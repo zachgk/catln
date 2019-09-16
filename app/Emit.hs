@@ -117,8 +117,8 @@ cgen (S.BinaryOp op a b) = do
       f ca cb
     Nothing -> cgen (S.Call ("binary" ++ op) [a,b])
 cgen (S.Var x) = getvar x >>= load
-cgen (S.Int n) = return $ cons $ C.Float (F.Double (fromIntegral n))
-cgen (S.Float n) = return $ cons $ C.Float (F.Double n)
+cgen (S.CExpr (S.Int n)) = return $ cons $ C.Float (F.Double (fromIntegral n))
+cgen (S.CExpr (S.Float n)) = return $ cons $ C.Float (F.Double n)
 cgen (S.Call fn args) = do
   largs <- mapM cgen args
   call (externf (AST.Name (SBS.toShort $ BSU.fromString fn))) largs

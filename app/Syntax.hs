@@ -13,9 +13,13 @@ module Syntax where
 
 type Name = String
 
-data Expr
+data Constant
   = Int Integer
   | Float Double
+  deriving (Eq, Ord, Show)
+
+data Expr
+  = CExpr Constant
   | Var String
   | Call Name [Expr]
   | Function Name [Name] Expr

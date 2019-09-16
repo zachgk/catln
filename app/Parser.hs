@@ -22,10 +22,10 @@ import Lexer
 import Syntax
 
 int :: Parser Expr
-int = Int <$> integer
+int = CExpr <$> Int <$> integer
 
 floating :: Parser Expr
-floating = Float <$> float
+floating = CExpr <$> Float <$> float
 
 binop = Ex.Infix (BinaryOp <$> op) Ex.AssocLeft
 unop = Ex.Prefix (UnaryOp <$> op)
