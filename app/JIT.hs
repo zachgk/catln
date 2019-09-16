@@ -50,7 +50,8 @@ passes = defaultCuratedPassSetSpec { optLevel = Just 3 }
 
 runJIT :: AST.Module -> IO (AST.Module)
 runJIT mod' = do
-   withContext $ \context ->
+   withContext $ \context -> do
+    initializeAllTargets
     jit context $ \executionEngine ->
        withModuleFromAST context mod' $ \m ->
         withPassManager passes $ \pm -> do
