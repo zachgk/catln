@@ -36,7 +36,7 @@ process modo source = do
   let res = parseToplevel source
   case res of
     Left err -> print err >> return Nothing
-    Right (Prgm ex) -> do
+    Right (Prgm _ _ ex) -> do
       ast <- codegen modo ex
       return $ Just ast
 
@@ -48,7 +48,7 @@ parseProcess line = do
   let res = parseToplevel line
   case res of
     Left err -> print err
-    Right (Prgm ex) -> mapM_ print ex
+    Right (Prgm _ _ ex) -> mapM_ print ex
 
 parseRepl :: IO ()
 parseRepl = runInputT defaultSettings loop

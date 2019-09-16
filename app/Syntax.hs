@@ -13,6 +13,12 @@ module Syntax where
 
 type Name = String
 
+data Import = Import String
+  deriving (Eq, Ord, Show)
+
+data Export = Export String
+  deriving (Eq, Ord, Show)
+
 data Constant
   = Int Integer
   | Float Double
@@ -33,4 +39,4 @@ data Expr
   | Let Name Expr Expr
   deriving (Eq, Ord, Show)
 
-data Prgm = Prgm [Expr]
+data Prgm = Prgm [Import] [Export] [Expr]

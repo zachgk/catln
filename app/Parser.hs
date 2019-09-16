@@ -161,7 +161,7 @@ exprs = many $ do
 toplevel :: Parser Prgm
 toplevel = do
   es <- exprs
-  return $ Prgm es
+  return $ Prgm [] [] es
 
 parseExpr :: String -> Either ParseError Expr
 parseExpr s = parse (contents expr) "<stdin>" s
