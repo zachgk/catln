@@ -11,6 +11,7 @@
 
 module Main where
 
+import Syntax
 import Parser
 import Codegen
 import Emit
@@ -35,7 +36,7 @@ process modo source = do
   let res = parseToplevel source
   case res of
     Left err -> print err >> return Nothing
-    Right ex -> do
+    Right (Prgm ex) -> do
       ast <- codegen modo ex
       return $ Just ast
 
@@ -47,7 +48,7 @@ parseProcess line = do
   let res = parseToplevel line
   case res of
     Left err -> print err
-    Right ex -> mapM_ print ex
+    Right (Prgm ex) -> mapM_ print ex
 
 parseRepl :: IO ()
 parseRepl = runInputT defaultSettings loop

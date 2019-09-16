@@ -32,3 +32,5 @@ data Expr
   | UnaryDef Name [Name] Expr
   | Let Name Expr Expr
   deriving (Eq, Ord, Show)
+
+data Prgm = Prgm [Expr]

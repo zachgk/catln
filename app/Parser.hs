@@ -152,14 +152,19 @@ contents p = do
   eof
   return r
 
-toplevel :: Parser [Expr]
-toplevel = many $ do
+exprs :: Parser [Expr]
+exprs = many $ do
     def <- defn
     reservedOp ";"
     return def
 
+toplevel :: Parser Prgm
+toplevel = do
+  es <- exprs
+  return $ Prgm es
+
 parseExpr :: String -> Either ParseError Expr
 parseExpr s = parse (contents expr) "<stdin>" s
 
-parseToplevel :: String -> Either ParseError [Expr]
+parseToplevel :: String -> Either ParseError Prgm
 parseToplevel s = parse (contents toplevel) "<stdin>" s
