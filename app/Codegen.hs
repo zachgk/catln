@@ -18,6 +18,9 @@ import Data.Word
 import Data.String
 import Data.List
 import Data.Function
+import qualified Data.ByteString as BBS
+import qualified Data.ByteString.UTF8 as BSU
+import qualified Data.ByteString.Short as SBS
 import qualified Data.Map as Map
 
 import Control.Monad.State
@@ -43,7 +46,7 @@ newtype LLVM a = LLVM (State AST.Module a)
 runLLVM :: AST.Module -> LLVM a -> AST.Module
 runLLVM mod (LLVM m) = execState m mod
 
-emptyModule :: String -> AST.Module
+emptyModule :: SBS.ShortByteString -> AST.Module
 emptyModule label = defaultModule { moduleName = label }
 
 addDefn :: Definition -> LLVM ()
@@ -51,7 +54,7 @@ addDefn d = do
   defs <- gets moduleDefinitions
   modify $ \s -> s { moduleDefinitions = defs ++ [d] }
 
-define ::  Type -> String -> [(Type, Name)] -> [BasicBlock] -> LLVM ()
+define ::  Type -> SBS.ShortByteString -> [(Type, Name)] -> [BasicBlock] -> LLVM ()
 define retty label argtys body = addDefn $
   GlobalDefinition $ functionDefaults {
     name        = Name label
@@ -60,7 +63,7 @@ define retty label argtys body = addDefn $
   , basicBlocks = body
   }
 
-external ::  Type -> String -> [(Type, Name)] -> LLVM ()
+external ::  Type -> SBS.ShortByteString -> [(Type, Name)] -> LLVM ()
 external retty label argtys = addDefn $
   GlobalDefinition $ functionDefaults {
     name        = Name label
@@ -76,7 +79,7 @@ external retty label argtys = addDefn $
 
 -- IEEE 754 double
 double :: Type
-double = FloatingPointType 64 IEEE
+double = FloatingPointType DoubleFP
 
 -------------------------------------------------------------------------------
 -- Names
@@ -84,11 +87,11 @@ double = FloatingPointType 64 IEEE
 
 type Names = Map.Map String Int
 
-uniqueName :: String -> Names -> (String, Names)
+uniqueName :: String -> Names -> (SBS.ShortByteString, Names)
 uniqueName nm ns =
   case Map.lookup nm ns of
-    Nothing -> (nm,  Map.insert nm 1 ns)
-    Just ix -> (nm ++ show ix, Map.insert nm (ix+1) ns)
+    Nothing -> (SBS.toShort $ BSU.fromString nm,  Map.insert nm 1 ns)
+    Just ix -> (SBS.toShort $ BSU.fromString $ nm ++ show ix, Map.insert nm (ix+1) ns)
 
 -------------------------------------------------------------------------------
 -- Codegen State
@@ -132,8 +135,8 @@ makeBlock (l, (BlockState _ s t)) = BasicBlock l (reverse s) (maketerm t)
     maketerm (Just x) = x
     maketerm Nothing = error $ "Block has no terminator: " ++ (show l)
 
-entryBlockName :: String
-entryBlockName = "entry"
+entryBlockName :: SBS.ShortByteString
+entryBlockName = SBS.toShort $ BSU.fromString "entry"
 
 emptyBlock :: Int -> BlockState
 emptyBlock i = BlockState i [] Nothing
@@ -173,7 +176,7 @@ terminator trm = do
   modifyBlock (blk { term = Just trm })
   return trm
 
-named :: String -> Codegen a -> Codegen Operand
+named :: SBS.ShortByteString -> Codegen a -> Codegen Operand
 named iname m = m >> do
   blk <- current
   let b = Name iname
@@ -246,16 +249,16 @@ externf = ConstantOperand . C.GlobalReference double
 
 -- Arithmetic and Constants
 fadd :: Operand -> Operand -> Codegen Operand
-fadd a b = instr $ FAdd NoFastMathFlags a b []
+fadd a b = instr $ FAdd noFastMathFlags a b []
 
 fsub :: Operand -> Operand -> Codegen Operand
-fsub a b = instr $ FSub NoFastMathFlags a b []
+fsub a b = instr $ FSub noFastMathFlags a b []
 
 fmul :: Operand -> Operand -> Codegen Operand
-fmul a b = instr $ FMul NoFastMathFlags a b []
+fmul a b = instr $ FMul noFastMathFlags a b []
 
 fdiv :: Operand -> Operand -> Codegen Operand
-fdiv a b = instr $ FDiv NoFastMathFlags a b []
+fdiv a b = instr $ FDiv noFastMathFlags a b []
 
 fcmp :: FP.FloatingPointPredicate -> Operand -> Operand -> Codegen Operand
 fcmp cond a b = instr $ FCmp cond a b []

@@ -27,6 +27,9 @@ import LLVM.ExecutionEngine ( withMCJIT, withModuleInEngine, getFunction )
 
 import Data.Word
 import Data.Int
+import qualified Data.ByteString as BBS
+import qualified Data.ByteString.UTF8 as BSU
+import qualified Data.ByteString.Short as SBS
 import Control.Monad.Except
 import Control.Applicative
 import qualified Data.Map as Map
@@ -40,26 +43,26 @@ zero = cons $ C.Float (F.Double 0.0)
 false = zero
 true = one
 
-toSig :: [String] -> [(AST.Type, AST.Name)]
+toSig :: [SBS.ShortByteString] -> [(AST.Type, AST.Name)]
 toSig = map (\x -> (double, AST.Name x))
 
 codegenTop :: S.Expr -> LLVM ()
 codegenTop (S.Function name args body) = do
-  define double name largs bls
+  define double (SBS.toShort $ BSU.fromString name) largs bls
   where
-    largs = map (\x -> (double, AST.Name x)) args
+    largs = map (\x -> (double, AST.Name x)) (map (SBS.toShort . BSU.fromString) args)
     bls = createBlocks $ execCodegen [] $ do
-      entry <- addBlock entryBlockName
+      entry <- addBlock (BSU.toString $ SBS.fromShort entryBlockName)
       setBlock entry
       forM args $ \a -> do
         var <- alloca double
-        store var (local (AST.Name a))
+        store var (local (AST.Name (SBS.toShort $ BSU.fromString a)))
         assign a var
       cgen body >>= ret
 
 codegenTop (S.Extern name args) = do
-  external double name fnargs
-  where fnargs = toSig args
+  external double (SBS.toShort $ BSU.fromString name) fnargs
+  where fnargs = toSig (map (SBS.toShort . BSU.fromString) args)
 
 codegenTop (S.BinaryDef name args body) =
   codegenTop $ S.Function ("binary" ++ name) args body
@@ -71,7 +74,7 @@ codegenTop exp = do
   define double "main" [] bls
   where
     bls = createBlocks $ execCodegen [] $ do
-      entry <- addBlock entryBlockName
+      entry <- addBlock (BSU.toString $ SBS.fromShort entryBlockName)
       setBlock entry
       cgen exp >>= ret
 
@@ -118,7 +121,7 @@ cgen (S.Int n) = return $ cons $ C.Float (F.Double (fromIntegral n))
 cgen (S.Float n) = return $ cons $ C.Float (F.Double n)
 cgen (S.Call fn args) = do
   largs <- mapM cgen args
-  call (externf (AST.Name fn)) largs
+  call (externf (AST.Name (SBS.toShort $ BSU.fromString fn))) largs
 cgen (S.If cond tr fl) = do
   ifthen <- addBlock "if.then"
   ifelse <- addBlock "if.else"
