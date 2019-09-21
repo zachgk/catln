@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections     #-}
 --------------------------------------------------------------------
 -- |
 -- Module    :  Lexer
@@ -11,37 +13,55 @@
 
 module Lexer where
 
-import Text.Parsec.String (Parser)
-import Text.Parsec.Language (emptyDef)
-import Text.Parsec.Prim (many)
+import Control.Applicative hiding (some, many)
+import Control.Monad (void)
+import Data.Text (Text)
+import qualified Data.Text as T
+import Data.Void
+import Text.Megaparsec
+import Text.Megaparsec.Char
+import qualified Text.Megaparsec.Char.Lexer as L
 
-import qualified Text.Parsec.Token as Tok
+type Parser = Parsec Void String
 
-lexer :: Tok.TokenParser ()
-lexer = Tok.makeTokenParser style
+lineComment :: Parser ()
+lineComment = L.skipLineComment "//"
+
+blockComment :: Parser ()
+blockComment = L.skipBlockComment "/*" "*/"
+
+scn :: Parser ()
+scn = L.space space1 lineComment blockComment
+
+sc :: Parser ()
+sc = L.space (void $ some (char ' ' <|> char '\t')) lineComment blockComment
+
+lexeme :: Parser a -> Parser a
+lexeme = L.lexeme sc
+
+symbol :: String -> Parser String
+symbol = L.symbol sc
+
+reservedWords :: [String]
+reservedWords = ["if"]
+
+
+  -- Parse simple sequences
+
+integer :: Parser Integer
+integer = lexeme L.decimal
+
+float :: Parser Double
+float = lexeme L.float
+
+parens :: Parser a -> Parser a
+parens = between (symbol "(") (symbol ")")
+
+
+identifier :: Parser String
+identifier = (lexeme . try) (p >>= check)
   where
-    ops = ["+","*","-","/",";","=",",","<",">","|",":"]
-    names = ["def","extern","if","then","else","in","for"
-            ,"binary", "unary", "var"
-            ]
-    style = emptyDef {
-               Tok.commentLine = "#"
-             , Tok.reservedOpNames = ops
-             , Tok.reservedNames = names
-             }
-
-integer    = Tok.integer lexer
-float      = Tok.float lexer
-parens     = Tok.parens lexer
-commaSep   = Tok.commaSep lexer
-semiSep    = Tok.semiSep lexer
-identifier = Tok.identifier lexer
-whitespace = Tok.whiteSpace lexer
-reserved   = Tok.reserved lexer
-reservedOp = Tok.reservedOp lexer
-
-operator :: Parser String
-operator = do
-  c <- Tok.opStart emptyDef
-  cs <- many $ Tok.opLetter emptyDef
-  return (c:cs)
+    p       = (:) <$> letterChar <*> many alphaNumChar
+    check x = if x `elem` reservedWords
+                 then fail $ "keyword " ++ show x ++ " cannot be an identifier"
+                 else return x

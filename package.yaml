@@ -21,7 +21,6 @@ description:         Please see the README on GitHub at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
-- parsec >= 3.1.14.0 && < 4
 - mtl >= 2.2.2 && < 3
 - haskeline >= 0.7.5.0 && < 1
 - containers == 0.6.0.1
@@ -29,6 +28,10 @@ dependencies:
 - llvm-hs-pure >= 8.0.0 && < 9
 - bytestring == 0.10.8.2
 - utf8-string == 1.0.1.1
+- megaparsec == 7.0.5
+- text == 1.2.3.1
+- parser-combinators == 1.1.0
+- parsec == 3.1.14.0 # TO REMOVE
 
 library:
   source-dirs: src

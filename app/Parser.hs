@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections     #-}
 --------------------------------------------------------------------
 -- |
 -- Module    :  Parser
@@ -11,160 +13,101 @@
 
 module Parser where
 
-import Text.Parsec
-import Text.Parsec.String (Parser)
-import Control.Applicative ((<$>))
-
-import qualified Text.Parsec.Expr as Ex
-import qualified Text.Parsec.Token as Tok
+import Control.Applicative hiding (some, many)
+import Control.Monad.Combinators.Expr
+import Text.Megaparsec
+import Text.Megaparsec.Char
+import qualified Text.Megaparsec.Char.Lexer as L
 
 import Lexer
 import Syntax
 
-int :: Parser Expr
-int = CExpr <$> Int <$> integer
+ops :: [[Operator Parser Expr]]
+ops = [
+    [ Prefix (UnaryOp "-" <$ symbol "-")
+    , Prefix (UnaryOp "~" <$ symbol "~")
+    ],
+    [ InfixL (BinaryOp "*" <$ symbol "*")
+    , InfixL (BinaryOp "/" <$ symbol "/")
+    ],
+    [ InfixL (BinaryOp "+" <$ symbol "+")
+    , InfixL (BinaryOp "-" <$ symbol "-")
+    ],
+    [ InfixL (BinaryOp "<" <$ symbol "<")
+    , InfixL (BinaryOp ">" <$ symbol ">")
+    , InfixL (BinaryOp "<=" <$ symbol "<=")
+    , InfixL (BinaryOp ">=" <$ symbol ">=")
+    , InfixL (BinaryOp "==" <$ symbol "==")
+    , InfixL (BinaryOp "!=" <$ symbol "!=")
+    ],
+    [ InfixL (BinaryOp "&" <$ symbol "&")
+    , InfixL (BinaryOp "|" <$ symbol "|")
+    , InfixL (BinaryOp "^" <$ symbol "^")
+    ]
+  ]
 
-floating :: Parser Expr
-floating = CExpr <$> Float <$> float
+opExpr :: Parser Expr
+opExpr = makeExprParser term ops
 
-binop = Ex.Infix (BinaryOp <$> op) Ex.AssocLeft
-unop = Ex.Prefix (UnaryOp <$> op)
+placeholderExpr :: Expr
+placeholderExpr = CExpr $ Int 0
 
-binary s assoc = Ex.Infix (reservedOp s >> return (BinaryOp s)) assoc
+pCall :: Parser Expr
+pCall = do
+  funName <- identifier
+  args <- parens $ sepBy1 opExpr (symbol ",")
+  return $ Call funName args
 
-op :: Parser String
-op = do
-  whitespace
-  o <- operator
-  whitespace
-  return o
+term :: Parser Expr
+term = parens opExpr
+       <|> Var <$> identifier
+       <|> (CExpr . Int) <$> integer
+       <|> pCall
 
-binops = [[binary "=" Ex.AssocLeft]
-        ,[binary "*" Ex.AssocLeft,
-          binary "/" Ex.AssocLeft]
-        ,[binary "+" Ex.AssocLeft,
-          binary "-" Ex.AssocLeft]
-        ,[binary "<" Ex.AssocLeft]]
+pExpr :: Parser Expr
+pExpr = undefined
 
-expr :: Parser Expr
-expr =  Ex.buildExpressionParser (binops ++ [[unop], [binop]]) factor
+pArgs :: Parser [Name]
+pArgs = sepBy1 identifier (symbol ",")
 
-variable :: Parser Expr
-variable = Var <$> identifier
+pDeclLHS :: Parser DeclLHS
+pDeclLHS = do
+  val <- identifier
+  args <- optional $ try $ parens pArgs
+  _ <- symbol "="
+  return $ case args of
+    Just a -> DeclFun val a
+    Nothing -> DeclVal val
 
-function :: Parser Expr
-function = do
-  reserved "def"
-  name <- identifier
-  args <- parens $ many identifier
-  body <- expr
-  return $ Function name args body
+pDeclSingle :: Parser Decl
+pDeclSingle = do
+  header <- pDeclLHS
+  expr <- pExpr
+  return $ Decl header [] expr
 
-extern :: Parser Expr
-extern = do
-  reserved "extern"
-  name <- identifier
-  args <- parens $ many identifier
-  return $ Extern name args
+pDeclTree :: Parser Decl
+pDeclTree = L.indentBlock scn p
+  where
+    pack header children = return $ Decl header children placeholderExpr
+    p = do
+      header <- pDeclLHS
+      return (L.IndentSome Nothing (pack header) (try pDeclTree <|> pDeclSingle))
 
-call :: Parser Expr
-call = do
-  name <- identifier
-  args <- parens $ commaSep expr
-  return $ Call name args
+pRootDecl :: Parser Decl
+pRootDecl = L.nonIndented scn (pDeclTree)
 
-ifthen :: Parser Expr
-ifthen = do
-  reserved "if"
-  cond <- expr
-  reserved "then"
-  tr <- expr
-  reserved "else"
-  fl <- expr
-  return $ If cond tr fl
+pPrgm :: Parser Prgm
+pPrgm = do
+  decls <- many pRootDecl
+  return $ Prgm [] [] decls
 
-for :: Parser Expr
-for = do
-  reserved "for"
-  var <- identifier
-  reservedOp "="
-  start <- expr
-  reservedOp ","
-  cond <- expr
-  reservedOp ","
-  step <- expr
-  reserved "in"
-  body <- expr
-  return $ For var start cond step body
+-- toplevel :: IndentParser Prgm
+-- toplevel = do
+--   es <- exprs
+--   return $ Prgm [] [] es
 
-letins :: Parser Expr
-letins = do
-  reserved "var"
-  defs <- commaSep $ do
-    var <- identifier
-    reservedOp "="
-    val <- expr
-    return (var, val)
-  reserved "in"
-  body <- expr
-  return $ foldr (uncurry Let) body defs
+-- parseExpr :: String -> Either ParseError Expr
+-- parseExpr s = parse (contents expr) "<stdin>" s
 
-unarydef :: Parser Expr
-unarydef = do
-  reserved "def"
-  reserved "unary"
-  o <- op
-  args <- parens $ many identifier
-  body <- expr
-  return $ UnaryDef o args body
-
-binarydef :: Parser Expr
-binarydef = do
-  reserved "def"
-  reserved "binary"
-  o <- op
-  prec <- int
-  args <- parens $ many identifier
-  body <- expr
-  return $ BinaryDef o args body
-
-factor :: Parser Expr
-factor = try floating
-      <|> try int
-      <|> try call
-      <|> try variable
-      <|> ifthen
-      <|> try letins
-      <|> for
-      <|> (parens expr)
-
-defn :: Parser Expr
-defn = try extern
-    <|> try function
-    <|> try unarydef
-    <|> try binarydef
-    <|> expr
-
-contents :: Parser a -> Parser a
-contents p = do
-  Tok.whiteSpace lexer
-  r <- p
-  eof
-  return r
-
-exprs :: Parser [Expr]
-exprs = many $ do
-    def <- defn
-    reservedOp ";"
-    return def
-
-toplevel :: Parser Prgm
-toplevel = do
-  es <- exprs
-  return $ Prgm [] [] es
-
-parseExpr :: String -> Either ParseError Expr
-parseExpr s = parse (contents expr) "<stdin>" s
-
-parseToplevel :: String -> Either ParseError Prgm
-parseToplevel s = parse (contents toplevel) "<stdin>" s
+-- parseToplevel :: String -> Either ParseError Prgm
+-- parseToplevel s = parse (contents toplevel) "<stdin>" s

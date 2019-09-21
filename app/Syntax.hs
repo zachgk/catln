@@ -27,16 +27,17 @@ data Constant
 data Expr
   = CExpr Constant
   | Var String
-  | Call Name [Expr]
-  | Function Name [Name] Expr
-  | Extern Name [Name]
-  | BinaryOp Name Expr Expr
   | UnaryOp Name Expr
-  | If Expr Expr Expr
-  | For Name Expr Expr Expr Expr
-  | BinaryDef Name [Name] Expr
-  | UnaryDef Name [Name] Expr
-  | Let Name Expr Expr
+  | BinaryOp Name Expr Expr
+  | Call Name [Expr]
   deriving (Eq, Ord, Show)
 
-data Prgm = Prgm [Import] [Export] [Expr]
+data DeclLHS
+  = DeclVal Name
+  | DeclFun Name [Name]
+  deriving (Eq, Ord, Show)
+
+data Decl = Decl DeclLHS [Decl] Expr
+  deriving (Eq, Ord, Show)
+
+data Prgm = Prgm [Import] [Export] [Decl]
