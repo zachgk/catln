@@ -15,6 +15,7 @@ module Parser where
 
 import Control.Applicative hiding (some, many)
 import Control.Monad.Combinators.Expr
+import Data.Void
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
@@ -100,6 +101,9 @@ pPrgm :: Parser Prgm
 pPrgm = do
   decls <- many pRootDecl
   return $ Prgm [] [] decls
+
+parseFile :: String -> Either (ParseErrorBundle String Void) Prgm
+parseFile s = runParser pPrgm "<stdin>" s
 
 -- toplevel :: IndentParser Prgm
 -- toplevel = do
