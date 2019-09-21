@@ -1,9 +1,9 @@
 --------------------------------------------------------------------
 -- |
 -- Module    :  Syntax
--- Copyright :  (c) Stephen Diehl 2013
+-- Copyright :  (c) Zach Kimberg 2019
 -- License   :  MIT
--- Maintainer:  stephen.m.diehl@gmail.com
+-- Maintainer:  zachary@kimberg.com
 -- Stability :  experimental
 -- Portability: non-portable
 --
@@ -40,4 +40,4 @@ data DeclLHS
 data Decl = Decl DeclLHS [Decl] Expr
   deriving (Eq, Ord, Show)
 
-data Prgm = Prgm [Import] [Export] [Decl]
+data Prgm = Prgm [Import] [Export] [Expr]
