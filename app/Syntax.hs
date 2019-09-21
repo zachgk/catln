@@ -41,3 +41,4 @@ data Decl = Decl DeclLHS [Decl] Expr
   deriving (Eq, Ord, Show)
 
 data Prgm = Prgm [Import] [Export] [Decl]
+  deriving (Eq, Ord, Show)
