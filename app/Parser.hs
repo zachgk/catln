@@ -48,20 +48,17 @@ ops = [
     ]
   ]
 
-placeholderExpr :: Expr
-placeholderExpr = CExpr $ Int 0
-
 pCall :: Parser Expr
 pCall = do
-  funName <- identifier
+  funName <- (:) <$> letterChar <*> many alphaNumChar
   args <- parens $ sepBy1 pExpr (symbol ",")
   return $ Call funName args
 
 term :: Parser Expr
-term = parens pExpr
-       <|> Var <$> identifier
-       <|> (CExpr . Int) <$> integer
-       <|> pCall
+term = try (parens pExpr)
+       <|> try pCall
+       <|> try (Var <$> identifier)
+       <|> (CExpr . CInt) <$> integer
 
 pExpr :: Parser Expr
 pExpr = makeExprParser term ops
@@ -102,7 +99,7 @@ pRootDecl = L.nonIndented scn (try pDeclTree <|> pDeclSingle)
 pPrgm :: Parser Prgm
 pPrgm = do
   decls <- sepBy1 pRootDecl newline
-  return $ Prgm [] [] decls
+  return $ ([], [], decls)
 
 contents :: Parser a -> Parser a
 contents p = do
@@ -110,16 +107,12 @@ contents p = do
   eof
   return r
 
-parseFile :: String -> Either (ParseErrorBundle String Void) Prgm
+parseFile :: String -> Either ParseErrorRes Prgm
 parseFile s = runParser (contents pPrgm) "<stdin>" s
 
--- toplevel :: IndentParser Prgm
--- toplevel = do
---   es <- exprs
---   return $ Prgm [] [] es
-
--- parseExpr :: String -> Either ParseError Expr
--- parseExpr s = parse (contents expr) "<stdin>" s
-
--- parseToplevel :: String -> Either ParseError Prgm
--- parseToplevel s = parse (contents toplevel) "<stdin>" s
+parseRepl :: String -> ReplRes
+parseRepl s = case runParser (contents p) "<stdin>" s of
+                Left e@(ParseErrorBundle _ _) -> ReplErr e
+                Right (Left decl) -> ReplDecl decl
+                Right (Right expr) -> ReplExpr expr
+  where p = try (Left <$> pRootDecl) <|> try (Right <$> pExpr)

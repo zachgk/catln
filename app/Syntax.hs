@@ -11,6 +11,9 @@
 
 module Syntax where
 
+import Data.Void (Void)
+import Text.Megaparsec.Error (ParseErrorBundle)
+
 type Name = String
 
 data Import = Import String
@@ -20,8 +23,8 @@ data Export = Export String
   deriving (Eq, Ord, Show)
 
 data Constant
-  = Int Integer
-  | Float Double
+  = CInt Integer
+  | CFloat Double
   deriving (Eq, Ord, Show)
 
 data Expr
@@ -40,5 +43,12 @@ data DeclLHS
 data Decl = Decl DeclLHS [Decl] Expr
   deriving (Eq, Ord, Show)
 
-data Prgm = Prgm [Import] [Export] [Decl]
-  deriving (Eq, Ord, Show)
+type Prgm = ([Import], [Export], [Decl])
+
+type ParseErrorRes = ParseErrorBundle String Void
+
+data ReplRes
+  = ReplDecl Decl
+  | ReplExpr Expr
+  | ReplErr ParseErrorRes
+  deriving (Eq, Show)
