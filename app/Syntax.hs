@@ -25,6 +25,7 @@ data Export = Export String
 data Constant
   = CInt Integer
   | CFloat Double
+  | CStr String
   deriving (Eq, Ord, Show)
 
 data Expr

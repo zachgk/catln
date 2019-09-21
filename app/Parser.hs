@@ -54,9 +54,13 @@ pCall = do
   args <- parens $ sepBy1 pExpr (symbol ",")
   return $ Call funName args
 
+pStringLiteral :: Parser Expr
+pStringLiteral = (CExpr . CStr) <$> (char '\"' *> manyTill L.charLiteral (char '\"'))
+
 term :: Parser Expr
 term = try (parens pExpr)
        <|> try pCall
+       <|> pStringLiteral
        <|> try (Var <$> identifier)
        <|> (CExpr . CInt) <$> integer
 

@@ -43,7 +43,7 @@ symbol :: String -> Parser String
 symbol = L.symbol sc
 
 reservedWords :: [String]
-reservedWords = ["if"]
+reservedWords = ["if", "assert"]
 
 
   -- Parse simple sequences

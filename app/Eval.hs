@@ -20,10 +20,13 @@ data Val
   = IntVal Integer
   | FloatVal Double
   | BoolVal Bool
+  | StrVal String
   | PrimVal ([Val] -> Val) -- runtime function
   | CloVal [Name] Env [Decl] Expr -- Function definition
 
-data EvalError = EvalError String
+data EvalError
+  = GenEvalError String
+  | AssertError String
   deriving (Eq, Show)
 type Env = H.HashMap String Val
 
@@ -76,18 +79,20 @@ baseEnv = H.fromList [ ("+", liftIntOp (+))
 evalExpr :: Env -> Expr -> Either EvalError Val
 evalExpr env (CExpr (CInt i)) = Right $ IntVal i
 evalExpr env (CExpr (CFloat f)) = Right $ FloatVal f
+evalExpr env (CExpr (CStr s)) = Right $ StrVal s
 evalExpr env (Var id) = case H.lookup id env of
   Just v -> Right v
-  Nothing -> Left $ EvalError $ "Could not find value " ++ id
+  Nothing -> Left $ GenEvalError $ "Could not find value " ++ id
 evalExpr env (UnaryOp op expr) = evalExpr env (Call op [expr])
 evalExpr env (BinaryOp op e1 e2) = evalExpr env (Call op [e1, e2])
+evalExpr env (Call "assert" [test, (CExpr (CStr msg))]) = evalExpr env test >>= (\(BoolVal b) -> if b == True then Right (BoolVal b) else Left (AssertError msg))
 evalExpr env (Call name exprs) = do
   vals <- mapM (evalExpr env) exprs
   case H.lookup name env of
     Just (PrimVal f) -> Right $ f vals
     Just (CloVal names cenv subDecls cexpr) -> evalDecl (H.union (H.fromList $ zip names vals) cenv) cexpr subDecls
-    Just _ -> Left $ EvalError $ "Could not call " ++ name
-    Nothing -> Left $ EvalError $ "Could not find function " ++ name
+    Just _ -> Left $ GenEvalError $ "Could not call " ++ name
+    Nothing -> Left $ GenEvalError $ "Could not find function " ++ name
 
 evalDecl :: Env -> Expr -> [Decl] -> Either EvalError Val
 evalDecl env expr subDecls = do
@@ -108,7 +113,7 @@ evalPrgm (imports, exports, decls) = do
   env <- addDecls baseEnv decls
   main <- case H.lookup "main" env of
                                    Just m@(CloVal _ _ _ _) -> Right $ m
-                                   Just _ -> Left $ EvalError "Wrong type of main function"
-                                   Nothing -> Left $ EvalError "No main function defined"
+                                   Just _ -> Left $ GenEvalError "Wrong type of main function"
+                                   Nothing -> Left $ GenEvalError "No main function defined"
   let CloVal _ env subDecls expr = main in
     evalDecl env expr subDecls
