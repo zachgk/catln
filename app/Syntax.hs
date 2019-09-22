@@ -16,6 +16,9 @@ import Text.Megaparsec.Error (ParseErrorBundle)
 
 type Name = String
 
+data Type = Type String
+  deriving (Eq, Ord, Show)
+
 data Import = Import String
   deriving (Eq, Ord, Show)
 
@@ -28,28 +31,35 @@ data Constant
   | CStr String
   deriving (Eq, Ord, Show)
 
-data Expr
-  = CExpr Constant
-  | Var String
-  | UnaryOp Name Expr
-  | BinaryOp Name Expr Expr
-  | Call Name [Expr]
+data Expr m
+  = CExpr m Constant
+  | Var m String
+  | UnaryOp m Name (Expr m)
+  | BinaryOp m Name (Expr m) (Expr m)
+  | Call m Name [(Expr m)]
   deriving (Eq, Ord, Show)
 
-data DeclLHS
+data DeclLHS m
   = DeclVal Name
-  | DeclFun Name [Name]
+  | DeclFun Name [(Name, m)]
   deriving (Eq, Ord, Show)
 
-data Decl = Decl DeclLHS [Decl] Expr
+data Decl m = Decl (DeclLHS m) [(Decl m)] (Expr m)
   deriving (Eq, Ord, Show)
 
-type Prgm = ([Import], [Export], [Decl])
+type Prgm m = ([Import], [Export], [(Decl m)])
 
 type ParseErrorRes = ParseErrorBundle String Void
 
-data ReplRes
-  = ReplDecl Decl
-  | ReplExpr Expr
+data ReplRes m
+  = ReplDecl (Decl m)
+  | ReplExpr (Expr m)
   | ReplErr ParseErrorRes
   deriving (Eq, Show)
+
+
+
+
+-- Metadata for the Programs
+data PreTyped = PreTyped (Maybe Type)
+  deriving (Eq, Ord, Show)

@@ -24,83 +24,95 @@ import qualified Text.Megaparsec.Char.Lexer as L
 import Lexer
 import Syntax
 
-ops :: [[Operator Parser Expr]]
+type ParseMeta = PreTyped
+type PExpr = Expr ParseMeta
+type PDecl = Decl ParseMeta
+type PDeclLHS = DeclLHS ParseMeta
+type PPrgm = Prgm ParseMeta
+type PReplRes = ReplRes ParseMeta
+
+emptyMeta = PreTyped Nothing
+intMeta = PreTyped (Just $ Type "Integer")
+boolMeta = PreTyped (Just $ Type "Boolean")
+strMeta = PreTyped (Just $ Type "String")
+
+ops :: [[Operator Parser PExpr]]
 ops = [
-    [ Prefix (UnaryOp "-" <$ symbol "-")
-    , Prefix (UnaryOp "~" <$ symbol "~")
+    [ Prefix (UnaryOp intMeta "-" <$ symbol "-")
+    , Prefix (UnaryOp boolMeta "~" <$ symbol "~")
     ],
-    [ InfixL (BinaryOp "*" <$ symbol "*")
-    , InfixL (BinaryOp "/" <$ symbol "/")
+    [ InfixL (BinaryOp intMeta "*" <$ symbol "*")
+    , InfixL (BinaryOp intMeta "/" <$ symbol "/")
     ],
-    [ InfixL (BinaryOp "+" <$ symbol "+")
-    , InfixL (BinaryOp "-" <$ symbol "-")
+    [ InfixL (BinaryOp intMeta "+" <$ symbol "+")
+    , InfixL (BinaryOp intMeta "-" <$ symbol "-")
     ],
-    [ InfixL (BinaryOp "<" <$ symbol "<")
-    , InfixL (BinaryOp ">" <$ symbol ">")
-    , InfixL (BinaryOp "<=" <$ symbol "<=")
-    , InfixL (BinaryOp ">=" <$ symbol ">=")
-    , InfixL (BinaryOp "==" <$ symbol "==")
-    , InfixL (BinaryOp "!=" <$ symbol "!=")
+    [ InfixL (BinaryOp boolMeta "<" <$ symbol "<")
+    , InfixL (BinaryOp boolMeta ">" <$ symbol ">")
+    , InfixL (BinaryOp boolMeta "<=" <$ symbol "<=")
+    , InfixL (BinaryOp boolMeta ">=" <$ symbol ">=")
+    , InfixL (BinaryOp boolMeta "==" <$ symbol "==")
+    , InfixL (BinaryOp boolMeta "!=" <$ symbol "!=")
     ],
-    [ InfixL (BinaryOp "&" <$ symbol "&")
-    , InfixL (BinaryOp "|" <$ symbol "|")
-    , InfixL (BinaryOp "^" <$ symbol "^")
+    [ InfixL (BinaryOp boolMeta "&" <$ symbol "&")
+    , InfixL (BinaryOp boolMeta "|" <$ symbol "|")
+    , InfixL (BinaryOp boolMeta "^" <$ symbol "^")
     ]
   ]
 
-pCall :: Parser Expr
+pCall :: Parser PExpr
 pCall = do
   funName <- (:) <$> letterChar <*> many alphaNumChar
   args <- parens $ sepBy1 pExpr (symbol ",")
-  return $ Call funName args
+  return $ Call emptyMeta funName args
 
-pStringLiteral :: Parser Expr
-pStringLiteral = (CExpr . CStr) <$> (char '\"' *> manyTill L.charLiteral (char '\"'))
+pStringLiteral :: Parser PExpr
+pStringLiteral = (CExpr emptyMeta . CStr) <$> (char '\"' *> manyTill L.charLiteral (char '\"'))
 
-term :: Parser Expr
+term :: Parser PExpr
 term = try (parens pExpr)
        <|> try pCall
        <|> pStringLiteral
-       <|> try (Var <$> identifier)
-       <|> (CExpr . CInt) <$> integer
+       <|> try (Var emptyMeta <$> identifier)
+       <|> (CExpr emptyMeta . CInt) <$> integer
 
-pExpr :: Parser Expr
+pExpr :: Parser PExpr
 pExpr = makeExprParser term ops
 
 pArgs :: Parser [Name]
 pArgs = sepBy1 identifier (symbol ",")
 
-pDeclLHS :: Parser DeclLHS
+pDeclLHS :: Parser PDeclLHS
 pDeclLHS = do
   val <- identifier
   args <- optional $ try $ parens pArgs
   _ <- symbol "="
   return $ case args of
-    Just a -> DeclFun val a
+    Just a -> DeclFun val (zip a (repeat emptyMeta))
     Nothing -> DeclVal val
 
-pDeclSingle :: Parser Decl
+pDeclSingle :: Parser PDecl
 pDeclSingle = do
   lhs <- pDeclLHS
   expr <- pExpr
   return $ Decl lhs [] expr
 
-pDeclTree :: Parser Decl
+pDeclTree :: Parser PDecl
 pDeclTree = L.indentBlock scn p
   where
     pack lhs children = if (isLeft $ last children) && (all isRight $ init children)
       then return $ Decl lhs (rights $ init children) (head $ lefts $ [last children])
       else fail $ "The declaration must end with an expression"
-    childParser :: Parser (Either Expr Decl)
+    childParser :: Parser (Either PExpr PDecl)
     childParser = try (Right <$> pDeclTree) <|> try (Right <$> pDeclSingle) <|> (Left <$> pExpr)
     p = do
       lhs <- pDeclLHS
       return (L.IndentSome Nothing (pack lhs) childParser)
 
-pRootDecl :: Parser Decl
+pRootDecl :: Parser PDecl
 pRootDecl = L.nonIndented scn (try pDeclTree <|> pDeclSingle)
 
-pPrgm :: Parser Prgm
+pPrgm :: Parser PPrgm
 pPrgm = do
   decls <- sepBy1 pRootDecl newline
   return $ ([], [], decls)
@@ -111,10 +123,10 @@ contents p = do
   eof
   return r
 
-parseFile :: String -> Either ParseErrorRes Prgm
+parseFile :: String -> Either ParseErrorRes PPrgm
 parseFile s = runParser (contents pPrgm) "<stdin>" s
 
-parseRepl :: String -> ReplRes
+parseRepl :: String -> PReplRes
 parseRepl s = case runParser (contents p) "<stdin>" s of
                 Left e@(ParseErrorBundle _ _) -> ReplErr e
                 Right (Left decl) -> ReplDecl decl

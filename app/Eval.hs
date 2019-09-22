@@ -16,13 +16,20 @@ import qualified Data.HashMap.Strict as H
 
 import Control.Monad
 
+type EvalMeta = PreTyped
+type EExpr = Expr EvalMeta
+type EDecl = Decl EvalMeta
+type EDeclLHS = DeclLHS EvalMeta
+type EPrgm = Prgm EvalMeta
+type EReplRes = ReplRes EvalMeta
+
 data Val
   = IntVal Integer
   | FloatVal Double
   | BoolVal Bool
   | StrVal String
   | PrimVal ([Val] -> Val) -- runtime function
-  | CloVal [Name] Env [Decl] Expr -- Function definition
+  | CloVal [Name] Env [EDecl] EExpr -- Function definition
 
 data EvalError
   = GenEvalError String
@@ -76,17 +83,17 @@ baseEnv = H.fromList [ ("+", liftIntOp (+))
                      , ("~", rnot)
                      ]
 
-evalExpr :: Env -> Expr -> Either EvalError Val
-evalExpr env (CExpr (CInt i)) = Right $ IntVal i
-evalExpr env (CExpr (CFloat f)) = Right $ FloatVal f
-evalExpr env (CExpr (CStr s)) = Right $ StrVal s
-evalExpr env (Var id) = case H.lookup id env of
+evalExpr :: Env -> EExpr -> Either EvalError Val
+evalExpr env (CExpr _ (CInt i)) = Right $ IntVal i
+evalExpr env (CExpr _ (CFloat f)) = Right $ FloatVal f
+evalExpr env (CExpr _ (CStr s)) = Right $ StrVal s
+evalExpr env (Var _ id) = case H.lookup id env of
   Just v -> Right v
   Nothing -> Left $ GenEvalError $ "Could not find value " ++ id
-evalExpr env (UnaryOp op expr) = evalExpr env (Call op [expr])
-evalExpr env (BinaryOp op e1 e2) = evalExpr env (Call op [e1, e2])
-evalExpr env (Call "assert" [test, (CExpr (CStr msg))]) = evalExpr env test >>= (\(BoolVal b) -> if b == True then Right (BoolVal b) else Left (AssertError msg))
-evalExpr env (Call name exprs) = do
+evalExpr env (UnaryOp m op expr) = evalExpr env (Call m op [expr])
+evalExpr env (BinaryOp m op e1 e2) = evalExpr env (Call m op [e1, e2])
+evalExpr env (Call _ "assert" [test, (CExpr _ (CStr msg))]) = evalExpr env test >>= (\(BoolVal b) -> if b == True then Right (BoolVal b) else Left (AssertError msg))
+evalExpr env (Call _ name exprs) = do
   vals <- mapM (evalExpr env) exprs
   case H.lookup name env of
     Just (PrimVal f) -> Right $ f vals
@@ -94,21 +101,21 @@ evalExpr env (Call name exprs) = do
     Just _ -> Left $ GenEvalError $ "Could not call " ++ name
     Nothing -> Left $ GenEvalError $ "Could not find function " ++ name
 
-evalDecl :: Env -> Expr -> [Decl] -> Either EvalError Val
+evalDecl :: Env -> EExpr -> [EDecl] -> Either EvalError Val
 evalDecl env expr subDecls = do
   subEnv <- addDecls env subDecls
   evalExpr subEnv expr
 
-addDecl :: Env -> Decl -> Either EvalError Env
+addDecl :: Env -> EDecl -> Either EvalError Env
 addDecl env (Decl (DeclVal id) subDecls expr) = evalDecl env expr subDecls >>= (\val -> Right $ H.insert id val env)
 addDecl env (Decl (DeclFun id args) subDecls expr) = return env'
-                                                     where cl = CloVal args env' subDecls expr
+                                                     where cl = CloVal (map fst args) env' subDecls expr
                                                            env' = H.insert id cl env
 
-addDecls :: Env -> [Decl] -> Either EvalError Env
+addDecls :: Env -> [EDecl] -> Either EvalError Env
 addDecls env decls = foldM (\e d -> addDecl e d) env decls
 
-evalPrgm :: Prgm -> Either EvalError Val
+evalPrgm :: EPrgm -> Either EvalError Val
 evalPrgm (imports, exports, decls) = do
   env <- addDecls baseEnv decls
   main <- case H.lookup "main" env of
