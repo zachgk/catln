@@ -51,7 +51,7 @@ data DeclLHS m
 data Decl m = Decl (DeclLHS m) [(Decl m)] (Expr m)
   deriving (Eq, Ord, Show)
 
-type Prgm m = ([Import], [Export], [(Decl m)])
+type Prgm m = [(Decl m)] -- TODO: Include [Import], [Export]
 
 type ParseErrorRes = ParseErrorBundle String Void
 

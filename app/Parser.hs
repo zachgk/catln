@@ -118,7 +118,7 @@ pRootDecl = L.nonIndented scn (try pDeclTree <|> pDeclSingle)
 pPrgm :: Parser PPrgm
 pPrgm = do
   decls <- sepBy1 pRootDecl newline
-  return ([], [], decls)
+  return decls
 
 contents :: Parser a -> Parser a
 contents p = do

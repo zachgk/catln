@@ -114,7 +114,7 @@ addDecls :: Env -> [EDecl] -> Either EvalError Env
 addDecls env decls = foldM (\e d -> addDecl e d) env decls
 
 evalPrgm :: EPrgm -> Either EvalError Val
-evalPrgm (imports, exports, decls) = do
+evalPrgm decls = do
   env <- addDecls baseEnv decls
   main <- case H.lookup "main" env of
                                    Just m@CloVal{} -> Right m

@@ -148,7 +148,7 @@ fromDecls env (decl:decls) = do
   return (vdecl:vdecls, env'')
 
 fromPrgm :: FEnv s -> PPrgm -> ST s (VPrgm s, FEnv s)
-fromPrgm env ([], [], decls) = fromDecls env decls >>= (\(vdecls, env') -> return (([], [], vdecls), env'))
+fromPrgm env decls = fromDecls env decls >>= (\(vdecls, env') -> return (vdecls, env'))
 
 executeConstraint :: Constraint s -> ST s ()
 executeConstraint (EqType pnt tp) = modifyDescriptor pnt (\oldTp ->
@@ -217,9 +217,9 @@ toDecl (Decl lhs subDecls expr) = do
     (a, b, c) -> Left $ concat [fromLeft [] a, fromLeft [] b, fromLeft [] c]
 
 toPrgm :: VPrgm s -> ST s (TypeCheckResult TPrgm)
-toPrgm ([], [], decls) = do
+toPrgm decls = do
   res <- mapM toDecl decls
-  return $ mergeTypeCheckResults res <&> ([], [],)
+  return $ mergeTypeCheckResults res
 
 typecheckPrgm :: PPrgm -> TypeCheckResult TPrgm
 typecheckPrgm ppgrm = runST $ do
