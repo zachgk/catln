@@ -11,10 +11,10 @@
 
 module Eval where
 
-import Syntax
 import qualified Data.HashMap.Strict as H
+import           Syntax
 
-import Control.Monad
+import           Control.Monad
 
 type EvalMeta = PreTyped
 type EExpr = Expr EvalMeta
@@ -38,10 +38,10 @@ data EvalError
 type Env = H.HashMap String Val
 
 instance Show Val where
-  show (IntVal i) = show i
-  show (FloatVal d) = show d
-  show (BoolVal b) = show b
-  show (PrimVal _) = "*primitive"
+  show (IntVal i)       = show i
+  show (FloatVal d)     = show d
+  show (BoolVal b)      = show b
+  show (PrimVal _)      = "*primitive"
   show (CloVal _ _ _ _) = "*closure"
 
 liftInt :: Integer -> Val
@@ -88,7 +88,7 @@ evalExpr env (CExpr _ (CInt i)) = Right $ IntVal i
 evalExpr env (CExpr _ (CFloat f)) = Right $ FloatVal f
 evalExpr env (CExpr _ (CStr s)) = Right $ StrVal s
 evalExpr env (Var _ id) = case H.lookup id env of
-  Just v -> Right v
+  Just v  -> Right v
   Nothing -> Left $ GenEvalError $ "Could not find value " ++ id
 evalExpr env (UnaryOp m op expr) = evalExpr env (Call m op [expr])
 evalExpr env (BinaryOp m op e1 e2) = evalExpr env (Call m op [e1, e2])

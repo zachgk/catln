@@ -1,22 +1,22 @@
 
 module Main where
 
-import Syntax
-import Parser (parseFile, parseRepl)
-import Eval
+import           Eval
+import           Parser                   (parseFile, parseRepl)
+import           Syntax
 
-import Control.Monad.Trans
+import           Control.Monad.Trans
 
-import System.IO
-import System.Environment
-import System.Console.Haskeline
+import           System.Console.Haskeline
+import           System.Environment
+import           System.IO
 
 parsingRepl :: IO ()
 parsingRepl = runInputT defaultSettings loop
   where loop = do
           minput <- getInputLine "parse> "
           case minput of
-            Nothing -> outputStrLn "Goodbye."
+            Nothing    -> outputStrLn "Goodbye."
             Just input -> (liftIO $ mapM_ print $ parseFile input) >> loop
 
 process :: Env -> String -> IO (Env)
@@ -26,7 +26,7 @@ process env source = do
     ReplErr err -> print err >> return env
     ReplExpr expr -> print (evalExpr env expr) >> return env
     ReplDecl decl -> case addDecl env decl of
-      Left err' -> print err' >> return env
+      Left err'  -> print err' >> return env
       Right env' -> return env'
 
 processFile = undefined
@@ -46,5 +46,5 @@ main = do
   args <- getArgs
   case args of
     []      -> repl
-    ["-p"]      -> parsingRepl
+    ["-p"]  -> parsingRepl
     [fname] -> processFile fname >> return ()

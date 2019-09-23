@@ -13,16 +13,16 @@
 
 module Parser where
 
-import Control.Applicative hiding (some, many)
-import Control.Monad.Combinators.Expr
-import Data.Void
-import Data.Either
-import Text.Megaparsec
-import Text.Megaparsec.Char
-import qualified Text.Megaparsec.Char.Lexer as L
+import           Control.Applicative            hiding (many, some)
+import           Control.Monad.Combinators.Expr
+import           Data.Either
+import           Data.Void
+import           Text.Megaparsec
+import           Text.Megaparsec.Char
+import qualified Text.Megaparsec.Char.Lexer     as L
 
-import Lexer
-import Syntax
+import           Lexer
+import           Syntax
 
 type ParseMeta = PreTyped
 type PExpr = Expr ParseMeta
@@ -88,7 +88,7 @@ pDeclLHS = do
   args <- optional $ try $ parens pArgs
   _ <- symbol "="
   return $ case args of
-    Just a -> DeclFun val (zip a (repeat emptyMeta))
+    Just a  -> DeclFun val (zip a (repeat emptyMeta))
     Nothing -> DeclVal val
 
 pDeclSingle :: Parser PDecl
@@ -129,6 +129,6 @@ parseFile s = runParser (contents pPrgm) "<stdin>" s
 parseRepl :: String -> PReplRes
 parseRepl s = case runParser (contents p) "<stdin>" s of
                 Left e@(ParseErrorBundle _ _) -> ReplErr e
-                Right (Left decl) -> ReplDecl decl
-                Right (Right expr) -> ReplExpr expr
+                Right (Left decl)             -> ReplDecl decl
+                Right (Right expr)            -> ReplExpr expr
   where p = try (Left <$> pRootDecl) <|> try (Right <$> pExpr)

@@ -1,4 +1,4 @@
-{-# LANGUAGE TupleSections     #-}
+{-# LANGUAGE TupleSections #-}
 --------------------------------------------------------------------
 -- |
 -- Module    :  TypeCheck
@@ -12,15 +12,15 @@
 
 module TypeCheck where
 
+import           Control.Monad
+import           Control.Monad.ST
+import           Data.Either
+import           Data.Functor
 import qualified Data.HashMap.Strict as H
-import Data.Functor
-import Data.Either
-import Control.Monad
-import Data.Void
-import Control.Monad.ST
-import Data.UnionFind.ST
+import           Data.UnionFind.ST
+import           Data.Void
 
-import Syntax
+import           Syntax
 
 type TypeCheckError = String
 
@@ -76,14 +76,14 @@ addConstraints (FEnv oldCons defMap errs) newCons = FEnv (newCons ++ oldCons) de
 
 fLookup :: FEnv s -> String -> (Maybe (PntDef s), FEnv s)
 fLookup env@(FEnv cons map errs) k = case H.lookup k map of
-  Just v -> (Just v, env)
+  Just v  -> (Just v, env)
   Nothing -> (Nothing, FEnv cons map (("Failed to lookup " ++ k):errs))
 
 fromMetaP :: FEnv s -> PreMeta -> ST s (VarMeta s, Pnt s, FEnv s)
 fromMetaP env (PreTyped mt) = do
   let scheme = case mt of
         Nothing -> SUnknown
-        Just t -> SKnown t
+        Just t  -> SKnown t
   p <- fresh scheme
   return (p, p, env)
 
@@ -105,7 +105,7 @@ fromExpr env (CExpr m (CStr s)) = do
 fromExpr env (Var m name) = do
   (m', p, env') <- fromMetaP env m
   let env'' = case fLookup env' name of
-              (Nothing, e) -> e
+              (Nothing, e)          -> e
               (Just (PntVal pp), e) -> addConstraints e [EqPoints p pp]
    in return (Var m' name, env'')
 fromExpr env (UnaryOp m op expr) = fromExpr env (Call m op [expr])
@@ -178,8 +178,8 @@ toMeta :: VarMeta s -> ST s (TypeCheckResult Typed)
 toMeta p = do
   scheme <- descriptor p
   return $ case scheme of
-    SKnown tp -> return $ Typed tp
-    SUnknown -> Left []
+    SKnown tp     -> return $ Typed tp
+    SUnknown      -> Left []
     SCheckError s -> Left [s]
 
 toExpr :: VExpr s -> ST s (TypeCheckResult TExpr)
@@ -190,7 +190,7 @@ toExpr (Var m name) = do
   res <- toMeta m
   return $ case res of
     Right m' -> Right $ Var m' name
-    Left _ -> Left ["Could not find type for " ++ name]
+    Left _   -> Left ["Could not find type for " ++ name]
 toExpr (UnaryOp m op expr) = toExpr (Call m op [expr])
 toExpr (BinaryOp m op e1 e2) = toExpr (Call m op [e1, e2])
 toExpr (Call m name exprs) = do

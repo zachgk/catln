@@ -11,8 +11,8 @@
 
 module Syntax where
 
-import Data.Void (Void)
-import Text.Megaparsec.Error (ParseErrorBundle)
+import           Data.Void             (Void)
+import           Text.Megaparsec.Error (ParseErrorBundle)
 
 type Name = String
 
@@ -76,8 +76,8 @@ data Typed = Typed Type
 
 getExprMeta :: Expr m -> m
 getExprMeta expr = case expr of
-  CExpr m _ -> m
-  Var m _ -> m
-  UnaryOp m _ _ -> m
+  CExpr m _        -> m
+  Var m _          -> m
+  UnaryOp m _ _    -> m
   BinaryOp m _ _ _ -> m
-  Call m _ _ -> m
+  Call m _ _       -> m
