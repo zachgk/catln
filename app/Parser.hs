@@ -32,9 +32,9 @@ type PPrgm = Prgm ParseMeta
 type PReplRes = ReplRes ParseMeta
 
 emptyMeta = PreTyped Nothing
-intMeta = PreTyped (Just $ Type "Integer")
-boolMeta = PreTyped (Just $ Type "Boolean")
-strMeta = PreTyped (Just $ Type "String")
+intMeta = PreTyped (Just intType)
+boolMeta = PreTyped (Just boolType)
+strMeta = PreTyped (Just strType)
 
 ops :: [[Operator Parser PExpr]]
 ops = [

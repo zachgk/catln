@@ -19,6 +19,12 @@ type Name = String
 data Type = Type String
   deriving (Eq, Ord, Show)
 
+intType, floatType, boolType, strType :: Type
+intType = Type "Integer"
+floatType = Type "Float"
+boolType = Type "Boolean"
+strType = Type "String"
+
 data Import = Import String
   deriving (Eq, Ord, Show)
 
@@ -63,3 +69,15 @@ data ReplRes m
 -- Metadata for the Programs
 data PreTyped = PreTyped (Maybe Type)
   deriving (Eq, Ord, Show)
+
+data Typed = Typed Type
+  deriving (Eq, Ord, Show)
+
+
+getExprMeta :: Expr m -> m
+getExprMeta expr = case expr of
+  CExpr m _ -> m
+  Var m _ -> m
+  UnaryOp m _ _ -> m
+  BinaryOp m _ _ _ -> m
+  Call m _ _ -> m
