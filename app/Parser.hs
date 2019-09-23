@@ -36,27 +36,30 @@ intMeta = PreTyped (Just intType)
 boolMeta = PreTyped (Just boolType)
 strMeta = PreTyped (Just strType)
 
+mkOp1 meta op x = Call meta op [x]
+mkOp2 meta op x y = Call meta op [x, y]
+
 ops :: [[Operator Parser PExpr]]
 ops = [
-    [ Prefix (UnaryOp intMeta "-" <$ symbol "-")
-    , Prefix (UnaryOp boolMeta "~" <$ symbol "~")
+    [ Prefix (mkOp1 intMeta "-"  <$ symbol "-")
+    , Prefix (mkOp1 boolMeta "~" <$ symbol "~")
     ],
-    [ InfixL (BinaryOp intMeta "*" <$ symbol "*")
-    , InfixL (BinaryOp intMeta "/" <$ symbol "/")
+    [ InfixL (mkOp2 intMeta "*" <$ symbol "*")
+    , InfixL (mkOp2 intMeta "/" <$ symbol "/")
     ],
-    [ InfixL (BinaryOp intMeta "+" <$ symbol "+")
-    , InfixL (BinaryOp intMeta "-" <$ symbol "-")
+    [ InfixL (mkOp2 intMeta "+" <$ symbol "+")
+    , InfixL (mkOp2 intMeta "-" <$ symbol "-")
     ],
-    [ InfixL (BinaryOp boolMeta "<" <$ symbol "<")
-    , InfixL (BinaryOp boolMeta ">" <$ symbol ">")
-    , InfixL (BinaryOp boolMeta "<=" <$ symbol "<=")
-    , InfixL (BinaryOp boolMeta ">=" <$ symbol ">=")
-    , InfixL (BinaryOp boolMeta "==" <$ symbol "==")
-    , InfixL (BinaryOp boolMeta "!=" <$ symbol "!=")
+    [ InfixL (mkOp2 boolMeta "<" <$ symbol "<")
+    , InfixL (mkOp2 boolMeta ">" <$ symbol ">")
+    , InfixL (mkOp2 boolMeta "<=" <$ symbol "<=")
+    , InfixL (mkOp2 boolMeta ">=" <$ symbol ">=")
+    , InfixL (mkOp2 boolMeta "==" <$ symbol "==")
+    , InfixL (mkOp2 boolMeta "!=" <$ symbol "!=")
     ],
-    [ InfixL (BinaryOp boolMeta "&" <$ symbol "&")
-    , InfixL (BinaryOp boolMeta "|" <$ symbol "|")
-    , InfixL (BinaryOp boolMeta "^" <$ symbol "^")
+    [ InfixL (mkOp2 boolMeta "&" <$ symbol "&")
+    , InfixL (mkOp2 boolMeta "|" <$ symbol "|")
+    , InfixL (mkOp2 boolMeta "^" <$ symbol "^")
     ]
   ]
 
@@ -67,14 +70,14 @@ pCall = do
   return $ Call emptyMeta funName args
 
 pStringLiteral :: Parser PExpr
-pStringLiteral = (CExpr emptyMeta . CStr) <$> (char '\"' *> manyTill L.charLiteral (char '\"'))
+pStringLiteral = CExpr emptyMeta . CStr <$> (char '\"' *> manyTill L.charLiteral (char '\"'))
 
 term :: Parser PExpr
 term = try (parens pExpr)
        <|> try pCall
        <|> pStringLiteral
        <|> try (Var emptyMeta <$> identifier)
-       <|> (CExpr emptyMeta . CInt) <$> integer
+       <|> CExpr emptyMeta . CInt <$> integer
 
 pExpr :: Parser PExpr
 pExpr = makeExprParser term ops
@@ -100,9 +103,9 @@ pDeclSingle = do
 pDeclTree :: Parser PDecl
 pDeclTree = L.indentBlock scn p
   where
-    pack lhs children = if (isLeft $ last children) && (all isRight $ init children)
-      then return $ Decl lhs (rights $ init children) (head $ lefts $ [last children])
-      else fail $ "The declaration must end with an expression"
+    pack lhs children = if isLeft ( last children) && all isRight (init children)
+      then return $ Decl lhs (rights $ init children) (head $ lefts [last children])
+      else fail "The declaration must end with an expression"
     childParser :: Parser (Either PExpr PDecl)
     childParser = try (Right <$> pDeclTree) <|> try (Right <$> pDeclSingle) <|> (Left <$> pExpr)
     p = do
@@ -115,7 +118,7 @@ pRootDecl = L.nonIndented scn (try pDeclTree <|> pDeclSingle)
 pPrgm :: Parser PPrgm
 pPrgm = do
   decls <- sepBy1 pRootDecl newline
-  return $ ([], [], decls)
+  return ([], [], decls)
 
 contents :: Parser a -> Parser a
 contents p = do

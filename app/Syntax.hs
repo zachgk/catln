@@ -40,8 +40,6 @@ data Constant
 data Expr m
   = CExpr m Constant
   | Var m String
-  | UnaryOp m Name (Expr m)
-  | BinaryOp m Name (Expr m) (Expr m)
   | Call m Name [(Expr m)]
   deriving (Eq, Ord, Show)
 
@@ -78,6 +76,4 @@ getExprMeta :: Expr m -> m
 getExprMeta expr = case expr of
   CExpr m _        -> m
   Var m _          -> m
-  UnaryOp m _ _    -> m
-  BinaryOp m _ _ _ -> m
   Call m _ _       -> m

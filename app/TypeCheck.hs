@@ -92,7 +92,7 @@ fromMeta env m = do
   (m', p, env') <- fromMetaP env m
   return (m', env')
 
-fromExpr :: (FEnv s) -> PExpr -> ST s (VExpr s, FEnv s)
+fromExpr :: FEnv s -> PExpr -> ST s (VExpr s, FEnv s)
 fromExpr env (CExpr m (CInt i)) = do
   (m', p, env') <- fromMetaP env m
   return (CExpr m' (CInt i), addConstraints env' [EqType p intType])
@@ -108,8 +108,6 @@ fromExpr env (Var m name) = do
               (Nothing, e)          -> e
               (Just (PntVal pp), e) -> addConstraints e [EqPoints p pp]
    in return (Var m' name, env'')
-fromExpr env (UnaryOp m op expr) = fromExpr env (Call m op [expr])
-fromExpr env (BinaryOp m op e1 e2) = fromExpr env (Call m op [e1, e2])
 fromExpr env1 (Call m name expressions) = topLevelCall
   where
     topLevelCall = do
@@ -191,8 +189,6 @@ toExpr (Var m name) = do
   return $ case res of
     Right m' -> Right $ Var m' name
     Left _   -> Left ["Could not find type for " ++ name]
-toExpr (UnaryOp m op expr) = toExpr (Call m op [expr])
-toExpr (BinaryOp m op e1 e2) = toExpr (Call m op [e1, e2])
 toExpr (Call m name exprs) = do
   res1 <- toMeta m
   res2 <- mapM toExpr exprs

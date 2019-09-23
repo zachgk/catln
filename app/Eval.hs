@@ -38,11 +38,11 @@ data EvalError
 type Env = H.HashMap String Val
 
 instance Show Val where
-  show (IntVal i)       = show i
-  show (FloatVal d)     = show d
-  show (BoolVal b)      = show b
-  show (PrimVal _)      = "*primitive"
-  show (CloVal _ _ _ _) = "*closure"
+  show (IntVal i)   = show i
+  show (FloatVal d) = show d
+  show (BoolVal b)  = show b
+  show (PrimVal _)  = "*primitive"
+  show CloVal{}     = "*closure"
 
 liftInt :: Integer -> Val
 liftInt i = IntVal i
@@ -63,10 +63,10 @@ liftCmpOp f = PrimVal f'
 
 liftBoolOp :: (Bool -> Bool -> Bool) -> Val
 liftBoolOp f = PrimVal f'
-  where f' [(BoolVal a), (BoolVal b)] = BoolVal $ f a b
+  where f' [BoolVal a, BoolVal b] = BoolVal $ f a b
 
 rnot = PrimVal f'
-  where f' [(BoolVal b)] = BoolVal $ not b
+  where f' [BoolVal b] = BoolVal $ not b
 
 baseEnv :: Env
 baseEnv = H.fromList [ ("+", liftIntOp (+))
@@ -90,8 +90,6 @@ evalExpr env (CExpr _ (CStr s)) = Right $ StrVal s
 evalExpr env (Var _ id) = case H.lookup id env of
   Just v  -> Right v
   Nothing -> Left $ GenEvalError $ "Could not find value " ++ id
-evalExpr env (UnaryOp m op expr) = evalExpr env (Call m op [expr])
-evalExpr env (BinaryOp m op e1 e2) = evalExpr env (Call m op [e1, e2])
 evalExpr env (Call _ "assert" [test, (CExpr _ (CStr msg))]) = evalExpr env test >>= (\(BoolVal b) -> if b == True then Right (BoolVal b) else Left (AssertError msg))
 evalExpr env (Call _ name exprs) = do
   vals <- mapM (evalExpr env) exprs
@@ -119,7 +117,7 @@ evalPrgm :: EPrgm -> Either EvalError Val
 evalPrgm (imports, exports, decls) = do
   env <- addDecls baseEnv decls
   main <- case H.lookup "main" env of
-                                   Just m@(CloVal _ _ _ _) -> Right $ m
+                                   Just m@CloVal{} -> Right m
                                    Just _ -> Left $ GenEvalError "Wrong type of main function"
                                    Nothing -> Left $ GenEvalError "No main function defined"
   let CloVal _ env subDecls expr = main in
