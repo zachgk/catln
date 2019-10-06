@@ -26,7 +26,7 @@ processRepl env source = do
   case res of
     ReplErr err -> print err >> return env
     ReplExpr expr -> print (evalExpr env expr) >> return env
-    ReplDecl decl -> case addDecl env (desDecl decl) of
+    ReplDecl decl -> case addDecl env (head $ desDecl decl) of
       Left err'  -> print err' >> return env
       Right env' -> return env'
 

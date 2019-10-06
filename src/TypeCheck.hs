@@ -65,8 +65,10 @@ type TDeclLHS = DeclLHS TypedMeta
 type TPrgm = Prgm TypedMeta
 type TReplRes = ReplRes TypedMeta
 
-baseFEnv :: FEnv s
-baseFEnv = FEnv [] H.empty []
+makeBaseFEnv :: ST s (FEnv s)
+makeBaseFEnv = do
+  let env1 = FEnv [] H.empty []
+  return env1
 
 getPnt :: VarMeta s -> Pnt s
 getPnt x = x
@@ -114,6 +116,7 @@ fromExpr env1 (Call m name expressions) = topLevelCall
           (m', p, env2) <- fromMetaP env1 m
           let (env3, pargs) = case fLookup env2 name of
                 (Just (PntFun pp pargs_), e) -> (addConstraints e [EqPoints p pp], pargs_)
+                (Nothing, _) -> error $ "Invalid state - Could not find " ++ name
             in do
                 (vexpressions, env4) <- recurse env3 expressions pargs
                 return (Call m' name vexpressions, env4)
@@ -125,6 +128,7 @@ fromExpr env1 (Call m name expressions) = topLevelCall
       return (vexpr:vexprs, addConstraints e'' [EqPoints parg (getPnt $ getExprMeta vexpr)])
 
 fromDeclLHS :: FEnv s -> PDeclLHS -> ST s (VDeclLHS s, FEnv s)
+fromDeclLHS env (DeclVal name ) = return (DeclVal name, env)
 fromDeclLHS env (DeclFun name []) = return (DeclFun name [], env)
 fromDeclLHS env (DeclFun name ((n, m):args)) = do
   (m', env') <- fromMeta env m
@@ -195,6 +199,7 @@ toExpr (Call m name exprs) = do
     (a, b) -> Left $ ["Could not find type for " ++ name | isLeft a] ++ fromLeft [] b
 
 toDeclLHS :: VDeclLHS s -> ST s (TypeCheckResult TDeclLHS)
+toDeclLHS (DeclVal name ) = return $ return $ DeclVal name
 toDeclLHS (DeclFun name [] ) = return $ return $ DeclFun name []
 toDeclLHS (DeclFun name ((n, m):args) ) = do
   res1 <- toMeta m
@@ -219,6 +224,7 @@ toPrgm decls = do
 
 typecheckPrgm :: PPrgm -> TypeCheckResult TPrgm
 typecheckPrgm ppgrm = runST $ do
+  baseFEnv <- makeBaseFEnv
   (vpgrm, (FEnv cons _ errs)) <- fromPrgm baseFEnv ppgrm
   mapM_ executeConstraint cons
   toPrgm vpgrm

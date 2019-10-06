@@ -88,3 +88,7 @@ getExprMeta expr = case expr of
 getDeclLHSName :: DeclLHS m -> Name
 getDeclLHSName (DeclVal n) = n
 getDeclLHSName (DeclFun n _ ) = n
+
+getDeclName :: Decl m -> Name
+getDeclName (Decl lhs _) = getDeclLHSName lhs
+

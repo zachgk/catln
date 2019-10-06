@@ -100,6 +100,9 @@ evalExpr env (Call _ name exprs) = do
     Nothing -> Left $ GenEvalError $ "Could not find function " ++ name
 
 addDecl :: Env -> EDecl -> Either EvalError Env
+addDecl env (Decl (DeclVal name) expr) = do
+  val <- evalExpr env expr
+  return $ H.insert name val env
 addDecl env (Decl (DeclFun name args) expr) = return env'
                                                      where cl = CloVal (map fst args) env' expr
                                                            env' = H.insert name cl env
@@ -107,12 +110,18 @@ addDecl env (Decl (DeclFun name args) expr) = return env'
 addDecls :: Env -> [EDecl] -> Either EvalError Env
 addDecls = foldM addDecl
 
+evalDecl :: EDecl -> Either EvalError Val
+evalDecl decl = do
+  env <- addDecl baseEnv decl
+  case H.lookup (getDeclName decl) env of
+    Just (CloVal _ env' expr) -> evalExpr env' expr
+    Just val -> Right val
+    Nothing -> Left $ GenEvalError "No decl function defined"
+
 evalPrgm :: EPrgm -> Either EvalError Val
 evalPrgm decls = do
   env <- addDecls baseEnv decls
-  main <- case H.lookup "main" env of
-                                   Just m@CloVal{} -> Right m
-                                   Just _ -> Left $ GenEvalError "Wrong type of main function"
-                                   Nothing -> Left $ GenEvalError "No main function defined"
-  let CloVal _ env' expr = main in
-    evalExpr env' expr
+  case H.lookup "main" env of
+    Just (CloVal _ env' expr) -> evalExpr env' expr
+    Just _ -> Left $ GenEvalError "Wrong type of main function"
+    Nothing -> Left $ GenEvalError "No main function defined"

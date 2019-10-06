@@ -27,7 +27,7 @@ import           Syntax
 type ParseMeta = PreTyped
 type PExpr = RawExpr ParseMeta
 type PDecl = RawDecl ParseMeta
-type PDeclLHS = RawDeclLHS ParseMeta
+type PDeclLHS = DeclLHS ParseMeta
 type PPrgm = RawPrgm ParseMeta
 type PReplRes = ReplRes ParseMeta
 
@@ -91,8 +91,8 @@ pDeclLHS = do
   args <- optional $ try $ parens pArgs
   _ <- symbol "="
   return $ case args of
-    Just a  -> RawDeclFun val (zip a (repeat emptyMeta))
-    Nothing -> RawDeclVal val
+    Just a  -> DeclFun val (zip a (repeat emptyMeta))
+    Nothing -> DeclVal val
 
 pDeclSingle :: Parser PDecl
 pDeclSingle = do
