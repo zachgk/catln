@@ -125,7 +125,6 @@ fromExpr env1 (Call m name expressions) = topLevelCall
       return (vexpr:vexprs, addConstraints e'' [EqPoints parg (getPnt $ getExprMeta vexpr)])
 
 fromDeclLHS :: FEnv s -> PDeclLHS -> ST s (VDeclLHS s, FEnv s)
-fromDeclLHS env (DeclVal name) = return (DeclVal name, env)
 fromDeclLHS env (DeclFun name []) = return (DeclFun name [], env)
 fromDeclLHS env (DeclFun name ((n, m):args)) = do
   (m', env') <- fromMeta env m
@@ -133,12 +132,11 @@ fromDeclLHS env (DeclFun name ((n, m):args)) = do
   return (DeclFun name ((n, m'):vargs), env'')
 
 fromDecl :: FEnv s -> PDecl -> ST s (VDecl s, FEnv s)
-fromDecl env1 (Decl lhs subDecls expr) = do
-  (vSubDecls, env2) <- fromDecls env1 subDecls
-  (vlhs, env3) <- fromDeclLHS env2 lhs
-  (vExpr, env4) <- fromExpr env3 expr
-  let vdecl = Decl vlhs vSubDecls vExpr
-  return (vdecl, env4)
+fromDecl env1 (Decl lhs expr) = do
+  (vlhs, env2) <- fromDeclLHS env1 lhs
+  (vExpr, env3) <- fromExpr env2 expr
+  let vdecl = Decl vlhs vExpr
+  return (vdecl, env3)
 
 fromDecls :: FEnv s -> [PDecl] -> ST s ([VDecl s], FEnv s)
 fromDecls env [] = return ([], env)
@@ -197,7 +195,6 @@ toExpr (Call m name exprs) = do
     (a, b) -> Left $ ["Could not find type for " ++ name | isLeft a] ++ fromLeft [] b
 
 toDeclLHS :: VDeclLHS s -> ST s (TypeCheckResult TDeclLHS)
-toDeclLHS (DeclVal name ) = return $ return $ DeclVal name
 toDeclLHS (DeclFun name [] ) = return $ return $ DeclFun name []
 toDeclLHS (DeclFun name ((n, m):args) ) = do
   res1 <- toMeta m
@@ -208,13 +205,12 @@ toDeclLHS (DeclFun name ((n, m):args) ) = do
 
 
 toDecl :: VDecl s -> ST s (TypeCheckResult TDecl)
-toDecl (Decl lhs subDecls expr) = do
+toDecl (Decl lhs expr) = do
   res1 <- toDeclLHS lhs
-  res2 <- mapM toDecl subDecls
-  res3 <- toExpr expr
-  return $ case (res1, mergeTypeCheckResults res2, res3) of
-    (Right lhs', Right subDecls', Right expr') -> Right $ Decl lhs' subDecls' expr'
-    (a, b, c) -> Left $ concat [fromLeft [] a, fromLeft [] b, fromLeft [] c]
+  res2 <- toExpr expr
+  return $ case (res1, res2) of
+    (Right lhs', Right expr') -> Right $ Decl lhs' expr'
+    (a, b) -> Left $ concat [fromLeft [] a, fromLeft [] b]
 
 toPrgm :: VPrgm s -> ST s (TypeCheckResult TPrgm)
 toPrgm decls = do

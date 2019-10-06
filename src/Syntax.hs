@@ -16,7 +16,7 @@ import           Text.Megaparsec.Error (ParseErrorBundle)
 
 type Name = String
 
-data Type = Type String
+newtype Type = Type String
   deriving (Eq, Ord, Show)
 
 intType, floatType, boolType, strType :: Type
@@ -25,10 +25,10 @@ floatType = Type "Float"
 boolType = Type "Boolean"
 strType = Type "String"
 
-data Import = Import String
+newtype Import = Import String
   deriving (Eq, Ord, Show)
 
-data Export = Export String
+newtype Export = Export String
   deriving (Eq, Ord, Show)
 
 data Constant
@@ -37,10 +37,12 @@ data Constant
   | CStr String
   deriving (Eq, Ord, Show)
 
+type RawExpr = Expr
+
 data Expr m
   = CExpr m Constant
-  | Var m String
-  | Call m Name [(Expr m)]
+  | Var m Name
+  | Call m Name [Expr m]
   deriving (Eq, Ord, Show)
 
 data DeclLHS m
@@ -48,15 +50,20 @@ data DeclLHS m
   | DeclFun Name [(Name, m)]
   deriving (Eq, Ord, Show)
 
-data Decl m = Decl (DeclLHS m) [(Decl m)] (Expr m)
+data RawDecl m = RawDecl (DeclLHS m) [RawDecl m] (Expr m)
   deriving (Eq, Ord, Show)
 
-type Prgm m = [(Decl m)] -- TODO: Include [Import], [Export]
+data Decl m = Decl (DeclLHS m) (Expr m)
+  deriving (Eq, Ord, Show)
+
+type RawPrgm m = [RawDecl m] -- TODO: Include [Import], [Export]
+
+type Prgm m = [Decl m] -- TODO: Include [Import], [Export]
 
 type ParseErrorRes = ParseErrorBundle String Void
 
 data ReplRes m
-  = ReplDecl (Decl m)
+  = ReplDecl (RawDecl m)
   | ReplExpr (Expr m)
   | ReplErr ParseErrorRes
   deriving (Eq, Show)
@@ -65,15 +72,19 @@ data ReplRes m
 
 
 -- Metadata for the Programs
-data PreTyped = PreTyped (Maybe Type)
+newtype PreTyped = PreTyped (Maybe Type)
   deriving (Eq, Ord, Show)
 
-data Typed = Typed Type
+newtype Typed = Typed Type
   deriving (Eq, Ord, Show)
 
 
 getExprMeta :: Expr m -> m
 getExprMeta expr = case expr of
-  CExpr m _        -> m
-  Var m _          -> m
-  Call m _ _       -> m
+  CExpr m _  -> m
+  Var m _    -> m
+  Call m _ _ -> m
+
+getDeclLHSName :: DeclLHS m -> Name
+getDeclLHSName (DeclVal n) = n
+getDeclLHSName (DeclFun n _ ) = n

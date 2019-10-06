@@ -25,10 +25,10 @@ import           Lexer
 import           Syntax
 
 type ParseMeta = PreTyped
-type PExpr = Expr ParseMeta
-type PDecl = Decl ParseMeta
-type PDeclLHS = DeclLHS ParseMeta
-type PPrgm = Prgm ParseMeta
+type PExpr = RawExpr ParseMeta
+type PDecl = RawDecl ParseMeta
+type PDeclLHS = RawDeclLHS ParseMeta
+type PPrgm = RawPrgm ParseMeta
 type PReplRes = ReplRes ParseMeta
 
 emptyMeta = PreTyped Nothing
@@ -91,20 +91,20 @@ pDeclLHS = do
   args <- optional $ try $ parens pArgs
   _ <- symbol "="
   return $ case args of
-    Just a  -> DeclFun val (zip a (repeat emptyMeta))
-    Nothing -> DeclVal val
+    Just a  -> RawDeclFun val (zip a (repeat emptyMeta))
+    Nothing -> RawDeclVal val
 
 pDeclSingle :: Parser PDecl
 pDeclSingle = do
   lhs <- pDeclLHS
   expr <- pExpr
-  return $ Decl lhs [] expr
+  return $ RawDecl lhs [] expr
 
 pDeclTree :: Parser PDecl
 pDeclTree = L.indentBlock scn p
   where
     pack lhs children = if isLeft ( last children) && all isRight (init children)
-      then return $ Decl lhs (rights $ init children) (head $ lefts [last children])
+      then return $ RawDecl lhs (rights $ init children) (head $ lefts [last children])
       else fail "The declaration must end with an expression"
     childParser :: Parser (Either PExpr PDecl)
     childParser = try (Right <$> pDeclTree) <|> try (Right <$> pDeclSingle) <|> (Left <$> pExpr)
@@ -116,9 +116,7 @@ pRootDecl :: Parser PDecl
 pRootDecl = L.nonIndented scn (try pDeclTree <|> pDeclSingle)
 
 pPrgm :: Parser PPrgm
-pPrgm = do
-  decls <- sepBy1 pRootDecl newline
-  return decls
+pPrgm = sepBy1 pRootDecl newline
 
 contents :: Parser a -> Parser a
 contents p = do
@@ -127,7 +125,7 @@ contents p = do
   return r
 
 parseFile :: String -> Either ParseErrorRes PPrgm
-parseFile s = runParser (contents pPrgm) "<stdin>" s
+parseFile = runParser (contents pPrgm) "<stdin>"
 
 parseRepl :: String -> PReplRes
 parseRepl s = case runParser (contents p) "<stdin>" s of

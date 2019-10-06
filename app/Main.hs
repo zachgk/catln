@@ -3,13 +3,14 @@ module Main where
 
 import           Eval
 import           Parser                   (parseFile, parseRepl)
+import           Desugarf (desPrgm, desDecl)
 import           Syntax
 
+import           Control.Monad
 import           Control.Monad.Trans
 
 import           System.Console.Haskeline
 import           System.Environment
-import           System.IO
 
 parsingRepl :: IO ()
 parsingRepl = runInputT defaultSettings loop
@@ -17,19 +18,27 @@ parsingRepl = runInputT defaultSettings loop
           minput <- getInputLine "parse> "
           case minput of
             Nothing    -> outputStrLn "Goodbye."
-            Just input -> (liftIO $ mapM_ print $ parseFile input) >> loop
+            Just input -> liftIO (mapM_ print $ parseFile input) >> loop
 
-process :: Env -> String -> IO (Env)
-process env source = do
+processRepl :: Env -> String -> IO Env
+processRepl env source = do
   let res = parseRepl source
   case res of
     ReplErr err -> print err >> return env
     ReplExpr expr -> print (evalExpr env expr) >> return env
-    ReplDecl decl -> case addDecl env decl of
+    ReplDecl decl -> case addDecl env (desDecl decl) of
       Left err'  -> print err' >> return env
       Right env' -> return env'
 
-processFile = undefined
+process :: String -> IO ()
+process source = do
+  let res = parseFile source
+  case res of
+    Left err -> print err
+    Right prgm -> print (evalPrgm (desPrgm prgm))
+
+processFile :: String -> IO ()
+processFile fname = readFile fname >>= process
 
 repl :: IO ()
 repl = runInputT defaultSettings (loop baseEnv)
@@ -38,7 +47,7 @@ repl = runInputT defaultSettings (loop baseEnv)
           case minput of
             Nothing -> outputStrLn "Goodbye."
             Just input -> do
-              env' <- lift $ process env input
+              env' <- lift $ processRepl env input
               loop env'
 
 main :: IO ()
@@ -47,4 +56,5 @@ main = do
   case args of
     []      -> repl
     ["-p"]  -> parsingRepl
-    [fname] -> processFile fname >> return ()
+    [fname] -> void (processFile fname)
+    _ -> putStr "Unknown arguments"

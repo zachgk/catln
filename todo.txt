@@ -1,5 +1,4 @@
-Add RawSyntax and Desugaring Layer
-    Remove declaration tree but duplication subExpressions, lift subFunctions
+Fix all compiler warnings
 Add tests
     QuickTest
     Test File
@@ -10,6 +9,9 @@ Types
   type classes
   Property
   Tuple
+Map
+  fmap, mmap, umap
+  map syntax (do notation)
 Implicit conversions
 Contexts
 Imports
@@ -17,3 +19,14 @@ Exports
 Handle mutual recursion
 Include line number in Syntax Results
 Formatter
+
+Minor
+  Desugarf recognize variable called in itself
+  Desugarf recognize mutually calling variables
+  Detect unused functions and vars (in desugar?)
+
+Research
+  multiple implements type (int monoid with addition, int monoid with multiplication)
+  prove function properties (map.map with a function that given two different keys must return different keys will return a map instead of a generic collection)
+  multiple possible uses of a type such as Ord. Given any Ordering, the filter function preserves it. But, there can also be default orderings
+  How does currying, function composition, point-free style (function with all arguments and number of args inferred) work?

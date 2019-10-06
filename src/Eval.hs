@@ -29,7 +29,7 @@ data Val
   | BoolVal Bool
   | StrVal String
   | PrimVal ([Val] -> Val) -- runtime function
-  | CloVal [Name] Env [EDecl] EExpr -- Function definition
+  | CloVal [Name] Env EExpr -- Function definition
 
 data EvalError
   = GenEvalError String
@@ -84,34 +84,28 @@ baseEnv = H.fromList [ ("+", liftIntOp (+))
                      ]
 
 evalExpr :: Env -> EExpr -> Either EvalError Val
-evalExpr env (CExpr _ (CInt i)) = Right $ IntVal i
-evalExpr env (CExpr _ (CFloat f)) = Right $ FloatVal f
-evalExpr env (CExpr _ (CStr s)) = Right $ StrVal s
-evalExpr env (Var _ id) = case H.lookup id env of
+evalExpr _ (CExpr _ (CInt i)) = Right $ IntVal i
+evalExpr _ (CExpr _ (CFloat f)) = Right $ FloatVal f
+evalExpr _ (CExpr _ (CStr s)) = Right $ StrVal s
+evalExpr env (Var _ name) = case H.lookup name env of
   Just v  -> Right v
-  Nothing -> Left $ GenEvalError $ "Could not find value " ++ id
-evalExpr env (Call _ "assert" [test, (CExpr _ (CStr msg))]) = evalExpr env test >>= (\(BoolVal b) -> if b == True then Right (BoolVal b) else Left (AssertError msg))
+  Nothing -> Left $ GenEvalError $ "Could not find value " ++ name
+evalExpr env (Call _ "assert" [test, CExpr _ (CStr msg)]) = evalExpr env test >>= (\(BoolVal b) -> if b then Right (BoolVal b) else Left (AssertError msg))
 evalExpr env (Call _ name exprs) = do
   vals <- mapM (evalExpr env) exprs
   case H.lookup name env of
     Just (PrimVal f) -> Right $ f vals
-    Just (CloVal names cenv subDecls cexpr) -> evalDecl (H.union (H.fromList $ zip names vals) cenv) cexpr subDecls
+    Just (CloVal names cenv cexpr) -> evalExpr (H.union (H.fromList $ zip names vals) cenv) cexpr
     Just _ -> Left $ GenEvalError $ "Could not call " ++ name
     Nothing -> Left $ GenEvalError $ "Could not find function " ++ name
 
-evalDecl :: Env -> EExpr -> [EDecl] -> Either EvalError Val
-evalDecl env expr subDecls = do
-  subEnv <- addDecls env subDecls
-  evalExpr subEnv expr
-
 addDecl :: Env -> EDecl -> Either EvalError Env
-addDecl env (Decl (DeclVal id) subDecls expr) = evalDecl env expr subDecls >>= (\val -> Right $ H.insert id val env)
-addDecl env (Decl (DeclFun id args) subDecls expr) = return env'
-                                                     where cl = CloVal (map fst args) env' subDecls expr
-                                                           env' = H.insert id cl env
+addDecl env (Decl (DeclFun name args) expr) = return env'
+                                                     where cl = CloVal (map fst args) env' expr
+                                                           env' = H.insert name cl env
 
 addDecls :: Env -> [EDecl] -> Either EvalError Env
-addDecls env decls = foldM (\e d -> addDecl e d) env decls
+addDecls = foldM addDecl
 
 evalPrgm :: EPrgm -> Either EvalError Val
 evalPrgm decls = do
@@ -120,5 +114,5 @@ evalPrgm decls = do
                                    Just m@CloVal{} -> Right m
                                    Just _ -> Left $ GenEvalError "Wrong type of main function"
                                    Nothing -> Left $ GenEvalError "No main function defined"
-  let CloVal _ env subDecls expr = main in
-    evalDecl env expr subDecls
+  let CloVal _ env' expr = main in
+    evalExpr env' expr
