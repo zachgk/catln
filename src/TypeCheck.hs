@@ -1,4 +1,3 @@
-{-# LANGUAGE TupleSections #-}
 --------------------------------------------------------------------
 -- |
 -- Module    :  TypeCheck
@@ -18,7 +17,6 @@ import           Data.Either
 import           Data.Functor
 import qualified Data.HashMap.Strict as H
 import           Data.UnionFind.ST
-import           Data.Void
 
 import           Syntax
 
@@ -51,6 +49,9 @@ type PDeclLHS = DeclLHS PreMeta
 type PPrgm = Prgm PreMeta
 type PReplRes = ReplRes PreMeta
 
+data SemiPDecl s = SemiPDecl (DeclLHS (VarMeta s)) PExpr
+  deriving (Eq)
+
 type VarMeta s = Pnt s
 type VExpr s = Expr (VarMeta s)
 type VDecl s = Decl (VarMeta s)
@@ -68,18 +69,43 @@ type TReplRes = ReplRes TypedMeta
 makeBaseFEnv :: ST s (FEnv s)
 makeBaseFEnv = do
   let env1 = FEnv [] H.empty []
-  return env1
+  let ops = [ ("+", intType, [intType, intType])
+            , ("-", intType, [intType, intType])
+            , ("*", intType, [intType, intType])
+            , (">", boolType, [intType, intType])
+            , ("<", boolType, [intType, intType])
+            , (">=", boolType, [intType, intType])
+            , ("<=", boolType, [intType, intType])
+            , ("==", boolType, [intType, intType])
+            , ("!=", boolType, [intType, intType])
+            , ("&", boolType, [boolType, boolType])
+            , ("~", boolType, [boolType])
+            ]
+  foldM f env1 ops
+  where f e (opName, retType, args) = do
+          p <- fresh (SKnown retType)
+          pargs <- forM args (fresh . SKnown )
+          return $ fInsert e opName (PntFun p pargs)
 
 getPnt :: VarMeta s -> Pnt s
 getPnt x = x
+
+addErr :: FEnv s -> String -> FEnv s
+addErr (FEnv cons pmap errs) newErr = FEnv cons pmap (newErr:errs)
 
 addConstraints :: FEnv s -> [Constraint s] -> FEnv s
 addConstraints (FEnv oldCons defMap errs) newCons = FEnv (newCons ++ oldCons) defMap errs
 
 fLookup :: FEnv s -> String -> (Maybe (PntDef s), FEnv s)
-fLookup env@(FEnv cons map errs) k = case H.lookup k map of
+fLookup env@(FEnv _ pmap _) k = case H.lookup k pmap of
   Just v  -> (Just v, env)
-  Nothing -> (Nothing, FEnv cons map (("Failed to lookup " ++ k):errs))
+  Nothing -> (Nothing, addErr env ("Failed to lookup " ++ k))
+
+fInsert :: FEnv s -> String -> PntDef s -> FEnv s
+fInsert (FEnv cons pmap errs) k v = FEnv cons (H.insert k v pmap) errs
+
+fReplaceMap :: FEnv s -> FEnv s -> FEnv s
+fReplaceMap (FEnv cons _ errs1) (FEnv _ pmap errs2) = FEnv cons pmap (errs1 ++ errs2)
 
 fromMetaP :: FEnv s -> PreMeta -> ST s (VarMeta s, Pnt s, FEnv s)
 fromMetaP env (PreTyped mt) = do
@@ -91,7 +117,7 @@ fromMetaP env (PreTyped mt) = do
 
 fromMeta :: FEnv s -> PreMeta -> ST s (VarMeta s, FEnv s)
 fromMeta env m = do
-  (m', p, env') <- fromMetaP env m
+  (m', _, env') <- fromMetaP env m
   return (m', env')
 
 fromExpr :: FEnv s -> PExpr -> ST s (VExpr s, FEnv s)
@@ -109,6 +135,7 @@ fromExpr env (Var m name) = do
   let env'' = case fLookup env' name of
               (Nothing, e)          -> e
               (Just (PntVal pp), e) -> addConstraints e [EqPoints p pp]
+              _                     -> error "Failed to find variable"
    in return (Var m' name, env'')
 fromExpr env1 (Call m name expressions) = topLevelCall
   where
@@ -117,6 +144,7 @@ fromExpr env1 (Call m name expressions) = topLevelCall
           let (env3, pargs) = case fLookup env2 name of
                 (Just (PntFun pp pargs_), e) -> (addConstraints e [EqPoints p pp], pargs_)
                 (Nothing, _) -> error $ "Invalid state - Could not find " ++ name
+                _ -> error "Failed to find function"
             in do
                 (vexpressions, env4) <- recurse env3 expressions pargs
                 return (Call m' name vexpressions, env4)
@@ -126,31 +154,58 @@ fromExpr env1 (Call m name expressions) = topLevelCall
       (vexpr, e') <- fromExpr e expr
       (vexprs, e'') <- recurse e' exprs pargs
       return (vexpr:vexprs, addConstraints e'' [EqPoints parg (getPnt $ getExprMeta vexpr)])
+    recurse _ _ _ = error "Invalid state"
 
-fromDeclLHS :: FEnv s -> PDeclLHS -> ST s (VDeclLHS s, FEnv s)
-fromDeclLHS env (DeclVal name ) = return (DeclVal name, env)
-fromDeclLHS env (DeclFun name []) = return (DeclFun name [], env)
-fromDeclLHS env (DeclFun name ((n, m):args)) = do
-  (m', env') <- fromMeta env m
-  (DeclFun _ vargs, env'') <- fromDeclLHS env' (DeclFun name args)
-  return (DeclFun name ((n, m'):vargs), env'')
+fromDeclAddScope :: FEnv s -> VDeclLHS s -> ST s (FEnv s)
+fromDeclAddScope env DeclVal{} = return env
+fromDeclAddScope env (DeclFun _ _ []) = return env
+fromDeclAddScope env (DeclFun _ _ args) = foldM aux env args
+  where aux e (n, m) = return $ fInsert e n (PntVal $ getPnt m)
 
-fromDecl :: FEnv s -> PDecl -> ST s (VDecl s, FEnv s)
-fromDecl env1 (Decl lhs expr) = do
-  (vlhs, env2) <- fromDeclLHS env1 lhs
+fromDecl :: FEnv s -> SemiPDecl s -> ST s (VDecl s, FEnv s)
+fromDecl env1 (SemiPDecl lhs expr) = do
+  env2 <- fromDeclAddScope env1 lhs
   (vExpr, env3) <- fromExpr env2 expr
-  let vdecl = Decl vlhs vExpr
-  return (vdecl, env3)
+  let env4 = addConstraints env3 [EqPoints (getPnt $ getDeclLHSMeta lhs) (getPnt $ getExprMeta vExpr)]
+  let vdecl = Decl lhs vExpr
+  return (vdecl, fReplaceMap env4 env1)
 
-fromDecls :: FEnv s -> [PDecl] -> ST s ([VDecl s], FEnv s)
+fromDecls :: FEnv s -> [SemiPDecl s] -> ST s ([VDecl s], FEnv s)
 fromDecls env [] = return ([], env)
-fromDecls env (decl:decls) = do
-  (vdecl, env') <- fromDecl env decl
-  (vdecls, env'') <- fromDecls env' decls
+fromDecls env (sdecl:sdecls) = do
+  (vdecl, env') <- fromDecl env sdecl
+  (vdecls, env'') <- fromDecls env' sdecls
   return (vdecl:vdecls, env'')
 
+addCallableArgs :: FEnv s -> [(Name, PreMeta)] -> ST s ([(Name, VarMeta s)], FEnv s)
+addCallableArgs env [] = return ([], env)
+addCallableArgs env ((n, m):args) = do
+  (m', env2) <- fromMeta env m
+  (args', env3) <- addCallableArgs env2 args
+  return ((n, m'):args', env3)
+
+addCallables :: FEnv s -> [PDecl] -> ST s ([SemiPDecl s], FEnv s)
+addCallables env [] = return ([], env)
+addCallables env (Decl (DeclVal m name) e:decls) = do
+  (m', p, env1) <- fromMetaP env m
+  let env2 = fInsert env1 name (PntVal p)
+  let sdecl = SemiPDecl (DeclVal m' name) e
+  (sdecls, env3) <- addCallables env2 decls
+  return (sdecl:sdecls, env3)
+addCallables env (Decl (DeclFun m name args) e:decls) = do
+  (m', p, env1) <- fromMetaP env m
+  let env2 = fInsert env1 name (PntVal p)
+  (args', env3) <- addCallableArgs env2 args
+  let sdecl = SemiPDecl (DeclFun m' name args') e
+  (sdecls, env4) <- addCallables env3 decls
+  return (sdecl:sdecls, env4)
+
+
 fromPrgm :: FEnv s -> PPrgm -> ST s (VPrgm s, FEnv s)
-fromPrgm env decls = fromDecls env decls >>= (\(vdecls, env') -> return (vdecls, env'))
+fromPrgm env decls = do
+  (sdecls, env') <- addCallables env decls
+  (vdecls, env'') <- fromDecls env' sdecls
+  return (vdecls, env'')
 
 executeConstraint :: Constraint s -> ST s ()
 executeConstraint (EqType pnt tp) = modifyDescriptor pnt (\oldTp ->
@@ -169,53 +224,56 @@ executeConstraint (EqPoints p1 p2) = union' p1 p2 (\s1 s2 -> return $ case (s1, 
                                                       (SCheckError s, _) -> SCheckError s
                                                   )
 
-mergeTypeCheckResults :: [TypeCheckResult r] -> TypeCheckResult [r]
-mergeTypeCheckResults = foldl addToTotal (Right [])
-  where addToTotal (Right accRes) (Right newRes) = Right (newRes:accRes)
-        addToTotal a b = Left $ fromLeft [] a ++ fromLeft [] b
+merge2TypeCheckResults :: TypeCheckResult a -> TypeCheckResult b -> TypeCheckResult (a, b)
+merge2TypeCheckResults a b = case (a, b) of
+  (Right a', Right b') -> Right (a', b')
+  (a', b')             -> Left $ fromLeft [] a' ++ fromLeft [] b'
 
-toMeta :: VarMeta s -> ST s (TypeCheckResult Typed)
-toMeta p = do
+mergeTypeCheckResults :: [TypeCheckResult r] -> TypeCheckResult [r]
+mergeTypeCheckResults res = case partitionEithers res of
+  ([], rs) -> Right rs
+  (ls, _)  -> Left $ concat ls
+
+toMeta :: VarMeta s -> String -> ST s (TypeCheckResult Typed)
+toMeta p name = do
   scheme <- descriptor p
   return $ case scheme of
     SKnown tp     -> return $ Typed tp
-    SUnknown      -> Left []
+    SUnknown      -> Left ["Unknown " ++ name]
     SCheckError s -> Left [s]
 
 toExpr :: VExpr s -> ST s (TypeCheckResult TExpr)
 toExpr (CExpr m c) = do
-  res <- toMeta m
+  res <- toMeta m $ "Constant " ++ show c
   return $ res <&> (`CExpr` c)
 toExpr (Var m name) = do
-  res <- toMeta m
-  return $ case res of
-    Right m' -> Right $ Var m' name
-    Left _   -> Left ["Could not find type for " ++ name]
+  res <- toMeta m $ "variable " ++ name
+  return $ res >>= (\m' -> Right $ Var m' name)
 toExpr (Call m name exprs) = do
-  res1 <- toMeta m
+  res1 <- toMeta m $ "Function call " ++ name
   res2 <- mapM toExpr exprs
   return $ case (res1, mergeTypeCheckResults res2) of
     (Right m', Right exprs') -> Right $ Call m' name exprs'
-    (a, b) -> Left $ ["Could not find type for " ++ name | isLeft a] ++ fromLeft [] b
+    (a, b)                   -> Left $ fromLeft [] a ++ fromLeft [] b
 
 toDeclLHS :: VDeclLHS s -> ST s (TypeCheckResult TDeclLHS)
-toDeclLHS (DeclVal name ) = return $ return $ DeclVal name
-toDeclLHS (DeclFun name [] ) = return $ return $ DeclFun name []
-toDeclLHS (DeclFun name ((n, m):args) ) = do
-  res1 <- toMeta m
-  res2 <- toDeclLHS (DeclFun name args)
-  return $ case (res1, res2) of
-    (Right m', Right (DeclFun _ targs)) -> Right (DeclFun name ((n, m'):targs))
-    (a, b) -> Left $ fromLeft [] a ++ fromLeft [] b
+toDeclLHS (DeclVal m name ) = do
+  res1 <- toMeta m $ "Value Declaration " ++ name
+  return $ res1 >>= (\m' -> Right $ DeclVal m' name)
+toDeclLHS (DeclFun m name [] ) = do
+  res1 <- toMeta m $ "Function Declaration Return Type " ++ name
+  return $ res1 >>= (\m' -> Right $ DeclFun m' name [])
+toDeclLHS (DeclFun m name ((an, am):args) ) = do
+  res1 <- toMeta am $ "Function Declaration Argument: " ++ name ++ "." ++ an
+  res2 <- toDeclLHS (DeclFun m name args)
+  return $ merge2TypeCheckResults res1 res2 >>= (\(am', DeclFun m' _ args') -> Right $ DeclFun m' name ((an, am'):args'))
 
 
 toDecl :: VDecl s -> ST s (TypeCheckResult TDecl)
 toDecl (Decl lhs expr) = do
   res1 <- toDeclLHS lhs
   res2 <- toExpr expr
-  return $ case (res1, res2) of
-    (Right lhs', Right expr') -> Right $ Decl lhs' expr'
-    (a, b) -> Left $ concat [fromLeft [] a, fromLeft [] b]
+  return $ merge2TypeCheckResults res1 res2 >>= (\(lhs', expr') -> Right $ Decl lhs' expr')
 
 toPrgm :: VPrgm s -> ST s (TypeCheckResult TPrgm)
 toPrgm decls = do
@@ -225,6 +283,9 @@ toPrgm decls = do
 typecheckPrgm :: PPrgm -> TypeCheckResult TPrgm
 typecheckPrgm ppgrm = runST $ do
   baseFEnv <- makeBaseFEnv
-  (vpgrm, (FEnv cons _ errs)) <- fromPrgm baseFEnv ppgrm
-  mapM_ executeConstraint cons
-  toPrgm vpgrm
+  (vpgrm, FEnv cons _ errs) <- fromPrgm baseFEnv ppgrm
+  case errs of
+    [] -> do
+      mapM_ executeConstraint cons
+      toPrgm vpgrm
+    _ -> return $ Left errs

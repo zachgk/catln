@@ -41,32 +41,39 @@ instance Show Val where
   show (IntVal i)   = show i
   show (FloatVal d) = show d
   show (BoolVal b)  = show b
+  show (StrVal s)   = show s
   show (PrimVal _)  = "*primitive"
   show CloVal{}     = "*closure"
 
 liftInt :: Integer -> Val
-liftInt i = IntVal i
+liftInt = IntVal
 
 liftFloat :: Double -> Val
-liftFloat d = FloatVal d
+liftFloat = FloatVal
 
 lowerInt ::  Val -> Integer
 lowerInt (IntVal i) = i
+lowerInt _          = error "can't lift non-int"
 
 liftIntOp :: (Integer -> Integer -> Integer) -> Val
 liftIntOp f = PrimVal f'
   where f' [a, b] = liftInt $ f (lowerInt a) (lowerInt b)
+        f' _      = error "Invalid signature"
 
 liftCmpOp :: (Integer -> Integer -> Bool) -> Val
 liftCmpOp f = PrimVal f'
   where f' [a, b] = BoolVal $ f (lowerInt a) (lowerInt b)
+        f' _      = error "Invalid signature"
 
 liftBoolOp :: (Bool -> Bool -> Bool) -> Val
 liftBoolOp f = PrimVal f'
   where f' [BoolVal a, BoolVal b] = BoolVal $ f a b
+        f' _                      = error "Invalid signature"
 
+rnot :: Val
 rnot = PrimVal f'
   where f' [BoolVal b] = BoolVal $ not b
+        f' _           = error "Invalid signature"
 
 baseEnv :: Env
 baseEnv = H.fromList [ ("+", liftIntOp (+))
@@ -100,10 +107,10 @@ evalExpr env (Call _ name exprs) = do
     Nothing -> Left $ GenEvalError $ "Could not find function " ++ name
 
 addDecl :: Env -> EDecl -> Either EvalError Env
-addDecl env (Decl (DeclVal name) expr) = do
+addDecl env (Decl (DeclVal _ name) expr) = do
   val <- evalExpr env expr
   return $ H.insert name val env
-addDecl env (Decl (DeclFun name args) expr) = return env'
+addDecl env (Decl (DeclFun _ name args) expr) = return env'
                                                      where cl = CloVal (map fst args) env' expr
                                                            env' = H.insert name cl env
 

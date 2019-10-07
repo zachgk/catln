@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TupleSections     #-}
 --------------------------------------------------------------------
 -- |
 -- Module    :  Parser
@@ -16,7 +15,6 @@ module Parser where
 import           Control.Applicative            hiding (many, some)
 import           Control.Monad.Combinators.Expr
 import           Data.Either
-import           Data.Void
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer     as L
@@ -31,12 +29,22 @@ type PDeclLHS = DeclLHS ParseMeta
 type PPrgm = RawPrgm ParseMeta
 type PReplRes = ReplRes ParseMeta
 
+emptyMeta :: ParseMeta
 emptyMeta = PreTyped Nothing
+
+intMeta :: ParseMeta
 intMeta = PreTyped (Just intType)
+
+boolMeta :: ParseMeta
 boolMeta = PreTyped (Just boolType)
+
+strMeta :: ParseMeta
 strMeta = PreTyped (Just strType)
 
+mkOp1 :: ParseMeta -> String -> PExpr -> PExpr
 mkOp1 meta op x = Call meta op [x]
+
+mkOp2 :: ParseMeta -> String -> PExpr -> PExpr -> PExpr
 mkOp2 meta op x y = Call meta op [x, y]
 
 ops :: [[Operator Parser PExpr]]
@@ -91,14 +99,13 @@ pDeclLHS = do
   args <- optional $ try $ parens pArgs
   _ <- symbol "="
   return $ case args of
-    Just a  -> DeclFun val (zip a (repeat emptyMeta))
-    Nothing -> DeclVal val
+    Just a  -> DeclFun emptyMeta val (zip a (repeat emptyMeta))
+    Nothing -> DeclVal emptyMeta val
 
 pDeclSingle :: Parser PDecl
 pDeclSingle = do
   lhs <- pDeclLHS
-  expr <- pExpr
-  return $ RawDecl lhs [] expr
+  RawDecl lhs [] <$> pExpr
 
 pDeclTree :: Parser PDecl
 pDeclTree = L.indentBlock scn p

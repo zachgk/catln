@@ -1,9 +1,9 @@
 
 module Main where
 
+import           Desugarf                 (desDecl, desPrgm)
 import           Eval
 import           Parser                   (parseFile, parseRepl)
-import           Desugarf (desPrgm, desDecl)
 import           Syntax
 
 import           Control.Monad
@@ -34,7 +34,7 @@ process :: String -> IO ()
 process source = do
   let res = parseFile source
   case res of
-    Left err -> print err
+    Left err   -> print err
     Right prgm -> print (evalPrgm (desPrgm prgm))
 
 processFile :: String -> IO ()
@@ -57,4 +57,4 @@ main = do
     []      -> repl
     ["-p"]  -> parsingRepl
     [fname] -> void (processFile fname)
-    _ -> putStr "Unknown arguments"
+    _       -> putStr "Unknown arguments"

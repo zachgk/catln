@@ -23,22 +23,24 @@ data SemiDecl m = SemiDecl (DeclLHS m) [Decl m] (Expr m)
 desExpr :: RawExpr m -> Expr m
 desExpr = id
 
+setMeta :: m -> Expr m -> Expr m
+setMeta m (CExpr _ c)   = CExpr m c
+setMeta m (Var _ n)     = Var m n
+setMeta m (Call _ n es) = Call m n es
+
 replaceVars :: H.HashMap Name (Expr m) -> Expr m -> Expr m
 replaceVars _ e@(CExpr _ _) = e
 replaceVars reps e@(Var m name) = case H.lookup name reps of
-  Just e' -> setMeta e'
+  Just e' -> setMeta m e'
   Nothing -> e
-  where setMeta (CExpr _ c)   = CExpr m c
-        setMeta (Var _ n)     = Var m n
-        setMeta (Call _ n es) = Call m n es
 replaceVars reps (Call m n es) = Call m n (map (replaceVars reps) es)
 
 -- Removes all subVariable declarations by replacing with their expressions
 removeSubDeclVal :: SemiDecl m -> SemiDecl m
 removeSubDeclVal (SemiDecl lhs decls expr) = SemiDecl lhs funs' expr'
   where (vars, funs) =  unzip $ map (\case
-                             Decl (DeclVal name) subE -> ([(name, subE)], [])
-                             f@(Decl (DeclFun _ _) _) -> ([], [f])) decls
+                             Decl (DeclVal m name) subE -> ([(name, setMeta m subE)], [])
+                             f@(Decl DeclFun{} _) -> ([], [f])) decls
         replaceList = H.fromList $ concat vars
         expr' = replaceVars replaceList expr
         replaceInFun (Decl l e) = Decl l (replaceVars replaceList e)
@@ -67,7 +69,7 @@ curryFun _ e = e
 
 -- Desugars declaration sub functions by currying the lhs terms and scoping the name
 curryFind :: DeclLHS m -> Decl m -> (Name, [Expr m])
-curryFind (DeclFun _ parentTerms) (Decl lhs expr) = (getDeclLHSName lhs, valTermsToCurry)
+curryFind (DeclFun _ _ parentTerms) (Decl lhs expr) = (getDeclLHSName lhs, valTermsToCurry)
   where parentSet = S.fromList (map fst parentTerms)
         parentMap = H.fromList parentTerms
         notUsedIn potentials (CExpr _ _) = potentials

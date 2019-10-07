@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TupleSections     #-}
 --------------------------------------------------------------------
 -- |
 -- Module    :  Lexer
@@ -15,8 +14,6 @@ module Lexer where
 
 import           Control.Applicative        hiding (many, some)
 import           Control.Monad              (void)
-import           Data.Text                  (Text)
-import qualified Data.Text                  as T
 import           Data.Void
 import           Text.Megaparsec
 import           Text.Megaparsec.Char

@@ -46,8 +46,8 @@ data Expr m
   deriving (Eq, Ord, Show)
 
 data DeclLHS m
-  = DeclVal Name
-  | DeclFun Name [(Name, m)]
+  = DeclVal m Name
+  | DeclFun m Name [(Name, m)]
   deriving (Eq, Ord, Show)
 
 data RawDecl m = RawDecl (DeclLHS m) [RawDecl m] (Expr m)
@@ -86,8 +86,12 @@ getExprMeta expr = case expr of
   Call m _ _ -> m
 
 getDeclLHSName :: DeclLHS m -> Name
-getDeclLHSName (DeclVal n) = n
-getDeclLHSName (DeclFun n _ ) = n
+getDeclLHSName (DeclVal _ n)    = n
+getDeclLHSName (DeclFun _ n _ ) = n
+
+getDeclLHSMeta :: DeclLHS m -> m
+getDeclLHSMeta (DeclVal m _)    = m
+getDeclLHSMeta (DeclFun m _ _ ) = m
 
 getDeclName :: Decl m -> Name
 getDeclName (Decl lhs _) = getDeclLHSName lhs
