@@ -17,24 +17,24 @@
 
 module Codegen where
 
-import qualified Data.ByteString.Short           as SBS
-import qualified Data.ByteString.UTF8            as BSU
+import qualified Data.ByteString.Short      as SBS
+import qualified Data.ByteString.UTF8       as BSU
 import           Data.Function
 import           Data.List
-import qualified Data.Map                        as Map
+import qualified Data.Map                   as Map
 
 import           Control.Monad.State
 
 import           LLVM.AST
-import qualified LLVM.AST                        as AST
+import qualified LLVM.AST                   as AST
 import           LLVM.AST.Global
 
-import qualified LLVM.AST.Attribute              as A
-import qualified LLVM.AST.CallingConvention      as CC
-import qualified LLVM.AST.Constant               as C
-import qualified LLVM.AST.Linkage                as L
+import qualified LLVM.AST.Attribute         as A
+import qualified LLVM.AST.CallingConvention as CC
+import qualified LLVM.AST.Constant          as C
+import qualified LLVM.AST.Linkage           as L
 
-import qualified Syntax as S
+import qualified Syntax                     as S
 
 -------------------------------------------------------------------------------
 -- Module Level
@@ -287,4 +287,4 @@ getType :: S.Typed -> AST.Type
 getType (S.Typed tp) | tp == S.intType = AST.IntegerType 64
 getType (S.Typed tp) | tp == S.floatType = AST.FloatingPointType AST.DoubleFP
 getType (S.Typed tp) | tp == S.boolType = AST.IntegerType 1
-getType tp = error $ "Uknown type " ++ show tp
+getType tp           = error $ "Uknown type " ++ show tp

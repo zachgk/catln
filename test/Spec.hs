@@ -1,15 +1,15 @@
 module Main where
 
-import Test.Tasty
-import Test.Tasty.HUnit
+import           Test.Tasty
+import           Test.Tasty.HUnit
 
-import           Eval
-import           Parser                   (parseFile)
-import           Desugarf (desPrgm)
-import           TypeCheck (typecheckPrgm)
-import           Emit (codegen, initModule)
-import           Syntax
 import           Control.Monad
+import           Desugarf         (desPrgm)
+import           Emit             (codegen, initModule)
+import           Eval
+import           Parser           (parseFile)
+import           Syntax
+import           TypeCheck        (typecheckPrgm)
 
 main :: IO ()
 main = defaultMain $ testCaseSteps "Add" $ \step -> do

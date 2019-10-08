@@ -3,22 +3,22 @@
 module Main where
 
 import           Desugarf                 (desDecl, desPrgm)
+import           Emit                     (codegen, initModule)
 import           Eval
 import           Parser                   (parseFile, parseRepl)
-import           TypeCheck (typecheckPrgm)
-import           Emit (codegen, initModule)
 import           Syntax
+import           TypeCheck                (typecheckPrgm)
 
-import           Data.List (isPrefixOf)
 import           Control.Monad
 import           Control.Monad.Trans
+import           Data.List                (isPrefixOf)
 
 import           System.Console.Haskeline
 import           System.Environment
 
 parsingRepl :: Env -> String -> IO Env
 parsingRepl env source = case parseRepl source of
-    ReplErr err -> print err >> return env
+    ReplErr err   -> print err >> return env
     ReplExpr expr -> print expr >> return env
     ReplDecl decl -> print decl >> return env
 
@@ -29,7 +29,7 @@ genRepl env source = do
     ReplErr err -> print err >> return env
     ReplExpr _ -> print ("Can not generate expression" :: String) >> return env
     ReplDecl decl -> case typecheckPrgm $ desPrgm [decl] of
-        Left err -> print ("type check err: " ++ show err) >> return env
+        Left err    -> print ("type check err: " ++ show err) >> return env
         Right tprgm -> codegen initModule tprgm >> return env
 
 processRepl :: Env -> String -> IO Env

@@ -11,16 +11,16 @@
 
 module Compile.Builtins(runtimeOps) where
 
-import qualified Data.HashMap.Strict as H
+import qualified Data.HashMap.Strict             as H
 
 import           LLVM.AST
 import qualified LLVM.AST                        as AST
 
 import qualified LLVM.AST.FloatingPointPredicate as FP
-import qualified LLVM.AST.IntegerPredicate as IP
+import qualified LLVM.AST.IntegerPredicate       as IP
 
-import Codegen
-import qualified Syntax as S
+import           Codegen
+import qualified Syntax                          as S
 
 -- Arithmetic and Constants
 arith :: (Operand -> Operand -> Instruction) -> [(S.Typed, Operand)] -> Maybe (Codegen Operand)

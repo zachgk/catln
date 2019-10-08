@@ -13,31 +13,32 @@
 
 module Emit where
 
-import LLVM.Module
-import LLVM.Context
-import LLVM.Analysis
-import LLVM.PassManager
+import           LLVM.Analysis
+import           LLVM.Context
+import           LLVM.Module
+import           LLVM.PassManager
 
-import qualified LLVM.AST as AST
-import qualified LLVM.AST.Constant as C
-import qualified LLVM.AST.Float as F
+import qualified LLVM.AST                        as AST
+import qualified LLVM.AST.Constant               as C
+import qualified LLVM.AST.Float                  as F
 import qualified LLVM.AST.FloatingPointPredicate as FP
 
-import LLVM.ExecutionEngine ( withMCJIT, withModuleInEngine, getFunction )
+import           LLVM.ExecutionEngine            (getFunction, withMCJIT,
+                                                  withModuleInEngine)
 
-import Data.Maybe
-import Data.Word
-import Data.Int
-import qualified Data.ByteString as BBS
-import qualified Data.ByteString.UTF8 as BSU
-import qualified Data.ByteString.Short as SBS
-import Control.Monad.Except
-import Control.Applicative
-import qualified Data.HashMap.Strict as H
+import           Control.Applicative
+import           Control.Monad.Except
+import qualified Data.ByteString                 as BBS
+import qualified Data.ByteString.Short           as SBS
+import qualified Data.ByteString.UTF8            as BSU
+import qualified Data.HashMap.Strict             as H
+import           Data.Int
+import           Data.Maybe
+import           Data.Word
 
-import Codegen
-import Syntax
-import Compile.Builtins
+import           Codegen
+import           Compile.Builtins
+import           Syntax
 
 type TypedMeta = Typed
 type TExpr = Expr TypedMeta
