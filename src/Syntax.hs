@@ -16,7 +16,10 @@ import           Text.Megaparsec.Error (ParseErrorBundle)
 
 type Name = String
 
-newtype Type = Type String
+data Type
+  = Type String
+  | SumType [Type]
+  | ProdType [Type]
   deriving (Eq, Ord, Show)
 
 intType, floatType, boolType, strType :: Type

@@ -57,7 +57,10 @@ parens = between (symbol "(") (symbol ")")
 identifier :: Parser String
 identifier = (lexeme . try) (p >>= check)
   where
-    p       = (:) <$> letterChar <*> many alphaNumChar
+    p       = (:) <$> lowerChar <*> many alphaNumChar
     check x = if x `elem` reservedWords
                  then fail $ "keyword " ++ show x ++ " cannot be an identifier"
                  else return x
+
+tidentifier :: Parser String
+tidentifier = try $ lexeme $ (:) <$> upperChar <*> many alphaNumChar

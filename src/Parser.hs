@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
 --------------------------------------------------------------------
 -- |
 -- Module    :  Parser
@@ -9,6 +8,8 @@
 -- Portability: non-portable
 --
 --------------------------------------------------------------------
+
+{-# LANGUAGE OverloadedStrings #-}
 
 module Parser where
 
@@ -90,17 +91,28 @@ term = try (parens pExpr)
 pExpr :: Parser PExpr
 pExpr = makeExprParser term ops
 
-pArgs :: Parser [Name]
-pArgs = sepBy1 identifier (symbol ",")
+pType :: Parser Type
+pType = try (Type <$> tidentifier)
+        <|> try (ProdType <$> parens (sepBy1 pType (symbol ",")))
+        <|> SumType <$> parens (sepBy1 pType (symbol "|"))
+
+pTypedIdentifier :: Parser (Name, ParseMeta)
+pTypedIdentifier = do
+  tp <- try $ optional pType
+  val <- identifier
+  return (val, PreTyped tp)
+
+pArgs :: Parser [(Name, ParseMeta)]
+pArgs = sepBy1 pTypedIdentifier (symbol ",")
 
 pDeclLHS :: Parser PDeclLHS
 pDeclLHS = do
-  val <- identifier
+  (val, meta) <- pTypedIdentifier
   args <- optional $ try $ parens pArgs
   _ <- symbol "="
   return $ case args of
-    Just a  -> DeclLHS emptyMeta val (zip a (repeat emptyMeta))
-    Nothing -> DeclLHS emptyMeta val []
+    Just a  -> DeclLHS meta val a
+    Nothing -> DeclLHS meta val []
 
 pDeclSingle :: Parser PDecl
 pDeclSingle = do
