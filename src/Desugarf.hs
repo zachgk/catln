@@ -1,4 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
 --------------------------------------------------------------------
 -- |
 -- Module    :  Desugarf
@@ -10,7 +9,10 @@
 --
 --------------------------------------------------------------------
 
+{-# LANGUAGE LambdaCase #-}
+
 module Desugarf where
+
 
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
@@ -39,8 +41,8 @@ replaceVars reps (Call m n es) = Call m n (map (replaceVars reps) es)
 removeSubDeclVal :: SemiDecl m -> SemiDecl m
 removeSubDeclVal (SemiDecl lhs decls expr) = SemiDecl lhs funs' expr'
   where (vars, funs) =  unzip $ map (\case
-                             Decl (DeclVal m name) subE -> ([(name, setMeta m subE)], [])
-                             f@(Decl DeclFun{} _) -> ([], [f])) decls
+                             Decl (DeclLHS m name []) subE -> ([(name, setMeta m subE)], [])
+                             f@(Decl _ _) -> ([], [f])) decls
         replaceList = H.fromList $ concat vars
         expr' = replaceVars replaceList expr
         replaceInFun (Decl l e) = Decl l (replaceVars replaceList e)
@@ -54,9 +56,9 @@ scopeSubDeclFunNamesE _ e = e
 
 -- Renames sub functions by applying the parent names as a prefix to avoid name collisions
 scopeSubDeclFunNamesD :: Name -> H.HashMap Name Name -> SemiDecl m -> SemiDecl m
-scopeSubDeclFunNamesD prefix nameMap (SemiDecl lhs subDecls expr) = SemiDecl lhs subDecls' expr'
-  where prefix' = prefix ++ '.' : getDeclLHSName lhs
-        getSubDeclName (Decl l _) = getDeclLHSName l
+scopeSubDeclFunNamesD prefix nameMap (SemiDecl lhs@(DeclLHS _ dn _) subDecls expr) = SemiDecl lhs subDecls' expr'
+  where prefix' = prefix ++ '.' : dn
+        getSubDeclName (Decl (DeclLHS _ n _) _) = n
         subDeclNames = map getSubDeclName subDecls
         nameMap' = foldl (\curMap name -> H.insert name (prefix' ++ name) curMap) nameMap subDeclNames
         subDecls' = map (\(Decl l e) -> Decl l (scopeSubDeclFunNamesE nameMap' e)) subDecls
@@ -69,7 +71,8 @@ curryFun _ e = e
 
 -- Desugars declaration sub functions by currying the lhs terms and scoping the name
 curryFind :: DeclLHS m -> Decl m -> (Name, [Expr m])
-curryFind (DeclFun _ _ parentTerms) (Decl lhs expr) = (getDeclLHSName lhs, valTermsToCurry)
+curryFind (DeclLHS _ _ []) _ = error "Should call curryFind after desDeclVals"
+curryFind (DeclLHS _ _ parentTerms) (Decl (DeclLHS _ name _) expr) = (name, valTermsToCurry)
   where parentSet = S.fromList (map fst parentTerms)
         parentMap = H.fromList parentTerms
         notUsedIn potentials (CExpr _ _) = potentials
@@ -77,7 +80,6 @@ curryFind (DeclFun _ _ parentTerms) (Decl lhs expr) = (getDeclLHSName lhs, valTe
         notUsedIn potentials (Call _ _ ces) = foldl S.intersection potentials $ map (notUsedIn potentials) ces
         termsToCurry = notUsedIn parentSet expr
         valTermsToCurry = map (\(t, m) -> Var m t)$ H.toList $ H.filterWithKey (\t _ -> S.member t termsToCurry) parentMap
-curryFind _ _ = error "Should call curryFind after desDeclVals"
 
 -- Removes all subFunction declarations by currying the function and lifting into top scope
 curryDeclD :: SemiDecl m -> [Decl m]

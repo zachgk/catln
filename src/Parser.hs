@@ -99,8 +99,8 @@ pDeclLHS = do
   args <- optional $ try $ parens pArgs
   _ <- symbol "="
   return $ case args of
-    Just a  -> DeclFun emptyMeta val (zip a (repeat emptyMeta))
-    Nothing -> DeclVal emptyMeta val
+    Just a  -> DeclLHS emptyMeta val (zip a (repeat emptyMeta))
+    Nothing -> DeclLHS emptyMeta val []
 
 pDeclSingle :: Parser PDecl
 pDeclSingle = do

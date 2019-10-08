@@ -68,8 +68,7 @@ codegenExpr (Call _ name exprs) = case H.lookup name runtimeOps of
           call (externf (AST.Name $ SBS.toShort $ BSU.fromString name)) largs
 
 codegenDecl :: TDecl -> LLVM ()
-codegenDecl (Decl (DeclVal m name) expr) = codegenDecl (Decl (DeclFun m name []) expr)
-codegenDecl (Decl (DeclFun m name args) expr) = define (getType m) (SBS.toShort $ BSU.fromString name) largs bls
+codegenDecl (Decl (DeclLHS m name args) expr) = define (getType m) (SBS.toShort $ BSU.fromString name) largs bls
   where
     largs = map (\(an, am) -> (getType am, AST.Name $ SBS.toShort $ BSU.fromString an)) args
     bls = createBlocks $ execCodegen [] $ do
@@ -84,12 +83,12 @@ codegenDecl (Decl (DeclFun m name args) expr) = define (getType m) (SBS.toShort 
 codegenPrgm :: TPrgm -> LLVM ()
 codegenPrgm = mapM_ codegenDecl
 
-codegen :: AST.Module -> TPrgm -> IO AST.Module
+codegen :: AST.Module -> TPrgm -> IO BSU.ByteString
 codegen astMod prgm = withContext $ \context ->
   withModuleFromAST context newast $ \m -> do
     llstr <- moduleLLVMAssembly m
-    putStrLn $ BSU.toString llstr
-    return newast
+    -- putStrLn $ BSU.toString llstr
+    return llstr
   where
     modn = codegenPrgm prgm
     newast = runLLVM astMod modn

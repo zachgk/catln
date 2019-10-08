@@ -107,10 +107,10 @@ evalExpr env (Call _ name exprs) = do
     Nothing -> Left $ GenEvalError $ "Could not find function " ++ name
 
 addDecl :: Env -> EDecl -> Either EvalError Env
-addDecl env (Decl (DeclVal _ name) expr) = do
+addDecl env (Decl (DeclLHS _ name []) expr) = do
   val <- evalExpr env expr
   return $ H.insert name val env
-addDecl env (Decl (DeclFun _ name args) expr) = return env'
+addDecl env (Decl (DeclLHS _ name args) expr) = return env'
                                                      where cl = CloVal (map fst args) env' expr
                                                            env' = H.insert name cl env
 

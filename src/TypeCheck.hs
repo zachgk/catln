@@ -157,16 +157,15 @@ fromExpr env1 (Call m name expressions) = topLevelCall
     recurse _ _ _ = error "Invalid state"
 
 fromDeclAddScope :: FEnv s -> VDeclLHS s -> ST s (FEnv s)
-fromDeclAddScope env DeclVal{} = return env
-fromDeclAddScope env (DeclFun _ _ []) = return env
-fromDeclAddScope env (DeclFun _ _ args) = foldM aux env args
+fromDeclAddScope env (DeclLHS _ _ []) = return env
+fromDeclAddScope env (DeclLHS _ _ args) = foldM aux env args
   where aux e (n, m) = return $ fInsert e n (PntVal $ getPnt m)
 
 fromDecl :: FEnv s -> SemiPDecl s -> ST s (VDecl s, FEnv s)
-fromDecl env1 (SemiPDecl lhs expr) = do
+fromDecl env1 (SemiPDecl lhs@(DeclLHS m' _ _) expr) = do
   env2 <- fromDeclAddScope env1 lhs
   (vExpr, env3) <- fromExpr env2 expr
-  let env4 = addConstraints env3 [EqPoints (getPnt $ getDeclLHSMeta lhs) (getPnt $ getExprMeta vExpr)]
+  let env4 = addConstraints env3 [EqPoints (getPnt m') (getPnt $ getExprMeta vExpr)]
   let vdecl = Decl lhs vExpr
   return (vdecl, fReplaceMap env4 env1)
 
@@ -186,17 +185,11 @@ addCallableArgs env ((n, m):args) = do
 
 addCallables :: FEnv s -> [PDecl] -> ST s ([SemiPDecl s], FEnv s)
 addCallables env [] = return ([], env)
-addCallables env (Decl (DeclVal m name) e:decls) = do
-  (m', p, env1) <- fromMetaP env m
-  let env2 = fInsert env1 name (PntVal p)
-  let sdecl = SemiPDecl (DeclVal m' name) e
-  (sdecls, env3) <- addCallables env2 decls
-  return (sdecl:sdecls, env3)
-addCallables env (Decl (DeclFun m name args) e:decls) = do
+addCallables env (Decl (DeclLHS m name args) e:decls) = do
   (m', p, env1) <- fromMetaP env m
   let env2 = fInsert env1 name (PntVal p)
   (args', env3) <- addCallableArgs env2 args
-  let sdecl = SemiPDecl (DeclFun m' name args') e
+  let sdecl = SemiPDecl (DeclLHS m' name args') e
   (sdecls, env4) <- addCallables env3 decls
   return (sdecl:sdecls, env4)
 
@@ -257,16 +250,13 @@ toExpr (Call m name exprs) = do
     (a, b)                   -> Left $ fromLeft [] a ++ fromLeft [] b
 
 toDeclLHS :: VDeclLHS s -> ST s (TypeCheckResult TDeclLHS)
-toDeclLHS (DeclVal m name ) = do
-  res1 <- toMeta m $ "Value Declaration " ++ name
-  return $ res1 >>= (\m' -> Right $ DeclVal m' name)
-toDeclLHS (DeclFun m name [] ) = do
-  res1 <- toMeta m $ "Function Declaration Return Type " ++ name
-  return $ res1 >>= (\m' -> Right $ DeclFun m' name [])
-toDeclLHS (DeclFun m name ((an, am):args) ) = do
-  res1 <- toMeta am $ "Function Declaration Argument: " ++ name ++ "." ++ an
-  res2 <- toDeclLHS (DeclFun m name args)
-  return $ merge2TypeCheckResults res1 res2 >>= (\(am', DeclFun m' _ args') -> Right $ DeclFun m' name ((an, am'):args'))
+toDeclLHS (DeclLHS m name [] ) = do
+  res1 <- toMeta m $ "Declaration Return Type " ++ name
+  return $ res1 >>= (\m' -> Right $ DeclLHS m' name [])
+toDeclLHS (DeclLHS m name ((an, am):args) ) = do
+  res1 <- toMeta am $ "Declaration Argument: " ++ name ++ "." ++ an
+  res2 <- toDeclLHS (DeclLHS m name args)
+  return $ merge2TypeCheckResults res1 res2 >>= (\(am', DeclLHS m' _ args') -> Right $ DeclLHS m' name ((an, am'):args'))
 
 
 toDecl :: VDecl s -> ST s (TypeCheckResult TDecl)

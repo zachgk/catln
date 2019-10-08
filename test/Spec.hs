@@ -20,7 +20,7 @@ main = defaultMain $ testCaseSteps "Add" $ \step -> do
     Right rprgm -> do
       step "Desgugar..."
       let prgm = desPrgm rprgm
-      step "Typecheck"
+      step "Typecheck..."
       case typecheckPrgm prgm of
         Left err -> assertFailure $ "Could not typecheck " ++ show err
         Right tprgm -> do
@@ -32,4 +32,5 @@ main = defaultMain $ testCaseSteps "Add" $ \step -> do
               Left err -> assertFailure $ "Could not eval " ++ name ++ show err
               Right (BoolVal True) -> return ()
               Right err -> assertFailure $ "Bad result for " ++ name ++ show err
+          step "Codegen"
           void (codegen initModule tprgm)
