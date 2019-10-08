@@ -78,6 +78,8 @@ newtype PreTyped = PreTyped (Maybe Type)
 newtype Typed = Typed Type
   deriving (Eq, Ord, Show)
 
+typedIs :: Typed -> Type -> Bool
+typedIs (Typed (Type t1)) (Type t2) = t1 == t2
 
 getExprMeta :: Expr m -> m
 getExprMeta expr = case expr of

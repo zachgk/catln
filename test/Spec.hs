@@ -7,6 +7,7 @@ import           Eval
 import           Parser                   (parseFile)
 import           Desugarf (desPrgm)
 import           TypeCheck (typecheckPrgm)
+import           Emit (codegen, initModule)
 import           Syntax
 import           Control.Monad
 
@@ -22,7 +23,7 @@ main = defaultMain $ testCaseSteps "Add" $ \step -> do
       step "Typecheck"
       case typecheckPrgm prgm of
         Left err -> assertFailure $ "Could not typecheck " ++ show err
-        Right result -> do
+        Right tprgm -> do
           step "Eval tests..."
           forM_ prgm $ \decl -> do
             let name = getDeclName decl
@@ -31,3 +32,4 @@ main = defaultMain $ testCaseSteps "Add" $ \step -> do
               Left err -> assertFailure $ "Could not eval " ++ name ++ show err
               Right (BoolVal True) -> return ()
               Right err -> assertFailure $ "Bad result for " ++ name ++ show err
+          void (codegen initModule tprgm)

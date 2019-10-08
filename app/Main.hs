@@ -1,24 +1,36 @@
+{-# LANGUAGE OverloadedStrings #-}
 
 module Main where
 
 import           Desugarf                 (desDecl, desPrgm)
 import           Eval
 import           Parser                   (parseFile, parseRepl)
+import           TypeCheck (typecheckPrgm)
+import           Emit (codegen, initModule)
 import           Syntax
 
+import           Data.List (isPrefixOf)
 import           Control.Monad
 import           Control.Monad.Trans
 
 import           System.Console.Haskeline
 import           System.Environment
 
-parsingRepl :: IO ()
-parsingRepl = runInputT defaultSettings loop
-  where loop = do
-          minput <- getInputLine "parse> "
-          case minput of
-            Nothing    -> outputStrLn "Goodbye."
-            Just input -> liftIO (mapM_ print $ parseFile input) >> loop
+parsingRepl :: Env -> String -> IO Env
+parsingRepl env source = case parseRepl source of
+    ReplErr err -> print err >> return env
+    ReplExpr expr -> print expr >> return env
+    ReplDecl decl -> print decl >> return env
+
+genRepl :: Env -> String -> IO Env
+genRepl env source = do
+  let res = parseRepl source
+  case res of
+    ReplErr err -> print err >> return env
+    ReplExpr _ -> print ("Can not generate expression" :: String) >> return env
+    ReplDecl decl -> case typecheckPrgm $ desPrgm [decl] of
+        Left err -> print ("type check err: " ++ show err) >> return env
+        Right tprgm -> codegen initModule tprgm >> return env
 
 processRepl :: Env -> String -> IO Env
 processRepl env source = do
@@ -47,7 +59,10 @@ repl = runInputT defaultSettings (loop baseEnv)
           case minput of
             Nothing -> outputStrLn "Goodbye."
             Just input -> do
-              env' <- lift $ processRepl env input
+              env' <- case input of
+                _ | ":p " `isPrefixOf` input -> lift $ parsingRepl env (drop 3 input)
+                _ | ":g " `isPrefixOf` input -> lift $ genRepl env (drop 3 input)
+                _ -> lift $ processRepl env input
               loop env'
 
 main :: IO ()
@@ -55,6 +70,5 @@ main = do
   args <- getArgs
   case args of
     []      -> repl
-    ["-p"]  -> parsingRepl
     [fname] -> void (processFile fname)
     _       -> putStr "Unknown arguments"
