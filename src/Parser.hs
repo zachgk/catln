@@ -16,6 +16,7 @@ module Parser where
 import           Control.Applicative            hiding (many, some)
 import           Control.Monad.Combinators.Expr
 import           Data.Either
+import           Data.Maybe
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer     as L
@@ -31,16 +32,16 @@ type PPrgm = RawPrgm ParseMeta
 type PReplRes = ReplRes ParseMeta
 
 emptyMeta :: ParseMeta
-emptyMeta = PreTyped Nothing
+emptyMeta = PreTyped RawTopType
 
 intMeta :: ParseMeta
-intMeta = PreTyped (Just intType)
+intMeta = PreTyped rintType
 
 boolMeta :: ParseMeta
-boolMeta = PreTyped (Just boolType)
+boolMeta = PreTyped rboolType
 
 strMeta :: ParseMeta
-strMeta = PreTyped (Just strType)
+strMeta = PreTyped rstrType
 
 mkOp1 :: ParseMeta -> String -> PExpr -> PExpr
 mkOp1 meta op x = Call meta op [x]
@@ -91,16 +92,16 @@ term = try (parens pExpr)
 pExpr :: Parser PExpr
 pExpr = makeExprParser term ops
 
-pType :: Parser Type
-pType = try (Type <$> tidentifier)
-        <|> try (ProdType <$> parens (sepBy1 pType (symbol ",")))
-        <|> SumType <$> parens (sepBy1 pType (symbol "|"))
+pType :: Parser RawType
+pType = try (RawLeafType <$> tidentifier)
+        <|> try (RawProdType <$> parens (sepBy1 pType (symbol ",")))
+        <|> RawSumType <$> parens (sepBy1 pType (symbol "|"))
 
 pTypedIdentifier :: Parser (Name, ParseMeta)
 pTypedIdentifier = do
   tp <- try $ optional pType
   val <- identifier
-  return (val, PreTyped tp)
+  return (val, PreTyped (fromMaybe RawTopType tp))
 
 pArgs :: Parser [(Name, ParseMeta)]
 pArgs = sepBy1 pTypedIdentifier (symbol ",")

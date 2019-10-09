@@ -1,5 +1,6 @@
 module Main where
 
+import           Data.List
 import           Test.Tasty
 import           Test.Tasty.HUnit
 
@@ -22,7 +23,7 @@ main = defaultMain $ testCaseSteps "Add" $ \step -> do
       let prgm = desPrgm rprgm
       step "Typecheck..."
       case typecheckPrgm prgm of
-        Left err -> assertFailure $ "Could not typecheck " ++ show err
+        Left err -> assertFailure $ "Could not typecheck: \t" ++ intercalate "\n\t" err
         Right tprgm -> do
           step "Eval tests..."
           forM_ prgm $ \decl -> do

@@ -23,8 +23,7 @@ import           Syntax
 type TypeCheckError = String
 
 data Scheme
-  = SKnown Type
-  | SUnknown
+  = SType RawType RawType
   | SCheckError String
   deriving (Eq, Ord, Show)
 
@@ -37,8 +36,10 @@ data PntDef s
 data FEnv s = FEnv [Constraint s] (H.HashMap String (PntDef s)) [TypeCheckError]
 
 data Constraint s
-  = EqType (Pnt s) Type
+  = EqType (Pnt s) RawType
   | EqPoints (Pnt s) (Pnt s)
+  | HasType (Pnt s) (Pnt s) -- May need variations that affect only the super or sub type
+  deriving (Eq)
 
 type TypeCheckResult r = Either [TypeCheckError] r
 
@@ -69,22 +70,22 @@ type TReplRes = ReplRes TypedMeta
 makeBaseFEnv :: ST s (FEnv s)
 makeBaseFEnv = do
   let env1 = FEnv [] H.empty []
-  let ops = [ ("+", intType, [intType, intType])
-            , ("-", intType, [intType, intType])
-            , ("*", intType, [intType, intType])
-            , (">", boolType, [intType, intType])
-            , ("<", boolType, [intType, intType])
-            , (">=", boolType, [intType, intType])
-            , ("<=", boolType, [intType, intType])
-            , ("==", boolType, [intType, intType])
-            , ("!=", boolType, [intType, intType])
-            , ("&", boolType, [boolType, boolType])
-            , ("~", boolType, [boolType])
+  let ops = [ ("+", rintType, [rintType, rintType])
+            , ("-", rintType, [rintType, rintType])
+            , ("*", rintType, [rintType, rintType])
+            , (">", rboolType, [rintType, rintType])
+            , ("<", rboolType, [rintType, rintType])
+            , (">=", rboolType, [rintType, rintType])
+            , ("<=", rboolType, [rintType, rintType])
+            , ("==", rboolType, [rintType, rintType])
+            , ("!=", rboolType, [rintType, rintType])
+            , ("&", rboolType, [rboolType, rboolType])
+            , ("~", rboolType, [rboolType])
             ]
   foldM f env1 ops
   where f e (opName, retType, args) = do
-          p <- fresh (SKnown retType)
-          pargs <- forM args (fresh . SKnown )
+          p <- fresh (SType RawBottomType retType)
+          pargs <- forM args (fresh . SType RawBottomType )
           return $ fInsert e opName (PntFun p pargs)
 
 getPnt :: VarMeta s -> Pnt s
@@ -109,10 +110,7 @@ fReplaceMap (FEnv cons _ errs1) (FEnv _ pmap errs2) = FEnv cons pmap (errs1 ++ e
 
 fromMetaP :: FEnv s -> PreMeta -> ST s (VarMeta s, Pnt s, FEnv s)
 fromMetaP env (PreTyped mt) = do
-  let scheme = case mt of
-        Nothing -> SUnknown
-        Just t  -> SKnown t
-  p <- fresh scheme
+  p <- fresh (SType RawBottomType mt)
   return (p, p, env)
 
 fromMeta :: FEnv s -> PreMeta -> ST s (VarMeta s, FEnv s)
@@ -123,13 +121,13 @@ fromMeta env m = do
 fromExpr :: FEnv s -> PExpr -> ST s (VExpr s, FEnv s)
 fromExpr env (CExpr m (CInt i)) = do
   (m', p, env') <- fromMetaP env m
-  return (CExpr m' (CInt i), addConstraints env' [EqType p intType])
+  return (CExpr m' (CInt i), addConstraints env' [EqType p rintType])
 fromExpr env (CExpr m (CFloat f)) = do
   (m', p, env') <- fromMetaP env m
-  return (CExpr m' (CFloat f), addConstraints env' [EqType p floatType])
+  return (CExpr m' (CFloat f), addConstraints env' [EqType p rfloatType])
 fromExpr env (CExpr m (CStr s)) = do
   (m', p, env') <- fromMetaP env m
-  return (CExpr m' (CStr s), addConstraints env' [EqType p strType])
+  return (CExpr m' (CStr s), addConstraints env' [EqType p rstrType])
 fromExpr env (Var m name) = do
   (m', p, env') <- fromMetaP env m
   let env'' = case fLookup env' name of
@@ -165,7 +163,7 @@ fromDecl :: FEnv s -> SemiPDecl s -> ST s (VDecl s, FEnv s)
 fromDecl env1 (SemiPDecl lhs@(DeclLHS m' _ _) expr) = do
   env2 <- fromDeclAddScope env1 lhs
   (vExpr, env3) <- fromExpr env2 expr
-  let env4 = addConstraints env3 [EqPoints (getPnt m') (getPnt $ getExprMeta vExpr)]
+  let env4 = addConstraints env3 [EqPoints (getPnt $ getExprMeta vExpr) (getPnt m')]
   let vdecl = Decl lhs vExpr
   return (vdecl, fReplaceMap env4 env1)
 
@@ -200,22 +198,28 @@ fromPrgm env decls = do
   (vdecls, env'') <- fromDecls env' sdecls
   return (vdecls, env'')
 
-executeConstraint :: Constraint s -> ST s ()
-executeConstraint (EqType pnt tp) = modifyDescriptor pnt (\oldTp ->
-                                                            case oldTp of
-                                                              SUnknown -> SKnown tp
-                                                              SKnown t | t == tp -> oldTp
-                                                              SKnown badTp -> SCheckError $ concat ["Mismatched types: ", show tp, " and ", show badTp]
-                                                              SCheckError s -> SCheckError s
-                                                         )
-executeConstraint (EqPoints p1 p2) = union' p1 p2 (\s1 s2 -> return $ case (s1, s2) of
-                                                      (SUnknown, SUnknown) -> SUnknown
-                                                      (SKnown t, SUnknown) -> SKnown t
-                                                      (SUnknown, SKnown t) -> SKnown t
-                                                      (SKnown t1, SKnown t2) -> if t1 == t2 then SKnown t1 else SCheckError $ concat ["Mismatched types: ", show t1, " and ", show t2]
-                                                      (_, SCheckError s) -> SCheckError s
-                                                      (SCheckError s, _) -> SCheckError s
-                                                  )
+equalizeSchemes :: (Scheme, Scheme) -> Scheme
+equalizeSchemes (_, SCheckError s) = SCheckError s
+equalizeSchemes (SCheckError s, _) = SCheckError s
+equalizeSchemes (SType lb1 ub1, SType lb2 ub2) = let lbBoth = unionRawTypes lb1 lb2
+                                                     ubBoth = intersectRawTypes ub1 ub2
+                                                  in if hasRawType lbBoth ubBoth
+                                                        then SType lbBoth ubBoth
+                                                        else SCheckError $ concat ["Type Mismatched: ", show lbBoth, " is not a subtype of ", show ubBoth]
+
+executeConstraint :: Constraint s -> ST s [Constraint s]
+executeConstraint (EqType pnt tp) = modifyDescriptor pnt (\oldScheme -> equalizeSchemes (oldScheme, SType tp tp)) >> return []
+executeConstraint (EqPoints p1 p2) = union' p1 p2 (\s1 s2 -> return (equalizeSchemes (s1, s2))) >> return []
+executeConstraint cons@(HasType subPnt parentPnt) = do
+  subScheme <- descriptor subPnt
+  parentScheme <- descriptor parentPnt
+  case (subScheme, parentScheme) of
+    (_, SCheckError _) -> return []
+    (SCheckError _, _) -> return []
+    (SType lb1 ub1, SType lb2 ub2) -> do
+      setDescriptor subPnt (SType lb1 (intersectRawTypes ub1 lb2))
+      setDescriptor parentPnt (SType (unionRawTypes lb2 ub1) ub2)
+      return [cons | not (hasRawType ub1 lb2)]
 
 merge2TypeCheckResults :: TypeCheckResult a -> TypeCheckResult b -> TypeCheckResult (a, b)
 merge2TypeCheckResults a b = case (a, b) of
@@ -227,13 +231,27 @@ mergeTypeCheckResults res = case partitionEithers res of
   ([], rs) -> Right rs
   (ls, _)  -> Left $ concat ls
 
+fromRawType :: RawType -> Maybe Type
+fromRawType RawTopType = Nothing
+fromRawType RawBottomType = Nothing
+fromRawType (RawLeafType s) = Just $ LeafType s
+fromRawType (RawSumType [t]) = fromRawType t
+fromRawType (RawSumType ts) = do
+  ts' <- mapM fromRawType ts
+  Just $ SumType ts'
+fromRawType (RawProdType ts) = do
+  ts' <- mapM fromRawType ts
+  Just $ ProdType ts'
+
+
 toMeta :: VarMeta s -> String -> ST s (TypeCheckResult Typed)
 toMeta p name = do
   scheme <- descriptor p
   return $ case scheme of
-    SKnown tp     -> return $ Typed tp
-    SUnknown      -> Left ["Unknown " ++ name]
-    SCheckError s -> Left [s]
+    SCheckError s -> Left ["CheckError on " ++ name ++ ": " ++ s]
+    SType lb ub -> case fromRawType ub of
+      Nothing -> Left ["CheckError on " ++ show name ++ ": \ntLower Bound: " ++ show lb ++ "\n\tUpper Bound: " ++ show ub]
+      Just t -> Right $ Typed t
 
 toExpr :: VExpr s -> ST s (TypeCheckResult TExpr)
 toExpr (CExpr m c) = do
@@ -270,12 +288,31 @@ toPrgm decls = do
   res <- mapM toDecl decls
   return $ mergeTypeCheckResults res
 
+abandonConstraints :: Constraint s -> ST s ()
+abandonConstraints EqType{} = error "Bad Type equality"
+abandonConstraints EqPoints{} = error "Bad point equality"
+abandonConstraints (HasType subPnt parentPnt) = do
+  subScheme <- descriptor subPnt
+  parentScheme <- descriptor parentPnt
+  case (subScheme, parentScheme) of
+    -- (SKnown _, SUnknown) -> setDescriptor parentPnt $ SCheckError "Failed to unify hasType"
+    (_, _) -> error "Uknown abandon constraint failure"
+
+runConstraints :: [Constraint s] -> ST s ()
+runConstraints [] = return ()
+runConstraints cons = do
+  res <- mapM executeConstraint cons
+  let cons' = concat res
+  if cons == cons'
+    then mapM_ abandonConstraints cons
+    else runConstraints cons'
+
 typecheckPrgm :: PPrgm -> TypeCheckResult TPrgm
 typecheckPrgm ppgrm = runST $ do
   baseFEnv <- makeBaseFEnv
   (vpgrm, FEnv cons _ errs) <- fromPrgm baseFEnv ppgrm
   case errs of
     [] -> do
-      mapM_ executeConstraint cons
+      runConstraints cons
       toPrgm vpgrm
     _ -> return $ Left errs
