@@ -59,7 +59,7 @@ type RawExpr = Expr
 data Expr m
   = CExpr m Constant
   | Var m Name
-  | Call m Name [Expr m]
+  | Tuple m Name [Expr m]
   deriving (Eq, Ord, Show)
 
 data DeclLHS m = DeclLHS m Name [(Name,m)]
@@ -68,12 +68,21 @@ data DeclLHS m = DeclLHS m Name [(Name,m)]
 data RawDecl m = RawDecl (DeclLHS m) [RawDecl m] (Expr m)
   deriving (Eq, Ord, Show)
 
-data Decl m = Decl (DeclLHS m) (Expr m)
-  deriving (Eq, Ord, Show)
+-- data Decl m = Decl (DeclLHS m) (Expr m)
+--   deriving (Eq, Ord, Show)
 
 type RawPrgm m = [RawDecl m] -- TODO: Include [Import], [Export]
 
-type Prgm m = [Decl m] -- TODO: Include [Import], [Export]
+data Global m = Global m Name (Expr m)
+  deriving (Eq, Ord, Show)
+
+data Object m = Object m Name [(Name, m)]
+  deriving (Eq, Ord, Show)
+
+data Arrow m = Arrow m Name (Expr m)
+  deriving (Eq, Ord, Show)
+
+type Prgm m = ([Global m], [Object m], [Arrow m]) -- TODO: Include [Import], [Export]
 
 type ParseErrorRes = ParseErrorBundle String Void
 
@@ -140,8 +149,8 @@ getExprMeta :: Expr m -> m
 getExprMeta expr = case expr of
   CExpr m _  -> m
   Var m _    -> m
-  Call m _ _ -> m
+  Tuple m _ _ -> m
 
-getDeclName :: Decl m -> Name
-getDeclName (Decl (DeclLHS _ name _) _) = name
+-- getDeclName :: Decl m -> Name
+-- getDeclName (Decl (DeclLHS _ name _) _) = name
 

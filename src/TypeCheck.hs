@@ -45,7 +45,6 @@ type TypeCheckResult r = Either [TypeCheckError] r
 
 type PreMeta = PreTyped
 type PExpr = Expr PreMeta
-type PDecl = Decl PreMeta
 type PDeclLHS = DeclLHS PreMeta
 type PPrgm = Prgm PreMeta
 type PReplRes = ReplRes PreMeta
@@ -55,14 +54,12 @@ data SemiPDecl s = SemiPDecl (DeclLHS (VarMeta s)) PExpr
 
 type VarMeta s = Pnt s
 type VExpr s = Expr (VarMeta s)
-type VDecl s = Decl (VarMeta s)
 type VDeclLHS s = DeclLHS (VarMeta s)
 type VPrgm s = Prgm (VarMeta s)
 type VReplRes s = ReplRes (VarMeta s)
 
 type TypedMeta = Typed
 type TExpr = Expr TypedMeta
-type TDecl = Decl TypedMeta
 type TDeclLHS = DeclLHS TypedMeta
 type TPrgm = Prgm TypedMeta
 type TReplRes = ReplRes TypedMeta
@@ -135,44 +132,44 @@ fromExpr env (Var m name) = do
               (Just (PntVal pp), e) -> addConstraints e [EqPoints p pp]
               _                     -> error "Failed to find variable"
    in return (Var m' name, env'')
-fromExpr env1 (Call m name expressions) = topLevelCall
-  where
-    topLevelCall = do
-          (m', p, env2) <- fromMetaP env1 m
-          let (env3, pargs) = case fLookup env2 name of
-                (Just (PntFun pp pargs_), e) -> (addConstraints e [EqPoints p pp], pargs_)
-                (Nothing, _) -> error $ "Invalid state - Could not find " ++ name
-                _ -> error "Failed to find function"
-            in do
-                (vexpressions, env4) <- recurse env3 expressions pargs
-                return (Call m' name vexpressions, env4)
-    recurse :: FEnv s -> [PExpr] -> [Pnt s] -> ST s ([VExpr s], FEnv s)
-    recurse e [] [] = return ([], e)
-    recurse e (expr:exprs) (parg:pargs) = do
-      (vexpr, e') <- fromExpr e expr
-      (vexprs, e'') <- recurse e' exprs pargs
-      return (vexpr:vexprs, addConstraints e'' [EqPoints parg (getPnt $ getExprMeta vexpr)])
-    recurse _ _ _ = error "Invalid state"
+-- fromExpr env1 (Call m name expressions) = topLevelCall
+--   where
+--     topLevelCall = do
+--           (m', p, env2) <- fromMetaP env1 m
+--           let (env3, pargs) = case fLookup env2 name of
+--                 (Just (PntFun pp pargs_), e) -> (addConstraints e [EqPoints p pp], pargs_)
+--                 (Nothing, _) -> error $ "Invalid state - Could not find " ++ name
+--                 _ -> error "Failed to find function"
+--             in do
+--                 (vexpressions, env4) <- recurse env3 expressions pargs
+--                 return (Call m' name vexpressions, env4)
+--     recurse :: FEnv s -> [PExpr] -> [Pnt s] -> ST s ([VExpr s], FEnv s)
+--     recurse e [] [] = return ([], e)
+--     recurse e (expr:exprs) (parg:pargs) = do
+--       (vexpr, e') <- fromExpr e expr
+--       (vexprs, e'') <- recurse e' exprs pargs
+--       return (vexpr:vexprs, addConstraints e'' [EqPoints parg (getPnt $ getExprMeta vexpr)])
+--     recurse _ _ _ = error "Invalid state"
 
 fromDeclAddScope :: FEnv s -> VDeclLHS s -> ST s (FEnv s)
 fromDeclAddScope env (DeclLHS _ _ []) = return env
 fromDeclAddScope env (DeclLHS _ _ args) = foldM aux env args
   where aux e (n, m) = return $ fInsert e n (PntVal $ getPnt m)
 
-fromDecl :: FEnv s -> SemiPDecl s -> ST s (VDecl s, FEnv s)
-fromDecl env1 (SemiPDecl lhs@(DeclLHS m' _ _) expr) = do
-  env2 <- fromDeclAddScope env1 lhs
-  (vExpr, env3) <- fromExpr env2 expr
-  let env4 = addConstraints env3 [EqPoints (getPnt $ getExprMeta vExpr) (getPnt m')]
-  let vdecl = Decl lhs vExpr
-  return (vdecl, fReplaceMap env4 env1)
+-- fromDecl :: FEnv s -> SemiPDecl s -> ST s (VDecl s, FEnv s)
+-- fromDecl env1 (SemiPDecl lhs@(DeclLHS m' _ _) expr) = do
+--   env2 <- fromDeclAddScope env1 lhs
+--   (vExpr, env3) <- fromExpr env2 expr
+--   let env4 = addConstraints env3 [EqPoints (getPnt $ getExprMeta vExpr) (getPnt m')]
+--   let vdecl = Decl lhs vExpr
+--   return (vdecl, fReplaceMap env4 env1)
 
-fromDecls :: FEnv s -> [SemiPDecl s] -> ST s ([VDecl s], FEnv s)
-fromDecls env [] = return ([], env)
-fromDecls env (sdecl:sdecls) = do
-  (vdecl, env') <- fromDecl env sdecl
-  (vdecls, env'') <- fromDecls env' sdecls
-  return (vdecl:vdecls, env'')
+-- fromDecls :: FEnv s -> [SemiPDecl s] -> ST s ([VDecl s], FEnv s)
+-- fromDecls env [] = return ([], env)
+-- fromDecls env (sdecl:sdecls) = do
+--   (vdecl, env') <- fromDecl env sdecl
+--   (vdecls, env'') <- fromDecls env' sdecls
+--   return (vdecl:vdecls, env'')
 
 addCallableArgs :: FEnv s -> [(Name, PreMeta)] -> ST s ([(Name, VarMeta s)], FEnv s)
 addCallableArgs env [] = return ([], env)
@@ -181,22 +178,23 @@ addCallableArgs env ((n, m):args) = do
   (args', env3) <- addCallableArgs env2 args
   return ((n, m'):args', env3)
 
-addCallables :: FEnv s -> [PDecl] -> ST s ([SemiPDecl s], FEnv s)
-addCallables env [] = return ([], env)
-addCallables env (Decl (DeclLHS m name args) e:decls) = do
-  (m', p, env1) <- fromMetaP env m
-  let env2 = fInsert env1 name (PntVal p)
-  (args', env3) <- addCallableArgs env2 args
-  let sdecl = SemiPDecl (DeclLHS m' name args') e
-  (sdecls, env4) <- addCallables env3 decls
-  return (sdecl:sdecls, env4)
+-- addCallables :: FEnv s -> [PDecl] -> ST s ([SemiPDecl s], FEnv s)
+-- addCallables env [] = return ([], env)
+-- addCallables env (Decl (DeclLHS m name args) e:decls) = do
+--   (m', p, env1) <- fromMetaP env m
+--   let env2 = fInsert env1 name (PntVal p)
+--   (args', env3) <- addCallableArgs env2 args
+--   let sdecl = SemiPDecl (DeclLHS m' name args') e
+--   (sdecls, env4) <- addCallables env3 decls
+--   return (sdecl:sdecls, env4)
 
 
 fromPrgm :: FEnv s -> PPrgm -> ST s (VPrgm s, FEnv s)
-fromPrgm env decls = do
-  (sdecls, env') <- addCallables env decls
-  (vdecls, env'') <- fromDecls env' sdecls
-  return (vdecls, env'')
+fromPrgm = undefined
+-- fromPrgm env decls = do
+--   (sdecls, env') <- addCallables env decls
+--   (vdecls, env'') <- fromDecls env' sdecls
+--   return (vdecls, env'')
 
 equalizeSchemes :: (Scheme, Scheme) -> Scheme
 equalizeSchemes (_, SCheckError s) = SCheckError s
@@ -260,12 +258,12 @@ toExpr (CExpr m c) = do
 toExpr (Var m name) = do
   res <- toMeta m $ "variable " ++ name
   return $ res >>= (\m' -> Right $ Var m' name)
-toExpr (Call m name exprs) = do
-  res1 <- toMeta m $ "Function call " ++ name
-  res2 <- mapM toExpr exprs
-  return $ case (res1, mergeTypeCheckResults res2) of
-    (Right m', Right exprs') -> Right $ Call m' name exprs'
-    (a, b)                   -> Left $ fromLeft [] a ++ fromLeft [] b
+-- toExpr (Call m name exprs) = do
+--   res1 <- toMeta m $ "Function call " ++ name
+--   res2 <- mapM toExpr exprs
+--   return $ case (res1, mergeTypeCheckResults res2) of
+--     (Right m', Right exprs') -> Right $ Call m' name exprs'
+--     (a, b)                   -> Left $ fromLeft [] a ++ fromLeft [] b
 
 toDeclLHS :: VDeclLHS s -> ST s (TypeCheckResult TDeclLHS)
 toDeclLHS (DeclLHS m name [] ) = do
@@ -277,16 +275,17 @@ toDeclLHS (DeclLHS m name ((an, am):args) ) = do
   return $ merge2TypeCheckResults res1 res2 >>= (\(am', DeclLHS m' _ args') -> Right $ DeclLHS m' name ((an, am'):args'))
 
 
-toDecl :: VDecl s -> ST s (TypeCheckResult TDecl)
-toDecl (Decl lhs expr) = do
-  res1 <- toDeclLHS lhs
-  res2 <- toExpr expr
-  return $ merge2TypeCheckResults res1 res2 >>= (\(lhs', expr') -> Right $ Decl lhs' expr')
+-- toDecl :: VDecl s -> ST s (TypeCheckResult TDecl)
+-- toDecl (Decl lhs expr) = do
+--   res1 <- toDeclLHS lhs
+--   res2 <- toExpr expr
+--   return $ merge2TypeCheckResults res1 res2 >>= (\(lhs', expr') -> Right $ Decl lhs' expr')
 
 toPrgm :: VPrgm s -> ST s (TypeCheckResult TPrgm)
-toPrgm decls = do
-  res <- mapM toDecl decls
-  return $ mergeTypeCheckResults res
+toPrgm = undefined
+-- toPrgm decls = do
+--   res <- mapM toDecl decls
+--   return $ mergeTypeCheckResults res
 
 abandonConstraints :: Constraint s -> ST s ()
 abandonConstraints EqType{} = error "Bad Type equality"
@@ -316,3 +315,9 @@ typecheckPrgm ppgrm = runST $ do
       runConstraints cons
       toPrgm vpgrm
     _ -> return $ Left errs
+
+
+testPrgm :: PPrgm
+testPrgm = ([
+               Global (PreTyped RawTopType) "add" (CExpr (PreTyped RawTopType) (CInt 1))
+            ], [], [])
