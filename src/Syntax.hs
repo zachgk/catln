@@ -59,7 +59,7 @@ type RawExpr = Expr
 data Expr m
   = CExpr m Constant
   | Var m Name
-  | Tuple m Name [Expr m]
+  | Tuple m Name [(Name, Expr m)]
   deriving (Eq, Ord, Show)
 
 data DeclLHS m = DeclLHS m Name [(Name,m)]
@@ -73,16 +73,13 @@ data RawDecl m = RawDecl (DeclLHS m) [RawDecl m] (Expr m)
 
 type RawPrgm m = [RawDecl m] -- TODO: Include [Import], [Export]
 
-data Global m = Global m Name (Expr m)
-  deriving (Eq, Ord, Show)
-
 data Object m = Object m Name [(Name, m)]
   deriving (Eq, Ord, Show)
 
-data Arrow m = Arrow m Name (Expr m)
+data Arrow m = Arrow m Name (Expr m) -- m is result metadata
   deriving (Eq, Ord, Show)
 
-type Prgm m = ([Global m], [Object m], [Arrow m]) -- TODO: Include [Import], [Export]
+type Prgm m = ([Object m], [Arrow m]) -- TODO: Include [Import], [Export]
 
 type ParseErrorRes = ParseErrorBundle String Void
 
