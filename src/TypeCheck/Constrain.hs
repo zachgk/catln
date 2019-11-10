@@ -11,6 +11,10 @@
 
 module TypeCheck.Constrain where
 
+import           Data.Maybe
+import           Control.Monad
+import qualified Data.HashSet as S
+import Data.Graph
 import           Control.Monad.ST
 
 import           Syntax
@@ -30,10 +34,68 @@ equalizeSchemes (SType lb1 ub1, SType lb2 ub2) = let lbBoth = unionRawTypes lb1 
                                                         then SType lbBoth ubBoth
                                                         else SCheckError $ concat ["Type Mismatched: ", show lbBoth, " is not a subtype of ", show ubBoth]
 
-executeConstraint :: Constraint s -> ST s [Constraint s]
-executeConstraint (EqualsKnown pnt tp) = modifyDescriptor pnt (\oldScheme -> equalizeSchemes (oldScheme, SType tp tp)) >> return []
-executeConstraint (EqPoints p1 p2) = union' p1 p2 (\s1 s2 -> return (equalizeSchemes (s1, s2))) >> return []
-executeConstraint cons@(BoundedBy subPnt parentPnt) = do
+tupleCrossProductTypes :: [RawType] -> Maybe RawType
+tupleCrossProductTypes parts = do
+  partLeafs <- mapM fromSum parts
+  return $ RawSumType $ S.fromList $ map RawProdType $ mapM S.toList partLeafs
+  where fromSum (RawSumType leafs) = Just leafs
+        fromSum RawTopType = Nothing
+        fromSum RawBottomType = Nothing
+
+tupleConstrainSumWith :: (([RawLeafType], RawType) -> ([RawLeafType], RawType)) -> (S.HashSet RawLeafType, [RawType]) -> (RawType, [RawType])
+tupleConstrainSumWith constrain (wholeUnparsed, parts) = (whole', parts')
+  where
+    extractWhole (RawProdType leafs) = if length leafs == length parts then Just leafs else Nothing
+    extractWhole _ = Nothing
+    wholeSplit = sequence $ mapMaybe extractWhole $ S.toList wholeUnparsed
+    (wholeSplit', parts') = unzip $ zipWith (curry constrain) wholeSplit parts
+    whole' = RawSumType $ S.fromList $ map RawProdType $ sequence wholeSplit'
+
+-- constrain by intersection
+tupleConstrainUb :: (RawType, [RawType]) -> (RawType, [RawType])
+tupleConstrainUb (RawTopType, parts) = (fromMaybe RawTopType $ tupleCrossProductTypes parts, parts)
+tupleConstrainUb (RawBottomType, parts) = (RawBottomType, parts)
+tupleConstrainUb (RawSumType wholeUnparsed, parts) = tupleConstrainSumWith constrain (wholeUnparsed, parts)
+  where
+    constrain (whole, RawTopType) = (whole, RawSumType $ S.fromList whole)
+    constrain (_, RawBottomType) = error "Constrain ub with RawBottomType"
+    constrain (whole, RawSumType partLeafs) = let leafs = S.intersection (S.fromList whole) partLeafs
+                                                  in (S.toList leafs, RawSumType leafs)
+
+-- constrain by union
+tupleConstrainLb :: (RawType, [RawType]) -> (RawType, [RawType])
+tupleConstrainLb (RawTopType, parts) = (RawTopType, parts)
+tupleConstrainLb (RawBottomType, parts) = (fromMaybe RawBottomType $ tupleCrossProductTypes parts, parts)
+tupleConstrainLb (RawSumType wholeUnparsed, parts) = tupleConstrainSumWith constrain (wholeUnparsed, parts)
+  where
+    constrain (_, RawTopType) = error "Constrain lb with RawTopType"
+    constrain (whole, RawBottomType) = (whole, RawSumType $ S.fromList whole)
+    constrain (whole, RawSumType partLeafs) = let leafs = S.union (S.fromList whole) partLeafs
+                                                  in (S.toList leafs, RawSumType leafs)
+
+arrowHelper :: SubTypeGraph -> RawType -> RawType
+arrowHelper _ RawTopType = RawTopType
+arrowHelper _ RawBottomType = RawBottomType
+arrowHelper (tg, fromVertex, lookupVertex) (RawSumType leafs) = RawSumType $ S.unions $ map f $ S.toList leafs
+  where f leaf = case lookupVertex leaf of
+          Just v -> let (nodes, _, _) = unzip3 $ fromVertex <$> reachable tg v
+                     in S.fromList nodes
+          Nothing -> leafs
+
+arrowForward :: TypeGraph -> RawType -> RawType
+arrowForward (ftg, _) = arrowHelper ftg
+
+arrowBackward :: TypeGraph -> RawType -> RawType
+arrowBackward (_, btg) = arrowHelper btg
+
+lowerUb :: RawType -> RawType -> RawType
+lowerUb ub@(RawSumType ubLeafs) lb | S.size ubLeafs == 1 = unionRawTypes ub lb
+lowerUb _ lb = lb
+
+executeConstraint :: TypeGraph -> Constraint s -> ST s [Constraint s]
+executeConstraint _ (EqualsKnown pnt tp) = modifyDescriptor pnt (\oldScheme -> equalizeSchemes (oldScheme, SType tp tp)) >> return []
+executeConstraint _ (EqPoints p1 p2) = union' p1 p2 (\s1 s2 -> return (equalizeSchemes (s1, s2))) >> return []
+executeConstraint _ cons@(BoundedBy subPnt parentPnt) = do
   subScheme <- descriptor subPnt
   parentScheme <- descriptor parentPnt
   case (subScheme, parentScheme) of
@@ -42,29 +104,57 @@ executeConstraint cons@(BoundedBy subPnt parentPnt) = do
     (SType lb1 ub1, SType _ ub2) -> do
       let subScheme' = SType lb1 (intersectRawTypes ub1 ub2)
       setDescriptor subPnt subScheme'
-      return [cons | isSolved subScheme']
-executeConstraint (IsTupleOf wholePnt partPnts) = do
+      return [cons | not (isSolved subScheme')]
+executeConstraint _ cons@(IsTupleOf wholePnt partPnts) = do
   wholeScheme <- descriptor wholePnt
   partSchemes <- mapM descriptor partPnts
-  return []
+  case (wholeScheme, partSchemes) of
+    (_, pts) | not $ null [p | p@SCheckError{} <- pts] -> return []
+    (SCheckError _, _) -> return []
+    (SType wholeUb wholeLb, _) -> do
+      let (partUbs, partLbs) = unzip $ map (\(SType ub lb) -> (ub, lb)) partSchemes
+      let (wholeUb', partUbs') = tupleConstrainUb (wholeUb, partUbs)
+      let (wholeLb', partLbs') = tupleConstrainLb (wholeLb, partLbs)
+      let wholeScheme' = SType wholeUb' wholeLb'
+      let partSchemes' = zipWith SType partUbs' partLbs'
+      setDescriptor wholePnt wholeScheme'
+      forM_ (zip partPnts partSchemes') $ uncurry setDescriptor
+      return [cons | not (isSolved wholeScheme')]
+executeConstraint typeGraph cons@(ArrowTo srcPnt destPnt) = do
+  srcScheme <- descriptor srcPnt
+  destScheme <- descriptor destPnt
+  case (srcScheme, destScheme) of
+    (SCheckError _, _) -> return []
+    (_, SCheckError _) -> return []
+    (SType srcUb srcLb, SType destUb destLb) -> do
+      let destUb' = intersectRawTypes destUb (arrowForward typeGraph srcUb)
+      let srcUb' = intersectRawTypes srcUb (arrowBackward typeGraph destUb)
+      let destLb' = lowerUb destUb' destLb
+      let srcLb' = lowerUb srcUb' srcLb
+      let srcScheme' = SType srcUb' srcLb'
+      let destScheme' = SType destUb' destLb'
+      setDescriptor srcPnt srcScheme'
+      setDescriptor destPnt destScheme'
+      return [cons | not (isSolved srcScheme' || isSolved destScheme')]
 
 
 abandonConstraints :: Constraint s -> ST s ()
-abandonConstraints = undefined
--- abandonConstraints EqualsKnown{} = error "Bad Type equality"
--- abandonConstraints EqPoints{} = error "Bad point equality"
--- abandonConstraints (HasType subPnt parentPnt) = do
---   subScheme <- descriptor subPnt
---   parentScheme <- descriptor parentPnt
---   case (subScheme, parentScheme) of
---     -- (SKnown _, SUnknown) -> setDescriptor parentPnt $ SCheckError "Failed to unify hasType"
---     (_, _) -> error "Uknown abandon constraint failure"
+abandonConstraints EqualsKnown{} = error "Bad Type equality"
+abandonConstraints EqPoints{} = error "Bad point equality"
+abandonConstraints BoundedBy{} = error "Bad Bounded By"
+abandonConstraints IsTupleOf{} = error "Bad Tuple Of"
+abandonConstraints (ArrowTo srcPnt destPnt) = do
+  subScheme <- descriptor srcPnt
+  parentScheme <- descriptor destPnt
+  case (subScheme, parentScheme) of
+    -- (SKnown _, SUnknown) -> setDescriptor destPnt $ SCheckError "Failed to unify hasType"
+    (_, _) -> error "Uknown abandon constraint failure"
 
-runConstraints :: [Constraint s] -> ST s ()
-runConstraints [] = return ()
-runConstraints cons = do
-  res <- mapM executeConstraint cons
+runConstraints :: TypeGraph -> [Constraint s] -> ST s ()
+runConstraints _ [] = return ()
+runConstraints typeGraph cons = do
+  res <- mapM (executeConstraint typeGraph) cons
   let cons' = concat res
   if cons == cons'
     then mapM_ abandonConstraints cons
-    else runConstraints cons'
+    else runConstraints typeGraph cons'

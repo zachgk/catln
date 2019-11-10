@@ -9,17 +9,27 @@
 --
 --------------------------------------------------------------------
 
+{-# LANGUAGE DeriveGeneric #-}
+
 module Syntax where
 
+import           Data.Hashable
+import qualified Data.HashSet          as S
 import           Data.Void             (Void)
+import           Data.Graph
+import           GHC.Generics          (Generic)
 import           Text.Megaparsec.Error (ParseErrorBundle)
 
 type Name = String
 
-data RawType
+data RawLeafType
   = RawLeafType String
-  | RawSumType [RawType]
-  | RawProdType [RawType]
+  | RawProdType [RawLeafType]
+  deriving (Eq, Ord, Show, Generic)
+instance Hashable RawLeafType
+
+data RawType
+  = RawSumType (S.HashSet RawLeafType)
   | RawTopType
   | RawBottomType
   deriving (Eq, Ord, Show)
@@ -31,10 +41,10 @@ data Type
   deriving (Eq, Ord, Show)
 
 rintType, rfloatType, rboolType, rstrType :: RawType
-rintType = RawLeafType "Integer"
-rfloatType = RawLeafType "Float"
-rboolType = RawLeafType "Boolean"
-rstrType = RawLeafType "String"
+rintType = RawSumType $ S.singleton $ RawLeafType "Integer"
+rfloatType = RawSumType $ S.singleton $ RawLeafType "Float"
+rboolType = RawSumType $ S.singleton $ RawLeafType "Boolean"
+rstrType = RawSumType $ S.singleton $ RawLeafType "String"
 
 intType, floatType, boolType, strType :: Type
 intType = LeafType "Integer"
@@ -89,6 +99,9 @@ data ReplRes m
   | ReplErr ParseErrorRes
   deriving (Eq, Show)
 
+-- implicit graph
+type SubTypeGraph = (Graph, Vertex -> (RawLeafType, RawLeafType, [RawLeafType]), RawLeafType -> Maybe Vertex)
+type TypeGraph = (SubTypeGraph, SubTypeGraph) -- (forwards, backwards)
 
 
 
@@ -99,55 +112,33 @@ newtype PreTyped = PreTyped RawType
 newtype Typed = Typed Type
   deriving (Eq, Ord, Show)
 
+-- Maybe rename to subtypeOf
 hasRawType :: RawType -> RawType -> Bool
 hasRawType _ RawTopType = True
 hasRawType RawTopType t = t == RawTopType
 hasRawType RawBottomType _ = True
 hasRawType t RawBottomType = t == RawBottomType
-hasRawType subType@RawLeafType{} parentType@RawLeafType{} = subType == parentType
-hasRawType subType@RawLeafType{} (RawSumType tps) = any (hasRawType subType) tps
-hasRawType RawLeafType{} RawProdType{} = False
-hasRawType (RawSumType subs) parents@(RawSumType _) = all (`hasRawType` parents) subs
-hasRawType RawSumType{} _ = False
-hasRawType (RawProdType subs) (RawProdType parents) | length subs /= length parents = False
-hasRawType (RawProdType subs) (RawProdType parents) = all (uncurry hasRawType) $ zip subs parents
-hasRawType RawProdType{} _ = False
+hasRawType (RawSumType subLeafs) (RawSumType superLeafs) = all (`elem` superLeafs) subLeafs
 
 unionRawTypes :: RawType -> RawType -> RawType
 unionRawTypes RawBottomType t = t
 unionRawTypes t RawBottomType = t
 unionRawTypes RawTopType _ = RawTopType
 unionRawTypes _ RawTopType = RawTopType
-unionRawTypes t1@RawLeafType{} t2 = unionRawTypes (RawSumType [t1]) t2
-unionRawTypes t1 t2@RawLeafType{} = unionRawTypes t1 (RawSumType [t2])
-unionRawTypes t1@RawProdType{} t2 = unionRawTypes (RawSumType [t1]) t2
-unionRawTypes t1 t2@RawProdType{} = unionRawTypes t1 (RawSumType [t2])
-unionRawTypes (RawSumType []) s2s@RawSumType{} = s2s
-unionRawTypes (RawSumType (t1:t1s)) s2s@(RawSumType t2s) = if hasRawType t1 s2s then unionRawTypes (RawSumType t1s) s2s else unionRawTypes (RawSumType t1s) (RawSumType (t1:t2s))
+unionRawTypes (RawSumType subLeafs) (RawSumType superLeafs) = RawSumType $ S.union subLeafs superLeafs
 
 intersectRawTypes :: RawType -> RawType -> RawType
 intersectRawTypes RawTopType t = t
 intersectRawTypes t RawTopType = t
 intersectRawTypes RawBottomType _ = RawBottomType
 intersectRawTypes _ RawBottomType = RawBottomType
-intersectRawTypes t1@RawLeafType{} t2 = intersectRawTypes (RawSumType [t1]) t2
-intersectRawTypes t1 t2@RawLeafType{} = intersectRawTypes t1 (RawSumType [t2])
-intersectRawTypes t1@RawProdType{} t2 = intersectRawTypes (RawSumType [t1]) t2
-intersectRawTypes t1 t2@RawProdType{} = intersectRawTypes t1 (RawSumType [t2])
-intersectRawTypes (RawSumType []) (RawSumType _) = RawSumType []
-intersectRawTypes (RawSumType (t1:t1s)) s2s@(RawSumType t2s) = RawSumType $ first ++ rst
-  where first = [t1 | any (hasRawType t1) t2s]
-        (RawSumType rst) = intersectRawTypes (RawSumType t1s) s2s
+intersectRawTypes (RawSumType subLeafs) (RawSumType superLeafs) = RawSumType $ S.intersection subLeafs superLeafs
 
 typedIs :: Typed -> Type -> Bool
 typedIs (Typed t1) t2 = t1 == t2
 
 getExprMeta :: Expr m -> m
 getExprMeta expr = case expr of
-  CExpr m _  -> m
-  Var m _    -> m
+  CExpr m _   -> m
+  Var m _     -> m
   Tuple m _ _ -> m
-
--- getDeclName :: Decl m -> Name
--- getDeclName (Decl (DeclLHS _ name _) _) = name
-

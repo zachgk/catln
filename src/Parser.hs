@@ -34,15 +34,6 @@ type PReplRes = ReplRes ParseMeta
 emptyMeta :: ParseMeta
 emptyMeta = PreTyped RawTopType
 
-intMeta :: ParseMeta
-intMeta = PreTyped rintType
-
-boolMeta :: ParseMeta
-boolMeta = PreTyped rboolType
-
-strMeta :: ParseMeta
-strMeta = PreTyped rstrType
-
 mkOp1 :: ParseMeta -> String -> PExpr -> PExpr
 mkOp1 meta op x = Call meta op [x]
 
@@ -51,25 +42,25 @@ mkOp2 meta op x y = Call meta op [x, y]
 
 ops :: [[Operator Parser PExpr]]
 ops = [
-    [ Prefix (mkOp1 intMeta "-"  <$ symbol "-")
-    , Prefix (mkOp1 boolMeta "~" <$ symbol "~")
+    [ Prefix (mkOp1 emptyMeta "-"  <$ symbol "-")
+    , Prefix (mkOp1 emptyMeta "~" <$ symbol "~")
     ],
-    [ InfixL (mkOp2 intMeta "*" <$ symbol "*")
-    , InfixL (mkOp2 intMeta "/" <$ symbol "/")
+    [ InfixL (mkOp2 emptyMeta "*" <$ symbol "*")
+    , InfixL (mkOp2 emptyMeta "/" <$ symbol "/")
     ],
-    [ InfixL (mkOp2 intMeta "+" <$ symbol "+")
-    , InfixL (mkOp2 intMeta "-" <$ symbol "-")
+    [ InfixL (mkOp2 emptyMeta "+" <$ symbol "+")
+    , InfixL (mkOp2 emptyMeta "-" <$ symbol "-")
     ],
-    [ InfixL (mkOp2 boolMeta "<" <$ symbol "<")
-    , InfixL (mkOp2 boolMeta ">" <$ symbol ">")
-    , InfixL (mkOp2 boolMeta "<=" <$ symbol "<=")
-    , InfixL (mkOp2 boolMeta ">=" <$ symbol ">=")
-    , InfixL (mkOp2 boolMeta "==" <$ symbol "==")
-    , InfixL (mkOp2 boolMeta "!=" <$ symbol "!=")
+    [ InfixL (mkOp2 emptyMeta "<" <$ symbol "<")
+    , InfixL (mkOp2 emptyMeta ">" <$ symbol ">")
+    , InfixL (mkOp2 emptyMeta "<=" <$ symbol "<=")
+    , InfixL (mkOp2 emptyMeta ">=" <$ symbol ">=")
+    , InfixL (mkOp2 emptyMeta "==" <$ symbol "==")
+    , InfixL (mkOp2 emptyMeta "!=" <$ symbol "!=")
     ],
-    [ InfixL (mkOp2 boolMeta "&" <$ symbol "&")
-    , InfixL (mkOp2 boolMeta "|" <$ symbol "|")
-    , InfixL (mkOp2 boolMeta "^" <$ symbol "^")
+    [ InfixL (mkOp2 emptyMeta "&" <$ symbol "&")
+    , InfixL (mkOp2 emptyMeta "|" <$ symbol "|")
+    , InfixL (mkOp2 emptyMeta "^" <$ symbol "^")
     ]
   ]
 
