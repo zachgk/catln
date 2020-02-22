@@ -18,6 +18,7 @@ import           Data.UnionFind.ST
 
 import           Syntax
 import           TypeCheck.Common
+import           TypeCheck.TypeGraph (buildTypeGraph)
 
 makeBaseFEnv :: ST s (FEnv s)
 makeBaseFEnv = return $ FEnv [] H.empty []
@@ -41,19 +42,8 @@ makeBaseFEnv = return $ FEnv [] H.empty []
 --           pargs <- forM args (fresh . SType RawBottomType )
 --           return $ fInsert e opName (PntFun p pargs)
 
-getPnt :: VarMeta s -> Pnt s
-getPnt x = x
-
-addErr :: FEnv s -> String -> FEnv s
-addErr (FEnv cons pmap errs) newErr = FEnv cons pmap (newErr:errs)
-
 addConstraints :: FEnv s -> [Constraint s] -> FEnv s
 addConstraints (FEnv oldCons defMap errs) newCons = FEnv (newCons ++ oldCons) defMap errs
-
-fLookup :: FEnv s -> String -> (Maybe (VObject s), FEnv s)
-fLookup env@(FEnv _ pmap _) k = case H.lookup k pmap of
-  Just v  -> (Just v, env)
-  Nothing -> (Nothing, addErr env ("Failed to lookup " ++ k))
 
 fInsert :: FEnv s -> String -> VObject s -> FEnv s
 fInsert (FEnv cons pmap errs) k v = FEnv cons (H.insert k v pmap) errs
@@ -100,7 +90,7 @@ fromExpr env1 (Tuple m name exprs) = do
     (Just (Object om _ _), e) -> do
       (exprVals, env3) <- mapMWithFEnv e fromExpr (map snd exprs)
       let exprs' = zip (map fst exprs) exprVals
-      let env4 = addConstraints env3 [BoundedBy p (getPnt om), IsTupleOf (getPnt m') (map (getPnt . getExprMeta) exprVals)]
+      let env4 = addConstraints env3 [BoundedBy p (getPnt om), IsTupleOf (getPnt m') (map getPntExpr exprVals)]
       return (Tuple m' name exprs', env4)
 
 arrowAddScope :: FEnv s -> VObject s -> ST s (FEnv s)
@@ -119,7 +109,7 @@ fromArrow env1 (Arrow m objName expr) = case fLookup env1 objName of
       env3 <- arrowAddScope env2 obj
       (vExpr, env4) <- fromExpr env3 expr
       (m', p, env5) <- fromMetaP env4 m
-      let env6 = addConstraints env5 [ArrowTo (getPnt $ getExprMeta vExpr) p]
+      let env6 = addConstraints env5 [ArrowTo (getPntExpr vExpr) p]
       let arrow' = Arrow m' objName vExpr
       return (arrow', fReplaceMap env6 env1)
 
@@ -136,9 +126,9 @@ addObject env (Object m name args) = do
   let env3 = fInsert env2 name obj'
   return (obj', env3)
 
-
-fromPrgm :: FEnv s -> PPrgm -> ST s (VPrgm s, FEnv s)
+fromPrgm :: FEnv s -> PPrgm -> ST s (VPrgm s, TypeGraph s, FEnv s)
 fromPrgm env (objects, arrows) = do
   (objs', env') <- mapMWithFEnv env addObject objects
   (arrows', env'') <- mapMWithFEnv env' fromArrow arrows
-  return ((objs', arrows'), env'')
+  let (env''', typeGraph) = buildTypeGraph env'' arrows'
+  return ((objs', arrows'), typeGraph, env''')

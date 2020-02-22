@@ -14,11 +14,11 @@ module TypeCheck.Constrain where
 import           Data.Maybe
 import           Control.Monad
 import qualified Data.HashSet as S
-import Data.Graph
 import           Control.Monad.ST
 
 import           Syntax
 import           TypeCheck.Common
+import           TypeCheck.TypeGraph (reaches)
 import           Data.UnionFind.ST
 
 isSolved :: Scheme -> Bool
@@ -73,26 +73,11 @@ tupleConstrainLb (RawSumType wholeUnparsed, parts) = tupleConstrainSumWith const
     constrain (whole, RawSumType partLeafs) = let leafs = S.union (S.fromList whole) partLeafs
                                                   in (S.toList leafs, RawSumType leafs)
 
-arrowHelper :: SubTypeGraph -> RawType -> RawType
-arrowHelper _ RawTopType = RawTopType
-arrowHelper _ RawBottomType = RawBottomType
-arrowHelper (tg, fromVertex, lookupVertex) (RawSumType leafs) = RawSumType $ S.unions $ map f $ S.toList leafs
-  where f leaf = case lookupVertex leaf of
-          Just v -> let (nodes, _, _) = unzip3 $ fromVertex <$> reachable tg v
-                     in S.fromList nodes
-          Nothing -> leafs
-
-arrowForward :: TypeGraph -> RawType -> RawType
-arrowForward (ftg, _) = arrowHelper ftg
-
-arrowBackward :: TypeGraph -> RawType -> RawType
-arrowBackward (_, btg) = arrowHelper btg
-
 lowerUb :: RawType -> RawType -> RawType
 lowerUb ub@(RawSumType ubLeafs) lb | S.size ubLeafs == 1 = unionRawTypes ub lb
 lowerUb _ lb = lb
 
-executeConstraint :: TypeGraph -> Constraint s -> ST s [Constraint s]
+executeConstraint :: TypeGraph s -> Constraint s -> ST s [Constraint s]
 executeConstraint _ (EqualsKnown pnt tp) = modifyDescriptor pnt (\oldScheme -> equalizeSchemes (oldScheme, SType tp tp)) >> return []
 executeConstraint _ (EqPoints p1 p2) = union' p1 p2 (\s1 s2 -> return (equalizeSchemes (s1, s2))) >> return []
 executeConstraint _ cons@(BoundedBy subPnt parentPnt) = do
@@ -127,15 +112,22 @@ executeConstraint typeGraph cons@(ArrowTo srcPnt destPnt) = do
     (SCheckError _, _) -> return []
     (_, SCheckError _) -> return []
     (SType srcUb srcLb, SType destUb destLb) -> do
-      let destUb' = intersectRawTypes destUb (arrowForward typeGraph srcUb)
-      let srcUb' = intersectRawTypes srcUb (arrowBackward typeGraph destUb)
-      let destLb' = lowerUb destUb' destLb
-      let srcLb' = lowerUb srcUb' srcLb
-      let srcScheme' = SType srcUb' srcLb'
-      let destScheme' = SType destUb' destLb'
-      setDescriptor srcPnt srcScheme'
-      setDescriptor destPnt destScheme'
-      return [cons | not (isSolved srcScheme' || isSolved destScheme')]
+      maybeDestUbByGraph <- reaches typeGraph srcUb
+      -- Commenting out reachedBy and usages until it is deemed necessary
+      -- srcUbByGraph <- reachedBy typeGraph destUb
+      case maybeDestUbByGraph of
+        Just destUbByGraph -> do
+          let destUb' = intersectRawTypes destUb destUbByGraph
+          -- let srcUb' = intersectRawTypes srcUb srcUbByGraph
+          let destLb' = lowerUb destUb' destLb
+          -- let srcLb' = lowerUb srcUb' srcLb
+          -- let srcScheme' = SType srcUb' srcLb'
+          let destScheme' = SType destUb' destLb'
+          -- setDescriptor srcPnt srcScheme'
+          setDescriptor destPnt destScheme'
+          -- return [cons | not (isSolved srcScheme' || isSolved destScheme')]
+          return [cons | not (isSolved destScheme')]
+        Nothing -> return []
 
 
 abandonConstraints :: Constraint s -> ST s ()
@@ -150,7 +142,7 @@ abandonConstraints (ArrowTo srcPnt destPnt) = do
     -- (SKnown _, SUnknown) -> setDescriptor destPnt $ SCheckError "Failed to unify hasType"
     (_, _) -> error "Uknown abandon constraint failure"
 
-runConstraints :: TypeGraph -> [Constraint s] -> ST s ()
+runConstraints :: TypeGraph s -> [Constraint s] -> ST s ()
 runConstraints _ [] = return ()
 runConstraints typeGraph cons = do
   res <- mapM (executeConstraint typeGraph) cons

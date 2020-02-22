@@ -35,12 +35,10 @@ import           TypeCheck.Constrain (runConstraints)
 --       toPrgm vprgm
 --     _ -> return $ Left errs
 
-typeGraph = undefined
-
 traceTestPrgm :: PPrgm -> Either [TypeCheckError] [SPrgm]
 traceTestPrgm pprgm = runST $ do
   baseFEnv <- makeBaseFEnv
-  (vprgm, FEnv cons _ errs) <- fromPrgm baseFEnv pprgm
+  (vprgm, typeGraph, FEnv cons _ errs) <- fromPrgm baseFEnv pprgm
   case errs of
     [] -> do
       sprgm1 <- showPrgm vprgm
@@ -52,7 +50,7 @@ traceTestPrgm pprgm = runST $ do
 showTestPrgm :: PPrgm -> Either [TypeCheckError] SPrgm
 showTestPrgm pprgm = runST $ do
   baseFEnv <- makeBaseFEnv
-  (vprgm, FEnv _ _ errs) <- fromPrgm baseFEnv pprgm
+  (vprgm, typeGraph, FEnv _ _ errs) <- fromPrgm baseFEnv pprgm
   case errs of
     [] -> do
       sprgm <- showPrgm vprgm

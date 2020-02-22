@@ -19,7 +19,7 @@ import           Syntax
 type TypeCheckError = String
 
 data Scheme
-  = SType RawType RawType
+  = SType RawType RawType -- SType lower upper
   | SCheckError String
   deriving (Eq, Ord, Show)
 
@@ -63,3 +63,21 @@ type TypedMeta = Typed
 type TExpr = Expr TypedMeta
 type TPrgm = Prgm TypedMeta
 type TReplRes = ReplRes TypedMeta
+
+
+-- implicit graph
+type TypeGraph s = H.HashMap RawLeafType [Pnt s]
+
+getPnt :: VarMeta s -> Pnt s
+getPnt x = x
+
+getPntExpr :: VExpr s -> Pnt s
+getPntExpr = getPnt . getExprMeta
+
+addErr :: FEnv s -> String -> FEnv s
+addErr (FEnv cons pmap errs) newErr = FEnv cons pmap (newErr:errs)
+
+fLookup :: FEnv s -> String -> (Maybe (VObject s), FEnv s)
+fLookup env@(FEnv _ pmap _) k = case H.lookup k pmap of
+  Just v  -> (Just v, env)
+  Nothing -> (Nothing, addErr env ("Failed to lookup " ++ k))

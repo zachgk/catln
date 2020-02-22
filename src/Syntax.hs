@@ -16,7 +16,7 @@ module Syntax where
 import           Data.Hashable
 import qualified Data.HashSet          as S
 import           Data.Void             (Void)
-import           Data.Graph
+
 import           GHC.Generics          (Generic)
 import           Text.Megaparsec.Error (ParseErrorBundle)
 
@@ -24,7 +24,7 @@ type Name = String
 
 data RawLeafType
   = RawLeafType String
-  | RawProdType [RawLeafType]
+  | RawProdType String [(String, RawLeafType)]
   deriving (Eq, Ord, Show, Generic)
 instance Hashable RawLeafType
 
@@ -86,7 +86,7 @@ type RawPrgm m = [RawDecl m] -- TODO: Include [Import], [Export]
 data Object m = Object m Name [(Name, m)]
   deriving (Eq, Ord, Show)
 
-data Arrow m = Arrow m Name (Expr m) -- m is result metadata
+data Arrow m = Arrow m (Object m) (Expr m) -- m is result metadata
   deriving (Eq, Ord, Show)
 
 type Prgm m = ([Object m], [Arrow m]) -- TODO: Include [Import], [Export]
@@ -98,10 +98,6 @@ data ReplRes m
   | ReplExpr (Expr m)
   | ReplErr ParseErrorRes
   deriving (Eq, Show)
-
--- implicit graph
-type SubTypeGraph = (Graph, Vertex -> (RawLeafType, RawLeafType, [RawLeafType]), RawLeafType -> Maybe Vertex)
-type TypeGraph = (SubTypeGraph, SubTypeGraph) -- (forwards, backwards)
 
 
 
