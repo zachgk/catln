@@ -13,43 +13,50 @@ module TypeCheck.Decode where
 
 import           Control.Monad
 import           Control.Monad.ST
+import           Control.Applicative
 import           Data.Either
 import           Data.Functor
+import Data.Hashable (Hashable)
 import qualified Data.HashMap.Strict as H
+import qualified Data.HashSet          as S
 import           Data.UnionFind.ST
 
 import           Syntax
 import           TypeCheck.Common
 
-merge2TypeCheckResults :: TypeCheckResult a -> TypeCheckResult b -> TypeCheckResult (a, b)
-merge2TypeCheckResults a b = case (a, b) of
+mergeTypeCheckResultsList :: [TypeCheckResult r] -> TypeCheckResult [r]
+mergeTypeCheckResultsList res = case partitionEithers res of
+  ([], rs) -> Right rs
+  (ls, _)  -> Left $ concat ls
+
+mergeTypeCheckResultsMap :: (Eq a, Hashable a) => H.HashMap a (TypeCheckResult b) -> TypeCheckResult (H.HashMap a b)
+mergeTypeCheckResultsMap res = fmap H.fromList $ mergeTypeCheckResultsList $ map (\(a, typeCheckResultB) -> fmap (a,) typeCheckResultB) $ H.toList res
+
+mergeTypeCheckResultsPair :: (TypeCheckResult a, TypeCheckResult b) -> TypeCheckResult (a, b)
+mergeTypeCheckResultsPair (a, b) = case (a,b) of
   (Right a', Right b') -> Right (a', b')
   (a', b')             -> Left $ fromLeft [] a' ++ fromLeft [] b'
 
-mergeTypeCheckResults :: [TypeCheckResult r] -> TypeCheckResult [r]
-mergeTypeCheckResults res = case partitionEithers res of
-  ([], rs) -> Right rs
-  (ls, _)  -> Left $ concat ls
+mergeTypeCheckResultsTriple :: (TypeCheckResult a, TypeCheckResult b, TypeCheckResult c) -> TypeCheckResult (a, b, c)
+mergeTypeCheckResultsTriple (a, b, c) = case (a, b, c) of
+  (Right a', Right b', Right c') -> Right (a', b', c')
+  (a', b', c')             -> Left $ fromLeft [] a' ++ fromLeft [] b' ++ fromLeft [] c'
+
+fromRawLeafType :: RawLeafType -> LeafType
+fromRawLeafType (RawLeafType s) = LeafType s
+fromRawLeafType (RawProdType name ts) = ProdType name ts
 
 fromRawType :: RawType -> Maybe Type
 fromRawType RawTopType = Nothing
 fromRawType RawBottomType = Nothing
-fromRawType (RawLeafType s) = Just $ LeafType s
-fromRawType (RawSumType [t]) = fromRawType t
-fromRawType (RawSumType ts) = do
-  ts' <- mapM fromRawType ts
-  Just $ SumType ts'
-fromRawType (RawProdType ts) = do
-  ts' <- mapM fromRawType ts
-  Just $ ProdType ts'
-
+fromRawType (RawSumType ts) = Just $ SumType $ S.map fromRawLeafType ts
 
 toMeta :: VarMeta s -> String -> ST s (TypeCheckResult Typed)
 toMeta p name = do
   scheme <- descriptor p
   return $ case scheme of
     SCheckError s -> Left ["CheckError on " ++ name ++ ": " ++ s]
-    SType lb ub -> case fromRawType ub of
+    SType ub lb -> case fromRawType ub of
       Nothing -> Left ["CheckError on " ++ show name ++ ": \ntLower Bound: " ++ show lb ++ "\n\tUpper Bound: " ++ show ub]
       Just t -> Right $ Typed t
 
@@ -60,31 +67,35 @@ toExpr (CExpr m c) = do
 toExpr (Var m name) = do
   res <- toMeta m $ "variable " ++ name
   return $ res >>= (\m' -> Right $ Var m' name)
--- toExpr (Call m name exprs) = do
---   res1 <- toMeta m $ "Function call " ++ name
---   res2 <- mapM toExpr exprs
---   return $ case (res1, mergeTypeCheckResults res2) of
---     (Right m', Right exprs') -> Right $ Call m' name exprs'
---     (a, b)                   -> Left $ fromLeft [] a ++ fromLeft [] b
+toExpr (Tuple m name args) = do
+  m' <- toMeta m $ "Tuple_" ++ name
+  args' <- mapM toExpr args
+  return $ (\(m'', args'') -> Tuple m'' name args'') <$> mergeTypeCheckResultsPair (m', mergeTypeCheckResultsMap args')
 
-toDeclLHS :: VDeclLHS s -> ST s (TypeCheckResult TDeclLHS)
-toDeclLHS (DeclLHS m name [] ) = do
-  res1 <- toMeta m $ "Declaration Return Type " ++ name
-  return $ res1 >>= (\m' -> Right $ DeclLHS m' name [])
-toDeclLHS (DeclLHS m name ((an, am):args) ) = do
-  res1 <- toMeta am $ "Declaration Argument: " ++ name ++ "." ++ an
-  res2 <- toDeclLHS (DeclLHS m name args)
-  return $ merge2TypeCheckResults res1 res2 >>= (\(am', DeclLHS m' _ args') -> Right $ DeclLHS m' name ((an, am'):args'))
+toObjectArg :: Name -> (Name, VarMeta s) -> ST s (TypeCheckResult (Name, Typed))
+toObjectArg objName (name, m) = do
+  m' <- toMeta m $ "Arg_" ++ objName ++ "." ++ name
+  return $ case m' of
+    Left m'' -> Left m''
+    Right m'' -> Right (name, m'')
 
+toObject :: VObject s -> ST s (TypeCheckResult TObject)
+toObject (Object m name args) = do
+  m' <- toMeta m $ "Object_" ++ name
+  args' <- mapM (toObjectArg name) $ H.toList args
+  return $ (\(m'', args'') -> Object m'' name args'') <$> mergeTypeCheckResultsPair (m', H.fromList <$> mergeTypeCheckResultsList args')
 
--- toDecl :: VDecl s -> ST s (TypeCheckResult TDecl)
--- toDecl (Decl lhs expr) = do
---   res1 <- toDeclLHS lhs
---   res2 <- toExpr expr
---   return $ merge2TypeCheckResults res1 res2 >>= (\(lhs', expr') -> Right $ Decl lhs' expr')
+toArrow :: VArrow s -> ST s (TypeCheckResult TArrow)
+toArrow (Arrow m obj expr) = do
+  m' <- toMeta m "Arrow"
+  obj' <- toObject obj
+  expr' <- toExpr expr
+  return $ (\(m'', obj'', expr'') -> Arrow m'' obj'' expr'') <$> mergeTypeCheckResultsTriple (m', obj', expr')
 
 toPrgm :: VPrgm s -> ST s (TypeCheckResult TPrgm)
-toPrgm = undefined
--- toPrgm decls = do
---   res <- mapM toDecl decls
---   return $ mergeTypeCheckResults res
+toPrgm (objects, arrows) = do
+  objects' <- mapM toObject objects
+  let objects'' = mergeTypeCheckResultsList objects'
+  arrows' <- mapM toArrow arrows
+  let arrows'' = mergeTypeCheckResultsList arrows'
+  return $ mergeTypeCheckResultsPair (objects'', arrows'')

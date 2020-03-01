@@ -14,6 +14,7 @@
 module Syntax where
 
 import           Data.Hashable
+import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet          as S
 import           Data.Void             (Void)
 
@@ -24,7 +25,7 @@ type Name = String
 
 data RawLeafType
   = RawLeafType String
-  | RawProdType String [(String, RawLeafType)]
+  | RawProdType String (H.HashMap String RawLeafType)
   deriving (Eq, Ord, Show, Generic)
 instance Hashable RawLeafType
 
@@ -34,10 +35,13 @@ data RawType
   | RawBottomType
   deriving (Eq, Ord, Show)
 
-data Type
+data LeafType
   = LeafType String
-  | SumType [Type]
-  | ProdType [Type]
+  | ProdType String (H.HashMap String RawLeafType)
+  deriving (Eq, Ord, Show, Generic)
+instance Hashable LeafType
+
+newtype Type = SumType (S.HashSet LeafType)
   deriving (Eq, Ord, Show)
 
 rintType, rfloatType, rboolType, rstrType :: RawType
@@ -47,10 +51,10 @@ rboolType = RawSumType $ S.singleton $ RawLeafType "Boolean"
 rstrType = RawSumType $ S.singleton $ RawLeafType "String"
 
 intType, floatType, boolType, strType :: Type
-intType = LeafType "Integer"
-floatType = LeafType "Float"
-boolType = LeafType "Boolean"
-strType = LeafType "String"
+intType = SumType $ S.singleton $ LeafType "Integer"
+floatType = SumType $ S.singleton $ LeafType "Float"
+boolType = SumType $ S.singleton $ LeafType "Boolean"
+strType = SumType $ S.singleton $ LeafType "String"
 
 newtype Import = Import String
   deriving (Eq, Ord, Show)
@@ -69,10 +73,10 @@ type RawExpr = Expr
 data Expr m
   = CExpr m Constant
   | Var m Name
-  | Tuple m Name [(Name, Expr m)]
+  | Tuple m Name (H.HashMap Name (Expr m))
   deriving (Eq, Ord, Show)
 
-data DeclLHS m = DeclLHS m Name [(Name,m)]
+data DeclLHS m = DeclLHS m Name (H.HashMap Name m)
   deriving (Eq, Ord, Show)
 
 data RawDecl m = RawDecl (DeclLHS m) [RawDecl m] (Expr m)
@@ -83,7 +87,7 @@ data RawDecl m = RawDecl (DeclLHS m) [RawDecl m] (Expr m)
 
 type RawPrgm m = [RawDecl m] -- TODO: Include [Import], [Export]
 
-data Object m = Object m Name [(Name, m)]
+data Object m = Object m Name (H.HashMap Name m)
   deriving (Eq, Ord, Show)
 
 data Arrow m = Arrow m (Object m) (Expr m) -- m is result metadata

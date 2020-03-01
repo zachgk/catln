@@ -13,6 +13,7 @@ module TypeCheck.Encode where
 
 import           Control.Monad
 import           Control.Monad.ST
+import Data.Hashable (Hashable)
 import qualified Data.HashMap.Strict as H
 import           Data.UnionFind.ST
 
@@ -38,8 +39,8 @@ makeBaseFEnv = return $ FEnv [] H.empty []
 --             ]
 --   foldM f env1 ops
 --   where f e (opName, retType, args) = do
---           p <- fresh (SType RawBottomType retType)
---           pargs <- forM args (fresh . SType RawBottomType )
+--           p <- fresh (SType retType RawBottomType)
+--           pargs <- forM args (fresh . (`SType` RawBottomType))
 --           return $ fInsert e opName (PntFun p pargs)
 
 addConstraints :: FEnv s -> [Constraint s] -> FEnv s
@@ -53,7 +54,7 @@ fReplaceMap (FEnv cons _ errs1) (FEnv _ pmap errs2) = FEnv cons pmap (errs1 ++ e
 
 fromMetaP :: FEnv s -> PreMeta -> ST s (VarMeta s, Pnt s, FEnv s)
 fromMetaP env (PreTyped mt) = do
-  p <- fresh (SType RawBottomType mt)
+  p <- fresh (SType mt RawBottomType)
   return (p, p, env)
 
 fromMeta :: FEnv s -> PreMeta -> ST s (VarMeta s, FEnv s)
@@ -66,6 +67,24 @@ mapMWithFEnv env f = foldM f' ([], env)
   where f' (acc, e) a = do
           (b, e') <- f e a
           return (b:acc, e')
+
+mapMWithFEnvMap :: (Eq k, Hashable k) => FEnv s -> (FEnv s -> a -> ST s (b, FEnv s)) -> H.HashMap k a -> ST s (H.HashMap k b, FEnv s)
+mapMWithFEnvMap env f map = do
+  (res, env2) <- mapMWithFEnv env f' (H.toList map)
+  return (H.fromList res, env2)
+  where
+    f' e (k, a) = do
+      (b, e2) <- f e a
+      return ((k, b), e2)
+
+mapMWithFEnvMapWithKey :: (Eq k, Hashable k) => FEnv s -> (FEnv s -> (k, a) -> ST s ((k, b), FEnv s)) -> H.HashMap k a -> ST s (H.HashMap k b, FEnv s)
+mapMWithFEnvMapWithKey env f map = do
+  (res, env2) <- mapMWithFEnv env f' (H.toList map)
+  return (H.fromList res, env2)
+  where
+    f' e (k, a) = do
+      ((k2, b), e2) <- f e (k, a)
+      return ((k2, b), e2)
 
 fromExpr :: FEnv s -> PExpr -> ST s (VExpr s, FEnv s)
 fromExpr env (CExpr m (CInt i)) = do
@@ -88,29 +107,27 @@ fromExpr env1 (Tuple m name exprs) = do
   case fLookup env2 name of
     (Nothing, _)          -> error $ "Could not find tuple object " ++ name
     (Just (Object om _ _), e) -> do
-      (exprVals, env3) <- mapMWithFEnv e fromExpr (map snd exprs)
-      let exprs' = zip (map fst exprs) exprVals
-      let env4 = addConstraints env3 [BoundedBy p (getPnt om), IsTupleOf (getPnt m') (map getPntExpr exprVals)]
+      (exprs', env3) <- mapMWithFEnvMap e fromExpr exprs
+      let env4 = addConstraints env3 [BoundedBy p (getPnt om), IsTupleOf (getPnt m') (fmap getPntExpr exprs')]
       return (Tuple m' name exprs', env4)
 
 arrowAddScope :: FEnv s -> VObject s -> ST s (FEnv s)
 arrowAddScope env1 (Object meta _ args) = do
-  env2 <- foldM aux env1 args
-  let argMetas = map snd args
-  let env3 = addConstraints env2 [IsTupleOf meta argMetas]
+  env2 <- foldM aux env1 $ H.toList args
+  let env3 = addConstraints env2 [IsTupleOf meta args]
   return env3
   where aux :: FEnv s -> (String, VarMeta s) -> ST s (FEnv s)
-        aux e (n, m) = return $ fInsert e n (Object m n [])
+        aux e (n, m) = return $ fInsert e n (Object m n H.empty)
 
 fromArrow :: FEnv s -> PArrow -> ST s (VArrow s, FEnv s)
-fromArrow env1 (Arrow m objName expr) = case fLookup env1 objName of
+fromArrow env1 (Arrow m (Object _ objName _) expr) = case fLookup env1 objName of
     (Nothing, _) -> error $ "Failed to find object " ++ objName
     (Just obj, env2) -> do
       env3 <- arrowAddScope env2 obj
       (vExpr, env4) <- fromExpr env3 expr
       (m', p, env5) <- fromMetaP env4 m
       let env6 = addConstraints env5 [ArrowTo (getPntExpr vExpr) p]
-      let arrow' = Arrow m' objName vExpr
+      let arrow' = Arrow m' obj vExpr
       return (arrow', fReplaceMap env6 env1)
 
 addObjArg :: FEnv s -> (Name, PreMeta) -> ST s ((Name, VarMeta s), FEnv s)
@@ -121,7 +138,7 @@ addObjArg env (n, m) = do
 addObject :: FEnv s -> PObject -> ST s (VObject s, FEnv s)
 addObject env (Object m name args) = do
   (m', env1) <- fromMeta env m
-  (args', env2) <- mapMWithFEnv env1 addObjArg args
+  (args', env2) <- mapMWithFEnvMapWithKey env1 addObjArg args
   let obj' = Object m' name args'
   let env3 = fInsert env2 name obj'
   return (obj', env3)
@@ -130,5 +147,5 @@ fromPrgm :: FEnv s -> PPrgm -> ST s (VPrgm s, TypeGraph s, FEnv s)
 fromPrgm env (objects, arrows) = do
   (objs', env') <- mapMWithFEnv env addObject objects
   (arrows', env'') <- mapMWithFEnv env' fromArrow arrows
-  let (env''', typeGraph) = buildTypeGraph env'' arrows'
+  (env''', typeGraph) <- buildTypeGraph env'' arrows'
   return ((objs', arrows'), typeGraph, env''')

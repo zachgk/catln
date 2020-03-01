@@ -19,7 +19,7 @@ import           Syntax
 type TypeCheckError = String
 
 data Scheme
-  = SType RawType RawType -- SType lower upper
+  = SType RawType RawType -- SType upper lower
   | SCheckError String
   deriving (Eq, Ord, Show)
 
@@ -32,7 +32,7 @@ data Constraint s
   = EqualsKnown (Pnt s) RawType
   | EqPoints (Pnt s) (Pnt s)
   | BoundedBy (Pnt s) (Pnt s)
-  | IsTupleOf (Pnt s) [Pnt s]
+  | IsTupleOf (Pnt s) (H.HashMap String (Pnt s))
   | ArrowTo (Pnt s) (Pnt s)
   deriving (Eq)
 
@@ -61,6 +61,8 @@ type VReplRes s = ReplRes (VarMeta s)
 
 type TypedMeta = Typed
 type TExpr = Expr TypedMeta
+type TArrow = Arrow TypedMeta
+type TObject = Object TypedMeta
 type TPrgm = Prgm TypedMeta
 type TReplRes = ReplRes TypedMeta
 
@@ -81,3 +83,7 @@ fLookup :: FEnv s -> String -> (Maybe (VObject s), FEnv s)
 fLookup env@(FEnv _ pmap _) k = case H.lookup k pmap of
   Just v  -> (Just v, env)
   Nothing -> (Nothing, addErr env ("Failed to lookup " ++ k))
+
+schemeError :: Scheme -> Bool
+schemeError SCheckError{} = True
+schemeError SType{} = False

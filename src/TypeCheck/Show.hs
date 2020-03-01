@@ -33,18 +33,19 @@ showExpr (Tuple m name args) = do
   let args' = zip (map fst args) argVals
   return (Tuple m' name args')
 
-showArrow :: VArrow s -> ST s SArrow
-showArrow (Arrow m name expr) = do
-  m' <- showM m
-  expr' <- showExpr expr
-  return (Arrow m' name expr')
-
 showObj :: VObject s -> ST s SObject
 showObj (Object m name args) = do
   m' <- showM m
   argsVals <- mapM (showM . snd) args
   let args' = zip (map fst args) argsVals
   return (Object m' name args')
+
+showArrow :: VArrow s -> ST s SArrow
+showArrow (Arrow m obj expr) = do
+  m' <- showM m
+  expr' <- showExpr expr
+  obj' <- showObj obj
+  return (Arrow m' obj' expr')
 
 showPrgm :: VPrgm s -> ST s SPrgm
 showPrgm (objects, arrows) = do

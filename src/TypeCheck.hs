@@ -60,8 +60,9 @@ showTestPrgm pprgm = runST $ do
 
 testPrgm :: PPrgm
 testPrgm = ([
-               Object (PreTyped RawTopType) "one" []
+               testObj
             ],
             [
-              Arrow (PreTyped RawTopType) "one" (CExpr (PreTyped rintType) (CInt 1))
+              Arrow (PreTyped RawTopType) testObj (CExpr (PreTyped rintType) (CInt 1))
             ])
+  where testObj = Object (PreTyped RawTopType) "one" H.empty

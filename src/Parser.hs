@@ -15,6 +15,8 @@ module Parser where
 
 import           Control.Applicative            hiding (many, some)
 import           Control.Monad.Combinators.Expr
+import qualified Data.HashMap.Strict as H
+import qualified Data.HashSet          as S
 import           Data.Either
 import           Data.Maybe
 import           Text.Megaparsec
@@ -35,10 +37,10 @@ emptyMeta :: ParseMeta
 emptyMeta = PreTyped RawTopType
 
 mkOp1 :: ParseMeta -> String -> PExpr -> PExpr
-mkOp1 meta op x = Call meta op [x]
+mkOp1 meta op x = Tuple meta op (H.singleton "a" x)
 
 mkOp2 :: ParseMeta -> String -> PExpr -> PExpr -> PExpr
-mkOp2 meta op x y = Call meta op [x, y]
+mkOp2 meta op x y = Tuple meta op (H.fromList [("a", x), ("b", y)])
 
 ops :: [[Operator Parser PExpr]]
 ops = [
@@ -64,11 +66,18 @@ ops = [
     ]
   ]
 
+pCallArg :: Parser (String, PExpr)
+pCallArg = do
+  argName <- identifier
+  equals <- symbol "="
+  expr <- pExpr
+  return (argName, expr)
+
 pCall :: Parser PExpr
 pCall = do
   funName <- (:) <$> letterChar <*> many alphaNumChar
-  args <- parens $ sepBy1 pExpr (symbol ",")
-  return $ Call emptyMeta funName args
+  args <- parens $ sepBy1 pCallArg (symbol ",")
+  return $ Tuple emptyMeta funName (H.fromList args)
 
 pStringLiteral :: Parser PExpr
 pStringLiteral = CExpr emptyMeta . CStr <$> (char '\"' *> manyTill L.charLiteral (char '\"'))
@@ -83,10 +92,25 @@ term = try (parens pExpr)
 pExpr :: Parser PExpr
 pExpr = makeExprParser term ops
 
+pTypeArg :: Parser (String, RawLeafType)
+pTypeArg = do
+  argName <- identifier
+  equals <- symbol "="
+  tp <- tidentifier
+  return (argName, RawLeafType tp)
+
+pTypeProduct :: Parser RawLeafType
+pTypeProduct = do
+  name <- tidentifier
+  args <- parens (sepBy1 pTypeArg (symbol ","))
+  return $ RawProdType name (H.fromList args)
+
+pLeafType :: Parser RawLeafType
+pLeafType = try (RawLeafType <$> tidentifier)
+        <|> try pTypeProduct
+
 pType :: Parser RawType
-pType = try (RawLeafType <$> tidentifier)
-        <|> try (RawProdType <$> parens (sepBy1 pType (symbol ",")))
-        <|> RawSumType <$> parens (sepBy1 pType (symbol "|"))
+pType = RawSumType . S.fromList <$> parens (sepBy1 pLeafType (symbol "|"))
 
 pTypedIdentifier :: Parser (Name, ParseMeta)
 pTypedIdentifier = do
@@ -103,8 +127,8 @@ pDeclLHS = do
   args <- optional $ try $ parens pArgs
   _ <- symbol "="
   return $ case args of
-    Just a  -> DeclLHS meta val a
-    Nothing -> DeclLHS meta val []
+    Just a  -> DeclLHS meta val (H.fromList a)
+    Nothing -> DeclLHS meta val H.empty
 
 pDeclSingle :: Parser PDecl
 pDeclSingle = do
