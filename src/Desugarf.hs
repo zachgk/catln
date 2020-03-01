@@ -27,15 +27,14 @@ desExpr = id
 
 setMeta :: m -> Expr m -> Expr m
 setMeta m (CExpr _ c)   = CExpr m c
-setMeta m (Var _ n)     = Var m n
 setMeta m (Tuple _ n es) = Tuple m n es
 
-replaceVars :: H.HashMap Name (Expr m) -> Expr m -> Expr m
-replaceVars _ e@(CExpr _ _) = e
-replaceVars reps e@(Var m name) = case H.lookup name reps of
-  Just e' -> setMeta m e'
-  Nothing -> e
-replaceVars reps (Tuple m n es) = Tuple m n (fmap (replaceVars reps) es)
+-- replaceVars :: H.HashMap Name (Expr m) -> Expr m -> Expr m
+-- replaceVars _ e@(CExpr _ _) = e
+-- replaceVars reps e@(Var m name) = case H.lookup name reps of
+--   Just e' -> setMeta m e'
+--   Nothing -> e
+-- replaceVars reps (Tuple m n es) = Tuple m n (fmap (replaceVars reps) es)
 
 -- Removes all subVariable declarations by replacing with their expressions
 -- removeSubDeclVal :: RawDecl m -> RawDecl m

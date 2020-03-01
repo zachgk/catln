@@ -72,7 +72,6 @@ type RawExpr = Expr
 
 data Expr m
   = CExpr m Constant
-  | Var m Name
   | Tuple m Name (H.HashMap Name (Expr m))
   deriving (Eq, Ord, Show)
 
@@ -140,5 +139,4 @@ typedIs (Typed t1) t2 = t1 == t2
 getExprMeta :: Expr m -> m
 getExprMeta expr = case expr of
   CExpr m _   -> m
-  Var m _     -> m
   Tuple m _ _ -> m

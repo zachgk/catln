@@ -96,12 +96,6 @@ fromExpr env (CExpr m (CFloat f)) = do
 fromExpr env (CExpr m (CStr s)) = do
   (m', p, env') <- fromMetaP env m
   return (CExpr m' (CStr s), addConstraints env' [EqualsKnown p rstrType])
-fromExpr env (Var m name) = do
-  (m', p, env') <- fromMetaP env m
-  let env'' = case fLookup env' name of
-              (Nothing, e)          -> e
-              (Just (Object om _ _), e) -> addConstraints e [EqPoints p (getPnt om)]
-   in return (Var m' name, env'')
 fromExpr env1 (Tuple m name exprs) = do
   (m', p, env2) <- fromMetaP env1 m
   case fLookup env2 name of

@@ -86,7 +86,7 @@ term :: Parser PExpr
 term = try (parens pExpr)
        <|> try pCall
        <|> pStringLiteral
-       <|> try (Var emptyMeta <$> identifier)
+       <|> try ((\i -> Tuple emptyMeta i H.empty) <$> identifier)
        <|> CExpr emptyMeta . CInt <$> integer
 
 pExpr :: Parser PExpr

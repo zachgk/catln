@@ -24,20 +24,15 @@ showExpr :: VExpr s -> ST s SExpr
 showExpr (CExpr m c) = do
   m' <- showM m
   return (CExpr m' c)
-showExpr (Var m name) = do
-  m' <- showM m
-  return (Var m' name)
 showExpr (Tuple m name args) = do
   m' <- showM m
-  argVals <- mapM (showExpr . snd) args
-  let args' = zip (map fst args) argVals
+  args' <- mapM showExpr args
   return (Tuple m' name args')
 
 showObj :: VObject s -> ST s SObject
 showObj (Object m name args) = do
   m' <- showM m
-  argsVals <- mapM (showM . snd) args
-  let args' = zip (map fst args) argsVals
+  args' <- mapM showM args
   return (Object m' name args')
 
 showArrow :: VArrow s -> ST s SArrow

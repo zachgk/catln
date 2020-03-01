@@ -64,9 +64,6 @@ toExpr :: VExpr s -> ST s (TypeCheckResult TExpr)
 toExpr (CExpr m c) = do
   res <- toMeta m $ "Constant " ++ show c
   return $ res <&> (`CExpr` c)
-toExpr (Var m name) = do
-  res <- toMeta m $ "variable " ++ name
-  return $ res >>= (\m' -> Right $ Var m' name)
 toExpr (Tuple m name args) = do
   m' <- toMeta m $ "Tuple_" ++ name
   args' <- mapM toExpr args
