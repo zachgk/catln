@@ -81,9 +81,6 @@ data DeclLHS m = DeclLHS m Name (H.HashMap Name m)
 data RawDecl m = RawDecl (DeclLHS m) [RawDecl m] (Expr m)
   deriving (Eq, Ord, Show)
 
--- data Decl m = Decl (DeclLHS m) (Expr m)
---   deriving (Eq, Ord, Show)
-
 type RawPrgm m = [RawDecl m] -- TODO: Include [Import], [Export]
 
 data Object m = Object m Name (H.HashMap Name m)

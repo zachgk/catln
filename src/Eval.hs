@@ -98,9 +98,6 @@ evalExpr :: Env -> EExpr -> Either EvalError Val
 evalExpr _ (CExpr _ (CInt i)) = Right $ IntVal i
 evalExpr _ (CExpr _ (CFloat f)) = Right $ FloatVal f
 evalExpr _ (CExpr _ (CStr s)) = Right $ StrVal s
-evalExpr env (Var _ name) = case H.lookup name env of
-  Just v  -> Right v
-  Nothing -> Left $ GenEvalError $ "Could not find value " ++ name
 evalExpr env (Tuple _ "assert" args) =
   case (H.lookup "test" args, H.lookup "msg" args) of
     (Just test, Just (CExpr _ (CStr msg))) -> evalExpr env test >>= (\(BoolVal b) -> if b then Right (BoolVal b) else Left (AssertError msg))
