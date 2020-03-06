@@ -42,8 +42,8 @@ import           Syntax
 
 type TypedMeta = Typed
 type TExpr = Expr TypedMeta
-type TDecl = Decl TypedMeta
-type TDeclLHS = DeclLHS TypedMeta
+type TObject = Object TypedMeta
+type TArrow = Arrow TypedMeta
 type TPrgm = Prgm TypedMeta
 type TReplRes = ReplRes TypedMeta
 
@@ -54,35 +54,38 @@ initModule :: AST.Module
 initModule = emptyModule "repl"
 
 codegenExpr :: TExpr -> Codegen AST.Operand
-codegenExpr (CExpr _ (CInt n)) = return $ cons $ C.Int 64 n
-codegenExpr (CExpr _ (CFloat n)) = return $ cons $ C.Float (F.Double n)
-codegenExpr (CExpr _ (CStr _)) = error "no string implemented"
-codegenExpr (Var _ name) = getvar name >>= load
-codegenExpr (Call _ name exprs) = case H.lookup name runtimeOps of
-    Just f -> do
-      exprs' <- mapM codegenExpr exprs
-      let exprTypes = map getExprMeta exprs
-      fromMaybe callOther (f $ zip exprTypes exprs')
-    Nothing -> callOther
-  where callOther = do
-          largs <- mapM codegenExpr exprs
-          call (externf (AST.Name $ SBS.toShort $ BSU.fromString name)) largs
+codegenExpr = undefined
+-- codegenExpr (CExpr _ (CInt n)) = return $ cons $ C.Int 64 n
+-- codegenExpr (CExpr _ (CFloat n)) = return $ cons $ C.Float (F.Double n)
+-- codegenExpr (CExpr _ (CStr _)) = error "no string implemented"
+-- codegenExpr (Var _ name) = getvar name >>= load
+-- codegenExpr (Call _ name exprs) = case H.lookup name runtimeOps of
+--     Just f -> do
+--       exprs' <- mapM codegenExpr exprs
+--       let exprTypes = map getExprMeta exprs
+--       fromMaybe callOther (f $ zip exprTypes exprs')
+--     Nothing -> callOther
+--   where callOther = do
+--           largs <- mapM codegenExpr exprs
+--           call (externf (AST.Name $ SBS.toShort $ BSU.fromString name)) largs
 
-codegenDecl :: TDecl -> LLVM ()
-codegenDecl (Decl (DeclLHS m name args) expr) = define (getType m) (SBS.toShort $ BSU.fromString name) largs bls
-  where
-    largs = map (\(an, am) -> (getType am, AST.Name $ SBS.toShort $ BSU.fromString an)) args
-    bls = createBlocks $ execCodegen [] $ do
-      ent <- addBlock (BSU.toString $ SBS.fromShort entryBlockName)
-      _ <- setBlock ent
-      forM_ args $ \(an, am) -> do
-        var <- alloca (getType am)
-        _ <- store var (local (AST.Name $ SBS.toShort $ BSU.fromString an))
-        assign an var
-      codegenExpr expr >>= ret
+codegenDecl :: TObject -> LLVM ()
+codegenDecl = undefined
+-- codegenDecl (Decl (DeclLHS m name args) expr) = define (getType m) (SBS.toShort $ BSU.fromString name) largs bls
+--   where
+--     largs = map (\(an, am) -> (getType am, AST.Name $ SBS.toShort $ BSU.fromString an)) args
+--     bls = createBlocks $ execCodegen [] $ do
+--       ent <- addBlock (BSU.toString $ SBS.fromShort entryBlockName)
+--       _ <- setBlock ent
+--       forM_ args $ \(an, am) -> do
+--         var <- alloca (getType am)
+--         _ <- store var (local (AST.Name $ SBS.toShort $ BSU.fromString an))
+--         assign an var
+--       codegenExpr expr >>= ret
 
 codegenPrgm :: TPrgm -> LLVM ()
-codegenPrgm = mapM_ codegenDecl
+codegenPrgm = undefined
+-- codegenPrgm = mapM_ codegenDecl
 
 codegen :: AST.Module -> TPrgm -> IO BSU.ByteString
 codegen astMod prgm = withContext $ \context ->

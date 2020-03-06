@@ -101,7 +101,7 @@ evalExpr _ (CExpr _ (CStr s)) = Right $ StrVal s
 evalExpr env (Tuple _ "assert" args) =
   case (H.lookup "test" args, H.lookup "msg" args) of
     (Just test, Just (CExpr _ (CStr msg))) -> evalExpr env test >>= (\(BoolVal b) -> if b then Right (BoolVal b) else Left (AssertError msg))
-    _ -> error "Invalid assertion"
+    _ -> Left $ GenEvalError "Invalid assertion"
 evalExpr env (Tuple _ name exprs) = do
   vals <- mapM (evalExpr env) exprs
   case H.lookup name env of
@@ -129,8 +129,8 @@ evalExpr env (Tuple _ name exprs) = do
 --     Just val -> Right val
 --     Nothing -> Left $ GenEvalError "No decl function defined"
 
-evalObject :: [EArrow] -> EObject -> Either EvalError Val
-evalObject = undefined
+evalArrow :: [EArrow] -> EObject -> Either EvalError Val
+evalArrow = undefined
 
 addObjects :: Env -> [EObject] -> Either EvalError Env
 addObjects = undefined

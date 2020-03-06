@@ -23,9 +23,10 @@ import           TypeCheck.Common
 import           TypeCheck.Encode
 import           TypeCheck.Show
 import           TypeCheck.Constrain (runConstraints)
--- import           TypeCheck.Decode
+import           TypeCheck.Decode
 
--- typecheckPrgm :: PPrgm -> TypeCheckResult TPrgm
+typecheckPrgm :: PPrgm -> TypeCheckResult TPrgm
+typecheckPrgm = undefined
 -- typecheckPrgm pprgm = runST $ do
 --   baseFEnv <- makeBaseFEnv
 --   (vprgm, FEnv cons _ errs) <- fromPrgm baseFEnv pprgm
