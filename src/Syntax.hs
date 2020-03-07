@@ -35,9 +35,10 @@ data RawType
   | RawBottomType
   deriving (Eq, Ord, Show)
 
+-- TODO: Consider unifying LeafType and ProdType with no args
 data LeafType
   = LeafType String
-  | ProdType String (H.HashMap String RawLeafType)
+  | ProdType String (H.HashMap String LeafType)
   deriving (Eq, Ord, Show, Generic)
 instance Hashable LeafType
 
@@ -49,6 +50,12 @@ rintType = RawSumType $ S.singleton $ RawLeafType "Integer"
 rfloatType = RawSumType $ S.singleton $ RawLeafType "Float"
 rboolType = RawSumType $ S.singleton $ RawLeafType "Boolean"
 rstrType = RawSumType $ S.singleton $ RawLeafType "String"
+
+intLeaf, floatLeaf, boolLeaf, strLeaf :: LeafType
+intLeaf = LeafType "Integer"
+floatLeaf = LeafType "Float"
+boolLeaf = LeafType "Boolean"
+strLeaf = LeafType "String"
 
 intType, floatType, boolType, strType :: Type
 intType = SumType $ S.singleton $ LeafType "Integer"

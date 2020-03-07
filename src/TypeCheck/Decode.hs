@@ -44,7 +44,7 @@ mergeTypeCheckResultsTriple (a, b, c) = case (a, b, c) of
 
 fromRawLeafType :: RawLeafType -> LeafType
 fromRawLeafType (RawLeafType s) = LeafType s
-fromRawLeafType (RawProdType name ts) = ProdType name ts
+fromRawLeafType (RawProdType name ts) = ProdType name (fmap fromRawLeafType ts)
 
 fromRawType :: RawType -> Maybe Type
 fromRawType RawTopType = Nothing
