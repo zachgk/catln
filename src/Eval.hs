@@ -125,11 +125,12 @@ leafFromMeta (Typed (SumType prodTypes)) = case S.toList prodTypes of
   [leafType] -> leafType
   _ -> error "Arrow has multiple leaves"
 
-makeBaseEnv :: [EArrow] -> Env
-makeBaseEnv arrows = (H.union primEnv resEnv, H.empty)
+makeBaseEnv :: EPrgm -> Env
+makeBaseEnv prgm = (H.union primEnv resEnv, H.empty)
   where
-    resEnv = H.fromList $ map resFromArrow arrows
-    resFromArrow arrow@(Arrow am (Object om _ _) _) = ((leafFromMeta om, leafFromMeta am), ResEArrow arrow)
+    resEnv = H.fromList $ concatMap resFromArrows $ H.toList prgm
+    resFromArrows (obj, arrows) = map (resFromArrow obj) arrows
+    resFromArrow (Object om _ _) arrow@(Arrow am _) = ((leafFromMeta om, leafFromMeta am), ResEArrow arrow)
 
 evalExpr :: Env -> EExpr -> LeafType -> Either EvalError Val
 evalExpr _ (CExpr _ (CInt i)) intType = Right $ IntVal i
@@ -146,7 +147,7 @@ evalExpr env (Tuple typed@(Typed (SumType prodTypes)) name exprs) destType = cas
     [prodType@(LeafType name leafType)] | H.keysSet exprs == H.keysSet leafType -> do
                            vals <- mapM (\(destType, expr) -> evalExpr env (Tuple typed name exprs) destType) $ H.intersectionWith (,) leafType exprs
                            case envLookup env prodType destType of
-                             Right (ResEArrow (Arrow m _ resExpr)) -> do
+                             Right (ResEArrow (Arrow m resExpr)) -> do
                                let env' = envWithVals env (H.fromList $ map (first (`LeafType` H.empty)) $ H.toList vals)
                                let destType' = leafFromMeta m
                                evalExpr env' resExpr destType'
@@ -168,7 +169,7 @@ envLookup (resEnv, valEnv) srcType destType = case H.lookup srcType valEnv of
     Nothing -> Left $ GenEvalError $ "Failed to lookup arrow for " ++ show (srcType, destType)
 
 evalPrgm :: EExpr -> LeafType -> EPrgm -> Either EvalError Val
-evalPrgm src dest (objects, arrows) = evalExpr (makeBaseEnv arrows) src dest
+evalPrgm src dest prgm = evalExpr (makeBaseEnv prgm) src dest
 
 evalMain :: EPrgm -> Either EvalError Val
 evalMain = evalPrgm main intLeaf

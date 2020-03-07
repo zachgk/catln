@@ -31,15 +31,12 @@ objectToLeaf env (Object _ name args) = do
                 args
         return $ RawLeafType name args'
 
-buildTypeGraph :: FEnv s -> [VArrow s] -> ST s (FEnv s, TypeGraph s)
-buildTypeGraph env = foldM addArrow (env, emptyGraph)
+buildTypeGraph :: FEnv s -> VPrgm s -> ST s (FEnv s, TypeGraph s)
+buildTypeGraph env = foldM addArrows (env, emptyGraph)
     where
         emptyGraph = H.empty
-        addArrow
-                :: (FEnv s, TypeGraph s)
-                -> VArrow s
-                -> ST s (FEnv s, TypeGraph s)
-        addArrow (env, graph) (Arrow m obj expr) = do
+        addArrows (env, graph) (obj, arrows) = foldM (addArrow obj) (env, graph) arrows
+        addArrow obj (env, graph) (Arrow m expr) = do
                 leaf <- objectToLeaf env obj
                 let graph2 = H.insertWith (++) leaf [getPntExpr expr] graph
                 return (env, graph2)

@@ -9,10 +9,18 @@
 --
 --------------------------------------------------------------------
 
+{-# LANGUAGE DeriveGeneric #-}
+
 module TypeCheck.Common where
 
 import qualified Data.HashMap.Strict as H
 import           Data.UnionFind.ST
+import           Data.Hashable
+import           GHC.Generics          (Generic)
+import Control.Applicative
+import Control.Monad ( when )
+import Control.Monad.ST
+import Data.STRef
 
 import           Syntax
 
@@ -21,7 +29,8 @@ type TypeCheckError = String
 data Scheme
   = SType RawType RawType -- SType upper lower
   | SCheckError String
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Generic)
+instance Hashable Scheme
 
 type Pnt s = Point s Scheme
 
@@ -56,7 +65,7 @@ type VarMeta s = Pnt s
 type VExpr s = Expr (VarMeta s)
 type VArrow s = Arrow (VarMeta s)
 type VObject s = Object (VarMeta s)
-type VPrgm s = Prgm (VarMeta s)
+type VPrgm s = [(VObject s, [VArrow s])]
 type VReplRes s = ReplRes (VarMeta s)
 
 type TypedMeta = Typed

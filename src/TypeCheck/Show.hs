@@ -13,6 +13,7 @@ module TypeCheck.Show where
 
 import           Control.Monad.ST
 import           Data.UnionFind.ST
+import qualified Data.HashMap.Strict as H
 
 import           Syntax
 import           TypeCheck.Common
@@ -29,21 +30,20 @@ showExpr (Tuple m name args) = do
   args' <- mapM showExpr args
   return (Tuple m' name args')
 
-showObj :: VObject s -> ST s SObject
-showObj (Object m name args) = do
-  m' <- showM m
-  args' <- mapM showM args
-  return (Object m' name args')
-
 showArrow :: VArrow s -> ST s SArrow
-showArrow (Arrow m obj expr) = do
+showArrow (Arrow m expr) = do
   m' <- showM m
   expr' <- showExpr expr
-  obj' <- showObj obj
-  return (Arrow m' obj' expr')
+  return (Arrow m' expr')
+
+showObj :: (VObject s, [VArrow s]) -> ST s (SObject, [SArrow])
+showObj (Object m name args, arrows) = do
+  m' <- showM m
+  args' <- mapM showM args
+  arrows' <- mapM showArrow arrows
+  return (Object m' name args', arrows')
 
 showPrgm :: VPrgm s -> ST s SPrgm
-showPrgm (objects, arrows) = do
-  objs' <- mapM showObj objects
-  arrows' <- mapM showArrow arrows
-  return (objs', arrows')
+showPrgm prgm = do
+  objs' <- mapM showObj prgm
+  return $ H.fromList objs'

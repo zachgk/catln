@@ -31,14 +31,16 @@ data RawType
   = RawSumType (S.HashSet RawLeafType)
   | RawTopType
   | RawBottomType
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Generic)
+instance Hashable RawType
 
 data LeafType = LeafType String (H.HashMap String LeafType)
   deriving (Eq, Ord, Show, Generic)
 instance Hashable LeafType
 
 newtype Type = SumType (S.HashSet LeafType)
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Generic)
+instance Hashable Type
 
 rintType, rfloatType, rboolType, rstrType :: RawType
 rintType = RawSumType $ S.singleton $ RawLeafType "Integer" H.empty
@@ -86,12 +88,13 @@ data RawDecl m = RawDecl (DeclLHS m) [RawDecl m] (Expr m)
 type RawPrgm m = [RawDecl m] -- TODO: Include [Import], [Export]
 
 data Object m = Object m Name (H.HashMap Name m)
+  deriving (Eq, Ord, Show, Generic)
+instance Hashable m => Hashable (Object m)
+
+data Arrow m = Arrow m (Expr m) -- m is result metadata
   deriving (Eq, Ord, Show)
 
-data Arrow m = Arrow m (Object m) (Expr m) -- m is result metadata
-  deriving (Eq, Ord, Show)
-
-type Prgm m = ([Object m], [Arrow m]) -- TODO: Include [Import], [Export]
+type Prgm m = (H.HashMap (Object m) [Arrow m]) -- TODO: Include [Import], [Export]
 
 type ParseErrorRes = ParseErrorBundle String Void
 
@@ -105,10 +108,12 @@ data ReplRes m
 
 -- Metadata for the Programs
 newtype PreTyped = PreTyped RawType
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Generic)
+instance Hashable PreTyped
 
 newtype Typed = Typed Type
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Generic)
+instance Hashable Typed
 
 -- Maybe rename to subtypeOf
 hasRawType :: RawType -> RawType -> Bool

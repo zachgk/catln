@@ -68,6 +68,12 @@ toExpr (Tuple m name args) = do
   args' <- mapM toExpr args
   return $ (\(m'', args'') -> Tuple m'' name args'') <$> mergeTypeCheckResultsPair (m', mergeTypeCheckResultsMap args')
 
+toArrow :: VArrow s -> ST s (TypeCheckResult TArrow)
+toArrow (Arrow m expr) = do
+  m' <- toMeta m "Arrow"
+  expr' <- toExpr expr
+  return $ uncurry Arrow <$> mergeTypeCheckResultsPair (m', expr')
+
 toObjectArg :: Name -> (Name, VarMeta s) -> ST s (TypeCheckResult (Name, Typed))
 toObjectArg objName (name, m) = do
   m' <- toMeta m $ "Arg_" ++ objName ++ "." ++ name
@@ -75,23 +81,16 @@ toObjectArg objName (name, m) = do
     Left m'' -> Left m''
     Right m'' -> Right (name, m'')
 
-toObject :: VObject s -> ST s (TypeCheckResult TObject)
-toObject (Object m name args) = do
+toObject :: (VObject s, [VArrow s]) -> ST s (TypeCheckResult (TObject, [TArrow]))
+toObject (Object m name args, arrows) = do
   m' <- toMeta m $ "Object_" ++ name
   args' <- mapM (toObjectArg name) $ H.toList args
-  return $ (\(m'', args'') -> Object m'' name args'') <$> mergeTypeCheckResultsPair (m', H.fromList <$> mergeTypeCheckResultsList args')
-
-toArrow :: VArrow s -> ST s (TypeCheckResult TArrow)
-toArrow (Arrow m obj expr) = do
-  m' <- toMeta m "Arrow"
-  obj' <- toObject obj
-  expr' <- toExpr expr
-  return $ (\(m'', obj'', expr'') -> Arrow m'' obj'' expr'') <$> mergeTypeCheckResultsTriple (m', obj', expr')
-
-toPrgm :: VPrgm s -> ST s (TypeCheckResult TPrgm)
-toPrgm (objects, arrows) = do
-  objects' <- mapM toObject objects
-  let objects'' = mergeTypeCheckResultsList objects'
+  let object' = (\(m'', args'') -> Object m'' name args'') <$> mergeTypeCheckResultsPair (m', H.fromList <$> mergeTypeCheckResultsList args')
   arrows' <- mapM toArrow arrows
   let arrows'' = mergeTypeCheckResultsList arrows'
-  return $ mergeTypeCheckResultsPair (objects'', arrows'')
+  return $ mergeTypeCheckResultsPair (object', arrows'')
+
+toPrgm :: VPrgm s -> ST s (TypeCheckResult TPrgm)
+toPrgm prgm = do
+  objects' <- mapM toObject prgm
+  return $ H.fromList <$> mergeTypeCheckResultsList objects'

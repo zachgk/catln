@@ -12,6 +12,7 @@
 module Desugarf where
 
 
+import           Data.Hashable
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import Data.Graph
@@ -76,18 +77,20 @@ removeSubDeclarations (RawDecl (DeclLHS m declName args) subDecls expr) = decl':
     (subDecls4, expr3) = currySubFunctions args subDecls3 expr2
     decl' = SemiDecl (DeclLHS m declName args) expr3
 
-declToObjArrow :: SemiDecl m -> (Object m, Arrow m)
-declToObjArrow (SemiDecl (DeclLHS m name args) expr) = (object, arrow)
+declToObjArrow :: SemiDecl m -> (Object m, [Arrow m])
+declToObjArrow (SemiDecl (DeclLHS m name args) expr) = (object, [arrow])
   where
     object = Object m name args
-    arrow = Arrow (getExprMeta expr) object expr
+    arrow = Arrow (getExprMeta expr) expr
 
-desDecl :: RawDecl m -> ([Object m], [Arrow m])
-desDecl decl = unzip $ map declToObjArrow $ removeSubDeclarations decl
+desDecl :: (Eq m, Hashable m) => RawDecl m -> Prgm m
+desDecl decl = H.fromList $ map declToObjArrow $ removeSubDeclarations decl
 
-desDecls :: [RawDecl m] -> ([Object m], [Arrow m])
-desDecls decls = let (objects', arrows') = unzip $ map desDecl decls
-                  in (concat objects', concat arrows')
+unionsWith :: (Ord k, Hashable k) => (a->a->a) -> [H.HashMap k a] -> H.HashMap k a
+unionsWith f = foldl (H.unionWith f) H.empty
 
-desPrgm :: RawPrgm m -> Prgm m
+desDecls :: (Eq m, Ord m, Hashable m) => [RawDecl m] -> Prgm m
+desDecls decls = unionsWith (++) $ map desDecl decls
+
+desPrgm :: (Eq m, Ord m, Hashable m) => RawPrgm m -> Prgm m
 desPrgm = desDecls

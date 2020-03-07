@@ -113,15 +113,15 @@ arrowAddScope env1 (Object meta _ args) = do
   where aux :: FEnv s -> (String, VarMeta s) -> ST s (FEnv s)
         aux e (n, m) = return $ fInsert e n (Object m n H.empty)
 
-fromArrow :: FEnv s -> PArrow -> ST s (VArrow s, FEnv s)
-fromArrow env1 (Arrow m (Object _ objName _) expr) = case fLookup env1 objName of
+fromArrow :: VObject s -> FEnv s -> PArrow -> ST s (VArrow s, FEnv s)
+fromArrow (Object _ objName _) env1 (Arrow m expr) = case fLookup env1 objName of
     (Nothing, _) -> error $ "Failed to find object " ++ objName
     (Just obj, env2) -> do
       env3 <- arrowAddScope env2 obj
       (vExpr, env4) <- fromExpr env3 expr
       (m', p, env5) <- fromMetaP env4 m
       let env6 = addConstraints env5 [ArrowTo (getPntExpr vExpr) p]
-      let arrow' = Arrow m' obj vExpr
+      let arrow' = Arrow m' vExpr
       return (arrow', fReplaceMap env6 env1)
 
 addObjArg :: FEnv s -> (Name, PreMeta) -> ST s ((Name, VarMeta s), FEnv s)
@@ -129,17 +129,17 @@ addObjArg env (n, m) = do
   (m', env2) <- fromMeta env m
   return ((n, m'), env2)
 
-addObject :: FEnv s -> PObject -> ST s (VObject s, FEnv s)
-addObject env (Object m name args) = do
+addObject :: FEnv s -> (PObject, [PArrow]) -> ST s ((VObject s, [VArrow s]), FEnv s)
+addObject env (Object m name args, arrows) = do
   (m', env1) <- fromMeta env m
   (args', env2) <- mapMWithFEnvMapWithKey env1 addObjArg args
   let obj' = Object m' name args'
   let env3 = fInsert env2 name obj'
-  return (obj', env3)
+  (arrows', env4) <- mapMWithFEnv env3 (fromArrow obj') arrows
+  return ((obj', arrows'), env3)
 
 fromPrgm :: FEnv s -> PPrgm -> ST s (VPrgm s, TypeGraph s, FEnv s)
-fromPrgm env (objects, arrows) = do
-  (objs', env') <- mapMWithFEnv env addObject objects
-  (arrows', env'') <- mapMWithFEnv env' fromArrow arrows
-  (env''', typeGraph) <- buildTypeGraph env'' arrows'
-  return ((objs', arrows'), typeGraph, env''')
+fromPrgm env prgm = do
+  (objs', env') <- mapMWithFEnv env addObject $ H.toList prgm
+  (env'', typeGraph) <- buildTypeGraph env' objs'
+  return (objs', typeGraph, env'')

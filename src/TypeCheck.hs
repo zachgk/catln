@@ -61,10 +61,8 @@ showTestPrgm pprgm = runST $ do
 
 
 testPrgm :: PPrgm
-testPrgm = ([
-               testObj
-            ],
-            [
-              Arrow (PreTyped RawTopType) testObj (CExpr (PreTyped rintType) (CInt 1))
-            ])
-  where testObj = Object (PreTyped (RawSumType $ S.singleton $ RawLeafType "one" H.empty)) "one" H.empty
+testPrgm = H.fromList [
+  (Object (PreTyped (RawSumType $ S.singleton $ RawLeafType "one" H.empty)) "one" H.empty, [
+              Arrow (PreTyped RawTopType) (CExpr (PreTyped rintType) (CInt 1))
+                                                                                           ])
+                      ]
