@@ -22,26 +22,26 @@ import           TypeCheck.Common
 import           TypeCheck.TypeGraph (buildTypeGraph)
 
 makeBaseFEnv :: ST s (FEnv s)
-makeBaseFEnv = return $ FEnv [] H.empty []
--- makeBaseFEnv = do
---   let env1 = FEnv [] H.empty []
---   let ops = [ ("+", rintType, [rintType, rintType])
---             , ("-", rintType, [rintType, rintType])
---             , ("*", rintType, [rintType, rintType])
---             , (">", rboolType, [rintType, rintType])
---             , ("<", rboolType, [rintType, rintType])
---             , (">=", rboolType, [rintType, rintType])
---             , ("<=", rboolType, [rintType, rintType])
---             , ("==", rboolType, [rintType, rintType])
---             , ("!=", rboolType, [rintType, rintType])
---             , ("&", rboolType, [rboolType, rboolType])
---             , ("~", rboolType, [rboolType])
---             ]
---   foldM f env1 ops
---   where f e (opName, retType, args) = do
---           p <- fresh (SType retType RawBottomType)
---           pargs <- forM args (fresh . (`SType` RawBottomType))
---           return $ fInsert e opName (PntFun p pargs)
+-- makeBaseFEnv = return $ FEnv [] H.empty []
+makeBaseFEnv = do
+  let env1 = FEnv [] H.empty []
+  let ops = [ ("+", rintType, H.fromList [("l", rintType), ("r", rintType)])
+            , ("-", rintType, H.fromList [("l", rintType), ("r", rintType)])
+            , ("*", rintType, H.fromList [("l", rintType), ("r", rintType)])
+            , (">", rboolType, H.fromList [("l", rintType), ("r", rintType)])
+            , ("<", rboolType, H.fromList [("l", rintType), ("r", rintType)])
+            , (">=", rboolType, H.fromList [("l", rintType), ("r", rintType)])
+            , ("<=", rboolType, H.fromList [("l", rintType), ("r", rintType)])
+            , ("==", rboolType, H.fromList [("l", rintType), ("r", rintType)])
+            , ("!=", rboolType, H.fromList [("l", rboolType), ("r", rboolType)])
+            , ("&", rboolType, H.fromList [("l", rboolType), ("r", rboolType)])
+            , ("~", rboolType, H.singleton "a" rboolType)
+            ]
+  foldM f env1 ops
+  where f e (opName, retType, args) = do
+          p <- fresh (SType retType RawBottomType)
+          pargs <- forM args (fresh . (`SType` RawBottomType))
+          return $ fInsert e opName (Object p opName pargs)
 
 addConstraints :: FEnv s -> [Constraint s] -> FEnv s
 addConstraints (FEnv oldCons defMap errs) newCons = FEnv (newCons ++ oldCons) defMap errs

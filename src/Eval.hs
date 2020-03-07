@@ -138,6 +138,7 @@ evalExpr _ (CExpr _ (CStr s)) strType = Right $ StrVal s
 evalExpr env (Tuple _ "assert" args) _ =
   case (H.lookup "test" args, H.lookup "msg" args) of
     (Just test, Just (CExpr _ (CStr msg))) -> evalExpr env test boolLeaf >>= (\(BoolVal b) -> if b then Right (BoolVal b) else Left (AssertError msg))
+    (Just test, Nothing) -> evalExpr env test boolLeaf >>= (\(BoolVal b) -> if b then Right (BoolVal b) else Left (AssertError "Failed assertion"))
     _ -> Left $ GenEvalError "Invalid assertion"
 evalExpr env (Tuple typed@(Typed (SumType prodTypes)) name exprs) destType = case S.toList prodTypes of
     (_:_:_) -> Left $ GenEvalError $ "Found multiple types for " ++ name
@@ -146,7 +147,7 @@ evalExpr env (Tuple typed@(Typed (SumType prodTypes)) name exprs) destType = cas
                            vals <- mapM (\(destType, expr) -> evalExpr env (Tuple typed name exprs) destType) $ H.intersectionWith (,) leafType exprs
                            case envLookup env prodType destType of
                              Right (ResEArrow (Arrow m _ resExpr)) -> do
-                               let env' = envWithVals env (H.fromList $ map (first (\valName -> LeafType valName H.empty)) $ H.toList vals)
+                               let env' = envWithVals env (H.fromList $ map (first (`LeafType` H.empty)) $ H.toList vals)
                                let destType' = leafFromMeta m
                                evalExpr env' resExpr destType'
                              Right IDArrow -> return $ TupleVal name vals
@@ -166,6 +167,9 @@ envLookup (resEnv, valEnv) srcType destType = case H.lookup srcType valEnv of
     Just resArrow -> Right resArrow
     Nothing -> Left $ GenEvalError $ "Failed to lookup arrow for " ++ show (srcType, destType)
 
-evalPrgm :: EPrgm -> Either EvalError Val
-evalPrgm (objects, arrows) = evalExpr (makeBaseEnv arrows) main intLeaf
+evalPrgm :: EExpr -> LeafType -> EPrgm -> Either EvalError Val
+evalPrgm src dest (objects, arrows) = evalExpr (makeBaseEnv arrows) src dest
+
+evalMain :: EPrgm -> Either EvalError Val
+evalMain = evalPrgm main intLeaf
   where main = Tuple (Typed $ SumType $ S.singleton $ LeafType "main" H.empty) "main" H.empty

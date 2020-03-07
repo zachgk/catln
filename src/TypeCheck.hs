@@ -16,6 +16,7 @@ import           Control.Monad.ST
 import           Data.Either
 import           Data.Functor
 import qualified Data.HashMap.Strict as H
+import qualified Data.HashSet          as S
 import           Data.UnionFind.ST
 
 import           Syntax
@@ -24,17 +25,17 @@ import           TypeCheck.Encode
 import           TypeCheck.Show
 import           TypeCheck.Constrain (runConstraints)
 import           TypeCheck.Decode
+import Text.Pretty.Simple (pString)
 
 typecheckPrgm :: PPrgm -> TypeCheckResult TPrgm
-typecheckPrgm = undefined
--- typecheckPrgm pprgm = runST $ do
---   baseFEnv <- makeBaseFEnv
---   (vprgm, FEnv cons _ errs) <- fromPrgm baseFEnv pprgm
---   case errs of
---     [] -> do
---       runConstraints cons
---       toPrgm vprgm
---     _ -> return $ Left errs
+typecheckPrgm pprgm = runST $ do
+  baseFEnv <- makeBaseFEnv
+  (vprgm, typeGraph, FEnv cons _ errs) <- fromPrgm baseFEnv pprgm
+  case errs of
+    [] -> do
+      runConstraints typeGraph cons
+      toPrgm vprgm
+    _ -> return $ Left errs
 
 traceTestPrgm :: PPrgm -> Either [TypeCheckError] [SPrgm]
 traceTestPrgm pprgm = runST $ do
@@ -66,4 +67,4 @@ testPrgm = ([
             [
               Arrow (PreTyped RawTopType) testObj (CExpr (PreTyped rintType) (CInt 1))
             ])
-  where testObj = Object (PreTyped RawTopType) "one" H.empty
+  where testObj = Object (PreTyped (RawSumType $ S.singleton $ RawLeafType "one" H.empty)) "one" H.empty

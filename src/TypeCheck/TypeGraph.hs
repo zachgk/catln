@@ -55,10 +55,10 @@ unionMaybeRawTypes maybeRawTypes = case sequence maybeRawTypes of
 
 reachesLeaf :: TypeGraph s -> RawLeafType -> ST s (Maybe RawType)
 reachesLeaf graph leaf = do
-        let (Just typePnts) = H.lookup leaf graph
-        schemes <- mapM descriptor typePnts
-        let maybeRawTypes = map rawTypeFromScheme schemes
-        return $ unionMaybeRawTypes maybeRawTypes
+  let typePnts = H.lookupDefault [] leaf graph
+  schemes <- mapM descriptor typePnts
+  let maybeRawTypes = map rawTypeFromScheme schemes
+  return $ unionMaybeRawTypes (Just (RawSumType $ S.singleton leaf) : maybeRawTypes)
 
 reaches :: TypeGraph s -> RawType -> ST s (Maybe RawType)
 reaches _     RawTopType            = return $ Just RawTopType

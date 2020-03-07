@@ -48,7 +48,7 @@ process = undefined
 --   let res = parseFile source
 --   case res of
 --     Left err   -> print err
---     Right prgm -> print (evalPrgm (desPrgm prgm))
+--     Right prgm -> print (evalMain (desPrgm prgm))
 
 processFile :: String -> IO ()
 processFile fname = readFile fname >>= process

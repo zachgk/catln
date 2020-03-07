@@ -134,23 +134,25 @@ executeConstraint typeGraph cons@(ArrowTo srcPnt destPnt) = do
         Nothing -> return []
 
 
-abandonConstraints :: Constraint s -> ST s ()
-abandonConstraints EqualsKnown{} = error "Bad Type equality"
-abandonConstraints EqPoints{} = error "Bad point equality"
-abandonConstraints BoundedBy{} = error "Bad Bounded By"
-abandonConstraints IsTupleOf{} = error "Bad Tuple Of"
+abandonConstraints :: Constraint s -> ST s TypeCheckError
+abandonConstraints EqualsKnown{} = return "Bad Type equality"
+abandonConstraints EqPoints{} = return "Bad point equality"
+abandonConstraints BoundedBy{} = return "Bad Bounded By"
+abandonConstraints IsTupleOf{} = return "Bad Tuple Of"
 abandonConstraints (ArrowTo srcPnt destPnt) = do
   subScheme <- descriptor srcPnt
   parentScheme <- descriptor destPnt
   case (subScheme, parentScheme) of
     -- (SKnown _, SUnknown) -> setDescriptor destPnt $ SCheckError "Failed to unify hasType"
-    (_, _) -> error "Uknown abandon constraint failure"
+    (_, _) -> return "Uknown abandon constraint failure"
 
-runConstraints :: TypeGraph s -> [Constraint s] -> ST s ()
-runConstraints _ [] = return ()
+runConstraints :: TypeGraph s -> [Constraint s] -> ST s (Either [TypeCheckError] ())
+runConstraints _ [] = return $ Right ()
 runConstraints typeGraph cons = do
   res <- mapM (executeConstraint typeGraph) cons
   let cons' = concat res
   if cons == cons'
-    then mapM_ abandonConstraints cons
+    then do
+      constraintErrors <- mapM abandonConstraints cons
+      return $ Left constraintErrors
     else runConstraints typeGraph cons'

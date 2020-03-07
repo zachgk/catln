@@ -40,7 +40,7 @@ mkOp1 :: ParseMeta -> String -> PExpr -> PExpr
 mkOp1 meta op x = Tuple meta op (H.singleton "a" x)
 
 mkOp2 :: ParseMeta -> String -> PExpr -> PExpr -> PExpr
-mkOp2 meta op x y = Tuple meta op (H.fromList [("a", x), ("b", y)])
+mkOp2 meta op x y = Tuple meta op (H.fromList [("l", x), ("r", y)])
 
 ops :: [[Operator Parser PExpr]]
 ops = [
@@ -138,7 +138,7 @@ pDeclSingle = do
 pDeclTree :: Parser PDecl
 pDeclTree = L.indentBlock scn p
   where
-    pack lhs children = if isLeft ( last children) && all isRight (init children)
+    pack lhs children = if isLeft ( last children)
       then return $ RawDecl lhs (rights $ init children) (head $ lefts [last children])
       else fail "The declaration must end with an expression"
     childParser :: Parser (Either PExpr PDecl)
