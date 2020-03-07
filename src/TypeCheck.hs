@@ -58,11 +58,3 @@ showTestPrgm pprgm = runST $ do
       sprgm <- showPrgm vprgm
       return $ Right sprgm
     _ -> return $ Left errs
-
-
-testPrgm :: PPrgm
-testPrgm = H.fromList [
-  (Object (PreTyped (RawSumType $ S.singleton $ RawLeafType "one" H.empty)) "one" H.empty, [
-              Arrow (PreTyped RawTopType) (CExpr (PreTyped rintType) (CInt 1))
-                                                                                           ])
-                      ]

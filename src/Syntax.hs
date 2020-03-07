@@ -42,6 +42,12 @@ newtype Type = SumType (S.HashSet LeafType)
   deriving (Eq, Ord, Show, Generic)
 instance Hashable Type
 
+rintLeaf, rfloatLeaf, rboolLeaf, rstrLeaf :: RawLeafType
+rintLeaf = RawLeafType "Integer" H.empty
+rfloatLeaf = RawLeafType "Float" H.empty
+rboolLeaf = RawLeafType "Boolean" H.empty
+rstrLeaf = RawLeafType "String" H.empty
+
 rintType, rfloatType, rboolType, rstrType :: RawType
 rintType = RawSumType $ S.singleton $ RawLeafType "Integer" H.empty
 rfloatType = RawSumType $ S.singleton $ RawLeafType "Float" H.empty

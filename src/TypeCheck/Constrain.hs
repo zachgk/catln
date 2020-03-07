@@ -43,6 +43,14 @@ mapSequence m = H.fromList $ map (\b -> (b, mapForB b)) $ S.toList bKeySet
     bKeySet = intersections $ H.elems $ H.map H.keysSet m
     mapForB b = H.mapMaybe (H.lookup b) m
 
+tupleCrossProductTypes :: H.HashMap String RawType -> Maybe RawType
+tupleCrossProductTypes parts = do
+  partLeafs <- mapM fromSum parts
+  return $ RawSumType $ S.fromList $ map (RawLeafType "") $ mapM S.toList partLeafs
+  where fromSum (RawSumType leafs) = Just leafs
+        fromSum RawTopType = Nothing
+        fromSum RawBottomType = Nothing
+
 tupleConstrainSumWith :: ((H.HashMap String RawLeafType, RawType) -> (H.HashMap String RawLeafType, RawType)) -> (S.HashSet RawLeafType, H.HashMap String RawType) -> (RawType, H.HashMap String RawType)
 tupleConstrainSumWith constrainArg (wholeUnmatched, parts) = (whole', parts')
   where
@@ -56,6 +64,7 @@ tupleConstrainSumWith constrainArg (wholeUnmatched, parts) = (whole', parts')
 -- constrain by intersection
 tupleConstrainUb :: (RawType, H.HashMap String RawType) -> (RawType, H.HashMap String RawType)
 tupleConstrainUb (RawTopType, parts) = (RawTopType, parts)
+-- tupleConstrainUb (RawTopType, parts) = (fromMaybe RawTopType $ tupleCrossProductTypes parts, parts)
 tupleConstrainUb (RawBottomType, parts) = (RawBottomType, parts)
 tupleConstrainUb (RawSumType wholeUnparsed, parts) = tupleConstrainSumWith constrainArg (wholeUnparsed, parts)
   where
@@ -76,7 +85,6 @@ tupleConstrainLb (RawSumType wholeUnparsed, parts) = tupleConstrainSumWith const
     constrainArg (whole, RawBottomType) = (whole, RawSumType $ S.fromList $ H.elems whole)
     constrainArg (whole, RawSumType partLeafs) = let leafs = S.union (S.fromList $ H.elems whole) partLeafs
                                                   in (whole, RawSumType leafs)
-
 lowerUb :: RawType -> RawType -> RawType
 lowerUb ub@(RawSumType ubLeafs) lb | S.size ubLeafs == 1 = unionRawTypes ub lb
 lowerUb _ lb = lb

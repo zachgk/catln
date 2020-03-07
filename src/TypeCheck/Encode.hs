@@ -114,15 +114,13 @@ arrowAddScope env1 (Object meta _ args) = do
         aux e (n, m) = return $ fInsert e n (Object m n H.empty)
 
 fromArrow :: VObject s -> FEnv s -> PArrow -> ST s (VArrow s, FEnv s)
-fromArrow (Object _ objName _) env1 (Arrow m expr) = case fLookup env1 objName of
-    (Nothing, _) -> error $ "Failed to find object " ++ objName
-    (Just obj, env2) -> do
-      env3 <- arrowAddScope env2 obj
-      (vExpr, env4) <- fromExpr env3 expr
-      (m', p, env5) <- fromMetaP env4 m
-      let env6 = addConstraints env5 [ArrowTo (getPntExpr vExpr) p]
-      let arrow' = Arrow m' vExpr
-      return (arrow', fReplaceMap env6 env1)
+fromArrow obj env1 (Arrow m expr) = do
+  env2 <- arrowAddScope env1 obj
+  (vExpr, env3) <- fromExpr env2 expr
+  (m', p, env4) <- fromMetaP env3 m
+  let env5 = addConstraints env4 [ArrowTo (getPntExpr vExpr) p]
+  let arrow' = Arrow m' vExpr
+  return (arrow', fReplaceMap env5 env1)
 
 addObjArg :: FEnv s -> (Name, PreMeta) -> ST s ((Name, VarMeta s), FEnv s)
 addObjArg env (n, m) = do

@@ -36,58 +36,77 @@ type PReplRes = ReplRes ParseMeta
 emptyMeta :: ParseMeta
 emptyMeta = PreTyped RawTopType
 
-mkOp1 :: ParseMeta -> String -> PExpr -> PExpr
-mkOp1 meta op x = Tuple meta op (H.singleton "a" x)
+identifierMeta :: String -> ParseMeta
+identifierMeta i = PreTyped $ RawSumType $ S.singleton $ RawLeafType i H.empty
 
-mkOp2 :: ParseMeta -> String -> PExpr -> PExpr -> PExpr
-mkOp2 meta op x y = Tuple meta op (H.fromList [("l", x), ("r", y)])
+intMeta, floatMeta, boolMeta, strMeta :: ParseMeta
+intMeta = PreTyped rintType
+floatMeta = PreTyped rfloatType
+boolMeta = PreTyped rboolType
+strMeta = PreTyped rstrType
+
+mkOp1 :: H.HashMap String RawLeafType -> String -> PExpr -> PExpr
+mkOp1 metaArgs op x = Tuple meta op (H.singleton "a" x)
+  where meta = PreTyped $ RawSumType $ S.singleton $ RawLeafType op metaArgs
+
+mkOp2 :: H.HashMap String RawLeafType -> String -> PExpr -> PExpr -> PExpr
+mkOp2 metaArgs op x y = Tuple meta op (H.fromList [("l", x), ("r", y)])
+  where meta = PreTyped $ RawSumType $ S.singleton $ RawLeafType op metaArgs
 
 ops :: [[Operator Parser PExpr]]
 ops = [
-    [ Prefix (mkOp1 emptyMeta "-"  <$ symbol "-")
-    , Prefix (mkOp1 emptyMeta "~" <$ symbol "~")
+    [ Prefix (mkOp1 (H.singleton "a" rintLeaf) "-"  <$ symbol "-")
+    , Prefix (mkOp1 (H.singleton "a" rboolLeaf) "~" <$ symbol "~")
     ],
-    [ InfixL (mkOp2 emptyMeta "*" <$ symbol "*")
-    , InfixL (mkOp2 emptyMeta "/" <$ symbol "/")
+    [ InfixL (mkOp2 intOpArgs "*" <$ symbol "*")
+    , InfixL (mkOp2 intOpArgs "/" <$ symbol "/")
     ],
-    [ InfixL (mkOp2 emptyMeta "+" <$ symbol "+")
-    , InfixL (mkOp2 emptyMeta "-" <$ symbol "-")
+    [ InfixL (mkOp2 intOpArgs "+" <$ symbol "+")
+    , InfixL (mkOp2 intOpArgs "-" <$ symbol "-")
     ],
-    [ InfixL (mkOp2 emptyMeta "<" <$ symbol "<")
-    , InfixL (mkOp2 emptyMeta ">" <$ symbol ">")
-    , InfixL (mkOp2 emptyMeta "<=" <$ symbol "<=")
-    , InfixL (mkOp2 emptyMeta ">=" <$ symbol ">=")
-    , InfixL (mkOp2 emptyMeta "==" <$ symbol "==")
-    , InfixL (mkOp2 emptyMeta "!=" <$ symbol "!=")
+    [ InfixL (mkOp2 cmpOpArgs "<" <$ symbol "<")
+    , InfixL (mkOp2 cmpOpArgs ">" <$ symbol ">")
+    , InfixL (mkOp2 cmpOpArgs "<=" <$ symbol "<=")
+    , InfixL (mkOp2 cmpOpArgs ">=" <$ symbol ">=")
+    , InfixL (mkOp2 cmpOpArgs "==" <$ symbol "==")
+    , InfixL (mkOp2 cmpOpArgs "!=" <$ symbol "!=")
     ],
-    [ InfixL (mkOp2 emptyMeta "&" <$ symbol "&")
-    , InfixL (mkOp2 emptyMeta "|" <$ symbol "|")
-    , InfixL (mkOp2 emptyMeta "^" <$ symbol "^")
+    [ InfixL (mkOp2 boolOpArgs "&" <$ symbol "&")
+    , InfixL (mkOp2 boolOpArgs "|" <$ symbol "|")
+    , InfixL (mkOp2 boolOpArgs "^" <$ symbol "^")
     ]
   ]
+  where
+    intOpArgs = H.fromList [("l", rintLeaf), ("r", rintLeaf)]
+    cmpOpArgs = H.fromList [("l", rboolLeaf), ("r", rboolLeaf)]
+    boolOpArgs = H.fromList [("l", rboolLeaf), ("r", rboolLeaf)]
 
-pCallArg :: Parser (String, PExpr)
+pCallArg :: Parser ((String, RawLeafType), (String, PExpr))
 pCallArg = do
+  tp <- tidentifier
   argName <- identifier
   equals <- symbol "="
   expr <- pExpr
-  return (argName, expr)
+  return ((argName, RawLeafType tp H.empty), (argName, expr))
 
 pCall :: Parser PExpr
 pCall = do
   funName <- (:) <$> letterChar <*> many alphaNumChar
-  args <- parens $ sepBy1 pCallArg (symbol ",")
-  return $ Tuple emptyMeta funName (H.fromList args)
+  argsList <- parens $ sepBy1 pCallArg (symbol ",")
+  let (argTypes, argVals) = unzip argsList
+  let metaArgs = H.fromList argTypes
+  let meta = PreTyped $ RawSumType $ S.singleton $ RawLeafType funName metaArgs
+  return $ Tuple meta funName (H.fromList argVals)
 
 pStringLiteral :: Parser PExpr
-pStringLiteral = CExpr emptyMeta . CStr <$> (char '\"' *> manyTill L.charLiteral (char '\"'))
+pStringLiteral = CExpr strMeta . CStr <$> (char '\"' *> manyTill L.charLiteral (char '\"'))
 
 term :: Parser PExpr
 term = try (parens pExpr)
        <|> try pCall
        <|> pStringLiteral
-       <|> try ((\i -> Tuple emptyMeta i H.empty) <$> identifier)
-       <|> CExpr emptyMeta . CInt <$> integer
+       <|> try ((\i -> Tuple (identifierMeta i) i H.empty) <$> identifier)
+       <|> CExpr intMeta . CInt <$> integer
 
 pExpr :: Parser PExpr
 pExpr = makeExprParser term ops
@@ -116,7 +135,10 @@ pTypedIdentifier :: Parser (Name, ParseMeta)
 pTypedIdentifier = do
   tp <- try $ optional pType
   val <- identifier
-  return (val, PreTyped (fromMaybe RawTopType tp))
+  let tp' = case tp of
+        Just t -> PreTyped t
+        Nothing -> identifierMeta val
+  return (val, tp')
 
 pArgs :: Parser [(Name, ParseMeta)]
 pArgs = sepBy1 pTypedIdentifier (symbol ",")
