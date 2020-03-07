@@ -155,7 +155,7 @@ pDeclLHS = do
 pDeclSingle :: Parser PDecl
 pDeclSingle = do
   lhs <- pDeclLHS
-  RawDecl lhs [] <$> pExpr
+  RawDecl lhs [] . Just <$> pExpr
 
 pDeclTree :: Parser PDecl
 pDeclTree = L.indentBlock scn p
@@ -163,8 +163,8 @@ pDeclTree = L.indentBlock scn p
     pack lhs children = if isLeft ( last children)
       then return $ RawDecl lhs (rights $ init children) (head $ lefts [last children])
       else fail "The declaration must end with an expression"
-    childParser :: Parser (Either PExpr PDecl)
-    childParser = try (Right <$> pDeclTree) <|> try (Right <$> pDeclSingle) <|> (Left <$> pExpr)
+    childParser :: Parser (Either (Maybe PExpr) PDecl)
+    childParser = try (Right <$> pDeclTree) <|> try (Right <$> pDeclSingle) <|> (Left . Just <$> pExpr)
     p = do
       lhs <- pDeclLHS
       return (L.IndentSome Nothing (pack lhs) childParser)

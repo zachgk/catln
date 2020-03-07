@@ -69,10 +69,13 @@ toExpr (Tuple m name args) = do
   return $ (\(m'', args'') -> Tuple m'' name args'') <$> mergeTypeCheckResultsPair (m', mergeTypeCheckResultsMap args')
 
 toArrow :: VArrow s -> ST s (TypeCheckResult TArrow)
-toArrow (Arrow m expr) = do
+toArrow (Arrow m maybeExpr) = do
   m' <- toMeta m "Arrow"
-  expr' <- toExpr expr
-  return $ uncurry Arrow <$> mergeTypeCheckResultsPair (m', expr')
+  case maybeExpr of
+    Just expr -> do
+      expr' <- toExpr expr
+      return $ (\(m'', expr'') -> Arrow m'' (Just expr'')) <$> mergeTypeCheckResultsPair (m', expr')
+    Nothing -> return $ fmap (`Arrow` Nothing) m'
 
 toObjectArg :: Name -> (Name, VarMeta s) -> ST s (TypeCheckResult (Name, Typed))
 toObjectArg objName (name, m) = do

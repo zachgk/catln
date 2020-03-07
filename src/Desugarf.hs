@@ -20,7 +20,7 @@ import Data.Graph
 import           Syntax
 import CallGraph
 
-data SemiDecl m = SemiDecl (DeclLHS m) (Expr m)
+data SemiDecl m = SemiDecl (DeclLHS m) (Maybe (Expr m))
   deriving (Eq, Ord, Show)
 
 setMeta :: m -> Expr m -> Expr m
@@ -36,13 +36,13 @@ scopeSubDeclFunNamesInExpr prefix replaceNames (Tuple m name args) = Tuple m nam
     args' = fmap (scopeSubDeclFunNamesInExpr prefix replaceNames) args
 
 -- Renames sub functions by applying the parent names as a prefix to avoid name collisions
-scopeSubDeclFunNames :: Name -> [SemiDecl m] -> Expr m -> ([SemiDecl m], Expr m)
-scopeSubDeclFunNames prefix decls expr = (decls', expr')
+scopeSubDeclFunNames :: Name -> [SemiDecl m] -> Maybe (Expr m) -> ([SemiDecl m], Maybe (Expr m))
+scopeSubDeclFunNames prefix decls maybeExpr = (decls', expr')
   where
     declNames = S.fromList $ map (\(SemiDecl (DeclLHS _ name _) _) -> name) decls
     addPrefix n = prefix ++ "." ++ n
-    decls' = map (\(SemiDecl (DeclLHS m name args) expr) -> SemiDecl (DeclLHS m (addPrefix name) args) (scopeSubDeclFunNamesInExpr prefix declNames expr)) decls
-    expr' = scopeSubDeclFunNamesInExpr prefix declNames expr
+    decls' = map (\(SemiDecl (DeclLHS m name args) subExpr) -> SemiDecl (DeclLHS m (addPrefix name) args) (fmap (scopeSubDeclFunNamesInExpr prefix declNames) subExpr)) decls
+    expr' = fmap (scopeSubDeclFunNamesInExpr prefix declNames) maybeExpr
 
 currySubFunctionSignature :: H.HashMap Name m -> CallGraph -> SemiDecl m -> (SemiDecl m, (Name, H.HashMap Name m))
 currySubFunctionSignature parentArgMap (graph, nodeFromVertex, vertexFromKey) (SemiDecl (DeclLHS m name args) expr) = (SemiDecl (DeclLHS m name args') expr, (name, curryArgs))
@@ -56,9 +56,10 @@ currySubFunctionSignature parentArgMap (graph, nodeFromVertex, vertexFromKey) (S
 buildCallGraph :: [SemiDecl m] -> CallGraph
 buildCallGraph decls = graphFromEdges $ map fromDecl decls
   where
-    fromDecl (SemiDecl (DeclLHS _ name _) expr) = ((), name, S.toList $ tupleNamesInExpr expr)
+    fromDecl (SemiDecl (DeclLHS _ name _) Nothing) = ((), name, [])
+    fromDecl (SemiDecl (DeclLHS _ name _) (Just expr)) = ((), name, S.toList $ tupleNamesInExpr expr)
 
-currySubFunctions :: H.HashMap Name m -> [SemiDecl m] -> Expr m -> ([SemiDecl m], Expr m)
+currySubFunctions :: H.HashMap Name m -> [SemiDecl m] -> Maybe (Expr m) -> ([SemiDecl m], Maybe (Expr m))
 currySubFunctions parentArgMap decls expr = (decls', expr')
   where
     callGraph = buildCallGraph decls
@@ -66,8 +67,8 @@ currySubFunctions parentArgMap decls expr = (decls', expr')
     exprUpdateMap = H.fromList exprUpdateSource
     updateExpr c@CExpr{} = c
     updateExpr (Tuple tm tn te) = Tuple tm tn (H.union (fmap updateExpr te) (H.mapWithKey (\argName argM -> Tuple argM argName H.empty) $ H.lookupDefault H.empty tn exprUpdateMap))
-    expr' = updateExpr expr
-    decls' = map (\(SemiDecl lhs e) -> SemiDecl lhs (updateExpr e)) decls2
+    expr' = fmap updateExpr expr
+    decls' = map (\(SemiDecl lhs e) -> SemiDecl lhs (fmap updateExpr e)) decls2
 
 removeSubDeclarations :: RawDecl m -> [SemiDecl m]
 removeSubDeclarations (RawDecl (DeclLHS m declName args) subDecls expr) = decl':subDecls4
@@ -81,7 +82,7 @@ declToObjArrow :: SemiDecl m -> (Object m, [Arrow m])
 declToObjArrow (SemiDecl (DeclLHS m name args) expr) = (object, [arrow])
   where
     object = Object m name args
-    arrow = Arrow (getExprMeta expr) expr
+    arrow = Arrow m expr
 
 desDecl :: (Eq m, Hashable m) => RawDecl m -> Prgm m
 desDecl decl = H.fromList $ map declToObjArrow $ removeSubDeclarations decl

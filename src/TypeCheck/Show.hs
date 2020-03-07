@@ -31,10 +31,13 @@ showExpr (Tuple m name args) = do
   return (Tuple m' name args')
 
 showArrow :: VArrow s -> ST s SArrow
-showArrow (Arrow m expr) = do
+showArrow (Arrow m maybeExpr) = do
   m' <- showM m
-  expr' <- showExpr expr
-  return (Arrow m' expr')
+  case maybeExpr of
+    Just expr -> do
+      expr' <- showExpr expr
+      return (Arrow m' (Just expr'))
+    Nothing -> return (Arrow m' Nothing)
 
 showObj :: (VObject s, [VArrow s]) -> ST s (SObject, [SArrow])
 showObj (Object m name args, arrows) = do

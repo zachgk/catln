@@ -36,9 +36,9 @@ buildTypeGraph env = foldM addArrows (env, emptyGraph)
     where
         emptyGraph = H.empty
         addArrows (env, graph) (obj, arrows) = foldM (addArrow obj) (env, graph) arrows
-        addArrow obj (env, graph) (Arrow m expr) = do
+        addArrow obj (env, graph) (Arrow m _) = do
                 leaf <- objectToLeaf env obj
-                let graph2 = H.insertWith (++) leaf [getPntExpr expr] graph
+                let graph2 = H.insertWith (++) leaf [m] graph
                 return (env, graph2)
 
 rawTypeFromScheme :: Scheme -> Maybe RawType

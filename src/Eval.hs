@@ -150,7 +150,9 @@ evalExpr env (Tuple typed@(Typed (SumType prodTypes)) name exprs) destType = cas
                              Right (ResEArrow (Arrow m resExpr)) -> do
                                let env' = envWithVals env (H.fromList $ map (first (`LeafType` H.empty)) $ H.toList vals)
                                let destType' = leafFromMeta m
-                               evalExpr env' resExpr destType'
+                               case resExpr of
+                                 Just resExpr' -> evalExpr env' resExpr' destType'
+                                 Nothing -> Left $ GenEvalError $ "Missing arrow expression for " ++ name
                              Right IDArrow -> return $ TupleVal name vals
                              Right (ValArrow val) -> return val
                              Right (PrimArrow f) -> Right $ f vals

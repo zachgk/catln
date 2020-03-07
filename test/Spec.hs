@@ -21,7 +21,7 @@ main = defaultMain $ testCaseSteps "Add" $ \step -> do
   case parseFile contents of
     Left err -> assertFailure $ "Could not parse:\n \t" ++ show err
     Right rprgm -> do
-      step $ T.unpack $ pShow rprgm
+      -- step $ T.unpack $ pShow rprgm
       step "Desgugar..."
       let prgm = desPrgm rprgm
       step "Typecheck..."

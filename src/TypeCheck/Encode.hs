@@ -114,13 +114,16 @@ arrowAddScope env1 (Object meta _ args) = do
         aux e (n, m) = return $ fInsert e n (Object m n H.empty)
 
 fromArrow :: VObject s -> FEnv s -> PArrow -> ST s (VArrow s, FEnv s)
-fromArrow obj env1 (Arrow m expr) = do
+fromArrow obj env1 (Arrow m maybeExpr) = do
   env2 <- arrowAddScope env1 obj
-  (vExpr, env3) <- fromExpr env2 expr
-  (m', p, env4) <- fromMetaP env3 m
-  let env5 = addConstraints env4 [ArrowTo (getPntExpr vExpr) p]
-  let arrow' = Arrow m' vExpr
-  return (arrow', fReplaceMap env5 env1)
+  (m', p, env3) <- fromMetaP env2 m
+  case maybeExpr of
+    Just expr -> do
+      (vExpr, env4) <- fromExpr env3 expr
+      let env5 = addConstraints env4 [ArrowTo (getPntExpr vExpr) p]
+      let arrow' = Arrow m' (Just vExpr)
+      return (arrow', fReplaceMap env5 env1)
+    Nothing -> return (Arrow m' Nothing, fReplaceMap env3 env1)
 
 addObjArg :: FEnv s -> (Name, PreMeta) -> ST s ((Name, VarMeta s), FEnv s)
 addObjArg env (n, m) = do

@@ -88,7 +88,7 @@ data Expr m
 data DeclLHS m = DeclLHS m Name (H.HashMap Name m)
   deriving (Eq, Ord, Show)
 
-data RawDecl m = RawDecl (DeclLHS m) [RawDecl m] (Expr m)
+data RawDecl m = RawDecl (DeclLHS m) [RawDecl m] (Maybe (Expr m))
   deriving (Eq, Ord, Show)
 
 type RawPrgm m = [RawDecl m] -- TODO: Include [Import], [Export]
@@ -97,7 +97,7 @@ data Object m = Object m Name (H.HashMap Name m)
   deriving (Eq, Ord, Show, Generic)
 instance Hashable m => Hashable (Object m)
 
-data Arrow m = Arrow m (Expr m) -- m is result metadata
+data Arrow m = Arrow m (Maybe (Expr m)) -- m is result metadata
   deriving (Eq, Ord, Show)
 
 type Prgm m = (H.HashMap (Object m) [Arrow m]) -- TODO: Include [Import], [Export]
