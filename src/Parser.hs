@@ -97,16 +97,16 @@ pTypeArg = do
   argName <- identifier
   equals <- symbol "="
   tp <- tidentifier
-  return (argName, RawLeafType tp)
+  return (argName, RawLeafType tp H.empty)
 
 pTypeProduct :: Parser RawLeafType
 pTypeProduct = do
   name <- tidentifier
   args <- parens (sepBy1 pTypeArg (symbol ","))
-  return $ RawProdType name (H.fromList args)
+  return $ RawLeafType name (H.fromList args)
 
 pLeafType :: Parser RawLeafType
-pLeafType = try (RawLeafType <$> tidentifier)
+pLeafType = try ((`RawLeafType` H.empty) <$> tidentifier)
         <|> try pTypeProduct
 
 pType :: Parser RawType

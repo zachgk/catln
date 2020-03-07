@@ -23,9 +23,7 @@ import           Text.Megaparsec.Error (ParseErrorBundle)
 
 type Name = String
 
-data RawLeafType
-  = RawLeafType String
-  | RawProdType String (H.HashMap String RawLeafType)
+data RawLeafType = RawLeafType String (H.HashMap String RawLeafType)
   deriving (Eq, Ord, Show, Generic)
 instance Hashable RawLeafType
 
@@ -35,10 +33,7 @@ data RawType
   | RawBottomType
   deriving (Eq, Ord, Show)
 
--- TODO: Consider unifying LeafType and ProdType with no args
-data LeafType
-  = LeafType String
-  | ProdType String (H.HashMap String LeafType)
+data LeafType = LeafType String (H.HashMap String LeafType)
   deriving (Eq, Ord, Show, Generic)
 instance Hashable LeafType
 
@@ -46,22 +41,22 @@ newtype Type = SumType (S.HashSet LeafType)
   deriving (Eq, Ord, Show)
 
 rintType, rfloatType, rboolType, rstrType :: RawType
-rintType = RawSumType $ S.singleton $ RawLeafType "Integer"
-rfloatType = RawSumType $ S.singleton $ RawLeafType "Float"
-rboolType = RawSumType $ S.singleton $ RawLeafType "Boolean"
-rstrType = RawSumType $ S.singleton $ RawLeafType "String"
+rintType = RawSumType $ S.singleton $ RawLeafType "Integer" H.empty
+rfloatType = RawSumType $ S.singleton $ RawLeafType "Float" H.empty
+rboolType = RawSumType $ S.singleton $ RawLeafType "Boolean" H.empty
+rstrType = RawSumType $ S.singleton $ RawLeafType "String" H.empty
 
 intLeaf, floatLeaf, boolLeaf, strLeaf :: LeafType
-intLeaf = LeafType "Integer"
-floatLeaf = LeafType "Float"
-boolLeaf = LeafType "Boolean"
-strLeaf = LeafType "String"
+intLeaf = LeafType "Integer" H.empty
+floatLeaf = LeafType "Float" H.empty
+boolLeaf = LeafType "Boolean" H.empty
+strLeaf = LeafType "String" H.empty
 
 intType, floatType, boolType, strType :: Type
-intType = SumType $ S.singleton $ LeafType "Integer"
-floatType = SumType $ S.singleton $ LeafType "Float"
-boolType = SumType $ S.singleton $ LeafType "Boolean"
-strType = SumType $ S.singleton $ LeafType "String"
+intType = SumType $ S.singleton $ LeafType "Integer" H.empty
+floatType = SumType $ S.singleton $ LeafType "Float" H.empty
+boolType = SumType $ S.singleton $ LeafType "Boolean" H.empty
+strType = SumType $ S.singleton $ LeafType "String" H.empty
 
 newtype Import = Import String
   deriving (Eq, Ord, Show)

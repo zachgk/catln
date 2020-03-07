@@ -29,7 +29,7 @@ objectToLeaf env (Object _ name args) = do
                         return $ head $ S.toList upper
                 )
                 args
-        return $ RawProdType name args'
+        return $ RawLeafType name args'
 
 buildTypeGraph :: FEnv s -> [VArrow s] -> ST s (FEnv s, TypeGraph s)
 buildTypeGraph env = foldM addArrow (env, emptyGraph)

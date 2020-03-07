@@ -46,12 +46,11 @@ mapSequence m = H.fromList $ map (\b -> (b, mapForB b)) $ S.toList bKeySet
 tupleConstrainSumWith :: ((H.HashMap String RawLeafType, RawType) -> (H.HashMap String RawLeafType, RawType)) -> (S.HashSet RawLeafType, H.HashMap String RawType) -> (RawType, H.HashMap String RawType)
 tupleConstrainSumWith constrainArg (wholeUnmatched, parts) = (whole', parts')
   where
-    extractWhole (RawProdType productName leafs) = if H.keysSet leafs == H.keysSet parts then Just (productName, leafs) else Nothing
-    extractWhole _ = Nothing
+    extractWhole (RawLeafType productName leafs) = if H.keysSet leafs == H.keysSet parts then Just (productName, leafs) else Nothing
     whole = mapSequence $ H.fromList $ mapMaybe extractWhole $ S.toList wholeUnmatched
     joined = H.intersectionWith (,) whole parts
     constrained = H.map constrainArg joined
-    whole' = RawSumType $ S.fromList $ map (uncurry RawProdType) $ H.toList $ mapSequence $ H.map fst constrained
+    whole' = RawSumType $ S.fromList $ map (uncurry RawLeafType) $ H.toList $ mapSequence $ H.map fst constrained
     parts' = H.map snd constrained
 
 -- constrain by intersection

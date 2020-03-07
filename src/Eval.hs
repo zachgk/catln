@@ -68,7 +68,7 @@ lowerInt _          = error "can't lift non-int"
 liftIntOp :: Name -> (Integer -> Integer -> Integer) -> ((LeafType, LeafType), ResArrow)
 liftIntOp name f = ((srcType, destType), arrow)
   where
-    srcType = ProdType name (H.fromList [("l", intLeaf), ("r", intLeaf)])
+    srcType = LeafType name (H.fromList [("l", intLeaf), ("r", intLeaf)])
     destType = intLeaf
     arrow = PrimArrow (\args -> case (H.lookup "l" args, H.lookup "r" args) of
                            (Just (IntVal l), Just (IntVal r)) -> IntVal $ f l r
@@ -78,7 +78,7 @@ liftIntOp name f = ((srcType, destType), arrow)
 liftCmpOp :: Name -> (Integer -> Integer -> Bool) -> ((LeafType, LeafType), ResArrow)
 liftCmpOp name f = ((srcType, destType), arrow)
   where
-    srcType = ProdType name (H.fromList [("l", intLeaf), ("r", intLeaf)])
+    srcType = LeafType name (H.fromList [("l", intLeaf), ("r", intLeaf)])
     destType = boolLeaf
     arrow = PrimArrow (\args -> case (H.lookup "l" args, H.lookup "r" args) of
                            (Just (IntVal l), Just (IntVal r)) -> BoolVal $ f l r
@@ -88,7 +88,7 @@ liftCmpOp name f = ((srcType, destType), arrow)
 liftBoolOp :: Name -> (Bool -> Bool -> Bool) -> ((LeafType, LeafType), ResArrow)
 liftBoolOp name f = ((srcType, destType), arrow)
   where
-    srcType = ProdType name (H.fromList [("l", boolLeaf), ("r", boolLeaf)])
+    srcType = LeafType name (H.fromList [("l", boolLeaf), ("r", boolLeaf)])
     destType = boolLeaf
     arrow = PrimArrow (\args -> case (H.lookup "l" args, H.lookup "r" args) of
                            (Just (BoolVal l), Just (BoolVal r)) -> BoolVal $ f l r
@@ -98,7 +98,7 @@ liftBoolOp name f = ((srcType, destType), arrow)
 rnot :: Name -> ((LeafType, LeafType), ResArrow)
 rnot name = ((srcType, destType), arrow)
   where
-    srcType = ProdType name (H.singleton "a" boolLeaf)
+    srcType = LeafType name (H.singleton "a" boolLeaf)
     destType = boolLeaf
     arrow = PrimArrow (\args -> case H.lookup "a" args of
           Just (BoolVal b) -> BoolVal $ not b
@@ -142,11 +142,11 @@ evalExpr env (Tuple _ "assert" args) _ =
 evalExpr env (Tuple typed@(Typed (SumType prodTypes)) name exprs) destType = case S.toList prodTypes of
     (_:_:_) -> Left $ GenEvalError $ "Found multiple types for " ++ name
     [] -> Left $ GenEvalError $ "Found no types for " ++ name
-    [prodType@(ProdType name leafType)] | H.keysSet exprs == H.keysSet leafType -> do
+    [prodType@(LeafType name leafType)] | H.keysSet exprs == H.keysSet leafType -> do
                            vals <- mapM (\(destType, expr) -> evalExpr env (Tuple typed name exprs) destType) $ H.intersectionWith (,) leafType exprs
                            case envLookup env prodType destType of
                              Right (ResEArrow (Arrow m _ resExpr)) -> do
-                               let env' = envWithVals env (H.fromList $ map (first LeafType) $ H.toList vals)
+                               let env' = envWithVals env (H.fromList $ map (first (\valName -> LeafType valName H.empty)) $ H.toList vals)
                                let destType' = leafFromMeta m
                                evalExpr env' resExpr destType'
                              Right IDArrow -> return $ TupleVal name vals
@@ -168,4 +168,4 @@ envLookup (resEnv, valEnv) srcType destType = case H.lookup srcType valEnv of
 
 evalPrgm :: EPrgm -> Either EvalError Val
 evalPrgm (objects, arrows) = evalExpr (makeBaseEnv arrows) main intLeaf
-  where main = Tuple (Typed $ SumType $ S.singleton $ ProdType "main" H.empty) "main" H.empty
+  where main = Tuple (Typed $ SumType $ S.singleton $ LeafType "main" H.empty) "main" H.empty
