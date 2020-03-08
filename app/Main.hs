@@ -32,38 +32,40 @@ genRepl env source = do
         Left err    -> print ("type check err: " ++ show err) >> return env
         Right tprgm -> codegen initModule tprgm >> return env
 
-processRepl :: Env -> String -> IO Env
-processRepl env source = do
-  let res = parseRepl source
-  case res of
-    ReplErr err -> print err >> return env
-    ReplExpr expr -> print (evalExpr env expr) >> return env
-    ReplDecl decl -> case addDecl env (head $ desDecl decl) of
-      Left err'  -> print err' >> return env
-      Right env' -> return env'
+-- processRepl :: Env -> String -> IO Env
+-- processRepl env source = do
+--   let res = parseRepl source
+--   case res of
+--     ReplErr err -> print err >> return env
+--     ReplExpr expr -> print (evalExpr env expr) >> return env
+--     ReplDecl decl -> case addDecl env (head $ desDecl decl) of
+--       Left err'  -> print err' >> return env
+--       Right env' -> return env'
 
 process :: String -> IO ()
-process source = do
-  let res = parseFile source
-  case res of
-    Left err   -> print err
-    Right prgm -> print (evalPrgm (desPrgm prgm))
+process = undefined
+-- process source = do
+--   let res = parseFile source
+--   case res of
+--     Left err   -> print err
+--     Right prgm -> print (evalMain (desPrgm prgm))
 
 processFile :: String -> IO ()
 processFile fname = readFile fname >>= process
 
 repl :: IO ()
-repl = runInputT defaultSettings (loop baseEnv)
-  where loop env = do
-          minput <- getInputLine "eval> "
-          case minput of
-            Nothing -> outputStrLn "Goodbye."
-            Just input -> do
-              env' <- case input of
-                _ | ":p " `isPrefixOf` input -> lift $ parsingRepl env (drop 3 input)
-                _ | ":g " `isPrefixOf` input -> lift $ genRepl env (drop 3 input)
-                _ -> lift $ processRepl env input
-              loop env'
+repl = undefined
+-- repl = runInputT defaultSettings (loop baseEnv)
+--   where loop env = do
+--           minput <- getInputLine "eval> "
+--           case minput of
+--             Nothing -> outputStrLn "Goodbye."
+--             Just input -> do
+--               env' <- case input of
+--                 _ | ":p " `isPrefixOf` input -> lift $ parsingRepl env (drop 3 input)
+--                 _ | ":g " `isPrefixOf` input -> lift $ genRepl env (drop 3 input)
+--                 _ -> lift $ processRepl env input
+--               loop env'
 
 main :: IO ()
 main = do
