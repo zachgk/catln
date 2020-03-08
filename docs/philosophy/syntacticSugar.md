@@ -1,0 +1,7 @@
+# Syntactic Sugar
+
+A good language should come in two forms: a minimalist form and a usable form. When optimizing, converting, and analyzing code, it helps to reduce the amount of language features to the bare minimum. While the ideal of having a simple to learn language is also good for end users, various additional kinds of language features and syntax could be adopted that greatly simplify coding in the language. Therefore, the easiest thing to do is have a number of language features that are converted into their minimalist equivalent and then used in that way. Here are a number of important examples of features that should be added as syntactic sugar. 
+
+## Closures
+
+One of the standard ideas with higher order functions is the closure. A lambda function uses the environment not of it's execution, but of it's creation. This enables values to be passed into the lambda from the external code. However, preserving thee environments is bad for memory usage and makes analysis difficult. Instead, I will convert lambdas that accept values from the environment into currying. By checking within the lambdas to see which variables must come from the outside, those will be passed into the function and the function will gain those as additional arguments. Then, the lambdas can be treated as a top-level function and doesn't require any special handling as well. Because currying is already a useful feature and can be accomplished with partially applied tuples, it can reasonably handle this form.
