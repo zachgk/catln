@@ -94,6 +94,7 @@ toObject (Object m name args, arrows) = do
   return $ mergeTypeCheckResultsPair (object', arrows'')
 
 toPrgm :: VPrgm s -> ST s (TypeCheckResult TPrgm)
-toPrgm prgm = do
-  objects' <- mapM toObject prgm
-  return $ H.fromList <$> mergeTypeCheckResultsList objects'
+toPrgm (objMap, classMap) = do
+  objects' <- mapM toObject objMap
+  let objMap = H.fromList <$> mergeTypeCheckResultsList objects'
+  return $ mergeTypeCheckResultsPair (objMap, return classMap)

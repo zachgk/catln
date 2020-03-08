@@ -2,6 +2,8 @@
 
 module Main where
 
+import qualified Data.HashMap.Strict as H
+
 import           Desugarf                 (desDecl, desPrgm)
 import           Emit                     (codegen, initModule)
 import           Eval
@@ -20,7 +22,7 @@ parsingRepl :: Env -> String -> IO Env
 parsingRepl env source = case parseRepl source of
     ReplErr err   -> print err >> return env
     ReplExpr expr -> print expr >> return env
-    ReplDecl decl -> print decl >> return env
+    ReplStatement statement -> print statement >> return env
 
 genRepl :: Env -> String -> IO Env
 genRepl env source = do
@@ -28,7 +30,7 @@ genRepl env source = do
   case res of
     ReplErr err -> print err >> return env
     ReplExpr _ -> print ("Can not generate expression" :: String) >> return env
-    ReplDecl decl -> case typecheckPrgm $ desPrgm [decl] of
+    ReplStatement statement -> case typecheckPrgm $ desPrgm [statement] of
         Left err    -> print ("type check err: " ++ show err) >> return env
         Right tprgm -> codegen initModule tprgm >> return env
 

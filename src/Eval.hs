@@ -22,6 +22,7 @@ type EvalMeta = Typed
 type EExpr = Expr EvalMeta
 type EObject = Object EvalMeta
 type EArrow = Arrow EvalMeta
+type EObjectMap = ObjectMap EvalMeta
 type EPrgm = Prgm EvalMeta
 type EReplRes = ReplRes EvalMeta
 
@@ -125,10 +126,10 @@ leafFromMeta (Typed (SumType prodTypes)) = case S.toList prodTypes of
   [leafType] -> leafType
   _ -> error "Arrow has multiple leaves"
 
-makeBaseEnv :: EPrgm -> Env
-makeBaseEnv prgm = (H.union primEnv resEnv, H.empty)
+makeBaseEnv :: EObjectMap -> Env
+makeBaseEnv objMap = (H.union primEnv resEnv, H.empty)
   where
-    resEnv = H.fromList $ concatMap resFromArrows $ H.toList prgm
+    resEnv = H.fromList $ concatMap resFromArrows $ H.toList objMap
     resFromArrows (obj, arrows) = map (resFromArrow obj) arrows
     resFromArrow (Object om _ _) arrow@(Arrow am _) = ((leafFromMeta om, leafFromMeta am), ResEArrow arrow)
 
@@ -171,7 +172,7 @@ envLookup (resEnv, valEnv) srcType destType = case H.lookup srcType valEnv of
     Nothing -> Left $ GenEvalError $ "Failed to lookup arrow for " ++ show (srcType, destType)
 
 evalPrgm :: EExpr -> LeafType -> EPrgm -> Either EvalError Val
-evalPrgm src dest prgm = evalExpr (makeBaseEnv prgm) src dest
+evalPrgm src dest (objectMap, _) = evalExpr (makeBaseEnv objectMap) src dest
 
 evalMain :: EPrgm -> Either EvalError Val
 evalMain = evalPrgm main intLeaf

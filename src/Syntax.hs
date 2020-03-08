@@ -23,12 +23,16 @@ import           Text.Megaparsec.Error (ParseErrorBundle)
 
 type Name = String
 
-data RawLeafType = RawLeafType String (H.HashMap String RawLeafType)
+type TypeName = Name
+type ClassName = Name
+
+data RawLeafType = RawLeafType TypeName (H.HashMap TypeName RawLeafType)
   deriving (Eq, Ord, Show, Generic)
 instance Hashable RawLeafType
 
+type RawLeafSet = S.HashSet RawLeafType
 data RawType
-  = RawSumType (S.HashSet RawLeafType)
+  = RawSumType RawLeafSet
   | RawTopType
   | RawBottomType
   deriving (Eq, Ord, Show, Generic)
@@ -41,6 +45,13 @@ instance Hashable LeafType
 newtype Type = SumType (S.HashSet LeafType)
   deriving (Eq, Ord, Show, Generic)
 instance Hashable Type
+
+type Sealed = Bool -- whether the typeclass can be extended or not
+data TypeClass = TypeClass Name Sealed RawLeafSet
+  deriving (Eq, Ord, Show, Generic)
+instance Hashable TypeClass
+
+type ClassMap = (H.HashMap TypeName (S.HashSet ClassName), H.HashMap ClassName (Sealed, S.HashSet TypeName))
 
 rintLeaf, rfloatLeaf, rboolLeaf, rstrLeaf :: RawLeafType
 rintLeaf = RawLeafType "Integer" H.empty
@@ -91,7 +102,18 @@ data DeclLHS m = DeclLHS m Name (H.HashMap Name m)
 data RawDecl m = RawDecl (DeclLHS m) [RawDecl m] (Maybe (Expr m))
   deriving (Eq, Ord, Show)
 
-type RawPrgm m = [RawDecl m] -- TODO: Include [Import], [Export]
+data RawTypeDef m = RawTypeDef Name RawLeafSet
+  deriving (Eq, Ord, Show)
+
+type RawClassDef = (TypeName, ClassName)
+
+data RawStatement m
+  = RawDeclStatement (RawDecl m)
+  | RawTypeDefStatement (RawTypeDef m)
+  | RawClassDefStatement RawClassDef
+  deriving (Eq, Ord, Show)
+
+type RawPrgm m = [RawStatement m] -- TODO: Include [Import], [Export]
 
 data Object m = Object m Name (H.HashMap Name m)
   deriving (Eq, Ord, Show, Generic)
@@ -100,12 +122,13 @@ instance Hashable m => Hashable (Object m)
 data Arrow m = Arrow m (Maybe (Expr m)) -- m is result metadata
   deriving (Eq, Ord, Show)
 
-type Prgm m = (H.HashMap (Object m) [Arrow m]) -- TODO: Include [Import], [Export]
+type ObjectMap m = (H.HashMap (Object m) [Arrow m])
+type Prgm m = (ObjectMap m, ClassMap) -- TODO: Include [Import], [Export]
 
 type ParseErrorRes = ParseErrorBundle String Void
 
 data ReplRes m
-  = ReplDecl (RawDecl m)
+  = ReplStatement (RawStatement m)
   | ReplExpr (Expr m)
   | ReplErr ParseErrorRes
   deriving (Eq, Show)

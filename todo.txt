@@ -1,7 +1,9 @@
+Compiler annotations and convert "assert" into the first one
 Types
   Type with defaultNames
   type classes
   Property
+Parameterized types and methods
 Typecheck in order of topological sort of function calls
   Compute with downstream functions as upper bound external
   Compute one strongly connected component at a time
@@ -19,6 +21,10 @@ Map
   map syntax (do notation)
 Include line number in Syntax Results
   Unified CompileError type
+
+Bad input testing
+    Prevent making inner definition with same name as outer definition
+    Prevent using lowercase name for type unless there is also a function def
     
 Implicit conversions
 Contexts

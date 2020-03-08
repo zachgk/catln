@@ -25,13 +25,7 @@ import qualified Text.Megaparsec.Char.Lexer     as L
 
 import           Lexer
 import           Syntax
-
-type ParseMeta = PreTyped
-type PExpr = RawExpr ParseMeta
-type PDecl = RawDecl ParseMeta
-type PDeclLHS = DeclLHS ParseMeta
-type PPrgm = RawPrgm ParseMeta
-type PReplRes = ReplRes ParseMeta
+import Parser.Syntax
 
 emptyMeta :: ParseMeta
 emptyMeta = PreTyped RawTopType
@@ -128,12 +122,12 @@ pLeafType :: Parser RawLeafType
 pLeafType = try ((`RawLeafType` H.empty) <$> tidentifier)
         <|> try pTypeProduct
 
-pType :: Parser RawType
-pType = RawSumType . S.fromList <$> parens (sepBy1 pLeafType (symbol "|"))
+pType :: Parser RawLeafSet
+pType = S.fromList <$> sepBy1 pLeafType (symbol "|")
 
 pTypedIdentifier :: Parser (Name, ParseMeta)
 pTypedIdentifier = do
-  tp <- try $ optional pType
+  tp <- try $ optional $ parens $ RawSumType <$> pType
   val <- identifier
   let tp' = case tp of
         Just t -> PreTyped t
@@ -169,11 +163,33 @@ pDeclTree = L.indentBlock scn p
       lhs <- pDeclLHS
       return (L.IndentSome Nothing (pack lhs) childParser)
 
-pRootDecl :: Parser PDecl
-pRootDecl = L.nonIndented scn (try pDeclTree <|> pDeclSingle)
+pRootDecl :: Parser PStatement
+pRootDecl = do
+  decl <- L.nonIndented scn (try pDeclTree <|> pDeclSingle)
+  return $ RawDeclStatement decl
+
+pTypeDefStatement :: Parser PStatement
+pTypeDefStatement = do
+  symbol "data"
+  name <- tidentifier
+  symbol "="
+  RawTypeDefStatement . RawTypeDef name <$> pType
+
+pClassDefStatement :: Parser PStatement
+pClassDefStatement = do
+  symbol "instance"
+  typeName <- tidentifier
+  symbol "of"
+  className <- tidentifier
+  return $ RawClassDefStatement (typeName, className)
+
+pStatement :: Parser PStatement
+pStatement = try pTypeDefStatement
+             <|> try pClassDefStatement
+             <|> try pRootDecl
 
 pPrgm :: Parser PPrgm
-pPrgm = sepBy1 pRootDecl newline
+pPrgm = sepBy1 pStatement newline
 
 contents :: Parser a -> Parser a
 contents p = do
@@ -187,6 +203,6 @@ parseFile = runParser (contents pPrgm) "<stdin>"
 parseRepl :: String -> PReplRes
 parseRepl s = case runParser (contents p) "<stdin>" s of
                 Left e@(ParseErrorBundle _ _) -> ReplErr e
-                Right (Left decl)             -> ReplDecl decl
+                Right (Left statement)             -> ReplStatement statement
                 Right (Right expr)            -> ReplExpr expr
-  where p = try (Left <$> pRootDecl) <|> try (Right <$> pExpr)
+  where p = try (Left <$> pStatement) <|> try (Right <$> pExpr)

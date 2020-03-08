@@ -65,7 +65,8 @@ type VarMeta s = Pnt s
 type VExpr s = Expr (VarMeta s)
 type VArrow s = Arrow (VarMeta s)
 type VObject s = Object (VarMeta s)
-type VPrgm s = [(VObject s, [VArrow s])]
+type VObjectMap s = [(VObject s, [VArrow s])]
+type VPrgm s = (VObjectMap s, ClassMap)
 type VReplRes s = ReplRes (VarMeta s)
 
 type TypedMeta = Typed

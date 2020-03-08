@@ -31,7 +31,7 @@ objectToLeaf env (Object _ name args) = do
                 args
         return $ RawLeafType name args'
 
-buildTypeGraph :: FEnv s -> VPrgm s -> ST s (FEnv s, TypeGraph s)
+buildTypeGraph :: FEnv s -> VObjectMap s -> ST s (FEnv s, TypeGraph s)
 buildTypeGraph env = foldM addArrows (env, emptyGraph)
     where
         emptyGraph = H.empty

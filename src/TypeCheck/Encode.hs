@@ -140,7 +140,7 @@ addObject env (Object m name args, arrows) = do
   return ((obj', arrows'), env3)
 
 fromPrgm :: FEnv s -> PPrgm -> ST s (VPrgm s, TypeGraph s, FEnv s)
-fromPrgm env prgm = do
-  (objs', env') <- mapMWithFEnv env addObject $ H.toList prgm
-  (env'', typeGraph) <- buildTypeGraph env' objs'
-  return (objs', typeGraph, env'')
+fromPrgm env (objMap, classMap) = do
+  (objMap', env') <- mapMWithFEnv env addObject $ H.toList objMap
+  (env'', typeGraph) <- buildTypeGraph env' objMap'
+  return ((objMap', classMap), typeGraph, env'')

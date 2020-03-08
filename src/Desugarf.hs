@@ -15,9 +15,11 @@ module Desugarf where
 import           Data.Hashable
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
+import Control.Applicative ((<$>))
 import Data.Graph
 
 import           Syntax
+import           Parser.Syntax
 import CallGraph
 
 data SemiDecl m = SemiDecl (DeclLHS m) (Maybe (Expr m))
@@ -84,14 +86,57 @@ declToObjArrow (SemiDecl (DeclLHS m name args) expr) = (object, [arrow])
     object = Object m name args
     arrow = Arrow m expr
 
-desDecl :: (Eq m, Hashable m) => RawDecl m -> Prgm m
+desDecl :: (Eq m, Hashable m) => RawDecl m -> ObjectMap m
 desDecl decl = H.fromList $ map declToObjArrow $ removeSubDeclarations decl
 
 unionsWith :: (Ord k, Hashable k) => (a->a->a) -> [H.HashMap k a] -> H.HashMap k a
 unionsWith f = foldl (H.unionWith f) H.empty
 
-desDecls :: (Eq m, Ord m, Hashable m) => [RawDecl m] -> Prgm m
+desDecls :: (Eq m, Ord m, Hashable m) => [RawDecl m] -> ObjectMap m
 desDecls decls = unionsWith (++) $ map desDecl decls
 
-desPrgm :: (Eq m, Ord m, Hashable m) => RawPrgm m -> Prgm m
-desPrgm = desDecls
+addTypeDef :: PRawTypeDef -> (PObjectMap, ClassMap) -> (PObjectMap, ClassMap)
+addTypeDef (RawTypeDef name leafs) (objMap, classMap) = (objMap', classMap')
+  where
+    leafArgConvert leafType = PreTyped $ RawSumType $ S.singleton leafType
+    leafToObj (RawLeafType leafName leafArgs) = Object (PreTyped $ RawSumType $ S.singleton $ RawLeafType leafName leafArgs) leafName (fmap leafArgConvert leafArgs)
+    newObjs = map leafToObj $ S.toList leafs
+    additionalObjMap = H.fromList $ map (,[]) newObjs
+    objMap' = mergeObjMaps objMap additionalObjMap
+    leafNames = (\(RawLeafType leafName _) -> leafName) <$> S.toList leafs
+    additionalClassMap = desClassDefs True $ map (,name) leafNames
+    classMap' = mergeClassMaps additionalClassMap classMap
+
+desTypeDefs :: [PRawTypeDef] -> (PObjectMap, ClassMap)
+desTypeDefs = foldr addTypeDef empty
+  where empty = (H.empty, (H.empty, H.empty))
+
+desClassDefs :: Sealed -> [RawClassDef] -> ClassMap
+desClassDefs sealed = foldr addDef empty
+  where
+    empty = (H.empty, H.empty)
+    addDef (typeName, className) (typeToClass, classToType) = (H.insertWith S.union typeName (S.singleton className) typeToClass, H.insertWith addClass className (sealed, S.singleton typeName) classToType)
+    addClass (sealed, set1) (_, set2) = (sealed, S.union set1 set2)
+
+mergeObjMaps :: PObjectMap -> PObjectMap -> PObjectMap
+mergeObjMaps = H.unionWith (++)
+
+mergeClassMaps :: ClassMap -> ClassMap -> ClassMap
+mergeClassMaps (toClassA, toTypeA) (toClassB, toTypeB) = (H.unionWith S.union toClassA toClassB, H.unionWith mergeClasses toTypeA toTypeB)
+  where mergeClasses (sealedA, setA) (sealedB, setB) = if sealedA == sealedB
+          then (sealedA, S.union setA setB)
+          else error "Added to sealed class definition"
+
+desPrgm :: PPrgm -> DesPrgm
+desPrgm prgm = (objMap, classMap)
+  where
+    splitStatements statement = case statement of
+          RawDeclStatement decl -> ([decl], [], [])
+          RawTypeDefStatement typedef -> ([], [typedef], [])
+          RawClassDefStatement classdef -> ([], [], [classdef])
+    (decls, types, classes) = (\(a, b, c) -> (concat a, concat b, concat c)) $ unzip3 $ map splitStatements prgm
+    declObjMap = desDecls decls
+    (typeObjMap, sealedClasses) = desTypeDefs types
+    unsealedClasses = desClassDefs False classes
+    objMap = mergeObjMaps declObjMap typeObjMap
+    classMap = mergeClassMaps sealedClasses unsealedClasses

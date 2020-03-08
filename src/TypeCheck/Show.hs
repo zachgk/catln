@@ -47,6 +47,6 @@ showObj (Object m name args, arrows) = do
   return (Object m' name args', arrows')
 
 showPrgm :: VPrgm s -> ST s SPrgm
-showPrgm prgm = do
-  objs' <- mapM showObj prgm
-  return $ H.fromList objs'
+showPrgm (objMap, classMap) = do
+  objs' <- mapM showObj objMap
+  return (H.fromList objs', classMap)
