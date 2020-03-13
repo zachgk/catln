@@ -20,6 +20,8 @@ type PDeclLHS = DeclLHS ParseMeta
 type PObjectMap = ObjectMap ParseMeta
 type PRawTypeDef = RawTypeDef ParseMeta
 type PStatement = RawStatement ParseMeta
+type PObject = Object ParseMeta
+type PArrow = Arrow ParseMeta
 type PPrgm = RawPrgm ParseMeta
 type PReplRes = ReplRes ParseMeta
 

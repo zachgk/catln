@@ -22,14 +22,14 @@ import           Syntax
 import           Parser.Syntax
 import CallGraph
 
-data SemiDecl m = SemiDecl (DeclLHS m) (Maybe (Expr m))
+data PSemiDecl = PSemiDecl PDeclLHS (Maybe PExpr)
   deriving (Eq, Ord, Show)
 
 setMeta :: m -> Expr m -> Expr m
 setMeta m (CExpr _ c)   = CExpr m c
 setMeta m (Tuple _ n es) = Tuple m n es
 
-scopeSubDeclFunNamesInExpr :: Name -> S.HashSet Name -> Expr m -> Expr m
+scopeSubDeclFunNamesInExpr :: Name -> S.HashSet Name -> PExpr -> PExpr
 scopeSubDeclFunNamesInExpr _ _ e@CExpr{} = e
 scopeSubDeclFunNamesInExpr prefix replaceNames (Tuple m name args) = Tuple m name' args'
   where
@@ -38,16 +38,16 @@ scopeSubDeclFunNamesInExpr prefix replaceNames (Tuple m name args) = Tuple m nam
     args' = fmap (scopeSubDeclFunNamesInExpr prefix replaceNames) args
 
 -- Renames sub functions by applying the parent names as a prefix to avoid name collisions
-scopeSubDeclFunNames :: Name -> [SemiDecl m] -> Maybe (Expr m) -> ([SemiDecl m], Maybe (Expr m))
+scopeSubDeclFunNames :: Name -> [PSemiDecl] -> Maybe PExpr -> ([PSemiDecl], Maybe PExpr)
 scopeSubDeclFunNames prefix decls maybeExpr = (decls', expr')
   where
-    declNames = S.fromList $ map (\(SemiDecl (DeclLHS _ name _) _) -> name) decls
+    declNames = S.fromList $ map (\(PSemiDecl (DeclLHS _ name _) _) -> name) decls
     addPrefix n = prefix ++ "." ++ n
-    decls' = map (\(SemiDecl (DeclLHS m name args) subExpr) -> SemiDecl (DeclLHS m (addPrefix name) args) (fmap (scopeSubDeclFunNamesInExpr prefix declNames) subExpr)) decls
+    decls' = map (\(PSemiDecl (DeclLHS m name args) subExpr) -> PSemiDecl (DeclLHS m (addPrefix name) args) (fmap (scopeSubDeclFunNamesInExpr prefix declNames) subExpr)) decls
     expr' = fmap (scopeSubDeclFunNamesInExpr prefix declNames) maybeExpr
 
-currySubFunctionSignature :: H.HashMap Name m -> CallGraph -> SemiDecl m -> (SemiDecl m, (Name, H.HashMap Name m))
-currySubFunctionSignature parentArgMap (graph, nodeFromVertex, vertexFromKey) (SemiDecl (DeclLHS m name args) expr) = (SemiDecl (DeclLHS m name args') expr, (name, curryArgs))
+currySubFunctionSignature :: H.HashMap Name ParseMeta -> CallGraph -> PSemiDecl -> (PSemiDecl, (Name, H.HashMap Name ParseMeta))
+currySubFunctionSignature parentArgMap (graph, nodeFromVertex, vertexFromKey) (PSemiDecl (DeclLHS m name args) expr) = (PSemiDecl (DeclLHS m name args') expr, (name, curryArgs))
   where
     getContained n = S.fromList $ map ((\(_, calledName, _) -> calledName) . nodeFromVertex) $ reachable graph $ (\(Just n') -> n') $ vertexFromKey n
     contained = getContained name
@@ -55,13 +55,13 @@ currySubFunctionSignature parentArgMap (graph, nodeFromVertex, vertexFromKey) (S
     args' = H.union args curryArgs
 
 
-buildCallGraph :: [SemiDecl m] -> CallGraph
+buildCallGraph :: [PSemiDecl] -> CallGraph
 buildCallGraph decls = graphFromEdges $ map fromDecl decls
   where
-    fromDecl (SemiDecl (DeclLHS _ name _) Nothing) = ((), name, [])
-    fromDecl (SemiDecl (DeclLHS _ name _) (Just expr)) = ((), name, S.toList $ tupleNamesInExpr expr)
+    fromDecl (PSemiDecl (DeclLHS _ name _) Nothing) = ((), name, [])
+    fromDecl (PSemiDecl (DeclLHS _ name _) (Just expr)) = ((), name, S.toList $ tupleNamesInExpr expr)
 
-currySubFunctions :: H.HashMap Name m -> [SemiDecl m] -> Maybe (Expr m) -> ([SemiDecl m], Maybe (Expr m))
+currySubFunctions :: H.HashMap Name ParseMeta -> [PSemiDecl] -> Maybe PExpr -> ([PSemiDecl], Maybe PExpr)
 currySubFunctions parentArgMap decls expr = (decls', expr')
   where
     callGraph = buildCallGraph decls
@@ -70,29 +70,29 @@ currySubFunctions parentArgMap decls expr = (decls', expr')
     updateExpr c@CExpr{} = c
     updateExpr (Tuple tm tn te) = Tuple tm tn (H.union (fmap updateExpr te) (H.mapWithKey (\argName argM -> Tuple argM argName H.empty) $ H.lookupDefault H.empty tn exprUpdateMap))
     expr' = fmap updateExpr expr
-    decls' = map (\(SemiDecl lhs e) -> SemiDecl lhs (fmap updateExpr e)) decls2
+    decls' = map (\(PSemiDecl lhs e) -> PSemiDecl lhs (fmap updateExpr e)) decls2
 
-removeSubDeclarations :: RawDecl m -> [SemiDecl m]
+removeSubDeclarations :: PDecl -> [PSemiDecl]
 removeSubDeclarations (RawDecl (DeclLHS m declName args) subDecls expr) = decl':subDecls4
   where
     subDecls2 = concatMap removeSubDeclarations subDecls
     (subDecls3, expr2) = scopeSubDeclFunNames declName subDecls2 expr
     (subDecls4, expr3) = currySubFunctions args subDecls3 expr2
-    decl' = SemiDecl (DeclLHS m declName args) expr3
+    decl' = PSemiDecl (DeclLHS m declName args) expr3
 
-declToObjArrow :: SemiDecl m -> (Object m, [Arrow m])
-declToObjArrow (SemiDecl (DeclLHS m name args) expr) = (object, [arrow])
+declToObjArrow :: PSemiDecl -> (PObject, [PArrow])
+declToObjArrow (PSemiDecl (DeclLHS m name args) expr) = (object, [arrow])
   where
     object = Object m name args
-    arrow = Arrow m expr
+    arrow = Arrow (PreTyped RawTopType) expr
 
-desDecl :: (Eq m, Hashable m) => RawDecl m -> ObjectMap m
+desDecl :: PDecl -> PObjectMap
 desDecl decl = H.fromList $ map declToObjArrow $ removeSubDeclarations decl
 
 unionsWith :: (Ord k, Hashable k) => (a->a->a) -> [H.HashMap k a] -> H.HashMap k a
 unionsWith f = foldl (H.unionWith f) H.empty
 
-desDecls :: (Eq m, Ord m, Hashable m) => [RawDecl m] -> ObjectMap m
+desDecls :: [PDecl] -> PObjectMap
 desDecls decls = unionsWith (++) $ map desDecl decls
 
 addTypeDef :: PRawTypeDef -> (PObjectMap, ClassMap) -> (PObjectMap, ClassMap)

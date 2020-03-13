@@ -56,6 +56,12 @@ instance Show Val where
   show (StrVal s)   = show s
   show (TupleVal n a)   = show n ++ show a
 
+instance Show ResArrow where
+  show (ResEArrow ea) = "ResEArrow"
+  show IDArrow = show "IDArrow"
+  show (PrimArrow _) = show "PrimArrow"
+  show (ValArrow v) = show $ "ValArrow " ++ show v
+
 liftInt :: Integer -> Val
 liftInt = IntVal
 

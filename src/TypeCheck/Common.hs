@@ -14,6 +14,7 @@
 module TypeCheck.Common where
 
 import qualified Data.HashMap.Strict as H
+import qualified Data.HashSet          as S
 import           Data.UnionFind.ST
 import           Data.Hashable
 import           GHC.Generics          (Generic)
@@ -42,8 +43,16 @@ data Constraint s
   | EqPoints (Pnt s) (Pnt s)
   | BoundedBy (Pnt s) (Pnt s)
   | IsTupleOf (Pnt s) (H.HashMap String (Pnt s))
-  | ArrowTo (Pnt s) (Pnt s)
+  | ArrowTo (Pnt s) (Pnt s) -- ArrowTo src dest
   deriving (Eq)
+
+data SConstraint
+  = SEqualsKnown RawType
+  | SEqPoints
+  | SBoundedBy
+  | SIsTupleOf (S.HashSet String)
+  | SArrowTo -- ArrowTo src dest
+  deriving (Eq, Ord, Show)
 
 type TypeCheckResult r = Either [TypeCheckError] r
 
@@ -75,7 +84,6 @@ type TArrow = Arrow TypedMeta
 type TObject = Object TypedMeta
 type TPrgm = Prgm TypedMeta
 type TReplRes = ReplRes TypedMeta
-
 
 -- implicit graph
 type TypeGraph s = H.HashMap RawLeafType [Pnt s]

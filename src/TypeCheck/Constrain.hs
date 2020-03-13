@@ -139,7 +139,7 @@ executeConstraint typeGraph cons@(ArrowTo srcPnt destPnt) = do
           setDescriptor destPnt destScheme'
           -- return [cons | not (isSolved srcScheme' || isSolved destScheme')]
           return [cons | not (isSolved destScheme')]
-        Nothing -> return []
+        Nothing -> return [] -- remove constraint if found SCheckError
 
 
 abandonConstraints :: Constraint s -> ST s TypeCheckError

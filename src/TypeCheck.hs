@@ -37,16 +37,17 @@ typecheckPrgm pprgm = runST $ do
       toPrgm vprgm
     _ -> return $ Left errs
 
-traceTestPrgm :: PPrgm -> Either [TypeCheckError] [SPrgm]
+traceTestPrgm :: PPrgm -> Either [TypeCheckError] [(SPrgm, [SConstraint])]
 traceTestPrgm pprgm = runST $ do
   baseFEnv <- makeBaseFEnv
   (vprgm, typeGraph, FEnv cons _ errs) <- fromPrgm baseFEnv pprgm
   case errs of
     [] -> do
       sprgm1 <- showPrgm vprgm
+      let scons1 = showConstraints cons
       runConstraints typeGraph cons
       sprgm2 <- showPrgm vprgm
-      return $ Right [sprgm1, sprgm2]
+      return $ Right [(sprgm1, scons1), (sprgm2, [])]
     _ -> return $ Left errs
 
 showTestPrgm :: PPrgm -> Either [TypeCheckError] SPrgm

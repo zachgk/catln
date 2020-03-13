@@ -1,4 +1,6 @@
 Compiler annotations and convert "assert" into the first one
+Have encode use classMap to check if types specified are a class or object
+
 Types
   Type with defaultNames
   type classes
@@ -23,6 +25,7 @@ Include line number in Syntax Results
   Unified CompileError type
 
 Bad input testing
+    Prevent using the same name for both a typeclass and an object
     Prevent making inner definition with same name as outer definition
     Prevent using lowercase name for type unless there is also a function def
     

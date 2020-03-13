@@ -100,10 +100,13 @@ fromExpr env1 (Tuple m name exprs) = do
   (m', p, env2) <- fromMetaP env1 m
   case fLookup env2 name of
     (Nothing, _)          -> error $ "Could not find tuple object " ++ name
-    (Just (Object om _ _), e) -> do
-      (exprs', env3) <- mapMWithFEnvMap e fromExpr exprs
-      let env4 = addConstraints env3 [BoundedBy p (getPnt om), IsTupleOf (getPnt m') (fmap getPntExpr exprs')]
-      return (Tuple m' name exprs', env4)
+    (Just (Object om _ _), env3) -> do
+      (exprs', env4) <- mapMWithFEnvMap env3 fromExpr exprs
+      convertExprMetas <- mapM (\_ -> fresh (SType RawTopType RawBottomType)) exprs
+      let arrowArgConstraints = H.elems $ H.intersectionWith ArrowTo (fmap getPntExpr exprs') convertExprMetas
+      let constraints = [BoundedBy p (getPnt om), IsTupleOf (getPnt m') convertExprMetas] ++ arrowArgConstraints
+      let env5 = addConstraints env4 constraints
+      return (Tuple m' name exprs', env5)
 
 arrowAddScope :: FEnv s -> VObject s -> ST s (FEnv s)
 arrowAddScope env1 (Object meta _ args) = do
@@ -137,7 +140,7 @@ addObject env (Object m name args, arrows) = do
   let obj' = Object m' name args'
   let env3 = fInsert env2 name obj'
   (arrows', env4) <- mapMWithFEnv env3 (fromArrow obj') arrows
-  return ((obj', arrows'), env3)
+  return ((obj', arrows'), env4)
 
 fromPrgm :: FEnv s -> PPrgm -> ST s (VPrgm s, TypeGraph s, FEnv s)
 fromPrgm env (objMap, classMap) = do
