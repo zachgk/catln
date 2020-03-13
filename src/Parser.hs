@@ -92,6 +92,15 @@ pCall = do
   let meta = PreTyped $ RawSumType $ S.singleton $ RawLeafType funName metaArgs
   return $ Tuple meta funName (H.fromList argVals)
 
+pCompAnnot :: Parser PCompAnnot
+pCompAnnot = do
+  string "#"
+  annotName <- (:) <$> letterChar <*> many alphaNumChar
+  argsList <- parens $ sepBy1 pCallArg (symbol ",")
+  let (argTypes, argVals) = unzip argsList
+  let metaArgs = H.fromList argTypes
+  return $ CompAnnot annotName (H.fromList argVals)
+
 pStringLiteral :: Parser PExpr
 pStringLiteral = CExpr strMeta . CStr <$> (char '\"' *> manyTill L.charLiteral (char '\"'))
 
@@ -151,14 +160,29 @@ pDeclSingle = do
   lhs <- pDeclLHS
   RawDecl lhs [] . Just <$> pExpr
 
+data TreeRes
+  = TRDecl PDecl
+  | TRExpr PExpr
+  | TRAnnot PCompAnnot
+
+validDeclTree :: [TreeRes] -> Either String ([PDeclSubStatement], PExpr)
+validDeclTree = aux ([], Nothing)
+  where
+    aux (_, Nothing) [] = Left "No expression found. The declaration must contain an expression"
+    aux (subSt, Just expr) [] = Right (subSt, expr)
+    aux (subSt, maybeExpr) ((TRDecl decl):trs) = aux (RawDeclSubStatementDecl decl:subSt, maybeExpr) trs
+    aux (subSt, maybeExpr) ((TRAnnot annot):trs) = aux (RawDeclSubStatementAnnot annot:subSt, maybeExpr) trs
+    aux (subSt, Nothing) ((TRExpr expr):trs) = aux (subSt, Just expr) trs
+    aux (_, Just{}) ((TRExpr _):_) = Left "Multiple expressions found. The declaration should only have one expression line"
+
 pDeclTree :: Parser PDecl
 pDeclTree = L.indentBlock scn p
   where
-    pack lhs children = if isLeft ( last children)
-      then return $ RawDecl lhs (rights $ init children) (head $ lefts [last children])
-      else fail "The declaration must end with an expression"
-    childParser :: Parser (Either (Maybe PExpr) PDecl)
-    childParser = try (Right <$> pDeclTree) <|> try (Right <$> pDeclSingle) <|> (Left . Just <$> pExpr)
+    pack lhs children = case validDeclTree children of
+      Right (subStatements, expr) -> return $ RawDecl lhs subStatements (Just expr)
+      Left err -> fail err
+    childParser :: Parser TreeRes
+    childParser = try (TRDecl <$> pDeclTree) <|> try (TRDecl <$> pDeclSingle) <|> try (TRAnnot <$> pCompAnnot) <|> (TRExpr <$> pExpr)
     p = do
       lhs <- pDeclLHS
       return (L.IndentSome Nothing (pack lhs) childParser)

@@ -108,6 +108,11 @@ fromExpr env1 (Tuple m name exprs) = do
       let env5 = addConstraints env4 constraints
       return (Tuple m' name exprs', env5)
 
+fromAnnot :: FEnv s -> PCompAnnot -> ST s (VCompAnnot s, FEnv s)
+fromAnnot env1 (CompAnnot name args) = do
+  (args', env2) <- mapMWithFEnvMap env1 fromExpr args
+  return (CompAnnot name args', env2)
+
 arrowAddScope :: FEnv s -> VObject s -> ST s (FEnv s)
 arrowAddScope env1 (Object meta _ args) = do
   env2 <- foldM aux env1 $ H.toList args
@@ -117,33 +122,41 @@ arrowAddScope env1 (Object meta _ args) = do
         aux e (n, m) = return $ fInsert e n (Object m n H.empty)
 
 fromArrow :: VObject s -> FEnv s -> PArrow -> ST s (VArrow s, FEnv s)
-fromArrow obj env1 (Arrow m maybeExpr) = do
+fromArrow obj env1 (Arrow m annots maybeExpr) = do
   env2 <- arrowAddScope env1 obj
   (m', p, env3) <- fromMetaP env2 m
+  (annots', env4) <- mapMWithFEnv env3 fromAnnot annots
   case maybeExpr of
     Just expr -> do
-      (vExpr, env4) <- fromExpr env3 expr
-      let env5 = addConstraints env4 [ArrowTo (getPntExpr vExpr) p]
-      let arrow' = Arrow m' (Just vExpr)
-      return (arrow', fReplaceMap env5 env1)
-    Nothing -> return (Arrow m' Nothing, fReplaceMap env3 env1)
+      (vExpr, env5) <- fromExpr env4 expr
+      let env6 = addConstraints env5 [ArrowTo (getPntExpr vExpr) p]
+      let arrow' = Arrow m' annots' (Just vExpr)
+      return (arrow', fReplaceMap env6 env1)
+    Nothing -> return (Arrow m' annots' Nothing, fReplaceMap env4 env1)
+
+fromObjectMap :: FEnv s -> (VObject s, [PArrow]) -> ST s ((VObject s, [VArrow s]), FEnv s)
+fromObjectMap env1 (obj@(Object m name args), arrows) = do
+  let env2 = fInsert env1 name obj
+  (arrows', env3) <- mapMWithFEnv env2 (fromArrow obj) arrows
+  return ((obj, arrows'), env3)
 
 addObjArg :: FEnv s -> (Name, PreMeta) -> ST s ((Name, VarMeta s), FEnv s)
 addObjArg env (n, m) = do
   (m', env2) <- fromMeta env m
   return ((n, m'), env2)
 
-addObject :: FEnv s -> (PObject, [PArrow]) -> ST s ((VObject s, [VArrow s]), FEnv s)
-addObject env (Object m name args, arrows) = do
+-- Add all of the objects first for various expressions references other top level functions
+fromObject :: FEnv s -> (PObject, [PArrow]) -> ST s ((VObject s, [PArrow]), FEnv s)
+fromObject env (Object m name args, arrows) = do
   (m', env1) <- fromMeta env m
   (args', env2) <- mapMWithFEnvMapWithKey env1 addObjArg args
   let obj' = Object m' name args'
   let env3 = fInsert env2 name obj'
-  (arrows', env4) <- mapMWithFEnv env3 (fromArrow obj') arrows
-  return ((obj', arrows'), env4)
+  return ((obj', arrows), env3)
 
 fromPrgm :: FEnv s -> PPrgm -> ST s (VPrgm s, TypeGraph s, FEnv s)
-fromPrgm env (objMap, classMap) = do
-  (objMap', env') <- mapMWithFEnv env addObject $ H.toList objMap
-  (env'', typeGraph) <- buildTypeGraph env' objMap'
-  return ((objMap', classMap), typeGraph, env'')
+fromPrgm env1 (objMap1, classMap) = do
+  (objMap2, env2) <- mapMWithFEnv env1 fromObject $ H.toList objMap1
+  (objMap3, env3) <- mapMWithFEnv env2 fromObjectMap objMap2
+  (env4, typeGraph) <- buildTypeGraph env3 objMap3
+  return ((objMap3, classMap), typeGraph, env4)

@@ -58,6 +58,7 @@ type TypeCheckResult r = Either [TypeCheckError] r
 
 type PreMeta = PreTyped
 type PExpr = Expr PreMeta
+type PCompAnnot = CompAnnot PreMeta
 type PArrow = Arrow PreMeta
 type PObject = Object PreMeta
 type PPrgm = Prgm PreMeta
@@ -65,6 +66,7 @@ type PReplRes = ReplRes PreMeta
 
 type ShowMeta = Scheme
 type SExpr = Expr ShowMeta
+type SCompAnnot = CompAnnot ShowMeta
 type SArrow = Arrow ShowMeta
 type SObject = Object ShowMeta
 type SPrgm = Prgm ShowMeta
@@ -72,6 +74,7 @@ type SReplRes = ReplRes ShowMeta
 
 type VarMeta s = Pnt s
 type VExpr s = Expr (VarMeta s)
+type VCompAnnot s = CompAnnot (VarMeta s)
 type VArrow s = Arrow (VarMeta s)
 type VObject s = Object (VarMeta s)
 type VObjectMap s = [(VObject s, [VArrow s])]
@@ -80,6 +83,7 @@ type VReplRes s = ReplRes (VarMeta s)
 
 type TypedMeta = Typed
 type TExpr = Expr TypedMeta
+type TCompAnnot = CompAnnot TypedMeta
 type TArrow = Arrow TypedMeta
 type TObject = Object TypedMeta
 type TPrgm = Prgm TypedMeta

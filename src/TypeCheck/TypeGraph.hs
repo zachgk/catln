@@ -36,7 +36,7 @@ buildTypeGraph env = foldM addArrows (env, emptyGraph)
     where
         emptyGraph = H.empty
         addArrows (env, graph) (obj, arrows) = foldM (addArrow obj) (env, graph) arrows
-        addArrow obj (env, graph) (Arrow m _) = do
+        addArrow obj (env, graph) (Arrow m _ _) = do
                 leaf <- objectToLeaf env obj
                 let graph2 = H.insertWith (++) leaf [m] graph
                 return (env, graph2)

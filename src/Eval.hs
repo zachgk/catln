@@ -19,6 +19,7 @@ import           Syntax
 import           Control.Monad
 
 type EvalMeta = Typed
+type ECompAnnot = CompAnnot EvalMeta
 type EExpr = Expr EvalMeta
 type EObject = Object EvalMeta
 type EArrow = Arrow EvalMeta
@@ -137,25 +138,29 @@ makeBaseEnv objMap = (H.union primEnv resEnv, H.empty)
   where
     resEnv = H.fromList $ concatMap resFromArrows $ H.toList objMap
     resFromArrows (obj, arrows) = map (resFromArrow obj) arrows
-    resFromArrow (Object om _ _) arrow@(Arrow am _) = ((leafFromMeta om, leafFromMeta am), ResEArrow arrow)
+    resFromArrow (Object om _ _) arrow@(Arrow am _ _) = ((leafFromMeta om, leafFromMeta am), ResEArrow arrow)
+
+evalCompAnnot :: Env -> ECompAnnot -> Either EvalError ()
+evalCompAnnot env (CompAnnot "assert" args) =
+  case (H.lookup "test" args, H.lookup "msg" args) of
+    (Just test, Just (CExpr _ (CStr msg))) -> evalExpr env test boolLeaf >>= (\(BoolVal b) -> if b then Right () else Left (AssertError msg))
+    (Just test, Nothing) -> evalExpr env test boolLeaf >>= (\(BoolVal b) -> if b then Right () else Left (AssertError "Failed assertion"))
+    _ -> Left $ GenEvalError "Invalid assertion"
+evalCompAnnot _ (CompAnnot name _) = Left $ GenEvalError $ "Unknown annotation: " ++ name
 
 evalExpr :: Env -> EExpr -> LeafType -> Either EvalError Val
 evalExpr _ (CExpr _ (CInt i)) intType = Right $ IntVal i
 evalExpr _ (CExpr _ (CFloat f)) floatType = Right $ FloatVal f
 evalExpr _ (CExpr _ (CStr s)) strType = Right $ StrVal s
-evalExpr env (Tuple _ "assert" args) _ =
-  case (H.lookup "test" args, H.lookup "msg" args) of
-    (Just test, Just (CExpr _ (CStr msg))) -> evalExpr env test boolLeaf >>= (\(BoolVal b) -> if b then Right (BoolVal b) else Left (AssertError msg))
-    (Just test, Nothing) -> evalExpr env test boolLeaf >>= (\(BoolVal b) -> if b then Right (BoolVal b) else Left (AssertError "Failed assertion"))
-    _ -> Left $ GenEvalError "Invalid assertion"
 evalExpr env (Tuple typed@(Typed (SumType prodTypes)) name exprs) destType = case S.toList prodTypes of
     (_:_:_) -> Left $ GenEvalError $ "Found multiple types for " ++ name
     [] -> Left $ GenEvalError $ "Found no types for " ++ name
     [prodType@(LeafType name leafType)] | H.keysSet exprs == H.keysSet leafType -> do
                            vals <- mapM (\(destType, expr) -> evalExpr env (Tuple typed name exprs) destType) $ H.intersectionWith (,) leafType exprs
                            case envLookup env prodType destType of
-                             Right (ResEArrow (Arrow m resExpr)) -> do
+                             Right (ResEArrow (Arrow m annots resExpr)) -> do
                                let env' = envWithVals env (H.fromList $ map (first (`LeafType` H.empty)) $ H.toList vals)
+                               env'' <- mapM (evalCompAnnot env') annots
                                let destType' = leafFromMeta m
                                case resExpr of
                                  Just resExpr' -> evalExpr env' resExpr' destType'

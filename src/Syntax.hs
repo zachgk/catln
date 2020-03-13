@@ -96,10 +96,19 @@ data Expr m
   | Tuple m Name (H.HashMap Name (Expr m))
   deriving (Eq, Ord, Show)
 
+-- Compiler Annotation
+data CompAnnot m = CompAnnot Name (H.HashMap Name (Expr m))
+  deriving (Eq, Ord, Show)
+
+data RawDeclSubStatement m
+  = RawDeclSubStatementDecl (RawDecl m)
+  | RawDeclSubStatementAnnot (CompAnnot m)
+  deriving (Eq, Ord, Show)
+
 data DeclLHS m = DeclLHS m Name (H.HashMap Name m)
   deriving (Eq, Ord, Show)
 
-data RawDecl m = RawDecl (DeclLHS m) [RawDecl m] (Maybe (Expr m))
+data RawDecl m = RawDecl (DeclLHS m) [RawDeclSubStatement m] (Maybe (Expr m))
   deriving (Eq, Ord, Show)
 
 data RawTypeDef m = RawTypeDef Name RawLeafSet
@@ -119,7 +128,7 @@ data Object m = Object m Name (H.HashMap Name m)
   deriving (Eq, Ord, Show, Generic)
 instance Hashable m => Hashable (Object m)
 
-data Arrow m = Arrow m (Maybe (Expr m)) -- m is result metadata
+data Arrow m = Arrow m [CompAnnot m] (Maybe (Expr m)) -- m is result metadata
   deriving (Eq, Ord, Show)
 
 type ObjectMap m = (H.HashMap (Object m) [Arrow m])

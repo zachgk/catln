@@ -30,14 +30,20 @@ showExpr (Tuple m name args) = do
   args' <- mapM showExpr args
   return (Tuple m' name args')
 
+showCompAnnot :: VCompAnnot s -> ST s SCompAnnot
+showCompAnnot (CompAnnot name args) = do
+  args' <- mapM showExpr args
+  return $ CompAnnot name args'
+
 showArrow :: VArrow s -> ST s SArrow
-showArrow (Arrow m maybeExpr) = do
+showArrow (Arrow m annots maybeExpr) = do
   m' <- showM m
+  annots' <- mapM showCompAnnot annots
   case maybeExpr of
     Just expr -> do
       expr' <- showExpr expr
-      return (Arrow m' (Just expr'))
-    Nothing -> return (Arrow m' Nothing)
+      return (Arrow m' annots' (Just expr'))
+    Nothing -> return (Arrow m' annots' Nothing)
 
 showObj :: (VObject s, [VArrow s]) -> ST s (SObject, [SArrow])
 showObj (Object m name args, arrows) = do

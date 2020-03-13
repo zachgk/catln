@@ -15,8 +15,10 @@ import           Syntax
 
 type ParseMeta = PreTyped
 type PExpr = RawExpr ParseMeta
-type PDecl = RawDecl ParseMeta
+type PCompAnnot = CompAnnot ParseMeta
+type PDeclSubStatement = RawDeclSubStatement ParseMeta
 type PDeclLHS = DeclLHS ParseMeta
+type PDecl = RawDecl ParseMeta
 type PObjectMap = ObjectMap ParseMeta
 type PRawTypeDef = RawTypeDef ParseMeta
 type PStatement = RawStatement ParseMeta

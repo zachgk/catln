@@ -68,14 +68,21 @@ toExpr (Tuple m name args) = do
   args' <- mapM toExpr args
   return $ (\(m'', args'') -> Tuple m'' name args'') <$> mergeTypeCheckResultsPair (m', mergeTypeCheckResultsMap args')
 
+toCompAnnot :: VCompAnnot s -> ST s (TypeCheckResult TCompAnnot)
+toCompAnnot (CompAnnot name args) = do
+  args' <- mapM toExpr args
+  return $ fmap (CompAnnot name) (mergeTypeCheckResultsMap args')
+
 toArrow :: VArrow s -> ST s (TypeCheckResult TArrow)
-toArrow (Arrow m maybeExpr) = do
+toArrow (Arrow m annots maybeExpr) = do
   m' <- toMeta m "Arrow"
+  annotsT <- mapM toCompAnnot annots
+  let annots' = mergeTypeCheckResultsList annotsT
   case maybeExpr of
     Just expr -> do
       expr' <- toExpr expr
-      return $ (\(m'', expr'') -> Arrow m'' (Just expr'')) <$> mergeTypeCheckResultsPair (m', expr')
-    Nothing -> return $ fmap (`Arrow` Nothing) m'
+      return $ (\(m'', annots'', expr'') -> Arrow m'' annots'' (Just expr'')) <$> mergeTypeCheckResultsTriple (m', annots', expr')
+    Nothing -> return $ (\(annots'', m'') -> Arrow m'' annots'' Nothing) <$> mergeTypeCheckResultsPair(annots', m')
 
 toObjectArg :: Name -> (Name, VarMeta s) -> ST s (TypeCheckResult (Name, Typed))
 toObjectArg objName (name, m) = do

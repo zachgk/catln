@@ -30,11 +30,11 @@ runTest displayName fileName = defaultMain $ testCaseSteps displayName $ \step -
           step $ T.unpack $ pShow $ traceTestPrgm prgm
           assertFailure $ "Could not typecheck:\n \t" ++ intercalate "\n\t" err
         Right tprgm -> do
-          step $ T.unpack $ pShow $ traceTestPrgm prgm
+          -- step $ T.unpack $ pShow $ traceTestPrgm prgm
           step "Eval tests..."
           case evalMain tprgm of
             Left err -> do
-              -- step $ T.unpack $ pShow $ makeBaseEnv (fst tprgm)
+              step $ T.unpack $ pShow $ makeBaseEnv (fst tprgm)
               assertFailure $ "Could not eval:\n \t " ++ show err
             Right (IntVal 0) -> return ()
             Right err -> assertFailure $ "Bad result for:\n \t " ++ show err
