@@ -33,7 +33,7 @@ makeBaseFEnv = do
             , (">=", rboolType, H.fromList [("l", rintType), ("r", rintType)])
             , ("<=", rboolType, H.fromList [("l", rintType), ("r", rintType)])
             , ("==", rboolType, H.fromList [("l", rintType), ("r", rintType)])
-            , ("!=", rboolType, H.fromList [("l", rboolType), ("r", rboolType)])
+            , ("!=", rboolType, H.fromList [("l", rintType), ("r", rintType)])
             , ("&", rboolType, H.fromList [("l", rboolType), ("r", rboolType)])
             , ("~", rboolType, H.singleton "a" rboolType)
             ]

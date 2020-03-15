@@ -161,6 +161,10 @@ hasRawType RawBottomType _ = True
 hasRawType t RawBottomType = t == RawBottomType
 hasRawType (RawSumType subLeafs) (RawSumType superLeafs) = all (`elem` superLeafs) subLeafs
 
+-- Maybe rename to subtypeOf
+hasType :: Type -> Type -> Bool
+hasType (SumType subLeafs) (SumType superLeafs) = all (`elem` superLeafs) subLeafs
+
 unionRawTypes :: RawType -> RawType -> RawType
 unionRawTypes RawBottomType t = t
 unionRawTypes t RawBottomType = t

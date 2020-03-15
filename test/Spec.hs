@@ -7,6 +7,7 @@ import           Test.Tasty.HUnit
 import           Control.Monad
 import           Desugarf         (desPrgm)
 import           Emit             (codegen, initModule)
+import           Eval.Common
 import           Eval
 import           Parser           (parseFile)
 import           Syntax
@@ -34,7 +35,7 @@ runTest displayName fileName = defaultMain $ testCaseSteps displayName $ \step -
           step "Eval tests..."
           case evalMain tprgm of
             Left err -> do
-              step $ T.unpack $ pShow $ makeBaseEnv (fst tprgm)
+              -- step $ T.unpack $ pShow $ makeBaseEnv (fst tprgm)
               assertFailure $ "Could not eval:\n \t " ++ show err
             Right (IntVal 0) -> return ()
             Right err -> assertFailure $ "Bad result for:\n \t " ++ show err

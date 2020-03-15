@@ -6,6 +6,7 @@ import qualified Data.HashMap.Strict as H
 
 import           Desugarf                 (desDecl, desPrgm)
 import           Emit                     (codegen, initModule)
+import           Eval.Common
 import           Eval
 import           Parser                   (parseFile, parseRepl)
 import           Syntax

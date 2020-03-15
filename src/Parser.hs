@@ -71,8 +71,9 @@ ops = [
     ]
   ]
   where
+    -- TODO: Fix the constrain product so that emptyMeta can be used for the type for the mkOp1 and mkOp2
     intOpArgs = H.fromList [("l", rintLeaf), ("r", rintLeaf)]
-    cmpOpArgs = H.fromList [("l", rboolLeaf), ("r", rboolLeaf)]
+    cmpOpArgs = H.fromList [("l", rintLeaf), ("r", rintLeaf)]
     boolOpArgs = H.fromList [("l", rboolLeaf), ("r", rboolLeaf)]
 
 pCallArg :: Parser ((String, RawLeafType), (String, PExpr))

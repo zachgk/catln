@@ -23,6 +23,7 @@ import           Data.UnionFind.ST
 
 import           Syntax
 import           TypeCheck.Common
+import           Debug.Trace                    ( trace )
 
 mergeTypeCheckResultsList :: [TypeCheckResult r] -> TypeCheckResult [r]
 mergeTypeCheckResultsList res = case partitionEithers res of
@@ -66,7 +67,9 @@ toExpr (CExpr m c) = do
 toExpr (Tuple m name args) = do
   m' <- toMeta m $ "Tuple_" ++ name
   args' <- mapM toExpr args
-  return $ (\(m'', args'') -> Tuple m'' name args'') <$> mergeTypeCheckResultsPair (m', mergeTypeCheckResultsMap args')
+  case m' of -- check for errors
+    Right (Typed (SumType sumType)) | all (\(LeafType _ leafArgs) -> H.keysSet args' /= H.keysSet leafArgs) (S.toList sumType) -> return $ Left ["toExpr has mismatch in type and args for " ++ name ++ " ---meta--- " ++ show m' ++ " ---args--- " ++ show args']
+    _ -> return $ (\(m'', args'') -> Tuple m'' name args'') <$> mergeTypeCheckResultsPair (m', mergeTypeCheckResultsMap args')
 
 toCompAnnot :: VCompAnnot s -> ST s (TypeCheckResult TCompAnnot)
 toCompAnnot (CompAnnot name args) = do
