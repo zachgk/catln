@@ -39,8 +39,8 @@ makeBaseFEnv = do
             ]
   foldM f env1 ops
   where f e (opName, retType, args) = do
-          p <- fresh (SType retType RawBottomType)
-          pargs <- forM args (fresh . (`SType` RawBottomType))
+          p <- fresh (SType retType rawBottomType)
+          pargs <- forM args (fresh . (`SType` rawBottomType))
           return $ fInsert e opName (Object p opName pargs)
 
 addConstraints :: FEnv s -> [Constraint s] -> FEnv s
@@ -54,7 +54,7 @@ fReplaceMap (FEnv cons _ errs1) (FEnv _ pmap errs2) = FEnv cons pmap (errs1 ++ e
 
 fromMetaP :: FEnv s -> PreMeta -> ST s (VarMeta s, Pnt s, FEnv s)
 fromMetaP env (PreTyped mt) = do
-  p <- fresh (SType mt RawBottomType)
+  p <- fresh (SType mt rawBottomType)
   return (p, p, env)
 
 fromMeta :: FEnv s -> PreMeta -> ST s (VarMeta s, FEnv s)
@@ -102,7 +102,7 @@ fromExpr env1 (Tuple m name exprs) = do
     (Nothing, _)          -> error $ "Could not find tuple object " ++ name
     (Just (Object om _ _), env3) -> do
       (exprs', env4) <- mapMWithFEnvMap env3 fromExpr exprs
-      convertExprMetas <- mapM (\_ -> fresh (SType RawTopType RawBottomType)) exprs
+      convertExprMetas <- mapM (\_ -> fresh (SType RawTopType rawBottomType)) exprs
       let arrowArgConstraints = H.elems $ H.intersectionWith ArrowTo (fmap getPntExpr exprs') convertExprMetas
       let constraints = [BoundedBy p (getPnt om), IsTupleOf (getPnt m') convertExprMetas] ++ arrowArgConstraints
       let env5 = addConstraints env4 constraints

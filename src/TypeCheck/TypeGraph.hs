@@ -47,7 +47,7 @@ rawTypeFromScheme SCheckError{} = Nothing
 
 unionMaybeRawTypes :: [Maybe RawType] -> Maybe RawType
 unionMaybeRawTypes maybeRawTypes = case sequence maybeRawTypes of
-        Just rawType -> Just $ foldr unionRawTypes RawBottomType rawType
+        Just rawType -> Just $ foldr unionRawTypes rawBottomType rawType
         Nothing      -> Nothing
 
 reachesLeaf :: TypeGraph s -> RawLeafType -> ST s (Maybe RawType)
@@ -59,7 +59,6 @@ reachesLeaf graph leaf = do
 
 reaches :: TypeGraph s -> RawType -> ST s (Maybe RawType)
 reaches _     RawTopType            = return $ Just RawTopType
-reaches _     RawBottomType         = return $ Just RawBottomType
 reaches graph (RawSumType srcTypes) = do
         resultParts <- mapM (reachesLeaf graph) $ S.toList srcTypes
         return $ unionMaybeRawTypes resultParts

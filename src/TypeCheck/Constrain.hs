@@ -49,7 +49,6 @@ tupleCrossProductTypes parts = do
   return $ RawSumType $ S.fromList $ map (RawLeafType "") $ mapM S.toList partLeafs
   where fromSum (RawSumType leafs) = Just leafs
         fromSum RawTopType = Nothing
-        fromSum RawBottomType = Nothing
 
 tupleConstrainSumWith :: ((H.HashMap String RawLeafType, RawType) -> (H.HashMap String RawLeafType, RawType)) -> (S.HashSet RawLeafType, H.HashMap String RawType) -> (RawType, H.HashMap String RawType)
 tupleConstrainSumWith constrainArg (wholeUnmatched, parts) = (whole', parts')
@@ -65,24 +64,20 @@ tupleConstrainSumWith constrainArg (wholeUnmatched, parts) = (whole', parts')
 tupleConstrainUb :: (RawType, H.HashMap String RawType) -> (RawType, H.HashMap String RawType)
 tupleConstrainUb (RawTopType, parts) = (RawTopType, parts)
 -- tupleConstrainUb (RawTopType, parts) = (fromMaybe RawTopType $ tupleCrossProductTypes parts, parts)
-tupleConstrainUb (RawBottomType, parts) = (RawBottomType, parts)
 tupleConstrainUb (RawSumType wholeUnparsed, parts) = tupleConstrainSumWith constrainArg (wholeUnparsed, parts)
   where
     constrainArg :: (H.HashMap String RawLeafType, RawType) -> (H.HashMap String RawLeafType, RawType)
     constrainArg (whole, RawTopType) = (whole, RawSumType $ S.fromList $ H.elems whole)
-    constrainArg (_, RawBottomType) = error "Constrain ub with RawBottomType"
     constrainArg (whole, RawSumType partLeafs) = let leafs = S.intersection (S.fromList $ H.elems whole) partLeafs
                                                   in (H.filter (`S.member` leafs) whole, RawSumType leafs)
 
 -- constrain by union
 tupleConstrainLb :: (RawType, H.HashMap String RawType) -> (RawType, H.HashMap String RawType)
 tupleConstrainLb (RawTopType, parts) = (RawTopType, parts)
-tupleConstrainLb (RawBottomType, parts) = (RawBottomType, parts)
 tupleConstrainLb (RawSumType wholeUnparsed, parts) = tupleConstrainSumWith constrainArg (wholeUnparsed, parts)
   where
     constrainArg :: (H.HashMap String RawLeafType, RawType) -> (H.HashMap String RawLeafType, RawType)
     constrainArg (_, RawTopType) = error "Constrain lb with RawTopType"
-    constrainArg (whole, RawBottomType) = (whole, RawSumType $ S.fromList $ H.elems whole)
     constrainArg (whole, RawSumType partLeafs) = let leafs = S.union (S.fromList $ H.elems whole) partLeafs
                                                   in (whole, RawSumType leafs)
 lowerUb :: RawType -> RawType -> RawType

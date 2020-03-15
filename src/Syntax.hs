@@ -34,7 +34,6 @@ type RawLeafSet = S.HashSet RawLeafType
 data RawType
   = RawSumType RawLeafSet
   | RawTopType
-  | RawBottomType
   deriving (Eq, Ord, Show, Generic)
 instance Hashable RawType
 
@@ -153,12 +152,13 @@ newtype Typed = Typed Type
   deriving (Eq, Ord, Show, Generic)
 instance Hashable Typed
 
+rawBottomType :: RawType
+rawBottomType = RawSumType S.empty
+
 -- Maybe rename to subtypeOf
 hasRawType :: RawType -> RawType -> Bool
 hasRawType _ RawTopType = True
 hasRawType RawTopType t = t == RawTopType
-hasRawType RawBottomType _ = True
-hasRawType t RawBottomType = t == RawBottomType
 hasRawType (RawSumType subLeafs) (RawSumType superLeafs) = all (`elem` superLeafs) subLeafs
 
 -- Maybe rename to subtypeOf
@@ -166,8 +166,6 @@ hasType :: Type -> Type -> Bool
 hasType (SumType subLeafs) (SumType superLeafs) = all (`elem` superLeafs) subLeafs
 
 unionRawTypes :: RawType -> RawType -> RawType
-unionRawTypes RawBottomType t = t
-unionRawTypes t RawBottomType = t
 unionRawTypes RawTopType _ = RawTopType
 unionRawTypes _ RawTopType = RawTopType
 unionRawTypes (RawSumType subLeafs) (RawSumType superLeafs) = RawSumType $ S.union subLeafs superLeafs
@@ -175,8 +173,6 @@ unionRawTypes (RawSumType subLeafs) (RawSumType superLeafs) = RawSumType $ S.uni
 intersectRawTypes :: RawType -> RawType -> RawType
 intersectRawTypes RawTopType t = t
 intersectRawTypes t RawTopType = t
-intersectRawTypes RawBottomType _ = RawBottomType
-intersectRawTypes _ RawBottomType = RawBottomType
 intersectRawTypes (RawSumType subLeafs) (RawSumType superLeafs) = RawSumType $ S.intersection subLeafs superLeafs
 
 typedIs :: Typed -> Type -> Bool

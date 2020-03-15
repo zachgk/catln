@@ -48,7 +48,6 @@ fromRawLeafType (RawLeafType name ts) = LeafType name (fmap fromRawLeafType ts)
 
 fromRawType :: RawType -> Maybe Type
 fromRawType RawTopType = Nothing
-fromRawType RawBottomType = Nothing
 fromRawType (RawSumType ts) = Just $ SumType $ S.map fromRawLeafType ts
 
 toMeta :: VarMeta s -> String -> ST s (TypeCheckResult Typed)
