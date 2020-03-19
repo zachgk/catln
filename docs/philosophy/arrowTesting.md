@@ -15,3 +15,18 @@ But, the greatest benefit of arrow testing comes about in combination with impli
 As an example, consider a list type. You can have multiple kinds of lists such as an arrayList or a linkedList. Since they are both lists, you could implicitly convert between the two types of lists. So, if you start with a value in an arrayList, convert it into a linkedList, and take the length, it should be equivalent to taking the length directly. Like this, you can use the comparison to test almost the entirety of the list class and the methods within it. It is basically a free test suite, although additional tests may still be beneficial (although those additional tests would only need to test one kind of list and would be automatically applied to all).
 
 Another major benefit is also introduced from this. It helps ensure that the APIs are consistent. For example, you could have an implicit between an Optional type and a List type where the list uses zero elements to represent Nothing and a singleton list to represent a value. If both these types have a map function, it would mean that their map functions must be equivalent. This is true even if the implicit is only one way (Optional -> List) as that direction can be tested even if the reverse is not.
+
+## Implementation
+
+Imagine you have a multi-level tuple `++('a', ++('b', 'c'))`. Then, you are able to follow implicit rules and substitute the implicit rules for various sublevels of the tuples. Then, you could evaluate it to:
+```
+++('a', ++('b', 'c')) -> ++('a', "bc") -> "abc"
+
+++('a', ++('b', 'c')) -> concat(['a', 'b', 'c']) -> "abc"
+```
+
+Essentially, apply all possible implicit rules nondeterministically to find all possible values that would be generated during the evaluation. For all of the generated values (including initial, intermediate, and final values), all ones with the same tuple types at all levels must be equal.
+
+An easy way to test this is to find a map from the value types to the produced values. Then, check to see that the produced values for each type are all equal. If not, show an informative error to the user.
+
+Given this implementation to execute arrow testing, the remaining problem is how to generate these multi-lelvel tuples. There will probably be different areas to generate for different situations.
