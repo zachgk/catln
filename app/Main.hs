@@ -2,21 +2,23 @@
 
 module Main where
 
-import qualified Data.HashMap.Strict as H
+-- import qualified Data.HashMap.Strict as H
 
-import           Desugarf                 (desDecl, desPrgm)
+-- import           Desugarf                 (desDecl, desPrgm)
+import           Desugarf                 (desPrgm)
 import           Emit                     (codegen, initModule)
 import           Eval.Common
-import           Eval
-import           Parser                   (parseFile, parseRepl)
+-- import           Eval
+-- import           Parser                   (parseFile, parseRepl)
+import           Parser                   (parseRepl)
 import           Syntax
 import           TypeCheck                (typecheckPrgm)
 
 import           Control.Monad
-import           Control.Monad.Trans
-import           Data.List                (isPrefixOf)
+-- import           Control.Monad.Trans
+-- import           Data.List                (isPrefixOf)
 
-import           System.Console.Haskeline
+-- import           System.Console.Haskeline
 import           System.Environment
 
 parsingRepl :: Env -> String -> IO Env

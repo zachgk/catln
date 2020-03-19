@@ -34,6 +34,7 @@ type RawLeafSet = S.HashSet RawLeafType
 data RawType
   = RawSumType RawLeafSet
   | RawTopType
+  | RawProdTopType Name
   deriving (Eq, Ord, Show, Generic)
 instance Hashable RawType
 
@@ -173,6 +174,9 @@ unionRawTypes (RawSumType subLeafs) (RawSumType superLeafs) = RawSumType $ S.uni
 intersectRawTypes :: RawType -> RawType -> RawType
 intersectRawTypes RawTopType t = t
 intersectRawTypes t RawTopType = t
+intersectRawTypes (RawProdTopType a) (RawProdTopType b) = if a == b then RawProdTopType a else rawBottomType
+intersectRawTypes (RawProdTopType a) (RawSumType leafs) = RawSumType $ S.filter (\(RawLeafType leafName _) -> leafName == a) leafs
+intersectRawTypes a@RawSumType{} b@RawProdTopType{} = intersectRawTypes b a
 intersectRawTypes (RawSumType subLeafs) (RawSumType superLeafs) = RawSumType $ S.intersection subLeafs superLeafs
 
 typedIs :: Typed -> Type -> Bool

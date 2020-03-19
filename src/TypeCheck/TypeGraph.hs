@@ -24,7 +24,7 @@ objectToLeaf :: FEnv s -> VObject s -> ST s RawLeafType
 objectToLeaf env (Object _ name args) = do
         args' <- mapM
                 (\argMeta -> do
-                        (SType _ (RawSumType upper)) <- descriptor
+                        (SType _ (RawSumType upper) _) <- descriptor
                                 $ getPnt argMeta
                         return $ head $ S.toList upper
                 )
@@ -42,11 +42,12 @@ buildTypeGraph env = foldM addArrows (env, emptyGraph)
                 return (env, graph2)
 
 rawTypeFromScheme :: Scheme -> Maybe RawType
-rawTypeFromScheme (SType ub _)  = Just ub
+rawTypeFromScheme (SType ub _ _)  = Just ub
 rawTypeFromScheme SCheckError{} = Nothing
 
 unionMaybeRawTypes :: [Maybe RawType] -> Maybe RawType
 unionMaybeRawTypes maybeRawTypes = case sequence maybeRawTypes of
+        Just [] -> Nothing
         Just rawType -> Just $ foldr unionRawTypes rawBottomType rawType
         Nothing      -> Nothing
 
@@ -59,6 +60,7 @@ reachesLeaf graph leaf = do
 
 reaches :: TypeGraph s -> RawType -> ST s (Maybe RawType)
 reaches _     RawTopType            = return $ Just RawTopType
+reaches _     (RawProdTopType _)            = return $ Just RawTopType -- TODO: Result should be a subset of RawTopType
 reaches graph (RawSumType srcTypes) = do
         resultParts <- mapM (reachesLeaf graph) $ S.toList srcTypes
         return $ unionMaybeRawTypes resultParts

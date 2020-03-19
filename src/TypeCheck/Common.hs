@@ -25,10 +25,15 @@ import Data.STRef
 
 import           Syntax
 
-type TypeCheckError = String
+data TypeCheckError
+  = GenTypeCheckError String
+  | AbandonCon SConstraint
+  | FailInfer String Scheme [SConstraint]
+  | TupleMismatch String Typed (TypeCheckResult (H.HashMap String TExpr)) [SConstraint]
+  deriving (Eq, Ord, Show)
 
 data Scheme
-  = SType RawType RawType -- SType upper lower
+  = SType RawType RawType String -- SType upper lower description
   | SCheckError String
   deriving (Eq, Ord, Show, Generic)
 instance Hashable Scheme
@@ -47,11 +52,11 @@ data Constraint s
   deriving (Eq)
 
 data SConstraint
-  = SEqualsKnown RawType
-  | SEqPoints
-  | SBoundedBy
-  | SIsTupleOf (S.HashSet String)
-  | SArrowTo -- ArrowTo src dest
+  = SEqualsKnown Scheme RawType
+  | SEqPoints Scheme Scheme
+  | SBoundedBy Scheme Scheme
+  | SIsTupleOf Scheme (H.HashMap String Scheme)
+  | SArrowTo Scheme Scheme
   deriving (Eq, Ord, Show)
 
 type TypeCheckResult r = Either [TypeCheckError] r
@@ -98,13 +103,13 @@ getPnt x = x
 getPntExpr :: VExpr s -> Pnt s
 getPntExpr = getPnt . getExprMeta
 
-addErr :: FEnv s -> String -> FEnv s
+addErr :: FEnv s -> TypeCheckError -> FEnv s
 addErr (FEnv cons pmap errs) newErr = FEnv cons pmap (newErr:errs)
 
 fLookup :: FEnv s -> String -> (Maybe (VObject s), FEnv s)
 fLookup env@(FEnv _ pmap _) k = case H.lookup k pmap of
   Just v  -> (Just v, env)
-  Nothing -> (Nothing, addErr env ("Failed to lookup " ++ k))
+  Nothing -> (Nothing, addErr env (GenTypeCheckError $ "Failed to lookup " ++ k))
 
 schemeError :: Scheme -> Bool
 schemeError SCheckError{} = True

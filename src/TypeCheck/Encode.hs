@@ -22,7 +22,6 @@ import           TypeCheck.Common
 import           TypeCheck.TypeGraph (buildTypeGraph)
 
 makeBaseFEnv :: ST s (FEnv s)
--- makeBaseFEnv = return $ FEnv [] H.empty []
 makeBaseFEnv = do
   let env1 = FEnv [] H.empty []
   let ops = [ ("+", rintType, H.fromList [("l", rintType), ("r", rintType)])
@@ -39,8 +38,9 @@ makeBaseFEnv = do
             ]
   foldM f env1 ops
   where f e (opName, retType, args) = do
-          p <- fresh (SType retType rawBottomType)
-          pargs <- forM args (fresh . (`SType` rawBottomType))
+          p <- fresh (SType retType rawBottomType ("Runtime operator " ++ opName))
+          -- pargs <- forM args (fresh . (`SType` rawBottomType))
+          pargs <- forM args (\arg -> fresh (SType arg rawBottomType ("Runtime operator " ++ opName ++ " argument " ++ show arg)))
           return $ fInsert e opName (Object p opName pargs)
 
 addConstraints :: FEnv s -> [Constraint s] -> FEnv s
@@ -52,14 +52,14 @@ fInsert (FEnv cons pmap errs) k v = FEnv cons (H.insert k v pmap) errs
 fReplaceMap :: FEnv s -> FEnv s -> FEnv s
 fReplaceMap (FEnv cons _ errs1) (FEnv _ pmap errs2) = FEnv cons pmap (errs1 ++ errs2)
 
-fromMetaP :: FEnv s -> PreMeta -> ST s (VarMeta s, Pnt s, FEnv s)
-fromMetaP env (PreTyped mt) = do
-  p <- fresh (SType mt rawBottomType)
+fromMetaP :: FEnv s -> PreMeta -> String -> ST s (VarMeta s, Pnt s, FEnv s)
+fromMetaP env (PreTyped mt) description = do
+  p <- fresh (SType mt rawBottomType description)
   return (p, p, env)
 
-fromMeta :: FEnv s -> PreMeta -> ST s (VarMeta s, FEnv s)
-fromMeta env m = do
-  (m', _, env') <- fromMetaP env m
+fromMeta :: FEnv s -> PreMeta -> String -> ST s (VarMeta s, FEnv s)
+fromMeta env m description = do
+  (m', _, env') <- fromMetaP env m description
   return (m', env')
 
 mapMWithFEnv :: FEnv s -> (FEnv s -> a -> ST s (b, FEnv s)) -> [a] -> ST s ([b], FEnv s)
@@ -88,21 +88,21 @@ mapMWithFEnvMapWithKey env f map = do
 
 fromExpr :: FEnv s -> PExpr -> ST s (VExpr s, FEnv s)
 fromExpr env (CExpr m (CInt i)) = do
-  (m', p, env') <- fromMetaP env m
+  (m', p, env') <- fromMetaP env m ("Constant int " ++ show i)
   return (CExpr m' (CInt i), addConstraints env' [EqualsKnown p rintType])
 fromExpr env (CExpr m (CFloat f)) = do
-  (m', p, env') <- fromMetaP env m
+  (m', p, env') <- fromMetaP env m ("Constant float " ++ show f)
   return (CExpr m' (CFloat f), addConstraints env' [EqualsKnown p rfloatType])
 fromExpr env (CExpr m (CStr s)) = do
-  (m', p, env') <- fromMetaP env m
+  (m', p, env') <- fromMetaP env m ("Constant str " ++ s)
   return (CExpr m' (CStr s), addConstraints env' [EqualsKnown p rstrType])
 fromExpr env1 (Tuple m name exprs) = do
-  (m', p, env2) <- fromMetaP env1 m
+  (m', p, env2) <- fromMetaP env1 m ("Tuple " ++ name)
   case fLookup env2 name of
     (Nothing, _)          -> error $ "Could not find tuple object " ++ name
     (Just (Object om _ _), env3) -> do
       (exprs', env4) <- mapMWithFEnvMap env3 fromExpr exprs
-      convertExprMetas <- mapM (\_ -> fresh (SType RawTopType rawBottomType)) exprs
+      convertExprMetas <- mapM (\_ -> fresh (SType RawTopType rawBottomType "Tuple converted expr meta")) exprs
       let arrowArgConstraints = H.elems $ H.intersectionWith ArrowTo (fmap getPntExpr exprs') convertExprMetas
       let constraints = [BoundedBy p (getPnt om), IsTupleOf (getPnt m') convertExprMetas] ++ arrowArgConstraints
       let env5 = addConstraints env4 constraints
@@ -122,9 +122,9 @@ arrowAddScope env1 (Object meta _ args) = do
         aux e (n, m) = return $ fInsert e n (Object m n H.empty)
 
 fromArrow :: VObject s -> FEnv s -> PArrow -> ST s (VArrow s, FEnv s)
-fromArrow obj env1 (Arrow m annots maybeExpr) = do
+fromArrow obj@(Object _ objName _) env1 (Arrow m annots maybeExpr) = do
   env2 <- arrowAddScope env1 obj
-  (m', p, env3) <- fromMetaP env2 m
+  (m', p, env3) <- fromMetaP env2 m ("Arrow result from " ++ show objName)
   (annots', env4) <- mapMWithFEnv env3 fromAnnot annots
   case maybeExpr of
     Just expr -> do
@@ -142,13 +142,13 @@ fromObjectMap env1 (obj@(Object m name args), arrows) = do
 
 addObjArg :: FEnv s -> (Name, PreMeta) -> ST s ((Name, VarMeta s), FEnv s)
 addObjArg env (n, m) = do
-  (m', env2) <- fromMeta env m
+  (m', env2) <- fromMeta env m ("Object argument " ++ n)
   return ((n, m'), env2)
 
--- Add all of the objects first for various expressions references other top level functions
+-- Add all of the objects first for various expressions that call other top level functions
 fromObject :: FEnv s -> (PObject, [PArrow]) -> ST s ((VObject s, [PArrow]), FEnv s)
 fromObject env (Object m name args, arrows) = do
-  (m', env1) <- fromMeta env m
+  (m', env1) <- fromMeta env m ("Object " ++ name ++ show args)
   (args', env2) <- mapMWithFEnvMapWithKey env1 addObjArg args
   let obj' = Object m' name args'
   let env3 = fInsert env2 name obj'

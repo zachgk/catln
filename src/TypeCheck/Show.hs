@@ -52,17 +52,31 @@ showObj (Object m name args, arrows) = do
   arrows' <- mapM showArrow arrows
   return (Object m' name args', arrows')
 
-showCon :: Constraint s -> SConstraint
-showCon (EqualsKnown _ t) = SEqualsKnown t
-showCon (EqPoints _ _) = SEqPoints
-showCon (BoundedBy _ _) = SBoundedBy
-showCon (IsTupleOf _ args) = SIsTupleOf (H.keysSet args)
-showCon (ArrowTo _ _) = SArrowTo
+showCon :: Constraint s -> ST s SConstraint
+showCon (EqualsKnown p t) = do
+  scheme <- descriptor p
+  return $ SEqualsKnown scheme t
+showCon (EqPoints p1 p2) = do
+  s1 <- descriptor p1
+  s2 <- descriptor p2
+  return $ SEqPoints s1 s2
+showCon (BoundedBy p1 p2) = do
+  s1 <- descriptor p1
+  s2 <- descriptor p2
+  return $ SBoundedBy s1 s2
+showCon (IsTupleOf p args) = do
+  s <- descriptor p
+  sArgs <- mapM descriptor args
+  return $ SIsTupleOf s sArgs
+showCon (ArrowTo p1 p2) = do
+  s1 <- descriptor p1
+  s2 <- descriptor p2
+  return $ SArrowTo s1 s2
 
 showPrgm :: VPrgm s -> ST s SPrgm
 showPrgm (objMap, classMap) = do
   objs' <- mapM showObj objMap
   return (H.fromList objs', classMap)
 
-showConstraints :: [Constraint s] -> [SConstraint]
-showConstraints = map showCon
+showConstraints :: [Constraint s] -> ST s [SConstraint]
+showConstraints = mapM showCon

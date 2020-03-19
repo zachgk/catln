@@ -34,7 +34,7 @@ typecheckPrgm pprgm = runST $ do
   case errs of
     [] -> do
       runConstraints typeGraph cons
-      toPrgm vprgm
+      toPrgm vprgm cons
     _ -> return $ Left errs
 
 traceTestPrgm :: PPrgm -> Either [TypeCheckError] [(SPrgm, [SConstraint])]
@@ -44,7 +44,7 @@ traceTestPrgm pprgm = runST $ do
   case errs of
     [] -> do
       sprgm1 <- showPrgm vprgm
-      let scons1 = showConstraints cons
+      scons1 <- showConstraints cons
       runConstraints typeGraph cons
       sprgm2 <- showPrgm vprgm
       return $ Right [(sprgm1, scons1), (sprgm2, [])]

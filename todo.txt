@@ -1,5 +1,3 @@
-- Fix the constrain product (see Parser todo). Trying using (RawNamedTopType productName)
-
 - Fix Main(Repl), Codegen
     - Main(Repl)
       1. Reformulate the repl to add statements to the environment, expr adds temporary value to environment to evaluate it to val
@@ -44,6 +42,7 @@
 - Program Optimization
   - Convert the ResArrowTree formating to include sorting of values
 
+Remove RawProdTopType. The same effect should be possible by doing a lookup in Encode against the possible products for an object. The usages of RawProdTopType can then be replaced with RawTopType for the most part.
 Make CompAnnot an enum over allowed compiler annotations and desugar goes from untyped RawCompAnnot tuple to the enum. Maybe wait until after typechecking to desugar, though
 Types
   Type with defaultNames

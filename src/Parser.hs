@@ -27,9 +27,6 @@ import           Lexer
 import           Syntax
 import Parser.Syntax
 
-emptyMeta :: ParseMeta
-emptyMeta = PreTyped RawTopType
-
 identifierMeta :: String -> ParseMeta
 identifierMeta i = PreTyped $ RawSumType $ S.singleton $ RawLeafType i H.empty
 
@@ -39,67 +36,57 @@ floatMeta = PreTyped rfloatType
 boolMeta = PreTyped rboolType
 strMeta = PreTyped rstrType
 
-mkOp1 :: H.HashMap String RawLeafType -> String -> PExpr -> PExpr
-mkOp1 metaArgs op x = Tuple meta op (H.singleton "a" x)
-  where meta = PreTyped $ RawSumType $ S.singleton $ RawLeafType op metaArgs
+mkOp1 :: String -> PExpr -> PExpr
+mkOp1 op x = Tuple meta op (H.singleton "a" x)
+  where meta = PreTyped $ RawProdTopType op
 
-mkOp2 :: H.HashMap String RawLeafType -> String -> PExpr -> PExpr -> PExpr
-mkOp2 metaArgs op x y = Tuple meta op (H.fromList [("l", x), ("r", y)])
-  where meta = PreTyped $ RawSumType $ S.singleton $ RawLeafType op metaArgs
+mkOp2 :: String -> PExpr -> PExpr -> PExpr
+mkOp2 op x y = Tuple meta op (H.fromList [("l", x), ("r", y)])
+  where meta = PreTyped $ RawProdTopType op
 
 ops :: [[Operator Parser PExpr]]
 ops = [
-    [ Prefix (mkOp1 (H.singleton "a" rintLeaf) "-"  <$ symbol "-")
-    , Prefix (mkOp1 (H.singleton "a" rboolLeaf) "~" <$ symbol "~")
+    [ Prefix (mkOp1 "-"  <$ symbol "-")
+    , Prefix (mkOp1 "~" <$ symbol "~")
     ],
-    [ InfixL (mkOp2 intOpArgs "*" <$ symbol "*")
-    , InfixL (mkOp2 intOpArgs "/" <$ symbol "/")
+    [ InfixL (mkOp2 "*" <$ symbol "*")
+    , InfixL (mkOp2 "/" <$ symbol "/")
     ],
-    [ InfixL (mkOp2 intOpArgs "+" <$ symbol "+")
-    , InfixL (mkOp2 intOpArgs "-" <$ symbol "-")
+    [ InfixL (mkOp2 "+" <$ symbol "+")
+    , InfixL (mkOp2 "-" <$ symbol "-")
     ],
-    [ InfixL (mkOp2 cmpOpArgs "<" <$ symbol "<")
-    , InfixL (mkOp2 cmpOpArgs ">" <$ symbol ">")
-    , InfixL (mkOp2 cmpOpArgs "<=" <$ symbol "<=")
-    , InfixL (mkOp2 cmpOpArgs ">=" <$ symbol ">=")
-    , InfixL (mkOp2 cmpOpArgs "==" <$ symbol "==")
-    , InfixL (mkOp2 cmpOpArgs "!=" <$ symbol "!=")
+    [ InfixL (mkOp2 "<" <$ symbol "<")
+    , InfixL (mkOp2 ">" <$ symbol ">")
+    , InfixL (mkOp2 "<=" <$ symbol "<=")
+    , InfixL (mkOp2 ">=" <$ symbol ">=")
+    , InfixL (mkOp2 "==" <$ symbol "==")
+    , InfixL (mkOp2 "!=" <$ symbol "!=")
     ],
-    [ InfixL (mkOp2 boolOpArgs "&" <$ symbol "&")
-    , InfixL (mkOp2 boolOpArgs "|" <$ symbol "|")
-    , InfixL (mkOp2 boolOpArgs "^" <$ symbol "^")
+    [ InfixL (mkOp2 "&" <$ symbol "&")
+    , InfixL (mkOp2 "|" <$ symbol "|")
+    , InfixL (mkOp2 "^" <$ symbol "^")
     ]
   ]
-  where
-    -- TODO: Fix the constrain product so that emptyMeta can be used for the type for the mkOp1 and mkOp2
-    intOpArgs = H.fromList [("l", rintLeaf), ("r", rintLeaf)]
-    cmpOpArgs = H.fromList [("l", rintLeaf), ("r", rintLeaf)]
-    boolOpArgs = H.fromList [("l", rboolLeaf), ("r", rboolLeaf)]
 
-pCallArg :: Parser ((String, RawLeafType), (String, PExpr))
+pCallArg :: Parser (String, PExpr)
 pCallArg = do
-  tp <- tidentifier
   argName <- identifier
   equals <- symbol "="
   expr <- pExpr
-  return ((argName, RawLeafType tp H.empty), (argName, expr))
+  return (argName, expr)
 
 pCall :: Parser PExpr
 pCall = do
   funName <- (:) <$> letterChar <*> many alphaNumChar
-  argsList <- parens $ sepBy1 pCallArg (symbol ",")
-  let (argTypes, argVals) = unzip argsList
-  let metaArgs = H.fromList argTypes
-  let meta = PreTyped $ RawSumType $ S.singleton $ RawLeafType funName metaArgs
+  argVals <- parens $ sepBy1 pCallArg (symbol ",")
+  let meta = PreTyped $ RawProdTopType funName
   return $ Tuple meta funName (H.fromList argVals)
 
 pCompAnnot :: Parser PCompAnnot
 pCompAnnot = do
   string "#"
   annotName <- (:) <$> letterChar <*> many alphaNumChar
-  argsList <- parens $ sepBy1 pCallArg (symbol ",")
-  let (argTypes, argVals) = unzip argsList
-  let metaArgs = H.fromList argTypes
+  argVals <- parens $ sepBy1 pCallArg (symbol ",")
   return $ CompAnnot annotName (H.fromList argVals)
 
 pStringLiteral :: Parser PExpr

@@ -4,13 +4,11 @@ import           Data.List
 import           Test.Tasty
 import           Test.Tasty.HUnit
 
-import           Control.Monad
 import           Desugarf         (desPrgm)
-import           Emit             (codegen, initModule)
+-- import           Emit             (codegen, initModule)
 import           Eval.Common
 import           Eval
 import           Parser           (parseFile)
-import           Syntax
 import           TypeCheck
 import qualified Data.Text.Lazy as T
 import Text.Pretty.Simple
@@ -29,7 +27,7 @@ runTest displayName fileName = defaultMain $ testCaseSteps displayName $ \step -
       case typecheckPrgm prgm of
         Left err -> do
           step $ T.unpack $ pShow $ traceTestPrgm prgm
-          assertFailure $ "Could not typecheck:\n \t" ++ intercalate "\n\t" err
+          assertFailure $ "Could not typecheck:\n\n\n\t" ++ intercalate "\n\n\n\t\t" (map (T.unpack . pShow) err)
         Right tprgm -> do
           -- step $ T.unpack $ pShow $ traceTestPrgm prgm
           step "Eval tests..."
