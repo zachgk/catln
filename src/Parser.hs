@@ -17,8 +17,6 @@ import           Control.Applicative            hiding (many, some)
 import           Control.Monad.Combinators.Expr
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet          as S
-import           Data.Either
-import           Data.Maybe
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer     as L
@@ -37,12 +35,12 @@ boolMeta = PreTyped rboolType
 strMeta = PreTyped rstrType
 
 mkOp1 :: String -> PExpr -> PExpr
-mkOp1 op x = Tuple meta op (H.singleton "a" x)
-  where meta = PreTyped $ RawProdTopType op
+mkOp1 op x = TupleApply emptyMeta (emptyMeta, Value metaVal op) (H.singleton "a" x)
+  where metaVal = identifierMeta op
 
 mkOp2 :: String -> PExpr -> PExpr -> PExpr
-mkOp2 op x y = Tuple meta op (H.fromList [("l", x), ("r", y)])
-  where meta = PreTyped $ RawProdTopType op
+mkOp2 op x y = TupleApply emptyMeta (emptyMeta, Value metaVal op) (H.fromList [("l", x), ("r", y)])
+  where metaVal = identifierMeta op
 
 ops :: [[Operator Parser PExpr]]
 ops = [
@@ -71,7 +69,7 @@ ops = [
 pCallArg :: Parser (String, PExpr)
 pCallArg = do
   argName <- identifier
-  equals <- symbol "="
+  _ <- symbol "="
   expr <- pExpr
   return (argName, expr)
 
@@ -79,12 +77,11 @@ pCall :: Parser PExpr
 pCall = do
   funName <- (:) <$> letterChar <*> many alphaNumChar
   argVals <- parens $ sepBy1 pCallArg (symbol ",")
-  let meta = PreTyped $ RawProdTopType funName
-  return $ Tuple meta funName (H.fromList argVals)
+  return $ TupleApply emptyMeta (emptyMeta, Value (identifierMeta funName) funName) (H.fromList argVals)
 
 pCompAnnot :: Parser PCompAnnot
 pCompAnnot = do
-  string "#"
+  _ <- string "#"
   annotName <- (:) <$> letterChar <*> many alphaNumChar
   argVals <- parens $ sepBy1 pCallArg (symbol ",")
   return $ CompAnnot annotName (H.fromList argVals)
@@ -96,7 +93,7 @@ term :: Parser PExpr
 term = try (parens pExpr)
        <|> try pCall
        <|> pStringLiteral
-       <|> try ((\i -> Tuple (identifierMeta i) i H.empty) <$> identifier)
+       <|> try ((\i -> Value (identifierMeta i) i) <$> identifier)
        <|> CExpr intMeta . CInt <$> integer
 
 pExpr :: Parser PExpr
@@ -105,7 +102,7 @@ pExpr = makeExprParser term ops
 pTypeArg :: Parser (String, RawLeafType)
 pTypeArg = do
   argName <- identifier
-  equals <- symbol "="
+  _ <- symbol "="
   tp <- tidentifier
   return (argName, RawLeafType tp H.empty)
 
@@ -182,16 +179,16 @@ pRootDecl = do
 
 pTypeDefStatement :: Parser PStatement
 pTypeDefStatement = do
-  symbol "data"
+  _ <- symbol "data"
   name <- tidentifier
-  symbol "="
+  _ <- symbol "="
   RawTypeDefStatement . RawTypeDef name <$> pType
 
 pClassDefStatement :: Parser PStatement
 pClassDefStatement = do
-  symbol "instance"
+  _ <- symbol "instance"
   typeName <- tidentifier
-  symbol "of"
+  _ <- symbol "of"
   className <- tidentifier
   return $ RawClassDefStatement (typeName, className)
 

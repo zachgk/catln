@@ -20,8 +20,8 @@ import           Data.UnionFind.ST
 import           Syntax
 import           TypeCheck.Common
 
-objectToLeaf :: FEnv s -> VObject s -> ST s RawLeafType
-objectToLeaf env (Object _ name args) = do
+objectToLeaf :: VObject s -> ST s RawLeafType
+objectToLeaf (Object _ name args) = do
         args' <- mapM
                 (\argMeta -> do
                         (SType _ (RawSumType upper) _) <- descriptor
@@ -35,11 +35,11 @@ buildTypeGraph :: FEnv s -> VObjectMap s -> ST s (FEnv s, TypeGraph s)
 buildTypeGraph env = foldM addArrows (env, emptyGraph)
     where
         emptyGraph = H.empty
-        addArrows (env, graph) (obj, arrows) = foldM (addArrow obj) (env, graph) arrows
-        addArrow obj (env, graph) (Arrow m _ _) = do
-                leaf <- objectToLeaf env obj
+        addArrows (aenv, graph) (obj, arrows) = foldM (addArrow obj) (aenv, graph) arrows
+        addArrow obj (aenv, graph) (Arrow m _ _) = do
+                leaf <- objectToLeaf obj
                 let graph2 = H.insertWith (++) leaf [m] graph
-                return (env, graph2)
+                return (aenv, graph2)
 
 rawTypeFromScheme :: Scheme -> Maybe RawType
 rawTypeFromScheme (SType ub _ _)  = Just ub
@@ -60,7 +60,6 @@ reachesLeaf graph leaf = do
 
 reaches :: TypeGraph s -> RawType -> ST s (Maybe RawType)
 reaches _     RawTopType            = return $ Just RawTopType
-reaches _     (RawProdTopType _)            = return $ Just RawTopType -- TODO: Result should be a subset of RawTopType
 reaches graph (RawSumType srcTypes) = do
         resultParts <- mapM (reachesLeaf graph) $ S.toList srcTypes
         return $ unionMaybeRawTypes resultParts

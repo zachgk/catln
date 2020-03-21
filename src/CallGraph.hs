@@ -21,4 +21,5 @@ type CallGraph = (Graph, Vertex -> ((), Name, [Name]), Name -> Maybe Vertex)
 
 tupleNamesInExpr :: Expr m -> S.HashSet Name
 tupleNamesInExpr CExpr{} = S.empty
-tupleNamesInExpr (Tuple _ name args) = S.unions $ S.singleton name:H.elems (fmap tupleNamesInExpr args)
+tupleNamesInExpr (Value _ name) = S.singleton name
+tupleNamesInExpr (TupleApply _ _ args) = S.unions $ H.elems (fmap tupleNamesInExpr args)

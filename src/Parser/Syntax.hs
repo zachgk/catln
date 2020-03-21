@@ -28,3 +28,6 @@ type PPrgm = RawPrgm ParseMeta
 type PReplRes = ReplRes ParseMeta
 
 type DesPrgm = Prgm ParseMeta
+
+emptyMeta :: ParseMeta
+emptyMeta = PreTyped RawTopType

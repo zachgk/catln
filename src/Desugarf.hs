@@ -25,10 +25,6 @@ import CallGraph
 data PSemiDecl = PSemiDecl PDeclLHS [PCompAnnot] (Maybe PExpr)
   deriving (Eq, Ord, Show)
 
-setMeta :: m -> Expr m -> Expr m
-setMeta m (CExpr _ c)   = CExpr m c
-setMeta m (Tuple _ n es) = Tuple m n es
-
 splitDeclSubStatements :: [PDeclSubStatement] -> ([PDecl], [PCompAnnot])
 splitDeclSubStatements = aux ([], [])
   where
@@ -38,10 +34,13 @@ splitDeclSubStatements = aux ([], [])
 
 scopeSubDeclFunNamesInExpr :: Name -> S.HashSet Name -> PExpr -> PExpr
 scopeSubDeclFunNamesInExpr _ _ e@CExpr{} = e
-scopeSubDeclFunNamesInExpr prefix replaceNames (Tuple m name args) = Tuple m name' args'
+scopeSubDeclFunNamesInExpr prefix replaceNames (Value m name) = Value m name'
   where
     addPrefix n = prefix ++ "." ++ n
     name' = if S.member name replaceNames then addPrefix name else name
+scopeSubDeclFunNamesInExpr prefix replaceNames (TupleApply m (bm, bExpr) args) = TupleApply m (bm, bExpr') args'
+  where
+    bExpr' = scopeSubDeclFunNamesInExpr prefix replaceNames bExpr
     args' = fmap (scopeSubDeclFunNamesInExpr prefix replaceNames) args
 
 -- Renames sub functions by applying the parent names as a prefix to avoid name collisions
@@ -75,7 +74,13 @@ currySubFunctions parentArgMap decls expr = (decls', expr')
     (decls2, exprUpdateSource) = unzip $ map (currySubFunctionSignature parentArgMap callGraph) decls
     exprUpdateMap = H.fromList exprUpdateSource
     updateExpr c@CExpr{} = c
-    updateExpr (Tuple tm tn te) = Tuple tm tn (H.union (fmap updateExpr te) (H.mapWithKey (\argName argM -> Tuple argM argName H.empty) $ H.lookupDefault H.empty tn exprUpdateMap))
+    updateExpr v@(Value _ vn) = case H.lookup vn exprUpdateMap of
+      Just newArgs -> TupleApply emptyMeta (emptyMeta, v) (H.mapWithKey (flip Value) newArgs)
+      Nothing -> v
+    updateExpr (TupleApply tm (tbm, tbe) tArgs) = TupleApply tm (tbm, tbe') tArgs'
+      where
+        tbe' = updateExpr tbe
+        tArgs' = fmap updateExpr tArgs
     expr' = fmap updateExpr expr
     decls' = map (\(PSemiDecl lhs an e) -> PSemiDecl lhs an (fmap updateExpr e)) decls2
 
@@ -124,7 +129,7 @@ desClassDefs sealed = foldr addDef empty
   where
     empty = (H.empty, H.empty)
     addDef (typeName, className) (typeToClass, classToType) = (H.insertWith S.union typeName (S.singleton className) typeToClass, H.insertWith addClass className (sealed, S.singleton typeName) classToType)
-    addClass (sealed, set1) (_, set2) = (sealed, S.union set1 set2)
+    addClass (cSealed, set1) (_, set2) = (cSealed, S.union set1 set2)
 
 mergeObjMaps :: PObjectMap -> PObjectMap -> PObjectMap
 mergeObjMaps = H.unionWith (++)

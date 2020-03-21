@@ -25,10 +25,15 @@ showExpr :: VExpr s -> ST s SExpr
 showExpr (CExpr m c) = do
   m' <- showM m
   return (CExpr m' c)
-showExpr (Tuple m name args) = do
+showExpr (Value m name) = do
   m' <- showM m
+  return (Value m' name)
+showExpr (TupleApply m (bm, base) args) = do
+  m' <- showM m
+  bm' <- showM bm
+  base' <- showExpr base
   args' <- mapM showExpr args
-  return (Tuple m' name args')
+  return (TupleApply m' (bm', base') args')
 
 showCompAnnot :: VCompAnnot s -> ST s SCompAnnot
 showCompAnnot (CompAnnot name args) = do

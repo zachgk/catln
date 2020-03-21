@@ -40,6 +40,7 @@ equalizeSchemes (SType ub1 lb1 desc1, SType ub2 lb2 desc2) = let lbBoth = unionR
 mapSequence :: (Eq b, Hashable b) => H.HashMap a (H.HashMap b c) -> H.HashMap b (H.HashMap a c)
 mapSequence m = H.fromList $ map (\b -> (b, mapForB b)) $ S.toList bKeySet
   where
+    intersections [] = error "mapSequence with no maps"
     intersections (firstSet:sets) = foldr S.intersection firstSet sets
     bKeySet = intersections $ H.elems $ H.map H.keysSet m
     mapForB b = H.mapMaybe (H.lookup b) m
@@ -50,7 +51,6 @@ tupleCrossProductTypes name parts = do
   return $ RawSumType $ S.fromList $ map (RawLeafType name) $ mapM S.toList partLeafs
   where fromSum (RawSumType leafs) = Just leafs
         fromSum RawTopType = Nothing
-        fromSum RawProdTopType{} = Nothing
 
 tupleConstrainSumWith :: ((H.HashMap String RawLeafType, RawType) -> (H.HashMap String RawLeafType, RawType)) -> (S.HashSet RawLeafType, H.HashMap String RawType) -> (RawType, H.HashMap String RawType)
 tupleConstrainSumWith constrainArg (wholeUnmatched, parts) = (whole', parts')
@@ -65,24 +65,20 @@ tupleConstrainSumWith constrainArg (wholeUnmatched, parts) = (whole', parts')
 -- constrain by intersection
 tupleConstrainUb :: (RawType, H.HashMap String RawType) -> (RawType, H.HashMap String RawType)
 tupleConstrainUb (RawTopType, parts) = (RawTopType, parts)
-tupleConstrainUb (RawProdTopType name, parts) = (fromMaybe RawTopType $ tupleCrossProductTypes name parts, parts)
 tupleConstrainUb (RawSumType wholeUnparsed, parts) = tupleConstrainSumWith constrainArg (wholeUnparsed, parts)
   where
     constrainArg :: (H.HashMap String RawLeafType, RawType) -> (H.HashMap String RawLeafType, RawType)
     constrainArg (whole, RawTopType) = (whole, RawSumType $ S.fromList $ H.elems whole)
-    constrainArg (whole, prod@RawProdTopType{}) = (whole, intersectRawTypes prod $ RawSumType $ S.fromList $ H.elems whole)
     constrainArg (whole, RawSumType partLeafs) = let leafs = S.intersection (S.fromList $ H.elems whole) partLeafs
                                                   in (H.filter (`S.member` leafs) whole, RawSumType leafs)
 
 -- constrain by union
 tupleConstrainLb :: (RawType, H.HashMap String RawType) -> (RawType, H.HashMap String RawType)
 tupleConstrainLb (RawTopType, parts) = (RawTopType, parts)
-tupleConstrainLb (RawProdTopType name, parts) = (RawProdTopType name, parts)
 tupleConstrainLb (RawSumType wholeUnparsed, parts) = tupleConstrainSumWith constrainArg (wholeUnparsed, parts)
   where
     constrainArg :: (H.HashMap String RawLeafType, RawType) -> (H.HashMap String RawLeafType, RawType)
     constrainArg (_, RawTopType) = error "Constrain lb with RawTopType"
-    constrainArg (_, RawProdTopType{}) = error "Constrain lb with RawProdTopType"
     constrainArg (whole, RawSumType partLeafs) = let leafs = S.union (S.fromList $ H.elems whole) partLeafs
                                                   in (whole, RawSumType leafs)
 lowerUb :: RawType -> RawType -> RawType
@@ -123,7 +119,7 @@ executeConstraint typeGraph cons@(ArrowTo srcPnt destPnt) = do
   case (srcScheme, destScheme) of
     (SCheckError _, _) -> return []
     (_, SCheckError _) -> return []
-    (SType srcUb srcLb _, SType destUb destLb destDescription) -> do
+    (SType srcUb _ _, SType destUb destLb destDescription) -> do
       maybeDestUbByGraph <- reaches typeGraph srcUb
       -- Commenting out reachedBy and usages until it is deemed necessary
       -- srcUbByGraph <- reachedBy typeGraph destUb

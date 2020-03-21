@@ -34,7 +34,6 @@ type RawLeafSet = S.HashSet RawLeafType
 data RawType
   = RawSumType RawLeafSet
   | RawTopType
-  | RawProdTopType Name
   deriving (Eq, Ord, Show, Generic)
 instance Hashable RawType
 
@@ -93,7 +92,8 @@ type RawExpr = Expr
 
 data Expr m
   = CExpr m Constant
-  | Tuple m Name (H.HashMap Name (Expr m))
+  | Value m Name
+  | TupleApply m (m, Expr m) (H.HashMap Name (Expr m))
   deriving (Eq, Ord, Show)
 
 -- Compiler Annotation
@@ -174,9 +174,6 @@ unionRawTypes (RawSumType subLeafs) (RawSumType superLeafs) = RawSumType $ S.uni
 intersectRawTypes :: RawType -> RawType -> RawType
 intersectRawTypes RawTopType t = t
 intersectRawTypes t RawTopType = t
-intersectRawTypes (RawProdTopType a) (RawProdTopType b) = if a == b then RawProdTopType a else rawBottomType
-intersectRawTypes (RawProdTopType a) (RawSumType leafs) = RawSumType $ S.filter (\(RawLeafType leafName _) -> leafName == a) leafs
-intersectRawTypes a@RawSumType{} b@RawProdTopType{} = intersectRawTypes b a
 intersectRawTypes (RawSumType subLeafs) (RawSumType superLeafs) = RawSumType $ S.intersection subLeafs superLeafs
 
 typedIs :: Typed -> Type -> Bool
@@ -185,4 +182,5 @@ typedIs (Typed t1) t2 = t1 == t2
 getExprMeta :: Expr m -> m
 getExprMeta expr = case expr of
   CExpr m _   -> m
-  Tuple m _ _ -> m
+  Value m _   -> m
+  TupleApply m _ _ -> m

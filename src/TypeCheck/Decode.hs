@@ -13,7 +13,6 @@ module TypeCheck.Decode where
 
 import           Control.Monad
 import           Control.Monad.ST
-import           Control.Applicative
 import           Data.Either
 import           Data.Functor
 import Data.Hashable (Hashable)
@@ -24,9 +23,6 @@ import           Data.UnionFind.ST
 import           Syntax
 import           TypeCheck.Common
 import           TypeCheck.Show (showCon)
-import           Debug.Trace                    ( trace )
-import           Text.Pretty.Simple             ( pShow )
-import qualified Data.Text.Lazy as T
 
 mergeTypeCheckResultsList :: [TypeCheckResult r] -> TypeCheckResult [r]
 mergeTypeCheckResultsList res = case partitionEithers res of
@@ -46,32 +42,33 @@ mergeTypeCheckResultsTriple (a, b, c) = case (a, b, c) of
   (Right a', Right b', Right c') -> Right (a', b', c')
   (a', b', c')             -> Left $ fromLeft [] a' ++ fromLeft [] b' ++ fromLeft [] c'
 
+mergeTypeCheckResultsQuad :: (TypeCheckResult a, TypeCheckResult b, TypeCheckResult c, TypeCheckResult d) -> TypeCheckResult (a, b, c, d)
+mergeTypeCheckResultsQuad (a, b, c, d) = case (a, b, c, d) of
+  (Right a', Right b', Right c', Right d') -> Right (a', b', c', d')
+  (a', b', c', d')             -> Left $ fromLeft [] a' ++ fromLeft [] b' ++ fromLeft [] c' ++ fromLeft [] d'
+
 fromRawLeafType :: RawLeafType -> LeafType
 fromRawLeafType (RawLeafType name ts) = LeafType name (fmap fromRawLeafType ts)
 
 fromRawType :: RawType -> Maybe Type
 fromRawType RawTopType = Nothing
-fromRawType RawProdTopType{} = Nothing
 fromRawType (RawSumType ts) = Just $ SumType $ S.map fromRawLeafType ts
+
+matchingConstraintHelper :: Pnt s -> Pnt s -> Pnt s -> ST s Bool
+matchingConstraintHelper p p2 p3 = do
+  c2 <- equivalent p p2
+  c3 <- equivalent p p3
+  return $ c2 || c3
 
 matchingConstraint :: Pnt s -> Constraint s -> ST s Bool
 matchingConstraint p (EqualsKnown p2 _) = equivalent p p2
-matchingConstraint p (EqPoints p2 p3) = do
-  c1 <- equivalent p p2
-  c2 <- equivalent p p3
-  return $ c1 || c2
-matchingConstraint p (BoundedBy p2 p3) = do
-  c1 <- equivalent p p2
-  c2 <- equivalent p p3
-  return $ c1 || c2
+matchingConstraint p (EqPoints p2 p3) = matchingConstraintHelper p p2 p3
+matchingConstraint p (BoundedBy p2 p3) = matchingConstraintHelper p p2 p3
 matchingConstraint p (IsTupleOf p2 args) = do
   c1 <- equivalent p p2
   c2 <- mapM (equivalent p) args
   return $ c1 || or c2
-matchingConstraint p (ArrowTo p2 p3) = do
-  c1 <- equivalent p p2
-  c2 <- equivalent p p3
-  return $ c1 || c2
+matchingConstraint p (ArrowTo p2 p3) = matchingConstraintHelper p p2 p3
 
 type DEnv s = [Constraint s]
 showMatchingConstraints :: [Constraint s] -> Pnt s -> ST s [SConstraint]
@@ -84,7 +81,7 @@ toMeta env p name = do
   scheme <- descriptor p
   case scheme of
     SCheckError s -> return $ Left [GenTypeCheckError ("Scheme error on " ++ name ++ ": " ++ s)]
-    SType ub lb desc -> case fromRawType ub of
+    SType ub _ _ -> case fromRawType ub of
       Nothing -> do
         showMatching <- showMatchingConstraints env p
         return $ Left [FailInfer name scheme showMatching]
@@ -94,15 +91,20 @@ toExpr :: DEnv s -> VExpr s -> ST s (TypeCheckResult TExpr)
 toExpr env (CExpr m c) = do
   res <- toMeta env m $ "Constant " ++ show c
   return $ res <&> (`CExpr` c)
-toExpr env (Tuple m name args) = do
-  m' <- toMeta env m $ "Tuple_" ++ name
+toExpr env (Value m name) = do
+  m' <- toMeta env m $ "Value_" ++ name
+  return $ fmap (`Value` name) m'
+toExpr env (TupleApply m (baseM, baseExpr) args) = do
+  m' <- toMeta env m "TupleApply_M"
+  baseM' <- toMeta env baseM "TupleApply_baseM"
+  baseExpr' <- toExpr env baseExpr
   args' <- mapM (toExpr env) args
   case m' of -- check for errors
     Right tp@(Typed (SumType sumType)) | all (\(LeafType _ leafArgs) -> H.keysSet args' /= H.keysSet leafArgs) (S.toList sumType) -> do
                                         matchingConstraints <- showMatchingConstraints env m
                                         let sArgs = mergeTypeCheckResultsMap args'
-                                        return $ Left [TupleMismatch name tp sArgs matchingConstraints]
-    _ -> return $ (\(m'', args'') -> Tuple m'' name args'') <$> mergeTypeCheckResultsPair (m', mergeTypeCheckResultsMap args')
+                                        return $ Left [TupleMismatch baseM' baseExpr' tp sArgs matchingConstraints]
+    _ -> return $ (\(m'', baseM'', baseExpr'', args'') -> TupleApply m'' (baseM'', baseExpr'') args'') <$> mergeTypeCheckResultsQuad (m', baseM', baseExpr', mergeTypeCheckResultsMap args')
 
 toCompAnnot :: DEnv s -> VCompAnnot s -> ST s (TypeCheckResult TCompAnnot)
 toCompAnnot env (CompAnnot name args) = do
@@ -140,5 +142,5 @@ toPrgm :: VPrgm s -> [Constraint s] -> ST s (TypeCheckResult TPrgm)
 toPrgm (objMap, classMap) cons = do
   let env = cons
   objects' <- mapM (toObject env) objMap
-  let objMap = H.fromList <$> mergeTypeCheckResultsList objects'
-  return $ mergeTypeCheckResultsPair (objMap, return classMap)
+  let objMap' = H.fromList <$> mergeTypeCheckResultsList objects'
+  return $ mergeTypeCheckResultsPair (objMap', return classMap)

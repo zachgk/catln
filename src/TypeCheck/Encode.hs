@@ -69,8 +69,8 @@ mapMWithFEnv env f = foldM f' ([], env)
           return (b:acc, e')
 
 mapMWithFEnvMap :: (Eq k, Hashable k) => FEnv s -> (FEnv s -> a -> ST s (b, FEnv s)) -> H.HashMap k a -> ST s (H.HashMap k b, FEnv s)
-mapMWithFEnvMap env f map = do
-  (res, env2) <- mapMWithFEnv env f' (H.toList map)
+mapMWithFEnvMap env f hmap = do
+  (res, env2) <- mapMWithFEnv env f' (H.toList hmap)
   return (H.fromList res, env2)
   where
     f' e (k, a) = do
@@ -78,8 +78,8 @@ mapMWithFEnvMap env f map = do
       return ((k, b), e2)
 
 mapMWithFEnvMapWithKey :: (Eq k, Hashable k) => FEnv s -> (FEnv s -> (k, a) -> ST s ((k, b), FEnv s)) -> H.HashMap k a -> ST s (H.HashMap k b, FEnv s)
-mapMWithFEnvMapWithKey env f map = do
-  (res, env2) <- mapMWithFEnv env f' (H.toList map)
+mapMWithFEnvMapWithKey env f hmap = do
+  (res, env2) <- mapMWithFEnv env f' (H.toList hmap)
   return (H.fromList res, env2)
   where
     f' e (k, a) = do
@@ -96,17 +96,33 @@ fromExpr env (CExpr m (CFloat f)) = do
 fromExpr env (CExpr m (CStr s)) = do
   (m', p, env') <- fromMetaP env m ("Constant str " ++ s)
   return (CExpr m' (CStr s), addConstraints env' [EqualsKnown p rstrType])
-fromExpr env1 (Tuple m name exprs) = do
-  (m', p, env2) <- fromMetaP env1 m ("Tuple " ++ name)
+fromExpr env1 (Value m name) = do
+  (m', p, env2) <- fromMetaP env1 m ("Value " ++ name)
   case fLookup env2 name of
-    (Nothing, _)          -> error $ "Could not find tuple object " ++ name
-    (Just (Object om _ _), env3) -> do
-      (exprs', env4) <- mapMWithFEnvMap env3 fromExpr exprs
-      convertExprMetas <- mapM (\_ -> fresh (SType RawTopType rawBottomType "Tuple converted expr meta")) exprs
-      let arrowArgConstraints = H.elems $ H.intersectionWith ArrowTo (fmap getPntExpr exprs') convertExprMetas
-      let constraints = [BoundedBy p (getPnt om), IsTupleOf (getPnt m') convertExprMetas] ++ arrowArgConstraints
-      let env5 = addConstraints env4 constraints
-      return (Tuple m' name exprs', env5)
+    (Nothing, _) -> error $ "Could not find value " ++ name
+    (Just (Object om _ _), env3) ->
+      return (Value m' name, addConstraints env3 [EqPoints (getPnt om) p])
+fromExpr env1 (TupleApply m (baseM, baseExpr) args) = do
+  (m', p, env2) <- fromMetaP env1 m "TupleApply Meta"
+  (baseM', baseP, env3) <- fromMetaP env2 baseM "TupleApply BaseMeta"
+  (baseExpr', env4) <- fromExpr env3 baseExpr
+  (args', env5) <- mapMWithFEnvMap env4 fromExpr args
+  convertExprMetas <- mapM (\_ -> fresh (SType RawTopType rawBottomType "Tuple converted expr meta")) args
+  let arrowArgConstraints = H.elems $ H.intersectionWith ArrowTo (fmap getPntExpr args') convertExprMetas
+  let constraints = [ArrowTo (getPntExpr baseExpr') baseP, IsTupleOf p convertExprMetas] ++ arrowArgConstraints -- TODO: Add constraints
+  let env6 = addConstraints env5 constraints
+  return (TupleApply m' (baseM', baseExpr') args', env6)
+-- fromExpr env1 (Tuple m name exprs) = do
+--   (m', p, env2) <- fromMetaP env1 m ("Tuple " ++ name)
+--   case fLookup env2 name of
+--     (Nothing, _)          -> error $ "Could not find tuple object " ++ name
+--     (Just (Object om _ _), env3) -> do
+--       (exprs', env4) <- mapMWithFEnvMap env3 fromExpr exprs
+--       convertExprMetas <- mapM (\_ -> fresh (SType RawTopType rawBottomType "Tuple converted expr meta")) exprs
+--       let arrowArgConstraints = H.elems $ H.intersectionWith ArrowTo (fmap getPntExpr exprs') convertExprMetas
+--       let constraints = [BoundedBy p (getPnt om), IsTupleOf (getPnt m') convertExprMetas] ++ arrowArgConstraints
+--       let env5 = addConstraints env4 constraints
+--       return (Tuple m' name exprs', env5)
 
 fromAnnot :: FEnv s -> PCompAnnot -> ST s (VCompAnnot s, FEnv s)
 fromAnnot env1 (CompAnnot name args) = do
@@ -135,7 +151,7 @@ fromArrow obj@(Object _ objName _) env1 (Arrow m annots maybeExpr) = do
     Nothing -> return (Arrow m' annots' Nothing, fReplaceMap env4 env1)
 
 fromObjectMap :: FEnv s -> (VObject s, [PArrow]) -> ST s ((VObject s, [VArrow s]), FEnv s)
-fromObjectMap env1 (obj@(Object m name args), arrows) = do
+fromObjectMap env1 (obj@(Object _ name _), arrows) = do
   let env2 = fInsert env1 name obj
   (arrows', env3) <- mapMWithFEnv env2 (fromArrow obj) arrows
   return ((obj, arrows'), env3)

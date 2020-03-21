@@ -14,14 +14,9 @@
 module TypeCheck.Common where
 
 import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet          as S
 import           Data.UnionFind.ST
 import           Data.Hashable
 import           GHC.Generics          (Generic)
-import Control.Applicative
-import Control.Monad ( when )
-import Control.Monad.ST
-import Data.STRef
 
 import           Syntax
 
@@ -29,7 +24,7 @@ data TypeCheckError
   = GenTypeCheckError String
   | AbandonCon SConstraint
   | FailInfer String Scheme [SConstraint]
-  | TupleMismatch String Typed (TypeCheckResult (H.HashMap String TExpr)) [SConstraint]
+  | TupleMismatch (TypeCheckResult TypedMeta) (TypeCheckResult TExpr) Typed (TypeCheckResult (H.HashMap String TExpr)) [SConstraint]
   deriving (Eq, Ord, Show)
 
 data Scheme

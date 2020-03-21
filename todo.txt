@@ -42,7 +42,7 @@
 - Program Optimization
   - Convert the ResArrowTree formating to include sorting of values
 
-Remove RawProdTopType. The same effect should be possible by doing a lookup in Encode against the possible products for an object. The usages of RawProdTopType can then be replaced with RawTopType for the most part.
+Fix parser and test on using multiple applies in a row `fun(a=1)(b=2)`
 Make CompAnnot an enum over allowed compiler annotations and desugar goes from untyped RawCompAnnot tuple to the enum. Maybe wait until after typechecking to desugar, though
 Types
   Type with defaultNames

@@ -12,7 +12,6 @@
 module Eval.Common where
 
 import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet          as S
 
 import           Syntax
 
@@ -40,7 +39,6 @@ data EvalError
 data ResArrow
   = ResEArrow EArrow
   | PrimArrow Type (H.HashMap String Val -> Val) -- runtime function
-  | ValArrow Val
 
 type ResEnv = H.HashMap LeafType [ResArrow]
 type Env = (ResEnv, H.HashMap LeafType Val)
@@ -48,7 +46,6 @@ type Env = (ResEnv, H.HashMap LeafType Val)
 data ResArrowTree
   = ResArrowTree ResArrow (H.HashMap LeafType ResArrowTree)
   | ResArrowID
-  | ResArrowVal Val
   deriving (Show)
 
 instance Show Val where
@@ -72,4 +69,3 @@ getValType (TupleVal name args) = LeafType name (fmap getValType args)
 resArrowDestType :: ResArrow -> Type
 resArrowDestType (ResEArrow (Arrow (Typed tp) _ _)) = tp
 resArrowDestType (PrimArrow tp _) = tp
-resArrowDestType (ValArrow val) = SumType $ S.singleton $ getValType val
