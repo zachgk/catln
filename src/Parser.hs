@@ -26,7 +26,7 @@ import           Syntax
 import Parser.Syntax
 
 identifierMeta :: String -> ParseMeta
-identifierMeta i = PreTyped $ RawSumType $ S.singleton $ RawLeafType i H.empty
+identifierMeta i = PreTyped $ RawSumType (S.singleton $ RawLeafType i H.empty) H.empty
 
 intMeta, floatMeta, boolMeta, strMeta :: ParseMeta
 intMeta = PreTyped rintType
@@ -121,7 +121,7 @@ pType = S.fromList <$> sepBy1 pLeafType (symbol "|")
 
 pTypedIdentifier :: Parser (Name, ParseMeta)
 pTypedIdentifier = do
-  tp <- try $ optional $ parens $ RawSumType <$> pType
+  tp <- try $ optional $ parens $ (`RawSumType` H.empty) <$> pType
   val <- identifier
   let tp' = case tp of
         Just t -> PreTyped t

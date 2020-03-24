@@ -24,7 +24,7 @@ objectToLeaf :: VObject s -> ST s RawLeafType
 objectToLeaf (Object _ name args) = do
         args' <- mapM
                 (\argMeta -> do
-                        (SType _ (RawSumType upper) _) <- descriptor
+                        (SType _ (RawSumType upper _) _) <- descriptor
                                 $ getPnt argMeta
                         return $ head $ S.toList upper
                 )
@@ -56,10 +56,12 @@ reachesLeaf graph leaf = do
   let typePnts = H.lookupDefault [] leaf graph
   schemes <- mapM descriptor typePnts
   let maybeRawTypes = map rawTypeFromScheme schemes
-  return $ unionMaybeRawTypes (Just (RawSumType $ S.singleton leaf) : maybeRawTypes)
+  return $ unionMaybeRawTypes (Just (RawSumType (S.singleton leaf) H.empty) : maybeRawTypes)
 
 reaches :: TypeGraph s -> RawType -> ST s (Maybe RawType)
 reaches _     RawTopType            = return $ Just RawTopType
-reaches graph (RawSumType srcTypes) = do
-        resultParts <- mapM (reachesLeaf graph) $ S.toList srcTypes
-        return $ unionMaybeRawTypes resultParts
+reaches graph (RawSumType srcLeafs srcPartials) = if H.null srcPartials
+  then do
+    resultParts <- mapM (reachesLeaf graph) $ S.toList srcLeafs
+    return $ unionMaybeRawTypes resultParts
+  else return $ Just RawTopType

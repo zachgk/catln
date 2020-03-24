@@ -57,26 +57,21 @@ showObj (Object m name args, arrows) = do
   arrows' <- mapM showArrow arrows
   return (Object m' name args', arrows')
 
+showConHelper :: (Scheme -> Scheme -> SConstraint) -> Pnt s -> Pnt s -> ST s SConstraint
+showConHelper f p1 p2 = do
+  s1 <- descriptor p1
+  s2 <- descriptor p2
+  return $ f s1 s2
+
 showCon :: Constraint s -> ST s SConstraint
 showCon (EqualsKnown p t) = do
   scheme <- descriptor p
   return $ SEqualsKnown scheme t
-showCon (EqPoints p1 p2) = do
-  s1 <- descriptor p1
-  s2 <- descriptor p2
-  return $ SEqPoints s1 s2
-showCon (BoundedBy p1 p2) = do
-  s1 <- descriptor p1
-  s2 <- descriptor p2
-  return $ SBoundedBy s1 s2
-showCon (IsTupleOf p args) = do
-  s <- descriptor p
-  sArgs <- mapM descriptor args
-  return $ SIsTupleOf s sArgs
-showCon (ArrowTo p1 p2) = do
-  s1 <- descriptor p1
-  s2 <- descriptor p2
-  return $ SArrowTo s1 s2
+showCon (EqPoints p1 p2) = showConHelper SEqPoints p1 p2
+showCon (BoundedBy p1 p2) = showConHelper SBoundedBy p1 p2
+showCon (ArrowTo p1 p2) = showConHelper SArrowTo p1 p2
+showCon (PropEq (p1, name) p2) = showConHelper (\s1 s2 -> SPropEq (s1, name) s2) p1 p2
+showCon (AddArgs (p1, argNames) p2) = showConHelper (\s1 s2 -> SAddArgs (s1, argNames) s2) p1 p2
 
 showPrgm :: VPrgm s -> ST s SPrgm
 showPrgm (objMap, classMap) = do

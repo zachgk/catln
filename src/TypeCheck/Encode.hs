@@ -109,20 +109,10 @@ fromExpr env1 (TupleApply m (baseM, baseExpr) args) = do
   (args', env5) <- mapMWithFEnvMap env4 fromExpr args
   convertExprMetas <- mapM (\_ -> fresh (SType RawTopType rawBottomType "Tuple converted expr meta")) args
   let arrowArgConstraints = H.elems $ H.intersectionWith ArrowTo (fmap getPntExpr args') convertExprMetas
-  let constraints = [ArrowTo (getPntExpr baseExpr') baseP, IsTupleOf p convertExprMetas] ++ arrowArgConstraints -- TODO: Add constraints
+  let tupleConstraints = H.elems $ H.mapWithKey (\name ceMeta -> PropEq (p, name) ceMeta) convertExprMetas
+  let constraints = [ArrowTo (getPntExpr baseExpr') baseP, AddArgs (baseP, H.keysSet args) p] ++ tupleConstraints ++ arrowArgConstraints
   let env6 = addConstraints env5 constraints
   return (TupleApply m' (baseM', baseExpr') args', env6)
--- fromExpr env1 (Tuple m name exprs) = do
---   (m', p, env2) <- fromMetaP env1 m ("Tuple " ++ name)
---   case fLookup env2 name of
---     (Nothing, _)          -> error $ "Could not find tuple object " ++ name
---     (Just (Object om _ _), env3) -> do
---       (exprs', env4) <- mapMWithFEnvMap env3 fromExpr exprs
---       convertExprMetas <- mapM (\_ -> fresh (SType RawTopType rawBottomType "Tuple converted expr meta")) exprs
---       let arrowArgConstraints = H.elems $ H.intersectionWith ArrowTo (fmap getPntExpr exprs') convertExprMetas
---       let constraints = [BoundedBy p (getPnt om), IsTupleOf (getPnt m') convertExprMetas] ++ arrowArgConstraints
---       let env5 = addConstraints env4 constraints
---       return (Tuple m' name exprs', env5)
 
 fromAnnot :: FEnv s -> PCompAnnot -> ST s (VCompAnnot s, FEnv s)
 fromAnnot env1 (CompAnnot name args) = do
@@ -132,7 +122,7 @@ fromAnnot env1 (CompAnnot name args) = do
 arrowAddScope :: FEnv s -> VObject s -> ST s (FEnv s)
 arrowAddScope env1 (Object meta _ args) = do
   env2 <- foldM aux env1 $ H.toList args
-  let env3 = addConstraints env2 [IsTupleOf meta args]
+  let env3 = addConstraints env2 $ H.elems $ H.mapWithKey (\argName argMeta -> PropEq (meta, argName) argMeta) args
   return env3
   where aux :: FEnv s -> (String, VarMeta s) -> ST s (FEnv s)
         aux e (n, m) = return $ fInsert e n (Object m n H.empty)

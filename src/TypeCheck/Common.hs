@@ -14,6 +14,7 @@
 module TypeCheck.Common where
 
 import qualified Data.HashMap.Strict as H
+import qualified Data.HashSet          as S
 import           Data.UnionFind.ST
 import           Data.Hashable
 import           GHC.Generics          (Generic)
@@ -42,16 +43,18 @@ data Constraint s
   = EqualsKnown (Pnt s) RawType
   | EqPoints (Pnt s) (Pnt s)
   | BoundedBy (Pnt s) (Pnt s)
-  | IsTupleOf (Pnt s) (H.HashMap String (Pnt s))
   | ArrowTo (Pnt s) (Pnt s) -- ArrowTo src dest
+  | PropEq (Pnt s, Name) (Pnt s)
+  | AddArgs (Pnt s, S.HashSet String) (Pnt s)
   deriving (Eq)
 
 data SConstraint
   = SEqualsKnown Scheme RawType
   | SEqPoints Scheme Scheme
   | SBoundedBy Scheme Scheme
-  | SIsTupleOf Scheme (H.HashMap String Scheme)
   | SArrowTo Scheme Scheme
+  | SPropEq (Scheme, Name) Scheme
+  | SAddArgs (Scheme, S.HashSet String) Scheme
   deriving (Eq, Ord, Show)
 
 type TypeCheckResult r = Either [TypeCheckError] r
@@ -105,7 +108,3 @@ fLookup :: FEnv s -> String -> (Maybe (VObject s), FEnv s)
 fLookup env@(FEnv _ pmap _) k = case H.lookup k pmap of
   Just v  -> (Just v, env)
   Nothing -> (Nothing, addErr env (GenTypeCheckError $ "Failed to lookup " ++ k))
-
-schemeError :: Scheme -> Bool
-schemeError SCheckError{} = True
-schemeError SType{} = False

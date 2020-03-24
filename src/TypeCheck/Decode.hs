@@ -52,7 +52,9 @@ fromRawLeafType (RawLeafType name ts) = LeafType name (fmap fromRawLeafType ts)
 
 fromRawType :: RawType -> Maybe Type
 fromRawType RawTopType = Nothing
-fromRawType (RawSumType ts) = Just $ SumType $ S.map fromRawLeafType ts
+fromRawType (RawSumType leafs partials) = if H.null partials
+  then Just $ SumType $ S.map fromRawLeafType leafs
+  else Nothing
 
 matchingConstraintHelper :: Pnt s -> Pnt s -> Pnt s -> ST s Bool
 matchingConstraintHelper p p2 p3 = do
@@ -64,11 +66,9 @@ matchingConstraint :: Pnt s -> Constraint s -> ST s Bool
 matchingConstraint p (EqualsKnown p2 _) = equivalent p p2
 matchingConstraint p (EqPoints p2 p3) = matchingConstraintHelper p p2 p3
 matchingConstraint p (BoundedBy p2 p3) = matchingConstraintHelper p p2 p3
-matchingConstraint p (IsTupleOf p2 args) = do
-  c1 <- equivalent p p2
-  c2 <- mapM (equivalent p) args
-  return $ c1 || or c2
 matchingConstraint p (ArrowTo p2 p3) = matchingConstraintHelper p p2 p3
+matchingConstraint p (PropEq (p2, _) p3) = matchingConstraintHelper p p2 p3
+matchingConstraint p (AddArgs (p2, _) p3) = matchingConstraintHelper p p2 p3
 
 type DEnv s = [Constraint s]
 showMatchingConstraints :: [Constraint s] -> Pnt s -> ST s [SConstraint]

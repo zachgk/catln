@@ -55,6 +55,7 @@ Automatically compute properties of constants
 Typecheck when errors during parsing
 Make desugar curry all values to the closure instead of checking which ones are used, then run a pass that gets rid of unused arguments to a function.
      Before this, add compiler warnings for all unused values in a function
+Do a pattern match against all expressions to see if they contain a subset which is equivalent to another function. In this case, throw a warning to use the higher function and replace in the code. This can take place during or after desugaring.
 Add tests
   QuickTest
   Repl Test

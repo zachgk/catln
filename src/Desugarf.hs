@@ -111,8 +111,8 @@ desDecls decls = unionsWith (++) $ map desDecl decls
 addTypeDef :: PRawTypeDef -> (PObjectMap, ClassMap) -> (PObjectMap, ClassMap)
 addTypeDef (RawTypeDef name leafs) (objMap, classMap) = (objMap', classMap')
   where
-    leafArgConvert leafType = PreTyped $ RawSumType $ S.singleton leafType
-    leafToObj (RawLeafType leafName leafArgs) = Object (PreTyped $ RawSumType $ S.singleton $ RawLeafType leafName leafArgs) leafName (fmap leafArgConvert leafArgs)
+    leafArgConvert leafType = PreTyped $ RawSumType (S.singleton leafType) H.empty
+    leafToObj (RawLeafType leafName leafArgs) = Object (PreTyped $ RawSumType (S.singleton $ RawLeafType leafName leafArgs) H.empty ) leafName (fmap leafArgConvert leafArgs)
     newObjs = map leafToObj $ S.toList leafs
     additionalObjMap = H.fromList $ map (,[]) newObjs
     objMap' = mergeObjMaps objMap additionalObjMap
