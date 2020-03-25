@@ -80,8 +80,8 @@ toMeta :: DEnv s -> VarMeta s -> String -> ST s (TypeCheckResult Typed)
 toMeta env p name = do
   scheme <- descriptor p
   case scheme of
-    SCheckError s -> return $ Left [GenTypeCheckError ("Scheme error on " ++ name ++ ": " ++ s)]
-    SType ub _ _ -> case fromRawType ub of
+    Left s -> return $ Left [GenTypeCheckError ("Scheme error on " ++ name ++ ": " ++ show s)]
+    Right (SType ub _ _) -> case fromRawType ub of
       Nothing -> do
         showMatching <- showMatchingConstraints env p
         return $ Left [FailInfer name scheme showMatching]

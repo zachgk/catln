@@ -89,7 +89,8 @@ data Constant
   = CInt Integer
   | CFloat Double
   | CStr String
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Generic)
+instance Hashable Constant
 
 type RawExpr = Expr
 
@@ -97,7 +98,8 @@ data Expr m
   = CExpr m Constant
   | Value m Name
   | TupleApply m (m, Expr m) (H.HashMap Name (Expr m))
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Generic)
+instance Hashable m => Hashable (Expr m)
 
 -- Compiler Annotation
 data CompAnnot m = CompAnnot Name (H.HashMap Name (Expr m))
@@ -145,6 +147,39 @@ data ReplRes m
   | ReplErr ParseErrorRes
   deriving (Eq, Show)
 
+
+
+-- compile errors
+data CNote
+  = GenCNote String
+  | GenCErr String
+  | TypeCheckCErr
+  deriving (Eq, Show)
+
+data CRes r
+  = CRes [CNote] r
+  | CErr [CNote]
+  deriving (Eq, Show)
+
+getCNotes :: CRes r -> [CNote]
+getCNotes (CRes notes _) = notes
+getCNotes (CErr notes) = notes
+
+instance Functor CRes where
+  fmap f (CRes notes r) = CRes notes (f r)
+  fmap _ (CErr notes) = CErr notes
+
+instance Applicative CRes where
+  pure = CRes []
+  (CRes notesA f) <*> (CRes notesB b) = CRes (notesA ++ notesB) (f b)
+  resA <*> resB = CErr (getCNotes resA ++ getCNotes resB)
+
+instance Monad CRes where
+  return = pure
+  (CRes notesA a) >>= f = case f a of
+    (CRes notesB b) -> CRes (notesA ++ notesB) b
+    (CErr notesB) -> CErr (notesA ++ notesB)
+  (CErr notes) >>= _ = CErr notes
 
 
 -- Metadata for the Programs

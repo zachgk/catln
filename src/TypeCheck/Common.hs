@@ -26,13 +26,13 @@ data TypeCheckError
   | AbandonCon SConstraint
   | FailInfer String Scheme [SConstraint]
   | TupleMismatch (TypeCheckResult TypedMeta) (TypeCheckResult TExpr) Typed (TypeCheckResult (H.HashMap String TExpr)) [SConstraint]
-  deriving (Eq, Ord, Show)
-
-data Scheme
-  = SType RawType RawType String -- SType upper lower description
-  | SCheckError String
   deriving (Eq, Ord, Show, Generic)
-instance Hashable Scheme
+instance Hashable TypeCheckError
+
+data SType = SType RawType RawType String -- SType upper lower description
+  deriving (Eq, Ord, Show, Generic)
+instance Hashable SType
+type Scheme = TypeCheckResult SType
 
 type Pnt s = Point s Scheme
 
@@ -55,7 +55,8 @@ data SConstraint
   | SArrowTo Scheme Scheme
   | SPropEq (Scheme, Name) Scheme
   | SAddArgs (Scheme, S.HashSet String) Scheme
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Generic)
+instance Hashable SConstraint
 
 type TypeCheckResult r = Either [TypeCheckError] r
 

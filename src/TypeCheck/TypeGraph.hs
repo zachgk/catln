@@ -24,7 +24,7 @@ objectToLeaf :: VObject s -> ST s RawLeafType
 objectToLeaf (Object _ name args) = do
         args' <- mapM
                 (\argMeta -> do
-                        (SType _ (RawSumType upper _) _) <- descriptor
+                        (Right (SType _ (RawSumType upper _) _)) <- descriptor
                                 $ getPnt argMeta
                         return $ head $ S.toList upper
                 )
@@ -42,8 +42,8 @@ buildTypeGraph env = foldM addArrows (env, emptyGraph)
                 return (aenv, graph2)
 
 rawTypeFromScheme :: Scheme -> Maybe RawType
-rawTypeFromScheme (SType ub _ _)  = Just ub
-rawTypeFromScheme SCheckError{} = Nothing
+rawTypeFromScheme (Right (SType ub _ _))  = Just ub
+rawTypeFromScheme Left{} = Nothing
 
 unionMaybeRawTypes :: [Maybe RawType] -> Maybe RawType
 unionMaybeRawTypes maybeRawTypes = case sequence maybeRawTypes of

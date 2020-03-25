@@ -38,9 +38,9 @@ makeBaseFEnv = do
             ]
   foldM f env1 ops
   where f e (opName, retType, args) = do
-          p <- fresh (SType retType rawBottomType ("Runtime operator " ++ opName))
+          p <- fresh (Right $ SType retType rawBottomType ("Runtime operator " ++ opName))
           -- pargs <- forM args (fresh . (`SType` rawBottomType))
-          pargs <- forM args (\arg -> fresh (SType arg rawBottomType ("Runtime operator " ++ opName ++ " argument " ++ show arg)))
+          pargs <- forM args (\arg -> fresh (Right $ SType arg rawBottomType ("Runtime operator " ++ opName ++ " argument " ++ show arg)))
           return $ fInsert e opName (Object p opName pargs)
 
 addConstraints :: FEnv s -> [Constraint s] -> FEnv s
@@ -54,7 +54,7 @@ fReplaceMap (FEnv cons _ errs1) (FEnv _ pmap errs2) = FEnv cons pmap (errs1 ++ e
 
 fromMetaP :: FEnv s -> PreMeta -> String -> ST s (VarMeta s, Pnt s, FEnv s)
 fromMetaP env (PreTyped mt) description = do
-  p <- fresh (SType mt rawBottomType description)
+  p <- fresh (Right $ SType mt rawBottomType description)
   return (p, p, env)
 
 fromMeta :: FEnv s -> PreMeta -> String -> ST s (VarMeta s, FEnv s)
@@ -107,7 +107,7 @@ fromExpr env1 (TupleApply m (baseM, baseExpr) args) = do
   (baseM', baseP, env3) <- fromMetaP env2 baseM "TupleApply BaseMeta"
   (baseExpr', env4) <- fromExpr env3 baseExpr
   (args', env5) <- mapMWithFEnvMap env4 fromExpr args
-  convertExprMetas <- mapM (\_ -> fresh (SType RawTopType rawBottomType "Tuple converted expr meta")) args
+  convertExprMetas <- mapM (\_ -> fresh (Right $ SType RawTopType rawBottomType "Tuple converted expr meta")) args
   let arrowArgConstraints = H.elems $ H.intersectionWith ArrowTo (fmap getPntExpr args') convertExprMetas
   let tupleConstraints = H.elems $ H.mapWithKey (\name ceMeta -> PropEq (p, name) ceMeta) convertExprMetas
   let constraints = [ArrowTo (getPntExpr baseExpr') baseP, AddArgs (baseP, H.keysSet args) p] ++ tupleConstraints ++ arrowArgConstraints
