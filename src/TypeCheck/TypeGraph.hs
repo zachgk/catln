@@ -24,9 +24,10 @@ objectToLeaf :: VObject s -> ST s RawLeafType
 objectToLeaf (Object _ name args) = do
         args' <- mapM
                 (\argMeta -> do
-                        (Right (SType _ (RawSumType upper _) _)) <- descriptor
-                                $ getPnt argMeta
-                        return $ head $ S.toList upper
+                        scheme <- descriptor $ getPnt argMeta
+                        case scheme of
+                          (Right (SType (RawSumType upper _) _ _)) -> return $ head $ S.toList upper
+                          _ -> error "bad objectToLeaf"
                 )
                 args
         return $ RawLeafType name args'
@@ -64,4 +65,4 @@ reaches graph (RawSumType srcLeafs srcPartials) = if H.null srcPartials
   then do
     resultParts <- mapM (reachesLeaf graph) $ S.toList srcLeafs
     return $ unionMaybeRawTypes resultParts
-  else return $ Just RawTopType
+  else return $ Just RawTopType -- TODO: add reachesPartial method

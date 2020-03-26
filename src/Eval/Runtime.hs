@@ -19,7 +19,7 @@ import Eval.Common
 liftIntOp :: Name -> (Integer -> Integer -> Integer) -> (LeafType, [ResArrow])
 liftIntOp name f = (srcType, [arrow])
   where
-    srcType = LeafType name (H.fromList [("l", intLeaf), ("r", intLeaf)])
+    srcType = LeafType ("operator" ++ name) (H.fromList [("l", intLeaf), ("r", intLeaf)])
     arrow = PrimArrow intType (\args -> case (H.lookup "l" args, H.lookup "r" args) of
                            (Just (IntVal l), Just (IntVal r)) -> IntVal $ f l r
                            _ -> error "Invalid intOp signature"
@@ -28,7 +28,7 @@ liftIntOp name f = (srcType, [arrow])
 liftCmpOp :: Name -> (Integer -> Integer -> Bool) -> (LeafType, [ResArrow])
 liftCmpOp name f = (srcType, [arrow])
   where
-    srcType = LeafType name (H.fromList [("l", intLeaf), ("r", intLeaf)])
+    srcType = LeafType ("operator" ++ name) (H.fromList [("l", intLeaf), ("r", intLeaf)])
     arrow = PrimArrow boolType (\args -> case (H.lookup "l" args, H.lookup "r" args) of
                            (Just (IntVal l), Just (IntVal r)) -> BoolVal $ f l r
                            _ -> error "Invalid compOp signature"
@@ -37,7 +37,7 @@ liftCmpOp name f = (srcType, [arrow])
 liftBoolOp :: Name -> (Bool -> Bool -> Bool) -> (LeafType, [ResArrow])
 liftBoolOp name f = (srcType, [arrow])
   where
-    srcType = LeafType name (H.fromList [("l", boolLeaf), ("r", boolLeaf)])
+    srcType = LeafType ("operator" ++ name) (H.fromList [("l", boolLeaf), ("r", boolLeaf)])
     arrow = PrimArrow boolType (\args -> case (H.lookup "l" args, H.lookup "r" args) of
                            (Just (BoolVal l), Just (BoolVal r)) -> BoolVal $ f l r
                            _ -> error "Invalid boolOp signature"
@@ -46,7 +46,7 @@ liftBoolOp name f = (srcType, [arrow])
 rnot :: Name -> (LeafType, [ResArrow])
 rnot name = (srcType, [arrow])
   where
-    srcType = LeafType name (H.singleton "a" boolLeaf)
+    srcType = LeafType ("operator" ++ name) (H.singleton "a" boolLeaf)
     arrow = PrimArrow boolType (\args -> case H.lookup "a" args of
           Just (BoolVal b) -> BoolVal $ not b
           _ -> error "Invalid rnot signature"

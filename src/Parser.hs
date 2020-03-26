@@ -17,6 +17,7 @@ import           Control.Applicative            hiding (many, some)
 import           Control.Monad.Combinators.Expr
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet          as S
+import           Data.Maybe
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer     as L
@@ -35,12 +36,12 @@ boolMeta = PreTyped rboolType
 strMeta = PreTyped rstrType
 
 mkOp1 :: String -> PExpr -> PExpr
-mkOp1 op x = TupleApply emptyMeta (emptyMeta, Value metaVal op) (H.singleton "a" x)
-  where metaVal = identifierMeta op
+mkOp1 opChars x = TupleApply emptyMeta (emptyMeta, Value emptyMeta op) (H.singleton "a" x)
+  where op = "operator" ++ opChars
 
 mkOp2 :: String -> PExpr -> PExpr -> PExpr
-mkOp2 op x y = TupleApply emptyMeta (emptyMeta, Value metaVal op) (H.fromList [("l", x), ("r", y)])
-  where metaVal = identifierMeta op
+mkOp2 opChars x y = TupleApply emptyMeta (emptyMeta, Value emptyMeta op) (H.fromList [("l", x), ("r", y)])
+  where op = "operator" ++ opChars
 
 ops :: [[Operator Parser PExpr]]
 ops = [
@@ -119,31 +120,45 @@ pLeafType = try ((`RawLeafType` H.empty) <$> tidentifier)
 pType :: Parser RawLeafSet
 pType = S.fromList <$> sepBy1 pLeafType (symbol "|")
 
-pTypedIdentifier :: Parser (Name, ParseMeta)
+pTypedIdentifier :: Parser (Name, RawType)
 pTypedIdentifier = do
-  tp <- try $ optional $ parens $ (`RawSumType` H.empty) <$> pType
+  tp <- try $ optional $ (`RawSumType` H.empty) <$> pType
   val <- identifier
   let tp' = case tp of
-        Just t -> PreTyped t
-        Nothing -> identifierMeta val
+        Just t -> t
+        Nothing -> RawSumType (S.singleton $ RawLeafType val H.empty) H.empty
   return (val, tp')
 
-pArgs :: Parser [(Name, ParseMeta)]
+pArgs :: Parser [(Name, RawType)]
 pArgs = sepBy1 pTypedIdentifier (symbol ",")
+
+pArrowRes :: Parser ParseMeta
+pArrowRes = do
+  _ <- symbol "->"
+  tp <- pLeafType
+  return $ PreTyped $ RawSumType (S.singleton tp) H.empty
 
 pDeclLHS :: Parser PDeclLHS
 pDeclLHS = do
-  (val, meta) <- pTypedIdentifier
+  val <- opIdentifier <|> identifier
   args <- optional $ try $ parens pArgs
-  _ <- symbol "="
+  maybeArrMeta <- optional pArrowRes
+  let arrMeta = fromMaybe emptyMeta maybeArrMeta
   return $ case args of
-    Just a  -> DeclLHS meta val (H.fromList a)
-    Nothing -> DeclLHS meta val H.empty
+    Just a  -> DeclLHS objMeta arrMeta val (PreTyped <$> H.fromList a)
+      where objMeta = PreTyped $ RawSumType S.empty (H.singleton val [H.fromList a])
+    Nothing -> DeclLHS objMeta arrMeta val H.empty
+      where objMeta = identifierMeta val
 
 pDeclSingle :: Parser PDecl
 pDeclSingle = do
   lhs <- pDeclLHS
-  RawDecl lhs [] . Just <$> pExpr
+  maybeExpr <- optional $ do
+    _ <- symbol "="
+    pExpr
+  return $ case maybeExpr of
+    Just expr -> RawDecl lhs [] (Just expr)
+    Nothing -> RawDecl lhs [] Nothing
 
 data TreeRes
   = TRDecl PDecl
@@ -170,6 +185,7 @@ pDeclTree = L.indentBlock scn p
     childParser = try (TRDecl <$> pDeclTree) <|> try (TRDecl <$> pDeclSingle) <|> try (TRAnnot <$> pCompAnnot) <|> (TRExpr <$> pExpr)
     p = do
       lhs <- pDeclLHS
+      _ <- symbol "="
       return (L.IndentSome Nothing (pack lhs) childParser)
 
 pRootDecl :: Parser PStatement

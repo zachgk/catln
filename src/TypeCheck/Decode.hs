@@ -81,7 +81,7 @@ toMeta env p name = do
   scheme <- descriptor p
   case scheme of
     Left s -> return $ Left [GenTypeCheckError ("Scheme error on " ++ name ++ ": " ++ show s)]
-    Right (SType ub _ _) -> case fromRawType ub of
+    Right (SType ub _ _) -> case fromRawType (compactRawType ub) of
       Nothing -> do
         showMatching <- showMatchingConstraints env p
         return $ Left [FailInfer name scheme showMatching]

@@ -47,13 +47,13 @@ scopeSubDeclFunNamesInExpr prefix replaceNames (TupleApply m (bm, bExpr) args) =
 scopeSubDeclFunNames :: Name -> [PSemiDecl] -> Maybe PExpr -> ([PSemiDecl], Maybe PExpr)
 scopeSubDeclFunNames prefix decls maybeExpr = (decls', expr')
   where
-    declNames = S.fromList $ map (\(PSemiDecl (DeclLHS _ name _) _ _) -> name) decls
+    declNames = S.fromList $ map (\(PSemiDecl (DeclLHS _ _ name _) _ _) -> name) decls
     addPrefix n = prefix ++ "." ++ n
-    decls' = map (\(PSemiDecl (DeclLHS m name args) annot subExpr) -> PSemiDecl (DeclLHS m (addPrefix name) args) annot (fmap (scopeSubDeclFunNamesInExpr prefix declNames) subExpr)) decls
+    decls' = map (\(PSemiDecl (DeclLHS objM arrM name args) annot subExpr) -> PSemiDecl (DeclLHS objM arrM (addPrefix name) args) annot (fmap (scopeSubDeclFunNamesInExpr prefix declNames) subExpr)) decls
     expr' = fmap (scopeSubDeclFunNamesInExpr prefix declNames) maybeExpr
 
 currySubFunctionSignature :: H.HashMap Name ParseMeta -> CallGraph -> PSemiDecl -> (PSemiDecl, (Name, H.HashMap Name ParseMeta))
-currySubFunctionSignature parentArgMap (graph, nodeFromVertex, vertexFromKey) (PSemiDecl (DeclLHS m name args) annot expr) = (PSemiDecl (DeclLHS m name args') annot expr, (name, curryArgs))
+currySubFunctionSignature parentArgMap (graph, nodeFromVertex, vertexFromKey) (PSemiDecl (DeclLHS objM arrM name args) annot expr) = (PSemiDecl (DeclLHS objM arrM name args') annot expr, (name, curryArgs))
   where
     getContained n = S.fromList $ map ((\(_, calledName, _) -> calledName) . nodeFromVertex) $ reachable graph $ (\(Just n') -> n') $ vertexFromKey n
     contained = getContained name
@@ -64,8 +64,8 @@ currySubFunctionSignature parentArgMap (graph, nodeFromVertex, vertexFromKey) (P
 buildCallGraph :: [PSemiDecl] -> CallGraph
 buildCallGraph decls = graphFromEdges $ map fromDecl decls
   where
-    fromDecl (PSemiDecl (DeclLHS _ name _) _ Nothing) = ((), name, [])
-    fromDecl (PSemiDecl (DeclLHS _ name _) _ (Just expr)) = ((), name, S.toList $ tupleNamesInExpr expr)
+    fromDecl (PSemiDecl (DeclLHS _ _ name _) _ Nothing) = ((), name, [])
+    fromDecl (PSemiDecl (DeclLHS _ _ name _) _ (Just expr)) = ((), name, S.toList $ tupleNamesInExpr expr)
 
 currySubFunctions :: H.HashMap Name ParseMeta -> [PSemiDecl] -> Maybe PExpr -> ([PSemiDecl], Maybe PExpr)
 currySubFunctions parentArgMap decls expr = (decls', expr')
@@ -85,19 +85,19 @@ currySubFunctions parentArgMap decls expr = (decls', expr')
     decls' = map (\(PSemiDecl lhs an e) -> PSemiDecl lhs an (fmap updateExpr e)) decls2
 
 removeSubDeclarations :: PDecl -> [PSemiDecl]
-removeSubDeclarations (RawDecl (DeclLHS m declName args) subStatements expr) = decl':subDecls4
+removeSubDeclarations (RawDecl (DeclLHS objM arrM declName args) subStatements expr) = decl':subDecls4
   where
     (subDecls, annots) = splitDeclSubStatements subStatements
     subDecls2 = concatMap removeSubDeclarations subDecls
     (subDecls3, expr2) = scopeSubDeclFunNames declName subDecls2 expr
     (subDecls4, expr3) = currySubFunctions args subDecls3 expr2
-    decl' = PSemiDecl (DeclLHS m declName args) annots expr3
+    decl' = PSemiDecl (DeclLHS objM arrM declName args) annots expr3
 
 declToObjArrow :: PSemiDecl -> (PObject, [PArrow])
-declToObjArrow (PSemiDecl (DeclLHS m name args) annots expr) = (object, [arrow])
+declToObjArrow (PSemiDecl (DeclLHS objM arrM name args) annots expr) = (object, [arrow])
   where
-    object = Object m name args
-    arrow = Arrow (PreTyped RawTopType) annots expr
+    object = Object objM name args
+    arrow = Arrow arrM annots expr
 
 desDecl :: PDecl -> PObjectMap
 desDecl decl = H.fromList $ map declToObjArrow $ removeSubDeclarations decl

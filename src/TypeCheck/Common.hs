@@ -36,8 +36,8 @@ type Scheme = TypeCheckResult SType
 
 type Pnt s = Point s Scheme
 
-type ObjMap s = (H.HashMap String (VObject s))
-data FEnv s = FEnv [Constraint s] (ObjMap s) [TypeCheckError]
+type EnvValMap s = (H.HashMap String (VarMeta s))
+data FEnv s = FEnv [Constraint s] (EnvValMap s) [TypeCheckError]
 
 data Constraint s
   = EqualsKnown (Pnt s) RawType
@@ -105,7 +105,13 @@ getPntExpr = getPnt . getExprMeta
 addErr :: FEnv s -> TypeCheckError -> FEnv s
 addErr (FEnv cons pmap errs) newErr = FEnv cons pmap (newErr:errs)
 
-fLookup :: FEnv s -> String -> (Maybe (VObject s), FEnv s)
+fLookup :: FEnv s -> String -> (Maybe (VarMeta s), FEnv s)
 fLookup env@(FEnv _ pmap _) k = case H.lookup k pmap of
   Just v  -> (Just v, env)
   Nothing -> (Nothing, addErr env (GenTypeCheckError $ "Failed to lookup " ++ k))
+
+addConstraints :: FEnv s -> [Constraint s] -> FEnv s
+addConstraints (FEnv oldCons defMap errs) newCons = FEnv (newCons ++ oldCons) defMap errs
+
+fInsert :: FEnv s -> String -> VarMeta s -> FEnv s
+fInsert (FEnv cons pmap errs) k v = FEnv cons (H.insert k v pmap) errs

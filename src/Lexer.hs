@@ -64,3 +64,11 @@ identifier = (lexeme . try) (p >>= check)
 
 tidentifier :: Parser String
 tidentifier = try $ lexeme $ (:) <$> upperChar <*> many alphaNumChar
+
+operators :: [String]
+operators = words "- ~ * / + - <= => < > == != & | ^"
+
+opIdentifier :: Parser String
+opIdentifier = try $ lexeme $ (++) <$> string "operator" <*> opChars
+  where opChars :: Parser String
+        opChars = foldr1 (<|>) (map symbol operators)

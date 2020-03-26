@@ -62,10 +62,10 @@ rboolLeaf = RawLeafType "Boolean" H.empty
 rstrLeaf = RawLeafType "String" H.empty
 
 rintType, rfloatType, rboolType, rstrType :: RawType
-rintType = RawSumType (S.singleton $ RawLeafType "Integer" H.empty) H.empty
-rfloatType = RawSumType (S.singleton $ RawLeafType "Float" H.empty) H.empty
-rboolType = RawSumType (S.singleton $ RawLeafType "Boolean" H.empty) H.empty
-rstrType = RawSumType (S.singleton $ RawLeafType "String" H.empty) H.empty
+rintType = RawSumType (S.singleton rintLeaf) H.empty
+rfloatType = RawSumType (S.singleton rfloatLeaf) H.empty
+rboolType = RawSumType (S.singleton rboolLeaf) H.empty
+rstrType = RawSumType (S.singleton rstrLeaf) H.empty
 
 intLeaf, floatLeaf, boolLeaf, strLeaf :: LeafType
 intLeaf = LeafType "Integer" H.empty
@@ -74,10 +74,10 @@ boolLeaf = LeafType "Boolean" H.empty
 strLeaf = LeafType "String" H.empty
 
 intType, floatType, boolType, strType :: Type
-intType = SumType $ S.singleton $ LeafType "Integer" H.empty
-floatType = SumType $ S.singleton $ LeafType "Float" H.empty
-boolType = SumType $ S.singleton $ LeafType "Boolean" H.empty
-strType = SumType $ S.singleton $ LeafType "String" H.empty
+intType = SumType $ S.singleton intLeaf
+floatType = SumType $ S.singleton floatLeaf
+boolType = SumType $ S.singleton boolLeaf
+strType = SumType $ S.singleton strLeaf
 
 newtype Import = Import String
   deriving (Eq, Ord, Show)
@@ -110,7 +110,7 @@ data RawDeclSubStatement m
   | RawDeclSubStatementAnnot (CompAnnot m)
   deriving (Eq, Ord, Show)
 
-data DeclLHS m = DeclLHS m Name (H.HashMap Name m)
+data DeclLHS m = DeclLHS m m Name (H.HashMap Name m) -- objM, arrM
   deriving (Eq, Ord, Show)
 
 data RawDecl m = RawDecl (DeclLHS m) [RawDeclSubStatement m] (Maybe (Expr m))
@@ -244,7 +244,11 @@ compactRawType (RawSumType leafs partials) = RawSumType leafs' partials'
   where
     (leafs', partials') = H.foldrWithKey accumLeafsPartials (leafs, H.empty) partials
     accumLeafsPartials partialName partialArgsOptions (leafsAccum, partialsAccum) = let (newLeafs, partialArgsOptions') = compactPartial partialName partialArgsOptions
-                                                                                     in (S.union leafsAccum newLeafs, H.insert partialName partialArgsOptions' partialsAccum)
+                                                                                        leafsAccum' = S.union leafsAccum newLeafs
+                                                                                        partialsAccum' = if null partialArgsOptions'
+                                                                                                            then partialsAccum
+                                                                                                            else H.insertWith (++) partialName partialArgsOptions' partialsAccum
+                                                                                     in (leafsAccum', partialsAccum')
     compactPartial name argsOptions = let items' = map (compactPartialItem name) argsOptions
                                        in (S.unions $ lefts items', rights items')
     compactPartialItem name args = case traverse finishCompactRawTypes args of
