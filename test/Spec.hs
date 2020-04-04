@@ -26,7 +26,7 @@ runTest displayName fileName = defaultMain $ testCaseSteps displayName $ \step -
       step "Typecheck..."
       case typecheckPrgm prgm of
         Left err -> do
-          -- step $ T.unpack $ pShow $ traceTestPrgm prgm
+          step $ T.unpack $ pShow $ traceTestPrgm prgm
           assertFailure $ "Could not typecheck:\n\n\n\t" ++ intercalate "\n\n\n\t\t" (map (T.unpack . pShow) err)
         Right tprgm -> do
           -- step $ T.unpack $ pShow $ traceTestPrgm prgm
@@ -44,5 +44,4 @@ test :: IO ()
 test = runTest "Test"  "test/code/test.flng"
 
 main :: IO ()
-main = test
--- main = runTest "Add"  "test/code/add.flng"
+main = runTest "Add"  "test/code/add.flng"

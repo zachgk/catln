@@ -19,13 +19,16 @@ import           TypeCheck.Show
 import           TypeCheck.Constrain (runConstraints)
 import           TypeCheck.Decode
 
+runConstraintsLimit :: Integer
+runConstraintsLimit = 100
+
 typecheckPrgm :: PPrgm -> TypeCheckResult TPrgm
 typecheckPrgm pprgm = runST $ do
   baseFEnv <- makeBaseFEnv
   (vprgm, typeGraph, FEnv cons _ errs) <- fromPrgm baseFEnv pprgm
   case errs of
     [] -> do
-      _ <- runConstraints typeGraph cons
+      _ <- runConstraints runConstraintsLimit typeGraph cons
       toPrgm vprgm cons
     _ -> return $ Left errs
 
@@ -37,7 +40,7 @@ traceTestPrgm pprgm = runST $ do
     [] -> do
       sprgm1 <- showPrgm vprgm
       scons1 <- showConstraints cons
-      _ <- runConstraints typeGraph cons
+      _ <- runConstraints runConstraintsLimit typeGraph cons
       sprgm2 <- showPrgm vprgm
       return $ Right [(sprgm1, scons1), (sprgm2, [])]
     _ -> return $ Left errs

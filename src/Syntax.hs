@@ -268,7 +268,7 @@ intersectRawTypes RawTopType t = t
 intersectRawTypes t RawTopType = t
 intersectRawTypes (RawSumType aLeafs aPartials) (RawSumType bLeafs bPartials) = compactRawType $ RawSumType leafs' partials'
   where
-    leafs' = S.intersection aLeafs bLeafs
+    leafs' = S.unions [S.intersection aLeafs bLeafs, intersectLeafsPartials aLeafs bPartials, intersectLeafsPartials bLeafs aPartials]
     partials' = H.intersectionWith intersectArgsOptions aPartials bPartials
     intersectArgsOptions as bs = catMaybes $ [intersectArgs a b | a <- as, b <- bs]
     intersectArgs :: H.HashMap TypeName RawType -> H.HashMap TypeName RawType -> Maybe (H.HashMap TypeName RawType)
@@ -279,6 +279,32 @@ intersectRawTypes (RawSumType aLeafs aPartials) (RawSumType bLeafs bPartials) = 
                                 in if joined == rawBottomType
                                    then Nothing
                                    else Just joined
+    intersectLeafsPartials leafs partials = S.filter (leafInPartials partials) leafs
+    leafInPartials partials (RawLeafType leafName leafArgs) = case H.lookup leafName partials of
+      Just partialArgOptions -> any (leafArgsInPartialArgs leafArgs) partialArgOptions
+      Nothing -> False
+    leafArgsInPartialArgs leafArgs partialArgs = H.keysSet leafArgs == H.keysSet partialArgs && and (H.intersectionWith hasRawLeaf leafArgs partialArgs)
+
+-- normal type, type to powerset
+intersectRawTypeWithPowerset :: RawType -> RawType -> RawType
+intersectRawTypeWithPowerset RawTopType t = t
+intersectRawTypeWithPowerset t RawTopType = t
+intersectRawTypeWithPowerset (RawSumType aLeafs aPartials) (RawSumType bLeafs bPartials) = compactRawType $ RawSumType leafs' partials'
+  where
+    leafs' = S.unions [S.intersection aLeafs bLeafs, intersectLeafsPartials aLeafs bPartials, intersectLeafsPartials bLeafs aPartials]
+    partials' = H.intersectionWith intersectArgsOptions aPartials bPartials
+    intersectArgsOptions as bs = catMaybes $ [intersectArgs a b | a <- as, b <- bs]
+    intersectArgs :: H.HashMap TypeName RawType -> H.HashMap TypeName RawType -> Maybe (H.HashMap TypeName RawType)
+    intersectArgs aArgs bArgs = sequence $ H.intersectionWith subIntersect aArgs bArgs
+    subIntersect aType bType = let joined = intersectRawTypes aType bType
+                                in if joined == rawBottomType
+                                   then Nothing
+                                   else Just joined
+    intersectLeafsPartials leafs partials = S.filter (leafInPartials partials) leafs
+    leafInPartials partials (RawLeafType leafName leafArgs) = case H.lookup leafName partials of
+      Just partialArgOptions -> any (leafArgsInPartialArgs leafArgs) partialArgOptions
+      Nothing -> False
+    leafArgsInPartialArgs leafArgs partialArgs = and (H.intersectionWith hasRawLeaf leafArgs partialArgs)
 
 typedIs :: Typed -> Type -> Bool
 typedIs (Typed t1) t2 = t1 == t2

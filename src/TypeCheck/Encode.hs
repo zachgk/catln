@@ -86,7 +86,7 @@ fromExpr env1 (TupleApply m (baseM, baseExpr) args) = do
   convertExprMetas <- mapM (\_ -> fresh (Right $ SType RawTopType rawBottomType "Tuple converted expr meta")) args
   let arrowArgConstraints = H.elems $ H.intersectionWith ArrowTo (fmap getPntExpr args') convertExprMetas
   let tupleConstraints = H.elems $ H.mapWithKey (\name ceMeta -> PropEq (p, name) ceMeta) convertExprMetas
-  let constraints = [ArrowTo (getPntExpr baseExpr') baseP, AddArgs (baseP, H.keysSet args) p] ++ tupleConstraints ++ arrowArgConstraints
+  let constraints = [ArrowTo (getPntExpr baseExpr') baseP, AddArgs (baseP, H.keysSet args) p] ++ arrowArgConstraints ++ tupleConstraints
   let env6 = addConstraints env5 constraints
   return (TupleApply m' (baseM', baseExpr') args', env6)
 
@@ -137,5 +137,6 @@ fromPrgm :: FEnv s -> PPrgm -> ST s (VPrgm s, TypeGraph s, FEnv s)
 fromPrgm env1 (objMap1, classMap) = do
   (objMap2, env2) <- mapMWithFEnv env1 fromObject $ H.toList objMap1
   (objMap3, env3) <- mapMWithFEnv env2 fromObjectMap objMap2
-  (env4, typeGraph) <- buildTypeGraph env3 objMap3
-  return ((objMap3, classMap), typeGraph, env4)
+  (env4, typeGraph, graphCons) <- buildTypeGraph env3 objMap3
+  let env5 = addConstraints env4 graphCons
+  return ((objMap3, classMap), typeGraph, env5)

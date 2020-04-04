@@ -69,6 +69,10 @@ matchingConstraint p (BoundedBy p2 p3) = matchingConstraintHelper p p2 p3
 matchingConstraint p (ArrowTo p2 p3) = matchingConstraintHelper p p2 p3
 matchingConstraint p (PropEq (p2, _) p3) = matchingConstraintHelper p p2 p3
 matchingConstraint p (AddArgs (p2, _) p3) = matchingConstraintHelper p p2 p3
+matchingConstraint p (UnionOf p2 p3s) = do
+  c2 <- equivalent p p2
+  c3s <- mapM (equivalent p) p3s
+  return $ c2 || or c3s
 
 type DEnv s = [Constraint s]
 showMatchingConstraints :: [Constraint s] -> Pnt s -> ST s [SConstraint]

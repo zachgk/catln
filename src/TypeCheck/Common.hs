@@ -46,6 +46,7 @@ data Constraint s
   | ArrowTo (Pnt s) (Pnt s) -- ArrowTo src dest
   | PropEq (Pnt s, Name) (Pnt s)
   | AddArgs (Pnt s, S.HashSet String) (Pnt s)
+  | UnionOf (Pnt s) [Pnt s]
   deriving (Eq)
 
 data SConstraint
@@ -55,6 +56,7 @@ data SConstraint
   | SArrowTo Scheme Scheme
   | SPropEq (Scheme, Name) Scheme
   | SAddArgs (Scheme, S.HashSet String) Scheme
+  | SUnionOf Scheme [Scheme]
   deriving (Eq, Ord, Show, Generic)
 instance Hashable SConstraint
 
@@ -94,7 +96,13 @@ type TPrgm = Prgm TypedMeta
 type TReplRes = ReplRes TypedMeta
 
 -- implicit graph
-type TypeGraph s = H.HashMap RawLeafType [Pnt s]
+-- type TypeGraphObjects = H.HashMap Name (S.HashSet (H.HashMap TypeName RawLeafType))
+type TypeGraphObjects s = Pnt s
+type TypeGraphLeafs s = H.HashMap RawLeafType [Pnt s]
+type TypeGraph s = (TypeGraphObjects s, TypeGraphLeafs s)
+
+tcResList :: [TypeCheckResult r] -> TypeCheckResult [r]
+tcResList = sequence
 
 getPnt :: VarMeta s -> Pnt s
 getPnt x = x
@@ -115,3 +123,4 @@ addConstraints (FEnv oldCons defMap errs) newCons = FEnv (newCons ++ oldCons) de
 
 fInsert :: FEnv s -> String -> VarMeta s -> FEnv s
 fInsert (FEnv cons pmap errs) k v = FEnv cons (H.insert k v pmap) errs
+

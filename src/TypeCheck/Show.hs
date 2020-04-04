@@ -72,6 +72,10 @@ showCon (BoundedBy p1 p2) = showConHelper SBoundedBy p1 p2
 showCon (ArrowTo p1 p2) = showConHelper SArrowTo p1 p2
 showCon (PropEq (p1, name) p2) = showConHelper (\s1 s2 -> SPropEq (s1, name) s2) p1 p2
 showCon (AddArgs (p1, argNames) p2) = showConHelper (\s1 s2 -> SAddArgs (s1, argNames) s2) p1 p2
+showCon (UnionOf p1 p2s) = do
+  s1 <- descriptor p1
+  s2s <- mapM descriptor p2s
+  return $ SUnionOf s1 s2s
 
 showPrgm :: VPrgm s -> ST s SPrgm
 showPrgm (objMap, classMap) = do

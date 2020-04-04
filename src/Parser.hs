@@ -29,12 +29,6 @@ import Parser.Syntax
 identifierMeta :: String -> ParseMeta
 identifierMeta i = PreTyped $ RawSumType (S.singleton $ RawLeafType i H.empty) H.empty
 
-intMeta, floatMeta, boolMeta, strMeta :: ParseMeta
-intMeta = PreTyped rintType
-floatMeta = PreTyped rfloatType
-boolMeta = PreTyped rboolType
-strMeta = PreTyped rstrType
-
 mkOp1 :: String -> PExpr -> PExpr
 mkOp1 opChars x = TupleApply emptyMeta (emptyMeta, Value emptyMeta op) (H.singleton "a" x)
   where op = "operator" ++ opChars
@@ -78,7 +72,7 @@ pCall :: Parser PExpr
 pCall = do
   funName <- (:) <$> letterChar <*> many alphaNumChar
   argVals <- parens $ sepBy1 pCallArg (symbol ",")
-  return $ TupleApply emptyMeta (emptyMeta, Value (identifierMeta funName) funName) (H.fromList argVals)
+  return $ TupleApply emptyMeta (emptyMeta, Value emptyMeta funName) (H.fromList argVals)
 
 pCompAnnot :: Parser PCompAnnot
 pCompAnnot = do
@@ -88,14 +82,14 @@ pCompAnnot = do
   return $ CompAnnot annotName (H.fromList argVals)
 
 pStringLiteral :: Parser PExpr
-pStringLiteral = CExpr strMeta . CStr <$> (char '\"' *> manyTill L.charLiteral (char '\"'))
+pStringLiteral = CExpr emptyMeta . CStr <$> (char '\"' *> manyTill L.charLiteral (char '\"'))
 
 term :: Parser PExpr
 term = try (parens pExpr)
        <|> try pCall
        <|> pStringLiteral
-       <|> try ((\i -> Value (identifierMeta i) i) <$> identifier)
-       <|> CExpr intMeta . CInt <$> integer
+       <|> try (Value emptyMeta <$> identifier)
+       <|> CExpr emptyMeta . CInt <$> integer
 
 pExpr :: Parser PExpr
 pExpr = makeExprParser term ops
@@ -114,8 +108,8 @@ pTypeProduct = do
   return $ RawLeafType name (H.fromList args)
 
 pLeafType :: Parser RawLeafType
-pLeafType = try ((`RawLeafType` H.empty) <$> tidentifier)
-        <|> try pTypeProduct
+pLeafType = try pTypeProduct
+        <|> ((`RawLeafType` H.empty) <$> tidentifier)
 
 pType :: Parser RawLeafSet
 pType = S.fromList <$> sepBy1 pLeafType (symbol "|")
@@ -209,12 +203,16 @@ pClassDefStatement = do
   return $ RawClassDefStatement (typeName, className)
 
 pStatement :: Parser PStatement
-pStatement = try pTypeDefStatement
+pStatement = pTypeDefStatement
              <|> try pClassDefStatement
-             <|> try pRootDecl
+             <|> pRootDecl
 
 pPrgm :: Parser PPrgm
-pPrgm = sepBy1 pStatement newline
+pPrgm = do
+  _ <- many newline
+  statements <- sepBy1 pStatement (some newline)
+  _ <- many newline
+  return statements
 
 contents :: Parser a -> Parser a
 contents p = do

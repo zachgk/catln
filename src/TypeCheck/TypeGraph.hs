@@ -32,15 +32,31 @@ objectToLeaf (Object _ name args) = do
                 args
         return $ RawLeafType name args'
 
-buildTypeGraph :: FEnv s -> VObjectMap s -> ST s (FEnv s, TypeGraph s)
-buildTypeGraph env = foldM addArrows (env, emptyGraph)
+buildTypeGraph :: FEnv s -> VObjectMap s -> ST s (FEnv s, TypeGraph s, [Constraint s])
+buildTypeGraph env objMap = do
+  graphObjs <- fresh $ Right $ SType RawTopType rawBottomType "typeGraph"
+  let emptyGraph = (graphObjs, H.empty)
+  (env2, typeGraph, pnts) <- foldM addArrows (env, emptyGraph, []) objMap
+  return (env2, typeGraph, [UnionOf graphObjs pnts])
     where
-        emptyGraph = H.empty
-        addArrows (aenv, graph) (obj, arrows) = foldM (addArrow obj) (aenv, graph) arrows
-        addArrow obj (aenv, graph) (Arrow m _ _) = do
+        addArrows :: (FEnv s, TypeGraph s, [Pnt s]) -> (VObject s, [VArrow s]) -> ST s (FEnv s, TypeGraph s, [Pnt s])
+        addArrows (aenv, (graphObjs, graphLeafs), pnts) (obj@(Object m _ _), arrows) = do
+          (aenv2, graphLeafs') <- foldM (addArrow obj) (aenv, graphLeafs) arrows
+          return (aenv2, (graphObjs, graphLeafs'), m:pnts)
+        addArrow obj (aenv, graphLeafs) (Arrow m _ _) = do
                 leaf <- objectToLeaf obj
-                let graph2 = H.insertWith (++) leaf [m] graph
-                return (aenv, graph2)
+                let graphLeafs2 = H.insertWith (++) leaf [m] graphLeafs
+                return (aenv, graphLeafs2)
+
+boundSchemeByGraphObjects :: TypeGraph s -> Scheme -> ST s Scheme
+boundSchemeByGraphObjects _ err@Left{} = return err
+boundSchemeByGraphObjects (graphObjs, _) (Right (SType ub lb desc)) = do
+  graphObjScheme <- descriptor graphObjs
+  case graphObjScheme of
+    Left err -> return $ Left err
+    Right (SType gub _ _) -> do
+      let ub' = intersectRawTypeWithPowerset ub gub
+      return $ Right $ SType ub' lb desc
 
 rawTypeFromScheme :: Scheme -> Maybe RawType
 rawTypeFromScheme (Right (SType ub _ _))  = Just ub
@@ -53,8 +69,8 @@ unionMaybeRawTypes maybeRawTypes = case sequence maybeRawTypes of
         Nothing      -> Nothing
 
 reachesLeaf :: TypeGraph s -> RawLeafType -> ST s (Maybe RawType)
-reachesLeaf graph leaf = do
-  let typePnts = H.lookupDefault [] leaf graph
+reachesLeaf (_, graphLeafs) leaf = do
+  let typePnts = H.lookupDefault [] leaf graphLeafs
   schemes <- mapM descriptor typePnts
   let maybeRawTypes = map rawTypeFromScheme schemes
   return $ unionMaybeRawTypes (Just (RawSumType (S.singleton leaf) H.empty) : maybeRawTypes)

@@ -1,6 +1,9 @@
+- Handle TypeCheckErrors from runConstraints in TypeCheck.hs
+
 - Fix Main(Repl), Codegen
     - Main(Repl)
-      1. Reformulate the repl to add statements to the environment, expr adds temporary value to environment to evaluate it to val
+      1. Add IO
+      2. Reformulate the repl to add statements to the environment, expr adds temporary value to environment to evaluate it to val
     - Codegen
       1. Divide eval to separate the envLookup to form evaluation trees from to share with codegen
       2. Fix rest of codegen
