@@ -26,7 +26,7 @@ objectToLeaf (Object _ name args) = do
                 (\argMeta -> do
                         scheme <- descriptor $ getPnt argMeta
                         case scheme of
-                          (Right (SType (RawSumType upper _) _ _)) -> return $ head $ S.toList upper
+                          (TypeCheckResult _ (SType (RawSumType upper _) _ _)) -> return $ head $ S.toList upper
                           _ -> error "bad objectToLeaf"
                 )
                 args
@@ -34,7 +34,7 @@ objectToLeaf (Object _ name args) = do
 
 buildTypeGraph :: FEnv s -> VObjectMap s -> ST s (FEnv s, TypeGraph s, [Constraint s])
 buildTypeGraph env objMap = do
-  graphObjs <- fresh $ Right $ SType RawTopType rawBottomType "typeGraph"
+  graphObjs <- fresh $ TypeCheckResult [] $ SType RawTopType rawBottomType "typeGraph"
   let emptyGraph = (graphObjs, H.empty)
   (env2, typeGraph, pnts) <- foldM addArrows (env, emptyGraph, []) objMap
   return (env2, typeGraph, [UnionOf graphObjs pnts])
@@ -49,18 +49,18 @@ buildTypeGraph env objMap = do
                 return (aenv, graphLeafs2)
 
 boundSchemeByGraphObjects :: TypeGraph s -> Scheme -> ST s Scheme
-boundSchemeByGraphObjects _ err@Left{} = return err
-boundSchemeByGraphObjects (graphObjs, _) (Right (SType ub lb desc)) = do
+boundSchemeByGraphObjects _ (TypeCheckResE err) = return $ TypeCheckResE err
+boundSchemeByGraphObjects (graphObjs, _) (TypeCheckResult notes (SType ub lb desc)) = do
   graphObjScheme <- descriptor graphObjs
   case graphObjScheme of
-    Left err -> return $ Left err
-    Right (SType gub _ _) -> do
+    TypeCheckResE err -> return $ TypeCheckResE (err ++ notes)
+    TypeCheckResult notes2 (SType gub _ _) -> do
       let ub' = intersectRawTypeWithPowerset ub gub
-      return $ Right $ SType ub' lb desc
+      return $ TypeCheckResult (notes2 ++ notes) (SType ub' lb desc)
 
 rawTypeFromScheme :: Scheme -> Maybe RawType
-rawTypeFromScheme (Right (SType ub _ _))  = Just ub
-rawTypeFromScheme Left{} = Nothing
+rawTypeFromScheme (TypeCheckResult _ (SType ub _ _))  = Just ub
+rawTypeFromScheme TypeCheckResE{} = Nothing
 
 unionMaybeRawTypes :: [Maybe RawType] -> Maybe RawType
 unionMaybeRawTypes maybeRawTypes = case sequence maybeRawTypes of

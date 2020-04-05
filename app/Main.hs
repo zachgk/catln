@@ -12,6 +12,7 @@ import           Eval.Common
 -- import           Parser                   (parseFile, parseRepl)
 import           Parser                   (parseRepl)
 import           Syntax
+import           TypeCheck.Common  (TypeCheckResult(TypeCheckResult, TypeCheckResE))
 import           TypeCheck                (typecheckPrgm)
 
 import           Control.Monad
@@ -34,8 +35,8 @@ genRepl env source = do
     ReplErr err -> print err >> return env
     ReplExpr _ -> print ("Can not generate expression" :: String) >> return env
     ReplStatement statement -> case typecheckPrgm $ desStatements [statement] of
-        Left err    -> print ("type check err: " ++ show err) >> return env
-        Right tprgm -> codegen initModule tprgm >> return env
+        TypeCheckResE err    -> print ("type check err: " ++ show err) >> return env
+        TypeCheckResult _ tprgm -> codegen initModule tprgm >> return env
 
 -- processRepl :: Env -> String -> IO Env
 -- processRepl env source = do

@@ -60,7 +60,32 @@ data SConstraint
   deriving (Eq, Ord, Show, Generic)
 instance Hashable SConstraint
 
-type TypeCheckResult r = Either [TypeCheckError] r
+data TypeCheckResult r
+  = TypeCheckResult [TypeCheckError] r
+  | TypeCheckResE [TypeCheckError]
+  deriving (Eq, Ord, Show, Generic)
+instance Hashable r => Hashable (TypeCheckResult r)
+
+getTCRE :: TypeCheckResult r -> [TypeCheckError]
+getTCRE (TypeCheckResult notes _) = notes
+getTCRE (TypeCheckResE notes) = notes
+
+instance Functor TypeCheckResult where
+  fmap f (TypeCheckResult notes r) = TypeCheckResult notes (f r)
+  fmap _ (TypeCheckResE notes) = TypeCheckResE notes
+
+instance Applicative TypeCheckResult where
+  pure = TypeCheckResult []
+  (TypeCheckResult notesA f) <*> (TypeCheckResult notesB b) = TypeCheckResult (notesA ++ notesB) (f b)
+  resA <*> resB = TypeCheckResE (getTCRE resA ++ getTCRE resB)
+
+instance Monad TypeCheckResult where
+  return = pure
+  (TypeCheckResult notesA a) >>= f = case f a of
+    (TypeCheckResult notesB b) -> TypeCheckResult (notesA ++ notesB) b
+    (TypeCheckResE notesB) -> TypeCheckResE (notesA ++ notesB)
+  (TypeCheckResE notes) >>= _ = TypeCheckResE notes
+
 
 type PreMeta = PreTyped
 type PExpr = Expr PreMeta
@@ -100,9 +125,6 @@ type TReplRes = ReplRes TypedMeta
 type TypeGraphObjects s = Pnt s
 type TypeGraphLeafs s = H.HashMap RawLeafType [Pnt s]
 type TypeGraph s = (TypeGraphObjects s, TypeGraphLeafs s)
-
-tcResList :: [TypeCheckResult r] -> TypeCheckResult [r]
-tcResList = sequence
 
 getPnt :: VarMeta s -> Pnt s
 getPnt x = x

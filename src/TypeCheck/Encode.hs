@@ -30,7 +30,7 @@ fReplaceMap (FEnv cons _ errs1) (FEnv _ pmap errs2) = FEnv cons pmap (errs1 ++ e
 
 fromMetaP :: FEnv s -> PreMeta -> String -> ST s (VarMeta s, Pnt s, FEnv s)
 fromMetaP env (PreTyped mt) description = do
-  p <- fresh (Right $ SType mt rawBottomType description)
+  p <- fresh (TypeCheckResult [] $ SType mt rawBottomType description)
   return (p, p, env)
 
 fromMeta :: FEnv s -> PreMeta -> String -> ST s (VarMeta s, FEnv s)
@@ -83,7 +83,7 @@ fromExpr env1 (TupleApply m (baseM, baseExpr) args) = do
   (baseM', baseP, env3) <- fromMetaP env2 baseM "TupleApply BaseMeta"
   (baseExpr', env4) <- fromExpr env3 baseExpr
   (args', env5) <- mapMWithFEnvMap env4 fromExpr args
-  convertExprMetas <- mapM (\_ -> fresh (Right $ SType RawTopType rawBottomType "Tuple converted expr meta")) args
+  convertExprMetas <- mapM (\_ -> fresh (TypeCheckResult [] $ SType RawTopType rawBottomType "Tuple converted expr meta")) args
   let arrowArgConstraints = H.elems $ H.intersectionWith ArrowTo (fmap getPntExpr args') convertExprMetas
   let tupleConstraints = H.elems $ H.mapWithKey (\name ceMeta -> PropEq (p, name) ceMeta) convertExprMetas
   let constraints = [ArrowTo (getPntExpr baseExpr') baseP, AddArgs (baseP, H.keysSet args) p] ++ arrowArgConstraints ++ tupleConstraints

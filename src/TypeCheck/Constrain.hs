@@ -21,48 +21,43 @@ import           TypeCheck.Common
 import           TypeCheck.Show (showCon)
 import           TypeCheck.TypeGraph (reaches, boundSchemeByGraphObjects)
 import           Data.UnionFind.ST
+import           Data.Tuple.Sequence
 
 isSolved :: Scheme -> Bool
-isSolved (Right (SType a b _)) = a == b
+isSolved (TypeCheckResult _ (SType a b _)) = a == b
 isSolved _ = False
 
 tryIntersectRawTypes :: RawType -> RawType -> String -> TypeCheckResult RawType
 tryIntersectRawTypes a b desc= let c = intersectRawTypes a b
                             in if c == rawBottomType
-                                  then Left [GenTypeCheckError $ "Failed to intersect(" ++ desc ++ "): " ++ show a ++ " --- " ++ show b]
-                                  else Right c
+                                  then TypeCheckResE [GenTypeCheckError $ "Failed to intersect(" ++ desc ++ "): " ++ show a ++ " --- " ++ show b]
+                                  else return c
 
 
 checkScheme :: String -> Scheme -> Scheme
-checkScheme msg (Right (SType ub _ desc)) | ub == rawBottomType = Left [GenTypeCheckError $ "Scheme failed check at " ++ msg ++ ": upper bound is rawBottomType - " ++ desc]
+checkScheme msg (TypeCheckResult notes (SType ub _ desc)) | ub == rawBottomType = TypeCheckResE (GenTypeCheckError ("Scheme failed check at " ++ msg ++ ": upper bound is rawBottomType - " ++ desc) : notes)
 checkScheme _ scheme = scheme
 
 equalizeBounds :: (Scheme, Scheme) -> String -> Scheme
-equalizeBounds (_, Left s) _ = Left s
-equalizeBounds (Left s, _) _ = Left s
-equalizeBounds (Right (SType ub1 lb1 desc1), Right (SType ub2 lb2 _)) d =
+equalizeBounds inSchemes d = do
+  (SType ub1 lb1 desc1, SType ub2 lb2 _) <- sequenceT inSchemes
   let lbBoth = unionRawTypes lb1 lb2
-      tryUbBoth = tryIntersectRawTypes ub1 ub2 $ "equalizeSchemes(" ++ d ++ ")"
-   in case tryUbBoth of
-           Right ubBoth -> if hasRawType lbBoth ubBoth
-             then return $ SType ubBoth lbBoth desc1
-             else Left [GenTypeCheckError $ concat ["Type Mismatched: ", show lbBoth, " is not a subtype of ", show ubBoth]]
-           Left errors -> Left errors
+  ubBoth <- tryIntersectRawTypes ub1 ub2 $ "equalizeSchemes(" ++ d ++ ")"
+  if hasRawType lbBoth ubBoth
+    then return $ SType ubBoth lbBoth desc1
+    else TypeCheckResE [GenTypeCheckError $ concat ["Type Mismatched: ", show lbBoth, " is not a subtype of ", show ubBoth]]
 
 equalizeSchemes :: (Scheme, Scheme) -> String -> Scheme
-equalizeSchemes (_, Left s) _ = Left s
-equalizeSchemes (Left s, _) _ = Left s
-equalizeSchemes (Right (SType ub1 lb1 desc1), Right (SType ub2 lb2 desc2)) d =
+equalizeSchemes inSchemes d = do
+  (SType ub1 lb1 desc1, SType ub2 lb2 desc2) <- sequenceT inSchemes
   let lbBoth = unionRawTypes lb1 lb2
-      tryUbBoth = tryIntersectRawTypes ub1 ub2 $ "equalizeSchemes(" ++ d ++ ")"
-      descBoth = if desc1 == desc2
+  ubBoth <- tryIntersectRawTypes ub1 ub2 $ "equalizeSchemes(" ++ d ++ ")"
+  let descBoth = if desc1 == desc2
          then desc1
          else "(" ++ desc1 ++ "," ++ desc2 ++ ")"
-   in case tryUbBoth of
-           Right ubBoth -> if hasRawType lbBoth ubBoth
-             then return $ SType ubBoth lbBoth descBoth
-             else Left [GenTypeCheckError $ concat ["Type Mismatched: ", show lbBoth, " is not a subtype of ", show ubBoth]]
-           Left errors -> Left errors
+  if hasRawType lbBoth ubBoth
+    then return $ SType ubBoth lbBoth descBoth
+    else TypeCheckResE [GenTypeCheckError $ concat ["Type Mismatched: ", show lbBoth, " is not a subtype of ", show ubBoth]]
 
 
 lowerUb :: RawType -> RawType -> RawType
@@ -71,8 +66,9 @@ lowerUb _ lb = lb
 
 
 getSchemeProp :: Scheme -> Name -> Scheme
-getSchemeProp Left{} _ = error "get prop of Left"
-getSchemeProp (Right (SType ub lb desc)) propName = Right $ SType (getRawTypeProp ub ) (getRawTypeProp lb) desc
+getSchemeProp inScheme propName = do
+  (SType ub lb desc) <- inScheme
+  return $ SType (getRawTypeProp ub ) (getRawTypeProp lb) desc
   where
     getRawTypeProp :: RawType -> RawType
     getRawTypeProp RawTopType = RawTopType
@@ -87,29 +83,30 @@ getSchemeProp (Right (SType ub lb desc)) propName = Right $ SType (getRawTypePro
     joinPartials = foldr unionRawTypes rawBottomType
 
 setSchemeProp :: Scheme -> Name -> Scheme -> Scheme
-setSchemeProp err@Left{} _ _ = err
-setSchemeProp _ _ err@Left{} = err
-setSchemeProp (Right (SType ub lb desc)) propName (Right (SType pub _ _)) = checkScheme ("setSchemeProp " ++ propName) $ Right $ SType (compactRawType $ setRawTypeUbProp ub) (compactRawType $ setRawTypeLbProp lb) desc
+setSchemeProp scheme propName pscheme = do
+  (SType ub lb desc) <- scheme
+  (SType pub _ _) <- pscheme
+  checkScheme ("setSchemeProp " ++ propName) $ return $ SType (compactRawType $ setRawTypeUbProp ub pub) (compactRawType $ setRawTypeLbProp lb) desc
   where
-    setRawTypeUbProp :: RawType -> RawType
-    setRawTypeUbProp RawTopType = RawTopType
-    setRawTypeUbProp (RawSumType ubLeafs ubPartials) = RawSumType (S.fromList $ mapMaybe setLeafUbProp $ S.toList ubLeafs) (H.mapMaybe setPartialsUb ubPartials)
-    setLeafUbProp  ubLeaf@(RawLeafType _ leafArgs) = case (H.lookup propName leafArgs, pub) of
+    setRawTypeUbProp :: RawType -> RawType -> RawType
+    setRawTypeUbProp RawTopType _ = RawTopType
+    setRawTypeUbProp (RawSumType ubLeafs ubPartials) pub = RawSumType (S.fromList $ mapMaybe (setLeafUbProp pub) $ S.toList ubLeafs) (H.mapMaybe (setPartialsUb pub) ubPartials)
+    setLeafUbProp pub ubLeaf@(RawLeafType _ leafArgs) = case (H.lookup propName leafArgs, pub) of
       (Nothing, _) -> Nothing
       (Just leafArg, RawSumType pubLeafs _) -> if S.member leafArg pubLeafs
         then Just ubLeaf
         else Nothing
       (Just{} , RawTopType) -> Just ubLeaf
-    setPartialsUb partials = case mapMaybe setPartialUb partials of
+    setPartialsUb pub partials = case mapMaybe (setPartialUb pub) partials of
       [] -> Nothing
       partials' -> Just partials'
-    setPartialUb partialArgs = case H.lookup propName partialArgs of
+    setPartialUb pub partialArgs = case H.lookup propName partialArgs of
       Just partialArg -> let tryPartialArg' = tryIntersectRawTypes partialArg pub "setSchemeProp"
                           in case tryPartialArg' of
-                               Right partialArg' -> if partialArg' == rawBottomType
+                               TypeCheckResult _ partialArg' -> if partialArg' == rawBottomType
                                                       then Nothing
                                                       else Just $ H.insert propName partialArg' partialArgs
-                               Left _ -> Nothing
+                               TypeCheckResE _ -> Nothing
       Nothing -> Nothing
     setRawTypeLbProp tp = tp -- TODO: Should set with union?
 
@@ -125,42 +122,38 @@ addArgsToRawType (RawSumType leafs partials) newArgs = Just $ RawSumType S.empty
 
 -- returns updated (pruned) constraints and boolean if schemes were updated
 executeConstraint :: TypeGraph s -> Constraint s -> ST s ([Constraint s], Bool)
-executeConstraint _ (EqualsKnown pnt tp) = modifyDescriptor pnt (\oldScheme -> equalizeSchemes (oldScheme, Right $ SType tp tp "") "executeConstraint EqualsKnown") >> return ([], True)
+executeConstraint _ (EqualsKnown pnt tp) = modifyDescriptor pnt (\oldScheme -> equalizeSchemes (oldScheme, return $ SType tp tp "") "executeConstraint EqualsKnown") >> return ([], True)
 executeConstraint _ (EqPoints p1 p2) = union' p1 p2 (\s1 s2 -> return (equalizeSchemes (s1, s2) "executeConstraint EqPoints")) >> return ([], True)
 executeConstraint _ cons@(BoundedBy subPnt parentPnt) = do
   subScheme <- descriptor subPnt
   parentScheme <- descriptor parentPnt
-  case (subScheme, parentScheme) of
-    (_, Left _) -> return ([], False)
-    (Left _, _) -> return ([], False)
-    (Right (SType ub1 lb1 description), Right (SType ub2 _ _)) -> do
+  case sequenceT (subScheme, parentScheme) of
+    TypeCheckResE _ -> return ([], False)
+    TypeCheckResult _ (SType ub1 lb1 description, SType ub2 _ _) -> do
       let subScheme' = fmap (\ub -> SType ub lb1 description) (tryIntersectRawTypes ub1 ub2 "executeConstraint BoundedBy")
       setDescriptor subPnt subScheme'
       return ([cons | not (isSolved subScheme')], subScheme /= subScheme')
 executeConstraint typeGraph cons@(ArrowTo srcPnt destPnt) = do
   srcScheme <- descriptor srcPnt
   destScheme <- descriptor destPnt
-  case (srcScheme, destScheme) of
-    (Left _, _) -> return ([], False)
-    (_, Left _) -> return ([], False)
-    (Right (SType srcUb _ _), Right (SType destUb destLb destDescription)) -> do
+  case sequenceT (srcScheme, destScheme) of
+    TypeCheckResE _ -> return ([], False)
+    TypeCheckResult _ (SType srcUb _ _, SType destUb destLb destDescription) -> do
       maybeDestUbByGraph <- reaches typeGraph srcUb
       case maybeDestUbByGraph of
         Just destUbByGraph -> do
-          let destScheme' = case tryIntersectRawTypes destUb destUbByGraph "executeConstraint ArrowTo" of
-                Right destUb' -> let destLb' = lowerUb destUb' destLb
-                                  in Right $ SType destUb' destLb' destDescription
-                Left errors -> Left errors
+          let destScheme' = tryIntersectRawTypes destUb destUbByGraph "executeConstraint ArrowTo" >>= \destUb' ->
+                let destLb' = lowerUb destUb' destLb
+                 in return $ SType destUb' destLb' destDescription
           setDescriptor destPnt destScheme'
           return ([cons | not (isSolved destScheme')], destScheme /= destScheme')
         Nothing -> return ([], False) -- remove constraint if found Left
 executeConstraint typeGraph cons@(PropEq (superPnt, propName) subPnt) = do
   superScheme <- descriptor superPnt
   subScheme <- descriptor subPnt
-  case (superScheme, subScheme) of
-    (Left _, _) -> return ([], False)
-    (_, Left _) -> return ([], False)
-    (Right{}, Right{}) -> do
+  case sequenceT (superScheme, subScheme) of
+    TypeCheckResE _ -> return ([], False)
+    TypeCheckResult{} -> do
       let superPropScheme = getSchemeProp superScheme propName
       let scheme' = equalizeBounds (subScheme, superPropScheme) "executeConstraint PropEq"
       superSchemeBound <- boundSchemeByGraphObjects typeGraph $ setSchemeProp superScheme propName scheme'
@@ -171,24 +164,22 @@ executeConstraint typeGraph cons@(PropEq (superPnt, propName) subPnt) = do
 executeConstraint _ cons@(AddArgs (srcPnt, newArgNames) destPnt) = do
   srcScheme <- descriptor srcPnt
   destScheme <- descriptor destPnt
-  case (srcScheme, destScheme) of
-    (Left _, _) -> return ([], False)
-    (_, Left _) -> return ([], False)
-    (Right (SType srcUb _ _), Right (SType _ destLb destDesc)) ->
+  case sequenceT (srcScheme, destScheme) of
+    TypeCheckResE _ -> return ([], False)
+    TypeCheckResult _ (SType srcUb _ _, SType _ destLb destDesc) ->
       case addArgsToRawType srcUb newArgNames of
         Just destUb' -> do
-          let destScheme' = equalizeSchemes (destScheme, Right $ SType destUb' destLb destDesc) "executeConstraint AddArgs"
+          let destScheme' = equalizeSchemes (destScheme, return $ SType destUb' destLb destDesc) "executeConstraint AddArgs"
           setDescriptor destPnt destScheme'
           return ([], True)
         Nothing -> return ([cons], False)
 executeConstraint _ cons@(UnionOf parentPnt childrenPnts) = do
   parentScheme <- descriptor parentPnt
   tcresChildrenSchemes <- mapM descriptor childrenPnts
-  case (parentScheme, sequence tcresChildrenSchemes) of
-    (Left _, _) -> return ([], False)
-    (_, Left _) -> return ([], False)
-    (Right{}, Right childrenSchemes) -> do
-      let childrenScheme = (\(ub, lb) -> Right $ SType ub lb "") $ foldr (\(SType ub1 lb1 _) (ub2, lb2) -> (unionRawTypes ub1 ub2, unionRawTypes lb1 lb2)) (rawBottomType, rawBottomType) childrenSchemes
+  case sequenceT (parentScheme, sequence tcresChildrenSchemes) of
+    TypeCheckResE _ -> return ([], False)
+    TypeCheckResult _ (_, childrenSchemes) -> do
+      let childrenScheme = (\(ub, lb) -> return $ SType ub lb "") $ foldr (\(SType ub1 lb1 _) (ub2, lb2) -> (unionRawTypes ub1 ub2, unionRawTypes lb1 lb2)) (rawBottomType, rawBottomType) childrenSchemes
       let parentScheme' = equalizeBounds (parentScheme, childrenScheme) "executeConstraint UnionOf"
       setDescriptor parentPnt parentScheme'
       return ([cons | not (isSolved parentScheme')], parentScheme /= parentScheme')
@@ -199,7 +190,7 @@ abandonConstraints con = do
   return $ AbandonCon scon
 
 runConstraints :: Integer -> TypeGraph s -> [Constraint s] -> ST s (Either [TypeCheckError] ())
-runConstraints _ _ [] = return $ Right ()
+runConstraints _ _ [] = return $ return ()
 runConstraints 0 _ _ = return $ Left [GenTypeCheckError "Reached runConstraints limit"]
 runConstraints limit typeGraph cons = do
   res <- mapM (executeConstraint typeGraph) cons

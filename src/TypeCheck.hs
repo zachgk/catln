@@ -30,7 +30,7 @@ typecheckPrgm pprgm = runST $ do
     [] -> do
       _ <- runConstraints runConstraintsLimit typeGraph cons
       toPrgm vprgm cons
-    _ -> return $ Left errs
+    _ -> return $ TypeCheckResE errs
 
 traceTestPrgm :: PPrgm -> Either [TypeCheckError] [(SPrgm, [SConstraint])]
 traceTestPrgm pprgm = runST $ do

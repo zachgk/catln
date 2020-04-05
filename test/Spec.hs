@@ -9,6 +9,7 @@ import           Desugarf         (desFiles)
 -- import           Emit             (codegen, initModule)
 import           Eval.Common
 import           Eval
+import           TypeCheck.Common  (TypeCheckResult(TypeCheckResult, TypeCheckResE))
 import           TypeCheck
 import qualified Data.Text.Lazy as T
 import Text.Pretty.Simple
@@ -22,10 +23,10 @@ runTest displayName fileName = defaultMain $ testCaseSteps displayName $ \step -
     CRes _ prgm -> do
       step "Typecheck..."
       case typecheckPrgm prgm of
-        Left err -> do
+        TypeCheckResE err -> do
           step $ T.unpack $ pShow $ traceTestPrgm prgm
           assertFailure $ "Could not typecheck:\n\n\n\t" ++ intercalate "\n\n\n\t\t" (map (T.unpack . pShow) err)
-        Right tprgm -> do
+        TypeCheckResult _ tprgm -> do
           -- step $ T.unpack $ pShow $ traceTestPrgm prgm
           step "Eval tests..."
           case evalMain tprgm of
