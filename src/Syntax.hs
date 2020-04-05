@@ -103,7 +103,8 @@ instance Hashable m => Hashable (Expr m)
 
 -- Compiler Annotation
 data CompAnnot m = CompAnnot Name (H.HashMap Name (Expr m))
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Generic)
+instance Hashable m => Hashable (CompAnnot m)
 
 data RawDeclSubStatement m
   = RawDeclSubStatementDecl (RawDecl m)
@@ -135,7 +136,8 @@ data Object m = Object m Name (H.HashMap Name m)
 instance Hashable m => Hashable (Object m)
 
 data Arrow m = Arrow m [CompAnnot m] (Maybe (Expr m)) -- m is result metadata
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Generic)
+instance Hashable m => Hashable (Arrow m)
 
 type ObjectMap m = (H.HashMap (Object m) [Arrow m])
 type Prgm m = (ObjectMap m, ClassMap) -- TODO: Include [Export]
@@ -148,6 +150,26 @@ data ReplRes m
   | ReplErr ParseErrorRes
   deriving (Eq, Show)
 
+--- ResArrowTree
+type ResBuildEnv f = H.HashMap LeafType [ResArrow f]
+type ResExEnv f = H.HashMap (Arrow Typed) (ResArrowTree f, [ResArrowTree f]) -- (result, [compAnnot trees])
+data ResArrow f
+  = ResEArrow (Arrow Typed)
+  | PrimArrow Type f
+  | ConstantArrow Constant
+
+data ResArrowTree f
+  = ResArrowCompose (ResArrowTree f) (ResArrowTree f)
+  | ResArrowMatch (H.HashMap LeafType (ResArrowTree f))
+  | ResArrowTuple String (H.HashMap String (ResArrowTree f))
+  | ResArrowSingle (ResArrow f)
+  | ResArrowID
+  deriving (Show)
+
+instance Show (ResArrow f) where
+  show (ResEArrow arrow) = "(ResEArrow " ++ show arrow ++ ")"
+  show (PrimArrow tp _) = "(PrimArrow " ++ show tp ++ ")"
+  show (ConstantArrow c) = "(ConstantArrow " ++ show c ++ ")"
 
 
 -- compile errors
@@ -156,6 +178,9 @@ data CNote
   | GenCErr String
   | ParseCErr String
   | TypeCheckCErr
+  | BuildTreeCErr String
+  | AssertCErr String
+  | EvalCErr String
   deriving (Eq, Show)
 
 data CRes r
@@ -166,6 +191,13 @@ data CRes r
 getCNotes :: CRes r -> [CNote]
 getCNotes (CRes notes _) = notes
 getCNotes (CErr notes) = notes
+
+partitionCRes :: [CRes r] -> ([CNote], ([CNote], [r]))
+partitionCRes = aux ([], ([], []))
+  where
+    aux x [] = x
+    aux (errNotes, (resNotes, res)) ((CRes newResNotes newRes):xs) = aux (errNotes, (newResNotes ++ resNotes, newRes:res)) xs
+    aux (errNotes, (resNotes, res)) ((CErr newErrNotes):xs) = aux (newErrNotes ++ errNotes, (resNotes, res)) xs
 
 instance Functor CRes where
   fmap f (CRes notes r) = CRes notes (f r)
@@ -288,6 +320,7 @@ intersectRawTypes (RawSumType aLeafs aPartials) (RawSumType bLeafs bPartials) = 
     leafArgsInPartialArgs leafArgs partialArgs = H.keysSet leafArgs == H.keysSet partialArgs && and (H.intersectionWith hasRawLeaf leafArgs partialArgs)
 
 -- normal type, type to powerset
+-- TODO: Fix leaf intersection, it currently does not use powerset of b but just b
 intersectRawTypeWithPowerset :: RawType -> RawType -> RawType
 intersectRawTypeWithPowerset RawTopType t = t
 intersectRawTypeWithPowerset t RawTopType = t

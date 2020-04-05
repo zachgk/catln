@@ -16,7 +16,7 @@ import           Syntax
 
 import Eval.Common
 
-liftIntOp :: Name -> (Integer -> Integer -> Integer) -> (LeafType, [ResArrow])
+liftIntOp :: Name -> (Integer -> Integer -> Integer) -> (LeafType, [ResArrow EPrim])
 liftIntOp name f = (srcType, [arrow])
   where
     srcType = LeafType ("operator" ++ name) (H.fromList [("l", intLeaf), ("r", intLeaf)])
@@ -25,7 +25,7 @@ liftIntOp name f = (srcType, [arrow])
                            _ -> error "Invalid intOp signature"
                            )
 
-liftCmpOp :: Name -> (Integer -> Integer -> Bool) -> (LeafType, [ResArrow])
+liftCmpOp :: Name -> (Integer -> Integer -> Bool) -> (LeafType, [ResArrow EPrim])
 liftCmpOp name f = (srcType, [arrow])
   where
     srcType = LeafType ("operator" ++ name) (H.fromList [("l", intLeaf), ("r", intLeaf)])
@@ -34,7 +34,7 @@ liftCmpOp name f = (srcType, [arrow])
                            _ -> error "Invalid compOp signature"
                            )
 
-liftBoolOp :: Name -> (Bool -> Bool -> Bool) -> (LeafType, [ResArrow])
+liftBoolOp :: Name -> (Bool -> Bool -> Bool) -> (LeafType, [ResArrow EPrim])
 liftBoolOp name f = (srcType, [arrow])
   where
     srcType = LeafType ("operator" ++ name) (H.fromList [("l", boolLeaf), ("r", boolLeaf)])
@@ -43,7 +43,7 @@ liftBoolOp name f = (srcType, [arrow])
                            _ -> error "Invalid boolOp signature"
                            )
 
-rnot :: Name -> (LeafType, [ResArrow])
+rnot :: Name -> (LeafType, [ResArrow EPrim])
 rnot name = (srcType, [arrow])
   where
     srcType = LeafType ("operator" ++ name) (H.singleton "a" boolLeaf)
@@ -52,7 +52,7 @@ rnot name = (srcType, [arrow])
           _ -> error "Invalid rnot signature"
           )
 
-primEnv :: ResEnv
+primEnv :: ResBuildEnv EPrim
 primEnv = H.fromList [ liftIntOp "+" (+)
                      , liftIntOp "-" (-)
                      , liftIntOp "*" (*)
