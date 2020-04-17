@@ -15,3 +15,4 @@ This directory contains  a number of the core ideas and directives that drive th
 - [syntacticSugar](syntacticSugar.md)
 - [typeSystem](typeSystem.md)
 - [typeTheory](typeTheory.md)
+- [documentation](documentation.md)
