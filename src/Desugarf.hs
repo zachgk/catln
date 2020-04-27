@@ -20,6 +20,7 @@ import Data.Graph
 
 import           Syntax
 import           Parser.Syntax
+import           Parser                   (parseFile)
 import CallGraph
 
 data PSemiDecl = PSemiDecl PDeclLHS [PCompAnnot] (Maybe PExpr)
@@ -140,16 +141,32 @@ mergeClassMaps (toClassA, toTypeA) (toClassB, toTypeB) = (H.unionWith S.union to
           then (sealedA, S.union setA setB)
           else error "Added to sealed class definition"
 
-desPrgm :: PPrgm -> DesPrgm
-desPrgm prgm = (objMap, classMap)
+desStatements :: [PStatement] -> DesPrgm
+desStatements statements = (objMap, classMap)
   where
     splitStatements statement = case statement of
           RawDeclStatement decl -> ([decl], [], [])
           RawTypeDefStatement typedef -> ([], [typedef], [])
           RawClassDefStatement classdef -> ([], [], [classdef])
-    (decls, types, classes) = (\(a, b, c) -> (concat a, concat b, concat c)) $ unzip3 $ map splitStatements prgm
+    (decls, types, classes) = (\(a, b, c) -> (concat a, concat b, concat c)) $ unzip3 $ map splitStatements statements
     declObjMap = desDecls decls
     (typeObjMap, sealedClasses) = desTypeDefs types
     unsealedClasses = desClassDefs False classes
     objMap = mergeObjMaps declObjMap typeObjMap
     classMap = mergeClassMaps sealedClasses unsealedClasses
+
+
+desPrgm :: PPrgm -> IO (CRes DesPrgm)
+desPrgm ([], statements) = return $ return $ desStatements statements
+desPrgm (curImport:restImports, statements) = do
+  f <- readFile curImport
+  case parseFile f of
+    CErr notes -> return $ CErr notes
+    CRes notes (parsedImports, parsedStatements) -> do
+      maybePrgm' <- desPrgm (parsedImports ++ restImports, parsedStatements ++ statements)
+      case maybePrgm' of
+        CErr notes2 -> return $ CErr (notes ++ notes2)
+        CRes notes2 res -> return $ CRes (notes ++ notes2) res
+
+desFiles :: [FileImport] -> IO (CRes DesPrgm)
+desFiles imports = desPrgm (imports, [])

@@ -127,7 +127,8 @@ data RawStatement m
   | RawClassDefStatement RawClassDef
   deriving (Eq, Ord, Show)
 
-type RawPrgm m = [RawStatement m] -- TODO: Include [Import], [Export]
+type FileImport = String
+type RawPrgm m = ([FileImport], [RawStatement m]) -- TODO: Include [Export]
 
 data Object m = Object m Name (H.HashMap Name m)
   deriving (Eq, Ord, Show, Generic)
@@ -137,7 +138,7 @@ data Arrow m = Arrow m [CompAnnot m] (Maybe (Expr m)) -- m is result metadata
   deriving (Eq, Ord, Show)
 
 type ObjectMap m = (H.HashMap (Object m) [Arrow m])
-type Prgm m = (ObjectMap m, ClassMap) -- TODO: Include [Import], [Export]
+type Prgm m = (ObjectMap m, ClassMap) -- TODO: Include [Export]
 
 type ParseErrorRes = ParseErrorBundle String Void
 
@@ -153,6 +154,7 @@ data ReplRes m
 data CNote
   = GenCNote String
   | GenCErr String
+  | ParseCErr String
   | TypeCheckCErr
   deriving (Eq, Show)
 

@@ -4,11 +4,11 @@ import           Data.List
 import           Test.Tasty
 import           Test.Tasty.HUnit
 
-import           Desugarf         (desPrgm)
+import           Syntax
+import           Desugarf         (desFiles)
 -- import           Emit             (codegen, initModule)
 import           Eval.Common
 import           Eval
-import           Parser           (parseFile)
 import           TypeCheck
 import qualified Data.Text.Lazy as T
 import Text.Pretty.Simple
@@ -16,13 +16,10 @@ import Text.Pretty.Simple
 runTest :: String -> String -> IO ()
 runTest displayName fileName = defaultMain $ testCaseSteps displayName $ \step -> do
   step "Read file..."
-  contents <- readFile fileName
-  case parseFile contents of
-    Left err -> assertFailure $ "Could not parse:\n \t" ++ show err
-    Right rprgm -> do
-      -- step $ T.unpack $ pShow rprgm
-      step "Desgugar..."
-      let prgm = desPrgm rprgm
+  maybePrgm <- desFiles [fileName, "std/std.flng"]
+  case maybePrgm of
+    CErr notes -> assertFailure $ "Could not parse and desguar:\n \t" ++ show notes
+    CRes _ prgm -> do
       step "Typecheck..."
       case typecheckPrgm prgm of
         Left err -> do

@@ -1,28 +1,7 @@
 - Handle TypeCheckErrors from runConstraints in TypeCheck.hs
 
-- Fix Main(Repl), Codegen
-    - Main(Repl)
-      1. Add IO
-      2. Reformulate the repl to add statements to the environment, expr adds temporary value to environment to evaluate it to val
-    - Codegen
-      1. Divide eval to separate the envLookup to form evaluation trees from to share with codegen
-      2. Fix rest of codegen
-
-- Start Core STDLIB
-  1. Have encode use classMap to check if types specified are a class or object
-  2. Allow operator overloading
-  3. Move the typechecking runtime into the existing test file
-  4. Allow importing and exporting to move the core runtime into a separate code area
-
 - Include line number in Syntax Results
   - Unified CompileError type
-
-- Code formatter
-  1. Add comments into the RawPrgm syntax and parser
-  1. Modify the RawPrgm syntax to fully align with all language possibilities
-  3. Build formatter
-     - Output format to file
-     - Check format against file
 
 - Case, conditionals
   1. Add the ability to have conditional expression guards to declarations and (I think) Arrows
@@ -42,9 +21,25 @@
      3. Context type (and macro for mapping it)
      4. Context syntax
 
+- Fix Main(Repl), Codegen
+    - Main(Repl)
+      1. Add IO
+      2. Reformulate the repl to add statements to the environment, expr adds temporary value to environment to evaluate it to val
+    - Codegen
+      1. Divide eval to separate the envLookup to form evaluation trees from to share with codegen
+      2. Fix rest of codegen
+
+- Code formatter
+  1. Add comments into the RawPrgm syntax and parser
+  1. Modify the RawPrgm syntax to fully align with all language possibilities
+  3. Build formatter
+     - Output format to file
+     - Check format against file
+
 - Program Optimization
   - Convert the ResArrowTree formating to include sorting of values
 
+Have encode use classMap to check if types specified are a class or object
 Fix parser and test on using multiple applies in a row `fun(a=1)(b=2)`
 Make CompAnnot an enum over allowed compiler annotations and desugar goes from untyped RawCompAnnot tuple to the enum. Maybe wait until after typechecking to desugar, though
 Types

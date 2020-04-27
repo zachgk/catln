@@ -61,6 +61,11 @@ ops = [
     ]
   ]
 
+pImport :: Parser String
+pImport = do
+  _ <- symbol "import"
+  some printChar
+
 pCallArg :: Parser (String, PExpr)
 pCallArg = do
   argName <- identifier
@@ -210,9 +215,11 @@ pStatement = pTypeDefStatement
 pPrgm :: Parser PPrgm
 pPrgm = do
   _ <- many newline
+  imports <- many pImport
+  _ <- many newline
   statements <- sepBy1 pStatement (some newline)
   _ <- many newline
-  return statements
+  return (imports, statements)
 
 contents :: Parser a -> Parser a
 contents p = do
@@ -220,8 +227,10 @@ contents p = do
   eof
   return r
 
-parseFile :: String -> Either ParseErrorRes PPrgm
-parseFile = runParser (contents pPrgm) "<stdin>"
+parseFile :: String -> CRes PPrgm
+parseFile f = case runParser (contents pPrgm) "<stdin>" f of
+  Left err -> CErr [ParseCErr $ show err]
+  Right prgm -> return prgm
 
 parseRepl :: String -> PReplRes
 parseRepl s = case runParser (contents p) "<stdin>" s of
