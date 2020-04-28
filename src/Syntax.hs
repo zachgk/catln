@@ -106,12 +106,19 @@ data CompAnnot m = CompAnnot Name (H.HashMap Name (Expr m))
   deriving (Eq, Ord, Show, Generic)
 instance Hashable m => Hashable (CompAnnot m)
 
+data Guard m
+  = IfGuard (Expr m)
+  | ElseGuard
+  | NoGuard
+  deriving (Eq, Ord, Show, Generic)
+instance Hashable m => Hashable (Guard m)
+
 data RawDeclSubStatement m
   = RawDeclSubStatementDecl (RawDecl m)
   | RawDeclSubStatementAnnot (CompAnnot m)
   deriving (Eq, Ord, Show)
 
-data DeclLHS m = DeclLHS m m Name (H.HashMap Name m) -- objM, arrM
+data DeclLHS m = DeclLHS m m Name (H.HashMap Name m) (Guard m) -- objM, arrM
   deriving (Eq, Ord, Show)
 
 data RawDecl m = RawDecl (DeclLHS m) [RawDeclSubStatement m] (Maybe (Expr m))
@@ -135,7 +142,7 @@ data Object m = Object m Name (H.HashMap Name m)
   deriving (Eq, Ord, Show, Generic)
 instance Hashable m => Hashable (Object m)
 
-data Arrow m = Arrow m [CompAnnot m] (Maybe (Expr m)) -- m is result metadata
+data Arrow m = Arrow m [CompAnnot m] (Guard m) (Maybe (Expr m)) -- m is result metadata
   deriving (Eq, Ord, Show, Generic)
 instance Hashable m => Hashable (Arrow m)
 
@@ -151,7 +158,7 @@ data ReplRes m
   deriving (Eq, Show)
 
 --- ResArrowTree
-type ResBuildEnv f = H.HashMap LeafType [ResArrow f]
+type ResBuildEnv f = H.HashMap LeafType [(Guard Typed, ResArrow f)]
 type ResExEnv f = H.HashMap (Arrow Typed) (ResArrowTree f, [ResArrowTree f]) -- (result, [compAnnot trees])
 data ResArrow f
   = ResEArrow (Arrow Typed)

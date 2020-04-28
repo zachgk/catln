@@ -16,8 +16,8 @@ import           Syntax
 
 import Eval.Common
 
-liftIntOp :: Name -> (Integer -> Integer -> Integer) -> (LeafType, [ResArrow EPrim])
-liftIntOp name f = (srcType, [arrow])
+liftIntOp :: Name -> (Integer -> Integer -> Integer) -> (LeafType, [(Guard Typed, ResArrow EPrim)])
+liftIntOp name f = (srcType, [(NoGuard, arrow)])
   where
     srcType = LeafType ("operator" ++ name) (H.fromList [("l", intLeaf), ("r", intLeaf)])
     arrow = PrimArrow intType (\args -> case (H.lookup "l" args, H.lookup "r" args) of
@@ -25,8 +25,8 @@ liftIntOp name f = (srcType, [arrow])
                            _ -> error "Invalid intOp signature"
                            )
 
-liftCmpOp :: Name -> (Integer -> Integer -> Bool) -> (LeafType, [ResArrow EPrim])
-liftCmpOp name f = (srcType, [arrow])
+liftCmpOp :: Name -> (Integer -> Integer -> Bool) -> (LeafType, [(Guard Typed, ResArrow EPrim)])
+liftCmpOp name f = (srcType, [(NoGuard, arrow)])
   where
     srcType = LeafType ("operator" ++ name) (H.fromList [("l", intLeaf), ("r", intLeaf)])
     arrow = PrimArrow boolType (\args -> case (H.lookup "l" args, H.lookup "r" args) of
@@ -34,8 +34,8 @@ liftCmpOp name f = (srcType, [arrow])
                            _ -> error "Invalid compOp signature"
                            )
 
-liftBoolOp :: Name -> (Bool -> Bool -> Bool) -> (LeafType, [ResArrow EPrim])
-liftBoolOp name f = (srcType, [arrow])
+liftBoolOp :: Name -> (Bool -> Bool -> Bool) -> (LeafType, [(Guard Typed, ResArrow EPrim)])
+liftBoolOp name f = (srcType, [(NoGuard, arrow)])
   where
     srcType = LeafType ("operator" ++ name) (H.fromList [("l", boolLeaf), ("r", boolLeaf)])
     arrow = PrimArrow boolType (\args -> case (H.lookup "l" args, H.lookup "r" args) of
@@ -43,8 +43,8 @@ liftBoolOp name f = (srcType, [arrow])
                            _ -> error "Invalid boolOp signature"
                            )
 
-rnot :: Name -> (LeafType, [ResArrow EPrim])
-rnot name = (srcType, [arrow])
+rnot :: Name -> (LeafType, [(Guard Typed, ResArrow EPrim)])
+rnot name = (srcType, [(NoGuard, arrow)])
   where
     srcType = LeafType ("operator" ++ name) (H.singleton "a" boolLeaf)
     arrow = PrimArrow boolType (\args -> case H.lookup "a" args of

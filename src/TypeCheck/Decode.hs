@@ -91,16 +91,24 @@ toCompAnnot env (CompAnnot name args) = do
   args' <- mapM (toExpr env) args
   return $ fmap (CompAnnot name) (sequence args')
 
+toGuard :: DEnv s -> VGuard s -> ST s (TypeCheckResult TGuard)
+toGuard env (IfGuard expr) = do
+  expr' <- toExpr env expr
+  return $ IfGuard <$> expr'
+toGuard _ ElseGuard = return $ return ElseGuard
+toGuard _ NoGuard = return $ return NoGuard
+
 toArrow :: DEnv s -> VArrow s -> ST s (TypeCheckResult TArrow)
-toArrow env (Arrow m annots maybeExpr) = do
+toArrow env (Arrow m annots aguard maybeExpr) = do
   m' <- toMeta env m "Arrow"
   annotsT <- mapM (toCompAnnot env) annots
+  aguard' <- toGuard env aguard
   let annots' = sequence annotsT
   case maybeExpr of
     Just expr -> do
       expr' <- toExpr env expr
-      return $ (\(m'', annots'', expr'') -> Arrow m'' annots'' (Just expr'')) <$> sequenceT (m', annots', expr')
-    Nothing -> return $ (\(annots'', m'') -> Arrow m'' annots'' Nothing) <$> sequenceT (annots', m')
+      return $ (\(m'', annots'', aguard'', expr'') -> Arrow m'' annots'' aguard'' (Just expr'')) <$> sequenceT (m', annots', aguard', expr')
+    Nothing -> return $ (\(annots'', m'', aguard'') -> Arrow m'' annots'' aguard'' Nothing) <$> sequenceT (annots', m', aguard')
 
 toObjectArg :: DEnv s -> Name -> (Name, VarMeta s) -> ST s (TypeCheckResult (Name, Typed))
 toObjectArg env objName (name, m) = do

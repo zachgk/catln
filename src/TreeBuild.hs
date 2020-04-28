@@ -9,6 +9,8 @@
 --
 --------------------------------------------------------------------
 
+{-# LANGUAGE LambdaCase #-}
+
 module TreeBuild where
 
 import qualified Data.HashMap.Strict as H
@@ -20,6 +22,7 @@ type TBMeta = Typed
 type TBCompAnnot = CompAnnot TBMeta
 type TBExpr = Expr TBMeta
 type TBObject = Object TBMeta
+type TBGuard = Guard TBMeta
 type TBArrow = Arrow TBMeta
 type TBObjectMap = ObjectMap TBMeta
 type TBPrgm = Prgm TBMeta
@@ -28,7 +31,7 @@ type TBReplRes = ReplRes TBMeta
 type TBEnv f = (ResBuildEnv f, H.HashMap LeafType (ResArrow f))
 
 resArrowDestType :: ResArrow f -> Type
-resArrowDestType (ResEArrow (Arrow (Typed tp) _ _)) = tp
+resArrowDestType (ResEArrow (Arrow (Typed tp) _ _ _)) = tp
 resArrowDestType (PrimArrow tp _) = tp
 resArrowDestType (ConstantArrow CInt{}) = intType
 resArrowDestType (ConstantArrow CFloat{}) = floatType
@@ -45,14 +48,14 @@ makeBaseEnv primEnv objMap = fmap (baseEnv,) exEnv
     baseEnv = (H.union primEnv resEnv, H.empty)
     resEnv = H.fromListWith (++) $ concatMap resFromArrows $ H.toList objMap
     resFromArrows (obj, arrows) = map (resFromArrow obj) arrows
-    resFromArrow (Object om _ _) arrow = (leafFromMeta om, [ResEArrow arrow])
+    resFromArrow (Object om _ _) arrow@(Arrow _ _ aguard _) = (leafFromMeta om, [(aguard, ResEArrow arrow)])
     exEnv = fmap H.fromList $ sequence $ concatMap exFromArrows $ H.toList objMap
     exFromArrows (obj, arrows) = mapMaybe (exFromArrow obj) arrows
-    exFromArrow _ arrow@(Arrow (Typed am) compAnnots maybeExpr) = fmap (\expr -> do
-                                                                          resArrowTree <- buildExprImp baseEnv expr am
-                                                                          compAnnots' <- mapM (buildCompAnnot baseEnv) compAnnots
-                                                                          return (arrow, (resArrowTree, compAnnots'))
-                                                                      ) maybeExpr
+    exFromArrow _ arrow@(Arrow (Typed am) compAnnots _ maybeExpr) = fmap (\expr -> do
+          resArrowTree <- buildExprImp baseEnv expr am
+          compAnnots' <- mapM (buildCompAnnot baseEnv) compAnnots
+          return (arrow, (resArrowTree, compAnnots'))
+      ) maybeExpr
 
 buildCompAnnot :: TBEnv f -> TBCompAnnot -> CRes (ResArrowTree f)
 buildCompAnnot env (CompAnnot "assert" args) = case (H.lookup "test" args, H.lookup "msg" args) of
@@ -103,8 +106,13 @@ envLookupTry env destType failure resArrow = do
 envLookup :: TBEnv f -> LeafType -> Type -> CRes (ResArrowTree f)
 envLookup _ srcType (SumType destTypes) | S.member srcType destTypes = return ResArrowID
 envLookup env@(resEnv, _) srcType destType = case H.lookup srcType resEnv of
-  Just resArrows -> do
+  Just guardResArrows -> do
     -- TODO: Sort resArrows by priority order before trying
+    -- TODO: Support IfGuard and ElseGuard
+    let resArrows = mapMaybe (\case
+                                  (NoGuard, resArr) -> Just resArr
+                                  _ -> Nothing
+                              ) guardResArrows
     let failure = CErr [BuildTreeCErr $ "Failed to lookup arrow for " ++ show (srcType, destType)]
     foldl (envLookupTry env destType) failure resArrows
   Nothing -> CErr [BuildTreeCErr $ "Failed to lookup arrow for " ++ show (srcType, destType)]

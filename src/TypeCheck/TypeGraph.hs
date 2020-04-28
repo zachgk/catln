@@ -43,7 +43,7 @@ buildTypeGraph env objMap = do
         addArrows (aenv, (graphObjs, graphLeafs), pnts) (obj@(Object m _ _), arrows) = do
           (aenv2, graphLeafs') <- foldM (addArrow obj) (aenv, graphLeafs) arrows
           return (aenv2, (graphObjs, graphLeafs'), m:pnts)
-        addArrow obj (aenv, graphLeafs) (Arrow m _ _) = do
+        addArrow obj (aenv, graphLeafs) (Arrow m _ _ _) = do
                 leaf <- objectToLeaf obj
                 let graphLeafs2 = H.insertWith (++) leaf [m] graphLeafs
                 return (aenv, graphLeafs2)
