@@ -28,8 +28,10 @@ typecheckPrgm pprgm = runST $ do
   (vprgm, typeGraph, FEnv cons _ errs) <- fromPrgm baseFEnv pprgm
   case errs of
     [] -> do
-      _ <- runConstraints runConstraintsLimit typeGraph cons
-      toPrgm vprgm cons
+      runErrors <- runConstraints runConstraintsLimit typeGraph cons
+      case runErrors of
+        Left errors -> return $ TypeCheckResE errors
+        Right _ -> toPrgm vprgm cons
     _ -> return $ TypeCheckResE errs
 
 traceTestPrgm :: PPrgm -> Either [TypeCheckError] [(SPrgm, [SConstraint])]
@@ -40,9 +42,12 @@ traceTestPrgm pprgm = runST $ do
     [] -> do
       sprgm1 <- showPrgm vprgm
       scons1 <- showConstraints cons
-      _ <- runConstraints runConstraintsLimit typeGraph cons
-      sprgm2 <- showPrgm vprgm
-      return $ Right [(sprgm1, scons1), (sprgm2, [])]
+      runErrors <- runConstraints runConstraintsLimit typeGraph cons
+      case runErrors of
+        Left errors -> return $ Left errors
+        Right _ -> do
+          sprgm2 <- showPrgm vprgm
+          return $ Right [(sprgm1, scons1), (sprgm2, [])]
     _ -> return $ Left errs
 
 showTestPrgm :: PPrgm -> Either [TypeCheckError] SPrgm

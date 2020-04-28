@@ -18,7 +18,6 @@ import           Control.Monad.ST
 
 import           Syntax
 import           TypeCheck.Common
-import           TypeCheck.Show (showCon)
 import           TypeCheck.TypeGraph (reaches, boundSchemeByGraphObjects)
 import           Data.UnionFind.ST
 import           Data.Tuple.Sequence
@@ -184,11 +183,6 @@ executeConstraint _ cons@(UnionOf parentPnt childrenPnts) = do
       setDescriptor parentPnt parentScheme'
       return ([cons | not (isSolved parentScheme')], parentScheme /= parentScheme')
 
-abandonConstraints :: Constraint s -> ST s TypeCheckError
-abandonConstraints con = do
-  scon <- showCon con
-  return $ AbandonCon scon
-
 runConstraints :: Integer -> TypeGraph s -> [Constraint s] -> ST s (Either [TypeCheckError] ())
 runConstraints _ _ [] = return $ return ()
 runConstraints 0 _ _ = return $ Left [GenTypeCheckError "Reached runConstraints limit"]
@@ -197,7 +191,5 @@ runConstraints limit typeGraph cons = do
   let (consList, changedList) = unzip res
   let cons' = concat consList
   if not (or changedList)
-    then do
-      constraintErrors <- mapM abandonConstraints cons
-      return $ Left constraintErrors
+    then return $ return ()
     else runConstraints (limit - 1) typeGraph cons'
