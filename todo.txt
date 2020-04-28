@@ -1,5 +1,7 @@
-- Include line number in Syntax Results
-  - Unified CompileError type
+Debug TreeBuild
+  Simplify matches in TreeBuild to have only the used path, not all possible paths
+    Need to add backwards arrows and make a function return without the implicit (direct results, not results reachable by implicit)
+  If necessary, make TreeBuild export into JSON for easier readability
 
 - Case, conditionals
   1. Add the ability to have conditional expression guards to declarations and (I think) Arrows
@@ -18,6 +20,9 @@
      2. map syntax (do notation)
      3. Context type (and macro for mapping it)
      4. Context syntax
+
+- Include line number in Syntax Results
+  - Unified CompileError type
 
 - Fix Main(Repl), Codegen
     - Main(Repl)

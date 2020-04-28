@@ -5,7 +5,7 @@ import           Test.Tasty
 import           Test.Tasty.HUnit
 
 import Syntax
-import           Desugarf         (desPrgm)
+import           Desugarf         (desFiles)
 -- import           Emit             (codegen, initModule)
 import           Eval.Common
 import           Eval

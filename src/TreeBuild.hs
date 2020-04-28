@@ -49,7 +49,7 @@ makeBaseEnv primEnv objMap = fmap (baseEnv,) exEnv
     exEnv = fmap H.fromList $ sequence $ concatMap exFromArrows $ H.toList objMap
     exFromArrows (obj, arrows) = mapMaybe (exFromArrow obj) arrows
     exFromArrow _ arrow@(Arrow (Typed am) compAnnots maybeExpr) = fmap (\expr -> do
-                                                                          resArrowTree <- arrowBuildExpr baseEnv expr am
+                                                                          resArrowTree <- buildExprImp baseEnv expr am
                                                                           compAnnots' <- mapM (buildCompAnnot baseEnv) compAnnots
                                                                           return (arrow, (resArrowTree, compAnnots'))
                                                                       ) maybeExpr
@@ -57,45 +57,34 @@ makeBaseEnv primEnv objMap = fmap (baseEnv,) exEnv
 buildCompAnnot :: TBEnv f -> TBCompAnnot -> CRes (ResArrowTree f)
 buildCompAnnot env (CompAnnot "assert" args) = case (H.lookup "test" args, H.lookup "msg" args) of
     (Just test, Just msgExpr) -> do
-      test' <- arrowBuildExpr env test boolType
-      msg' <- arrowBuildExpr env msgExpr strType
+      test' <- buildExprImp env test boolType
+      msg' <- buildExprImp env msgExpr strType
       return $ ResArrowTuple "assert" (H.fromList [("test", test'), ("msg", msg')])
     (Just test, Nothing) -> do
-      test' <- arrowBuildExpr env test boolType
+      test' <- buildExprImp env test boolType
       return $ ResArrowTuple "assert" (H.singleton "test" test')
     _ -> CErr [BuildTreeCErr "Invalid assertion"]
 buildCompAnnot _ (CompAnnot name _ )= CErr [BuildTreeCErr $ "Unknown compiler annotation" ++ name]
 
 buildExpr :: TBEnv f -> TBExpr -> CRes (ResArrowTree f)
-buildExpr _ (CExpr _ c) = return $ ResArrowCompose (ResArrowSingle $ ConstantArrow c) ResArrowID
+buildExpr _ (CExpr _ c) = return $ ResArrowSingle (ConstantArrow c)
 buildExpr (_, valEnv) (Value (Typed (SumType prodTypes)) name) = case S.toList prodTypes of
     (_:_:_) -> CErr [BuildTreeCErr $ "Found multiple types for value " ++ name]
     [] -> CErr [BuildTreeCErr $ "Found no types for value " ++ name ++ " with type " ++ show prodTypes]
     [prodType] -> return $ case H.lookup prodType valEnv of
-      Just val -> ResArrowCompose (ResArrowSingle val) ResArrowID
+      Just val -> ResArrowSingle val
       Nothing -> ResArrowTuple name H.empty
 buildExpr env (TupleApply (Typed (SumType prodTypes)) (Typed baseType, baseExpr) argExprs) = case S.toList prodTypes of
     (_:_:_) -> CErr [BuildTreeCErr $ "Found multiple types for tupleApply " ++ show baseExpr]
     [] -> CErr [BuildTreeCErr $ "Found no types for tupleApply " ++ show baseExpr ++ " with type " ++ show prodTypes ++ " and exprs " ++ show argExprs]
     [LeafType _ leafType] | H.keysSet argExprs == H.keysSet leafType -> do
-                           baseBuild <- arrowBuildExpr env baseExpr baseType
-                           argVals <- mapM (\(valDestType, expr) -> arrowBuildExpr env expr (SumType $ S.singleton valDestType)) $ H.intersectionWith (,) leafType argExprs
+                           baseBuild <- buildExprImp env baseExpr baseType
+                           argVals <- mapM (\(valDestType, expr) -> buildExprImp env expr (SumType $ S.singleton valDestType)) $ H.intersectionWith (,) leafType argExprs
                            case baseBuild of
                              ResArrowTuple baseName baseArgs -> return $ ResArrowTuple baseName (H.union argVals baseArgs)
                              (ResArrowCompose (ResArrowTuple baseName baseArgs) arrow2) -> return $ ResArrowCompose (ResArrowTuple baseName (H.union argVals baseArgs)) arrow2
                              _ -> CErr [BuildTreeCErr $ "The base to apply was not a tuple: " ++ show baseBuild]
     _ -> CErr [BuildTreeCErr $ "Found bad types for tupleApply " ++ show baseExpr]
-
-arrowBuildExpr :: TBEnv f -> TBExpr -> Type -> CRes (ResArrowTree f)
-arrowBuildExpr env expr destType = do
-  val <- buildExpr env expr
-  let (Typed (SumType srcType)) = getExprMeta expr
-  matchVal <- sequence $ H.fromList $ map aux $ S.toList srcType
-  return (ResArrowCompose val (ResArrowMatch matchVal))
-  where
-    aux leafSrcType = case envLookup env leafSrcType destType of
-      CRes notes resArrowTree -> (leafSrcType, CRes notes resArrowTree)
-      e@CErr{} -> (leafSrcType, e)
 
 envWithVals :: TBEnv f -> H.HashMap LeafType (ResArrow f) -> TBEnv f
 envWithVals (resEnv, _) vals = (resEnv, vals)
@@ -120,9 +109,23 @@ envLookup env@(resEnv, _) srcType destType = case H.lookup srcType resEnv of
     foldl (envLookupTry env destType) failure resArrows
   Nothing -> CErr [BuildTreeCErr $ "Failed to lookup arrow for " ++ show (srcType, destType)]
 
+buildImplicit :: TBEnv f -> Type -> Type -> CRes (ResArrowTree f)
+buildImplicit env (SumType srcType) destType = do
+  matchVal <- sequence $ H.fromList $ map aux $ S.toList srcType
+  return (ResArrowMatch matchVal)
+  where
+    aux leafSrcType = (leafSrcType,) $ envLookup env leafSrcType destType
 
-buildPrgm :: ResBuildEnv f -> TBExpr -> Type -> TBPrgm -> CRes (ResArrowTree f, ResExEnv f)
+-- executes an expression and then an implicit to a desired dest type
+buildExprImp :: TBEnv f -> TBExpr -> Type -> CRes (ResArrowTree f)
+buildExprImp env expr destType = do
+  t1 <- buildExpr env expr
+  let (Typed srcType) = getExprMeta expr
+  t2 <- buildImplicit env srcType destType
+  return $ ResArrowCompose t1 t2
+
+buildPrgm :: ResBuildEnv f -> LeafType -> Type -> TBPrgm -> CRes (ResArrowTree f, ResExEnv f)
 buildPrgm primEnv src dest (objectMap, _) = do
   (env, exEnv) <- makeBaseEnv primEnv objectMap
-  rootTree <- arrowBuildExpr env src dest
+  rootTree <- envLookup env src dest
   return (rootTree, exEnv)

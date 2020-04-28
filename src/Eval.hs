@@ -12,7 +12,6 @@
 module Eval where
 
 import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet          as S
 import           Syntax
 
 import TreeBuild
@@ -153,18 +152,18 @@ newEvalTree env val (ResArrowTuple name args) = do
 newEvalTree env val (ResArrowSingle r) = newEval env val r
 newEvalTree _ val ResArrowID = return val
 
-evalBuildPrgm :: EExpr -> Type -> EPrgm -> CRes (ResArrowTree EPrim, ResExEnv EPrim)
+evalBuildPrgm :: LeafType -> Type -> EPrgm -> CRes (ResArrowTree EPrim, ResExEnv EPrim)
 evalBuildPrgm = buildPrgm primEnv
 
 evalBuildMain :: EPrgm -> CRes (ResArrowTree EPrim, ResExEnv EPrim)
 evalBuildMain = evalBuildPrgm main intType
-  where main = Value (Typed $ SumType $ S.singleton $ LeafType "main" H.empty) "main"
+  where main = LeafType "main" H.empty
 
-evalPrgm :: EExpr -> Type -> EPrgm -> CRes Val
+evalPrgm :: LeafType -> Type -> EPrgm -> CRes Val
 evalPrgm src dest prgm = do
   (resArrowTree, exEnv) <- evalBuildPrgm src dest prgm
   newEvalTree exEnv NoVal resArrowTree
 
 evalMain :: EPrgm -> CRes Val
 evalMain = evalPrgm main intType
-  where main = Value (Typed $ SumType $ S.singleton $ LeafType "main" H.empty) "main"
+  where main = LeafType "main" H.empty
