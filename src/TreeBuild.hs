@@ -31,7 +31,8 @@ type TBReplRes = ReplRes TBMeta
 type TBEnv f = (ResBuildEnv f, H.HashMap LeafType (ResArrow f))
 
 resArrowDestType :: ResArrow f -> Type
-resArrowDestType (ResEArrow (Arrow (Typed tp) _ _ _)) = tp
+resArrowDestType (ResEArrow (Arrow _ _ _ (Just expr))) = (\(Typed t) -> t) $ getExprMeta expr
+resArrowDestType (ResEArrow (Arrow (Typed tp) _ _ Nothing)) = tp
 resArrowDestType (PrimArrow tp _) = tp
 resArrowDestType (ConstantArrow CInt{}) = intType
 resArrowDestType (ConstantArrow CFloat{}) = floatType
