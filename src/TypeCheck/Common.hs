@@ -150,3 +150,8 @@ addConstraints (FEnv oldCons defMap errs) newCons = FEnv (newCons ++ oldCons) de
 fInsert :: FEnv s -> String -> VarMeta s -> FEnv s
 fInsert (FEnv cons pmap errs) k v = FEnv cons (H.insert k v pmap) errs
 
+tryIntersectRawTypes :: RawType -> RawType -> String -> TypeCheckResult RawType
+tryIntersectRawTypes a b desc= let c = intersectRawTypes a b
+                            in if c == rawBottomType
+                                  then TypeCheckResE [GenTypeCheckError $ "Failed to intersect(" ++ desc ++ "): " ++ show a ++ " --- " ++ show b]
+                                  else return c

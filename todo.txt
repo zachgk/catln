@@ -54,6 +54,7 @@ Typecheck in order of topological sort of function calls
 Add caching within the pipeline for reading files, typechecking, expression evaluating, etc.
 Convert arrow guards into properties when possible
 Convert (or create secondary) `abs(Number n) -> Number = ` into `abs(Number $N n)`
+Argument inference
 Automatically compute properties of constants
 Typecheck when errors during parsing
 Make desugar curry all values to the closure instead of checking which ones are used, then run a pass that gets rid of unused arguments to a function.

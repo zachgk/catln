@@ -32,6 +32,7 @@ data RawLeafType = RawLeafType TypeName (H.HashMap TypeName RawLeafType)
   deriving (Eq, Ord, Show, Generic)
 instance Hashable RawLeafType
 
+type RawPartialType = (TypeName, H.HashMap TypeName RawType)
 type RawLeafSet = S.HashSet RawLeafType
 type RawPartialLeafs = (H.HashMap TypeName [H.HashMap TypeName RawType])
 data RawType
@@ -245,6 +246,12 @@ hasRawLeaf leaf@(RawLeafType name args) (RawSumType superLeafs superPartials) = 
       Nothing -> False
     inSuperPartial superArgs = H.keysSet args == H.keysSet superArgs && and (H.elems $ H.intersectionWith hasRawLeaf args superArgs)
 
+splitPartialLeafs :: RawPartialLeafs -> [RawPartialType]
+splitPartialLeafs partials = concatMap (\(k, vs) -> zip (repeat k) vs) $ H.toList partials
+
+joinPartialLeafs :: [RawPartialType] -> RawPartialLeafs
+joinPartialLeafs = foldr (\(pName, pArgs) partials -> H.insertWith (++) pName [pArgs] partials) H.empty
+
 -- assumes a compacted super type, does not check in superLeafs
 hasRawPartial :: (TypeName, [H.HashMap TypeName RawType]) -> RawType -> Bool
 hasRawPartial _ RawTopType = True
@@ -303,6 +310,9 @@ unionRawTypes (RawSumType aLeafs aPartials) (RawSumType bLeafs bPartials) = comp
   where
     leafs' = S.union aLeafs bLeafs
     partials' = H.unionWith (++) aPartials bPartials
+
+unionRawTypesList :: [RawType] -> RawType
+unionRawTypesList = foldr unionRawTypes rawBottomType
 
 intersectRawTypes :: RawType -> RawType -> RawType
 intersectRawTypes RawTopType t = t

@@ -18,20 +18,13 @@ import           Control.Monad.ST
 
 import           Syntax
 import           TypeCheck.Common
-import           TypeCheck.TypeGraph (reaches, boundSchemeByGraphObjects)
+import           TypeCheck.TypeGraph
 import           Data.UnionFind.ST
 import           Data.Tuple.Sequence
 
 isSolved :: Scheme -> Bool
 isSolved (TypeCheckResult _ (SType a b _)) = a == b
 isSolved _ = False
-
-tryIntersectRawTypes :: RawType -> RawType -> String -> TypeCheckResult RawType
-tryIntersectRawTypes a b desc= let c = intersectRawTypes a b
-                            in if c == rawBottomType
-                                  then TypeCheckResE [GenTypeCheckError $ "Failed to intersect(" ++ desc ++ "): " ++ show a ++ " --- " ++ show b]
-                                  else return c
-
 
 checkScheme :: String -> Scheme -> Scheme
 checkScheme msg (TypeCheckResult notes (SType ub _ desc)) | ub == rawBottomType = TypeCheckResE (GenTypeCheckError ("Scheme failed check at " ++ msg ++ ": upper bound is rawBottomType - " ++ desc) : notes)
@@ -58,10 +51,6 @@ equalizeSchemes inSchemes d = do
     then return $ SType ubBoth lbBoth descBoth
     else TypeCheckResE [GenTypeCheckError $ concat ["Type Mismatched: ", show lbBoth, " is not a subtype of ", show ubBoth]]
 
-
-lowerUb :: RawType -> RawType -> RawType
-lowerUb ub@(RawSumType ubLeafs ubPartials) lb | S.size ubLeafs == 1 && H.null ubPartials = unionRawTypes ub lb
-lowerUb _ lb = lb
 
 
 getSchemeProp :: Scheme -> Name -> Scheme
@@ -137,16 +126,16 @@ executeConstraint typeGraph cons@(ArrowTo srcPnt destPnt) = do
   destScheme <- descriptor destPnt
   case sequenceT (srcScheme, destScheme) of
     TypeCheckResE _ -> return ([], False)
-    TypeCheckResult _ (SType srcUb _ _, SType destUb destLb destDescription) -> do
-      maybeDestUbByGraph <- reaches typeGraph srcUb
-      case maybeDestUbByGraph of
-        Just destUbByGraph -> do
-          let destScheme' = tryIntersectRawTypes destUb destUbByGraph "executeConstraint ArrowTo" >>= \destUb' ->
-                let destLb' = lowerUb destUb' destLb
-                 in return $ SType destUb' destLb' destDescription
+    TypeCheckResult _ (SType srcUb srcLb srcDesc, SType destUb destLb destDesc) -> do
+      constrained <- arrowConstrainUbs typeGraph srcUb destUb
+      case constrained of
+        TypeCheckResult _ (srcUb', destUb') -> do
+          let srcScheme' = return $ SType srcUb' srcLb srcDesc
+          let destScheme' = return $ SType destUb' destLb destDesc
+          setDescriptor srcPnt srcScheme'
           setDescriptor destPnt destScheme'
-          return ([cons | not (isSolved destScheme')], destScheme /= destScheme')
-        Nothing -> return ([], False) -- remove constraint if found Left
+          return ([cons | not (isSolved destScheme')], srcScheme /= srcScheme' || destScheme /= destScheme')
+        TypeCheckResE _ -> return ([], False)
 executeConstraint typeGraph cons@(PropEq (superPnt, propName) subPnt) = do
   superScheme <- descriptor superPnt
   subScheme <- descriptor subPnt
