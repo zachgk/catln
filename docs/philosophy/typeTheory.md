@@ -8,9 +8,9 @@ The problems occur once the type theory starts adding additional ideas. For sum 
 
 The other major extension is adding generics. They are typically considered as existential qualilfiers similar to `∀a. a => a`. However, this has now introduced an entire dimension of kinds into the type system for methods.
 
-## Flng
+## Catln
 
-Flng is based on a directed graph structure. The nodes are named tuples that can either be a sum or product type. As an example, `Tree = Node(Value v, Tree left, Tree right) | Leaf(Value v)`.
+Catln is based on a directed graph structure. The nodes are named tuples that can either be a sum or product type. As an example, `Tree = Node(Value v, Tree left, Tree right) | Leaf(Value v)`.
 
 The edges of the graph represent implicit conversions. It is inspired by [Scala](https://docs.scala-lang.org/tour/implicit-conversions.html). The idea of an implicit conversion is that it represents a conversion that has a clear definition. Which implicit conversions should be taken can be inferred based off the methods that are called on the result of the conversion.
 

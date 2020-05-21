@@ -1,4 +1,4 @@
-# flng
+# catln
 
 This is a programming language designed to be very high-level and very strongly typed.
 

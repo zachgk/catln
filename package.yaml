@@ -1,6 +1,6 @@
-name:                flng
+name:                catln
 version:             0.1.0.0
-github:              "zachgk/flng"
+github:              "zachgk/catln"
 license:             MIT
 author:              "Zach Kimberg"
 maintainer:          "zachary@kimberg.com"
@@ -17,7 +17,7 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/zachgk/flng#readme>
+description:         Please see the README on GitHub at <https://github.com/zachgk/catln#readme>
 
 default-extensions:
 - OverloadedStrings
@@ -53,7 +53,7 @@ library:
   source-dirs: src
 
 executables:
-  flng-exe:
+  catln-exe:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -63,10 +63,10 @@ executables:
     - -Wall
     - -Werror
     dependencies:
-    - flng
+    - catln
 
 tests:
-  flng-test:
+  catln-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
@@ -76,4 +76,4 @@ tests:
     - -Wall
     - -Werror
     dependencies:
-    - flng
+    - catln

@@ -17,7 +17,7 @@ import Text.Pretty.Simple
 runTest :: String -> String -> IO ()
 runTest displayName fileName = defaultMain $ testCaseSteps displayName $ \step -> do
   step "Read file..."
-  maybePrgm <- desFiles [fileName, "std/std.flng"]
+  maybePrgm <- desFiles [fileName, "std/std.ct"]
   case maybePrgm of
     CErr notes -> assertFailure $ "Could not parse and desguar:\n \t" ++ show notes
     CRes _ prgm -> do
@@ -39,7 +39,7 @@ runTest displayName fileName = defaultMain $ testCaseSteps displayName $ \step -
           -- void (codegen initModule tprgm)
 
 test :: IO ()
-test = runTest "Test"  "test/code/test.flng"
+test = runTest "Test"  "test/code/test.ct"
 
 main :: IO ()
-main = runTest "Add"  "test/code/add.flng"
+main = runTest "Add"  "test/code/add.ct"

@@ -1,3 +1,3 @@
-# Changelog for flng
+# Changelog for catln
 
 ## Unreleased changes
