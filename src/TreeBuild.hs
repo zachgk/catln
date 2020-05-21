@@ -84,10 +84,7 @@ buildExpr env (TupleApply (Typed (SumType prodTypes)) (Typed baseType, baseExpr)
     [LeafType _ leafType] | H.keysSet argExprs == H.keysSet leafType -> do
                            baseBuild <- buildExprImp env baseExpr baseType
                            argVals <- mapM (\(valDestType, expr) -> buildExprImp env expr (SumType $ S.singleton valDestType)) $ H.intersectionWith (,) leafType argExprs
-                           case baseBuild of
-                             ResArrowTuple baseName baseArgs -> return $ ResArrowTuple baseName (H.union argVals baseArgs)
-                             (ResArrowCompose (ResArrowTuple baseName baseArgs) arrow2) -> return $ ResArrowCompose (ResArrowTuple baseName (H.union argVals baseArgs)) arrow2
-                             _ -> CErr [BuildTreeCErr $ "The base to apply was not a tuple: " ++ show baseBuild]
+                           return $ ResArrowTupleApply baseBuild argVals
     _ -> CErr [BuildTreeCErr $ "Found bad types for tupleApply " ++ show baseExpr]
 
 envWithVals :: TBEnv f -> H.HashMap LeafType (ResArrow f) -> TBEnv f

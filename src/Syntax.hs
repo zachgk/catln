@@ -170,6 +170,7 @@ data ResArrowTree f
   = ResArrowCompose (ResArrowTree f) (ResArrowTree f)
   | ResArrowMatch (H.HashMap LeafType (ResArrowTree f))
   | ResArrowTuple String (H.HashMap String (ResArrowTree f))
+  | ResArrowTupleApply (ResArrowTree f) (H.HashMap String (ResArrowTree f))
   | ResArrowSingle (ResArrow f)
   | ResArrowID
   deriving (Show)

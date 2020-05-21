@@ -54,6 +54,14 @@ evalTree env val (ResArrowMatch opts) = case H.lookup (getValType val) opts of
 evalTree env val (ResArrowTuple name args) = do
   args' <- traverse (evalTree env val) args
   return $ TupleVal name args'
+evalTree env val (ResArrowTupleApply base args) = do
+  base' <- evalTree env val base
+  case base' of
+    TupleVal name baseArgs -> do
+      argVals <- mapM (evalTree env val) args
+      let args' = H.union argVals baseArgs
+      return $ TupleVal name args'
+    _ -> CErr [EvalCErr "Invalid input to tuple application"]
 evalTree env val (ResArrowSingle r) = eval env val r
 evalTree _ val ResArrowID = return val
 
