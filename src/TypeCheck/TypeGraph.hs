@@ -16,6 +16,7 @@ import qualified Data.HashSet                  as S
 import           Control.Monad.ST
 import           Control.Monad
 import           Data.UnionFind.ST
+import           Data.Tuple.Sequence
 
 import           Syntax
 import           TypeCheck.Common
@@ -43,7 +44,7 @@ buildTypeGraph env objMap = do
         addArrows (aenv, (graphObjs, graphLeafs), pnts) (obj@(Object m _ _), arrows) = do
           (aenv2, graphLeafs') <- foldM (addArrow obj) (aenv, graphLeafs) arrows
           return (aenv2, (graphObjs, graphLeafs'), m:pnts)
-        addArrow obj (aenv, graphLeafs) (Arrow m _ _) = do
+        addArrow obj (aenv, graphLeafs) (Arrow m _ _ _) = do
                 leaf <- objectToLeaf obj
                 let graphLeafs2 = H.insertWith (++) leaf [m] graphLeafs
                 return (aenv, graphLeafs2)
@@ -58,27 +59,46 @@ boundSchemeByGraphObjects (graphObjs, _) (TypeCheckResult notes (SType ub lb des
       let ub' = intersectRawTypeWithPowerset ub gub
       return $ TypeCheckResult (notes2 ++ notes) (SType ub' lb desc)
 
-rawTypeFromScheme :: Scheme -> Maybe RawType
-rawTypeFromScheme (TypeCheckResult _ (SType ub _ _))  = Just ub
-rawTypeFromScheme TypeCheckResE{} = Nothing
+ubFromScheme :: Scheme -> TypeCheckResult RawType
+ubFromScheme (TypeCheckResult _ (SType ub _ _))  = return ub
+ubFromScheme (TypeCheckResE notes) = TypeCheckResE notes
 
-unionMaybeRawTypes :: [Maybe RawType] -> Maybe RawType
-unionMaybeRawTypes maybeRawTypes = case sequence maybeRawTypes of
-        Just [] -> Nothing
-        Just rawType -> Just $ foldr unionRawTypes rawBottomType rawType
-        Nothing      -> Nothing
+unionRawTypeList :: [RawType] -> RawType
+unionRawTypeList = foldr unionRawTypes rawBottomType
 
-reachesLeaf :: TypeGraph s -> RawLeafType -> ST s (Maybe RawType)
+reachesLeaf :: TypeGraph s -> RawLeafType -> ST s (TypeCheckResult RawType)
 reachesLeaf (_, graphLeafs) leaf = do
   let typePnts = H.lookupDefault [] leaf graphLeafs
   schemes <- mapM descriptor typePnts
-  let maybeRawTypes = map rawTypeFromScheme schemes
-  return $ unionMaybeRawTypes (Just (RawSumType (S.singleton leaf) H.empty) : maybeRawTypes)
+  let joined = return (RawSumType (S.singleton leaf) H.empty) : map ubFromScheme schemes
+  return $ unionRawTypesList <$> sequence joined
 
-reaches :: TypeGraph s -> RawType -> ST s (Maybe RawType)
-reaches _     RawTopType            = return $ Just RawTopType
-reaches graph (RawSumType srcLeafs srcPartials) = if H.null srcPartials
-  then do
-    resultParts <- mapM (reachesLeaf graph) $ S.toList srcLeafs
-    return $ unionMaybeRawTypes resultParts
-  else return $ Just RawTopType -- TODO: add reachesPartial method
+reachesPartial :: TypeGraph s -> RawPartialType -> ST s (TypeCheckResult RawType)
+reachesPartial _ _ = return $ return RawTopType -- TODO: build real reachesPartial method
+
+reaches :: TypeGraph s -> RawType -> ST s (TypeCheckResult RawType)
+reaches _     RawTopType            = return $ return RawTopType
+reaches graph (RawSumType srcLeafs srcPartials) = do
+  resultsByLeafs <- mapM (reachesLeaf graph) $ S.toList srcLeafs
+  resultsByPartials <- mapM (reachesPartial graph) $ splitPartialLeafs srcPartials
+  return $ unionRawTypeList <$> sequence (resultsByPartials ++ resultsByLeafs)
+
+
+arrowConstrainUbs :: TypeGraph s -> RawType -> RawType -> ST s (TypeCheckResult (RawType, RawType))
+arrowConstrainUbs _ RawTopType dest = return $ return (RawTopType, dest)
+arrowConstrainUbs typeGraph (RawSumType srcLeafs srcPartials) dest = do
+  let srcLeafList = S.toList srcLeafs
+  leafMap <- sequence $ H.fromList $ zip srcLeafList $ map (reachesLeaf typeGraph) srcLeafList
+  let srcPartialList = splitPartialLeafs srcPartials
+  partialMap <- sequence $ H.fromList $ zip srcPartialList $ map (reachesPartial typeGraph) srcPartialList
+  let leafMap' = H.filter (`hasRawType` dest) <$> sequence leafMap
+  let partialMap' = H.filter (`hasRawType` dest) <$> sequence partialMap
+  return $ do
+    (leafMap'', partialMap'') <- sequenceT (leafMap', partialMap')
+    let (srcLeafList', destByLeaf) = unzip $ H.toList leafMap''
+    let (srcPartialList', destByPartial) = unzip $ H.toList partialMap''
+    let srcLeafs' = S.fromList srcLeafList'
+    let srcPartials' = joinPartialLeafs srcPartialList'
+    let destByGraph = unionRawTypeList (destByLeaf ++ destByPartial)
+    dest' <- tryIntersectRawTypes dest destByGraph "executeConstraint ArrowTo"
+    return (RawSumType srcLeafs' srcPartials', dest')

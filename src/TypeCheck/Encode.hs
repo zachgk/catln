@@ -95,23 +95,31 @@ fromAnnot env1 (CompAnnot name args) = do
   (args', env2) <- mapMWithFEnvMap env1 fromExpr args
   return (CompAnnot name args', env2)
 
+fromGuard :: FEnv s -> PGuard -> ST s (VGuard s, FEnv s)
+fromGuard env1 (IfGuard expr) =  do
+  (expr', env2) <- fromExpr env1 expr
+  return (IfGuard expr', env2)
+fromGuard env ElseGuard = return (ElseGuard, env)
+fromGuard env NoGuard = return (NoGuard, env)
+
 arrowAddScope :: FEnv s -> VObject s -> ST s (FEnv s)
 arrowAddScope env1 (Object _ _ args) = foldM aux env1 $ H.toList args
   where aux :: FEnv s -> (String, VarMeta s) -> ST s (FEnv s)
         aux e (n, m) = return $ fInsert e n m
 
 fromArrow :: VObject s -> FEnv s -> PArrow -> ST s (VArrow s, FEnv s)
-fromArrow obj@(Object _ objName _) env1 (Arrow m annots maybeExpr) = do
+fromArrow obj@(Object _ objName _) env1 (Arrow m annots aguard maybeExpr) = do
   env2 <- arrowAddScope env1 obj
   (m', p, env3) <- fromMetaP env2 m ("Arrow result from " ++ show objName)
   (annots', env4) <- mapMWithFEnv env3 fromAnnot annots
+  (aguard', env5) <- fromGuard env4 aguard
   case maybeExpr of
     Just expr -> do
-      (vExpr, env5) <- fromExpr env4 expr
-      let env6 = addConstraints env5 [ArrowTo (getPntExpr vExpr) p]
-      let arrow' = Arrow m' annots' (Just vExpr)
-      return (arrow', fReplaceMap env6 env1)
-    Nothing -> return (Arrow m' annots' Nothing, fReplaceMap env4 env1)
+      (vExpr, env6) <- fromExpr env5 expr
+      let env7 = addConstraints env6 [ArrowTo (getPntExpr vExpr) p]
+      let arrow' = Arrow m' annots' aguard' (Just vExpr)
+      return (arrow', fReplaceMap env7 env1)
+    Nothing -> return (Arrow m' annots' aguard' Nothing, fReplaceMap env5 env1)
 
 fromObjectMap :: FEnv s -> (VObject s, [PArrow]) -> ST s ((VObject s, [VArrow s]), FEnv s)
 fromObjectMap env1 (obj, arrows) = do

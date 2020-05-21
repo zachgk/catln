@@ -90,6 +90,7 @@ instance Monad TypeCheckResult where
 type PreMeta = PreTyped
 type PExpr = Expr PreMeta
 type PCompAnnot = CompAnnot PreMeta
+type PGuard = Guard PreMeta
 type PArrow = Arrow PreMeta
 type PObject = Object PreMeta
 type PPrgm = Prgm PreMeta
@@ -98,6 +99,7 @@ type PReplRes = ReplRes PreMeta
 type ShowMeta = Scheme
 type SExpr = Expr ShowMeta
 type SCompAnnot = CompAnnot ShowMeta
+type SGuard = Guard ShowMeta
 type SArrow = Arrow ShowMeta
 type SObject = Object ShowMeta
 type SPrgm = Prgm ShowMeta
@@ -106,6 +108,7 @@ type SReplRes = ReplRes ShowMeta
 type VarMeta s = Pnt s
 type VExpr s = Expr (VarMeta s)
 type VCompAnnot s = CompAnnot (VarMeta s)
+type VGuard s = Guard (VarMeta s)
 type VArrow s = Arrow (VarMeta s)
 type VObject s = Object (VarMeta s)
 type VObjectMap s = [(VObject s, [VArrow s])]
@@ -115,6 +118,7 @@ type VReplRes s = ReplRes (VarMeta s)
 type TypedMeta = Typed
 type TExpr = Expr TypedMeta
 type TCompAnnot = CompAnnot TypedMeta
+type TGuard = Guard TypedMeta
 type TArrow = Arrow TypedMeta
 type TObject = Object TypedMeta
 type TPrgm = Prgm TypedMeta
@@ -146,3 +150,8 @@ addConstraints (FEnv oldCons defMap errs) newCons = FEnv (newCons ++ oldCons) de
 fInsert :: FEnv s -> String -> VarMeta s -> FEnv s
 fInsert (FEnv cons pmap errs) k v = FEnv cons (H.insert k v pmap) errs
 
+tryIntersectRawTypes :: RawType -> RawType -> String -> TypeCheckResult RawType
+tryIntersectRawTypes a b desc= let c = intersectRawTypes a b
+                            in if c == rawBottomType
+                                  then TypeCheckResE [GenTypeCheckError $ "Failed to intersect(" ++ desc ++ "): " ++ show a ++ " --- " ++ show b]
+                                  else return c

@@ -40,15 +40,24 @@ showCompAnnot (CompAnnot name args) = do
   args' <- mapM showExpr args
   return $ CompAnnot name args'
 
+
+showGuard :: VGuard s -> ST s SGuard
+showGuard (IfGuard e) = do
+  e' <- showExpr e
+  return $ IfGuard e'
+showGuard ElseGuard = return ElseGuard
+showGuard NoGuard = return NoGuard
+
 showArrow :: VArrow s -> ST s SArrow
-showArrow (Arrow m annots maybeExpr) = do
+showArrow (Arrow m annots guard maybeExpr) = do
   m' <- showM m
   annots' <- mapM showCompAnnot annots
+  guard' <- showGuard guard
   case maybeExpr of
     Just expr -> do
       expr' <- showExpr expr
-      return (Arrow m' annots' (Just expr'))
-    Nothing -> return (Arrow m' annots' Nothing)
+      return (Arrow m' annots' guard' (Just expr'))
+    Nothing -> return (Arrow m' annots' guard' Nothing)
 
 showObj :: (VObject s, [VArrow s]) -> ST s (SObject, [SArrow])
 showObj (Object m name args, arrows) = do

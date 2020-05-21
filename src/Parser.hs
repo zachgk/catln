@@ -131,6 +131,21 @@ pTypedIdentifier = do
 pArgs :: Parser [(Name, RawType)]
 pArgs = sepBy1 pTypedIdentifier (symbol ",")
 
+pIfGuard :: Parser PGuard
+pIfGuard = do
+  _ <- symbol "if"
+  IfGuard <$> pExpr
+
+pElseGuard :: Parser PGuard
+pElseGuard = do
+  _ <- symbol "else"
+  return ElseGuard
+
+pDeclGuard :: Parser PGuard
+pDeclGuard = fromMaybe NoGuard <$> optional (try pIfGuard
+                                              <|> pElseGuard
+                                            )
+
 pArrowRes :: Parser ParseMeta
 pArrowRes = do
   _ <- symbol "->"
@@ -141,12 +156,13 @@ pDeclLHS :: Parser PDeclLHS
 pDeclLHS = do
   val <- opIdentifier <|> identifier
   args <- optional $ try $ parens pArgs
+  guard <- pDeclGuard
   maybeArrMeta <- optional pArrowRes
   let arrMeta = fromMaybe emptyMeta maybeArrMeta
   return $ case args of
-    Just a  -> DeclLHS objMeta arrMeta val (PreTyped <$> H.fromList a)
+    Just a  -> DeclLHS objMeta arrMeta val (PreTyped <$> H.fromList a) guard
       where objMeta = PreTyped $ RawSumType S.empty (H.singleton val [H.fromList a])
-    Nothing -> DeclLHS objMeta arrMeta val H.empty
+    Nothing -> DeclLHS objMeta arrMeta val H.empty guard
       where objMeta = identifierMeta val
 
 pDeclSingle :: Parser PDecl

@@ -1,5 +1,7 @@
-- Include line number in Syntax Results
-  - Unified CompileError type
+Debug TreeBuild
+  Simplify matches in TreeBuild to have only the used path, not all possible paths
+    Need to add backwards arrows and make a function return without the implicit (direct results, not results reachable by implicit)
+  If necessary, make TreeBuild export into JSON for easier readability
 
 - Case, conditionals
   1. Add the ability to have conditional expression guards to declarations and (I think) Arrows
@@ -18,6 +20,9 @@
      2. map syntax (do notation)
      3. Context type (and macro for mapping it)
      4. Context syntax
+
+- Include line number in Syntax Results
+  - Unified CompileError type
 
 - Fix Main(Repl), Codegen
     - Main(Repl)
@@ -47,6 +52,9 @@ Typecheck in order of topological sort of function calls
   Compute with downstream functions as upper bound external
   Compute one strongly connected component at a time
 Add caching within the pipeline for reading files, typechecking, expression evaluating, etc.
+Convert arrow guards into properties when possible
+Convert (or create secondary) `abs(Number n) -> Number = ` into `abs(Number $N n)`
+Argument inference
 Automatically compute properties of constants
 Typecheck when errors during parsing
 Make desugar curry all values to the closure instead of checking which ones are used, then run a pass that gets rid of unused arguments to a function.

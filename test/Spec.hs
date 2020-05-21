@@ -4,7 +4,7 @@ import           Data.List
 import           Test.Tasty
 import           Test.Tasty.HUnit
 
-import           Syntax
+import Syntax
 import           Desugarf         (desFiles)
 -- import           Emit             (codegen, initModule)
 import           Eval.Common
@@ -30,11 +30,11 @@ runTest displayName fileName = defaultMain $ testCaseSteps displayName $ \step -
           -- step $ T.unpack $ pShow $ traceTestPrgm prgm
           step "Eval tests..."
           case evalMain tprgm of
-            Left err -> do
-              -- step $ T.unpack $ pShow $ makeBaseEnv (fst tprgm)
-              assertFailure $ "Could not eval:\n \t " ++ show err
-            Right (IntVal 0) -> return ()
-            Right err -> assertFailure $ "Bad result for:\n \t " ++ show err
+            CErr notes -> do
+              step $ T.unpack $ pShow $ evalBuildMain tprgm
+              assertFailure $ "Could not eval:\n \t " ++ show notes
+            CRes [] (IntVal 0) -> return ()
+            CRes notes res -> assertFailure $ "Bad result for:\n \t " ++ show res ++ "\n \tNotes\t" ++ show notes
           -- step "Codegen"
           -- void (codegen initModule tprgm)
 
