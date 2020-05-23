@@ -4,6 +4,7 @@ import           Data.List
 import           Test.Tasty
 import           Test.Tasty.HUnit
 
+import qualified Data.HashMap.Strict as H
 import Syntax
 import           Desugarf         (desFiles)
 -- import           Emit             (codegen, initModule)
@@ -14,13 +15,14 @@ import           TypeCheck
 import qualified Data.Text.Lazy as T
 import Text.Pretty.Simple
 
-runTest :: String -> String -> IO ()
-runTest displayName fileName = defaultMain $ testCaseSteps displayName $ \step -> do
+runTest :: Bool -> String -> String -> TestTree
+runTest includeStd displayName fileName = testCaseSteps displayName $ \step -> do
   step "Read file..."
-  maybePrgm <- desFiles [fileName, "std/std.ct"]
+  maybePrgm <- desFiles $ (fileName : ["std/std.ct" | includeStd])
   case maybePrgm of
     CErr notes -> assertFailure $ "Could not parse and desguar:\n \t" ++ show notes
     CRes _ prgm -> do
+      -- step $ T.unpack $ pShow prgm
       step "Typecheck..."
       case typecheckPrgm prgm of
         TypeCheckResE err -> do
@@ -38,8 +40,22 @@ runTest displayName fileName = defaultMain $ testCaseSteps displayName $ \step -
           -- step "Codegen"
           -- void (codegen initModule tprgm)
 
+runTests :: Bool -> [(String, String)] -> IO ()
+runTests includeStd testFiles = defaultMain $ testGroup "Tests" testTrees
+  where testTrees = map (uncurry (runTest includeStd)) testFiles
+
 test :: IO ()
-test = runTest "Test"  "test/code/test.ct"
+test = runTests False [("Test", "test/code/test.ct")]
+
+standardTests :: H.HashMap String String
+standardTests = H.fromList [ ("Syntax", "test/code/syntax.ct")
+  , ("Arithmetic", "test/code/arith.ct")
+  ]
+
+mt :: String -> IO ()
+mt k = case H.lookup k standardTests of
+  Just v -> runTests True [(k,v)]
+  Nothing -> error "invalid test name"
 
 main :: IO ()
-main = runTest "Add"  "test/code/add.ct"
+main = runTests True $ H.toList standardTests

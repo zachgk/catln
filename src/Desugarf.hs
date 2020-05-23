@@ -17,6 +17,7 @@ import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import Control.Applicative ((<$>))
 import Data.Graph
+import           Data.Bifunctor                 ( first )
 
 import           Syntax
 import           Parser.Syntax
@@ -33,25 +34,40 @@ splitDeclSubStatements = aux ([], [])
     aux (decls, annots) (RawDeclSubStatementDecl decl : subSt) = aux (decl:decls, annots) subSt
     aux (decls, annots) (RawDeclSubStatementAnnot annot : subSt) = aux (decls, annot:annots) subSt
 
-scopeSubDeclFunNamesInExpr :: Name -> S.HashSet Name -> PExpr -> PExpr
-scopeSubDeclFunNamesInExpr _ _ e@CExpr{} = e
-scopeSubDeclFunNamesInExpr prefix replaceNames (Value m name) = Value m name'
+scopeSubDeclFunNamesInS :: Name -> S.HashSet Name -> Name -> Name
+scopeSubDeclFunNamesInS prefix replaceNames name = name'
   where
     addPrefix n = prefix ++ "." ++ n
     name' = if S.member name replaceNames then addPrefix name else name
+
+scopeSubDeclFunNamesInExpr :: Name -> S.HashSet Name -> PExpr -> PExpr
+scopeSubDeclFunNamesInExpr _ _ e@CExpr{} = e
+scopeSubDeclFunNamesInExpr prefix replaceNames (Value m name) = Value m $ scopeSubDeclFunNamesInS prefix replaceNames name
 scopeSubDeclFunNamesInExpr prefix replaceNames (TupleApply m (bm, bExpr) args) = TupleApply m (bm, bExpr') args'
   where
     bExpr' = scopeSubDeclFunNamesInExpr prefix replaceNames bExpr
     args' = fmap (scopeSubDeclFunNamesInExpr prefix replaceNames) args
 
+scopeSubDeclFunNamesInMeta :: Name -> S.HashSet Name -> ParseMeta -> ParseMeta
+scopeSubDeclFunNamesInMeta prefix replaceNames (PreTyped (RawSumType leafs partials)) = PreTyped $ RawSumType leafs' partials'
+  where
+    scopeS = scopeSubDeclFunNamesInS prefix replaceNames
+    leafs' = S.fromList $ map (\(RawLeafType n args) -> RawLeafType (scopeS n) args) $ S.toList leafs
+    partials' = H.fromList $ map (first scopeS) $ H.toList partials
+scopeSubDeclFunNamesInMeta _ _ m@(PreTyped RawTopType) = m
+
 -- Renames sub functions by applying the parent names as a prefix to avoid name collisions
-scopeSubDeclFunNames :: Name -> [PSemiDecl] -> Maybe PExpr -> ([PSemiDecl], Maybe PExpr)
-scopeSubDeclFunNames prefix decls maybeExpr = (decls', expr')
+scopeSubDeclFunNames :: Name -> [PSemiDecl] -> Maybe PExpr -> [PCompAnnot] -> ParseMeta -> ParseMeta -> ([PSemiDecl], Maybe PExpr, [PCompAnnot], ParseMeta, ParseMeta)
+scopeSubDeclFunNames prefix decls maybeExpr annots objM arrM = (decls', expr', annots', objM', arrM')
   where
     declNames = S.fromList $ map (\(PSemiDecl (DeclLHS _ _ name _ _) _ _) -> name) decls
     addPrefix n = prefix ++ "." ++ n
-    decls' = map (\(PSemiDecl (DeclLHS objM arrM name args guard) annot subExpr) -> PSemiDecl (DeclLHS objM arrM (addPrefix name) args guard) annot (fmap (scopeSubDeclFunNamesInExpr prefix declNames) subExpr)) decls
+    scopeM = scopeSubDeclFunNamesInMeta prefix declNames
+    objM' = scopeM objM
+    arrM' = scopeM arrM
+    decls' = map (\(PSemiDecl (DeclLHS oM aM name args guard) annot subExpr) -> PSemiDecl (DeclLHS (scopeM oM) (scopeM aM) (addPrefix name) args guard) annot (fmap (scopeSubDeclFunNamesInExpr prefix declNames) subExpr)) decls
     expr' = fmap (scopeSubDeclFunNamesInExpr prefix declNames) maybeExpr
+    annots' = map (\(CompAnnot n ca) -> CompAnnot n (fmap (scopeSubDeclFunNamesInExpr prefix declNames) ca)) annots
 
 currySubFunctionSignature :: H.HashMap Name ParseMeta -> CallGraph -> PSemiDecl -> (PSemiDecl, (Name, H.HashMap Name ParseMeta))
 currySubFunctionSignature parentArgMap (graph, nodeFromVertex, vertexFromKey) (PSemiDecl (DeclLHS objM arrM name args guard) annot expr) = (PSemiDecl (DeclLHS objM arrM name args' guard) annot expr, (name, curryArgs))
@@ -68,31 +84,35 @@ buildCallGraph decls = graphFromEdges $ map fromDecl decls
     fromDecl (PSemiDecl (DeclLHS _ _ name _ _) _ Nothing) = ((), name, [])
     fromDecl (PSemiDecl (DeclLHS _ _ name _ _) _ (Just expr)) = ((), name, S.toList $ tupleNamesInExpr expr)
 
-currySubFunctions :: H.HashMap Name ParseMeta -> [PSemiDecl] -> Maybe PExpr -> ([PSemiDecl], Maybe PExpr)
-currySubFunctions parentArgMap decls expr = (decls', expr')
+currySubFunctionsUpdateExpr :: H.HashMap Name (H.HashMap Name ParseMeta) -> PExpr -> PExpr
+currySubFunctionsUpdateExpr _ c@CExpr{} = c
+currySubFunctionsUpdateExpr exprUpdateMap v@(Value _ vn) = case H.lookup vn exprUpdateMap of
+  Just newArgs | H.null newArgs -> v
+  Just newArgs -> TupleApply emptyMeta (emptyMeta, v) (H.mapWithKey (flip Value) newArgs)
+  Nothing -> v
+currySubFunctionsUpdateExpr exprUpdateMap (TupleApply tm (tbm, tbe) tArgs) = TupleApply tm (tbm, tbe') tArgs'
+  where
+    tbe' = currySubFunctionsUpdateExpr exprUpdateMap tbe
+    tArgs' = fmap (currySubFunctionsUpdateExpr exprUpdateMap) tArgs
+
+currySubFunctions :: H.HashMap Name ParseMeta -> [PSemiDecl] -> Maybe PExpr -> [PCompAnnot] -> ([PSemiDecl], Maybe PExpr, [PCompAnnot])
+currySubFunctions parentArgMap decls expr annots = (decls', expr', annots')
   where
     callGraph = buildCallGraph decls
     (decls2, exprUpdateSource) = unzip $ map (currySubFunctionSignature parentArgMap callGraph) decls
     exprUpdateMap = H.fromList exprUpdateSource
-    updateExpr c@CExpr{} = c
-    updateExpr v@(Value _ vn) = case H.lookup vn exprUpdateMap of
-      Just newArgs -> TupleApply emptyMeta (emptyMeta, v) (H.mapWithKey (flip Value) newArgs)
-      Nothing -> v
-    updateExpr (TupleApply tm (tbm, tbe) tArgs) = TupleApply tm (tbm, tbe') tArgs'
-      where
-        tbe' = updateExpr tbe
-        tArgs' = fmap updateExpr tArgs
-    expr' = fmap updateExpr expr
-    decls' = map (\(PSemiDecl lhs an e) -> PSemiDecl lhs an (fmap updateExpr e)) decls2
+    expr' = fmap (currySubFunctionsUpdateExpr exprUpdateMap) expr
+    decls' = map (\(PSemiDecl lhs an e) -> PSemiDecl lhs an (fmap (currySubFunctionsUpdateExpr exprUpdateMap) e)) decls2
+    annots' = map (\(CompAnnot n ca) -> CompAnnot n (fmap (currySubFunctionsUpdateExpr exprUpdateMap) ca)) annots
 
 removeSubDeclarations :: PDecl -> [PSemiDecl]
 removeSubDeclarations (RawDecl (DeclLHS objM arrM declName args guard) subStatements expr) = decl':subDecls4
   where
-    (subDecls, annots) = splitDeclSubStatements subStatements
+    (subDecls, annots1) = splitDeclSubStatements subStatements
     subDecls2 = concatMap removeSubDeclarations subDecls
-    (subDecls3, expr2) = scopeSubDeclFunNames declName subDecls2 expr
-    (subDecls4, expr3) = currySubFunctions args subDecls3 expr2
-    decl' = PSemiDecl (DeclLHS objM arrM declName args guard) annots expr3
+    (subDecls3, expr2, annots2, objM', arrM') = scopeSubDeclFunNames declName subDecls2 expr annots1 objM arrM
+    (subDecls4, expr3, annots3) = currySubFunctions args subDecls3 expr2 annots2
+    decl' = PSemiDecl (DeclLHS objM' arrM' declName args guard) annots3 expr3
 
 declToObjArrow :: PSemiDecl -> (PObject, [PArrow])
 declToObjArrow (PSemiDecl (DeclLHS objM arrM name args guard) annots expr) = (object, [arrow])

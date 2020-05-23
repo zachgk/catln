@@ -73,13 +73,13 @@ buildCompAnnot _ (CompAnnot name _ )= CErr [BuildTreeCErr $ "Unknown compiler an
 buildExpr :: TBEnv f -> TBExpr -> CRes (ResArrowTree f)
 buildExpr _ (CExpr _ c) = return $ ResArrowSingle (ConstantArrow c)
 buildExpr (_, valEnv) (Value (Typed (SumType prodTypes)) name) = case S.toList prodTypes of
-    (_:_:_) -> CErr [BuildTreeCErr $ "Found multiple types for value " ++ name]
+    (_:_:_) -> CErr [BuildTreeCErr $ "Found multiple types for value " ++ name ++ "\n\t" ++ show prodTypes]
     [] -> CErr [BuildTreeCErr $ "Found no types for value " ++ name ++ " with type " ++ show prodTypes]
     [prodType] -> return $ case H.lookup prodType valEnv of
       Just val -> ResArrowSingle val
       Nothing -> ResArrowTuple name H.empty
 buildExpr env (TupleApply (Typed (SumType prodTypes)) (Typed baseType, baseExpr) argExprs) = case S.toList prodTypes of
-    (_:_:_) -> CErr [BuildTreeCErr $ "Found multiple types for tupleApply " ++ show baseExpr]
+    (_:_:_) -> CErr [BuildTreeCErr $ "Found multiple types for tupleApply " ++ show baseExpr ++ "\n\t" ++ show prodTypes]
     [] -> CErr [BuildTreeCErr $ "Found no types for tupleApply " ++ show baseExpr ++ " with type " ++ show prodTypes ++ " and exprs " ++ show argExprs]
     [LeafType _ leafType] | H.keysSet argExprs == H.keysSet leafType -> do
                            baseBuild <- buildExprImp env baseExpr baseType
