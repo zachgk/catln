@@ -34,7 +34,7 @@ equalizeBounds :: (Scheme, Scheme) -> String -> Scheme
 equalizeBounds inSchemes d = do
   (SType ub1 lb1 desc1, SType ub2 lb2 _) <- sequenceT inSchemes
   let lbBoth = unionRawTypes lb1 lb2
-  ubBoth <- tryIntersectRawTypes ub1 ub2 $ "equalizeSchemes(" ++ d ++ ")"
+  ubBoth <- tryIntersectRawTypes ub1 ub2 $ "equalizeBounds(" ++ d ++ ")"
   if hasRawType lbBoth ubBoth
     then return $ SType ubBoth lbBoth desc1
     else TypeCheckResE [GenTypeCheckError $ concat ["Type Mismatched: ", show lbBoth, " is not a subtype of ", show ubBoth]]

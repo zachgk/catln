@@ -50,6 +50,7 @@ test = runTests False [("Test", "test/code/test.ct")]
 standardTests :: H.HashMap String String
 standardTests = H.fromList [ ("Syntax", "test/code/syntax.ct")
   , ("Arithmetic", "test/code/arith.ct")
+  , ("Id", "test/code/id.ct")
   ]
 
 mt :: String -> IO ()
