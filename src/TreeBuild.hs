@@ -16,6 +16,7 @@ module TreeBuild where
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet          as S
 import           Data.Maybe
+import           Syntax.Types
 import           Syntax
 
 type TBMeta = Typed

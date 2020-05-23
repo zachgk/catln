@@ -23,6 +23,7 @@ import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer     as L
 
 import           Lexer
+import           Syntax.Types
 import           Syntax
 import Parser.Syntax
 

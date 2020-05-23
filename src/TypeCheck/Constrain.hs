@@ -16,7 +16,7 @@ import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet as S
 import           Control.Monad.ST
 
-import           Syntax
+import           Syntax.Types
 import           TypeCheck.Common
 import           TypeCheck.TypeGraph
 import           Data.UnionFind.ST

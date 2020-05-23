@@ -12,6 +12,7 @@
 module Eval where
 
 import qualified Data.HashMap.Strict as H
+import           Syntax.Types
 import           Syntax
 
 import TreeBuild

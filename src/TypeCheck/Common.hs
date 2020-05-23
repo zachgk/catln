@@ -19,6 +19,7 @@ import           Data.UnionFind.ST
 import           Data.Hashable
 import           GHC.Generics          (Generic)
 
+import           Syntax.Types
 import           Syntax
 
 data TypeCheckError

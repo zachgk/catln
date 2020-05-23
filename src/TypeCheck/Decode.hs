@@ -19,6 +19,7 @@ import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet          as S
 import           Data.UnionFind.ST
 
+import           Syntax.Types
 import           Syntax
 import           TypeCheck.Common
 import           TypeCheck.Show (showCon)

@@ -18,6 +18,7 @@ import           Control.Monad
 import           Data.UnionFind.ST
 import           Data.Tuple.Sequence
 
+import           Syntax.Types
 import           Syntax
 import           TypeCheck.Common
 

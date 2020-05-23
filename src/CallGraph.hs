@@ -15,6 +15,7 @@ import Data.Graph
 
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
+import           Syntax.Types
 import           Syntax
 
 type CallGraph = (Graph, Vertex -> ((), Name, [Name]), Name -> Maybe Vertex)

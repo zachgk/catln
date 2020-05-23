@@ -12,6 +12,7 @@
 module Eval.Runtime where
 
 import qualified Data.HashMap.Strict as H
+import           Syntax.Types
 import           Syntax
 
 import Eval.Common

@@ -19,6 +19,7 @@ import Control.Applicative ((<$>))
 import Data.Graph
 import           Data.Bifunctor                 ( first )
 
+import           Syntax.Types
 import           Syntax
 import           Parser.Syntax
 import           Parser                   (parseFile)
