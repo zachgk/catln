@@ -20,6 +20,7 @@ import Data.Graph
 import           Data.Bifunctor                 ( first )
 
 import           Syntax.Types
+import           Syntax.Prgm
 import           Syntax
 import           Parser.Syntax
 import           Parser                   (parseFile)

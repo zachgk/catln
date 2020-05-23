@@ -14,6 +14,7 @@ module Eval.Common where
 import qualified Data.HashMap.Strict as H
 
 import           Syntax.Types
+import           Syntax.Prgm
 import           Syntax
 
 type EvalMeta = Typed

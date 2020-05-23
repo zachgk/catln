@@ -15,7 +15,7 @@ import           Control.Monad.ST
 import           Data.UnionFind.ST
 import qualified Data.HashMap.Strict as H
 
-import           Syntax
+import           Syntax.Prgm
 import           TypeCheck.Common
 
 showM :: VarMeta s -> ST s ShowMeta

@@ -20,6 +20,7 @@ import           Data.Hashable
 import           GHC.Generics          (Generic)
 
 import           Syntax.Types
+import           Syntax.Prgm
 import           Syntax
 
 data TypeCheckError

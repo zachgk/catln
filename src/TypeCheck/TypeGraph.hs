@@ -19,7 +19,7 @@ import           Data.UnionFind.ST
 import           Data.Tuple.Sequence
 
 import           Syntax.Types
-import           Syntax
+import           Syntax.Prgm
 import           TypeCheck.Common
 
 objectToLeaf :: VObject s -> ST s RawLeafType

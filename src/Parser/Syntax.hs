@@ -12,6 +12,7 @@
 module Parser.Syntax where
 
 import           Syntax.Types
+import           Syntax.Prgm
 import           Syntax
 
 type ParseMeta = PreTyped

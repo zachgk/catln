@@ -19,6 +19,7 @@ import qualified Data.HashSet          as S
 import           Data.UnionFind.ST
 
 import           Syntax.Types
+import           Syntax.Prgm
 import           Syntax
 import           TypeCheck.Common
 import           TypeCheck.TypeGraph (buildTypeGraph)
