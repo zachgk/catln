@@ -50,10 +50,10 @@ ops = [
     [ InfixL (mkOp2 "+" <$ symbol "+")
     , InfixL (mkOp2 "-" <$ symbol "-")
     ],
-    [ InfixL (mkOp2 "<" <$ symbol "<")
-    , InfixL (mkOp2 ">" <$ symbol ">")
-    , InfixL (mkOp2 "<=" <$ symbol "<=")
+    [ InfixL (mkOp2 "<=" <$ symbol "<=")
     , InfixL (mkOp2 ">=" <$ symbol ">=")
+    , InfixL (mkOp2 "<" <$ symbol "<")
+    , InfixL (mkOp2 ">" <$ symbol ">")
     , InfixL (mkOp2 "==" <$ symbol "==")
     , InfixL (mkOp2 "!=" <$ symbol "!=")
     ],
@@ -247,7 +247,7 @@ contents p = do
 
 parseFile :: String -> CRes PPrgm
 parseFile f = case runParser (contents pPrgm) "<stdin>" f of
-  Left err -> CErr [ParseCErr $ show err]
+  Left err -> CErr [ParseCErr err]
   Right prgm -> return prgm
 
 parseRepl :: String -> PReplRes

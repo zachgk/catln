@@ -20,7 +20,7 @@ runTest includeStd displayName fileName = testCaseSteps displayName $ \step -> d
   step "Read file..."
   maybePrgm <- desFiles $ (fileName : ["std/std.ct" | includeStd])
   case maybePrgm of
-    CErr notes -> assertFailure $ "Could not parse and desguar:\n \t" ++ show notes
+    CErr notes -> assertFailure $ "Could not parse and desguar:\n \t" ++ concat (map prettyCNote notes)
     CRes _ prgm -> do
       -- step $ T.unpack $ pShow prgm
       step "Typecheck..."
@@ -30,13 +30,14 @@ runTest includeStd displayName fileName = testCaseSteps displayName $ \step -> d
           assertFailure $ "Could not typecheck:\n\n\n\t" ++ intercalate "\n\n\n\t\t" (map (T.unpack . pShow) err)
         TypeCheckResult _ tprgm -> do
           -- step $ T.unpack $ pShow $ traceTestPrgm prgm
+          -- step $ T.unpack $ pShow $ tprgm
           step "Eval tests..."
           case evalMain tprgm of
             CErr notes -> do
-              step $ T.unpack $ pShow $ evalBuildMain tprgm
-              assertFailure $ "Could not eval:\n \t " ++ show notes
+              -- step $ T.unpack $ pShow $ evalBuildMain tprgm
+              assertFailure $ "Could not eval:\n\t " ++ intercalate "\n\t" (map prettyCNote notes)
             CRes [] (IntVal 0) -> return ()
-            CRes notes res -> assertFailure $ "Bad result for:\n \t " ++ show res ++ "\n \tNotes\t" ++ show notes
+            CRes notes res -> assertFailure $ "Bad result for:\n \t " ++ show res ++ "\n \tNotes\t" ++ concat (map prettyCNote notes)
           -- step "Codegen"
           -- void (codegen initModule tprgm)
 
@@ -51,6 +52,7 @@ standardTests :: H.HashMap String String
 standardTests = H.fromList [ ("Syntax", "test/code/syntax.ct")
   , ("Arithmetic", "test/code/arith.ct")
   , ("Id", "test/code/id.ct")
+  , ("Cond", "test/code/cond.ct")
   ]
 
 mt :: String -> IO ()

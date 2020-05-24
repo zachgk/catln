@@ -16,9 +16,12 @@ module Syntax where
 import           Data.Hashable
 import qualified Data.HashMap.Strict as H
 import           Data.Void             (Void)
+import           Data.List                      ( intercalate )
 
 import           GHC.Generics          (Generic)
-import           Text.Megaparsec.Error (ParseErrorBundle)
+import           Text.Megaparsec.Error (ParseErrorBundle, errorBundlePretty)
+import qualified Data.Text.Lazy as T
+import Text.Pretty.Simple
 
 import Syntax.Types
 import Syntax.Prgm
@@ -43,29 +46,62 @@ data ResArrow f
 data ResArrowTree f
   = ResArrowCompose (ResArrowTree f) (ResArrowTree f)
   | ResArrowMatch (H.HashMap LeafType (ResArrowTree f))
+  | ResArrowCond [(ResArrowTree f, ResArrowTree f)] (ResArrowTree f) -- [(if, then)] else
   | ResArrowTuple String (H.HashMap String (ResArrowTree f))
   | ResArrowTupleApply (ResArrowTree f) (H.HashMap String (ResArrowTree f))
   | ResArrowSingle (ResArrow f)
   | ResArrowID
-  deriving (Show)
 
 instance Show (ResArrow f) where
-  show (ResEArrow arrow) = "(ResEArrow " ++ show arrow ++ ")"
+  show (ResEArrow arrow) = "(ResEArrow: " ++ show arrow ++ ")"
   show (PrimArrow tp _) = "(PrimArrow " ++ show tp ++ ")"
   show (ConstantArrow c) = "(ConstantArrow " ++ show c ++ ")"
   show (ArgArrow tp n) = "(ArgArrow " ++ show tp ++ " " ++ n ++ ")"
 
+instance Show (ResArrowTree f) where
+  show (ResArrowCompose a b) = show a ++ " -> " ++ show b
+  show (ResArrowMatch args) = "match (" ++ args' ++ ")"
+    where
+      showArg (leaf, tree) = show leaf ++ " -> " ++ show tree
+      args' = intercalate ", " $ map showArg $ H.toList args
+  show (ResArrowCond ifTrees elseTree) = "( [" ++ ifTrees' ++ "] ( else " ++ show elseTree ++ ") )"
+    where
+      showIfTree (condTree, thenTree) = "if " ++ show condTree ++ " then " ++ show thenTree
+      ifTrees' = intercalate ", " $ map showIfTree ifTrees
+  show (ResArrowTuple name args) = if H.null args
+    then name
+    else name ++ "(" ++ args' ++ ")"
+    where
+      showArg (argName, val) = argName ++ " = " ++ show val
+      args' = intercalate ", " $ map showArg $ H.toList args
+  show (ResArrowTupleApply base args) = "(" ++ show base ++ ")(" ++ args' ++ ")"
+    where
+      showArg (name, val) = name ++ " = " ++ show val
+      args' = intercalate ", " $ map showArg $ H.toList args
+  show (ResArrowSingle a) = show a
+  show ResArrowID = "ResArrowID"
+
 
 -- compile errors
+type EStacktrace = [String]
 data CNote
   = GenCNote String
   | GenCErr String
-  | ParseCErr String
+  | ParseCErr ParseErrorRes
   | TypeCheckCErr
   | BuildTreeCErr String
   | AssertCErr String
-  | EvalCErr String
+  | EvalCErr EStacktrace String
+  | WrapCN [CNote] String
   deriving (Eq, Show)
+
+prettyCNote :: CNote -> String
+prettyCNote (ParseCErr p) = errorBundlePretty p
+prettyCNote (WrapCN n s) = s ++ "\n\t\t" ++ intercalate "\n\t\t" (map prettyCNote n)
+prettyCNote n = T.unpack $ pShow n
+
+wrapCErr :: [CNote] -> String -> CRes r
+wrapCErr notes s = CErr [WrapCN notes s]
 
 data CRes r
   = CRes [CNote] r
@@ -76,12 +112,12 @@ getCNotes :: CRes r -> [CNote]
 getCNotes (CRes notes _) = notes
 getCNotes (CErr notes) = notes
 
-partitionCRes :: [CRes r] -> ([CNote], ([CNote], [r]))
-partitionCRes = aux ([], ([], []))
+partitionCRes :: [CRes r] -> ([CNote], [CRes r])
+partitionCRes = aux ([], [])
   where
     aux x [] = x
-    aux (errNotes, (resNotes, res)) ((CRes newResNotes newRes):xs) = aux (errNotes, (newResNotes ++ resNotes, newRes:res)) xs
-    aux (errNotes, (resNotes, res)) ((CErr newErrNotes):xs) = aux (newErrNotes ++ errNotes, (resNotes, res)) xs
+    aux (errRes, resRes) (r@CRes{}:xs) = aux (errRes, r:resRes) xs
+    aux (errRes, resRes) ((CErr newErrNotes):xs) = aux (newErrNotes ++ errRes, resRes) xs
 
 instance Functor CRes where
   fmap f (CRes notes r) = CRes notes (f r)
@@ -106,8 +142,11 @@ newtype PreTyped = PreTyped RawType
 instance Hashable PreTyped
 
 newtype Typed = Typed Type
-  deriving (Eq, Ord, Show, Generic)
+  deriving (Eq, Ord, Generic)
 instance Hashable Typed
 
 typedIs :: Typed -> Type -> Bool
 typedIs (Typed t1) t2 = t1 == t2
+
+instance Show Typed where
+  show (Typed t) = show t

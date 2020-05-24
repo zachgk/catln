@@ -15,6 +15,7 @@ module Syntax.Prgm where
 
 import           Data.Hashable
 import qualified Data.HashMap.Strict as H
+import           Data.List                      ( intercalate )
 import           GHC.Generics          (Generic)
 
 import Syntax.Types
@@ -44,20 +45,25 @@ data Expr m
   | Value m Name
   | Arg m Name
   | TupleApply m (m, Expr m) (H.HashMap Name (Expr m))
-  deriving (Eq, Ord, Show, Generic)
+  deriving (Eq, Ord, Generic)
 instance Hashable m => Hashable (Expr m)
 
 -- Compiler Annotation
 data CompAnnot e = CompAnnot Name (H.HashMap Name e)
-  deriving (Eq, Ord, Show, Generic)
+  deriving (Eq, Ord, Generic)
 instance Hashable e => Hashable (CompAnnot e)
 
 data Guard e
   = IfGuard e
   | ElseGuard
   | NoGuard
-  deriving (Eq, Ord, Show, Generic)
+  deriving (Eq, Ord, Generic)
 instance Hashable e => Hashable (Guard e)
+
+instance Functor Guard where
+  fmap f (IfGuard e) = IfGuard (f e)
+  fmap _ ElseGuard = ElseGuard
+  fmap _ NoGuard = NoGuard
 
 data RawDeclSubStatement m
   = RawDeclSubStatementDecl (RawDecl m)
@@ -86,15 +92,53 @@ type FileImport = String
 type RawPrgm m = ([FileImport], [RawStatement m]) -- TODO: Include [Export]
 
 data Object m = Object m Name (ArgMetaMap m)
-  deriving (Eq, Ord, Show, Generic)
+  deriving (Eq, Ord, Generic)
 instance Hashable m => Hashable (Object m)
 
 data Arrow m = Arrow m [CompAnnot (Expr m)] (Guard (Expr m)) (Maybe (Expr m)) -- m is result metadata
-  deriving (Eq, Ord, Show, Generic)
+  deriving (Eq, Ord, Generic)
 instance Hashable m => Hashable (Arrow m)
 
 type ObjectMap m = (H.HashMap (Object m) [Arrow m])
 type Prgm m = (ObjectMap m, ClassMap) -- TODO: Include [Export]
+
+instance Show m => Show (Expr m) where
+  show (CExpr _ c) = show c
+  show (Value _ name) = "Value " ++ name
+  show (Arg m name) = "Arg " ++ show m ++ " " ++ name
+  show (TupleApply _ (_, baseExpr) args) = "(" ++ show baseExpr ++ ")(" ++ args' ++ ")"
+    where
+      showArg (name, expr) = name ++ " = " ++ show expr
+      args' = intercalate ", " $ map showArg $ H.toList args
+
+instance Show e => Show (CompAnnot e) where
+  show (CompAnnot name args) = if H.null args
+    then name
+    else name ++ "(" ++ args' ++ ")"
+    where
+      showArg (argName, expr) = argName ++ " = " ++ show expr
+      args' = intercalate ", " $ map showArg $ H.toList args
+
+instance Show e => Show (Guard e) where
+  show (IfGuard expr) = "if (" ++ show expr ++ ")"
+  show ElseGuard = "else"
+  show NoGuard = ""
+
+instance Show m => Show (Object m) where
+  show (Object _ name args) = "Object " ++ name ++ maybeArgsString ++ ""
+    where
+      showArg (argName, argM) = show argM ++ " " ++ argName
+      maybeArgsString = if H.size args == 0
+        then ""
+        else "(" ++ intercalate ", " (map showArg $ H.toList args) ++ ")"
+
+instance Show m => Show (Arrow m) where
+  show (Arrow m annots guard maybeExpr) = concat $ [show guard, " -> ", show m, " "] ++ showExpr maybeExpr ++ showAnnots annots
+    where
+      showExpr (Just expr) = [" = ", show expr]
+      showExpr Nothing = []
+      showAnnots [] = []
+      showAnnots _ = [" ", show annots]
 
 getExprMeta :: Expr m -> m
 getExprMeta expr = case expr of

@@ -66,7 +66,7 @@ tidentifier :: Parser String
 tidentifier = try $ lexeme $ (:) <$> upperChar <*> many alphaNumChar
 
 operators :: [String]
-operators = words "- ~ * / + - <= => < > == != & | ^"
+operators = words "- ~ * / + <= >= < > == != & | ^"
 
 opIdentifier :: Parser String
 opIdentifier = try $ lexeme $ (++) <$> string "operator" <*> opChars

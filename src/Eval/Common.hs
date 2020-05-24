@@ -12,6 +12,7 @@
 module Eval.Common where
 
 import qualified Data.HashMap.Strict as H
+import           Data.List                      ( intercalate )
 
 import           Syntax.Types
 import           Syntax.Prgm
@@ -45,7 +46,12 @@ instance Show Val where
   show (FloatVal d) = show d
   show (BoolVal b)  = show b
   show (StrVal s)   = show s
-  show (TupleVal n a)   = show n ++ show a
+  show (TupleVal name args) = if H.null args
+    then name
+    else name ++ "(" ++ args' ++ ")"
+    where
+      showArg (argName, val) = argName ++ " = " ++ show val
+      args' = intercalate ", " $ map showArg $ H.toList args
   show NoVal   = "NoVal"
 
 getValType :: Val -> LeafType

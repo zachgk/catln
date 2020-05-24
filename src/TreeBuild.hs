@@ -16,6 +16,7 @@ module TreeBuild where
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet          as S
 import           Data.Maybe
+import           Data.Tuple.Sequence
 import           Syntax.Types
 import           Syntax.Prgm
 import           Syntax
@@ -51,8 +52,8 @@ makeBaseEnv primEnv objMap = fmap (baseEnv,) exEnv
   where
     baseEnv = (H.union primEnv resEnv, H.empty)
     resEnv = H.fromListWith (++) $ concatMap resFromArrows $ H.toList objMap
-    resFromArrows (obj, arrows) = map (resFromArrow obj) arrows
-    resFromArrow (Object om _ _) arrow@(Arrow _ _ aguard _) = (leafFromMeta om, [(aguard, ResEArrow arrow)])
+    resFromArrows (obj, arrows) = mapMaybe (resFromArrow obj) arrows
+    resFromArrow (Object om _ _) arrow@(Arrow _ _ aguard expr) = fmap (const (leafFromMeta om, [(aguard, ResEArrow arrow)])) expr
     exEnv = fmap H.fromList $ sequence $ concatMap exFromArrows $ H.toList objMap
     exFromArrows (obj, arrows) = mapMaybe (exFromArrow obj) arrows
     exFromArrow _ arrow@(Arrow (Typed am) compAnnots _ maybeExpr) = fmap (\expr -> do
@@ -94,30 +95,50 @@ buildExpr env (TupleApply (Typed (SumType prodTypes)) (Typed baseType, baseExpr)
 envWithVals :: TBEnv f -> H.HashMap LeafType (ResArrow f) -> TBEnv f
 envWithVals (resEnv, _) vals = (resEnv, vals)
 
-envLookupTry :: TBEnv f -> Type -> CRes (ResArrowTree f) -> ResArrow f -> CRes (ResArrowTree f)
-envLookupTry _ _ r@CRes{} _ = r
-envLookupTry env destType failure resArrow = do
+envLookupTry :: TBEnv f -> Type -> ResArrow f -> CRes (ResArrowTree f)
+envLookupTry _ destType resArrow | hasType (resArrowDestType resArrow) destType = return $ ResArrowSingle resArrow
+envLookupTry env destType resArrow = do
   let (SumType newLeafTypes) = resArrowDestType resArrow
   let eitherAfterArrows = partitionCRes $ map (\leafType -> (leafType,) <$> envLookup env leafType destType) $ S.toList newLeafTypes
   case eitherAfterArrows of
-    ([], (notes, afterArrows)) -> do
-      let afterArrowTree = H.fromList afterArrows
-      CRes notes $ ResArrowCompose (ResArrowSingle resArrow) (ResArrowMatch afterArrowTree)
-    (_:_, _) -> failure
+    ([], afterArrows) -> do
+      let maybeAfterArrowTree = H.fromList <$> sequence afterArrows
+      fmap (ResArrowCompose (ResArrowSingle resArrow) . ResArrowMatch) maybeAfterArrowTree
+    (errNotes, _) -> wrapCErr errNotes "Failed envLookupTry"
+
+buildGuardArrows :: TBEnv f -> LeafType -> Type -> ([ResArrow f], [(TBExpr, ResArrow f)], [ResArrow f]) -> CRes (ResArrowTree f)
+buildGuardArrows env srcType destType guards = case guards of
+      ([], [], []) -> CErr [BuildTreeCErr "No arrows found on lookup"]
+      (_, _, _:_:_) -> CErr [BuildTreeCErr "Multiple ElseGuards"]
+      (noGuard, ifGuards, elseGuard) | not (null noGuard) -> case partitionCRes $ map ltry noGuard of
+                          (_, resArrowTree:_) -> resArrowTree
+                          (errNotes1, _) -> case buildGuardArrows env srcType destType ([], ifGuards, elseGuard) of
+                            r@CRes{} -> r
+                            CErr errNotes2 -> wrapCErr (errNotes1 ++ errNotes2) $ "Failed to lookup noGuard arrow from " ++ show srcType ++ " to " ++ show destType ++ "\n\tNoGuard: " ++ show noGuard
+      ([], _, []) -> CErr [BuildTreeCErr "Missing ElseGuard on envLookup"]
+      ([], ifGuards, [elseGuard]) | not (null ifGuards) -> do
+                                      let maybeIfTreePairs = mapM (\(ifCond, ifThen) -> sequenceT (buildExprImp env ifCond boolType, ltry ifThen)) ifGuards
+                                      let maybeElseTree = ltry elseGuard
+                                      case sequenceT (maybeIfTreePairs, maybeElseTree) of
+                                        (CRes notes (ifTreePairs, elseTree)) -> CRes notes $ ResArrowCond ifTreePairs elseTree
+                                        CErr notes -> wrapCErr notes "No valid ifTrees:"
+      _ -> CErr [BuildTreeCErr "Unknown arrows found in envLookup"]
+  where
+    ltry = envLookupTry env destType
 
 envLookup :: TBEnv f -> LeafType -> Type -> CRes (ResArrowTree f)
 envLookup _ srcType (SumType destTypes) | S.member srcType destTypes = return ResArrowID
 envLookup env@(resEnv, _) srcType destType = case H.lookup srcType resEnv of
-  Just guardResArrows -> do
+  Just resArrows -> do
     -- TODO: Sort resArrows by priority order before trying
-    -- TODO: Support IfGuard and ElseGuard
-    let resArrows = mapMaybe (\case
-                                  (NoGuard, resArr) -> Just resArr
-                                  _ -> Nothing
-                              ) guardResArrows
-    let failure = CErr [BuildTreeCErr $ "Failed to lookup arrow for " ++ show (srcType, destType)]
-    foldl (envLookupTry env destType) failure resArrows
-  Nothing -> CErr [BuildTreeCErr $ "Failed to lookup arrow for " ++ show (srcType, destType)]
+    let guards = (\(a,b,c) -> (concat a, concat b, concat c)) $ unzip3 $ map (\case
+                          (NoGuard, a) -> ([a], [], [])
+                          (IfGuard ifCond, ifThen) -> ([], [(ifCond, ifThen)], [])
+                          (ElseGuard, a) -> ([], [], [a])
+                      ) resArrows
+    buildGuardArrows env srcType destType guards
+
+  Nothing -> CErr [BuildTreeCErr $ "Failed to find any arrows for " ++ show (srcType, destType)]
 
 buildImplicit :: TBEnv f -> Type -> Type -> CRes (ResArrowTree f)
 buildImplicit env (SumType srcType) destType = do
@@ -131,8 +152,11 @@ buildExprImp :: TBEnv f -> TBExpr -> Type -> CRes (ResArrowTree f)
 buildExprImp env expr destType = do
   t1 <- buildExpr env expr
   let (Typed srcType) = getExprMeta expr
-  t2 <- buildImplicit env srcType destType
-  return $ ResArrowCompose t1 t2
+  if srcType == destType then
+    return t1
+    else do
+      t2 <- buildImplicit env srcType destType
+      return $ ResArrowCompose t1 t2
 
 buildPrgm :: ResBuildEnv f -> LeafType -> Type -> TBPrgm -> CRes (ResArrowTree f, ResExEnv f)
 buildPrgm primEnv src dest (objectMap, _) = do

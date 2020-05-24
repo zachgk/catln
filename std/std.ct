@@ -1,6 +1,19 @@
+operator-(Integer a) -> Integer
+operator~(Boolean a) -> Boolean
+
 operator-(Integer l, Integer r) -> Integer
 operator+(Integer l, Integer r) -> Integer
 operator*(Integer l, Integer r) -> Integer
+
+operator<=(Integer l, Integer r) -> Boolean
+operator>=(Integer l, Integer r) -> Boolean
+operator<(Integer l, Integer r) -> Boolean
+operator>(Integer l, Integer r) -> Boolean
 operator==(Integer l, Integer r) -> Boolean
+operator!=(Integer l, Integer r) -> Boolean
+
+operator&(Boolean l, Boolean r) -> Boolean
+operator|(Boolean l, Boolean r) -> Boolean
+operator^(Boolean l, Boolean r) -> Boolean
 
 data Number = Int | Float

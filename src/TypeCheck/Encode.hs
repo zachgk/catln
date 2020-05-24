@@ -103,7 +103,8 @@ fromAnnot objArgs env1 (CompAnnot name args) = do
 fromGuard :: VArgMetaMap s -> FEnv s -> PGuard -> ST s (VGuard s, FEnv s)
 fromGuard objArgs env1 (IfGuard expr) =  do
   (expr', env2) <- fromExpr objArgs env1 expr
-  return (IfGuard expr', env2)
+  bool <- fresh $ TypeCheckResult [] $ SType rboolType rawBottomType "bool"
+  return (IfGuard expr', addConstraints env2 [ArrowTo (getExprMeta expr') bool])
 fromGuard _ env ElseGuard = return (ElseGuard, env)
 fromGuard _ env NoGuard = return (NoGuard, env)
 

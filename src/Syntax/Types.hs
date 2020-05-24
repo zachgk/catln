@@ -18,6 +18,7 @@ import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet          as S
 import           Data.Either
 import           Data.Maybe
+import           Data.List
 import           GHC.Generics          (Generic)
 
 type Name = String
@@ -39,11 +40,11 @@ data RawType
 instance Hashable RawType
 
 data LeafType = LeafType String (H.HashMap String LeafType)
-  deriving (Eq, Ord, Show, Generic)
+  deriving (Eq, Ord, Generic)
 instance Hashable LeafType
 
 newtype Type = SumType (S.HashSet LeafType)
-  deriving (Eq, Ord, Show, Generic)
+  deriving (Eq, Ord, Generic)
 instance Hashable Type
 
 type Sealed = Bool -- whether the typeclass can be extended or not
@@ -52,6 +53,20 @@ data TypeClass = TypeClass Name Sealed RawLeafSet
 instance Hashable TypeClass
 
 type ClassMap = (H.HashMap TypeName (S.HashSet ClassName), H.HashMap ClassName (Sealed, S.HashSet TypeName))
+
+instance Show LeafType where
+  show (LeafType name args) = if null args then name
+    else name ++ "(" ++ args' ++ ")"
+    where
+      args' = intercalate ", " (map prettyArg $ H.toList args)
+      prettyArg (argName, argType) = show argType ++ " " ++ argName
+
+instance Show Type where
+  show (SumType leafs) = if S.size leafs == 1
+    then sumString
+    else "(" ++ sumString ++ ")"
+    where sumString = intercalate " | " (map show $ S.toList leafs)
+
 
 rintLeaf, rfloatLeaf, rboolLeaf, rstrLeaf :: RawLeafType
 rintLeaf = RawLeafType "Integer" H.empty

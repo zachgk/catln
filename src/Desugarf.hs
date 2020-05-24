@@ -124,9 +124,7 @@ desExpr arrArgs (RawValue m n) = if H.member n arrArgs
 desExpr arrArgs (RawTupleApply m (bm, be) args) = TupleApply m (bm, desExpr arrArgs be) (fmap (desExpr arrArgs) args)
 
 desGuard :: PArgMetaMap -> PGuard -> DesGuard
-desGuard arrArgs (IfGuard e) = IfGuard (desExpr arrArgs e)
-desGuard _ ElseGuard = ElseGuard
-desGuard _ NoGuard = NoGuard
+desGuard arrArgs = fmap (desExpr arrArgs)
 
 desAnnot :: PArgMetaMap -> PCompAnnot -> DesCompAnnot
 desAnnot arrArgs (CompAnnot name args) = CompAnnot name (fmap (desExpr arrArgs) args)
