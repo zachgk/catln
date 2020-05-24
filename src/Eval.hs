@@ -31,41 +31,44 @@ evalCompAnnot (TupleVal "assert" args) = case (H.lookup "test" args, H.lookup "m
 evalCompAnnot (TupleVal name _) = CErr [EvalCErr $ "Unknown compiler annotation " ++ name]
 evalCompAnnot _ = CErr [EvalCErr "Eval: Invalid compiler annotation type"]
 
-eval :: Env -> Val -> ResArrow EPrim -> CRes Val
-eval env val (ResEArrow arrow) = case envLookupResArrowTree env arrow of
+eval :: Env -> Args -> Val -> ResArrow EPrim -> CRes Val
+eval env _ val@(TupleVal _ newArrArgs) (ResEArrow arrow) = case envLookupResArrowTree env arrow of
   Just (resArrowTree, compAnnots) -> do
     mapM_ (\compAnnot -> do
-              compAnnot' <- evalTree env NoVal compAnnot
+              compAnnot' <- evalTree env newArrArgs NoVal compAnnot
               return $ evalCompAnnot compAnnot'
           ) compAnnots
-    evalTree env val resArrowTree
+    evalTree env newArrArgs val resArrowTree
   Nothing -> CErr [EvalCErr "Failed to find arrow in eval resArrow"]
-eval _ (TupleVal _ args) (PrimArrow _ f) = return $ f args
-eval _ _ (ConstantArrow (CInt i)) = return $ IntVal i
-eval _ _ (ConstantArrow (CFloat f)) = return $ FloatVal f
-eval _ _ (ConstantArrow (CStr s)) = return $ StrVal s
-eval _ _ _ = error "Bad eval resArrow"
+eval _ _ (TupleVal _ args) (PrimArrow _ f) = return $ f args
+eval _ _ _ (ConstantArrow (CInt i)) = return $ IntVal i
+eval _ _ _ (ConstantArrow (CFloat f)) = return $ FloatVal f
+eval _ _ _ (ConstantArrow (CStr s)) = return $ StrVal s
+eval _ args _ (ArgArrow _ name) = case H.lookup name args of
+  Just arg -> return arg
+  Nothing -> CErr [EvalCErr $ "Invalid arg: " ++ name]
+eval _ _ _ _ = error "Bad eval resArrow"
 
-evalTree :: Env -> Val -> ResArrowTree EPrim -> CRes Val
-evalTree env val (ResArrowCompose t1 t2) = do
-  val' <- evalTree env val t1
-  evalTree env val' t2
-evalTree env val (ResArrowMatch opts) = case H.lookup (getValType val) opts of
-  Just resArrowTree -> evalTree env val resArrowTree
+evalTree :: Env -> Args -> Val -> ResArrowTree EPrim -> CRes Val
+evalTree env arrArgs val (ResArrowCompose t1 t2) = do
+  val' <- evalTree env arrArgs val t1
+  evalTree env arrArgs val' t2
+evalTree env arrArgs val (ResArrowMatch opts) = case H.lookup (getValType val) opts of
+  Just resArrowTree -> evalTree env arrArgs val resArrowTree
   Nothing -> CErr [EvalCErr $ "Failed match in eval resArrowTree: \n\t" ++ show val ++ "\n\t" ++ show opts]
-evalTree env val (ResArrowTuple name args) = do
-  args' <- traverse (evalTree env val) args
+evalTree env arrArgs val (ResArrowTuple name args) = do
+  args' <- traverse (evalTree env arrArgs val) args
   return $ TupleVal name args'
-evalTree env val (ResArrowTupleApply base args) = do
-  base' <- evalTree env val base
+evalTree env arrArgs val (ResArrowTupleApply base args) = do
+  base' <- evalTree env arrArgs val base
   case base' of
     TupleVal name baseArgs -> do
-      argVals <- mapM (evalTree env val) args
+      argVals <- mapM (evalTree env arrArgs val) args
       let args' = H.union argVals baseArgs
       return $ TupleVal name args'
     _ -> CErr [EvalCErr "Invalid input to tuple application"]
-evalTree env val (ResArrowSingle r) = eval env val r
-evalTree _ val ResArrowID = return val
+evalTree env arrArgs val (ResArrowSingle r) = eval env arrArgs val r
+evalTree _ _ val ResArrowID = return val
 
 evalBuildPrgm :: LeafType -> Type -> EPrgm -> CRes (ResArrowTree EPrim, ResExEnv EPrim)
 evalBuildPrgm = buildPrgm primEnv
@@ -75,9 +78,9 @@ evalBuildMain = evalBuildPrgm main intType
   where main = LeafType "main" H.empty
 
 evalPrgm :: LeafType -> Type -> EPrgm -> CRes Val
-evalPrgm src dest prgm = do
+evalPrgm src@(LeafType srcName _) dest prgm = do
   (resArrowTree, exEnv) <- evalBuildPrgm src dest prgm
-  evalTree exEnv NoVal resArrowTree
+  evalTree exEnv H.empty (TupleVal srcName H.empty) resArrowTree
 
 evalMain :: EPrgm -> CRes Val
 evalMain = evalPrgm main intType

@@ -42,6 +42,7 @@ instance Hashable m => Hashable (RawExpr m)
 data Expr m
   = CExpr m Constant
   | Value m Name
+  | Arg m Name
   | TupleApply m (m, Expr m) (H.HashMap Name (Expr m))
   deriving (Eq, Ord, Show, Generic)
 instance Hashable m => Hashable (Expr m)
@@ -63,7 +64,8 @@ data RawDeclSubStatement m
   | RawDeclSubStatementAnnot (CompAnnot (RawExpr m))
   deriving (Eq, Ord, Show)
 
-data DeclLHS m e = DeclLHS m m Name (H.HashMap Name m) (Guard e) -- objM, arrM
+type ArgMetaMap m = (H.HashMap Name m)
+data DeclLHS m e = DeclLHS m m Name (ArgMetaMap m) (Guard e) -- objM, arrM
   deriving (Eq, Ord, Show)
 
 data RawDecl m = RawDecl (DeclLHS m (RawExpr m)) [RawDeclSubStatement m] (Maybe (RawExpr m))
@@ -83,7 +85,7 @@ data RawStatement m
 type FileImport = String
 type RawPrgm m = ([FileImport], [RawStatement m]) -- TODO: Include [Export]
 
-data Object m = Object m Name (H.HashMap Name m)
+data Object m = Object m Name (ArgMetaMap m)
   deriving (Eq, Ord, Show, Generic)
 instance Hashable m => Hashable (Object m)
 
@@ -98,4 +100,5 @@ getExprMeta :: Expr m -> m
 getExprMeta expr = case expr of
   CExpr m _   -> m
   Value m _   -> m
+  Arg m _   -> m
   TupleApply m _ _ -> m

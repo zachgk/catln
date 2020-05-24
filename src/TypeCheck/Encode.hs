@@ -27,9 +27,6 @@ import           TypeCheck.TypeGraph (buildTypeGraph)
 makeBaseFEnv :: ST s (FEnv s)
 makeBaseFEnv = return $ FEnv [] H.empty []
 
-fReplaceMap :: FEnv s -> FEnv s -> FEnv s
-fReplaceMap (FEnv cons _ errs1) (FEnv _ pmap errs2) = FEnv cons pmap (errs1 ++ errs2)
-
 fromMetaP :: FEnv s -> PreMeta -> String -> ST s (VarMeta s, Pnt s, FEnv s)
 fromMetaP env (PreTyped mt) description = do
   p <- fresh (TypeCheckResult [] $ SType mt rawBottomType description)
@@ -64,27 +61,33 @@ mapMWithFEnvMapWithKey env f hmap = do
       ((k2, b), e2) <- f e (k, a)
       return ((k2, b), e2)
 
-fromExpr :: FEnv s -> PExpr -> ST s (VExpr s, FEnv s)
-fromExpr env (CExpr m (CInt i)) = do
+fromExpr :: VArgMetaMap s -> FEnv s -> PExpr -> ST s (VExpr s, FEnv s)
+fromExpr _ env (CExpr m (CInt i)) = do
   (m', p, env') <- fromMetaP env m ("Constant int " ++ show i)
   return (CExpr m' (CInt i), addConstraints env' [EqualsKnown p rintType])
-fromExpr env (CExpr m (CFloat f)) = do
+fromExpr _ env (CExpr m (CFloat f)) = do
   (m', p, env') <- fromMetaP env m ("Constant float " ++ show f)
   return (CExpr m' (CFloat f), addConstraints env' [EqualsKnown p rfloatType])
-fromExpr env (CExpr m (CStr s)) = do
+fromExpr _ env (CExpr m (CStr s)) = do
   (m', p, env') <- fromMetaP env m ("Constant str " ++ s)
   return (CExpr m' (CStr s), addConstraints env' [EqualsKnown p rstrType])
-fromExpr env1 (Value m name) = do
+fromExpr _ env1 (Value m name) = do
   (m', p, env2) <- fromMetaP env1 m ("Value " ++ name)
   case fLookup env2 name of
     (Nothing, _) -> error $ "Could not find value " ++ name
     (Just lookupM, env3) ->
       return (Value m' name, addConstraints env3 [EqPoints p (getPnt lookupM)])
-fromExpr env1 (TupleApply m (baseM, baseExpr) args) = do
+fromExpr objArgs env1 (Arg m name) = do
+  (m', p, env2) <- fromMetaP env1 m ("Arg " ++ name)
+  case H.lookup name objArgs of
+    Nothing -> error $ "Could not find arg " ++ name
+    Just lookupArg ->
+      return (Arg m' name, addConstraints env2 [EqPoints p (getPnt lookupArg)])
+fromExpr objArgs env1 (TupleApply m (baseM, baseExpr) args) = do
   (m', p, env2) <- fromMetaP env1 m "TupleApply Meta"
   (baseM', baseP, env3) <- fromMetaP env2 baseM "TupleApply BaseMeta"
-  (baseExpr', env4) <- fromExpr env3 baseExpr
-  (args', env5) <- mapMWithFEnvMap env4 fromExpr args
+  (baseExpr', env4) <- fromExpr objArgs env3 baseExpr
+  (args', env5) <- mapMWithFEnvMap env4 (fromExpr objArgs) args
   convertExprMetas <- mapM (\_ -> fresh (TypeCheckResult [] $ SType RawTopType rawBottomType "Tuple converted expr meta")) args
   let arrowArgConstraints = H.elems $ H.intersectionWith ArrowTo (fmap getPntExpr args') convertExprMetas
   let tupleConstraints = H.elems $ H.mapWithKey (\name ceMeta -> PropEq (p, name) ceMeta) convertExprMetas
@@ -92,36 +95,30 @@ fromExpr env1 (TupleApply m (baseM, baseExpr) args) = do
   let env6 = addConstraints env5 constraints
   return (TupleApply m' (baseM', baseExpr') args', env6)
 
-fromAnnot :: FEnv s -> PCompAnnot -> ST s (VCompAnnot s, FEnv s)
-fromAnnot env1 (CompAnnot name args) = do
-  (args', env2) <- mapMWithFEnvMap env1 fromExpr args
+fromAnnot :: VArgMetaMap s -> FEnv s -> PCompAnnot -> ST s (VCompAnnot s, FEnv s)
+fromAnnot objArgs env1 (CompAnnot name args) = do
+  (args', env2) <- mapMWithFEnvMap env1 (fromExpr objArgs) args
   return (CompAnnot name args', env2)
 
-fromGuard :: FEnv s -> PGuard -> ST s (VGuard s, FEnv s)
-fromGuard env1 (IfGuard expr) =  do
-  (expr', env2) <- fromExpr env1 expr
+fromGuard :: VArgMetaMap s -> FEnv s -> PGuard -> ST s (VGuard s, FEnv s)
+fromGuard objArgs env1 (IfGuard expr) =  do
+  (expr', env2) <- fromExpr objArgs env1 expr
   return (IfGuard expr', env2)
-fromGuard env ElseGuard = return (ElseGuard, env)
-fromGuard env NoGuard = return (NoGuard, env)
-
-arrowAddScope :: FEnv s -> VObject s -> ST s (FEnv s)
-arrowAddScope env1 (Object _ _ args) = foldM aux env1 $ H.toList args
-  where aux :: FEnv s -> (String, VarMeta s) -> ST s (FEnv s)
-        aux e (n, m) = return $ fInsert e n m
+fromGuard _ env ElseGuard = return (ElseGuard, env)
+fromGuard _ env NoGuard = return (NoGuard, env)
 
 fromArrow :: VObject s -> FEnv s -> PArrow -> ST s (VArrow s, FEnv s)
-fromArrow obj@(Object _ objName _) env1 (Arrow m annots aguard maybeExpr) = do
-  env2 <- arrowAddScope env1 obj
-  (m', p, env3) <- fromMetaP env2 m ("Arrow result from " ++ show objName)
-  (annots', env4) <- mapMWithFEnv env3 fromAnnot annots
-  (aguard', env5) <- fromGuard env4 aguard
+fromArrow (Object _ objName objArgs) env1 (Arrow m annots aguard maybeExpr) = do
+  (m', p, env2) <- fromMetaP env1 m ("Arrow result from " ++ show objName)
+  (annots', env3) <- mapMWithFEnv env2 (fromAnnot objArgs) annots
+  (aguard', env4) <- fromGuard objArgs env3 aguard
   case maybeExpr of
     Just expr -> do
-      (vExpr, env6) <- fromExpr env5 expr
-      let env7 = addConstraints env6 [ArrowTo (getPntExpr vExpr) p]
+      (vExpr, env5) <- fromExpr objArgs env4 expr
+      let env6 = addConstraints env5 [ArrowTo (getPntExpr vExpr) p]
       let arrow' = Arrow m' annots' aguard' (Just vExpr)
-      return (arrow', fReplaceMap env7 env1)
-    Nothing -> return (Arrow m' annots' aguard' Nothing, fReplaceMap env5 env1)
+      return (arrow', env6)
+    Nothing -> return (Arrow m' annots' aguard' Nothing, env4)
 
 fromObjectMap :: FEnv s -> (VObject s, [PArrow]) -> ST s ((VObject s, [VArrow s]), FEnv s)
 fromObjectMap env1 (obj, arrows) = do

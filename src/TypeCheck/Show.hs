@@ -28,6 +28,9 @@ showExpr (CExpr m c) = do
 showExpr (Value m name) = do
   m' <- showM m
   return (Value m' name)
+showExpr (Arg m name) = do
+  m' <- showM m
+  return (Arg m' name)
 showExpr (TupleApply m (bm, base) args) = do
   m' <- showM m
   bm' <- showM bm

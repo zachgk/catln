@@ -76,6 +76,9 @@ toExpr env (CExpr m c) = do
 toExpr env (Value m name) = do
   m' <- toMeta env m $ "Value_" ++ name
   return $ fmap (`Value` name) m'
+toExpr env (Arg m name) = do
+  m' <- toMeta env m $ "Arg_" ++ name
+  return $ fmap (`Arg` name) m'
 toExpr env (TupleApply m (baseM, baseExpr) args) = do
   m' <- toMeta env m "TupleApply_M"
   baseM' <- toMeta env baseM "TupleApply_baseM"

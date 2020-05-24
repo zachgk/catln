@@ -30,12 +30,14 @@ type EPrim = H.HashMap String Val -> Val
 
 type Env = ResExEnv EPrim
 
+type Args = H.HashMap String Val
+
 data Val
   = IntVal Integer
   | FloatVal Double
   | BoolVal Bool
   | StrVal String
-  | TupleVal String (H.HashMap String Val)
+  | TupleVal String Args
   | NoVal
 
 instance Show Val where

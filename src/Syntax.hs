@@ -38,6 +38,7 @@ data ResArrow f
   = ResEArrow (Arrow Typed)
   | PrimArrow Type f
   | ConstantArrow Constant
+  | ArgArrow Type String
 
 data ResArrowTree f
   = ResArrowCompose (ResArrowTree f) (ResArrowTree f)
@@ -52,6 +53,7 @@ instance Show (ResArrow f) where
   show (ResEArrow arrow) = "(ResEArrow " ++ show arrow ++ ")"
   show (PrimArrow tp _) = "(PrimArrow " ++ show tp ++ ")"
   show (ConstantArrow c) = "(ConstantArrow " ++ show c ++ ")"
+  show (ArgArrow tp n) = "(ArgArrow " ++ show tp ++ " " ++ n ++ ")"
 
 
 -- compile errors

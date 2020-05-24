@@ -108,6 +108,7 @@ type SPrgm = Prgm ShowMeta
 type SReplRes = ReplRes ShowMeta
 
 type VarMeta s = Pnt s
+type VArgMetaMap s = ArgMetaMap (VarMeta s)
 type VExpr s = Expr (VarMeta s)
 type VCompAnnot s = CompAnnot (VExpr s)
 type VGuard s = Guard (VExpr s)

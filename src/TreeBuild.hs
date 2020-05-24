@@ -39,6 +39,7 @@ resArrowDestType (PrimArrow tp _) = tp
 resArrowDestType (ConstantArrow CInt{}) = intType
 resArrowDestType (ConstantArrow CFloat{}) = floatType
 resArrowDestType (ConstantArrow CStr{}) = strType
+resArrowDestType (ArgArrow tp _) = tp
 
 leafFromMeta :: TBMeta -> LeafType
 leafFromMeta (Typed (SumType prodTypes)) = case S.toList prodTypes of
@@ -80,6 +81,7 @@ buildExpr (_, valEnv) (Value (Typed (SumType prodTypes)) name) = case S.toList p
     [prodType] -> return $ case H.lookup prodType valEnv of
       Just val -> ResArrowSingle val
       Nothing -> ResArrowTuple name H.empty
+buildExpr _ (Arg (Typed tp) name) = return $ ResArrowSingle $ ArgArrow tp name
 buildExpr env (TupleApply (Typed (SumType prodTypes)) (Typed baseType, baseExpr) argExprs) = case S.toList prodTypes of
     (_:_:_) -> CErr [BuildTreeCErr $ "Found multiple types for tupleApply " ++ show baseExpr ++ "\n\t" ++ show prodTypes]
     [] -> CErr [BuildTreeCErr $ "Found no types for tupleApply " ++ show baseExpr ++ " with type " ++ show prodTypes ++ " and exprs " ++ show argExprs]

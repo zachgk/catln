@@ -16,6 +16,7 @@ import           Syntax.Prgm
 import           Syntax
 
 type ParseMeta = PreTyped
+type PArgMetaMap = ArgMetaMap ParseMeta
 type PExpr = RawExpr ParseMeta
 type PCompAnnot = CompAnnot PExpr
 type PGuard = Guard PExpr

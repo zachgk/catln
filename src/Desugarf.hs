@@ -116,24 +116,26 @@ removeSubDeclarations (RawDecl (DeclLHS objM arrM declName args guard) subStatem
     (subDecls4, expr3, annots3) = currySubFunctions args subDecls3 expr2 annots2
     decl' = PSemiDecl (DeclLHS objM' arrM' declName args guard) annots3 expr3
 
-desExpr :: PExpr -> DesExpr
-desExpr (RawCExpr m c) = CExpr m c
-desExpr (RawValue m n) = Value m n
-desExpr (RawTupleApply m (bm, be) args) = TupleApply m (bm, desExpr be) (fmap desExpr args)
+desExpr :: PArgMetaMap -> PExpr -> DesExpr
+desExpr _ (RawCExpr m c) = CExpr m c
+desExpr arrArgs (RawValue m n) = if H.member n arrArgs
+  then Arg m n
+  else Value m n
+desExpr arrArgs (RawTupleApply m (bm, be) args) = TupleApply m (bm, desExpr arrArgs be) (fmap (desExpr arrArgs) args)
 
-desGuard :: PGuard -> DesGuard
-desGuard (IfGuard e) = IfGuard (desExpr e)
-desGuard ElseGuard = ElseGuard
-desGuard NoGuard = NoGuard
+desGuard :: PArgMetaMap -> PGuard -> DesGuard
+desGuard arrArgs (IfGuard e) = IfGuard (desExpr arrArgs e)
+desGuard _ ElseGuard = ElseGuard
+desGuard _ NoGuard = NoGuard
 
-desAnnot :: PCompAnnot -> DesCompAnnot
-desAnnot (CompAnnot name args) = CompAnnot name (fmap desExpr args)
+desAnnot :: PArgMetaMap -> PCompAnnot -> DesCompAnnot
+desAnnot arrArgs (CompAnnot name args) = CompAnnot name (fmap (desExpr arrArgs) args)
 
 declToObjArrow :: PSemiDecl -> (PObject, [PArrow])
 declToObjArrow (PSemiDecl (DeclLHS objM arrM name args guard) annots expr) = (object, [arrow])
   where
     object = Object objM name args
-    arrow = Arrow arrM (map desAnnot annots) (desGuard guard) (fmap desExpr expr)
+    arrow = Arrow arrM (map (desAnnot args) annots) (desGuard args guard) (fmap (desExpr args) expr)
 
 desDecl :: PDecl -> PObjectMap
 desDecl decl = H.fromList $ map declToObjArrow $ removeSubDeclarations decl
