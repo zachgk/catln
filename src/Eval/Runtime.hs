@@ -18,7 +18,9 @@ import           Syntax
 
 import Eval.Common
 
-liftIntOp :: Name -> (Integer -> Integer -> Integer) -> (LeafType, [(Guard Typed, ResArrow EPrim)])
+type Op = (LeafType, [(Guard (Expr Typed), ResArrow EPrim)])
+
+liftIntOp :: Name -> (Integer -> Integer -> Integer) -> Op
 liftIntOp name f = (srcType, [(NoGuard, arrow)])
   where
     srcType = LeafType ("operator" ++ name) (H.fromList [("l", intLeaf), ("r", intLeaf)])
@@ -27,7 +29,7 @@ liftIntOp name f = (srcType, [(NoGuard, arrow)])
                            _ -> error "Invalid intOp signature"
                            )
 
-liftCmpOp :: Name -> (Integer -> Integer -> Bool) -> (LeafType, [(Guard Typed, ResArrow EPrim)])
+liftCmpOp :: Name -> (Integer -> Integer -> Bool) -> Op
 liftCmpOp name f = (srcType, [(NoGuard, arrow)])
   where
     srcType = LeafType ("operator" ++ name) (H.fromList [("l", intLeaf), ("r", intLeaf)])
@@ -36,7 +38,7 @@ liftCmpOp name f = (srcType, [(NoGuard, arrow)])
                            _ -> error "Invalid compOp signature"
                            )
 
-liftBoolOp :: Name -> (Bool -> Bool -> Bool) -> (LeafType, [(Guard Typed, ResArrow EPrim)])
+liftBoolOp :: Name -> (Bool -> Bool -> Bool) -> Op
 liftBoolOp name f = (srcType, [(NoGuard, arrow)])
   where
     srcType = LeafType ("operator" ++ name) (H.fromList [("l", boolLeaf), ("r", boolLeaf)])
@@ -45,7 +47,7 @@ liftBoolOp name f = (srcType, [(NoGuard, arrow)])
                            _ -> error "Invalid boolOp signature"
                            )
 
-rnot :: Name -> (LeafType, [(Guard Typed, ResArrow EPrim)])
+rnot :: Name -> Op
 rnot name = (srcType, [(NoGuard, arrow)])
   where
     srcType = LeafType ("operator" ++ name) (H.singleton "a" boolLeaf)

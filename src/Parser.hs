@@ -32,11 +32,11 @@ identifierMeta :: String -> ParseMeta
 identifierMeta i = PreTyped $ RawSumType (S.singleton $ RawLeafType i H.empty) H.empty
 
 mkOp1 :: String -> PExpr -> PExpr
-mkOp1 opChars x = TupleApply emptyMeta (emptyMeta, Value emptyMeta op) (H.singleton "a" x)
+mkOp1 opChars x = RawTupleApply emptyMeta (emptyMeta, RawValue emptyMeta op) (H.singleton "a" x)
   where op = "operator" ++ opChars
 
 mkOp2 :: String -> PExpr -> PExpr -> PExpr
-mkOp2 opChars x y = TupleApply emptyMeta (emptyMeta, Value emptyMeta op) (H.fromList [("l", x), ("r", y)])
+mkOp2 opChars x y = RawTupleApply emptyMeta (emptyMeta, RawValue emptyMeta op) (H.fromList [("l", x), ("r", y)])
   where op = "operator" ++ opChars
 
 ops :: [[Operator Parser PExpr]]
@@ -79,7 +79,7 @@ pCall :: Parser PExpr
 pCall = do
   funName <- (:) <$> letterChar <*> many alphaNumChar
   argVals <- parens $ sepBy1 pCallArg (symbol ",")
-  return $ TupleApply emptyMeta (emptyMeta, Value emptyMeta funName) (H.fromList argVals)
+  return $ RawTupleApply emptyMeta (emptyMeta, RawValue emptyMeta funName) (H.fromList argVals)
 
 pCompAnnot :: Parser PCompAnnot
 pCompAnnot = do
@@ -89,14 +89,14 @@ pCompAnnot = do
   return $ CompAnnot annotName (H.fromList argVals)
 
 pStringLiteral :: Parser PExpr
-pStringLiteral = CExpr emptyMeta . CStr <$> (char '\"' *> manyTill L.charLiteral (char '\"'))
+pStringLiteral = RawCExpr emptyMeta . CStr <$> (char '\"' *> manyTill L.charLiteral (char '\"'))
 
 term :: Parser PExpr
 term = try (parens pExpr)
        <|> try pCall
        <|> pStringLiteral
-       <|> try (Value emptyMeta <$> identifier)
-       <|> CExpr emptyMeta . CInt <$> integer
+       <|> try (RawValue emptyMeta <$> identifier)
+       <|> RawCExpr emptyMeta . CInt <$> integer
 
 pExpr :: Parser PExpr
 pExpr = makeExprParser term ops

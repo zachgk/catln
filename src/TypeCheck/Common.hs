@@ -91,8 +91,8 @@ instance Monad TypeCheckResult where
 
 type PreMeta = PreTyped
 type PExpr = Expr PreMeta
-type PCompAnnot = CompAnnot PreMeta
-type PGuard = Guard PreMeta
+type PCompAnnot = CompAnnot PExpr
+type PGuard = Guard PExpr
 type PArrow = Arrow PreMeta
 type PObject = Object PreMeta
 type PPrgm = Prgm PreMeta
@@ -100,8 +100,8 @@ type PReplRes = ReplRes PreMeta
 
 type ShowMeta = Scheme
 type SExpr = Expr ShowMeta
-type SCompAnnot = CompAnnot ShowMeta
-type SGuard = Guard ShowMeta
+type SCompAnnot = CompAnnot SExpr
+type SGuard = Guard SExpr
 type SArrow = Arrow ShowMeta
 type SObject = Object ShowMeta
 type SPrgm = Prgm ShowMeta
@@ -109,8 +109,8 @@ type SReplRes = ReplRes ShowMeta
 
 type VarMeta s = Pnt s
 type VExpr s = Expr (VarMeta s)
-type VCompAnnot s = CompAnnot (VarMeta s)
-type VGuard s = Guard (VarMeta s)
+type VCompAnnot s = CompAnnot (VExpr s)
+type VGuard s = Guard (VExpr s)
 type VArrow s = Arrow (VarMeta s)
 type VObject s = Object (VarMeta s)
 type VObjectMap s = [(VObject s, [VArrow s])]
@@ -119,8 +119,8 @@ type VReplRes s = ReplRes (VarMeta s)
 
 type TypedMeta = Typed
 type TExpr = Expr TypedMeta
-type TCompAnnot = CompAnnot TypedMeta
-type TGuard = Guard TypedMeta
+type TCompAnnot = CompAnnot TExpr
+type TGuard = Guard TExpr
 type TArrow = Arrow TypedMeta
 type TObject = Object TypedMeta
 type TPrgm = Prgm TypedMeta

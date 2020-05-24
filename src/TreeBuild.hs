@@ -21,10 +21,10 @@ import           Syntax.Prgm
 import           Syntax
 
 type TBMeta = Typed
-type TBCompAnnot = CompAnnot TBMeta
 type TBExpr = Expr TBMeta
+type TBCompAnnot = CompAnnot TBExpr
 type TBObject = Object TBMeta
-type TBGuard = Guard TBMeta
+type TBGuard = Guard TBExpr
 type TBArrow = Arrow TBMeta
 type TBObjectMap = ObjectMap TBMeta
 type TBPrgm = Prgm TBMeta

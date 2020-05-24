@@ -43,9 +43,9 @@ scopeSubDeclFunNamesInS prefix replaceNames name = name'
     name' = if S.member name replaceNames then addPrefix name else name
 
 scopeSubDeclFunNamesInExpr :: Name -> S.HashSet Name -> PExpr -> PExpr
-scopeSubDeclFunNamesInExpr _ _ e@CExpr{} = e
-scopeSubDeclFunNamesInExpr prefix replaceNames (Value m name) = Value m $ scopeSubDeclFunNamesInS prefix replaceNames name
-scopeSubDeclFunNamesInExpr prefix replaceNames (TupleApply m (bm, bExpr) args) = TupleApply m (bm, bExpr') args'
+scopeSubDeclFunNamesInExpr _ _ e@RawCExpr{} = e
+scopeSubDeclFunNamesInExpr prefix replaceNames (RawValue m name) = RawValue m $ scopeSubDeclFunNamesInS prefix replaceNames name
+scopeSubDeclFunNamesInExpr prefix replaceNames (RawTupleApply m (bm, bExpr) args) = RawTupleApply m (bm, bExpr') args'
   where
     bExpr' = scopeSubDeclFunNamesInExpr prefix replaceNames bExpr
     args' = fmap (scopeSubDeclFunNamesInExpr prefix replaceNames) args
@@ -87,12 +87,12 @@ buildCallGraph decls = graphFromEdges $ map fromDecl decls
     fromDecl (PSemiDecl (DeclLHS _ _ name _ _) _ (Just expr)) = ((), name, S.toList $ tupleNamesInExpr expr)
 
 currySubFunctionsUpdateExpr :: H.HashMap Name (H.HashMap Name ParseMeta) -> PExpr -> PExpr
-currySubFunctionsUpdateExpr _ c@CExpr{} = c
-currySubFunctionsUpdateExpr exprUpdateMap v@(Value _ vn) = case H.lookup vn exprUpdateMap of
+currySubFunctionsUpdateExpr _ c@RawCExpr{} = c
+currySubFunctionsUpdateExpr exprUpdateMap v@(RawValue _ vn) = case H.lookup vn exprUpdateMap of
   Just newArgs | H.null newArgs -> v
-  Just newArgs -> TupleApply emptyMeta (emptyMeta, v) (H.mapWithKey (flip Value) newArgs)
+  Just newArgs -> RawTupleApply emptyMeta (emptyMeta, v) (H.mapWithKey (flip RawValue) newArgs)
   Nothing -> v
-currySubFunctionsUpdateExpr exprUpdateMap (TupleApply tm (tbm, tbe) tArgs) = TupleApply tm (tbm, tbe') tArgs'
+currySubFunctionsUpdateExpr exprUpdateMap (RawTupleApply tm (tbm, tbe) tArgs) = RawTupleApply tm (tbm, tbe') tArgs'
   where
     tbe' = currySubFunctionsUpdateExpr exprUpdateMap tbe
     tArgs' = fmap (currySubFunctionsUpdateExpr exprUpdateMap) tArgs
@@ -116,11 +116,24 @@ removeSubDeclarations (RawDecl (DeclLHS objM arrM declName args guard) subStatem
     (subDecls4, expr3, annots3) = currySubFunctions args subDecls3 expr2 annots2
     decl' = PSemiDecl (DeclLHS objM' arrM' declName args guard) annots3 expr3
 
+desExpr :: PExpr -> DesExpr
+desExpr (RawCExpr m c) = CExpr m c
+desExpr (RawValue m n) = Value m n
+desExpr (RawTupleApply m (bm, be) args) = TupleApply m (bm, desExpr be) (fmap desExpr args)
+
+desGuard :: PGuard -> DesGuard
+desGuard (IfGuard e) = IfGuard (desExpr e)
+desGuard ElseGuard = ElseGuard
+desGuard NoGuard = NoGuard
+
+desAnnot :: PCompAnnot -> DesCompAnnot
+desAnnot (CompAnnot name args) = CompAnnot name (fmap desExpr args)
+
 declToObjArrow :: PSemiDecl -> (PObject, [PArrow])
 declToObjArrow (PSemiDecl (DeclLHS objM arrM name args guard) annots expr) = (object, [arrow])
   where
     object = Object objM name args
-    arrow = Arrow arrM annots guard expr
+    arrow = Arrow arrM (map desAnnot annots) (desGuard guard) (fmap desExpr expr)
 
 desDecl :: PDecl -> PObjectMap
 desDecl decl = H.fromList $ map declToObjArrow $ removeSubDeclarations decl

@@ -27,12 +27,12 @@ type ParseErrorRes = ParseErrorBundle String Void
 
 data ReplRes m
   = ReplStatement (RawStatement m)
-  | ReplExpr (Expr m)
+  | ReplExpr (RawExpr m)
   | ReplErr ParseErrorRes
   deriving (Eq, Show)
 
 --- ResArrowTree
-type ResBuildEnv f = H.HashMap LeafType [(Guard Typed, ResArrow f)]
+type ResBuildEnv f = H.HashMap LeafType [(Guard (Expr Typed), ResArrow f)]
 type ResExEnv f = H.HashMap (Arrow Typed) (ResArrowTree f, [ResArrowTree f]) -- (result, [compAnnot trees])
 data ResArrow f
   = ResEArrow (Arrow Typed)

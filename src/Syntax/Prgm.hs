@@ -32,7 +32,12 @@ data Constant
   deriving (Eq, Ord, Show, Generic)
 instance Hashable Constant
 
-type RawExpr = Expr
+data RawExpr m
+  = RawCExpr m Constant
+  | RawValue m Name
+  | RawTupleApply m (m, RawExpr m) (H.HashMap Name (RawExpr m))
+  deriving (Eq, Ord, Show, Generic)
+instance Hashable m => Hashable (RawExpr m)
 
 data Expr m
   = CExpr m Constant
@@ -42,26 +47,26 @@ data Expr m
 instance Hashable m => Hashable (Expr m)
 
 -- Compiler Annotation
-data CompAnnot m = CompAnnot Name (H.HashMap Name (Expr m))
+data CompAnnot e = CompAnnot Name (H.HashMap Name e)
   deriving (Eq, Ord, Show, Generic)
-instance Hashable m => Hashable (CompAnnot m)
+instance Hashable e => Hashable (CompAnnot e)
 
-data Guard m
-  = IfGuard (Expr m)
+data Guard e
+  = IfGuard e
   | ElseGuard
   | NoGuard
   deriving (Eq, Ord, Show, Generic)
-instance Hashable m => Hashable (Guard m)
+instance Hashable e => Hashable (Guard e)
 
 data RawDeclSubStatement m
   = RawDeclSubStatementDecl (RawDecl m)
-  | RawDeclSubStatementAnnot (CompAnnot m)
+  | RawDeclSubStatementAnnot (CompAnnot (RawExpr m))
   deriving (Eq, Ord, Show)
 
-data DeclLHS m = DeclLHS m m Name (H.HashMap Name m) (Guard m) -- objM, arrM
+data DeclLHS m e = DeclLHS m m Name (H.HashMap Name m) (Guard e) -- objM, arrM
   deriving (Eq, Ord, Show)
 
-data RawDecl m = RawDecl (DeclLHS m) [RawDeclSubStatement m] (Maybe (Expr m))
+data RawDecl m = RawDecl (DeclLHS m (RawExpr m)) [RawDeclSubStatement m] (Maybe (RawExpr m))
   deriving (Eq, Ord, Show)
 
 data RawTypeDef m = RawTypeDef Name RawLeafSet
@@ -82,7 +87,7 @@ data Object m = Object m Name (H.HashMap Name m)
   deriving (Eq, Ord, Show, Generic)
 instance Hashable m => Hashable (Object m)
 
-data Arrow m = Arrow m [CompAnnot m] (Guard m) (Maybe (Expr m)) -- m is result metadata
+data Arrow m = Arrow m [CompAnnot (Expr m)] (Guard (Expr m)) (Maybe (Expr m)) -- m is result metadata
   deriving (Eq, Ord, Show, Generic)
 instance Hashable m => Hashable (Arrow m)
 

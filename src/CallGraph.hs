@@ -20,7 +20,7 @@ import           Syntax.Prgm
 
 type CallGraph = (Graph, Vertex -> ((), Name, [Name]), Name -> Maybe Vertex)
 
-tupleNamesInExpr :: Expr m -> S.HashSet Name
-tupleNamesInExpr CExpr{} = S.empty
-tupleNamesInExpr (Value _ name) = S.singleton name
-tupleNamesInExpr (TupleApply _ _ args) = S.unions $ H.elems (fmap tupleNamesInExpr args)
+tupleNamesInExpr :: RawExpr m -> S.HashSet Name
+tupleNamesInExpr RawCExpr{} = S.empty
+tupleNamesInExpr (RawValue _ name) = S.singleton name
+tupleNamesInExpr (RawTupleApply _ _ args) = S.unions $ H.elems (fmap tupleNamesInExpr args)
