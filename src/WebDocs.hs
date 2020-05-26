@@ -119,25 +119,25 @@ getTPrgmJoined provider = do
   return (mergePrgms . map fst3 . graphToNodes <$> base)
 
 getTreebug :: WDProvider -> String -> String -> IO EvalResult
-getTreebug provider prgmName function = do
+getTreebug provider prgmName fun = do
   base <- getTPrgm provider
-  let pre = base >>= evalRun function prgmName
+  let pre = base >>= evalRun fun prgmName
   case pre of
     CRes _ r -> snd <$> r
     CErr _   -> fail "No eval result found"
 
 getEvaluated :: WDProvider -> String -> String -> IO Integer
-getEvaluated provider prgmName function = do
+getEvaluated provider prgmName fun = do
   base <- getTPrgm provider
-  let pre = base >>= evalRun function prgmName
+  let pre = base >>= evalRun fun prgmName
   case pre of
     CRes _ r -> fst <$> r
     CErr _   -> return 999
 
 getEvalBuild :: WDProvider -> String -> String -> IO Val
-getEvalBuild provider prgmName function = do
+getEvalBuild provider prgmName fun = do
   base <- getTPrgm provider
-  let pre = base >>= evalBuild function prgmName
+  let pre = base >>= evalBuild fun prgmName
   case pre of
     CRes _ r -> fst <$> r
     CErr _   -> return NoVal
@@ -151,9 +151,9 @@ getEvalAnnots provider prgmName = do
     CErr _   -> return []
 
 getWeb :: WDProvider -> String -> String -> IO String
-getWeb provider prgmName function = do
+getWeb provider prgmName fun = do
   base <- getTPrgm provider
-  let pre = base >>= evalBuild function prgmName
+  let pre = base >>= evalBuild fun prgmName
   case pre of
     CRes _ r -> do
       (TupleVal _ args, _) <- r
@@ -222,26 +222,26 @@ docApiBase provider = do
 
   get "/api/treebug" $ do
     prgmName <- param "prgmName"
-    function <- param "function" `rescue` (\_ -> return "main")
-    treebug <- liftAndCatchIO $ getTreebug provider prgmName function
+    fun <- param "function" `rescue` (\_ -> return "main")
+    treebug <- liftAndCatchIO $ getTreebug provider prgmName fun
     json $ Success treebug ([] :: [String])
 
   get "/api/eval" $ do
     prgmName <- param "prgmName"
-    function <- param "function" `rescue` (\_ -> return "main")
-    evaluated <- liftAndCatchIO $ getEvaluated provider prgmName function
+    fun <- param "function" `rescue` (\_ -> return "main")
+    evaluated <- liftAndCatchIO $ getEvaluated provider prgmName fun
     json $ Success evaluated ([] :: [String])
 
   get "/api/evalBuild" $ do
     prgmName <- param "prgmName"
-    function <- param "function" `rescue` (\_ -> return "main")
-    build <- liftAndCatchIO $ getEvalBuild provider prgmName function
+    fun <- param "function" `rescue` (\_ -> return "main")
+    build <- liftAndCatchIO $ getEvalBuild provider prgmName fun
     json $ Success build ([] :: [String])
 
   get "/api/web" $ do
     prgmName <- param "prgmName"
-    function <- param "function" `rescue` (\_ -> return "main")
-    build <- liftAndCatchIO $ getWeb provider prgmName function
+    fun <- param "function" `rescue` (\_ -> return "main")
+    build <- liftAndCatchIO $ getWeb provider prgmName fun
     html (T.pack build)
 
 
