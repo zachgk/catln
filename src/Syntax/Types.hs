@@ -27,7 +27,7 @@ type TypeName = Name
 type ClassName = Name
 
 data RawLeafType = RawLeafType TypeName (H.HashMap TypeName RawLeafType)
-  deriving (Eq, Ord, Show, Generic)
+  deriving (Eq, Ord, Generic)
 instance Hashable RawLeafType
 
 type RawPartialType = (TypeName, H.HashMap TypeName RawType)
@@ -36,7 +36,7 @@ type RawPartialLeafs = (H.HashMap TypeName [H.HashMap TypeName RawType])
 data RawType
   = RawSumType RawLeafSet RawPartialLeafs
   | RawTopType
-  deriving (Eq, Ord, Show, Generic)
+  deriving (Eq, Ord, Generic)
 instance Hashable RawType
 
 data LeafType = LeafType String (H.HashMap String LeafType)
@@ -53,6 +53,22 @@ data TypeClass = TypeClass Name Sealed RawLeafSet
 instance Hashable TypeClass
 
 type ClassMap = (H.HashMap TypeName (S.HashSet ClassName), H.HashMap ClassName (Sealed, S.HashSet TypeName))
+
+instance Show RawLeafType where
+  show (RawLeafType name args) = if null args then name
+    else name ++ "(" ++ args' ++ ")"
+    where
+      args' = intercalate ", " (map prettyArg $ H.toList args)
+      prettyArg (argName, argType) = show argType ++ " " ++ argName
+
+instance Show RawType where
+  show (RawSumType leafs partials) = "(" ++ intercalate " | " (leafs' ++ partials') ++ ")"
+    where
+      leafs' = map show $ S.toList leafs
+      showPartialArgs (argName, argVal) = argName ++ "=" ++ show argVal
+      showPartial (partialName, partialArgs) = partialName ++ "(" ++ intercalate ", " (map showPartialArgs $ H.toList partialArgs) ++ ")"
+      partials' = map showPartial $ splitPartialLeafs partials
+  show RawTopType = "RawTopType"
 
 instance Show LeafType where
   show (LeafType name args) = if null args then name

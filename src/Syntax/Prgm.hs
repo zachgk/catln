@@ -37,6 +37,7 @@ data RawExpr m
   = RawCExpr m Constant
   | RawValue m Name
   | RawTupleApply m (m, RawExpr m) (H.HashMap Name (RawExpr m))
+  | RawIfThenElse m (RawExpr m) (RawExpr m) (RawExpr m)
   deriving (Eq, Ord, Show, Generic)
 instance Hashable m => Hashable (RawExpr m)
 

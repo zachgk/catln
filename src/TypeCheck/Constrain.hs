@@ -121,6 +121,14 @@ executeConstraint _ cons@(BoundedBy subPnt parentPnt) = do
       let subScheme' = fmap (\ub -> SType ub lb1 description) (tryIntersectRawTypes ub1 ub2 "executeConstraint BoundedBy")
       setDescriptor subPnt subScheme'
       return ([cons | not (isSolved subScheme')], subScheme /= subScheme')
+executeConstraint _ (BoundedByKnown subPnt boundTp) = do
+  subScheme <- descriptor subPnt
+  case subScheme of
+    TypeCheckResE _ -> return ([], False)
+    TypeCheckResult _ (SType ub lb description) -> do
+      let subScheme' = fmap (\ub' -> SType ub' lb description) (tryIntersectRawTypes ub boundTp "executeConstraint BoundedBy")
+      setDescriptor subPnt subScheme'
+      return ([], subScheme /= subScheme')
 executeConstraint typeGraph cons@(ArrowTo srcPnt destPnt) = do
   srcScheme <- descriptor srcPnt
   destScheme <- descriptor destPnt

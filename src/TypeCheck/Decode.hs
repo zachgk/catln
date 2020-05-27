@@ -44,6 +44,7 @@ matchingConstraint :: Pnt s -> Constraint s -> ST s Bool
 matchingConstraint p (EqualsKnown p2 _) = equivalent p p2
 matchingConstraint p (EqPoints p2 p3) = matchingConstraintHelper p p2 p3
 matchingConstraint p (BoundedBy p2 p3) = matchingConstraintHelper p p2 p3
+matchingConstraint p (BoundedByKnown p2 _) = equivalent p p2
 matchingConstraint p (ArrowTo p2 p3) = matchingConstraintHelper p p2 p3
 matchingConstraint p (PropEq (p2, _) p3) = matchingConstraintHelper p p2 p3
 matchingConstraint p (AddArgs (p2, _) p3) = matchingConstraintHelper p p2 p3

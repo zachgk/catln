@@ -45,6 +45,7 @@ data Constraint s
   = EqualsKnown (Pnt s) RawType
   | EqPoints (Pnt s) (Pnt s)
   | BoundedBy (Pnt s) (Pnt s)
+  | BoundedByKnown (Pnt s) RawType
   | ArrowTo (Pnt s) (Pnt s) -- ArrowTo src dest
   | PropEq (Pnt s, Name) (Pnt s)
   | AddArgs (Pnt s, S.HashSet String) (Pnt s)
@@ -55,6 +56,7 @@ data SConstraint
   = SEqualsKnown Scheme RawType
   | SEqPoints Scheme Scheme
   | SBoundedBy Scheme Scheme
+  | SBoundedByKnown Scheme RawType
   | SArrowTo Scheme Scheme
   | SPropEq (Scheme, Name) Scheme
   | SAddArgs (Scheme, S.HashSet String) Scheme

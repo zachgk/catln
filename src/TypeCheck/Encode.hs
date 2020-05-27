@@ -126,20 +126,21 @@ fromObjectMap env1 (obj, arrows) = do
   (arrows', env2) <- mapMWithFEnv env1 (fromArrow obj) arrows
   return ((obj, arrows'), env2)
 
-addObjArg :: FEnv s -> (Name, PreMeta) -> ST s ((Name, VarMeta s), FEnv s)
-addObjArg env (n, m) = do
+addObjArg :: VarMeta s -> FEnv s -> (Name, PreMeta) -> ST s ((Name, VarMeta s), FEnv s)
+addObjArg objM env (n, m) = do
   (m', env2) <- fromMeta env m ("Object argument " ++ n)
-  return ((n, m'), env2)
+  return ((n, m'), addConstraints env2 [PropEq (getPnt objM, n) m'])
 
 -- Add all of the objects first for various expressions that call other top level functions
 fromObject :: FEnv s -> (PObject, [PArrow]) -> ST s ((VObject s, [PArrow]), FEnv s)
 fromObject env (Object m name args, arrows) = do
   (m', env1) <- fromMeta env m ("Object " ++ name ++ "")
-  (args', env2) <- mapMWithFEnvMapWithKey env1 addObjArg args
+  (args', env2) <- mapMWithFEnvMapWithKey env1 (addObjArg m') args
   let obj' = Object m' name args'
   (objValue, env3) <- fromMeta env2 (PreTyped $ RawSumType (S.singleton (RawLeafType name H.empty)) H.empty) ("objValue" ++ name)
   let env4 = fInsert env3 name objValue
-  return ((obj', arrows), env4)
+  let env5 = addConstraints env4 [BoundedByKnown m' (RawSumType S.empty (H.singleton name [fmap (const RawTopType) args]))]
+  return ((obj', arrows), env5)
 
 fromPrgm :: FEnv s -> PPrgm -> ST s (VPrgm s, TypeGraph s, FEnv s)
 fromPrgm env1 (objMap1, classMap) = do

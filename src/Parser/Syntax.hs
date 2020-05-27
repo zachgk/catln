@@ -11,6 +11,8 @@
 
 module Parser.Syntax where
 
+import qualified Data.HashMap.Strict as H
+
 import           Syntax.Types
 import           Syntax.Prgm
 import           Syntax
@@ -30,6 +32,25 @@ type PObject = Object ParseMeta
 type PArrow = Arrow ParseMeta
 type PPrgm = RawPrgm ParseMeta
 type PReplRes = ReplRes ParseMeta
+
+
+
+data PSemiExpr m
+  = PSCExpr m Constant
+  | PSValue m Name
+  | PSTupleApply m (m, PSemiExpr m) (H.HashMap Name (PSemiExpr m))
+  deriving (Eq, Ord, Show)
+type PSExpr = PSemiExpr ParseMeta
+
+type PSCompAnnot = CompAnnot PSExpr
+type PSGuard = Guard PSExpr
+type PSDeclLHS = DeclLHS ParseMeta PSExpr
+
+data PSemiDecl = PSemiDecl PSDeclLHS [PSCompAnnot] (Maybe PSExpr)
+  deriving (Eq, Ord, Show)
+
+
+
 
 type DesExpr = Expr ParseMeta
 type DesCompAnnot = CompAnnot DesExpr

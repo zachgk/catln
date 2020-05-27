@@ -138,7 +138,7 @@ envLookup env@(resEnv, _) srcType destType = case H.lookup srcType resEnv of
                       ) resArrows
     buildGuardArrows env srcType destType guards
 
-  Nothing -> CErr [BuildTreeCErr $ "Failed to find any arrows for " ++ show (srcType, destType)]
+  Nothing -> CErr [BuildTreeCErr $ "Failed to find any arrows from " ++ show srcType ++ " to " ++ show destType]
 
 buildImplicit :: TBEnv f -> Type -> Type -> CRes (ResArrowTree f)
 buildImplicit env (SumType srcType) destType = do

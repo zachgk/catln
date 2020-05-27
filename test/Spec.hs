@@ -26,7 +26,7 @@ runTest includeStd displayName fileName = testCaseSteps displayName $ \step -> d
       step "Typecheck..."
       case typecheckPrgm prgm of
         TypeCheckResE err -> do
-          step $ T.unpack $ pShow $ traceTestPrgm prgm
+          -- step $ T.unpack $ pShow $ traceTestPrgm prgm
           assertFailure $ "Could not typecheck:\n\n\n\t" ++ intercalate "\n\n\n\t\t" (map (T.unpack . pShow) err)
         TypeCheckResult _ tprgm -> do
           -- step $ T.unpack $ pShow $ traceTestPrgm prgm
@@ -55,6 +55,7 @@ standardTests = H.fromList [ ("Syntax", "test/code/syntax.ct")
   , ("Cond", "test/code/cond.ct")
   , ("Rec", "test/code/rec.ct")
   , ("Fib", "test/code/fib.ct")
+  , ("IfThenElse", "test/code/ifThenElse.ct")
   ]
 
 mt :: String -> IO ()

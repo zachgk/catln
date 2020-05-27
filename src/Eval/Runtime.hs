@@ -47,6 +47,15 @@ liftBoolOp name f = (srcType, [(NoGuard, arrow)])
                            _ -> error "Invalid boolOp signature"
                            )
 
+rneg :: Name -> Op
+rneg name = (srcType, [(NoGuard, arrow)])
+  where
+    srcType = LeafType ("operator" ++ name) (H.singleton "a" intLeaf)
+    arrow = PrimArrow intType (\args -> case H.lookup "a" args of
+                                  Just (IntVal i) -> IntVal $ -i
+                                  _ -> error "Invalid rneg signature"
+                              )
+
 rnot :: Name -> Op
 rnot name = (srcType, [(NoGuard, arrow)])
   where
@@ -69,4 +78,5 @@ primEnv = H.fromList [ liftIntOp "+" (+)
                      , liftBoolOp "&" (&&)
                      , liftBoolOp "|" (||)
                      , rnot "~"
+                     , rneg "-"
                      ]

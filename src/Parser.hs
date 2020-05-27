@@ -91,12 +91,22 @@ pCompAnnot = do
 pStringLiteral :: Parser PExpr
 pStringLiteral = RawCExpr emptyMeta . CStr <$> (char '\"' *> manyTill L.charLiteral (char '\"'))
 
+pIfThenElse :: Parser PExpr
+pIfThenElse = do
+  _ <- symbol "if"
+  condExpr <- pExpr
+  _ <- symbol "then"
+  thenExpr <- pExpr
+  _ <- symbol "else"
+  RawIfThenElse emptyMeta condExpr thenExpr <$> pExpr
+
 term :: Parser PExpr
 term = try (parens pExpr)
-       <|> try pCall
+       <|> pIfThenElse
        <|> pStringLiteral
-       <|> try (RawValue emptyMeta <$> identifier)
        <|> RawCExpr emptyMeta . CInt <$> integer
+       <|> try pCall
+       <|> try (RawValue emptyMeta <$> identifier)
 
 pExpr :: Parser PExpr
 pExpr = makeExprParser term ops
@@ -162,10 +172,8 @@ pDeclLHS = do
   maybeArrMeta <- optional pArrowRes
   let arrMeta = fromMaybe emptyMeta maybeArrMeta
   return $ case args of
-    Just a  -> DeclLHS objMeta arrMeta val (PreTyped <$> H.fromList a) guard
-      where objMeta = PreTyped $ RawSumType S.empty (H.singleton val [H.fromList a])
-    Nothing -> DeclLHS objMeta arrMeta val H.empty guard
-      where objMeta = identifierMeta val
+    Just a  -> DeclLHS emptyMeta arrMeta val (PreTyped <$> H.fromList a) guard
+    Nothing -> DeclLHS emptyMeta arrMeta val H.empty guard
 
 pDeclSingle :: Parser PDecl
 pDeclSingle = do
