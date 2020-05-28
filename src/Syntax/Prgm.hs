@@ -33,13 +33,16 @@ data Constant
   deriving (Eq, Ord, Show, Generic)
 instance Hashable Constant
 
-type Pattern m = (Name, ArgMetaMap m, Guard (RawExpr m))
+data Pattern m e = Pattern Name (ArgMetaMap m) (Guard e)
+  deriving (Eq, Ord, Show, Generic)
+instance (Hashable m, Hashable e) => Hashable (Pattern m e)
+
 data RawExpr m
   = RawCExpr m Constant
   | RawValue m Name
   | RawTupleApply m (m, RawExpr m) (H.HashMap Name (RawExpr m))
   | RawIfThenElse m (RawExpr m) (RawExpr m) (RawExpr m)
-  | RawMatch m (RawExpr m) (H.HashMap (Pattern m) (RawExpr m))
+  | RawMatch m (RawExpr m) (H.HashMap (Pattern m (RawExpr m)) (RawExpr m))
   deriving (Eq, Ord, Show, Generic)
 instance Hashable m => Hashable (RawExpr m)
 
@@ -73,9 +76,8 @@ data RawDeclSubStatement m
   | RawDeclSubStatementAnnot (CompAnnot (RawExpr m))
   deriving (Eq, Ord, Show)
 
--- TODO: Make DeclLHS Use Pattern
 type ArgMetaMap m = (H.HashMap Name m)
-data DeclLHS m e = DeclLHS m m Name (ArgMetaMap m) (Guard e) -- objM, arrM
+data DeclLHS m e = DeclLHS m m (Pattern m e) -- objM, arrM
   deriving (Eq, Ord, Show)
 
 data RawDecl m = RawDecl (DeclLHS m (RawExpr m)) [RawDeclSubStatement m] (Maybe (RawExpr m))

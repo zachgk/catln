@@ -112,7 +112,7 @@ pPattern = do
   args <- optional $ try $ parens pArgs
   guard <- pPatternGuard
   let args' = fmap PreTyped $ H.fromList $ fromMaybe [] args
-  return (val, args', guard)
+  return $ Pattern val args' guard
 
 pMatch :: Parser PExpr
 pMatch = L.indentBlock scn p
@@ -191,10 +191,10 @@ pArrowRes = do
 
 pDeclLHS :: Parser PDeclLHS
 pDeclLHS = do
-  (val, args, guard) <- pPattern
+  patt <- pPattern
   maybeArrMeta <- optional pArrowRes
   let arrMeta = fromMaybe emptyMeta maybeArrMeta
-  return $ DeclLHS emptyMeta arrMeta val args guard
+  return $ DeclLHS emptyMeta arrMeta patt
 
 pDeclSingle :: Parser PDecl
 pDeclSingle = do

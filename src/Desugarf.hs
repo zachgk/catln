@@ -58,17 +58,17 @@ scopeSubDeclFunNamesInMeta _ _ m@(PreTyped RawTopType) = m
 scopeSubDeclFunNames :: Name -> [PSemiDecl] -> Maybe PSExpr -> [PSCompAnnot] -> ParseMeta -> ParseMeta -> ([PSemiDecl], Maybe PSExpr, [PSCompAnnot], ParseMeta, ParseMeta)
 scopeSubDeclFunNames prefix decls maybeExpr annots objM arrM = (decls', expr', annots', objM', arrM')
   where
-    declNames = S.fromList $ map (\(PSemiDecl (DeclLHS _ _ name _ _) _ _) -> name) decls
+    declNames = S.fromList $ map (\(PSemiDecl (DeclLHS _ _ (Pattern name _ _)) _ _) -> name) decls
     addPrefix n = prefix ++ "." ++ n
     scopeM = scopeSubDeclFunNamesInMeta prefix declNames
     objM' = scopeM objM
     arrM' = scopeM arrM
-    decls' = map (\(PSemiDecl (DeclLHS oM aM name args guard) annot subExpr) -> PSemiDecl (DeclLHS (scopeM oM) (scopeM aM) (addPrefix name) args guard) annot (fmap (scopeSubDeclFunNamesInExpr prefix declNames) subExpr)) decls
+    decls' = map (\(PSemiDecl (DeclLHS oM aM (Pattern name args guard)) annot subExpr) -> PSemiDecl (DeclLHS (scopeM oM) (scopeM aM) (Pattern (addPrefix name) args guard)) annot (fmap (scopeSubDeclFunNamesInExpr prefix declNames) subExpr)) decls
     expr' = fmap (scopeSubDeclFunNamesInExpr prefix declNames) maybeExpr
     annots' = map (\(CompAnnot n ca) -> CompAnnot n (fmap (scopeSubDeclFunNamesInExpr prefix declNames) ca)) annots
 
 currySubFunctionSignature :: H.HashMap Name ParseMeta -> PSemiDecl -> PSemiDecl
-currySubFunctionSignature parentArgs (PSemiDecl (DeclLHS objM arrM name args guard) annot expr) = PSemiDecl (DeclLHS objM arrM name args' guard) annot expr
+currySubFunctionSignature parentArgs (PSemiDecl (DeclLHS objM arrM (Pattern name args guard)) annot expr) = PSemiDecl (DeclLHS objM arrM (Pattern name args' guard)) annot expr
   where args' = H.union args parentArgs
 
 
@@ -86,14 +86,14 @@ currySubFunctionsUpdateExpr toUpdate parentArgs (PSTupleApply tm (tbm, tbe) tArg
 currySubFunctions :: H.HashMap Name ParseMeta -> [PSemiDecl] -> Maybe PSExpr -> [PSCompAnnot] -> ([PSemiDecl], Maybe PSExpr, [PSCompAnnot])
 currySubFunctions parentArgs decls expr annots = (decls', expr', annots')
   where
-    toUpdate = S.fromList $ map (\(PSemiDecl (DeclLHS _ _ declName _ _) _ _) -> declName) decls
+    toUpdate = S.fromList $ map (\(PSemiDecl (DeclLHS _ _ (Pattern declName _ _)) _ _) -> declName) decls
     decls2 = map (currySubFunctionSignature parentArgs) decls
     expr' = fmap (currySubFunctionsUpdateExpr toUpdate parentArgs) expr
     decls' = map (\(PSemiDecl lhs an e) -> PSemiDecl lhs an (fmap (currySubFunctionsUpdateExpr toUpdate parentArgs) e)) decls2
     annots' = map (\(CompAnnot n ca) -> CompAnnot n (fmap (currySubFunctionsUpdateExpr toUpdate parentArgs) ca)) annots
 
 removeSubDeclarations :: PDecl -> [PSemiDecl]
-removeSubDeclarations (RawDecl (DeclLHS objM arrM declName args guard1) subStatements expr1) = decl':subDecls5
+removeSubDeclarations (RawDecl (DeclLHS objM arrM (Pattern declName args guard1)) subStatements expr1) = decl':subDecls5
   where
     (subDecls, annots1) = splitDeclSubStatements subStatements
     subDecls2 = concatMap removeSubDeclarations subDecls
@@ -103,7 +103,7 @@ removeSubDeclarations (RawDecl (DeclLHS objM arrM declName args guard1) subState
     subDecls3 = concat [subDecls2, subDecls21, subDecls22, subDecls23]
     (subDecls4, expr3, annots3, objM', arrM') = scopeSubDeclFunNames declName subDecls3 expr2 annots2 objM arrM
     (subDecls5, expr4, annots4) = currySubFunctions args subDecls4 expr3 annots3
-    decl' = PSemiDecl (DeclLHS objM' arrM' declName args guard2) annots4 expr4
+    decl' = PSemiDecl (DeclLHS objM' arrM' (Pattern declName args guard2)) annots4 expr4
 
 desExpr :: PArgMetaMap -> PSExpr -> DesExpr
 desExpr _ (PSCExpr m c) = CExpr m c
@@ -131,8 +131,8 @@ semiDesExpr r@(RawIfThenElse m i t e) = (concat [subI, subT, subE, [elseDecl, if
     (subI, i') = semiDesExpr i
     (subT, t') = semiDesExpr t
     (subE, e') = semiDesExpr e
-    ifDecl = PSemiDecl (DeclLHS emptyMeta emptyMeta condName H.empty (IfGuard i')) [] (Just t')
-    elseDecl = PSemiDecl (DeclLHS emptyMeta emptyMeta condName H.empty ElseGuard) [] (Just e')
+    ifDecl = PSemiDecl (DeclLHS emptyMeta emptyMeta (Pattern condName H.empty (IfGuard i'))) [] (Just t')
+    elseDecl = PSemiDecl (DeclLHS emptyMeta emptyMeta (Pattern condName H.empty ElseGuard)) [] (Just e')
     expr' = PSValue m condName
 semiDesExpr r@(RawMatch m e matchItems) = (subE ++ subMatchItems, expr')
   where
@@ -141,13 +141,13 @@ semiDesExpr r@(RawMatch m e matchItems) = (subE ++ subMatchItems, expr')
     (subE, e') = semiDesExpr e
     expr' = PSTupleApply m (emptyMeta, PSValue emptyMeta condName) (H.singleton argName e')
     subMatchItems = concatMap semiDesMatchItem $ H.toList matchItems
-    semiDesMatchItem ((pattName, pattArgs, pattGuard), matchExpr) = concat [[matchItemExpr'], subPattGuard, subMatchExpr]
+    semiDesMatchItem (Pattern pattName pattArgs pattGuard, matchExpr) = concat [[matchItemExpr'], subPattGuard, subMatchExpr]
       where
         (subPattGuard, pattGuard') = semiDesGuard pattGuard
         (subMatchExpr, matchExpr') = semiDesExpr matchExpr
         metaToType (PreTyped tp) = tp
         matchArg = H.singleton argName (PreTyped $ RawSumType S.empty (H.singleton pattName [fmap metaToType pattArgs]) )
-        matchItemExpr' = PSemiDecl (DeclLHS emptyMeta emptyMeta condName matchArg pattGuard') [] (Just matchExpr')
+        matchItemExpr' = PSemiDecl (DeclLHS emptyMeta emptyMeta (Pattern condName matchArg pattGuard')) [] (Just matchExpr')
 
 semiDesGuard :: PGuard -> ([PSemiDecl], PSGuard)
 semiDesGuard (IfGuard e) = (subE, IfGuard e')
@@ -160,7 +160,7 @@ semiDesAnnot (CompAnnot name args) = (subArgs, CompAnnot name args')
   where (subArgs, args') = traverse semiDesExpr args
 
 declToObjArrow :: PSemiDecl -> (PObject, [PArrow])
-declToObjArrow (PSemiDecl (DeclLHS objM arrM name args guard) annots expr) = (object, [arrow])
+declToObjArrow (PSemiDecl (DeclLHS objM arrM (Pattern name args guard)) annots expr) = (object, [arrow])
   where
     object = Object objM name args
     arrow = Arrow arrM (map (desAnnot args) annots) (desGuard args guard) (fmap (desExpr args) expr)
