@@ -18,7 +18,6 @@ import           Syntax.Prgm
 import           Syntax
 
 type ParseMeta = PreTyped
-type PArgMetaMap = ArgMetaMap ParseMeta
 type PExpr = RawExpr ParseMeta
 type PPattern = Pattern ParseMeta PExpr
 type PCompAnnot = CompAnnot PExpr
@@ -29,6 +28,8 @@ type PDecl = RawDecl ParseMeta
 type PObjectMap = ObjectMap ParseMeta
 type PRawTypeDef = RawTypeDef ParseMeta
 type PStatement = RawStatement ParseMeta
+type PArgMetaMap = H.HashMap Name ParseMeta
+type PObjArg = ObjArg ParseMeta
 type PObject = Object ParseMeta
 type PArrow = Arrow ParseMeta
 type PPrgm = RawPrgm ParseMeta

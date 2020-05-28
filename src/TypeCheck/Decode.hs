@@ -116,23 +116,33 @@ toArrow env (Arrow m annots aguard maybeExpr) = do
       return $ (\(m'', annots'', aguard'', expr'') -> Arrow m'' annots'' aguard'' (Just expr'')) <$> sequenceT (m', annots', aguard', expr')
     Nothing -> return $ (\(annots'', m'', aguard'') -> Arrow m'' annots'' aguard'' Nothing) <$> sequenceT (annots', m', aguard')
 
-toObjectArg :: DEnv s -> Name -> (Name, VarMeta s) -> ST s (TypeCheckResult (Name, Typed))
-toObjectArg env objName (name, m) = do
-  m' <- toMeta env m $ "Arg_" ++ objName ++ "." ++ name
-  return $ (name,) <$> m'
+toObjArg :: DEnv s -> String -> (Name, VObjArg s) -> ST s (TypeCheckResult (Name, TObjArg))
+toObjArg env prefix (name, (m, maybeObj)) = do
+  let prefix' = prefix ++ "_" ++ name
+  m' <- toMeta env m prefix'
+  case maybeObj of
+    Just obj -> do
+      obj' <- toObject env prefix' obj
+      return $ (name,) <$> sequenceT (m', sequence $ Just obj')
+    Nothing -> return $ (name,) . (,Nothing) <$> m'
 
-toObject :: DEnv s -> (VObject s, [VArrow s]) -> ST s (TypeCheckResult (TObject, [TArrow]))
-toObject env (Object m name args, arrows) = do
-  m' <- toMeta env m $ "Object_" ++ name
-  args' <- mapM (toObjectArg env name) $ H.toList args
-  let object' = (\(m'', args'') -> Object m'' name args'') <$> sequenceT  (m', H.fromList <$> sequence args')
+toObject :: DEnv s -> String -> VObject s -> ST s (TypeCheckResult TObject)
+toObject env prefix (Object m name args) = do
+  let prefix' = prefix ++ "_" ++ name
+  m' <- toMeta env m prefix'
+  args' <- mapM (toObjArg env prefix') $ H.toList args
+  return $ (\(m'', args'') -> Object m'' name args'') <$> sequenceT  (m', H.fromList <$> sequence args')
+
+toObjectArrows :: DEnv s -> (VObject s, [VArrow s]) -> ST s (TypeCheckResult (TObject, [TArrow]))
+toObjectArrows env (obj, arrows) = do
+  obj' <- toObject env "Object" obj
   arrows' <- mapM (toArrow env) arrows
   let arrows'' = sequence arrows'
-  return $ sequenceT (object', arrows'')
+  return $ sequenceT (obj', arrows'')
 
 toPrgm :: VPrgm s -> [Constraint s] -> ST s (TypeCheckResult TPrgm)
 toPrgm (objMap, classMap) cons = do
   let env = cons
-  objects' <- mapM (toObject env) objMap
+  objects' <- mapM (toObjectArrows env) objMap
   let objMap' = H.fromList <$> sequence objects'
   return $ sequenceT (objMap', TypeCheckResult [] classMap)

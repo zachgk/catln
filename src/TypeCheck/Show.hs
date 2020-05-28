@@ -62,12 +62,26 @@ showArrow (Arrow m annots guard maybeExpr) = do
       return (Arrow m' annots' guard' (Just expr'))
     Nothing -> return (Arrow m' annots' guard' Nothing)
 
-showObj :: (VObject s, [VArrow s]) -> ST s (SObject, [SArrow])
-showObj (Object m name args, arrows) = do
+showObjArg :: VObjArg s -> ST s SObjArg
+showObjArg (m, maybeObj) = do
   m' <- showM m
-  args' <- mapM showM args
+  case maybeObj of
+    Just obj -> do
+      obj' <- showObj obj
+      return (m', Just obj')
+    Nothing -> return (m', Nothing)
+
+showObj :: VObject s -> ST s SObject
+showObj (Object m name args) = do
+  m' <- showM m
+  args' <- mapM showObjArg args
+  return $ Object m' name args'
+
+showObjArrows :: (VObject s, [VArrow s]) -> ST s (SObject, [SArrow])
+showObjArrows (obj, arrows) = do
+  obj' <- showObj obj
   arrows' <- mapM showArrow arrows
-  return (Object m' name args', arrows')
+  return (obj', arrows')
 
 showConHelper :: (Scheme -> Scheme -> SConstraint) -> Pnt s -> Pnt s -> ST s SConstraint
 showConHelper f p1 p2 = do
@@ -94,7 +108,7 @@ showCon (UnionOf p1 p2s) = do
 
 showPrgm :: VPrgm s -> ST s SPrgm
 showPrgm (objMap, classMap) = do
-  objs' <- mapM showObj objMap
+  objs' <- mapM showObjArrows objMap
   return (H.fromList objs', classMap)
 
 showConstraints :: [Constraint s] -> ST s [SConstraint]

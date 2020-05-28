@@ -150,3 +150,4 @@ typedIs (Typed t1) t2 = t1 == t2
 
 instance Show Typed where
   show (Typed t) = show t
+

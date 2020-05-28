@@ -24,15 +24,16 @@ import           TypeCheck.Common
 
 objectToLeaf :: VObject s -> ST s RawLeafType
 objectToLeaf (Object _ name args) = do
-        args' <- mapM
-                (\argMeta -> do
-                        scheme <- descriptor $ getPnt argMeta
-                        case scheme of
-                          (TypeCheckResult _ (SType (RawSumType upper _) _ _)) -> return $ head $ S.toList upper
-                          _ -> error "bad objectToLeaf"
-                )
-                args
+        args' <- mapM objArgToLeaf args
         return $ RawLeafType name args'
+  where
+    objArgToLeaf :: VObjArg s -> ST s RawLeafType
+    objArgToLeaf (_, Just obj) = objectToLeaf obj
+    objArgToLeaf (argMeta, Nothing) = do
+      scheme <- descriptor $ getPnt argMeta
+      case scheme of
+        (TypeCheckResult _ (SType (RawSumType upper _) _ _)) -> return $ head $ S.toList upper
+        _ -> error "bad objectToLeaf"
 
 buildTypeGraph :: FEnv s -> VObjectMap s -> ST s (FEnv s, TypeGraph s, [Constraint s])
 buildTypeGraph env objMap = do

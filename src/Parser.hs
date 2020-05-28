@@ -28,9 +28,6 @@ import           Syntax.Prgm
 import           Syntax
 import Parser.Syntax
 
-identifierMeta :: String -> ParseMeta
-identifierMeta i = PreTyped $ RawSumType (S.singleton $ RawLeafType i H.empty) H.empty
-
 mkOp1 :: String -> PExpr -> PExpr
 mkOp1 opChars x = RawTupleApply emptyMeta (emptyMeta, RawValue emptyMeta op) (H.singleton "a" x)
   where op = "operator" ++ opChars
@@ -106,13 +103,32 @@ pPatternGuard = fromMaybe NoGuard <$> optional (try pIfGuard
                                               <|> pElseGuard
                                             )
 
+pObjTreeArg :: Parser (Name, PObjArg)
+pObjTreeArg = do
+  tp <- try $ optional $ (`RawSumType` H.empty) <$> pType
+  val <- identifier
+  let tp' = maybe emptyMeta PreTyped tp
+  subTree <- optional $ do
+    _ <- symbol "="
+    pObjTree
+  return (val, (tp', subTree))
+
+pObjTreeArgs :: Parser [(Name, PObjArg)]
+pObjTreeArgs = sepBy1 pObjTreeArg (symbol ",")
+
+pObjTree :: Parser PObject
+pObjTree = do
+  tp <- try $ optional $ (`RawSumType` H.empty) <$> pType
+  name <- opIdentifier <|> identifier
+  args <- optional $ try $ parens pObjTreeArgs
+  let tp' = maybe emptyMeta PreTyped tp
+  let args' = H.fromList $ fromMaybe [] args
+  return $ Object tp' name args'
+
 pPattern :: Parser PPattern
 pPattern = do
-  val <- opIdentifier <|> identifier
-  args <- optional $ try $ parens pArgs
-  guard <- pPatternGuard
-  let args' = fmap PreTyped $ H.fromList $ fromMaybe [] args
-  return $ Pattern val args' guard
+  objTree <- pObjTree
+  Pattern objTree <$> pPatternGuard
 
 pMatch :: Parser PExpr
 pMatch = L.indentBlock scn p
@@ -161,18 +177,6 @@ pLeafType = try pTypeProduct
 pType :: Parser RawLeafSet
 pType = S.fromList <$> sepBy1 pLeafType (symbol "|")
 
-pTypedIdentifier :: Parser (Name, RawType)
-pTypedIdentifier = do
-  tp <- try $ optional $ (`RawSumType` H.empty) <$> pType
-  val <- identifier
-  let tp' = case tp of
-        Just t -> t
-        Nothing -> RawSumType (S.singleton $ RawLeafType val H.empty) H.empty
-  return (val, tp')
-
-pArgs :: Parser [(Name, RawType)]
-pArgs = sepBy1 pTypedIdentifier (symbol ",")
-
 pIfGuard :: Parser PGuard
 pIfGuard = do
   _ <- symbol "if"
@@ -194,7 +198,7 @@ pDeclLHS = do
   patt <- pPattern
   maybeArrMeta <- optional pArrowRes
   let arrMeta = fromMaybe emptyMeta maybeArrMeta
-  return $ DeclLHS emptyMeta arrMeta patt
+  return $ DeclLHS arrMeta patt
 
 pDeclSingle :: Parser PDecl
 pDeclSingle = do

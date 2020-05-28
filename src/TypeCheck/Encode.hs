@@ -109,13 +109,14 @@ fromGuard _ env ElseGuard = return (ElseGuard, env)
 fromGuard _ env NoGuard = return (NoGuard, env)
 
 fromArrow :: VObject s -> FEnv s -> PArrow -> ST s (VArrow s, FEnv s)
-fromArrow (Object _ objName objArgs) env1 (Arrow m annots aguard maybeExpr) = do
+fromArrow obj@(Object _ objName _) env1 (Arrow m annots aguard maybeExpr) = do
   (m', p, env2) <- fromMetaP env1 m ("Arrow result from " ++ show objName)
-  (annots', env3) <- mapMWithFEnv env2 (fromAnnot objArgs) annots
-  (aguard', env4) <- fromGuard objArgs env3 aguard
+  let argMetaMap = formArgMetaMap obj
+  (annots', env3) <- mapMWithFEnv env2 (fromAnnot argMetaMap) annots
+  (aguard', env4) <- fromGuard argMetaMap env3 aguard
   case maybeExpr of
     Just expr -> do
-      (vExpr, env5) <- fromExpr objArgs env4 expr
+      (vExpr, env5) <- fromExpr argMetaMap env4 expr
       let env6 = addConstraints env5 [ArrowTo (getPntExpr vExpr) p]
       let arrow' = Arrow m' annots' aguard' (Just vExpr)
       return (arrow', env6)
@@ -126,25 +127,37 @@ fromObjectMap env1 (obj, arrows) = do
   (arrows', env2) <- mapMWithFEnv env1 (fromArrow obj) arrows
   return ((obj, arrows'), env2)
 
-addObjArg :: VarMeta s -> FEnv s -> (Name, PreMeta) -> ST s ((Name, VarMeta s), FEnv s)
-addObjArg objM env (n, m) = do
-  (m', env2) <- fromMeta env m ("Object argument " ++ n)
-  return ((n, m'), addConstraints env2 [PropEq (getPnt objM, n) m'])
+addObjArg :: VarMeta s -> String -> FEnv s -> (Name, PObjArg) -> ST s ((Name, VObjArg s), FEnv s)
+addObjArg objM prefix env (n, (m, maybeSubObj)) = do
+  let prefix' = prefix ++ "." ++ n
+  (m', env2) <- fromMeta env m prefix'
+  let env3 = addConstraints env2 [PropEq (getPnt objM, n) m']
+  case maybeSubObj of
+    Just subObj -> do
+      (subObj'@(Object subM _ _), env4) <- fromObject prefix' env3 subObj
+      return ((n, (m', Just subObj')), addConstraints env4 [ArrowTo subM m'])
+    Nothing -> return ((n, (m', Nothing)), env3)
 
--- Add all of the objects first for various expressions that call other top level functions
-fromObject :: FEnv s -> (PObject, [PArrow]) -> ST s ((VObject s, [PArrow]), FEnv s)
-fromObject env (Object m name args, arrows) = do
-  (m', env1) <- fromMeta env m ("Object " ++ name ++ "")
-  (args', env2) <- mapMWithFEnvMapWithKey env1 (addObjArg m') args
+fromObject :: String -> FEnv s -> PObject -> ST s (VObject s, FEnv s)
+fromObject prefix env (Object m name args) = do
+  let prefix' = prefix ++ "." ++ name
+  (m', env1) <- fromMeta env m prefix'
+  (args', env2) <- mapMWithFEnvMapWithKey env1 (addObjArg m' prefix') args
   let obj' = Object m' name args'
   (objValue, env3) <- fromMeta env2 (PreTyped $ RawSumType (S.singleton (RawLeafType name H.empty)) H.empty) ("objValue" ++ name)
   let env4 = fInsert env3 name objValue
   let env5 = addConstraints env4 [BoundedByKnown m' (RawSumType S.empty (H.singleton name [fmap (const RawTopType) args]))]
-  return ((obj', arrows), env5)
+  return (obj', env5)
+
+-- Add all of the objects first for various expressions that call other top level functions
+fromObjectArrows :: FEnv s -> (PObject, [PArrow]) -> ST s ((VObject s, [PArrow]), FEnv s)
+fromObjectArrows env (obj, arrows) = do
+  (obj', env1) <- fromObject "Object" env obj
+  return ((obj', arrows), env1)
 
 fromPrgm :: FEnv s -> PPrgm -> ST s (VPrgm s, TypeGraph s, FEnv s)
 fromPrgm env1 (objMap1, classMap) = do
-  (objMap2, env2) <- mapMWithFEnv env1 fromObject $ H.toList objMap1
+  (objMap2, env2) <- mapMWithFEnv env1 fromObjectArrows $ H.toList objMap1
   (objMap3, env3) <- mapMWithFEnv env2 fromObjectMap objMap2
   (env4, typeGraph, graphCons) <- buildTypeGraph env3 objMap3
   let env5 = addConstraints env4 graphCons

@@ -33,7 +33,7 @@ data Constant
   deriving (Eq, Ord, Show, Generic)
 instance Hashable Constant
 
-data Pattern m e = Pattern Name (ArgMetaMap m) (Guard e)
+data Pattern m e = Pattern (Object m) (Guard e)
   deriving (Eq, Ord, Show, Generic)
 instance (Hashable m, Hashable e) => Hashable (Pattern m e)
 
@@ -76,13 +76,13 @@ data RawDeclSubStatement m
   | RawDeclSubStatementAnnot (CompAnnot (RawExpr m))
   deriving (Eq, Ord, Show)
 
-type ArgMetaMap m = (H.HashMap Name m)
-data DeclLHS m e = DeclLHS m m (Pattern m e) -- objM, arrM
+data DeclLHS m e = DeclLHS m (Pattern m e)
   deriving (Eq, Ord, Show)
 
 data RawDecl m = RawDecl (DeclLHS m (RawExpr m)) [RawDeclSubStatement m] (Maybe (RawExpr m))
   deriving (Eq, Ord, Show)
 
+-- TODO: Convert to RawTypeDef Name ObjTree
 data RawTypeDef m = RawTypeDef Name RawLeafSet
   deriving (Eq, Ord, Show)
 
@@ -97,7 +97,8 @@ data RawStatement m
 type FileImport = String
 type RawPrgm m = ([FileImport], [RawStatement m]) -- TODO: Include [Export]
 
-data Object m = Object m Name (ArgMetaMap m)
+type ObjArg m = (m, Maybe (Object m))
+data Object m = Object m Name (H.HashMap Name (ObjArg m))
   deriving (Eq, Ord, Generic)
 instance Hashable m => Hashable (Object m)
 
@@ -152,3 +153,12 @@ getExprMeta expr = case expr of
   Value m _   -> m
   Arg m _   -> m
   TupleApply m _ _ -> m
+
+type ArgMetaMap m = H.HashMap Name m
+formArgMetaMap :: Object m -> ArgMetaMap m
+formArgMetaMap (Object m name args) | H.null args = H.singleton name m
+formArgMetaMap (Object _ _ args) = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg args
+  where
+    unionCombine _ _ = error "Duplicate var matched"
+    fromArg k (m, Nothing) = H.singleton k m
+    fromArg _ (_, Just arg) = formArgMetaMap arg
