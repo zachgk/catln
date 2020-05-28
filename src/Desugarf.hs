@@ -23,7 +23,7 @@ import           Syntax.Prgm
 import           Syntax
 import           Parser.Syntax
 import           Parser                   (parseFile)
-import           Numeric                        ( showHex )
+import           Text.Printf
 
 splitDeclSubStatements :: [PDeclSubStatement] -> ([PDecl], [PCompAnnot])
 splitDeclSubStatements = aux ([], [])
@@ -127,13 +127,27 @@ semiDesExpr (RawTupleApply m (bm, be) args) = (subBe ++ subArgs, PSTupleApply m 
     (subArgs, args') = traverse semiDesExpr args
 semiDesExpr r@(RawIfThenElse m i t e) = (concat [subI, subT, subE, [elseDecl, ifDecl]], expr')
   where
-    condName = "\\" ++ take 6 (showHex (hash r) "")
+    condName = "\\" ++ take 6 (printf "%08x" (hash r))
     (subI, i') = semiDesExpr i
     (subT, t') = semiDesExpr t
     (subE, e') = semiDesExpr e
     ifDecl = PSemiDecl (DeclLHS emptyMeta emptyMeta condName H.empty (IfGuard i')) [] (Just t')
     elseDecl = PSemiDecl (DeclLHS emptyMeta emptyMeta condName H.empty ElseGuard) [] (Just e')
     expr' = PSValue m condName
+semiDesExpr r@(RawMatch m e matchItems) = (subE ++ subMatchItems, expr')
+  where
+    condName = "\\" ++ take 6 (printf "%08x" (hash r))
+    argName = condName ++ "-arg"
+    (subE, e') = semiDesExpr e
+    expr' = PSTupleApply m (emptyMeta, PSValue emptyMeta condName) (H.singleton argName e')
+    subMatchItems = concatMap semiDesMatchItem $ H.toList matchItems
+    semiDesMatchItem ((pattName, pattArgs, pattGuard), matchExpr) = concat [[matchItemExpr'], subPattGuard, subMatchExpr]
+      where
+        (subPattGuard, pattGuard') = semiDesGuard pattGuard
+        (subMatchExpr, matchExpr') = semiDesExpr matchExpr
+        metaToType (PreTyped tp) = tp
+        matchArg = H.singleton argName (PreTyped $ RawSumType S.empty (H.singleton pattName [fmap metaToType pattArgs]) )
+        matchItemExpr' = PSemiDecl (DeclLHS emptyMeta emptyMeta condName matchArg pattGuard') [] (Just matchExpr')
 
 semiDesGuard :: PGuard -> ([PSemiDecl], PSGuard)
 semiDesGuard (IfGuard e) = (subE, IfGuard e')

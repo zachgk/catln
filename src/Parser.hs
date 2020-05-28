@@ -100,13 +100,43 @@ pIfThenElse = do
   _ <- symbol "else"
   RawIfThenElse emptyMeta condExpr thenExpr <$> pExpr
 
+
+pPatternGuard :: Parser PGuard
+pPatternGuard = fromMaybe NoGuard <$> optional (try pIfGuard
+                                              <|> pElseGuard
+                                            )
+
+pPattern :: Parser PPattern
+pPattern = do
+  val <- opIdentifier <|> identifier
+  args <- optional $ try $ parens pArgs
+  guard <- pPatternGuard
+  let args' = fmap PreTyped $ H.fromList $ fromMaybe [] args
+  return (val, args', guard)
+
+pMatch :: Parser PExpr
+pMatch = L.indentBlock scn p
+  where
+    pack expr matchItems = return $ RawMatch emptyMeta expr (H.fromList matchItems)
+    pItem = do
+      patt <- pPattern
+      _ <- symbol "=>"
+      expr <- pExpr
+      return (patt, expr)
+    p = do
+      _ <- symbol "match"
+      expr <- pExpr
+      _ <- symbol "of"
+      return $ L.IndentSome Nothing (pack expr) pItem
+
 term :: Parser PExpr
 term = try (parens pExpr)
        <|> pIfThenElse
+       <|> pMatch
        <|> pStringLiteral
        <|> RawCExpr emptyMeta . CInt <$> integer
        <|> try pCall
-       <|> try (RawValue emptyMeta <$> identifier)
+       <|> (RawValue emptyMeta <$> identifier)
 
 pExpr :: Parser PExpr
 pExpr = makeExprParser term ops
@@ -153,11 +183,6 @@ pElseGuard = do
   _ <- symbol "else"
   return ElseGuard
 
-pDeclGuard :: Parser PGuard
-pDeclGuard = fromMaybe NoGuard <$> optional (try pIfGuard
-                                              <|> pElseGuard
-                                            )
-
 pArrowRes :: Parser ParseMeta
 pArrowRes = do
   _ <- symbol "->"
@@ -166,14 +191,10 @@ pArrowRes = do
 
 pDeclLHS :: Parser PDeclLHS
 pDeclLHS = do
-  val <- opIdentifier <|> identifier
-  args <- optional $ try $ parens pArgs
-  guard <- pDeclGuard
+  (val, args, guard) <- pPattern
   maybeArrMeta <- optional pArrowRes
   let arrMeta = fromMaybe emptyMeta maybeArrMeta
-  return $ case args of
-    Just a  -> DeclLHS emptyMeta arrMeta val (PreTyped <$> H.fromList a) guard
-    Nothing -> DeclLHS emptyMeta arrMeta val H.empty guard
+  return $ DeclLHS emptyMeta arrMeta val args guard
 
 pDeclSingle :: Parser PDecl
 pDeclSingle = do

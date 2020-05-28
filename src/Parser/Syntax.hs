@@ -19,6 +19,7 @@ import           Syntax
 
 type ParseMeta = PreTyped
 type PArgMetaMap = ArgMetaMap ParseMeta
+type PPattern = Pattern ParseMeta
 type PExpr = RawExpr ParseMeta
 type PCompAnnot = CompAnnot PExpr
 type PGuard = Guard PExpr
