@@ -62,6 +62,7 @@ instance Show RawLeafType where
       prettyArg (argName, argType) = show argType ++ " " ++ argName
 
 instance Show RawType where
+  show t | t == rawBottomType = "∅"
   show (RawSumType leafs partials) = "(" ++ intercalate " | " (leafs' ++ partials') ++ ")"
     where
       leafs' = map show $ S.toList leafs
@@ -78,6 +79,7 @@ instance Show LeafType where
       prettyArg (argName, argType) = show argType ++ " " ++ argName
 
 instance Show Type where
+  show (SumType leafs) | S.null leafs = "∅"
   show (SumType leafs) = if S.size leafs == 1
     then sumString
     else "(" ++ sumString ++ ")"

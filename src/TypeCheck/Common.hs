@@ -17,22 +17,24 @@ import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet          as S
 import           Data.UnionFind.ST
 import           Data.Hashable
+import           Data.List
 import           GHC.Generics          (Generic)
 
 import           Syntax.Types
 import           Syntax.Prgm
 import           Syntax
+import           Text.Printf
 
 data TypeCheckError
   = GenTypeCheckError String
   | AbandonCon SConstraint
   | FailInfer String Scheme [SConstraint]
   | TupleMismatch (TypeCheckResult TypedMeta) (TypeCheckResult TExpr) Typed (TypeCheckResult (H.HashMap String TExpr)) [SConstraint]
-  deriving (Eq, Ord, Show, Generic)
+  deriving (Eq, Ord, Generic)
 instance Hashable TypeCheckError
 
 data SType = SType RawType RawType String -- SType upper lower description
-  deriving (Eq, Ord, Show, Generic)
+  deriving (Eq, Ord, Generic)
 instance Hashable SType
 type Scheme = TypeCheckResult SType
 
@@ -61,13 +63,13 @@ data SConstraint
   | SPropEq (Scheme, Name) Scheme
   | SAddArgs (Scheme, S.HashSet String) Scheme
   | SUnionOf Scheme [Scheme]
-  deriving (Eq, Ord, Show, Generic)
+  deriving (Eq, Ord, Generic)
 instance Hashable SConstraint
 
 data TypeCheckResult r
   = TypeCheckResult [TypeCheckError] r
   | TypeCheckResE [TypeCheckError]
-  deriving (Eq, Ord, Show, Generic)
+  deriving (Eq, Ord, Generic)
 instance Hashable r => Hashable (TypeCheckResult r)
 
 getTCRE :: TypeCheckResult r -> [TypeCheckError]
@@ -138,6 +140,36 @@ type TReplRes = ReplRes TypedMeta
 type TypeGraphObjects s = Pnt s
 type TypeGraphLeafs s = H.HashMap RawLeafType [Pnt s]
 type TypeGraph s = (TypeGraphObjects s, TypeGraphLeafs s)
+
+instance Show TypeCheckError where
+  show (GenTypeCheckError s) = s
+  show (AbandonCon c) = printf "Abandon %s" (show c)
+  show (FailInfer desc scheme constraints) = printf "Failed to infer %s\n\tScheme: %s\n\tConstraints: %s" desc (show scheme) (show constraints)
+  show (TupleMismatch baseM baseExpr m maybeArgs constraints) = printf "Tuple Apply Mismatch:\n\t(%s %s)(%s) ≠ %s\n\tConstraints: %s" (show baseM) (show baseExpr) args' (show m) (show constraints)
+    where
+      showArg (argName, argVal) = printf "%s = %s" argName (show argVal)
+      args' = case maybeArgs of
+        TypeCheckResult _ args -> intercalate ", " $ map showArg $ H.toList args
+        TypeCheckResE _ -> "TypeCheckResE"
+
+instance Show SType where
+  show (SType upper lower desc) = concat [show upper, " ⊇ ", desc, " ⊇ ", show lower]
+
+instance Show SConstraint where
+  show (SEqualsKnown s t) = printf "%s == %s" (show s) (show t)
+  show (SEqPoints s1 s2) = printf "%s == %s" (show s1) (show s2)
+  show (SBoundedBy s1 s2) = printf "%s ⊆ %s" (show s1) (show s2)
+  show (SBoundedByKnown s t) = printf "%s ⊆ %s" (show s) (show t)
+  show (SArrowTo f t) = printf "%s -> %s" (show t) (show f)
+  show (SPropEq (s1, n) s2) = printf "(%s).%s == %s"  (show s1) n (show s2)
+  show (SAddArgs (base, args) res) = printf "(%s)(%s) == %s" (show base) args' (show res)
+    where args' = intercalate ", " $ S.toList args
+  show (SUnionOf s _) = printf "SUnionOf for %s" (show s)
+
+instance Show r => Show (TypeCheckResult r) where
+  show (TypeCheckResult [] r) = show r
+  show (TypeCheckResult notes r) = concat ["TCRes [", show notes, "] (", show r, ")"]
+  show (TypeCheckResE notes) = concat ["TCErr [", show notes, "]"]
 
 getPnt :: VarMeta s -> Pnt s
 getPnt x = x
