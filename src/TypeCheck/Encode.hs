@@ -22,7 +22,7 @@ import           Syntax.Types
 import           Syntax.Prgm
 import           Syntax
 import           TypeCheck.Common
-import           TypeCheck.TypeGraph (buildTypeGraph)
+import           TypeCheck.TypeGraph (buildTypeEnv)
 
 makeBaseFEnv :: ST s (FEnv s)
 makeBaseFEnv = return $ FEnv [] H.empty []
@@ -155,10 +155,10 @@ fromObjectArrows env (obj, arrows) = do
   (obj', env1) <- fromObject "Object" env obj
   return ((obj', arrows), env1)
 
-fromPrgm :: FEnv s -> PPrgm -> ST s (VPrgm s, TypeGraph s, FEnv s)
+fromPrgm :: FEnv s -> PPrgm -> ST s (VPrgm s, TypeEnv s, FEnv s)
 fromPrgm env1 (objMap1, classMap) = do
   (objMap2, env2) <- mapMWithFEnv env1 fromObjectArrows $ H.toList objMap1
   (objMap3, env3) <- mapMWithFEnv env2 fromObjectMap objMap2
-  (env4, typeGraph, graphCons) <- buildTypeGraph env3 objMap3
-  let env5 = addConstraints env4 graphCons
-  return ((objMap3, classMap), typeGraph, env5)
+  (typeEnv, typeEnvConstraints) <- buildTypeEnv objMap3
+  let env4 = addConstraints env3 typeEnvConstraints
+  return ((objMap3, classMap), typeEnv, env4)

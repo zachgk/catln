@@ -109,7 +109,7 @@ addArgsToRawType (RawSumType leafs partials) newArgs = Just $ RawSumType S.empty
     fromPartial = H.union partialUpdate
 
 -- returns updated (pruned) constraints and boolean if schemes were updated
-executeConstraint :: TypeGraph s -> Constraint s -> ST s ([Constraint s], Bool)
+executeConstraint :: TypeEnv s -> Constraint s -> ST s ([Constraint s], Bool)
 executeConstraint _ (EqualsKnown pnt tp) = modifyDescriptor pnt (\oldScheme -> equalizeSchemes (oldScheme, return $ SType tp tp "") "executeConstraint EqualsKnown") >> return ([], True)
 executeConstraint _ (EqPoints p1 p2) = union' p1 p2 (\s1 s2 -> return (equalizeSchemes (s1, s2) "executeConstraint EqPoints")) >> return ([], True)
 executeConstraint _ cons@(BoundedBy subPnt parentPnt) = do
@@ -180,7 +180,7 @@ executeConstraint _ cons@(UnionOf parentPnt childrenPnts) = do
       setDescriptor parentPnt parentScheme'
       return ([cons | not (isSolved parentScheme')], parentScheme /= parentScheme')
 
-runConstraints :: Integer -> TypeGraph s -> [Constraint s] -> ST s (Either [TypeCheckError] ())
+runConstraints :: Integer -> TypeEnv s -> [Constraint s] -> ST s (Either [TypeCheckError] ())
 runConstraints _ _ [] = return $ return ()
 runConstraints 0 _ _ = return $ Left [GenTypeCheckError "Reached runConstraints limit"]
 runConstraints limit typeGraph cons = do

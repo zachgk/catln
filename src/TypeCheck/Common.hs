@@ -136,10 +136,9 @@ type TPrgm = Prgm TypedMeta
 type TReplRes = ReplRes TypedMeta
 
 -- implicit graph
--- type TypeGraphObjects = H.HashMap Name (S.HashSet (H.HashMap TypeName RawLeafType))
-type TypeGraphObjects s = Pnt s
-type TypeGraphLeafs s = H.HashMap RawLeafType [Pnt s]
-type TypeGraph s = (TypeGraphObjects s, TypeGraphLeafs s)
+type UnionObj s = Pnt s -- a union of all object types for argument inference
+type TypeGraph s = H.HashMap Name [(Pnt s, Pnt s)] -- H.HashMap (Root tuple name for filtering) [(match type), (if matching then can implicit to)]
+type TypeEnv s = (UnionObj s, TypeGraph s)
 
 instance Show TypeCheckError where
   show (GenTypeCheckError s) = s
