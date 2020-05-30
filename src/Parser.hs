@@ -110,24 +110,24 @@ pObjTreeArg = do
   let tp' = maybe emptyMeta PreTyped tp
   subTree <- optional $ do
     _ <- symbol "="
-    pObjTree
+    pObjTree PatternObj
   return (val, (tp', subTree))
 
 pObjTreeArgs :: Parser [(Name, PObjArg)]
 pObjTreeArgs = sepBy1 pObjTreeArg (symbol ",")
 
-pObjTree :: Parser PObject
-pObjTree = do
+pObjTree :: ObjectBasis -> Parser PObject
+pObjTree basis = do
   tp <- try $ optional $ (`RawSumType` H.empty) <$> pType
   name <- opIdentifier <|> identifier
   args <- optional $ try $ parens pObjTreeArgs
   let tp' = maybe emptyMeta PreTyped tp
   let args' = H.fromList $ fromMaybe [] args
-  return $ Object tp' FunctionObj name args'
+  return $ Object tp' basis name args'
 
-pPattern :: Parser PPattern
-pPattern = do
-  objTree <- pObjTree
+pPattern :: ObjectBasis -> Parser PPattern
+pPattern basis = do
+  objTree <- pObjTree basis
   Pattern objTree <$> pPatternGuard
 
 pMatch :: Parser PExpr
@@ -135,7 +135,7 @@ pMatch = L.indentBlock scn p
   where
     pack expr matchItems = return $ RawMatch emptyMeta expr (H.fromList matchItems)
     pItem = do
-      patt <- pPattern
+      patt <- pPattern PatternObj
       _ <- symbol "=>"
       expr <- pExpr
       return (patt, expr)
@@ -195,7 +195,7 @@ pArrowRes = do
 
 pDeclLHS :: Parser PDeclLHS
 pDeclLHS = do
-  patt <- pPattern
+  patt <- pPattern FunctionObj
   maybeArrMeta <- optional pArrowRes
   let arrMeta = fromMaybe emptyMeta maybeArrMeta
   return $ DeclLHS arrMeta patt
