@@ -34,8 +34,8 @@ type TBReplRes = ReplRes TBMeta
 type TBEnv f = (ResBuildEnv f, H.HashMap LeafType (ResArrow f))
 
 resArrowDestType :: ResArrow f -> Type
-resArrowDestType (ResEArrow (Arrow _ _ _ (Just expr))) = (\(Typed t) -> t) $ getExprMeta expr
-resArrowDestType (ResEArrow (Arrow (Typed tp) _ _ Nothing)) = tp
+resArrowDestType (ResEArrow _ (Arrow _ _ _ (Just expr))) = (\(Typed t) -> t) $ getExprMeta expr
+resArrowDestType (ResEArrow _ (Arrow (Typed tp) _ _ Nothing)) = tp
 resArrowDestType (PrimArrow tp _) = tp
 resArrowDestType (ConstantArrow CInt{}) = intType
 resArrowDestType (ConstantArrow CFloat{}) = floatType
@@ -53,7 +53,7 @@ makeBaseEnv primEnv objMap = fmap (baseEnv,) exEnv
     baseEnv = (H.union primEnv resEnv, H.empty)
     resEnv = H.fromListWith (++) $ concatMap resFromArrows $ H.toList objMap
     resFromArrows (obj, arrows) = mapMaybe (resFromArrow obj) arrows
-    resFromArrow (Object om _ _ _) arrow@(Arrow _ _ aguard expr) = fmap (const (leafFromMeta om, [(aguard, ResEArrow arrow)])) expr
+    resFromArrow obj@(Object om _ _ _) arrow@(Arrow _ _ aguard expr) = fmap (const (leafFromMeta om, [(aguard, ResEArrow obj arrow)])) expr
     exEnv = fmap H.fromList $ sequence $ concatMap exFromArrows $ H.toList objMap
     exFromArrows (obj, arrows) = mapMaybe (exFromArrow obj) arrows
     exFromArrow _ arrow@(Arrow (Typed am) compAnnots _ maybeExpr) = fmap (\expr -> do
@@ -86,7 +86,7 @@ buildExpr _ (Arg (Typed tp) name) = return $ ResArrowSingle $ ArgArrow tp name
 buildExpr env (TupleApply (Typed (SumType prodTypes)) (Typed baseType, baseExpr) argExprs) = case S.toList prodTypes of
     (_:_:_) -> CErr [BuildTreeCErr $ "Found multiple types for tupleApply " ++ show baseExpr ++ "\n\t" ++ show prodTypes]
     [] -> CErr [BuildTreeCErr $ "Found no types for tupleApply " ++ show baseExpr ++ " with type " ++ show prodTypes ++ " and exprs " ++ show argExprs]
-    [LeafType _ leafType] | H.keysSet argExprs == H.keysSet leafType -> do
+    [LeafType _ leafType] | H.keysSet argExprs `isSubsetOf` H.keysSet leafType -> do
                            baseBuild <- buildExprImp env baseExpr baseType
                            argVals <- mapM (\(valDestType, expr) -> buildExprImp env expr (SumType $ S.singleton valDestType)) $ H.intersectionWith (,) leafType argExprs
                            return $ ResArrowTupleApply baseBuild argVals

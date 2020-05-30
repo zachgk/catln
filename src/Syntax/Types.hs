@@ -209,6 +209,9 @@ intersectRawTypes (RawSumType aLeafs aPartials) (RawSumType bLeafs bPartials) = 
       Nothing -> False
     leafArgsInPartialArgs leafArgs partialArgs = H.keysSet leafArgs == H.keysSet partialArgs && and (H.intersectionWith hasRawLeaf leafArgs partialArgs)
 
+isSubsetOf :: (Eq a, Hashable a) => S.HashSet a -> S.HashSet a -> Bool
+x `isSubsetOf` y = all (`S.member` y) x
+
 isSubmapOf :: (Eq k, Eq v, Hashable k) => H.HashMap k v -> H.HashMap k v -> Bool
 as `isSubmapOf` bs = and $ H.mapWithKey aux as
   where aux ak av = case H.lookup ak bs of

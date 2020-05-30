@@ -23,6 +23,7 @@ import           GHC.Generics          (Generic)
 import           Text.Megaparsec.Error (ParseErrorBundle, errorBundlePretty)
 import qualified Data.Text.Lazy as T
 import Text.Pretty.Simple
+import           Text.Printf
 
 import Syntax.Types
 import Syntax.Prgm
@@ -39,7 +40,7 @@ data ReplRes m
 type ResBuildEnv f = H.HashMap LeafType [(Guard (Expr Typed), ResArrow f)]
 type ResExEnv f = H.HashMap (Arrow Typed) (ResArrowTree f, [ResArrowTree f]) -- (result, [compAnnot trees])
 data ResArrow f
-  = ResEArrow (Arrow Typed)
+  = ResEArrow (Object Typed) (Arrow Typed)
   | PrimArrow Type f
   | ConstantArrow Constant
   | ArgArrow Type String
@@ -54,7 +55,7 @@ data ResArrowTree f
   | ResArrowID
 
 instance Show (ResArrow f) where
-  show (ResEArrow arrow) = "(ResEArrow: " ++ show arrow ++ ")"
+  show (ResEArrow obj arrow) = printf "(ResEArrow: %s -> %s)" (show obj) (show arrow)
   show (PrimArrow tp _) = "(PrimArrow " ++ show tp ++ ")"
   show (ConstantArrow c) = "(ConstantArrow " ++ show c ++ ")"
   show (ArgArrow tp n) = "(ArgArrow " ++ show tp ++ " " ++ n ++ ")"

@@ -20,6 +20,15 @@ import TreeBuild
 import Eval.Common
 import Eval.Runtime
 
+buildArrArgs :: EObject -> Val -> Args
+buildArrArgs = aux H.empty
+  where
+    aux acc (Object _ _ objName objArgs) val | H.null objArgs = H.insert objName val acc
+    aux acc (Object _ _ _ objArgs) (TupleVal _ tupleArgs) = H.foldrWithKey addArgs acc $ H.intersectionWith (,) objArgs tupleArgs
+    aux _ _ val = error $ "Invalid buildArrArgs value: " ++ show val
+    addArgs argName ((_, Nothing), argVal) acc = H.insert argName argVal acc
+    addArgs _ ((_, Just subObj), argVal) acc = aux acc subObj argVal
+
 envLookupResArrowTree :: Env -> EArrow -> Maybe (ResArrowTree EPrim, [ResArrowTree EPrim])
 envLookupResArrowTree env arrow = H.lookup arrow env
 
@@ -32,8 +41,9 @@ evalCompAnnot st (TupleVal name _) = CErr [EvalCErr st $ "Unknown compiler annot
 evalCompAnnot st _ = CErr [EvalCErr st "Eval: Invalid compiler annotation type"]
 
 eval :: Env -> EStacktrace -> Args  -> Val -> ResArrow EPrim -> CRes Val
-eval env st _ val@(TupleVal _ newArrArgs) (ResEArrow arrow) = case envLookupResArrowTree env arrow of
+eval env st _ val (ResEArrow object arrow) = case envLookupResArrowTree env arrow of
   Just (resArrowTree, compAnnots) -> do
+    let newArrArgs = buildArrArgs object val
     mapM_ (\compAnnot -> do
               compAnnot' <- evalTree env (("annot " ++ show compAnnot):st) newArrArgs NoVal compAnnot
               return $ evalCompAnnot st compAnnot'

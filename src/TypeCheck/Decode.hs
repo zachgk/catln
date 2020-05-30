@@ -11,7 +11,6 @@
 
 module TypeCheck.Decode where
 
-import           Data.Hashable
 import           Control.Monad
 import           Control.Monad.ST
 import           Data.Functor
@@ -71,9 +70,6 @@ toMeta env p name = do
         showMatching <- showMatchingConstraints env p
         return $ TypeCheckResE (FailInfer name scheme showMatching:notes)
       Just t -> return $ TypeCheckResult notes (Typed t)
-
-isSubsetOf :: (Eq a, Hashable a) => S.HashSet a -> S.HashSet a -> Bool
-x `isSubsetOf` y = all (`S.member` y) x
 
 toExpr :: DEnv s -> VExpr s -> ST s (TypeCheckResult TExpr)
 toExpr env (CExpr m c) = do
