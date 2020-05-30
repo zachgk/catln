@@ -123,7 +123,7 @@ pObjTree = do
   args <- optional $ try $ parens pObjTreeArgs
   let tp' = maybe emptyMeta PreTyped tp
   let args' = H.fromList $ fromMaybe [] args
-  return $ Object tp' name args'
+  return $ Object tp' FunctionObj name args'
 
 pPattern :: Parser PPattern
 pPattern = do

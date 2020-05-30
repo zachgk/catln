@@ -109,7 +109,7 @@ fromGuard _ env ElseGuard = return (ElseGuard, env)
 fromGuard _ env NoGuard = return (NoGuard, env)
 
 fromArrow :: VObject s -> FEnv s -> PArrow -> ST s (VArrow s, FEnv s)
-fromArrow obj@(Object _ objName _) env1 (Arrow m annots aguard maybeExpr) = do
+fromArrow obj@(Object _ _ objName _) env1 (Arrow m annots aguard maybeExpr) = do
   (m', p, env2) <- fromMetaP env1 m ("Arrow result from " ++ show objName)
   let argMetaMap = formArgMetaMap obj
   (annots', env3) <- mapMWithFEnv env2 (fromAnnot argMetaMap) annots
@@ -134,16 +134,16 @@ addObjArg objM prefix env (n, (m, maybeSubObj)) = do
   let env3 = addConstraints env2 [PropEq (getPnt objM, n) m']
   case maybeSubObj of
     Just subObj -> do
-      (subObj'@(Object subM _ _), env4) <- fromObject prefix' env3 subObj
+      (subObj'@(Object subM _ _ _), env4) <- fromObject prefix' env3 subObj
       return ((n, (m', Just subObj')), addConstraints env4 [ArrowTo subM m'])
     Nothing -> return ((n, (m', Nothing)), env3)
 
 fromObject :: String -> FEnv s -> PObject -> ST s (VObject s, FEnv s)
-fromObject prefix env (Object m name args) = do
+fromObject prefix env (Object m basis name args) = do
   let prefix' = prefix ++ "." ++ name
   (m', env1) <- fromMeta env m prefix'
   (args', env2) <- mapMWithFEnvMapWithKey env1 (addObjArg m' prefix') args
-  let obj' = Object m' name args'
+  let obj' = Object m' basis name args'
   (objValue, env3) <- fromMeta env2 (PreTyped $ RawSumType (S.singleton (RawLeafType name H.empty)) H.empty) ("objValue" ++ name)
   let env4 = fInsert env3 name objValue
   let env5 = addConstraints env4 [BoundedByKnown m' (RawSumType S.empty (H.singleton name [fmap (const RawTopType) args])), BoundedByObjs m']

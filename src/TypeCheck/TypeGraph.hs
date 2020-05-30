@@ -25,14 +25,14 @@ import           TypeCheck.Common
 buildUnionObj :: [VObject s] -> ST s (UnionObj s, Constraint s)
 buildUnionObj objs = do
   graphObjs <- fresh $ TypeCheckResult [] $ SType RawTopType rawBottomType "typeGraph"
-  let constraints = UnionOf graphObjs (map (\(Object m _ _) -> m) objs)
+  let constraints = UnionOf graphObjs (map (\(Object m _ _ _) -> m) objs)
   return (graphObjs, constraints)
 
 buildTypeGraph :: VObjectMap s -> TypeGraph s
 buildTypeGraph = foldr addArrows H.empty
   where
     addArrows (obj, arrows) acc = foldr (addArrow obj) acc arrows
-    addArrow (Object objM name _) (Arrow arrM _ _ _) graph = graph'
+    addArrow (Object objM _ name _) (Arrow arrM _ _ _) graph = graph'
       where graph' = H.insertWith (++) name [(objM, arrM)] graph
 
 buildTypeEnv :: VObjectMap s -> ST s (TypeEnv s, [Constraint s])

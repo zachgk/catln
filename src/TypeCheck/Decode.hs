@@ -128,11 +128,11 @@ toObjArg env prefix (name, (m, maybeObj)) = do
     Nothing -> return $ (name,) . (,Nothing) <$> m'
 
 toObject :: DEnv s -> String -> VObject s -> ST s (TypeCheckResult TObject)
-toObject env prefix (Object m name args) = do
+toObject env prefix (Object m basis name args) = do
   let prefix' = prefix ++ "_" ++ name
   m' <- toMeta env m prefix'
   args' <- mapM (toObjArg env prefix') $ H.toList args
-  return $ (\(m'', args'') -> Object m'' name args'') <$> sequenceT  (m', H.fromList <$> sequence args')
+  return $ (\(m'', args'') -> Object m'' basis name args'') <$> sequenceT  (m', H.fromList <$> sequence args')
 
 toObjectArrows :: DEnv s -> (VObject s, [VArrow s]) -> ST s (TypeCheckResult (TObject, [TArrow]))
 toObjectArrows env (obj, arrows) = do

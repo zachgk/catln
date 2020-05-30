@@ -58,17 +58,17 @@ scopeSubDeclFunNamesInMeta _ _ m@(PreTyped RawTopType) = m
 scopeSubDeclFunNames :: Name -> [PSemiDecl] -> Maybe PSExpr -> [PSCompAnnot] -> ParseMeta -> ParseMeta -> ([PSemiDecl], Maybe PSExpr, [PSCompAnnot], ParseMeta, ParseMeta)
 scopeSubDeclFunNames prefix decls maybeExpr annots objM arrM = (decls', expr', annots', objM', arrM')
   where
-    declNames = S.fromList $ map (\(PSemiDecl (DeclLHS _ (Pattern (Object _ name _) _)) _ _) -> name) decls
+    declNames = S.fromList $ map (\(PSemiDecl (DeclLHS _ (Pattern (Object _ _ name _) _)) _ _) -> name) decls
     addPrefix n = prefix ++ "." ++ n
     scopeM = scopeSubDeclFunNamesInMeta prefix declNames
     objM' = scopeM objM
     arrM' = scopeM arrM
-    decls' = map (\(PSemiDecl (DeclLHS aM (Pattern (Object oM name args) guard)) annot subExpr) -> PSemiDecl (DeclLHS (scopeM aM) (Pattern (Object (scopeM oM) (addPrefix name) args) guard)) annot (fmap (scopeSubDeclFunNamesInExpr prefix declNames) subExpr)) decls
+    decls' = map (\(PSemiDecl (DeclLHS aM (Pattern (Object oM basis name args) guard)) annot subExpr) -> PSemiDecl (DeclLHS (scopeM aM) (Pattern (Object (scopeM oM) basis (addPrefix name) args) guard)) annot (fmap (scopeSubDeclFunNamesInExpr prefix declNames) subExpr)) decls
     expr' = fmap (scopeSubDeclFunNamesInExpr prefix declNames) maybeExpr
     annots' = map (\(CompAnnot n ca) -> CompAnnot n (fmap (scopeSubDeclFunNamesInExpr prefix declNames) ca)) annots
 
 currySubFunctionSignature :: H.HashMap Name PObjArg -> PSemiDecl -> PSemiDecl
-currySubFunctionSignature parentArgs (PSemiDecl (DeclLHS arrM (Pattern (Object objM name args) guard)) annot expr) = PSemiDecl (DeclLHS arrM (Pattern (Object objM name args') guard)) annot expr
+currySubFunctionSignature parentArgs (PSemiDecl (DeclLHS arrM (Pattern (Object objM basis name args) guard)) annot expr) = PSemiDecl (DeclLHS arrM (Pattern (Object objM basis name args') guard)) annot expr
   where args' = H.union args parentArgs
 
 
@@ -86,14 +86,14 @@ currySubFunctionsUpdateExpr toUpdate parentArgs (PSTupleApply tm (tbm, tbe) tArg
 currySubFunctions :: H.HashMap Name PObjArg -> [PSemiDecl] -> Maybe PSExpr -> [PSCompAnnot] -> ([PSemiDecl], Maybe PSExpr, [PSCompAnnot])
 currySubFunctions parentArgs decls expr annots = (decls', expr', annots')
   where
-    toUpdate = S.fromList $ map (\(PSemiDecl (DeclLHS _ (Pattern (Object _ declName _) _)) _ _) -> declName) decls
+    toUpdate = S.fromList $ map (\(PSemiDecl (DeclLHS _ (Pattern (Object _ _ declName _) _)) _ _) -> declName) decls
     decls2 = map (currySubFunctionSignature parentArgs) decls
     expr' = fmap (currySubFunctionsUpdateExpr toUpdate parentArgs) expr
     decls' = map (\(PSemiDecl lhs an e) -> PSemiDecl lhs an (fmap (currySubFunctionsUpdateExpr toUpdate parentArgs) e)) decls2
     annots' = map (\(CompAnnot n ca) -> CompAnnot n (fmap (currySubFunctionsUpdateExpr toUpdate parentArgs) ca)) annots
 
 removeSubDeclarations :: PDecl -> [PSemiDecl]
-removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern (Object objM declName args) guard1)) subStatements expr1) = decl':subDecls5
+removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern (Object objM basis declName args) guard1)) subStatements expr1) = decl':subDecls5
   where
     (subDecls, annots1) = splitDeclSubStatements subStatements
     subDecls2 = concatMap removeSubDeclarations subDecls
@@ -103,7 +103,7 @@ removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern (Object objM declName args
     subDecls3 = concat [subDecls2, subDecls21, subDecls22, subDecls23]
     (subDecls4, expr3, annots3, objM', arrM') = scopeSubDeclFunNames declName subDecls3 expr2 annots2 objM arrM
     (subDecls5, expr4, annots4) = currySubFunctions args subDecls4 expr3 annots3
-    decl' = PSemiDecl (DeclLHS arrM' (Pattern (Object objM' declName args) guard2)) annots4 expr4
+    decl' = PSemiDecl (DeclLHS arrM' (Pattern (Object objM' basis declName args) guard2)) annots4 expr4
 
 desExpr :: PArgMetaMap -> PSExpr -> DesExpr
 desExpr _ (PSCExpr m c) = CExpr m c
@@ -131,8 +131,8 @@ semiDesExpr r@(RawIfThenElse m i t e) = (concat [subI, subT, subE, [elseDecl, if
     (subI, i') = semiDesExpr i
     (subT, t') = semiDesExpr t
     (subE, e') = semiDesExpr e
-    ifDecl = PSemiDecl (DeclLHS emptyMeta (Pattern (Object emptyMeta condName H.empty) (IfGuard i'))) [] (Just t')
-    elseDecl = PSemiDecl (DeclLHS emptyMeta (Pattern (Object emptyMeta condName H.empty) ElseGuard)) [] (Just e')
+    ifDecl = PSemiDecl (DeclLHS emptyMeta (Pattern (Object emptyMeta FunctionObj condName H.empty) (IfGuard i'))) [] (Just t')
+    elseDecl = PSemiDecl (DeclLHS emptyMeta (Pattern (Object emptyMeta FunctionObj condName H.empty) ElseGuard)) [] (Just e')
     expr' = PSValue m condName
 semiDesExpr r@(RawMatch m e matchItems) = (subE ++ subMatchItems, expr')
   where
@@ -146,7 +146,7 @@ semiDesExpr r@(RawMatch m e matchItems) = (subE ++ subMatchItems, expr')
         (subPattGuard, pattGuard') = semiDesGuard pattGuard
         (subMatchExpr, matchExpr') = semiDesExpr matchExpr
         matchArg = H.singleton argName (emptyMeta, Just patt)
-        matchItemExpr' = PSemiDecl (DeclLHS emptyMeta (Pattern (Object emptyMeta condName matchArg) pattGuard')) [] (Just matchExpr')
+        matchItemExpr' = PSemiDecl (DeclLHS emptyMeta (Pattern (Object emptyMeta FunctionObj condName matchArg) pattGuard')) [] (Just matchExpr')
 
 semiDesGuard :: PGuard -> ([PSemiDecl], PSGuard)
 semiDesGuard (IfGuard e) = (subE, IfGuard e')
@@ -177,7 +177,7 @@ addTypeDef :: PRawTypeDef -> (PObjectMap, ClassMap) -> (PObjectMap, ClassMap)
 addTypeDef (RawTypeDef name leafs) (objMap, classMap) = (objMap', classMap')
   where
     leafArgConvert leafType = (PreTyped $ RawSumType (S.singleton leafType) H.empty, Nothing)
-    leafToObj (RawLeafType leafName leafArgs) = Object emptyMeta leafName (fmap leafArgConvert leafArgs)
+    leafToObj (RawLeafType leafName leafArgs) = Object emptyMeta TypeObj leafName (fmap leafArgConvert leafArgs)
     newObjs = map leafToObj $ S.toList leafs
     additionalObjMap = H.fromList $ map (,[]) newObjs
     objMap' = mergeObjMaps objMap additionalObjMap

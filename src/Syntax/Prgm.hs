@@ -9,6 +9,7 @@
 --
 --------------------------------------------------------------------
 
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 
 module Syntax.Prgm where
@@ -19,6 +20,7 @@ import           Data.List                      ( intercalate )
 import           GHC.Generics          (Generic)
 
 import Syntax.Types
+import           Text.Printf
 
 newtype Import = Import String
   deriving (Eq, Ord, Show)
@@ -98,7 +100,9 @@ type FileImport = String
 type RawPrgm m = ([FileImport], [RawStatement m]) -- TODO: Include [Export]
 
 type ObjArg m = (m, Maybe (Object m))
-data Object m = Object m Name (H.HashMap Name (ObjArg m))
+data ObjectBasis = FunctionObj | TypeObj
+  deriving (Eq, Ord, Show, Generic, Hashable)
+data Object m = Object m ObjectBasis Name (H.HashMap Name (ObjArg m))
   deriving (Eq, Ord, Generic)
 instance Hashable m => Hashable (Object m)
 
@@ -132,7 +136,7 @@ instance Show e => Show (Guard e) where
   show NoGuard = ""
 
 instance Show m => Show (Object m) where
-  show (Object _ name args) = "Object " ++ name ++ maybeArgsString ++ ""
+  show (Object _ basis name args) = printf "%s %s %s" (show basis) name maybeArgsString
     where
       showArg (argName, argM) = show argM ++ " " ++ argName
       maybeArgsString = if H.size args == 0
@@ -156,8 +160,8 @@ getExprMeta expr = case expr of
 
 type ArgMetaMap m = H.HashMap Name m
 formArgMetaMap :: Object m -> ArgMetaMap m
-formArgMetaMap (Object m name args) | H.null args = H.singleton name m
-formArgMetaMap (Object _ _ args) = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg args
+formArgMetaMap (Object m _ name args) | H.null args = H.singleton name m
+formArgMetaMap (Object _ _ _ args) = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg args
   where
     unionCombine _ _ = error "Duplicate var matched"
     fromArg k (m, Nothing) = H.singleton k m
