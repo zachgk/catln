@@ -48,6 +48,7 @@ data Constraint s
   | EqPoints (Pnt s) (Pnt s)
   | BoundedBy (Pnt s) (Pnt s)
   | BoundedByKnown (Pnt s) RawType
+  | BoundedByObjs (Pnt s)
   | ArrowTo (Pnt s) (Pnt s) -- ArrowTo src dest
   | PropEq (Pnt s, Name) (Pnt s)
   | AddArgs (Pnt s, S.HashSet String) (Pnt s)
@@ -59,6 +60,7 @@ data SConstraint
   | SEqPoints Scheme Scheme
   | SBoundedBy Scheme Scheme
   | SBoundedByKnown Scheme RawType
+  | SBoundedByObjs Scheme
   | SArrowTo Scheme Scheme
   | SPropEq (Scheme, Name) Scheme
   | SAddArgs (Scheme, S.HashSet String) Scheme
@@ -159,6 +161,7 @@ instance Show SConstraint where
   show (SEqPoints s1 s2) = printf "%s == %s" (show s1) (show s2)
   show (SBoundedBy s1 s2) = printf "%s ⊆ %s" (show s1) (show s2)
   show (SBoundedByKnown s t) = printf "%s ⊆ %s" (show s) (show t)
+  show (SBoundedByObjs s) = printf "BoundObj %s" (show s)
   show (SArrowTo f t) = printf "%s -> %s" (show t) (show f)
   show (SPropEq (s1, n) s2) = printf "(%s).%s == %s"  (show s1) n (show s2)
   show (SAddArgs (base, args) res) = printf "(%s)(%s) == %s" (show base) args' (show res)

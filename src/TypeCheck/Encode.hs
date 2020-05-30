@@ -91,7 +91,7 @@ fromExpr objArgs env1 (TupleApply m (baseM, baseExpr) args) = do
   convertExprMetas <- mapM (\_ -> fresh (TypeCheckResult [] $ SType RawTopType rawBottomType "Tuple converted expr meta")) args
   let arrowArgConstraints = H.elems $ H.intersectionWith ArrowTo (fmap getPntExpr args') convertExprMetas
   let tupleConstraints = H.elems $ H.mapWithKey (\name ceMeta -> PropEq (p, name) ceMeta) convertExprMetas
-  let constraints = [ArrowTo (getPntExpr baseExpr') baseP, AddArgs (baseP, H.keysSet args) p] ++ arrowArgConstraints ++ tupleConstraints
+  let constraints = [ArrowTo (getPntExpr baseExpr') baseP, AddArgs (baseP, H.keysSet args) p, BoundedByObjs p] ++ arrowArgConstraints ++ tupleConstraints
   let env6 = addConstraints env5 constraints
   return (TupleApply m' (baseM', baseExpr') args', env6)
 
@@ -146,7 +146,7 @@ fromObject prefix env (Object m name args) = do
   let obj' = Object m' name args'
   (objValue, env3) <- fromMeta env2 (PreTyped $ RawSumType (S.singleton (RawLeafType name H.empty)) H.empty) ("objValue" ++ name)
   let env4 = fInsert env3 name objValue
-  let env5 = addConstraints env4 [BoundedByKnown m' (RawSumType S.empty (H.singleton name [fmap (const RawTopType) args]))]
+  let env5 = addConstraints env4 [BoundedByKnown m' (RawSumType S.empty (H.singleton name [fmap (const RawTopType) args])), BoundedByObjs m']
   return (obj', env5)
 
 -- Add all of the objects first for various expressions that call other top level functions

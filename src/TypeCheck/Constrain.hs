@@ -129,13 +129,22 @@ executeConstraint _ (BoundedByKnown subPnt boundTp) = do
       let subScheme' = fmap (\ub' -> SType ub' lb description) (tryIntersectRawTypes ub boundTp "executeConstraint BoundedBy")
       setDescriptor subPnt subScheme'
       return ([], subScheme /= subScheme')
-executeConstraint typeGraph cons@(ArrowTo srcPnt destPnt) = do
+executeConstraint (unionObjsPnt, _) cons@(BoundedByObjs pnt) = do
+  scheme <- descriptor pnt
+  unionObjsScheme <- descriptor unionObjsPnt
+  case sequenceT (scheme, unionObjsScheme) of
+    TypeCheckResE _ -> return ([], False)
+    TypeCheckResult _ (SType ub lb desc, SType objsUb _ _) -> do
+      let scheme' = fmap (\ub' -> SType ub' lb desc) (tryIntersectRawTypes ub objsUb "executeConstraint BoundedByObjs")
+      setDescriptor pnt scheme'
+      return ([cons | not (isSolved scheme')], scheme /= scheme')
+executeConstraint typeEnv cons@(ArrowTo srcPnt destPnt) = do
   srcScheme <- descriptor srcPnt
   destScheme <- descriptor destPnt
   case sequenceT (srcScheme, destScheme) of
     TypeCheckResE _ -> return ([], False)
     TypeCheckResult _ (SType srcUb srcLb srcDesc, SType destUb destLb destDesc) -> do
-      constrained <- arrowConstrainUbs typeGraph srcUb destUb
+      constrained <- arrowConstrainUbs typeEnv srcUb destUb
       case constrained of
         TypeCheckResult _ (srcUb', destUb') -> do
           let srcScheme' = return $ SType srcUb' srcLb srcDesc
@@ -144,7 +153,7 @@ executeConstraint typeGraph cons@(ArrowTo srcPnt destPnt) = do
           setDescriptor destPnt destScheme'
           return ([cons | not (isSolved destScheme')], srcScheme /= srcScheme' || destScheme /= destScheme')
         TypeCheckResE _ -> return ([], False)
-executeConstraint typeGraph cons@(PropEq (superPnt, propName) subPnt) = do
+executeConstraint _ cons@(PropEq (superPnt, propName) subPnt) = do
   superScheme <- descriptor superPnt
   subScheme <- descriptor subPnt
   case sequenceT (superScheme, subScheme) of
@@ -152,8 +161,7 @@ executeConstraint typeGraph cons@(PropEq (superPnt, propName) subPnt) = do
     TypeCheckResult{} -> do
       let superPropScheme = getSchemeProp superScheme propName
       let scheme' = equalizeBounds (subScheme, superPropScheme) "executeConstraint PropEq"
-      superSchemeBound <- boundSchemeByGraphObjects typeGraph $ setSchemeProp superScheme propName scheme'
-      let superScheme' = checkScheme "PropEq superScheme'" superSchemeBound
+      let superScheme' = setSchemeProp superScheme propName scheme'
       setDescriptor subPnt scheme'
       setDescriptor superPnt superScheme'
       return ([cons | not (isSolved scheme')], subScheme /= scheme' || superScheme /= superScheme')
@@ -183,10 +191,10 @@ executeConstraint _ cons@(UnionOf parentPnt childrenPnts) = do
 runConstraints :: Integer -> TypeEnv s -> [Constraint s] -> ST s (Either [TypeCheckError] ())
 runConstraints _ _ [] = return $ return ()
 runConstraints 0 _ _ = return $ Left [GenTypeCheckError "Reached runConstraints limit"]
-runConstraints limit typeGraph cons = do
-  res <- mapM (executeConstraint typeGraph) cons
+runConstraints limit typeEnv cons = do
+  res <- mapM (executeConstraint typeEnv) cons
   let (consList, changedList) = unzip res
   let cons' = concat consList
   if not (or changedList)
     then return $ return ()
-    else runConstraints (limit - 1) typeGraph cons'
+    else runConstraints (limit - 1) typeEnv cons'
