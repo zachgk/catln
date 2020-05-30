@@ -130,7 +130,8 @@ instance Show e => Show (Guard e) where
 instance Show m => Show (Object m) where
   show (Object _ basis name args) = printf "%s %s %s" (show basis) name maybeArgsString
     where
-      showArg (argName, argM) = show argM ++ " " ++ argName
+      showArg (argName, (_, Just argVal)) = printf "%s = %s" argName (show argVal)
+      showArg (argName, (argM, Nothing)) = printf "%s %s" (show argM) argName
       maybeArgsString = if H.size args == 0
         then ""
         else "(" ++ intercalate ", " (map showArg $ H.toList args) ++ ")"

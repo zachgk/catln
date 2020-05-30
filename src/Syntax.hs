@@ -139,13 +139,16 @@ instance Monad CRes where
 
 -- Metadata for the Programs
 newtype PreTyped = PreTyped RawType
-  deriving (Eq, Ord, Show, Generic, Hashable)
+  deriving (Eq, Ord, Generic, Hashable)
 
 newtype Typed = Typed Type
   deriving (Eq, Ord, Generic, Hashable)
 
 typedIs :: Typed -> Type -> Bool
 typedIs (Typed t1) t2 = t1 == t2
+
+instance Show PreTyped where
+  show (PreTyped t) = show t
 
 instance Show Typed where
   show (Typed t) = show t
