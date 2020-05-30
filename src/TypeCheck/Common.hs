@@ -31,12 +31,10 @@ data TypeCheckError
   | AbandonCon SConstraint
   | FailInfer String Scheme [SConstraint]
   | TupleMismatch (TypeCheckResult TypedMeta) (TypeCheckResult TExpr) Typed (TypeCheckResult (H.HashMap String TExpr)) [SConstraint]
-  deriving (Eq, Ord, Generic)
-instance Hashable TypeCheckError
+  deriving (Eq, Ord, Generic, Hashable)
 
 data SType = SType RawType RawType String -- SType upper lower description
-  deriving (Eq, Ord, Generic)
-instance Hashable SType
+  deriving (Eq, Ord, Generic, Hashable)
 type Scheme = TypeCheckResult SType
 
 type Pnt s = Point s Scheme
@@ -69,14 +67,12 @@ data SConstraint
   | SPropEq (Scheme, Name) Scheme
   | SAddArgs (Scheme, S.HashSet String) Scheme
   | SUnionOf Scheme [Scheme]
-  deriving (Eq, Ord, Generic)
-instance Hashable SConstraint
+  deriving (Eq, Ord, Generic, Hashable)
 
 data TypeCheckResult r
   = TypeCheckResult [TypeCheckError] r
   | TypeCheckResE [TypeCheckError]
-  deriving (Eq, Ord, Generic)
-instance Hashable r => Hashable (TypeCheckResult r)
+  deriving (Eq, Ord, Generic, Hashable)
 
 getTCRE :: TypeCheckResult r -> [TypeCheckError]
 getTCRE (TypeCheckResult notes _) = notes

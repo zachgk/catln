@@ -10,6 +10,7 @@
 --------------------------------------------------------------------
 
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
 
 module Syntax.Types where
 
@@ -27,8 +28,7 @@ type TypeName = Name
 type ClassName = Name
 
 data RawLeafType = RawLeafType TypeName (H.HashMap TypeName RawLeafType)
-  deriving (Eq, Ord, Generic)
-instance Hashable RawLeafType
+  deriving (Eq, Ord, Generic, Hashable)
 
 type RawPartialType = (TypeName, H.HashMap TypeName RawType)
 type RawLeafSet = S.HashSet RawLeafType
@@ -36,21 +36,17 @@ type RawPartialLeafs = (H.HashMap TypeName [H.HashMap TypeName RawType])
 data RawType
   = RawSumType RawLeafSet RawPartialLeafs
   | RawTopType
-  deriving (Eq, Ord, Generic)
-instance Hashable RawType
+  deriving (Eq, Ord, Generic, Hashable)
 
 data LeafType = LeafType String (H.HashMap String LeafType)
-  deriving (Eq, Ord, Generic)
-instance Hashable LeafType
+  deriving (Eq, Ord, Generic, Hashable)
 
 newtype Type = SumType (S.HashSet LeafType)
-  deriving (Eq, Ord, Generic)
-instance Hashable Type
+  deriving (Eq, Ord, Generic, Hashable)
 
 type Sealed = Bool -- whether the typeclass can be extended or not
 data TypeClass = TypeClass Name Sealed RawLeafSet
-  deriving (Eq, Ord, Show, Generic)
-instance Hashable TypeClass
+  deriving (Eq, Ord, Show, Generic, Hashable)
 
 type ClassMap = (H.HashMap TypeName (S.HashSet ClassName), H.HashMap ClassName (Sealed, S.HashSet TypeName))
 

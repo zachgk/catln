@@ -10,6 +10,7 @@
 --------------------------------------------------------------------
 
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
 
 module Syntax where
 
@@ -138,12 +139,10 @@ instance Monad CRes where
 
 -- Metadata for the Programs
 newtype PreTyped = PreTyped RawType
-  deriving (Eq, Ord, Show, Generic)
-instance Hashable PreTyped
+  deriving (Eq, Ord, Show, Generic, Hashable)
 
 newtype Typed = Typed Type
-  deriving (Eq, Ord, Generic)
-instance Hashable Typed
+  deriving (Eq, Ord, Generic, Hashable)
 
 typedIs :: Typed -> Type -> Bool
 typedIs (Typed t1) t2 = t1 == t2

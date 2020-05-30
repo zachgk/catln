@@ -9,8 +9,8 @@
 --
 --------------------------------------------------------------------
 
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
 
 module Syntax.Prgm where
 
@@ -32,12 +32,10 @@ data Constant
   = CInt Integer
   | CFloat Double
   | CStr String
-  deriving (Eq, Ord, Show, Generic)
-instance Hashable Constant
+  deriving (Eq, Ord, Show, Generic, Hashable)
 
 data Pattern m e = Pattern (Object m) (Guard e)
-  deriving (Eq, Ord, Show, Generic)
-instance (Hashable m, Hashable e) => Hashable (Pattern m e)
+  deriving (Eq, Ord, Show, Generic, Hashable)
 
 data RawExpr m
   = RawCExpr m Constant
@@ -45,28 +43,24 @@ data RawExpr m
   | RawTupleApply m (m, RawExpr m) (H.HashMap Name (RawExpr m))
   | RawIfThenElse m (RawExpr m) (RawExpr m) (RawExpr m)
   | RawMatch m (RawExpr m) (H.HashMap (Pattern m (RawExpr m)) (RawExpr m))
-  deriving (Eq, Ord, Show, Generic)
-instance Hashable m => Hashable (RawExpr m)
+  deriving (Eq, Ord, Show, Generic, Hashable)
 
 data Expr m
   = CExpr m Constant
   | Value m Name
   | Arg m Name
   | TupleApply m (m, Expr m) (H.HashMap Name (Expr m))
-  deriving (Eq, Ord, Generic)
-instance Hashable m => Hashable (Expr m)
+  deriving (Eq, Ord, Generic, Hashable)
 
 -- Compiler Annotation
 data CompAnnot e = CompAnnot Name (H.HashMap Name e)
-  deriving (Eq, Ord, Generic)
-instance Hashable e => Hashable (CompAnnot e)
+  deriving (Eq, Ord, Generic, Hashable)
 
 data Guard e
   = IfGuard e
   | ElseGuard
   | NoGuard
-  deriving (Eq, Ord, Generic)
-instance Hashable e => Hashable (Guard e)
+  deriving (Eq, Ord, Generic, Hashable)
 
 instance Functor Guard where
   fmap f (IfGuard e) = IfGuard (f e)
@@ -103,12 +97,10 @@ type ObjArg m = (m, Maybe (Object m))
 data ObjectBasis = FunctionObj | TypeObj
   deriving (Eq, Ord, Show, Generic, Hashable)
 data Object m = Object m ObjectBasis Name (H.HashMap Name (ObjArg m))
-  deriving (Eq, Ord, Generic)
-instance Hashable m => Hashable (Object m)
+  deriving (Eq, Ord, Generic, Hashable)
 
 data Arrow m = Arrow m [CompAnnot (Expr m)] (Guard (Expr m)) (Maybe (Expr m)) -- m is result metadata
-  deriving (Eq, Ord, Generic)
-instance Hashable m => Hashable (Arrow m)
+  deriving (Eq, Ord, Generic, Hashable)
 
 type ObjectMap m = (H.HashMap (Object m) [Arrow m])
 type Prgm m = (ObjectMap m, ClassMap) -- TODO: Include [Export]
