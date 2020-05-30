@@ -11,6 +11,7 @@
 
 module TypeCheck.Decode where
 
+import           Data.Hashable
 import           Control.Monad
 import           Control.Monad.ST
 import           Data.Functor
@@ -71,6 +72,9 @@ toMeta env p name = do
         return $ TypeCheckResE (FailInfer name scheme showMatching:notes)
       Just t -> return $ TypeCheckResult notes (Typed t)
 
+isSubsetOf :: (Eq a, Hashable a) => S.HashSet a -> S.HashSet a -> Bool
+x `isSubsetOf` y = all (`S.member` y) x
+
 toExpr :: DEnv s -> VExpr s -> ST s (TypeCheckResult TExpr)
 toExpr env (CExpr m c) = do
   res <- toMeta env m $ "Constant " ++ show c
@@ -87,7 +91,7 @@ toExpr env (TupleApply m (baseM, baseExpr) args) = do
   baseExpr' <- toExpr env baseExpr
   args' <- mapM (toExpr env) args
   case m' of -- check for errors
-    TypeCheckResult notes tp@(Typed (SumType sumType)) | all (\(LeafType _ leafArgs) -> H.keysSet args' /= H.keysSet leafArgs) (S.toList sumType) -> do
+    TypeCheckResult notes tp@(Typed (SumType sumType)) | all (\(LeafType _ leafArgs) -> not (H.keysSet args' `isSubsetOf` H.keysSet leafArgs)) (S.toList sumType) -> do
                                         matchingConstraints <- showMatchingConstraints env m
                                         let sArgs = sequence args'
                                         return $ TypeCheckResE (TupleMismatch baseM' baseExpr' tp sArgs matchingConstraints:notes)
