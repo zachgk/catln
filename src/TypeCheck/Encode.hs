@@ -131,7 +131,7 @@ addObjArg :: VarMeta s -> String -> FEnv s -> (Name, PObjArg) -> ST s ((Name, VO
 addObjArg objM prefix env (n, (m, maybeSubObj)) = do
   let prefix' = prefix ++ "." ++ n
   (m', env2) <- fromMeta env m prefix'
-  let env3 = addConstraints env2 [PropEq (getPnt objM, n) m']
+  let env3 = addConstraints env2 [PropEq (getPnt objM, n) m', BoundedByObjs BoundTypeObjs m']
   case maybeSubObj of
     Just subObj -> do
       (subObj'@(Object subM _ _ _), env4) <- fromObject prefix' env3 subObj

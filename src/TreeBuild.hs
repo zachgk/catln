@@ -45,7 +45,7 @@ resArrowDestType (ArgArrow tp _) = tp
 leafFromMeta :: TBMeta -> LeafType
 leafFromMeta (Typed (SumType prodTypes)) = case S.toList prodTypes of
   [leafType] -> leafType
-  _ -> error "Arrow has multiple leaves"
+  _ -> error $ "Arrow has multiple leaves: " ++ show prodTypes
 
 makeBaseEnv :: ResBuildEnv f -> TBObjectMap -> CRes (TBEnv f, ResExEnv f)
 makeBaseEnv primEnv objMap = fmap (baseEnv,) exEnv
