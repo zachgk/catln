@@ -22,11 +22,15 @@ import           Syntax.Types
 import           Syntax.Prgm
 import           TypeCheck.Common
 
-buildUnionObj :: [VObject s] -> ST s (UnionObj s, Constraint s)
+buildUnionObj :: [VObject s] -> ST s (UnionObj s, [Constraint s])
 buildUnionObj objs = do
-  graphObjs <- fresh $ TypeCheckResult [] $ SType RawTopType rawBottomType "typeGraph"
-  let constraints = UnionOf graphObjs (map (\(Object m _ _ _) -> m) objs)
-  return (graphObjs, constraints)
+  unionAllObjs <- fresh $ TypeCheckResult [] $ SType RawTopType rawBottomType "unionAllObjs"
+  unionTypeObjs <- fresh $ TypeCheckResult [] $ SType RawTopType rawBottomType "unionTypeObjs"
+  let constraints = [unionObjs unionAllObjs objs, unionObjs unionTypeObjs $ filterTypes objs]
+  return ((unionAllObjs, unionTypeObjs), constraints)
+                    where
+                      unionObjs pnt os = UnionOf pnt $ map (\(Object m _ _ _) -> m) os
+                      filterTypes = filter (\(Object _ basis _ _) -> basis == TypeObj)
 
 buildTypeGraph :: VObjectMap s -> TypeGraph s
 buildTypeGraph = foldr addArrows H.empty
@@ -39,17 +43,7 @@ buildTypeEnv :: VObjectMap s -> ST s (TypeEnv s, [Constraint s])
 buildTypeEnv objMap = do
   let typeGraph = buildTypeGraph objMap
   (unionObj, cons) <- buildUnionObj (map fst objMap)
-  return ((unionObj, typeGraph), [cons])
-
-boundSchemeByGraphObjects :: TypeEnv s -> Scheme -> ST s Scheme
-boundSchemeByGraphObjects _ (TypeCheckResE err) = return $ TypeCheckResE err
-boundSchemeByGraphObjects (graphObjs, _) (TypeCheckResult notes (SType ub lb desc)) = do
-  graphObjScheme <- descriptor graphObjs
-  case graphObjScheme of
-    TypeCheckResE err -> return $ TypeCheckResE (err ++ notes)
-    TypeCheckResult notes2 (SType gub _ _) -> do
-      let ub' = intersectRawTypeWithPowerset ub gub
-      return $ TypeCheckResult (notes2 ++ notes) (SType ub' lb desc)
+  return ((unionObj, typeGraph), cons)
 
 ubFromScheme :: Scheme -> TypeCheckResult RawType
 ubFromScheme (TypeCheckResult _ (SType ub _ _))  = return ub

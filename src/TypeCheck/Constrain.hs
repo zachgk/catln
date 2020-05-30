@@ -129,10 +129,13 @@ executeConstraint _ (BoundedByKnown subPnt boundTp) = do
       let subScheme' = fmap (\ub' -> SType ub' lb description) (tryIntersectRawTypes ub boundTp "executeConstraint BoundedBy")
       setDescriptor subPnt subScheme'
       return ([], subScheme /= subScheme')
-executeConstraint (unionObjsPnt, _) cons@(BoundedByObjs pnt) = do
+executeConstraint ((unionAllObjs, unionTypeObjs), _) cons@(BoundedByObjs bnd pnt) = do
   scheme <- descriptor pnt
-  unionObjsScheme <- descriptor unionObjsPnt
-  case sequenceT (scheme, unionObjsScheme) of
+  let unionPnt = case bnd of
+        BoundAllObjs -> unionAllObjs
+        BoundTypeObjs -> unionTypeObjs
+  unionScheme <- descriptor unionPnt
+  case sequenceT (scheme, unionScheme) of
     TypeCheckResE _ -> return ([], False)
     TypeCheckResult _ (SType ub lb desc, SType objsUb _ _) -> do
       let scheme' = fmap (\ub' -> SType ub' lb desc) (tryIntersectRawTypes ub objsUb "executeConstraint BoundedByObjs")

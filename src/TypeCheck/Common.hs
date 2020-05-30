@@ -10,6 +10,7 @@
 --------------------------------------------------------------------
 
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
 
 module TypeCheck.Common where
 
@@ -43,12 +44,15 @@ type Pnt s = Point s Scheme
 type EnvValMap s = (H.HashMap String (VarMeta s))
 data FEnv s = FEnv [Constraint s] (EnvValMap s) [TypeCheckError]
 
+data BoundObjs = BoundAllObjs | BoundTypeObjs
+  deriving (Eq, Ord, Show, Generic, Hashable)
+
 data Constraint s
   = EqualsKnown (Pnt s) RawType
   | EqPoints (Pnt s) (Pnt s)
   | BoundedBy (Pnt s) (Pnt s)
   | BoundedByKnown (Pnt s) RawType
-  | BoundedByObjs (Pnt s)
+  | BoundedByObjs BoundObjs (Pnt s)
   | ArrowTo (Pnt s) (Pnt s) -- ArrowTo src dest
   | PropEq (Pnt s, Name) (Pnt s)
   | AddArgs (Pnt s, S.HashSet String) (Pnt s)
@@ -60,7 +64,7 @@ data SConstraint
   | SEqPoints Scheme Scheme
   | SBoundedBy Scheme Scheme
   | SBoundedByKnown Scheme RawType
-  | SBoundedByObjs Scheme
+  | SBoundedByObjs BoundObjs Scheme
   | SArrowTo Scheme Scheme
   | SPropEq (Scheme, Name) Scheme
   | SAddArgs (Scheme, S.HashSet String) Scheme
@@ -138,7 +142,7 @@ type TPrgm = Prgm TypedMeta
 type TReplRes = ReplRes TypedMeta
 
 -- implicit graph
-type UnionObj s = Pnt s -- a union of all object types for argument inference
+type UnionObj s = (Pnt s, Pnt s) -- a union of all TypeObj for argument inference, union of all Object types for function limiting
 type TypeGraph s = H.HashMap Name [(Pnt s, Pnt s)] -- H.HashMap (Root tuple name for filtering) [(match type), (if matching then can implicit to)]
 type TypeEnv s = (UnionObj s, TypeGraph s)
 
@@ -161,7 +165,7 @@ instance Show SConstraint where
   show (SEqPoints s1 s2) = printf "%s == %s" (show s1) (show s2)
   show (SBoundedBy s1 s2) = printf "%s ⊆ %s" (show s1) (show s2)
   show (SBoundedByKnown s t) = printf "%s ⊆ %s" (show s) (show t)
-  show (SBoundedByObjs s) = printf "BoundObj %s" (show s)
+  show (SBoundedByObjs b s) = printf "%s %s" (show b) (show s)
   show (SArrowTo f t) = printf "%s -> %s" (show t) (show f)
   show (SPropEq (s1, n) s2) = printf "(%s).%s == %s"  (show s1) n (show s2)
   show (SAddArgs (base, args) res) = printf "(%s)(%s) == %s" (show base) args' (show res)
