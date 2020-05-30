@@ -209,15 +209,28 @@ intersectRawTypes (RawSumType aLeafs aPartials) (RawSumType bLeafs bPartials) = 
       Nothing -> False
     leafArgsInPartialArgs leafArgs partialArgs = H.keysSet leafArgs == H.keysSet partialArgs && and (H.intersectionWith hasRawLeaf leafArgs partialArgs)
 
+isSubmapOf :: (Eq k, Eq v, Hashable k) => H.HashMap k v -> H.HashMap k v -> Bool
+as `isSubmapOf` bs = and $ H.mapWithKey aux as
+  where aux ak av = case H.lookup ak bs of
+          Just bv -> av == bv
+          Nothing -> True
+
+intersectRawLeafsWithPowerset :: RawLeafType -> RawLeafSet -> [RawLeafType]
+intersectRawLeafsWithPowerset (RawLeafType aName aArgs) bs = concatMap subIntersect $ S.toList bs
+  where
+    subIntersect (RawLeafType bName _) | aName /= bName = []
+    subIntersect (RawLeafType _ bArgs) = [RawLeafType aName aArgs | aArgs `isSubmapOf` bArgs]
+
+
 -- normal type, type to powerset
--- TODO: Fix leaf intersection, it currently does not use powerset of b but just b
 intersectRawTypeWithPowerset :: RawType -> RawType -> RawType
 intersectRawTypeWithPowerset RawTopType t = t
 intersectRawTypeWithPowerset t RawTopType = t
 intersectRawTypeWithPowerset (RawSumType aLeafs aPartials) (RawSumType bLeafs bPartials) = compactRawType $ RawSumType leafs' partials'
   where
-    leafs' = S.unions [S.intersection aLeafs bLeafs, intersectLeafsPartials aLeafs bPartials, intersectLeafsPartials bLeafs aPartials]
+    leafs' = S.unions [fromLeafs, intersectLeafsPartials aLeafs bPartials, intersectLeafsPartials bLeafs aPartials]
     partials' = H.intersectionWith intersectArgsOptions aPartials bPartials
+    fromLeafs = S.fromList $ concatMap (`intersectRawLeafsWithPowerset` bLeafs) $ S.toList aLeafs
     intersectArgsOptions as bs = catMaybes $ [intersectArgs a b | a <- as, b <- bs]
     intersectArgs :: H.HashMap TypeName RawType -> H.HashMap TypeName RawType -> Maybe (H.HashMap TypeName RawType)
     intersectArgs aArgs bArgs = sequence $ H.intersectionWith subIntersect aArgs bArgs

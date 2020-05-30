@@ -21,6 +21,7 @@ import           TypeCheck.Common
 import           TypeCheck.TypeGraph
 import           Data.UnionFind.ST
 import           Data.Tuple.Sequence
+import           Text.Printf
 
 isSolved :: Scheme -> Bool
 isSolved (TypeCheckResult _ (SType a b _)) = a == b
@@ -138,7 +139,12 @@ executeConstraint ((unionAllObjs, unionTypeObjs), _) cons@(BoundedByObjs bnd pnt
   case sequenceT (scheme, unionScheme) of
     TypeCheckResE _ -> return ([], False)
     TypeCheckResult _ (SType ub lb desc, SType objsUb _ _) -> do
-      let scheme' = fmap (\ub' -> SType ub' lb desc) (tryIntersectRawTypes ub objsUb "executeConstraint BoundedByObjs")
+      -- A partially applied tuple would not be a raw type on the unionObj,
+      -- but a subset of the arguments in that type
+      let ub' = intersectRawTypeWithPowerset ub objsUb
+      let scheme' = if ub' == rawBottomType
+            then TypeCheckResE [GenTypeCheckError $ printf "Failed to BoundByObjs for %s: %s %s" desc (show ub) (show objsUb)]
+            else return $ SType ub' lb desc
       setDescriptor pnt scheme'
       return ([cons | not (isSolved scheme')], scheme /= scheme')
 executeConstraint typeEnv cons@(ArrowTo srcPnt destPnt) = do
