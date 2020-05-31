@@ -43,6 +43,7 @@ data RawExpr m
   | RawTupleApply m (m, RawExpr m) (H.HashMap Name (RawExpr m))
   | RawIfThenElse m (RawExpr m) (RawExpr m) (RawExpr m)
   | RawMatch m (RawExpr m) (H.HashMap (Pattern m (RawExpr m)) (RawExpr m))
+  | RawCase m (RawExpr m) [(Pattern m (RawExpr m), RawExpr m)]
   deriving (Eq, Ord, Show, Generic, Hashable)
 
 data Expr m

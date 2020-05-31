@@ -130,25 +130,36 @@ pPattern basis = do
   objTree <- pObjTree basis
   Pattern objTree <$> pPatternGuard
 
-pMatch :: Parser PExpr
-pMatch = L.indentBlock scn p
+pMatchCaseHelper :: String -> Parser (PExpr, [(PPattern, PExpr)])
+pMatchCaseHelper keyword = L.indentBlock scn p
   where
-    pack expr matchItems = return $ RawMatch emptyMeta expr (H.fromList matchItems)
+    pack expr matchItems = return (expr, matchItems)
     pItem = do
       patt <- pPattern PatternObj
       _ <- symbol "=>"
       expr <- pExpr
       return (patt, expr)
     p = do
-      _ <- symbol "match"
+      _ <- symbol keyword
       expr <- pExpr
       _ <- symbol "of"
       return $ L.IndentSome Nothing (pack expr) pItem
+
+pCase :: Parser PExpr
+pCase = do
+  (expr, matchItems) <- pMatchCaseHelper "case"
+  return $ RawCase emptyMeta expr matchItems
+
+pMatch :: Parser PExpr
+pMatch = do
+  (expr, matchItems) <- pMatchCaseHelper "match"
+  return $ RawMatch emptyMeta expr (H.fromList matchItems)
 
 term :: Parser PExpr
 term = try (parens pExpr)
        <|> pIfThenElse
        <|> pMatch
+       <|> pCase
        <|> pStringLiteral
        <|> RawCExpr emptyMeta . CInt <$> integer
        <|> try pCall

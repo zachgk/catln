@@ -58,6 +58,7 @@ standardTests = H.fromList [ ("Syntax", "test/code/syntax.ct")
   , ("Fib", "test/code/fib.ct")
   , ("IfThenElse", "test/code/ifThenElse.ct")
   , ("Match", "test/code/match.ct")
+  , ("Case", "test/code/case.ct")
   ]
 
 mt :: String -> IO ()

@@ -148,6 +148,22 @@ semiDesExpr r@(RawMatch m e matchItems) = (subE ++ subMatchItems, expr')
         (subMatchExpr, matchExpr') = semiDesExpr matchExpr
         matchArg = H.singleton argName (emptyMeta, Just patt)
         matchItemExpr' = PSemiDecl (DeclLHS emptyMeta (Pattern (Object emptyMeta FunctionObj condName matchArg) pattGuard')) [] (Just matchExpr')
+semiDesExpr (RawCase _ _ ((Pattern _ ElseGuard, _):_)) = error "Can't use elseguard in match expr"
+semiDesExpr (RawCase _ _ []) = error "Empty case"
+semiDesExpr (RawCase _ _ [(_, matchExpr)]) = semiDesExpr matchExpr
+semiDesExpr r@(RawCase m e ((Pattern firstObj@(Object fm _ _ _) firstGuard, firstExpr):restCases)) = (concat [[firstDecl, restDecl], subFG, subFE, subRE, subE], expr')
+  where
+    condName = "\\" ++ take 6 (printf "%08x" (hash r))
+    argName = condName ++ "-arg"
+    declObj = Object emptyMeta FunctionObj condName (H.singleton argName (fm, Just firstObj))
+    firstDecl = PSemiDecl (DeclLHS m (Pattern declObj firstGuard')) [] (Just firstExpr')
+    (subFG, firstGuard') = semiDesGuard firstGuard
+    (subFE, firstExpr') = semiDesExpr firstExpr
+    restDecl = PSemiDecl (DeclLHS m (Pattern declObj ElseGuard)) [] (Just restExpr')
+    (subRE, restExpr') = semiDesExpr (RawCase m e restCases)
+    (subE, e') = semiDesExpr e
+    expr' = PSTupleApply m (emptyMeta, PSValue emptyMeta condName) (H.singleton argName e')
+
 
 semiDesGuard :: PGuard -> ([PSemiDecl], PSGuard)
 semiDesGuard (IfGuard e) = (subE, IfGuard e')
