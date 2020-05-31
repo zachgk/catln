@@ -51,6 +51,7 @@ test = runTests False [("Test", "test/code/test.ct")]
 standardTests :: H.HashMap String String
 standardTests = H.fromList [ ("Syntax", "test/code/syntax.ct")
   , ("Arithmetic", "test/code/arith.ct")
+  , ("Bool", "test/code/bool.ct")
   , ("Id", "test/code/id.ct")
   , ("Cond", "test/code/cond.ct")
   , ("Rec", "test/code/rec.ct")

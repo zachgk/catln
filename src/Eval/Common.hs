@@ -36,15 +36,14 @@ type Args = H.HashMap String Val
 data Val
   = IntVal Integer
   | FloatVal Double
-  | BoolVal Bool
   | StrVal String
   | TupleVal String Args
   | NoVal
+  deriving (Eq)
 
 instance Show Val where
   show (IntVal i)   = show i
   show (FloatVal d) = show d
-  show (BoolVal b)  = show b
   show (StrVal s)   = show s
   show (TupleVal name args) = if H.null args
     then name
@@ -57,7 +56,6 @@ instance Show Val where
 getValType :: Val -> LeafType
 getValType IntVal{} = intLeaf
 getValType FloatVal{} = floatLeaf
-getValType BoolVal{} = boolLeaf
 getValType StrVal{} = strLeaf
 getValType (TupleVal name args) = LeafType name (fmap getValType args)
 getValType NoVal = error "getValType of NoVal"

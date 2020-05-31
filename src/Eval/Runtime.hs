@@ -20,6 +20,14 @@ import Eval.Common
 
 type Op = (LeafType, [(Guard (Expr Typed), ResArrow EPrim)])
 
+true, false :: Val
+true = TupleVal "True" H.empty
+false = TupleVal "False" H.empty
+
+bool :: Bool -> Val
+bool True = true
+bool False = false
+
 liftIntOp :: Name -> (Integer -> Integer -> Integer) -> Op
 liftIntOp name f = (srcType, [(NoGuard, arrow)])
   where
@@ -34,17 +42,8 @@ liftCmpOp name f = (srcType, [(NoGuard, arrow)])
   where
     srcType = LeafType ("operator" ++ name) (H.fromList [("l", intLeaf), ("r", intLeaf)])
     arrow = PrimArrow boolType (\args -> case (H.lookup "l" args, H.lookup "r" args) of
-                           (Just (IntVal l), Just (IntVal r)) -> BoolVal $ f l r
+                           (Just (IntVal l), Just (IntVal r)) -> bool $ f l r
                            _ -> error "Invalid compOp signature"
-                           )
-
-liftBoolOp :: Name -> (Bool -> Bool -> Bool) -> Op
-liftBoolOp name f = (srcType, [(NoGuard, arrow)])
-  where
-    srcType = LeafType ("operator" ++ name) (H.fromList [("l", boolLeaf), ("r", boolLeaf)])
-    arrow = PrimArrow boolType (\args -> case (H.lookup "l" args, H.lookup "r" args) of
-                           (Just (BoolVal l), Just (BoolVal r)) -> BoolVal $ f l r
-                           _ -> error "Invalid boolOp signature"
                            )
 
 rneg :: Name -> Op
@@ -56,15 +55,6 @@ rneg name = (srcType, [(NoGuard, arrow)])
                                   _ -> error "Invalid rneg signature"
                               )
 
-rnot :: Name -> Op
-rnot name = (srcType, [(NoGuard, arrow)])
-  where
-    srcType = LeafType ("operator" ++ name) (H.singleton "a" boolLeaf)
-    arrow = PrimArrow boolType (\args -> case H.lookup "a" args of
-          Just (BoolVal b) -> BoolVal $ not b
-          _ -> error "Invalid rnot signature"
-          )
-
 primEnv :: ResBuildEnv EPrim
 primEnv = H.fromList [ liftIntOp "+" (+)
                      , liftIntOp "-" (-)
@@ -75,8 +65,5 @@ primEnv = H.fromList [ liftIntOp "+" (+)
                      , liftCmpOp "<=" (<=)
                      , liftCmpOp "==" (==)
                      , liftCmpOp "!=" (/=)
-                     , liftBoolOp "&" (&&)
-                     , liftBoolOp "|" (||)
-                     , rnot "~"
                      , rneg "-"
                      ]

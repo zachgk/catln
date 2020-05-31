@@ -34,8 +34,10 @@ envLookupResArrowTree env arrow = H.lookup arrow env
 
 evalCompAnnot :: EStacktrace -> Val -> CRes ()
 evalCompAnnot st (TupleVal "assert" args) = case (H.lookup "test" args, H.lookup "msg" args) of
-  (Just (BoolVal test), Just (StrVal msg)) -> if test then return () else CErr [AssertCErr msg]
-  (Just (BoolVal test), Nothing) -> if test then return () else CErr [AssertCErr "Failed assertion"]
+  (Just b, Just (StrVal _)) | b == true -> return ()
+  (Just b, Just (StrVal msg)) | b == false -> CErr [AssertCErr msg]
+  (Just b, Nothing) | b == true -> return ()
+  (Just b, Nothing) | b == false -> CErr [AssertCErr "Failed assertion"]
   _ -> CErr [EvalCErr st "Invalid assertion"]
 evalCompAnnot st (TupleVal name _) = CErr [EvalCErr st $ "Unknown compiler annotation " ++ name]
 evalCompAnnot st _ = CErr [EvalCErr st "Eval: Invalid compiler annotation type"]
@@ -74,8 +76,8 @@ evalTree env st arrArgs val (ResArrowCond [] elseTree) = evalTree env ("else":st
 evalTree env st arrArgs val (ResArrowCond ((ifCondTree, ifThenTree):restIfTrees) elseTree) = do
   cond' <- evalTree env ("cond":st) arrArgs val ifCondTree
   case cond' of
-    (BoolVal True) -> evalTree env (("then for " ++ show ifCondTree):st) arrArgs val ifThenTree
-    (BoolVal False) -> evalTree env st arrArgs val (ResArrowCond restIfTrees elseTree)
+    b | b == true -> evalTree env (("then for " ++ show ifCondTree):st) arrArgs val ifThenTree
+    b | b == false -> evalTree env st arrArgs val (ResArrowCond restIfTrees elseTree)
     _ -> error "Non-Bool evalTree resArrowCond"
 evalTree env st arrArgs val (ResArrowTuple name args) = do
   args' <- traverse (evalTree env ("tuple":st) arrArgs val) args

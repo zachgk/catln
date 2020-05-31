@@ -152,7 +152,8 @@ term = try (parens pExpr)
        <|> pStringLiteral
        <|> RawCExpr emptyMeta . CInt <$> integer
        <|> try pCall
-       <|> (RawValue emptyMeta <$> identifier)
+       <|> try (RawValue emptyMeta <$> identifier)
+       <|> (RawValue emptyMeta <$> tidentifier)
 
 pExpr :: Parser PExpr
 pExpr = makeExprParser term ops

@@ -17,13 +17,14 @@ import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import Control.Applicative ((<$>))
 import           Data.Bifunctor                 ( first )
+import           Text.Printf
 
 import           Syntax.Types
 import           Syntax.Prgm
 import           Syntax
 import           Parser.Syntax
 import           Parser                   (parseFile)
-import           Text.Printf
+import           Desugarf.Passes
 
 splitDeclSubStatements :: [PDeclSubStatement] -> ([PDecl], [PCompAnnot])
 splitDeclSubStatements = aux ([], [])
@@ -219,6 +220,8 @@ desStatements statements = (objMap, classMap)
     objMap = mergeObjMaps declObjMap typeObjMap
     classMap = mergeClassMaps sealedClasses unsealedClasses
 
+finalPasses :: DesPrgm -> DesPrgm
+finalPasses = classToObjSum
 
 desPrgm :: PPrgm -> IO (CRes DesPrgm)
 desPrgm ([], statements) = return $ return $ desStatements statements
@@ -230,7 +233,7 @@ desPrgm (curImport:restImports, statements) = do
       maybePrgm' <- desPrgm (parsedImports ++ restImports, parsedStatements ++ statements)
       case maybePrgm' of
         CErr notes2 -> return $ CErr (notes ++ notes2)
-        CRes notes2 res -> return $ CRes (notes ++ notes2) res
+        CRes notes2 res -> return $ CRes (notes ++ notes2) $ finalPasses res
 
 desFiles :: [FileImport] -> IO (CRes DesPrgm)
 desFiles imports = desPrgm (imports, [])

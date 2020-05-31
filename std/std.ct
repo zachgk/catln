@@ -1,5 +1,4 @@
 operator-(Integer a) -> Integer
-operator~(Boolean a) -> Boolean
 
 operator-(Integer l, Integer r) -> Integer
 operator+(Integer l, Integer r) -> Integer
@@ -12,9 +11,27 @@ operator>(Integer l, Integer r) -> Boolean
 operator==(Integer l, Integer r) -> Boolean
 operator!=(Integer l, Integer r) -> Boolean
 
+operator~(Boolean a) -> Boolean
+operator~(True a) = False
+operator~(False a) = True
+
 operator&(Boolean l, Boolean r) -> Boolean
+operator&(True l, True r) = True
+operator&(True l, False r) = False
+operator&(False l, True r) = False
+operator&(False l, False r) = False
+
 operator|(Boolean l, Boolean r) -> Boolean
+operator|(True l, True r) = True
+operator|(True l, False r) = True
+operator|(False l, True r) = True
+operator|(False l, False r) = False
+
 operator^(Boolean l, Boolean r) -> Boolean
+operator^(True l, True r) = False
+operator^(True l, False r) = True
+operator^(False l, True r) = True
+operator^(False l, False r) = False
 
 data Number = Integer | Float
-data Boolean = Boolean
+data Boolean = True | False

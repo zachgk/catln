@@ -82,28 +82,26 @@ instance Show Type where
     where sumString = intercalate " | " (map show $ S.toList leafs)
 
 
-rintLeaf, rfloatLeaf, rboolLeaf, rstrLeaf :: RawLeafType
+rintLeaf, rfloatLeaf, rstrLeaf :: RawLeafType
 rintLeaf = RawLeafType "Integer" H.empty
 rfloatLeaf = RawLeafType "Float" H.empty
-rboolLeaf = RawLeafType "Boolean" H.empty
 rstrLeaf = RawLeafType "String" H.empty
 
 rintType, rfloatType, rboolType, rstrType :: RawType
 rintType = RawSumType (S.singleton rintLeaf) H.empty
 rfloatType = RawSumType (S.singleton rfloatLeaf) H.empty
-rboolType = RawSumType (S.singleton rboolLeaf) H.empty
+rboolType = RawSumType (S.fromList [RawLeafType "True" H.empty, RawLeafType "False" H.empty]) H.empty
 rstrType = RawSumType (S.singleton rstrLeaf) H.empty
 
-intLeaf, floatLeaf, boolLeaf, strLeaf :: LeafType
+intLeaf, floatLeaf, strLeaf :: LeafType
 intLeaf = LeafType "Integer" H.empty
 floatLeaf = LeafType "Float" H.empty
-boolLeaf = LeafType "Boolean" H.empty
 strLeaf = LeafType "String" H.empty
 
 intType, floatType, boolType, strType :: Type
 intType = SumType $ S.singleton intLeaf
 floatType = SumType $ S.singleton floatLeaf
-boolType = SumType $ S.singleton boolLeaf
+boolType = SumType $ S.fromList [LeafType "True" H.empty, LeafType "False" H.empty]
 strType = SumType $ S.singleton strLeaf
 
 rawBottomType :: RawType
