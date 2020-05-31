@@ -1,10 +1,10 @@
 module Main where
 
+import System.Directory
 import           Data.List
 import           Test.Tasty
 import           Test.Tasty.HUnit
 
-import qualified Data.HashMap.Strict as H
 import Syntax
 import           Desugarf         (desFiles)
 -- import           Emit             (codegen, initModule)
@@ -15,8 +15,11 @@ import           TypeCheck
 import qualified Data.Text.Lazy as T
 import Text.Pretty.Simple
 
-runTest :: Bool -> String -> String -> TestTree
-runTest includeStd displayName fileName = testCaseSteps displayName $ \step -> do
+testDir :: String
+testDir = "test/code/"
+
+runTest :: Bool -> String -> TestTree
+runTest includeStd fileName = testCaseSteps fileName $ \step -> do
   step "Read file..."
   maybePrgm <- desFiles $ (fileName : ["std/std.ct" | includeStd])
   case maybePrgm of
@@ -41,30 +44,27 @@ runTest includeStd displayName fileName = testCaseSteps displayName $ \step -> d
           -- step "Codegen"
           -- void (codegen initModule tprgm)
 
-runTests :: Bool -> [(String, String)] -> IO ()
+runTests :: Bool -> [String] -> IO ()
 runTests includeStd testFiles = defaultMain $ testGroup "Tests" testTrees
-  where testTrees = map (uncurry (runTest includeStd)) testFiles
+  where testTrees = map (runTest includeStd) testFiles
 
 test :: IO ()
-test = runTests False [("Test", "test/code/test.ct")]
+test = runTests False ["test/test.ct"]
 
-standardTests :: H.HashMap String String
-standardTests = H.fromList [ ("Syntax", "test/code/syntax.ct")
-  , ("Arithmetic", "test/code/arith.ct")
-  , ("Bool", "test/code/bool.ct")
-  , ("Id", "test/code/id.ct")
-  , ("Cond", "test/code/cond.ct")
-  , ("Rec", "test/code/rec.ct")
-  , ("Fib", "test/code/fib.ct")
-  , ("IfThenElse", "test/code/ifThenElse.ct")
-  , ("Match", "test/code/match.ct")
-  , ("Case", "test/code/case.ct")
-  ]
+standardTests :: IO ([String])
+standardTests = do
+  fileNames <- listDirectory testDir
+  return $ map (testDir ++) fileNames
 
 mt :: String -> IO ()
-mt k = case H.lookup k standardTests of
-  Just v -> runTests True [(k,v)]
-  Nothing -> error "invalid test name"
+mt k = do
+  let fileName = testDir ++ k ++ ".ct"
+  tests <- standardTests
+  if elem fileName tests
+     then runTests True [fileName]
+     else error $ "invalid test name" ++ fileName ++ show tests
 
 main :: IO ()
-main = runTests True $ H.toList standardTests
+main = do
+  tests <- standardTests
+  runTests True tests

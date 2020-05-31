@@ -283,8 +283,8 @@ phi ty incoming = instr $ Phi ty incoming []
 ret :: Operand -> Codegen (Named Terminator)
 ret val = terminator $ Do $ Ret (Just val) []
 
-getType :: S.Typed -> AST.Type
-getType (S.Typed tp) | tp == S.intType = AST.IntegerType 64
-getType (S.Typed tp) | tp == S.floatType = AST.FloatingPointType AST.DoubleFP
-getType (S.Typed tp) | tp == S.boolType = AST.IntegerType 1
-getType tp           = error $ "Uknown type " ++ show tp
+-- getType :: S.Typed -> AST.Type
+-- getType (S.Typed tp) | tp == S.intType = AST.IntegerType 64
+-- getType (S.Typed tp) | tp == S.floatType = AST.FloatingPointType AST.DoubleFP
+-- getType (S.Typed tp) | tp == S.boolType = AST.IntegerType 1
+-- getType tp           = error $ "Uknown type " ++ show tp

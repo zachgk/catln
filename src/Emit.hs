@@ -39,6 +39,8 @@ import           Data.Word
 import           Codegen
 import           Compile.Builtins
 import           Syntax
+import           Syntax.Types
+import           Syntax.Prgm
 
 type TypedMeta = Typed
 type TExpr = Expr TypedMeta

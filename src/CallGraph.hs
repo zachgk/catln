@@ -29,5 +29,5 @@ tupleNamesInExpr (PSTupleApply _ _ args) = S.unions $ H.elems (fmap tupleNamesIn
 buildCallGraph :: [PSemiDecl] -> CallGraph
 buildCallGraph decls = graphFromEdges $ map fromDecl decls
   where
-    fromDecl (PSemiDecl (DeclLHS _ _ name _ _) _ Nothing) = ((), name, [])
-    fromDecl (PSemiDecl (DeclLHS _ _ name _ _) _ (Just expr)) = ((), name, S.toList $ tupleNamesInExpr expr)
+    fromDecl (PSemiDecl (DeclLHS _ (Pattern (Object _ _ name _) _)) _ Nothing) = ((), name, [])
+    fromDecl (PSemiDecl (DeclLHS _ (Pattern (Object _ _ name _) _)) _ (Just expr)) = ((), name, S.toList $ tupleNamesInExpr expr)
