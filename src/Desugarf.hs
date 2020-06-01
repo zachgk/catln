@@ -48,10 +48,9 @@ scopeSubDeclFunNamesInExpr prefix replaceNames (PSTupleApply m (bm, bExpr) args)
     args' = fmap (scopeSubDeclFunNamesInExpr prefix replaceNames) args
 
 scopeSubDeclFunNamesInMeta :: Name -> S.HashSet Name -> ParseMeta -> ParseMeta
-scopeSubDeclFunNamesInMeta prefix replaceNames (PreTyped (RawSumType leafs partials)) = PreTyped $ RawSumType leafs' partials'
+scopeSubDeclFunNamesInMeta prefix replaceNames (PreTyped (RawSumType partials)) = PreTyped $ RawSumType partials'
   where
     scopeS = scopeSubDeclFunNamesInS prefix replaceNames
-    leafs' = S.fromList $ map (\(RawLeafType n args) -> RawLeafType (scopeS n) args) $ S.toList leafs
     partials' = H.fromList $ map (first scopeS) $ H.toList partials
 scopeSubDeclFunNamesInMeta _ _ m@(PreTyped RawTopType) = m
 
@@ -192,7 +191,7 @@ desDecls decls = unionsWith (++) $ map desDecl decls
 
 addTypeDef :: PRawTypeDef -> (PObjectMap, ClassMap) -> (PObjectMap, ClassMap)
 addTypeDef (RawTypeDef _ RawTopType) _ = error "Invalid type def to desugar"
-addTypeDef (RawTypeDef name (RawSumType _ partials)) (objMap, classMap) = (objMap', classMap')
+addTypeDef (RawTypeDef name (RawSumType partials)) (objMap, classMap) = (objMap', classMap')
   where
     leafArgConvert partialType = (PreTyped partialType, Nothing)
     partialToObj (partialName, partialArgs) = Object emptyMeta TypeObj partialName (fmap leafArgConvert partialArgs)

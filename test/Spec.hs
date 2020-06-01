@@ -4,6 +4,7 @@ import System.Directory
 import           Data.List
 import           Test.Tasty
 import           Test.Tasty.HUnit
+import           Text.Printf
 
 import Syntax
 import           Desugarf         (desFiles)
@@ -20,7 +21,7 @@ testDir = "test/code/"
 
 runTest :: Bool -> String -> TestTree
 runTest includeStd fileName = testCaseSteps fileName $ \step -> do
-  step "Read file..."
+  step $ printf "Read file %s..." fileName
   maybePrgm <- desFiles $ (fileName : ["std/std.ct" | includeStd])
   case maybePrgm of
     CErr notes -> assertFailure $ "Could not parse and desguar:\n \t" ++ concat (map prettyCNote notes)

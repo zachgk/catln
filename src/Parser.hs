@@ -16,7 +16,6 @@ module Parser where
 import           Control.Applicative            hiding (many, some)
 import           Control.Monad.Combinators.Expr
 import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet          as S
 import           Data.Maybe
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
@@ -174,7 +173,7 @@ pTypeArg = do
   argName <- identifier
   _ <- symbol "="
   tp <- tidentifier
-  return (argName, RawSumType S.empty $ joinPartialLeafs [(tp, H.empty)])
+  return (argName, RawSumType $ joinPartialLeafs [(tp, H.empty)])
 
 pTypeProduct :: Parser RawPartialType
 pTypeProduct = do
@@ -184,10 +183,10 @@ pTypeProduct = do
 
 pLeafType :: Parser RawPartialType
 pLeafType = try pTypeProduct
-        <|> ((, H.empty) <$> tidentifier)
+        <|> ((,H.empty) <$> tidentifier)
 
 pType :: Parser RawType
-pType = RawSumType S.empty . joinPartialLeafs <$> sepBy1 pLeafType (symbol "|")
+pType = RawSumType . joinPartialLeafs <$> sepBy1 pLeafType (symbol "|")
 
 pIfGuard :: Parser PGuard
 pIfGuard = do
@@ -203,7 +202,7 @@ pArrowRes :: Parser ParseMeta
 pArrowRes = do
   _ <- symbol "->"
   tp <- pLeafType
-  return $ PreTyped $ RawSumType S.empty $ joinPartialLeafs [tp]
+  return $ PreTyped $ RawSumType $ joinPartialLeafs [tp]
 
 pDeclLHS :: Parser PDeclLHS
 pDeclLHS = do

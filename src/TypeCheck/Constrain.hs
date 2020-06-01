@@ -19,6 +19,7 @@ import           Control.Monad.ST
 import           Syntax.Types
 import           TypeCheck.Common
 import           TypeCheck.TypeGraph
+import           TypeCheck.Show
 import           Data.UnionFind.ST
 import           Data.Tuple.Sequence
 import           Text.Printf
@@ -61,11 +62,9 @@ getSchemeProp inScheme propName = do
   where
     getRawTypeProp :: RawType -> RawType
     getRawTypeProp RawTopType = RawTopType
-    getRawTypeProp (RawSumType leafs partials) = case getPartials partials of
+    getRawTypeProp (RawSumType partials) = case getPartials partials of
       RawTopType -> RawTopType
-      (RawSumType partialLeafs partials') -> RawSumType (S.union partialLeafs $ S.fromList $ mapMaybe getLeafProp $ S.toList leafs) partials'
-    getLeafProp :: RawLeafType -> Maybe RawLeafType
-    getLeafProp (RawLeafType _ leafArgs) = H.lookup propName leafArgs
+      (RawSumType partials') -> RawSumType partials'
     getPartials :: RawPartialLeafs -> RawType
     getPartials partials = unionRawTypes $ mapMaybe (H.lookup propName) $ concatMap S.toList (H.elems partials)
 
@@ -77,13 +76,7 @@ setSchemeProp scheme propName pscheme = do
   where
     setRawTypeUbProp :: RawType -> RawType -> RawType
     setRawTypeUbProp RawTopType _ = RawTopType
-    setRawTypeUbProp (RawSumType ubLeafs ubPartials) pub = RawSumType (S.fromList $ mapMaybe (setLeafUbProp pub) $ S.toList ubLeafs) (joinPartialLeafs $ mapMaybe (setPartialsUb pub) $ splitPartialLeafs ubPartials)
-    setLeafUbProp pub ubLeaf@(RawLeafType _ leafArgs) = case (H.lookup propName leafArgs, pub) of
-      (Nothing, _) -> Nothing
-      (Just leafArg, RawSumType pubLeafs _) -> if S.member leafArg pubLeafs
-        then Just ubLeaf
-        else Nothing
-      (Just{} , RawTopType) -> Just ubLeaf
+    setRawTypeUbProp (RawSumType ubPartials) pub = RawSumType (joinPartialLeafs $ mapMaybe (setPartialsUb pub) $ splitPartialLeafs ubPartials)
     setPartialsUb RawTopType partial = Just partial
     setPartialsUb pub (partialName, partialArgs) = case H.lookup propName partialArgs of
       Just partialArg -> let partialArg' = intersectRawTypes partialArg pub
@@ -95,12 +88,10 @@ setSchemeProp scheme propName pscheme = do
 
 addArgsToRawType :: RawType -> S.HashSet Name -> Maybe RawType
 addArgsToRawType RawTopType _ = Nothing
-addArgsToRawType (RawSumType leafs partials) newArgs = Just $ RawSumType S.empty (H.unionWith S.union partialsFromLeafs partialsFromPartials)
+addArgsToRawType (RawSumType partials) newArgs = Just $ RawSumType partials'
   where
     partialUpdate = H.fromList $ map (,RawTopType) $ S.toList newArgs
-    partialsFromLeafs = foldr (H.unionWith S.union . partialFromLeaf) H.empty $ S.toList leafs
-    partialFromLeaf (RawLeafType leafName leafArgs) = H.singleton leafName (S.singleton (H.unionWith unionRawType partialUpdate $ fmap (\leafArg -> RawSumType (S.singleton leafArg) H.empty) leafArgs))
-    partialsFromPartials = joinPartialLeafs $ map fromPartial $ splitPartialLeafs partials
+    partials' = joinPartialLeafs $ map fromPartial $ splitPartialLeafs partials
     fromPartial (partialName, partialArgs) = (partialName, H.unionWith unionRawType partialArgs partialUpdate)
 
 -- returns updated (pruned) constraints and boolean if schemes were updated
@@ -203,7 +194,11 @@ executeConstraint _ cons@(UnionOf parentPnt childrenPnts) = do
 
 runConstraints :: Integer -> TypeEnv s -> [Constraint s] -> ST s (Either [TypeCheckError] ())
 runConstraints _ _ [] = return $ return ()
-runConstraints 0 _ _ = return $ Left [GenTypeCheckError "Reached runConstraints limit"]
+runConstraints 0 typeEnv cons = do
+  res <- mapM (executeConstraint typeEnv) cons
+  let consChangedList = mapMaybe (\(con, isChanged) -> if isChanged then Just con else Nothing) res
+  showCons <- showConstraints $ concat consChangedList
+  return $ Left [GenTypeCheckError $ "Reached runConstraints limit with still changing constraints: " ++ show showCons]
 runConstraints limit typeEnv cons = do
   res <- mapM (executeConstraint typeEnv) cons
   let (consList, changedList) = unzip res

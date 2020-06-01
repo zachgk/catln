@@ -25,9 +25,6 @@ import           Syntax
 import           TypeCheck.Common
 import           TypeCheck.Show (showCon)
 
-fromRawLeafType :: RawLeafType -> LeafType
-fromRawLeafType (RawLeafType name ts) = LeafType name (fmap fromRawLeafType ts)
-
 fromRawPartialType :: RawPartialType -> Maybe [LeafType]
 fromRawPartialType (name, args) = case traverse fromRawType args of
   Just args' -> Just $ map (LeafType name) $ traverse extractLeafs args'
@@ -36,10 +33,7 @@ fromRawPartialType (name, args) = case traverse fromRawType args of
 
 fromRawType :: RawType -> Maybe Type
 fromRawType RawTopType = Nothing
-fromRawType (RawSumType leafs partials) = fmap (SumType . S.union leafs') partials'
-  where
-    leafs' = S.map fromRawLeafType leafs
-    partials' = fmap (S.fromList . concat) $ traverse fromRawPartialType $ splitPartialLeafs partials
+fromRawType (RawSumType partials) = fmap (SumType . S.fromList . concat) $ traverse fromRawPartialType $ splitPartialLeafs partials
 
 matchingConstraintHelper :: Pnt s -> Pnt s -> Pnt s -> ST s Bool
 matchingConstraintHelper p p2 p3 = do

@@ -15,7 +15,6 @@ import           Control.Monad
 import           Control.Monad.ST
 import Data.Hashable (Hashable)
 import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet          as S
 import           Data.UnionFind.ST
 
 import           Syntax.Types
@@ -144,10 +143,10 @@ fromObject prefix env (Object m basis name args) = do
   (m', env1) <- fromMeta env m prefix'
   (args', env2) <- mapMWithFEnvMapWithKey env1 (addObjArg m' prefix') args
   let obj' = Object m' basis name args'
-  (objValue, env3) <- fromMeta env2 (PreTyped $ RawSumType S.empty $ joinPartialLeafs [(name, H.empty)]) ("objValue" ++ name)
+  (objValue, env3) <- fromMeta env2 (PreTyped $ RawSumType $ joinPartialLeafs [(name, H.empty)]) ("objValue" ++ name)
   let env4 = fInsert env3 name objValue
   let env5 = addConstraints env4 [BoundedByObjs BoundAllObjs m']
-  let env6 = addConstraints env5 [BoundedByKnown m' (RawSumType S.empty $ joinPartialLeafs [(name, fmap (const RawTopType) args)]) | basis /= PatternObj]
+  let env6 = addConstraints env5 [BoundedByKnown m' (RawSumType $ joinPartialLeafs [(name, fmap (const RawTopType) args)]) | basis /= PatternObj]
   return (obj', env6)
 
 -- Add all of the objects first for various expressions that call other top level functions
