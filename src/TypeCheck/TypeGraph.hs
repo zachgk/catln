@@ -66,7 +66,20 @@ reachesLeaf (_, graph) leaf@(RawLeafType leafName _) = do
     joinDestTypes destTypes = unionRawTypesList (idReach:destTypes)
 
 reachesPartial :: TypeEnv s -> RawPartialType -> ST s (TypeCheckResult RawType)
-reachesPartial _ _ = return $ return RawTopType -- TODO: build real reachesPartial method
+reachesPartial (_, graph) partial@(partialName, _) = do
+  let typePnts = H.lookupDefault [] partialName graph
+  schemes <- mapM fromTypePnts typePnts
+  return $ fmap (joinDestTypes . mapMaybe tryArrows) (mapM sequenceT schemes)
+  where
+    fromTypePnts (p1, p2) = do
+      s1 <- descriptor p1
+      s2 <- descriptor p2
+      return (ubFromScheme s1, ubFromScheme s2)
+    tryArrows (check, dest) = if hasRawPartial partial check
+      then Just dest
+      else Nothing
+    idReach = RawSumType S.empty (joinPartialLeafs [partial])
+    joinDestTypes destTypes = unionRawTypesList (idReach:destTypes)
 
 reaches :: TypeEnv s -> RawType -> ST s (TypeCheckResult RawType)
 reaches _     RawTopType            = return $ return RawTopType

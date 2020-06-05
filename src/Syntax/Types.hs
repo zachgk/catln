@@ -124,14 +124,13 @@ joinPartialLeafs :: [RawPartialType] -> RawPartialLeafs
 joinPartialLeafs = foldr (\(pName, pArgs) partials -> H.insertWith (++) pName [pArgs] partials) H.empty
 
 -- assumes a compacted super type, does not check in superLeafs
-hasRawPartial :: (TypeName, [H.HashMap TypeName RawType]) -> RawType -> Bool
+hasRawPartial :: RawPartialType -> RawType -> Bool
 hasRawPartial _ RawTopType = True
-hasRawPartial (subName, subArgsOptions) (RawSumType _ superPartials) = case H.lookup subName superPartials of
-  Just superArgsOptions -> all (`hasArgOption` superArgsOptions) subArgsOptions
+hasRawPartial (subName, subArgs) (RawSumType _ superPartials) = case H.lookup subName superPartials of
+  Just superArgsOptions -> any hasArg superArgsOptions
   Nothing -> False
   where
-    hasArgOption subArgs = any (hasArg subArgs)
-    hasArg subArgs superArgs = and $ H.elems $ H.intersectionWith hasRawType subArgs superArgs
+    hasArg superArgs = and $ H.elems $ H.intersectionWith hasRawType subArgs superArgs
 
 -- Maybe rename to subtypeOf
 hasRawType :: RawType -> RawType -> Bool
@@ -140,7 +139,7 @@ hasRawType RawTopType t = t == RawTopType
 hasRawType (RawSumType subLeafs subPartials) superType = subLeafsMatch && subPartialsMatch
   where
     subLeafsMatch = all (`hasRawLeaf` superType) subLeafs
-    subPartialsMatch = all (`hasRawPartial` superType) $ H.toList subPartials
+    subPartialsMatch = all (`hasRawPartial` superType) $ splitPartialLeafs subPartials
 
 -- Maybe rename to subtypeOf
 hasType :: Type -> Type -> Bool
