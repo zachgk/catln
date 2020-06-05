@@ -67,7 +67,7 @@ getSchemeProp inScheme propName = do
     getLeafProp :: RawLeafType -> Maybe RawLeafType
     getLeafProp (RawLeafType _ leafArgs) = H.lookup propName leafArgs
     getPartials :: RawPartialLeafs -> RawType
-    getPartials partials = joinPartials $ mapMaybe (H.lookup propName) $ concat $ H.elems partials
+    getPartials partials = joinPartials $ mapMaybe (H.lookup propName) $ concatMap S.toList (H.elems partials)
     joinPartials :: [RawType] -> RawType
     joinPartials = foldr unionRawTypes rawBottomType
 
@@ -79,7 +79,7 @@ setSchemeProp scheme propName pscheme = do
   where
     setRawTypeUbProp :: RawType -> RawType -> RawType
     setRawTypeUbProp RawTopType _ = RawTopType
-    setRawTypeUbProp (RawSumType ubLeafs ubPartials) pub = RawSumType (S.fromList $ mapMaybe (setLeafUbProp pub) $ S.toList ubLeafs) (H.mapMaybe (setPartialsUb pub) ubPartials)
+    setRawTypeUbProp (RawSumType ubLeafs ubPartials) pub = RawSumType (S.fromList $ mapMaybe (setLeafUbProp pub) $ S.toList ubLeafs) (S.fromList <$> H.mapMaybe (setPartialsUb pub) (fmap S.toList ubPartials))
     setLeafUbProp pub ubLeaf@(RawLeafType _ leafArgs) = case (H.lookup propName leafArgs, pub) of
       (Nothing, _) -> Nothing
       (Just leafArg, RawSumType pubLeafs _) -> if S.member leafArg pubLeafs
@@ -101,11 +101,11 @@ setSchemeProp scheme propName pscheme = do
 
 addArgsToRawType :: RawType -> S.HashSet Name -> Maybe RawType
 addArgsToRawType RawTopType _ = Nothing
-addArgsToRawType (RawSumType leafs partials) newArgs = Just $ RawSumType S.empty (H.unionWith (++) partialsFromLeafs partialsFromPartials)
+addArgsToRawType (RawSumType leafs partials) newArgs = Just $ RawSumType S.empty (H.unionWith S.union partialsFromLeafs partialsFromPartials)
   where
     partialUpdate = H.fromList $ map (,RawTopType) $ S.toList newArgs
-    partialsFromLeafs = foldr (H.unionWith (++) . partialFromLeaf) H.empty $ S.toList leafs
-    partialFromLeaf (RawLeafType leafName leafArgs) = H.singleton leafName [H.union partialUpdate $ fmap (\leafArg -> RawSumType (S.singleton leafArg) H.empty) leafArgs]
+    partialsFromLeafs = foldr (H.unionWith S.union . partialFromLeaf) H.empty $ S.toList leafs
+    partialFromLeaf (RawLeafType leafName leafArgs) = H.singleton leafName (S.singleton (H.union partialUpdate $ fmap (\leafArg -> RawSumType (S.singleton leafArg) H.empty) leafArgs))
     partialsFromPartials = joinPartialLeafs $ map fromPartial $ splitPartialLeafs partials
     fromPartial (partialName, partialArgs) = (partialName, H.unionWith unionRawTypes partialArgs partialUpdate)
 

@@ -32,7 +32,7 @@ data RawLeafType = RawLeafType TypeName (H.HashMap TypeName RawLeafType)
 
 type RawPartialType = (TypeName, H.HashMap TypeName RawType)
 type RawLeafSet = S.HashSet RawLeafType
-type RawPartialLeafs = (H.HashMap TypeName [H.HashMap TypeName RawType])
+type RawPartialLeafs = (H.HashMap TypeName (S.HashSet (H.HashMap TypeName RawType)))
 data RawType
   = RawSumType RawLeafSet RawPartialLeafs
   | RawTopType
@@ -118,10 +118,10 @@ hasRawLeaf leaf@(RawLeafType name args) (RawSumType superLeafs superPartials) = 
     inSuperPartial superArgs = H.keysSet args == H.keysSet superArgs && and (H.elems $ H.intersectionWith hasRawLeaf args superArgs)
 
 splitPartialLeafs :: RawPartialLeafs -> [RawPartialType]
-splitPartialLeafs partials = concatMap (\(k, vs) -> zip (repeat k) vs) $ H.toList partials
+splitPartialLeafs partials = concatMap (\(k, vs) -> zip (repeat k) vs) $ H.toList $ fmap S.toList partials
 
 joinPartialLeafs :: [RawPartialType] -> RawPartialLeafs
-joinPartialLeafs = foldr (\(pName, pArgs) partials -> H.insertWith (++) pName [pArgs] partials) H.empty
+joinPartialLeafs = foldr (\(pName, pArgs) partials -> H.insertWith S.union pName (S.singleton pArgs) partials) H.empty
 
 -- assumes a compacted super type, does not check in superLeafs
 hasRawPartial :: RawPartialType -> RawType -> Bool
@@ -151,16 +151,16 @@ finishCompactRawTypes (RawSumType leafs partials) = fmap (S.union leafs) partial
   where
     fromArgs prodName args = productRawLeafTypes prodName <$> traverse finishCompactRawTypes args
     fromPartial prodName argsOptions = S.unions <$> traverse (fromArgs prodName) argsOptions
-    partials' = fmap S.unions $ H.elems <$> H.traverseWithKey fromPartial partials
+    partials' = fmap S.unions $ H.elems <$> H.traverseWithKey fromPartial (fmap S.toList partials)
 
 productRawLeafTypes :: TypeName -> H.HashMap TypeName RawLeafSet -> RawLeafSet
 productRawLeafTypes prodName args = S.fromList $ RawLeafType prodName <$> traverse S.toList args
 
 compactRawType :: RawType -> RawType
 compactRawType RawTopType = RawTopType
-compactRawType (RawSumType leafs partials) = RawSumType leafs' partials'
+compactRawType (RawSumType leafs partials) = RawSumType leafs' (fmap S.fromList partials')
   where
-    (leafs', partials') = H.foldrWithKey accumLeafsPartials (leafs, H.empty) partials
+    (leafs', partials') = H.foldrWithKey accumLeafsPartials (leafs, H.empty) $ fmap S.toList partials
     accumLeafsPartials partialName partialArgsOptions (leafsAccum, partialsAccum) = let (newLeafs, partialArgsOptions') = compactPartial partialName partialArgsOptions
                                                                                         leafsAccum' = S.union leafsAccum newLeafs
                                                                                         partialsAccum' = if null partialArgsOptions'
@@ -179,7 +179,7 @@ unionRawTypes _ RawTopType = RawTopType
 unionRawTypes (RawSumType aLeafs aPartials) (RawSumType bLeafs bPartials) = compactRawType $ RawSumType leafs' partials'
   where
     leafs' = S.union aLeafs bLeafs
-    partials' = H.unionWith (++) aPartials bPartials
+    partials' = H.unionWith S.union aPartials bPartials
 
 unionRawTypesList :: [RawType] -> RawType
 unionRawTypesList = foldr unionRawTypes rawBottomType
@@ -190,7 +190,7 @@ intersectRawTypes t RawTopType = t
 intersectRawTypes (RawSumType aLeafs aPartials) (RawSumType bLeafs bPartials) = compactRawType $ RawSumType leafs' partials'
   where
     leafs' = S.unions [S.intersection aLeafs bLeafs, intersectLeafsPartials aLeafs bPartials, intersectLeafsPartials bLeafs aPartials]
-    partials' = H.intersectionWith intersectArgsOptions aPartials bPartials
+    partials' = S.fromList <$> H.intersectionWith intersectArgsOptions (fmap S.toList aPartials) (fmap S.toList bPartials)
     intersectArgsOptions as bs = catMaybes $ [intersectArgs a b | a <- as, b <- bs]
     intersectArgs :: H.HashMap TypeName RawType -> H.HashMap TypeName RawType -> Maybe (H.HashMap TypeName RawType)
     intersectArgs aArgs bArgs = if H.keysSet aArgs == H.keysSet bArgs
