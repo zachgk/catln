@@ -233,8 +233,9 @@ intersectRawTypeWithPowerset (RawSumType aLeafs aPartials) (RawSumType bLeafs bP
     fromLeafs = S.fromList $ concatMap (`intersectRawLeafsWithPowerset` bLeafs) $ S.toList aLeafs
     intersectArgsOptions as bs = catMaybes $ [intersectArgs a b | a <- as, b <- bs]
     intersectArgs :: H.HashMap TypeName RawType -> H.HashMap TypeName RawType -> Maybe (H.HashMap TypeName RawType)
+    intersectArgs aArgs bArgs | not (H.keysSet aArgs `isSubsetOf` H.keysSet bArgs) = Nothing
     intersectArgs aArgs bArgs = sequence $ H.intersectionWith subIntersect aArgs bArgs
-    subIntersect aType bType = let joined = intersectRawTypes aType bType
+    subIntersect aType bType = let joined = intersectRawTypeWithPowerset aType bType
                                 in if joined == rawBottomType
                                    then Nothing
                                    else Just joined
