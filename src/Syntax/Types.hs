@@ -223,24 +223,15 @@ intersectRawLeafsWithPowerset (RawLeafType aName aArgs) bs = concatMap subInters
 
 
 -- normal type, type to powerset
-intersectRawTypeWithPowerset :: RawType -> RawType -> RawType
-intersectRawTypeWithPowerset RawTopType t = t
-intersectRawTypeWithPowerset t RawTopType = t
-intersectRawTypeWithPowerset (RawSumType aLeafs aPartials) (RawSumType bLeafs bPartials) = compactRawType $ RawSumType leafs' partials'
+powerset :: [x] -> [[x]]
+powerset [] = [[]]
+powerset (x:xs) = map (x:) (powerset xs) ++ powerset xs
+
+powersetRawType :: RawType -> RawType
+powersetRawType RawTopType = RawTopType
+powersetRawType (RawSumType leafs partials) = RawSumType leafs' partials'
   where
-    leafs' = S.unions [fromLeafs, intersectLeafsPartials aLeafs bPartials, intersectLeafsPartials bLeafs aPartials]
-    partials' = H.intersectionWith intersectArgsOptions aPartials bPartials
-    fromLeafs = S.fromList $ concatMap (`intersectRawLeafsWithPowerset` bLeafs) $ S.toList aLeafs
-    intersectArgsOptions as bs = catMaybes $ [intersectArgs a b | a <- as, b <- bs]
-    intersectArgs :: H.HashMap TypeName RawType -> H.HashMap TypeName RawType -> Maybe (H.HashMap TypeName RawType)
-    intersectArgs aArgs bArgs | not (H.keysSet aArgs `isSubsetOf` H.keysSet bArgs) = Nothing
-    intersectArgs aArgs bArgs = sequence $ H.intersectionWith subIntersect aArgs bArgs
-    subIntersect aType bType = let joined = intersectRawTypeWithPowerset aType bType
-                                in if joined == rawBottomType
-                                   then Nothing
-                                   else Just joined
-    intersectLeafsPartials leafs partials = S.filter (leafInPartials partials) leafs
-    leafInPartials partials (RawLeafType leafName leafArgs) = case H.lookup leafName partials of
-      Just partialArgOptions -> any (leafArgsInPartialArgs leafArgs) partialArgOptions
-      Nothing -> False
-    leafArgsInPartialArgs leafArgs partialArgs = and (H.intersectionWith hasRawLeaf leafArgs partialArgs)
+    leafs' = S.fromList $ concatMap fromLeaf $ S.toList leafs
+    fromLeaf (RawLeafType name args) = map (RawLeafType name . H.fromList) $ powerset $ H.toList args
+    partials' = joinPartialLeafs $ concatMap fromPartialType $ splitPartialLeafs partials
+    fromPartialType (name, args) = map ((name,) . H.fromList) (powerset $ H.toList args)

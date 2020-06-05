@@ -54,6 +54,7 @@ data Constraint s
   | ArrowTo (Pnt s) (Pnt s) -- ArrowTo src dest
   | PropEq (Pnt s, Name) (Pnt s)
   | AddArgs (Pnt s, S.HashSet String) (Pnt s)
+  | PowersetTo (Pnt s) (Pnt s)
   | UnionOf (Pnt s) [Pnt s]
   deriving (Eq)
 
@@ -66,6 +67,7 @@ data SConstraint
   | SArrowTo Scheme Scheme
   | SPropEq (Scheme, Name) Scheme
   | SAddArgs (Scheme, S.HashSet String) Scheme
+  | SPowersetTo Scheme Scheme
   | SUnionOf Scheme [Scheme]
   deriving (Eq, Ord, Generic, Hashable)
 
@@ -166,6 +168,7 @@ instance Show SConstraint where
   show (SPropEq (s1, n) s2) = printf "(%s).%s == %s"  (show s1) n (show s2)
   show (SAddArgs (base, args) res) = printf "(%s)(%s) == %s" (show base) args' (show res)
     where args' = intercalate ", " $ S.toList args
+  show (SPowersetTo s t) = printf "𝒫(%s) ⊇ %s" (show s) (show t)
   show (SUnionOf s _) = printf "SUnionOf for %s" (show s)
 
 instance Show r => Show (TypeCheckResult r) where

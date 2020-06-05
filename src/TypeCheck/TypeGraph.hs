@@ -26,8 +26,10 @@ buildUnionObj :: [VObject s] -> ST s (UnionObj s, [Constraint s])
 buildUnionObj objs = do
   unionAllObjs <- fresh $ TypeCheckResult [] $ SType RawTopType rawBottomType "unionAllObjs"
   unionTypeObjs <- fresh $ TypeCheckResult [] $ SType RawTopType rawBottomType "unionTypeObjs"
-  let constraints = [unionObjs unionAllObjs objs, unionObjs unionTypeObjs $ filterTypes objs]
-  return ((unionAllObjs, unionTypeObjs), constraints)
+  unionAllObjsPs <- fresh $ TypeCheckResult [] $ SType RawTopType rawBottomType "unionAllObjsPs"
+  unionTypeObjsPs <- fresh $ TypeCheckResult [] $ SType RawTopType rawBottomType "unionTypeObjsPs"
+  let constraints = [unionObjs unionAllObjs objs, unionObjs unionTypeObjs $ filterTypes objs, PowersetTo unionAllObjs unionAllObjsPs, PowersetTo unionTypeObjs unionTypeObjsPs]
+  return ((unionAllObjsPs, unionTypeObjsPs), constraints)
                     where
                       unionObjs pnt os = UnionOf pnt $ map (\(Object m _ _ _) -> m) os
                       filterTypes = filter (\(Object _ basis _ _) -> basis == TypeObj)

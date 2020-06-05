@@ -49,6 +49,7 @@ matchingConstraint p (BoundedByObjs _ p2) = equivalent p p2
 matchingConstraint p (ArrowTo p2 p3) = matchingConstraintHelper p p2 p3
 matchingConstraint p (PropEq (p2, _) p3) = matchingConstraintHelper p p2 p3
 matchingConstraint p (AddArgs (p2, _) p3) = matchingConstraintHelper p p2 p3
+matchingConstraint p (PowersetTo p2 p3) = matchingConstraintHelper p p2 p3
 matchingConstraint p (UnionOf p2 p3s) = do
   c2 <- equivalent p p2
   c3s <- mapM (equivalent p) p3s

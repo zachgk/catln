@@ -141,7 +141,7 @@ executeConstraint ((unionAllObjs, unionTypeObjs), _) cons@(BoundedByObjs bnd pnt
     TypeCheckResult _ (SType ub lb desc, SType objsUb _ _) -> do
       -- A partially applied tuple would not be a raw type on the unionObj,
       -- but a subset of the arguments in that type
-      let ub' = intersectRawTypeWithPowerset ub objsUb
+      let ub' = intersectRawTypes ub objsUb
       let scheme' = if ub' == rawBottomType
             then TypeCheckResE [GenTypeCheckError $ printf "Failed to BoundByObjs for %s: %s %s" desc (show ub) (show objsUb)]
             else return $ SType ub' lb desc
@@ -186,6 +186,15 @@ executeConstraint _ cons@(AddArgs (srcPnt, newArgNames) destPnt) = do
           setDescriptor destPnt destScheme'
           return ([], True)
         Nothing -> return ([cons], False)
+executeConstraint _ cons@(PowersetTo srcPnt destPnt) = do
+  srcScheme <- descriptor srcPnt
+  destScheme <- descriptor destPnt
+  case sequenceT (srcScheme, destScheme) of
+    TypeCheckResE _ -> return ([], False)
+    TypeCheckResult _ (SType ub1 _ _, SType ub2 lb2 description2) -> do
+      let destScheme' = fmap (\ub -> SType ub lb2 description2) (tryIntersectRawTypes (powersetRawType ub1) ub2 "executeConstraint PowersetTo")
+      setDescriptor destPnt destScheme'
+      return ([cons | not (isSolved destScheme')], destScheme /= destScheme')
 executeConstraint _ cons@(UnionOf parentPnt childrenPnts) = do
   parentScheme <- descriptor parentPnt
   tcresChildrenSchemes <- mapM descriptor childrenPnts
