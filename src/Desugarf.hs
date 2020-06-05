@@ -191,14 +191,15 @@ desDecls :: [PDecl] -> PObjectMap
 desDecls decls = unionsWith (++) $ map desDecl decls
 
 addTypeDef :: PRawTypeDef -> (PObjectMap, ClassMap) -> (PObjectMap, ClassMap)
-addTypeDef (RawTypeDef name leafs) (objMap, classMap) = (objMap', classMap')
+addTypeDef (RawTypeDef _ RawTopType) _ = error "Invalid type def to desugar"
+addTypeDef (RawTypeDef name (RawSumType _ partials)) (objMap, classMap) = (objMap', classMap')
   where
-    leafArgConvert leafType = (PreTyped $ RawSumType (S.singleton leafType) H.empty, Nothing)
-    leafToObj (RawLeafType leafName leafArgs) = Object emptyMeta TypeObj leafName (fmap leafArgConvert leafArgs)
-    newObjs = map leafToObj $ S.toList leafs
+    leafArgConvert partialType = (PreTyped partialType, Nothing)
+    partialToObj (partialName, partialArgs) = Object emptyMeta TypeObj partialName (fmap leafArgConvert partialArgs)
+    newObjs = map partialToObj $ splitPartialLeafs partials
     additionalObjMap = H.fromList $ map (,[]) newObjs
     objMap' = mergeObjMaps objMap additionalObjMap
-    leafNames = (\(RawLeafType leafName _) -> leafName) <$> S.toList leafs
+    leafNames = fst <$> splitPartialLeafs partials
     additionalClassMap = desClassDefs True $ map (,name) leafNames
     classMap' = mergeClassMaps additionalClassMap classMap
 

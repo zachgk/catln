@@ -82,16 +82,16 @@ instance Show Type where
     where sumString = intercalate " | " (map show $ S.toList leafs)
 
 
-rintLeaf, rfloatLeaf, rstrLeaf :: RawLeafType
-rintLeaf = RawLeafType "Integer" H.empty
-rfloatLeaf = RawLeafType "Float" H.empty
-rstrLeaf = RawLeafType "String" H.empty
+rintLeaf, rfloatLeaf, rstrLeaf :: RawPartialType
+rintLeaf = ("Integer", H.empty)
+rfloatLeaf = ("Float", H.empty)
+rstrLeaf = ("String", H.empty)
 
 rintType, rfloatType, rboolType, rstrType :: RawType
-rintType = RawSumType (S.singleton rintLeaf) H.empty
-rfloatType = RawSumType (S.singleton rfloatLeaf) H.empty
-rboolType = RawSumType (S.fromList [RawLeafType "True" H.empty, RawLeafType "False" H.empty]) H.empty
-rstrType = RawSumType (S.singleton rstrLeaf) H.empty
+rintType = RawSumType S.empty $ joinPartialLeafs [rintLeaf]
+rfloatType = RawSumType S.empty $ joinPartialLeafs [rfloatLeaf]
+rboolType = RawSumType S.empty $ joinPartialLeafs [("True", H.empty), ("False", H.empty)]
+rstrType = RawSumType S.empty $ joinPartialLeafs [rstrLeaf]
 
 intLeaf, floatLeaf, strLeaf :: LeafType
 intLeaf = LeafType "Integer" H.empty

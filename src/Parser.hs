@@ -105,7 +105,7 @@ pPatternGuard = fromMaybe NoGuard <$> optional (try pIfGuard
 
 pObjTreeArg :: Parser (Name, PObjArg)
 pObjTreeArg = do
-  tp <- try $ optional $ (`RawSumType` H.empty) <$> pType
+  tp <- try $ optional pType
   val <- identifier
   let tp' = maybe emptyMeta PreTyped tp
   subTree <- optional $ do
@@ -118,7 +118,7 @@ pObjTreeArgs = sepBy1 pObjTreeArg (symbol ",")
 
 pObjTree :: ObjectBasis -> Parser PObject
 pObjTree basis = do
-  tp <- try $ optional $ (`RawSumType` H.empty) <$> pType
+  tp <- try $ optional pType
   name <- opIdentifier <|> identifier
   args <- optional $ try $ parens pObjTreeArgs
   let tp' = maybe emptyMeta PreTyped tp
@@ -169,25 +169,25 @@ term = try (parens pExpr)
 pExpr :: Parser PExpr
 pExpr = makeExprParser term ops
 
-pTypeArg :: Parser (String, RawLeafType)
+pTypeArg :: Parser (String, RawType)
 pTypeArg = do
   argName <- identifier
   _ <- symbol "="
   tp <- tidentifier
-  return (argName, RawLeafType tp H.empty)
+  return (argName, RawSumType S.empty $ joinPartialLeafs [(tp, H.empty)])
 
-pTypeProduct :: Parser RawLeafType
+pTypeProduct :: Parser RawPartialType
 pTypeProduct = do
   name <- tidentifier
   args <- parens (sepBy1 pTypeArg (symbol ","))
-  return $ RawLeafType name (H.fromList args)
+  return (name, H.fromList args)
 
-pLeafType :: Parser RawLeafType
+pLeafType :: Parser RawPartialType
 pLeafType = try pTypeProduct
-        <|> ((`RawLeafType` H.empty) <$> tidentifier)
+        <|> ((, H.empty) <$> tidentifier)
 
-pType :: Parser RawLeafSet
-pType = S.fromList <$> sepBy1 pLeafType (symbol "|")
+pType :: Parser RawType
+pType = RawSumType S.empty . joinPartialLeafs <$> sepBy1 pLeafType (symbol "|")
 
 pIfGuard :: Parser PGuard
 pIfGuard = do
@@ -203,7 +203,7 @@ pArrowRes :: Parser ParseMeta
 pArrowRes = do
   _ <- symbol "->"
   tp <- pLeafType
-  return $ PreTyped $ RawSumType (S.singleton tp) H.empty
+  return $ PreTyped $ RawSumType S.empty $ joinPartialLeafs [tp]
 
 pDeclLHS :: Parser PDeclLHS
 pDeclLHS = do

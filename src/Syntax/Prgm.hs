@@ -80,7 +80,7 @@ data RawDecl m = RawDecl (DeclLHS m (RawExpr m)) [RawDeclSubStatement m] (Maybe 
   deriving (Eq, Ord, Show)
 
 -- TODO: Convert to RawTypeDef Name ObjTree
-data RawTypeDef m = RawTypeDef Name RawLeafSet
+data RawTypeDef m = RawTypeDef Name RawType
   deriving (Eq, Ord, Show)
 
 type RawClassDef = (TypeName, ClassName)
