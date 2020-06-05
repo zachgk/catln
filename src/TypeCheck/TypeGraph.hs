@@ -65,7 +65,7 @@ reachesLeaf (_, graph) leaf@(RawLeafType leafName _) = do
       then Just dest
       else Nothing
     idReach = RawSumType (S.singleton leaf) H.empty
-    joinDestTypes destTypes = unionRawTypesList (idReach:destTypes)
+    joinDestTypes destTypes = unionRawTypes (idReach:destTypes)
 
 reachesPartial :: TypeEnv s -> RawPartialType -> ST s (TypeCheckResult RawType)
 reachesPartial (_, graph) partial@(partialName, _) = do
@@ -81,14 +81,14 @@ reachesPartial (_, graph) partial@(partialName, _) = do
       then Just dest
       else Nothing
     idReach = RawSumType S.empty (joinPartialLeafs [partial])
-    joinDestTypes destTypes = unionRawTypesList (idReach:destTypes)
+    joinDestTypes destTypes = unionRawTypes (idReach:destTypes)
 
 reaches :: TypeEnv s -> RawType -> ST s (TypeCheckResult RawType)
 reaches _     RawTopType            = return $ return RawTopType
 reaches typeEnv (RawSumType srcLeafs srcPartials) = do
   resultsByLeafs <- mapM (reachesLeaf typeEnv) $ S.toList srcLeafs
   resultsByPartials <- mapM (reachesPartial typeEnv) $ splitPartialLeafs srcPartials
-  return $ unionRawTypesList <$> sequence (resultsByPartials ++ resultsByLeafs)
+  return $ unionRawTypes <$> sequence (resultsByPartials ++ resultsByLeafs)
 
 
 arrowConstrainUbs :: TypeEnv s -> RawType -> RawType -> ST s (TypeCheckResult (RawType, RawType))
@@ -106,6 +106,6 @@ arrowConstrainUbs typeEnv (RawSumType srcLeafs srcPartials) dest = do
     let (srcPartialList', destByPartial) = unzip $ H.toList partialMap''
     let srcLeafs' = S.fromList srcLeafList'
     let srcPartials' = joinPartialLeafs srcPartialList'
-    let destByGraph = unionRawTypesList (destByLeaf ++ destByPartial)
+    let destByGraph = unionRawTypes (destByLeaf ++ destByPartial)
     dest' <- tryIntersectRawTypes dest destByGraph "executeConstraint ArrowTo"
     return (RawSumType srcLeafs' srcPartials', dest')

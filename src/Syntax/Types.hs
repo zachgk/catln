@@ -173,16 +173,16 @@ compactRawType (RawSumType leafs partials) = RawSumType leafs' (fmap S.fromList 
       Just leafArgs -> Left $ productRawLeafTypes name leafArgs
       Nothing -> Right $ fmap compactRawType args
 
-unionRawTypes :: RawType -> RawType -> RawType
-unionRawTypes RawTopType _ = RawTopType
-unionRawTypes _ RawTopType = RawTopType
-unionRawTypes (RawSumType aLeafs aPartials) (RawSumType bLeafs bPartials) = compactRawType $ RawSumType leafs' partials'
+unionRawType :: RawType -> RawType -> RawType
+unionRawType RawTopType _ = RawTopType
+unionRawType _ RawTopType = RawTopType
+unionRawType (RawSumType aLeafs aPartials) (RawSumType bLeafs bPartials) = compactRawType $ RawSumType leafs' partials'
   where
     leafs' = S.union aLeafs bLeafs
     partials' = H.unionWith S.union aPartials bPartials
 
-unionRawTypesList :: [RawType] -> RawType
-unionRawTypesList = foldr unionRawTypes rawBottomType
+unionRawTypes :: Foldable f => f RawType -> RawType
+unionRawTypes = foldr unionRawType rawBottomType
 
 intersectRawTypes :: RawType -> RawType -> RawType
 intersectRawTypes RawTopType t = t

@@ -34,7 +34,7 @@ checkScheme _ scheme = scheme
 equalizeBounds :: (Scheme, Scheme) -> String -> Scheme
 equalizeBounds inSchemes d = do
   (SType ub1 lb1 desc1, SType ub2 lb2 _) <- sequenceT inSchemes
-  let lbBoth = unionRawTypes lb1 lb2
+  let lbBoth = unionRawType lb1 lb2
   ubBoth <- tryIntersectRawTypes ub1 ub2 $ "equalizeBounds(" ++ d ++ ")"
   if hasRawType lbBoth ubBoth
     then return $ SType ubBoth lbBoth desc1
@@ -43,7 +43,7 @@ equalizeBounds inSchemes d = do
 equalizeSchemes :: (Scheme, Scheme) -> String -> Scheme
 equalizeSchemes inSchemes d = do
   (SType ub1 lb1 desc1, SType ub2 lb2 desc2) <- sequenceT inSchemes
-  let lbBoth = unionRawTypes lb1 lb2
+  let lbBoth = unionRawType lb1 lb2
   ubBoth <- tryIntersectRawTypes ub1 ub2 $ "equalizeSchemes(" ++ d ++ ")"
   let descBoth = if desc1 == desc2
          then desc1
@@ -67,7 +67,7 @@ getSchemeProp inScheme propName = do
     getLeafProp :: RawLeafType -> Maybe RawLeafType
     getLeafProp (RawLeafType _ leafArgs) = H.lookup propName leafArgs
     getPartials :: RawPartialLeafs -> RawType
-    getPartials partials = unionRawTypesList $ mapMaybe (H.lookup propName) $ concatMap S.toList (H.elems partials)
+    getPartials partials = unionRawTypes $ mapMaybe (H.lookup propName) $ concatMap S.toList (H.elems partials)
 
 setSchemeProp :: Scheme -> Name -> Scheme -> Scheme
 setSchemeProp scheme propName pscheme = do
@@ -99,9 +99,9 @@ addArgsToRawType (RawSumType leafs partials) newArgs = Just $ RawSumType S.empty
   where
     partialUpdate = H.fromList $ map (,RawTopType) $ S.toList newArgs
     partialsFromLeafs = foldr (H.unionWith S.union . partialFromLeaf) H.empty $ S.toList leafs
-    partialFromLeaf (RawLeafType leafName leafArgs) = H.singleton leafName (S.singleton (H.unionWith unionRawTypes partialUpdate $ fmap (\leafArg -> RawSumType (S.singleton leafArg) H.empty) leafArgs))
+    partialFromLeaf (RawLeafType leafName leafArgs) = H.singleton leafName (S.singleton (H.unionWith unionRawType partialUpdate $ fmap (\leafArg -> RawSumType (S.singleton leafArg) H.empty) leafArgs))
     partialsFromPartials = joinPartialLeafs $ map fromPartial $ splitPartialLeafs partials
-    fromPartial (partialName, partialArgs) = (partialName, H.unionWith unionRawTypes partialArgs partialUpdate)
+    fromPartial (partialName, partialArgs) = (partialName, H.unionWith unionRawType partialArgs partialUpdate)
 
 -- returns updated (pruned) constraints and boolean if schemes were updated
 executeConstraint :: TypeEnv s -> Constraint s -> ST s ([Constraint s], Bool)
@@ -196,7 +196,7 @@ executeConstraint _ cons@(UnionOf parentPnt childrenPnts) = do
   case sequenceT (parentScheme, sequence tcresChildrenSchemes) of
     TypeCheckResE _ -> return ([], False)
     TypeCheckResult _ (_, childrenSchemes) -> do
-      let childrenScheme = (\(ub, lb) -> return $ SType ub lb "") $ foldr (\(SType ub1 lb1 _) (ub2, lb2) -> (unionRawTypes ub1 ub2, unionRawTypes lb1 lb2)) (rawBottomType, rawBottomType) childrenSchemes
+      let childrenScheme = (\(ub, lb) -> return $ SType ub lb "") $ foldr (\(SType ub1 lb1 _) (ub2, lb2) -> (unionRawType ub1 ub2, unionRawType lb1 lb2)) (rawBottomType, rawBottomType) childrenSchemes
       let parentScheme' = equalizeBounds (parentScheme, childrenScheme) "executeConstraint UnionOf"
       setDescriptor parentPnt parentScheme'
       return ([cons | not (isSolved parentScheme')], parentScheme /= parentScheme')
