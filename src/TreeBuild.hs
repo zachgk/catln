@@ -84,7 +84,7 @@ buildExpr (_, valEnv) (Value (Typed (SumType prodTypes)) name) = case S.toList p
       Nothing -> ResArrowTuple name H.empty
 buildExpr _ (Arg (Typed tp) name) = return $ ResArrowSingle $ ArgArrow tp name
 buildExpr env (TupleApply (Typed (SumType prodTypes)) (Typed baseType, baseExpr) argExprs) = case S.toList prodTypes of
-    (_:_:_) -> CErr [BuildTreeCErr $ "Found multiple types for tupleApply " ++ show baseExpr ++ "\n\t" ++ show prodTypes]
+    (_:_:_) -> CErr [BuildTreeCErr $ "Found multiple types for tupleApply " ++ show baseExpr ++ "\n\t" ++ show prodTypes ++ "\n\t" ++ show argExprs]
     [] -> CErr [BuildTreeCErr $ "Found no types for tupleApply " ++ show baseExpr ++ " with type " ++ show prodTypes ++ " and exprs " ++ show argExprs]
     [LeafType _ leafType] | H.keysSet argExprs `isSubsetOf` H.keysSet leafType -> do
                            baseBuild <- buildExprImp env baseExpr baseType

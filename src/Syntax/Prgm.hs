@@ -108,9 +108,9 @@ type Prgm m = (ObjectMap m, ClassMap) -- TODO: Include [Export]
 
 instance Show m => Show (Expr m) where
   show (CExpr _ c) = show c
-  show (Value _ name) = "Value " ++ name
-  show (Arg m name) = "Arg " ++ show m ++ " " ++ name
-  show (TupleApply _ (_, baseExpr) args) = "(" ++ show baseExpr ++ ")(" ++ args' ++ ")"
+  show (Value _ name) = printf "Value %s" name
+  show (Arg m name) = printf "Arg %s %s" (show m) name
+  show (TupleApply _ (_, baseExpr) args) = printf "(%s)(%s)" (show baseExpr) args'
     where
       showArg (name, expr) = name ++ " = " ++ show expr
       args' = intercalate ", " $ map showArg $ H.toList args

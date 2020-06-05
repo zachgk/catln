@@ -185,7 +185,7 @@ executeConstraint _ cons@(AddArgs (srcPnt, newArgNames) destPnt) = do
         Just destUb' -> do
           let destScheme' = equalizeSchemes (destScheme, return $ SType destUb' destLb destDesc) "executeConstraint AddArgs"
           setDescriptor destPnt destScheme'
-          return ([], True)
+          return ([cons | not (isSolved srcScheme || isSolved destScheme)], destScheme /= destScheme')
         Nothing -> return ([cons], False)
 executeConstraint _ cons@(PowersetTo srcPnt destPnt) = do
   srcScheme <- descriptor srcPnt
