@@ -67,9 +67,7 @@ getSchemeProp inScheme propName = do
     getLeafProp :: RawLeafType -> Maybe RawLeafType
     getLeafProp (RawLeafType _ leafArgs) = H.lookup propName leafArgs
     getPartials :: RawPartialLeafs -> RawType
-    getPartials partials = joinPartials $ mapMaybe (H.lookup propName) $ concatMap S.toList (H.elems partials)
-    joinPartials :: [RawType] -> RawType
-    joinPartials = foldr unionRawTypes rawBottomType
+    getPartials partials = unionRawTypesList $ mapMaybe (H.lookup propName) $ concatMap S.toList (H.elems partials)
 
 setSchemeProp :: Scheme -> Name -> Scheme -> Scheme
 setSchemeProp scheme propName pscheme = do
@@ -79,23 +77,19 @@ setSchemeProp scheme propName pscheme = do
   where
     setRawTypeUbProp :: RawType -> RawType -> RawType
     setRawTypeUbProp RawTopType _ = RawTopType
-    setRawTypeUbProp (RawSumType ubLeafs ubPartials) pub = RawSumType (S.fromList $ mapMaybe (setLeafUbProp pub) $ S.toList ubLeafs) (S.fromList <$> H.mapMaybe (setPartialsUb pub) (fmap S.toList ubPartials))
+    setRawTypeUbProp (RawSumType ubLeafs ubPartials) pub = RawSumType (S.fromList $ mapMaybe (setLeafUbProp pub) $ S.toList ubLeafs) (joinPartialLeafs $ mapMaybe (setPartialsUb pub) $ splitPartialLeafs ubPartials)
     setLeafUbProp pub ubLeaf@(RawLeafType _ leafArgs) = case (H.lookup propName leafArgs, pub) of
       (Nothing, _) -> Nothing
       (Just leafArg, RawSumType pubLeafs _) -> if S.member leafArg pubLeafs
         then Just ubLeaf
         else Nothing
       (Just{} , RawTopType) -> Just ubLeaf
-    setPartialsUb pub partials = case mapMaybe (setPartialUb pub) partials of
-      [] -> Nothing
-      partials' -> Just partials'
-    setPartialUb pub partialArgs = case H.lookup propName partialArgs of
-      Just partialArg -> let tryPartialArg' = tryIntersectRawTypes partialArg pub "setSchemeProp"
-                          in case tryPartialArg' of
-                               TypeCheckResult _ partialArg' -> if partialArg' == rawBottomType
-                                                      then Nothing
-                                                      else Just $ H.insert propName partialArg' partialArgs
-                               TypeCheckResE _ -> Nothing
+    setPartialsUb RawTopType partial = Just partial
+    setPartialsUb pub (partialName, partialArgs) = case H.lookup propName partialArgs of
+      Just partialArg -> let partialArg' = intersectRawTypes partialArg pub
+                          in if partialArg' == rawBottomType
+                                then Nothing
+                                else Just (partialName, H.insert propName partialArg' partialArgs)
       Nothing -> Nothing
     setRawTypeLbProp tp = tp -- TODO: Should set with union?
 
@@ -105,7 +99,7 @@ addArgsToRawType (RawSumType leafs partials) newArgs = Just $ RawSumType S.empty
   where
     partialUpdate = H.fromList $ map (,RawTopType) $ S.toList newArgs
     partialsFromLeafs = foldr (H.unionWith S.union . partialFromLeaf) H.empty $ S.toList leafs
-    partialFromLeaf (RawLeafType leafName leafArgs) = H.singleton leafName (S.singleton (H.union partialUpdate $ fmap (\leafArg -> RawSumType (S.singleton leafArg) H.empty) leafArgs))
+    partialFromLeaf (RawLeafType leafName leafArgs) = H.singleton leafName (S.singleton (H.unionWith unionRawTypes partialUpdate $ fmap (\leafArg -> RawSumType (S.singleton leafArg) H.empty) leafArgs))
     partialsFromPartials = joinPartialLeafs $ map fromPartial $ splitPartialLeafs partials
     fromPartial (partialName, partialArgs) = (partialName, H.unionWith unionRawTypes partialArgs partialUpdate)
 
