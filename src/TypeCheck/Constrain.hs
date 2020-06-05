@@ -106,8 +106,8 @@ addArgsToRawType (RawSumType leafs partials) newArgs = Just $ RawSumType S.empty
     partialUpdate = H.fromList $ map (,RawTopType) $ S.toList newArgs
     partialsFromLeafs = foldr (H.unionWith (++) . partialFromLeaf) H.empty $ S.toList leafs
     partialFromLeaf (RawLeafType leafName leafArgs) = H.singleton leafName [H.union partialUpdate $ fmap (\leafArg -> RawSumType (S.singleton leafArg) H.empty) leafArgs]
-    partialsFromPartials = fmap (map fromPartial) partials
-    fromPartial = H.union partialUpdate
+    partialsFromPartials = joinPartialLeafs $ map fromPartial $ splitPartialLeafs partials
+    fromPartial (partialName, partialArgs) = (partialName, H.unionWith unionRawTypes partialArgs partialUpdate)
 
 -- returns updated (pruned) constraints and boolean if schemes were updated
 executeConstraint :: TypeEnv s -> Constraint s -> ST s ([Constraint s], Bool)
@@ -179,6 +179,7 @@ executeConstraint _ cons@(AddArgs (srcPnt, newArgNames) destPnt) = do
   destScheme <- descriptor destPnt
   case sequenceT (srcScheme, destScheme) of
     TypeCheckResE _ -> return ([], False)
+    TypeCheckResult _ (SType RawTopType _ _, _) -> return ([cons], False)
     TypeCheckResult _ (SType srcUb _ _, SType _ destLb destDesc) ->
       case addArgsToRawType srcUb newArgNames of
         Just destUb' -> do
