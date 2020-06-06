@@ -66,7 +66,14 @@ identifier = (lexeme . try) (p >>= check)
                  else return x
 
 tidentifier :: Parser String
-tidentifier = try $ lexeme $ (:) <$> upperChar <*> many alphaNumChar
+tidentifier = lexeme $ (:) <$> upperChar <*> many alphaNumChar
+
+tvar :: Parser String
+tvar = try $ lexeme $ do
+  _ <- string "$"
+  first <- upperChar
+  rest <- many alphaNumChar
+  return $ '$' : first : rest
 
 operators :: [String]
 operators = words "- ~ * / + <= >= < > == != & | ^"

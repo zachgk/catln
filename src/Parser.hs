@@ -107,11 +107,8 @@ pPatternGuard = fromMaybe NoGuard <$> optional (try pIfGuard
 
 pObjTreeVar :: Parser (TypeVarName, ParseMeta)
 pObjTreeVar = do
-  tp <- try $ optional pType
-  _ <- string "$"
-  name <- lexeme $ (:) <$> upperChar <*> many alphaNumChar
-  let tp' = maybe emptyMeta PreTyped tp
-  return (name, tp')
+  var <- tvar
+  return (var, emptyMeta)
 
 pObjTreeArg :: Parser (ArgName, PObjArg)
 pObjTreeArg = do
@@ -131,8 +128,8 @@ pObjTree :: ObjectBasis -> Parser PObject
 pObjTree basis = do
   tp <- try $ optional pType
   name <- opIdentifier <|> identifier
-  vars <- optional $ angleBraces $ sepBy1 pObjTreeVar (symbol ",")
-  args <- optional $ try $ parens pObjTreeArgs
+  vars <- try $ optional $ angleBraces $ sepBy1 pObjTreeVar (symbol ",")
+  args <- optional $ parens pObjTreeArgs
   let tp' = maybe emptyMeta PreTyped tp
   let vars' = maybe H.empty H.fromList vars
   let args' = H.fromList $ fromMaybe [] args
@@ -185,18 +182,16 @@ pTypeArg :: Parser (String, Type)
 pTypeArg = do
   argName <- identifier
   _ <- symbol "="
-  tp <- tidentifier
+  tp <- tidentifier <|> tvar
   return (argName, SumType $ joinPartialLeafs [(tp, H.empty, H.empty)])
 
-pTypeProduct :: Parser PartialType
-pTypeProduct = do
-  name <- tidentifier
-  args <- parens (sepBy1 pTypeArg (symbol ","))
-  return (name, H.empty, H.fromList args)
-
 pLeafType :: Parser PartialType
-pLeafType = try pTypeProduct
-        <|> ((, H.empty, H.empty) <$> tidentifier)
+pLeafType = do
+  name <- tidentifier <|> tvar
+  maybeArgs <- optional $ parens (sepBy1 pTypeArg (symbol ","))
+  case maybeArgs of
+    Just args -> return (name, H.empty, H.fromList args)
+    Nothing -> return (name, H.empty, H.empty)
 
 pType :: Parser Type
 pType = SumType . joinPartialLeafs <$> sepBy1 pLeafType (symbol "|")

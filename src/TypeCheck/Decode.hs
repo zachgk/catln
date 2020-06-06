@@ -25,7 +25,7 @@ import           TypeCheck.Common
 import           TypeCheck.Show (showCon)
 
 fromPartialType :: PartialType -> Maybe PartialType
-fromPartialType (name, vars, args) = case sequenceT (traverse fromType vars, traverse fromType args) of
+fromPartialType (name, vars, args) = case sequenceT (Just vars, traverse fromType args) of
   Just (vars', args') -> Just (name, vars', args')
   Nothing -> Nothing
 

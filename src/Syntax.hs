@@ -145,6 +145,12 @@ newtype PreTyped = PreTyped Type
 newtype Typed = Typed Type
   deriving (Eq, Ord, Generic, Hashable)
 
+preTypedToTypeVar :: PreTyped -> Maybe TypeVarName
+preTypedToTypeVar (PreTyped (SumType partials)) = case splitPartialLeafs partials of
+  [(partialName@('$':_), _, _)] -> Just partialName
+  _ -> Nothing
+preTypedToTypeVar _ = Nothing
+
 typedIs :: Typed -> Type -> Bool
 typedIs (Typed t1) t2 = t1 == t2
 
