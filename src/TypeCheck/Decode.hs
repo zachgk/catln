@@ -25,8 +25,8 @@ import           TypeCheck.Common
 import           TypeCheck.Show (showCon)
 
 fromPartialType :: PartialType -> Maybe PartialType
-fromPartialType (name, args) = case traverse fromType args of
-  Just args' -> Just (name, args')
+fromPartialType (name, vars, args) = case sequenceT (traverse fromType vars, traverse fromType args) of
+  Just (vars', args') -> Just (name, vars', args')
   Nothing -> Nothing
 
 fromType :: Type -> Maybe Type
@@ -87,7 +87,7 @@ toExpr env (TupleApply m (baseM, baseExpr) args) = do
   baseExpr' <- toExpr env baseExpr
   args' <- mapM (toExpr env) args
   case m' of -- check for errors
-    TypeCheckResult notes tp@(Typed (SumType sumType)) | all (\(_, leafArgs) -> not (H.keysSet args' `isSubsetOf` H.keysSet leafArgs)) (splitPartialLeafs sumType) -> do
+    TypeCheckResult notes tp@(Typed (SumType sumType)) | all (\(_, _, leafArgs) -> not (H.keysSet args' `isSubsetOf` H.keysSet leafArgs)) (splitPartialLeafs sumType) -> do
                                         matchingConstraints <- showMatchingConstraints env m
                                         let sArgs = sequence args'
                                         return $ TypeCheckResE (TupleMismatch baseM' baseExpr' tp sArgs matchingConstraints:notes)

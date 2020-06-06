@@ -86,7 +86,7 @@ buildExpr _ (Arg (Typed tp) name) = return $ ResArrowSingle $ ArgArrow tp name
 buildExpr env (TupleApply (Typed (SumType prodTypes)) (Typed baseType, baseExpr) argExprs) = case splitPartialLeafs prodTypes of
     (_:_:_) -> CErr [BuildTreeCErr $ "Found multiple types for tupleApply " ++ show baseExpr ++ "\n\t" ++ show prodTypes ++ "\n\t" ++ show argExprs]
     [] -> CErr [BuildTreeCErr $ "Found no types for tupleApply " ++ show baseExpr ++ " with type " ++ show prodTypes ++ " and exprs " ++ show argExprs]
-    [(_, leafType)] | H.keysSet argExprs `isSubsetOf` H.keysSet leafType -> do
+    [(_, _, leafType)] | H.keysSet argExprs `isSubsetOf` H.keysSet leafType -> do
                            baseBuild <- buildExprImp env baseExpr baseType
                            argVals <- mapM (\(valDestType, expr) -> buildExprImp env expr valDestType) $ H.intersectionWith (,) leafType argExprs
                            return $ ResArrowTupleApply baseBuild argVals

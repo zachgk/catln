@@ -19,16 +19,19 @@ import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet          as S
 import           Data.Maybe
 import           Data.List
+import           Data.Tuple.Sequence
 import           GHC.Generics          (Generic)
+import           Text.Printf
 
 type Name = String
 
 type ArgName = Name
+type TypeVarName = Name
 type TypeName = Name
 type ClassName = Name
 
-type PartialType = (TypeName, H.HashMap ArgName Type)
-type PartialLeafs = (H.HashMap TypeName (S.HashSet (H.HashMap ArgName Type)))
+type PartialType = (TypeName, H.HashMap TypeVarName Type, H.HashMap ArgName Type)
+type PartialLeafs = (H.HashMap TypeName (S.HashSet (H.HashMap TypeVarName Type, H.HashMap ArgName Type)))
 data Type
   = SumType PartialLeafs
   | TopType
@@ -41,41 +44,48 @@ instance Show Type where
   show t | t == bottomType = "∅"
   show (SumType partials) = "(" ++ intercalate " | " partials' ++ ")"
     where
-      showPartialArgs (argName, argVal) = argName ++ "=" ++ show argVal
-      showPartial (partialName, partialArgs) = partialName ++ "(" ++ intercalate ", " (map showPartialArgs $ H.toList partialArgs) ++ ")"
+      showArg (argName, argVal) = argName ++ "=" ++ show argVal
+      showTypeVars vars | H.null vars = ""
+      showTypeVars vars = printf "<%s>" (intercalate ", " $ map showArg $ H.toList vars)
+      showArgs args | H.null args = ""
+      showArgs args = printf "(%s)" (intercalate ", " $ map showArg $ H.toList args)
+      showPartial (partialName, partialTypeVars, partialArgs) = partialName ++ showTypeVars partialTypeVars ++ showArgs partialArgs
       partials' = map showPartial $ splitPartialLeafs partials
   show TopType = "TopType"
 
 
 intLeaf, floatLeaf, strLeaf :: PartialType
-intLeaf = ("Integer", H.empty)
-floatLeaf = ("Float", H.empty)
-strLeaf = ("String", H.empty)
+intLeaf = ("Integer", H.empty, H.empty)
+floatLeaf = ("Float", H.empty, H.empty)
+strLeaf = ("String", H.empty, H.empty)
 
 intType, floatType, boolType, strType :: Type
 intType = SumType $ joinPartialLeafs [intLeaf]
 floatType = SumType $ joinPartialLeafs [floatLeaf]
-boolType = SumType $ joinPartialLeafs [("True", H.empty), ("False", H.empty)]
+boolType = SumType $ joinPartialLeafs [("True", H.empty, H.empty), ("False", H.empty, H.empty)]
 strType = SumType $ joinPartialLeafs [strLeaf]
 
 bottomType :: Type
 bottomType = SumType H.empty
 
 splitPartialLeafs :: PartialLeafs -> [PartialType]
-splitPartialLeafs partials = concatMap (\(k, vs) -> zip (repeat k) vs) $ H.toList $ fmap S.toList partials
+splitPartialLeafs partials = concatMap (\(k, vs) -> map (aux k) vs) $ H.toList $ fmap S.toList partials
+  where aux name (vars, args) = (name, vars, args)
 
 joinPartialLeafs :: [PartialType] -> PartialLeafs
-joinPartialLeafs = foldr (\(pName, pArgs) partials -> H.insertWith S.union pName (S.singleton pArgs) partials) H.empty
+joinPartialLeafs = foldr (\(pName, pVars, pArgs) partials -> H.insertWith S.union pName (S.singleton (pVars, pArgs)) partials) H.empty
 
 -- assumes a compacted super type, does not check in superLeafs
 hasPartial :: PartialType -> Type -> Bool
 hasPartial _ TopType = True
-hasPartial (subName, subArgs) (SumType superPartials) = case H.lookup subName superPartials of
-  Just superArgsOptions -> any hasArg superArgsOptions
+hasPartial (subName, subVars, subArgs) (SumType superPartials) = case H.lookup subName superPartials of
+  Just superArgsOptions -> any hasArgs superArgsOptions
   Nothing -> False
   where
-    hasArg superArgs | H.keysSet subArgs /= H.keysSet superArgs = False
-    hasArg superArgs = and $ H.elems $ H.intersectionWith hasType subArgs superArgs
+    hasArgs (_, superArgs) | H.keysSet subArgs /= H.keysSet superArgs = False
+    hasArgs (superVars, _) | H.keysSet subVars /= H.keysSet superVars = False
+    hasArgs (superVars, superArgs) = hasAll subArgs superArgs && hasAll subVars superVars
+    hasAll sub sup = and $ H.elems $ H.intersectionWith hasType sub sup
 
 -- Maybe rename to subtypeOf
 hasType :: Type -> Type -> Bool
@@ -105,10 +115,10 @@ intersectTypes (SumType aPartials) (SumType bPartials) = compactType $ SumType p
   where
     partials' = H.intersectionWith intersectArgsOptions (fmap S.toList aPartials) (fmap S.toList bPartials)
     intersectArgsOptions as bs = S.fromList $ catMaybes $ [intersectArgs a b | a <- as, b <- bs]
-    intersectArgs :: H.HashMap ArgName Type -> H.HashMap ArgName Type -> Maybe (H.HashMap ArgName Type)
-    intersectArgs aArgs bArgs = if H.keysSet aArgs == H.keysSet bArgs
-      then  sequence $ H.intersectionWith subIntersect aArgs bArgs
-      else Nothing
+    intersectArgs (aVars, _) (bVars, _) | H.keysSet aVars /= H.keysSet bVars = Nothing
+    intersectArgs (_, aArgs) (_, bArgs) | H.keysSet aArgs /= H.keysSet bArgs = Nothing
+    intersectArgs (aVars, aArgs) (bVars, bArgs) = sequenceT (intersectMap aVars bVars, intersectMap aArgs bArgs)
+    intersectMap a b = sequence $ H.intersectionWith subIntersect a b
     subIntersect aType bType = let joined = intersectTypes aType bType
                                 in if joined == bottomType
                                    then Nothing
@@ -133,4 +143,5 @@ powersetType TopType = TopType
 powersetType (SumType partials) = SumType partials'
   where
     partials' = joinPartialLeafs $ concatMap fromPartialType $ splitPartialLeafs partials
-    fromPartialType (name, args) = map ((name,) . H.fromList) (powerset $ H.toList args)
+    fromArgs args = powerset $ H.toList args
+    fromPartialType (name, vars, args) = [(name, H.fromList v, H.fromList a) | v <- fromArgs vars, a <- fromArgs args]

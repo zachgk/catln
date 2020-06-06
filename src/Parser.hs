@@ -173,17 +173,17 @@ pTypeArg = do
   argName <- identifier
   _ <- symbol "="
   tp <- tidentifier
-  return (argName, SumType $ joinPartialLeafs [(tp, H.empty)])
+  return (argName, SumType $ joinPartialLeafs [(tp, H.empty, H.empty)])
 
 pTypeProduct :: Parser PartialType
 pTypeProduct = do
   name <- tidentifier
   args <- parens (sepBy1 pTypeArg (symbol ","))
-  return (name, H.fromList args)
+  return (name, H.empty, H.fromList args)
 
 pLeafType :: Parser PartialType
 pLeafType = try pTypeProduct
-        <|> ((,H.empty) <$> tidentifier)
+        <|> ((, H.empty, H.empty) <$> tidentifier)
 
 pType :: Parser Type
 pType = SumType . joinPartialLeafs <$> sepBy1 pLeafType (symbol "|")

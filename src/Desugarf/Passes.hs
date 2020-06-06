@@ -27,7 +27,8 @@ classToObjSum prgm@(_, (_, classToTypes)) = mapMetaPrgm aux prgm
     mapType (SumType partials) = SumType partials'
       where
         partials' = H.fromList $ concatMap mapPartial $ H.toList partials
-        mapOpts = S.map (fmap mapType)
+        mapOpt (vars, args) = (fmap mapType vars, fmap mapType args)
+        mapOpts = S.map mapOpt
         mapPartial (name, opts) = case H.lookup name classToTypes of
           Just (_, types) -> map (, mapOpts opts) $ S.toList types
           Nothing -> [(name, mapOpts opts)]

@@ -51,7 +51,7 @@ ubFromScheme (TypeCheckResult _ (SType ub _ _))  = return ub
 ubFromScheme (TypeCheckResE notes) = TypeCheckResE notes
 
 reachesPartial :: TypeEnv s -> PartialType -> ST s (TypeCheckResult Type)
-reachesPartial (_, graph) partial@(partialName, _) = do
+reachesPartial (_, graph) partial@(partialName, _, _) = do
   let typePnts = H.lookupDefault [] partialName graph
   schemes <- mapM fromTypePnts typePnts
   return $ fmap (joinDestTypes . mapMaybe tryArrows) (mapM sequenceT schemes)
@@ -83,6 +83,6 @@ arrowConstrainUbs typeEnv (SumType srcPartials) dest = do
     partialMap'' <- partialMap'
     let (srcPartialList', destByPartial) = unzip $ H.toList partialMap''
     let srcPartials' = joinPartialLeafs srcPartialList'
-    let destByGraph = unionTypes (destByPartial)
+    let destByGraph = unionTypes destByPartial
     dest' <- tryIntersectTypes dest destByGraph "executeConstraint ArrowTo"
     return (SumType srcPartials', dest')

@@ -143,10 +143,11 @@ fromObject prefix env (Object m basis name args) = do
   (m', env1) <- fromMeta env m prefix'
   (args', env2) <- mapMWithFEnvMapWithKey env1 (addObjArg m' prefix') args
   let obj' = Object m' basis name args'
-  (objValue, env3) <- fromMeta env2 (PreTyped $ SumType $ joinPartialLeafs [(name, H.empty)]) ("objValue" ++ name)
+  (objValue, env3) <- fromMeta env2 (PreTyped $ SumType $ joinPartialLeafs [(name, H.empty, H.empty)]) ("objValue" ++ name)
   let env4 = fInsert env3 name objValue
   let env5 = addConstraints env4 [BoundedByObjs BoundAllObjs m']
-  let env6 = addConstraints env5 [BoundedByKnown m' (SumType $ joinPartialLeafs [(name, fmap (const TopType) args)]) | basis /= PatternObj]
+  -- TODO: Use vars for BoundedByKnown with Object parameterization
+  let env6 = addConstraints env5 [BoundedByKnown m' (SumType $ joinPartialLeafs [(name, H.empty, fmap (const TopType) args)]) | basis /= PatternObj]
   return (obj', env6)
 
 -- Add all of the objects first for various expressions that call other top level functions

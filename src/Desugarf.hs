@@ -194,11 +194,12 @@ addTypeDef (TypeDef _ TopType) _ = error "Invalid type def to desugar"
 addTypeDef (TypeDef name (SumType partials)) (objMap, classMap) = (objMap', classMap')
   where
     leafArgConvert partialType = (PreTyped partialType, Nothing)
-    partialToObj (partialName, partialArgs) = Object emptyMeta TypeObj partialName (fmap leafArgConvert partialArgs)
+    -- TODO: Use partialVars in partialToObj for parameterized objects
+    partialToObj (partialName, _, partialArgs) = Object emptyMeta TypeObj partialName (fmap leafArgConvert partialArgs)
     newObjs = map partialToObj $ splitPartialLeafs partials
     additionalObjMap = H.fromList $ map (,[]) newObjs
     objMap' = mergeObjMaps objMap additionalObjMap
-    leafNames = fst <$> splitPartialLeafs partials
+    leafNames = (\(a, _, _) -> a) <$> splitPartialLeafs partials
     additionalClassMap = desClassDefs True $ map (,name) leafNames
     classMap' = mergeClassMaps additionalClassMap classMap
 

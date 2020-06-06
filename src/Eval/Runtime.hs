@@ -31,7 +31,7 @@ bool False = false
 liftIntOp :: TypeName -> (Integer -> Integer -> Integer) -> Op
 liftIntOp name f = (srcType, [(NoGuard, arrow)])
   where
-    srcType = ("operator" ++ name, H.fromList [("l", intType), ("r", intType)])
+    srcType = ("operator" ++ name, H.empty, H.fromList [("l", intType), ("r", intType)])
     arrow = PrimArrow intType (\args -> case (H.lookup "l" args, H.lookup "r" args) of
                            (Just (IntVal l), Just (IntVal r)) -> IntVal $ f l r
                            _ -> error "Invalid intOp signature"
@@ -40,7 +40,7 @@ liftIntOp name f = (srcType, [(NoGuard, arrow)])
 liftCmpOp :: TypeName -> (Integer -> Integer -> Bool) -> Op
 liftCmpOp name f = (srcType, [(NoGuard, arrow)])
   where
-    srcType = ("operator" ++ name, H.fromList [("l", intType), ("r", intType)])
+    srcType = ("operator" ++ name, H.empty, H.fromList [("l", intType), ("r", intType)])
     arrow = PrimArrow boolType (\args -> case (H.lookup "l" args, H.lookup "r" args) of
                            (Just (IntVal l), Just (IntVal r)) -> bool $ f l r
                            _ -> error "Invalid compOp signature"
@@ -49,7 +49,7 @@ liftCmpOp name f = (srcType, [(NoGuard, arrow)])
 rneg :: TypeName -> Op
 rneg name = (srcType, [(NoGuard, arrow)])
   where
-    srcType = ("operator" ++ name, H.singleton "a" intType)
+    srcType = ("operator" ++ name, H.empty, H.singleton "a" intType)
     arrow = PrimArrow intType (\args -> case H.lookup "a" args of
                                   Just (IntVal i) -> IntVal $ -i
                                   _ -> error "Invalid rneg signature"
