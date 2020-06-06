@@ -73,9 +73,12 @@ pCallArg = do
 
 pCall :: Parser PExpr
 pCall = do
-  funName <- (:) <$> letterChar <*> many alphaNumChar
-  argVals <- parens $ sepBy1 pCallArg (symbol ",")
-  return $ RawTupleApply emptyMeta (emptyMeta, RawValue emptyMeta funName) (H.fromList argVals)
+  funName <- identifier
+  maybeArgVals <- optional $ parens $ sepBy1 pCallArg (symbol ",")
+  let baseValue = RawValue emptyMeta funName
+  return $ case maybeArgVals of
+    Just argVals -> RawTupleApply emptyMeta (emptyMeta, baseValue) (H.fromList argVals)
+    Nothing -> baseValue
 
 pCompAnnot :: Parser PCompAnnot
 pCompAnnot = do
@@ -162,7 +165,6 @@ term = try (parens pExpr)
        <|> pStringLiteral
        <|> RawCExpr emptyMeta . CInt <$> integer
        <|> try pCall
-       <|> try (RawValue emptyMeta <$> identifier)
        <|> (RawValue emptyMeta <$> tidentifier)
 
 pExpr :: Parser PExpr
