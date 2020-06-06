@@ -134,7 +134,7 @@ instance Show m => Show (Object m) where
       maybeVarsString :: String
       maybeVarsString = if H.size vars == 0
         then ""
-        else printf "(%s)" (intercalate ", " $ map showVar $ H.toList vars)
+        else printf "<%s>" (intercalate ", " $ map showVar $ H.toList vars)
       showArg (argName, (_, Just argVal)) = printf "%s = %s" argName (show argVal)
       showArg (argName, (argM, Nothing)) = printf "%s %s" (show argM) argName
       maybeArgsString = if H.size args == 0

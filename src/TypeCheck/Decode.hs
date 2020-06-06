@@ -62,15 +62,17 @@ showMatchingConstraints cons matchVar = do
   mapM showCon filterCons
 
 toMeta :: DEnv s -> VarMeta s -> String -> ST s (TypeCheckResult Typed)
-toMeta env m name = do
-  scheme <- descriptor $ getPnt m
+toMeta env (p, PreTyped pt) name = do
+  scheme <- descriptor p
   case scheme of
     TypeCheckResE s -> return $ TypeCheckResE s
     TypeCheckResult notes (SType ub _ _) -> case fromType (compactType ub) of
       Nothing -> do
-        showMatching <- showMatchingConstraints env $ getPnt m
+        showMatching <- showMatchingConstraints env p
         return $ TypeCheckResE (FailInfer name scheme showMatching:notes)
-      Just t -> return $ TypeCheckResult notes (Typed t)
+      Just t -> case pt of
+        TypeVar{} -> return $ TypeCheckResult notes (Typed pt)
+        _ -> return $ TypeCheckResult notes (Typed t)
 
 toExpr :: DEnv s -> VExpr s -> ST s (TypeCheckResult TExpr)
 toExpr env (CExpr m c) = do
