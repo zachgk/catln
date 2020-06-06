@@ -105,6 +105,14 @@ pPatternGuard = fromMaybe NoGuard <$> optional (try pIfGuard
                                               <|> pElseGuard
                                             )
 
+pObjTreeVar :: Parser (TypeVarName, ParseMeta)
+pObjTreeVar = do
+  tp <- try $ optional pType
+  _ <- string "$"
+  name <- lexeme $ (:) <$> upperChar <*> many alphaNumChar
+  let tp' = maybe emptyMeta PreTyped tp
+  return (name, tp')
+
 pObjTreeArg :: Parser (ArgName, PObjArg)
 pObjTreeArg = do
   tp <- try $ optional pType
@@ -118,14 +126,17 @@ pObjTreeArg = do
 pObjTreeArgs :: Parser [(ArgName, PObjArg)]
 pObjTreeArgs = sepBy1 pObjTreeArg (symbol ",")
 
+-- TODO: This should not accept tp at root level
 pObjTree :: ObjectBasis -> Parser PObject
 pObjTree basis = do
   tp <- try $ optional pType
   name <- opIdentifier <|> identifier
+  vars <- optional $ angleBraces $ sepBy1 pObjTreeVar (symbol ",")
   args <- optional $ try $ parens pObjTreeArgs
   let tp' = maybe emptyMeta PreTyped tp
+  let vars' = maybe H.empty H.fromList vars
   let args' = H.fromList $ fromMaybe [] args
-  return $ Object tp' basis name args'
+  return $ Object tp' basis name vars' args'
 
 pPattern :: ObjectBasis -> Parser PPattern
 pPattern basis = do

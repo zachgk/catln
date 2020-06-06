@@ -30,14 +30,14 @@ buildUnionObj objs = do
   let constraints = [unionObjs unionAllObjs objs, unionObjs unionTypeObjs $ filterTypes objs, PowersetTo unionAllObjs unionAllObjsPs, PowersetTo unionTypeObjs unionTypeObjsPs]
   return ((unionAllObjsPs, unionTypeObjsPs), constraints)
                     where
-                      unionObjs pnt os = UnionOf pnt $ map (\(Object m _ _ _) -> m) os
-                      filterTypes = filter (\(Object _ basis _ _) -> basis == TypeObj)
+                      unionObjs pnt os = UnionOf pnt $ map (\(Object m _ _ _ _) -> m) os
+                      filterTypes = filter (\(Object _ basis _ _ _) -> basis == TypeObj)
 
 buildTypeGraph :: VObjectMap s -> TypeGraph s
 buildTypeGraph = foldr addArrows H.empty
   where
     addArrows (obj, arrows) acc = foldr (addArrow obj) acc arrows
-    addArrow (Object objM _ name _) (Arrow arrM _ _ _) graph = graph'
+    addArrow (Object objM _ name _ _) (Arrow arrM _ _ _) graph = graph'
       where graph' = H.insertWith (++) name [(objM, arrM)] graph
 
 buildTypeEnv :: VObjectMap s -> ST s (TypeEnv s, [Constraint s])

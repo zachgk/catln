@@ -41,7 +41,7 @@ mapMetaObjArg :: (a -> b) -> ObjArg a -> ObjArg b
 mapMetaObjArg f (m, maybeObj) = (f m, fmap (mapMeta f) maybeObj)
 
 instance MapMeta Object where
-  mapMeta f (Object m basis name args) = Object (f m) basis name (fmap (mapMetaObjArg f) args)
+  mapMeta f (Object m basis name vars args) = Object (f m) basis name (fmap f vars) (fmap (mapMetaObjArg f) args)
 
 instance MapMeta Arrow where
   mapMeta f (Arrow m annots guard maybeExpr) = Arrow (f m) (map (mapMetaCompAnnot f) annots) (mapMetaGuard f guard) (fmap (mapMeta f) maybeExpr)

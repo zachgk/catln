@@ -72,10 +72,11 @@ showObjArg (m, maybeObj) = do
     Nothing -> return (m', Nothing)
 
 showObj :: VObject s -> ST s SObject
-showObj (Object m basis name args) = do
+showObj (Object m basis name vars args) = do
   m' <- showM m
+  vars' <- mapM showM vars
   args' <- mapM showObjArg args
-  return $ Object m' basis name args'
+  return $ Object m' basis name vars' args'
 
 showObjArrows :: (VObject s, [VArrow s]) -> ST s (SObject, [SArrow])
 showObjArrows (obj, arrows) = do

@@ -54,6 +54,9 @@ float = lexeme L.float
 parens :: Parser a -> Parser a
 parens = between (symbol "(") (symbol ")")
 
+angleBraces :: Parser a -> Parser a
+angleBraces = between (symbol "<") (symbol ">")
+
 identifier :: Parser String
 identifier = (lexeme . try) (p >>= check)
   where
