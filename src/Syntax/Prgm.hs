@@ -39,8 +39,8 @@ data Pattern m e = Pattern (Object m) (Guard e)
 
 data RawExpr m
   = RawCExpr m Constant
-  | RawValue m Name
-  | RawTupleApply m (m, RawExpr m) (H.HashMap Name (RawExpr m))
+  | RawValue m TypeName
+  | RawTupleApply m (m, RawExpr m) (H.HashMap ArgName (RawExpr m))
   | RawIfThenElse m (RawExpr m) (RawExpr m) (RawExpr m)
   | RawMatch m (RawExpr m) (H.HashMap (Pattern m (RawExpr m)) (RawExpr m))
   | RawCase m (RawExpr m) [(Pattern m (RawExpr m), RawExpr m)]
@@ -48,13 +48,13 @@ data RawExpr m
 
 data Expr m
   = CExpr m Constant
-  | Value m Name
-  | Arg m Name
-  | TupleApply m (m, Expr m) (H.HashMap Name (Expr m))
+  | Value m TypeName
+  | Arg m ArgName
+  | TupleApply m (m, Expr m) (H.HashMap ArgName (Expr m))
   deriving (Eq, Ord, Generic, Hashable)
 
 -- Compiler Annotation
-data CompAnnot e = CompAnnot Name (H.HashMap Name e)
+data CompAnnot e = CompAnnot TypeName (H.HashMap ArgName e)
   deriving (Eq, Ord, Generic, Hashable)
 
 data Guard e
@@ -79,7 +79,7 @@ data DeclLHS m e = DeclLHS m (Pattern m e)
 data RawDecl m = RawDecl (DeclLHS m (RawExpr m)) [RawDeclSubStatement m] (Maybe (RawExpr m))
   deriving (Eq, Ord, Show)
 
-data TypeDef m = TypeDef Name Type
+data TypeDef m = TypeDef TypeName Type
   deriving (Eq, Ord, Show)
 
 type RawClassDef = (TypeName, ClassName)
@@ -96,7 +96,7 @@ type RawPrgm m = ([FileImport], [RawStatement m]) -- TODO: Include [Export]
 type ObjArg m = (m, Maybe (Object m))
 data ObjectBasis = FunctionObj | TypeObj | PatternObj
   deriving (Eq, Ord, Show, Generic, Hashable)
-data Object m = Object m ObjectBasis Name (H.HashMap Name (ObjArg m))
+data Object m = Object m ObjectBasis TypeName (H.HashMap ArgName (ObjArg m))
   deriving (Eq, Ord, Generic, Hashable)
 
 data Arrow m = Arrow m [CompAnnot (Expr m)] (Guard (Expr m)) (Maybe (Expr m)) -- m is result metadata
@@ -151,7 +151,7 @@ getExprMeta expr = case expr of
   Arg m _   -> m
   TupleApply m _ _ -> m
 
-type ArgMetaMap m = H.HashMap Name m
+type ArgMetaMap m = H.HashMap ArgName m
 formArgMetaMap :: Object m -> ArgMetaMap m
 formArgMetaMap (Object m _ name args) | H.null args = H.singleton name m
 formArgMetaMap (Object _ _ _ args) = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg args

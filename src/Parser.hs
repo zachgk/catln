@@ -102,7 +102,7 @@ pPatternGuard = fromMaybe NoGuard <$> optional (try pIfGuard
                                               <|> pElseGuard
                                             )
 
-pObjTreeArg :: Parser (Name, PObjArg)
+pObjTreeArg :: Parser (ArgName, PObjArg)
 pObjTreeArg = do
   tp <- try $ optional pType
   val <- identifier
@@ -112,7 +112,7 @@ pObjTreeArg = do
     pObjTree PatternObj
   return (val, (tp', subTree))
 
-pObjTreeArgs :: Parser [(Name, PObjArg)]
+pObjTreeArgs :: Parser [(ArgName, PObjArg)]
 pObjTreeArgs = sepBy1 pObjTreeArg (symbol ",")
 
 pObjTree :: ObjectBasis -> Parser PObject

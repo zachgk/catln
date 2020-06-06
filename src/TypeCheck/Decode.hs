@@ -117,7 +117,7 @@ toArrow env (Arrow m annots aguard maybeExpr) = do
       return $ (\(m'', annots'', aguard'', expr'') -> Arrow m'' annots'' aguard'' (Just expr'')) <$> sequenceT (m', annots', aguard', expr')
     Nothing -> return $ (\(annots'', m'', aguard'') -> Arrow m'' annots'' aguard'' Nothing) <$> sequenceT (annots', m', aguard')
 
-toObjArg :: DEnv s -> String -> (Name, VObjArg s) -> ST s (TypeCheckResult (Name, TObjArg))
+toObjArg :: DEnv s -> String -> (TypeName, VObjArg s) -> ST s (TypeCheckResult (TypeName, TObjArg))
 toObjArg env prefix (name, (m, maybeObj)) = do
   let prefix' = prefix ++ "_" ++ name
   m' <- toMeta env m prefix'

@@ -28,7 +28,7 @@ bool :: Bool -> Val
 bool True = true
 bool False = false
 
-liftIntOp :: Name -> (Integer -> Integer -> Integer) -> Op
+liftIntOp :: TypeName -> (Integer -> Integer -> Integer) -> Op
 liftIntOp name f = (srcType, [(NoGuard, arrow)])
   where
     srcType = ("operator" ++ name, H.fromList [("l", intType), ("r", intType)])
@@ -37,7 +37,7 @@ liftIntOp name f = (srcType, [(NoGuard, arrow)])
                            _ -> error "Invalid intOp signature"
                            )
 
-liftCmpOp :: Name -> (Integer -> Integer -> Bool) -> Op
+liftCmpOp :: TypeName -> (Integer -> Integer -> Bool) -> Op
 liftCmpOp name f = (srcType, [(NoGuard, arrow)])
   where
     srcType = ("operator" ++ name, H.fromList [("l", intType), ("r", intType)])
@@ -46,7 +46,7 @@ liftCmpOp name f = (srcType, [(NoGuard, arrow)])
                            _ -> error "Invalid compOp signature"
                            )
 
-rneg :: Name -> Op
+rneg :: TypeName -> Op
 rneg name = (srcType, [(NoGuard, arrow)])
   where
     srcType = ("operator" ++ name, H.singleton "a" intType)

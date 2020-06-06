@@ -33,13 +33,13 @@ splitDeclSubStatements = aux ([], [])
     aux (decls, annots) (RawDeclSubStatementDecl decl : subSt) = aux (decl:decls, annots) subSt
     aux (decls, annots) (RawDeclSubStatementAnnot annot : subSt) = aux (decls, annot:annots) subSt
 
-scopeSubDeclFunNamesInS :: Name -> S.HashSet Name -> Name -> Name
+scopeSubDeclFunNamesInS :: TypeName -> S.HashSet TypeName -> TypeName -> TypeName
 scopeSubDeclFunNamesInS prefix replaceNames name = name'
   where
     addPrefix n = prefix ++ "." ++ n
     name' = if S.member name replaceNames then addPrefix name else name
 
-scopeSubDeclFunNamesInExpr :: Name -> S.HashSet Name -> PSExpr -> PSExpr
+scopeSubDeclFunNamesInExpr :: TypeName -> S.HashSet TypeName -> PSExpr -> PSExpr
 scopeSubDeclFunNamesInExpr _ _ e@PSCExpr{} = e
 scopeSubDeclFunNamesInExpr prefix replaceNames (PSValue m name) = PSValue m $ scopeSubDeclFunNamesInS prefix replaceNames name
 scopeSubDeclFunNamesInExpr prefix replaceNames (PSTupleApply m (bm, bExpr) args) = PSTupleApply m (bm, bExpr') args'
@@ -47,7 +47,7 @@ scopeSubDeclFunNamesInExpr prefix replaceNames (PSTupleApply m (bm, bExpr) args)
     bExpr' = scopeSubDeclFunNamesInExpr prefix replaceNames bExpr
     args' = fmap (scopeSubDeclFunNamesInExpr prefix replaceNames) args
 
-scopeSubDeclFunNamesInMeta :: Name -> S.HashSet Name -> ParseMeta -> ParseMeta
+scopeSubDeclFunNamesInMeta :: TypeName -> S.HashSet TypeName -> ParseMeta -> ParseMeta
 scopeSubDeclFunNamesInMeta prefix replaceNames (PreTyped (SumType partials)) = PreTyped $ SumType partials'
   where
     scopeS = scopeSubDeclFunNamesInS prefix replaceNames
@@ -55,7 +55,7 @@ scopeSubDeclFunNamesInMeta prefix replaceNames (PreTyped (SumType partials)) = P
 scopeSubDeclFunNamesInMeta _ _ m@(PreTyped TopType) = m
 
 -- Renames sub functions by applying the parent names as a prefix to avoid name collisions
-scopeSubDeclFunNames :: Name -> [PSemiDecl] -> Maybe PSExpr -> [PSCompAnnot] -> ParseMeta -> ParseMeta -> ([PSemiDecl], Maybe PSExpr, [PSCompAnnot], ParseMeta, ParseMeta)
+scopeSubDeclFunNames :: TypeName -> [PSemiDecl] -> Maybe PSExpr -> [PSCompAnnot] -> ParseMeta -> ParseMeta -> ([PSemiDecl], Maybe PSExpr, [PSCompAnnot], ParseMeta, ParseMeta)
 scopeSubDeclFunNames prefix decls maybeExpr annots objM arrM = (decls', expr', annots', objM', arrM')
   where
     declNames = S.fromList $ map (\(PSemiDecl (DeclLHS _ (Pattern (Object _ _ name _) _)) _ _) -> name) decls
@@ -67,12 +67,12 @@ scopeSubDeclFunNames prefix decls maybeExpr annots objM arrM = (decls', expr', a
     expr' = fmap (scopeSubDeclFunNamesInExpr prefix declNames) maybeExpr
     annots' = map (\(CompAnnot n ca) -> CompAnnot n (fmap (scopeSubDeclFunNamesInExpr prefix declNames) ca)) annots
 
-currySubFunctionSignature :: H.HashMap Name PObjArg -> PSemiDecl -> PSemiDecl
+currySubFunctionSignature :: H.HashMap ArgName PObjArg -> PSemiDecl -> PSemiDecl
 currySubFunctionSignature parentArgs (PSemiDecl (DeclLHS arrM (Pattern (Object objM basis name args) guard)) annot expr) = PSemiDecl (DeclLHS arrM (Pattern (Object objM basis name args') guard)) annot expr
   where args' = H.union args parentArgs
 
 
-currySubFunctionsUpdateExpr :: S.HashSet Name -> H.HashMap Name PObjArg -> PSExpr -> PSExpr
+currySubFunctionsUpdateExpr :: S.HashSet TypeName -> H.HashMap ArgName PObjArg -> PSExpr -> PSExpr
 currySubFunctionsUpdateExpr _ _ c@PSCExpr{} = c
 currySubFunctionsUpdateExpr _ parentArgs v@PSValue{} | H.null parentArgs = v
 currySubFunctionsUpdateExpr toUpdate parentArgs v@(PSValue _ vn) = if S.member vn toUpdate
@@ -83,7 +83,7 @@ currySubFunctionsUpdateExpr toUpdate parentArgs (PSTupleApply tm (tbm, tbe) tArg
     tbe' = currySubFunctionsUpdateExpr toUpdate parentArgs tbe
     tArgs' = fmap (currySubFunctionsUpdateExpr toUpdate parentArgs) tArgs
 
-currySubFunctions :: H.HashMap Name PObjArg -> [PSemiDecl] -> Maybe PSExpr -> [PSCompAnnot] -> ([PSemiDecl], Maybe PSExpr, [PSCompAnnot])
+currySubFunctions :: H.HashMap ArgName PObjArg -> [PSemiDecl] -> Maybe PSExpr -> [PSCompAnnot] -> ([PSemiDecl], Maybe PSExpr, [PSCompAnnot])
 currySubFunctions parentArgs decls expr annots = (decls', expr', annots')
   where
     toUpdate = S.fromList $ map (\(PSemiDecl (DeclLHS _ (Pattern (Object _ _ declName _) _)) _ _) -> declName) decls

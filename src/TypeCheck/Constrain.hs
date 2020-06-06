@@ -55,7 +55,7 @@ equalizeSchemes inSchemes d = do
 
 
 
-getSchemeProp :: Scheme -> Name -> Scheme
+getSchemeProp :: Scheme -> ArgName -> Scheme
 getSchemeProp inScheme propName = do
   (SType ub lb desc) <- inScheme
   return $ SType (getTypeProp ub ) (getTypeProp lb) desc
@@ -68,7 +68,7 @@ getSchemeProp inScheme propName = do
     getPartials :: PartialLeafs -> Type
     getPartials partials = unionTypes $ mapMaybe (H.lookup propName) $ concatMap S.toList (H.elems partials)
 
-setSchemeProp :: Scheme -> Name -> Scheme -> Scheme
+setSchemeProp :: Scheme -> ArgName -> Scheme -> Scheme
 setSchemeProp scheme propName pscheme = do
   (SType ub lb desc) <- scheme
   (SType pub _ _) <- pscheme
@@ -86,7 +86,7 @@ setSchemeProp scheme propName pscheme = do
       Nothing -> Nothing
     setTypeLbProp tp = tp -- TODO: Should set with union?
 
-addArgsToType :: Type -> S.HashSet Name -> Maybe Type
+addArgsToType :: Type -> S.HashSet ArgName -> Maybe Type
 addArgsToType TopType _ = Nothing
 addArgsToType (SumType partials) newArgs = Just $ SumType partials'
   where

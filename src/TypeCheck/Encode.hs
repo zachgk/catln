@@ -126,7 +126,7 @@ fromObjectMap env1 (obj, arrows) = do
   (arrows', env2) <- mapMWithFEnv env1 (fromArrow obj) arrows
   return ((obj, arrows'), env2)
 
-addObjArg :: VarMeta s -> String -> FEnv s -> (Name, PObjArg) -> ST s ((Name, VObjArg s), FEnv s)
+addObjArg :: VarMeta s -> String -> FEnv s -> (TypeName, PObjArg) -> ST s ((TypeName, VObjArg s), FEnv s)
 addObjArg objM prefix env (n, (m, maybeSubObj)) = do
   let prefix' = prefix ++ "." ++ n
   (m', env2) <- fromMeta env m prefix'

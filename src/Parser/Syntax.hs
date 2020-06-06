@@ -28,7 +28,7 @@ type PDecl = RawDecl ParseMeta
 type PObjectMap = ObjectMap ParseMeta
 type PTypeDef = TypeDef ParseMeta
 type PStatement = RawStatement ParseMeta
-type PArgMetaMap = H.HashMap Name ParseMeta
+type PArgMetaMap = H.HashMap ArgName ParseMeta
 type PObjArg = ObjArg ParseMeta
 type PObject = Object ParseMeta
 type PArrow = Arrow ParseMeta
@@ -39,8 +39,8 @@ type PReplRes = ReplRes ParseMeta
 
 data PSemiExpr m
   = PSCExpr m Constant
-  | PSValue m Name
-  | PSTupleApply m (m, PSemiExpr m) (H.HashMap Name (PSemiExpr m))
+  | PSValue m TypeName
+  | PSTupleApply m (m, PSemiExpr m) (H.HashMap ArgName (PSemiExpr m))
   deriving (Eq, Ord, Show)
 type PSExpr = PSemiExpr ParseMeta
 

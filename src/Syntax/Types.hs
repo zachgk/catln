@@ -23,11 +23,12 @@ import           GHC.Generics          (Generic)
 
 type Name = String
 
+type ArgName = Name
 type TypeName = Name
 type ClassName = Name
 
-type PartialType = (TypeName, H.HashMap TypeName Type)
-type PartialLeafs = (H.HashMap TypeName (S.HashSet (H.HashMap TypeName Type)))
+type PartialType = (TypeName, H.HashMap ArgName Type)
+type PartialLeafs = (H.HashMap TypeName (S.HashSet (H.HashMap ArgName Type)))
 data Type
   = SumType PartialLeafs
   | TopType
@@ -104,7 +105,7 @@ intersectTypes (SumType aPartials) (SumType bPartials) = compactType $ SumType p
   where
     partials' = H.intersectionWith intersectArgsOptions (fmap S.toList aPartials) (fmap S.toList bPartials)
     intersectArgsOptions as bs = S.fromList $ catMaybes $ [intersectArgs a b | a <- as, b <- bs]
-    intersectArgs :: H.HashMap TypeName Type -> H.HashMap TypeName Type -> Maybe (H.HashMap TypeName Type)
+    intersectArgs :: H.HashMap ArgName Type -> H.HashMap ArgName Type -> Maybe (H.HashMap ArgName Type)
     intersectArgs aArgs bArgs = if H.keysSet aArgs == H.keysSet bArgs
       then  sequence $ H.intersectionWith subIntersect aArgs bArgs
       else Nothing

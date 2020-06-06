@@ -52,7 +52,7 @@ data Constraint s
   | BoundedByKnown (Pnt s) Type
   | BoundedByObjs BoundObjs (Pnt s)
   | ArrowTo (Pnt s) (Pnt s) -- ArrowTo src dest
-  | PropEq (Pnt s, Name) (Pnt s)
+  | PropEq (Pnt s, ArgName) (Pnt s)
   | AddArgs (Pnt s, S.HashSet String) (Pnt s)
   | PowersetTo (Pnt s) (Pnt s)
   | UnionOf (Pnt s) [Pnt s]
@@ -65,7 +65,7 @@ data SConstraint
   | SBoundedByKnown Scheme Type
   | SBoundedByObjs BoundObjs Scheme
   | SArrowTo Scheme Scheme
-  | SPropEq (Scheme, Name) Scheme
+  | SPropEq (Scheme, ArgName) Scheme
   | SAddArgs (Scheme, S.HashSet String) Scheme
   | SPowersetTo Scheme Scheme
   | SUnionOf Scheme [Scheme]
@@ -141,7 +141,7 @@ type TReplRes = ReplRes TypedMeta
 
 -- implicit graph
 type UnionObj s = (Pnt s, Pnt s) -- a union of all TypeObj for argument inference, union of all Object types for function limiting
-type TypeGraph s = H.HashMap Name [(Pnt s, Pnt s)] -- H.HashMap (Root tuple name for filtering) [(match type), (if matching then can implicit to)]
+type TypeGraph s = H.HashMap TypeName [(Pnt s, Pnt s)] -- H.HashMap (Root tuple name for filtering) [(match type), (if matching then can implicit to)]
 type TypeEnv s = (UnionObj s, TypeGraph s)
 
 instance Show TypeCheckError where
