@@ -16,7 +16,6 @@ import           Control.Monad.ST
 import           Data.Functor
 import           Data.Tuple.Sequence
 import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet          as S
 import           Data.UnionFind.ST
 
 import           Syntax.Types
@@ -25,15 +24,14 @@ import           Syntax
 import           TypeCheck.Common
 import           TypeCheck.Show (showCon)
 
-fromRawPartialType :: RawPartialType -> Maybe [LeafType]
+fromRawPartialType :: RawPartialType -> Maybe RawPartialType
 fromRawPartialType (name, args) = case traverse fromRawType args of
-  Just args' -> Just $ map (LeafType name) $ traverse extractLeafs args'
+  Just args' -> Just (name, args')
   Nothing -> Nothing
-  where extractLeafs (SumType tp) = S.toList tp
 
-fromRawType :: RawType -> Maybe Type
+fromRawType :: RawType -> Maybe RawType
 fromRawType RawTopType = Nothing
-fromRawType (RawSumType partials) = fmap (SumType . S.fromList . concat) $ traverse fromRawPartialType $ splitPartialLeafs partials
+fromRawType (RawSumType partials) = fmap (RawSumType . joinPartialLeafs) $ traverse fromRawPartialType $ splitPartialLeafs partials
 
 matchingConstraintHelper :: Pnt s -> Pnt s -> Pnt s -> ST s Bool
 matchingConstraintHelper p p2 p3 = do
@@ -89,7 +87,7 @@ toExpr env (TupleApply m (baseM, baseExpr) args) = do
   baseExpr' <- toExpr env baseExpr
   args' <- mapM (toExpr env) args
   case m' of -- check for errors
-    TypeCheckResult notes tp@(Typed (SumType sumType)) | all (\(LeafType _ leafArgs) -> not (H.keysSet args' `isSubsetOf` H.keysSet leafArgs)) (S.toList sumType) -> do
+    TypeCheckResult notes tp@(Typed (RawSumType sumType)) | all (\(_, leafArgs) -> not (H.keysSet args' `isSubsetOf` H.keysSet leafArgs)) (splitPartialLeafs sumType) -> do
                                         matchingConstraints <- showMatchingConstraints env m
                                         let sArgs = sequence args'
                                         return $ TypeCheckResE (TupleMismatch baseM' baseExpr' tp sArgs matchingConstraints:notes)

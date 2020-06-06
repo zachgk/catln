@@ -79,7 +79,6 @@ data DeclLHS m e = DeclLHS m (Pattern m e)
 data RawDecl m = RawDecl (DeclLHS m (RawExpr m)) [RawDeclSubStatement m] (Maybe (RawExpr m))
   deriving (Eq, Ord, Show)
 
--- TODO: Convert to RawTypeDef Name ObjTree
 data RawTypeDef m = RawTypeDef Name RawType
   deriving (Eq, Ord, Show)
 

@@ -33,12 +33,6 @@ data RawType
   | RawTopType
   deriving (Eq, Ord, Generic, Hashable)
 
-data LeafType = LeafType String (H.HashMap String LeafType)
-  deriving (Eq, Ord, Generic, Hashable)
-
-newtype Type = SumType (S.HashSet LeafType)
-  deriving (Eq, Ord, Generic, Hashable)
-
 type Sealed = Bool -- whether the typeclass can be extended or not
 type ClassMap = (H.HashMap TypeName (S.HashSet ClassName), H.HashMap ClassName (Sealed, S.HashSet TypeName))
 
@@ -51,20 +45,6 @@ instance Show RawType where
       partials' = map showPartial $ splitPartialLeafs partials
   show RawTopType = "RawTopType"
 
-instance Show LeafType where
-  show (LeafType name args) = if null args then name
-    else name ++ "(" ++ args' ++ ")"
-    where
-      args' = intercalate ", " (map prettyArg $ H.toList args)
-      prettyArg (argName, argType) = show argType ++ " " ++ argName
-
-instance Show Type where
-  show (SumType leafs) | S.null leafs = "∅"
-  show (SumType leafs) = if S.size leafs == 1
-    then sumString
-    else "(" ++ sumString ++ ")"
-    where sumString = intercalate " | " (map show $ S.toList leafs)
-
 
 rintLeaf, rfloatLeaf, rstrLeaf :: RawPartialType
 rintLeaf = ("Integer", H.empty)
@@ -76,17 +56,6 @@ rintType = RawSumType $ joinPartialLeafs [rintLeaf]
 rfloatType = RawSumType $ joinPartialLeafs [rfloatLeaf]
 rboolType = RawSumType $ joinPartialLeafs [("True", H.empty), ("False", H.empty)]
 rstrType = RawSumType $ joinPartialLeafs [rstrLeaf]
-
-intLeaf, floatLeaf, strLeaf :: LeafType
-intLeaf = LeafType "Integer" H.empty
-floatLeaf = LeafType "Float" H.empty
-strLeaf = LeafType "String" H.empty
-
-intType, floatType, boolType, strType :: Type
-intType = SumType $ S.singleton intLeaf
-floatType = SumType $ S.singleton floatLeaf
-boolType = SumType $ S.fromList [LeafType "True" H.empty, LeafType "False" H.empty]
-strType = SumType $ S.singleton strLeaf
 
 rawBottomType :: RawType
 rawBottomType = RawSumType H.empty
@@ -112,10 +81,6 @@ hasRawType :: RawType -> RawType -> Bool
 hasRawType _ RawTopType = True
 hasRawType RawTopType t = t == RawTopType
 hasRawType (RawSumType subPartials) superType = all (`hasRawPartial` superType) $ splitPartialLeafs subPartials
-
--- Maybe rename to subtypeOf
-hasType :: Type -> Type -> Bool
-hasType (SumType subLeafs) (SumType superLeafs) = all (`elem` superLeafs) subLeafs
 
 -- TODO: This should combine overlapping partials
 compactRawType :: RawType -> RawType
