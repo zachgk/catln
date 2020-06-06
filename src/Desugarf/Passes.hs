@@ -22,11 +22,12 @@ import           MapMeta
 classToObjSum :: DesPrgm -> DesPrgm
 classToObjSum prgm@(_, (_, classToTypes)) = mapMetaPrgm aux prgm
   where
-    aux t@(PreTyped TopType) = t
-    aux (PreTyped (SumType partials)) = PreTyped $ SumType partials'
+    aux (PreTyped t) = PreTyped $ mapType t
+    mapType TopType = TopType
+    mapType (SumType partials) = SumType partials'
       where
         partials' = H.fromList $ concatMap mapPartial $ H.toList partials
-        -- TODO mapPartial where args can be classes
-        mapPartial partial@(name, opts) = case H.lookup name classToTypes of
-          Just (_, types) -> map (,opts) $ S.toList types
-          Nothing -> [partial]
+        mapOpts = S.map (fmap mapType)
+        mapPartial (name, opts) = case H.lookup name classToTypes of
+          Just (_, types) -> map (, mapOpts opts) $ S.toList types
+          Nothing -> [(name, mapOpts opts)]
