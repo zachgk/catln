@@ -130,6 +130,7 @@ hasRawPartial (subName, subArgs) (RawSumType _ superPartials) = case H.lookup su
   Just superArgsOptions -> any hasArg superArgsOptions
   Nothing -> False
   where
+    hasArg superArgs | H.keysSet subArgs /= H.keysSet superArgs = False
     hasArg superArgs = and $ H.elems $ H.intersectionWith hasRawType subArgs superArgs
 
 -- Maybe rename to subtypeOf
