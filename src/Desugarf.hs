@@ -48,11 +48,11 @@ scopeSubDeclFunNamesInExpr prefix replaceNames (PSTupleApply m (bm, bExpr) args)
     args' = fmap (scopeSubDeclFunNamesInExpr prefix replaceNames) args
 
 scopeSubDeclFunNamesInMeta :: Name -> S.HashSet Name -> ParseMeta -> ParseMeta
-scopeSubDeclFunNamesInMeta prefix replaceNames (PreTyped (RawSumType partials)) = PreTyped $ RawSumType partials'
+scopeSubDeclFunNamesInMeta prefix replaceNames (PreTyped (SumType partials)) = PreTyped $ SumType partials'
   where
     scopeS = scopeSubDeclFunNamesInS prefix replaceNames
     partials' = H.fromList $ map (first scopeS) $ H.toList partials
-scopeSubDeclFunNamesInMeta _ _ m@(PreTyped RawTopType) = m
+scopeSubDeclFunNamesInMeta _ _ m@(PreTyped TopType) = m
 
 -- Renames sub functions by applying the parent names as a prefix to avoid name collisions
 scopeSubDeclFunNames :: Name -> [PSemiDecl] -> Maybe PSExpr -> [PSCompAnnot] -> ParseMeta -> ParseMeta -> ([PSemiDecl], Maybe PSExpr, [PSCompAnnot], ParseMeta, ParseMeta)
@@ -189,9 +189,9 @@ unionsWith f = foldl (H.unionWith f) H.empty
 desDecls :: [PDecl] -> PObjectMap
 desDecls decls = unionsWith (++) $ map desDecl decls
 
-addTypeDef :: PRawTypeDef -> (PObjectMap, ClassMap) -> (PObjectMap, ClassMap)
-addTypeDef (RawTypeDef _ RawTopType) _ = error "Invalid type def to desugar"
-addTypeDef (RawTypeDef name (RawSumType partials)) (objMap, classMap) = (objMap', classMap')
+addTypeDef :: PTypeDef -> (PObjectMap, ClassMap) -> (PObjectMap, ClassMap)
+addTypeDef (TypeDef _ TopType) _ = error "Invalid type def to desugar"
+addTypeDef (TypeDef name (SumType partials)) (objMap, classMap) = (objMap', classMap')
   where
     leafArgConvert partialType = (PreTyped partialType, Nothing)
     partialToObj (partialName, partialArgs) = Object emptyMeta TypeObj partialName (fmap leafArgConvert partialArgs)
@@ -202,7 +202,7 @@ addTypeDef (RawTypeDef name (RawSumType partials)) (objMap, classMap) = (objMap'
     additionalClassMap = desClassDefs True $ map (,name) leafNames
     classMap' = mergeClassMaps additionalClassMap classMap
 
-desTypeDefs :: [PRawTypeDef] -> (PObjectMap, ClassMap)
+desTypeDefs :: [PTypeDef] -> (PObjectMap, ClassMap)
 desTypeDefs = foldr addTypeDef empty
   where empty = (H.empty, (H.empty, H.empty))
 
@@ -227,7 +227,7 @@ desStatements statements = (objMap, classMap)
   where
     splitStatements statement = case statement of
           RawDeclStatement decl -> ([decl], [], [])
-          RawTypeDefStatement typedef -> ([], [typedef], [])
+          TypeDefStatement typedef -> ([], [typedef], [])
           RawClassDefStatement classdef -> ([], [], [classdef])
     (decls, types, classes) = (\(a, b, c) -> (concat a, concat b, concat c)) $ unzip3 $ map splitStatements statements
     declObjMap = desDecls decls

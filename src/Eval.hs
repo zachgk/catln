@@ -93,18 +93,18 @@ evalTree env st arrArgs val (ResArrowTupleApply base args) = do
 evalTree env st arrArgs val (ResArrowSingle r) = eval env (("ResArrowSingle: " ++ show r):st) arrArgs val r
 evalTree _ _ _ val ResArrowID = return val
 
-evalBuildPrgm :: RawPartialType -> RawType -> EPrgm -> CRes (ResArrowTree EPrim, ResExEnv EPrim)
+evalBuildPrgm :: PartialType -> Type -> EPrgm -> CRes (ResArrowTree EPrim, ResExEnv EPrim)
 evalBuildPrgm = buildPrgm primEnv
 
 evalBuildMain :: EPrgm -> CRes (ResArrowTree EPrim, ResExEnv EPrim)
-evalBuildMain = evalBuildPrgm main rintType
+evalBuildMain = evalBuildPrgm main intType
   where main = ("main", H.empty)
 
-evalPrgm :: RawPartialType -> RawType -> EPrgm -> CRes Val
+evalPrgm :: PartialType -> Type -> EPrgm -> CRes Val
 evalPrgm src@(srcName, _) dest prgm = do
   (resArrowTree, exEnv) <- evalBuildPrgm src dest prgm
   evalTree exEnv [] H.empty (TupleVal srcName H.empty) resArrowTree
 
 evalMain :: EPrgm -> CRes Val
-evalMain = evalPrgm main rintType
+evalMain = evalPrgm main intType
   where main = ("main", H.empty)

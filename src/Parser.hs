@@ -168,25 +168,25 @@ term = try (parens pExpr)
 pExpr :: Parser PExpr
 pExpr = makeExprParser term ops
 
-pTypeArg :: Parser (String, RawType)
+pTypeArg :: Parser (String, Type)
 pTypeArg = do
   argName <- identifier
   _ <- symbol "="
   tp <- tidentifier
-  return (argName, RawSumType $ joinPartialLeafs [(tp, H.empty)])
+  return (argName, SumType $ joinPartialLeafs [(tp, H.empty)])
 
-pTypeProduct :: Parser RawPartialType
+pTypeProduct :: Parser PartialType
 pTypeProduct = do
   name <- tidentifier
   args <- parens (sepBy1 pTypeArg (symbol ","))
   return (name, H.fromList args)
 
-pLeafType :: Parser RawPartialType
+pLeafType :: Parser PartialType
 pLeafType = try pTypeProduct
         <|> ((,H.empty) <$> tidentifier)
 
-pType :: Parser RawType
-pType = RawSumType . joinPartialLeafs <$> sepBy1 pLeafType (symbol "|")
+pType :: Parser Type
+pType = SumType . joinPartialLeafs <$> sepBy1 pLeafType (symbol "|")
 
 pIfGuard :: Parser PGuard
 pIfGuard = do
@@ -202,7 +202,7 @@ pArrowRes :: Parser ParseMeta
 pArrowRes = do
   _ <- symbol "->"
   tp <- pLeafType
-  return $ PreTyped $ RawSumType $ joinPartialLeafs [tp]
+  return $ PreTyped $ SumType $ joinPartialLeafs [tp]
 
 pDeclLHS :: Parser PDeclLHS
 pDeclLHS = do
@@ -259,7 +259,7 @@ pTypeDefStatement = do
   _ <- symbol "data"
   name <- tidentifier
   _ <- symbol "="
-  RawTypeDefStatement . RawTypeDef name <$> pType
+  TypeDefStatement . TypeDef name <$> pType
 
 pClassDefStatement :: Parser PStatement
 pClassDefStatement = do

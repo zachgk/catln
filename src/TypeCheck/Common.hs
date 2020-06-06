@@ -33,7 +33,7 @@ data TypeCheckError
   | TupleMismatch (TypeCheckResult TypedMeta) (TypeCheckResult TExpr) Typed (TypeCheckResult (H.HashMap String TExpr)) [SConstraint]
   deriving (Eq, Ord, Generic, Hashable)
 
-data SType = SType RawType RawType String -- SType upper lower description
+data SType = SType Type Type String -- SType upper lower description
   deriving (Eq, Ord, Generic, Hashable)
 type Scheme = TypeCheckResult SType
 
@@ -46,10 +46,10 @@ data BoundObjs = BoundAllObjs | BoundTypeObjs
   deriving (Eq, Ord, Show, Generic, Hashable)
 
 data Constraint s
-  = EqualsKnown (Pnt s) RawType
+  = EqualsKnown (Pnt s) Type
   | EqPoints (Pnt s) (Pnt s)
   | BoundedBy (Pnt s) (Pnt s)
-  | BoundedByKnown (Pnt s) RawType
+  | BoundedByKnown (Pnt s) Type
   | BoundedByObjs BoundObjs (Pnt s)
   | ArrowTo (Pnt s) (Pnt s) -- ArrowTo src dest
   | PropEq (Pnt s, Name) (Pnt s)
@@ -59,10 +59,10 @@ data Constraint s
   deriving (Eq)
 
 data SConstraint
-  = SEqualsKnown Scheme RawType
+  = SEqualsKnown Scheme Type
   | SEqPoints Scheme Scheme
   | SBoundedBy Scheme Scheme
-  | SBoundedByKnown Scheme RawType
+  | SBoundedByKnown Scheme Type
   | SBoundedByObjs BoundObjs Scheme
   | SArrowTo Scheme Scheme
   | SPropEq (Scheme, Name) Scheme
@@ -196,8 +196,8 @@ addConstraints (FEnv oldCons defMap errs) newCons = FEnv (newCons ++ oldCons) de
 fInsert :: FEnv s -> String -> VarMeta s -> FEnv s
 fInsert (FEnv cons pmap errs) k v = FEnv cons (H.insert k v pmap) errs
 
-tryIntersectRawTypes :: RawType -> RawType -> String -> TypeCheckResult RawType
-tryIntersectRawTypes a b desc= let c = intersectRawTypes a b
-                            in if c == rawBottomType
+tryIntersectTypes :: Type -> Type -> String -> TypeCheckResult Type
+tryIntersectTypes a b desc= let c = intersectTypes a b
+                            in if c == bottomType
                                   then TypeCheckResE [GenTypeCheckError $ "Failed to intersect(" ++ desc ++ "): " ++ show a ++ " --- " ++ show b]
                                   else return c

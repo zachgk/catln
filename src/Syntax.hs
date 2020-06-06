@@ -37,17 +37,17 @@ data ReplRes m
   deriving (Eq, Show)
 
 --- ResArrowTree
-type ResBuildEnv f = H.HashMap RawPartialType [(Guard (Expr Typed), ResArrow f)]
+type ResBuildEnv f = H.HashMap PartialType [(Guard (Expr Typed), ResArrow f)]
 type ResExEnv f = H.HashMap (Arrow Typed) (ResArrowTree f, [ResArrowTree f]) -- (result, [compAnnot trees])
 data ResArrow f
   = ResEArrow (Object Typed) (Arrow Typed)
-  | PrimArrow RawType f
+  | PrimArrow Type f
   | ConstantArrow Constant
-  | ArgArrow RawType String
+  | ArgArrow Type String
 
 data ResArrowTree f
   = ResArrowCompose (ResArrowTree f) (ResArrowTree f)
-  | ResArrowMatch (H.HashMap RawPartialType (ResArrowTree f))
+  | ResArrowMatch (H.HashMap PartialType (ResArrowTree f))
   | ResArrowCond [(ResArrowTree f, ResArrowTree f)] (ResArrowTree f) -- [(if, then)] else
   | ResArrowTuple String (H.HashMap String (ResArrowTree f))
   | ResArrowTupleApply (ResArrowTree f) (H.HashMap String (ResArrowTree f))
@@ -139,13 +139,13 @@ instance Monad CRes where
 
 
 -- Metadata for the Programs
-newtype PreTyped = PreTyped RawType
+newtype PreTyped = PreTyped Type
   deriving (Eq, Ord, Generic, Hashable)
 
-newtype Typed = Typed RawType
+newtype Typed = Typed Type
   deriving (Eq, Ord, Generic, Hashable)
 
-typedIs :: Typed -> RawType -> Bool
+typedIs :: Typed -> Type -> Bool
 typedIs (Typed t1) t2 = t1 == t2
 
 instance Show PreTyped where

@@ -26,90 +26,90 @@ type Name = String
 type TypeName = Name
 type ClassName = Name
 
-type RawPartialType = (TypeName, H.HashMap TypeName RawType)
-type RawPartialLeafs = (H.HashMap TypeName (S.HashSet (H.HashMap TypeName RawType)))
-data RawType
-  = RawSumType RawPartialLeafs
-  | RawTopType
+type PartialType = (TypeName, H.HashMap TypeName Type)
+type PartialLeafs = (H.HashMap TypeName (S.HashSet (H.HashMap TypeName Type)))
+data Type
+  = SumType PartialLeafs
+  | TopType
   deriving (Eq, Ord, Generic, Hashable)
 
 type Sealed = Bool -- whether the typeclass can be extended or not
 type ClassMap = (H.HashMap TypeName (S.HashSet ClassName), H.HashMap ClassName (Sealed, S.HashSet TypeName))
 
-instance Show RawType where
-  show t | t == rawBottomType = "∅"
-  show (RawSumType partials) = "(" ++ intercalate " | " partials' ++ ")"
+instance Show Type where
+  show t | t == bottomType = "∅"
+  show (SumType partials) = "(" ++ intercalate " | " partials' ++ ")"
     where
       showPartialArgs (argName, argVal) = argName ++ "=" ++ show argVal
       showPartial (partialName, partialArgs) = partialName ++ "(" ++ intercalate ", " (map showPartialArgs $ H.toList partialArgs) ++ ")"
       partials' = map showPartial $ splitPartialLeafs partials
-  show RawTopType = "RawTopType"
+  show TopType = "TopType"
 
 
-rintLeaf, rfloatLeaf, rstrLeaf :: RawPartialType
-rintLeaf = ("Integer", H.empty)
-rfloatLeaf = ("Float", H.empty)
-rstrLeaf = ("String", H.empty)
+intLeaf, floatLeaf, strLeaf :: PartialType
+intLeaf = ("Integer", H.empty)
+floatLeaf = ("Float", H.empty)
+strLeaf = ("String", H.empty)
 
-rintType, rfloatType, rboolType, rstrType :: RawType
-rintType = RawSumType $ joinPartialLeafs [rintLeaf]
-rfloatType = RawSumType $ joinPartialLeafs [rfloatLeaf]
-rboolType = RawSumType $ joinPartialLeafs [("True", H.empty), ("False", H.empty)]
-rstrType = RawSumType $ joinPartialLeafs [rstrLeaf]
+intType, floatType, boolType, strType :: Type
+intType = SumType $ joinPartialLeafs [intLeaf]
+floatType = SumType $ joinPartialLeafs [floatLeaf]
+boolType = SumType $ joinPartialLeafs [("True", H.empty), ("False", H.empty)]
+strType = SumType $ joinPartialLeafs [strLeaf]
 
-rawBottomType :: RawType
-rawBottomType = RawSumType H.empty
+bottomType :: Type
+bottomType = SumType H.empty
 
-splitPartialLeafs :: RawPartialLeafs -> [RawPartialType]
+splitPartialLeafs :: PartialLeafs -> [PartialType]
 splitPartialLeafs partials = concatMap (\(k, vs) -> zip (repeat k) vs) $ H.toList $ fmap S.toList partials
 
-joinPartialLeafs :: [RawPartialType] -> RawPartialLeafs
+joinPartialLeafs :: [PartialType] -> PartialLeafs
 joinPartialLeafs = foldr (\(pName, pArgs) partials -> H.insertWith S.union pName (S.singleton pArgs) partials) H.empty
 
 -- assumes a compacted super type, does not check in superLeafs
-hasRawPartial :: RawPartialType -> RawType -> Bool
-hasRawPartial _ RawTopType = True
-hasRawPartial (subName, subArgs) (RawSumType superPartials) = case H.lookup subName superPartials of
+hasPartial :: PartialType -> Type -> Bool
+hasPartial _ TopType = True
+hasPartial (subName, subArgs) (SumType superPartials) = case H.lookup subName superPartials of
   Just superArgsOptions -> any hasArg superArgsOptions
   Nothing -> False
   where
     hasArg superArgs | H.keysSet subArgs /= H.keysSet superArgs = False
-    hasArg superArgs = and $ H.elems $ H.intersectionWith hasRawType subArgs superArgs
+    hasArg superArgs = and $ H.elems $ H.intersectionWith hasType subArgs superArgs
 
 -- Maybe rename to subtypeOf
-hasRawType :: RawType -> RawType -> Bool
-hasRawType _ RawTopType = True
-hasRawType RawTopType t = t == RawTopType
-hasRawType (RawSumType subPartials) superType = all (`hasRawPartial` superType) $ splitPartialLeafs subPartials
+hasType :: Type -> Type -> Bool
+hasType _ TopType = True
+hasType TopType t = t == TopType
+hasType (SumType subPartials) superType = all (`hasPartial` superType) $ splitPartialLeafs subPartials
 
 -- TODO: This should combine overlapping partials
-compactRawType :: RawType -> RawType
-compactRawType RawTopType = RawTopType
-compactRawType (RawSumType partials) = RawSumType partials
+compactType :: Type -> Type
+compactType TopType = TopType
+compactType (SumType partials) = SumType partials
 
-unionRawType :: RawType -> RawType -> RawType
-unionRawType RawTopType _ = RawTopType
-unionRawType _ RawTopType = RawTopType
-unionRawType (RawSumType aPartials) (RawSumType bPartials) = compactRawType $ RawSumType partials'
+unionType :: Type -> Type -> Type
+unionType TopType _ = TopType
+unionType _ TopType = TopType
+unionType (SumType aPartials) (SumType bPartials) = compactType $ SumType partials'
   where
     partials' = H.unionWith S.union aPartials bPartials
 
-unionRawTypes :: Foldable f => f RawType -> RawType
-unionRawTypes = foldr unionRawType rawBottomType
+unionTypes :: Foldable f => f Type -> Type
+unionTypes = foldr unionType bottomType
 
-intersectRawTypes :: RawType -> RawType -> RawType
-intersectRawTypes RawTopType t = t
-intersectRawTypes t RawTopType = t
-intersectRawTypes (RawSumType aPartials) (RawSumType bPartials) = compactRawType $ RawSumType partials'
+intersectTypes :: Type -> Type -> Type
+intersectTypes TopType t = t
+intersectTypes t TopType = t
+intersectTypes (SumType aPartials) (SumType bPartials) = compactType $ SumType partials'
   where
     partials' = H.intersectionWith intersectArgsOptions (fmap S.toList aPartials) (fmap S.toList bPartials)
     intersectArgsOptions as bs = S.fromList $ catMaybes $ [intersectArgs a b | a <- as, b <- bs]
-    intersectArgs :: H.HashMap TypeName RawType -> H.HashMap TypeName RawType -> Maybe (H.HashMap TypeName RawType)
+    intersectArgs :: H.HashMap TypeName Type -> H.HashMap TypeName Type -> Maybe (H.HashMap TypeName Type)
     intersectArgs aArgs bArgs = if H.keysSet aArgs == H.keysSet bArgs
       then  sequence $ H.intersectionWith subIntersect aArgs bArgs
       else Nothing
-    subIntersect aType bType = let joined = intersectRawTypes aType bType
-                                in if joined == rawBottomType
+    subIntersect aType bType = let joined = intersectTypes aType bType
+                                in if joined == bottomType
                                    then Nothing
                                    else Just joined
 
@@ -127,9 +127,9 @@ powerset :: [x] -> [[x]]
 powerset [] = [[]]
 powerset (x:xs) = map (x:) (powerset xs) ++ powerset xs
 
-powersetRawType :: RawType -> RawType
-powersetRawType RawTopType = RawTopType
-powersetRawType (RawSumType partials) = RawSumType partials'
+powersetType :: Type -> Type
+powersetType TopType = TopType
+powersetType (SumType partials) = SumType partials'
   where
     partials' = joinPartialLeafs $ concatMap fromPartialType $ splitPartialLeafs partials
     fromPartialType (name, args) = map ((name,) . H.fromList) (powerset $ H.toList args)

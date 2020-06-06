@@ -53,10 +53,10 @@ instance Show Val where
       args' = intercalate ", " $ map showArg $ H.toList args
   show NoVal   = "NoVal"
 
-getValType :: Val -> RawPartialType
-getValType IntVal{} = rintLeaf
-getValType FloatVal{} = rfloatLeaf
-getValType StrVal{} = rstrLeaf
+getValType :: Val -> PartialType
+getValType IntVal{} = intLeaf
+getValType FloatVal{} = floatLeaf
+getValType StrVal{} = strLeaf
 getValType (TupleVal name args) = (name, fmap fromArg args)
-  where fromArg arg = RawSumType $ joinPartialLeafs [getValType arg]
+  where fromArg arg = SumType $ joinPartialLeafs [getValType arg]
 getValType NoVal = error "getValType of NoVal"

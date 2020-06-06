@@ -22,8 +22,8 @@ import           MapMeta
 classToObjSum :: DesPrgm -> DesPrgm
 classToObjSum prgm@(_, (_, classToTypes)) = mapMetaPrgm aux prgm
   where
-    aux t@(PreTyped RawTopType) = t
-    aux (PreTyped (RawSumType partials)) = PreTyped $ RawSumType partials'
+    aux t@(PreTyped TopType) = t
+    aux (PreTyped (SumType partials)) = PreTyped $ SumType partials'
       where
         partials' = H.fromList $ concatMap mapPartial $ H.toList partials
         -- TODO mapPartial where args can be classes

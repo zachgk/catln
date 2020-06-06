@@ -29,27 +29,27 @@ isSolved (TypeCheckResult _ (SType a b _)) = a == b
 isSolved _ = False
 
 checkScheme :: String -> Scheme -> Scheme
-checkScheme msg (TypeCheckResult notes (SType ub _ desc)) | ub == rawBottomType = TypeCheckResE (GenTypeCheckError ("Scheme failed check at " ++ msg ++ ": upper bound is rawBottomType - " ++ desc) : notes)
+checkScheme msg (TypeCheckResult notes (SType ub _ desc)) | ub == bottomType = TypeCheckResE (GenTypeCheckError ("Scheme failed check at " ++ msg ++ ": upper bound is bottomType - " ++ desc) : notes)
 checkScheme _ scheme = scheme
 
 equalizeBounds :: (Scheme, Scheme) -> String -> Scheme
 equalizeBounds inSchemes d = do
   (SType ub1 lb1 desc1, SType ub2 lb2 _) <- sequenceT inSchemes
-  let lbBoth = unionRawType lb1 lb2
-  ubBoth <- tryIntersectRawTypes ub1 ub2 $ "equalizeBounds(" ++ d ++ ")"
-  if hasRawType lbBoth ubBoth
+  let lbBoth = unionType lb1 lb2
+  ubBoth <- tryIntersectTypes ub1 ub2 $ "equalizeBounds(" ++ d ++ ")"
+  if hasType lbBoth ubBoth
     then return $ SType ubBoth lbBoth desc1
     else TypeCheckResE [GenTypeCheckError $ concat ["Type Mismatched: ", show lbBoth, " is not a subtype of ", show ubBoth]]
 
 equalizeSchemes :: (Scheme, Scheme) -> String -> Scheme
 equalizeSchemes inSchemes d = do
   (SType ub1 lb1 desc1, SType ub2 lb2 desc2) <- sequenceT inSchemes
-  let lbBoth = unionRawType lb1 lb2
-  ubBoth <- tryIntersectRawTypes ub1 ub2 $ "equalizeSchemes(" ++ d ++ ")"
+  let lbBoth = unionType lb1 lb2
+  ubBoth <- tryIntersectTypes ub1 ub2 $ "equalizeSchemes(" ++ d ++ ")"
   let descBoth = if desc1 == desc2
          then desc1
          else "(" ++ desc1 ++ "," ++ desc2 ++ ")"
-  if hasRawType lbBoth ubBoth
+  if hasType lbBoth ubBoth
     then return $ SType ubBoth lbBoth descBoth
     else TypeCheckResE [GenTypeCheckError $ concat ["Type Mismatched: ", show lbBoth, " is not a subtype of ", show ubBoth]]
 
@@ -58,41 +58,41 @@ equalizeSchemes inSchemes d = do
 getSchemeProp :: Scheme -> Name -> Scheme
 getSchemeProp inScheme propName = do
   (SType ub lb desc) <- inScheme
-  return $ SType (getRawTypeProp ub ) (getRawTypeProp lb) desc
+  return $ SType (getTypeProp ub ) (getTypeProp lb) desc
   where
-    getRawTypeProp :: RawType -> RawType
-    getRawTypeProp RawTopType = RawTopType
-    getRawTypeProp (RawSumType partials) = case getPartials partials of
-      RawTopType -> RawTopType
-      (RawSumType partials') -> RawSumType partials'
-    getPartials :: RawPartialLeafs -> RawType
-    getPartials partials = unionRawTypes $ mapMaybe (H.lookup propName) $ concatMap S.toList (H.elems partials)
+    getTypeProp :: Type -> Type
+    getTypeProp TopType = TopType
+    getTypeProp (SumType partials) = case getPartials partials of
+      TopType -> TopType
+      (SumType partials') -> SumType partials'
+    getPartials :: PartialLeafs -> Type
+    getPartials partials = unionTypes $ mapMaybe (H.lookup propName) $ concatMap S.toList (H.elems partials)
 
 setSchemeProp :: Scheme -> Name -> Scheme -> Scheme
 setSchemeProp scheme propName pscheme = do
   (SType ub lb desc) <- scheme
   (SType pub _ _) <- pscheme
-  checkScheme ("setSchemeProp " ++ propName) $ return $ SType (compactRawType $ setRawTypeUbProp ub pub) (compactRawType $ setRawTypeLbProp lb) desc
+  checkScheme ("setSchemeProp " ++ propName) $ return $ SType (compactType $ setTypeUbProp ub pub) (compactType $ setTypeLbProp lb) desc
   where
-    setRawTypeUbProp :: RawType -> RawType -> RawType
-    setRawTypeUbProp RawTopType _ = RawTopType
-    setRawTypeUbProp (RawSumType ubPartials) pub = RawSumType (joinPartialLeafs $ mapMaybe (setPartialsUb pub) $ splitPartialLeafs ubPartials)
-    setPartialsUb RawTopType partial = Just partial
+    setTypeUbProp :: Type -> Type -> Type
+    setTypeUbProp TopType _ = TopType
+    setTypeUbProp (SumType ubPartials) pub = SumType (joinPartialLeafs $ mapMaybe (setPartialsUb pub) $ splitPartialLeafs ubPartials)
+    setPartialsUb TopType partial = Just partial
     setPartialsUb pub (partialName, partialArgs) = case H.lookup propName partialArgs of
-      Just partialArg -> let partialArg' = intersectRawTypes partialArg pub
-                          in if partialArg' == rawBottomType
+      Just partialArg -> let partialArg' = intersectTypes partialArg pub
+                          in if partialArg' == bottomType
                                 then Nothing
                                 else Just (partialName, H.insert propName partialArg' partialArgs)
       Nothing -> Nothing
-    setRawTypeLbProp tp = tp -- TODO: Should set with union?
+    setTypeLbProp tp = tp -- TODO: Should set with union?
 
-addArgsToRawType :: RawType -> S.HashSet Name -> Maybe RawType
-addArgsToRawType RawTopType _ = Nothing
-addArgsToRawType (RawSumType partials) newArgs = Just $ RawSumType partials'
+addArgsToType :: Type -> S.HashSet Name -> Maybe Type
+addArgsToType TopType _ = Nothing
+addArgsToType (SumType partials) newArgs = Just $ SumType partials'
   where
-    partialUpdate = H.fromList $ map (,RawTopType) $ S.toList newArgs
+    partialUpdate = H.fromList $ map (,TopType) $ S.toList newArgs
     partials' = joinPartialLeafs $ map fromPartial $ splitPartialLeafs partials
-    fromPartial (partialName, partialArgs) = (partialName, H.unionWith unionRawType partialArgs partialUpdate)
+    fromPartial (partialName, partialArgs) = (partialName, H.unionWith unionType partialArgs partialUpdate)
 
 -- returns updated (pruned) constraints and boolean if schemes were updated
 executeConstraint :: TypeEnv s -> Constraint s -> ST s ([Constraint s], Bool)
@@ -104,7 +104,7 @@ executeConstraint _ cons@(BoundedBy subPnt parentPnt) = do
   case sequenceT (subScheme, parentScheme) of
     TypeCheckResE _ -> return ([], False)
     TypeCheckResult _ (SType ub1 lb1 description, SType ub2 _ _) -> do
-      let subScheme' = fmap (\ub -> SType ub lb1 description) (tryIntersectRawTypes ub1 ub2 "executeConstraint BoundedBy")
+      let subScheme' = fmap (\ub -> SType ub lb1 description) (tryIntersectTypes ub1 ub2 "executeConstraint BoundedBy")
       setDescriptor subPnt subScheme'
       return ([cons | not (isSolved subScheme')], subScheme /= subScheme')
 executeConstraint _ (BoundedByKnown subPnt boundTp) = do
@@ -112,7 +112,7 @@ executeConstraint _ (BoundedByKnown subPnt boundTp) = do
   case subScheme of
     TypeCheckResE _ -> return ([], False)
     TypeCheckResult _ (SType ub lb description) -> do
-      let subScheme' = fmap (\ub' -> SType ub' lb description) (tryIntersectRawTypes ub boundTp "executeConstraint BoundedBy")
+      let subScheme' = fmap (\ub' -> SType ub' lb description) (tryIntersectTypes ub boundTp "executeConstraint BoundedBy")
       setDescriptor subPnt subScheme'
       return ([], subScheme /= subScheme')
 executeConstraint ((unionAllObjs, unionTypeObjs), _) cons@(BoundedByObjs bnd pnt) = do
@@ -126,8 +126,8 @@ executeConstraint ((unionAllObjs, unionTypeObjs), _) cons@(BoundedByObjs bnd pnt
     TypeCheckResult _ (SType ub lb desc, SType objsUb _ _) -> do
       -- A partially applied tuple would not be a raw type on the unionObj,
       -- but a subset of the arguments in that type
-      let ub' = intersectRawTypes ub objsUb
-      let scheme' = if ub' == rawBottomType
+      let ub' = intersectTypes ub objsUb
+      let scheme' = if ub' == bottomType
             then TypeCheckResE [GenTypeCheckError $ printf "Failed to BoundByObjs for %s: %s %s" desc (show ub) (show objsUb)]
             else return $ SType ub' lb desc
       setDescriptor pnt scheme'
@@ -164,9 +164,9 @@ executeConstraint _ cons@(AddArgs (srcPnt, newArgNames) destPnt) = do
   destScheme <- descriptor destPnt
   case sequenceT (srcScheme, destScheme) of
     TypeCheckResE _ -> return ([], False)
-    TypeCheckResult _ (SType RawTopType _ _, _) -> return ([cons], False)
+    TypeCheckResult _ (SType TopType _ _, _) -> return ([cons], False)
     TypeCheckResult _ (SType srcUb _ _, SType _ destLb destDesc) ->
-      case addArgsToRawType srcUb newArgNames of
+      case addArgsToType srcUb newArgNames of
         Just destUb' -> do
           let destScheme' = equalizeSchemes (destScheme, return $ SType destUb' destLb destDesc) "executeConstraint AddArgs"
           setDescriptor destPnt destScheme'
@@ -178,7 +178,7 @@ executeConstraint _ cons@(PowersetTo srcPnt destPnt) = do
   case sequenceT (srcScheme, destScheme) of
     TypeCheckResE _ -> return ([], False)
     TypeCheckResult _ (SType ub1 _ _, SType ub2 lb2 description2) -> do
-      let destScheme' = fmap (\ub -> SType ub lb2 description2) (tryIntersectRawTypes (powersetRawType ub1) ub2 "executeConstraint PowersetTo")
+      let destScheme' = fmap (\ub -> SType ub lb2 description2) (tryIntersectTypes (powersetType ub1) ub2 "executeConstraint PowersetTo")
       setDescriptor destPnt destScheme'
       return ([cons | not (isSolved destScheme')], destScheme /= destScheme')
 executeConstraint _ cons@(UnionOf parentPnt childrenPnts) = do
@@ -187,7 +187,7 @@ executeConstraint _ cons@(UnionOf parentPnt childrenPnts) = do
   case sequenceT (parentScheme, sequence tcresChildrenSchemes) of
     TypeCheckResE _ -> return ([], False)
     TypeCheckResult _ (_, childrenSchemes) -> do
-      let childrenScheme = (\(ub, lb) -> return $ SType ub lb "") $ foldr (\(SType ub1 lb1 _) (ub2, lb2) -> (unionRawType ub1 ub2, unionRawType lb1 lb2)) (rawBottomType, rawBottomType) childrenSchemes
+      let childrenScheme = (\(ub, lb) -> return $ SType ub lb "") $ foldr (\(SType ub1 lb1 _) (ub2, lb2) -> (unionType ub1 ub2, unionType lb1 lb2)) (bottomType, bottomType) childrenSchemes
       let parentScheme' = equalizeBounds (parentScheme, childrenScheme) "executeConstraint UnionOf"
       setDescriptor parentPnt parentScheme'
       return ([cons | not (isSolved parentScheme')], parentScheme /= parentScheme')

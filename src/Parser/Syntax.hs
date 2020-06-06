@@ -26,7 +26,7 @@ type PDeclSubStatement = RawDeclSubStatement ParseMeta
 type PDeclLHS = DeclLHS ParseMeta PExpr
 type PDecl = RawDecl ParseMeta
 type PObjectMap = ObjectMap ParseMeta
-type PRawTypeDef = RawTypeDef ParseMeta
+type PTypeDef = TypeDef ParseMeta
 type PStatement = RawStatement ParseMeta
 type PArgMetaMap = H.HashMap Name ParseMeta
 type PObjArg = ObjArg ParseMeta
@@ -60,4 +60,4 @@ type DesGuard = Guard DesExpr
 type DesPrgm = Prgm ParseMeta
 
 emptyMeta :: ParseMeta
-emptyMeta = PreTyped RawTopType
+emptyMeta = PreTyped TopType

@@ -24,14 +24,14 @@ import           Syntax
 import           TypeCheck.Common
 import           TypeCheck.Show (showCon)
 
-fromRawPartialType :: RawPartialType -> Maybe RawPartialType
-fromRawPartialType (name, args) = case traverse fromRawType args of
+fromPartialType :: PartialType -> Maybe PartialType
+fromPartialType (name, args) = case traverse fromType args of
   Just args' -> Just (name, args')
   Nothing -> Nothing
 
-fromRawType :: RawType -> Maybe RawType
-fromRawType RawTopType = Nothing
-fromRawType (RawSumType partials) = fmap (RawSumType . joinPartialLeafs) $ traverse fromRawPartialType $ splitPartialLeafs partials
+fromType :: Type -> Maybe Type
+fromType TopType = Nothing
+fromType (SumType partials) = fmap (SumType . joinPartialLeafs) $ traverse fromPartialType $ splitPartialLeafs partials
 
 matchingConstraintHelper :: Pnt s -> Pnt s -> Pnt s -> ST s Bool
 matchingConstraintHelper p p2 p3 = do
@@ -65,7 +65,7 @@ toMeta env p name = do
   scheme <- descriptor p
   case scheme of
     TypeCheckResE s -> return $ TypeCheckResE s
-    TypeCheckResult notes (SType ub _ _) -> case fromRawType (compactRawType ub) of
+    TypeCheckResult notes (SType ub _ _) -> case fromType (compactType ub) of
       Nothing -> do
         showMatching <- showMatchingConstraints env p
         return $ TypeCheckResE (FailInfer name scheme showMatching:notes)
@@ -87,7 +87,7 @@ toExpr env (TupleApply m (baseM, baseExpr) args) = do
   baseExpr' <- toExpr env baseExpr
   args' <- mapM (toExpr env) args
   case m' of -- check for errors
-    TypeCheckResult notes tp@(Typed (RawSumType sumType)) | all (\(_, leafArgs) -> not (H.keysSet args' `isSubsetOf` H.keysSet leafArgs)) (splitPartialLeafs sumType) -> do
+    TypeCheckResult notes tp@(Typed (SumType sumType)) | all (\(_, leafArgs) -> not (H.keysSet args' `isSubsetOf` H.keysSet leafArgs)) (splitPartialLeafs sumType) -> do
                                         matchingConstraints <- showMatchingConstraints env m
                                         let sArgs = sequence args'
                                         return $ TypeCheckResE (TupleMismatch baseM' baseExpr' tp sArgs matchingConstraints:notes)

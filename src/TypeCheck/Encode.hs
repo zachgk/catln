@@ -28,7 +28,7 @@ makeBaseFEnv = return $ FEnv [] H.empty []
 
 fromMetaP :: FEnv s -> PreMeta -> String -> ST s (VarMeta s, Pnt s, FEnv s)
 fromMetaP env (PreTyped mt) description = do
-  p <- fresh (TypeCheckResult [] $ SType mt rawBottomType description)
+  p <- fresh (TypeCheckResult [] $ SType mt bottomType description)
   return (p, p, env)
 
 fromMeta :: FEnv s -> PreMeta -> String -> ST s (VarMeta s, FEnv s)
@@ -63,13 +63,13 @@ mapMWithFEnvMapWithKey env f hmap = do
 fromExpr :: VArgMetaMap s -> FEnv s -> PExpr -> ST s (VExpr s, FEnv s)
 fromExpr _ env (CExpr m (CInt i)) = do
   (m', p, env') <- fromMetaP env m ("Constant int " ++ show i)
-  return (CExpr m' (CInt i), addConstraints env' [EqualsKnown p rintType])
+  return (CExpr m' (CInt i), addConstraints env' [EqualsKnown p intType])
 fromExpr _ env (CExpr m (CFloat f)) = do
   (m', p, env') <- fromMetaP env m ("Constant float " ++ show f)
-  return (CExpr m' (CFloat f), addConstraints env' [EqualsKnown p rfloatType])
+  return (CExpr m' (CFloat f), addConstraints env' [EqualsKnown p floatType])
 fromExpr _ env (CExpr m (CStr s)) = do
   (m', p, env') <- fromMetaP env m ("Constant str " ++ s)
-  return (CExpr m' (CStr s), addConstraints env' [EqualsKnown p rstrType])
+  return (CExpr m' (CStr s), addConstraints env' [EqualsKnown p strType])
 fromExpr _ env1 (Value m name) = do
   (m', p, env2) <- fromMetaP env1 m ("Value " ++ name)
   case fLookup env2 name of
@@ -87,7 +87,7 @@ fromExpr objArgs env1 (TupleApply m (baseM, baseExpr) args) = do
   (baseM', baseP, env3) <- fromMetaP env2 baseM "TupleApply BaseMeta"
   (baseExpr', env4) <- fromExpr objArgs env3 baseExpr
   (args', env5) <- mapMWithFEnvMap env4 (fromExpr objArgs) args
-  convertExprMetas <- mapM (\_ -> fresh (TypeCheckResult [] $ SType RawTopType rawBottomType "Tuple converted expr meta")) args
+  convertExprMetas <- mapM (\_ -> fresh (TypeCheckResult [] $ SType TopType bottomType "Tuple converted expr meta")) args
   let arrowArgConstraints = H.elems $ H.intersectionWith ArrowTo (fmap getPntExpr args') convertExprMetas
   let tupleConstraints = H.elems $ H.mapWithKey (\name ceMeta -> PropEq (p, name) ceMeta) convertExprMetas
   let constraints = [ArrowTo (getPntExpr baseExpr') baseP, AddArgs (baseP, H.keysSet args) p, BoundedByObjs BoundAllObjs p] ++ arrowArgConstraints ++ tupleConstraints
@@ -102,7 +102,7 @@ fromAnnot objArgs env1 (CompAnnot name args) = do
 fromGuard :: VArgMetaMap s -> FEnv s -> PGuard -> ST s (VGuard s, FEnv s)
 fromGuard objArgs env1 (IfGuard expr) =  do
   (expr', env2) <- fromExpr objArgs env1 expr
-  bool <- fresh $ TypeCheckResult [] $ SType rboolType rawBottomType "bool"
+  bool <- fresh $ TypeCheckResult [] $ SType boolType bottomType "bool"
   return (IfGuard expr', addConstraints env2 [ArrowTo (getExprMeta expr') bool])
 fromGuard _ env ElseGuard = return (ElseGuard, env)
 fromGuard _ env NoGuard = return (NoGuard, env)
@@ -143,10 +143,10 @@ fromObject prefix env (Object m basis name args) = do
   (m', env1) <- fromMeta env m prefix'
   (args', env2) <- mapMWithFEnvMapWithKey env1 (addObjArg m' prefix') args
   let obj' = Object m' basis name args'
-  (objValue, env3) <- fromMeta env2 (PreTyped $ RawSumType $ joinPartialLeafs [(name, H.empty)]) ("objValue" ++ name)
+  (objValue, env3) <- fromMeta env2 (PreTyped $ SumType $ joinPartialLeafs [(name, H.empty)]) ("objValue" ++ name)
   let env4 = fInsert env3 name objValue
   let env5 = addConstraints env4 [BoundedByObjs BoundAllObjs m']
-  let env6 = addConstraints env5 [BoundedByKnown m' (RawSumType $ joinPartialLeafs [(name, fmap (const RawTopType) args)]) | basis /= PatternObj]
+  let env6 = addConstraints env5 [BoundedByKnown m' (SumType $ joinPartialLeafs [(name, fmap (const TopType) args)]) | basis /= PatternObj]
   return (obj', env6)
 
 -- Add all of the objects first for various expressions that call other top level functions
