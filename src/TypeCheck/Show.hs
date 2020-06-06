@@ -19,7 +19,7 @@ import           Syntax.Prgm
 import           TypeCheck.Common
 
 showM :: VarMeta s -> ST s ShowMeta
-showM = descriptor
+showM = descriptor . getPnt
 
 showExpr :: VExpr s -> ST s SExpr
 showExpr (CExpr m c) = do

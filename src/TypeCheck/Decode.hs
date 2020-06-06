@@ -62,13 +62,13 @@ showMatchingConstraints cons matchVar = do
   mapM showCon filterCons
 
 toMeta :: DEnv s -> VarMeta s -> String -> ST s (TypeCheckResult Typed)
-toMeta env p name = do
-  scheme <- descriptor p
+toMeta env m name = do
+  scheme <- descriptor $ getPnt m
   case scheme of
     TypeCheckResE s -> return $ TypeCheckResE s
     TypeCheckResult notes (SType ub _ _) -> case fromType (compactType ub) of
       Nothing -> do
-        showMatching <- showMatchingConstraints env p
+        showMatching <- showMatchingConstraints env $ getPnt m
         return $ TypeCheckResE (FailInfer name scheme showMatching:notes)
       Just t -> return $ TypeCheckResult notes (Typed t)
 
@@ -89,7 +89,7 @@ toExpr env (TupleApply m (baseM, baseExpr) args) = do
   args' <- mapM (toExpr env) args
   case m' of -- check for errors
     TypeCheckResult notes tp@(Typed (SumType sumType)) | all (\(_, _, leafArgs) -> not (H.keysSet args' `isSubsetOf` H.keysSet leafArgs)) (splitPartialLeafs sumType) -> do
-                                        matchingConstraints <- showMatchingConstraints env m
+                                        matchingConstraints <- showMatchingConstraints env $ getPnt m
                                         let sArgs = sequence args'
                                         return $ TypeCheckResE (TupleMismatch baseM' baseExpr' tp sArgs matchingConstraints:notes)
     _ -> return $ (\(m'', baseM'', baseExpr'', args'') -> TupleApply m'' (baseM'', baseExpr'') args'') <$> sequenceT (m', baseM', baseExpr', sequence args')
