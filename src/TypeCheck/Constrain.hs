@@ -62,8 +62,10 @@ getSchemeProp inScheme propName = do
   where
     getTypeProp :: Type -> Type
     getTypeProp TopType = TopType
+    getTypeProp TypeVar{} = error "getSchemeProp getTypeProp TypeVar"
     getTypeProp (SumType partials) = case getPartials partials of
       TopType -> TopType
+      TypeVar{} -> error "getSchemeProp getPartials TypeVar"
       (SumType partials') -> SumType partials'
     getPartials :: PartialLeafs -> Type
     getPartials partials = unionTypes $ mapMaybe (H.lookup propName . snd) $ concatMap S.toList $ H.elems partials
@@ -76,6 +78,7 @@ setSchemeProp scheme propName pscheme = do
   where
     setTypeUbProp :: Type -> Type -> Type
     setTypeUbProp TopType _ = TopType
+    setTypeUbProp TypeVar{} _ = error "setSchemeProp setTypeUbProp TypeVar"
     setTypeUbProp (SumType ubPartials) pub = SumType (joinPartialLeafs $ mapMaybe (setPartialsUb pub) $ splitPartialLeafs ubPartials)
     setPartialsUb TopType partial = Just partial
     setPartialsUb pub (partialName, partialVars, partialArgs) = case H.lookup propName partialArgs of
@@ -88,6 +91,7 @@ setSchemeProp scheme propName pscheme = do
 
 addArgsToType :: Type -> S.HashSet ArgName -> Maybe Type
 addArgsToType TopType _ = Nothing
+addArgsToType TypeVar{} _ = error "addArgsToType TypeVar"
 addArgsToType (SumType partials) newArgs = Just $ SumType partials'
   where
     partialUpdate = H.fromList $ map (,TopType) $ S.toList newArgs

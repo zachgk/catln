@@ -24,6 +24,7 @@ classToObjSum prgm@(_, (_, classToTypes)) = mapMetaPrgm aux prgm
   where
     aux (PreTyped t) = PreTyped $ mapType t
     mapType TopType = TopType
+    mapType t@TypeVar{} = t
     mapType (SumType partials) = SumType partials'
       where
         partials' = H.fromList $ concatMap mapPartial $ H.toList partials

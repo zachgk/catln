@@ -43,6 +43,7 @@ resArrowDestType (ArgArrow tp _) = tp
 
 leafFromMeta :: TBMeta -> PartialType
 leafFromMeta (Typed TopType) = error "leafFromMeta from TopType"
+leafFromMeta (Typed TypeVar{}) = error "leafFromMeta from TypeVar"
 leafFromMeta (Typed (SumType prodTypes)) = case splitPartialLeafs prodTypes of
   [leafType] -> leafType
   _ -> error $ "Arrow has multiple leaves: " ++ show prodTypes

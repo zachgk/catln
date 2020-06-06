@@ -31,6 +31,7 @@ fromPartialType (name, vars, args) = case sequenceT (Just vars, traverse fromTyp
 
 fromType :: Type -> Maybe Type
 fromType TopType = Nothing
+fromType t@TypeVar{} = Just t
 fromType (SumType partials) = fmap (SumType . joinPartialLeafs) $ traverse fromPartialType $ splitPartialLeafs partials
 
 matchingConstraintHelper :: Pnt s -> Pnt s -> Pnt s -> ST s Bool

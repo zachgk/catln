@@ -53,6 +53,7 @@ scopeSubDeclFunNamesInMeta prefix replaceNames (PreTyped (SumType partials)) = P
     scopeS = scopeSubDeclFunNamesInS prefix replaceNames
     partials' = H.fromList $ map (first scopeS) $ H.toList partials
 scopeSubDeclFunNamesInMeta _ _ m@(PreTyped TopType) = m
+scopeSubDeclFunNamesInMeta _ _ m@(PreTyped TypeVar{}) = m
 
 -- Renames sub functions by applying the parent names as a prefix to avoid name collisions
 scopeSubDeclFunNames :: TypeName -> [PSemiDecl] -> Maybe PSExpr -> [PSCompAnnot] -> ParseMeta -> ParseMeta -> ([PSemiDecl], Maybe PSExpr, [PSCompAnnot], ParseMeta, ParseMeta)
@@ -190,7 +191,8 @@ desDecls :: [PDecl] -> PObjectMap
 desDecls decls = unionsWith (++) $ map desDecl decls
 
 addTypeDef :: PTypeDef -> (PObjectMap, ClassMap) -> (PObjectMap, ClassMap)
-addTypeDef (TypeDef _ TopType) _ = error "Invalid type def to desugar"
+addTypeDef (TypeDef _ TopType) _ = error "Invalid type def to desugar TopType"
+addTypeDef (TypeDef _ TypeVar{}) _ = error "Invalid type def to desugar TypeVar"
 addTypeDef (TypeDef name (SumType partials)) (objMap, classMap) = (objMap', classMap')
   where
     leafArgConvert partialType = (PreTyped partialType, Nothing)

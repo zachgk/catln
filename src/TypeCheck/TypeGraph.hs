@@ -68,6 +68,7 @@ reachesPartial (_, graph) partial@(partialName, _, _) = do
 
 reaches :: TypeEnv s -> Type -> ST s (TypeCheckResult Type)
 reaches _     TopType            = return $ return TopType
+reaches _     TypeVar{}            = error "reaches TypeVar"
 reaches typeEnv (SumType srcPartials) = do
   resultsByPartials <- mapM (reachesPartial typeEnv) $ splitPartialLeafs srcPartials
   return $ unionTypes <$> sequence resultsByPartials
@@ -75,6 +76,7 @@ reaches typeEnv (SumType srcPartials) = do
 
 arrowConstrainUbs :: TypeEnv s -> Type -> Type -> ST s (TypeCheckResult (Type, Type))
 arrowConstrainUbs _ TopType dest = return $ return (TopType, dest)
+arrowConstrainUbs _ TypeVar{} _ = error "arrowConstrainUbs typeVar"
 arrowConstrainUbs typeEnv (SumType srcPartials) dest = do
   let srcPartialList = splitPartialLeafs srcPartials
   partialMap <- sequence $ H.fromList $ zip srcPartialList $ map (reachesPartial typeEnv) srcPartialList

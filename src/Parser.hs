@@ -108,7 +108,7 @@ pPatternGuard = fromMaybe NoGuard <$> optional (try pIfGuard
 pObjTreeVar :: Parser (TypeVarName, ParseMeta)
 pObjTreeVar = do
   var <- tvar
-  return (var, emptyMeta)
+  return (var, PreTyped $ TypeVar var)
 
 pObjTreeArg :: Parser (ArgName, PObjArg)
 pObjTreeArg = do
@@ -182,19 +182,29 @@ pTypeArg :: Parser (String, Type)
 pTypeArg = do
   argName <- identifier
   _ <- symbol "="
-  tp <- tidentifier <|> tvar
+  tp <- tidentifier
   return (argName, SumType $ joinPartialLeafs [(tp, H.empty, H.empty)])
+
+pTypeVar :: Parser Type
+pTypeVar = TypeVar <$> tvar
 
 pLeafType :: Parser PartialType
 pLeafType = do
-  name <- tidentifier <|> tvar
+  name <- tidentifier
   maybeArgs <- optional $ parens (sepBy1 pTypeArg (symbol ","))
   case maybeArgs of
     Just args -> return (name, H.empty, H.fromList args)
     Nothing -> return (name, H.empty, H.empty)
 
+pSingleType :: Parser Type
+pSingleType = pTypeVar
+              <|> do
+  leaf <- pLeafType
+  return $ SumType $ joinPartialLeafs [leaf]
+
 pType :: Parser Type
-pType = SumType . joinPartialLeafs <$> sepBy1 pLeafType (symbol "|")
+pType = pTypeVar
+        <|> SumType . joinPartialLeafs <$> sepBy1 pLeafType (symbol "|")
 
 pIfGuard :: Parser PGuard
 pIfGuard = do
@@ -209,8 +219,7 @@ pElseGuard = do
 pArrowRes :: Parser ParseMeta
 pArrowRes = do
   _ <- symbol "->"
-  tp <- pLeafType
-  return $ PreTyped $ SumType $ joinPartialLeafs [tp]
+  PreTyped <$> pSingleType
 
 pDeclLHS :: Parser PDeclLHS
 pDeclLHS = do
