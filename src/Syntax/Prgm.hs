@@ -128,6 +128,7 @@ instance Show e => Show (Guard e) where
   show NoGuard = ""
 
 instance Show m => Show (Object m) where
+  -- show (Object m basis name vars args) = printf "%s %s (%s) %s %s" (show basis) name (show m) maybeVarsString maybeArgsString
   show (Object _ basis name vars args) = printf "%s %s %s %s" (show basis) name maybeVarsString maybeArgsString
     where
       showVar (varName, varVal) = printf "%s = %s" varName (show varVal)

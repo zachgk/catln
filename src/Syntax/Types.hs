@@ -86,7 +86,6 @@ hasPartial (subName, subVars, subArgs) (SumType superPartials) = case H.lookup s
   Nothing -> False
   where
     hasArgs (_, superArgs) | H.keysSet subArgs /= H.keysSet superArgs = False
-    hasArgs (superVars, _) | H.keysSet subVars /= H.keysSet superVars = False
     hasArgs (superVars, superArgs) = hasAll subArgs superArgs && hasAll subVars superVars
     hasAll sub sup = and $ H.elems $ H.intersectionWith hasType sub sup
 
@@ -97,6 +96,9 @@ hasType TopType t = t == TopType
 hasType (TypeVar v) _ = error $ "Can't hasType type vars: " ++ v
 hasType _ (TypeVar v) = error $ "Can't hasType type vars: " ++ v
 hasType (SumType subPartials) superType = all (`hasPartial` superType) $ splitPartialLeafs subPartials
+
+subPartialOf :: PartialType -> PartialType -> Bool
+subPartialOf sub sup = sub `hasPartial` SumType (joinPartialLeafs [sup])
 
 -- TODO: This should combine overlapping partials
 compactType :: Type -> Type

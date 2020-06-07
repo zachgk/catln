@@ -61,7 +61,7 @@ reachesPartial (_, graph) partial@(partialName, _, _) = do
       s2 <- descriptor p2
       return (ubFromScheme s1, ubFromScheme s2)
     tryArrows (check, dest) = if hasPartial partial check
-      then Just dest
+      then Just dest -- TODO: May need to propagate partialVars into the dest here
       else Nothing
     idReach = SumType (joinPartialLeafs [partial])
     joinDestTypes destTypes = unionTypes (idReach:destTypes)

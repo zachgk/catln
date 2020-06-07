@@ -108,7 +108,7 @@ pPatternGuard = fromMaybe NoGuard <$> optional (try pIfGuard
 pObjTreeVar :: Parser (TypeVarName, ParseMeta)
 pObjTreeVar = do
   var <- tvar
-  return (var, PreTyped $ TypeVar var)
+  return (var, emptyMeta)
 
 pObjTreeArg :: Parser (ArgName, PObjArg)
 pObjTreeArg = do
