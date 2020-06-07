@@ -25,12 +25,13 @@ import           TypeCheck.Common
 import           TypeCheck.Show (showCon)
 
 fromPartialType :: PartialType -> Maybe PartialType
-fromPartialType (name, args) = case traverse fromType args of
-  Just args' -> Just (name, args')
+fromPartialType (name, vars, args) = case sequenceT (Just vars, traverse fromType args) of
+  Just (vars', args') -> Just (name, vars', args')
   Nothing -> Nothing
 
 fromType :: Type -> Maybe Type
 fromType TopType = Nothing
+fromType t@TypeVar{} = Just t
 fromType (SumType partials) = fmap (SumType . joinPartialLeafs) $ traverse fromPartialType $ splitPartialLeafs partials
 
 matchingConstraintHelper :: Pnt s -> Pnt s -> Pnt s -> ST s Bool
@@ -61,7 +62,7 @@ showMatchingConstraints cons matchVar = do
   mapM showCon filterCons
 
 toMeta :: DEnv s -> VarMeta s -> String -> ST s (TypeCheckResult Typed)
-toMeta env p name = do
+toMeta env (p, PreTyped pt) name = do
   scheme <- descriptor p
   case scheme of
     TypeCheckResE s -> return $ TypeCheckResE s
@@ -69,7 +70,9 @@ toMeta env p name = do
       Nothing -> do
         showMatching <- showMatchingConstraints env p
         return $ TypeCheckResE (FailInfer name scheme showMatching:notes)
-      Just t -> return $ TypeCheckResult notes (Typed t)
+      Just t -> case pt of
+        TypeVar{} -> return $ TypeCheckResult notes (Typed pt)
+        _ -> return $ TypeCheckResult notes (Typed t)
 
 toExpr :: DEnv s -> VExpr s -> ST s (TypeCheckResult TExpr)
 toExpr env (CExpr m c) = do
@@ -87,8 +90,8 @@ toExpr env (TupleApply m (baseM, baseExpr) args) = do
   baseExpr' <- toExpr env baseExpr
   args' <- mapM (toExpr env) args
   case m' of -- check for errors
-    TypeCheckResult notes tp@(Typed (SumType sumType)) | all (\(_, leafArgs) -> not (H.keysSet args' `isSubsetOf` H.keysSet leafArgs)) (splitPartialLeafs sumType) -> do
-                                        matchingConstraints <- showMatchingConstraints env m
+    TypeCheckResult notes tp@(Typed (SumType sumType)) | all (\(_, _, leafArgs) -> not (H.keysSet args' `isSubsetOf` H.keysSet leafArgs)) (splitPartialLeafs sumType) -> do
+                                        matchingConstraints <- showMatchingConstraints env $ getPnt m
                                         let sArgs = sequence args'
                                         return $ TypeCheckResE (TupleMismatch baseM' baseExpr' tp sArgs matchingConstraints:notes)
     _ -> return $ (\(m'', baseM'', baseExpr'', args'') -> TupleApply m'' (baseM'', baseExpr'') args'') <$> sequenceT (m', baseM', baseExpr', sequence args')
@@ -128,11 +131,12 @@ toObjArg env prefix (name, (m, maybeObj)) = do
     Nothing -> return $ (name,) . (,Nothing) <$> m'
 
 toObject :: DEnv s -> String -> VObject s -> ST s (TypeCheckResult TObject)
-toObject env prefix (Object m basis name args) = do
+toObject env prefix (Object m basis name vars args) = do
   let prefix' = prefix ++ "_" ++ name
   m' <- toMeta env m prefix'
+  vars' <- mapM (\(varName, varVal) -> (varName,) <$> toMeta env varVal (prefix' ++ "." ++ varName)) $ H.toList vars
   args' <- mapM (toObjArg env prefix') $ H.toList args
-  return $ (\(m'', args'') -> Object m'' basis name args'') <$> sequenceT  (m', H.fromList <$> sequence args')
+  return $ (\(m'', vars'', args'') -> Object m'' basis name vars'' args'') <$> sequenceT  (m', sequence $ H.fromList vars', H.fromList <$> sequence args')
 
 toObjectArrows :: DEnv s -> (VObject s, [VArrow s]) -> ST s (TypeCheckResult (TObject, [TArrow]))
 toObjectArrows env (obj, arrows) = do

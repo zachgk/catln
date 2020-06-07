@@ -62,11 +62,13 @@ getSchemeProp inScheme propName = do
   where
     getTypeProp :: Type -> Type
     getTypeProp TopType = TopType
+    getTypeProp TypeVar{} = error "getSchemeProp getTypeProp TypeVar"
     getTypeProp (SumType partials) = case getPartials partials of
       TopType -> TopType
+      TypeVar{} -> error "getSchemeProp getPartials TypeVar"
       (SumType partials') -> SumType partials'
     getPartials :: PartialLeafs -> Type
-    getPartials partials = unionTypes $ mapMaybe (H.lookup propName) $ concatMap S.toList (H.elems partials)
+    getPartials partials = unionTypes $ mapMaybe (H.lookup propName . snd) $ concatMap S.toList $ H.elems partials
 
 setSchemeProp :: Scheme -> ArgName -> Scheme -> Scheme
 setSchemeProp scheme propName pscheme = do
@@ -76,23 +78,25 @@ setSchemeProp scheme propName pscheme = do
   where
     setTypeUbProp :: Type -> Type -> Type
     setTypeUbProp TopType _ = TopType
+    setTypeUbProp TypeVar{} _ = error "setSchemeProp setTypeUbProp TypeVar"
     setTypeUbProp (SumType ubPartials) pub = SumType (joinPartialLeafs $ mapMaybe (setPartialsUb pub) $ splitPartialLeafs ubPartials)
     setPartialsUb TopType partial = Just partial
-    setPartialsUb pub (partialName, partialArgs) = case H.lookup propName partialArgs of
+    setPartialsUb pub (partialName, partialVars, partialArgs) = case H.lookup propName partialArgs of
       Just partialArg -> let partialArg' = intersectTypes partialArg pub
                           in if partialArg' == bottomType
                                 then Nothing
-                                else Just (partialName, H.insert propName partialArg' partialArgs)
+                                else Just (partialName, partialVars, H.insert propName partialArg' partialArgs)
       Nothing -> Nothing
     setTypeLbProp tp = tp -- TODO: Should set with union?
 
 addArgsToType :: Type -> S.HashSet ArgName -> Maybe Type
 addArgsToType TopType _ = Nothing
+addArgsToType TypeVar{} _ = error "addArgsToType TypeVar"
 addArgsToType (SumType partials) newArgs = Just $ SumType partials'
   where
     partialUpdate = H.fromList $ map (,TopType) $ S.toList newArgs
     partials' = joinPartialLeafs $ map fromPartial $ splitPartialLeafs partials
-    fromPartial (partialName, partialArgs) = (partialName, H.unionWith unionType partialArgs partialUpdate)
+    fromPartial (partialName, partialVars, partialArgs) = (partialName, partialVars, H.unionWith unionType partialArgs partialUpdate)
 
 -- returns updated (pruned) constraints and boolean if schemes were updated
 executeConstraint :: TypeEnv s -> Constraint s -> ST s ([Constraint s], Bool)

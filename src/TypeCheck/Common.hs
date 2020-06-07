@@ -117,7 +117,7 @@ type SObject = Object ShowMeta
 type SPrgm = Prgm ShowMeta
 type SReplRes = ReplRes ShowMeta
 
-type VarMeta s = Pnt s
+type VarMeta s = (Pnt s, PreTyped)
 type VExpr s = Expr (VarMeta s)
 type VCompAnnot s = CompAnnot (VExpr s)
 type VGuard s = Guard (VExpr s)
@@ -177,7 +177,7 @@ instance Show r => Show (TypeCheckResult r) where
   show (TypeCheckResE notes) = concat ["TCErr [", show notes, "]"]
 
 getPnt :: VarMeta s -> Pnt s
-getPnt x = x
+getPnt (p, _) = p
 
 getPntExpr :: VExpr s -> Pnt s
 getPntExpr = getPnt . getExprMeta

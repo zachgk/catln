@@ -96,7 +96,7 @@ type RawPrgm m = ([FileImport], [RawStatement m]) -- TODO: Include [Export]
 type ObjArg m = (m, Maybe (Object m))
 data ObjectBasis = FunctionObj | TypeObj | PatternObj
   deriving (Eq, Ord, Show, Generic, Hashable)
-data Object m = Object m ObjectBasis TypeName (H.HashMap ArgName (ObjArg m))
+data Object m = Object m ObjectBasis TypeName (H.HashMap TypeVarName m) (H.HashMap ArgName (ObjArg m))
   deriving (Eq, Ord, Generic, Hashable)
 
 data Arrow m = Arrow m [CompAnnot (Expr m)] (Guard (Expr m)) (Maybe (Expr m)) -- m is result metadata
@@ -128,8 +128,14 @@ instance Show e => Show (Guard e) where
   show NoGuard = ""
 
 instance Show m => Show (Object m) where
-  show (Object _ basis name args) = printf "%s %s %s" (show basis) name maybeArgsString
+  -- show (Object m basis name vars args) = printf "%s %s (%s) %s %s" (show basis) name (show m) maybeVarsString maybeArgsString
+  show (Object _ basis name vars args) = printf "%s %s %s %s" (show basis) name maybeVarsString maybeArgsString
     where
+      showVar (varName, varVal) = printf "%s = %s" varName (show varVal)
+      maybeVarsString :: String
+      maybeVarsString = if H.size vars == 0
+        then ""
+        else printf "<%s>" (intercalate ", " $ map showVar $ H.toList vars)
       showArg (argName, (_, Just argVal)) = printf "%s = %s" argName (show argVal)
       showArg (argName, (argM, Nothing)) = printf "%s %s" (show argM) argName
       maybeArgsString = if H.size args == 0
@@ -153,8 +159,8 @@ getExprMeta expr = case expr of
 
 type ArgMetaMap m = H.HashMap ArgName m
 formArgMetaMap :: Object m -> ArgMetaMap m
-formArgMetaMap (Object m _ name args) | H.null args = H.singleton name m
-formArgMetaMap (Object _ _ _ args) = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg args
+formArgMetaMap (Object m _ name _ args) | H.null args = H.singleton name m
+formArgMetaMap (Object _ _ _ _ args) = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg args
   where
     unionCombine _ _ = error "Duplicate var matched"
     fromArg k (m, Nothing) = H.singleton k m

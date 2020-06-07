@@ -17,6 +17,7 @@ import           Data.List                      ( intercalate )
 import           Syntax.Types
 import           Syntax.Prgm
 import           Syntax
+import           Text.Printf
 
 type EvalMeta = Typed
 type ECompAnnot = CompAnnot EvalMeta
@@ -45,18 +46,17 @@ instance Show Val where
   show (IntVal i)   = show i
   show (FloatVal d) = show d
   show (StrVal s)   = show s
-  show (TupleVal name args) = if H.null args
-    then name
-    else name ++ "(" ++ args' ++ ")"
+  show (TupleVal name args) = name ++ showArgs args
     where
+      showArgs as | H.null as = ""
+      showArgs as = printf "(%s)" (intercalate ", " $ map showArg $ H.toList as)
       showArg (argName, val) = argName ++ " = " ++ show val
-      args' = intercalate ", " $ map showArg $ H.toList args
   show NoVal   = "NoVal"
 
 getValType :: Val -> PartialType
 getValType IntVal{} = intLeaf
 getValType FloatVal{} = floatLeaf
 getValType StrVal{} = strLeaf
-getValType (TupleVal name args) = (name, fmap fromArg args)
+getValType (TupleVal name args) = (name, H.empty, fmap fromArg args)
   where fromArg arg = SumType $ joinPartialLeafs [getValType arg]
 getValType NoVal = error "getValType of NoVal"

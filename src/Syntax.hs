@@ -37,7 +37,7 @@ data ReplRes m
   deriving (Eq, Show)
 
 --- ResArrowTree
-type ResBuildEnv f = H.HashMap PartialType [(Guard (Expr Typed), ResArrow f)]
+type ResBuildEnv f = H.HashMap TypeName [(PartialType, Guard (Expr Typed), ResArrow f)]
 type ResExEnv f = H.HashMap (Arrow Typed) (ResArrowTree f, [ResArrowTree f]) -- (result, [compAnnot trees])
 data ResArrow f
   = ResEArrow (Object Typed) (Arrow Typed)
@@ -144,6 +144,10 @@ newtype PreTyped = PreTyped Type
 
 newtype Typed = Typed Type
   deriving (Eq, Ord, Generic, Hashable)
+
+preTypedToTypeVar :: PreTyped -> Maybe TypeVarName
+preTypedToTypeVar (PreTyped (TypeVar v)) = Just v
+preTypedToTypeVar _ = Nothing
 
 typedIs :: Typed -> Type -> Bool
 typedIs (Typed t1) t2 = t1 == t2

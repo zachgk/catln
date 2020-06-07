@@ -53,22 +53,23 @@ scopeSubDeclFunNamesInMeta prefix replaceNames (PreTyped (SumType partials)) = P
     scopeS = scopeSubDeclFunNamesInS prefix replaceNames
     partials' = H.fromList $ map (first scopeS) $ H.toList partials
 scopeSubDeclFunNamesInMeta _ _ m@(PreTyped TopType) = m
+scopeSubDeclFunNamesInMeta _ _ m@(PreTyped TypeVar{}) = m
 
 -- Renames sub functions by applying the parent names as a prefix to avoid name collisions
 scopeSubDeclFunNames :: TypeName -> [PSemiDecl] -> Maybe PSExpr -> [PSCompAnnot] -> ParseMeta -> ParseMeta -> ([PSemiDecl], Maybe PSExpr, [PSCompAnnot], ParseMeta, ParseMeta)
 scopeSubDeclFunNames prefix decls maybeExpr annots objM arrM = (decls', expr', annots', objM', arrM')
   where
-    declNames = S.fromList $ map (\(PSemiDecl (DeclLHS _ (Pattern (Object _ _ name _) _)) _ _) -> name) decls
+    declNames = S.fromList $ map (\(PSemiDecl (DeclLHS _ (Pattern (Object _ _ name _ _) _)) _ _) -> name) decls
     addPrefix n = prefix ++ "." ++ n
     scopeM = scopeSubDeclFunNamesInMeta prefix declNames
     objM' = scopeM objM
     arrM' = scopeM arrM
-    decls' = map (\(PSemiDecl (DeclLHS aM (Pattern (Object oM basis name args) guard)) annot subExpr) -> PSemiDecl (DeclLHS (scopeM aM) (Pattern (Object (scopeM oM) basis (addPrefix name) args) guard)) annot (fmap (scopeSubDeclFunNamesInExpr prefix declNames) subExpr)) decls
+    decls' = map (\(PSemiDecl (DeclLHS aM (Pattern (Object oM basis name vars args) guard)) annot subExpr) -> PSemiDecl (DeclLHS (scopeM aM) (Pattern (Object (scopeM oM) basis (addPrefix name) vars args) guard)) annot (fmap (scopeSubDeclFunNamesInExpr prefix declNames) subExpr)) decls
     expr' = fmap (scopeSubDeclFunNamesInExpr prefix declNames) maybeExpr
     annots' = map (\(CompAnnot n ca) -> CompAnnot n (fmap (scopeSubDeclFunNamesInExpr prefix declNames) ca)) annots
 
 currySubFunctionSignature :: H.HashMap ArgName PObjArg -> PSemiDecl -> PSemiDecl
-currySubFunctionSignature parentArgs (PSemiDecl (DeclLHS arrM (Pattern (Object objM basis name args) guard)) annot expr) = PSemiDecl (DeclLHS arrM (Pattern (Object objM basis name args') guard)) annot expr
+currySubFunctionSignature parentArgs (PSemiDecl (DeclLHS arrM (Pattern (Object objM basis name vars args) guard)) annot expr) = PSemiDecl (DeclLHS arrM (Pattern (Object objM basis name vars args') guard)) annot expr
   where args' = H.union args parentArgs
 
 
@@ -86,14 +87,14 @@ currySubFunctionsUpdateExpr toUpdate parentArgs (PSTupleApply tm (tbm, tbe) tArg
 currySubFunctions :: H.HashMap ArgName PObjArg -> [PSemiDecl] -> Maybe PSExpr -> [PSCompAnnot] -> ([PSemiDecl], Maybe PSExpr, [PSCompAnnot])
 currySubFunctions parentArgs decls expr annots = (decls', expr', annots')
   where
-    toUpdate = S.fromList $ map (\(PSemiDecl (DeclLHS _ (Pattern (Object _ _ declName _) _)) _ _) -> declName) decls
+    toUpdate = S.fromList $ map (\(PSemiDecl (DeclLHS _ (Pattern (Object _ _ declName _ _) _)) _ _) -> declName) decls
     decls2 = map (currySubFunctionSignature parentArgs) decls
     expr' = fmap (currySubFunctionsUpdateExpr toUpdate parentArgs) expr
     decls' = map (\(PSemiDecl lhs an e) -> PSemiDecl lhs an (fmap (currySubFunctionsUpdateExpr toUpdate parentArgs) e)) decls2
     annots' = map (\(CompAnnot n ca) -> CompAnnot n (fmap (currySubFunctionsUpdateExpr toUpdate parentArgs) ca)) annots
 
 removeSubDeclarations :: PDecl -> [PSemiDecl]
-removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern (Object objM basis declName args) guard1)) subStatements expr1) = decl':subDecls5
+removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern (Object objM basis declName vars args) guard1)) subStatements expr1) = decl':subDecls5
   where
     (subDecls, annots1) = splitDeclSubStatements subStatements
     subDecls2 = concatMap removeSubDeclarations subDecls
@@ -103,7 +104,7 @@ removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern (Object objM basis declNam
     subDecls3 = concat [subDecls2, subDecls21, subDecls22, subDecls23]
     (subDecls4, expr3, annots3, objM', arrM') = scopeSubDeclFunNames declName subDecls3 expr2 annots2 objM arrM
     (subDecls5, expr4, annots4) = currySubFunctions args subDecls4 expr3 annots3
-    decl' = PSemiDecl (DeclLHS arrM' (Pattern (Object objM' basis declName args) guard2)) annots4 expr4
+    decl' = PSemiDecl (DeclLHS arrM' (Pattern (Object objM' basis declName vars args) guard2)) annots4 expr4
 
 desExpr :: PArgMetaMap -> PSExpr -> DesExpr
 desExpr _ (PSCExpr m c) = CExpr m c
@@ -131,8 +132,8 @@ semiDesExpr r@(RawIfThenElse m i t e) = (concat [subI, subT, subE, [elseDecl, if
     (subI, i') = semiDesExpr i
     (subT, t') = semiDesExpr t
     (subE, e') = semiDesExpr e
-    ifDecl = PSemiDecl (DeclLHS emptyMeta (Pattern (Object emptyMeta FunctionObj condName H.empty) (IfGuard i'))) [] (Just t')
-    elseDecl = PSemiDecl (DeclLHS emptyMeta (Pattern (Object emptyMeta FunctionObj condName H.empty) ElseGuard)) [] (Just e')
+    ifDecl = PSemiDecl (DeclLHS emptyMeta (Pattern (Object emptyMeta FunctionObj condName H.empty H.empty) (IfGuard i'))) [] (Just t')
+    elseDecl = PSemiDecl (DeclLHS emptyMeta (Pattern (Object emptyMeta FunctionObj condName H.empty H.empty) ElseGuard)) [] (Just e')
     expr' = PSValue m condName
 semiDesExpr r@(RawMatch m e matchItems) = (subE ++ subMatchItems, expr')
   where
@@ -146,15 +147,15 @@ semiDesExpr r@(RawMatch m e matchItems) = (subE ++ subMatchItems, expr')
         (subPattGuard, pattGuard') = semiDesGuard pattGuard
         (subMatchExpr, matchExpr') = semiDesExpr matchExpr
         matchArg = H.singleton argName (emptyMeta, Just patt)
-        matchItemExpr' = PSemiDecl (DeclLHS emptyMeta (Pattern (Object emptyMeta FunctionObj condName matchArg) pattGuard')) [] (Just matchExpr')
+        matchItemExpr' = PSemiDecl (DeclLHS emptyMeta (Pattern (Object emptyMeta FunctionObj condName H.empty matchArg) pattGuard')) [] (Just matchExpr')
 semiDesExpr (RawCase _ _ ((Pattern _ ElseGuard, _):_)) = error "Can't use elseguard in match expr"
 semiDesExpr (RawCase _ _ []) = error "Empty case"
 semiDesExpr (RawCase _ _ [(_, matchExpr)]) = semiDesExpr matchExpr
-semiDesExpr r@(RawCase m e ((Pattern firstObj@(Object fm _ _ _) firstGuard, firstExpr):restCases)) = (concat [[firstDecl, restDecl], subFG, subFE, subRE, subE], expr')
+semiDesExpr r@(RawCase m e ((Pattern firstObj@(Object fm _ _ _ _) firstGuard, firstExpr):restCases)) = (concat [[firstDecl, restDecl], subFG, subFE, subRE, subE], expr')
   where
     condName = "\\" ++ take 6 (printf "%08x" (hash r))
     argName = condName ++ "-arg"
-    declObj = Object emptyMeta FunctionObj condName (H.singleton argName (fm, Just firstObj))
+    declObj = Object emptyMeta FunctionObj condName H.empty (H.singleton argName (fm, Just firstObj))
     firstDecl = PSemiDecl (DeclLHS m (Pattern declObj firstGuard')) [] (Just firstExpr')
     (subFG, firstGuard') = semiDesGuard firstGuard
     (subFE, firstExpr') = semiDesExpr firstExpr
@@ -190,15 +191,16 @@ desDecls :: [PDecl] -> PObjectMap
 desDecls decls = unionsWith (++) $ map desDecl decls
 
 addTypeDef :: PTypeDef -> (PObjectMap, ClassMap) -> (PObjectMap, ClassMap)
-addTypeDef (TypeDef _ TopType) _ = error "Invalid type def to desugar"
+addTypeDef (TypeDef _ TopType) _ = error "Invalid type def to desugar TopType"
+addTypeDef (TypeDef _ TypeVar{}) _ = error "Invalid type def to desugar TypeVar"
 addTypeDef (TypeDef name (SumType partials)) (objMap, classMap) = (objMap', classMap')
   where
     leafArgConvert partialType = (PreTyped partialType, Nothing)
-    partialToObj (partialName, partialArgs) = Object emptyMeta TypeObj partialName (fmap leafArgConvert partialArgs)
+    partialToObj (partialName, partialVars, partialArgs) = Object emptyMeta TypeObj partialName (fmap PreTyped partialVars) (fmap leafArgConvert partialArgs)
     newObjs = map partialToObj $ splitPartialLeafs partials
     additionalObjMap = H.fromList $ map (,[]) newObjs
     objMap' = mergeObjMaps objMap additionalObjMap
-    leafNames = fst <$> splitPartialLeafs partials
+    leafNames = (\(a, _, _) -> a) <$> splitPartialLeafs partials
     additionalClassMap = desClassDefs True $ map (,name) leafNames
     classMap' = mergeClassMaps additionalClassMap classMap
 

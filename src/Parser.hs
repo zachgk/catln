@@ -73,9 +73,12 @@ pCallArg = do
 
 pCall :: Parser PExpr
 pCall = do
-  funName <- (:) <$> letterChar <*> many alphaNumChar
-  argVals <- parens $ sepBy1 pCallArg (symbol ",")
-  return $ RawTupleApply emptyMeta (emptyMeta, RawValue emptyMeta funName) (H.fromList argVals)
+  funName <- identifier
+  maybeArgVals <- optional $ parens $ sepBy1 pCallArg (symbol ",")
+  let baseValue = RawValue emptyMeta funName
+  return $ case maybeArgVals of
+    Just argVals -> RawTupleApply emptyMeta (emptyMeta, baseValue) (H.fromList argVals)
+    Nothing -> baseValue
 
 pCompAnnot :: Parser PCompAnnot
 pCompAnnot = do
@@ -102,6 +105,11 @@ pPatternGuard = fromMaybe NoGuard <$> optional (try pIfGuard
                                               <|> pElseGuard
                                             )
 
+pObjTreeVar :: Parser (TypeVarName, ParseMeta)
+pObjTreeVar = do
+  var <- tvar
+  return (var, emptyMeta)
+
 pObjTreeArg :: Parser (ArgName, PObjArg)
 pObjTreeArg = do
   tp <- try $ optional pType
@@ -115,14 +123,17 @@ pObjTreeArg = do
 pObjTreeArgs :: Parser [(ArgName, PObjArg)]
 pObjTreeArgs = sepBy1 pObjTreeArg (symbol ",")
 
+-- TODO: This should not accept tp at root level
 pObjTree :: ObjectBasis -> Parser PObject
 pObjTree basis = do
   tp <- try $ optional pType
   name <- opIdentifier <|> identifier
-  args <- optional $ try $ parens pObjTreeArgs
+  vars <- try $ optional $ angleBraces $ sepBy1 pObjTreeVar (symbol ",")
+  args <- optional $ parens pObjTreeArgs
   let tp' = maybe emptyMeta PreTyped tp
+  let vars' = maybe H.empty H.fromList vars
   let args' = H.fromList $ fromMaybe [] args
-  return $ Object tp' basis name args'
+  return $ Object tp' basis name vars' args'
 
 pPattern :: ObjectBasis -> Parser PPattern
 pPattern basis = do
@@ -162,7 +173,6 @@ term = try (parens pExpr)
        <|> pStringLiteral
        <|> RawCExpr emptyMeta . CInt <$> integer
        <|> try pCall
-       <|> try (RawValue emptyMeta <$> identifier)
        <|> (RawValue emptyMeta <$> tidentifier)
 
 pExpr :: Parser PExpr
@@ -173,20 +183,28 @@ pTypeArg = do
   argName <- identifier
   _ <- symbol "="
   tp <- tidentifier
-  return (argName, SumType $ joinPartialLeafs [(tp, H.empty)])
+  return (argName, SumType $ joinPartialLeafs [(tp, H.empty, H.empty)])
 
-pTypeProduct :: Parser PartialType
-pTypeProduct = do
-  name <- tidentifier
-  args <- parens (sepBy1 pTypeArg (symbol ","))
-  return (name, H.fromList args)
+pTypeVar :: Parser Type
+pTypeVar = TypeVar <$> tvar
 
 pLeafType :: Parser PartialType
-pLeafType = try pTypeProduct
-        <|> ((,H.empty) <$> tidentifier)
+pLeafType = do
+  name <- tidentifier
+  maybeArgs <- optional $ parens (sepBy1 pTypeArg (symbol ","))
+  case maybeArgs of
+    Just args -> return (name, H.empty, H.fromList args)
+    Nothing -> return (name, H.empty, H.empty)
+
+pSingleType :: Parser Type
+pSingleType = pTypeVar
+              <|> do
+  leaf <- pLeafType
+  return $ SumType $ joinPartialLeafs [leaf]
 
 pType :: Parser Type
-pType = SumType . joinPartialLeafs <$> sepBy1 pLeafType (symbol "|")
+pType = pTypeVar
+        <|> SumType . joinPartialLeafs <$> sepBy1 pLeafType (symbol "|")
 
 pIfGuard :: Parser PGuard
 pIfGuard = do
@@ -201,8 +219,7 @@ pElseGuard = do
 pArrowRes :: Parser ParseMeta
 pArrowRes = do
   _ <- symbol "->"
-  tp <- pLeafType
-  return $ PreTyped $ SumType $ joinPartialLeafs [tp]
+  PreTyped <$> pSingleType
 
 pDeclLHS :: Parser PDeclLHS
 pDeclLHS = do
