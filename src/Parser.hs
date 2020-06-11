@@ -18,31 +18,16 @@ import           Text.Megaparsec
 import           Text.Megaparsec.Char
 
 import           Lexer
-import           Syntax.Prgm
 import           Syntax
 import Parser.Syntax
-import Parser.Expr
+import Parser.Expr (pExpr)
 import Parser.Decl
+import Parser.Type (pTypeDefStatement, pClassDefStatement)
 
 pImport :: Parser String
 pImport = do
   _ <- symbol "import"
   some printChar
-
-pTypeDefStatement :: Parser PStatement
-pTypeDefStatement = do
-  _ <- symbol "data"
-  name <- tidentifier
-  _ <- symbol "="
-  TypeDefStatement . TypeDef name <$> pType
-
-pClassDefStatement :: Parser PStatement
-pClassDefStatement = do
-  _ <- symbol "instance"
-  typeName <- tidentifier
-  _ <- symbol "of"
-  className <- tidentifier
-  return $ RawClassDefStatement (typeName, className)
 
 pStatement :: Parser PStatement
 pStatement = pTypeDefStatement

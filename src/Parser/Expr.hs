@@ -68,7 +68,7 @@ pCallArg = do
 
 pCall :: Parser PExpr
 pCall = do
-  funName <- identifier
+  funName <- identifier <|> tidentifier
   maybeArgVals <- optional $ parens $ sepBy1 pCallArg (symbol ",")
   let baseValue = RawValue emptyMeta funName
   return $ case maybeArgVals of
@@ -166,7 +166,7 @@ pObjTreeArgs = sepBy1 (try pObjTreeArgPattern <|> pObjTreeArgName) (symbol ",")
 
 pObjTree :: ObjectBasis -> Parser PObject
 pObjTree basis = do
-  name <- opIdentifier <|> identifier
+  name <- opIdentifier <|> identifier <|> tidentifier
   vars <- try $ optional $ angleBraces $ sepBy1 pObjTreeVar (symbol ",")
   args <- optional $ parens pObjTreeArgs
   let vars' = maybe H.empty H.fromList vars
