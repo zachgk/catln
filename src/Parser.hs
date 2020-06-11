@@ -110,30 +110,31 @@ pObjTreeVar = do
   var <- tvar
   return (var, emptyMeta)
 
-pObjTreeArg :: Parser (ArgName, PObjArg)
-pObjTreeArg = do
+pObjTreeArgPattern :: Parser (ArgName, PObjArg)
+pObjTreeArgPattern = do
+  val <- identifier
+  _ <- symbol "="
+  subTree <- pObjTree PatternObj
+  return (val, (emptyMeta, Just subTree))
+
+pObjTreeArgName :: Parser (ArgName, PObjArg)
+pObjTreeArgName = do
   tp <- try $ optional pType
   val <- identifier
   let tp' = maybe emptyMeta PreTyped tp
-  subTree <- optional $ do
-    _ <- symbol "="
-    pObjTree PatternObj
-  return (val, (tp', subTree))
+  return (val, (tp', Nothing))
 
 pObjTreeArgs :: Parser [(ArgName, PObjArg)]
-pObjTreeArgs = sepBy1 pObjTreeArg (symbol ",")
+pObjTreeArgs = sepBy1 (try pObjTreeArgPattern <|> pObjTreeArgName) (symbol ",")
 
--- TODO: This should not accept tp at root level
 pObjTree :: ObjectBasis -> Parser PObject
 pObjTree basis = do
-  tp <- try $ optional pType
   name <- opIdentifier <|> identifier
   vars <- try $ optional $ angleBraces $ sepBy1 pObjTreeVar (symbol ",")
   args <- optional $ parens pObjTreeArgs
-  let tp' = maybe emptyMeta PreTyped tp
   let vars' = maybe H.empty H.fromList vars
   let args' = H.fromList $ fromMaybe [] args
-  return $ Object tp' basis name vars' args'
+  return $ Object emptyMeta basis name vars' args'
 
 pPattern :: ObjectBasis -> Parser PPattern
 pPattern basis = do
@@ -198,9 +199,7 @@ pLeafType = do
 
 pSingleType :: Parser Type
 pSingleType = pTypeVar
-              <|> do
-  leaf <- pLeafType
-  return $ SumType $ joinPartialLeafs [leaf]
+              <|> SumType . joinPartialLeafs . pure <$> pLeafType
 
 pType :: Parser Type
 pType = pTypeVar
