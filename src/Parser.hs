@@ -179,6 +179,11 @@ term = try (parens pExpr)
 pExpr :: Parser PExpr
 pExpr = makeExprParser term ops
 
+pLeafVar :: Parser (TypeVarName, Type)
+pLeafVar = do
+  var <- tvar
+  return (var, TopType)
+
 pTypeArg :: Parser (String, Type)
 pTypeArg = do
   argName <- identifier
@@ -192,10 +197,11 @@ pTypeVar = TypeVar <$> tvar
 pLeafType :: Parser PartialType
 pLeafType = do
   name <- tidentifier
+  maybeVars <- try $ optional $ angleBraces $ sepBy1 pLeafVar (symbol ",")
   maybeArgs <- optional $ parens (sepBy1 pTypeArg (symbol ","))
-  case maybeArgs of
-    Just args -> return (name, H.empty, H.fromList args)
-    Nothing -> return (name, H.empty, H.empty)
+  let vars = maybe H.empty H.fromList maybeVars
+  let args = maybe H.empty H.fromList maybeArgs
+  return (name, vars, args)
 
 pSingleType :: Parser Type
 pSingleType = pTypeVar
