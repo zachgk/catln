@@ -15,8 +15,8 @@ module Desugarf where
 import           Data.Hashable
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
-import Control.Applicative ((<$>))
 import           Data.Bifunctor                 ( first )
+import           Data.List
 import           Text.Printf
 
 import           Syntax.Types
@@ -190,23 +190,20 @@ unionsWith f = foldl (H.unionWith f) H.empty
 desDecls :: [PDecl] -> PObjectMap
 desDecls decls = unionsWith (++) $ map desDecl decls
 
-addTypeDef :: PTypeDef -> (PObjectMap, ClassMap) -> (PObjectMap, ClassMap)
-addTypeDef (TypeDef _ TopType) _ = error "Invalid type def to desugar TopType"
-addTypeDef (TypeDef _ TypeVar{}) _ = error "Invalid type def to desugar TypeVar"
-addTypeDef (TypeDef name (SumType partials)) (objMap, classMap) = (objMap', classMap')
+desMultiTypeDefs :: [PMultiTypeDef] -> (PObjectMap, ClassMap)
+desMultiTypeDefs = foldr addTypeDef (H.empty, (H.empty, H.empty))
   where
-    leafArgConvert partialType = (PreTyped partialType, Nothing)
-    partialToObj (partialName, partialVars, partialArgs) = Object emptyMeta TypeObj partialName (fmap PreTyped partialVars) (fmap leafArgConvert partialArgs)
-    newObjs = map partialToObj $ splitPartialLeafs partials
-    additionalObjMap = H.fromList $ map (,[]) newObjs
-    objMap' = mergeObjMaps objMap additionalObjMap
-    leafNames = (\(a, _, _) -> a) <$> splitPartialLeafs partials
-    additionalClassMap = desClassDefs True $ map (,name) leafNames
-    classMap' = mergeClassMaps additionalClassMap classMap
+    addTypeDef (MultiTypeDef className objs) (objMap, (typeToClass, classToType)) = (objMap', (typeToClass', classToType'))
+      where
+        objMap' = mergeObjMaps objMap $ H.fromList $ map (,[]) objs
+        objNames = map (\(Object _ _ name _ _) -> name) objs
+        classToType' = H.insert className (True, S.fromList objNames) classToType
+        newTypeToClass = H.fromList $ map (,S.singleton className) objNames
+        typeToClass' = H.unionWith S.union typeToClass newTypeToClass
 
-desTypeDefs :: [PTypeDef] -> (PObjectMap, ClassMap)
-desTypeDefs = foldr addTypeDef empty
-  where empty = (H.empty, (H.empty, H.empty))
+desTypeDefs :: [PTypeDef] -> PObjectMap
+desTypeDefs = foldr addTypeDef H.empty
+  where addTypeDef (TypeDef obj) = H.insert obj []
 
 desClassDefs :: Sealed -> [RawClassDef] -> ClassMap
 desClassDefs sealed = foldr addDef empty
@@ -228,14 +225,16 @@ desStatements :: [PStatement] -> DesPrgm
 desStatements statements = (objMap, classMap)
   where
     splitStatements statement = case statement of
-          RawDeclStatement decl -> ([decl], [], [])
-          TypeDefStatement typedef -> ([], [typedef], [])
-          RawClassDefStatement classdef -> ([], [], [classdef])
-    (decls, types, classes) = (\(a, b, c) -> (concat a, concat b, concat c)) $ unzip3 $ map splitStatements statements
+          RawDeclStatement decl -> ([decl], [], [], [])
+          MultiTypeDefStatement multiTypedef -> ([], [multiTypedef], [], [])
+          TypeDefStatement typedef -> ([], [], [typedef], [])
+          RawClassDefStatement classdef -> ([], [], [], [classdef])
+    (decls, multiTypes, types, classes) = (\(a, b, c, d) -> (concat a, concat b, concat c, concat d)) $ unzip4 $ map splitStatements statements
     declObjMap = desDecls decls
-    (typeObjMap, sealedClasses) = desTypeDefs types
+    typeObjMap = desTypeDefs types
+    (multiTypeObjMap, sealedClasses) = desMultiTypeDefs multiTypes
     unsealedClasses = desClassDefs False classes
-    objMap = mergeObjMaps declObjMap typeObjMap
+    objMap = foldr mergeObjMaps H.empty [declObjMap, multiTypeObjMap, typeObjMap]
     classMap = mergeClassMaps sealedClasses unsealedClasses
 
 finalPasses :: DesPrgm -> DesPrgm

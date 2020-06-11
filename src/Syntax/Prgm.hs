@@ -79,13 +79,17 @@ data DeclLHS m e = DeclLHS m (Pattern m e)
 data RawDecl m = RawDecl (DeclLHS m (RawExpr m)) [RawDeclSubStatement m] (Maybe (RawExpr m))
   deriving (Eq, Ord, Show)
 
-data TypeDef m = TypeDef TypeName Type
+newtype TypeDef m = TypeDef (Object m)
+  deriving (Eq, Ord, Show)
+
+data MultiTypeDef m = MultiTypeDef ClassName [Object m]
   deriving (Eq, Ord, Show)
 
 type RawClassDef = (TypeName, ClassName)
 
 data RawStatement m
   = RawDeclStatement (RawDecl m)
+  | MultiTypeDefStatement (MultiTypeDef m)
   | TypeDefStatement (TypeDef m)
   | RawClassDefStatement RawClassDef
   deriving (Eq, Ord, Show)

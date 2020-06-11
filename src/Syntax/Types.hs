@@ -39,6 +39,7 @@ data Type
   deriving (Eq, Ord, Generic, Hashable)
 
 type Sealed = Bool -- whether the typeclass can be extended or not
+-- TODO: ClassMap should be more granular. Can have class to only a certain object or based on type variables.
 type ClassMap = (H.HashMap TypeName (S.HashSet ClassName), H.HashMap ClassName (Sealed, S.HashSet TypeName))
 
 instance Show Type where

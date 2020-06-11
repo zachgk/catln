@@ -22,7 +22,7 @@ import           Syntax
 import Parser.Syntax
 import Parser.Expr (pExpr)
 import Parser.Decl
-import Parser.Type (pTypeDefStatement, pClassDefStatement)
+import Parser.Type (pTypeStatement)
 
 pImport :: Parser String
 pImport = do
@@ -30,8 +30,7 @@ pImport = do
   some printChar
 
 pStatement :: Parser PStatement
-pStatement = pTypeDefStatement
-             <|> try pClassDefStatement
+pStatement = pTypeStatement
              <|> pRootDecl
 
 pPrgm :: Parser PPrgm

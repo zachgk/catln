@@ -26,6 +26,7 @@ type PDeclSubStatement = RawDeclSubStatement ParseMeta
 type PDeclLHS = DeclLHS ParseMeta PExpr
 type PDecl = RawDecl ParseMeta
 type PObjectMap = ObjectMap ParseMeta
+type PMultiTypeDef = MultiTypeDef ParseMeta
 type PTypeDef = TypeDef ParseMeta
 type PStatement = RawStatement ParseMeta
 type PArgMetaMap = H.HashMap ArgName ParseMeta

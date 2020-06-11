@@ -20,41 +20,43 @@ import           Text.Megaparsec
 import           Lexer
 import           Syntax.Types
 import           Syntax.Prgm
+import           Syntax
 import Parser.Syntax
 
-pLeafVar :: Parser (TypeVarName, Type)
+pLeafVar :: Parser (TypeVarName, ParseMeta)
 pLeafVar = do
   var <- tvar
-  return (var, TopType)
+  return (var, emptyMeta)
 
-pTypeArg :: Parser (String, Type)
+pTypeArg :: Parser (String, PObjArg)
 pTypeArg = do
   tp <- tvar <|> tidentifier
   argName <- identifier
-  return (argName, SumType $ joinPartialLeafs [(tp, H.empty, H.empty)])
+  return (argName, (PreTyped $ SumType $ joinPartialLeafs [(tp, H.empty, H.empty)], Nothing))
 
-pTypeVar :: Parser Type
-pTypeVar = TypeVar <$> tvar
-
-pLeafType :: Parser PartialType
+pLeafType :: Parser PObject
 pLeafType = do
   name <- tidentifier
   maybeVars <- try $ optional $ angleBraces $ sepBy1 pLeafVar (symbol ",")
   maybeArgs <- optional $ parens (sepBy1 pTypeArg (symbol ","))
   let vars = maybe H.empty H.fromList maybeVars
   let args = maybe H.empty H.fromList maybeArgs
-  return (name, vars, args)
+  return $ Object emptyMeta TypeObj name vars args
 
-pType :: Parser Type
-pType = pTypeVar
-        <|> SumType . joinPartialLeafs <$> sepBy1 pLeafType (symbol "|")
+pType :: Parser [PObject]
+pType = sepBy1 pLeafType (symbol "|")
+
+pMultiTypeDefStatement :: Parser PStatement
+pMultiTypeDefStatement = do
+  _ <- symbol "data"
+  name <- tidentifier
+  _ <- symbol "="
+  MultiTypeDefStatement . MultiTypeDef name <$> pType
 
 pTypeDefStatement :: Parser PStatement
 pTypeDefStatement = do
   _ <- symbol "data"
-  name <- tidentifier
-  _ <- symbol "="
-  TypeDefStatement . TypeDef name <$> pType
+  TypeDefStatement . TypeDef <$> pLeafType
 
 pClassDefStatement :: Parser PStatement
 pClassDefStatement = do
@@ -63,3 +65,8 @@ pClassDefStatement = do
   _ <- symbol "of"
   className <- tidentifier
   return $ RawClassDefStatement (typeName, className)
+
+pTypeStatement :: Parser PStatement
+pTypeStatement = try pMultiTypeDefStatement
+                 <|> try pTypeDefStatement
+                 <|> pClassDefStatement
