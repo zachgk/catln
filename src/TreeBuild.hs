@@ -37,7 +37,7 @@ type TBEnv f = (ResBuildEnv f, H.HashMap PartialType (ResArrow f))
 type VisitedArrows f = S.HashSet (ResArrow f)
 
 resArrowDestType :: PartialType -> ResArrow f -> Type
-resArrowDestType src (ResEArrow obj arr) = arrowDestType src obj arr
+resArrowDestType src (ResEArrow obj arr) = arrowDestType False src obj arr
 resArrowDestType _ (PrimArrow tp _) = tp
 resArrowDestType _ (ConstantArrow CInt{}) = intType
 resArrowDestType _ (ConstantArrow CFloat{}) = floatType

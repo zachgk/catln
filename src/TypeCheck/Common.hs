@@ -119,6 +119,7 @@ type SPrgm = Prgm ShowMeta
 type SReplRes = ReplRes ShowMeta
 
 data VarMeta = VarMeta Pnt PreTyped
+  deriving (Eq, Show)
 type VExpr = Expr VarMeta
 type VCompAnnot = CompAnnot VExpr
 type VGuard = Guard VExpr

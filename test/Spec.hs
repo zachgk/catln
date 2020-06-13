@@ -35,9 +35,9 @@ runTest includeStd fileName = testCaseSteps fileName $ \step -> do
         TypeCheckResult _ tprgm -> do
           -- step $ T.unpack $ pShow $ tprgm
           step "Eval tests..."
+          -- step $ T.unpack $ pShow $ evalBuildMain tprgm
           case evalMain tprgm of
             CErr notes -> do
-              -- step $ T.unpack $ pShow $ evalBuildMain tprgm
               assertFailure $ "Could not eval:\n\t " ++ intercalate "\n\t" (map prettyCNote notes)
             CRes [] (IntVal 0) -> return ()
             CRes notes res -> assertFailure $ "Bad result for:\n \t " ++ show res ++ "\n \tNotes\t" ++ concat (map prettyCNote notes)
@@ -63,6 +63,9 @@ mt k = do
   if elem fileName tests
      then runTests True [fileName]
      else error $ "invalid test name" ++ fileName ++ show tests
+
+mtt :: IO ()
+mtt = mt "match"
 
 main :: IO ()
 main = do

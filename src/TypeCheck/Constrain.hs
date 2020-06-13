@@ -31,7 +31,8 @@ checkScheme msg (TypeCheckResult notes (SType ub _ desc)) | ub == bottomType = T
 checkScheme _ scheme = scheme
 
 setScheme :: FEnv -> Pnt -> Scheme -> String -> FEnv
-setScheme env p scheme msg = setDescriptor env p (checkScheme msg scheme)
+setScheme env p scheme msg = setDescriptor env p (checkScheme msg' scheme)
+  where msg' = printf "setScheme %s" msg
 
 findSVar :: FEnv -> Scheme -> TypeCheckResult SplitSType
 findSVar env scheme = scheme >>= aux
@@ -129,6 +130,7 @@ executeConstraint env@(FEnv _ _ ((unionAllObjs, unionTypeObjs), _) _) cons@(Boun
   let unionScheme = descriptor env unionPnt
   case sequenceT (scheme, unionScheme) of
     TypeCheckResE _ -> ([], False, env)
+    TypeCheckResult _ (SType TopType _ _, _) -> ([cons], False, env)
     TypeCheckResult _ (SVar _ pnt', _) -> executeConstraint env (BoundedByObjs bnd pnt')
     TypeCheckResult _ (_, SVar{}) -> error "bound point is type var"
     TypeCheckResult _ (SType ub lb desc, SType objsUb _ _) -> do
@@ -174,6 +176,7 @@ executeConstraint env cons@(PropEq (superPnt, propName) subPnt) = do
 executeConstraint env cons@(AddArgs (srcPnt, newArgNames) destPnt) = do
   let srcScheme = descriptor env srcPnt
   let destScheme = descriptor env destPnt
+  let checkName = printf "AddArgs %s" (show newArgNames)
   case sequenceT (srcScheme, destScheme) of
     TypeCheckResE _ -> ([], False, env)
     TypeCheckResult _ (SVar _ srcPnt', _) -> executeConstraint env (AddArgs (srcPnt', newArgNames) destPnt)
@@ -182,14 +185,14 @@ executeConstraint env cons@(AddArgs (srcPnt, newArgNames) destPnt) = do
     TypeCheckResult notes (SType srcUb _ _, SType destUb destLb destDesc) ->
       case addArgsToType srcUb newArgNames of
         Just destUb' ->
-          case tryIntersectTypes destUb' destUb "AddArgs" of
+          case tryIntersectTypes destUb' destUb checkName of
             TypeCheckResult notes2 destUb'' -> do
               let destScheme' = TypeCheckResult (notes ++ notes2) (SType destUb'' destLb destDesc)
-              let env' = setScheme env destPnt destScheme' "AddArgs"
+              let env' = setScheme env destPnt destScheme' checkName
               ([cons | not (isSolved srcScheme || isSolved destScheme)], destScheme /= destScheme', env')
             TypeCheckResE notes2 -> do
               let res = TypeCheckResE (notes ++ notes2)
-              let env' = setScheme env destPnt res "AddArgs"
+              let env' = setScheme env destPnt res checkName
               ([], True, env')
         Nothing -> ([cons], False, env)
 executeConstraint env cons@(PowersetTo srcPnt destPnt) = do

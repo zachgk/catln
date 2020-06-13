@@ -13,7 +13,6 @@
 module TypeCheck.TypeGraph where
 
 import qualified Data.HashMap.Strict           as H
-import           Data.Tuple.Sequence
 import           Data.Maybe
 
 import           Syntax.Types
@@ -67,13 +66,12 @@ reachesPartial env@(FEnv _ _ (_, graph) _) partial@(partialName, _, _) = do
   schemes <- mapM tryArrow typeArrows
   return $ ReachesLeaf $ catMaybes schemes
   where
-    tryArrow (obj@(Object (VarMeta objP _) _ _ _ _), arr@(Arrow (VarMeta arrP _) _ _ _)) = do
+    tryArrow (obj@(Object (VarMeta objP _) _ _ _ _), arr) = do
       let objScheme = descriptor env objP
-      let arrScheme = descriptor env arrP
-      sequenceT (ubFromScheme env objScheme, ubFromScheme env arrScheme) >>= \(objUb, arrUb) -> return $ if hasPartial partial objUb
+      ubFromScheme env objScheme >>= \objUb -> return $ if hasPartial partial objUb
         -- TODO: Should this line below call `reaches` to make this recursive?
         -- otherwise, no reaches path requiring multiple steps can be found
-        then Just $ intersectTypes arrUb (arrowDestType partial obj arr)
+        then Just $ arrowDestType True partial obj arr
         else Nothing
 
 reaches :: FEnv -> Type -> TypeCheckResult ReachesTree
@@ -91,6 +89,13 @@ rootReachesPartial env src = do
   return (src, reachedWithId)
 
 arrowConstrainUbs :: FEnv -> Type -> Type -> TypeCheckResult (Type, Type)
+arrowConstrainUbs env@(FEnv _ _ ((unionAllObjsPnt, _), _) _) TopType dest@SumType{} = do
+  unionPnt <- descriptor env unionAllObjsPnt
+  case unionPnt of
+    (SType unionUb@SumType{} _ _) -> do
+      (src', dest') <- arrowConstrainUbs env unionUb dest
+      return (src', dest')
+    _ -> return (TopType, dest)
 arrowConstrainUbs _ TopType dest = return (TopType, dest)
 arrowConstrainUbs _ TypeVar{} _ = error "arrowConstrainUbs typeVar"
 arrowConstrainUbs env (SumType srcPartials) dest = do
