@@ -44,6 +44,7 @@ data ResArrow f
   | PrimArrow Type f
   | ConstantArrow Constant
   | ArgArrow Type String
+  deriving (Eq, Generic, Hashable)
 
 data ResArrowTree f
   = ResArrowCompose (ResArrowTree f) (ResArrowTree f)
@@ -53,6 +54,7 @@ data ResArrowTree f
   | ResArrowTupleApply (ResArrowTree f) (H.HashMap String (ResArrowTree f))
   | ResArrowSingle (ResArrow f)
   | ResArrowID
+  deriving (Eq, Generic, Hashable)
 
 instance Show (ResArrow f) where
   show (ResEArrow obj arrow) = printf "(ResEArrow: %s -> %s)" (show obj) (show arrow)

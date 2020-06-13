@@ -52,7 +52,7 @@ eval env st _ val (ResEArrow object arrow) = case envLookupResArrowTree env arro
           ) compAnnots
     evalTree env (("ResEArrow " ++ show arrow):st) newArrArgs val resArrowTree
   Nothing -> CErr [EvalCErr st $ "Failed to find arrow in eval resArrow: " ++ show arrow]
-eval _ _ _ (TupleVal _ args) (PrimArrow _ f) = return $ f args
+eval _ _ _ (TupleVal _ args) (PrimArrow _ (EPrim _ _ f)) = return $ f args
 eval _ _ _ _ (ConstantArrow (CInt i)) = return $ IntVal i
 eval _ _ _ _ (ConstantArrow (CFloat f)) = return $ FloatVal f
 eval _ _ _ _ (ConstantArrow (CStr s)) = return $ StrVal s
