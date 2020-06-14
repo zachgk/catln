@@ -197,7 +197,9 @@ desMultiTypeDefs = foldr addTypeDef (H.empty, (H.empty, H.empty))
       where
         objMap' = mergeObjMaps objMap $ H.fromList $ map (,[]) objs
         objNames = map (\(Object _ _ name _ _) -> name) objs
-        classToType' = H.insert className (True, S.fromList objNames) classToType
+        objTypes = unionTypes $ map (\(Object (PreTyped tp) _ _ _ _) -> tp) objs
+        unionSealType (sealed, a) (_, b) = (sealed, unionType a b)
+        classToType' = H.insertWith unionSealType className (True, objTypes) classToType
         newTypeToClass = H.fromList $ map (,S.singleton className) objNames
         typeToClass' = H.unionWith S.union typeToClass newTypeToClass
 
@@ -209,8 +211,8 @@ desClassDefs :: Sealed -> [RawClassDef] -> ClassMap
 desClassDefs sealed = foldr addDef empty
   where
     empty = (H.empty, H.empty)
-    addDef (typeName, className) (typeToClass, classToType) = (H.insertWith S.union typeName (S.singleton className) typeToClass, H.insertWith addClass className (sealed, S.singleton typeName) classToType)
-    addClass (cSealed, set1) (_, set2) = (cSealed, S.union set1 set2)
+    addDef (typeName, className) (typeToClass, classToType) = (H.insertWith S.union typeName (S.singleton className) typeToClass, H.insertWith addClass className (sealed, SumType $ joinPartialLeafs [(typeName, H.empty, H.empty)]) classToType)
+    addClass (cSealed, set1) (_, set2) = (cSealed, unionType set1 set2)
 
 mergeObjMaps :: PObjectMap -> PObjectMap -> PObjectMap
 mergeObjMaps = H.unionWith (++)
@@ -218,7 +220,7 @@ mergeObjMaps = H.unionWith (++)
 mergeClassMaps :: ClassMap -> ClassMap -> ClassMap
 mergeClassMaps (toClassA, toTypeA) (toClassB, toTypeB) = (H.unionWith S.union toClassA toClassB, H.unionWith mergeClasses toTypeA toTypeB)
   where mergeClasses (sealedA, setA) (sealedB, setB) = if sealedA == sealedB
-          then (sealedA, S.union setA setB)
+          then (sealedA, unionType setA setB)
           else error "Added to sealed class definition"
 
 desStatements :: [PStatement] -> DesPrgm

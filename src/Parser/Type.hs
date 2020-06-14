@@ -41,7 +41,8 @@ pLeafType = do
   maybeArgs <- optional $ parens (sepBy1 pTypeArg (symbol ","))
   let vars = maybe H.empty H.fromList maybeVars
   let args = maybe H.empty H.fromList maybeArgs
-  return $ Object emptyMeta TypeObj name vars args
+  let tp = PreTyped $ SumType $ joinPartialLeafs [(name, H.empty, H.empty)]
+  return $ Object tp TypeObj name vars args
 
 pType :: Parser [PObject]
 pType = sepBy1 pLeafType (symbol "|")

@@ -40,7 +40,7 @@ data Type
 
 type Sealed = Bool -- whether the typeclass can be extended or not
 -- TODO: ClassMap should be more granular. Can have class to only a certain object or based on type variables.
-type ClassMap = (H.HashMap TypeName (S.HashSet ClassName), H.HashMap ClassName (Sealed, S.HashSet TypeName))
+type ClassMap = (H.HashMap TypeName (S.HashSet ClassName), H.HashMap ClassName (Sealed, Type))
 
 instance Show Type where
   show TopType = "TopType"
