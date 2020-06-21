@@ -4,11 +4,11 @@ Documentation is important for developing a scalable language. Documentation exi
 
 ## Code Documentation
 
-Code documentation is probably the most well established. This includes documenting types, variables, methods, parameters, and return values. Documenting all of these ideas could help improve the understanding.
+Code documentation is probably the most well established. This includes documenting types, variables, methods, parameters, and return values. Documenting all of these ideas could help readers understand the code being written.
 
 However, there are mixed results of this. Natural documentation exists in the form of naming and type signatures. Naming requires a balance of typability and descriptiveness, so documentation can help pick up some slack there. But, factors about the types should be expressed formally using the signature rather than informally in documentation when possible. In that respect, I am hesitant to require this documentation as it could encourage users not to devote the proper attention to names and signatures.
 
-Another tricky aspect of this documentation is the independence of these docs. In reality, many separate pieces of docs are in fact related. They could link to each other, but transclusion would be better.
+Another tricky aspect of this documentation is the independence of these docs. In reality, many separate pieces of docs are in fact related. They could link to each other, but including would be better.
 
 ## Relationship Documentation
 

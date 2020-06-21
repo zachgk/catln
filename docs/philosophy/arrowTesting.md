@@ -6,7 +6,7 @@ The simplest use case for arrow testing is inheritance. In Java for example, you
 
 This is even more important in the case of multiple inheritance. The typical problem is that it is entirely unclear in the case of both parents having the same method which one should be used. Arrow testing guarantees that they must be equal so either choice would be equally valid. In this case, some simple heuristics can be used to try to select the best choice or it can be manually specified.
 
-Another benefit of arrow testing is that various methods can be tested by providing multiple definitions. For example, a more complicated fib method can be combined with the simpler variation to verify that the complicated one is still correct. It could also be used (along with an annotation to indicate tests) to write simple unit tests instead of a simple testing framework.
+Another benefit of arrow testing is that various methods can be tested by providing multiple definitions. For example, a more complicated fib method can be combined with the simpler variation to verify that the complicated one is still correct. It could also be used (along with an annotation to indicate tests) to write simple unit tests instead of a simple testing framework. Lastly, it can be used to describe invariates such as the Functor laws to help verify that class instances are correctly defined.
 
 ## Implicit Arrow Testing
 

@@ -44,9 +44,10 @@ It is often useful to have wrapper types such as Optional which help enable sum 
 
 
 ## Type Selection
+
 Another potential area for optimization is the selection of types. For example, users must pick between the different list variations including linked lists, array lists, skip lists, deque, trees, and hashmaps. Languages then have to choose between which implementations are worth supporting and how many can be supported before it merely confuses users. Some languages simply provide one option with the idea that it is sufficient.
 
-For this reason, it should be important to allow the compiler to choose between a number of implementations of an interface. This would also require some way for the implementer to provide guidance such as avoid this implementation if it calls this function. It can also take advantage of profiling through the unit and integration tests to determine how the interface is typically used. Users could also specify an actual value. But, even a poor heuristic from the compiler is likely to be better than users choosing without any particular thought.
+For this reason, it should be important to allow the compiler to choose between a number of implementations of an interface. This would also require some way for the implementer to provide guidance such as avoid this implementation if it calls this function. It can also take advantage of profiling through the unit and integration tests to determine how the interface is typically used. Users could also specify an actual value. But, even a poor heuristic from the compiler is likely to be better than users choosing without any particular thought. See [more](genericTypeUsage.md).
 
 ## Method specialization
 When there are multiple possible implementations of a function, there may not always be a best option. For example, sorting with quicksort is better for large arrays while sorting with selection sort can be faster with small ones. This can be used to improve the overall performance.
