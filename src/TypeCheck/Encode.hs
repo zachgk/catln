@@ -24,7 +24,7 @@ import           TypeCheck.Common
 import           TypeCheck.TypeGraph (buildTypeEnv)
 
 makeBaseFEnv :: ST s (FEnv s)
-makeBaseFEnv = return $ FEnv [] H.empty []
+makeBaseFEnv = return $ FEnv [] H.empty H.empty []
 
 fromMetaP :: FEnv s -> PreMeta -> String -> ST s (VarMeta s, Pnt s, FEnv s)
 fromMetaP env pretyped@(PreTyped mt) description  = case preTypedToTypeVar pretyped of
@@ -112,7 +112,7 @@ fromGuard _ env ElseGuard = return (ElseGuard, env)
 fromGuard _ env NoGuard = return (NoGuard, env)
 
 fromArrow :: VObject s -> FEnv s -> PArrow -> ST s (VArrow s, FEnv s)
-fromArrow obj@(Object _ _ objName objVars _) env1 (Arrow m annots aguard maybeExpr) = do
+fromArrow obj@(Object objM _ objName objVars _) env1 (Arrow m annots aguard maybeExpr) = do
   (m', p, env2) <- fromMetaP env1 m ("Arrow result from " ++ show objName)
   let argMetaMap = formArgMetaMap obj
   (annots', env3) <- mapMWithFEnv env2 (fromAnnot argMetaMap) annots
@@ -125,8 +125,9 @@ fromArrow obj@(Object _ _ objName objVars _) env1 (Arrow m annots aguard maybeEx
               Just varM -> addConstraints env5 [ArrowTo (getPntExpr vExpr) (getPnt varM), EqPoints (getPnt varM) p]
               Nothing -> error "unknown type var"
             Nothing -> addConstraints env5 [ArrowTo (getPntExpr vExpr) p]
+      let env7 = fAddTypeGraph env6 objName (getPnt objM, p)
       let arrow' = Arrow m' annots' aguard' (Just vExpr)
-      return (arrow', env6)
+      return (arrow', env7)
     Nothing -> return (Arrow m' annots' aguard' Nothing, env4)
 
 fromObjectMap :: FEnv s -> (VObject s, [PArrow]) -> ST s ((VObject s, [VArrow s]), FEnv s)
@@ -176,6 +177,6 @@ fromPrgm :: FEnv s -> PPrgm -> ST s (VPrgm s, TypeEnv s, FEnv s)
 fromPrgm env1 (objMap1, classMap) = do
   (objMap2, env2) <- mapMWithFEnv env1 fromObjectArrows $ H.toList objMap1
   (objMap3, env3) <- mapMWithFEnv env2 fromObjectMap objMap2
-  (typeEnv, typeEnvConstraints) <- buildTypeEnv objMap3
+  (typeEnv, typeEnvConstraints) <- buildTypeEnv env3 objMap3
   let env4 = addConstraints env3 typeEnvConstraints
   return ((objMap3, classMap), typeEnv, env4)

@@ -40,7 +40,7 @@ type Scheme = TypeCheckResult SType
 type Pnt s = Point s Scheme
 
 type EnvValMap s = (H.HashMap String (VarMeta s))
-data FEnv s = FEnv [Constraint s] (EnvValMap s) [TypeCheckError]
+data FEnv s = FEnv [Constraint s] (TypeGraph s) (EnvValMap s) [TypeCheckError]
 
 data BoundObjs = BoundAllObjs | BoundTypeObjs
   deriving (Eq, Ord, Show, Generic, Hashable)
@@ -141,7 +141,8 @@ type TReplRes = ReplRes TypedMeta
 
 -- implicit graph
 type UnionObj s = (Pnt s, Pnt s) -- a union of all TypeObj for argument inference, union of all Object types for function limiting
-type TypeGraph s = H.HashMap TypeName [(Pnt s, Pnt s)] -- H.HashMap (Root tuple name for filtering) [(match type), (if matching then can implicit to)]
+type TypeGraphVal s = (Pnt s, Pnt s) -- (match object type, if matching then can implicit to type)
+type TypeGraph s = H.HashMap TypeName [TypeGraphVal s] -- H.HashMap (Root tuple name for filtering) [vals]
 type TypeEnv s = (UnionObj s, TypeGraph s)
 
 instance Show TypeCheckError where
@@ -183,18 +184,21 @@ getPntExpr :: VExpr s -> Pnt s
 getPntExpr = getPnt . getExprMeta
 
 addErr :: FEnv s -> TypeCheckError -> FEnv s
-addErr (FEnv cons pmap errs) newErr = FEnv cons pmap (newErr:errs)
+addErr (FEnv cons graph pmap errs) newErr = FEnv cons graph pmap (newErr:errs)
 
 fLookup :: FEnv s -> String -> (Maybe (VarMeta s), FEnv s)
-fLookup env@(FEnv _ pmap _) k = case H.lookup k pmap of
+fLookup env@(FEnv _ _ pmap _) k = case H.lookup k pmap of
   Just v  -> (Just v, env)
   Nothing -> (Nothing, addErr env (GenTypeCheckError $ "Failed to lookup " ++ k))
 
 addConstraints :: FEnv s -> [Constraint s] -> FEnv s
-addConstraints (FEnv oldCons defMap errs) newCons = FEnv (newCons ++ oldCons) defMap errs
+addConstraints (FEnv oldCons graph defMap errs) newCons = FEnv (newCons ++ oldCons) graph defMap errs
 
 fInsert :: FEnv s -> String -> VarMeta s -> FEnv s
-fInsert (FEnv cons pmap errs) k v = FEnv cons (H.insert k v pmap) errs
+fInsert (FEnv cons graph pmap errs) k v = FEnv cons graph (H.insert k v pmap) errs
+
+fAddTypeGraph :: FEnv s -> TypeName -> TypeGraphVal s -> FEnv s
+fAddTypeGraph (FEnv cons graph pmap errs) k v = FEnv cons (H.insertWith (++) k [v] graph) pmap errs
 
 tryIntersectTypes :: Type -> Type -> String -> TypeCheckResult Type
 tryIntersectTypes a b desc= let c = intersectTypes a b
