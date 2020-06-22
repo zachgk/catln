@@ -30,10 +30,10 @@ fromMetaP :: FEnv s -> PreMeta -> String -> ST s (VarMeta s, Pnt s, FEnv s)
 fromMetaP env pretyped@(PreTyped mt) description  = case preTypedToTypeVar pretyped of
   Just _ -> do
     p <- fresh (TypeCheckResult [] $ SType TopType bottomType description)
-    return ((p, pretyped), p, env)
+    return (VarMeta p pretyped, p, env)
   Nothing -> do
     p <- fresh (TypeCheckResult [] $ SType mt bottomType description)
-    return ((p, pretyped), p, env)
+    return (VarMeta p pretyped, p, env)
 
 fromMeta :: FEnv s -> PreMeta -> String -> ST s (VarMeta s, FEnv s)
 fromMeta env m description = do

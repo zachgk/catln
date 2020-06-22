@@ -117,7 +117,7 @@ type SObject = Object ShowMeta
 type SPrgm = Prgm ShowMeta
 type SReplRes = ReplRes ShowMeta
 
-type VarMeta s = (Pnt s, PreTyped)
+data VarMeta s = VarMeta (Pnt s) PreTyped
 type VExpr s = Expr (VarMeta s)
 type VCompAnnot s = CompAnnot (VExpr s)
 type VGuard s = Guard (VExpr s)
@@ -144,6 +144,9 @@ type UnionObj s = (Pnt s, Pnt s) -- a union of all TypeObj for argument inferenc
 type TypeGraphVal s = (VObject s, VArrow s) -- (match object type, if matching then can implicit to type in arrow)
 type TypeGraph s = H.HashMap TypeName [TypeGraphVal s] -- H.HashMap (Root tuple name for filtering) [vals]
 type TypeEnv s = (UnionObj s, TypeGraph s)
+
+instance Meta (VarMeta s) where
+  getMetaType (VarMeta _ p) = getMetaType p
 
 instance Show TypeCheckError where
   show (GenTypeCheckError s) = s
@@ -178,7 +181,7 @@ instance Show r => Show (TypeCheckResult r) where
   show (TypeCheckResE notes) = concat ["TCErr [", show notes, "]"]
 
 getPnt :: VarMeta s -> Pnt s
-getPnt (p, _) = p
+getPnt (VarMeta p _) = p
 
 getPntExpr :: VExpr s -> Pnt s
 getPntExpr = getPnt . getExprMeta

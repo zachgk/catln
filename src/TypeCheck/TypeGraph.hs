@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 --------------------------------------------------------------------
 -- |
 -- Module    :  TypeCheck.TypeGraph
@@ -44,21 +45,16 @@ ubFromScheme (TypeCheckResult _ (SType ub _ _))  = return ub
 ubFromScheme (TypeCheckResE notes) = TypeCheckResE notes
 
 reachesPartial :: TypeEnv s -> PartialType -> ST s (TypeCheckResult Type)
-reachesPartial (_, graph) partial@(partialName, _, partialArgs) = do
+reachesPartial (_, graph) partial@(partialName, _, _) = do
   let typeArrows = H.lookupDefault [] partialName graph
   schemes <- mapM tryArrow typeArrows
   return $ joinDestTypes . catMaybes <$> sequence schemes
   where
-    tryArrow (Object (objP, _) _ _ _ objArgs, Arrow (arrP, arrPreT) _ _ _) = do
+    tryArrow (obj@(Object (VarMeta objP _) _ _ _ _), arr@(Arrow (VarMeta arrP _) _ _ _)) = do
       objScheme <- descriptor objP
       arrScheme <- descriptor arrP
       return $ sequenceT (ubFromScheme objScheme, ubFromScheme arrScheme) >>= \(objUb, arrUb) -> return $ if hasPartial partial objUb
-        then case preTypedToTypeVar arrPreT of
-               Just typeVar -> case H.elems $ H.intersectionWith const partialArgs $ H.filter (\((_, PreTyped (TypeVar t)), _) -> t == typeVar) objArgs of
-                 [] -> Just arrUb
-                 -- if the result is a type variable then it should be the intersection of all type variable args in the partial
-                 partialAtArgs -> Just $ intersectAllTypes partialAtArgs
-               Nothing -> Just arrUb
+        then Just $ intersectTypes arrUb (arrowDestType partial obj arr)
         else Nothing
     idReach = SumType (joinPartialLeafs [partial])
     joinDestTypes destTypes = unionTypes (idReach:destTypes)

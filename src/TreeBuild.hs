@@ -37,13 +37,7 @@ type TBEnv f = (ResBuildEnv f, H.HashMap PartialType (ResArrow f))
 type VisitedArrows f = S.HashSet (ResArrow f)
 
 resArrowDestType :: PartialType -> ResArrow f -> Type
-resArrowDestType (_, _, srcArgs) (ResEArrow (Object _ _ _ _ objArgs) (Arrow (Typed typeVar@TypeVar{}) _ _ (Just expr))) = case H.toList $ H.filter (\(Typed t, _) -> t == typeVar) objArgs of
-  ((matchingArgName, _):_) -> case H.lookup matchingArgName srcArgs of
-    Just srcArg -> srcArg
-    Nothing -> error "Bad arg search in resArrowDestType"
-  [] -> (\(Typed t) -> t) $ getExprMeta expr
-resArrowDestType _ (ResEArrow _ (Arrow _ _ _ (Just expr))) = (\(Typed t) -> t) $ getExprMeta expr
-resArrowDestType _ (ResEArrow _ (Arrow (Typed tp) _ _ Nothing)) = tp
+resArrowDestType src (ResEArrow obj arr) = arrowDestType src obj arr
 resArrowDestType _ (PrimArrow tp _) = tp
 resArrowDestType _ (ConstantArrow CInt{}) = intType
 resArrowDestType _ (ConstantArrow CFloat{}) = floatType

@@ -62,7 +62,7 @@ showMatchingConstraints cons matchVar = do
   mapM showCon filterCons
 
 toMeta :: DEnv s -> VarMeta s -> String -> ST s (TypeCheckResult Typed)
-toMeta env (p, PreTyped pt) name = do
+toMeta env (VarMeta p (PreTyped pt)) name = do
   scheme <- descriptor p
   case scheme of
     TypeCheckResE s -> return $ TypeCheckResE s

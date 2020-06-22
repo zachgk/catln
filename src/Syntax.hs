@@ -160,3 +160,25 @@ instance Show PreTyped where
 instance Show Typed where
   show (Typed t) = show t
 
+class Meta m where
+  getMetaType :: m -> Type
+
+instance Meta PreTyped where
+  getMetaType (PreTyped t) = t
+
+instance Meta Typed where
+  getMetaType (Typed t) = t
+
+arrowDestType :: (Meta m) => PartialType -> Object m -> Arrow m -> Type
+arrowDestType (_, _, srcArgs) (Object _ _ _ _ objArgs) (Arrow arrM _ _ maybeExpr) = case getMetaType arrM of
+  arrType@TypeVar{} -> case H.elems $ H.intersectionWith const srcArgs $ H.filter (\(m, _) -> getMetaType m == arrType) objArgs of
+    [] -> case maybeExpr of
+      Just (Arg m _) -> getMetaType m
+      Just e -> getMetaType $ getExprMeta e
+      Nothing -> arrType
+    -- if the result is a type variable then it should be the intersection of all type variable args in the src
+    srcArgsAtTypeVar -> intersectAllTypes srcArgsAtTypeVar
+  arrType -> case maybeExpr of
+    Just (Arg m _) -> getMetaType m
+    Just e -> getMetaType $ getExprMeta e
+    Nothing -> arrType
