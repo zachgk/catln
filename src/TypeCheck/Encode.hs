@@ -27,13 +27,13 @@ makeBaseFEnv :: ST s (FEnv s)
 makeBaseFEnv = return $ FEnv [] H.empty H.empty []
 
 fromMetaP :: FEnv s -> PreMeta -> String -> ST s (VarMeta s, Pnt s, FEnv s)
-fromMetaP env pretyped@(PreTyped mt) description  = case preTypedToTypeVar pretyped of
+fromMetaP env m description  = case metaTypeVar m of
   Just _ -> do
     p <- fresh (TypeCheckResult [] $ SType TopType bottomType description)
-    return (VarMeta p pretyped, p, env)
+    return (VarMeta p m, p, env)
   Nothing -> do
-    p <- fresh (TypeCheckResult [] $ SType mt bottomType description)
-    return (VarMeta p pretyped, p, env)
+    p <- fresh (TypeCheckResult [] $ SType (getMetaType m) bottomType description)
+    return (VarMeta p m, p, env)
 
 fromMeta :: FEnv s -> PreMeta -> String -> ST s (VarMeta s, FEnv s)
 fromMeta env m description = do
@@ -120,7 +120,7 @@ fromArrow obj@(Object _ _ objName objVars _) env1 (Arrow m annots aguard maybeEx
   case maybeExpr of
     Just expr -> do
       (vExpr, env5) <- fromExpr argMetaMap env4 expr
-      let env6 = case preTypedToTypeVar m of
+      let env6 = case metaTypeVar m of
             Just typeVarName -> case H.lookup typeVarName objVars of
               Just varM -> addConstraints env5 [ArrowTo (getPntExpr vExpr) (getPnt varM), EqPoints (getPnt varM) p]
               Nothing -> error "unknown type var"

@@ -147,13 +147,6 @@ newtype PreTyped = PreTyped Type
 newtype Typed = Typed Type
   deriving (Eq, Ord, Generic, Hashable)
 
-preTypedToTypeVar :: PreTyped -> Maybe TypeVarName
-preTypedToTypeVar (PreTyped (TypeVar v)) = Just v
-preTypedToTypeVar _ = Nothing
-
-typedIs :: Typed -> Type -> Bool
-typedIs (Typed t1) t2 = t1 == t2
-
 instance Show PreTyped where
   show (PreTyped t) = show t
 
@@ -182,3 +175,8 @@ arrowDestType (_, _, srcArgs) (Object _ _ _ _ objArgs) (Arrow arrM _ _ maybeExpr
     Just (Arg m _) -> getMetaType m
     Just e -> getMetaType $ getExprMeta e
     Nothing -> arrType
+
+metaTypeVar :: (Meta m) => m -> Maybe TypeVarName
+metaTypeVar m = case getMetaType m of
+  TypeVar v -> Just v
+  _ -> Nothing
