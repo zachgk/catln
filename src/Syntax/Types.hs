@@ -119,6 +119,9 @@ unionType (SumType aPartials) (SumType bPartials) = compactType $ SumType partia
 unionTypes :: Foldable f => f Type -> Type
 unionTypes = foldr unionType bottomType
 
+intersectAllTypes :: Foldable f => f Type -> Type
+intersectAllTypes = foldr intersectTypes TopType
+
 intersectTypes :: Type -> Type -> Type
 intersectTypes TopType t = t
 intersectTypes t TopType = t

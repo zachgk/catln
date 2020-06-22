@@ -112,7 +112,7 @@ fromGuard _ env ElseGuard = return (ElseGuard, env)
 fromGuard _ env NoGuard = return (NoGuard, env)
 
 fromArrow :: VObject s -> FEnv s -> PArrow -> ST s (VArrow s, FEnv s)
-fromArrow obj@(Object objM _ objName objVars _) env1 (Arrow m annots aguard maybeExpr) = do
+fromArrow obj@(Object _ _ objName objVars _) env1 (Arrow m annots aguard maybeExpr) = do
   (m', p, env2) <- fromMetaP env1 m ("Arrow result from " ++ show objName)
   let argMetaMap = formArgMetaMap obj
   (annots', env3) <- mapMWithFEnv env2 (fromAnnot argMetaMap) annots
@@ -125,8 +125,8 @@ fromArrow obj@(Object objM _ objName objVars _) env1 (Arrow m annots aguard mayb
               Just varM -> addConstraints env5 [ArrowTo (getPntExpr vExpr) (getPnt varM), EqPoints (getPnt varM) p]
               Nothing -> error "unknown type var"
             Nothing -> addConstraints env5 [ArrowTo (getPntExpr vExpr) p]
-      let env7 = fAddTypeGraph env6 objName (getPnt objM, p)
       let arrow' = Arrow m' annots' aguard' (Just vExpr)
+      let env7 = fAddTypeGraph env6 objName (obj, arrow')
       return (arrow', env7)
     Nothing -> return (Arrow m' annots' aguard' Nothing, env4)
 

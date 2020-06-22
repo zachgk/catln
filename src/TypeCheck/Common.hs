@@ -141,7 +141,7 @@ type TReplRes = ReplRes TypedMeta
 
 -- implicit graph
 type UnionObj s = (Pnt s, Pnt s) -- a union of all TypeObj for argument inference, union of all Object types for function limiting
-type TypeGraphVal s = (Pnt s, Pnt s) -- (match object type, if matching then can implicit to type)
+type TypeGraphVal s = (VObject s, VArrow s) -- (match object type, if matching then can implicit to type in arrow)
 type TypeGraph s = H.HashMap TypeName [TypeGraphVal s] -- H.HashMap (Root tuple name for filtering) [vals]
 type TypeEnv s = (UnionObj s, TypeGraph s)
 
