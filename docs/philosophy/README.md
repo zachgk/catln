@@ -14,5 +14,6 @@ This directory contains  a number of the core ideas and directives that drive th
 - [macros](macros.md) - For a strongly typed language, you must either support unsafe features, require duplicate code, or support macros. This describes the macro usage within the language.
 - [optimization](optimization.md) - Various aspects about performance optimization.
 - [syntacticSugar](syntacticSugar.md) - Various forms of syntactic sugar to add.
-- [documentation](documentation.md) - Discusses how documentation should be written.
+- [documentation](documentation.md) - Documentation organization.
+- [modules](modules.md) - module and code scoping systems.
 - [debugging](debugging.md) - Tools for debugging.
