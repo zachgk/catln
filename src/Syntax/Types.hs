@@ -30,13 +30,19 @@ type TypeVarName = Name
 type TypeName = Name
 type ClassName = Name
 
+
 type PartialType = (TypeName, H.HashMap TypeVarName Type, H.HashMap ArgName Type)
 type PartialLeafs = (H.HashMap TypeName (S.HashSet (H.HashMap TypeVarName Type, H.HashMap ArgName Type)))
 data Type
   = SumType PartialLeafs
-  | TypeVar TypeVarName
+  | TypeVar TypeVarAux
   | TopType
   deriving (Eq, Ord, Generic, Hashable)
+
+data TypeVarAux
+  = TVVar TypeVarName
+  | TVArg ArgName
+  deriving (Eq, Ord, Show, Generic, Hashable)
 
 type Sealed = Bool -- whether the typeclass can be extended or not
 -- TODO: ClassMap should be more granular. Can have class to only a certain object or based on type variables.
@@ -44,7 +50,7 @@ type ClassMap = (H.HashMap TypeName (S.HashSet ClassName), H.HashMap ClassName (
 
 instance Show Type where
   show TopType = "TopType"
-  show (TypeVar v) = v
+  show (TypeVar v) = show v
   show t | t == bottomType = "∅"
   show (SumType partials) = "(" ++ intercalate " | " partials' ++ ")"
     where
@@ -81,7 +87,7 @@ joinPartialLeafs = foldr (\(pName, pVars, pArgs) partials -> H.insertWith S.unio
 -- assumes a compacted super type, does not check in superLeafs
 hasPartial :: PartialType -> Type -> Bool
 hasPartial _ TopType = True
-hasPartial _ (TypeVar v) = error $ "Can't hasPartial type vars: " ++ v
+hasPartial _ (TypeVar v) = error $ "Can't hasPartial type vars: " ++ show v
 hasPartial (subName, subVars, subArgs) (SumType superPartials) = case H.lookup subName superPartials of
   Just superArgsOptions -> any hasArgs superArgsOptions
   Nothing -> False
@@ -94,8 +100,8 @@ hasPartial (subName, subVars, subArgs) (SumType superPartials) = case H.lookup s
 hasType :: Type -> Type -> Bool
 hasType _ TopType = True
 hasType TopType t = t == TopType
-hasType (TypeVar v) _ = error $ "Can't hasType type vars: " ++ v
-hasType _ (TypeVar v) = error $ "Can't hasType type vars: " ++ v
+hasType (TypeVar v) _ = error $ "Can't hasType type vars: " ++ show v
+hasType _ (TypeVar v) = error $ "Can't hasType type vars: " ++ show v
 hasType (SumType subPartials) superType = all (`hasPartial` superType) $ splitPartialLeafs subPartials
 
 subPartialOf :: PartialType -> PartialType -> Bool
@@ -110,8 +116,8 @@ compactType (SumType partials) = SumType partials
 unionType :: Type -> Type -> Type
 unionType TopType _ = TopType
 unionType _ TopType = TopType
-unionType (TypeVar v) _ = error $ "Can't union type vars: " ++ v
-unionType _ (TypeVar v) = error $ "Can't union type vars: " ++ v
+unionType (TypeVar v) _ = error $ "Can't union type vars: " ++ show v
+unionType _ (TypeVar v) = error $ "Can't union type vars: " ++ show v
 unionType (SumType aPartials) (SumType bPartials) = compactType $ SumType partials'
   where
     partials' = H.unionWith S.union aPartials bPartials
@@ -125,8 +131,8 @@ intersectAllTypes = foldr intersectTypes TopType
 intersectTypes :: Type -> Type -> Type
 intersectTypes TopType t = t
 intersectTypes t TopType = t
-intersectTypes (TypeVar v) _ = error $ "Can't intersect type vars: " ++ v
-intersectTypes _ (TypeVar v) = error $ "Can't intersect type vars: " ++ v
+intersectTypes (TypeVar v) _ = error $ "Can't intersect type vars: " ++ show v
+intersectTypes _ (TypeVar v) = error $ "Can't intersect type vars: " ++ show v
 intersectTypes (SumType aPartials) (SumType bPartials) = compactType $ SumType partials'
   where
     partials' = H.intersectionWith intersectArgsOptions (fmap S.toList aPartials) (fmap S.toList bPartials)

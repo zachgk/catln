@@ -11,7 +11,6 @@
 
 module TypeCheck.Decode where
 
-import           Data.Tuple.Sequence
 import qualified Data.HashMap.Strict as H
 
 import           Syntax.Types
@@ -19,16 +18,6 @@ import           Syntax.Prgm
 import           Syntax
 import           TypeCheck.Common
 import           TypeCheck.Show (showCon)
-
-fromPartialType :: PartialType -> Maybe PartialType
-fromPartialType (name, vars, args) = case sequenceT (Just vars, traverse fromType args) of
-  Just (vars', args') -> Just (name, vars', args')
-  Nothing -> Nothing
-
-fromType :: Type -> Maybe Type
-fromType TopType = Nothing
-fromType t@TypeVar{} = Just t
-fromType (SumType partials) = fmap (SumType . joinPartialLeafs) $ traverse fromPartialType $ splitPartialLeafs partials
 
 matchingConstraintHelper :: FEnv -> Pnt -> Pnt -> Pnt -> Bool
 matchingConstraintHelper env p p2 p3 = equivalent env p p2 || equivalent env p p3
@@ -55,16 +44,12 @@ stypeUb env (SVar _ p) = do
   stypeUb env stype'
 
 toMeta :: FEnv -> VarMeta -> String -> TypeCheckResult Typed
-toMeta env (VarMeta p (PreTyped pt)) name = do
+toMeta env (VarMeta p (PreTyped pt)) _ = do
   scheme <- descriptor env p
   ub <- stypeUb env scheme
-  case fromType (compactType ub) of
-    Nothing -> do
-      let showMatching = showMatchingConstraints env p
-      TypeCheckResE [FailInfer name scheme showMatching]
-    Just t -> case pt of
-      TypeVar{} -> return $ Typed pt
-      _ -> return $ Typed t
+  case pt of
+    TypeVar{} -> return $ Typed pt
+    _ -> return $ Typed $ compactType ub
 
 toExpr :: FEnv -> VExpr -> TypeCheckResult TExpr
 toExpr env (CExpr m c) = do

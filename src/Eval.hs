@@ -65,12 +65,11 @@ evalTree :: Env -> EStacktrace -> Args -> Val -> ResArrowTree EPrim -> CRes Val
 evalTree env st arrArgs val (ResArrowCompose t1 t2) = do
   val' <- evalTree env ("Compose first":st) arrArgs val t1
   evalTree env ("Compose second":st) arrArgs val' t2
-evalTree env st _ val (ResArrowMatch opts) = case H.lookup (getValType val) opts of
+evalTree env st arrArgs val (ResArrowMatch opts) = case H.lookup (getValType val) opts of
   Just resArrowTree -> case val of
     (TupleVal _ newArrArgs) ->
-      evalTree env (("match with " ++ show val):st) newArrArgs val resArrowTree
-    _ ->
-      CErr [EvalCErr st "Called match with a non tuple. I don't know if this is valid"]
+      evalTree env (("match with tuple " ++ show val):st) newArrArgs val resArrowTree
+    _ -> evalTree env (("match with tuple " ++ show val):st) arrArgs val resArrowTree
   Nothing -> CErr [EvalCErr st $ "Failed match in eval resArrowTree: \n\t" ++ show val ++ "\n\t" ++ show opts]
 evalTree env st arrArgs val (ResArrowCond [] elseTree) = evalTree env ("else":st) arrArgs val elseTree
 evalTree env st arrArgs val (ResArrowCond ((ifCondTree, ifThenTree):restIfTrees) elseTree) = do

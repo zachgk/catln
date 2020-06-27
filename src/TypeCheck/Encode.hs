@@ -32,12 +32,17 @@ fromMetaPNoObj env m description  = do
   return (VarMeta p m, p, env')
 
 fromMetaP :: FEnv -> VObject -> PreMeta -> String -> TypeCheckResult (VarMeta, Pnt, FEnv)
-fromMetaP env (Object _ _ _ objVars _) m description  = case metaTypeVar m of
-  Just varName -> case H.lookup varName objVars of
+fromMetaP env obj@(Object _ _ _ objVars _) m description  = case metaTypeVar m of
+  Just (TVVar varName) -> case H.lookup varName objVars of
     Just objVarM -> do
       let (p, env') = fresh env (TypeCheckResult [] $ SVar varName (getPnt objVarM))
       return (VarMeta p m, p, env')
     Nothing -> error $ "Unknown obj var: " ++ varName
+  Just (TVArg argName) -> case H.lookup argName $ formArgMetaMap obj of
+    Just objArgM -> do
+      let (p, env') = fresh env (TypeCheckResult [] $ SVar argName (getPnt objArgM))
+      return (VarMeta p m, p, env')
+    Nothing -> error $ "Unknown obj arg: " ++ argName
   Nothing -> fromMetaPNoObj env m description
 
 fromMeta :: FEnv -> VObject -> PreMeta -> String -> TypeCheckResult (VarMeta, FEnv)
@@ -84,11 +89,12 @@ fromExpr _ obj env1 (Value m name) = do
   lookupM <- fLookup env2 name
   return (Value m' name, addConstraints env2 [EqPoints p (getPnt lookupM)])
 fromExpr objArgs obj env1 (Arg m name) = do
-  (m', p, env2) <- fromMetaP env1 obj m ("Arg " ++ name)
+  (_, p, env2) <- fromMetaP env1 obj m ("Arg " ++ name)
+  let varM = PreTyped $ TypeVar $  TVArg name
+  (varM', env3) <- fromMeta env2 obj varM $ "ArgVar " ++ name
   case H.lookup name objArgs of
     Nothing -> error $ "Could not find arg " ++ name
-    Just lookupArg ->
-      return (Arg m' name, addConstraints env2 [EqPoints p (getPnt lookupArg)])
+    Just lookupArg -> return (Arg varM' name, addConstraints env3 [EqPoints p (getPnt lookupArg)])
 fromExpr objArgs obj env1 (TupleApply m (baseM, baseExpr) args) = do
   (m', p, env2) <- fromMetaP env1 obj m "TupleApply Meta"
   (baseM', baseP, env3) <- fromMetaP env2 obj baseM "TupleApply BaseMeta"
@@ -124,9 +130,10 @@ fromArrow obj@(Object _ _ objName objVars _) env1 (Arrow m annots aguard maybeEx
     Just expr -> do
       (vExpr, env5) <- fromExpr argMetaMap obj env4 expr
       let env6 = case metaTypeVar m of
-            Just typeVarName -> case H.lookup typeVarName objVars of
+            Just (TVVar typeVarName) -> case H.lookup typeVarName objVars of
               Just varM -> addConstraints env5 [ArrowTo (getPntExpr vExpr) (getPnt varM)]
-              Nothing -> error "unknown type var"
+              Nothing -> error "unknown type fromArrow"
+            Just TVArg{} -> error "Bad TVArg in fromArrow"
             Nothing -> addConstraints env5 [ArrowTo (getPntExpr vExpr) p]
       let arrow' = Arrow m' annots' aguard' (Just vExpr)
       let env7 = fAddTypeGraph env6 objName (obj, arrow')

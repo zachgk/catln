@@ -22,6 +22,7 @@ import           Data.List                      ( intercalate )
 import           GHC.Generics          (Generic)
 import           Text.Megaparsec.Error (ParseErrorBundle, errorBundlePretty)
 import qualified Data.Text.Lazy as T
+import           Data.Maybe
 import Text.Pretty.Simple
 import           Text.Printf
 
@@ -166,17 +167,17 @@ arrowDestType :: (Meta m) => PartialType -> Object m -> Arrow m -> Type
 arrowDestType (_, _, srcArgs) (Object _ _ _ _ objArgs) (Arrow arrM _ _ maybeExpr) = case getMetaType arrM of
   arrType@TypeVar{} -> case H.elems $ H.intersectionWith const srcArgs $ H.filter (\(m, _) -> getMetaType m == arrType) objArgs of
     [] -> case maybeExpr of
-      Just (Arg m _) -> getMetaType m
+      Just (Arg _ n) -> fromMaybe arrType (H.lookup n srcArgs)
       Just e -> getMetaType $ getExprMeta e
       Nothing -> arrType
     -- if the result is a type variable then it should be the intersection of all type variable args in the src
     srcArgsAtTypeVar -> intersectAllTypes srcArgsAtTypeVar
   arrType -> case maybeExpr of
-    Just (Arg m _) -> getMetaType m
+    Just (Arg _ n) -> fromMaybe arrType (H.lookup n srcArgs)
     Just e -> getMetaType $ getExprMeta e
     Nothing -> arrType
 
-metaTypeVar :: (Meta m) => m -> Maybe TypeVarName
+metaTypeVar :: (Meta m) => m -> Maybe TypeVarAux
 metaTypeVar m = case getMetaType m of
   TypeVar v -> Just v
   _ -> Nothing

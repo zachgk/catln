@@ -194,7 +194,7 @@ pTypeArg = do
   return (argName, SumType $ joinPartialLeafs [(tp, H.empty, H.empty)])
 
 pTypeVar :: Parser Type
-pTypeVar = TypeVar <$> tvar
+pTypeVar = TypeVar . TVVar <$> tvar
 
 pLeafType :: Parser PartialType
 pLeafType = do
