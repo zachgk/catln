@@ -48,9 +48,16 @@ matchingConstraint env p (UnionOf p2 p3s) = equivalent env p p2 || any (equivale
 showMatchingConstraints :: FEnv -> Pnt -> [SConstraint]
 showMatchingConstraints env@(FEnv _ cons _ _) matchVar = map (showCon env) $ filter (matchingConstraint env matchVar) cons
 
+stypeUb :: FEnv -> SType -> TypeCheckResult Type
+stypeUb _ (SType ub _ _) = return ub
+stypeUb env (SVar _ p) = do
+  stype' <- descriptor env p
+  stypeUb env stype'
+
 toMeta :: FEnv -> VarMeta -> String -> TypeCheckResult Typed
 toMeta env (VarMeta p (PreTyped pt)) name = do
-  scheme@(SType ub _ _) <- descriptor env p
+  scheme <- descriptor env p
+  ub <- stypeUb env scheme
   case fromType (compactType ub) of
     Nothing -> do
       let showMatching = showMatchingConstraints env p
