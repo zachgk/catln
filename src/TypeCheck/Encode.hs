@@ -24,7 +24,7 @@ import           TypeCheck.Common
 import           TypeCheck.TypeGraph (buildTypeEnv)
 
 makeBaseFEnv :: FEnv
-makeBaseFEnv = FEnv IM.empty [] ((0, 0), H.empty) H.empty []
+makeBaseFEnv = FEnv IM.empty [] ((0, 0), H.empty) H.empty
 
 fromMetaP :: FEnv -> PreMeta -> String -> TypeCheckResult (VarMeta, Pnt, FEnv)
 fromMetaP env m description  = case metaTypeVar m of

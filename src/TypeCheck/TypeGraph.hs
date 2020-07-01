@@ -30,7 +30,7 @@ buildUnionObj env1 objs = do
   let (unionTypeObjsPs, env5) = fresh env4 $ TypeCheckResult [] $ SType TopType bottomType $ S.singleton "unionTypeObjsPs"
   let constraints = [unionObjs unionAllObjs objs, unionObjs unionTypeObjs $ filterTypes objs, PowersetTo unionAllObjs unionAllObjsPs, PowersetTo unionTypeObjs unionTypeObjsPs]
   let unionObjs' = (unionAllObjsPs, unionTypeObjsPs)
-  let env6 = (\(FEnv pnts cons (_, graph) pmap errs) -> FEnv pnts cons (unionObjs', graph) pmap errs) env5
+  let env6 = (\(FEnv pnts cons (_, graph) pmap) -> FEnv pnts cons (unionObjs', graph) pmap) env5
   addConstraints env6 constraints
                     where
                       unionObjs pnt os = UnionOf pnt $ map (\(Object m _ _ _ _) -> getPnt m) os
@@ -44,7 +44,7 @@ ubFromScheme (TypeCheckResult _ (SType ub _ _))  = return ub
 ubFromScheme (TypeCheckResE notes) = TypeCheckResE notes
 
 reachesPartial :: FEnv -> PartialType -> TypeCheckResult Type
-reachesPartial env@(FEnv _ _ (_, graph) _ _) partial@(partialName, _, _) = do
+reachesPartial env@(FEnv _ _ (_, graph) _) partial@(partialName, _, _) = do
   let typeArrows = H.lookupDefault [] partialName graph
   schemes <- mapM tryArrow typeArrows
   return $ joinDestTypes $ catMaybes schemes

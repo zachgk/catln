@@ -124,7 +124,7 @@ executeConstraint env (BoundedByKnown subPnt boundTp) = do
       let subScheme' = fmap (\ub' -> SType ub' lb description) (tryIntersectTypes ub boundTp "executeConstraint BoundedBy")
       let env' = setDescriptor env subPnt subScheme'
       ([], subScheme /= subScheme', env')
-executeConstraint env@(FEnv _ _ ((unionAllObjs, unionTypeObjs), _) _ _) cons@(BoundedByObjs bnd pnt) = do
+executeConstraint env@(FEnv _ _ ((unionAllObjs, unionTypeObjs), _) _) cons@(BoundedByObjs bnd pnt) = do
   let scheme = descriptor env pnt
   let unionPnt = case bnd of
         BoundAllObjs -> unionAllObjs

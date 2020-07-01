@@ -40,8 +40,7 @@ type Scheme = TypeCheckResult SType
 type Pnt = Int
 
 type EnvValMap = (H.HashMap String VarMeta)
--- TODO: Remove FEnv's TypeCheckError list
-data FEnv = FEnv (IM.IntMap Scheme) [Constraint] TypeEnv EnvValMap [TypeCheckError]
+data FEnv = FEnv (IM.IntMap Scheme) [Constraint] TypeEnv EnvValMap
 
 data BoundObjs = BoundAllObjs | BoundTypeObjs
   deriving (Eq, Ord, Show, Generic, Hashable)
@@ -185,22 +184,19 @@ getPnt (VarMeta p _) = p
 getPntExpr :: VExpr -> Pnt
 getPntExpr = getPnt . getExprMeta
 
-addErr :: FEnv -> TypeCheckError -> FEnv
-addErr (FEnv pnts cons graph pmap errs) newErr = FEnv pnts cons graph pmap (newErr:errs)
-
 fLookup :: FEnv -> String -> TypeCheckResult VarMeta
-fLookup (FEnv _ _ _ pmap _) k = case H.lookup k pmap of
+fLookup (FEnv _ _ _ pmap) k = case H.lookup k pmap of
   Just v  -> return v
   Nothing -> TypeCheckResE [GenTypeCheckError $ "Failed to lookup " ++ k]
 
 addConstraints :: FEnv -> [Constraint] -> FEnv
-addConstraints (FEnv pnts oldCons graph defMap errs) newCons = FEnv pnts (newCons ++ oldCons) graph defMap errs
+addConstraints (FEnv pnts oldCons graph defMap) newCons = FEnv pnts (newCons ++ oldCons) graph defMap
 
 fInsert :: FEnv -> String -> VarMeta -> FEnv
-fInsert (FEnv pnts cons graph pmap errs) k v = FEnv pnts cons graph (H.insert k v pmap) errs
+fInsert (FEnv pnts cons graph pmap) k v = FEnv pnts cons graph (H.insert k v pmap)
 
 fAddTypeGraph :: FEnv -> TypeName -> TypeGraphVal -> FEnv
-fAddTypeGraph (FEnv pnts cons (unionObj, graph) pmap errs) k v = FEnv pnts cons (unionObj, H.insertWith (++) k [v] graph) pmap errs
+fAddTypeGraph (FEnv pnts cons (unionObj, graph) pmap) k v = FEnv pnts cons (unionObj, H.insertWith (++) k [v] graph) pmap
 
 tryIntersectTypes :: Type -> Type -> String -> TypeCheckResult Type
 tryIntersectTypes a b desc= let c = intersectTypes a b
@@ -211,19 +207,19 @@ tryIntersectTypes a b desc= let c = intersectTypes a b
 -- Point operations
 
 descriptor :: FEnv -> Pnt -> Scheme
-descriptor (FEnv pnts _ _ _ _) p = pnts IM.! p
+descriptor (FEnv pnts _ _ _) p = pnts IM.! p
 
 equivalent :: FEnv -> Pnt -> Pnt -> Bool
-equivalent (FEnv pnts _ _ _ _) p1 p2 = (pnts IM.! p1) == (pnts IM.! p2)
+equivalent (FEnv pnts _ _ _) p1 p2 = (pnts IM.! p1) == (pnts IM.! p2)
 
 fresh :: FEnv -> Scheme -> (Pnt, FEnv)
-fresh (FEnv pnts cons typeEnv pmap errs) scheme = (pnt', FEnv pnts' cons typeEnv pmap errs)
+fresh (FEnv pnts cons typeEnv pmap) scheme = (pnt', FEnv pnts' cons typeEnv pmap)
   where
     pnt' = IM.size pnts
     pnts' = IM.insert pnt' scheme pnts
 
 setDescriptor :: FEnv -> Pnt -> Scheme -> FEnv
-setDescriptor (FEnv pnts cons typeEnv pmap errs) p s = FEnv pnts' cons typeEnv pmap errs
+setDescriptor (FEnv pnts cons typeEnv pmap) p s = FEnv pnts' cons typeEnv pmap
   where pnts' = IM.insert p s pnts
 
 modifyDescriptor :: FEnv -> Pnt -> (Scheme -> Scheme) -> FEnv

@@ -46,7 +46,7 @@ matchingConstraint env p (PowersetTo p2 p3) = matchingConstraintHelper env p p2 
 matchingConstraint env p (UnionOf p2 p3s) = equivalent env p p2 || any (equivalent env p) p3s
 
 showMatchingConstraints :: FEnv -> Pnt -> [SConstraint]
-showMatchingConstraints env@(FEnv _ cons _ _ _) matchVar = map (showCon env) $ filter (matchingConstraint env matchVar) cons
+showMatchingConstraints env@(FEnv _ cons _ _) matchVar = map (showCon env) $ filter (matchingConstraint env matchVar) cons
 
 toMeta :: FEnv -> VarMeta -> String -> TypeCheckResult Typed
 toMeta env (VarMeta p (PreTyped pt)) name = do

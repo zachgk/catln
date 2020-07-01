@@ -23,7 +23,7 @@ runConstraintsLimit = 100
 typecheckPrgm :: PPrgm -> TypeCheckResult TPrgm
 typecheckPrgm pprgm = do
   let baseFEnv = makeBaseFEnv
-  (vprgm, env@(FEnv _ cons _ _ _)) <- fromPrgm baseFEnv pprgm
+  (vprgm, env@(FEnv _ cons _ _)) <- fromPrgm baseFEnv pprgm
   env' <- runConstraints runConstraintsLimit env cons
   toPrgm env' vprgm
 
@@ -31,7 +31,7 @@ traceTestPrgm :: PPrgm -> ([TypeCheckError], [(SPrgm, [SConstraint])])
 traceTestPrgm pprgm = do
   let baseFEnv = makeBaseFEnv
   case fromPrgm baseFEnv pprgm of
-    TypeCheckResult notes (vprgm, env@(FEnv _ cons _ _ _)) -> do
+    TypeCheckResult notes (vprgm, env@(FEnv _ cons _ _)) -> do
       let sprgm1 = showPrgm env vprgm
       let scons1 = showConstraints env cons
       case runConstraints runConstraintsLimit env cons of
