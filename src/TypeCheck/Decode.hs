@@ -11,12 +11,8 @@
 
 module TypeCheck.Decode where
 
-import           Control.Monad
-import           Control.Monad.ST
-import           Data.Functor
 import           Data.Tuple.Sequence
 import qualified Data.HashMap.Strict as H
-import           Data.UnionFind.ST
 
 import           Syntax.Types
 import           Syntax.Prgm
@@ -34,120 +30,104 @@ fromType TopType = Nothing
 fromType t@TypeVar{} = Just t
 fromType (SumType partials) = fmap (SumType . joinPartialLeafs) $ traverse fromPartialType $ splitPartialLeafs partials
 
-matchingConstraintHelper :: Pnt s -> Pnt s -> Pnt s -> ST s Bool
-matchingConstraintHelper p p2 p3 = do
-  c2 <- equivalent p p2
-  c3 <- equivalent p p3
-  return $ c2 || c3
+matchingConstraintHelper :: FEnv -> Pnt -> Pnt -> Pnt -> Bool
+matchingConstraintHelper env p p2 p3 = equivalent env p p2 || equivalent env p p3
 
-matchingConstraint :: Pnt s -> Constraint s -> ST s Bool
-matchingConstraint p (EqualsKnown p2 _) = equivalent p p2
-matchingConstraint p (EqPoints p2 p3) = matchingConstraintHelper p p2 p3
-matchingConstraint p (BoundedBy p2 p3) = matchingConstraintHelper p p2 p3
-matchingConstraint p (BoundedByKnown p2 _) = equivalent p p2
-matchingConstraint p (BoundedByObjs _ p2) = equivalent p p2
-matchingConstraint p (ArrowTo p2 p3) = matchingConstraintHelper p p2 p3
-matchingConstraint p (PropEq (p2, _) p3) = matchingConstraintHelper p p2 p3
-matchingConstraint p (AddArgs (p2, _) p3) = matchingConstraintHelper p p2 p3
-matchingConstraint p (PowersetTo p2 p3) = matchingConstraintHelper p p2 p3
-matchingConstraint p (UnionOf p2 p3s) = do
-  c2 <- equivalent p p2
-  c3s <- mapM (equivalent p) p3s
-  return $ c2 || or c3s
+matchingConstraint :: FEnv -> Pnt -> Constraint -> Bool
+matchingConstraint env p (EqualsKnown p2 _) = equivalent env p p2
+matchingConstraint env p (EqPoints p2 p3) = matchingConstraintHelper env p p2 p3
+matchingConstraint env p (BoundedBy p2 p3) = matchingConstraintHelper env p p2 p3
+matchingConstraint env p (BoundedByKnown p2 _) = equivalent env p p2
+matchingConstraint env p (BoundedByObjs _ p2) = equivalent env p p2
+matchingConstraint env p (ArrowTo p2 p3) = matchingConstraintHelper env p p2 p3
+matchingConstraint env p (PropEq (p2, _) p3) = matchingConstraintHelper env p p2 p3
+matchingConstraint env p (AddArgs (p2, _) p3) = matchingConstraintHelper env p p2 p3
+matchingConstraint env p (PowersetTo p2 p3) = matchingConstraintHelper env p p2 p3
+matchingConstraint env p (UnionOf p2 p3s) = equivalent env p p2 || any (equivalent env p) p3s
 
-type DEnv s = [Constraint s]
-showMatchingConstraints :: [Constraint s] -> Pnt s -> ST s [SConstraint]
-showMatchingConstraints cons matchVar = do
-  filterCons <- filterM (matchingConstraint matchVar) cons
-  mapM showCon filterCons
+showMatchingConstraints :: FEnv -> Pnt -> [SConstraint]
+showMatchingConstraints env@(FEnv _ cons _ _ _) matchVar = map (showCon env) $ filter (matchingConstraint env matchVar) cons
 
-toMeta :: DEnv s -> VarMeta s -> String -> ST s (TypeCheckResult Typed)
+toMeta :: FEnv -> VarMeta -> String -> TypeCheckResult Typed
 toMeta env (VarMeta p (PreTyped pt)) name = do
-  scheme <- descriptor p
-  case scheme of
-    TypeCheckResE s -> return $ TypeCheckResE s
-    TypeCheckResult notes (SType ub _ _) -> case fromType (compactType ub) of
-      Nothing -> do
-        showMatching <- showMatchingConstraints env p
-        return $ TypeCheckResE (FailInfer name scheme showMatching:notes)
-      Just t -> case pt of
-        TypeVar{} -> return $ TypeCheckResult notes (Typed pt)
-        _ -> return $ TypeCheckResult notes (Typed t)
+  scheme@(SType ub _ _) <- descriptor env p
+  case fromType (compactType ub) of
+    Nothing -> do
+      let showMatching = showMatchingConstraints env p
+      TypeCheckResE [FailInfer name scheme showMatching]
+    Just t -> case pt of
+      TypeVar{} -> return $ Typed pt
+      _ -> return $ Typed t
 
-toExpr :: DEnv s -> VExpr s -> ST s (TypeCheckResult TExpr)
+toExpr :: FEnv -> VExpr -> TypeCheckResult TExpr
 toExpr env (CExpr m c) = do
-  res <- toMeta env m $ "Constant " ++ show c
-  return $ res <&> (`CExpr` c)
+  m' <- toMeta env m $ "Constant " ++ show c
+  return $ CExpr m' c
 toExpr env (Value m name) = do
   m' <- toMeta env m $ "Value_" ++ name
-  return $ fmap (`Value` name) m'
+  return $ Value m' name
 toExpr env (Arg m name) = do
   m' <- toMeta env m $ "Arg_" ++ name
-  return $ fmap (`Arg` name) m'
+  return $ Arg m' name
 toExpr env (TupleApply m (baseM, baseExpr) args) = do
   m' <- toMeta env m "TupleApply_M"
   baseM' <- toMeta env baseM "TupleApply_baseM"
   baseExpr' <- toExpr env baseExpr
   args' <- mapM (toExpr env) args
   case m' of -- check for errors
-    TypeCheckResult notes tp@(Typed (SumType sumType)) | all (\(_, _, leafArgs) -> not (H.keysSet args' `isSubsetOf` H.keysSet leafArgs)) (splitPartialLeafs sumType) -> do
-                                        matchingConstraints <- showMatchingConstraints env $ getPnt m
-                                        let sArgs = sequence args'
-                                        return $ TypeCheckResE (TupleMismatch baseM' baseExpr' tp sArgs matchingConstraints:notes)
-    _ -> return $ (\(m'', baseM'', baseExpr'', args'') -> TupleApply m'' (baseM'', baseExpr'') args'') <$> sequenceT (m', baseM', baseExpr', sequence args')
+    tp@(Typed (SumType sumType)) | all (\(_, _, leafArgs) -> not (H.keysSet args' `isSubsetOf` H.keysSet leafArgs)) (splitPartialLeafs sumType) -> do
+                                        let matchingConstraints = showMatchingConstraints env $ getPnt m
+                                        TypeCheckResE [TupleMismatch baseM' baseExpr' tp args' matchingConstraints]
+    _ -> return $ TupleApply m' (baseM', baseExpr') args'
 
-toCompAnnot :: DEnv s -> VCompAnnot s -> ST s (TypeCheckResult TCompAnnot)
+toCompAnnot :: FEnv -> VCompAnnot -> TypeCheckResult TCompAnnot
 toCompAnnot env (CompAnnot name args) = do
   args' <- mapM (toExpr env) args
-  return $ fmap (CompAnnot name) (sequence args')
+  return $ CompAnnot name args'
 
-toGuard :: DEnv s -> VGuard s -> ST s (TypeCheckResult TGuard)
+toGuard :: FEnv -> VGuard -> TypeCheckResult TGuard
 toGuard env (IfGuard expr) = do
   expr' <- toExpr env expr
-  return $ IfGuard <$> expr'
-toGuard _ ElseGuard = return $ return ElseGuard
-toGuard _ NoGuard = return $ return NoGuard
+  return $ IfGuard expr'
+toGuard _ ElseGuard = return ElseGuard
+toGuard _ NoGuard = return NoGuard
 
-toArrow :: DEnv s -> VArrow s -> ST s (TypeCheckResult TArrow)
+toArrow :: FEnv -> VArrow -> TypeCheckResult TArrow
 toArrow env (Arrow m annots aguard maybeExpr) = do
   m' <- toMeta env m "Arrow"
-  annotsT <- mapM (toCompAnnot env) annots
+  annots' <- mapM (toCompAnnot env) annots
   aguard' <- toGuard env aguard
-  let annots' = sequence annotsT
   case maybeExpr of
     Just expr -> do
       expr' <- toExpr env expr
-      return $ (\(m'', annots'', aguard'', expr'') -> Arrow m'' annots'' aguard'' (Just expr'')) <$> sequenceT (m', annots', aguard', expr')
-    Nothing -> return $ (\(annots'', m'', aguard'') -> Arrow m'' annots'' aguard'' Nothing) <$> sequenceT (annots', m', aguard')
+      return $ Arrow m' annots' aguard' (Just expr')
+    Nothing -> return $ Arrow m' annots' aguard' Nothing
 
-toObjArg :: DEnv s -> String -> (TypeName, VObjArg s) -> ST s (TypeCheckResult (TypeName, TObjArg))
+toObjArg :: FEnv -> String -> (TypeName, VObjArg) -> TypeCheckResult (TypeName, TObjArg)
 toObjArg env prefix (name, (m, maybeObj)) = do
   let prefix' = prefix ++ "_" ++ name
   m' <- toMeta env m prefix'
   case maybeObj of
     Just obj -> do
       obj' <- toObject env prefix' obj
-      return $ (name,) <$> sequenceT (m', sequence $ Just obj')
-    Nothing -> return $ (name,) . (,Nothing) <$> m'
+      return (name, (m', Just obj'))
+    Nothing -> return (name, (m', Nothing))
 
-toObject :: DEnv s -> String -> VObject s -> ST s (TypeCheckResult TObject)
+toObject :: FEnv -> String -> VObject -> TypeCheckResult TObject
 toObject env prefix (Object m basis name vars args) = do
   let prefix' = prefix ++ "_" ++ name
   m' <- toMeta env m prefix'
   vars' <- mapM (\(varName, varVal) -> (varName,) <$> toMeta env varVal (prefix' ++ "." ++ varName)) $ H.toList vars
   args' <- mapM (toObjArg env prefix') $ H.toList args
-  return $ (\(m'', vars'', args'') -> Object m'' basis name vars'' args'') <$> sequenceT  (m', sequence $ H.fromList vars', H.fromList <$> sequence args')
+  return $ Object m' basis name (H.fromList vars') (H.fromList args')
 
-toObjectArrows :: DEnv s -> (VObject s, [VArrow s]) -> ST s (TypeCheckResult (TObject, [TArrow]))
+toObjectArrows :: FEnv -> (VObject, [VArrow]) -> TypeCheckResult (TObject, [TArrow])
 toObjectArrows env (obj, arrows) = do
   obj' <- toObject env "Object" obj
   arrows' <- mapM (toArrow env) arrows
-  let arrows'' = sequence arrows'
-  return $ sequenceT (obj', arrows'')
+  return (obj', arrows')
 
-toPrgm :: VPrgm s -> [Constraint s] -> ST s (TypeCheckResult TPrgm)
-toPrgm (objMap, classMap) cons = do
-  let env = cons
-  objects' <- mapM (toObjectArrows env) objMap
-  let objMap' = H.fromList <$> sequence objects'
-  return $ sequenceT (objMap', TypeCheckResult [] classMap)
+toPrgm :: FEnv -> VPrgm -> TypeCheckResult TPrgm
+toPrgm env (objMap, classMap) = do
+  objMap' <- mapM (toObjectArrows env) objMap
+  return (H.fromList objMap', classMap)

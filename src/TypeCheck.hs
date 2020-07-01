@@ -11,8 +11,6 @@
 
 module TypeCheck where
 
-import           Control.Monad.ST
-
 import           TypeCheck.Common
 import           TypeCheck.Encode
 import           TypeCheck.Show
@@ -23,39 +21,29 @@ runConstraintsLimit :: Integer
 runConstraintsLimit = 100
 
 typecheckPrgm :: PPrgm -> TypeCheckResult TPrgm
-typecheckPrgm pprgm = runST $ do
-  baseFEnv <- makeBaseFEnv
-  (vprgm, typeGraph, FEnv cons _ _ errs) <- fromPrgm baseFEnv pprgm
-  case errs of
-    [] -> do
-      runErrors <- runConstraints runConstraintsLimit typeGraph cons
-      case runErrors of
-        Left errors -> return $ TypeCheckResE errors
-        Right _ -> toPrgm vprgm cons
-    _ -> return $ TypeCheckResE errs
+typecheckPrgm pprgm = do
+  let baseFEnv = makeBaseFEnv
+  (vprgm, env@(FEnv _ cons _ _ _)) <- fromPrgm baseFEnv pprgm
+  env' <- runConstraints runConstraintsLimit env cons
+  toPrgm env' vprgm
 
 traceTestPrgm :: PPrgm -> ([TypeCheckError], [(SPrgm, [SConstraint])])
-traceTestPrgm pprgm = runST $ do
-  baseFEnv <- makeBaseFEnv
-  (vprgm, typeGraph, FEnv cons _ _ errs) <- fromPrgm baseFEnv pprgm
-  case errs of
-    [] -> do
-      sprgm1 <- showPrgm vprgm
-      scons1 <- showConstraints cons
-      runErrors <- runConstraints runConstraintsLimit typeGraph cons
-      sprgm2 <- showPrgm vprgm
-      let res = [(sprgm1, scons1), (sprgm2, [])]
-      case runErrors of
-        Left errors -> return (errors, res)
-        Right _ -> return ([], res)
-    _ -> return (errs, [])
+traceTestPrgm pprgm = do
+  let baseFEnv = makeBaseFEnv
+  case fromPrgm baseFEnv pprgm of
+    TypeCheckResult notes (vprgm, env@(FEnv _ cons _ _ _)) -> do
+      let sprgm1 = showPrgm env vprgm
+      let scons1 = showConstraints env cons
+      case runConstraints runConstraintsLimit env cons of
+        TypeCheckResult notes2 env' -> do
+          let sprgm2 = showPrgm env' vprgm
+          let res = [(sprgm1, scons1), (sprgm2, [])]
+          (notes ++ notes2, res)
+        TypeCheckResE errs -> (notes ++ errs, [(sprgm1, scons1)])
+    TypeCheckResE errs -> (errs, [])
 
-showTestPrgm :: PPrgm -> Either [TypeCheckError] SPrgm
-showTestPrgm pprgm = runST $ do
-  baseFEnv <- makeBaseFEnv
-  (vprgm, _, FEnv _ _ _ errs) <- fromPrgm baseFEnv pprgm
-  case errs of
-    [] -> do
-      sprgm <- showPrgm vprgm
-      return $ Right sprgm
-    _ -> return $ Left errs
+showTestPrgm :: PPrgm -> TypeCheckResult SPrgm
+showTestPrgm pprgm = do
+  let baseFEnv = makeBaseFEnv
+  (vprgm, env) <- fromPrgm baseFEnv pprgm
+  return $ showPrgm env vprgm

@@ -11,110 +11,66 @@
 
 module TypeCheck.Show where
 
-import           Control.Monad.ST
-import           Data.UnionFind.ST
 import qualified Data.HashMap.Strict as H
 
 import           Syntax.Prgm
 import           TypeCheck.Common
 
-showM :: VarMeta s -> ST s ShowMeta
-showM = descriptor . getPnt
+showM :: FEnv -> VarMeta -> ShowMeta
+showM env = descriptor env . getPnt
 
-showExpr :: VExpr s -> ST s SExpr
-showExpr (CExpr m c) = do
-  m' <- showM m
-  return (CExpr m' c)
-showExpr (Value m name) = do
-  m' <- showM m
-  return (Value m' name)
-showExpr (Arg m name) = do
-  m' <- showM m
-  return (Arg m' name)
-showExpr (TupleApply m (bm, base) args) = do
-  m' <- showM m
-  bm' <- showM bm
-  base' <- showExpr base
-  args' <- mapM showExpr args
-  return (TupleApply m' (bm', base') args')
+showExpr :: FEnv -> VExpr -> SExpr
+showExpr env (CExpr m c) = CExpr (showM env m) c
+showExpr env (Value m name) = Value (showM env m) name
+showExpr env (Arg m name) = Arg (showM env m) name
+showExpr env (TupleApply m (bm, base) args) = TupleApply (showM env m) (showM env bm, showExpr env base) (fmap (showExpr env) args)
 
-showCompAnnot :: VCompAnnot s -> ST s SCompAnnot
-showCompAnnot (CompAnnot name args) = do
-  args' <- mapM showExpr args
-  return $ CompAnnot name args'
+showCompAnnot :: FEnv -> VCompAnnot -> SCompAnnot
+showCompAnnot env (CompAnnot name args) = CompAnnot name (fmap (showExpr env) args)
 
+showGuard :: FEnv -> VGuard -> SGuard
+showGuard env (IfGuard e) = IfGuard (showExpr env e)
+showGuard _ ElseGuard = ElseGuard
+showGuard _ NoGuard = NoGuard
 
-showGuard :: VGuard s -> ST s SGuard
-showGuard (IfGuard e) = do
-  e' <- showExpr e
-  return $ IfGuard e'
-showGuard ElseGuard = return ElseGuard
-showGuard NoGuard = return NoGuard
+showArrow :: FEnv -> VArrow -> SArrow
+showArrow env (Arrow m annots guard maybeExpr) = case maybeExpr of
+    Just expr -> Arrow m' annots' guard' (Just $ showExpr env expr)
+    Nothing -> Arrow m' annots' guard' Nothing
+  where
+    m' = showM env m
+    annots' = fmap (showCompAnnot env) annots
+    guard' = showGuard env guard
 
-showArrow :: VArrow s -> ST s SArrow
-showArrow (Arrow m annots guard maybeExpr) = do
-  m' <- showM m
-  annots' <- mapM showCompAnnot annots
-  guard' <- showGuard guard
-  case maybeExpr of
-    Just expr -> do
-      expr' <- showExpr expr
-      return (Arrow m' annots' guard' (Just expr'))
-    Nothing -> return (Arrow m' annots' guard' Nothing)
+showObjArg :: FEnv -> VObjArg -> SObjArg
+showObjArg env (m, maybeObj) = case maybeObj of
+    Just obj -> (m', Just $ showObj env obj)
+    Nothing -> (m', Nothing)
+  where m' = showM env m
 
-showObjArg :: VObjArg s -> ST s SObjArg
-showObjArg (m, maybeObj) = do
-  m' <- showM m
-  case maybeObj of
-    Just obj -> do
-      obj' <- showObj obj
-      return (m', Just obj')
-    Nothing -> return (m', Nothing)
+showObj :: FEnv -> VObject -> SObject
+showObj env (Object m basis name vars args) = Object (showM env m) basis name (fmap (showM env) vars) (fmap (showObjArg env) args)
 
-showObj :: VObject s -> ST s SObject
-showObj (Object m basis name vars args) = do
-  m' <- showM m
-  vars' <- mapM showM vars
-  args' <- mapM showObjArg args
-  return $ Object m' basis name vars' args'
+showObjArrows :: FEnv -> (VObject, [VArrow]) -> (SObject, [SArrow])
+showObjArrows env (obj, arrows) = (showObj env obj, map (showArrow env) arrows)
 
-showObjArrows :: (VObject s, [VArrow s]) -> ST s (SObject, [SArrow])
-showObjArrows (obj, arrows) = do
-  obj' <- showObj obj
-  arrows' <- mapM showArrow arrows
-  return (obj', arrows')
+showConHelper :: FEnv -> (Scheme -> Scheme -> SConstraint) -> Pnt -> Pnt -> SConstraint
+showConHelper env f p1 p2 = f (descriptor env p1) (descriptor env p2)
 
-showConHelper :: (Scheme -> Scheme -> SConstraint) -> Pnt s -> Pnt s -> ST s SConstraint
-showConHelper f p1 p2 = do
-  s1 <- descriptor p1
-  s2 <- descriptor p2
-  return $ f s1 s2
+showCon :: FEnv -> Constraint -> SConstraint
+showCon env (EqualsKnown p t) = SEqualsKnown (descriptor env p) t
+showCon env (EqPoints p1 p2) = showConHelper env SEqPoints p1 p2
+showCon env (BoundedBy p1 p2) = showConHelper env SBoundedBy p1 p2
+showCon env (BoundedByKnown p t) = SBoundedByKnown (descriptor env p) t
+showCon env (BoundedByObjs b p) = SBoundedByObjs b (descriptor env p)
+showCon env (ArrowTo p1 p2) = showConHelper env SArrowTo p1 p2
+showCon env (PropEq (p1, name) p2) = showConHelper env (\s1 s2 -> SPropEq (s1, name) s2) p1 p2
+showCon env (AddArgs (p1, argNames) p2) = showConHelper env (\s1 s2 -> SAddArgs (s1, argNames) s2) p1 p2
+showCon env (PowersetTo p1 p2) = showConHelper env SPowersetTo p1 p2
+showCon env (UnionOf p1 p2s) = SUnionOf (descriptor env p1) (map (descriptor env) p2s)
 
-showCon :: Constraint s -> ST s SConstraint
-showCon (EqualsKnown p t) = do
-  scheme <- descriptor p
-  return $ SEqualsKnown scheme t
-showCon (EqPoints p1 p2) = showConHelper SEqPoints p1 p2
-showCon (BoundedBy p1 p2) = showConHelper SBoundedBy p1 p2
-showCon (BoundedByKnown p t) = do
-  scheme <- descriptor p
-  return $ SBoundedByKnown scheme t
-showCon (BoundedByObjs b p) = do
-  s <- descriptor p
-  return $ SBoundedByObjs b s
-showCon (ArrowTo p1 p2) = showConHelper SArrowTo p1 p2
-showCon (PropEq (p1, name) p2) = showConHelper (\s1 s2 -> SPropEq (s1, name) s2) p1 p2
-showCon (AddArgs (p1, argNames) p2) = showConHelper (\s1 s2 -> SAddArgs (s1, argNames) s2) p1 p2
-showCon (PowersetTo p1 p2) = showConHelper SPowersetTo p1 p2
-showCon (UnionOf p1 p2s) = do
-  s1 <- descriptor p1
-  s2s <- mapM descriptor p2s
-  return $ SUnionOf s1 s2s
+showPrgm :: FEnv -> VPrgm -> SPrgm
+showPrgm env (objMap, classMap) = (H.fromList $ map (showObjArrows env) objMap, classMap)
 
-showPrgm :: VPrgm s -> ST s SPrgm
-showPrgm (objMap, classMap) = do
-  objs' <- mapM showObjArrows objMap
-  return (H.fromList objs', classMap)
-
-showConstraints :: [Constraint s] -> ST s [SConstraint]
-showConstraints = mapM showCon
+showConstraints :: FEnv -> [Constraint] -> [SConstraint]
+showConstraints env = map (showCon env)

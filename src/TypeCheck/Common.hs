@@ -16,7 +16,7 @@ module TypeCheck.Common where
 
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet          as S
-import           Data.UnionFind.ST
+import qualified Data.IntMap.Lazy as IM
 import           Data.Hashable
 import           Data.List
 import           GHC.Generics          (Generic)
@@ -29,33 +29,34 @@ import           Text.Printf
 data TypeCheckError
   = GenTypeCheckError String
   | AbandonCon SConstraint
-  | FailInfer String Scheme [SConstraint]
-  | TupleMismatch (TypeCheckResult TypedMeta) (TypeCheckResult TExpr) Typed (TypeCheckResult (H.HashMap String TExpr)) [SConstraint]
+  | FailInfer String SType [SConstraint]
+  | TupleMismatch TypedMeta TExpr Typed (H.HashMap String TExpr) [SConstraint]
   deriving (Eq, Ord, Generic, Hashable)
 
 data SType = SType Type Type String -- SType upper lower description
   deriving (Eq, Ord, Generic, Hashable)
 type Scheme = TypeCheckResult SType
 
-type Pnt s = Point s Scheme
+type Pnt = Int
 
-type EnvValMap s = (H.HashMap String (VarMeta s))
-data FEnv s = FEnv [Constraint s] (TypeGraph s) (EnvValMap s) [TypeCheckError]
+type EnvValMap = (H.HashMap String VarMeta)
+-- TODO: Remove FEnv's TypeCheckError list
+data FEnv = FEnv (IM.IntMap Scheme) [Constraint] TypeEnv EnvValMap [TypeCheckError]
 
 data BoundObjs = BoundAllObjs | BoundTypeObjs
   deriving (Eq, Ord, Show, Generic, Hashable)
 
-data Constraint s
-  = EqualsKnown (Pnt s) Type
-  | EqPoints (Pnt s) (Pnt s)
-  | BoundedBy (Pnt s) (Pnt s)
-  | BoundedByKnown (Pnt s) Type
-  | BoundedByObjs BoundObjs (Pnt s)
-  | ArrowTo (Pnt s) (Pnt s) -- ArrowTo src dest
-  | PropEq (Pnt s, ArgName) (Pnt s)
-  | AddArgs (Pnt s, S.HashSet String) (Pnt s)
-  | PowersetTo (Pnt s) (Pnt s)
-  | UnionOf (Pnt s) [Pnt s]
+data Constraint
+  = EqualsKnown Pnt Type
+  | EqPoints Pnt Pnt
+  | BoundedBy Pnt Pnt
+  | BoundedByKnown Pnt Type
+  | BoundedByObjs BoundObjs Pnt
+  | ArrowTo Pnt Pnt -- ArrowTo src dest
+  | PropEq (Pnt, ArgName) Pnt
+  | AddArgs (Pnt, S.HashSet String) Pnt
+  | PowersetTo Pnt Pnt
+  | UnionOf Pnt [Pnt]
   deriving (Eq)
 
 data SConstraint
@@ -117,17 +118,17 @@ type SObject = Object ShowMeta
 type SPrgm = Prgm ShowMeta
 type SReplRes = ReplRes ShowMeta
 
-data VarMeta s = VarMeta (Pnt s) PreTyped
-type VExpr s = Expr (VarMeta s)
-type VCompAnnot s = CompAnnot (VExpr s)
-type VGuard s = Guard (VExpr s)
-type VArgMetaMap s = ArgMetaMap (VarMeta s)
-type VArrow s = Arrow (VarMeta s)
-type VObjArg s = ObjArg (VarMeta s)
-type VObject s = Object (VarMeta s)
-type VObjectMap s = [(VObject s, [VArrow s])]
-type VPrgm s = (VObjectMap s, ClassMap)
-type VReplRes s = ReplRes (VarMeta s)
+data VarMeta = VarMeta Pnt PreTyped
+type VExpr = Expr VarMeta
+type VCompAnnot = CompAnnot VExpr
+type VGuard = Guard VExpr
+type VArgMetaMap = ArgMetaMap VarMeta
+type VArrow = Arrow VarMeta
+type VObjArg = ObjArg VarMeta
+type VObject = Object VarMeta
+type VObjectMap = [(VObject, [VArrow])]
+type VPrgm = (VObjectMap, ClassMap)
+type VReplRes = ReplRes VarMeta
 
 type TypedMeta = Typed
 type TExpr = Expr TypedMeta
@@ -140,24 +141,22 @@ type TPrgm = Prgm TypedMeta
 type TReplRes = ReplRes TypedMeta
 
 -- implicit graph
-type UnionObj s = (Pnt s, Pnt s) -- a union of all TypeObj for argument inference, union of all Object types for function limiting
-type TypeGraphVal s = (VObject s, VArrow s) -- (match object type, if matching then can implicit to type in arrow)
-type TypeGraph s = H.HashMap TypeName [TypeGraphVal s] -- H.HashMap (Root tuple name for filtering) [vals]
-type TypeEnv s = (UnionObj s, TypeGraph s)
+type UnionObj = (Pnt, Pnt) -- a union of all TypeObj for argument inference, union of all Object types for function limiting
+type TypeGraphVal = (VObject, VArrow) -- (match object type, if matching then can implicit to type in arrow)
+type TypeGraph = H.HashMap TypeName [TypeGraphVal] -- H.HashMap (Root tuple name for filtering) [vals]
+type TypeEnv = (UnionObj, TypeGraph)
 
-instance Meta (VarMeta s) where
+instance Meta VarMeta where
   getMetaType (VarMeta _ p) = getMetaType p
 
 instance Show TypeCheckError where
   show (GenTypeCheckError s) = s
   show (AbandonCon c) = printf "Abandon %s" (show c)
   show (FailInfer desc scheme constraints) = printf "Failed to infer %s\n\tScheme: %s\n\tConstraints: %s" desc (show scheme) (show constraints)
-  show (TupleMismatch baseM baseExpr m maybeArgs constraints) = printf "Tuple Apply Mismatch:\n\t(%s %s)(%s) ≠ %s\n\tConstraints: %s" (show baseM) (show baseExpr) args' (show m) (show constraints)
+  show (TupleMismatch baseM baseExpr m args constraints) = printf "Tuple Apply Mismatch:\n\t(%s %s)(%s) ≠ %s\n\tConstraints: %s" (show baseM) (show baseExpr) args' (show m) (show constraints)
     where
       showArg (argName, argVal) = printf "%s = %s" argName (show argVal)
-      args' = case maybeArgs of
-        TypeCheckResult _ args -> intercalate ", " $ map showArg $ H.toList args
-        TypeCheckResE _ -> "TypeCheckResE"
+      args' = intercalate ", " $ map showArg $ H.toList args
 
 instance Show SType where
   show (SType upper lower desc) = concat [show upper, " ⊇ ", desc, " ⊇ ", show lower]
@@ -180,31 +179,52 @@ instance Show r => Show (TypeCheckResult r) where
   show (TypeCheckResult notes r) = concat ["TCRes [", show notes, "] (", show r, ")"]
   show (TypeCheckResE notes) = concat ["TCErr [", show notes, "]"]
 
-getPnt :: VarMeta s -> Pnt s
+getPnt :: VarMeta -> Pnt
 getPnt (VarMeta p _) = p
 
-getPntExpr :: VExpr s -> Pnt s
+getPntExpr :: VExpr -> Pnt
 getPntExpr = getPnt . getExprMeta
 
-addErr :: FEnv s -> TypeCheckError -> FEnv s
-addErr (FEnv cons graph pmap errs) newErr = FEnv cons graph pmap (newErr:errs)
+addErr :: FEnv -> TypeCheckError -> FEnv
+addErr (FEnv pnts cons graph pmap errs) newErr = FEnv pnts cons graph pmap (newErr:errs)
 
-fLookup :: FEnv s -> String -> (Maybe (VarMeta s), FEnv s)
-fLookup env@(FEnv _ _ pmap _) k = case H.lookup k pmap of
-  Just v  -> (Just v, env)
-  Nothing -> (Nothing, addErr env (GenTypeCheckError $ "Failed to lookup " ++ k))
+fLookup :: FEnv -> String -> TypeCheckResult VarMeta
+fLookup (FEnv _ _ _ pmap _) k = case H.lookup k pmap of
+  Just v  -> return v
+  Nothing -> TypeCheckResE [GenTypeCheckError $ "Failed to lookup " ++ k]
 
-addConstraints :: FEnv s -> [Constraint s] -> FEnv s
-addConstraints (FEnv oldCons graph defMap errs) newCons = FEnv (newCons ++ oldCons) graph defMap errs
+addConstraints :: FEnv -> [Constraint] -> FEnv
+addConstraints (FEnv pnts oldCons graph defMap errs) newCons = FEnv pnts (newCons ++ oldCons) graph defMap errs
 
-fInsert :: FEnv s -> String -> VarMeta s -> FEnv s
-fInsert (FEnv cons graph pmap errs) k v = FEnv cons graph (H.insert k v pmap) errs
+fInsert :: FEnv -> String -> VarMeta -> FEnv
+fInsert (FEnv pnts cons graph pmap errs) k v = FEnv pnts cons graph (H.insert k v pmap) errs
 
-fAddTypeGraph :: FEnv s -> TypeName -> TypeGraphVal s -> FEnv s
-fAddTypeGraph (FEnv cons graph pmap errs) k v = FEnv cons (H.insertWith (++) k [v] graph) pmap errs
+fAddTypeGraph :: FEnv -> TypeName -> TypeGraphVal -> FEnv
+fAddTypeGraph (FEnv pnts cons (unionObj, graph) pmap errs) k v = FEnv pnts cons (unionObj, H.insertWith (++) k [v] graph) pmap errs
 
 tryIntersectTypes :: Type -> Type -> String -> TypeCheckResult Type
 tryIntersectTypes a b desc= let c = intersectTypes a b
                             in if c == bottomType
                                   then TypeCheckResE [GenTypeCheckError $ "Failed to intersect(" ++ desc ++ "): " ++ show a ++ " --- " ++ show b]
                                   else return c
+
+-- Point operations
+
+descriptor :: FEnv -> Pnt -> Scheme
+descriptor (FEnv pnts _ _ _ _) p = pnts IM.! p
+
+equivalent :: FEnv -> Pnt -> Pnt -> Bool
+equivalent (FEnv pnts _ _ _ _) p1 p2 = (pnts IM.! p1) == (pnts IM.! p2)
+
+fresh :: FEnv -> Scheme -> (Pnt, FEnv)
+fresh (FEnv pnts cons typeEnv pmap errs) scheme = (pnt', FEnv pnts' cons typeEnv pmap errs)
+  where
+    pnt' = IM.size pnts
+    pnts' = IM.insert pnt' scheme pnts
+
+setDescriptor :: FEnv -> Pnt -> Scheme -> FEnv
+setDescriptor (FEnv pnts cons typeEnv pmap errs) p s = FEnv pnts' cons typeEnv pmap errs
+  where pnts' = IM.insert p s pnts
+
+modifyDescriptor :: FEnv -> Pnt -> (Scheme -> Scheme) -> FEnv
+modifyDescriptor env p f = setDescriptor env p (f $ descriptor env p)
