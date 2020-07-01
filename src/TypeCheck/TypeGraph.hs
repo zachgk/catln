@@ -39,9 +39,10 @@ buildUnionObj env1 objs = do
 buildTypeEnv :: FEnv -> VObjectMap -> FEnv
 buildTypeEnv env objMap = buildUnionObj env (map fst objMap)
 
-ubFromScheme :: Scheme -> TypeCheckResult Type
-ubFromScheme (TypeCheckResult _ (SType ub _ _))  = return ub
-ubFromScheme (TypeCheckResE notes) = TypeCheckResE notes
+ubFromScheme :: FEnv -> Scheme -> TypeCheckResult Type
+ubFromScheme _ (TypeCheckResult _ (SType ub _ _))  = return ub
+ubFromScheme env (TypeCheckResult _ (SVar _ p))  = ubFromScheme env (descriptor env p)
+ubFromScheme _ (TypeCheckResE notes) = TypeCheckResE notes
 
 reachesPartial :: FEnv -> PartialType -> TypeCheckResult Type
 reachesPartial env@(FEnv _ _ (_, graph) _) partial@(partialName, _, _) = do
@@ -52,7 +53,7 @@ reachesPartial env@(FEnv _ _ (_, graph) _) partial@(partialName, _, _) = do
     tryArrow (obj@(Object (VarMeta objP _) _ _ _ _), arr@(Arrow (VarMeta arrP _) _ _ _)) = do
       let objScheme = descriptor env objP
       let arrScheme = descriptor env arrP
-      sequenceT (ubFromScheme objScheme, ubFromScheme arrScheme) >>= \(objUb, arrUb) -> return $ if hasPartial partial objUb
+      sequenceT (ubFromScheme env objScheme, ubFromScheme env arrScheme) >>= \(objUb, arrUb) -> return $ if hasPartial partial objUb
         then Just $ intersectTypes arrUb (arrowDestType partial obj arr)
         else Nothing
     idReach = SumType (joinPartialLeafs [partial])
