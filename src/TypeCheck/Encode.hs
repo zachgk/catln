@@ -14,6 +14,7 @@ module TypeCheck.Encode where
 import           Control.Monad
 import Data.Hashable (Hashable)
 import qualified Data.HashMap.Strict as H
+import qualified Data.HashSet          as S
 import qualified Data.IntMap.Lazy as IM
 
 import           Syntax.Types
@@ -28,10 +29,10 @@ makeBaseFEnv = FEnv IM.empty [] ((0, 0), H.empty) H.empty []
 fromMetaP :: FEnv -> PreMeta -> String -> TypeCheckResult (VarMeta, Pnt, FEnv)
 fromMetaP env m description  = case metaTypeVar m of
   Just _ -> do
-    let (p, env') = fresh env (TypeCheckResult [] $ SType TopType bottomType description)
+    let (p, env') = fresh env (TypeCheckResult [] $ SType TopType bottomType $ S.singleton description)
     return (VarMeta p m, p, env')
   Nothing -> do
-    let (p, env') = fresh env (TypeCheckResult [] $ SType (getMetaType m) bottomType description)
+    let (p, env') = fresh env (TypeCheckResult [] $ SType (getMetaType m) bottomType $ S.singleton description)
     return (VarMeta p m, p, env')
 
 fromMeta :: FEnv -> PreMeta -> String -> TypeCheckResult (VarMeta, FEnv)
@@ -88,7 +89,7 @@ fromExpr objArgs env1 (TupleApply m (baseM, baseExpr) args) = do
   (baseM', baseP, env3) <- fromMetaP env2 baseM "TupleApply BaseMeta"
   (baseExpr', env4) <- fromExpr objArgs env3 baseExpr
   (args', env5) <- mapMWithFEnvMap env4 (fromExpr objArgs) args
-  (convertExprMetas, env6) <- mapMWithFEnvMap env5 (\e _ -> return $ fresh e (TypeCheckResult [] $ SType TopType bottomType "Tuple converted expr meta")) args
+  (convertExprMetas, env6) <- mapMWithFEnvMap env5 (\e _ -> return $ fresh e (TypeCheckResult [] $ SType TopType bottomType $ S.singleton "Tuple converted expr meta")) args
   let arrowArgConstraints = H.elems $ H.intersectionWith ArrowTo (fmap getPntExpr args') convertExprMetas
   let tupleConstraints = H.elems $ H.mapWithKey (\name ceMeta -> PropEq (p, name) ceMeta) convertExprMetas
   let constraints = [ArrowTo (getPntExpr baseExpr') baseP, AddArgs (baseP, H.keysSet args) p, BoundedByObjs BoundAllObjs p] ++ arrowArgConstraints ++ tupleConstraints
@@ -103,7 +104,7 @@ fromAnnot objArgs env1 (CompAnnot name args) = do
 fromGuard :: VArgMetaMap -> FEnv -> PGuard -> TypeCheckResult (VGuard, FEnv)
 fromGuard objArgs env1 (IfGuard expr) =  do
   (expr', env2) <- fromExpr objArgs env1 expr
-  let (bool, env3) = fresh env2 $ TypeCheckResult [] $ SType boolType bottomType "bool"
+  let (bool, env3) = fresh env2 $ TypeCheckResult [] $ SType boolType bottomType $ S.singleton "bool"
   return (IfGuard expr', addConstraints env3 [ArrowTo (getPnt $ getExprMeta expr') bool])
 fromGuard _ env ElseGuard = return (ElseGuard, env)
 fromGuard _ env NoGuard = return (NoGuard, env)

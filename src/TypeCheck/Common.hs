@@ -33,7 +33,7 @@ data TypeCheckError
   | TupleMismatch TypedMeta TExpr Typed (H.HashMap String TExpr) [SConstraint]
   deriving (Eq, Ord, Generic, Hashable)
 
-data SType = SType Type Type String -- SType upper lower description
+data SType = SType Type Type (S.HashSet String) -- SType upper lower (descriptions in type)
   deriving (Eq, Ord, Generic, Hashable)
 type Scheme = TypeCheckResult SType
 
@@ -159,7 +159,7 @@ instance Show TypeCheckError where
       args' = intercalate ", " $ map showArg $ H.toList args
 
 instance Show SType where
-  show (SType upper lower desc) = concat [show upper, " ⊇ ", desc, " ⊇ ", show lower]
+  show (SType upper lower desc) = concat [show upper, " ⊇ ", show (S.toList desc), " ⊇ ", show lower]
 
 instance Show SConstraint where
   show (SEqualsKnown s t) = printf "%s == %s" (show s) (show t)
