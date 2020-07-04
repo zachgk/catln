@@ -37,19 +37,21 @@ matchingConstraint env p (UnionOf p2 p3s) = equivalent env p p2 || any (equivale
 showMatchingConstraints :: FEnv -> Pnt -> [SConstraint]
 showMatchingConstraints env@(FEnv _ cons _ _) matchVar = map (showCon env) $ filter (matchingConstraint env matchVar) cons
 
-stypeUb :: FEnv -> SType -> TypeCheckResult Type
-stypeUb _ (SType ub _ _) = return ub
-stypeUb env (SVar _ p) = do
-  stype' <- descriptor env p
-  stypeUb env stype'
+pointUb :: FEnv -> Pnt -> TypeCheckResult Type
+pointUb env p = do
+  scheme <- descriptor env p
+  case scheme of
+    (SType ub _ _) -> return ub
+    (SVar _ p') -> pointUb env p'
 
 toMeta :: FEnv -> VarMeta -> String -> TypeCheckResult Typed
-toMeta env (VarMeta p (PreTyped pt)) _ = do
-  scheme <- descriptor env p
-  ub <- stypeUb env scheme
-  case pt of
+toMeta env (VarMeta p (PreTyped pt)) _ = case pointUb env p of
+  TypeCheckResult notes ub -> case pt of
     TypeVar{} -> return $ Typed pt
-    _ -> return $ Typed $ compactType ub
+    _ -> TypeCheckResult notes $ Typed $ compactType ub
+  TypeCheckResE notes -> do
+    let matchingConstraints = showMatchingConstraints env p
+    TypeCheckResE $ map (TCWithMatchingConstraints matchingConstraints) notes
 
 toExpr :: FEnv -> VExpr -> TypeCheckResult TExpr
 toExpr env (CExpr m c) = do
@@ -69,7 +71,7 @@ toExpr env (TupleApply m (baseM, baseExpr) args) = do
   case m' of -- check for errors
     tp@(Typed (SumType sumType)) | all (\(_, _, leafArgs) -> not (H.keysSet args' `isSubsetOf` H.keysSet leafArgs)) (splitPartialLeafs sumType) -> do
                                         let matchingConstraints = showMatchingConstraints env $ getPnt m
-                                        TypeCheckResE [TupleMismatch baseM' baseExpr' tp args' matchingConstraints]
+                                        TypeCheckResE [TCWithMatchingConstraints matchingConstraints $ TupleMismatch baseM' baseExpr' tp args']
     _ -> return $ TupleApply m' (baseM', baseExpr') args'
 
 toCompAnnot :: FEnv -> VCompAnnot -> TypeCheckResult TCompAnnot

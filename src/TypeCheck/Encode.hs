@@ -161,12 +161,12 @@ addObjArg fakeObj objM prefix varMap env (n, (m, maybeSubObj)) = do
         Nothing -> env3
   case maybeSubObj of
     Just subObj -> do
-      (subObj'@(Object subM _ _ _ _), env5) <- fromObject prefix' env4 subObj
+      (subObj'@(Object subM _ _ _ _), env5) <- fromObject prefix' True env4 subObj
       return ((n, (m', Just subObj')), addConstraints env5 [ArrowTo (getPnt subM) (getPnt m')])
     Nothing -> return ((n, (m', Nothing)), env4)
 
-fromObject :: String -> FEnv -> PObject -> TypeCheckResult (VObject, FEnv)
-fromObject prefix env (Object m basis name vars args) = do
+fromObject :: String -> Bool -> FEnv -> PObject -> TypeCheckResult (VObject, FEnv)
+fromObject prefix isObjArg env (Object m basis name vars args) = do
   let prefix' = prefix ++ "." ++ name
   (m', _, env1) <- fromMetaPNoObj env m prefix'
   (vars', env2) <- mapMWithFEnvMapWithKey env1 (fromObjVar prefix') vars
@@ -175,14 +175,14 @@ fromObject prefix env (Object m basis name vars args) = do
   let obj' = Object m' basis name vars' args'
   (objValue, env4) <- fromMeta env3 obj' (PreTyped $ SumType $ joinPartialLeafs [(name, H.empty, H.empty)]) ("objValue" ++ name)
   let env5 = fInsert env4 name objValue
-  let env6 = addConstraints env5 [BoundedByObjs BoundAllObjs (getPnt m')]
-  let env7 = addConstraints env6 [BoundedByKnown (getPnt m') (SumType $ joinPartialLeafs [(name, fmap (const TopType) vars, fmap (const TopType) args)]) | basis /= PatternObj]
+  let env6 = addConstraints env5 [BoundedByObjs BoundAllObjs (getPnt m') | isObjArg]
+  let env7 = addConstraints env6 [BoundedByKnown (getPnt m') (SumType $ joinPartialLeafs [(name, fmap (const TopType) vars, fmap (const TopType) args)]) | basis == FunctionObj]
   return (obj', env7)
 
 -- Add all of the objects first for various expressions that call other top level functions
 fromObjectArrows :: FEnv -> (PObject, [PArrow]) -> TypeCheckResult ((VObject, [PArrow]), FEnv)
 fromObjectArrows env (obj, arrows) = do
-  (obj', env1) <- fromObject "Object" env obj
+  (obj', env1) <- fromObject "Object" False env obj
   return ((obj', arrows), env1)
 
 fromPrgm :: FEnv -> PPrgm -> TypeCheckResult (VPrgm, FEnv)

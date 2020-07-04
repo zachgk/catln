@@ -42,10 +42,10 @@ equalizeBounds env inSchemes d = do
   case inSchemes' of
     (SVar _ p1, scheme2) -> do
       let scheme1 = descriptor env p1
-      equalizeSchemes env (scheme1, return scheme2) d
+      equalizeBounds env (scheme1, return scheme2) d
     (scheme1, SVar _ p2) -> do
       let scheme2 = descriptor env p2
-      equalizeSchemes env (return scheme1, scheme2) d
+      equalizeBounds env (return scheme1, scheme2) d
     (SType ub1 lb1 desc1, SType ub2 lb2 _) -> do
       let lbBoth = unionType lb1 lb2
       ubBoth <- tryIntersectTypes ub1 ub2 $ "equalizeBounds(" ++ d ++ ")"
@@ -80,7 +80,7 @@ getSchemeProp env inScheme propName = do
     (SVar _ p) -> do
       let inScheme'' = descriptor env p
       getSchemeProp env inScheme'' propName
-    (SType ub lb desc) -> checkScheme (printf "getSchemeProp with prop %s" propName) $ return $ SType (getTypeProp ub ) (getTypeProp lb) desc
+    (SType ub lb desc) -> checkScheme (printf "getSchemeProp with prop %s from %s" propName (show inScheme)) $ return $ SType (getTypeProp ub ) (getTypeProp lb) desc
   where
     getTypeProp :: Type -> Type
     getTypeProp TopType = TopType
@@ -157,7 +157,7 @@ executeConstraint env (BoundedByKnown subPnt boundTp) = do
     TypeCheckResE _ -> ([], False, env)
     TypeCheckResult _ (SVar _ subPnt') -> executeConstraint env (BoundedByKnown subPnt' boundTp)
     TypeCheckResult _ (SType ub lb description) -> do
-      let subScheme' = fmap (\ub' -> SType ub' lb description) (tryIntersectTypes ub boundTp "executeConstraint BoundedBy")
+      let subScheme' = fmap (\ub' -> SType ub' lb description) (tryIntersectTypes ub boundTp "executeConstraint BoundedByKnown")
       let env' = setScheme env subPnt subScheme' "BoundedByKnown"
       ([], subScheme /= subScheme', env')
 executeConstraint env@(FEnv _ _ ((unionAllObjs, unionTypeObjs), _) _) cons@(BoundedByObjs bnd pnt) = do

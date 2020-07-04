@@ -29,8 +29,8 @@ import           Text.Printf
 data TypeCheckError
   = GenTypeCheckError String
   | AbandonCon SConstraint
-  | FailInfer String SType [SConstraint]
-  | TupleMismatch TypedMeta TExpr Typed (H.HashMap String TExpr) [SConstraint]
+  | TupleMismatch TypedMeta TExpr Typed (H.HashMap String TExpr)
+  | TCWithMatchingConstraints [SConstraint] TypeCheckError
   deriving (Eq, Ord, Generic, Hashable)
 
 data SType
@@ -153,11 +153,11 @@ instance Meta VarMeta where
 instance Show TypeCheckError where
   show (GenTypeCheckError s) = s
   show (AbandonCon c) = printf "Abandon %s" (show c)
-  show (FailInfer desc scheme constraints) = printf "Failed to infer %s\n\tScheme: %s\n\tConstraints: %s" desc (show scheme) (show constraints)
-  show (TupleMismatch baseM baseExpr m args constraints) = printf "Tuple Apply Mismatch:\n\t(%s %s)(%s) ≠ %s\n\tConstraints: %s" (show baseM) (show baseExpr) args' (show m) (show constraints)
+  show (TupleMismatch baseM baseExpr m args) = printf "Tuple Apply Mismatch:\n\t(%s %s)(%s) ≠ %s\n\t" (show baseM) (show baseExpr) args' (show m)
     where
       showArg (argName, argVal) = printf "%s = %s" argName (show argVal)
       args' = intercalate ", " $ map showArg $ H.toList args
+  show (TCWithMatchingConstraints constraints er) = printf "%s\n\tConstraints: %s" (show er) (show constraints)
 
 instance Show SType where
   show (SType upper lower desc) = concat [show upper, " ⊇ ", show (S.toList desc), " ⊇ ", show lower]
