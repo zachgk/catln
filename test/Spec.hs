@@ -28,12 +28,11 @@ runTest includeStd fileName = testCaseSteps fileName $ \step -> do
     CRes _ prgm -> do
       -- step $ T.unpack $ pShow prgm
       step "Typecheck..."
+      -- step $ T.unpack $ pShow $ traceTestPrgm prgm
       case typecheckPrgm prgm of
         TypeCheckResE err -> do
-          -- step $ T.unpack $ pShow $ traceTestPrgm prgm
           assertFailure $ "Could not typecheck:\n\n\n\t" ++ intercalate "\n\n\n\t\t" (map (T.unpack . pShow) err)
         TypeCheckResult _ tprgm -> do
-          -- step $ T.unpack $ pShow $ traceTestPrgm prgm
           -- step $ T.unpack $ pShow $ tprgm
           step "Eval tests..."
           case evalMain tprgm of
