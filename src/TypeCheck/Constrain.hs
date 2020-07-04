@@ -169,7 +169,7 @@ executeConstraint env@(FEnv _ _ ((unionAllObjs, unionTypeObjs), _) _) cons@(Boun
       -- but a subset of the arguments in that type
       let ub' = intersectTypes ub objsUb
       let scheme' = if ub' == bottomType
-            then TypeCheckResE [GenTypeCheckError $ printf "Failed to BoundByObjs for %s: %s %s" (show $ S.toList desc) (show ub) (show objsUb)]
+            then TypeCheckResE [GenTypeCheckError $ printf "Failed to BoundByObjs for %s: \n\t%s \n\twith \n\t%s" (show $ S.toList desc) (show ub) (show objsUb)]
             else return $ SType ub' lb desc
       let env' = setDescriptor env pnt scheme'
       ([cons | not (isSolved scheme')], scheme /= scheme', env')
@@ -213,7 +213,7 @@ executeConstraint env cons@(AddArgs (srcPnt, newArgNames) destPnt) = do
     TypeCheckResult _ (SType srcUb _ _, SType _ destLb destDesc) ->
       case addArgsToType srcUb newArgNames of
         Just destUb' -> do
-          let destScheme' = equalizeSchemes env (destScheme, return $ SType destUb' destLb destDesc) "executeConstraint AddArgs"
+          let destScheme' = equalizeSchemes env (destScheme, return $ SType destUb' destLb destDesc) $ printf "executeConstraint AddArgs %s" (show $ S.toList newArgNames)
           let env' = setDescriptor env destPnt destScheme'
           ([cons | not (isSolved srcScheme || isSolved destScheme)], destScheme /= destScheme', env')
         Nothing -> ([cons], False, env)

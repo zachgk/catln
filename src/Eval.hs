@@ -64,7 +64,7 @@ eval _ st _ _ _ = error $ "Bad eval resArrow at: " ++ show st
 evalTree :: Env -> EStacktrace -> Args -> Val -> ResArrowTree EPrim -> CRes Val
 evalTree env st arrArgs val (ResArrowCompose t1 t2) = do
   val' <- evalTree env ("Compose first":st) arrArgs val t1
-  evalTree env ("Compose second":st) arrArgs val' t2
+  evalTree env (("Compose second with " ++ show val'):st) arrArgs val' t2
 evalTree env st arrArgs val (ResArrowMatch opts) = case H.lookup (getValType val) opts of
   Just resArrowTree -> case val of
     (TupleVal _ newArrArgs) ->

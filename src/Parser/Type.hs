@@ -28,11 +28,20 @@ pLeafVar = do
   var <- tvar
   return (var, emptyMeta)
 
-pTypeArg :: Parser (String, PObjArg)
-pTypeArg = do
-  tp <- tvar <|> tidentifier
+pIdArg :: Parser (String, PObjArg)
+pIdArg = do
+  tp <- tidentifier
   argName <- identifier
   return (argName, (PreTyped $ SumType $ joinPartialLeafs [(tp, H.empty, H.empty)], Nothing))
+
+pVarArg :: Parser (String, PObjArg)
+pVarArg = do
+  tp <- tvar
+  argName <- identifier
+  return (argName, (PreTyped $ TypeVar $ TVVar tp, Nothing))
+
+pTypeArg :: Parser (String, PObjArg)
+pTypeArg = pVarArg <|> pIdArg
 
 pLeafType :: Parser PObject
 pLeafType = do
