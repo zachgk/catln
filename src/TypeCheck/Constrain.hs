@@ -36,42 +36,29 @@ setScheme env p scheme msg = setDescriptor env p (checkScheme msg scheme)
 modifyScheme :: FEnv -> Pnt -> (Scheme -> Scheme) -> String -> FEnv
 modifyScheme env p f msg = setDescriptor env p (checkScheme msg $ f $ descriptor env p)
 
-equalizeBounds :: FEnv -> (Scheme, Scheme) -> String -> Scheme
-equalizeBounds env inSchemes d = do
-  inSchemes' <- sequenceT inSchemes
-  case inSchemes' of
-    (SVar _ p1, scheme2) -> do
-      let scheme1 = descriptor env p1
-      equalizeBounds env (scheme1, return scheme2) d
-    (scheme1, SVar _ p2) -> do
-      let scheme2 = descriptor env p2
-      equalizeBounds env (return scheme1, scheme2) d
-    (SType ub1 lb1 desc1, SType ub2 lb2 _) -> do
-      let lbBoth = unionType lb1 lb2
-      ubBoth <- tryIntersectTypes ub1 ub2 $ "equalizeBounds(" ++ d ++ ")"
-      if hasType lbBoth ubBoth
-        then return $ SType ubBoth lbBoth desc1
-        else TypeCheckResE [GenTypeCheckError $ concat ["Type Mismatched: ", show lbBoth, " is not a subtype of ", show ubBoth]]
-
-equalizeSchemes :: FEnv -> (Scheme, Scheme) -> String -> Scheme
-equalizeSchemes env inSchemes d = do
-  inSchemes' <- sequenceT inSchemes
-  case inSchemes' of
-    (SVar _ p1, scheme2) -> do
-      let scheme1 = descriptor env p1
-      equalizeSchemes env (scheme1, return scheme2) d
-    (scheme1, SVar _ p2) -> do
-      let scheme2 = descriptor env p2
-      equalizeSchemes env (return scheme1, scheme2) d
+equalizeSchemes :: FEnv -> (Scheme, Scheme) -> String -> (Scheme, Scheme)
+equalizeSchemes env inSchemes d = case sequenceT inSchemes of
+  TypeCheckResult notes inSchemes' -> case inSchemes' of
+    (scheme1@(SVar _ p1), scheme2) -> do
+      let scheme1' = descriptor env p1
+      let (_, scheme2') = equalizeSchemes env (scheme1', return scheme2) d
+      (return scheme1, scheme2')
+    (scheme1, scheme2@(SVar _ p2)) -> do
+      let scheme2' = descriptor env p2
+      let (scheme1', _) = equalizeSchemes env (return scheme1, scheme2') d
+      (scheme1', return scheme2)
     (SType ub1 lb1 desc1, SType ub2 lb2 desc2) -> do
       let lbBoth = unionType lb1 lb2
-      ubBoth <- tryIntersectTypes ub1 ub2 $ "equalizeSchemes(" ++ d ++ ")"
-      let descBoth = S.union desc1 desc2
-      if hasType lbBoth ubBoth
-        then return $ SType ubBoth lbBoth descBoth
-        else TypeCheckResE [GenTypeCheckError $ concat ["Type Mismatched: ", show lbBoth, " is not a subtype of ", show ubBoth]]
-
-
+      case tryIntersectTypes ub1 ub2 $ "equalizeSchemes(" ++ d ++ ")" of
+        TypeCheckResult notes2 ubBoth -> if hasType lbBoth ubBoth
+          then (TypeCheckResult (notes ++ notes2) $ SType ubBoth lbBoth desc1, return $ SType ubBoth lbBoth desc2)
+          else do
+            let er = TypeCheckResE $ GenTypeCheckError (printf "Type mismatched: %s is not a subtype of %s" (show lbBoth) (show ubBoth)) : notes ++ notes2
+            (er, er)
+        TypeCheckResE err -> do
+            let er = TypeCheckResE $ err ++ notes
+            (er, er)
+  TypeCheckResE _ -> inSchemes
 
 getSchemeProp :: FEnv -> Scheme -> ArgName -> Scheme
 getSchemeProp env inScheme propName = do
@@ -131,15 +118,15 @@ addArgsToType (SumType partials) newArgs = Just $ SumType partials'
 executeConstraint :: FEnv -> Constraint -> ([Constraint], Bool, FEnv)
 executeConstraint env (EqualsKnown pnt tp) = ([], True, env')
   where
-    f oldScheme = equalizeSchemes env (oldScheme, return $ SType tp tp $ S.singleton "") "executeConstraint EqualsKnown"
+    f oldScheme = fst $ equalizeSchemes env (oldScheme, return $ SType tp tp $ S.singleton "") "executeConstraint EqualsKnown"
     env' = modifyScheme env pnt f "EqualslKnown"
-executeConstraint env1 cons@(EqPoints p1 p2) = ([cons | not (isSolved s')], s1 /= s' || s2 /= s', env3)
+executeConstraint env1 cons@(EqPoints p1 p2) = ([cons | not (isSolved s1')], s1 /= s1' || s2 /= s2', env3)
   where
     s1 = descriptor env1 p1
     s2 = descriptor env1 p2
-    s' = equalizeSchemes env1 (s1, s2) "executeConstraint EqPoints"
-    env2 = setScheme env1 p1 s' "EqPoints p1"
-    env3 = setScheme env2 p2 s' "EqPoints p2"
+    (s1', s2') = equalizeSchemes env1 (s1, s2) "executeConstraint EqPoints"
+    env2 = setScheme env1 p1 s1' "EqPoints p1"
+    env3 = setScheme env2 p2 s2' "EqPoints p2"
 executeConstraint env cons@(BoundedBy subPnt parentPnt) = do
   let subScheme = descriptor env subPnt
   let parentScheme = descriptor env parentPnt
@@ -203,11 +190,11 @@ executeConstraint env cons@(PropEq (superPnt, propName) subPnt) = do
     TypeCheckResE _ -> ([], False, env)
     TypeCheckResult{} -> do
       let superPropScheme = getSchemeProp env superScheme propName
-      let scheme' = equalizeBounds env (subScheme, superPropScheme) $ printf "executeConstraint PropEq %s" propName
-      let superScheme' = setSchemeProp env superScheme propName scheme'
-      let env' = setScheme env subPnt scheme' "PropEq sub"
+      let (subScheme', superPropScheme') = equalizeSchemes env (subScheme, superPropScheme) $ printf "executeConstraint PropEq %s" propName
+      let superScheme' = setSchemeProp env superScheme propName superPropScheme'
+      let env' = setScheme env subPnt subScheme' "PropEq sub"
       let env'' = setScheme env' superPnt superScheme' "PropEq super"
-      ([cons | not (isSolved scheme')], subScheme /= scheme' || superScheme /= superScheme', env'')
+      ([cons | not (isSolved subScheme')], subScheme /= subScheme' || superScheme /= superScheme', env'')
 executeConstraint env cons@(AddArgs (srcPnt, newArgNames) destPnt) = do
   let srcScheme = descriptor env srcPnt
   let destScheme = descriptor env destPnt
@@ -219,7 +206,7 @@ executeConstraint env cons@(AddArgs (srcPnt, newArgNames) destPnt) = do
     TypeCheckResult _ (SType srcUb _ _, SType _ destLb destDesc) ->
       case addArgsToType srcUb newArgNames of
         Just destUb' -> do
-          let destScheme' = equalizeSchemes env (destScheme, return $ SType destUb' destLb destDesc) $ printf "executeConstraint AddArgs %s" (show $ S.toList newArgNames)
+          let (destScheme', _) = equalizeSchemes env (destScheme, return $ SType destUb' destLb destDesc) $ printf "executeConstraint AddArgs %s" (show $ S.toList newArgNames)
           let env' = setScheme env destPnt destScheme' "AddArgs"
           ([cons | not (isSolved srcScheme || isSolved destScheme)], destScheme /= destScheme', env')
         Nothing -> ([cons], False, env)
@@ -241,7 +228,7 @@ executeConstraint env cons@(UnionOf parentPnt childrenPnts) = do
     TypeCheckResE _ -> ([], False, env)
     TypeCheckResult _ (_, childrenSchemes) -> do
       let childrenScheme = (\(ub, lb) -> return $ SType ub lb (S.singleton "")) $ foldr (\(SType ub1 lb1 _) (ub2, lb2) -> (unionType ub1 ub2, unionType lb1 lb2)) (bottomType, bottomType) childrenSchemes
-      let parentScheme' = equalizeBounds env (parentScheme, childrenScheme) "executeConstraint UnionOf"
+      let (parentScheme', _) = equalizeSchemes env (parentScheme, childrenScheme) "executeConstraint UnionOf"
       let env' = setScheme env parentPnt parentScheme' "UnionOf"
       ([cons | not (isSolved parentScheme')], parentScheme /= parentScheme', env')
 
