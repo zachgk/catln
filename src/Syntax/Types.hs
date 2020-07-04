@@ -111,7 +111,8 @@ subPartialOf sub sup = sub `hasPartial` SumType (joinPartialLeafs [sup])
 compactType :: Type -> Type
 compactType TopType = TopType
 compactType t@TypeVar{} = t
-compactType (SumType partials) = SumType partials
+compactType (SumType partials) = SumType nonEmpty
+  where nonEmpty = H.filter (not . S.null) partials
 
 unionType :: Type -> Type -> Type
 unionType TopType _ = TopType
