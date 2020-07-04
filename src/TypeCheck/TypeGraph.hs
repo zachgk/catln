@@ -13,7 +13,6 @@
 module TypeCheck.TypeGraph where
 
 import qualified Data.HashMap.Strict           as H
-import qualified Data.HashSet          as S
 import           Data.Tuple.Sequence
 import           Data.Maybe
 
@@ -24,10 +23,10 @@ import           TypeCheck.Common
 
 buildUnionObj :: FEnv -> [VObject] -> FEnv
 buildUnionObj env1 objs = do
-  let (unionAllObjs, env2) = fresh env1 $ TypeCheckResult [] $ SType TopType bottomType $ S.singleton "unionAllObjs"
-  let (unionTypeObjs, env3) = fresh env2 $ TypeCheckResult [] $ SType TopType bottomType $ S.singleton "unionTypeObjs"
-  let (unionAllObjsPs, env4) = fresh env3 $ TypeCheckResult [] $ SType TopType bottomType $ S.singleton "unionAllObjsPs"
-  let (unionTypeObjsPs, env5) = fresh env4 $ TypeCheckResult [] $ SType TopType bottomType $ S.singleton "unionTypeObjsPs"
+  let (unionAllObjs, env2) = fresh env1 $ TypeCheckResult [] $ SType TopType bottomType "unionAllObjs"
+  let (unionTypeObjs, env3) = fresh env2 $ TypeCheckResult [] $ SType TopType bottomType "unionTypeObjs"
+  let (unionAllObjsPs, env4) = fresh env3 $ TypeCheckResult [] $ SType TopType bottomType "unionAllObjsPs"
+  let (unionTypeObjsPs, env5) = fresh env4 $ TypeCheckResult [] $ SType TopType bottomType "unionTypeObjsPs"
   let constraints = [unionObjs unionAllObjs objs, unionObjs unionTypeObjs $ filterTypes objs, PowersetTo unionAllObjs unionAllObjsPs, PowersetTo unionTypeObjs unionTypeObjsPs]
   let unionObjs' = (unionAllObjsPs, unionTypeObjsPs)
   let env6 = (\(FEnv pnts cons (_, graph) pmap) -> FEnv pnts cons (unionObjs', graph) pmap) env5

@@ -14,7 +14,6 @@ module TypeCheck.Encode where
 import           Control.Monad
 import Data.Hashable (Hashable)
 import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet          as S
 import qualified Data.IntMap.Lazy as IM
 
 import           Syntax.Types
@@ -28,7 +27,7 @@ makeBaseFEnv = FEnv IM.empty [] ((0, 0), H.empty) H.empty
 
 fromMetaPNoObj :: FEnv -> PreMeta -> String -> TypeCheckResult (VarMeta, Pnt, FEnv)
 fromMetaPNoObj env m description  = do
-  let (p, env') = fresh env (TypeCheckResult [] $ SType (getMetaType m) bottomType $ S.singleton description)
+  let (p, env') = fresh env (TypeCheckResult [] $ SType (getMetaType m) bottomType description)
   return (VarMeta p m, p, env')
 
 fromMetaP :: FEnv -> VObject -> PreMeta -> String -> TypeCheckResult (VarMeta, Pnt, FEnv)
@@ -100,7 +99,7 @@ fromExpr objArgs obj env1 (TupleApply m (baseM, baseExpr) args) = do
   (baseM', baseP, env3) <- fromMetaP env2 obj baseM "TupleApply BaseMeta"
   (baseExpr', env4) <- fromExpr objArgs obj env3 baseExpr
   (args', env5) <- mapMWithFEnvMap env4 (fromExpr objArgs obj) args
-  (convertExprMetas, env6) <- mapMWithFEnvMap env5 (\e _ -> return $ fresh e (TypeCheckResult [] $ SType TopType bottomType $ S.singleton "Tuple converted expr meta")) args
+  (convertExprMetas, env6) <- mapMWithFEnvMap env5 (\e _ -> return $ fresh e (TypeCheckResult [] $ SType TopType bottomType "Tuple converted expr meta")) args
   let arrowArgConstraints = H.elems $ H.intersectionWith ArrowTo (fmap getPntExpr args') convertExprMetas
   let tupleConstraints = H.elems $ H.mapWithKey (\name ceMeta -> PropEq (p, name) ceMeta) convertExprMetas
   let constraints = [ArrowTo (getPntExpr baseExpr') baseP, AddArgs (baseP, H.keysSet args) p, BoundedByObjs BoundAllObjs p] ++ arrowArgConstraints ++ tupleConstraints
@@ -115,7 +114,7 @@ fromAnnot objArgs obj env1 (CompAnnot name args) = do
 fromGuard :: VArgMetaMap -> VObject -> FEnv -> PGuard -> TypeCheckResult (VGuard, FEnv)
 fromGuard objArgs obj env1 (IfGuard expr) =  do
   (expr', env2) <- fromExpr objArgs obj env1 expr
-  let (bool, env3) = fresh env2 $ TypeCheckResult [] $ SType boolType bottomType $ S.singleton "bool"
+  let (bool, env3) = fresh env2 $ TypeCheckResult [] $ SType boolType bottomType "bool"
   return (IfGuard expr', addConstraints env3 [ArrowTo (getPnt $ getExprMeta expr') bool])
 fromGuard _ _ env ElseGuard = return (ElseGuard, env)
 fromGuard _ _ env NoGuard = return (NoGuard, env)

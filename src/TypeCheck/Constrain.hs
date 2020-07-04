@@ -27,7 +27,7 @@ isSolved (TypeCheckResult _ (SType a b _)) = a == b
 isSolved _ = False
 
 checkScheme :: String -> Scheme -> Scheme
-checkScheme msg (TypeCheckResult notes (SType ub _ desc)) | ub == bottomType = TypeCheckResE (GenTypeCheckError ("Scheme failed check at " ++ msg ++ ": upper bound is bottomType - " ++ show (S.toList desc)) : notes)
+checkScheme msg (TypeCheckResult notes (SType ub _ desc)) | ub == bottomType = TypeCheckResE (GenTypeCheckError ("Scheme failed check at " ++ msg ++ ": upper bound is bottomType - " ++ desc) : notes)
 checkScheme _ scheme = scheme
 
 setScheme :: FEnv -> Pnt -> Scheme -> String -> FEnv
@@ -118,7 +118,7 @@ addArgsToType (SumType partials) newArgs = Just $ SumType partials'
 executeConstraint :: FEnv -> Constraint -> ([Constraint], Bool, FEnv)
 executeConstraint env (EqualsKnown pnt tp) = ([], True, env')
   where
-    f oldScheme = fst $ equalizeSchemes env (oldScheme, return $ SType tp tp $ S.singleton "") "executeConstraint EqualsKnown"
+    f oldScheme = fst $ equalizeSchemes env (oldScheme, return $ SType tp tp "") "executeConstraint EqualsKnown"
     env' = modifyScheme env pnt f "EqualslKnown"
 executeConstraint env1 cons@(EqPoints p1 p2) = ([cons | not (isSolved s1')], s1 /= s1' || s2 /= s2', env3)
   where
@@ -162,7 +162,7 @@ executeConstraint env@(FEnv _ _ ((unionAllObjs, unionTypeObjs), _) _) cons@(Boun
       -- but a subset of the arguments in that type
       let ub' = intersectTypes ub objsUb
       let scheme' = if ub' == bottomType
-            then TypeCheckResE [GenTypeCheckError $ printf "Failed to BoundByObjs for %s: \n\t%s \n\twith \n\t%s" (show $ S.toList desc) (show ub) (show objsUb)]
+            then TypeCheckResE [GenTypeCheckError $ printf "Failed to BoundByObjs for %s: \n\t%s \n\twith \n\t%s" desc (show ub) (show objsUb)]
             else return $ SType ub' lb desc
       let env' = setScheme env pnt scheme' "BoundedByObjs"
       ([cons | not (isSolved scheme')], scheme /= scheme', env')
@@ -227,7 +227,7 @@ executeConstraint env cons@(UnionOf parentPnt childrenPnts) = do
   case sequenceT (parentScheme, sequence tcresChildrenSchemes) of
     TypeCheckResE _ -> ([], False, env)
     TypeCheckResult _ (_, childrenSchemes) -> do
-      let childrenScheme = (\(ub, lb) -> return $ SType ub lb (S.singleton "")) $ foldr (\(SType ub1 lb1 _) (ub2, lb2) -> (unionType ub1 ub2, unionType lb1 lb2)) (bottomType, bottomType) childrenSchemes
+      let childrenScheme = (\(ub, lb) -> return $ SType ub lb "") $ foldr (\(SType ub1 lb1 _) (ub2, lb2) -> (unionType ub1 ub2, unionType lb1 lb2)) (bottomType, bottomType) childrenSchemes
       let (parentScheme', _) = equalizeSchemes env (parentScheme, childrenScheme) "executeConstraint UnionOf"
       let env' = setScheme env parentPnt parentScheme' "UnionOf"
       ([cons | not (isSolved parentScheme')], parentScheme /= parentScheme', env')
