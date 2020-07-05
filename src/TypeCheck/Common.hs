@@ -33,6 +33,7 @@ data TypeCheckError
   | TCWithMatchingConstraints [SConstraint] TypeCheckError
   deriving (Eq, Ord, Generic, Hashable)
 
+type SplitSType = (Type, Type, String)
 data SType
   = SType Type Type String -- SType upper lower (description in type)
   | SVar TypeVarName Pnt
@@ -50,7 +51,6 @@ data BoundObjs = BoundAllObjs | BoundTypeObjs
 data Constraint
   = EqualsKnown Pnt Type
   | EqPoints Pnt Pnt
-  | BoundedBy Pnt Pnt
   | BoundedByKnown Pnt Type
   | BoundedByObjs BoundObjs Pnt
   | ArrowTo Pnt Pnt -- ArrowTo src dest
@@ -63,7 +63,6 @@ data Constraint
 data SConstraint
   = SEqualsKnown Scheme Type
   | SEqPoints Scheme Scheme
-  | SBoundedBy Scheme Scheme
   | SBoundedByKnown Scheme Type
   | SBoundedByObjs BoundObjs Scheme
   | SArrowTo Scheme Scheme
@@ -166,7 +165,6 @@ instance Show SType where
 instance Show SConstraint where
   show (SEqualsKnown s t) = printf "%s == %s" (show s) (show t)
   show (SEqPoints s1 s2) = printf "%s == %s" (show s1) (show s2)
-  show (SBoundedBy s1 s2) = printf "%s ⊆ %s" (show s1) (show s2)
   show (SBoundedByKnown s t) = printf "%s ⊆ %s" (show s) (show t)
   show (SBoundedByObjs b s) = printf "%s %s" (show b) (show s)
   show (SArrowTo f t) = printf "%s -> %s" (show t) (show f)
@@ -224,6 +222,3 @@ fresh (FEnv pnts cons typeEnv pmap) scheme = (pnt', FEnv pnts' cons typeEnv pmap
 setDescriptor :: FEnv -> Pnt -> Scheme -> FEnv
 setDescriptor (FEnv pnts cons typeEnv pmap) p s = FEnv pnts' cons typeEnv pmap
   where pnts' = IM.insert p s pnts
-
-modifyDescriptor :: FEnv -> Pnt -> (Scheme -> Scheme) -> FEnv
-modifyDescriptor env p f = setDescriptor env p (f $ descriptor env p)

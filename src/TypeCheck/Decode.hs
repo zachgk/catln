@@ -25,7 +25,6 @@ matchingConstraintHelper env p p2 p3 = equivalent env p p2 || equivalent env p p
 matchingConstraint :: FEnv -> Pnt -> Constraint -> Bool
 matchingConstraint env p (EqualsKnown p2 _) = equivalent env p p2
 matchingConstraint env p (EqPoints p2 p3) = matchingConstraintHelper env p p2 p3
-matchingConstraint env p (BoundedBy p2 p3) = matchingConstraintHelper env p p2 p3
 matchingConstraint env p (BoundedByKnown p2 _) = equivalent env p p2
 matchingConstraint env p (BoundedByObjs _ p2) = equivalent env p p2
 matchingConstraint env p (ArrowTo p2 p3) = matchingConstraintHelper env p p2 p3
