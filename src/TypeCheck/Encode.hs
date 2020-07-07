@@ -32,14 +32,14 @@ fromMetaPNoObj env m description  = do
 
 fromMetaP :: FEnv -> VObject -> PreMeta -> String -> TypeCheckResult (VarMeta, Pnt, FEnv)
 fromMetaP env obj@(Object _ _ _ objVars _) m description  = case metaTypeVar m of
-  Just (TVVar varName) -> case H.lookup varName objVars of
+  Just tv@(TVVar varName) -> case H.lookup varName objVars of
     Just objVarM -> do
-      let (p, env') = fresh env (TypeCheckResult [] $ SVar varName (getPnt objVarM))
+      let (p, env') = fresh env (TypeCheckResult [] $ SVar tv (getPnt objVarM))
       return (VarMeta p m, p, env')
     Nothing -> error $ "Unknown obj var: " ++ varName
-  Just (TVArg argName) -> case H.lookup argName $ formArgMetaMap obj of
+  Just tv@(TVArg argName) -> case H.lookup argName $ formArgMetaMap obj of
     Just objArgM -> do
-      let (p, env') = fresh env (TypeCheckResult [] $ SVar argName (getPnt objArgM))
+      let (p, env') = fresh env (TypeCheckResult [] $ SVar tv (getPnt objArgM))
       return (VarMeta p m, p, env')
     Nothing -> error $ "Unknown obj arg: " ++ argName
   Nothing -> fromMetaPNoObj env m description

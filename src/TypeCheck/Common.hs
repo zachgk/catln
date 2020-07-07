@@ -36,7 +36,7 @@ data TypeCheckError
 type SplitSType = (Type, Type, String)
 data SType
   = SType Type Type String -- SType upper lower (description in type)
-  | SVar TypeVarName Pnt
+  | SVar TypeVarAux Pnt
   deriving (Eq, Ord, Generic, Hashable)
 type Scheme = TypeCheckResult SType
 
@@ -160,7 +160,7 @@ instance Show TypeCheckError where
 
 instance Show SType where
   show (SType upper lower desc) = concat [show upper, " ⊇ ", desc, " ⊇ ", show lower]
-  show (SVar varName _) = printf "SVar %s" varName
+  show (SVar varName _) = printf "SVar %s" (show varName)
 
 instance Show SConstraint where
   show (SEqualsKnown s t) = printf "%s == %s" (show s) (show t)
