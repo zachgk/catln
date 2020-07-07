@@ -137,7 +137,10 @@ fromArrow obj@(Object _ _ objName objVars _) env1 (Arrow m annots aguard maybeEx
       let arrow' = Arrow m' annots' aguard' (Just vExpr)
       let env7 = fAddTypeGraph env6 objName (obj, arrow')
       return (arrow', env7)
-    Nothing -> return (Arrow m' annots' aguard' Nothing, env4)
+    Nothing -> do
+      let arrow' = Arrow m' annots' aguard' Nothing
+      let env5 = fAddTypeGraph env4 objName (obj, arrow')
+      return (arrow', env5)
 
 fromObjectMap :: FEnv -> (VObject, [PArrow]) -> TypeCheckResult ((VObject, [VArrow]), FEnv)
 fromObjectMap env1 (obj, arrows) = do
