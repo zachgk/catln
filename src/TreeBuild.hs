@@ -44,12 +44,10 @@ resArrowDestType _ (ConstantArrow CFloat{}) = floatType
 resArrowDestType _ (ConstantArrow CStr{}) = strType
 resArrowDestType _ (ArgArrow tp _) = tp
 
-leafFromMeta :: TBMeta -> PartialType
-leafFromMeta (Typed TopType) = error "leafFromMeta from TopType"
-leafFromMeta (Typed TypeVar{}) = error "leafFromMeta from TypeVar"
-leafFromMeta (Typed (SumType prodTypes)) = case splitPartialLeafs prodTypes of
-  [leafType] -> leafType
-  _ -> error $ "Arrow has multiple leaves: " ++ show prodTypes
+leafsFromMeta :: TBMeta -> [PartialType]
+leafsFromMeta (Typed TopType) = error "leafFromMeta from TopType"
+leafsFromMeta (Typed TypeVar{}) = error "leafFromMeta from TypeVar"
+leafsFromMeta (Typed (SumType prodTypes)) = splitPartialLeafs prodTypes
 
 makeBaseEnv :: (Eq f, Hashable f) => ResBuildEnv f -> TBObjectMap -> CRes (TBEnv f, ResExEnv f)
 makeBaseEnv primEnv objMap = fmap (baseEnv,) exEnv
@@ -59,7 +57,9 @@ makeBaseEnv primEnv objMap = fmap (baseEnv,) exEnv
     resFromArrows :: (TBObject, [TBArrow]) -> [(TypeName, [(PartialType, TBGuard, ResArrow f)])]
     resFromArrows (obj, arrows) = mapMaybe (resFromArrow obj) arrows
     resFromArrow :: TBObject -> TBArrow -> Maybe (TypeName, [(PartialType, TBGuard, ResArrow f)])
-    resFromArrow obj@(Object om _ objName _ _) arrow@(Arrow _ _ aguard expr) = fmap (const (objName, [(leafFromMeta om, aguard, ResEArrow obj arrow)])) expr
+    resFromArrow obj@(Object om _ objName _ _) arrow@(Arrow _ _ aguard expr) = case expr of
+      Just _ -> Just (objName, [(objLeaf, aguard, ResEArrow obj arrow) | objLeaf <- leafsFromMeta om])
+      Nothing -> Nothing
     exEnv = fmap H.fromList $ sequence $ concatMap exFromArrows $ H.toList objMap
     exFromArrows (obj, arrows) = mapMaybe (exFromArrow obj) arrows
     exFromArrow obj@(Object _ _ _ objVars _) arrow@(Arrow (Typed am) compAnnots _ maybeExpr) = fmap (\expr -> do

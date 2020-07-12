@@ -33,6 +33,11 @@ checkScheme _ scheme = scheme
 setScheme :: FEnv -> Pnt -> Scheme -> String -> FEnv
 setScheme env p scheme msg = setDescriptor env p (checkScheme msg scheme)
 
+findSVar :: FEnv -> Scheme -> TypeCheckResult SplitSType
+findSVar env scheme = scheme >>= aux
+  where aux (SType ub lb desc) = return (ub, lb, desc)
+        aux (SVar _ p) = findSVar env (descriptor env p)
+
 equalizeSTypes :: (SplitSType, SplitSType) -> String -> TypeCheckResult (SType, SType)
 equalizeSTypes ((ub1, lb1, desc1), (ub2, lb2, desc2)) d = do
   let lbBoth = unionType lb1 lb2
@@ -41,55 +46,29 @@ equalizeSTypes ((ub1, lb1, desc1), (ub2, lb2, desc2)) d = do
     then return (SType ubBoth lbBoth desc1, SType ubBoth lbBoth desc2)
     else TypeCheckResE [GenTypeCheckError (printf "Type mismatched: %s is not a subtype of %s" (show lbBoth) (show ubBoth))]
 
-getSchemeProp :: FEnv -> Scheme -> ArgName -> TypeCheckResult SplitSType
-getSchemeProp env inScheme propName = do
-  inScheme' <- inScheme
-  case inScheme' of
-    (SVar _ p) -> do
-      let inScheme'' = descriptor env p
-      getSchemeProp env inScheme'' propName
-    (SType ub lb desc) -> do
-      let ub' = getTypeProp ub
-      let lb' = getTypeProp lb
-      case checkScheme (printf "getSchemeProp with prop %s from %s" propName (show inScheme)) $ return $ SType ub' lb' desc of
-        TypeCheckResult notes _ -> TypeCheckResult notes (ub', lb', desc)
-        TypeCheckResE notes -> TypeCheckResE notes
+updateSchemeProp :: FEnv -> SplitSType -> ArgName -> SplitSType -> (Scheme, Scheme)
+updateSchemeProp _ (superUb, superLb, superDesc) propName (subUb, subLb, subDesc) = (return $ SType superUb' superLb superDesc, return $ SType subUb' subLb subDesc)
   where
-    getTypeProp :: Type -> Type
-    getTypeProp TopType = TopType
-    getTypeProp TypeVar{} = error "getSchemeProp getTypeProp TypeVar"
-    getTypeProp (SumType partials) = case getPartials partials of
-      TopType -> TopType
-      TypeVar{} -> error "getSchemeProp getPartials TypeVar"
-      (SumType partials') -> SumType partials'
-    getPartials :: PartialLeafs -> Type
-    getPartials partials = unionTypes $ mapMaybe (H.lookup propName . snd) $ concatMap S.toList $ H.elems partials
-
-setSchemeProp :: FEnv -> Scheme -> ArgName -> Scheme -> Scheme
-setSchemeProp env scheme propName pscheme = do
-  scheme' <- scheme
-  pscheme' <- pscheme
-  case (scheme', pscheme') of
-    (SVar _ p', _) -> do
-      let scheme'' = descriptor env p'
-      setSchemeProp env scheme'' propName pscheme
-    (_, SVar _ p') -> do
-      let pscheme'' = descriptor env p'
-      setSchemeProp env scheme propName pscheme''
-    (SType ub lb desc, SType pub _ _) -> checkScheme ("setSchemeProp " ++ propName) $ return $ SType (compactType $ setTypeUbProp ub pub) (compactType $ setTypeLbProp lb) desc
-  where
-    setTypeUbProp :: Type -> Type -> Type
-    setTypeUbProp TopType _ = TopType
-    setTypeUbProp TypeVar{} _ = error "setSchemeProp setTypeUbProp TypeVar"
-    setTypeUbProp (SumType ubPartials) pub = SumType (joinPartialLeafs $ mapMaybe (setPartialsUb pub) $ splitPartialLeafs ubPartials)
-    setPartialsUb TopType partial = Just partial
-    setPartialsUb pub (partialName, partialVars, partialArgs) = case H.lookup propName partialArgs of
-      Just partialArg -> let partialArg' = intersectTypes partialArg pub
-                          in if partialArg' == bottomType
-                                then Nothing
-                                else Just (partialName, partialVars, H.insert propName partialArg' partialArgs)
-      Nothing -> Nothing
-    setTypeLbProp tp = tp -- TODO: Should set with union?
+    (superUb', subUb') = case (superUb, subUb) of
+      (TopType, sub) -> (TopType, sub)
+      (SumType supPartials, TopType) -> do
+        let supPartialList = splitPartialLeafs supPartials
+        let getProp (_, _, supArgs) = H.lookup propName supArgs
+        let sub = unionTypes $ mapMaybe getProp supPartialList
+        (superUb, sub)
+      (SumType supPartials, SumType subPartials) -> do
+        let supPartialList = splitPartialLeafs supPartials
+        let subPartialList = splitPartialLeafs subPartials
+        let intersectPartials (supName, supVars, supArgs) sub = case H.lookup propName supArgs of
+              Just supProp -> do
+                let newProp = intersectTypes supProp (SumType $ joinPartialLeafs [sub])
+                if newProp == bottomType
+                  then Nothing
+                  else Just ((supName, supVars, H.insert propName newProp supArgs), newProp)
+              Nothing -> Nothing
+        let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectPartials sup sub | sup <- supPartialList, sub <- subPartialList]
+        (SumType $ joinPartialLeafs supPartialList', unionTypes subPartialList')
+      (sup, sub) -> error $ printf "Unsupported updateSchemeProp Ub (%s).%s = %s" (show sup) propName (show sub)
 
 addArgsToType :: Type -> S.HashSet ArgName -> Maybe Type
 addArgsToType TopType _ = Nothing
@@ -184,28 +163,14 @@ executeConstraint env cons@(PropEq (superPnt, propName) subPnt) = do
   case sequenceT (superScheme, subScheme) of
     TypeCheckResE _ -> ([], False, env)
     (TypeCheckResult _ (SVar _ superPnt', _)) -> executeConstraint env (PropEq (superPnt', propName) subPnt)
-    (TypeCheckResult _ (_, SVar _ subPnt')) -> executeConstraint env (PropEq (superPnt, propName) subPnt')
-    (TypeCheckResult notes (SType{}, SType ub2 lb2 desc2)) -> do
-      let maybeSuperPropSType = getSchemeProp env superScheme propName
-      case maybeSuperPropSType of
-        TypeCheckResult notes2 superPropSType -> do
-          case equalizeSTypes (superPropSType, (ub2, lb2, desc2)) $ printf "executeConstraint PropEq %s" propName of
-            TypeCheckResult notes3 (subST', superST') -> do
-              let subScheme' = TypeCheckResult (notes ++ notes2 ++ notes3) subST'
-              let superPropScheme' = return superST'
-              let superScheme' = setSchemeProp env superScheme propName superPropScheme'
-              let env' = setScheme env subPnt subScheme' "PropEq sub"
-              let env'' = setScheme env' superPnt superScheme' "PropEq super"
-              ([cons | not (isSolved subScheme')], subScheme /= subScheme' || superScheme /= superScheme', env'')
-            TypeCheckResE notes3 -> do
-              let res = TypeCheckResE (notes ++ notes2 ++ notes3)
-              let env' = setScheme env subPnt res "PropEq sub"
-              let env'' = setScheme env' superPnt res "PropEq super"
-              ([], True, env'')
-        TypeCheckResE notes2 -> do
-          let res = TypeCheckResE (notes ++ notes2)
-          let env' = setScheme env superPnt res "PropEq super"
-          ([], True, env')
+    (TypeCheckResult _ _) ->
+      case sequenceT (findSVar env superScheme, findSVar env subScheme) of
+        TypeCheckResult _ (superSType, subSType) -> do
+          let (superScheme', subScheme') = updateSchemeProp env superSType propName subSType
+          let env' = setScheme env superPnt superScheme' "PropEq super"
+          let env'' = setScheme env' subPnt subScheme' "PropEq sub"
+          ([cons | not (isSolved subScheme)], subScheme /= subScheme' || superScheme /= superScheme', env'')
+        TypeCheckResE _ -> ([], False, env)
 executeConstraint env cons@(AddArgs (srcPnt, newArgNames) destPnt) = do
   let srcScheme = descriptor env srcPnt
   let destScheme = descriptor env destPnt

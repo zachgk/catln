@@ -117,8 +117,10 @@ compactType (SumType partials) = SumType nonEmpty
 unionType :: Type -> Type -> Type
 unionType TopType _ = TopType
 unionType _ TopType = TopType
-unionType (TypeVar v) _ = error $ "Can't union type vars: " ++ show v
-unionType _ (TypeVar v) = error $ "Can't union type vars: " ++ show v
+unionType t1 t2 | t2 == bottomType = t1
+unionType t1 t2 | t1 == bottomType = t2
+unionType (TypeVar v) t = error $ printf "Can't union type vars %s with %s " (show v) (show t)
+unionType t (TypeVar v) = error $ printf "Can't union type vars %s with %s " (show t) (show v)
 unionType (SumType aPartials) (SumType bPartials) = compactType $ SumType partials'
   where
     partials' = H.unionWith S.union aPartials bPartials
@@ -132,8 +134,8 @@ intersectAllTypes = foldr intersectTypes TopType
 intersectTypes :: Type -> Type -> Type
 intersectTypes TopType t = t
 intersectTypes t TopType = t
-intersectTypes (TypeVar v) _ = error $ "Can't intersect type vars: " ++ show v
-intersectTypes _ (TypeVar v) = error $ "Can't intersect type vars: " ++ show v
+intersectTypes (TypeVar v) t = error $ printf "Can't intersect type vars %s with %s" (show v) (show t)
+intersectTypes t (TypeVar v) = error $ printf "Can't intersect type vars %s with %s" (show t) (show v)
 intersectTypes (SumType aPartials) (SumType bPartials) = compactType $ SumType partials'
   where
     partials' = H.intersectionWith intersectArgsOptions (fmap S.toList aPartials) (fmap S.toList bPartials)
