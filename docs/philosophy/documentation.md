@@ -6,7 +6,7 @@ Documentation is important for developing a language for maintainable code. Docu
 
 Code documentation is probably the most well established. This includes documenting types, variables, methods, parameters, and return values. Documenting all of these ideas could help readers understand the code being written.
 
-However, there are mixed results of this. Natural documentation exists in the form of naming and type signatures. Naming can help give guidance about the relative purpose of everything. The reason Catln focuses on named tuples rather than positional arguments is precisely to increase the amount of names to add natural description to the code.
+However, there are mixed results of this. Natural documentation exists in the form of [naming](naming.md) and type signatures. Naming can help give guidance about the relative purpose of everything. The reason Catln focuses on named tuples rather than positional arguments is precisely to increase the amount of names to add natural description to the code.
 
 The other factor is the usage of types. Having a precise and descriptive type system allows a significant amount of information and relationships about code to be given. At all times, it is better to prefer the compiler comprehensible use of types rather than informal ideas only passed in code. Due to the power of these signatures, I am hesitant to require documentation about things like methods and return values as the signature often presents that information even more clearly.
 

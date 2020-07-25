@@ -10,7 +10,7 @@ Another benefit of arrow testing is that various methods can be tested by provid
 
 ## Implicit Arrow Testing
 
-But, the greatest benefit of arrow testing comes about in combination with implicit conversions. Similarly to category theory, any two paths going from the same start node to the same end node must be equal. So, the conversions themselves can be converted by following different conversion paths to the same result. It can also test functions. For any combination of `implict -> method -> implicit` that can get the same type, it should be equal and can be tested.
+But, the greatest benefit of arrow testing comes about in combination with implicit conversions. Similarly to composing diagrams in category theory, any two paths going from the same start node to the same end node must be equal. So, the conversions themselves can be converted by following different conversion paths to the same result. It can also test functions. For any combination of `implict -> method -> implicit` that can get the same type, it should be equal and can be tested.
 
 As an example, consider a list type. You can have multiple kinds of lists such as an arrayList or a linkedList. Since they are both lists, you could implicitly convert between the two types of lists. So, if you start with a value in an arrayList, convert it into a linkedList, and take the length, it should be equivalent to taking the length directly. Like this, you can use the comparison to test almost the entirety of the list class and the methods within it. It is basically a free test suite, although additional tests may still be beneficial (although those additional tests would only need to test one kind of list and would be automatically applied to all).
 
