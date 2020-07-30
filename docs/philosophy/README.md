@@ -6,8 +6,9 @@ This directory contains  a number of the core ideas and directives that drive th
 
 - **[typeSystem](typeSystem.md)** - Discusses the basic elements within the type system.
 - **[typeTheory](typeTheory.md)** - Introduction to the ideas behind the type theory.
-- [arrowTesting](arrowTesting.md) - Automatic testing to ensure that overlapping function definitions should have the same result. It makes the use of multiple return values and implicit conversions safe.
-- [assertions](assertions.md) - Using assertions both for property testing and to declare properties.
+- [testing](testing.md) - General introduction to testing philosophy and techniques
+  - [arrowTesting](arrowTesting.md) - Automatic testing to ensure that overlapping function definitions should have the same result. It makes the use of multiple return values and implicit conversions safe.
+  - [assertions](assertions.md) - Using assertions both for property testing and to declare properties.
 - [Context](context.md) - An additional calling convention for passing data down through the call stack. This can be used for easier while still manageable state management.
 - [genericTypeUsage](genericTypeUsage.md) - To fully support higher level classes, you must be able to create the higher level class and not just use it (e.g. get a list without specifying what kind of list).
 - [macros](macros.md) - For a strongly typed language, you must either support unsafe features, require duplicate code, or support macros. This describes the macro usage within the language.
