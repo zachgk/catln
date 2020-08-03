@@ -159,7 +159,10 @@ addObjArg :: VObject -> VarMeta -> String -> H.HashMap TypeVarName VarMeta -> FE
 addObjArg fakeObj objM prefix varMap env (n, (m, maybeSubObj)) = do
   let prefix' = prefix ++ "." ++ n
   -- requires a fakeObj to pull the type variables from
-  (m', env2) <- fromMeta env BUpper fakeObj m prefix'
+  let argBound = case maybeSubObj of
+        Just{} -> BUpper
+        Nothing -> BEq
+  (m', env2) <- fromMeta env argBound fakeObj m prefix'
   let env3 = addConstraints env2 [PropEq (getPnt objM, n) (getPnt m'), BoundedByObjs BoundTypeObjs (getPnt m')]
   let env4 = case H.lookup n varMap of
         Just varM -> addConstraints env3 [EqPoints (getPnt m') (getPnt varM)]
