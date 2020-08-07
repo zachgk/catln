@@ -22,7 +22,6 @@ import           Data.List                      ( intercalate )
 import           GHC.Generics          (Generic)
 import           Text.Megaparsec.Error (ParseErrorBundle, errorBundlePretty)
 import qualified Data.Text.Lazy as T
-import           Data.Maybe
 import Text.Pretty.Simple
 import           Text.Printf
 
@@ -163,10 +162,26 @@ instance Meta PreTyped where
 instance Meta Typed where
   getMetaType (Typed t) = t
 
+type ArgMetaMapWithSrc m = H.HashMap ArgName (m, Type)
+formArgMetaMapWithSrc :: Object m -> PartialType -> ArgMetaMapWithSrc m
+formArgMetaMapWithSrc (Object m _ name _ args) src | H.null args = H.singleton name (m, SumType $ joinPartialLeafs [src])
+formArgMetaMapWithSrc (Object _ _ _ _ args) (_, _, srcArgs) = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg args
+  where
+    unionCombine _ _ = error "Duplicate var matched"
+    fromArg k (m, Nothing) = case H.lookup k srcArgs of
+      Just srcArg -> H.singleton k (m, srcArg)
+      Nothing -> H.empty
+    fromArg k (_, Just arg) = case H.lookup k srcArgs of
+      Just (SumType srcArg) -> mergeMaps $ map (formArgMetaMapWithSrc arg) $ splitPartialLeafs srcArg
+      Just _ -> H.empty
+      Nothing -> H.empty
+    mergeMaps [] = H.empty
+    mergeMaps (x:xs) = foldr (H.intersectionWith (\(m1, t1) (_, t2) -> (m1, unionType t1 t2))) x xs
+
 -- fullDest means to use the greatest possible type (after implicit).
 -- Otherwise, it uses the minimal type that *must* be reached
-arrowDestType :: (Meta m) => Bool -> PartialType -> Object m -> Arrow m -> Type
-arrowDestType fullDest (_, _, srcArgs) (Object _ _ _ _ objArgs) (Arrow arrM _ _ maybeExpr) = case getMetaType arrM of
+arrowDestType :: (Meta m, Show m) => Bool -> PartialType -> Object m -> Arrow m -> Type
+arrowDestType fullDest src@(_, _, srcArgs) obj@(Object _ _ _ _ objArgs) (Arrow arrM _ _ maybeExpr) = case getMetaType arrM of
   arrType@(TypeVar TVVar{}) -> do
     let argsMatchingTypeVar = H.filter (\(m, _) -> getMetaType m == arrType) objArgs
     case H.elems $ H.intersectionWith const srcArgs argsMatchingTypeVar of
@@ -179,7 +194,7 @@ arrowDestType fullDest (_, _, srcArgs) (Object _ _ _ _ objArgs) (Arrow arrM _ _ 
   arrType -> basicDest arrType
   where
     basicDest arrType = case maybeExpr of
-      Just (Arg _ n) -> fromMaybe arrType (H.lookup n srcArgs)
+      Just (Arg _ n) -> maybe arrType snd (H.lookup n $ formArgMetaMapWithSrc obj src)
       Just e | not fullDest -> getMetaType $ getExprMeta e
       _ -> arrType
 
