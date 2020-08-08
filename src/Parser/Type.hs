@@ -61,7 +61,7 @@ pType = sepBy1 (pLeafType <|> varOption) (symbol "|")
 
 pMultiTypeDefStatement :: Parser PStatement
 pMultiTypeDefStatement = do
-  _ <- symbol "data"
+  _ <- symbol "class"
   name <- tidentifier
   maybeVars <- try $ optional $ angleBraces $ sepBy1 tvar (symbol ",")
   let vars = maybe H.empty (H.fromList . map (, TopType)) maybeVars

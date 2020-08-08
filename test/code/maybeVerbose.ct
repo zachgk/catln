@@ -1,4 +1,4 @@
-data Maybe<$T> = Just<$T>($T val) | Nothing
+class Maybe<$T> = Just<$T>($T val) | Nothing
 
 defInt(x=Just(Integer val)) = val
 defInt(x=Nothing) = 0
