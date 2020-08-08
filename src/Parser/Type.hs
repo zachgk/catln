@@ -28,11 +28,20 @@ pLeafVar = do
   var <- tvar
   return (var, emptyMeta)
 
+-- TODO: Currently only parses `$T` as sugar for `$T=$T`
+-- Should eventually also support the full `$A=$B`
+pTypeVar :: Parser (TypeVarName, Type)
+pTypeVar = do
+  var <- tvar
+  return (var, TypeVar $ TVVar var)
+
 pIdArg :: Parser (String, PObjArg)
 pIdArg = do
   tp <- tidentifier
+  maybeVars <- optional $ angleBraces $ sepBy1 pTypeVar (symbol ",")
+  let vars = maybe H.empty H.fromList maybeVars
   argName <- identifier
-  return (argName, (PreTyped $ SumType $ joinPartialLeafs [(tp, H.empty, H.empty)], Nothing))
+  return (argName, (PreTyped $ SumType $ joinPartialLeafs [(tp, vars, H.empty)], Nothing))
 
 pVarArg :: Parser (String, PObjArg)
 pVarArg = do
@@ -46,7 +55,7 @@ pTypeArg = pVarArg <|> pIdArg
 pLeafType :: Parser ParseMeta
 pLeafType = do
   name <- tidentifier
-  maybeVars <- try $ optional $ angleBraces $ sepBy1 pLeafVar (symbol ",")
+  maybeVars <- optional $ angleBraces $ sepBy1 pLeafVar (symbol ",")
   maybeArgs <- optional $ parens (sepBy1 pTypeArg (symbol ","))
   let vars = maybe H.empty H.fromList maybeVars
   let args = maybe H.empty H.fromList maybeArgs
@@ -63,7 +72,7 @@ pMultiTypeDefStatement :: Parser PStatement
 pMultiTypeDefStatement = do
   _ <- symbol "class"
   name <- tidentifier
-  maybeVars <- try $ optional $ angleBraces $ sepBy1 tvar (symbol ",")
+  maybeVars <- optional $ angleBraces $ sepBy1 tvar (symbol ",")
   let vars = maybe H.empty (H.fromList . map (, TopType)) maybeVars
   _ <- symbol "="
   MultiTypeDefStatement . MultiTypeDef name vars <$> pType
@@ -82,6 +91,6 @@ pClassDefStatement = do
   return $ RawClassDefStatement (typeName, className)
 
 pTypeStatement :: Parser PStatement
-pTypeStatement = try pMultiTypeDefStatement
-                 <|> try pTypeDefStatement
+pTypeStatement = pMultiTypeDefStatement
+                 <|> pTypeDefStatement
                  <|> pClassDefStatement
