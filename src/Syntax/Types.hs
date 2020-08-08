@@ -112,8 +112,8 @@ expandClassPartial classMap@(_, classToType) (PClassName className, partialVars,
 hasPartial :: ClassMap -> PartialType -> Type -> Bool
 hasPartial _ _ TopType = True
 hasPartial _ _ (TypeVar v) = error $ "Can't hasPartial type vars: " ++ show v
-hasPartial classMap sub@(subName, subVars, subArgs) super@(SumType superPartials) = case subName of
-  PTypeName{} -> checkDirect
+hasPartial classMap@(typeToClass, _) sub@(subName, subVars, subArgs) super@(SumType superPartials) = case subName of
+  (PTypeName typeName) -> checkDirect || any checkSuperClass (H.lookupDefault S.empty typeName typeToClass)
   PClassName{} -> checkDirect || hasType classMap (expandClassPartial classMap sub) super
   where
     checkDirect = case H.lookup subName superPartials of
@@ -123,13 +123,17 @@ hasPartial classMap sub@(subName, subVars, subArgs) super@(SumType superPartials
         hasArgs (_, superArgs) | H.keysSet subArgs /= H.keysSet superArgs = False
         hasArgs (superVars, superArgs) = hasAll subArgs superArgs && hasAll subVars superVars
         hasAll sb sp = and $ H.elems $ H.intersectionWith (hasType classMap) sb sp
+    checkSuperClass superClassName = case H.lookup (PClassName superClassName) superPartials of
+      Just superClassArgsOptions -> any (hasPartial classMap sub . expandClassPartial classMap) $ splitPartialLeafs $ H.singleton (PClassName superClassName) superClassArgsOptions
+      Nothing -> False
 
 -- Maybe rename to subtypeOf
 hasType :: ClassMap -> Type -> Type -> Bool
 hasType _ _ TopType = True
 hasType _ TopType t = t == TopType
-hasType _ (TypeVar v) _ = error $ "Can't hasType type vars: " ++ show v
-hasType _ _ (TypeVar v) = error $ "Can't hasType type vars: " ++ show v
+hasType _ t1 t2 | t1 == t2 = True
+hasType _ (TypeVar v) t = error $ printf "Can't hasType for type var %s in %s" (show v) (show t)
+hasType _ t (TypeVar v) = error $ printf "Can't hasType for %s in type var %s" (show t) (show v)
 hasType classMap (SumType subPartials) superType = all (\p -> hasPartial classMap p superType) $ splitPartialLeafs subPartials
 
 subPartialOf :: ClassMap -> PartialType -> PartialType -> Bool

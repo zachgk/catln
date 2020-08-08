@@ -73,7 +73,7 @@ reachesPartial env@(FEnv _ _ (_, graph, classMap) _) partial@(PTypeName partialN
         -- otherwise, no reaches path requiring multiple steps can be found
         then Just $ arrowDestType True classMap partial obj arr
         else Nothing
-reachesPartial _ (PClassName _, _, _) = undefined
+reachesPartial env@(FEnv _ _ (_, _, classMap) _) partial@(PClassName _, _, _) = reaches env (expandClassPartial classMap partial)
 
 reaches :: FEnv -> Type -> TypeCheckResult ReachesTree
 reaches _     TopType            = return $ ReachesLeaf [TopType]

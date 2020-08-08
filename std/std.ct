@@ -35,3 +35,9 @@ operator^(False l, False r) = False
 
 class Number = Integer | Float
 class Boolean = True | False
+
+class ConsList<$T> = Cons<$T>($T head, ConsList tail) | Nil
+operator::<$T>($T l, ConsList<$T> r) = Cons(head=l, tail=r)
+
+length(l=Nil) = 0
+length(l=Cons(head, tail)) = 1 + length(l=tail)

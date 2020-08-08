@@ -21,8 +21,9 @@ import           MapMeta
 -- replaces uses of PTypeName with PClassName where it actually contains a class
 -- e.g. PTypeName Boolean ==> PClassName Boolean
 typeNameToClass :: DesPrgm -> DesPrgm
-typeNameToClass prgm@(_, (_, classToTypes)) = mapMetaPrgm aux prgm
+typeNameToClass (objMap, (typeToClass, classToTypes)) = mapMetaPrgm aux (objMap, (typeToClass, classToTypes'))
   where
+    classToTypes' = fmap (\(s, vs, ts) -> (s, fmap mapType vs, fmap mapType ts)) classToTypes
     aux (PreTyped t) = PreTyped $ mapType t
 
     mapType TopType = TopType
@@ -31,7 +32,7 @@ typeNameToClass prgm@(_, (_, classToTypes)) = mapMetaPrgm aux prgm
     mapType (SumType partials) = unionTypes $ map mapPartial $ splitPartialLeafs partials
       where
         mapPartial (PTypeName name, partialVars, partialArgs) = SumType $ joinPartialLeafs [(name', fmap mapType partialVars, fmap mapType partialArgs)]
-          where name' = case H.lookup name classToTypes of
+          where name' = case H.lookup name classToTypes' of
                   -- is a class, replace with class type
                   Just _ -> PClassName name
 

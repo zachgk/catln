@@ -98,13 +98,19 @@ buildExpr (_, valEnv, _) _ (Value (Typed (SumType prodTypes)) name) = case split
       Nothing -> ResArrowTuple name H.empty
 buildExpr _ _ (Arg (Typed tp) name) = return $ ResArrowSingle $ ArgArrow tp name
 buildExpr env obj (TupleApply (Typed (SumType prodTypes)) (Typed baseType, baseExpr) argExprs) = case splitPartialLeafs prodTypes of
-    (_:_:_) -> CErr [BuildTreeCErr $ "Found multiple types for tupleApply " ++ show baseExpr ++ "\n\t" ++ show prodTypes ++ "\n\t" ++ show argExprs]
     [] -> CErr [BuildTreeCErr $ "Found no types for tupleApply " ++ show baseExpr ++ " with type " ++ show prodTypes ++ " and exprs " ++ show argExprs]
-    [(_, _, leafType)] | H.keysSet argExprs `isSubsetOf` H.keysSet leafType -> do
-                           baseBuild <- buildExprImp env obj baseExpr baseType
-                           argVals <- mapM (\(valDestType, expr) -> buildExprImp env obj expr valDestType) $ H.intersectionWith (,) leafType argExprs
-                           return $ ResArrowTupleApply baseBuild argVals
-    _ -> CErr [BuildTreeCErr $ "Found bad types for tupleApply " ++ show baseExpr]
+    leaves -> do
+      baseBuild <- buildExprImp env obj baseExpr baseType
+      leavesArgs <- mapM getLeafArgs leaves
+      let leafArgs = foldr (H.unionWith unionType) H.empty leavesArgs
+      -- TODO: Currently for each arg it does: execute expr, execute implicit (to any leaf), then match
+      -- it should really be execute expr for args, match all args, then implicit all args
+      argVals <- mapM (\(valDestType, e) -> buildExprImp env obj e valDestType) $ H.intersectionWith (,) leafArgs argExprs
+      return $ ResArrowTupleApply baseBuild argVals
+  where
+    getLeafArgs (_, _, leafArgs) = if H.keysSet argExprs `isSubsetOf` H.keysSet leafArgs
+      then return leafArgs
+      else CErr [BuildTreeCErr "buildExpr could not find expected args"]
 buildExpr _ _ _ = error "Bad buildExpr"
 
 envLookupTry :: (Eq f, Hashable f) => TBEnv f -> TBObject -> VisitedArrows f -> PartialType -> Type -> ResArrow f -> CRes (ResArrowTree f)
@@ -160,7 +166,7 @@ envLookup env@(resEnv, _, classMap) obj visitedArrows srcType@(PTypeName srcName
 envLookup _ _ _ (PClassName _, _, _) _ = undefined
 
 buildImplicit :: (Eq f, Hashable f) => TBEnv f -> TBObject -> Type -> Type -> CRes (ResArrowTree f)
-buildImplicit _ _ TopType TopType = return ResArrowID
+buildImplicit _ _ _ TopType = return ResArrowID
 buildImplicit _ _ TopType destType = error $ printf "Build implicit from top type to %s" (show destType)
 buildImplicit env obj@(Object _ _ _ objVars _) (TypeVar (TVVar varName)) destType = case H.lookup varName objVars of
   Just objVarM -> buildImplicit env obj (getMetaType objVarM) destType
