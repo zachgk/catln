@@ -31,8 +31,13 @@ type TypeName = Name
 type ClassName = Name
 
 
-type PartialType = (TypeName, H.HashMap TypeVarName Type, H.HashMap ArgName Type)
-type PartialLeafs = (H.HashMap TypeName (S.HashSet (H.HashMap TypeVarName Type, H.HashMap ArgName Type)))
+data PartialName
+  = PTypeName TypeName
+  | PClassName ClassName
+  deriving (Eq, Ord, Show, Generic, Hashable)
+
+type PartialType = (PartialName, H.HashMap TypeVarName Type, H.HashMap ArgName Type)
+type PartialLeafs = (H.HashMap PartialName (S.HashSet (H.HashMap TypeVarName Type, H.HashMap ArgName Type)))
 data Type
   = SumType PartialLeafs
   | TypeVar TypeVarAux
@@ -59,19 +64,19 @@ instance Show Type where
       showTypeVars vars = printf "<%s>" (intercalate ", " $ map showArg $ H.toList vars)
       showArgs args | H.null args = ""
       showArgs args = printf "(%s)" (intercalate ", " $ map showArg $ H.toList args)
-      showPartial (partialName, partialTypeVars, partialArgs) = partialName ++ showTypeVars partialTypeVars ++ showArgs partialArgs
+      showPartial (partialName, partialTypeVars, partialArgs) = show partialName ++ showTypeVars partialTypeVars ++ showArgs partialArgs
       partials' = map showPartial $ splitPartialLeafs partials
 
 
 intLeaf, floatLeaf, strLeaf :: PartialType
-intLeaf = ("Integer", H.empty, H.empty)
-floatLeaf = ("Float", H.empty, H.empty)
-strLeaf = ("String", H.empty, H.empty)
+intLeaf = (PTypeName "Integer", H.empty, H.empty)
+floatLeaf = (PTypeName "Float", H.empty, H.empty)
+strLeaf = (PTypeName "String", H.empty, H.empty)
 
 intType, floatType, boolType, strType :: Type
 intType = SumType $ joinPartialLeafs [intLeaf]
 floatType = SumType $ joinPartialLeafs [floatLeaf]
-boolType = SumType $ joinPartialLeafs [("True", H.empty, H.empty), ("False", H.empty, H.empty)]
+boolType = SumType $ joinPartialLeafs [(PTypeName "True", H.empty, H.empty), (PTypeName "False", H.empty, H.empty)]
 strType = SumType $ joinPartialLeafs [strLeaf]
 
 bottomType :: Type

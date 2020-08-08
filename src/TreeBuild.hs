@@ -145,7 +145,7 @@ buildGuardArrows env obj visitedArrows srcType destType guards = case guards of
 
 envLookup :: (Eq f, Hashable f) => TBEnv f -> TBObject -> VisitedArrows f -> PartialType -> Type -> CRes (ResArrowTree f)
 envLookup _ _ _ srcType destType | srcType `hasPartial` destType = return ResArrowID
-envLookup env@(resEnv, _) obj visitedArrows srcType@(srcName, _, _) destType = case H.lookup srcName resEnv of
+envLookup env@(resEnv, _) obj visitedArrows srcType@(PTypeName srcName, _, _) destType = case H.lookup srcName resEnv of
   Just resArrowsWithName -> do
     let resArrows = filter (\(arrowType, _, _) -> srcType `subPartialOf` arrowType) resArrowsWithName
     -- TODO: Sort resArrows by priority order before trying
@@ -157,6 +157,7 @@ envLookup env@(resEnv, _) obj visitedArrows srcType@(srcName, _, _) destType = c
     buildGuardArrows env obj visitedArrows srcType destType guards
 
   Nothing -> CErr [BuildTreeCErr $ "Failed to find any arrows from " ++ show srcType ++ " to " ++ show destType]
+envLookup _ _ _ (PClassName _, _, _) _ = undefined
 
 buildImplicit :: (Eq f, Hashable f) => TBEnv f -> TBObject -> Type -> Type -> CRes (ResArrowTree f)
 buildImplicit _ _ TopType TopType = return ResArrowID

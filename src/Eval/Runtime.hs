@@ -32,7 +32,7 @@ liftIntOp :: TypeName -> (Integer -> Integer -> Integer) -> Op
 liftIntOp name f = (name', [(srcType, NoGuard, PrimArrow resType prim)])
   where
     name' = "operator" ++ name
-    srcType = (name', H.empty, H.fromList [("l", intType), ("r", intType)])
+    srcType = (PTypeName name', H.empty, H.fromList [("l", intType), ("r", intType)])
     resType = intType
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "l" args, H.lookup "r" args) of
                            (Just (IntVal l), Just (IntVal r)) -> IntVal $ f l r
@@ -43,7 +43,7 @@ liftCmpOp :: TypeName -> (Integer -> Integer -> Bool) -> Op
 liftCmpOp name f = (name', [(srcType, NoGuard, PrimArrow resType prim)])
   where
     name' = "operator" ++ name
-    srcType = (name', H.empty, H.fromList [("l", intType), ("r", intType)])
+    srcType = (PTypeName name', H.empty, H.fromList [("l", intType), ("r", intType)])
     resType = boolType
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "l" args, H.lookup "r" args) of
                            (Just (IntVal l), Just (IntVal r)) -> bool $ f l r
@@ -54,7 +54,7 @@ rneg :: TypeName -> Op
 rneg name = (name', [(srcType, NoGuard, PrimArrow resType prim)])
   where
     name' = "operator" ++ name
-    srcType = (name', H.empty, H.singleton "a" intType)
+    srcType = (PTypeName name', H.empty, H.singleton "a" intType)
     resType = intType
     prim = EPrim srcType NoGuard (\args -> case H.lookup "a" args of
                                   Just (IntVal i) -> IntVal $ -i

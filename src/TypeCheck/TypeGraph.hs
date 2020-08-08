@@ -61,7 +61,7 @@ reachesHasCutSubtypeOf (ReachesTree children) superType = all childIsSubtype $ H
 reachesHasCutSubtypeOf (ReachesLeaf leafs) superType = any (`hasType` superType) leafs
 
 reachesPartial :: FEnv -> PartialType -> TypeCheckResult ReachesTree
-reachesPartial env@(FEnv _ _ (_, graph) _) partial@(partialName, _, _) = do
+reachesPartial env@(FEnv _ _ (_, graph) _) partial@(PTypeName partialName, _, _) = do
   let typeArrows = H.lookupDefault [] partialName graph
   schemes <- mapM tryArrow typeArrows
   return $ ReachesLeaf $ catMaybes schemes
@@ -73,6 +73,7 @@ reachesPartial env@(FEnv _ _ (_, graph) _) partial@(partialName, _, _) = do
         -- otherwise, no reaches path requiring multiple steps can be found
         then Just $ arrowDestType True partial obj arr
         else Nothing
+reachesPartial _ (PClassName _, _, _) = undefined
 
 reaches :: FEnv -> Type -> TypeCheckResult ReachesTree
 reaches _     TopType            = return $ ReachesLeaf [TopType]

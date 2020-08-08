@@ -40,6 +40,10 @@ scopeSubDeclFunNamesInS prefix replaceNames name = name'
     addPrefix n = prefix ++ "." ++ n
     name' = if S.member name replaceNames then addPrefix name else name
 
+scopeSubDeclFunNamesInPartialName :: TypeName -> S.HashSet TypeName -> PartialName -> PartialName
+scopeSubDeclFunNamesInPartialName prefix replaceNames (PTypeName name) = PTypeName $ scopeSubDeclFunNamesInS prefix replaceNames name
+scopeSubDeclFunNamesInPartialName prefix replaceNames (PClassName name) = PClassName $ scopeSubDeclFunNamesInS prefix replaceNames name
+
 scopeSubDeclFunNamesInExpr :: TypeName -> S.HashSet TypeName -> PSExpr -> PSExpr
 scopeSubDeclFunNamesInExpr _ _ e@PSCExpr{} = e
 scopeSubDeclFunNamesInExpr prefix replaceNames (PSValue m name) = PSValue m $ scopeSubDeclFunNamesInS prefix replaceNames name
@@ -51,7 +55,7 @@ scopeSubDeclFunNamesInExpr prefix replaceNames (PSTupleApply m (bm, bExpr) args)
 scopeSubDeclFunNamesInMeta :: TypeName -> S.HashSet TypeName -> ParseMeta -> ParseMeta
 scopeSubDeclFunNamesInMeta prefix replaceNames (PreTyped (SumType partials)) = PreTyped $ SumType partials'
   where
-    scopeS = scopeSubDeclFunNamesInS prefix replaceNames
+    scopeS = scopeSubDeclFunNamesInPartialName prefix replaceNames
     partials' = H.fromList $ map (first scopeS) $ H.toList partials
 scopeSubDeclFunNamesInMeta _ _ m@(PreTyped TopType) = m
 scopeSubDeclFunNamesInMeta _ _ m@(PreTyped TypeVar{}) = m
@@ -194,7 +198,7 @@ desDecls decls = unionsWith (++) $ map desDecl decls
 typeDefMetaToObj :: H.HashMap TypeVarName Type -> ParseMeta -> Maybe PObject
 typeDefMetaToObj _ (PreTyped TypeVar{}) = Nothing
 typeDefMetaToObj varReplaceMap m@(PreTyped (SumType partials)) = case splitPartialLeafs partials of
-  [(partialName, partialVars, partialArgs)] -> Just $ Object m TypeObj partialName (fmap fixVar partialVars) (fmap ((,Nothing) . PreTyped) partialArgs)
+  [(PTypeName partialName, partialVars, partialArgs)] -> Just $ Object m TypeObj partialName (fmap fixVar partialVars) (fmap ((,Nothing) . PreTyped) partialArgs)
     where
       fixVar v@(TypeVar (TVVar t)) = PreTyped $ fromMaybe v $ H.lookup t varReplaceMap
       fixVar v = PreTyped v
@@ -225,7 +229,7 @@ desClassDefs :: Sealed -> [RawClassDef] -> ClassMap
 desClassDefs sealed = foldr addDef empty
   where
     empty = (H.empty, H.empty)
-    addDef (typeName, className) (typeToClass, classToType) = (H.insertWith S.union typeName (S.singleton className) typeToClass, H.insertWith addClass className (sealed, H.empty, [SumType $ joinPartialLeafs [(typeName, H.empty, H.empty)]]) classToType)
+    addDef (typeName, className) (typeToClass, classToType) = (H.insertWith S.union typeName (S.singleton className) typeToClass, H.insertWith addClass className (sealed, H.empty, [SumType $ joinPartialLeafs [(PTypeName typeName, H.empty, H.empty)]]) classToType)
     addClass (cSealed, cVars, set1) (_, _, set2) = (cSealed, cVars, set1 ++ set2)
 
 mergeObjMaps :: PObjectMap -> PObjectMap -> PObjectMap
@@ -254,7 +258,7 @@ desStatements statements = (objMap, classMap)
     classMap = mergeClassMaps sealedClasses unsealedClasses
 
 finalPasses :: DesPrgm -> DesPrgm
-finalPasses = classToObjSum
+finalPasses = typeNameToClass
 
 desPrgm :: PPrgm -> IO (CRes DesPrgm)
 desPrgm ([], statements) = return $ return $ desStatements statements
