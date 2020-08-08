@@ -134,6 +134,7 @@ intersectAllTypes = foldr intersectTypes TopType
 intersectTypes :: Type -> Type -> Type
 intersectTypes TopType t = t
 intersectTypes t TopType = t
+intersectTypes t1 t2 | t1 == t2 = t1
 intersectTypes (TypeVar v) t = error $ printf "Can't intersect type vars %s with %s" (show v) (show t)
 intersectTypes t (TypeVar v) = error $ printf "Can't intersect type vars %s with %s" (show t) (show v)
 intersectTypes (SumType aPartials) (SumType bPartials) = compactType $ SumType partials'

@@ -35,5 +35,3 @@ operator^(False l, False r) = False
 
 class Number = Integer | Float
 class Boolean = True | False
-
-class ConsList<$T> = Cons<$T>($T head, ConsList<$T> tail) | Nil

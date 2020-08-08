@@ -44,6 +44,7 @@ type Pnt = Int
 
 type EnvValMap = (H.HashMap String VarMeta)
 data FEnv = FEnv (IM.IntMap Scheme) [Constraint] TypeEnv EnvValMap
+  deriving (Eq, Show)
 
 data BoundObjs = BoundAllObjs | BoundTypeObjs
   deriving (Eq, Ord, Show, Generic, Hashable)
@@ -58,7 +59,7 @@ data Constraint
   | AddArgs (Pnt, S.HashSet String) Pnt
   | PowersetTo Pnt Pnt
   | UnionOf Pnt [Pnt]
-  deriving (Eq)
+  deriving (Eq, Show)
 
 data SConstraint
   = SEqualsKnown Scheme Type
@@ -161,7 +162,7 @@ instance Show TypeCheckError where
 
 instance Show SType where
   show (SType upper lower desc) = concat [show upper, " ⊇ ", desc, " ⊇ ", show lower]
-  show (SVar varName _) = printf "SVar %s" (show varName)
+  show (SVar varName p) = printf "SVar %d %s" p (show varName)
 
 instance Show SConstraint where
   show (SEqualsKnown s t) = printf "%s == %s" (show s) (show t)

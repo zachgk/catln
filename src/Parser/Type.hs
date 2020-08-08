@@ -23,10 +23,10 @@ import           Syntax.Prgm
 import           Syntax
 import Parser.Syntax
 
-pLeafVar :: Parser (TypeVarName, ParseMeta)
+pLeafVar :: Parser (TypeVarName, Type)
 pLeafVar = do
   var <- tvar
-  return (var, emptyMeta)
+  return (var, TopType)
 
 -- TODO: Currently only parses `$T` as sugar for `$T=$T`
 -- Should eventually also support the full `$A=$B`
@@ -35,36 +35,40 @@ pTypeVar = do
   var <- tvar
   return (var, TypeVar $ TVVar var)
 
-pIdArg :: Parser (String, PObjArg)
+pIdArg :: Parser (String, Type)
 pIdArg = do
   tp <- tidentifier
   maybeVars <- optional $ angleBraces $ sepBy1 pTypeVar (symbol ",")
   let vars = maybe H.empty H.fromList maybeVars
   argName <- identifier
-  return (argName, (PreTyped $ SumType $ joinPartialLeafs [(tp, vars, H.empty)], Nothing))
+  return (argName, SumType $ joinPartialLeafs [(tp, vars, H.empty)])
 
-pVarArg :: Parser (String, PObjArg)
+pVarArg :: Parser (String, Type)
 pVarArg = do
   tp <- tvar
   argName <- identifier
-  return (argName, (PreTyped $ TypeVar $ TVVar tp, Nothing))
+  return (argName, TypeVar $ TVVar tp)
 
-pTypeArg :: Parser (String, PObjArg)
+pTypeArg :: Parser (String, Type)
 pTypeArg = pVarArg <|> pIdArg
 
-pLeafType :: Parser ParseMeta
-pLeafType = do
+data PLeafTypeMode = PLeafTypeData | PLeafTypeSealedClass
+pLeafType :: PLeafTypeMode -> Parser ParseMeta
+pLeafType mode = do
   name <- tidentifier
-  maybeVars <- optional $ angleBraces $ sepBy1 pLeafVar (symbol ",")
+  let parseVar = case mode of
+        PLeafTypeData -> pLeafVar
+        PLeafTypeSealedClass -> pTypeVar
+  maybeVars <- optional $ angleBraces $ sepBy1 parseVar (symbol ",")
   maybeArgs <- optional $ parens (sepBy1 pTypeArg (symbol ","))
   let vars = maybe H.empty H.fromList maybeVars
   let args = maybe H.empty H.fromList maybeArgs
-  let tp = PreTyped $ SumType $ joinPartialLeafs [(name, fmap (const TopType) vars, fmap (const TopType) args)]
+  let tp = PreTyped $ SumType $ joinPartialLeafs [(name, vars, args)]
   return tp
 
 -- Parses the options for a sealed class definition
 pType :: Parser [ParseMeta]
-pType = sepBy1 (pLeafType <|> varOption) (symbol "|")
+pType = sepBy1 (pLeafType PLeafTypeSealedClass <|> varOption) (symbol "|")
   where varOption = PreTyped . TypeVar . TVVar <$> tvar
 
 
@@ -80,7 +84,7 @@ pMultiTypeDefStatement = do
 pTypeDefStatement :: Parser PStatement
 pTypeDefStatement = do
   _ <- symbol "data"
-  TypeDefStatement . TypeDef <$> pLeafType
+  TypeDefStatement . TypeDef <$> pLeafType PLeafTypeData
 
 pClassDefStatement :: Parser PStatement
 pClassDefStatement = do

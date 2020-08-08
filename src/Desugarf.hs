@@ -191,12 +191,15 @@ unionsWith f = foldl (H.unionWith f) H.empty
 desDecls :: [PDecl] -> PObjectMap
 desDecls decls = unionsWith (++) $ map desDecl decls
 
-typeDefMetaToObj :: ParseMeta -> Maybe PObject
-typeDefMetaToObj (PreTyped TypeVar{}) = Nothing
-typeDefMetaToObj m@(PreTyped (SumType partials)) = case splitPartialLeafs partials of
-  [(partialName, partialVars, partialArgs)] -> Just $ Object m TypeObj partialName (fmap PreTyped partialVars) (fmap ((,Nothing) . PreTyped) partialArgs)
+typeDefMetaToObj :: H.HashMap TypeVarName Type -> ParseMeta -> Maybe PObject
+typeDefMetaToObj _ (PreTyped TypeVar{}) = Nothing
+typeDefMetaToObj varReplaceMap m@(PreTyped (SumType partials)) = case splitPartialLeafs partials of
+  [(partialName, partialVars, partialArgs)] -> Just $ Object m TypeObj partialName (fmap fixVar partialVars) (fmap ((,Nothing) . PreTyped) partialArgs)
+    where
+      fixVar v@(TypeVar (TVVar t)) = PreTyped $ fromMaybe v $ H.lookup t varReplaceMap
+      fixVar v = PreTyped v
   _ -> error "Invalid call to typeDefMetaToObj with SumType"
-typeDefMetaToObj _ = error "Invalid call to typeDefMetaToObj"
+typeDefMetaToObj _ _ = error "Invalid call to typeDefMetaToObj"
 
 desMultiTypeDefs :: [PMultiTypeDef] -> (PObjectMap, ClassMap)
 desMultiTypeDefs = foldr addTypeDef (H.empty, (H.empty, H.empty))
@@ -206,7 +209,7 @@ desMultiTypeDefs = foldr addTypeDef (H.empty, (H.empty, H.empty))
         objMap' = mergeObjMaps objMap $ H.fromList $ map (,[]) objs
         objNames = map (\(Object _ _ name _ _) -> name) objs
         dataTypes = map (\(PreTyped tp) -> tp) dataMetas
-        objs = mapMaybe typeDefMetaToObj dataMetas
+        objs = mapMaybe (typeDefMetaToObj classVars) dataMetas
         unionSealType (sealed, cv, a) (_, _, b) = (sealed, cv, a ++ b)
         classToType' = H.insertWith unionSealType className (True, classVars, dataTypes) classToType
         newTypeToClass = H.fromList $ map (,S.singleton className) objNames
@@ -214,7 +217,7 @@ desMultiTypeDefs = foldr addTypeDef (H.empty, (H.empty, H.empty))
 
 desTypeDefs :: [PTypeDef] -> PObjectMap
 desTypeDefs = foldr addTypeDef H.empty
-  where addTypeDef (TypeDef tp) = case typeDefMetaToObj tp of
+  where addTypeDef (TypeDef tp) = case typeDefMetaToObj H.empty tp of
           Just obj -> H.insert obj []
           Nothing -> error "Type def could not be converted into meta"
 
