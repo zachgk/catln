@@ -43,7 +43,7 @@ pVarArg = do
 pTypeArg :: Parser (String, PObjArg)
 pTypeArg = pVarArg <|> pIdArg
 
-pLeafType :: Parser PObject
+pLeafType :: Parser ParseMeta
 pLeafType = do
   name <- tidentifier
   maybeVars <- try $ optional $ angleBraces $ sepBy1 pLeafVar (symbol ",")
@@ -51,10 +51,13 @@ pLeafType = do
   let vars = maybe H.empty H.fromList maybeVars
   let args = maybe H.empty H.fromList maybeArgs
   let tp = PreTyped $ SumType $ joinPartialLeafs [(name, fmap (const TopType) vars, fmap (const TopType) args)]
-  return $ Object tp TypeObj name vars args
+  return tp
 
-pType :: Parser [PObject]
-pType = sepBy1 pLeafType (symbol "|")
+-- Parses the options for a sealed class definition
+pType :: Parser [ParseMeta]
+pType = sepBy1 (pLeafType <|> varOption) (symbol "|")
+  where varOption = PreTyped . TypeVar . TVVar <$> tvar
+
 
 pMultiTypeDefStatement :: Parser PStatement
 pMultiTypeDefStatement = do

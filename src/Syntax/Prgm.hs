@@ -79,10 +79,10 @@ data DeclLHS m e = DeclLHS m (Pattern m e)
 data RawDecl m = RawDecl (DeclLHS m (RawExpr m)) [RawDeclSubStatement m] (Maybe (RawExpr m))
   deriving (Eq, Ord, Show)
 
-newtype TypeDef m = TypeDef (Object m)
+newtype TypeDef m = TypeDef m
   deriving (Eq, Ord, Show)
 
-data MultiTypeDef m = MultiTypeDef ClassName (H.HashMap TypeVarName Type) [Object m]
+data MultiTypeDef m = MultiTypeDef ClassName (H.HashMap TypeVarName Type) [m]
   deriving (Eq, Ord, Show)
 
 type RawClassDef = (TypeName, ClassName)

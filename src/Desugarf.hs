@@ -17,6 +17,7 @@ import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Data.Bifunctor                 ( first )
 import           Data.List
+import           Data.Maybe
 import           Text.Printf
 
 import           Syntax.Types
@@ -190,29 +191,39 @@ unionsWith f = foldl (H.unionWith f) H.empty
 desDecls :: [PDecl] -> PObjectMap
 desDecls decls = unionsWith (++) $ map desDecl decls
 
+typeDefMetaToObj :: ParseMeta -> Maybe PObject
+typeDefMetaToObj (PreTyped TypeVar{}) = Nothing
+typeDefMetaToObj m@(PreTyped (SumType partials)) = case splitPartialLeafs partials of
+  [(partialName, partialVars, partialArgs)] -> Just $ Object m TypeObj partialName (fmap PreTyped partialVars) (fmap ((,Nothing) . PreTyped) partialArgs)
+  _ -> error "Invalid call to typeDefMetaToObj with SumType"
+typeDefMetaToObj _ = error "Invalid call to typeDefMetaToObj"
+
 desMultiTypeDefs :: [PMultiTypeDef] -> (PObjectMap, ClassMap)
 desMultiTypeDefs = foldr addTypeDef (H.empty, (H.empty, H.empty))
   where
-    addTypeDef (MultiTypeDef className classVars objs) (objMap, (typeToClass, classToType)) = (objMap', (typeToClass', classToType'))
+    addTypeDef (MultiTypeDef className classVars dataMetas) (objMap, (typeToClass, classToType)) = (objMap', (typeToClass', classToType'))
       where
         objMap' = mergeObjMaps objMap $ H.fromList $ map (,[]) objs
         objNames = map (\(Object _ _ name _ _) -> name) objs
-        objTypes = unionTypes $ map (\(Object (PreTyped tp) _ _ _ _) -> tp) objs
-        unionSealType (sealed, cv, a) (_, _, b) = (sealed, cv, unionType a b)
-        classToType' = H.insertWith unionSealType className (True, classVars, objTypes) classToType
+        dataTypes = map (\(PreTyped tp) -> tp) dataMetas
+        objs = mapMaybe typeDefMetaToObj dataMetas
+        unionSealType (sealed, cv, a) (_, _, b) = (sealed, cv, a ++ b)
+        classToType' = H.insertWith unionSealType className (True, classVars, dataTypes) classToType
         newTypeToClass = H.fromList $ map (,S.singleton className) objNames
         typeToClass' = H.unionWith S.union typeToClass newTypeToClass
 
 desTypeDefs :: [PTypeDef] -> PObjectMap
 desTypeDefs = foldr addTypeDef H.empty
-  where addTypeDef (TypeDef obj) = H.insert obj []
+  where addTypeDef (TypeDef tp) = case typeDefMetaToObj tp of
+          Just obj -> H.insert obj []
+          Nothing -> error "Type def could not be converted into meta"
 
 desClassDefs :: Sealed -> [RawClassDef] -> ClassMap
 desClassDefs sealed = foldr addDef empty
   where
     empty = (H.empty, H.empty)
-    addDef (typeName, className) (typeToClass, classToType) = (H.insertWith S.union typeName (S.singleton className) typeToClass, H.insertWith addClass className (sealed, H.empty, SumType $ joinPartialLeafs [(typeName, H.empty, H.empty)]) classToType)
-    addClass (cSealed, cVars, set1) (_, _, set2) = (cSealed, cVars, unionType set1 set2)
+    addDef (typeName, className) (typeToClass, classToType) = (H.insertWith S.union typeName (S.singleton className) typeToClass, H.insertWith addClass className (sealed, H.empty, [SumType $ joinPartialLeafs [(typeName, H.empty, H.empty)]]) classToType)
+    addClass (cSealed, cVars, set1) (_, _, set2) = (cSealed, cVars, set1 ++ set2)
 
 mergeObjMaps :: PObjectMap -> PObjectMap -> PObjectMap
 mergeObjMaps = H.unionWith (++)
@@ -220,7 +231,7 @@ mergeObjMaps = H.unionWith (++)
 mergeClassMaps :: ClassMap -> ClassMap -> ClassMap
 mergeClassMaps (toClassA, toTypeA) (toClassB, toTypeB) = (H.unionWith S.union toClassA toClassB, H.unionWith mergeClasses toTypeA toTypeB)
   where mergeClasses (sealedA, classVarsA, setA) (sealedB, classVarsB, setB) = if sealedA == sealedB
-          then (sealedA, H.unionWith unionType classVarsA classVarsB, unionType setA setB)
+          then (sealedA, H.unionWith unionType classVarsA classVarsB, setA ++ setB)
           else error "Added to sealed class definition"
 
 desStatements :: [PStatement] -> DesPrgm

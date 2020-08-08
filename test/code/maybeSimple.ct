@@ -1,0 +1,6 @@
+data Maybe<$T> = $T | Nothing
+
+defInt(Integer x) = x
+defInt(x=Nothing) = 0
+
+main = defInt(x=0)
