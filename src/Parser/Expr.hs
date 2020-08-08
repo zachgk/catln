@@ -21,10 +21,10 @@ import           Text.Megaparsec
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer     as L
 
-import           Lexer
 import           Syntax.Types
 import           Syntax.Prgm
 import           Syntax
+import           Parser.Lexer
 import Parser.Syntax
 
 mkOp1 :: String -> PExpr -> PExpr

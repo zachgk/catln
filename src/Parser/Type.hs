@@ -17,10 +17,10 @@ import           Control.Applicative            hiding (many, some)
 import qualified Data.HashMap.Strict as H
 import           Text.Megaparsec
 
-import           Lexer
 import           Syntax.Types
 import           Syntax.Prgm
 import           Syntax
+import           Parser.Lexer
 import Parser.Syntax
 
 pLeafVar :: Parser (TypeVarName, Type)

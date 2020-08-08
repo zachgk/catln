@@ -18,8 +18,8 @@ import Control.Applicative ((<$>))
 import qualified Text.Parsec.Expr as Ex
 import qualified Text.Parsec.Token as Tok
 
-import Lexer
 import Syntax
+import Parser.Lexer
 
 int :: Parser Expr
 int = CExpr <$> Int <$> integer

@@ -20,9 +20,9 @@ import           Text.Megaparsec
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer     as L
 
-import           Lexer
 import           Syntax.Prgm
 import           Syntax
+import           Parser.Lexer
 import Parser.Syntax
 import Parser.Expr
 

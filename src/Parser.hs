@@ -17,8 +17,8 @@ import           Control.Applicative            hiding (many, some)
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
 
-import           Lexer
 import           Syntax
+import           Parser.Lexer
 import Parser.Syntax
 import Parser.Expr (pExpr)
 import Parser.Decl

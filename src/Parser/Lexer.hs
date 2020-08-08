@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 --------------------------------------------------------------------
 -- |
--- Module    :  Lexer
+-- Module    :  Parser.Lexer
 -- Copyright :  (c) Zach Kimberg 2019
 -- License   :  MIT
 -- Maintainer:  zachary@kimberg.com
@@ -10,7 +10,7 @@
 --
 --------------------------------------------------------------------
 
-module Lexer where
+module Parser.Lexer where
 
 import           Control.Applicative        hiding (many, some)
 import           Control.Monad              (void)
