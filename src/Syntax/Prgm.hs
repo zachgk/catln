@@ -82,7 +82,7 @@ data RawDecl m = RawDecl (DeclLHS m (RawExpr m)) [RawDeclSubStatement m] (Maybe 
 newtype TypeDef m = TypeDef (Object m)
   deriving (Eq, Ord, Show)
 
-data MultiTypeDef m = MultiTypeDef ClassName [Object m]
+data MultiTypeDef m = MultiTypeDef ClassName (H.HashMap TypeVarName Type) [Object m]
   deriving (Eq, Ord, Show)
 
 type RawClassDef = (TypeName, ClassName)

@@ -60,8 +60,10 @@ pMultiTypeDefStatement :: Parser PStatement
 pMultiTypeDefStatement = do
   _ <- symbol "data"
   name <- tidentifier
+  maybeVars <- try $ optional $ angleBraces $ sepBy1 tvar (symbol ",")
+  let vars = maybe H.empty (H.fromList . map (, TopType)) maybeVars
   _ <- symbol "="
-  MultiTypeDefStatement . MultiTypeDef name <$> pType
+  MultiTypeDefStatement . MultiTypeDef name vars <$> pType
 
 pTypeDefStatement :: Parser PStatement
 pTypeDefStatement = do

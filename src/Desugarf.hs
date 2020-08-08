@@ -193,13 +193,13 @@ desDecls decls = unionsWith (++) $ map desDecl decls
 desMultiTypeDefs :: [PMultiTypeDef] -> (PObjectMap, ClassMap)
 desMultiTypeDefs = foldr addTypeDef (H.empty, (H.empty, H.empty))
   where
-    addTypeDef (MultiTypeDef className objs) (objMap, (typeToClass, classToType)) = (objMap', (typeToClass', classToType'))
+    addTypeDef (MultiTypeDef className classVars objs) (objMap, (typeToClass, classToType)) = (objMap', (typeToClass', classToType'))
       where
         objMap' = mergeObjMaps objMap $ H.fromList $ map (,[]) objs
         objNames = map (\(Object _ _ name _ _) -> name) objs
         objTypes = unionTypes $ map (\(Object (PreTyped tp) _ _ _ _) -> tp) objs
-        unionSealType (sealed, a) (_, b) = (sealed, unionType a b)
-        classToType' = H.insertWith unionSealType className (True, objTypes) classToType
+        unionSealType (sealed, cv, a) (_, _, b) = (sealed, cv, unionType a b)
+        classToType' = H.insertWith unionSealType className (True, classVars, objTypes) classToType
         newTypeToClass = H.fromList $ map (,S.singleton className) objNames
         typeToClass' = H.unionWith S.union typeToClass newTypeToClass
 
@@ -211,16 +211,16 @@ desClassDefs :: Sealed -> [RawClassDef] -> ClassMap
 desClassDefs sealed = foldr addDef empty
   where
     empty = (H.empty, H.empty)
-    addDef (typeName, className) (typeToClass, classToType) = (H.insertWith S.union typeName (S.singleton className) typeToClass, H.insertWith addClass className (sealed, SumType $ joinPartialLeafs [(typeName, H.empty, H.empty)]) classToType)
-    addClass (cSealed, set1) (_, set2) = (cSealed, unionType set1 set2)
+    addDef (typeName, className) (typeToClass, classToType) = (H.insertWith S.union typeName (S.singleton className) typeToClass, H.insertWith addClass className (sealed, H.empty, SumType $ joinPartialLeafs [(typeName, H.empty, H.empty)]) classToType)
+    addClass (cSealed, cVars, set1) (_, _, set2) = (cSealed, cVars, unionType set1 set2)
 
 mergeObjMaps :: PObjectMap -> PObjectMap -> PObjectMap
 mergeObjMaps = H.unionWith (++)
 
 mergeClassMaps :: ClassMap -> ClassMap -> ClassMap
 mergeClassMaps (toClassA, toTypeA) (toClassB, toTypeB) = (H.unionWith S.union toClassA toClassB, H.unionWith mergeClasses toTypeA toTypeB)
-  where mergeClasses (sealedA, setA) (sealedB, setB) = if sealedA == sealedB
-          then (sealedA, unionType setA setB)
+  where mergeClasses (sealedA, classVarsA, setA) (sealedB, classVarsB, setB) = if sealedA == sealedB
+          then (sealedA, H.unionWith unionType classVarsA classVarsB, unionType setA setB)
           else error "Added to sealed class definition"
 
 desStatements :: [PStatement] -> DesPrgm

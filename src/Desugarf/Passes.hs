@@ -32,7 +32,8 @@ classToObjSum prgm@(_, (_, classToTypes)) = mapMetaPrgm aux prgm
       where
         partials' = H.fromList $ concatMap mapPartial $ H.toList partials
         mapPartial (name, opts) = case H.lookup name classToTypes of
-          Just (_, SumType classPartials) -> H.toList classPartials
+          -- TODO: Replace type variables in the classPartials by looking them up in the classVars
+          Just (_, _, SumType classPartials) -> H.toList classPartials
           Just cls -> error $ printf "bad classToObjSum partial: %s(%s) \n\tClass: %s" name (show opts) (show cls)
           Nothing -> [(name, mapOpts opts)]
         mapOpts = S.map mapOpt
