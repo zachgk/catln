@@ -180,14 +180,14 @@ formArgMetaMapWithSrc (Object _ _ _ _ args) (_, _, srcArgs) = H.foldr (H.unionWi
 
 -- fullDest means to use the greatest possible type (after implicit).
 -- Otherwise, it uses the minimal type that *must* be reached
-arrowDestType :: (Meta m, Show m) => Bool -> PartialType -> Object m -> Arrow m -> Type
-arrowDestType fullDest src@(_, _, srcArgs) obj@(Object _ _ _ _ objArgs) (Arrow arrM _ _ maybeExpr) = case getMetaType arrM of
+arrowDestType :: (Meta m, Show m) => Bool -> ClassMap -> PartialType -> Object m -> Arrow m -> Type
+arrowDestType fullDest classMap src@(_, _, srcArgs) obj@(Object _ _ _ _ objArgs) (Arrow arrM _ _ maybeExpr) = case getMetaType arrM of
   arrType@(TypeVar TVVar{}) -> do
     let argsMatchingTypeVar = H.filter (\(m, _) -> getMetaType m == arrType) objArgs
     case H.elems $ H.intersectionWith const srcArgs argsMatchingTypeVar of
       [] -> basicDest arrType
       -- if the result is a type variable then it should be the intersection of all type variable args in the src
-      srcArgsAtTypeVar -> intersectAllTypes srcArgsAtTypeVar
+      srcArgsAtTypeVar -> intersectAllTypes classMap srcArgsAtTypeVar
   (TypeVar (TVArg t)) -> case H.lookup t objArgs of
     Just (objArgM, _) -> getMetaType objArgM
     _ -> error $ printf "arrowDestType with unknown arg %s" (show t)

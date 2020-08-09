@@ -27,8 +27,8 @@ import           TypeCheck.TypeGraph (buildTypeEnv)
 data TypeBound = BUpper | BLower | BEq
   deriving (Eq)
 
-makeBaseFEnv :: FEnv
-makeBaseFEnv = FEnv IM.empty [] ((0, 0), H.empty) H.empty
+makeBaseFEnv :: ClassMap -> FEnv
+makeBaseFEnv classMap = FEnv IM.empty [] ((0, 0), H.empty, classMap) H.empty
 
 fromMetaNoObj :: FEnv -> TypeBound -> PreMeta -> String -> TypeCheckResult (VarMeta, FEnv)
 fromMetaNoObj env bound m description  = do
@@ -117,7 +117,7 @@ fromAnnot objArgs obj env1 (CompAnnot name args) = do
 fromGuard :: VArgMetaMap -> VObject -> FEnv -> PGuard -> TypeCheckResult (VGuard, FEnv)
 fromGuard objArgs obj env1 (IfGuard expr) =  do
   (expr', env2) <- fromExpr objArgs obj env1 expr
-  let (bool, env3) = fresh env2 $ TypeCheckResult [] $ SType boolType bottomType "bool"
+  let (bool, env3) = fresh env2 $ TypeCheckResult [] $ SType boolType bottomType "ifGuardBool"
   return (IfGuard expr', addConstraints env3 [ArrowTo (getPnt $ getExprMeta expr') bool])
 fromGuard _ _ env ElseGuard = return (ElseGuard, env)
 fromGuard _ _ env NoGuard = return (NoGuard, env)

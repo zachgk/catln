@@ -21,15 +21,15 @@ runConstraintsLimit :: Integer
 runConstraintsLimit = 100
 
 typecheckPrgm :: PPrgm -> TypeCheckResult TPrgm
-typecheckPrgm pprgm = do
-  let baseFEnv = makeBaseFEnv
+typecheckPrgm pprgm@(_, classMap) = do
+  let baseFEnv = makeBaseFEnv classMap
   (vprgm, env@(FEnv _ cons _ _)) <- fromPrgm baseFEnv pprgm
   env' <- runConstraints runConstraintsLimit env cons
   toPrgm env' vprgm
 
 traceTestPrgm :: PPrgm -> ([TypeCheckError], [(SPrgm, [SConstraint])])
-traceTestPrgm pprgm = do
-  let baseFEnv = makeBaseFEnv
+traceTestPrgm pprgm@(_, classMap) = do
+  let baseFEnv = makeBaseFEnv classMap
   case fromPrgm baseFEnv pprgm of
     TypeCheckResult notes (vprgm, env@(FEnv _ cons _ _)) -> do
       let sprgm1 = showPrgm env vprgm
@@ -43,7 +43,7 @@ traceTestPrgm pprgm = do
     TypeCheckResE errs -> (errs, [])
 
 showTestPrgm :: PPrgm -> TypeCheckResult SPrgm
-showTestPrgm pprgm = do
-  let baseFEnv = makeBaseFEnv
+showTestPrgm pprgm@(_, classMap) = do
+  let baseFEnv = makeBaseFEnv classMap
   (vprgm, env) <- fromPrgm baseFEnv pprgm
   return $ showPrgm env vprgm
