@@ -191,7 +191,7 @@ pTypeArg = do
   argName <- identifier
   _ <- symbol "="
   tp <- tidentifier
-  return (argName, SumType $ joinPartialLeafs [(tp, H.empty, H.empty)])
+  return (argName, SumType $ joinPartialLeafs [(PTypeName tp, H.empty, H.empty)])
 
 pTypeVar :: Parser Type
 pTypeVar = TypeVar . TVVar <$> tvar
@@ -203,7 +203,7 @@ pLeafType = do
   maybeArgs <- optional $ parens (sepBy1 pTypeArg (symbol ","))
   let vars = maybe H.empty H.fromList maybeVars
   let args = maybe H.empty H.fromList maybeArgs
-  return (name, vars, args)
+  return (PTypeName name, vars, args)
 
 pSingleType :: Parser Type
 pSingleType = pTypeVar

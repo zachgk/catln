@@ -70,6 +70,6 @@ getValType :: Val -> PartialType
 getValType IntVal{} = intLeaf
 getValType FloatVal{} = floatLeaf
 getValType StrVal{} = strLeaf
-getValType (TupleVal name args) = (name, H.empty, fmap fromArg args)
+getValType (TupleVal name args) = (PTypeName name, H.empty, fmap fromArg args)
   where fromArg arg = SumType $ joinPartialLeafs [getValType arg]
 getValType NoVal = error "getValType of NoVal"

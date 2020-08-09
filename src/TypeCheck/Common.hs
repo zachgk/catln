@@ -146,7 +146,7 @@ type TReplRes = ReplRes TypedMeta
 type UnionObj = (Pnt, Pnt) -- a union of all TypeObj for argument inference, union of all Object types for function limiting
 type TypeGraphVal = (VObject, VArrow) -- (match object type, if matching then can implicit to type in arrow)
 type TypeGraph = H.HashMap TypeName [TypeGraphVal] -- H.HashMap (Root tuple name for filtering) [vals]
-type TypeEnv = (UnionObj, TypeGraph)
+type TypeEnv = (UnionObj, TypeGraph, ClassMap)
 
 instance Meta VarMeta where
   getMetaType (VarMeta _ p) = getMetaType p
@@ -199,13 +199,13 @@ fInsert :: FEnv -> String -> VarMeta -> FEnv
 fInsert (FEnv pnts cons graph pmap) k v = FEnv pnts cons graph (H.insert k v pmap)
 
 fAddTypeGraph :: FEnv -> TypeName -> TypeGraphVal -> FEnv
-fAddTypeGraph (FEnv pnts cons (unionObj, graph) pmap) k v = FEnv pnts cons (unionObj, H.insertWith (++) k [v] graph) pmap
+fAddTypeGraph (FEnv pnts cons (unionObj, graph, classMap) pmap) k v = FEnv pnts cons (unionObj, H.insertWith (++) k [v] graph, classMap) pmap
 
-tryIntersectTypes :: Type -> Type -> String -> TypeCheckResult Type
-tryIntersectTypes a b desc= let c = intersectTypes a b
-                            in if c == bottomType
-                                  then TypeCheckResE [GenTypeCheckError $ "Failed to intersect(" ++ desc ++ "): " ++ show a ++ " --- " ++ show b]
-                                  else return c
+tryIntersectTypes :: FEnv -> Type -> Type -> String -> TypeCheckResult Type
+tryIntersectTypes (FEnv _ _ (_, _, classMap) _) a b desc = let c = intersectTypes classMap a b
+                                                            in if c == bottomType
+                                                                  then TypeCheckResE [GenTypeCheckError $ "Failed to intersect(" ++ desc ++ "): " ++ show a ++ " --- " ++ show b]
+                                                                  else return c
 
 -- Point operations
 

@@ -97,13 +97,14 @@ evalBuildPrgm = buildPrgm primEnv
 
 evalBuildMain :: EPrgm -> CRes (ResArrowTree EPrim, ResExEnv EPrim)
 evalBuildMain = evalBuildPrgm main intType
-  where main = ("main", H.empty, H.empty)
+  where main = (PTypeName "main", H.empty, H.empty)
 
 evalPrgm :: PartialType -> Type -> EPrgm -> CRes Val
-evalPrgm src@(srcName, _, _) dest prgm = do
+evalPrgm src@(PTypeName srcName, _, _) dest prgm = do
   (resArrowTree, exEnv) <- evalBuildPrgm src dest prgm
   evalTree exEnv [] H.empty (TupleVal srcName H.empty) resArrowTree
+evalPrgm (PClassName _, _, _) _ _ = error "Can't eval class"
 
 evalMain :: EPrgm -> CRes Val
 evalMain = evalPrgm main intType
-  where main = ("main", H.empty, H.empty)
+  where main = (PTypeName "main", H.empty, H.empty)

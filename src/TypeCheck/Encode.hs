@@ -27,8 +27,8 @@ import           TypeCheck.TypeGraph (buildTypeEnv)
 data TypeBound = BUpper | BLower | BEq
   deriving (Eq)
 
-makeBaseFEnv :: FEnv
-makeBaseFEnv = FEnv IM.empty [] ((0, 0), H.empty) H.empty
+makeBaseFEnv :: ClassMap -> FEnv
+makeBaseFEnv classMap = FEnv IM.empty [] ((0, 0), H.empty, classMap) H.empty
 
 fromMetaNoObj :: FEnv -> TypeBound -> PreMeta -> String -> TypeCheckResult (VarMeta, FEnv)
 fromMetaNoObj env bound m description  = do
@@ -117,7 +117,7 @@ fromAnnot objArgs obj env1 (CompAnnot name args) = do
 fromGuard :: VArgMetaMap -> VObject -> FEnv -> PGuard -> TypeCheckResult (VGuard, FEnv)
 fromGuard objArgs obj env1 (IfGuard expr) =  do
   (expr', env2) <- fromExpr objArgs obj env1 expr
-  let (bool, env3) = fresh env2 $ TypeCheckResult [] $ SType boolType bottomType "bool"
+  let (bool, env3) = fresh env2 $ TypeCheckResult [] $ SType boolType bottomType "ifGuardBool"
   return (IfGuard expr', addConstraints env3 [ArrowTo (getPnt $ getExprMeta expr') bool])
 fromGuard _ _ env ElseGuard = return (ElseGuard, env)
 fromGuard _ _ env NoGuard = return (NoGuard, env)
@@ -189,10 +189,10 @@ fromObject prefix isObjArg env (Object m basis name vars args) = do
   let fakeObjForArgs = Object m' basis name vars' H.empty
   (args', env3) <- mapMWithFEnvMapWithKey env2 (addObjArg fakeObjForArgs m' prefix' vars') args
   let obj' = Object m' basis name vars' args'
-  (objValue, env4) <- fromMeta env3 BUpper obj' (PreTyped $ SumType $ joinPartialLeafs [(name, H.empty, H.empty)]) ("objValue" ++ name)
+  (objValue, env4) <- fromMeta env3 BUpper obj' (PreTyped $ SumType $ joinPartialLeafs [(PTypeName name, H.empty, H.empty)]) ("objValue" ++ name)
   let env5 = fInsert env4 name objValue
   let env6 = addConstraints env5 [BoundedByObjs BoundAllObjs (getPnt m') | isObjArg]
-  let env7 = addConstraints env6 [BoundedByKnown (getPnt m') (SumType $ joinPartialLeafs [(name, fmap (const TopType) vars, fmap (const TopType) args)]) | basis == FunctionObj]
+  let env7 = addConstraints env6 [BoundedByKnown (getPnt m') (SumType $ joinPartialLeafs [(PTypeName name, fmap (const TopType) vars, fmap (const TopType) args)]) | basis == FunctionObj]
   return (obj', env7)
 
 -- Add all of the objects first for various expressions that call other top level functions

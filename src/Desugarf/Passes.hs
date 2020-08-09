@@ -12,29 +12,29 @@
 module Desugarf.Passes where
 
 import qualified Data.HashMap.Strict as H
-import           Data.Maybe
 
 import           Syntax.Types
 import           Syntax
 import           Parser.Syntax
 import           MapMeta
 
--- replaces uses of class with a SumType of it's objects
--- e.g. Boolean ==> Sum (True | False)
-classToObjSum :: DesPrgm -> DesPrgm
-classToObjSum prgm@(_, (_, classToTypes)) = mapMetaPrgm aux prgm
+-- replaces uses of PTypeName with PClassName where it actually contains a class
+-- e.g. PTypeName Boolean ==> PClassName Boolean
+typeNameToClass :: DesPrgm -> DesPrgm
+typeNameToClass prgm@(_, (_, classToTypes)) = mapMetaPrgm aux prgm
   where
-    aux (PreTyped t) = PreTyped $ mapType H.empty t
+    aux (PreTyped t) = PreTyped $ mapType t
 
-    -- Replace all classes with their sum and replace type vars based on the var map
-    mapType _ TopType = TopType
-    mapType varMap tp@(TypeVar (TVVar t)) = fromMaybe tp $ H.lookup t varMap
-    mapType _ (TypeVar TVArg{}) = error "Invalid arg type"
-    mapType varMap (SumType partials) = unionTypes $ map mapPartial $ splitPartialLeafs partials
+    mapType TopType = TopType
+    mapType tp@(TypeVar TVVar{}) = tp
+    mapType (TypeVar TVArg{}) = error "Invalid arg type"
+    mapType (SumType partials) = unionTypes $ map mapPartial $ splitPartialLeafs partials
       where
-        mapPartial (name, partialVars, partialArgs) = case H.lookup name classToTypes of
-          -- is a class, replace with class type
-          Just (_, classVars, classTypes) -> unionTypes $ map (mapType (H.union classVars varMap)) classTypes
+        mapPartial (PTypeName name, partialVars, partialArgs) = SumType $ joinPartialLeafs [(name', fmap mapType partialVars, fmap mapType partialArgs)]
+          where name' = case H.lookup name classToTypes of
+                  -- is a class, replace with class type
+                  Just _ -> PClassName name
 
-          -- is data, use data after recursively cleaning classes
-          Nothing -> SumType $ joinPartialLeafs [(name, fmap (mapType varMap) partialVars, fmap (mapType varMap) partialArgs)]
+                  -- is data, use data after recursively cleaning classes
+                  Nothing -> PTypeName name
+        mapPartial (PClassName name, partialVars, partialArgs) = SumType $ joinPartialLeafs [(PClassName name, fmap mapType partialVars, fmap mapType partialArgs)]

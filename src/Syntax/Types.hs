@@ -31,8 +31,13 @@ type TypeName = Name
 type ClassName = Name
 
 
-type PartialType = (TypeName, H.HashMap TypeVarName Type, H.HashMap ArgName Type)
-type PartialLeafs = (H.HashMap TypeName (S.HashSet (H.HashMap TypeVarName Type, H.HashMap ArgName Type)))
+data PartialName
+  = PTypeName TypeName
+  | PClassName ClassName
+  deriving (Eq, Ord, Show, Generic, Hashable)
+
+type PartialType = (PartialName, H.HashMap TypeVarName Type, H.HashMap ArgName Type)
+type PartialLeafs = (H.HashMap PartialName (S.HashSet (H.HashMap TypeVarName Type, H.HashMap ArgName Type)))
 data Type
   = SumType PartialLeafs
   | TypeVar TypeVarAux
@@ -59,19 +64,19 @@ instance Show Type where
       showTypeVars vars = printf "<%s>" (intercalate ", " $ map showArg $ H.toList vars)
       showArgs args | H.null args = ""
       showArgs args = printf "(%s)" (intercalate ", " $ map showArg $ H.toList args)
-      showPartial (partialName, partialTypeVars, partialArgs) = partialName ++ showTypeVars partialTypeVars ++ showArgs partialArgs
+      showPartial (partialName, partialTypeVars, partialArgs) = show partialName ++ showTypeVars partialTypeVars ++ showArgs partialArgs
       partials' = map showPartial $ splitPartialLeafs partials
 
 
 intLeaf, floatLeaf, strLeaf :: PartialType
-intLeaf = ("Integer", H.empty, H.empty)
-floatLeaf = ("Float", H.empty, H.empty)
-strLeaf = ("String", H.empty, H.empty)
+intLeaf = (PTypeName "Integer", H.empty, H.empty)
+floatLeaf = (PTypeName "Float", H.empty, H.empty)
+strLeaf = (PTypeName "String", H.empty, H.empty)
 
 intType, floatType, boolType, strType :: Type
 intType = SumType $ joinPartialLeafs [intLeaf]
 floatType = SumType $ joinPartialLeafs [floatLeaf]
-boolType = SumType $ joinPartialLeafs [("True", H.empty, H.empty), ("False", H.empty, H.empty)]
+boolType = SumType $ joinPartialLeafs [(PTypeName "True", H.empty, H.empty), (PTypeName "False", H.empty, H.empty)]
 strType = SumType $ joinPartialLeafs [strLeaf]
 
 bottomType :: Type
@@ -84,30 +89,54 @@ splitPartialLeafs partials = concatMap (\(k, vs) -> map (aux k) vs) $ H.toList $
 joinPartialLeafs :: [PartialType] -> PartialLeafs
 joinPartialLeafs = foldr (\(pName, pVars, pArgs) partials -> H.insertWith S.union pName (S.singleton (pVars, pArgs)) partials) H.empty
 
--- assumes a compacted super type, does not check in superLeafs
-hasPartial :: PartialType -> Type -> Bool
-hasPartial _ TopType = True
-hasPartial _ (TypeVar v) = error $ "Can't hasPartial type vars: " ++ show v
-hasPartial (subName, subVars, subArgs) (SumType superPartials) = case H.lookup subName superPartials of
-  Just superArgsOptions -> any hasArgs superArgsOptions
-  Nothing -> False
+-- expands a class partial into a sum of the constituent type partials
+expandClassPartial :: ClassMap -> PartialType -> Type
+expandClassPartial _ (PTypeName _, _, _) = error "bad type name found in expandClassPartial"
+expandClassPartial _ (PClassName _, _, partialArgs) | not (H.null partialArgs) = error "expandClassPartial class with args"
+expandClassPartial classMap@(_, classToType) (PClassName className, partialVars, _) = SumType $ joinPartialLeafs expanded
   where
-    hasArgs (_, superArgs) | H.keysSet subArgs /= H.keysSet superArgs = False
-    hasArgs (superVars, superArgs) = hasAll subArgs superArgs && hasAll subVars superVars
-    hasAll sub sup = and $ H.elems $ H.intersectionWith hasType sub sup
+    expanded = case H.lookup className classToType of
+      Just (_, classVars, classTypes) -> splitPartialLeafs partials'
+        where
+          (SumType partials') = unionTypes $ map mapClassType classTypes
+          mapClassType TopType = TopType
+          mapClassType (TypeVar (TVVar t)) = case H.lookup t classVars of
+            Just v -> intersectTypes classMap v (H.lookupDefault TopType t partialVars)
+            Nothing -> error $ printf "Unknown var %s in expandClassPartial" t
+          mapClassType (TypeVar (TVArg t)) = error $ printf "Arg %s found in expandClassPartial" t
+          mapClassType (SumType p) = SumType $ joinPartialLeafs $ map mapClassPartial $ splitPartialLeafs p
+          mapClassPartial (n, v, a) = (n, fmap mapClassType v, fmap mapClassType a)
+      Nothing -> error $ printf "Unknown class %s in expandClassPartial" className
+
+-- assumes a compacted super type, does not check in superLeafs
+hasPartial :: ClassMap -> PartialType -> Type -> Bool
+hasPartial _ _ TopType = True
+hasPartial _ _ (TypeVar v) = error $ "Can't hasPartial type vars: " ++ show v
+hasPartial classMap sub@(subName, subVars, subArgs) super@(SumType superPartials) = case subName of
+  PTypeName{} -> checkDirect
+  PClassName{} -> checkDirect || hasType classMap (expandClassPartial classMap sub) super
+  where
+    checkDirect = case H.lookup subName superPartials of
+      Just superArgsOptions -> any hasArgs superArgsOptions
+      Nothing -> False
+      where
+        hasArgs (_, superArgs) | H.keysSet subArgs /= H.keysSet superArgs = False
+        hasArgs (superVars, superArgs) = hasAll subArgs superArgs && hasAll subVars superVars
+        hasAll sb sp = and $ H.elems $ H.intersectionWith (hasType classMap) sb sp
 
 -- Maybe rename to subtypeOf
-hasType :: Type -> Type -> Bool
-hasType _ TopType = True
-hasType TopType t = t == TopType
-hasType (TypeVar v) _ = error $ "Can't hasType type vars: " ++ show v
-hasType _ (TypeVar v) = error $ "Can't hasType type vars: " ++ show v
-hasType (SumType subPartials) superType = all (`hasPartial` superType) $ splitPartialLeafs subPartials
+hasType :: ClassMap -> Type -> Type -> Bool
+hasType _ _ TopType = True
+hasType _ TopType t = t == TopType
+hasType _ (TypeVar v) _ = error $ "Can't hasType type vars: " ++ show v
+hasType _ _ (TypeVar v) = error $ "Can't hasType type vars: " ++ show v
+hasType classMap (SumType subPartials) superType = all (\p -> hasPartial classMap p superType) $ splitPartialLeafs subPartials
 
-subPartialOf :: PartialType -> PartialType -> Bool
-subPartialOf sub sup = sub `hasPartial` SumType (joinPartialLeafs [sup])
+subPartialOf :: ClassMap -> PartialType -> PartialType -> Bool
+subPartialOf classMap sub sup = hasPartial classMap sub (SumType (joinPartialLeafs [sup]))
 
 -- TODO: This should combine overlapping partials
+-- TODO: This should merge type partials into class partials
 compactType :: Type -> Type
 compactType TopType = TopType
 compactType t@TypeVar{} = t
@@ -128,16 +157,13 @@ unionType (SumType aPartials) (SumType bPartials) = compactType $ SumType partia
 unionTypes :: Foldable f => f Type -> Type
 unionTypes = foldr unionType bottomType
 
-intersectAllTypes :: Foldable f => f Type -> Type
-intersectAllTypes = foldr intersectTypes TopType
+intersectAllTypes :: Foldable f => ClassMap -> f Type -> Type
+intersectAllTypes classMap = foldr (intersectTypes classMap) TopType
 
-intersectTypes :: Type -> Type -> Type
-intersectTypes TopType t = t
-intersectTypes t TopType = t
-intersectTypes t1 t2 | t1 == t2 = t1
-intersectTypes (TypeVar v) t = error $ printf "Can't intersect type vars %s with %s" (show v) (show t)
-intersectTypes t (TypeVar v) = error $ printf "Can't intersect type vars %s with %s" (show t) (show v)
-intersectTypes (SumType aPartials) (SumType bPartials) = compactType $ SumType partials'
+type TypePartialLeafs = PartialLeafs -- leaves only with PTypeName
+type ClassPartialLeafs = PartialLeafs -- leaves only with PClassName
+intersectTypePartialLeaves :: ClassMap -> TypePartialLeafs -> TypePartialLeafs -> PartialLeafs
+intersectTypePartialLeaves classMap aPartials bPartials = partials'
   where
     partials' = H.intersectionWith intersectArgsOptions (fmap S.toList aPartials) (fmap S.toList bPartials)
     intersectArgsOptions as bs = S.fromList $ catMaybes $ [intersectArgs a b | a <- as, b <- bs]
@@ -145,10 +171,38 @@ intersectTypes (SumType aPartials) (SumType bPartials) = compactType $ SumType p
     intersectArgs (_, aArgs) (_, bArgs) | H.keysSet aArgs /= H.keysSet bArgs = Nothing
     intersectArgs (aVars, aArgs) (bVars, bArgs) = sequenceT (intersectMap aVars bVars, intersectMap aArgs bArgs)
     intersectMap a b = sequence $ H.intersectionWith subIntersect a b
-    subIntersect aType bType = let joined = intersectTypes aType bType
+    subIntersect aType bType = let joined = intersectTypes classMap aType bType
                                 in if joined == bottomType
                                    then Nothing
                                    else Just joined
+
+intersectTypeWithClassPartialLeaves :: ClassMap -> TypePartialLeafs -> ClassPartialLeafs -> PartialLeafs
+intersectTypeWithClassPartialLeaves classMap typePartials classPartials = intersectTypePartialLeaves classMap typePartials typePartialsFromClassPartials
+  where (SumType typePartialsFromClassPartials) = unionTypes $ map (expandClassPartial classMap) $ splitPartialLeafs classPartials
+
+intersectClassPartialLeaves :: ClassMap -> ClassPartialLeafs -> ClassPartialLeafs -> PartialLeafs
+intersectClassPartialLeaves = intersectTypePartialLeaves
+
+intersectTypes :: ClassMap -> Type -> Type -> Type
+intersectTypes _ TopType t = t
+intersectTypes _ t TopType = t
+intersectTypes _ t1 t2 | t1 == t2 = t1
+intersectTypes _ (TypeVar v) t = error $ printf "Can't intersect type vars %s with %s" (show v) (show t)
+intersectTypes _ t (TypeVar v) = error $ printf "Can't intersect type vars %s with %s" (show t) (show v)
+intersectTypes classMap (SumType aPartials) (SumType bPartials) = unionTypes
+  [ SumType $ intersectTypePartialLeaves classMap aTypePartials bTypePartials
+  , SumType $ intersectClassPartialLeaves classMap aClassPartials bClassPartials
+  , SumType $ intersectTypeWithClassPartialLeaves classMap aTypePartials bClassPartials
+  , SumType $ intersectTypeWithClassPartialLeaves classMap bTypePartials aClassPartials
+  ]
+  where
+    isTypeLeaf (PTypeName _) _ = True
+    isTypeLeaf (PClassName _) _ = False
+    isClassLeaf name v = not $ isTypeLeaf name v
+    aTypePartials = H.filterWithKey isTypeLeaf aPartials
+    aClassPartials = H.filterWithKey isClassLeaf aPartials
+    bTypePartials = H.filterWithKey isTypeLeaf bPartials
+    bClassPartials = H.filterWithKey isClassLeaf bPartials
 
 isSubsetOf :: (Eq a, Hashable a) => S.HashSet a -> S.HashSet a -> Bool
 x `isSubsetOf` y = all (`S.member` y) x

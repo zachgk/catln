@@ -39,16 +39,16 @@ findSVar env scheme = scheme >>= aux
   where aux (SType ub lb desc) = return (ub, lb, desc)
         aux (SVar _ p) = findSVar env (descriptor env p)
 
-equalizeSTypes :: (SplitSType, SplitSType) -> String -> TypeCheckResult (SType, SType)
-equalizeSTypes ((ub1, lb1, desc1), (ub2, lb2, desc2)) d = do
+equalizeSTypes :: FEnv -> (SplitSType, SplitSType) -> String -> TypeCheckResult (SType, SType)
+equalizeSTypes env@(FEnv _ _ (_, _, classMap) _) ((ub1, lb1, desc1), (ub2, lb2, desc2)) d = do
   let lbBoth = unionType lb1 lb2
-  ubBoth <- tryIntersectTypes ub1 ub2 $ "equalizeSTypes(" ++ d ++ ")"
-  if hasType lbBoth ubBoth
+  ubBoth <- tryIntersectTypes env ub1 ub2 $ "equalizeSTypes(" ++ d ++ ")"
+  if hasType classMap lbBoth ubBoth
     then return (SType ubBoth lbBoth desc1, SType ubBoth lbBoth desc2)
     else TypeCheckResE [GenTypeCheckError (printf "Type mismatched: %s is not a subtype of %s" (show lbBoth) (show ubBoth))]
 
 updateSchemeProp :: FEnv -> SplitSType -> ArgName -> SplitSType -> (Scheme, Scheme)
-updateSchemeProp _ (superUb, superLb, superDesc) propName (subUb, subLb, subDesc) = (return $ SType superUb' superLb superDesc, return $ SType subUb' subLb subDesc)
+updateSchemeProp (FEnv _ _ (_, _, classMap) _) (superUb, superLb, superDesc) propName (subUb, subLb, subDesc) = (return $ SType superUb' superLb superDesc, return $ SType subUb' subLb subDesc)
   where
     (superUb', subUb') = case (superUb, subUb) of
       (TopType, sub) -> (TopType, sub)
@@ -62,7 +62,7 @@ updateSchemeProp _ (superUb, superLb, superDesc) propName (subUb, subLb, subDesc
         let subPartialList = splitPartialLeafs subPartials
         let intersectPartials (supName, supVars, supArgs) sub = case H.lookup propName supArgs of
               Just supProp -> do
-                let newProp = intersectTypes supProp (SumType $ joinPartialLeafs [sub])
+                let newProp = intersectTypes classMap supProp (SumType $ joinPartialLeafs [sub])
                 if newProp == bottomType
                   then Nothing
                   else Just ((supName, supVars, H.insert propName newProp supArgs), newProp)
@@ -84,7 +84,7 @@ addArgsToType (SumType partials) newArgs = Just $ SumType partials'
 executeConstraint :: FEnv -> Constraint -> ([Constraint], Bool, FEnv)
 executeConstraint env (EqualsKnown pnt tp) = case descriptor env pnt of
   (TypeCheckResult notes oldSType) -> case oldSType of
-    (SType ub lb desc) -> case equalizeSTypes ((ub, lb, desc), (tp, tp, "")) "executeConstraint EqualsKnown" of
+    (SType ub lb desc) -> case equalizeSTypes env ((ub, lb, desc), (tp, tp, "")) "executeConstraint EqualsKnown" of
       TypeCheckResult notes2 (stype', _) -> do
         let scheme' = TypeCheckResult (notes ++ notes2) stype'
         let env' = setScheme env pnt scheme' "EqualsKnown"
@@ -102,7 +102,7 @@ executeConstraint env1 cons@(EqPoints p1 p2) = case sequenceT (descriptor env1 p
     let (_, _, env2) = executeConstraint env1 (EqPoints p1 p2')
     let env3 = setScheme env2 p1 (return var) "EqPoints"
     ([],  True, env3)
-  TypeCheckResult notes (s1@(SType ub1 lb1 desc1), s2@(SType ub2 lb2 desc2)) -> case equalizeSTypes ((ub1, lb1, desc1), (ub2, lb2, desc2)) "executeConstraint EqPoints" of
+  TypeCheckResult notes (s1@(SType ub1 lb1 desc1), s2@(SType ub2 lb2 desc2)) -> case equalizeSTypes env1 ((ub1, lb1, desc1), (ub2, lb2, desc2)) "executeConstraint EqPoints" of
     TypeCheckResult notes2 (s1', s2') -> do
       let env2 = setScheme env1 p1 (TypeCheckResult (notes ++ notes2) s1') "EqPoints"
       let env3 = setScheme env2 p2 (return s2') "EqPoints"
@@ -119,10 +119,10 @@ executeConstraint env (BoundedByKnown subPnt boundTp) = do
     TypeCheckResE _ -> ([], False, env)
     TypeCheckResult _ (SVar _ subPnt') -> executeConstraint env (BoundedByKnown subPnt' boundTp)
     TypeCheckResult _ (SType ub lb description) -> do
-      let subScheme' = fmap (\ub' -> SType ub' lb description) (tryIntersectTypes ub boundTp "executeConstraint BoundedByKnown")
+      let subScheme' = fmap (\ub' -> SType ub' lb description) (tryIntersectTypes env ub boundTp "executeConstraint BoundedByKnown")
       let env' = setScheme env subPnt subScheme' "BoundedByKnown"
       ([], subScheme /= subScheme', env')
-executeConstraint env@(FEnv _ _ ((unionAllObjs, unionTypeObjs), _) _) cons@(BoundedByObjs bnd pnt) = do
+executeConstraint env@(FEnv _ _ ((unionAllObjs, unionTypeObjs), _, classMap) _) cons@(BoundedByObjs bnd pnt) = do
   let scheme = descriptor env pnt
   let unionPnt = case bnd of
         BoundAllObjs -> unionAllObjs
@@ -136,7 +136,7 @@ executeConstraint env@(FEnv _ _ ((unionAllObjs, unionTypeObjs), _) _) cons@(Boun
     TypeCheckResult _ (SType ub lb desc, SType objsUb _ _) -> do
       -- A partially applied tuple would not be a raw type on the unionObj,
       -- but a subset of the arguments in that type
-      let ub' = intersectTypes ub objsUb
+      let ub' = intersectTypes classMap ub objsUb
       let scheme' = if ub' == bottomType
             then TypeCheckResE [GenTypeCheckError $ printf "Failed to BoundByObjs for %s: \n\t%s \n\twith \n\t%s" desc (show ub) (show objsUb)]
             else return $ SType ub' lb desc
@@ -185,7 +185,7 @@ executeConstraint env cons@(AddArgs (srcPnt, newArgNames) destPnt) = do
     TypeCheckResult notes (SType srcUb _ _, SType destUb destLb destDesc) ->
       case addArgsToType srcUb newArgNames of
         Just destUb' ->
-          case tryIntersectTypes destUb' destUb checkName of
+          case tryIntersectTypes env destUb' destUb checkName of
             TypeCheckResult notes2 destUb'' -> do
               let destScheme' = TypeCheckResult (notes ++ notes2) (SType destUb'' destLb destDesc)
               let env' = setScheme env destPnt destScheme' checkName
@@ -203,7 +203,7 @@ executeConstraint env cons@(PowersetTo srcPnt destPnt) = do
     TypeCheckResult _ (SVar _ srcPnt', _) -> executeConstraint env (PowersetTo srcPnt' destPnt)
     TypeCheckResult _ (_, SVar _ destPnt') -> executeConstraint env (PowersetTo srcPnt destPnt')
     TypeCheckResult _ (SType ub1 _ _, SType ub2 lb2 description2) -> do
-      let destScheme' = fmap (\ub -> SType ub lb2 description2) (tryIntersectTypes (powersetType ub1) ub2 "executeConstraint PowersetTo")
+      let destScheme' = fmap (\ub -> SType ub lb2 description2) (tryIntersectTypes env (powersetType ub1) ub2 "executeConstraint PowersetTo")
       let env' = setScheme env destPnt destScheme' "PowersetTo"
       ([cons | not (isSolved destScheme')], destScheme /= destScheme', env')
 executeConstraint env cons@(UnionOf parentPnt childrenPnts) = do
@@ -214,7 +214,7 @@ executeConstraint env cons@(UnionOf parentPnt childrenPnts) = do
     TypeCheckResult _ (SVar _ parentPnt', _) -> executeConstraint env (UnionOf parentPnt' childrenPnts)
     TypeCheckResult notes (SType pub plb pdesc, childrenSchemes) -> do
       let (chUb, chLb) = (\(ub, lb) -> (ub, lb)) $ foldr (\(SType ub1 lb1 _) (ub2, lb2) -> (unionType ub1 ub2, unionType lb1 lb2)) (bottomType, bottomType) childrenSchemes
-      case equalizeSTypes ((pub, plb, pdesc), (chUb, chLb, "")) "executeConstraint UnionOf" of
+      case equalizeSTypes env ((pub, plb, pdesc), (chUb, chLb, "")) "executeConstraint UnionOf" of
         TypeCheckResult notes2 (parentST', _) -> do
           let parentScheme' = TypeCheckResult (notes ++ notes2) parentST'
           let env' = setScheme env parentPnt parentScheme' "UnionOf"

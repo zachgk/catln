@@ -41,7 +41,8 @@ pIdArg = do
   maybeVars <- optional $ angleBraces $ sepBy1 pTypeVar (symbol ",")
   let vars = maybe H.empty H.fromList maybeVars
   argName <- identifier
-  return (argName, SumType $ joinPartialLeafs [(tp, vars, H.empty)])
+  -- Use PTypeName for now and replace with classes during Desugarf.Passes.typeNameToClass
+  return (argName, SumType $ joinPartialLeafs [(PTypeName tp, vars, H.empty)])
 
 pVarArg :: Parser (String, Type)
 pVarArg = do
@@ -63,7 +64,8 @@ pLeafType mode = do
   maybeArgs <- optional $ parens (sepBy1 pTypeArg (symbol ","))
   let vars = maybe H.empty H.fromList maybeVars
   let args = maybe H.empty H.fromList maybeArgs
-  let tp = PreTyped $ SumType $ joinPartialLeafs [(name, vars, args)]
+  -- Use PTypeName for now and replace with classes during Desugarf.Passes.typeNameToClass
+  let tp = PreTyped $ SumType $ joinPartialLeafs [(PTypeName name, vars, args)]
   return tp
 
 -- Parses the options for a sealed class definition
