@@ -192,18 +192,18 @@ fromObject prefix isObjArg env (Object m basis name vars args) = do
   (objValue, env4) <- fromMeta env3 BUpper obj' (PreTyped $ SumType $ joinPartialLeafs [(PTypeName name, H.empty, H.empty)]) ("objValue" ++ name)
   let env5 = fInsert env4 name objValue
   let env6 = addConstraints env5 [BoundedByObjs BoundAllObjs (getPnt m') | isObjArg]
-  let env7 = addConstraints env6 [BoundedByKnown (getPnt m') (SumType $ joinPartialLeafs [(PTypeName name, fmap (const TopType) vars, fmap (const TopType) args)]) | basis == FunctionObj]
+  let env7 = addConstraints env6 [BoundedByKnown (getPnt m') (SumType $ joinPartialLeafs [(PTypeName name, fmap (const TopType) vars, fmap (const TopType) args)]) | basis == FunctionObj || basis == PatternObj]
   return (obj', env7)
 
 -- Add all of the objects first for various expressions that call other top level functions
-fromObjectArrows :: FEnv -> (PObject, [PArrow]) -> TypeCheckResult ((VObject, [PArrow]), FEnv)
-fromObjectArrows env (obj, arrows) = do
+fromObjects :: FEnv -> (PObject, [PArrow]) -> TypeCheckResult ((VObject, [PArrow]), FEnv)
+fromObjects env (obj, arrows) = do
   (obj', env1) <- fromObject "Object" False env obj
   return ((obj', arrows), env1)
 
 fromPrgm :: FEnv -> PPrgm -> TypeCheckResult (VPrgm, FEnv)
 fromPrgm env1 (objMap1, classMap) = do
-  (objMap2, env2) <- mapMWithFEnv env1 fromObjectArrows $ H.toList objMap1
+  (objMap2, env2) <- mapMWithFEnv env1 fromObjects $ H.toList objMap1
   (objMap3, env3) <- mapMWithFEnv env2 fromObjectMap objMap2
   let env4 = buildTypeEnv env3 objMap3
   return ((objMap3, classMap), env4)

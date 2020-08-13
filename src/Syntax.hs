@@ -102,6 +102,7 @@ data CNote
 prettyCNote :: CNote -> String
 prettyCNote (ParseCErr p) = errorBundlePretty p
 prettyCNote (WrapCN n s) = s ++ "\n\t\t" ++ intercalate "\n\t\t" (map prettyCNote n)
+prettyCNote (EvalCErr st err) = printf "%s\n\tStack trace:\n\t\t%s" err (intercalate "\n\t\t" st)
 prettyCNote n = T.unpack $ pShow n
 
 wrapCErr :: [CNote] -> String -> CRes r

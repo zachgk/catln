@@ -92,7 +92,7 @@ pMatchCaseHelper keyword = L.indentBlock scn p
   where
     pack expr matchItems = return (expr, matchItems)
     pItem = do
-      patt <- pPattern PatternObj
+      patt <- pPattern MatchObj
       _ <- symbol "=>"
       expr <- pExpr
       return (patt, expr)

@@ -98,7 +98,7 @@ type FileImport = String
 type RawPrgm m = ([FileImport], [RawStatement m]) -- TODO: Include [Export]
 
 type ObjArg m = (m, Maybe (Object m))
-data ObjectBasis = FunctionObj | TypeObj | PatternObj
+data ObjectBasis = FunctionObj | TypeObj | PatternObj | MatchObj
   deriving (Eq, Ord, Show, Generic, Hashable)
 data Object m = Object m ObjectBasis TypeName (H.HashMap TypeVarName m) (H.HashMap ArgName (ObjArg m))
   deriving (Eq, Ord, Generic, Hashable)

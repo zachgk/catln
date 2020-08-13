@@ -26,6 +26,7 @@ buildArrArgs :: EObject -> Val -> Args
 buildArrArgs = aux H.empty
   where
     aux acc (Object _ _ objName _ objArgs) val | H.null objArgs = H.insert objName val acc
+    aux _ (Object _ _ objName _ _) (TupleVal tupleName _) | objName /= tupleName = error $ printf "Found name mismatch in buildArrArgs: object %s and tuple %s" objName tupleName
     aux acc (Object _ _ _ _ objArgs) (TupleVal _ tupleArgs) = H.foldrWithKey addArgs acc $ H.intersectionWith (,) objArgs tupleArgs
     aux _ _ val = error $ "Invalid buildArrArgs value: " ++ show val
     addArgs argName ((_, Nothing), argVal) acc = H.insert argName argVal acc
@@ -76,13 +77,13 @@ eval _ st _ _ = error $ "Bad eval resArrow at: " ++ show st
 
 evalTree :: Env -> EStacktrace -> Val -> ResArrowTree EPrim -> CRes Val
 evalTree env st val (ResArrowCompose t1 t2) = do
-  val' <- evalTree env ("Compose first":st) val t1
+  val' <- evalTree env (printf "Compose first with val %s" (show val):st) val t1
   evalTree env (("Compose second with " ++ show val'):st) val' t2
 evalTree env st val (ResArrowMatch opts) = case H.lookup (getValType val) opts of
   Just resArrowTree -> case val of
     (TupleVal _ arrArgs) ->
-      evalTree env (("match with tuple " ++ show val):st) val $ replaceTreeArgs arrArgs resArrowTree
-    _ -> evalTree env (("match with tuple " ++ show val):st) val resArrowTree
+      evalTree env (printf "match with tuple %s (%s) for options %s" (show val) (show $ getValType val) (show $ H.keys opts):st) val $ replaceTreeArgs arrArgs resArrowTree
+    _ -> evalTree env (("match with val " ++ show val):st) val resArrowTree
   Nothing -> CErr [EvalCErr st $ "Failed match in eval resArrowTree: \n\t" ++ show val ++ "\n\t" ++ show opts]
 evalTree env st val (ResArrowCond [] elseTree) = evalTree env ("else":st) val elseTree
 evalTree env st val (ResArrowCond ((ifCondTree, ifThenTree):restIfTrees) elseTree) = do
@@ -98,7 +99,7 @@ evalTree env st val (ResArrowTupleApply base args) = do
   base' <- evalTree env ("tupleApplyBase":st) val base
   case base' of
     TupleVal name baseArgs -> do
-      argVals <- mapM (evalTree env ("tupleApplyArg":st) val) args
+      argVals <- mapM (evalTree env (printf "tupleApplyArg applying %s" (show $ H.keys args):st) val) args
       let args' = H.union argVals baseArgs
       return $ TupleVal name args'
     _ -> CErr [EvalCErr st "Invalid input to tuple application"]
