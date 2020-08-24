@@ -125,6 +125,7 @@ fromGuard _ _ env NoGuard = return (NoGuard, env)
 fromArrow :: VObject -> FEnv -> PArrow -> TypeCheckResult (VArrow, FEnv)
 fromArrow obj@(Object _ _ objName objVars _) env1 (Arrow m annots aguard maybeExpr) = do
   (m', env2) <- fromMeta env1 BUpper obj m ("Arrow result from " ++ show objName)
+  -- TODO: Change m' to not use type from m if it is an expression. User entered type is not an upper bound, so start with TopType always. The true use of the user entered type is that the expression should have an arrow that has a reachesTree cut that is within the user entered type.
   let argMetaMap = formArgMetaMap obj
   (annots', env3) <- mapMWithFEnv env2 (fromAnnot argMetaMap obj) annots
   (aguard', env4) <- fromGuard argMetaMap obj env3 aguard

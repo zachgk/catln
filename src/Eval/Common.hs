@@ -43,7 +43,7 @@ instance Eq EPrim where
 instance Hashable EPrim where
   hashWithSalt s (EPrim at ag _) = s `hashWithSalt` at `hashWithSalt` ag
 
-type Env = ResExEnv EPrim
+type Env = (ResExEnv EPrim, ClassMap)
 
 type Args = H.HashMap String Val
 

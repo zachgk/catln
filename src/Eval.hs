@@ -45,7 +45,7 @@ replaceTreeArgs _ (ResArrowSingle a) = ResArrowSingle a
 replaceTreeArgs _ ResArrowID = ResArrowID
 
 envLookupResArrowTree :: Env -> EArrow -> Maybe (ResArrowTree EPrim, [ResArrowTree EPrim])
-envLookupResArrowTree env arrow = H.lookup arrow env
+envLookupResArrowTree (resExEnv, _) arrow = H.lookup arrow resExEnv
 
 evalCompAnnot :: EStacktrace -> Val -> CRes ()
 evalCompAnnot st (TupleVal "assert" args) = case (H.lookup "test" args, H.lookup "msg" args) of
@@ -79,12 +79,13 @@ evalTree :: Env -> EStacktrace -> Val -> ResArrowTree EPrim -> CRes Val
 evalTree env st val (ResArrowCompose t1 t2) = do
   val' <- evalTree env (printf "Compose first with val %s" (show val):st) val t1
   evalTree env (("Compose second with " ++ show val'):st) val' t2
-evalTree env st val (ResArrowMatch opts) = case H.lookup (getValType val) opts of
-  Just resArrowTree -> case val of
+evalTree env@(_, classMap) st val (ResArrowMatch opts) = case H.toList $ H.filterWithKey (\optType _ -> hasPartial classMap (getValType val) (SumType $ joinPartialLeafs [optType])) opts of
+  [(_, resArrowTree)] -> case val of
     (TupleVal _ arrArgs) ->
       evalTree env (printf "match with tuple %s (%s) for options %s" (show val) (show $ getValType val) (show $ H.keys opts):st) val $ replaceTreeArgs arrArgs resArrowTree
     _ -> evalTree env (("match with val " ++ show val):st) val resArrowTree
-  Nothing -> CErr [EvalCErr st $ "Failed match in eval resArrowTree: \n\t" ++ show val ++ "\n\t" ++ show opts]
+  [] -> CErr [EvalCErr st $ "Failed match in eval resArrowTree: \n\tVal: " ++ show val ++ "\n\tOptions: " ++ show opts]
+  (_:_:_) -> CErr [EvalCErr st $ "Multiple matches in eval resArrowTree: \n\tVal: " ++ show val ++ "\n\tOptions: " ++ show opts]
 evalTree env st val (ResArrowCond [] elseTree) = evalTree env ("else":st) val elseTree
 evalTree env st val (ResArrowCond ((ifCondTree, ifThenTree):restIfTrees) elseTree) = do
   cond' <- evalTree env ("cond":st) val ifCondTree
@@ -114,9 +115,10 @@ evalBuildMain = evalBuildPrgm main intType
   where main = (PTypeName "main", H.empty, H.empty)
 
 evalPrgm :: PartialType -> Type -> EPrgm -> CRes Val
-evalPrgm src@(PTypeName srcName, _, _) dest prgm = do
+evalPrgm src@(PTypeName srcName, _, _) dest prgm@(_, classMap) = do
   (resArrowTree, exEnv) <- evalBuildPrgm src dest prgm
-  evalTree exEnv [] (TupleVal srcName H.empty) resArrowTree
+  let env = (exEnv, classMap)
+  evalTree env [] (TupleVal srcName H.empty) resArrowTree
 evalPrgm (PClassName _, _, _) _ _ = error "Can't eval class"
 
 evalMain :: EPrgm -> CRes Val
