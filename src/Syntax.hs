@@ -165,7 +165,7 @@ instance Meta Typed where
 
 type ArgMetaMapWithSrc m = H.HashMap ArgName (m, Type)
 formArgMetaMapWithSrc :: Object m -> PartialType -> ArgMetaMapWithSrc m
-formArgMetaMapWithSrc (Object m _ name _ args) src | H.null args = H.singleton name (m, SumType $ joinPartialLeafs [src])
+formArgMetaMapWithSrc (Object m _ name _ args) src | H.null args = H.singleton name (m, singletonType src)
 formArgMetaMapWithSrc (Object _ _ _ _ args) (_, _, srcArgs) = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg args
   where
     unionCombine _ _ = error "Duplicate var matched"

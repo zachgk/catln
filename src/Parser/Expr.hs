@@ -191,7 +191,7 @@ pTypeArg = do
   argName <- identifier
   _ <- symbol "="
   tp <- tidentifier
-  return (argName, SumType $ joinPartialLeafs [(PTypeName tp, H.empty, H.empty)])
+  return (argName, singletonType (PTypeName tp, H.empty, H.empty))
 
 pTypeVar :: Parser Type
 pTypeVar = TypeVar . TVVar <$> tvar
@@ -207,7 +207,7 @@ pLeafType = do
 
 pSingleType :: Parser Type
 pSingleType = pTypeVar
-              <|> SumType . joinPartialLeafs . pure <$> pLeafType
+              <|> singletonType <$> pLeafType
 
 pType :: Parser Type
 pType = pTypeVar

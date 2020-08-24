@@ -42,7 +42,7 @@ pIdArg = do
   let vars = maybe H.empty H.fromList maybeVars
   argName <- identifier
   -- Use PTypeName for now and replace with classes during Desugarf.Passes.typeNameToClass
-  return (argName, SumType $ joinPartialLeafs [(PTypeName tp, vars, H.empty)])
+  return (argName, singletonType (PTypeName tp, vars, H.empty))
 
 pVarArg :: Parser (String, Type)
 pVarArg = do
@@ -65,7 +65,7 @@ pLeafType mode = do
   let vars = maybe H.empty H.fromList maybeVars
   let args = maybe H.empty H.fromList maybeArgs
   -- Use PTypeName for now and replace with classes during Desugarf.Passes.typeNameToClass
-  let tp = PreTyped $ SumType $ joinPartialLeafs [(PTypeName name, vars, args)]
+  let tp = PreTyped $ singletonType (PTypeName name, vars, args)
   return tp
 
 -- Parses the options for a sealed class definition

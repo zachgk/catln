@@ -62,7 +62,7 @@ updateSchemeProp (FEnv _ _ (_, _, classMap) _) (superUb, superLb, superDesc) pro
         let subPartialList = splitPartialLeafs subPartials
         let intersectPartials (supName, supVars, supArgs) sub = case H.lookup propName supArgs of
               Just supProp -> do
-                let newProp = intersectTypes classMap supProp (SumType $ joinPartialLeafs [sub])
+                let newProp = intersectTypes classMap supProp (singletonType sub)
                 if newProp == bottomType
                   then Nothing
                   else Just ((supName, supVars, H.insert propName newProp supArgs), newProp)

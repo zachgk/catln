@@ -74,10 +74,10 @@ floatLeaf = (PTypeName "Float", H.empty, H.empty)
 strLeaf = (PTypeName "String", H.empty, H.empty)
 
 intType, floatType, boolType, strType :: Type
-intType = SumType $ joinPartialLeafs [intLeaf]
-floatType = SumType $ joinPartialLeafs [floatLeaf]
+intType = singletonType intLeaf
+floatType = singletonType floatLeaf
 boolType = SumType $ joinPartialLeafs [(PTypeName "True", H.empty, H.empty), (PTypeName "False", H.empty, H.empty)]
-strType = SumType $ joinPartialLeafs [strLeaf]
+strType = singletonType strLeaf
 
 bottomType :: Type
 bottomType = SumType H.empty
@@ -88,6 +88,9 @@ splitPartialLeafs partials = concatMap (\(k, vs) -> map (aux k) vs) $ H.toList $
 
 joinPartialLeafs :: [PartialType] -> PartialLeafs
 joinPartialLeafs = foldr (\(pName, pVars, pArgs) partials -> H.insertWith S.union pName (S.singleton (pVars, pArgs)) partials) H.empty
+
+singletonType :: PartialType -> Type
+singletonType partial = SumType $ joinPartialLeafs [partial]
 
 -- expands a class partial into a sum of the constituent type partials
 expandClassPartial :: ClassMap -> PartialType -> Type
@@ -137,7 +140,7 @@ hasType _ t (TypeVar v) = error $ printf "Can't hasType for %s in type var %s" (
 hasType classMap (SumType subPartials) superType = all (\p -> hasPartial classMap p superType) $ splitPartialLeafs subPartials
 
 subPartialOf :: ClassMap -> PartialType -> PartialType -> Bool
-subPartialOf classMap sub sup = hasPartial classMap sub (SumType (joinPartialLeafs [sup]))
+subPartialOf classMap sub sup = hasPartial classMap sub (singletonType sup)
 
 -- TODO: This should combine overlapping partials
 -- TODO: This should merge type partials into class partials

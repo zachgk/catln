@@ -194,6 +194,6 @@ buildExprImp env obj expr destType = do
 buildPrgm :: (Eq f, Hashable f) => ResBuildEnv f -> PartialType -> Type -> TBPrgm -> CRes (ResArrowTree f, ResExEnv f)
 buildPrgm primEnv src dest prgm = do
   (env, exEnv) <- makeBaseEnv primEnv prgm
-  let emptyObj = Object (Typed $ SumType $ joinPartialLeafs [src]) FunctionObj "EmptyObj" H.empty H.empty
+  let emptyObj = Object (Typed $ singletonType src) FunctionObj "EmptyObj" H.empty H.empty
   rootTree <- envLookup env emptyObj S.empty src dest
   return (rootTree, exEnv)

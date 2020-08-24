@@ -79,7 +79,7 @@ evalTree :: Env -> EStacktrace -> Val -> ResArrowTree EPrim -> CRes Val
 evalTree env st val (ResArrowCompose t1 t2) = do
   val' <- evalTree env (printf "Compose first with val %s" (show val):st) val t1
   evalTree env (("Compose second with " ++ show val'):st) val' t2
-evalTree env@(_, classMap) st val (ResArrowMatch opts) = case H.toList $ H.filterWithKey (\optType _ -> hasPartial classMap (getValType val) (SumType $ joinPartialLeafs [optType])) opts of
+evalTree env@(_, classMap) st val (ResArrowMatch opts) = case H.toList $ H.filterWithKey (\optType _ -> hasPartial classMap (getValType val) (singletonType optType)) opts of
   [(_, resArrowTree)] -> case val of
     (TupleVal _ arrArgs) ->
       evalTree env (printf "match with tuple %s (%s) for options %s" (show val) (show $ getValType val) (show $ H.keys opts):st) val $ replaceTreeArgs arrArgs resArrowTree
