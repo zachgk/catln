@@ -203,7 +203,7 @@ fAddTypeGraph (FEnv pnts cons (unionObj, graph, classMap) pmap) k v = FEnv pnts 
 
 tryIntersectTypes :: FEnv -> Type -> Type -> String -> TypeCheckResult Type
 tryIntersectTypes (FEnv _ _ (_, _, classMap) _) a b desc = let c = intersectTypes classMap a b
-                                                            in if c == bottomType
+                                                            in if isBottomType c
                                                                   then TypeCheckResE [GenTypeCheckError $ "Failed to intersect(" ++ desc ++ "): " ++ show a ++ " --- " ++ show b]
                                                                   else return c
 

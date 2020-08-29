@@ -56,7 +56,7 @@ type ClassMap = (H.HashMap TypeName (S.HashSet ClassName), H.HashMap ClassName (
 instance Show Type where
   show TopType = "TopType"
   show (TypeVar v) = show v
-  show t | t == bottomType = "∅"
+  show t | isBottomType t = "∅"
   show (SumType partials) = "(" ++ intercalate " | " partials' ++ ")"
     where
       showArg (argName, argVal) = argName ++ "=" ++ show argVal
@@ -82,12 +82,18 @@ strType = singletonType strLeaf
 bottomType :: Type
 bottomType = SumType H.empty
 
+isBottomType :: Type -> Bool
+isBottomType t = compactType t == bottomType
+
 splitPartialLeafs :: PartialLeafs -> [PartialType]
 splitPartialLeafs partials = concatMap (\(k, vs) -> map (aux k) vs) $ H.toList $ fmap S.toList partials
   where aux name (vars, args) = (name, vars, args)
 
 joinPartialLeafs :: [PartialType] -> PartialLeafs
-joinPartialLeafs = foldr (\(pName, pVars, pArgs) partials -> H.insertWith S.union pName (S.singleton (pVars, pArgs)) partials) H.empty
+joinPartialLeafs leafs = compacted
+  where
+    joined = foldr (\(pName, pVars, pArgs) partials -> H.insertWith S.union pName (S.singleton (pVars, pArgs)) partials) H.empty leafs
+    (SumType compacted) = compactType $ SumType joined
 
 singletonType :: PartialType -> Type
 singletonType partial = SumType $ joinPartialLeafs [partial]
@@ -153,8 +159,8 @@ compactType (SumType partials) = SumType nonEmpty
 unionType :: Type -> Type -> Type
 unionType TopType _ = TopType
 unionType _ TopType = TopType
-unionType t1 t2 | t2 == bottomType = t1
-unionType t1 t2 | t1 == bottomType = t2
+unionType t1 t2 | isBottomType t2 = t1
+unionType t1 t2 | isBottomType t1 = t2
 unionType (TypeVar v) t = error $ printf "Can't union type vars %s with %s " (show v) (show t)
 unionType t (TypeVar v) = error $ printf "Can't union type vars %s with %s " (show t) (show v)
 unionType (SumType aPartials) (SumType bPartials) = compactType $ SumType partials'
@@ -179,7 +185,7 @@ intersectTypePartialLeaves classMap aPartials bPartials = partials'
     intersectArgs (aVars, aArgs) (bVars, bArgs) = sequenceT (intersectMap aVars bVars, intersectMap aArgs bArgs)
     intersectMap a b = sequence $ H.intersectionWith subIntersect a b
     subIntersect aType bType = let joined = intersectTypes classMap aType bType
-                                in if joined == bottomType
+                                in if isBottomType joined
                                    then Nothing
                                    else Just joined
 

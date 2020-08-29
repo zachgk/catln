@@ -63,7 +63,7 @@ updateSchemeProp (FEnv _ _ (_, _, classMap) _) (superUb, superLb, superDesc) pro
         let intersectPartials (supName, supVars, supArgs) sub = case H.lookup propName supArgs of
               Just supProp -> do
                 let newProp = intersectTypes classMap supProp (singletonType sub)
-                if newProp == bottomType
+                if isBottomType newProp
                   then Nothing
                   else Just ((supName, supVars, H.insert propName newProp supArgs), newProp)
               Nothing -> Nothing
@@ -137,7 +137,7 @@ executeConstraint env@(FEnv _ _ ((unionAllObjs, unionTypeObjs), _, classMap) _) 
       -- A partially applied tuple would not be a raw type on the unionObj,
       -- but a subset of the arguments in that type
       let ub' = intersectTypes classMap ub objsUb
-      let scheme' = if ub' == bottomType
+      let scheme' = if isBottomType ub'
             then TypeCheckResE [GenTypeCheckError $ printf "Failed to BoundByObjs for %s: \n\t%s \n\twith \n\t%s" desc (show ub) (show objsUb)]
             else return $ SType ub' lb desc
       let env' = setScheme env pnt scheme' "BoundedByObjs"
