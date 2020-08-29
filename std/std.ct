@@ -36,8 +36,8 @@ operator^(False l, False r) = False
 class Number = Integer | Float
 class Boolean = True | False
 
-class ConsList = Cons(Integer head, ConsList tail) | Nil
-operator::(Integer l, ConsList r) = Cons(head=l, tail=r)
+class ConsList<$T> = Cons<$T>($T head, ConsList<$T> tail) | Nil
+operator::<$T>($T l, ConsList<$T> r) = Cons(head=l, tail=r)
 
 length(l=Nil) = 0
 // TODO: Fix example below which should work without explicit return value

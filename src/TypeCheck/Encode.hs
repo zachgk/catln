@@ -51,7 +51,25 @@ fromMeta env bound obj@(Object _ _ _ objVars _) m description  = case metaTypeVa
       let (p, env') = fresh env (TypeCheckResult [] $ SVar tv (getPnt objArgM))
       return (VarMeta p m, env')
     Nothing -> error $ "Unknown obj arg: " ++ argName
-  Nothing -> fromMetaNoObj env bound m description
+  Nothing -> case m of
+    PreTyped (SumType tp) -> do -- Handle m.$T = $ObjVar
+      let mapPartialVar t = case t of
+            (TypeVar (TVVar varName)) -> case H.lookup varName objVars of
+              Just (VarMeta objP (PreTyped objVar)) -> (objVar, H.singleton varName [objP])
+              Nothing -> error $ printf "fromMeta failed to find var %s" varName
+            _ -> (t, H.empty)
+      let mapPartial (partialName, partialVars, partialArgs) = do
+            let mapped = fmap mapPartialVar partialVars
+            let partialVars' = fmap fst mapped
+            let constraints = foldr (H.unionWith (++)) H.empty $ H.elems $ fmap snd mapped
+            ((partialName, partialVars', partialArgs), constraints)
+      let (partials', constraints) = unzip $ map mapPartial $ splitPartialLeafs tp
+      let m' = PreTyped $ SumType $ joinPartialLeafs partials'
+      (m'', env') <- fromMetaNoObj env bound m' description
+      let env'' = addConstraints env' $ concatMap (\(varName, pnts) -> map (VarEq (getPnt m'', varName)) pnts ) $ H.toList $ foldr (H.unionWith (++)) H.empty constraints
+      return (m'', env'')
+
+    _ -> fromMetaNoObj env bound m description
 
 mapMWithFEnv :: FEnv -> (FEnv -> a -> TypeCheckResult (b, FEnv)) -> [a] -> TypeCheckResult ([b], FEnv)
 mapMWithFEnv env f = foldM f' ([], env)

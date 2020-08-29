@@ -71,6 +71,30 @@ updateSchemeProp (FEnv _ _ (_, _, classMap) _) (superUb, superLb, superDesc) pro
         (SumType $ joinPartialLeafs supPartialList', unionTypes classMap subPartialList')
       (sup, sub) -> error $ printf "Unsupported updateSchemeProp Ub (%s).%s = %s" (show sup) propName (show sub)
 
+updateSchemeVar :: FEnv -> SplitSType -> TypeVarName -> SplitSType -> (Scheme, Scheme)
+updateSchemeVar (FEnv _ _ (_, _, classMap) _) (superUb, superLb, superDesc) varName (subUb, subLb, subDesc) = (return $ SType superUb' superLb superDesc, return $ SType subUb' subLb subDesc)
+  where
+    (superUb', subUb') = case (superUb, subUb) of
+      (TopType, sub) -> (TopType, sub)
+      (SumType supPartials, TopType) -> do
+        let supPartialList = splitPartialLeafs supPartials
+        let getVar (_, supVars, _) = H.lookup varName supVars
+        let sub = unionTypes classMap $ mapMaybe getVar supPartialList
+        (superUb, sub)
+      (SumType supPartials, SumType subPartials) -> do
+        let supPartialList = splitPartialLeafs supPartials
+        let subPartialList = splitPartialLeafs subPartials
+        let intersectPartials (supName, supVars, supArgs) sub = case H.lookup varName supVars of
+              Just supVar -> do
+                let newVar = intersectTypes classMap supVar (singletonType sub)
+                if isBottomType newVar
+                  then Nothing
+                  else Just ((supName, H.insert varName newVar supVars, supArgs), newVar)
+              Nothing -> Just ((supName, H.insert varName (singletonType sub) supVars, supArgs), singletonType sub)
+        let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectPartials sup sub | sup <- supPartialList, sub <- subPartialList]
+        (SumType $ joinPartialLeafs supPartialList', unionTypes classMap subPartialList')
+      (sup, sub) -> error $ printf "Unsupported updateSchemeVar Ub (%s).%s = %s" (show sup) varName (show sub)
+
 addArgToType :: FEnv -> Type -> ArgName -> Maybe Type
 addArgToType _ TopType _ = Nothing
 addArgToType _ TypeVar{} _ = error "addArgToType TypeVar"
@@ -170,6 +194,20 @@ executeConstraint env cons@(PropEq (superPnt, propName) subPnt) = do
           let (superScheme', subScheme') = updateSchemeProp env superSType propName subSType
           let env' = setScheme env superPnt superScheme' "PropEq super"
           let env'' = setScheme env' subPnt subScheme' "PropEq sub"
+          ([cons | not (isSolved subScheme)], subScheme /= subScheme' || superScheme /= superScheme', env'')
+        TypeCheckResE _ -> ([], False, env)
+executeConstraint env cons@(VarEq (superPnt, varName) subPnt) = do
+  let superScheme = descriptor env superPnt
+  let subScheme = descriptor env subPnt
+  case sequenceT (superScheme, subScheme) of
+    TypeCheckResE _ -> ([], False, env)
+    (TypeCheckResult _ (SVar _ superPnt', _)) -> executeConstraint env (VarEq (superPnt', varName) subPnt)
+    (TypeCheckResult _ _) ->
+      case sequenceT (findSVar env superScheme, findSVar env subScheme) of
+        TypeCheckResult _ (superSType, subSType) -> do
+          let (superScheme', subScheme') = updateSchemeVar env superSType varName subSType
+          let env' = setScheme env superPnt superScheme' "VarEq super"
+          let env'' = setScheme env' subPnt subScheme' "VarEq sub"
           ([cons | not (isSolved subScheme)], subScheme /= subScheme' || superScheme /= superScheme', env'')
         TypeCheckResE _ -> ([], False, env)
 executeConstraint env cons@(AddArg (srcPnt, newArgName) destPnt) = do

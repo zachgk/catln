@@ -19,6 +19,7 @@ import           Syntax.Types
 import           Syntax.Prgm
 import           Syntax
 import           TypeCheck.Common
+import           Text.Printf
 
 buildUnionObj :: FEnv -> [VObject] -> FEnv
 buildUnionObj env1 objs = do
@@ -98,7 +99,7 @@ arrowConstrainUbs env@(FEnv _ _ ((unionAllObjsPnt, _), _, _) _) TopType dest@Sum
       return (src', dest')
     _ -> return (TopType, dest)
 arrowConstrainUbs _ TopType dest = return (TopType, dest)
-arrowConstrainUbs _ TypeVar{} _ = error "arrowConstrainUbs typeVar"
+arrowConstrainUbs _ (TypeVar v) _ = error $ printf "arrowConstrainUbs typeVar %s" (show v)
 arrowConstrainUbs env@(FEnv _ _ (_, _, classMap) _) (SumType srcPartials) dest = do
   let srcPartialList = splitPartialLeafs srcPartials
   srcPartialList' <- mapM (rootReachesPartial env) srcPartialList

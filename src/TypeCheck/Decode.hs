@@ -29,6 +29,7 @@ matchingConstraint env p (BoundedByKnown p2 _) = equivalent env p p2
 matchingConstraint env p (BoundedByObjs _ p2) = equivalent env p p2
 matchingConstraint env p (ArrowTo p2 p3) = matchingConstraintHelper env p p2 p3
 matchingConstraint env p (PropEq (p2, _) p3) = matchingConstraintHelper env p p2 p3
+matchingConstraint env p (VarEq (p2, _) p3) = matchingConstraintHelper env p p2 p3
 matchingConstraint env p (AddArg (p2, _) p3) = matchingConstraintHelper env p p2 p3
 matchingConstraint env p (PowersetTo p2 p3) = matchingConstraintHelper env p p2 p3
 matchingConstraint env p (UnionOf p2 p3s) = equivalent env p p2 || any (equivalent env p) p3s

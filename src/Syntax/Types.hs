@@ -128,6 +128,7 @@ hasPartial classMap@(typeToClass, _) sub@(subName, subVars, subArgs) super@(SumT
       Nothing -> False
       where
         hasArgs (_, superArgs) | H.keysSet subArgs /= H.keysSet superArgs = False
+        hasArgs (superVars, _) | not (H.keysSet subVars `isSubsetOf` H.keysSet superVars) = False
         hasArgs (superVars, superArgs) = hasAll subArgs superArgs && hasAll subVars superVars
         hasAll sb sp = and $ H.elems $ H.intersectionWith (hasType classMap) sb sp
     checkSuperClass superClassName = case H.lookup (PClassName superClassName) superPartials of
