@@ -16,7 +16,7 @@ For areas where performance is more critical, there will be supplementary annota
 
 The other goal of the language is to have strong typing. Typing as well can have somewhat different meanings. In a low-level language, the typing exists closer to memory and is used to determine what registers and CPU instructions to use. Typing in some languages can allow you to introduce some abstractions to organize your code and type checking to help convert runtime errors into compile time errors. At higher levels, having the typing more closely reflecting the underlying problems can make it even more difficult to introduce bugs.
 
-In this, the goal of a type is to represent things that you know before your code is run. While the actual values may not be known, some information about it can still be determined. Specifically, the type can be thought of as the set of all possible values and the goal is to narrow down the set as much as possible. For example, the set of integers is better than the set of numbers. But, the set of integers that are greater than or equal to zero is even better. This additional information can be used to determine when functions can be called, used to find compile errors, and used for optimizations. Once this is known, a programmer should try to represent everything they know about the program's problem domain using types.
+In this, the goal of a type is to represent things that you know before your code is run. While the actual values may not be known, some information about it can still be determined. Specifically, the type can be thought of as the set of all possible values and the goal is to narrow down the set as much as possible. For example, the set of integers is better than the set of numbers. But, the set of integers that are greater than or equal to zero is even better. This additional information can be used to determine when functions can be called, used to find compile errors, and used for optimizations. Once this is known, a programmer should try to represent everything they know about the program's problem domain using types. This information can be propagated through functions to achieve effects similar to theorem proving or formal verification. See [type system components](docs/philosophy/typeSystem.md) or [type theory](docs/philosophy/typeTheory.md).
 
 ### Tree Structure
 
@@ -26,4 +26,14 @@ This format, like lisp, can be used to represent both code and data. For example
 
 In addition to the data tuples, there are also arrows which convert one tuple format to another. For example, there could be an arrow `addInts(Int left, Int right) -> Int` that applies the integer addition operation. These arrows can match complicated patterns involving the data themselves, and even patterns involving the composition of multiple functions. Arrows can even take the same input tuple to multiple output tuples. See [more](docs/philosophy/typeSystem.md).
 
-That leaves the question of when arrows should be applied. Lisp relies on quoting and unquoting to convert between lists and functions. In Catln, a program that is well-typed means that any order of applying the arrows should result in the same values for the same types. This property is verified by [arrow testing](docs/philosophy/arrowTesting.md). Therefore, the actual choice of order of application of arrows is left as a **how** question to be determined during compilation. See [more](docs/philosophy/typeTheory.md).
+That leaves the question of when arrows should be applied. Lisp relies on quoting and unquoting to convert between lists and functions. In Catln, a program that is well-typed means that any order of applying the arrows should result in the same values for the same types. This property is verified by [arrow testing](docs/philosophy/arrowTesting.md). Therefore, the actual choice of order of application of arrows is left as a **how** question to be determined during compilation. See more in the [type system components](docs/philosophy/typeSystem.md).
+
+## Learn More
+
+You can learn more by checking out:
+
+- [Documentation](docs)
+  - [Project Goals and Ideology Documentation](docs/philosophy) - These documents describe different interesting advancements in the language including everything above, modules, testing, documentation, debugging, and more language features.
+- [Compiler Test Cases (as Catln code examples)](test/code)
+
+Contact [@zachgk](mailto:zachary@kimberg.com) if you have any thoughts, ideas, questions, or feedback about the language.
