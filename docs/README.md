@@ -2,8 +2,9 @@
 
 This directory contains a number of documents describing the project.
 
+- [Syntax](syntax.md) - Basic guide to the syntax for Catln
+- [Building](building.md) - Instructions on installing dependencies, building, and running Catln
 - [Code Organization](organization.md) - Describes the overarching organization of the compiler and summaries of the key files to understand it
-- [Getting Started](gettingStarted.md) - Instructions on installing, building, and running Catln
 
 ## Philosophy
 

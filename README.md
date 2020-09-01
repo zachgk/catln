@@ -32,9 +32,10 @@ That leaves the question of when arrows should be applied. Lisp relies on quotin
 
 You can learn more by checking out:
 
+- [Syntax](docs/syntax.md) - Guide to the basic syntax and features of Catln.
+- [Building](docs/building.md) - Instructions for setting up and running the compiler.
 - [Documentation](docs)
   - [Project Goals and Ideology Documentation](docs/philosophy) - These documents describe different interesting advancements in the language including everything above, modules, testing, documentation, debugging, and more language features.
 - [Compiler Test Cases (as Catln code examples)](test/code)
-- [Getting Started Instructions](docs/gettingStarted.md)
 
 Contact [@zachgk](mailto:zachary@kimberg.com) if you have any thoughts, ideas, questions, or feedback about the language.
