@@ -2,7 +2,8 @@
 
 This directory contains a number of documents describing the project.
 
-## [Code Organization](organization.md)
+- [Code Organization](organization.md) - Describes the overarching organization of the compiler and summaries of the key files to understand it
+- [Getting Started](gettingStarted.md) - Instructions on installing, building, and running Catln
 
 ## Philosophy
 
