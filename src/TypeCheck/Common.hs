@@ -15,7 +15,6 @@
 module TypeCheck.Common where
 
 import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet          as S
 import qualified Data.IntMap.Lazy as IM
 import           Data.Hashable
 import           Data.List
@@ -56,7 +55,7 @@ data Constraint
   | BoundedByObjs BoundObjs Pnt
   | ArrowTo Pnt Pnt -- ArrowTo src dest
   | PropEq (Pnt, ArgName) Pnt
-  | AddArgs (Pnt, S.HashSet String) Pnt
+  | AddArg (Pnt, String) Pnt
   | PowersetTo Pnt Pnt
   | UnionOf Pnt [Pnt]
   deriving (Eq, Show)
@@ -68,7 +67,7 @@ data SConstraint
   | SBoundedByObjs BoundObjs Scheme
   | SArrowTo Scheme Scheme
   | SPropEq (Scheme, ArgName) Scheme
-  | SAddArgs (Scheme, S.HashSet String) Scheme
+  | SAddArg (Scheme, String) Scheme
   | SPowersetTo Scheme Scheme
   | SUnionOf Scheme [Scheme]
   deriving (Eq, Ord, Generic, Hashable)
@@ -171,8 +170,7 @@ instance Show SConstraint where
   show (SBoundedByObjs b s) = printf "%s %s" (show b) (show s)
   show (SArrowTo f t) = printf "%s -> %s" (show t) (show f)
   show (SPropEq (s1, n) s2) = printf "(%s).%s == %s"  (show s1) n (show s2)
-  show (SAddArgs (base, args) res) = printf "(%s)(%s) == %s" (show base) args' (show res)
-    where args' = intercalate ", " $ S.toList args
+  show (SAddArg (base, arg) res) = printf "(%s)(%s) == %s" (show base) arg (show res)
   show (SPowersetTo s t) = printf "𝒫(%s) ⊇ %s" (show s) (show t)
   show (SUnionOf s _) = printf "SUnionOf for %s" (show s)
 

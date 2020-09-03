@@ -27,7 +27,7 @@ instance MapMeta Expr where
   mapMeta f (CExpr m c) = CExpr (f m) c
   mapMeta f (Value m n) = Value (f m) n
   mapMeta f (Arg m n) = Arg (f m) n
-  mapMeta f (TupleApply m (bm, be) args) = TupleApply (f m) (f bm, mapMeta f be) (fmap (mapMeta f) args)
+  mapMeta f (TupleApply m (bm, be) argName argVal) = TupleApply (f m) (f bm, mapMeta f be) argName (mapMeta f argVal)
 
 mapMetaCompAnnot :: (MapMeta e) => (a -> b) -> CompAnnot (e a) -> CompAnnot (e b)
 mapMetaCompAnnot f (CompAnnot name args) = CompAnnot name (fmap (mapMeta f) args)

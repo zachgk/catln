@@ -40,4 +40,5 @@ class ConsList = Cons(Integer head, ConsList tail) | Nil
 operator::(Integer l, ConsList r) = Cons(head=l, tail=r)
 
 length(l=Nil) = 0
-length(l=Cons(head, tail)) = 1 + length(l=tail)
+// TODO: Fix example below which should work without explicit return value
+length(l=Cons(head, tail)) -> Integer = 1 + length(l=tail)

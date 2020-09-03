@@ -50,7 +50,7 @@ data Expr m
   = CExpr m Constant
   | Value m TypeName
   | Arg m ArgName
-  | TupleApply m (m, Expr m) (H.HashMap ArgName (Expr m))
+  | TupleApply m (m, Expr m) ArgName (Expr m)
   deriving (Eq, Ord, Generic, Hashable)
 
 -- Compiler Annotation
@@ -113,10 +113,9 @@ instance Show m => Show (Expr m) where
   show (CExpr _ c) = show c
   show (Value _ name) = printf "Value %s" name
   show (Arg m name) = printf "Arg %s %s" (show m) name
-  show (TupleApply _ (_, baseExpr) args) = printf "(%s)(%s)" (show baseExpr) args'
-    where
-      showArg (name, expr) = name ++ " = " ++ show expr
-      args' = intercalate ", " $ map showArg $ H.toList args
+  show (TupleApply _ (_, Value _ funName) argName argVal) = printf "%s(%s = %s)" funName argName (show argVal)
+  show (TupleApply _ (_, baseExpr@TupleApply{}) argName argVal) = printf "%s(%s = %s)" (show baseExpr) argName (show argVal)
+  show (TupleApply _ (_, baseExpr) argName argVal) = printf "(%s)(%s = %s)" (show baseExpr) argName (show argVal)
 
 instance Show e => Show (CompAnnot e) where
   show (CompAnnot name args) = if H.null args
@@ -159,7 +158,7 @@ getExprMeta expr = case expr of
   CExpr m _   -> m
   Value m _   -> m
   Arg m _   -> m
-  TupleApply m _ _ -> m
+  TupleApply m _ _ _ -> m
 
 type ArgMetaMap m = H.HashMap ArgName m
 formArgMetaMap :: Object m -> ArgMetaMap m

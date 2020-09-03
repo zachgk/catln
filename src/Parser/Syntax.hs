@@ -41,7 +41,7 @@ type PReplRes = ReplRes ParseMeta
 data PSemiExpr m
   = PSCExpr m Constant
   | PSValue m TypeName
-  | PSTupleApply m (m, PSemiExpr m) (H.HashMap ArgName (PSemiExpr m))
+  | PSTupleApply m (m, PSemiExpr m) ArgName (PSemiExpr m)
   deriving (Eq, Ord, Show)
 type PSExpr = PSemiExpr ParseMeta
 

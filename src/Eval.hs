@@ -37,7 +37,7 @@ replaceTreeArgs args (ResArrowCompose a b) = ResArrowCompose (replaceTreeArgs ar
 replaceTreeArgs _ (ResArrowMatch m) = ResArrowMatch m -- Match does not propagate reachesTreeArgs to subtree as the match introduces it's own args later
 replaceTreeArgs args (ResArrowCond ifThens els) = ResArrowCond (map (bimap (replaceTreeArgs args) (replaceTreeArgs args)) ifThens) (replaceTreeArgs args els)
 replaceTreeArgs args (ResArrowTuple n vs) = ResArrowTuple n (fmap (replaceTreeArgs args) vs)
-replaceTreeArgs args (ResArrowTupleApply b as) = ResArrowTupleApply (replaceTreeArgs args b) (fmap (replaceTreeArgs args) as)
+replaceTreeArgs args (ResArrowTupleApply b an av) = ResArrowTupleApply (replaceTreeArgs args b) an (replaceTreeArgs args av)
 replaceTreeArgs args a@(ResArrowSingle (ArgArrow tp name)) = case H.lookup name args of
   Just arg -> ResArrowSingle $ PrimArrow tp $ EPrim (getValType arg) NoGuard (const arg)
   Nothing -> a
@@ -96,12 +96,12 @@ evalTree env st val (ResArrowCond ((ifCondTree, ifThenTree):restIfTrees) elseTre
 evalTree env st val (ResArrowTuple name args) = do
   args' <- traverse (evalTree env ("tuple":st) val) args
   return $ TupleVal name args'
-evalTree env st val (ResArrowTupleApply base args) = do
+evalTree env st val (ResArrowTupleApply base argName argRATree) = do
   base' <- evalTree env ("tupleApplyBase":st) val base
   case base' of
     TupleVal name baseArgs -> do
-      argVals <- mapM (evalTree env (printf "tupleApplyArg applying %s" (show $ H.keys args):st) val) args
-      let args' = H.union argVals baseArgs
+      argVal <- evalTree env (printf "tupleApplyArg applying %s" argName:st) val argRATree
+      let args' = H.insert argName argVal baseArgs
       return $ TupleVal name args'
     _ -> CErr [EvalCErr st "Invalid input to tuple application"]
 evalTree env st val (ResArrowSingle r) = eval env (("ResArrowSingle: " ++ show r):st) val r

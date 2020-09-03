@@ -51,7 +51,7 @@ data ResArrowTree f
   | ResArrowMatch (H.HashMap PartialType (ResArrowTree f))
   | ResArrowCond [(ResArrowTree f, ResArrowTree f)] (ResArrowTree f) -- [(if, then)] else
   | ResArrowTuple String (H.HashMap String (ResArrowTree f))
-  | ResArrowTupleApply (ResArrowTree f) (H.HashMap String (ResArrowTree f))
+  | ResArrowTupleApply (ResArrowTree f) String (ResArrowTree f)
   | ResArrowSingle (ResArrow f)
   | ResArrowID
   deriving (Eq, Generic, Hashable)
@@ -78,10 +78,7 @@ instance Show (ResArrowTree f) where
     where
       showArg (argName, val) = argName ++ " = " ++ show val
       args' = intercalate ", " $ map showArg $ H.toList args
-  show (ResArrowTupleApply base args) = "(" ++ show base ++ ")(" ++ args' ++ ")"
-    where
-      showArg (name, val) = name ++ " = " ++ show val
-      args' = intercalate ", " $ map showArg $ H.toList args
+  show (ResArrowTupleApply base argName argVal) = printf "(%s)(%s = %s)" (show base) argName (show argVal)
   show (ResArrowSingle a) = show a
   show ResArrowID = "ResArrowID"
 

@@ -13,7 +13,6 @@ module TypeCheck.Constrain where
 
 import           Data.Maybe
 import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet as S
 
 import           Syntax.Types
 import           TypeCheck.Common
@@ -27,7 +26,8 @@ isSolved (TypeCheckResult _ (SType a b _)) = a == b
 isSolved _ = False
 
 checkScheme :: String -> Scheme -> Scheme
-checkScheme msg (TypeCheckResult notes (SType ub _ desc)) | ub == bottomType = TypeCheckResE (GenTypeCheckError ("Scheme failed check at " ++ msg ++ ": upper bound is bottomType - " ++ desc) : notes)
+checkScheme msg (TypeCheckResult _ (SType ub _ desc)) | isBottomType ub = error $ "Scheme failed check at " ++ msg ++ ": upper bound is bottomType - " ++ desc
+-- checkScheme msg (TypeCheckResult notes (SType ub _ desc)) | isBottomType ub = TypeCheckResE (GenTypeCheckError ("Scheme failed check at " ++ msg ++ ": upper bound is bottomType - " ++ desc) : notes)
 checkScheme _ scheme = scheme
 
 setScheme :: FEnv -> Pnt -> Scheme -> String -> FEnv
@@ -71,14 +71,13 @@ updateSchemeProp (FEnv _ _ (_, _, classMap) _) (superUb, superLb, superDesc) pro
         (SumType $ joinPartialLeafs supPartialList', unionTypes subPartialList')
       (sup, sub) -> error $ printf "Unsupported updateSchemeProp Ub (%s).%s = %s" (show sup) propName (show sub)
 
-addArgsToType :: Type -> S.HashSet ArgName -> Maybe Type
-addArgsToType TopType _ = Nothing
-addArgsToType TypeVar{} _ = error "addArgsToType TypeVar"
-addArgsToType (SumType partials) newArgs = Just $ SumType partials'
+addArgToType :: Type -> ArgName -> Maybe Type
+addArgToType TopType _ = Nothing
+addArgToType TypeVar{} _ = error "addArgToType TypeVar"
+addArgToType (SumType partials) newArg = Just $ SumType partials'
   where
-    partialUpdate = H.fromList $ map (,TopType) $ S.toList newArgs
     partials' = joinPartialLeafs $ map fromPartial $ splitPartialLeafs partials
-    fromPartial (partialName, partialVars, partialArgs) = (partialName, partialVars, H.unionWith unionType partialArgs partialUpdate)
+    fromPartial (partialName, partialVars, partialArgs) = (partialName, partialVars, H.insertWith unionType newArg TopType partialArgs)
 
 -- returns updated (pruned) constraints and boolean if schemes were updated
 executeConstraint :: FEnv -> Constraint -> ([Constraint], Bool, FEnv)
@@ -173,17 +172,17 @@ executeConstraint env cons@(PropEq (superPnt, propName) subPnt) = do
           let env'' = setScheme env' subPnt subScheme' "PropEq sub"
           ([cons | not (isSolved subScheme)], subScheme /= subScheme' || superScheme /= superScheme', env'')
         TypeCheckResE _ -> ([], False, env)
-executeConstraint env cons@(AddArgs (srcPnt, newArgNames) destPnt) = do
+executeConstraint env cons@(AddArg (srcPnt, newArgName) destPnt) = do
   let srcScheme = descriptor env srcPnt
   let destScheme = descriptor env destPnt
-  let checkName = printf "AddArgs %s" (show newArgNames)
+  let checkName = printf "AddArg %s" (show newArgName)
   case sequenceT (srcScheme, destScheme) of
     TypeCheckResE _ -> ([], False, env)
-    TypeCheckResult _ (SVar _ srcPnt', _) -> executeConstraint env (AddArgs (srcPnt', newArgNames) destPnt)
-    TypeCheckResult _ (_, SVar _ destPnt') -> executeConstraint env (AddArgs (srcPnt, newArgNames) destPnt')
+    TypeCheckResult _ (SVar _ srcPnt', _) -> executeConstraint env (AddArg (srcPnt', newArgName) destPnt)
+    TypeCheckResult _ (_, SVar _ destPnt') -> executeConstraint env (AddArg (srcPnt, newArgName) destPnt')
     TypeCheckResult _ (SType TopType _ _, _) -> ([cons], False, env)
     TypeCheckResult notes (SType srcUb _ _, SType destUb destLb destDesc) ->
-      case addArgsToType srcUb newArgNames of
+      case addArgToType srcUb newArgName of
         Just destUb' ->
           case tryIntersectTypes env destUb' destUb checkName of
             TypeCheckResult notes2 destUb'' -> do

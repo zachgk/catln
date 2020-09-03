@@ -29,7 +29,7 @@ matchingConstraint env p (BoundedByKnown p2 _) = equivalent env p p2
 matchingConstraint env p (BoundedByObjs _ p2) = equivalent env p p2
 matchingConstraint env p (ArrowTo p2 p3) = matchingConstraintHelper env p p2 p3
 matchingConstraint env p (PropEq (p2, _) p3) = matchingConstraintHelper env p p2 p3
-matchingConstraint env p (AddArgs (p2, _) p3) = matchingConstraintHelper env p p2 p3
+matchingConstraint env p (AddArg (p2, _) p3) = matchingConstraintHelper env p p2 p3
 matchingConstraint env p (PowersetTo p2 p3) = matchingConstraintHelper env p p2 p3
 matchingConstraint env p (UnionOf p2 p3s) = equivalent env p p2 || any (equivalent env p) p3s
 
@@ -62,16 +62,16 @@ toExpr env (Value m name) = do
 toExpr env (Arg m name) = do
   m' <- toMeta env m $ "Arg_" ++ name
   return $ Arg m' name
-toExpr env (TupleApply m (baseM, baseExpr) args) = do
+toExpr env (TupleApply m (baseM, baseExpr) argName argExpr) = do
   m' <- toMeta env m "TupleApply_M"
   baseM' <- toMeta env baseM "TupleApply_baseM"
   baseExpr' <- toExpr env baseExpr
-  args' <- mapM (toExpr env) args
+  argExpr' <- toExpr env argExpr
   case m' of -- check for errors
-    tp@(Typed (SumType sumType)) | all (\(_, _, leafArgs) -> not (H.keysSet args' `isSubsetOf` H.keysSet leafArgs)) (splitPartialLeafs sumType) -> do
+    tp@(Typed (SumType sumType)) | all (\(_, _, leafArgs) -> not (argName `H.member` leafArgs)) (splitPartialLeafs sumType) -> do
                                         let matchingConstraints = showMatchingConstraints env $ getPnt m
-                                        TypeCheckResE [TCWithMatchingConstraints matchingConstraints $ TupleMismatch baseM' baseExpr' tp args']
-    _ -> return $ TupleApply m' (baseM', baseExpr') args'
+                                        TypeCheckResE [TCWithMatchingConstraints matchingConstraints $ TupleMismatch baseM' baseExpr' tp $ H.singleton argName argExpr']
+    _ -> return $ TupleApply m' (baseM', baseExpr') argName argExpr'
 
 toCompAnnot :: FEnv -> VCompAnnot -> TypeCheckResult TCompAnnot
 toCompAnnot env (CompAnnot name args) = do

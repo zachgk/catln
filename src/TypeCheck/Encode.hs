@@ -98,17 +98,20 @@ fromExpr objArgs obj env1 (Arg m name) = do
   case H.lookup name objArgs of
     Nothing -> error $ "Could not find arg " ++ name
     Just lookupArg -> return (Arg varM' name, addConstraints env3 [EqPoints (getPnt m') (getPnt lookupArg)])
-fromExpr objArgs obj env1 (TupleApply m (baseM, baseExpr) args) = do
-  (m', env2) <- fromMeta env1 BUpper obj m "TupleApply Meta"
-  (baseM', env3) <- fromMeta env2 BUpper obj baseM "TupleApply BaseMeta"
+fromExpr objArgs obj env1 (TupleApply m (baseM, baseExpr) argName argExpr) = do
+  (m', env2) <- fromMeta env1 BUpper obj m $ printf "TupleApply %s(%s) Meta" (show baseExpr) argName
+  (baseM', env3) <- fromMeta env2 BUpper obj baseM $ printf "TupleApply %s(%s) BaseMeta" (show baseExpr) argName
   (baseExpr', env4) <- fromExpr objArgs obj env3 baseExpr
-  (args', env5) <- mapMWithFEnvMap env4 (fromExpr objArgs obj) args
-  (convertExprMetas, env6) <- mapMWithFEnvMap env5 (\e _ -> return $ fresh e (TypeCheckResult [] $ SType TopType bottomType "Tuple converted expr meta")) args
-  let arrowArgConstraints = H.elems $ H.intersectionWith ArrowTo (fmap getPntExpr args') convertExprMetas
-  let tupleConstraints = H.elems $ H.mapWithKey (\name ceMeta -> PropEq (getPnt m', name) ceMeta) convertExprMetas
-  let constraints = [ArrowTo (getPntExpr baseExpr') (getPnt baseM'), AddArgs (getPnt baseM', H.keysSet args) (getPnt m'), BoundedByObjs BoundAllObjs (getPnt m')] ++ arrowArgConstraints ++ tupleConstraints
+  (argExpr', env5) <- fromExpr objArgs obj env4 argExpr
+  let (convertExprMeta, env6) = fresh env5 (TypeCheckResult [] $ SType TopType bottomType "Tuple converted expr meta")
+  let constraints = [ArrowTo (getPntExpr baseExpr') (getPnt baseM'),
+                     AddArg (getPnt baseM', argName) (getPnt m'),
+                     BoundedByObjs BoundAllObjs (getPnt m'),
+                     ArrowTo (getPnt $ getExprMeta argExpr') convertExprMeta,
+                     PropEq (getPnt m', argName) convertExprMeta
+                    ]
   let env7 = addConstraints env6 constraints
-  return (TupleApply m' (baseM', baseExpr') args', env7)
+  return (TupleApply m' (baseM', baseExpr') argName argExpr', env7)
 
 fromAnnot :: VArgMetaMap -> VObject -> FEnv -> PCompAnnot -> TypeCheckResult (VCompAnnot, FEnv)
 fromAnnot objArgs obj env1 (CompAnnot name args) = do
