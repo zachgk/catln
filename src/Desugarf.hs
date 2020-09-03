@@ -130,7 +130,7 @@ semiDesExpr (RawValue m n) = ([], PSValue m n)
 semiDesExpr (RawTupleApply m (bm, be) args) = (subBe ++ subArgs, PSTupleApply m (bm, be') args')
   where
     (subBe, be') = semiDesExpr be
-    (subArgs, args') = traverse semiDesExpr args
+    (subArgs, args') = traverse semiDesExpr $ H.fromList args
 semiDesExpr r@(RawIfThenElse m i t e) = (concat [subI, subT, subE, [elseDecl, ifDecl]], expr')
   where
     condName = "\\" ++ take 6 (printf "%08x" (hash r))

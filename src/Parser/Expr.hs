@@ -28,11 +28,11 @@ import           Parser.Lexer
 import Parser.Syntax
 
 mkOp1 :: String -> PExpr -> PExpr
-mkOp1 opChars x = RawTupleApply emptyMeta (emptyMeta, RawValue emptyMeta op) (H.singleton "a" x)
+mkOp1 opChars x = RawTupleApply emptyMeta (emptyMeta, RawValue emptyMeta op) [("a", x)]
   where op = "operator" ++ opChars
 
 mkOp2 :: String -> PExpr -> PExpr -> PExpr
-mkOp2 opChars x y = RawTupleApply emptyMeta (emptyMeta, RawValue emptyMeta op) (H.fromList [("l", x), ("r", y)])
+mkOp2 opChars x y = RawTupleApply emptyMeta (emptyMeta, RawValue emptyMeta op) [("l", x), ("r", y)]
   where op = "operator" ++ opChars
 
 ops :: [[Operator Parser PExpr]]
@@ -72,7 +72,7 @@ pCall = do
   maybeArgVals <- optional $ parens $ sepBy1 pCallArg (symbol ",")
   let baseValue = RawValue emptyMeta funName
   return $ case maybeArgVals of
-    Just argVals -> RawTupleApply emptyMeta (emptyMeta, baseValue) (H.fromList argVals)
+    Just argVals -> RawTupleApply emptyMeta (emptyMeta, baseValue) argVals
     Nothing -> baseValue
 
 pStringLiteral :: Parser PExpr
