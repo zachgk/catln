@@ -21,6 +21,7 @@ import           Syntax.Prgm
 import           Syntax
 import           TypeCheck.Common
 import           TypeCheck.TypeGraph (buildTypeEnv)
+import           Text.Printf
 
 -- represents how a specified variables corresponds to the known types.
 -- It could be a lower bound, upper bound, or exact bound
@@ -124,25 +125,26 @@ fromGuard _ _ env NoGuard = return (NoGuard, env)
 
 fromArrow :: VObject -> FEnv -> PArrow -> TypeCheckResult (VArrow, FEnv)
 fromArrow obj@(Object _ _ objName objVars _) env1 (Arrow m annots aguard maybeExpr) = do
-  (m', env2) <- fromMeta env1 BUpper obj m ("Arrow result from " ++ show objName)
-  -- TODO: Change m' to not use type from m if it is an expression. User entered type is not an upper bound, so start with TopType always. The true use of the user entered type is that the expression should have an arrow that has a reachesTree cut that is within the user entered type.
+  -- User entered type is not an upper bound, so start with TopType always. The true use of the user entered type is that the expression should have an arrow that has a reachesTree cut that is within the user entered type.
+  (mUserReturn', env2) <- fromMeta env1 BUpper obj m (printf "Specified result from %s" (show objName))
   let argMetaMap = formArgMetaMap obj
   (annots', env3) <- mapMWithFEnv env2 (fromAnnot argMetaMap obj) annots
   (aguard', env4) <- fromGuard argMetaMap obj env3 aguard
   case maybeExpr of
     Just expr -> do
-      (vExpr, env5) <- fromExpr argMetaMap obj env4 expr
-      let env6 = case metaTypeVar m of
+      (m', env5) <- fromMetaNoObj env4 BUpper (PreTyped TopType) $ printf "Arrow result from %s" (show objName)
+      (vExpr, env6) <- fromExpr argMetaMap obj env5 expr
+      let env7 = case metaTypeVar m of
             Just (TVVar typeVarName) -> case H.lookup typeVarName objVars of
-              Just varM -> addConstraints env5 [ArrowTo (getPntExpr vExpr) (getPnt varM)]
+              Just varM -> addConstraints env6 [ArrowTo (getPntExpr vExpr) (getPnt varM)]
               Nothing -> error "unknown type fromArrow"
             Just TVArg{} -> error "Bad TVArg in fromArrow"
-            Nothing -> addConstraints env5 [ArrowTo (getPntExpr vExpr) (getPnt m')]
+            Nothing -> addConstraints env6 [ArrowTo (getPntExpr vExpr) (getPnt m'), ArrowTo (getPntExpr vExpr) (getPnt mUserReturn')]
       let arrow' = Arrow m' annots' aguard' (Just vExpr)
-      let env7 = fAddTypeGraph env6 objName (obj, arrow')
-      return (arrow', env7)
+      let env8 = fAddTypeGraph env7 objName (obj, arrow')
+      return (arrow', env8)
     Nothing -> do
-      let arrow' = Arrow m' annots' aguard' Nothing
+      let arrow' = Arrow mUserReturn' annots' aguard' Nothing
       let env5 = fAddTypeGraph env4 objName (obj, arrow')
       return (arrow', env5)
 
