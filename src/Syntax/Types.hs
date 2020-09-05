@@ -56,7 +56,7 @@ type ClassMap = (H.HashMap TypeName (S.HashSet ClassName), H.HashMap ClassName (
 instance Show Type where
   show TopType = "TopType"
   show (TypeVar v) = show v
-  show t | isBottomType t = "∅"
+  show (SumType partials) | H.null partials = "∅"
   show (SumType partials) = "(" ++ intercalate " | " partials' ++ ")"
     where
       showArg (argName, argVal) = argName ++ "=" ++ show argVal
@@ -83,17 +83,15 @@ bottomType :: Type
 bottomType = SumType H.empty
 
 isBottomType :: Type -> Bool
-isBottomType t = compactType t == bottomType
+-- isBottomType t = compactType t == bottomType
+isBottomType t = t == bottomType
 
 splitPartialLeafs :: PartialLeafs -> [PartialType]
 splitPartialLeafs partials = concatMap (\(k, vs) -> map (aux k) vs) $ H.toList $ fmap S.toList partials
   where aux name (vars, args) = (name, vars, args)
 
 joinPartialLeafs :: [PartialType] -> PartialLeafs
-joinPartialLeafs leafs = compacted
-  where
-    joined = foldr (\(pName, pVars, pArgs) partials -> H.insertWith S.union pName (S.singleton (pVars, pArgs)) partials) H.empty leafs
-    (SumType compacted) = compactType $ SumType joined
+joinPartialLeafs = foldr (\(pName, pVars, pArgs) partials -> H.insertWith S.union pName (S.singleton (pVars, pArgs)) partials) H.empty
 
 singletonType :: PartialType -> Type
 singletonType partial = SumType $ joinPartialLeafs [partial]
@@ -178,7 +176,7 @@ type ClassPartialLeafs = PartialLeafs -- leaves only with PClassName
 intersectTypePartialLeaves :: ClassMap -> TypePartialLeafs -> TypePartialLeafs -> PartialLeafs
 intersectTypePartialLeaves classMap aPartials bPartials = partials'
   where
-    partials' = H.intersectionWith intersectArgsOptions (fmap S.toList aPartials) (fmap S.toList bPartials)
+    partials' = H.filter (not . S.null) $ H.intersectionWith intersectArgsOptions (fmap S.toList aPartials) (fmap S.toList bPartials)
     intersectArgsOptions as bs = S.fromList $ catMaybes $ [intersectArgs a b | a <- as, b <- bs]
     intersectArgs (aVars, _) (bVars, _) | H.keysSet aVars /= H.keysSet bVars = Nothing
     intersectArgs (_, aArgs) (_, bArgs) | H.keysSet aArgs /= H.keysSet bArgs = Nothing
