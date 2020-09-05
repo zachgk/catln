@@ -161,7 +161,7 @@ executeConstraint env@(FEnv _ _ ((unionAllObjs, unionTypeObjs), _, classMap) _) 
       -- but a subset of the arguments in that type
       let ub' = intersectTypes classMap ub objsUb
       let scheme' = if isBottomType ub'
-            then TypeCheckResE [GenTypeCheckError $ printf "Failed to BoundByObjs for %s: \n\t%s \n\twith \n\t%s" desc (show ub) (show objsUb)]
+            then TypeCheckResE [GenTypeCheckError $ printf "Failed to BoundByObjs for %s: \n\t%s" desc (show ub)]
             else return $ SType ub' lb desc
       let env' = setScheme env pnt scheme' "BoundedByObjs"
       ([cons | not (isSolved scheme')], scheme /= scheme', env')

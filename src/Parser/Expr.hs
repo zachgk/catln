@@ -112,8 +112,14 @@ pMatch = do
   (expr, matchItems) <- pMatchCaseHelper "match"
   return $ RawMatch emptyMeta expr (H.fromList matchItems)
 
+pMethod :: Parser PExpr
+pMethod = do
+  _ <- string "."
+  pCall
+
 term :: Parser PExpr
-term = try (parens pExpr)
+term = do
+  base <- try (parens pExpr)
        <|> pIfThenElse
        <|> pMatch
        <|> pCase
@@ -121,6 +127,10 @@ term = try (parens pExpr)
        <|> RawCExpr emptyMeta . CInt <$> integer
        <|> try pCall
        <|> (RawValue emptyMeta <$> tidentifier)
+  methods <- many pMethod
+  return $ case methods of
+    [] -> base
+    ms -> RawMethods base ms
 
 pExpr :: Parser PExpr
 pExpr = makeExprParser term ops

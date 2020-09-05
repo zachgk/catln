@@ -41,6 +41,7 @@ data RawExpr m
   = RawCExpr m Constant
   | RawValue m TypeName
   | RawTupleApply m (m, RawExpr m) [(ArgName, RawExpr m)]
+  | RawMethods (RawExpr m) [RawExpr m]
   | RawIfThenElse m (RawExpr m) (RawExpr m) (RawExpr m)
   | RawMatch m (RawExpr m) (H.HashMap (Pattern m (RawExpr m)) (RawExpr m))
   | RawCase m (RawExpr m) [(Pattern m (RawExpr m), RawExpr m)]

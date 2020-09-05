@@ -132,6 +132,11 @@ semiDesExpr (RawTupleApply m'' (bm, be) args) = (\(a, _, PSTupleApply _ (bm'', b
     (subBe, be') = semiDesExpr be
     aux (sub, m, e) (argName, argVal) = (subArgVal ++ sub, emptyMeta, PSTupleApply emptyMeta (m, e) argName argVal')
       where (subArgVal, argVal') = semiDesExpr argVal
+semiDesExpr (RawMethods base methods) = semiDesExpr $ foldl addMethod base methods
+  where
+    addMethod b method@RawValue{} = RawTupleApply emptyMeta (emptyMeta, method) [("this", b)]
+    addMethod b (RawTupleApply m methodVal methodArgs) = RawTupleApply m methodVal (("this", b) : methodArgs)
+    addMethod _ _ = error "Unknown semiDesExpr method"
 semiDesExpr r@(RawIfThenElse m i t e) = (concat [subI, subT, subE, [elseDecl, ifDecl]], expr')
   where
     condName = "\\" ++ take 6 (printf "%08x" (hash r))
