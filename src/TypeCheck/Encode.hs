@@ -182,9 +182,13 @@ addObjArg fakeObj objM prefix varMap env (n, (m, maybeSubObj)) = do
 -- Remove constraints on args from the main meta in an Object.
 -- Those constraints are still applied by constraints with the args.
 -- However, typeVars only work correctly from the arg version and not the main meta
+-- Likewise, replace the type vars equal to vars with top type for now
 clearMetaArgTypes :: PreMeta -> PreMeta
 clearMetaArgTypes (PreTyped (SumType partials)) = PreTyped $ SumType $ joinPartialLeafs $ map clearPartialTypeArgs $ splitPartialLeafs partials
-  where clearPartialTypeArgs (partialName, partialVars, partialArgs) = (partialName, partialVars, fmap (const TopType) partialArgs)
+  where
+    clearPartialTypeArgs (partialName, partialVars, partialArgs) = (partialName, fmap cleanVar partialVars, fmap (const TopType) partialArgs)
+    cleanVar (TypeVar TVVar{}) = TopType
+    cleanVar varVal = varVal
 clearMetaArgTypes p = p
 
 fromObject :: String -> Bool -> FEnv -> PObject -> TypeCheckResult (VObject, FEnv)

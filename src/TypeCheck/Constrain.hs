@@ -26,8 +26,8 @@ isSolved (TypeCheckResult _ (SType a b _)) = a == b
 isSolved _ = False
 
 checkScheme :: String -> Scheme -> Scheme
-checkScheme msg (TypeCheckResult _ (SType ub _ desc)) | isBottomType ub = error $ "Scheme failed check at " ++ msg ++ ": upper bound is bottomType - " ++ desc
--- checkScheme msg (TypeCheckResult notes (SType ub _ desc)) | isBottomType ub = TypeCheckResE (GenTypeCheckError ("Scheme failed check at " ++ msg ++ ": upper bound is bottomType - " ++ desc) : notes)
+-- checkScheme msg (TypeCheckResult _ (SType ub _ desc)) | isBottomType ub = error $ "Scheme failed check at " ++ msg ++ ": upper bound is bottomType - " ++ desc
+checkScheme msg (TypeCheckResult notes (SType ub _ desc)) | isBottomType ub = TypeCheckResE (GenTypeCheckError ("Scheme failed check at " ++ msg ++ ": upper bound is bottomType - " ++ desc) : notes)
 checkScheme _ scheme = scheme
 
 setScheme :: FEnv -> Pnt -> Scheme -> String -> FEnv
