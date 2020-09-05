@@ -47,7 +47,7 @@ toMeta :: FEnv -> VarMeta -> String -> TypeCheckResult Typed
 toMeta env (VarMeta p (PreTyped pt)) _ = case pointUb env p of
   TypeCheckResult notes ub -> case pt of
     TypeVar{} -> return $ Typed pt
-    _ -> TypeCheckResult notes $ Typed $ compactType ub
+    _ -> TypeCheckResult notes $ Typed ub
   TypeCheckResE notes -> do
     let matchingConstraints = showMatchingConstraints env p
     TypeCheckResE $ map (TCWithMatchingConstraints matchingConstraints) notes

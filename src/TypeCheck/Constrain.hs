@@ -41,7 +41,7 @@ findSVar env scheme = scheme >>= aux
 
 equalizeSTypes :: FEnv -> (SplitSType, SplitSType) -> String -> TypeCheckResult (SType, SType)
 equalizeSTypes env@(FEnv _ _ (_, _, classMap) _) ((ub1, lb1, desc1), (ub2, lb2, desc2)) d = do
-  let lbBoth = unionType lb1 lb2
+  let lbBoth = unionType classMap lb1 lb2
   ubBoth <- tryIntersectTypes env ub1 ub2 $ "equalizeSTypes(" ++ d ++ ")"
   if hasType classMap lbBoth ubBoth
     then return (SType ubBoth lbBoth desc1, SType ubBoth lbBoth desc2)
@@ -55,7 +55,7 @@ updateSchemeProp (FEnv _ _ (_, _, classMap) _) (superUb, superLb, superDesc) pro
       (SumType supPartials, TopType) -> do
         let supPartialList = splitPartialLeafs supPartials
         let getProp (_, _, supArgs) = H.lookup propName supArgs
-        let sub = unionTypes $ mapMaybe getProp supPartialList
+        let sub = unionTypes classMap $ mapMaybe getProp supPartialList
         (superUb, sub)
       (SumType supPartials, SumType subPartials) -> do
         let supPartialList = splitPartialLeafs supPartials
@@ -68,16 +68,16 @@ updateSchemeProp (FEnv _ _ (_, _, classMap) _) (superUb, superLb, superDesc) pro
                   else Just ((supName, supVars, H.insert propName newProp supArgs), newProp)
               Nothing -> Nothing
         let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectPartials sup sub | sup <- supPartialList, sub <- subPartialList]
-        (SumType $ joinPartialLeafs supPartialList', unionTypes subPartialList')
+        (SumType $ joinPartialLeafs supPartialList', unionTypes classMap subPartialList')
       (sup, sub) -> error $ printf "Unsupported updateSchemeProp Ub (%s).%s = %s" (show sup) propName (show sub)
 
-addArgToType :: Type -> ArgName -> Maybe Type
-addArgToType TopType _ = Nothing
-addArgToType TypeVar{} _ = error "addArgToType TypeVar"
-addArgToType (SumType partials) newArg = Just $ SumType partials'
+addArgToType :: FEnv -> Type -> ArgName -> Maybe Type
+addArgToType _ TopType _ = Nothing
+addArgToType _ TypeVar{} _ = error "addArgToType TypeVar"
+addArgToType (FEnv _ _ (_, _, classMap) _) (SumType partials) newArg = Just $ SumType partials'
   where
     partials' = joinPartialLeafs $ map fromPartial $ splitPartialLeafs partials
-    fromPartial (partialName, partialVars, partialArgs) = (partialName, partialVars, H.insertWith unionType newArg TopType partialArgs)
+    fromPartial (partialName, partialVars, partialArgs) = (partialName, partialVars, H.insertWith (unionType classMap) newArg TopType partialArgs)
 
 -- returns updated (pruned) constraints and boolean if schemes were updated
 executeConstraint :: FEnv -> Constraint -> ([Constraint], Bool, FEnv)
@@ -182,7 +182,7 @@ executeConstraint env cons@(AddArg (srcPnt, newArgName) destPnt) = do
     TypeCheckResult _ (_, SVar _ destPnt') -> executeConstraint env (AddArg (srcPnt, newArgName) destPnt')
     TypeCheckResult _ (SType TopType _ _, _) -> ([cons], False, env)
     TypeCheckResult notes (SType srcUb _ _, SType destUb destLb destDesc) ->
-      case addArgToType srcUb newArgName of
+      case addArgToType env srcUb newArgName of
         Just destUb' ->
           case tryIntersectTypes env destUb' destUb checkName of
             TypeCheckResult notes2 destUb'' -> do
@@ -205,14 +205,14 @@ executeConstraint env cons@(PowersetTo srcPnt destPnt) = do
       let destScheme' = fmap (\ub -> SType ub lb2 description2) (tryIntersectTypes env (powersetType ub1) ub2 "executeConstraint PowersetTo")
       let env' = setScheme env destPnt destScheme' "PowersetTo"
       ([cons | not (isSolved destScheme')], destScheme /= destScheme', env')
-executeConstraint env cons@(UnionOf parentPnt childrenPnts) = do
+executeConstraint env@(FEnv _ _ (_, _, classMap) _) cons@(UnionOf parentPnt childrenPnts) = do
   let parentScheme = descriptor env parentPnt
   let tcresChildrenSchemes = fmap (descriptor env) childrenPnts
   case sequenceT (parentScheme, sequence tcresChildrenSchemes) of
     TypeCheckResE _ -> ([], False, env)
     TypeCheckResult _ (SVar _ parentPnt', _) -> executeConstraint env (UnionOf parentPnt' childrenPnts)
     TypeCheckResult notes (SType pub plb pdesc, childrenSchemes) -> do
-      let (chUb, chLb) = (\(ub, lb) -> (ub, lb)) $ foldr (\(SType ub1 lb1 _) (ub2, lb2) -> (unionType ub1 ub2, unionType lb1 lb2)) (bottomType, bottomType) childrenSchemes
+      let (chUb, chLb) = (\(ub, lb) -> (ub, lb)) $ foldr (\(SType ub1 lb1 _) (ub2, lb2) -> (unionType classMap ub1 ub2, unionType classMap lb1 lb2)) (bottomType, bottomType) childrenSchemes
       case equalizeSTypes env ((pub, plb, pdesc), (chUb, chLb, "")) "executeConstraint UnionOf" of
         TypeCheckResult notes2 (parentST', _) -> do
           let parentScheme' = TypeCheckResult (notes ++ notes2) parentST'

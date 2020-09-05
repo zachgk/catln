@@ -21,7 +21,7 @@ import           MapMeta
 -- replaces uses of PTypeName with PClassName where it actually contains a class
 -- e.g. PTypeName Boolean ==> PClassName Boolean
 typeNameToClass :: DesPrgm -> DesPrgm
-typeNameToClass (objMap, (typeToClass, classToTypes)) = mapMetaPrgm aux (objMap, (typeToClass, classToTypes'))
+typeNameToClass (objMap, classMap@(typeToClass, classToTypes)) = mapMetaPrgm aux (objMap, (typeToClass, classToTypes'))
   where
     classToTypes' = fmap (\(s, vs, ts) -> (s, fmap mapType vs, fmap mapType ts)) classToTypes
     aux (PreTyped t) = PreTyped $ mapType t
@@ -29,7 +29,7 @@ typeNameToClass (objMap, (typeToClass, classToTypes)) = mapMetaPrgm aux (objMap,
     mapType TopType = TopType
     mapType tp@(TypeVar TVVar{}) = tp
     mapType (TypeVar TVArg{}) = error "Invalid arg type"
-    mapType (SumType partials) = unionTypes $ map mapPartial $ splitPartialLeafs partials
+    mapType (SumType partials) = unionTypes classMap $ map mapPartial $ splitPartialLeafs partials
       where
         mapPartial (PTypeName name, partialVars, partialArgs) = singletonType (name', fmap mapType partialVars, fmap mapType partialArgs)
           where name' = case H.lookup name classToTypes' of

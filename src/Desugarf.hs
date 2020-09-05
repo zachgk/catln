@@ -237,9 +237,9 @@ mergeObjMaps :: PObjectMap -> PObjectMap -> PObjectMap
 mergeObjMaps = H.unionWith (++)
 
 mergeClassMaps :: ClassMap -> ClassMap -> ClassMap
-mergeClassMaps (toClassA, toTypeA) (toClassB, toTypeB) = (H.unionWith S.union toClassA toClassB, H.unionWith mergeClasses toTypeA toTypeB)
+mergeClassMaps classMap@(toClassA, toTypeA) (toClassB, toTypeB) = (H.unionWith S.union toClassA toClassB, H.unionWith mergeClasses toTypeA toTypeB)
   where mergeClasses (sealedA, classVarsA, setA) (sealedB, classVarsB, setB) = if sealedA == sealedB
-          then (sealedA, H.unionWith unionType classVarsA classVarsB, setA ++ setB)
+          then (sealedA, H.unionWith (unionType classMap) classVarsA classVarsB, setA ++ setB)
           else error "Added to sealed class definition"
 
 desStatements :: [PStatement] -> DesPrgm

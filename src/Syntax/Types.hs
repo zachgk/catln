@@ -105,7 +105,7 @@ expandClassPartial classMap@(_, classToType) (PClassName className, partialVars,
     expanded = case H.lookup className classToType of
       Just (_, classVars, classTypes) -> splitPartialLeafs partials'
         where
-          (SumType partials') = unionTypes $ map mapClassType classTypes
+          (SumType partials') = unionTypes classMap $ map mapClassType classTypes
           mapClassType TopType = TopType
           mapClassType (TypeVar (TVVar t)) = case H.lookup t classVars of
             Just v -> intersectTypes classMap v (H.lookupDefault TopType t partialVars)
@@ -146,27 +146,34 @@ hasType classMap (SumType subPartials) superType = all (\p -> hasPartial classMa
 subPartialOf :: ClassMap -> PartialType -> PartialType -> Bool
 subPartialOf classMap sub sup = hasPartial classMap sub (singletonType sup)
 
+-- join partials where one is a subset of another
+compactOverlapping :: ClassMap -> PartialLeafs -> PartialLeafs
+compactOverlapping classMap = H.mapWithKey compactArgOptions
+  where
+    compactArgOptions partialName argOptions = S.filter (filterOption partialName argOptions) argOptions
+    filterOption partialName argOptions option@(subVars, subArgs) = not $ any (\potentialSuperOption@(supVars, supArgs) -> option /= potentialSuperOption && hasType classMap (singletonType (partialName, subVars, subArgs)) (singletonType (partialName, supVars, supArgs))) argOptions
+
 -- TODO: This should combine overlapping partials
 -- TODO: This should merge type partials into class partials
-compactType :: Type -> Type
-compactType TopType = TopType
-compactType t@TypeVar{} = t
-compactType (SumType partials) = SumType nonEmpty
+compactType :: ClassMap -> Type -> Type
+compactType _ TopType = TopType
+compactType _ t@TypeVar{} = t
+compactType classMap (SumType partials) = SumType $ compactOverlapping classMap nonEmpty
   where nonEmpty = H.filter (not . S.null) partials
 
-unionType :: Type -> Type -> Type
-unionType TopType _ = TopType
-unionType _ TopType = TopType
-unionType t1 t2 | isBottomType t2 = t1
-unionType t1 t2 | isBottomType t1 = t2
-unionType (TypeVar v) t = error $ printf "Can't union type vars %s with %s " (show v) (show t)
-unionType t (TypeVar v) = error $ printf "Can't union type vars %s with %s " (show t) (show v)
-unionType (SumType aPartials) (SumType bPartials) = compactType $ SumType partials'
+unionType :: ClassMap -> Type -> Type -> Type
+unionType _ TopType _ = TopType
+unionType _ _ TopType = TopType
+unionType _ t1 t2 | isBottomType t2 = t1
+unionType _ t1 t2 | isBottomType t1 = t2
+unionType _ (TypeVar v) t = error $ printf "Can't union type vars %s with %s " (show v) (show t)
+unionType _ t (TypeVar v) = error $ printf "Can't union type vars %s with %s " (show t) (show v)
+unionType classMap (SumType aPartials) (SumType bPartials) = compactType classMap $ SumType partials'
   where
     partials' = H.unionWith S.union aPartials bPartials
 
-unionTypes :: Foldable f => f Type -> Type
-unionTypes = foldr unionType bottomType
+unionTypes :: Foldable f => ClassMap -> f Type -> Type
+unionTypes classMap = foldr (unionType classMap) bottomType
 
 intersectAllTypes :: Foldable f => ClassMap -> f Type -> Type
 intersectAllTypes classMap = foldr (intersectTypes classMap) TopType
@@ -189,7 +196,7 @@ intersectTypePartialLeaves classMap aPartials bPartials = partials'
 
 intersectTypeWithClassPartialLeaves :: ClassMap -> TypePartialLeafs -> ClassPartialLeafs -> PartialLeafs
 intersectTypeWithClassPartialLeaves classMap typePartials classPartials = intersectTypePartialLeaves classMap typePartials typePartialsFromClassPartials
-  where (SumType typePartialsFromClassPartials) = unionTypes $ map (expandClassPartial classMap) $ splitPartialLeafs classPartials
+  where (SumType typePartialsFromClassPartials) = unionTypes classMap $ map (expandClassPartial classMap) $ splitPartialLeafs classPartials
 
 intersectClassPartialLeaves :: ClassMap -> ClassPartialLeafs -> ClassPartialLeafs -> PartialLeafs
 intersectClassPartialLeaves = intersectTypePartialLeaves
@@ -200,7 +207,7 @@ intersectTypes _ t TopType = t
 intersectTypes _ t1 t2 | t1 == t2 = t1
 intersectTypes _ (TypeVar v) t = error $ printf "Can't intersect type vars %s with %s" (show v) (show t)
 intersectTypes _ t (TypeVar v) = error $ printf "Can't intersect type vars %s with %s" (show t) (show v)
-intersectTypes classMap (SumType aPartials) (SumType bPartials) = unionTypes
+intersectTypes classMap (SumType aPartials) (SumType bPartials) = unionTypes classMap
   [ SumType $ intersectTypePartialLeaves classMap aTypePartials bTypePartials
   , SumType $ intersectClassPartialLeaves classMap aClassPartials bClassPartials
   , SumType $ intersectTypeWithClassPartialLeaves classMap aTypePartials bClassPartials

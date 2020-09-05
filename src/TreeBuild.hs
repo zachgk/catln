@@ -97,12 +97,12 @@ buildExpr (_, valEnv, _) _ (Value (Typed (SumType prodTypes)) name) = case split
       Just val -> ResArrowSingle val
       Nothing -> ResArrowTuple name H.empty
 buildExpr _ _ (Arg (Typed tp) name) = return $ ResArrowSingle $ ArgArrow tp name
-buildExpr env obj (TupleApply (Typed (SumType prodTypes)) (Typed baseType, baseExpr) argName argExpr) = case splitPartialLeafs prodTypes of
+buildExpr env@(_, _, classMap) obj (TupleApply (Typed (SumType prodTypes)) (Typed baseType, baseExpr) argName argExpr) = case splitPartialLeafs prodTypes of
     [] -> CErr [BuildTreeCErr $ "Found no types for tupleApply " ++ show baseExpr ++ " with type " ++ show prodTypes ++ " and expr " ++ show argExpr]
     leaves -> do
       baseBuild <- buildExprImp env obj baseExpr baseType
       leavesArgs <- mapM getLeafArgs leaves
-      let leafArgs = unionTypes leavesArgs
+      let leafArgs = unionTypes classMap leavesArgs
       -- TODO: Currently for each arg it does: execute expr, execute implicit (to any leaf), then match
       -- it should really be execute expr for args, match all args, then implicit all args
       argVal <- buildExprImp env obj argExpr leafArgs

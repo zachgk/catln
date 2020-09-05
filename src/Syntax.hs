@@ -161,20 +161,20 @@ instance Meta Typed where
   getMetaType (Typed t) = t
 
 type ArgMetaMapWithSrc m = H.HashMap ArgName (m, Type)
-formArgMetaMapWithSrc :: Object m -> PartialType -> ArgMetaMapWithSrc m
-formArgMetaMapWithSrc (Object m _ name _ args) src | H.null args = H.singleton name (m, singletonType src)
-formArgMetaMapWithSrc (Object _ _ _ _ args) (_, _, srcArgs) = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg args
+formArgMetaMapWithSrc :: ClassMap -> Object m -> PartialType -> ArgMetaMapWithSrc m
+formArgMetaMapWithSrc _ (Object m _ name _ args) src | H.null args = H.singleton name (m, singletonType src)
+formArgMetaMapWithSrc classMap (Object _ _ _ _ args) (_, _, srcArgs) = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg args
   where
     unionCombine _ _ = error "Duplicate var matched"
     fromArg k (m, Nothing) = case H.lookup k srcArgs of
       Just srcArg -> H.singleton k (m, srcArg)
       Nothing -> H.empty
     fromArg k (_, Just arg) = case H.lookup k srcArgs of
-      Just (SumType srcArg) -> mergeMaps $ map (formArgMetaMapWithSrc arg) $ splitPartialLeafs srcArg
+      Just (SumType srcArg) -> mergeMaps $ map (formArgMetaMapWithSrc classMap arg) $ splitPartialLeafs srcArg
       Just _ -> H.empty
       Nothing -> H.empty
     mergeMaps [] = H.empty
-    mergeMaps (x:xs) = foldr (H.intersectionWith (\(m1, t1) (_, t2) -> (m1, unionType t1 t2))) x xs
+    mergeMaps (x:xs) = foldr (H.intersectionWith (\(m1, t1) (_, t2) -> (m1, unionType classMap t1 t2))) x xs
 
 -- fullDest means to use the greatest possible type (after implicit).
 -- Otherwise, it uses the minimal type that *must* be reached
@@ -192,7 +192,7 @@ arrowDestType fullDest classMap src@(_, _, srcArgs) obj@(Object _ _ _ _ objArgs)
   arrType -> basicDest arrType
   where
     basicDest arrType = case maybeExpr of
-      Just (Arg _ n) -> maybe arrType snd (H.lookup n $ formArgMetaMapWithSrc obj src)
+      Just (Arg _ n) -> maybe arrType snd (H.lookup n $ formArgMetaMapWithSrc classMap obj src)
       Just e | not fullDest -> getMetaType $ getExprMeta e
       _ -> arrType
 

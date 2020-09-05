@@ -47,13 +47,13 @@ data ReachesTree
   | ReachesLeaf [Type]
   deriving (Show)
 
-unionReachesTree :: ReachesTree -> Type
-unionReachesTree (ReachesTree children) = do
+unionReachesTree :: ClassMap -> ReachesTree -> Type
+unionReachesTree classMap (ReachesTree children) = do
   let (keys, vals) = unzip $ H.toList children
   let keys' = SumType $ joinPartialLeafs keys
-  let vals' = map unionReachesTree vals
-  unionTypes (keys':vals')
-unionReachesTree (ReachesLeaf leafs) = unionTypes leafs
+  let vals' = map (unionReachesTree classMap) vals
+  unionTypes classMap (keys':vals')
+unionReachesTree classMap (ReachesLeaf leafs) = unionTypes classMap leafs
 
 reachesHasCutSubtypeOf :: ClassMap -> ReachesTree -> Type -> Bool
 reachesHasCutSubtypeOf classMap (ReachesTree children) superType = all childIsSubtype $ H.toList children
@@ -106,6 +106,6 @@ arrowConstrainUbs env@(FEnv _ _ (_, _, classMap) _) (SumType srcPartials) dest =
   let partialMap' = H.filter (\t -> reachesHasCutSubtypeOf classMap t dest) partialMap
   let (srcPartialList'', destByPartial) = unzip $ H.toList partialMap'
   let srcPartials' = joinPartialLeafs srcPartialList''
-  let destByGraph = unionTypes $ fmap unionReachesTree destByPartial
+  let destByGraph = unionTypes classMap $ fmap (unionReachesTree classMap) destByPartial
   dest' <- tryIntersectTypes env dest destByGraph "executeConstraint ArrowTo"
   return (SumType srcPartials', dest')
