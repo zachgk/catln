@@ -54,18 +54,20 @@ pDeclLHS = do
 
 pDeclSingle :: Parser PDecl
 pDeclSingle = do
-  lhs <- pDeclLHS
+  lhs@(DeclLHS arrMeta _) <- pDeclLHS
   maybeExpr <- optional $ do
     _ <- symbol "="
     pExpr
-  return $ case maybeExpr of
-    Just expr -> RawDecl lhs [] (Just expr)
-    Nothing -> RawDecl lhs [] Nothing
+  case maybeExpr of
+    Nothing | arrMeta == emptyMeta -> fail "Declaration must include an arrow or an equals"
+    Nothing -> return $ RawDecl lhs [] Nothing
+    Just expr -> return $ RawDecl lhs [] (Just expr)
 
 data TreeRes
   = TRDecl PDecl
   | TRExpr PExpr
   | TRAnnot PCompAnnot
+  deriving (Eq, Show)
 
 validDeclTree :: [TreeRes] -> Either String ([PDeclSubStatement], PExpr)
 validDeclTree = aux ([], Nothing)
