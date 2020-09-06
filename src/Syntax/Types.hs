@@ -56,16 +56,19 @@ type ClassMap = (H.HashMap TypeName (S.HashSet ClassName), H.HashMap ClassName (
 instance Show Type where
   show TopType = "TopType"
   show (TypeVar v) = show v
-  show (SumType partials) | H.null partials = "∅"
-  show (SumType partials) = "(" ++ intercalate " | " partials' ++ ")"
+  show (SumType partials) = join $ map showPartial $ splitPartialLeafs partials
     where
+      showName (PTypeName t) = t
+      showName (PClassName t) = t
       showArg (argName, argVal) = argName ++ "=" ++ show argVal
       showTypeVars vars | H.null vars = ""
       showTypeVars vars = printf "<%s>" (intercalate ", " $ map showArg $ H.toList vars)
       showArgs args | H.null args = ""
       showArgs args = printf "(%s)" (intercalate ", " $ map showArg $ H.toList args)
-      showPartial (partialName, partialTypeVars, partialArgs) = show partialName ++ showTypeVars partialTypeVars ++ showArgs partialArgs
-      partials' = map showPartial $ splitPartialLeafs partials
+      showPartial (partialName, partialTypeVars, partialArgs) = showName partialName ++ showTypeVars partialTypeVars ++ showArgs partialArgs
+      join [] = "∅"
+      join [p] = p
+      join ps = "(" ++ intercalate " | " ps ++ ")"
 
 
 intLeaf, floatLeaf, strLeaf :: PartialType

@@ -131,13 +131,13 @@ envLookupTry env@(_, _, classMap) obj visitedArrows srcType destType resArrow = 
 
 buildGuardArrows :: (Eq f, Hashable f) => TBEnv f -> TBObject -> VisitedArrows f -> PartialType -> Type -> ([ResArrow f], [(TBExpr, ResArrow f)], [ResArrow f]) -> CRes (ResArrowTree f)
 buildGuardArrows env obj visitedArrows srcType destType guards = case guards of
-      ([], [], []) -> CErr [BuildTreeCErr $ printf "No arrows found on lookup from %s to %s" (show srcType) (show destType)]
+      ([], [], []) -> CErr [BuildTreeCErr $ printf "No arrows found when looking for: %s -> %s" (show $ singletonType srcType) (show destType)]
       (_, _, _:_:_) -> CErr [BuildTreeCErr "Multiple ElseGuards"]
       (noGuard, ifGuards, elseGuard) | not (null noGuard) -> case partitionCRes $ map ltry noGuard of
                           (_, resArrowTree:_) -> resArrowTree
                           (errNotes1, _) -> case buildGuardArrows env obj visitedArrows srcType destType ([], ifGuards, elseGuard) of
                             r@CRes{} -> r
-                            CErr errNotes2 -> wrapCErr (errNotes1 ++ errNotes2) $ "Failed to lookup noGuard arrow from " ++ show srcType ++ " to " ++ show destType ++ "\n\tNoGuard: " ++ show noGuard
+                            CErr errNotes2 -> wrapCErr (errNotes1 ++ errNotes2) $ printf "Failed to lookup noGuard arrow: %s -> %s\n\tNoGuard: %s" (show $ singletonType srcType) (show destType) (show noGuard)
       ([], _, []) -> CErr [BuildTreeCErr "Missing ElseGuard on envLookup"]
       ([], ifGuards, [elseGuard]) | not (null ifGuards) -> do
                                       let maybeIfTreePairs = mapM (\(ifCond, ifThen@(ResEArrow o _)) -> sequenceT (buildExprImp env o ifCond boolType, ltry ifThen)) ifGuards
