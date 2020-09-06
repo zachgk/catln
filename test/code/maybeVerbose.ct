@@ -3,4 +3,4 @@ class Maybe<$T> = Just<$T>($T val) | Nothing
 defInt(x=Just(Integer val)) = val
 defInt(x=Nothing) = 0
 
-main = defInt(x=Just(val=0))
+main(IO io) = io.exit(val=defInt(x=Just(val=0)))

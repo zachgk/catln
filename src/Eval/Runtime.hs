@@ -84,6 +84,28 @@ intToString = (name', [(srcType, NoGuard, PrimArrow resType prim)])
                               )
 
 
+ioExit :: Op
+ioExit = (name', [(srcType, NoGuard, PrimArrow resType prim)])
+  where
+    name' = "exit"
+    srcType = (PTypeName name', H.empty, H.fromList [("this", ioType), ("val", intType)])
+    resType = ioType
+    prim = EPrim srcType NoGuard (\args -> case (H.lookup "this" args, H.lookup "val" args) of
+                                  (Just (IOVal _ io), Just (IntVal val)) -> IOVal val io
+                                  _ -> error "Invalid exit signature"
+                              )
+
+println :: Op
+println = (name', [(srcType, NoGuard, PrimArrow resType prim)])
+  where
+    name' = "println"
+    srcType = (PTypeName name', H.empty, H.fromList [("this", ioType), ("msg", strType)])
+    resType = ioType
+    prim = EPrim srcType NoGuard (\args -> case (H.lookup "this" args, H.lookup "msg" args) of
+                                  (Just (IOVal r io), Just (StrVal msg)) -> IOVal r (io >> putStrLn msg)
+                                  _ -> error "Invalid println signature"
+                              )
+
 primEnv :: ResBuildEnv EPrim
 primEnv = H.fromListWith (++) [ liftIntOp "+" (+)
                               , liftIntOp "-" (-)
@@ -97,4 +119,6 @@ primEnv = H.fromListWith (++) [ liftIntOp "+" (+)
                               , rneg "-"
                               , strEq
                               , intToString
+                              , ioExit
+                              , println
                               ]

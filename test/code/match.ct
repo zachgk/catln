@@ -1,4 +1,4 @@
-main = abs(0)
+main(IO io) = io.exit(val=abs(0))
 
 abs(Integer x) = match x of
                   x2 if x >= 0 => x2

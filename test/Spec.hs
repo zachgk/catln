@@ -9,7 +9,6 @@ import           Text.Printf
 import Syntax
 import           Desugarf         (desFiles)
 -- import           Emit             (codegen, initModule)
-import           Eval.Common
 import           Eval
 import           TypeCheck.Common  (TypeCheckResult(TypeCheckResult, TypeCheckResE))
 import           TypeCheck
@@ -39,8 +38,11 @@ runTest includeStd fileName = testCaseSteps fileName $ \step -> do
           case evalMain tprgm of
             CErr notes -> do
               assertFailure $ "Could not eval:\n\t " ++ intercalate "\n\t" (map prettyCNote notes)
-            CRes [] (IntVal 0) -> return ()
-            CRes notes res -> assertFailure $ "Bad result for:\n \t " ++ show res ++ "\n \tNotes\t" ++ concat (map prettyCNote notes)
+            CRes notes io -> do
+              returnValue <- io
+              case (notes, returnValue) of
+                ([], 0) -> return () -- success
+                _ -> assertFailure $ "Bad result for:\n \t " ++ show returnValue ++ "\n \tNotes\t" ++ concat (map prettyCNote notes)
           -- step "Codegen"
           -- void (codegen initModule tprgm)
 

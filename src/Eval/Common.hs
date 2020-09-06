@@ -52,8 +52,18 @@ data Val
   | FloatVal Double
   | StrVal String
   | TupleVal String Args
+  | IOVal Integer (IO ())
   | NoVal
-  deriving (Eq)
+
+instance Eq Val where
+  (IntVal a) == (IntVal b) = a == b
+  (FloatVal a) == (FloatVal b) = a == b
+  (StrVal a) == (StrVal b) = a == b
+  (TupleVal an aa) == (TupleVal bn ba) = an == bn && aa == ba
+  IOVal{} == _ = error "Can't determine equality with IOVal"
+  _ == IOVal{} = error "Can't determine equality with IOVal"
+  NoVal == NoVal = True
+  _ == _ = False
 
 instance Show Val where
   show (IntVal i)   = show i
@@ -64,6 +74,7 @@ instance Show Val where
       showArgs as | H.null as = ""
       showArgs as = printf "(%s)" (intercalate ", " $ map showArg $ H.toList as)
       showArg (argName, val) = argName ++ " = " ++ show val
+  show IOVal{}   = "IOVal"
   show NoVal   = "NoVal"
 
 getValType :: Val -> PartialType
@@ -72,4 +83,5 @@ getValType FloatVal{} = floatLeaf
 getValType StrVal{} = strLeaf
 getValType (TupleVal name args) = (PTypeName name, H.empty, fmap fromArg args)
   where fromArg arg = singletonType $ getValType arg
+getValType IOVal{} = ioLeaf
 getValType NoVal = error "getValType of NoVal"

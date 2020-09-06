@@ -39,6 +39,9 @@ operator==(String l, String r) -> Boolean
 toString(String this) -> String = this
 toString(Integer this) -> String
 
+data IO
+exit(IO this, Integer val) -> IO
+
 class Number = Integer | Float
 class Boolean = True | False
 
