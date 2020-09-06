@@ -82,7 +82,7 @@ currySubFunctionsUpdateExpr :: S.HashSet TypeName -> H.HashMap ArgName PObjArg -
 currySubFunctionsUpdateExpr _ _ c@PSCExpr{} = c
 currySubFunctionsUpdateExpr _ parentArgs v@PSValue{} | H.null parentArgs = v
 currySubFunctionsUpdateExpr toUpdate parentArgs v@(PSValue _ vn) = if S.member vn toUpdate
-  then foldr (\(parentArgName, (parentArgM, _)) e -> PSTupleApply emptyMeta (emptyMeta, e) parentArgName (PSValue parentArgM parentArgName)) v $ H.toList parentArgs
+  then foldr (\(parentArgName, (parentArgM, _)) e -> PSTupleApply emptyMeta (emptyMeta, e) (Just parentArgName) (PSValue parentArgM parentArgName)) v $ H.toList parentArgs
   else v
 currySubFunctionsUpdateExpr toUpdate parentArgs (PSTupleApply tm (tbm, tbe) tArgName tArgVal) = PSTupleApply tm (tbm, tbe') tArgName tArgVal'
   where
@@ -112,11 +112,11 @@ removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern (Object objM basis declNam
     decl' = PSemiDecl (DeclLHS arrM' (Pattern (Object objM' basis declName vars args) guard2)) annots4 expr4
 
 desExpr :: PArgMetaMap -> PSExpr -> DesExpr
-desExpr _ (PSCExpr m c) = CExpr m c
+desExpr _ (PSCExpr m c) = ICExpr m c
 desExpr arrArgs (PSValue m n) = if H.member n arrArgs
-  then Arg m n
-  else Value m n
-desExpr arrArgs (PSTupleApply m (bm, be) argName argVal) = TupleApply m (bm, desExpr arrArgs be) argName (desExpr arrArgs argVal)
+  then IArg m n
+  else IValue m n
+desExpr arrArgs (PSTupleApply m (bm, be) argName argVal) = ITupleApply m (bm, desExpr arrArgs be) argName (desExpr arrArgs argVal)
 
 desGuard :: PArgMetaMap -> PSGuard -> DesGuard
 desGuard arrArgs = fmap (desExpr arrArgs)
@@ -130,12 +130,14 @@ semiDesExpr (RawValue m n) = ([], PSValue m n)
 semiDesExpr (RawTupleApply m'' (bm, be) args) = (\(a, _, PSTupleApply _ (bm'', be'') argName'' argVal'') -> (a, PSTupleApply m'' (bm'', be'') argName'' argVal'')) $ foldl aux (subBe, bm, be') args
   where
     (subBe, be') = semiDesExpr be
-    aux (sub, m, e) (argName, argVal) = (subArgVal ++ sub, emptyMeta, PSTupleApply emptyMeta (m, e) argName argVal')
+    aux (sub, m, e) (RawTupleArgNamed argName argVal) = (subArgVal ++ sub, emptyMeta, PSTupleApply emptyMeta (m, e) (Just argName) argVal')
+      where (subArgVal, argVal') = semiDesExpr argVal
+    aux (sub, m, e) (RawTupleArgInfer argVal) = (subArgVal ++ sub, emptyMeta, PSTupleApply emptyMeta (m, e) Nothing argVal')
       where (subArgVal, argVal') = semiDesExpr argVal
 semiDesExpr (RawMethods base methods) = semiDesExpr $ foldl addMethod base methods
   where
-    addMethod b method@RawValue{} = RawTupleApply emptyMeta (emptyMeta, method) [("this", b)]
-    addMethod b (RawTupleApply m methodVal methodArgs) = RawTupleApply m methodVal (("this", b) : methodArgs)
+    addMethod b method@RawValue{} = RawTupleApply emptyMeta (emptyMeta, method) [RawTupleArgNamed "this" b]
+    addMethod b (RawTupleApply m methodVal methodArgs) = RawTupleApply m methodVal (RawTupleArgNamed "this" b : methodArgs)
     addMethod _ _ = error "Unknown semiDesExpr method"
 semiDesExpr r@(RawIfThenElse m i t e) = (concat [subI, subT, subE, [elseDecl, ifDecl]], expr')
   where
@@ -151,7 +153,7 @@ semiDesExpr r@(RawMatch m e matchItems) = (subE ++ subMatchItems, expr')
     condName = "\\" ++ take 6 (printf "%08x" (hash r))
     argName = condName ++ "-arg"
     (subE, e') = semiDesExpr e
-    expr' = PSTupleApply m (emptyMeta, PSValue emptyMeta condName) argName e'
+    expr' = PSTupleApply m (emptyMeta, PSValue emptyMeta condName) (Just argName) e'
     subMatchItems = concatMap semiDesMatchItem $ H.toList matchItems
     semiDesMatchItem (Pattern patt pattGuard, matchExpr) = concat [[matchItemExpr'], subPattGuard, subMatchExpr]
       where
@@ -173,7 +175,7 @@ semiDesExpr r@(RawCase m e ((Pattern firstObj@(Object fm _ _ _ _) firstGuard, fi
     restDecl = PSemiDecl (DeclLHS m (Pattern declObj ElseGuard)) [] (Just restExpr')
     (subRE, restExpr') = semiDesExpr (RawCase m e restCases)
     (subE, e') = semiDesExpr e
-    expr' = PSTupleApply m (emptyMeta, PSValue emptyMeta condName) argName e'
+    expr' = PSTupleApply m (emptyMeta, PSValue emptyMeta condName) (Just argName) e'
 
 
 semiDesGuard :: PGuard -> ([PSemiDecl], PSGuard)
@@ -186,19 +188,19 @@ semiDesAnnot :: PCompAnnot -> ([PSemiDecl], PSCompAnnot)
 semiDesAnnot (CompAnnot name args) = (subArgs, CompAnnot name args')
   where (subArgs, args') = traverse semiDesExpr args
 
-declToObjArrow :: PSemiDecl -> (PObject, [PArrow])
+declToObjArrow :: PSemiDecl -> (DesObject, [DesArrow])
 declToObjArrow (PSemiDecl (DeclLHS arrM (Pattern object guard)) annots expr) = (object, [arrow])
   where
     argMetaMap = formArgMetaMap object
     arrow = Arrow arrM (map (desAnnot argMetaMap) annots) (desGuard argMetaMap guard) (fmap (desExpr argMetaMap) expr)
 
-desDecl :: PDecl -> PObjectMap
+desDecl :: PDecl -> DesObjectMap
 desDecl decl = H.fromListWith (++) $ map declToObjArrow $ removeSubDeclarations decl
 
 unionsWith :: (Ord k, Hashable k) => (a->a->a) -> [H.HashMap k a] -> H.HashMap k a
 unionsWith f = foldl (H.unionWith f) H.empty
 
-desDecls :: [PDecl] -> PObjectMap
+desDecls :: [PDecl] -> DesObjectMap
 desDecls decls = unionsWith (++) $ map desDecl decls
 
 typeDefMetaToObj :: H.HashMap TypeVarName Type -> ParseMeta -> Maybe PObject
@@ -211,7 +213,7 @@ typeDefMetaToObj varReplaceMap m@(PreTyped (SumType partials)) = case splitParti
   _ -> error "Invalid call to typeDefMetaToObj with SumType"
 typeDefMetaToObj _ _ = error "Invalid call to typeDefMetaToObj"
 
-desMultiTypeDefs :: [PMultiTypeDef] -> (PObjectMap, ClassMap)
+desMultiTypeDefs :: [PMultiTypeDef] -> (DesObjectMap, ClassMap)
 desMultiTypeDefs = foldr addTypeDef (H.empty, (H.empty, H.empty))
   where
     addTypeDef (MultiTypeDef className classVars dataMetas) (objMap, (typeToClass, classToType)) = (objMap', (typeToClass', classToType'))
@@ -225,7 +227,7 @@ desMultiTypeDefs = foldr addTypeDef (H.empty, (H.empty, H.empty))
         newTypeToClass = H.fromList $ map (,S.singleton className) objNames
         typeToClass' = H.unionWith S.union typeToClass newTypeToClass
 
-desTypeDefs :: [PTypeDef] -> PObjectMap
+desTypeDefs :: [PTypeDef] -> DesObjectMap
 desTypeDefs = foldr addTypeDef H.empty
   where addTypeDef (TypeDef tp) = case typeDefMetaToObj H.empty tp of
           Just obj -> H.insert obj []
@@ -238,7 +240,7 @@ desClassDefs sealed = foldr addDef empty
     addDef (typeName, className) (typeToClass, classToType) = (H.insertWith S.union typeName (S.singleton className) typeToClass, H.insertWith addClass className (sealed, H.empty, [singletonType (PTypeName typeName, H.empty, H.empty)]) classToType)
     addClass (cSealed, cVars, set1) (_, _, set2) = (cSealed, cVars, set1 ++ set2)
 
-mergeObjMaps :: PObjectMap -> PObjectMap -> PObjectMap
+mergeObjMaps :: DesObjectMap -> DesObjectMap -> DesObjectMap
 mergeObjMaps = H.unionWith (++)
 
 mergeClassMaps :: ClassMap -> ClassMap -> ClassMap

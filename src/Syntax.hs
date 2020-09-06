@@ -38,9 +38,9 @@ data ReplRes m
 
 --- ResArrowTree
 type ResBuildEnv f = H.HashMap TypeName [(PartialType, Guard (Expr Typed), ResArrow f)]
-type ResExEnv f = H.HashMap (Arrow Typed) (ResArrowTree f, [ResArrowTree f]) -- (result, [compAnnot trees])
+type ResExEnv f = H.HashMap (Arrow (Expr Typed) Typed) (ResArrowTree f, [ResArrowTree f]) -- (result, [compAnnot trees])
 data ResArrow f
-  = ResEArrow (Object Typed) (Arrow Typed)
+  = ResEArrow (Object Typed) (Arrow (Expr Typed) Typed)
   | PrimArrow Type f
   | ConstantArrow Constant
   | ArgArrow Type String
@@ -178,7 +178,7 @@ formArgMetaMapWithSrc classMap (Object _ _ _ _ args) (_, _, srcArgs) = H.foldr (
 
 -- fullDest means to use the greatest possible type (after implicit).
 -- Otherwise, it uses the minimal type that *must* be reached
-arrowDestType :: (Meta m, Show m) => Bool -> ClassMap -> PartialType -> Object m -> Arrow m -> Type
+arrowDestType :: (Meta m, Show m, ExprClass e) => Bool -> ClassMap -> PartialType -> Object m -> Arrow (e m) m -> Type
 arrowDestType fullDest classMap src@(_, _, srcArgs) obj@(Object _ _ _ _ objArgs) (Arrow arrM _ _ maybeExpr) = case getMetaType arrM of
   arrType@(TypeVar TVVar{}) -> do
     let argsMatchingTypeVar = H.filter (\(m, _) -> getMetaType m == arrType) objArgs
@@ -191,9 +191,9 @@ arrowDestType fullDest classMap src@(_, _, srcArgs) obj@(Object _ _ _ _ objArgs)
     _ -> error $ printf "arrowDestType with unknown arg %s" (show t)
   arrType -> basicDest arrType
   where
-    basicDest arrType = case maybeExpr of
-      Just (Arg _ n) -> maybe arrType snd (H.lookup n $ formArgMetaMapWithSrc classMap obj src)
-      Just e | not fullDest -> getMetaType $ getExprMeta e
+    basicDest arrType = case (maybeExpr, mapM getExprArg maybeExpr) of
+      (_, Just (Just n)) -> maybe arrType snd (H.lookup n $ formArgMetaMapWithSrc classMap obj src)
+      (Just e, _) | not fullDest -> getMetaType $ getExprMeta e
       _ -> arrType
 
 metaTypeVar :: (Meta m) => m -> Maybe TypeVarAux

@@ -23,6 +23,12 @@ class MapMeta m where
 
 --
 
+instance MapMeta IExpr where
+  mapMeta f (ICExpr m c) = ICExpr (f m) c
+  mapMeta f (IValue m n) = IValue (f m) n
+  mapMeta f (IArg m n) = IArg (f m) n
+  mapMeta f (ITupleApply m (bm, be) argName argVal) = ITupleApply (f m) (f bm, mapMeta f be) argName (mapMeta f argVal)
+
 instance MapMeta Expr where
   mapMeta f (CExpr m c) = CExpr (f m) c
   mapMeta f (Value m n) = Value (f m) n
@@ -43,12 +49,12 @@ mapMetaObjArg f (m, maybeObj) = (f m, fmap (mapMeta f) maybeObj)
 instance MapMeta Object where
   mapMeta f (Object m basis name vars args) = Object (f m) basis name (fmap f vars) (fmap (mapMetaObjArg f) args)
 
-instance MapMeta Arrow where
-  mapMeta f (Arrow m annots guard maybeExpr) = Arrow (f m) (map (mapMetaCompAnnot f) annots) (mapMetaGuard f guard) (fmap (mapMeta f) maybeExpr)
+mapMetaArrow :: (Eq b, Hashable b, MapMeta e) => (a -> b) -> Arrow (e a) a -> Arrow (e b) b
+mapMetaArrow f (Arrow m annots guard maybeExpr) = Arrow (f m) (map (mapMetaCompAnnot f) annots) (mapMetaGuard f guard) (fmap (mapMeta f) maybeExpr)
 
-mapMetaObjectMap :: (Eq b, Hashable b) => (a -> b) -> ObjectMap a -> ObjectMap b
+mapMetaObjectMap :: (Eq b, Hashable b, MapMeta e) => (a -> b) -> ObjectMap (e a) a -> ObjectMap (e b) b
 mapMetaObjectMap f mp = H.fromList $ map aux $ H.toList mp
-  where aux (obj, arrows) = (mapMeta f obj, map (mapMeta f) arrows)
+  where aux (obj, arrows) = (mapMeta f obj, map (mapMetaArrow f) arrows)
 
-mapMetaPrgm :: (Eq b, Hashable b) => (a -> b) -> Prgm a -> Prgm b
+mapMetaPrgm :: (Eq b, Hashable b, MapMeta e) => (a -> b) -> Prgm (e a) a -> Prgm (e b) b
 mapMetaPrgm f (objMap, classMap) = (mapMetaObjectMap f objMap, classMap)

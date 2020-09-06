@@ -27,6 +27,9 @@ double2(Integer val) -> Integer = val + val
 
 // Call the function by passing in the arguments
 result = double(val=5)
+
+// Call the function while attempting to infer the argument name
+result = double(5)
 ```
 
 Catln supports the following operators following the typical operator precedence:

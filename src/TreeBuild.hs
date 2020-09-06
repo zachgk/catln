@@ -28,9 +28,9 @@ type TBExpr = Expr TBMeta
 type TBCompAnnot = CompAnnot TBExpr
 type TBObject = Object TBMeta
 type TBGuard = Guard TBExpr
-type TBArrow = Arrow TBMeta
-type TBObjectMap = ObjectMap TBMeta
-type TBPrgm = Prgm TBMeta
+type TBArrow = Arrow TBExpr TBMeta
+type TBObjectMap = ObjectMap TBExpr TBMeta
+type TBPrgm = Prgm TBExpr TBMeta
 type TBReplRes = ReplRes TBMeta
 
 type TBEnv f = (ResBuildEnv f, H.HashMap PartialType (ResArrow f), ClassMap)

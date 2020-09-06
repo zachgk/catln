@@ -57,6 +57,7 @@ data Constraint
   | PropEq (Pnt, ArgName) Pnt
   | VarEq (Pnt, TypeVarName) Pnt
   | AddArg (Pnt, String) Pnt
+  | AddInferArg Pnt Pnt -- AddInferArg base arg
   | PowersetTo Pnt Pnt
   | UnionOf Pnt [Pnt]
   deriving (Eq, Show)
@@ -70,6 +71,7 @@ data SConstraint
   | SPropEq (Scheme, ArgName) Scheme
   | SVarEq (Scheme, TypeVarName) Scheme
   | SAddArg (Scheme, String) Scheme
+  | SAddInferArg Scheme Scheme
   | SPowersetTo Scheme Scheme
   | SUnionOf Scheme [Scheme]
   deriving (Eq, Ord, Generic, Hashable)
@@ -101,32 +103,32 @@ instance Monad TypeCheckResult where
 
 
 type PreMeta = PreTyped
-type PExpr = Expr PreMeta
+type PExpr = IExpr PreMeta
 type PCompAnnot = CompAnnot PExpr
 type PGuard = Guard PExpr
-type PArrow = Arrow PreMeta
+type PArrow = Arrow PExpr PreMeta
 type PObjArg = ObjArg PreMeta
 type PObject = Object PreMeta
-type PPrgm = Prgm PreMeta
+type PPrgm = Prgm PExpr PreMeta
 type PReplRes = ReplRes PreMeta
 
 type ShowMeta = Scheme
-type SExpr = Expr ShowMeta
+type SExpr = IExpr ShowMeta
 type SCompAnnot = CompAnnot SExpr
 type SGuard = Guard SExpr
-type SArrow = Arrow ShowMeta
+type SArrow = Arrow SExpr ShowMeta
 type SObjArg = ObjArg ShowMeta
 type SObject = Object ShowMeta
-type SPrgm = Prgm ShowMeta
+type SPrgm = Prgm SExpr ShowMeta
 type SReplRes = ReplRes ShowMeta
 
 data VarMeta = VarMeta Pnt PreTyped
   deriving (Eq, Show)
-type VExpr = Expr VarMeta
+type VExpr = IExpr VarMeta
 type VCompAnnot = CompAnnot VExpr
 type VGuard = Guard VExpr
 type VArgMetaMap = ArgMetaMap VarMeta
-type VArrow = Arrow VarMeta
+type VArrow = Arrow VExpr VarMeta
 type VObjArg = ObjArg VarMeta
 type VObject = Object VarMeta
 type VObjectMap = [(VObject, [VArrow])]
@@ -137,10 +139,10 @@ type TypedMeta = Typed
 type TExpr = Expr TypedMeta
 type TCompAnnot = CompAnnot TExpr
 type TGuard = Guard TExpr
-type TArrow = Arrow TypedMeta
+type TArrow = Arrow TExpr TypedMeta
 type TObjArg = ObjArg TypedMeta
 type TObject = Object TypedMeta
-type TPrgm = Prgm TypedMeta
+type TPrgm = Prgm TExpr TypedMeta
 type TReplRes = ReplRes TypedMeta
 
 -- implicit graph
@@ -174,6 +176,7 @@ instance Show SConstraint where
   show (SPropEq (s1, n) s2) = printf "(%s).%s == %s"  (show s1) n (show s2)
   show (SVarEq (s1, n) s2) = printf "(%s).%s == %s"  (show s1) n (show s2)
   show (SAddArg (base, arg) res) = printf "(%s)(%s) == %s" (show base) arg (show res)
+  show (SAddInferArg base res) = printf "(%s)(?) == %s" (show base) (show res)
   show (SPowersetTo s t) = printf "𝒫(%s) ⊇ %s" (show s) (show t)
   show (SUnionOf s _) = printf "SUnionOf for %s" (show s)
 

@@ -26,11 +26,18 @@ import           Parser.Lexer
 import Parser.Syntax
 import Parser.Expr
 
+pDeclArg :: Parser (String, PExpr)
+pDeclArg = do
+  argName <- identifier
+  _ <- symbol "="
+  expr <- pExpr
+  return (argName, expr)
+
 pCompAnnot :: Parser PCompAnnot
 pCompAnnot = do
   _ <- string "#"
   annotName <- (:) <$> letterChar <*> many alphaNumChar
-  argVals <- parens $ sepBy1 pCallArg (symbol ",")
+  argVals <- parens $ sepBy1 pDeclArg (symbol ",")
   return $ CompAnnot annotName (H.fromList argVals)
 
 pArrowRes :: Parser ParseMeta

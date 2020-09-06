@@ -12,6 +12,7 @@
 module TypeCheck.Decode where
 
 import qualified Data.HashMap.Strict as H
+import qualified Data.HashSet        as S
 
 import           Syntax.Types
 import           Syntax.Prgm
@@ -31,6 +32,7 @@ matchingConstraint env p (ArrowTo p2 p3) = matchingConstraintHelper env p p2 p3
 matchingConstraint env p (PropEq (p2, _) p3) = matchingConstraintHelper env p p2 p3
 matchingConstraint env p (VarEq (p2, _) p3) = matchingConstraintHelper env p p2 p3
 matchingConstraint env p (AddArg (p2, _) p3) = matchingConstraintHelper env p p2 p3
+matchingConstraint env p (AddInferArg p2 p3) = matchingConstraintHelper env p p2 p3
 matchingConstraint env p (PowersetTo p2 p3) = matchingConstraintHelper env p p2 p3
 matchingConstraint env p (UnionOf p2 p3s) = equivalent env p p2 || any (equivalent env p) p3s
 
@@ -54,16 +56,16 @@ toMeta env (VarMeta p (PreTyped pt)) _ = case pointUb env p of
     TypeCheckResE $ map (TCWithMatchingConstraints matchingConstraints) notes
 
 toExpr :: FEnv -> VExpr -> TypeCheckResult TExpr
-toExpr env (CExpr m c) = do
+toExpr env (ICExpr m c) = do
   m' <- toMeta env m $ "Constant " ++ show c
   return $ CExpr m' c
-toExpr env (Value m name) = do
+toExpr env (IValue m name) = do
   m' <- toMeta env m $ "Value_" ++ name
   return $ Value m' name
-toExpr env (Arg m name) = do
+toExpr env (IArg m name) = do
   m' <- toMeta env m $ "Arg_" ++ name
   return $ Arg m' name
-toExpr env (TupleApply m (baseM, baseExpr) argName argExpr) = do
+toExpr env (ITupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
   m' <- toMeta env m "TupleApply_M"
   baseM' <- toMeta env baseM "TupleApply_baseM"
   baseExpr' <- toExpr env baseExpr
@@ -73,6 +75,19 @@ toExpr env (TupleApply m (baseM, baseExpr) argName argExpr) = do
                                         let matchingConstraints = showMatchingConstraints env $ getPnt m
                                         TypeCheckResE [TCWithMatchingConstraints matchingConstraints $ TupleMismatch baseM' baseExpr' tp $ H.singleton argName argExpr']
     _ -> return $ TupleApply m' (baseM', baseExpr') argName argExpr'
+toExpr env (ITupleApply m (baseM, baseExpr) Nothing argExpr) = do
+  m' <- toMeta env m "TupleApplyInfer_M"
+  baseM' <- toMeta env baseM "TupleApplyInfer_baseM"
+  baseExpr' <- toExpr env baseExpr
+  argExpr' <- toExpr env argExpr
+  argName <- case (getMetaType baseM', getMetaType m') of
+    (SumType basePartialLeafs, SumType partialLeafs) -> case (splitPartialLeafs basePartialLeafs, splitPartialLeafs partialLeafs) of
+      ([(_, _, basePartialArgs)], [(_, _, partialArgs)]) -> case S.toList $ S.difference (H.keysSet partialArgs) (H.keysSet basePartialArgs) of
+        [argN] -> return argN
+        _ -> TypeCheckResE [GenTypeCheckError "Failed argument inference due to multiple arg options"]
+      _ -> TypeCheckResE [GenTypeCheckError "Failed argument inference due to multiple types"]
+    _ -> TypeCheckResE [GenTypeCheckError "Failed argument inference due to non SumType"]
+  return $ TupleApply m' (baseM', baseExpr') argName argExpr'
 
 toCompAnnot :: FEnv -> VCompAnnot -> TypeCheckResult TCompAnnot
 toCompAnnot env (CompAnnot name args) = do

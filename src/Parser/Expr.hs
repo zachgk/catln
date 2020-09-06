@@ -28,11 +28,11 @@ import           Parser.Lexer
 import Parser.Syntax
 
 mkOp1 :: String -> PExpr -> PExpr
-mkOp1 opChars x = RawTupleApply emptyMeta (emptyMeta, RawValue emptyMeta op) [("a", x)]
+mkOp1 opChars x = RawTupleApply emptyMeta (emptyMeta, RawValue emptyMeta op) [RawTupleArgNamed "a" x]
   where op = "operator" ++ opChars
 
 mkOp2 :: String -> PExpr -> PExpr -> PExpr
-mkOp2 opChars x y = RawTupleApply emptyMeta (emptyMeta, RawValue emptyMeta op) [("l", x), ("r", y)]
+mkOp2 opChars x y = RawTupleApply emptyMeta (emptyMeta, RawValue emptyMeta op) [RawTupleArgNamed "l" x, RawTupleArgNamed "r" y]
   where op = "operator" ++ opChars
 
 ops :: [[Operator Parser PExpr]]
@@ -59,12 +59,16 @@ ops = [
     ]
   ]
 
-pCallArg :: Parser (String, PExpr)
+pCallArg :: Parser PTupleArg
 pCallArg = do
-  argName <- identifier
-  _ <- symbol "="
+  maybeArgName <- optional $ do
+    n <- identifier
+    _ <- symbol "="
+    return n
   expr <- pExpr
-  return (argName, expr)
+  return $ case maybeArgName of
+    Just argName -> RawTupleArgNamed argName expr
+    Nothing -> RawTupleArgInfer expr
 
 pCall :: Parser PExpr
 pCall = do
