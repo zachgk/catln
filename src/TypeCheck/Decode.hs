@@ -54,16 +54,16 @@ toMeta env (VarMeta p (PreTyped pt)) _ = case pointUb env p of
     TypeCheckResE $ map (TCWithMatchingConstraints matchingConstraints) notes
 
 toExpr :: FEnv -> VExpr -> TypeCheckResult TExpr
-toExpr env (CExpr m c) = do
+toExpr env (ICExpr m c) = do
   m' <- toMeta env m $ "Constant " ++ show c
   return $ CExpr m' c
-toExpr env (Value m name) = do
+toExpr env (IValue m name) = do
   m' <- toMeta env m $ "Value_" ++ name
   return $ Value m' name
-toExpr env (Arg m name) = do
+toExpr env (IArg m name) = do
   m' <- toMeta env m $ "Arg_" ++ name
   return $ Arg m' name
-toExpr env (TupleApply m (baseM, baseExpr) argName argExpr) = do
+toExpr env (ITupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
   m' <- toMeta env m "TupleApply_M"
   baseM' <- toMeta env baseM "TupleApply_baseM"
   baseExpr' <- toExpr env baseExpr

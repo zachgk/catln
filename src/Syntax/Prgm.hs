@@ -34,19 +34,34 @@ data Constant
   | CStr String
   deriving (Eq, Ord, Show, Generic, Hashable)
 
-data Pattern m e = Pattern (Object m) (Guard e)
+data Pattern e m = Pattern (Object m) (Guard e)
   deriving (Eq, Ord, Show, Generic, Hashable)
 
+data RawTupleArg m
+  = RawTupleArgNamed ArgName (RawExpr m)
+  | RawTupleArgInfer (RawExpr m)
+  deriving (Eq, Ord, Show, Generic, Hashable)
+
+-- Expr before desugar
 data RawExpr m
   = RawCExpr m Constant
   | RawValue m TypeName
-  | RawTupleApply m (m, RawExpr m) [(ArgName, RawExpr m)]
+  | RawTupleApply m (m, RawExpr m) [RawTupleArg m]
   | RawMethods (RawExpr m) [RawExpr m]
   | RawIfThenElse m (RawExpr m) (RawExpr m) (RawExpr m)
-  | RawMatch m (RawExpr m) (H.HashMap (Pattern m (RawExpr m)) (RawExpr m))
-  | RawCase m (RawExpr m) [(Pattern m (RawExpr m), RawExpr m)]
+  | RawMatch m (RawExpr m) (H.HashMap (Pattern (RawExpr m) m) (RawExpr m))
+  | RawCase m (RawExpr m) [(Pattern (RawExpr m) m, RawExpr m)]
   deriving (Eq, Ord, Show, Generic, Hashable)
 
+-- Expr (to infer) from desugar to typecheck
+data IExpr m
+  = ICExpr m Constant
+  | IValue m TypeName
+  | IArg m ArgName
+  | ITupleApply m (m, IExpr m) (Maybe ArgName) (IExpr m) -- the ArgName is optional. Must be inferred if Nothing
+  deriving (Eq, Ord, Generic, Hashable)
+
+-- Expr after typechecking
 data Expr m
   = CExpr m Constant
   | Value m TypeName
@@ -74,10 +89,10 @@ data RawDeclSubStatement m
   | RawDeclSubStatementAnnot (CompAnnot (RawExpr m))
   deriving (Eq, Ord, Show)
 
-data DeclLHS m e = DeclLHS m (Pattern m e)
+data DeclLHS e m = DeclLHS m (Pattern e m)
   deriving (Eq, Ord, Show)
 
-data RawDecl m = RawDecl (DeclLHS m (RawExpr m)) [RawDeclSubStatement m] (Maybe (RawExpr m))
+data RawDecl m = RawDecl (DeclLHS (RawExpr m) m) [RawDeclSubStatement m] (Maybe (RawExpr m))
   deriving (Eq, Ord, Show)
 
 newtype TypeDef m = TypeDef m
@@ -104,11 +119,23 @@ data ObjectBasis = FunctionObj | TypeObj | PatternObj | MatchObj
 data Object m = Object m ObjectBasis TypeName (H.HashMap TypeVarName m) (H.HashMap ArgName (ObjArg m))
   deriving (Eq, Ord, Generic, Hashable)
 
-data Arrow m = Arrow m [CompAnnot (Expr m)] (Guard (Expr m)) (Maybe (Expr m)) -- m is result metadata
+data Arrow e m = Arrow m [CompAnnot e] (Guard e) (Maybe e) -- m is result metadata
   deriving (Eq, Ord, Generic, Hashable)
 
-type ObjectMap m = (H.HashMap (Object m) [Arrow m])
-type Prgm m = (ObjectMap m, ClassMap) -- TODO: Include [Export]
+type ObjectMap e m = (H.HashMap (Object m) [Arrow e m])
+type Prgm e m = (ObjectMap e m, ClassMap) -- TODO: Include [Export]
+
+instance Show m => Show (IExpr m) where
+  show (ICExpr _ c) = show c
+  show (IValue _ name) = printf "Value %s" name
+  show (IArg m name) = printf "Arg %s %s" (show m) name
+  show (ITupleApply _ (_, baseExpr) argName argVal) = printf "%s(%s%s)" (show baseExpr') argName' (show argVal)
+    where
+      baseExpr' = case baseExpr of
+        IValue _ funName -> funName
+        ITupleApply{} -> show baseExpr
+        _ -> printf "(%s)" (show baseExpr)
+      argName' = maybe "" (++ " = ") argName
 
 instance Show m => Show (Expr m) where
   show (CExpr _ c) = show c
@@ -146,7 +173,7 @@ instance Show m => Show (Object m) where
         then ""
         else "(" ++ intercalate ", " (map showArg $ H.toList args) ++ ")"
 
-instance Show m => Show (Arrow m) where
+instance (Show m, Show e) => Show (Arrow e m) where
   show (Arrow m annots guard maybeExpr) = concat $ [show guard, " -> ", show m, " "] ++ showExpr maybeExpr ++ showAnnots annots
     where
       showExpr (Just expr) = [" = ", show expr]
@@ -154,12 +181,29 @@ instance Show m => Show (Arrow m) where
       showAnnots [] = []
       showAnnots _ = [" ", show annots]
 
-getExprMeta :: Expr m -> m
-getExprMeta expr = case expr of
-  CExpr m _   -> m
-  Value m _   -> m
-  Arg m _   -> m
-  TupleApply m _ _ _ -> m
+class ExprClass e where
+  getExprMeta ::  e m -> m
+  getExprArg :: e m -> Maybe ArgName
+
+instance ExprClass Expr where
+  getExprMeta expr = case expr of
+    CExpr m _   -> m
+    Value m _   -> m
+    Arg m _   -> m
+    TupleApply m _ _ _ -> m
+
+  getExprArg (Arg _ n) = Just n
+  getExprArg _ = Nothing
+
+instance ExprClass IExpr where
+  getExprMeta expr = case expr of
+    ICExpr m _   -> m
+    IValue m _   -> m
+    IArg m _   -> m
+    ITupleApply m _ _ _ -> m
+
+  getExprArg (IArg _ n) = Just n
+  getExprArg _ = Nothing
 
 type ArgMetaMap m = H.HashMap ArgName m
 formArgMetaMap :: Object m -> ArgMetaMap m

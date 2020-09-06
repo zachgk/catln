@@ -20,10 +20,10 @@ showM :: FEnv -> VarMeta -> ShowMeta
 showM env = descriptor env . getPnt
 
 showExpr :: FEnv -> VExpr -> SExpr
-showExpr env (CExpr m c) = CExpr (showM env m) c
-showExpr env (Value m name) = Value (showM env m) name
-showExpr env (Arg m name) = Arg (showM env m) name
-showExpr env (TupleApply m (bm, base) argName argVal) = TupleApply (showM env m) (showM env bm, showExpr env base) argName (showExpr env argVal)
+showExpr env (ICExpr m c) = ICExpr (showM env m) c
+showExpr env (IValue m name) = IValue (showM env m) name
+showExpr env (IArg m name) = IArg (showM env m) name
+showExpr env (ITupleApply m (bm, base) argName argVal) = ITupleApply (showM env m) (showM env bm, showExpr env base) argName (showExpr env argVal)
 
 showCompAnnot :: FEnv -> VCompAnnot -> SCompAnnot
 showCompAnnot env (CompAnnot name args) = CompAnnot name (fmap (showExpr env) args)

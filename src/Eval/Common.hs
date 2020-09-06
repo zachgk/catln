@@ -28,9 +28,9 @@ type ECompAnnot = CompAnnot EvalMeta
 type EExpr = Expr EvalMeta
 type EGuard = Guard EExpr
 type EObject = Object EvalMeta
-type EArrow = Arrow EvalMeta
-type EObjectMap = ObjectMap EvalMeta
-type EPrgm = Prgm EvalMeta
+type EArrow = Arrow EExpr EvalMeta
+type EObjectMap = ObjectMap EExpr EvalMeta
+type EPrgm = Prgm EExpr EvalMeta
 type EReplRes = ReplRes EvalMeta
 
 data EPrim = EPrim PartialType EGuard (H.HashMap String Val -> Val)
