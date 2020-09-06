@@ -62,7 +62,8 @@ eval env st val (ResEArrow object arrow) = case envLookupResArrowTree env arrow 
   Just (resArrowTree, compAnnots) -> do
     let newArrArgs = buildArrArgs object val
     mapM_ (\compAnnot -> do
-              compAnnot' <- evalTree env (("annot " ++ show compAnnot):st) NoVal compAnnot
+              let treeWithoutArgs = replaceTreeArgs newArrArgs compAnnot
+              compAnnot' <- evalTree env (("annot " ++ show compAnnot):st) val treeWithoutArgs
               return $ evalCompAnnot st compAnnot'
           ) compAnnots
     let treeWithoutArgs = replaceTreeArgs newArrArgs resArrowTree
@@ -73,7 +74,7 @@ eval _ _ _ (ConstantArrow (CInt i)) = return $ IntVal i
 eval _ _ _ (ConstantArrow (CFloat f)) = return $ FloatVal f
 eval _ _ _ (ConstantArrow (CStr s)) = return $ StrVal s
 eval _ st _ (ArgArrow _ name) = CErr [EvalCErr st $ printf "Unexpected arg %s not removed during evaluation" name]
-eval _ st _ _ = error $ "Bad eval resArrow at: " ++ show st
+eval _ st val arr = error $ printf "Bad eval resArrow\n\t\t Arrow: %s\n\t\t Val: %s\n\t\t State: %s" (show arr) (show val) (show st)
 
 evalTree :: Env -> EStacktrace -> Val -> ResArrowTree EPrim -> CRes Val
 evalTree env st val (ResArrowCompose t1 t2) = do
