@@ -103,6 +103,13 @@ addArgToType (FEnv _ _ (_, _, classMap) _) (SumType partials) newArg = Just $ Su
     partials' = joinPartialLeafs $ map fromPartial $ splitPartialLeafs partials
     fromPartial (partialName, partialVars, partialArgs) = (partialName, partialVars, H.insertWith (unionType classMap) newArg TopType partialArgs)
 
+addInferArgToType :: FEnv -> Type -> Maybe Type
+addInferArgToType _ TopType = Nothing
+addInferArgToType _ TypeVar{} = error "addInferArgToType TypeVar"
+addInferArgToType env@(FEnv _ _ (_, _, classMap) _) (SumType partials) = Just $ unionTypes classMap partials'
+  where
+    partials' = map (inferArgFromPartial env) $ splitPartialLeafs partials
+
 -- returns updated (pruned) constraints and boolean if schemes were updated
 executeConstraint :: FEnv -> Constraint -> ([Constraint], Bool, FEnv)
 executeConstraint env (EqualsKnown pnt tp) = case descriptor env pnt of
@@ -230,6 +237,27 @@ executeConstraint env cons@(AddArg (srcPnt, newArgName) destPnt) = do
             TypeCheckResE notes2 -> do
               let res = TypeCheckResE (notes ++ notes2)
               let env' = setScheme env destPnt res checkName
+              ([], True, env')
+        Nothing -> ([cons], False, env)
+executeConstraint env cons@(AddInferArg srcPnt destPnt) = do
+  let srcScheme = descriptor env srcPnt
+  let destScheme = descriptor env destPnt
+  case sequenceT (srcScheme, destScheme) of
+    TypeCheckResE _ -> ([], False, env)
+    TypeCheckResult _ (SVar _ srcPnt', _) -> executeConstraint env (AddInferArg srcPnt' destPnt)
+    TypeCheckResult _ (_, SVar _ destPnt') -> executeConstraint env (AddInferArg srcPnt destPnt')
+    TypeCheckResult _ (SType TopType _ _, _) -> ([cons], False, env)
+    TypeCheckResult notes (SType srcUb _ _, SType destUb destLb destDesc) ->
+      case addInferArgToType env srcUb of
+        Just destUb' ->
+          case tryIntersectTypes env destUb' destUb "AddInferArg intersect" of
+            TypeCheckResult notes2 destUb'' -> do
+              let destScheme' = TypeCheckResult (notes ++ notes2) (SType destUb'' destLb destDesc)
+              let env' = setScheme env destPnt destScheme' "AddInferArg dest"
+              ([cons | not (isSolved srcScheme || isSolved destScheme)], destScheme /= destScheme', env')
+            TypeCheckResE notes2 -> do
+              let res = TypeCheckResE (notes ++ notes2)
+              let env' = setScheme env destPnt res "AddInferArg error"
               ([], True, env')
         Nothing -> ([cons], False, env)
 executeConstraint env cons@(PowersetTo srcPnt destPnt) = do

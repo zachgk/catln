@@ -13,6 +13,7 @@
 module TypeCheck.TypeGraph where
 
 import qualified Data.HashMap.Strict           as H
+import qualified Data.HashSet        as S
 import           Data.Maybe
 
 import           Syntax.Types
@@ -37,6 +38,17 @@ buildUnionObj env1 objs = do
 
 buildTypeEnv :: FEnv -> VObjectMap -> FEnv
 buildTypeEnv env objMap = buildUnionObj env (map fst objMap)
+
+inferArgFromPartial :: FEnv -> PartialType -> Type
+inferArgFromPartial (FEnv _ _ (_, graph, classMap) _) (PTypeName partialName, partialVars, partialArgs) = do
+  let typeArrows = H.lookupDefault [] partialName graph
+  unionTypes classMap $ map tryArrow typeArrows
+  where
+    tryArrow ((Object _ _ _ _ objArgs), _) = if H.keysSet partialArgs `isSubsetOf` H.keysSet objArgs
+      then SumType $ joinPartialLeafs $ map addArg $ S.toList $ S.difference (H.keysSet objArgs) (H.keysSet partialArgs)
+      else bottomType
+    addArg arg = (PTypeName partialName, partialVars, H.insertWith (unionType classMap) arg TopType partialArgs)
+inferArgFromPartial _ (PClassName _, _, _) = bottomType
 
 ubFromScheme :: FEnv -> Scheme -> TypeCheckResult Type
 ubFromScheme _ (TypeCheckResult _ (SType ub _ _))  = return ub

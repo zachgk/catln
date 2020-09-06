@@ -57,6 +57,7 @@ data Constraint
   | PropEq (Pnt, ArgName) Pnt
   | VarEq (Pnt, TypeVarName) Pnt
   | AddArg (Pnt, String) Pnt
+  | AddInferArg Pnt Pnt -- AddInferArg base arg
   | PowersetTo Pnt Pnt
   | UnionOf Pnt [Pnt]
   deriving (Eq, Show)
@@ -70,6 +71,7 @@ data SConstraint
   | SPropEq (Scheme, ArgName) Scheme
   | SVarEq (Scheme, TypeVarName) Scheme
   | SAddArg (Scheme, String) Scheme
+  | SAddInferArg Scheme Scheme
   | SPowersetTo Scheme Scheme
   | SUnionOf Scheme [Scheme]
   deriving (Eq, Ord, Generic, Hashable)
@@ -174,6 +176,7 @@ instance Show SConstraint where
   show (SPropEq (s1, n) s2) = printf "(%s).%s == %s"  (show s1) n (show s2)
   show (SVarEq (s1, n) s2) = printf "(%s).%s == %s"  (show s1) n (show s2)
   show (SAddArg (base, arg) res) = printf "(%s)(%s) == %s" (show base) arg (show res)
+  show (SAddInferArg base res) = printf "(%s)(?) == %s" (show base) (show res)
   show (SPowersetTo s t) = printf "𝒫(%s) ⊇ %s" (show s) (show t)
   show (SUnionOf s _) = printf "SUnionOf for %s" (show s)
 

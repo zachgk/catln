@@ -130,6 +130,19 @@ fromExpr objArgs obj env1 (ITupleApply m (baseM, baseExpr) (Just argName) argExp
                     ]
   let env7 = addConstraints env6 constraints
   return (ITupleApply m' (baseM', baseExpr') (Just argName) argExpr', env7)
+fromExpr objArgs obj env1 (ITupleApply m (baseM, baseExpr) Nothing argExpr) = do
+  (m', env2) <- fromMeta env1 BUpper obj m $ printf "TupleApplyInfer %s(%s) Meta" (show baseExpr) (show argExpr)
+  (baseM', env3) <- fromMeta env2 BUpper obj baseM $ printf "TupleApplyInfer %s(%s) BaseMeta" (show baseExpr) (show argExpr)
+  (baseExpr', env4) <- fromExpr objArgs obj env3 baseExpr
+  (argExpr', env5) <- fromExpr objArgs obj env4 argExpr
+  let (convertExprMeta, env6) = fresh env5 (TypeCheckResult [] $ SType TopType bottomType "Tuple converted expr meta")
+  let constraints = [ArrowTo (getPntExpr baseExpr') (getPnt baseM'),
+                     AddInferArg (getPnt baseM') (getPnt m'),
+                     BoundedByObjs BoundAllObjs (getPnt m'),
+                     ArrowTo (getPnt $ getExprMeta argExpr') convertExprMeta
+                    ]
+  let env7 = addConstraints env6 constraints
+  return (ITupleApply m' (baseM', baseExpr') Nothing argExpr', env7)
 
 fromAnnot :: VArgMetaMap -> VObject -> FEnv -> PCompAnnot -> TypeCheckResult (VCompAnnot, FEnv)
 fromAnnot objArgs obj env1 (CompAnnot name args) = do
