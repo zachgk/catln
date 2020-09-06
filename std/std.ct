@@ -41,6 +41,7 @@ toString(Integer this) -> String
 
 data IO
 exit(IO this, Integer val) -> IO
+println(IO this, String msg) -> IO
 
 class Number = Integer | Float
 class Boolean = True | False
