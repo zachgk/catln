@@ -61,6 +61,29 @@ rneg name = (name', [(srcType, NoGuard, PrimArrow resType prim)])
                                   _ -> error "Invalid rneg signature"
                               )
 
+strEq :: Op
+strEq = (name', [(srcType, NoGuard, PrimArrow resType prim)])
+  where
+    name' = "operator=="
+    srcType = (PTypeName name', H.empty, H.fromList [("l", strType), ("r", strType)])
+    resType = boolType
+    prim = EPrim srcType NoGuard (\args -> case (H.lookup "l" args, H.lookup "r" args) of
+                                  (Just (StrVal l), Just (StrVal r)) -> bool $ l == r
+                                  _ -> error "Invalid intToString signature"
+                              )
+
+intToString :: Op
+intToString = (name', [(srcType, NoGuard, PrimArrow resType prim)])
+  where
+    name' = "toString"
+    srcType = (PTypeName name', H.empty, H.singleton "this" intType)
+    resType = strType
+    prim = EPrim srcType NoGuard (\args -> case H.lookup "this" args of
+                                  (Just (IntVal val)) -> StrVal $ show val
+                                  _ -> error "Invalid intToString signature"
+                              )
+
+
 primEnv :: ResBuildEnv EPrim
 primEnv = H.fromListWith (++) [ liftIntOp "+" (+)
                               , liftIntOp "-" (-)
@@ -72,4 +95,6 @@ primEnv = H.fromListWith (++) [ liftIntOp "+" (+)
                               , liftCmpOp "==" (==)
                               , liftCmpOp "!=" (/=)
                               , rneg "-"
+                              , strEq
+                              , intToString
                               ]
