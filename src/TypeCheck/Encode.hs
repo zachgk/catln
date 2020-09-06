@@ -117,8 +117,8 @@ fromExpr objArgs obj env1 (IArg m name) = do
     Nothing -> error $ "Could not find arg " ++ name
     Just lookupArg -> return (IArg varM' name, addConstraints env3 [EqPoints (getPnt m') (getPnt lookupArg)])
 fromExpr objArgs obj env1 (ITupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
-  (m', env2) <- fromMeta env1 BUpper obj m $ printf "TupleApply %s(%s) Meta" (show baseExpr) argName
-  (baseM', env3) <- fromMeta env2 BUpper obj baseM $ printf "TupleApply %s(%s) BaseMeta" (show baseExpr) argName
+  (m', env2) <- fromMeta env1 BUpper obj m $ printf "TupleApply %s(%s = %s) Meta" (show baseExpr) argName (show argExpr)
+  (baseM', env3) <- fromMeta env2 BUpper obj baseM $ printf "TupleApply %s(%s = %s) BaseMeta" (show baseExpr) argName (show argExpr)
   (baseExpr', env4) <- fromExpr objArgs obj env3 baseExpr
   (argExpr', env5) <- fromExpr objArgs obj env4 argExpr
   let (convertExprMeta, env6) = fresh env5 (TypeCheckResult [] $ SType TopType bottomType "Tuple converted expr meta")

@@ -129,7 +129,7 @@ instance Show m => Show (IExpr m) where
   show (ICExpr _ c) = show c
   show (IValue _ name) = printf "Value %s" name
   show (IArg m name) = printf "Arg %s %s" (show m) name
-  show (ITupleApply _ (_, baseExpr) argName argVal) = printf "%s(%s%s)" (show baseExpr') argName' (show argVal)
+  show (ITupleApply _ (_, baseExpr) argName argVal) = printf "%s(%s%s)" baseExpr' argName' (show argVal)
     where
       baseExpr' = case baseExpr of
         IValue _ funName -> funName
