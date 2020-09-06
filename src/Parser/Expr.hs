@@ -158,8 +158,11 @@ pPatternGuard = fromMaybe NoGuard <$> optional (try pIfGuard
 
 pObjTreeVar :: Parser (TypeVarName, ParseMeta)
 pObjTreeVar = do
+  -- TODO: Should support multiple class identifiers such as <Eq Ord $T>
+  maybeClass <- optional tidentifier
   var <- tvar
-  return (var, emptyMeta)
+  let tp = maybe TopType (\n -> singletonType (PTypeName n, H.empty, H.empty)) maybeClass
+  return (var, PreTyped tp)
 
 pObjTreeArgPattern :: Parser (ArgName, PObjArg)
 pObjTreeArgPattern = do

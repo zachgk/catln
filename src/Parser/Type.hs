@@ -25,8 +25,11 @@ import Parser.Syntax
 
 pLeafVar :: Parser (TypeVarName, Type)
 pLeafVar = do
+  -- TODO: Should support multiple class identifiers such as <Eq Ord $T>
+  maybeClass <- optional tidentifier
   var <- tvar
-  return (var, TopType)
+  let tp = maybe TopType (\n -> singletonType (PTypeName n, H.empty, H.empty)) maybeClass
+  return (var, tp)
 
 -- TODO: Currently only parses `$T` as sugar for `$T=$T`
 -- Should eventually also support the full `$A=$B`
@@ -78,8 +81,8 @@ pMultiTypeDefStatement :: Parser PStatement
 pMultiTypeDefStatement = do
   _ <- symbol "class"
   name <- tidentifier
-  maybeVars <- optional $ angleBraces $ sepBy1 tvar (symbol ",")
-  let vars = maybe H.empty (H.fromList . map (, TopType)) maybeVars
+  maybeVars <- optional $ angleBraces $ sepBy1 pLeafVar (symbol ",")
+  let vars = maybe H.empty H.fromList maybeVars
   _ <- symbol "="
   MultiTypeDefStatement . MultiTypeDef name vars <$> pType
 
