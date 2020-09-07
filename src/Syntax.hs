@@ -163,7 +163,7 @@ instance Meta Typed where
 type ArgMetaMapWithSrc m = H.HashMap ArgName (m, Type)
 formArgMetaMapWithSrc :: ClassMap -> Object m -> PartialType -> ArgMetaMapWithSrc m
 formArgMetaMapWithSrc _ (Object m _ name _ args) src | H.null args = H.singleton name (m, singletonType src)
-formArgMetaMapWithSrc classMap (Object _ _ _ _ args) (_, _, srcArgs) = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg args
+formArgMetaMapWithSrc classMap (Object _ _ _ _ args) (_, _, _, srcArgs) = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg args
   where
     unionCombine _ _ = error "Duplicate var matched"
     fromArg k (m, Nothing) = case H.lookup k srcArgs of
@@ -179,7 +179,7 @@ formArgMetaMapWithSrc classMap (Object _ _ _ _ args) (_, _, srcArgs) = H.foldr (
 -- fullDest means to use the greatest possible type (after implicit).
 -- Otherwise, it uses the minimal type that *must* be reached
 arrowDestType :: (Meta m, Show m, ExprClass e) => Bool -> ClassMap -> PartialType -> Object m -> Arrow (e m) m -> Type
-arrowDestType fullDest classMap src@(_, _, srcArgs) obj@(Object _ _ _ _ objArgs) (Arrow arrM _ _ maybeExpr) = case getMetaType arrM of
+arrowDestType fullDest classMap src@(_, _, _, srcArgs) obj@(Object _ _ _ _ objArgs) (Arrow arrM _ _ maybeExpr) = case getMetaType arrM of
   arrType@(TypeVar TVVar{}) -> do
     let argsMatchingTypeVar = H.filter (\(m, _) -> getMetaType m == arrType) objArgs
     case H.elems $ H.intersectionWith const srcArgs argsMatchingTypeVar of

@@ -112,20 +112,20 @@ evalBuildPrgm :: PartialType -> Type -> EPrgm -> CRes (ResArrowTree EPrim, ResEx
 evalBuildPrgm = buildPrgm primEnv
 
 mainPartial :: PartialType
-mainPartial = (PTypeName "main", H.empty, H.singleton "io" ioType)
+mainPartial = (PTypeName "main", H.empty, H.empty, H.singleton "io" ioType)
 
 evalBuildMain :: EPrgm -> CRes (ResArrowTree EPrim, ResExEnv EPrim)
 evalBuildMain = evalBuildPrgm mainPartial ioType
 
 evalPrgm :: PartialType -> Type -> EPrgm -> CRes (IO Integer)
-evalPrgm src@(PTypeName srcName, _, _) dest prgm@(_, classMap) = do
+evalPrgm src@(PTypeName srcName, _, _, _) dest prgm@(_, classMap) = do
   (resArrowTree, exEnv) <- evalBuildPrgm src dest prgm
   let env = (exEnv, classMap)
   res <- evalTree env [] (TupleVal srcName (H.singleton "io" (IOVal 0 $ pure ()))) resArrowTree
   case res of
     (IOVal r io) -> return (io >> pure r)
     _ -> CErr [GenCErr "Eval did not return an instance of IO"]
-evalPrgm (PClassName _, _, _) _ _ = error "Can't eval class"
+evalPrgm (PClassName _, _, _, _) _ _ = error "Can't eval class"
 
 evalMain :: EPrgm -> CRes (IO Integer)
 evalMain = evalPrgm mainPartial ioType

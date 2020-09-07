@@ -58,11 +58,11 @@ fromMeta env bound obj@(Object _ _ _ objVars _) m description  = case metaTypeVa
               Just (VarMeta objP (PreTyped objVar)) -> (objVar, H.singleton varName [objP])
               Nothing -> error $ printf "fromMeta failed to find var %s" varName
             _ -> (t, H.empty)
-      let mapPartial (partialName, partialVars, partialArgs) = do
+      let mapPartial (partialName, partialVars, partialProps, partialArgs) = do
             let mapped = fmap mapPartialVar partialVars
             let partialVars' = fmap fst mapped
             let constraints = foldr (H.unionWith (++)) H.empty $ H.elems $ fmap snd mapped
-            ((partialName, partialVars', partialArgs), constraints)
+            ((partialName, partialVars', partialProps, partialArgs), constraints)
       let (partials', constraints) = unzip $ map mapPartial $ splitPartialLeafs tp
       let m' = PreTyped $ SumType $ joinPartialLeafs partials'
       (m'', env') <- fromMetaNoObj env bound m' description
@@ -217,7 +217,7 @@ addObjArg fakeObj objM prefix varMap env (n, (m, maybeSubObj)) = do
 clearMetaArgTypes :: PreMeta -> PreMeta
 clearMetaArgTypes (PreTyped (SumType partials)) = PreTyped $ SumType $ joinPartialLeafs $ map clearPartialTypeArgs $ splitPartialLeafs partials
   where
-    clearPartialTypeArgs (partialName, partialVars, partialArgs) = (partialName, fmap cleanVar partialVars, fmap (const TopType) partialArgs)
+    clearPartialTypeArgs (partialName, partialVars, partialProps, partialArgs) = (partialName, fmap cleanVar partialVars, partialProps, fmap (const TopType) partialArgs)
     cleanVar (TypeVar TVVar{}) = TopType
     cleanVar varVal = varVal
 clearMetaArgTypes p = p
@@ -230,10 +230,10 @@ fromObject prefix isObjArg env (Object m basis name vars args) = do
   let fakeObjForArgs = Object m' basis name vars' H.empty
   (args', env3) <- mapMWithFEnvMapWithKey env2 (addObjArg fakeObjForArgs m' prefix' vars') args
   let obj' = Object m' basis name vars' args'
-  (objValue, env4) <- fromMeta env3 BUpper obj' (PreTyped $ singletonType (PTypeName name, H.empty, H.empty)) ("objValue" ++ name)
+  (objValue, env4) <- fromMeta env3 BUpper obj' (PreTyped $ singletonType (PTypeName name, H.empty, H.empty, H.empty)) ("objValue" ++ name)
   let env5 = fInsert env4 name objValue
   let env6 = addConstraints env5 [BoundedByObjs BoundAllObjs (getPnt m') | isObjArg]
-  let env7 = addConstraints env6 [BoundedByKnown (getPnt m') (singletonType (PTypeName name, fmap (const TopType) vars, fmap (const TopType) args)) | basis == FunctionObj || basis == PatternObj]
+  let env7 = addConstraints env6 [BoundedByKnown (getPnt m') (singletonType (PTypeName name, fmap (const TopType) vars, H.empty, fmap (const TopType) args)) | basis == FunctionObj || basis == PatternObj]
   return (obj', env7)
 
 -- Add all of the objects first for various expressions that call other top level functions

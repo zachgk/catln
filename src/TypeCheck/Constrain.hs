@@ -54,18 +54,18 @@ updateSchemeProp (FEnv _ _ (_, _, classMap) _) (superUb, superLb, superDesc) pro
       (TopType, sub) -> (TopType, sub)
       (SumType supPartials, TopType) -> do
         let supPartialList = splitPartialLeafs supPartials
-        let getProp (_, _, supArgs) = H.lookup propName supArgs
+        let getProp (_, _, _, supArgs) = H.lookup propName supArgs
         let sub = unionTypes classMap $ mapMaybe getProp supPartialList
         (superUb, sub)
       (SumType supPartials, SumType subPartials) -> do
         let supPartialList = splitPartialLeafs supPartials
         let subPartialList = splitPartialLeafs subPartials
-        let intersectPartials (supName, supVars, supArgs) sub = case H.lookup propName supArgs of
+        let intersectPartials (supName, supVars, supProps, supArgs) sub = case H.lookup propName supArgs of
               Just supProp -> do
                 let newProp = intersectTypes classMap supProp (singletonType sub)
                 if isBottomType newProp
                   then Nothing
-                  else Just ((supName, supVars, H.insert propName newProp supArgs), newProp)
+                  else Just ((supName, supVars, supProps, H.insert propName newProp supArgs), newProp)
               Nothing -> Nothing
         let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectPartials sup sub | sup <- supPartialList, sub <- subPartialList]
         (SumType $ joinPartialLeafs supPartialList', unionTypes classMap subPartialList')
@@ -78,19 +78,19 @@ updateSchemeVar (FEnv _ _ (_, _, classMap) _) (superUb, superLb, superDesc) varN
       (TopType, sub) -> (TopType, sub)
       (SumType supPartials, TopType) -> do
         let supPartialList = splitPartialLeafs supPartials
-        let getVar (_, supVars, _) = H.lookup varName supVars
+        let getVar (_, supVars, _, _) = H.lookup varName supVars
         let sub = unionTypes classMap $ mapMaybe getVar supPartialList
         (superUb, sub)
       (SumType supPartials, SumType subPartials) -> do
         let supPartialList = splitPartialLeafs supPartials
         let subPartialList = splitPartialLeafs subPartials
-        let intersectPartials (supName, supVars, supArgs) sub = case H.lookup varName supVars of
+        let intersectPartials (supName, supVars, supProps, supArgs) sub = case H.lookup varName supVars of
               Just supVar -> do
                 let newVar = intersectTypes classMap supVar (singletonType sub)
                 if isBottomType newVar
                   then Nothing
-                  else Just ((supName, H.insert varName newVar supVars, supArgs), newVar)
-              Nothing -> Just ((supName, H.insert varName (singletonType sub) supVars, supArgs), singletonType sub)
+                  else Just ((supName, H.insert varName newVar supVars, supProps, supArgs), newVar)
+              Nothing -> Just ((supName, H.insert varName (singletonType sub) supVars, supProps, supArgs), singletonType sub)
         let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectPartials sup sub | sup <- supPartialList, sub <- subPartialList]
         (SumType $ joinPartialLeafs supPartialList', unionTypes classMap subPartialList')
       (sup, sub) -> error $ printf "Unsupported updateSchemeVar Ub (%s).%s = %s" (show sup) varName (show sub)
@@ -101,7 +101,7 @@ addArgToType _ TypeVar{} _ = error "addArgToType TypeVar"
 addArgToType (FEnv _ _ (_, _, classMap) _) (SumType partials) newArg = Just $ SumType partials'
   where
     partials' = joinPartialLeafs $ map fromPartial $ splitPartialLeafs partials
-    fromPartial (partialName, partialVars, partialArgs) = (partialName, partialVars, H.insertWith (unionType classMap) newArg TopType partialArgs)
+    fromPartial (partialName, partialVars, partialProps, partialArgs) = (partialName, partialVars, partialProps, H.insertWith (unionType classMap) newArg TopType partialArgs)
 
 addInferArgToType :: FEnv -> Type -> Maybe Type
 addInferArgToType _ TopType = Nothing

@@ -28,7 +28,7 @@ pLeafVar = do
   -- TODO: Should support multiple class identifiers such as <Eq Ord $T>
   maybeClass <- optional tidentifier
   var <- tvar
-  let tp = maybe TopType (\n -> singletonType (PTypeName n, H.empty, H.empty)) maybeClass
+  let tp = maybe TopType (\n -> singletonType (PTypeName n, H.empty, H.empty, H.empty)) maybeClass
   return (var, tp)
 
 -- TODO: Currently only parses `$T` as sugar for `$T=$T`
@@ -38,6 +38,7 @@ pTypeVar = do
   var <- tvar
   return (var, TypeVar $ TVVar var)
 
+-- TODO: Parse type properties
 pIdArg :: Parser (String, Type)
 pIdArg = do
   tp <- tidentifier
@@ -45,7 +46,7 @@ pIdArg = do
   let vars = maybe H.empty H.fromList maybeVars
   argName <- identifier
   -- Use PTypeName for now and replace with classes during Desugarf.Passes.typeNameToClass
-  return (argName, singletonType (PTypeName tp, vars, H.empty))
+  return (argName, singletonType (PTypeName tp, vars, H.empty, H.empty))
 
 pVarArg :: Parser (String, Type)
 pVarArg = do
@@ -56,6 +57,7 @@ pVarArg = do
 pTypeArg :: Parser (String, Type)
 pTypeArg = pVarArg <|> pIdArg
 
+-- TODO: Parse type properties
 data PLeafTypeMode = PLeafTypeData | PLeafTypeSealedClass
 pLeafType :: PLeafTypeMode -> Parser ParseMeta
 pLeafType mode = do
@@ -68,7 +70,7 @@ pLeafType mode = do
   let vars = maybe H.empty H.fromList maybeVars
   let args = maybe H.empty H.fromList maybeArgs
   -- Use PTypeName for now and replace with classes during Desugarf.Passes.typeNameToClass
-  let tp = PreTyped $ singletonType (PTypeName name, vars, args)
+  let tp = PreTyped $ singletonType (PTypeName name, vars, H.empty, args)
   return tp
 
 -- Parses the options for a sealed class definition

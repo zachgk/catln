@@ -40,15 +40,15 @@ buildTypeEnv :: FEnv -> VObjectMap -> FEnv
 buildTypeEnv env objMap = buildUnionObj env (map fst objMap)
 
 inferArgFromPartial :: FEnv -> PartialType -> Type
-inferArgFromPartial (FEnv _ _ (_, graph, classMap) _) (PTypeName partialName, partialVars, partialArgs) = do
+inferArgFromPartial (FEnv _ _ (_, graph, classMap) _) (PTypeName partialName, partialVars, partialProps, partialArgs) = do
   let typeArrows = H.lookupDefault [] partialName graph
   unionTypes classMap $ map tryArrow typeArrows
   where
     tryArrow ((Object _ _ _ _ objArgs), _) = if H.keysSet partialArgs `isSubsetOf` H.keysSet objArgs
       then SumType $ joinPartialLeafs $ map addArg $ S.toList $ S.difference (H.keysSet objArgs) (H.keysSet partialArgs)
       else bottomType
-    addArg arg = (PTypeName partialName, partialVars, H.insertWith (unionType classMap) arg TopType partialArgs)
-inferArgFromPartial _ (PClassName _, _, _) = bottomType
+    addArg arg = (PTypeName partialName, partialVars, partialProps, H.insertWith (unionType classMap) arg TopType partialArgs)
+inferArgFromPartial _ (PClassName _, _, _, _) = bottomType
 
 ubFromScheme :: FEnv -> Scheme -> TypeCheckResult Type
 ubFromScheme _ (TypeCheckResult _ (SType ub _ _))  = return ub
@@ -74,7 +74,7 @@ reachesHasCutSubtypeOf classMap (ReachesTree children) superType = all childIsSu
 reachesHasCutSubtypeOf classMap (ReachesLeaf leafs) superType = any (\t -> hasType classMap t superType) leafs
 
 reachesPartial :: FEnv -> PartialType -> TypeCheckResult ReachesTree
-reachesPartial env@(FEnv _ _ (_, graph, classMap) _) partial@(PTypeName partialName, _, _) = do
+reachesPartial env@(FEnv _ _ (_, graph, classMap) _) partial@(PTypeName partialName, _, _, _) = do
   let typeArrows = H.lookupDefault [] partialName graph
   schemes <- mapM tryArrow typeArrows
   return $ ReachesLeaf $ catMaybes schemes
@@ -90,7 +90,7 @@ reachesPartial env@(FEnv _ _ (_, graph, classMap) _) partial@(PTypeName partialN
           -- otherwise, no reaches path requiring multiple steps can be found
           then Just $ unionTypes classMap [arrowDestType True classMap potentialSrcPartial obj arr | potentialSrcPartial <- splitPartialLeafs potSrcLeafs]
           else Nothing
-reachesPartial env@(FEnv _ _ (_, _, classMap) _) partial@(PClassName _, _, _) = reaches env (expandClassPartial classMap partial)
+reachesPartial env@(FEnv _ _ (_, _, classMap) _) partial@(PClassName _, _, _, _) = reaches env (expandClassPartial classMap partial)
 
 reaches :: FEnv -> Type -> TypeCheckResult ReachesTree
 reaches _     TopType            = return $ ReachesLeaf [TopType]

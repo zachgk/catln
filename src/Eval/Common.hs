@@ -81,7 +81,7 @@ getValType :: Val -> PartialType
 getValType IntVal{} = intLeaf
 getValType FloatVal{} = floatLeaf
 getValType StrVal{} = strLeaf
-getValType (TupleVal name args) = (PTypeName name, H.empty, fmap fromArg args)
+getValType (TupleVal name args) = (PTypeName name, H.empty, H.empty, fmap fromArg args)
   where fromArg arg = singletonType $ getValType arg
 getValType IOVal{} = ioLeaf
 getValType NoVal = error "getValType of NoVal"

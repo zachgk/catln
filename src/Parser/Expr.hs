@@ -161,7 +161,7 @@ pObjTreeVar = do
   -- TODO: Should support multiple class identifiers such as <Eq Ord $T>
   maybeClass <- optional tidentifier
   var <- tvar
-  let tp = maybe TopType (\n -> singletonType (PTypeName n, H.empty, H.empty)) maybeClass
+  let tp = maybe TopType (\n -> singletonType (PTypeName n, H.empty, H.empty, H.empty)) maybeClass
   return (var, PreTyped tp)
 
 pObjTreeArgPattern :: Parser (ArgName, PObjArg)
@@ -208,11 +208,12 @@ pTypeArg = do
   argName <- identifier
   _ <- symbol "="
   tp <- tidentifier
-  return (argName, singletonType (PTypeName tp, H.empty, H.empty))
+  return (argName, singletonType (PTypeName tp, H.empty, H.empty, H.empty))
 
 pTypeVar :: Parser Type
 pTypeVar = TypeVar . TVVar <$> tvar
 
+-- TODO: Parse type properties
 pLeafType :: Parser PartialType
 pLeafType = do
   name <- tidentifier
@@ -220,7 +221,7 @@ pLeafType = do
   maybeArgs <- optional $ parens (sepBy1 pTypeArg (symbol ","))
   let vars = maybe H.empty H.fromList maybeVars
   let args = maybe H.empty H.fromList maybeArgs
-  return (PTypeName name, vars, args)
+  return (PTypeName name, vars, H.empty, args)
 
 pSingleType :: Parser Type
 pSingleType = pTypeVar

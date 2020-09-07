@@ -108,7 +108,7 @@ buildExpr env@(_, _, classMap) obj (TupleApply (Typed (SumType prodTypes)) (Type
       argVal <- buildExprImp env obj argExpr leafArgs
       return $ ResArrowTupleApply baseBuild argName argVal
   where
-    getLeafArgs (_, _, leafArgs) = case H.lookup argName leafArgs of
+    getLeafArgs (_, _, _, leafArgs) = case H.lookup argName leafArgs of
       Just leafArg -> return leafArg
       Nothing -> CErr [BuildTreeCErr "buildExpr could not find expected args"]
 buildExpr _ _ _ = error "Bad buildExpr"
@@ -151,7 +151,7 @@ buildGuardArrows env obj visitedArrows srcType destType guards = case guards of
 
 envLookup :: (Eq f, Hashable f) => TBEnv f -> TBObject -> VisitedArrows f -> PartialType -> Type -> CRes (ResArrowTree f)
 envLookup (_, _, classMap) _ _ srcType destType | hasPartial classMap srcType destType = return ResArrowID
-envLookup env@(resEnv, _, classMap) obj visitedArrows srcType@(PTypeName srcName, _, _) destType = case H.lookup srcName resEnv of
+envLookup env@(resEnv, _, classMap) obj visitedArrows srcType@(PTypeName srcName, _, _, _) destType = case H.lookup srcName resEnv of
   Just resArrowsWithName -> do
     let resArrows = filter (\(arrowType, _, _) -> subPartialOf classMap srcType arrowType) resArrowsWithName
     -- TODO: Sort resArrows by priority order before trying
@@ -163,7 +163,7 @@ envLookup env@(resEnv, _, classMap) obj visitedArrows srcType@(PTypeName srcName
     buildGuardArrows env obj visitedArrows srcType destType guards
 
   Nothing -> CErr [BuildTreeCErr $ "Failed to find any arrows from " ++ show srcType ++ " to " ++ show destType]
-envLookup _ _ _ (PClassName _, _, _) _ = undefined
+envLookup _ _ _ (PClassName _, _, _, _) _ = undefined
 
 buildImplicit :: (Eq f, Hashable f) => TBEnv f -> TBObject -> Type -> Type -> CRes (ResArrowTree f)
 buildImplicit _ _ _ TopType = return ResArrowID

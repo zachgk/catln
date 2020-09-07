@@ -71,7 +71,7 @@ toExpr env (ITupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
   baseExpr' <- toExpr env baseExpr
   argExpr' <- toExpr env argExpr
   case m' of -- check for errors
-    tp@(Typed (SumType sumType)) | all (\(_, _, leafArgs) -> not (argName `H.member` leafArgs)) (splitPartialLeafs sumType) -> do
+    tp@(Typed (SumType sumType)) | all (\(_, _, _, leafArgs) -> not (argName `H.member` leafArgs)) (splitPartialLeafs sumType) -> do
                                         let matchingConstraints = showMatchingConstraints env $ getPnt m
                                         TypeCheckResE [TCWithMatchingConstraints matchingConstraints $ TupleMismatch baseM' baseExpr' tp $ H.singleton argName argExpr']
     _ -> return $ TupleApply m' (baseM', baseExpr') argName argExpr'
@@ -82,7 +82,7 @@ toExpr env (ITupleApply m (baseM, baseExpr) Nothing argExpr) = do
   argExpr' <- toExpr env argExpr
   argName <- case (getMetaType baseM', getMetaType m') of
     (SumType basePartialLeafs, SumType partialLeafs) -> case (splitPartialLeafs basePartialLeafs, splitPartialLeafs partialLeafs) of
-      ([(_, _, basePartialArgs)], [(_, _, partialArgs)]) -> case S.toList $ S.difference (H.keysSet partialArgs) (H.keysSet basePartialArgs) of
+      ([(_, _, _, basePartialArgs)], [(_, _, _, partialArgs)]) -> case S.toList $ S.difference (H.keysSet partialArgs) (H.keysSet basePartialArgs) of
         [argN] -> return argN
         _ -> TypeCheckResE [GenTypeCheckError "Failed argument inference due to multiple arg options"]
       _ -> TypeCheckResE [GenTypeCheckError "Failed argument inference due to multiple types"]

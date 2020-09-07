@@ -29,6 +29,7 @@ type ArgName = Name
 type TypeVarName = Name
 type TypeName = Name
 type ClassName = Name
+type TypePropName = Name
 
 
 data PartialName
@@ -36,8 +37,8 @@ data PartialName
   | PClassName ClassName
   deriving (Eq, Ord, Show, Generic, Hashable)
 
-type PartialType = (PartialName, H.HashMap TypeVarName Type, H.HashMap ArgName Type)
-type PartialLeafs = (H.HashMap PartialName (S.HashSet (H.HashMap TypeVarName Type, H.HashMap ArgName Type)))
+type PartialType = (PartialName, H.HashMap TypeVarName Type, H.HashMap (TypeName, TypePropName) Type, H.HashMap ArgName Type)
+type PartialLeafs = (H.HashMap PartialName (S.HashSet (H.HashMap TypeVarName Type, H.HashMap (TypeName, TypePropName) Type, H.HashMap ArgName Type)))
 data Type
   = SumType PartialLeafs
   | TypeVar TypeVarAux
@@ -61,26 +62,29 @@ instance Show Type where
       showName (PTypeName t) = t
       showName (PClassName t) = t
       showArg (argName, argVal) = argName ++ "=" ++ show argVal
+      showProp ((typeName, propName), propVal) = printf "%s_%s = %s" typeName propName (show propVal)
       showTypeVars vars | H.null vars = ""
       showTypeVars vars = printf "<%s>" (intercalate ", " $ map showArg $ H.toList vars)
+      showProps props | H.null props = ""
+      showProps props = printf "[%s]" (intercalate ", " $ map showProp $ H.toList props)
       showArgs args | H.null args = ""
       showArgs args = printf "(%s)" (intercalate ", " $ map showArg $ H.toList args)
-      showPartial (partialName, partialTypeVars, partialArgs) = showName partialName ++ showTypeVars partialTypeVars ++ showArgs partialArgs
+      showPartial (partialName, partialTypeVars, partialProps, partialArgs) = showName partialName ++ showTypeVars partialTypeVars ++ showProps partialProps ++ showArgs partialArgs
       join [] = "∅"
       join [p] = p
       join ps = "(" ++ intercalate " | " ps ++ ")"
 
 
 intLeaf, floatLeaf, strLeaf, ioLeaf :: PartialType
-intLeaf = (PTypeName "Integer", H.empty, H.empty)
-floatLeaf = (PTypeName "Float", H.empty, H.empty)
-strLeaf = (PTypeName "String", H.empty, H.empty)
-ioLeaf = (PTypeName "IO", H.empty, H.empty)
+intLeaf = (PTypeName "Integer", H.empty, H.empty, H.empty)
+floatLeaf = (PTypeName "Float", H.empty, H.empty, H.empty)
+strLeaf = (PTypeName "String", H.empty, H.empty, H.empty)
+ioLeaf = (PTypeName "IO", H.empty, H.empty, H.empty)
 
 intType, floatType, boolType, strType, ioType :: Type
 intType = singletonType intLeaf
 floatType = singletonType floatLeaf
-boolType = SumType $ joinPartialLeafs [(PTypeName "True", H.empty, H.empty), (PTypeName "False", H.empty, H.empty)]
+boolType = SumType $ joinPartialLeafs [(PTypeName "True", H.empty, H.empty, H.empty), (PTypeName "False", H.empty, H.empty, H.empty)]
 strType = singletonType strLeaf
 ioType = singletonType ioLeaf
 
@@ -93,19 +97,20 @@ isBottomType t = t == bottomType
 
 splitPartialLeafs :: PartialLeafs -> [PartialType]
 splitPartialLeafs partials = concatMap (\(k, vs) -> map (aux k) vs) $ H.toList $ fmap S.toList partials
-  where aux name (vars, args) = (name, vars, args)
+  where aux name (vars, props, args) = (name, vars, props, args)
 
 joinPartialLeafs :: [PartialType] -> PartialLeafs
-joinPartialLeafs = foldr (\(pName, pVars, pArgs) partials -> H.insertWith S.union pName (S.singleton (pVars, pArgs)) partials) H.empty
+joinPartialLeafs = foldr (\(pName, pVars, pProps, pArgs) partials -> H.insertWith S.union pName (S.singleton (pVars, pProps, pArgs)) partials) H.empty
 
 singletonType :: PartialType -> Type
 singletonType partial = SumType $ joinPartialLeafs [partial]
 
 -- expands a class partial into a sum of the constituent type partials
+-- TODO: Should preserve type properties when expanding
 expandClassPartial :: ClassMap -> PartialType -> Type
-expandClassPartial _ (PTypeName _, _, _) = error "bad type name found in expandClassPartial"
-expandClassPartial _ (PClassName _, _, partialArgs) | not (H.null partialArgs) = error "expandClassPartial class with args"
-expandClassPartial classMap@(_, classToType) (PClassName className, partialVars, _) = SumType $ joinPartialLeafs expanded
+expandClassPartial _ (PTypeName _, _, _, _) = error "bad type name found in expandClassPartial"
+expandClassPartial _ (PClassName _, _, _, partialArgs) | not (H.null partialArgs) = error "expandClassPartial class with args"
+expandClassPartial classMap@(_, classToType) (PClassName className, partialVars, _, _) = SumType $ joinPartialLeafs expanded
   where
     expanded = case H.lookup className classToType of
       Just (_, classVars, classTypes) -> splitPartialLeafs partials'
@@ -117,14 +122,14 @@ expandClassPartial classMap@(_, classToType) (PClassName className, partialVars,
             Nothing -> error $ printf "Unknown var %s in expandClassPartial" t
           mapClassType (TypeVar (TVArg t)) = error $ printf "Arg %s found in expandClassPartial" t
           mapClassType (SumType p) = SumType $ joinPartialLeafs $ map mapClassPartial $ splitPartialLeafs p
-          mapClassPartial (n, v, a) = (n, fmap mapClassType v, fmap mapClassType a)
+          mapClassPartial (n, v, p, a) = (n, fmap mapClassType v, fmap mapClassType p, fmap mapClassType a)
       Nothing -> error $ printf "Unknown class %s in expandClassPartial" className
 
 -- assumes a compacted super type, does not check in superLeafs
 hasPartial :: ClassMap -> PartialType -> Type -> Bool
 hasPartial _ _ TopType = True
 hasPartial _ _ (TypeVar v) = error $ "Can't hasPartial type vars: " ++ show v
-hasPartial classMap@(typeToClass, _) sub@(subName, subVars, subArgs) super@(SumType superPartials) = case subName of
+hasPartial classMap@(typeToClass, _) sub@(subName, subVars, subProps, subArgs) super@(SumType superPartials) = case subName of
   (PTypeName typeName) -> checkDirect || any checkSuperClass (H.lookupDefault S.empty typeName typeToClass)
   PClassName{} -> checkDirect || hasType classMap (expandClassPartial classMap sub) super
   where
@@ -132,9 +137,10 @@ hasPartial classMap@(typeToClass, _) sub@(subName, subVars, subArgs) super@(SumT
       Just superArgsOptions -> any hasArgs superArgsOptions
       Nothing -> False
       where
-        hasArgs (_, superArgs) | H.keysSet subArgs /= H.keysSet superArgs = False
-        hasArgs (superVars, _) | not (H.keysSet subVars `isSubsetOf` H.keysSet superVars) = False
-        hasArgs (superVars, superArgs) = hasAll subArgs superArgs && hasAll subVars superVars
+        hasArgs (_, _, superArgs) | H.keysSet subArgs /= H.keysSet superArgs = False
+        hasArgs (superVars, _, _) | not (H.keysSet subVars `isSubsetOf` H.keysSet superVars) = False
+        hasArgs (_, superProps, _) | not (H.keysSet subProps `isSubsetOf` H.keysSet superProps) = False
+        hasArgs (superVars, superProps, superArgs) = hasAll subArgs superArgs && hasAll subProps superProps && hasAll subVars superVars
         hasAll sb sp = and $ H.elems $ H.intersectionWith (hasType classMap) sb sp
     checkSuperClass superClassName = case H.lookup (PClassName superClassName) superPartials of
       Just superClassArgsOptions -> any (hasPartial classMap sub . expandClassPartial classMap) $ splitPartialLeafs $ H.singleton (PClassName superClassName) superClassArgsOptions
@@ -157,7 +163,7 @@ compactOverlapping :: ClassMap -> PartialLeafs -> PartialLeafs
 compactOverlapping classMap = H.mapWithKey compactArgOptions
   where
     compactArgOptions partialName argOptions = S.filter (filterOption partialName argOptions) argOptions
-    filterOption partialName argOptions option@(subVars, subArgs) = not $ any (\potentialSuperOption@(supVars, supArgs) -> option /= potentialSuperOption && hasType classMap (singletonType (partialName, subVars, subArgs)) (singletonType (partialName, supVars, supArgs))) argOptions
+    filterOption partialName argOptions option@(subVars, subProps, subArgs) = not $ any (\potentialSuperOption@(supVars, supProps, supArgs) -> option /= potentialSuperOption && hasType classMap (singletonType (partialName, subVars, subProps, subArgs)) (singletonType (partialName, supVars, supProps, supArgs))) argOptions
 
 -- TODO: This should combine overlapping partials
 -- TODO: This should merge type partials into class partials
@@ -191,8 +197,8 @@ intersectTypePartialLeaves classMap aPartials bPartials = partials'
   where
     partials' = H.filter (not . S.null) $ H.intersectionWith intersectArgsOptions (fmap S.toList aPartials) (fmap S.toList bPartials)
     intersectArgsOptions as bs = S.fromList $ catMaybes $ [intersectArgs a b | a <- as, b <- bs]
-    intersectArgs (_, aArgs) (_, bArgs) | H.keysSet aArgs /= H.keysSet bArgs = Nothing
-    intersectArgs (aVars, aArgs) (bVars, bArgs) = sequenceT (intersectMap aVars bVars, intersectMap aArgs bArgs)
+    intersectArgs (_, _, aArgs) (_, _, bArgs) | H.keysSet aArgs /= H.keysSet bArgs = Nothing
+    intersectArgs (aVars, aProps, aArgs) (bVars, bProps, bArgs) = sequenceT (intersectMap aVars bVars, intersectMap aProps bProps, intersectMap aArgs bArgs)
     intersectMap a b = sequence $ H.intersectionWith subIntersect a b
     subIntersect aType bType = let joined = intersectTypes classMap aType bType
                                 in if isBottomType joined
@@ -248,4 +254,4 @@ powersetType (SumType partials) = SumType partials'
   where
     partials' = joinPartialLeafs $ concatMap fromPartialType $ splitPartialLeafs partials
     fromArgs args = powerset $ H.toList args
-    fromPartialType (name, vars, args) = [(name, H.fromList v, H.fromList a) | v <- fromArgs vars, a <- fromArgs args]
+    fromPartialType (name, vars, props, args) = [(name, H.fromList v, H.fromList p, H.fromList a) | v <- fromArgs vars, p <- fromArgs props, a <- fromArgs args]

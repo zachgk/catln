@@ -31,11 +31,11 @@ typeNameToClass (objMap, classMap@(typeToClass, classToTypes)) = mapMetaPrgm aux
     mapType (TypeVar TVArg{}) = error "Invalid arg type"
     mapType (SumType partials) = unionTypes classMap $ map mapPartial $ splitPartialLeafs partials
       where
-        mapPartial (PTypeName name, partialVars, partialArgs) = singletonType (name', fmap mapType partialVars, fmap mapType partialArgs)
+        mapPartial (PTypeName name, partialVars, partialProps, partialArgs) = singletonType (name', fmap mapType partialVars, fmap mapType partialProps, fmap mapType partialArgs)
           where name' = case H.lookup name classToTypes' of
                   -- is a class, replace with class type
                   Just _ -> PClassName name
 
                   -- is data, use data after recursively cleaning classes
                   Nothing -> PTypeName name
-        mapPartial (PClassName name, partialVars, partialArgs) = singletonType (PClassName name, fmap mapType partialVars, fmap mapType partialArgs)
+        mapPartial (PClassName name, partialVars, partialProps, partialArgs) = singletonType (PClassName name, fmap mapType partialVars, fmap mapType partialProps, fmap mapType partialArgs)
