@@ -189,7 +189,6 @@ intersectTypePartialLeaves classMap aPartials bPartials = partials'
   where
     partials' = H.filter (not . S.null) $ H.intersectionWith intersectArgsOptions (fmap S.toList aPartials) (fmap S.toList bPartials)
     intersectArgsOptions as bs = S.fromList $ catMaybes $ [intersectArgs a b | a <- as, b <- bs]
-    intersectArgs (aVars, _) (bVars, _) | H.keysSet aVars /= H.keysSet bVars = Nothing
     intersectArgs (_, aArgs) (_, bArgs) | H.keysSet aArgs /= H.keysSet bArgs = Nothing
     intersectArgs (aVars, aArgs) (bVars, bArgs) = sequenceT (intersectMap aVars bVars, intersectMap aArgs bArgs)
     intersectMap a b = sequence $ H.intersectionWith subIntersect a b

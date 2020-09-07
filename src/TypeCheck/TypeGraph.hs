@@ -81,11 +81,15 @@ reachesPartial env@(FEnv _ _ (_, graph, classMap) _) partial@(PTypeName partialN
   where
     tryArrow (obj@(Object (VarMeta objP _) _ _ _ _), arr) = do
       let objScheme = descriptor env objP
-      ubFromScheme env objScheme >>= \objUb -> return $ if hasPartial classMap partial objUb
-        -- TODO: Should this line below call `reaches` to make this recursive?
-        -- otherwise, no reaches path requiring multiple steps can be found
-        then Just $ arrowDestType True classMap partial obj arr
-        else Nothing
+      ubFromScheme env objScheme >>= \objUb -> do
+        -- It is possible to send part of a partial through the arrow, so must compute the valid part
+        -- If none of it is valid, then there is Nothing
+        let potentialSrc@(SumType potSrcLeafs) = intersectTypes classMap (singletonType partial) objUb
+        return $ if not (isBottomType potentialSrc)
+          -- TODO: Should this line below call `reaches` to make this recursive?
+          -- otherwise, no reaches path requiring multiple steps can be found
+          then Just $ unionTypes classMap [arrowDestType True classMap potentialSrcPartial obj arr | potentialSrcPartial <- splitPartialLeafs potSrcLeafs]
+          else Nothing
 reachesPartial env@(FEnv _ _ (_, _, classMap) _) partial@(PClassName _, _, _) = reaches env (expandClassPartial classMap partial)
 
 reaches :: FEnv -> Type -> TypeCheckResult ReachesTree
