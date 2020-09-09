@@ -51,12 +51,12 @@ envLookupResArrowTree (resExEnv, _) arrow = H.lookup arrow resExEnv
 evalCompAnnot :: EStacktrace -> Val -> CRes ()
 evalCompAnnot st (TupleVal "assert" args) = case (H.lookup "test" args, H.lookup "msg" args) of
   (Just b, Just (StrVal _)) | b == true -> return ()
-  (Just b, Just (StrVal msg)) | b == false -> CErr [AssertCErr msg]
+  (Just b, Just (StrVal msg)) | b == false -> CErr [MkCNote $ AssertCErr msg]
   (Just b, Nothing) | b == true -> return ()
-  (Just b, Nothing) | b == false -> CErr [AssertCErr "Failed assertion"]
-  _ -> CErr [EvalCErr st "Invalid assertion"]
-evalCompAnnot st (TupleVal name _) = CErr [EvalCErr st $ "Unknown compiler annotation " ++ name]
-evalCompAnnot st _ = CErr [EvalCErr st "Eval: Invalid compiler annotation type"]
+  (Just b, Nothing) | b == false -> CErr [MkCNote $ AssertCErr "Failed assertion"]
+  _ -> CErr [MkCNote $ EvalCErr st "Invalid assertion"]
+evalCompAnnot st (TupleVal name _) = CErr [MkCNote $ EvalCErr st $ "Unknown compiler annotation " ++ name]
+evalCompAnnot st _ = CErr [MkCNote $ EvalCErr st "Eval: Invalid compiler annotation type"]
 
 eval :: Env -> EStacktrace -> Val -> ResArrow EPrim -> CRes Val
 eval env st val (ResEArrow object arrow) = case envLookupResArrowTree env arrow of
@@ -69,12 +69,12 @@ eval env st val (ResEArrow object arrow) = case envLookupResArrowTree env arrow 
           ) compAnnots
     let treeWithoutArgs = replaceTreeArgs newArrArgs resArrowTree
     evalTree env (("ResEArrow " ++ show arrow):st) val treeWithoutArgs
-  Nothing -> CErr [EvalCErr st $ "Failed to find arrow in eval resArrow: " ++ show arrow]
+  Nothing -> CErr [MkCNote $ EvalCErr st $ "Failed to find arrow in eval resArrow: " ++ show arrow]
 eval _ _ (TupleVal _ args) (PrimArrow _ (EPrim _ _ f)) = return $ f args
 eval _ _ _ (ConstantArrow (CInt i)) = return $ IntVal i
 eval _ _ _ (ConstantArrow (CFloat f)) = return $ FloatVal f
 eval _ _ _ (ConstantArrow (CStr s)) = return $ StrVal s
-eval _ st _ (ArgArrow _ name) = CErr [EvalCErr st $ printf "Unexpected arg %s not removed during evaluation" name]
+eval _ st _ (ArgArrow _ name) = CErr [MkCNote $ EvalCErr st $ printf "Unexpected arg %s not removed during evaluation" name]
 eval _ st val arr = error $ printf "Bad eval resArrow\n\t\t Arrow: %s\n\t\t Val: %s\n\t\t State: %s" (show arr) (show val) (show st)
 
 evalTree :: Env -> EStacktrace -> Val -> ResArrowTree EPrim -> CRes Val
@@ -86,8 +86,8 @@ evalTree env@(_, classMap) st val (ResArrowMatch opts) = case H.toList $ H.filte
     (TupleVal _ arrArgs) ->
       evalTree env (printf "match with tuple %s (%s) for options %s" (show val) (show $ getValType val) (show $ H.keys opts):st) val $ replaceTreeArgs arrArgs resArrowTree
     _ -> evalTree env (("match with val " ++ show val):st) val resArrowTree
-  [] -> CErr [EvalCErr st $ "Failed match in eval resArrowTree: \n\tVal: " ++ show val ++ "\n\tOptions: " ++ show opts]
-  (_:_:_) -> CErr [EvalCErr st $ "Multiple matches in eval resArrowTree: \n\tVal: " ++ show val ++ "\n\tOptions: " ++ show opts]
+  [] -> CErr [MkCNote $ EvalCErr st $ "Failed match in eval resArrowTree: \n\tVal: " ++ show val ++ "\n\tOptions: " ++ show opts]
+  (_:_:_) -> CErr [MkCNote $ EvalCErr st $ "Multiple matches in eval resArrowTree: \n\tVal: " ++ show val ++ "\n\tOptions: " ++ show opts]
 evalTree env st val (ResArrowCond [] elseTree) = evalTree env ("else":st) val elseTree
 evalTree env st val (ResArrowCond ((ifCondTree, ifThenTree):restIfTrees) elseTree) = do
   cond' <- evalTree env ("cond":st) val ifCondTree
@@ -105,7 +105,7 @@ evalTree env st val (ResArrowTupleApply base argName argRATree) = do
       argVal <- evalTree env (printf "tupleApplyArg applying %s" argName:st) val argRATree
       let args' = H.insert argName argVal baseArgs
       return $ TupleVal name args'
-    _ -> CErr [EvalCErr st "Invalid input to tuple application"]
+    _ -> CErr [MkCNote $ EvalCErr st "Invalid input to tuple application"]
 evalTree env st val (ResArrowSingle r) = eval env (("ResArrowSingle: " ++ show r):st) val r
 evalTree _ _ val ResArrowID = return val
 
@@ -125,7 +125,7 @@ evalPrgm src@(PTypeName srcName, _, _, _) dest prgm@(_, classMap) = do
   res <- evalTree env [] (TupleVal srcName (H.singleton "io" (IOVal 0 $ pure ()))) resArrowTree
   case res of
     (IOVal r io) -> return (io >> pure r)
-    _ -> CErr [GenCErr "Eval did not return an instance of IO"]
+    _ -> CErr [MkCNote $ GenCErr "Eval did not return an instance of IO"]
 evalPrgm (PClassName _, _, _, _) _ _ = error "Can't eval class"
 
 evalMain :: EPrgm -> CRes (IO Integer)

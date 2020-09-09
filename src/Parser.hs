@@ -51,7 +51,7 @@ contents p = do
 
 parseFile :: String -> CRes PPrgm
 parseFile f = case runParser (contents pPrgm) "<stdin>" f of
-  Left err -> CErr [ParseCErr err]
+  Left err -> CErr [MkCNote $ ParseCErr err]
   Right prgm -> return prgm
 
 parseRepl :: String -> PReplRes

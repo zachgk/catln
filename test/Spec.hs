@@ -23,7 +23,7 @@ runTest includeStd fileName = testCaseSteps fileName $ \step -> do
   step $ printf "Read file %s..." fileName
   maybePrgm <- desFiles $ (fileName : ["std/std.ct" | includeStd])
   case maybePrgm of
-    CErr notes -> assertFailure $ "Could not parse and desguar:\n \t" ++ concat (map prettyCNote notes)
+    CErr notes -> assertFailure $ "Could not parse and desguar:\n \t" ++ concat (map show notes)
     CRes _ prgm -> do
       -- step $ T.unpack $ pShow prgm
       step "Typecheck..."
@@ -37,12 +37,12 @@ runTest includeStd fileName = testCaseSteps fileName $ \step -> do
           -- step $ T.unpack $ pShow $ evalBuildMain tprgm
           case evalMain tprgm of
             CErr notes -> do
-              assertFailure $ "Could not eval:\n\t " ++ intercalate "\n\t" (map prettyCNote notes)
+              assertFailure $ "Could not eval:\n\t " ++ intercalate "\n\t" (map show notes)
             CRes notes io -> do
               returnValue <- io
               case (notes, returnValue) of
                 ([], 0) -> return () -- success
-                _ -> assertFailure $ "Bad result for:\n \t " ++ show returnValue ++ "\n \tNotes\t" ++ concat (map prettyCNote notes)
+                _ -> assertFailure $ "Bad result for:\n \t " ++ show returnValue ++ "\n \tNotes\t" ++ concat (map show notes)
           -- step "Codegen"
           -- void (codegen initModule tprgm)
 

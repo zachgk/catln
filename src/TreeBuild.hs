@@ -87,20 +87,20 @@ buildCompAnnot env obj (CompAnnot "assert" args) = case (H.lookup "test" args, H
     (Just test, Nothing) -> do
       test' <- buildExprImp env obj test boolType
       return $ ResArrowTuple "assert" (H.singleton "test" test')
-    _ -> CErr [BuildTreeCErr "Invalid assertion"]
-buildCompAnnot _ _ (CompAnnot name _ )= CErr [BuildTreeCErr $ "Unknown compiler annotation" ++ name]
+    _ -> CErr [MkCNote $ BuildTreeCErr "Invalid assertion"]
+buildCompAnnot _ _ (CompAnnot name _ )= CErr [MkCNote $ BuildTreeCErr $ "Unknown compiler annotation" ++ name]
 
 buildExpr :: (Eq f, Hashable f) => TBEnv f -> TBObject -> TBExpr -> CRes (ResArrowTree f)
 buildExpr _ _ (CExpr _ c) = return $ ResArrowSingle (ConstantArrow c)
 buildExpr (_, valEnv, _) _ (Value (Typed (SumType prodTypes)) name) = case splitPartialLeafs prodTypes of
-    (_:_:_) -> CErr [BuildTreeCErr $ "Found multiple types for value " ++ name ++ "\n\t" ++ show prodTypes]
-    [] -> CErr [BuildTreeCErr $ "Found no types for value " ++ name ++ " with type " ++ show prodTypes]
+    (_:_:_) -> CErr [MkCNote $ BuildTreeCErr $ "Found multiple types for value " ++ name ++ "\n\t" ++ show prodTypes]
+    [] -> CErr [MkCNote $ BuildTreeCErr $ "Found no types for value " ++ name ++ " with type " ++ show prodTypes]
     [prodType] -> return $ case H.lookup prodType valEnv of
       Just val -> ResArrowSingle val
       Nothing -> ResArrowTuple name H.empty
 buildExpr _ _ (Arg (Typed tp) name) = return $ ResArrowSingle $ ArgArrow tp name
 buildExpr env@(_, _, classMap) obj (TupleApply (Typed (SumType prodTypes)) (Typed baseType, baseExpr) argName argExpr) = case splitPartialLeafs prodTypes of
-    [] -> CErr [BuildTreeCErr $ "Found no types for tupleApply " ++ show baseExpr ++ " with type " ++ show prodTypes ++ " and expr " ++ show argExpr]
+    [] -> CErr [MkCNote $ BuildTreeCErr $ "Found no types for tupleApply " ++ show baseExpr ++ " with type " ++ show prodTypes ++ " and expr " ++ show argExpr]
     leaves -> do
       baseBuild <- buildExprImp env obj baseExpr baseType
       leavesArgs <- mapM getLeafArgs leaves
@@ -112,12 +112,12 @@ buildExpr env@(_, _, classMap) obj (TupleApply (Typed (SumType prodTypes)) (Type
   where
     getLeafArgs (_, _, _, leafArgs) = case H.lookup argName leafArgs of
       Just leafArg -> return leafArg
-      Nothing -> CErr [BuildTreeCErr "buildExpr could not find expected args"]
+      Nothing -> CErr [MkCNote $ BuildTreeCErr "buildExpr could not find expected args"]
 buildExpr _ _ _ = error "Bad buildExpr"
 
 envLookupTry :: (Eq f, Hashable f) => TBEnv f -> TBObject -> VisitedArrows f -> PartialType -> Type -> ResArrow f -> CRes (ResArrowTree f)
 envLookupTry (_, _, classMap) _ _ srcType destType resArrow | hasType classMap (resArrowDestType classMap srcType resArrow) destType = return $ ResArrowSingle resArrow
-envLookupTry _ _ visitedArrows _ _ resArrow | S.member resArrow visitedArrows = CErr [BuildTreeCErr "Found cyclical use of function"]
+envLookupTry _ _ visitedArrows _ _ resArrow | S.member resArrow visitedArrows = CErr [MkCNote $ BuildTreeCErr "Found cyclical use of function"]
 envLookupTry env@(_, _, classMap) obj visitedArrows srcType destType resArrow = do
   let (SumType newLeafTypes) = resArrowDestType classMap srcType resArrow
   let visitedArrows' = S.insert resArrow visitedArrows
@@ -133,21 +133,21 @@ envLookupTry env@(_, _, classMap) obj visitedArrows srcType destType resArrow = 
 
 buildGuardArrows :: (Eq f, Hashable f) => TBEnv f -> TBObject -> VisitedArrows f -> PartialType -> Type -> ([ResArrow f], [(TBExpr, ResArrow f)], [ResArrow f]) -> CRes (ResArrowTree f)
 buildGuardArrows env obj visitedArrows srcType destType guards = case guards of
-      ([], [], []) -> CErr [BuildTreeCErr $ printf "No arrows found when looking for: %s -> %s" (show $ singletonType srcType) (show destType)]
-      (_, _, _:_:_) -> CErr [BuildTreeCErr "Multiple ElseGuards"]
+      ([], [], []) -> CErr [MkCNote $ BuildTreeCErr $ printf "No arrows found when looking for: %s -> %s" (show $ singletonType srcType) (show destType)]
+      (_, _, _:_:_) -> CErr [MkCNote $ BuildTreeCErr "Multiple ElseGuards"]
       (noGuard, ifGuards, elseGuard) | not (null noGuard) -> case partitionCRes $ map ltry noGuard of
                           (_, resArrowTree:_) -> resArrowTree
                           (errNotes1, _) -> case buildGuardArrows env obj visitedArrows srcType destType ([], ifGuards, elseGuard) of
                             r@CRes{} -> r
                             CErr errNotes2 -> wrapCErr (errNotes1 ++ errNotes2) $ printf "Failed to lookup noGuard arrow: %s -> %s\n\tNoGuard: %s" (show $ singletonType srcType) (show destType) (show noGuard)
-      ([], _, []) -> CErr [BuildTreeCErr "Missing ElseGuard on envLookup"]
+      ([], _, []) -> CErr [MkCNote $ BuildTreeCErr "Missing ElseGuard on envLookup"]
       ([], ifGuards, [elseGuard]) | not (null ifGuards) -> do
                                       let maybeIfTreePairs = mapM (\(ifCond, ifThen@(ResEArrow o _)) -> sequenceT (buildExprImp env o ifCond boolType, ltry ifThen)) ifGuards
                                       let maybeElseTree = ltry elseGuard
                                       case sequenceT (maybeIfTreePairs, maybeElseTree) of
                                         (CRes notes (ifTreePairs, elseTree)) -> CRes notes $ ResArrowCond ifTreePairs elseTree
                                         CErr notes -> wrapCErr notes "No valid ifTrees:"
-      _ -> CErr [BuildTreeCErr "Unknown arrows found in envLookup"]
+      _ -> CErr [MkCNote $ BuildTreeCErr "Unknown arrows found in envLookup"]
   where
     ltry = envLookupTry env obj visitedArrows srcType destType
 
@@ -164,7 +164,7 @@ envLookup env@(resEnv, _, classMap) obj visitedArrows srcType@(PTypeName srcName
                       ) resArrows
     buildGuardArrows env obj visitedArrows srcType destType guards
 
-  Nothing -> CErr [BuildTreeCErr $ "Failed to find any arrows from " ++ show srcType ++ " to " ++ show destType]
+  Nothing -> CErr [MkCNote $ BuildTreeCErr $ "Failed to find any arrows from " ++ show srcType ++ " to " ++ show destType]
 envLookup _ _ _ (PClassName _, _, _, _) _ = undefined
 
 buildImplicit :: (Eq f, Hashable f) => TBEnv f -> TBObject -> Type -> Type -> CRes (ResArrowTree f)

@@ -9,19 +9,30 @@
 --
 --------------------------------------------------------------------
 
+{-# LANGUAGE GADTs #-}
+
 module CRes where
 
 import           Data.List                      ( intercalate )
 import           Text.Megaparsec.Error (errorBundlePretty)
-import qualified Data.Text.Lazy as T
-import Text.Pretty.Simple
+-- import qualified Data.Text.Lazy as T
+-- import Text.Pretty.Simple
 import           Text.Printf
 
 import Syntax
 
 -- compile errors
 type EStacktrace = [String]
+
 data CNote
+  where
+  MkCNote :: Show a => a -> CNote
+
+instance Show CNote
+  where
+  showsPrec p (MkCNote a) = showsPrec p a
+
+data CNoteI
   = GenCNote String
   | GenCErr String
   | ParseCErr ParseErrorRes
@@ -30,21 +41,24 @@ data CNote
   | AssertCErr String
   | EvalCErr EStacktrace String
   | WrapCN [CNote] String
-  deriving (Eq, Show)
 
-prettyCNote :: CNote -> String
-prettyCNote (ParseCErr p) = errorBundlePretty p
-prettyCNote (WrapCN n s) = s ++ "\n\t\t" ++ intercalate "\n\t\t" (map prettyCNote n)
-prettyCNote (EvalCErr st err) = printf "%s\n\tStack trace:\n\t\t%s" err (intercalate "\n\t\t" st)
-prettyCNote n = T.unpack $ pShow n
+instance Show CNoteI where
+  show (GenCNote s) = printf "Note: %s" s
+  show (GenCErr s) = printf "Error: %s" s
+  show (ParseCErr p) = errorBundlePretty p
+  show TypeCheckCErr = "TypeCheckCErr"
+  show (BuildTreeCErr s) = printf "Failed to Build Tree: %s" s
+  show (AssertCErr s) = printf "Failed assertion: %s" s
+  show (EvalCErr st err) = printf "%s\n\tStack trace:\n\t\t%s" err (intercalate "\n\t\t" st)
+  show (WrapCN n s) = s ++ "\n\t\t" ++ intercalate "\n\t\t" (map show n)
 
 wrapCErr :: [CNote] -> String -> CRes r
-wrapCErr notes s = CErr [WrapCN notes s]
+wrapCErr notes s = CErr [MkCNote $ WrapCN notes s]
 
 data CRes r
   = CRes [CNote] r
   | CErr [CNote]
-  deriving (Eq, Show)
+  deriving (Show)
 
 getCNotes :: CRes r -> [CNote]
 getCNotes (CRes notes _) = notes
