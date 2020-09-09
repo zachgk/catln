@@ -18,6 +18,7 @@ import           Text.Megaparsec
 import           Text.Megaparsec.Char
 
 import           Syntax
+import           CRes
 import           Parser.Lexer
 import Parser.Syntax
 import Parser.Expr (pExpr)

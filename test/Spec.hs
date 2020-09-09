@@ -6,7 +6,7 @@ import           Test.Tasty
 import           Test.Tasty.HUnit
 import           Text.Printf
 
-import Syntax
+import CRes
 import           Desugarf         (desFiles)
 -- import           Emit             (codegen, initModule)
 import           Eval

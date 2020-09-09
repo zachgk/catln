@@ -19,9 +19,11 @@ import qualified Data.HashSet        as S
 import           Data.Maybe
 import           Data.Tuple.Sequence
 import           Text.Printf
+
 import           Syntax.Types
 import           Syntax.Prgm
 import           Syntax
+import           CRes
 
 type TBMeta = Typed
 type TBExpr = Expr TBMeta

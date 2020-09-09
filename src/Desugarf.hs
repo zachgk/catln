@@ -23,6 +23,7 @@ import           Text.Printf
 import           Syntax.Types
 import           Syntax.Prgm
 import           Syntax
+import           CRes
 import           Parser.Syntax
 import           Parser                   (parseFile)
 import           Desugarf.Passes

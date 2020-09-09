@@ -16,6 +16,7 @@ import           Data.Bifunctor
 import           Syntax.Types
 import           Syntax.Prgm
 import           Syntax
+import           CRes
 
 import TreeBuild
 import Eval.Common

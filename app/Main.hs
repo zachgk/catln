@@ -7,9 +7,9 @@ import qualified Data.HashMap.Strict as H
 import           Desugarf                 (desFiles, desPrgm)
 -- import           Emit                     (codegen, initModule)
 import           Eval
-import           Syntax
 import           Syntax.Types
 import           Syntax.Prgm
+import           CRes
 import           Parser
 import           Parser.Syntax
 import           TypeCheck.Common  (TypeCheckResult(TypeCheckResult, TypeCheckResE))
