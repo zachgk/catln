@@ -9,10 +9,10 @@ import           Desugarf                 (desFiles, desPrgm)
 import           Eval
 import           Syntax.Types
 import           Syntax.Prgm
+import           Syntax
 import           CRes
 import           Parser
 import           Parser.Syntax
-import           TypeCheck.Common  (TypeCheckResult(TypeCheckResult, TypeCheckResE))
 import           TypeCheck                (typecheckPrgm)
 
 import           Control.Monad
@@ -44,19 +44,18 @@ parsingRepl env source = case parseRepl source of
 --         TypeCheckResult _ tprgm -> codegen initModule tprgm >> return env
 
 processDes :: CRes DesPrgm -> IO ()
-processDes des = case des of
+processDes des = case aux of
   CErr err   -> print err
-  CRes _ prgm ->
-    case typecheckPrgm prgm of
-      TypeCheckResE err -> print err
-      TypeCheckResult _ tprgm ->
-        case evalMain tprgm of
-          CErr err -> print err
-          CRes _ resIO -> do
-            returnValue <- resIO
-            case returnValue of
-              0 -> return ()
-              _ -> print $ "error code " ++ show returnValue
+  CRes _ resIO -> do
+    returnValue <- resIO
+    case returnValue of
+      0 -> return ()
+      _ -> print $ "error code " ++ show returnValue
+  where
+    aux = do
+      prgm <- des
+      tprgm <- typecheckPrgm prgm
+      evalMain tprgm
 
 processRepl :: ReplEnv -> String -> IO ReplEnv
 processRepl env source = do
@@ -65,7 +64,7 @@ processRepl env source = do
     ReplErr err -> print err >> return env
     ReplExpr expr -> do
       -- main(IO io) = io.println(msg=expr.toString)
-      let exprAsMain = RawDeclStatement $ RawDecl (DeclLHS emptyMeta (Pattern (Object emptyMeta FunctionObj "main" H.empty (H.singleton "io" (PreTyped $ singletonType (PTypeName "IO", H.empty, H.empty), Nothing))) NoGuard)) [] (Just $ RawMethods (RawValue emptyMeta "io") [RawTupleApply emptyMeta (emptyMeta, RawValue emptyMeta "println") [RawTupleArgNamed "msg" (RawMethods expr [RawValue emptyMeta "toString"])]])
+      let exprAsMain = RawDeclStatement $ RawDecl (DeclLHS emptyMeta (Pattern (Object emptyMeta FunctionObj "main" H.empty (H.singleton "io" (PreTyped $ singletonType (PTypeName "IO", H.empty, H.empty, H.empty), Nothing))) NoGuard)) [] (Just $ RawMethods (RawValue emptyMeta "io") [RawTupleApply emptyMeta (emptyMeta, RawValue emptyMeta "println") [RawTupleArgNamed "msg" (RawMethods expr [RawValue emptyMeta "toString"])]])
       let rawPrgm = (["std/std.ct"], exprAsMain:env)
       des <- desPrgm rawPrgm
       processDes des

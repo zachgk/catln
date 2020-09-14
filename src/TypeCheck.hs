@@ -11,6 +11,7 @@
 
 module TypeCheck where
 
+import           CRes
 import           TypeCheck.Common
 import           TypeCheck.Encode
 import           TypeCheck.Show
@@ -20,12 +21,17 @@ import           TypeCheck.Decode
 runConstraintsLimit :: Integer
 runConstraintsLimit = 100
 
-typecheckPrgm :: PPrgm -> TypeCheckResult TPrgm
-typecheckPrgm pprgm@(_, classMap) = do
-  let baseFEnv = makeBaseFEnv classMap
-  (vprgm, env@(FEnv _ cons _ _)) <- fromPrgm baseFEnv pprgm
-  env' <- runConstraints runConstraintsLimit env cons
-  toPrgm env' vprgm
+typecheckPrgm :: PPrgm -> CRes TPrgm
+typecheckPrgm pprgm@(_, classMap) = case aux of
+  TypeCheckResult notes tprgm -> CRes (map MkCNote notes) tprgm
+  TypeCheckResE notes -> CErr (map MkCNote notes)
+  where
+    aux :: TypeCheckResult TPrgm
+    aux = do
+      let baseFEnv = makeBaseFEnv classMap
+      (vprgm, env@(FEnv _ cons _ _)) <- fromPrgm baseFEnv pprgm
+      env' <- runConstraints runConstraintsLimit env cons
+      toPrgm env' vprgm
 
 traceTestPrgm :: PPrgm -> ([TypeCheckError], [(SPrgm, [SConstraint])])
 traceTestPrgm pprgm@(_, classMap) = do
