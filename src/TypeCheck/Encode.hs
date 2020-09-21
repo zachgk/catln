@@ -9,10 +9,14 @@
 --
 --------------------------------------------------------------------
 
+{-# LANGUAGE FlexibleContexts #-}
+
 module TypeCheck.Encode where
 
+import           Prelude hiding (unzip)
 import           Control.Monad
 import Data.Hashable (Hashable)
+import Data.Zip
 import qualified Data.HashMap.Strict as H
 import qualified Data.IntMap.Lazy as IM
 
@@ -59,10 +63,9 @@ fromMeta env bound obj@(Object _ _ _ objVars _) m description  = case metaTypeVa
               Nothing -> error $ printf "fromMeta failed to find var %s" varName
             _ -> (t, H.empty)
       let mapPartial (partialName, partialVars, partialProps, partialArgs) = do
-            let mapped = fmap mapPartialVar partialVars
-            let partialVars' = fmap fst mapped
-            let constraints = foldr (H.unionWith (++)) H.empty $ H.elems $ fmap snd mapped
-            ((partialName, partialVars', partialProps, partialArgs), constraints)
+            let (partialVars', constraints) = unzip $ fmap mapPartialVar partialVars
+            let constraints' = foldr (H.unionWith (++)) H.empty $ H.elems $ constraints
+            ((partialName, partialVars', partialProps, partialArgs), constraints')
       let (partials', constraints) = unzip $ map mapPartial $ splitPartialLeafs tp
       let m' = PreTyped $ SumType $ joinPartialLeafs partials'
       (m'', env') <- fromMetaNoObj env bound m' description
