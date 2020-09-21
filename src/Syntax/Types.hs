@@ -14,12 +14,13 @@
 
 module Syntax.Types where
 
+import           Prelude hiding (unzip)
+import Data.Zip
 import           Data.Hashable
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet          as S
 import           Data.Maybe
-import           Data.List
-import           Data.Tuple.Sequence
+import           Data.List (intercalate)
 import           GHC.Generics          (Generic)
 import           Text.Printf
 import Data.Aeson (ToJSON)
@@ -216,38 +217,46 @@ intersectAllTypes classMap = foldr (intersectTypes classMap) TopType
 
 type TypePartialLeafs = PartialLeafs -- leaves only with PTypeName
 type ClassPartialLeafs = PartialLeafs -- leaves only with PClassName
-intersectTypePartialLeaves :: ClassMap -> TypePartialLeafs -> TypePartialLeafs -> PartialLeafs
-intersectTypePartialLeaves classMap aPartials bPartials = partials'
+intersectTypePartialLeaves :: ClassMap -> TypeVarEnv -> TypePartialLeafs -> TypePartialLeafs -> (TypeVarEnv, PartialLeafs)
+intersectTypePartialLeaves classMap venv aPartials bPartials = partials'
   where
-    partials' = H.filter (not . S.null) $ H.intersectionWith intersectArgsOptions (fmap S.toList aPartials) (fmap S.toList bPartials)
-    intersectArgsOptions as bs = S.fromList $ catMaybes $ [intersectArgs a b | a <- as, b <- bs]
-    intersectArgs (_, _, aArgs) (_, _, bArgs) | H.keysSet aArgs /= H.keysSet bArgs = Nothing
-    intersectArgs (aVars, aProps, aArgs) (bVars, bProps, bArgs) = sequenceT (intersectMap aVars bVars, intersectMap aProps bProps, intersectMap aArgs bArgs)
-    intersectMap a b = sequence $ H.intersectionWith subIntersect a b
-    subIntersect aType bType = let joined = intersectTypes classMap aType bType
-                                in if isBottomType joined
-                                   then Nothing
-                                   else Just joined
+    partials' = (\(pVenvs, p) -> (mergeVenvs pVenvs, p)) $ unzip $ H.filter (not . S.null . snd) $ H.intersectionWith intersectArgsOptions (fmap S.toList aPartials) (fmap S.toList bPartials)
 
-intersectTypeWithClassPartialLeaves :: ClassMap -> TypePartialLeafs -> ClassPartialLeafs -> PartialLeafs
-intersectTypeWithClassPartialLeaves classMap typePartials classPartials = intersectTypePartialLeaves classMap typePartials typePartialsFromClassPartials
+    intersectArgsOptions :: [PartialArgsOption] -> [PartialArgsOption] -> (TypeVarEnv, S.HashSet PartialArgsOption)
+    intersectArgsOptions as bs = (\(oVenvs, o) -> (mergeVenvs oVenvs, S.fromList o)) $ unzip $ catMaybes $ [intersectArgs a b | a <- as, b <- bs]
+
+    intersectArgs :: PartialArgsOption -> PartialArgsOption -> Maybe (TypeVarEnv, PartialArgsOption)
+    intersectArgs (_, _, aArgs) (_, _, bArgs) | H.keysSet aArgs /= H.keysSet bArgs = Nothing
+    intersectArgs (aVars, aProps, aArgs) (bVars, bProps, bArgs) = do
+      (varsVenvs, vars') <- fmap unzip $ intersectMap H.empty aVars bVars
+      (propsVenvs, props') <- fmap unzip $ intersectMap venv aProps bProps
+      (argsVenvs, args') <- fmap unzip $ intersectMap venv aArgs bArgs
+      let venvs' = mergeVenvs [mergeVenvs varsVenvs, mergeVenvs propsVenvs, mergeVenvs argsVenvs]
+      return (venvs', (vars', props', args'))
+
+    mergeVenvs p = foldr (H.unionWith (intersectTypes classMap)) H.empty p
+    -- intersectMap unions so that all typeVars or props from either a or b are kept
+    intersectMap vev a b = traverse subValidate $ H.unionWith subUnion (fmap (vev,) a) (fmap (vev,) b)
+    subUnion (aVenv, a) (bVenv, b) = intersectTypesWithVarEnv classMap (mergeVenvs [aVenv, bVenv]) a b
+    subValidate (vev, subTp) = if isBottomType subTp then Nothing else Just (vev, subTp)
+
+intersectTypeWithClassPartialLeaves :: ClassMap -> TypeVarEnv -> TypePartialLeafs -> ClassPartialLeafs -> (TypeVarEnv, PartialLeafs)
+intersectTypeWithClassPartialLeaves classMap venv typePartials classPartials = intersectTypePartialLeaves classMap venv typePartials typePartialsFromClassPartials
   where (SumType typePartialsFromClassPartials) = unionTypes classMap $ map (expandClassPartial classMap) $ splitPartialLeafs classPartials
 
-intersectClassPartialLeaves :: ClassMap -> ClassPartialLeafs -> ClassPartialLeafs -> PartialLeafs
+intersectClassPartialLeaves :: ClassMap -> TypeVarEnv -> ClassPartialLeafs -> ClassPartialLeafs -> (TypeVarEnv, PartialLeafs)
 intersectClassPartialLeaves = intersectTypePartialLeaves
 
-intersectTypes :: ClassMap -> Type -> Type -> Type
-intersectTypes _ TopType t = t
-intersectTypes _ t TopType = t
-intersectTypes _ t1 t2 | t1 == t2 = t1
-intersectTypes _ (TypeVar v) t = error $ printf "Can't intersect type vars %s with %s" (show v) (show t)
-intersectTypes _ t (TypeVar v) = error $ printf "Can't intersect type vars %s with %s" (show t) (show v)
-intersectTypes classMap (SumType aPartials) (SumType bPartials) = unionTypes classMap
-  [ SumType $ intersectTypePartialLeaves classMap aTypePartials bTypePartials
-  , SumType $ intersectClassPartialLeaves classMap aClassPartials bClassPartials
-  , SumType $ intersectTypeWithClassPartialLeaves classMap aTypePartials bClassPartials
-  , SumType $ intersectTypeWithClassPartialLeaves classMap bTypePartials aClassPartials
-  ]
+intersectTypesWithVarEnv :: ClassMap -> TypeVarEnv -> Type -> Type -> (TypeVarEnv, Type)
+intersectTypesWithVarEnv _ venv TopType t = (venv, t)
+intersectTypesWithVarEnv _ venv t TopType = (venv, t)
+intersectTypesWithVarEnv _ venv t1 t2 | t1 == t2 = (venv, t1)
+intersectTypesWithVarEnv _ _ (TypeVar v1) (TypeVar v2) = error $ printf "Can't intersect type vars %s with %s" (show v1) (show v2)
+intersectTypesWithVarEnv classMap venv tv@(TypeVar (TVVar v)) t = (H.insertWith (intersectTypes classMap) v t venv, tv)
+intersectTypesWithVarEnv classMap venv t tv@(TypeVar (TVVar v)) = (H.insertWith (intersectTypes classMap) v t venv, tv)
+intersectTypesWithVarEnv _ _ (TypeVar v) t = error $ printf "Can't intersect type vars %s with %s" (show v) (show t)
+intersectTypesWithVarEnv _ _ t (TypeVar v) = error $ printf "Can't intersect type vars %s with %s" (show t) (show v)
+intersectTypesWithVarEnv classMap venv1 (SumType aPartials) (SumType bPartials) = (venv5, unionTypes classMap $ map SumType [res1, res2, res3, res4])
   where
     isTypeLeaf (PTypeName _) _ = True
     isTypeLeaf (PClassName _) _ = False
@@ -256,6 +265,14 @@ intersectTypes classMap (SumType aPartials) (SumType bPartials) = unionTypes cla
     aClassPartials = H.filterWithKey isClassLeaf aPartials
     bTypePartials = H.filterWithKey isTypeLeaf bPartials
     bClassPartials = H.filterWithKey isClassLeaf bPartials
+
+    (venv2, res1) = intersectTypePartialLeaves classMap venv1 aTypePartials bTypePartials
+    (venv3, res2) = intersectClassPartialLeaves classMap venv2 aClassPartials bClassPartials
+    (venv4, res3) = intersectTypeWithClassPartialLeaves classMap venv3 aTypePartials bClassPartials
+    (venv5, res4) = intersectTypeWithClassPartialLeaves classMap venv4 bTypePartials aClassPartials
+
+intersectTypes :: ClassMap -> Type -> Type -> Type
+intersectTypes classMap a b = snd $ intersectTypesWithVarEnv classMap H.empty a b
 
 isSubsetOf :: (Eq a, Hashable a) => S.HashSet a -> S.HashSet a -> Bool
 x `isSubsetOf` y = all (`S.member` y) x

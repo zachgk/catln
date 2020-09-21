@@ -127,4 +127,4 @@ arrowConstrainUbs env (SumType srcPartials) dest = do
   let srcPartials' = joinPartialLeafs srcPartialList''
   let destByGraph = unionTypes classMap $ fmap (unionReachesTree classMap) destByPartial
   dest' <- tryIntersectTypes env dest destByGraph "executeConstraint ArrowTo"
-  return (SumType srcPartials', dest')
+  return (compactType classMap $ SumType srcPartials', dest')
