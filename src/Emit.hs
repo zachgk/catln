@@ -45,8 +45,8 @@ import           Syntax.Prgm
 type TypedMeta = Typed
 type TExpr = Expr TypedMeta
 type TObject = Object TypedMeta
-type TArrow = Arrow TypedMeta
-type TPrgm = Prgm TypedMeta
+type TArrow = Arrow TExpr TypedMeta
+type TPrgm = Prgm TExpr TypedMeta
 type TReplRes = ReplRes TypedMeta
 
 toSig :: [SBS.ShortByteString] -> [(AST.Type, AST.Name)]

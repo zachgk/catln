@@ -1,4 +1,3 @@
-{-# LANGUAGE FlexibleContexts #-}
 --------------------------------------------------------------------
 -- |
 -- Module    :  TypeCheck.TypeGraph
@@ -9,6 +8,8 @@
 -- Portability: non-portable
 --
 --------------------------------------------------------------------
+
+{-# LANGUAGE FlexibleContexts #-}
 
 module TypeCheck.TypeGraph where
 
