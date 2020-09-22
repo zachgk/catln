@@ -36,7 +36,7 @@ However, there is another way to consider it. The main function of the program h
 
 While it is possible that the code will be more difficult, it shouldn't be too large of a difference. It shouldn't be crazy given the power of implicit conversions, multi-level functions, and macros. It should end up fairly similar to simply writing it in catln to begin with.
 
-There are a number of benefits to this approach. First, it means that the compiler becomes extendable and additional libraries can interact with the compiler types and classes. By using [generic type usage](genericTypeUsage.md), whole compiler modules can be replaced wholesale if desired. The compiler can also be configured at a high granularity using the same systems as annotation configuration files that specify the **how** details of the code.
+There are a number of benefits to this approach. First, it means that the compiler becomes extendable and additional libraries can interact with the compiler types and classes. By using [abstract choices](choice.md), whole compiler modules can be replaced wholesale if desired. The compiler can also be configured at a high granularity using the same systems as annotation configuration files that specify the **how** details of the code.
 
 Another benefit is that it is possible to write multiple compilers. Instead of the standard LLVM compiler, a simple direct to x86 compiler could be made that might run faster for use during development. It can also be used to create a separate parallel compiler or even a GPU compiler to replace the standard one.
 
