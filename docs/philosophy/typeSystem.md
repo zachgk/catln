@@ -2,13 +2,13 @@
 
 The fundamental data structure in catln is a named tuple of the format `tupleType(argTypeA argNameA = argValA, argTypeB argNameB = argValB, ...)`. As the arguments can themselves be tuples, this forms a typed tree structure.
 
-This format, like lisp, can be used to represent both code and data. For example, `addInts(Int left, Int right)` would be a tuple for the addition function. Something like `Point(Int x, Int y)` could represent a simple data type.
+This format can be used to represent both code and data. For example, `addInts(Int left, Int right)` would be a tuple for the addition function. Something like `Point(Int x, Int y)` could represent a simple data type.
 
 In addition to the data tuples, there are also arrows which convert one tuple format to another. For example, there could be an arrow `addInts(Int left, Int right) -> Int` that applies the integer addition operation. These arrows can match complicated patterns involving the data themselves, and even patterns involving the composition of multiple functions. Arrows can even take the same input tuple to multiple output tuples.
 
 ## Objects
 
-In Catln, objects are used to define the allowed types of tuples. Each object behaves similar to a product type. To give some examples, let me explain the two ways objects can be created: function and data types.
+In Catln, objects are used to define the allowed types of tuples. Each object behaves similar to a product type or a cross product. To give some examples, let me explain the two ways objects can be created: function and data types.
 
 A function declaration looks like:
 ```
@@ -60,7 +60,7 @@ Note that it is also possible to have a class be an instance of another class. F
 
 Just like Haskell, types are made instances of classes separately from their construction. For your own types, this is not important. However, this feature becomes useful when working with dependencies that are more difficult to change. You can add additional type classes to types within those dependencies, including types within the standard library.
 
-Another idea worth mentioning is that type classes, sealed or unsealed, represent general sum types. The only effect that sealing a type class has is to throw a compiler error if you try to extend one.
+Another idea worth mentioning is that type classes, sealed or unsealed, represent general union types. The only effect that sealing a type class has is to throw a compiler error if you try to extend one.
 
 ## Generics
 

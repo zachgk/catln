@@ -1,6 +1,6 @@
 # Testing
 
-For writing secure, reliable, and maintainable software, testing is a necessity. It can be used to check your code does not have bugs and to prevent bugs from appearing when updating and refactoring the code. However, testing is also the subject of numerous blog posts, debates, and discussions. They argue the relative merits of unit tests and integration. The importance of test coverage, mocking, and test driven development. I will describe my current thoughts on testing and how I plan to implement it with Catln below.
+For writing secure, reliable, and maintainable software, testing is a necessity. It can be used to check your code does not have bugs and to prevent bugs from appearing when updating and refactoring the code. However, testing is also the subject of numerous blog posts, debates, and discussions. They argue the relative merits of unit tests and integration. The importance of test coverage, mocking, and test driven development. I will describe my current thoughts on testing and how I plan to implement it with Catln here.
 
 ## Testing Fundamentals
 
@@ -10,9 +10,9 @@ A unit test and an integration test represent specific elements in the domain an
 
 However, it is unreliable for humans to decide the appropriate elements from the function domain to test. There are other alternatives. The most common alternative is known as property testing. In property testing, you describe a property of the function that should be true for all inputs. For example, a property of appending to a list is that the length of the list increases by one. This property is true, and could be verified, for all types of lists, lengths of lists, contents of the lists, and elements that are being appended. Then, the testing Engine can accept the responsibility of choosing items from the domain to test as well as ensuring code coverage.
 
-The one potential issue with property testing is that the choice of properties may not fully verify correctness. In the example I gave, numerous incorrect (if contrived) problems are possible such as inserting the wrong element, messing up the rest of the list, and changing the types. None of these would cause the property test to fail. Formally, the property testing restricts the co-domain and then verifies that the values produced are in the smaller co-domain. A co-domain of 1 would perfectly test the values, but larger co-domains will not. In the appending example, we could perfectly property test it by ensuring that the last element is the one appended and the preceding elements are the original list. Regardless, property tests occupy only a single line of code so they excel in terms of ease of creation.
+The one potential issue with property testing is that the choice of properties may not fully verify correctness. In the example of appending while only checking the length, numerous incorrect (if contrived) problems are possible such as inserting the wrong element, messing up the rest of the list, and changing the types. None of these would cause the property test to fail. Formally, the property testing restricts the co-domain and then verifies that the values produced are in the smaller co-domain. A co-domain of 1 would perfectly test the values, but larger co-domains will not. In the appending example, we could perfectly property test it by ensuring that the last element is the one appended and the preceding elements are the original list. Regardless, property tests greatest strength is how little work is required to create them.
 
-Another potential avenue for testing is by creating multiple definitions of a function. Those definitions should then match for all inputs in a domain. Duplicate functions are the best form of testing as they can fully verify across the domain and fully verify each element in the domain. This idea is identified as [arrow testing](arrowTesting.md).
+Another potential avenue for testing is by creating multiple definitions of a function. Those definitions should then match for all inputs in a domain. Duplicate functions are the best form of testing as they can fully verify across the domain and fully verify each element in the domain. This idea is a part of [arrow testing](arrowTesting.md).
 
 ## Testing Implementation
 
@@ -40,11 +40,11 @@ In the actual testing process, all tests really align into two ideas. Any functi
 
 Then, any test with overlapping definitions is executed using [arrow testing](arrowTesting.md). The simple tests written as sample function inputs and outputs just use arrow testing (with the domain of one item) to match against the other definitions.
 
-One requirement of this system is the ability to create sample function inputs. If you come from an imperative background, this may seem somewhat unreliable. Generally, that means that you are not making a strong enough use of the type system to encode the fundamental ideas behind your data types. You should write it so that any invalid combination of data would not be allowed in the object and match the type definition. The reverse of this is then any type creation would be a valid input. Furthermore, all of the edge cases should be much easier to create as they are either boundaries in numbers, or cases in the sum types.
+One requirement of this system is the ability to create sample function inputs. If you come from an imperative background, this may seem somewhat unreliable. Generally, that means that you are not making a strong enough use of the type system to encode the fundamental ideas behind your data types. You should write it so that any invalid combination of data would not be allowed in the object and match the type definition. The reverse of this is then any type creation would be a valid input. Furthermore, all of the edge cases should be much easier to create as there are either boundaries in numbers, or cases in the sum types.
 
 ### Test Proofs
 
-In lieu of using the testing engine to produce sample inputs to a function, it may be possible to prove using the type properties that an assertion is guaranteed to be true. This would actually be proven during type checking, so in those instances no tests need to be manually run. You can also specify that an assertion must be proven for additional verification.
+In lieu of using the testing engine to produce sample inputs to a function, it may be possible to prove using the type properties that an assertion is guaranteed to be true. This would actually be proven during type inference, so in those instances no tests need to actually be run. You can also specify that an assertion must be proven for a stronger verification.
 
 ### Test Caching
 

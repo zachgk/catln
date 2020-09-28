@@ -1,6 +1,6 @@
 # Philosophy
 
-This directory contains  a number of the core ideas and directives that drive the project. Many of these are not currently implemented but will hopefully be implemented in the future.
+This directory contains  a number of the core ideas and directives that drive the project. Many of these are not currently implemented, but will hopefully be implemented in the future.
 
 ## Sub-Pages
 

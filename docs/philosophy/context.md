@@ -5,6 +5,7 @@ One of the problems with functional programming is the way that state, especiall
 In pure functions, the way that state is passed around is typically monads if not directly. However, these monads are difficult to combine if multiple states (such as logging, IO, counters, readers, etc.) are all needed. This has lead to the creation of an entire structure of monad transformers to bridge the gap.
 
 For this reason, there will be an additional syntax known as Context. A method can require a context such as:
+
 ```
 printAndLog{IO io, Log log}(String s) = ...
 ```
