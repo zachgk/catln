@@ -56,7 +56,7 @@ Here, a new class called show is declared. An instance, String, is also made of 
 
 Then, the function show is declared which should show all items of type show. Note that this syntax is a generic function declaration. The compiler will verify that all appropriate definitions exist to fulfill a claim made within all declarations. So, this syntax can also be used outside of type classes. Here, it then requires that a definition is provided for the only instance, String, which is given.
 
-Note that it is also possible to have a class be an instance of another class. For example, all classes which are comparable also have the equality class. No special syntax is required to handle function as it merely requires that all appropriate declarations are fulfilled.
+It is also possible to have a class be an instance of another class. For example, all classes which are comparable also have the equality class. No special syntax is required to handle function as it merely requires that all appropriate declarations are fulfilled.
 
 Just like Haskell, types are made instances of classes separately from their construction. For your own types, this is not important. However, this feature becomes useful when working with dependencies that are more difficult to change. You can add additional type classes to types within those dependencies, including types within the standard library.
 
