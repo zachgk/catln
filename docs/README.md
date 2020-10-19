@@ -5,7 +5,7 @@ The language focuses at a high level on the expression of ideas.
 It can encode ideas that are impossible to describe in most other languages and avoids low-level ideas that other languages leave you no choice but to express.
 It is most similar to the functional programming languages, but is not technically based around functions.
 
-## Structure 
+## Language Summary
 
 There are two key pieces to Catln: objects for data and arrows for operations.
 
@@ -15,9 +15,11 @@ The fundamental data structure in catln is a named tuple of the format `tupleTyp
 
 This format can be used to represent both code and data. For example, `addInts(Int left, Int right)` would be a tuple for the addition function. Something like `Point(Int x, Int y)` could represent a simple data type.
 
-With this key structure, it allows for a simple and powerful definition of types: a set of named tuples. Any type feature, no matter how complicated, simply reduces into these sets making them easy to combine and reason about.
+With this key structure, it allows for a simple and powerful definition of types: a set of named tuples. Any type feature, no matter how complicated, simply reduces into these sets making them easy to use and reason about.
 
-Types can also be combined. By taking the union of types, it can represent all the power of many features including enums, sum types, inheritance, and type classes. Types can also intersect by using type properties like `List_sorted(True)_length<Int_gt(5)>`. The intersection allows for more information about types to be expressed and inferred through type inference. It can then be used for purposes such as optimization or even simple formal verification of [assertions](philosophy/assertions.md). [See more about the type theory here](philosophy/typeTheory.md).
+Types can be combined. By taking the union of types, it can represent all the power of many features including enums, sum types, inheritance, and type classes.
+
+Types can also intersect by using type properties like `List_sorted(True)_length<Int_gt(5)>`. The intersection allows for more information about types to be expressed and inferred through type inference. It can then be used for purposes such as optimization or even simple formal verification of [assertions](philosophy/assertions.md). [See more about the type theory here](philosophy/typeTheory.md).
 
 ### Arrows
 
@@ -41,16 +43,6 @@ Here are some of the other highlights for features which are possible in the lan
 - While Catln can be used to program a normal exectuables, it should be able to describe ideas which are larger than a single executable. For example, it could build both a web client and server, a distributed system, or even an entire cloud architecture with a CloudFormation template. This let's the type checing ensure that all levels of your program work together properly and eliminates bugs. This is best done by moving the compilation and optimization process from the compiler and instead implement it within the standard library using the powerful meta-programming features Catln provides. [See more about language compilation](philosophy/languageCompilation.md).
 
 While these cover some of the most interesting ideas of the language, many more ideas as well as many further details can be found within the [project goals and ideology documentation](philosophy).
-
-## Learn More
-
-You can learn more by checking out:
-
-- [Syntax](syntax.md) - Guide to the **currently implemented** syntax and features of Catln.
-- [Building](building.md) - Instructions for setting up and running the compiler.
-- [Documentation](docs)
-    - [Project Goals and Ideology Documentation](philosophy) - These documents describe different interesting advancements in the language including everything above, modules, testing, documentation, debugging, and more language features.
-- [Compiler Test Cases (as Catln code examples)](test/code)
 
 **The language is currently under development. Only some of the critical language features have been implemented in the compiler so code written in the language is still somewhat limited.**
 

@@ -85,19 +85,19 @@ For example, the `List` type might have a property `List_length(Int)`. This can 
 
 ```
 List<$T>.head -> Optional<$T>
-List_length(Int_gt(0))<$T>.head -> $T
+List_length<Int_gt(0)><$T>.head -> $T
 ```
 
 Now, calling the head function on a list will give you an optional value regardless of whether the length is known but a direct value if it is known. Therefore, you can directly use the value when it is known to be safe without writing unnecessary code to handle an impossible `Nothing` condition. When the length can't be inferred, then you do have to handle the very real `Nothing` condition. If it can be inferred, you can still treat it as an `Optional`, but it will throw a compiler warning because the `Nothing` handling code is unreachable.
 
 For all lists, you can also assume that the length is at least 0. This leads to the relationship:
 ```
-List -> List_length(Int_gt(0))
+List -> List_length<Int_gt(0)>
 ```
 
 In order for this to work, it is important to describe how various arrows affect the type properties. For example:
 ```
-List_length(Int_gt(a)).concat(List_length(Int_gt(b))) -> List_length(Int_gt(a+b))
+List_length<Int_gt(a)>.concat(List_length<Int_gt(b)>) -> List_length<Int_gt(a+b)>
 ```
 
 Rules defined like this can enable the compiler to infer type properties even when they are not explicitly declared. Higher level functions can use these rules to automatically compute the type properties of return values.
@@ -118,11 +118,11 @@ Following the above definitions, there are several interesting possibilities wor
 
 When defining a function, you can use either function overloading and/or default arguments like other languages. Unlike other languages, a function can accept the same arguments and return different return values.
 
-For example, a `sqrt` function might return `Optional[Number]` where it can only be computed if the input is at least 0. It could also return a `Complex[Number]` including the irrational component. Either of these are reasonable return values for the function.
+For example, a `sqrt` function might return `Optional<Number>` where it can only be computed if the input is at least 0. It could also return a `Complex<Number>` including the irrational component. Either of these are reasonable return values for the function.
 
 In Catln, these two definitions can share the same name and the desired return value will be detected during type inference. While this seems like it could have unintended effects, [arrow testing](arrowTesting.md) guarantees that it should be safe.
 
-Furthermore, implicit conversions mean that multiple return values would be the norm rather than the exception. For example, a complex number with no irrational component can be implicitly converted to an int. The int can then be implicitly wrapped in an optional to form the same `Optional[Number]` anyway.
+Furthermore, implicit conversions mean that multiple return values would be the norm rather than the exception. For example, a complex number with no irrational component can be implicitly converted to an int. The int can then be implicitly wrapped in an optional to form the same `Optional<Number>` anyway.
 
 ### Multiple level functions
 

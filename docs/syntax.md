@@ -1,6 +1,7 @@
 # Syntax
 
-Here is a basic guide to the syntax for Catln.
+Here is a basic guide to the **currently implemented** syntax and features for Catln.
+You can view examples of the syntax inside the [compiler test cases](https://github.com/zachgk/catln/tree/master/test/code).
 
 ## Declarations
 
