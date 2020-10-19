@@ -1,0 +1,42 @@
+site_name: Catln
+repo_name: zachgk/catln
+repo_url: https://github.com/zachgk/catln/
+
+theme:
+  name: material
+
+markdown_extensions:
+  - codehilite
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+
+docs_dir: 'docs'
+
+nav:
+  - 'README.md'
+  - Design:
+      - Main: 'philosophy/README.md'
+      - 'philosophy/typeSystem.md'
+      - 'philosophy/typeTheory.md'
+      - 'philosophy/choice.md'
+      - Testing:
+        - 'philosophy/testing.md'
+        - 'philosophy/arrowTesting.md'
+        - 'philosophy/assertions.md'
+      - 'philosophy/context.md'
+      - 'philosophy/macros.md'
+      - 'philosophy/optimization.md'
+      - 'philosophy/syntacticSugar.md'
+      - 'philosophy/compilerErrorStatement.md'
+      - Documentation:
+        - 'philosophy/documentation.md'
+        - 'philosophy/naming.md'
+      - 'philosophy/modules.md'
+      - 'philosophy/debugging.md'
+      - 'philosophy/languageCompilation.md'
+  - 'syntax.md'
+  - 'building.md'
+  - 'organization.md'

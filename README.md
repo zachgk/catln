@@ -1,4 +1,4 @@
-# catln
+# Catln
 
 Catln is a new paradigm of programming languages based around the idea of implicit conversions.
 The language focuses at a high level on the expression of ideas.
@@ -49,7 +49,7 @@ You can learn more by checking out:
 - [Syntax](docs/syntax.md) - Guide to the **currently implemented** syntax and features of Catln.
 - [Building](docs/building.md) - Instructions for setting up and running the compiler.
 - [Documentation](docs)
-  - [Project Goals and Ideology Documentation](docs/philosophy) - These documents describe different interesting advancements in the language including everything above, modules, testing, documentation, debugging, and more language features.
+    - [Project Goals and Ideology Documentation](docs/philosophy) - These documents describe different interesting advancements in the language including everything above, modules, testing, documentation, debugging, and more language features.
 - [Compiler Test Cases (as Catln code examples)](test/code)
 
 **The language is currently under development. Only some of the critical language features have been implemented in the compiler so code written in the language is still somewhat limited.**
