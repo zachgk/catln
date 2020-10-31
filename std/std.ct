@@ -43,6 +43,9 @@ data IO
 exit(IO this, Integer val) -> IO
 println(IO this, String msg) -> IO
 
+data CatlnResult(String name, String contents)
+www(String html) = CatlnResult(name="index.html", contents=html)
+
 class Number = Integer | Float
 class Boolean = True | False
 

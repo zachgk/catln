@@ -130,3 +130,17 @@ evalPrgm (PClassName _, _, _, _) _ _ = error "Can't eval class"
 
 evalMain :: EPrgm -> CRes (IO Integer)
 evalMain = evalPrgm mainPartial ioType
+
+evalMainb :: EPrgm -> CRes (String, String)
+evalMainb prgm@(_, classMap) = do
+  let srcName = "mainb"
+  let src = (PTypeName srcName, H.empty, H.empty, H.empty)
+  let dest = singletonType (PTypeName "CatlnResult", H.empty, H.empty, H.fromList [("name", strType), ("contents", strType)])
+  (resArrowTree, exEnv) <- evalBuildPrgm src dest prgm
+  let env = (exEnv, classMap)
+  res <- evalTree env [] NoVal resArrowTree
+  case res of
+    (TupleVal "CatlnResult" args) -> case (H.lookup "name" args, H.lookup "contents" args) of
+      (Just (StrVal n), Just (StrVal c)) -> return (n, c)
+      _ -> CErr [MkCNote $ GenCErr "Eval mainb returned a CatlnResult with bad args"]
+    _ -> CErr [MkCNote $ GenCErr "Eval mainb did not return a CatlnResult"]

@@ -17,6 +17,9 @@ import Text.Pretty.Simple
 testDir :: String
 testDir = "test/code/"
 
+buildDir :: String
+buildDir = "test/build/"
+
 runTest :: Bool -> String -> TestTree
 runTest includeStd fileName = testCaseSteps fileName $ \step -> do
   step $ printf "Read file %s..." fileName
@@ -45,25 +48,65 @@ runTest includeStd fileName = testCaseSteps fileName $ \step -> do
           -- step "Codegen"
           -- void (codegen initModule tprgm)
 
-runTests :: Bool -> [String] -> IO ()
-runTests includeStd testFiles = defaultMain $ testGroup "Tests" testTrees
+runTests :: Bool -> [String] -> TestTree
+runTests includeStd testFiles = testGroup "Tests" testTrees
   where testTrees = map (runTest includeStd) testFiles
 
+runBuild :: String -> TestTree
+runBuild fileName = testCaseSteps fileName $ \step -> do
+  step $ printf "Read file %s..." fileName
+  maybePrgm <- desFiles $ (fileName : ["std/std.ct"])
+  case maybePrgm of
+    CErr notes -> assertFailure $ "Could not parse and desguar:\n \t" ++ concat (map show notes)
+    CRes _ prgm -> do
+      -- step $ T.unpack $ pShow prgm
+      step "Typecheck..."
+      -- step $ T.unpack $ pShow $ traceTestPrgm prgm
+      case typecheckPrgm prgm of
+        CErr err -> do
+          assertFailure $ "Could not typecheck:\n\n\n\t" ++ intercalate "\n\n\n\t\t" (map (T.unpack . pShow) err)
+        CRes _ tprgm -> do
+          -- step $ T.unpack $ pShow $ tprgm
+          step "Eval tests..."
+          -- step $ T.unpack $ pShow $ evalBuildMain tprgm
+          case evalMainb tprgm of
+            CErr notes -> do
+              assertFailure $ "Could not eval:\n\t " ++ intercalate "\n\t" (map show notes)
+            CRes _ _ -> return () -- success
+
+runBuilds :: [String] -> TestTree
+runBuilds testFiles = testGroup "Builds" testTrees
+  where testTrees = map runBuild testFiles
+
 test :: IO ()
-test = runTests False ["test/test.ct"]
+test = defaultMain $ runTests False ["test/test.ct"]
 
 standardTests :: IO ([String])
 standardTests = do
   fileNames <- listDirectory testDir
   return $ map (testDir ++) fileNames
 
+buildTests :: IO ([String])
+buildTests = do
+  fileNames <- listDirectory buildDir
+  return $ map (buildDir ++) fileNames
+
 mt :: String -> IO ()
 mt k = do
   let fileName = testDir ++ k ++ ".ct"
   tests <- standardTests
   if elem fileName tests
-     then runTests True [fileName]
-     else error $ "invalid test name" ++ fileName ++ show tests
+     then defaultMain $ runTests True [fileName]
+     else error $ printf "invalid test name %s in %s" fileName (show tests)
+
+
+mb :: String -> IO ()
+mb k = do
+  let fileName = buildDir ++ k ++ ".ct"
+  tests <- buildTests
+  if elem fileName tests
+     then defaultMain $ runBuilds [fileName]
+     else error $ printf "invalid build test name %s in %s" fileName (show tests)
 
 mtt :: IO ()
 mtt = mt "match"
@@ -71,4 +114,8 @@ mtt = mt "match"
 main :: IO ()
 main = do
   tests <- standardTests
-  runTests True tests
+  let tests' = runTests True tests
+  builds <- buildTests
+  let builds' = runBuilds builds
+  let full = testGroup "full" [tests', builds']
+  defaultMain full
