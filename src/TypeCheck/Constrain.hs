@@ -94,6 +94,16 @@ updateSchemeVar FEnv{feClassMap} (superUb, superLb, superDesc) varName (subUb, s
               Nothing -> Just ((supName, H.insert varName (singletonType sub) supVars, supProps, supArgs), singletonType sub)
         let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectPartials sup sub | sup <- supPartialList, sub <- subPartialList]
         (SumType $ joinPartialLeafs supPartialList', unionTypes feClassMap subPartialList')
+      (SumType supPartials, subT@TypeVar{}) -> do
+        let supPartialList = splitPartialLeafs supPartials
+        let intersectPartials sup@(_, supVars, _, _) = case H.lookup varName supVars of
+              Just supVar -> do
+                if supVar == subT
+                  then Just sup
+                  else Nothing
+              Nothing -> Nothing
+        let supPartialList' = catMaybes [intersectPartials sup | sup <- supPartialList]
+        (SumType $ joinPartialLeafs supPartialList', subT)
       (sup, sub) -> error $ printf "Unsupported updateSchemeVar Ub (%s).%s = %s" (show sup) varName (show sub)
 
 addArgToType :: FEnv -> Type -> ArgName -> Maybe Type

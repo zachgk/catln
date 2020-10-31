@@ -258,3 +258,15 @@ nextConstrainEpoch env@FEnv{feTrace} = case feTrace of
 startConstraint :: Constraint -> FEnv -> FEnv
 startConstraint c env@FEnv{feTrace = curEpoch:prevEpochs} = env{feTrace = ((c, []):curEpoch):prevEpochs}
 startConstraint _ _ = error "bad input to startConstraint"
+
+substituteVarsWithVarEnv :: TypeVarEnv -> Type -> Type
+substituteVarsWithVarEnv venv (SumType partials) = SumType $ joinPartialLeafs $ map substitutePartial $ splitPartialLeafs partials
+  where substitutePartial (partialName, partialVars, partialProps, partialArgs) = (partialName, partialVars, fmap (substituteVarsWithVarEnv venv') partialProps, fmap (substituteVarsWithVarEnv venv') partialArgs)
+          where venv' = H.union venv partialVars
+substituteVarsWithVarEnv venv (TypeVar (TVVar v)) = case H.lookup v venv of
+  Just v' -> v'
+  Nothing -> error $ printf "Could not substitute unknown type var %s" v
+substituteVarsWithVarEnv _ t = t
+
+substituteVars :: Type -> Type
+substituteVars = substituteVarsWithVarEnv H.empty

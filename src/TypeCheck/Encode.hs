@@ -16,7 +16,6 @@ module TypeCheck.Encode where
 import           Prelude hiding (unzip)
 import           Control.Monad
 import Data.Hashable (Hashable)
-import Data.Zip
 import qualified Data.HashMap.Strict as H
 import qualified Data.IntMap.Lazy as IM
 
@@ -46,42 +45,27 @@ makeBaseFEnv classMap = FEnv{
 
 fromMetaNoObj :: FEnv -> TypeBound -> PreMeta -> String -> TypeCheckResult (VarMeta, FEnv)
 fromMetaNoObj env bound m description  = do
+  let tp = substituteVars $ getMetaType m
   let (p, env') = case bound of
-        BUpper -> fresh env (TypeCheckResult [] $ SType (getMetaType m) bottomType description)
-        BLower -> fresh env (TypeCheckResult [] $ SType TopType (getMetaType m) description)
-        BEq -> fresh env (TypeCheckResult [] $ SType (getMetaType m) (getMetaType m) description)
+        BUpper -> fresh env (TypeCheckResult [] $ SType tp bottomType description)
+        BLower -> fresh env (TypeCheckResult [] $ SType TopType tp description)
+        BEq -> fresh env (TypeCheckResult [] $ SType tp tp description)
   return (VarMeta p m, env')
 
 fromMeta :: FEnv -> TypeBound -> VObject -> PreMeta -> String -> TypeCheckResult (VarMeta, FEnv)
 fromMeta env bound obj@(Object _ _ _ objVars _) m description  = case metaTypeVar m of
-  Just tv@(TVVar varName) -> case H.lookup varName objVars of
-    Just objVarM -> do
-      let (p, env') = fresh env (TypeCheckResult [] $ SVar tv (getPnt objVarM))
-      return (VarMeta p m, env')
-    Nothing -> error $ "Unknown obj var: " ++ varName
   Just tv@(TVArg argName) -> case H.lookup argName $ formArgMetaMap obj of
     Just objArgM -> do
       let (p, env') = fresh env (TypeCheckResult [] $ SVar tv (getPnt objArgM))
       return (VarMeta p m, env')
     Nothing -> error $ "Unknown obj arg: " ++ argName
-  Nothing -> case m of
-    PreTyped (SumType tp) -> do -- Handle m.$T = $ObjVar
-      let mapPartialVar t = case t of
-            (TypeVar (TVVar varName)) -> case H.lookup varName objVars of
-              Just (VarMeta objP (PreTyped objVar)) -> (objVar, H.singleton varName [objP])
-              Nothing -> error $ printf "fromMeta failed to find var %s" varName
-            _ -> (t, H.empty)
-      let mapPartial (partialName, partialVars, partialProps, partialArgs) = do
-            let (partialVars', constraints) = unzip $ fmap mapPartialVar partialVars
-            let constraints' = foldr (H.unionWith (++)) H.empty $ H.elems $ constraints
-            ((partialName, partialVars', partialProps, partialArgs), constraints')
-      let (partials', constraints) = unzip $ map mapPartial $ splitPartialLeafs tp
-      let m' = PreTyped $ SumType $ joinPartialLeafs partials'
-      (m'', env') <- fromMetaNoObj env bound m' description
-      let env'' = addConstraints env' $ concatMap (\(varName, pnts) -> map (VarEq (getPnt m'', varName)) pnts ) $ H.toList $ foldr (H.unionWith (++)) H.empty constraints
-      return (m'', env'')
-
-    _ -> fromMetaNoObj env bound m description
+  _ -> do
+    let tp = substituteVarsWithVarEnv (fmap getMetaType objVars) $ getMetaType m
+    let (p, env') = case bound of
+          BUpper -> fresh env (TypeCheckResult [] $ SType tp bottomType description)
+          BLower -> fresh env (TypeCheckResult [] $ SType TopType tp description)
+          BEq -> fresh env (TypeCheckResult [] $ SType tp tp description)
+    return (VarMeta p m, env')
 
 mapMWithFEnv :: FEnv -> (FEnv -> a -> TypeCheckResult (b, FEnv)) -> [a] -> TypeCheckResult ([b], FEnv)
 mapMWithFEnv env f = foldM f' ([], env)
@@ -199,10 +183,11 @@ fromObjectMap env1 (obj, arrows) = do
   (arrows', env2) <- mapMWithFEnv env1 (fromArrow obj) arrows
   return ((obj, arrows'), env2)
 
-fromObjVar :: String -> FEnv -> (TypeVarName, PreMeta) -> TypeCheckResult ((TypeVarName, VarMeta), FEnv)
-fromObjVar prefix env1 (varName, m) = do
+fromObjVar :: VarMeta -> String -> FEnv -> (TypeVarName, PreMeta) -> TypeCheckResult ((TypeVarName, VarMeta), FEnv)
+fromObjVar objM prefix env1 (varName, m) = do
   (m', env2) <- fromMetaNoObj env1 BUpper m (prefix ++ "." ++ varName)
-  return ((varName, m'), env2)
+  let env3 = addConstraints env2 [VarEq (getPnt objM, varName) (getPnt m')]
+  return ((varName, m'), env3)
 
 addObjArg :: VObject -> VarMeta -> String -> H.HashMap TypeVarName VarMeta -> FEnv -> (TypeName, PObjArg) -> TypeCheckResult ((TypeName, VObjArg), FEnv)
 addObjArg fakeObj objM prefix varMap env (n, (m, maybeSubObj)) = do
@@ -229,16 +214,14 @@ addObjArg fakeObj objM prefix varMap env (n, (m, maybeSubObj)) = do
 clearMetaArgTypes :: PreMeta -> PreMeta
 clearMetaArgTypes (PreTyped (SumType partials)) = PreTyped $ SumType $ joinPartialLeafs $ map clearPartialTypeArgs $ splitPartialLeafs partials
   where
-    clearPartialTypeArgs (partialName, partialVars, partialProps, partialArgs) = (partialName, fmap cleanVar partialVars, partialProps, fmap (const TopType) partialArgs)
-    cleanVar (TypeVar TVVar{}) = TopType
-    cleanVar varVal = varVal
+    clearPartialTypeArgs (partialName, partialVars, partialProps, partialArgs) = (partialName, partialVars, partialProps, fmap (const TopType) partialArgs)
 clearMetaArgTypes p = p
 
 fromObject :: String -> Bool -> FEnv -> PObject -> TypeCheckResult (VObject, FEnv)
 fromObject prefix isObjArg env (Object m basis name vars args) = do
   let prefix' = prefix ++ "." ++ name
   (m', env1) <- fromMetaNoObj env BUpper (clearMetaArgTypes m) prefix'
-  (vars', env2) <- mapMWithFEnvMapWithKey env1 (fromObjVar prefix') vars
+  (vars', env2) <- mapMWithFEnvMapWithKey env1 (fromObjVar m' prefix') vars
   let fakeObjForArgs = Object m' basis name vars' H.empty
   (args', env3) <- mapMWithFEnvMapWithKey env2 (addObjArg fakeObjForArgs m' prefix' vars') args
   let obj' = Object m' basis name vars' args'
