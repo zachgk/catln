@@ -33,8 +33,7 @@ import qualified LLVM.AST.Attribute         as A
 import qualified LLVM.AST.CallingConvention as CC
 import qualified LLVM.AST.Constant          as C
 import qualified LLVM.AST.Linkage           as L
-
-import qualified Syntax                     as S
+import LLVM.AST.Type
 
 -------------------------------------------------------------------------------
 -- Module Level
@@ -77,9 +76,11 @@ external retty label argtys = addDefn $
 -- Types
 -------------------------------------------------------------------------------
 
--- IEEE 754 double
-double :: Type
-double = FloatingPointType DoubleFP
+struct :: Name -> [Type] -> LLVM ()
+struct n as = addDefn $ TypeDefinition n (Just $ structType as)
+
+structType :: [Type] -> Type
+structType as = StructureType False as
 
 -------------------------------------------------------------------------------
 -- Names
@@ -265,10 +266,10 @@ alloca :: Type -> Codegen Operand
 alloca ty = instr $ Alloca ty Nothing 0 []
 
 store :: Operand -> Operand -> Codegen Operand
-store ptr val = instr $ Store False ptr val Nothing 0 []
+store pointer val = instr $ Store False pointer val Nothing 0 []
 
 load :: Operand -> Codegen Operand
-load ptr = instr $ Load False ptr Nothing 0 []
+load pointer = instr $ Load False pointer Nothing 0 []
 
 -- Control Flow
 br :: Name -> Codegen (Named Terminator)
@@ -282,9 +283,3 @@ phi ty incoming = instr $ Phi ty incoming []
 
 ret :: Operand -> Codegen (Named Terminator)
 ret val = terminator $ Do $ Ret (Just val) []
-
--- getType :: S.Typed -> AST.Type
--- getType (S.Typed tp) | tp == S.intType = AST.IntegerType 64
--- getType (S.Typed tp) | tp == S.floatType = AST.FloatingPointType AST.DoubleFP
--- getType (S.Typed tp) | tp == S.boolType = AST.IntegerType 1
--- getType tp           = error $ "Uknown type " ++ show tp

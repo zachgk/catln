@@ -80,16 +80,18 @@ instance Show Type where
       join ps = "(" ++ intercalate " | " ps ++ ")"
 
 
-intLeaf, floatLeaf, strLeaf, ioLeaf :: PartialType
+intLeaf, floatLeaf, trueLeaf, falseLeaf, strLeaf, ioLeaf :: PartialType
 intLeaf = (PTypeName "Integer", H.empty, H.empty, H.empty)
 floatLeaf = (PTypeName "Float", H.empty, H.empty, H.empty)
+trueLeaf = (PTypeName "True", H.empty, H.empty, H.empty)
+falseLeaf = (PTypeName "False", H.empty, H.empty, H.empty)
 strLeaf = (PTypeName "String", H.empty, H.empty, H.empty)
 ioLeaf = (PTypeName "IO", H.empty, H.empty, H.empty)
 
 intType, floatType, boolType, strType, ioType :: Type
 intType = singletonType intLeaf
 floatType = singletonType floatLeaf
-boolType = SumType $ joinPartialLeafs [(PTypeName "True", H.empty, H.empty, H.empty), (PTypeName "False", H.empty, H.empty, H.empty)]
+boolType = SumType $ joinPartialLeafs [trueLeaf, falseLeaf]
 strType = singletonType strLeaf
 ioType = singletonType ioLeaf
 

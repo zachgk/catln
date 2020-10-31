@@ -47,7 +47,8 @@ runTest includeStd fileName = testCaseSteps fileName $ \step -> do
                 ([], 0) -> return () -- success
                 _ -> assertFailure $ "Bad result for:\n \t " ++ show returnValue ++ "\n \tNotes\t" ++ concat (map show notes)
           -- step "Codegen"
-          -- void (codegen initModule tprgm)
+          -- cgPrgm <- codegen initModule tprgm
+          -- step $ T.unpack $ pShow $ cgPrgm
 
 runTests :: Bool -> [String] -> TestTree
 runTests includeStd testFiles = testGroup "Tests" testTrees
