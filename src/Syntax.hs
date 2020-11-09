@@ -36,7 +36,7 @@ data ReplRes m
 
 --- ResArrowTree
 type ResBuildEnv f = H.HashMap TypeName [(PartialType, Guard (Expr Typed), ResArrow f)]
-type ResExEnv f = H.HashMap (Arrow (Expr Typed) Typed) (ResArrowTree f, [ResArrowTree f]) -- (result, [compAnnot trees])
+type ResExEnv f = H.HashMap (Arrow (Expr Typed) Typed) (Object Typed, ResArrowTree f, [ResArrowTree f]) -- (result, [compAnnot trees])
 data ResArrow f
   = ResEArrow (Object Typed) (Arrow (Expr Typed) Typed)
   | PrimArrow Type f

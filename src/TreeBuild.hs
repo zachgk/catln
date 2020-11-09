@@ -75,7 +75,7 @@ makeBaseEnv primEnv (objMap, classMap) = fmap (baseEnv,) exEnv
                   _ -> am
             resArrowTree <- buildExprImp baseEnv obj expr am'
             compAnnots' <- mapM (buildCompAnnot baseEnv obj) compAnnots
-            return (arrow, (resArrowTree, compAnnots'))
+            return (arrow, (obj, resArrowTree, compAnnots'))
       ) maybeExpr
 
 buildCompAnnot :: (Eq f, Hashable f) => TBEnv f -> TBObject -> TBCompAnnot -> CRes (ResArrowTree f)

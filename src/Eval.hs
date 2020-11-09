@@ -45,7 +45,7 @@ replaceTreeArgs args a@(ResArrowSingle (ArgArrow tp name)) = case H.lookup name 
 replaceTreeArgs _ (ResArrowSingle a) = ResArrowSingle a
 replaceTreeArgs _ ResArrowID = ResArrowID
 
-envLookupResArrowTree :: Env -> EArrow -> Maybe (ResArrowTree EPrim, [ResArrowTree EPrim])
+envLookupResArrowTree :: Env -> EArrow -> Maybe (EObject, ResArrowTree EPrim, [ResArrowTree EPrim])
 envLookupResArrowTree (resExEnv, _) arrow = H.lookup arrow resExEnv
 
 evalCompAnnot :: EStacktrace -> Val -> CRes ()
@@ -60,7 +60,7 @@ evalCompAnnot st _ = CErr [MkCNote $ EvalCErr st "Eval: Invalid compiler annotat
 
 eval :: Env -> EStacktrace -> Val -> ResArrow EPrim -> CRes Val
 eval env st val (ResEArrow object arrow) = case envLookupResArrowTree env arrow of
-  Just (resArrowTree, compAnnots) -> do
+  Just (_, resArrowTree, compAnnots) -> do
     let newArrArgs = buildArrArgs object val
     mapM_ (\compAnnot -> do
               let treeWithoutArgs = replaceTreeArgs newArrArgs compAnnot
