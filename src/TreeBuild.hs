@@ -165,7 +165,11 @@ envLookup env@(resEnv, _, classMap) obj visitedArrows srcType@(PTypeName srcName
     buildGuardArrows env obj visitedArrows srcType destType guards
 
   Nothing -> CErr [MkCNote $ BuildTreeCErr $ "Failed to find any arrows from " ++ show srcType ++ " to " ++ show destType]
-envLookup _ _ _ (PClassName _, _, _, _) _ = undefined
+envLookup env@(_, _, classMap) obj visitedArrows srcType@(PClassName _, _, _, _) destType = do
+  let (SumType expanded) = expandClassPartial classMap srcType
+  let expanded' = splitPartialLeafs expanded
+  expandedTrees <- mapM (\expandedSrc -> envLookup env obj visitedArrows expandedSrc destType) expanded'
+  return $ ResArrowMatch $ H.fromList $ zip expanded' expandedTrees
 
 buildImplicit :: (Eq f, Hashable f) => TBEnv f -> TBObject -> Type -> Type -> CRes (ResArrowTree f)
 buildImplicit _ _ _ TopType = return ResArrowID
