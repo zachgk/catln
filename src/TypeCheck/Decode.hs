@@ -35,7 +35,7 @@ matchingConstraint env p (VarEq (p2, _) p3) = matchingConstraintHelper env p p2 
 matchingConstraint env p (AddArg (p2, _) p3) = matchingConstraintHelper env p p2 p3
 matchingConstraint env p (AddInferArg p2 p3) = matchingConstraintHelper env p p2 p3
 matchingConstraint env p (PowersetTo p2 p3) = matchingConstraintHelper env p p2 p3
-matchingConstraint env p (UnionOf p2 p3s) = equivalent env p p2 || any (equivalent env p) p3s
+matchingConstraint env p (UnionOf p2 p3s) = equivalent env p p2 || any (equivalent env p . getPnt) p3s
 
 showMatchingConstraints :: FEnv -> Pnt -> [SConstraint]
 showMatchingConstraints env@FEnv{feCons} matchVar = map (showCon env) $ filter (matchingConstraint env matchVar) feCons

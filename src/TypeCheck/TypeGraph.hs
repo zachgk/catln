@@ -34,7 +34,7 @@ buildUnionObj env1 objs = do
   let env6 = (\env -> env{feUnionAllObjs=unionAllObjsPs, feUnionTypeObjs=unionTypeObjsPs}) env5
   addConstraints env6 constraints
                     where
-                      unionObjs pnt os = UnionOf pnt $ map (\(Object m _ _ _ _) -> getPnt m) os
+                      unionObjs pnt os = UnionOf pnt $ map (\(Object m _ _ _ _) -> m) os
                       filterTypes = filter (\(Object _ basis _ _ _) -> basis == TypeObj)
 
 buildTypeEnv :: FEnv -> VObjectMap -> FEnv

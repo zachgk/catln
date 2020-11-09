@@ -15,6 +15,7 @@ module TypeCheck.Constrain where
 import           Data.Maybe
 import qualified Data.HashMap.Strict as H
 
+import           Syntax
 import           Syntax.Types
 import           TypeCheck.Common
 import           TypeCheck.TypeGraph
@@ -282,14 +283,17 @@ executeConstraint env cons@(PowersetTo srcPnt destPnt) = do
       let destScheme' = fmap (\ub -> SType ub lb2 description2) (tryIntersectTypes env (powersetType ub1) ub2 "executeConstraint PowersetTo")
       let env' = setScheme env destPnt destScheme' "PowersetTo"
       ([cons | not (isSolved destScheme')], destScheme /= destScheme', env')
-executeConstraint env@FEnv{feClassMap} cons@(UnionOf parentPnt childrenPnts) = do
+executeConstraint env@FEnv{feClassMap} cons@(UnionOf parentPnt childrenM) = do
   let parentScheme = descriptor env parentPnt
-  let tcresChildrenSchemes = fmap (descriptor env) childrenPnts
+  let tcresChildrenSchemes = fmap (descriptor env . getPnt) childrenM
   case sequenceT (parentScheme, sequence tcresChildrenSchemes) of
     TypeCheckResE _ -> ([], False, env)
-    TypeCheckResult _ (SVar _ parentPnt', _) -> executeConstraint env (UnionOf parentPnt' childrenPnts)
+    TypeCheckResult _ (SVar _ parentPnt', _) -> executeConstraint env (UnionOf parentPnt' childrenM)
     TypeCheckResult notes (SType pub plb pdesc, childrenSchemes) -> do
-      let (chUb, chLb) = (\(ub, lb) -> (ub, lb)) $ foldr (\(SType ub1 lb1 _) (ub2, lb2) -> (unionType feClassMap ub1 ub2, unionType feClassMap lb1 lb2)) (bottomType, bottomType) childrenSchemes
+      let accumulateChild newChild (accUb, accLb) = case newChild of
+            (SType ub lb _, VarMeta _ (PreTyped baseTp)) -> (unionType feClassMap (substituteVars $ intersectTypes feClassMap ub baseTp) accUb, unionType feClassMap lb accLb)
+            _ -> error "Invalid constraint Union accumulateChild"
+      let (chUb, chLb) = foldr accumulateChild (bottomType, bottomType) (zip childrenSchemes childrenM)
       case equalizeSTypes env ((pub, plb, pdesc), (chUb, chLb, "")) "executeConstraint UnionOf" of
         TypeCheckResult notes2 (parentST', _) -> do
           let parentScheme' = TypeCheckResult (notes ++ notes2) parentST'

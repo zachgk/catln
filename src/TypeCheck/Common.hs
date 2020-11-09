@@ -70,7 +70,7 @@ data Constraint
   | AddArg (Pnt, String) Pnt
   | AddInferArg Pnt Pnt -- AddInferArg base arg
   | PowersetTo Pnt Pnt
-  | UnionOf Pnt [Pnt]
+  | UnionOf Pnt [VarMeta]
   deriving (Eq, Show, Generic, ToJSON)
 
 data SConstraint

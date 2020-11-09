@@ -68,7 +68,7 @@ showCon env (VarEq (p1, name) p2) = showConHelper env (\s1 s2 -> SVarEq (s1, nam
 showCon env (AddArg (p1, argName) p2) = showConHelper env (\s1 s2 -> SAddArg (s1, argName) s2) p1 p2
 showCon env (AddInferArg p1 p2) = showConHelper env SAddInferArg p1 p2
 showCon env (PowersetTo p1 p2) = showConHelper env SPowersetTo p1 p2
-showCon env (UnionOf p1 p2s) = SUnionOf (descriptor env p1) (map (descriptor env) p2s)
+showCon env (UnionOf p1 p2s) = SUnionOf (descriptor env p1) (map (descriptor env . getPnt) p2s)
 
 showPrgm :: FEnv -> VPrgm -> SPrgm
 showPrgm env (objMap, classMap) = (H.fromList $ map (showObjArrows env) objMap, classMap)
