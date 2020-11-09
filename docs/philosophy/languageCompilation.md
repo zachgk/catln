@@ -2,13 +2,13 @@
 
 In order to have an effective compiler system, I would argue that as much reasoning should be pushed into the language as possible. The primary reason is that the compiler is relatively fixed. It can only be improved periodically while changes can be easily made to the code that is run.
 
-The other key difference is that the compiler only has a relatively small knowledge about the program. While many optimizations can be made without it, plenty require it. The problematic requirement has typically been that there is no way for the language to really reason about the code. In Catln, the type properties provide a sufficient reasoning ability for much of the necessary things that compilers typically do. All that should be left are more fundamental operations based on the language system itself.
+The other key difference is that the compiler only has a relatively small knowledge about the program. It is possible to understand some basic domains of code like numbers, strings, and lists, it is much more limited compared to all of the custom types that are created. While many optimizations can be made without it, plenty require it. The problematic requirement has typically been that there is no way for the language to really reason about the code. In Catln, the type properties provide a sufficient reasoning ability for much of the necessary things that compilers typically do. All that should be left are more fundamental operations based on the language system itself.
 
 The other direction is within the area typically thought of as compiler plugins. It should be possible to develop these within the bounds of the language itself as well. Here are some of the key "plugin" directions I envision:
 
 ## Optimization Rules
 
-Many rules for optimization can be embedded within the language itself. While many optimization rules are strictly based on the structure of the code, others require knowledge of the types themselves. The largest way to accomplish this is through [multiple level functions](typeSystem.md).
+Many rules for optimization can be embedded within the language itself. While many optimization rules are strictly based on the structure of the code, others require knowledge of the types themselves. The largest way to accomplish this is through [multiple level functions](basics.md).
 
 ## Imports
 
@@ -16,7 +16,7 @@ One important feature of a file of code is to interact with external sources of 
 
 The standard code import would have to either be built-in or part of the standard library. It should allow importing another Catln file into the scope of the current file. Remember that the language consists of essentially objects and arrows. So, the objects and arrows of the other file are brought into the current file.
 
-In addition, I may add an additional import type of dependencies. These differ from a standard import in terms of the strictness. Bad formatting or warnings shouldn't be allowed within the main code, but could be excused in dependencies. They would also be excluded from coverage metrics and it may be worth skipping tests directed at dependencies as well.
+In addition, I may add an additional import type for dependency Catln code. These differ from a standard import in terms of the strictness. Bad formatting or warnings shouldn't be allowed within the main code, but could be excused in dependencies. They would also be excluded from coverage metrics and it may be worth skipping tests directed at dependencies as well.
 
 Beyond this, the same idea of "importing" could be used as a general system of creating objects and arrows as prerequisites for the code in the file. For example, a static json file could be "imported" into the type system as a JSON object. Then, the contents of the file can be used while verifying through the type system that the code matches the file. It could also import things like a text file as a string or a static image to return from a web server.
 
@@ -34,7 +34,7 @@ Potentially the most powerful area is by changing the compiler targets. It is st
 
 However, there is another way to consider it. The main function of the program has the following signature `main<IO>(List[String] args) -> IO`. It we create a type `CatlnLLVMExecutable`, the final compiler stages could be described as an implicit conversion from `IO -> CatlnLLVMExecutable`. This implicit could be written within the standard library instead of the compiler.
 
-While it is possible that the code will be more difficult, it shouldn't be too large of a difference. It shouldn't be crazy given the power of implicit conversions, multi-level functions, and macros. It should end up fairly similar to simply writing it in catln to begin with.
+While it is possible that the code will be more difficult, it shouldn't be too large of a difference. It shouldn't be crazy given the power of implicit conversions, multi-level functions, and macros and will end up fairly similar to simply writing it in catln to begin with.
 
 There are a number of benefits to this approach. First, it means that the compiler becomes extendable and additional libraries can interact with the compiler types and classes. By using [abstract choices](choice.md), whole compiler modules can be replaced wholesale if desired. The compiler can also be configured at a high granularity using the same systems as annotation configuration files that specify the **how** details of the code.
 

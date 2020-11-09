@@ -23,6 +23,8 @@ sort(List lst) -> List = ... // selection sort
 
 When you call sort normally, it can actually use any of those definitions. This is in fact the default function calling state in Catln. Fortunately, the definitions in this case should all be equal so it requires even less concern from users of the functions. Instead of just relying on this, it can also be verified by using [arrow testing](arrowTesting.md).
 
+Another way to think of this is that a function signature contains both an abstract signature and a concrete definition. When you make calls, you always use the abstract signature. Then, the code is abstracted over all of these choices.
+
 ## Class Choices
 
 For cases where choices may not be equal, a class is used instead of an object. Consider this example:

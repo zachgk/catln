@@ -25,7 +25,7 @@ Types can also intersect by using type properties like `List_sorted(True)_length
 
 While objects support data and functions, arrows enable behavior. Each arrow matches an input type and converts it into an output type such as `addInts(Int left, Int right) -> Int`. A function definition would create both an object to build the function call and an arrow to execute it.
 
-The arrows are very flexible. They can have overlapping input types such as `sqrt(Num val) -> Optional<Num>` and `sqrt(Num_gte(0) val) -> Num`. It can even produce a completely different output type from the same input such as `sqrt(Num val) -> Complex<Num>`. Arrows can also match patterns that have multiple levels such as `++(String left, right=++(left=rl, right=rr)) = concat([left, rl, rr])`. [See more about arrows](philosophy/typeSystem.md).
+The arrows are very flexible. They can have overlapping input types such as `sqrt(Num val) -> Optional<Num>` and `sqrt(Num_gte(0) val) -> Num`. It can even produce a completely different output type from the same input such as `sqrt(Num val) -> Complex<Num>`. Arrows can also match patterns that have multiple levels such as `++(String left, right=++(left=rl, right=rr)) = concat([left, rl, rr])`. [See more about arrows](philosophy/basics.md).
 
 That leaves the question of when arrows should be applied and which arrows should be applied. Arrows are applied automatically by the compiler without any specific call by the user. The arrows which are valid in any particular location are determined during type inference based on the inputs and outputs. This leaves the question of which valid arrows to apply for the best performance. Essentially, this makes the programs produced abstracted over the choice of arrows.
 

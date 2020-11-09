@@ -1,4 +1,4 @@
-# Type System
+# Basics
 
 The fundamental data structure in catln is a named tuple of the format `tupleType(argTypeA argNameA = argValA, argTypeB argNameB = argValB, ...)`. As the arguments can themselves be tuples, this forms a typed tree structure.
 
@@ -16,7 +16,7 @@ addInts(Int left, Int right) -> Int
 ```
 This is an object that consists of a single product with two arguments. For now, ignore the return value.
 
-If you overload a function, it creates two objects.
+If you overload a function, it creates two objects that share the same name, but with different arguments.
 ```
 add(Int left, Int right) -> Int
 add(Float left, Float right) -> Float
@@ -27,11 +27,9 @@ It is also possible to create a data type as an object. Each data declaration al
 data ComplexInt(Int real, Int irrational)
 ```
 
-If you noticed earlier, it is possible to have multiple objects that share the same name. The objects can be thought of like a pattern that is matched against tuples. Each object also can correspond to any number of arrows that are applied if the pattern matches. So, there is also no problem of having multiple objects match the same tuple since it just means all the arrows from all matching objects apply.
-
 ## Type Classes
 
-Along with objects, Catln also has type classes. Each type class corresponds to the combination of one or more objects. It is essentially a sum of products. The type class can be thought of as a boolean property where a tuple has a set of type classes that it matches.
+Along with objects, Catln also has type classes. Each type class corresponds to the combination of one or more objects. If each object is a product, the type class is a union of products. The type class can also be thought of as a boolean property where a tuple has a set of type classes that it matches.
 
 Type classes can be used to represent common properties and behaviors across multiple objects. It is analogous to enums, interfaces, and parent classes in object oriented classes. It also corresponds to both sum types and type classes in Haskell.
 
@@ -42,25 +40,31 @@ data OptionalInt = Some(Int val) | Nothing
 
 Because they are fixed, sealed type classes can be used for pattern matching and enums.
 
-Unsealed type classes are used to represent sums that can be extended later. This corresponds to the interface or type class.
+Unsealed type classes are used to represent unions that can be extended later. This corresponds to the interface or type class.
 
 ```
 class Show
-instance String of Show
-
 show(Show s) -> String
+
+instance String of Show
 show(String s) = s
+
+instance Boolean of Show
+show(True) = "True"
+show(False) = "False"
 ```
 
-Here, a new class called show is declared. An instance, String, is also made of the show class.
+Here, a new class called show is declared.
 
-Then, the function show is declared which should show all items of type show. Note that this syntax is a generic function declaration. The compiler will verify that all appropriate definitions exist to fulfill a claim made within all declarations. So, this syntax can also be used outside of type classes. Here, it then requires that a definition is provided for the only instance, String, which is given.
+Then, the function `show` is declared which should show all items of type show. Note that this syntax is a generic function declaration. The compiler will verify that all appropriate definitions exist to fulfill a claim made within the declaration. So, this syntax can also be used outside of type classes.
+
+Next, two instances of the `Show` class are added: String and Boolean. Each must also fulfill the `show` definition as they have been added to the domain of the function.
 
 It is also possible to have a class be an instance of another class. For example, all classes which are comparable also have the equality class. No special syntax is required to handle function as it merely requires that all appropriate declarations are fulfilled.
 
 Just like Haskell, types are made instances of classes separately from their construction. For your own types, this is not important. However, this feature becomes useful when working with dependencies that are more difficult to change. You can add additional type classes to types within those dependencies, including types within the standard library.
 
-Another idea worth mentioning is that type classes, sealed or unsealed, represent general union types. The only effect that sealing a type class has is to throw a compiler error if you try to extend one.
+Another idea worth mentioning is that type classes, sealed or unsealed, represent general union types. The only effect that sealing a type class has is to throw a compiler error if you try to extend one. The implementation, otherwise, is completely identical.
 
 ## Generics
 
@@ -70,7 +74,7 @@ add<Numeric $T>($T left, $T right) -> $T
 
 data Complex<Numeric $T>($T real, $T irrational)
 
-data Optional<$T> = Some($T val) | Nothing
+class Optional<$T> = Some($T val) | Nothing
 ```
 
 The type variables are written within angle braces, begin with a dollar sign and a capital letter. Here, several of them require that the type variable be instances of the Numeric type class.
@@ -81,42 +85,91 @@ They behave fairly straightforwardly in that they simply increase what the objec
 
 The other key design feature of the type system is type properties. Type properties are attached to types or typeclasses and add additional metadata about them. The goal of the type checker is to infer the type properties when possible and use them to better inform the choice of objects and arrows.
 
-For example, the `List` type might have a property `List_length(Int)`. This can be used to change the return value of the `head` function depending on the inferred length of the list:
+For example, the `List` type might have a property `List_length<Int>`. This can be used to change the return value of the `head` function depending on the inferred length of the list:
 
 ```
 List<$T>.head -> Optional<$T>
 List_length<Int_gt(0)><$T>.head -> $T
 ```
 
-Now, calling the head function on a list will give you an optional value regardless of whether the length is known but a direct value if it is known. Therefore, you can directly use the value when it is known to be safe without writing unnecessary code to handle an impossible `Nothing` condition. When the length can't be inferred, then you do have to handle the very real `Nothing` condition. If it can be inferred, you can still treat it as an `Optional`, but it will throw a compiler warning because the `Nothing` handling code is unreachable.
+Now, calling the head function on a list can give you either an optional or direct value. Therefore, you can directly use the value when it is known to be safe without writing unnecessary code to handle an impossible `Nothing` condition. When the length can't be inferred, then you do have to handle the very real `Nothing` condition. If it can be inferred, you can still treat it as an `Optional`, but it will throw a compiler warning because the `Nothing` handling code is unreachable.
 
 For all lists, you can also assume that the length is at least 0. This leads to the relationship:
 ```
 List -> List_length<Int_gt(0)>
 ```
 
-In order for this to work, it is important to describe how various arrows affect the type properties. For example:
+In addition, it is important to describe how various functions and arrows affect the type properties. For example:
 ```
 List_length<Int_gt(a)>.concat(List_length<Int_gt(b)>) -> List_length<Int_gt(a+b)>
 ```
 
 Rules defined like this can enable the compiler to infer type properties even when they are not explicitly declared. Higher level functions can use these rules to automatically compute the type properties of return values.
 
-Type properties can also be established by using conditional statements, pattern matching, and [assertions](assertions.md).
+To clarify, type properties can accept an input either as a type or an expression. Types, like usual, are provided using `<>` while expressions use `()`. When they are compared, it checks using the type of the expression and the direct types.
 
 I recommend thinking about type properties in terms of sets of values. Each object and type class represent a set of possible values. Then, the type properties further restrict the set of possible values of the type into a subset of the original. This allows more information of what is known about various data types to be propagated through the program and used for both static analysis and optimization.
+
+It is also possible to use type properties for more abstract or computed values. You could add a `String_hasPassword<Boolean>` property to help check whether it is possible that a password is contained somewhere in it. This could be used to sanitize the results before saving in a database or sending to a browser. Another possible property would be something like `HTML_classList<List<$T=String>>`. This property can be used to compute the possible classes an HTML element could have, useful for pruning the CSS file.
 
 ## Arrows
 
 An arrow represents a conversion from one data tuple to an expression (this is the same as one data tuple to another data tuple). Each arrow consists of the Object it applies to, the resulting expression (declarations are written as arrows without an expression), a conditional guard, and possible compiler annotations. See [more](typeTheory.md).
 
+The objects can be thought of like a pattern that is matched against tuples. Each object then corresponds to zero or more arrows that are applied if the pattern matches (zero for pure data type). So, there is also no problem of having multiple objects match the same tuple since it just means all the arrows from all matching objects apply.
+
+Arrows are created by providing either a declaration or definition. A declaration features the object (or pattern) on the left side and the resulting type on the right side. It states that there should exist a definition for this type, but doesn't explicitly state what it is.
+
+```
+show(Show s) -> String
+```
+
+A definition, unlike a declaration, does return a value. The expression on the right side of the `=` is the tuple that is returned as a result of the arrow. It can involve sub-definitions and sub-declarations as well as arguments from the pattern matching on the left hand side of the `=`.
+
+```
+not(val=True) = False
+not(val=False) = True
+```
+
+Both a declaration and definition create two components: an object and an arrow.
+
+## True Statements
+
+The final major syntactic structure is an implication. The purpose of the implication is to support true statements. For example, consider this simple absolute value function:
+
+```
+abs(Int i) = if i >= 0
+               then i
+               else -i
+```
+
+This definition has a conditional "if" statement that branches the code based on the definition of `i`. However branching the code is also the process of learning about `i`. While `i` can be any integer in the function at large, we know it is limited to `Int_gte(0)` within the then branch. The reason we know this is because within the branch we can further assume that `i >= 0`. Likewise, we know within the else branch that `i` is of type `Int_lt(0)` because `not(i >= 0)`.
+
+To convert between expressions and the type properties that they imply are implication statements. Here are some examples:
+
+```
+// the left part of a true boolean expression is also a true statement
+operator&(Boolean l) .: l
+
+// the right part of a true boolean expression is also a true statement
+operator&(Boolean r) .: r
+
+// the left side of a >= has type Int_gte(r)
+operator>=(Int l, Int r) .: l :: Int_gte(r)
+
+// the right side of a >= has type Int_lt(l)
+operator>=(Int l, Int r) .: r :: Int_lt(l)
+```
+
+These implications are used to adjust the uses of a type. The support for conjunction of true statements works like defined in the example above. A disjunction can still be represented by combining the information into the object containing several types. For a function definition, this is typically the calling function would contain the disjunction information about it's arguments.
+
 ## Other Type System Features
 
-Following the above definitions, there are several interesting possibilities worth bringing attention to.
+Following the above definitions, there are several interesting possibilities worth bringing attention to. These are not additional language features, but cases within the above features that are worthy of attention.
 
 ### Multiple Return Values
 
-When defining a function, you can use either function overloading and/or default arguments like other languages. Unlike other languages, a function can accept the same arguments and return different return values.
+When defining a function, you can use either function overloading and/or default arguments like other languages. Unlike them, a function can accept the same arguments and return different return values.
 
 For example, a `sqrt` function might return `Optional<Number>` where it can only be computed if the input is at least 0. It could also return a `Complex<Number>` including the irrational component. Either of these are reasonable return values for the function.
 
@@ -126,14 +179,16 @@ Furthermore, implicit conversions mean that multiple return values would be the 
 
 ### Multiple level functions
 
-The other useful type system feature is the use of multi-level function definitions. For example:
+Another useful type system feature is the use of multi-level function definitions. For example:
 ```
 String concat(concat(String a, String b), String c) = concat([a, b, c])
 ```
 
 Since functions are tuple trees, multi level functions can be handled naturally by simply matching against multiple levels of the tree at once.
 
-This can be used to resolve potential performance problems like the one above. It is faster to concatenate the multiple strings all at once rather than doing them individually. Other languages have no ability to express this idea and require manual effort by the programmer. In Catln, this ensures that any way that you write your code would be optimized by the optimization rule and get the same performance.
+This can be used to resolve potential performance problems like the one above. It is faster to concatenate the multiple strings all at once rather than doing them individually. Most languages have no ability to express this idea and require manual effort by the programmer. In Catln, this ensures that any way that you write your code would be optimized by the optimization rule and get the same performance.
+
+This feature is also very useful as the backbone of [metaprogramming](metaprogramming.md).
 
 ### Partial Application
 
@@ -145,6 +200,6 @@ finalCall = match val
     False -> baseFunctionCall(arg3=2)
 ```
 
-Once the value is used as the result type (determined through type inference), then the function will actually be called and the result returned. The partial application feature can be used to handle currying and many function manipulation problems.
+Once the value is used as the result type (determined through type inference), then the function will actually be called and the result returned. The partial application feature can be used to handle currying and function manipulation.
 
 One other potential usage of partial applications is to be able to call the function even when it is only partially defined as long as the missing arguments are not used. This is more common in the case of data types. For example, a circle data type given only the radius but not the center location is still sufficient to determine the circle's circumference.

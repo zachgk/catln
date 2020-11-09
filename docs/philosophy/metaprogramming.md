@@ -1,0 +1,17 @@
+# Metaprogramming
+
+A principle for good programming design is that code should live at a single level of abstraction. While that is true for most code, it is not true for all code. If each layer of abstraction represents a domain of knowledge, it is also important to represent how different domains of knowledge interact. Meta programming joins these levels of abstractions.
+
+The ultimate goal of the meta programming is to be able to transform code into something larger. Given code with the core business logic, transform it into an entire cloud architecture. Given code that is high-level and not optimized, convert it into fast low-level machine code (compiling). Take normal code and convert it to use matrix operations. Apply back-propagation for gradient descent to any function.
+
+## Catln meta programming
+
+There are a number of reasons that make Catln unusually effective at meta programming. The first is the tree structure. Like functional programming languages, all values and expressions obey a pure tree structure. This means that making changes can be described using tree rewriting. In an imperative language on the other hand, describing the changes can only be done in terms of the language syntax with string manipulations.
+
+The next reason is that the language, like lisp, uses an identical structure for both data and functions. This property is known as homoiconicity. This means that all of the functions and familiar tools within the language can be used to manipulate the functions as are used to manipulate the data. It also means that both the data and functions can be manipulated with the same syntax and even at the same time. If your macro needs to know the data types to know whether it can be used, it is effortless.
+
+Unlike lisp, Catln does not require the use of quoting and unquoting. Instead of specifying when functions should be treated as code or data, the type inference process can make the determination. This significantly reduces the complexity of making macros by reducing out this burden. Instead, they are able to be identical to standard functions.
+
+Specifically, the normal mechanism for meta programming is a multi-level function definitions (see [basics](basics.md)). The outer level is the macro being applied and the inner level(s) represent the data or functions the macro are being applied to. This can include writing custom macro definitions for particular functions or larger ones using the specialized [macro capabilities](macros.md).
+
+The final, and possibly most important, benefit of catln is through [choice](choice.md). In the area of metaprogramming, I tend to think of it as changing the goal from defining what **should** be done to what **can** be done. Each metaprogramming definition only needs to add possibilities. Then, the choices can be resolved later. In the example of a cloud architecture, there are many choices such as using serverless or horizontal scaling, choosing different database systems, or choosing between service options. When designing the macro, it is hard to know which choices are really right. Instead, each service is just a possibility and choosing services can be deferred for both the heuristics and users.
