@@ -21,6 +21,8 @@ import           GHC.Generics          (Generic)
 
 import Syntax.Types
 import           Text.Printf
+import Data.Aeson.Types (ToJSON)
+import Data.Aeson (ToJSONKey)
 
 newtype Import = Import String
   deriving (Eq, Ord, Show)
@@ -32,15 +34,15 @@ data Constant
   = CInt Integer
   | CFloat Double
   | CStr String
-  deriving (Eq, Ord, Show, Generic, Hashable)
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 data Pattern e m = Pattern (Object m) (Guard e)
-  deriving (Eq, Ord, Show, Generic, Hashable)
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON, ToJSONKey)
 
 data RawTupleArg m
   = RawTupleArgNamed ArgName (RawExpr m)
   | RawTupleArgInfer (RawExpr m)
-  deriving (Eq, Ord, Show, Generic, Hashable)
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 -- Expr before desugar
 data RawExpr m
@@ -51,7 +53,7 @@ data RawExpr m
   | RawIfThenElse m (RawExpr m) (RawExpr m) (RawExpr m)
   | RawMatch m (RawExpr m) (H.HashMap (Pattern (RawExpr m) m) (RawExpr m))
   | RawCase m (RawExpr m) [(Pattern (RawExpr m) m, RawExpr m)]
-  deriving (Eq, Ord, Show, Generic, Hashable)
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 -- Expr (to infer) from desugar to typecheck
 data IExpr m
@@ -59,7 +61,7 @@ data IExpr m
   | IValue m TypeName
   | IArg m ArgName
   | ITupleApply m (m, IExpr m) (Maybe ArgName) (IExpr m) -- the ArgName is optional. Must be inferred if Nothing
-  deriving (Eq, Ord, Generic, Hashable)
+  deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 -- Expr after typechecking
 data Expr m
@@ -67,17 +69,17 @@ data Expr m
   | Value m TypeName
   | Arg m ArgName
   | TupleApply m (m, Expr m) ArgName (Expr m)
-  deriving (Eq, Ord, Generic, Hashable)
+  deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 -- Compiler Annotation
 data CompAnnot e = CompAnnot TypeName (H.HashMap ArgName e)
-  deriving (Eq, Ord, Generic, Hashable)
+  deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 data Guard e
   = IfGuard e
   | ElseGuard
   | NoGuard
-  deriving (Eq, Ord, Generic, Hashable)
+  deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 instance Functor Guard where
   fmap f (IfGuard e) = IfGuard (f e)
@@ -115,12 +117,12 @@ type RawPrgm m = ([FileImport], [RawStatement m]) -- TODO: Include [Export]
 
 type ObjArg m = (m, Maybe (Object m))
 data ObjectBasis = FunctionObj | TypeObj | PatternObj | MatchObj
-  deriving (Eq, Ord, Show, Generic, Hashable)
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 data Object m = Object m ObjectBasis TypeName (H.HashMap TypeVarName m) (H.HashMap ArgName (ObjArg m))
-  deriving (Eq, Ord, Generic, Hashable)
+  deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
 data Arrow e m = Arrow m [CompAnnot e] (Guard e) (Maybe e) -- m is result metadata
-  deriving (Eq, Ord, Generic, Hashable)
+  deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 type ObjectMap e m = (H.HashMap (Object m) [Arrow e m])
 type Prgm e m = (ObjectMap e m, ClassMap) -- TODO: Include [Export]

@@ -22,6 +22,8 @@ import           Data.List
 import           Data.Tuple.Sequence
 import           GHC.Generics          (Generic)
 import           Text.Printf
+import Data.Aeson (ToJSON)
+import Data.Aeson.Types (ToJSONKey)
 
 type Name = String
 
@@ -35,7 +37,7 @@ type TypePropName = Name
 data PartialName
   = PTypeName TypeName
   | PClassName ClassName
-  deriving (Eq, Ord, Show, Generic, Hashable)
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON, ToJSONKey)
 
 type PartialType = (PartialName, H.HashMap TypeVarName Type, H.HashMap (TypeName, TypePropName) Type, H.HashMap ArgName Type)
 type PartialArgsOption = (H.HashMap TypeVarName Type, H.HashMap (TypeName, TypePropName) Type, H.HashMap ArgName Type)
@@ -44,12 +46,12 @@ data Type
   = SumType PartialLeafs
   | TypeVar TypeVarAux
   | TopType
-  deriving (Eq, Ord, Generic, Hashable)
+  deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 data TypeVarAux
   = TVVar TypeVarName
   | TVArg ArgName
-  deriving (Eq, Ord, Show, Generic, Hashable)
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 type Sealed = Bool -- whether the typeclass can be extended or not
 -- TODO: ClassMap should be more granular. Can have class to only a certain object or based on type variables.

@@ -8,14 +8,36 @@
 -- Portability: non-portable
 --
 --------------------------------------------------------------------
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
 
 module WebDocs where
 
 import Web.Scotty
+import Data.Aeson (ToJSON)
 
 import qualified Data.Text.Lazy as T
+import           GHC.Generics          (Generic)
 
-docServe :: String -> IO ()
-docServe fileName = scotty 3000 $
+import           Desugarf         (desFiles)
+import           CRes
+
+data ResSuccess a n = Success a [n]
+  deriving (Generic, ToJSON)
+
+data ResFail n = ResFail [n]
+  deriving (Generic, ToJSON)
+
+maybeJson :: ToJSON a => CRes a -> ActionM ()
+maybeJson (CRes notes r) = json $ Success r (map show notes)
+maybeJson (CErr notes) = json $ ResFail (map show notes)
+
+docServe :: Bool -> String -> IO ()
+docServe includeStd fileName = do
+  maybePrgm <- desFiles $ (fileName : ["std/std.ct" | includeStd])
+  scotty 3000 $ do
     get "/files" $ do
-        json ["File: ", T.pack fileName]
+      json ["File: ", T.pack fileName]
+
+    get "/desugar" $ do
+      maybeJson maybePrgm

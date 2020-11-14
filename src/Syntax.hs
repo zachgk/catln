@@ -25,6 +25,7 @@ import           Text.Printf
 
 import Syntax.Types
 import Syntax.Prgm
+import Data.Aeson (ToJSON)
 
 type ParseErrorRes = ParseErrorBundle String Void
 
@@ -83,10 +84,10 @@ instance Show (ResArrowTree f) where
 
 -- Metadata for the Programs
 newtype PreTyped = PreTyped Type
-  deriving (Eq, Ord, Generic, Hashable)
+  deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 newtype Typed = Typed Type
-  deriving (Eq, Ord, Generic, Hashable)
+  deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 instance Show PreTyped where
   show (PreTyped t) = show t

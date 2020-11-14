@@ -13,6 +13,7 @@ import           Eval
 import           TypeCheck
 import qualified Data.Text.Lazy as T
 import Text.Pretty.Simple
+import WebDocs (docServe)
 
 testDir :: String
 testDir = "test/code/"
@@ -99,6 +100,13 @@ mt k = do
      then defaultMain $ runTests True [fileName]
      else error $ printf "invalid test name %s in %s" fileName (show tests)
 
+mtd :: String -> IO ()
+mtd k = do
+  let fileName = testDir ++ k ++ ".ct"
+  tests <- standardTests
+  if elem fileName tests
+     then docServe True fileName
+     else error $ printf "invalid test name %s in %s" fileName (show tests)
 
 mb :: String -> IO ()
 mb k = do
