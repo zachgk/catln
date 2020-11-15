@@ -1,5 +1,28 @@
 import React from 'react';
 
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemText from '@material-ui/core/ListItemText';
+import Card from '@material-ui/core/Card';
+import CardContent from '@material-ui/core/CardContent';
+
+const useStyles = {
+  objDetails: {
+    float: 'right',
+    color: 'gray'
+  },
+  arrow: {
+    background: '#f6'
+  },
+  arrowDeclaration: {
+    padding: 0,
+    fontWeight: 'bold'
+  },
+  arrowExpression: {
+    padding: 0
+  }
+};
+
 class Desugar extends React.Component {
   constructor(props) {
     super(props);
@@ -62,13 +85,13 @@ class Desugar extends React.Component {
 class ObjMap extends React.Component {
   render() {
     return (
-      <ul>
+      <List component="nav">
         {this.props.objMap
          .sort((obj1, obj2) => obj1[0][2] < obj2[0][2])
          .map(obj =>
             <ObjArrows objas={obj} />
         )}
-      </ul>
+      </List>
     );
   }
 }
@@ -83,7 +106,8 @@ class ObjArrows extends React.Component {
       showVars = (
           <span>
           &lt;
-          {Object.keys(vars).map(v => v).join(', ')}
+          {Object.keys(vars).map(v => <>{renderType(vars[v])} {v}</>)
+           .reduce((acc, x) => acc == null ? [x] : <>{acc}, {x}</>, null)}
           &gt;
         </span>);
     }
@@ -93,7 +117,8 @@ class ObjArrows extends React.Component {
       showArgs = (
         <span>
           (
-          {Object.keys(args).map(arg => arg).join(', ')}
+          {Object.keys(args).map(arg => <>{renderType(args[arg][0])} {arg}</>)
+           .reduce((acc, x) => acc == null ? [x] : <>{acc}, {x}</>, null)}
           )
         </span>);
     }
@@ -101,34 +126,41 @@ class ObjArrows extends React.Component {
     let showArrows;
     if(Object.keys(arrows).length > 0) {
       showArrows = (
-        <ul>
+        <div>
           {arrows.map(arrow => <Arrow arrow={arrow} />)}
-        </ul>
+        </div>
       );
     }
 
+    let primary = (<div>
+                   <span> {name}{showVars}{showArgs}</span>
+                   <span style={useStyles.objDetails}>{objBasis} - {renderType(objM)}</span>
+                   </div>);
+
     return (
-        <li>
-          <span>{name}</span>
-          {showVars}
-          {showArgs}
-          {showArrows}
-        </li>
+        <ListItem divider>
+          <ListItemText primary={primary} secondary={showArrows} />
+        </ListItem>
     );
   }
 }
 
 class Arrow extends React.Component {
   render() {
-    const [arrM, annots, guard, maybeExpr] = this.props.arrow;
+    const [arrM, , guard, maybeExpr] = this.props.arrow;
 
     let showExpr;
     if(maybeExpr) {
       showExpr = ` = ${renderExpr(maybeExpr)}`;
     }
 
+    let header = (<span>{renderGuard(guard)} -> {renderType(arrM)}</span>);
+
     return (
-        <li>{renderGuard(guard)} -> {renderType(arrM)}{showExpr}</li>
+      <Card style={useStyles.arrow}>
+        <CardContent style={useStyles.arrowDeclaration}>{header}</CardContent>
+        <CardContent style={useStyles.arrowExpression}>{showExpr}</CardContent>
+      </Card>
     );
   }
 }
@@ -143,16 +175,18 @@ function renderType(t) {
     let partials = t.contents.map(partialOptions => {
       let [partialName, options] = partialOptions;
       return options.map(partialData => {
-        let [partialVars, partialProps, partialArgs] = partialData;
+        let [partialVars, , partialArgs] = partialData;
 
         let showVars = "";
         if(Object.keys(partialVars).length > 0) {
           showVars = (
-              <span>
+            <span>
               &lt;
-            {Object.keys(partialVars).map(v => v).join(', ')}
+            {Object.keys(partialVars).map(v => <>{renderType(partialVars[v])} {v}</>)
+             .reduce((acc, x) => acc == null ? [x] : <>{acc}, {x}</>, null)}
               &gt;
-            </span>);
+            </span>
+          );
         }
 
         let showArgs = "";
@@ -160,15 +194,17 @@ function renderType(t) {
           showArgs = (
               <span>
               (
-                {Object.keys(partialArgs).map(arg => arg).join(', ')}
+                {Object.keys(partialArgs).map(arg => <>{renderType(partialArgs[arg])} {arg}</>)
+                 .reduce((acc, x) => acc == null ? [x] : <>{acc}, {x}</>, null)}
               )
-            </span>);
+            </span>
+          );
         }
 
-        return `${partialName.contents}${showVars}${showArgs}`;
+        return (<span>{partialName.contents}{showVars}{showArgs}</span>);
       });
     }).flat();
-    return partials.join(' | ');
+    return partials.reduce((acc, x) => acc == null ? [x] : <>{acc} | {x}</>, null);
   default:
     console.error("Unknown renderMeta");
     return "";
