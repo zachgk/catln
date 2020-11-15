@@ -21,6 +21,7 @@ import           GHC.Generics          (Generic)
 
 import           Desugarf         (desFiles)
 import           CRes
+import TypeCheck (typecheckPrgm)
 
 data ResSuccess a n = Success a [n]
   deriving (Generic, ToJSON)
@@ -35,9 +36,15 @@ maybeJson (CErr notes) = json $ ResFail (map show notes)
 docServe :: Bool -> String -> IO ()
 docServe includeStd fileName = do
   maybePrgm <- desFiles $ (fileName : ["std/std.ct" | includeStd])
+
+  let maybeTprgm = maybePrgm >>= typecheckPrgm
+
   scotty 31204 $ do
     get "/files" $ do
       json ["File: ", T.pack fileName]
 
     get "/desugar" $ do
       maybeJson maybePrgm
+
+    get "/typecheck" $ do
+      maybeJson maybeTprgm

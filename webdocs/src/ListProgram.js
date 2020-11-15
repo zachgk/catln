@@ -23,7 +23,7 @@ const useStyles = {
   }
 };
 
-class Desugar extends React.Component {
+class ListProgram extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -35,8 +35,8 @@ class Desugar extends React.Component {
     };
   }
 
-  componentDidMount() {
-    fetch("/desugar")
+  runFetch() {
+    fetch(this.props.dataPath)
       .then(res => res.json())
       .then(
         (result) => {
@@ -64,6 +64,14 @@ class Desugar extends React.Component {
           });
         }
       );
+  }
+
+  componentDidMount() {
+    this.runFetch();
+  }
+
+  componentDidUpdate() {
+    this.runFetch();
   }
 
   render() {
@@ -133,13 +141,13 @@ class ObjArrows extends React.Component {
     }
 
     let primary = (<div>
-                   <span> {name}{showVars}{showArgs}</span>
                    <span style={useStyles.objDetails}>{objBasis} - {renderType(objM)}</span>
+                   <span> {name}{showVars}{showArgs}</span>
                    </div>);
 
     return (
         <ListItem divider>
-          <ListItemText primary={primary} secondary={showArrows} />
+          <ListItemText disableTypography primary={primary} secondary={showArrows} />
         </ListItem>
     );
   }
@@ -228,12 +236,16 @@ function renderGuard(guard) {
 function renderExpr(expr) {
   switch(expr.tag) {
   case "ICExpr":
+  case "CExpr":
     return "" + expr.contents[1].contents;
   case "IValue":
+  case "Value":
     return "" + expr.contents[1];
   case "IArg":
+  case "Arg":
     return "" + expr.contents[1];
   case "ITupleApply":
+  case "TupleApply":
     const [, [,base], arg, subExpr] = expr.contents;
 
     let showArg;
@@ -247,4 +259,4 @@ function renderExpr(expr) {
   }
 }
 
-export default Desugar;
+export default ListProgram;
