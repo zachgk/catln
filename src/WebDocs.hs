@@ -35,7 +35,7 @@ maybeJson (CErr notes) = json $ ResFail (map show notes)
 docServe :: Bool -> String -> IO ()
 docServe includeStd fileName = do
   maybePrgm <- desFiles $ (fileName : ["std/std.ct" | includeStd])
-  scotty 3000 $ do
+  scotty 31204 $ do
     get "/files" $ do
       json ["File: ", T.pack fileName]
 
