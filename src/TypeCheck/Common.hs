@@ -11,6 +11,7 @@
 
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 module TypeCheck.Common where
 
@@ -42,8 +43,16 @@ type Scheme = TypeCheckResult SType
 type Pnt = Int
 
 type EnvValMap = (H.HashMap String VarMeta)
-data FEnv = FEnv (IM.IntMap Scheme) [Constraint] TypeEnv EnvValMap
-  deriving (Eq, Show)
+data FEnv = FEnv { fePnts :: IM.IntMap Scheme
+                 , feCons :: [Constraint]
+                 , feUnionAllObjs :: Pnt -- union of all TypeObj for argument inference
+                 , feUnionTypeObjs :: Pnt -- union of all Object types for function limiting
+                 , feTypeGraph :: TypeGraph
+                 , feClassMap :: ClassMap
+                 , feDefMap :: EnvValMap
+                 } deriving (Eq, Show)
+
+type UnionObj = (Pnt, Pnt) -- a union of all TypeObj for argument inference, union of all Object types for function limiting
 
 data BoundObjs = BoundAllObjs | BoundTypeObjs
   deriving (Eq, Ord, Show, Generic, Hashable)
@@ -146,10 +155,8 @@ type TPrgm = Prgm TExpr TypedMeta
 type TReplRes = ReplRes TypedMeta
 
 -- implicit graph
-type UnionObj = (Pnt, Pnt) -- a union of all TypeObj for argument inference, union of all Object types for function limiting
 type TypeGraphVal = (VObject, VArrow) -- (match object type, if matching then can implicit to type in arrow)
 type TypeGraph = H.HashMap TypeName [TypeGraphVal] -- H.HashMap (Root tuple name for filtering) [vals]
-type TypeEnv = (UnionObj, TypeGraph, ClassMap)
 
 instance Meta VarMeta where
   getMetaType (VarMeta _ p) = getMetaType p
@@ -192,21 +199,21 @@ getPntExpr :: VExpr -> Pnt
 getPntExpr = getPnt . getExprMeta
 
 fLookup :: FEnv -> String -> TypeCheckResult VarMeta
-fLookup (FEnv _ _ _ pmap) k = case H.lookup k pmap of
+fLookup FEnv{feDefMap} k = case H.lookup k feDefMap of
   Just v  -> return v
   Nothing -> TypeCheckResE [GenTypeCheckError $ "Failed to lookup " ++ k]
 
 addConstraints :: FEnv -> [Constraint] -> FEnv
-addConstraints (FEnv pnts oldCons graph defMap) newCons = FEnv pnts (newCons ++ oldCons) graph defMap
+addConstraints env@FEnv{feCons} newCons = env {feCons = (newCons ++ feCons)}
 
 fInsert :: FEnv -> String -> VarMeta -> FEnv
-fInsert (FEnv pnts cons graph pmap) k v = FEnv pnts cons graph (H.insert k v pmap)
+fInsert env@FEnv{feDefMap} k v = env{feDefMap = H.insert k v feDefMap}
 
 fAddTypeGraph :: FEnv -> TypeName -> TypeGraphVal -> FEnv
-fAddTypeGraph (FEnv pnts cons (unionObj, graph, classMap) pmap) k v = FEnv pnts cons (unionObj, H.insertWith (++) k [v] graph, classMap) pmap
+fAddTypeGraph env@FEnv{feTypeGraph} k v = env {feTypeGraph = H.insertWith (++) k [v] feTypeGraph}
 
 tryIntersectTypes :: FEnv -> Type -> Type -> String -> TypeCheckResult Type
-tryIntersectTypes (FEnv _ _ (_, _, classMap) _) a b desc = let c = intersectTypes classMap a b
+tryIntersectTypes FEnv{feClassMap} a b desc = let c = intersectTypes feClassMap a b
                                                             in if isBottomType c
                                                                   then TypeCheckResE [GenTypeCheckError $ "Failed to intersect(" ++ desc ++ "): " ++ show a ++ " --- " ++ show b]
                                                                   else return c
@@ -214,17 +221,17 @@ tryIntersectTypes (FEnv _ _ (_, _, classMap) _) a b desc = let c = intersectType
 -- Point operations
 
 descriptor :: FEnv -> Pnt -> Scheme
-descriptor (FEnv pnts _ _ _) p = pnts IM.! p
+descriptor FEnv{fePnts} p = fePnts IM.! p
 
 equivalent :: FEnv -> Pnt -> Pnt -> Bool
-equivalent (FEnv pnts _ _ _) p1 p2 = (pnts IM.! p1) == (pnts IM.! p2)
+equivalent FEnv{fePnts} p1 p2 = (fePnts IM.! p1) == (fePnts IM.! p2)
 
 fresh :: FEnv -> Scheme -> (Pnt, FEnv)
-fresh (FEnv pnts cons typeEnv pmap) scheme = (pnt', FEnv pnts' cons typeEnv pmap)
+fresh env@FEnv{fePnts} scheme = (pnt', env{fePnts = pnts'})
   where
-    pnt' = IM.size pnts
-    pnts' = IM.insert pnt' scheme pnts
+    pnt' = IM.size fePnts
+    pnts' = IM.insert pnt' scheme fePnts
 
 setDescriptor :: FEnv -> Pnt -> Scheme -> FEnv
-setDescriptor (FEnv pnts cons typeEnv pmap) p s = FEnv pnts' cons typeEnv pmap
-  where pnts' = IM.insert p s pnts
+setDescriptor env@FEnv{fePnts} p s = env{fePnts = pnts'}
+  where pnts' = IM.insert p s fePnts

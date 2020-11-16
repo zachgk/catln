@@ -8,6 +8,7 @@
 -- Portability: non-portable
 --
 --------------------------------------------------------------------
+{-# LANGUAGE NamedFieldPuns #-}
 
 module TypeCheck where
 
@@ -29,18 +30,18 @@ typecheckPrgm pprgm@(_, classMap) = case aux of
     aux :: TypeCheckResult TPrgm
     aux = do
       let baseFEnv = makeBaseFEnv classMap
-      (vprgm, env@(FEnv _ cons _ _)) <- fromPrgm baseFEnv pprgm
-      env' <- runConstraints runConstraintsLimit env cons
+      (vprgm, env@FEnv{feCons}) <- fromPrgm baseFEnv pprgm
+      env' <- runConstraints runConstraintsLimit env feCons
       toPrgm env' vprgm
 
 traceTestPrgm :: PPrgm -> ([TypeCheckError], [(SPrgm, [SConstraint])])
 traceTestPrgm pprgm@(_, classMap) = do
   let baseFEnv = makeBaseFEnv classMap
   case fromPrgm baseFEnv pprgm of
-    TypeCheckResult notes (vprgm, env@(FEnv _ cons _ _)) -> do
+    TypeCheckResult notes (vprgm, env@FEnv{feCons}) -> do
       let sprgm1 = showPrgm env vprgm
-      let scons1 = showConstraints env cons
-      case runConstraints runConstraintsLimit env cons of
+      let scons1 = showConstraints env feCons
+      case runConstraints runConstraintsLimit env feCons of
         TypeCheckResult notes2 env' -> do
           let sprgm2 = showPrgm env' vprgm
           let res = [(sprgm1, scons1), (sprgm2, [])]

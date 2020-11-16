@@ -33,7 +33,15 @@ data TypeBound = BUpper | BLower | BEq
   deriving (Eq)
 
 makeBaseFEnv :: ClassMap -> FEnv
-makeBaseFEnv classMap = FEnv IM.empty [] ((0, 0), H.empty, classMap) H.empty
+makeBaseFEnv classMap = FEnv{
+  fePnts = IM.empty,
+  feCons = [],
+  feUnionAllObjs = 0,
+  feUnionTypeObjs = 0,
+  feTypeGraph = H.empty,
+  feClassMap = classMap,
+  feDefMap = H.empty
+  }
 
 fromMetaNoObj :: FEnv -> TypeBound -> PreMeta -> String -> TypeCheckResult (VarMeta, FEnv)
 fromMetaNoObj env bound m description  = do
