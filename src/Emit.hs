@@ -83,18 +83,21 @@ asOperand _ = error "Does not have type operand"
 
 -- TODO: Add genType with varEnv
 -- TODO: Add genType that is a union of multiple types (with tag)
-genType :: Type -> AST.Type
-genType t | t == intType = i32
-genType t | t == boolType = i1
-genType t | t == floatType = double
-genType t | t == strType = ptr i8
-genType (SumType leafs) = case splitPartialLeafs leafs of
-  [(_, _, _, partialArgs)] -> structType $ H.elems $ fmap genType partialArgs
+genType :: H.HashMap TypeVarName Type -> Type -> AST.Type
+genType _ t | t == intType = i32
+genType _ t | t == boolType = i1
+genType _ t | t == floatType = double
+genType _ t | t == strType = ptr i8
+genType varEnv (SumType leafs) = case splitPartialLeafs leafs of
+  [(_, partialVars, _, partialArgs)] -> structType $ H.elems $ fmap (genType (H.union partialVars varEnv)) partialArgs
   _ -> error "genType does not have a single partial"
-genType t = error $ printf "Unsupported emit genType: %s" (show t)
+genType varEnv (TypeVar (TVVar v)) = case H.lookup v varEnv of
+  Just t -> genType varEnv t
+  Nothing -> error $ printf "Unknown type var in emit genType: %s" (show v)
+genType _ t = error $ printf "Unsupported emit genType: %s" (show t)
 
 genTypeMeta :: TypedMeta -> AST.Type
-genTypeMeta (Typed t) = genType t
+genTypeMeta (Typed t) = genType H.empty t
 
 arrowName :: TArrow -> String
 arrowName arrow = take 6 (printf "%08x" (hash arrow))
