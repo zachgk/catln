@@ -20,7 +20,7 @@ import qualified LLVM.AST                        as AST
 import qualified LLVM.AST.Constant               as C
 import qualified LLVM.AST.Float                  as F
 
-import           Control.Monad.Except
+-- import           Control.Monad.Except
 import qualified Data.ByteString.Short           as SBS
 import qualified Data.ByteString.UTF8            as BSU
 import qualified Data.HashMap.Strict             as H
@@ -94,6 +94,7 @@ genType varEnv (SumType leafs) = case splitPartialLeafs leafs of
 genType varEnv (TypeVar (TVVar v)) = case H.lookup v varEnv of
   Just t -> genType varEnv t
   Nothing -> error $ printf "Unknown type var in emit genType: %s" (show v)
+genType _ TopType = i32 -- TODO: Should compute the top type
 genType _ t = error $ printf "Unsupported emit genType: %s" (show t)
 
 genTypeMeta :: TypedMeta -> AST.Type
@@ -152,7 +153,7 @@ codegenTree env val (ResArrowSingle r) = codegenArrow env val r
 codegenTree _ val ResArrowID = return val
 
 codegenDecl :: Env -> String -> TObject -> ResArrowTree LLVMPrim -> LLVM ()
-codegenDecl env name (Object objM _ _ _ args) tree = define (genTypeMeta objM) (SBS.toShort $ BSU.fromString name) args' blks
+codegenDecl _ name (Object objM _ _ _ args) _ = define (genTypeMeta objM) (SBS.toShort $ BSU.fromString name) args' blks
   where
     args' = map(\(argName, (argM, _)) -> (genTypeMeta argM, AST.Name $ SBS.toShort $ BSU.fromString argName)) $ H.toList args
     blks = createBlocks $ execCodegen [] $ do
@@ -187,13 +188,13 @@ mainObject :: TObject
 mainObject = Object (Typed $ singletonType mainPartial) FunctionObj "main" H.empty (H.singleton "io" (Typed ioType, Nothing))
 
 codegenPrgm :: TPrgm -> LLVM ()
-codegenPrgm tprgm@(objMap, classMap) = case buildPrgm primEnv mainPartial ioType tprgm of
-  CRes _ (rootTree, exEnv) -> do
+codegenPrgm tprgm@(_, classMap) = case buildPrgm primEnv mainPartial ioType tprgm of
+  CRes _ (rootTree, _) -> do
     let env = classMap
-    forM_ (H.keys objMap) $ \obj -> do
-      codegenStruct obj
-    forM_ (H.toList exEnv) $ \(arrow, (obj, tree, _)) -> do
-      codegenDecl env (arrowName arrow) obj tree
+    -- forM_ (H.keys objMap) $ \obj -> do
+    --   codegenStruct obj
+    -- forM_ (H.toList exEnv) $ \(arrow, (obj, tree, _)) -> do
+    --   codegenDecl env (arrowName arrow) obj tree
     codegenDecl env "main" mainObject rootTree
   CErr err -> error $ printf "Build to buildPrgm in codegen: \n\t%s" (show err)
 
