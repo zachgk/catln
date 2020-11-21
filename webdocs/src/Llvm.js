@@ -1,5 +1,7 @@
 import React from 'react';
 
+import SyntaxHighlighter from 'react-syntax-highlighter';
+
 class Llvm extends React.Component {
   constructor(props) {
     super(props);
@@ -57,9 +59,9 @@ class Llvm extends React.Component {
       return <div>Loading...</div>;
     } else {
       return (
-          <pre>
+          <SyntaxHighlighter language="llvm">
             {llvm}
-          </pre>
+          </SyntaxHighlighter>
       );
     }
   }
