@@ -6,6 +6,7 @@ import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import StarIcon from '@material-ui/icons/Star';
 import StarOutlineIcon from '@material-ui/icons/StarOutlined';
+import BuildIcon from '@material-ui/icons/Build';
 import {
   BrowserRouter as Router,
   Switch,
@@ -14,6 +15,7 @@ import {
 } from 'react-router-dom';
 
 import ListProgram from './ListProgram';
+import Llvm from './Llvm';
 
 function App() {
   return (
@@ -29,6 +31,9 @@ function App() {
           <Link to="/">
             <IconButton color="inherit" edge="end"><StarIcon /></IconButton>
           </Link>
+          <Link to="/llvm">
+            <IconButton color="inherit" edge="end"><BuildIcon /></IconButton>
+          </Link>
         </Toolbar>
       </AppBar>
       <div>
@@ -40,6 +45,10 @@ function App() {
           <Route path="/desugar">
             <h2>Desugar</h2>
             <ListProgram dataPath="/desugar" />
+          </Route>
+          <Route path="/llvm">
+            <h2>LLVM</h2>
+            <Llvm />
           </Route>
         </Switch>
       </div>
