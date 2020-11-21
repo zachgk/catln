@@ -18,10 +18,13 @@ import Data.Aeson (ToJSON)
 
 import qualified Data.Text.Lazy as T
 import           GHC.Generics          (Generic)
+import qualified Data.ByteString.UTF8            as BSU
 
 import           Desugarf         (desFiles)
 import           CRes
 import TypeCheck (typecheckPrgm)
+import           Eval (evalMain)
+import Emit (initModule, codegen)
 
 data ResSuccess a n = Success a [n]
   deriving (Generic, ToJSON)
@@ -39,6 +42,16 @@ docServe includeStd fileName = do
 
   let maybeTprgm = maybePrgm >>= typecheckPrgm
 
+  let maybeEvalMainPre = maybeTprgm >>= evalMain
+  evaluated <- case maybeEvalMainPre of
+        CRes _ r -> r
+        CErr _ -> return 999
+
+  let maybeLlvmPre = maybeTprgm >>= return . codegen initModule
+  llvm <- case maybeLlvmPre of
+        CRes _ r -> r
+        CErr _ -> return ""
+
   scotty 31204 $ do
     get "/files" $ do
       json ["File: ", T.pack fileName]
@@ -48,3 +61,10 @@ docServe includeStd fileName = do
 
     get "/typecheck" $ do
       maybeJson maybeTprgm
+
+    get "/eval" $ do
+      json $ Success evaluated ([] :: [String])
+
+    get "/llvm" $ do
+      let llvmStr = BSU.toString llvm
+      json $ Success llvmStr ([] :: [String])
