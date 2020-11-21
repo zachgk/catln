@@ -16,6 +16,7 @@ module Parser where
 import           Control.Applicative            hiding (many, some)
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
+import qualified Data.HashSet        as S
 
 import           Syntax
 import           CRes
@@ -60,3 +61,14 @@ parseRepl s = case runParser (contents p) "<stdin>" s of
                 Right (Left statement)             -> ReplStatement statement
                 Right (Right expr)            -> ReplExpr expr
   where p = try (Left <$> pStatement) <|> try (Right <$> pExpr)
+
+readFiles :: [String] -> IO (CRes [(String, PPrgm)])
+readFiles = aux [] S.empty
+  where
+    aux acc _ [] = return $ return acc
+    aux acc visited (nextToVisit:restToVisit) | S.member nextToVisit visited = aux acc visited restToVisit
+    aux acc visited (nextToVisit:restToVisit) = do
+      f <- readFile nextToVisit
+      case parseFile f of
+        CErr notes -> return $ CErr notes
+        CRes _ prgm@(parsedImports, _) -> aux ((nextToVisit, prgm):acc) (S.insert nextToVisit visited) (parsedImports ++ restToVisit)

@@ -89,19 +89,19 @@ instance Functor Guard where
 data RawDeclSubStatement m
   = RawDeclSubStatementDecl (RawDecl m)
   | RawDeclSubStatementAnnot (CompAnnot (RawExpr m))
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Generic, ToJSON)
 
 data DeclLHS e m = DeclLHS m (Pattern e m)
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Generic, ToJSON)
 
 data RawDecl m = RawDecl (DeclLHS (RawExpr m) m) [RawDeclSubStatement m] (Maybe (RawExpr m))
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Generic, ToJSON)
 
 newtype TypeDef m = TypeDef m
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Generic, ToJSON)
 
 data MultiTypeDef m = MultiTypeDef ClassName (H.HashMap TypeVarName Type) [m]
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Generic, ToJSON)
 
 type RawClassDef = (TypeName, ClassName)
 
@@ -110,10 +110,11 @@ data RawStatement m
   | MultiTypeDefStatement (MultiTypeDef m)
   | TypeDefStatement (TypeDef m)
   | RawClassDefStatement RawClassDef
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Generic, ToJSON)
 
 type FileImport = String
 type RawPrgm m = ([FileImport], [RawStatement m]) -- TODO: Include [Export]
+type RawPrgms m = [(String, RawPrgm m)]
 
 type ObjArg m = (m, Maybe (Object m))
 data ObjectBasis = FunctionObj | TypeObj | PatternObj | MatchObj

@@ -7,6 +7,7 @@ import           Test.Tasty.HUnit
 import           Text.Printf
 
 import CRes
+import           Parser (readFiles)
 import           Desugarf         (desFiles)
 import           Emit             (codegen, initModule)
 import           Eval
@@ -24,32 +25,36 @@ buildDir = "test/build/"
 runTest :: Bool -> String -> TestTree
 runTest includeStd fileName = testCaseSteps fileName $ \step -> do
   step $ printf "Read file %s..." fileName
-  maybePrgm <- desFiles $ (fileName : ["std/std.ct" | includeStd])
-  case maybePrgm of
-    CErr notes -> assertFailure $ "Could not parse and desguar:\n \t" ++ concat (map show notes)
-    CRes _ prgm -> do
-      -- step $ T.unpack $ pShow prgm
-      step "Typecheck..."
-      -- step $ T.unpack $ pShow $ traceTestPrgm prgm
-      case typecheckPrgm prgm of
-        CErr err -> do
-          assertFailure $ "Could not typecheck:\n\n\n\t" ++ intercalate "\n\n\n\t\t" (map (T.unpack . pShow) err)
-        CRes _ tprgm -> do
-          -- step $ T.unpack $ pShow $ tprgm
-          step "Eval tests..."
-          -- step $ T.unpack $ pShow $ evalBuildMain tprgm
-          case evalMain tprgm of
-            CErr notes -> do
-              assertFailure $ "Could not eval:\n\t " ++ intercalate "\n\t" (map show notes)
-            CRes notes io -> do
-              returnValue <- io
-              case (notes, returnValue) of
-                ([], 0) -> return () -- success
-                _ -> assertFailure $ "Bad result for:\n \t " ++ show returnValue ++ "\n \tNotes\t" ++ concat (map show notes)
-          step "Codegen"
-          _ <- codegen initModule tprgm
-          -- step $ T.unpack $ pShow $ cgPrgm
-          step "Done"
+  maybeRawPrgm <- readFiles (fileName : ["std/std.ct" | includeStd])
+  case maybeRawPrgm of
+    CErr notes -> assertFailure $ "Could not parse:\n \t" ++ concat (map show notes)
+    CRes _ rawPrgm -> do
+      -- step $ T.unpack $ pShow rawPrgm
+      case desFiles rawPrgm of
+        CErr notes -> assertFailure $ "Could not desguar:\n \t" ++ concat (map show notes)
+        CRes _ prgm -> do
+          -- step $ T.unpack $ pShow prgm
+          step "Typecheck..."
+          -- step $ T.unpack $ pShow $ traceTestPrgm prgm
+          case typecheckPrgm prgm of
+            CErr err -> do
+              assertFailure $ "Could not typecheck:\n\n\n\t" ++ intercalate "\n\n\n\t\t" (map (T.unpack . pShow) err)
+            CRes _ tprgm -> do
+              -- step $ T.unpack $ pShow $ tprgm
+              step "Eval tests..."
+              -- step $ T.unpack $ pShow $ evalBuildMain tprgm
+              case evalMain tprgm of
+                CErr notes -> do
+                  assertFailure $ "Could not eval:\n\t " ++ intercalate "\n\t" (map show notes)
+                CRes notes io -> do
+                  returnValue <- io
+                  case (notes, returnValue) of
+                    ([], 0) -> return () -- success
+                    _ -> assertFailure $ "Bad result for:\n \t " ++ show returnValue ++ "\n \tNotes\t" ++ concat (map show notes)
+              step "Codegen"
+              _ <- codegen initModule tprgm
+              -- step $ T.unpack $ pShow $ cgPrgm
+              step "Done"
 
 runTests :: Bool -> [String] -> TestTree
 runTests includeStd testFiles = testGroup "Tests" testTrees
@@ -58,24 +63,28 @@ runTests includeStd testFiles = testGroup "Tests" testTrees
 runBuild :: String -> TestTree
 runBuild fileName = testCaseSteps fileName $ \step -> do
   step $ printf "Read file %s..." fileName
-  maybePrgm <- desFiles $ (fileName : ["std/std.ct"])
-  case maybePrgm of
-    CErr notes -> assertFailure $ "Could not parse and desguar:\n \t" ++ concat (map show notes)
-    CRes _ prgm -> do
-      -- step $ T.unpack $ pShow prgm
-      step "Typecheck..."
-      -- step $ T.unpack $ pShow $ traceTestPrgm prgm
-      case typecheckPrgm prgm of
-        CErr err -> do
-          assertFailure $ "Could not typecheck:\n\n\n\t" ++ intercalate "\n\n\n\t\t" (map (T.unpack . pShow) err)
-        CRes _ tprgm -> do
-          -- step $ T.unpack $ pShow $ tprgm
-          step "Eval tests..."
-          -- step $ T.unpack $ pShow $ evalBuildMain tprgm
-          case evalMainb tprgm of
-            CErr notes -> do
-              assertFailure $ "Could not eval:\n\t " ++ intercalate "\n\t" (map show notes)
-            CRes _ _ -> return () -- success
+  maybeRawPrgm <- readFiles (fileName : ["std/std.ct"])
+  case maybeRawPrgm of
+    CErr notes -> assertFailure $ "Could not parse:\n \t" ++ concat (map show notes)
+    CRes _ rawPrgm -> do
+      -- step $ T.unpack $ pShow rawPrgm
+      case desFiles rawPrgm of
+        CErr notes -> assertFailure $ "Could not desguar:\n \t" ++ concat (map show notes)
+        CRes _ prgm -> do
+          -- step $ T.unpack $ pShow prgm
+          step "Typecheck..."
+          -- step $ T.unpack $ pShow $ traceTestPrgm prgm
+          case typecheckPrgm prgm of
+            CErr err -> do
+              assertFailure $ "Could not typecheck:\n\n\n\t" ++ intercalate "\n\n\n\t\t" (map (T.unpack . pShow) err)
+            CRes _ tprgm -> do
+              -- step $ T.unpack $ pShow $ tprgm
+              step "Eval tests..."
+              -- step $ T.unpack $ pShow $ evalBuildMain tprgm
+              case evalMainb tprgm of
+                CErr notes -> do
+                  assertFailure $ "Could not eval:\n\t " ++ intercalate "\n\t" (map show notes)
+                CRes _ _ -> return () -- success
 
 runBuilds :: [String] -> TestTree
 runBuilds testFiles = testGroup "Builds" testTrees

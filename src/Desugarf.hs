@@ -25,7 +25,6 @@ import           Syntax.Prgm
 import           Syntax
 import           CRes
 import           Parser.Syntax
-import           Parser                   (parseFile)
 import           Desugarf.Passes
 
 splitDeclSubStatements :: [PDeclSubStatement] -> ([PDecl], [PCompAnnot])
@@ -269,17 +268,11 @@ desStatements statements = (objMap, classMap)
 finalPasses :: DesPrgm -> DesPrgm
 finalPasses = typeNameToClass
 
-desPrgm :: PPrgm -> IO (CRes DesPrgm)
-desPrgm ([], statements) = return $ return $ desStatements statements
-desPrgm (curImport:restImports, statements) = do
-  f <- readFile curImport
-  case parseFile f of
-    CErr notes -> return $ CErr notes
-    CRes notes (parsedImports, parsedStatements) -> do
-      maybePrgm' <- desPrgm (parsedImports ++ restImports, parsedStatements ++ statements)
-      case maybePrgm' of
-        CErr notes2 -> return $ CErr (notes ++ notes2)
-        CRes notes2 res -> return $ CRes (notes ++ notes2) $ finalPasses res
+desPrgm :: PPrgm -> CRes DesPrgm
+desPrgm (_, statements) = return $ finalPasses $ desStatements statements
 
-desFiles :: [FileImport] -> IO (CRes DesPrgm)
-desFiles imports = desPrgm (imports, [])
+desFiles :: PPrgms -> CRes DesPrgm
+desFiles rawPrgms = desPrgm $ foldr joinPrgms emptyPrgm $ map snd rawPrgms
+  where
+    emptyPrgm = ([], [])
+    joinPrgms (aImports, aStatements) (bImports, bStatements) = (aImports ++ bImports, aStatements ++ bStatements)

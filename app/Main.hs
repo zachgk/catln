@@ -4,7 +4,7 @@ module Main where
 
 import qualified Data.HashMap.Strict as H
 
-import           Desugarf                 (desFiles, desPrgm)
+import           Desugarf                 (desFiles)
 -- import           Emit                     (codegen, initModule)
 import           Eval
 import           Syntax.Types
@@ -22,10 +22,14 @@ import           Data.List                (isPrefixOf)
 import           System.Console.Haskeline
 import           System.Environment
 
-type ReplEnv = [RawStatement PreTyped]
+type ReplEnv = ([RawStatement PreTyped], RawPrgms PreTyped)
 
-replBaseEnv :: ReplEnv
-replBaseEnv = []
+buildReplBaseEnv :: IO ReplEnv
+buildReplBaseEnv = do
+  rawStd <- readFiles ["std/std.ct"]
+  case rawStd of
+    CRes _ r -> return ([], r)
+    CErr _ -> fail "Could not read std"
 
 parsingRepl :: ReplEnv -> String -> IO ReplEnv
 parsingRepl env source = case parseRepl source of
@@ -58,29 +62,33 @@ processDes des = case aux of
       evalMain tprgm
 
 processRepl :: ReplEnv -> String -> IO ReplEnv
-processRepl env source = do
+processRepl env@(envRepl, envStd) source = do
   let res = parseRepl source
   case res of
     ReplErr err -> print err >> return env
     ReplExpr expr -> do
       -- main(IO io) = io.println(msg=expr.toString)
       let exprAsMain = RawDeclStatement $ RawDecl (DeclLHS emptyMeta (Pattern (Object emptyMeta FunctionObj "main" H.empty (H.singleton "io" (PreTyped $ singletonType (PTypeName "IO", H.empty, H.empty, H.empty), Nothing))) NoGuard)) [] (Just $ RawMethods (RawValue emptyMeta "io") [RawTupleApply emptyMeta (emptyMeta, RawValue emptyMeta "println") [RawTupleArgNamed "msg" (RawMethods expr [RawValue emptyMeta "toString"])]])
-      let rawPrgm = (["std/std.ct"], exprAsMain:env)
-      des <- desPrgm rawPrgm
+      let replRawPrgm = (["std/std.ct"], exprAsMain:envRepl)
+      let des = desFiles (("replMain", replRawPrgm):envStd)
       processDes des
       return env
-    ReplStatement s -> return (s:env)
+    ReplStatement s -> return (s:envRepl, envStd)
 
 process :: [String] -> IO ()
 process source = do
-  des <- desFiles source
-  processDes des
+  raw <- readFiles source
+  case raw of
+    CErr err -> print err
+    CRes _ raw' -> processDes (desFiles raw')
 
 processFile :: String -> IO ()
 processFile fname = process [fname, "std/std.ct"]
 
 repl :: IO ()
-repl = runInputT defaultSettings (loop replBaseEnv)
+repl = do
+  replBaseEnv <- buildReplBaseEnv
+  runInputT defaultSettings (loop replBaseEnv)
   where loop env = do
           minput <- getInputLine "eval> "
           case minput of

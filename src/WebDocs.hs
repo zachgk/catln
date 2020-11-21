@@ -25,6 +25,7 @@ import           CRes
 import TypeCheck (typecheckPrgm)
 import           Eval (evalMain)
 import Emit (initModule, codegen)
+import Parser (readFiles)
 
 data ResSuccess a n = Success a [n]
   deriving (Generic, ToJSON)
@@ -38,7 +39,10 @@ maybeJson (CErr notes) = json $ ResFail (map show notes)
 
 docServe :: Bool -> String -> IO ()
 docServe includeStd fileName = do
-  maybePrgm <- desFiles $ (fileName : ["std/std.ct" | includeStd])
+
+  maybeRawPrgm <- readFiles (fileName : ["std/std.ct" | includeStd])
+
+  let maybePrgm = maybeRawPrgm >>= desFiles
 
   let maybeTprgm = maybePrgm >>= typecheckPrgm
 
@@ -55,6 +59,9 @@ docServe includeStd fileName = do
   scotty 31204 $ do
     get "/files" $ do
       json ["File: ", T.pack fileName]
+
+    get "/raw" $ do
+      maybeJson maybeRawPrgm
 
     get "/desugar" $ do
       maybeJson maybePrgm
