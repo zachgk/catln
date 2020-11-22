@@ -47,10 +47,6 @@ class Llvm extends React.Component {
     this.runFetch();
   }
 
-  componentDidUpdate() {
-    this.runFetch();
-  }
-
   render() {
     const { error, isLoaded, llvm } = this.state;
     if (error) {

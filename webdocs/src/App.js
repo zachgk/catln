@@ -7,6 +7,7 @@ import IconButton from '@material-ui/core/IconButton';
 import StarIcon from '@material-ui/icons/Star';
 import StarOutlineIcon from '@material-ui/icons/StarOutlined';
 import BuildIcon from '@material-ui/icons/Build';
+import MenuBookIcon from '@material-ui/icons/MenuBook';
 import {
   BrowserRouter as Router,
   Switch,
@@ -16,6 +17,7 @@ import {
 
 import ListProgram from './ListProgram';
 import Llvm from './Llvm';
+import Docs from './Docs';
 
 function App() {
   return (
@@ -34,6 +36,9 @@ function App() {
           <Link to="/llvm">
             <IconButton color="inherit" edge="end"><BuildIcon /></IconButton>
           </Link>
+          <Link to="/docs">
+            <IconButton color="inherit" edge="end"><MenuBookIcon /></IconButton>
+          </Link>
         </Toolbar>
       </AppBar>
       <div>
@@ -49,6 +54,10 @@ function App() {
           <Route path="/llvm">
             <h2>LLVM</h2>
             <Llvm />
+          </Route>
+          <Route path="/docs">
+            <h2>Docs</h2>
+            <Docs />
           </Route>
         </Switch>
       </div>

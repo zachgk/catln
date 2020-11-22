@@ -6,6 +6,8 @@ import ListItemText from '@material-ui/core/ListItemText';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 
+import {renderGuard, renderType, renderObj} from './Common';
+
 const useStyles = {
   objDetails: {
     float: 'right',
@@ -70,10 +72,6 @@ class ListProgram extends React.Component {
     this.runFetch();
   }
 
-  componentDidUpdate() {
-    this.runFetch();
-  }
-
   render() {
     const { error, isLoaded, objMap } = this.state;
     if (error) {
@@ -107,29 +105,6 @@ class ObjMap extends React.Component {
 class ObjArrows extends React.Component {
   render() {
     const [obj, arrows] = this.props.objas;
-    const [objM, objBasis, name, vars, args] = obj;
-
-    let showVars;
-    if(Object.keys(vars).length > 0) {
-      showVars = (
-          <span>
-          &lt;
-          {Object.keys(vars).map(v => <>{renderType(vars[v])} {v}</>)
-           .reduce((acc, x) => acc == null ? [x] : <>{acc}, {x}</>, null)}
-          &gt;
-        </span>);
-    }
-
-    let showArgs;
-    if(Object.keys(args).length > 0) {
-      showArgs = (
-        <span>
-          (
-          {Object.keys(args).map(arg => <>{renderType(args[arg][0])} {arg}</>)
-           .reduce((acc, x) => acc == null ? [x] : <>{acc}, {x}</>, null)}
-          )
-        </span>);
-    }
 
     let showArrows;
     if(Object.keys(arrows).length > 0) {
@@ -140,10 +115,7 @@ class ObjArrows extends React.Component {
       );
     }
 
-    let primary = (<div>
-                   <span style={useStyles.objDetails}>{objBasis} - {renderType(objM)}</span>
-                   <span> {name}{showVars}{showArgs}</span>
-                   </div>);
+    let primary = renderObj(obj, useStyles.objDetails);
 
     return (
         <ListItem divider>
@@ -162,7 +134,7 @@ class Arrow extends React.Component {
       showExpr = ` = ${renderExpr(maybeExpr)}`;
     }
 
-    let header = (<span>{renderGuard(guard)} -> {renderType(arrM)}</span>);
+    let header = (<span>{renderGuard(guard, renderExpr)} -&gt; {renderType(arrM)}</span>);
 
     return (
       <Card style={useStyles.arrow}>
@@ -170,66 +142,6 @@ class Arrow extends React.Component {
         <CardContent style={useStyles.arrowExpression}>{showExpr}</CardContent>
       </Card>
     );
-  }
-}
-
-function renderType(t) {
-  switch(t.tag) {
-  case "TopType":
-    return "TopType";
-  case "TypeVar":
-    return t.contents.contents;
-  case "SumType":
-    let partials = t.contents.map(partialOptions => {
-      let [partialName, options] = partialOptions;
-      return options.map(partialData => {
-        let [partialVars, , partialArgs] = partialData;
-
-        let showVars = "";
-        if(Object.keys(partialVars).length > 0) {
-          showVars = (
-            <span>
-              &lt;
-            {Object.keys(partialVars).map(v => <>{renderType(partialVars[v])} {v}</>)
-             .reduce((acc, x) => acc == null ? [x] : <>{acc}, {x}</>, null)}
-              &gt;
-            </span>
-          );
-        }
-
-        let showArgs = "";
-        if(Object.keys(partialArgs).length > 0) {
-          showArgs = (
-              <span>
-              (
-                {Object.keys(partialArgs).map(arg => <>{renderType(partialArgs[arg])} {arg}</>)
-                 .reduce((acc, x) => acc == null ? [x] : <>{acc}, {x}</>, null)}
-              )
-            </span>
-          );
-        }
-
-        return (<span>{partialName.contents}{showVars}{showArgs}</span>);
-      });
-    }).flat();
-    return partials.reduce((acc, x) => acc == null ? [x] : <>{acc} | {x}</>, null);
-  default:
-    console.error("Unknown renderMeta");
-    return "";
-  }
-}
-
-function renderGuard(guard) {
-  switch(guard.tag) {
-  case "IfGuard":
-    return `if (${renderExpr(guard.contents[0])})`;
-  case "ElseGuard":
-    return "else";
-  case "NoGuard":
-    return "";
-  default:
-    console.error("Unkwnon guard: ", guard);
-    return "";
   }
 }
 
@@ -256,6 +168,7 @@ function renderExpr(expr) {
     return `${renderExpr(base)}(${showArg}${renderExpr(subExpr)})`;
   default:
     console.error("Unknown renderExpr", expr);
+    return "";
   }
 }
 
