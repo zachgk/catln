@@ -10,7 +10,7 @@ import {
   useRouteMatch
 } from 'react-router-dom';
 
-import {useApi, Loading, renderType} from './Common';
+import {useApi, Loading, Type} from './Common';
 import {ObjMap} from './ListProgram';
 
 function Constrain() {
@@ -35,7 +35,7 @@ function Main(props) {
       <Route path={`${path}/:curMeta`}>
         <Grid container spacing={2} justify="center">
           <Grid item xs>
-            <ObjMap objMap={prgm[0]} renderMeta={VarMeta}/>
+            <ObjMap objMap={prgm[0]} Meta={VarMeta}/>
           </Grid>
           <Grid item xs>
             <TraceEpochs trace={trace} />
@@ -46,8 +46,9 @@ function Main(props) {
   );
 }
 
-function VarMeta(m) {
-  return <span>{renderType(m[1])}(<Pnt pnt={m[0]} />)</span>;
+function VarMeta(props) {
+  const m = props.data;
+  return <span><Type data={m[1]}/>(<Pnt pnt={m[0]} />)</span>;
 }
 
 function TraceEpochs(props) {
@@ -96,11 +97,11 @@ function Constraint(props) {
   let {constraint} = props;
   switch(constraint.tag) {
   case "EqualsKnown":
-    return (<span><Pnt pnt={constraint.contents[0]}/> == {renderType(constraint.contents[1])}</span>);
+    return (<span><Pnt pnt={constraint.contents[0]}/> == <Type data={constraint.contents[1]}/></span>);
   case "EqPoints":
     return (<span><Pnt pnt={constraint.contents[0]}/> == <Pnt pnt={constraint.contents[1]}/></span>);
   case "BoundedByKnown":
-    return (<span><Pnt pnt={constraint.contents[0]}/> ⊆ {renderType(constraint.contents[1])}</span>);
+    return (<span><Pnt pnt={constraint.contents[0]}/> ⊆ <Type data={constraint.contents[1]}/></span>);
   case "BoundedByObjs":
     return (<span>{constraint.contents[0]} <Pnt pnt={constraint.contents[1]}/></span>);
   case "ArrowTo":
@@ -132,7 +133,7 @@ function Scheme(props) {
     switch(stype.tag) {
     case "SType":
       let [upper, lower, desc] = stype.contents;
-      return <div>{renderType(upper)} ⊇ {desc} ⊇ {renderType(lower)}</div>;
+      return <div><Type data={upper}/> ⊇ {desc} ⊇ <Type data={lower}/></div>;
     case "SVar":
       return <div>Var <Pnt pnt={stype.contents[1]} /></div>;
     default:

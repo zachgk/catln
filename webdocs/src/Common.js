@@ -55,10 +55,11 @@ function Loading(props) {
   }
 }
 
-function renderGuard(guard, exprRenderer) {
+function Guard(props) {
+  const {guard, Expr} = props;
   switch(guard.tag) {
   case "IfGuard":
-    return `if (${exprRenderer(guard.contents[0])})`;
+    return <span>if <Expr expr={guard.contents[0]}/>`</span>;
   case "ElseGuard":
     return "else";
   case "NoGuard":
@@ -69,7 +70,8 @@ function renderGuard(guard, exprRenderer) {
   }
 }
 
-function renderType(t) {
+function Type(props) {
+  let t = props.data;
   switch(t.tag) {
   case "TopType":
     return "TopType";
@@ -86,7 +88,7 @@ function renderType(t) {
           showVars = (
             <span>
               &lt;
-              {tagJoin(Object.keys(partialVars).map(v => <>{renderType(partialVars[v])} {v}</>), ", ")}
+              {tagJoin(Object.keys(partialVars).map(v => <><Type data={partialVars[v]}/> {v}</>), ", ")}
               &gt;
             </span>
           );
@@ -97,7 +99,7 @@ function renderType(t) {
           showArgs = (
               <span>
               (
-                {tagJoin(Object.keys(partialArgs).map(arg => <>{renderType(partialArgs[arg])} {arg}</>), ", ")}
+                {tagJoin(Object.keys(partialArgs).map(arg => <><Type data={partialArgs[arg]}/> {arg}</>), ", ")}
               )
             </span>
           );
@@ -113,7 +115,8 @@ function renderType(t) {
   }
 }
 
-function renderObj(obj, objDetails, renderMeta) {
+function Obj(props) {
+  const {obj, details, Meta} = props;
   const [objM, objBasis, name, vars, args] = obj;
 
   let showVars;
@@ -121,7 +124,7 @@ function renderObj(obj, objDetails, renderMeta) {
     showVars = (
       <span>
         &lt;
-        {tagJoin(Object.keys(vars).map(v => <>{renderMeta(vars[v])} {v}</>), ", ")}
+        {tagJoin(Object.keys(vars).map(v => <><Meta data={vars[v]}/> {v}</>), ", ")}
         &gt;
       </span>);
   }
@@ -131,14 +134,14 @@ function renderObj(obj, objDetails, renderMeta) {
     showArgs = (
       <span>
       (
-        {tagJoin(Object.keys(args).map(arg => <>{renderMeta(args[arg][0])} {arg}</>), ", ")}
+        {tagJoin(Object.keys(args).map(arg => <><Meta data={args[arg][0]}/> {arg}</>), ", ")}
       )
       </span>);
   }
 
   let showObjDetails;
-  if(objDetails) {
-    showObjDetails = (<span style={objDetails}>{objBasis} - {renderMeta(objM)}</span>);
+  if(details) {
+    showObjDetails = (<span style={details}>{objBasis} - <Meta data={objM}/></span>);
   }
 
   return (<span>
@@ -152,7 +155,7 @@ export {
   tagJoin,
   useApi,
   Loading,
-  renderGuard,
-  renderType,
-  renderObj
+  Guard,
+  Type,
+  Obj
 };
