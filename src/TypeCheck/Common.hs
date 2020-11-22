@@ -25,19 +25,20 @@ import           Syntax.Types
 import           Syntax.Prgm
 import           Syntax
 import           Text.Printf
+import Data.Aeson (ToJSON)
 
 data TypeCheckError
   = GenTypeCheckError String
   | AbandonCon SConstraint
   | TupleMismatch TypedMeta TExpr Typed (H.HashMap String TExpr)
   | TCWithMatchingConstraints [SConstraint] TypeCheckError
-  deriving (Eq, Ord, Generic, Hashable)
+  deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 type SplitSType = (Type, Type, String)
 data SType
   = SType Type Type String -- SType upper lower (description in type)
   | SVar TypeVarAux Pnt
-  deriving (Eq, Ord, Generic, Hashable)
+  deriving (Eq, Ord, Generic, Hashable, ToJSON)
 type Scheme = TypeCheckResult SType
 
 type Pnt = Int
@@ -50,12 +51,13 @@ data FEnv = FEnv { fePnts :: IM.IntMap Scheme
                  , feTypeGraph :: TypeGraph
                  , feClassMap :: ClassMap
                  , feDefMap :: EnvValMap
+                 , feTrace :: TraceConstrain
                  } deriving (Eq, Show)
 
 type UnionObj = (Pnt, Pnt) -- a union of all TypeObj for argument inference, union of all Object types for function limiting
 
 data BoundObjs = BoundAllObjs | BoundTypeObjs
-  deriving (Eq, Ord, Show, Generic, Hashable)
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 data Constraint
   = EqualsKnown Pnt Type
@@ -69,7 +71,7 @@ data Constraint
   | AddInferArg Pnt Pnt -- AddInferArg base arg
   | PowersetTo Pnt Pnt
   | UnionOf Pnt [Pnt]
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic, ToJSON)
 
 data SConstraint
   = SEqualsKnown Scheme Type
@@ -83,12 +85,12 @@ data SConstraint
   | SAddInferArg Scheme Scheme
   | SPowersetTo Scheme Scheme
   | SUnionOf Scheme [Scheme]
-  deriving (Eq, Ord, Generic, Hashable)
+  deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 data TypeCheckResult r
   = TypeCheckResult [TypeCheckError] r
   | TypeCheckResE [TypeCheckError]
-  deriving (Eq, Ord, Generic, Hashable)
+  deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 getTCRE :: TypeCheckResult r -> [TypeCheckError]
 getTCRE (TypeCheckResult notes _) = notes
@@ -233,5 +235,26 @@ fresh env@FEnv{fePnts} scheme = (pnt', env{fePnts = pnts'})
     pnts' = IM.insert pnt' scheme fePnts
 
 setDescriptor :: FEnv -> Pnt -> Scheme -> FEnv
-setDescriptor env@FEnv{fePnts} p s = env{fePnts = pnts'}
-  where pnts' = IM.insert p s fePnts
+setDescriptor env@FEnv{fePnts, feTrace} p scheme' = env{fePnts = pnts', feTrace = feTrace'}
+  where
+    scheme = fePnts IM.! p
+    schemeChanged = scheme /= scheme'
+    pnts' = IM.insert p scheme' fePnts
+    feTrace' = if schemeChanged
+      then case feTrace of
+             ((curConstraint, curChanged):curEpoch):prevEpochs -> ((curConstraint, (p, scheme'):curChanged):curEpoch):prevEpochs
+             _ -> error "no epochs in feTrace"
+      else feTrace
+
+
+-- trace constrain
+type TraceConstrain = [[(Constraint, [(Pnt, Scheme)])]]
+
+nextConstrainEpoch :: FEnv -> FEnv
+nextConstrainEpoch env@FEnv{feTrace} = case feTrace of
+  [] -> env
+  prevEpochs -> env{feTrace = ([]:prevEpochs)}
+
+startConstraint :: Constraint -> FEnv -> FEnv
+startConstraint c env@FEnv{feTrace = curEpoch:prevEpochs} = env{feTrace = ((c, []):curEpoch):prevEpochs}
+startConstraint _ _ = error "bad input to startConstraint"

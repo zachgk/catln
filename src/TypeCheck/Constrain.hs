@@ -292,10 +292,11 @@ executeConstraint env@FEnv{feClassMap} cons@(UnionOf parentPnt childrenPnts) = d
 
 executeConstraints :: FEnv -> [Constraint] -> ([([Constraint], Bool)], FEnv)
 executeConstraints env [] = ([], env)
-executeConstraints env (c:cs) = ((a, b):res, env'')
+executeConstraints env1 (c:cs) = ((a, b):res, env4)
   where
-    (a, b, env') = executeConstraint env c
-    (res, env'') = executeConstraints env' cs
+    env2 = startConstraint c env1
+    (a, b, env3) = executeConstraint env2 c
+    (res, env4) = executeConstraints env3 cs
 
 runConstraints :: Integer -> FEnv -> [Constraint] -> TypeCheckResult FEnv
 runConstraints _ env [] = return env
@@ -310,4 +311,4 @@ runConstraints limit env cons = do
   let cons' = concat consList
   if not (or changedList)
     then return env'
-    else runConstraints (limit - 1) env' cons'
+    else runConstraints (limit - 1) (nextConstrainEpoch env') cons'

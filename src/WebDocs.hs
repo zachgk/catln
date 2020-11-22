@@ -22,7 +22,7 @@ import qualified Data.ByteString.UTF8            as BSU
 
 import           Desugarf         (desFiles)
 import           CRes
-import TypeCheck (typecheckPrgm)
+import TypeCheck (typecheckPrgmWithTrace)
 import           Eval (evalMain)
 import Emit (initModule, codegen)
 import Parser (readFiles)
@@ -44,7 +44,9 @@ docServe includeStd fileName = do
 
   let maybePrgm = maybeRawPrgm >>= desFiles
 
-  let maybeTprgm = maybePrgm >>= typecheckPrgm
+  let maybeTprgmWithTrace = maybePrgm >>= typecheckPrgmWithTrace
+
+  let maybeTprgm = fst <$> maybeTprgmWithTrace
 
   let maybeEvalMainPre = maybeTprgm >>= evalMain
   evaluated <- case maybeEvalMainPre of
@@ -65,6 +67,9 @@ docServe includeStd fileName = do
 
     get "/desugar" $ do
       maybeJson maybePrgm
+
+    get "/constrain" $ do
+      maybeJson maybeTprgmWithTrace
 
     get "/typecheck" $ do
       maybeJson maybeTprgm

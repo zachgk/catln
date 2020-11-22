@@ -40,7 +40,8 @@ makeBaseFEnv classMap = FEnv{
   feUnionTypeObjs = 0,
   feTypeGraph = H.empty,
   feClassMap = classMap,
-  feDefMap = H.empty
+  feDefMap = H.empty,
+  feTrace = [[]]
   }
 
 fromMetaNoObj :: FEnv -> TypeBound -> PreMeta -> String -> TypeCheckResult (VarMeta, FEnv)
