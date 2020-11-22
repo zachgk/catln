@@ -46,7 +46,7 @@ docServe includeStd fileName = do
 
   let maybeTprgmWithTrace = maybePrgm >>= typecheckPrgmWithTrace
 
-  let maybeTprgm = fst <$> maybeTprgmWithTrace
+  let maybeTprgm = (\(a, _, _) -> a) <$> maybeTprgmWithTrace
 
   let maybeEvalMainPre = maybeTprgm >>= evalMain
   evaluated <- case maybeEvalMainPre of

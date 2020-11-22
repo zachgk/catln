@@ -81,7 +81,7 @@ class ListProgram extends React.Component {
     } else {
       return (
           <div>
-            <ObjMap objMap={objMap}/>
+            <ObjMap objMap={objMap} renderMeta={renderType}/>
           </div>
       );
     }
@@ -95,7 +95,7 @@ class ObjMap extends React.Component {
         {this.props.objMap
          .sort((obj1, obj2) => obj1[0][2] < obj2[0][2])
          .map(obj =>
-            <ObjArrows objas={obj} />
+           <ObjArrows objas={obj} renderMeta={this.props.renderMeta} />
         )}
       </List>
     );
@@ -110,12 +110,12 @@ class ObjArrows extends React.Component {
     if(Object.keys(arrows).length > 0) {
       showArrows = (
         <div>
-          {arrows.map(arrow => <Arrow arrow={arrow} />)}
+          {arrows.map(arrow => <Arrow arrow={arrow} renderMeta={this.props.renderMeta}/>)}
         </div>
       );
     }
 
-    let primary = renderObj(obj, useStyles.objDetails);
+    let primary = renderObj(obj, useStyles.objDetails, this.props.renderMeta);
 
     return (
         <ListItem divider>
@@ -134,7 +134,7 @@ class Arrow extends React.Component {
       showExpr = ` = ${renderExpr(maybeExpr)}`;
     }
 
-    let header = (<span>{renderGuard(guard, renderExpr)} -&gt; {renderType(arrM)}</span>);
+    let header = (<span>{renderGuard(guard, renderExpr)} -&gt; {this.props.renderMeta(arrM)}</span>);
 
     return (
       <Card style={useStyles.arrow}>
@@ -173,3 +173,6 @@ function renderExpr(expr) {
 }
 
 export default ListProgram;
+export {
+  ObjMap
+};

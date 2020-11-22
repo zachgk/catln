@@ -134,7 +134,7 @@ type SPrgm = Prgm SExpr ShowMeta
 type SReplRes = ReplRes ShowMeta
 
 data VarMeta = VarMeta Pnt PreTyped
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic, ToJSON)
 type VExpr = IExpr VarMeta
 type VCompAnnot = CompAnnot VExpr
 type VGuard = Guard VExpr

@@ -23,9 +23,9 @@ runConstraintsLimit :: Integer
 runConstraintsLimit = 100
 
 typecheckPrgm :: PPrgm -> CRes TPrgm
-typecheckPrgm pprgm = fst <$> typecheckPrgmWithTrace pprgm
+typecheckPrgm pprgm = (\(a, _, _) -> a) <$> typecheckPrgmWithTrace pprgm
 
-typecheckPrgmWithTrace :: PPrgm -> CRes (TPrgm, TraceConstrain)
+typecheckPrgmWithTrace :: PPrgm -> CRes (TPrgm, VPrgm, TraceConstrain)
 typecheckPrgmWithTrace pprgm@(_, classMap) = case aux of
   TypeCheckResult notes res -> CRes (map MkCNote notes) res
   TypeCheckResE notes -> CErr (map MkCNote notes)
@@ -35,7 +35,7 @@ typecheckPrgmWithTrace pprgm@(_, classMap) = case aux of
       (vprgm, env@FEnv{feCons}) <- fromPrgm baseFEnv pprgm
       env'@FEnv{feTrace} <- runConstraints runConstraintsLimit env feCons
       tprgm <- toPrgm env' vprgm
-      return (tprgm, feTrace)
+      return (tprgm, vprgm, feTrace)
 
 traceTestPrgm :: PPrgm -> ([TypeCheckError], [(SPrgm, [SConstraint])])
 traceTestPrgm pprgm@(_, classMap) = do
