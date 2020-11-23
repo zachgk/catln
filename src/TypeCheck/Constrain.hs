@@ -32,7 +32,7 @@ checkScheme :: String -> Scheme -> Scheme
 checkScheme msg (TypeCheckResult notes (SType ub _ desc)) | isBottomType ub = TypeCheckResE (GenTypeCheckError ("Scheme failed check at " ++ msg ++ ": upper bound is bottomType - " ++ desc) : notes)
 checkScheme _ scheme = scheme
 
-setScheme :: FEnv -> Pnt -> Scheme -> String -> FEnv
+setScheme :: FEnv -> VarMeta -> Scheme -> String -> FEnv
 setScheme env p scheme msg = setDescriptor env p (checkScheme msg' scheme)
   where msg' = printf "setScheme %s" msg
 
@@ -285,13 +285,13 @@ executeConstraint env cons@(PowersetTo srcPnt destPnt) = do
       ([cons | not (isSolved destScheme')], destScheme /= destScheme', env')
 executeConstraint env@FEnv{feClassMap} cons@(UnionOf parentPnt childrenM) = do
   let parentScheme = descriptor env parentPnt
-  let tcresChildrenSchemes = fmap (descriptor env . getPnt) childrenM
+  let tcresChildrenSchemes = fmap (descriptor env) childrenM
   case sequenceT (parentScheme, sequence tcresChildrenSchemes) of
     TypeCheckResE _ -> ([], False, env)
     TypeCheckResult _ (SVar _ parentPnt', _) -> executeConstraint env (UnionOf parentPnt' childrenM)
     TypeCheckResult notes (SType pub plb pdesc, childrenSchemes) -> do
       let accumulateChild newChild (accUb, accLb) = case newChild of
-            (SType ub lb _, VarMeta _ (PreTyped baseTp)) -> (unionType feClassMap (substituteVars $ intersectTypes feClassMap ub baseTp) accUb, unionType feClassMap lb accLb)
+            (SType ub lb _, VarMeta _ (PreTyped baseTp) _) -> (unionType feClassMap (substituteVars $ intersectTypes feClassMap ub baseTp) accUb, unionType feClassMap lb accLb)
             _ -> error "Invalid constraint Union accumulateChild"
       let (chUb, chLb) = foldr accumulateChild (bottomType, bottomType) (zip childrenSchemes childrenM)
       case equalizeSTypes env ((pub, plb, pdesc), (chUb, chLb, "")) "executeConstraint UnionOf" of

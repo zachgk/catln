@@ -30,8 +30,12 @@ buildUnionObj env1 objs = do
   let (unionTypeObjs, env3) = fresh env2 $ TypeCheckResult [] $ SType TopType bottomType "unionTypeObjs"
   let (unionAllObjsPs, env4) = fresh env3 $ TypeCheckResult [] $ SType TopType bottomType "unionAllObjsPs"
   let (unionTypeObjsPs, env5) = fresh env4 $ TypeCheckResult [] $ SType TopType bottomType "unionTypeObjsPs"
-  let constraints = [unionObjs unionAllObjs objs, unionObjs unionTypeObjs $ filterTypes objs, PowersetTo unionAllObjs unionAllObjsPs, PowersetTo unionTypeObjs unionTypeObjsPs]
-  let env6 = (\env -> env{feUnionAllObjs=unionAllObjsPs, feUnionTypeObjs=unionTypeObjsPs}) env5
+  let unionAllObjs' = VarMeta unionAllObjs (PreTyped TopType) Nothing
+  let unionTypeObjs' = VarMeta unionTypeObjs (PreTyped TopType) Nothing
+  let unionAllObjsPs' = VarMeta unionAllObjsPs (PreTyped TopType) Nothing
+  let unionTypeObjsPs' = VarMeta unionTypeObjsPs (PreTyped TopType) Nothing
+  let constraints = [unionObjs unionAllObjs' objs, unionObjs unionTypeObjs' $ filterTypes objs, PowersetTo unionAllObjs' unionAllObjsPs', PowersetTo unionTypeObjs' unionTypeObjsPs']
+  let env6 = (\env -> env{feUnionAllObjs=unionAllObjsPs', feUnionTypeObjs=unionTypeObjsPs'}) env5
   addConstraints env6 constraints
                     where
                       unionObjs pnt os = UnionOf pnt $ map (\(Object m _ _ _ _) -> m) os
@@ -80,8 +84,8 @@ reachesPartial env@FEnv{feTypeGraph, feClassMap} partial@(PTypeName partialName,
   schemes <- mapM tryArrow typeArrows
   return $ ReachesLeaf $ catMaybes schemes
   where
-    tryArrow (obj@(Object (VarMeta objP _) _ _ _ _), arr) = do
-      let objScheme = descriptor env objP
+    tryArrow (obj@(Object objM _ _ _ _), arr) = do
+      let objScheme = descriptor env objM
       ubFromScheme env objScheme >>= \objUb -> do
         -- It is possible to send part of a partial through the arrow, so must compute the valid part
         -- If none of it is valid, then there is Nothing
