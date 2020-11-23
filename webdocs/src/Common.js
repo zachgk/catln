@@ -56,10 +56,10 @@ function Loading(props) {
 }
 
 function Guard(props) {
-  const {guard, Expr} = props;
+  const {guard, Expr, showExprMetas, Meta} = props;
   switch(guard.tag) {
   case "IfGuard":
-    return <span>if <Expr expr={guard.contents[0]}/>`</span>;
+    return <span>if <Expr expr={guard.contents} Meta={Meta} showMetas={showExprMetas}/></span>;
   case "ElseGuard":
     return "else";
   case "NoGuard":

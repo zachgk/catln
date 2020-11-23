@@ -35,7 +35,7 @@ function Main(props) {
       <Route path={`${path}/:curMeta`}>
         <Grid container spacing={2} justify="center">
           <Grid item xs>
-            <ObjMap objMap={prgm[0]} Meta={VarMeta}/>
+            <ObjMap objMap={prgm[0]} Meta={VarMeta} showExprMetas={true}/>
           </Grid>
           <Grid item xs>
             <TraceEpochs trace={trace} />
@@ -97,27 +97,27 @@ function Constraint(props) {
   let {constraint} = props;
   switch(constraint.tag) {
   case "EqualsKnown":
-    return (<span><Pnt pnt={constraint.contents[0]}/> == <Type data={constraint.contents[1]}/></span>);
+    return (<span><VarMeta data={constraint.contents[0]}/> k== <Type data={constraint.contents[1]}/></span>);
   case "EqPoints":
-    return (<span><Pnt pnt={constraint.contents[0]}/> == <Pnt pnt={constraint.contents[1]}/></span>);
+    return (<span><VarMeta data={constraint.contents[0]}/> p== <VarMeta data={constraint.contents[1]}/></span>);
   case "BoundedByKnown":
-    return (<span><Pnt pnt={constraint.contents[0]}/> ⊆ <Type data={constraint.contents[1]}/></span>);
+    return (<span><VarMeta data={constraint.contents[0]}/> ⊆ <Type data={constraint.contents[1]}/></span>);
   case "BoundedByObjs":
-    return (<span>{constraint.contents[0]} <Pnt pnt={constraint.contents[1]}/></span>);
+    return (<span>{constraint.contents[0]} <VarMeta data={constraint.contents[1]}/></span>);
   case "ArrowTo":
-    return (<span><Pnt pnt={constraint.contents[0]}/> -&gt; <Pnt pnt={constraint.contents[1]} /></span>);
+    return (<span><VarMeta data={constraint.contents[0]}/> -&gt; <VarMeta data={constraint.contents[1]} /></span>);
   case "PropEq":
-    return (<span>(<Pnt pnt={constraint.contents[0][0]}/>).{constraint.contents[0][1]} == <Pnt pnt={constraint.contents[1]}/></span>);
+    return (<span>(<VarMeta data={constraint.contents[0][0]}/>).{constraint.contents[0][1]} == <VarMeta data={constraint.contents[1]}/></span>);
   case "VarEq":
-    return (<span>(<Pnt pnt={constraint.contents[0][0]}/>).{constraint.contents[0][1]} == <Pnt pnt={constraint.contents[1]}/></span>);
+    return (<span>(<VarMeta data={constraint.contents[0][0]}/>).{constraint.contents[0][1]} == <VarMeta data={constraint.contents[1]}/></span>);
   case "AddArg":
-    return (<span>(<Pnt pnt={constraint.contents[0][0]}/>)({constraint.contents[0][1]}) == <Pnt pnt={constraint.contents[1]}/></span>);
+    return (<span>(<VarMeta data={constraint.contents[0][0]}/>)({constraint.contents[0][1]}) arg== <VarMeta data={constraint.contents[1]}/></span>);
   case "AddInferArg":
-    return (<span>(<Pnt pnt={constraint.contents[0]}/>)(?) == <Pnt pnt={constraint.contents[1]}/></span>);
+    return (<span>(<VarMeta data={constraint.contents[0]}/>)(?) iarg== <VarMeta data={constraint.contents[1]}/></span>);
   case "PowersetTo":
-    return (<span>P(<Pnt pnt={constraint.contents[0]}/>) == <Pnt pnt={constraint.contents[1]}/></span>);
+    return (<span>P(<VarMeta data={constraint.contents[0]}/>) ps== <VarMeta data={constraint.contents[1]}/></span>);
   case "UnionOf":
-    return (<span>UnionOf <Pnt pnt={constraint.contents[0]} /></span>);
+    return (<span>UnionOf <VarMeta data={constraint.contents[0]} /></span>);
   default:
     console.error("Unknown renderConstraint", constraint);
     return "";
@@ -128,19 +128,8 @@ function Scheme(props) {
   let {scheme} = props;
   switch (scheme.tag) {
   case "TypeCheckResult":
-    let stype = scheme.contents[1];
-
-    switch(stype.tag) {
-    case "SType":
-      let [upper, lower, desc] = stype.contents;
-      return <div><Type data={upper}/> ⊇ {desc} ⊇ <Type data={lower}/></div>;
-    case "SVar":
-      return <div>Var <Pnt pnt={stype.contents[1]} /></div>;
-    default:
-      console.error("Unknown stype");
-      return "";
-    }
-
+    let [upper, lower, desc] = scheme.contents[1];
+    return <div><Type data={upper}/> ⊇ {desc} ⊇ <Type data={lower}/></div>;
   case "TypeCheckResE":
     return <pre>{JSON.stringify(scheme.contents, null, 2)}</pre>;
   default:

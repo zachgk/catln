@@ -34,10 +34,7 @@ data TypeCheckError
   | TCWithMatchingConstraints [SConstraint] TypeCheckError
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
-type SplitSType = (Type, Type, String)
-data SType
-  = SType Type Type String -- SType upper lower (description in type)
-  | SVar TypeVarAux VarMeta
+data SType = SType Type Type String -- SType upper lower (description in type)
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 type Scheme = TypeCheckResult SType
 
@@ -174,7 +171,6 @@ instance Show TypeCheckError where
 
 instance Show SType where
   show (SType upper lower desc) = concat [show upper, " ⊇ ", desc, " ⊇ ", show lower]
-  show (SVar varName p) = printf "SVar %s %s" (show p) (show varName)
 
 instance Show SConstraint where
   show (SEqualsKnown s t) = printf "%s == %s" (show s) (show t)
@@ -244,6 +240,19 @@ setDescriptor env@FEnv{fePnts, feTrace} m scheme' = env{fePnts = pnts', feTrace 
              _ -> error "no epochs in feTrace"
       else feTrace
 
+pointUb :: FEnv -> VarMeta -> TypeCheckResult Type
+pointUb env p = do
+  (SType ub _ _) <- descriptor env p
+  return ub
+
+resolveTypeVar :: TypeVarAux -> VarMeta -> TypeCheckResult VarMeta
+resolveTypeVar (TVVar v) (VarMeta _ _ (Just (Object _ _ _ objVars _))) = case H.lookup v objVars of
+  Just m' -> return m'
+  Nothing -> TypeCheckResE [GenTypeCheckError $ "Unknown variable in resolveTypeVar var"]
+resolveTypeVar (TVArg v) (VarMeta _ _ (Just (Object _ _ _ _ objArgs))) = case H.lookup v objArgs of
+  Just (m', _) -> return m'
+  Nothing -> TypeCheckResE [GenTypeCheckError $ "Unknown variable in resolveTypeVar arg"]
+resolveTypeVar _ (VarMeta _ _ Nothing) = TypeCheckResE [GenTypeCheckError $ "Tried to resolve a type var without an object"]
 
 -- trace constrain
 type TraceConstrain = [[(Constraint, [(Pnt, Scheme)])]]

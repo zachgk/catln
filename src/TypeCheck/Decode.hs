@@ -40,13 +40,6 @@ matchingConstraint env p (UnionOf p2 p3s) = equivalent env p p2 || any (equivale
 showMatchingConstraints :: FEnv -> VarMeta -> [SConstraint]
 showMatchingConstraints env@FEnv{feCons} matchVar = map (showCon env) $ filter (matchingConstraint env matchVar) feCons
 
-pointUb :: FEnv -> VarMeta -> TypeCheckResult Type
-pointUb env p = do
-  scheme <- descriptor env p
-  case scheme of
-    (SType ub _ _) -> return ub
-    (SVar _ p') -> pointUb env p'
-
 toMeta :: FEnv -> VarMeta -> String -> TypeCheckResult Typed
 toMeta env@FEnv{feClassMap} m@(VarMeta _ (PreTyped pt) _) _ = case pointUb env m of
   TypeCheckResult notes ub -> case pt of

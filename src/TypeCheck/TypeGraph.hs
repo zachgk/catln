@@ -22,7 +22,6 @@ import           Syntax.Types
 import           Syntax.Prgm
 import           Syntax
 import           TypeCheck.Common
-import           Text.Printf
 
 buildUnionObj :: FEnv -> [VObject] -> FEnv
 buildUnionObj env1 objs = do
@@ -55,11 +54,6 @@ inferArgFromPartial FEnv{feTypeGraph, feClassMap} (PTypeName partialName, partia
     addArg arg = (PTypeName partialName, partialVars, partialProps, H.insertWith (unionType feClassMap) arg TopType partialArgs)
 inferArgFromPartial _ (PClassName _, _, _, _) = bottomType
 
-ubFromScheme :: FEnv -> Scheme -> TypeCheckResult Type
-ubFromScheme _ (TypeCheckResult _ (SType ub _ _))  = return ub
-ubFromScheme env (TypeCheckResult _ (SVar _ p))  = ubFromScheme env (descriptor env p)
-ubFromScheme _ (TypeCheckResE notes) = TypeCheckResE notes
-
 data ReachesTree
   = ReachesTree (H.HashMap PartialType ReachesTree)
   | ReachesLeaf [Type]
@@ -85,8 +79,7 @@ reachesPartial env@FEnv{feTypeGraph, feClassMap} partial@(PTypeName partialName,
   return $ ReachesLeaf $ catMaybes schemes
   where
     tryArrow (obj@(Object objM _ _ _ _), arr) = do
-      let objScheme = descriptor env objM
-      ubFromScheme env objScheme >>= \objUb -> do
+      pointUb env objM >>= \objUb -> do
         -- It is possible to send part of a partial through the arrow, so must compute the valid part
         -- If none of it is valid, then there is Nothing
         let potentialSrc@(SumType potSrcLeafs) = intersectTypes feClassMap (singletonType partial) objUb
@@ -111,17 +104,20 @@ rootReachesPartial env src = do
   let reachedWithId = ReachesTree $ H.singleton src reached
   return (src, reachedWithId)
 
-arrowConstrainUbs :: FEnv -> Type -> Type -> TypeCheckResult (Type, Type)
-arrowConstrainUbs env@FEnv{feUnionAllObjs} TopType dest@SumType{} = do
+arrowConstrainUbs :: FEnv -> Type -> VarMeta -> Type -> TypeCheckResult (Type, Type)
+arrowConstrainUbs env@FEnv{feUnionAllObjs} TopType srcM dest@SumType{} = do
   unionPnt <- descriptor env feUnionAllObjs
   case unionPnt of
     (SType unionUb@SumType{} _ _) -> do
-      (src', dest') <- arrowConstrainUbs env unionUb dest
+      (src', dest') <- arrowConstrainUbs env unionUb srcM dest
       return (src', dest')
     _ -> return (TopType, dest)
-arrowConstrainUbs _ TopType dest = return (TopType, dest)
-arrowConstrainUbs _ (TypeVar v) _ = error $ printf "arrowConstrainUbs typeVar %s" (show v)
-arrowConstrainUbs env (SumType srcPartials) dest = do
+arrowConstrainUbs _ TopType _ dest = return (TopType, dest)
+arrowConstrainUbs env src@(TypeVar v) srcM dest = do
+  src' <- resolveTypeVar v srcM
+  (_, cdest) <- arrowConstrainUbs env (getMetaType src') srcM dest
+  return (src, cdest)
+arrowConstrainUbs env (SumType srcPartials) _ dest = do
   let classMap = feClassMap env
   let srcPartialList = splitPartialLeafs srcPartials
   srcPartialList' <- mapM (rootReachesPartial env) srcPartialList

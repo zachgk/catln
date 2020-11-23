@@ -43,29 +43,17 @@ makeBaseFEnv classMap = FEnv{
   feTrace = [[]]
   }
 
-fromMetaNoObj :: FEnv -> TypeBound -> PreMeta -> String -> TypeCheckResult (VarMeta, FEnv)
-fromMetaNoObj env bound m description  = do
+fromMetaBase :: FEnv -> TypeBound -> Maybe VObject -> PreMeta -> String -> TypeCheckResult (VarMeta, FEnv)
+fromMetaBase env bound obj m description  = do
   let tp = getMetaType m
   let (p, env') = case bound of
         BUpper -> fresh env (TypeCheckResult [] $ SType tp bottomType description)
         BLower -> fresh env (TypeCheckResult [] $ SType TopType tp description)
         BEq -> fresh env (TypeCheckResult [] $ SType tp tp description)
-  return (VarMeta p m Nothing, env')
+  return (VarMeta p m (obj), env')
 
 fromMeta :: FEnv -> TypeBound -> VObject -> PreMeta -> String -> TypeCheckResult (VarMeta, FEnv)
-fromMeta env bound obj m description  = case metaTypeVar m of
-  Just tv@(TVArg argName) -> case H.lookup argName $ formArgMetaMap obj of
-    Just objArgM -> do
-      let (p, env') = fresh env (TypeCheckResult [] $ SVar tv objArgM)
-      return (VarMeta p m (Just obj), env')
-    Nothing -> error $ "Unknown obj arg: " ++ argName
-  _ -> do
-    let tp = getMetaType m
-    let (p, env') = case bound of
-          BUpper -> fresh env (TypeCheckResult [] $ SType tp bottomType description)
-          BLower -> fresh env (TypeCheckResult [] $ SType TopType tp description)
-          BEq -> fresh env (TypeCheckResult [] $ SType tp tp description)
-    return (VarMeta p m (Just obj), env')
+fromMeta env bound obj = fromMetaBase env bound (Just obj)
 
 mapMWithFEnv :: FEnv -> (FEnv -> a -> TypeCheckResult (b, FEnv)) -> [a] -> TypeCheckResult ([b], FEnv)
 mapMWithFEnv env f = foldM f' ([], env)
@@ -188,7 +176,7 @@ fromObjectMap env1 (obj, arrows) = do
 
 fromObjVar :: VarMeta -> String -> FEnv -> (TypeVarName, PreMeta) -> TypeCheckResult ((TypeVarName, VarMeta), FEnv)
 fromObjVar objM prefix env1 (varName, m) = do
-  (m', env2) <- fromMetaNoObj env1 BUpper m (prefix ++ "." ++ varName)
+  (m', env2) <- fromMetaBase env1 BUpper Nothing m (prefix ++ "." ++ varName)
   let env3 = addConstraints env2 [VarEq (objM, varName) m']
   return ((varName, m'), env3)
 
@@ -223,7 +211,7 @@ clearMetaArgTypes p = p
 fromObject :: String -> Bool -> FEnv -> PObject -> TypeCheckResult (VObject, FEnv)
 fromObject prefix isObjArg env (Object m basis name vars args) = do
   let prefix' = prefix ++ "." ++ name
-  (m', env1) <- fromMetaNoObj env BUpper (clearMetaArgTypes m) prefix'
+  (m', env1) <- fromMetaBase env BUpper Nothing (clearMetaArgTypes m) prefix'
   (vars', env2) <- mapMWithFEnvMapWithKey env1 (fromObjVar m' prefix') vars
   let fakeObjForArgs = Object m' basis name vars' H.empty
   (args', env3) <- mapMWithFEnvMapWithKey env2 (addObjArg fakeObjForArgs m' prefix' vars') args
