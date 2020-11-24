@@ -1,0 +1,8 @@
+class ConsList<$T> = Cons<$T>($T head, ConsList<$T> tail) | Nil
+operator::<$T>($T l, ConsList<$T> r) = Cons(head=l, tail=r)
+
+length(this=Nil) = 0
+// TODO: Fix example below which should work without explicit return value
+length(this=Cons(head, tail)) -> Integer = 1 + tail.length
+
+main(IO io) = io.exit(val=Cons(head=5, tail=Cons(head=3, tail=Nil)).length - 2)

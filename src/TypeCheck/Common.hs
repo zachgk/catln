@@ -254,6 +254,15 @@ resolveTypeVar (TVArg v) (VarMeta _ _ (Just (Object _ _ _ _ objArgs))) = case H.
   Nothing -> TypeCheckResE [GenTypeCheckError $ "Unknown variable in resolveTypeVar arg"]
 resolveTypeVar _ (VarMeta _ _ Nothing) = TypeCheckResE [GenTypeCheckError $ "Tried to resolve a type var without an object"]
 
+descriptorResolve :: FEnv -> VarMeta -> TypeCheckResult (VarMeta, SType)
+descriptorResolve env m = do
+  scheme@(SType ub _ _) <- descriptor env m
+  case ub of
+    (TypeVar v) -> do
+      m' <- resolveTypeVar v m
+      descriptorResolve env m'
+    _ -> return (m, scheme)
+
 -- trace constrain
 type TraceConstrain = [[(Constraint, [(Pnt, Scheme)])]]
 
