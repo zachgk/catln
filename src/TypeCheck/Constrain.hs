@@ -36,7 +36,7 @@ setScheme env p scheme msg = setDescriptor env p (checkScheme msg' scheme)
   where msg' = printf "setScheme %s" msg
 
 equalizeSTypes :: FEnv -> (SType, SType) -> String -> TypeCheckResult (SType, SType)
-equalizeSTypes env@FEnv{feClassMap} ((SType ub1 lb1 desc1), (SType ub2 lb2 desc2)) d = do
+equalizeSTypes env@FEnv{feClassMap} (SType ub1 lb1 desc1, SType ub2 lb2 desc2) d = do
   let lbBoth = unionType feClassMap lb1 lb2
   ubBoth <- tryIntersectTypes env ub1 ub2 $ "equalizeSTypes(" ++ d ++ ")"
   if hasType feClassMap lbBoth ubBoth
@@ -52,12 +52,11 @@ updateSchemeProp env@FEnv{feClassMap} (superM, superScheme@(SType superUb superL
       let (env2, super'', sub'') = updateSchemeProp env (superM, super') propName (subM, subScheme)
       let env3 = setScheme env2 superM' super'' "PropEq var super"
       (env3, pure superScheme, sub'')
-    (_, TypeVar v) -> do
-      let (TypeCheckResult _ subM') = resolveTypeVar v subM
-      let (TypeCheckResult _ subScheme') = pure subM' >>= descriptor env
-      let (env2, super'', sub'') = updateSchemeProp env (superM, superScheme) propName (subM, subScheme')
-      let env3 = setScheme env2 subM' sub'' "PropEq var sub"
-      (env3, super'', pure subScheme)
+    (SumType supPartials, TypeVar{}) -> do
+      let supPartialList = splitPartialLeafs supPartials
+      let intersectPartials (supName, supVars, supProps, supArgs) = Just (supName, supVars, supProps, H.insert propName subUb supArgs)
+      let supPartialList' = catMaybes $ [intersectPartials sup | sup <- supPartialList]
+      wrapUbs (SumType $ joinPartialLeafs supPartialList', subUb)
     (SumType supPartials, TopType) -> do
       let supPartialList = splitPartialLeafs supPartials
       let getProp (_, _, _, supArgs) = H.lookup propName supArgs

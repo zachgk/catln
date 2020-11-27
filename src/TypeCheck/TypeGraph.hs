@@ -22,6 +22,8 @@ import           Syntax.Types
 import           Syntax.Prgm
 import           Syntax
 import           TypeCheck.Common
+import Text.Printf
+import Data.List (partition)
 
 buildUnionObj :: FEnv -> [VObject] -> FEnv
 buildUnionObj env1 objs = do
@@ -48,11 +50,15 @@ inferArgFromPartial FEnv{feTypeGraph, feClassMap} (PTypeName partialName, partia
   let typeArrows = H.lookupDefault [] partialName feTypeGraph
   unionTypes feClassMap $ map tryArrow typeArrows
   where
-    tryArrow ((Object _ _ _ _ objArgs), _) = if H.keysSet partialArgs `isSubsetOf` H.keysSet objArgs
+    tryArrow (Object _ _ _ _ objArgs, _) = if H.keysSet partialArgs `isSubsetOf` H.keysSet objArgs
       then SumType $ joinPartialLeafs $ map addArg $ S.toList $ S.difference (H.keysSet objArgs) (H.keysSet partialArgs)
       else bottomType
     addArg arg = (PTypeName partialName, partialVars, partialProps, H.insertWith (unionType feClassMap) arg TopType partialArgs)
 inferArgFromPartial _ (PClassName _, _, _, _) = bottomType
+
+isTypeVar :: Type -> Bool
+isTypeVar TypeVar{} = True
+isTypeVar _ = False
 
 data ReachesTree
   = ReachesTree (H.HashMap PartialType ReachesTree)
@@ -64,7 +70,10 @@ unionReachesTree classMap (ReachesTree children) = do
   let (keys, vals) = unzip $ H.toList children
   let keys' = SumType $ joinPartialLeafs keys
   let vals' = map (unionReachesTree classMap) vals
-  unionTypes classMap (keys':vals')
+  let both = keys':vals'
+  case partition isTypeVar both of
+    ([onlyVar], []) -> onlyVar
+    (_, sums) -> unionTypes classMap sums
 unionReachesTree classMap (ReachesLeaf leafs) = unionTypes classMap leafs
 
 reachesHasCutSubtypeOf :: ClassMap -> ReachesTree -> Type -> Bool
@@ -92,7 +101,7 @@ reachesPartial env@FEnv{feClassMap} partial@(PClassName _, _, _, _) = reaches en
 
 reaches :: FEnv -> Type -> TypeCheckResult ReachesTree
 reaches _     TopType            = return $ ReachesLeaf [TopType]
-reaches _     TypeVar{}            = error "reaches TypeVar"
+reaches _     (TypeVar v)            = error $ printf "reaches with typevar %s" (show v)
 reaches typeEnv (SumType src) = do
   let partials = splitPartialLeafs src
   resultsByPartials <- mapM (reachesPartial typeEnv) partials
