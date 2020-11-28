@@ -38,22 +38,21 @@ typecheckPrgmWithTrace pprgm@(_, classMap) = case aux of
       return (tprgm, vprgm, feTrace)
 
 traceTestPrgm :: PPrgm -> ([TypeCheckError], [(SPrgm, [SConstraint])])
-traceTestPrgm pprgm@(_, classMap) = do
-  let baseFEnv = makeBaseFEnv classMap
-  case fromPrgm baseFEnv pprgm of
-    TypeCheckResult notes (vprgm, env@FEnv{feCons}) -> do
-      let sprgm1 = showPrgm env vprgm
+traceTestPrgm pprgm@(_, classMap) = case aux of
+    TypeCheckResult notes res -> (notes, res)
+    TypeCheckResE notes -> (notes, [])
+  where
+    aux = do
+      let baseFEnv = makeBaseFEnv classMap
+      (vprgm, env@FEnv{feCons}) <- fromPrgm baseFEnv pprgm
+      sprgm1 <- showPrgm env vprgm
       let scons1 = showConstraints env feCons
-      case runConstraints runConstraintsLimit env feCons of
-        TypeCheckResult notes2 env' -> do
-          let sprgm2 = showPrgm env' vprgm
-          let res = [(sprgm1, scons1), (sprgm2, [])]
-          (notes ++ notes2, res)
-        TypeCheckResE errs -> (notes ++ errs, [(sprgm1, scons1)])
-    TypeCheckResE errs -> (errs, [])
+      _ <- runConstraints runConstraintsLimit env feCons
+      sprgm2 <- showPrgm env vprgm
+      return [(sprgm1, scons1), (sprgm2, [])]
 
 showTestPrgm :: PPrgm -> TypeCheckResult SPrgm
 showTestPrgm pprgm@(_, classMap) = do
   let baseFEnv = makeBaseFEnv classMap
   (vprgm, env) <- fromPrgm baseFEnv pprgm
-  return $ showPrgm env vprgm
+  showPrgm env vprgm

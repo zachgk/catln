@@ -120,7 +120,8 @@ type PObject = Object PreMeta
 type PPrgm = Prgm PExpr PreMeta
 type PReplRes = ReplRes PreMeta
 
-type ShowMeta = Scheme
+data ShowMeta = ShowMeta SType VarMeta
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 type SExpr = IExpr ShowMeta
 type SCompAnnot = CompAnnot SExpr
 type SGuard = Guard SExpr
@@ -159,6 +160,9 @@ type TypeGraph = H.HashMap TypeName [TypeGraphVal] -- H.HashMap (Root tuple name
 
 instance Meta VarMeta where
   getMetaType (VarMeta _ p _) = getMetaType p
+
+instance Meta ShowMeta where
+  getMetaType (ShowMeta (SType ub _ _) _) = ub
 
 instance Show TypeCheckError where
   show (GenTypeCheckError s) = s
