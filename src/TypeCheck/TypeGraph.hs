@@ -24,6 +24,7 @@ import           Syntax
 import           TypeCheck.Common
 import Text.Printf
 import Data.List (partition)
+import TypeCheck.Show
 
 buildUnionObj :: FEnv -> [VObject] -> FEnv
 buildUnionObj env1 objs = do
@@ -76,10 +77,10 @@ unionReachesTree classMap (ReachesTree children) = do
     (_, sums) -> unionTypes classMap sums
 unionReachesTree classMap (ReachesLeaf leafs) = unionTypes classMap leafs
 
-reachesHasCutSubtypeOf :: ClassMap -> ReachesTree -> Type -> Bool
-reachesHasCutSubtypeOf classMap (ReachesTree children) superType = all childIsSubtype $ H.toList children
-  where childIsSubtype (key, val) = hasPartial classMap key superType || reachesHasCutSubtypeOf classMap val superType
-reachesHasCutSubtypeOf classMap (ReachesLeaf leafs) superType = any (\t -> hasType classMap t superType) leafs
+reachesHasCutSubtypeOf :: ClassMap -> TypeVarEnv -> ReachesTree -> Type -> Bool
+reachesHasCutSubtypeOf classMap venv (ReachesTree children) superType = all childIsSubtype $ H.toList children
+  where childIsSubtype (key, val) = hasPartialWithVarEnv classMap venv key superType || reachesHasCutSubtypeOf classMap venv val superType
+reachesHasCutSubtypeOf classMap venv (ReachesLeaf leafs) superType = any (\t -> hasTypeWithVarEnv classMap venv t superType) leafs
 
 reachesPartial :: FEnv -> PartialType -> TypeCheckResult ReachesTree
 reachesPartial env@FEnv{feTypeGraph, feClassMap} partial@(PTypeName partialName, _, _, _) = do
@@ -92,11 +93,14 @@ reachesPartial env@FEnv{feTypeGraph, feClassMap} partial@(PTypeName partialName,
         -- It is possible to send part of a partial through the arrow, so must compute the valid part
         -- If none of it is valid, then there is Nothing
         let potentialSrc@(SumType potSrcLeafs) = intersectTypes feClassMap (singletonType partial) objUb
-        return $ if not (isBottomType potentialSrc)
+        if not (isBottomType potentialSrc)
           -- TODO: Should this line below call `reaches` to make this recursive?
           -- otherwise, no reaches path requiring multiple steps can be found
-          then Just $ unionTypes feClassMap [arrowDestType True feClassMap potentialSrcPartial obj arr | potentialSrcPartial <- splitPartialLeafs potSrcLeafs]
-          else Nothing
+          then do
+            sobj <- showObj env obj
+            sarr <- showArrow env arr
+            return $ Just $ unionTypes feClassMap [arrowDestType True feClassMap potentialSrcPartial sobj sarr | potentialSrcPartial <- splitPartialLeafs potSrcLeafs]
+          else return Nothing
 reachesPartial env@FEnv{feClassMap} partial@(PClassName _, _, _, _) = reaches env (expandClassPartial feClassMap partial)
 
 reaches :: FEnv -> Type -> TypeCheckResult ReachesTree
@@ -113,25 +117,26 @@ rootReachesPartial env src = do
   let reachedWithId = ReachesTree $ H.singleton src reached
   return (src, reachedWithId)
 
-arrowConstrainUbs :: FEnv -> Type -> VarMeta -> Type -> TypeCheckResult (Type, Type)
-arrowConstrainUbs env@FEnv{feUnionAllObjs} TopType srcM dest@SumType{} = do
+arrowConstrainUbs :: FEnv -> Type -> VarMeta -> Type -> VarMeta -> TypeCheckResult (Type, Type)
+arrowConstrainUbs env@FEnv{feUnionAllObjs} TopType srcM dest@SumType{} destM = do
   unionPnt <- descriptor env feUnionAllObjs
   case unionPnt of
     (SType unionUb@SumType{} _ _) -> do
-      (src', dest') <- arrowConstrainUbs env unionUb srcM dest
+      (src', dest') <- arrowConstrainUbs env unionUb srcM dest destM
       return (src', dest')
     _ -> return (TopType, dest)
-arrowConstrainUbs _ TopType _ dest = return (TopType, dest)
-arrowConstrainUbs env src@(TypeVar v) srcM dest = do
+arrowConstrainUbs _ TopType _ dest _ = return (TopType, dest)
+arrowConstrainUbs env src@(TypeVar v) srcM dest destM = do
   src' <- resolveTypeVar v srcM
-  (_, cdest) <- arrowConstrainUbs env (getMetaType src') srcM dest
+  (_, cdest) <- arrowConstrainUbs env (getMetaType src') srcM dest destM
   return (src, cdest)
-arrowConstrainUbs env (SumType srcPartials) _ dest = do
+arrowConstrainUbs env (SumType srcPartials) srcM dest _ = do
   let classMap = feClassMap env
   let srcPartialList = splitPartialLeafs srcPartials
   srcPartialList' <- mapM (rootReachesPartial env) srcPartialList
   let partialMap = H.fromList srcPartialList'
-  let partialMap' = H.filter (\t -> reachesHasCutSubtypeOf classMap t dest) partialMap
+  let venv = varMetaVarEnv srcM
+  let partialMap' = H.filter (\t -> reachesHasCutSubtypeOf classMap venv t dest) partialMap
   let (srcPartialList'', destByPartial) = unzip $ H.toList partialMap'
   let srcPartials' = joinPartialLeafs srcPartialList''
   let destByGraph = unionTypes classMap $ fmap (unionReachesTree classMap) destByPartial

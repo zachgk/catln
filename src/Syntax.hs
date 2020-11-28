@@ -26,6 +26,7 @@ import           Text.Printf
 import Syntax.Types
 import Syntax.Prgm
 import Data.Aeson (ToJSON)
+import Data.Maybe
 
 type ParseErrorRes = ParseErrorBundle String Void
 
@@ -113,32 +114,33 @@ formArgMetaMapWithSrc classMap (Object _ _ _ _ args) (_, _, _, srcArgs) = H.fold
     fromArg k (m, Nothing) = case H.lookup k srcArgs of
       Just srcArg -> H.singleton k (m, srcArg)
       Nothing -> H.empty
-    fromArg k (_, Just arg) = case H.lookup k srcArgs of
+    fromArg k (m, Just arg@(Object _ _ argName _ _)) = case H.lookup k srcArgs of
       Just (SumType srcArg) -> mergeMaps $ map (formArgMetaMapWithSrc classMap arg) $ splitPartialLeafs srcArg
+      Just TopType -> H.singleton argName (m, TopType)
       Just _ -> H.empty
       Nothing -> H.empty
     mergeMaps [] = H.empty
     mergeMaps (x:xs) = foldr (H.intersectionWith (\(m1, t1) (_, t2) -> (m1, unionType classMap t1 t2))) x xs
 
+formVarMap :: ClassMap -> Type -> TypeVarEnv
+formVarMap classMap (SumType partialLeafs) = unionsWith (unionType classMap) $ map (\(_, vars, _, _) -> vars) $ splitPartialLeafs partialLeafs
+formVarMap _ _ = error "Unknown formVarMap"
+
 -- fullDest means to use the greatest possible type (after implicit).
 -- Otherwise, it uses the minimal type that *must* be reached
 arrowDestType :: (Meta m, Show m, ExprClass e) => Bool -> ClassMap -> PartialType -> Object m -> Arrow (e m) m -> Type
-arrowDestType fullDest classMap src@(_, _, _, srcArgs) obj@(Object _ _ _ _ objArgs) (Arrow arrM _ _ maybeExpr) = case getMetaType arrM of
-  arrType@(TypeVar TVVar{}) -> do
-    let argsMatchingTypeVar = H.filter (\(m, _) -> getMetaType m == arrType) objArgs
-    case H.elems $ H.intersectionWith const srcArgs argsMatchingTypeVar of
-      [] -> basicDest arrType
-      -- if the result is a type variable then it should be the intersection of all type variable args in the src
-      srcArgsAtTypeVar -> intersectAllTypes classMap srcArgsAtTypeVar
-  (TypeVar (TVArg t)) -> case H.lookup t objArgs of
-    Just (objArgM, _) -> getMetaType objArgM
-    _ -> error $ printf "arrowDestType with unknown arg %s" (show t)
-  arrType -> basicDest arrType
+arrowDestType fullDest classMap src obj@(Object objM _ _ _ _) (Arrow arrM _ _ maybeExpr) = case mapM getExprArg maybeExpr of
+  Just (Just _) -> fromMaybe (error "Unfound expr") expr'
+  _ -> joined
   where
-    basicDest arrType = case (maybeExpr, mapM getExprArg maybeExpr) of
-      (_, Just (Just n)) -> maybe arrType snd (H.lookup n $ formArgMetaMapWithSrc classMap obj src)
-      (Just e, _) | not fullDest -> getMetaType $ getExprMeta e
-      _ -> arrType
+    varEnv = formVarMap classMap $ intersectTypes classMap (getMetaType objM) (singletonType src)
+    argEnv = snd <$> formArgMetaMapWithSrc classMap obj src
+    substitute = substituteVarsWithVarEnv varEnv . substituteArgsWithArgEnv argEnv
+    expr' = fmap (substitute . getMetaType . getExprMeta) maybeExpr
+    arr' = substitute $ getMetaType arrM
+    joined = if fullDest
+      then unionType classMap (fromMaybe bottomType expr') arr'
+      else intersectTypes classMap (fromMaybe TopType expr') arr'
 
 metaTypeVar :: (Meta m) => m -> Maybe TypeVarAux
 metaTypeVar m = case getMetaType m of

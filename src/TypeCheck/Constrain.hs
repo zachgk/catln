@@ -181,7 +181,7 @@ executeConstraint env cons@(ArrowTo srcPnt destPnt) = do
   case sequenceT (srcScheme, destScheme) of
     TypeCheckResE _ -> ([], False, env)
     TypeCheckResult _ (SType srcUb srcLb srcDesc, SType destUb destLb destDesc) -> do
-      let constrained = arrowConstrainUbs env srcUb srcPnt destUb
+      let constrained = arrowConstrainUbs env srcUb srcPnt destUb destPnt
       case constrained of
         TypeCheckResult _ (srcUb', destUb') -> do
           let srcScheme' = return $ SType srcUb' srcLb srcDesc

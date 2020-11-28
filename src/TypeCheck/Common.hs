@@ -203,7 +203,7 @@ fLookup FEnv{feDefMap} k = case H.lookup k feDefMap of
   Nothing -> TypeCheckResE [GenTypeCheckError $ "Failed to lookup " ++ k]
 
 addConstraints :: FEnv -> [Constraint] -> FEnv
-addConstraints env@FEnv{feCons} newCons = env {feCons = (newCons ++ feCons)}
+addConstraints env@FEnv{feCons} newCons = env {feCons = newCons ++ feCons}
 
 fInsert :: FEnv -> String -> VarMeta -> FEnv
 fInsert env@FEnv{feDefMap} k v = env{feDefMap = H.insert k v feDefMap}
@@ -220,7 +220,7 @@ tryIntersectTypes FEnv{feClassMap} a b desc = let c = intersectTypes feClassMap 
 -- Point operations
 
 descriptor :: FEnv -> VarMeta -> Scheme
-descriptor FEnv{fePnts} p = fePnts IM.! (getPnt p)
+descriptor FEnv{fePnts} p = fePnts IM.! getPnt p
 
 equivalent :: FEnv -> VarMeta -> VarMeta -> Bool
 equivalent FEnv{fePnts} m1 m2 = (fePnts IM.! getPnt m1) == (fePnts IM.! getPnt m2)
@@ -252,11 +252,15 @@ pointUb env p = do
 resolveTypeVar :: TypeVarAux -> VarMeta -> TypeCheckResult VarMeta
 resolveTypeVar (TVVar v) (VarMeta _ _ (Just (Object _ _ _ objVars _))) = case H.lookup v objVars of
   Just m' -> return m'
-  Nothing -> TypeCheckResE [GenTypeCheckError $ "Unknown variable in resolveTypeVar var"]
+  Nothing -> TypeCheckResE [GenTypeCheckError "Unknown variable in resolveTypeVar var"]
 resolveTypeVar (TVArg v) (VarMeta _ _ (Just (Object _ _ _ _ objArgs))) = case H.lookup v objArgs of
   Just (m', _) -> return m'
-  Nothing -> TypeCheckResE [GenTypeCheckError $ "Unknown variable in resolveTypeVar arg"]
-resolveTypeVar _ (VarMeta _ _ Nothing) = TypeCheckResE [GenTypeCheckError $ "Tried to resolve a type var without an object"]
+  Nothing -> TypeCheckResE [GenTypeCheckError "Unknown variable in resolveTypeVar arg"]
+resolveTypeVar _ (VarMeta _ _ Nothing) = TypeCheckResE [GenTypeCheckError "Tried to resolve a type var without an object"]
+
+varMetaVarEnv :: VarMeta -> TypeVarEnv
+varMetaVarEnv (VarMeta _ _ (Just (Object _ _ _ objVars _))) = fmap getMetaType objVars
+varMetaVarEnv _ = H.empty
 
 descriptorResolve :: FEnv -> VarMeta -> TypeCheckResult (VarMeta, SType)
 descriptorResolve env m = do
@@ -273,20 +277,8 @@ type TraceConstrain = [[(Constraint, [(Pnt, Scheme)])]]
 nextConstrainEpoch :: FEnv -> FEnv
 nextConstrainEpoch env@FEnv{feTrace} = case feTrace of
   [] -> env
-  prevEpochs -> env{feTrace = ([]:prevEpochs)}
+  prevEpochs -> env{feTrace = []:prevEpochs}
 
 startConstraint :: Constraint -> FEnv -> FEnv
 startConstraint c env@FEnv{feTrace = curEpoch:prevEpochs} = env{feTrace = ((c, []):curEpoch):prevEpochs}
 startConstraint _ _ = error "bad input to startConstraint"
-
-substituteVarsWithVarEnv :: TypeVarEnv -> Type -> Type
-substituteVarsWithVarEnv venv (SumType partials) = SumType $ joinPartialLeafs $ map substitutePartial $ splitPartialLeafs partials
-  where substitutePartial (partialName, partialVars, partialProps, partialArgs) = (partialName, partialVars, fmap (substituteVarsWithVarEnv venv') partialProps, fmap (substituteVarsWithVarEnv venv') partialArgs)
-          where venv' = H.union venv partialVars
-substituteVarsWithVarEnv venv (TypeVar (TVVar v)) = case H.lookup v venv of
-  Just v' -> v'
-  Nothing -> error $ printf "Could not substitute unknown type var %s" v
-substituteVarsWithVarEnv _ t = t
-
-substituteVars :: Type -> Type
-substituteVars = substituteVarsWithVarEnv H.empty

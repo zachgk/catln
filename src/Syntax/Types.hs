@@ -59,6 +59,7 @@ type Sealed = Bool -- whether the typeclass can be extended or not
 type ClassMap = (H.HashMap TypeName (S.HashSet ClassName), H.HashMap ClassName (Sealed, H.HashMap TypeVarName Type, [Type]))
 
 type TypeVarEnv = H.HashMap TypeVarName Type
+type ArgEnv = H.HashMap ArgName Type
 
 instance Show Type where
   show TopType = "TopType"
@@ -98,6 +99,9 @@ ioType = singletonType ioLeaf
 
 bottomType :: Type
 bottomType = SumType H.empty
+
+unionsWith :: (Ord k, Hashable k) => (a->a->a) -> [H.HashMap k a] -> H.HashMap k a
+unionsWith f = foldl (H.unionWith f) H.empty
 
 isBottomType :: Type -> Bool
 -- isBottomType t = compactType t == bottomType
@@ -296,3 +300,27 @@ powersetType (SumType partials) = SumType partials'
     partials' = joinPartialLeafs $ concatMap fromPartialType $ splitPartialLeafs partials
     fromArgs args = powerset $ H.toList args
     fromPartialType (name, vars, props, args) = [(name, H.fromList v, H.fromList p, H.fromList a) | v <- fromArgs vars, p <- fromArgs props, a <- fromArgs args]
+
+substituteVarsWithVarEnv :: TypeVarEnv -> Type -> Type
+substituteVarsWithVarEnv venv (SumType partials) = SumType $ joinPartialLeafs $ map substitutePartial $ splitPartialLeafs partials
+  where substitutePartial (partialName, partialVars, partialProps, partialArgs) = (partialName, partialVars, fmap (substituteVarsWithVarEnv venv') partialProps, fmap (substituteVarsWithVarEnv venv') partialArgs)
+          where venv' = H.union venv partialVars
+substituteVarsWithVarEnv venv (TypeVar (TVVar v)) = case H.lookup v venv of
+  Just v' -> v'
+  Nothing -> error $ printf "Could not substitute unknown type var %s" v
+substituteVarsWithVarEnv _ t = t
+
+substituteVars :: Type -> Type
+substituteVars = substituteVarsWithVarEnv H.empty
+
+substituteArgsWithArgEnv :: ArgEnv -> Type -> Type
+substituteArgsWithArgEnv aenv (SumType partials) = SumType $ joinPartialLeafs $ map substitutePartial $ splitPartialLeafs partials
+  where substitutePartial (partialName, partialVars, partialProps, partialArgs) = (partialName, partialVars, partialProps, fmap (substituteArgsWithArgEnv aenv') partialArgs)
+          where aenv' = H.union aenv partialVars
+substituteArgsWithArgEnv aenv (TypeVar (TVArg v)) = case H.lookup v aenv of
+  Just v' -> v'
+  Nothing -> error $ printf "Could not substitute unknown type arg %s" v
+substituteArgsWithArgEnv _ t = t
+
+substituteArgs :: Type -> Type
+substituteArgs = substituteArgsWithArgEnv H.empty
