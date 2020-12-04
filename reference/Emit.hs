@@ -34,7 +34,7 @@ import Control.Monad.Except
 import Control.Applicative
 import qualified Data.Map as Map
 
-import Codegen
+import Emit.Codegen
 import JIT (runJIT)
 import qualified Syntax as S
 

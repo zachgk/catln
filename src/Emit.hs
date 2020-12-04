@@ -25,7 +25,6 @@ import qualified Data.ByteString.Short           as SBS
 import qualified Data.ByteString.UTF8            as BSU
 import qualified Data.HashMap.Strict             as H
 
-import           Codegen
 import           Syntax
 import           Syntax.Types
 import           Syntax.Prgm
@@ -35,6 +34,7 @@ import Text.Printf
 import Data.Bifunctor
 import Emit.Common
 import Data.Hashable
+import           Emit.Codegen
 import Emit.Runtime (primEnv)
 import LLVM.AST.Type (i8, ptr, double, i1, i32)
 

@@ -17,7 +17,7 @@ import           Syntax.Prgm
 import           Syntax
 
 import Emit.Common
-import Codegen
+import Emit.Codegen
 import qualified LLVM.AST as AST
 import LLVM.AST.Operand (Operand)
 import qualified LLVM.AST.IntegerPredicate as IP
@@ -61,6 +61,36 @@ rneg name = (name', [(srcType, NoGuard, PrimArrow resType prim)])
                            _ -> error "Invalid strEq signature"
                            )
 
+-- Floating point operations for reference
+-- Arithmetic and Constants
+-- arith :: (Operand -> Operand -> Instruction) -> [(S.Typed, Operand)] -> Maybe (Codegen Operand)
+-- arith _ [(S.Typed at, _), (S.Typed bt, _)] | at /= bt = Nothing
+-- arith f [(at, ao), (_, bo)] | S.typedIs at S.floatType = Just $ instr $ f ao bo
+-- arith f [(at, ao), (_, bo)] | S.typedIs at S.intType = Just $ instr $ f ao bo
+-- arith _ _ = Nothing
+
+-- fadd, fsub, fmul, fdiv, fand, for :: [(S.Typed, Operand)] -> Maybe (Codegen Operand)
+-- fadd = arith (\a b -> FAdd noFastMathFlags a b [])
+-- fsub = arith (\a b -> FSub noFastMathFlags a b [])
+-- fmul = arith (\a b -> FMul noFastMathFlags a b [])
+-- fdiv = arith (\a b -> FDiv noFastMathFlags a b [])
+-- fand = arith (\a b -> And a b [])
+-- for = arith (\a b -> Or a b [])
+
+-- cmp :: FP.FloatingPointPredicate -> IP.IntegerPredicate -> [(S.Typed, Operand)] -> Maybe (Codegen Operand)
+-- cmp _ _ [(S.Typed at, _), (S.Typed bt, _)] | at /= bt = Nothing
+-- cmp cond _ [(at, ao), (_, bo)] | S.typedIs at S.floatType = Just $ instr $ FCmp cond ao bo []
+-- cmp _ cond [(at, ao), (_, bo)] | S.typedIs at S.intType = Just $ instr $ ICmp cond ao bo []
+-- cmp _ _ _ = Nothing
+
+-- lt, gt, gte, lte, eq, neq :: [(S.Typed, Operand)] -> Maybe (Codegen Operand)
+-- gt = cmp FP.UGT IP.UGT
+-- lt = cmp FP.ULT IP.ULT
+-- gte = cmp FP.UGE IP.UGE
+-- lte = cmp FP.ULE IP.ULE
+-- eq = cmp FP.UEQ IP.EQ
+-- neq = cmp FP.UNE IP.NE
+
 strEq :: Op
 strEq = (name', [(srcType, NoGuard, PrimArrow resType prim)])
   where
@@ -79,7 +109,7 @@ intToString = (name', [(srcType, NoGuard, PrimArrow resType prim)])
     srcType = (PTypeName name', H.empty, H.empty, H.singleton "this" intType)
     resType = strType
     prim = LLVMPrim srcType NoGuard (\args -> case H.lookup "this" args of
-                           Just (OVal _ _) -> OVal strType <$> (pure $ cons $ C.Int 64 0) --TODO: Should do actual conversion
+                           Just (OVal _ _) -> pure (OVal strType (cons $ C.Int 64 0)) --TODO: Should do actual conversion
                            _ -> error "Invalid strEq signature"
                            )
 
@@ -90,7 +120,7 @@ ioExit = (name', [(srcType, NoGuard, PrimArrow resType prim)])
     srcType = (PTypeName name', H.empty, H.empty, H.fromList [("this", ioType), ("val", intType)])
     resType = ioType
     prim = LLVMPrim srcType NoGuard (\args -> case (H.lookup "this" args, H.lookup "val" args) of
-                           (Just IOVal, Just (OVal _ r)) -> call (externf "exit") [r] >> (pure IOVal)
+                           (Just IOVal, Just (OVal _ r)) -> call (externf "exit") [r] >> pure IOVal
                            _ -> pure IOVal -- TODO: Delete, should be an error
                            -- _ -> error "Invalid ioExit signature"
                            )
@@ -102,7 +132,7 @@ println = (name', [(srcType, NoGuard, PrimArrow resType prim)])
     srcType = (PTypeName name', H.empty, H.empty, H.fromList [("this", ioType), ("msg", strType)])
     resType = ioType
     prim = LLVMPrim srcType NoGuard (\args -> case (H.lookup "this" args, H.lookup "msg" args) of
-                           (Just IOVal, Just (OVal _ s)) -> call (externf "puts") [s] >> (pure IOVal)
+                           (Just IOVal, Just (OVal _ s)) -> call (externf "puts") [s] >> pure IOVal
                            _ -> error "Invalid strEq signature"
                            )
 

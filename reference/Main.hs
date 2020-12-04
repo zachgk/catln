@@ -13,7 +13,7 @@ module Main where
 
 import Syntax
 import Parser
-import Codegen
+import Emit.Codegen
 import Emit
 
 import Control.Monad.Trans
