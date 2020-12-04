@@ -46,7 +46,7 @@ function ObjMap(props) {
       {props.objMap
         .sort((obj1, obj2) => obj1[0][2] < obj2[0][2])
         .map(obj =>
-          <ObjArrows objas={obj} Meta={props.Meta} />
+          <ObjArrows objas={obj} Meta={props.Meta} showExprMetas={props.showExprMetas}/>
       )}
     </List>
   );
@@ -59,7 +59,7 @@ function ObjArrows(props) {
   if(Object.keys(arrows).length > 0) {
     showArrows = (
       <div>
-        {arrows.map(arrow => <Arrow arrow={arrow} Meta={props.Meta}/>)}
+        {arrows.map(arrow => <Arrow arrow={arrow} Meta={props.Meta} showExprMetas={props.showExprMetas}/>)}
       </div>
     );
   }
@@ -79,10 +79,10 @@ function Arrow(props) {
 
   let showExpr;
   if(maybeExpr) {
-    showExpr = <span> = <Expr expr={maybeExpr}/></span>;
+    showExpr = <span> = <Expr expr={maybeExpr} Meta={Meta} showMetas={props.showExprMetas}/></span>;
   }
 
-  let header = (<span><Guard guard={guard} Expr={Expr}/> -&gt; <Meta data={arrM} /></span>);
+  let header = (<span><Guard guard={guard} Expr={Expr} Meta={Meta} showExprMetas={props.showExprMetas}/> -&gt; <Meta data={arrM} /></span>);
 
   return (
     <Card style={useStyles.arrow}>
@@ -93,7 +93,7 @@ function Arrow(props) {
 }
 
 function Expr(props) {
-  let {expr} = props;
+  let {expr, Meta, showMetas} = props;
   switch(expr.tag) {
   case "ICExpr":
   case "CExpr":
@@ -106,14 +106,24 @@ function Expr(props) {
     return "" + expr.contents[1];
   case "ITupleApply":
   case "TupleApply":
-    const [, [,base], arg, subExpr] = expr.contents;
+    const [m, [baseM ,base], arg, subExpr] = expr.contents;
 
     let showArg;
     if(arg) {
       showArg = `${arg} = `;
     }
 
-    return <span><Expr expr={base}/>({showArg}<Expr expr={subExpr}/>)</span>;
+    let showBaseM;
+    if(showMetas) {
+      showBaseM = <i><Meta data={baseM}/></i>;
+    }
+
+    let showM;
+    if(showMetas) {
+      showM = <i>[<Meta data={m}/>]</i>;
+    }
+
+    return <span><Expr expr={base}/>({showArg} {showBaseM} <Expr expr={subExpr}/>){showM}</span>;
   default:
     console.error("Unknown renderExpr", expr);
     return "";

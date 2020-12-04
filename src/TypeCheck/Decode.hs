@@ -21,10 +21,10 @@ import           Syntax
 import           TypeCheck.Common
 import           TypeCheck.Show (showCon)
 
-matchingConstraintHelper :: FEnv -> Pnt -> Pnt -> Pnt -> Bool
+matchingConstraintHelper :: FEnv -> VarMeta -> VarMeta -> VarMeta -> Bool
 matchingConstraintHelper env p p2 p3 = equivalent env p p2 || equivalent env p p3
 
-matchingConstraint :: FEnv -> Pnt -> Constraint -> Bool
+matchingConstraint :: FEnv -> VarMeta -> Constraint -> Bool
 matchingConstraint env p (EqualsKnown p2 _) = equivalent env p p2
 matchingConstraint env p (EqPoints p2 p3) = matchingConstraintHelper env p p2 p3
 matchingConstraint env p (BoundedByKnown p2 _) = equivalent env p p2
@@ -37,23 +37,16 @@ matchingConstraint env p (AddInferArg p2 p3) = matchingConstraintHelper env p p2
 matchingConstraint env p (PowersetTo p2 p3) = matchingConstraintHelper env p p2 p3
 matchingConstraint env p (UnionOf p2 p3s) = equivalent env p p2 || any (equivalent env p) p3s
 
-showMatchingConstraints :: FEnv -> Pnt -> [SConstraint]
+showMatchingConstraints :: FEnv -> VarMeta -> [SConstraint]
 showMatchingConstraints env@FEnv{feCons} matchVar = map (showCon env) $ filter (matchingConstraint env matchVar) feCons
 
-pointUb :: FEnv -> Pnt -> TypeCheckResult Type
-pointUb env p = do
-  scheme <- descriptor env p
-  case scheme of
-    (SType ub _ _) -> return ub
-    (SVar _ p') -> pointUb env p'
-
 toMeta :: FEnv -> VarMeta -> String -> TypeCheckResult Typed
-toMeta env (VarMeta p (PreTyped pt)) _ = case pointUb env p of
+toMeta env@FEnv{feClassMap} m@(VarMeta _ (PreTyped pt) _) _ = case pointUb env m of
   TypeCheckResult notes ub -> case pt of
     TypeVar{} -> return $ Typed pt
-    _ -> TypeCheckResult notes $ Typed ub
+    _ -> TypeCheckResult notes $ Typed $ intersectTypes feClassMap ub pt
   TypeCheckResE notes -> do
-    let matchingConstraints = showMatchingConstraints env p
+    let matchingConstraints = showMatchingConstraints env m
     TypeCheckResE $ map (TCWithMatchingConstraints matchingConstraints) notes
 
 toExpr :: FEnv -> VExpr -> TypeCheckResult TExpr
@@ -73,7 +66,7 @@ toExpr env (ITupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
   argExpr' <- toExpr env argExpr
   case m' of -- check for errors
     tp@(Typed (SumType sumType)) | all (\(_, _, _, leafArgs) -> not (argName `H.member` leafArgs)) (splitPartialLeafs sumType) -> do
-                                        let matchingConstraints = showMatchingConstraints env $ getPnt m
+                                        let matchingConstraints = showMatchingConstraints env m
                                         TypeCheckResE [TCWithMatchingConstraints matchingConstraints $ TupleMismatch baseM' baseExpr' tp $ H.singleton argName argExpr']
     _ -> return $ TupleApply m' (baseM', baseExpr') argName argExpr'
 toExpr env (ITupleApply m (baseM, baseExpr) Nothing argExpr) = do

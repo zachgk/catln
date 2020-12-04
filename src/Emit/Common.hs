@@ -20,7 +20,7 @@ import GHC.Generics
 import Syntax.Types
 import qualified Data.HashMap.Strict as H
 import qualified LLVM.AST as AST
-import Codegen
+import Emit.Codegen
 
 type TypedMeta = Typed
 type TExpr = Expr TypedMeta

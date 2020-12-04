@@ -34,10 +34,7 @@ data TypeCheckError
   | TCWithMatchingConstraints [SConstraint] TypeCheckError
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
-type SplitSType = (Type, Type, String)
-data SType
-  = SType Type Type String -- SType upper lower (description in type)
-  | SVar TypeVarAux Pnt
+data SType = SType Type Type String -- SType upper lower (description in type)
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 type Scheme = TypeCheckResult SType
 
@@ -46,8 +43,8 @@ type Pnt = Int
 type EnvValMap = (H.HashMap String VarMeta)
 data FEnv = FEnv { fePnts :: IM.IntMap Scheme
                  , feCons :: [Constraint]
-                 , feUnionAllObjs :: Pnt -- union of all TypeObj for argument inference
-                 , feUnionTypeObjs :: Pnt -- union of all Object types for function limiting
+                 , feUnionAllObjs :: VarMeta -- union of all TypeObj for argument inference
+                 , feUnionTypeObjs :: VarMeta -- union of all Object types for function limiting
                  , feTypeGraph :: TypeGraph
                  , feClassMap :: ClassMap
                  , feDefMap :: EnvValMap
@@ -60,17 +57,17 @@ data BoundObjs = BoundAllObjs | BoundTypeObjs
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 data Constraint
-  = EqualsKnown Pnt Type
-  | EqPoints Pnt Pnt
-  | BoundedByKnown Pnt Type
-  | BoundedByObjs BoundObjs Pnt
-  | ArrowTo Pnt Pnt -- ArrowTo src dest
-  | PropEq (Pnt, ArgName) Pnt
-  | VarEq (Pnt, TypeVarName) Pnt
-  | AddArg (Pnt, String) Pnt
-  | AddInferArg Pnt Pnt -- AddInferArg base arg
-  | PowersetTo Pnt Pnt
-  | UnionOf Pnt [Pnt]
+  = EqualsKnown VarMeta Type
+  | EqPoints VarMeta VarMeta
+  | BoundedByKnown VarMeta Type
+  | BoundedByObjs BoundObjs VarMeta
+  | ArrowTo VarMeta VarMeta -- ArrowTo src dest
+  | PropEq (VarMeta, ArgName) VarMeta
+  | VarEq (VarMeta, TypeVarName) VarMeta
+  | AddArg (VarMeta, String) VarMeta
+  | AddInferArg VarMeta VarMeta -- AddInferArg base arg
+  | PowersetTo VarMeta VarMeta
+  | UnionOf VarMeta [VarMeta]
   deriving (Eq, Show, Generic, ToJSON)
 
 data SConstraint
@@ -123,7 +120,8 @@ type PObject = Object PreMeta
 type PPrgm = Prgm PExpr PreMeta
 type PReplRes = ReplRes PreMeta
 
-type ShowMeta = Scheme
+data ShowMeta = ShowMeta SType VarMeta
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 type SExpr = IExpr ShowMeta
 type SCompAnnot = CompAnnot SExpr
 type SGuard = Guard SExpr
@@ -133,8 +131,8 @@ type SObject = Object ShowMeta
 type SPrgm = Prgm SExpr ShowMeta
 type SReplRes = ReplRes ShowMeta
 
-data VarMeta = VarMeta Pnt PreTyped
-  deriving (Eq, Show, Generic, ToJSON)
+data VarMeta = VarMeta Pnt PreTyped (Maybe VObject)
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 type VExpr = IExpr VarMeta
 type VCompAnnot = CompAnnot VExpr
 type VGuard = Guard VExpr
@@ -161,7 +159,10 @@ type TypeGraphVal = (VObject, VArrow) -- (match object type, if matching then ca
 type TypeGraph = H.HashMap TypeName [TypeGraphVal] -- H.HashMap (Root tuple name for filtering) [vals]
 
 instance Meta VarMeta where
-  getMetaType (VarMeta _ p) = getMetaType p
+  getMetaType (VarMeta _ p _) = getMetaType p
+
+instance Meta ShowMeta where
+  getMetaType (ShowMeta (SType ub _ _) _) = ub
 
 instance Show TypeCheckError where
   show (GenTypeCheckError s) = s
@@ -174,7 +175,6 @@ instance Show TypeCheckError where
 
 instance Show SType where
   show (SType upper lower desc) = concat [show upper, " ⊇ ", desc, " ⊇ ", show lower]
-  show (SVar varName p) = printf "SVar %d %s" p (show varName)
 
 instance Show SConstraint where
   show (SEqualsKnown s t) = printf "%s == %s" (show s) (show t)
@@ -195,10 +195,7 @@ instance Show r => Show (TypeCheckResult r) where
   show (TypeCheckResE notes) = concat ["TCErr [", show notes, "]"]
 
 getPnt :: VarMeta -> Pnt
-getPnt (VarMeta p _) = p
-
-getPntExpr :: VExpr -> Pnt
-getPntExpr = getPnt . getExprMeta
+getPnt (VarMeta p _ _) = p
 
 fLookup :: FEnv -> String -> TypeCheckResult VarMeta
 fLookup FEnv{feDefMap} k = case H.lookup k feDefMap of
@@ -206,7 +203,7 @@ fLookup FEnv{feDefMap} k = case H.lookup k feDefMap of
   Nothing -> TypeCheckResE [GenTypeCheckError $ "Failed to lookup " ++ k]
 
 addConstraints :: FEnv -> [Constraint] -> FEnv
-addConstraints env@FEnv{feCons} newCons = env {feCons = (newCons ++ feCons)}
+addConstraints env@FEnv{feCons} newCons = env {feCons = newCons ++ feCons}
 
 fInsert :: FEnv -> String -> VarMeta -> FEnv
 fInsert env@FEnv{feDefMap} k v = env{feDefMap = H.insert k v feDefMap}
@@ -222,11 +219,11 @@ tryIntersectTypes FEnv{feClassMap} a b desc = let c = intersectTypes feClassMap 
 
 -- Point operations
 
-descriptor :: FEnv -> Pnt -> Scheme
-descriptor FEnv{fePnts} p = fePnts IM.! p
+descriptor :: FEnv -> VarMeta -> Scheme
+descriptor FEnv{fePnts} p = fePnts IM.! getPnt p
 
-equivalent :: FEnv -> Pnt -> Pnt -> Bool
-equivalent FEnv{fePnts} p1 p2 = (fePnts IM.! p1) == (fePnts IM.! p2)
+equivalent :: FEnv -> VarMeta -> VarMeta -> Bool
+equivalent FEnv{fePnts} m1 m2 = (fePnts IM.! getPnt m1) == (fePnts IM.! getPnt m2)
 
 fresh :: FEnv -> Scheme -> (Pnt, FEnv)
 fresh env@FEnv{fePnts} scheme = (pnt', env{fePnts = pnts'})
@@ -234,9 +231,10 @@ fresh env@FEnv{fePnts} scheme = (pnt', env{fePnts = pnts'})
     pnt' = IM.size fePnts
     pnts' = IM.insert pnt' scheme fePnts
 
-setDescriptor :: FEnv -> Pnt -> Scheme -> FEnv
-setDescriptor env@FEnv{fePnts, feTrace} p scheme' = env{fePnts = pnts', feTrace = feTrace'}
+setDescriptor :: FEnv -> VarMeta -> Scheme -> FEnv
+setDescriptor env@FEnv{fePnts, feTrace} m scheme' = env{fePnts = pnts', feTrace = feTrace'}
   where
+    p = getPnt m
     scheme = fePnts IM.! p
     schemeChanged = scheme /= scheme'
     pnts' = IM.insert p scheme' fePnts
@@ -246,6 +244,32 @@ setDescriptor env@FEnv{fePnts, feTrace} p scheme' = env{fePnts = pnts', feTrace 
              _ -> error "no epochs in feTrace"
       else feTrace
 
+pointUb :: FEnv -> VarMeta -> TypeCheckResult Type
+pointUb env p = do
+  (SType ub _ _) <- descriptor env p
+  return ub
+
+resolveTypeVar :: TypeVarAux -> VarMeta -> TypeCheckResult VarMeta
+resolveTypeVar (TVVar v) (VarMeta _ _ (Just (Object _ _ _ objVars _))) = case H.lookup v objVars of
+  Just m' -> return m'
+  Nothing -> TypeCheckResE [GenTypeCheckError "Unknown variable in resolveTypeVar var"]
+resolveTypeVar (TVArg v) (VarMeta _ _ (Just (Object _ _ _ _ objArgs))) = case H.lookup v objArgs of
+  Just (m', _) -> return m'
+  Nothing -> TypeCheckResE [GenTypeCheckError "Unknown variable in resolveTypeVar arg"]
+resolveTypeVar _ (VarMeta _ _ Nothing) = TypeCheckResE [GenTypeCheckError "Tried to resolve a type var without an object"]
+
+varMetaVarEnv :: VarMeta -> TypeVarEnv
+varMetaVarEnv (VarMeta _ _ (Just (Object _ _ _ objVars _))) = fmap getMetaType objVars
+varMetaVarEnv _ = H.empty
+
+descriptorResolve :: FEnv -> VarMeta -> TypeCheckResult (VarMeta, SType)
+descriptorResolve env m = do
+  scheme@(SType ub _ _) <- descriptor env m
+  case ub of
+    (TypeVar v) -> do
+      m' <- resolveTypeVar v m
+      descriptorResolve env m'
+    _ -> return (m, scheme)
 
 -- trace constrain
 type TraceConstrain = [[(Constraint, [(Pnt, Scheme)])]]
@@ -253,7 +277,7 @@ type TraceConstrain = [[(Constraint, [(Pnt, Scheme)])]]
 nextConstrainEpoch :: FEnv -> FEnv
 nextConstrainEpoch env@FEnv{feTrace} = case feTrace of
   [] -> env
-  prevEpochs -> env{feTrace = ([]:prevEpochs)}
+  prevEpochs -> env{feTrace = []:prevEpochs}
 
 startConstraint :: Constraint -> FEnv -> FEnv
 startConstraint c env@FEnv{feTrace = curEpoch:prevEpochs} = env{feTrace = ((c, []):curEpoch):prevEpochs}

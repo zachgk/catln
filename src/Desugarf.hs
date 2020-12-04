@@ -197,9 +197,6 @@ declToObjArrow (PSemiDecl (DeclLHS arrM (Pattern object guard)) annots expr) = (
 desDecl :: PDecl -> DesObjectMap
 desDecl decl = H.fromListWith (++) $ map declToObjArrow $ removeSubDeclarations decl
 
-unionsWith :: (Ord k, Hashable k) => (a->a->a) -> [H.HashMap k a] -> H.HashMap k a
-unionsWith f = foldl (H.unionWith f) H.empty
-
 desDecls :: [PDecl] -> DesObjectMap
 desDecls decls = unionsWith (++) $ map desDecl decls
 

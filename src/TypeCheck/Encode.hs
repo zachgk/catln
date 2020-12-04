@@ -16,7 +16,6 @@ module TypeCheck.Encode where
 import           Prelude hiding (unzip)
 import           Control.Monad
 import Data.Hashable (Hashable)
-import Data.Zip
 import qualified Data.HashMap.Strict as H
 import qualified Data.IntMap.Lazy as IM
 
@@ -36,52 +35,25 @@ makeBaseFEnv :: ClassMap -> FEnv
 makeBaseFEnv classMap = FEnv{
   fePnts = IM.empty,
   feCons = [],
-  feUnionAllObjs = 0,
-  feUnionTypeObjs = 0,
+  feUnionAllObjs = VarMeta 0 (PreTyped TopType) Nothing,
+  feUnionTypeObjs = VarMeta 0 (PreTyped TopType) Nothing,
   feTypeGraph = H.empty,
   feClassMap = classMap,
   feDefMap = H.empty,
   feTrace = [[]]
   }
 
-fromMetaNoObj :: FEnv -> TypeBound -> PreMeta -> String -> TypeCheckResult (VarMeta, FEnv)
-fromMetaNoObj env bound m description  = do
+fromMetaBase :: FEnv -> TypeBound -> Maybe VObject -> PreMeta -> String -> TypeCheckResult (VarMeta, FEnv)
+fromMetaBase env bound obj m description  = do
+  let tp = getMetaType m
   let (p, env') = case bound of
-        BUpper -> fresh env (TypeCheckResult [] $ SType (getMetaType m) bottomType description)
-        BLower -> fresh env (TypeCheckResult [] $ SType TopType (getMetaType m) description)
-        BEq -> fresh env (TypeCheckResult [] $ SType (getMetaType m) (getMetaType m) description)
-  return (VarMeta p m, env')
+        BUpper -> fresh env (TypeCheckResult [] $ SType tp bottomType description)
+        BLower -> fresh env (TypeCheckResult [] $ SType TopType tp description)
+        BEq -> fresh env (TypeCheckResult [] $ SType tp tp description)
+  return (VarMeta p m (obj), env')
 
 fromMeta :: FEnv -> TypeBound -> VObject -> PreMeta -> String -> TypeCheckResult (VarMeta, FEnv)
-fromMeta env bound obj@(Object _ _ _ objVars _) m description  = case metaTypeVar m of
-  Just tv@(TVVar varName) -> case H.lookup varName objVars of
-    Just objVarM -> do
-      let (p, env') = fresh env (TypeCheckResult [] $ SVar tv (getPnt objVarM))
-      return (VarMeta p m, env')
-    Nothing -> error $ "Unknown obj var: " ++ varName
-  Just tv@(TVArg argName) -> case H.lookup argName $ formArgMetaMap obj of
-    Just objArgM -> do
-      let (p, env') = fresh env (TypeCheckResult [] $ SVar tv (getPnt objArgM))
-      return (VarMeta p m, env')
-    Nothing -> error $ "Unknown obj arg: " ++ argName
-  Nothing -> case m of
-    PreTyped (SumType tp) -> do -- Handle m.$T = $ObjVar
-      let mapPartialVar t = case t of
-            (TypeVar (TVVar varName)) -> case H.lookup varName objVars of
-              Just (VarMeta objP (PreTyped objVar)) -> (objVar, H.singleton varName [objP])
-              Nothing -> error $ printf "fromMeta failed to find var %s" varName
-            _ -> (t, H.empty)
-      let mapPartial (partialName, partialVars, partialProps, partialArgs) = do
-            let (partialVars', constraints) = unzip $ fmap mapPartialVar partialVars
-            let constraints' = foldr (H.unionWith (++)) H.empty $ H.elems $ constraints
-            ((partialName, partialVars', partialProps, partialArgs), constraints')
-      let (partials', constraints) = unzip $ map mapPartial $ splitPartialLeafs tp
-      let m' = PreTyped $ SumType $ joinPartialLeafs partials'
-      (m'', env') <- fromMetaNoObj env bound m' description
-      let env'' = addConstraints env' $ concatMap (\(varName, pnts) -> map (VarEq (getPnt m'', varName)) pnts ) $ H.toList $ foldr (H.unionWith (++)) H.empty constraints
-      return (m'', env'')
-
-    _ -> fromMetaNoObj env bound m description
+fromMeta env bound obj = fromMetaBase env bound (Just obj)
 
 mapMWithFEnv :: FEnv -> (FEnv -> a -> TypeCheckResult (b, FEnv)) -> [a] -> TypeCheckResult ([b], FEnv)
 mapMWithFEnv env f = foldM f' ([], env)
@@ -110,35 +82,36 @@ mapMWithFEnvMapWithKey env f hmap = do
 fromExpr :: VArgMetaMap -> VObject -> FEnv -> PExpr -> TypeCheckResult (VExpr, FEnv)
 fromExpr _ obj env (ICExpr m (CInt i)) = do
   (m', env') <- fromMeta env BUpper obj m ("Constant int " ++ show i)
-  return (ICExpr m' (CInt i), addConstraints env' [EqualsKnown (getPnt m') intType])
+  return (ICExpr m' (CInt i), addConstraints env' [EqualsKnown m' intType])
 fromExpr _ obj env (ICExpr m (CFloat f)) = do
   (m', env') <- fromMeta env BUpper obj m ("Constant float " ++ show f)
-  return (ICExpr m' (CFloat f), addConstraints env' [EqualsKnown (getPnt m') floatType])
+  return (ICExpr m' (CFloat f), addConstraints env' [EqualsKnown m' floatType])
 fromExpr _ obj env (ICExpr m (CStr s)) = do
   (m', env') <- fromMeta env BUpper obj m ("Constant str " ++ s)
-  return (ICExpr m' (CStr s), addConstraints env' [EqualsKnown (getPnt m') strType])
+  return (ICExpr m' (CStr s), addConstraints env' [EqualsKnown m' strType])
 fromExpr _ obj env1 (IValue m name) = do
   (m', env2) <- fromMeta env1 BUpper obj m ("Value " ++ name)
   lookupM <- fLookup env2 name
-  return (IValue m' name, addConstraints env2 [EqPoints (getPnt m') (getPnt lookupM)])
+  return (IValue m' name, addConstraints env2 [EqPoints m' lookupM])
 fromExpr objArgs obj env1 (IArg m name) = do
   (m', env2) <- fromMeta env1 BUpper obj m ("Arg " ++ name)
   let varM = PreTyped $ TypeVar $  TVArg name
   (varM', env3) <- fromMeta env2 BUpper obj varM $ "ArgVar " ++ name
   case H.lookup name objArgs of
     Nothing -> error $ "Could not find arg " ++ name
-    Just lookupArg -> return (IArg varM' name, addConstraints env3 [EqPoints (getPnt m') (getPnt lookupArg)])
+    Just lookupArg -> return (IArg varM' name, addConstraints env3 [EqPoints m' lookupArg])
 fromExpr objArgs obj env1 (ITupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
   (m', env2) <- fromMeta env1 BUpper obj m $ printf "TupleApply %s(%s = %s) Meta" (show baseExpr) argName (show argExpr)
   (baseM', env3) <- fromMeta env2 BUpper obj baseM $ printf "TupleApply %s(%s = %s) BaseMeta" (show baseExpr) argName (show argExpr)
   (baseExpr', env4) <- fromExpr objArgs obj env3 baseExpr
   (argExpr', env5) <- fromExpr objArgs obj env4 argExpr
   let (convertExprMeta, env6) = fresh env5 (TypeCheckResult [] $ SType TopType bottomType "Tuple converted expr meta")
-  let constraints = [ArrowTo (getPntExpr baseExpr') (getPnt baseM'),
-                     AddArg (getPnt baseM', argName) (getPnt m'),
-                     BoundedByObjs BoundAllObjs (getPnt m'),
-                     ArrowTo (getPnt $ getExprMeta argExpr') convertExprMeta,
-                     PropEq (getPnt m', argName) convertExprMeta
+  let convertExprMeta' = VarMeta convertExprMeta (PreTyped TopType) (Just obj)
+  let constraints = [ArrowTo (getExprMeta baseExpr') baseM',
+                     AddArg (baseM', argName) m',
+                     BoundedByObjs BoundAllObjs m',
+                     ArrowTo (getExprMeta argExpr') convertExprMeta',
+                     PropEq (m', argName) convertExprMeta'
                     ]
   let env7 = addConstraints env6 constraints
   return (ITupleApply m' (baseM', baseExpr') (Just argName) argExpr', env7)
@@ -148,10 +121,11 @@ fromExpr objArgs obj env1 (ITupleApply m (baseM, baseExpr) Nothing argExpr) = do
   (baseExpr', env4) <- fromExpr objArgs obj env3 baseExpr
   (argExpr', env5) <- fromExpr objArgs obj env4 argExpr
   let (convertExprMeta, env6) = fresh env5 (TypeCheckResult [] $ SType TopType bottomType "Tuple converted expr meta")
-  let constraints = [ArrowTo (getPntExpr baseExpr') (getPnt baseM'),
-                     AddInferArg (getPnt baseM') (getPnt m'),
-                     BoundedByObjs BoundAllObjs (getPnt m'),
-                     ArrowTo (getPnt $ getExprMeta argExpr') convertExprMeta
+  let convertExprMeta' = VarMeta convertExprMeta (PreTyped TopType) (Just obj)
+  let constraints = [ArrowTo (getExprMeta baseExpr') baseM',
+                     AddInferArg baseM' m',
+                     BoundedByObjs BoundAllObjs m',
+                     ArrowTo (getExprMeta argExpr') convertExprMeta'
                     ]
   let env7 = addConstraints env6 constraints
   return (ITupleApply m' (baseM', baseExpr') Nothing argExpr', env7)
@@ -165,7 +139,8 @@ fromGuard :: VArgMetaMap -> VObject -> FEnv -> PGuard -> TypeCheckResult (VGuard
 fromGuard objArgs obj env1 (IfGuard expr) =  do
   (expr', env2) <- fromExpr objArgs obj env1 expr
   let (bool, env3) = fresh env2 $ TypeCheckResult [] $ SType boolType bottomType "ifGuardBool"
-  return (IfGuard expr', addConstraints env3 [ArrowTo (getPnt $ getExprMeta expr') bool])
+  let bool' = VarMeta bool (PreTyped TopType) (Just obj)
+  return (IfGuard expr', addConstraints env3 [ArrowTo (getExprMeta expr') bool'])
 fromGuard _ _ env ElseGuard = return (ElseGuard, env)
 fromGuard _ _ env NoGuard = return (NoGuard, env)
 
@@ -178,14 +153,14 @@ fromArrow obj@(Object _ _ objName objVars _) env1 (Arrow m annots aguard maybeEx
   (aguard', env4) <- fromGuard argMetaMap obj env3 aguard
   case maybeExpr of
     Just expr -> do
-      (m', env5) <- fromMetaNoObj env4 BUpper (PreTyped TopType) $ printf "Arrow result from %s" (show objName)
+      (m', env5) <- fromMeta env4 BUpper obj (PreTyped TopType) $ printf "Arrow result from %s" (show objName)
       (vExpr, env6) <- fromExpr argMetaMap obj env5 expr
       let env7 = case metaTypeVar m of
             Just (TVVar typeVarName) -> case H.lookup typeVarName objVars of
-              Just varM -> addConstraints env6 [ArrowTo (getPntExpr vExpr) (getPnt varM)]
+              Just varM -> addConstraints env6 [ArrowTo (getExprMeta vExpr) varM]
               Nothing -> error "unknown type fromArrow"
             Just TVArg{} -> error "Bad TVArg in fromArrow"
-            Nothing -> addConstraints env6 [ArrowTo (getPntExpr vExpr) (getPnt m'), ArrowTo (getPntExpr vExpr) (getPnt mUserReturn')]
+            Nothing -> addConstraints env6 [ArrowTo (getExprMeta vExpr) m', ArrowTo (getExprMeta vExpr) mUserReturn']
       let arrow' = Arrow m' annots' aguard' (Just vExpr)
       let env8 = fAddTypeGraph env7 objName (obj, arrow')
       return (arrow', env8)
@@ -199,10 +174,11 @@ fromObjectMap env1 (obj, arrows) = do
   (arrows', env2) <- mapMWithFEnv env1 (fromArrow obj) arrows
   return ((obj, arrows'), env2)
 
-fromObjVar :: String -> FEnv -> (TypeVarName, PreMeta) -> TypeCheckResult ((TypeVarName, VarMeta), FEnv)
-fromObjVar prefix env1 (varName, m) = do
-  (m', env2) <- fromMetaNoObj env1 BUpper m (prefix ++ "." ++ varName)
-  return ((varName, m'), env2)
+fromObjVar :: VarMeta -> String -> FEnv -> (TypeVarName, PreMeta) -> TypeCheckResult ((TypeVarName, VarMeta), FEnv)
+fromObjVar objM prefix env1 (varName, m) = do
+  (m', env2) <- fromMetaBase env1 BUpper Nothing m (prefix ++ "." ++ varName)
+  let env3 = addConstraints env2 [VarEq (objM, varName) m']
+  return ((varName, m'), env3)
 
 addObjArg :: VObject -> VarMeta -> String -> H.HashMap TypeVarName VarMeta -> FEnv -> (TypeName, PObjArg) -> TypeCheckResult ((TypeName, VObjArg), FEnv)
 addObjArg fakeObj objM prefix varMap env (n, (m, maybeSubObj)) = do
@@ -212,14 +188,14 @@ addObjArg fakeObj objM prefix varMap env (n, (m, maybeSubObj)) = do
         Just{} -> BUpper
         Nothing -> BEq
   (m', env2) <- fromMeta env argBound fakeObj m prefix'
-  let env3 = addConstraints env2 [PropEq (getPnt objM, n) (getPnt m'), BoundedByObjs BoundTypeObjs (getPnt m')]
+  let env3 = addConstraints env2 [PropEq (objM, n) m', BoundedByObjs BoundTypeObjs m']
   let env4 = case H.lookup n varMap of
-        Just varM -> addConstraints env3 [EqPoints (getPnt m') (getPnt varM)]
+        Just varM -> addConstraints env3 [EqPoints m' varM]
         Nothing -> env3
   case maybeSubObj of
     Just subObj -> do
       (subObj'@(Object subM _ _ _ _), env5) <- fromObject prefix' True env4 subObj
-      return ((n, (m', Just subObj')), addConstraints env5 [ArrowTo (getPnt subM) (getPnt m')])
+      return ((n, (m', Just subObj')), addConstraints env5 [ArrowTo subM m'])
     Nothing -> return ((n, (m', Nothing)), env4)
 
 -- Remove constraints on args from the main meta in an Object.
@@ -229,23 +205,21 @@ addObjArg fakeObj objM prefix varMap env (n, (m, maybeSubObj)) = do
 clearMetaArgTypes :: PreMeta -> PreMeta
 clearMetaArgTypes (PreTyped (SumType partials)) = PreTyped $ SumType $ joinPartialLeafs $ map clearPartialTypeArgs $ splitPartialLeafs partials
   where
-    clearPartialTypeArgs (partialName, partialVars, partialProps, partialArgs) = (partialName, fmap cleanVar partialVars, partialProps, fmap (const TopType) partialArgs)
-    cleanVar (TypeVar TVVar{}) = TopType
-    cleanVar varVal = varVal
+    clearPartialTypeArgs (partialName, partialVars, partialProps, partialArgs) = (partialName, partialVars, partialProps, fmap (const TopType) partialArgs)
 clearMetaArgTypes p = p
 
 fromObject :: String -> Bool -> FEnv -> PObject -> TypeCheckResult (VObject, FEnv)
 fromObject prefix isObjArg env (Object m basis name vars args) = do
   let prefix' = prefix ++ "." ++ name
-  (m', env1) <- fromMetaNoObj env BUpper (clearMetaArgTypes m) prefix'
-  (vars', env2) <- mapMWithFEnvMapWithKey env1 (fromObjVar prefix') vars
+  (m', env1) <- fromMetaBase env BUpper Nothing (clearMetaArgTypes m) prefix'
+  (vars', env2) <- mapMWithFEnvMapWithKey env1 (fromObjVar m' prefix') vars
   let fakeObjForArgs = Object m' basis name vars' H.empty
   (args', env3) <- mapMWithFEnvMapWithKey env2 (addObjArg fakeObjForArgs m' prefix' vars') args
   let obj' = Object m' basis name vars' args'
   (objValue, env4) <- fromMeta env3 BUpper obj' (PreTyped $ singletonType (PTypeName name, H.empty, H.empty, H.empty)) ("objValue" ++ name)
   let env5 = fInsert env4 name objValue
-  let env6 = addConstraints env5 [BoundedByObjs BoundAllObjs (getPnt m') | isObjArg]
-  let env7 = addConstraints env6 [BoundedByKnown (getPnt m') (singletonType (PTypeName name, fmap (const TopType) vars, H.empty, fmap (const TopType) args)) | basis == FunctionObj || basis == PatternObj]
+  let env6 = addConstraints env5 [BoundedByObjs BoundAllObjs m' | isObjArg]
+  let env7 = addConstraints env6 [BoundedByKnown m' (singletonType (PTypeName name, fmap (const TopType) vars, H.empty, fmap (const TopType) args)) | basis == FunctionObj || basis == PatternObj]
   return (obj', env7)
 
 -- Add all of the objects first for various expressions that call other top level functions

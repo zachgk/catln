@@ -1,6 +1,6 @@
 --------------------------------------------------------------------
 -- |
--- Module    :  Codegen
+-- Module    :  Emit.Codegen
 -- Copyright :  (c) Zach Kimberg 2019
 -- License   :  MIT
 -- Maintainer:  zachary@kimberg.com
@@ -15,7 +15,7 @@
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE TupleSections              #-}
 
-module Codegen where
+module Emit.Codegen where
 
 import qualified Data.ByteString.Short      as SBS
 import qualified Data.ByteString.UTF8       as BSU
@@ -80,7 +80,7 @@ struct :: Name -> [Type] -> LLVM ()
 struct n as = addDefn $ TypeDefinition n (Just $ structType as)
 
 structType :: [Type] -> Type
-structType as = StructureType False as
+structType = StructureType False
 
 -------------------------------------------------------------------------------
 -- Names
