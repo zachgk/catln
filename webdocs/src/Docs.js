@@ -100,8 +100,10 @@ function Statement(props) {
   case "RawClassDefStatement":
     let [instanceType, instanceClass] = statement.contents;
     return (<div>instance {instanceType} of {instanceClass}</div>);
+  case "RawComment":
+    return (<p>{statement.contents}</p>);
   default:
-    console.error("Unknown renderStatement");
+    console.error("Unknown renderStatement", statement);
     return "";
   }
 }

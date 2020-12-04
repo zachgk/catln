@@ -254,6 +254,7 @@ desStatements statements = (objMap, classMap)
           MultiTypeDefStatement multiTypedef -> ([], [multiTypedef], [], [])
           TypeDefStatement typedef -> ([], [], [typedef], [])
           RawClassDefStatement classdef -> ([], [], [], [classdef])
+          RawComment _ -> ([], [], [], [])
     (decls, multiTypes, types, classes) = (\(a, b, c, d) -> (concat a, concat b, concat c, concat d)) $ unzip4 $ map splitStatements statements
     declObjMap = desDecls decls
     typeObjMap = desTypeDefs types
@@ -269,7 +270,7 @@ desPrgm :: PPrgm -> CRes DesPrgm
 desPrgm (_, statements) = return $ finalPasses $ desStatements statements
 
 desFiles :: PPrgms -> CRes DesPrgm
-desFiles rawPrgms = desPrgm $ foldr joinPrgms emptyPrgm $ map snd rawPrgms
+desFiles rawPrgms = desPrgm $ foldr (joinPrgms . snd) emptyPrgm rawPrgms
   where
     emptyPrgm = ([], [])
     joinPrgms (aImports, aStatements) (bImports, bStatements) = (aImports ++ bImports, aStatements ++ bStatements)

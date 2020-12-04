@@ -25,14 +25,21 @@ import Parser.Syntax
 import Parser.Expr (pExpr)
 import Parser.Decl
 import Parser.Type (pTypeStatement)
+import Syntax.Prgm
 
 pImport :: Parser String
 pImport = do
   _ <- symbol "import"
   some printChar
 
+pComment :: Parser PStatement
+pComment = do
+  _ <- string "// "
+  RawComment <$> takeWhileP (Just "character") (/= '\n')
+
 pStatement :: Parser PStatement
 pStatement = pTypeStatement
+             <|> pComment
              <|> pRootDecl
 
 pPrgm :: Parser PPrgm

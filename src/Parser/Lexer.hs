@@ -21,17 +21,11 @@ import qualified Text.Megaparsec.Char.Lexer as L
 
 type Parser = Parsec Void String
 
-lineComment :: Parser ()
-lineComment = L.skipLineComment "//"
-
-blockComment :: Parser ()
-blockComment = L.skipBlockComment "/*" "*/"
-
 scn :: Parser ()
-scn = L.space space1 lineComment blockComment
+scn = L.space space1 empty empty
 
 sc :: Parser ()
-sc = L.space (void $ some (char ' ' <|> char '\t')) lineComment blockComment
+sc = L.space (void $ some (char ' ' <|> char '\t')) empty empty
 
 lexeme :: Parser a -> Parser a
 lexeme = L.lexeme sc

@@ -110,6 +110,7 @@ data RawStatement m
   | MultiTypeDefStatement (MultiTypeDef m)
   | TypeDefStatement (TypeDef m)
   | RawClassDefStatement RawClassDef
+  | RawComment String
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
 type FileImport = String
