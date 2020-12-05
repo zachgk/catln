@@ -17,11 +17,9 @@ module Syntax where
 import           Data.Hashable
 import qualified Data.HashMap.Strict as H
 import           Data.Void             (Void)
-import           Data.List                      ( intercalate )
 
 import           GHC.Generics          (Generic)
 import           Text.Megaparsec.Error (ParseErrorBundle)
-import           Text.Printf
 
 import Syntax.Types
 import Syntax.Prgm
@@ -35,45 +33,6 @@ data ReplRes m
   | ReplExpr (RawExpr m)
   | ReplErr ParseErrorRes
   deriving (Eq, Show)
-
---- ResArrowTree
-type ResBuildEnvItem f = (PartialType, Guard (Expr Typed), ResArrowTree f -> ResArrowTree f)
-type ResBuildEnv f = H.HashMap TypeName [ResBuildEnvItem f]
-type ResExEnv f = H.HashMap (Arrow (Expr Typed) Typed) (ResArrowTree f, [ResArrowTree f]) -- (result, [compAnnot trees])
-type TBEnv f = (ResBuildEnv f, H.HashMap PartialType (ResArrowTree f), ClassMap)
-
-data ResArrowTree f
-  = ResEArrow (ResArrowTree f) (Object Typed) (Arrow (Expr Typed) Typed)
-  | PrimArrow (ResArrowTree f) Type f
-  | ConstantArrow Constant
-  | ArgArrow Type String
-  | ResArrowMatch (ResArrowTree f) (H.HashMap PartialType (ResArrowTree f))
-  | ResArrowCond [((ResArrowTree f, ResArrowTree f, Object Typed), ResArrowTree f)] (ResArrowTree f) -- [((if, ifInput, ifObj), then)] else
-  | ResArrowTuple String (H.HashMap String (ResArrowTree f))
-  | ResArrowTupleApply (ResArrowTree f) String (ResArrowTree f)
-  deriving (Eq, Generic, Hashable)
-
-instance Show (ResArrowTree f) where
-  show (ResEArrow _ obj arrow) = printf "(ResEArrow: %s -> %s)" (show obj) (show arrow)
-  show (PrimArrow _ tp _) = "(PrimArrow " ++ show tp ++ ")"
-  show (ConstantArrow c) = "(ConstantArrow " ++ show c ++ ")"
-  show (ArgArrow tp n) = "(ArgArrow " ++ show tp ++ " " ++ n ++ ")"
-  show (ResArrowMatch m args) = printf "match (%s) {%s}" (show m) args'
-    where
-      showArg (leaf, tree) = show leaf ++ " -> " ++ show tree
-      args' = intercalate ", " $ map showArg $ H.toList args
-  show (ResArrowCond ifTrees elseTree) = "( [" ++ ifTrees' ++ "] ( else " ++ show elseTree ++ ") )"
-    where
-      showIfTree (condTree, thenTree) = "if " ++ show condTree ++ " then " ++ show thenTree
-      ifTrees' = intercalate ", " $ map showIfTree ifTrees
-  show (ResArrowTuple name args) = if H.null args
-    then name
-    else name ++ "(" ++ args' ++ ")"
-    where
-      showArg (argName, val) = argName ++ " = " ++ show val
-      args' = intercalate ", " $ map showArg $ H.toList args
-  show (ResArrowTupleApply base argName argVal) = printf "(%s)(%s = %s)" (show base) argName (show argVal)
-
 
 -- Metadata for the Programs
 newtype PreTyped = PreTyped Type

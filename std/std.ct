@@ -44,5 +44,9 @@ println(IO this, String msg) -> IO
 data CatlnResult(String name, String contents)
 www(String html) = CatlnResult(name="index.html", contents=html)
 
+main(IO io) -> IO
+llvm(c) -> CatlnResult
+mainb else -> CatlnResult = llvm(c=main)
+
 class Number = Integer | Float
 class Boolean = True | False

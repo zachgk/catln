@@ -18,13 +18,11 @@ import Data.Aeson (ToJSON)
 
 import qualified Data.Text.Lazy as T
 import           GHC.Generics          (Generic)
--- import qualified Data.ByteString.UTF8            as BSU
 
 import           Desugarf         (desFiles)
 import           CRes
 import TypeCheck (typecheckPrgmWithTrace)
-import           Eval (evalMain)
--- import Emit (initModule, codegen)
+import           Eval (evalMain, evalMainb)
 import Parser (readFiles)
 import Parser.Syntax (DesPrgm, PPrgm)
 import TypeCheck.Common (TraceConstrain, VPrgm, TPrgm)
@@ -74,13 +72,13 @@ getEvaluated includeStd fileName = do
     CRes _ r -> fst <$> r
     CErr _ -> return 999
 
--- getLlvm :: Bool -> String -> IO String
--- getLlvm includeStd fileName = do
---   base <- getTPrgm includeStd fileName
---   let pre = base >>= return . codegen initModule
---   case pre of
---     CRes _ r -> BSU.toString <$> r
---     CErr _ -> return ""
+getEvalBuild :: Bool -> String -> IO (String, String)
+getEvalBuild includeStd fileName = do
+  base <- getTPrgm includeStd fileName
+  let pre = base >>= evalMainb
+  case pre of
+    CRes _ r -> (\(a, b, _) -> (a, b)) <$> r
+    CErr _ -> return ("", "")
 
 
 docServe :: Bool -> String -> IO ()
@@ -114,6 +112,6 @@ docServe includeStd fileName = do
       evaluated <- liftAndCatchIO $ getEvaluated includeStd fileName
       json $ Success evaluated ([] :: [String])
 
-    -- get "/llvm" $ do
-    --   llvm <- liftAndCatchIO $ getLlvm includeStd fileName
-    --   json $ Success llvm ([] :: [String])
+    get "/evalBuild" $ do
+      build <- liftAndCatchIO $ getEvalBuild includeStd fileName
+      json $ Success build ([] :: [String])

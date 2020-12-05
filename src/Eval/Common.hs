@@ -10,7 +10,6 @@
 --------------------------------------------------------------------
 
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE DeriveAnyClass #-}
 
 module Eval.Common where
@@ -24,8 +23,6 @@ import           Syntax.Types
 import           Syntax.Prgm
 import           Syntax
 import           Text.Printf
-import CRes
-import TreeBuild (buildArrow)
 import Data.Aeson hiding (Object)
 
 type EvalMeta = Typed
@@ -74,8 +71,9 @@ data Val
   = IntVal Integer
   | FloatVal Double
   | StrVal String
-  | TupleVal String Args
+  | TupleVal String (H.HashMap String Val)
   | IOVal Integer (IO ())
+  | LLVMVal (IO String)
   | NoVal
 
 instance Eq Val where
@@ -98,7 +96,17 @@ instance Show Val where
       showArgs as = printf "(%s)" (intercalate ", " $ map showArg $ H.toList as)
       showArg (argName, val) = argName ++ " = " ++ show val
   show IOVal{}   = "IOVal"
+  show LLVMVal{}   = "LLVMVal"
   show NoVal   = "NoVal"
+
+instance Hashable Val where
+  hashWithSalt s (IntVal i) = s `hashWithSalt` i
+  hashWithSalt s (FloatVal i) = s `hashWithSalt` i
+  hashWithSalt s (StrVal i) = s `hashWithSalt` i
+  hashWithSalt s (TupleVal n as) = s `hashWithSalt` n `hashWithSalt` as
+  hashWithSalt s (IOVal i _) = s `hashWithSalt` i
+  hashWithSalt s (LLVMVal _) = s
+  hashWithSalt s NoVal = s
 
 instance ToJSON Val where
   toJSON (IntVal v) = object ["tag".=("IntVal" :: String), "contents".=toJSON v]
@@ -106,6 +114,7 @@ instance ToJSON Val where
   toJSON (StrVal v) = object ["tag".=("StrVal" :: String), "contents".=toJSON v]
   toJSON (TupleVal name args) = object ["tag".=("TupleVal" :: String), "name".=name, "args".=toJSON args]
   toJSON IOVal{} = object ["tag".=("IOVal" :: String)]
+  toJSON LLVMVal{} = object ["tag".=("LLVMVal" :: String)]
   toJSON NoVal = object ["tag".=("NoVal" :: String)]
 
 getValType :: Val -> PartialType
@@ -115,55 +124,54 @@ getValType StrVal{} = strLeaf
 getValType (TupleVal name args) = (PTypeName name, H.empty, H.empty, fmap fromArg args)
   where fromArg arg = singletonType $ getValType arg
 getValType IOVal{} = ioLeaf
+getValType LLVMVal{} = (PTypeName "CatlnResult", H.empty, H.empty, H.fromList [("name", strType), ("contents", strType)])
 getValType NoVal = error "getValType of NoVal"
 
-evalStartEArrow :: Env -> EObject -> EArrow -> Args -> CRes (ResArrowTree EPrim, [ResArrowTree EPrim], Args, Env)
-evalStartEArrow env@Env{evExEnv, evTbEnv, evArgs, evCoverage, evTreebugOpen} obj arr newArgs = do
-  let env' = env{
-                evArgs=newArgs
-                , evCoverage = H.insertWith (+) arr 1 evCoverage
-                , evTreebugOpen = EvalTreebugOpen obj arr : evTreebugOpen
-                }
-  case H.lookup arr evExEnv of
-    Just (tree, annots) -> return (tree, annots, evArgs, env')
-    Nothing -> do
-      maybeArrow' <- buildArrow evTbEnv obj arr
-      case maybeArrow' of
-        Just (_, arrow'@(tree, annots)) -> do
-          let env'' = env' {evExEnv = H.insert arr arrow' evExEnv}
-          return (tree, annots, evArgs, env'')
-        Nothing -> evalError env $ printf "Failed to find arrow in eval resArrow: %s" (show arr)
 
-evalEndEArrow :: Env -> Val -> Args -> Env
-evalEndEArrow Env{evTreebugOpen} _ _ | null evTreebugOpen = error $ printf "Tried to evalEndEArrow with an empty treebug open"
-evalEndEArrow env@Env{evTreebugOpen, evTreebugClosed} val newArgs = env {
-  evTreebugOpen = tail evTreebugOpen,
-  evTreebugClosed = pure $ (\(EvalTreebugOpen obj arr) -> EvalTreebugClosed obj arr val evTreebugClosed) (head evTreebugOpen),
-  evArgs = newArgs
-                                                            }
+--- ResArrowTree
+data MacroData f = MacroData {
+                               mdPrgm :: Prgm (Expr Typed) Typed
+                             }
+type ResBuildEnvItem f = (PartialType, Guard (Expr Typed), ResArrowTree f -> MacroData f -> ResArrowTree f)
+type ResBuildEnv f = H.HashMap TypeName [ResBuildEnvItem f]
+type ResExEnv f = H.HashMap (Arrow (Expr Typed) Typed) (ResArrowTree f, [ResArrowTree f]) -- (result, [compAnnot trees])
+type TBEnv f = (ResBuildEnv f, H.HashMap PartialType (ResArrowTree f), ObjectMap (Expr Typed) Typed, ClassMap)
 
-evalEnvJoin :: Env -> Env -> Env
-evalEnvJoin (Env objMap classMap args exEnv1 tbEnv callStack cov1 treebugOpen treebugClosed1) (Env _ _ _ exEnv2 _ _ cov2 _ treebugClosed2) = Env objMap classMap args (H.union exEnv1 exEnv2) tbEnv callStack (H.unionWith (+) cov1 cov2) treebugOpen (treebugClosed1 ++ treebugClosed2)
+data ResArrowTree f
+  = ResEArrow (ResArrowTree f) (Object Typed) (Arrow (Expr Typed) Typed)
+  | PrimArrow (ResArrowTree f) Type f
+  | MacroArrow (ResArrowTree f) Type
+  | ConstantArrow Val
+  | ArgArrow Type String
+  | ResArrowMatch (ResArrowTree f) (H.HashMap PartialType (ResArrowTree f))
+  | ResArrowCond [((ResArrowTree f, ResArrowTree f, Object Typed), ResArrowTree f)] (ResArrowTree f) -- [((if, ifInput, ifObj), then)] else
+  | ResArrowTuple String (H.HashMap String (ResArrowTree f))
+  | ResArrowTupleApply (ResArrowTree f) String (ResArrowTree f)
+  deriving (Eq, Generic, Hashable)
 
-evalEnvJoinAll :: Foldable f => f Env -> Env
-evalEnvJoinAll = foldr1 evalEnvJoin
+instance Show (ResArrowTree f) where
+  show (ResEArrow _ obj arrow) = printf "(ResEArrow: %s -> %s)" (show obj) (show arrow)
+  show (PrimArrow _ tp _) = "(PrimArrow " ++ show tp ++ ")"
+  show (MacroArrow _ tp) = "(MacroArrow " ++ show tp ++ ")"
+  show (ConstantArrow c) = "(ConstantArrow " ++ show c ++ ")"
+  show (ArgArrow tp n) = "(ArgArrow " ++ show tp ++ " " ++ n ++ ")"
+  show (ResArrowMatch m args) = printf "match (%s) {%s}" (show m) args'
+    where
+      showArg (leaf, tree) = show leaf ++ " -> " ++ show tree
+      args' = intercalate ", " $ map showArg $ H.toList args
+  show (ResArrowCond ifTrees elseTree) = "( [" ++ ifTrees' ++ "] ( else " ++ show elseTree ++ ") )"
+    where
+      showIfTree (condTree, thenTree) = "if " ++ show condTree ++ " then " ++ show thenTree
+      ifTrees' = intercalate ", " $ map showIfTree ifTrees
+  show (ResArrowTuple name args) = if H.null args
+    then name
+    else name ++ "(" ++ args' ++ ")"
+    where
+      showArg (argName, val) = argName ++ " = " ++ show val
+      args' = intercalate ", " $ map showArg $ H.toList args
+  show (ResArrowTupleApply base argName argVal) = printf "(%s)(%s = %s)" (show base) argName (show argVal)
 
-evalError :: Env -> String -> CRes a
-evalError Env{evCallStack} msg = CErr [MkCNote $ EvalCErr evCallStack msg]
+macroData :: TBEnv f -> MacroData f
+macroData (_, _, objMap, classMap) = MacroData (objMap, classMap)
 
-evalSetArgs :: Env -> H.HashMap ArgName Val -> Env
-evalSetArgs env args' = env{evArgs=args'}
 
-evalPush :: Env -> String -> Env
-evalPush env@Env{evCallStack} c = env{evCallStack = c:evCallStack}
-
-evalPop :: Env -> Env
-evalPop env@Env{evCallStack} = case evCallStack of
-  (_:stack') -> env{evCallStack=stack'}
-  _ -> error "Popped empty evCallStack"
-
-evalPopVal :: (a, Env) -> (a, Env)
-evalPopVal (a, env) = (a, evalPop env)
-
-evalResult :: Env -> EvalResult
-evalResult Env{evCoverage, evTreebugClosed} = EvalResult evCoverage evTreebugClosed

@@ -30,7 +30,7 @@ type TArrow = Arrow TExpr TypedMeta
 type TPrgm = Prgm TExpr TypedMeta
 type TReplRes = ReplRes TypedMeta
 
-data LLVMPrim = LLVMPrim PartialType TGuard (H.HashMap String Val -> Codegen Val)
+data LLVMPrim = LLVMPrim PartialType TGuard (H.HashMap String LVal -> Codegen LVal)
   deriving (Generic)
 
 instance Eq LLVMPrim where
@@ -39,12 +39,12 @@ instance Eq LLVMPrim where
 instance Hashable LLVMPrim where
   hashWithSalt s (LLVMPrim at ag _) = s `hashWithSalt` at `hashWithSalt` ag
 
-data Val
-  = OVal Type AST.Operand
-  | TupleVal String Args
-  | IOVal
-  | NoVal
+data LVal
+  = LOVal Type AST.Operand
+  | LTupleVal String LArgs
+  | LIOVal
+  | LNoVal
   deriving (Show)
 
-type Args = H.HashMap String Val
-type Env = ClassMap
+type LArgs = H.HashMap String LVal
+type LEnv = ClassMap

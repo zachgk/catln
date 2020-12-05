@@ -23,6 +23,7 @@ import           CRes
 import TreeBuild
 import Eval.Common
 import Eval.Runtime
+import Eval.Env
 import           Text.Printf
 import Control.Monad
 
@@ -64,9 +65,8 @@ eval env (PrimArrow input _ (EPrim _ _ f)) = do
   case input' of
     (TupleVal _ args) -> return (f args, env2)
     _ -> error "Unexpected eval PrimArrow input"
-eval env (ConstantArrow (CInt i)) = return (IntVal i, env)
-eval env (ConstantArrow (CFloat f)) = return (FloatVal f, env)
-eval env (ConstantArrow (CStr s)) = return (StrVal s, env)
+eval env MacroArrow{} = evalError env $ printf "Can't evaluate a macro - it should be removed during TreeBuild"
+eval env (ConstantArrow v) = return (v, env)
 eval env@Env{evArgs} (ArgArrow _ name) = case H.lookup name evArgs of
   Just arg' -> return (arg', env)
   Nothing -> evalError env $ printf "Unknown arg %s found during evaluation \n\t\t with arg env %s" name (show evArgs)
@@ -133,7 +133,7 @@ evalMain = evalPrgm mainExpr mainPartial ioType
         mainPartialEmpty = Typed $ singletonType (PTypeName "main", H.empty, H.empty, H.empty)
         mainExpr = TupleApply (Typed $ singletonType mainPartial) (mainPartialEmpty, Value mainPartialEmpty "main") "io" (Arg (Typed ioType) "io")
 
-evalMainb :: EPrgm -> CRes (String, String, EvalResult)
+evalMainb :: EPrgm -> CRes (IO (String, String, EvalResult))
 evalMainb prgm = do
   let srcName = "mainb"
   let src = (PTypeName srcName, H.empty, H.empty, H.empty)
@@ -143,6 +143,9 @@ evalMainb prgm = do
   (res, env') <- eval env initTree
   case res of
     (TupleVal "CatlnResult" args) -> case (H.lookup "name" args, H.lookup "contents" args) of
-      (Just (StrVal n), Just (StrVal c)) -> return (n, c, evalResult env')
+      (Just (StrVal n), Just (StrVal c)) -> return $ return (n, c, evalResult env')
       _ -> CErr [MkCNote $ GenCErr "Eval mainb returned a CatlnResult with bad args"]
+    (LLVMVal ioRes) -> return $ do
+      llvmStr <- ioRes
+      return ("out.ll", llvmStr, evalResult env')
     _ -> CErr [MkCNote $ GenCErr "Eval mainb did not return a CatlnResult"]

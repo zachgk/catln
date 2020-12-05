@@ -24,6 +24,7 @@ import           Syntax.Types
 import           Syntax.Prgm
 import           Syntax
 import           CRes
+import           Eval.Common
 import Control.Monad
 
 type TBMeta = Typed
@@ -41,9 +42,8 @@ type VisitedArrows f = S.HashSet (ResArrowTree f)
 resArrowDestType :: ClassMap -> PartialType -> ResArrowTree f -> Type
 resArrowDestType classMap src (ResEArrow _ obj arr) = arrowDestType False classMap src obj arr
 resArrowDestType _ _ (PrimArrow _ tp _) = tp
-resArrowDestType _ _ (ConstantArrow CInt{}) = intType
-resArrowDestType _ _ (ConstantArrow CFloat{}) = floatType
-resArrowDestType _ _ (ConstantArrow CStr{}) = strType
+resArrowDestType _ _ (MacroArrow _ tp) = tp
+resArrowDestType _ _ (ConstantArrow v) = singletonType $ getValType v
 resArrowDestType _ _ (ArgArrow tp _) = tp
 resArrowDestType _ _ t = error $ printf "Not yet implemented resArrowDestType for %s" (show t)
 
@@ -55,11 +55,11 @@ leafsFromMeta (Typed (SumType prodTypes)) = splitPartialLeafs prodTypes
 makeTBEnv :: (Eq f, Hashable f) => ResBuildEnv f -> TBPrgm -> TBEnv f
 makeTBEnv primEnv (objMap, classMap) = baseEnv
   where
-    baseEnv = (H.union primEnv resEnv, H.empty, classMap)
+    baseEnv = (H.union primEnv resEnv, H.empty, objMap, classMap)
     resEnv = H.fromListWith (++) $ concatMap resFromArrows $ H.toList objMap
     resFromArrows (obj, arrows) = mapMaybe (resFromArrow obj) arrows
     resFromArrow obj@(Object om _ objName _ _) arrow@(Arrow _ _ aguard expr) = case expr of
-      Just _ -> Just (objName, [(objLeaf, aguard, \input -> ResEArrow input obj arrow) | objLeaf <- leafsFromMeta om])
+      Just _ -> Just (objName, [(objLeaf, aguard, \input _ -> ResEArrow input obj arrow) | objLeaf <- leafsFromMeta om])
       Nothing -> Nothing
 
 buildCompAnnot :: (Eq f, Hashable f) => TBEnv f -> TBObject -> TBCompAnnot -> CRes (ResArrowTree f)
@@ -75,15 +75,18 @@ buildCompAnnot env obj (CompAnnot "assert" args) = case (H.lookup "test" args, H
 buildCompAnnot _ _ (CompAnnot name _ )= CErr [MkCNote $ BuildTreeCErr $ "Unknown compiler annotation" ++ name]
 
 buildExpr :: (Eq f, Hashable f) => TBEnv f -> TBObject -> TBExpr -> CRes (ResArrowTree f)
-buildExpr _ _ (CExpr _ c) = return (ConstantArrow c)
-buildExpr (_, valEnv, _) _ (Value (Typed (SumType prodTypes)) name) = case splitPartialLeafs prodTypes of
+buildExpr _ _ (CExpr _ c) = case c of
+  (CInt i) -> return $ ConstantArrow $ IntVal i
+  (CFloat i) -> return $ ConstantArrow $ FloatVal i
+  (CStr i) -> return $ ConstantArrow $ StrVal i
+buildExpr (_, valEnv, _, _) _ (Value (Typed (SumType prodTypes)) name) = case splitPartialLeafs prodTypes of
     (_:_:_) -> CErr [MkCNote $ BuildTreeCErr $ "Found multiple types for value " ++ name ++ "\n\t" ++ show prodTypes]
     [] -> CErr [MkCNote $ BuildTreeCErr $ "Found no types for value " ++ name ++ " with type " ++ show prodTypes]
     [prodType] -> return $ case H.lookup prodType valEnv of
       Just val -> val
       Nothing -> ResArrowTuple name H.empty
 buildExpr _ _ (Arg (Typed tp) name) = return $ ArgArrow tp name
-buildExpr env@(_, _, classMap) obj (TupleApply (Typed (SumType prodTypes)) (Typed baseType, baseExpr) argName argExpr) = case splitPartialLeafs prodTypes of
+buildExpr env@(_, _, _, classMap) obj (TupleApply (Typed (SumType prodTypes)) (Typed baseType, baseExpr) argName argExpr) = case splitPartialLeafs prodTypes of
     [] -> CErr [MkCNote $ BuildTreeCErr $ "Found no types for tupleApply " ++ show baseExpr ++ " with type " ++ show prodTypes ++ " and expr " ++ show argExpr]
     leaves -> do
       baseBuild <- buildExprImp env obj baseExpr baseType
@@ -100,9 +103,10 @@ buildExpr env@(_, _, classMap) obj (TupleApply (Typed (SumType prodTypes)) (Type
 buildExpr _ _ _ = error "Bad buildExpr"
 
 envLookupTry :: (Eq f, Hashable f) => TBEnv f -> TBObject -> VisitedArrows f -> PartialType -> Type -> ResArrowTree f -> CRes (ResArrowTree f)
-envLookupTry (_, _, classMap) _ _ srcType destType resArrow | hasType classMap (resArrowDestType classMap srcType resArrow) destType = return resArrow
+envLookupTry (_, _, _, classMap) _ _ srcType destType resArrow | hasType classMap (resArrowDestType classMap srcType resArrow) destType = return resArrow
 envLookupTry _ _ visitedArrows _ _ resArrow | S.member resArrow visitedArrows = CErr [MkCNote $ BuildTreeCErr "Found cyclical use of function"]
-envLookupTry env@(_, _, classMap) obj visitedArrows srcType destType resArrow = do
+envLookupTry (_, valMap, _, _) obj _ _ _ MacroArrow{} = error $ printf "envLookupTry with MacroArrow not yet completed \n\t\t valMap: %s \n\t\t obj: %s" (show valMap) (show obj)
+envLookupTry env@(_, _, _, classMap) obj visitedArrows srcType destType resArrow = do
   let (SumType newLeafTypes) = resArrowDestType classMap srcType resArrow
   let visitedArrows' = S.insert resArrow visitedArrows
   let obj' = case resArrow of
@@ -125,7 +129,7 @@ buildGuardArrows env obj input visitedArrows srcType destType guards = case guar
                             r@CRes{} -> r
                             CErr errNotes2 -> wrapCErr (errNotes1 ++ errNotes2) $ printf "Failed to lookup noGuard arrow: %s -> %s\n\tNoGuard: %s" (show $ singletonType srcType) (show destType) (show noGuard)
       ([], _, []) -> CErr [MkCNote $ BuildTreeCErr "Missing ElseGuard on envLookup"]
-      ([], ifGuards, [elseGuard]) | not (null ifGuards) -> do
+      ([], ifGuards, [elseGuard]) -> do
                                       let maybeIfTreePairs = forM ifGuards $ \(ifCond, ifThen@(ResEArrow _ o _)) -> do
                                             ifTree' <- buildExprImp env o ifCond boolType
                                             thenTree' <- ltry ifThen
@@ -134,12 +138,12 @@ buildGuardArrows env obj input visitedArrows srcType destType guards = case guar
                                       case sequenceT (maybeIfTreePairs, maybeElseTree) of
                                         (CRes notes (ifTreePairs, elseTree)) -> CRes notes $ ResArrowCond ifTreePairs elseTree
                                         CErr notes -> wrapCErr notes "No valid ifTrees:"
-      _ -> CErr [MkCNote $ BuildTreeCErr "Unknown arrows found in envLookup"]
+      arrows -> CErr [MkCNote $ BuildTreeCErr $ printf "Unknown arrows found in envLookup: %s" (show arrows)]
   where
     ltry = envLookupTry env obj visitedArrows srcType destType
 
 findResArrows :: (Eq f, Hashable f) => TBEnv f -> PartialType -> Type -> CRes [ResBuildEnvItem f]
-findResArrows (resEnv, _, classMap) srcType@(PTypeName srcName, _, _, _) destType = case H.lookup srcName resEnv of
+findResArrows (resEnv, _, _, classMap) srcType@(PTypeName srcName, _, _, _) destType = case H.lookup srcName resEnv of
   Just resArrowsWithName -> do
     let resArrows = filter (\(arrowType, _, _) -> subPartialOf classMap srcType arrowType) resArrowsWithName
     -- TODO: Sort resArrows by priority order before trying
@@ -148,16 +152,17 @@ findResArrows (resEnv, _, classMap) srcType@(PTypeName srcName, _, _, _) destTyp
 findResArrows _ (PClassName _, _, _, _) _ = error "Can't findResArrows for class"
 
 envLookup :: (Eq f, Hashable f) => TBEnv f -> TBObject -> ResArrowTree f -> VisitedArrows f -> PartialType -> Type -> CRes (ResArrowTree f)
-envLookup (_, _, classMap) _ input _ srcType destType | hasPartial classMap srcType destType = return input
+envLookup (_, _, _, classMap) _ input _ srcType destType | hasPartial classMap srcType destType = return input
 envLookup env obj input visitedArrows srcType@(PTypeName _, _, _, _) destType = do
   resArrows <- findResArrows env srcType destType
+  let md = macroData env
   let guards = (\(a,b,c) -> (concat a, concat b, concat c)) $ unzip3 $ map (\case
-                        (_, NoGuard, a) -> ([a input], [], [])
-                        (_, IfGuard ifCond, ifThen) -> ([], [(ifCond, ifThen input)], [])
-                        (_, ElseGuard, a) -> ([], [], [a input])
+                        (_, NoGuard, a) -> ([a input md], [], [])
+                        (_, IfGuard ifCond, ifThen) -> ([], [(ifCond, ifThen input md)], [])
+                        (_, ElseGuard, a) -> ([], [], [a input md])
                     ) resArrows
   buildGuardArrows env obj input visitedArrows srcType destType guards
-envLookup env@(_, _, classMap) obj input visitedArrows srcType@(PClassName _, _, _, _) destType = do
+envLookup env@(_, _, _, classMap) obj input visitedArrows srcType@(PClassName _, _, _, _) destType = do
   let (SumType expanded) = expandClassPartial classMap srcType
   let expanded' = splitPartialLeafs expanded
   expandedTrees <- mapM (\expandedSrc -> envLookup env obj input visitedArrows expandedSrc destType) expanded'

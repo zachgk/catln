@@ -8,6 +8,7 @@
 -- Portability: non-portable
 --
 --------------------------------------------------------------------
+{-# LANGUAGE NamedFieldPuns #-}
 
 module Eval.Runtime where
 
@@ -17,8 +18,10 @@ import           Syntax.Prgm
 import           Syntax
 
 import Eval.Common
+import Text.Printf
+import Emit (codegenInit)
 
-type Op = (TypeName, [(PartialType, Guard (Expr Typed), ResArrowTree EPrim -> ResArrowTree EPrim)])
+type Op = (TypeName, [(PartialType, Guard (Expr Typed), ResArrowTree EPrim -> MacroData EPrim -> ResArrowTree EPrim)])
 
 true, false :: Val
 true = TupleVal "True" H.empty
@@ -29,7 +32,7 @@ bool True = true
 bool False = false
 
 liftIntOp :: TypeName -> (Integer -> Integer -> Integer) -> Op
-liftIntOp name f = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
+liftIntOp name f = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType prim)])
   where
     name' = "operator" ++ name
     srcType = (PTypeName name', H.empty, H.empty, H.fromList [("l", intType), ("r", intType)])
@@ -40,7 +43,7 @@ liftIntOp name f = (name', [(srcType, NoGuard, \input -> PrimArrow input resType
                            )
 
 liftCmpOp :: TypeName -> (Integer -> Integer -> Bool) -> Op
-liftCmpOp name f = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
+liftCmpOp name f = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType prim)])
   where
     name' = "operator" ++ name
     srcType = (PTypeName name', H.empty, H.empty, H.fromList [("l", intType), ("r", intType)])
@@ -51,7 +54,7 @@ liftCmpOp name f = (name', [(srcType, NoGuard, \input -> PrimArrow input resType
                            )
 
 rneg :: TypeName -> Op
-rneg name = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
+rneg name = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType prim)])
   where
     name' = "operator" ++ name
     srcType = (PTypeName name', H.empty, H.empty, H.singleton "a" intType)
@@ -62,7 +65,7 @@ rneg name = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)]
                               )
 
 strEq :: Op
-strEq = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
+strEq = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType prim)])
   where
     name' = "operator=="
     srcType = (PTypeName name', H.empty, H.empty, H.fromList [("l", strType), ("r", strType)])
@@ -73,7 +76,7 @@ strEq = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
                               )
 
 intToString :: Op
-intToString = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
+intToString = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType prim)])
   where
     name' = "toString"
     srcType = (PTypeName name', H.empty, H.empty, H.singleton "this" intType)
@@ -85,7 +88,7 @@ intToString = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim
 
 
 ioExit :: Op
-ioExit = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
+ioExit = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType prim)])
   where
     name' = "exit"
     srcType = (PTypeName name', H.empty, H.empty, H.fromList [("this", ioType), ("val", intType)])
@@ -96,7 +99,7 @@ ioExit = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
                               )
 
 println :: Op
-println = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
+println = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType prim)])
   where
     name' = "println"
     srcType = (PTypeName name', H.empty, H.empty, H.fromList [("this", ioType), ("msg", strType)])
@@ -105,6 +108,16 @@ println = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
                                   (Just (IOVal r io), Just (StrVal msg)) -> IOVal r (io >> putStrLn msg)
                                   _ -> error "Invalid println signature"
                               )
+
+llvm :: Op
+llvm = (name', [(srcType, NoGuard, aux)])
+  where
+    name' = "llvm"
+    srcType = (PTypeName name', H.empty, H.empty, H.fromList [("c", TopType)])
+    aux (ResEArrow _ _ (Arrow _ _ _ (Just expr))) MacroData{mdPrgm} = case expr of
+      (TupleApply _ (_, Value _ "llvm") "c" f@(Value _ functionToCodegen)) -> ConstantArrow $ LLVMVal $ codegenInit f (PTypeName functionToCodegen, H.empty, H.empty, H.singleton "io" ioType) ioType mdPrgm
+      _ -> error $ printf "Unknown expr to llvm macro: %s" (show expr)
+    aux input _ = error $ printf "Unknown input to llvm macro: %s" (show input)
 
 primEnv :: ResBuildEnv EPrim
 primEnv = H.fromListWith (++) [ liftIntOp "+" (+)
@@ -121,4 +134,5 @@ primEnv = H.fromListWith (++) [ liftIntOp "+" (+)
                               , intToString
                               , ioExit
                               , println
+                              , llvm
                               ]
