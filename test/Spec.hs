@@ -48,7 +48,7 @@ runTest includeStd fileName = testCaseSteps fileName $ \step -> do
                 CRes notes io -> do
                   returnValue <- io
                   case (notes, returnValue) of
-                    ([], 0) -> return () -- success
+                    ([], (0, _)) -> return () -- success
                     _ -> assertFailure $ "Bad result for:\n \t " ++ show returnValue ++ "\n \tNotes\t" ++ concat (map show notes)
               step "Codegen"
               _ <- codegen initModule tprgm

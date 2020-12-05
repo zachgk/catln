@@ -72,7 +72,7 @@ eval env val (ResEArrow object arrow) = do
         _ -> evalEnvJoinAll env4s
   let treeWithoutArgs = replaceTreeArgs newArrArgs resArrowTree
   (res, env5) <- evalPopVal <$> evalTree (evalPush env4 $ printf "ResEArrow %s" (show arrow)) val treeWithoutArgs
-  return (res, evalEndEArrow env5)
+  return (res, evalEndEArrow env5 res)
 eval env (TupleVal _ args) (PrimArrow _ (EPrim _ _ f)) = return (f args, env)
 eval env _ (ConstantArrow (CInt i)) = return (IntVal i, env)
 eval env _ (ConstantArrow (CFloat f)) = return (FloatVal f, env)
@@ -126,34 +126,36 @@ evalBuildPrgm srcType destType prgm@(objMap, classMap) = do
         evExEnv = H.empty,
         evTbEnv = tbEnv,
         evCallStack = [],
-        evCoverage = H.empty
+        evCoverage = H.empty,
+        evTreebugOpen = [],
+        evTreebugClosed = []
                 }
   return (initTree, env)
 
 mainPartial :: PartialType
 mainPartial = (PTypeName "main", H.empty, H.empty, H.singleton "io" ioType)
 
-evalPrgm :: PartialType -> Type -> EPrgm -> CRes (IO Integer)
+evalPrgm :: PartialType -> Type -> EPrgm -> CRes (IO (Integer, EvalResult))
 evalPrgm src@(PTypeName srcName, _, _, _) dest prgm = do
   (initTree, env) <- evalBuildPrgm src dest prgm
-  (res, _) <- evalTree env (TupleVal srcName (H.singleton "io" (IOVal 0 $ pure ()))) initTree
+  (res, env') <- evalTree env (TupleVal srcName (H.singleton "io" (IOVal 0 $ pure ()))) initTree
   case res of
-    (IOVal r io) -> return (io >> pure r)
+    (IOVal r io) -> return (io >> pure (r, evalResult env'))
     _ -> CErr [MkCNote $ GenCErr "Eval did not return an instance of IO"]
 evalPrgm (PClassName _, _, _, _) _ _ = error "Can't eval class"
 
-evalMain :: EPrgm -> CRes (IO Integer)
+evalMain :: EPrgm -> CRes (IO (Integer, EvalResult))
 evalMain = evalPrgm mainPartial ioType
 
-evalMainb :: EPrgm -> CRes (String, String)
+evalMainb :: EPrgm -> CRes (String, String, EvalResult)
 evalMainb prgm = do
   let srcName = "mainb"
   let src = (PTypeName srcName, H.empty, H.empty, H.empty)
   let dest = singletonType (PTypeName "CatlnResult", H.empty, H.empty, H.fromList [("name", strType), ("contents", strType)])
   (initTree, env) <- evalBuildPrgm src dest prgm
-  (res, _) <- evalTree env NoVal initTree
+  (res, env') <- evalTree env NoVal initTree
   case res of
     (TupleVal "CatlnResult" args) -> case (H.lookup "name" args, H.lookup "contents" args) of
-      (Just (StrVal n), Just (StrVal c)) -> return (n, c)
+      (Just (StrVal n), Just (StrVal c)) -> return (n, c, evalResult env')
       _ -> CErr [MkCNote $ GenCErr "Eval mainb returned a CatlnResult with bad args"]
     _ -> CErr [MkCNote $ GenCErr "Eval mainb did not return a CatlnResult"]

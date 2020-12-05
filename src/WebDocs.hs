@@ -28,6 +28,7 @@ import Emit (initModule, codegen)
 import Parser (readFiles)
 import Parser.Syntax (DesPrgm, PPrgm)
 import TypeCheck.Common (TraceConstrain, VPrgm, TPrgm)
+import Eval.Common (EvalResult)
 
 data ResSuccess a n = Success a [n]
   deriving (Generic, ToJSON)
@@ -57,12 +58,20 @@ getTPrgm includeStd fileName = do
   base <- getTPrgmWithTrace includeStd fileName
   return ((\(a, _, _) -> a) <$> base)
 
+getTreebug :: Bool -> String -> IO EvalResult
+getTreebug includeStd fileName = do
+  base <- getTPrgm includeStd fileName
+  let pre = base >>= evalMain
+  case pre of
+    CRes _ r -> snd <$> r
+    CErr _ -> fail "No eval result found"
+
 getEvaluated :: Bool -> String -> IO Integer
 getEvaluated includeStd fileName = do
   base <- getTPrgm includeStd fileName
   let pre = base >>= evalMain
   case pre of
-    CRes _ r -> r
+    CRes _ r -> fst <$> r
     CErr _ -> return 999
 
 getLlvm :: Bool -> String -> IO String
@@ -96,6 +105,10 @@ docServe includeStd fileName = do
     get "/typecheck" $ do
       maybeTprgm <- liftAndCatchIO $ getTPrgm includeStd fileName
       maybeJson maybeTprgm
+
+    get "/treebug" $ do
+      treebug <- liftAndCatchIO $ getTreebug includeStd fileName
+      json $ Success treebug ([] :: [String])
 
     get "/eval" $ do
       evaluated <- liftAndCatchIO $ getEvaluated includeStd fileName

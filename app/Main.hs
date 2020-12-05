@@ -53,7 +53,7 @@ processDes des = case aux of
   CRes _ resIO -> do
     returnValue <- resIO
     case returnValue of
-      0 -> return ()
+      (0, _) -> return ()
       _ -> print $ "error code " ++ show returnValue
   where
     aux = do
