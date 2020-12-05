@@ -61,7 +61,7 @@ evalCompAnnot env _ = evalError env "Eval: Invalid compiler annotation type"
 
 eval :: Env -> Val -> ResArrow EPrim -> CRes (Val, Env)
 eval env val (ResEArrow object arrow) = do
-  (resArrowTree, compAnnots, env2) <- getArrowTree env object arrow
+  (resArrowTree, compAnnots, env2) <- evalStartEArrow env object arrow
   let newArrArgs = buildArrArgs object val
   env4s <- forM compAnnots $ \compAnnot -> do
             let treeWithoutArgs = replaceTreeArgs newArrArgs compAnnot
@@ -71,7 +71,8 @@ eval env val (ResEArrow object arrow) = do
         [] -> env2
         _ -> evalEnvJoinAll env4s
   let treeWithoutArgs = replaceTreeArgs newArrArgs resArrowTree
-  evalPopVal <$> evalTree (evalPush env4 $ printf "ResEArrow %s" (show arrow)) val treeWithoutArgs
+  (res, env5) <- evalPopVal <$> evalTree (evalPush env4 $ printf "ResEArrow %s" (show arrow)) val treeWithoutArgs
+  return (res, evalEndEArrow env5)
 eval env (TupleVal _ args) (PrimArrow _ (EPrim _ _ f)) = return (f args, env)
 eval env _ (ConstantArrow (CInt i)) = return (IntVal i, env)
 eval env _ (ConstantArrow (CFloat f)) = return (FloatVal f, env)
@@ -128,7 +129,7 @@ evalBuildMain = evalBuildPrgm mainPartial ioType
 evalPrgm :: PartialType -> Type -> EPrgm -> CRes (IO Integer)
 evalPrgm src@(PTypeName srcName, _, _, _) dest prgm@(objMap, classMap) = do
   (resArrowTree, exEnv) <- evalBuildPrgm src dest prgm
-  let env = Env objMap classMap exEnv []
+  let env = Env objMap classMap exEnv [] H.empty
   (res, _) <- evalTree env (TupleVal srcName (H.singleton "io" (IOVal 0 $ pure ()))) resArrowTree
   case res of
     (IOVal r io) -> return (io >> pure r)
@@ -144,7 +145,7 @@ evalMainb prgm@(objMap, classMap) = do
   let src = (PTypeName srcName, H.empty, H.empty, H.empty)
   let dest = singletonType (PTypeName "CatlnResult", H.empty, H.empty, H.fromList [("name", strType), ("contents", strType)])
   (resArrowTree, exEnv) <- evalBuildPrgm src dest prgm
-  let env = Env objMap classMap exEnv []
+  let env = Env objMap classMap exEnv [] H.empty
   (res, _) <- evalTree env NoVal resArrowTree
   case res of
     (TupleVal "CatlnResult" args) -> case (H.lookup "name" args, H.lookup "contents" args) of

@@ -49,6 +49,7 @@ data Env = Env { evObjMap :: EObjectMap
                , evClassMap :: ClassMap
                , evExEnv :: ResExEnv EPrim
                , evCallStack :: [String]
+               , evCoverage :: H.HashMap EArrow Int
                } deriving (Eq, Show)
 
 type Args = H.HashMap String Val
@@ -92,13 +93,16 @@ getValType (TupleVal name args) = (PTypeName name, H.empty, H.empty, fmap fromAr
 getValType IOVal{} = ioLeaf
 getValType NoVal = error "getValType of NoVal"
 
-getArrowTree :: Env -> EObject -> EArrow -> CRes (ResArrowTree EPrim, [ResArrowTree EPrim], Env)
-getArrowTree env@Env{evExEnv, evCallStack} _ arr = case H.lookup arr evExEnv of
-  Just (tree, annots) -> return (tree, annots, env)
+evalStartEArrow :: Env -> EObject -> EArrow -> CRes (ResArrowTree EPrim, [ResArrowTree EPrim], Env)
+evalStartEArrow env@Env{evExEnv, evCallStack, evCoverage} _ arr = case H.lookup arr evExEnv of
+  Just (tree, annots) -> return (tree, annots, env{evCoverage = H.insertWith (+) arr 1 evCoverage})
   Nothing -> CErr [MkCNote $ EvalCErr evCallStack $ printf "Failed to find arrow in eval resArrow: %s" (show arr)]
 
+evalEndEArrow :: Env -> Env
+evalEndEArrow env = env
+
 evalEnvJoin :: Env -> Env -> Env
-evalEnvJoin (Env objMap classMap exEnv1 callStack) (Env _ _ exEnv2 _) = Env objMap classMap (H.union exEnv1 exEnv2) callStack
+evalEnvJoin (Env objMap classMap exEnv1 callStack cov1) (Env _ _ exEnv2 _ cov2) = Env objMap classMap (H.union exEnv1 exEnv2) callStack (H.unionWith (+) cov1 cov2)
 
 evalEnvJoinAll :: Foldable f => f Env -> Env
 evalEnvJoinAll = foldr1 evalEnvJoin
