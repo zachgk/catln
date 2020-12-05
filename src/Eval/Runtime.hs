@@ -18,7 +18,7 @@ import           Syntax
 
 import Eval.Common
 
-type Op = (TypeName, [(PartialType, Guard (Expr Typed), ResArrow EPrim)])
+type Op = (TypeName, [(PartialType, Guard (Expr Typed), ResArrowTree EPrim)])
 
 true, false :: Val
 true = TupleVal "True" H.empty

@@ -23,7 +23,7 @@ import LLVM.AST.Operand (Operand)
 import qualified LLVM.AST.IntegerPredicate as IP
 import qualified LLVM.AST.Constant as C
 
-type Op = (TypeName, [(PartialType, Guard (Expr Typed), ResArrow LLVMPrim)])
+type Op = (TypeName, [(PartialType, Guard (Expr Typed), ResArrowTree LLVMPrim)])
 
 true, false :: Val
 true = TupleVal "True" H.empty

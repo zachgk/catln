@@ -9,7 +9,7 @@ import           Text.Printf
 import CRes
 import           Parser (readFiles)
 import           Desugarf         (desFiles)
-import           Emit             (codegen, initModule)
+-- import           Emit             (codegen, initModule)
 import           Eval
 import           TypeCheck
 import qualified Data.Text.Lazy as T
@@ -51,7 +51,7 @@ runTest includeStd fileName = testCaseSteps fileName $ \step -> do
                     ([], (0, _)) -> return () -- success
                     _ -> assertFailure $ "Bad result for:\n \t " ++ show returnValue ++ "\n \tNotes\t" ++ concat (map show notes)
               step "Codegen"
-              _ <- codegen initModule tprgm
+              -- _ <- codegen initModule tprgm
               -- step $ T.unpack $ pShow $ cgPrgm
               step "Done"
 

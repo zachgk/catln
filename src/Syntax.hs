@@ -37,34 +37,29 @@ data ReplRes m
   deriving (Eq, Show)
 
 --- ResArrowTree
-type ResBuildEnvItem f = (PartialType, Guard (Expr Typed), ResArrow f)
+type ResBuildEnvItem f = (PartialType, Guard (Expr Typed), ResArrowTree f)
 type ResBuildEnv f = H.HashMap TypeName [ResBuildEnvItem f]
 type ResExEnv f = H.HashMap (Arrow (Expr Typed) Typed) (ResArrowTree f, [ResArrowTree f]) -- (result, [compAnnot trees])
-data ResArrow f
+type TBEnv f = (ResBuildEnv f, H.HashMap PartialType (ResArrowTree f), ClassMap)
+
+data ResArrowTree f
   = ResEArrow (Object Typed) (Arrow (Expr Typed) Typed)
   | PrimArrow Type f
   | ConstantArrow Constant
   | ArgArrow Type String
-  deriving (Eq, Generic, Hashable)
-type TBEnv f = (ResBuildEnv f, H.HashMap PartialType (ResArrow f), ClassMap)
-
-data ResArrowTree f
-  = ResArrowCompose (ResArrowTree f) (ResArrowTree f)
+  | ResArrowCompose (ResArrowTree f) (ResArrowTree f)
   | ResArrowMatch (H.HashMap PartialType (ResArrowTree f))
   | ResArrowCond [(ResArrowTree f, ResArrowTree f)] (ResArrowTree f) -- [(if, then)] else
   | ResArrowTuple String (H.HashMap String (ResArrowTree f))
   | ResArrowTupleApply (ResArrowTree f) String (ResArrowTree f)
-  | ResArrowSingle (ResArrow f)
   | ResArrowID
   deriving (Eq, Generic, Hashable)
 
-instance Show (ResArrow f) where
+instance Show (ResArrowTree f) where
   show (ResEArrow obj arrow) = printf "(ResEArrow: %s -> %s)" (show obj) (show arrow)
   show (PrimArrow tp _) = "(PrimArrow " ++ show tp ++ ")"
   show (ConstantArrow c) = "(ConstantArrow " ++ show c ++ ")"
   show (ArgArrow tp n) = "(ArgArrow " ++ show tp ++ " " ++ n ++ ")"
-
-instance Show (ResArrowTree f) where
   show (ResArrowCompose a b) = show a ++ " -> " ++ show b
   show (ResArrowMatch args) = "match (" ++ args' ++ ")"
     where
@@ -81,7 +76,6 @@ instance Show (ResArrowTree f) where
       showArg (argName, val) = argName ++ " = " ++ show val
       args' = intercalate ", " $ map showArg $ H.toList args
   show (ResArrowTupleApply base argName argVal) = printf "(%s)(%s = %s)" (show base) argName (show argVal)
-  show (ResArrowSingle a) = show a
   show ResArrowID = "ResArrowID"
 
 
