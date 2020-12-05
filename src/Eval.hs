@@ -8,6 +8,7 @@
 -- Portability: non-portable
 --
 --------------------------------------------------------------------
+{-# LANGUAGE NamedFieldPuns #-}
 
 module Eval where
 
@@ -45,9 +46,6 @@ replaceTreeArgs args a@(ResArrowSingle (ArgArrow tp name)) = case H.lookup name 
 replaceTreeArgs _ (ResArrowSingle a) = ResArrowSingle a
 replaceTreeArgs _ ResArrowID = ResArrowID
 
-envLookupResArrowTree :: Env -> EArrow -> Maybe (EObject, ResArrowTree EPrim, [ResArrowTree EPrim])
-envLookupResArrowTree (resExEnv, _) arrow = H.lookup arrow resExEnv
-
 evalCompAnnot :: EStacktrace -> Val -> CRes ()
 evalCompAnnot st (TupleVal "assert" args) = case (H.lookup "test" args, H.lookup "msg" args) of
   (Just b, Just (StrVal _)) | b == true -> return ()
@@ -59,17 +57,16 @@ evalCompAnnot st (TupleVal name _) = CErr [MkCNote $ EvalCErr st $ "Unknown comp
 evalCompAnnot st _ = CErr [MkCNote $ EvalCErr st "Eval: Invalid compiler annotation type"]
 
 eval :: Env -> EStacktrace -> Val -> ResArrow EPrim -> CRes Val
-eval env st val (ResEArrow object arrow) = case envLookupResArrowTree env arrow of
-  Just (_, resArrowTree, compAnnots) -> do
-    let newArrArgs = buildArrArgs object val
-    mapM_ (\compAnnot -> do
-              let treeWithoutArgs = replaceTreeArgs newArrArgs compAnnot
-              compAnnot' <- evalTree env (("annot " ++ show compAnnot):st) val treeWithoutArgs
-              return $ evalCompAnnot st compAnnot'
-          ) compAnnots
-    let treeWithoutArgs = replaceTreeArgs newArrArgs resArrowTree
-    evalTree env (("ResEArrow " ++ show arrow):st) val treeWithoutArgs
-  Nothing -> CErr [MkCNote $ EvalCErr st $ "Failed to find arrow in eval resArrow: " ++ show arrow]
+eval env st val (ResEArrow object arrow) = do
+  (resArrowTree, compAnnots, env2) <- getArrowTree env st object arrow
+  let newArrArgs = buildArrArgs object val
+  mapM_ (\compAnnot -> do
+            let treeWithoutArgs = replaceTreeArgs newArrArgs compAnnot
+            compAnnot' <- evalTree env2 (("annot " ++ show compAnnot):st) val treeWithoutArgs
+            return $ evalCompAnnot st compAnnot'
+        ) compAnnots
+  let treeWithoutArgs = replaceTreeArgs newArrArgs resArrowTree
+  evalTree env2 (("ResEArrow " ++ show arrow):st) val treeWithoutArgs
 eval _ _ (TupleVal _ args) (PrimArrow _ (EPrim _ _ f)) = return $ f args
 eval _ _ _ (ConstantArrow (CInt i)) = return $ IntVal i
 eval _ _ _ (ConstantArrow (CFloat f)) = return $ FloatVal f
@@ -81,7 +78,7 @@ evalTree :: Env -> EStacktrace -> Val -> ResArrowTree EPrim -> CRes Val
 evalTree env st val (ResArrowCompose t1 t2) = do
   val' <- evalTree env (printf "Compose first with val %s" (show val):st) val t1
   evalTree env (("Compose second with " ++ show val'):st) val' t2
-evalTree env@(_, classMap) st val (ResArrowMatch opts) = case H.toList $ H.filterWithKey (\optType _ -> hasPartial classMap (getValType val) (singletonType optType)) opts of
+evalTree env@Env{evClassMap} st val (ResArrowMatch opts) = case H.toList $ H.filterWithKey (\optType _ -> hasPartial evClassMap (getValType val) (singletonType optType)) opts of
   [(_, resArrowTree)] -> case val of
     (TupleVal _ arrArgs) ->
       evalTree env (printf "match with tuple %s (%s) for options %s" (show val) (show $ getValType val) (show $ H.keys opts):st) val $ replaceTreeArgs arrArgs resArrowTree
@@ -119,9 +116,9 @@ evalBuildMain :: EPrgm -> CRes (ResArrowTree EPrim, ResExEnv EPrim)
 evalBuildMain = evalBuildPrgm mainPartial ioType
 
 evalPrgm :: PartialType -> Type -> EPrgm -> CRes (IO Integer)
-evalPrgm src@(PTypeName srcName, _, _, _) dest prgm@(_, classMap) = do
+evalPrgm src@(PTypeName srcName, _, _, _) dest prgm@(objMap, classMap) = do
   (resArrowTree, exEnv) <- evalBuildPrgm src dest prgm
-  let env = (exEnv, classMap)
+  let env = Env objMap classMap exEnv
   res <- evalTree env [] (TupleVal srcName (H.singleton "io" (IOVal 0 $ pure ()))) resArrowTree
   case res of
     (IOVal r io) -> return (io >> pure r)
@@ -132,12 +129,12 @@ evalMain :: EPrgm -> CRes (IO Integer)
 evalMain = evalPrgm mainPartial ioType
 
 evalMainb :: EPrgm -> CRes (String, String)
-evalMainb prgm@(_, classMap) = do
+evalMainb prgm@(objMap, classMap) = do
   let srcName = "mainb"
   let src = (PTypeName srcName, H.empty, H.empty, H.empty)
   let dest = singletonType (PTypeName "CatlnResult", H.empty, H.empty, H.fromList [("name", strType), ("contents", strType)])
   (resArrowTree, exEnv) <- evalBuildPrgm src dest prgm
-  let env = (exEnv, classMap)
+  let env = Env objMap classMap exEnv
   res <- evalTree env [] NoVal resArrowTree
   case res of
     (TupleVal "CatlnResult" args) -> case (H.lookup "name" args, H.lookup "contents" args) of

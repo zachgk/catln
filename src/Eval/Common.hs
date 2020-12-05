@@ -10,6 +10,7 @@
 --------------------------------------------------------------------
 
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 module Eval.Common where
 
@@ -22,6 +23,7 @@ import           Syntax.Types
 import           Syntax.Prgm
 import           Syntax
 import           Text.Printf
+import CRes
 
 type EvalMeta = Typed
 type ECompAnnot = CompAnnot EvalMeta
@@ -43,7 +45,10 @@ instance Eq EPrim where
 instance Hashable EPrim where
   hashWithSalt s (EPrim at ag _) = s `hashWithSalt` at `hashWithSalt` ag
 
-type Env = (ResExEnv EPrim, ClassMap)
+data Env = Env { evObjMap :: EObjectMap
+               , evClassMap :: ClassMap
+               , evExEnv :: ResExEnv EPrim
+               } deriving (Eq, Show)
 
 type Args = H.HashMap String Val
 
@@ -85,3 +90,9 @@ getValType (TupleVal name args) = (PTypeName name, H.empty, H.empty, fmap fromAr
   where fromArg arg = singletonType $ getValType arg
 getValType IOVal{} = ioLeaf
 getValType NoVal = error "getValType of NoVal"
+
+getArrowTree :: Env -> EStacktrace -> EObject -> EArrow -> CRes (ResArrowTree EPrim, [ResArrowTree EPrim], Env)
+getArrowTree env@Env{evExEnv} st _ arr = case H.lookup arr evExEnv of
+  Just (_, tree, annots) -> return (tree, annots, env)
+  Nothing -> CErr [MkCNote $ EvalCErr st $ printf "Failed to find arrow in eval resArrow: %s" (show arr)]
+
