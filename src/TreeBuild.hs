@@ -35,7 +35,6 @@ type TBObjectMap = ObjectMap TBExpr TBMeta
 type TBPrgm = Prgm TBExpr TBMeta
 type TBReplRes = ReplRes TBMeta
 
-type TBEnv f = (ResBuildEnv f, H.HashMap PartialType (ResArrow f), ClassMap)
 type VisitedArrows f = S.HashSet (ResArrow f)
 
 resArrowDestType :: ClassMap -> PartialType -> ResArrow f -> Type
@@ -51,8 +50,8 @@ leafsFromMeta (Typed TopType) = error "leafFromMeta from TopType"
 leafsFromMeta (Typed TypeVar{}) = error "leafFromMeta from TypeVar"
 leafsFromMeta (Typed (SumType prodTypes)) = splitPartialLeafs prodTypes
 
-makeBaseEnv :: (Eq f, Hashable f) => ResBuildEnv f -> TBPrgm -> TBEnv f
-makeBaseEnv primEnv (objMap, classMap) = baseEnv
+makeTBEnv :: (Eq f, Hashable f) => ResBuildEnv f -> TBPrgm -> TBEnv f
+makeTBEnv primEnv (objMap, classMap) = baseEnv
   where
     baseEnv = (H.union primEnv resEnv, H.empty, classMap)
     resEnv = H.fromListWith (++) $ concatMap resFromArrows $ H.toList objMap
@@ -136,20 +135,25 @@ buildGuardArrows env obj visitedArrows srcType destType guards = case guards of
   where
     ltry = envLookupTry env obj visitedArrows srcType destType
 
-envLookup :: (Eq f, Hashable f) => TBEnv f -> TBObject -> VisitedArrows f -> PartialType -> Type -> CRes (ResArrowTree f)
-envLookup (_, _, classMap) _ _ srcType destType | hasPartial classMap srcType destType = return ResArrowID
-envLookup env@(resEnv, _, classMap) obj visitedArrows srcType@(PTypeName srcName, _, _, _) destType = case H.lookup srcName resEnv of
+findResArrows :: (Eq f, Hashable f) => TBEnv f -> PartialType -> Type -> CRes [ResBuildEnvItem f]
+findResArrows (resEnv, _, classMap) srcType@(PTypeName srcName, _, _, _) destType = case H.lookup srcName resEnv of
   Just resArrowsWithName -> do
     let resArrows = filter (\(arrowType, _, _) -> subPartialOf classMap srcType arrowType) resArrowsWithName
     -- TODO: Sort resArrows by priority order before trying
-    let guards = (\(a,b,c) -> (concat a, concat b, concat c)) $ unzip3 $ map (\case
-                          (_, NoGuard, a) -> ([a], [], [])
-                          (_, IfGuard ifCond, ifThen) -> ([], [(ifCond, ifThen)], [])
-                          (_, ElseGuard, a) -> ([], [], [a])
-                      ) resArrows
-    buildGuardArrows env obj visitedArrows srcType destType guards
-
+    return resArrows
   Nothing -> CErr [MkCNote $ BuildTreeCErr $ "Failed to find any arrows from " ++ show srcType ++ " to " ++ show destType]
+findResArrows _ (PClassName _, _, _, _) _ = error "Can't findResArrows for class"
+
+envLookup :: (Eq f, Hashable f) => TBEnv f -> TBObject -> VisitedArrows f -> PartialType -> Type -> CRes (ResArrowTree f)
+envLookup (_, _, classMap) _ _ srcType destType | hasPartial classMap srcType destType = return ResArrowID
+envLookup env obj visitedArrows srcType@(PTypeName _, _, _, _) destType = do
+  resArrows <- findResArrows env srcType destType
+  let guards = (\(a,b,c) -> (concat a, concat b, concat c)) $ unzip3 $ map (\case
+                        (_, NoGuard, a) -> ([a], [], [])
+                        (_, IfGuard ifCond, ifThen) -> ([], [(ifCond, ifThen)], [])
+                        (_, ElseGuard, a) -> ([], [], [a])
+                    ) resArrows
+  buildGuardArrows env obj visitedArrows srcType destType guards
 envLookup env@(_, _, classMap) obj visitedArrows srcType@(PClassName _, _, _, _) destType = do
   let (SumType expanded) = expandClassPartial classMap srcType
   let expanded' = splitPartialLeafs expanded
@@ -203,10 +207,15 @@ buildResExEnv env (objMap, _) = do
   return (H.fromList $ catMaybes $ concat build')
   where buildArrows (obj, arrows) = mapM (buildArrow env obj) arrows
 
+buildRoot :: (Eq f, Hashable f) => ResBuildEnv f -> PartialType -> Type -> TBPrgm -> CRes (ResArrowTree f, TBEnv f)
+buildRoot primEnv src dest prgm = do
+  let env = makeTBEnv primEnv prgm
+  let emptyObj = Object (Typed $ singletonType src) FunctionObj "EmptyObj" H.empty H.empty
+  rootTree <- envLookup env emptyObj S.empty src dest
+  return (rootTree, env)
+
 buildPrgm :: (Eq f, Hashable f) => ResBuildEnv f -> PartialType -> Type -> TBPrgm -> CRes (ResArrowTree f, ResExEnv f)
 buildPrgm primEnv src dest prgm = do
-  let env = makeBaseEnv primEnv prgm
-  let emptyObj = Object (Typed $ singletonType src) FunctionObj "EmptyObj" H.empty H.empty
+  (rootTree, env) <- buildRoot primEnv src dest prgm
   exEnv <- buildResExEnv env prgm
-  rootTree <- envLookup env emptyObj S.empty src dest
   return (rootTree, exEnv)

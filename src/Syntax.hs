@@ -37,7 +37,8 @@ data ReplRes m
   deriving (Eq, Show)
 
 --- ResArrowTree
-type ResBuildEnv f = H.HashMap TypeName [(PartialType, Guard (Expr Typed), ResArrow f)]
+type ResBuildEnvItem f = (PartialType, Guard (Expr Typed), ResArrow f)
+type ResBuildEnv f = H.HashMap TypeName [ResBuildEnvItem f]
 type ResExEnv f = H.HashMap (Arrow (Expr Typed) Typed) (ResArrowTree f, [ResArrowTree f]) -- (result, [compAnnot trees])
 data ResArrow f
   = ResEArrow (Object Typed) (Arrow (Expr Typed) Typed)
@@ -45,6 +46,7 @@ data ResArrow f
   | ConstantArrow Constant
   | ArgArrow Type String
   deriving (Eq, Generic, Hashable)
+type TBEnv f = (ResBuildEnv f, H.HashMap PartialType (ResArrow f), ClassMap)
 
 data ResArrowTree f
   = ResArrowCompose (ResArrowTree f) (ResArrowTree f)

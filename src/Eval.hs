@@ -117,20 +117,26 @@ evalTree env val (ResArrowSingle r) = do
   return (res, evalPop env2)
 evalTree env val ResArrowID = return (val, env)
 
-evalBuildPrgm :: PartialType -> Type -> EPrgm -> CRes (ResArrowTree EPrim, ResExEnv EPrim)
-evalBuildPrgm = buildPrgm primEnv
+evalBuildPrgm :: PartialType -> Type -> EPrgm -> CRes (ResArrowTree EPrim, Env)
+evalBuildPrgm srcType destType prgm@(objMap, classMap) = do
+  (initTree, tbEnv) <- buildRoot primEnv srcType destType prgm
+  let env = Env {
+        evObjMap = objMap,
+        evClassMap = classMap,
+        evExEnv = H.empty,
+        evTbEnv = tbEnv,
+        evCallStack = [],
+        evCoverage = H.empty
+                }
+  return (initTree, env)
 
 mainPartial :: PartialType
 mainPartial = (PTypeName "main", H.empty, H.empty, H.singleton "io" ioType)
 
-evalBuildMain :: EPrgm -> CRes (ResArrowTree EPrim, ResExEnv EPrim)
-evalBuildMain = evalBuildPrgm mainPartial ioType
-
 evalPrgm :: PartialType -> Type -> EPrgm -> CRes (IO Integer)
-evalPrgm src@(PTypeName srcName, _, _, _) dest prgm@(objMap, classMap) = do
-  (resArrowTree, exEnv) <- evalBuildPrgm src dest prgm
-  let env = Env objMap classMap exEnv [] H.empty
-  (res, _) <- evalTree env (TupleVal srcName (H.singleton "io" (IOVal 0 $ pure ()))) resArrowTree
+evalPrgm src@(PTypeName srcName, _, _, _) dest prgm = do
+  (initTree, env) <- evalBuildPrgm src dest prgm
+  (res, _) <- evalTree env (TupleVal srcName (H.singleton "io" (IOVal 0 $ pure ()))) initTree
   case res of
     (IOVal r io) -> return (io >> pure r)
     _ -> CErr [MkCNote $ GenCErr "Eval did not return an instance of IO"]
@@ -140,13 +146,12 @@ evalMain :: EPrgm -> CRes (IO Integer)
 evalMain = evalPrgm mainPartial ioType
 
 evalMainb :: EPrgm -> CRes (String, String)
-evalMainb prgm@(objMap, classMap) = do
+evalMainb prgm = do
   let srcName = "mainb"
   let src = (PTypeName srcName, H.empty, H.empty, H.empty)
   let dest = singletonType (PTypeName "CatlnResult", H.empty, H.empty, H.fromList [("name", strType), ("contents", strType)])
-  (resArrowTree, exEnv) <- evalBuildPrgm src dest prgm
-  let env = Env objMap classMap exEnv [] H.empty
-  (res, _) <- evalTree env NoVal resArrowTree
+  (initTree, env) <- evalBuildPrgm src dest prgm
+  (res, _) <- evalTree env NoVal initTree
   case res of
     (TupleVal "CatlnResult" args) -> case (H.lookup "name" args, H.lookup "contents" args) of
       (Just (StrVal n), Just (StrVal c)) -> return (n, c)

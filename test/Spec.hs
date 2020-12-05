@@ -42,7 +42,6 @@ runTest includeStd fileName = testCaseSteps fileName $ \step -> do
             CRes _ tprgm -> do
               -- step $ T.unpack $ pShow $ tprgm
               step "Eval tests..."
-              -- step $ T.unpack $ pShow $ evalBuildMain tprgm
               case evalMain tprgm of
                 CErr notes -> do
                   assertFailure $ "Could not eval:\n\t " ++ intercalate "\n\t" (map show notes)
@@ -80,7 +79,6 @@ runBuild fileName = testCaseSteps fileName $ \step -> do
             CRes _ tprgm -> do
               -- step $ T.unpack $ pShow $ tprgm
               step "Eval tests..."
-              -- step $ T.unpack $ pShow $ evalBuildMain tprgm
               case evalMainb tprgm of
                 CErr notes -> do
                   assertFailure $ "Could not eval:\n\t " ++ intercalate "\n\t" (map show notes)
