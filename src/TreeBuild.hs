@@ -182,7 +182,7 @@ buildExprImp env obj expr destType = do
       t2 <- buildImplicit env obj srcType destType
       return $ ResArrowCompose t1 t2
 
-buildArrow :: (Eq f, Hashable f) => TBEnv f -> TBObject -> TBArrow -> CRes (Maybe (TBArrow, (TBObject, ResArrowTree f, [ResArrowTree f])))
+buildArrow :: (Eq f, Hashable f) => TBEnv f -> TBObject -> TBArrow -> CRes (Maybe (TBArrow, (ResArrowTree f, [ResArrowTree f])))
 buildArrow _ _ (Arrow _ _ _ Nothing) = return Nothing
 buildArrow env obj@(Object _ _ _ objVars _) arrow@(Arrow (Typed am) compAnnots _ (Just expr)) = do
   let am' = case am of
@@ -195,7 +195,7 @@ buildArrow env obj@(Object _ _ _ objVars _) arrow@(Arrow (Typed am) compAnnots _
         _ -> am
   resArrowTree <- buildExprImp env obj expr am'
   compAnnots' <- mapM (buildCompAnnot env obj) compAnnots
-  return $ Just (arrow, (obj, resArrowTree, compAnnots'))
+  return $ Just (arrow, (resArrowTree, compAnnots'))
 
 buildResExEnv :: (Eq f, Hashable f) => TBEnv f -> TBPrgm -> CRes (ResExEnv f)
 buildResExEnv env (objMap, _) = do

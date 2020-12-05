@@ -93,6 +93,6 @@ getValType NoVal = error "getValType of NoVal"
 
 getArrowTree :: Env -> EStacktrace -> EObject -> EArrow -> CRes (ResArrowTree EPrim, [ResArrowTree EPrim], Env)
 getArrowTree env@Env{evExEnv} st _ arr = case H.lookup arr evExEnv of
-  Just (_, tree, annots) -> return (tree, annots, env)
+  Just (tree, annots) -> return (tree, annots, env)
   Nothing -> CErr [MkCNote $ EvalCErr st $ printf "Failed to find arrow in eval resArrow: %s" (show arr)]
 
