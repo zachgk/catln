@@ -51,8 +51,8 @@ leafsFromMeta (Typed TopType) = error "leafFromMeta from TopType"
 leafsFromMeta (Typed TypeVar{}) = error "leafFromMeta from TypeVar"
 leafsFromMeta (Typed (SumType prodTypes)) = splitPartialLeafs prodTypes
 
-makeBaseEnv :: (Eq f, Hashable f) => ResBuildEnv f -> TBPrgm -> CRes (TBEnv f, ResExEnv f)
-makeBaseEnv primEnv (objMap, classMap) = fmap (baseEnv,) exEnv
+makeBaseEnv :: (Eq f, Hashable f) => ResBuildEnv f -> TBPrgm -> TBEnv f
+makeBaseEnv primEnv (objMap, classMap) = baseEnv
   where
     baseEnv = (H.union primEnv resEnv, H.empty, classMap)
     resEnv = H.fromListWith (++) $ concatMap resFromArrows $ H.toList objMap
@@ -62,21 +62,6 @@ makeBaseEnv primEnv (objMap, classMap) = fmap (baseEnv,) exEnv
     resFromArrow obj@(Object om _ objName _ _) arrow@(Arrow _ _ aguard expr) = case expr of
       Just _ -> Just (objName, [(objLeaf, aguard, ResEArrow obj arrow) | objLeaf <- leafsFromMeta om])
       Nothing -> Nothing
-    exEnv = fmap H.fromList $ sequence $ concatMap exFromArrows $ H.toList objMap
-    exFromArrows (obj, arrows) = mapMaybe (exFromArrow obj) arrows
-    exFromArrow obj@(Object _ _ _ objVars _) arrow@(Arrow (Typed am) compAnnots _ maybeExpr) = fmap (\expr -> do
-            let am' = case am of
-                  (TypeVar (TVVar v)) -> case H.lookup v objVars of
-                    Just (Typed t) -> t
-                    Nothing -> error "Bad TVVar in makeBaseEnv"
-                  (TypeVar (TVArg v)) -> case H.lookup v $ formArgMetaMap obj of
-                    Just argMeta -> getMetaType argMeta
-                    Nothing -> error "Bad TVArg in makeBaseEnv"
-                  _ -> am
-            resArrowTree <- buildExprImp baseEnv obj expr am'
-            compAnnots' <- mapM (buildCompAnnot baseEnv obj) compAnnots
-            return (arrow, (obj, resArrowTree, compAnnots'))
-      ) maybeExpr
 
 buildCompAnnot :: (Eq f, Hashable f) => TBEnv f -> TBObject -> TBCompAnnot -> CRes (ResArrowTree f)
 buildCompAnnot env obj (CompAnnot "assert" args) = case (H.lookup "test" args, H.lookup "msg" args) of
@@ -197,9 +182,31 @@ buildExprImp env obj expr destType = do
       t2 <- buildImplicit env obj srcType destType
       return $ ResArrowCompose t1 t2
 
+buildArrow :: (Eq f, Hashable f) => TBEnv f -> TBObject -> TBArrow -> CRes (Maybe (TBArrow, (TBObject, ResArrowTree f, [ResArrowTree f])))
+buildArrow _ _ (Arrow _ _ _ Nothing) = return Nothing
+buildArrow env obj@(Object _ _ _ objVars _) arrow@(Arrow (Typed am) compAnnots _ (Just expr)) = do
+  let am' = case am of
+        (TypeVar (TVVar v)) -> case H.lookup v objVars of
+          Just (Typed t) -> t
+          Nothing -> error "Bad TVVar in makeBaseEnv"
+        (TypeVar (TVArg v)) -> case H.lookup v $ formArgMetaMap obj of
+          Just argMeta -> getMetaType argMeta
+          Nothing -> error "Bad TVArg in makeBaseEnv"
+        _ -> am
+  resArrowTree <- buildExprImp env obj expr am'
+  compAnnots' <- mapM (buildCompAnnot env obj) compAnnots
+  return $ Just (arrow, (obj, resArrowTree, compAnnots'))
+
+buildResExEnv :: (Eq f, Hashable f) => TBEnv f -> TBPrgm -> CRes (ResExEnv f)
+buildResExEnv env (objMap, _) = do
+  build' <- mapM buildArrows $ H.toList objMap
+  return (H.fromList $ catMaybes $ concat build')
+  where buildArrows (obj, arrows) = mapM (buildArrow env obj) arrows
+
 buildPrgm :: (Eq f, Hashable f) => ResBuildEnv f -> PartialType -> Type -> TBPrgm -> CRes (ResArrowTree f, ResExEnv f)
 buildPrgm primEnv src dest prgm = do
-  (env, exEnv) <- makeBaseEnv primEnv prgm
+  let env = makeBaseEnv primEnv prgm
   let emptyObj = Object (Typed $ singletonType src) FunctionObj "EmptyObj" H.empty H.empty
+  exEnv <- buildResExEnv env prgm
   rootTree <- envLookup env emptyObj S.empty src dest
   return (rootTree, exEnv)
