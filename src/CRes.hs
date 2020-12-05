@@ -21,9 +21,6 @@ import           Text.Printf
 
 import Syntax
 
--- compile errors
-type EStacktrace = [String]
-
 data CNote
   where
   MkCNote :: Show a => a -> CNote
@@ -39,7 +36,7 @@ data CNoteI
   | TypeCheckCErr
   | BuildTreeCErr String
   | AssertCErr String
-  | EvalCErr EStacktrace String
+  | EvalCErr [String] String
   | WrapCN [CNote] String
 
 instance Show CNoteI where

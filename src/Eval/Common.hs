@@ -48,6 +48,7 @@ instance Hashable EPrim where
 data Env = Env { evObjMap :: EObjectMap
                , evClassMap :: ClassMap
                , evExEnv :: ResExEnv EPrim
+               , evCallStack :: [String]
                } deriving (Eq, Show)
 
 type Args = H.HashMap String Val
@@ -91,8 +92,27 @@ getValType (TupleVal name args) = (PTypeName name, H.empty, H.empty, fmap fromAr
 getValType IOVal{} = ioLeaf
 getValType NoVal = error "getValType of NoVal"
 
-getArrowTree :: Env -> EStacktrace -> EObject -> EArrow -> CRes (ResArrowTree EPrim, [ResArrowTree EPrim], Env)
-getArrowTree env@Env{evExEnv} st _ arr = case H.lookup arr evExEnv of
+getArrowTree :: Env -> EObject -> EArrow -> CRes (ResArrowTree EPrim, [ResArrowTree EPrim], Env)
+getArrowTree env@Env{evExEnv, evCallStack} _ arr = case H.lookup arr evExEnv of
   Just (tree, annots) -> return (tree, annots, env)
-  Nothing -> CErr [MkCNote $ EvalCErr st $ printf "Failed to find arrow in eval resArrow: %s" (show arr)]
+  Nothing -> CErr [MkCNote $ EvalCErr evCallStack $ printf "Failed to find arrow in eval resArrow: %s" (show arr)]
 
+evalEnvJoin :: Env -> Env -> Env
+evalEnvJoin (Env objMap classMap exEnv1 callStack) (Env _ _ exEnv2 _) = Env objMap classMap (H.union exEnv1 exEnv2) callStack
+
+evalEnvJoinAll :: Foldable f => f Env -> Env
+evalEnvJoinAll = foldr1 evalEnvJoin
+
+evalError :: Env -> String -> CRes a
+evalError Env{evCallStack} msg = CErr [MkCNote $ EvalCErr evCallStack msg]
+
+evalPush :: Env -> String -> Env
+evalPush env@Env{evCallStack} c = env{evCallStack = c:evCallStack}
+
+evalPop :: Env -> Env
+evalPop env@Env{evCallStack} = case evCallStack of
+  (_:stack') -> env{evCallStack=stack'}
+  _ -> error "Popped empty evCallStack"
+
+evalPopVal :: (a, Env) -> (a, Env)
+evalPopVal (a, env) = (a, evalPop env)
