@@ -125,6 +125,9 @@ data BlockState
 newtype Codegen a = Codegen { runCodegen :: State CodegenState a }
   deriving (Functor, Applicative, Monad, MonadState CodegenState )
 
+instance Show (Codegen a) where
+  show Codegen{} = "Codegen"
+
 sortBlocks :: [(Name, BlockState)] -> [(Name, BlockState)]
 sortBlocks = sortBy (compare `on` (idx . snd))
 

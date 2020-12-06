@@ -62,11 +62,11 @@ buildArrArgs = aux H.empty
     aux acc (Object _ _ objName _ objArgs) val | H.null objArgs = H.insert objName val acc
     aux _ (Object _ _ objName _ _) (LTupleVal tupleName _) | objName /= tupleName = error $ printf "Found name mismatch in buildArrArgs: object %s and tuple %s" objName tupleName
     aux acc (Object _ _ _ _ objArgs) (LTupleVal _ tupleArgs) = H.foldrWithKey addArgs acc $ H.intersectionWith (,) objArgs tupleArgs
-    aux _ _ _ = error $ "Invalid buildArrArgs value"
+    aux _ _ _ = error "Invalid buildArrArgs value"
     addArgs argName ((_, Nothing), argVal) acc = H.insert argName argVal acc
     addArgs _ ((_, Just subObj), argVal) acc = aux acc subObj argVal
 
-asOperand :: LVal -> AST.Operand
+asOperand :: LVal -> Codegen AST.Operand
 asOperand (LOVal _ o) = o
 asOperand _ = error "Does not have type operand"
 
@@ -95,24 +95,20 @@ arrowName arrow = take 6 (printf "%08x" (hash arrow))
 typeName :: Type -> String
 typeName tp = take 6 (printf "%08x" (hash tp))
 
--- codegenArrow classMap val resArrow@(ResEArrow object arrow) = do
+codegenTree :: LEnv -> LVal -> ResArrowTree LLVMPrim -> Codegen LVal
+codegenTree = undefined
+-- codegenTree classMap val resArrow@(ResEArrow _ object arrow) = do
 --   let args' = buildArrArgs object val
 --   let outType = resArrowDestType classMap (getValType val) resArrow
 --   OVal outType <$> call (externf (AST.Name $ SBS.toShort $ BSU.fromString  $ arrowName arrow)) (map asOperand $ H.elems args')
--- codegenArrow _ (TupleVal _ args) (PrimArrow _ (LLVMPrim _ _ f)) = f args
--- codegenArrow _ (OVal _ _) (PrimArrow _ (LLVMPrim _ _ f)) = f H.empty -- TODO: Extract values from OVal which should be a struct
--- codegenArrow _ NoVal (PrimArrow _ (LLVMPrim _ _ f)) = f H.empty
--- codegenArrow _ _ (ConstantArrow (CInt i)) = return $ OVal intType $ cons $ C.Int 64 i
--- codegenArrow _ _ (ConstantArrow (CFloat f)) = return $ OVal floatType $ cons $ C.Float (F.Double f)
--- codegenArrow _ _ (ConstantArrow (CStr _)) = error "no string implemented"
--- codegenArrow _ _ (ArgArrow _ name) = error $ printf "Unexpected arg arrow %s not removed during evaluation" name
--- codegenArrow _ val arr = error $ printf "Unknown codegenArrow with arrow %s and val %s" (show arr) (show val)
-
-codegenTree :: LEnv -> LVal -> ResArrowTree LLVMPrim -> Codegen LVal
-codegenTree = undefined
--- codegenTree env val (ResArrowCompose t1 t2) = do
---   val' <- codegenTree env val t1
---   codegenTree env val' t2
+-- codegenTree _ (LTupleVal _ args) (PrimArrow _ _ (LLVMPrim _ _ f)) = f args
+-- codegenTree _ (LOVal _ _) (PrimArrow _ _ (LLVMPrim _ _ f)) = f H.empty -- TODO: Extract values from OVal which should be a struct
+-- codegenTree _ NoVal (PrimArrow _ _ (LLVMPrim _ _ f)) = f H.empty
+-- codegenTree _ _ (ConstantArrow (CInt i)) = return $ OVal intType $ cons $ C.Int 64 i
+-- codegenTree _ _ (ConstantArrow (CFloat f)) = return $ OVal floatType $ cons $ C.Float (F.Double f)
+-- codegenTree _ _ (ConstantArrow (CStr _)) = error "no string implemented"
+-- codegenTree _ _ (ArgArrow _ name) = error $ printf "Unexpected arg arrow %s not removed during evaluation" name
+-- codegenTree _ val arr = error $ printf "Unknown codegenTree with arrow %s and val %s" (show arr) (show val)
 -- codegenTree classMap val (ResArrowMatch opts) = case H.toList $ H.filterWithKey (\optType _ -> hasPartial classMap (getValType val) (singletonType optType)) opts of
 --   [(_, resArrowTree)] -> case val of
 --     (TupleVal _ arrArgs) ->
@@ -138,8 +134,6 @@ codegenTree = undefined
 --       let args' = H.insert argName argVal baseArgs
 --       return $ TupleVal name args'
 --     _ -> error "Invalid input to tuple application"
--- codegenTree env val (ResArrowSingle r) = codegenArrow env val r
--- codegenTree _ val ResArrowID = return val
 
 codegenDecl :: LEnv -> String -> PartialType -> ResArrowTree LLVMPrim -> LLVM ()
 codegenDecl _ name tp@(_, _, _, args) _ = define (genType H.empty $ singletonType tp) (SBS.toShort $ BSU.fromString name) args' blks
@@ -168,7 +162,7 @@ codegenDecl _ name tp@(_, _, _, args) _ = define (genType H.empty $ singletonTyp
 codegenStruct :: TObject -> LLVM ()
 codegenStruct (Object objM _ _ _ args) = struct name (map (\(argM, _) -> genTypeMeta argM) $ H.elems args)
   where
-    name = (AST.Name $ SBS.toShort $ BSU.fromString $ typeName $ getMetaType objM)
+    name = AST.Name $ SBS.toShort $ BSU.fromString $ typeName $ getMetaType objM
 
 -- mainPartial :: PartialType
 -- mainPartial = (PTypeName "main", H.empty, H.empty, H.singleton "io" ioType)

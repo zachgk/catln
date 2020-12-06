@@ -40,8 +40,11 @@ liftBinOp lType rType resType name f = (name', [(srcType, NoGuard, \input _ -> P
     name' = "operator" ++ name
     srcType = (PTypeName name', H.empty, H.empty, H.fromList [("l", lType), ("r", rType)])
     prim = LLVMPrim srcType NoGuard (\args -> case (H.lookup "l" args, H.lookup "r" args) of
-                           (Just (LOVal _ l), Just (LOVal _ r)) -> LOVal resType <$> instr (f l r)
-                           _ -> pure LIOVal -- TODO: Delete, should be an error
+                           (Just (LOVal _ l), Just (LOVal _ r)) -> LOVal resType $ do
+                             l' <- l
+                             r' <- r
+                             instr (f l' r')
+                           _ -> LIOVal (pure ()) -- TODO: Delete, should be an error
                            -- _ -> error "Invalid binary op signature"
                            )
 
@@ -58,7 +61,9 @@ rneg name = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType prim
     srcType = (PTypeName name', H.empty, H.empty, H.singleton "a" intType)
     resType = intType
     prim = LLVMPrim srcType NoGuard (\args -> case H.lookup "a" args of
-                           Just (LOVal _ a') -> LOVal intType <$> instr (AST.Mul False False a' (cons $ C.Int 32 (-1)) [])
+                           Just (LOVal _ a') -> LOVal intType $ do
+                             a'' <- a'
+                             instr (AST.Mul False False a'' (cons $ C.Int 32 (-1)) [])
                            _ -> error "Invalid strEq signature"
                            )
 
@@ -99,7 +104,10 @@ strEq = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType prim)])
     srcType = (PTypeName name', H.empty, H.empty, H.fromList [("l", strType), ("r", strType)])
     resType = boolType
     prim = LLVMPrim srcType NoGuard (\args -> case (H.lookup "l" args, H.lookup "r" args) of
-                           (Just (LOVal _ l), Just (LOVal _ r)) -> LOVal boolType <$> call (externf "strcmp") [l, r] -- TODO: really returns int type as result of comparison
+                           (Just (LOVal _ l), Just (LOVal _ r)) -> LOVal boolType $ do
+                             l' <- l
+                             r' <- r
+                             call (externf "strcmp") [l', r'] -- TODO: really returns int type as result of comparison
                            _ -> error "Invalid strEq signature"
                            )
 
@@ -110,7 +118,7 @@ intToString = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType pr
     srcType = (PTypeName name', H.empty, H.empty, H.singleton "this" intType)
     resType = strType
     prim = LLVMPrim srcType NoGuard (\args -> case H.lookup "this" args of
-                           Just (LOVal _ _) -> pure (LOVal strType (cons $ C.Int 64 0)) --TODO: Should do actual conversion
+                           Just (LOVal _ _) -> LOVal strType (pure $ cons $ C.Int 64 0) --TODO: Should do actual conversion
                            _ -> error "Invalid strEq signature"
                            )
 
@@ -121,8 +129,11 @@ ioExit = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType prim)])
     srcType = (PTypeName name', H.empty, H.empty, H.fromList [("this", ioType), ("val", intType)])
     resType = ioType
     prim = LLVMPrim srcType NoGuard (\args -> case (H.lookup "this" args, H.lookup "val" args) of
-                           (Just LIOVal, Just (LOVal _ r)) -> call (externf "exit") [r] >> pure LIOVal
-                           _ -> pure LIOVal -- TODO: Delete, should be an error
+                           (Just (LIOVal _), Just (LOVal _ r)) -> LIOVal $ do
+                             r' <- r
+                             _ <- call (externf "exit") [r']
+                             return ()
+                           _ -> LIOVal (pure ())-- TODO: Delete, should be an error
                            -- _ -> error "Invalid ioExit signature"
                            )
 
@@ -133,7 +144,10 @@ println = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType prim)]
     srcType = (PTypeName name', H.empty, H.empty, H.fromList [("this", ioType), ("msg", strType)])
     resType = ioType
     prim = LLVMPrim srcType NoGuard (\args -> case (H.lookup "this" args, H.lookup "msg" args) of
-                           (Just LIOVal, Just (LOVal _ s)) -> call (externf "puts") [s] >> pure LIOVal
+                           (Just (LIOVal _), Just (LOVal _ s)) -> LIOVal $ do
+                             s' <- s
+                             _ <- call (externf "puts") [s']
+                             return ()
                            _ -> error "Invalid strEq signature"
                            )
 
