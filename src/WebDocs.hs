@@ -80,6 +80,14 @@ getEvalBuild includeStd fileName = do
     CRes _ r -> (\(a, b, _) -> (a, b)) <$> r
     CErr _ -> return ("", "")
 
+getWeb :: Bool -> String -> IO String
+getWeb includeStd fileName = do
+  base <- getTPrgm includeStd fileName
+  let pre = base >>= evalMainb
+  case pre of
+    CRes _ r -> (\(_, b, _) -> b) <$> r
+    CErr _ -> return ""
+
 
 docServe :: Bool -> String -> IO ()
 docServe includeStd fileName = do
@@ -115,3 +123,7 @@ docServe includeStd fileName = do
     get "/evalBuild" $ do
       build <- liftAndCatchIO $ getEvalBuild includeStd fileName
       json $ Success build ([] :: [String])
+
+    get "/web" $ do
+      build <- liftAndCatchIO $ getWeb includeStd fileName
+      html (T.pack build)

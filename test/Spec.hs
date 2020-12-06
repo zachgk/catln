@@ -131,6 +131,14 @@ mb k = do
      then defaultMain $ runBuilds [fileName]
      else error $ printf "invalid build test name %s in %s" fileName (show tests)
 
+mbd :: String -> IO ()
+mbd k = do
+  let fileName = buildDir ++ k ++ ".ct"
+  tests <- buildTests
+  if elem fileName tests
+     then docServe True fileName
+     else error $ printf "invalid build test name %s in %s" fileName (show tests)
+
 mtt :: IO ()
 mtt = mt "match"
 

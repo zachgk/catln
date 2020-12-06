@@ -17,7 +17,7 @@ import {
 } from 'react-router-dom';
 
 import ListProgram from './ListProgram';
-import Llvm from './Llvm';
+import Build from './Build';
 import Docs from './Docs';
 import Constrain from './Constrain';
 
@@ -59,8 +59,8 @@ function App() {
           <Route path="/constrain">
             <Constrain />
           </Route>
-          <Route path="/llvm">
-            <Llvm />
+          <Route path="/build">
+            <Build />
           </Route>
           <Route path="/docs">
             <Docs />
