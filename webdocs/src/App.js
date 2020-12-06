@@ -9,6 +9,7 @@ import StarOutlineIcon from '@material-ui/icons/StarOutlined';
 import BuildIcon from '@material-ui/icons/Build';
 import MenuBookIcon from '@material-ui/icons/MenuBook';
 import CompareArrowsIcon from '@material-ui/icons/CompareArrows';
+import BugReportIcon from '@material-ui/icons/BugReport';
 import {
   BrowserRouter as Router,
   Switch,
@@ -20,6 +21,7 @@ import ListProgram from './ListProgram';
 import Build from './Build';
 import Docs from './Docs';
 import Constrain from './Constrain';
+import Debug from './Debug';
 
 function App() {
   return (
@@ -37,6 +39,9 @@ function App() {
           </Link>
           <Link to="/constrain">
             <IconButton color="inherit" edge="end"><CompareArrowsIcon /></IconButton>
+          </Link>
+          <Link to="/debug">
+            <IconButton color="inherit" edge="end"><BugReportIcon /></IconButton>
           </Link>
           <Link to="/llvm">
             <IconButton color="inherit" edge="end"><BuildIcon /></IconButton>
@@ -58,6 +63,9 @@ function App() {
           </Route>
           <Route path="/constrain">
             <Constrain />
+          </Route>
+          <Route path="/debug">
+            <Debug />
           </Route>
           <Route path="/build">
             <Build />

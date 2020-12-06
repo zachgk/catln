@@ -20,6 +20,7 @@ import TreeBuild (buildArrow)
 import           CRes
 import Syntax.Types
 import Text.Printf
+import Data.Hashable
 
 evalStartEArrow :: Env -> EObject -> EArrow -> Args -> CRes (ResArrowTree EPrim, [ResArrowTree EPrim], Args, Env)
 evalStartEArrow env@Env{evExEnv, evTbEnv, evArgs, evCoverage, evTreebugOpen} obj arr newArgs = do
@@ -40,11 +41,13 @@ evalStartEArrow env@Env{evExEnv, evTbEnv, evArgs, evCoverage, evTreebugOpen} obj
 
 evalEndEArrow :: Env -> Val -> Args -> Env
 evalEndEArrow Env{evTreebugOpen} _ _ | null evTreebugOpen = error $ printf "Tried to evalEndEArrow with an empty treebug open"
-evalEndEArrow env@Env{evTreebugOpen, evTreebugClosed} val newArgs = env {
+evalEndEArrow env@Env{evTreebugOpen, evTreebugClosed, evCallStack} val newArgs = env {
   evTreebugOpen = tail evTreebugOpen,
-  evTreebugClosed = pure $ (\(EvalTreebugOpen obj arr) -> EvalTreebugClosed obj arr val evTreebugClosed) (head evTreebugOpen),
+  evTreebugClosed = pure $ (\(EvalTreebugOpen obj arr) -> EvalTreebugClosed obj arr val evTreebugClosed closedId) (head evTreebugOpen),
   evArgs = newArgs
                                                             }
+  where
+    closedId = take 10 (printf "%08x" (hash (evTreebugOpen, evTreebugClosed, evCallStack)))
 
 evalEnvJoin :: Env -> Env -> Env
 evalEnvJoin (Env objMap classMap args exEnv1 tbEnv callStack cov1 treebugOpen treebugClosed1) (Env _ _ _ exEnv2 _ _ cov2 _ treebugClosed2) = Env objMap classMap args (H.union exEnv1 exEnv2) tbEnv callStack (H.unionWith (+) cov1 cov2) treebugOpen (treebugClosed1 ++ treebugClosed2)

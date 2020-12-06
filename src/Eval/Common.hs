@@ -46,9 +46,9 @@ instance Hashable EPrim where
   hashWithSalt s (EPrim at ag _) = s `hashWithSalt` at `hashWithSalt` ag
 
 data EvalTreebugOpen = EvalTreebugOpen EObject EArrow
-  deriving (Eq)
-data EvalTreebugClosed = EvalTreebugClosed EObject EArrow Val [EvalTreebugClosed]
-  deriving (Eq, Generic, ToJSON)
+  deriving (Eq, Generic, Hashable)
+data EvalTreebugClosed = EvalTreebugClosed EObject EArrow Val [EvalTreebugClosed] String
+  deriving (Eq, Generic, Hashable, ToJSON)
 
 data Env = Env { evObjMap :: EObjectMap
                , evClassMap :: ClassMap
