@@ -106,9 +106,9 @@ formArgMetaMapWithSrc classMap (Object _ _ _ _ args) (_, _, _, srcArgs) = H.fold
     fromArg k (m, Nothing) = case H.lookup k srcArgs of
       Just srcArg -> H.singleton k (m, srcArg)
       Nothing -> H.empty
-    fromArg k (m, Just arg@(Object _ _ argName _ _)) = case H.lookup k srcArgs of
+    fromArg k (_, Just arg) = case H.lookup k srcArgs of
       Just (SumType srcArg) -> mergeMaps $ map (formArgMetaMapWithSrc classMap arg) $ splitPartialLeafs srcArg
-      Just TopType -> H.singleton argName (m, TopType)
+      Just TopType -> (,TopType) <$> formArgMetaMap arg
       Just _ -> H.empty
       Nothing -> H.empty
     mergeMaps [] = H.empty
@@ -120,7 +120,7 @@ formVarMap _ _ = error "Unknown formVarMap"
 
 -- fullDest means to use the greatest possible type (after implicit).
 -- Otherwise, it uses the minimal type that *must* be reached
-arrowDestType :: (Meta m, Show m, ExprClass e) => Bool -> ClassMap -> PartialType -> Object m -> Arrow (e m) m -> Type
+arrowDestType :: (Meta m, Show m, ExprClass e, Show (e m)) => Bool -> ClassMap -> PartialType -> Object m -> Arrow (e m) m -> Type
 arrowDestType fullDest classMap src obj@(Object objM _ _ _ _) (Arrow arrM _ _ maybeExpr) = case mapM getExprArg maybeExpr of
   Just (Just _) -> fromMaybe (error "Unfound expr") expr'
   _ -> joined
