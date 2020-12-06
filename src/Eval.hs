@@ -15,7 +15,6 @@ module Eval where
 import Prelude hiding (unzip)
 import Data.Zip
 import qualified Data.HashMap.Strict as H
-import           Data.Bifunctor
 import           Syntax.Types
 import           Syntax.Prgm
 import           Syntax
@@ -37,17 +36,6 @@ buildArrArgs = aux H.empty
     addArgs argName ((_, Nothing), argVal) acc = H.insert argName argVal acc
     addArgs _ ((_, Just subObj), argVal) acc = aux acc subObj argVal
 
-replaceTreeArgs :: Args -> ResArrowTree EPrim -> ResArrowTree EPrim
-replaceTreeArgs args (ResArrowCompose a b) = ResArrowCompose (replaceTreeArgs args a) (replaceTreeArgs args b)
-replaceTreeArgs _ (ResArrowMatch m) = ResArrowMatch m -- Match does not propagate reachesTreeArgs to subtree as the match introduces it's own args later
-replaceTreeArgs args (ResArrowCond ifThens els) = ResArrowCond (map (bimap (replaceTreeArgs args) (replaceTreeArgs args)) ifThens) (replaceTreeArgs args els)
-replaceTreeArgs args (ResArrowTuple n vs) = ResArrowTuple n (fmap (replaceTreeArgs args) vs)
-replaceTreeArgs args (ResArrowTupleApply b an av) = ResArrowTupleApply (replaceTreeArgs args b) an (replaceTreeArgs args av)
-replaceTreeArgs args a@(ArgArrow tp name) = case H.lookup name args of
-  Just arg -> PrimArrow tp $ EPrim (getValType arg) NoGuard (const arg)
-  Nothing -> a
-replaceTreeArgs _ t = t
-
 evalCompAnnot :: Env -> Val -> CRes Env
 evalCompAnnot env (TupleVal "assert" args) = case (H.lookup "test" args, H.lookup "msg" args) of
   (Just b, Just (StrVal _)) | b == true -> return env
@@ -58,65 +46,68 @@ evalCompAnnot env (TupleVal "assert" args) = case (H.lookup "test" args, H.looku
 evalCompAnnot env (TupleVal name _) = evalError env $ printf "Unknown compiler annotation %s" name
 evalCompAnnot env _ = evalError env "Eval: Invalid compiler annotation type"
 
-eval :: Env -> Val -> ResArrowTree EPrim -> CRes (Val, Env)
-eval env val (ResEArrow object arrow) = do
-  (resArrowTree, compAnnots, env2) <- evalStartEArrow env object arrow
-  let newArrArgs = buildArrArgs object val
-  env4s <- forM compAnnots $ \compAnnot -> do
-            let treeWithoutArgs = replaceTreeArgs newArrArgs compAnnot
-            (compAnnot', env3) <- evalPopVal <$> eval (evalPush env2 $ printf "annot %s" (show compAnnot)) val treeWithoutArgs
-            evalCompAnnot env3 compAnnot'
-  let env4 = case env4s of
-        [] -> env2
-        _ -> evalEnvJoinAll env4s
-  let treeWithoutArgs = replaceTreeArgs newArrArgs resArrowTree
-  (res, env5) <- evalPopVal <$> eval (evalPush env4 $ printf "ResEArrow %s" (show arrow)) val treeWithoutArgs
-  return (res, evalEndEArrow env5 res)
-eval env (TupleVal _ args) (PrimArrow _ (EPrim _ _ f)) = return (f args, env)
-eval env _ (ConstantArrow (CInt i)) = return (IntVal i, env)
-eval env _ (ConstantArrow (CFloat f)) = return (FloatVal f, env)
-eval env _ (ConstantArrow (CStr s)) = return (StrVal s, env)
-eval env _ (ArgArrow _ name) = evalError env $ printf "Unexpected arg %s not removed during evaluation" name
-eval env val (ResArrowCompose t1 t2) = do
-  (val', env2) <- evalPopVal <$> eval (evalPush env $ printf "Compose first with val %s" (show val)) val t1
-  evalPopVal <$> eval (evalPush env2 $ "Compose second with " ++ show val') val' t2
-eval env@Env{evClassMap} val (ResArrowMatch opts) = case H.toList $ H.filterWithKey (\optType _ -> hasPartial evClassMap (getValType val) (singletonType optType)) opts of
-  [(_, resArrowTree)] -> case val of
-    (TupleVal _ arrArgs) ->
-      fmap evalPopVal <$> eval (evalPush env $ printf "match with tuple %s (%s) for options %s" (show val) (show $ getValType val) (show $ H.keys opts)) val $ replaceTreeArgs arrArgs resArrowTree
-    _ -> evalPopVal <$> eval (evalPush env $ "match with val " ++ show val) val resArrowTree
-  [] -> evalError env $ printf "Failed match in eval resArrowTree: \n\tVal: %s \n\tOptions: %s" (show val) (show opts)
-  (_:_:_) -> evalError env $ printf "Multiple matches in eval resArrowTree: \n\tVal: %s \n\tOptions: %s " (show val) (show opts)
-eval env val (ResArrowCond [] elseTree) = evalPopVal <$> eval (evalPush env "else") val elseTree
-eval env val (ResArrowCond ((ifCondTree, ifThenTree):restIfTrees) elseTree) = do
-  (cond', env2) <- evalPopVal <$> eval (evalPush env "cond") val ifCondTree
+eval :: Env -> ResArrowTree EPrim -> CRes (Val, Env)
+eval env (ResEArrow input object arrow) = do
+  (input', env2) <- evalPopVal <$> eval (evalPush env "resEArrow input") input
+  let newArrArgs = buildArrArgs object input'
+  (resArrowTree, compAnnots, oldArgs, env3) <- evalStartEArrow env2 object arrow newArrArgs
+  env5s <- forM compAnnots $ \compAnnot -> do
+            (compAnnot', env4) <- evalPopVal <$> eval (evalPush env3 $ printf "annot %s" (show compAnnot)) compAnnot
+            evalCompAnnot env4 compAnnot'
+  let env5 = case env5s of
+        [] -> env3
+        _ -> evalEnvJoinAll env5s
+  (res, env6) <- evalPopVal <$> eval (evalPush env5 $ printf "ResEArrow %s" (show arrow)) resArrowTree
+  return (res, evalEndEArrow env6 res oldArgs)
+eval env (PrimArrow input _ (EPrim _ _ f)) = do
+  (input', env2) <- evalPopVal <$> eval (evalPush env "PrimArrow input") input
+  case input' of
+    (TupleVal _ args) -> return (f args, env2)
+    _ -> error "Unexpected eval PrimArrow input"
+eval env (ConstantArrow (CInt i)) = return (IntVal i, env)
+eval env (ConstantArrow (CFloat f)) = return (FloatVal f, env)
+eval env (ConstantArrow (CStr s)) = return (StrVal s, env)
+eval env@Env{evArgs} (ArgArrow _ name) = case H.lookup name evArgs of
+  Just arg' -> return (arg', env)
+  Nothing -> evalError env $ printf "Unknown arg %s found during evaluation \n\t\t with arg env %s" name (show evArgs)
+eval env@Env{evClassMap} (ResArrowMatch m opts) = do
+  (m', env2) <- evalPopVal <$> eval (evalPush env "match input") m
+  case H.toList $ H.filterWithKey (\optType _ -> hasPartial evClassMap (getValType m') (singletonType optType)) opts of
+    [(_, resArrowTree)] -> evalPopVal <$> eval (evalPush env2 $ "match with val " ++ show m') resArrowTree
+    [] -> evalError env2 $ printf "Failed match in eval resArrowTree: \n\tVal: %s \n\tOptions: %s" (show m') (show opts)
+    (_:_:_) -> evalError env $ printf "Multiple matches in eval resArrowTree: \n\tVal: %s \n\tOptions: %s " (show m') (show opts)
+eval env (ResArrowCond [] elseTree) = evalPopVal <$> eval (evalPush env "else") elseTree
+eval env@Env{evArgs} (ResArrowCond (((ifCondTree, ifCondInput, ifObj), ifThenTree):restIfTrees) elseTree) = do
+  (ifCondInput', env2) <- evalPopVal <$> eval (evalPush env "condInput") ifCondInput
+  let env3 = evalSetArgs env2 $ buildArrArgs ifObj ifCondInput'
+  (cond', env4) <- evalPopVal <$> eval (evalPush env3 "cond") ifCondTree
+  let env5 = evalSetArgs env4 evArgs
   case cond' of
-    b | b == true -> evalPopVal <$> eval (evalPush env2 $ "then for " ++ show ifCondTree) val ifThenTree
-    b | b == false -> evalPopVal <$> eval (evalPush env $ "else for " ++ show ifCondTree) val (ResArrowCond restIfTrees elseTree)
+    b | b == true -> evalPopVal <$> eval (evalPush env5 $ "then for " ++ show ifCondTree) ifThenTree
+    b | b == false -> evalPopVal <$> eval (evalPush env5 $ "else for " ++ show ifCondTree) (ResArrowCond restIfTrees elseTree)
     _ -> error "Non-Bool eval resArrowCond"
-eval env _ (ResArrowTuple name args) | H.null args = return (TupleVal name H.empty, env)
-eval env val (ResArrowTuple name args) = do
-  args' <- traverse (eval (evalPush env "tuple") val) args
+eval env (ResArrowTuple name args) | H.null args = return (TupleVal name H.empty, env)
+eval env (ResArrowTuple name args) = do
+  args' <- traverse (eval (evalPush env "tuple")) args
   let (args'', env2s) = unzip args'
   let env2 = evalEnvJoinAll $ fmap evalPop env2s
   return (TupleVal name args'', env2)
-eval env val (ResArrowTupleApply base argName argRATree) = do
-  (base', env2) <- evalPopVal <$> eval (evalPush env "tupleApplyBase") val base
+eval env (ResArrowTupleApply base argName argRATree) = do
+  (base', env2) <- evalPopVal <$> eval (evalPush env "tupleApplyBase") base
   case base' of
     TupleVal name baseArgs -> do
-      (argVal, env3) <- eval (evalPush env2 $ printf "tupleApplyArg applying %s" argName) val argRATree
+      (argVal, env3) <- eval (evalPush env2 $ printf "tupleApplyArg applying %s" argName) argRATree
       let args' = H.insert argName argVal baseArgs
       return (TupleVal name args', evalPop env3)
     _ -> evalError env "Invalid input to tuple application"
-eval env val ResArrowID = return (val, env)
-eval Env{evCallStack} val arr = error $ printf "Bad eval resArrow\n\t\t Arrow: %s\n\t\t Val: %s\n\t\t State: %s" (show arr) (show val) (show evCallStack)
 
-evalBuildPrgm :: PartialType -> Type -> EPrgm -> CRes (ResArrowTree EPrim, Env)
-evalBuildPrgm srcType destType prgm@(objMap, classMap) = do
-  (initTree, tbEnv) <- buildRoot primEnv srcType destType prgm
+evalBuildPrgm :: EExpr -> PartialType -> Type -> EPrgm -> CRes (ResArrowTree EPrim, Env)
+evalBuildPrgm input srcType destType prgm@(objMap, classMap) = do
+  (initTree, tbEnv) <- buildRoot primEnv input srcType destType prgm
   let env = Env {
         evObjMap = objMap,
         evClassMap = classMap,
+        evArgs = H.empty,
         evExEnv = H.empty,
         evTbEnv = tbEnv,
         evCallStack = [],
@@ -126,28 +117,30 @@ evalBuildPrgm srcType destType prgm@(objMap, classMap) = do
                 }
   return (initTree, env)
 
-mainPartial :: PartialType
-mainPartial = (PTypeName "main", H.empty, H.empty, H.singleton "io" ioType)
-
-evalPrgm :: PartialType -> Type -> EPrgm -> CRes (IO (Integer, EvalResult))
-evalPrgm src@(PTypeName srcName, _, _, _) dest prgm = do
-  (initTree, env) <- evalBuildPrgm src dest prgm
-  (res, env') <- eval env (TupleVal srcName (H.singleton "io" (IOVal 0 $ pure ()))) initTree
+evalPrgm :: EExpr -> PartialType -> Type -> EPrgm -> CRes (IO (Integer, EvalResult))
+evalPrgm input src@(PTypeName _, _, _, _) dest prgm = do
+  (initTree, env) <- evalBuildPrgm input src dest prgm
+  let env2 = evalSetArgs env (H.singleton "io" (IOVal 0 $ pure ()))
+  (res, env') <- eval env2 initTree
   case res of
     (IOVal r io) -> return (io >> pure (r, evalResult env'))
     _ -> CErr [MkCNote $ GenCErr "Eval did not return an instance of IO"]
-evalPrgm (PClassName _, _, _, _) _ _ = error "Can't eval class"
+evalPrgm _ (PClassName _, _, _, _) _ _ = error "Can't eval class"
 
 evalMain :: EPrgm -> CRes (IO (Integer, EvalResult))
-evalMain = evalPrgm mainPartial ioType
+evalMain = evalPrgm mainExpr mainPartial ioType
+  where mainPartial = (PTypeName "main", H.empty, H.empty, H.singleton "io" ioType)
+        mainPartialEmpty = Typed $ singletonType (PTypeName "main", H.empty, H.empty, H.empty)
+        mainExpr = TupleApply (Typed $ singletonType mainPartial) (mainPartialEmpty, Value mainPartialEmpty "main") "io" (Arg (Typed ioType) "io")
 
 evalMainb :: EPrgm -> CRes (String, String, EvalResult)
 evalMainb prgm = do
   let srcName = "mainb"
   let src = (PTypeName srcName, H.empty, H.empty, H.empty)
+  let input = Value (Typed $ singletonType src) "mainb"
   let dest = singletonType (PTypeName "CatlnResult", H.empty, H.empty, H.fromList [("name", strType), ("contents", strType)])
-  (initTree, env) <- evalBuildPrgm src dest prgm
-  (res, env') <- eval env NoVal initTree
+  (initTree, env) <- evalBuildPrgm input src dest prgm
+  (res, env') <- eval env initTree
   case res of
     (TupleVal "CatlnResult" args) -> case (H.lookup "name" args, H.lookup "contents" args) of
       (Just (StrVal n), Just (StrVal c)) -> return (n, c, evalResult env')

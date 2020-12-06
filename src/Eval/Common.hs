@@ -49,23 +49,24 @@ instance Hashable EPrim where
   hashWithSalt s (EPrim at ag _) = s `hashWithSalt` at `hashWithSalt` ag
 
 data EvalTreebugOpen = EvalTreebugOpen EObject EArrow
-  deriving (Eq, Show)
+  deriving (Eq)
 data EvalTreebugClosed = EvalTreebugClosed EObject EArrow Val [EvalTreebugClosed]
-  deriving (Eq, Show, Generic, ToJSON)
+  deriving (Eq, Generic, ToJSON)
 
 data Env = Env { evObjMap :: EObjectMap
                , evClassMap :: ClassMap
+               , evArgs :: H.HashMap ArgName Val
                , evExEnv :: ResExEnv EPrim
                , evTbEnv :: TBEnv EPrim
                , evCallStack :: [String]
                , evCoverage :: H.HashMap EArrow Int
                , evTreebugOpen :: [EvalTreebugOpen]
                , evTreebugClosed :: [EvalTreebugClosed]
-               } deriving (Eq, Show)
+               }
 
 data EvalResult = EvalResult { erCoverage :: H.HashMap EArrow Int
                              , erTreebug :: [EvalTreebugClosed]
-                             } deriving (Eq, Show, Generic, ToJSON)
+                             } deriving (Eq, Generic, ToJSON)
 
 type Args = H.HashMap String Val
 
@@ -116,34 +117,42 @@ getValType (TupleVal name args) = (PTypeName name, H.empty, H.empty, fmap fromAr
 getValType IOVal{} = ioLeaf
 getValType NoVal = error "getValType of NoVal"
 
-evalStartEArrow :: Env -> EObject -> EArrow -> CRes (ResArrowTree EPrim, [ResArrowTree EPrim], Env)
-evalStartEArrow env@Env{evExEnv, evTbEnv, evCoverage, evTreebugOpen} obj arr = case H.lookup arr evExEnv of
-  Just (tree, annots) -> return (tree, annots, env{evCoverage = H.insertWith (+) arr 1 evCoverage})
-  Nothing -> do
-    maybeArrow' <- buildArrow evTbEnv obj arr
-    case maybeArrow' of
-      Just (_, arrow'@(tree, annots)) -> do
-        let env' = env {
-                         evExEnv = H.insert arr arrow' evExEnv
-                       , evTreebugOpen = EvalTreebugOpen obj arr : evTreebugOpen
-              }
-        return (tree, annots, env')
-      Nothing -> evalError env $ printf "Failed to find arrow in eval resArrow: %s" (show arr)
+evalStartEArrow :: Env -> EObject -> EArrow -> Args -> CRes (ResArrowTree EPrim, [ResArrowTree EPrim], Args, Env)
+evalStartEArrow env@Env{evExEnv, evTbEnv, evArgs, evCoverage, evTreebugOpen} obj arr newArgs = do
+  let env' = env{
+                evArgs=newArgs
+                , evCoverage = H.insertWith (+) arr 1 evCoverage
+                , evTreebugOpen = EvalTreebugOpen obj arr : evTreebugOpen
+                }
+  case H.lookup arr evExEnv of
+    Just (tree, annots) -> return (tree, annots, evArgs, env')
+    Nothing -> do
+      maybeArrow' <- buildArrow evTbEnv obj arr
+      case maybeArrow' of
+        Just (_, arrow'@(tree, annots)) -> do
+          let env'' = env' {evExEnv = H.insert arr arrow' evExEnv}
+          return (tree, annots, evArgs, env'')
+        Nothing -> evalError env $ printf "Failed to find arrow in eval resArrow: %s" (show arr)
 
-evalEndEArrow :: Env -> Val -> Env
-evalEndEArrow env@Env{evTreebugOpen, evTreebugClosed} val = env {
+evalEndEArrow :: Env -> Val -> Args -> Env
+evalEndEArrow Env{evTreebugOpen} _ _ | null evTreebugOpen = error $ printf "Tried to evalEndEArrow with an empty treebug open"
+evalEndEArrow env@Env{evTreebugOpen, evTreebugClosed} val newArgs = env {
   evTreebugOpen = tail evTreebugOpen,
-  evTreebugClosed = pure $ (\(EvalTreebugOpen obj arr) -> EvalTreebugClosed obj arr val evTreebugClosed) (head evTreebugOpen)
+  evTreebugClosed = pure $ (\(EvalTreebugOpen obj arr) -> EvalTreebugClosed obj arr val evTreebugClosed) (head evTreebugOpen),
+  evArgs = newArgs
                                                             }
 
 evalEnvJoin :: Env -> Env -> Env
-evalEnvJoin (Env objMap classMap exEnv1 tbEnv callStack cov1 treebugOpen treebugClosed1) (Env _ _ exEnv2 _ _ cov2 _ treebugClosed2) = Env objMap classMap (H.union exEnv1 exEnv2) tbEnv callStack (H.unionWith (+) cov1 cov2) treebugOpen (treebugClosed1 ++ treebugClosed2)
+evalEnvJoin (Env objMap classMap args exEnv1 tbEnv callStack cov1 treebugOpen treebugClosed1) (Env _ _ _ exEnv2 _ _ cov2 _ treebugClosed2) = Env objMap classMap args (H.union exEnv1 exEnv2) tbEnv callStack (H.unionWith (+) cov1 cov2) treebugOpen (treebugClosed1 ++ treebugClosed2)
 
 evalEnvJoinAll :: Foldable f => f Env -> Env
 evalEnvJoinAll = foldr1 evalEnvJoin
 
 evalError :: Env -> String -> CRes a
 evalError Env{evCallStack} msg = CErr [MkCNote $ EvalCErr evCallStack msg]
+
+evalSetArgs :: Env -> H.HashMap ArgName Val -> Env
+evalSetArgs env args' = env{evArgs=args'}
 
 evalPush :: Env -> String -> Env
 evalPush env@Env{evCallStack} c = env{evCallStack = c:evCallStack}

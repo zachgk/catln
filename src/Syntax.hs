@@ -37,31 +37,28 @@ data ReplRes m
   deriving (Eq, Show)
 
 --- ResArrowTree
-type ResBuildEnvItem f = (PartialType, Guard (Expr Typed), ResArrowTree f)
+type ResBuildEnvItem f = (PartialType, Guard (Expr Typed), ResArrowTree f -> ResArrowTree f)
 type ResBuildEnv f = H.HashMap TypeName [ResBuildEnvItem f]
 type ResExEnv f = H.HashMap (Arrow (Expr Typed) Typed) (ResArrowTree f, [ResArrowTree f]) -- (result, [compAnnot trees])
 type TBEnv f = (ResBuildEnv f, H.HashMap PartialType (ResArrowTree f), ClassMap)
 
 data ResArrowTree f
-  = ResEArrow (Object Typed) (Arrow (Expr Typed) Typed)
-  | PrimArrow Type f
+  = ResEArrow (ResArrowTree f) (Object Typed) (Arrow (Expr Typed) Typed)
+  | PrimArrow (ResArrowTree f) Type f
   | ConstantArrow Constant
   | ArgArrow Type String
-  | ResArrowCompose (ResArrowTree f) (ResArrowTree f)
-  | ResArrowMatch (H.HashMap PartialType (ResArrowTree f))
-  | ResArrowCond [(ResArrowTree f, ResArrowTree f)] (ResArrowTree f) -- [(if, then)] else
+  | ResArrowMatch (ResArrowTree f) (H.HashMap PartialType (ResArrowTree f))
+  | ResArrowCond [((ResArrowTree f, ResArrowTree f, Object Typed), ResArrowTree f)] (ResArrowTree f) -- [((if, ifInput, ifObj), then)] else
   | ResArrowTuple String (H.HashMap String (ResArrowTree f))
   | ResArrowTupleApply (ResArrowTree f) String (ResArrowTree f)
-  | ResArrowID
   deriving (Eq, Generic, Hashable)
 
 instance Show (ResArrowTree f) where
-  show (ResEArrow obj arrow) = printf "(ResEArrow: %s -> %s)" (show obj) (show arrow)
-  show (PrimArrow tp _) = "(PrimArrow " ++ show tp ++ ")"
+  show (ResEArrow _ obj arrow) = printf "(ResEArrow: %s -> %s)" (show obj) (show arrow)
+  show (PrimArrow _ tp _) = "(PrimArrow " ++ show tp ++ ")"
   show (ConstantArrow c) = "(ConstantArrow " ++ show c ++ ")"
   show (ArgArrow tp n) = "(ArgArrow " ++ show tp ++ " " ++ n ++ ")"
-  show (ResArrowCompose a b) = show a ++ " -> " ++ show b
-  show (ResArrowMatch args) = "match (" ++ args' ++ ")"
+  show (ResArrowMatch m args) = printf "match (%s) {%s}" (show m) args'
     where
       showArg (leaf, tree) = show leaf ++ " -> " ++ show tree
       args' = intercalate ", " $ map showArg $ H.toList args
@@ -76,7 +73,6 @@ instance Show (ResArrowTree f) where
       showArg (argName, val) = argName ++ " = " ++ show val
       args' = intercalate ", " $ map showArg $ H.toList args
   show (ResArrowTupleApply base argName argVal) = printf "(%s)(%s = %s)" (show base) argName (show argVal)
-  show ResArrowID = "ResArrowID"
 
 
 -- Metadata for the Programs

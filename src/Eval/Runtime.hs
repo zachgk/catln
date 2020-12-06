@@ -18,7 +18,7 @@ import           Syntax
 
 import Eval.Common
 
-type Op = (TypeName, [(PartialType, Guard (Expr Typed), ResArrowTree EPrim)])
+type Op = (TypeName, [(PartialType, Guard (Expr Typed), ResArrowTree EPrim -> ResArrowTree EPrim)])
 
 true, false :: Val
 true = TupleVal "True" H.empty
@@ -29,7 +29,7 @@ bool True = true
 bool False = false
 
 liftIntOp :: TypeName -> (Integer -> Integer -> Integer) -> Op
-liftIntOp name f = (name', [(srcType, NoGuard, PrimArrow resType prim)])
+liftIntOp name f = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "operator" ++ name
     srcType = (PTypeName name', H.empty, H.empty, H.fromList [("l", intType), ("r", intType)])
@@ -40,7 +40,7 @@ liftIntOp name f = (name', [(srcType, NoGuard, PrimArrow resType prim)])
                            )
 
 liftCmpOp :: TypeName -> (Integer -> Integer -> Bool) -> Op
-liftCmpOp name f = (name', [(srcType, NoGuard, PrimArrow resType prim)])
+liftCmpOp name f = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "operator" ++ name
     srcType = (PTypeName name', H.empty, H.empty, H.fromList [("l", intType), ("r", intType)])
@@ -51,7 +51,7 @@ liftCmpOp name f = (name', [(srcType, NoGuard, PrimArrow resType prim)])
                            )
 
 rneg :: TypeName -> Op
-rneg name = (name', [(srcType, NoGuard, PrimArrow resType prim)])
+rneg name = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "operator" ++ name
     srcType = (PTypeName name', H.empty, H.empty, H.singleton "a" intType)
@@ -62,7 +62,7 @@ rneg name = (name', [(srcType, NoGuard, PrimArrow resType prim)])
                               )
 
 strEq :: Op
-strEq = (name', [(srcType, NoGuard, PrimArrow resType prim)])
+strEq = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "operator=="
     srcType = (PTypeName name', H.empty, H.empty, H.fromList [("l", strType), ("r", strType)])
@@ -73,7 +73,7 @@ strEq = (name', [(srcType, NoGuard, PrimArrow resType prim)])
                               )
 
 intToString :: Op
-intToString = (name', [(srcType, NoGuard, PrimArrow resType prim)])
+intToString = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "toString"
     srcType = (PTypeName name', H.empty, H.empty, H.singleton "this" intType)
@@ -85,7 +85,7 @@ intToString = (name', [(srcType, NoGuard, PrimArrow resType prim)])
 
 
 ioExit :: Op
-ioExit = (name', [(srcType, NoGuard, PrimArrow resType prim)])
+ioExit = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "exit"
     srcType = (PTypeName name', H.empty, H.empty, H.fromList [("this", ioType), ("val", intType)])
@@ -96,7 +96,7 @@ ioExit = (name', [(srcType, NoGuard, PrimArrow resType prim)])
                               )
 
 println :: Op
-println = (name', [(srcType, NoGuard, PrimArrow resType prim)])
+println = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "println"
     srcType = (PTypeName name', H.empty, H.empty, H.fromList [("this", ioType), ("msg", strType)])
