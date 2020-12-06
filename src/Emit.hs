@@ -33,22 +33,12 @@ import TreeBuild
 import CRes
 import Text.Printf
 -- import Data.Bifunctor
-import Emit.Common
 import Data.Hashable
 import           Emit.Codegen
 import Emit.Runtime (primEnv)
 import LLVM.AST.Type (i8, ptr, double, i1, i32)
 
-getLValType :: LVal -> PartialType
-getLValType (LOVal t _) = case t of
-  SumType leafs -> case splitPartialLeafs leafs of
-    [partial] -> partial
-    _ -> error "could not getValType without a single partial"
-  _ -> error "could not get non sum getValType"
-getLValType (LTupleVal name args) = (PTypeName name, H.empty, H.empty, fmap fromArg args)
-  where fromArg arg = singletonType $ getLValType arg
-getLValType LIOVal{} = ioLeaf
-getLValType LNoVal = error "getValType of NoVal"
+type LEnv = ClassMap
 
 toSig :: [SBS.ShortByteString] -> [(AST.Type, AST.Name)]
 toSig = map (\x -> (double, AST.Name x))
@@ -56,18 +46,8 @@ toSig = map (\x -> (double, AST.Name x))
 initModule :: AST.Module
 initModule = emptyModule "repl"
 
-buildArrArgs :: TObject -> LVal -> LArgs
-buildArrArgs = aux H.empty
-  where
-    aux acc (Object _ _ objName _ objArgs) val | H.null objArgs = H.insert objName val acc
-    aux _ (Object _ _ objName _ _) (LTupleVal tupleName _) | objName /= tupleName = error $ printf "Found name mismatch in buildArrArgs: object %s and tuple %s" objName tupleName
-    aux acc (Object _ _ _ _ objArgs) (LTupleVal _ tupleArgs) = H.foldrWithKey addArgs acc $ H.intersectionWith (,) objArgs tupleArgs
-    aux _ _ _ = error "Invalid buildArrArgs value"
-    addArgs argName ((_, Nothing), argVal) acc = H.insert argName argVal acc
-    addArgs _ ((_, Just subObj), argVal) acc = aux acc subObj argVal
-
-asOperand :: LVal -> Codegen AST.Operand
-asOperand (LOVal _ o) = o
+asOperand :: Val -> Codegen AST.Operand
+asOperand (LLVMOperand _ o) = o
 asOperand _ = error "Does not have type operand"
 
 -- TODO: Add genType with varEnv
@@ -86,24 +66,24 @@ genType varEnv (TypeVar (TVVar v)) = case H.lookup v varEnv of
 genType _ TopType = i32 -- TODO: Should compute the top type
 genType _ t = error $ printf "Unsupported emit genType: %s" (show t)
 
-genTypeMeta :: TypedMeta -> AST.Type
+genTypeMeta :: EvalMeta -> AST.Type
 genTypeMeta (Typed t) = genType H.empty t
 
-arrowName :: TArrow -> String
+arrowName :: EArrow -> String
 arrowName arrow = take 6 (printf "%08x" (hash arrow))
 
 typeName :: Type -> String
 typeName tp = take 6 (printf "%08x" (hash tp))
 
-codegenTree :: LEnv -> LVal -> ResArrowTree LLVMPrim -> Codegen LVal
+codegenTree :: LEnv -> Val -> ResArrowTree EPrim -> Codegen Val
 codegenTree = undefined
 -- codegenTree classMap val resArrow@(ResEArrow _ object arrow) = do
 --   let args' = buildArrArgs object val
 --   let outType = resArrowDestType classMap (getValType val) resArrow
 --   OVal outType <$> call (externf (AST.Name $ SBS.toShort $ BSU.fromString  $ arrowName arrow)) (map asOperand $ H.elems args')
--- codegenTree _ (LTupleVal _ args) (PrimArrow _ _ (LLVMPrim _ _ f)) = f args
--- codegenTree _ (LOVal _ _) (PrimArrow _ _ (LLVMPrim _ _ f)) = f H.empty -- TODO: Extract values from OVal which should be a struct
--- codegenTree _ NoVal (PrimArrow _ _ (LLVMPrim _ _ f)) = f H.empty
+-- codegenTree _ (TupleVal _ args) (PrimArrow _ _ (EPrim _ _ f)) = f args
+-- codegenTree _ (LLVMOperand _ _) (PrimArrow _ _ (EPrim _ _ f)) = f H.empty -- TODO: Extract values from OVal which should be a struct
+-- codegenTree _ NoVal (PrimArrow _ _ (EPrim _ _ f)) = f H.empty
 -- codegenTree _ _ (ConstantArrow (CInt i)) = return $ OVal intType $ cons $ C.Int 64 i
 -- codegenTree _ _ (ConstantArrow (CFloat f)) = return $ OVal floatType $ cons $ C.Float (F.Double f)
 -- codegenTree _ _ (ConstantArrow (CStr _)) = error "no string implemented"
@@ -135,7 +115,7 @@ codegenTree = undefined
 --       return $ TupleVal name args'
 --     _ -> error "Invalid input to tuple application"
 
-codegenDecl :: LEnv -> String -> PartialType -> ResArrowTree LLVMPrim -> LLVM ()
+codegenDecl :: LEnv -> String -> PartialType -> ResArrowTree EPrim -> LLVM ()
 codegenDecl _ name tp@(_, _, _, args) _ = define (genType H.empty $ singletonType tp) (SBS.toShort $ BSU.fromString name) args' blks
   where
     args' = map(\(argName, argTp) -> (genType H.empty argTp, AST.Name $ SBS.toShort $ BSU.fromString argName)) $ H.toList args
@@ -159,7 +139,7 @@ codegenDecl _ name tp@(_, _, _, args) _ = define (genType H.empty $ singletonTyp
       --   IOVal -> ret $ cons $ C.Int 64 0 -- TODO: Delete, this should be an error
       --   err -> error $ printf "Bad result in codegenDecl: %s" (show err)
 
-codegenStruct :: TObject -> LLVM ()
+codegenStruct :: EObject -> LLVM ()
 codegenStruct (Object objM _ _ _ args) = struct name (map (\(argM, _) -> genTypeMeta argM) $ H.elems args)
   where
     name = AST.Name $ SBS.toShort $ BSU.fromString $ typeName $ getMetaType objM
@@ -170,7 +150,7 @@ codegenStruct (Object objM _ _ _ args) = struct name (map (\(argM, _) -> genType
 -- mainObject :: TObject
 -- mainObject = Object (Typed $ singletonType mainPartial) FunctionObj "main" H.empty (H.singleton "io" (Typed ioType, Nothing))
 
-codegenPrgm :: TExpr -> PartialType -> Type -> TPrgm -> LLVM ()
+codegenPrgm :: EExpr -> PartialType -> Type -> EPrgm -> LLVM ()
 codegenPrgm input srcType destType tprgm@(_, classMap) = case buildRoot primEnv input srcType destType tprgm of
   CRes _ (initTree, _) -> do
     let env = classMap
@@ -181,12 +161,12 @@ codegenPrgm input srcType destType tprgm@(_, classMap) = case buildRoot primEnv 
     codegenDecl env "main" srcType initTree
   CErr err -> error $ printf "Build to buildPrgm in codegen: \n\t%s" (show err)
 
-codegen :: AST.Module -> TExpr -> PartialType -> Type -> TPrgm -> IO String
+codegen :: AST.Module -> EExpr -> PartialType -> Type -> EPrgm -> IO String
 codegen astMod input srcType destType prgm = withContext $ \context ->
   withModuleFromAST context newast (fmap BSU.toString . moduleLLVMAssembly)
   where
     modn = codegenPrgm input srcType destType prgm
     newast = runLLVM astMod modn
 
-codegenInit :: TExpr -> PartialType -> Type -> TPrgm -> IO String
+codegenInit :: EExpr -> PartialType -> Type -> EPrgm -> IO String
 codegenInit = codegen initModule

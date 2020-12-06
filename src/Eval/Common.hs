@@ -24,6 +24,8 @@ import           Syntax.Prgm
 import           Syntax
 import           Text.Printf
 import Data.Aeson hiding (Object)
+import Emit.Codegen (Codegen)
+import qualified LLVM.AST as AST
 
 type EvalMeta = Typed
 type ECompAnnot = CompAnnot EvalMeta
@@ -74,6 +76,8 @@ data Val
   | TupleVal String (H.HashMap String Val)
   | IOVal Integer (IO ())
   | LLVMVal (IO String)
+  | LLVMOperand Type (Codegen AST.Operand)
+  | LLVMIO (Codegen ())
   | NoVal
 
 instance Eq Val where
@@ -97,6 +101,8 @@ instance Show Val where
       showArg (argName, val) = argName ++ " = " ++ show val
   show IOVal{}   = "IOVal"
   show LLVMVal{}   = "LLVMVal"
+  show (LLVMOperand tp _)   = "LLVMOperand" ++ show tp
+  show LLVMIO{}   = "LLVMIO"
   show NoVal   = "NoVal"
 
 instance Hashable Val where
@@ -106,6 +112,8 @@ instance Hashable Val where
   hashWithSalt s (TupleVal n as) = s `hashWithSalt` n `hashWithSalt` as
   hashWithSalt s (IOVal i _) = s `hashWithSalt` i
   hashWithSalt s (LLVMVal _) = s
+  hashWithSalt s (LLVMOperand tp _) = s `hashWithSalt` tp
+  hashWithSalt s (LLVMIO _) = s
   hashWithSalt s NoVal = s
 
 instance ToJSON Val where
@@ -115,6 +123,8 @@ instance ToJSON Val where
   toJSON (TupleVal name args) = object ["tag".=("TupleVal" :: String), "name".=name, "args".=toJSON args]
   toJSON IOVal{} = object ["tag".=("IOVal" :: String)]
   toJSON LLVMVal{} = object ["tag".=("LLVMVal" :: String)]
+  toJSON LLVMOperand{} = object ["tag".=("LLVMOperand" :: String)]
+  toJSON LLVMIO{} = object ["tag".=("LLVMIO" :: String)]
   toJSON NoVal = object ["tag".=("NoVal" :: String)]
 
 getValType :: Val -> PartialType
@@ -125,6 +135,12 @@ getValType (TupleVal name args) = (PTypeName name, H.empty, H.empty, fmap fromAr
   where fromArg arg = singletonType $ getValType arg
 getValType IOVal{} = ioLeaf
 getValType LLVMVal{} = (PTypeName "CatlnResult", H.empty, H.empty, H.fromList [("name", strType), ("contents", strType)])
+getValType (LLVMOperand t _) = case t of
+  SumType leafs -> case splitPartialLeafs leafs of
+    [partial] -> partial
+    _ -> error "could not getValType without a single partial"
+  _ -> error "could not get non sum getValType"
+getValType LLVMIO{} = ioLeaf
 getValType NoVal = error "getValType of NoVal"
 
 
@@ -174,4 +190,12 @@ instance Show (ResArrowTree f) where
 macroData :: TBEnv f -> MacroData f
 macroData (_, _, objMap, classMap) = MacroData (objMap, classMap)
 
-
+buildArrArgs :: EObject -> Val -> Args
+buildArrArgs = aux H.empty
+  where
+    aux acc (Object _ _ objName _ objArgs) val | H.null objArgs = H.insert objName val acc
+    aux _ (Object _ _ objName _ _) (TupleVal tupleName _) | objName /= tupleName = error $ printf "Found name mismatch in buildArrArgs: object %s and tuple %s" objName tupleName
+    aux acc (Object _ _ _ _ objArgs) (TupleVal _ tupleArgs) = H.foldrWithKey addArgs acc $ H.intersectionWith (,) objArgs tupleArgs
+    aux _ _ val = error $ "Invalid buildArrArgs value: " ++ show val
+    addArgs argName ((_, Nothing), argVal) acc = H.insert argName argVal acc
+    addArgs _ ((_, Just subObj), argVal) acc = aux acc subObj argVal

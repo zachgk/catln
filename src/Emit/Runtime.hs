@@ -17,20 +17,19 @@ import           Syntax.Prgm
 import           Syntax
 
 import Eval.Common
-import Emit.Common
 import Emit.Codegen
 import qualified LLVM.AST as AST
 import LLVM.AST.Operand (Operand)
 import qualified LLVM.AST.IntegerPredicate as IP
 import qualified LLVM.AST.Constant as C
 
-type Op = (TypeName, [(PartialType, Guard (Expr Typed), ResArrowTree LLVMPrim -> MacroData LLVMPrim -> ResArrowTree LLVMPrim)])
+type Op = (TypeName, [(PartialType, Guard (Expr Typed), ResArrowTree EPrim -> MacroData EPrim -> ResArrowTree EPrim)])
 
-true, false :: LVal
-true = LTupleVal "True" H.empty
-false = LTupleVal "False" H.empty
+true, false :: Val
+true = TupleVal "True" H.empty
+false = TupleVal "False" H.empty
 
-bool :: Bool -> LVal
+bool :: Bool -> Val
 bool True = true
 bool False = false
 
@@ -39,12 +38,12 @@ liftBinOp lType rType resType name f = (name', [(srcType, NoGuard, \input _ -> P
   where
     name' = "operator" ++ name
     srcType = (PTypeName name', H.empty, H.empty, H.fromList [("l", lType), ("r", rType)])
-    prim = LLVMPrim srcType NoGuard (\args -> case (H.lookup "l" args, H.lookup "r" args) of
-                           (Just (LOVal _ l), Just (LOVal _ r)) -> LOVal resType $ do
+    prim = EPrim srcType NoGuard (\args -> case (H.lookup "l" args, H.lookup "r" args) of
+                           (Just (LLVMOperand _ l), Just (LLVMOperand _ r)) -> LLVMOperand resType $ do
                              l' <- l
                              r' <- r
                              instr (f l' r')
-                           _ -> LIOVal (pure ()) -- TODO: Delete, should be an error
+                           _ -> LLVMIO (pure ()) -- TODO: Delete, should be an error
                            -- _ -> error "Invalid binary op signature"
                            )
 
@@ -60,8 +59,8 @@ rneg name = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType prim
     name' = "operator" ++ name
     srcType = (PTypeName name', H.empty, H.empty, H.singleton "a" intType)
     resType = intType
-    prim = LLVMPrim srcType NoGuard (\args -> case H.lookup "a" args of
-                           Just (LOVal _ a') -> LOVal intType $ do
+    prim = EPrim srcType NoGuard (\args -> case H.lookup "a" args of
+                           Just (LLVMOperand _ a') -> LLVMOperand intType $ do
                              a'' <- a'
                              instr (AST.Mul False False a'' (cons $ C.Int 32 (-1)) [])
                            _ -> error "Invalid strEq signature"
@@ -103,8 +102,8 @@ strEq = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType prim)])
     name' = "operator=="
     srcType = (PTypeName name', H.empty, H.empty, H.fromList [("l", strType), ("r", strType)])
     resType = boolType
-    prim = LLVMPrim srcType NoGuard (\args -> case (H.lookup "l" args, H.lookup "r" args) of
-                           (Just (LOVal _ l), Just (LOVal _ r)) -> LOVal boolType $ do
+    prim = EPrim srcType NoGuard (\args -> case (H.lookup "l" args, H.lookup "r" args) of
+                           (Just (LLVMOperand _ l), Just (LLVMOperand _ r)) -> LLVMOperand boolType $ do
                              l' <- l
                              r' <- r
                              call (externf "strcmp") [l', r'] -- TODO: really returns int type as result of comparison
@@ -117,8 +116,8 @@ intToString = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType pr
     name' = "toString"
     srcType = (PTypeName name', H.empty, H.empty, H.singleton "this" intType)
     resType = strType
-    prim = LLVMPrim srcType NoGuard (\args -> case H.lookup "this" args of
-                           Just (LOVal _ _) -> LOVal strType (pure $ cons $ C.Int 64 0) --TODO: Should do actual conversion
+    prim = EPrim srcType NoGuard (\args -> case H.lookup "this" args of
+                           Just (LLVMOperand _ _) -> LLVMOperand strType (pure $ cons $ C.Int 64 0) --TODO: Should do actual conversion
                            _ -> error "Invalid strEq signature"
                            )
 
@@ -128,12 +127,12 @@ ioExit = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType prim)])
     name' = "exit"
     srcType = (PTypeName name', H.empty, H.empty, H.fromList [("this", ioType), ("val", intType)])
     resType = ioType
-    prim = LLVMPrim srcType NoGuard (\args -> case (H.lookup "this" args, H.lookup "val" args) of
-                           (Just (LIOVal _), Just (LOVal _ r)) -> LIOVal $ do
+    prim = EPrim srcType NoGuard (\args -> case (H.lookup "this" args, H.lookup "val" args) of
+                           (Just (LLVMIO _), Just (LLVMOperand _ r)) -> LLVMIO $ do
                              r' <- r
                              _ <- call (externf "exit") [r']
                              return ()
-                           _ -> LIOVal (pure ())-- TODO: Delete, should be an error
+                           _ -> LLVMIO (pure ())-- TODO: Delete, should be an error
                            -- _ -> error "Invalid ioExit signature"
                            )
 
@@ -143,8 +142,8 @@ println = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType prim)]
     name' = "println"
     srcType = (PTypeName name', H.empty, H.empty, H.fromList [("this", ioType), ("msg", strType)])
     resType = ioType
-    prim = LLVMPrim srcType NoGuard (\args -> case (H.lookup "this" args, H.lookup "msg" args) of
-                           (Just (LIOVal _), Just (LOVal _ s)) -> LIOVal $ do
+    prim = EPrim srcType NoGuard (\args -> case (H.lookup "this" args, H.lookup "msg" args) of
+                           (Just (LLVMIO _), Just (LLVMOperand _ s)) -> LLVMIO $ do
                              s' <- s
                              _ <- call (externf "puts") [s']
                              return ()
@@ -152,7 +151,7 @@ println = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType prim)]
                            )
 
 
-primEnv :: ResBuildEnv LLVMPrim
+primEnv :: ResBuildEnv EPrim
 primEnv = H.fromListWith (++) [liftIntOp "+" (\l r -> AST.Add False False l r [])
                               , liftIntOp "-" (\l r -> AST.Sub False False l r [])
                               , liftIntOp "*" (\l r -> AST.Mul False False l r [])

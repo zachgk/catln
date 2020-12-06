@@ -27,16 +27,6 @@ import Eval.Env
 import           Text.Printf
 import Control.Monad
 
-buildArrArgs :: EObject -> Val -> Args
-buildArrArgs = aux H.empty
-  where
-    aux acc (Object _ _ objName _ objArgs) val | H.null objArgs = H.insert objName val acc
-    aux _ (Object _ _ objName _ _) (TupleVal tupleName _) | objName /= tupleName = error $ printf "Found name mismatch in buildArrArgs: object %s and tuple %s" objName tupleName
-    aux acc (Object _ _ _ _ objArgs) (TupleVal _ tupleArgs) = H.foldrWithKey addArgs acc $ H.intersectionWith (,) objArgs tupleArgs
-    aux _ _ val = error $ "Invalid buildArrArgs value: " ++ show val
-    addArgs argName ((_, Nothing), argVal) acc = H.insert argName argVal acc
-    addArgs _ ((_, Just subObj), argVal) acc = aux acc subObj argVal
-
 evalCompAnnot :: Env -> Val -> CRes Env
 evalCompAnnot env (TupleVal "assert" args) = case (H.lookup "test" args, H.lookup "msg" args) of
   (Just b, Just (StrVal _)) | b == true -> return env
