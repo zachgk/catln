@@ -26,6 +26,7 @@ import Eval.Runtime
 import Eval.Env
 import           Text.Printf
 import Control.Monad
+import Emit (codegenExInit)
 
 evalCompAnnot :: Env -> Val -> CRes Env
 evalCompAnnot env (TupleVal "assert" args) = case (H.lookup "test" args, H.lookup "msg" args) of
@@ -135,7 +136,7 @@ evalMainb prgm = do
     (TupleVal "CatlnResult" args) -> case (H.lookup "name" args, H.lookup "contents" args) of
       (Just (StrVal n), Just (StrVal c)) -> return $ return (n, c, evalResult env')
       _ -> CErr [MkCNote $ GenCErr "Eval mainb returned a CatlnResult with bad args"]
-    (LLVMVal ioRes) -> return $ do
-      llvmStr <- ioRes
+    (LLVMVal toCodegen) -> return $ do
+      llvmStr <- codegenExInit toCodegen
       return ("out.ll", llvmStr, evalResult env')
     _ -> CErr [MkCNote $ GenCErr "Eval mainb did not return a CatlnResult"]

@@ -161,12 +161,11 @@ codegenPrgm input srcType destType tprgm@(_, classMap) = case buildRoot primEnv 
     codegenDecl env "main" srcType initTree
   CErr err -> error $ printf "Build to buildPrgm in codegen: \n\t%s" (show err)
 
-codegen :: AST.Module -> EExpr -> PartialType -> Type -> EPrgm -> IO String
-codegen astMod input srcType destType prgm = withContext $ \context ->
+codegenEx :: AST.Module -> LLVM () -> IO String
+codegenEx astMod modn = withContext $ \context ->
   withModuleFromAST context newast (fmap BSU.toString . moduleLLVMAssembly)
   where
-    modn = codegenPrgm input srcType destType prgm
     newast = runLLVM astMod modn
 
-codegenInit :: EExpr -> PartialType -> Type -> EPrgm -> IO String
-codegenInit = codegen initModule
+codegenExInit :: LLVM () -> IO String
+codegenExInit = codegenEx initModule

@@ -24,7 +24,7 @@ import           Syntax.Prgm
 import           Syntax
 import           Text.Printf
 import Data.Aeson hiding (Object)
-import Emit.Codegen (Codegen)
+import Emit.Codegen (Codegen, LLVM)
 import qualified LLVM.AST as AST
 
 type EvalMeta = Typed
@@ -75,7 +75,7 @@ data Val
   | StrVal String
   | TupleVal String (H.HashMap String Val)
   | IOVal Integer (IO ())
-  | LLVMVal (IO String)
+  | LLVMVal (LLVM ())
   | LLVMOperand Type (Codegen AST.Operand)
   | LLVMIO (Codegen ())
   | NoVal

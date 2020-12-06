@@ -19,7 +19,7 @@ import           Syntax
 
 import Eval.Common
 import Text.Printf
-import Emit (codegenInit)
+import Emit (codegenPrgm)
 
 type Op = (TypeName, [(PartialType, Guard (Expr Typed), ResArrowTree EPrim -> MacroData EPrim -> ResArrowTree EPrim)])
 
@@ -115,7 +115,7 @@ llvm = (name', [(srcType, NoGuard, aux)])
     name' = "llvm"
     srcType = (PTypeName name', H.empty, H.empty, H.fromList [("c", TopType)])
     aux (ResEArrow _ _ (Arrow _ _ _ (Just expr))) MacroData{mdPrgm} = case expr of
-      (TupleApply _ (_, Value _ "llvm") "c" f@(Value _ functionToCodegen)) -> ConstantArrow $ LLVMVal $ codegenInit f (PTypeName functionToCodegen, H.empty, H.empty, H.singleton "io" ioType) ioType mdPrgm
+      (TupleApply _ (_, Value _ "llvm") "c" f@(Value _ functionToCodegen)) -> ConstantArrow $ LLVMVal $ codegenPrgm f (PTypeName functionToCodegen, H.empty, H.empty, H.singleton "io" ioType) ioType mdPrgm
       _ -> error $ printf "Unknown expr to llvm macro: %s" (show expr)
     aux input _ = error $ printf "Unknown input to llvm macro: %s" (show input)
 
