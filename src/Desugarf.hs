@@ -53,12 +53,12 @@ scopeSubDeclFunNamesInExpr prefix replaceNames (PSTupleApply m (bm, bExpr) argNa
     argVal' = scopeSubDeclFunNamesInExpr prefix replaceNames argVal
 
 scopeSubDeclFunNamesInMeta :: TypeName -> S.HashSet TypeName -> ParseMeta -> ParseMeta
-scopeSubDeclFunNamesInMeta prefix replaceNames (PreTyped (SumType partials)) = PreTyped $ SumType partials'
+scopeSubDeclFunNamesInMeta prefix replaceNames (PreTyped (SumType partials) pos) = PreTyped (SumType partials') pos
   where
     scopeS = scopeSubDeclFunNamesInPartialName prefix replaceNames
     partials' = H.fromList $ map (first scopeS) $ H.toList partials
-scopeSubDeclFunNamesInMeta _ _ m@(PreTyped TopType) = m
-scopeSubDeclFunNamesInMeta _ _ m@(PreTyped TypeVar{}) = m
+scopeSubDeclFunNamesInMeta _ _ m@(PreTyped TopType _) = m
+scopeSubDeclFunNamesInMeta _ _ m@(PreTyped TypeVar{} _) = m
 
 -- Renames sub functions by applying the parent names as a prefix to avoid name collisions
 scopeSubDeclFunNames :: TypeName -> [PSemiDecl] -> Maybe PSExpr -> [PSCompAnnot] -> ParseMeta -> ParseMeta -> ([PSemiDecl], Maybe PSExpr, [PSCompAnnot], ParseMeta, ParseMeta)
@@ -82,7 +82,7 @@ currySubFunctionsUpdateExpr :: S.HashSet TypeName -> H.HashMap ArgName PObjArg -
 currySubFunctionsUpdateExpr _ _ c@PSCExpr{} = c
 currySubFunctionsUpdateExpr _ parentArgs v@PSValue{} | H.null parentArgs = v
 currySubFunctionsUpdateExpr toUpdate parentArgs v@(PSValue _ vn) = if S.member vn toUpdate
-  then foldr (\(parentArgName, (parentArgM, _)) e -> PSTupleApply emptyMeta (emptyMeta, e) (Just parentArgName) (PSValue parentArgM parentArgName)) v $ H.toList parentArgs
+  then foldr (\(parentArgName, (parentArgM, _)) e -> PSTupleApply emptyMetaN (emptyMetaN, e) (Just parentArgName) (PSValue parentArgM parentArgName)) v $ H.toList parentArgs
   else v
 currySubFunctionsUpdateExpr toUpdate parentArgs (PSTupleApply tm (tbm, tbe) tArgName tArgVal) = PSTupleApply tm (tbm, tbe') tArgName tArgVal'
   where
@@ -130,13 +130,13 @@ semiDesExpr (RawValue m n) = ([], PSValue m n)
 semiDesExpr (RawTupleApply m'' (bm, be) args) = (\(a, _, PSTupleApply _ (bm'', be'') argName'' argVal'') -> (a, PSTupleApply m'' (bm'', be'') argName'' argVal'')) $ foldl aux (subBe, bm, be') args
   where
     (subBe, be') = semiDesExpr be
-    aux (sub, m, e) (RawTupleArgNamed argName argVal) = (subArgVal ++ sub, emptyMeta, PSTupleApply emptyMeta (m, e) (Just argName) argVal')
+    aux (sub, m, e) (RawTupleArgNamed argName argVal) = (subArgVal ++ sub, emptyMetaN, PSTupleApply emptyMetaN (m, e) (Just argName) argVal')
       where (subArgVal, argVal') = semiDesExpr argVal
-    aux (sub, m, e) (RawTupleArgInfer argVal) = (subArgVal ++ sub, emptyMeta, PSTupleApply emptyMeta (m, e) Nothing argVal')
+    aux (sub, m, e) (RawTupleArgInfer argVal) = (subArgVal ++ sub, emptyMetaN, PSTupleApply emptyMetaN (m, e) Nothing argVal')
       where (subArgVal, argVal') = semiDesExpr argVal
 semiDesExpr (RawMethods base methods) = semiDesExpr $ foldl addMethod base methods
   where
-    addMethod b method@RawValue{} = RawTupleApply emptyMeta (emptyMeta, method) [RawTupleArgNamed "this" b]
+    addMethod b method@RawValue{} = RawTupleApply emptyMetaN (emptyMetaN, method) [RawTupleArgNamed "this" b]
     addMethod b (RawTupleApply m methodVal methodArgs) = RawTupleApply m methodVal (RawTupleArgNamed "this" b : methodArgs)
     addMethod _ _ = error "Unknown semiDesExpr method"
 semiDesExpr r@(RawIfThenElse m i t e) = (concat [subI, subT, subE, [elseDecl, ifDecl]], expr')
@@ -145,22 +145,22 @@ semiDesExpr r@(RawIfThenElse m i t e) = (concat [subI, subT, subE, [elseDecl, if
     (subI, i') = semiDesExpr i
     (subT, t') = semiDesExpr t
     (subE, e') = semiDesExpr e
-    ifDecl = PSemiDecl (DeclLHS emptyMeta (Pattern (Object emptyMeta FunctionObj condName H.empty H.empty) (IfGuard i'))) [] (Just t')
-    elseDecl = PSemiDecl (DeclLHS emptyMeta (Pattern (Object emptyMeta FunctionObj condName H.empty H.empty) ElseGuard)) [] (Just e')
+    ifDecl = PSemiDecl (DeclLHS emptyMetaN (Pattern (Object emptyMetaN FunctionObj condName H.empty H.empty) (IfGuard i'))) [] (Just t')
+    elseDecl = PSemiDecl (DeclLHS emptyMetaN (Pattern (Object emptyMetaN FunctionObj condName H.empty H.empty) ElseGuard)) [] (Just e')
     expr' = PSValue m condName
 semiDesExpr r@(RawMatch m e matchItems) = (subE ++ subMatchItems, expr')
   where
     condName = "\\" ++ take 6 (printf "%08x" (hash r))
     argName = condName ++ "-arg"
     (subE, e') = semiDesExpr e
-    expr' = PSTupleApply m (emptyMeta, PSValue emptyMeta condName) (Just argName) e'
+    expr' = PSTupleApply m (emptyMetaN, PSValue emptyMetaN condName) (Just argName) e'
     subMatchItems = concatMap semiDesMatchItem matchItems
     semiDesMatchItem (Pattern patt pattGuard, matchExpr) = concat [[matchItemExpr'], subPattGuard, subMatchExpr]
       where
         (subPattGuard, pattGuard') = semiDesGuard pattGuard
         (subMatchExpr, matchExpr') = semiDesExpr matchExpr
-        matchArg = H.singleton argName (emptyMeta, Just patt)
-        matchItemExpr' = PSemiDecl (DeclLHS emptyMeta (Pattern (Object emptyMeta FunctionObj condName H.empty matchArg) pattGuard')) [] (Just matchExpr')
+        matchArg = H.singleton argName (emptyMetaN, Just patt)
+        matchItemExpr' = PSemiDecl (DeclLHS emptyMetaN (Pattern (Object emptyMetaN FunctionObj condName H.empty matchArg) pattGuard')) [] (Just matchExpr')
 semiDesExpr (RawCase _ _ ((Pattern _ ElseGuard, _):_)) = error "Can't use elseguard in match expr"
 semiDesExpr (RawCase _ _ []) = error "Empty case"
 semiDesExpr (RawCase _ _ [(_, matchExpr)]) = semiDesExpr matchExpr
@@ -168,14 +168,14 @@ semiDesExpr r@(RawCase m e ((Pattern firstObj@(Object fm _ _ _ _) firstGuard, fi
   where
     condName = "\\" ++ take 6 (printf "%08x" (hash r))
     argName = condName ++ "-arg"
-    declObj = Object emptyMeta FunctionObj condName H.empty (H.singleton argName (fm, Just firstObj))
+    declObj = Object emptyMetaN FunctionObj condName H.empty (H.singleton argName (fm, Just firstObj))
     firstDecl = PSemiDecl (DeclLHS m (Pattern declObj firstGuard')) [] (Just firstExpr')
     (subFG, firstGuard') = semiDesGuard firstGuard
     (subFE, firstExpr') = semiDesExpr firstExpr
     restDecl = PSemiDecl (DeclLHS m (Pattern declObj ElseGuard)) [] (Just restExpr')
     (subRE, restExpr') = semiDesExpr (RawCase m e restCases)
     (subE, e') = semiDesExpr e
-    expr' = PSTupleApply m (emptyMeta, PSValue emptyMeta condName) (Just argName) e'
+    expr' = PSTupleApply m (emptyMetaN, PSValue emptyMetaN condName) (Just argName) e'
 
 
 semiDesGuard :: PGuard -> ([PSemiDecl], PSGuard)
@@ -201,12 +201,12 @@ desDecls :: [PDecl] -> DesObjectMap
 desDecls = concatMap desDecl
 
 typeDefMetaToObj :: H.HashMap TypeVarName Type -> ParseMeta -> Maybe PObject
-typeDefMetaToObj _ (PreTyped TypeVar{}) = Nothing
-typeDefMetaToObj varReplaceMap m@(PreTyped (SumType partials)) = case splitPartialLeafs partials of
-  [(PTypeName partialName, partialVars, _, partialArgs)] -> Just $ Object m TypeObj partialName (fmap fixVar partialVars) (fmap ((,Nothing) . PreTyped) partialArgs)
+typeDefMetaToObj _ (PreTyped TypeVar{} _) = Nothing
+typeDefMetaToObj varReplaceMap m@(PreTyped (SumType partials) _) = case splitPartialLeafs partials of
+  [(PTypeName partialName, partialVars, _, partialArgs)] -> Just $ Object m TypeObj partialName (fmap fixVar partialVars) (fmap (\arg -> (PreTyped arg Nothing, Nothing)) partialArgs)
     where
-      fixVar v@(TypeVar (TVVar t)) = PreTyped $ fromMaybe v $ H.lookup t varReplaceMap
-      fixVar v = PreTyped v
+      fixVar v@(TypeVar (TVVar t)) = PreTyped (fromMaybe v $ H.lookup t varReplaceMap) Nothing
+      fixVar v = PreTyped v Nothing
   _ -> error "Invalid call to typeDefMetaToObj with SumType"
 typeDefMetaToObj _ _ = error "Invalid call to typeDefMetaToObj"
 
@@ -217,7 +217,7 @@ desMultiTypeDefs = foldr addTypeDef ([], (H.empty, H.empty))
       where
         objMap' = mergeObjMaps objMap $ map (,[]) objs
         objNames = map (\(Object _ _ name _ _) -> name) objs
-        dataTypes = map (\(PreTyped tp) -> tp) dataMetas
+        dataTypes = map getMetaType dataMetas
         objs = mapMaybe (typeDefMetaToObj classVars) dataMetas
         unionSealType (sealed, cv, a) (_, _, b) = (sealed, cv, a ++ b)
         classToType' = H.insertWith unionSealType className (True, classVars, dataTypes) classToType

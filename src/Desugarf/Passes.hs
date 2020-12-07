@@ -24,7 +24,7 @@ typeNameToClass :: DesPrgm -> DesPrgm
 typeNameToClass (objMap, classMap@(typeToClass, classToTypes)) = mapMetaPrgm aux (objMap, (typeToClass, classToTypes'))
   where
     classToTypes' = fmap (\(s, vs, ts) -> (s, fmap mapType vs, fmap mapType ts)) classToTypes
-    aux (PreTyped t) = PreTyped $ mapType t
+    aux (PreTyped t p) = PreTyped (mapType t) p
 
     mapType TopType = TopType
     mapType tp@(TypeVar TVVar{}) = tp

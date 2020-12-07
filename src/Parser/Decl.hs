@@ -44,13 +44,16 @@ pCompAnnot = do
 pArrowRes :: Parser ParseMeta
 pArrowRes = do
   _ <- symbol "->"
-  PreTyped <$> pSingleType
+  pos <- getSourcePos
+  t <- pSingleType
+  return $ PreTyped t (Just pos)
 
 pDeclLHS :: Parser PDeclLHS
 pDeclLHS = do
+  pos <- getSourcePos
   patt <- pPattern FunctionObj
   maybeArrMeta <- optional pArrowRes
-  let arrMeta = fromMaybe emptyMeta maybeArrMeta
+  let arrMeta = fromMaybe (emptyMeta pos) maybeArrMeta
   return $ DeclLHS arrMeta patt
 
 pDeclSingle :: Parser PDecl

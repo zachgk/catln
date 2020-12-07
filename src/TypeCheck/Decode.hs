@@ -41,7 +41,7 @@ showMatchingConstraints :: FEnv -> VarMeta -> [SConstraint]
 showMatchingConstraints env@FEnv{feCons} matchVar = map (showCon env) $ filter (matchingConstraint env matchVar) feCons
 
 toMeta :: FEnv -> VarMeta -> String -> TypeCheckResult Typed
-toMeta env@FEnv{feClassMap} m@(VarMeta _ (PreTyped pt) _) _ = case pointUb env m of
+toMeta env@FEnv{feClassMap} m@(VarMeta _ (PreTyped pt _) _) _ = case pointUb env m of
   TypeCheckResult notes ub -> case pt of
     TypeVar{} -> return $ Typed pt
     _ -> TypeCheckResult notes $ Typed $ intersectTypes feClassMap ub pt

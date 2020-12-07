@@ -61,6 +61,7 @@ pTypeArg = pVarArg <|> pIdArg
 data PLeafTypeMode = PLeafTypeData | PLeafTypeSealedClass
 pLeafType :: PLeafTypeMode -> Parser ParseMeta
 pLeafType mode = do
+  pos <- getSourcePos
   name <- tidentifier
   let parseVar = case mode of
         PLeafTypeData -> pLeafVar
@@ -70,13 +71,16 @@ pLeafType mode = do
   let vars = maybe H.empty H.fromList maybeVars
   let args = maybe H.empty H.fromList maybeArgs
   -- Use PTypeName for now and replace with classes during Desugarf.Passes.typeNameToClass
-  let tp = PreTyped $ singletonType (PTypeName name, vars, H.empty, args)
+  let tp = PreTyped (singletonType (PTypeName name, vars, H.empty, args)) (Just pos)
   return tp
 
 -- Parses the options for a sealed class definition
 pType :: Parser [ParseMeta]
 pType = sepBy1 (pLeafType PLeafTypeSealedClass <|> varOption) (symbol "|")
-  where varOption = PreTyped . TypeVar . TVVar <$> tvar
+  where varOption = do
+          pos <- getSourcePos
+          name <- tvar
+          return $ PreTyped (TypeVar $ TVVar name) (Just pos)
 
 
 pMultiTypeDefStatement :: Parser PStatement

@@ -16,6 +16,7 @@ import qualified Data.HashMap.Strict as H
 import           Syntax.Types
 import           Syntax.Prgm
 import           Syntax
+import Text.Megaparsec (SourcePos)
 
 type ParseMeta = PreTyped
 type PTupleArg = RawTupleArg ParseMeta
@@ -66,5 +67,8 @@ type DesObject = Object ParseMeta
 type DesArrow = Arrow DesExpr ParseMeta
 type DesPrgm = Prgm DesExpr ParseMeta
 
-emptyMeta :: ParseMeta
-emptyMeta = PreTyped TopType
+emptyMeta :: SourcePos -> ParseMeta
+emptyMeta p = PreTyped TopType (Just p)
+
+emptyMetaN :: ParseMeta
+emptyMetaN = PreTyped TopType Nothing

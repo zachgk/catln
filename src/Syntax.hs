@@ -11,6 +11,7 @@
 
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Syntax where
 
@@ -23,8 +24,9 @@ import           Text.Megaparsec.Error (ParseErrorBundle)
 
 import Syntax.Types
 import Syntax.Prgm
-import Data.Aeson (ToJSON)
+import Data.Aeson hiding (Object)
 import Data.Maybe
+import Text.Megaparsec
 
 type ParseErrorRes = ParseErrorBundle String Void
 
@@ -35,23 +37,29 @@ data ReplRes m
   deriving (Eq, Show)
 
 -- Metadata for the Programs
-newtype PreTyped = PreTyped Type
+data PreTyped = PreTyped Type (Maybe SourcePos)
   deriving (Generic, Hashable, ToJSON)
 
 newtype Typed = Typed Type
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 instance Show PreTyped where
-  show (PreTyped t) = show t
+  show (PreTyped t _) = show t
 
 instance Show Typed where
   show (Typed t) = show t
+
+instance Hashable SourcePos where
+  hashWithSalt s (SourcePos name line col) = s `hashWithSalt` show name `hashWithSalt` unPos line `hashWithSalt` unPos col
+
+instance ToJSON SourcePos where
+  toJSON (SourcePos name line col) = object ["name".=name, "line".=unPos line, "col".=unPos col]
 
 class Meta m where
   getMetaType :: m -> Type
 
 instance Meta PreTyped where
-  getMetaType (PreTyped t) = t
+  getMetaType (PreTyped t _) = t
 
 instance Meta Typed where
   getMetaType (Typed t) = t
