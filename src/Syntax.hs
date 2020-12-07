@@ -36,7 +36,7 @@ data ReplRes m
 
 -- Metadata for the Programs
 newtype PreTyped = PreTyped Type
-  deriving (Eq, Ord, Generic, Hashable, ToJSON)
+  deriving (Generic, Hashable, ToJSON)
 
 newtype Typed = Typed Type
   deriving (Eq, Ord, Generic, Hashable, ToJSON)

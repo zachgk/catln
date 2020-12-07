@@ -136,7 +136,7 @@ executeConstraint env (EqualsKnown pnt tp) = case descriptor env pnt of
       ([], True, env')
     TypeCheckResE _ -> ([], False, env)
   TypeCheckResE{} -> ([], False, env)
-executeConstraint env (EqPoints p1 p2) | p1 == p2 = ([], False, env)
+executeConstraint env (EqPoints (VarMeta p1 _ _) (VarMeta p2 _ _)) | p1 == p2 = ([], False, env)
 executeConstraint env1 cons@(EqPoints p1 p2) = case sequenceT (descriptor env1 p1, descriptor env1 p2) of
   TypeCheckResult notes (s1, s2) -> case equalizeSTypes env1 (s1, s2) "executeConstraint EqPoints" of
     TypeCheckResult notes2 (s1', s2') -> do

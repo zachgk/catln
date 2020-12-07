@@ -49,7 +49,7 @@ data FEnv = FEnv { fePnts :: IM.IntMap Scheme
                  , feClassMap :: ClassMap
                  , feDefMap :: EnvValMap
                  , feTrace :: TraceConstrain
-                 } deriving (Eq, Show)
+                 } deriving (Show)
 
 type UnionObj = (Pnt, Pnt) -- a union of all TypeObj for argument inference, union of all Object types for function limiting
 
@@ -68,7 +68,7 @@ data Constraint
   | AddInferArg VarMeta VarMeta -- AddInferArg base arg
   | PowersetTo VarMeta VarMeta
   | UnionOf VarMeta [VarMeta]
-  deriving (Eq, Show, Generic, ToJSON)
+  deriving (Show, Generic, ToJSON)
 
 data SConstraint
   = SEqualsKnown Scheme Type
@@ -121,7 +121,7 @@ type PPrgm = Prgm PExpr PreMeta
 type PReplRes = ReplRes PreMeta
 
 data ShowMeta = ShowMeta SType VarMeta
-  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+  deriving (Show, Generic, Hashable, ToJSON)
 type SExpr = IExpr ShowMeta
 type SCompAnnot = CompAnnot SExpr
 type SGuard = Guard SExpr
@@ -132,7 +132,7 @@ type SPrgm = Prgm SExpr ShowMeta
 type SReplRes = ReplRes ShowMeta
 
 data VarMeta = VarMeta Pnt PreTyped (Maybe VObject)
-  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+  deriving (Show, Generic, Hashable, ToJSON)
 type VExpr = IExpr VarMeta
 type VCompAnnot = CompAnnot VExpr
 type VGuard = Guard VExpr

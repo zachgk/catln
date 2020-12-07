@@ -25,6 +25,7 @@ import           Syntax
 import           Parser.Lexer
 import Parser.Syntax
 import Parser.Expr
+import Syntax.Types
 
 pDeclArg :: Parser (String, PExpr)
 pDeclArg = do
@@ -59,7 +60,7 @@ pDeclSingle = do
     _ <- symbol "="
     pExpr
   case maybeExpr of
-    Nothing | arrMeta == emptyMeta -> fail "Declaration must include an arrow or an equals"
+    Nothing | getMetaType arrMeta == TopType -> fail "Declaration must include an arrow or an equals"
     Nothing -> return $ RawDecl lhs [] Nothing
     Just expr -> return $ RawDecl lhs [] (Just expr)
 
@@ -67,7 +68,7 @@ data TreeRes
   = TRDecl PDecl
   | TRExpr PExpr
   | TRAnnot PCompAnnot
-  deriving (Eq, Show)
+  deriving (Show)
 
 validDeclTree :: [TreeRes] -> Either String ([PDeclSubStatement], PExpr)
 validDeclTree = aux ([], Nothing)

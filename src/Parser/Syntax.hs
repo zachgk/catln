@@ -53,7 +53,7 @@ type PSGuard = Guard PSExpr
 type PSDeclLHS = DeclLHS PSExpr ParseMeta
 
 data PSemiDecl = PSemiDecl PSDeclLHS [PSCompAnnot] (Maybe PSExpr)
-  deriving (Eq, Ord, Show)
+  deriving (Show)
 
 
 

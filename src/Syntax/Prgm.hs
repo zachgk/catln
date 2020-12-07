@@ -126,7 +126,7 @@ data Object m = Object m ObjectBasis TypeName (H.HashMap TypeVarName m) (H.HashM
 data Arrow e m = Arrow m [CompAnnot e] (Guard e) (Maybe e) -- m is result metadata
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
-type ObjectMap e m = (H.HashMap (Object m) [Arrow e m])
+type ObjectMap e m = [(Object m, [Arrow e m])]
 type Prgm e m = (ObjectMap e m, ClassMap) -- TODO: Include [Export]
 
 instance Show m => Show (IExpr m) where

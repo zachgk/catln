@@ -13,9 +13,6 @@
 
 module MapMeta where
 
-import           Data.Hashable
-import qualified Data.HashMap.Strict as H
-
 import           Syntax.Prgm
 
 class MapMeta m where
@@ -49,12 +46,12 @@ mapMetaObjArg f (m, maybeObj) = (f m, fmap (mapMeta f) maybeObj)
 instance MapMeta Object where
   mapMeta f (Object m basis name vars args) = Object (f m) basis name (fmap f vars) (fmap (mapMetaObjArg f) args)
 
-mapMetaArrow :: (Eq b, Hashable b, MapMeta e) => (a -> b) -> Arrow (e a) a -> Arrow (e b) b
+mapMetaArrow :: (MapMeta e) => (a -> b) -> Arrow (e a) a -> Arrow (e b) b
 mapMetaArrow f (Arrow m annots guard maybeExpr) = Arrow (f m) (map (mapMetaCompAnnot f) annots) (mapMetaGuard f guard) (fmap (mapMeta f) maybeExpr)
 
-mapMetaObjectMap :: (Eq b, Hashable b, MapMeta e) => (a -> b) -> ObjectMap (e a) a -> ObjectMap (e b) b
-mapMetaObjectMap f mp = H.fromList $ map aux $ H.toList mp
+mapMetaObjectMap :: (MapMeta e) => (a -> b) -> ObjectMap (e a) a -> ObjectMap (e b) b
+mapMetaObjectMap f = map aux
   where aux (obj, arrows) = (mapMeta f obj, map (mapMetaArrow f) arrows)
 
-mapMetaPrgm :: (Eq b, Hashable b, MapMeta e) => (a -> b) -> Prgm (e a) a -> Prgm (e b) b
+mapMetaPrgm :: (MapMeta e) => (a -> b) -> Prgm (e a) a -> Prgm (e b) b
 mapMetaPrgm f (objMap, classMap) = (mapMetaObjectMap f objMap, classMap)

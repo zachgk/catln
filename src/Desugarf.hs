@@ -195,10 +195,10 @@ declToObjArrow (PSemiDecl (DeclLHS arrM (Pattern object guard)) annots expr) = (
     arrow = Arrow arrM (map (desAnnot argMetaMap) annots) (desGuard argMetaMap guard) (fmap (desExpr argMetaMap) expr)
 
 desDecl :: PDecl -> DesObjectMap
-desDecl decl = H.fromListWith (++) $ map declToObjArrow $ removeSubDeclarations decl
+desDecl decl = map declToObjArrow $ removeSubDeclarations decl
 
 desDecls :: [PDecl] -> DesObjectMap
-desDecls decls = unionsWith (++) $ map desDecl decls
+desDecls = concatMap desDecl
 
 typeDefMetaToObj :: H.HashMap TypeVarName Type -> ParseMeta -> Maybe PObject
 typeDefMetaToObj _ (PreTyped TypeVar{}) = Nothing
@@ -211,11 +211,11 @@ typeDefMetaToObj varReplaceMap m@(PreTyped (SumType partials)) = case splitParti
 typeDefMetaToObj _ _ = error "Invalid call to typeDefMetaToObj"
 
 desMultiTypeDefs :: [PMultiTypeDef] -> (DesObjectMap, ClassMap)
-desMultiTypeDefs = foldr addTypeDef (H.empty, (H.empty, H.empty))
+desMultiTypeDefs = foldr addTypeDef ([], (H.empty, H.empty))
   where
     addTypeDef (MultiTypeDef className classVars dataMetas) (objMap, (typeToClass, classToType)) = (objMap', (typeToClass', classToType'))
       where
-        objMap' = mergeObjMaps objMap $ H.fromList $ map (,[]) objs
+        objMap' = mergeObjMaps objMap $ map (,[]) objs
         objNames = map (\(Object _ _ name _ _) -> name) objs
         dataTypes = map (\(PreTyped tp) -> tp) dataMetas
         objs = mapMaybe (typeDefMetaToObj classVars) dataMetas
@@ -225,9 +225,9 @@ desMultiTypeDefs = foldr addTypeDef (H.empty, (H.empty, H.empty))
         typeToClass' = H.unionWith S.union typeToClass newTypeToClass
 
 desTypeDefs :: [PTypeDef] -> DesObjectMap
-desTypeDefs = foldr addTypeDef H.empty
+desTypeDefs = foldr addTypeDef []
   where addTypeDef (TypeDef tp) = case typeDefMetaToObj H.empty tp of
-          Just obj -> H.insert obj []
+          Just obj -> \objs -> (obj, []) : objs
           Nothing -> error "Type def could not be converted into meta"
 
 desClassDefs :: Sealed -> [RawClassDef] -> ClassMap
@@ -238,7 +238,7 @@ desClassDefs sealed = foldr addDef empty
     addClass (cSealed, cVars, set1) (_, _, set2) = (cSealed, cVars, set1 ++ set2)
 
 mergeObjMaps :: DesObjectMap -> DesObjectMap -> DesObjectMap
-mergeObjMaps = H.unionWith (++)
+mergeObjMaps = (++)
 
 mergeClassMaps :: ClassMap -> ClassMap -> ClassMap
 mergeClassMaps classMap@(toClassA, toTypeA) (toClassB, toTypeB) = (H.unionWith S.union toClassA toClassB, H.unionWith mergeClasses toTypeA toTypeB)
@@ -260,7 +260,7 @@ desStatements statements = (objMap, classMap)
     typeObjMap = desTypeDefs types
     (multiTypeObjMap, sealedClasses) = desMultiTypeDefs multiTypes
     unsealedClasses = desClassDefs False classes
-    objMap = foldr mergeObjMaps H.empty [declObjMap, multiTypeObjMap, typeObjMap]
+    objMap = foldr mergeObjMaps [] [declObjMap, multiTypeObjMap, typeObjMap]
     classMap = mergeClassMaps sealedClasses unsealedClasses
 
 finalPasses :: DesPrgm -> DesPrgm

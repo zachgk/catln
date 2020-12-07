@@ -133,4 +133,4 @@ toObjectArrows env (obj, arrows) = do
 toPrgm :: FEnv -> VPrgm -> TypeCheckResult TPrgm
 toPrgm env (objMap, classMap) = do
   objMap' <- mapM (toObjectArrows env) objMap
-  return (H.fromList objMap', classMap)
+  return (objMap', classMap)

@@ -11,8 +11,6 @@
 
 module TypeCheck.Show where
 
-import qualified Data.HashMap.Strict as H
-
 import           Syntax.Prgm
 import           TypeCheck.Common
 
@@ -96,7 +94,7 @@ showCon env (UnionOf p1 p2s) = SUnionOf (descriptor env p1) (map (descriptor env
 showPrgm :: FEnv -> VPrgm -> TypeCheckResult SPrgm
 showPrgm env (objMap, classMap) = do
   objMap' <- mapM (showObjArrows env) objMap
-  return (H.fromList objMap', classMap)
+  return (objMap', classMap)
 
 showConstraints :: FEnv -> [Constraint] -> [SConstraint]
 showConstraints env = map (showCon env)

@@ -56,7 +56,7 @@ makeTBEnv :: (Eq f, Hashable f) => ResBuildEnv f -> TBPrgm -> TBEnv f
 makeTBEnv primEnv (objMap, classMap) = baseEnv
   where
     baseEnv = (H.union primEnv resEnv, H.empty, objMap, classMap)
-    resEnv = H.fromListWith (++) $ concatMap resFromArrows $ H.toList objMap
+    resEnv = H.fromListWith (++) $ concatMap resFromArrows objMap
     resFromArrows (obj, arrows) = mapMaybe (resFromArrow obj) arrows
     resFromArrow obj@(Object om _ objName _ _) arrow@(Arrow _ _ aguard expr) = case expr of
       Just _ -> Just (objName, [(objLeaf, aguard, \input _ -> ResEArrow input obj arrow) | objLeaf <- leafsFromMeta om])
@@ -209,7 +209,7 @@ buildArrow env obj@(Object _ _ _ objVars _) arrow@(Arrow (Typed am) compAnnots _
 
 buildResExEnv :: (Eq f, Hashable f) => TBEnv f -> TBPrgm -> CRes (ResExEnv f)
 buildResExEnv env (objMap, _) = do
-  build' <- mapM buildArrows $ H.toList objMap
+  build' <- mapM buildArrows objMap
   return (H.fromList $ catMaybes $ concat build')
   where buildArrows (obj, arrows) = mapM (buildArrow env obj) arrows
 

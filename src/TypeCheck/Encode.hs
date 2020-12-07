@@ -230,7 +230,7 @@ fromObjects env (obj, arrows) = do
 
 fromPrgm :: FEnv -> PPrgm -> TypeCheckResult (VPrgm, FEnv)
 fromPrgm env1 (objMap1, classMap) = do
-  (objMap2, env2) <- mapMWithFEnv env1 fromObjects $ H.toList objMap1
+  (objMap2, env2) <- mapMWithFEnv env1 fromObjects objMap1
   (objMap3, env3) <- mapMWithFEnv env2 fromObjectMap objMap2
   let env4 = buildTypeEnv env3 objMap3
   return ((objMap3, classMap), env4)
