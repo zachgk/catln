@@ -23,7 +23,7 @@ import LLVM.AST.Operand (Operand)
 import qualified LLVM.AST.IntegerPredicate as IP
 import qualified LLVM.AST.Constant as C
 
-type Op = (TypeName, [(PartialType, Guard (Expr Typed), ResArrowTree EPrim -> MacroData EPrim -> ResArrowTree EPrim)])
+type Op = (TypeName, [(PartialType, Guard (Expr Typed), MacroFunction EPrim)])
 
 true, false :: Val
 true = TupleVal "True" H.empty
@@ -34,7 +34,7 @@ bool True = true
 bool False = false
 
 liftBinOp :: Type -> Type -> Type -> TypeName -> (Operand -> Operand -> AST.Instruction) -> Op
-liftBinOp lType rType resType name f = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType prim)])
+liftBinOp lType rType resType name f = (name', [(srcType, NoGuard, MacroFunction (\input _ -> PrimArrow input resType prim))])
   where
     name' = "operator" ++ name
     srcType = (PTypeName name', H.empty, H.empty, H.fromList [("l", lType), ("r", rType)])
@@ -54,7 +54,7 @@ liftCmpOp :: TypeName -> IP.IntegerPredicate -> Op
 liftCmpOp name predicate = liftBinOp intType intType boolType name (\l r -> AST.ICmp predicate l r [])
 
 rneg :: TypeName -> Op
-rneg name = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType prim)])
+rneg name = (name', [(srcType, NoGuard, MacroFunction (\input _ -> PrimArrow input resType prim))])
   where
     name' = "operator" ++ name
     srcType = (PTypeName name', H.empty, H.empty, H.singleton "a" intType)
@@ -97,7 +97,7 @@ rneg name = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType prim
 -- neq = cmp FP.UNE IP.NE
 
 strEq :: Op
-strEq = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType prim)])
+strEq = (name', [(srcType, NoGuard, MacroFunction (\input _ -> PrimArrow input resType prim))])
   where
     name' = "operator=="
     srcType = (PTypeName name', H.empty, H.empty, H.fromList [("l", strType), ("r", strType)])
@@ -111,7 +111,7 @@ strEq = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType prim)])
                            )
 
 intToString :: Op
-intToString = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType prim)])
+intToString = (name', [(srcType, NoGuard, MacroFunction (\input _ -> PrimArrow input resType prim))])
   where
     name' = "toString"
     srcType = (PTypeName name', H.empty, H.empty, H.singleton "this" intType)
@@ -122,7 +122,7 @@ intToString = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType pr
                            )
 
 ioExit :: Op
-ioExit = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType prim)])
+ioExit = (name', [(srcType, NoGuard, MacroFunction (\input _ -> PrimArrow input resType prim))])
   where
     name' = "exit"
     srcType = (PTypeName name', H.empty, H.empty, H.fromList [("this", ioType), ("val", intType)])
@@ -137,7 +137,7 @@ ioExit = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType prim)])
                            )
 
 println :: Op
-println = (name', [(srcType, NoGuard, \input _ -> PrimArrow input resType prim)])
+println = (name', [(srcType, NoGuard, MacroFunction (\input _ -> PrimArrow input resType prim))])
   where
     name' = "println"
     srcType = (PTypeName name', H.empty, H.empty, H.fromList [("this", ioType), ("msg", strType)])

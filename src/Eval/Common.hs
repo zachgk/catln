@@ -76,6 +76,7 @@ data Val
   | TupleVal String (H.HashMap String Val)
   | IOVal Integer (IO ())
   | LLVMVal (LLVM ())
+  | LLVMQueue [(ResArrowTree EPrim, Object Typed, Arrow (Expr Typed) Typed)]
   | LLVMOperand Type (Codegen AST.Operand)
   | LLVMIO (Codegen ())
   | NoVal
@@ -101,6 +102,7 @@ instance Show Val where
       showArg (argName, val) = argName ++ " = " ++ show val
   show IOVal{}   = "IOVal"
   show LLVMVal{}   = "LLVMVal"
+  show LLVMQueue{}   = "LLVMQueue"
   show (LLVMOperand tp _)   = "LLVMOperand" ++ show tp
   show LLVMIO{}   = "LLVMIO"
   show NoVal   = "NoVal"
@@ -112,6 +114,7 @@ instance Hashable Val where
   hashWithSalt s (TupleVal n as) = s `hashWithSalt` n `hashWithSalt` as
   hashWithSalt s (IOVal i _) = s `hashWithSalt` i
   hashWithSalt s (LLVMVal _) = s
+  hashWithSalt s (LLVMQueue _) = s
   hashWithSalt s (LLVMOperand tp _) = s `hashWithSalt` tp
   hashWithSalt s (LLVMIO _) = s
   hashWithSalt s NoVal = s
@@ -123,9 +126,14 @@ instance ToJSON Val where
   toJSON (TupleVal name args) = object ["tag".=("TupleVal" :: String), "name".=name, "args".=toJSON args]
   toJSON IOVal{} = object ["tag".=("IOVal" :: String)]
   toJSON LLVMVal{} = object ["tag".=("LLVMVal" :: String)]
+  toJSON LLVMQueue{} = object ["tag".=("LLVMQueue" :: String)]
   toJSON LLVMOperand{} = object ["tag".=("LLVMOperand" :: String)]
   toJSON LLVMIO{} = object ["tag".=("LLVMIO" :: String)]
   toJSON NoVal = object ["tag".=("NoVal" :: String)]
+
+resultLeaf, queueLeaf :: PartialType
+resultLeaf = (PTypeName "CatlnResult", H.empty, H.empty, H.fromList [("name", strType), ("contents", strType)])
+queueLeaf = (PTypeName "llvmQueue", H.empty, H.empty, H.empty)
 
 getValType :: Val -> PartialType
 getValType IntVal{} = intLeaf
@@ -134,7 +142,8 @@ getValType StrVal{} = strLeaf
 getValType (TupleVal name args) = (PTypeName name, H.empty, H.empty, fmap fromArg args)
   where fromArg arg = singletonType $ getValType arg
 getValType IOVal{} = ioLeaf
-getValType LLVMVal{} = (PTypeName "CatlnResult", H.empty, H.empty, H.fromList [("name", strType), ("contents", strType)])
+getValType LLVMVal{} = resultLeaf
+getValType LLVMQueue{} = queueLeaf
 getValType (LLVMOperand t _) = case t of
   SumType leafs -> case splitPartialLeafs leafs of
     [partial] -> partial
@@ -148,15 +157,22 @@ getValType NoVal = error "getValType of NoVal"
 data MacroData f = MacroData {
                                mdPrgm :: Prgm (Expr Typed) Typed
                              }
-type ResBuildEnvItem f = (PartialType, Guard (Expr Typed), ResArrowTree f -> MacroData f -> ResArrowTree f)
+newtype MacroFunction f = MacroFunction (ResArrowTree f -> MacroData f -> ResArrowTree f)
+type ResBuildEnvItem f = (PartialType, Guard (Expr Typed), MacroFunction f)
 type ResBuildEnv f = H.HashMap TypeName [ResBuildEnvItem f]
 type ResExEnv f = H.HashMap (Arrow (Expr Typed) Typed) (ResArrowTree f, [ResArrowTree f]) -- (result, [compAnnot trees])
 type TBEnv f = (ResBuildEnv f, H.HashMap PartialType (ResArrowTree f), Prgm (Expr Typed) Typed, ClassMap)
 
+instance Eq (MacroFunction f) where
+  _ == _ = False
+
+instance Hashable (MacroFunction f) where
+  s `hashWithSalt` _ = s
+
 data ResArrowTree f
   = ResEArrow (ResArrowTree f) (Object Typed) (Arrow (Expr Typed) Typed)
   | PrimArrow (ResArrowTree f) Type f
-  | MacroArrow (ResArrowTree f) Type
+  | MacroArrow (ResArrowTree f) Type (MacroFunction f)
   | ConstantArrow Val
   | ArgArrow Type String
   | ResArrowMatch (ResArrowTree f) (H.HashMap PartialType (ResArrowTree f))
@@ -168,7 +184,7 @@ data ResArrowTree f
 instance Show (ResArrowTree f) where
   show (ResEArrow _ obj arrow) = printf "(ResEArrow: %s -> %s)" (show obj) (show arrow)
   show (PrimArrow _ tp _) = "(PrimArrow " ++ show tp ++ ")"
-  show (MacroArrow _ tp) = "(MacroArrow " ++ show tp ++ ")"
+  show (MacroArrow _ tp _) = "(MacroArrow " ++ show tp ++ ")"
   show (ConstantArrow c) = "(ConstantArrow " ++ show c ++ ")"
   show (ArgArrow tp n) = "(ArgArrow " ++ show tp ++ " " ++ n ++ ")"
   show (ResArrowMatch m args) = printf "match (%s) {%s}" (show m) args'

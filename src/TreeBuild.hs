@@ -42,7 +42,7 @@ type VisitedArrows f = S.HashSet (ResArrowTree f)
 resArrowDestType :: ClassMap -> PartialType -> ResArrowTree f -> Type
 resArrowDestType classMap src (ResEArrow _ obj arr) = arrowDestType False classMap src obj arr
 resArrowDestType _ _ (PrimArrow _ tp _) = tp
-resArrowDestType _ _ (MacroArrow _ tp) = tp
+resArrowDestType _ _ (MacroArrow _ tp _) = tp
 resArrowDestType _ _ (ConstantArrow v) = singletonType $ getValType v
 resArrowDestType _ _ (ArgArrow tp _) = tp
 resArrowDestType _ _ t = error $ printf "Not yet implemented resArrowDestType for %s" (show t)
@@ -59,8 +59,13 @@ makeTBEnv primEnv prgm@(objMap, classMap, _) = baseEnv
     resEnv = H.fromListWith (++) $ concatMap resFromArrows objMap
     resFromArrows (obj, arrows) = mapMaybe (resFromArrow obj) arrows
     resFromArrow obj@(Object om _ objName _ _) arrow@(Arrow _ _ aguard expr) = case expr of
-      Just _ -> Just (objName, [(objLeaf, aguard, \input _ -> ResEArrow input obj arrow) | objLeaf <- leafsFromMeta om])
+      Just _ -> Just (objName, [(objLeaf, aguard, MacroFunction (\input _ -> ResEArrow input obj arrow)) | objLeaf <- leafsFromMeta om])
       Nothing -> Nothing
+
+-- TODO: May need a deep replacement of macros, rather than a shallow one
+pruneMacros :: TBEnv f -> ResArrowTree f -> ResArrowTree f
+pruneMacros env (MacroArrow input _ (MacroFunction f)) = f input (macroData env)
+pruneMacros _ t = t
 
 buildCompAnnot :: (Eq f, Hashable f) => TBEnv f -> TBObject -> TBCompAnnot -> CRes (ResArrowTree f)
 buildCompAnnot env obj (CompAnnot "#assert" args) = case (H.lookup "test" args, H.lookup "msg" args) of
@@ -140,7 +145,7 @@ buildGuardArrows env obj input visitedArrows srcType destType guards = case guar
                                         CErr notes -> wrapCErr notes "No valid ifTrees:"
       arrows -> CErr [MkCNote $ BuildTreeCErr $ printf "Unknown arrows found in envLookup: %s" (show arrows)]
   where
-    ltry = envLookupTry env obj visitedArrows srcType destType
+    ltry tree = envLookupTry env obj visitedArrows srcType destType (pruneMacros env tree)
 
 findResArrows :: (Eq f, Hashable f) => TBEnv f -> PartialType -> Type -> CRes [ResBuildEnvItem f]
 findResArrows (resEnv, _, _, classMap) srcType@(PTypeName srcName, _, _, _) destType = case H.lookup srcName resEnv of
@@ -157,9 +162,9 @@ envLookup env obj input visitedArrows srcType@(PTypeName _, _, _, _) destType = 
   resArrows <- findResArrows env srcType destType
   let md = macroData env
   let guards = (\(a,b,c) -> (concat a, concat b, concat c)) $ unzip3 $ map (\case
-                        (_, NoGuard, a) -> ([a input md], [], [])
-                        (_, IfGuard ifCond, ifThen) -> ([], [(ifCond, ifThen input md)], [])
-                        (_, ElseGuard, a) -> ([], [], [a input md])
+                        (_, NoGuard, MacroFunction a) -> ([a input md], [], [])
+                        (_, IfGuard ifCond, MacroFunction ifThen) -> ([], [(ifCond, ifThen input md)], [])
+                        (_, ElseGuard, MacroFunction a) -> ([], [], [a input md])
                     ) resArrows
   buildGuardArrows env obj input visitedArrows srcType destType guards
 envLookup env@(_, _, _, classMap) obj input visitedArrows srcType@(PClassName _, _, _, _) destType = do
