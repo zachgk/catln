@@ -131,6 +131,7 @@ toObjectArrows env (obj, arrows) = do
   return (obj', arrows')
 
 toPrgm :: FEnv -> VPrgm -> TypeCheckResult TPrgm
-toPrgm env (objMap, classMap) = do
+toPrgm env (objMap, classMap, annots) = do
   objMap' <- mapM (toObjectArrows env) objMap
-  return (objMap', classMap)
+  annots' <- mapM (toCompAnnot env) annots
+  return (objMap', classMap, annots')

@@ -32,14 +32,19 @@ pImport = do
   _ <- symbol "import"
   some printChar
 
-pComment :: Parser PStatement
-pComment = do
+pGlobalAnnot :: Parser PStatement
+pGlobalAnnot = do
   _ <- string "// "
   RawComment <$> takeWhileP (Just "character") (/= '\n')
+
+pComment :: Parser PStatement
+pComment = do
+  RawGlobalAnnot <$> pCompAnnot
 
 pStatement :: Parser PStatement
 pStatement = pTypeStatement
              <|> pComment
+             <|> pGlobalAnnot
              <|> pRootDecl
 
 pPrgm :: Parser PPrgm

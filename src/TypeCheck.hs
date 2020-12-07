@@ -26,7 +26,7 @@ typecheckPrgm :: PPrgm -> CRes TPrgm
 typecheckPrgm pprgm = (\(a, _, _) -> a) <$> typecheckPrgmWithTrace pprgm
 
 typecheckPrgmWithTrace :: PPrgm -> CRes (TPrgm, VPrgm, TraceConstrain)
-typecheckPrgmWithTrace pprgm@(_, classMap) = case aux of
+typecheckPrgmWithTrace pprgm@(_, classMap, _) = case aux of
   TypeCheckResult notes res -> CRes (map MkCNote notes) res
   TypeCheckResE notes -> CErr (map MkCNote notes)
   where
@@ -38,7 +38,7 @@ typecheckPrgmWithTrace pprgm@(_, classMap) = case aux of
       return (tprgm, vprgm, feTrace)
 
 traceTestPrgm :: PPrgm -> ([TypeCheckError], [(SPrgm, [SConstraint])])
-traceTestPrgm pprgm@(_, classMap) = case aux of
+traceTestPrgm pprgm@(_, classMap, _) = case aux of
     TypeCheckResult notes res -> (notes, res)
     TypeCheckResE notes -> (notes, [])
   where
@@ -52,7 +52,7 @@ traceTestPrgm pprgm@(_, classMap) = case aux of
       return [(sprgm1, scons1), (sprgm2, [])]
 
 showTestPrgm :: PPrgm -> TypeCheckResult SPrgm
-showTestPrgm pprgm@(_, classMap) = do
+showTestPrgm pprgm@(_, classMap, _) = do
   let baseFEnv = makeBaseFEnv classMap
   (vprgm, env) <- fromPrgm baseFEnv pprgm
   showPrgm env vprgm

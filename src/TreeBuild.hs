@@ -53,9 +53,9 @@ leafsFromMeta (Typed TypeVar{}) = error "leafFromMeta from TypeVar"
 leafsFromMeta (Typed (SumType prodTypes)) = splitPartialLeafs prodTypes
 
 makeTBEnv :: (Eq f, Hashable f) => ResBuildEnv f -> TBPrgm -> TBEnv f
-makeTBEnv primEnv (objMap, classMap) = baseEnv
+makeTBEnv primEnv prgm@(objMap, classMap, _) = baseEnv
   where
-    baseEnv = (H.union primEnv resEnv, H.empty, objMap, classMap)
+    baseEnv = (H.union primEnv resEnv, H.empty, prgm, classMap)
     resEnv = H.fromListWith (++) $ concatMap resFromArrows objMap
     resFromArrows (obj, arrows) = mapMaybe (resFromArrow obj) arrows
     resFromArrow obj@(Object om _ objName _ _) arrow@(Arrow _ _ aguard expr) = case expr of
@@ -206,12 +206,6 @@ buildArrow env obj@(Object _ _ _ objVars _) arrow@(Arrow (Typed am) compAnnots _
   resArrowTree <- buildExprImp env obj expr am'
   compAnnots' <- mapM (buildCompAnnot env obj) compAnnots
   return $ Just (arrow, (resArrowTree, compAnnots'))
-
-buildResExEnv :: (Eq f, Hashable f) => TBEnv f -> TBPrgm -> CRes (ResExEnv f)
-buildResExEnv env (objMap, _) = do
-  build' <- mapM buildArrows objMap
-  return (H.fromList $ catMaybes $ concat build')
-  where buildArrows (obj, arrows) = mapM (buildArrow env obj) arrows
 
 buildRoot :: (Eq f, Hashable f) => ResBuildEnv f -> TBExpr -> PartialType -> Type -> TBPrgm -> CRes (ResArrowTree f, TBEnv f)
 buildRoot primEnv input src dest prgm = do

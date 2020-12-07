@@ -54,4 +54,4 @@ mapMetaObjectMap f = map aux
   where aux (obj, arrows) = (mapMeta f obj, map (mapMetaArrow f) arrows)
 
 mapMetaPrgm :: (MapMeta e) => (a -> b) -> Prgm (e a) a -> Prgm (e b) b
-mapMetaPrgm f (objMap, classMap) = (mapMetaObjectMap f objMap, classMap)
+mapMetaPrgm f (objMap, classMap, annots) = (mapMetaObjectMap f objMap, classMap, map (mapMetaCompAnnot f) annots)

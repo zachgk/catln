@@ -151,7 +151,7 @@ data MacroData f = MacroData {
 type ResBuildEnvItem f = (PartialType, Guard (Expr Typed), ResArrowTree f -> MacroData f -> ResArrowTree f)
 type ResBuildEnv f = H.HashMap TypeName [ResBuildEnvItem f]
 type ResExEnv f = H.HashMap (Arrow (Expr Typed) Typed) (ResArrowTree f, [ResArrowTree f]) -- (result, [compAnnot trees])
-type TBEnv f = (ResBuildEnv f, H.HashMap PartialType (ResArrowTree f), ObjectMap (Expr Typed) Typed, ClassMap)
+type TBEnv f = (ResBuildEnv f, H.HashMap PartialType (ResArrowTree f), Prgm (Expr Typed) Typed, ClassMap)
 
 data ResArrowTree f
   = ResEArrow (ResArrowTree f) (Object Typed) (Arrow (Expr Typed) Typed)
@@ -188,7 +188,7 @@ instance Show (ResArrowTree f) where
   show (ResArrowTupleApply base argName argVal) = printf "(%s)(%s = %s)" (show base) argName (show argVal)
 
 macroData :: TBEnv f -> MacroData f
-macroData (_, _, objMap, classMap) = MacroData (objMap, classMap)
+macroData (_, _, prgm, _) = MacroData prgm
 
 buildArrArgs :: EObject -> Val -> Args
 buildArrArgs = aux H.empty

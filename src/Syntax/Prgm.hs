@@ -111,6 +111,7 @@ data RawStatement m
   | TypeDefStatement (TypeDef m)
   | RawClassDefStatement RawClassDef
   | RawComment String
+  | RawGlobalAnnot (CompAnnot (RawExpr m))
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
 type FileImport = String
@@ -127,7 +128,7 @@ data Arrow e m = Arrow m [CompAnnot e] (Guard e) (Maybe e) -- m is result metada
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
 type ObjectMap e m = [(Object m, [Arrow e m])]
-type Prgm e m = (ObjectMap e m, ClassMap) -- TODO: Include [Export]
+type Prgm e m = (ObjectMap e m, ClassMap, [CompAnnot e]) -- TODO: Include [Export]
 
 instance Show m => Show (IExpr m) where
   show (ICExpr _ c) = show c

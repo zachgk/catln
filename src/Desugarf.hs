@@ -246,22 +246,29 @@ mergeClassMaps classMap@(toClassA, toTypeA) (toClassB, toTypeB) = (H.unionWith S
           then (sealedA, H.unionWith (unionType classMap) classVarsA classVarsB, setA ++ setB)
           else error "Added to sealed class definition"
 
+desGlobalAnnot :: PCompAnnot -> DesCompAnnot
+desGlobalAnnot p = case semiDesAnnot p of
+  ([], d) -> desAnnot H.empty d
+  _ -> error "Global annotations do not support sub-expressions and lambdas"
+
 desStatements :: [PStatement] -> DesPrgm
-desStatements statements = (objMap, classMap)
+desStatements statements = (objMap, classMap, annots')
   where
     splitStatements statement = case statement of
-          RawDeclStatement decl -> ([decl], [], [], [])
-          MultiTypeDefStatement multiTypedef -> ([], [multiTypedef], [], [])
-          TypeDefStatement typedef -> ([], [], [typedef], [])
-          RawClassDefStatement classdef -> ([], [], [], [classdef])
-          RawComment _ -> ([], [], [], [])
-    (decls, multiTypes, types, classes) = (\(a, b, c, d) -> (concat a, concat b, concat c, concat d)) $ unzip4 $ map splitStatements statements
+          RawDeclStatement decl -> ([decl], [], [], [], [])
+          MultiTypeDefStatement multiTypedef -> ([], [multiTypedef], [], [], [])
+          TypeDefStatement typedef -> ([], [], [typedef], [], [])
+          RawClassDefStatement classdef -> ([], [], [], [classdef], [])
+          RawComment _ -> ([], [], [], [], [])
+          RawGlobalAnnot a -> ([], [], [], [], [a])
+    (decls, multiTypes, types, classes, annots) = (\(a, b, c, d, e) -> (concat a, concat b, concat c, concat d, concat e)) $ unzip5 $ map splitStatements statements
     declObjMap = desDecls decls
     typeObjMap = desTypeDefs types
     (multiTypeObjMap, sealedClasses) = desMultiTypeDefs multiTypes
     unsealedClasses = desClassDefs False classes
     objMap = foldr mergeObjMaps [] [declObjMap, multiTypeObjMap, typeObjMap]
     classMap = mergeClassMaps sealedClasses unsealedClasses
+    annots' = map desGlobalAnnot annots
 
 finalPasses :: DesPrgm -> DesPrgm
 finalPasses = typeNameToClass

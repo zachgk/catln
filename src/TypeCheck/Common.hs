@@ -141,7 +141,7 @@ type VArrow = Arrow VExpr VarMeta
 type VObjArg = ObjArg VarMeta
 type VObject = Object VarMeta
 type VObjectMap = [(VObject, [VArrow])]
-type VPrgm = (VObjectMap, ClassMap)
+type VPrgm = (VObjectMap, ClassMap, [VCompAnnot])
 type VReplRes = ReplRes VarMeta
 
 type TypedMeta = Typed

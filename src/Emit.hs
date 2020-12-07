@@ -151,7 +151,7 @@ codegenStruct (Object objM _ _ _ args) = struct name (map (\(argM, _) -> genType
 -- mainObject = Object (Typed $ singletonType mainPartial) FunctionObj "main" H.empty (H.singleton "io" (Typed ioType, Nothing))
 
 codegenPrgm :: EExpr -> PartialType -> Type -> EPrgm -> LLVM ()
-codegenPrgm input srcType destType tprgm@(_, classMap) = case buildRoot primEnv input srcType destType tprgm of
+codegenPrgm input srcType destType tprgm@(_, classMap, _) = case buildRoot primEnv input srcType destType tprgm of
   CRes _ (initTree, _) -> do
     let env = classMap
     -- forM_ (H.keys objMap) $ \obj -> do

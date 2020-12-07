@@ -20,8 +20,9 @@ import           MapMeta
 
 -- replaces uses of PTypeName with PClassName where it actually contains a class
 -- e.g. PTypeName Boolean ==> PClassName Boolean
+-- uses the mapMeta for objMap and annots, but must map the classMap manually
 typeNameToClass :: DesPrgm -> DesPrgm
-typeNameToClass (objMap, classMap@(typeToClass, classToTypes)) = mapMetaPrgm aux (objMap, (typeToClass, classToTypes'))
+typeNameToClass (objMap, classMap@(typeToClass, classToTypes), annots) = mapMetaPrgm aux (objMap, (typeToClass, classToTypes'), annots)
   where
     classToTypes' = fmap (\(s, vs, ts) -> (s, fmap mapType vs, fmap mapType ts)) classToTypes
     aux (PreTyped t p) = PreTyped (mapType t) p
