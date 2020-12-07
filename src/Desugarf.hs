@@ -154,7 +154,7 @@ semiDesExpr r@(RawMatch m e matchItems) = (subE ++ subMatchItems, expr')
     argName = condName ++ "-arg"
     (subE, e') = semiDesExpr e
     expr' = PSTupleApply m (emptyMeta, PSValue emptyMeta condName) (Just argName) e'
-    subMatchItems = concatMap semiDesMatchItem $ H.toList matchItems
+    subMatchItems = concatMap semiDesMatchItem matchItems
     semiDesMatchItem (Pattern patt pattGuard, matchExpr) = concat [[matchItemExpr'], subPattGuard, subMatchExpr]
       where
         (subPattGuard, pattGuard') = semiDesGuard pattGuard

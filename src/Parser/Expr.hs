@@ -114,7 +114,7 @@ pCase = do
 pMatch :: Parser PExpr
 pMatch = do
   (expr, matchItems) <- pMatchCaseHelper "match"
-  return $ RawMatch emptyMeta expr (H.fromList matchItems)
+  return $ RawMatch emptyMeta expr matchItems
 
 pMethod :: Parser PExpr
 pMethod = do

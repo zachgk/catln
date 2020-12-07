@@ -51,7 +51,7 @@ data RawExpr m
   | RawTupleApply m (m, RawExpr m) [RawTupleArg m]
   | RawMethods (RawExpr m) [RawExpr m]
   | RawIfThenElse m (RawExpr m) (RawExpr m) (RawExpr m)
-  | RawMatch m (RawExpr m) (H.HashMap (Pattern (RawExpr m) m) (RawExpr m))
+  | RawMatch m (RawExpr m) [(Pattern (RawExpr m) m, RawExpr m)]
   | RawCase m (RawExpr m) [(Pattern (RawExpr m) m, RawExpr m)]
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
