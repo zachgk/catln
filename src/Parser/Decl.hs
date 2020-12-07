@@ -17,7 +17,6 @@ import           Control.Applicative            hiding (many, some)
 import qualified Data.HashMap.Strict as H
 import           Data.Maybe
 import           Text.Megaparsec
-import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer     as L
 
 import           Syntax.Prgm
@@ -36,8 +35,7 @@ pDeclArg = do
 
 pCompAnnot :: Parser PCompAnnot
 pCompAnnot = do
-  _ <- string "#"
-  annotName <- (:) <$> letterChar <*> many alphaNumChar
+  annotName <- pAnnotIdentifier
   argVals <- parens $ sepBy1 pDeclArg (symbol ",")
   return $ CompAnnot annotName (H.fromList argVals)
 

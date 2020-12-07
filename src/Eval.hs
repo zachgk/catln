@@ -29,7 +29,7 @@ import Control.Monad
 import Emit (codegenExInit)
 
 evalCompAnnot :: Env -> Val -> CRes Env
-evalCompAnnot env (TupleVal "assert" args) = case (H.lookup "test" args, H.lookup "msg" args) of
+evalCompAnnot env (TupleVal "#assert" args) = case (H.lookup "test" args, H.lookup "msg" args) of
   (Just b, Just (StrVal _)) | b == true -> return env
   (Just b, Just (StrVal msg)) | b == false -> CErr [MkCNote $ AssertCErr msg]
   (Just b, Nothing) | b == true -> return env

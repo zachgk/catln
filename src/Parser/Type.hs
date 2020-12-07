@@ -58,13 +58,18 @@ pTypeArg :: Parser (String, Type)
 pTypeArg = pVarArg <|> pIdArg
 
 -- TODO: Parse type properties
-data PLeafTypeMode = PLeafTypeData | PLeafTypeSealedClass
+data PLeafTypeMode = PLeafTypeData | PLeafTypeSealedClass | PLeafTypeAnnot
 pLeafType :: PLeafTypeMode -> Parser ParseMeta
 pLeafType mode = do
   pos <- getSourcePos
-  name <- tidentifier
+  let parseIdentifier = case mode of
+        PLeafTypeData -> tidentifier
+        PLeafTypeAnnot -> pAnnotIdentifier
+        PLeafTypeSealedClass -> tidentifier
+  name <- parseIdentifier
   let parseVar = case mode of
         PLeafTypeData -> pLeafVar
+        PLeafTypeAnnot -> pLeafVar
         PLeafTypeSealedClass -> pTypeVar
   maybeVars <- optional $ angleBraces $ sepBy1 parseVar (symbol ",")
   maybeArgs <- optional $ parens (sepBy1 pTypeArg (symbol ","))
@@ -92,6 +97,11 @@ pMultiTypeDefStatement = do
   _ <- symbol "="
   MultiTypeDefStatement . MultiTypeDef name vars <$> pType
 
+pAnnotDefStatement :: Parser PStatement
+pAnnotDefStatement = do
+  _ <- symbol "annot"
+  TypeDefStatement . TypeDef <$> pLeafType PLeafTypeAnnot
+
 pTypeDefStatement :: Parser PStatement
 pTypeDefStatement = do
   _ <- symbol "data"
@@ -107,5 +117,6 @@ pClassDefStatement = do
 
 pTypeStatement :: Parser PStatement
 pTypeStatement = pMultiTypeDefStatement
+                 <|> pAnnotDefStatement
                  <|> pTypeDefStatement
                  <|> pClassDefStatement

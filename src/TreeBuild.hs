@@ -63,14 +63,14 @@ makeTBEnv primEnv prgm@(objMap, classMap, _) = baseEnv
       Nothing -> Nothing
 
 buildCompAnnot :: (Eq f, Hashable f) => TBEnv f -> TBObject -> TBCompAnnot -> CRes (ResArrowTree f)
-buildCompAnnot env obj (CompAnnot "assert" args) = case (H.lookup "test" args, H.lookup "msg" args) of
+buildCompAnnot env obj (CompAnnot "#assert" args) = case (H.lookup "test" args, H.lookup "msg" args) of
     (Just test, Just msgExpr) -> do
       test' <- buildExprImp env obj test boolType
       msg' <- buildExprImp env obj msgExpr strType
-      return $ ResArrowTuple "assert" (H.fromList [("test", test'), ("msg", msg')])
+      return $ ResArrowTuple "#assert" (H.fromList [("test", test'), ("msg", msg')])
     (Just test, Nothing) -> do
       test' <- buildExprImp env obj test boolType
-      return $ ResArrowTuple "assert" (H.singleton "test" test')
+      return $ ResArrowTuple "#assert" (H.singleton "test" test')
     _ -> CErr [MkCNote $ BuildTreeCErr "Invalid assertion"]
 buildCompAnnot _ _ (CompAnnot name _ )= CErr [MkCNote $ BuildTreeCErr $ "Unknown compiler annotation" ++ name]
 

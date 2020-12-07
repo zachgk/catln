@@ -48,5 +48,9 @@ main(IO io) -> IO
 llvm(c) -> CatlnResult
 mainb else -> CatlnResult = llvm(c=main)
 
+annot #assert(Boolean test)
+annot #assert(Boolean test, String msg)
+annot #print(CatlnResult p)
+
 class Number = Integer | Float
 class Boolean = True | False

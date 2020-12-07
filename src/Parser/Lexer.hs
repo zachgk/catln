@@ -69,6 +69,13 @@ tvar = try $ lexeme $ do
   rest <- many alphaNumChar
   return $ '$' : first : rest
 
+pAnnotIdentifier :: Parser String
+pAnnotIdentifier = do
+  _ <- string "#"
+  f <- letterChar
+  rst <- many alphaNumChar
+  return ('#':f:rst)
+
 operators :: [String]
 operators = words "- ~ * / + <= >= < > == != & | ^ ::"
 

@@ -42,17 +42,20 @@ pComment = do
   RawGlobalAnnot <$> pCompAnnot
 
 pStatement :: Parser PStatement
-pStatement = pTypeStatement
+pStatement = do
+  statement <- pTypeStatement
              <|> pComment
              <|> pGlobalAnnot
              <|> pRootDecl
+  _ <- many newline
+  return statement
 
 pPrgm :: Parser PPrgm
 pPrgm = do
   _ <- many newline
   imports <- many pImport
   _ <- many newline
-  statements <- sepBy1 pStatement (some newline)
+  statements <- many pStatement
   _ <- many newline
   return (imports, statements)
 
