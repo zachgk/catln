@@ -59,7 +59,7 @@ makeTBEnv primEnv prgm@(objMap, classMap, _) = baseEnv
     resEnv = H.fromListWith (++) $ concatMap resFromArrows objMap
     resFromArrows (obj, arrows) = mapMaybe (resFromArrow obj) arrows
     resFromArrow obj@(Object om _ objName _ _) arrow@(Arrow _ _ aguard expr) = case expr of
-      Just _ -> Just (objName, [(objLeaf, aguard, MacroFunction (\input _ -> ResEArrow input obj arrow)) | objLeaf <- leafsFromMeta om])
+      Just _ -> Just (objName, [(objLeaf, aguard, \input -> ResEArrow input obj arrow) | objLeaf <- leafsFromMeta om])
       Nothing -> Nothing
 
 -- TODO: May need a deep replacement of macros, rather than a shallow one
@@ -160,11 +160,10 @@ envLookup :: (Eq f, Hashable f) => TBEnv f -> TBObject -> ResArrowTree f -> Visi
 envLookup (_, _, _, classMap) _ input _ srcType destType | hasPartial classMap srcType destType = return input
 envLookup env obj input visitedArrows srcType@(PTypeName _, _, _, _) destType = do
   resArrows <- findResArrows env srcType destType
-  let md = macroData env
   let guards = (\(a,b,c) -> (concat a, concat b, concat c)) $ unzip3 $ map (\case
-                        (_, NoGuard, MacroFunction a) -> ([a input md], [], [])
-                        (_, IfGuard ifCond, MacroFunction ifThen) -> ([], [(ifCond, ifThen input md)], [])
-                        (_, ElseGuard, MacroFunction a) -> ([], [], [a input md])
+                        (_, NoGuard, a) -> ([a input], [], [])
+                        (_, IfGuard ifCond, ifThen) -> ([], [(ifCond, ifThen input)], [])
+                        (_, ElseGuard, a) -> ([], [], [a input])
                     ) resArrows
   buildGuardArrows env obj input visitedArrows srcType destType guards
 envLookup env@(_, _, _, classMap) obj input visitedArrows srcType@(PClassName _, _, _, _) destType = do

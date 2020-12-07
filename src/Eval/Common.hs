@@ -158,7 +158,8 @@ data MacroData f = MacroData {
                                mdPrgm :: Prgm (Expr Typed) Typed
                              }
 newtype MacroFunction f = MacroFunction (ResArrowTree f -> MacroData f -> ResArrowTree f)
-type ResBuildEnvItem f = (PartialType, Guard (Expr Typed), MacroFunction f)
+type ResBuildEnvFunction f = ResArrowTree f -> ResArrowTree f
+type ResBuildEnvItem f = (PartialType, Guard (Expr Typed), ResBuildEnvFunction f)
 type ResBuildEnv f = H.HashMap TypeName [ResBuildEnvItem f]
 type ResExEnv f = H.HashMap (Arrow (Expr Typed) Typed) (ResArrowTree f, [ResArrowTree f]) -- (result, [compAnnot trees])
 type TBEnv f = (ResBuildEnv f, H.HashMap PartialType (ResArrowTree f), Prgm (Expr Typed) Typed, ClassMap)
