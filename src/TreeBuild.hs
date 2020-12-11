@@ -62,18 +62,6 @@ makeTBEnv primEnv prgm@(objMap, classMap, _) = baseEnv
       Just _ -> Just (objName, [(objLeaf, aguard, \input -> ResEArrow input obj arrow) | objLeaf <- leafsFromMeta om])
       Nothing -> Nothing
 
-buildCompAnnot :: (Eq f, Hashable f) => TBEnv f -> TBObject -> TBCompAnnot -> CRes (ResArrowTree f)
-buildCompAnnot env obj (CompAnnot "#assert" args) = case (H.lookup "test" args, H.lookup "msg" args) of
-    (Just test, Just msgExpr) -> do
-      test' <- buildExprImp env obj test boolType
-      msg' <- buildExprImp env obj msgExpr strType
-      return $ ResArrowTuple "#assert" (H.fromList [("test", test'), ("msg", msg')])
-    (Just test, Nothing) -> do
-      test' <- buildExprImp env obj test boolType
-      return $ ResArrowTuple "#assert" (H.singleton "test" test')
-    _ -> CErr [MkCNote $ BuildTreeCErr "Invalid assertion"]
-buildCompAnnot _ _ (CompAnnot name _ )= CErr [MkCNote $ BuildTreeCErr $ "Unknown compiler annotation" ++ name]
-
 buildExpr :: (Eq f, Hashable f) => TBEnv f -> TBObject -> TBExpr -> CRes (ResArrowTree f)
 buildExpr _ _ (CExpr _ c) = case c of
   (CInt i) -> return $ ConstantArrow $ IntVal i
@@ -236,7 +224,7 @@ buildArrow env obj@(Object _ _ _ objVars _) arrow@(Arrow (Typed am) compAnnots _
           Nothing -> error "Bad TVArg in makeBaseEnv"
         _ -> am
   resArrowTree <- resolveTree env obj (ExprArrow expr am')
-  compAnnots' <- mapM (buildCompAnnot env obj) compAnnots
+  compAnnots' <- mapM (\annot -> resolveTree env obj (ExprArrow annot (getMetaType $ getExprMeta annot))) compAnnots
   return $ Just (arrow, (resArrowTree, compAnnots'))
 
 buildRoot :: (Eq f, Hashable f) => ResBuildEnv f -> TBExpr -> PartialType -> Type -> TBPrgm -> CRes (ResArrowTree f, TBEnv f)

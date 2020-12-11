@@ -83,11 +83,6 @@ toExpr env (ITupleApply m (baseM, baseExpr) Nothing argExpr) = do
     _ -> TypeCheckResE [GenTypeCheckError "Failed argument inference due to non SumType"]
   return $ TupleApply m' (baseM', baseExpr') argName argExpr'
 
-toCompAnnot :: FEnv -> VCompAnnot -> TypeCheckResult TCompAnnot
-toCompAnnot env (CompAnnot name args) = do
-  args' <- mapM (toExpr env) args
-  return $ CompAnnot name args'
-
 toGuard :: FEnv -> VGuard -> TypeCheckResult TGuard
 toGuard env (IfGuard expr) = do
   expr' <- toExpr env expr
@@ -98,7 +93,7 @@ toGuard _ NoGuard = return NoGuard
 toArrow :: FEnv -> VArrow -> TypeCheckResult TArrow
 toArrow env (Arrow m annots aguard maybeExpr) = do
   m' <- toMeta env m "Arrow"
-  annots' <- mapM (toCompAnnot env) annots
+  annots' <- mapM (toExpr env) annots
   aguard' <- toGuard env aguard
   case maybeExpr of
     Just expr -> do
@@ -133,5 +128,5 @@ toObjectArrows env (obj, arrows) = do
 toPrgm :: FEnv -> VPrgm -> TypeCheckResult TPrgm
 toPrgm env (objMap, classMap, annots) = do
   objMap' <- mapM (toObjectArrows env) objMap
-  annots' <- mapM (toCompAnnot env) annots
+  annots' <- mapM (toExpr env) annots
   return (objMap', classMap, annots')

@@ -72,8 +72,7 @@ data Expr m
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 -- Compiler Annotation
-data CompAnnot e = CompAnnot TypeName (H.HashMap ArgName e)
-  deriving (Eq, Ord, Generic, Hashable, ToJSON)
+type CompAnnot e = e
 
 data Guard e
   = IfGuard e
@@ -149,14 +148,6 @@ instance Show m => Show (Expr m) where
   show (TupleApply _ (_, Value _ funName) argName argVal) = printf "%s(%s = %s)" funName argName (show argVal)
   show (TupleApply _ (_, baseExpr@TupleApply{}) argName argVal) = printf "%s(%s = %s)" (show baseExpr) argName (show argVal)
   show (TupleApply _ (_, baseExpr) argName argVal) = printf "(%s)(%s = %s)" (show baseExpr) argName (show argVal)
-
-instance Show e => Show (CompAnnot e) where
-  show (CompAnnot name args) = if H.null args
-    then name
-    else name ++ "(" ++ args' ++ ")"
-    where
-      showArg (argName, expr) = argName ++ " = " ++ show expr
-      args' = intercalate ", " $ map showArg $ H.toList args
 
 instance Show e => Show (Guard e) where
   show (IfGuard expr) = "if (" ++ show expr ++ ")"

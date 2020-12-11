@@ -71,7 +71,7 @@ scopeSubDeclFunNames prefix decls maybeExpr annots objM arrM = (decls', expr', a
     arrM' = scopeM arrM
     decls' = map (\(PSemiDecl (DeclLHS aM (Pattern (Object oM basis name vars args) guard)) annot subExpr) -> PSemiDecl (DeclLHS (scopeM aM) (Pattern (Object (scopeM oM) basis (addPrefix name) vars args) guard)) annot (fmap (scopeSubDeclFunNamesInExpr prefix declNames) subExpr)) decls
     expr' = fmap (scopeSubDeclFunNamesInExpr prefix declNames) maybeExpr
-    annots' = map (\(CompAnnot n ca) -> CompAnnot n (fmap (scopeSubDeclFunNamesInExpr prefix declNames) ca)) annots
+    annots' = map (scopeSubDeclFunNamesInExpr prefix declNames) annots
 
 currySubFunctionSignature :: H.HashMap ArgName PObjArg -> PSemiDecl -> PSemiDecl
 currySubFunctionSignature parentArgs (PSemiDecl (DeclLHS arrM (Pattern (Object objM basis name vars args) guard)) annot expr) = PSemiDecl (DeclLHS arrM (Pattern (Object objM basis name vars args') guard)) annot expr
@@ -96,7 +96,7 @@ currySubFunctions parentArgs decls expr annots = (decls', expr', annots')
     decls2 = map (currySubFunctionSignature parentArgs) decls
     expr' = fmap (currySubFunctionsUpdateExpr toUpdate parentArgs) expr
     decls' = map (\(PSemiDecl lhs an e) -> PSemiDecl lhs an (fmap (currySubFunctionsUpdateExpr toUpdate parentArgs) e)) decls2
-    annots' = map (\(CompAnnot n ca) -> CompAnnot n (fmap (currySubFunctionsUpdateExpr toUpdate parentArgs) ca)) annots
+    annots' = map (currySubFunctionsUpdateExpr toUpdate parentArgs) annots
 
 removeSubDeclarations :: PDecl -> [PSemiDecl]
 removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern (Object objM basis declName vars args) guard1)) subStatements expr1) = decl':subDecls5
@@ -104,7 +104,7 @@ removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern (Object objM basis declNam
     (subDecls, annots1) = splitDeclSubStatements subStatements
     subDecls2 = concatMap removeSubDeclarations subDecls
     (subDecls21, expr2) = traverse semiDesExpr expr1
-    (subDecls22, annots2) = traverse semiDesAnnot annots1
+    (subDecls22, annots2) = traverse semiDesExpr annots1
     (subDecls23, guard2) = semiDesGuard guard1
     subDecls3 = concat [subDecls2, subDecls21, subDecls22, subDecls23]
     (subDecls4, expr3, annots3, objM', arrM') = scopeSubDeclFunNames declName subDecls3 expr2 annots2 objM arrM
@@ -120,9 +120,6 @@ desExpr arrArgs (PSTupleApply m (bm, be) argName argVal) = ITupleApply m (bm, de
 
 desGuard :: PArgMetaMap -> PSGuard -> DesGuard
 desGuard arrArgs = fmap (desExpr arrArgs)
-
-desAnnot :: PArgMetaMap -> PSCompAnnot -> DesCompAnnot
-desAnnot arrArgs (CompAnnot name args) = CompAnnot name (fmap (desExpr arrArgs) args)
 
 semiDesExpr :: PExpr -> ([PSemiDecl], PSExpr)
 semiDesExpr (RawCExpr m c) = ([], PSCExpr m c)
@@ -184,15 +181,11 @@ semiDesGuard (IfGuard e) = (subE, IfGuard e')
 semiDesGuard ElseGuard = ([], ElseGuard)
 semiDesGuard NoGuard = ([], NoGuard)
 
-semiDesAnnot :: PCompAnnot -> ([PSemiDecl], PSCompAnnot)
-semiDesAnnot (CompAnnot name args) = (subArgs, CompAnnot name args')
-  where (subArgs, args') = traverse semiDesExpr args
-
 declToObjArrow :: PSemiDecl -> (DesObject, [DesArrow])
 declToObjArrow (PSemiDecl (DeclLHS arrM (Pattern object guard)) annots expr) = (object, [arrow])
   where
     argMetaMap = formArgMetaMap object
-    arrow = Arrow arrM (map (desAnnot argMetaMap) annots) (desGuard argMetaMap guard) (fmap (desExpr argMetaMap) expr)
+    arrow = Arrow arrM (map (desExpr argMetaMap) annots) (desGuard argMetaMap guard) (fmap (desExpr argMetaMap) expr)
 
 desDecl :: PDecl -> DesObjectMap
 desDecl decl = map declToObjArrow $ removeSubDeclarations decl
@@ -247,8 +240,8 @@ mergeClassMaps classMap@(toClassA, toTypeA) (toClassB, toTypeB) = (H.unionWith S
           else error "Added to sealed class definition"
 
 desGlobalAnnot :: PCompAnnot -> DesCompAnnot
-desGlobalAnnot p = case semiDesAnnot p of
-  ([], d) -> desAnnot H.empty d
+desGlobalAnnot p = case semiDesExpr p of
+  ([], d) -> desExpr H.empty d
   _ -> error "Global annotations do not support sub-expressions and lambdas"
 
 desStatements :: [PStatement] -> DesPrgm

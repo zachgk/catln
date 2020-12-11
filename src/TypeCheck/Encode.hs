@@ -128,11 +128,6 @@ fromExpr objArgs obj env1 (ITupleApply m (baseM, baseExpr) Nothing argExpr) = do
   let env7 = addConstraints env6 constraints
   return (ITupleApply m' (baseM', baseExpr') Nothing argExpr', env7)
 
-fromAnnot :: VArgMetaMap -> Maybe VObject -> FEnv -> PCompAnnot -> TypeCheckResult (VCompAnnot, FEnv)
-fromAnnot objArgs obj env1 (CompAnnot name args) = do
-  (args', env2) <- mapMWithFEnvMap env1 (fromExpr objArgs obj) args
-  return (CompAnnot name args', env2)
-
 fromGuard :: VArgMetaMap -> Maybe VObject -> FEnv -> PGuard -> TypeCheckResult (VGuard, FEnv)
 fromGuard objArgs obj env1 (IfGuard expr) =  do
   (expr', env2) <- fromExpr objArgs obj env1 expr
@@ -148,7 +143,7 @@ fromArrow obj@(Object _ _ objName objVars _) env1 (Arrow m annots aguard maybeEx
   let jobj = Just obj
   (mUserReturn', env2) <- fromMeta env1 BUpper jobj m (printf "Specified result from %s" (show objName))
   let argMetaMap = formArgMetaMap obj
-  (annots', env3) <- mapMWithFEnv env2 (fromAnnot argMetaMap jobj) annots
+  (annots', env3) <- mapMWithFEnv env2 (fromExpr argMetaMap jobj) annots
   (aguard', env4) <- fromGuard argMetaMap jobj env3 aguard
   case maybeExpr of
     Just expr -> do
@@ -231,6 +226,6 @@ fromPrgm :: FEnv -> PPrgm -> TypeCheckResult (VPrgm, FEnv)
 fromPrgm env1 (objMap1, classMap, annots) = do
   (objMap2, env2) <- mapMWithFEnv env1 fromObjects objMap1
   (objMap3, env3) <- mapMWithFEnv env2 fromObjectMap objMap2
-  (annots', env4) <- mapMWithFEnv env3 (fromAnnot H.empty Nothing) annots
+  (annots', env4) <- mapMWithFEnv env3 (fromExpr H.empty Nothing) annots
   let env5 = buildTypeEnv env4 objMap3
   return ((objMap3, classMap, annots'), env5)

@@ -36,11 +36,6 @@ showExpr env (ITupleApply m (bm, base) argName argVal) = do
   argVal' <- showExpr env argVal
   return $ ITupleApply m' (bm', base') argName argVal'
 
-showCompAnnot :: FEnv -> VCompAnnot -> TypeCheckResult SCompAnnot
-showCompAnnot env (CompAnnot name args) = do
-  args' <- mapM (showExpr env) args
-  return $ CompAnnot name args'
-
 showGuard :: FEnv -> VGuard -> TypeCheckResult SGuard
 showGuard env (IfGuard e) = do
   e' <- showExpr env e
@@ -51,7 +46,7 @@ showGuard _ NoGuard = return NoGuard
 showArrow :: FEnv -> VArrow -> TypeCheckResult SArrow
 showArrow env (Arrow m annots guard maybeExpr) = do
   m' <- showM env m
-  annots' <- mapM (showCompAnnot env) annots
+  annots' <- mapM (showExpr env) annots
   guard' <- showGuard env guard
   expr' <- mapM (showExpr env) maybeExpr
   return $ Arrow m' annots' guard' expr'
@@ -94,7 +89,7 @@ showCon env (UnionOf p1 p2s) = SUnionOf (descriptor env p1) (map (descriptor env
 showPrgm :: FEnv -> VPrgm -> TypeCheckResult SPrgm
 showPrgm env (objMap, classMap, annots) = do
   objMap' <- mapM (showObjArrows env) objMap
-  annots' <- mapM (showCompAnnot env) annots
+  annots' <- mapM (showExpr env) annots
   return (objMap', classMap, annots')
 
 showConstraints :: FEnv -> [Constraint] -> [SConstraint]

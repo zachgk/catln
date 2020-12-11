@@ -14,7 +14,6 @@
 module Parser.Decl where
 
 import           Control.Applicative            hiding (many, some)
-import qualified Data.HashMap.Strict as H
 import           Data.Maybe
 import           Text.Megaparsec
 import qualified Text.Megaparsec.Char.Lexer     as L
@@ -35,9 +34,13 @@ pDeclArg = do
 
 pCompAnnot :: Parser PCompAnnot
 pCompAnnot = do
+  pos <- getSourcePos
   annotName <- pAnnotIdentifier
-  argVals <- parens $ sepBy1 pDeclArg (symbol ",")
-  return $ CompAnnot annotName (H.fromList argVals)
+  maybeArgVals <- optional $ parens $ sepBy1 pCallArg (symbol ",")
+  let baseValue = RawValue (emptyMeta pos) annotName
+  return $ case maybeArgVals of
+    Just argVals -> RawTupleApply (emptyMeta pos) (emptyMeta pos, baseValue) argVals
+    Nothing -> baseValue
 
 pArrowRes :: Parser ParseMeta
 pArrowRes = do
