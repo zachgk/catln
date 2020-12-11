@@ -57,6 +57,7 @@ eval env (PrimArrow input _ (EPrim _ _ f)) = do
     (TupleVal _ args) -> return (f args, env2)
     _ -> error "Unexpected eval PrimArrow input"
 eval env MacroArrow{} = evalError env $ printf "Can't evaluate a macro - it should be removed during TreeBuild"
+eval env ExprArrow{} = evalError env $ printf "Can't evaluate an expr - it should be removed during TreeBuild"
 eval env (ConstantArrow v) = return (v, env)
 eval env@Env{evArgs} (ArgArrow _ name) = case H.lookup name evArgs of
   Just arg' -> return (arg', env)

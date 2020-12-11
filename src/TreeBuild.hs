@@ -62,11 +62,6 @@ makeTBEnv primEnv prgm@(objMap, classMap, _) = baseEnv
       Just _ -> Just (objName, [(objLeaf, aguard, \input -> ResEArrow input obj arrow) | objLeaf <- leafsFromMeta om])
       Nothing -> Nothing
 
--- TODO: May need a deep replacement of macros, rather than a shallow one
-pruneMacros :: TBEnv f -> ResArrowTree f -> ResArrowTree f
-pruneMacros env (MacroArrow input _ (MacroFunction f)) = f input (macroData env)
-pruneMacros _ t = t
-
 buildCompAnnot :: (Eq f, Hashable f) => TBEnv f -> TBObject -> TBCompAnnot -> CRes (ResArrowTree f)
 buildCompAnnot env obj (CompAnnot "#assert" args) = case (H.lookup "test" args, H.lookup "msg" args) of
     (Just test, Just msgExpr) -> do
@@ -91,15 +86,15 @@ buildExpr (_, valEnv, _, _) _ (Value (Typed (SumType prodTypes)) name) = case sp
       Just val -> val
       Nothing -> ResArrowTuple name H.empty
 buildExpr _ _ (Arg (Typed tp) name) = return $ ArgArrow tp name
-buildExpr env@(_, _, _, classMap) obj (TupleApply (Typed (SumType prodTypes)) (Typed baseType, baseExpr) argName argExpr) = case splitPartialLeafs prodTypes of
+buildExpr (_, _, _, classMap) _ (TupleApply (Typed (SumType prodTypes)) (Typed baseType, baseExpr) argName argExpr) = case splitPartialLeafs prodTypes of
     [] -> CErr [MkCNote $ BuildTreeCErr $ "Found no types for tupleApply " ++ show baseExpr ++ " with type " ++ show prodTypes ++ " and expr " ++ show argExpr]
     leaves -> do
-      baseBuild <- buildExprImp env obj baseExpr baseType
+      let baseBuild = ExprArrow baseExpr baseType
       leavesArgs <- mapM getLeafArgs leaves
       let leafArgs = unionTypes classMap leavesArgs
       -- TODO: Currently for each arg it does: execute expr, execute implicit (to any leaf), then match
       -- it should really be execute expr for args, match all args, then implicit all args
-      argVal <- buildExprImp env obj argExpr leafArgs
+      let argVal = ExprArrow argExpr leafArgs
       return $ ResArrowTupleApply baseBuild argName argVal
   where
     getLeafArgs (_, _, _, leafArgs) = case H.lookup argName leafArgs of
@@ -145,7 +140,7 @@ buildGuardArrows env obj input visitedArrows srcType destType guards = case guar
                                         CErr notes -> wrapCErr notes "No valid ifTrees:"
       arrows -> CErr [MkCNote $ BuildTreeCErr $ printf "Unknown arrows found in envLookup: %s" (show arrows)]
   where
-    ltry tree = envLookupTry env obj visitedArrows srcType destType (pruneMacros env tree)
+    ltry tree = envLookupTry env obj visitedArrows srcType destType tree
 
 findResArrows :: (Eq f, Hashable f) => TBEnv f -> PartialType -> Type -> CRes [ResBuildEnvItem f]
 findResArrows (resEnv, _, _, classMap) srcType@(PTypeName srcName, _, _, _) destType = case H.lookup srcName resEnv of
@@ -190,11 +185,44 @@ buildImplicit env obj input (SumType srcType) destType = do
 -- executes an expression and then an implicit to a desired dest type
 buildExprImp :: (Eq f, Hashable f) => TBEnv f -> TBObject -> TBExpr -> Type -> CRes (ResArrowTree f)
 buildExprImp env obj expr destType = do
-  t1 <- buildExpr env obj expr
-  let (Typed srcType) = getExprMeta expr
-  if srcType == destType then
-    return t1
-    else buildImplicit env obj t1 srcType destType
+  let exprType = getMetaType (getExprMeta expr)
+  res' <- if exprType == destType
+    then buildExpr env obj expr
+    else buildImplicit env obj (ExprArrow expr exprType) exprType destType
+  resolveTree env obj res'
+
+-- builds all macroArrows and exprArrows into other arrow types
+resolveTree :: (Eq f, Hashable f) => TBEnv f -> TBObject -> ResArrowTree f -> CRes (ResArrowTree f)
+resolveTree env obj (ResEArrow input o a) = do
+  input' <- resolveTree env obj input
+  return $ ResEArrow input' o a
+resolveTree env obj (PrimArrow input t f) = do
+  input' <- resolveTree env obj input
+  return $ PrimArrow input' t f
+resolveTree env obj (MacroArrow input _ (MacroFunction f)) = resolveTree env obj $ f input (macroData env)
+resolveTree env obj (ExprArrow e destType) = buildExprImp env obj e destType
+resolveTree _ _ a@ConstantArrow{} = return a
+resolveTree _ _ a@ArgArrow{} = return a
+resolveTree env obj (ResArrowMatch input matches) = do
+  input' <- resolveTree env obj input
+  matches' <- mapM (resolveTree env obj) matches
+  return $ ResArrowMatch input' matches'
+resolveTree env obj (ResArrowCond ifs elseTree) = do
+  ifs' <- forM ifs $ \((ifCondTree, ifCondInput, ifObj), ifThenTree) -> do
+    ifCondTree' <- resolveTree env obj ifCondTree
+    ifCondInput' <- resolveTree env obj ifCondInput
+    ifThenTree' <- resolveTree env obj ifThenTree
+    return ((ifCondTree', ifCondInput', ifObj), ifThenTree')
+  elseTree' <- resolveTree env obj elseTree
+  return $ ResArrowCond ifs' elseTree'
+resolveTree env obj (ResArrowTuple name args) = do
+  args' <- mapM (resolveTree env obj) args
+  return $ ResArrowTuple name args'
+resolveTree env obj (ResArrowTupleApply input argName argVal) = do
+  input' <- resolveTree env obj input
+  argVal' <- resolveTree env obj argVal
+  return $ ResArrowTupleApply input' argName argVal'
+
 
 buildArrow :: (Eq f, Hashable f) => TBEnv f -> TBObject -> TBArrow -> CRes (Maybe (TBArrow, (ResArrowTree f, [ResArrowTree f])))
 buildArrow _ _ (Arrow _ _ _ Nothing) = return Nothing
@@ -207,7 +235,7 @@ buildArrow env obj@(Object _ _ _ objVars _) arrow@(Arrow (Typed am) compAnnots _
           Just argMeta -> getMetaType argMeta
           Nothing -> error "Bad TVArg in makeBaseEnv"
         _ -> am
-  resArrowTree <- buildExprImp env obj expr am'
+  resArrowTree <- resolveTree env obj (ExprArrow expr am')
   compAnnots' <- mapM (buildCompAnnot env obj) compAnnots
   return $ Just (arrow, (resArrowTree, compAnnots'))
 
@@ -215,6 +243,7 @@ buildRoot :: (Eq f, Hashable f) => ResBuildEnv f -> TBExpr -> PartialType -> Typ
 buildRoot primEnv input src dest prgm = do
   let env = makeTBEnv primEnv prgm
   let emptyObj = Object (Typed $ singletonType src) FunctionObj "EmptyObj" H.empty H.empty
-  input' <- buildExpr env emptyObj input
-  rootTree <- envLookup env emptyObj input' S.empty src dest
+  -- input' <- buildExpr env emptyObj input
+  -- rootTree <- envLookup env emptyObj input' S.empty src dest
+  rootTree <- resolveTree env emptyObj (ExprArrow input dest)
   return (rootTree, env)

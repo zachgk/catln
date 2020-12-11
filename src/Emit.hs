@@ -144,14 +144,16 @@ codegenStruct (Object objM _ _ _ args) = struct name (map (\(argM, _) -> genType
   where
     name = AST.Name $ SBS.toShort $ BSU.fromString $ typeName $ getMetaType objM
 
--- mainPartial :: PartialType
--- mainPartial = (PTypeName "main", H.empty, H.empty, H.singleton "io" ioType)
-
 -- mainObject :: TObject
 -- mainObject = Object (Typed $ singletonType mainPartial) FunctionObj "main" H.empty (H.singleton "io" (Typed ioType, Nothing))
 
+applyIO :: EExpr -> EExpr
+applyIO input@(Value m name) = TupleApply applyMeta (m, input) "io" (Arg (Typed ioType) "io")
+  where applyMeta = Typed $ singletonType (PTypeName name, H.empty, H.empty, H.singleton "io" ioType)
+applyIO _ = error "Bad applyIO"
+
 codegenPrgm :: EExpr -> PartialType -> Type -> EPrgm -> LLVM ()
-codegenPrgm input srcType destType tprgm@(_, classMap, _) = case buildRoot primEnv input srcType destType tprgm of
+codegenPrgm input srcType destType tprgm@(_, classMap, _) = case buildRoot primEnv (applyIO input) srcType destType tprgm of
   CRes _ (initTree, _) -> do
     let env = classMap
     -- forM_ (H.keys objMap) $ \obj -> do

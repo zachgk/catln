@@ -174,6 +174,7 @@ data ResArrowTree f
   = ResEArrow (ResArrowTree f) (Object Typed) (Arrow (Expr Typed) Typed)
   | PrimArrow (ResArrowTree f) Type f
   | MacroArrow (ResArrowTree f) Type (MacroFunction f)
+  | ExprArrow EExpr Type
   | ConstantArrow Val
   | ArgArrow Type String
   | ResArrowMatch (ResArrowTree f) (H.HashMap PartialType (ResArrowTree f))
@@ -186,6 +187,7 @@ instance Show (ResArrowTree f) where
   show (ResEArrow _ obj arrow) = printf "(ResEArrow: %s -> %s)" (show obj) (show arrow)
   show (PrimArrow _ tp _) = "(PrimArrow " ++ show tp ++ ")"
   show (MacroArrow _ tp _) = "(MacroArrow " ++ show tp ++ ")"
+  show (ExprArrow e destType) = "(ExprArrow " ++ show e ++ " to " ++ show destType ++ ")"
   show (ConstantArrow c) = "(ConstantArrow " ++ show c ++ ")"
   show (ArgArrow tp n) = "(ArgArrow " ++ show tp ++ " " ++ n ++ ")"
   show (ResArrowMatch m args) = printf "match (%s) {%s}" (show m) args'
