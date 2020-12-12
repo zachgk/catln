@@ -52,8 +52,8 @@ leafsFromMeta (Typed TopType) = error "leafFromMeta from TopType"
 leafsFromMeta (Typed TypeVar{}) = error "leafFromMeta from TypeVar"
 leafsFromMeta (Typed (SumType prodTypes)) = splitPartialLeafs prodTypes
 
-makeTBEnv :: (Eq f, Hashable f) => ResBuildEnv f -> TBPrgm -> TBEnv f
-makeTBEnv primEnv prgm@(objMap, classMap, _) = baseEnv
+buildTBEnv :: (Eq f, Hashable f) => ResBuildEnv f -> TBPrgm -> TBEnv f
+buildTBEnv primEnv prgm@(objMap, classMap, _) = baseEnv
   where
     baseEnv = (H.union primEnv resEnv, H.empty, prgm, classMap)
     resEnv = H.fromListWith (++) $ concatMap resFromArrows objMap
@@ -227,11 +227,7 @@ buildArrow env obj@(Object _ _ _ objVars _) arrow@(Arrow (Typed am) compAnnots _
   compAnnots' <- mapM (\annot -> resolveTree env obj (ExprArrow annot (getMetaType $ getExprMeta annot))) compAnnots
   return $ Just (arrow, (resArrowTree, compAnnots'))
 
-buildRoot :: (Eq f, Hashable f) => ResBuildEnv f -> TBExpr -> PartialType -> Type -> TBPrgm -> CRes (ResArrowTree f, TBEnv f)
-buildRoot primEnv input src dest prgm = do
-  let env = makeTBEnv primEnv prgm
+buildRoot :: (Eq f, Hashable f) => TBEnv f -> TBExpr -> PartialType -> Type -> CRes (ResArrowTree f)
+buildRoot env input src dest = do
   let emptyObj = Object (Typed $ singletonType src) FunctionObj "EmptyObj" H.empty H.empty
-  -- input' <- buildExpr env emptyObj input
-  -- rootTree <- envLookup env emptyObj input' S.empty src dest
-  rootTree <- resolveTree env emptyObj (ExprArrow input dest)
-  return (rootTree, env)
+  resolveTree env emptyObj (ExprArrow input dest)

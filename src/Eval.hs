@@ -93,20 +93,23 @@ eval env (ResArrowTupleApply base argName argRATree) = do
       return (TupleVal name args', evalPop env3)
     _ -> evalError env "Invalid input to tuple application"
 
-evalBuildPrgm :: EExpr -> PartialType -> Type -> EPrgm -> CRes (ResArrowTree EPrim, Env)
-evalBuildPrgm input srcType destType prgm@(objMap, classMap, _) = do
-  (initTree, tbEnv) <- buildRoot primEnv input srcType destType prgm
-  let env = Env {
+evalBaseEnv :: EPrgm -> Env
+evalBaseEnv prgm@(objMap, classMap, _) = Env {
         evObjMap = objMap,
         evClassMap = classMap,
         evArgs = H.empty,
         evExEnv = H.empty,
-        evTbEnv = tbEnv,
+        evTbEnv = buildTBEnv primEnv prgm,
         evCallStack = [],
         evCoverage = H.empty,
         evTreebugOpen = [],
         evTreebugClosed = []
                 }
+
+evalBuildPrgm :: EExpr -> PartialType -> Type -> EPrgm -> CRes (ResArrowTree EPrim, Env)
+evalBuildPrgm input srcType destType prgm = do
+  let env@Env{evTbEnv} = evalBaseEnv prgm
+  initTree <- buildRoot evTbEnv input srcType destType
   return (initTree, env)
 
 evalPrgm :: EExpr -> PartialType -> Type -> EPrgm -> CRes (IO (Integer, EvalResult))

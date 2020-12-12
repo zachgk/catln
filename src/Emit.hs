@@ -154,15 +154,17 @@ applyIO input@(Value m name) = TupleApply applyMeta (m, input) "io" (Arg (Typed 
 applyIO _ = error "Bad applyIO"
 
 codegenPrgm :: EExpr -> PartialType -> Type -> EPrgm -> LLVM ()
-codegenPrgm input srcType destType tprgm@(_, classMap, _) = case buildRoot primEnv (applyIO input) srcType destType tprgm of
-  CRes _ (initTree, _) -> do
-    let env = classMap
-    -- forM_ (H.keys objMap) $ \obj -> do
-    --   codegenStruct obj
-    -- forM_ (H.toList exEnv) $ \(arrow, (obj, tree, _)) -> do
-    --   codegenDecl env (arrowName arrow) obj tree
-    codegenDecl env "main" srcType initTree
-  CErr err -> error $ printf "Build to buildPrgm in codegen: \n\t%s" (show err)
+codegenPrgm input srcType destType tprgm@(_, classMap, _) = do
+  let tbEnv = buildTBEnv primEnv tprgm
+  case buildRoot tbEnv (applyIO input) srcType destType of
+    CRes _ initTree -> do
+      let env = classMap
+      -- forM_ (H.keys objMap) $ \obj -> do
+      --   codegenStruct obj
+      -- forM_ (H.toList exEnv) $ \(arrow, (obj, tree, _)) -> do
+      --   codegenDecl env (arrowName arrow) obj tree
+      codegenDecl env "main" srcType initTree
+    CErr err -> error $ printf "Build to buildPrgm in codegen: \n\t%s" (show err)
 
 codegenEx :: AST.Module -> LLVM () -> IO String
 codegenEx astMod modn = withContext $ \context ->
