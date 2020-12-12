@@ -93,7 +93,6 @@ buildExpr _ _ _ = error "Bad buildExpr"
 envLookupTry :: (Eq f, Hashable f) => TBEnv f -> TBObject -> VisitedArrows f -> PartialType -> Type -> ResArrowTree f -> CRes (ResArrowTree f)
 envLookupTry (_, _, _, classMap) _ _ srcType destType resArrow | hasType classMap (resArrowDestType classMap srcType resArrow) destType = return resArrow
 envLookupTry _ _ visitedArrows _ _ resArrow | S.member resArrow visitedArrows = CErr [MkCNote $ BuildTreeCErr "Found cyclical use of function"]
-envLookupTry (_, valMap, _, _) obj _ _ _ MacroArrow{} = error $ printf "envLookupTry with MacroArrow not yet completed \n\t\t valMap: %s \n\t\t obj: %s" (show valMap) (show obj)
 envLookupTry env@(_, _, _, classMap) obj visitedArrows srcType destType resArrow = do
   let (SumType newLeafTypes) = resArrowDestType classMap srcType resArrow
   let visitedArrows' = S.insert resArrow visitedArrows

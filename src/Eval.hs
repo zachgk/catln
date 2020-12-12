@@ -112,6 +112,17 @@ evalBuildPrgm input srcType destType prgm = do
   initTree <- buildRoot evTbEnv input srcType destType
   return (initTree, env)
 
+evalAnnots :: EPrgm -> CRes [(EExpr, Val)]
+evalAnnots prgm@(_, _, annots) = do
+  let env@Env{evTbEnv} = evalBaseEnv prgm
+  forM annots $ \annot -> do
+    let exprType = getMetaType $ getExprMeta annot
+    let inTree = ExprArrow annot exprType
+    let emptyObj = Object (Typed exprType) FunctionObj "EmptyObj" H.empty H.empty
+    tree <- resolveTree evTbEnv emptyObj inTree
+    val <- fst <$> eval env tree
+    return (annot, val)
+
 evalPrgm :: EExpr -> PartialType -> Type -> EPrgm -> CRes (IO (Integer, EvalResult))
 evalPrgm input src@PartialType{ptName=PTypeName{}} dest prgm = do
   (initTree, env) <- evalBuildPrgm input src dest prgm

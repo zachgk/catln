@@ -77,7 +77,7 @@ type TypeArgEnv = H.HashMap ArgName Type
 type ArgEnv = H.HashMap ArgName Type
 
 instance Show PartialType where
-  show (PartialType ptName ptVars ptProps ptArgs _) = showName ptName ++ showTypeVars ptVars ++ showProps ptProps ++ showArgs ptArgs
+  show (PartialType ptName ptVars ptProps ptArgs ptArgMode) = concat [showName ptName, showTypeVars ptVars, showProps ptProps, showArgs ptArgs, show ptArgMode]
     where
       showName (PTypeName t) = t
       showName (PClassName t) = t

@@ -49,13 +49,18 @@ runTest includeStd fileName = testCaseSteps fileName $ \step -> do
                   case (notes, returnValue) of
                     ([], (0, _)) -> return () -- success
                     _ -> assertFailure $ "Bad result for:\n \t " ++ show (fst returnValue) ++ "\n \tNotes\t" ++ concat (map show notes)
-              step "evalBuild"
+              step "evalBuild..."
               case evalMainb tprgm of
                 CErr notes -> do
                   assertFailure $ "Could not eval:\n\t " ++ intercalate "\n\t" (map show notes)
                 CRes _ ioRes -> do
                   _ <- ioRes
                   return () -- success
+              step "evalAnnots..."
+              case evalAnnots tprgm of
+                CErr notes -> do
+                  assertFailure $ "Could not eval:\n\t " ++ intercalate "\n\t" (map show notes)
+                CRes _ _ -> return () -- success
               step "Done"
 
 runTests :: Bool -> [String] -> TestTree
@@ -83,6 +88,11 @@ runBuild fileName = testCaseSteps fileName $ \step -> do
               -- step $ T.unpack $ pShow $ tprgm
               step "Eval tests..."
               case evalMainb tprgm of
+                CErr notes -> do
+                  assertFailure $ "Could not eval:\n\t " ++ intercalate "\n\t" (map show notes)
+                CRes _ _ -> return () -- success
+              step "evalAnnots..."
+              case evalAnnots tprgm of
                 CErr notes -> do
                   assertFailure $ "Could not eval:\n\t " ++ intercalate "\n\t" (map show notes)
                 CRes _ _ -> return () -- success
