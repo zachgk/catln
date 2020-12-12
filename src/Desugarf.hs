@@ -264,7 +264,7 @@ desStatements statements = (objMap, classMap, annots')
     annots' = map desGlobalAnnot annots
 
 finalPasses :: DesPrgm -> DesPrgm
-finalPasses = typeNameToClass
+finalPasses = expandDataReferences . typeNameToClass
 
 desPrgm :: PPrgm -> CRes DesPrgm
 desPrgm (_, statements) = return $ finalPasses $ desStatements statements
