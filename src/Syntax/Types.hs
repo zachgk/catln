@@ -316,7 +316,7 @@ substituteVars = substituteVarsWithVarEnv H.empty
 substituteArgsWithArgEnv :: ArgEnv -> Type -> Type
 substituteArgsWithArgEnv aenv (SumType partials) = SumType $ joinPartialLeafs $ map substitutePartial $ splitPartialLeafs partials
   where substitutePartial (partialName, partialVars, partialProps, partialArgs) = (partialName, partialVars, partialProps, fmap (substituteArgsWithArgEnv aenv') partialArgs)
-          where aenv' = H.union aenv partialVars
+          where aenv' = H.union aenv partialArgs
 substituteArgsWithArgEnv aenv (TypeVar (TVArg v)) = case H.lookup v aenv of
   Just v' -> v'
   Nothing -> error $ printf "Could not substitute unknown type arg %s" v
