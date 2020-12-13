@@ -73,6 +73,7 @@ type Sealed = Bool -- whether the typeclass can be extended or not
 type ClassMap = (H.HashMap TypeName (S.HashSet ClassName), H.HashMap ClassName (Sealed, H.HashMap TypeVarName Type, [Type]))
 
 type TypeVarEnv = H.HashMap TypeVarName Type
+type TypeArgEnv = H.HashMap ArgName Type
 type ArgEnv = H.HashMap ArgName Type
 
 instance Show PartialType where
@@ -156,15 +157,17 @@ expandClassPartial classMap@(_, classToType) PartialType{ptName=PClassName class
       Nothing -> error $ printf "Unknown class %s in expandClassPartial" className
 
 -- assumes a compacted super type, does not check in superLeafs
-hasPartialWithVarEnv :: ClassMap -> TypeVarEnv -> PartialType -> Type -> Bool
-hasPartialWithVarEnv _ _ _ TopType = True
-hasPartialWithVarEnv classMap venv sub (TypeVar (TVVar v)) = case H.lookup v venv of
-  Just sup -> hasPartialWithVarEnv classMap venv sub sup
-  Nothing -> error $ printf "hasPartialWithVarEnv with unknown type var %s" v
-hasPartialWithVarEnv _ _ _ (TypeVar v) = error $ "Can't hasPartial type vars: " ++ show v
-hasPartialWithVarEnv classMap@(typeToClass, _) venv sub@(PartialType subName subVars subProps subArgs subArgMode) super@(SumType superPartials) = case subName of
+hasPartialWithEnv :: ClassMap -> TypeVarEnv -> TypeArgEnv -> PartialType -> Type -> Bool
+hasPartialWithEnv _ _ _ _ TopType = True
+hasPartialWithEnv classMap venv aenv sub (TypeVar (TVVar v)) = case H.lookup v venv of
+  Just sup -> hasPartialWithEnv classMap venv aenv sub sup
+  Nothing -> error $ printf "hasPartialWithEnv with unknown type var %s" v
+hasPartialWithEnv classMap venv aenv sub (TypeVar (TVArg v)) = case H.lookup v aenv of
+  Just sup -> hasPartialWithEnv classMap venv aenv sub sup
+  Nothing -> error $ printf "hasPartialWithEnv with unknown type arg %s" v
+hasPartialWithEnv classMap@(typeToClass, _) venv aenv sub@(PartialType subName subVars subProps subArgs subArgMode) super@(SumType superPartials) = case subName of
   (PTypeName typeName) -> checkDirect || any checkSuperClass (H.lookupDefault S.empty typeName typeToClass)
-  PClassName{} -> checkDirect || hasTypeWithVarEnv classMap venv (expandClassPartial classMap sub) super
+  PClassName{} -> checkDirect || hasTypeWithEnv classMap venv aenv (expandClassPartial classMap sub) super
   where
     venv' = H.union subVars venv
     checkDirect = case H.lookup subName superPartials of
@@ -175,31 +178,35 @@ hasPartialWithVarEnv classMap@(typeToClass, _) venv sub@(PartialType subName sub
         hasArgs (superVars, _, _, _) | not (H.keysSet subVars `isSubsetOf` H.keysSet superVars) = False
         hasArgs (_, superProps, _, _) | not (H.keysSet subProps `isSubsetOf` H.keysSet superProps) = False
         hasArgs (superVars, superProps, superArgs, _) = hasAll subArgs superArgs && hasAll subProps superProps && hasAll subVars superVars
-        hasAll sb sp = and $ H.elems $ H.intersectionWith (hasTypeWithVarEnv classMap venv') sb sp
+        hasAll sb sp = and $ H.elems $ H.intersectionWith (hasTypeWithEnv classMap venv' aenv) sb sp
     checkSuperClass superClassName = case H.lookup (PClassName superClassName) superPartials of
-      Just superClassArgsOptions -> any (hasPartialWithVarEnv classMap venv' sub . expandClassPartial classMap) $ splitPartialLeafs $ H.singleton (PClassName superClassName) superClassArgsOptions
+      Just superClassArgsOptions -> any (hasPartialWithEnv classMap venv' aenv sub . expandClassPartial classMap) $ splitPartialLeafs $ H.singleton (PClassName superClassName) superClassArgsOptions
       Nothing -> False
 
 hasPartial :: ClassMap -> PartialType -> Type -> Bool
-hasPartial classMap = hasPartialWithVarEnv classMap H.empty
+hasPartial classMap = hasPartialWithEnv classMap H.empty H.empty
 
 -- Maybe rename to subtypeOf
-hasTypeWithVarEnv :: ClassMap -> TypeVarEnv -> Type -> Type -> Bool
-hasTypeWithVarEnv _ _ _ TopType = True
-hasTypeWithVarEnv _ _ TopType t = t == TopType
-hasTypeWithVarEnv _ _ t1 t2 | t1 == t2 = True
-hasTypeWithVarEnv classMap venv (TypeVar (TVVar v)) t2 = case H.lookup v venv of
-  Just t1 -> hasTypeWithVarEnv classMap venv t1 t2
-  Nothing -> error $ printf "hasTypeWithVarEnv with unkonwn type var %s" v
-hasTypeWithVarEnv classMap venv t1 (TypeVar (TVVar v)) = case H.lookup v venv of
-  Just t2 -> hasTypeWithVarEnv classMap venv t1 t2
-  Nothing -> error $ printf "hasTypeWithVarEnv with unkonwn type var %s" v
-hasTypeWithVarEnv _ _ (TypeVar v) t = error $ printf "Can't hasType for type var %s in %s" (show v) (show t)
-hasTypeWithVarEnv _ _ t (TypeVar v) = error $ printf "Can't hasType for %s in type var %s" (show t) (show v)
-hasTypeWithVarEnv classMap venv (SumType subPartials) superType = all (\p -> hasPartialWithVarEnv classMap venv p superType) $ splitPartialLeafs subPartials
+hasTypeWithEnv :: ClassMap -> TypeVarEnv -> TypeArgEnv -> Type -> Type -> Bool
+hasTypeWithEnv _ _ _ _ TopType = True
+hasTypeWithEnv _ _ _ TopType t = t == TopType
+hasTypeWithEnv _ _ _ t1 t2 | t1 == t2 = True
+hasTypeWithEnv classMap venv aenv (TypeVar (TVVar v)) t2 = case H.lookup v venv of
+  Just t1 -> hasTypeWithEnv classMap venv aenv t1 t2
+  Nothing -> error $ printf "hasTypeWithEnv with unkonwn type var %s" v
+hasTypeWithEnv classMap venv aenv t1 (TypeVar (TVVar v)) = case H.lookup v venv of
+  Just t2 -> hasTypeWithEnv classMap venv aenv t1 t2
+  Nothing -> error $ printf "hasTypeWithEnv with unkonwn type var %s" v
+hasTypeWithEnv classMap venv aenv (TypeVar (TVArg v)) t2 = case H.lookup v aenv of
+  Just t1 -> hasTypeWithEnv classMap venv aenv t1 t2
+  Nothing -> error $ printf "hasTypeWithEnv with unkonwn type arg %s" v
+hasTypeWithEnv classMap venv aenv t1 (TypeVar (TVArg v)) = case H.lookup v aenv of
+  Just t2 -> hasTypeWithEnv classMap venv aenv t1 t2
+  Nothing -> error $ printf "hasTypeWithEnv with unkonwn type arg %s" v
+hasTypeWithEnv classMap venv aenv (SumType subPartials) superType = all (\p -> hasPartialWithEnv classMap venv aenv p superType) $ splitPartialLeafs subPartials
 
 hasType :: ClassMap -> Type -> Type -> Bool
-hasType classMap = hasTypeWithVarEnv classMap H.empty
+hasType classMap = hasTypeWithEnv classMap H.empty H.empty
 
 subPartialOf :: ClassMap -> PartialType -> PartialType -> Bool
 subPartialOf classMap sub sup = hasPartial classMap sub (singletonType sup)

@@ -172,9 +172,9 @@ buildImplicit env obj input (SumType srcType) destType = do
 
 -- executes an expression and then an implicit to a desired dest type
 buildExprImp :: (Eq f, Hashable f) => TBEnv f -> TBObject -> TBExpr -> Type -> CRes (ResArrowTree f)
-buildExprImp env obj expr destType = do
+buildExprImp env@(_, _, _, classMap) obj expr destType = do
   let exprType = getMetaType (getExprMeta expr)
-  res' <- if exprType == destType
+  res' <- if hasTypeWithObj classMap obj exprType destType
     then buildExpr env obj expr
     else buildImplicit env obj (ExprArrow expr exprType) exprType destType
   resolveTree env obj res'

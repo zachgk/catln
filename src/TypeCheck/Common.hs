@@ -258,10 +258,6 @@ resolveTypeVar (TVArg v) (VarMeta _ _ (Just (Object _ _ _ _ objArgs))) = case H.
   Nothing -> TypeCheckResE [GenTypeCheckError "Unknown variable in resolveTypeVar arg"]
 resolveTypeVar _ (VarMeta _ _ Nothing) = TypeCheckResE [GenTypeCheckError "Tried to resolve a type var without an object"]
 
-varMetaVarEnv :: VarMeta -> TypeVarEnv
-varMetaVarEnv (VarMeta _ _ (Just (Object _ _ _ objVars _))) = fmap getMetaType objVars
-varMetaVarEnv _ = H.empty
-
 descriptorResolve :: FEnv -> VarMeta -> TypeCheckResult (VarMeta, SType)
 descriptorResolve env m = do
   scheme@(SType ub _ _) <- descriptor env m

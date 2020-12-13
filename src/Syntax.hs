@@ -105,3 +105,10 @@ metaTypeVar :: (Meta m) => m -> Maybe TypeVarAux
 metaTypeVar m = case getMetaType m of
   TypeVar v -> Just v
   _ -> Nothing
+
+
+hasPartialWithObj :: (Meta m) => ClassMap -> Object m -> PartialType -> Type -> Bool
+hasPartialWithObj classMap (Object _ _ _ objVars objArgs) = hasPartialWithEnv classMap (fmap getMetaType objVars) (fmap (getMetaType . fst) objArgs)
+
+hasTypeWithObj :: (Meta m) => ClassMap -> Object m -> Type -> Type -> Bool
+hasTypeWithObj classMap (Object _ _ _ objVars objArgs) = hasTypeWithEnv classMap (fmap getMetaType objVars) (fmap (getMetaType . fst) objArgs)
