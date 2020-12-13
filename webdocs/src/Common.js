@@ -80,7 +80,7 @@ function Type(props) {
   case "SumType":
     let partials = t.contents.map(partialOptions => {
       let [partialName, options] = partialOptions;
-      return options.map(partialData => {
+      return options.map((partialData, partialIndex) => {
         let [partialVars, , partialArgs] = partialData;
 
         let showVars = "";
@@ -105,7 +105,7 @@ function Type(props) {
           );
         }
 
-        return (<span>{partialName.contents}{showVars}{showArgs}</span>);
+        return (<span key={partialIndex}>{partialName.contents}{showVars}{showArgs}</span>);
       });
     }).flat();
     return tagJoin(partials, " | ");
@@ -124,7 +124,7 @@ function Obj(props) {
     showVars = (
       <span>
         &lt;
-        {tagJoin(Object.keys(vars).map(v => <><Meta data={vars[v]}/> {v}</>), ", ")}
+        {tagJoin(Object.keys(vars).map(v => <span key={v}><Meta data={vars[v]}/> {v}</span>), ", ")}
         &gt;
       </span>);
   }
@@ -134,7 +134,7 @@ function Obj(props) {
     showArgs = (
       <span>
       (
-        {tagJoin(Object.keys(args).map(arg => <><Meta data={args[arg][0]}/> {arg}</>), ", ")}
+        {tagJoin(Object.keys(args).map(arg => <span key={arg}><Meta data={args[arg][0]}/> {arg}</span>), ", ")}
       )
       </span>);
   }

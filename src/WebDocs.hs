@@ -22,11 +22,13 @@ import           GHC.Generics          (Generic)
 import           Desugarf         (desFiles)
 import           CRes
 import TypeCheck (typecheckPrgmWithTrace)
-import           Eval (evalMain, evalMainb)
+import           Eval (evalMain, evalMainb, evalAnnots)
 import Parser (readFiles)
 import Parser.Syntax (DesPrgm, PPrgm)
 import TypeCheck.Common (TraceConstrain, VPrgm, TPrgm)
-import Eval.Common (EvalResult)
+import Eval.Common (Val, EvalResult)
+import Syntax.Prgm (Expr)
+import Syntax (Typed)
 
 data ResSuccess a n = Success a [n]
   deriving (Generic, ToJSON)
@@ -80,6 +82,14 @@ getEvalBuild includeStd fileName = do
     CRes _ r -> (\(a, b, _) -> (a, b)) <$> r
     CErr _ -> return ("", "")
 
+getEvalAnnots :: Bool -> String -> IO [(Expr Typed, Val)]
+getEvalAnnots includeStd fileName = do
+  base <- getTPrgm includeStd fileName
+  let pre = base >>= evalAnnots
+  case pre of
+    CRes _ r -> return r
+    CErr _ -> return []
+
 getWeb :: Bool -> String -> IO String
 getWeb includeStd fileName = do
   base <- getTPrgm includeStd fileName
@@ -99,6 +109,13 @@ docServe includeStd fileName = do
     get "/raw" $ do
       maybeRawPrgm <- liftAndCatchIO $ getRawPrgm includeStd fileName
       maybeJson maybeRawPrgm
+
+    get "/pages" $ do
+      maybeRawPrgm <- liftAndCatchIO $ getRawPrgm includeStd fileName
+      annots <- liftAndCatchIO $ getEvalAnnots includeStd fileName
+      maybeJson $ do
+        rawPrgm <- maybeRawPrgm
+        return (rawPrgm, annots)
 
     get "/desugar" $ do
       maybePrgm <- liftAndCatchIO $ getPrgm includeStd fileName

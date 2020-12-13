@@ -19,7 +19,7 @@ const useStyles = {
 };
 
 function Docs() {
-  let apiResult = useApi("/raw");
+  let apiResult = useApi("/pages");
 
   return (
     <Loading status={apiResult}>
@@ -29,7 +29,7 @@ function Docs() {
 }
 
 function Main(props) {
-  let pages = props.data;
+  let [pages, ] = props.data;
   let { path } = useRouteMatch();
   return (
     <Switch>
@@ -39,7 +39,7 @@ function Main(props) {
       <Route path={`${path}/:curPage`}>
         <Grid container spacing={2} justify="center">
           <Grid item xs={2}>
-            {pages.map((page, index) => <div><Link key={page[0]} to={`${path}/${index}`}>{page[0]}</Link></div>)}
+            {pages.map((page, index) => <div key={page[0]}><Link to={`${path}/${index}`}>{page[0]}</Link></div>)}
           </Grid>
           <Grid item xs={8}>
             <MainStatements pages={pages} />
@@ -57,7 +57,7 @@ function MainStatements(props) {
 }
 
 function Statements(props) {
-  return props.statements.map(statement => <Statement statement={statement}/>);
+  return props.statements.map((statement, index) => <Statement key={index} statement={statement}/>);
 }
 
 function Statement(props) {
@@ -74,7 +74,7 @@ function Statement(props) {
 
     return (
       <div>
-        <Obj obj={obj} Meta={Type}/><Guard guard={guard} Expr={Expr}/>{showExpr}
+        <Obj obj={obj} Meta={RawMeta}/><Guard guard={guard} Expr={Expr}/>{showExpr}
         <div style={useStyles.indented}><Statements statements={subStatements}/></div>
       </div>
     );
@@ -86,20 +86,22 @@ function Statement(props) {
       showClassVars = (
         <span>
           &lt;
-          {tagJoin(Object.keys(classVars).map(v => <><Type data={classVars[v]}/> v</>), ", ")}
+          {tagJoin(Object.keys(classVars).map(v => <span key={v}><Type data={classVars[v]}/> v</span>), ", ")}
           &gt;
         </span>
       );
     }
 
-    let showClassDatas = tagJoin(classDatas.map(d => <span><Type data={d}/></span>), " | ");
+    let showClassDatas = tagJoin(classDatas.map((d, dIndex) => <span key={dIndex}><Type data={d[0]}/></span>), " | ");
 
     return (<div>class {className}{showClassVars} = {showClassDatas}</div>);
   case "TypeDefStatement":
-    return (<div>data <Type data={statement.contents}/></div>);
+    return (<div>data <Type data={statement.contents[0]}/></div>);
   case "RawClassDefStatement":
     let [instanceType, instanceClass] = statement.contents;
     return (<div>instance {instanceType} of {instanceClass}</div>);
+  case "RawGlobalAnnot":
+    return (<Expr expr={statement.contents} />);
   case "RawComment":
     return (<p>{statement.contents}</p>);
   default:
@@ -118,15 +120,15 @@ function Expr(props) {
   case "RawTupleApply":
     const [, [,base], args] = expr.contents;
 
-    let showArgs = tagJoin(args.map(arg => {
+    let showArgs = tagJoin(args.map((arg, argIndex) => {
       switch(arg.tag) {
       case "RawTupleArgNamed":
-        return (<span>{arg.contents[0]} = <Expr expr={arg.contents[1]}/></span>);
+        return (<span key={argIndex}>{arg.contents[0]} = <Expr expr={arg.contents[1]}/></span>);
       case "RawTupleArgInfer":
-        return <Expr expr={arg.contents}/>;
+        return <Expr key={argIndex} expr={arg.contents}/>;
       default:
         console.error("Unknown renderExpr tupleApply arg type");
-        return "";
+        return <span key={argIndex}></span>;
       }
     }), ", ");
 
@@ -142,20 +144,25 @@ function Expr(props) {
     let [, matchExpr, matchPatterns] = expr.contents;
     let showMPatterns = tagJoin(matchPatterns.map(pattern => {
       let [obj, guard] = pattern;
-      return (<span><Obj obj={obj} Meta={Type}/><Guard guard={guard} Expr={Expr}/></span>);
+      return (<span><Obj obj={obj} Meta={RawMeta}/><Guard guard={guard} Expr={Expr}/></span>);
     }), "");
     return (<span>match <Expr expr={matchExpr}/> of <div style={useStyles.indented}>{showMPatterns}</div></span>);
   case "RawCase":
     let [, caseExpr, casePatterns] = expr.contents;
     let showCPatterns = tagJoin(casePatterns.map(pattern => {
       let [obj, guard] = pattern;
-      return (<span><Obj obj={obj} Meta={Type}/><Guard guard={guard} Expr={Expr}/></span>);
+      return (<span><Obj obj={obj} Meta={RawMeta}/><Guard guard={guard} Expr={Expr}/></span>);
     }), "");
     return (<span>case <Expr expr={caseExpr}/> of <div style={useStyles.indented}>{showCPatterns}</div></span>);
   default:
     console.error("Unknown renderExpr", expr);
     return "";
   }
+}
+
+function RawMeta(props) {
+  let [tp, ] = props.data;
+  return <Type data={tp} />;
 }
 
 export default Docs;
