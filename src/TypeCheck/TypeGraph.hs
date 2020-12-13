@@ -48,15 +48,15 @@ buildTypeEnv :: FEnv -> VObjectMap -> FEnv
 buildTypeEnv env objMap = buildUnionObj env (map fst objMap)
 
 inferArgFromPartial :: FEnv -> PartialType -> Type
-inferArgFromPartial FEnv{feTypeGraph, feClassMap} (PTypeName partialName, partialVars, partialProps, partialArgs) = do
-  let typeArrows = H.lookupDefault [] partialName feTypeGraph
+inferArgFromPartial FEnv{feTypeGraph, feClassMap} partial@PartialType{ptName=PTypeName name, ptArgs} = do
+  let typeArrows = H.lookupDefault [] name feTypeGraph
   unionTypes feClassMap $ map tryArrow typeArrows
   where
-    tryArrow (Object _ _ _ _ objArgs, _) = if H.keysSet partialArgs `isSubsetOf` H.keysSet objArgs
-      then SumType $ joinPartialLeafs $ map addArg $ S.toList $ S.difference (H.keysSet objArgs) (H.keysSet partialArgs)
+    tryArrow (Object _ _ _ _ objArgs, _) = if H.keysSet ptArgs `isSubsetOf` H.keysSet objArgs
+      then SumType $ joinPartialLeafs $ map addArg $ S.toList $ S.difference (H.keysSet objArgs) (H.keysSet ptArgs)
       else bottomType
-    addArg arg = (PTypeName partialName, partialVars, partialProps, H.insertWith (unionType feClassMap) arg TopType partialArgs)
-inferArgFromPartial _ (PClassName _, _, _, _) = bottomType
+    addArg arg = partial{ptArgs=H.insertWith (unionType feClassMap) arg TopType ptArgs}
+inferArgFromPartial _ PartialType{ptName=PClassName{}} = bottomType
 
 isTypeVar :: Type -> Bool
 isTypeVar TypeVar{} = True
@@ -84,8 +84,8 @@ reachesHasCutSubtypeOf classMap venv (ReachesTree children) superType = all chil
 reachesHasCutSubtypeOf classMap venv (ReachesLeaf leafs) superType = any (\t -> hasTypeWithVarEnv classMap venv t superType) leafs
 
 reachesPartial :: FEnv -> PartialType -> TypeCheckResult ReachesTree
-reachesPartial env@FEnv{feTypeGraph, feClassMap} partial@(PTypeName partialName, _, _, _) = do
-  let typeArrows = H.lookupDefault [] partialName feTypeGraph
+reachesPartial env@FEnv{feTypeGraph, feClassMap} partial@PartialType{ptName=PTypeName name} = do
+  let typeArrows = H.lookupDefault [] name feTypeGraph
   schemes <- mapM tryArrow typeArrows
   return $ ReachesLeaf $ catMaybes schemes
   where
@@ -102,7 +102,7 @@ reachesPartial env@FEnv{feTypeGraph, feClassMap} partial@(PTypeName partialName,
             sarr <- showArrow env arr
             return $ Just $ unionTypes feClassMap [arrowDestType True feClassMap potentialSrcPartial sobj sarr | potentialSrcPartial <- splitPartialLeafs potSrcLeafs]
           else return Nothing
-reachesPartial env@FEnv{feClassMap} partial@(PClassName _, _, _, _) = reaches env (expandClassPartial feClassMap partial)
+reachesPartial env@FEnv{feClassMap} partial@PartialType{ptName=PClassName{}} = reaches env (expandClassPartial feClassMap partial)
 
 reaches :: FEnv -> Type -> TypeCheckResult ReachesTree
 reaches _     TopType            = return $ ReachesLeaf [TopType]

@@ -10,6 +10,7 @@
 --------------------------------------------------------------------
 
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 module Emit where
 
@@ -58,7 +59,7 @@ genType _ t | t == boolType = i1
 genType _ t | t == floatType = double
 genType _ t | t == strType = ptr i8
 genType varEnv (SumType leafs) = case splitPartialLeafs leafs of
-  [(_, partialVars, _, partialArgs)] -> structType $ H.elems $ fmap (genType (H.union partialVars varEnv)) partialArgs
+  [PartialType{ptVars, ptArgs}] -> structType $ H.elems $ fmap (genType (H.union ptVars varEnv)) ptArgs
   _ -> error "genType does not have a single partial"
 genType varEnv (TypeVar (TVVar v)) = case H.lookup v varEnv of
   Just t -> genType varEnv t
@@ -116,9 +117,9 @@ codegenTree = undefined
 --     _ -> error "Invalid input to tuple application"
 
 codegenDecl :: LEnv -> String -> PartialType -> ResArrowTree EPrim -> LLVM ()
-codegenDecl _ name tp@(_, _, _, args) _ = define (genType H.empty $ singletonType tp) (SBS.toShort $ BSU.fromString name) args' blks
+codegenDecl _ name tp@PartialType{ptArgs} _ = define (genType H.empty $ singletonType tp) (SBS.toShort $ BSU.fromString name) args' blks
   where
-    args' = map(\(argName, argTp) -> (genType H.empty argTp, AST.Name $ SBS.toShort $ BSU.fromString argName)) $ H.toList args
+    args' = map(\(argName, argTp) -> (genType H.empty argTp, AST.Name $ SBS.toShort $ BSU.fromString argName)) $ H.toList ptArgs
     blks = createBlocks $ execCodegen [] $ do
       ent <- addBlock (BSU.toString $ SBS.fromShort entryBlockName)
       _ <- setBlock ent
@@ -149,7 +150,7 @@ codegenStruct (Object objM _ _ _ args) = struct name (map (\(argM, _) -> genType
 
 applyIO :: EExpr -> EExpr
 applyIO input@(Value m name) = TupleApply applyMeta (m, input) "io" (Arg (Typed ioType) "io")
-  where applyMeta = Typed $ singletonType (PTypeName name, H.empty, H.empty, H.singleton "io" ioType)
+  where applyMeta = Typed $ singletonType (PartialType (PTypeName name) H.empty H.empty (H.singleton "io" ioType) PtArgExact)
 applyIO _ = error "Bad applyIO"
 
 codegenPrgm :: EExpr -> PartialType -> Type -> EPrgm -> LLVM ()

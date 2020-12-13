@@ -54,23 +54,23 @@ updateSchemeProp env@FEnv{feClassMap} (superM, superScheme@(SType superUb superL
       (env3, pure superScheme, sub'')
     (SumType supPartials, TypeVar{}) -> do
       let supPartialList = splitPartialLeafs supPartials
-      let intersectPartials (supName, supVars, supProps, supArgs) = Just (supName, supVars, supProps, H.insert propName subUb supArgs)
+      let intersectPartials sup@PartialType{ptArgs=supArgs} = Just (sup{ptArgs=H.insert propName subUb supArgs})
       let supPartialList' = catMaybes $ [intersectPartials sup | sup <- supPartialList]
       wrapUbs (SumType $ joinPartialLeafs supPartialList', subUb)
     (SumType supPartials, TopType) -> do
       let supPartialList = splitPartialLeafs supPartials
-      let getProp (_, _, _, supArgs) = H.lookup propName supArgs
+      let getProp PartialType{ptArgs=supArgs} = H.lookup propName supArgs
       let sub' = unionTypes feClassMap $ mapMaybe getProp supPartialList
       wrapUbs (superUb, sub')
     (SumType supPartials, SumType subPartials) -> do
       let supPartialList = splitPartialLeafs supPartials
       let subPartialList = splitPartialLeafs subPartials
-      let intersectPartials (supName, supVars, supProps, supArgs) sub = case H.lookup propName supArgs of
+      let intersectPartials sup@PartialType{ptArgs=supArgs} sub = case H.lookup propName supArgs of
             Just supProp -> do
               let newProp = intersectTypes feClassMap supProp (singletonType sub)
               if isBottomType newProp
                 then Nothing
-                else Just ((supName, supVars, supProps, H.insert propName newProp supArgs), newProp)
+                else Just (sup{ptArgs=H.insert propName newProp supArgs}, newProp)
             Nothing -> Nothing
       let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectPartials sup sub | sup <- supPartialList, sub <- subPartialList]
       wrapUbs (SumType $ joinPartialLeafs supPartialList', unionTypes feClassMap subPartialList')
@@ -84,24 +84,24 @@ updateSchemeVar FEnv{feClassMap} (SType superUb superLb superDesc) varName (STyp
       (TopType, sub) -> (TopType, sub)
       (SumType supPartials, TopType) -> do
         let supPartialList = splitPartialLeafs supPartials
-        let getVar (_, supVars, _, _) = H.lookup varName supVars
+        let getVar PartialType{ptVars=supVars} = H.lookup varName supVars
         let sub = unionTypes feClassMap $ mapMaybe getVar supPartialList
         (superUb, sub)
       (SumType supPartials, SumType subPartials) -> do
         let supPartialList = splitPartialLeafs supPartials
         let subPartialList = splitPartialLeafs subPartials
-        let intersectPartials (supName, supVars, supProps, supArgs) sub = case H.lookup varName supVars of
+        let intersectPartials sup@PartialType{ptVars=supVars} sub = case H.lookup varName supVars of
               Just supVar -> do
                 let newVar = intersectTypes feClassMap supVar (singletonType sub)
                 if isBottomType newVar
                   then Nothing
-                  else Just ((supName, H.insert varName newVar supVars, supProps, supArgs), newVar)
-              Nothing -> Just ((supName, H.insert varName (singletonType sub) supVars, supProps, supArgs), singletonType sub)
+                  else Just (sup{ptVars=H.insert varName newVar supVars}, newVar)
+              Nothing -> Just (sup{ptVars=H.insert varName (singletonType sub) supVars}, singletonType sub)
         let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectPartials sup sub | sup <- supPartialList, sub <- subPartialList]
         (SumType $ joinPartialLeafs supPartialList', unionTypes feClassMap subPartialList')
       (SumType supPartials, subT@TypeVar{}) -> do
         let supPartialList = splitPartialLeafs supPartials
-        let intersectPartials sup@(_, supVars, _, _) = case H.lookup varName supVars of
+        let intersectPartials sup@PartialType{ptVars=supVars} = case H.lookup varName supVars of
               Just supVar -> do
                 if supVar == subT
                   then Just sup
@@ -117,7 +117,7 @@ addArgToType _ TypeVar{} _ = error "addArgToType TypeVar"
 addArgToType FEnv{feClassMap} (SumType partials) newArg = Just $ SumType partials'
   where
     partials' = joinPartialLeafs $ map fromPartial $ splitPartialLeafs partials
-    fromPartial (partialName, partialVars, partialProps, partialArgs) = (partialName, partialVars, partialProps, H.insertWith (unionType feClassMap) newArg TopType partialArgs)
+    fromPartial partial@PartialType{ptArgs} = partial{ptArgs=H.insertWith (unionType feClassMap) newArg TopType ptArgs}
 
 addInferArgToType :: FEnv -> Type -> Maybe Type
 addInferArgToType _ TopType = Nothing

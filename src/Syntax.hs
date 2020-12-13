@@ -67,7 +67,7 @@ instance Meta Typed where
 type ArgMetaMapWithSrc m = H.HashMap ArgName (m, Type)
 formArgMetaMapWithSrc :: ClassMap -> Object m -> PartialType -> ArgMetaMapWithSrc m
 formArgMetaMapWithSrc _ (Object m _ name _ args) src | H.null args = H.singleton name (m, singletonType src)
-formArgMetaMapWithSrc classMap (Object _ _ _ _ args) (_, _, _, srcArgs) = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg args
+formArgMetaMapWithSrc classMap (Object _ _ _ _ args) PartialType{ptArgs=srcArgs} = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg args
   where
     unionCombine _ _ = error "Duplicate var matched"
     fromArg k (m, Nothing) = case H.lookup k srcArgs of
@@ -82,7 +82,7 @@ formArgMetaMapWithSrc classMap (Object _ _ _ _ args) (_, _, _, srcArgs) = H.fold
     mergeMaps (x:xs) = foldr (H.intersectionWith (\(m1, t1) (_, t2) -> (m1, unionType classMap t1 t2))) x xs
 
 formVarMap :: ClassMap -> Type -> TypeVarEnv
-formVarMap classMap (SumType partialLeafs) = unionsWith (unionType classMap) $ map (\(_, vars, _, _) -> vars) $ splitPartialLeafs partialLeafs
+formVarMap classMap (SumType partialLeafs) = unionsWith (unionType classMap) $ map ptVars $ splitPartialLeafs partialLeafs
 formVarMap _ _ = error "Unknown formVarMap"
 
 -- fullDest means to use the greatest possible type (after implicit).

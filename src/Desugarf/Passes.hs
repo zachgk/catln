@@ -8,6 +8,7 @@
 -- Portability: non-portable
 --
 --------------------------------------------------------------------
+{-# LANGUAGE NamedFieldPuns #-}
 
 module Desugarf.Passes where
 
@@ -32,11 +33,15 @@ typeNameToClass (objMap, classMap@(typeToClass, classToTypes), annots) = mapMeta
     mapType (TypeVar TVArg{}) = error "Invalid arg type"
     mapType (SumType partials) = unionTypes classMap $ map mapPartial $ splitPartialLeafs partials
       where
-        mapPartial (PTypeName name, partialVars, partialProps, partialArgs) = singletonType (name', fmap mapType partialVars, fmap mapType partialProps, fmap mapType partialArgs)
+        mapPartial (PartialType (PTypeName name) partialVars partialProps partialArgs partialArgMode) = singletonType (PartialType name' (fmap mapType partialVars) (fmap mapType partialProps) (fmap mapType partialArgs) partialArgMode)
           where name' = case H.lookup name classToTypes' of
                   -- is a class, replace with class type
                   Just _ -> PClassName name
 
                   -- is data, use data after recursively cleaning classes
                   Nothing -> PTypeName name
-        mapPartial (PClassName name, partialVars, partialProps, partialArgs) = singletonType (PClassName name, fmap mapType partialVars, fmap mapType partialProps, fmap mapType partialArgs)
+        mapPartial partial@PartialType{ptName=PClassName{}, ptVars, ptProps, ptArgs} = singletonType $ partial{
+          ptVars = fmap mapType ptVars,
+          ptProps = fmap mapType ptProps,
+          ptArgs = fmap mapType ptArgs
+                                                                                                              }

@@ -37,7 +37,7 @@ liftBinOp :: Type -> Type -> Type -> TypeName -> (Operand -> Operand -> AST.Inst
 liftBinOp lType rType resType name f = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "operator" ++ name
-    srcType = (PTypeName name', H.empty, H.empty, H.fromList [("l", lType), ("r", rType)])
+    srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("l", lType), ("r", rType)]) PtArgAny
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "l" args, H.lookup "r" args) of
                            (Just (LLVMOperand _ l), Just (LLVMOperand _ r)) -> LLVMOperand resType $ do
                              l' <- l
@@ -57,7 +57,7 @@ rneg :: TypeName -> Op
 rneg name = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "operator" ++ name
-    srcType = (PTypeName name', H.empty, H.empty, H.singleton "a" intType)
+    srcType = PartialType (PTypeName name') H.empty H.empty (H.singleton "a" intType) PtArgAny
     resType = intType
     prim = EPrim srcType NoGuard (\args -> case H.lookup "a" args of
                            Just (LLVMOperand _ a') -> LLVMOperand intType $ do
@@ -100,7 +100,7 @@ strEq :: Op
 strEq = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "operator=="
-    srcType = (PTypeName name', H.empty, H.empty, H.fromList [("l", strType), ("r", strType)])
+    srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("l", strType), ("r", strType)]) PtArgAny
     resType = boolType
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "l" args, H.lookup "r" args) of
                            (Just (LLVMOperand _ l), Just (LLVMOperand _ r)) -> LLVMOperand boolType $ do
@@ -114,7 +114,7 @@ intToString :: Op
 intToString = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "toString"
-    srcType = (PTypeName name', H.empty, H.empty, H.singleton "this" intType)
+    srcType = PartialType (PTypeName name') H.empty H.empty (H.singleton "this" intType) PtArgAny
     resType = strType
     prim = EPrim srcType NoGuard (\args -> case H.lookup "this" args of
                            Just (LLVMOperand _ _) -> LLVMOperand strType (pure $ cons $ C.Int 64 0) --TODO: Should do actual conversion
@@ -125,7 +125,7 @@ ioExit :: Op
 ioExit = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "exit"
-    srcType = (PTypeName name', H.empty, H.empty, H.fromList [("this", ioType), ("val", intType)])
+    srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("this", ioType), ("val", intType)]) PtArgAny
     resType = ioType
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "this" args, H.lookup "val" args) of
                            (Just (LLVMIO _), Just (LLVMOperand _ r)) -> LLVMIO $ do
@@ -140,7 +140,7 @@ println :: Op
 println = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "println"
-    srcType = (PTypeName name', H.empty, H.empty, H.fromList [("this", ioType), ("msg", strType)])
+    srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("this", ioType), ("msg", strType)]) PtArgAny
     resType = ioType
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "this" args, H.lookup "msg" args) of
                            (Just (LLVMIO _), Just (LLVMOperand _ s)) -> LLVMIO $ do

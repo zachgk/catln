@@ -85,7 +85,7 @@ buildExpr (_, _, _, classMap) _ (TupleApply (Typed (SumType prodTypes)) (Typed b
       let argVal = ExprArrow argExpr leafArgs
       return $ ResArrowTupleApply baseBuild argName argVal
   where
-    getLeafArgs (_, _, _, leafArgs) = case H.lookup argName leafArgs of
+    getLeafArgs PartialType{ptArgs=leafArgs} = case H.lookup argName leafArgs of
       Just leafArg -> return leafArg
       Nothing -> CErr [MkCNote $ BuildTreeCErr "buildExpr could not find expected args"]
 buildExpr _ _ _ = error "Bad buildExpr"
@@ -131,17 +131,17 @@ buildGuardArrows env obj input visitedArrows srcType destType guards = case guar
     ltry tree = envLookupTry env obj visitedArrows srcType destType tree
 
 findResArrows :: (Eq f, Hashable f) => TBEnv f -> PartialType -> Type -> CRes [ResBuildEnvItem f]
-findResArrows (resEnv, _, _, classMap) srcType@(PTypeName srcName, _, _, _) destType = case H.lookup srcName resEnv of
+findResArrows (resEnv, _, _, classMap) srcType@PartialType{ptName=PTypeName srcName} destType = case H.lookup srcName resEnv of
   Just resArrowsWithName -> do
     let resArrows = filter (\(arrowType, _, _) -> subPartialOf classMap srcType arrowType) resArrowsWithName
     -- TODO: Sort resArrows by priority order before trying
     return resArrows
   Nothing -> CErr [MkCNote $ BuildTreeCErr $ "Failed to find any arrows from " ++ show srcType ++ " to " ++ show destType]
-findResArrows _ (PClassName _, _, _, _) _ = error "Can't findResArrows for class"
+findResArrows _ PartialType{ptName=PClassName{}} _ = error "Can't findResArrows for class"
 
 envLookup :: (Eq f, Hashable f) => TBEnv f -> TBObject -> ResArrowTree f -> VisitedArrows f -> PartialType -> Type -> CRes (ResArrowTree f)
 envLookup (_, _, _, classMap) _ input _ srcType destType | hasPartial classMap srcType destType = return input
-envLookup env obj input visitedArrows srcType@(PTypeName _, _, _, _) destType = do
+envLookup env obj input visitedArrows srcType@PartialType{ptName=PTypeName{}} destType = do
   resArrows <- findResArrows env srcType destType
   let guards = (\(a,b,c) -> (concat a, concat b, concat c)) $ unzip3 $ map (\case
                         (_, NoGuard, a) -> ([a input], [], [])
@@ -149,7 +149,7 @@ envLookup env obj input visitedArrows srcType@(PTypeName _, _, _, _) destType = 
                         (_, ElseGuard, a) -> ([], [], [a input])
                     ) resArrows
   buildGuardArrows env obj input visitedArrows srcType destType guards
-envLookup env@(_, _, _, classMap) obj input visitedArrows srcType@(PClassName _, _, _, _) destType = do
+envLookup env@(_, _, _, classMap) obj input visitedArrows srcType@PartialType{ptName=PClassName{}} destType = do
   let (SumType expanded) = expandClassPartial classMap srcType
   let expanded' = splitPartialLeafs expanded
   expandedTrees <- mapM (\expandedSrc -> envLookup env obj input visitedArrows expandedSrc destType) expanded'

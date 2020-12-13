@@ -10,6 +10,7 @@
 --------------------------------------------------------------------
 
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 module TypeCheck.Encode where
 
@@ -199,7 +200,7 @@ addObjArg fakeObj objM prefix varMap env (n, (m, maybeSubObj)) = do
 clearMetaArgTypes :: PreMeta -> PreMeta
 clearMetaArgTypes (PreTyped (SumType partials) pos) = PreTyped (SumType $ joinPartialLeafs $ map clearPartialTypeArgs $ splitPartialLeafs partials) pos
   where
-    clearPartialTypeArgs (partialName, partialVars, partialProps, partialArgs) = (partialName, partialVars, partialProps, fmap (const TopType) partialArgs)
+    clearPartialTypeArgs partial@PartialType{ptArgs} = partial{ptArgs=fmap (const TopType) ptArgs}
 clearMetaArgTypes p = p
 
 fromObject :: String -> Bool -> FEnv -> PObject -> TypeCheckResult (VObject, FEnv)
@@ -210,10 +211,10 @@ fromObject prefix isObjArg env (Object m basis name vars args) = do
   let fakeObjForArgs = Object m' basis name vars' H.empty
   (args', env3) <- mapMWithFEnvMapWithKey env2 (addObjArg fakeObjForArgs m' prefix' vars') args
   let obj' = Object m' basis name vars' args'
-  (objValue, env4) <- fromMeta env3 BUpper (Just obj') (PreTyped (singletonType (PTypeName name, H.empty, H.empty, H.empty)) Nothing) ("objValue" ++ name)
+  (objValue, env4) <- fromMeta env3 BUpper (Just obj') (PreTyped (singletonType (PartialType (PTypeName name) H.empty H.empty H.empty PtArgExact)) Nothing) ("objValue" ++ name)
   let env5 = fInsert env4 name objValue
   let env6 = addConstraints env5 [BoundedByObjs BoundAllObjs m' | isObjArg]
-  let env7 = addConstraints env6 [BoundedByKnown m' (singletonType (PTypeName name, fmap (const TopType) vars, H.empty, fmap (const TopType) args)) | basis == FunctionObj || basis == PatternObj]
+  let env7 = addConstraints env6 [BoundedByKnown m' (singletonType (PartialType (PTypeName name) (fmap (const TopType) vars) H.empty (fmap (const TopType) args) PtArgExact)) | basis == FunctionObj || basis == PatternObj]
   return (obj', env7)
 
 -- Add all of the objects first for various expressions that call other top level functions

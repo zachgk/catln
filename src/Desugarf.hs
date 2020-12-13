@@ -196,7 +196,7 @@ desDecls = concatMap desDecl
 typeDefMetaToObj :: H.HashMap TypeVarName Type -> ParseMeta -> Maybe PObject
 typeDefMetaToObj _ (PreTyped TypeVar{} _) = Nothing
 typeDefMetaToObj varReplaceMap m@(PreTyped (SumType partials) _) = case splitPartialLeafs partials of
-  [(PTypeName partialName, partialVars, _, partialArgs)] -> Just $ Object m TypeObj partialName (fmap fixVar partialVars) (fmap (\arg -> (PreTyped arg Nothing, Nothing)) partialArgs)
+  [PartialType (PTypeName partialName) partialVars _ partialArgs _] -> Just $ Object m TypeObj partialName (fmap fixVar partialVars) (fmap (\arg -> (PreTyped arg Nothing, Nothing)) partialArgs)
     where
       fixVar v@(TypeVar (TVVar t)) = PreTyped (fromMaybe v $ H.lookup t varReplaceMap) Nothing
       fixVar v = PreTyped v Nothing
@@ -227,7 +227,7 @@ desClassDefs :: Sealed -> [RawClassDef] -> ClassMap
 desClassDefs sealed = foldr addDef empty
   where
     empty = (H.empty, H.empty)
-    addDef (typeName, className) (typeToClass, classToType) = (H.insertWith S.union typeName (S.singleton className) typeToClass, H.insertWith addClass className (sealed, H.empty, [singletonType (PTypeName typeName, H.empty, H.empty, H.empty)]) classToType)
+    addDef (typeName, className) (typeToClass, classToType) = (H.insertWith S.union typeName (S.singleton className) typeToClass, H.insertWith addClass className (sealed, H.empty, [singletonType (PartialType (PTypeName typeName) H.empty H.empty H.empty PtArgExact)]) classToType)
     addClass (cSealed, cVars, set1) (_, _, set2) = (cSealed, cVars, set1 ++ set2)
 
 mergeObjMaps :: DesObjectMap -> DesObjectMap -> DesObjectMap

@@ -169,7 +169,7 @@ pObjTreeVar = do
   pos <- getSourcePos
   maybeClass <- optional tidentifier
   var <- tvar
-  let tp = maybe TopType (\n -> singletonType (PTypeName n, H.empty, H.empty, H.empty)) maybeClass
+  let tp = maybe TopType (\n -> singletonType (PartialType (PTypeName n) H.empty H.empty H.empty PtArgExact)) maybeClass
   return (var, PreTyped tp (Just pos))
 
 pObjTreeArgPattern :: Parser (ArgName, PObjArg)
@@ -219,7 +219,7 @@ pTypeArg = do
   argName <- identifier
   _ <- symbol "="
   tp <- tidentifier
-  return (argName, singletonType (PTypeName tp, H.empty, H.empty, H.empty))
+  return (argName, singletonType (PartialType (PTypeName tp) H.empty H.empty H.empty PtArgExact))
 
 pTypeVar :: Parser Type
 pTypeVar = TypeVar . TVVar <$> tvar
@@ -232,7 +232,7 @@ pLeafType = do
   maybeArgs <- optional $ parens (sepBy1 pTypeArg (symbol ","))
   let vars = maybe H.empty H.fromList maybeVars
   let args = maybe H.empty H.fromList maybeArgs
-  return (PTypeName name, vars, H.empty, args)
+  return (PartialType (PTypeName name) vars H.empty args PtArgExact)
 
 pSingleType :: Parser Type
 pSingleType = pTypeVar

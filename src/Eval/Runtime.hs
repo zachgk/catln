@@ -35,7 +35,7 @@ liftIntOp :: TypeName -> (Integer -> Integer -> Integer) -> Op
 liftIntOp name f = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "operator" ++ name
-    srcType = (PTypeName name', H.empty, H.empty, H.fromList [("l", intType), ("r", intType)])
+    srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("l", intType), ("r", intType)]) PtArgAny
     resType = intType
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "l" args, H.lookup "r" args) of
                            (Just (IntVal l), Just (IntVal r)) -> IntVal $ f l r
@@ -46,7 +46,7 @@ liftCmpOp :: TypeName -> (Integer -> Integer -> Bool) -> Op
 liftCmpOp name f = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "operator" ++ name
-    srcType = (PTypeName name', H.empty, H.empty, H.fromList [("l", intType), ("r", intType)])
+    srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("l", intType), ("r", intType)]) PtArgAny
     resType = boolType
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "l" args, H.lookup "r" args) of
                            (Just (IntVal l), Just (IntVal r)) -> bool $ f l r
@@ -57,7 +57,7 @@ rneg :: TypeName -> Op
 rneg name = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "operator" ++ name
-    srcType = (PTypeName name', H.empty, H.empty, H.singleton "a" intType)
+    srcType = PartialType (PTypeName name') H.empty H.empty (H.singleton "a" intType) PtArgAny
     resType = intType
     prim = EPrim srcType NoGuard (\args -> case H.lookup "a" args of
                                   Just (IntVal i) -> IntVal $ -i
@@ -68,7 +68,7 @@ strEq :: Op
 strEq = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "operator=="
-    srcType = (PTypeName name', H.empty, H.empty, H.fromList [("l", strType), ("r", strType)])
+    srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("l", strType), ("r", strType)]) PtArgAny
     resType = boolType
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "l" args, H.lookup "r" args) of
                                   (Just (StrVal l), Just (StrVal r)) -> bool $ l == r
@@ -79,7 +79,7 @@ intToString :: Op
 intToString = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "toString"
-    srcType = (PTypeName name', H.empty, H.empty, H.singleton "this" intType)
+    srcType = PartialType (PTypeName name') H.empty H.empty (H.singleton "this" intType) PtArgAny
     resType = strType
     prim = EPrim srcType NoGuard (\args -> case H.lookup "this" args of
                                   (Just (IntVal val)) -> StrVal $ show val
@@ -91,7 +91,7 @@ ioExit :: Op
 ioExit = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "exit"
-    srcType = (PTypeName name', H.empty, H.empty, H.fromList [("this", ioType), ("val", intType)])
+    srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("this", ioType), ("val", intType)]) PtArgAny
     resType = ioType
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "this" args, H.lookup "val" args) of
                                   (Just (IOVal _ io), Just (IntVal val)) -> IOVal val io
@@ -102,7 +102,7 @@ println :: Op
 println = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "println"
-    srcType = (PTypeName name', H.empty, H.empty, H.fromList [("this", ioType), ("msg", strType)])
+    srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("this", ioType), ("msg", strType)]) PtArgAny
     resType = ioType
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "this" args, H.lookup "msg" args) of
                                   (Just (IOVal r io), Just (StrVal msg)) -> IOVal r (io >> putStrLn msg)
@@ -113,11 +113,11 @@ llvm :: Op
 llvm = (name', [(srcType, NoGuard, aux)])
   where
     name' = "llvm"
-    srcType = (PTypeName name', H.empty, H.empty, H.fromList [("c", TopType)])
+    srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("c", TopType)]) PtArgAny
     aux (ResEArrow input obj arr) = MacroArrow (ConstantArrow $ LLVMQueue [(input, obj, arr)]) (singletonType resultLeaf) (MacroFunction macroBuild)
     aux input = error $ printf "Unknown input to llvm macro: %s" (show input)
     macroBuild (ConstantArrow (LLVMQueue [(_, _, Arrow _ _ _ (Just expr))])) MacroData{mdPrgm} = case expr of
-      (TupleApply _ (_, Value _ "llvm") "c" f@(Value _ functionToCodegen)) -> ConstantArrow $ LLVMVal $ codegenPrgm f (PTypeName functionToCodegen, H.empty, H.empty, H.singleton "io" ioType) ioType mdPrgm
+      (TupleApply _ (_, Value _ "llvm") "c" f@(Value _ functionToCodegen)) -> ConstantArrow $ LLVMVal $ codegenPrgm f (PartialType (PTypeName functionToCodegen) H.empty H.empty (H.singleton "io" ioType) PtArgExact) ioType mdPrgm
       _ -> error $ printf "Unknown expr to llvm macro: %s" (show expr)
     macroBuild input _ = error $ printf "Unknown input to llvm build macro: %s" (show input)
 

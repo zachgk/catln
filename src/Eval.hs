@@ -110,27 +110,27 @@ evalBuildPrgm input srcType destType prgm@(objMap, classMap, _) = do
   return (initTree, env)
 
 evalPrgm :: EExpr -> PartialType -> Type -> EPrgm -> CRes (IO (Integer, EvalResult))
-evalPrgm input src@(PTypeName _, _, _, _) dest prgm = do
+evalPrgm input src@PartialType{ptName=PTypeName{}} dest prgm = do
   (initTree, env) <- evalBuildPrgm input src dest prgm
   let env2 = evalSetArgs env (H.singleton "io" (IOVal 0 $ pure ()))
   (res, env') <- eval env2 initTree
   case res of
     (IOVal r io) -> return (io >> pure (r, evalResult env'))
     _ -> CErr [MkCNote $ GenCErr "Eval did not return an instance of IO"]
-evalPrgm _ (PClassName _, _, _, _) _ _ = error "Can't eval class"
+evalPrgm _ PartialType{ptName=PClassName{}} _ _ = error "Can't eval class"
 
 evalMain :: EPrgm -> CRes (IO (Integer, EvalResult))
 evalMain = evalPrgm mainExpr mainPartial ioType
-  where mainPartial = (PTypeName "main", H.empty, H.empty, H.singleton "io" ioType)
-        mainPartialEmpty = Typed $ singletonType (PTypeName "main", H.empty, H.empty, H.empty)
+  where mainPartial = PartialType (PTypeName "main") H.empty H.empty (H.singleton "io" ioType) PtArgExact
+        mainPartialEmpty = Typed $ singletonType (PartialType (PTypeName "main") H.empty H.empty H.empty PtArgExact)
         mainExpr = TupleApply (Typed $ singletonType mainPartial) (mainPartialEmpty, Value mainPartialEmpty "main") "io" (Arg (Typed ioType) "io")
 
 evalMainb :: EPrgm -> CRes (IO (String, String, EvalResult))
 evalMainb prgm = do
   let srcName = "mainb"
-  let src = (PTypeName srcName, H.empty, H.empty, H.empty)
+  let src = PartialType (PTypeName srcName) H.empty H.empty H.empty PtArgExact
   let input = Value (Typed $ singletonType src) "mainb"
-  let dest = singletonType (PTypeName "CatlnResult", H.empty, H.empty, H.fromList [("name", strType), ("contents", strType)])
+  let dest = singletonType (PartialType (PTypeName "CatlnResult") H.empty H.empty (H.fromList [("name", strType), ("contents", strType)]) PtArgExact)
   (initTree, env) <- evalBuildPrgm input src dest prgm
   (res, env') <- eval env initTree
   case res of
