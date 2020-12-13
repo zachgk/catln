@@ -157,23 +157,23 @@ function Expr(props) {
     return (<span><Expr expr={base}/>({showArgs})</span>);
   case "RawMethods":
     let [mBase, methods] = expr.contents;
-    let showMethods = methods.map(method => <span>.<Expr expr={method}/></span>);
+    let showMethods = methods.map((method, methodIndex) => <span key={methodIndex}>.<Expr expr={method}/></span>);
     return (<span><Expr expr={mBase}/>{showMethods}</span>);
   case "RawIfThenElse":
     let [, ifExpr, thenExpr, elseExpr] = expr.contents;
     return (<span>if <Expr expr={ifExpr}/> then <Expr expr={thenExpr}/> else <Expr expr={elseExpr}/></span>);
   case "RawMatch":
     let [, matchExpr, matchPatterns] = expr.contents;
-    let showMPatterns = tagJoin(matchPatterns.map(pattern => {
+    let showMPatterns = tagJoin(matchPatterns.map((pattern, patternIndex) => {
       let [obj, guard] = pattern;
-      return (<span><Obj obj={obj} Meta={RawMeta}/><Guard guard={guard} Expr={Expr}/></span>);
+      return (<span key={patternIndex}><Obj obj={obj} Meta={RawMeta}/><Guard guard={guard} Expr={Expr}/></span>);
     }), "");
     return (<span>match <Expr expr={matchExpr}/> of <div style={useStyles.indented}>{showMPatterns}</div></span>);
   case "RawCase":
     let [, caseExpr, casePatterns] = expr.contents;
-    let showCPatterns = tagJoin(casePatterns.map(pattern => {
+    let showCPatterns = tagJoin(casePatterns.map((pattern, patternIndex) => {
       let [obj, guard] = pattern;
-      return (<span><Obj obj={obj} Meta={RawMeta}/><Guard guard={guard} Expr={Expr}/></span>);
+      return (<span key={patternIndex}><Obj obj={obj} Meta={RawMeta}/><Guard guard={guard} Expr={Expr}/></span>);
     }), "");
     return (<span>case <Expr expr={caseExpr}/> of <div style={useStyles.indented}>{showCPatterns}</div></span>);
   default:

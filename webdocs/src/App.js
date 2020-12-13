@@ -41,7 +41,7 @@ function App() {
           <Link to="/debug">
             <IconButton color="inherit" edge="end"><BugReportIcon /></IconButton>
           </Link>
-          <Link to="/llvm">
+          <Link to="/build">
             <IconButton color="inherit" edge="end"><BuildIcon /></IconButton>
           </Link>
           <Link to="/docs">

@@ -1,8 +1,6 @@
 import React from 'react';
 
-import SyntaxHighlighter from 'react-syntax-highlighter';
-
-import {useApi, Loading} from './Common';
+import {useApi, Loading, Val} from './Common';
 
 function Build() {
   let apiResult = useApi("/evalBuild");
@@ -15,32 +13,7 @@ function Build() {
 }
 
 function Main(props) {
-  let [fileName, fileContents] = props.data;
-  switch(fileName) {
-  case "out.ll":
-    return <BuildLlvm llvm={fileContents}/>;
-  case "index.html":
-    return <BuildWeb contents={fileContents}/>;
-  default:
-    console.error("Unknown build result", props);
-    return "";
-  }
-}
-
-function BuildLlvm(props) {
-  let {llvm} = props;
-  return (
-    <SyntaxHighlighter language="llvm">
-      {llvm}
-    </SyntaxHighlighter>
-  );
-}
-
-function BuildWeb(props) {
-  let {contents} = props;
-  return (
-    <iframe srcDoc={contents} title="Web display of build" />
-  );
+  return <Val data={props.data}/>;
 }
 
 export default Build;

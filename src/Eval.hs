@@ -139,7 +139,7 @@ evalMain = evalPrgm mainExpr mainPartial ioType
         mainPartialEmpty = Typed (singletonType (PartialType (PTypeName "main") H.empty H.empty H.empty PtArgExact)) Nothing
         mainExpr = TupleApply (Typed (singletonType mainPartial) Nothing) (mainPartialEmpty, Value mainPartialEmpty "main") "io" (Arg (Typed ioType Nothing) "io")
 
-evalMainb :: EPrgm -> CRes (IO (String, String, EvalResult))
+evalMainb :: EPrgm -> CRes (IO (Val, EvalResult))
 evalMainb prgm = do
   let srcName = "mainb"
   let src = PartialType (PTypeName srcName) H.empty H.empty H.empty PtArgExact
@@ -148,10 +148,10 @@ evalMainb prgm = do
   (initTree, env) <- evalBuildPrgm input src dest prgm
   (res, env') <- eval env initTree
   case res of
-    (TupleVal "CatlnResult" args) -> case (H.lookup "name" args, H.lookup "contents" args) of
-      (Just (StrVal n), Just (StrVal c)) -> return $ return (n, c, evalResult env')
+    val@(TupleVal "CatlnResult" args) -> case (H.lookup "name" args, H.lookup "contents" args) of
+      (Just (StrVal _), Just (StrVal _)) -> return $ return (val, evalResult env')
       _ -> CErr [MkCNote $ GenCErr "Eval mainb returned a CatlnResult with bad args"]
     (LLVMVal toCodegen) -> return $ do
       llvmStr <- codegenExInit toCodegen
-      return ("out.ll", llvmStr, evalResult env')
+      return (TupleVal "CatlnResult" (H.fromList [("name", StrVal "out.ll"), ("contents", StrVal llvmStr)]), evalResult env')
     _ -> CErr [MkCNote $ GenCErr "Eval mainb did not return a CatlnResult"]

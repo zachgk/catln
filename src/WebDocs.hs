@@ -16,6 +16,7 @@ module WebDocs where
 import Web.Scotty
 import Data.Aeson (ToJSON)
 
+import qualified Data.HashMap.Strict as H
 import qualified Data.Text.Lazy as T
 import           GHC.Generics          (Generic)
 
@@ -26,14 +27,14 @@ import           Eval (evalMain, evalMainb, evalAnnots)
 import Parser (readFiles)
 import Parser.Syntax (DesPrgm, PPrgm)
 import TypeCheck.Common (TraceConstrain, VPrgm, TPrgm)
-import Eval.Common (Val, EvalResult)
+import Eval.Common (Val(..), Val, EvalResult)
 import Syntax.Prgm (Expr)
 import Syntax (Typed)
 
 data ResSuccess a n = Success a [n]
   deriving (Generic, ToJSON)
 
-data ResFail n = ResFail [n]
+newtype ResFail n = ResFail [n]
   deriving (Generic, ToJSON)
 
 maybeJson :: ToJSON a => CRes a -> ActionM ()
@@ -74,13 +75,13 @@ getEvaluated includeStd fileName = do
     CRes _ r -> fst <$> r
     CErr _ -> return 999
 
-getEvalBuild :: Bool -> String -> IO (String, String)
+getEvalBuild :: Bool -> String -> IO Val
 getEvalBuild includeStd fileName = do
   base <- getTPrgm includeStd fileName
   let pre = base >>= evalMainb
   case pre of
-    CRes _ r -> (\(a, b, _) -> (a, b)) <$> r
-    CErr _ -> return ("", "")
+    CRes _ r -> fst <$> r
+    CErr _ -> return NoVal
 
 getEvalAnnots :: Bool -> String -> IO [(Expr Typed, Val)]
 getEvalAnnots includeStd fileName = do
@@ -95,7 +96,11 @@ getWeb includeStd fileName = do
   base <- getTPrgm includeStd fileName
   let pre = base >>= evalMainb
   case pre of
-    CRes _ r -> (\(_, b, _) -> b) <$> r
+    CRes _ r -> do
+      (TupleVal _ args, _) <- r
+      case H.lookup "contents" args of
+        Just (StrVal s) -> return s
+        _ -> return "";
     CErr _ -> return ""
 
 

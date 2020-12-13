@@ -157,17 +157,35 @@ function Obj(props) {
 function Val(props) {
   let val = props.data;
   switch(val.tag) {
+  case "IntVal":
+  case "FloatVal":
+  case "StrVal":
+    return <span>{val.contents}</span>;
   case "TupleVal":
     switch(val.name) {
     case "CatlnResult":
       return <CatlnResult data={val}/>;
     default:
-      console.error("Unknown val tuple name", val);
-      return "Unknown val tuple name";
+      let showArgs = "";
+      if(Object.keys(val.args).length > 0) {
+        showArgs = (
+          <span>
+            (
+            {tagJoin(Object.keys(val.args).map(arg => <span key={arg}>{arg} = <Val key={arg} data={val.args[arg]}/></span>), ", ")}
+            )
+          </span>
+        );
+      }
+
+      return <span>{val.name}{showArgs}</span>;
     }
+  case "IOVal":
+    return <span>IOVal</span>;
+  case "NoVal":
+    return <span>NoVal</span>;
   default:
     console.error("Unknown val tag", val);
-    return "Unknown val tag";
+    return <span>Unknown Val tag</span>;
   }
 }
 
