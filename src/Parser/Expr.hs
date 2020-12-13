@@ -219,7 +219,7 @@ pTypeArg = do
   argName <- identifier
   _ <- symbol "="
   tp <- tidentifier
-  return (argName, singletonType (PartialType (PTypeName tp) H.empty H.empty H.empty PtArgExact))
+  return (argName, singletonType (PartialType (PTypeName tp) H.empty H.empty H.empty PtArgAny))
 
 pTypeVar :: Parser Type
 pTypeVar = TypeVar . TVVar <$> tvar
@@ -232,7 +232,7 @@ pLeafType = do
   maybeArgs <- optional $ parens (sepBy1 pTypeArg (symbol ","))
   let vars = maybe H.empty H.fromList maybeVars
   let args = maybe H.empty H.fromList maybeArgs
-  return (PartialType (PTypeName name) vars H.empty args PtArgExact)
+  return (PartialType (PTypeName name) vars H.empty args PtArgAny)
 
 pSingleType :: Parser Type
 pSingleType = pTypeVar

@@ -138,7 +138,6 @@ singletonType partial = SumType $ joinPartialLeafs [partial]
 -- expands a class partial into a sum of the constituent type partials
 -- TODO: Should preserve type properties when expanding
 expandClassPartial :: ClassMap -> PartialType -> Type
--- expandClassPartial _ (PTypeName n, _, _, _) = error $ printf "Bad type name %s found in expandClassPartial" n
 expandClassPartial _ PartialType{ptName=PTypeName n} = error $ printf "Bad type name %s found in expandClassPartial" n
 expandClassPartial _ p@PartialType{ptName=PClassName{}, ptArgs} | not (H.null ptArgs) = error $ printf "expandClassPartial class with args: %s" (show p)
 expandClassPartial classMap@(_, classToType) PartialType{ptName=PClassName className, ptVars} = SumType $ joinPartialLeafs expanded
@@ -169,18 +168,20 @@ hasPartialWithEnv classMap@(typeToClass, _) venv aenv sub@(PartialType subName s
   (PTypeName typeName) -> checkDirect || any checkSuperClass (H.lookupDefault S.empty typeName typeToClass)
   PClassName{} -> checkDirect || hasTypeWithEnv classMap venv aenv (expandClassPartial classMap sub) super
   where
-    venv' = H.union subVars venv
+    venv' = fmap (substituteVarsWithVarEnv venv) subVars
+    aenv' = fmap (substituteArgsWithArgEnv aenv) subArgs
     checkDirect = case H.lookup subName superPartials of
       Just superArgsOptions -> any hasArgs superArgsOptions
       Nothing -> False
       where
         hasArgs (_, _, superArgs, _) | subArgMode == PtArgExact && H.keysSet subArgs /= H.keysSet superArgs = False
+        hasArgs (_, _, superArgs, superArgMode) | superArgMode == PtArgExact && not (H.keysSet subArgs `isSubsetOf` H.keysSet superArgs) = False
         hasArgs (superVars, _, _, _) | not (H.keysSet subVars `isSubsetOf` H.keysSet superVars) = False
         hasArgs (_, superProps, _, _) | not (H.keysSet subProps `isSubsetOf` H.keysSet superProps) = False
         hasArgs (superVars, superProps, superArgs, _) = hasAll subArgs superArgs && hasAll subProps superProps && hasAll subVars superVars
-        hasAll sb sp = and $ H.elems $ H.intersectionWith (hasTypeWithEnv classMap venv' aenv) sb sp
+        hasAll sb sp = and $ H.elems $ H.intersectionWith (hasTypeWithEnv classMap venv' aenv') sb sp
     checkSuperClass superClassName = case H.lookup (PClassName superClassName) superPartials of
-      Just superClassArgsOptions -> any (hasPartialWithEnv classMap venv' aenv sub . expandClassPartial classMap) $ splitPartialLeafs $ H.singleton (PClassName superClassName) superClassArgsOptions
+      Just superClassArgsOptions -> any (hasPartialWithEnv classMap venv' aenv' sub . expandClassPartial classMap) $ splitPartialLeafs $ H.singleton (PClassName superClassName) superClassArgsOptions
       Nothing -> False
 
 hasPartial :: ClassMap -> PartialType -> Type -> Bool
