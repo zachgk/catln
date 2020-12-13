@@ -28,9 +28,7 @@ function App() {
     <Router className="App">
       <AppBar position="static">
         <Toolbar>
-          <Typography>
-            <Typography component="hi" variant="h6" color="inherit" noWrap>Catln WebDocs</Typography>
-          </Typography>
+          <Typography variant="h6" color="inherit" noWrap>Catln WebDocs</Typography>
           <Link to="/desugar">
             <IconButton color="inherit" edge="end"><StarOutlineIcon /></IconButton>
           </Link>

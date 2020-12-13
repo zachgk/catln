@@ -15,7 +15,6 @@ function Build() {
 }
 
 function Main(props) {
-  console.log(props.data);
   let [fileName, fileContents] = props.data;
   switch(fileName) {
   case "out.ll":

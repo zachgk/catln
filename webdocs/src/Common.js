@@ -1,5 +1,7 @@
 import React, {useState, useEffect} from 'react';
 
+import SyntaxHighlighter from 'react-syntax-highlighter';
+
 function tagJoin(lst, joinWith) {
   return lst.reduce((acc, x) => acc == null ? [x] : <>{acc}{joinWith}{x}</>, null);
 }
@@ -78,9 +80,10 @@ function Type(props) {
   case "TypeVar":
     return t.contents.contents;
   case "SumType":
-    let partials = t.contents.map(partialOptions => {
+    var partials = []
+    t.contents.forEach(partialOptions => {
       let [partialName, options] = partialOptions;
-      return options.map((partialData, partialIndex) => {
+      options.forEach((partialData, partialIndex) => {
         let [partialVars, , partialArgs] = partialData;
 
         let showVars = "";
@@ -88,7 +91,7 @@ function Type(props) {
           showVars = (
             <span>
               &lt;
-              {tagJoin(Object.keys(partialVars).map(v => <><Type data={partialVars[v]}/> {v}</>), ", ")}
+            {tagJoin(Object.keys(partialVars).map(v => <span key={v}><Type data={partialVars[v]}/> {v}</span>), ", ")}
               &gt;
             </span>
           );
@@ -99,15 +102,15 @@ function Type(props) {
           showArgs = (
               <span>
               (
-                {tagJoin(Object.keys(partialArgs).map(arg => <><Type data={partialArgs[arg]}/> {arg}</>), ", ")}
+                {tagJoin(Object.keys(partialArgs).map(arg => <span key={arg}><Type data={partialArgs[arg]}/> {arg}</span>), ", ")}
               )
             </span>
           );
         }
 
-        return (<span key={partialIndex}>{partialName.contents}{showVars}{showArgs}</span>);
+        partials.push(<span key={[partialName, partialIndex]}>{partialName.contents}{showVars}{showArgs}</span>);
       });
-    }).flat();
+    });
     return tagJoin(partials, " | ");
   default:
     console.error("Unknown type", t);
@@ -151,11 +154,48 @@ function Obj(props) {
          );
 }
 
+function Val(props) {
+  let val = props.data;
+  switch(val.tag) {
+  case "TupleVal":
+    switch(val.name) {
+    case "CatlnResult":
+      return <CatlnResult data={val}/>;
+    default:
+      console.error("Unknown val tuple name", val);
+      return "Unknown val tuple name";
+    }
+  default:
+    console.error("Unknown val tag", val);
+    return "Unknown val tag";
+  }
+}
+
+function CatlnResult(props) {
+  let data = props.data;
+  let fileName = data.args.name.contents;
+  let fileContents = data.args.contents.contents;
+  if(fileName.endsWith(".ll")) {
+    return (
+      <SyntaxHighlighter language="llvm">
+        {fileContents}
+      </SyntaxHighlighter>
+    );
+  } else if(fileName.endsWith(".html")) {
+    return <iframe srcDoc={fileContents} title={fileName} />;
+  } else {
+    return (
+      <pre>{fileContents}</pre>
+    );
+  }
+}
+
 export {
   tagJoin,
   useApi,
   Loading,
   Guard,
   Type,
-  Obj
+  Obj,
+  Val
 };

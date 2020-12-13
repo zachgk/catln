@@ -10,7 +10,7 @@ import {
   useRouteMatch
 } from 'react-router-dom';
 
-import {useApi, Loading, Obj, Guard, Type, tagJoin} from './Common';
+import {useApi, Loading, Obj, Guard, Type, Val, tagJoin} from './Common';
 
 const useStyles = {
   indented: {
@@ -29,7 +29,15 @@ function Docs() {
 }
 
 function Main(props) {
-  let [pages, ] = props.data;
+  let [pages, annots] = props.data;
+
+  var annotsMap = {};
+  annots.forEach(annot => {
+    let pos = annot[0].contents[0][1];
+    let val = annot[1];
+    annotsMap[posKey(pos)] = val;
+  });
+
   let { path } = useRouteMatch();
   return (
     <Switch>
@@ -42,7 +50,7 @@ function Main(props) {
             {pages.map((page, index) => <div key={page[0]}><Link to={`${path}/${index}`}>{page[0]}</Link></div>)}
           </Grid>
           <Grid item xs={8}>
-            <MainStatements pages={pages} />
+            <MainStatements pages={pages} annotsMap={annotsMap}/>
           </Grid>
         </Grid>
       </Route>
@@ -53,15 +61,15 @@ function Main(props) {
 function MainStatements(props) {
   let { curPage } = useParams();
   let statements = props.pages[parseInt(curPage)][1][1];
-  return <Statements statements={statements}/>;
+  return <Statements statements={statements} annotsMap={props.annotsMap} />;
 }
 
 function Statements(props) {
-  return props.statements.map((statement, index) => <Statement key={index} statement={statement}/>);
+  return props.statements.map((statement, index) => <Statement key={index} statement={statement} annotsMap={props.annotsMap}/>);
 }
 
 function Statement(props) {
-  let {statement} = props;
+  let {statement, annotsMap} = props;
   switch(statement.tag) {
   case "RawDeclStatement":
     let [lhs, subStatements, maybeExpr] = statement.contents;
@@ -101,7 +109,21 @@ function Statement(props) {
     let [instanceType, instanceClass] = statement.contents;
     return (<div>instance {instanceType} of {instanceClass}</div>);
   case "RawGlobalAnnot":
-    return (<Expr expr={statement.contents} />);
+    let pos = statement.contents.contents[0][1];
+    let val = annotsMap[posKey(pos)];
+
+    let showAnnotExpr = <Expr expr={statement.contents} />;
+    if(val.name === "#print") {
+      return (
+        <div>
+          {showAnnotExpr}
+          <br />
+          <Val data={val.args.p} />
+        </div>
+      );
+    } else {
+      return showAnnotExpr;
+    }
   case "RawComment":
     return (<p>{statement.contents}</p>);
   default:
@@ -163,6 +185,10 @@ function Expr(props) {
 function RawMeta(props) {
   let [tp, ] = props.data;
   return <Type data={tp} />;
+}
+
+function posKey(pos) {
+  return `${pos.name}-${pos.line}-${pos.col}`;
 }
 
 export default Docs;

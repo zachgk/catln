@@ -47,8 +47,8 @@ function Main(props) {
 }
 
 function VarMeta(props) {
-  const m = props.data;
-  return <span><Type data={m[1]}/>(<Pnt pnt={m[0]} />)</span>;
+  const [pnt, [tp, ], ] = props.data;
+  return <span><Type data={tp}/>(<Pnt pnt={pnt} />)</span>;
 }
 
 function TraceEpochs(props) {
@@ -74,7 +74,7 @@ function Trace(props) {
   let {trace} = props;
   let { curMeta } = useParams();
   curMeta = parseInt(curMeta);
-  return trace.map(constraintPair => {
+  return trace.map((constraintPair, constraintIndex) => {
     let [constraint, updates] = constraintPair;
 
     let filteredUpdates = updates.filter(update => update[0] === curMeta);
@@ -82,10 +82,10 @@ function Trace(props) {
       return null;
     }
 
-    let showUpdates = filteredUpdates.map(update => <Scheme scheme={update[1]} />);
+    let showUpdates = filteredUpdates.map((update, updateIndex) => <Scheme key={updateIndex} scheme={update[1]} />);
 
     return (
-      <div>
+      <div key={constraintIndex}>
         <b><Constraint constraint={constraint}/></b>
         {showUpdates}
       </div>

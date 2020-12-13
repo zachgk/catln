@@ -37,7 +37,7 @@ function ListProgram(props) {
 
 function Main(props) {
   let [objMap, ] = props.data;
-  return <ObjMap objMap={objMap} Meta={Type}/>;
+  return <ObjMap objMap={objMap} Meta={Meta}/>;
 }
 
 function ObjMap(props) {
@@ -45,8 +45,8 @@ function ObjMap(props) {
     <List component="nav">
       {props.objMap
         .sort((obj1, obj2) => obj1[0][2] < obj2[0][2])
-        .map(obj =>
-          <ObjArrows objas={obj} Meta={props.Meta} showExprMetas={props.showExprMetas}/>
+        .map((obj, objIndex) =>
+          <ObjArrows key={objIndex} objas={obj} Meta={props.Meta} showExprMetas={props.showExprMetas}/>
       )}
     </List>
   );
@@ -59,7 +59,7 @@ function ObjArrows(props) {
   if(Object.keys(arrows).length > 0) {
     showArrows = (
       <div>
-        {arrows.map(arrow => <Arrow arrow={arrow} Meta={props.Meta} showExprMetas={props.showExprMetas}/>)}
+        {arrows.map((arrow, arrowIndex) => <Arrow key={arrowIndex} arrow={arrow} Meta={props.Meta} showExprMetas={props.showExprMetas}/>)}
       </div>
     );
   }
@@ -128,6 +128,11 @@ function Expr(props) {
     console.error("Unknown renderExpr", expr);
     return "";
   }
+}
+
+function Meta(props) {
+  let [tp, ] = props.data;
+  return <Type data={tp} />;
 }
 
 export default ListProgram;
