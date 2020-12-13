@@ -68,7 +68,7 @@ genType _ TopType = i32 -- TODO: Should compute the top type
 genType _ t = error $ printf "Unsupported emit genType: %s" (show t)
 
 genTypeMeta :: EvalMeta -> AST.Type
-genTypeMeta (Typed t) = genType H.empty t
+genTypeMeta (Typed t _) = genType H.empty t
 
 arrowName :: EArrow -> String
 arrowName arrow = take 6 (printf "%08x" (hash arrow))
@@ -149,8 +149,8 @@ codegenStruct (Object objM _ _ _ args) = struct name (map (\(argM, _) -> genType
 -- mainObject = Object (Typed $ singletonType mainPartial) FunctionObj "main" H.empty (H.singleton "io" (Typed ioType, Nothing))
 
 applyIO :: EExpr -> EExpr
-applyIO input@(Value m name) = TupleApply applyMeta (m, input) "io" (Arg (Typed ioType) "io")
-  where applyMeta = Typed $ singletonType (PartialType (PTypeName name) H.empty H.empty (H.singleton "io" ioType) PtArgExact)
+applyIO input@(Value m name) = TupleApply applyMeta (m, input) "io" (Arg (Typed ioType Nothing) "io")
+  where applyMeta = Typed (singletonType (PartialType (PTypeName name) H.empty H.empty (H.singleton "io" ioType) PtArgExact)) Nothing
 applyIO _ = error "Bad applyIO"
 
 codegenPrgm :: EExpr -> PartialType -> Type -> EPrgm -> LLVM ()

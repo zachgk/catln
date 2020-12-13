@@ -48,9 +48,9 @@ resArrowDestType _ _ (ArgArrow tp _) = tp
 resArrowDestType _ _ t = error $ printf "Not yet implemented resArrowDestType for %s" (show t)
 
 leafsFromMeta :: TBMeta -> [PartialType]
-leafsFromMeta (Typed TopType) = error "leafFromMeta from TopType"
-leafsFromMeta (Typed TypeVar{}) = error "leafFromMeta from TypeVar"
-leafsFromMeta (Typed (SumType prodTypes)) = splitPartialLeafs prodTypes
+leafsFromMeta (Typed TopType _) = error "leafFromMeta from TopType"
+leafsFromMeta (Typed TypeVar{} _) = error "leafFromMeta from TypeVar"
+leafsFromMeta (Typed (SumType prodTypes) _) = splitPartialLeafs prodTypes
 
 buildTBEnv :: (Eq f, Hashable f) => ResBuildEnv f -> TBPrgm -> TBEnv f
 buildTBEnv primEnv prgm@(objMap, classMap, _) = baseEnv
@@ -67,14 +67,14 @@ buildExpr _ _ (CExpr _ c) = case c of
   (CInt i) -> return $ ConstantArrow $ IntVal i
   (CFloat i) -> return $ ConstantArrow $ FloatVal i
   (CStr i) -> return $ ConstantArrow $ StrVal i
-buildExpr (_, valEnv, _, _) _ (Value (Typed (SumType prodTypes)) name) = case splitPartialLeafs prodTypes of
+buildExpr (_, valEnv, _, _) _ (Value (Typed (SumType prodTypes) _) name) = case splitPartialLeafs prodTypes of
     (_:_:_) -> CErr [MkCNote $ BuildTreeCErr $ "Found multiple types for value " ++ name ++ "\n\t" ++ show prodTypes]
     [] -> CErr [MkCNote $ BuildTreeCErr $ "Found no types for value " ++ name ++ " with type " ++ show prodTypes]
     [prodType] -> return $ case H.lookup prodType valEnv of
       Just val -> val
       Nothing -> ResArrowTuple name H.empty
-buildExpr _ _ (Arg (Typed tp) name) = return $ ArgArrow tp name
-buildExpr (_, _, _, classMap) _ (TupleApply (Typed (SumType prodTypes)) (Typed baseType, baseExpr) argName argExpr) = case splitPartialLeafs prodTypes of
+buildExpr _ _ (Arg (Typed tp _) name) = return $ ArgArrow tp name
+buildExpr (_, _, _, classMap) _ (TupleApply (Typed (SumType prodTypes) _) (Typed baseType _, baseExpr) argName argExpr) = case splitPartialLeafs prodTypes of
     [] -> CErr [MkCNote $ BuildTreeCErr $ "Found no types for tupleApply " ++ show baseExpr ++ " with type " ++ show prodTypes ++ " and expr " ++ show argExpr]
     leaves -> do
       let baseBuild = ExprArrow baseExpr baseType
@@ -213,10 +213,10 @@ resolveTree env obj (ResArrowTupleApply input argName argVal) = do
 
 buildArrow :: (Eq f, Hashable f) => TBEnv f -> TBObject -> TBArrow -> CRes (Maybe (TBArrow, (ResArrowTree f, [ResArrowTree f])))
 buildArrow _ _ (Arrow _ _ _ Nothing) = return Nothing
-buildArrow env obj@(Object _ _ _ objVars _) arrow@(Arrow (Typed am) compAnnots _ (Just expr)) = do
+buildArrow env obj@(Object _ _ _ objVars _) arrow@(Arrow (Typed am _) compAnnots _ (Just expr)) = do
   let am' = case am of
         (TypeVar (TVVar v)) -> case H.lookup v objVars of
-          Just (Typed t) -> t
+          Just m -> getMetaType m
           Nothing -> error "Bad TVVar in makeBaseEnv"
         (TypeVar (TVArg v)) -> case H.lookup v $ formArgMetaMap obj of
           Just argMeta -> getMetaType argMeta
@@ -228,5 +228,5 @@ buildArrow env obj@(Object _ _ _ objVars _) arrow@(Arrow (Typed am) compAnnots _
 
 buildRoot :: (Eq f, Hashable f) => TBEnv f -> TBExpr -> PartialType -> Type -> CRes (ResArrowTree f)
 buildRoot env input src dest = do
-  let emptyObj = Object (Typed $ singletonType src) FunctionObj "EmptyObj" H.empty H.empty
+  let emptyObj = Object (Typed (singletonType src) Nothing) FunctionObj "EmptyObj" H.empty H.empty
   resolveTree env emptyObj (ExprArrow input dest)

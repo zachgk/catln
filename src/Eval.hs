@@ -118,7 +118,7 @@ evalAnnots prgm@(_, _, annots) = do
   forM annots $ \annot -> do
     let exprType = getMetaType $ getExprMeta annot
     let inTree = ExprArrow annot exprType
-    let emptyObj = Object (Typed exprType) FunctionObj "EmptyObj" H.empty H.empty
+    let emptyObj = Object (Typed exprType Nothing) FunctionObj "EmptyObj" H.empty H.empty
     tree <- resolveTree evTbEnv emptyObj inTree
     val <- fst <$> eval env tree
     return (annot, val)
@@ -136,14 +136,14 @@ evalPrgm _ PartialType{ptName=PClassName{}} _ _ = error "Can't eval class"
 evalMain :: EPrgm -> CRes (IO (Integer, EvalResult))
 evalMain = evalPrgm mainExpr mainPartial ioType
   where mainPartial = PartialType (PTypeName "main") H.empty H.empty (H.singleton "io" ioType) PtArgExact
-        mainPartialEmpty = Typed $ singletonType (PartialType (PTypeName "main") H.empty H.empty H.empty PtArgExact)
-        mainExpr = TupleApply (Typed $ singletonType mainPartial) (mainPartialEmpty, Value mainPartialEmpty "main") "io" (Arg (Typed ioType) "io")
+        mainPartialEmpty = Typed (singletonType (PartialType (PTypeName "main") H.empty H.empty H.empty PtArgExact)) Nothing
+        mainExpr = TupleApply (Typed (singletonType mainPartial) Nothing) (mainPartialEmpty, Value mainPartialEmpty "main") "io" (Arg (Typed ioType Nothing) "io")
 
 evalMainb :: EPrgm -> CRes (IO (String, String, EvalResult))
 evalMainb prgm = do
   let srcName = "mainb"
   let src = PartialType (PTypeName srcName) H.empty H.empty H.empty PtArgExact
-  let input = Value (Typed $ singletonType src) "mainb"
+  let input = Value (Typed (singletonType src) Nothing) "mainb"
   let dest = singletonType (PartialType (PTypeName "CatlnResult") H.empty H.empty (H.fromList [("name", strType), ("contents", strType)]) PtArgExact)
   (initTree, env) <- evalBuildPrgm input src dest prgm
   (res, env') <- eval env initTree

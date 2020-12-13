@@ -41,10 +41,10 @@ showMatchingConstraints :: FEnv -> VarMeta -> [SConstraint]
 showMatchingConstraints env@FEnv{feCons} matchVar = map (showCon env) $ filter (matchingConstraint env matchVar) feCons
 
 toMeta :: FEnv -> VarMeta -> String -> TypeCheckResult Typed
-toMeta env@FEnv{feClassMap} m@(VarMeta _ (PreTyped pt _) _) _ = case pointUb env m of
+toMeta env@FEnv{feClassMap} m@(VarMeta _ (PreTyped pt pos) _) _ = case pointUb env m of
   TypeCheckResult notes ub -> case pt of
-    TypeVar{} -> return $ Typed pt
-    _ -> TypeCheckResult notes $ Typed $ intersectTypes feClassMap ub pt
+    TypeVar{} -> return $ Typed pt pos
+    _ -> TypeCheckResult notes $ Typed (intersectTypes feClassMap ub pt) pos
   TypeCheckResE notes -> do
     let matchingConstraints = showMatchingConstraints env m
     TypeCheckResE $ map (TCWithMatchingConstraints matchingConstraints) notes
@@ -65,7 +65,7 @@ toExpr env (ITupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
   baseExpr' <- toExpr env baseExpr
   argExpr' <- toExpr env argExpr
   case m' of -- check for errors
-    tp@(Typed (SumType sumType)) | all (\PartialType{ptArgs=leafArgs} -> not (argName `H.member` leafArgs)) (splitPartialLeafs sumType) -> do
+    tp@(Typed (SumType sumType) _) | all (\PartialType{ptArgs=leafArgs} -> not (argName `H.member` leafArgs)) (splitPartialLeafs sumType) -> do
                                         let matchingConstraints = showMatchingConstraints env m
                                         TypeCheckResE [TCWithMatchingConstraints matchingConstraints $ TupleMismatch baseM' baseExpr' tp $ H.singleton argName argExpr']
     _ -> return $ TupleApply m' (baseM', baseExpr') argName argExpr'

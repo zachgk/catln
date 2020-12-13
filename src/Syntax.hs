@@ -40,14 +40,14 @@ data ReplRes m
 data PreTyped = PreTyped Type (Maybe SourcePos)
   deriving (Generic, Hashable, ToJSON)
 
-newtype Typed = Typed Type
+data Typed = Typed Type (Maybe SourcePos)
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 instance Show PreTyped where
   show (PreTyped t _) = show t
 
 instance Show Typed where
-  show (Typed t) = show t
+  show (Typed t _) = show t
 
 instance Hashable SourcePos where
   hashWithSalt s (SourcePos name line col) = s `hashWithSalt` show name `hashWithSalt` unPos line `hashWithSalt` unPos col
@@ -62,7 +62,7 @@ instance Meta PreTyped where
   getMetaType (PreTyped t _) = t
 
 instance Meta Typed where
-  getMetaType (Typed t) = t
+  getMetaType (Typed t _) = t
 
 type ArgMetaMapWithSrc m = H.HashMap ArgName (m, Type)
 formArgMetaMapWithSrc :: ClassMap -> Object m -> PartialType -> ArgMetaMapWithSrc m
