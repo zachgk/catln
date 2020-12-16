@@ -196,26 +196,23 @@ desDecls = concatMap desDecl
 typeDefMetaToObj :: H.HashMap TypeVarName Type -> ParseMeta -> Maybe PObject
 typeDefMetaToObj _ (PreTyped TypeVar{} _) = Nothing
 typeDefMetaToObj varReplaceMap m@(PreTyped (SumType partials) _) = case splitPartialLeafs partials of
-  [PartialType (PTypeName partialName) partialVars _ partialArgs _] -> Just $ Object m TypeObj partialName (fmap fixVar partialVars) (fmap (\arg -> (PreTyped arg Nothing, Nothing)) partialArgs)
+  [PartialType (PTypeName partialName) partialVars _ partialArgs _] -> Just $ Object m TypeObj partialName (fmap (toMeta . substituteVarsWithVarEnv varReplaceMap) partialVars) (fmap (\arg -> (PreTyped arg Nothing, Nothing)) partialArgs)
     where
-      fixVar v@(TypeVar (TVVar t)) = PreTyped (fromMaybe v $ H.lookup t varReplaceMap) Nothing
-      fixVar v = PreTyped v Nothing
+      toMeta t = PreTyped t Nothing
   _ -> error "Invalid call to typeDefMetaToObj with SumType"
 typeDefMetaToObj _ _ = error "Invalid call to typeDefMetaToObj"
 
-desMultiTypeDefs :: [PMultiTypeDef] -> (DesObjectMap, ClassMap)
-desMultiTypeDefs = foldr addTypeDef ([], (H.empty, H.empty))
+desMultiTypeDefs :: [PMultiTypeDef] -> DesPrgm
+desMultiTypeDefs multiDefs = mergeDesPrgms $ map buildTypeDef multiDefs
   where
-    addTypeDef (MultiTypeDef className classVars dataMetas) (objMap, (typeToClass, classToType)) = (objMap', (typeToClass', classToType'))
+    buildTypeDef (MultiTypeDef className classVars dataMetas) = (objMap', (typeToClass', classToType'), [])
       where
-        objMap' = mergeObjMaps objMap $ map (,[]) objs
+        objMap' = map (,[]) objs
         objNames = map (\(Object _ _ name _ _) -> name) objs
         dataTypes = map getMetaType dataMetas
         objs = mapMaybe (typeDefMetaToObj classVars) dataMetas
-        unionSealType (sealed, cv, a) (_, _, b) = (sealed, cv, a ++ b)
-        classToType' = H.insertWith unionSealType className (True, classVars, dataTypes) classToType
-        newTypeToClass = H.fromList $ map (,S.singleton className) objNames
-        typeToClass' = H.unionWith S.union typeToClass newTypeToClass
+        classToType' = H.singleton className (True, classVars, dataTypes)
+        typeToClass' = H.fromList $ map (,S.singleton className) objNames
 
 desTypeDefs :: [PTypeDef] -> DesObjectMap
 desTypeDefs = foldr addTypeDef []
@@ -223,8 +220,8 @@ desTypeDefs = foldr addTypeDef []
           Just obj -> \objs -> (obj, []) : objs
           Nothing -> error "Type def could not be converted into meta"
 
-desClassDefs :: Sealed -> [RawClassDef] -> ClassMap
-desClassDefs sealed = foldr addDef empty
+desClassDefs :: Sealed -> [RawClassDef] -> DesPrgm
+desClassDefs sealed classDefs = ([], foldr addDef empty classDefs, [])
   where
     empty = (H.empty, H.empty)
     addDef (typeName, className) (typeToClass, classToType) = (H.insertWith S.union typeName (S.singleton className) typeToClass, H.insertWith addClass className (sealed, H.empty, [singletonType (PartialType (PTypeName typeName) H.empty H.empty H.empty PtArgExact)]) classToType)
@@ -239,13 +236,23 @@ mergeClassMaps classMap@(toClassA, toTypeA) (toClassB, toTypeB) = (H.unionWith S
           then (sealedA, H.unionWith (unionType classMap) classVarsA classVarsB, setA ++ setB)
           else error "Added to sealed class definition"
 
+mergeDesPrgm :: DesPrgm -> DesPrgm -> DesPrgm
+mergeDesPrgm (objMap1, classMap1, annots1) (objMap2, classMap2, annots2) = (
+  objMap1 ++ objMap2,
+  mergeClassMaps classMap1 classMap2,
+  annots1 ++ annots2
+                                                                           )
+
+mergeDesPrgms :: Foldable f => f DesPrgm -> DesPrgm
+mergeDesPrgms = foldr mergeDesPrgm ([], (H.empty, H.empty), [])
+
 desGlobalAnnot :: PCompAnnot -> DesCompAnnot
 desGlobalAnnot p = case semiDesExpr p of
   ([], d) -> desExpr H.empty d
   _ -> error "Global annotations do not support sub-expressions and lambdas"
 
 desStatements :: [PStatement] -> DesPrgm
-desStatements statements = (objMap, classMap, annots')
+desStatements statements = prgm'
   where
     splitStatements statement = case statement of
           RawDeclStatement decl -> ([decl], [], [], [], [])
@@ -257,11 +264,12 @@ desStatements statements = (objMap, classMap, annots')
     (decls, multiTypes, types, classes, annots) = (\(a, b, c, d, e) -> (concat a, concat b, concat c, concat d, concat e)) $ unzip5 $ map splitStatements statements
     declObjMap = desDecls decls
     typeObjMap = desTypeDefs types
-    (multiTypeObjMap, sealedClasses) = desMultiTypeDefs multiTypes
-    unsealedClasses = desClassDefs False classes
-    objMap = foldr mergeObjMaps [] [declObjMap, multiTypeObjMap, typeObjMap]
-    classMap = mergeClassMaps sealedClasses unsealedClasses
+    multiTypeDefsPrgm = desMultiTypeDefs multiTypes
+    classDefsPrgm = desClassDefs False classes
+    objMap = foldr mergeObjMaps [] [declObjMap, typeObjMap]
     annots' = map desGlobalAnnot annots
+    miscPrgm = (objMap, (H.empty, H.empty), annots')
+    prgm' = mergeDesPrgms [multiTypeDefsPrgm, classDefsPrgm, miscPrgm]
 
 finalPasses :: DesPrgm -> DesPrgm
 finalPasses = expandDataReferences . typeNameToClass
