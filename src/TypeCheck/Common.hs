@@ -26,6 +26,7 @@ import           Syntax.Prgm
 import           Syntax
 import           Text.Printf
 import Data.Aeson (ToJSON)
+import qualified Data.HashSet as S
 
 data TypeCheckError
   = GenTypeCheckError String
@@ -217,6 +218,20 @@ tryIntersectTypes FEnv{feClassMap} a b desc = let c = intersectTypes feClassMap 
                                                                   then TypeCheckResE [GenTypeCheckError $ "Failed to intersect(" ++ desc ++ "): " ++ show a ++ " --- " ++ show b]
                                                                   else return c
 
+verifyScheme :: VarMeta -> Scheme -> Bool
+verifyScheme (VarMeta _ _ obj) (TypeCheckResult _ (SType ub _ _)) = verifyTypeVars (mobjVars obj) ub
+  where
+    verifyTypeVars venv (SumType partialLeafs) = all (verifyTypeVarsPartial venv) $ splitPartialLeafs partialLeafs
+    verifyTypeVars venv (TypeVar (TVVar v)) = S.member v venv
+    verifyTypeVars _ _ = True
+    verifyTypeVarsPartial venv PartialType{ptVars, ptArgs, ptProps} = all (verifyTypeVars venv) ptVars
+                                                                        && all (verifyTypeVars $ H.keysSet ptVars) ptArgs
+                                                                        && all (verifyTypeVars $ H.keysSet ptVars) ptProps
+
+    mobjVars (Just (Object _ _ _ objVars _)) = H.keysSet objVars
+    mobjVars Nothing = S.empty
+verifyScheme _ _ = True
+
 -- Point operations
 
 descriptor :: FEnv -> VarMeta -> Scheme
@@ -240,6 +255,7 @@ setDescriptor env@FEnv{fePnts, feTrace} m scheme' = env{fePnts = pnts', feTrace 
     pnts' = IM.insert p scheme' fePnts
     feTrace' = if schemeChanged
       then case feTrace of
+             _ | not (verifyScheme m scheme') -> error $ printf "Scheme failed verification during typechecking: %s \n\t\t in obj: %s" (show scheme') (show m)
              ((curConstraint, curChanged):curEpoch):prevEpochs -> ((curConstraint, (p, scheme'):curChanged):curEpoch):prevEpochs
              _ -> error "no epochs in feTrace"
       else feTrace

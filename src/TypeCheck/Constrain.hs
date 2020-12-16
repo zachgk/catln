@@ -65,7 +65,12 @@ updateSchemeProp env@FEnv{feClassMap} (superM, superScheme@(SType superUb superL
     (SumType supPartials, SumType subPartials) -> do
       let supPartialList = splitPartialLeafs supPartials
       let subPartialList = splitPartialLeafs subPartials
-      let intersectPartials sup@PartialType{ptArgs=supArgs} sub = case H.lookup propName supArgs of
+      let intersectPartials sup@PartialType{ptArgs=supArgs, ptVars=supVars} sub = case H.lookup propName supArgs of
+            Just (TypeVar (TVVar v)) -> do
+              let supVar = H.lookupDefault TopType v supVars
+              let newProp = intersectTypes feClassMap supVar (singletonType sub)
+              Just (sup{ptVars=H.insert v newProp supVars}, newProp)
+            Just (TypeVar TVArg{}) -> error $ printf "Not yet implemented"
             Just supProp -> do
               let newProp = intersectTypes feClassMap supProp (singletonType sub)
               if isBottomType newProp
