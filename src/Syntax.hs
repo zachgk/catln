@@ -27,6 +27,7 @@ import Syntax.Prgm
 import Data.Aeson hiding (Object)
 import Data.Maybe
 import Text.Megaparsec
+import Text.Printf
 
 type ParseErrorRes = ParseErrorBundle String Void
 
@@ -83,7 +84,7 @@ formArgMetaMapWithSrc classMap (Object _ _ _ _ args) PartialType{ptArgs=srcArgs}
 
 formVarMap :: ClassMap -> Type -> TypeVarEnv
 formVarMap classMap (SumType partialLeafs) = unionsWith (unionType classMap) $ map ptVars $ splitPartialLeafs partialLeafs
-formVarMap _ _ = error "Unknown formVarMap"
+formVarMap _ _ = error $ printf "Unknown formVarMap"
 
 -- fullDest means to use the greatest possible type (after implicit).
 -- Otherwise, it uses the minimal type that *must* be reached
@@ -93,7 +94,7 @@ arrowDestType fullDest classMap src obj@(Object objM _ _ _ _) (Arrow arrM _ _ ma
   _ -> joined
   where
     varEnv = formVarMap classMap $ intersectTypes classMap (getMetaType objM) (singletonType src)
-    argEnv = snd <$> formArgMetaMapWithSrc classMap obj src
+    argEnv = snd <$> formArgMetaMapWithSrc classMap obj ((\(SumType pl) -> head $ splitPartialLeafs pl) $ substituteVars $ singletonType src)
     substitute = substituteVarsWithVarEnv varEnv . substituteArgsWithArgEnv argEnv
     expr' = fmap (substitute . getMetaType . getExprMeta) maybeExpr
     arr' = substitute $ getMetaType arrM

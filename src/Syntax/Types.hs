@@ -336,10 +336,11 @@ powersetType (SumType partials) = SumType partials'
 substituteVarsWithVarEnv :: TypeVarEnv -> Type -> Type
 substituteVarsWithVarEnv venv (SumType partials) = SumType $ joinPartialLeafs $ map substitutePartial $ splitPartialLeafs partials
   where substitutePartial partial@PartialType{ptVars, ptProps, ptArgs} = partial{
-          ptProps = fmap (substituteVarsWithVarEnv venv') ptProps,
-          ptArgs = fmap (substituteVarsWithVarEnv venv') ptArgs
+          ptVars = fmap (substituteVarsWithVarEnv venv) ptVars,
+          ptProps = fmap (substituteVarsWithVarEnv ptVars') ptProps,
+          ptArgs = fmap (substituteVarsWithVarEnv ptVars') ptArgs
                                                                         }
-          where venv' = H.union venv ptVars
+          where ptVars' = fmap (substituteVarsWithVarEnv venv) ptVars
 substituteVarsWithVarEnv venv (TypeVar (TVVar v)) = case H.lookup v venv of
   Just v' -> v'
   Nothing -> error $ printf "Could not substitute unknown type var %s" v
