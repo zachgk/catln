@@ -77,7 +77,7 @@ type TypeArgEnv = H.HashMap ArgName Type
 type ArgEnv = H.HashMap ArgName Type
 
 instance Show PartialType where
-  show (PartialType ptName ptVars ptProps ptArgs ptArgMode) = concat [showName ptName, showTypeVars ptVars, showProps ptProps, showArgs ptArgs, show ptArgMode]
+  show (PartialType ptName ptVars ptProps ptArgs _) = concat [showName ptName, showTypeVars ptVars, showProps ptProps, showArgs ptArgs]
     where
       showName (PTypeName t) = t
       showName (PClassName t) = t
@@ -330,7 +330,7 @@ powersetType (SumType partials) = SumType partials'
   where
     partials' = joinPartialLeafs $ concatMap fromPartialType $ splitPartialLeafs partials
     fromArgs args = powerset $ H.toList args
-    fromPartialType (PartialType name vars props args argMode) = [PartialType name (H.fromList v) (H.fromList p) (H.fromList a) argMode | v <- fromArgs vars, p <- fromArgs props, a <- fromArgs args]
+    fromPartialType (PartialType name vars props args argMode) = [PartialType name vars (H.fromList p) (H.fromList a) argMode | p <- fromArgs props, a <- fromArgs args]
 
 substituteVarsWithVarEnv :: TypeVarEnv -> Type -> Type
 substituteVarsWithVarEnv venv (SumType partials) = SumType $ joinPartialLeafs $ map substitutePartial $ splitPartialLeafs partials
