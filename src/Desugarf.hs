@@ -195,9 +195,11 @@ desDecls = concatMap desDecl
 
 typeDefMetaToObj :: H.HashMap TypeVarName Type -> ParseMeta -> Maybe PObject
 typeDefMetaToObj _ (PreTyped TypeVar{} _) = Nothing
-typeDefMetaToObj varReplaceMap m@(PreTyped (SumType partials) _) = case splitPartialLeafs partials of
-  [PartialType (PTypeName partialName) partialVars _ partialArgs _] -> Just $ Object m TypeObj partialName (fmap (toMeta . substituteVarsWithVarEnv varReplaceMap) partialVars) (fmap (\arg -> (PreTyped arg Nothing, Nothing)) partialArgs)
+typeDefMetaToObj varReplaceMap (PreTyped (SumType partials) pos) = case splitPartialLeafs partials of
+  [partial@(PartialType (PTypeName partialName) partialVars _ partialArgs _)] -> Just $ Object m' TypeObj partialName (fmap toMeta partialVars') (fmap (\arg -> (PreTyped arg Nothing, Nothing)) partialArgs)
     where
+      partialVars' = fmap (substituteVarsWithVarEnv varReplaceMap) partialVars
+      m' = PreTyped (singletonType partial{ptVars=partialVars'}) pos
       toMeta t = PreTyped t Nothing
   _ -> error "Invalid call to typeDefMetaToObj with SumType"
 typeDefMetaToObj _ _ = error "Invalid call to typeDefMetaToObj"
