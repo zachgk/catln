@@ -168,8 +168,6 @@ hasPartialWithEnv classMap@(typeToClass, _) venv aenv sub@(PartialType subName s
   (PTypeName typeName) -> checkDirect || any checkSuperClass (H.lookupDefault S.empty typeName typeToClass)
   PClassName{} -> checkDirect || hasTypeWithEnv classMap venv aenv (expandClassPartial classMap sub) super
   where
-    venv' = fmap (substituteVarsWithVarEnv venv) subVars
-    aenv' = fmap (substituteArgsWithArgEnv aenv) subArgs
     checkDirect = case H.lookup subName superPartials of
       Just superArgsOptions -> any hasArgs superArgsOptions
       Nothing -> False
@@ -179,9 +177,12 @@ hasPartialWithEnv classMap@(typeToClass, _) venv aenv sub@(PartialType subName s
         hasArgs (superVars, _, _, _) | not (H.keysSet subVars `isSubsetOf` H.keysSet superVars) = False
         hasArgs (_, superProps, _, _) | not (H.keysSet subProps `isSubsetOf` H.keysSet superProps) = False
         hasArgs (superVars, superProps, superArgs, _) = hasAll subArgs superArgs && hasAll subProps superProps && hasAll subVars superVars
-        hasAll sb sp = and $ H.elems $ H.intersectionWith (hasTypeWithEnv classMap venv' aenv') sb sp
+          where
+            venv' = fmap (substituteVarsWithVarEnv venv) superVars
+            aenv' = fmap (substituteArgsWithArgEnv aenv) superArgs
+            hasAll sb sp = and $ H.elems $ H.intersectionWith (hasTypeWithEnv classMap venv' aenv') sb sp
     checkSuperClass superClassName = case H.lookup (PClassName superClassName) superPartials of
-      Just superClassArgsOptions -> any (hasPartialWithEnv classMap venv' aenv' sub . expandClassPartial classMap) $ splitPartialLeafs $ H.singleton (PClassName superClassName) superClassArgsOptions
+      Just superClassArgsOptions -> any (hasPartialWithEnv classMap venv aenv sub . expandClassPartial classMap) $ splitPartialLeafs $ H.singleton (PClassName superClassName) superClassArgsOptions
       Nothing -> False
 
 hasPartial :: ClassMap -> PartialType -> Type -> Bool

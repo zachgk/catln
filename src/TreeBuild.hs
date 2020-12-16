@@ -74,7 +74,7 @@ buildExpr (_, valEnv, _, _) _ (Value (Typed (SumType prodTypes) _) name) = case 
       Just val -> val
       Nothing -> ResArrowTuple name H.empty
 buildExpr _ _ (Arg (Typed tp _) name) = return $ ArgArrow tp name
-buildExpr (_, _, _, classMap) _ (TupleApply (Typed (SumType prodTypes) _) (Typed baseType _, baseExpr) argName argExpr) = case splitPartialLeafs prodTypes of
+buildExpr (_, _, _, classMap) (Object _ _ _ objVars _) (TupleApply (Typed (SumType prodTypes) _) (Typed baseType _, baseExpr) argName argExpr) = case splitPartialLeafs prodTypes of
     [] -> CErr [MkCNote $ BuildTreeCErr $ "Found no types for tupleApply " ++ show baseExpr ++ " with type " ++ show prodTypes ++ " and expr " ++ show argExpr]
     leaves -> do
       let baseBuild = ExprArrow baseExpr baseType
@@ -86,6 +86,8 @@ buildExpr (_, _, _, classMap) _ (TupleApply (Typed (SumType prodTypes) _) (Typed
       return $ ResArrowTupleApply baseBuild argName argVal
   where
     getLeafArgs PartialType{ptArgs=leafArgs} = case H.lookup argName leafArgs of
+      Just (TypeVar (TVVar v)) -> return $ H.lookupDefault TopType v $ fmap getMetaType objVars
+      Just (TypeVar TVArg{}) -> error "Not yet implemented: type arg in getLeafArgs"
       Just leafArg -> return leafArg
       Nothing -> CErr [MkCNote $ BuildTreeCErr "buildExpr could not find expected args"]
 buildExpr _ _ _ = error "Bad buildExpr"
