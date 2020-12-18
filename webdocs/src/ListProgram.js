@@ -123,7 +123,10 @@ function Expr(props) {
       showM = <i>[<Meta data={m}/>]</i>;
     }
 
-    return <span><Expr expr={base}/>({showArg} {showBaseM} <Expr expr={subExpr}/>){showM}</span>;
+    let showBase = <Expr expr={base} Meta={Meta} showMetas={showMetas}/>;
+    let showSubExpr = <Expr expr={subExpr} Meta={Meta} showMetas={showMetas}/>;
+
+    return <span>{showBase}({showArg} {showBaseM} {showSubExpr}){showM}</span>;
   default:
     console.error("Unknown renderExpr", expr);
     return "";

@@ -218,19 +218,21 @@ tryIntersectTypes FEnv{feClassMap} a b desc = let c = intersectTypes feClassMap 
                                                                   then TypeCheckResE [GenTypeCheckError $ "Failed to intersect(" ++ desc ++ "): " ++ show a ++ " --- " ++ show b]
                                                                   else return c
 
-verifyScheme :: VarMeta -> Scheme -> Bool
-verifyScheme (VarMeta _ _ obj) (TypeCheckResult _ (SType ub _ _)) = verifyTypeVars (mobjVars obj) ub
+verifyScheme :: ClassMap -> VarMeta -> Scheme -> Scheme -> Bool
+verifyScheme classMap (VarMeta _ _ mobj) (TypeCheckResult _ (SType oldUb _ _)) (TypeCheckResult _ (SType ub _ _)) = verifyTypeVars (mobjVars mobj) ub && verifySchemeUbLowers mobj
   where
     verifyTypeVars venv (SumType partialLeafs) = all (verifyTypeVarsPartial venv) $ splitPartialLeafs partialLeafs
     verifyTypeVars venv (TypeVar (TVVar v)) = S.member v venv
     verifyTypeVars _ _ = True
     verifyTypeVarsPartial venv PartialType{ptVars, ptArgs, ptProps} = all (verifyTypeVars venv) ptVars
-                                                                        && all (verifyTypeVars $ H.keysSet ptVars) ptArgs
-                                                                        && all (verifyTypeVars $ H.keysSet ptVars) ptProps
+                                                                        && all (verifyTypeVars (H.keysSet ptVars)) ptArgs
+                                                                        && all (verifyTypeVars (H.keysSet ptVars)) ptProps
 
     mobjVars (Just (Object _ _ _ objVars _)) = H.keysSet objVars
     mobjVars Nothing = S.empty
-verifyScheme _ _ = True
+    verifySchemeUbLowers (Just obj) = hasTypeWithObj classMap obj ub oldUb
+    verifySchemeUbLowers Nothing = hasType classMap ub oldUb
+verifyScheme _ _ _ _ = True
 
 -- Point operations
 
@@ -247,7 +249,7 @@ fresh env@FEnv{fePnts} scheme = (pnt', env{fePnts = pnts'})
     pnts' = IM.insert pnt' scheme fePnts
 
 setDescriptor :: FEnv -> VarMeta -> Scheme -> FEnv
-setDescriptor env@FEnv{fePnts, feTrace} m scheme' = env{fePnts = pnts', feTrace = feTrace'}
+setDescriptor env@FEnv{feClassMap, fePnts, feTrace} m scheme' = env{fePnts = pnts', feTrace = feTrace'}
   where
     p = getPnt m
     scheme = fePnts IM.! p
@@ -255,7 +257,7 @@ setDescriptor env@FEnv{fePnts, feTrace} m scheme' = env{fePnts = pnts', feTrace 
     pnts' = IM.insert p scheme' fePnts
     feTrace' = if schemeChanged
       then case feTrace of
-             _ | not (verifyScheme m scheme') -> error $ printf "Scheme failed verification during typechecking: %s \n\t\t in obj: %s" (show scheme') (show m)
+             _ | not (verifyScheme feClassMap m scheme scheme') -> error $ printf "Scheme failed verification during typechecking: %s \n\t\t in obj: %s with old scheme: %s" (show scheme') (show m) (show scheme)
              ((curConstraint, curChanged):curEpoch):prevEpochs -> ((curConstraint, (p, scheme'):curChanged):curEpoch):prevEpochs
              _ -> error "no epochs in feTrace"
       else feTrace

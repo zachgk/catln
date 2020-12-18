@@ -174,12 +174,10 @@ hasPartialWithEnv classMap@(typeToClass, _) venv aenv sub@(PartialType subName s
       where
         hasArgs (_, _, superArgs, _) | subArgMode == PtArgExact && H.keysSet subArgs /= H.keysSet superArgs = False
         hasArgs (_, _, superArgs, superArgMode) | superArgMode == PtArgExact && not (H.keysSet subArgs `isSubsetOf` H.keysSet superArgs) = False
-        hasArgs (superVars, _, _, _) | not (H.keysSet subVars `isSubsetOf` H.keysSet superVars) = False
-        hasArgs (_, superProps, _, _) | not (H.keysSet subProps `isSubsetOf` H.keysSet superProps) = False
         hasArgs (superVars, superProps, superArgs, _) = hasAll subArgs superArgs && hasAll subProps superProps && hasAll subVars superVars
           where
-            venv' = fmap (substituteVarsWithVarEnv venv) superVars
-            aenv' = fmap (substituteArgsWithArgEnv aenv) superArgs
+            venv' = substituteVarsWithVarEnv venv <$> H.unionWith (intersectTypes classMap) superVars subVars
+            aenv' = substituteArgsWithArgEnv aenv <$> H.unionWith (intersectTypes classMap) superArgs subArgs
             hasAll sb sp = and $ H.elems $ H.intersectionWith (hasTypeWithEnv classMap venv' aenv') sb sp
     checkSuperClass superClassName = case H.lookup (PClassName superClassName) superPartials of
       Just superClassArgsOptions -> any (hasPartialWithEnv classMap venv aenv sub . expandClassPartial classMap) $ splitPartialLeafs $ H.singleton (PClassName superClassName) superClassArgsOptions
@@ -263,12 +261,12 @@ intersectTypePartialLeaves classMap venv aPartials bPartials = partials'
       (varsVenvs, vars') <- unzip <$> intersectMap H.empty aVars bVars
       (propsVenvs, props') <- unzip <$> intersectMap venv aProps bProps
       (argsVenvs, args') <- unzip <$> intersectMap venv aArgs bArgs
-      let venvs' = mergeVenvs [mergeVenvs varsVenvs, mergeVenvs propsVenvs, mergeVenvs argsVenvs]
+      let venvs' = mergeVenvs [mergeVenvs propsVenvs, mergeVenvs argsVenvs, vars']
       let argMode' = case (aArgMode, bArgMode) of
             (PtArgAny, _) -> PtArgAny
             (_, PtArgAny) -> PtArgAny
             (PtArgExact, PtArgExact) -> PtArgExact
-      return (venvs', (vars', props', args', argMode'))
+      return (mergeVenvs varsVenvs, (venvs', props', args', argMode'))
 
     mergeVenvs p = foldr (H.unionWith (intersectTypes classMap)) H.empty p
     -- intersectMap unions so that all typeVars or props from either a or b are kept
