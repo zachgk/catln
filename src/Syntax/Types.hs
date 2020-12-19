@@ -360,3 +360,15 @@ substituteArgsWithArgEnv _ t = t
 
 substituteArgs :: Type -> Type
 substituteArgs = substituteArgsWithArgEnv H.empty
+
+-- gets arg while substituting the variables used in the surrounding context
+typeGetArg :: ArgName -> PartialType -> Maybe Type
+typeGetArg argName PartialType{ptArgs, ptVars} = do
+  arg <- H.lookup argName ptArgs
+  return $ case arg of
+    TopType -> TopType
+    TypeVar (TVVar v) -> H.lookupDefault TopType v ptVars
+    TypeVar (TVArg _) -> error $ printf "Not yet implemented"
+    SumType partialLeafs -> SumType $ joinPartialLeafs $ map substitutePartial $ splitPartialLeafs partialLeafs
+      where
+        substitutePartial partial@PartialType{ptVars=vs} = partial{ptVars = fmap (substituteVarsWithVarEnv ptVars) vs}

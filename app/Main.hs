@@ -54,12 +54,18 @@ processDes des = case aux of
     returnValue <- resIO
     case returnValue of
       (0, _) -> return ()
-      _ -> print $ "error code " ++ show returnValue
+      (i, _) -> print $ "error code " ++ show i
   where
     aux = do
       prgm <- des
       tprgm <- typecheckPrgm prgm
       evalMain tprgm
+
+mainStatement :: RawExpr PreTyped -> RawStatement PreTyped
+mainStatement expr = RawDeclStatement $ RawDecl lhs [] (Just wrappedExpr)
+  where
+    lhs = DeclLHS emptyMetaN (Pattern (Object emptyMetaN FunctionObj "main" H.empty (H.singleton "io" (PreTyped (singletonType (PartialType (PTypeName "IO") H.empty H.empty H.empty PtArgAny)) Nothing, Nothing))) NoGuard)
+    wrappedExpr = RawMethods (RawValue emptyMetaN "io") [RawTupleApply emptyMetaN (emptyMetaN, RawValue emptyMetaN "println") [RawTupleArgNamed "msg" (RawMethods expr [RawValue emptyMetaN "toString"])]]
 
 processRepl :: ReplEnv -> String -> IO ReplEnv
 processRepl env@(envRepl, envStd) source = do
@@ -68,8 +74,7 @@ processRepl env@(envRepl, envStd) source = do
     ReplErr err -> print err >> return env
     ReplExpr expr -> do
       -- main(IO io) = io.println(msg=expr.toString)
-      let exprAsMain = RawDeclStatement $ RawDecl (DeclLHS emptyMeta (Pattern (Object emptyMeta FunctionObj "main" H.empty (H.singleton "io" (PreTyped $ singletonType (PTypeName "IO", H.empty, H.empty, H.empty), Nothing))) NoGuard)) [] (Just $ RawMethods (RawValue emptyMeta "io") [RawTupleApply emptyMeta (emptyMeta, RawValue emptyMeta "println") [RawTupleArgNamed "msg" (RawMethods expr [RawValue emptyMeta "toString"])]])
-      let replRawPrgm = (["std/std.ct"], exprAsMain:envRepl)
+      let replRawPrgm = (["std/std.ct"], mainStatement expr:envRepl)
       let des = desFiles (("replMain", replRawPrgm):envStd)
       processDes des
       return env

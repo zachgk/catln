@@ -59,8 +59,7 @@ updateSchemeProp env@FEnv{feClassMap} (superM, superScheme@(SType superUb superL
       wrapUbs (SumType $ joinPartialLeafs supPartialList', subUb)
     (SumType supPartials, TopType) -> do
       let supPartialList = splitPartialLeafs supPartials
-      let getProp PartialType{ptArgs=supArgs} = H.lookup propName supArgs
-      let sub' = unionTypes feClassMap $ mapMaybe getProp supPartialList
+      let sub' = unionTypes feClassMap $ mapMaybe (typeGetArg propName) supPartialList
       wrapUbs (superUb, sub')
     (SumType supPartials, SumType subPartials) -> do
       let supPartialList = splitPartialLeafs supPartials
