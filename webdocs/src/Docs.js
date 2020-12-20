@@ -10,7 +10,7 @@ import {
   useRouteMatch
 } from 'react-router-dom';
 
-import {useApi, Loading, Obj, Guard, Type, Val, tagJoin} from './Common';
+import {useApi, posKey, Loading, Obj, Guard, Type, Val, tagJoin} from './Common';
 
 const useStyles = {
   indented: {
@@ -187,8 +187,5 @@ function RawMeta(props) {
   return <Type data={tp} />;
 }
 
-function posKey(pos) {
-  return `${pos.name}-${pos.line}-${pos.col}`;
-}
 
 export default Docs;

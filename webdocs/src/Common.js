@@ -20,6 +20,10 @@ const useStyles = {
   }
 };
 
+function posKey(pos) {
+  return `${pos.name}-${pos.line}-${pos.col}`;
+}
+
 function useApi(path) {
   const [result, setResult] = useState({
     error: null,
@@ -56,6 +60,7 @@ function useApi(path) {
           default:
             setResult({
               isLoaded: true,
+              notes: [],
               error: "Unknown result type"
             });
           }
@@ -89,7 +94,12 @@ function Loading(props) {
 }
 
 function Notes(props) {
-  let notes = props.notes;
+  let {notes, noPosOnly} = props;
+
+  if(noPosOnly) {
+    notes = notes.filter(note => !note.pos);
+  }
+
   return (
     <div>
       {notes.map((note, noteIndex) => <Note key={noteIndex} note={note} />)}
@@ -269,6 +279,7 @@ function CatlnResult(props) {
 
 export {
   tagJoin,
+  posKey,
   useApi,
   Loading,
   Notes,

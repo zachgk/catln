@@ -10,7 +10,7 @@ import {
   useRouteMatch
 } from 'react-router-dom';
 
-import {useApi, Loading, Notes, Type} from './Common';
+import {useApi, posKey, Loading, Notes, Type} from './Common';
 import {ObjMap} from './ListProgram';
 
 const useStyles = {
@@ -31,15 +31,29 @@ function Constrain() {
 }
 
 function Main(props) {
-  let [, prgm, trace] = props.data;
+  let {notes, data: [, prgm, trace]} = props;
   let { path } = useRouteMatch();
+
+  var notesMap = {};
+  notes.forEach(note => {
+    if(note.pos) {
+      let k = posKey(note.pos);
+      if(k in notesMap) {
+        notesMap[k].push(note);
+      } else {
+        notesMap[k] = [note];
+      }
+    }
+  });
+  let Meta = VarMeta(notesMap);
+
   return (
     <div>
-      <Notes notes={props.notes}/>
+      <Notes notes={notes} noPosOnly />
       <Grid container spacing={2} justify="center">
         <Grid item xs >
           <div style={useStyles.objMap}>
-            <ObjMap objMap={prgm[0]} Meta={VarMeta} showExprMetas={true} />
+            <ObjMap objMap={prgm[0]} Meta={Meta} showExprMetas />
           </div>
         </Grid>
         <Grid item xs>
@@ -48,7 +62,7 @@ function Main(props) {
               <Redirect to={`${path}/0`} />
             </Route>
             <Route path={`${path}/:curMeta`}>
-              <TraceEpochs trace={trace} />
+              <TraceEpochs trace={trace} Meta={Meta} />
             </Route>
           </Switch>
         </Grid>
@@ -57,19 +71,25 @@ function Main(props) {
   );
 }
 
-function VarMeta(props) {
-  const [pnt, [tp, ], ] = props.data;
-  return <span><Type data={tp}/>(<Pnt pnt={pnt} />)</span>;
-}
+let VarMeta = (notesMap) => (props) => {
+  const [pnt, [tp, pos], ] = props.data;
+  var style = {};
+
+  if(pos && posKey(pos) in notesMap) {
+    style.background = 'lightCoral';
+  }
+
+  return <span style={style}><Type data={tp}/>(<Pnt pnt={pnt} />)</span>;
+};
 
 function TraceEpochs(props) {
   let { curMeta } = useParams();
-  let {trace} = props;
+  let {trace, Meta} = props;
   let traces = trace.map((t, index) => {
     return (
       <div key={index}>
         <h3>{index}</h3>
-        <Trace trace={t} />
+        <Trace trace={t} Meta={Meta} />
       </div>
     );
   });
@@ -82,7 +102,7 @@ function TraceEpochs(props) {
 }
 
 function Trace(props) {
-  let {trace} = props;
+  let {trace, Meta} = props;
   let { curMeta } = useParams();
   curMeta = parseInt(curMeta);
   return trace.map((constraintPair, constraintIndex) => {
@@ -97,7 +117,7 @@ function Trace(props) {
 
     return (
       <div key={constraintIndex}>
-        <b><Constraint constraint={constraint}/></b>
+        <b><Constraint constraint={constraint} Meta={Meta}/></b>
         {showUpdates}
       </div>
     );
@@ -105,30 +125,30 @@ function Trace(props) {
 }
 
 function Constraint(props) {
-  let {constraint} = props;
+  let {constraint, Meta} = props;
   switch(constraint.tag) {
   case "EqualsKnown":
-    return (<span><VarMeta data={constraint.contents[0]}/> k== <Type data={constraint.contents[1]}/></span>);
+    return (<span><Meta data={constraint.contents[0]}/> k== <Type data={constraint.contents[1]}/></span>);
   case "EqPoints":
-    return (<span><VarMeta data={constraint.contents[0]}/> p== <VarMeta data={constraint.contents[1]}/></span>);
+    return (<span><Meta data={constraint.contents[0]}/> p== <Meta data={constraint.contents[1]}/></span>);
   case "BoundedByKnown":
-    return (<span><VarMeta data={constraint.contents[0]}/> ⊆ <Type data={constraint.contents[1]}/></span>);
+    return (<span><Meta data={constraint.contents[0]}/> ⊆ <Type data={constraint.contents[1]}/></span>);
   case "BoundedByObjs":
-    return (<span>{constraint.contents[0]} <VarMeta data={constraint.contents[1]}/></span>);
+    return (<span>{constraint.contents[0]} <Meta data={constraint.contents[1]}/></span>);
   case "ArrowTo":
-    return (<span><VarMeta data={constraint.contents[0]}/> -&gt; <VarMeta data={constraint.contents[1]} /></span>);
+    return (<span><Meta data={constraint.contents[0]}/> -&gt; <Meta data={constraint.contents[1]} /></span>);
   case "PropEq":
-    return (<span>(<VarMeta data={constraint.contents[0][0]}/>).{constraint.contents[0][1]} == <VarMeta data={constraint.contents[1]}/></span>);
+    return (<span>(<Meta data={constraint.contents[0][0]}/>).{constraint.contents[0][1]} == <Meta data={constraint.contents[1]}/></span>);
   case "VarEq":
-    return (<span>(<VarMeta data={constraint.contents[0][0]}/>).{constraint.contents[0][1]} == <VarMeta data={constraint.contents[1]}/></span>);
+    return (<span>(<Meta data={constraint.contents[0][0]}/>).{constraint.contents[0][1]} == <Meta data={constraint.contents[1]}/></span>);
   case "AddArg":
-    return (<span>(<VarMeta data={constraint.contents[0][0]}/>)({constraint.contents[0][1]}) arg== <VarMeta data={constraint.contents[1]}/></span>);
+    return (<span>(<Meta data={constraint.contents[0][0]}/>)({constraint.contents[0][1]}) arg== <Meta data={constraint.contents[1]}/></span>);
   case "AddInferArg":
-    return (<span>(<VarMeta data={constraint.contents[0]}/>)(?) iarg== <VarMeta data={constraint.contents[1]}/></span>);
+    return (<span>(<Meta data={constraint.contents[0]}/>)(?) iarg== <Meta data={constraint.contents[1]}/></span>);
   case "PowersetTo":
-    return (<span>P(<VarMeta data={constraint.contents[0]}/>) ps== <VarMeta data={constraint.contents[1]}/></span>);
+    return (<span>P(<Meta data={constraint.contents[0]}/>) ps== <Meta data={constraint.contents[1]}/></span>);
   case "UnionOf":
-    return (<span>UnionOf <VarMeta data={constraint.contents[0]} /></span>);
+    return (<span>UnionOf <Meta data={constraint.contents[0]} /></span>);
   default:
     console.error("Unknown renderConstraint", constraint);
     return "";

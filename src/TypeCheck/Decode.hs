@@ -65,8 +65,14 @@ toExpr env (ITupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
   argExpr' <- toExpr env argExpr
   let result = TupleApply m' (baseM', baseExpr') argName argExpr'
   case m' of -- check for errors
+
+    -- Don't check if a bottom type is present
+    _ | getMetaType m' == bottomType -> return result
+    _ | getMetaType baseM' == bottomType -> return result
+
     tp@(Typed (SumType sumType) _) | all (\PartialType{ptArgs=leafArgs} -> not (argName `H.member` leafArgs)) (splitPartialLeafs sumType) ->
                                         TypeCheckResult [TupleMismatch baseM' baseExpr' tp $ H.singleton argName argExpr'] result
+
     _ -> return result
 toExpr env (ITupleApply m (baseM, baseExpr) Nothing argExpr) = do
   let pos = getMetaPos m
