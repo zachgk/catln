@@ -10,7 +10,7 @@ import {
   useRouteMatch
 } from 'react-router-dom';
 
-import {useApi, Loading, Type} from './Common';
+import {useApi, Loading, Notes, Type} from './Common';
 import {ObjMap} from './ListProgram';
 
 function Constrain() {
@@ -18,11 +18,10 @@ function Constrain() {
 
   return (
     <Loading status={apiResult}>
-      <Main data={apiResult.data} />
+      <Main data={apiResult.data} notes={apiResult.notes} />
     </Loading>
   );
 }
-
 
 function Main(props) {
   let [, prgm, trace] = props.data;
@@ -33,6 +32,7 @@ function Main(props) {
         <Redirect to={`${path}/0`} />
       </Route>
       <Route path={`${path}/:curMeta`}>
+        <Notes notes={props.notes}/>
         <Grid container spacing={2} justify="center">
           <Grid item xs>
             <ObjMap objMap={prgm[0]} Meta={VarMeta} showExprMetas={true}/>

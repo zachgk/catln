@@ -6,6 +6,13 @@ function tagJoin(lst, joinWith) {
   return lst.reduce((acc, x) => acc == null ? [x] : <>{acc}{joinWith}{x}</>, null);
 }
 
+const useStyles = {
+  notes: {
+    whiteSpace: 'pre-wrap',
+    background: 'lightCoral'
+  }
+};
+
 function useApi(path) {
   const [result, setResult] = useState({
     error: null,
@@ -18,16 +25,24 @@ function useApi(path) {
       .then(res => res.json())
       .then(
         (res) => {
-          if(res.length === 2) {
+          switch(res.tag) {
+          case "Success":
             setResult({
               isLoaded: true,
-              data: res[0],
-              notes: res[1]
+              data: res.contents[0],
+              notes: res.contents[1]
             });
-          } else {
+            break;
+          case "ResFail":
             setResult({
               isLoaded: true,
-              notes: res[0]
+              notes: res.contents
+            });
+            break;
+          default:
+            setResult({
+              isLoaded: true,
+              error: "Unknown result type"
             });
           }
         },
@@ -46,15 +61,24 @@ function useApi(path) {
 }
 
 function Loading(props) {
-  const {error, isLoaded} = props.status;
+  const {error, isLoaded, data, notes} = props.status;
 
   if (error) {
     return <div>Error: {error.message}</div>;
   } else if (!isLoaded) {
     return <div>Loading...</div>;
+  } else if (!data){
+    return <div><Notes notes={notes} /></div>;
   } else {
     return props.children;
   }
+}
+
+function Notes(props) {
+  let notes = props.notes;
+  return <div>
+           {notes.map(note => <pre key={note} style={useStyles.notes}>{note}</pre>)}
+         </div>;
 }
 
 function Guard(props) {
@@ -80,7 +104,7 @@ function Type(props) {
   case "TypeVar":
     return t.contents.contents;
   case "SumType":
-    var partials = []
+    var partials = [];
     t.contents.forEach(partialOptions => {
       let [partialName, options] = partialOptions;
       options.forEach((partialData, partialIndex) => {
@@ -212,6 +236,7 @@ export {
   tagJoin,
   useApi,
   Loading,
+  Notes,
   Guard,
   Type,
   Obj,

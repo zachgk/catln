@@ -46,8 +46,7 @@ toMeta env@FEnv{feClassMap} m@(VarMeta _ (PreTyped pt pos) _) _ = case pointUb e
     TypeVar{} -> return $ Typed pt pos
     _ -> TypeCheckResult notes $ Typed (intersectTypes feClassMap ub pt) pos
   TypeCheckResE notes -> do
-    let matchingConstraints = showMatchingConstraints env m
-    TypeCheckResE $ map (TCWithMatchingConstraints matchingConstraints) notes
+    TypeCheckResult notes (Typed bottomType pos)
 
 toExpr :: FEnv -> VExpr -> TypeCheckResult TExpr
 toExpr env (ICExpr m c) = do
@@ -64,11 +63,12 @@ toExpr env (ITupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
   baseM' <- toMeta env baseM "TupleApply_baseM"
   baseExpr' <- toExpr env baseExpr
   argExpr' <- toExpr env argExpr
+  let result = TupleApply m' (baseM', baseExpr') argName argExpr'
   case m' of -- check for errors
     tp@(Typed (SumType sumType) _) | all (\PartialType{ptArgs=leafArgs} -> not (argName `H.member` leafArgs)) (splitPartialLeafs sumType) -> do
                                         let matchingConstraints = showMatchingConstraints env m
-                                        TypeCheckResE [TCWithMatchingConstraints matchingConstraints $ TupleMismatch baseM' baseExpr' tp $ H.singleton argName argExpr']
-    _ -> return $ TupleApply m' (baseM', baseExpr') argName argExpr'
+                                        TypeCheckResult [TCWithMatchingConstraints matchingConstraints $ TupleMismatch baseM' baseExpr' tp $ H.singleton argName argExpr'] result
+    _ -> return result
 toExpr env (ITupleApply m (baseM, baseExpr) Nothing argExpr) = do
   m' <- toMeta env m "TupleApplyInfer_M"
   baseM' <- toMeta env baseM "TupleApplyInfer_baseM"

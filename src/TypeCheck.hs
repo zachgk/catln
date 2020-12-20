@@ -23,7 +23,9 @@ runConstraintsLimit :: Integer
 runConstraintsLimit = 100
 
 typecheckPrgm :: PPrgm -> CRes TPrgm
-typecheckPrgm pprgm = (\(a, _, _) -> a) <$> typecheckPrgmWithTrace pprgm
+typecheckPrgm pprgm = do
+  (a, _, _) <- failOnNotes $ typecheckPrgmWithTrace pprgm
+  return a
 
 typecheckPrgmWithTrace :: PPrgm -> CRes (TPrgm, VPrgm, TraceConstrain)
 typecheckPrgmWithTrace pprgm@(_, classMap, _) = case aux of

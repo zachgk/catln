@@ -84,4 +84,7 @@ instance Monad CRes where
     (CErr notesB) -> CErr (notesA ++ notesB)
   (CErr notes) >>= _ = CErr notes
 
-
+failOnNotes :: CRes n -> CRes n
+failOnNotes (CRes [] r) = CRes [] r
+failOnNotes (CRes notes _) = CErr notes
+failOnNotes (CErr notes) = CErr notes

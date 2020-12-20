@@ -22,7 +22,7 @@ import           GHC.Generics          (Generic)
 
 import           Desugarf         (desFiles)
 import           CRes
-import TypeCheck (typecheckPrgmWithTrace)
+import TypeCheck (typecheckPrgm, typecheckPrgmWithTrace)
 import           Eval (evalMain, evalMainb, evalAnnots)
 import Parser (readFiles)
 import Parser.Syntax (DesPrgm, PPrgm)
@@ -32,14 +32,12 @@ import Syntax.Prgm (Expr)
 import Syntax (Typed)
 
 data ResSuccess a n = Success a [n]
+  | ResFail [n]
   deriving (Generic, ToJSON)
 
-newtype ResFail n = ResFail [n]
-  deriving (Generic, ToJSON)
-
-maybeJson :: ToJSON a => CRes a -> ActionM ()
+maybeJson :: (ToJSON a) => CRes a -> ActionM ()
 maybeJson (CRes notes r) = json $ Success r (map show notes)
-maybeJson (CErr notes) = json $ ResFail (map show notes)
+maybeJson (CErr notes) = json (ResFail (map show notes) :: ResSuccess () [Char])
 
 getRawPrgm :: Bool -> String -> IO (CRes [(String, PPrgm)])
 getRawPrgm includeStd fileName = readFiles (fileName : ["std/std.ct" | includeStd])
@@ -56,8 +54,8 @@ getTPrgmWithTrace includeStd fileName = do
 
 getTPrgm :: Bool -> String -> IO (CRes TPrgm)
 getTPrgm includeStd fileName = do
-  base <- getTPrgmWithTrace includeStd fileName
-  return ((\(a, _, _) -> a) <$> base)
+  base <- getPrgm includeStd fileName
+  return (base >>= typecheckPrgm)
 
 getTreebug :: Bool -> String -> IO EvalResult
 getTreebug includeStd fileName = do
