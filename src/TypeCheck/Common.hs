@@ -27,10 +27,11 @@ import           Syntax
 import           Text.Printf
 import Data.Aeson (ToJSON)
 import qualified Data.HashSet as S
+import CRes
+import Text.Megaparsec (SourcePos)
 
 data TypeCheckError
-  = GenTypeCheckError String
-  | AbandonCon SConstraint
+  = GenTypeCheckError (Maybe SourcePos) String
   | TupleMismatch TypedMeta TExpr Typed (H.HashMap String TExpr)
   | TCWithMatchingConstraints [SConstraint] TypeCheckError
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
@@ -161,18 +162,26 @@ type TypeGraph = H.HashMap TypeName [TypeGraphVal] -- H.HashMap (Root tuple name
 
 instance Meta VarMeta where
   getMetaType (VarMeta _ p _) = getMetaType p
+  getMetaPos (VarMeta _ p _) = getMetaPos p
 
 instance Meta ShowMeta where
   getMetaType (ShowMeta (SType ub _ _) _) = ub
+  getMetaPos (ShowMeta _ varMeta) = getMetaPos varMeta
 
 instance Show TypeCheckError where
-  show (GenTypeCheckError s) = s
-  show (AbandonCon c) = printf "Abandon %s" (show c)
+  show (GenTypeCheckError _ s) = s
   show (TupleMismatch baseM baseExpr m args) = printf "Tuple Apply Mismatch:\n\t(%s %s)(%s) ≠ %s\n\t" (show baseM) (show baseExpr) args' (show m)
     where
       showArg (argName, argVal) = printf "%s = %s" argName (show argVal)
       args' = intercalate ", " $ map showArg $ H.toList args
   show (TCWithMatchingConstraints constraints er) = printf "%s\n\tConstraints: %s" (show er) (show constraints)
+
+instance CNoteTC TypeCheckError where
+  posCNote (GenTypeCheckError pos _) = pos
+  posCNote (TupleMismatch _ _ m _) = getMetaPos m
+  posCNote (TCWithMatchingConstraints _ e) = posCNote e
+
+  typeCNote _ = CNoteError
 
 instance Show SType where
   show (SType upper lower desc) = concat [show upper, " ⊇ ", desc, " ⊇ ", show lower]
@@ -201,7 +210,7 @@ getPnt (VarMeta p _ _) = p
 fLookup :: FEnv -> String -> TypeCheckResult VarMeta
 fLookup FEnv{feDefMap} k = case H.lookup k feDefMap of
   Just v  -> return v
-  Nothing -> TypeCheckResE [GenTypeCheckError $ "Failed to lookup " ++ k]
+  Nothing -> TypeCheckResE [GenTypeCheckError Nothing $ "Failed to lookup " ++ k]
 
 addConstraints :: FEnv -> [Constraint] -> FEnv
 addConstraints env@FEnv{feCons} newCons = env {feCons = newCons ++ feCons}
@@ -215,7 +224,7 @@ fAddTypeGraph env@FEnv{feTypeGraph} k v = env {feTypeGraph = H.insertWith (++) k
 tryIntersectTypes :: FEnv -> Type -> Type -> String -> TypeCheckResult Type
 tryIntersectTypes FEnv{feClassMap} a b desc = let c = intersectTypes feClassMap a b
                                                             in if isBottomType c
-                                                                  then TypeCheckResE [GenTypeCheckError $ "Failed to intersect(" ++ desc ++ "): " ++ show a ++ " --- " ++ show b]
+                                                                  then TypeCheckResE [GenTypeCheckError Nothing $ "Failed to intersect(" ++ desc ++ "): " ++ show a ++ " --- " ++ show b]
                                                                   else return c
 
 verifyScheme :: ClassMap -> VarMeta -> Scheme -> Scheme -> Bool
@@ -268,13 +277,13 @@ pointUb env p = do
   return ub
 
 resolveTypeVar :: TypeVarAux -> VarMeta -> TypeCheckResult VarMeta
-resolveTypeVar (TVVar v) (VarMeta _ _ (Just (Object _ _ _ objVars _))) = case H.lookup v objVars of
+resolveTypeVar (TVVar v) m@(VarMeta _ _ (Just (Object _ _ _ objVars _))) = case H.lookup v objVars of
   Just m' -> return m'
-  Nothing -> TypeCheckResE [GenTypeCheckError "Unknown variable in resolveTypeVar var"]
-resolveTypeVar (TVArg v) (VarMeta _ _ (Just (Object _ _ _ _ objArgs))) = case H.lookup v objArgs of
+  Nothing -> TypeCheckResE [GenTypeCheckError (getMetaPos m) "Unknown variable in resolveTypeVar var"]
+resolveTypeVar (TVArg v) m@(VarMeta _ _ (Just (Object _ _ _ _ objArgs))) = case H.lookup v objArgs of
   Just (m', _) -> return m'
-  Nothing -> TypeCheckResE [GenTypeCheckError "Unknown variable in resolveTypeVar arg"]
-resolveTypeVar _ (VarMeta _ _ Nothing) = TypeCheckResE [GenTypeCheckError "Tried to resolve a type var without an object"]
+  Nothing -> TypeCheckResE [GenTypeCheckError (getMetaPos m) "Unknown variable in resolveTypeVar arg"]
+resolveTypeVar _ m@(VarMeta _ _ Nothing) = TypeCheckResE [GenTypeCheckError (getMetaPos m) "Tried to resolve a type var without an object"]
 
 descriptorResolve :: FEnv -> VarMeta -> TypeCheckResult (VarMeta, SType)
 descriptorResolve env m = do

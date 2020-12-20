@@ -14,40 +14,59 @@
 module CRes where
 
 import           Data.List                      ( intercalate )
-import           Text.Megaparsec.Error (errorBundlePretty)
 -- import qualified Data.Text.Lazy as T
 -- import Text.Pretty.Simple
 import           Text.Printf
 
 import Syntax
+import Text.Megaparsec (pstateSourcePos, SourcePos)
+import Text.Megaparsec.Error
+
+data CNoteType
+  = CNoteError
+  | CNoteWarn
+  deriving (Eq, Ord)
+
+class CNoteTC n where
+  posCNote :: n -> Maybe SourcePos
+  typeCNote :: n -> CNoteType
 
 data CNote
   where
-  MkCNote :: Show a => a -> CNote
+  MkCNote :: (CNoteTC a, Show a) => a -> CNote
+
+instance CNoteTC CNote where
+  posCNote (MkCNote a) = posCNote a
+  typeCNote (MkCNote a) = typeCNote a
 
 instance Show CNote
   where
   showsPrec p (MkCNote a) = showsPrec p a
 
 data CNoteI
-  = GenCNote String
-  | GenCErr String
+  = GenCNote (Maybe SourcePos) String
+  | GenCErr (Maybe SourcePos) String
   | ParseCErr ParseErrorRes
-  | TypeCheckCErr
-  | BuildTreeCErr String
+  | BuildTreeCErr (Maybe SourcePos) String
   | AssertCErr String
   | EvalCErr [String] String
   | WrapCN [CNote] String
 
 instance Show CNoteI where
-  show (GenCNote s) = printf "Note: %s" s
-  show (GenCErr s) = printf "Error: %s" s
+  show (GenCNote _ s) = printf "Note: %s" s
+  show (GenCErr _ s) = printf "Error: %s" s
   show (ParseCErr p) = errorBundlePretty p
-  show TypeCheckCErr = "TypeCheckCErr"
-  show (BuildTreeCErr s) = printf "Failed to Build Tree: %s" s
+  show (BuildTreeCErr _ s) = printf "Failed to Build Tree: %s" s
   show (AssertCErr s) = printf "Failed assertion: %s" s
   show (EvalCErr st err) = printf "%s\n\tStack trace:\n\t\t%s" err (intercalate "\n\t\t" st)
   show (WrapCN n s) = s ++ "\n\t\t" ++ intercalate "\n\t\t" (map show n)
+
+instance CNoteTC CNoteI where
+  posCNote (ParseCErr bundle) = Just $ pstateSourcePos $ bundlePosState bundle
+  posCNote _ = Nothing
+
+  typeCNote GenCNote{} = CNoteWarn
+  typeCNote _ = CNoteError
 
 wrapCErr :: [CNote] -> String -> CRes r
 wrapCErr notes s = CErr [MkCNote $ WrapCN notes s]
@@ -84,7 +103,9 @@ instance Monad CRes where
     (CErr notesB) -> CErr (notesA ++ notesB)
   (CErr notes) >>= _ = CErr notes
 
-failOnNotes :: CRes n -> CRes n
-failOnNotes (CRes [] r) = CRes [] r
-failOnNotes (CRes notes _) = CErr notes
-failOnNotes (CErr notes) = CErr notes
+failOnErrorNotes :: CRes n -> CRes n
+failOnErrorNotes (CRes [] r) = CRes [] r
+failOnErrorNotes (CRes notes r) = if any (\n -> typeCNote n == CNoteError) notes
+  then CErr notes
+  else CRes notes r
+failOnErrorNotes (CErr notes) = CErr notes

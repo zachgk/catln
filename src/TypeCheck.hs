@@ -24,7 +24,7 @@ runConstraintsLimit = 100
 
 typecheckPrgm :: PPrgm -> CRes TPrgm
 typecheckPrgm pprgm = do
-  (a, _, _) <- failOnNotes $ typecheckPrgmWithTrace pprgm
+  (a, _, _) <- failOnErrorNotes $ typecheckPrgmWithTrace pprgm
   return a
 
 typecheckPrgmWithTrace :: PPrgm -> CRes (TPrgm, VPrgm, TraceConstrain)

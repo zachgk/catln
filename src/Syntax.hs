@@ -58,12 +58,15 @@ instance ToJSON SourcePos where
 
 class Meta m where
   getMetaType :: m -> Type
+  getMetaPos :: m -> Maybe SourcePos
 
 instance Meta PreTyped where
   getMetaType (PreTyped t _) = t
+  getMetaPos (PreTyped _ pos) = pos
 
 instance Meta Typed where
   getMetaType (Typed t _) = t
+  getMetaPos (Typed _ pos) = pos
 
 type ArgMetaMapWithSrc m = H.HashMap ArgName (m, Type)
 formArgMetaMapWithSrc :: ClassMap -> Object m -> PartialType -> ArgMetaMapWithSrc m

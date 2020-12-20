@@ -130,7 +130,7 @@ evalPrgm input src@PartialType{ptName=PTypeName{}} dest prgm = do
   (res, env') <- eval env2 initTree
   case res of
     (IOVal r io) -> return (io >> pure (r, evalResult env'))
-    _ -> CErr [MkCNote $ GenCErr "Eval did not return an instance of IO"]
+    _ -> CErr [MkCNote $ GenCErr Nothing "Eval did not return an instance of IO"]
 evalPrgm _ PartialType{ptName=PClassName{}} _ _ = error "Can't eval class"
 
 evalMain :: EPrgm -> CRes (IO (Integer, EvalResult))
@@ -150,8 +150,8 @@ evalMainb prgm = do
   case res of
     val@(TupleVal "CatlnResult" args) -> case (H.lookup "name" args, H.lookup "contents" args) of
       (Just (StrVal _), Just (StrVal _)) -> return $ return (val, evalResult env')
-      _ -> CErr [MkCNote $ GenCErr "Eval mainb returned a CatlnResult with bad args"]
+      _ -> CErr [MkCNote $ GenCErr Nothing "Eval mainb returned a CatlnResult with bad args"]
     (LLVMVal toCodegen) -> return $ do
       llvmStr <- codegenExInit toCodegen
       return (TupleVal "CatlnResult" (H.fromList [("name", StrVal "out.ll"), ("contents", StrVal llvmStr)]), evalResult env')
-    _ -> CErr [MkCNote $ GenCErr "Eval mainb did not return a CatlnResult"]
+    _ -> CErr [MkCNote $ GenCErr Nothing "Eval mainb did not return a CatlnResult"]

@@ -70,6 +70,7 @@ toExpr env (ITupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
                                         TypeCheckResult [TCWithMatchingConstraints matchingConstraints $ TupleMismatch baseM' baseExpr' tp $ H.singleton argName argExpr'] result
     _ -> return result
 toExpr env (ITupleApply m (baseM, baseExpr) Nothing argExpr) = do
+  let pos = getMetaPos m
   m' <- toMeta env m "TupleApplyInfer_M"
   baseM' <- toMeta env baseM "TupleApplyInfer_baseM"
   baseExpr' <- toExpr env baseExpr
@@ -78,9 +79,9 @@ toExpr env (ITupleApply m (baseM, baseExpr) Nothing argExpr) = do
     (SumType basePartialLeafs, SumType partialLeafs) -> case (splitPartialLeafs basePartialLeafs, splitPartialLeafs partialLeafs) of
       ([PartialType{ptArgs=basePartialArgs}], [PartialType{ptArgs}]) -> case S.toList $ S.difference (H.keysSet ptArgs) (H.keysSet basePartialArgs) of
         [argN] -> return argN
-        _ -> TypeCheckResE [GenTypeCheckError "Failed argument inference due to multiple arg options"]
-      _ -> TypeCheckResE [GenTypeCheckError "Failed argument inference due to multiple types"]
-    _ -> TypeCheckResE [GenTypeCheckError "Failed argument inference due to non SumType"]
+        _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to multiple arg options"]
+      _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to multiple types"]
+    _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to non SumType"]
   return $ TupleApply m' (baseM', baseExpr') argName argExpr'
 
 toGuard :: FEnv -> VGuard -> TypeCheckResult TGuard

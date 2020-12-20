@@ -21,6 +21,7 @@ import           TypeCheck.TypeGraph
 import           TypeCheck.Show
 import           Data.Tuple.Sequence
 import           Text.Printf
+import Syntax
 
 isSolved :: Scheme -> Bool
 isSolved (TypeCheckResult _ (SType a b _)) = a == b
@@ -28,7 +29,7 @@ isSolved _ = False
 
 checkScheme :: String -> Scheme -> Scheme
 -- checkScheme msg (TypeCheckResult _ (SType ub _ desc)) | isBottomType ub = error $ "Scheme failed check at " ++ msg ++ ": upper bound is bottomType - " ++ desc
-checkScheme msg (TypeCheckResult notes (SType ub _ desc)) | isBottomType ub = TypeCheckResE (GenTypeCheckError ("Scheme failed check at " ++ msg ++ ": upper bound is bottomType - " ++ desc) : notes)
+checkScheme msg (TypeCheckResult notes (SType ub _ desc)) | isBottomType ub = TypeCheckResE (GenTypeCheckError Nothing ("Scheme failed check at " ++ msg ++ ": upper bound is bottomType - " ++ desc) : notes)
 checkScheme _ scheme = scheme
 
 setScheme :: FEnv -> VarMeta -> Scheme -> String -> FEnv
@@ -41,7 +42,7 @@ equalizeSTypes env@FEnv{feClassMap} (SType ub1 lb1 desc1, SType ub2 lb2 desc2) d
   ubBoth <- tryIntersectTypes env ub1 ub2 $ "equalizeSTypes(" ++ d ++ ")"
   if hasType feClassMap lbBoth ubBoth
     then return (SType ubBoth lbBoth desc1, SType ubBoth lbBoth desc2)
-    else TypeCheckResE [GenTypeCheckError (printf "Type mismatched: %s is not a subtype of %s" (show lbBoth) (show ubBoth))]
+    else TypeCheckResE [GenTypeCheckError Nothing (printf "Type mismatched: %s is not a subtype of %s" (show lbBoth) (show ubBoth))]
 
 updateSchemeProp :: FEnv -> (VarMeta, SType) -> ArgName -> (VarMeta, SType) -> (FEnv, Scheme, Scheme)
 updateSchemeProp env@FEnv{feClassMap} (superM, superScheme@(SType superUb superLb superDesc)) propName (subM, subScheme@(SType subUb subLb subDesc)) = case (superUb, subUb) of
@@ -175,7 +176,7 @@ executeConstraint env@FEnv{feUnionAllObjs, feUnionTypeObjs, feClassMap} cons@(Bo
       -- but a subset of the arguments in that type
       let ub' = intersectTypes feClassMap ub objsUb
       let scheme' = if isBottomType ub'
-            then TypeCheckResE [GenTypeCheckError $ printf "Failed to BoundByObjs for %s: \n\t%s" desc (show ub)]
+            then TypeCheckResE [GenTypeCheckError (getMetaPos pnt) $ printf "Failed to BoundByObjs for %s: \n\t%s" desc (show ub)]
             else return $ SType ub' lb desc
       let env' = setScheme env pnt scheme' "BoundedByObjs"
       ([cons | not (isSolved scheme')], scheme /= scheme', env')
@@ -300,7 +301,7 @@ runConstraints 0 env cons = do
   let (res, env') = executeConstraints env cons
   let consChangedList = mapMaybe (\(con, isChanged) -> if isChanged then Just con else Nothing) res
   let showCons = showConstraints env' $ concat consChangedList
-  TypeCheckResE [GenTypeCheckError $ "Reached runConstraints limit with still changing constraints: " ++ show showCons]
+  TypeCheckResE [GenTypeCheckError Nothing $ "Reached runConstraints limit with still changing constraints: " ++ show showCons]
 runConstraints limit env cons = do
   let (res, env') = executeConstraints env cons
   let (consList, changedList) = unzip res
