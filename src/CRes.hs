@@ -24,7 +24,7 @@ import           Text.Printf
 import Syntax
 import Text.Megaparsec (pstateSourcePos, SourcePos)
 import Text.Megaparsec.Error
-import Data.Aeson (ToJSON)
+import Data.Aeson
 
 data CNoteType
   = CNoteError
@@ -46,6 +46,9 @@ instance CNoteTC CNote where
 instance Show CNote
   where
   showsPrec p (MkCNote a) = showsPrec p a
+
+instance ToJSON CNote where
+  toJSON (MkCNote n) = object ["msg".=show n, "pos".= posCNote n, "tp" .= typeCNote n]
 
 data CNoteI
   = GenCNote (Maybe SourcePos) String
@@ -78,7 +81,7 @@ wrapCErr notes s = CErr [MkCNote $ WrapCN notes s]
 data CRes r
   = CRes [CNote] r
   | CErr [CNote]
-  deriving (Show)
+  deriving (Show, Generic, ToJSON)
 
 getCNotes :: CRes r -> [CNote]
 getCNotes (CRes notes _) = notes

@@ -158,13 +158,16 @@ function Constraint(props) {
 function Scheme(props) {
   let {scheme} = props;
   switch (scheme.tag) {
-  case "TypeCheckResult":
-    let [upper, lower, desc] = scheme.contents[1];
-    return <div><Type data={upper}/> ⊇ {desc} ⊇ <Type data={lower}/></div>;
-  case "TypeCheckResE":
-    return <pre>{JSON.stringify(scheme.contents, null, 2)}</pre>;
+  case "CRes":
+    const [notes, [upper, lower, desc]] = scheme.contents;
+    return <div>
+             <Notes notes={notes}/>
+             <Type data={upper}/> ⊇ {desc} ⊇ <Type data={lower}/>
+           </div>;
+  case "CErr":
+    return <Notes notes={scheme.contents}/>;
   default:
-    console.error("Unknown renderScheme");
+    console.error("Unknown renderScheme", scheme);
     return "";
   }
 }

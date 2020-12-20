@@ -25,7 +25,7 @@ import           Syntax.Types
 import           Syntax.Prgm
 import           Syntax
 import           Text.Printf
-import Data.Aeson (ToJSON)
+import Data.Aeson (ToJSON, toJSON)
 import qualified Data.HashSet as S
 import CRes
 import Text.Megaparsec (SourcePos)
@@ -33,7 +33,7 @@ import Text.Megaparsec (SourcePos)
 data TypeCheckError
   = GenTypeCheckError (Maybe SourcePos) String
   | TupleMismatch TypedMeta TExpr Typed (H.HashMap String TExpr)
-  deriving (Eq, Ord, Generic, Hashable, ToJSON)
+  deriving (Eq, Ord, Generic, Hashable)
 
 data SType = SType Type Type String -- SType upper lower (description in type)
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
@@ -83,12 +83,15 @@ data SConstraint
   | SAddInferArg Scheme Scheme
   | SPowersetTo Scheme Scheme
   | SUnionOf Scheme [Scheme]
-  deriving (Eq, Ord, Generic, Hashable, ToJSON)
+  deriving (Eq, Ord, Generic, Hashable)
 
 data TypeCheckResult r
   = TypeCheckResult [TypeCheckError] r
   | TypeCheckResE [TypeCheckError]
-  deriving (Eq, Ord, Generic, Hashable, ToJSON)
+  deriving (Eq, Ord, Generic, Hashable)
+
+instance ToJSON r => ToJSON (TypeCheckResult r) where
+  toJSON res = toJSON $ typeCheckToRes res
 
 getTCRE :: TypeCheckResult r -> [TypeCheckError]
 getTCRE (TypeCheckResult notes _) = notes
@@ -200,6 +203,11 @@ instance Show r => Show (TypeCheckResult r) where
   show (TypeCheckResult [] r) = show r
   show (TypeCheckResult notes r) = concat ["TCRes [", show notes, "] (", show r, ")"]
   show (TypeCheckResE notes) = concat ["TCErr [", show notes, "]"]
+
+typeCheckToRes :: TypeCheckResult r -> CRes r
+typeCheckToRes tc = case tc of
+  TypeCheckResult notes res -> CRes (map MkCNote notes) res
+  TypeCheckResE notes -> CErr (map MkCNote notes)
 
 getPnt :: VarMeta -> Pnt
 getPnt (VarMeta p _ _) = p
