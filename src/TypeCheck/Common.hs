@@ -33,7 +33,6 @@ import Text.Megaparsec (SourcePos)
 data TypeCheckError
   = GenTypeCheckError (Maybe SourcePos) String
   | TupleMismatch TypedMeta TExpr Typed (H.HashMap String TExpr)
-  | TCWithMatchingConstraints [SConstraint] TypeCheckError
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 data SType = SType Type Type String -- SType upper lower (description in type)
@@ -174,12 +173,10 @@ instance Show TypeCheckError where
     where
       showArg (argName, argVal) = printf "%s = %s" argName (show argVal)
       args' = intercalate ", " $ map showArg $ H.toList args
-  show (TCWithMatchingConstraints constraints er) = printf "%s\n\tConstraints: %s" (show er) (show constraints)
 
 instance CNoteTC TypeCheckError where
   posCNote (GenTypeCheckError pos _) = pos
   posCNote (TupleMismatch _ _ m _) = getMetaPos m
-  posCNote (TCWithMatchingConstraints _ e) = posCNote e
 
   typeCNote _ = CNoteError
 

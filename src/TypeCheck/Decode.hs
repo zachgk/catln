@@ -65,9 +65,8 @@ toExpr env (ITupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
   argExpr' <- toExpr env argExpr
   let result = TupleApply m' (baseM', baseExpr') argName argExpr'
   case m' of -- check for errors
-    tp@(Typed (SumType sumType) _) | all (\PartialType{ptArgs=leafArgs} -> not (argName `H.member` leafArgs)) (splitPartialLeafs sumType) -> do
-                                        let matchingConstraints = showMatchingConstraints env m
-                                        TypeCheckResult [TCWithMatchingConstraints matchingConstraints $ TupleMismatch baseM' baseExpr' tp $ H.singleton argName argExpr'] result
+    tp@(Typed (SumType sumType) _) | all (\PartialType{ptArgs=leafArgs} -> not (argName `H.member` leafArgs)) (splitPartialLeafs sumType) ->
+                                        TypeCheckResult [TupleMismatch baseM' baseExpr' tp $ H.singleton argName argExpr'] result
     _ -> return result
 toExpr env (ITupleApply m (baseM, baseExpr) Nothing argExpr) = do
   let pos = getMetaPos m
