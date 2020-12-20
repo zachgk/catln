@@ -181,6 +181,18 @@ class ExprClass e where
   getExprMeta ::  e m -> m
   getExprArg :: e m -> Maybe ArgName
 
+instance ExprClass RawExpr where
+  getExprMeta expr = case expr of
+    RawCExpr m _   -> m
+    RawValue m _   -> m
+    RawTupleApply m _ _ -> m
+    RawMethods e _ -> getExprMeta e
+    RawIfThenElse m _ _ _ -> m
+    RawMatch m _ _ -> m
+    RawCase m _ _ -> m
+
+  getExprArg _ = Nothing
+
 instance ExprClass Expr where
   getExprMeta expr = case expr of
     CExpr m _   -> m

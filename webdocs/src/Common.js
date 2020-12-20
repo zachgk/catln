@@ -29,6 +29,13 @@ function useApi(path) {
   });
   useEffect(() => {
     fetch(path)
+      .then(res => {
+        if(res.status !== 200) {
+          throw new Error(res.statusText);
+        } else {
+          return res;
+        }
+      })
       .then(res => res.json())
       .then(
         (res) => {

@@ -25,7 +25,7 @@ prettyCNotes :: [CNote] -> String
 prettyCNotes notes = "\n\n\t\t" ++ intercalate "\n\n\t\t" (map prettyNote notes)
   where
     prettyNote note = case posCNote note of
-      Just pos -> show pos ++ T.unpack (pShow note)
+      Just pos -> printf "%s\n\t\t%s" (show pos) (T.unpack $ pShow note)
       Nothing -> T.unpack $ pShow note
 
 runTest :: Bool -> String -> TestTree

@@ -105,7 +105,7 @@ fromExpr objArgs obj env1 (ITupleApply m (baseM, baseExpr) (Just argName) argExp
   (baseExpr', env4) <- fromExpr objArgs obj env3 baseExpr
   (argExpr', env5) <- fromExpr objArgs obj env4 argExpr
   let (convertExprMeta, env6) = fresh env5 (TypeCheckResult [] $ SType TopType bottomType "Tuple converted expr meta")
-  let convertExprMeta' = VarMeta convertExprMeta emptyMetaN obj
+  let convertExprMeta' = VarMeta convertExprMeta (PreTyped TopType (getMetaPos $ getExprMeta argExpr)) obj
   let constraints = [ArrowTo (getExprMeta baseExpr') baseM',
                      AddArg (baseM', argName) m',
                      BoundedByObjs BoundAllObjs m',
@@ -120,7 +120,7 @@ fromExpr objArgs obj env1 (ITupleApply m (baseM, baseExpr) Nothing argExpr) = do
   (baseExpr', env4) <- fromExpr objArgs obj env3 baseExpr
   (argExpr', env5) <- fromExpr objArgs obj env4 argExpr
   let (convertExprMeta, env6) = fresh env5 (TypeCheckResult [] $ SType TopType bottomType "Tuple converted expr meta")
-  let convertExprMeta' = VarMeta convertExprMeta emptyMetaN obj
+  let convertExprMeta' = VarMeta convertExprMeta (PreTyped TopType (getMetaPos $ getExprMeta argExpr)) obj
   let constraints = [ArrowTo (getExprMeta baseExpr') baseM',
                      AddInferArg baseM' m',
                      BoundedByObjs BoundAllObjs m',
@@ -133,7 +133,7 @@ fromGuard :: VArgMetaMap -> Maybe VObject -> FEnv -> PGuard -> TypeCheckResult (
 fromGuard objArgs obj env1 (IfGuard expr) =  do
   (expr', env2) <- fromExpr objArgs obj env1 expr
   let (bool, env3) = fresh env2 $ TypeCheckResult [] $ SType boolType bottomType "ifGuardBool"
-  let bool' = VarMeta bool emptyMetaN obj
+  let bool' = VarMeta bool (PreTyped boolType (getMetaPos $ getExprMeta expr)) obj
   return (IfGuard expr', addConstraints env3 [ArrowTo (getExprMeta expr') bool'])
 fromGuard _ _ env ElseGuard = return (ElseGuard, env)
 fromGuard _ _ env NoGuard = return (NoGuard, env)
@@ -148,7 +148,7 @@ fromArrow obj@(Object _ _ objName objVars _) env1 (Arrow m annots aguard maybeEx
   (aguard', env4) <- fromGuard argMetaMap jobj env3 aguard
   case maybeExpr of
     Just expr -> do
-      (m', env5) <- fromMeta env4 BUpper jobj emptyMetaN $ printf "Arrow result from %s" (show objName)
+      (m', env5) <- fromMeta env4 BUpper jobj (PreTyped TopType (getMetaPos m)) $ printf "Arrow result from %s" (show objName)
       (vExpr, env6) <- fromExpr argMetaMap jobj env5 expr
       let env7 = case metaTypeVar m of
             Just (TVVar typeVarName) -> case H.lookup typeVarName objVars of

@@ -65,13 +65,13 @@ contents p = do
   eof
   return r
 
-parseFile :: String -> CRes PPrgm
-parseFile f = case runParser (contents pPrgm) "<stdin>" f of
+parseFile :: String -> String -> CRes PPrgm
+parseFile fileName fileContents = case runParser (contents pPrgm) fileName fileContents of
   Left err -> CErr [MkCNote $ ParseCErr err]
   Right prgm -> return prgm
 
 parseRepl :: String -> PReplRes
-parseRepl s = case runParser (contents p) "<stdin>" s of
+parseRepl s = case runParser (contents p) "<repl>" s of
                 Left e@(ParseErrorBundle _ _) -> ReplErr e
                 Right (Left statement)             -> ReplStatement statement
                 Right (Right expr)            -> ReplExpr expr
@@ -84,6 +84,6 @@ readFiles = aux [] S.empty
     aux acc visited (nextToVisit:restToVisit) | S.member nextToVisit visited = aux acc visited restToVisit
     aux acc visited (nextToVisit:restToVisit) = do
       f <- readFile nextToVisit
-      case parseFile f of
+      case parseFile nextToVisit f of
         CErr notes -> return $ CErr notes
         CRes _ prgm@(parsedImports, _) -> aux ((nextToVisit, prgm):acc) (S.insert nextToVisit visited) (parsedImports ++ restToVisit)

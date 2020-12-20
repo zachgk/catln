@@ -72,3 +72,9 @@ emptyMeta p = PreTyped TopType (Just p)
 
 emptyMetaN :: ParseMeta
 emptyMetaN = PreTyped TopType Nothing
+
+emptyMetaM :: (Meta m) => m -> ParseMeta
+emptyMetaM m = PreTyped TopType (getMetaPos m)
+
+emptyMetaE :: (Meta m) => RawExpr m -> ParseMeta
+emptyMetaE e = PreTyped TopType (getMetaPos $ getExprMeta e)

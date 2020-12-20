@@ -127,13 +127,13 @@ semiDesExpr (RawValue m n) = ([], PSValue m n)
 semiDesExpr (RawTupleApply m'' (bm, be) args) = (\(a, _, PSTupleApply _ (bm'', be'') argName'' argVal'') -> (a, PSTupleApply m'' (bm'', be'') argName'' argVal'')) $ foldl aux (subBe, bm, be') args
   where
     (subBe, be') = semiDesExpr be
-    aux (sub, m, e) (RawTupleArgNamed argName argVal) = (subArgVal ++ sub, emptyMetaN, PSTupleApply emptyMetaN (m, e) (Just argName) argVal')
+    aux (sub, m, e) (RawTupleArgNamed argName argVal) = (subArgVal ++ sub, emptyMetaM m'', PSTupleApply (emptyMetaM m'') (m, e) (Just argName) argVal')
       where (subArgVal, argVal') = semiDesExpr argVal
-    aux (sub, m, e) (RawTupleArgInfer argVal) = (subArgVal ++ sub, emptyMetaN, PSTupleApply emptyMetaN (m, e) Nothing argVal')
+    aux (sub, m, e) (RawTupleArgInfer argVal) = (subArgVal ++ sub, emptyMetaM m'', PSTupleApply (emptyMetaM m'') (m, e) Nothing argVal')
       where (subArgVal, argVal') = semiDesExpr argVal
 semiDesExpr (RawMethods base methods) = semiDesExpr $ foldl addMethod base methods
   where
-    addMethod b method@RawValue{} = RawTupleApply emptyMetaN (emptyMetaN, method) [RawTupleArgNamed "this" b]
+    addMethod b method@RawValue{} = RawTupleApply (emptyMetaE b) (emptyMetaE method, method) [RawTupleArgNamed "this" b]
     addMethod b (RawTupleApply m methodVal methodArgs) = RawTupleApply m methodVal (RawTupleArgNamed "this" b : methodArgs)
     addMethod _ _ = error "Unknown semiDesExpr method"
 semiDesExpr r@(RawIfThenElse m i t e) = (concat [subI, subT, subE, [elseDecl, ifDecl]], expr')
@@ -142,22 +142,22 @@ semiDesExpr r@(RawIfThenElse m i t e) = (concat [subI, subT, subE, [elseDecl, if
     (subI, i') = semiDesExpr i
     (subT, t') = semiDesExpr t
     (subE, e') = semiDesExpr e
-    ifDecl = PSemiDecl (DeclLHS emptyMetaN (Pattern (Object emptyMetaN FunctionObj condName H.empty H.empty) (IfGuard i'))) [] (Just t')
-    elseDecl = PSemiDecl (DeclLHS emptyMetaN (Pattern (Object emptyMetaN FunctionObj condName H.empty H.empty) ElseGuard)) [] (Just e')
+    ifDecl = PSemiDecl (DeclLHS (emptyMetaE i) (Pattern (Object (emptyMetaE i) FunctionObj condName H.empty H.empty) (IfGuard i'))) [] (Just t')
+    elseDecl = PSemiDecl (DeclLHS (emptyMetaE e) (Pattern (Object (emptyMetaE e) FunctionObj condName H.empty H.empty) ElseGuard)) [] (Just e')
     expr' = PSValue m condName
 semiDesExpr r@(RawMatch m e matchItems) = (subE ++ subMatchItems, expr')
   where
     condName = "\\" ++ take 6 (printf "%08x" (hash r))
     argName = condName ++ "-arg"
     (subE, e') = semiDesExpr e
-    expr' = PSTupleApply m (emptyMetaN, PSValue emptyMetaN condName) (Just argName) e'
+    expr' = PSTupleApply m (emptyMetaM m, PSValue (emptyMetaM m) condName) (Just argName) e'
     subMatchItems = concatMap semiDesMatchItem matchItems
     semiDesMatchItem (Pattern patt pattGuard, matchExpr) = concat [[matchItemExpr'], subPattGuard, subMatchExpr]
       where
         (subPattGuard, pattGuard') = semiDesGuard pattGuard
         (subMatchExpr, matchExpr') = semiDesExpr matchExpr
-        matchArg = H.singleton argName (emptyMetaN, Just patt)
-        matchItemExpr' = PSemiDecl (DeclLHS emptyMetaN (Pattern (Object emptyMetaN FunctionObj condName H.empty matchArg) pattGuard')) [] (Just matchExpr')
+        matchArg = H.singleton argName (emptyMetaM m, Just patt)
+        matchItemExpr' = PSemiDecl (DeclLHS (emptyMetaM m) (Pattern (Object (emptyMetaM m) FunctionObj condName H.empty matchArg) pattGuard')) [] (Just matchExpr')
 semiDesExpr (RawCase _ _ ((Pattern _ ElseGuard, _):_)) = error "Can't use elseguard in match expr"
 semiDesExpr (RawCase _ _ []) = error "Empty case"
 semiDesExpr (RawCase _ _ [(_, matchExpr)]) = semiDesExpr matchExpr
@@ -165,14 +165,14 @@ semiDesExpr r@(RawCase m e ((Pattern firstObj@(Object fm _ _ _ _) firstGuard, fi
   where
     condName = "\\" ++ take 6 (printf "%08x" (hash r))
     argName = condName ++ "-arg"
-    declObj = Object emptyMetaN FunctionObj condName H.empty (H.singleton argName (fm, Just firstObj))
+    declObj = Object (emptyMetaM m) FunctionObj condName H.empty (H.singleton argName (fm, Just firstObj))
     firstDecl = PSemiDecl (DeclLHS m (Pattern declObj firstGuard')) [] (Just firstExpr')
     (subFG, firstGuard') = semiDesGuard firstGuard
     (subFE, firstExpr') = semiDesExpr firstExpr
     restDecl = PSemiDecl (DeclLHS m (Pattern declObj ElseGuard)) [] (Just restExpr')
     (subRE, restExpr') = semiDesExpr (RawCase m e restCases)
     (subE, e') = semiDesExpr e
-    expr' = PSTupleApply m (emptyMetaN, PSValue emptyMetaN condName) (Just argName) e'
+    expr' = PSTupleApply m (emptyMetaM m, PSValue (emptyMetaE e) condName) (Just argName) e'
 
 
 semiDesGuard :: PGuard -> ([PSemiDecl], PSGuard)
