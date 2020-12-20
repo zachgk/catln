@@ -8,8 +8,15 @@ function tagJoin(lst, joinWith) {
 
 const useStyles = {
   notes: {
-    whiteSpace: 'pre-wrap',
-    background: 'lightCoral'
+    all: {
+      whiteSpace: 'pre-wrap'
+    },
+    error: {
+      background: 'lightCoral'
+    },
+    warning: {
+      background: 'moccasin'
+    }
   }
 };
 
@@ -77,8 +84,25 @@ function Loading(props) {
 function Notes(props) {
   let notes = props.notes;
   return <div>
-           {notes.map(note => <pre key={note} style={useStyles.notes}>{note}</pre>)}
+           {notes.map((note, noteIndex) => <Note key={noteIndex} note={note} />)};
          </div>;
+}
+
+function Note(props) {
+  let note = props.note;
+  var styles = useStyles.notes.all;
+  switch(note.tp) {
+  case "CNoteError":
+    styles = {...styles, ...useStyles.notes.error};
+    break;
+  case "CNoteWarning":
+    styles = {...styles, ...useStyles.notes.warning};
+    break;
+  default:
+    console.error("Unknown note type", note);
+  }
+
+  return <pre style={styles}>{note.msg}</pre>;
 }
 
 function Guard(props) {

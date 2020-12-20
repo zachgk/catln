@@ -30,14 +30,24 @@ import TypeCheck.Common (TraceConstrain, VPrgm, TPrgm)
 import Eval.Common (Val(..), Val, EvalResult)
 import Syntax.Prgm (Expr)
 import Syntax (Typed)
+import Text.Megaparsec (SourcePos)
 
 data ResSuccess a n = Success a [n]
   | ResFail [n]
   deriving (Generic, ToJSON)
 
+data WebNote = WebNote {
+  msg :: String,
+  pos :: Maybe SourcePos,
+  tp :: CNoteType
+                       } deriving (Generic, ToJSON)
+
+mkWebNote :: CNote -> WebNote
+mkWebNote n = WebNote (show n) (posCNote n) (typeCNote n)
+
 maybeJson :: (ToJSON a) => CRes a -> ActionM ()
-maybeJson (CRes notes r) = json $ Success r (map show notes)
-maybeJson (CErr notes) = json (ResFail (map show notes) :: ResSuccess () [Char])
+maybeJson (CRes notes r) = json $ Success r (map mkWebNote notes)
+maybeJson (CErr notes) = json (ResFail (map mkWebNote notes) :: ResSuccess () WebNote)
 
 getRawPrgm :: Bool -> String -> IO (CRes [(String, PPrgm)])
 getRawPrgm includeStd fileName = readFiles (fileName : ["std/std.ct" | includeStd])

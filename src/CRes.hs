@@ -10,9 +10,12 @@
 --------------------------------------------------------------------
 
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
 
 module CRes where
 
+import           GHC.Generics          (Generic)
 import           Data.List                      ( intercalate )
 -- import qualified Data.Text.Lazy as T
 -- import Text.Pretty.Simple
@@ -21,11 +24,12 @@ import           Text.Printf
 import Syntax
 import Text.Megaparsec (pstateSourcePos, SourcePos)
 import Text.Megaparsec.Error
+import Data.Aeson (ToJSON)
 
 data CNoteType
   = CNoteError
   | CNoteWarn
-  deriving (Eq, Ord)
+  deriving (Eq, Ord, Generic, ToJSON)
 
 class CNoteTC n where
   posCNote :: n -> Maybe SourcePos
