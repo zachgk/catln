@@ -13,6 +13,13 @@ import {
 import {useApi, Loading, Notes, Type} from './Common';
 import {ObjMap} from './ListProgram';
 
+const useStyles = {
+  objMap: {
+    maxHeight: '100vh',
+    overflow: 'scroll'
+  }
+};
+
 function Constrain() {
   let apiResult = useApi("/constrain");
 
@@ -27,22 +34,24 @@ function Main(props) {
   let [, prgm, trace] = props.data;
   let { path } = useRouteMatch();
   return (
-    <Switch>
-      <Route exact path={path}>
-        <Redirect to={`${path}/0`} />
-      </Route>
-      <Route path={`${path}/:curMeta`}>
-        <Notes notes={props.notes}/>
-        <Grid container spacing={2} justify="center">
-          <Grid item xs>
-            <ObjMap objMap={prgm[0]} Meta={VarMeta} showExprMetas={true}/>
-          </Grid>
-          <Grid item xs>
-            <TraceEpochs trace={trace} />
-          </Grid>
+    <div>
+      <Notes notes={props.notes}/>
+      <Grid container spacing={2} justify="center">
+        <Grid item xs>
+          <ObjMap objMap={prgm[0]} Meta={VarMeta} showExprMetas={true} style={useStyles.objMap}/>
         </Grid>
-      </Route>
-    </Switch>
+        <Grid item xs>
+          <Switch>
+            <Route exact path={path}>
+              <Redirect to={`${path}/0`} />
+            </Route>
+            <Route path={`${path}/:curMeta`}>
+              <TraceEpochs trace={trace} />
+            </Route>
+          </Switch>
+        </Grid>
+      </Grid>
+    </div>
   );
 }
 

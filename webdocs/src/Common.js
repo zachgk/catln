@@ -83,9 +83,11 @@ function Loading(props) {
 
 function Notes(props) {
   let notes = props.notes;
-  return <div>
-           {notes.map((note, noteIndex) => <Note key={noteIndex} note={note} />)};
-         </div>;
+  return (
+    <div>
+      {notes.map((note, noteIndex) => <Note key={noteIndex} note={note} />)}
+    </div>
+  );
 }
 
 function Note(props) {
@@ -102,7 +104,9 @@ function Note(props) {
     console.error("Unknown note type", note);
   }
 
-  return <pre style={styles}>{note.msg}</pre>;
+  return (
+    <pre style={styles}>{note.msg}</pre>
+  );
 }
 
 function Guard(props) {
