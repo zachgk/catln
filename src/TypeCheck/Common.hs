@@ -241,6 +241,7 @@ verifyScheme classMap (VarMeta _ _ mobj) (TypeCheckResult _ (SType oldUb _ _)) (
     mobjVars Nothing = S.empty
     verifySchemeUbLowers (Just obj) = hasTypeWithObj classMap obj ub oldUb
     verifySchemeUbLowers Nothing = hasType classMap ub oldUb
+verifyScheme _ _ TypeCheckResE{} TypeCheckResult{} = False
 verifyScheme _ _ _ _ = True
 
 -- Point operations

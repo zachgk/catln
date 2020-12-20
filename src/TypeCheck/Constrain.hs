@@ -27,14 +27,12 @@ isSolved :: Scheme -> Bool
 isSolved (TypeCheckResult _ (SType a b _)) = a == b
 isSolved _ = False
 
-checkScheme :: String -> Scheme -> Scheme
--- checkScheme msg (TypeCheckResult _ (SType ub _ desc)) | isBottomType ub = error $ "Scheme failed check at " ++ msg ++ ": upper bound is bottomType - " ++ desc
-checkScheme msg (TypeCheckResult notes (SType ub _ desc)) | isBottomType ub = TypeCheckResE (GenTypeCheckError Nothing ("Scheme failed check at " ++ msg ++ ": upper bound is bottomType - " ++ desc) : notes)
-checkScheme _ scheme = scheme
-
 setScheme :: FEnv -> VarMeta -> Scheme -> String -> FEnv
-setScheme env p scheme msg = setDescriptor env p (checkScheme msg' scheme)
+setScheme env p scheme msg = setDescriptor env p (checkScheme scheme)
   where msg' = printf "setScheme %s" msg
+        -- checkScheme msg (TypeCheckResult _ (SType ub _ desc)) | isBottomType ub = error $ "Scheme failed check at " ++ msg ++ ": upper bound is bottomType - " ++ desc
+        checkScheme (TypeCheckResult notes (SType ub _ desc)) | isBottomType ub = TypeCheckResE (GenTypeCheckError (getMetaPos p) ("Scheme failed check at " ++ msg' ++ ": upper bound is bottomType - " ++ desc) : notes)
+        checkScheme s = s
 
 equalizeSTypes :: FEnv -> (SType, SType) -> String -> TypeCheckResult (SType, SType)
 equalizeSTypes env@FEnv{feClassMap} (SType ub1 lb1 desc1, SType ub2 lb2 desc2) d = do
