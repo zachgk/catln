@@ -5,6 +5,14 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
+import FormGroup from '@material-ui/core/FormGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
+import {
+  useHistory,
+  useLocation,
+  useRouteMatch
+} from 'react-router-dom';
 
 import {useApi, Loading, Guard, Type, Obj} from './Common';
 
@@ -26,18 +34,60 @@ const useStyles = {
 };
 
 function ListProgram(props) {
-  let apiResult = useApi(props.dataPath);
+  let query = useQuery();
+  let history = useHistory();
+
+  let noTypecheck = (query.get("noTypecheck") || "false") === "true";
+  let dataPath;
+  if(noTypecheck) {
+    dataPath = "/desugar";
+  } else {
+    dataPath = "/typecheck";
+  }
+  let apiResult = useApi(dataPath);
+  let { path } = useRouteMatch();
+
+  let switchTypecheck = (event) => {
+    query.set("noTypecheck", !noTypecheck);
+    history.push({
+      pathname: path,
+      search: `?${query.toString()}`
+    });
+  };
 
   return (
-    <Loading status={apiResult}>
-      <Main data={apiResult.data} />
-    </Loading>
+    <div>
+      <FormGroup row>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={noTypecheck}
+              onChange={switchTypecheck}
+              color="primary"
+            />
+          }
+          label="No Typecheck"
+        />
+      </FormGroup>
+      <Loading status={apiResult}>
+        <Main data={apiResult.data} />
+      </Loading>
+    </div>
   );
+}
+
+function useQuery() {
+  return new URLSearchParams(useLocation().search);
 }
 
 function Main(props) {
   let [objMap, ] = props.data;
-  return <ObjMap objMap={objMap} Meta={Meta}/>;
+
+  return (
+    <div>
+      <ObjMap objMap={objMap} Meta={Meta}/>
+    </div>
+  );
 }
 
 function ObjMap(props) {

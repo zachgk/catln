@@ -5,7 +5,6 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import StarIcon from '@material-ui/icons/Star';
-import StarOutlineIcon from '@material-ui/icons/StarOutlined';
 import BuildIcon from '@material-ui/icons/Build';
 import MenuBookIcon from '@material-ui/icons/MenuBook';
 import CompareArrowsIcon from '@material-ui/icons/CompareArrows';
@@ -14,7 +13,8 @@ import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Link
+  Link,
+  Redirect
 } from 'react-router-dom';
 
 import ListProgram from './ListProgram';
@@ -29,10 +29,7 @@ function App() {
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" color="inherit" noWrap>Catln WebDocs</Typography>
-          <Link to="/desugar">
-            <IconButton color="inherit" edge="end"><StarOutlineIcon /></IconButton>
-          </Link>
-          <Link to="/">
+          <Link to="/list">
             <IconButton color="inherit" edge="end"><StarIcon /></IconButton>
           </Link>
           <Link to="/constrain">
@@ -52,12 +49,10 @@ function App() {
       <div>
         <Switch>
           <Route exact path="/">
-            <h2>Typecheck</h2>
-            <ListProgram dataPath="/typecheck" />
+            <Redirect to={"/list"} />
           </Route>
-          <Route path="/desugar">
-            <h2>Desugar</h2>
-            <ListProgram dataPath="/desugar" />
+          <Route path="/list">
+            <ListProgram />
           </Route>
           <Route path="/constrain">
             <Constrain />

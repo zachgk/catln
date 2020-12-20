@@ -37,8 +37,10 @@ function Main(props) {
     <div>
       <Notes notes={props.notes}/>
       <Grid container spacing={2} justify="center">
-        <Grid item xs>
-          <ObjMap objMap={prgm[0]} Meta={VarMeta} showExprMetas={true} style={useStyles.objMap}/>
+        <Grid item xs >
+          <div style={useStyles.objMap}>
+            <ObjMap objMap={prgm[0]} Meta={VarMeta} showExprMetas={true} />
+          </div>
         </Grid>
         <Grid item xs>
           <Switch>
