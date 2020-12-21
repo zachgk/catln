@@ -22,7 +22,7 @@ import           Data.List                      ( intercalate )
 import           Text.Printf
 
 import Syntax
-import Text.Megaparsec (pstateSourcePos, SourcePos)
+import Text.Megaparsec (pstateSourcePos)
 import Text.Megaparsec.Error
 import Data.Aeson
 
@@ -32,7 +32,7 @@ data CNoteType
   deriving (Eq, Ord, Generic, ToJSON)
 
 class CNoteTC n where
-  posCNote :: n -> Maybe SourcePos
+  posCNote :: n -> CodeRange
   typeCNote :: n -> CNoteType
 
 data CNote
@@ -51,10 +51,10 @@ instance ToJSON CNote where
   toJSON (MkCNote n) = object ["msg".=show n, "pos".= posCNote n, "tp" .= typeCNote n]
 
 data CNoteI
-  = GenCNote (Maybe SourcePos) String
-  | GenCErr (Maybe SourcePos) String
+  = GenCNote CodeRange String
+  | GenCErr CodeRange String
   | ParseCErr ParseErrorRes
-  | BuildTreeCErr (Maybe SourcePos) String
+  | BuildTreeCErr CodeRange String
   | AssertCErr String
   | EvalCErr [String] String
   | WrapCN [CNote] String
@@ -69,7 +69,8 @@ instance Show CNoteI where
   show (WrapCN n s) = s ++ "\n\t\t" ++ intercalate "\n\t\t" (map show n)
 
 instance CNoteTC CNoteI where
-  posCNote (ParseCErr bundle) = Just $ pstateSourcePos $ bundlePosState bundle
+  posCNote (ParseCErr bundle) = Just (pos, pos, "")
+    where pos = pstateSourcePos $ bundlePosState bundle
   posCNote _ = Nothing
 
   typeCNote GenCNote{} = CNoteWarn

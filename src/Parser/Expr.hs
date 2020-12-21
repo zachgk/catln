@@ -17,7 +17,7 @@ import           Control.Applicative            hiding (many, some)
 import           Control.Monad.Combinators.Expr
 import qualified Data.HashMap.Strict as H
 import           Data.Maybe
-import           Text.Megaparsec
+import           Text.Megaparsec hiding (pos1)
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer     as L
 
@@ -72,28 +72,36 @@ pCallArg = do
 
 pCall :: Parser PExpr
 pCall = do
-  pos <- getSourcePos
+  pos1 <- getSourcePos
   funName <- identifier <|> tidentifier
+  pos2 <- getSourcePos
   maybeArgVals <- optional $ parens $ sepBy1 pCallArg (symbol ",")
-  let baseValue = RawValue (emptyMeta pos) funName
+  pos3 <- getSourcePos
+  let m1 = emptyMeta pos1 pos2
+  let m2 = emptyMeta pos2 pos3
+  let baseValue = RawValue m1 funName
   return $ case maybeArgVals of
-    Just argVals -> RawTupleApply (emptyMeta pos) (emptyMeta pos, baseValue) argVals
+    Just argVals -> RawTupleApply m2 (labelPosM "call" m1, baseValue) argVals
     Nothing -> baseValue
 
 pStringLiteral :: Parser PExpr
 pStringLiteral = do
-  pos <- getSourcePos
-  RawCExpr (emptyMeta pos) . CStr <$> (char '\"' *> manyTill L.charLiteral (char '\"'))
+  pos1 <- getSourcePos
+  s <- char '\"' *> manyTill L.charLiteral (char '\"')
+  pos2 <- getSourcePos
+  return $ RawCExpr (emptyMeta pos1 pos2) (CStr s)
 
 pIfThenElse :: Parser PExpr
 pIfThenElse = do
-  pos <- getSourcePos
+  pos1 <- getSourcePos
   _ <- symbol "if"
   condExpr <- pExpr
   _ <- symbol "then"
   thenExpr <- pExpr
   _ <- symbol "else"
-  RawIfThenElse (emptyMeta pos) condExpr thenExpr <$> pExpr
+  elseExpr <- pExpr
+  pos2 <- getSourcePos
+  return $ RawIfThenElse (emptyMeta pos1 pos2) condExpr thenExpr elseExpr
 
 pMatchCaseHelper :: String -> Parser (PExpr, [(PPattern, PExpr)])
 pMatchCaseHelper keyword = L.indentBlock scn p
@@ -112,32 +120,47 @@ pMatchCaseHelper keyword = L.indentBlock scn p
 
 pCase :: Parser PExpr
 pCase = do
-  pos <- getSourcePos
+  pos1 <- getSourcePos
   (expr, matchItems) <- pMatchCaseHelper "case"
-  return $ RawCase (emptyMeta pos) expr matchItems
+  pos2 <- getSourcePos
+  return $ RawCase (emptyMeta pos1 pos2) expr matchItems
 
 pMatch :: Parser PExpr
 pMatch = do
-  pos <- getSourcePos
+  pos1 <- getSourcePos
   (expr, matchItems) <- pMatchCaseHelper "match"
-  return $ RawMatch (emptyMeta pos) expr matchItems
+  pos2 <- getSourcePos
+  return $ RawMatch (emptyMeta pos1 pos2) expr matchItems
 
 pMethod :: Parser PExpr
 pMethod = do
   _ <- string "."
   pCall
 
+pInt :: Parser PExpr
+pInt = do
+  pos1 <- getSourcePos
+  i <- integer
+  pos2 <- getSourcePos
+  return $ RawCExpr (emptyMeta pos1 pos2) (CInt i)
+
+pValue :: Parser PExpr
+pValue = do
+  pos1 <- getSourcePos
+  v <- tidentifier
+  pos2 <- getSourcePos
+  return $ RawValue (emptyMeta pos1 pos2) v
+
 term :: Parser PExpr
 term = do
-  pos <- getSourcePos
   base <- try (parens pExpr)
        <|> pIfThenElse
        <|> pMatch
        <|> pCase
        <|> pStringLiteral
-       <|> RawCExpr (emptyMeta pos) . CInt <$> integer
+       <|> pInt
        <|> try pCall
-       <|> (RawValue (emptyMeta pos) <$> tidentifier)
+       <|> pValue
   methods <- many pMethod
   return $ case methods of
     [] -> base
@@ -166,26 +189,29 @@ pPatternGuard = fromMaybe NoGuard <$> optional (try pIfGuard
 pObjTreeVar :: Parser (TypeVarName, ParseMeta)
 pObjTreeVar = do
   -- TODO: Should support multiple class identifiers such as <Eq Ord $T>
-  pos <- getSourcePos
+  pos1 <- getSourcePos
   maybeClass <- optional tidentifier
   var <- tvar
+  pos2 <- getSourcePos
   let tp = maybe TopType (\n -> singletonType (PartialType (PTypeName n) H.empty H.empty H.empty PtArgExact)) maybeClass
-  return (var, PreTyped tp (Just pos))
+  return (var, PreTyped tp (Just (pos1, pos2, "")))
 
 pObjTreeArgPattern :: Parser (ArgName, PObjArg)
 pObjTreeArgPattern = do
+  pos1 <- getSourcePos
   val <- identifier
   _ <- symbol "="
-  pos <- getSourcePos
   subTree <- pObjTree PatternObj
-  return (val, (emptyMeta pos, Just subTree))
+  pos2 <- getSourcePos
+  return (val, (emptyMeta pos1 pos2, Just subTree))
 
 pObjTreeArgName :: Parser (ArgName, PObjArg)
 pObjTreeArgName = do
-  pos <- getSourcePos
+  pos1 <- getSourcePos
   tp <- try $ optional pType
   val <- identifier
-  let tp' = maybe (emptyMeta pos) (`PreTyped` Just pos) tp
+  pos2 <- getSourcePos
+  let tp' = maybe (emptyMeta pos1 pos2) (`PreTyped` Just (pos1, pos2, "")) tp
   return (val, (tp', Nothing))
 
 pObjTreeArgs :: Parser [(ArgName, PObjArg)]
@@ -193,13 +219,14 @@ pObjTreeArgs = sepBy1 (try pObjTreeArgPattern <|> pObjTreeArgName) (symbol ",")
 
 pObjTree :: ObjectBasis -> Parser PObject
 pObjTree basis = do
-  pos <- getSourcePos
+  pos1 <- getSourcePos
   name <- opIdentifier <|> identifier <|> tidentifier
   vars <- try $ optional $ angleBraces $ sepBy1 pObjTreeVar (symbol ",")
   args <- optional $ parens pObjTreeArgs
+  pos2 <- getSourcePos
   let vars' = maybe H.empty H.fromList vars
   let args' = H.fromList $ fromMaybe [] args
-  return $ Object (emptyMeta pos) basis name vars' args'
+  return $ Object (emptyMeta pos1 pos2) basis name vars' args'
 
 pPattern :: ObjectBasis -> Parser PPattern
 pPattern basis = do

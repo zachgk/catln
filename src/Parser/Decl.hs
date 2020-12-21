@@ -15,7 +15,7 @@ module Parser.Decl where
 
 import           Control.Applicative            hiding (many, some)
 import           Data.Maybe
-import           Text.Megaparsec
+import           Text.Megaparsec hiding (pos1)
 import qualified Text.Megaparsec.Char.Lexer     as L
 
 import           Syntax.Prgm
@@ -34,27 +34,31 @@ pDeclArg = do
 
 pCompAnnot :: Parser PCompAnnot
 pCompAnnot = do
-  pos <- getSourcePos
+  pos1 <- getSourcePos
   annotName <- pAnnotIdentifier
+  pos2 <- getSourcePos
   maybeArgVals <- optional $ parens $ sepBy1 pCallArg (symbol ",")
-  let baseValue = RawValue (emptyMeta pos) annotName
+  pos3 <- getSourcePos
+  let baseValue = RawValue (emptyMeta pos1 pos2) annotName
   return $ case maybeArgVals of
-    Just argVals -> RawTupleApply (emptyMeta pos) (emptyMeta pos, baseValue) argVals
+    Just argVals -> RawTupleApply (emptyMeta pos2 pos3) (PreTyped TopType (Just (pos1, pos2, "apply")), baseValue) argVals
     Nothing -> baseValue
 
 pArrowRes :: Parser ParseMeta
 pArrowRes = do
   _ <- symbol "->"
-  pos <- getSourcePos
+  pos1 <- getSourcePos
   t <- pSingleType
-  return $ PreTyped t (Just pos)
+  pos2 <- getSourcePos
+  return $ PreTyped t (Just (pos1, pos2, ""))
 
 pDeclLHS :: Parser PDeclLHS
 pDeclLHS = do
-  pos <- getSourcePos
+  pos1 <- getSourcePos
   patt <- pPattern FunctionObj
   maybeArrMeta <- optional pArrowRes
-  let arrMeta = fromMaybe (emptyMeta pos) maybeArrMeta
+  pos2 <- getSourcePos
+  let arrMeta = fromMaybe (emptyMeta pos1 pos2) maybeArrMeta
   return $ DeclLHS arrMeta patt
 
 pDeclSingle :: Parser PDecl

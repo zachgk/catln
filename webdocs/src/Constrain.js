@@ -75,11 +75,27 @@ let VarMeta = (notesMap) => (props) => {
   const [pnt, [tp, pos], ] = props.data;
   var style = {};
 
-  if(pos && posKey(pos) in notesMap) {
-    style.background = 'lightCoral';
+  let showPos;
+  if(pos) {
+
+    if(props.withPos) {
+      showPos = <span>&nbsp;-&nbsp;<Pos pos={pos} /></span>;
+    }
+
+    if(posKey(pos) in notesMap) {
+      style.background = 'lightCoral';
+    }
   }
 
-  return <span style={style}><Type data={tp}/>(<Pnt pnt={pnt} />)</span>;
+  return (
+    <span style={style}>
+      <Type data={tp}/>
+      (
+        <Pnt pnt={pnt} />
+        {showPos}
+      )
+    </span>
+  );
 };
 
 function TraceEpochs(props) {
@@ -128,27 +144,27 @@ function Constraint(props) {
   let {constraint, Meta} = props;
   switch(constraint.tag) {
   case "EqualsKnown":
-    return (<span><Meta data={constraint.contents[0]}/> k== <Type data={constraint.contents[1]}/></span>);
+    return (<span><Meta data={constraint.contents[0]} withPos /> k== <Type data={constraint.contents[1]}/></span>);
   case "EqPoints":
-    return (<span><Meta data={constraint.contents[0]}/> p== <Meta data={constraint.contents[1]}/></span>);
+    return (<span><Meta data={constraint.contents[0]} withPos /> p== <Meta data={constraint.contents[1]} withPos /></span>);
   case "BoundedByKnown":
-    return (<span><Meta data={constraint.contents[0]}/> ⊆ <Type data={constraint.contents[1]}/></span>);
+    return (<span><Meta data={constraint.contents[0]} withPos /> ⊆ <Type data={constraint.contents[1]}/></span>);
   case "BoundedByObjs":
-    return (<span>{constraint.contents[0]} <Meta data={constraint.contents[1]}/></span>);
+    return (<span>{constraint.contents[0]} <Meta data={constraint.contents[1]} withPos /></span>);
   case "ArrowTo":
-    return (<span><Meta data={constraint.contents[0]}/> -&gt; <Meta data={constraint.contents[1]} /></span>);
+    return (<span><Meta data={constraint.contents[0]} withPos /> -&gt; <Meta data={constraint.contents[1]} withPos /></span>);
   case "PropEq":
-    return (<span>(<Meta data={constraint.contents[0][0]}/>).{constraint.contents[0][1]} == <Meta data={constraint.contents[1]}/></span>);
+    return (<span>(<Meta data={constraint.contents[0][0]} withPos />).{constraint.contents[0][1]} == <Meta data={constraint.contents[1]} withPos /></span>);
   case "VarEq":
-    return (<span>(<Meta data={constraint.contents[0][0]}/>).{constraint.contents[0][1]} == <Meta data={constraint.contents[1]}/></span>);
+    return (<span>(<Meta data={constraint.contents[0][0]} withPos />).{constraint.contents[0][1]} == <Meta data={constraint.contents[1]} withPos /></span>);
   case "AddArg":
-    return (<span>(<Meta data={constraint.contents[0][0]}/>)({constraint.contents[0][1]}) arg== <Meta data={constraint.contents[1]}/></span>);
+    return (<span>(<Meta data={constraint.contents[0][0]} withPos />)({constraint.contents[0][1]}) arg== <Meta data={constraint.contents[1]} withPos /></span>);
   case "AddInferArg":
-    return (<span>(<Meta data={constraint.contents[0]}/>)(?) iarg== <Meta data={constraint.contents[1]}/></span>);
+    return (<span>(<Meta data={constraint.contents[0]} withPos />)(?) iarg== <Meta data={constraint.contents[1]} withPos /></span>);
   case "PowersetTo":
-    return (<span>P(<Meta data={constraint.contents[0]}/>) ps== <Meta data={constraint.contents[1]}/></span>);
+    return (<span>P(<Meta data={constraint.contents[0]} withPos />) ps== <Meta data={constraint.contents[1]} withPos /></span>);
   case "UnionOf":
-    return (<span>UnionOf <Meta data={constraint.contents[0]} /></span>);
+    return (<span>UnionOf <Meta data={constraint.contents[0]} withPos /></span>);
   default:
     console.error("Unknown renderConstraint", constraint);
     return "";
@@ -175,6 +191,11 @@ function Scheme(props) {
 function Pnt(props) {
   let {pnt} = props;
   return <Link to={`/constrain/${pnt}`}>{pnt}</Link>;
+}
+
+function Pos(props) {
+  const {pos: [start, end, label]} = props;
+  return `${start.name}: ${start.line}:${start.col} - ${end.line}:${end.col} ${label}`;
 }
 
 export default Constrain;

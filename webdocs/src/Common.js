@@ -21,7 +21,8 @@ const useStyles = {
 };
 
 function posKey(pos) {
-  return `${pos.name}-${pos.line}-${pos.col}`;
+  const f = p => `${p.name}-${p.line}-${p.col}`;
+  return `${f(pos[0])}_${f(pos[1])}_${pos[2]}`;
 }
 
 function useApi(path) {

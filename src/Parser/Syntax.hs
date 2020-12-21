@@ -67,14 +67,14 @@ type DesObject = Object ParseMeta
 type DesArrow = Arrow DesExpr ParseMeta
 type DesPrgm = Prgm DesExpr ParseMeta
 
-emptyMeta :: SourcePos -> ParseMeta
-emptyMeta p = PreTyped TopType (Just p)
+emptyMeta :: SourcePos -> SourcePos -> ParseMeta
+emptyMeta p1 p2 = PreTyped TopType (Just (p1, p2, ""))
 
 emptyMetaN :: ParseMeta
 emptyMetaN = PreTyped TopType Nothing
 
-emptyMetaM :: (Meta m) => m -> ParseMeta
-emptyMetaM m = PreTyped TopType (getMetaPos m)
+emptyMetaM :: (Meta m) => String -> m -> ParseMeta
+emptyMetaM s m = PreTyped TopType (labelPos s $ getMetaPos m)
 
-emptyMetaE :: (Meta m) => RawExpr m -> ParseMeta
-emptyMetaE e = PreTyped TopType (getMetaPos $ getExprMeta e)
+emptyMetaE :: (Meta m) => String -> RawExpr m -> ParseMeta
+emptyMetaE s e = PreTyped TopType (labelPos s $ getMetaPos $ getExprMeta e)

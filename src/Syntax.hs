@@ -37,11 +37,13 @@ data ReplRes m
   | ReplErr ParseErrorRes
   deriving (Eq, Show)
 
+type CodeRange = Maybe (SourcePos, SourcePos, String)
+
 -- Metadata for the Programs
-data PreTyped = PreTyped Type (Maybe SourcePos)
+data PreTyped = PreTyped Type CodeRange
   deriving (Generic, Hashable, ToJSON)
 
-data Typed = Typed Type (Maybe SourcePos)
+data Typed = Typed Type CodeRange
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 instance Show PreTyped where
@@ -58,15 +60,25 @@ instance ToJSON SourcePos where
 
 class Meta m where
   getMetaType :: m -> Type
-  getMetaPos :: m -> Maybe SourcePos
+  getMetaPos :: m -> CodeRange
+  labelPosM :: String -> m -> m
 
 instance Meta PreTyped where
   getMetaType (PreTyped t _) = t
   getMetaPos (PreTyped _ pos) = pos
+  labelPosM s (PreTyped t pos) = PreTyped t (labelPos s pos)
 
 instance Meta Typed where
   getMetaType (Typed t _) = t
   getMetaPos (Typed _ pos) = pos
+  labelPosM s (Typed t pos) = Typed t (labelPos s pos)
+
+labelPos :: String -> CodeRange -> CodeRange
+labelPos s (Just (p1, p2, sPrefix)) = Just (p1, p2, label')
+  where label' = case sPrefix of
+          [] -> s
+          _ -> printf "%s-%s" sPrefix s
+labelPos _ Nothing = Nothing
 
 type ArgMetaMapWithSrc m = H.HashMap ArgName (m, Type)
 formArgMetaMapWithSrc :: ClassMap -> Object m -> PartialType -> ArgMetaMapWithSrc m

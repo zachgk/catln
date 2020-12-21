@@ -94,7 +94,7 @@ fromExpr _ obj env1 (IValue m name) = do
   return (IValue m' name, addConstraints env2 [EqPoints m' lookupM])
 fromExpr objArgs obj env1 (IArg m name) = do
   (m', env2) <- fromMeta env1 BUpper obj m ("Arg " ++ name)
-  let varM = PreTyped (TypeVar $ TVArg name) (getMetaPos m)
+  let varM = PreTyped (TypeVar $ TVArg name) (labelPos "var" $ getMetaPos m)
   (varM', env3) <- fromMeta env2 BUpper obj varM $ "ArgVar " ++ name
   case H.lookup name objArgs of
     Nothing -> error $ "Could not find arg " ++ name
@@ -105,7 +105,7 @@ fromExpr objArgs obj env1 (ITupleApply m (baseM, baseExpr) (Just argName) argExp
   (baseExpr', env4) <- fromExpr objArgs obj env3 baseExpr
   (argExpr', env5) <- fromExpr objArgs obj env4 argExpr
   let (convertExprMeta, env6) = fresh env5 (TypeCheckResult [] $ SType TopType bottomType "Tuple converted expr meta")
-  let convertExprMeta' = VarMeta convertExprMeta (PreTyped TopType (getMetaPos $ getExprMeta argExpr)) obj
+  let convertExprMeta' = VarMeta convertExprMeta (PreTyped TopType (labelPos "convert" $ getMetaPos $ getExprMeta argExpr)) obj
   let constraints = [ArrowTo (getExprMeta baseExpr') baseM',
                      AddArg (baseM', argName) m',
                      BoundedByObjs BoundAllObjs m',
@@ -120,7 +120,7 @@ fromExpr objArgs obj env1 (ITupleApply m (baseM, baseExpr) Nothing argExpr) = do
   (baseExpr', env4) <- fromExpr objArgs obj env3 baseExpr
   (argExpr', env5) <- fromExpr objArgs obj env4 argExpr
   let (convertExprMeta, env6) = fresh env5 (TypeCheckResult [] $ SType TopType bottomType "Tuple converted expr meta")
-  let convertExprMeta' = VarMeta convertExprMeta (PreTyped TopType (getMetaPos $ getExprMeta argExpr)) obj
+  let convertExprMeta' = VarMeta convertExprMeta (PreTyped TopType (labelPos "convert" $ getMetaPos $ getExprMeta argExpr)) obj
   let constraints = [ArrowTo (getExprMeta baseExpr') baseM',
                      AddInferArg baseM' m',
                      BoundedByObjs BoundAllObjs m',
@@ -133,7 +133,7 @@ fromGuard :: VArgMetaMap -> Maybe VObject -> FEnv -> PGuard -> TypeCheckResult (
 fromGuard objArgs obj env1 (IfGuard expr) =  do
   (expr', env2) <- fromExpr objArgs obj env1 expr
   let (bool, env3) = fresh env2 $ TypeCheckResult [] $ SType boolType bottomType "ifGuardBool"
-  let bool' = VarMeta bool (PreTyped boolType (getMetaPos $ getExprMeta expr)) obj
+  let bool' = VarMeta bool (PreTyped boolType (labelPos "bool" $ getMetaPos $ getExprMeta expr)) obj
   return (IfGuard expr', addConstraints env3 [ArrowTo (getExprMeta expr') bool'])
 fromGuard _ _ env ElseGuard = return (ElseGuard, env)
 fromGuard _ _ env NoGuard = return (NoGuard, env)
@@ -148,7 +148,7 @@ fromArrow obj@(Object _ _ objName objVars _) env1 (Arrow m annots aguard maybeEx
   (aguard', env4) <- fromGuard argMetaMap jobj env3 aguard
   case maybeExpr of
     Just expr -> do
-      (m', env5) <- fromMeta env4 BUpper jobj (PreTyped TopType (getMetaPos m)) $ printf "Arrow result from %s" (show objName)
+      (m', env5) <- fromMeta env4 BUpper jobj (PreTyped TopType (labelPos "res" $ getMetaPos m)) $ printf "Arrow result from %s" (show objName)
       (vExpr, env6) <- fromExpr argMetaMap jobj env5 expr
       let env7 = case metaTypeVar m of
             Just (TVVar typeVarName) -> case H.lookup typeVarName objVars of
@@ -198,7 +198,7 @@ addObjArg fakeObj objM prefix varMap env (n, (m, maybeSubObj)) = do
 -- However, typeVars only work correctly from the arg version and not the main meta
 -- Likewise, replace the type vars equal to vars with top type for now
 clearMetaArgTypes :: PreMeta -> PreMeta
-clearMetaArgTypes (PreTyped (SumType partials) pos) = PreTyped (SumType $ joinPartialLeafs $ map clearPartialTypeArgs $ splitPartialLeafs partials) pos
+clearMetaArgTypes (PreTyped (SumType partials) pos) = PreTyped (SumType $ joinPartialLeafs $ map clearPartialTypeArgs $ splitPartialLeafs partials) (labelPos "clear" pos)
   where
     clearPartialTypeArgs partial@PartialType{ptArgs} = partial{ptArgs=fmap (const TopType) ptArgs}
 clearMetaArgTypes p = p
@@ -211,7 +211,7 @@ fromObject prefix isObjArg env (Object m basis name vars args) = do
   let fakeObjForArgs = Object m' basis name vars' H.empty
   (args', env3) <- mapMWithFEnvMapWithKey env2 (addObjArg fakeObjForArgs m' prefix' vars') args
   let obj' = Object m' basis name vars' args'
-  (objValue, env4) <- fromMeta env3 BUpper (Just obj') (PreTyped (singletonType (PartialType (PTypeName name) H.empty H.empty H.empty PtArgExact)) (getMetaPos m)) ("objValue" ++ name)
+  (objValue, env4) <- fromMeta env3 BUpper (Just obj') (PreTyped (singletonType (PartialType (PTypeName name) H.empty H.empty H.empty PtArgExact)) (labelPos "objValue" $ getMetaPos m)) ("objValue" ++ name)
   let env5 = fInsert env4 name objValue
   let env6 = addConstraints env5 [BoundedByObjs BoundAllObjs m' | isObjArg]
   let env7 = addConstraints env6 [BoundedByKnown m' (singletonType (PartialType (PTypeName name) (fmap (const TopType) vars) H.empty (fmap (const TopType) args) PtArgExact)) | basis == FunctionObj || basis == PatternObj]

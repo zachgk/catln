@@ -28,10 +28,9 @@ import           Text.Printf
 import Data.Aeson (ToJSON, toJSON)
 import qualified Data.HashSet as S
 import CRes
-import Text.Megaparsec (SourcePos)
 
 data TypeCheckError
-  = GenTypeCheckError (Maybe SourcePos) String
+  = GenTypeCheckError CodeRange String
   | TupleMismatch TypedMeta TExpr Typed (H.HashMap String TExpr)
   deriving (Eq, Ord, Generic, Hashable)
 
@@ -165,10 +164,12 @@ type TypeGraph = H.HashMap TypeName [TypeGraphVal] -- H.HashMap (Root tuple name
 instance Meta VarMeta where
   getMetaType (VarMeta _ p _) = getMetaType p
   getMetaPos (VarMeta _ p _) = getMetaPos p
+  labelPosM s (VarMeta p pos o) = VarMeta p (labelPosM s pos) o
 
 instance Meta ShowMeta where
   getMetaType (ShowMeta (SType ub _ _) _) = ub
   getMetaPos (ShowMeta _ varMeta) = getMetaPos varMeta
+  labelPosM s (ShowMeta scheme pos) = ShowMeta scheme (labelPosM s pos)
 
 instance Show TypeCheckError where
   show (GenTypeCheckError _ s) = s
