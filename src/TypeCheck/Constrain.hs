@@ -30,7 +30,7 @@ isSolved _ = False
 setScheme :: FEnv -> VarMeta -> Scheme -> String -> FEnv
 setScheme env p scheme msg = setDescriptor env p (checkScheme scheme) msg
   where msg' = printf "setScheme %s" msg
-        -- checkScheme msg (TypeCheckResult _ (SType ub _ desc)) | isBottomType ub = error $ "Scheme failed check at " ++ msg ++ ": upper bound is bottomType - " ++ desc
+        -- checkScheme (TypeCheckResult _ (SType ub _ desc)) | isBottomType ub = error $ "Scheme failed check at " ++ msg' ++ ": upper bound is bottomType - " ++ desc
         checkScheme (TypeCheckResult notes (SType ub _ desc)) | isBottomType ub = TypeCheckResE (GenTypeCheckError (getMetaPos p) ("Scheme failed check at " ++ msg' ++ ": upper bound is bottomType - " ++ desc) : notes)
         checkScheme s = s
 
@@ -200,8 +200,8 @@ executeConstraint env cons@(PropEq (superPnt, propName) subPnt) = do
       case sequenceT (superScheme, subScheme) of
         TypeCheckResult _ (superSType, subSType) -> do
           let (env2, superScheme', subScheme') = updateSchemeProp env (superPnt, superSType) propName (subPnt, subSType)
-          let env3 = setScheme env2 superPnt superScheme' "PropEq super"
-          let env4 = setScheme env3 subPnt subScheme' "PropEq sub"
+          let env3 = setScheme env2 superPnt superScheme' (printf "PropEq super (%s)" propName)
+          let env4 = setScheme env3 subPnt subScheme' (printf"PropEq sub (%s)" propName)
           ([cons | not (isSolved subScheme)], subScheme /= subScheme' || superScheme /= superScheme', env4)
         TypeCheckResE _ -> ([], False, env)
 executeConstraint env cons@(VarEq (superPnt, varName) subPnt) = do
