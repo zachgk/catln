@@ -15,7 +15,7 @@ module Parser.Type where
 
 import           Control.Applicative            hiding (many, some)
 import qualified Data.HashMap.Strict as H
-import           Text.Megaparsec
+import           Text.Megaparsec hiding (pos1)
 
 import           Syntax.Types
 import           Syntax.Prgm

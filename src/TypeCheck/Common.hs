@@ -233,6 +233,8 @@ tryIntersectTypes FEnv{feClassMap} a b desc = let c = intersectTypes feClassMap 
                                                                   then TypeCheckResE [GenTypeCheckError Nothing $ "Failed to intersect(" ++ desc ++ "): " ++ show a ++ " --- " ++ show b]
                                                                   else return c
 
+-- This ensures schemes are correct
+-- It differs from Constrain.checkScheme because it checks for bugs in the internal compiler, not bugs in the user code
 verifyScheme :: ClassMap -> VarMeta -> Scheme -> Scheme -> Bool
 verifyScheme classMap (VarMeta _ _ mobj) (TypeCheckResult _ (SType oldUb _ _)) (TypeCheckResult _ (SType ub _ _)) = verifyTypeVars (mobjVars mobj) ub && verifySchemeUbLowers mobj
   where
