@@ -22,6 +22,7 @@ import qualified LLVM.AST as AST
 import LLVM.AST.Operand (Operand)
 import qualified LLVM.AST.IntegerPredicate as IP
 import qualified LLVM.AST.Constant as C
+import qualified LLVM.AST.Type as ATP
 
 type Op = (TypeName, [(PartialType, Guard (Expr Typed), ResBuildEnvFunction EPrim)])
 
@@ -106,7 +107,7 @@ strEq = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
                            (Just (LLVMOperand _ l), Just (LLVMOperand _ r)) -> LLVMOperand boolType $ do
                              l' <- l
                              r' <- r
-                             call (externf "strcmp") [l', r'] -- TODO: really returns int type as result of comparison
+                             callf ATP.i1 "strcmp" [l', r'] -- TODO: really returns int type as result of comparison
                            _ -> error "Invalid strEq signature"
                            )
 
@@ -130,7 +131,7 @@ ioExit = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "this" args, H.lookup "val" args) of
                            (Just (LLVMIO _), Just (LLVMOperand _ r)) -> LLVMIO $ do
                              r' <- r
-                             _ <- call (externf "exit") [r']
+                             _ <- callf ATP.VoidType "exit" [r']
                              return ()
                            _ -> LLVMIO (pure ())-- TODO: Delete, should be an error
                            -- _ -> error "Invalid ioExit signature"
@@ -145,7 +146,7 @@ println = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "this" args, H.lookup "msg" args) of
                            (Just (LLVMIO _), Just (LLVMOperand _ s)) -> LLVMIO $ do
                              s' <- s
-                             _ <- call (externf "puts") [s']
+                             _ <- callf ATP.i32 "puts" [s']
                              return ()
                            _ -> error "Invalid strEq signature"
                            )

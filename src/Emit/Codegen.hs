@@ -34,6 +34,7 @@ import qualified LLVM.AST.CallingConvention as CC
 import qualified LLVM.AST.Constant          as C
 import qualified LLVM.AST.Linkage           as L
 import LLVM.AST.Type
+import LLVM.AST.Typed
 
 -------------------------------------------------------------------------------
 -- Module Level
@@ -256,8 +257,8 @@ local = LocalReference double
 global ::  Name -> C.Constant
 global = C.GlobalReference double
 
-externf :: Name -> Operand
-externf = ConstantOperand . C.GlobalReference double
+externf :: Type -> Name -> Operand
+externf t = ConstantOperand . C.GlobalReference (ptr t)
 
 cons :: C.Constant -> Operand
 cons = ConstantOperand
@@ -271,6 +272,12 @@ toArgs = map (, [])
 -- Effects
 call :: Operand -> [Operand] -> Codegen Operand
 call fn ags = instr $ Call Nothing CC.C [] (Right fn) (toArgs ags) [] []
+
+callf :: Type -> String -> [Operand] -> Codegen Operand
+callf retType fnName args = do
+  let fnType = FunctionType retType (map typeOf args) False
+  let fn = externf fnType (astName fnName)
+  call fn args
 
 alloca :: Type -> Codegen Operand
 alloca ty = instr $ Alloca ty Nothing 0 []
