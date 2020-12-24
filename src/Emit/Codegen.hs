@@ -53,10 +53,10 @@ addDefn d = do
   defs <- gets moduleDefinitions
   modify $ \s -> s { moduleDefinitions = defs ++ [d] }
 
-define ::  Type -> SBS.ShortByteString -> [(Type, Name)] -> [BasicBlock] -> LLVM ()
+define ::  Type -> String -> [(Type, Name)] -> [BasicBlock] -> LLVM ()
 define retty label argtys body = addDefn $
   GlobalDefinition $ functionDefaults {
-    name        = Name label
+    name        = Name $ fromString label
   , parameters  = ([Parameter ty nm [] | (ty, nm) <- argtys], False)
   , returnType  = retty
   , basicBlocks = body
@@ -91,8 +91,8 @@ type Names = Map.Map String Int
 uniqueName :: String -> Names -> (SBS.ShortByteString, Names)
 uniqueName nm ns =
   case Map.lookup nm ns of
-    Nothing -> (SBS.toShort $ BSU.fromString nm,  Map.insert nm 1 ns)
-    Just ix -> (SBS.toShort $ BSU.fromString $ nm ++ show ix, Map.insert nm (ix+1) ns)
+    Nothing -> (fromString nm,  Map.insert nm 1 ns)
+    Just ix -> (fromString $ nm ++ show ix, Map.insert nm (ix+1) ns)
 
 
 -------------------------------------------------------------------------------
@@ -140,14 +140,14 @@ makeBlock (l, BlockState _ s t) = BasicBlock l (reverse s) (maketerm t)
     maketerm (Just x) = x
     maketerm Nothing  = error $ "Block has no terminator: " ++ show l
 
-entryBlockName :: SBS.ShortByteString
-entryBlockName = SBS.toShort $ BSU.fromString "entry"
+entryBlockName :: String
+entryBlockName = "entry"
 
 emptyBlock :: Int -> BlockState
 emptyBlock i = BlockState i [] Nothing
 
 emptyCodegen :: CodegenState
-emptyCodegen = CodegenState (Name entryBlockName) Map.empty [] 1 0 Map.empty
+emptyCodegen = CodegenState (Name $ fromString entryBlockName) Map.empty [] 1 0 Map.empty
 
 execCodegen :: [(String, Operand)] -> Codegen a -> CodegenState
 execCodegen vars m = execState (runCodegen m) emptyCodegen { symtab = vars }
@@ -174,6 +174,13 @@ instr ins = do
   let i = stack blk
   modifyBlock (blk { stack = (ref := ins) : i } )
   return $ local ref
+
+voidInstr :: Instruction -> Codegen ()
+voidInstr ins = do
+  blk <- current
+  let i = stack blk
+  modifyBlock (blk { stack = Do ins : i } )
+  return ()
 
 terminator :: Named Terminator -> Codegen (Named Terminator)
 terminator trm = do
@@ -268,8 +275,8 @@ call fn ags = instr $ Call Nothing CC.C [] (Right fn) (toArgs ags) [] []
 alloca :: Type -> Codegen Operand
 alloca ty = instr $ Alloca ty Nothing 0 []
 
-store :: Operand -> Operand -> Codegen Operand
-store pointer val = instr $ Store False pointer val Nothing 0 []
+store :: Operand -> Operand -> Codegen ()
+store pointer val = voidInstr $ Store False pointer val Nothing 0 []
 
 load :: Operand -> Codegen Operand
 load pointer = instr $ Load False pointer Nothing 0 []
@@ -281,8 +288,24 @@ br val = terminator $ Do $ Br val []
 cbr :: Operand -> Name -> Name -> Codegen (Named Terminator)
 cbr cond tr fl = terminator $ Do $ CondBr cond tr fl []
 
+switch :: Operand -> Name -> [(C.Constant, Name)] -> Codegen (Named Terminator)
+switch cond def dests = terminator $ Do $ Switch cond def dests []
+
 phi :: Type -> [(Operand, Name)] -> Codegen Operand
 phi ty incoming = instr $ Phi ty incoming []
 
 ret :: Operand -> Codegen (Named Terminator)
 ret val = terminator $ Do $ Ret (Just val) []
+
+panic :: String -> Codegen Operand
+-- panic _ = call (externf "exit") [cons $ C.Int 64 3] -- TODO
+panic _ = return $ cons $ C.Int 64 0
+
+astName :: String -> AST.Name
+astName = AST.Name . fromString
+
+toString :: SBS.ShortByteString -> String
+toString = BSU.toString . SBS.fromShort
+
+fromString :: String -> SBS.ShortByteString
+fromString = SBS.toShort . BSU.fromString
