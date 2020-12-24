@@ -52,6 +52,12 @@ leafsFromMeta (Typed TopType _) = error "leafFromMeta from TopType"
 leafsFromMeta (Typed TypeVar{} _) = error "leafFromMeta from TypeVar"
 leafsFromMeta (Typed (SumType prodTypes) _) = splitPartialLeafs prodTypes
 
+-- Helper to replace matches with a single option with their result
+buildMatch :: ResArrowTree f -> H.HashMap PartialType (ResArrowTree f) -> ResArrowTree f
+buildMatch m opts = case H.toList opts of
+  [(_, t)] -> t
+  _ -> ResArrowMatch m opts
+
 buildTBEnv :: (Eq f, Hashable f) => ResBuildEnv f -> TBPrgm -> TBEnv f
 buildTBEnv primEnv prgm@(objMap, classMap, _) = baseEnv
   where
@@ -105,7 +111,7 @@ envLookupTry env@(_, _, _, classMap) obj visitedArrows srcType destType resArrow
   case eitherAfterArrows of
     ([], afterArrows) -> do
       maybeAfterArrowTrees <- H.fromList <$> sequence afterArrows
-      return $ ResArrowMatch resArrow maybeAfterArrowTrees
+      return $ buildMatch resArrow maybeAfterArrowTrees
     (errNotes, _) -> wrapCErr errNotes "Failed envLookupTry"
 
 buildGuardArrows :: (Eq f, Hashable f) => TBEnv f -> TBObject -> ResArrowTree f -> VisitedArrows f -> PartialType -> Type -> ([ResArrowTree f], [(TBExpr, ResArrowTree f)], [ResArrowTree f]) -> CRes (ResArrowTree f)
@@ -154,7 +160,7 @@ envLookup env@(_, _, _, classMap) obj input visitedArrows srcType@PartialType{pt
   let (SumType expanded) = expandClassPartial classMap srcType
   let expanded' = splitPartialLeafs expanded
   expandedTrees <- mapM (\expandedSrc -> envLookup env obj input visitedArrows expandedSrc destType) expanded'
-  return $ ResArrowMatch input $ H.fromList $ zip expanded' expandedTrees
+  return $ buildMatch input $ H.fromList $ zip expanded' expandedTrees
 
 buildImplicit :: (Eq f, Hashable f) => TBEnv f -> TBObject -> ResArrowTree f -> Type -> Type -> CRes (ResArrowTree f)
 buildImplicit _ _ input _ TopType = return input
@@ -167,7 +173,7 @@ buildImplicit env obj input (TypeVar (TVArg argName)) destType = case H.lookup a
   Nothing -> error $ printf "buildImplicit unknown arg %s with obj %s" argName (show obj)
 buildImplicit env obj input (SumType srcType) destType = do
   matchVal <- sequence $ H.fromList $ map aux $ splitPartialLeafs srcType
-  return (ResArrowMatch input matchVal)
+  return (buildMatch input matchVal)
   where
     aux leafSrcType = (leafSrcType,) $ envLookup env obj input S.empty leafSrcType destType
 
