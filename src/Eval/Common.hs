@@ -177,8 +177,8 @@ data ResArrowTree f
   | ExprArrow EExpr Type
   | ConstantArrow Val
   | ArgArrow Type String
-  | ResArrowMatch (ResArrowTree f) (H.HashMap PartialType (ResArrowTree f))
-  | ResArrowCond [((ResArrowTree f, ResArrowTree f, Object Typed), ResArrowTree f)] (ResArrowTree f) -- [((if, ifInput, ifObj), then)] else
+  | ResArrowMatch (ResArrowTree f) Type (H.HashMap PartialType (ResArrowTree f))
+  | ResArrowCond Type [((ResArrowTree f, ResArrowTree f, Object Typed), ResArrowTree f)] (ResArrowTree f) -- [((if, ifInput, ifObj), then)] else
   | ResArrowTuple String (H.HashMap String (ResArrowTree f))
   | ResArrowTupleApply (ResArrowTree f) String (ResArrowTree f)
   deriving (Eq, Generic, Hashable)
@@ -190,11 +190,11 @@ instance Show (ResArrowTree f) where
   show (ExprArrow e destType) = "(ExprArrow " ++ show e ++ " to " ++ show destType ++ ")"
   show (ConstantArrow c) = "(ConstantArrow " ++ show c ++ ")"
   show (ArgArrow tp n) = "(ArgArrow " ++ show tp ++ " " ++ n ++ ")"
-  show (ResArrowMatch m args) = printf "match (%s) {%s}" (show m) args'
+  show (ResArrowMatch m _ args) = printf "match (%s) {%s}" (show m) args'
     where
       showArg (leaf, tree) = show leaf ++ " -> " ++ show tree
       args' = intercalate ", " $ map showArg $ H.toList args
-  show (ResArrowCond ifTrees elseTree) = "( [" ++ ifTrees' ++ "] ( else " ++ show elseTree ++ ") )"
+  show (ResArrowCond _ ifTrees elseTree) = "( [" ++ ifTrees' ++ "] ( else " ++ show elseTree ++ ") )"
     where
       showIfTree (condTree, thenTree) = "if " ++ show condTree ++ " then " ++ show thenTree
       ifTrees' = intercalate ", " $ map showIfTree ifTrees

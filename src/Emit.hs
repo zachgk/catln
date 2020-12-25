@@ -133,8 +133,7 @@ codegenTree _ (ConstantArrow val) = LLVMOperand (singletonType $ getValType val)
 -- codegenTree env@LEnv{lvArgs} (ArgArrow _ name) = case H.lookup name lvArgs of
 --   Just arg' -> (arg', env)
   -- Nothing -> error $ printf "Failed to find emit ArgArrow %s" (show name)
-codegenTree env@LEnv{lvClassMap} match@(ResArrowMatch m opts) = do
-  let matchType = unionTypes lvClassMap $ map singletonType $ H.keys opts
+codegenTree env match@(ResArrowMatch m matchType opts) = do
   let matchHashName = "match:" ++ take 6 (printf "%08x" (hash match))
   LLVMOperand matchType $ do
     -- matchResult <- alloca $ genType H.empty matchType TODO
@@ -166,7 +165,42 @@ codegenTree env@LEnv{lvClassMap} match@(ResArrowMatch m opts) = do
     -- Start building exit block with result
     _ <- setBlock exitBlock
     load matchResult
--- codegenTree env val (ResArrowCond [] elseTree) = codegenTree env val elseTree
+codegenTree env (ResArrowCond _ [] elseTree) = codegenTree env elseTree
+codegenTree env cond@(ResArrowCond resType (((ifCondTree, ifCondInput, ifObj), ifThenTree):restIfTrees) elseTree) = do
+  let condHashName = "cond:" ++ take 6 (printf "%08x" (hash cond))
+  let ifCondInput' = codegenTree env ifCondInput
+  let envCond = env{lvArgs=buildArrArgs ifObj ifCondInput'}
+  let cond' = codegenTree envCond ifCondTree
+  let ifThenTree' = codegenTree env ifThenTree
+  let rest' = codegenTree env (ResArrowCond resType restIfTrees elseTree)
+  LLVMOperand resType $ do
+      -- result <- alloca $ genType H.empty matchType TODO
+      result <- alloca i32
+
+      thenBlock <- addBlock $ condHashName ++ "-then"
+      elseBlock <- addBlock $ condHashName ++ "-else"
+      exitBlock <- addBlock $ condHashName ++ "-exit"
+
+      -- Branch on condition
+      cond'' <- asOperand cond'
+      _ <- cbr cond'' thenBlock elseBlock
+
+      -- True condition
+      _ <- setBlock thenBlock
+      thenRes <- asOperand ifThenTree'
+      store result thenRes
+      _ <- br exitBlock
+
+      -- False / rest of tree
+      _ <- setBlock elseBlock
+      elseRes <- asOperand rest'
+      store result elseRes
+      _ <- br exitBlock
+
+      -- Exit after branch
+      _ <- setBlock exitBlock
+      load result
+
 -- codegenTree env val (ResArrowCond ((ifCondTree, ifThenTree):restIfTrees) elseTree) = do
 --   cond' <- codegenTree env val ifCondTree
 --   codegenTree env cond' (ResArrowMatch $ H.fromList [

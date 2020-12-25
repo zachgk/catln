@@ -53,10 +53,10 @@ leafsFromMeta (Typed TypeVar{} _) = error "leafFromMeta from TypeVar"
 leafsFromMeta (Typed (SumType prodTypes) _) = splitPartialLeafs prodTypes
 
 -- Helper to replace matches with a single option with their result
-buildMatch :: ResArrowTree f -> H.HashMap PartialType (ResArrowTree f) -> ResArrowTree f
-buildMatch m opts = case H.toList opts of
+buildMatch :: ResArrowTree f -> Type -> H.HashMap PartialType (ResArrowTree f) -> ResArrowTree f
+buildMatch m tp opts = case H.toList opts of
   [(_, t)] -> t
-  _ -> ResArrowMatch m opts
+  _ -> ResArrowMatch m tp opts
 
 buildTBEnv :: (Eq f, Hashable f) => ResBuildEnv f -> TBPrgm -> TBEnv f
 buildTBEnv primEnv prgm@(objMap, classMap, _) = baseEnv
@@ -111,7 +111,7 @@ envLookupTry env@(_, _, _, classMap) obj visitedArrows srcType destType resArrow
   case eitherAfterArrows of
     ([], afterArrows) -> do
       maybeAfterArrowTrees <- H.fromList <$> sequence afterArrows
-      return $ buildMatch resArrow maybeAfterArrowTrees
+      return $ buildMatch resArrow destType maybeAfterArrowTrees
     (errNotes, _) -> wrapCErr errNotes "Failed envLookupTry"
 
 buildGuardArrows :: (Eq f, Hashable f) => TBEnv f -> TBObject -> ResArrowTree f -> VisitedArrows f -> PartialType -> Type -> ([ResArrowTree f], [(TBExpr, ResArrowTree f)], [ResArrowTree f]) -> CRes (ResArrowTree f)
@@ -131,7 +131,7 @@ buildGuardArrows env obj input visitedArrows srcType destType guards = case guar
                                             return ((ifTree', input, o), thenTree')
                                       let maybeElseTree = ltry elseGuard
                                       case sequenceT (maybeIfTreePairs, maybeElseTree) of
-                                        (CRes notes (ifTreePairs, elseTree)) -> CRes notes $ ResArrowCond ifTreePairs elseTree
+                                        (CRes notes (ifTreePairs, elseTree)) -> CRes notes $ ResArrowCond destType ifTreePairs elseTree
                                         CErr notes -> wrapCErr notes "No valid ifTrees:"
       arrows -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Unknown arrows found in envLookup: %s" (show arrows)]
   where
@@ -160,11 +160,11 @@ envLookup env@(_, _, _, classMap) obj input visitedArrows srcType@PartialType{pt
   let (SumType expanded) = expandClassPartial classMap srcType
   let expanded' = splitPartialLeafs expanded
   expandedTrees <- mapM (\expandedSrc -> envLookup env obj input visitedArrows expandedSrc destType) expanded'
-  return $ buildMatch input $ H.fromList $ zip expanded' expandedTrees
+  return $ buildMatch input destType $ H.fromList $ zip expanded' expandedTrees
 
 buildImplicit :: (Eq f, Hashable f) => TBEnv f -> TBObject -> ResArrowTree f -> Type -> Type -> CRes (ResArrowTree f)
 buildImplicit _ _ input _ TopType = return input
-buildImplicit _ _ _ TopType destType = error $ printf "Build implicit from top type to %s" (show destType)
+buildImplicit _ obj _ TopType destType = error $ printf "Build implicit from top type to %s in %s" (show destType) (show obj)
 buildImplicit env obj@(Object _ _ _ objVars _) input (TypeVar (TVVar varName)) destType = case H.lookup varName objVars of
   Just objVarM -> buildImplicit env obj input (getMetaType objVarM) destType
   Nothing -> error $ printf "buildImplicit unknown arg %s with obj %s" varName (show obj)
@@ -173,7 +173,7 @@ buildImplicit env obj input (TypeVar (TVArg argName)) destType = case H.lookup a
   Nothing -> error $ printf "buildImplicit unknown arg %s with obj %s" argName (show obj)
 buildImplicit env obj input (SumType srcType) destType = do
   matchVal <- sequence $ H.fromList $ map aux $ splitPartialLeafs srcType
-  return (buildMatch input matchVal)
+  return (buildMatch input destType matchVal)
   where
     aux leafSrcType = (leafSrcType,) $ envLookup env obj input S.empty leafSrcType destType
 
@@ -198,18 +198,18 @@ resolveTree env obj (MacroArrow input _ (MacroFunction f)) = resolveTree env obj
 resolveTree env obj (ExprArrow e destType) = buildExprImp env obj e destType
 resolveTree _ _ a@ConstantArrow{} = return a
 resolveTree _ _ a@ArgArrow{} = return a
-resolveTree env obj (ResArrowMatch input matches) = do
+resolveTree env obj (ResArrowMatch input tp matches) = do
   input' <- resolveTree env obj input
   matches' <- mapM (resolveTree env obj) matches
-  return $ ResArrowMatch input' matches'
-resolveTree env obj (ResArrowCond ifs elseTree) = do
+  return $ ResArrowMatch input' tp matches'
+resolveTree env obj (ResArrowCond tp ifs elseTree) = do
   ifs' <- forM ifs $ \((ifCondTree, ifCondInput, ifObj), ifThenTree) -> do
     ifCondTree' <- resolveTree env obj ifCondTree
     ifCondInput' <- resolveTree env obj ifCondInput
     ifThenTree' <- resolveTree env obj ifThenTree
     return ((ifCondTree', ifCondInput', ifObj), ifThenTree')
   elseTree' <- resolveTree env obj elseTree
-  return $ ResArrowCond ifs' elseTree'
+  return $ ResArrowCond tp ifs' elseTree'
 resolveTree env obj (ResArrowTuple name args) = do
   args' <- mapM (resolveTree env obj) args
   return $ ResArrowTuple name args'
