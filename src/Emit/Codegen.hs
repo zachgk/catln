@@ -92,7 +92,7 @@ external retty label argtys = addDefn $
 -------------------------------------------------------------------------------
 
 struct :: Name -> [Type] -> LLVM ()
-struct n as = addDefn $ TypeDefinition n (Just $ structType as)
+struct n as = addDefn $ TypeDefinition n (Just $ StructureType False as)
 
 structType :: [Type] -> Type
 structType = StructureType False
@@ -153,8 +153,11 @@ sortBlocks = sortBy (compare `on` (idx . snd))
 
 createBlocks :: CodegenState -> LLVM [BasicBlock]
 createBlocks m = do
-  curTasks <- gets lTaskArrows
-  modify $ \s -> s {lTaskArrows = taskArrows m ++ curTasks}
+  curTaskArrows <- gets lTaskArrows
+  modify $ \s -> s {lTaskArrows = taskArrows m ++ curTaskArrows}
+
+  curTaskStructs <- gets lTaskStructs
+  modify $ \s -> s {lTaskStructs = taskStructs m ++ curTaskStructs}
 
   return $ map makeBlock $ sortBlocks $ Map.toList (blocks m)
 
@@ -197,7 +200,7 @@ instr ins = do
   blk <- current
   let i = stack blk
   modifyBlock (blk { stack = (ref := ins) : i } )
-  return $ local ref
+  return $ local double ref
 
 voidInstr :: Instruction -> Codegen ()
 voidInstr ins = do
@@ -218,7 +221,7 @@ named iname m = m >> do
   let b = Name iname
       (_ := x) = last (stack blk)
   modifyBlock $ blk { stack = init (stack blk) ++ [b := x] }
-  return $ local b
+  return $ local double b
 
 -------------------------------------------------------------------------------
 -- Tasks
@@ -298,17 +301,20 @@ getvar var = do
 -------------------------------------------------------------------------------
 
 -- References
-local ::  Name -> Operand
-local = LocalReference double
+local ::  Type -> Name -> Operand
+local = LocalReference
 
-global ::  Name -> C.Constant
-global = C.GlobalReference double
+global ::  Type -> String -> Operand
+global tp = ConstantOperand . C.GlobalReference tp . astName
 
 externf :: Type -> Name -> Operand
 externf t = ConstantOperand . C.GlobalReference (ptr t)
 
 cons :: C.Constant -> Operand
 cons = ConstantOperand
+
+getelementptr :: Operand -> [Operand] -> Codegen Operand
+getelementptr tp ops = instr $ GetElementPtr True tp ops []
 
 uitofp :: Type -> Operand -> Codegen Operand
 uitofp ty a = instr $ UIToFP a ty []

@@ -56,6 +56,16 @@ asOperand (LLVMOperand _ o) = o
 asOperand (IntVal i) = return $ cons $ C.Int 64 i
 asOperand (FloatVal f) = return $ cons $ C.Float (F.Double f)
 asOperand (StrVal s) = return $ cons $ C.Array i8 $ map (C.Int 8 . toInteger . ord) s
+asOperand val@(TupleVal _ args) = do
+  let tp = singletonType $ getValType val
+  tp' <- genType H.empty tp
+  res <- alloca tp'
+  -- let tpDef = global tp' (typeName tp)
+  forM_ (zip [0..] $ H.toList args) \(argIndx, (_, argVal)) -> do
+    argPntr <- getelementptr res [res, cons $ C.Int 32 argIndx]
+    argVal' <- asOperand argVal
+    store argPntr argVal'
+  return res
 asOperand val = error $ printf "Invalid val to operand: %s" (show val)
 
 -- TODO: Add genType with varEnv
@@ -86,7 +96,8 @@ arrowName (Object _ _ name _ _) arrow = printf "fun:%s-%s" name arrHash
   where arrHash = take 6 (printf "%08x" (hash arrow)) :: String
 
 typeName :: Type -> String
-typeName tp = take 6 (printf "%08x" (hash tp))
+typeName tp = printf "tp_%s" tpHash
+  where tpHash = take 6 (printf "%08x" (hash tp)) :: String
 
 codegenTree :: LEnv -> ResArrowTree EPrim -> Val
 codegenTree env (ResEArrow input object arrow) = do
@@ -177,9 +188,9 @@ codegenTree env (ResArrowTupleApply base argName argRATree) = do
 codegenTree _ _ = LLVMOperand intType (return $ cons $ C.Int 64 0)
 
 codegenDecl :: LEnv -> String -> PartialType -> ResArrowTree EPrim -> LLVM ()
-codegenDecl env name tp@PartialType{ptArgs} tree = do
+codegenDecl env name tp@PartialType{ptArgs, ptVars} tree = do
   forM_ (H.toList ptArgs) $ \(argName, argTp) -> do -- TODO Use as args'
-    argTp' <- genType H.empty argTp
+    argTp' <- genType ptVars argTp
     return (argTp', astName argName)
   _ <- genType H.empty $ singletonType tp -- TODO Use as retType
   let args' = [(i32, astName "i")]
@@ -198,17 +209,8 @@ codegenDecl env name tp@PartialType{ptArgs} tree = do
       --   assign argName var
       --   return (argName, OVal (getMetaType argM) var)
       let env' = env{lvArgs = H.fromList replaceArgs}
-      case codegenTree env' tree of
-        (LLVMOperand _ o) -> do
-          _ <- o
-          -- ret o'
-          ret $ cons $ C.Int 32 0
-        TupleVal _ _ -> do
-      --     -- TODO: This should build a struct and return it
-      --     -- let tp = structType as
-          ret $ cons $ C.Int 32 0
-      --   IOVal -> ret $ cons $ C.Int 64 0 -- TODO: Delete, this should be an error
-        err -> error $ printf "Unexpected return type in codegenDecl: %s" (show err)
+      _ <- asOperand $ codegenTree env' tree -- TODO use as return value
+      ret $ cons $ C.Int 32 0
 
 codegenDecls :: LEnv -> String -> Type -> ResArrowTree EPrim -> LLVM ()
 codegenDecls env name (SumType partialLeafs) tree = case splitPartialLeafs partialLeafs of
@@ -219,8 +221,8 @@ codegenDecls _ _ _ _ = error $ printf "Invalid input to codegenDecls"
 codegenStruct :: Type -> LLVM ()
 codegenStruct tp@(SumType partialLeafs) = do
   case splitPartialLeafs partialLeafs of
-    [PartialType{ptArgs}] -> do
-      args' <- mapM (genType H.empty) $ H.elems ptArgs
+    [PartialType{ptArgs, ptVars}] -> do
+      args' <- mapM (genType ptVars) $ H.elems ptArgs
       struct structName args'
     _ -> error $ printf "Invalid type count to codegenStruct: %s" (show tp)
   where
