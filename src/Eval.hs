@@ -42,7 +42,7 @@ eval :: Env -> ResArrowTree EPrim -> CRes (Val, Env)
 eval env (ResEArrow input object arrow) = do
   (input', env2) <- evalPopVal <$> eval (evalPush env "resEArrow input") input
   let newArrArgs = buildArrArgs object input'
-  (resArrowTree, compAnnots, oldArgs, env3) <- evalStartEArrow env2 object arrow newArrArgs
+  (resArrowTree, compAnnots, oldArgs, env3) <- evalStartEArrow env2 (getValType input') object arrow newArrArgs
   env5s <- forM compAnnots $ \compAnnot -> do
             (compAnnot', env4) <- evalPopVal <$> eval (evalPush env3 $ printf "annot %s" (show compAnnot)) compAnnot
             evalCompAnnot env4 compAnnot'
@@ -118,8 +118,9 @@ evalAnnots prgm@(_, _, annots) = do
   forM annots $ \annot -> do
     let exprType = getMetaType $ getExprMeta annot
     let inTree = ExprArrow annot exprType
-    let emptyObj = Object (Typed exprType Nothing) FunctionObj "EmptyObj" H.empty H.empty
-    tree <- resolveTree evTbEnv emptyObj inTree
+    let emptyType = PartialType (PTypeName "EmptyObj") H.empty H.empty H.empty PtArgExact
+    let emptyObj = Object (Typed (singletonType emptyType) Nothing) FunctionObj "EmptyObj" H.empty H.empty
+    tree <- resolveTree evTbEnv (emptyType, emptyObj) inTree
     val <- fst <$> eval env tree
     return (annot, val)
 

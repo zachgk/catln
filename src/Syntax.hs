@@ -128,3 +128,6 @@ hasPartialWithObj classMap (Object _ _ _ objVars objArgs) = hasPartialWithEnv cl
 
 hasTypeWithObj :: (Meta m) => ClassMap -> Object m -> Type -> Type -> Bool
 hasTypeWithObj classMap obj@(Object _ _ _ objVars _) = hasTypeWithEnv classMap (fmap getMetaType objVars) (getMetaType <$> formArgMetaMap obj)
+
+hasTypeWithObjSrc :: (Meta m) => ClassMap -> PartialType -> Object m -> Type -> Type -> Bool
+hasTypeWithObjSrc classMap srcType obj@(Object _ _ _ objVars _) = hasTypeWithEnv classMap (fmap getMetaType objVars) (snd <$> formArgMetaMapWithSrc classMap obj srcType )

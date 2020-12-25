@@ -120,7 +120,7 @@ data DeclInput
   = TupleInput
   | StructInput
   deriving (Eq, Ord, Show)
-type TaskArrow = (Object SYN.Typed, Arrow (Expr SYN.Typed) SYN.Typed, DeclInput)
+type TaskArrow = (SYNT.PartialType, Object SYN.Typed, Arrow (Expr SYN.Typed) SYN.Typed, DeclInput)
 type TaskStruct = SYNT.Type
 
 data CodegenState

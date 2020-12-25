@@ -91,9 +91,9 @@ genType _ t = error $ printf "Unsupported emit genType: %s" (show t)
 genTypeMeta :: (Monad m, TaskState m) => EvalMeta -> m AST.Type
 genTypeMeta (Typed t _) = genType H.empty t
 
-arrowName :: EObject -> EArrow -> String
-arrowName (Object _ _ name _ _) arrow = printf "fun:%s-%s" name arrHash
-  where arrHash = take 6 (printf "%08x" (hash arrow)) :: String
+arrowName :: PartialType -> EObject -> EArrow -> String
+arrowName srcType (Object _ _ name _ _) arrow = printf "fun:%s-%s" name arrHash
+  where arrHash = take 6 (printf "%08x" (hash (srcType, arrow))) :: String
 
 typeName :: Type -> String
 typeName tp = printf "tp_%s" tpHash
@@ -102,22 +102,23 @@ typeName tp = printf "tp_%s" tpHash
 codegenTree :: LEnv -> ResArrowTree EPrim -> Val
 codegenTree env (ResEArrow input object arrow) = do
   let val = codegenTree env input
-  -- let outType = resArrowDestType lvClassMap (getValType val) resArrow TODO
+  let arrowSrcType = getValType val
+  -- let outType = resArrowDestType lvClassMap arrowSrcType resArrow TODO
   let outType = intType
   case val of
     TupleVal{} ->
       LLVMOperand outType $ do
         let args' = buildArrArgs object val
         mapM_ asOperand $ H.elems args'
-        addTaskArrow (object, arrow, TupleInput)
+        addTaskArrow (arrowSrcType, object, arrow, TupleInput)
         outType' <- genType H.empty outType
-        callf outType' (arrowName object arrow) [cons $ C.Int 32 0]
+        callf outType' (arrowName arrowSrcType object arrow) [cons $ C.Int 32 0]
     _ -> do
       LLVMOperand outType $ do
         _ <- asOperand val
-        addTaskArrow (object, arrow, StructInput)
+        addTaskArrow (arrowSrcType, object, arrow, StructInput)
         outType' <- genType H.empty outType
-        callf outType' (arrowName object arrow) [cons $ C.Int 32 0]
+        callf outType' (arrowName arrowSrcType object arrow) [cons $ C.Int 32 0]
 codegenTree _ MacroArrow{} = error $ printf "Can't evaluate a macro - it should be removed during TreeBuild"
 codegenTree _ ExprArrow{} = error $ printf "Can't evaluate an expr - it should be removed during TreeBuild"
 codegenTree env (PrimArrow input outType (EPrim _ _ f)) = do
@@ -273,17 +274,17 @@ codegenTasks env@LEnv{lvTbEnv} = do
   taskArrows <- gets lTaskArrows
   completed <- gets lTasksCompleted
   case taskArrows of
-    (obj@(Object objM _ _ _ _), arr, declInput):tas -> do
+    (arrowSrcType, obj@(Object objM _ _ _ _), arr, declInput):tas -> do
       modify $ \s -> s {lTaskArrows = tas}
-      let nm = arrowName obj arr
+      let nm = arrowName arrowSrcType obj arr
       if S.member nm completed
         then codegenTasks env
-        else case buildArrow lvTbEnv obj arr of
+        else case buildArrow lvTbEnv arrowSrcType obj arr of
           CRes _ (Just (_, (tree, _))) -> do
             modify $ \s -> s {lTasksCompleted = S.insert nm completed}
             codegenDecls env nm (getMetaType objM) tree declInput
             codegenTasks env
-          _ -> error $ printf "Failed to buildtree to emit arrow"
+          err -> error $ printf "Failed to buildtree to emit arrow: %s" (show err)
     [] -> do
       taskStructs <- gets lTaskStructs
       case taskStructs of
