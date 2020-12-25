@@ -15,8 +15,6 @@
 
 module Emit where
 
-import Prelude hiding (unzip)
-import Data.Zip
 import           LLVM.Context
 import           LLVM.Module
 
@@ -47,13 +45,7 @@ import qualified Data.HashSet as S
 data LEnv = LEnv { lvArgs :: H.HashMap ArgName Val
                  , lvTbEnv :: TBEnv EPrim
                  , lvClassMap :: ClassMap
-                 , lvTaskArrow :: [(Object Typed, Arrow (Expr Typed) Typed, Bool)] -- Bool is true for tuple, false for codegenOperand
-                 , lvTasksCompleted :: S.HashSet String
                  }
-
-mergeLEnvs :: Foldable f => f LEnv -> LEnv
-mergeLEnvs = foldr1 aux
-  where aux (LEnv args tb classMap arrows1 comp1) (LEnv _ _ _ arrows2 comp2) = LEnv args tb classMap (arrows1 ++ arrows2) (S.union comp1 comp2)
 
 initModule :: AST.Module
 initModule = emptyModule "repl"
@@ -91,67 +83,60 @@ arrowName (Object _ _ name _ _) arrow = printf "fun:%s-%s" name arrHash
 typeName :: Type -> String
 typeName tp = take 6 (printf "%08x" (hash tp))
 
-codegenTree :: LEnv -> ResArrowTree EPrim -> (Val, LEnv)
-codegenTree env@LEnv{lvTaskArrow} (ResEArrow input object arrow) = do
-  let (val, env2) = codegenTree env input
+codegenTree :: LEnv -> ResArrowTree EPrim -> Val
+codegenTree env (ResEArrow input object arrow) = do
+  let val = codegenTree env input
   -- let outType = resArrowDestType lvClassMap (getValType val) resArrow TODO
   let outType = intType
   case val of
     TupleVal{} ->
-      (LLVMOperand outType $ do
+      LLVMOperand outType $ do
         let args' = buildArrArgs object val
         mapM_ asOperand $ H.elems args'
+        addTaskArrow (object, arrow, True)
         callf (genType H.empty outType) (arrowName object arrow) [cons $ C.Int 32 0]
-       , env2{lvTaskArrow = (object, arrow, True):lvTaskArrow})
     _ -> do
-      (LLVMOperand outType $ do
+      LLVMOperand outType $ do
         _ <- asOperand val
+        addTaskArrow (object, arrow, False)
         callf (genType H.empty outType) (arrowName object arrow) [cons $ C.Int 32 0]
-       , env2{lvTaskArrow = (object, arrow, False):lvTaskArrow})
 codegenTree _ MacroArrow{} = error $ printf "Can't evaluate a macro - it should be removed during TreeBuild"
 codegenTree _ ExprArrow{} = error $ printf "Can't evaluate an expr - it should be removed during TreeBuild"
 codegenTree env (PrimArrow input outType (EPrim _ _ f)) = do
-  let (input', env2) = codegenTree env input
+  let input' = codegenTree env input
   case input' of
-    TupleVal _ args -> (f args, env2)
+    TupleVal _ args -> f args
     LLVMOperand _ o ->
-      (LLVMOperand outType $ do
+      LLVMOperand outType $ do
           _ <- o
           return $ cons $ C.Int 32 0
-        , env2)
     _ -> error $ printf "Unknown input to PrimArrow"
-codegenTree env (ConstantArrow val) = (LLVMOperand (singletonType $ getValType val) (asOperand val), env)
+codegenTree _ (ConstantArrow val) = LLVMOperand (singletonType $ getValType val) (asOperand val)
 -- codegenTree env@LEnv{lvArgs} (ArgArrow _ name) = case H.lookup name lvArgs of
 --   Just arg' -> (arg', env)
   -- Nothing -> error $ printf "Failed to find emit ArgArrow %s" (show name)
 codegenTree env@LEnv{lvClassMap} match@(ResArrowMatch m opts) = do
   let matchType = unionTypes lvClassMap $ map singletonType $ H.keys opts
   let matchHashName = "match:" ++ take 6 (printf "%08x" (hash match))
-  let (m', env2) = codegenTree env m
-  let (opts', env3s) = unzip $ (\(optType, optTree) -> do
-                                        let (optTree', e) = codegenTree env2 optTree
-                                        ((optType, optTree'), e)
-                                    ) <$> H.toList opts
-  let env3 = mergeLEnvs env3s
-  (LLVMOperand matchType $ do
+  LLVMOperand matchType $ do
     -- matchResult <- alloca $ genType H.empty matchType TODO
     matchResult <- alloca i32
 
     -- Create blocks
     exitBlock <- addBlock $ matchHashName ++ "-exit"
     noMatchBlock <- addBlock $ matchHashName ++ "-noMatch"
-    opts'' <- forM opts' $ \opt@(optType, _) -> do
+    opts' <- forM (H.toList opts) $ \opt@(optType, _) -> do
       optBlock <- addBlock $ printf "%s-opt:%s" matchHashName (typeName $ singletonType optType)
       return (optBlock, opt)
 
     -- End block with switch of input
-    m'' <- asOperand m'
-    _ <- switch m'' noMatchBlock (map ((C.Int 64 0,) . fst) opts'')
+    m' <- asOperand $ codegenTree env m
+    _ <- switch m' noMatchBlock (map ((C.Int 64 0,) . fst) opts')
 
     -- Build switch bblocks
-    forM_ opts'' $ \(optBlock, (_, optTree)) -> do
+    forM_ opts' $ \(optBlock, (_, optTree)) -> do
       _ <- setBlock optBlock
-      tree' <- asOperand optTree
+      tree' <- asOperand $ codegenTree env optTree
       _ <- store matchResult tree'
       br exitBlock
 
@@ -163,7 +148,6 @@ codegenTree env@LEnv{lvClassMap} match@(ResArrowMatch m opts) = do
     -- Start building exit block with result
     _ <- setBlock exitBlock
     load matchResult
-    , env3)
 -- codegenTree env val (ResArrowCond [] elseTree) = codegenTree env val elseTree
 -- codegenTree env val (ResArrowCond ((ifCondTree, ifThenTree):restIfTrees) elseTree) = do
 --   cond' <- codegenTree env val ifCondTree
@@ -171,32 +155,33 @@ codegenTree env@LEnv{lvClassMap} match@(ResArrowMatch m opts) = do
 --                           (trueLeaf, ifThenTree),
 --                           (falseLeaf, (ResArrowCond restIfTrees elseTree))
 --                                                   ])
-codegenTree env (ResArrowTuple name args) | H.null args = (TupleVal name H.empty, env)
+codegenTree _ (ResArrowTuple name args) | H.null args = TupleVal name H.empty
 codegenTree env (ResArrowTuple name args) = do
   let args' = fmap (codegenTree env) args
-  let (args'', env2s) = unzip args'
-  (TupleVal name args'', mergeLEnvs env2s)
+  TupleVal name args'
 codegenTree env (ResArrowTupleApply base argName argRATree) = do
-  let (base', env2) = codegenTree env base
-  let (argRATree', env3) = codegenTree env2 argRATree
+  let base' = codegenTree env base
+  let argRATree' = codegenTree env argRATree
   case base' of
     TupleVal name baseArgs -> do
       let args' = H.insert argName argRATree' baseArgs
-      (TupleVal name args', env3)
+      TupleVal name args'
     _ -> error "Invalid input to tuple application"
-codegenTree env _ = (LLVMOperand intType (return $ cons $ C.Int 64 0), env)
+codegenTree _ _ = LLVMOperand intType (return $ cons $ C.Int 64 0)
 
-codegenDecl :: LEnv -> String -> PartialType -> ResArrowTree EPrim -> LLVM LEnv
-codegenDecl env name PartialType{} tree = define retType name args' blks >> return env''
+codegenDecl :: LEnv -> String -> PartialType -> ResArrowTree EPrim -> LLVM CodegenResult
+codegenDecl env name PartialType{} tree = define retType name args' blks >> return codegenRes
   where
     -- args' = map(\(argName, argTp) -> (genType H.empty argTp, astName argName)) $ H.toList ptArgs -- TODO
     -- retType = genType H.empty $ singletonType tp
     args' = [(i32, astName "i")]
     retType = i32
-    blks = createBlocks $ execCodegen [] buildBlock
+    codegenState = execCodegen [] buildBlock
+    codegenRes = buildCodegenRes codegenState
+    blks = createBlocks codegenState
     replaceArgs = [] -- TODO: Use actual args
     env' = env{lvArgs = H.fromList replaceArgs}
-    (tree', env'') = codegenTree env' tree
+    tree' = codegenTree env' tree
     buildBlock = do
       ent <- addBlock entryBlockName
       _ <- setBlock ent
@@ -217,7 +202,7 @@ codegenDecl env name PartialType{} tree = define retType name args' blks >> retu
       --   IOVal -> ret $ cons $ C.Int 64 0 -- TODO: Delete, this should be an error
         err -> error $ printf "Unexpected return type in codegenDecl: %s" (show err)
 
-codegenDecls :: LEnv -> String -> Type -> ResArrowTree EPrim -> LLVM LEnv
+codegenDecls :: LEnv -> String -> Type -> ResArrowTree EPrim -> LLVM CodegenResult
 codegenDecls env name (SumType partialLeafs) tree = case splitPartialLeafs partialLeafs of
   [leaf] -> codegenDecl env name leaf tree
   _ -> error $ printf "CodegenDecls only supports a singleton partial right now"
@@ -228,19 +213,18 @@ codegenStruct (Object objM _ _ _ args) = struct name (map (\(argM, _) -> genType
   where
     name = astName $ typeName $ getMetaType objM
 
-codegenTasks :: LEnv -> LLVM LEnv
-codegenTasks env@LEnv{lvTbEnv, lvTaskArrow, lvTasksCompleted} = case lvTaskArrow of
+codegenTasks :: LEnv -> [TaskArrow] -> S.HashSet String -> LLVM ()
+codegenTasks env@LEnv{lvTbEnv} taskArrows completed = case taskArrows of
   (obj@(Object objM _ _ _ _), arr, _):tas -> do
-    let env' = env{lvTaskArrow=tas}
     let nm = arrowName obj arr
-    if S.member nm lvTasksCompleted
-      then codegenTasks env'
+    if S.member nm completed
+      then codegenTasks env tas completed
       else case buildArrow lvTbEnv obj arr of
         CRes _ (Just (_, (tree, _))) -> do
-          env'' <- codegenDecls env' nm (getMetaType objM) tree
-          codegenTasks env''{lvTasksCompleted = S.insert nm lvTasksCompleted}
+          cgRes <- codegenDecls env nm (getMetaType objM) tree
+          codegenTasks env (tas ++ cgRes) (S.insert nm completed)
         _ -> error $ printf "Failed to buildtree to emit arrow"
-  [] -> return env
+  [] -> return ()
 
 applyIO :: EExpr -> EExpr
 applyIO input@(Value m name) = TupleApply applyMeta (m, input) "io" (Arg (Typed ioType Nothing) "io")
@@ -252,13 +236,13 @@ codegenPrgm input srcType destType tprgm@(_, classMap, _) = do
   let tbEnv = buildTBEnv primEnv tprgm
   case buildRoot tbEnv (applyIO input) srcType destType of
     CRes _ initTree -> do
-      let env = LEnv H.empty tbEnv classMap [] S.empty
+      let env = LEnv H.empty tbEnv classMap
       -- forM_ (H.keys objMap) $ \obj -> do
       --   codegenStruct obj
       -- forM_ (H.toList exEnv) $ \(arrow, (obj, tree, _)) -> do
       --   codegenDecl env (arrowName obj arrow) obj tree
-      env' <- codegenDecl env "main" srcType initTree
-      _ <- codegenTasks env'
+      cgRes <- codegenDecl env "main" srcType initTree
+      _ <- codegenTasks env cgRes S.empty
       return ()
     CErr err -> error $ printf "Build to buildPrgm in codegen: \n\t%s" (show err)
 

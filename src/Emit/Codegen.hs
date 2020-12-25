@@ -35,6 +35,8 @@ import qualified LLVM.AST.Constant          as C
 import qualified LLVM.AST.Linkage           as L
 import LLVM.AST.Type
 import LLVM.AST.Typed
+import Syntax.Prgm
+import qualified Syntax as SYN
 
 -------------------------------------------------------------------------------
 -- Module Level
@@ -102,6 +104,9 @@ uniqueName nm ns =
 
 type SymbolTable = [(String, Operand)]
 
+type TaskArrow = (Object SYN.Typed, Arrow (Expr SYN.Typed) SYN.Typed, Bool)
+type CodegenResult = [TaskArrow]
+
 data CodegenState
   = CodegenState {
     currentBlock :: Name                     -- Name of the active block to append to
@@ -110,6 +115,7 @@ data CodegenState
   , blockCount   :: Int                      -- Count of basic blocks
   , count        :: Word                     -- Count of unnamed instructions
   , names        :: Names                    -- Name Supply
+  , taskArrows :: [TaskArrow]
   } deriving Show
 
 data BlockState
@@ -148,10 +154,18 @@ emptyBlock :: Int -> BlockState
 emptyBlock i = BlockState i [] Nothing
 
 emptyCodegen :: CodegenState
-emptyCodegen = CodegenState (Name $ fromString entryBlockName) Map.empty [] 1 0 Map.empty
+emptyCodegen = CodegenState (Name $ fromString entryBlockName) Map.empty [] 1 0 Map.empty []
 
 execCodegen :: [(String, Operand)] -> Codegen a -> CodegenState
 execCodegen vars m = execState (runCodegen m) emptyCodegen { symtab = vars }
+
+buildCodegenRes :: CodegenState -> CodegenResult
+buildCodegenRes = taskArrows
+
+addTaskArrow :: TaskArrow -> Codegen ()
+addTaskArrow task = do
+  curTasks <- gets taskArrows
+  modify $ \s -> s {taskArrows = task:curTasks}
 
 fresh :: Codegen Word
 fresh = do
