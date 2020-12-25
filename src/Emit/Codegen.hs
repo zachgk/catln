@@ -116,7 +116,11 @@ uniqueName nm ns =
 
 type SymbolTable = [(String, Operand)]
 
-type TaskArrow = (Object SYN.Typed, Arrow (Expr SYN.Typed) SYN.Typed, Bool)
+data DeclInput
+  = TupleInput
+  | StructInput
+  deriving (Eq, Ord, Show)
+type TaskArrow = (Object SYN.Typed, Arrow (Expr SYN.Typed) SYN.Typed, DeclInput)
 type TaskStruct = SYNT.Type
 
 data CodegenState

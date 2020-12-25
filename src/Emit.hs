@@ -109,13 +109,13 @@ codegenTree env (ResEArrow input object arrow) = do
       LLVMOperand outType $ do
         let args' = buildArrArgs object val
         mapM_ asOperand $ H.elems args'
-        addTaskArrow (object, arrow, True)
+        addTaskArrow (object, arrow, TupleInput)
         outType' <- genType H.empty outType
         callf outType' (arrowName object arrow) [cons $ C.Int 32 0]
     _ -> do
       LLVMOperand outType $ do
         _ <- asOperand val
-        addTaskArrow (object, arrow, False)
+        addTaskArrow (object, arrow, StructInput)
         outType' <- genType H.empty outType
         callf outType' (arrowName object arrow) [cons $ C.Int 32 0]
 codegenTree _ MacroArrow{} = error $ printf "Can't evaluate a macro - it should be removed during TreeBuild"
@@ -187,11 +187,16 @@ codegenTree env (ResArrowTupleApply base argName argRATree) = do
     _ -> error "Invalid input to tuple application"
 codegenTree _ _ = LLVMOperand intType (return $ cons $ C.Int 64 0)
 
-codegenDecl :: LEnv -> String -> PartialType -> ResArrowTree EPrim -> LLVM ()
-codegenDecl env name tp@PartialType{ptArgs, ptVars} tree = do
-  forM_ (H.toList ptArgs) $ \(argName, argTp) -> do -- TODO Use as args'
-    argTp' <- genType ptVars argTp
-    return (argTp', astName argName)
+codegenDecl :: LEnv -> String -> PartialType -> ResArrowTree EPrim -> DeclInput -> LLVM ()
+codegenDecl env name tp@PartialType{ptArgs, ptVars} tree declInput = do
+  _ <- case declInput of -- TODO Use as args'
+    TupleInput -> do
+      forM (H.toList ptArgs) $ \(argName, argTp) -> do
+        argTp' <- genType ptVars argTp
+        return (argTp', astName argName)
+    StructInput -> do
+      tp' <- genType H.empty (singletonType tp)
+      return [(tp', astName "_i")]
   _ <- genType H.empty $ singletonType tp -- TODO Use as retType
   let args' = [(i32, astName "i")]
   let retType = i32
@@ -212,11 +217,11 @@ codegenDecl env name tp@PartialType{ptArgs, ptVars} tree = do
       _ <- asOperand $ codegenTree env' tree -- TODO use as return value
       ret $ cons $ C.Int 32 0
 
-codegenDecls :: LEnv -> String -> Type -> ResArrowTree EPrim -> LLVM ()
-codegenDecls env name (SumType partialLeafs) tree = case splitPartialLeafs partialLeafs of
-  [leaf] -> codegenDecl env name leaf tree
+codegenDecls :: LEnv -> String -> Type -> ResArrowTree EPrim -> DeclInput -> LLVM ()
+codegenDecls env name (SumType partialLeafs) tree declInput = case splitPartialLeafs partialLeafs of
+  [leaf] -> codegenDecl env name leaf tree declInput
   _ -> error $ printf "CodegenDecls only supports a singleton partial right now"
-codegenDecls _ _ _ _ = error $ printf "Invalid input to codegenDecls"
+codegenDecls _ _ _ _ _ = error $ printf "Invalid input to codegenDecls"
 
 codegenStruct :: Type -> LLVM ()
 codegenStruct tp@(SumType partialLeafs) = do
@@ -234,7 +239,7 @@ codegenTasks env@LEnv{lvTbEnv} = do
   taskArrows <- gets lTaskArrows
   completed <- gets lTasksCompleted
   case taskArrows of
-    (obj@(Object objM _ _ _ _), arr, _):tas -> do
+    (obj@(Object objM _ _ _ _), arr, declInput):tas -> do
       modify $ \s -> s {lTaskArrows = tas}
       let nm = arrowName obj arr
       if S.member nm completed
@@ -242,7 +247,7 @@ codegenTasks env@LEnv{lvTbEnv} = do
         else case buildArrow lvTbEnv obj arr of
           CRes _ (Just (_, (tree, _))) -> do
             modify $ \s -> s {lTasksCompleted = S.insert nm completed}
-            codegenDecls env nm (getMetaType objM) tree
+            codegenDecls env nm (getMetaType objM) tree declInput
             codegenTasks env
           _ -> error $ printf "Failed to buildtree to emit arrow"
     [] -> do
@@ -274,7 +279,7 @@ codegenPrgm input srcType destType tprgm@(_, classMap, _) = do
       --   codegenStruct obj
       -- forM_ (H.toList exEnv) $ \(arrow, (obj, tree, _)) -> do
       --   codegenDecl env (arrowName obj arrow) obj tree
-      codegenDecl env "main" srcType initTree
+      codegenDecl env "main" srcType initTree TupleInput
       codegenTasks env
     CErr err -> error $ printf "Build to buildPrgm in codegen: \n\t%s" (show err)
 
