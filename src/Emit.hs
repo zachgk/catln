@@ -60,21 +60,24 @@ asOperand val = error $ printf "Invalid val to operand: %s" (show val)
 
 -- TODO: Add genType with varEnv
 -- TODO: Add genType that is a union of multiple types (with tag)
-genType :: H.HashMap TypeVarName Type -> Type -> AST.Type
-genType _ t | t == intType = i32
-genType _ t | t == boolType = i1
-genType _ t | t == floatType = double
-genType _ t | t == strType = ptr i8
+genType :: (Monad m, TaskState m) => H.HashMap TypeVarName Type -> Type -> m AST.Type
+genType _ t | t == intType = return i32
+genType _ t | t == boolType = return i1
+genType _ t | t == floatType = return double
+genType _ t | t == strType = return $ ptr i8
 genType varEnv (SumType leafs) = case splitPartialLeafs leafs of
-  [PartialType{ptVars, ptArgs}] -> structType $ H.elems $ fmap (genType (H.union ptVars varEnv)) ptArgs
+  [PartialType{ptVars, ptArgs}] -> do
+    let varEnv' = H.union ptVars varEnv
+    args' <- mapM (genType varEnv') ptArgs
+    return $ structType $ H.elems args'
   _ -> error "genType does not have a single partial"
 genType varEnv (TypeVar (TVVar v)) = case H.lookup v varEnv of
   Just t -> genType varEnv t
   Nothing -> error $ printf "Unknown type var in emit genType: %s" (show v)
-genType _ TopType = i32 -- TODO: Should compute the top type
+genType _ TopType = return i32 -- TODO: Should compute the top type
 genType _ t = error $ printf "Unsupported emit genType: %s" (show t)
 
-genTypeMeta :: EvalMeta -> AST.Type
+genTypeMeta :: (Monad m, TaskState m) => EvalMeta -> m AST.Type
 genTypeMeta (Typed t _) = genType H.empty t
 
 arrowName :: EObject -> EArrow -> String
@@ -95,12 +98,14 @@ codegenTree env (ResEArrow input object arrow) = do
         let args' = buildArrArgs object val
         mapM_ asOperand $ H.elems args'
         addTaskArrow (object, arrow, True)
-        callf (genType H.empty outType) (arrowName object arrow) [cons $ C.Int 32 0]
+        outType' <- genType H.empty outType
+        callf outType' (arrowName object arrow) [cons $ C.Int 32 0]
     _ -> do
       LLVMOperand outType $ do
         _ <- asOperand val
         addTaskArrow (object, arrow, False)
-        callf (genType H.empty outType) (arrowName object arrow) [cons $ C.Int 32 0]
+        outType' <- genType H.empty outType
+        callf outType' (arrowName object arrow) [cons $ C.Int 32 0]
 codegenTree _ MacroArrow{} = error $ printf "Can't evaluate a macro - it should be removed during TreeBuild"
 codegenTree _ ExprArrow{} = error $ printf "Can't evaluate an expr - it should be removed during TreeBuild"
 codegenTree env (PrimArrow input outType (EPrim _ _ f)) = do
@@ -210,7 +215,9 @@ codegenDecls env name (SumType partialLeafs) tree = case splitPartialLeafs parti
 codegenDecls _ _ _ _ = error $ printf "Invalid input to codegenDecls"
 
 codegenStruct :: EObject -> LLVM ()
-codegenStruct (Object objM _ _ _ args) = struct name (map (\(argM, _) -> genTypeMeta argM) $ H.elems args)
+codegenStruct (Object objM _ _ _ args) = do
+  args' <- mapM (\(argM, _) -> genTypeMeta argM) $ H.elems args
+  struct name args'
   where
     name = astName $ typeName $ getMetaType objM
 

@@ -172,11 +172,6 @@ emptyCodegen = CodegenState (Name $ fromString entryBlockName) Map.empty [] 1 0 
 execCodegen :: [(String, Operand)] -> Codegen a -> CodegenState
 execCodegen vars m = execState (runCodegen m) emptyCodegen { symtab = vars }
 
-addTaskArrow :: TaskArrow -> Codegen ()
-addTaskArrow task = do
-  curTasks <- gets taskArrows
-  modify $ \s -> s {taskArrows = task:curTasks}
-
 fresh :: Codegen Word
 fresh = do
   i <- gets count
@@ -220,6 +215,23 @@ named iname m = m >> do
       (_ := x) = last (stack blk)
   modifyBlock $ blk { stack = init (stack blk) ++ [b := x] }
   return $ local b
+
+-------------------------------------------------------------------------------
+-- Tasks
+-------------------------------------------------------------------------------
+
+class TaskState m where
+  addTaskArrow :: TaskArrow -> m ()
+
+instance TaskState Codegen where
+  addTaskArrow task = do
+    curTasks <- gets taskArrows
+    modify $ \s -> s {taskArrows = task:curTasks}
+
+instance TaskState LLVM where
+  addTaskArrow task = do
+    curTasks <- gets lTaskArrows
+    modify $ \s -> s {lTaskArrows = task:curTasks}
 
 -------------------------------------------------------------------------------
 -- Block Stack
