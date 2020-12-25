@@ -1,4 +1,3 @@
-{-# LANGUAGE BlockArguments #-}
 --------------------------------------------------------------------
 -- |
 -- Module    :  Emit
@@ -10,11 +9,14 @@
 --
 --------------------------------------------------------------------
 
+{-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
 module Emit where
 
+import Prelude hiding (unzip)
+import Data.Zip
 import           LLVM.Context
 import           LLVM.Module
 
@@ -106,12 +108,22 @@ codegenTree env@LEnv{lvTaskArrow} (ResEArrow input object arrow) = do
         _ <- asOperand val
         callf (genType H.empty outType) (arrowName object arrow) [cons $ C.Int 32 0]
        , env2{lvTaskArrow = (object, arrow, False):lvTaskArrow})
--- codegenTree _ (TupleVal _ args) (PrimArrow _ _ (EPrim _ _ f)) = f args
--- codegenTree _ (LLVMOperand _ _) (PrimArrow _ _ (EPrim _ _ f)) = f H.empty -- TODO: Extract values from OVal which should be a struct
--- codegenTree _ NoVal (PrimArrow _ _ (EPrim _ _ f)) = f H.empty
+codegenTree _ MacroArrow{} = error $ printf "Can't evaluate a macro - it should be removed during TreeBuild"
+codegenTree _ ExprArrow{} = error $ printf "Can't evaluate an expr - it should be removed during TreeBuild"
+codegenTree env (PrimArrow input outType (EPrim _ _ f)) = do
+  let (input', env2) = codegenTree env input
+  case input' of
+    TupleVal _ args -> (f args, env2)
+    LLVMOperand _ o ->
+      (LLVMOperand outType $ do
+          _ <- o
+          return $ cons $ C.Int 32 0
+        , env2)
+    _ -> error $ printf "Unknown input to PrimArrow"
 codegenTree env (ConstantArrow val) = (LLVMOperand (singletonType $ getValType val) (asOperand val), env)
--- codegenTree _ _ (ArgArrow _ name) = error $ printf "Unexpected arg arrow %s not removed during evaluation" name
--- codegenTree _ val arr = error $ printf "Unknown codegenTree with arrow %s and val %s" (show arr) (show val)
+-- codegenTree env@LEnv{lvArgs} (ArgArrow _ name) = case H.lookup name lvArgs of
+--   Just arg' -> (arg', env)
+  -- Nothing -> error $ printf "Failed to find emit ArgArrow %s" (show name)
 codegenTree env@LEnv{lvClassMap} match@(ResArrowMatch m opts) = do
   let matchType = unionTypes lvClassMap $ map singletonType $ H.keys opts
   let matchHashName = "match:" ++ take 6 (printf "%08x" (hash match))
@@ -159,18 +171,19 @@ codegenTree env@LEnv{lvClassMap} match@(ResArrowMatch m opts) = do
 --                           (trueLeaf, ifThenTree),
 --                           (falseLeaf, (ResArrowCond restIfTrees elseTree))
 --                                                   ])
--- codegenTree env val (ResArrowTuple name args) = do
---   args' <- traverse (codegenTree env val) args
---   return $ TupleVal name args'
--- codegenTree env val (ResArrowTupleApply base argName argRATree) = do
---   base' <- codegenTree env val base
---   case base' of
---     TupleVal name baseArgs -> do
---       argVal <- codegenTree env val argRATree
---       let args' = H.insert argName argVal baseArgs
---       return $ TupleVal name args'
---     _ -> error "Invalid input to tuple application"
--- codegenTree _ t | trace (printf "Uncompleted gen: %s" (show t)) False = undefined
+codegenTree env (ResArrowTuple name args) | H.null args = (TupleVal name H.empty, env)
+codegenTree env (ResArrowTuple name args) = do
+  let args' = fmap (codegenTree env) args
+  let (args'', env2s) = unzip args'
+  (TupleVal name args'', mergeLEnvs env2s)
+codegenTree env (ResArrowTupleApply base argName argRATree) = do
+  let (base', env2) = codegenTree env base
+  let (argRATree', env3) = codegenTree env2 argRATree
+  case base' of
+    TupleVal name baseArgs -> do
+      let args' = H.insert argName argRATree' baseArgs
+      (TupleVal name args', env3)
+    _ -> error "Invalid input to tuple application"
 codegenTree env _ = (LLVMOperand intType (return $ cons $ C.Int 64 0), env)
 
 codegenDecl :: LEnv -> String -> PartialType -> ResArrowTree EPrim -> LLVM LEnv
@@ -197,10 +210,10 @@ codegenDecl env name PartialType{} tree = define retType name args' blks >> retu
           _ <- o
           -- ret o'
           ret $ cons $ C.Int 32 0
-      --   TupleVal _ _ -> do
+        TupleVal _ _ -> do
       --     -- TODO: This should build a struct and return it
       --     -- let tp = structType as
-      --     ret $ cons $ C.Int 64 0
+          ret $ cons $ C.Int 32 0
       --   IOVal -> ret $ cons $ C.Int 64 0 -- TODO: Delete, this should be an error
         err -> error $ printf "Unexpected return type in codegenDecl: %s" (show err)
 
