@@ -65,8 +65,9 @@ genType _ t | t == intType = return i32
 genType _ t | t == boolType = return i1
 genType _ t | t == floatType = return double
 genType _ t | t == strType = return $ ptr i8
-genType varEnv (SumType leafs) = case splitPartialLeafs leafs of
+genType varEnv tp@(SumType leafs) = case splitPartialLeafs leafs of
   [PartialType{ptVars, ptArgs}] -> do
+    addTaskStruct tp
     let varEnv' = H.union ptVars varEnv
     args' <- mapM (genType varEnv') ptArgs
     return $ structType $ H.elems args'
@@ -176,27 +177,28 @@ codegenTree env (ResArrowTupleApply base argName argRATree) = do
 codegenTree _ _ = LLVMOperand intType (return $ cons $ C.Int 64 0)
 
 codegenDecl :: LEnv -> String -> PartialType -> ResArrowTree EPrim -> LLVM ()
-codegenDecl env name PartialType{} tree = do
+codegenDecl env name tp@PartialType{ptArgs} tree = do
+  forM_ (H.toList ptArgs) $ \(argName, argTp) -> do -- TODO Use as args'
+    argTp' <- genType H.empty argTp
+    return (argTp', astName argName)
+  _ <- genType H.empty $ singletonType tp -- TODO Use as retType
+  let args' = [(i32, astName "i")]
+  let retType = i32
+  let codegenState = execCodegen [] buildBlock
   blks <- createBlocks codegenState
   define retType name args' blks
   where
-    -- args' = map(\(argName, argTp) -> (genType H.empty argTp, astName argName)) $ H.toList ptArgs -- TODO
-    -- retType = genType H.empty $ singletonType tp
-    args' = [(i32, astName "i")]
-    retType = i32
-    codegenState = execCodegen [] buildBlock
-    replaceArgs = [] -- TODO: Use actual args
-    env' = env{lvArgs = H.fromList replaceArgs}
-    tree' = codegenTree env' tree
     buildBlock = do
       ent <- addBlock entryBlockName
       _ <- setBlock ent
+      let replaceArgs = [] -- TODO: Use actual replaceArgs below
       -- replaceArgs <- forM (H.toList args) $ \(argName, (argM, _)) -> do
       --   var <- alloca (genTypeMeta argM)
       --   _ <- store var (local (AST.Name $ SBS.toShort $ BSU.fromString argName))
       --   assign argName var
       --   return (argName, OVal (getMetaType argM) var)
-      case tree' of
+      let env' = env{lvArgs = H.fromList replaceArgs}
+      case codegenTree env' tree of
         (LLVMOperand _ o) -> do
           _ <- o
           -- ret o'
@@ -214,12 +216,16 @@ codegenDecls env name (SumType partialLeafs) tree = case splitPartialLeafs parti
   _ -> error $ printf "CodegenDecls only supports a singleton partial right now"
 codegenDecls _ _ _ _ = error $ printf "Invalid input to codegenDecls"
 
-codegenStruct :: EObject -> LLVM ()
-codegenStruct (Object objM _ _ _ args) = do
-  args' <- mapM (\(argM, _) -> genTypeMeta argM) $ H.elems args
-  struct name args'
+codegenStruct :: Type -> LLVM ()
+codegenStruct tp@(SumType partialLeafs) = do
+  case splitPartialLeafs partialLeafs of
+    [PartialType{ptArgs}] -> do
+      args' <- mapM (genType H.empty) $ H.elems ptArgs
+      struct structName args'
+    _ -> error $ printf "Invalid type count to codegenStruct: %s" (show tp)
   where
-    name = astName $ typeName $ getMetaType objM
+    structName = astName $ typeName tp
+codegenStruct tp = error $ printf "Invalid type to codegenStruct: %s" (show tp)
 
 codegenTasks :: LEnv -> LLVM ()
 codegenTasks env@LEnv{lvTbEnv} = do
@@ -237,7 +243,19 @@ codegenTasks env@LEnv{lvTbEnv} = do
             codegenDecls env nm (getMetaType objM) tree
             codegenTasks env
           _ -> error $ printf "Failed to buildtree to emit arrow"
-    [] -> return ()
+    [] -> do
+      taskStructs <- gets lTaskStructs
+      case taskStructs of
+        str:strs -> do
+          modify $ \s -> s {lTaskStructs = strs}
+          let nm = typeName str
+          if S.member nm completed
+            then codegenTasks env
+            else do
+              modify $ \s -> s {lTasksCompleted = S.insert nm completed}
+              codegenStruct str
+              codegenTasks env
+        [] -> return ()
 
 applyIO :: EExpr -> EExpr
 applyIO input@(Value m name) = TupleApply applyMeta (m, input) "io" (Arg (Typed ioType Nothing) "io")

@@ -37,6 +37,7 @@ import LLVM.AST.Type
 import LLVM.AST.Typed
 import Syntax.Prgm
 import qualified Syntax as SYN
+import qualified Syntax.Types as SYNT
 import qualified Data.HashSet as S
 
 -------------------------------------------------------------------------------
@@ -47,6 +48,7 @@ data LLVMState
   = LLVMState {
     lsMod :: AST.Module
   , lTaskArrows :: [TaskArrow]
+  , lTaskStructs :: [TaskStruct]
   , lTasksCompleted :: S.HashSet String
                            }
 
@@ -55,7 +57,7 @@ newtype LLVM a = LLVM (State LLVMState a)
 
 runLLVM :: AST.Module -> LLVM a -> AST.Module
 runLLVM astMod (LLVM m) = lsMod $ execState m initState
-  where initState = LLVMState astMod [] S.empty
+  where initState = LLVMState astMod [] [] S.empty
 
 emptyModule :: SBS.ShortByteString -> AST.Module
 emptyModule label = defaultModule { moduleName = label }
@@ -115,6 +117,7 @@ uniqueName nm ns =
 type SymbolTable = [(String, Operand)]
 
 type TaskArrow = (Object SYN.Typed, Arrow (Expr SYN.Typed) SYN.Typed, Bool)
+type TaskStruct = SYNT.Type
 
 data CodegenState
   = CodegenState {
@@ -125,6 +128,7 @@ data CodegenState
   , count        :: Word                     -- Count of unnamed instructions
   , names        :: Names                    -- Name Supply
   , taskArrows :: [TaskArrow]
+  , taskStructs :: [TaskStruct]
   } deriving Show
 
 data BlockState
@@ -167,7 +171,7 @@ emptyBlock :: Int -> BlockState
 emptyBlock i = BlockState i [] Nothing
 
 emptyCodegen :: CodegenState
-emptyCodegen = CodegenState (Name $ fromString entryBlockName) Map.empty [] 1 0 Map.empty []
+emptyCodegen = CodegenState (Name $ fromString entryBlockName) Map.empty [] 1 0 Map.empty [] []
 
 execCodegen :: [(String, Operand)] -> Codegen a -> CodegenState
 execCodegen vars m = execState (runCodegen m) emptyCodegen { symtab = vars }
@@ -222,16 +226,23 @@ named iname m = m >> do
 
 class TaskState m where
   addTaskArrow :: TaskArrow -> m ()
+  addTaskStruct :: TaskStruct -> m ()
 
 instance TaskState Codegen where
   addTaskArrow task = do
     curTasks <- gets taskArrows
     modify $ \s -> s {taskArrows = task:curTasks}
+  addTaskStruct task = do
+    curTasks <- gets taskStructs
+    modify $ \s -> s {taskStructs = task:curTasks}
 
 instance TaskState LLVM where
   addTaskArrow task = do
     curTasks <- gets lTaskArrows
     modify $ \s -> s {lTaskArrows = task:curTasks}
+  addTaskStruct task = do
+    curTasks <- gets lTaskStructs
+    modify $ \s -> s {lTaskStructs = task:curTasks}
 
 -------------------------------------------------------------------------------
 -- Block Stack
