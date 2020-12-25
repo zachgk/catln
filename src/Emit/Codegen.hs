@@ -37,24 +37,34 @@ import LLVM.AST.Type
 import LLVM.AST.Typed
 import Syntax.Prgm
 import qualified Syntax as SYN
+import qualified Data.HashSet as S
 
 -------------------------------------------------------------------------------
 -- Module Level
 -------------------------------------------------------------------------------
 
-newtype LLVM a = LLVM (State AST.Module a)
-  deriving (Functor, Applicative, Monad, MonadState AST.Module )
+data LLVMState
+  = LLVMState {
+    lsMod :: AST.Module
+  , lTaskArrows :: [TaskArrow]
+  , lTasksCompleted :: S.HashSet String
+                           }
+
+newtype LLVM a = LLVM (State LLVMState a)
+  deriving (Functor, Applicative, Monad, MonadState LLVMState )
 
 runLLVM :: AST.Module -> LLVM a -> AST.Module
-runLLVM astMod (LLVM m) = execState m astMod
+runLLVM astMod (LLVM m) = lsMod $ execState m initState
+  where initState = LLVMState astMod [] S.empty
 
 emptyModule :: SBS.ShortByteString -> AST.Module
 emptyModule label = defaultModule { moduleName = label }
 
 addDefn :: Definition -> LLVM ()
 addDefn d = do
-  defs <- gets moduleDefinitions
-  modify $ \s -> s { moduleDefinitions = defs ++ [d] }
+  m <- gets lsMod
+  let defs = moduleDefinitions m
+  modify $ \s -> s { lsMod = m {moduleDefinitions = defs ++ [d] }}
 
 define ::  Type -> String -> [(Type, Name)] -> [BasicBlock] -> LLVM ()
 define retty label argtys body = addDefn $
@@ -105,7 +115,6 @@ uniqueName nm ns =
 type SymbolTable = [(String, Operand)]
 
 type TaskArrow = (Object SYN.Typed, Arrow (Expr SYN.Typed) SYN.Typed, Bool)
-type CodegenResult = [TaskArrow]
 
 data CodegenState
   = CodegenState {
@@ -138,8 +147,12 @@ instance Show (Codegen a) where
 sortBlocks :: [(Name, BlockState)] -> [(Name, BlockState)]
 sortBlocks = sortBy (compare `on` (idx . snd))
 
-createBlocks :: CodegenState -> [BasicBlock]
-createBlocks m = map makeBlock $ sortBlocks $ Map.toList (blocks m)
+createBlocks :: CodegenState -> LLVM [BasicBlock]
+createBlocks m = do
+  curTasks <- gets lTaskArrows
+  modify $ \s -> s {lTaskArrows = taskArrows m ++ curTasks}
+
+  return $ map makeBlock $ sortBlocks $ Map.toList (blocks m)
 
 makeBlock :: (Name, BlockState) -> BasicBlock
 makeBlock (l, BlockState _ s t) = BasicBlock l (reverse s) (maketerm t)
@@ -158,9 +171,6 @@ emptyCodegen = CodegenState (Name $ fromString entryBlockName) Map.empty [] 1 0 
 
 execCodegen :: [(String, Operand)] -> Codegen a -> CodegenState
 execCodegen vars m = execState (runCodegen m) emptyCodegen { symtab = vars }
-
-buildCodegenRes :: CodegenState -> CodegenResult
-buildCodegenRes = taskArrows
 
 addTaskArrow :: TaskArrow -> Codegen ()
 addTaskArrow task = do

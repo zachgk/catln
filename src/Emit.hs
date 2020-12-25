@@ -41,6 +41,7 @@ import LLVM.AST.Type (i8, ptr, double, i1, i32)
 import qualified LLVM.AST.Float as F
 import Data.Char (ord)
 import qualified Data.HashSet as S
+import Control.Monad.State
 
 data LEnv = LEnv { lvArgs :: H.HashMap ArgName Val
                  , lvTbEnv :: TBEnv EPrim
@@ -169,16 +170,16 @@ codegenTree env (ResArrowTupleApply base argName argRATree) = do
     _ -> error "Invalid input to tuple application"
 codegenTree _ _ = LLVMOperand intType (return $ cons $ C.Int 64 0)
 
-codegenDecl :: LEnv -> String -> PartialType -> ResArrowTree EPrim -> LLVM CodegenResult
-codegenDecl env name PartialType{} tree = define retType name args' blks >> return codegenRes
+codegenDecl :: LEnv -> String -> PartialType -> ResArrowTree EPrim -> LLVM ()
+codegenDecl env name PartialType{} tree = do
+  blks <- createBlocks codegenState
+  define retType name args' blks
   where
     -- args' = map(\(argName, argTp) -> (genType H.empty argTp, astName argName)) $ H.toList ptArgs -- TODO
     -- retType = genType H.empty $ singletonType tp
     args' = [(i32, astName "i")]
     retType = i32
     codegenState = execCodegen [] buildBlock
-    codegenRes = buildCodegenRes codegenState
-    blks = createBlocks codegenState
     replaceArgs = [] -- TODO: Use actual args
     env' = env{lvArgs = H.fromList replaceArgs}
     tree' = codegenTree env' tree
@@ -202,7 +203,7 @@ codegenDecl env name PartialType{} tree = define retType name args' blks >> retu
       --   IOVal -> ret $ cons $ C.Int 64 0 -- TODO: Delete, this should be an error
         err -> error $ printf "Unexpected return type in codegenDecl: %s" (show err)
 
-codegenDecls :: LEnv -> String -> Type -> ResArrowTree EPrim -> LLVM CodegenResult
+codegenDecls :: LEnv -> String -> Type -> ResArrowTree EPrim -> LLVM ()
 codegenDecls env name (SumType partialLeafs) tree = case splitPartialLeafs partialLeafs of
   [leaf] -> codegenDecl env name leaf tree
   _ -> error $ printf "CodegenDecls only supports a singleton partial right now"
@@ -213,18 +214,23 @@ codegenStruct (Object objM _ _ _ args) = struct name (map (\(argM, _) -> genType
   where
     name = astName $ typeName $ getMetaType objM
 
-codegenTasks :: LEnv -> [TaskArrow] -> S.HashSet String -> LLVM ()
-codegenTasks env@LEnv{lvTbEnv} taskArrows completed = case taskArrows of
-  (obj@(Object objM _ _ _ _), arr, _):tas -> do
-    let nm = arrowName obj arr
-    if S.member nm completed
-      then codegenTasks env tas completed
-      else case buildArrow lvTbEnv obj arr of
-        CRes _ (Just (_, (tree, _))) -> do
-          cgRes <- codegenDecls env nm (getMetaType objM) tree
-          codegenTasks env (tas ++ cgRes) (S.insert nm completed)
-        _ -> error $ printf "Failed to buildtree to emit arrow"
-  [] -> return ()
+codegenTasks :: LEnv -> LLVM ()
+codegenTasks env@LEnv{lvTbEnv} = do
+  taskArrows <- gets lTaskArrows
+  completed <- gets lTasksCompleted
+  case taskArrows of
+    (obj@(Object objM _ _ _ _), arr, _):tas -> do
+      modify $ \s -> s {lTaskArrows = tas}
+      let nm = arrowName obj arr
+      if S.member nm completed
+        then codegenTasks env
+        else case buildArrow lvTbEnv obj arr of
+          CRes _ (Just (_, (tree, _))) -> do
+            modify $ \s -> s {lTasksCompleted = S.insert nm completed}
+            codegenDecls env nm (getMetaType objM) tree
+            codegenTasks env
+          _ -> error $ printf "Failed to buildtree to emit arrow"
+    [] -> return ()
 
 applyIO :: EExpr -> EExpr
 applyIO input@(Value m name) = TupleApply applyMeta (m, input) "io" (Arg (Typed ioType Nothing) "io")
@@ -241,9 +247,8 @@ codegenPrgm input srcType destType tprgm@(_, classMap, _) = do
       --   codegenStruct obj
       -- forM_ (H.toList exEnv) $ \(arrow, (obj, tree, _)) -> do
       --   codegenDecl env (arrowName obj arrow) obj tree
-      cgRes <- codegenDecl env "main" srcType initTree
-      _ <- codegenTasks env cgRes S.empty
-      return ()
+      codegenDecl env "main" srcType initTree
+      codegenTasks env
     CErr err -> error $ printf "Build to buildPrgm in codegen: \n\t%s" (show err)
 
 codegenEx :: AST.Module -> LLVM () -> IO String
