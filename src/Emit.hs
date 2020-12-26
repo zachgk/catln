@@ -37,7 +37,7 @@ import Text.Printf
 import Data.Hashable
 import           Emit.Codegen
 import Emit.Runtime (primEnv, genType)
-import LLVM.AST.Type (i8)
+import LLVM.AST.Type (i32, i8)
 import qualified LLVM.AST.Float as F
 import Data.Char (ord)
 import qualified Data.HashSet as S
@@ -199,8 +199,8 @@ codegenTree env (ResArrowTupleApply base argName argRATree) = do
       TupleVal name args'
     _ -> error "Invalid input to tuple application"
 
-codegenDecl :: LEnv -> String -> PartialType -> Type -> ResArrowTree EPrim -> DeclInput -> LLVM ()
-codegenDecl env name srcType@PartialType{ptArgs, ptVars} destType tree declInput = do
+codegenDecl :: LEnv -> String -> EObject -> PartialType -> Type -> ResArrowTree EPrim -> DeclInput -> LLVM ()
+codegenDecl env name obj srcType@PartialType{ptArgs, ptVars} destType tree declInput = do
   args' <- case declInput of
     TupleInput -> do
       forM (H.toList ptArgs) $ \(argName, argTp) -> do
@@ -226,11 +226,29 @@ codegenDecl env name srcType@PartialType{ptArgs, ptVars} destType tree declInput
       res <- asOperand $ codegenTree env' tree
       ret res
 
-codegenDecls :: LEnv -> String -> Type -> Type -> ResArrowTree EPrim -> DeclInput -> LLVM ()
-codegenDecls env name (SumType partialLeafs) destType tree declInput = case splitPartialLeafs partialLeafs of
-  [leaf] -> codegenDecl env name leaf destType tree declInput
+codegenMain :: LEnv -> ResArrowTree EPrim -> LLVM ()
+codegenMain env tree = do
+  let codegenState = execCodegen [] buildBlock
+  blks <- createBlocks codegenState
+  define i32 "main" [] blks
+  where
+    buildBlock = do
+      ent <- addBlock entryBlockName
+      _ <- setBlock ent
+
+      ioType' <- genType H.empty ioType
+      initIO <- alloca ioType'
+      let replaceArgs = [("io", LLVMOperand ioType (return initIO))]
+
+      let env' = env{lvArgs = H.fromList replaceArgs}
+      res <- asOperand $ codegenTree env' tree
+      ret res
+
+codegenDecls :: LEnv -> String -> EObject -> Type -> Type -> ResArrowTree EPrim -> DeclInput -> LLVM ()
+codegenDecls env name obj (SumType partialLeafs) destType tree declInput = case splitPartialLeafs partialLeafs of
+  [leaf] -> codegenDecl env name obj leaf destType tree declInput
   _ -> error $ printf "CodegenDecls only supports a singleton partial right now"
-codegenDecls _ _ _ _ _ _ = error $ printf "Invalid input to codegenDecls"
+codegenDecls _ _ _ _ _ _ _ = error $ printf "Invalid input to codegenDecls"
 
 codegenStruct :: Type -> LLVM ()
 codegenStruct tp@(SumType partialLeafs) = do
@@ -257,7 +275,7 @@ codegenTasks env@LEnv{lvTbEnv, lvClassMap} = do
           CRes _ (Just (_, (tree, _))) -> do
             modify $ \s -> s {lTasksCompleted = S.insert nm completed}
             let destType = arrowDestType False lvClassMap arrowSrcType obj arr
-            codegenDecls env nm (singletonType arrowSrcType) destType tree declInput
+            codegenDecls env nm obj (singletonType arrowSrcType) destType tree declInput
             codegenTasks env
           err -> error $ printf "Failed to buildtree to emit arrow: %s" (show err)
     [] -> do
@@ -285,7 +303,7 @@ codegenPrgm input srcType destType tprgm@(_, classMap, _) = do
   case buildRoot tbEnv (applyIO input) srcType destType of
     CRes _ initTree -> do
       let env = LEnv H.empty tbEnv classMap
-      codegenDecl env "main" srcType destType initTree TupleInput
+      codegenMain env initTree
       codegenTasks env
     CErr err -> error $ printf "Build to buildPrgm in codegen: \n\t%s" (show err)
 
