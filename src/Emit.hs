@@ -62,9 +62,9 @@ asOperand val@(TupleVal _ args) = do
   tp' <- genType H.empty tp
   res <- alloca tp'
   -- let tpDef = global tp' (typeName tp)
-  forM_ (zip [0..] $ H.toList args) \(argIndx, (_, argVal)) -> do
+  forM_ (zip [0..] $ H.toList args) \(argIndex, (_, argVal)) -> do
     argVal' <- asOperand argVal
-    argPntr <- getelementptr (ASTT.typeOf argVal') res [res, cons $ C.Int 32 argIndx]
+    argPntr <- getelementptr (ASTT.typeOf argVal') res [res, cons $ C.Int 32 argIndex]
     store argPntr argVal'
   return res
 asOperand val = error $ printf "Invalid val to operand: %s" (show val)
@@ -199,6 +199,37 @@ codegenTree env (ResArrowTupleApply base argName argRATree) = do
       TupleVal name args'
     _ -> error "Invalid input to tuple application"
 
+getValArgs :: Val -> Codegen (H.HashMap ArgName Val)
+getValArgs (TupleVal _ args) = return args
+getValArgs (LLVMOperand tp o) = do
+  o' <- o
+  case tp of
+    SumType partialLeafs -> case splitPartialLeafs partialLeafs of
+      [PartialType{ptArgs, ptVars}] -> do
+        args' <- forM (zip [0..] $ H.toList ptArgs) $ \(argIndex, (argName, argType)) -> do
+          argType' <- genType ptVars argType
+          argPntr <- getelementptr argType' o' [o', cons $ C.Int 32 argIndex]
+          argVal <- load argPntr
+          return (argName, LLVMOperand argType (return argVal))
+        return $ H.fromList args'
+      _ -> error $ printf "Invalid leaf number" (show tp)
+    t -> error $ printf "Invalid operand type: %s" (show t)
+getValArgs v = error $ printf "Val does not have args: %s" (show v)
+
+formArgValMap :: EObject -> Val -> Codegen (H.HashMap ArgName (Typed, Val))
+formArgValMap (Object m _ name _ args) val | H.null args = return $ H.singleton name (m, val)
+formArgValMap (Object _ _ _ _ args) val = do
+  valArgs <- getValArgs val
+  args' <- mapM (fromArg valArgs) $ H.toList args
+  return $ unionsWith (error "Duplicate var matched") args'
+  where
+    fromArg valArgs (argName, (m, Nothing)) = case H.lookup argName valArgs of
+      Just valArg -> return $ H.singleton argName (m, valArg)
+      Nothing -> return H.empty
+    fromArg valArgs (argName, (_, Just arg)) = case H.lookup argName valArgs of
+      Just valArg -> formArgValMap arg valArg
+      Nothing -> return H.empty
+
 codegenDecl :: LEnv -> String -> EObject -> PartialType -> Type -> ResArrowTree EPrim -> DeclInput -> LLVM ()
 codegenDecl env name obj srcType@PartialType{ptArgs, ptVars} destType tree declInput = do
   args' <- case declInput of
@@ -217,12 +248,19 @@ codegenDecl env name obj srcType@PartialType{ptArgs, ptVars} destType tree declI
     buildBlock = do
       ent <- addBlock entryBlockName
       _ <- setBlock ent
-      replaceArgs <- forM (H.toList ptArgs) $ \(argName, argTp) -> do
-        argTp' <- genType ptVars argTp
-        let argOp = local argTp' (astName argName)
-        let argVal = LLVMOperand argTp (return argOp)
-        return (argName, argVal)
-      let env' = env{lvArgs = H.fromList replaceArgs}
+      argVals <- case declInput of
+            TupleInput -> do
+              args' <- forM (H.toList ptArgs) $ \(argName, argTp) -> do
+                argTp' <- genType ptVars argTp
+                let argOp = local argTp' (astName argName)
+                let argVal = LLVMOperand argTp (return argOp)
+                return (argName, argVal)
+              return $ TupleVal name (H.fromList args')
+            StructInput -> return $ LLVMOperand (singletonType srcType) $ do
+              srcType' <- genType H.empty (singletonType srcType)
+              return $ local srcType' (astName "_i")
+      replaceArgs <- fmap snd <$> formArgValMap obj argVals
+      let env' = env{lvArgs = replaceArgs}
       res <- asOperand $ codegenTree env' tree
       ret res
 

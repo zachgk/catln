@@ -318,7 +318,7 @@ cons :: C.Constant -> Operand
 cons = ConstantOperand
 
 getelementptr :: Type -> Operand -> [Operand] -> Codegen Operand
-getelementptr resType tp ops = instr resType $ GetElementPtr True tp ops []
+getelementptr elementType tp ops = instr (ptr elementType) $ GetElementPtr True tp ops []
 
 uitofp :: Type -> Operand -> Codegen Operand
 uitofp ty a = instr undefined $ UIToFP a ty []
