@@ -197,14 +197,14 @@ current = do
     Just x  -> return x
     Nothing -> error $ "No such block: " ++ show c
 
-instr :: Instruction -> Codegen Operand
-instr ins = do
+instr :: Type -> Instruction -> Codegen Operand
+instr tp ins = do
   n <- fresh
   let ref = UnName n
   blk <- current
   let i = stack blk
   modifyBlock (blk { stack = (ref := ins) : i } )
-  return $ local double ref
+  return $ local tp ref
 
 voidInstr :: Instruction -> Codegen ()
 voidInstr ins = do
@@ -219,13 +219,13 @@ terminator trm = do
   modifyBlock (blk { term = Just trm })
   return trm
 
-named :: SBS.ShortByteString -> Codegen a -> Codegen Operand
-named iname m = m >> do
-  blk <- current
-  let b = Name iname
-      (_ := x) = last (stack blk)
-  modifyBlock $ blk { stack = init (stack blk) ++ [b := x] }
-  return $ local double b
+-- named :: SBS.ShortByteString -> Codegen a -> Codegen Operand
+-- named iname m = m >> do
+--   blk <- current
+--   let b = Name iname
+--       (_ := x) = last (stack blk)
+--   modifyBlock $ blk { stack = init (stack blk) ++ [b := x] }
+--   return $ local double b
 
 -------------------------------------------------------------------------------
 -- Tasks
@@ -317,33 +317,33 @@ externf t = ConstantOperand . C.GlobalReference (ptr t)
 cons :: C.Constant -> Operand
 cons = ConstantOperand
 
-getelementptr :: Operand -> [Operand] -> Codegen Operand
-getelementptr tp ops = instr $ GetElementPtr True tp ops []
+getelementptr :: Type -> Operand -> [Operand] -> Codegen Operand
+getelementptr resType tp ops = instr resType $ GetElementPtr True tp ops []
 
 uitofp :: Type -> Operand -> Codegen Operand
-uitofp ty a = instr $ UIToFP a ty []
+uitofp ty a = instr undefined $ UIToFP a ty []
 
 toArgs :: [Operand] -> [(Operand, [A.ParameterAttribute])]
 toArgs = map (, [])
 
 -- Effects
-call :: Operand -> [Operand] -> Codegen Operand
-call fn ags = instr $ Call Nothing CC.C [] (Right fn) (toArgs ags) [] []
+call :: Type -> Operand -> [Operand] -> Codegen Operand
+call retType fn ags = instr retType $ Call Nothing CC.C [] (Right fn) (toArgs ags) [] []
 
 callf :: Type -> String -> [Operand] -> Codegen Operand
 callf retType fnName args = do
   let fnType = FunctionType retType (map typeOf args) False
   let fn = externf fnType (astName fnName)
-  call fn args
+  call retType fn args
 
 alloca :: Type -> Codegen Operand
-alloca ty = instr $ Alloca ty Nothing 0 []
+alloca ty = instr ty $ Alloca ty Nothing 0 []
 
 store :: Operand -> Operand -> Codegen ()
 store pointer val = voidInstr $ Store False pointer val Nothing 0 []
 
 load :: Operand -> Codegen Operand
-load pointer = instr $ Load False pointer Nothing 0 []
+load pointer = instr (getElementType $ typeOf pointer) $ Load False pointer Nothing 0 []
 
 -- Control Flow
 br :: Name -> Codegen (Named Terminator)
@@ -356,14 +356,14 @@ switch :: Operand -> Name -> [(C.Constant, Name)] -> Codegen (Named Terminator)
 switch cond def dests = terminator $ Do $ Switch cond def dests []
 
 phi :: Type -> [(Operand, Name)] -> Codegen Operand
-phi ty incoming = instr $ Phi ty incoming []
+phi ty incoming = instr ty $ Phi ty incoming []
 
 ret :: Operand -> Codegen (Named Terminator)
 ret val = terminator $ Do $ Ret (Just val) []
 
 panic :: String -> Codegen Operand
--- panic _ = call (externf "exit") [cons $ C.Int 64 3] -- TODO
-panic _ = return $ cons $ C.Int 64 0
+-- panic _ = call (externf "exit") [cons $ C.Int 32 3] -- TODO
+panic _ = return $ cons $ C.Int 32 0
 
 astName :: String -> AST.Name
 astName = AST.Name . fromString

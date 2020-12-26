@@ -23,8 +23,31 @@ import LLVM.AST.Operand (Operand)
 import qualified LLVM.AST.IntegerPredicate as IP
 import qualified LLVM.AST.Constant as C
 import qualified LLVM.AST.Type as ATP
+import Text.Printf
+import qualified LLVM.AST.Typed as ASTT
 
 type Op = (TypeName, [(PartialType, Guard (Expr Typed), ResBuildEnvFunction EPrim)])
+
+-- TODO: Add genType with varEnv
+-- TODO: Add genType that is a union of multiple types (with tag)
+genType :: (Monad m, TaskState m) => H.HashMap TypeVarName Type -> Type -> m AST.Type
+genType _ t | t == intType = return ATP.i32
+genType _ t | t == boolType = return ATP.i1
+genType _ t | t == floatType = return ATP.double
+genType _ t | t == strType = return $ ATP.ptr ATP.i8
+genType varEnv tp@(SumType leafs) = case splitPartialLeafs leafs of
+  [PartialType{ptVars, ptArgs}] -> do
+    addTaskStruct tp
+    let varEnv' = H.union ptVars varEnv
+    args' <- mapM (genType varEnv') ptArgs
+    return $ structType $ H.elems args'
+  _ -> error "genType does not have a single partial"
+genType varEnv (TypeVar (TVVar v)) = case H.lookup v varEnv of
+  Just t -> genType varEnv t
+  Nothing -> error $ printf "Unknown type var in emit genType: %s" (show v)
+genType _ TopType = return ATP.i32 -- TODO: Should compute the top type
+genType _ t = error $ printf "Unsupported emit genType: %s" (show t)
+
 
 true, false :: Val
 true = TupleVal "True" H.empty
@@ -43,9 +66,9 @@ liftBinOp lType rType resType name f = (name', [(srcType, NoGuard, \input -> Pri
                            (Just (LLVMOperand _ l), Just (LLVMOperand _ r)) -> LLVMOperand resType $ do
                              l' <- l
                              r' <- r
-                             instr (f l' r')
-                           _ -> LLVMIO (pure ()) -- TODO: Delete, should be an error
-                           -- _ -> error "Invalid binary op signature"
+                             resType' <- genType H.empty resType
+                             instr resType' (f l' r')
+                           _ -> error "Invalid binary op signature"
                            )
 
 liftIntOp :: TypeName -> (Operand -> Operand -> AST.Instruction) -> Op
@@ -63,7 +86,7 @@ rneg name = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)]
     prim = EPrim srcType NoGuard (\args -> case H.lookup "a" args of
                            Just (LLVMOperand _ a') -> LLVMOperand intType $ do
                              a'' <- a'
-                             instr (AST.Mul False False a'' (cons $ C.Int 32 (-1)) [])
+                             instr (ASTT.typeOf a'') (AST.Mul False False a'' (cons $ C.Int 32 (-1)) [])
                            _ -> error "Invalid strEq signature"
                            )
 
@@ -107,7 +130,8 @@ strEq = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
                            (Just (LLVMOperand _ l), Just (LLVMOperand _ r)) -> LLVMOperand boolType $ do
                              l' <- l
                              r' <- r
-                             callf ATP.i1 "strcmp" [l', r'] -- TODO: really returns int type as result of comparison
+                             sc <- callf ATP.i1 "strcmp" [l', r']
+                             instr ATP.i1 $ AST.ICmp IP.EQ sc (cons $ C.Int 32 0) []
                            _ -> error "Invalid strEq signature"
                            )
 
@@ -118,7 +142,7 @@ intToString = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim
     srcType = PartialType (PTypeName name') H.empty H.empty (H.singleton "this" intType) PtArgAny
     resType = strType
     prim = EPrim srcType NoGuard (\args -> case H.lookup "this" args of
-                           Just (LLVMOperand _ _) -> LLVMOperand strType (pure $ cons $ C.Int 64 0) --TODO: Should do actual conversion
+                           Just (LLVMOperand _ _) -> LLVMOperand strType (pure $ cons $ C.Int 32 0) --TODO: Should do actual conversion
                            _ -> error "Invalid strEq signature"
                            )
 
@@ -133,8 +157,7 @@ ioExit = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
                              r' <- r
                              _ <- callf ATP.VoidType "exit" [r']
                              return ()
-                           _ -> LLVMIO (pure ())-- TODO: Delete, should be an error
-                           -- _ -> error "Invalid ioExit signature"
+                           _ -> error "Invalid ioExit signature"
                            )
 
 println :: Op
