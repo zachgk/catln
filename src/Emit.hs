@@ -72,6 +72,25 @@ asOperand val@(TupleVal _ args) = do
   load res
 asOperand val = error $ printf "Invalid val to operand: %s" (show val)
 
+getValArgs :: Val -> Codegen (H.HashMap ArgName Val)
+getValArgs (TupleVal _ args) = return args
+getValArgs (LLVMOperand tp o) = do
+  o' <- o
+  o'' <- alloca (typeOf o')
+  store o'' o'
+  case tp of
+    SumType partialLeafs -> case splitPartialLeafs partialLeafs of
+      [PartialType{ptArgs, ptVars}] -> do
+        args' <- forM (zip [0..] $ H.toList ptArgs) $ \(argIndex, (argName, argType)) -> do
+          argType' <- genType ptVars argType
+          argPntr <- getelementptr argType' o'' [cons $ C.Int 32 argIndex]
+          argVal <- load argPntr
+          return (argName, LLVMOperand argType (return argVal))
+        return $ H.fromList args'
+      _ -> error $ printf "Invalid leaf number" (show tp)
+    t -> error $ printf "Invalid operand type: %s" (show t)
+getValArgs v = error $ printf "Val does not have args: %s" (show v)
+
 genTypeMeta :: (Monad m, TaskState m) => EvalMeta -> m AST.Type
 genTypeMeta (Typed t _) = genType H.empty t
 
@@ -147,14 +166,8 @@ codegenTree env match@(ResArrowMatch m matchType opts) = do
     _ <- setBlock exitBlock
     load matchResult
 codegenTree env (ResArrowCond _ [] elseTree) = codegenTree env elseTree
-codegenTree env cond@(ResArrowCond resType (((ifCondTree, ifCondInput, ifObj), ifThenTree):restIfTrees) elseTree) = do
-  let condHashName = "cond:" ++ take 6 (printf "%08x" (hash cond))
-  let ifCondInput' = codegenTree env ifCondInput
-  let envCond = env{lvArgs=buildArrArgs ifObj ifCondInput'}
-  let cond' = codegenTree envCond ifCondTree
-  let ifThenTree' = codegenTree env ifThenTree
-  let rest' = codegenTree env (ResArrowCond resType restIfTrees elseTree)
-  LLVMOperand resType $ do
+codegenTree env cond@(ResArrowCond resType (((ifCondTree, ifCondInput, ifObj), ifThenTree):restIfTrees) elseTree) = LLVMOperand resType $ do
+      let condHashName = "cond:" ++ take 6 (printf "%08x" (hash cond))
       resType' <- genType H.empty resType
       result <- alloca resType'
 
@@ -163,18 +176,21 @@ codegenTree env cond@(ResArrowCond resType (((ifCondTree, ifCondInput, ifObj), i
       exitBlock <- addBlock $ condHashName ++ "-exit"
 
       -- Branch on condition
-      cond'' <- asOperand cond'
+      let ifCondInput' = codegenTree env ifCondInput
+      condArgs <- fmap snd <$> formArgValMap ifObj ifCondInput'
+      let envCond = env{lvArgs=condArgs}
+      cond'' <- asOperand $ codegenTree envCond ifCondTree
       _ <- cbr cond'' thenBlock elseBlock
 
       -- True condition
       _ <- setBlock thenBlock
-      thenRes <- asOperand ifThenTree'
+      thenRes <- asOperand $ codegenTree env ifThenTree
       store result thenRes
       _ <- br exitBlock
 
       -- False / rest of tree
       _ <- setBlock elseBlock
-      elseRes <- asOperand rest'
+      elseRes <- asOperand $ codegenTree env (ResArrowCond resType restIfTrees elseTree)
       store result elseRes
       _ <- br exitBlock
 
@@ -200,25 +216,6 @@ codegenTree env (ResArrowTupleApply base argName argRATree) = do
       let args' = H.insert argName argRATree' baseArgs
       TupleVal name args'
     _ -> error "Invalid input to tuple application"
-
-getValArgs :: Val -> Codegen (H.HashMap ArgName Val)
-getValArgs (TupleVal _ args) = return args
-getValArgs (LLVMOperand tp o) = do
-  o' <- o
-  o'' <- alloca (typeOf o')
-  store o'' o'
-  case tp of
-    SumType partialLeafs -> case splitPartialLeafs partialLeafs of
-      [PartialType{ptArgs, ptVars}] -> do
-        args' <- forM (zip [0..] $ H.toList ptArgs) $ \(argIndex, (argName, argType)) -> do
-          argType' <- genType ptVars argType
-          argPntr <- getelementptr argType' o'' [cons $ C.Int 32 argIndex]
-          argVal <- load argPntr
-          return (argName, LLVMOperand argType (return argVal))
-        return $ H.fromList args'
-      _ -> error $ printf "Invalid leaf number" (show tp)
-    t -> error $ printf "Invalid operand type: %s" (show t)
-getValArgs v = error $ printf "Val does not have args: %s" (show v)
 
 formArgValMap :: EObject -> Val -> Codegen (H.HashMap ArgName (Typed, Val))
 formArgValMap (Object m _ name _ args) val | H.null args = return $ H.singleton name (m, val)
