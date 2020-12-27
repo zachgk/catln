@@ -21,6 +21,7 @@ import           LLVM.Module
 import qualified LLVM.AST                        as AST
 import qualified LLVM.AST.Constant               as C
 import qualified Data.ByteString.UTF8       as BSU
+import qualified Data.Text.Lazy as T
 -- import qualified LLVM.AST.Float                  as F
 
 import           Control.Monad
@@ -43,6 +44,7 @@ import Data.Char (ord)
 import qualified Data.HashSet as S
 import Control.Monad.State
 import qualified LLVM.AST.Typed as ASTT
+import LLVM.Pretty (ppllvm)
 
 data LEnv = LEnv { lvArgs :: H.HashMap ArgName Val
                  , lvTbEnv :: TBEnv EPrim
@@ -345,11 +347,20 @@ codegenPrgm input srcType destType tprgm@(_, classMap, _) = do
       codegenTasks env
     CErr err -> error $ printf "Build to buildPrgm in codegen: \n\t%s" (show err)
 
-codegenEx :: AST.Module -> LLVM () -> IO String
-codegenEx astMod modn = withContext $ \context ->
+codegenExPrint :: AST.Module -> LLVM () -> String
+codegenExPrint astMod modn = T.unpack $ ppllvm newast
+  where
+    newast = runLLVM astMod modn
+
+codegenExAPI :: AST.Module -> LLVM () -> IO String
+codegenExAPI astMod modn = withContext $ \context ->
   withModuleFromAST context newast (fmap BSU.toString . moduleLLVMAssembly)
   where
     newast = runLLVM astMod modn
+
+codegenEx :: AST.Module -> LLVM () -> IO String
+-- codegenEx astMod modn = return $ codegenExPrint astMod modn
+codegenEx = codegenExAPI
 
 codegenExInit :: LLVM () -> IO String
 codegenExInit = codegenEx initModule
