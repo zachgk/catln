@@ -43,7 +43,7 @@ import qualified LLVM.AST.Float as F
 import Data.Char (ord)
 import qualified Data.HashSet as S
 import Control.Monad.State
-import qualified LLVM.AST.Typed as ASTT
+import LLVM.AST.Typed (typeOf)
 import LLVM.Pretty (ppllvm)
 
 data LEnv = LEnv { lvArgs :: H.HashMap ArgName Val
@@ -66,17 +66,18 @@ asOperand val@(TupleVal _ args) = do
   -- let tpDef = global tp' (typeName tp)
   forM_ (zip [0..] $ H.toList args) \(argIndex, (_, argVal)) -> do
     argVal' <- asOperand argVal
-    argPntr <- getelementptr (ASTT.typeOf argVal') res [res, cons $ C.Int 32 argIndex]
+    let argType' = typeOf argVal'
+    argPntr <- getelementptr argType' res [cons $ C.Int 32 argIndex]
     store argPntr argVal'
-  return res
+  load res
 asOperand val = error $ printf "Invalid val to operand: %s" (show val)
 
 genTypeMeta :: (Monad m, TaskState m) => EvalMeta -> m AST.Type
 genTypeMeta (Typed t _) = genType H.empty t
 
-arrowName :: PartialType -> EObject -> EArrow -> String
-arrowName srcType (Object _ _ name _ _) arrow = printf "fun:%s-%s" name arrHash
-  where arrHash = take 6 (printf "%08x" (hash (srcType, arrow))) :: String
+arrowName :: PartialType -> EObject -> EArrow -> DeclInput -> String
+arrowName srcType (Object _ _ name _ _) arrow di = printf "fun:%s-%s" name arrHash
+  where arrHash = take 6 (printf "%08x" (hash (srcType, arrow, di))) :: String
 
 typeName :: Type -> String
 typeName tp = printf "tp_%s" tpHash
@@ -88,19 +89,18 @@ codegenTree env@LEnv{lvClassMap} resArrow@(ResEArrow input object arrow) = do
   let arrowSrcType = getValType val
   let outType = resArrowDestType lvClassMap arrowSrcType resArrow
   case val of
-    TupleVal{} ->
+    (TupleVal _ args) ->
       LLVMOperand outType $ do
-        let args' = buildArrArgs object val
-        args'' <- mapM asOperand $ H.elems args'
+        args' <- mapM asOperand $ H.elems args
         addTaskArrow (arrowSrcType, object, arrow, TupleInput)
         outType' <- genType H.empty outType
-        callf outType' (arrowName arrowSrcType object arrow) args''
+        callf outType' (arrowName arrowSrcType object arrow TupleInput) args'
     _ -> do
       LLVMOperand outType $ do
         val' <- asOperand val
         addTaskArrow (arrowSrcType, object, arrow, StructInput)
         outType' <- genType H.empty outType
-        callf outType' (arrowName arrowSrcType object arrow) [val']
+        callf outType' (arrowName arrowSrcType object arrow StructInput) [val']
 codegenTree _ MacroArrow{} = error $ printf "Can't evaluate a macro - it should be removed during TreeBuild"
 codegenTree _ ExprArrow{} = error $ printf "Can't evaluate an expr - it should be removed during TreeBuild"
 codegenTree env (PrimArrow input outType (EPrim _ _ f)) = do
@@ -205,12 +205,14 @@ getValArgs :: Val -> Codegen (H.HashMap ArgName Val)
 getValArgs (TupleVal _ args) = return args
 getValArgs (LLVMOperand tp o) = do
   o' <- o
+  o'' <- alloca (typeOf o')
+  store o'' o'
   case tp of
     SumType partialLeafs -> case splitPartialLeafs partialLeafs of
       [PartialType{ptArgs, ptVars}] -> do
         args' <- forM (zip [0..] $ H.toList ptArgs) $ \(argIndex, (argName, argType)) -> do
           argType' <- genType ptVars argType
-          argPntr <- getelementptr argType' o' [o', cons $ C.Int 32 argIndex]
+          argPntr <- getelementptr argType' o'' [cons $ C.Int 32 argIndex]
           argVal <- load argPntr
           return (argName, LLVMOperand argType (return argVal))
         return $ H.fromList args'
@@ -278,11 +280,12 @@ codegenMain env tree = do
 
       ioType' <- genType H.empty ioType
       initIO <- alloca ioType'
-      let replaceArgs = [("io", LLVMOperand ioType (return initIO))]
+      initIO' <- load initIO
+      let replaceArgs = [("io", LLVMOperand ioType (return initIO'))]
 
       let env' = env{lvArgs = H.fromList replaceArgs}
-      res <- asOperand $ codegenTree env' tree
-      ret res
+      _ <- asOperand $ codegenTree env' tree
+      ret $ cons $ C.Int 32 0
 
 codegenDecls :: LEnv -> String -> EObject -> Type -> Type -> ResArrowTree EPrim -> DeclInput -> LLVM ()
 codegenDecls env name obj (SumType partialLeafs) destType tree declInput = case splitPartialLeafs partialLeafs of
@@ -308,7 +311,7 @@ codegenTasks env@LEnv{lvTbEnv, lvClassMap} = do
   case taskArrows of
     (arrowSrcType, obj, arr, declInput):tas -> do
       modify $ \s -> s {lTaskArrows = tas}
-      let nm = arrowName arrowSrcType obj arr
+      let nm = arrowName arrowSrcType obj arr declInput
       if S.member nm completed
         then codegenTasks env
         else case buildArrow lvTbEnv arrowSrcType obj arr of

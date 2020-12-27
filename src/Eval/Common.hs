@@ -103,7 +103,7 @@ instance Show Val where
   show IOVal{}   = "IOVal"
   show LLVMVal{}   = "LLVMVal"
   show LLVMQueue{}   = "LLVMQueue"
-  show (LLVMOperand tp _)   = "LLVMOperand" ++ show tp
+  show (LLVMOperand tp _)   = printf "LLVMOperand<$T=%s>" (show tp)
   show LLVMIO{}   = "LLVMIO"
   show NoVal   = "NoVal"
 

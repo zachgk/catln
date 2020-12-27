@@ -11,7 +11,10 @@
 
 -- Originally from http://www.stephendiehl.com/llvm/#haskell-llvm-bindings
 
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE TupleSections              #-}
 
@@ -39,6 +42,9 @@ import Syntax.Prgm
 import qualified Syntax as SYN
 import qualified Syntax.Types as SYNT
 import qualified Data.HashSet as S
+import Text.Printf
+import GHC.Generics (Generic)
+import Data.Hashable
 
 -------------------------------------------------------------------------------
 -- Module Level
@@ -53,7 +59,7 @@ data LLVMState
                            }
 
 newtype LLVM a = LLVM (State LLVMState a)
-  deriving (Functor, Applicative, Monad, MonadState LLVMState )
+  deriving newtype (Functor, Applicative, Monad, MonadState LLVMState )
 
 runLLVM :: AST.Module -> LLVM a -> AST.Module
 runLLVM astMod (LLVM m) = lsMod $ execState m initState
@@ -119,7 +125,7 @@ type SymbolTable = [(String, Operand)]
 data DeclInput
   = TupleInput
   | StructInput
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Generic, Hashable)
 type TaskArrow = (SYNT.PartialType, Object SYN.Typed, Arrow (Expr SYN.Typed) SYN.Typed, DeclInput)
 type TaskStruct = SYNT.Type
 
@@ -147,7 +153,7 @@ data BlockState
 -------------------------------------------------------------------------------
 
 newtype Codegen a = Codegen { runCodegen :: State CodegenState a }
-  deriving (Functor, Applicative, Monad, MonadState CodegenState )
+  deriving newtype (Functor, Applicative, Monad, MonadState CodegenState )
 
 instance Show (Codegen a) where
   show Codegen{} = "Codegen"
@@ -318,7 +324,12 @@ cons :: C.Constant -> Operand
 cons = ConstantOperand
 
 getelementptr :: Type -> Operand -> [Operand] -> Codegen Operand
-getelementptr elementType tp ops = instr (ptr elementType) $ GetElementPtr True tp ops []
+getelementptr elementType tp ops = case typeOf tp of
+  PointerType{} -> instr (ptr elementType) $ GetElementPtr True tp ops []
+  _ -> error $ printf "Invalid getElementPtr address: %s" (show tp)
+
+typeOperand :: Type -> Operand
+typeOperand = ConstantOperand . C.Undef
 
 uitofp :: Type -> Operand -> Codegen Operand
 uitofp ty a = instr undefined $ UIToFP a ty []
@@ -337,7 +348,7 @@ callf retType fnName args = do
   call retType fn args
 
 alloca :: Type -> Codegen Operand
-alloca ty = instr ty $ Alloca ty Nothing 0 []
+alloca ty = instr (ptr ty) $ Alloca ty Nothing 0 []
 
 store :: Operand -> Operand -> Codegen ()
 store pointer val = voidInstr $ Store False pointer val Nothing 0 []
