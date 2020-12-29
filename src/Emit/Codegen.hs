@@ -193,7 +193,7 @@ fresh :: Codegen Word
 fresh = do
   i <- gets count
   modify $ \s -> s { count = 1 + i }
-  return $ i + 1
+  return i
 
 current :: Codegen BlockState
 current = do

@@ -67,7 +67,7 @@ asOperand val@(TupleVal _ args) = do
   forM_ (zip [0..] $ H.toList args) \(argIndex, (_, argVal)) -> do
     argVal' <- asOperand argVal
     let argType' = typeOf argVal'
-    argPntr <- getelementptr argType' res [cons $ C.Int 32 argIndex]
+    argPntr <- getelementptr argType' res [cons $ C.Int 32 0, cons $ C.Int 32 argIndex]
     store argPntr argVal'
   load res
 asOperand val = error $ printf "Invalid val to operand: %s" (show val)
@@ -83,7 +83,7 @@ getValArgs (LLVMOperand tp o) = do
       [PartialType{ptArgs, ptVars}] -> do
         args' <- forM (zip [0..] $ H.toList ptArgs) $ \(argIndex, (argName, argType)) -> do
           argType' <- genType ptVars argType
-          argPntr <- getelementptr argType' o'' [cons $ C.Int 32 argIndex]
+          argPntr <- getelementptr argType' o'' [cons $ C.Int 32 0, cons $ C.Int 32 argIndex]
           argVal <- load argPntr
           return (argName, LLVMOperand argType (return argVal))
         return $ H.fromList args'
@@ -359,8 +359,8 @@ codegenExAPI astMod modn = withContext $ \context ->
     newast = runLLVM astMod modn
 
 codegenEx :: AST.Module -> LLVM () -> IO String
--- codegenEx astMod modn = return $ codegenExPrint astMod modn
-codegenEx = codegenExAPI
+codegenEx astMod modn = return $ codegenExPrint astMod modn
+-- codegenEx = codegenExAPI
 
 codegenExInit :: LLVM () -> IO String
 codegenExInit = codegenEx initModule
