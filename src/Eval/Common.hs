@@ -103,7 +103,7 @@ instance Show Val where
   show IOVal{}   = "IOVal"
   show LLVMVal{}   = "LLVMVal"
   show LLVMQueue{}   = "LLVMQueue"
-  show (LLVMOperand tp _)   = "LLVMOperand" ++ show tp
+  show (LLVMOperand tp _)   = printf "LLVMOperand<$T=%s>" (show tp)
   show LLVMIO{}   = "LLVMIO"
   show NoVal   = "NoVal"
 
@@ -161,7 +161,7 @@ newtype MacroFunction f = MacroFunction (ResArrowTree f -> MacroData f -> ResArr
 type ResBuildEnvFunction f = ResArrowTree f -> ResArrowTree f
 type ResBuildEnvItem f = (PartialType, Guard (Expr Typed), ResBuildEnvFunction f)
 type ResBuildEnv f = H.HashMap TypeName [ResBuildEnvItem f]
-type ResExEnv f = H.HashMap (Arrow (Expr Typed) Typed) (ResArrowTree f, [ResArrowTree f]) -- (result, [compAnnot trees])
+type ResExEnv f = H.HashMap (PartialType, Arrow (Expr Typed) Typed) (ResArrowTree f, [ResArrowTree f]) -- (result, [compAnnot trees])
 type TBEnv f = (ResBuildEnv f, H.HashMap PartialType (ResArrowTree f), Prgm (Expr Typed) Typed, ClassMap)
 
 instance Eq (MacroFunction f) where
@@ -177,8 +177,8 @@ data ResArrowTree f
   | ExprArrow EExpr Type
   | ConstantArrow Val
   | ArgArrow Type String
-  | ResArrowMatch (ResArrowTree f) (H.HashMap PartialType (ResArrowTree f))
-  | ResArrowCond [((ResArrowTree f, ResArrowTree f, Object Typed), ResArrowTree f)] (ResArrowTree f) -- [((if, ifInput, ifObj), then)] else
+  | ResArrowMatch (ResArrowTree f) Type (H.HashMap PartialType (ResArrowTree f))
+  | ResArrowCond Type [((ResArrowTree f, ResArrowTree f, Object Typed), ResArrowTree f)] (ResArrowTree f) -- [((if, ifInput, ifObj), then)] else
   | ResArrowTuple String (H.HashMap String (ResArrowTree f))
   | ResArrowTupleApply (ResArrowTree f) String (ResArrowTree f)
   deriving (Eq, Generic, Hashable)
@@ -190,11 +190,11 @@ instance Show (ResArrowTree f) where
   show (ExprArrow e destType) = "(ExprArrow " ++ show e ++ " to " ++ show destType ++ ")"
   show (ConstantArrow c) = "(ConstantArrow " ++ show c ++ ")"
   show (ArgArrow tp n) = "(ArgArrow " ++ show tp ++ " " ++ n ++ ")"
-  show (ResArrowMatch m args) = printf "match (%s) {%s}" (show m) args'
+  show (ResArrowMatch m _ args) = printf "match (%s) {%s}" (show m) args'
     where
       showArg (leaf, tree) = show leaf ++ " -> " ++ show tree
       args' = intercalate ", " $ map showArg $ H.toList args
-  show (ResArrowCond ifTrees elseTree) = "( [" ++ ifTrees' ++ "] ( else " ++ show elseTree ++ ") )"
+  show (ResArrowCond _ ifTrees elseTree) = "( [" ++ ifTrees' ++ "] ( else " ++ show elseTree ++ ") )"
     where
       showIfTree (condTree, thenTree) = "if " ++ show condTree ++ " then " ++ show thenTree
       ifTrees' = intercalate ", " $ map showIfTree ifTrees
@@ -215,6 +215,6 @@ buildArrArgs = aux H.empty
     aux acc (Object _ _ objName _ objArgs) val | H.null objArgs = H.insert objName val acc
     aux _ (Object _ _ objName _ _) (TupleVal tupleName _) | objName /= tupleName = error $ printf "Found name mismatch in buildArrArgs: object %s and tuple %s" objName tupleName
     aux acc (Object _ _ _ _ objArgs) (TupleVal _ tupleArgs) = H.foldrWithKey addArgs acc $ H.intersectionWith (,) objArgs tupleArgs
-    aux _ _ val = error $ "Invalid buildArrArgs value: " ++ show val
+    aux _ obj val = error $ printf "Invalid buildArrArgs with obj %s and value %s" (show obj) (show val)
     addArgs argName ((_, Nothing), argVal) acc = H.insert argName argVal acc
     addArgs _ ((_, Just subObj), argVal) acc = aux acc subObj argVal

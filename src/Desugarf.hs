@@ -138,7 +138,7 @@ semiDesExpr (RawMethods base methods) = semiDesExpr $ foldl addMethod base metho
     addMethod _ _ = error "Unknown semiDesExpr method"
 semiDesExpr r@(RawIfThenElse m i t e) = (concat [subI, subT, subE, [elseDecl, ifDecl]], expr')
   where
-    condName = "\\" ++ take 6 (printf "%08x" (hash r))
+    condName = "$" ++ take 6 (printf "%08x" (hash r))
     (subI, i') = semiDesExpr i
     (subT, t') = semiDesExpr t
     (subE, e') = semiDesExpr e
@@ -147,7 +147,7 @@ semiDesExpr r@(RawIfThenElse m i t e) = (concat [subI, subT, subE, [elseDecl, if
     expr' = PSValue m condName
 semiDesExpr r@(RawMatch m e matchItems) = (subE ++ subMatchItems, expr')
   where
-    condName = "\\" ++ take 6 (printf "%08x" (hash r))
+    condName = "$" ++ take 6 (printf "%08x" (hash r))
     argName = condName ++ "-arg"
     (subE, e') = semiDesExpr e
     expr' = PSTupleApply m (emptyMetaM "app" m, PSValue (emptyMetaM "val" m) condName) (Just argName) e'
@@ -163,7 +163,7 @@ semiDesExpr (RawCase _ _ []) = error "Empty case"
 semiDesExpr (RawCase _ _ [(_, matchExpr)]) = semiDesExpr matchExpr
 semiDesExpr r@(RawCase m e ((Pattern firstObj@(Object fm _ _ _ _) firstGuard, firstExpr):restCases)) = (concat [[firstDecl, restDecl], subFG, subFE, subRE, subE], expr')
   where
-    condName = "\\" ++ take 6 (printf "%08x" (hash r))
+    condName = "$" ++ take 6 (printf "%08x" (hash r))
     argName = condName ++ "-arg"
     declObj = Object (emptyMetaM "obj" m) FunctionObj condName H.empty (H.singleton argName (fm, Just firstObj))
     firstDecl = PSemiDecl (DeclLHS m (Pattern declObj firstGuard')) [] (Just firstExpr')

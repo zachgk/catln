@@ -22,20 +22,20 @@ import Syntax.Types
 import Text.Printf
 import Data.Hashable
 
-evalStartEArrow :: Env -> EObject -> EArrow -> Args -> CRes (ResArrowTree EPrim, [ResArrowTree EPrim], Args, Env)
-evalStartEArrow env@Env{evExEnv, evTbEnv, evArgs, evCoverage, evTreebugOpen} obj arr newArgs = do
+evalStartEArrow :: Env -> PartialType -> EObject -> EArrow -> Args -> CRes (ResArrowTree EPrim, [ResArrowTree EPrim], Args, Env)
+evalStartEArrow env@Env{evExEnv, evTbEnv, evArgs, evCoverage, evTreebugOpen} srcType obj arr newArgs = do
   let env' = env{
                 evArgs=newArgs
                 , evCoverage = H.insertWith (+) arr 1 evCoverage
                 , evTreebugOpen = EvalTreebugOpen obj arr : evTreebugOpen
                 }
-  case H.lookup arr evExEnv of
+  case H.lookup (srcType, arr) evExEnv of
     Just (tree, annots) -> return (tree, annots, evArgs, env')
     Nothing -> do
-      maybeArrow' <- buildArrow evTbEnv obj arr
+      maybeArrow' <- buildArrow evTbEnv srcType obj arr
       case maybeArrow' of
         Just (_, arrow'@(tree, annots)) -> do
-          let env'' = env' {evExEnv = H.insert arr arrow' evExEnv}
+          let env'' = env' {evExEnv = H.insert (srcType, arr) arrow' evExEnv}
           return (tree, annots, evArgs, env'')
         Nothing -> evalError env $ printf "Failed to find arrow in eval resArrow: %s" (show arr)
 

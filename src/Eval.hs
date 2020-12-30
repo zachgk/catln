@@ -42,7 +42,7 @@ eval :: Env -> ResArrowTree EPrim -> CRes (Val, Env)
 eval env (ResEArrow input object arrow) = do
   (input', env2) <- evalPopVal <$> eval (evalPush env "resEArrow input") input
   let newArrArgs = buildArrArgs object input'
-  (resArrowTree, compAnnots, oldArgs, env3) <- evalStartEArrow env2 object arrow newArrArgs
+  (resArrowTree, compAnnots, oldArgs, env3) <- evalStartEArrow env2 (getValType input') object arrow newArrArgs
   env5s <- forM compAnnots $ \compAnnot -> do
             (compAnnot', env4) <- evalPopVal <$> eval (evalPush env3 $ printf "annot %s" (show compAnnot)) compAnnot
             evalCompAnnot env4 compAnnot'
@@ -62,21 +62,21 @@ eval env (ConstantArrow v) = return (v, env)
 eval env@Env{evArgs} (ArgArrow _ name) = case H.lookup name evArgs of
   Just arg' -> return (arg', env)
   Nothing -> evalError env $ printf "Unknown arg %s found during evaluation \n\t\t with arg env %s" name (show evArgs)
-eval env@Env{evClassMap} (ResArrowMatch m opts) = do
+eval env@Env{evClassMap} (ResArrowMatch m _ opts) = do
   (m', env2) <- evalPopVal <$> eval (evalPush env "match input") m
   case H.toList $ H.filterWithKey (\optType _ -> hasPartial evClassMap (getValType m') (singletonType optType)) opts of
     [(_, resArrowTree)] -> evalPopVal <$> eval (evalPush env2 $ "match with val " ++ show m') resArrowTree
     [] -> evalError env2 $ printf "Failed match in eval resArrowTree: \n\tVal: %s \n\tOptions: %s" (show m') (show opts)
     (_:_:_) -> evalError env $ printf "Multiple matches in eval resArrowTree: \n\tVal: %s \n\tOptions: %s " (show m') (show opts)
-eval env (ResArrowCond [] elseTree) = evalPopVal <$> eval (evalPush env "else") elseTree
-eval env@Env{evArgs} (ResArrowCond (((ifCondTree, ifCondInput, ifObj), ifThenTree):restIfTrees) elseTree) = do
+eval env (ResArrowCond _ [] elseTree) = evalPopVal <$> eval (evalPush env "else") elseTree
+eval env@Env{evArgs} (ResArrowCond resType (((ifCondTree, ifCondInput, ifObj), ifThenTree):restIfTrees) elseTree) = do
   (ifCondInput', env2) <- evalPopVal <$> eval (evalPush env "condInput") ifCondInput
   let env3 = evalSetArgs env2 $ buildArrArgs ifObj ifCondInput'
   (cond', env4) <- evalPopVal <$> eval (evalPush env3 "cond") ifCondTree
   let env5 = evalSetArgs env4 evArgs
   case cond' of
     b | b == true -> evalPopVal <$> eval (evalPush env5 $ "then for " ++ show ifCondTree) ifThenTree
-    b | b == false -> evalPopVal <$> eval (evalPush env5 $ "else for " ++ show ifCondTree) (ResArrowCond restIfTrees elseTree)
+    b | b == false -> evalPopVal <$> eval (evalPush env5 $ "else for " ++ show ifCondTree) (ResArrowCond resType restIfTrees elseTree)
     _ -> error "Non-Bool eval resArrowCond"
 eval env (ResArrowTuple name args) | H.null args = return (TupleVal name H.empty, env)
 eval env (ResArrowTuple name args) = do
@@ -118,8 +118,9 @@ evalAnnots prgm@(_, _, annots) = do
   forM annots $ \annot -> do
     let exprType = getMetaType $ getExprMeta annot
     let inTree = ExprArrow annot exprType
-    let emptyObj = Object (Typed exprType Nothing) FunctionObj "EmptyObj" H.empty H.empty
-    tree <- resolveTree evTbEnv emptyObj inTree
+    let emptyType = PartialType (PTypeName "EmptyObj") H.empty H.empty H.empty PtArgExact
+    let emptyObj = Object (Typed (singletonType emptyType) Nothing) FunctionObj "EmptyObj" H.empty H.empty
+    tree <- resolveTree evTbEnv (emptyType, emptyObj) inTree
     val <- fst <$> eval env tree
     return (annot, val)
 
