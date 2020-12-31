@@ -1,28 +1,66 @@
 # Context
 
-One of the problems with functional programming is the way that state, especially global state, is handled. Imperative languages always have variables to store the state in. Often, mutable objects that are passes around and updated store the state, although that can make it difficult to understand where the state is changed. This can also be used in the case of singletons which are even more difficult to track.
+One of the fundamental problems for a programming language is the management of state. In order to manage state well, there are a few goals for a successful system.
 
-In pure functions, the way that state is passed around is typically monads if not directly. However, these monads are difficult to combine if multiple states (such as logging, IO, counters, readers, etc.) are all needed. This has lead to the creation of an entire structure of monad transformers to bridge the gap.
+In imperative languages, the state management is relatively straightforward by using variables and memory. However, it behaves like a blunt instrument in that it works for everything but loses too much information. It is hard to know what kind of variables, mutations, and state changes could happen in a function. It also restricts the compiler due to the limits of analyzing the control flow with the singular state. The first goal is that the state should be explicitly controlled in the type system so it is easy to understand and optimize.
 
-For this reason, there will be an additional syntax known as Context. A method can require a context such as:
+In functional languages, there isn't an implicit variable map and states have to be created explicitly. This does make programs easier to understand, but it can be verbose and unwieldy to have different values (state1, state2, state3, ...) for every change made to a state. This brings the second goal that state should be easy to update.
+
+The first technique functional programming languages use to manage the state, beyond the naive, is as a monad. Combined with a "do-notation", this saves significantly on the verbosity. However, the monad is fairly unintuitive for a full state. It converts your function into a lambda that is run using a `runState` function. This means that when combining functions, you are building up a larger and larger function to execute. This is remarkably convoluted. The simpler form of a state is that a function should accept a state as part of the input and return a state as part of the output. The third goal is that state management should be intuitive.
+
+The other issue with monads is that they are difficult to combine. If each monad fulfills the idea of "do one thing and do it well" instead of having a monolithic monad, then it must be possible to combine the monads. Unfortunately, monads can't combine. Building monoliths is also not right. If using the slightly more powerful form of a monad transformer, they can combine by it is complicated, verbose, and ultimately lacking.
+
+More than just combining, the combination needs to change easily. You need to add things to the state partway through the computation or prune state when it is no longer needed. This shouldn't be a side part, but one of the key aspects of state management.
+
+One approach which I have seen in more recent systems is effect systems. This is similar to monads, but adds more into combination and a bit into adding/removing parts of state. However, it also falls into the problem that it is based on monads instead of state changes (`$A -> $M<$B>` but should be `$M<$A> -> $M<$B>`) as being convoluted.
+
+## Context
+
+The solution that Catln uses is called context. It corresponds to a data object defined in the standard library:
 
 ```
-printAndLog{IO io, Log log}(String s) = ...
+data Context<$T>($T val, $states...)
 ```
 
-The context can be thought of as a set of values, each with it's own type. Values can be added to a scope and are then available within that context while inside that scope.
+The context can be thought of as a collection of values, each with it's own type. The primary operations on the context are to add additional elements of state to the context and to get the elements of the state from the context. The elements in the context are all values that have types, and can be identified by the type.
 
-The context passes data down the call stack without requiring it to be specified at each level. This makes it convenient to have more global state. However, the state is clearly typed and lives within a well defined scope. I think this forms a reasonable compromise between the lack of global state in functional programming and the overabundance of global state in imperative programming.
+In addition, there are also some syntax sugars to make it easier to work with the context. Many methods will require a context to be called such as:
 
-Context can be used by specifying the values with a method. An element is pulled out of the context by specifying the type of the element. If multiple elements of that type exist within the context, it would result in a compiler error. For this reason, it may be common to create custom types just to store values for the context.
+```
+// The println method requires the IO object to be part of the context when it is called
+// It then returns nothing (unit) inside of an updated context object
+println{IO io}(String s) -> {IO}()
 
-When a method accepts a context as part of it's definition, that values in that context are considered consumed. When the result of the method is returned, new context values (or the same ones) can then be returned alongside the return value as an update to the context.
+//It corresponds to the desugared form:
+Context(val=println(String s), IO $io, $states...) -> Context(val=(), IO $newio, $newstates...)
+```
 
-It is also possible for values to not be included in the definition. For example, context values might be accessed by methods that are called, but not the main method. Those context values are referred to as covered. They do not need to be added to the context of the main method.
+Within the println function, including IO inside of the curly braces means to remove the IO element from the context. Then, the new IO produced after the println operation has to be re-added to the context before returning.
+
+Many functions will use context elements indirectly. They do not need to access the values in the context, but they call functions that need to access values inside the context. For these, no changes to be made to the parent function. While this may seem impure in that it gives functions side effects, it really just saves a bit of typing. The true context requirements of the function and the transitive requirements are computed during type inference, so they can be displayed by the IDE or in the docs (which is really all you need).
+
+There is also a few additional syntax sugars for contexts:
+
+```
+// A value can be prepended with the context to add something to a context
+// This is very useful when returning while adding context values
+x = {valToAddToContext} valInsideContext
+
+// The standard context get requires that exactly one element of that type should be in the context
+// Otherwise, it will throw a syntax error during compilation
+// This syntax stores all elements as a Collection<MyListenerType> which can be zero or many listeners
+callWithListeners{MyListenerType... listeners}(...) = ...
+
+// Add an element to the context within a scope
+// This makes it available within the block and removes it when the block ends
+foo =
+  with {newContextElement}
+    ...
+```
 
 ## Uses
 
-The context can be used for various purposes. One example is that unlike Haskell, IO would be represented as a Context instead of a Monad. As an easy way to decide between Monads and Context, if you can have an unwrap method that discards the context and returns the value outside of the monad, it should be a context. Methods should return updated IO values when they accept IO as an input Context. Similarly to this, Context can be used for readers, writers, and state.
+The context can be used for various purposes. One example is that unlike Haskell, IO would be represented as a Context instead of a Monad. As an easy way to decide between Monads and Context, if you can have an unwrap method that discards the context and returns the value outside of the monad, it should be a context rather than a monad. Methods should return updated IO values when they accept IO as an input Context. Similarly to this, Context can be used for readers, writers, and state.
 
 Context can also be used to pass constant environment information down the call stack. In this instance, the value would be consumed by functions that need it and the same value would be re-added to the context for the return value. It might be useful to add a `const` keyword as syntactic sugar for the reasonably frequent cases of values that are only read from the context.
 

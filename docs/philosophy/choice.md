@@ -3,6 +3,7 @@
 It is a relatively common issue in programming when you must choose between several options. While your code could be valid depending on these options, one of them must ultimately be chosen.
 
 There are two main types of choices:
+
 - choices which are equal and valid. One example of this is choosing a sorting function. Any sorting function will return the same result given the same input
 - choices which are not equal, but valid. One example of this is an approximation of something like TSP. Different approximation algorithms will return slightly different results, but they should all serve a similar purpose. As a user, it may be more important what you are approximating rather than how it is done.
 
@@ -90,4 +91,8 @@ Finally, the last option is to try to determine the best choice automatically. T
 
 The final approach, if all else fails, is to just pick an option at random. While this is far from ideal, it can always be overridden later if it proves to be a problem. The rest of the time, it is likely to work or not cause too many problems as long as the most important choices are properly accounted for.
 
-In the future, more sophisticated techniques can be used to make these automatic choices. They can rely on things like profiling all of the tests and examples to explore how functions are actually used. It can try to prove Big O values of functions.
+### Future Development
+
+Right now, the algorithm I have described above for choice should be reasonably sufficient. It should work well in the general cases and can be improved over time. Even in specific cases it can be manually controlled.
+
+However, this is essentially greedy. It assumes that all choices are independent, but they are often not. In that case, multiple choices should be made simultaneously. It may also take advantage of other data such as profiler guided optimization, automatic Big O notation, or machine learning guided optimization. These are all areas for future development of the language. But, it requires the same semantics as choice as a background so using the simpler greedy algorithm should be a good start towards those future developments as well.
