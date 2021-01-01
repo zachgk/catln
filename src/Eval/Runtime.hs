@@ -95,7 +95,7 @@ ioExit = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
     resType = ioType
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "this" args, H.lookup "val" args) of
                                   (Just (IOVal _ io), Just (IntVal val)) -> IOVal val io
-                                  _ -> error "Invalid exit signature"
+                                  _ -> error $ printf "Invalid exit signature with args: %s" (show args)
                               )
 
 println :: Op

@@ -84,12 +84,12 @@ buildExpr _ _ (Arg (Typed tp _) name) = return $ ArgArrow tp name
 buildExpr (_, _, _, classMap) (Object _ _ _ objVars _) (TupleApply (Typed (SumType prodTypes) pos) (Typed baseType _, baseExpr) argName argExpr) = case splitPartialLeafs prodTypes of
     [] -> CErr [MkCNote $ BuildTreeCErr pos $ "Found no types for tupleApply " ++ show baseExpr ++ " with type " ++ show prodTypes ++ " and expr " ++ show argExpr]
     leaves -> do
-      let baseBuild = ExprArrow baseExpr baseType
+      let baseBuild = ExprArrow baseExpr (getMetaType $ getExprMeta baseExpr) baseType
       leavesArgs <- mapM getLeafArgs leaves
       let leafArgs = unionTypes classMap leavesArgs
       -- TODO: Currently for each arg it does: execute expr, execute implicit (to any leaf), then match
       -- it should really be execute expr for args, match all args, then implicit all args
-      let argVal = ExprArrow argExpr leafArgs
+      let argVal = ExprArrow argExpr (getMetaType $ getExprMeta argExpr) leafArgs
       return $ ResArrowTupleApply baseBuild argName argVal
   where
     getLeafArgs PartialType{ptArgs=leafArgs} = case H.lookup argName leafArgs of
@@ -127,7 +127,7 @@ buildGuardArrows env obj input visitedArrows srcType destType guards = case guar
       ([], _, []) -> CErr [MkCNote $ BuildTreeCErr Nothing "Missing ElseGuard on envLookup"]
       ([], ifGuards, [elseGuard]) -> do
                                       let maybeIfTreePairs = forM ifGuards $ \(ifCond, ifThen@(ResEArrow _ o _)) -> do
-                                            ifTree' <- buildExprImp env (srcType, o) ifCond boolType
+                                            ifTree' <- buildExprImp env (srcType, o) ifCond (getMetaType $ getExprMeta ifCond) boolType
                                             thenTree' <- ltry ifThen
                                             return ((ifTree', input, o), thenTree')
                                       let maybeElseTree = ltry elseGuard
@@ -179,12 +179,11 @@ buildImplicit env obj input (SumType srcType) destType = do
     aux leafSrcType = (leafSrcType,) $ envLookup env obj input S.empty leafSrcType destType
 
 -- executes an expression and then an implicit to a desired dest type
-buildExprImp :: (Eq f, Hashable f) => TBEnv f -> ObjSrc -> TBExpr -> Type -> CRes (ResArrowTree f)
-buildExprImp env@(_, _, _, classMap) objSrc@(os, obj) expr destType = do
-  let exprType = getMetaType (getExprMeta expr)
+buildExprImp :: (Eq f, Hashable f) => TBEnv f -> ObjSrc -> TBExpr -> Type -> Type -> CRes (ResArrowTree f)
+buildExprImp env@(_, _, _, classMap) objSrc@(os, obj) expr exprType destType = do
   res' <- if hasTypeWithObjSrc classMap os obj exprType destType
     then buildExpr env obj expr
-    else buildImplicit env objSrc (ExprArrow expr exprType) exprType destType
+    else buildImplicit env objSrc (ExprArrow expr exprType exprType) exprType destType
   resolveTree env objSrc res'
 
 -- builds all macroArrows and exprArrows into other arrow types
@@ -196,7 +195,7 @@ resolveTree env obj (PrimArrow input t f) = do
   input' <- resolveTree env obj input
   return $ PrimArrow input' t f
 resolveTree env obj (MacroArrow input _ (MacroFunction f)) = resolveTree env obj $ f input (macroData env)
-resolveTree env obj (ExprArrow e destType) = buildExprImp env obj e destType
+resolveTree env obj (ExprArrow e exprType destType) = buildExprImp env obj e exprType destType
 resolveTree _ _ a@ConstantArrow{} = return a
 resolveTree _ _ a@ArgArrow{} = return a
 resolveTree env obj (ResArrowMatch input tp matches) = do
@@ -232,12 +231,12 @@ buildArrow env objPartial obj@(Object _ _ _ objVars _) arrow@(Arrow (Typed am _)
           Just argMeta -> getMetaType argMeta
           Nothing -> error "Bad TVArg in makeBaseEnv"
         _ -> am
-  resArrowTree <- resolveTree env objSrc (ExprArrow expr am')
-  compAnnots' <- mapM (\annot -> resolveTree env objSrc (ExprArrow annot (getMetaType $ getExprMeta annot))) compAnnots
+  resArrowTree <- resolveTree env objSrc (ExprArrow expr (getMetaType $ getExprMeta expr) am')
+  compAnnots' <- mapM (\annot -> resolveTree env objSrc (ExprArrow annot (getMetaType $ getExprMeta annot) (getMetaType $ getExprMeta annot))) compAnnots
   return $ Just (arrow, (resArrowTree, compAnnots'))
 
 buildRoot :: (Eq f, Hashable f) => TBEnv f -> TBExpr -> PartialType -> Type -> CRes (ResArrowTree f)
 buildRoot env input src dest = do
   let emptyObj = Object (Typed (singletonType src) Nothing) FunctionObj "EmptyObj" H.empty H.empty
   let objSrc = (src, emptyObj)
-  resolveTree env objSrc (ExprArrow input dest)
+  resolveTree env objSrc (ExprArrow input (getMetaType $ getExprMeta input) dest)

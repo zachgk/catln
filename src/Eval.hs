@@ -117,7 +117,7 @@ evalAnnots prgm@(_, _, annots) = do
   let env@Env{evTbEnv} = evalBaseEnv prgm
   forM annots $ \annot -> do
     let exprType = getMetaType $ getExprMeta annot
-    let inTree = ExprArrow annot exprType
+    let inTree = ExprArrow annot exprType exprType
     let emptyType = PartialType (PTypeName "EmptyObj") H.empty H.empty H.empty PtArgExact
     let emptyObj = Object (Typed (singletonType emptyType) Nothing) FunctionObj "EmptyObj" H.empty H.empty
     tree <- resolveTree evTbEnv (emptyType, emptyObj) inTree
