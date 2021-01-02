@@ -26,6 +26,7 @@ import           Text.Printf
 import Data.Aeson hiding (Object)
 import Emit.Codegen (Codegen, LLVM)
 import qualified LLVM.AST as AST
+import CRes
 
 type EvalMeta = Typed
 type ECompAnnot = CompAnnot EvalMeta
@@ -155,9 +156,11 @@ getValType NoVal = error "getValType of NoVal"
 
 --- ResArrowTree
 data MacroData f = MacroData {
-                               mdPrgm :: Prgm (Expr Typed) Typed
+                               mdTbEnv :: TBEnv f
+                             , mdObj :: Object Typed
+                             , mdObjSrcType :: PartialType
                              }
-newtype MacroFunction f = MacroFunction (ResArrowTree f -> MacroData f -> ResArrowTree f)
+newtype MacroFunction f = MacroFunction (ResArrowTree f -> MacroData f -> CRes (ResArrowTree f))
 type ResBuildEnvFunction f = ResArrowTree f -> ResArrowTree f
 type ResBuildEnvItem f = (PartialType, Guard (Expr Typed), ResBuildEnvFunction f)
 type ResBuildEnv f = H.HashMap TypeName [ResBuildEnvItem f]
@@ -206,8 +209,18 @@ instance Show (ResArrowTree f) where
       args' = intercalate ", " $ map showArg $ H.toList args
   show (ResArrowTupleApply base argName argVal) = printf "(%s)(%s = %s)" (show base) argName (show argVal)
 
-macroData :: TBEnv f -> MacroData f
-macroData (_, _, prgm, _) = MacroData prgm
+type ObjSrc = (PartialType, Object Typed)
+macroData :: TBEnv f -> ObjSrc -> MacroData f
+macroData tbEnv (objSrcType, obj) = MacroData tbEnv obj objSrcType
+
+resArrowDestType :: ClassMap -> PartialType -> ResArrowTree f -> Type
+resArrowDestType classMap src (ResEArrow _ obj arr) = arrowDestType False classMap src obj arr
+resArrowDestType _ _ (PrimArrow _ tp _) = tp
+resArrowDestType _ _ (MacroArrow _ tp _) = tp
+resArrowDestType _ _ (ConstantArrow v) = singletonType $ getValType v
+resArrowDestType _ _ (ArgArrow tp _) = tp
+resArrowDestType _ _ t = error $ printf "Not yet implemented resArrowDestType for %s" (show t)
+
 
 buildArrArgs :: EObject -> Val -> Args
 buildArrArgs = aux H.empty

@@ -20,6 +20,7 @@ import           Syntax
 import Eval.Common
 import Text.Printf
 import Emit (codegenPrgm)
+import TreeBuild
 
 type Op = (TypeName, [(PartialType, Guard (Expr Typed), ResBuildEnvFunction EPrim)])
 
@@ -114,12 +115,15 @@ llvm = (name', [(srcType, NoGuard, aux)])
   where
     name' = "llvm"
     srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("c", TopType)]) PtArgAny
-    aux (ResEArrow input obj arr) = MacroArrow (ConstantArrow $ LLVMQueue [(input, obj, arr)]) (singletonType resultLeaf) (MacroFunction macroBuild)
-    aux input = error $ printf "Unknown input to llvm macro: %s" (show input)
-    macroBuild (ConstantArrow (LLVMQueue [(_, _, Arrow _ _ _ (Just expr))])) MacroData{mdPrgm} = case expr of
-      (TupleApply _ (_, Value _ "llvm") "c" f@(Value _ functionToCodegen)) -> ConstantArrow $ LLVMVal $ codegenPrgm f (PartialType (PTypeName functionToCodegen) H.empty H.empty (H.singleton "io" ioType) PtArgExact) ioType mdPrgm
-      _ -> error $ printf "Unknown expr to llvm macro: %s" (show expr)
-    macroBuild input _ = error $ printf "Unknown input to llvm build macro: %s" (show input)
+    aux a = MacroArrow a (singletonType resultLeaf) (MacroFunction macroBuild)
+    macroBuild input MacroData{mdTbEnv, mdObj, mdObjSrcType} = do
+      let (_, _, mdPrgm, _) = mdTbEnv
+      input' <- resolveTree mdTbEnv (mdObjSrcType, mdObj) input
+      case input' of
+        (ResEArrow _ _ (Arrow _ _ _ (Just expr))) -> case expr of
+          (TupleApply _ (_, Value _ "llvm") "c" f@(Value _ functionToCodegen)) -> return $ ConstantArrow $ LLVMVal $ codegenPrgm f (PartialType (PTypeName functionToCodegen) H.empty H.empty (H.singleton "io" ioType) PtArgExact) ioType mdPrgm
+          _ -> error $ printf "Unknown expr to llvm macro: %s" (show expr)
+        _ -> error $ printf "Unknown input to llvm macro: %s" (show input')
 
 primEnv :: ResBuildEnv EPrim
 primEnv = H.fromListWith (++) [ liftIntOp "+" (+)

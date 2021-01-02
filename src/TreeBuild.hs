@@ -37,15 +37,6 @@ type TBPrgm = Prgm TBExpr TBMeta
 type TBReplRes = ReplRes TBMeta
 
 type VisitedArrows f = S.HashSet (ResArrowTree f)
-type ObjSrc = (PartialType, TBObject)
-
-resArrowDestType :: ClassMap -> PartialType -> ResArrowTree f -> Type
-resArrowDestType classMap src (ResEArrow _ obj arr) = arrowDestType False classMap src obj arr
-resArrowDestType _ _ (PrimArrow _ tp _) = tp
-resArrowDestType _ _ (MacroArrow _ tp _) = tp
-resArrowDestType _ _ (ConstantArrow v) = singletonType $ getValType v
-resArrowDestType _ _ (ArgArrow tp _) = tp
-resArrowDestType _ _ t = error $ printf "Not yet implemented resArrowDestType for %s" (show t)
 
 leafsFromMeta :: TBMeta -> [PartialType]
 leafsFromMeta (Typed TopType _) = error "leafFromMeta from TopType"
@@ -129,7 +120,9 @@ buildGuardArrows env obj input ee visitedArrows srcType destType guards = case g
                                             thenTree' <- ltry ifThen
                                             return ((ifTree', input, o), thenTree')
                                       elseTree <- ltry elseGuard
-                                      return $ ResArrowCond destType ifTreePairs elseTree
+                                      return $ case ifTreePairs of
+                                        [] -> elseTree
+                                        _ -> ResArrowCond destType ifTreePairs elseTree
       arrows -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Unknown arrows found in envLookup: %s" (show arrows)]
   where
     ltry tree = envLookupTry env obj visitedArrows ee srcType destType tree
@@ -144,7 +137,7 @@ findResArrows (resEnv, _, _, classMap) srcType@PartialType{ptName=PTypeName srcN
 findResArrows _ PartialType{ptName=PClassName{}} _ = error "Can't findResArrows for class"
 
 envLookup :: (Eq f, Hashable f) => TBEnv f -> ObjSrc -> ResArrowTree f -> (TBExpr, Type) -> VisitedArrows f -> PartialType -> Type -> CRes (ResArrowTree f)
-envLookup (_, _, _, classMap) _ _ (expr, exprType) _ srcType destType | hasPartial classMap srcType destType = return $ ExprArrow expr exprType destType
+envLookup (_, _, _, classMap) _ input _ _ srcType destType | hasPartial classMap srcType destType = return input
 envLookup env obj input ee visitedArrows srcType@PartialType{ptName=PTypeName{}} destType = do
   resArrows <- findResArrows env srcType destType
   let guards = (\(a,b,c) -> (concat a, concat b, concat c)) $ unzip3 $ map (\case
@@ -195,7 +188,9 @@ resolveTree env obj (ResEArrow input o a) = do
 resolveTree env obj (PrimArrow input t f) = do
   input' <- resolveTree env obj input
   return $ PrimArrow input' t f
-resolveTree env obj (MacroArrow input _ (MacroFunction f)) = resolveTree env obj $ f input (macroData env)
+resolveTree env obj (MacroArrow input _ (MacroFunction f)) = do
+  input' <- f input (macroData env obj)
+  resolveTree env obj input'
 resolveTree env obj (ExprArrow e exprType destType) = buildExprImp env obj e exprType destType
 resolveTree _ _ a@ConstantArrow{} = return a
 resolveTree _ _ a@ArgArrow{} = return a
