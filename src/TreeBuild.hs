@@ -9,8 +9,6 @@
 --
 --------------------------------------------------------------------
 
-{-# LANGUAGE LambdaCase #-}
-
 module TreeBuild where
 
 import           Data.Hashable
@@ -94,28 +92,41 @@ envLookupTry env@(_, _, _, classMap) objSrc visitedArrows ee srcType destType re
     buildAfterArrows = \leafType -> do
       v <- envLookup env objSrc' resArrow ee visitedArrows' leafType destType
       return (leafType, v)
-buildGuardArrows :: (Eq f, Hashable f) => TBEnv f -> ObjSrc -> ResArrowTree f -> (TBExpr, Type) -> VisitedArrows f -> PartialType -> Type -> ([ResArrowTree f], [(TBExpr, ResArrowTree f)], [ResArrowTree f]) -> CRes (ResArrowTree f)
-buildGuardArrows env obj input ee visitedArrows srcType destType guards = case guards of
-      ([], [], []) -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "No arrows found when looking for: %s -> %s" (show $ singletonType srcType) (show destType)]
-      (_, _, _:_:_) -> CErr [MkCNote $ BuildTreeCErr Nothing "Multiple ElseGuards"]
-      (noGuard, ifGuards, elseGuard) | not (null noGuard) -> case partitionCRes $ map ltry noGuard of
-                          (_, resArrowTree:_) -> resArrowTree
-                          (errNotes1, _) -> case buildGuardArrows env obj input ee visitedArrows srcType destType ([], ifGuards, elseGuard) of
-                            r@CRes{} -> r
-                            CErr errNotes2 -> wrapCErr (errNotes1 ++ errNotes2) $ printf "Failed to lookup noGuard arrow: %s -> %s\n\tNoGuard: %s" (show $ singletonType srcType) (show destType) (show noGuard)
-      ([], _, []) -> CErr [MkCNote $ BuildTreeCErr Nothing "Missing ElseGuard on envLookup"]
-      ([], ifGuards, [elseGuard]) -> do
-                                      ifTreePairs <- forM ifGuards $ \(ifCond, ifThen@(ResEArrow _ o _)) -> do
-                                            ifTree' <- buildExprImp env (srcType, o) ifCond (getMetaType $ getExprMeta ifCond) boolType
-                                            thenTree' <- ltry ifThen
-                                            return ((ifTree', input, o), thenTree')
-                                      elseTree <- ltry elseGuard
-                                      return $ case ifTreePairs of
-                                        [] -> elseTree
-                                        _ -> ResArrowCond destType ifTreePairs elseTree
-      arrows -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Unknown arrows found in envLookup: %s" (show arrows)]
+
+data ArrowGuardGroup f
+  = NoGuardGroup PartialType (ResArrowTree f)
+  | CondGuardGroup [(PartialType, TBExpr, ResArrowTree f)] (PartialType, ResArrowTree f)
+buildGuardArrows :: (Eq f, Hashable f) => TBEnv f -> ObjSrc -> ResArrowTree f -> (TBExpr, Type) -> VisitedArrows f -> PartialType -> Type -> [ArrowGuardGroup f] -> CRes (ResArrowTree f)
+buildGuardArrows env obj input ee visitedArrows srcType destType guards = do
+  trees <- catCRes $ map buildGuard guards
+  case trees of
+    t:_ -> return t
+    [] -> CErr [MkCNote $ BuildTreeCErr Nothing "No BuildGuardArrows found"]
   where
+    buildGuard (NoGuardGroup _ tree) = ltry tree
+    buildGuard (CondGuardGroup ifs (_, elseTree)) = do
+      ifTreePairs <- forM ifs $ \(_, ifCond, ifThen@(ResEArrow _ o _)) -> do
+            ifTree' <- buildExprImp env (srcType, o) ifCond (getMetaType $ getExprMeta ifCond) boolType
+            thenTree' <- ltry ifThen
+            return ((ifTree', input, o), thenTree')
+      elseTree' <- ltry elseTree
+      return $ case ifTreePairs of
+        [] -> elseTree'
+        _ -> ResArrowCond destType ifTreePairs elseTree'
     ltry tree = envLookupTry env obj visitedArrows ee srcType destType tree
+
+groupArrows :: ResArrowTree f -> [ResBuildEnvItem f] -> CRes [ArrowGuardGroup f]
+groupArrows = aux ([], Nothing)
+  where
+    aux ([], Nothing) _ [] = return []
+    aux (ifs, Just els) _ [] = return [CondGuardGroup ifs els]
+    aux (_, Nothing) _ [] = CErr [MkCNote $ BuildTreeCErr Nothing "No ElseGuards found"]
+    aux acc input ((pt, NoGuard, t):bs) = do
+      bs' <- aux acc input bs
+      return $ NoGuardGroup pt (t input):bs'
+    aux (ifs, els) input ((pt, IfGuard it, t):bs) = aux ((pt, it, t input):ifs, els) input bs
+    aux (ifs, Nothing) input ((pt, ElseGuard, t):bs) = aux (ifs, Just (pt, t input)) input bs
+    aux (_, Just{}) _ ((_, ElseGuard, _):_) = CErr [MkCNote $ BuildTreeCErr Nothing "Multiple ElseGuards found"]
 
 findResArrows :: (Eq f, Hashable f) => TBEnv f -> PartialType -> Type -> CRes [ResBuildEnvItem f]
 findResArrows (resEnv, _, _, classMap) srcType@PartialType{ptName=PTypeName srcName} destType = case H.lookup srcName resEnv of
@@ -130,11 +141,7 @@ envLookup :: (Eq f, Hashable f) => TBEnv f -> ObjSrc -> ResArrowTree f -> (TBExp
 envLookup (_, _, _, classMap) _ input _ _ srcType destType | hasPartial classMap srcType destType = return input
 envLookup env obj input ee visitedArrows srcType@PartialType{ptName=PTypeName{}} destType = do
   resArrows <- findResArrows env srcType destType
-  let guards = (\(a,b,c) -> (concat a, concat b, concat c)) $ unzip3 $ map (\case
-                        (_, NoGuard, a) -> ([a input], [], [])
-                        (_, IfGuard ifCond, ifThen) -> ([], [(ifCond, ifThen input)], [])
-                        (_, ElseGuard, a) -> ([], [], [a input])
-                    ) resArrows
+  guards <- groupArrows input resArrows
   buildGuardArrows env obj input ee visitedArrows srcType destType guards
 envLookup env@(_, _, _, classMap) obj input ee visitedArrows srcType@PartialType{ptName=PClassName{}} destType = do
   let (SumType expanded) = expandClassPartial classMap srcType

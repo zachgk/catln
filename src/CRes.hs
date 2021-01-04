@@ -117,3 +117,10 @@ failOnErrorNotes (CRes notes r) = if any (\n -> typeCNote n == CNoteError) notes
   then CErr notes
   else CRes notes r
 failOnErrorNotes (CErr notes) = CErr notes
+
+catCRes :: [CRes r] -> CRes [r]
+catCRes [] = return []
+catCRes (CRes notes r:rs) = do
+  rs' <- catCRes rs
+  CRes notes (r:rs')
+catCRes (CErr _:rs) = catCRes rs
