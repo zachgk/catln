@@ -59,35 +59,25 @@ buildTBEnv primEnv prgm@(objMap, classMap, _) = baseEnv
       Just _ -> Just (objName, [(objLeaf, aguard, \input -> ResEArrow input obj arrow) | objLeaf <- leafsFromMeta om])
       Nothing -> Nothing
 
-buildExpr :: (Eq f, Hashable f) => TBEnv f -> TBObject -> TBExpr -> CRes (ResArrowTree f)
-buildExpr _ _ (CExpr _ c) = case c of
+buildExpr :: (Eq f, Hashable f) => TBEnv f -> TBExpr -> CRes (ResArrowTree f)
+buildExpr _ (CExpr _ c) = case c of
   (CInt i) -> return $ ConstantArrow $ IntVal i
   (CFloat i) -> return $ ConstantArrow $ FloatVal i
   (CStr i) -> return $ ConstantArrow $ StrVal i
-buildExpr (_, valEnv, _, _) _ (Value (Typed (SumType prodTypes) pos) name) = case splitPartialLeafs prodTypes of
+buildExpr (_, valEnv, _, _) (Value (Typed (SumType prodTypes) pos) name) = case splitPartialLeafs prodTypes of
     (_:_:_) -> CErr [MkCNote $ BuildTreeCErr pos $ "Found multiple types for value " ++ name ++ "\n\t" ++ show prodTypes]
     [] -> CErr [MkCNote $ BuildTreeCErr pos $ "Found no types for value " ++ name ++ " with type " ++ show prodTypes]
     [prodType] -> return $ case H.lookup prodType valEnv of
       Just val -> val
       Nothing -> ResArrowTuple name H.empty
-buildExpr _ _ (Arg (Typed tp _) name) = return $ ArgArrow tp name
-buildExpr (_, _, _, classMap) (Object _ _ _ objVars _) (TupleApply (Typed (SumType prodTypes) pos) (Typed baseType _, baseExpr) argName argExpr) = case splitPartialLeafs prodTypes of
-    [] -> CErr [MkCNote $ BuildTreeCErr pos $ "Found no types for tupleApply " ++ show baseExpr ++ " with type " ++ show prodTypes ++ " and expr " ++ show argExpr]
-    leaves -> do
+buildExpr _ (Arg (Typed tp _) name) = return $ ArgArrow tp name
+buildExpr (_, _, _, classMap) (TupleApply (Typed tp pos) (Typed baseType _, baseExpr) argName argExpr) = case typesGetArg classMap argName tp of
+    Nothing -> CErr [MkCNote $ BuildTreeCErr pos $ printf "Found no types for tupleApply %s with type %s and expr %s" (show baseExpr) (show tp) (show argExpr)]
+    Just leafArgs -> do
       let baseBuild = ExprArrow baseExpr (getMetaType $ getExprMeta baseExpr) baseType
-      leavesArgs <- mapM getLeafArgs leaves
-      let leafArgs = unionTypes classMap leavesArgs
-      -- TODO: Currently for each arg it does: execute expr, execute implicit (to any leaf), then match
-      -- it should really be execute expr for args, match all args, then implicit all args
       let argVal = ExprArrow argExpr (getMetaType $ getExprMeta argExpr) leafArgs
       return $ ResArrowTupleApply baseBuild argName argVal
-  where
-    getLeafArgs PartialType{ptArgs=leafArgs} = case H.lookup argName leafArgs of
-      Just (TypeVar (TVVar v)) -> return $ H.lookupDefault TopType v $ fmap getMetaType objVars
-      Just (TypeVar TVArg{}) -> error "Not yet implemented: type arg in getLeafArgs"
-      Just leafArg -> return leafArg
-      Nothing -> CErr [MkCNote $ BuildTreeCErr pos "buildExpr could not find expected args"]
-buildExpr _ _ _ = error "Bad buildExpr"
+buildExpr _ _ = error "Bad buildExpr"
 
 envLookupTry :: (Eq f, Hashable f) => TBEnv f -> ObjSrc -> VisitedArrows f -> (TBExpr, Type) -> PartialType -> Type -> ResArrowTree f -> CRes (ResArrowTree f)
 envLookupTry (_, _, _, classMap) _ _ _ srcType destType resArrow | hasType classMap (resArrowDestType classMap srcType resArrow) destType = return resArrow
@@ -176,7 +166,7 @@ buildImplicit env obj expr srcType@(SumType srcTypeLeafs) destType = do
 buildExprImp :: (Eq f, Hashable f) => TBEnv f -> ObjSrc -> TBExpr -> Type -> Type -> CRes (ResArrowTree f)
 buildExprImp env@(_, _, _, classMap) objSrc@(os, obj) expr exprType destType = do
   res' <- if hasTypeWithObjSrc classMap os obj exprType destType
-    then buildExpr env obj expr
+    then buildExpr env expr
     else buildImplicit env objSrc expr exprType destType
   resolveTree env objSrc res'
 

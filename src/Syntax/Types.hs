@@ -372,3 +372,7 @@ typeGetArg argName PartialType{ptArgs, ptVars} = do
     SumType partialLeafs -> SumType $ joinPartialLeafs $ map substitutePartial $ splitPartialLeafs partialLeafs
       where
         substitutePartial partial@PartialType{ptVars=vs} = partial{ptVars = fmap (substituteVarsWithVarEnv ptVars) vs}
+
+typesGetArg :: ClassMap -> ArgName -> Type -> Maybe Type
+typesGetArg classMap argName (SumType partialLeafs) = fmap (unionTypes classMap) $ mapM (typeGetArg argName) $ splitPartialLeafs partialLeafs
+typesGetArg _ _ _ = Nothing
