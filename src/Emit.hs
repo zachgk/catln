@@ -46,8 +46,7 @@ import Control.Monad.State
 import LLVM.AST.Typed (typeOf)
 import LLVM.Pretty (ppllvm)
 
-data LEnv = LEnv { lvArgs :: H.HashMap ArgName Val
-                 , lvTbEnv :: TBEnv EPrim
+data LEnv = LEnv { lvTbEnv :: TBEnv EPrim
                  , lvClassMap :: ClassMap
                  }
 
@@ -72,8 +71,8 @@ asOperand val@(TupleVal _ args) = do
   load res
 asOperand val = error $ printf "Invalid val to operand: %s" (show val)
 
-getValArgs :: Val -> Codegen (H.HashMap ArgName Val)
-getValArgs (TupleVal _ args) = return args
+getValArgs :: Val -> Codegen (H.HashMap ArgName AST.Operand)
+-- getValArgs (TupleVal _ args) = return args
 getValArgs (LLVMOperand tp o) = do
   o' <- o
   o'' <- alloca (typeOf o')
@@ -85,7 +84,7 @@ getValArgs (LLVMOperand tp o) = do
           argType' <- genType ptVars argType
           argPntr <- getelementptr argType' o'' [cons $ C.Int 32 0, cons $ C.Int 32 argIndex]
           argVal <- load argPntr
-          return (argName, LLVMOperand argType (return argVal))
+          return (argName, argVal)
         return $ H.fromList args'
       _ -> error $ printf "Invalid leaf number" (show tp)
     t -> error $ printf "Invalid operand type: %s" (show t)
@@ -130,9 +129,7 @@ codegenTree env (PrimArrow input outType (EPrim _ _ f)) = do
       LLVMOperand outType o
     _ -> error $ printf "Unknown input to PrimArrow"
 codegenTree _ (ConstantArrow val) = LLVMOperand (singletonType $ getValType val) (asOperand val)
-codegenTree LEnv{lvArgs} (ArgArrow _ name) = case H.lookup name lvArgs of
-  Just arg' -> arg'
-  Nothing -> error $ printf "Failed to find emit ArgArrow %s" (show name)
+codegenTree _ (ArgArrow tp name) = LLVMOperand tp (getVar name)
 codegenTree env match@(ResArrowMatch m matchType opts) = do
   let matchHashName = "match:" ++ take 6 (printf "%08x" (hash match))
   LLVMOperand matchType $ do
@@ -177,9 +174,11 @@ codegenTree env cond@(ResArrowCond resType (((ifCondTree, ifCondInput, ifObj), i
 
       -- Branch on condition
       let ifCondInput' = codegenTree env ifCondInput
+      preCondArgs <- getArgs
       condArgs <- fmap snd <$> formArgValMap ifObj ifCondInput'
-      let envCond = env{lvArgs=condArgs}
-      cond'' <- asOperand $ codegenTree envCond ifCondTree
+      setArgs condArgs
+      cond'' <- asOperand $ codegenTree env ifCondTree
+      setArgs preCondArgs
       _ <- cbr cond'' thenBlock elseBlock
 
       -- True condition
@@ -217,8 +216,10 @@ codegenTree env (ResArrowTupleApply base argName argRATree) = do
       TupleVal name args'
     _ -> error "Invalid input to tuple application"
 
-formArgValMap :: EObject -> Val -> Codegen (H.HashMap ArgName (Typed, Val))
-formArgValMap (Object m _ name _ args) val | H.null args = return $ H.singleton name (m, val)
+formArgValMap :: EObject -> Val -> Codegen (H.HashMap ArgName (Typed, AST.Operand))
+formArgValMap (Object m _ name _ args) (LLVMOperand _ o) | H.null args = do
+                                                             o' <- o
+                                                             return $ H.singleton name (m, o')
 formArgValMap (Object _ _ _ _ args) val = do
   valArgs <- getValArgs val
   args' <- mapM (fromArg valArgs) $ H.toList args
@@ -228,7 +229,7 @@ formArgValMap (Object _ _ _ _ args) val = do
       Just valArg -> return $ H.singleton argName (m, valArg)
       Nothing -> return H.empty
     fromArg valArgs (argName, (_, Just arg)) = case H.lookup argName valArgs of
-      Just valArg -> formArgValMap arg valArg
+      Just valArg -> formArgValMap arg (LLVMOperand (getMetaType $ getObjMeta arg) (return valArg))
       Nothing -> return H.empty
 
 codegenDecl :: LEnv -> String -> EObject -> PartialType -> Type -> ResArrowTree EPrim -> DeclInput -> LLVM ()
@@ -242,7 +243,7 @@ codegenDecl env name obj srcType@PartialType{ptArgs, ptVars} destType tree declI
       tp' <- genType H.empty (singletonType srcType)
       return [(tp', astName "_i")]
   destType' <- genType H.empty destType
-  let codegenState = execCodegen [] buildBlock
+  let codegenState = execCodegen buildBlock
   blks <- createBlocks codegenState
   define destType' name args' blks
   where
@@ -261,13 +262,13 @@ codegenDecl env name obj srcType@PartialType{ptArgs, ptVars} destType tree declI
               srcType' <- genType H.empty (singletonType srcType)
               return $ local srcType' (astName "_i")
       replaceArgs <- fmap snd <$> formArgValMap obj argVals
-      let env' = env{lvArgs = replaceArgs}
-      res <- asOperand $ codegenTree env' tree
+      setArgs replaceArgs
+      res <- asOperand $ codegenTree env tree
       ret res
 
 codegenMain :: LEnv -> ResArrowTree EPrim -> LLVM ()
 codegenMain env tree = do
-  let codegenState = execCodegen [] buildBlock
+  let codegenState = execCodegen buildBlock
   blks <- createBlocks codegenState
   define i32 "main" [] blks
   where
@@ -278,10 +279,10 @@ codegenMain env tree = do
       ioType' <- genType H.empty ioType
       initIO <- alloca ioType'
       initIO' <- load initIO
-      let replaceArgs = [("io", LLVMOperand ioType (return initIO'))]
+      let replaceArgs = [("io", initIO')]
 
-      let env' = env{lvArgs = H.fromList replaceArgs}
-      _ <- asOperand $ codegenTree env' tree
+      setArgs $ H.fromList replaceArgs
+      _ <- asOperand $ codegenTree env tree
       ret $ cons $ C.Int 32 0
 
 codegenDecls :: LEnv -> String -> EObject -> Type -> Type -> ResArrowTree EPrim -> DeclInput -> LLVM ()
@@ -342,7 +343,7 @@ codegenPrgm input srcType destType tprgm@(_, classMap, _) = do
   let tbEnv = buildTBEnv primEnv tprgm
   case buildRoot tbEnv (applyIO input) srcType destType of
     CRes _ initTree -> do
-      let env = LEnv H.empty tbEnv classMap
+      let env = LEnv tbEnv classMap
       codegenMain env initTree
       codegenTasks env
     CErr err -> error $ printf "Build to buildPrgm in codegen: \n\t%s" (show err)

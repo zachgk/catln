@@ -213,6 +213,9 @@ instance ExprClass IExpr where
   getExprArg (IArg _ n) = Just n
   getExprArg _ = Nothing
 
+getObjMeta :: Object m -> m
+getObjMeta (Object m _ _ _ _) = m
+
 type ArgMetaMap m = H.HashMap ArgName m
 formArgMetaMap :: Object m -> ArgMetaMap m
 formArgMetaMap (Object m _ name _ args) | H.null args = H.singleton name m

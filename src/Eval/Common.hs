@@ -9,6 +9,8 @@
 --
 --------------------------------------------------------------------
 
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
 
@@ -18,15 +20,17 @@ import           GHC.Generics          (Generic)
 import           Data.Hashable
 import qualified Data.HashMap.Strict as H
 import           Data.List                      ( intercalate )
+import qualified Data.Map                   as Map
+import qualified Data.HashSet as S
 
 import           Syntax.Types
 import           Syntax.Prgm
 import           Syntax
 import           Text.Printf
 import Data.Aeson hiding (Object)
-import Emit.Codegen (Codegen, LLVM)
 import qualified LLVM.AST as AST
 import CRes
+import Control.Monad.State
 
 type EvalMeta = Typed
 type ECompAnnot = CompAnnot EvalMeta
@@ -208,6 +212,57 @@ instance Show (ResArrowTree f) where
       showArg (argName, val) = argName ++ " = " ++ show val
       args' = intercalate ", " $ map showArg $ H.toList args
   show (ResArrowTupleApply base argName argVal) = printf "(%s)(%s = %s)" (show base) argName (show argVal)
+
+
+-------------------------------------------------------------------------------
+-- Codegen State
+-------------------------------------------------------------------------------
+
+data LLVMState
+  = LLVMState {
+    lsMod :: AST.Module
+  , lTaskArrows :: [TaskArrow]
+  , lTaskStructs :: [TaskStruct]
+  , lTasksCompleted :: S.HashSet String
+                           }
+
+newtype LLVM a = LLVM (State LLVMState a)
+  deriving newtype (Functor, Applicative, Monad, MonadState LLVMState )
+data DeclInput
+  = TupleInput
+  | StructInput
+  deriving (Eq, Ord, Show, Generic, Hashable)
+
+type TaskArrow = (PartialType, Object Typed, Arrow (Expr Typed) Typed, DeclInput)
+type TaskStruct = Type
+
+type Names = Map.Map String Int
+
+data CodegenState
+  = CodegenState {
+    currentBlock :: AST.Name                     -- Name of the active block to append to
+  , blocks       :: Map.Map AST.Name BlockState  -- Blocks for function
+  , cgArgs         :: H.HashMap ArgName AST.Operand    -- Function scope symbol table
+  , blockCount   :: Int                      -- Count of basic blocks
+  , count        :: Word                     -- Count of unnamed instructions
+  , names        :: Names                    -- Name Supply
+  , taskArrows :: [TaskArrow]
+  , taskStructs :: [TaskStruct]
+  } deriving Show
+
+data BlockState
+  = BlockState {
+    idx   :: Int                            -- Block index
+  , stack :: [AST.Named AST.Instruction]            -- Stack of instructions
+  , term  :: Maybe (AST.Named AST.Terminator)       -- Block terminator
+  } deriving Show
+
+newtype Codegen a = Codegen { runCodegen :: State CodegenState a }
+  deriving newtype (Functor, Applicative, Monad, MonadState CodegenState )
+
+instance Show (Codegen a) where
+  show Codegen{} = "Codegen"
+
 
 type ObjSrc = (PartialType, Object Typed)
 macroData :: TBEnv f -> ObjSrc -> MacroData f

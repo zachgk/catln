@@ -11,9 +11,6 @@
 
 -- Originally from http://www.stephendiehl.com/llvm/#haskell-llvm-bindings
 
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE TupleSections              #-}
@@ -38,28 +35,16 @@ import qualified LLVM.AST.Constant          as C
 import qualified LLVM.AST.Linkage           as L
 import LLVM.AST.Type
 import LLVM.AST.Typed
-import Syntax.Prgm
-import qualified Syntax as SYN
-import qualified Syntax.Types as SYNT
 import qualified Data.HashSet as S
 import Text.Printf
-import GHC.Generics (Generic)
-import Data.Hashable
+import qualified Data.HashMap.Strict as H
+import Syntax.Types (ArgName)
+import Eval.Common
 
 -------------------------------------------------------------------------------
 -- Module Level
 -------------------------------------------------------------------------------
 
-data LLVMState
-  = LLVMState {
-    lsMod :: AST.Module
-  , lTaskArrows :: [TaskArrow]
-  , lTaskStructs :: [TaskStruct]
-  , lTasksCompleted :: S.HashSet String
-                           }
-
-newtype LLVM a = LLVM (State LLVMState a)
-  deriving newtype (Functor, Applicative, Monad, MonadState LLVMState )
 
 runLLVM :: AST.Module -> LLVM a -> AST.Module
 runLLVM astMod (LLVM m) = lsMod $ execState m initState
@@ -107,8 +92,6 @@ structType = StructureType False
 -- Names
 -------------------------------------------------------------------------------
 
-type Names = Map.Map String Int
-
 uniqueName :: String -> Names -> (SBS.ShortByteString, Names)
 uniqueName nm ns =
   case Map.lookup nm ns of
@@ -117,46 +100,9 @@ uniqueName nm ns =
 
 
 -------------------------------------------------------------------------------
--- Codegen State
--------------------------------------------------------------------------------
-
-type SymbolTable = [(String, Operand)]
-
-data DeclInput
-  = TupleInput
-  | StructInput
-  deriving (Eq, Ord, Show, Generic, Hashable)
-type TaskArrow = (SYNT.PartialType, Object SYN.Typed, Arrow (Expr SYN.Typed) SYN.Typed, DeclInput)
-type TaskStruct = SYNT.Type
-
-data CodegenState
-  = CodegenState {
-    currentBlock :: Name                     -- Name of the active block to append to
-  , blocks       :: Map.Map Name BlockState  -- Blocks for function
-  , symtab       :: SymbolTable              -- Function scope symbol table
-  , blockCount   :: Int                      -- Count of basic blocks
-  , count        :: Word                     -- Count of unnamed instructions
-  , names        :: Names                    -- Name Supply
-  , taskArrows :: [TaskArrow]
-  , taskStructs :: [TaskStruct]
-  } deriving Show
-
-data BlockState
-  = BlockState {
-    idx   :: Int                            -- Block index
-  , stack :: [Named Instruction]            -- Stack of instructions
-  , term  :: Maybe (Named Terminator)       -- Block terminator
-  } deriving Show
-
--------------------------------------------------------------------------------
 -- Codegen Operations
 -------------------------------------------------------------------------------
 
-newtype Codegen a = Codegen { runCodegen :: State CodegenState a }
-  deriving newtype (Functor, Applicative, Monad, MonadState CodegenState )
-
-instance Show (Codegen a) where
-  show Codegen{} = "Codegen"
 
 sortBlocks :: [(Name, BlockState)] -> [(Name, BlockState)]
 sortBlocks = sortBy (compare `on` (idx . snd))
@@ -184,10 +130,10 @@ emptyBlock :: Int -> BlockState
 emptyBlock i = BlockState i [] Nothing
 
 emptyCodegen :: CodegenState
-emptyCodegen = CodegenState (Name $ fromString entryBlockName) Map.empty [] 1 0 Map.empty [] []
+emptyCodegen = CodegenState (Name $ fromString entryBlockName) Map.empty H.empty 1 0 Map.empty [] []
 
-execCodegen :: [(String, Operand)] -> Codegen a -> CodegenState
-execCodegen vars m = execState (runCodegen m) emptyCodegen { symtab = vars }
+execCodegen :: Codegen a -> CodegenState
+execCodegen m = execState (runCodegen m) emptyCodegen
 
 fresh :: Codegen Word
 fresh = do
@@ -296,15 +242,17 @@ modifyBlock new = do
 -- Symbol Table
 -------------------------------------------------------------------------------
 
-assign :: String -> Operand -> Codegen ()
-assign var x = do
-  lcls <- gets symtab
-  modify $ \s -> s { symtab = (var, x):lcls }
+getArgs :: Codegen (H.HashMap ArgName Operand)
+getArgs = gets cgArgs
 
-getvar :: String -> Codegen Operand
-getvar var = do
-  syms <- gets symtab
-  case lookup var syms of
+setArgs :: H.HashMap ArgName Operand -> Codegen ()
+setArgs newArgs = do
+  modify $ \s -> s { cgArgs = newArgs}
+
+getVar :: String -> Codegen Operand
+getVar var = do
+  syms <- gets cgArgs
+  case H.lookup var syms of
     Just x  -> return x
     Nothing -> error $ "Local variable not in scope: " ++ show var
 
