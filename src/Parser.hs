@@ -26,19 +26,25 @@ import Parser.Expr (pExpr)
 import Parser.Decl
 import Parser.Type (pTypeStatement)
 import Syntax.Prgm
+import qualified Text.Megaparsec.Char.Lexer as L
+import Data.List
 
 pImport :: Parser String
 pImport = do
   _ <- symbol "import"
   some printChar
 
+pComment :: Parser PStatement
+pComment = RawComment <$> L.indentBlock scn p
+  where
+    takeLine = takeWhileP (Just "character") (/= '\n')
+    p = do
+      _ <- string "// "
+      l <- takeLine
+      return (L.IndentMany Nothing (\ls -> return $ intercalate "\n" (l:ls)) takeLine)
+
 pGlobalAnnot :: Parser PStatement
 pGlobalAnnot = do
-  _ <- string "// "
-  RawComment <$> takeWhileP (Just "character") (/= '\n')
-
-pComment :: Parser PStatement
-pComment = do
   RawGlobalAnnot <$> pCompAnnot
 
 pStatement :: Parser PStatement
