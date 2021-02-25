@@ -1,6 +1,7 @@
 import React from 'react';
 
 import Grid from '@material-ui/core/Grid';
+import ReactMarkdown from 'react-markdown';
 import {
   Switch,
   Route,
@@ -125,7 +126,7 @@ function Statement(props) {
       return showAnnotExpr;
     }
   case "RawComment":
-    return (<p>{statement.contents}</p>);
+    return (<ReactMarkdown children={statement.contents} />);
   default:
     console.error("Unknown renderStatement", statement);
     return "";
