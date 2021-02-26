@@ -67,5 +67,5 @@ expandDataReferences (objMap, classMap@(typeToClass, classToTypes), annots) = ma
       where
         mapPartial PartialType{ptName=PTypeName name} = case H.lookup name objExpansions of
           Just (Object objM _ _ _ _) -> getMetaType objM
-          Nothing -> error $ printf "Data not found in expandDataReferences for %s" name
+          Nothing -> error $ printf "Data not found in expandDataReferences for %s with objExpansions %s" name (show objExpansions)
         mapPartial partial@PartialType{ptName=PClassName{}} = singletonType partial

@@ -4,19 +4,20 @@
    It defines the fundamental units of the language, core data types, basic compilation, and standard methods.
 
 class Eq
+// operator==<Eq $T>($T l, $T r) -> Boolean
+   This method does not work yet
 
-operator-(Integer a) -> Integer
+class Ordering = LT | EQ | GT
 
-operator-(Integer l, Integer r) -> Integer
-operator+(Integer l, Integer r) -> Integer
-operator*(Integer l, Integer r) -> Integer
+// ## Booleans
 
-operator<=(Integer l, Integer r) -> Boolean
-operator>=(Integer l, Integer r) -> Boolean
-operator<(Integer l, Integer r) -> Boolean
-operator>(Integer l, Integer r) -> Boolean
-operator==(Integer l, Integer r) -> Boolean
-operator!=(Integer l, Integer r) -> Boolean
+class Boolean = True | False
+
+instance Boolean of Eq
+operator==(True l, True r) = True
+operator==(True l, False r) = False
+operator==(False l, True r) = False
+operator==(False l, False r) = True
 
 operator~(Boolean a) -> Boolean
 operator~(True a) = False
@@ -37,6 +38,25 @@ operator^(True l, True r) = False
 operator^(True l, False r) = True
 operator^(False l, True r) = True
 operator^(False l, False r) = False
+
+
+// ## Integers
+
+class Number = Integer | Float
+instance Number of Eq
+
+operator-(Integer a) -> Integer
+
+operator-(Integer l, Integer r) -> Integer
+operator+(Integer l, Integer r) -> Integer
+operator*(Integer l, Integer r) -> Integer
+
+operator<=(Integer l, Integer r) -> Boolean
+operator>=(Integer l, Integer r) -> Boolean
+operator<(Integer l, Integer r) -> Boolean
+operator>(Integer l, Integer r) -> Boolean
+operator==(Integer l, Integer r) -> Boolean
+operator!=(Integer l, Integer r) -> Boolean
 
 data String
 operator==(String l, String r) -> Boolean
@@ -59,5 +79,3 @@ annot #assert(Boolean test)
 annot #assert(Boolean test, String msg)
 annot #print(CatlnResult p)
 
-class Number = Integer | Float
-class Boolean = True | False
