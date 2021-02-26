@@ -216,6 +216,11 @@ desMultiTypeDefs multiDefs = mergeDesPrgms $ map buildTypeDef multiDefs
         classToType' = H.singleton className (True, classVars, dataTypes)
         typeToClass' = H.fromList $ map (,S.singleton className) objNames
 
+desClassDecls :: [RawClassDecl] -> DesPrgm
+desClassDecls classDecls = mergeDesPrgms $ map buildClassDecl classDecls
+  where
+    buildClassDecl (className, classVars) = ([], (H.empty, H.singleton className (False, classVars, [])), [])
+
 desTypeDefs :: [PTypeDef] -> DesObjectMap
 desTypeDefs = foldr addTypeDef []
   where addTypeDef (TypeDef tp) = case typeDefMetaToObj H.empty tp of
@@ -257,22 +262,23 @@ desStatements :: [PStatement] -> DesPrgm
 desStatements statements = prgm'
   where
     splitStatements statement = case statement of
-          RawDeclStatement decl -> ([decl], [], [], [], [])
-          MultiTypeDefStatement multiTypedef -> ([], [multiTypedef], [], [], [])
-          TypeDefStatement typedef -> ([], [], [typedef], [], [])
-          RawClassDefStatement classdef -> ([], [], [], [classdef], [])
-          RawClassDeclStatement _ -> ([], [], [], [], [])
-          RawComment _ -> ([], [], [], [], [])
-          RawGlobalAnnot a -> ([], [], [], [], [a])
-    (decls, multiTypes, types, classes, annots) = (\(a, b, c, d, e) -> (concat a, concat b, concat c, concat d, concat e)) $ unzip5 $ map splitStatements statements
+          RawDeclStatement decl -> ([decl], [], [], [], [], [])
+          MultiTypeDefStatement multiTypedef -> ([], [multiTypedef], [], [], [], [])
+          TypeDefStatement typedef -> ([], [], [typedef], [], [], [])
+          RawClassDefStatement classdef -> ([], [], [], [classdef], [], [])
+          RawClassDeclStatement classDecl -> ([], [], [], [], [classDecl], [])
+          RawComment _ -> ([], [], [], [], [], [])
+          RawGlobalAnnot a -> ([], [], [], [], [], [a])
+    (decls, multiTypes, types, classes, classDecls, annots) = (\(a, b, c, d, e, f) -> (concat a, concat b, concat c, concat d, concat e, concat f)) $ unzip6 $ map splitStatements statements
     declObjMap = desDecls decls
     typeObjMap = desTypeDefs types
     multiTypeDefsPrgm = desMultiTypeDefs multiTypes
+    classDeclsPrgm = desClassDecls classDecls
     classDefsPrgm = desClassDefs False classes
     objMap = foldr mergeObjMaps [] [declObjMap, typeObjMap]
     annots' = map desGlobalAnnot annots
     miscPrgm = (objMap, (H.empty, H.empty), annots')
-    prgm' = mergeDesPrgms [multiTypeDefsPrgm, classDefsPrgm, miscPrgm]
+    prgm' = mergeDesPrgms [multiTypeDefsPrgm, classDeclsPrgm, classDefsPrgm, miscPrgm]
 
 finalPasses :: DesPrgm -> DesPrgm
 finalPasses = expandDataReferences . typeNameToClass
