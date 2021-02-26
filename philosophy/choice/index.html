@@ -1,0 +1,917 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      <link rel="shortcut icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.0.2">
+    
+    
+      
+        <title>Choice - Catln</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.1655a90d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.7fa14f5b.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font-family:"Roboto";--md-code-font-family:"Roboto Mono"}</style>
+      
+    
+    
+    
+    
+      
+        
+<!-- Add custom analytics integration here -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-PMHTDK53PT"></script>
+<script>
+ window.dataLayer = window.dataLayer || [];
+ function gtag(){dataLayer.push(arguments);}
+ gtag('js', new Date());
+
+ gtag('config', 'G-PMHTDK53PT');
+</script>
+
+      
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="none" data-md-color-accent="none">
+      
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#choice" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Catln" class="md-header__button md-logo" aria-label="Catln">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Catln
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Choice
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="md-header__options">
+      
+    </div>
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        
+<a href="https://github.com/zachgk/catln/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zachgk/catln
+  </div>
+</a>
+      </div>
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Catln" class="md-nav__button md-logo" aria-label="Catln">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    Catln
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/zachgk/catln/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zachgk/catln
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Catln
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" checked>
+      
+      <label class="md-nav__link" for="__nav_2">
+        Design
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Design" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Design
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        Design
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../basics/" class="md-nav__link">
+        Basics
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../typeTheory/" class="md-nav__link">
+        Type Theory
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_4" type="checkbox" id="__nav_2_4" checked>
+      
+      <label class="md-nav__link" for="__nav_2_4">
+        Metaprogramming
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Metaprogramming" data-md-level="2">
+        <label class="md-nav__title" for="__nav_2_4">
+          <span class="md-nav__icon md-icon"></span>
+          Metaprogramming
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metaprogramming/" class="md-nav__link">
+        Metaprogramming
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Choice
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Choice
+      </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#object-choices" class="md-nav__link">
+    Object Choices
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#class-choices" class="md-nav__link">
+    Class Choices
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resolving-choices" class="md-nav__link">
+    Resolving Choices
+  </a>
+  
+    <nav class="md-nav" aria-label="Resolving Choices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#choice-by-name" class="md-nav__link">
+    Choice by Name
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dispatch-choices" class="md-nav__link">
+    Dispatch Choices
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automatic" class="md-nav__link">
+    Automatic
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#future-development" class="md-nav__link">
+    Future Development
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../macros/" class="md-nav__link">
+        Macros
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../languageCompilation/" class="md-nav__link">
+        Language based Compilation
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../compilerErrorStatement/" class="md-nav__link">
+        Compiler Error Statement
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_5" type="checkbox" id="__nav_2_5" >
+      
+      <label class="md-nav__link" for="__nav_2_5">
+        Testing
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Testing" data-md-level="2">
+        <label class="md-nav__title" for="__nav_2_5">
+          <span class="md-nav__icon md-icon"></span>
+          Testing
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing/" class="md-nav__link">
+        Testing
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../arrowTesting/" class="md-nav__link">
+        Arrow Testing
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../assertions/" class="md-nav__link">
+        Assertions
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../context/" class="md-nav__link">
+        Context
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../optimization/" class="md-nav__link">
+        Optimization
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../syntacticSugar/" class="md-nav__link">
+        Syntactic Sugar
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_9" type="checkbox" id="__nav_2_9" >
+      
+      <label class="md-nav__link" for="__nav_2_9">
+        Documentation
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Documentation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_2_9">
+          <span class="md-nav__icon md-icon"></span>
+          Documentation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation/" class="md-nav__link">
+        Documentation
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../naming/" class="md-nav__link">
+        Naming
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/" class="md-nav__link">
+        Modules
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../debugging/" class="md-nav__link">
+        Debugging
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../syntax/" class="md-nav__link">
+        Syntax
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../building/" class="md-nav__link">
+        Getting Started
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../organization/" class="md-nav__link">
+        Code Organization
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#object-choices" class="md-nav__link">
+    Object Choices
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#class-choices" class="md-nav__link">
+    Class Choices
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resolving-choices" class="md-nav__link">
+    Resolving Choices
+  </a>
+  
+    <nav class="md-nav" aria-label="Resolving Choices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#choice-by-name" class="md-nav__link">
+    Choice by Name
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dispatch-choices" class="md-nav__link">
+    Dispatch Choices
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automatic" class="md-nav__link">
+    Automatic
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#future-development" class="md-nav__link">
+    Future Development
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/zachgk/catln/edit/master/docs/philosophy/choice.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                <h1 id="choice">Choice<a class="headerlink" href="#choice" title="Permanent link">&para;</a></h1>
+<p>It is a relatively common issue in programming when you must choose between several options. While your code could be valid depending on these options, one of them must ultimately be chosen.</p>
+<p>There are two main types of choices:</p>
+<ul>
+<li>choices which are equal and valid. One example of this is choosing a sorting function. Any sorting function will return the same result given the same input</li>
+<li>choices which are not equal, but valid. One example of this is an approximation of something like TSP. Different approximation algorithms will return slightly different results, but they should all serve a similar purpose. As a user, it may be more important what you are approximating rather than how it is done.</li>
+</ul>
+<p>In most programming languages, code must be written while specifying all of these choices. Sometimes, the options can be propagated up the call stack through arguments. However, this leaves the question of which choices to propagate and how far to propagate them. Propagating too much can result in unreadable and unmaintainable APIs that bury the essential ideas within the incidental ones. Propagating too few can result in bad performance and duplicate copies of the API that differ based on these choices such as the number of strict/lazy variations in Haskell.</p>
+<p>A better solution is to be able to write code that defers these choices. Essentially, code is abstract over the choices. Catln has two different mechanisms to defer these choices.</p>
+<h2 id="object-choices">Object Choices<a class="headerlink" href="#object-choices" title="Permanent link">&para;</a></h2>
+<p>The first is by using simple objects and arrows. In Catln, it is possible to provide multiple definitions of the same function:</p>
+<div class="codehilite"><pre><span></span><code><span class="nf">sort</span><span class="p">(</span><span class="n">List</span> <span class="n">lst</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span> <span class="o">=</span> <span class="p">...</span> <span class="c1">// quicksort</span>
+<span class="nf">sort</span><span class="p">(</span><span class="n">List</span> <span class="n">lst</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span> <span class="o">=</span> <span class="p">...</span> <span class="c1">// merge sort</span>
+<span class="nf">sort</span><span class="p">(</span><span class="n">List</span> <span class="n">lst</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span> <span class="o">=</span> <span class="p">...</span> <span class="c1">// selection sort</span>
+<span class="p">...</span>
+</code></pre></div>
+
+<p>When you call sort normally, it can actually use any of those definitions. This is in fact the default function calling state in Catln. Fortunately, the definitions in this case should all be equal so it requires even less concern from users of the functions. Instead of just relying on this, it can also be verified by using <a href="../arrowTesting/">arrow testing</a>.</p>
+<p>Another way to think of this is that a function signature contains both an abstract signature and a concrete definition. When you make calls, you always use the abstract signature. Then, the code is abstracted over all of these choices.</p>
+<h2 id="class-choices">Class Choices<a class="headerlink" href="#class-choices" title="Permanent link">&para;</a></h2>
+<p>For cases where choices may not be equal, a class is used instead of an object. Consider this example:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">class</span> <span class="n">Approx</span><span class="s">&lt;$T&gt;</span>
+<span class="n">data</span> <span class="n">TSP</span>(...)
+
+<span class="n">tspApproxA</span>(<span class="n">TSP</span> <span class="n">inputData</span>) = ...
+<span class="n">instance</span> <span class="n">tspApproxA</span> <span class="nb">of</span> <span class="n">Approx</span><span class="s">&lt;$T=TSP&gt;</span>
+<span class="n">Approx</span>(<span class="n">TSP</span> <span class="nb">val</span>) = <span class="n">tspApproxA</span>(<span class="n">inputData</span>=<span class="nb">val</span>)
+
+<span class="n">tspApproxB</span>(<span class="n">TSP</span> <span class="n">inputData</span>) = ...
+<span class="n">instance</span> <span class="n">tspApproxB</span> <span class="nb">of</span> <span class="n">Approx</span><span class="s">&lt;$T=TSP&gt;</span>
+<span class="n">Approx</span>(<span class="n">TSP</span> <span class="nb">val</span>) = <span class="n">tspApproxB</span>(<span class="n">inputData</span>=<span class="nb">val</span>)
+</code></pre></div>
+
+<p>Here, it creates a standard Approximation class (this definition would likely be part of the standard library). Then, it has a standard form for TSP input data. You can think of this as a graph.</p>
+<p>To create an instance, three steps are required. First, create the actual function to describe the particular approximation strategy. This strategy would then be a member of the Approx class. Lastly, provide the definition for how to convert from the general class form of <code>Approx</code> to the particular choice form of <code>tspApproxX</code> in the form of a simple definition.</p>
+<p>In Catln, a class name can not be reused as an object name. Therefore, any definitions that use a declared class name are known to be a class choice. They will not be subject to arrow testing, but will otherwise be treated fairly normally.</p>
+<p>Another powerful use of class choices is for data structures. For example, a definition like <code>List.empty</code> can be resolved to use a class choice to determine the appropriate type of list. This is one example of how this section will be crucial for handling <a href="../optimization/">optimizations</a>.</p>
+<h2 id="resolving-choices">Resolving Choices<a class="headerlink" href="#resolving-choices" title="Permanent link">&para;</a></h2>
+<p>Given this power, the next question is how to make the choices.</p>
+<h3 id="choice-by-name">Choice by Name<a class="headerlink" href="#choice-by-name" title="Permanent link">&para;</a></h3>
+<p>The first option is by using the <code>#name(String name)</code> compiler annotation. The name can be applied to both a definition of a function and a call of the function. This can be used to manually specify the value of the choice.</p>
+<p>While this seems simple, it is actually quite powerful. If necessary, annotations can be overwritten by using an apply statement:</p>
+<div class="codehilite"><pre><span></span><code>apply sort#name(&quot;quickSort&quot;) sort#name(&quot;selectionSort&quot;) sort
+  #name(&quot;selectionSort&quot;)
+</code></pre></div>
+
+<p>The apply statement can also describe a path of definitions to describe where to apply the annotations. Files that focus on these apply statements can be treated like configuration files where additional information to resolve these choices are. These statements work where the latest one takes effect, so they can be part of both libraries and directly used by users.</p>
+<p>For a user, these name configuration files can be used to create final overrides. This follows the idea of "make it work, make it right, make it fast". The main code files are able to fully describe how to make it work right. Then, only the final override needs to be touched to make it fast.</p>
+<h3 id="dispatch-choices">Dispatch Choices<a class="headerlink" href="#dispatch-choices" title="Permanent link">&para;</a></h3>
+<p>Another option is by providing a choice dispatch definition. This looks like a normal definition, but has no behavior besides deciding which option to choose. Here is an example of such a dispatch:</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">sort</span><span class="ss">(</span><span class="nv">List</span> <span class="nv">lst</span><span class="ss">)</span> <span class="o">=</span>
+  <span class="k">if</span> <span class="nv">lst</span>.<span class="nv">length</span> <span class="o">&gt;</span> <span class="mi">256</span>
+    <span class="k">then</span> <span class="nv">sort</span>#<span class="nv">quickSort</span><span class="ss">(</span><span class="nv">lst</span><span class="ss">)</span>
+    <span class="k">else</span> <span class="nv">sort</span>#<span class="nv">selectionSort</span><span class="ss">(</span><span class="nv">lst</span><span class="ss">)</span>
+</code></pre></div>
+
+<p>This uses the length of the list to decide between various sorting algorithms before running the algorithms themselves. This would then dispatch to the appropriate algorithm at runtime. However, it can still take advantage of type inference to remove the conditionals if it can be proven during compile time. So, if it is possible to prove the size, it will be decided during compile time instead.</p>
+<p>It is also possible for the dispatch to rely on other traits to determine the appropriate method to dispatch to. For example, it can read compile annotations using <code>$hasAnnot(val=this, annot="lazy")</code> and <code>$getAnnot(val=this, annot"lazy")</code>. Different annotations can be used to help guide heuristics as well. In the future, I will also consider adding additional profiling strategies that can be used to determine what methods are called on the result, or possible how many methods the result can call. These will all run during compile time and be evaluated like normal <a href="../macros/">macros</a>.</p>
+<h3 id="automatic">Automatic<a class="headerlink" href="#automatic" title="Permanent link">&para;</a></h3>
+<p>Finally, the last option is to try to determine the best choice automatically. The first strategy is to follow an order of precedence. If there are multiple valid arrows but their domains differ, prefer ones with smaller (but still sufficient) domains. In other words, use the definition that is more precise to the actual input. After that, use a dispatch if one exists before looking at other functions.</p>
+<p>The final approach, if all else fails, is to just pick an option at random. While this is far from ideal, it can always be overridden later if it proves to be a problem. The rest of the time, it is likely to work or not cause too many problems as long as the most important choices are properly accounted for.</p>
+<h3 id="future-development">Future Development<a class="headerlink" href="#future-development" title="Permanent link">&para;</a></h3>
+<p>Right now, the algorithm I have described above for choice should be reasonably sufficient. It should work well in the general cases and can be improved over time. Even in specific cases it can be manually controlled.</p>
+<p>However, this is essentially greedy. It assumes that all choices are independent, but they are often not. In that case, multiple choices should be made simultaneously. It may also take advantage of other data such as profiler guided optimization, automatic Big O notation, or machine learning guided optimization. These are all areas for future development of the language. But, it requires the same semantics as choice as a background so using the simpler greedy algorithm should be a good start towards those future developments as well.</p>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        <a href="../metaprogramming/" class="md-footer__link md-footer__link--prev" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Metaprogramming
+            </div>
+          </div>
+        </a>
+      
+      
+        <a href="../macros/" class="md-footer__link md-footer__link--next" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Macros
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../..", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "../../assets/javascripts/workers/search.f5903571.min.js", "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.3981fc68.min.js"></script>
+      
+    
+  </body>
+</html>
