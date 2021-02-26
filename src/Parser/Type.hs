@@ -90,14 +90,18 @@ pType = sepBy1 (pLeafType PLeafTypeSealedClass <|> varOption) (symbol "|")
           return $ PreTyped (TypeVar $ TVVar name) (Just (pos1, pos2, ""))
 
 
-pMultiTypeDefStatement :: Parser PStatement
-pMultiTypeDefStatement = do
+pClassStatement :: Parser PStatement
+pClassStatement = do
   _ <- symbol "class"
   name <- tidentifier
   maybeVars <- optional $ angleBraces $ sepBy1 pLeafVar (symbol ",")
   let vars = maybe H.empty H.fromList maybeVars
-  _ <- symbol "="
-  MultiTypeDefStatement . MultiTypeDef name vars <$> pType
+  maybeTypes <- optional $ do
+    _ <- symbol "="
+    MultiTypeDefStatement . MultiTypeDef name vars <$> pType
+  case maybeTypes of
+    Just types -> return types
+    Nothing -> return $ RawClassDeclStatement (name, vars)
 
 pAnnotDefStatement :: Parser PStatement
 pAnnotDefStatement = do
@@ -118,7 +122,7 @@ pClassDefStatement = do
   return $ RawClassDefStatement (typeName, className)
 
 pTypeStatement :: Parser PStatement
-pTypeStatement = pMultiTypeDefStatement
+pTypeStatement = pClassStatement
                  <|> pAnnotDefStatement
                  <|> pTypeDefStatement
                  <|> pClassDefStatement

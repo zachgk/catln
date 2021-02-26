@@ -104,11 +104,14 @@ data MultiTypeDef m = MultiTypeDef ClassName (H.HashMap TypeVarName Type) [m]
 
 type RawClassDef = (TypeName, ClassName)
 
+type RawClassDecl = (ClassName, H.HashMap TypeVarName Type)
+
 data RawStatement m
   = RawDeclStatement (RawDecl m)
   | MultiTypeDefStatement (MultiTypeDef m)
   | TypeDefStatement (TypeDef m)
   | RawClassDefStatement RawClassDef
+  | RawClassDeclStatement RawClassDecl
   | RawComment String
   | RawGlobalAnnot (CompAnnot (RawExpr m))
   deriving (Eq, Ord, Show, Generic, ToJSON)

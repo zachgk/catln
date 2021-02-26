@@ -261,6 +261,7 @@ desStatements statements = prgm'
           MultiTypeDefStatement multiTypedef -> ([], [multiTypedef], [], [], [])
           TypeDefStatement typedef -> ([], [], [typedef], [], [])
           RawClassDefStatement classdef -> ([], [], [], [classdef], [])
+          RawClassDeclStatement _ -> ([], [], [], [], [])
           RawComment _ -> ([], [], [], [], [])
           RawGlobalAnnot a -> ([], [], [], [], [a])
     (decls, multiTypes, types, classes, annots) = (\(a, b, c, d, e) -> (concat a, concat b, concat c, concat d, concat e)) $ unzip5 $ map splitStatements statements
