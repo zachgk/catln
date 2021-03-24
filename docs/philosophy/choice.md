@@ -22,9 +22,9 @@ sort(List lst) -> List = ... // selection sort
 ...
 ```
 
-When you call sort normally, it can actually use any of those definitions. This is in fact the default function calling state in Catln. Fortunately, the definitions in this case should all be equal so it requires even less concern from users of the functions. Instead of just relying on this, it can also be verified by using [arrow testing](arrowTesting.md).
+When you call sort normally, it can actually use any of those definitions. This is in fact the default function calling state in Catln. Fortunately, the definitions in this case should all be equal so it requires even less concern from users of the functions. Instead of just hoping this works, it can also be verified by using [arrow testing](arrowTesting.md).
 
-Another way to think of this is that a function signature contains both an abstract signature and a concrete definition. When you make calls, you always use the abstract signature. Then, the code is abstracted over all of these choices.
+Another way to think of this is that a function signature contains both an abstract signature and a concrete definition. When you make calls, you always use the abstract signature. Then, the code is abstracted over all the possible definitions.
 
 ## Class Choices
 
@@ -43,7 +43,7 @@ instance tspApproxB of Approx<$T=TSP>
 Approx(TSP val) = tspApproxB(inputData=val)
 ```
 
-Here, it creates a standard Approximation class (this definition would likely be part of the standard library). Then, it has a standard form for TSP input data. You can think of this as a graph.
+Here, it creates a standard Approximation class (this definition would likely be part of the standard library). Then, it has a standard form for TSP input data (most likely a graph object).
 
 To create an instance, three steps are required. First, create the actual function to describe the particular approximation strategy. This strategy would then be a member of the Approx class. Lastly, provide the definition for how to convert from the general class form of `Approx` to the particular choice form of `tspApproxX` in the form of a simple definition.
 
@@ -68,7 +68,7 @@ apply sort#name("quickSort") sort#name("selectionSort") sort
 
 The apply statement can also describe a path of definitions to describe where to apply the annotations. Files that focus on these apply statements can be treated like configuration files where additional information to resolve these choices are. These statements work where the latest one takes effect, so they can be part of both libraries and directly used by users.
 
-For a user, these name configuration files can be used to create final overrides. This follows the idea of "make it work, make it right, make it fast". The main code files are able to fully describe how to make it work right. Then, only the final override needs to be touched to make it fast.
+For a user, these name configuration files can be used to create final overrides. This follows the idea of "make it work, make it right, make it fast". The main code files are able to fully describe how to make it work and make it right. Then, only the final override needs to be touched to make it fast.
 
 ### Dispatch Choices
 
@@ -83,16 +83,28 @@ sort(List lst) =
 
 This uses the length of the list to decide between various sorting algorithms before running the algorithms themselves. This would then dispatch to the appropriate algorithm at runtime. However, it can still take advantage of type inference to remove the conditionals if it can be proven during compile time. So, if it is possible to prove the size, it will be decided during compile time instead.
 
-It is also possible for the dispatch to rely on other traits to determine the appropriate method to dispatch to. For example, it can read compile annotations using `$hasAnnot(val=this, annot="lazy")` and `$getAnnot(val=this, annot"lazy")`. Different annotations can be used to help guide heuristics as well. In the future, I will also consider adding additional profiling strategies that can be used to determine what methods are called on the result, or possible how many methods the result can call. These will all run during compile time and be evaluated like normal [macros](macros.md).
+It is also possible for the dispatch to rely on other traits to determine the appropriate method to dispatch to. For example, it can read compile annotations using `$hasAnnot(val=this, annot="lazy")` and `$getAnnot(val=this, annot="lazy")`. Different annotations can be used to help guide heuristics as well. In the future, I will also consider adding additional profiling strategies that can be used to determine what methods are called on the result, or possible how many methods the result can call for more powerful dispatch strategies. These will all run during compile time and be evaluated like normal [macros](macros.md).
 
 ### Automatic
 
 Finally, the last option is to try to determine the best choice automatically. The first strategy is to follow an order of precedence. If there are multiple valid arrows but their domains differ, prefer ones with smaller (but still sufficient) domains. In other words, use the definition that is more precise to the actual input. After that, use a dispatch if one exists before looking at other functions.
 
-The final approach, if all else fails, is to just pick an option at random. While this is far from ideal, it can always be overridden later if it proves to be a problem. The rest of the time, it is likely to work or not cause too many problems as long as the most important choices are properly accounted for.
+The final approach, if all else fails, is to just pick an option at random. While this is far from ideal, it can always be overridden later if it proves to be a problem. The rest of the time, it is likely to work or not cause too many problems as long as the most important choices are properly accounted for. But, it means that it would still compile. For a slightly more reliable method, it can choose the last definition instead of a random one.
 
 ### Future Development
 
-Right now, the algorithm I have described above for choice should be reasonably sufficient. It should work well in the general cases and can be improved over time. Even in specific cases it can be manually controlled.
+Right now, the algorithm I have described above for choice should be reasonably sufficient. It should work well in the general cases and can be improved over time with more rules given. Even in specific cases it can be manually controlled.
 
-However, this is essentially greedy. It assumes that all choices are independent, but they are often not. In that case, multiple choices should be made simultaneously. It may also take advantage of other data such as profiler guided optimization, automatic Big O notation, or machine learning guided optimization. These are all areas for future development of the language. But, it requires the same semantics as choice as a background so using the simpler greedy algorithm should be a good start towards those future developments as well.
+Other languages that lack choice essentially force there to be one option. Then, the choice is always trivial. While this solution isn't perfect, it is no doubt better.
+
+The main problem with this choice strategy is that it is essentially greedy. It assumes that all choices are independent, but they are often not. In that case, multiple choices should be made simultaneously. It may also take advantage of other data such as profiler guided optimization, automatic Big O notation, or machine learning guided optimization. These are all areas for future development of the language. But, it requires the same semantics of choice as a background so using the simpler greedy algorithm should be a good start towards those future developments as well. Hopefully, they can even be added on to later versions of the language.
+
+## Visualizing Choice
+
+Another important task is how to visualize choice. When trying to understand what choices are made and why, having an appropriate visualization tool would make the process much easier. For low-level programming and optimizing performance choices, it would be critical.
+
+Currently, I image a tool similar to the chrome inspector:
+
+![Chrome Inspector](https://developer-chrome-com.imgix.net/image/BrQidfK9jaQyIHwdw91aVpkPiib2/TDNgfhI9byR4eeGQ0Xxv.png?auto=format&w=1600)
+
+Here, the functions used at a particular level would be the HTML. For each function, it can then show all of the choices that match the function like CSS. Then, you can view all of the various choice matches and see why the final ones are chosen to figure out how to improve it.

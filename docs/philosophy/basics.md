@@ -110,7 +110,9 @@ To clarify, type properties can accept an input either as a type or an expressio
 
 I recommend thinking about type properties in terms of sets of values. Each object and type class represent a set of possible values. Then, the type properties further restrict the set of possible values of the type into a subset of the original. This allows more information of what is known about various data types to be propagated through the program and used for both static analysis and optimization.
 
-It is also possible to use type properties for more abstract or computed values. You could add a `String_hasPassword<Boolean>` property to help check whether it is possible that a password is contained somewhere in it. This could be used to sanitize the results before saving in a database or sending to a browser. Another possible property would be something like `HTML_classList<List<$T=String>>`. This property can be used to compute the possible classes an HTML element could have, useful for pruning the CSS file.
+Type properties exist in a somewhat similar space to [refinement types](https://en.wikipedia.org/wiki/Refinement_type). The key difference is that they are defined entirely within Catln itself while most refinement type systems use an external tool such as [Z3](https://en.wikipedia.org/wiki/Z3_Theorem_Prover). That means that the external tool would be limited to operating on preset domains of knowledge while type properties can grow as more things are implemented in the language.
+
+Another difference is that it is also possible to use type properties for more abstract or computed values. You could add a `String_hasPassword<Boolean>` property to help check whether it is possible that a password is contained in a String. This could be used to sanitize the results before saving in a database or sending to a browser. Another possible property would be something like `HTML_classList<List<$T=String>>`. This property can be used to compute the possible classes an HTML element could have, useful for pruning the CSS file.
 
 ## Arrows
 
@@ -135,7 +137,7 @@ Both a declaration and definition create two components: an object and an arrow.
 
 ## True Statements
 
-The final major syntactic structure is an implication. The purpose of the implication is to support true statements. For example, consider this simple absolute value function:
+The other major syntactic structure for effective type properties is an implication. The purpose of the implication is to support true statements. For example, consider this simple absolute value function:
 
 ```
 abs(Int i) = if i >= 0
@@ -143,7 +145,7 @@ abs(Int i) = if i >= 0
                else -i
 ```
 
-This definition has a conditional "if" statement that branches the code based on the definition of `i`. However branching the code is also the process of learning about `i`. While `i` can be any integer in the function at large, we know it is limited to `Int_gte(0)` within the then branch. The reason we know this is because within the branch we can further assume that `i >= 0`. Likewise, we know within the else branch that `i` is of type `Int_lt(0)` because `not(i >= 0)`.
+This definition has a conditional "if" statement that branches the code based on the definition of `i`. However branching the code is also the process of learning about `i`. While `i` can be any integer in the function at large, we know it is limited to `Int_gte(0)` within the then branch. The reason we know this is because within the branch we can further assume the statement `i >= 0` is true. Likewise, we know within the else branch that `i` is of type `Int_lt(0)` because `not(i >= 0)` is true.
 
 To convert between expressions and the type properties that they imply are implication statements. Here are some examples:
 
@@ -162,6 +164,19 @@ operator>=(Int l, Int r) .: r :: Int_lt(l)
 ```
 
 These implications are used to adjust the uses of a type. The support for conjunction of true statements works like defined in the example above. A disjunction can still be represented by combining the information into the object containing several types. For a function definition, this is typically the calling function would contain the disjunction information about it's arguments.
+
+## Annotation Applications
+
+The final major structure is an annotation application. These applications are used to provide additional annotations after a function is written.
+
+It can also be used to apply to only certain kinds of calls to the function. It is designed similarly to CSS selectors and many of the same capabilities are available. Instead of using a DOM tree, it matches against the function call tree. Here is an example:
+
+```
+apply sort#name("quickSort") > sort#name("selectionSort") sort
+  #name("selectionSort")
+```
+
+The main use of the applications is to provide more information towards [choice](choice.md). It can also be moved into a separate file to work like a configuration. Note that while annotations can give instructions to tools such as the compiler, testing, or webdocs, it doesn't change the fundamental knowledge environment.
 
 ## Other Type System Features
 

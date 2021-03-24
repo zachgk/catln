@@ -42,7 +42,6 @@ Another potential avenue for this is values that can be determined at compile ti
 
 It is often useful to have wrapper types such as Optional which help enable sum types. In this case, it should not have a cost to use these types over not having them to avoid discouraging good usage of abstraction. For example, if the optional is guaranteed to return a value, it should be equivalent to not having an optional at all.
 
-
 ## Type Selection
 
 Another potential area for optimization is the selection of types. For example, users must pick between the different list variations including linked lists, array lists, skip lists, deque, trees, and hashmaps. Languages then have to choose between which implementations are worth supporting and how many can be supported before it merely confuses users. Some languages simply provide one option with the idea that it is sufficient.
@@ -50,9 +49,11 @@ Another potential area for optimization is the selection of types. For example, 
 For this reason, it should be important to allow the compiler to choose between a number of implementations of an interface. This would also require some way for the implementer to provide guidance such as avoid this implementation if it calls this function. It can also take advantage of profiling through the unit and integration tests to determine how the interface is typically used. Users could also specify an actual value. But, even a poor heuristic from the compiler is likely to be better than users choosing without any particular thought. See [more](choice.md).
 
 ## Method specialization
+
 When there are multiple possible implementations of a function, there may not always be a best option. For example, sorting with quicksort is better for large arrays while sorting with selection sort can be faster with small ones. This can be used to improve the overall performance. This is also handled as a [choice abstraction](choice.md).
 
 ## Memory Management
+
 Memory management is one of the most important optimizations in a language. Systems generally fall into manually managed memory (C++, Rust), Garbage Collection (Java), and Reference Counting (Swift, Python). While having memory managed by systems like this can greatly reduce bugs and simplify development, that is only if it works well enough. A bad management system does not leave you any better off.
 
 For memory management, the primary system should be passed on lifetime. Consider your functional program as a tree. Values are created and can then be propagated up the tree. However, there should exist a level on the tree where the value is guaranteed to be removed and propagated up no farther. By doing this analysis, the values can be freed without requiring any runtime analysis and they can be allocated and freed efficiently in a combined group as well. This technique can be supplemented by reference counting as well.
@@ -60,6 +61,7 @@ For memory management, the primary system should be passed on lifetime. Consider
 Another component for analysis is the use of stack vs heap. Using the stack can help improve the memory usage as well when it is possible.
 
 ## Parallelization
+
 One of the key benefits of functional programming is that it can greatly simplify parallelization. By having pure code, it guarantees that sections must be independent and therefore can be computed independently in different threads. However, diving the work up into the threads requires a little bit of work. Functions should be divided up into chunks which can each be run in parallel. Then, they can be added into a global queue and multiple lightweight threads can each pull elements off the queue and then execute them. If chunks depend on other chunks, they will check if all chunks have finished after working and then add the successive chunk code to the queue at the end.
 
 Chunks should be large enough to avoid contention for the queue and not spend too much time outside of chunks. Then can include one or several subtrees that will be arguments to a larger tree. For large parallel operations (like a map), they should be divided into chunks with a fixed size that is determined based on the code in the map and then the remainder can be combined with the last chunk.
@@ -67,10 +69,17 @@ Chunks should be large enough to avoid contention for the queue and not spend to
 While this works for thread parallelization, there is also GPU style parallelization. For this, it can be focused on specific data types that typically work well with GPUS. It may also require a special context to enable GPU support as well.
 
 ## Only subset of Function needed
+
 Sometimes, the application may not need all of the functionality provided by a library. For example, if it only calls the function with one argument set to true, it would be more optimal to remove that argument from the function and substitute the value into it. This requires additional compilation but has only benefits during runtime.
 
 ## Promises and Futures
+
 One area to consider is how to manage asynchronous code including promises and futures. For most of the code which should be pure, this shouldn't be a problem because the general parallelization should be able to handle it. Some structure may be needed for IO and the monads that are order dependent.
 
 ## Static and Dynamic Dispatch
+
 One avenue worth considering is static vs dynamic dispatch. Static dispatch can be faster although it requires duplicating the code for each of the possible input types (binary size). Dynamic dispatch requires another layer of indirection before making calls but does not duplicate methods. The best option might be a combination of the two depending on the requirements and the goals. For example, only use static dispatch for the hot loops where it would greatly increase performance.
+
+## Pre-computing
+
+There are often expressions or functions in a program which can be computed during compile time instead of run time. Essentially, anything that doesn't use IO could be computed. However, it is hard to determine which ones are reasonable to compute and which ones might require too much work. But, pre-computing the right tasks such as with constant strings in a `printf` could drastically speed up the program.
