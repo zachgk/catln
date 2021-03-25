@@ -14,7 +14,7 @@ import {
   useRouteMatch
 } from 'react-router-dom';
 
-import {useApi, Loading, Guard, Type, Obj} from './Common';
+import {useApi, tagJoin, Loading, Guard, PartialName, Type, Obj} from './Common';
 
 const useStyles = {
   objDetails: {
@@ -81,11 +81,13 @@ function useQuery() {
 }
 
 function Main(props) {
-  let [objMap, ] = props.data;
+  let [objMap, classMap] = props.data;
 
   return (
     <div>
       <ObjMap objMap={objMap} Meta={Meta}/>
+      <br /> <br /> <br />
+      <ClassMap classMap={classMap} />
     </div>
   );
 }
@@ -186,6 +188,49 @@ function Expr(props) {
 function Meta(props) {
   let [tp, ] = props.data;
   return <Type data={tp} />;
+}
+
+function ClassMap(props) {
+  const {classMap} = props;
+  const [typeToClass, classToType] = classMap;
+  return (
+    <div>
+      <h2>Types</h2>
+      {tagJoin(Object.keys(typeToClass).map(typeName => <TypeToClassEntry key={typeName} typeName={typeName} classes={typeToClass[typeName]} />), "")}
+      <br/>
+      <h2>Classes</h2>
+      {tagJoin(Object.keys(classToType).map(className => <ClassToTypeEntry key={className} className={className} val={classToType[className]} />), "")}
+    </div>
+  );
+}
+
+function TypeToClassEntry(props) {
+  const {typeName, classes} = props;
+
+  let showTypeName = <PartialName name={{tag: "PTypeName", contents: typeName}}/>;
+  let showClasses = tagJoin(classes.map(c => <PartialName key={c} name={{tag: "PClassName", contents: c}}/>), ", ");
+
+  return <div>{showTypeName}: {showClasses}</div>;
+}
+
+function ClassToTypeEntry(props) {
+  const {className, val: [, vars, types]} = props;
+
+  let showVars = "";
+  if(Object.keys(vars).length > 0) {
+    showVars = (
+      <span>
+        &lt;
+        {tagJoin(Object.keys(vars).map(v => <span key={v}><Type data={vars[v]}/> {v}</span>), ", ")}
+        &gt;
+      </span>
+    );
+  }
+
+  let showClassName = <PartialName name={{tag: "PClassName", contents: className}}/>;
+  let showTypes = tagJoin(types.map((t, i) => <span key={i}><Type data={t}/></span>), ", ");
+
+  return <div>{showClassName}{showVars} = {showTypes}</div>;
 }
 
 export default ListProgram;

@@ -152,23 +152,6 @@ function Guard(props) {
   }
 }
 
-function PartialName(props) {
-  const {name} = props;
-  let style;
-  switch(name.tag) {
-  case "PTypeName":
-    style = useStyles.partialName.tp;
-    break;
-  case "PClassName":
-    style = useStyles.partialName.class;
-    break;
-  default:
-    console.error("Unknown partial name", name);
-    style = {};
-  }
-  return <span style={style}>{name.contents}</span>;
-}
-
 function Type(props) {
   let t = props.data;
   switch(t.tag) {
@@ -214,6 +197,24 @@ function Type(props) {
     return "";
   }
 }
+
+function PartialName(props) {
+  const {name} = props;
+  let style;
+  switch(name.tag) {
+  case "PTypeName":
+    style = useStyles.partialName.tp;
+    break;
+  case "PClassName":
+    style = useStyles.partialName.class;
+    break;
+  default:
+    console.error("Unknown partial name", name);
+    style = {};
+  }
+  return <span style={style}>{name.contents}</span>;
+}
+
 
 function Obj(props) {
   const {obj, details, Meta} = props;
@@ -313,6 +314,7 @@ export {
   Notes,
   Guard,
   Type,
+  PartialName,
   Obj,
   Val
 };
