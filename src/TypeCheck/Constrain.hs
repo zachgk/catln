@@ -28,7 +28,7 @@ isSolved (TypeCheckResult _ (SType a b _)) = a == b
 isSolved _ = False
 
 setScheme :: FEnv -> VarMeta -> Scheme -> String -> FEnv
-setScheme env p scheme msg = setDescriptor env p (checkScheme scheme)
+setScheme env p scheme msg = setDescriptor env p (checkScheme scheme) msg
   where msg' = printf "setScheme %s" msg
         -- checkScheme msg (TypeCheckResult _ (SType ub _ desc)) | isBottomType ub = error $ "Scheme failed check at " ++ msg ++ ": upper bound is bottomType - " ++ desc
         checkScheme (TypeCheckResult notes (SType ub _ desc)) | isBottomType ub = TypeCheckResE (GenTypeCheckError (getMetaPos p) ("Scheme failed check at " ++ msg' ++ ": upper bound is bottomType - " ++ desc) : notes)
@@ -55,7 +55,7 @@ updateSchemeProp env@FEnv{feClassMap} (superM, superScheme@(SType superUb superL
       let supPartialList = splitPartialLeafs supPartials
       let intersectPartials sup@PartialType{ptArgs=supArgs} = Just (sup{ptArgs=H.insert propName subUb supArgs})
       let supPartialList' = catMaybes $ [intersectPartials sup | sup <- supPartialList]
-      wrapUbs (SumType $ joinPartialLeafs supPartialList', subUb)
+      wrapUbs (compactType feClassMap $ SumType $ joinPartialLeafs supPartialList', subUb)
     (SumType supPartials, TopType) -> do
       let supPartialList = splitPartialLeafs supPartials
       let sub' = unionTypes feClassMap $ mapMaybe (typeGetArg propName) supPartialList
@@ -76,7 +76,7 @@ updateSchemeProp env@FEnv{feClassMap} (superM, superScheme@(SType superUb superL
                 else Just (sup{ptArgs=H.insert propName newProp supArgs}, newProp)
             Nothing -> Nothing
       let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectPartials sup sub | sup <- supPartialList, sub <- subPartialList]
-      wrapUbs (SumType $ joinPartialLeafs supPartialList', unionTypes feClassMap subPartialList')
+      wrapUbs (compactType feClassMap $ SumType $ joinPartialLeafs supPartialList', unionTypes feClassMap subPartialList')
   where
     wrapUbs (superUb', subUb') = (env, return $ SType superUb' superLb superDesc, return $ SType subUb' subLb subDesc)
 
@@ -101,7 +101,7 @@ updateSchemeVar FEnv{feClassMap} (SType superUb superLb superDesc) varName (STyp
                   else Just (sup{ptVars=H.insert varName newVar supVars}, newVar)
               Nothing -> Just (sup{ptVars=H.insert varName (singletonType sub) supVars}, singletonType sub)
         let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectPartials sup sub | sup <- supPartialList, sub <- subPartialList]
-        (SumType $ joinPartialLeafs supPartialList', unionTypes feClassMap subPartialList')
+        (compactType feClassMap $ SumType $ joinPartialLeafs supPartialList', unionTypes feClassMap subPartialList')
       (SumType supPartials, subT@TypeVar{}) -> do
         let supPartialList = splitPartialLeafs supPartials
         let intersectPartials sup@PartialType{ptVars=supVars} = case H.lookup varName supVars of
@@ -111,7 +111,7 @@ updateSchemeVar FEnv{feClassMap} (SType superUb superLb superDesc) varName (STyp
                   else Nothing
               Nothing -> Nothing
         let supPartialList' = catMaybes [intersectPartials sup | sup <- supPartialList]
-        (SumType $ joinPartialLeafs supPartialList', subT)
+        (compactType feClassMap $ SumType $ joinPartialLeafs supPartialList', subT)
       (sup, sub) -> error $ printf "Unsupported updateSchemeVar Ub (%s).%s = %s" (show sup) varName (show sub)
 
 addArgToType :: FEnv -> Type -> ArgName -> Maybe Type
@@ -162,20 +162,18 @@ executeConstraint env (BoundedByKnown subPnt boundTp) = do
       ([], subScheme /= subScheme', env')
 executeConstraint env@FEnv{feUnionAllObjs, feUnionTypeObjs, feClassMap} cons@(BoundedByObjs bnd pnt) = do
   let scheme = descriptor env pnt
-  let unionPnt = case bnd of
+  let boundPnt = case bnd of
         BoundAllObjs -> feUnionAllObjs
         BoundTypeObjs -> feUnionTypeObjs
-  let unionScheme = descriptor env unionPnt
-  case sequenceT (scheme, unionScheme) of
+  let boundScheme = descriptor env boundPnt
+  case sequenceT (scheme, boundScheme) of
     TypeCheckResE _ -> ([], False, env)
     TypeCheckResult _ (SType TopType _ _, _) -> ([cons], False, env)
-    TypeCheckResult _ (SType ub lb desc, SType objsUb _ _) -> do
+    TypeCheckResult _ (SType ub lb desc, SType boundUb _ _) -> do
       -- A partially applied tuple would not be a raw type on the unionObj,
       -- but a subset of the arguments in that type
-      let ub' = intersectTypes feClassMap ub objsUb
-      let scheme' = if isBottomType ub'
-            then TypeCheckResE [GenTypeCheckError (getMetaPos pnt) $ printf "Failed to BoundByObjs for %s: \n\t%s" desc (show ub)]
-            else return $ SType ub' lb desc
+      let ub' = intersectTypes feClassMap ub boundUb
+      let scheme' = return $ SType ub' lb desc
       let env' = setScheme env pnt scheme' "BoundedByObjs"
       ([cons | not (isSolved scheme')], scheme /= scheme', env')
 executeConstraint env cons@(ArrowTo srcPnt destPnt) = do
@@ -258,13 +256,13 @@ executeConstraint env cons@(AddInferArg srcPnt destPnt) = do
               let env' = setScheme env destPnt res "AddInferArg error"
               ([], True, env')
         Nothing -> ([cons], False, env)
-executeConstraint env cons@(PowersetTo srcPnt destPnt) = do
+executeConstraint env@FEnv{feClassMap} cons@(PowersetTo srcPnt destPnt) = do
   let srcScheme = descriptor env srcPnt
   let destScheme = descriptor env destPnt
   case sequenceT (srcScheme, destScheme) of
     TypeCheckResE _ -> ([], False, env)
     TypeCheckResult _ (SType ub1 _ _, SType ub2 lb2 description2) -> do
-      let destScheme' = fmap (\ub -> SType ub lb2 description2) (tryIntersectTypes env (powersetType ub1) ub2 "executeConstraint PowersetTo")
+      let destScheme' = fmap (\ub -> SType ub lb2 description2) (tryIntersectTypes env (compactType feClassMap $ powersetType ub1) ub2 "executeConstraint PowersetTo")
       let env' = setScheme env destPnt destScheme' "PowersetTo"
       ([cons | not (isSolved destScheme')], destScheme /= destScheme', env')
 executeConstraint env@FEnv{feClassMap} cons@(UnionOf parentPnt childrenM) = do
@@ -299,7 +297,7 @@ runConstraints 0 env cons = do
   let (res, env') = executeConstraints env cons
   let consChangedList = mapMaybe (\(con, isChanged) -> if isChanged then Just con else Nothing) res
   let showCons = showConstraints env' $ concat consChangedList
-  TypeCheckResE [GenTypeCheckError Nothing $ "Reached runConstraints limit with still changing constraints: " ++ show showCons]
+  TypeCheckResult [GenTypeCheckError Nothing $ "Reached runConstraints limit with still changing constraints: " ++ show showCons] env
 runConstraints limit env cons = do
   let (res, env') = executeConstraints env cons
   let (consList, changedList) = unzip res

@@ -236,7 +236,7 @@ tryIntersectTypes FEnv{feClassMap} a b desc = let c = intersectTypes feClassMap 
 -- This ensures schemes are correct
 -- It differs from Constrain.checkScheme because it checks for bugs in the internal compiler, not bugs in the user code
 verifyScheme :: ClassMap -> VarMeta -> Scheme -> Scheme -> Bool
-verifyScheme classMap (VarMeta _ _ mobj) (TypeCheckResult _ (SType oldUb _ _)) (TypeCheckResult _ (SType ub _ _)) = verifyTypeVars (mobjVars mobj) ub && verifySchemeUbLowers mobj
+verifyScheme classMap (VarMeta _ _ mobj) (TypeCheckResult _ (SType oldUb _ _)) (TypeCheckResult _ (SType ub _ _)) = verifyTypeVars (mobjVars mobj) ub && verifySchemeUbLowers mobj && verifyCompacted
   where
     verifyTypeVars venv (SumType partialLeafs) = all (verifyTypeVarsPartial venv) $ splitPartialLeafs partialLeafs
     verifyTypeVars venv (TypeVar (TVVar v)) = S.member v venv
@@ -249,6 +249,7 @@ verifyScheme classMap (VarMeta _ _ mobj) (TypeCheckResult _ (SType oldUb _ _)) (
     mobjVars Nothing = S.empty
     verifySchemeUbLowers (Just obj) = hasTypeWithObj classMap obj ub oldUb
     verifySchemeUbLowers Nothing = hasType classMap ub oldUb
+    verifyCompacted = ub == compactType classMap ub
 verifyScheme _ _ TypeCheckResE{} TypeCheckResult{} = False
 verifyScheme _ _ _ _ = True
 
@@ -266,8 +267,8 @@ fresh env@FEnv{fePnts} scheme = (pnt', env{fePnts = pnts'})
     pnt' = IM.size fePnts
     pnts' = IM.insert pnt' scheme fePnts
 
-setDescriptor :: FEnv -> VarMeta -> Scheme -> FEnv
-setDescriptor env@FEnv{feClassMap, fePnts, feTrace} m scheme' = env{fePnts = pnts', feTrace = feTrace'}
+setDescriptor :: FEnv -> VarMeta -> Scheme -> String -> FEnv
+setDescriptor env@FEnv{feClassMap, fePnts, feTrace} m scheme' msg = env{fePnts = pnts', feTrace = feTrace'}
   where
     p = getPnt m
     scheme = fePnts IM.! p
@@ -275,7 +276,7 @@ setDescriptor env@FEnv{feClassMap, fePnts, feTrace} m scheme' = env{fePnts = pnt
     pnts' = IM.insert p scheme' fePnts
     feTrace' = if schemeChanged
       then case feTrace of
-             _ | not (verifyScheme feClassMap m scheme scheme') -> error $ printf "Scheme failed verification during typechecking: %s \n\t\t in obj: %s with old scheme: %s" (show scheme') (show m) (show scheme)
+             _ | not (verifyScheme feClassMap m scheme scheme') -> error $ printf "Scheme failed verification during typechecking of %s: %s \n\t\t in obj: %s with old scheme: %s" msg (show scheme') (show m) (show scheme)
              ((curConstraint, curChanged):curEpoch):prevEpochs -> ((curConstraint, (p, scheme'):curChanged):curEpoch):prevEpochs
              _ -> error "no epochs in feTrace"
       else feTrace

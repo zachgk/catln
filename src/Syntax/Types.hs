@@ -219,13 +219,21 @@ compactOverlapping classMap = H.mapWithKey compactArgOptions
     filterOptions partialName argOptions option = not $ any (\potentialSuperOption -> option /= potentialSuperOption && hasType classMap (optionToType partialName option) (optionToType partialName potentialSuperOption)) argOptions
     optionToType name (vars, props, args, argMode) = singletonType (PartialType name vars props args argMode)
 
+-- compacts partials where a type variable is the bottomType to a bottomType
+compactBottomTypeVars :: PartialLeafs -> PartialLeafs
+compactBottomTypeVars partials = joinPartialLeafs $ mapMaybe aux $ splitPartialLeafs partials
+  where
+    aux partial@PartialType{ptVars} = if any isBottomType ptVars
+      then Nothing
+      else Just partial
+
 -- TODO: This should combine overlapping partials
 -- TODO: This should merge type partials into class partials
 compactType :: ClassMap -> Type -> Type
 compactType _ TopType = TopType
 compactType _ t@TypeVar{} = t
-compactType classMap (SumType partials) = SumType $ compactOverlapping classMap nonEmpty
-  where nonEmpty = H.filter (not . S.null) partials
+compactType classMap (SumType partials) = SumType $ (compactOverlapping classMap . nonEmpty . compactBottomTypeVars) partials
+  where nonEmpty = H.filter (not . S.null)
 
 unionType :: ClassMap -> Type -> Type -> Type
 unionType _ TopType _ = TopType
@@ -290,7 +298,7 @@ intersectTypesWithVarEnv classMap venv tv@(TypeVar (TVVar v)) t = (H.insertWith 
 intersectTypesWithVarEnv classMap venv t tv@(TypeVar (TVVar v)) = (H.insertWith (intersectTypes classMap) v t venv, tv)
 intersectTypesWithVarEnv _ _ (TypeVar v) t = error $ printf "Can't intersect type vars %s with %s" (show v) (show t)
 intersectTypesWithVarEnv _ _ t (TypeVar v) = error $ printf "Can't intersect type vars %s with %s" (show t) (show v)
-intersectTypesWithVarEnv classMap venv1 (SumType aPartials) (SumType bPartials) = (venv5, unionTypes classMap $ map SumType [res1, res2, res3, res4])
+intersectTypesWithVarEnv classMap venv1 (SumType aPartials) (SumType bPartials) = (venv5, compactType classMap $ unionTypes classMap $ map SumType [res1, res2, res3, res4])
   where
     isTypeLeaf (PTypeName _) _ = True
     isTypeLeaf (PClassName _) _ = False
