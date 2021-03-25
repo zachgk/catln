@@ -101,7 +101,8 @@ let VarMeta = (notesMap) => (props) => {
 function TraceEpochs(props) {
   let { curMeta } = useParams();
   let {trace, Meta} = props;
-  let traces = trace.map((t, index) => {
+  const forwardTrace = [].concat(trace).reverse(); // Trace defaults to reverse order
+  let traces = forwardTrace.map((t, index) => {
     return (
       <div key={index}>
         <h3>{index}</h3>

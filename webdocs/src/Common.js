@@ -17,6 +17,16 @@ const useStyles = {
     warning: {
       background: 'moccasin'
     }
+  },
+  partialName: {
+    tp: {
+      fontWeight: 'bold',
+      color: 'green'
+    },
+    class: {
+      fontWeight: 'bold',
+      color: 'purple'
+    }
   }
 };
 
@@ -142,6 +152,23 @@ function Guard(props) {
   }
 }
 
+function PartialName(props) {
+  const {name} = props;
+  let style;
+  switch(name.tag) {
+  case "PTypeName":
+    style = useStyles.partialName.tp;
+    break;
+  case "PClassName":
+    style = useStyles.partialName.class;
+    break;
+  default:
+    console.error("Unknown partial name", name);
+    style = {};
+  }
+  return <span style={style}>{name.contents}</span>;
+}
+
 function Type(props) {
   let t = props.data;
   switch(t.tag) {
@@ -178,7 +205,7 @@ function Type(props) {
           );
         }
 
-        partials.push(<span key={[partialName, partialIndex]}>{partialName.contents}{showVars}{showArgs}</span>);
+        partials.push(<span key={[partialName, partialIndex]}><PartialName name={partialName}/>{showVars}{showArgs}</span>);
       });
     });
     return tagJoin(partials, " | ");
