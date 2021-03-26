@@ -22,7 +22,7 @@ import Text.Printf
 import Emit (codegenPrgm)
 import TreeBuild
 
-type Op = (TypeName, [(PartialType, Guard (Expr Typed), ResBuildEnvFunction EPrim)])
+type Op = (TypeName, [(PartialType, Guard (Expr Typed), ResBuildEnvFunction)])
 
 true, false :: Val
 true = TupleVal "True" H.empty
@@ -125,7 +125,7 @@ llvm = (name', [(srcType, NoGuard, aux)])
           _ -> error $ printf "Unknown expr to llvm macro: %s" (show expr)
         _ -> error $ printf "Unknown input to llvm macro: %s" (show input')
 
-primEnv :: ResBuildEnv EPrim
+primEnv :: ResBuildEnv
 primEnv = H.fromListWith (++) [ liftIntOp "+" (+)
                               , liftIntOp "-" (-)
                               , liftIntOp "*" (*)

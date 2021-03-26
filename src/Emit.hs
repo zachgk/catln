@@ -46,7 +46,7 @@ import Control.Monad.State
 import LLVM.AST.Typed (typeOf)
 import LLVM.Pretty (ppllvm)
 
-data LEnv = LEnv { lvTbEnv :: TBEnv EPrim
+data LEnv = LEnv { lvTbEnv :: TBEnv
                  , lvClassMap :: ClassMap
                  }
 
@@ -101,7 +101,7 @@ typeName :: Type -> String
 typeName tp = printf "tp_%s" tpHash
   where tpHash = take 6 (printf "%08x" (hash tp)) :: String
 
-codegenTree :: LEnv -> ResArrowTree EPrim -> Val
+codegenTree :: LEnv -> ResArrowTree -> Val
 codegenTree env@LEnv{lvClassMap} resArrow@(ResEArrow input object arrow) = do
   let val = codegenTree env input
   let arrowSrcType = getValType val
@@ -232,7 +232,7 @@ formArgValMap (Object _ _ _ _ args) val = do
       Just valArg -> formArgValMap arg (LLVMOperand (getMetaType $ getObjMeta arg) (return valArg))
       Nothing -> return H.empty
 
-codegenDecl :: LEnv -> String -> EObject -> PartialType -> Type -> ResArrowTree EPrim -> DeclInput -> LLVM ()
+codegenDecl :: LEnv -> String -> EObject -> PartialType -> Type -> ResArrowTree -> DeclInput -> LLVM ()
 codegenDecl env name obj srcType@PartialType{ptArgs, ptVars} destType tree declInput = do
   args' <- case declInput of
     TupleInput -> do
@@ -266,7 +266,7 @@ codegenDecl env name obj srcType@PartialType{ptArgs, ptVars} destType tree declI
       res <- asOperand $ codegenTree env tree
       ret res
 
-codegenMain :: LEnv -> ResArrowTree EPrim -> LLVM ()
+codegenMain :: LEnv -> ResArrowTree -> LLVM ()
 codegenMain env tree = do
   let codegenState = execCodegen buildBlock
   blks <- createBlocks codegenState
@@ -285,7 +285,7 @@ codegenMain env tree = do
       _ <- asOperand $ codegenTree env tree
       ret $ cons $ C.Int 32 0
 
-codegenDecls :: LEnv -> String -> EObject -> Type -> Type -> ResArrowTree EPrim -> DeclInput -> LLVM ()
+codegenDecls :: LEnv -> String -> EObject -> Type -> Type -> ResArrowTree -> DeclInput -> LLVM ()
 codegenDecls env name obj (SumType partialLeafs) destType tree declInput = case splitPartialLeafs partialLeafs of
   [leaf] -> codegenDecl env name obj leaf destType tree declInput
   _ -> error $ printf "CodegenDecls only supports a singleton partial right now"

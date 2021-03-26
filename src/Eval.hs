@@ -38,7 +38,7 @@ evalCompAnnot env (TupleVal "#assert" args) = case (H.lookup "test" args, H.look
 evalCompAnnot env (TupleVal name _) = evalError env $ printf "Unknown compiler annotation %s" name
 evalCompAnnot env _ = evalError env "Eval: Invalid compiler annotation type"
 
-eval :: Env -> ResArrowTree EPrim -> CRes (Val, Env)
+eval :: Env -> ResArrowTree -> CRes (Val, Env)
 eval env (ResEArrow input object arrow) = do
   (input', env2) <- evalPopVal <$> eval (evalPush env "resEArrow input") input
   let newArrArgs = buildArrArgs object input'
@@ -106,7 +106,7 @@ evalBaseEnv prgm@(objMap, classMap, _) = Env {
         evTreebugClosed = []
                 }
 
-evalBuildPrgm :: EExpr -> PartialType -> Type -> EPrgm -> CRes (ResArrowTree EPrim, Env)
+evalBuildPrgm :: EExpr -> PartialType -> Type -> EPrgm -> CRes (ResArrowTree, Env)
 evalBuildPrgm input srcType destType prgm = do
   let env@Env{evTbEnv} = evalBaseEnv prgm
   initTree <- buildRoot evTbEnv input srcType destType

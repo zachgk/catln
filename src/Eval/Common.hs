@@ -60,8 +60,8 @@ data EvalTreebugClosed = EvalTreebugClosed EObject EArrow Val [EvalTreebugClosed
 data Env = Env { evObjMap :: EObjectMap
                , evClassMap :: ClassMap
                , evArgs :: H.HashMap ArgName Val
-               , evExEnv :: ResExEnv EPrim
-               , evTbEnv :: TBEnv EPrim
+               , evExEnv :: ResExEnv
+               , evTbEnv :: TBEnv
                , evCallStack :: [String]
                , evCoverage :: H.HashMap EArrow Int
                , evTreebugOpen :: [EvalTreebugOpen]
@@ -81,7 +81,7 @@ data Val
   | TupleVal String (H.HashMap String Val)
   | IOVal Integer (IO ())
   | LLVMVal (LLVM ())
-  | LLVMQueue [(ResArrowTree EPrim, Object Typed, Arrow (Expr Typed) Typed)]
+  | LLVMQueue [(ResArrowTree, Object Typed, Arrow (Expr Typed) Typed)]
   | LLVMOperand Type (Codegen AST.Operand)
   | LLVMIO (Codegen ())
   | NoVal
@@ -159,38 +159,38 @@ getValType NoVal = error "getValType of NoVal"
 
 
 --- ResArrowTree
-data MacroData f = MacroData {
-                               mdTbEnv :: TBEnv f
+data MacroData = MacroData {
+                               mdTbEnv :: TBEnv
                              , mdObj :: Object Typed
                              , mdObjSrcType :: PartialType
                              }
-newtype MacroFunction f = MacroFunction (ResArrowTree f -> MacroData f -> CRes (ResArrowTree f))
-type ResBuildEnvFunction f = ResArrowTree f -> ResArrowTree f
-type ResBuildEnvItem f = (PartialType, Guard (Expr Typed), ResBuildEnvFunction f)
-type ResBuildEnv f = H.HashMap TypeName [ResBuildEnvItem f]
-type ResExEnv f = H.HashMap (PartialType, Arrow (Expr Typed) Typed) (ResArrowTree f, [ResArrowTree f]) -- (result, [compAnnot trees])
-type TBEnv f = (ResBuildEnv f, H.HashMap PartialType (ResArrowTree f), Prgm (Expr Typed) Typed, ClassMap)
+newtype MacroFunction = MacroFunction (ResArrowTree -> MacroData -> CRes ResArrowTree)
+type ResBuildEnvFunction = ResArrowTree -> ResArrowTree
+type ResBuildEnvItem = (PartialType, Guard (Expr Typed), ResBuildEnvFunction)
+type ResBuildEnv = H.HashMap TypeName [ResBuildEnvItem]
+type ResExEnv = H.HashMap (PartialType, Arrow (Expr Typed) Typed) (ResArrowTree, [ResArrowTree]) -- (result, [compAnnot trees])
+type TBEnv = (ResBuildEnv, H.HashMap PartialType ResArrowTree, Prgm (Expr Typed) Typed, ClassMap)
 
-instance Eq (MacroFunction f) where
+instance Eq MacroFunction where
   _ == _ = False
 
-instance Hashable (MacroFunction f) where
+instance Hashable MacroFunction where
   s `hashWithSalt` _ = s
 
-data ResArrowTree f
-  = ResEArrow (ResArrowTree f) (Object Typed) (Arrow (Expr Typed) Typed)
-  | PrimArrow (ResArrowTree f) Type f
-  | MacroArrow (ResArrowTree f) Type (MacroFunction f)
+data ResArrowTree
+  = ResEArrow ResArrowTree (Object Typed) (Arrow (Expr Typed) Typed)
+  | PrimArrow ResArrowTree Type EPrim
+  | MacroArrow ResArrowTree Type MacroFunction
   | ExprArrow EExpr Type Type
   | ConstantArrow Val
   | ArgArrow Type String
-  | ResArrowMatch (ResArrowTree f) Type (H.HashMap PartialType (ResArrowTree f))
-  | ResArrowCond Type [((ResArrowTree f, ResArrowTree f, Object Typed), ResArrowTree f)] (ResArrowTree f) -- [((if, ifInput, ifObj), then)] else
-  | ResArrowTuple String (H.HashMap String (ResArrowTree f))
-  | ResArrowTupleApply (ResArrowTree f) String (ResArrowTree f)
+  | ResArrowMatch ResArrowTree Type (H.HashMap PartialType ResArrowTree)
+  | ResArrowCond Type [((ResArrowTree, ResArrowTree, Object Typed), ResArrowTree)] ResArrowTree -- [((if, ifInput, ifObj), then)] else
+  | ResArrowTuple String (H.HashMap String ResArrowTree)
+  | ResArrowTupleApply ResArrowTree String ResArrowTree
   deriving (Eq, Generic, Hashable)
 
-instance Show (ResArrowTree f) where
+instance Show ResArrowTree where
   show (ResEArrow _ obj arrow) = printf "(ResEArrow: %s -> %s)" (show obj) (show arrow)
   show (PrimArrow _ tp _) = "(PrimArrow " ++ show tp ++ ")"
   show (MacroArrow _ tp _) = "(MacroArrow " ++ show tp ++ ")"
@@ -265,10 +265,10 @@ instance Show (Codegen a) where
 
 
 type ObjSrc = (PartialType, Object Typed)
-macroData :: TBEnv f -> ObjSrc -> MacroData f
+macroData :: TBEnv -> ObjSrc -> MacroData
 macroData tbEnv (objSrcType, obj) = MacroData tbEnv obj objSrcType
 
-resArrowDestType :: ClassMap -> PartialType -> ResArrowTree f -> Type
+resArrowDestType :: ClassMap -> PartialType -> ResArrowTree -> Type
 resArrowDestType classMap src (ResEArrow _ obj arr) = arrowDestType False classMap src obj arr
 resArrowDestType _ _ (PrimArrow _ tp _) = tp
 resArrowDestType _ _ (MacroArrow _ tp _) = tp

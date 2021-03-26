@@ -22,7 +22,7 @@ import Syntax.Types
 import Text.Printf
 import Data.Hashable
 
-evalStartEArrow :: Env -> PartialType -> EObject -> EArrow -> Args -> CRes (ResArrowTree EPrim, [ResArrowTree EPrim], Args, Env)
+evalStartEArrow :: Env -> PartialType -> EObject -> EArrow -> Args -> CRes (ResArrowTree, [ResArrowTree], Args, Env)
 evalStartEArrow env@Env{evExEnv, evTbEnv, evArgs, evCoverage, evTreebugOpen} srcType obj arr newArgs = do
   let env' = env{
                 evArgs=newArgs

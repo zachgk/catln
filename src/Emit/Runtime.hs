@@ -26,7 +26,7 @@ import qualified LLVM.AST.Type as ATP
 import Text.Printf
 import qualified LLVM.AST.Typed as ASTT
 
-type Op = (TypeName, [(PartialType, Guard (Expr Typed), ResBuildEnvFunction EPrim)])
+type Op = (TypeName, [(PartialType, Guard (Expr Typed), ResBuildEnvFunction)])
 
 -- TODO: Add genType with varEnv
 -- TODO: Add genType that is a union of multiple types (with tag)
@@ -175,7 +175,7 @@ println = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
                            )
 
 
-primEnv :: ResBuildEnv EPrim
+primEnv :: ResBuildEnv
 primEnv = H.fromListWith (++) [liftIntOp "+" (\l r -> AST.Add False False l r [])
                               , liftIntOp "-" (\l r -> AST.Sub False False l r [])
                               , liftIntOp "*" (\l r -> AST.Mul False False l r [])
