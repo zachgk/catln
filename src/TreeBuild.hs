@@ -93,26 +93,46 @@ envLookupTry env@(_, _, _, classMap) objSrc visitedArrows ee srcType destType re
       v <- envLookup env objSrc' resArrow ee visitedArrows' leafType destType
       return (leafType, v)
 
+-- This function takes a desired type, arrows with various inputs in sorted order of preference
+-- It returns the map of what each arrow should cover for a match tree or a CErr
+-- It is used for arrow declarations that require multiple arrows definitions to constitute
+-- TODO: This would be drastically improved with type difference
+completeTreeSet :: TBEnv f -> PartialType -> [(PartialType, ResArrowTree f)] -> CRes (H.HashMap PartialType (ResArrowTree f))
+completeTreeSet (_, _, _, classMap) fullPartial = aux H.empty bottomType
+  where
+    fullType = singletonType fullPartial
+    aux accMap accType _ | hasType classMap fullType accType = return accMap
+    aux _ accType [] = CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Could not find arrows equaling input %s only found %s" (show fullType) (show accType)]
+    aux accMap accType ((optType, optTree):opts) = do
+      let accType' = intersectTypes classMap fullType $ unionType classMap accType (singletonType optType)
+
+      -- next opt increases accumulation
+      if not (hasType classMap accType' accType)
+        -- Add to accumulation
+        -- TODO: Should use ((optType - accType) ∩ fullType) for insertion, otherwise order may not be correct in matching and match not precise
+        then aux (H.insert optType optTree accMap) accType' opts
+        -- Don't add to accumulation
+        else aux accMap accType opts
+
 data ArrowGuardGroup f
   = NoGuardGroup PartialType (ResArrowTree f)
   | CondGuardGroup [(PartialType, TBExpr, ResArrowTree f)] (PartialType, ResArrowTree f)
 buildGuardArrows :: (Eq f, Hashable f) => TBEnv f -> ObjSrc -> ResArrowTree f -> (TBExpr, Type) -> VisitedArrows f -> PartialType -> Type -> [ArrowGuardGroup f] -> CRes (ResArrowTree f)
 buildGuardArrows env obj input ee visitedArrows srcType destType guards = do
-  trees <- catCRes $ map buildGuard guards
-  case trees of
-    t:_ -> return t
-    [] -> CErr [MkCNote $ BuildTreeCErr Nothing "No BuildGuardArrows found"]
+  treeOptions <- catCRes $ map buildGuard guards
+  finalTrees <- completeTreeSet env srcType treeOptions
+  return $ buildMatch input destType finalTrees
   where
-    buildGuard (NoGuardGroup _ tree) = ltry tree
-    buildGuard (CondGuardGroup ifs (_, elseTree)) = do
+    buildGuard (NoGuardGroup tp tree) = (tp,) <$> ltry tree
+    buildGuard (CondGuardGroup ifs (elseTp, elseTree)) = do
       ifTreePairs <- forM ifs $ \(_, ifCond, ifThen@(ResEArrow _ o _)) -> do
             ifTree' <- buildExprImp env (srcType, o) ifCond (getMetaType $ getExprMeta ifCond) boolType
             thenTree' <- ltry ifThen
             return ((ifTree', input, o), thenTree')
       elseTree' <- ltry elseTree
       return $ case ifTreePairs of
-        [] -> elseTree'
-        _ -> ResArrowCond destType ifTreePairs elseTree'
+        [] -> (elseTp, elseTree')
+        _ -> (elseTp, ResArrowCond destType ifTreePairs elseTree')
     ltry tree = envLookupTry env obj visitedArrows ee srcType destType tree
 
 groupArrows :: ResArrowTree f -> [ResBuildEnvItem f] -> CRes [ArrowGuardGroup f]
@@ -131,7 +151,7 @@ groupArrows = aux ([], Nothing)
 findResArrows :: (Eq f, Hashable f) => TBEnv f -> PartialType -> Type -> CRes [ResBuildEnvItem f]
 findResArrows (resEnv, _, _, classMap) srcType@PartialType{ptName=PTypeName srcName} destType = case H.lookup srcName resEnv of
   Just resArrowsWithName -> do
-    let resArrows = filter (\(arrowType, _, _) -> subPartialOf classMap srcType arrowType) resArrowsWithName
+    let resArrows = filter (\(arrowType, _, _) -> not $ isBottomType $ intersectTypes classMap (singletonType srcType) (singletonType arrowType)) resArrowsWithName
     -- TODO: Sort resArrows by priority order before trying
     return resArrows
   Nothing -> CErr [MkCNote $ BuildTreeCErr Nothing $ "Failed to find any arrows from " ++ show srcType ++ " to " ++ show destType]
@@ -139,17 +159,10 @@ findResArrows _ PartialType{ptName=PClassName{}} _ = error "Can't findResArrows 
 
 envLookup :: (Eq f, Hashable f) => TBEnv f -> ObjSrc -> ResArrowTree f -> (TBExpr, Type) -> VisitedArrows f -> PartialType -> Type -> CRes (ResArrowTree f)
 envLookup (_, _, _, classMap) _ input _ _ srcType destType | hasPartial classMap srcType destType = return input
-envLookup env obj input ee visitedArrows srcType@PartialType{ptName=PTypeName{}} destType = do
+envLookup env obj input ee visitedArrows srcType destType = do
   resArrows <- findResArrows env srcType destType
   guards <- groupArrows input resArrows
   buildGuardArrows env obj input ee visitedArrows srcType destType guards
-envLookup env@(_, _, _, classMap) obj input ee visitedArrows srcType@PartialType{ptName=PClassName{}} destType = do
-  let (SumType expanded) = expandClassPartial classMap srcType
-  let expanded' = splitPartialLeafs expanded
-  expandedTrees <- forM expanded' $ \expandedSrc -> do
-    v <- envLookup env obj input ee visitedArrows expandedSrc destType
-    return (expandedSrc, v)
-  return $ buildMatch input destType $ H.fromList expandedTrees
 
 buildImplicit :: (Eq f, Hashable f) => TBEnv f -> ObjSrc -> TBExpr -> Type -> Type -> CRes (ResArrowTree f)
 buildImplicit _ _ expr srcType TopType = return $ ExprArrow expr srcType srcType
