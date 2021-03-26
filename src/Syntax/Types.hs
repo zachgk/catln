@@ -219,6 +219,30 @@ compactOverlapping classMap = H.mapWithKey compactArgOptions
     filterOptions partialName argOptions option = not $ any (\potentialSuperOption -> option /= potentialSuperOption && hasType classMap (optionToType partialName option) (optionToType partialName potentialSuperOption)) argOptions
     optionToType name (vars, props, args, argMode) = singletonType (PartialType name vars props args argMode)
 
+-- joins partials with only one difference between their args or vars
+-- TODO: Should check if props are suitable for joining
+compactJoinPartials :: ClassMap -> PartialLeafs -> PartialLeafs
+compactJoinPartials classMap partials = joinPartialLeafs $ concat $ H.elems $ fmap joinMatchArgPartials $ H.fromListWith (++) $ map prepGroupJoinable $ splitPartialLeafs partials
+  where
+    -- group partials by argSet and varSet to check for joins
+    prepGroupJoinable partial@PartialType{ptName, ptArgs, ptVars, ptArgMode} = ((ptName, H.keysSet ptArgs, H.keysSet ptVars, ptArgMode), [partial])
+
+    -- Checks pairs of tuples for joins
+    joinMatchArgPartials [] = []
+    joinMatchArgPartials (p:ps) = joinMatchArgPartialsAux p ps []
+    joinMatchArgPartialsAux curPartial [] tried = curPartial:joinMatchArgPartials tried
+    joinMatchArgPartialsAux curPartial (toTry:toTrys) tried = case tryJoin curPartial toTry of
+      Just joined -> joinMatchArgPartialsAux joined toTrys tried
+      Nothing -> joinMatchArgPartialsAux curPartial toTrys (toTry:tried)
+
+    -- if two partials differ by only one arg or var, joins them else Nothing
+    tryJoin (PartialType name1 vars1 props1 args1 mode1) (PartialType _ vars2 props2 args2 _) = if numDifferences args1 args2 + numDifferences vars1 vars2 == 1
+      then Just $ PartialType name1 (joinMap vars1 vars2) (joinMap props1 props2) (joinMap args1 args2) mode1
+      else Nothing
+
+    numDifferences m1 m2 = sum $ fromEnum <$> H.intersectionWith (/=) m1 m2
+    joinMap m1 m2 = H.unionWith (unionType classMap) m1 m2
+
 -- compacts partials where a type variable is the bottomType to a bottomType
 compactBottomTypeVars :: PartialLeafs -> PartialLeafs
 compactBottomTypeVars partials = joinPartialLeafs $ mapMaybe aux $ splitPartialLeafs partials
@@ -232,7 +256,7 @@ compactBottomTypeVars partials = joinPartialLeafs $ mapMaybe aux $ splitPartialL
 compactType :: ClassMap -> Type -> Type
 compactType _ TopType = TopType
 compactType _ t@TypeVar{} = t
-compactType classMap (SumType partials) = SumType $ (compactOverlapping classMap . nonEmpty . compactBottomTypeVars) partials
+compactType classMap (SumType partials) = SumType $ (compactOverlapping classMap . compactJoinPartials classMap . nonEmpty . compactBottomTypeVars) partials
   where nonEmpty = H.filter (not . S.null)
 
 unionType :: ClassMap -> Type -> Type -> Type
