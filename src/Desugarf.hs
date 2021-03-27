@@ -234,7 +234,7 @@ desClassDefs :: Sealed -> [RawClassDef] -> DesPrgm
 desClassDefs sealed classDefs = ([], foldr addDef empty classDefs, [])
   where
     empty = (H.empty, H.empty)
-    addDef (typeName, className) (typeToClass, classToType) = (H.insertWith S.union typeName (S.singleton className) typeToClass, H.insertWith addClass className (sealed, H.empty, [singletonType (PartialType (PTypeName typeName) H.empty H.empty H.empty PtArgExact)]) classToType)
+    addDef ((typeName, typeVars), className) (typeToClass, classToType) = (H.insertWith S.union typeName (S.singleton className) typeToClass, H.insertWith addClass className (sealed, H.empty, [singletonType (PartialType (PTypeName typeName) typeVars H.empty H.empty PtArgExact)]) classToType)
     addClass (cSealed, cVars, set1) (_, _, set2) = (cSealed, cVars, set1 ++ set2)
 
 mergeObjMaps :: DesObjectMap -> DesObjectMap -> DesObjectMap

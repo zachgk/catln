@@ -104,7 +104,7 @@ newtype TypeDef m = TypeDef m
 data MultiTypeDef m = MultiTypeDef ClassName (H.HashMap TypeVarName Type) [m]
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
-type RawClassDef = (TypeName, ClassName)
+type RawClassDef = ((TypeName, H.HashMap TypeVarName Type), ClassName)
 
 type RawClassDecl = (ClassName, H.HashMap TypeVarName Type)
 

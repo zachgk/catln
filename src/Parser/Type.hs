@@ -22,6 +22,7 @@ import           Syntax.Prgm
 import           Syntax
 import           Parser.Lexer
 import Parser.Syntax
+import Data.Maybe
 
 pLeafVar :: Parser (TypeVarName, Type)
 pLeafVar = do
@@ -31,12 +32,14 @@ pLeafVar = do
   let tp = maybe TopType (\n -> singletonType (PartialType (PTypeName n) H.empty H.empty H.empty PtArgExact)) maybeClass
   return (var, tp)
 
--- TODO: Currently only parses `$T` as sugar for `$T=$T`
--- Should eventually also support the full `$A=$B`
 pTypeVar :: Parser (TypeVarName, Type)
 pTypeVar = do
   var <- tvar
-  return (var, TypeVar $ TVVar var)
+  maybeVal <- optional $ do
+    _ <- symbol "="
+    tvar
+  let val = fromMaybe var maybeVal
+  return (var, TypeVar $ TVVar val)
 
 -- TODO: Parse type properties
 pIdArg :: Parser (String, Type)
@@ -117,9 +120,11 @@ pClassDefStatement :: Parser PStatement
 pClassDefStatement = do
   _ <- symbol "instance"
   typeName <- tidentifier
+  maybeVars <- optional $ angleBraces $ sepBy1 pTypeVar (symbol ",")
+  let vars = maybe H.empty H.fromList maybeVars
   _ <- symbol "of"
   className <- tidentifier
-  return $ RawClassDefStatement (typeName, className)
+  return $ RawClassDefStatement ((typeName, vars), className)
 
 pTypeStatement :: Parser PStatement
 pTypeStatement = pClassStatement

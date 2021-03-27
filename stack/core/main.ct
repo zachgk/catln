@@ -65,6 +65,19 @@ operator==(String l, String r) -> Boolean
 toString(String this) -> String = this
 toString(Integer this) -> String
 
+// ## Collections
+
+class Functor<$T>
+// fmap<Functor $F>($F<$T=$A> this, fn($A) -> $B) -> $F<$T=$B>
+
+// ## Collections
+
+class Option<$T> = $T | None
+
+instance Option<$T> of Functor
+// fmap(this=None, fn) = None
+// fmap($T this, fn($T)) = fn(this)
+
 // ## List
 
 class ConsList<$T> = Cons<$T>($T head, ConsList<$T> tail) | Nil
@@ -73,6 +86,9 @@ operator::<$T>($T l, ConsList<$T> r) = Cons(head=l, tail=r)
 length(this=Nil) = 0
 length(this=Cons(head, tail)) = 1 + tail.length
 
+instance ConsList<$T> of Functor
+// fmap(this=Nil, fn) = Nil
+// fmap(this=Cons(head, tail), fn) = Cons(head=fn(head), tail=tail.fmap(fn))
 
 // ## IO
 
@@ -80,9 +96,6 @@ data IO
 exit(IO this, Integer val) -> IO
 println(IO this, String msg) -> IO
 
-// ## Collections
-
-class Option<$T> = $T | None
 
 // ## Core Annotations
 
