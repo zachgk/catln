@@ -40,58 +40,58 @@ maybeJson (CRes notes r) = json $ Success r notes
 maybeJson (CErr notes) = json (ResFail notes :: ResSuccess () CNote)
 
 getRawPrgm :: Bool -> String -> IO (CRes [(String, PPrgm)])
-getRawPrgm includeStd fileName = readFiles (fileName : ["std/std.ct" | includeStd])
+getRawPrgm includeCore fileName = readFiles (fileName : ["stack/core/main.ct" | includeCore])
 
 getPrgm :: Bool -> String -> IO (CRes DesPrgm)
-getPrgm includeStd fileName = do
-  base <- getRawPrgm includeStd fileName
+getPrgm includeCore fileName = do
+  base <- getRawPrgm includeCore fileName
   return (base >>= desFiles)
 
 getTPrgmWithTrace :: Bool -> String -> IO (CRes (TPrgm, VPrgm, TraceConstrain))
-getTPrgmWithTrace includeStd fileName = do
-  base <- getPrgm includeStd fileName
+getTPrgmWithTrace includeCore fileName = do
+  base <- getPrgm includeCore fileName
   return (base >>= typecheckPrgmWithTrace)
 
 getTPrgm :: Bool -> String -> IO (CRes TPrgm)
-getTPrgm includeStd fileName = do
-  base <- getPrgm includeStd fileName
+getTPrgm includeCore fileName = do
+  base <- getPrgm includeCore fileName
   return (base >>= typecheckPrgm)
 
 getTreebug :: Bool -> String -> IO EvalResult
-getTreebug includeStd fileName = do
-  base <- getTPrgm includeStd fileName
+getTreebug includeCore fileName = do
+  base <- getTPrgm includeCore fileName
   let pre = base >>= evalMain
   case pre of
     CRes _ r -> snd <$> r
     CErr _ -> fail "No eval result found"
 
 getEvaluated :: Bool -> String -> IO Integer
-getEvaluated includeStd fileName = do
-  base <- getTPrgm includeStd fileName
+getEvaluated includeCore fileName = do
+  base <- getTPrgm includeCore fileName
   let pre = base >>= evalMain
   case pre of
     CRes _ r -> fst <$> r
     CErr _ -> return 999
 
 getEvalBuild :: Bool -> String -> IO Val
-getEvalBuild includeStd fileName = do
-  base <- getTPrgm includeStd fileName
+getEvalBuild includeCore fileName = do
+  base <- getTPrgm includeCore fileName
   let pre = base >>= evalMainb
   case pre of
     CRes _ r -> fst <$> r
     CErr _ -> return NoVal
 
 getEvalAnnots :: Bool -> String -> IO [(Expr Typed, Val)]
-getEvalAnnots includeStd fileName = do
-  base <- getTPrgm includeStd fileName
+getEvalAnnots includeCore fileName = do
+  base <- getTPrgm includeCore fileName
   let pre = base >>= evalAnnots
   case pre of
     CRes _ r -> return r
     CErr _ -> return []
 
 getWeb :: Bool -> String -> IO String
-getWeb includeStd fileName = do
-  base <- getTPrgm includeStd fileName
+getWeb includeCore fileName = do
+  base <- getTPrgm includeCore fileName
   let pre = base >>= evalMainb
   case pre of
     CRes _ r -> do
@@ -103,47 +103,47 @@ getWeb includeStd fileName = do
 
 
 docServe :: Bool -> String -> IO ()
-docServe includeStd fileName = do
+docServe includeCore fileName = do
 
   scotty 31204 $ do
     get "/files" $ do
       json $ Success ["File: ", T.pack fileName] ([] :: String)
 
     get "/raw" $ do
-      maybeRawPrgm <- liftAndCatchIO $ getRawPrgm includeStd fileName
+      maybeRawPrgm <- liftAndCatchIO $ getRawPrgm includeCore fileName
       maybeJson maybeRawPrgm
 
     get "/pages" $ do
-      maybeRawPrgm <- liftAndCatchIO $ getRawPrgm includeStd fileName
-      annots <- liftAndCatchIO $ getEvalAnnots includeStd fileName
+      maybeRawPrgm <- liftAndCatchIO $ getRawPrgm includeCore fileName
+      annots <- liftAndCatchIO $ getEvalAnnots includeCore fileName
       maybeJson $ do
         rawPrgm <- maybeRawPrgm
         return (rawPrgm, annots)
 
     get "/desugar" $ do
-      maybePrgm <- liftAndCatchIO $ getPrgm includeStd fileName
+      maybePrgm <- liftAndCatchIO $ getPrgm includeCore fileName
       maybeJson maybePrgm
 
     get "/constrain" $ do
-      maybeTprgmWithTrace <- liftAndCatchIO $ getTPrgmWithTrace includeStd fileName
+      maybeTprgmWithTrace <- liftAndCatchIO $ getTPrgmWithTrace includeCore fileName
       maybeJson maybeTprgmWithTrace
 
     get "/typecheck" $ do
-      maybeTprgm <- liftAndCatchIO $ getTPrgm includeStd fileName
+      maybeTprgm <- liftAndCatchIO $ getTPrgm includeCore fileName
       maybeJson maybeTprgm
 
     get "/treebug" $ do
-      treebug <- liftAndCatchIO $ getTreebug includeStd fileName
+      treebug <- liftAndCatchIO $ getTreebug includeCore fileName
       json $ Success treebug ([] :: [String])
 
     get "/eval" $ do
-      evaluated <- liftAndCatchIO $ getEvaluated includeStd fileName
+      evaluated <- liftAndCatchIO $ getEvaluated includeCore fileName
       json $ Success evaluated ([] :: [String])
 
     get "/evalBuild" $ do
-      build <- liftAndCatchIO $ getEvalBuild includeStd fileName
+      build <- liftAndCatchIO $ getEvalBuild includeCore fileName
       json $ Success build ([] :: [String])
 
     get "/web" $ do
-      build <- liftAndCatchIO $ getWeb includeStd fileName
+      build <- liftAndCatchIO $ getWeb includeCore fileName
       html (T.pack build)

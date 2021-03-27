@@ -24,12 +24,15 @@ import           System.Environment
 
 type ReplEnv = ([RawStatement PreTyped], RawPrgms PreTyped)
 
+coreImport :: String
+coreImport = "stack/core/main.ct"
+
 buildReplBaseEnv :: IO ReplEnv
 buildReplBaseEnv = do
-  rawStd <- readFiles ["std/std.ct"]
-  case rawStd of
+  rawCore <- readFiles [coreImport]
+  case rawCore of
     CRes _ r -> return ([], r)
-    CErr _ -> fail "Could not read std"
+    CErr _ -> fail "Could not read core"
 
 parsingRepl :: ReplEnv -> String -> IO ReplEnv
 parsingRepl env source = case parseRepl source of
@@ -68,17 +71,17 @@ mainStatement expr = RawDeclStatement $ RawDecl lhs [] (Just wrappedExpr)
     wrappedExpr = RawMethods (RawValue emptyMetaN "io") [RawTupleApply emptyMetaN (emptyMetaN, RawValue emptyMetaN "println") [RawTupleArgNamed "msg" (RawMethods expr [RawValue emptyMetaN "toString"])]]
 
 processRepl :: ReplEnv -> String -> IO ReplEnv
-processRepl env@(envRepl, envStd) source = do
+processRepl env@(envRepl, envCore) source = do
   let res = parseRepl source
   case res of
     ReplErr err -> print err >> return env
     ReplExpr expr -> do
       -- main(IO io) = io.println(msg=expr.toString)
-      let replRawPrgm = (["std/std.ct"], mainStatement expr:envRepl)
-      let des = desFiles (("replMain", replRawPrgm):envStd)
+      let replRawPrgm = ([coreImport], mainStatement expr:envRepl)
+      let des = desFiles (("replMain", replRawPrgm):envCore)
       processDes des
       return env
-    ReplStatement s -> return (s:envRepl, envStd)
+    ReplStatement s -> return (s:envRepl, envCore)
 
 process :: [String] -> IO ()
 process source = do
@@ -88,7 +91,7 @@ process source = do
     CRes _ raw' -> processDes (desFiles raw')
 
 processFile :: String -> IO ()
-processFile fname = process [fname, "std/std.ct"]
+processFile fname = process [fname, coreImport]
 
 repl :: IO ()
 repl = do
