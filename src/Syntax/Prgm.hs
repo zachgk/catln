@@ -49,6 +49,7 @@ data RawExpr m
   = RawCExpr m Constant
   | RawValue m TypeName
   | RawTupleApply m (m, RawExpr m) [RawTupleArg m]
+  | RawParen (RawExpr m)
   | RawMethods (RawExpr m) [RawExpr m]
   | RawIfThenElse m (RawExpr m) (RawExpr m) (RawExpr m)
   | RawMatch m (RawExpr m) [(Pattern (RawExpr m) m, RawExpr m)]

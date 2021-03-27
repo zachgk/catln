@@ -131,6 +131,7 @@ semiDesExpr (RawTupleApply m'' (bm, be) args) = (\(a, _, PSTupleApply _ (bm'', b
       where (subArgVal, argVal') = semiDesExpr argVal
     aux (sub, m, e) (RawTupleArgInfer argVal) = (subArgVal ++ sub, emptyMetaM "res" m'', PSTupleApply (emptyMetaM "app" m'') (m, e) Nothing argVal')
       where (subArgVal, argVal') = semiDesExpr argVal
+semiDesExpr (RawParen e) = semiDesExpr e
 semiDesExpr (RawMethods base methods) = semiDesExpr $ foldl addMethod base methods
   where
     addMethod b method@RawValue{} = RawTupleApply (emptyMetaE "app" b) (emptyMetaE "appBase" method, method) [RawTupleArgNamed "this" b]

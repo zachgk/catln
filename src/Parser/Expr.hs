@@ -91,6 +91,11 @@ pStringLiteral = do
   pos2 <- getSourcePos
   return $ RawCExpr (emptyMeta pos1 pos2) (CStr s)
 
+parenExpr :: Parser PExpr
+parenExpr = do
+  e <- parens pExpr
+  return $ RawParen e
+
 pIfThenElse :: Parser PExpr
 pIfThenElse = do
   pos1 <- getSourcePos
@@ -151,9 +156,10 @@ pValue = do
   pos2 <- getSourcePos
   return $ RawValue (emptyMeta pos1 pos2) v
 
+
 term :: Parser PExpr
 term = do
-  base <- try (parens pExpr)
+  base <- try parenExpr
        <|> pIfThenElse
        <|> pMatch
        <|> pCase
