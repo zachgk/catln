@@ -174,6 +174,8 @@ semiDesExpr r@(RawCase m e ((Pattern firstObj@(Object fm _ _ _ _) firstGuard, fi
     (subRE, restExpr') = semiDesExpr (RawCase m e restCases)
     (subE, e') = semiDesExpr e
     expr' = PSTupleApply m (emptyMetaM "app" m, PSValue (emptyMetaE "val" e) condName) (Just argName) e'
+semiDesExpr (RawList m []) = semiDesExpr (RawValue m "Nil")
+semiDesExpr (RawList m (l:ls)) = semiDesExpr (RawTupleApply (emptyMetaM "listApp" (getExprMeta l)) (emptyMetaM "listBase" (getExprMeta l), RawValue m "Cons") [RawTupleArgNamed "head" l, RawTupleArgNamed "tail" (RawList m ls)])
 
 
 semiDesGuard :: PGuard -> ([PSemiDecl], PSGuard)

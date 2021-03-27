@@ -149,6 +149,15 @@ pInt = do
   pos2 <- getSourcePos
   return $ RawCExpr (emptyMeta pos1 pos2) (CInt i)
 
+pList :: Parser PExpr
+pList = do
+  pos1 <- getSourcePos
+  _ <- string "["
+  lst <- sepBy pExpr (symbol ",")
+  _ <- string "]"
+  pos2 <- getSourcePos
+  return $ RawList (emptyMeta pos1 pos2) lst
+
 pValue :: Parser PExpr
 pValue = do
   pos1 <- getSourcePos
@@ -165,6 +174,7 @@ term = do
        <|> pCase
        <|> pStringLiteral
        <|> pInt
+       <|> pList
        <|> try pCall
        <|> pValue
   methods <- many pMethod

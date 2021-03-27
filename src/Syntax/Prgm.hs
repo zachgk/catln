@@ -54,6 +54,7 @@ data RawExpr m
   | RawIfThenElse m (RawExpr m) (RawExpr m) (RawExpr m)
   | RawMatch m (RawExpr m) [(Pattern (RawExpr m) m, RawExpr m)]
   | RawCase m (RawExpr m) [(Pattern (RawExpr m) m, RawExpr m)]
+  | RawList m [RawExpr m]
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 -- Expr (to infer) from desugar to typecheck
@@ -190,10 +191,12 @@ instance ExprClass RawExpr where
     RawCExpr m _   -> m
     RawValue m _   -> m
     RawTupleApply m _ _ -> m
+    RawParen e -> getExprMeta e
     RawMethods e _ -> getExprMeta e
     RawIfThenElse m _ _ _ -> m
     RawMatch m _ _ -> m
     RawCase m _ _ -> m
+    RawList m _ -> m
 
   getExprArg _ = Nothing
 
