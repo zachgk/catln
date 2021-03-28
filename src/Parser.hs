@@ -28,6 +28,7 @@ import Parser.Type (pTypeStatement)
 import Syntax.Prgm
 import qualified Text.Megaparsec.Char.Lexer as L
 import Data.List
+import Data.Maybe
 
 pImport :: Parser String
 pImport = do
@@ -48,22 +49,22 @@ pGlobalAnnot = do
   RawGlobalAnnot <$> pCompAnnot
 
 pStatement :: Parser PStatement
-pStatement = do
-  statement <- pTypeStatement
-             <|> pComment
-             <|> pGlobalAnnot
-             <|> pRootDecl
-  _ <- many newline
-  return statement
+pStatement = pTypeStatement
+    <|> pComment
+    <|> pGlobalAnnot
+    <|> pRootDecl
+
+pNothingNewline :: Parser (Maybe a)
+pNothingNewline = do
+  _ <- newline
+  return Nothing
 
 pPrgm :: Parser PPrgm
 pPrgm = do
   _ <- many newline
   imports <- many pImport
-  _ <- many newline
-  statements <- many pStatement
-  _ <- many newline
-  return (imports, statements)
+  statements <- many (Just <$> try pStatement <|> pNothingNewline)
+  return (imports, catMaybes statements)
 
 contents :: Parser a -> Parser a
 contents p = do

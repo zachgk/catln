@@ -61,7 +61,7 @@ ops = [
 
 pCallArg :: Parser PTupleArg
 pCallArg = do
-  maybeArgName <- optional $ do
+  maybeArgName <- optional . try $ do
     n <- identifier
     _ <- symbol "="
     return n
@@ -158,25 +158,16 @@ pList = do
   pos2 <- getSourcePos
   return $ RawList (emptyMeta pos1 pos2) lst
 
-pValue :: Parser PExpr
-pValue = do
-  pos1 <- getSourcePos
-  v <- tidentifier
-  pos2 <- getSourcePos
-  return $ RawValue (emptyMeta pos1 pos2) v
-
-
 term :: Parser PExpr
 term = do
-  base <- try parenExpr
+  base <- parenExpr
        <|> pIfThenElse
        <|> pMatch
        <|> pCase
        <|> pStringLiteral
        <|> pInt
        <|> pList
-       <|> try pCall
-       <|> pValue
+       <|> pCall
   methods <- many pMethod
   return $ case methods of
     [] -> base
@@ -198,7 +189,7 @@ pElseGuard = do
   return ElseGuard
 
 pPatternGuard :: Parser PGuard
-pPatternGuard = fromMaybe NoGuard <$> optional (try pIfGuard
+pPatternGuard = fromMaybe NoGuard <$> optional (pIfGuard
                                               <|> pElseGuard
                                             )
 
@@ -237,7 +228,7 @@ pObjTree :: ObjectBasis -> Parser PObject
 pObjTree basis = do
   pos1 <- getSourcePos
   name <- opIdentifier <|> identifier <|> tidentifier
-  vars <- try $ optional $ angleBraces $ sepBy1 pObjTreeVar (symbol ",")
+  vars <- optional $ angleBraces $ sepBy1 pObjTreeVar (symbol ",")
   args <- optional $ parens pObjTreeArgs
   pos2 <- getSourcePos
   let vars' = maybe H.empty H.fromList vars
@@ -271,7 +262,7 @@ pTypeVar = TypeVar . TVVar <$> tvar
 pLeafType :: Parser PartialType
 pLeafType = do
   name <- tidentifier
-  maybeVars <- try $ optional $ angleBraces $ sepBy1 pLeafVar (symbol ",")
+  maybeVars <- optional $ angleBraces $ sepBy1 pLeafVar (symbol ",")
   maybeArgs <- optional $ parens (sepBy1 pTypeArg (symbol ","))
   let vars = maybe H.empty H.fromList maybeVars
   let args = maybe H.empty H.fromList maybeArgs
