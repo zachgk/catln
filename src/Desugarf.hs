@@ -289,8 +289,8 @@ finalPasses = expandDataReferences . typeNameToClass
 desPrgm :: PPrgm -> CRes DesPrgm
 desPrgm (_, statements) = return $ finalPasses $ desStatements statements
 
-desFiles :: PPrgms -> CRes DesPrgm
-desFiles rawPrgms = desPrgm $ foldr (joinPrgms . snd) emptyPrgm rawPrgms
+desFiles :: [PPrgmTree] -> CRes DesPrgm
+desFiles rawPrgms = desPrgm $ foldr joinPrgms emptyPrgm rawPrgms
   where
     emptyPrgm = ([], [])
-    joinPrgms (aImports, aStatements) (bImports, bStatements) = (aImports ++ bImports, aStatements ++ bStatements)
+    joinPrgms (RawPrgmTree _ (aImports, aStatements) subPrgms) (bImports, bStatements) = foldr joinPrgms (aImports ++ bImports, aStatements ++ bStatements) subPrgms

@@ -120,7 +120,8 @@ data RawStatement m
 
 type FileImport = String
 type RawPrgm m = ([FileImport], [RawStatement m]) -- TODO: Include [Export]
-type RawPrgms m = [(String, RawPrgm m)]
+data RawPrgmTree m = RawPrgmTree String (RawPrgm m) [RawPrgmTree m]
+  deriving (Eq, Generic, ToJSON)
 
 type ObjArg m = (m, Maybe (Object m))
 data ObjectBasis = FunctionObj | TypeObj | PatternObj | MatchObj

@@ -86,13 +86,18 @@ parseRepl s = case runParser (contents p) "<repl>" s of
                 Right (Right expr)            -> ReplExpr expr
   where p = try (Left <$> pStatement) <|> try (Right <$> pExpr)
 
-readFiles :: [String] -> IO (CRes [(String, PPrgm)])
-readFiles = aux [] S.empty
+readFiles :: [String] -> IO (CRes [RawPrgmTree ParseMeta])
+readFiles = fmap (fmap snd) . aux [] S.empty
   where
-    aux acc _ [] = return $ return acc
+    aux :: [RawPrgmTree ParseMeta] -> S.HashSet String -> [String] -> IO (CRes (S.HashSet String, [RawPrgmTree ParseMeta]))
+    aux acc visited [] = return $ return (visited, acc)
     aux acc visited (nextToVisit:restToVisit) | S.member nextToVisit visited = aux acc visited restToVisit
     aux acc visited (nextToVisit:restToVisit) = do
       f <- readFile nextToVisit
       case parseFile nextToVisit f of
         CErr notes -> return $ CErr notes
-        CRes _ prgm@(parsedImports, _) -> aux ((nextToVisit, prgm):acc) (S.insert nextToVisit visited) (parsedImports ++ restToVisit)
+        CRes _ prgm@(parsedImports, _) -> do
+          sub <- aux [] (S.insert nextToVisit visited) parsedImports
+          case sub of
+            CErr notes -> return $ CErr notes
+            CRes _ (subVisited, subPrgms) -> aux (RawPrgmTree nextToVisit prgm subPrgms : acc) subVisited restToVisit

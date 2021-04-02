@@ -25,7 +25,7 @@ import           CRes
 import TypeCheck (typecheckPrgm, typecheckPrgmWithTrace)
 import           Eval (evalMain, evalMainb, evalAnnots)
 import Parser (readFiles)
-import Parser.Syntax (DesPrgm, PPrgm)
+import Parser.Syntax (DesPrgm, PPrgmTree)
 import TypeCheck.Common (TraceConstrain, VPrgm, TPrgm)
 import Eval.Common (Val(..), Val, EvalResult)
 import Syntax.Prgm (Expr)
@@ -39,7 +39,7 @@ maybeJson :: (ToJSON a) => CRes a -> ActionM ()
 maybeJson (CRes notes r) = json $ Success r notes
 maybeJson (CErr notes) = json (ResFail notes :: ResSuccess () CNote)
 
-getRawPrgm :: Bool -> String -> IO (CRes [(String, PPrgm)])
+getRawPrgm :: Bool -> String -> IO (CRes [PPrgmTree])
 getRawPrgm includeCore fileName = readFiles (fileName : ["stack/core/main.ct" | includeCore])
 
 getPrgm :: Bool -> String -> IO (CRes DesPrgm)
