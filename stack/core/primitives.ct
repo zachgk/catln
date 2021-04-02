@@ -1,0 +1,53 @@
+import stack/core/algebra.ct
+
+// # Catln Core Library
+
+// ## Booleans
+
+class Boolean = True | False
+
+instance Boolean of Eq
+operator==(True l, True r) = True
+operator==(True l, False r) = False
+operator==(False l, True r) = False
+operator==(False l, False r) = True
+
+operator~(Boolean a) -> Boolean
+operator~(True a) = False
+operator~(False a) = True
+
+operator&(Boolean l, Boolean r) -> Boolean
+operator&(True l, True r) = True
+operator&(Boolean l, False r) = False
+operator&(False l, Boolean r) = False
+
+operator|(Boolean l, Boolean r) -> Boolean
+operator|(True l, Boolean r) = True
+operator|(Boolean l, True r) = True
+operator|(False l, False r) = False
+
+operator^(Boolean l, Boolean r) -> Boolean
+operator^(True l, True r) = False
+operator^(True l, False r) = True
+operator^(False l, True r) = True
+operator^(False l, False r) = False
+
+
+// ## Integers
+
+class Number = Integer | Float
+instance Number of Eq
+
+operator-(Integer a) -> Integer
+
+operator-(Integer l, Integer r) -> Integer
+operator+(Integer l, Integer r) -> Integer
+operator*(Integer l, Integer r) -> Integer
+
+operator<=(Integer l, Integer r) -> Boolean
+operator>=(Integer l, Integer r) -> Boolean
+operator<(Integer l, Integer r) -> Boolean
+operator>(Integer l, Integer r) -> Boolean
+operator==(Integer l, Integer r) -> Boolean
+operator!=(Integer l, Integer r) -> Boolean
+

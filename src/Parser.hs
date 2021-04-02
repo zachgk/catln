@@ -33,7 +33,9 @@ import Data.Maybe
 pImport :: Parser String
 pImport = do
   _ <- symbol "import"
-  some printChar
+  imp <- some printChar
+  _ <- newline
+  return imp
 
 pComment :: Parser PStatement
 pComment = RawComment <$> L.indentBlock scn p

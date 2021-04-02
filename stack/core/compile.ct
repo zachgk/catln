@@ -1,0 +1,28 @@
+import stack/core/primitives.ct
+import stack/core/data.ct
+
+// # Catln Core Compiling Types and Annotations
+
+// ## IO
+
+data IO
+exit(IO this, Integer val) -> IO
+println(IO this, String msg) -> IO
+
+
+// ## Core Annotations
+
+annot #assert(Boolean test)
+annot #assert(Boolean test, String msg)
+annot #print(CatlnResult p)
+
+// ## Result Classes
+
+data CatlnResult(String name, String contents)
+www(String html) = CatlnResult(name="index.html", contents=html)
+
+main(IO io) -> IO
+llvm(c) -> CatlnResult
+mainb else -> CatlnResult = llvm(c=main)
+
+
