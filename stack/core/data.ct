@@ -25,6 +25,8 @@ instance Option<$T> of Functor
 
 // ## List
 
+class List<$T>
+
 class ConsList<$T> = Cons<$T>($T head, ConsList<$T> tail) | Nil
 operator::<$T>($T l, ConsList<$T> r) = Cons(head=l, tail=r)
 
@@ -34,3 +36,13 @@ length(this=Cons(head, tail)) = 1 + tail.length
 instance ConsList<$T> of Functor
 // fmap(this=Nil, fn) = Nil
 // fmap(this=Cons(head, tail), fn) = Cons(head=fn(head), tail=tail.fmap(fn))
+
+// ## Set
+
+class Set<$T>
+
+// ## Enum
+
+class Enum
+
+enum<Enum $T> -> Set<$T>

@@ -1,4 +1,5 @@
 import stack/core/algebra.ct
+import stack/core/data.ct
 
 // # Catln Core Library
 
@@ -32,6 +33,9 @@ operator^(True l, False r) = True
 operator^(False l, True r) = True
 operator^(False l, False r) = False
 
+instance Boolean of Enum
+// enum<Boolean> = [False, True]
+
 
 // ## Integers
 
@@ -51,3 +55,9 @@ operator>(Integer l, Integer r) -> Boolean
 operator==(Integer l, Integer r) -> Boolean
 operator!=(Integer l, Integer r) -> Boolean
 
+instance Integer of CommutativeMonoid
+instance Integer of Group
+
+mempty<Integer $T> = 0
+mappend<Integer $T>($T l, $T r) = l + r
+inverse<Integer $T>($T t) = -t

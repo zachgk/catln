@@ -1,6 +1,85 @@
+import stack/core/primitives.ct
+import stack/core/compile.ct
+
 // # Catln Core Abstract Algebra Types
 
 class Eq
 operator==<Eq $T>($T l, $T r) -> Boolean
+operator!=<Eq $T>($T l, $T r) -> Boolean
 
-class Ordering = LT | EQ | GT
+operator!=(l, r) = ~(l == r)
+
+class Ordering = LessThan | Equal | GreaterThan
+
+class POrdering = Ordering | NoOrdering
+
+class POrd
+
+class Ord
+instance Ord of POrd
+instance Ord of Eq
+
+compare<Ord $T>($T l, $T r) -> Ordering
+compare<POrd $T>($T l, $T r) -> POrdering
+
+operator<=<Ord $T>($T l, $T r) -> Boolean
+operator>=<Ord $T>($T l, $T r) -> Boolean
+operator<<Ord $T>($T l, $T r) -> Boolean
+operator><Ord $T>($T l, $T r) -> Boolean
+
+// max<Ord $T>($T l, $T r) -> $T = if l >= r then l else r
+// min<Ord $T>($T l, $T r) -> $T = if l <= r then l else r
+
+// TODO: Tests and properties for compare
+
+
+// ## Semigroup
+
+class Semigroup
+instance Semigroup of Eq
+
+mappend<Semigroup $T>($T l, $T r) -> $T
+
+testSemigroupAssociative<Semigroup $T>($T a, $T b, $T c) =
+  #test
+  #assert(test=mappend(l=mappend(l=a, r=b), r=c) == mappend(l=a, r=mappend(l=b, r=c)))
+  0
+
+class Monoid
+instance Monoid of Semigroup
+
+mempty<Monoid $T> -> $T
+
+testRightMonoidIdentity<Monoid $T>($T t) =
+  #test
+  #assert(test=mappend(l=t, r=mempty) == t)
+  0
+
+testLeftMonoidIdentity<Monoid $T>($T t) =
+  #test
+  #assert(test=mappend(l=mempty, r=t) == t)
+  0
+
+// mconcat<Monoid $T>(List<$T> lst) = lst.fold(mappend, mempty)
+
+class CommutativeMonoid
+
+// This is also called an Abelian Monoid
+
+instance CommutativeMonoid of Monoid
+
+testCommutativeMonoid<CommutativeMonoid $T>($T a, $T b) =
+  #test
+  #assert(test=mappend(l=a, r=b) == mappend(l=b, r=a))
+  0
+
+class Group
+instance Group of Monoid
+
+inverse<Group $T>($T t) -> $T
+
+testGroup<Group $T>($T t) =
+  #test
+  #assert(test=mappend(l=t, r=inverse(t)) == mempty)
+  #assert(test=mappend(l=inverse(t), r=t) == mempty)
+  0
