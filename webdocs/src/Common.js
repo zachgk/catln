@@ -1,5 +1,7 @@
 import React, {useState, useEffect} from 'react';
 
+import {Link} from 'react-router-dom';
+
 import SyntaxHighlighter from 'react-syntax-highlighter';
 
 function tagJoin(lst, joinWith) {
@@ -200,19 +202,21 @@ function Type(props) {
 
 function PartialName(props) {
   const {name} = props;
-  let style;
+  let style, link;
   switch(name.tag) {
   case "PTypeName":
     style = useStyles.partialName.tp;
+    link = `/type/${name.contents}`;
     break;
   case "PClassName":
     style = useStyles.partialName.class;
+    link = `/class/${name.contents}`;
     break;
   default:
     console.error("Unknown partial name", name);
     style = {};
   }
-  return <span style={style}>{name.contents}</span>;
+  return <Link to={link} style={style}>{name.contents}</Link>;
 }
 
 

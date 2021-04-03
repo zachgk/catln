@@ -22,6 +22,8 @@ import Build from './Build';
 import Docs from './Docs';
 import Constrain from './Constrain';
 import Debug from './Debug';
+import TypePage from './Type';
+import Class from './Class';
 
 function App() {
   return (
@@ -65,6 +67,12 @@ function App() {
           </Route>
           <Route path="/docs">
             <Docs />
+          </Route>
+          <Route path="/type/:name">
+            <TypePage />
+          </Route>
+          <Route path="/class/:name">
+            <Class />
           </Route>
         </Switch>
       </div>
