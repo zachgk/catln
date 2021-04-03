@@ -26,6 +26,7 @@ import           Syntax
 import           CRes
 import           Parser.Syntax
 import           Desugarf.Passes
+import Utils
 
 splitDeclSubStatements :: [PDeclSubStatement] -> ([PDecl], [PCompAnnot])
 splitDeclSubStatements = aux ([], [])
@@ -289,8 +290,10 @@ finalPasses = expandDataReferences . typeNameToClass
 desPrgm :: PPrgm -> CRes DesPrgm
 desPrgm (_, statements) = return $ finalPasses $ desStatements statements
 
-desFiles :: [PPrgmTree] -> CRes DesPrgm
-desFiles rawPrgms = desPrgm $ foldr joinPrgms emptyPrgm rawPrgms
+-- TODO: This shouldn't join files when desugaring, but return a graph of desugared files
+-- it may require extra work for desugaring with the classmap
+desFiles :: PPrgmGraphData -> CRes DesPrgm
+desFiles graphData = desPrgm $ foldr (joinPrgms . fst3) emptyPrgm $ graphToNodes graphData
   where
     emptyPrgm = ([], [])
-    joinPrgms (RawPrgmTree _ (aImports, aStatements) subPrgms) (bImports, bStatements) = foldr joinPrgms (aImports ++ bImports, aStatements ++ bStatements) subPrgms
+    joinPrgms (aImports, aStatements) (bImports, bStatements) = (aImports ++ bImports, aStatements ++ bStatements)

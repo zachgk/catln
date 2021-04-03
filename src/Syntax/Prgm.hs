@@ -23,6 +23,7 @@ import Syntax.Types
 import           Text.Printf
 import Data.Aeson.Types (ToJSON)
 import Data.Aeson (ToJSONKey)
+import Data.Graph
 
 newtype Import = Import String
   deriving (Eq, Ord, Show)
@@ -120,8 +121,7 @@ data RawStatement m
 
 type FileImport = String
 type RawPrgm m = ([FileImport], [RawStatement m]) -- TODO: Include [Export]
-data RawPrgmTree m = RawPrgmTree String (RawPrgm m) [RawPrgmTree m]
-  deriving (Eq, Generic, ToJSON)
+type RawPrgmGraphData m = (Graph, Vertex -> (RawPrgm m, String, [String]), String -> Maybe Vertex)
 
 type ObjArg m = (m, Maybe (Object m))
 data ObjectBasis = FunctionObj | TypeObj | PatternObj | MatchObj

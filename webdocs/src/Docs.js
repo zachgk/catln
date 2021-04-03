@@ -36,6 +36,12 @@ function Docs() {
 function Main(props) {
   let [pages, annots] = props.data;
 
+  const pagesMap = {};
+  pages.forEach(page => {
+    const [pageData, pageName, pageDeps] = page;
+    pagesMap[pageName] = [pageData, pageDeps];
+  });
+
   var annotsMap = {};
   annots.forEach(annot => {
     let pos = annot[0].contents[0][1];
@@ -45,7 +51,8 @@ function Main(props) {
 
   let { path } = useRouteMatch();
 
-  const startingPage = pages.length - 1;
+  const startingPage = encodeURIComponent(pages[pages.length - 1][1]);
+
   return (
     <Switch>
       <Route exact path={path}>
@@ -58,11 +65,11 @@ function Main(props) {
               defaultCollapseIcon={<ExpandMoreIcon />}
               defaultExpandIcon={<ChevronRightIcon />}
             >
-              {pages.map((page, index) => <TableOfContentsNode key={index} page={page} path={path} prevIndices={[index]} />)}
+              <TableOfContentsNodes pageTree={buildPageTree(pagesMap)} prevTree="" path={path} />
             </TreeView>
           </Grid>
           <Grid item xs={8}>
-            <MainStatements pages={pages} annotsMap={annotsMap}/>
+            <MainStatements pagesMap={pagesMap} annotsMap={annotsMap}/>
           </Grid>
         </Grid>
       </Route>
@@ -70,32 +77,66 @@ function Main(props) {
   );
 }
 
-function TableOfContentsNode(props) {
-  const {page, path, prevIndices} = props;
-  const [pageName, , subPages] = page;
+function buildPageTree(pagesMap) {
+  const pageNames = Object.keys(pagesMap);
+  const tree = {};
+  pageNames.forEach(pageName => {
+    const pageDirs = pageName.split("/");
+    const pageFile = pageDirs.splice(-1, 1);
+    let curTree = tree;
+    pageDirs.forEach(pageDir => {
+      if(!(pageDir in curTree)) {
+        curTree[pageDir] = {};
+      }
+      curTree = curTree[pageDir];
+    });
+    curTree[pageFile] = 1;
+  });
+  return tree;
+}
 
-  const pagePathStr = prevIndices.join('.');
+function TableOfContentsNodes(props) {
+  const {pageTree, prevTree, path} = props;
 
-  // return pages.map((page, index) => <div key={page[0]}></div>);
-  let label = <Link to={`${path}/${pagePathStr}`} >{pageName}</Link>;
-  return (
-    <TreeItem nodeId={pagePathStr} label={label}>
-      {subPages.map((subPage, subIndex) => <TableOfContentsNode key={subIndex} page={subPage} path={path} prevIndices={prevIndices.concat([subIndex])} />)}
-    </TreeItem>
-  );
+  let trees = Object.keys(pageTree);
+  if(trees.includes("main.ct")) {
+    trees.splice(trees.indexOf("main.ct"), 1);
+    trees.unshift("main.ct");
+  }
+
+  return trees.map(tree => {
+
+    let newPrevTree = [prevTree, tree].join("/");
+    if(prevTree === "") newPrevTree = tree;
+
+    if(isNaN(pageTree[tree])) {
+      // Directory
+
+      return (
+        <TreeItem key={tree} nodeId={newPrevTree} label={tree} >
+          <TableOfContentsNodes key={tree} pageTree={pageTree[tree]} prevTree={newPrevTree} path={path} />
+        </TreeItem>
+      );
+    } else {
+      // File
+
+      let label = <Link to={`${path}/${encodeURIComponent(newPrevTree)}`} >{tree}</Link>;
+      return (
+        <TreeItem key={tree} nodeId={newPrevTree} label={label} />
+      );
+    }
+
+  });
 }
 
 function MainStatements(props) {
-  let { curPage } = useParams();
+  const {pagesMap, annotsMap} = props;
+  const { curPage } = useParams();
 
-  let statements = ["root", "prgm", props.pages];
-  let splitCurPage = curPage.split(".");
-  splitCurPage.forEach(p => {
-    statements = statements[2][parseInt(p)];
-  });
+  const page = pagesMap[decodeURIComponent(curPage)];
+  const statements = page[0][1];
 
-  statements = statements[1][1];
-  return <Statements statements={statements} annotsMap={props.annotsMap} />;
+  return <Statements statements={statements} annotsMap={annotsMap} />;
 }
 
 function Statements(props) {

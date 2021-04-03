@@ -25,11 +25,12 @@ import           CRes
 import TypeCheck (typecheckPrgm, typecheckPrgmWithTrace)
 import           Eval (evalMain, evalMainb, evalAnnots)
 import Parser (readFiles)
-import Parser.Syntax (DesPrgm, PPrgmTree)
+import Parser.Syntax (DesPrgm, PPrgmGraphData)
 import TypeCheck.Common (TraceConstrain, VPrgm, TPrgm)
 import Eval.Common (Val(..), Val, EvalResult)
 import Syntax.Prgm (Expr)
 import Syntax (Typed)
+import Utils
 
 data ResSuccess a n = Success a [n]
   | ResFail [n]
@@ -39,7 +40,7 @@ maybeJson :: (ToJSON a) => CRes a -> ActionM ()
 maybeJson (CRes notes r) = json $ Success r notes
 maybeJson (CErr notes) = json (ResFail notes :: ResSuccess () CNote)
 
-getRawPrgm :: Bool -> String -> IO (CRes [PPrgmTree])
+getRawPrgm :: Bool -> String -> IO (CRes PPrgmGraphData )
 getRawPrgm includeCore fileName = readFiles (fileName : ["stack/core/main.ct" | includeCore])
 
 getPrgm :: Bool -> String -> IO (CRes DesPrgm)
@@ -110,14 +111,16 @@ docServe includeCore fileName = do
       json $ Success ["File: ", T.pack fileName] ([] :: String)
 
     get "/raw" $ do
-      maybeRawPrgm <- liftAndCatchIO $ getRawPrgm includeCore fileName
-      maybeJson maybeRawPrgm
+      maybeRawPrgms <- liftAndCatchIO $ getRawPrgm includeCore fileName
+      let maybeRawPrgms' = graphToNodes <$> maybeRawPrgms
+      maybeJson maybeRawPrgms'
 
     get "/pages" $ do
-      maybeRawPrgm <- liftAndCatchIO $ getRawPrgm includeCore fileName
+      maybeRawPrgms <- liftAndCatchIO $ getRawPrgm includeCore fileName
+      let maybeRawPrgms' = graphToNodes <$> maybeRawPrgms
       annots <- liftAndCatchIO $ getEvalAnnots includeCore fileName
       maybeJson $ do
-        rawPrgm <- maybeRawPrgm
+        rawPrgm <- maybeRawPrgms'
         return (rawPrgm, annots)
 
     get "/desugar" $ do

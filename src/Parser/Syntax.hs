@@ -36,7 +36,7 @@ type PObjArg = ObjArg ParseMeta
 type PObject = Object ParseMeta
 type PArrow = Arrow PExpr ParseMeta
 type PPrgm = RawPrgm ParseMeta
-type PPrgmTree = RawPrgmTree ParseMeta
+type PPrgmGraphData = RawPrgmGraphData ParseMeta
 type PReplRes = ReplRes ParseMeta
 
 
