@@ -24,8 +24,9 @@ import Syntax.Prgm
 -- replaces uses of PTypeName with PClassName where it actually contains a class
 -- e.g. PTypeName Boolean ==> PClassName Boolean
 -- uses the mapMeta for objMap and annots, but must map the classMap manually
-typeNameToClass :: DesPrgm -> DesPrgm
-typeNameToClass (objMap, classMap@(typeToClass, classToTypes), annots) = mapMetaPrgm aux (objMap, (typeToClass, classToTypes'), annots)
+-- the fullPrgmClassToTypes includes the imports and is used for when the class def is inside an import
+typeNameToClass :: DesPrgm -> DesPrgm -> DesPrgm
+typeNameToClass (_, (_, fullPrgmClassToTypes), _) (objMap, classMap@(typeToClass, classToTypes), annots) = mapMetaPrgm aux (objMap, (typeToClass, classToTypes'), annots)
   where
     classToTypes' = fmap (\(s, vs, ts) -> (s, fmap mapType vs, fmap mapType ts)) classToTypes
     aux _ (PreTyped t p) = PreTyped (mapType t) p
@@ -36,23 +37,23 @@ typeNameToClass (objMap, classMap@(typeToClass, classToTypes), annots) = mapMeta
     mapType (SumType partials) = unionTypes classMap $ map mapPartial $ splitPartialLeafs partials
       where
         mapPartial (PartialType (PTypeName name) partialVars partialProps partialArgs partialArgMode) = singletonType (PartialType name' (fmap mapType partialVars) (fmap mapType partialProps) (fmap mapType partialArgs) partialArgMode)
-          where name' = case H.lookup name classToTypes' of
+          where name' = if H.member name fullPrgmClassToTypes
                   -- is a class, replace with class type
-                  Just _ -> PClassName name
+                  then PClassName name
 
                   -- is data, use data after recursively cleaning classes
-                  Nothing -> PTypeName name
+                  else PTypeName name
         mapPartial partial@PartialType{ptName=PClassName{}, ptVars, ptProps, ptArgs} = singletonType $ partial{
           ptVars = fmap mapType ptVars,
           ptProps = fmap mapType ptProps,
           ptArgs = fmap mapType ptArgs
                                                                                                               }
 
-expandDataReferences :: DesPrgm -> DesPrgm
-expandDataReferences (objMap, classMap@(typeToClass, classToTypes), annots) = mapMetaPrgm aux (objMap, (typeToClass, classToTypes'), annots)
+expandDataReferences :: DesPrgm -> DesPrgm -> DesPrgm
+expandDataReferences (fullPrgmObjMap, _, _) (objMap, classMap@(typeToClass, classToTypes), annots) = mapMetaPrgm aux (objMap, (typeToClass, classToTypes'), annots)
   where
     classToTypes' = fmap (\(s, vs, ts) -> (s, fmap mapType vs, fmap mapType ts)) classToTypes
-    objExpansions = H.fromList $ concatMap (\(obj@(Object _ basis name _ _), _) -> ([(name, obj) | basis == TypeObj])) objMap
+    objExpansions = H.fromList $ concatMap (\(obj@(Object _ basis name _ _), _) -> ([(name, obj) | basis == TypeObj])) fullPrgmObjMap
     aux metaType inM@(PreTyped t p) = case metaType of
       ExprMeta -> inM
       ObjMeta -> inM
@@ -67,5 +68,5 @@ expandDataReferences (objMap, classMap@(typeToClass, classToTypes), annots) = ma
       where
         mapPartial PartialType{ptName=PTypeName name} = case H.lookup name objExpansions of
           Just (Object objM _ _ _ _) -> getMetaType objM
-          Nothing -> error $ printf "Data not found in expandDataReferences for %s with objExpansions %s" name (show objExpansions)
+          Nothing -> error $ printf "Data not found in expandDataReferences for %s with objExpansions %s" name (show objMap)
         mapPartial partial@PartialType{ptName=PClassName{}} = singletonType partial

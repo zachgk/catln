@@ -27,6 +27,7 @@ import           CRes
 import           Parser.Syntax
 import           Desugarf.Passes
 import Utils
+import Data.Graph
 
 splitDeclSubStatements :: [PDeclSubStatement] -> ([PDecl], [PCompAnnot])
 splitDeclSubStatements = aux ([], [])
@@ -209,7 +210,7 @@ typeDefMetaToObj varReplaceMap (PreTyped (SumType partials) pos) = case splitPar
 typeDefMetaToObj _ _ = error "Invalid call to typeDefMetaToObj"
 
 desMultiTypeDefs :: [PMultiTypeDef] -> DesPrgm
-desMultiTypeDefs multiDefs = mergeDesPrgms $ map buildTypeDef multiDefs
+desMultiTypeDefs multiDefs = mergePrgms $ map buildTypeDef multiDefs
   where
     buildTypeDef (MultiTypeDef className classVars dataMetas) = (objMap', (typeToClass', classToType'), [])
       where
@@ -221,7 +222,7 @@ desMultiTypeDefs multiDefs = mergeDesPrgms $ map buildTypeDef multiDefs
         typeToClass' = H.fromList $ map (,S.singleton className) objNames
 
 desClassDecls :: [RawClassDecl] -> DesPrgm
-desClassDecls classDecls = mergeDesPrgms $ map buildClassDecl classDecls
+desClassDecls classDecls = mergePrgms $ map buildClassDecl classDecls
   where
     buildClassDecl (className, classVars) = ([], (H.empty, H.singleton className (False, classVars, [])), [])
 
@@ -240,22 +241,6 @@ desClassDefs sealed classDefs = ([], foldr addDef empty classDefs, [])
 
 mergeObjMaps :: DesObjectMap -> DesObjectMap -> DesObjectMap
 mergeObjMaps = (++)
-
-mergeClassMaps :: ClassMap -> ClassMap -> ClassMap
-mergeClassMaps classMap@(toClassA, toTypeA) (toClassB, toTypeB) = (H.unionWith S.union toClassA toClassB, H.unionWith mergeClasses toTypeA toTypeB)
-  where mergeClasses (sealedA, classVarsA, setA) (sealedB, classVarsB, setB) = if sealedA == sealedB
-          then (sealedA, H.unionWith (unionType classMap) classVarsA classVarsB, setA ++ setB)
-          else error "Added to sealed class definition"
-
-mergeDesPrgm :: DesPrgm -> DesPrgm -> DesPrgm
-mergeDesPrgm (objMap1, classMap1, annots1) (objMap2, classMap2, annots2) = (
-  objMap1 ++ objMap2,
-  mergeClassMaps classMap1 classMap2,
-  annots1 ++ annots2
-                                                                           )
-
-mergeDesPrgms :: Foldable f => f DesPrgm -> DesPrgm
-mergeDesPrgms = foldr mergeDesPrgm ([], (H.empty, H.empty), [])
 
 desGlobalAnnot :: PCompAnnot -> DesCompAnnot
 desGlobalAnnot p = case semiDesExpr p of
@@ -282,18 +267,34 @@ desStatements statements = prgm'
     objMap = foldr mergeObjMaps [] [declObjMap, typeObjMap]
     annots' = map desGlobalAnnot annots
     miscPrgm = (objMap, (H.empty, H.empty), annots')
-    prgm' = mergeDesPrgms [multiTypeDefsPrgm, classDeclsPrgm, classDefsPrgm, miscPrgm]
+    prgm' = mergePrgms [multiTypeDefsPrgm, classDeclsPrgm, classDefsPrgm, miscPrgm]
 
-finalPasses :: DesPrgm -> DesPrgm
-finalPasses = expandDataReferences . typeNameToClass
+finalPasses :: DesPrgmGraphData -> GraphNodes DesPrgm String -> GraphNodes DesPrgm String
+finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm, prgmName, imports) = (prgm'', prgmName, imports)
+  where
+    -- Build fullPrgm with recursive imports
+    vertex = fromJust $ vertexFromKey prgmName
+    importTree = reachable desPrgmGraph vertex
+    fullPrgm = mergePrgms $ map (fst3 . nodeFromVertex) importTree
+
+    -- Run typeNameToClass pass
+    prgm' = typeNameToClass fullPrgm prgm
+    fullPrgm' = typeNameToClass fullPrgm fullPrgm
+
+    -- Run expandDataReferences pass
+    prgm'' = expandDataReferences fullPrgm' prgm'
 
 desPrgm :: PPrgm -> CRes DesPrgm
-desPrgm (_, statements) = return $ finalPasses $ desStatements statements
+desPrgm (_, statements) = return $ desStatements statements
 
 -- TODO: This shouldn't join files when desugaring, but return a graph of desugared files
 -- it may require extra work for desugaring with the classmap
-desFiles :: PPrgmGraphData -> CRes DesPrgm
-desFiles graphData = desPrgm $ foldr (joinPrgms . fst3) emptyPrgm $ graphToNodes graphData
-  where
-    emptyPrgm = ([], [])
-    joinPrgms (aImports, aStatements) (bImports, bStatements) = (aImports ++ bImports, aStatements ++ bStatements)
+desFiles :: PPrgmGraphData -> CRes DesPrgmGraphData
+desFiles graphData = do
+  -- initial desugar
+  prgms' <- mapMFst3 desPrgm (graphToNodes graphData)
+  let graphData' = graphFromEdges prgms'
+
+  -- final passes
+  let prgms'' = map (finalPasses graphData') prgms'
+  return $ graphFromEdges prgms''

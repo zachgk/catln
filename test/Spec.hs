@@ -21,9 +21,6 @@ testDir = "test/code/"
 buildDir :: String
 buildDir = "test/build/"
 
-coreImport :: String
-coreImport = "stack/core/main.ct"
-
 prettyCNotes :: [CNote] -> String
 prettyCNotes notes = "\n\n\t\t" ++ intercalate "\n\n\t\t" (map prettyNote notes)
   where
@@ -34,7 +31,7 @@ prettyCNotes notes = "\n\n\t\t" ++ intercalate "\n\n\t\t" (map prettyNote notes)
 runTest :: Bool -> String -> TestTree
 runTest includeCore fileName = testCaseSteps fileName $ \step -> do
   step $ printf "Read file %s..." fileName
-  maybeRawPrgm <- readFiles (fileName : [coreImport | includeCore])
+  maybeRawPrgm <- readFiles includeCore [fileName]
   case maybeRawPrgm of
     CErr notes -> assertFailure $ "Could not parse:" ++ prettyCNotes notes
     CRes _ rawPrgm -> do
@@ -80,7 +77,7 @@ runTests includeCore testFiles = testGroup "Tests" testTrees
 runBuild :: String -> TestTree
 runBuild fileName = testCaseSteps fileName $ \step -> do
   step $ printf "Read file %s..." fileName
-  maybeRawPrgm <- readFiles (fileName : [coreImport ])
+  maybeRawPrgm <- readFiles True [fileName]
   case maybeRawPrgm of
     CErr notes -> assertFailure $ "Could not parse:" ++ prettyCNotes notes
     CRes _ rawPrgm -> do

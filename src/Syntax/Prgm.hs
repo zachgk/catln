@@ -16,6 +16,7 @@ module Syntax.Prgm where
 
 import           Data.Hashable
 import qualified Data.HashMap.Strict as H
+import qualified Data.HashSet as S
 import           Data.List                      ( intercalate )
 import           GHC.Generics          (Generic)
 
@@ -23,7 +24,6 @@ import Syntax.Types
 import           Text.Printf
 import Data.Aeson.Types (ToJSON)
 import Data.Aeson (ToJSONKey)
-import Data.Graph
 
 newtype Import = Import String
   deriving (Eq, Ord, Show)
@@ -121,7 +121,6 @@ data RawStatement m
 
 type FileImport = String
 type RawPrgm m = ([FileImport], [RawStatement m]) -- TODO: Include [Export]
-type RawPrgmGraphData m = (Graph, Vertex -> (RawPrgm m, String, [String]), String -> Maybe Vertex)
 
 type ObjArg m = (m, Maybe (Object m))
 data ObjectBasis = FunctionObj | TypeObj | PatternObj | MatchObj
@@ -232,3 +231,20 @@ formArgMetaMap (Object _ _ _ _ args) = H.foldr (H.unionWith unionCombine) H.empt
     unionCombine _ _ = error "Duplicate var matched"
     fromArg k (m, Nothing) = H.singleton k m
     fromArg _ (_, Just arg) = formArgMetaMap arg
+
+mergeClassMaps :: ClassMap -> ClassMap -> ClassMap
+mergeClassMaps classMap@(toClassA, toTypeA) (toClassB, toTypeB) = (H.unionWith S.union toClassA toClassB, H.unionWith mergeClasses toTypeA toTypeB)
+  where mergeClasses (sealedA, classVarsA, setA) (sealedB, classVarsB, setB) = if sealedA == sealedB
+          then (sealedA, H.unionWith (unionType classMap) classVarsA classVarsB, setA ++ setB)
+          else error "Added to sealed class definition"
+
+mergePrgm :: Prgm e m -> Prgm e m -> Prgm e m
+mergePrgm (objMap1, classMap1, annots1) (objMap2, classMap2, annots2) = (
+  objMap1 ++ objMap2,
+  mergeClassMaps classMap1 classMap2,
+  annots1 ++ annots2
+                                                                           )
+
+mergePrgms :: Foldable f => f (Prgm e m) -> Prgm e m
+mergePrgms = foldr mergePrgm emptyPrgm
+  where emptyPrgm = ([], (H.empty, H.empty), [])

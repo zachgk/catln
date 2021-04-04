@@ -28,7 +28,7 @@ import Parser (readFiles)
 import Parser.Syntax (DesPrgm, PPrgmGraphData)
 import TypeCheck.Common (TraceConstrain, VPrgm, TPrgm)
 import Eval.Common (Val(..), Val, EvalResult)
-import Syntax.Prgm (Expr)
+import Syntax.Prgm (Expr, mergePrgms)
 import Syntax (Typed)
 import Utils
 
@@ -41,9 +41,9 @@ maybeJson (CRes notes r) = json $ Success r notes
 maybeJson (CErr notes) = json (ResFail notes :: ResSuccess () CNote)
 
 getRawPrgm :: Bool -> String -> IO (CRes PPrgmGraphData )
-getRawPrgm includeCore fileName = readFiles (fileName : ["stack/core/main.ct" | includeCore])
+getRawPrgm includeCore fileName = readFiles includeCore [fileName]
 
-getPrgm :: Bool -> String -> IO (CRes DesPrgm)
+getPrgm :: Bool -> String -> IO (CRes (GraphData DesPrgm String))
 getPrgm includeCore fileName = do
   base <- getRawPrgm includeCore fileName
   return (base >>= desFiles)
@@ -124,7 +124,8 @@ docServe includeCore fileName = do
         return (rawPrgm, annots)
 
     get "/desugar" $ do
-      maybePrgm <- liftAndCatchIO $ getPrgm includeCore fileName
+      maybePrgmGraph <- liftAndCatchIO $ getPrgm includeCore fileName
+      let maybePrgm = mergePrgms . map fst3 . graphToNodes <$> maybePrgmGraph
       maybeJson maybePrgm
 
     get "/constrain" $ do

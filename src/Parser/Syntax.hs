@@ -17,6 +17,7 @@ import           Syntax.Types
 import           Syntax.Prgm
 import           Syntax
 import Text.Megaparsec (SourcePos)
+import Utils
 
 type ParseMeta = PreTyped
 type PTupleArg = RawTupleArg ParseMeta
@@ -36,7 +37,7 @@ type PObjArg = ObjArg ParseMeta
 type PObject = Object ParseMeta
 type PArrow = Arrow PExpr ParseMeta
 type PPrgm = RawPrgm ParseMeta
-type PPrgmGraphData = RawPrgmGraphData ParseMeta
+type PPrgmGraphData = GraphData PPrgm String
 type PReplRes = ReplRes ParseMeta
 
 
@@ -66,6 +67,7 @@ type DesObjectMap = ObjectMap DesExpr ParseMeta
 type DesObject = Object ParseMeta
 type DesArrow = Arrow DesExpr ParseMeta
 type DesPrgm = Prgm DesExpr ParseMeta
+type DesPrgmGraphData = GraphData DesPrgm String
 
 emptyMeta :: SourcePos -> SourcePos -> ParseMeta
 emptyMeta p1 p2 = PreTyped TopType (Just (p1, p2, ""))

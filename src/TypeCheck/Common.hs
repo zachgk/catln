@@ -28,6 +28,7 @@ import           Text.Printf
 import Data.Aeson (ToJSON, toJSON)
 import qualified Data.HashSet as S
 import CRes
+import Utils
 
 data TypeCheckError
   = GenTypeCheckError CodeRange String
@@ -121,6 +122,7 @@ type PArrow = Arrow PExpr PreMeta
 type PObjArg = ObjArg PreMeta
 type PObject = Object PreMeta
 type PPrgm = Prgm PExpr PreMeta
+type PPrgmGraphData = GraphData PPrgm String
 type PReplRes = ReplRes PreMeta
 
 data ShowMeta = ShowMeta SType VarMeta

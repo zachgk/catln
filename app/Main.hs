@@ -29,7 +29,7 @@ coreImport = "stack/core/main.ct"
 
 buildReplBaseEnv :: IO ReplEnv
 buildReplBaseEnv = do
-  rawCore <- readFiles [coreImport]
+  rawCore <- readFiles True [coreImport]
   case rawCore of
     CRes _ r -> return ([], r)
     CErr _ -> fail "Could not read core"
@@ -85,7 +85,7 @@ processRepl env@(envRepl, envCore) source = do
 
 process :: [String] -> IO ()
 process source = do
-  raw <- readFiles source
+  raw <- readFiles True source
   case raw of
     CErr err -> print err
     CRes _ raw' -> processDes (desFiles raw')

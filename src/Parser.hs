@@ -87,8 +87,8 @@ parseRepl s = case runParser (contents p) "<repl>" s of
                 Right (Right expr)            -> ReplExpr expr
   where p = try (Left <$> pStatement) <|> try (Right <$> pExpr)
 
-readFiles :: [String] -> IO (CRes PPrgmGraphData)
-readFiles = fmap (fmap (graphFromEdges . snd)) . aux [] S.empty
+readFiles :: Bool -> [String] -> IO (CRes PPrgmGraphData)
+readFiles includeCore = fmap (fmap (graphFromEdges . snd)) . aux [] S.empty
   where
     aux acc visited [] = return $ return (visited, acc)
     aux acc visited (nextToVisit:restToVisit) | S.member nextToVisit visited = aux acc visited restToVisit
@@ -96,4 +96,8 @@ readFiles = fmap (fmap (graphFromEdges . snd)) . aux [] S.empty
       f <- readFile nextToVisit
       case parseFile nextToVisit f of
         CErr notes -> return $ CErr notes
-        CRes _ prgm@(parsedImports, _) -> aux ((prgm, nextToVisit, parsedImports) : acc) (S.insert nextToVisit visited) (parsedImports ++ restToVisit)
+        CRes _ prgm@(parsedImports, statements) -> do
+          let prgm'@(parsedImports', _) = if includeCore && not ("stack/core" `isPrefixOf` nextToVisit)
+                then ("stack/core/main.ct":parsedImports, statements)
+                else prgm
+          aux ((prgm', nextToVisit, parsedImports') : acc) (S.insert nextToVisit visited) (parsedImports' ++ restToVisit)
