@@ -1,9 +1,12 @@
-import React from 'react';
+import React, {useState} from 'react';
 
 import Grid from '@material-ui/core/Grid';
+import Menu from '@material-ui/core/Menu';
+import MenuItem from '@material-ui/core/MenuItem';
 import TreeView from '@material-ui/lab/TreeView';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
+import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import TreeItem from '@material-ui/lab/TreeItem';
 import ReactMarkdown from 'react-markdown';
 import {
@@ -12,6 +15,7 @@ import {
   Redirect,
   Link,
   useParams,
+  useHistory,
   useRouteMatch
 } from 'react-router-dom';
 
@@ -20,6 +24,12 @@ import {useApi, posKey, Loading, Obj, Guard, Type, Val, tagJoin} from './Common'
 const useStyles = {
   indented: {
     marginLeft: '4em'
+  },
+  playIcon: {
+    color: 'green'
+  },
+  noPlay: {
+    marginLeft: '24px'
   }
 };
 
@@ -147,7 +157,12 @@ function Statement(props) {
   let {statement, annotsMap} = props;
   switch(statement.tag) {
   case "RawDeclStatement":
-    return <Decl contents={statement.contents} />;
+    return (
+      <div>
+        <PlayButton />
+        <Decl contents={statement.contents} />
+      </div>
+    );
   case "MultiTypeDefStatement":
     let [className, classVars, classDatas] = statement.contents;
 
@@ -164,9 +179,9 @@ function Statement(props) {
 
     let showClassDatas = tagJoin(classDatas.map((d, dIndex) => <span key={dIndex}><Type data={d[0]}/></span>), " | ");
 
-    return (<div>class {className}{showClassVars} = {showClassDatas}</div>);
+    return (<div style={useStyles.noPlay}>class {className}{showClassVars} = {showClassDatas}</div>);
   case "TypeDefStatement":
-    return (<div>data <Type data={statement.contents[0]}/></div>);
+    return (<div style={useStyles.noPlay}>data <Type data={statement.contents[0]}/></div>);
   case "RawClassDefStatement":
     let [[instanceType, instanceVars], instanceClass] = statement.contents;
 
@@ -181,7 +196,7 @@ function Statement(props) {
       );
     }
 
-    return (<div>instance {instanceType}{showInstanceVars} of {instanceClass}</div>);
+    return (<div style={useStyles.noPlay}>instance {instanceType}{showInstanceVars} of {instanceClass}</div>);
   case "RawClassDeclStatement":
     let [classDeclName, classDeclVars] = statement.contents;
 
@@ -197,15 +212,15 @@ function Statement(props) {
     }
 
 
-    return (<div>class {classDeclName}{showClassDeclVars}</div>);
+    return (<div style={useStyles.noPlay}>class {classDeclName}{showClassDeclVars}</div>);
   case "RawGlobalAnnot":
     let pos = statement.contents.contents[0][1];
     let val = annotsMap[posKey(pos)];
 
-    let showAnnotExpr = <Expr expr={statement.contents} />;
+    let showAnnotExpr = <Expr style={useStyles.noPlay} expr={statement.contents} />;
     if(val.name === "#print") {
       return (
-        <div>
+        <div style={useStyles.noPlay}>
           {showAnnotExpr}
           <br />
           <Val data={val.args.p} />
@@ -215,7 +230,7 @@ function Statement(props) {
       return showAnnotExpr;
     }
   case "RawComment":
-    return (<ReactMarkdown children={statement.contents} />);
+    return (<div style={useStyles.noPlay}><ReactMarkdown children={statement.contents} /></div>);
   default:
     console.error("Unknown renderStatement", statement);
     return "";
@@ -232,12 +247,12 @@ function Decl(props) {
   }
 
   return (
-    <div>
+    <span>
       <Obj obj={obj} Meta={RawMeta}/><Guard guard={guard} Expr={Expr}/>{showExpr}
       <div style={useStyles.indented}>
         {subStatements.map((subStatement, index) => <DeclSubStatement key={index} subStatement={subStatement} />)}
       </div>
-    </div>
+    </span>
   );
 }
 
@@ -246,7 +261,7 @@ function DeclSubStatement(props) {
 
   switch(subStatement.tag) {
   case "RawDeclSubStatementDecl":
-    return <Decl contents={subStatement.contents} />;
+    return <div><Decl contents={subStatement.contents} /></div>;
   case "RawDeclSubStatementAnnot":
     return <div><Expr expr={subStatement.contents} /></div>;
   default:
@@ -310,6 +325,41 @@ function Expr(props) {
 function RawMeta(props) {
   let [tp, ] = props.data;
   return <Type data={tp} />;
+}
+
+function PlayButton(props) {
+  let history = useHistory();
+  const [open, setOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
+
+
+  let handleClick = (event) => {
+    setOpen(!open);
+    setAnchorEl(event.currentTarget);
+  };
+
+  let handleClose = (link) => () => {
+    setOpen(false);
+    history.push({pathname: link});
+  };
+
+  let button = <PlayArrowIcon fontSize='small' style={useStyles.playIcon} aria-controls="fade-menu" aria-haspopup="true" onClick={handleClick} />;
+
+  return (
+    <span>
+      {button}
+      <Menu
+        anchorEl={anchorEl}
+        keepMounted
+        open={open}
+        onClose={handleClose}
+      >
+        <MenuItem onClick={handleClose("/build")}>Build</MenuItem>
+        <MenuItem onClick={handleClose("/debug")}>Debug</MenuItem>
+        <MenuItem onClick={handleClose("/constrain")}>Constrain</MenuItem>
+      </Menu>
+    </span>
+  );
 }
 
 

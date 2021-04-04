@@ -5,10 +5,7 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import StarIcon from '@material-ui/icons/Star';
-import BuildIcon from '@material-ui/icons/Build';
 import MenuBookIcon from '@material-ui/icons/MenuBook';
-import CompareArrowsIcon from '@material-ui/icons/CompareArrows';
-import BugReportIcon from '@material-ui/icons/BugReport';
 import {
   BrowserRouter as Router,
   Switch,
@@ -34,15 +31,6 @@ function App() {
           <Link to="/list">
             <IconButton color="inherit" edge="end"><StarIcon /></IconButton>
           </Link>
-          <Link to="/constrain">
-            <IconButton color="inherit" edge="end"><CompareArrowsIcon /></IconButton>
-          </Link>
-          <Link to="/debug">
-            <IconButton color="inherit" edge="end"><BugReportIcon /></IconButton>
-          </Link>
-          <Link to="/build">
-            <IconButton color="inherit" edge="end"><BuildIcon /></IconButton>
-          </Link>
           <Link to="/docs">
             <IconButton color="inherit" edge="end"><MenuBookIcon /></IconButton>
           </Link>
@@ -51,7 +39,7 @@ function App() {
       <div>
         <Switch>
           <Route exact path="/">
-            <Redirect to={"/list"} />
+            <Redirect to={"/docs"} />
           </Route>
           <Route path="/list">
             <ListProgram />
