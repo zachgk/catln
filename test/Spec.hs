@@ -41,7 +41,6 @@ runTest includeCore fileName = testCaseSteps fileName $ \step -> do
         CRes _ prgm -> do
           -- step $ T.unpack $ pShow prgm
           step "Typecheck..."
-          -- step $ T.unpack $ pShow $ traceTestPrgm prgm
           case typecheckPrgm prgm of
             CErr errs -> do
               assertFailure $ "Could not typecheck:" ++ prettyCNotes errs
@@ -87,7 +86,6 @@ runBuild fileName = testCaseSteps fileName $ \step -> do
         CRes _ prgm -> do
           -- step $ T.unpack $ pShow prgm
           step "Typecheck..."
-          -- step $ T.unpack $ pShow $ traceTestPrgm prgm
           case typecheckPrgm prgm of
             CErr errs -> do
               assertFailure $ "Could not typecheck:\n\n\n\t" ++ prettyCNotes errs
