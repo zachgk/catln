@@ -6,8 +6,7 @@ import {
   Route,
   Redirect,
   Link,
-  useParams,
-  useRouteMatch
+  useParams
 } from 'react-router-dom';
 
 import {useApi, posKey, Loading, Notes, Type} from './Common';
@@ -21,7 +20,8 @@ const useStyles = {
 };
 
 function Constrain() {
-  let apiResult = useApi("/constrain");
+  const { prgmName } = useParams();
+  let apiResult = useApi(`/constrain?prgmName=${prgmName}`);
 
   return (
     <Loading status={apiResult}>
@@ -32,7 +32,7 @@ function Constrain() {
 
 function Main(props) {
   let {notes, data: [, prgm, trace]} = props;
-  let { path } = useRouteMatch();
+  let { prgmName } = useParams();
 
   var notesMap = {};
   notes.forEach(note => {
@@ -58,10 +58,10 @@ function Main(props) {
         </Grid>
         <Grid item xs>
           <Switch>
-            <Route exact path={path}>
-              <Redirect to={`${path}/0`} />
+            <Route exact path={`/constrain/${prgmName}`}>
+              <Redirect to={`/constrain/${prgmName}/0`} />
             </Route>
-            <Route path={`${path}/:curMeta`}>
+            <Route path={`/constrain/${prgmName}/:curMeta`}>
               <TraceEpochs trace={trace} Meta={Meta} />
             </Route>
           </Switch>
@@ -191,7 +191,8 @@ function Scheme(props) {
 
 function Pnt(props) {
   let {pnt} = props;
-  return <Link to={`/constrain/${pnt}`}>{pnt}</Link>;
+  let { prgmName } = useParams();
+  return <Link to={`/constrain/${prgmName}/${pnt}`}>{pnt}</Link>;
 }
 
 function Pos(props) {

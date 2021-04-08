@@ -1,9 +1,12 @@
 import React from 'react';
 
+import {useParams} from 'react-router-dom';
+
 import {useApi, Loading, Val} from './Common';
 
 function Build() {
-  let apiResult = useApi("/evalBuild");
+  const { prgmName } = useParams();
+  let apiResult = useApi(`/evalBuild?prgmName=${prgmName}`);
 
   return (
     <Loading status={apiResult}>

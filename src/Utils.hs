@@ -18,10 +18,19 @@ type GraphNodes node key = (node, key, [key])
 type GraphData node key = (Graph, Vertex -> (node, key, [key]), key -> Maybe Vertex)
 
 fst3 :: (a, b, c) -> a
-fst3 (x, _, _) = x
+fst3 (a, _, _) = a
+
+snd3 :: (a, b, c) -> b
+snd3 (_, b, _) = b
+
+thr3 :: (a, b, c) -> c
+thr3 (_, _, c) = c
 
 mapFst3 :: (Functor f) => (a -> a') -> f (a, b, c) -> f (a', b, c)
-mapFst3 f = fmap (\(a, b, c) -> (f a, b, c))
+mapFst3 fn = fmap (\(a, b, c) -> (fn a, b, c))
+
+mapSnd3 :: (Functor f) => (b -> b') -> f (a, b, c) -> f (a, b', c)
+mapSnd3 fn = fmap (\(a, b, c) -> (a, fn b, c))
 
 mapMFst3 :: (Traversable t, Monad m) => (a -> m a') -> t (a, b, c) -> m (t (a', b, c))
 mapMFst3 f = mapM aux
@@ -31,3 +40,6 @@ mapMFst3 f = mapM aux
 
 graphToNodes :: GraphData node key -> [GraphNodes node key]
 graphToNodes (g, nodeFromVertex, _) = map nodeFromVertex $ vertices g
+
+fmapGraph :: (Ord key) => (node1 -> node2) -> GraphData node1 key -> GraphData node2 key
+fmapGraph f = graphFromEdges . mapFst3 f . graphToNodes

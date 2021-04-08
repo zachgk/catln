@@ -21,8 +21,10 @@ import           Data.List                (isPrefixOf)
 
 import           System.Console.Haskeline
 import           System.Environment
+import Data.Graph
+import Utils
 
-type ReplEnv = ([RawStatement PreTyped], RawPrgms PreTyped)
+type ReplEnv = ([RawStatement PreTyped], GraphData (RawPrgm PreTyped) String)
 
 coreImport :: String
 coreImport = "stack/core/main.ct"
@@ -62,7 +64,7 @@ processDes des = case aux of
     aux = do
       prgm <- des
       tprgm <- typecheckPrgm prgm
-      evalMain tprgm
+      evalMain "" (graphFromEdges [(tprgm, ("" :: String), [])])
 
 mainStatement :: RawExpr PreTyped -> RawStatement PreTyped
 mainStatement expr = RawDeclStatement $ RawDecl lhs [] (Just wrappedExpr)

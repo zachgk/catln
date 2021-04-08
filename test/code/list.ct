@@ -1,1 +1,5 @@
-main(IO io) = io.exit(val=[5, 3].length - 2)
+// TODO: Use core length rather than llength
+llength(this=Nil) = 0
+llength(this=Cons(head, tail)) = 1 + tail.llength
+
+main(IO io) = io.exit(val=[5, 3].llength - 2)

@@ -48,52 +48,52 @@ getPrgm includeCore fileName = do
   base <- getRawPrgm includeCore fileName
   return (base >>= desFiles)
 
-getTPrgmWithTrace :: Bool -> String -> IO (CRes (TPrgm, VPrgm, TraceConstrain))
+getTPrgmWithTrace :: Bool -> String -> IO (CRes (GraphData (TPrgm, VPrgm, TraceConstrain) String))
 getTPrgmWithTrace includeCore fileName = do
   base <- getPrgm includeCore fileName
   return (base >>= typecheckPrgmWithTrace)
 
-getTPrgm :: Bool -> String -> IO (CRes TPrgm)
+getTPrgm :: Bool -> String -> IO (CRes (GraphData TPrgm String))
 getTPrgm includeCore fileName = do
   base <- getPrgm includeCore fileName
   return (base >>= typecheckPrgm)
 
-getTreebug :: Bool -> String -> IO EvalResult
-getTreebug includeCore fileName = do
-  base <- getTPrgm includeCore fileName
-  let pre = base >>= evalMain
+getTreebug :: Bool -> String -> String -> IO EvalResult
+getTreebug includeCore baseFileName prgmName = do
+  base <- getTPrgm includeCore baseFileName
+  let pre = base >>= evalMain prgmName
   case pre of
     CRes _ r -> snd <$> r
     CErr _ -> fail "No eval result found"
 
-getEvaluated :: Bool -> String -> IO Integer
-getEvaluated includeCore fileName = do
-  base <- getTPrgm includeCore fileName
-  let pre = base >>= evalMain
+getEvaluated :: Bool -> String -> String -> IO Integer
+getEvaluated includeCore baseFileName prgmName = do
+  base <- getTPrgm includeCore baseFileName
+  let pre = base >>= evalMain prgmName
   case pre of
     CRes _ r -> fst <$> r
     CErr _ -> return 999
 
-getEvalBuild :: Bool -> String -> IO Val
-getEvalBuild includeCore fileName = do
-  base <- getTPrgm includeCore fileName
-  let pre = base >>= evalMainb
+getEvalBuild :: Bool -> String -> String -> IO Val
+getEvalBuild includeCore baseFileName prgmName = do
+  base <- getTPrgm includeCore baseFileName
+  let pre = base >>= evalMainb prgmName
   case pre of
     CRes _ r -> fst <$> r
     CErr _ -> return NoVal
 
-getEvalAnnots :: Bool -> String -> IO [(Expr Typed, Val)]
-getEvalAnnots includeCore fileName = do
-  base <- getTPrgm includeCore fileName
-  let pre = base >>= evalAnnots
+getEvalAnnots :: Bool -> String -> String -> IO [(Expr Typed, Val)]
+getEvalAnnots includeCore baseFileName prgmName = do
+  base <- getTPrgm includeCore baseFileName
+  let pre = base >>= evalAnnots prgmName
   case pre of
     CRes _ r -> return r
     CErr _ -> return []
 
-getWeb :: Bool -> String -> IO String
-getWeb includeCore fileName = do
-  base <- getTPrgm includeCore fileName
-  let pre = base >>= evalMainb
+getWeb :: Bool -> String -> String -> IO String
+getWeb includeCore baseFileName prgmName = do
+  base <- getTPrgm includeCore baseFileName
+  let pre = base >>= evalMainb prgmName
   case pre of
     CRes _ r -> do
       (TupleVal _ args, _) <- r
@@ -104,50 +104,62 @@ getWeb includeCore fileName = do
 
 
 docServe :: Bool -> String -> IO ()
-docServe includeCore fileName = do
+docServe includeCore baseFileName = do
 
   scotty 31204 $ do
     get "/files" $ do
-      json $ Success ["File: ", T.pack fileName] ([] :: String)
+      json $ Success ["File: ", T.pack baseFileName] ([] :: String)
 
     get "/raw" $ do
-      maybeRawPrgms <- liftAndCatchIO $ getRawPrgm includeCore fileName
+      maybeRawPrgms <- liftAndCatchIO $ getRawPrgm includeCore baseFileName
       let maybeRawPrgms' = graphToNodes <$> maybeRawPrgms
       maybeJson maybeRawPrgms'
 
+    -- TODO: pages should load single page, move TOC to separate call
     get "/pages" $ do
-      maybeRawPrgms <- liftAndCatchIO $ getRawPrgm includeCore fileName
+      maybeRawPrgms <- liftAndCatchIO $ getRawPrgm includeCore baseFileName
       let maybeRawPrgms' = graphToNodes <$> maybeRawPrgms
-      annots <- liftAndCatchIO $ getEvalAnnots includeCore fileName
+      annots <- liftAndCatchIO $ getEvalAnnots includeCore baseFileName baseFileName
       maybeJson $ do
         rawPrgm <- maybeRawPrgms'
         return (rawPrgm, annots)
 
     get "/desugar" $ do
-      maybePrgmGraph <- liftAndCatchIO $ getPrgm includeCore fileName
+      maybePrgmGraph <- liftAndCatchIO $ getPrgm includeCore baseFileName
       let maybePrgm = mergePrgms . map fst3 . graphToNodes <$> maybePrgmGraph
       maybeJson maybePrgm
 
     get "/constrain" $ do
-      maybeTprgmWithTrace <- liftAndCatchIO $ getTPrgmWithTrace includeCore fileName
+      prgmName <- param "prgmName"
+      maybeTprgmWithTraceGraph <- liftAndCatchIO $ getTPrgmWithTrace includeCore baseFileName
+      let maybeTprgmWithTrace = maybeTprgmWithTraceGraph >>= \(_, prgmFromVertex, vertexFromName) -> do
+            vertex <- case vertexFromName prgmName of
+              Just v -> return v
+              Nothing -> CErr [MkCNote $ GenCErr Nothing "Invalid file to constrain"]
+            return $ fst3 $ prgmFromVertex vertex
       maybeJson maybeTprgmWithTrace
 
     get "/typecheck" $ do
-      maybeTprgm <- liftAndCatchIO $ getTPrgm includeCore fileName
+      maybeTprgmGraph <- liftAndCatchIO $ getTPrgm includeCore baseFileName
+      let maybeTprgm = mergePrgms . map fst3 . graphToNodes <$> maybeTprgmGraph
       maybeJson maybeTprgm
 
     get "/treebug" $ do
-      treebug <- liftAndCatchIO $ getTreebug includeCore fileName
+      prgmName <- param "prgmName"
+      treebug <- liftAndCatchIO $ getTreebug includeCore baseFileName prgmName
       json $ Success treebug ([] :: [String])
 
     get "/eval" $ do
-      evaluated <- liftAndCatchIO $ getEvaluated includeCore fileName
+      prgmName <- param "prgmName"
+      evaluated <- liftAndCatchIO $ getEvaluated includeCore baseFileName prgmName
       json $ Success evaluated ([] :: [String])
 
     get "/evalBuild" $ do
-      build <- liftAndCatchIO $ getEvalBuild includeCore fileName
+      prgmName <- param "prgmName"
+      build <- liftAndCatchIO $ getEvalBuild includeCore baseFileName prgmName
       json $ Success build ([] :: [String])
 
     get "/web" $ do
-      build <- liftAndCatchIO $ getWeb includeCore fileName
+      prgmName <- param "prgmName"
+      build <- liftAndCatchIO $ getWeb includeCore baseFileName prgmName
       html (T.pack build)

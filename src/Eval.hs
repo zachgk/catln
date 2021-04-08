@@ -27,6 +27,9 @@ import Eval.Env
 import           Text.Printf
 import Control.Monad
 import Emit (codegenExInit)
+import Data.Graph
+import Data.Maybe
+import Utils
 
 evalCompAnnot :: Env -> Val -> CRes Env
 evalCompAnnot env (TupleVal "#assert" args) = case (H.lookup "test" args, H.lookup "msg" args) of
@@ -106,14 +109,18 @@ evalBaseEnv prgm@(objMap, classMap, _) = Env {
         evTreebugClosed = []
                 }
 
+prgmFromGraphData :: String -> EPrgmGraphData -> EPrgm
+prgmFromGraphData prgmName (prgmGraph, nodeFromVertex, vertexFromKey) = mergePrgms $ map (fst3 . nodeFromVertex) $ reachable prgmGraph $ fromJust $ vertexFromKey prgmName
+
 evalBuildPrgm :: EExpr -> PartialType -> Type -> EPrgm -> CRes (ResArrowTree, Env)
 evalBuildPrgm input srcType destType prgm = do
   let env@Env{evTbEnv} = evalBaseEnv prgm
   initTree <- buildRoot evTbEnv input srcType destType
   return (initTree, env)
 
-evalAnnots :: EPrgm -> CRes [(EExpr, Val)]
-evalAnnots prgm@(_, _, annots) = do
+evalAnnots :: String -> EPrgmGraphData -> CRes [(EExpr, Val)]
+evalAnnots prgmName prgmGraphData = do
+  let prgm@(_, _, annots) = prgmFromGraphData prgmName prgmGraphData
   let env@Env{evTbEnv} = evalBaseEnv prgm
   forM annots $ \annot -> do
     let exprType = getMetaType $ getExprMeta annot
@@ -124,28 +131,30 @@ evalAnnots prgm@(_, _, annots) = do
     val <- fst <$> eval env tree
     return (annot, val)
 
-evalPrgm :: EExpr -> PartialType -> Type -> EPrgm -> CRes (IO (Integer, EvalResult))
-evalPrgm input src@PartialType{ptName=PTypeName{}} dest prgm = do
+evalPrgm :: EExpr -> PartialType -> Type -> String -> EPrgmGraphData -> CRes (IO (Integer, EvalResult))
+evalPrgm input src@PartialType{ptName=PTypeName{}} dest prgmName prgmGraphData = do
+  let prgm = prgmFromGraphData prgmName prgmGraphData
   (initTree, env) <- evalBuildPrgm input src dest prgm
   let env2 = evalSetArgs env (H.singleton "io" (IOVal 0 $ pure ()))
   (res, env') <- eval env2 initTree
   case res of
     (IOVal r io) -> return (io >> pure (r, evalResult env'))
     _ -> CErr [MkCNote $ GenCErr Nothing "Eval did not return an instance of IO"]
-evalPrgm _ PartialType{ptName=PClassName{}} _ _ = error "Can't eval class"
+evalPrgm _ PartialType{ptName=PClassName{}} _ _ _ = error "Can't eval class"
 
-evalMain :: EPrgm -> CRes (IO (Integer, EvalResult))
+evalMain :: String -> EPrgmGraphData -> CRes (IO (Integer, EvalResult))
 evalMain = evalPrgm mainExpr mainPartial ioType
   where mainPartial = PartialType (PTypeName "main") H.empty H.empty (H.singleton "io" ioType) PtArgExact
         mainPartialEmpty = Typed (singletonType (PartialType (PTypeName "main") H.empty H.empty H.empty PtArgExact)) Nothing
         mainExpr = TupleApply (Typed (singletonType mainPartial) Nothing) (mainPartialEmpty, Value mainPartialEmpty "main") "io" (Arg (Typed ioType Nothing) "io")
 
-evalMainb :: EPrgm -> CRes (IO (Val, EvalResult))
-evalMainb prgm = do
+evalMainb :: String -> EPrgmGraphData -> CRes (IO (Val, EvalResult))
+evalMainb prgmName prgmGraphData = do
   let srcName = "mainb"
   let src = PartialType (PTypeName srcName) H.empty H.empty H.empty PtArgExact
   let input = Value (Typed (singletonType src) Nothing) "mainb"
   let dest = singletonType (PartialType (PTypeName "CatlnResult") H.empty H.empty (H.fromList [("name", strType), ("contents", strType)]) PtArgExact)
+  let prgm = prgmFromGraphData prgmName prgmGraphData
   (initTree, env) <- evalBuildPrgm input src dest prgm
   (res, env') <- eval env initTree
   case res of

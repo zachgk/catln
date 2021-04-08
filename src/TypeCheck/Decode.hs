@@ -136,3 +136,6 @@ toPrgm env (objMap, classMap, annots) = do
   objMap' <- mapM (toObjectArrows env) objMap
   annots' <- mapM (toExpr env) annots
   return (objMap', classMap, annots')
+
+toPrgms :: FEnv -> [VPrgm] -> TypeCheckResult [TPrgm]
+toPrgms env = mapM (toPrgm env)

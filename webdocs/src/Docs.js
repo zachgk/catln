@@ -329,9 +329,9 @@ function RawMeta(props) {
 
 function PlayButton(props) {
   let history = useHistory();
+  const { curPage } = useParams();
   const [open, setOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
-
 
   let handleClick = (event) => {
     setOpen(!open);
@@ -354,9 +354,9 @@ function PlayButton(props) {
         open={open}
         onClose={handleClose}
       >
-        <MenuItem onClick={handleClose("/build")}>Build</MenuItem>
-        <MenuItem onClick={handleClose("/debug")}>Debug</MenuItem>
-        <MenuItem onClick={handleClose("/constrain")}>Constrain</MenuItem>
+        <MenuItem onClick={handleClose(`/build/${curPage}`)}>Build</MenuItem>
+        <MenuItem onClick={handleClose(`/debug/${curPage}`)}>Debug</MenuItem>
+        <MenuItem onClick={handleClose(`/constrain/${curPage}`)}>Constrain</MenuItem>
       </Menu>
     </span>
   );

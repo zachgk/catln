@@ -39,7 +39,8 @@ makeBaseFEnv classMap = FEnv{
   feCons = [],
   feUnionAllObjs = VarMeta 0 emptyMetaN Nothing,
   feUnionTypeObjs = VarMeta 0 emptyMetaN Nothing,
-  feTypeGraph = H.empty,
+  feVTypeGraph = H.empty,
+  feTTypeGraph = H.empty,
   feClassMap = classMap,
   feDefMap = H.empty,
   feTrace = [[]]
@@ -54,6 +55,7 @@ fromMeta env bound obj m description  = do
         BEq -> fresh env (TypeCheckResult [] $ SType tp tp description)
   return (VarMeta p m obj, env')
 
+-- TODO: This might reverse the list to return.
 mapMWithFEnv :: FEnv -> (FEnv -> a -> TypeCheckResult (b, FEnv)) -> [a] -> TypeCheckResult ([b], FEnv)
 mapMWithFEnv env f = foldM f' ([], env)
   where f' (acc, e) a = do
@@ -90,14 +92,17 @@ fromExpr _ obj env (ICExpr m (CStr s)) = do
   return (ICExpr m' (CStr s), addConstraints env' [EqualsKnown m' strType])
 fromExpr _ obj env1 (IValue m name) = do
   (m', env2) <- fromMeta env1 BUpper obj m ("Value " ++ name)
-  lookupM <- fLookup env2 name
-  return (IValue m' name, addConstraints env2 [EqPoints m' lookupM])
+  lookupVal <- fLookup env2 name
+  lookupConstraints <- case lookupVal of
+    DefVar lookupM -> return [EqPoints m' lookupM]
+    DefKnown lookupType -> return [BoundedByKnown m' lookupType]
+  return (IValue m' name, addConstraints env2 lookupConstraints)
 fromExpr objArgs obj env1 (IArg m name) = do
   (m', env2) <- fromMeta env1 BUpper obj m ("Arg " ++ name)
   let varM = PreTyped (TypeVar $ TVArg name) (labelPos "var" $ getMetaPos m)
   (varM', env3) <- fromMeta env2 BUpper obj varM $ "ArgVar " ++ name
   case H.lookup name objArgs of
-    Nothing -> error $ "Could not find arg " ++ name
+    Nothing -> error $ printf "Could not find arg %s with objArgs %s and obj %s" name (show objArgs) (show obj)
     Just lookupArg -> return (IArg varM' name, addConstraints env3 [EqPoints m' lookupArg])
 fromExpr objArgs obj env1 (ITupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
   (m', env2) <- fromMeta env1 BUpper obj m $ printf "TupleApply %s(%s = %s) Meta" (show baseExpr) argName (show argExpr)
@@ -157,11 +162,11 @@ fromArrow obj@(Object _ _ objName objVars _) env1 (Arrow m annots aguard maybeEx
             Just TVArg{} -> error "Bad TVArg in fromArrow"
             Nothing -> addConstraints env6 [ArrowTo (getExprMeta vExpr) m', ArrowTo (getExprMeta vExpr) mUserReturn']
       let arrow' = Arrow m' annots' aguard' (Just vExpr)
-      let env8 = fAddTypeGraph env7 objName (obj, arrow')
+      let env8 = fAddVTypeGraph env7 objName (obj, arrow')
       return (arrow', env8)
     Nothing -> do
       let arrow' = Arrow mUserReturn' annots' aguard' Nothing
-      let env5 = fAddTypeGraph env4 objName (obj, arrow')
+      let env5 = fAddVTypeGraph env4 objName (obj, arrow')
       return (arrow', env5)
 
 fromObjectMap :: FEnv -> (VObject, [PArrow]) -> TypeCheckResult ((VObject, [VArrow]), FEnv)
@@ -212,7 +217,7 @@ fromObject prefix isObjArg env (Object m basis name vars args) = do
   (args', env3) <- mapMWithFEnvMapWithKey env2 (addObjArg fakeObjForArgs m' prefix' vars') args
   let obj' = Object m' basis name vars' args'
   (objValue, env4) <- fromMeta env3 BUpper (Just obj') (PreTyped (singletonType (PartialType (PTypeName name) H.empty H.empty H.empty PtArgExact)) (labelPos "objValue" $ getMetaPos m)) ("objValue" ++ name)
-  let env5 = fInsert env4 name objValue
+  let env5 = fInsert env4 name (DefVar objValue)
   let env6 = addConstraints env5 [BoundedByObjs BoundAllObjs m' | isObjArg]
   let env7 = addConstraints env6 [BoundedByKnown m' (singletonType (PartialType (PTypeName name) (fmap (const TopType) vars) H.empty (fmap (const TopType) args) PtArgExact)) | basis == FunctionObj || basis == PatternObj]
   return (obj', env7)
@@ -223,10 +228,40 @@ fromObjects env (obj, arrows) = do
   (obj', env1) <- fromObject "Object" False env obj
   return ((obj', arrows), env1)
 
-fromPrgm :: FEnv -> PPrgm -> TypeCheckResult (VPrgm, FEnv)
-fromPrgm env1 (objMap1, classMap, annots) = do
+fromPrgm :: FEnv -> (PPrgm, [VObject]) -> TypeCheckResult (VPrgm, FEnv)
+fromPrgm env1 ((objMap1, classMap, annots), vobjs) = do
+  let objMap2 = zipWith (\(_, arrows) vobj -> (vobj, arrows)) (reverse objMap1) vobjs
+  (objMap3, env2) <- mapMWithFEnv env1 fromObjectMap objMap2
+  (annots', env3) <- mapMWithFEnv env2 (fromExpr H.empty Nothing) annots
+  return ((objMap3, classMap, annots'), env3)
+
+-- Add all of the objects first for various expressions that call other top level functions, from all programs
+prepObjPrgm :: FEnv -> PPrgm -> TypeCheckResult ((PPrgm, [VObject]), FEnv)
+prepObjPrgm env1 pprgm@(objMap1, _, _) = do
   (objMap2, env2) <- mapMWithFEnv env1 fromObjects objMap1
-  (objMap3, env3) <- mapMWithFEnv env2 fromObjectMap objMap2
-  (annots', env4) <- mapMWithFEnv env3 (fromExpr H.empty Nothing) annots
-  let env5 = buildTypeEnv env4 objMap3
-  return ((objMap3, classMap, annots'), env5)
+  return ((pprgm, map fst objMap2), env2)
+
+addTypeGraphArrow :: TObject -> FEnv -> TArrow -> TypeCheckResult ((), FEnv)
+addTypeGraphArrow obj@(Object _ _ name _ _) env arr = return ((), fAddTTypeGraph env name (obj, arr))
+
+addTypeGraphObjects :: FEnv -> (TObject, [TArrow]) -> TypeCheckResult ((), FEnv)
+addTypeGraphObjects env (obj@(Object _ _ name _ _), arrows) = do
+  let objValue = singletonType (PartialType (PTypeName name) H.empty H.empty H.empty PtArgExact)
+  let env' = fInsert env name (DefKnown objValue)
+  (_, env'') <- mapMWithFEnv env' (addTypeGraphArrow obj) arrows
+  return ((), env'')
+
+addTypeGraphPrgm :: FEnv -> TPrgm -> TypeCheckResult ((), FEnv)
+addTypeGraphPrgm env (objMap, _, _) = do
+  (_, env') <- mapMWithFEnv env addTypeGraphObjects objMap
+  return ((), env')
+
+fromPrgms :: FEnv -> [PPrgm] -> [TPrgm] -> TypeCheckResult ([VPrgm], FEnv)
+fromPrgms env1 pprgms tprgms = do
+  (_, env2) <- mapMWithFEnv env1 addTypeGraphPrgm tprgms
+  (pprgmsWithVObjs, env3) <- mapMWithFEnv env2 prepObjPrgm pprgms
+  (vprgms, env4) <- mapMWithFEnv env3 fromPrgm pprgmsWithVObjs
+  let (vjoinObjMap, _, _) = mergePrgms vprgms
+  let (tjoinObjMap, _, _) = mergePrgms tprgms
+  let env5 = buildTypeEnv env4 vjoinObjMap tjoinObjMap
+  return (vprgms, env5)

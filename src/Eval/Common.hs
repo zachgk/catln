@@ -31,6 +31,7 @@ import Data.Aeson hiding (Object)
 import qualified LLVM.AST as AST
 import CRes
 import Control.Monad.State
+import Utils
 
 type EvalMeta = Typed
 type ECompAnnot = CompAnnot EvalMeta
@@ -40,6 +41,7 @@ type EObject = Object EvalMeta
 type EArrow = Arrow EExpr EvalMeta
 type EObjectMap = ObjectMap EExpr EvalMeta
 type EPrgm = Prgm EExpr EvalMeta
+type EPrgmGraphData = GraphData EPrgm String
 type EReplRes = ReplRes EvalMeta
 
 data EPrim = EPrim PartialType EGuard (H.HashMap String Val -> Val)

@@ -41,26 +41,26 @@ function App() {
           <Route exact path="/">
             <Redirect to={"/docs"} />
           </Route>
-          <Route path="/list">
-            <ListProgram />
-          </Route>
-          <Route path="/constrain">
-            <Constrain />
-          </Route>
-          <Route path="/debug">
-            <Debug />
-          </Route>
-          <Route path="/build">
-            <Build />
-          </Route>
           <Route path="/docs">
             <Docs />
+          </Route>
+          <Route path="/list">
+            <ListProgram />
           </Route>
           <Route path="/type/:name">
             <TypePage />
           </Route>
           <Route path="/class/:name">
             <Class />
+          </Route>
+          <Route path="/constrain/:prgmName">
+            <Constrain />
+          </Route>
+          <Route path="/debug/:prgmName">
+            <Debug />
+          </Route>
+          <Route path="/build/:prgmName">
+            <Build />
           </Route>
         </Switch>
       </div>

@@ -4,11 +4,13 @@ import TreeView from '@material-ui/lab/TreeView';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import TreeItem from '@material-ui/lab/TreeItem';
+import {useParams} from 'react-router-dom';
 
 import {useApi, Loading, Obj, Val} from './Common';
 
 function Debug(props) {
-  let apiResult = useApi("/treebug");
+  const { prgmName } = useParams();
+  let apiResult = useApi(`/treebug?prgmName=${prgmName}`);
 
   return (
     <Loading status={apiResult}>

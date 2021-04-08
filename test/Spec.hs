@@ -47,7 +47,7 @@ runTest includeCore fileName = testCaseSteps fileName $ \step -> do
             CRes _ tprgm -> do
               -- step $ T.unpack $ pShow $ tprgm
               step "Eval tests..."
-              case evalMain tprgm of
+              case evalMain fileName tprgm of
                 CErr notes -> do
                   assertFailure $ "Could not eval: " ++ prettyCNotes notes
                 CRes notes io -> do
@@ -56,14 +56,14 @@ runTest includeCore fileName = testCaseSteps fileName $ \step -> do
                     ([], (0, _)) -> return () -- success
                     _ -> assertFailure $ "Bad result for:\n \t " ++ show (fst returnValue) ++ "\n \tNotes:" ++ prettyCNotes notes
               step "evalBuild..."
-              case evalMainb tprgm of
+              case evalMainb fileName tprgm of
                 CErr notes -> do
                   assertFailure $ "Could not eval: " ++ prettyCNotes notes
                 CRes _ ioRes -> do
                   _ <- ioRes
                   return () -- success
               step "evalAnnots..."
-              case evalAnnots tprgm of
+              case evalAnnots fileName tprgm of
                 CErr notes -> do
                   assertFailure $ "Could not eval: " ++ prettyCNotes notes
                 CRes _ _ -> return () -- success
@@ -92,12 +92,12 @@ runBuild fileName = testCaseSteps fileName $ \step -> do
             CRes _ tprgm -> do
               -- step $ T.unpack $ pShow $ tprgm
               step "Eval tests..."
-              case evalMainb tprgm of
+              case evalMainb fileName tprgm of
                 CErr notes -> do
                   assertFailure $ "Could not eval:\n\t " ++ prettyCNotes notes
                 CRes _ _ -> return () -- success
               step "evalAnnots..."
-              case evalAnnots tprgm of
+              case evalAnnots fileName tprgm of
                 CErr notes -> do
                   assertFailure $ "Could not eval:\n\t " ++ prettyCNotes notes
                 CRes _ _ -> return () -- success

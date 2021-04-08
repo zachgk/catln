@@ -41,12 +41,15 @@ type Scheme = TypeCheckResult SType
 
 type Pnt = Int
 
-type EnvValMap = (H.HashMap String VarMeta)
+data EnvDef = DefVar VarMeta | DefKnown Type
+  deriving (Show, Generic, Hashable, ToJSON)
+type EnvValMap = (H.HashMap String EnvDef)
 data FEnv = FEnv { fePnts :: IM.IntMap Scheme
                  , feCons :: [Constraint]
                  , feUnionAllObjs :: VarMeta -- union of all TypeObj for argument inference
                  , feUnionTypeObjs :: VarMeta -- union of all Object types for function limiting
-                 , feTypeGraph :: TypeGraph
+                 , feVTypeGraph :: VTypeGraph
+                 , feTTypeGraph :: TTypeGraph
                  , feClassMap :: ClassMap
                  , feDefMap :: EnvValMap
                  , feTrace :: TraceConstrain
@@ -156,12 +159,15 @@ type TGuard = Guard TExpr
 type TArrow = Arrow TExpr TypedMeta
 type TObjArg = ObjArg TypedMeta
 type TObject = Object TypedMeta
+type TObjectMap = [(TObject, [TArrow])]
 type TPrgm = Prgm TExpr TypedMeta
 type TReplRes = ReplRes TypedMeta
 
 -- implicit graph
-type TypeGraphVal = (VObject, VArrow) -- (match object type, if matching then can implicit to type in arrow)
-type TypeGraph = H.HashMap TypeName [TypeGraphVal] -- H.HashMap (Root tuple name for filtering) [vals]
+type VTypeGraphVal = (VObject, VArrow) -- (match object type, if matching then can implicit to type in arrow)
+type VTypeGraph = H.HashMap TypeName [VTypeGraphVal] -- H.HashMap (Root tuple name for filtering) [vals]
+type TTypeGraphVal = (TObject, TArrow) -- (match object type, if matching then can implicit to type in arrow)
+type TTypeGraph = H.HashMap TypeName [TTypeGraphVal] -- H.HashMap (Root tuple name for filtering) [vals]
 
 instance Meta VarMeta where
   getMetaType (VarMeta _ p _) = getMetaType p
@@ -215,19 +221,22 @@ typeCheckToRes tc = case tc of
 getPnt :: VarMeta -> Pnt
 getPnt (VarMeta p _ _) = p
 
-fLookup :: FEnv -> String -> TypeCheckResult VarMeta
+fLookup :: FEnv -> String -> TypeCheckResult EnvDef
 fLookup FEnv{feDefMap} k = case H.lookup k feDefMap of
   Just v  -> return v
-  Nothing -> TypeCheckResE [GenTypeCheckError Nothing $ "Failed to lookup " ++ k]
+  Nothing -> TypeCheckResE [GenTypeCheckError Nothing $ printf "Failed to lookup %s with keys %s" k (show $ H.keys feDefMap)]
 
 addConstraints :: FEnv -> [Constraint] -> FEnv
 addConstraints env@FEnv{feCons} newCons = env {feCons = newCons ++ feCons}
 
-fInsert :: FEnv -> String -> VarMeta -> FEnv
+fInsert :: FEnv -> String -> EnvDef -> FEnv
 fInsert env@FEnv{feDefMap} k v = env{feDefMap = H.insert k v feDefMap}
 
-fAddTypeGraph :: FEnv -> TypeName -> TypeGraphVal -> FEnv
-fAddTypeGraph env@FEnv{feTypeGraph} k v = env {feTypeGraph = H.insertWith (++) k [v] feTypeGraph}
+fAddVTypeGraph :: FEnv -> TypeName -> VTypeGraphVal -> FEnv
+fAddVTypeGraph env@FEnv{feVTypeGraph} k v = env {feVTypeGraph = H.insertWith (++) k [v] feVTypeGraph}
+
+fAddTTypeGraph :: FEnv -> TypeName -> TTypeGraphVal -> FEnv
+fAddTTypeGraph env@FEnv{feTTypeGraph} k v = env {feTTypeGraph = H.insertWith (++) k [v] feTTypeGraph}
 
 tryIntersectTypes :: FEnv -> Type -> Type -> String -> TypeCheckResult Type
 tryIntersectTypes FEnv{feClassMap} a b desc = let c = intersectTypes feClassMap a b
