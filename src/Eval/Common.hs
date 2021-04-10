@@ -169,7 +169,14 @@ type ResBuildEnvFunction = ResArrowTree -> ResArrowTree
 type ResBuildEnvItem = (PartialType, Guard (Expr Typed), ResBuildEnvFunction)
 type ResBuildEnv = H.HashMap TypeName [ResBuildEnvItem]
 type ResExEnv = H.HashMap (PartialType, Arrow (Expr Typed) Typed) (ResArrowTree, [ResArrowTree]) -- (result, [compAnnot trees])
-type TBEnv = (ResBuildEnv, H.HashMap PartialType ResArrowTree, Prgm (Expr Typed) Typed, ClassMap)
+
+data TBEnv = TBEnv {
+    tbName :: String
+  , tbResEnv :: ResBuildEnv
+  , tbVals :: H.HashMap PartialType ResArrowTree
+  , tbPrgm :: Prgm (Expr Typed) Typed
+  , tbClassMap :: ClassMap
+  }
 
 instance Eq MacroFunction where
   _ == _ = False

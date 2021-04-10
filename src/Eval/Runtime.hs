@@ -117,11 +117,11 @@ llvm = (name', [(srcType, NoGuard, aux)])
     srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("c", TopType)]) PtArgExact
     aux a = MacroArrow a (singletonType resultLeaf) (MacroFunction macroBuild)
     macroBuild input MacroData{mdTbEnv, mdObj, mdObjSrcType} = do
-      let (_, _, mdPrgm, _) = mdTbEnv
+      let TBEnv{tbPrgm} = mdTbEnv
       input' <- resolveTree mdTbEnv (mdObjSrcType, mdObj) input
       case input' of
         (ResEArrow _ _ (Arrow _ _ _ (Just expr))) -> case expr of
-          (TupleApply _ (_, Value _ "llvm") "c" f@(Value _ functionToCodegen)) -> return $ ConstantArrow $ LLVMVal $ codegenPrgm f (PartialType (PTypeName functionToCodegen) H.empty H.empty (H.singleton "io" ioType) PtArgExact) ioType mdPrgm
+          (TupleApply _ (_, Value _ "llvm") "c" f@(Value _ functionToCodegen)) -> return $ ConstantArrow $ LLVMVal $ codegenPrgm f (PartialType (PTypeName functionToCodegen) H.empty H.empty (H.singleton "io" ioType) PtArgExact) ioType tbPrgm
           _ -> error $ printf "Unknown expr to llvm macro: %s" (show expr)
         _ -> error $ printf "Unknown input to llvm macro: %s" (show input')
 

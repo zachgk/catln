@@ -97,7 +97,7 @@ Right now, the algorithm I have described above for choice should be reasonably 
 
 Other languages that lack choice essentially force there to be one option. Then, the choice is always trivial. While this solution isn't perfect, it is no doubt better.
 
-The main problem with this choice strategy is that it is essentially greedy. It assumes that all choices are independent, but they are often not. In that case, multiple choices should be made simultaneously. It may also take advantage of other data such as profiler guided optimization, automatic Big O notation, or machine learning guided optimization. These are all areas for future development of the language. But, it requires the same semantics of choice as a background so using the simpler greedy algorithm should be a good start towards those future developments as well. Hopefully, they can even be added on to later versions of the language.
+The main problem with this choice strategy is that it is essentially greedy. It assumes that all choices are independent, but they are often not. In that case, multiple choices should be made simultaneously. It may also take advantage of other data such as profiler guided optimization, automatic Big O notation, or machine learning guided optimization. It can also make multiple choices simultaneously such as polyhedral optimization or [e-graphs](https://egraphs-good.github.io/). These are all areas for future development of the language. But, it requires the same semantics of choice as a background so using the simpler greedy algorithm should be a good start towards those future developments as well. Hopefully, they can even be added on to later versions of the language.
 
 ## Visualizing Choice
 
