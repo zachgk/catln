@@ -32,6 +32,7 @@ import Syntax.Prgm
 import Syntax (Typed)
 import Utils
 import Syntax.Types
+import Data.Maybe (fromJust)
 
 data ResSuccess a n = Success a [n]
   | ResFail [n]
@@ -137,11 +138,16 @@ docServe includeCore baseFileName = do
       let maybeRawPrgms' = graphToNodes <$> maybeRawPrgms
       maybeJson maybeRawPrgms'
 
-    -- TODO: pages should load single page, move TOC to separate call
-    get "/pages" $ do
+    get "/toc" $ do
       maybeRawPrgms <- liftAndCatchIO $ getRawPrgm includeCore baseFileName
-      let maybeRawPrgms' = graphToNodes <$> maybeRawPrgms
-      annots <- liftAndCatchIO $ getEvalAnnots includeCore baseFileName baseFileName
+      let maybeRawPrgms' = map snd3 . graphToNodes <$> maybeRawPrgms
+      maybeJson maybeRawPrgms'
+
+    get "/page" $ do
+      prgmName <- param "prgmName"
+      maybeRawPrgms <- liftAndCatchIO $ getRawPrgm includeCore baseFileName
+      let maybeRawPrgms' = (\(_, nodeFromVertex, vertexFromKey) -> nodeFromVertex $ fromJust $ vertexFromKey prgmName) <$> maybeRawPrgms
+      annots <- liftAndCatchIO $ getEvalAnnots includeCore baseFileName prgmName
       maybeJson $ do
         rawPrgm <- maybeRawPrgms'
         return (rawPrgm, annots)
