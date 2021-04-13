@@ -28,9 +28,10 @@ import Parser (readFiles)
 import Parser.Syntax (DesPrgm, PPrgmGraphData)
 import TypeCheck.Common (TraceConstrain, VPrgm, TPrgm)
 import Eval.Common (Val(..), Val, EvalResult)
-import Syntax.Prgm (Expr, mergePrgms)
+import Syntax.Prgm
 import Syntax (Typed)
 import Utils
+import Syntax.Types
 
 data ResSuccess a n = Success a [n]
   | ResFail [n]
@@ -42,6 +43,22 @@ maybeJson (CErr notes) = json (ResFail notes :: ResSuccess () CNote)
 
 getRawPrgm :: Bool -> String -> IO (CRes PPrgmGraphData )
 getRawPrgm includeCore fileName = readFiles includeCore [fileName]
+
+filterByObj :: String -> TPrgm -> TPrgm
+filterByObj objName (objMap, (typeToClass, classToType), _) = (objMap', (typeToClass', classToType'), [])
+  where
+    objMap' = filter (\(Object _ _ n _ _, _) -> objName == n) objMap
+    typeToClass' = H.filterWithKey (\n _ -> n == objName) typeToClass
+    classToType' = H.filter (\(_, vars, types) -> any involvesType vars || any involvesType types) classToType
+    involvesType (SumType leafs) = any involvesPartial $ splitPartialLeafs leafs
+    involvesType _ = False
+    involvesPartial PartialType{ptName, ptVars, ptProps, ptArgs} = ptName == PTypeName objName || any involvesType ptVars || any involvesType ptProps || any involvesType ptArgs
+
+filterByClass :: String -> TPrgm -> TPrgm
+filterByClass className (_, (_, classToType), _) = ([], (typeToClass', classToType'), [])
+  where
+    typeToClass' = H.empty
+    classToType' = H.filterWithKey (\n _ -> n == className) classToType
 
 getPrgm :: Bool -> String -> IO (CRes (GraphData DesPrgm String))
 getPrgm includeCore fileName = do
@@ -57,6 +74,11 @@ getTPrgm :: Bool -> String -> IO (CRes (GraphData TPrgm String))
 getTPrgm includeCore fileName = do
   base <- getPrgm includeCore fileName
   return (base >>= typecheckPrgm)
+
+getTPrgmJoined :: Bool -> String -> IO (CRes TPrgm)
+getTPrgmJoined includeCore fileName = do
+  base <- getTPrgm includeCore fileName
+  return (mergePrgms . map fst3 . graphToNodes <$> base)
 
 getTreebug :: Bool -> String -> String -> IO EvalResult
 getTreebug includeCore baseFileName prgmName = do
@@ -140,9 +162,20 @@ docServe includeCore baseFileName = do
       maybeJson maybeTprgmWithTrace
 
     get "/typecheck" $ do
-      maybeTprgmGraph <- liftAndCatchIO $ getTPrgm includeCore baseFileName
-      let maybeTprgm = mergePrgms . map fst3 . graphToNodes <$> maybeTprgmGraph
+      maybeTprgm <- liftAndCatchIO $ getTPrgmJoined includeCore baseFileName
       maybeJson maybeTprgm
+
+    get "/object/:objName" $ do
+      objName <- param "objName"
+      maybeTprgm <- liftAndCatchIO $ getTPrgmJoined includeCore baseFileName
+      let filterTprgm = filterByObj objName <$> maybeTprgm
+      maybeJson filterTprgm
+
+    get "/class/:className" $ do
+      className <- param "className"
+      maybeTprgm <- liftAndCatchIO $ getTPrgmJoined includeCore baseFileName
+      let filterTprgm = filterByClass className <$> maybeTprgm
+      maybeJson filterTprgm
 
     get "/treebug" $ do
       prgmName <- param "prgmName"

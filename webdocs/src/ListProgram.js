@@ -70,7 +70,7 @@ function ListProgram(props) {
         />
       </FormGroup>
       <Loading status={apiResult}>
-        <Main data={apiResult.data} />
+        <ShowList data={apiResult.data} />
       </Loading>
     </div>
   );
@@ -80,7 +80,7 @@ function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-function Main(props) {
+function ShowList(props) {
   let [objMap, classMap] = props.data;
 
   return (
@@ -235,5 +235,6 @@ function ClassToTypeEntry(props) {
 
 export default ListProgram;
 export {
-  ObjMap
+  ObjMap,
+  ShowList
 };
