@@ -1,5 +1,6 @@
 import React from 'react';
 
+import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import TreeView from '@material-ui/lab/TreeView';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
@@ -16,6 +17,15 @@ import {
 
 import {useApi, Loading} from './Common';
 import DocsPage from './DocsPage';
+
+const useStyles = {
+  dirButtons: {
+    marginTop: '50px',
+    width: '100%',
+    display: 'flex',
+    justifyContent: 'space-evenly'
+  }
+};
 
 function Docs() {
   let apiResult = useApi("/toc");
@@ -50,7 +60,7 @@ function Main(props) {
             </TreeView>
           </Grid>
           <Grid item xs={8}>
-            <ShowPage />
+            <ShowPage pages={pages} path={path}/>
           </Grid>
         </Grid>
       </Route>
@@ -109,10 +119,39 @@ function TableOfContentsNodes(props) {
   });
 }
 
-function ShowPage() {
+function ShowPage(props) {
+  const {pages, path} = props;
   const { prgmName } = useParams();
 
-  return <DocsPage prgmName={prgmName} />;
+  const pageNum = pages.indexOf(decodeURIComponent(prgmName));
+
+  let showPrev;
+  if(pageNum > 0) {
+    showPrev = (
+      <Link to={`${path}/${encodeURIComponent(pages[pageNum - 1])}`}>
+        <Button variant="contained" color="primary">Previous</Button>
+      </Link>
+    );
+  }
+
+  let showNext;
+  if(pageNum < pages.length - 1) {
+    showNext = (
+      <Link to={`${path}/${encodeURIComponent(pages[pageNum + 1])}`}>
+        <Button variant="contained" color="primary">Next</Button>
+      </Link>
+    );
+  }
+
+  return (
+    <div>
+      <DocsPage prgmName={prgmName} />
+      <div style={useStyles.dirButtons}>
+        {showPrev}
+        {showNext}
+      </div>
+    </div>
+  );
 }
 
 export default Docs;
