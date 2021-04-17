@@ -147,10 +147,15 @@ docServe includeCore baseFileName = do
       prgmName <- param "prgmName"
       maybeRawPrgms <- liftAndCatchIO $ getRawPrgm includeCore baseFileName
       let maybeRawPrgms' = (\(_, nodeFromVertex, vertexFromKey) -> nodeFromVertex $ fromJust $ vertexFromKey prgmName) <$> maybeRawPrgms
+
+      maybeTPrgms <- liftAndCatchIO $ getTPrgm includeCore baseFileName
+      let maybeTPrgms' = (\(_, nodeFromVertex, vertexFromKey) -> nodeFromVertex $ fromJust $ vertexFromKey prgmName) <$> maybeTPrgms
+
       annots <- liftAndCatchIO $ getEvalAnnots includeCore baseFileName prgmName
       maybeJson $ do
         rawPrgm <- maybeRawPrgms'
-        return (rawPrgm, annots)
+        tprgm <- maybeTPrgms'
+        return (rawPrgm, tprgm, annots)
 
     get "/desugar" $ do
       maybePrgmGraph <- liftAndCatchIO $ getPrgm includeCore baseFileName

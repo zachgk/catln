@@ -14,7 +14,7 @@ import {
   useRouteMatch
 } from 'react-router-dom';
 
-import {useApi, tagJoin, Loading, Guard, PartialName, Type, Obj} from './Common';
+import {useApi, tagJoin, Loading, Guard, PTypeName, PClassName, Type, Obj} from './Common';
 
 const useStyles = {
   objDetails: {
@@ -207,8 +207,8 @@ function ClassMap(props) {
 function TypeToClassEntry(props) {
   const {typeName, classes} = props;
 
-  let showTypeName = <PartialName name={{tag: "PTypeName", contents: typeName}}/>;
-  let showClasses = tagJoin(classes.map(c => <PartialName key={c} name={{tag: "PClassName", contents: c}}/>), ", ");
+  let showTypeName = <PTypeName name={typeName} />;
+  let showClasses = tagJoin(classes.map(c => <PClassName key={c} name={c} />), ", ");
 
   return <div>{showTypeName}: {showClasses}</div>;
 }
@@ -227,7 +227,7 @@ function ClassToTypeEntry(props) {
     );
   }
 
-  let showClassName = <PartialName name={{tag: "PClassName", contents: className}}/>;
+  let showClassName = <PClassName name={className} />;
   let showTypes = tagJoin(types.map((t, i) => <span key={i}><Type data={t}/></span>), ", ");
 
   return <div>{showClassName}{showVars} = {showTypes}</div>;

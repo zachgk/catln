@@ -22,13 +22,17 @@ const useStyles = {
   },
   partialName: {
     tp: {
-      fontWeight: 'bold',
       color: 'green'
     },
     class: {
-      fontWeight: 'bold',
       color: 'purple'
     }
+  },
+  keyword: {
+    fontWeight: 'bold'
+  },
+  typevar: {
+    fontWeight: 'bold'
   }
 };
 
@@ -158,9 +162,9 @@ function Type(props) {
   let t = props.data;
   switch(t.tag) {
   case "TopType":
-    return "TopType";
+    return "";
   case "TypeVar":
-    return t.contents.contents;
+    return <TypeVar>{t.contents.contents}</TypeVar>;
   case "SumType":
     var partials = [];
     t.contents.forEach(partialOptions => {
@@ -200,6 +204,22 @@ function Type(props) {
   }
 }
 
+function KeyWord(props) {
+  return <span style={useStyles.keyword}>{props.children}</span>;
+}
+
+function TypeVar(props) {
+  return <span style={useStyles.typevar}>{props.children}</span>;
+}
+
+function PTypeName(props) {
+  return <PartialName name={{tag: "PTypeName", contents: props.name}}/>;
+}
+
+function PClassName(props) {
+  return <PartialName name={{tag: "PClassName", contents: props.name}}/>;
+}
+
 function PartialName(props) {
   const {name} = props;
   let style, link;
@@ -229,7 +249,7 @@ function Obj(props) {
     showVars = (
       <span>
         &lt;
-        {tagJoin(Object.keys(vars).map(v => <span key={v}><Meta data={vars[v]}/> {v}</span>), ", ")}
+        {tagJoin(Object.keys(vars).map(v => <span key={v}><Meta data={vars[v]}/> <TypeVar>{v}</TypeVar></span>), ", ")}
         &gt;
       </span>);
   }
@@ -251,7 +271,7 @@ function Obj(props) {
 
   return (<span>
             {showObjDetails}
-            <span> {name}{showVars}{showArgs}</span>
+            <span><PTypeName name={name}/>{showVars}{showArgs}</span>
           </span>
          );
 }
@@ -318,6 +338,10 @@ export {
   Notes,
   Guard,
   Type,
+  KeyWord,
+  TypeVar,
+  PTypeName,
+  PClassName,
   PartialName,
   Obj,
   Val
