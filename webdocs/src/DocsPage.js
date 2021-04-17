@@ -43,11 +43,19 @@ function Main(props) {
   let metaMap = {};
   let objMap = {};
   typed[0][0].forEach(tObjArrs => {
-    const [obj, ] = tObjArrs;
+    const [obj, arrs] = tObjArrs;
     const objM = obj[0];
     const [metaType, metaPos] = objM;
     metaMap[posKey(metaPos)] = metaType;
     objMap[posKey(metaPos)] = obj;
+
+    arrs.forEach(tArr => {
+      const [, arrAnnots, , expr] = tArr;
+      addExprToMetaMap(metaMap, expr);
+      arrAnnots.forEach(arrAnnot => {
+        addExprToMetaMap(metaMap, arrAnnot);
+      });
+    });
   });
 
   var annotsMap = {};
@@ -161,11 +169,12 @@ function Decl(props) {
   const {objMap} = useContext(ResMaps);
 
   const {contents} = props;
-  let [lhs, subStatements, maybeExpr] = contents;
-  let [m, [obj, guard]] = lhs;
+  const [lhs, subStatements, maybeExpr] = contents;
+  const [, [obj, guard]] = lhs;
+  const objM = obj[0];
 
   let showObj = obj;
-  let typedObj = objMap[posKey(m[1])];
+  let typedObj = objMap[posKey(objM[1])];
   if(typedObj) {
     showObj = typedObj;
   }
@@ -200,12 +209,20 @@ function DeclSubStatement(props) {
 }
 
 function Expr(props) {
+  let {metaMap} = useContext(ResMaps);
   let {expr} = props;
   switch(expr.tag) {
   case "RawCExpr":
     return "" + expr.contents[1].contents;
   case "RawValue":
-    return <PTypeName name={expr.contents[1]}/>;
+    const [[, pos], val] = expr.contents;
+    if(pos) {
+      const tp = metaMap[posKey(pos)];
+      if(tp && tp.tag === "TypeVar" && tp.contents.tag === "TVArg") {
+        return <span>{val}</span>;
+      }
+    }
+    return <PTypeName name={val}/>;
   case "RawTupleApply":
     const [, [,base], args] = expr.contents;
 
@@ -291,6 +308,38 @@ function PlayButton() {
   );
 }
 
+function addExprToMetaMap(base, expr) {
+  if(!expr) {
+    return base;
+  }
+
+  switch(expr.tag) {
+  case "CExpr":
+  case "Value":
+  case "Arg":
+    return addToMetaMap(base, expr.contents[0]);
+  case "TupleApply":
+    const [m, [baseM ,baseExpr], , subExpr] = expr.contents;
+
+    addToMetaMap(base, m);
+    addToMetaMap(base, baseM);
+    addExprToMetaMap(base, baseExpr);
+    addExprToMetaMap(base, subExpr);
+
+    return base;
+  default:
+    console.error("Unknown expr", expr);
+    return {};
+  }
+}
+
+function addToMetaMap(base, m) {
+  const [tp, pos] = m;
+  if(pos) {
+    base[posKey(pos)] = tp;
+  }
+  return base;
+}
 
 
 export default DocsPage;

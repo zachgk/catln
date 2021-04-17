@@ -99,7 +99,7 @@ fromExpr _ obj env1 (IValue m name) = do
   return (IValue m' name, addConstraints env2 lookupConstraints)
 fromExpr objArgs obj env1 (IArg m name) = do
   (m', env2) <- fromMeta env1 BUpper obj m ("Arg " ++ name)
-  let varM = PreTyped (TypeVar $ TVArg name) (labelPos "var" $ getMetaPos m)
+  let varM = PreTyped (TypeVar $ TVArg name) (getMetaPos m)
   (varM', env3) <- fromMeta env2 BUpper obj varM $ "ArgVar " ++ name
   case H.lookup name objArgs of
     Nothing -> error $ printf "Could not find arg %s with objArgs %s and obj %s" name (show objArgs) (show obj)
