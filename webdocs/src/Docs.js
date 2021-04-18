@@ -39,10 +39,12 @@ function Docs() {
 
 function Main(props) {
   let pages = props.data;
-
   let { path } = useRouteMatch();
 
   const startingPage = encodeURIComponent(pages[pages.length - 1]);
+  const basePageTree = buildPageTree(pages);
+  let pageList = []; // sorted list
+  const pageTree = sortPageTree(basePageTree, pageList, "");
 
   return (
     <Switch>
@@ -56,11 +58,11 @@ function Main(props) {
               defaultCollapseIcon={<ExpandMoreIcon />}
               defaultExpandIcon={<ChevronRightIcon />}
             >
-              <TableOfContentsNodes pageTree={buildPageTree(pages)} prevTree="" path={path} />
+              <TableOfContentsNodes pageTree={pageTree} path={path} />
             </TreeView>
           </Grid>
           <Grid item xs={8}>
-            <ShowPage pages={pages} path={path}/>
+            <ShowPage pages={pageList} path={path}/>
           </Grid>
         </Grid>
       </Route>
@@ -85,34 +87,54 @@ function buildPageTree(pageNames) {
   return tree;
 }
 
-function TableOfContentsNodes(props) {
-  const {pageTree, prevTree, path} = props;
-
-  let trees = Object.keys(pageTree);
-  if(trees.includes("main.ct")) {
-    trees.splice(trees.indexOf("main.ct"), 1);
-    trees.unshift("main.ct");
+function sortPageTree(pageTree, pageList, filePath) {
+  let sorted = [];
+  let keys = Object.keys(pageTree);
+  if(keys.includes("main.ct")) {
+    keys.splice(keys.indexOf("main.ct"), 1);
+    keys.unshift("main.ct");
   }
+  keys.forEach(key => {
+    let newFilePath = [filePath, key].join("/");
+    if(filePath === "") newFilePath = key;
+    if(isNaN(pageTree[key])) {
+      // directory
+      sorted.push({
+        type: "dir",
+        key,
+        filePath,
+        newFilePath,
+        children: sortPageTree(pageTree[key], pageList, newFilePath)
+      });
+    } else {
+      // file
+      sorted.push({
+        type: "file",
+        key,
+        filePath,
+        newFilePath
+      });
+      pageList.push(newFilePath);
+    }
+  });
+  return sorted;
+}
 
-  return trees.map(tree => {
+function TableOfContentsNodes(props) {
+  const {pageTree, path} = props;
 
-    let newPrevTree = [prevTree, tree].join("/");
-    if(prevTree === "") newPrevTree = tree;
+  return pageTree.map(tree => {
 
-    if(isNaN(pageTree[tree])) {
-      // Directory
-
+    if(tree.type === "dir") {
       return (
-        <TreeItem key={tree} nodeId={newPrevTree} label={tree} >
-          <TableOfContentsNodes key={tree} pageTree={pageTree[tree]} prevTree={newPrevTree} path={path} />
+        <TreeItem key={tree.newFilePath} nodeId={tree.newFilePath} label={tree.key} >
+          <TableOfContentsNodes key={tree.newFilePath} pageTree={tree.children} path={path} />
         </TreeItem>
       );
     } else {
-      // File
-
-      let label = <Link to={`${path}/${encodeURIComponent(newPrevTree)}`} >{tree}</Link>;
+      let label = <Link to={`${path}/${encodeURIComponent(tree.newFilePath)}`} >{tree.key}</Link>;
       return (
-        <TreeItem key={tree} nodeId={newPrevTree} label={label} />
+        <TreeItem key={tree.newFilePath} nodeId={tree.newFilePath} label={label} />
       );
     }
 
