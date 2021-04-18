@@ -110,7 +110,7 @@ test :: IO ()
 test = defaultMain $ runTests False ["test/test.ct"]
 
 testd :: IO ()
-testd = docServe False "test/test.ct"
+testd = docServe False False "test/test.ct"
 
 standardTests :: IO [String]
 standardTests = do
@@ -135,7 +135,7 @@ mtd k = do
   let fileName = testDir ++ k ++ ".ct"
   tests <- standardTests
   if fileName `elem` tests
-     then docServe True fileName
+     then docServe False True fileName
      else error $ printf "invalid test name %s in %s" fileName (show tests)
 
 mb :: String -> IO ()
@@ -151,7 +151,7 @@ mbd k = do
   let fileName = buildDir ++ k ++ ".ct"
   tests <- buildTests
   if fileName `elem` tests
-     then docServe True fileName
+     then docServe False True fileName
      else error $ printf "invalid build test name %s in %s" fileName (show tests)
 
 mtt :: IO ()
