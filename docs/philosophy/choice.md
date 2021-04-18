@@ -2,6 +2,8 @@
 
 It is a relatively common issue in programming when you must choose between several options. While your code could be valid depending on these options, one of them must ultimately be chosen.
 
+For example, most low-level details such as strict/lazy, parallelization, caching, memory management scheme, what data structure to use, what algorithms to use are all examples of choices. For any particular decision of **what** you want to do, all of the options for **how** you want to do it are choices.
+
 There are two main types of choices:
 
 - choices which are equal and valid. One example of this is choosing a sorting function. Any sorting function will return the same result given the same input
@@ -9,47 +11,67 @@ There are two main types of choices:
 
 In most programming languages, code must be written while specifying all of these choices. Sometimes, the options can be propagated up the call stack through arguments. However, this leaves the question of which choices to propagate and how far to propagate them. Propagating too much can result in unreadable and unmaintainable APIs that bury the essential ideas within the incidental ones. Propagating too few can result in bad performance and duplicate copies of the API that differ based on these choices such as the number of strict/lazy variations in Haskell.
 
-A better solution is to be able to write code that defers these choices. Essentially, code is abstract over the choices. Catln has two different mechanisms to defer these choices.
+A better solution is to be able to write code that defers these choices. Essentially, code is abstract over the choices. When compiling, it decides what choices to make for the final version (or versions to compile multiple variations of a function). Catln has two different mechanisms to defer these choices.
 
-## Object Choices
+## Standard Choices
 
-The first is by using simple objects and arrows. In Catln, it is possible to provide multiple definitions of the same function:
+Standard choices are implemented by using simple objects and arrows. In Catln, it is possible to provide multiple definitions of the same function:
 
 ```
-sort(List lst) -> List = ... // quicksort
-sort(List lst) -> List = ... // merge sort
-sort(List lst) -> List = ... // selection sort
-...
+sort(List lst) -> List =
+  #name("quicksort")
+  ...
+
+sort(List lst) -> List =
+  #name("mergesort")
+  ...
+
+sort(List lst) -> List =
+  #name("selectionsort")
+  ...
 ```
 
 When you call sort normally, it can actually use any of those definitions. This is in fact the default function calling state in Catln. Fortunately, the definitions in this case should all be equal so it requires even less concern from users of the functions. Instead of just hoping this works, it can also be verified by using [arrow testing](arrowTesting.md).
 
-Another way to think of this is that a function signature contains both an abstract signature and a concrete definition. When you make calls, you always use the abstract signature. Then, the code is abstracted over all the possible definitions.
+Another way to think of this is that a function signature contains both an abstract signature and a concrete definition. When you make calls, you always use the abstract signature. Then, the code is abstracted over all the possible concrete definitions.
 
-## Class Choices
+## Variant Choices
 
-For cases where choices may not be equal, a class is used instead of an object. Consider this example:
+The other case is where the results may not be equal. In this case, it is not written any differently as it doesn't change how it is executed in the language. The only change is adding the `variant` annotation to a declaration to exempt the function from arrow testing.
 
 ```
+// ## Standard library
 class Approx<$T>
-data TSP(...)
+approx(f -> $T) -> Approx<$T>
+  #variant
 
-tspApproxA(TSP inputData) = ...
-instance tspApproxA of Approx<$T=TSP>
-Approx(TSP val) = tspApproxA(inputData=val)
+// ## Your TSP Code
 
-tspApproxB(TSP inputData) = ...
-instance tspApproxB of Approx<$T=TSP>
-Approx(TSP val) = tspApproxB(inputData=val)
+data TSPIn(...)
+data TSPOut(...)
+
+// Declaration of the function to approximate
+tsp(TSPIn inputData) -> TSPOut
+
+approx(f=tsp(TSP inputData)) -> Approx<$T=TSPResult> =
+  #name("tspApproxAlgorithmA")
+  ...
+
+approx(f=tsp(TSP inputData)) -> Approx<$T=TSPResult> =
+  #name("tspApproxAlgorithmB")
+  ...
+
 ```
 
-Here, it creates a standard Approximation class (this definition would likely be part of the standard library). Then, it has a standard form for TSP input data (most likely a graph object).
+Here, it creates a standard Approximation class to represent approximations of a type `$T` and a standard approximation function that accepts a function `f` and returns the approximation of it. These will most likely be in the standard library.
 
-To create an instance, three steps are required. First, create the actual function to describe the particular approximation strategy. This strategy would then be a member of the Approx class. Lastly, provide the definition for how to convert from the general class form of `Approx` to the particular choice form of `tspApproxX` in the form of a simple definition.
+Then, you declare the signature of the real tsp function along with input and output data types. This could even be a real definition too as computing the exact version might be desired in some circumstances.
 
-In Catln, a class name can not be reused as an object name. Therefore, any definitions that use a declared class name are known to be a class choice. They will not be subject to arrow testing, but will otherwise be treated fairly normally.
+Finally, you can define different implementations of the approx function applied to the tsp signature. 
 
 Another powerful use of class choices is for data structures. For example, a definition like `List.empty` can be resolved to use a class choice to determine the appropriate type of list. This is one example of how this section will be crucial for handling [optimizations](optimization.md).
+
+Note that with variant functions, it is also possible to apply properties to the results. For example, an approximation could have a property that provides a bound on it's accuracy. Then, you can request not just any approximation, but one with a particular minimum accuracy.
 
 ## Resolving Choices
 

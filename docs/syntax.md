@@ -3,15 +3,25 @@
 Here is a basic guide to the **currently implemented** syntax and features for Catln.
 You can view examples of the syntax inside the [compiler test cases](https://github.com/zachgk/catln/tree/master/test/code).
 
+## Comments
+
+A comment is done using by prefixing a line with `//`. The comment includes all lines that are indented after it as well. The contents of the comment are treated as markdown so all markdown syntax (headings, bold, links, etc.) will work in the comment.
+
+```
+// This is a comment
+
+   # Markdown title
+```
+
 ## Declarations
 
 To declare a value, you can write an equality:
 
 ```
-// Untyped value
+// Type inferred value
 x = 5
 
-// Typed value
+// Explicitly Typed value
 Integer y = 3
 
 ```
@@ -46,9 +56,9 @@ For longer functions, they can be split over multiple lines. The earlier lines c
 
 ```
 sumEqProduct(Integer a, Integer b) =
-    s = a + b
-    p = a * b
-    s == p
+    sumVal = a + b
+    prodVal = a * b
+    sumVal == prodVal
     
 result = sumEqProduct(a=2, b=2)
 ```
@@ -61,7 +71,7 @@ doublePositive(Integer val) =
     val + val
 ```
 
-You can also add a conditional guard to a declaration. You can give either a if or an else guard. The else guard only activates if none of the if conditions execute.
+You can also add a conditional guard to a declaration. You can give either an if or an else guard. The else guard only activates if none of the if conditions execute.
 
 ```
 abs(Integer x) if x >= 0 = x
@@ -122,14 +132,37 @@ class Stoplight = Red | Greed | Blue
 class Maybe<$T> = Just<$T>($T val) | Nothing
 
 // A union that directly uses $T without creating a new object
-// In this instance, it is not a sum type
+// In this instance, it is not a sum type but a true union type
 class Maybe2<$T> = $T | Nothing
+```
+
+You can also define annotations similarly to data objects:
+
+```
+annot #assert(Boolean test)
 ```
 
 ## Programs
 
-To create a Catln program, it should include a main value. There is no way to pass input arguments, read from stdin, or print to stdout at this time. Main should be (return) an integer which is the exit value of the process.
+There are two kinds of Catln programs, full builds and executables. The type of program is defined based on how you define the appropriate type of main.
+
+### Executable - mainx
+
+A mainx defines an executable program. This is most similar to what you would see in most programming languages. The IO argument will eventually be used to define interactions with stdin, stdout, exiting the process, and program arguments.
+
+The signature for mainx should be:
 
 ```
-main = 0
+mainx(IO io) -> IO
+```
+
+
+### Build - main
+
+A full build produces a program that does not necessarily consist of just a single executable. The only current example is [the web test](../test/build/web.ct) which produces a single page website. In the future, other types of builds will be created.
+
+The signature for main should be:
+
+```
+main -> CatlnResult
 ```

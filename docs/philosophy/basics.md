@@ -46,10 +46,10 @@ Unsealed type classes are used to represent unions that can be extended later. T
 class Show
 show(Show s) -> String
 
-instance String of Show
+every String isa Show
 show(String s) = s
 
-instance Boolean of Show
+every Boolean isa Show
 show(True) = "True"
 show(False) = "False"
 ```
@@ -58,11 +58,11 @@ Here, a new class called show is declared.
 
 Then, the function `show` is declared which should show all items of type show. Note that this syntax is a generic function declaration. The compiler will verify that all appropriate definitions exist to fulfill a claim made within the declaration. So, this syntax can also be used outside of type classes.
 
-Next, two instances of the `Show` class are added: String and Boolean. Each must also fulfill the `show` definition as they have been added to the domain of the function.
+Next, two instances of the `Show` class are added: String and Boolean. Each must also fulfill the `show` definition as they have been added to the domain of the function. They are described using an `every _ isa _` statement.
 
-It is also possible to have a class be an instance of another class. For example, all classes which are comparable also have the equality class. No special syntax is required to handle function as it merely requires that all appropriate declarations are fulfilled.
+It is also possible to have a class extend another class. For example, all classes which are comparable also have the equality class. No special syntax is required to handle function as it merely requires that all appropriate declarations are fulfilled.
 
-Just like Haskell, types are made instances of classes separately from their construction. For your own types, this is not important. However, this feature becomes useful when working with dependencies that are more difficult to change. You can add additional type classes to types within those dependencies, including types within the standard library.
+Just like Haskell, types are added to classes separately from their construction. For your own types, this is not important. However, this feature becomes useful when working with dependencies that are more difficult to change. You can add additional type classes to types within those dependencies, including types within the standard library.
 
 Another idea worth mentioning is that type classes, sealed or unsealed, represent general union types. The only effect that sealing a type class has is to throw a compiler error if you try to extend one. The implementation, otherwise, is completely identical.
 

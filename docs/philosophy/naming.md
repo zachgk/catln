@@ -10,14 +10,10 @@ Just as important as the presence of names is the absence of them. For example c
 
 By using the default names, it is not necessary to come up with names that do not present information. By using type aliases, even usages of the same type for different purposes can also utilize grouped names. This name would then be easy to change using a code refactoring tool as all usages correspond only to the default name.
 
-Scope naming for context
-
-Names exclude Types
-
 ## Name Guidance
 
 Another key piece of guidance for names is that they usually consist of a single word or idea. This is not an absolute rule, but consider if multiple words can be broken down into different pieces.
 
 For example, instead of using an `ArrayList` type, it should use the power of [modules](modules.md) and instead be `List::Array`. Then, it is possible to refer to it by the full name if necessary or an abbreviated name of that sufficiently describes the type. There is also no need to worry about conflicts. There could be different types named `Listener` in different scopes that would be separated by the module name, instead of the object name. No need for smurf programming.
 
-The other direction is to avoid having types inside names such as `toString`. Instead, it would be better to use the real type for linking, discoverability, and simplicity. Here, you could instead write `to<$T=String>` as the function name.
+The other direction is to avoid having types inside names such as `toString`. Instead, it would be better to use the real type for linking, discoverability, and simplicity. Here, you could instead write `to<String>` as the function name.
