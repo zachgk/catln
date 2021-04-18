@@ -6,4 +6,4 @@ length(this=IntNil) = 0
 // TODO: Fix example below which should work without explicit return value
 length(this=IntCons(head, tail)) -> Integer = 1 + tail.length
 
-main(IO io) = io.exit(val=IntCons(head=5, tail=IntCons(head=3, tail=IntNil)).length - 2)
+mainx(IO io) = io.exit(val=IntCons(head=5, tail=IntCons(head=3, tail=IntNil)).length - 2)

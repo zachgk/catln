@@ -142,17 +142,17 @@ evalPrgm input src@PartialType{ptName=PTypeName{}} dest prgmName prgmGraphData =
     _ -> CErr [MkCNote $ GenCErr Nothing "Eval did not return an instance of IO"]
 evalPrgm _ PartialType{ptName=PClassName{}} _ _ _ = error "Can't eval class"
 
-evalMain :: String -> EPrgmGraphData -> CRes (IO (Integer, EvalResult))
-evalMain = evalPrgm mainExpr mainPartial ioType
-  where mainPartial = PartialType (PTypeName "main") H.empty H.empty (H.singleton "io" ioType) PtArgExact
-        mainPartialEmpty = Typed (singletonType (PartialType (PTypeName "main") H.empty H.empty H.empty PtArgExact)) Nothing
-        mainExpr = TupleApply (Typed (singletonType mainPartial) Nothing) (mainPartialEmpty, Value mainPartialEmpty "main") "io" (Arg (Typed ioType Nothing) "io")
+evalMainx :: String -> EPrgmGraphData -> CRes (IO (Integer, EvalResult))
+evalMainx = evalPrgm mainExpr mainPartial ioType
+  where mainPartial = PartialType (PTypeName "mainx") H.empty H.empty (H.singleton "io" ioType) PtArgExact
+        mainPartialEmpty = Typed (singletonType (PartialType (PTypeName "mainx") H.empty H.empty H.empty PtArgExact)) Nothing
+        mainExpr = TupleApply (Typed (singletonType mainPartial) Nothing) (mainPartialEmpty, Value mainPartialEmpty "mainx") "io" (Arg (Typed ioType Nothing) "io")
 
-evalMainb :: String -> EPrgmGraphData -> CRes (IO (Val, EvalResult))
-evalMainb prgmName prgmGraphData = do
-  let srcName = "mainb"
+evalMain :: String -> EPrgmGraphData -> CRes (IO (Val, EvalResult))
+evalMain prgmName prgmGraphData = do
+  let srcName = "main"
   let src = PartialType (PTypeName srcName) H.empty H.empty H.empty PtArgExact
-  let input = Value (Typed (singletonType src) Nothing) "mainb"
+  let input = Value (Typed (singletonType src) Nothing) "main"
   let dest = singletonType (PartialType (PTypeName "CatlnResult") H.empty H.empty (H.fromList [("name", strType), ("contents", strType)]) PtArgExact)
   let prgm = prgmFromGraphData prgmName prgmGraphData
   (initTree, env) <- evalBuildPrgm input src dest prgm
@@ -160,8 +160,8 @@ evalMainb prgmName prgmGraphData = do
   case res of
     val@(TupleVal "CatlnResult" args) -> case (H.lookup "name" args, H.lookup "contents" args) of
       (Just (StrVal _), Just (StrVal _)) -> return $ return (val, evalResult env')
-      _ -> CErr [MkCNote $ GenCErr Nothing "Eval mainb returned a CatlnResult with bad args"]
+      _ -> CErr [MkCNote $ GenCErr Nothing "Eval main returned a CatlnResult with bad args"]
     (LLVMVal toCodegen) -> return $ do
       llvmStr <- codegenExInit toCodegen
       return (TupleVal "CatlnResult" (H.fromList [("name", StrVal "out.ll"), ("contents", StrVal llvmStr)]), evalResult env')
-    _ -> CErr [MkCNote $ GenCErr Nothing "Eval mainb did not return a CatlnResult"]
+    _ -> CErr [MkCNote $ GenCErr Nothing "Eval main did not return a CatlnResult"]

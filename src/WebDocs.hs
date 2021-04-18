@@ -23,7 +23,7 @@ import           GHC.Generics          (Generic)
 import           Desugarf         (desFiles)
 import           CRes
 import TypeCheck (typecheckPrgm, typecheckPrgmWithTrace)
-import           Eval (evalMain, evalMainb, evalAnnots)
+import           Eval (evalMainx, evalMain, evalAnnots)
 import Parser (readFiles)
 import Parser.Syntax (DesPrgm, PPrgmGraphData)
 import TypeCheck.Common (TraceConstrain, VPrgm, TPrgm)
@@ -115,7 +115,7 @@ getTPrgmJoined provider = do
 getTreebug :: WDProvider -> String -> IO EvalResult
 getTreebug provider prgmName = do
   base <- getTPrgm provider
-  let pre = base >>= evalMain prgmName
+  let pre = base >>= evalMainx prgmName
   case pre of
     CRes _ r -> snd <$> r
     CErr _ -> fail "No eval result found"
@@ -123,7 +123,7 @@ getTreebug provider prgmName = do
 getEvaluated :: WDProvider -> String -> IO Integer
 getEvaluated provider prgmName = do
   base <- getTPrgm provider
-  let pre = base >>= evalMain prgmName
+  let pre = base >>= evalMainx prgmName
   case pre of
     CRes _ r -> fst <$> r
     CErr _ -> return 999
@@ -131,7 +131,7 @@ getEvaluated provider prgmName = do
 getEvalBuild :: WDProvider -> String -> IO Val
 getEvalBuild provider prgmName = do
   base <- getTPrgm provider
-  let pre = base >>= evalMainb prgmName
+  let pre = base >>= evalMain prgmName
   case pre of
     CRes _ r -> fst <$> r
     CErr _ -> return NoVal
@@ -147,7 +147,7 @@ getEvalAnnots provider prgmName = do
 getWeb :: WDProvider -> String -> IO String
 getWeb provider prgmName = do
   base <- getTPrgm provider
-  let pre = base >>= evalMainb prgmName
+  let pre = base >>= evalMain prgmName
   case pre of
     CRes _ r -> do
       (TupleVal _ args, _) <- r
