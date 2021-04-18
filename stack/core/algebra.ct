@@ -16,8 +16,8 @@ class POrdering = Ordering | NoOrdering
 class POrd
 
 class Ord
-instance Ord of POrd
-instance Ord of Eq
+every Ord isa POrd
+every Ord isa Eq
 
 compare<Ord $T>($T l, $T r) -> Ordering
 compare<POrd $T>($T l, $T r) -> POrdering
@@ -36,7 +36,7 @@ operator><Ord $T>($T l, $T r) -> Boolean
 // ## Semigroup
 
 class Semigroup
-instance Semigroup of Eq
+every Semigroup isa Eq
 
 mappend<Semigroup $T>($T l, $T r) -> $T
 
@@ -46,7 +46,7 @@ testSemigroupAssociative<Semigroup $T>($T a, $T b, $T c) =
   0
 
 class Monoid
-instance Monoid of Semigroup
+every Monoid isa Semigroup
 
 mempty<Monoid $T> -> $T
 
@@ -66,7 +66,7 @@ class CommutativeMonoid
 
 // This is also called an Abelian Monoid
 
-instance CommutativeMonoid of Monoid
+every CommutativeMonoid isa Monoid
 
 testCommutativeMonoid<CommutativeMonoid $T>($T a, $T b) =
   #test
@@ -74,7 +74,7 @@ testCommutativeMonoid<CommutativeMonoid $T>($T a, $T b) =
   0
 
 class Group
-instance Group of Monoid
+every Group isa Monoid
 
 inverse<Group $T>($T t) -> $T
 

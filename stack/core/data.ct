@@ -19,7 +19,7 @@ class Functor<$T>
 
 class Option<$T> = $T | None
 
-instance Option<$T> of Functor
+every Option<$T> isa Functor
 // fmap(this=None, fn) = None
 // fmap($T this, fn($T)) = fn(this)
 
@@ -33,7 +33,7 @@ operator::<$T>($T l, ConsList<$T> r) = Cons(head=l, tail=r)
 length(this=Nil) = 0
 length(this=Cons(head, tail)) = 1 + tail.length
 
-instance ConsList<$T> of Functor
+every ConsList<$T> isa Functor
 // fmap(this=Nil, fn) = Nil
 // fmap(this=Cons(head, tail), fn) = Cons(head=fn(head), tail=tail.fmap(fn))
 

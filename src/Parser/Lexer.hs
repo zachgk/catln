@@ -34,7 +34,7 @@ symbol :: String -> Parser String
 symbol = L.symbol sc
 
 reservedWords :: [String]
-reservedWords = ["if", "else", "assert", "data", "type", "instance", "of", "match", "case"]
+reservedWords = ["if", "else", "assert", "data", "type", "every", "isa", "match", "case"]
 
 
   -- Parse simple sequences

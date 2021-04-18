@@ -118,11 +118,11 @@ pTypeDefStatement = do
 
 pClassDefStatement :: Parser PStatement
 pClassDefStatement = do
-  _ <- symbol "instance"
+  _ <- symbol "every"
   typeName <- tidentifier
   maybeVars <- optional $ angleBraces $ sepBy1 pTypeVar (symbol ",")
   let vars = maybe H.empty H.fromList maybeVars
-  _ <- symbol "of"
+  _ <- symbol "isa"
   className <- tidentifier
   return $ RawClassDefStatement ((typeName, vars), className)
 

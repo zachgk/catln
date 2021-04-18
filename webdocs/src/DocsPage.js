@@ -124,7 +124,7 @@ function Statement(props) {
       );
     }
 
-    return (<h3 style={useStyles.noPlay}><KeyWord>instance</KeyWord> <PTypeName name={instanceType}/>{showInstanceVars} <KeyWord>of</KeyWord> <PClassName name={instanceClass}/></h3>);
+    return (<h3 style={useStyles.noPlay}><KeyWord>every</KeyWord> <PTypeName name={instanceType}/>{showInstanceVars} <KeyWord>isa</KeyWord> <PClassName name={instanceClass}/></h3>);
   case "RawClassDeclStatement":
     let [classDeclName, classDeclVars] = statement.contents;
 
