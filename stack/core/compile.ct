@@ -6,8 +6,8 @@ import stack/core/data.ct
 // ## IO
 
 data IO
-exit(IO this, Integer val) -> IO
-println(IO this, String msg) -> IO
+IO.exit(Integer val) -> IO
+IO.println(String msg) -> IO
 
 
 // ## Core Annotations

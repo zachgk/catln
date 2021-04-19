@@ -1,5 +1,5 @@
 // TODO: Use core length rather than llength
-llength(this=Nil) = 0
-llength(this=Cons(head, tail)) = 1 + tail.llength
+Nil.llength = 0
+Cons(head, tail).llength = 1 + tail.llength
 
 mainx(IO io) = io.exit(val=[5, 3].llength - 2)

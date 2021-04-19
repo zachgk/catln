@@ -24,6 +24,7 @@ import           Parser.Lexer
 import Parser.Syntax
 import Parser.Expr
 import Syntax.Types
+import qualified Data.HashMap.Strict as H
 
 pDeclArg :: Parser (String, PExpr)
 pDeclArg = do
@@ -52,14 +53,37 @@ pArrowRes = do
   pos2 <- getSourcePos
   return $ PreTyped t (Just (pos1, pos2, ""))
 
+pMethodCallerType :: Parser PObjArg
+pMethodCallerType = do
+  pos1 <- getSourcePos
+  t <- singletonType <$> pLeafType
+  pos2 <- getSourcePos
+  _ <- symbol "."
+  return (PreTyped t (Just (pos1, pos2, "")), Nothing)
+
+pMethodCallerObj :: Parser PObjArg
+pMethodCallerObj = do
+  pos1 <- getSourcePos
+  obj <- pObjTree FunctionObj
+  pos2 <- getSourcePos
+  _ <- symbol "."
+  return (emptyMeta pos1 pos2, Just obj)
+
+pMethodCaller :: Parser PObjArg
+pMethodCaller = try pMethodCallerType <|> pMethodCallerObj
+
 pDeclLHS :: Parser PDeclLHS
 pDeclLHS = do
   pos1 <- getSourcePos
-  patt <- pPattern FunctionObj
+  meth <-  optional $ try pMethodCaller
+  patt@(Pattern (Object objM basis objName objVars objArgs) guard) <- pPattern FunctionObj
+  let patt' = case meth of
+        Just meth' -> Pattern (Object objM basis objName objVars (H.insert "this" meth' objArgs)) guard
+        Nothing -> patt
   maybeArrMeta <- optional pArrowRes
   pos2 <- getSourcePos
   let arrMeta = fromMaybe (emptyMeta pos1 pos2) maybeArrMeta
-  return $ DeclLHS arrMeta patt
+  return $ DeclLHS arrMeta patt'
 
 pDeclSingle :: Parser PDecl
 pDeclSingle = do

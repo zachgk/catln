@@ -40,7 +40,12 @@ double2(Integer val) -> Integer = val + val
 result = double(val=5)
 
 // Call the function while attempting to infer the argument name
-result = double(5)
+result2 = double(5)
+
+// Functions can also be defined in a method format
+// It behaves like a function with the caller as an argument called "this"
+Integer.double3 = this + this
+result3 = 5.double3
 ```
 
 Catln supports the following operators following the typical operator precedence:

@@ -254,12 +254,19 @@ function Obj(props) {
       </span>);
   }
 
+  let showCaller;
+  let argsCall = Object.assign({}, args);
+  if('this' in args) {
+    showCaller = <span><Meta data={args['this'][0]}/>.</span>;
+    delete argsCall['this'];
+  }
+
   let showArgs;
-  if(Object.keys(args).length > 0) {
+  if(Object.keys(argsCall).length > 0) {
     showArgs = (
       <span>
       (
-        {tagJoin(Object.keys(args).map(arg => <span key={arg}><Meta data={args[arg][0]}/> {arg}</span>), ", ")}
+        {tagJoin(Object.keys(argsCall).map(arg => <span key={arg}><Meta data={argsCall[arg][0]}/> {arg}</span>), ", ")}
       )
       </span>);
   }
@@ -271,7 +278,7 @@ function Obj(props) {
 
   return (<span>
             {showObjDetails}
-            <span><PTypeName name={name}/>{showVars}{showArgs}</span>
+            <span>{showCaller}<PTypeName name={name}/>{showVars}{showArgs}</span>
           </span>
          );
 }

@@ -7,21 +7,21 @@ import stack/core/primitives.ct
 data String
 operator==(String l, String r) -> Boolean
 
-toString(String this) -> String = this
-toString(Integer this) -> String
+String.toString -> String = this
+Integer.toString -> String
 
 // ## Collections
 
 class Functor<$T>
-// fmap<Functor $F>($F<$T=$A> this, fn($A) -> $B) -> $F<$T=$B>
+// $F<$T=$A>.fmap<Functor $F>(fn($A) -> $B) -> $F<$T=$B>
 
 // ## Collections
 
 class Option<$T> = $T | None
 
 every Option<$T> isa Functor
-// fmap(this=None, fn) = None
-// fmap($T this, fn($T)) = fn(this)
+// None.fmap(fn) = None
+// $T.fmap(fn($T)) = fn(this)
 
 // ## List
 
@@ -30,12 +30,12 @@ class List<$T>
 class ConsList<$T> = Cons<$T>($T head, ConsList<$T> tail) | Nil
 operator::<$T>($T l, ConsList<$T> r) = Cons(head=l, tail=r)
 
-length(this=Nil) = 0
-length(this=Cons(head, tail)) = 1 + tail.length
+Nil.length = 0
+Cons(head, tail).length = 1 + tail.length
 
 every ConsList<$T> isa Functor
-// fmap(this=Nil, fn) = Nil
-// fmap(this=Cons(head, tail), fn) = Cons(head=fn(head), tail=tail.fmap(fn))
+// Nil.fmap(fn) = Nil
+// Cons(head, tail).fmap(fn) = Cons(head=fn(head), tail=tail.fmap(fn))
 
 // ## Set
 
