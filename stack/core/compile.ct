@@ -1,16 +1,16 @@
 import stack/core/primitives.ct
 import stack/core/data.ct
 
-// # Catln Core Compiling Types and Annotations
+# # Catln Core Compiling Types and Annotations
 
-// ## IO
+# ## IO
 
 data IO
 IO.exit(Integer val) -> IO
 IO.println(String msg) -> IO
 
 
-// ## Core Annotations
+# ## Core Annotations
 
 annot #assert(Boolean test)
 annot #assert(Boolean test, String msg)
@@ -18,7 +18,7 @@ annot #print(CatlnResult p)
 annot #test
 annot #example
 
-// ## Result Classes
+# ## Result Classes
 
 data CatlnResult(String name, String contents)
 www(String html) = CatlnResult(name="index.html", contents=html)

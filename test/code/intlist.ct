@@ -1,9 +1,9 @@
 class IntList = IntCons(Integer head, IntList tail) | IntNil
-// operator::(Integer l, ConsList r) = Cons(head=l, tail=r)
+# operator::(Integer l, ConsList r) = Cons(head=l, tail=r)
 
 IntList.length -> Integer
 IntNil.length = 0
-// TODO: Fix example below which should work without explicit return value
+# TODO: Fix example below which should work without explicit return value
 IntCons(head, tail).length -> Integer = 1 + tail.length
 
 mainx(IO io) = io.exit(val=IntCons(head=5, tail=IntCons(head=3, tail=IntNil)).length - 2)

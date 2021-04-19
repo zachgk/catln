@@ -27,11 +27,11 @@ The context can be thought of as a collection of values, each with it's own type
 In addition, there are also some syntax sugars to make it easier to work with the context. Many methods will require a context to be called such as:
 
 ```
-// The println method requires the IO object to be part of the context when it is called
-// It then returns nothing (unit) inside of an updated context object
+# The println method requires the IO object to be part of the context when it is called
+# It then returns nothing (unit) inside of an updated context object
 println{IO io}(String s) -> {IO}()
 
-//It corresponds to the desugared form:
+# It corresponds to the desugared form:
 Context(val=println(String s), IO $io, $states...) -> Context(val=(), IO $newio, $newstates...)
 ```
 
@@ -42,17 +42,17 @@ Many functions will use context elements indirectly. They do not need to access 
 There is also a few additional syntax sugars for contexts:
 
 ```
-// A value can be prepended with the context to add something to a context
-// This is very useful when returning while adding context values
+# A value can be prepended with the context to add something to a context
+# This is very useful when returning while adding context values
 x = {valToAddToContext} valInsideContext
 
-// The standard context get requires that exactly one element of that type should be in the context
-// Otherwise, it will throw a syntax error during compilation
-// This syntax stores all elements as a Collection<MyListenerType> which can be zero or many listeners
+# The standard context get requires that exactly one element of that type should be in the context
+# Otherwise, it will throw a syntax error during compilation
+# This syntax stores all elements as a Collection<MyListenerType> which can be zero or many listeners
 callWithListeners{MyListenerType... listeners}(...) = ...
 
-// Add an element to the context within a scope
-// This makes it available within the block and removes it when the block ends
+# Add an element to the context within a scope
+# This makes it available within the block and removes it when the block ends
 foo =
   with {newContextElement}
     ...

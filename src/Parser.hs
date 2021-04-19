@@ -43,7 +43,7 @@ pComment = RawComment <$> L.indentBlock scn p
   where
     takeLine = takeWhileP (Just "character") (/= '\n')
     p = do
-      _ <- string "// "
+      _ <- string "# "
       l <- takeLine
       return (L.IndentMany Nothing (\ls -> return $ intercalate "\n" (l:ls)) takeLine)
 

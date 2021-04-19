@@ -40,17 +40,17 @@ Another way to think of this is that a function signature contains both an abstr
 The other case is where the results may not be equal. In this case, it is not written any differently as it doesn't change how it is executed in the language. The only change is adding the `variant` annotation to a declaration to exempt the function from arrow testing.
 
 ```
-// ## Standard library
+# ## Standard library
 class Approx<$T>
 approx(f -> $T) -> Approx<$T>
   #variant
 
-// ## Your TSP Code
+# ## Your TSP Code
 
 data TSPIn(...)
 data TSPOut(...)
 
-// Declaration of the function to approximate
+# Declaration of the function to approximate
 tsp(TSPIn inputData) -> TSPOut
 
 approx(f=tsp(TSP inputData)) -> Approx<$T=TSPResult> =

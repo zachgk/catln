@@ -1,7 +1,7 @@
 import stack/core/primitives.ct
 import stack/core/compile.ct
 
-// # Catln Core Abstract Algebra Types
+# # Catln Core Abstract Algebra Types
 
 class Eq
 operator==<Eq $T>($T l, $T r) -> Boolean
@@ -27,13 +27,13 @@ operator>=<Ord $T>($T l, $T r) -> Boolean
 operator<<Ord $T>($T l, $T r) -> Boolean
 operator><Ord $T>($T l, $T r) -> Boolean
 
-// max<Ord $T>($T l, $T r) -> $T = if l >= r then l else r
-// min<Ord $T>($T l, $T r) -> $T = if l <= r then l else r
+# max<Ord $T>($T l, $T r) -> $T = if l >= r then l else r
+# min<Ord $T>($T l, $T r) -> $T = if l <= r then l else r
 
-// TODO: Tests and properties for compare
+# TODO: Tests and properties for compare
 
 
-// ## Semigroup
+# ## Semigroup
 
 class Semigroup
 every Semigroup isa Eq
@@ -60,11 +60,11 @@ testLeftMonoidIdentity<Monoid $T>($T t) =
   #assert(test=mappend(l=mempty, r=t) == t)
   0
 
-// mconcat<Monoid $T>(List<$T> lst) = lst.fold(mappend, mempty)
+# mconcat<Monoid $T>(List<$T> lst) = lst.fold(mappend, mempty)
 
 class CommutativeMonoid
 
-// This is also called an Abelian Monoid
+# This is also called an Abelian Monoid
 
 every CommutativeMonoid isa Monoid
 

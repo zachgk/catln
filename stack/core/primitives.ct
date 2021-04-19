@@ -1,9 +1,9 @@
 import stack/core/algebra.ct
 import stack/core/data.ct
 
-// # Catln Core Library
+# # Catln Core Library
 
-// ## Booleans
+# ## Booleans
 
 class Boolean = True | False
 
@@ -34,10 +34,10 @@ operator^(False l, True r) = True
 operator^(False l, False r) = False
 
 every Boolean isa Enum
-// enum<Boolean> = [False, True]
+# enum<Boolean> = [False, True]
 
 
-// ## Integers
+# ## Integers
 
 class Number = Integer | Float
 every Number isa Eq

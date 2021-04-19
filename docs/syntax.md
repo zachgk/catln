@@ -5,10 +5,10 @@ You can view examples of the syntax inside the [compiler test cases](https://git
 
 ## Comments
 
-A comment is done using by prefixing a line with `//`. The comment includes all lines that are indented after it as well. The contents of the comment are treated as markdown so all markdown syntax (headings, bold, links, etc.) will work in the comment.
+A comment is done using by prefixing a line with `# `. The comment includes all lines that are indented after it as well. The contents of the comment are treated as markdown so all markdown syntax (headings, bold, links, etc.) will work in the comment.
 
 ```
-// This is a comment
+# This is a comment
 
    # Markdown title
 ```
@@ -18,10 +18,10 @@ A comment is done using by prefixing a line with `//`. The comment includes all 
 To declare a value, you can write an equality:
 
 ```
-// Type inferred value
+# Type inferred value
 x = 5
 
-// Explicitly Typed value
+# Explicitly Typed value
 Integer y = 3
 
 ```
@@ -33,17 +33,17 @@ A function is written with an equals followed by the arguments:
 ```
 double(Integer val) = val + val
 
-// With a return type
+# With a return type
 double2(Integer val) -> Integer = val + val
 
-// Call the function by passing in the arguments
+# Call the function by passing in the arguments
 result = double(val=5)
 
-// Call the function while attempting to infer the argument name
+# Call the function while attempting to infer the argument name
 result2 = double(5)
 
-// Functions can also be defined in a method format
-// It behaves like a function with the caller as an argument called "this"
+# Functions can also be defined in a method format
+# It behaves like a function with the caller as an argument called "this"
 Integer.double3 = this + this
 result3 = 5.double3
 ```
@@ -82,7 +82,7 @@ You can also add a conditional guard to a declaration. You can give either an if
 abs(Integer x) if x >= 0 = x
 abs(Integer x) else = x
 
-// With return values
+# With return values
 abs2(Integer x) if x >= 0 -> Integer = x
 abs2(Integer x) else -> Integer = x
 ```
@@ -117,14 +117,14 @@ A new type object can be created through a data declaration. By convention, type
 ```
 data Pair(Int a, Int b)
 
-// Create a pair
+# Create a pair
 myPair = Pair(a=1, b=2)
 
-// Pattern match against a data object in a declaration
+# Pattern match against a data object in a declaration
 fst(val=Pair(a, b)) = a
 snd(val=Pair(a, b)) = b
 
-// A pair with a type parameter
+# A pair with a type parameter
 data Pair2<$N>($N a, $N b)
 ```
 
@@ -133,11 +133,11 @@ To create a union type, use a class declaration. Each of the elements of the uni
 ```
 class Stoplight = Red | Greed | Blue
 
-// A class with a type parameter and argument
+# A class with a type parameter and argument
 class Maybe<$T> = Just<$T>($T val) | Nothing
 
-// A union that directly uses $T without creating a new object
-// In this instance, it is not a sum type but a true union type
+# A union that directly uses $T without creating a new object
+# In this instance, it is not a sum type but a true union type
 class Maybe2<$T> = $T | Nothing
 ```
 

@@ -1,8 +1,8 @@
 import stack/core/primitives.ct
 
-// # Catln Core Data Types
+# # Catln Core Data Types
 
-// ## String
+# ## String
 
 data String
 operator==(String l, String r) -> Boolean
@@ -10,20 +10,20 @@ operator==(String l, String r) -> Boolean
 String.toString -> String = this
 Integer.toString -> String
 
-// ## Collections
+# ## Collections
 
 class Functor<$T>
-// $F<$T=$A>.fmap<Functor $F>(fn($A) -> $B) -> $F<$T=$B>
+# $F<$T=$A>.fmap<Functor $F>(fn($A) -> $B) -> $F<$T=$B>
 
-// ## Collections
+# ## Collections
 
 class Option<$T> = $T | None
 
 every Option<$T> isa Functor
-// None.fmap(fn) = None
-// $T.fmap(fn($T)) = fn(this)
+# None.fmap(fn) = None
+# $T.fmap(fn($T)) = fn(this)
 
-// ## List
+# ## List
 
 class List<$T>
 
@@ -34,14 +34,14 @@ Nil.length = 0
 Cons(head, tail).length = 1 + tail.length
 
 every ConsList<$T> isa Functor
-// Nil.fmap(fn) = Nil
-// Cons(head, tail).fmap(fn) = Cons(head=fn(head), tail=tail.fmap(fn))
+# Nil.fmap(fn) = Nil
+# Cons(head, tail).fmap(fn) = Cons(head=fn(head), tail=tail.fmap(fn))
 
-// ## Set
+# ## Set
 
 class Set<$T>
 
-// ## Enum
+# ## Enum
 
 class Enum
 

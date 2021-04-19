@@ -150,16 +150,16 @@ This definition has a conditional "if" statement that branches the code based on
 To convert between expressions and the type properties that they imply are implication statements. Here are some examples:
 
 ```
-// the left part of a true boolean expression is also a true statement
+# the left part of a true boolean expression is also a true statement
 operator&(Boolean l) .: l
 
-// the right part of a true boolean expression is also a true statement
+# the right part of a true boolean expression is also a true statement
 operator&(Boolean r) .: r
 
-// the left side of a >= has type Int_gte(r)
+# the left side of a >= has type Int_gte(r)
 operator>=(Int l, Int r) .: l :: Int_gte(r)
 
-// the right side of a >= has type Int_lt(l)
+# the right side of a >= has type Int_lt(l)
 operator>=(Int l, Int r) .: r :: Int_lt(l)
 ```
 
