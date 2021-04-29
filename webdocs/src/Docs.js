@@ -52,7 +52,7 @@ function Main(props) {
         <Redirect to={`${path}/${startingPage}`} />
       </Route>
       <Route path={`${path}/:prgmName`}>
-        <Grid container spacing={2} justify="center">
+        <Grid style={{width: '100%'}} container spacing={2} justify="center">
           <Grid item xs={2}>
             <TreeView
               defaultCollapseIcon={<ExpandMoreIcon />}

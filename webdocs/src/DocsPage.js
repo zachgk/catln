@@ -226,19 +226,31 @@ function Expr(props) {
   case "RawTupleApply":
     const [, [,base], args] = expr.contents;
 
-    let showArgs = tagJoin(args.map((arg, argIndex) => {
-      switch(arg.tag) {
-      case "RawTupleArgNamed":
-        return (<span key={argIndex}>{arg.contents[0]} = <Expr expr={arg.contents[1]}/></span>);
-      case "RawTupleArgInfer":
-        return <Expr key={argIndex} expr={arg.contents}/>;
-      default:
-        console.error("Unknown renderExpr tupleApply arg type");
-        return <span key={argIndex}></span>;
-      }
-    }), ", ");
+    if(base.tag === "RawValue" && base.contents[1].startsWith("operator")) {
+      const op = base.contents[1].substring("operator".length);
 
-    return (<span><Expr expr={base}/>({showArgs})</span>);
+      if(args.length === 1) {
+        return (<span>{op}<Expr expr={args[0].contents[1]}/></span>);
+      } else {
+        return (<span><Expr expr={args[0].contents[1]} /> {op} <Expr expr={args[1].contents[1]}/></span>);
+      }
+
+    } else {
+      let showArgs = tagJoin(args.map((arg, argIndex) => {
+        switch(arg.tag) {
+        case "RawTupleArgNamed":
+          return (<span key={argIndex}>{arg.contents[0]} = <Expr expr={arg.contents[1]}/></span>);
+        case "RawTupleArgInfer":
+          return <Expr key={argIndex} expr={arg.contents}/>;
+        default:
+          console.error("Unknown renderExpr tupleApply arg type");
+          return <span key={argIndex}></span>;
+        }
+      }), ", ");
+
+      return (<span><Expr expr={base}/>({showArgs})</span>);
+    }
+
   case "RawParen":
     return <span>(<Expr expr={expr.contents}/>)</span>;
   case "RawMethods":
