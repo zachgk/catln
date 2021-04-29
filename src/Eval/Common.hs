@@ -155,7 +155,7 @@ getValType (LLVMOperand t _) = case t of
   SumType leafs -> case splitPartialLeafs leafs of
     [partial] -> partial
     _ -> error "could not getValType without a single partial"
-  _ -> error "could not get non sum getValType"
+  _ -> error $ printf "could not get non sum getValType %s" (show t)
 getValType LLVMIO{} = ioLeaf
 getValType NoVal = error "getValType of NoVal"
 

@@ -72,7 +72,7 @@ asOperand val@(TupleVal _ args) = do
 asOperand val = error $ printf "Invalid val to operand: %s" (show val)
 
 getValArgs :: Val -> Codegen (H.HashMap ArgName AST.Operand)
--- getValArgs (TupleVal _ args) = return args
+getValArgs (TupleVal _ args) = mapM asOperand args
 getValArgs (LLVMOperand tp o) = do
   o' <- o
   o'' <- alloca (typeOf o')

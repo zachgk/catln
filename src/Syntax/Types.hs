@@ -192,16 +192,16 @@ hasTypeWithEnv _ _ _ _ TopType = True
 hasTypeWithEnv _ _ _ t1 t2 | t1 == t2 = True
 hasTypeWithEnv classMap venv aenv (TypeVar (TVVar v)) t2 = case H.lookup v venv of
   Just t1 -> hasTypeWithEnv classMap venv aenv t1 t2
-  Nothing -> error $ printf "hasTypeWithEnv with unkonwn type var %s" v
+  Nothing -> error $ printf "hasTypeWithEnv with unknown type var %s" v
 hasTypeWithEnv classMap venv aenv t1 (TypeVar (TVVar v)) = case H.lookup v venv of
   Just t2 -> hasTypeWithEnv classMap venv aenv t1 t2
-  Nothing -> error $ printf "hasTypeWithEnv with unkonwn type var %s" v
+  Nothing -> error $ printf "hasTypeWithEnv with unknown type var %s" v
 hasTypeWithEnv classMap venv aenv (TypeVar (TVArg v)) t2 = case H.lookup v aenv of
   Just t1 -> hasTypeWithEnv classMap venv aenv t1 t2
-  Nothing -> error $ printf "hasTypeWithEnv with unkonwn type arg %s" v
+  Nothing -> error $ printf "hasTypeWithEnv with unknown type arg %s" v
 hasTypeWithEnv classMap venv aenv t1 (TypeVar (TVArg v)) = case H.lookup v aenv of
   Just t2 -> hasTypeWithEnv classMap venv aenv t1 t2
-  Nothing -> error $ printf "hasTypeWithEnv with unkonwn type arg %s" v
+  Nothing -> error $ printf "hasTypeWithEnv with unknown type arg %s" v
 hasTypeWithEnv _ _ _ TopType t = t == TopType
 hasTypeWithEnv classMap venv aenv (SumType subPartials) superType = all (\p -> hasPartialWithEnv classMap venv aenv p superType) $ splitPartialLeafs subPartials
 
