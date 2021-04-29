@@ -31,6 +31,14 @@ import Data.Graph
 import Data.Maybe
 import Utils
 
+-- Checks if mainx is defined (not declared)
+containsMainx :: String -> EPrgmGraphData -> Bool
+containsMainx prgmName prgmGraphData = any objArrowsContains objMap
+  where
+    (objMap, _, _) = prgmFromGraphData prgmName prgmGraphData
+    objArrowsContains (Object _ _ name _ _, arrows) = name == "mainx" && any arrowDefined arrows
+    arrowDefined (Arrow _ _ _ maybeExpr) = isJust maybeExpr
+
 evalCompAnnot :: Env -> Val -> CRes Env
 evalCompAnnot env (TupleVal "#assert" args) = case (H.lookup "test" args, H.lookup "msg" args) of
   (Just b, Just (StrVal _)) | b == true -> return env

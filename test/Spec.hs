@@ -1,3 +1,4 @@
+{-# LANGUAGE BlockArguments #-}
 module Main where
 
 import System.Directory
@@ -5,6 +6,7 @@ import           Data.List
 import           Test.Tasty
 import           Test.Tasty.HUnit
 import           Text.Printf
+import           Control.Monad
 
 import CRes
 import           Parser (readFiles)
@@ -17,9 +19,6 @@ import WebDocs (docServe)
 
 testDir :: String
 testDir = "test/code/"
-
-buildDir :: String
-buildDir = "test/build/"
 
 prettyCNotes :: [CNote] -> String
 prettyCNotes notes = "\n\n\t\t" ++ intercalate "\n\n\t\t" (map prettyNote notes)
@@ -46,15 +45,16 @@ runTest includeCore fileName = testCaseSteps fileName $ \step -> do
               assertFailure $ "Could not typecheck:" ++ prettyCNotes errs
             CRes _ tprgm -> do
               -- step $ T.unpack $ pShow $ tprgm
-              step "Eval tests..."
-              case evalMainx fileName tprgm of
-                CErr notes -> do
-                  assertFailure $ "Could not eval: " ++ prettyCNotes notes
-                CRes notes io -> do
-                  returnValue <- io
-                  case (notes, returnValue) of
-                    ([], (0, _)) -> return () -- success
-                    _ -> assertFailure $ "Bad result for:\n \t " ++ show (fst returnValue) ++ "\n \tNotes:" ++ prettyCNotes notes
+              when (containsMainx fileName tprgm) $ do
+                step "Eval tests..."
+                case evalMainx fileName tprgm of
+                  CErr notes -> do
+                    assertFailure $ "Could not eval: " ++ prettyCNotes notes
+                  CRes notes io -> do
+                    returnValue <- io
+                    case (notes, returnValue) of
+                      ([], (0, _)) -> return () -- success
+                      _ -> assertFailure $ "Bad result for:\n \t " ++ show (fst returnValue) ++ "\n \tNotes:" ++ prettyCNotes notes
               step "evalBuild..."
               case evalMain fileName tprgm of
                 CErr notes -> do
@@ -73,39 +73,6 @@ runTests :: Bool -> [String] -> TestTree
 runTests includeCore testFiles = testGroup "Tests" testTrees
   where testTrees = map (runTest includeCore) testFiles
 
-runBuild :: String -> TestTree
-runBuild fileName = testCaseSteps fileName $ \step -> do
-  step $ printf "Read file %s..." fileName
-  maybeRawPrgm <- readFiles True [fileName]
-  case maybeRawPrgm of
-    CErr notes -> assertFailure $ "Could not parse:" ++ prettyCNotes notes
-    CRes _ rawPrgm -> do
-      -- step $ T.unpack $ pShow rawPrgm
-      case desFiles rawPrgm of
-        CErr notes -> assertFailure $ "Could not desguar:\n \t" ++ prettyCNotes notes
-        CRes _ prgm -> do
-          -- step $ T.unpack $ pShow prgm
-          step "Typecheck..."
-          case typecheckPrgm prgm of
-            CErr errs -> do
-              assertFailure $ "Could not typecheck:\n\n\n\t" ++ prettyCNotes errs
-            CRes _ tprgm -> do
-              -- step $ T.unpack $ pShow $ tprgm
-              step "Eval tests..."
-              case evalMain fileName tprgm of
-                CErr notes -> do
-                  assertFailure $ "Could not eval:\n\t " ++ prettyCNotes notes
-                CRes _ _ -> return () -- success
-              step "evalAnnots..."
-              case evalAnnots fileName tprgm of
-                CErr notes -> do
-                  assertFailure $ "Could not eval:\n\t " ++ prettyCNotes notes
-                CRes _ _ -> return () -- success
-
-runBuilds :: [String] -> TestTree
-runBuilds testFiles = testGroup "Builds" testTrees
-  where testTrees = map runBuild testFiles
-
 test :: IO ()
 test = defaultMain $ runTests False ["test/test.ct"]
 
@@ -116,11 +83,6 @@ standardTests :: IO [String]
 standardTests = do
   fileNames <- listDirectory testDir
   return $ map (testDir ++) fileNames
-
-buildTests :: IO [String]
-buildTests = do
-  fileNames <- listDirectory buildDir
-  return $ map (buildDir ++) fileNames
 
 mt :: String -> IO ()
 mt k = do
@@ -138,22 +100,6 @@ mtd k = do
      then docServe False True fileName
      else error $ printf "invalid test name %s in %s" fileName (show tests)
 
-mb :: String -> IO ()
-mb k = do
-  let fileName = buildDir ++ k ++ ".ct"
-  tests <- buildTests
-  if fileName `elem` tests
-     then defaultMain $ runBuilds [fileName]
-     else error $ printf "invalid build test name %s in %s" fileName (show tests)
-
-mbd :: String -> IO ()
-mbd k = do
-  let fileName = buildDir ++ k ++ ".ct"
-  tests <- buildTests
-  if fileName `elem` tests
-     then docServe False True fileName
-     else error $ printf "invalid build test name %s in %s" fileName (show tests)
-
 mtt :: IO ()
 mtt = mt "match"
 
@@ -161,7 +107,4 @@ main :: IO ()
 main = do
   tests <- standardTests
   let tests' = runTests True tests
-  builds <- buildTests
-  let builds' = runBuilds builds
-  let full = testGroup "full" [tests', builds']
-  defaultMain full
+  defaultMain tests'
