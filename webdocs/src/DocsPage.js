@@ -4,10 +4,7 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import ReactMarkdown from 'react-markdown';
-import {
-  useParams,
-  useHistory
-} from 'react-router-dom';
+import {useHistory} from 'react-router-dom';
 
 import {useApi, posKey, Loading, KeyWord, TypeVar, PTypeName, PClassName, Obj, Guard, Type, Val, tagJoin} from './Common';
 
@@ -32,12 +29,13 @@ function DocsPage(props) {
 
   return (
     <Loading status={apiResult}>
-    <Main data={apiResult.data} />
+      <Main data={apiResult.data} prgmName={prgmName}/>
     </Loading>
   );
 }
 
 function Main(props) {
+  const {prgmName} = props;
   let [page, typed, annots] = props.data;
 
   let metaMap = {};
@@ -66,7 +64,7 @@ function Main(props) {
   });
 
   const statements = page[0][1];
-  const resMaps = {metaMap, objMap, annotsMap};
+  const resMaps = {metaMap, objMap, annotsMap, prgmName};
 
   return (
     <ResMaps.Provider value={resMaps}>
@@ -287,7 +285,7 @@ function RawMeta(props) {
 
 function PlayButton() {
   let history = useHistory();
-  const { curPage } = useParams();
+  let {prgmName} = useContext(ResMaps);
   const [open, setOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -296,7 +294,12 @@ function PlayButton() {
     setAnchorEl(event.currentTarget);
   };
 
-  let handleClose = (link) => () => {
+  let handleClose = () => {
+    setOpen(false);
+  };
+
+  let linkClose = (link) => () => {
+    console.log(link);
     setOpen(false);
     history.push({pathname: link});
   };
@@ -312,9 +315,9 @@ function PlayButton() {
         open={open}
         onClose={handleClose}
       >
-        <MenuItem onClick={handleClose(`/build/${curPage}`)}>Build</MenuItem>
-        <MenuItem onClick={handleClose(`/debug/${curPage}`)}>Debug</MenuItem>
-        <MenuItem onClick={handleClose(`/constrain/${curPage}`)}>Constrain</MenuItem>
+        <MenuItem onClick={linkClose(`/build/${prgmName}`)}>Build</MenuItem>
+        <MenuItem onClick={linkClose(`/debug/${prgmName}`)}>Debug</MenuItem>
+        <MenuItem onClick={linkClose(`/constrain/${prgmName}`)}>Constrain</MenuItem>
       </Menu>
     </span>
   );

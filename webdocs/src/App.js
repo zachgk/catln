@@ -4,7 +4,7 @@ import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
-import StarIcon from '@material-ui/icons/Star';
+import ViewList from '@material-ui/icons/ViewList';
 import MenuBookIcon from '@material-ui/icons/MenuBook';
 import {
   BrowserRouter as Router,
@@ -29,7 +29,7 @@ function App() {
         <Toolbar>
           <Typography variant="h6" color="inherit" noWrap>Catln WebDocs</Typography>
           <Link to="/list">
-            <IconButton color="inherit" edge="end"><StarIcon /></IconButton>
+            <IconButton color="inherit" edge="end"><ViewList /></IconButton>
           </Link>
           <Link to="/docs">
             <IconButton color="inherit" edge="end"><MenuBookIcon /></IconButton>
