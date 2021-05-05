@@ -256,7 +256,7 @@ verifyScheme classMap (VarMeta _ _ mobj) (TypeCheckResult _ (SType oldUb _ _)) (
                                                                         && all (verifyTypeVars (H.keysSet ptVars)) ptArgs
                                                                         && all (verifyTypeVars (H.keysSet ptVars)) ptProps
 
-    mobjVars (Just (Object _ _ _ objVars _)) = H.keysSet objVars
+    mobjVars (Just Object{objVars}) = H.keysSet objVars
     mobjVars Nothing = S.empty
     verifySchemeUbLowers (Just obj) = hasTypeWithObj classMap obj ub oldUb
     verifySchemeUbLowers Nothing = hasType classMap ub oldUb
@@ -298,10 +298,10 @@ pointUb env p = do
   return ub
 
 resolveTypeVar :: TypeVarAux -> VarMeta -> TypeCheckResult VarMeta
-resolveTypeVar (TVVar v) m@(VarMeta _ _ (Just (Object _ _ _ objVars _))) = case H.lookup v objVars of
+resolveTypeVar (TVVar v) m@(VarMeta _ _ (Just Object{objVars})) = case H.lookup v objVars of
   Just m' -> return m'
   Nothing -> TypeCheckResE [GenTypeCheckError (getMetaPos m) "Unknown variable in resolveTypeVar var"]
-resolveTypeVar (TVArg v) m@(VarMeta _ _ (Just (Object _ _ _ _ objArgs))) = case H.lookup v objArgs of
+resolveTypeVar (TVArg v) m@(VarMeta _ _ (Just Object{objArgs})) = case H.lookup v objArgs of
   Just (m', _) -> return m'
   Nothing -> TypeCheckResE [GenTypeCheckError (getMetaPos m) "Unknown variable in resolveTypeVar arg"]
 resolveTypeVar _ m@(VarMeta _ _ Nothing) = TypeCheckResE [GenTypeCheckError (getMetaPos m) "Tried to resolve a type var without an object"]

@@ -83,7 +83,7 @@ labelPos _ Nothing = Nothing
 type ArgMetaMapWithSrc m = H.HashMap ArgName (m, Type)
 formArgMetaMapWithSrc :: ClassMap -> Object m -> PartialType -> ArgMetaMapWithSrc m
 formArgMetaMapWithSrc _ (Object m _ name _ args) src | H.null args = H.singleton name (m, singletonType src)
-formArgMetaMapWithSrc classMap (Object _ _ _ _ args) PartialType{ptArgs=srcArgs} = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg args
+formArgMetaMapWithSrc classMap Object{objArgs} PartialType{ptArgs=srcArgs} = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg objArgs
   where
     unionCombine _ _ = error "Duplicate var matched"
     fromArg k (m, Nothing) = case H.lookup k srcArgs of
@@ -104,7 +104,7 @@ formVarMap _ _ = error $ printf "Unknown formVarMap"
 -- fullDest means to use the greatest possible type (after implicit).
 -- Otherwise, it uses the minimal type that *must* be reached
 arrowDestType :: (Meta m, Show m, ExprClass e, Show (e m)) => Bool -> ClassMap -> PartialType -> Object m -> Arrow (e m) m -> Type
-arrowDestType fullDest classMap src obj@(Object objM _ _ _ _) (Arrow arrM _ _ maybeExpr) = case mapM getExprArg maybeExpr of
+arrowDestType fullDest classMap src obj@Object{objM} (Arrow arrM _ _ maybeExpr) = case mapM getExprArg maybeExpr of
   Just (Just _) -> fromMaybe (error "Unfound expr") expr'
   _ -> joined
   where
@@ -124,10 +124,10 @@ metaTypeVar m = case getMetaType m of
 
 
 hasPartialWithObj :: (Meta m) => ClassMap -> Object m -> PartialType -> Type -> Bool
-hasPartialWithObj classMap (Object _ _ _ objVars objArgs) = hasPartialWithEnv classMap (fmap getMetaType objVars) (fmap (getMetaType . fst) objArgs)
+hasPartialWithObj classMap Object{objVars, objArgs} = hasPartialWithEnv classMap (fmap getMetaType objVars) (fmap (getMetaType . fst) objArgs)
 
 hasTypeWithObj :: (Meta m) => ClassMap -> Object m -> Type -> Type -> Bool
-hasTypeWithObj classMap obj@(Object _ _ _ objVars _) = hasTypeWithEnv classMap (fmap getMetaType objVars) (getMetaType <$> formArgMetaMap obj)
+hasTypeWithObj classMap obj@Object{objVars} = hasTypeWithEnv classMap (fmap getMetaType objVars) (getMetaType <$> formArgMetaMap obj)
 
 hasTypeWithObjSrc :: (Meta m) => ClassMap -> PartialType -> Object m -> Type -> Type -> Bool
-hasTypeWithObjSrc classMap srcType obj@(Object _ _ _ objVars _) = hasTypeWithEnv classMap (fmap getMetaType objVars) (snd <$> formArgMetaMapWithSrc classMap obj srcType )
+hasTypeWithObjSrc classMap srcType obj@Object{objVars} = hasTypeWithEnv classMap (fmap getMetaType objVars) (snd <$> formArgMetaMapWithSrc classMap obj srcType )

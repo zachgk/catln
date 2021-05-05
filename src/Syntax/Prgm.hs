@@ -125,7 +125,13 @@ type RawPrgm m = ([FileImport], [RawStatement m]) -- TODO: Include [Export]
 type ObjArg m = (m, Maybe (Object m))
 data ObjectBasis = FunctionObj | TypeObj | PatternObj | MatchObj
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
-data Object m = Object m ObjectBasis TypeName (H.HashMap TypeVarName m) (H.HashMap ArgName (ObjArg m))
+data Object m = Object {
+  objM :: m,
+  objBasis :: ObjectBasis,
+  objName :: TypeName,
+  objVars :: H.HashMap TypeVarName m,
+  objArgs :: H.HashMap ArgName (ObjArg m)
+                       }
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
 data Arrow e m = Arrow m [CompAnnot e] (Guard e) (Maybe e) -- m is result metadata
@@ -220,13 +226,10 @@ instance ExprClass IExpr where
   getExprArg (IArg _ n) = Just n
   getExprArg _ = Nothing
 
-getObjMeta :: Object m -> m
-getObjMeta (Object m _ _ _ _) = m
-
 type ArgMetaMap m = H.HashMap ArgName m
 formArgMetaMap :: Object m -> ArgMetaMap m
 formArgMetaMap (Object m _ name _ args) | H.null args = H.singleton name m
-formArgMetaMap (Object _ _ _ _ args) = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg args
+formArgMetaMap Object{objArgs} = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg objArgs
   where
     unionCombine _ _ = error "Duplicate var matched"
     fromArg k (m, Nothing) = H.singleton k m

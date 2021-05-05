@@ -56,9 +56,9 @@ buildUnionObj env1@FEnv{feClassMap} vobjs tobjs = do
   let env8 = (\env -> env{feUnionAllObjs=unionAllObjsPs', feUnionTypeObjs=unionTypeObjsPs'}) env7
   addConstraints env8 constraints
                     where
-                      unionObjs pnt known objects = UnionOf pnt (known : map getObjMeta objects)
-                      filterTypeObjs = filter (\(Object _ basis _ _ _) -> basis == TypeObj)
-                      makeTypechecked objs = unionTypes feClassMap $ map (getMetaType . getObjMeta) objs
+                      unionObjs pnt known objects = UnionOf pnt (known : map objM objects)
+                      filterTypeObjs = filter (\Object{objBasis} -> objBasis == TypeObj)
+                      makeTypechecked objs = unionTypes feClassMap $ map (getMetaType . objM) objs
 
 buildTypeEnv :: FEnv -> VObjectMap -> TObjectMap -> FEnv
 buildTypeEnv env vobjMap tobjMap = buildUnionObj env (map fst vobjMap) (map fst tobjMap)
@@ -73,7 +73,7 @@ inferArgFromPartial FEnv{feVTypeGraph, feTTypeGraph, feClassMap} partial@Partial
 
   unionType feClassMap vTypes tTypes
   where
-    tryArrow (Object _ _ _ _ objArgs, _) = if H.keysSet ptArgs `isSubsetOf` H.keysSet objArgs
+    tryArrow (Object{objArgs}, _) = if H.keysSet ptArgs `isSubsetOf` H.keysSet objArgs
       then SumType $ joinPartialLeafs $ map addArg $ S.toList $ S.difference (H.keysSet objArgs) (H.keysSet ptArgs)
       else bottomType
     addArg arg = partial{ptArgs=H.insertWith (unionType feClassMap) arg TopType ptArgs}
@@ -123,7 +123,7 @@ reachesPartial env@FEnv{feVTypeGraph, feTTypeGraph, feClassMap} partial@PartialT
 
   return $ ReachesLeaf (catMaybes vtypes ++ catMaybes ttypes)
   where
-    tryVArrow (obj@(Object objM _ _ _ _), arr) = do
+    tryVArrow (obj@Object{objM}, arr) = do
       pointUb env objM >>= \objUb -> do
         -- It is possible to send part of a partial through the arrow, so must compute the valid part
         -- If none of it is valid, then there is Nothing
@@ -136,7 +136,7 @@ reachesPartial env@FEnv{feVTypeGraph, feTTypeGraph, feClassMap} partial@PartialT
             sarr <- showArrow env arr
             return $ Just $ unionTypes feClassMap [arrowDestType True feClassMap potentialSrcPartial sobj sarr | potentialSrcPartial <- splitPartialLeafs potSrcLeafs]
           else return Nothing
-    tryTArrow (obj@(Object objM _ _ _ _), arr) = do
+    tryTArrow (obj@Object{objM}, arr) = do
       -- It is possible to send part of a partial through the arrow, so must compute the valid part
       -- If none of it is valid, then there is Nothing
       let potentialSrc@(SumType potSrcLeafs) = intersectTypes feClassMap (singletonType partial) (getMetaType objM)

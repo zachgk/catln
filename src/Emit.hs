@@ -94,7 +94,7 @@ genTypeMeta :: (Monad m, TaskState m) => EvalMeta -> m AST.Type
 genTypeMeta (Typed t _) = genType H.empty t
 
 arrowName :: PartialType -> EObject -> EArrow -> DeclInput -> String
-arrowName srcType (Object _ _ name _ _) arrow di = printf "fun:%s-%s" name arrHash
+arrowName srcType Object{objName} arrow di = printf "fun:%s-%s" objName arrHash
   where arrHash = take 6 (printf "%08x" (hash (srcType, arrow, di))) :: String
 
 typeName :: Type -> String
@@ -217,19 +217,19 @@ codegenTree env (ResArrowTupleApply base argName argRATree) = do
     _ -> error "Invalid input to tuple application"
 
 formArgValMap :: EObject -> Val -> Codegen (H.HashMap ArgName (Typed, AST.Operand))
-formArgValMap (Object m _ name _ args) (LLVMOperand _ o) | H.null args = do
+formArgValMap Object{objM, objName, objArgs} (LLVMOperand _ o) | H.null objArgs = do
                                                              o' <- o
-                                                             return $ H.singleton name (m, o')
-formArgValMap (Object _ _ _ _ args) val = do
+                                                             return $ H.singleton objName (objM, o')
+formArgValMap Object{objArgs} val = do
   valArgs <- getValArgs val
-  args' <- mapM (fromArg valArgs) $ H.toList args
+  args' <- mapM (fromArg valArgs) $ H.toList objArgs
   return $ unionsWith (error "Duplicate var matched") args'
   where
     fromArg valArgs (argName, (m, Nothing)) = case H.lookup argName valArgs of
       Just valArg -> return $ H.singleton argName (m, valArg)
       Nothing -> return H.empty
     fromArg valArgs (argName, (_, Just arg)) = case H.lookup argName valArgs of
-      Just valArg -> formArgValMap arg (LLVMOperand (getMetaType $ getObjMeta arg) (return valArg))
+      Just valArg -> formArgValMap arg (LLVMOperand (getMetaType $ objM arg) (return valArg))
       Nothing -> return H.empty
 
 codegenDecl :: LEnv -> String -> EObject -> PartialType -> Type -> ResArrowTree -> DeclInput -> LLVM ()

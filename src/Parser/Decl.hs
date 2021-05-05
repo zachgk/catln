@@ -76,9 +76,9 @@ pDeclLHS :: Parser PDeclLHS
 pDeclLHS = do
   pos1 <- getSourcePos
   meth <-  optional $ try pMethodCaller
-  patt@(Pattern (Object objM basis objName objVars objArgs) guard) <- pPattern FunctionObj
+  patt@(Pattern obj@Object{objArgs} guard) <- pPattern FunctionObj
   let patt' = case meth of
-        Just meth' -> Pattern (Object objM basis objName objVars (H.insert "this" meth' objArgs)) guard
+        Just meth' -> Pattern obj{objArgs = H.insert "this" meth' objArgs} guard
         Nothing -> patt
   maybeArrMeta <- optional pArrowRes
   pos2 <- getSourcePos

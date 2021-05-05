@@ -289,9 +289,9 @@ resArrowDestType _ _ t = error $ printf "Not yet implemented resArrowDestType fo
 buildArrArgs :: EObject -> Val -> Args
 buildArrArgs = aux H.empty
   where
-    aux acc (Object _ _ objName _ objArgs) val | H.null objArgs = H.insert objName val acc
-    aux _ (Object _ _ objName _ _) (TupleVal tupleName _) | objName /= tupleName = error $ printf "Found name mismatch in buildArrArgs: object %s and tuple %s" objName tupleName
-    aux acc (Object _ _ _ _ objArgs) (TupleVal _ tupleArgs) = H.foldrWithKey addArgs acc $ H.intersectionWith (,) objArgs tupleArgs
+    aux acc Object{objName, objArgs} val | H.null objArgs = H.insert objName val acc
+    aux _ Object{objName} (TupleVal tupleName _) | objName /= tupleName = error $ printf "Found name mismatch in buildArrArgs: object %s and tuple %s" objName tupleName
+    aux acc Object{objArgs} (TupleVal _ tupleArgs) = H.foldrWithKey addArgs acc $ H.intersectionWith (,) objArgs tupleArgs
     aux _ obj val = error $ printf "Invalid buildArrArgs with obj %s and value %s" (show obj) (show val)
     addArgs argName ((_, Nothing), argVal) acc = H.insert argName argVal acc
     addArgs _ ((_, Just subObj), argVal) acc = aux acc subObj argVal

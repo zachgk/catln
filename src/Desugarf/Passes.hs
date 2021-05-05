@@ -53,7 +53,7 @@ expandDataReferences :: DesPrgm -> DesPrgm -> DesPrgm
 expandDataReferences (fullPrgmObjMap, _, _) (objMap, classMap@(typeToClass, classToTypes), annots) = mapMetaPrgm aux (objMap, (typeToClass, classToTypes'), annots)
   where
     classToTypes' = fmap (\(s, vs, ts) -> (s, fmap mapType vs, fmap mapType ts)) classToTypes
-    objExpansions = H.fromList $ concatMap (\(obj@(Object _ basis name _ _), _) -> ([(name, obj) | basis == TypeObj])) fullPrgmObjMap
+    objExpansions = H.fromList $ concatMap (\(obj@Object{objBasis, objName}, _) -> ([(objName, obj) | objBasis == TypeObj])) fullPrgmObjMap
     aux metaType inM@(PreTyped t p) = case metaType of
       ExprMeta -> inM
       ObjMeta -> inM
@@ -67,6 +67,6 @@ expandDataReferences (fullPrgmObjMap, _, _) (objMap, classMap@(typeToClass, clas
     mapType (SumType partials) = unionTypes classMap $ map mapPartial $ splitPartialLeafs partials
       where
         mapPartial PartialType{ptName=PTypeName name} = case H.lookup name objExpansions of
-          Just (Object objM _ _ _ _) -> getMetaType objM
+          Just Object{objM} -> getMetaType objM
           Nothing -> error $ printf "Data not found in expandDataReferences for %s with objExpansions %s" name (show objMap)
         mapPartial partial@PartialType{ptName=PClassName{}} = singletonType partial

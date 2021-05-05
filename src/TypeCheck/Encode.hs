@@ -194,7 +194,7 @@ addObjArg fakeObj objM prefix varMap env (n, (m, maybeSubObj)) = do
         Nothing -> env3
   case maybeSubObj of
     Just subObj -> do
-      (subObj'@(Object subM _ _ _ _), env5) <- fromObject prefix' True env4 subObj
+      (subObj'@Object{objM=subM}, env5) <- fromObject prefix' True env4 subObj
       return ((n, (m', Just subObj')), addConstraints env5 [ArrowTo subM m'])
     Nothing -> return ((n, (m', Nothing)), env4)
 
@@ -242,12 +242,12 @@ prepObjPrgm env1 pprgm@(objMap1, _, _) = do
   return ((pprgm, map fst objMap2), env2)
 
 addTypeGraphArrow :: TObject -> FEnv -> TArrow -> TypeCheckResult ((), FEnv)
-addTypeGraphArrow obj@(Object _ _ name _ _) env arr = return ((), fAddTTypeGraph env name (obj, arr))
+addTypeGraphArrow obj@Object{objName} env arr = return ((), fAddTTypeGraph env objName (obj, arr))
 
 addTypeGraphObjects :: FEnv -> (TObject, [TArrow]) -> TypeCheckResult ((), FEnv)
-addTypeGraphObjects env (obj@(Object _ _ name _ _), arrows) = do
-  let objValue = singletonType (PartialType (PTypeName name) H.empty H.empty H.empty PtArgExact)
-  let env' = fInsert env name (DefKnown objValue)
+addTypeGraphObjects env (obj@Object{objName}, arrows) = do
+  let objValue = singletonType (PartialType (PTypeName objName) H.empty H.empty H.empty PtArgExact)
+  let env' = fInsert env objName (DefKnown objValue)
   (_, env'') <- mapMWithFEnv env' (addTypeGraphArrow obj) arrows
   return ((), env'')
 

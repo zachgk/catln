@@ -66,18 +66,18 @@ scopeSubDeclFunNamesInMeta _ _ m@(PreTyped TypeVar{} _) = m
 scopeSubDeclFunNames :: TypeName -> [PSemiDecl] -> Maybe PSExpr -> [PSCompAnnot] -> ParseMeta -> ParseMeta -> ([PSemiDecl], Maybe PSExpr, [PSCompAnnot], ParseMeta, ParseMeta)
 scopeSubDeclFunNames prefix decls maybeExpr annots objM arrM = (decls', expr', annots', objM', arrM')
   where
-    declNames = S.fromList $ map (\(PSemiDecl (DeclLHS _ (Pattern (Object _ _ name _ _) _)) _ _) -> name) decls
+    declNames = S.fromList $ map (\(PSemiDecl (DeclLHS _ (Pattern Object{objName} _)) _ _) -> objName) decls
     addPrefix n = prefix ++ "." ++ n
     scopeM = scopeSubDeclFunNamesInMeta prefix declNames
     objM' = scopeM objM
     arrM' = scopeM arrM
-    decls' = map (\(PSemiDecl (DeclLHS aM (Pattern (Object oM basis name vars args) guard)) annot subExpr) -> PSemiDecl (DeclLHS (scopeM aM) (Pattern (Object (scopeM oM) basis (addPrefix name) vars args) guard)) annot (fmap (scopeSubDeclFunNamesInExpr prefix declNames) subExpr)) decls
+    decls' = map (\(PSemiDecl (DeclLHS aM (Pattern obj@Object{objM=om, objName} guard)) annot subExpr) -> PSemiDecl (DeclLHS (scopeM aM) (Pattern (obj{objM=scopeM om, objName = addPrefix objName}) guard)) annot (fmap (scopeSubDeclFunNamesInExpr prefix declNames) subExpr)) decls
     expr' = fmap (scopeSubDeclFunNamesInExpr prefix declNames) maybeExpr
     annots' = map (scopeSubDeclFunNamesInExpr prefix declNames) annots
 
 currySubFunctionSignature :: H.HashMap ArgName PObjArg -> PSemiDecl -> PSemiDecl
-currySubFunctionSignature parentArgs (PSemiDecl (DeclLHS arrM (Pattern (Object objM basis name vars args) guard)) annot expr) = PSemiDecl (DeclLHS arrM (Pattern (Object objM basis name vars args') guard)) annot expr
-  where args' = H.union args parentArgs
+currySubFunctionSignature parentArgs (PSemiDecl (DeclLHS arrM (Pattern obj@Object{objArgs} guard)) annot expr) = PSemiDecl (DeclLHS arrM (Pattern obj{objArgs=objArgs'} guard)) annot expr
+  where objArgs' = H.union objArgs parentArgs
 
 
 currySubFunctionsUpdateExpr :: S.HashSet TypeName -> H.HashMap ArgName PObjArg -> PSExpr -> PSExpr
@@ -94,14 +94,14 @@ currySubFunctionsUpdateExpr toUpdate parentArgs (PSTupleApply tm (tbm, tbe) tArg
 currySubFunctions :: H.HashMap ArgName PObjArg -> [PSemiDecl] -> Maybe PSExpr -> [PSCompAnnot] -> ([PSemiDecl], Maybe PSExpr, [PSCompAnnot])
 currySubFunctions parentArgs decls expr annots = (decls', expr', annots')
   where
-    toUpdate = S.fromList $ map (\(PSemiDecl (DeclLHS _ (Pattern (Object _ _ declName _ _) _)) _ _) -> declName) decls
+    toUpdate = S.fromList $ map (\(PSemiDecl (DeclLHS _ (Pattern Object{objName} _)) _ _) -> objName) decls
     decls2 = map (currySubFunctionSignature parentArgs) decls
     expr' = fmap (currySubFunctionsUpdateExpr toUpdate parentArgs) expr
     decls' = map (\(PSemiDecl lhs an e) -> PSemiDecl lhs an (fmap (currySubFunctionsUpdateExpr toUpdate parentArgs) e)) decls2
     annots' = map (currySubFunctionsUpdateExpr toUpdate parentArgs) annots
 
 removeSubDeclarations :: PDecl -> [PSemiDecl]
-removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern (Object objM basis declName vars args) guard1)) subStatements expr1) = decl':subDecls5
+removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern obj@Object{objM, objName, objArgs} guard1)) subStatements expr1) = decl':subDecls5
   where
     (subDecls, annots1) = splitDeclSubStatements subStatements
     subDecls2 = concatMap removeSubDeclarations subDecls
@@ -109,9 +109,9 @@ removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern (Object objM basis declNam
     (subDecls22, annots2) = traverse semiDesExpr annots1
     (subDecls23, guard2) = semiDesGuard guard1
     subDecls3 = concat [subDecls2, subDecls21, subDecls22, subDecls23]
-    (subDecls4, expr3, annots3, objM', arrM') = scopeSubDeclFunNames declName subDecls3 expr2 annots2 objM arrM
-    (subDecls5, expr4, annots4) = currySubFunctions args subDecls4 expr3 annots3
-    decl' = PSemiDecl (DeclLHS arrM' (Pattern (Object objM' basis declName vars args) guard2)) annots4 expr4
+    (subDecls4, expr3, annots3, objM', arrM') = scopeSubDeclFunNames objName subDecls3 expr2 annots2 objM arrM
+    (subDecls5, expr4, annots4) = currySubFunctions objArgs subDecls4 expr3 annots3
+    decl' = PSemiDecl (DeclLHS arrM' (Pattern obj{objM=objM'} guard2)) annots4 expr4
 
 desExpr :: PArgMetaMap -> PSExpr -> DesExpr
 desExpr _ (PSCExpr m c) = ICExpr m c
@@ -164,7 +164,7 @@ semiDesExpr r@(RawMatch m e matchItems) = (subE ++ subMatchItems, expr')
 semiDesExpr (RawCase _ _ ((Pattern _ ElseGuard, _):_)) = error "Can't use elseguard in match expr"
 semiDesExpr (RawCase _ _ []) = error "Empty case"
 semiDesExpr (RawCase _ _ [(_, matchExpr)]) = semiDesExpr matchExpr
-semiDesExpr r@(RawCase m e ((Pattern firstObj@(Object fm _ _ _ _) firstGuard, firstExpr):restCases)) = (concat [[firstDecl, restDecl], subFG, subFE, subRE, subE], expr')
+semiDesExpr r@(RawCase m e ((Pattern firstObj@Object{objM=fm} firstGuard, firstExpr):restCases)) = (concat [[firstDecl, restDecl], subFG, subFE, subRE, subE], expr')
   where
     condName = "$" ++ take 6 (printf "%08x" (hash r))
     argName = condName ++ "-arg"
@@ -215,7 +215,7 @@ desMultiTypeDefs multiDefs = mergePrgms $ map buildTypeDef multiDefs
     buildTypeDef (MultiTypeDef className classVars dataMetas) = (objMap', (typeToClass', classToType'), [])
       where
         objMap' = map (,[]) objs
-        objNames = map (\(Object _ _ name _ _) -> name) objs
+        objNames = map objName objs
         dataTypes = map getMetaType dataMetas
         objs = mapMaybe (typeDefMetaToObj classVars) dataMetas
         classToType' = H.singleton className (True, classVars, dataTypes)

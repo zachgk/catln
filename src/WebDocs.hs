@@ -45,7 +45,7 @@ maybeJson (CErr notes) = json (ResFail notes :: ResSuccess () CNote)
 filterByObj :: String -> TPrgm -> TPrgm
 filterByObj objName (objMap, (typeToClass, classToType), _) = (objMap', (typeToClass', classToType'), [])
   where
-    objMap' = filter (\(Object _ _ n _ _, _) -> objName == n) objMap
+    objMap' = filter (\(Object{objName=n}, _) -> objName == n) objMap
     typeToClass' = H.filterWithKey (\n _ -> n == objName) typeToClass
     classToType' = H.filter (\(_, vars, types) -> any involvesType vars || any involvesType types) classToType
     involvesType (SumType leafs) = any involvesPartial $ splitPartialLeafs leafs

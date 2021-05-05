@@ -58,11 +58,11 @@ showObjArg env (m, maybeObj) = do
   return (m', maybeObj')
 
 showObj :: FEnv -> VObject -> TypeCheckResult SObject
-showObj env (Object m basis name vars args) = do
-  m' <- showM env m
-  vars' <- mapM (showM env) vars
-  args' <- mapM (showObjArg env) args
-  return $ Object m' basis name vars' args'
+showObj env obj@Object{objM, objVars, objArgs} = do
+  m' <- showM env objM
+  vars' <- mapM (showM env) objVars
+  args' <- mapM (showObjArg env) objArgs
+  return $ obj{objM=m', objVars=vars', objArgs=args'}
 
 showObjArrows :: FEnv -> (VObject, [VArrow]) -> TypeCheckResult (SObject, [SArrow])
 showObjArrows env (obj, arrows) = do
