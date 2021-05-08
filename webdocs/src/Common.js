@@ -242,22 +242,22 @@ function PartialName(props) {
 
 function Obj(props) {
   const {obj, details, Meta} = props;
-  const [objM, objBasis, name, vars, args] = obj;
+  const {objM, objBasis, objName, objVars, objArgs} = obj;
 
   let showVars;
-  if(Object.keys(vars).length > 0) {
+  if(Object.keys(objVars).length > 0) {
     showVars = (
       <span>
         &lt;
-        {tagJoin(Object.keys(vars).map(v => <span key={v}><Meta data={vars[v]}/> <TypeVar>{v}</TypeVar></span>), ", ")}
+        {tagJoin(Object.keys(objVars).map(v => <span key={v}><Meta data={objVars[v]}/> <TypeVar>{v}</TypeVar></span>), ", ")}
         &gt;
       </span>);
   }
 
   let showCaller;
-  let argsCall = Object.assign({}, args);
-  if('this' in args) {
-    showCaller = <span><Meta data={args['this'][0]}/>.</span>;
+  let argsCall = Object.assign({}, objArgs);
+  if('this' in objArgs) {
+    showCaller = <span><Meta data={objArgs['this'][0]}/>.</span>;
     delete argsCall['this'];
   }
 
@@ -278,7 +278,7 @@ function Obj(props) {
 
   return (<span>
             {showObjDetails}
-            <span>{showCaller}<PTypeName name={name}/>{showVars}{showArgs}</span>
+            <span>{showCaller}<PTypeName name={objName}/>{showVars}{showArgs}</span>
           </span>
          );
 }

@@ -40,9 +40,9 @@ function ListProgram(props) {
   let noTypecheck = (query.get("noTypecheck") || "false") === "true";
   let dataPath;
   if(noTypecheck) {
-    dataPath = "/desugar";
+    dataPath = "/api/desugar";
   } else {
-    dataPath = "/typecheck";
+    dataPath = "/api/typecheck";
   }
   let apiResult = useApi(dataPath);
   let { path } = useRouteMatch();
@@ -96,7 +96,7 @@ function ObjMap(props) {
   return (
     <List component="nav">
       {props.objMap
-        .sort((obj1, obj2) => obj1[0][2] < obj2[0][2])
+        .sort((obj1, obj2) => obj1[0].objName < obj2[0].objName)
         .map((obj, objIndex) =>
           <ObjArrows key={objIndex} objas={obj} Meta={props.Meta} showExprMetas={props.showExprMetas}/>
       )}

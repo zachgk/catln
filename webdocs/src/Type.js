@@ -8,7 +8,7 @@ import {ShowList} from './ListProgram';
 function TypePage() {
   const { name } = useParams();
 
-  let apiResult = useApi(`/object/${name}`);
+  let apiResult = useApi(`/api/object/${name}`);
 
   return (
     <div>

@@ -21,7 +21,7 @@ const useStyles = {
 
 function Constrain() {
   const { prgmName } = useParams();
-  let apiResult = useApi(`/constrain?prgmName=${prgmName}`);
+  let apiResult = useApi(`/api/constrain?prgmName=${prgmName}`);
 
   return (
     <Loading status={apiResult}>

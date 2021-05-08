@@ -28,7 +28,7 @@ const useStyles = {
 };
 
 function Docs() {
-  let apiResult = useApi("/toc");
+  let apiResult = useApi("/api/toc");
 
   return (
     <Loading status={apiResult}>

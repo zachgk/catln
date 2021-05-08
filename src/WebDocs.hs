@@ -19,6 +19,7 @@ import Data.Aeson (ToJSON)
 import qualified Data.HashMap.Strict as H
 import qualified Data.Text.Lazy as T
 import           GHC.Generics          (Generic)
+import Network.Wai.Middleware.Static
 
 import           Desugarf         (desFiles)
 import           CRes
@@ -156,88 +157,107 @@ getWeb provider prgmName = do
         _ -> return "";
     CErr _ -> return ""
 
-docServe :: Bool -> Bool -> String -> IO ()
-docServe cached includeCore baseFileName = do
+docApiBase :: WDProvider -> ScottyM ()
+docApiBase provider = do
+
+  get "/api/raw" $ do
+    maybeRawPrgms <- liftAndCatchIO $ getRawPrgm provider
+    let maybeRawPrgms' = graphToNodes <$> maybeRawPrgms
+    maybeJson maybeRawPrgms'
+
+  get "/api/toc" $ do
+    maybeRawPrgms <- liftAndCatchIO $ getRawPrgm provider
+    let maybeRawPrgms' = map snd3 . graphToNodes <$> maybeRawPrgms
+    maybeJson maybeRawPrgms'
+
+  get "/api/page" $ do
+    prgmName <- param "prgmName"
+    maybeRawPrgms <- liftAndCatchIO $ getRawPrgm provider
+    let maybeRawPrgms' = (\(_, nodeFromVertex, vertexFromKey) -> nodeFromVertex $ fromJust $ vertexFromKey prgmName) <$> maybeRawPrgms
+
+    maybeTPrgms <- liftAndCatchIO $ getTPrgm provider
+    let maybeTPrgms' = (\(_, nodeFromVertex, vertexFromKey) -> nodeFromVertex $ fromJust $ vertexFromKey prgmName) <$> maybeTPrgms
+
+    annots <- liftAndCatchIO $ getEvalAnnots provider prgmName
+    maybeJson $ do
+      rawPrgm <- maybeRawPrgms'
+      tprgm <- maybeTPrgms'
+      return (rawPrgm, tprgm, annots)
+
+  get "/api/desugar" $ do
+    maybePrgmGraph <- liftAndCatchIO $ getPrgm provider
+    let maybePrgm = mergePrgms . map fst3 . graphToNodes <$> maybePrgmGraph
+    maybeJson maybePrgm
+
+  get "/api/constrain" $ do
+    prgmName <- param "prgmName"
+    maybeTprgmWithTraceGraph <- liftAndCatchIO $ getTPrgmWithTrace provider
+    let maybeTprgmWithTrace = maybeTprgmWithTraceGraph >>= \(_, prgmFromVertex, vertexFromName) -> do
+          vertex <- case vertexFromName prgmName of
+            Just v -> return v
+            Nothing -> CErr [MkCNote $ GenCErr Nothing "Invalid file to constrain"]
+          return $ fst3 $ prgmFromVertex vertex
+    maybeJson maybeTprgmWithTrace
+
+  get "/api/typecheck" $ do
+    maybeTprgm <- liftAndCatchIO $ getTPrgmJoined provider
+    maybeJson maybeTprgm
+
+  get "/api/object/:objName" $ do
+    objName <- param "objName"
+    maybeTprgm <- liftAndCatchIO $ getTPrgmJoined provider
+    let filterTprgm = filterByObj objName <$> maybeTprgm
+    maybeJson filterTprgm
+
+  get "/api/class/:className" $ do
+    className <- param "className"
+    maybeTprgm <- liftAndCatchIO $ getTPrgmJoined provider
+    let filterTprgm = filterByClass className <$> maybeTprgm
+    maybeJson filterTprgm
+
+  get "/api/treebug" $ do
+    prgmName <- param "prgmName"
+    treebug <- liftAndCatchIO $ getTreebug provider prgmName
+    json $ Success treebug ([] :: [String])
+
+  get "/api/eval" $ do
+    prgmName <- param "prgmName"
+    evaluated <- liftAndCatchIO $ getEvaluated provider prgmName
+    json $ Success evaluated ([] :: [String])
+
+  get "/api/evalBuild" $ do
+    prgmName <- param "prgmName"
+    build <- liftAndCatchIO $ getEvalBuild provider prgmName
+    json $ Success build ([] :: [String])
+
+  get "/api/web" $ do
+    prgmName <- param "prgmName"
+    build <- liftAndCatchIO $ getWeb provider prgmName
+    html (T.pack build)
+
+
+docApi :: Bool -> Bool -> String -> IO ()
+docApi cached includeCore baseFileName = do
 
   provider <- if cached
     then mkCacheWDProvider includeCore baseFileName
     else return $ LiveWDProvider includeCore baseFileName
 
-  scotty 31204 $ do
-    get "/files" $ do
-      json $ Success ["File: ", T.pack baseFileName] ([] :: String)
+  scotty 31204 $ docApiBase provider
 
-    get "/raw" $ do
-      maybeRawPrgms <- liftAndCatchIO $ getRawPrgm provider
-      let maybeRawPrgms' = graphToNodes <$> maybeRawPrgms
-      maybeJson maybeRawPrgms'
+docServe :: Bool -> Bool -> String -> IO ()
+docServe cached includeCore baseFileName = do
 
-    get "/toc" $ do
-      maybeRawPrgms <- liftAndCatchIO $ getRawPrgm provider
-      let maybeRawPrgms' = map snd3 . graphToNodes <$> maybeRawPrgms
-      maybeJson maybeRawPrgms'
+  let handleIndex p = case p of
+        "" -> Just "index.html"
+        _ -> Just p
 
-    get "/page" $ do
-      prgmName <- param "prgmName"
-      maybeRawPrgms <- liftAndCatchIO $ getRawPrgm provider
-      let maybeRawPrgms' = (\(_, nodeFromVertex, vertexFromKey) -> nodeFromVertex $ fromJust $ vertexFromKey prgmName) <$> maybeRawPrgms
+  provider <- if cached
+    then mkCacheWDProvider includeCore baseFileName
+    else return $ LiveWDProvider includeCore baseFileName
 
-      maybeTPrgms <- liftAndCatchIO $ getTPrgm provider
-      let maybeTPrgms' = (\(_, nodeFromVertex, vertexFromKey) -> nodeFromVertex $ fromJust $ vertexFromKey prgmName) <$> maybeTPrgms
+  scotty 8080 $ do
 
-      annots <- liftAndCatchIO $ getEvalAnnots provider prgmName
-      maybeJson $ do
-        rawPrgm <- maybeRawPrgms'
-        tprgm <- maybeTPrgms'
-        return (rawPrgm, tprgm, annots)
+    docApiBase provider
 
-    get "/desugar" $ do
-      maybePrgmGraph <- liftAndCatchIO $ getPrgm provider
-      let maybePrgm = mergePrgms . map fst3 . graphToNodes <$> maybePrgmGraph
-      maybeJson maybePrgm
-
-    get "/constrain" $ do
-      prgmName <- param "prgmName"
-      maybeTprgmWithTraceGraph <- liftAndCatchIO $ getTPrgmWithTrace provider
-      let maybeTprgmWithTrace = maybeTprgmWithTraceGraph >>= \(_, prgmFromVertex, vertexFromName) -> do
-            vertex <- case vertexFromName prgmName of
-              Just v -> return v
-              Nothing -> CErr [MkCNote $ GenCErr Nothing "Invalid file to constrain"]
-            return $ fst3 $ prgmFromVertex vertex
-      maybeJson maybeTprgmWithTrace
-
-    get "/typecheck" $ do
-      maybeTprgm <- liftAndCatchIO $ getTPrgmJoined provider
-      maybeJson maybeTprgm
-
-    get "/object/:objName" $ do
-      objName <- param "objName"
-      maybeTprgm <- liftAndCatchIO $ getTPrgmJoined provider
-      let filterTprgm = filterByObj objName <$> maybeTprgm
-      maybeJson filterTprgm
-
-    get "/class/:className" $ do
-      className <- param "className"
-      maybeTprgm <- liftAndCatchIO $ getTPrgmJoined provider
-      let filterTprgm = filterByClass className <$> maybeTprgm
-      maybeJson filterTprgm
-
-    get "/treebug" $ do
-      prgmName <- param "prgmName"
-      treebug <- liftAndCatchIO $ getTreebug provider prgmName
-      json $ Success treebug ([] :: [String])
-
-    get "/eval" $ do
-      prgmName <- param "prgmName"
-      evaluated <- liftAndCatchIO $ getEvaluated provider prgmName
-      json $ Success evaluated ([] :: [String])
-
-    get "/evalBuild" $ do
-      prgmName <- param "prgmName"
-      build <- liftAndCatchIO $ getEvalBuild provider prgmName
-      json $ Success build ([] :: [String])
-
-    get "/web" $ do
-      prgmName <- param "prgmName"
-      build <- liftAndCatchIO $ getWeb provider prgmName
-      html (T.pack build)
+    middleware $ staticPolicy (noDots >-> policy handleIndex >-> addBase "webdocs/build")

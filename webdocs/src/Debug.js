@@ -10,7 +10,7 @@ import {useApi, Loading, Obj, Val} from './Common';
 
 function Debug(props) {
   const { prgmName } = useParams();
-  let apiResult = useApi(`/treebug?prgmName=${prgmName}`);
+  let apiResult = useApi(`/api/treebug?prgmName=${prgmName}`);
 
   return (
     <Loading status={apiResult}>

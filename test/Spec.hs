@@ -15,7 +15,7 @@ import           Eval
 import           TypeCheck
 import qualified Data.Text.Lazy as T
 import Text.Pretty.Simple
-import WebDocs (docServe)
+import WebDocs (docApi)
 
 testDir :: String
 testDir = "test/code/"
@@ -77,7 +77,7 @@ test :: IO ()
 test = defaultMain $ runTests False ["test/test.ct"]
 
 testd :: IO ()
-testd = docServe False False "test/test.ct"
+testd = docApi False False "test/test.ct"
 
 standardTests :: IO [String]
 standardTests = do
@@ -97,7 +97,7 @@ mtd k = do
   let fileName = testDir ++ k ++ ".ct"
   tests <- standardTests
   if fileName `elem` tests
-     then docServe False True fileName
+     then docApi False True fileName
      else error $ printf "invalid test name %s in %s" fileName (show tests)
 
 mtt :: IO ()

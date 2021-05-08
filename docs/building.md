@@ -19,6 +19,13 @@ This installs Catln to `~/.local/bin/catln`. You may have to add `~/.local/bin` 
 
 You can determine the available options for catln by running `catln --help`.
 
+If you want to run the docs, you will also need to build the docs site as well. Install `npm` and then run the following:
+
+```
+cd $CATLN_HOME/webdocs
+npm run build
+```
+
 ## Building for development
 
 To build the compiler, you can run `stack build` from `$CATLN_HOME`.

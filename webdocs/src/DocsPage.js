@@ -25,7 +25,7 @@ const ResMaps = React.createContext({});
 function DocsPage(props) {
   const {prgmName} = props;
 
-  let apiResult = useApi(`/page?prgmName=${prgmName}`);
+  let apiResult = useApi(`/api/page?prgmName=${prgmName}`);
 
   return (
     <Loading status={apiResult}>
@@ -42,8 +42,7 @@ function Main(props) {
   let objMap = {};
   typed[0][0].forEach(tObjArrs => {
     const [obj, arrs] = tObjArrs;
-    const objM = obj[0];
-    const [metaType, metaPos] = objM;
+    const [metaType, metaPos] = obj.objM;
     metaMap[posKey(metaPos)] = metaType;
     objMap[posKey(metaPos)] = obj;
 
@@ -169,10 +168,9 @@ function Decl(props) {
   const {contents} = props;
   const [lhs, subStatements, maybeExpr] = contents;
   const [, [obj, guard]] = lhs;
-  const objM = obj[0];
 
   let showObj = obj;
-  let typedObj = objMap[posKey(objM[1])];
+  let typedObj = objMap[posKey(obj.objM[1])];
   if(typedObj) {
     showObj = typedObj;
   }
@@ -299,7 +297,6 @@ function PlayButton() {
   };
 
   let linkClose = (link) => () => {
-    console.log(link);
     setOpen(false);
     history.push({pathname: link});
   };

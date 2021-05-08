@@ -8,7 +8,7 @@ import {ShowList} from './ListProgram';
 function Class() {
   const { name } = useParams();
 
-  let apiResult = useApi(`/class/${name}`);
+  let apiResult = useApi(`/api/class/${name}`);
 
   return (
     <div>

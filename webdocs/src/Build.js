@@ -6,7 +6,7 @@ import {useApi, Loading, Val} from './Common';
 
 function Build() {
   const { prgmName } = useParams();
-  let apiResult = useApi(`/evalBuild?prgmName=${prgmName}`);
+  let apiResult = useApi(`/api/evalBuild?prgmName=${prgmName}`);
 
   return (
     <Loading status={apiResult}>
