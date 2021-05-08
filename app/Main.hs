@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
 
 module Main where
 
@@ -8,9 +7,10 @@ import           CRes
 import           Parser
 import           Parser.Syntax
 import           TypeCheck                (typecheckPrgm)
+import Options.Applicative
 
 import           Control.Monad
-import           System.Environment
+import           Data.Semigroup ((<>))
 -- import Repl (repl)
 
 processDes :: String -> CRes PPrgmGraphData -> IO ()
@@ -33,10 +33,17 @@ process source = do
   raw <- readFiles True [source]
   processDes source raw
 
+runFile :: Parser String
+runFile = argument str (metavar "FILE" <> help "The file to run")
+
+exec :: String -> IO ()
+exec fname = do
+  void (process fname)
+
 main :: IO ()
-main = do
-  args <- getArgs
-  case args of
-    -- []      -> repl
-    [fname] -> void (process fname)
-    _       -> putStr "Unknown arguments"
+main = exec =<< execParser opts
+  where
+    opts = info (runFile <**> helper)
+      ( fullDesc
+     <> progDesc "Executes Catln options"
+     <> header "Catln Compiler" )
