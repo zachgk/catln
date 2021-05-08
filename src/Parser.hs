@@ -30,6 +30,9 @@ import qualified Text.Megaparsec.Char.Lexer as L
 import Data.List
 import Data.Maybe
 import Data.Graph
+import System.Directory
+import Text.Printf
+import Control.Monad
 
 pImport :: Parser String
 pImport = do
@@ -87,17 +90,45 @@ parseRepl s = case runParser (contents p) "<repl>" s of
                 Right (Right expr)            -> ReplExpr expr
   where p = try (Left <$> pStatement) <|> try (Right <$> pExpr)
 
+-- replaces imports of a directory with directory/main.ct
+dirImportToMain :: String -> IO String
+dirImportToMain f = do
+  isFile <- doesFileExist f
+  isDir <- doesDirectoryExist f
+  return $ case (isFile, isDir) of
+    (True, False) -> f
+    (False, True) -> f ++ "/main.ct"
+    _ -> error "bad dir"
+
 readFiles :: Bool -> [String] -> IO (CRes PPrgmGraphData)
 readFiles includeCore = fmap (fmap (graphFromEdges . snd)) . aux [] S.empty
   where
     aux acc visited [] = return $ return (visited, acc)
     aux acc visited (nextToVisit:restToVisit) | S.member nextToVisit visited = aux acc visited restToVisit
     aux acc visited (nextToVisit:restToVisit) = do
-      f <- readFile nextToVisit
-      case parseFile nextToVisit f of
-        CErr notes -> return $ CErr notes
-        CRes _ prgm@(parsedImports, statements) -> do
-          let prgm'@(parsedImports', _) = if includeCore && not ("stack/core" `isPrefixOf` nextToVisit)
-                then ("stack/core/main.ct":parsedImports, statements)
-                else prgm
-          aux ((prgm', nextToVisit, parsedImports') : acc) (S.insert nextToVisit visited) (parsedImports' ++ restToVisit)
+      isFile <- doesFileExist nextToVisit
+      isDir <- doesDirectoryExist nextToVisit
+      case (isFile, isDir) of
+        (True, False) -> do -- file
+          f <- readFile nextToVisit
+          case parseFile nextToVisit f of
+            CErr notes -> return $ CErr notes
+            CRes _ (parsedImports, statements) -> do
+              let parsedImports' = if includeCore && not ("stack/core" `isPrefixOf` nextToVisit)
+                    then "stack/core":parsedImports
+                    else parsedImports
+              parsedImports'' <- mapM dirImportToMain parsedImports'
+              let prgm' = (parsedImports'', statements)
+              aux ((prgm', nextToVisit, parsedImports'') : acc) (S.insert nextToVisit visited) (parsedImports' ++ restToVisit)
+        (False, True) -> do -- directory
+          files <- listDirectory nextToVisit
+          files' <- forM files $ \file -> do
+            let file' = nextToVisit ++ "/" ++ file
+            isF <- doesFileExist file'
+            isD <- doesDirectoryExist file'
+            case (isF, isD) of
+              (True, False) -> if ".ct" `isSuffixOf` file' then return (Just file') else return Nothing
+              (False, True) -> return (Just file')
+              _ -> error $ printf "Found non-file or directory: %s" file'
+          aux acc visited (catMaybes files' ++ restToVisit)
+        _ -> return $ CErr [MkCNote $ GenCErr Nothing $ printf "Could not find file or directory %s" nextToVisit]
