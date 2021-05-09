@@ -23,6 +23,7 @@ If you want to run the docs, you will also need to build the docs site as well. 
 
 ```
 cd $CATLN_HOME/webdocs
+npm install
 npm run build
 ```
 
