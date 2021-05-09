@@ -26,7 +26,6 @@ import Parser.Expr (pExpr)
 import Parser.Decl
 import Parser.Type (pTypeStatement)
 import Syntax.Prgm
-import qualified Text.Megaparsec.Char.Lexer as L
 import Data.List
 import Data.Maybe
 import Data.Graph
@@ -41,22 +40,13 @@ pImport = do
   _ <- newline
   return imp
 
-pComment :: Parser PStatement
-pComment = RawComment <$> L.indentBlock scn p
-  where
-    takeLine = takeWhileP (Just "character") (/= '\n')
-    p = do
-      _ <- string "# "
-      l <- takeLine
-      return (L.IndentMany Nothing (\ls -> return $ intercalate "\n" (l:ls)) takeLine)
-
 pGlobalAnnot :: Parser PStatement
 pGlobalAnnot = do
   RawGlobalAnnot <$> pCompAnnot
 
 pStatement :: Parser PStatement
 pStatement = pTypeStatement
-    <|> pComment
+    <|> RawComment <$> pComment
     <|> pGlobalAnnot
     <|> pRootDecl
 

@@ -155,7 +155,7 @@ function Statement(props) {
       return showAnnotExpr;
     }
   case "RawComment":
-    return (<div style={useStyles.noPlay}><ReactMarkdown children={statement.contents} /></div>);
+    return (<div style={useStyles.noPlay}><Comment comment={statement.contents} /></div>);
   default:
     console.error("Unknown renderStatement", statement);
     return "";
@@ -198,6 +198,8 @@ function DeclSubStatement(props) {
     return <div><Decl contents={subStatement.contents} /></div>;
   case "RawDeclSubStatementAnnot":
     return <div><Expr expr={subStatement.contents} /></div>;
+  case "RawDeclSubStatementComment":
+    return <div><Comment comment={subStatement.contents} /></div>;
   default:
     console.error("Unknown DeclSubStatement", subStatement);
     return "";
@@ -318,6 +320,11 @@ function PlayButton() {
       </Menu>
     </span>
   );
+}
+
+function Comment(props) {
+  const {comment} = props;
+  return <ReactMarkdown children={comment} />;
 }
 
 function addExprToMetaMap(base, expr) {

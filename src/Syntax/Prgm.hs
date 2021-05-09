@@ -91,6 +91,7 @@ instance Functor Guard where
 data RawDeclSubStatement m
   = RawDeclSubStatementDecl (RawDecl m)
   | RawDeclSubStatementAnnot (CompAnnot (RawExpr m))
+  | RawDeclSubStatementComment String
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
 data DeclLHS e m = DeclLHS m (Pattern e m)

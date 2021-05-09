@@ -35,6 +35,7 @@ splitDeclSubStatements = aux ([], [])
     aux (decls, annots) [] = (decls, annots)
     aux (decls, annots) (RawDeclSubStatementDecl decl : subSt) = aux (decl:decls, annots) subSt
     aux (decls, annots) (RawDeclSubStatementAnnot annot : subSt) = aux (decls, annot:annots) subSt
+    aux (decls, annots) (RawDeclSubStatementComment _ : subSt) = aux (decls, annots) subSt
 
 scopeSubDeclFunNamesInS :: TypeName -> S.HashSet TypeName -> TypeName -> TypeName
 scopeSubDeclFunNamesInS prefix replaceNames name = name'
