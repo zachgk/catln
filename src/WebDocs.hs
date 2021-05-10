@@ -261,3 +261,5 @@ docServe cached includeCore baseFileName = do
     docApiBase provider
 
     middleware $ staticPolicy (noDots >-> policy handleIndex >-> addBase "webdocs/build")
+
+    get (regex ".*") $ file "webdocs/build/index.html"
