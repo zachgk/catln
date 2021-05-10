@@ -107,15 +107,14 @@ every Monoid isa Semigroup
 
 mempty<Monoid $T> -> $T
 
-testRightMonoidIdentity<Monoid $T>($T t) =
-  #test
-  #assert(test=mappend(l=t, r=mempty) == t)
-  0
+#test
+  testRightMonoidIdentity<Monoid $T>($T t) =
+    #assert(test=mappend(l=t, r=mempty) == t)
+    0
 
-testLeftMonoidIdentity<Monoid $T>($T t) =
-  #test
-  #assert(test=mappend(l=mempty, r=t) == t)
-  0
+  testLeftMonoidIdentity<Monoid $T>($T t) =
+    #assert(test=mappend(l=mempty, r=t) == t)
+    0
 
 # mconcat<Monoid $T>(List<$T> lst) = lst.fold(mappend, mempty)
 

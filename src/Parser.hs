@@ -32,6 +32,7 @@ import Data.Graph
 import System.Directory
 import Text.Printf
 import Control.Monad
+import qualified Text.Megaparsec.Char.Lexer as L
 
 pImport :: Parser String
 pImport = do
@@ -41,8 +42,12 @@ pImport = do
   return imp
 
 pGlobalAnnot :: Parser PStatement
-pGlobalAnnot = do
-  RawGlobalAnnot <$> pCompAnnot
+pGlobalAnnot = L.indentBlock scn p
+  where
+    pack annot children = return $ RawGlobalAnnot annot children
+    p = do
+      annot <- pCompAnnot
+      return (L.IndentMany Nothing (pack annot) pStatement)
 
 pStatement :: Parser PStatement
 pStatement = pTypeStatement

@@ -28,6 +28,8 @@ import           Desugarf.Passes
 import Utils
 import Data.Graph
 
+type StatementEnv = [DesCompAnnot]
+
 splitDeclSubStatements :: [PDeclSubStatement] -> ([PDecl], [PCompAnnot])
 splitDeclSubStatements = aux ([], [])
   where
@@ -186,14 +188,15 @@ semiDesGuard (IfGuard e) = (subE, IfGuard e')
 semiDesGuard ElseGuard = ([], ElseGuard)
 semiDesGuard NoGuard = ([], NoGuard)
 
-declToObjArrow :: PSemiDecl -> (DesObject, [DesArrow])
-declToObjArrow (PSemiDecl (DeclLHS arrM (Pattern object guard)) annots expr) = (object, [arrow])
+declToObjArrow :: StatementEnv -> PSemiDecl -> (DesObject, [DesArrow])
+declToObjArrow inheritAnnots (PSemiDecl (DeclLHS arrM (Pattern object guard)) annots expr) = (object, [arrow])
   where
     argMetaMap = formArgMetaMap object
-    arrow = Arrow arrM (map (desExpr argMetaMap) annots) (desGuard argMetaMap guard) (fmap (desExpr argMetaMap) expr)
+    annots' = map (desExpr argMetaMap) annots
+    arrow = Arrow arrM (annots' ++ inheritAnnots) (desGuard argMetaMap guard) (fmap (desExpr argMetaMap) expr)
 
-desDecl :: PDecl -> DesObjectMap
-desDecl decl = map declToObjArrow $ removeSubDeclarations decl
+desDecl :: StatementEnv -> PDecl -> DesObjectMap
+desDecl statementEnv decl = map (declToObjArrow statementEnv) $ removeSubDeclarations decl
 
 typeDefMetaToObj :: H.HashMap TypeVarName Type -> ParseMeta -> Maybe PObject
 typeDefMetaToObj _ (PreTyped TypeVar{} _) = Nothing
@@ -243,14 +246,15 @@ desGlobalAnnot p = case semiDesExpr p of
   ([], d) -> desExpr H.empty d
   _ -> error "Global annotations do not support sub-expressions and lambdas"
 
-desStatement :: PStatement -> DesPrgm
-desStatement (RawDeclStatement decl) = (desDecl decl, emptyClassMap, [])
-desStatement (MultiTypeDefStatement multiTypeDef) = desMultiTypeDef multiTypeDef
-desStatement (TypeDefStatement typeDef) = (desTypeDef typeDef, emptyClassMap, [])
-desStatement (RawClassDefStatement classDef) = desClassDef False classDef
-desStatement (RawClassDeclStatement classDecls) = desClassDecl classDecls
-desStatement RawComment{} = ([], emptyClassMap, [])
-desStatement (RawGlobalAnnot a) = ([], emptyClassMap, [desGlobalAnnot a])
+desStatement :: StatementEnv -> PStatement -> DesPrgm
+desStatement statementEnv (RawDeclStatement decl) = (desDecl statementEnv decl, emptyClassMap, [])
+desStatement _ (MultiTypeDefStatement multiTypeDef) = desMultiTypeDef multiTypeDef
+desStatement _ (TypeDefStatement typeDef) = (desTypeDef typeDef, emptyClassMap, [])
+desStatement _ (RawClassDefStatement classDef) = desClassDef False classDef
+desStatement _ (RawClassDeclStatement classDecls) = desClassDecl classDecls
+desStatement _ RawComment{} = ([], emptyClassMap, [])
+desStatement _ (RawGlobalAnnot a []) = ([], emptyClassMap, [desGlobalAnnot a])
+desStatement inheritAnnots (RawGlobalAnnot a subStatements) = mergePrgms $ map (desStatement (desGlobalAnnot a:inheritAnnots)) subStatements
 
 finalPasses :: DesPrgmGraphData -> GraphNodes DesPrgm String -> GraphNodes DesPrgm String
 finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm, prgmName, imports) = (prgm'', prgmName, imports)
@@ -268,7 +272,7 @@ finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm, prgmName, impor
     prgm'' = expandDataReferences fullPrgm' prgm'
 
 desPrgm :: PPrgm -> CRes DesPrgm
-desPrgm (_, statements) = return $ mergePrgms $ map desStatement statements
+desPrgm (_, statements) = return $ mergePrgms $ map (desStatement []) statements
 
 desFiles :: PPrgmGraphData -> CRes DesPrgmGraphData
 desFiles graphData = do

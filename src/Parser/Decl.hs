@@ -151,6 +151,4 @@ pDeclTree = L.indentBlock scn p
       return (L.IndentMany Nothing (pack lhs eqAndExpr) childParser)
 
 pRootDecl :: Parser PStatement
-pRootDecl = do
-  decl <- L.nonIndented scn (try pDeclTree)
-  return $ RawDeclStatement decl
+pRootDecl = RawDeclStatement <$> pDeclTree
