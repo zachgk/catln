@@ -10,7 +10,7 @@ class Eq
 # The Eq class is used to define values which can be compared for equality.
   While naive tuple equality often works, some types have equality that behaves differently and must be defined.
   For example, a TreeSet can insert items in different order and produce different trees, but with equal sets.
-  There are only two operations for eq.
+  There are only two operations for eq: [operator==] and [operator!=].
 
 operator==<Eq $T>($T l, $T r) -> Boolean
 
@@ -36,7 +36,7 @@ operator!=(l, r) = ~(l == r)
 class Ord
 
 # Ord is used to define types which can be strictly ordered.
-  Every element, when compared must have one of the following Ordering relationships:
+  Every element, when compared must have one of the following [Ordering] relationships:
 
 class Ordering = LessThan | Equal | GreaterThan
 
@@ -46,6 +46,8 @@ class POrd
 
 # In addition to Ord, POrd defines a partial ordering.
   Partially ordered items can be compared, but may result in NoOrdering:
+
+# TODO: POrdering should treat Ordering as a reference, not as a new type
 
 class POrdering = Ordering | NoOrdering
 

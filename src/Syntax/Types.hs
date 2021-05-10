@@ -70,7 +70,10 @@ data TypeVarAux
 
 type Sealed = Bool -- whether the typeclass can be extended or not
 -- TODO: ClassMap should be more granular. Can have class to only a certain object or based on type variables.
-type ClassMap = (H.HashMap TypeName (S.HashSet ClassName), H.HashMap ClassName (Sealed, H.HashMap TypeVarName Type, [Type]))
+type ClassMap = (
+    H.HashMap TypeName (S.HashSet ClassName),
+    H.HashMap ClassName (Sealed, H.HashMap TypeVarName Type, [Type])
+  )
 
 type TypeVarEnv = H.HashMap TypeVarName Type
 type TypeArgEnv = H.HashMap ArgName Type

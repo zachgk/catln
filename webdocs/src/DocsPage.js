@@ -3,7 +3,7 @@ import React, {useState, useContext} from 'react';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, {uriTransformer} from 'react-markdown';
 import {useHistory} from 'react-router-dom';
 
 import {useApi, posKey, Loading, KeyWord, TypeVar, PTypeName, PClassName, Obj, Guard, Type, Val, tagJoin} from './Common';
@@ -38,13 +38,22 @@ function Main(props) {
   const {prgmName} = props;
   let [page, typed, annots] = props.data;
 
+  const classToType = typed[0][1][1];
+
   let metaMap = {};
   let objMap = {};
+  let objNames = {};
   typed[0][0].forEach(tObjArrs => {
     const [obj, arrs] = tObjArrs;
-    const [metaType, metaPos] = obj.objM;
+    const {objM, objName} = obj;
+    const [metaType, metaPos] = objM;
     metaMap[posKey(metaPos)] = metaType;
     objMap[posKey(metaPos)] = obj;
+
+    if(!(objName in objNames)) {
+      objNames[objName] = [];
+    }
+    objNames[objName].push(obj);
 
     arrs.forEach(tArr => {
       const [, arrAnnots, , expr] = tArr;
@@ -63,7 +72,7 @@ function Main(props) {
   });
 
   const statements = page[0][1];
-  const resMaps = {metaMap, objMap, annotsMap, prgmName};
+  const resMaps = {metaMap, objMap, objNames, classToType, annotsMap, prgmName};
 
   return (
     <ResMaps.Provider value={resMaps}>
@@ -324,7 +333,43 @@ function PlayButton() {
 
 function Comment(props) {
   const {comment} = props;
-  return <ReactMarkdown children={comment} />;
+  let {objNames, classToType} = useContext(ResMaps);
+
+  // Replace usages of [TypeName] and [ClassName] with catn:// link reference
+  const regex = /\[(\S+)\][^[(]/g;
+  const comment2 = comment.replaceAll(regex, (m, name) => {
+    if(name in classToType) {
+      return `[${name}](catln://class/${name})${m.slice(-1)}`;
+    } else if(name in objNames) {
+      return `[${name}](catln://type/${name})${m.slice(-1)}`;
+    } else {
+      return m;
+    }
+  });
+
+  const components = {
+    a: ({href, children}) => {
+      if(href.startsWith("catln://class/")) {
+        const className = href.substring("catln://class/".length);
+        return <PClassName name={className}/>;
+      } else if(href.startsWith("catln://type/")) {
+          const typeName = href.substring("catln://type/".length);
+          return <PTypeName name={typeName}/>;
+      } else {
+        return <a href={href}>{children}</a>;
+      }
+    }
+  };
+
+  function transformLinkUri(href, children, title) {
+    if(href.startsWith("catln://")) {
+      return href;
+    } else {
+      return uriTransformer(href, children, title);
+    }
+  }
+
+  return <ReactMarkdown children={comment2} transformLinkUri={transformLinkUri} components={components}/>;
 }
 
 function addExprToMetaMap(base, expr) {
