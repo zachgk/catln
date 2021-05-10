@@ -16,7 +16,6 @@ import           Data.Hashable
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Data.Bifunctor                 ( first )
-import           Data.List
 import           Data.Maybe
 import           Text.Printf
 
@@ -196,9 +195,6 @@ declToObjArrow (PSemiDecl (DeclLHS arrM (Pattern object guard)) annots expr) = (
 desDecl :: PDecl -> DesObjectMap
 desDecl decl = map declToObjArrow $ removeSubDeclarations decl
 
-desDecls :: [PDecl] -> DesObjectMap
-desDecls = concatMap desDecl
-
 typeDefMetaToObj :: H.HashMap TypeVarName Type -> ParseMeta -> Maybe PObject
 typeDefMetaToObj _ (PreTyped TypeVar{} _) = Nothing
 typeDefMetaToObj varReplaceMap (PreTyped (SumType partials) pos) = case splitPartialLeafs partials of
@@ -210,35 +206,34 @@ typeDefMetaToObj varReplaceMap (PreTyped (SumType partials) pos) = case splitPar
   _ -> error "Invalid call to typeDefMetaToObj with SumType"
 typeDefMetaToObj _ _ = error "Invalid call to typeDefMetaToObj"
 
-desMultiTypeDefs :: [PMultiTypeDef] -> DesPrgm
-desMultiTypeDefs multiDefs = mergePrgms $ map buildTypeDef multiDefs
-  where
-    buildTypeDef (MultiTypeDef className classVars dataMetas) = (objMap', (typeToClass', classToType'), [])
-      where
-        objMap' = map (,[]) objs
-        objNames = map objName objs
-        dataTypes = map getMetaType dataMetas
-        objs = mapMaybe (typeDefMetaToObj classVars) dataMetas
-        classToType' = H.singleton className (True, classVars, dataTypes)
-        typeToClass' = H.fromList $ map (,S.singleton className) objNames
+desMultiTypeDef :: PMultiTypeDef -> DesPrgm
+desMultiTypeDef (MultiTypeDef className classVars dataMetas) = (objMap', (typeToClass', classToType'), [])
+    where
+      objMap' = map (,[]) objs
+      objNames = map objName objs
+      dataTypes = map getMetaType dataMetas
+      objs = mapMaybe (typeDefMetaToObj classVars) dataMetas
+      classToType' = H.singleton className (True, classVars, dataTypes)
+      typeToClass' = H.fromList $ map (,S.singleton className) objNames
 
-desClassDecls :: [RawClassDecl] -> DesPrgm
-desClassDecls classDecls = mergePrgms $ map buildClassDecl classDecls
-  where
-    buildClassDecl (className, classVars) = ([], (H.empty, H.singleton className (False, classVars, [])), [])
+desClassDecl :: RawClassDecl -> DesPrgm
+desClassDecl (className, classVars) = ([], (H.empty, H.singleton className (False, classVars, [])), [])
 
-desTypeDefs :: [PTypeDef] -> DesObjectMap
-desTypeDefs = foldr addTypeDef []
-  where addTypeDef (TypeDef tp) = case typeDefMetaToObj H.empty tp of
-          Just obj -> \objs -> (obj, []) : objs
+desTypeDef :: PTypeDef -> DesObjectMap
+desTypeDef (TypeDef tp) = case typeDefMetaToObj H.empty tp of
+          Just obj -> [(obj, [])]
           Nothing -> error "Type def could not be converted into meta"
 
-desClassDefs :: Sealed -> [RawClassDef] -> DesPrgm
-desClassDefs sealed classDefs = ([], foldr addDef empty classDefs, [])
+desClassDef :: Sealed -> RawClassDef -> DesPrgm
+desClassDef sealed ((typeName, typeVars), className) = ([], classMap, [])
   where
-    empty = (H.empty, H.empty)
-    addDef ((typeName, typeVars), className) (typeToClass, classToType) = (H.insertWith S.union typeName (S.singleton className) typeToClass, H.insertWith addClass className (sealed, H.empty, [singletonType (PartialType (PTypeName typeName) typeVars H.empty H.empty PtArgExact)]) classToType)
-    addClass (cSealed, cVars, set1) (_, _, set2) = (cSealed, cVars, set1 ++ set2)
+    classMap = (
+        H.singleton typeName (S.singleton className),
+        H.singleton className (sealed, H.empty, [singletonType (PartialType (PTypeName typeName) typeVars H.empty H.empty PtArgExact)])
+      )
+
+emptyClassMap :: ClassMap
+emptyClassMap = (H.empty, H.empty)
 
 mergeObjMaps :: DesObjectMap -> DesObjectMap -> DesObjectMap
 mergeObjMaps = (++)
@@ -248,27 +243,14 @@ desGlobalAnnot p = case semiDesExpr p of
   ([], d) -> desExpr H.empty d
   _ -> error "Global annotations do not support sub-expressions and lambdas"
 
-desStatements :: [PStatement] -> DesPrgm
-desStatements statements = prgm'
-  where
-    splitStatements statement = case statement of
-          RawDeclStatement decl -> ([decl], [], [], [], [], [])
-          MultiTypeDefStatement multiTypedef -> ([], [multiTypedef], [], [], [], [])
-          TypeDefStatement typedef -> ([], [], [typedef], [], [], [])
-          RawClassDefStatement classdef -> ([], [], [], [classdef], [], [])
-          RawClassDeclStatement classDecl -> ([], [], [], [], [classDecl], [])
-          RawComment _ -> ([], [], [], [], [], [])
-          RawGlobalAnnot a -> ([], [], [], [], [], [a])
-    (decls, multiTypes, types, classes, classDecls, annots) = (\(a, b, c, d, e, f) -> (concat a, concat b, concat c, concat d, concat e, concat f)) $ unzip6 $ map splitStatements statements
-    declObjMap = desDecls decls
-    typeObjMap = desTypeDefs types
-    multiTypeDefsPrgm = desMultiTypeDefs multiTypes
-    classDeclsPrgm = desClassDecls classDecls
-    classDefsPrgm = desClassDefs False classes
-    objMap = foldr mergeObjMaps [] [declObjMap, typeObjMap]
-    annots' = map desGlobalAnnot annots
-    miscPrgm = (objMap, (H.empty, H.empty), annots')
-    prgm' = mergePrgms [multiTypeDefsPrgm, classDeclsPrgm, classDefsPrgm, miscPrgm]
+desStatement :: PStatement -> DesPrgm
+desStatement (RawDeclStatement decl) = (desDecl decl, emptyClassMap, [])
+desStatement (MultiTypeDefStatement multiTypeDef) = desMultiTypeDef multiTypeDef
+desStatement (TypeDefStatement typeDef) = (desTypeDef typeDef, emptyClassMap, [])
+desStatement (RawClassDefStatement classDef) = desClassDef False classDef
+desStatement (RawClassDeclStatement classDecls) = desClassDecl classDecls
+desStatement RawComment{} = ([], emptyClassMap, [])
+desStatement (RawGlobalAnnot a) = ([], emptyClassMap, [desGlobalAnnot a])
 
 finalPasses :: DesPrgmGraphData -> GraphNodes DesPrgm String -> GraphNodes DesPrgm String
 finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm, prgmName, imports) = (prgm'', prgmName, imports)
@@ -286,10 +268,8 @@ finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm, prgmName, impor
     prgm'' = expandDataReferences fullPrgm' prgm'
 
 desPrgm :: PPrgm -> CRes DesPrgm
-desPrgm (_, statements) = return $ desStatements statements
+desPrgm (_, statements) = return $ mergePrgms $ map desStatement statements
 
--- TODO: This shouldn't join files when desugaring, but return a graph of desugared files
--- it may require extra work for desugaring with the classmap
 desFiles :: PPrgmGraphData -> CRes DesPrgmGraphData
 desFiles graphData = do
   -- initial desugar
