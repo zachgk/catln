@@ -49,10 +49,20 @@ pGlobalAnnot = L.indentBlock scn p
       annot <- pCompAnnot
       return (L.IndentMany Nothing (pack annot) pStatement)
 
+pModule :: Parser PStatement
+pModule = L.indentBlock scn p
+  where
+    pack name children = return $ RawModule name children
+    p = do
+      _ <- symbol "module"
+      name <- tidentifier
+      return (L.IndentMany Nothing (pack name) pStatement)
+
 pStatement :: Parser PStatement
 pStatement = pTypeStatement
     <|> RawComment <$> pComment
     <|> pGlobalAnnot
+    <|> pModule
     <|> pRootDecl
 
 pNothingNewline :: Parser (Maybe a)

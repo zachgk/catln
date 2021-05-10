@@ -118,6 +118,7 @@ data RawStatement m
   | RawClassDeclStatement RawClassDecl
   | RawComment String
   | RawGlobalAnnot (CompAnnot (RawExpr m)) [RawStatement m]
+  | RawModule String [RawStatement m]
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
 type FileImport = String

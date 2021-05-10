@@ -41,7 +41,7 @@ ops = [
     , Prefix (mkOp1 "~" <$ symbol "~")
     ],
     [ InfixL (mkOp2 "*" <$ symbol "*")
-    , InfixL (mkOp2 "/" <$ symbol "/")
+    , InfixL (mkOp2 "//" <$ symbol "//")
     ],
     [ InfixL (mkOp2 "+" <$ symbol "+")
     , InfixL (mkOp2 "-" <$ symbol "-")

@@ -34,7 +34,7 @@ symbol :: String -> Parser String
 symbol = L.symbol sc
 
 reservedWords :: [String]
-reservedWords = ["if", "else", "assert", "data", "type", "every", "isa", "match", "case"]
+reservedWords = ["if", "else", "assert", "data", "type", "every", "isa", "match", "case", "module"]
 
 
   -- Parse simple sequences
@@ -54,13 +54,13 @@ angleBraces = between (symbol "<") (symbol ">")
 identifier :: Parser String
 identifier = (lexeme . try) (p >>= check)
   where
-    p       = (:) <$> lowerChar <*> many alphaNumChar
+    p       = (:) <$> lowerChar <*> many (alphaNumChar <|> char '/')
     check x = if x `elem` reservedWords
                  then fail $ "keyword " ++ show x ++ " cannot be an identifier"
                  else return x
 
 tidentifier :: Parser String
-tidentifier = lexeme $ (:) <$> upperChar <*> many alphaNumChar
+tidentifier = lexeme $ (:) <$> upperChar <*> many (alphaNumChar <|> char '/')
 
 tvar :: Parser String
 tvar = try $ lexeme $ do
@@ -77,7 +77,7 @@ pAnnotIdentifier = do
   return ('#':f:rst)
 
 operators :: [String]
-operators = words "- ~ * / + <= >= < > == != & | ^ ::"
+operators = words "- ~ * // + <= >= < > == != & | ^ ::"
 
 opIdentifier :: Parser String
 opIdentifier = try $ lexeme $ (++) <$> string "operator" <*> opChars

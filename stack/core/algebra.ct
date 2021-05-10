@@ -1,141 +1,143 @@
 import stack/core/primitives.ct
 import stack/core/compile.ct
 
-# # Catln Core Abstract Algebra Types
+module Data/Algebra
 
-  These types define some of the basic relationship and classes
+  # # Catln Core Abstract Algebra Types
 
-class Eq
+    These types define some of the basic relationship and classes
 
-# The Eq class is used to define values which can be compared for equality.
-  While naive tuple equality often works, some types have equality that behaves differently and must be defined.
-  For example, a TreeSet can insert items in different order and produce different trees, but with equal sets.
-  There are only two operations for eq: [operator==] and [operator!=].
+  class Eq
 
-operator==<Eq $T>($T l, $T r) -> Boolean
+  # The Eq class is used to define values which can be compared for equality.
+    While naive tuple equality often works, some types have equality that behaves differently and must be defined.
+    For example, a TreeSet can insert items in different order and produce different trees, but with equal sets.
+    There are only two operations for eq: [operator==] and [operator!=].
 
-# The first operation checks whether two items are equal.
-  Note that it only compares like items with each other, not that you can compare apples to oranges.
+  operator==<Eq $T>($T l, $T r) -> Boolean
 
-operator!=<Eq $T>($T l, $T r) -> Boolean
-  # The second operation is check if they are not equal.
+  # The first operation checks whether two items are equal.
+    Note that it only compares like items with each other, not that you can compare apples to oranges.
 
-# It is the opposite of the first operation leading to the simple definition:
+  operator!=<Eq $T>($T l, $T r) -> Boolean
+    # The second operation is check if they are not equal.
 
-operator!=(l, r) = ~(l == r)
+  # It is the opposite of the first operation leading to the simple definition:
 
-# Given this, creating an instance of Eq only requires defining equality and the != can be produced automatically.
+  operator!=(l, r) = ~(l == r)
 
-# ## Ordering
+  # Given this, creating an instance of Eq only requires defining equality and the != can be produced automatically.
 
-# Ordering is used to define operations that have a natural ability to be ordered or sorted.
-  Some examples include numbers which are sorted from smallest to largest or strings which are sorted alphabetically.
+  # ## Ordering
 
-# There are two different forms of ordering:
+  # Ordering is used to define operations that have a natural ability to be ordered or sorted.
+    Some examples include numbers which are sorted from smallest to largest or strings which are sorted alphabetically.
 
-class Ord
+  # There are two different forms of ordering:
 
-# Ord is used to define types which can be strictly ordered.
-  Every element, when compared must have one of the following [Ordering] relationships:
+  class Ord
 
-class Ordering = LessThan | Equal | GreaterThan
+  # Ord is used to define types which can be strictly ordered.
+    Every element, when compared must have one of the following [Ordering] relationships:
 
-# The Orderings can relate any like items of Ord. 
+  class Ordering = LessThan | Equal | GreaterThan
 
-class POrd
+  # The Orderings can relate any like items of Ord. 
 
-# In addition to Ord, POrd defines a partial ordering.
-  Partially ordered items can be compared, but may result in NoOrdering:
+  class POrd
 
-# TODO: POrdering should treat Ordering as a reference, not as a new type
+  # In addition to Ord, POrd defines a partial ordering.
+    Partially ordered items can be compared, but may result in NoOrdering:
 
-class POrdering = Ordering | NoOrdering
+  # TODO: POrdering should treat Ordering as a reference, not as a new type
 
-# As an example, sets can be partiall ordered by the subset operation.
-  One set A <= B when A is a subset of B.
-  An ordered example is {1} <= {1, 2}.
-  But, two sets like {1} and {2} have no ordering between them.
+  class POrdering = Ordering | NoOrdering
 
-# There are a few nice properties about ordering.
+  # As an example, sets can be partiall ordered by the subset operation.
+    One set A <= B when A is a subset of B.
+    An ordered example is {1} <= {1, 2}.
+    But, two sets like {1} and {2} have no ordering between them.
 
-every Ord isa POrd
+  # There are a few nice properties about ordering.
 
-# This means that something fully ordered can still take advantage of many of the same functions as partially ordered ones.
-  It just usually results in a more specific result.
+  every Ord isa POrd
 
-compare<Ord $T>($T l, $T r) -> Ordering
-compare<POrd $T>($T l, $T r) -> POrdering
+  # This means that something fully ordered can still take advantage of many of the same functions as partially ordered ones.
+    It just usually results in a more specific result.
 
-# The only major function is compare.
-  Comparing two orderables will result in an ordering.
-  Likewise, comparing two partially orderables results in a POrdering.
+  compare<Ord $T>($T l, $T r) -> Ordering
+  compare<POrd $T>($T l, $T r) -> POrdering
 
-# ### Operators for ordering
+  # The only major function is compare.
+    Comparing two orderables will result in an ordering.
+    Likewise, comparing two partially orderables results in a POrdering.
 
-operator<=<Ord $T>($T l, $T r) -> Boolean
-operator>=<Ord $T>($T l, $T r) -> Boolean
-operator<<Ord $T>($T l, $T r) -> Boolean
-operator><Ord $T>($T l, $T r) -> Boolean
+  # ### Operators for ordering
 
-every POrd isa Eq
+  operator<=<Ord $T>($T l, $T r) -> Boolean
+  operator>=<Ord $T>($T l, $T r) -> Boolean
+  operator<<Ord $T>($T l, $T r) -> Boolean
+  operator><Ord $T>($T l, $T r) -> Boolean
 
-# If something can be compared for order, it should also be comparable for equality.
-  Basically, if compare
+  every POrd isa Eq
 
-# operator==<POrd $T>($T l, $T r) = compare(l=l, r=r) == Equal
+  # If something can be compared for order, it should also be comparable for equality.
+    Basically, if compare
 
-# max<Ord $T>($T l, $T r) -> $T = if l >= r then l else r
-# min<Ord $T>($T l, $T r) -> $T = if l <= r then l else r
+  # operator==<POrd $T>($T l, $T r) = compare(l=l, r=r) == Equal
 
-# TODO: Tests and properties for compare
+  # max<Ord $T>($T l, $T r) -> $T = if l >= r then l else r
+  # min<Ord $T>($T l, $T r) -> $T = if l <= r then l else r
+
+  # TODO: Tests and properties for compare
 
 
-# ## Semigroup
+  # ## Semigroup
 
-class Semigroup
-every Semigroup isa Eq
+  class Semigroup
+  every Semigroup isa Eq
 
-mappend<Semigroup $T>($T l, $T r) -> $T
+  mappend<Semigroup $T>($T l, $T r) -> $T
 
-testSemigroupAssociative<Semigroup $T>($T a, $T b, $T c) =
-  #test
-  #assert(test=mappend(l=mappend(l=a, r=b), r=c) == mappend(l=a, r=mappend(l=b, r=c)))
-  0
-
-class Monoid
-every Monoid isa Semigroup
-
-mempty<Monoid $T> -> $T
-
-#test
-  testRightMonoidIdentity<Monoid $T>($T t) =
-    #assert(test=mappend(l=t, r=mempty) == t)
+  testSemigroupAssociative<Semigroup $T>($T a, $T b, $T c) =
+    #test
+    #assert(test=mappend(l=mappend(l=a, r=b), r=c) == mappend(l=a, r=mappend(l=b, r=c)))
     0
 
-  testLeftMonoidIdentity<Monoid $T>($T t) =
-    #assert(test=mappend(l=mempty, r=t) == t)
+  class Monoid
+  every Monoid isa Semigroup
+
+  mempty<Monoid $T> -> $T
+
+  #test
+    testRightMonoidIdentity<Monoid $T>($T t) =
+      #assert(test=mappend(l=t, r=mempty) == t)
+      0
+
+    testLeftMonoidIdentity<Monoid $T>($T t) =
+      #assert(test=mappend(l=mempty, r=t) == t)
+      0
+
+  # mconcat<Monoid $T>(List<$T> lst) = lst.fold(mappend, mempty)
+
+  class CommutativeMonoid
+
+  # This is also called an Abelian Monoid
+
+  every CommutativeMonoid isa Monoid
+
+  testCommutativeMonoid<CommutativeMonoid $T>($T a, $T b) =
+    #test
+    #assert(test=mappend(l=a, r=b) == mappend(l=b, r=a))
     0
 
-# mconcat<Monoid $T>(List<$T> lst) = lst.fold(mappend, mempty)
+  class Group
+  every Group isa Monoid
 
-class CommutativeMonoid
+  inverse<Group $T>($T t) -> $T
 
-# This is also called an Abelian Monoid
-
-every CommutativeMonoid isa Monoid
-
-testCommutativeMonoid<CommutativeMonoid $T>($T a, $T b) =
-  #test
-  #assert(test=mappend(l=a, r=b) == mappend(l=b, r=a))
-  0
-
-class Group
-every Group isa Monoid
-
-inverse<Group $T>($T t) -> $T
-
-testGroup<Group $T>($T t) =
-  #test
-  #assert(test=mappend(l=t, r=inverse(t)) == mempty)
-  #assert(test=mappend(l=inverse(t), r=t) == mempty)
-  0
+  testGroup<Group $T>($T t) =
+    #test
+    #assert(test=mappend(l=t, r=inverse(t)) == mempty)
+    #assert(test=mappend(l=inverse(t), r=t) == mempty)
+    0

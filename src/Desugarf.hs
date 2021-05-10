@@ -28,7 +28,7 @@ import           Desugarf.Passes
 import Utils
 import Data.Graph
 
-type StatementEnv = [DesCompAnnot]
+type StatementEnv = (String, [DesCompAnnot])
 
 splitDeclSubStatements :: [PDeclSubStatement] -> ([PDecl], [PCompAnnot])
 splitDeclSubStatements = aux ([], [])
@@ -189,7 +189,7 @@ semiDesGuard ElseGuard = ([], ElseGuard)
 semiDesGuard NoGuard = ([], NoGuard)
 
 declToObjArrow :: StatementEnv -> PSemiDecl -> (DesObject, [DesArrow])
-declToObjArrow inheritAnnots (PSemiDecl (DeclLHS arrM (Pattern object guard)) annots expr) = (object, [arrow])
+declToObjArrow (_, inheritAnnots) (PSemiDecl (DeclLHS arrM (Pattern object guard)) annots expr) = (object, [arrow])
   where
     argMetaMap = formArgMetaMap object
     annots' = map (desExpr argMetaMap) annots
@@ -254,7 +254,8 @@ desStatement _ (RawClassDefStatement classDef) = desClassDef False classDef
 desStatement _ (RawClassDeclStatement classDecls) = desClassDecl classDecls
 desStatement _ RawComment{} = ([], emptyClassMap, [])
 desStatement _ (RawGlobalAnnot a []) = ([], emptyClassMap, [desGlobalAnnot a])
-desStatement inheritAnnots (RawGlobalAnnot a subStatements) = mergePrgms $ map (desStatement (desGlobalAnnot a:inheritAnnots)) subStatements
+desStatement (inheritModule, inheritAnnots) (RawGlobalAnnot a subStatements) = mergePrgms $ map (desStatement (inheritModule, desGlobalAnnot a:inheritAnnots)) subStatements
+desStatement (inheritModule, inheritAnnots) (RawModule name subStatements) = mergePrgms $ map (desStatement (inheritModule ++ "/" ++ name, inheritAnnots)) subStatements
 
 finalPasses :: DesPrgmGraphData -> GraphNodes DesPrgm String -> GraphNodes DesPrgm String
 finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm, prgmName, imports) = (prgm'', prgmName, imports)
@@ -272,7 +273,7 @@ finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm, prgmName, impor
     prgm'' = expandDataReferences fullPrgm' prgm'
 
 desPrgm :: PPrgm -> CRes DesPrgm
-desPrgm (_, statements) = return $ mergePrgms $ map (desStatement []) statements
+desPrgm (_, statements) = return $ mergePrgms $ map (desStatement ("", [])) statements
 
 desFiles :: PPrgmGraphData -> CRes DesPrgmGraphData
 desFiles graphData = do
