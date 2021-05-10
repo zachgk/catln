@@ -148,21 +148,36 @@ function Statement(props) {
 
     return (<h3 style={useStyles.noPlay}><KeyWord>class</KeyWord> <PClassName name={classDeclName}/>{showClassDeclVars}</h3>);
   case "RawGlobalAnnot":
-    let pos = statement.contents.contents[0][1];
+    const [annot, annotSubStatements] = statement.contents;
+    let pos = annot.contents[0][1];
     let val = annotsMap[posKey(pos)];
 
-    let showAnnotExpr = <Expr style={useStyles.noPlay} expr={statement.contents} />;
-    if(val.name === "#print") {
-      return (
-        <div style={useStyles.noPlay}>
+    let showAnnotExpr = <Expr expr={annot} />;
+    let showAnnot;
+    if(val && val.name === "#print") {
+      showAnnot = (
+        <div>
           {showAnnotExpr}
           <br />
           <Val data={val.args.p} />
         </div>
       );
     } else {
-      return showAnnotExpr;
+      showAnnot = showAnnotExpr;
     }
+    return (
+      <div style={useStyles.noPlay}>
+        {showAnnot}
+        <div><Statements statements={annotSubStatements}/></div>
+      </div>
+    );
+  case "RawModule":
+    return (
+      <div style={useStyles.noPlay}>
+        <KeyWord>module</KeyWord> {statement.contents[0]}
+        <div><Statements statements={statement.contents[1]}/></div>
+      </div>
+    );
   case "RawComment":
     return (<div style={useStyles.noPlay}><Comment comment={statement.contents} /></div>);
   default:
