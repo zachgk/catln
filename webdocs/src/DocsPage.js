@@ -125,7 +125,7 @@ function Statement(props) {
 
     let showClassDatas = tagJoin(classDatas.map((d, dIndex) => <span key={dIndex}><Type data={d[0]}/></span>), " | ");
 
-    return (<h3 className={classes.noPlay}><KeyWord>class</KeyWord> <PClassName name={className}/>{showClassVars} = {showClassDatas}</h3>);
+    return (<h3 className={classes.noPlay} id={`defClass${className}`}><KeyWord>class</KeyWord> <PClassName name={className}/>{showClassVars} = {showClassDatas}</h3>);
   case "TypeDefStatement":
     return (<h3 className={classes.noPlay}><KeyWord>data</KeyWord> <Type data={statement.contents[0]}/></h3>);
   case "RawClassDefStatement":
@@ -158,7 +158,7 @@ function Statement(props) {
     }
 
 
-    return (<h3 className={classes.noPlay}><KeyWord>class</KeyWord> <PClassName name={classDeclName}/>{showClassDeclVars}</h3>);
+    return (<h3 className={classes.noPlay} id={`defClass${classDeclName}`}><KeyWord>class</KeyWord> <PClassName name={classDeclName}/>{showClassDeclVars}</h3>);
   case "RawGlobalAnnot":
     const [annot, annotSubStatements] = statement.contents;
     let pos = annot.contents[0][1];
