@@ -13,7 +13,8 @@ const useStyles = {
     marginLeft: '4em'
   },
   playIcon: {
-    color: 'green'
+    color: 'green',
+    cursor: 'pointer'
   },
   noPlay: {
     marginLeft: '24px'
@@ -91,12 +92,21 @@ function Statement(props) {
 
   switch(statement.tag) {
   case "RawDeclStatement":
-    return (
-      <div>
-        <PlayButton />
-      <Decl contents={statement.contents} />
-      </div>
-    );
+    const objName = statement.contents[0][1][0].objName;
+    if(objName === "main" || objName === "mainx") {
+      return (
+        <div>
+          <PlayButton />
+          <Decl contents={statement.contents} />
+        </div>
+      );
+    } else {
+      return (
+        <div style={useStyles.noPlay}>
+          <Decl contents={statement.contents} />
+        </div>
+      );
+    }
   case "MultiTypeDefStatement":
     let [className, classVars, classDatas] = statement.contents;
 
