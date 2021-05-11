@@ -1,63 +1,69 @@
 import stack/core/algebra.ct
 import stack/core/data.ct
 
-# # Catln Core Library
+module Data/Primitive
 
-# ## Booleans
+  # # Catln Core Primitives
 
-class Boolean = True | False
+    These types some of the basic types used in Catln.
 
-every Boolean isa Eq
-operator==(True l, True r) = True
-operator==(True l, False r) = False
-operator==(False l, True r) = False
-operator==(False l, False r) = True
+  # ## Booleans
 
-operator~(Boolean a) -> Boolean
-operator~(True a) = False
-operator~(False a) = True
+  class Boolean = True | False
 
-operator&(Boolean l, Boolean r) -> Boolean
-operator&(True l, True r) = True
-operator&(Boolean l, False r) = False
-operator&(False l, Boolean r) = False
+  every Boolean isa Eq
+  operator==(True l, True r) = True
+  operator==(True l, False r) = False
+  operator==(False l, True r) = False
+  operator==(False l, False r) = True
 
-operator|(Boolean l, Boolean r) -> Boolean
-operator|(True l, Boolean r) = True
-operator|(Boolean l, True r) = True
-operator|(False l, False r) = False
+  operator~(Boolean a) -> Boolean
+  operator~(True a) = False
+  operator~(False a) = True
 
-operator^(Boolean l, Boolean r) -> Boolean
-operator^(True l, True r) = False
-operator^(True l, False r) = True
-operator^(False l, True r) = True
-operator^(False l, False r) = False
+  operator&(Boolean l, Boolean r) -> Boolean
+  operator&(True l, True r) = True
+  operator&(Boolean l, False r) = False
+  operator&(False l, Boolean r) = False
 
-every Boolean isa Enum
-# enum<Boolean> = [False, True]
+  operator|(Boolean l, Boolean r) -> Boolean
+  operator|(True l, Boolean r) = True
+  operator|(Boolean l, True r) = True
+  operator|(False l, False r) = False
+
+  operator^(Boolean l, Boolean r) -> Boolean
+  operator^(True l, True r) = False
+  operator^(True l, False r) = True
+  operator^(False l, True r) = True
+  operator^(False l, False r) = False
+
+  every Boolean isa Enum
+  # enum<Boolean> = [False, True]
 
 
-# ## Integers
+  # ## Integers
 
-class Number = Integer | Float
-every Number isa Eq
+  class Number = Integer | Float
+  every Number isa Eq
 
-operator-(Integer a) -> Integer
+  operator-(Integer a) -> Integer
 
-operator-(Integer l, Integer r) -> Integer
-operator+(Integer l, Integer r) -> Integer
-operator*(Integer l, Integer r) -> Integer
+  operator-(Integer l, Integer r) -> Integer
+  operator+(Integer l, Integer r) -> Integer
+  operator*(Integer l, Integer r) -> Integer
 
-operator<=(Integer l, Integer r) -> Boolean
-operator>=(Integer l, Integer r) -> Boolean
-operator<(Integer l, Integer r) -> Boolean
-operator>(Integer l, Integer r) -> Boolean
-operator==(Integer l, Integer r) -> Boolean
-operator!=(Integer l, Integer r) -> Boolean
+  operator<=(Integer l, Integer r) -> Boolean
+  operator>=(Integer l, Integer r) -> Boolean
+  operator<(Integer l, Integer r) -> Boolean
+  operator>(Integer l, Integer r) -> Boolean
+  operator==(Integer l, Integer r) -> Boolean
+  operator!=(Integer l, Integer r) -> Boolean
 
-every Integer isa CommutativeMonoid
-every Integer isa Group
+  # ### Commutative Group
 
-mempty<Integer $T> = 0
-mappend<Integer $T>($T l, $T r) = l + r
-inverse<Integer $T>($T t) = -t
+  every Integer isa CommutativeMonoid
+  every Integer isa Group
+
+  mempty<Integer $T> = 0
+  mappend<Integer $T>($T l, $T r) = l + r
+  inverse<Integer $T>($T t) = -t

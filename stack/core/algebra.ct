@@ -5,7 +5,7 @@ module Data/Algebra
 
   # # Catln Core Abstract Algebra Types
 
-    These types define some of the basic relationship and classes
+    These types define some of the basic relationship between types and ways classes can relate to themselves.
 
   class Eq
 
@@ -16,13 +16,13 @@ module Data/Algebra
 
   operator==<Eq $T>($T l, $T r) -> Boolean
 
-  # The first operation checks whether two items are equal.
-    Note that it only compares like items with each other, not that you can compare apples to oranges.
+    # This checks whether two items are equal.
+      Note that it only compares like items with each other, not that you can compare apples to oranges.
 
   operator!=<Eq $T>($T l, $T r) -> Boolean
-    # The second operation is check if they are not equal.
+    # This checks if two items are not equal.
 
-  # It is the opposite of the first operation leading to the simple definition:
+  # It is the opposite of [operator==] leading to the simple definition:
 
   operator!=(l, r) = ~(l == r)
 
@@ -46,14 +46,12 @@ module Data/Algebra
 
   class POrd
 
-  # In addition to Ord, POrd defines a partial ordering.
-    Partially ordered items can be compared, but may result in NoOrdering:
-
-  # TODO: POrdering should treat Ordering as a reference, not as a new type
+  # In addition to [Ord], [POrd] defines a partial ordering.
+    Partially ordered items can be compared, but may result in [NoOrdering]:
 
   class POrdering = Ordering | NoOrdering
 
-  # As an example, sets can be partiall ordered by the subset operation.
+  # As an example, sets can be partially ordered by the subset operation.
     One set A <= B when A is a subset of B.
     An ordered example is {1} <= {1, 2}.
     But, two sets like {1} and {2} have no ordering between them.
@@ -63,16 +61,18 @@ module Data/Algebra
   every Ord isa POrd
 
   # This means that something fully ordered can still take advantage of many of the same functions as partially ordered ones.
-    It just usually results in a more specific result.
+    It just usually has a more specific result.
 
   compare<Ord $T>($T l, $T r) -> Ordering
   compare<POrd $T>($T l, $T r) -> POrdering
 
-  # The only major function is compare.
-    Comparing two orderables will result in an ordering.
-    Likewise, comparing two partially orderables results in a POrdering.
+  # The only major function for ordering is [compare].
+    Comparing two [Ord] will result in an [Ordering].
+    Likewise, comparing two partially orderables [POrd] results in a [POrdering].
 
   # ### Operators for ordering
+
+    Besides compare, there are also some operators to make using ordering easier.
 
   operator<=<Ord $T>($T l, $T r) -> Boolean
   operator>=<Ord $T>($T l, $T r) -> Boolean
@@ -81,10 +81,11 @@ module Data/Algebra
 
   every POrd isa Eq
 
-  # If something can be compared for order, it should also be comparable for equality.
-    Basically, if compare
+  # If something can be compared for order, it should also be comparable for equality by the following relationship:
 
   # operator==<POrd $T>($T l, $T r) = compare(l=l, r=r) == Equal
+
+  # ### Ordering utility functions
 
   # max<Ord $T>($T l, $T r) -> $T = if l >= r then l else r
   # min<Ord $T>($T l, $T r) -> $T = if l <= r then l else r
@@ -95,6 +96,10 @@ module Data/Algebra
   # ## Semigroup
 
   class Semigroup
+
+  # A semigroup is a type combined with an associative operation called [mappend].
+    For example, integers with the addition operation are a semigroup.
+
   every Semigroup isa Eq
 
   mappend<Semigroup $T>($T l, $T r) -> $T
@@ -105,9 +110,18 @@ module Data/Algebra
     0
 
   class Monoid
+
+  # The [Monoid] builds on top of the [Semigroup].
+    It adds the identity value [mempty].
+    The integers with addition form a [Monoid], and 0 is the value for [mempty].
+    Another example is [String] where "" is the value for [mempty]
+  
   every Monoid isa Semigroup
 
   mempty<Monoid $T> -> $T
+    # mempty is the "zero" or "empty" value that can be combined with [mappend] to result in the same operation
+
+  # We can test to verify that [mempty] works with both the left and right.
 
   #test
     testRightMonoidIdentity<Monoid $T>($T t) =
@@ -118,13 +132,19 @@ module Data/Algebra
       #assert(test=mappend(l=mempty, r=t) == t)
       0
 
+
   # mconcat<Monoid $T>(List<$T> lst) = lst.fold(mappend, mempty)
+  # Using the [Monoid], it is possible to combine a list of monoids together.
 
   class CommutativeMonoid
 
-  # This is also called an Abelian Monoid
+  # The [CommutativeMonoid] builds on top of the [Monoid].
+    It is also called an Abelian Monoid
+    Here, integers with addition are a [CommutativeMonoid], but [String]s are not.
 
   every CommutativeMonoid isa Monoid
+
+  # We can test to ensure that all [CommutativeMonoid]s satisfy the commutativity requirement.
 
   testCommutativeMonoid<CommutativeMonoid $T>($T a, $T b) =
     #test
@@ -132,9 +152,18 @@ module Data/Algebra
     0
 
   class Group
+
+  # The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
+    It adds an inverse operation that finds the opposite of an element.
+    For integers with addition, negation with [operator~] would be the inverse.
+    Something like [String]s would not have an inverse, so it wouldn't be a [Group].
+
   every Group isa Monoid
 
   inverse<Group $T>($T t) -> $T
+
+  # We can test to ensure that all [Group]s satisfy the inverse requirements.
+    An inverse times itself should result in [mempty].
 
   testGroup<Group $T>($T t) =
     #test

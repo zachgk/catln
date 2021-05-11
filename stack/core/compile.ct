@@ -1,30 +1,86 @@
 import stack/core/primitives.ct
 import stack/core/data.ct
 
-# # Catln Core Compiling Types and Annotations
+module Catln
 
-# ## IO
+  # # Catln Core Compiling Types and Annotations
 
-data IO
-IO.exit(Integer val) -> IO
-IO.println(String msg) -> IO
+  # ## IO
+
+    [IO] is the type used to encapsulate interactions with the outside world.
+    This can include reading/writing from files and interacting over sockets.
+    The [IO] type is also special because it is the only truly impure type in the language.
+    Files and external values can change unexpectedly.
+    But, all of the impurity is managed in this single type.
+
+  data IO
+
+  IO.exit(Integer val) -> IO
+    # [exit] will immediately terminate the process and return [val] as the status value.
+
+  IO.println(String msg) -> IO
+    # [println] will print the [msg] to the standard output along with a newline character.
+
+  # ## Core Annotations
+
+    The core annotations are all of the annotations used by the compiler and the web docs program.
+
+  annot #assert(Boolean test)
+
+  # [#assert] will check if the [test]ed value is true.
+    The test is used only when testing a function, and is not included as part of the actual build.
+    It can be used to illustrate properties which are known about a particular value in a function or ways to verify the correctness of a value.
+    It is used during property testing, manual testing, and arrow testing.
+    If you call a function during testing that features an assertion, that assertion will still be checked.
+  
+  annot #assert(Boolean test, String msg)
+
+  # The [#assert] can also include a [msg] to be displayed for debugging purposes.
+  
+  annot #print(CatlnResult p)
+
+  # The print annotation is used to display computed values inside webdocs.
+    It can be used to avoid manually writing computed values into code, display temporary values, and visualizations.
+
+  annot #test
+
+  # [#test] is used to mark that a function or value is a test.
+    All tests are treated as private and are not expected to be called.
+    The compiler executes all of the test during it's test phase to verify the [#assert]s inside of them.
+    The tests can contain no arguments and it will be executed.
+    If the test has arguments, the test engine will attempt to auto-generate inputs to the function and will automatically run the test for all of the generated inputs.
+
+  annot #example
+
+  # [#example] is used to mark a function as an example.
+    The goal of an example is to provide a reference that shows how a function or type is commonly used.
+    The examples are treated as private and are not expected to be called.
+    They are also specially highlighted in the webdocs.
+    Examples are still typechecked during compilation and should contain valid code.
+    For code which is not worth including, it can be replaced with a hole.
+    Holes found within examples are safe to leave in and are not treated as a warning.
 
 
-# ## Core Annotations
+  # ## Result Classes
 
-annot #assert(Boolean test)
-annot #assert(Boolean test, String msg)
-annot #print(CatlnResult p)
-annot #test
-annot #example
+  data CatlnResult(String name, String contents)
 
-# ## Result Classes
+  # The [CatlnResult] represents the result of a catln build.
+    The most typical results are compiled executables.
+    But, they could also be other kinds of results such as websites or cloud configurations.
+    Any global value which has type [CatlnResult] can be called through `catln build [FILE] [VALUE]`.
 
-data CatlnResult(String name, String contents)
-www(String html) = CatlnResult(name="index.html", contents=html)
+  www(String html) = CatlnResult(name="index.html", contents=html)
+    # [www] is used to build web results.
 
-mainx(IO io) -> IO
-llvm(c) -> CatlnResult
-main else -> CatlnResult = llvm(c=mainx)
+  mainx(IO io) -> IO
+    # [mainx] is the main function for calls to `catln run [FILE]`.
+      It matches the signature of an executable.
 
+  llvm(c) -> CatlnResult
+    # [llvm] runs the [LLVM Compiler](https://llvm.org/) to build the runnable argument [c] into a [CatlnResult] executable.
 
+  main else -> CatlnResult = llvm(c=mainx)
+    # [main] is the main function for calls to `catln build [FILE]`.
+      The default behavior, following this rule, is to find a runnable defined as [mainx] and compile it with [llvm].
+      If a different build is desired, define a [CatlnResult] in the value [main] instead of [mainx].

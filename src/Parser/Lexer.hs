@@ -77,7 +77,7 @@ pAnnotIdentifier = do
   return ('#':f:rst)
 
 operators :: [String]
-operators = words "- ~ * // + <= >= < > == != & | ^ ::"
+operators = words "- ~ * // + <= >= < > == != & | ^ ++ ::"
 
 opIdentifier :: Parser String
 opIdentifier = try $ lexeme $ (++) <$> string "operator" <*> opChars
