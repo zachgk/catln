@@ -3,6 +3,7 @@
 ## Prerequisites
 
 There are two main prerequisites for installing Catln:
+
 - [Haskell GHC comiler](https://www.haskell.org/ghc/distribution_packages.html)
 - [Haskell Stack](https://docs.haskellstack.org/en/stable/install_and_upgrade/), to build the compiler and manage Haskell dependencies.
 
@@ -27,43 +28,16 @@ npm install
 npm run build
 ```
 
-## Building for development
+## Running
 
-To build the compiler, you can run `stack build` from `$CATLN_HOME`.
+Now that it is installed, the compiler should be available in your path. You can test this by running `catln --help`.
 
-Once it is built, you can execute the compiler on a Catln file by running `stack exec catln test/code/arith.ct`.
+There are several subcommands available within the compiler.
 
-You can also use a repl as follows:
-```
-# Start stack repl
-stack repl
+You can use `catln run [FILEPATH]` to run a particular file. It will expect to find a definition of `mainx` within that file. This command must be run from the directory of `$CATLN_HOME`.
 
-# run command in repl
-# the ... represents all files in the program
-# process run the file
-*...> process "test/code/arith.ct"
-```
+You can use `catln build [FILEPATH]` to build a particular file. It will expect to find a definition of `main` within that file defining what to build. This command must be run from the directory of `$CATLN_HOME`.
 
-### Tests
+You can use `catln doc [PATH]` to run the doc server on port `8080`. It will serve all `.ct` files located recursively in the `[PATH]` if it is a directory, or just `[PATH]` if not. It will also include all dependencies in the doc build. This command must be run from the directory of `$CATLN_HOME` and requires some additional installation (see above).
 
-To run the Catln test suite, execute `stack test`.
-
-You can also load the tests within the repl:
-```
-# Start stack repl
-stack repl
-
-# Load the main test file in the repl
-*...> :l test/Spec
-
-# Execute the main test suite command including the full test suite
-*...> main
-
-# Execute the "arith" test located in "test/code/arith.ct"
-*...> mt "arith"
-
-# Execute the custom untracked test file located at "test/test.ct"
-# This is useful during development 
-# Unlike the main tests, this one does not include the core library
-*...> test
-```
+There are also several additional options to run in the [building for development document](contrib/building.md).

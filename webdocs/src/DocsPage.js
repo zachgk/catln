@@ -78,8 +78,18 @@ function Main(props) {
 
   return (
     <ResMaps.Provider value={resMaps}>
+      {page[0][0].map((imp, ind) => <Import key={ind} name={imp}/>)}
+      <br/>
       <Statements statements={statements} />
     </ResMaps.Provider>
+  );
+}
+
+function Import(props) {
+  const {name} = props;
+  const classes = useStyles();
+  return (
+    <div className={classes.noPlay}><KeyWord>import</KeyWord> {name}</div>
   );
 }
 

@@ -1,7 +1,8 @@
 # Syntax
 
 Here is a basic guide to the **currently implemented** syntax and features for Catln.
-You can view examples of the syntax inside the [compiler test cases](https://github.com/zachgk/catln/tree/master/test/code).
+You can view examples of the syntax inside the [stack site](https://stack.catln.dev).
+The raw files are available for both the [stack files](https://github.com/zachgk/catln/tree/master/stack) and [test files](https://github.com/zachgk/catln/tree/master/test/code).
 
 ## Comments
 
@@ -10,7 +11,7 @@ A comment is done using by prefixing a line with `# `. The comment includes all 
 ```
 # This is a comment
 
-   # Markdown title
+   # Markdown title inside the comment.
 ```
 
 ## Declarations
