@@ -1,10 +1,13 @@
-import React from 'react';
+import React, {useState} from 'react';
 
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import TreeView from '@material-ui/lab/TreeView';
+import Menu from '@material-ui/core/Menu';
+import MenuItem from '@material-ui/core/MenuItem';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
+import MoreVertIcon from '@material-ui/icons/MoreVert';
 import TreeItem from '@material-ui/lab/TreeItem';
 import {
   Switch,
@@ -12,6 +15,7 @@ import {
   Redirect,
   Link,
   useParams,
+  useHistory,
   useRouteMatch
 } from 'react-router-dom';
 
@@ -24,6 +28,19 @@ const useStyles = {
     width: '100%',
     display: 'flex',
     justifyContent: 'space-evenly'
+  },
+  tocFileMain: {
+    display: 'flex',
+    alignItems: 'center'
+  },
+  tocFileName: {
+    flexGrow: 1
+  },
+  tocFileMenu: {
+    "&:hover": {
+      background: 'lightgray',
+      borderRadius: '2em'
+    }
   }
 };
 
@@ -132,13 +149,57 @@ function TableOfContentsNodes(props) {
         </TreeItem>
       );
     } else {
-      let label = <Link to={`${path}/${encodeURIComponent(tree.newFilePath)}`} >{tree.key}</Link>;
+      let label = (
+        <div style={useStyles.tocFileMain}>
+          <Link to={`${path}/${encodeURIComponent(tree.newFilePath)}`} style={useStyles.tocFileName}>
+            {tree.key}
+          </Link>
+          <FileMenu prgmName={encodeURIComponent(tree.newFilePath)}/>
+        </div>
+      );
       return (
         <TreeItem key={tree.newFilePath} nodeId={tree.newFilePath} label={label} />
       );
     }
 
   });
+}
+
+function FileMenu(props) {
+  const {prgmName} = props;
+  const history = useHistory();
+  const [open, setOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  let handleClick = (event) => {
+    setOpen(!open);
+    setAnchorEl(event.currentTarget);
+  };
+
+  let handleClose = () => {
+    setOpen(false);
+  };
+
+  let linkClose = (link) => () => {
+    setOpen(false);
+    history.push({pathname: link});
+  };
+
+  let button = <MoreVertIcon style={useStyles.tocFileMenu} aria-controls="fade-menu" aria-haspopup="true" onClick={handleClick} />;
+
+  return (
+    <span>
+      {button}
+      <Menu
+        anchorEl={anchorEl}
+        keepMounted
+        open={open}
+        onClose={handleClose}
+      >
+        <MenuItem onClick={linkClose(`/constrain/${prgmName}`)}>Constrain</MenuItem>
+      </Menu>
+    </span>
+  );
 }
 
 function ShowPage(props) {

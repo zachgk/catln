@@ -350,7 +350,6 @@ function PlayButton() {
       >
         <MenuItem onClick={linkClose(`/build/${prgmName}`)}>Build</MenuItem>
         <MenuItem onClick={linkClose(`/debug/${prgmName}`)}>Debug</MenuItem>
-        <MenuItem onClick={linkClose(`/constrain/${prgmName}`)}>Constrain</MenuItem>
       </Menu>
     </span>
   );
