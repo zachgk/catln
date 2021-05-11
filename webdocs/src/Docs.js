@@ -196,7 +196,7 @@ function FileMenu(props) {
         open={open}
         onClose={handleClose}
       >
-        <MenuItem onClick={linkClose(`/constrain/${prgmName}`)}>Constrain</MenuItem>
+        <MenuItem onClick={linkClose(`/typeinfer/${prgmName}`)}>Type Inference</MenuItem>
       </Menu>
     </span>
   );

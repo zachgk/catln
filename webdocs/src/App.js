@@ -17,7 +17,7 @@ import {
 import ListProgram from './ListProgram';
 import Build from './Build';
 import Docs from './Docs';
-import Constrain from './Constrain';
+import TypeInfer from './TypeInfer';
 import Debug from './Debug';
 import TypePage from './Type';
 import Class from './Class';
@@ -53,8 +53,8 @@ function App() {
           <Route path="/class/:name">
             <Class />
           </Route>
-          <Route path="/constrain/:prgmName">
-            <Constrain />
+          <Route path="/typeinfer/:prgmName">
+            <TypeInfer />
           </Route>
           <Route path="/debug/:prgmName">
             <Debug />
