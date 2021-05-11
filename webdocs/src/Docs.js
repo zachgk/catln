@@ -32,14 +32,19 @@ const useStyles = makeStyles({
   },
   tocFileMain: {
     display: 'flex',
-    alignItems: 'center'
+    alignItems: 'center',
+    "&:hover $tocFileMenu": {
+      visibility: 'visible'
+    }
   },
   tocFileName: {
     flexGrow: 1
   },
   tocFileMenu: {
     verticalAlign: 'middle',
+    visibility: 'hidden',
     "&:hover": {
+      visibility: 'visible',
       background: 'lightgray',
       borderRadius: '2em'
     }
