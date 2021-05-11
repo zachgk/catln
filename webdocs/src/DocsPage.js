@@ -1,5 +1,6 @@
 import React, {useState, useContext} from 'react';
 
+import { makeStyles } from '@material-ui/core/styles';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
@@ -8,7 +9,7 @@ import {useHistory} from 'react-router-dom';
 
 import {useApi, posKey, Loading, KeyWord, TypeVar, PTypeName, PClassName, Obj, Guard, Type, Val, tagJoin} from './Common';
 
-const useStyles = {
+const useStyles = makeStyles({
   indented: {
     marginLeft: '4em'
   },
@@ -19,7 +20,7 @@ const useStyles = {
   noPlay: {
     marginLeft: '24px'
   }
-};
+});
 
 const ResMaps = React.createContext({});
 
@@ -89,6 +90,7 @@ function Statements(props) {
 function Statement(props) {
   let {statement} = props;
   let {annotsMap} = useContext(ResMaps);
+  const classes = useStyles();
 
   switch(statement.tag) {
   case "RawDeclStatement":
@@ -102,7 +104,7 @@ function Statement(props) {
       );
     } else {
       return (
-        <div style={useStyles.noPlay}>
+        <div className={classes.noPlay}>
           <Decl contents={statement.contents} />
         </div>
       );
@@ -123,9 +125,9 @@ function Statement(props) {
 
     let showClassDatas = tagJoin(classDatas.map((d, dIndex) => <span key={dIndex}><Type data={d[0]}/></span>), " | ");
 
-    return (<h3 style={useStyles.noPlay}><KeyWord>class</KeyWord> <PClassName name={className}/>{showClassVars} = {showClassDatas}</h3>);
+    return (<h3 className={classes.noPlay}><KeyWord>class</KeyWord> <PClassName name={className}/>{showClassVars} = {showClassDatas}</h3>);
   case "TypeDefStatement":
-    return (<h3 style={useStyles.noPlay}><KeyWord>data</KeyWord> <Type data={statement.contents[0]}/></h3>);
+    return (<h3 className={classes.noPlay}><KeyWord>data</KeyWord> <Type data={statement.contents[0]}/></h3>);
   case "RawClassDefStatement":
     let [[instanceType, instanceVars], instanceClass] = statement.contents;
 
@@ -140,7 +142,7 @@ function Statement(props) {
       );
     }
 
-    return (<h3 style={useStyles.noPlay}><KeyWord>every</KeyWord> <PTypeName name={instanceType}/>{showInstanceVars} <KeyWord>isa</KeyWord> <PClassName name={instanceClass}/></h3>);
+    return (<h3 className={classes.noPlay}><KeyWord>every</KeyWord> <PTypeName name={instanceType}/>{showInstanceVars} <KeyWord>isa</KeyWord> <PClassName name={instanceClass}/></h3>);
   case "RawClassDeclStatement":
     let [classDeclName, classDeclVars] = statement.contents;
 
@@ -156,7 +158,7 @@ function Statement(props) {
     }
 
 
-    return (<h3 style={useStyles.noPlay}><KeyWord>class</KeyWord> <PClassName name={classDeclName}/>{showClassDeclVars}</h3>);
+    return (<h3 className={classes.noPlay}><KeyWord>class</KeyWord> <PClassName name={classDeclName}/>{showClassDeclVars}</h3>);
   case "RawGlobalAnnot":
     const [annot, annotSubStatements] = statement.contents;
     let pos = annot.contents[0][1];
@@ -176,20 +178,20 @@ function Statement(props) {
       showAnnot = showAnnotExpr;
     }
     return (
-      <div style={useStyles.noPlay}>
+      <div className={classes.noPlay}>
         {showAnnot}
         <div><Statements statements={annotSubStatements}/></div>
       </div>
     );
   case "RawModule":
     return (
-      <div style={useStyles.noPlay}>
+      <div className={classes.noPlay}>
         <KeyWord>module</KeyWord> {statement.contents[0]}
         <div><Statements statements={statement.contents[1]}/></div>
       </div>
     );
   case "RawComment":
-    return (<div style={useStyles.noPlay}><Comment comment={statement.contents} /></div>);
+    return (<div className={classes.noPlay}><Comment comment={statement.contents} /></div>);
   default:
     console.error("Unknown renderStatement", statement);
     return "";
@@ -198,6 +200,7 @@ function Statement(props) {
 
 function Decl(props) {
   const {objMap} = useContext(ResMaps);
+  const classes = useStyles();
 
   const {contents} = props;
   const [lhs, subStatements, maybeExpr] = contents;
@@ -217,7 +220,7 @@ function Decl(props) {
   return (
     <span>
       <Obj obj={showObj} Meta={RawMeta}/><Guard guard={guard} Expr={Expr}/>{showExpr}
-      <div style={useStyles.indented}>
+      <div className={classes.indented}>
       {subStatements.map((subStatement, index) => <DeclSubStatement key={index} subStatement={subStatement} />)}
       </div>
     </span>
@@ -242,7 +245,9 @@ function DeclSubStatement(props) {
 
 function Expr(props) {
   let {metaMap} = useContext(ResMaps);
+  const classes = useStyles();
   let {expr} = props;
+
   switch(expr.tag) {
   case "RawCExpr":
     return "" + expr.contents[1].contents;
@@ -298,14 +303,14 @@ function Expr(props) {
       let [obj, guard] = pattern;
       return (<span key={patternIndex}><Obj obj={obj} Meta={RawMeta}/><Guard guard={guard} Expr={Expr}/></span>);
     }), "");
-    return (<span><KeyWord>match</KeyWord> <Expr expr={matchExpr}/> <KeyWord>of</KeyWord> <div style={useStyles.indented}>{showMPatterns}</div></span>);
+    return (<span><KeyWord>match</KeyWord> <Expr expr={matchExpr}/> <KeyWord>of</KeyWord> <div className={classes.indented}>{showMPatterns}</div></span>);
   case "RawCase":
     let [, caseExpr, casePatterns] = expr.contents;
     let showCPatterns = tagJoin(casePatterns.map((pattern, patternIndex) => {
       let [obj, guard] = pattern;
       return (<span key={patternIndex}><Obj obj={obj} Meta={RawMeta}/><Guard guard={guard} Expr={Expr}/></span>);
     }), "");
-    return (<span><KeyWord>case</KeyWord> <Expr expr={caseExpr}/> <KeyWord>of</KeyWord> <div style={useStyles.indented}>{showCPatterns}</div></span>);
+    return (<span><KeyWord>case</KeyWord> <Expr expr={caseExpr}/> <KeyWord>of</KeyWord> <div className={classes.indented}>{showCPatterns}</div></span>);
   default:
     console.error("Unknown renderExpr", expr);
     return "";
@@ -322,6 +327,7 @@ function PlayButton() {
   let {prgmName} = useContext(ResMaps);
   const [open, setOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  const classes = useStyles();
 
   let handleClick = (event) => {
     setOpen(!open);
@@ -337,7 +343,7 @@ function PlayButton() {
     history.push({pathname: link});
   };
 
-  let button = <PlayArrowIcon fontSize='small' style={useStyles.playIcon} aria-controls="fade-menu" aria-haspopup="true" onClick={handleClick} />;
+  let button = <PlayArrowIcon fontSize='small' className={classes.playIcon} aria-controls="fade-menu" aria-haspopup="true" onClick={handleClick} />;
 
   return (
     <span>

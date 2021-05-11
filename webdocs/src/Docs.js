@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
 
+import { makeStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import TreeView from '@material-ui/lab/TreeView';
@@ -22,7 +23,7 @@ import {
 import {useApi, Loading} from './Common';
 import DocsPage from './DocsPage';
 
-const useStyles = {
+const useStyles = makeStyles({
   dirButtons: {
     marginTop: '50px',
     width: '100%',
@@ -37,12 +38,13 @@ const useStyles = {
     flexGrow: 1
   },
   tocFileMenu: {
+    verticalAlign: 'middle',
     "&:hover": {
       background: 'lightgray',
       borderRadius: '2em'
     }
   }
-};
+});
 
 function Docs() {
   let apiResult = useApi("/api/toc");
@@ -139,6 +141,7 @@ function sortPageTree(pageTree, pageList, filePath) {
 
 function TableOfContentsNodes(props) {
   const {pageTree, path} = props;
+  const classes = useStyles();
 
   return pageTree.map(tree => {
 
@@ -150,8 +153,8 @@ function TableOfContentsNodes(props) {
       );
     } else {
       let label = (
-        <div style={useStyles.tocFileMain}>
-          <Link to={`${path}/${encodeURIComponent(tree.newFilePath)}`} style={useStyles.tocFileName}>
+        <div className={classes.tocFileMain}>
+          <Link to={`${path}/${encodeURIComponent(tree.newFilePath)}`} className={classes.tocFileName}>
             {tree.key}
           </Link>
           <FileMenu prgmName={encodeURIComponent(tree.newFilePath)}/>
@@ -167,6 +170,7 @@ function TableOfContentsNodes(props) {
 
 function FileMenu(props) {
   const {prgmName} = props;
+  const classes = useStyles();
   const history = useHistory();
   const [open, setOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -185,7 +189,7 @@ function FileMenu(props) {
     history.push({pathname: link});
   };
 
-  let button = <MoreVertIcon style={useStyles.tocFileMenu} aria-controls="fade-menu" aria-haspopup="true" onClick={handleClick} />;
+  let button = <MoreVertIcon className={classes.tocFileMenu} aria-controls="fade-menu" aria-haspopup="true" onClick={handleClick} />;
 
   return (
     <span>
@@ -205,6 +209,7 @@ function FileMenu(props) {
 function ShowPage(props) {
   const {pages, path} = props;
   const { prgmName } = useParams();
+  const classes = useStyles();
 
   const pageNum = pages.indexOf(decodeURIComponent(prgmName));
 
@@ -229,7 +234,7 @@ function ShowPage(props) {
   return (
     <div>
       <DocsPage prgmName={prgmName} />
-      <div style={useStyles.dirButtons}>
+      <div className={classes.dirButtons}>
         {showPrev}
         {showNext}
       </div>

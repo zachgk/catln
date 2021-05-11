@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import {
   Switch,
@@ -12,14 +13,14 @@ import {
 import {useApi, posKey, Loading, Notes, Type} from './Common';
 import {ObjMap} from './ListProgram';
 
-const useStyles = {
+const useStyles = makeStyles({
   objMap: {
     maxHeight: '100vh',
     overflow: 'scroll'
   }
-};
+});
 
-function Constrain() {
+function TypeInfer() {
   const { prgmName } = useParams();
   let apiResult = useApi(`/api/constrain?prgmName=${prgmName}`);
 
@@ -33,6 +34,7 @@ function Constrain() {
 function Main(props) {
   let {notes, data: [, prgm, trace]} = props;
   let { prgmName } = useParams();
+  const classes = useStyles();
 
   var notesMap = {};
   notes.forEach(note => {
@@ -52,16 +54,16 @@ function Main(props) {
       <Notes notes={notes} noPosOnly />
       <Grid container spacing={2} justify="center">
         <Grid item xs >
-          <div style={useStyles.objMap}>
+          <div className={classes.objMap}>
             <ObjMap objMap={prgm[0]} Meta={Meta} showExprMetas />
           </div>
         </Grid>
         <Grid item xs>
           <Switch>
-            <Route exact path={`/constrain/${prgmName}`}>
-              <Redirect to={`/constrain/${prgmName}/0`} />
+            <Route exact path={`/typeinfer/${prgmName}`}>
+              <Redirect to={`/typeinfer/${prgmName}/0`} />
             </Route>
-            <Route path={`/constrain/${prgmName}/:curMeta`}>
+            <Route path={`/typeinfer/${prgmName}/:curMeta`}>
               <TraceEpochs trace={trace} Meta={Meta} />
             </Route>
           </Switch>
@@ -192,7 +194,7 @@ function Scheme(props) {
 function Pnt(props) {
   let {pnt} = props;
   let { prgmName } = useParams();
-  return <Link to={`/constrain/${prgmName}/${pnt}`}>{pnt}</Link>;
+  return <Link to={`/typeinfer/${prgmName}/${pnt}`}>{pnt}</Link>;
 }
 
 function Pos(props) {
@@ -200,4 +202,4 @@ function Pos(props) {
   return `${start.name}: ${start.line}:${start.col} - ${end.line}:${end.col} ${label}`;
 }
 
-export default Constrain;
+export default TypeInfer;

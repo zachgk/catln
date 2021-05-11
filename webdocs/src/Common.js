@@ -1,5 +1,6 @@
 import React, {useState, useEffect} from 'react';
 
+import { makeStyles } from '@material-ui/core/styles';
 import {Link} from 'react-router-dom';
 
 import SyntaxHighlighter from 'react-syntax-highlighter';
@@ -8,25 +9,21 @@ function tagJoin(lst, joinWith) {
   return lst.reduce((acc, x) => acc == null ? [x] : <>{acc}{joinWith}{x}</>, null);
 }
 
-const useStyles = {
-  notes: {
-    all: {
-      whiteSpace: 'pre-wrap'
-    },
-    error: {
-      background: 'lightCoral'
-    },
-    warning: {
-      background: 'moccasin'
-    }
+const useStyles = makeStyles( theme => ({
+  notesAll: {
+    whiteSpace: 'pre-wrap'
   },
-  partialName: {
-    tp: {
-      color: 'green'
-    },
-    class: {
-      color: 'purple'
-    }
+  notesError: {
+    background: theme.palette.error.main
+  },
+  notesWarning: {
+    background: theme.palette.warning.main
+  },
+  partialNameTp: {
+    color: 'green'
+  },
+  partialNameClass: {
+    color: 'purple'
   },
   keyword: {
     fontWeight: 'bold'
@@ -34,7 +31,7 @@ const useStyles = {
   typevar: {
     fontWeight: 'bold'
   }
-};
+}));
 
 function posKey(pos) {
   const f = p => `${p.name}-${p.line}-${p.col}`;
@@ -126,20 +123,22 @@ function Notes(props) {
 
 function Note(props) {
   let note = props.note;
-  var styles = useStyles.notes.all;
+  const classes = useStyles();
+
+  let noteClass;
   switch(note.tp) {
   case "CNoteError":
-    styles = {...styles, ...useStyles.notes.error};
+    noteClass = classes.notesError;
     break;
   case "CNoteWarning":
-    styles = {...styles, ...useStyles.notes.warning};
+    noteClass = classes.notesWarning;
     break;
   default:
     console.error("Unknown note type", note);
   }
 
   return (
-    <pre style={styles}>{note.msg}</pre>
+    <pre classes={`${classes.notesAll} ${noteClass}`}>{note.msg}</pre>
   );
 }
 
@@ -205,11 +204,13 @@ function Type(props) {
 }
 
 function KeyWord(props) {
-  return <span style={useStyles.keyword}>{props.children}</span>;
+  const classes = useStyles();
+  return <span className={classes.keyword}>{props.children}</span>;
 }
 
 function TypeVar(props) {
-  return <span style={useStyles.typevar}>{props.children}</span>;
+  const classes = useStyles();
+  return <span className={classes.typevar}>{props.children}</span>;
 }
 
 function PTypeName(props) {
@@ -222,21 +223,22 @@ function PClassName(props) {
 
 function PartialName(props) {
   const {name} = props;
-  let style, link;
+  const classes = useStyles();
+
+  let cls, link;
   switch(name.tag) {
   case "PTypeName":
-    style = useStyles.partialName.tp;
+    cls = classes.partialNameTp;
     link = `/type/${name.contents}`;
     break;
   case "PClassName":
-    style = useStyles.partialName.class;
+    cls = classes.partialNameClass;
     link = `/class/${name.contents}`;
     break;
   default:
     console.error("Unknown partial name", name);
-    style = {};
   }
-  return <Link to={link} style={style}>{name.contents}</Link>;
+  return <Link to={link} className={cls}>{name.contents}</Link>;
 }
 
 
@@ -273,7 +275,7 @@ function Obj(props) {
 
   let showObjDetails;
   if(details) {
-    showObjDetails = (<span style={details}>{objBasis} - <Meta data={objM}/></span>);
+    showObjDetails = (<span className={details}>{objBasis} - <Meta data={objM}/></span>);
   }
 
   return (<span>

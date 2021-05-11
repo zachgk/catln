@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { makeStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
@@ -16,7 +17,7 @@ import {
 
 import {useApi, tagJoin, Loading, Guard, PTypeName, PClassName, Type, Obj} from './Common';
 
-const useStyles = {
+const useStyles = makeStyles({
   objDetails: {
     float: 'right',
     color: 'gray'
@@ -31,7 +32,7 @@ const useStyles = {
   arrowExpression: {
     padding: 0
   }
-};
+});
 
 function ListProgram(props) {
   let query = useQuery();
@@ -106,6 +107,7 @@ function ObjMap(props) {
 
 function ObjArrows(props) {
   const [obj, arrows] = props.objas;
+  const classes = useStyles();
 
   let showArrows;
   if(Object.keys(arrows).length > 0) {
@@ -116,7 +118,7 @@ function ObjArrows(props) {
     );
   }
 
-  let primary = <Obj obj={obj} details={useStyles.objDetails} Meta={props.Meta}/>;
+  let primary = <Obj obj={obj} details={classes.objDetails} Meta={props.Meta}/>;
 
   return (
       <ListItem divider>
@@ -128,6 +130,7 @@ function ObjArrows(props) {
 function Arrow(props) {
   const {Meta} = props;
   const [arrM, , guard, maybeExpr] = props.arrow;
+  const classes = useStyles();
 
   let showExpr;
   if(maybeExpr) {
@@ -137,9 +140,9 @@ function Arrow(props) {
   let header = (<span><Guard guard={guard} Expr={Expr} Meta={Meta} showExprMetas={props.showExprMetas}/> -&gt; <Meta data={arrM} /></span>);
 
   return (
-    <Card style={useStyles.arrow}>
-      <CardContent style={useStyles.arrowDeclaration}>{header}</CardContent>
-      <CardContent style={useStyles.arrowExpression}>{showExpr}</CardContent>
+    <Card className={classes.arrow}>
+      <CardContent className={classes.arrowDeclaration}>{header}</CardContent>
+      <CardContent className={classes.arrowExpression}>{showExpr}</CardContent>
     </Card>
   );
 }
