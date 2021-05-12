@@ -97,16 +97,16 @@ module Data/Algebra
 
   class Semigroup
 
-    # A semigroup is a type combined with an associative operation called [mappend].
+    # A semigroup is a type combined with an associative operation called [operator++].
       For example, integers with the addition operation are a semigroup.
 
   every Semigroup isa Eq
 
-  mappend<Semigroup $T>($T l, $T r) -> $T
+  operator++<Semigroup $T>($T l, $T r) -> $T
 
   testSemigroupAssociative<Semigroup $T>($T a, $T b, $T c) =
     #test
-    #assert(test=mappend(l=mappend(l=a, r=b), r=c) == mappend(l=a, r=mappend(l=b, r=c)))
+    #assert(test=(a ++ b) ++ c == a ++ (b ++ c))
     0
 
   class Monoid
@@ -119,21 +119,21 @@ module Data/Algebra
   every Monoid isa Semigroup
 
   mempty<Monoid $T> -> $T
-    # mempty is the "zero" or "empty" value that can be combined with [mappend] to result in the same operation
+    # mempty is the "zero" or "empty" value that can be combined with [operator++] to result in the same operation
 
   # We can test to verify that [mempty] works with both the left and right.
 
   #test
     testRightMonoidIdentity<Monoid $T>($T t) =
-      #assert(test=mappend(l=t, r=mempty) == t)
+      #assert(test=(t ++ mempty) == t)
       0
 
     testLeftMonoidIdentity<Monoid $T>($T t) =
-      #assert(test=mappend(l=mempty, r=t) == t)
+      #assert(test=mempty ++ t == t)
       0
 
 
-  # mconcat<Monoid $T>(List<$T> lst) = lst.fold(mappend, mempty)
+  # mconcat<Monoid $T>(List<$T> lst) = lst.fold(operator++, mempty)
   # Using the [Monoid], it is possible to combine a list of monoids together.
 
   class CommutativeMonoid
@@ -148,7 +148,7 @@ module Data/Algebra
 
   testCommutativeMonoid<CommutativeMonoid $T>($T a, $T b) =
     #test
-    #assert(test=mappend(l=a, r=b) == mappend(l=b, r=a))
+    #assert(test=a ++ b == b ++ a)
     0
 
   class Group
@@ -167,6 +167,6 @@ module Data/Algebra
 
   testGroup<Group $T>($T t) =
     #test
-    #assert(test=mappend(l=t, r=inverse(t)) == mempty)
-    #assert(test=mappend(l=inverse(t), r=t) == mempty)
+    #assert(test=t ++ inverse(t) == mempty)
+    #assert(test=inverse(t) ++ t == mempty)
     0
