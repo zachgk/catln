@@ -1,3 +1,7 @@
+# Tests an identity function.
+  It requires using the type of the input argument as the output type of id as well.
+  So, it must be read as `id($T) -> $T`, not (id(Any) -> Any).
+
 id(x) = x
 
 mainx(IO io) = io.exit(val=id(x=0))

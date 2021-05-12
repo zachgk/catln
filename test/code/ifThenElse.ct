@@ -1,3 +1,5 @@
+# Tests the "if-then-else" syntax with an absolute value
+
 abs(Integer x) = if x >= 0 then x else -1 * x
 
 mainx(IO io) = io.exit(val=abs(0))

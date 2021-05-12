@@ -132,7 +132,9 @@ readFiles includeCore = fmap (fmap (graphFromEdges . snd)) . aux [] S.empty
             isF <- doesFileExist file'
             isD <- doesDirectoryExist file'
             case (isF, isD) of
-              (True, False) -> if ".ct" `isSuffixOf` file' then return (Just file') else return Nothing
+              (True, False) -> if not ("." `isPrefixOf` file) && ".ct" `isSuffixOf` file'
+                then return (Just file')
+                else return Nothing
               (False, True) -> return (Just file')
               _ -> error $ printf "Found non-file or directory: %s" file'
           aux acc visited (catMaybes files' ++ restToVisit)
