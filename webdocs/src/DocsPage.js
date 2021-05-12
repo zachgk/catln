@@ -52,7 +52,8 @@ function Main(props) {
     metaMap[posKey(metaPos)] = metaType;
     objMap[posKey(metaPos)] = obj;
 
-    if(!(objName in objNames)) {
+    // Need to check for functions because "toString" is already defined
+    if(!(objName in objNames) || typeof(objNames[objName]) === "function") {
       objNames[objName] = [];
     }
     objNames[objName].push(obj);
@@ -231,14 +232,14 @@ function Decl(props) {
     <span>
       <Obj obj={showObj} Meta={RawMeta}/><Guard guard={guard} Expr={Expr}/>{showExpr}
       <div className={classes.indented}>
-      {subStatements.map((subStatement, index) => <DeclSubStatement key={index} subStatement={subStatement} />)}
+        {subStatements.map((subStatement, index) => <DeclSubStatement key={index} obj={showObj} subStatement={subStatement} />)}
       </div>
     </span>
   );
 }
 
 function DeclSubStatement(props) {
-  const {subStatement} = props;
+  const {subStatement, obj} = props;
 
   switch(subStatement.tag) {
   case "RawDeclSubStatementDecl":
@@ -246,7 +247,7 @@ function DeclSubStatement(props) {
   case "RawDeclSubStatementAnnot":
     return <div><Expr expr={subStatement.contents} /></div>;
   case "RawDeclSubStatementComment":
-    return <div><Comment comment={subStatement.contents} /></div>;
+    return <div><Comment comment={subStatement.contents} obj={obj} /></div>;
   default:
     console.error("Unknown DeclSubStatement", subStatement);
     return "";
@@ -372,7 +373,7 @@ function PlayButton() {
 }
 
 function Comment(props) {
-  const {comment} = props;
+  const {comment, obj} = props;
   let {objNames, classToType} = useContext(ResMaps);
 
   // Replace usages of [TypeName] and [ClassName] with catn:// link reference
@@ -382,6 +383,10 @@ function Comment(props) {
       return `[${name}](catln://class/${name})${m.slice(-1)}`;
     } else if(name in objNames) {
       return `[${name}](catln://type/${name})${m.slice(-1)}`;
+    } else if(obj && name in obj.objArgs){
+      return `[${name}](catln://arg/${name})${m.slice(-1)}`;
+    } else if(obj && name in obj.objVars){
+      return `[${name}](catln://typevar/${name})${m.slice(-1)}`;
     } else {
       return m;
     }
@@ -393,8 +398,14 @@ function Comment(props) {
         const className = href.substring("catln://class/".length);
         return <PClassName name={className}/>;
       } else if(href.startsWith("catln://type/")) {
-          const typeName = href.substring("catln://type/".length);
-          return <PTypeName name={typeName}/>;
+        const typeName = href.substring("catln://type/".length);
+        return <PTypeName name={typeName}/>;
+      } else if(href.startsWith("catln://arg/")) {
+        const argName = href.substring("catln://arg/".length);
+        return <KeyWord>{argName}</KeyWord>;
+      } else if(href.startsWith("catln://typevar/")) {
+          const typeVarName = href.substring("catln://typevar/".length);
+          return <KeyWord>{typeVarName}</KeyWord>;
       } else {
         return <a href={href}>{children}</a>;
       }
