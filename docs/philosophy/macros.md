@@ -6,11 +6,11 @@ I try to differentiate the terms metaprogramming and macros. Metaprogramming is 
 
 ## Reflective Functions
 
-Instead, macros have two types. The first type is used to refer to arrow definitions which are more unusual. They may accept variable keywords names or variable numbers of keywords.
+Instead, macros have two types. The first type is used to refer to arrow definitions which are more unusual in terms of what they match. They may accept variable argument names or variable numbers of arguments.
 
 Consider as an example the `zip` method. This method takes a tuple of lists into a list of tuples. A single `zip` method with fixed tuples can be created normally, but to support any kind of input tuple (or more than two input lists to zip together at once), you would need to resort to macros.
 
-Reflective functions are used as opposed to infinite functions. So, it is not possible to create `zip${N} for all N` because that would require creating infinite objects. Instead, create a single object `zip` that would apply for all numbers of things to zip.
+Then, the macros are implemented using reflective functions as opposed to infinite functions. So, it is not possible to create `function zip${N}` for all `N` because that would require creating infinite objects. Instead, create a single object `zip` that would apply for all numbers of things to zip.
 
 The main thing that differentiates this from a normal function is that it may use special internal functions. For example, functions usually have fixed arguments. Some could have arbitrary arguments, but not inspect them. The most common would probably be functions to inspect or work with arbitrary number of arguments. Others could be those that look into how data structures are used or access information about the global set of objects.
 
@@ -21,7 +21,7 @@ I intend to use the dollar sign as the key to macros including macro types, macr
 ```
 zip(List $args...) =
     Int size = $args.$dict.map(v -> v.size).values.min
-    List(size=size, values=(i -> $args.$map(v.get(i))))
+    List(size=size, values=(i -> $args.$map(v -> v.get(i))))
 ```
 
 ## Code generation

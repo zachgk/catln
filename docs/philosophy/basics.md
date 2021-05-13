@@ -112,7 +112,7 @@ I recommend thinking about type properties in terms of sets of values. Each obje
 
 Type properties exist in a somewhat similar space to [refinement types](https://en.wikipedia.org/wiki/Refinement_type). The key difference is that they are defined entirely within Catln itself while most refinement type systems use an external tool such as [Z3](https://en.wikipedia.org/wiki/Z3_Theorem_Prover). That means that the external tool would be limited to operating on preset domains of knowledge while type properties can grow as more things are implemented in the language.
 
-Another difference is that it is also possible to use type properties for more abstract or computed values. You could add a `String_hasPassword<Boolean>` property to help check whether it is possible that a password is contained in a String. This could be used to sanitize the results before saving in a database or sending to a browser. Another possible property would be something like `HTML_classList<List<$T=String>>`. This property can be used to compute the possible classes an HTML element could have, useful for pruning the CSS file.
+Another difference is that it is also possible to use type properties for more abstract or computed values. You could add a `String_hasPassword<Boolean>` property to help check whether it is possible that a password is contained in a String. This could be used for security to check the values before saving in a database or sending to a browser. Another possible property would be something like `HTML_classList<List<$T=String>>`. This property can be used to compute the possible classes an HTML element could have, useful for pruning unused parts of the CSS file.
 
 ## Arrows
 
@@ -145,7 +145,7 @@ abs(Int i) = if i >= 0
                else -i
 ```
 
-This definition has a conditional "if" statement that branches the code based on the definition of `i`. However branching the code is also the process of learning about `i`. While `i` can be any integer in the function at large, we know it is limited to `Int_gte(0)` within the then branch. The reason we know this is because within the branch we can further assume the statement `i >= 0` is true. Likewise, we know within the else branch that `i` is of type `Int_lt(0)` because `not(i >= 0)` is true.
+This definition has a conditional "if" statement that branches the code based on the definition of `i`. However branching the code is also the process of learning about `i`. While `i` can be any integer in the function at large, we know it is limited to `Int_gte(0)` within the then branch. The reason we know this is because within the branch, we can further assume the statement `i >= 0` is true. Likewise, we know within the else branch that `i` is of type `Int_lt(0)` because `not(i >= 0)` is true.
 
 To convert between expressions and the type properties that they imply are implication statements. Here are some examples:
 

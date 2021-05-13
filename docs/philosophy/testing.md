@@ -54,7 +54,7 @@ In order to improve the performance of the testing, the tests can be cached. If 
 
 ### Testing Difference Engine
 
-With testing, one goal is to avoid accidentally changing the behavior of a function. To suit this goal, it requires an extensive test suite with high coverage. This test suite requires significant manual work to create an upkeep. Instead, a tool can do it almost effortlessly.
+With testing, one goal is to avoid accidentally changing the behavior of a function. To suit this goal, it requires an extensive test suite with high coverage. This test suite requires significant manual work to create and upkeep. Instead, a tool can do it almost effortlessly.
 
 This powerful addition to the testing system is the use of a testing difference engine. The difference engine expects you have a copy of the code in two different files (or directories). It tests the two implementations against each other using arrow testing to ensure that matching functions should be equal for all possible inputs. When it isn't, the engine should (as always) attempt to find the simple examples that demonstrate how it changes.
 

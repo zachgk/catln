@@ -18,13 +18,13 @@ The standard code import would have to either be built-in or part of the standar
 
 In addition, I may add an additional import type for dependency Catln code. These differ from a standard import in terms of the strictness. Bad formatting or warnings shouldn't be allowed within the main code, but could be excused in dependencies. They would also be excluded from coverage metrics and it may be worth skipping tests directed at dependencies as well.
 
-Beyond this, the same idea of "importing" could be used as a general system of creating objects and arrows as prerequisites for the code in the file. For example, a static json file could be "imported" into the type system as a JSON object. Then, the contents of the file can be used while verifying through the type system that the code matches the file. It could also import things like a text file as a string or a static image to return from a web server.
+Beyond this, the same idea of "importing" could be used as a general system of creating objects and arrows as prerequisites for the code in the file. For example, a static json file could be "imported" into the program as a JSON object. Then, the contents of the file can be used while verifying through the type system that the code matches the file. It could also import things like a text file as a string or a static image to return from a web server. These can then be optimized out during build time to use these external sources of information just as if they were Catln code directly.
 
 Another powerful option could be to import types themselves. For example, the OpenAPI specification allows you to design an API as a JSON file. If that file were imported as a type, then the type checker could ensure that the implementation matches the API definition. Not only would it simplify the code, it would help prevent bugs and errors. The same could be used for other code generation like protobuf files.
 
 Another avenue for importing is to handle language interop. For the simplest example of C header files with static binaries, the functions in the C header could be imported as objects. However, the arrows would all be undefined within the actual Catln except by interoperating with the code generation.
 
-Likewise, a similar system could be used to interop with other languages as well. Swift for Tensorflow added Swift > Python interoperability to take advantage of the expansive library of python functions. The same could be used to leverage the python libraries from Catln too. However, it would be better to create wrappers as the Python language lacks type bindings.
+Likewise, a similar system could be used to interop with other languages as well. Swift for Tensorflow added Swift > Python interoperability to take advantage of the expansive library of python functions. The same could be used to leverage the python libraries from Catln too. However, it would be better to create wrappers as the Python language lacks the same degree of type expressiveness.
 
 Overall, an expandable import system would help resolve the requirements on code generation/macros from the build system while providing high ease of use to developers. It would most likely require heavy use of the [macro system](macros.md), but that should be fine.
 
@@ -32,7 +32,7 @@ Overall, an expandable import system would help resolve the requirements on code
 
 Potentially the most powerful area is by changing the compiler targets. It is standard to think of a program producing a single binary executable. In the current design, this executable is produced by building the system into a tree form, generating the tree into LLVM, optimizing the LLVM, and saving using LLVM.
 
-However, there is another way to consider it. The main function of the program has the following signature `main<IO>(List[String] args) -> IO`. It we create a type `CatlnLLVMExecutable`, the final compiler stages could be described as an implicit conversion from `IO -> CatlnLLVMExecutable`. This implicit could be written within the standard library instead of the compiler.
+However, there is another way to consider it. The main function of the program has the following signature `mainx(IO io) -> IO`. It we create a type `CatlnLLVMExecutable`, the final compiler stages could be described as metaprogramming `llvm(c=runnable(IO io) -> IO) -> CatlnLLVMExecutable`. This function could be written within the standard library instead of the compiler.
 
 While it is possible that the code will be more difficult, it shouldn't be too large of a difference. It shouldn't be crazy given the power of implicit conversions, multi-level functions, and macros and will end up fairly similar to simply writing it in catln to begin with.
 
@@ -40,7 +40,7 @@ There are a number of benefits to this approach. First, it means that the compil
 
 Another benefit is that it is possible to write multiple compilers. Instead of the standard LLVM compiler, a simple direct to x86 compiler could be made that might run faster for use during development. It can also be used to create a separate parallel compiler or even a GPU compiler to replace the standard one.
 
-The greatest power is expanding the very nature of a program. The final result type can be expanded from a single executable to a more general `CatlnResult` class. Then, we would have `instance CatlnLLVMExecutable of CatlnResult` so that the LLVM binary would be one valid result from compiling a Catln file.
+The greatest power is expanding the very nature of a program. The final result type can be expanded from a single executable to a more general `CatlnResult` class. Then, we would have `every CatlnLLVMExecutable isa CatlnResult` so that the LLVM binary would be one valid result from compiling a Catln file.
 
 Other results could be generated as well. For building a server, maybe it would generate the server executable along with a database schema. If you are building a full-stack web application, it could generate both the client and server simultaneously. You would only need one program and one language for your application, while being able to write validation to apply on both sides and type checking to help ensure your client and server match. You could even throw in mobile as well.
 

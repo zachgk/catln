@@ -1,17 +1,17 @@
 # Choice
 
-It is a relatively common issue in programming when you must choose between several options. While your code could be valid depending on these options, one of them must ultimately be chosen.
+It is a relatively common issue in programming when you must choose between several options. While your code could be valid depending on these options, one of them must ultimately be chosen. It is best to break this into three steps: what do you want to do, what are the options to do it, and which option do you want to choose. Both what you want to do and what options to take can be specified using overlapping arrows. So, choice resolves the final problem of which arrow to pick.
 
 For example, most low-level details such as strict/lazy, parallelization, caching, memory management scheme, what data structure to use, what algorithms to use are all examples of choices. For any particular decision of **what** you want to do, all of the options for **how** you want to do it are choices.
 
 There are two main types of choices:
 
 - choices which are equal and valid. One example of this is choosing a sorting function. Any sorting function will return the same result given the same input
-- choices which are not equal, but valid. One example of this is an approximation of something like TSP. Different approximation algorithms will return slightly different results, but they should all serve a similar purpose. As a user, it may be more important what you are approximating rather than how it is done.
+- choices which are not equal, but valid. One example of this is an approximation of something like TSP. Different approximation algorithms will return slightly different results, but they should all serve a similar purpose. As a user, it may be more important what you are approximating rather than how it is done. Although, you can still specify more "properties" about the approximation such as a bound on it's accuracy.
 
 In most programming languages, code must be written while specifying all of these choices. Sometimes, the options can be propagated up the call stack through arguments. However, this leaves the question of which choices to propagate and how far to propagate them. Propagating too much can result in unreadable and unmaintainable APIs that bury the essential ideas within the incidental ones. Propagating too few can result in bad performance and duplicate copies of the API that differ based on these choices such as the number of strict/lazy variations in Haskell.
 
-A better solution is to be able to write code that defers these choices. Essentially, code is abstract over the choices. When compiling, it decides what choices to make for the final version (or versions to compile multiple variations of a function). Catln has two different mechanisms to defer these choices.
+A better solution is to be able to write code that defers these choices. Essentially, code is abstract over the choices. When compiling, it decides what choices to make for the final version (or versions as it is also possible to compile multiple variations of a function). Catln has two different mechanisms to defer these choices.
 
 ## Standard Choices
 
