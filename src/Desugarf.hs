@@ -59,7 +59,7 @@ scopeSubDeclFunNamesInExpr prefix replaceNames (PSTupleApply m (bm, bExpr) argNa
     argVal' = scopeSubDeclFunNamesInExpr prefix replaceNames argVal
 
 scopeSubDeclFunNamesInMeta :: TypeName -> S.HashSet TypeName -> ParseMeta -> ParseMeta
-scopeSubDeclFunNamesInMeta prefix replaceNames (PreTyped (SumType partials) pos) = PreTyped (SumType partials') pos
+scopeSubDeclFunNamesInMeta prefix replaceNames (PreTyped (UnionType partials) pos) = PreTyped (UnionType partials') pos
   where
     scopeS = scopeSubDeclFunNamesInPartialName prefix replaceNames
     partials' = H.fromList $ map (first scopeS) $ H.toList partials
@@ -202,13 +202,13 @@ desDecl statementEnv decl = map (declToObjArrow statementEnv) $ removeSubDeclara
 
 typeDefMetaToObj :: H.HashMap TypeVarName Type -> ParseMeta -> Maybe PObject
 typeDefMetaToObj _ (PreTyped TypeVar{} _) = Nothing
-typeDefMetaToObj varReplaceMap (PreTyped (SumType partials) pos) = case splitPartialLeafs partials of
+typeDefMetaToObj varReplaceMap (PreTyped (UnionType partials) pos) = case splitPartialLeafs partials of
   [partial@(PartialType (PTypeName partialName) partialVars _ partialArgs _)] -> Just $ Object m' TypeObj partialName (fmap toMeta partialVars') (fmap (\arg -> (PreTyped arg Nothing, Nothing)) partialArgs)
     where
       partialVars' = fmap (substituteVarsWithVarEnv varReplaceMap) partialVars
       m' = PreTyped (singletonType partial{ptVars=partialVars'}) $ labelPos "obj" pos
       toMeta t = PreTyped t Nothing
-  _ -> error "Invalid call to typeDefMetaToObj with SumType"
+  _ -> error "Invalid call to typeDefMetaToObj with UnionType"
 typeDefMetaToObj _ _ = error "Invalid call to typeDefMetaToObj"
 
 desMultiTypeDef :: PMultiTypeDef -> DesPrgm

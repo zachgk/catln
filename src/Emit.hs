@@ -80,7 +80,7 @@ getValArgs (LLVMOperand tp o) = do
   o'' <- alloca (typeOf o')
   store o'' o'
   case tp of
-    SumType partialLeafs -> case splitPartialLeafs partialLeafs of
+    UnionType partialLeafs -> case splitPartialLeafs partialLeafs of
       [PartialType{ptArgs, ptVars}] -> do
         args' <- forM (zip [0..] $ H.toList ptArgs) $ \(argIndex, (argName, argType)) -> do
           argType' <- genType ptVars argType
@@ -288,13 +288,13 @@ codegenMain env tree = do
       ret $ cons $ C.Int 32 0
 
 codegenDecls :: LEnv -> String -> EObject -> Type -> Type -> ResArrowTree -> DeclInput -> LLVM ()
-codegenDecls env name obj (SumType partialLeafs) destType tree declInput = case splitPartialLeafs partialLeafs of
+codegenDecls env name obj (UnionType partialLeafs) destType tree declInput = case splitPartialLeafs partialLeafs of
   [leaf] -> codegenDecl env name obj leaf destType tree declInput
   _ -> error $ printf "CodegenDecls only supports a singleton partial right now"
 codegenDecls _ _ _ _ _ _ _ = error $ printf "Invalid input to codegenDecls"
 
 codegenStruct :: Type -> LLVM ()
-codegenStruct tp@(SumType partialLeafs) = do
+codegenStruct tp@(UnionType partialLeafs) = do
   case splitPartialLeafs partialLeafs of
     [PartialType{ptArgs, ptVars}] -> do
       args' <- mapM (genType ptVars) $ H.elems ptArgs
