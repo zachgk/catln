@@ -1,0 +1,21 @@
+name: continuous
+
+on:
+  push:
+    paths:
+      - "**.hs"
+  pull_request:
+    paths:
+      - "**.hs"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: sudo apt-get install -y llvm-8
+      - uses: actions/checkout@v1
+      - uses: haskell/actions/setup@v1
+        with:
+          enable-stack: true
+          stack-version: 'latest'
+      - run: stack test
