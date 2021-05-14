@@ -79,7 +79,7 @@ inferArgFromPartial FEnv{feVTypeGraph, feTTypeGraph, feClassMap} partial@Partial
   unionType feClassMap vTypes tTypes
   where
     tryArrow (Object{objArgs}, _) = if H.keysSet ptArgs `isSubsetOf` H.keysSet objArgs
-      then SumType $ joinPartialLeafs $ map addArg $ S.toList $ S.difference (H.keysSet objArgs) (H.keysSet ptArgs)
+      then UnionType $ joinPartialLeafs $ map addArg $ S.toList $ S.difference (H.keysSet objArgs) (H.keysSet ptArgs)
       else bottomType
     addArg arg = partial{ptArgs=H.insertWith (unionType feClassMap) arg TopType ptArgs}
 inferArgFromPartial _ PartialType{ptName=PClassName{}} = bottomType
@@ -96,7 +96,7 @@ data ReachesTree
 unionReachesTree :: ClassMap -> ReachesTree -> Type
 unionReachesTree classMap (ReachesTree children) = do
   let (keys, vals) = unzip $ H.toList children
-  let keys' = SumType $ joinPartialLeafs keys
+  let keys' = UnionType $ joinPartialLeafs keys
   let vals' = map (unionReachesTree classMap) vals
   let both = keys':vals'
   case partition isTypeVar both of
@@ -132,7 +132,7 @@ reachesPartial env@FEnv{feVTypeGraph, feTTypeGraph, feClassMap} partial@PartialT
       pointUb env objM >>= \objUb -> do
         -- It is possible to send part of a partial through the arrow, so must compute the valid part
         -- If none of it is valid, then there is Nothing
-        let potentialSrc@(SumType potSrcLeafs) = intersectTypes feClassMap (singletonType partial) objUb
+        let potentialSrc@(UnionType potSrcLeafs) = intersectTypes feClassMap (singletonType partial) objUb
         if not (isBottomType potentialSrc)
           -- TODO: Should this line below call `reaches` to make this recursive?
           -- otherwise, no reaches path requiring multiple steps can be found
@@ -144,7 +144,7 @@ reachesPartial env@FEnv{feVTypeGraph, feTTypeGraph, feClassMap} partial@PartialT
     tryTArrow (obj@Object{objM}, arr) = do
       -- It is possible to send part of a partial through the arrow, so must compute the valid part
       -- If none of it is valid, then there is Nothing
-      let potentialSrc@(SumType potSrcLeafs) = intersectTypes feClassMap (singletonType partial) (getMetaType objM)
+      let potentialSrc@(UnionType potSrcLeafs) = intersectTypes feClassMap (singletonType partial) (getMetaType objM)
       if not (isBottomType potentialSrc)
         -- TODO: Should this line below call `reaches` to make this recursive?
         -- otherwise, no reaches path requiring multiple steps can be found
@@ -155,7 +155,7 @@ reachesPartial env@FEnv{feClassMap} partial@PartialType{ptName=PClassName{}} = r
 reaches :: FEnv -> Type -> TypeCheckResult ReachesTree
 reaches _     TopType            = return $ ReachesLeaf [TopType]
 reaches _     (TypeVar v)            = error $ printf "reaches with typevar %s" (show v)
-reaches typeEnv (SumType src) = do
+reaches typeEnv (UnionType src) = do
   let partials = splitPartialLeafs src
   resultsByPartials <- mapM (reachesPartial typeEnv) partials
   return $ ReachesTree $ H.fromList $ zip partials resultsByPartials
@@ -167,10 +167,10 @@ rootReachesPartial env src = do
   return (src, reachedWithId)
 
 arrowConstrainUbs :: FEnv -> Type -> VarMeta -> Type -> VarMeta -> TypeCheckResult (Type, Type)
-arrowConstrainUbs env@FEnv{feUnionAllObjs} TopType srcM dest@SumType{} destM = do
+arrowConstrainUbs env@FEnv{feUnionAllObjs} TopType srcM dest@UnionType{} destM = do
   unionPnt <- descriptor env feUnionAllObjs
   case unionPnt of
-    (SType unionUb@SumType{} _ _) -> do
+    (SType unionUb@UnionType{} _ _) -> do
       (src', dest') <- arrowConstrainUbs env unionUb srcM dest destM
       return (src', dest')
     _ -> return (TopType, dest)
@@ -179,7 +179,7 @@ arrowConstrainUbs env src@(TypeVar v) srcM dest destM = do
   src' <- resolveTypeVar v srcM
   (_, cdest) <- arrowConstrainUbs env (getMetaType src') srcM dest destM
   return (src, cdest)
-arrowConstrainUbs env (SumType srcPartials) (VarMeta _ _ srcObj) dest _ = do
+arrowConstrainUbs env (UnionType srcPartials) (VarMeta _ _ srcObj) dest _ = do
   let classMap = feClassMap env
   let srcPartialList = splitPartialLeafs srcPartials
   srcPartialList' <- mapM (rootReachesPartial env) srcPartialList
@@ -189,4 +189,4 @@ arrowConstrainUbs env (SumType srcPartials) (VarMeta _ _ srcObj) dest _ = do
   let srcPartials' = joinPartialLeafs srcPartialList''
   let destByGraph = unionTypes classMap $ fmap (unionReachesTree classMap) destByPartial
   dest' <- tryIntersectTypes env dest destByGraph "executeConstraint ArrowTo"
-  return (compactType classMap $ SumType srcPartials', dest')
+  return (compactType classMap $ UnionType srcPartials', dest')

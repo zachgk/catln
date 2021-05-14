@@ -43,7 +43,7 @@ type VisitedArrows = S.HashSet ResArrowTree
 leafsFromMeta :: TBMeta -> [PartialType]
 leafsFromMeta (Typed TopType _) = error "leafFromMeta from TopType"
 leafsFromMeta (Typed TypeVar{} _) = error "leafFromMeta from TypeVar"
-leafsFromMeta (Typed (SumType prodTypes) _) = splitPartialLeafs prodTypes
+leafsFromMeta (Typed (UnionType prodTypes) _) = splitPartialLeafs prodTypes
 
 -- Helper to replace matches with a single option with their result
 buildMatch :: ResArrowTree -> Type -> H.HashMap PartialType ResArrowTree -> ResArrowTree
@@ -66,7 +66,7 @@ buildExpr _ _ (CExpr _ c) = case c of
   (CInt i) -> return $ ConstantArrow $ IntVal i
   (CFloat i) -> return $ ConstantArrow $ FloatVal i
   (CStr i) -> return $ ConstantArrow $ StrVal i
-buildExpr TBEnv{tbVals} _ (Value (Typed (SumType prodTypes) pos) name) = case splitPartialLeafs prodTypes of
+buildExpr TBEnv{tbVals} _ (Value (Typed (UnionType prodTypes) pos) name) = case splitPartialLeafs prodTypes of
     (_:_:_) -> CErr [MkCNote $ BuildTreeCErr pos $ "Found multiple types for value " ++ name ++ "\n\t" ++ show prodTypes]
     [] -> CErr [MkCNote $ BuildTreeCErr pos $ "Found no types for value " ++ name ++ " with type " ++ show prodTypes]
     [prodType] -> return $ case H.lookup prodType tbVals of
@@ -89,7 +89,7 @@ envLookupTry env@TBEnv{tbClassMap} objSrc visitedArrows ee srcType destType resA
   afterArrows <- traverse buildAfterArrows $ splitPartialLeafs newLeafTypes
   return $ buildMatch resArrow destType (H.fromList afterArrows)
   where
-    (SumType newLeafTypes) = resArrowDestType tbClassMap srcType resArrow
+    (UnionType newLeafTypes) = resArrowDestType tbClassMap srcType resArrow
     visitedArrows' = S.insert resArrow visitedArrows
     objSrc' = case resArrow of
           (ResEArrow _ o _) -> (srcType, o)
@@ -178,7 +178,7 @@ buildImplicit env objSrc@(_, Object{objVars}) input (TypeVar (TVVar varName)) de
 buildImplicit env@TBEnv{tbClassMap} objSrc@(os, obj) input (TypeVar (TVArg argName)) destType = case H.lookup argName $ formArgMetaMapWithSrc tbClassMap obj os of
   Just (_, srcType) -> buildImplicit env objSrc input srcType destType
   Nothing -> error $ printf "buildImplicit unknown arg %s with obj %s" argName (show obj)
-buildImplicit env obj expr srcType@(SumType srcTypeLeafs) destType = do
+buildImplicit env obj expr srcType@(UnionType srcTypeLeafs) destType = do
   let wholeInput = ExprArrow expr srcType srcType
   matchVal <- forM (splitPartialLeafs srcTypeLeafs) $ \leafSrcType -> do
     let leafInputType = singletonType leafSrcType

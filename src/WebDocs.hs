@@ -53,7 +53,7 @@ filterByObj objName (objMap, (typeToClass, classToType), _) = (objMap', (typeToC
     objMap' = filter (\(Object{objName=n}, _) -> objName == n) objMap
     typeToClass' = H.filterWithKey (\n _ -> n == objName) typeToClass
     classToType' = H.filter (\(_, vars, types) -> any involvesType vars || any involvesType types) classToType
-    involvesType (SumType leafs) = any involvesPartial $ splitPartialLeafs leafs
+    involvesType (UnionType leafs) = any involvesPartial $ splitPartialLeafs leafs
     involvesType _ = False
     involvesPartial PartialType{ptName, ptVars, ptProps, ptArgs} = ptName == PTypeName objName || any involvesType ptVars || any involvesType ptProps || any involvesType ptArgs
 

@@ -206,7 +206,7 @@ addObjArg fakeObj objM prefix varMap env (n, (m, maybeSubObj)) = do
 -- However, typeVars only work correctly from the arg version and not the main meta
 -- Likewise, replace the type vars equal to vars with top type for now
 clearMetaArgTypes :: PreMeta -> PreMeta
-clearMetaArgTypes (PreTyped (SumType partials) pos) = PreTyped (SumType $ joinPartialLeafs $ map clearPartialTypeArgs $ splitPartialLeafs partials) (labelPos "clear" pos)
+clearMetaArgTypes (PreTyped (UnionType partials) pos) = PreTyped (UnionType $ joinPartialLeafs $ map clearPartialTypeArgs $ splitPartialLeafs partials) (labelPos "clear" pos)
   where
     clearPartialTypeArgs partial@PartialType{ptArgs} = partial{ptArgs=fmap (const TopType) ptArgs}
 clearMetaArgTypes p = p

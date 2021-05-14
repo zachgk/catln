@@ -39,7 +39,7 @@ genType _ t | t == intType = return ATP.i32
 genType _ t | t == boolType = return ATP.i1
 genType _ t | t == floatType = return ATP.double
 genType _ t | t == strType = return $ ATP.ptr ATP.i8
-genType varEnv tp@(SumType leafs) = case splitPartialLeafs leafs of
+genType varEnv tp@(UnionType leafs) = case splitPartialLeafs leafs of
   [PartialType{ptVars, ptArgs}] -> do
     addTaskStruct tp
     let varEnv' = H.union ptVars varEnv

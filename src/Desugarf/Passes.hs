@@ -37,7 +37,7 @@ typeNameToClass (_, (_, fullPrgmClassToTypes), _) (objMap, classMap@(typeToClass
     mapType TopType = TopType
     mapType tp@(TypeVar TVVar{}) = tp
     mapType (TypeVar TVArg{}) = error "Invalid arg type"
-    mapType (SumType partials) = unionTypes classMap $ map mapPartial $ splitPartialLeafs partials
+    mapType (UnionType partials) = unionTypes classMap $ map mapPartial $ splitPartialLeafs partials
       where
         mapPartial (PartialType (PTypeName name) partialVars partialProps partialArgs partialArgMode) = singletonType (PartialType name' (fmap mapType partialVars) (fmap mapType partialProps) (fmap mapType partialArgs) partialArgMode)
           where name' = if H.member name fullPrgmClassToTypes
@@ -67,7 +67,7 @@ expandDataReferences (fullPrgmObjMap, _, _) (objMap, classMap@(typeToClass, clas
     mapType TopType = TopType
     mapType tp@(TypeVar TVVar{}) = tp
     mapType (TypeVar TVArg{}) = error "Invalid arg type"
-    mapType (SumType partials) = unionTypes classMap $ map mapPartial $ splitPartialLeafs partials
+    mapType (UnionType partials) = unionTypes classMap $ map mapPartial $ splitPartialLeafs partials
       where
         mapPartial PartialType{ptName=PTypeName name} = case H.lookup name objExpansions of
           Just Object{objM} -> getMetaType objM

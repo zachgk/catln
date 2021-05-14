@@ -72,7 +72,7 @@ toExpr env (ITupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
     _ | getMetaType m' == bottomType -> return result
     _ | getMetaType baseM' == bottomType -> return result
 
-    tp@(Typed (SumType sumType) _) | all (\PartialType{ptArgs=leafArgs} -> not (argName `H.member` leafArgs)) (splitPartialLeafs sumType) ->
+    tp@(Typed (UnionType uType) _) | all (\PartialType{ptArgs=leafArgs} -> not (argName `H.member` leafArgs)) (splitPartialLeafs uType) ->
                                         TypeCheckResult [TupleMismatch baseM' baseExpr' tp $ H.singleton argName argExpr'] result
 
     _ -> return result
@@ -83,12 +83,12 @@ toExpr env (ITupleApply m (baseM, baseExpr) Nothing argExpr) = do
   baseExpr' <- toExpr env baseExpr
   argExpr' <- toExpr env argExpr
   argName <- case (getMetaType baseM', getMetaType m') of
-    (SumType basePartialLeafs, SumType partialLeafs) -> case (splitPartialLeafs basePartialLeafs, splitPartialLeafs partialLeafs) of
+    (UnionType basePartialLeafs, UnionType partialLeafs) -> case (splitPartialLeafs basePartialLeafs, splitPartialLeafs partialLeafs) of
       ([PartialType{ptArgs=basePartialArgs}], [PartialType{ptArgs}]) -> case S.toList $ S.difference (H.keysSet ptArgs) (H.keysSet basePartialArgs) of
         [argN] -> return argN
         _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to multiple arg options"]
       _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to multiple types"]
-    _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to non SumType"]
+    _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to non UnionType"]
   return $ TupleApply m' (baseM', baseExpr') argName argExpr'
 
 toGuard :: FEnv -> VGuard -> TypeCheckResult TGuard

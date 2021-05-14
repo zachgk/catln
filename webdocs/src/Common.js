@@ -164,7 +164,7 @@ function Type(props) {
     return "";
   case "TypeVar":
     return <TypeVar>{t.contents.contents}</TypeVar>;
-  case "SumType":
+  case "UnionType":
     var partials = [];
     t.contents.forEach(partialOptions => {
       let [partialName, options] = partialOptions;

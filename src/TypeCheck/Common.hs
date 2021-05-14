@@ -251,7 +251,7 @@ tryIntersectTypes FEnv{feClassMap} a b desc = let c = intersectTypes feClassMap 
 verifyScheme :: ClassMap -> VarMeta -> Scheme -> Scheme -> Bool
 verifyScheme classMap (VarMeta _ _ mobj) (TypeCheckResult _ (SType oldUb _ _)) (TypeCheckResult _ (SType ub _ _)) = verifyTypeVars (mobjVars mobj) ub && verifySchemeUbLowers mobj && verifyCompacted
   where
-    verifyTypeVars venv (SumType partialLeafs) = all (verifyTypeVarsPartial venv) $ splitPartialLeafs partialLeafs
+    verifyTypeVars venv (UnionType partialLeafs) = all (verifyTypeVarsPartial venv) $ splitPartialLeafs partialLeafs
     verifyTypeVars venv (TypeVar (TVVar v)) = S.member v venv
     verifyTypeVars _ _ = True
     verifyTypeVarsPartial venv PartialType{ptVars, ptArgs, ptProps} = all (verifyTypeVars venv) ptVars

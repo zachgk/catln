@@ -93,7 +93,7 @@ formArgMetaMapWithSrc classMap Object{objArgs} PartialType{ptArgs=srcArgs} = H.f
       Just srcArg -> H.singleton k (m, srcArg)
       Nothing -> H.empty
     fromArg k (_, Just arg) = case H.lookup k srcArgs of
-      Just (SumType srcArg) -> mergeMaps $ map (formArgMetaMapWithSrc classMap arg) $ splitPartialLeafs srcArg
+      Just (UnionType srcArg) -> mergeMaps $ map (formArgMetaMapWithSrc classMap arg) $ splitPartialLeafs srcArg
       Just TopType -> (,TopType) <$> formArgMetaMap arg
       Just _ -> H.empty
       Nothing -> H.empty
@@ -101,7 +101,7 @@ formArgMetaMapWithSrc classMap Object{objArgs} PartialType{ptArgs=srcArgs} = H.f
     mergeMaps (x:xs) = foldr (H.intersectionWith (\(m1, t1) (_, t2) -> (m1, unionType classMap t1 t2))) x xs
 
 formVarMap :: ClassMap -> Type -> TypeVarEnv
-formVarMap classMap (SumType partialLeafs) = unionsWith (unionType classMap) $ map ptVars $ splitPartialLeafs partialLeafs
+formVarMap classMap (UnionType partialLeafs) = unionsWith (unionType classMap) $ map ptVars $ splitPartialLeafs partialLeafs
 formVarMap _ _ = error $ printf "Unknown formVarMap"
 
 -- fullDest means to use the greatest possible type (after implicit).
@@ -112,7 +112,7 @@ arrowDestType fullDest classMap src obj@Object{objM} (Arrow arrM _ _ maybeExpr) 
   _ -> joined
   where
     varEnv = formVarMap classMap $ intersectTypes classMap (getMetaType objM) (singletonType src)
-    argEnv = snd <$> formArgMetaMapWithSrc classMap obj ((\(SumType pl) -> head $ splitPartialLeafs pl) $ substituteVars $ singletonType src)
+    argEnv = snd <$> formArgMetaMapWithSrc classMap obj ((\(UnionType pl) -> head $ splitPartialLeafs pl) $ substituteVars $ singletonType src)
     substitute = substituteVarsWithVarEnv varEnv . substituteArgsWithArgEnv argEnv
     expr' = fmap (substitute . getMetaType . getExprMeta) maybeExpr
     arr' = substitute $ getMetaType arrM
