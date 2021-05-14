@@ -15,8 +15,8 @@
 -- Originally from http://www.stephendiehl.com/llvm/#haskell-llvm-bindings
 
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE TupleSections      #-}
 
 module Emit.Codegen where
 
@@ -32,17 +32,17 @@ import           LLVM.AST
 import qualified LLVM.AST                   as AST
 import           LLVM.AST.Global
 
+import qualified Data.HashMap.Strict        as H
+import qualified Data.HashSet               as S
+import           Eval.Common
 import qualified LLVM.AST.Attribute         as A
 import qualified LLVM.AST.CallingConvention as CC
 import qualified LLVM.AST.Constant          as C
 import qualified LLVM.AST.Linkage           as L
-import LLVM.AST.Type
-import LLVM.AST.Typed
-import qualified Data.HashSet as S
-import Text.Printf
-import qualified Data.HashMap.Strict as H
-import Syntax.Types (ArgName)
-import Eval.Common
+import           LLVM.AST.Type
+import           LLVM.AST.Typed
+import           Syntax.Types               (ArgName)
+import           Text.Printf
 
 -------------------------------------------------------------------------------
 -- Module Level
@@ -277,7 +277,7 @@ cons = ConstantOperand
 getelementptr :: Type -> Operand -> [Operand] -> Codegen Operand
 getelementptr elementType tp ops = case typeOf tp of
   PointerType{} -> instr (ptr elementType) $ GetElementPtr True tp ops []
-  _ -> error $ printf "Invalid getElementPtr address: %s" (show tp)
+  _             -> error $ printf "Invalid getElementPtr address: %s" (show tp)
 
 typeOperand :: Type -> Operand
 typeOperand = ConstantOperand . C.Undef

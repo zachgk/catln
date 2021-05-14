@@ -17,11 +17,11 @@ module TypeCheck.Decode where
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 
-import           Syntax.Types
-import           Syntax.Prgm
 import           Syntax
+import           Syntax.Prgm
+import           Syntax.Types
 import           TypeCheck.Common
-import           TypeCheck.Show (showCon)
+import           TypeCheck.Show      (showCon)
 
 matchingConstraintHelper :: FEnv -> VarMeta -> VarMeta -> VarMeta -> Bool
 matchingConstraintHelper env p p2 p3 = equivalent env p p2 || equivalent env p p3

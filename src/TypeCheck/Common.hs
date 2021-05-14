@@ -11,26 +11,26 @@
 -- typechecking.
 --------------------------------------------------------------------
 
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric  #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
 module TypeCheck.Common where
 
 import qualified Data.HashMap.Strict as H
-import qualified Data.IntMap.Lazy as IM
 import           Data.Hashable
+import qualified Data.IntMap.Lazy    as IM
 import           Data.List
-import           GHC.Generics          (Generic)
+import           GHC.Generics        (Generic)
 
-import           Syntax.Types
-import           Syntax.Prgm
+import           CRes
+import           Data.Aeson          (ToJSON, toJSON)
+import qualified Data.HashSet        as S
 import           Syntax
+import           Syntax.Prgm
+import           Syntax.Types
 import           Text.Printf
-import Data.Aeson (ToJSON, toJSON)
-import qualified Data.HashSet as S
-import CRes
-import Utils
+import           Utils
 
 data TypeCheckError
   = GenTypeCheckError CodeRange String
@@ -46,15 +46,15 @@ type Pnt = Int
 data EnvDef = DefVar VarMeta | DefKnown Type
   deriving (Show, Generic, Hashable, ToJSON)
 type EnvValMap = (H.HashMap String EnvDef)
-data FEnv = FEnv { fePnts :: IM.IntMap Scheme
-                 , feCons :: [Constraint]
-                 , feUnionAllObjs :: VarMeta -- union of all TypeObj for argument inference
+data FEnv = FEnv { fePnts          :: IM.IntMap Scheme
+                 , feCons          :: [Constraint]
+                 , feUnionAllObjs  :: VarMeta -- union of all TypeObj for argument inference
                  , feUnionTypeObjs :: VarMeta -- union of all Object types for function limiting
-                 , feVTypeGraph :: VTypeGraph
-                 , feTTypeGraph :: TTypeGraph
-                 , feClassMap :: ClassMap
-                 , feDefMap :: EnvValMap
-                 , feTrace :: TraceConstrain
+                 , feVTypeGraph    :: VTypeGraph
+                 , feTTypeGraph    :: TTypeGraph
+                 , feClassMap      :: ClassMap
+                 , feDefMap        :: EnvValMap
+                 , feTrace         :: TraceConstrain
                  } deriving (Show)
 
 type UnionObj = (Pnt, Pnt) -- a union of all TypeObj for argument inference, union of all Object types for function limiting
@@ -100,11 +100,11 @@ instance ToJSON r => ToJSON (TypeCheckResult r) where
 
 getTCRE :: TypeCheckResult r -> [TypeCheckError]
 getTCRE (TypeCheckResult notes _) = notes
-getTCRE (TypeCheckResE notes) = notes
+getTCRE (TypeCheckResE notes)     = notes
 
 instance Functor TypeCheckResult where
   fmap f (TypeCheckResult notes r) = TypeCheckResult notes (f r)
-  fmap _ (TypeCheckResE notes) = TypeCheckResE notes
+  fmap _ (TypeCheckResE notes)     = TypeCheckResE notes
 
 instance Applicative TypeCheckResult where
   pure = TypeCheckResult []
@@ -115,7 +115,7 @@ instance Monad TypeCheckResult where
   return = pure
   (TypeCheckResult notesA a) >>= f = case f a of
     (TypeCheckResult notesB b) -> TypeCheckResult (notesA ++ notesB) b
-    (TypeCheckResE notesB) -> TypeCheckResE (notesA ++ notesB)
+    (TypeCheckResE notesB)     -> TypeCheckResE (notesA ++ notesB)
   (TypeCheckResE notes) >>= _ = TypeCheckResE notes
 
 
@@ -190,7 +190,7 @@ instance Show TypeCheckError where
 
 instance CNoteTC TypeCheckError where
   posCNote (GenTypeCheckError pos _) = pos
-  posCNote (TupleMismatch _ _ m _) = getMetaPos m
+  posCNote (TupleMismatch _ _ m _)   = getMetaPos m
 
   typeCNote _ = CNoteError
 
@@ -218,7 +218,7 @@ instance Show r => Show (TypeCheckResult r) where
 typeCheckToRes :: TypeCheckResult r -> CRes r
 typeCheckToRes tc = case tc of
   TypeCheckResult notes res -> CRes (map MkCNote notes) res
-  TypeCheckResE notes -> CErr (map MkCNote notes)
+  TypeCheckResE notes       -> CErr (map MkCNote notes)
 
 getPnt :: VarMeta -> Pnt
 getPnt (VarMeta p _ _) = p
@@ -259,9 +259,9 @@ verifyScheme classMap (VarMeta _ _ mobj) (TypeCheckResult _ (SType oldUb _ _)) (
                                                                         && all (verifyTypeVars (H.keysSet ptVars)) ptProps
 
     mobjVars (Just Object{objVars}) = H.keysSet objVars
-    mobjVars Nothing = S.empty
+    mobjVars Nothing                = S.empty
     verifySchemeUbLowers (Just obj) = hasTypeWithObj classMap obj ub oldUb
-    verifySchemeUbLowers Nothing = hasType classMap ub oldUb
+    verifySchemeUbLowers Nothing    = hasType classMap ub oldUb
     verifyCompacted = ub == compactType classMap ub
 verifyScheme _ _ TypeCheckResE{} TypeCheckResult{} = False
 verifyScheme _ _ _ _ = True
@@ -322,7 +322,7 @@ type TraceConstrain = [[(Constraint, [(Pnt, Scheme)])]]
 
 nextConstrainEpoch :: FEnv -> FEnv
 nextConstrainEpoch env@FEnv{feTrace} = case feTrace of
-  [] -> env
+  []         -> env
   prevEpochs -> env{feTrace = []:prevEpochs}
 
 startConstraint :: Constraint -> FEnv -> FEnv

@@ -12,32 +12,33 @@
 -- for the webdocs is located inside the /webdocs directory of the
 -- repo.
 --------------------------------------------------------------------
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric  #-}
 
 module WebDocs where
 
-import Web.Scotty
-import Data.Aeson (ToJSON)
+import           Data.Aeson                    (ToJSON)
+import           Web.Scotty
 
-import qualified Data.HashMap.Strict as H
-import qualified Data.Text.Lazy as T
-import           GHC.Generics          (Generic)
-import Network.Wai.Middleware.Static
+import qualified Data.HashMap.Strict           as H
+import qualified Data.Text.Lazy                as T
+import           GHC.Generics                  (Generic)
+import           Network.Wai.Middleware.Static
 
-import           Desugarf         (desFiles)
 import           CRes
-import TypeCheck (typecheckPrgm, typecheckPrgmWithTrace)
-import           Eval (evalMainx, evalMain, evalAnnots)
-import Parser (readFiles)
-import Parser.Syntax (DesPrgm, PPrgmGraphData)
-import TypeCheck.Common (TraceConstrain, VPrgm, TPrgm)
-import Eval.Common (Val(..), Val, EvalResult)
-import Syntax.Prgm
-import Syntax (Typed)
-import Utils
-import Syntax.Types
-import Data.Maybe (fromJust)
+import           Data.Maybe                    (fromJust)
+import           Desugarf                      (desFiles)
+import           Eval                          (evalAnnots, evalMain, evalMainx)
+import           Eval.Common                   (EvalResult, Val (..))
+import           Parser                        (readFiles)
+import           Parser.Syntax                 (DesPrgm, PPrgmGraphData)
+import           Syntax                        (Typed)
+import           Syntax.Prgm
+import           Syntax.Types
+import           TypeCheck                     (typecheckPrgm,
+                                                typecheckPrgmWithTrace)
+import           TypeCheck.Common              (TPrgm, TraceConstrain, VPrgm)
+import           Utils
 
 data ResSuccess a n = Success a [n]
   | ResFail [n]
@@ -45,7 +46,7 @@ data ResSuccess a n = Success a [n]
 
 maybeJson :: (ToJSON a) => CRes a -> ActionM ()
 maybeJson (CRes notes r) = json $ Success r notes
-maybeJson (CErr notes) = json (ResFail notes :: ResSuccess () CNote)
+maybeJson (CErr notes)   = json (ResFail notes :: ResSuccess () CNote)
 
 filterByObj :: String -> TPrgm -> TPrgm
 filterByObj objName (objMap, (typeToClass, classToType), _) = (objMap', (typeToClass', classToType'), [])
@@ -66,12 +67,12 @@ filterByClass className (_, (_, classToType), _) = ([], (typeToClass', classToTy
 data WDProvider
   = LiveWDProvider Bool String
   | CacheWDProvider {
-    cCore :: Bool
-  , cBaseFileName :: String
-  , cRaw :: CRes PPrgmGraphData
-  , cPrgm :: CRes (GraphData DesPrgm String)
+    cCore           :: Bool
+  , cBaseFileName   :: String
+  , cRaw            :: CRes PPrgmGraphData
+  , cPrgm           :: CRes (GraphData DesPrgm String)
   , cTPrgmWithTrace :: CRes (GraphData (TPrgm, VPrgm, TraceConstrain) String)
-  , cTPrgm :: CRes (GraphData TPrgm String)
+  , cTPrgm          :: CRes (GraphData TPrgm String)
                     }
 
 mkCacheWDProvider :: Bool -> String -> IO WDProvider
@@ -123,7 +124,7 @@ getTreebug provider prgmName = do
   let pre = base >>= evalMainx prgmName
   case pre of
     CRes _ r -> snd <$> r
-    CErr _ -> fail "No eval result found"
+    CErr _   -> fail "No eval result found"
 
 getEvaluated :: WDProvider -> String -> IO Integer
 getEvaluated provider prgmName = do
@@ -131,7 +132,7 @@ getEvaluated provider prgmName = do
   let pre = base >>= evalMainx prgmName
   case pre of
     CRes _ r -> fst <$> r
-    CErr _ -> return 999
+    CErr _   -> return 999
 
 getEvalBuild :: WDProvider -> String -> IO Val
 getEvalBuild provider prgmName = do
@@ -139,7 +140,7 @@ getEvalBuild provider prgmName = do
   let pre = base >>= evalMain prgmName
   case pre of
     CRes _ r -> fst <$> r
-    CErr _ -> return NoVal
+    CErr _   -> return NoVal
 
 getEvalAnnots :: WDProvider -> String -> IO [(Expr Typed, Val)]
 getEvalAnnots provider prgmName = do
@@ -147,7 +148,7 @@ getEvalAnnots provider prgmName = do
   let pre = base >>= evalAnnots prgmName
   case pre of
     CRes _ r -> return r
-    CErr _ -> return []
+    CErr _   -> return []
 
 getWeb :: WDProvider -> String -> IO String
 getWeb provider prgmName = do
@@ -158,7 +159,7 @@ getWeb provider prgmName = do
       (TupleVal _ args, _) <- r
       case H.lookup "contents" args of
         Just (StrVal s) -> return s
-        _ -> return "";
+        _               -> return "";
     CErr _ -> return ""
 
 docApiBase :: WDProvider -> ScottyM ()
@@ -254,7 +255,7 @@ docServe cached includeCore baseFileName = do
 
   let handleIndex p = case p of
         "" -> Just "index.html"
-        _ -> Just p
+        _  -> Just p
 
   provider <- if cached
     then mkCacheWDProvider includeCore baseFileName

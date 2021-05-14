@@ -1,21 +1,21 @@
 {-# LANGUAGE BlockArguments #-}
 module Main where
 
-import System.Directory
+import           Control.Monad
 import           Data.List
+import           System.Directory
 import           Test.Tasty
 import           Test.Tasty.HUnit
 import           Text.Printf
-import           Control.Monad
 
-import CRes
-import           Parser (readFiles)
-import           Desugarf         (desFiles)
+import           CRes
+import qualified Data.Text.Lazy     as T
+import           Desugarf           (desFiles)
 import           Eval
+import           Parser             (readFiles)
+import           Text.Pretty.Simple
 import           TypeCheck
-import qualified Data.Text.Lazy as T
-import Text.Pretty.Simple
-import WebDocs (docApi)
+import           WebDocs            (docApi)
 
 testDir :: String
 testDir = "test/code/"
@@ -25,7 +25,7 @@ prettyCNotes notes = "\n\n\t\t" ++ intercalate "\n\n\t\t" (map prettyNote notes)
   where
     prettyNote note = case posCNote note of
       Just pos -> printf "%s\n\t\t%s" (show pos) (T.unpack $ pShow note)
-      Nothing -> T.unpack $ pShow note
+      Nothing  -> T.unpack $ pShow note
 
 runTest :: Bool -> String -> TestTree
 runTest includeCore fileName = testCaseSteps fileName $ \step -> do

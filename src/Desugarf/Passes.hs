@@ -17,12 +17,12 @@ module Desugarf.Passes where
 
 import qualified Data.HashMap.Strict as H
 
-import           Syntax.Types
-import           Syntax
-import           Parser.Syntax
 import           MapMeta
-import Text.Printf
-import Syntax.Prgm
+import           Parser.Syntax
+import           Syntax
+import           Syntax.Prgm
+import           Syntax.Types
+import           Text.Printf
 
 -- replaces uses of PTypeName with PClassName where it actually contains a class
 -- e.g. PTypeName Boolean ==> PClassName Boolean
@@ -58,11 +58,11 @@ expandDataReferences (fullPrgmObjMap, _, _) (objMap, classMap@(typeToClass, clas
     classToTypes' = fmap (\(s, vs, ts) -> (s, fmap mapType vs, fmap mapType ts)) classToTypes
     objExpansions = H.fromList $ concatMap (\(obj@Object{objBasis, objName}, _) -> ([(objName, obj) | objBasis == TypeObj])) fullPrgmObjMap
     aux metaType inM@(PreTyped t p) = case metaType of
-      ExprMeta -> inM
-      ObjMeta -> inM
+      ExprMeta   -> inM
+      ObjMeta    -> inM
       ObjArgMeta -> PreTyped (mapType t) p
       ObjVarMeta -> PreTyped (mapType t) p
-      ArrMeta -> PreTyped (mapType t) p
+      ArrMeta    -> PreTyped (mapType t) p
 
     mapType TopType = TopType
     mapType tp@(TypeVar TVVar{}) = tp

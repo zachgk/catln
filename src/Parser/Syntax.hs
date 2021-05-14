@@ -14,11 +14,11 @@ module Parser.Syntax where
 
 import qualified Data.HashMap.Strict as H
 
-import           Syntax.Types
-import           Syntax.Prgm
 import           Syntax
-import Text.Megaparsec (SourcePos)
-import Utils
+import           Syntax.Prgm
+import           Syntax.Types
+import           Text.Megaparsec     (SourcePos)
+import           Utils
 
 type ParseMeta = PreTyped
 type PTupleArg = RawTupleArg ParseMeta

@@ -15,22 +15,22 @@
 --------------------------------------------------------------------
 
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE NamedFieldPuns   #-}
 
 module TypeCheck.TypeGraph where
 
-import qualified Data.HashMap.Strict           as H
+import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Data.Maybe
 
-import           Syntax.Types
-import           Syntax.Prgm
+import           Data.List           (partition)
+import           Parser.Syntax       (emptyMetaN)
 import           Syntax
+import           Syntax.Prgm
+import           Syntax.Types
+import           Text.Printf
 import           TypeCheck.Common
-import Text.Printf
-import Data.List (partition)
-import TypeCheck.Show
-import Parser.Syntax (emptyMetaN)
+import           TypeCheck.Show
 
 buildUnionObj :: FEnv -> [VObject] -> [TObject] -> FEnv
 buildUnionObj env1@FEnv{feClassMap} vobjs tobjs = do
@@ -86,7 +86,7 @@ inferArgFromPartial _ PartialType{ptName=PClassName{}} = bottomType
 
 isTypeVar :: Type -> Bool
 isTypeVar TypeVar{} = True
-isTypeVar _ = False
+isTypeVar _         = False
 
 data ReachesTree
   = ReachesTree (H.HashMap PartialType ReachesTree)
@@ -101,16 +101,16 @@ unionReachesTree classMap (ReachesTree children) = do
   let both = keys':vals'
   case partition isTypeVar both of
     ([onlyVar], []) -> onlyVar
-    (_, sums) -> unionTypes classMap sums
+    (_, sums)       -> unionTypes classMap sums
 unionReachesTree classMap (ReachesLeaf leafs) = unionTypes classMap leafs
 
 hasPartialWithMaybeObj :: (Meta m) => ClassMap -> Maybe (Object m) -> PartialType -> Type -> Bool
 hasPartialWithMaybeObj classMap (Just obj) = hasPartialWithObj classMap obj
-hasPartialWithMaybeObj classMap Nothing = hasPartial classMap
+hasPartialWithMaybeObj classMap Nothing    = hasPartial classMap
 
 hasTypeWithMaybeObj :: (Meta m) => ClassMap -> Maybe (Object m) -> Type -> Type -> Bool
 hasTypeWithMaybeObj classMap (Just obj) = hasTypeWithObj classMap obj
-hasTypeWithMaybeObj classMap Nothing = hasType classMap
+hasTypeWithMaybeObj classMap Nothing    = hasType classMap
 
 reachesHasCutSubtypeOf :: (Meta m) => ClassMap -> Maybe (Object m) -> ReachesTree -> Type -> Bool
 reachesHasCutSubtypeOf classMap mObj (ReachesTree children) superType = all childIsSubtype $ H.toList children

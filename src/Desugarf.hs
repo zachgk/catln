@@ -14,21 +14,21 @@
 module Desugarf where
 
 
-import           Data.Hashable
+import           Data.Bifunctor      (first)
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
-import           Data.Bifunctor                 ( first )
+import           Data.Hashable
 import           Data.Maybe
 import           Text.Printf
 
-import           Syntax.Types
-import           Syntax.Prgm
-import           Syntax
 import           CRes
-import           Parser.Syntax
+import           Data.Graph
 import           Desugarf.Passes
-import Utils
-import Data.Graph
+import           Parser.Syntax
+import           Syntax
+import           Syntax.Prgm
+import           Syntax.Types
+import           Utils
 
 type StatementEnv = (String, [DesCompAnnot])
 
@@ -227,7 +227,7 @@ desClassDecl (className, classVars) = ([], (H.empty, H.singleton className (Fals
 desTypeDef :: PTypeDef -> DesObjectMap
 desTypeDef (TypeDef tp) = case typeDefMetaToObj H.empty tp of
           Just obj -> [(obj, [])]
-          Nothing -> error "Type def could not be converted into meta"
+          Nothing  -> error "Type def could not be converted into meta"
 
 desClassDef :: Sealed -> RawClassDef -> DesPrgm
 desClassDef sealed ((typeName, typeVars), className) = ([], classMap, [])

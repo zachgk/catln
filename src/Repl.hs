@@ -13,27 +13,27 @@
 
 module Repl where
 
-import qualified Data.HashMap.Strict as H
+import qualified Data.HashMap.Strict      as H
 
 import           Desugarf                 (desFiles)
 -- import           Emit                     (codegen, initModule)
-import           Eval
-import           Syntax.Types
-import           Syntax.Prgm
-import           Syntax
 import           CRes
+import           Eval
 import           Parser
 import           Parser.Syntax
+import           Syntax
+import           Syntax.Prgm
+import           Syntax.Types
 import           TypeCheck                (typecheckPrgm)
 
 import           Control.Monad
 import           Control.Monad.Trans
 import           Data.List                (isPrefixOf)
 
+import           Data.Graph
 import           System.Console.Haskeline
 import           System.Environment
-import Data.Graph
-import Utils
+import           Utils
 
 type ReplEnv = ([RawStatement PreTyped], GraphData (RawPrgm PreTyped) String)
 
@@ -45,12 +45,12 @@ buildReplBaseEnv = do
   rawCore <- readFiles True [coreImport]
   case rawCore of
     CRes _ r -> return ([], r)
-    CErr _ -> fail "Could not read core"
+    CErr _   -> fail "Could not read core"
 
 parsingRepl :: ReplEnv -> String -> IO ReplEnv
 parsingRepl env source = case parseRepl source of
-    ReplErr err   -> print err >> return env
-    ReplExpr expr -> print expr >> return env
+    ReplErr err             -> print err >> return env
+    ReplExpr expr           -> print expr >> return env
     ReplStatement statement -> print statement >> return env
 
 -- genRepl :: ReplEnv -> String -> IO ReplEnv

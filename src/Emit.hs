@@ -11,44 +11,44 @@
 -- the llvm() function.
 --------------------------------------------------------------------
 
-{-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE BlockArguments    #-}
+{-# LANGUAGE NamedFieldPuns    #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE NamedFieldPuns #-}
 
 module Emit where
 
 import           LLVM.Context
 import           LLVM.Module
 
-import qualified LLVM.AST                        as AST
-import qualified LLVM.AST.Constant               as C
-import qualified Data.ByteString.UTF8       as BSU
-import qualified Data.Text.Lazy as T
+import qualified Data.ByteString.UTF8 as BSU
+import qualified Data.Text.Lazy       as T
+import qualified LLVM.AST             as AST
+import qualified LLVM.AST.Constant    as C
 -- import qualified LLVM.AST.Float                  as F
 
 import           Control.Monad
-import qualified Data.HashMap.Strict             as H
+import qualified Data.HashMap.Strict  as H
 
+import           CRes
+import           Eval.Common
 import           Syntax
-import           Syntax.Types
 import           Syntax.Prgm
-import Eval.Common
-import TreeBuild
-import CRes
-import Text.Printf
+import           Syntax.Types
+import           Text.Printf
+import           TreeBuild
 -- import Data.Bifunctor
-import Data.Hashable
+import           Control.Monad.State
+import           Data.Char            (ord)
+import qualified Data.HashSet         as S
+import           Data.Hashable
 import           Emit.Codegen
-import Emit.Runtime (primEnv, genType)
-import LLVM.AST.Type (i32, i8)
-import qualified LLVM.AST.Float as F
-import Data.Char (ord)
-import qualified Data.HashSet as S
-import Control.Monad.State
-import LLVM.AST.Typed (typeOf)
-import LLVM.Pretty (ppllvm)
+import           Emit.Runtime         (genType, primEnv)
+import qualified LLVM.AST.Float       as F
+import           LLVM.AST.Type        (i32, i8)
+import           LLVM.AST.Typed       (typeOf)
+import           LLVM.Pretty          (ppllvm)
 
-data LEnv = LEnv { lvTbEnv :: TBEnv
+data LEnv = LEnv { lvTbEnv    :: TBEnv
                  , lvClassMap :: ClassMap
                  }
 
@@ -229,7 +229,7 @@ formArgValMap Object{objArgs} val = do
   where
     fromArg valArgs (argName, (m, Nothing)) = case H.lookup argName valArgs of
       Just valArg -> return $ H.singleton argName (m, valArg)
-      Nothing -> return H.empty
+      Nothing     -> return H.empty
     fromArg valArgs (argName, (_, Just arg)) = case H.lookup argName valArgs of
       Just valArg -> formArgValMap arg (LLVMOperand (getMetaType $ objM arg) (return valArg))
       Nothing -> return H.empty

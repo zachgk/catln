@@ -17,14 +17,14 @@
 module Eval.Runtime where
 
 import qualified Data.HashMap.Strict as H
-import           Syntax.Types
-import           Syntax.Prgm
 import           Syntax
+import           Syntax.Prgm
+import           Syntax.Types
 
-import Eval.Common
-import Text.Printf
-import Emit (codegenPrgm)
-import TreeBuild
+import           Emit                (codegenPrgm)
+import           Eval.Common
+import           Text.Printf
+import           TreeBuild
 
 type Op = (TypeName, [(PartialType, Guard (Expr Typed), ResBuildEnvFunction)])
 
@@ -33,7 +33,7 @@ true = TupleVal "True" H.empty
 false = TupleVal "False" H.empty
 
 bool :: Bool -> Val
-bool True = true
+bool True  = true
 bool False = false
 
 liftIntOp :: TypeName -> (Integer -> Integer -> Integer) -> Op

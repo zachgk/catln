@@ -17,12 +17,12 @@ module Eval.Env where
 
 import qualified Data.HashMap.Strict as H
 
-import Eval.Common
-import TreeBuild (buildArrow)
 import           CRes
-import Syntax.Types
-import Text.Printf
-import Data.Hashable
+import           Data.Hashable
+import           Eval.Common
+import           Syntax.Types
+import           Text.Printf
+import           TreeBuild           (buildArrow)
 
 evalStartEArrow :: Env -> PartialType -> EObject -> EArrow -> Args -> CRes (ResArrowTree, [ResArrowTree], Args, Env)
 evalStartEArrow env@Env{evExEnv, evTbEnv, evArgs, evCoverage, evTreebugOpen} srcType obj arr newArgs = do
@@ -69,7 +69,7 @@ evalPush env@Env{evCallStack} c = env{evCallStack = c:evCallStack}
 evalPop :: Env -> Env
 evalPop env@Env{evCallStack} = case evCallStack of
   (_:stack') -> env{evCallStack=stack'}
-  _ -> error "Popped empty evCallStack"
+  _          -> error "Popped empty evCallStack"
 
 evalPopVal :: (a, Env) -> (a, Env)
 evalPopVal (a, env) = (a, evalPop env)

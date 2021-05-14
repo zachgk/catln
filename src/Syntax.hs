@@ -12,25 +12,25 @@
 -- general syntax-based utilities.
 --------------------------------------------------------------------
 
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric  #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Syntax where
 
+import qualified Data.HashMap.Strict   as H
 import           Data.Hashable
-import qualified Data.HashMap.Strict as H
 import           Data.Void             (Void)
 
 import           GHC.Generics          (Generic)
 import           Text.Megaparsec.Error (ParseErrorBundle)
 
-import Syntax.Types
-import Syntax.Prgm
-import Data.Aeson hiding (Object)
-import Data.Maybe
-import Text.Megaparsec
-import Text.Printf
+import           Data.Aeson            hiding (Object)
+import           Data.Maybe
+import           Syntax.Prgm
+import           Syntax.Types
+import           Text.Megaparsec
+import           Text.Printf
 
 type ParseErrorRes = ParseErrorBundle String Void
 
@@ -80,7 +80,7 @@ labelPos :: String -> CodeRange -> CodeRange
 labelPos s (Just (p1, p2, sPrefix)) = Just (p1, p2, label')
   where label' = case sPrefix of
           [] -> s
-          _ -> printf "%s-%s" sPrefix s
+          _  -> printf "%s-%s" sPrefix s
 labelPos _ Nothing = Nothing
 
 type ArgMetaMapWithSrc m = H.HashMap ArgName (m, Type)
@@ -91,7 +91,7 @@ formArgMetaMapWithSrc classMap Object{objArgs} PartialType{ptArgs=srcArgs} = H.f
     unionCombine _ _ = error "Duplicate var matched"
     fromArg k (m, Nothing) = case H.lookup k srcArgs of
       Just srcArg -> H.singleton k (m, srcArg)
-      Nothing -> H.empty
+      Nothing     -> H.empty
     fromArg k (_, Just arg) = case H.lookup k srcArgs of
       Just (UnionType srcArg) -> mergeMaps $ map (formArgMetaMapWithSrc classMap arg) $ splitPartialLeafs srcArg
       Just TopType -> (,TopType) <$> formArgMetaMap arg
@@ -109,7 +109,7 @@ formVarMap _ _ = error $ printf "Unknown formVarMap"
 arrowDestType :: (Meta m, Show m, ExprClass e, Show (e m)) => Bool -> ClassMap -> PartialType -> Object m -> Arrow (e m) m -> Type
 arrowDestType fullDest classMap src obj@Object{objM} (Arrow arrM _ _ maybeExpr) = case mapM getExprArg maybeExpr of
   Just (Just _) -> fromMaybe (error "Unfound expr") expr'
-  _ -> joined
+  _             -> joined
   where
     varEnv = formVarMap classMap $ intersectTypes classMap (getMetaType objM) (singletonType src)
     argEnv = snd <$> formArgMetaMapWithSrc classMap obj ((\(UnionType pl) -> head $ splitPartialLeafs pl) $ substituteVars $ singletonType src)
@@ -123,7 +123,7 @@ arrowDestType fullDest classMap src obj@Object{objM} (Arrow arrM _ _ maybeExpr) 
 metaTypeVar :: (Meta m) => m -> Maybe TypeVarAux
 metaTypeVar m = case getMetaType m of
   TypeVar v -> Just v
-  _ -> Nothing
+  _         -> Nothing
 
 
 hasPartialWithObj :: (Meta m) => ClassMap -> Object m -> PartialType -> Type -> Bool

@@ -13,23 +13,23 @@
 --------------------------------------------------------------------
 
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE NamedFieldPuns   #-}
 
 module TypeCheck.Encode where
 
-import           Prelude hiding (unzip)
 import           Control.Monad
-import Data.Hashable (Hashable)
 import qualified Data.HashMap.Strict as H
-import qualified Data.IntMap.Lazy as IM
+import           Data.Hashable       (Hashable)
+import qualified Data.IntMap.Lazy    as IM
+import           Prelude             hiding (unzip)
 
-import           Syntax.Types
-import           Syntax.Prgm
+import           Parser.Syntax       (emptyMetaN)
 import           Syntax
+import           Syntax.Prgm
+import           Syntax.Types
+import           Text.Printf
 import           TypeCheck.Common
 import           TypeCheck.TypeGraph (buildTypeEnv)
-import           Text.Printf
-import Parser.Syntax (emptyMetaN)
 
 -- represents how a specified variables corresponds to the known types.
 -- It could be a lower bound, upper bound, or exact bound
@@ -97,7 +97,7 @@ fromExpr _ obj env1 (IValue m name) = do
   (m', env2) <- fromMeta env1 BUpper obj m ("Value " ++ name)
   lookupVal <- fLookup env2 name
   lookupConstraints <- case lookupVal of
-    DefVar lookupM -> return [EqPoints m' lookupM]
+    DefVar lookupM      -> return [EqPoints m' lookupM]
     DefKnown lookupType -> return [BoundedByKnown m' lookupType]
   return (IValue m' name, addConstraints env2 lookupConstraints)
 fromExpr objArgs obj env1 (IArg m name) = do
@@ -188,13 +188,13 @@ addObjArg fakeObj objM prefix varMap env (n, (m, maybeSubObj)) = do
   let prefix' = prefix ++ "." ++ n
   -- requires a fakeObj to pull the type variables from
   let argBound = case maybeSubObj of
-        Just{} -> BUpper
+        Just{}  -> BUpper
         Nothing -> BEq
   (m', env2) <- fromMeta env argBound (Just fakeObj) m prefix'
   let env3 = addConstraints env2 [PropEq (objM, n) m', BoundedByObjs BoundTypeObjs m']
   let env4 = case H.lookup n varMap of
         Just varM -> addConstraints env3 [EqPoints m' varM]
-        Nothing -> env3
+        Nothing   -> env3
   case maybeSubObj of
     Just subObj -> do
       (subObj'@Object{objM=subM}, env5) <- fromObject prefix' True env4 subObj

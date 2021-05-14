@@ -11,21 +11,21 @@
 -- program.
 --------------------------------------------------------------------
 
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric  #-}
 
 module Syntax.Prgm where
 
-import           Data.Hashable
 import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet as S
-import           Data.List                      ( intercalate )
-import           GHC.Generics          (Generic)
+import qualified Data.HashSet        as S
+import           Data.Hashable
+import           Data.List           (intercalate)
+import           GHC.Generics        (Generic)
 
-import Syntax.Types
+import           Data.Aeson          (ToJSONKey)
+import           Data.Aeson.Types    (ToJSON)
+import           Syntax.Types
 import           Text.Printf
-import Data.Aeson.Types (ToJSON)
-import Data.Aeson (ToJSONKey)
 
 newtype Import = Import String
   deriving (Eq, Ord, Show)
@@ -87,8 +87,8 @@ data Guard e
 
 instance Functor Guard where
   fmap f (IfGuard e) = IfGuard (f e)
-  fmap _ ElseGuard = ElseGuard
-  fmap _ NoGuard = NoGuard
+  fmap _ ElseGuard   = ElseGuard
+  fmap _ NoGuard     = NoGuard
 
 data RawDeclSubStatement m
   = RawDeclSubStatementDecl (RawDecl m)
@@ -130,11 +130,11 @@ type ObjArg m = (m, Maybe (Object m))
 data ObjectBasis = FunctionObj | TypeObj | PatternObj | MatchObj
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 data Object m = Object {
-  objM :: m,
+  objM     :: m,
   objBasis :: ObjectBasis,
-  objName :: TypeName,
-  objVars :: H.HashMap TypeVarName m,
-  objArgs :: H.HashMap ArgName (ObjArg m)
+  objName  :: TypeName,
+  objVars  :: H.HashMap TypeVarName m,
+  objArgs  :: H.HashMap ArgName (ObjArg m)
                        }
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
@@ -152,8 +152,8 @@ instance Show m => Show (IExpr m) where
     where
       baseExpr' = case baseExpr of
         IValue _ funName -> funName
-        ITupleApply{} -> show baseExpr
-        _ -> printf "(%s)" (show baseExpr)
+        ITupleApply{}    -> show baseExpr
+        _                -> printf "(%s)" (show baseExpr)
       argName' = maybe "" (++ " = ") argName
 
 instance Show m => Show (Expr m) where
@@ -166,8 +166,8 @@ instance Show m => Show (Expr m) where
 
 instance Show e => Show (Guard e) where
   show (IfGuard expr) = "if (" ++ show expr ++ ")"
-  show ElseGuard = "else"
-  show NoGuard = ""
+  show ElseGuard      = "else"
+  show NoGuard        = ""
 
 instance Show m => Show (Object m) where
   -- show (Object m basis name vars args) = printf "%s %s (%s) %s %s" (show basis) name (show m) maybeVarsString maybeArgsString
@@ -188,9 +188,9 @@ instance (Show m, Show e) => Show (Arrow e m) where
   show (Arrow m annots guard maybeExpr) = concat $ [show guard, " -> ", show m, " "] ++ showExpr maybeExpr ++ showAnnots annots
     where
       showExpr (Just expr) = [" = ", show expr]
-      showExpr Nothing = []
+      showExpr Nothing     = []
       showAnnots [] = []
-      showAnnots _ = [" ", show annots]
+      showAnnots _  = [" ", show annots]
 
 class ExprClass e where
   getExprMeta ::  e m -> m
@@ -198,37 +198,37 @@ class ExprClass e where
 
 instance ExprClass RawExpr where
   getExprMeta expr = case expr of
-    RawCExpr m _   -> m
-    RawValue m _   -> m
-    RawTupleApply m _ _ -> m
-    RawParen e -> getExprMeta e
-    RawMethods e _ -> getExprMeta e
+    RawCExpr m _          -> m
+    RawValue m _          -> m
+    RawTupleApply m _ _   -> m
+    RawParen e            -> getExprMeta e
+    RawMethods e _        -> getExprMeta e
     RawIfThenElse m _ _ _ -> m
-    RawMatch m _ _ -> m
-    RawCase m _ _ -> m
-    RawList m _ -> m
+    RawMatch m _ _        -> m
+    RawCase m _ _         -> m
+    RawList m _           -> m
 
   getExprArg _ = Nothing
 
 instance ExprClass Expr where
   getExprMeta expr = case expr of
-    CExpr m _   -> m
-    Value m _   -> m
-    Arg m _   -> m
+    CExpr m _          -> m
+    Value m _          -> m
+    Arg m _            -> m
     TupleApply m _ _ _ -> m
 
   getExprArg (Arg _ n) = Just n
-  getExprArg _ = Nothing
+  getExprArg _         = Nothing
 
 instance ExprClass IExpr where
   getExprMeta expr = case expr of
-    ICExpr m _   -> m
-    IValue m _   -> m
-    IArg m _   -> m
+    ICExpr m _          -> m
+    IValue m _          -> m
+    IArg m _            -> m
     ITupleApply m _ _ _ -> m
 
   getExprArg (IArg _ n) = Just n
-  getExprArg _ = Nothing
+  getExprArg _          = Nothing
 
 type ArgMetaMap m = H.HashMap ArgName m
 formArgMetaMap :: Object m -> ArgMetaMap m
@@ -236,7 +236,7 @@ formArgMetaMap (Object m _ name _ args) | H.null args = H.singleton name m
 formArgMetaMap Object{objArgs} = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg objArgs
   where
     unionCombine _ _ = error "Duplicate var matched"
-    fromArg k (m, Nothing) = H.singleton k m
+    fromArg k (m, Nothing)  = H.singleton k m
     fromArg _ (_, Just arg) = formArgMetaMap arg
 
 mergeClassMaps :: ClassMap -> ClassMap -> ClassMap

@@ -11,22 +11,22 @@
 -- results of compiler steps.
 --------------------------------------------------------------------
 
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric  #-}
+{-# LANGUAGE GADTs          #-}
 
 module CRes where
 
+import           Data.List             (intercalate)
 import           GHC.Generics          (Generic)
-import           Data.List                      ( intercalate )
 -- import qualified Data.Text.Lazy as T
 -- import Text.Pretty.Simple
 import           Text.Printf
 
-import Syntax
-import Text.Megaparsec (pstateSourcePos)
-import Text.Megaparsec.Error
-import Data.Aeson
+import           Data.Aeson
+import           Syntax
+import           Text.Megaparsec       (pstateSourcePos)
+import           Text.Megaparsec.Error
 
 data CNoteType
   = CNoteError
@@ -76,7 +76,7 @@ instance CNoteTC CNoteI where
   posCNote _ = Nothing
 
   typeCNote GenCNote{} = CNoteWarn
-  typeCNote _ = CNoteError
+  typeCNote _          = CNoteError
 
 wrapCErr :: [CNote] -> String -> CRes r
 wrapCErr notes s = CErr [MkCNote $ WrapCN notes s]
@@ -88,7 +88,7 @@ data CRes r
 
 getCNotes :: CRes r -> [CNote]
 getCNotes (CRes notes _) = notes
-getCNotes (CErr notes) = notes
+getCNotes (CErr notes)   = notes
 
 partitionCRes :: [CRes r] -> ([CNote], [CRes r])
 partitionCRes = aux ([], [])
@@ -99,18 +99,18 @@ partitionCRes = aux ([], [])
 
 instance Functor CRes where
   fmap f (CRes notes r) = CRes notes (f r)
-  fmap _ (CErr notes) = CErr notes
+  fmap _ (CErr notes)   = CErr notes
 
 instance Applicative CRes where
   pure = CRes []
   (CRes notesA f) <*> (CRes notesB b) = CRes (notesA ++ notesB) (f b)
-  resA <*> resB = CErr (getCNotes resA ++ getCNotes resB)
+  resA <*> resB                       = CErr (getCNotes resA ++ getCNotes resB)
 
 instance Monad CRes where
   return = pure
   (CRes notesA a) >>= f = case f a of
     (CRes notesB b) -> CRes (notesA ++ notesB) b
-    (CErr notesB) -> CErr (notesA ++ notesB)
+    (CErr notesB)   -> CErr (notesA ++ notesB)
   (CErr notes) >>= _ = CErr notes
 
 failOnErrorNotes :: CRes n -> CRes n

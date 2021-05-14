@@ -16,20 +16,20 @@
 
 module TypeCheck.Constrain where
 
-import           Data.Maybe
 import qualified Data.HashMap.Strict as H
+import           Data.Maybe
 
-import           Syntax.Types
-import           TypeCheck.Common
-import           TypeCheck.TypeGraph
-import           TypeCheck.Show
 import           Data.Tuple.Sequence
+import           Syntax
+import           Syntax.Types
 import           Text.Printf
-import Syntax
+import           TypeCheck.Common
+import           TypeCheck.Show
+import           TypeCheck.TypeGraph
 
 isSolved :: Scheme -> Bool
 isSolved (TypeCheckResult _ (SType a b _)) = a == b
-isSolved _ = False
+isSolved _                                 = False
 
 setScheme :: FEnv -> VarMeta -> Scheme -> String -> FEnv
 setScheme env p scheme msg = setDescriptor env p (checkScheme scheme) msg
@@ -167,7 +167,7 @@ executeConstraint env (BoundedByKnown subPnt boundTp) = do
 executeConstraint env@FEnv{feUnionAllObjs, feUnionTypeObjs, feClassMap} cons@(BoundedByObjs bnd pnt) = do
   let scheme = descriptor env pnt
   let boundPnt = case bnd of
-        BoundAllObjs -> feUnionAllObjs
+        BoundAllObjs  -> feUnionAllObjs
         BoundTypeObjs -> feUnionTypeObjs
   let boundScheme = descriptor env boundPnt
   case sequenceT (scheme, boundScheme) of

@@ -16,17 +16,17 @@ module Parser.Expr where
 
 import           Control.Applicative            hiding (many, some)
 import           Control.Monad.Combinators.Expr
-import qualified Data.HashMap.Strict as H
+import qualified Data.HashMap.Strict            as H
 import           Data.Maybe
-import           Text.Megaparsec hiding (pos1)
+import           Text.Megaparsec                hiding (pos1)
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer     as L
 
-import           Syntax.Types
-import           Syntax.Prgm
-import           Syntax
 import           Parser.Lexer
-import Parser.Syntax
+import           Parser.Syntax
+import           Syntax
+import           Syntax.Prgm
+import           Syntax.Types
 
 mkOp1 :: String -> PExpr -> PExpr
 mkOp1 opChars x = RawTupleApply emptyMetaN (emptyMetaN, RawValue emptyMetaN op) [RawTupleArgNamed "a" x]
@@ -70,7 +70,7 @@ pCallArg = do
   expr <- pExpr
   return $ case maybeArgName of
     Just argName -> RawTupleArgNamed argName expr
-    Nothing -> RawTupleArgInfer expr
+    Nothing      -> RawTupleArgInfer expr
 
 pCall :: Parser PExpr
 pCall = do
@@ -84,7 +84,7 @@ pCall = do
   let baseValue = RawValue m1 funName
   return $ case maybeArgVals of
     Just argVals -> RawTupleApply m2 (labelPosM "call" m1, baseValue) argVals
-    Nothing -> baseValue
+    Nothing      -> baseValue
 
 pStringLiteral :: Parser PExpr
 pStringLiteral = do

@@ -13,7 +13,7 @@
 
 module Utils where
 
-import Data.Graph
+import           Data.Graph
 
 type GraphNodes node key = (node, key, [key])
 type GraphData node key = (Graph, Vertex -> (node, key, [key]), key -> Maybe Vertex)

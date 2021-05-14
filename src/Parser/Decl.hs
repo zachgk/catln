@@ -15,21 +15,21 @@
 
 module Parser.Decl where
 
-import           Control.Applicative            hiding (many, some)
+import           Control.Applicative        hiding (many, some)
 import           Data.Maybe
-import           Text.Megaparsec hiding (pos1)
-import qualified Text.Megaparsec.Char.Lexer     as L
+import           Text.Megaparsec            hiding (pos1)
+import qualified Text.Megaparsec.Char.Lexer as L
 
-import           Syntax.Prgm
-import           Syntax
+import           Data.Either
+import qualified Data.HashMap.Strict        as H
+import           Data.List
+import           Parser.Expr
 import           Parser.Lexer
-import Parser.Syntax
-import Parser.Expr
-import Syntax.Types
-import qualified Data.HashMap.Strict as H
-import Text.Megaparsec.Char
-import Data.List
-import Data.Either
+import           Parser.Syntax
+import           Syntax
+import           Syntax.Prgm
+import           Syntax.Types
+import           Text.Megaparsec.Char
 
 pDeclArg :: Parser (String, PExpr)
 pDeclArg = do
@@ -84,7 +84,7 @@ pDeclLHS = do
   patt@(Pattern obj@Object{objArgs} guard) <- pPattern FunctionObj
   let patt' = case meth of
         Just meth' -> Pattern obj{objArgs = H.insert "this" meth' objArgs} guard
-        Nothing -> patt
+        Nothing    -> patt
   maybeArrMeta <- optional pArrowRes
   pos2 <- getSourcePos
   let arrMeta = fromMaybe (emptyMeta pos1 pos2) maybeArrMeta

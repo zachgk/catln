@@ -15,26 +15,26 @@
 
 module Parser where
 
-import           Control.Applicative            hiding (many, some)
+import           Control.Applicative        hiding (many, some)
+import qualified Data.HashSet               as S
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
-import qualified Data.HashSet        as S
 
-import           Syntax
 import           CRes
+import           Control.Monad
+import           Data.Graph
+import           Data.List
+import           Data.Maybe
+import           Parser.Decl
+import           Parser.Expr                (pExpr)
 import           Parser.Lexer
-import Parser.Syntax
-import Parser.Expr (pExpr)
-import Parser.Decl
-import Parser.Type (pTypeStatement)
-import Syntax.Prgm
-import Data.List
-import Data.Maybe
-import Data.Graph
-import System.Directory
-import Text.Printf
-import Control.Monad
+import           Parser.Syntax
+import           Parser.Type                (pTypeStatement)
+import           Syntax
+import           Syntax.Prgm
+import           System.Directory
 import qualified Text.Megaparsec.Char.Lexer as L
+import           Text.Printf
 
 pImport :: Parser String
 pImport = do
@@ -87,13 +87,13 @@ contents p = do
 
 parseFile :: String -> String -> CRes PPrgm
 parseFile fileName fileContents = case runParser (contents pPrgm) fileName fileContents of
-  Left err -> CErr [MkCNote $ ParseCErr err]
+  Left err   -> CErr [MkCNote $ ParseCErr err]
   Right prgm -> return prgm
 
 parseRepl :: String -> PReplRes
 parseRepl s = case runParser (contents p) "<repl>" s of
                 Left e@(ParseErrorBundle _ _) -> ReplErr e
-                Right (Left statement)             -> ReplStatement statement
+                Right (Left statement)        -> ReplStatement statement
                 Right (Right expr)            -> ReplExpr expr
   where p = try (Left <$> pStatement) <|> try (Right <$> pExpr)
 
@@ -105,7 +105,7 @@ dirImportToMain f = do
   return $ case (isFile, isDir) of
     (True, False) -> f
     (False, True) -> f ++ "/main.ct"
-    _ -> error "bad dir"
+    _             -> error "bad dir"
 
 readFiles :: Bool -> [String] -> IO (CRes PPrgmGraphData)
 readFiles includeCore = fmap (fmap (graphFromEdges . snd)) . aux [] S.empty

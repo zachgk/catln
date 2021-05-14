@@ -1,20 +1,20 @@
 
 module Main where
 
-import           Desugarf                 (desFiles)
-import           Eval
 import           CRes
+import           Desugarf            (desFiles)
+import           Eval
+import           Options.Applicative
 import           Parser
-import           TypeCheck                (typecheckPrgm)
-import Options.Applicative
+import           TypeCheck           (typecheckPrgm)
 
-import           Data.Semigroup ((<>))
-import Eval.Common (Val(TupleVal, StrVal))
 import qualified Data.HashMap.Strict as H
-import Data.Maybe
-import WebDocs (docServe)
-import System.Directory
-import Text.Printf
+import           Data.Maybe
+import           Data.Semigroup      ((<>))
+import           Eval.Common         (Val (StrVal, TupleVal))
+import           System.Directory
+import           Text.Printf
+import           WebDocs             (docServe)
 -- import Repl (repl)
 
 xRun :: String -> IO ()
@@ -62,8 +62,8 @@ xDoc :: String -> Bool -> IO ()
 xDoc prgmName cached = docServe cached True prgmName
 
 exec :: Command -> IO ()
-exec (RunFile fname) = xRun fname
-exec (BuildFile fname) = xBuild fname
+exec (RunFile fname)    = xRun fname
+exec (BuildFile fname)  = xBuild fname
 exec (Doc fname cached) = xDoc fname cached
 
 data Command

@@ -11,29 +11,29 @@
 -- "Eval".
 --------------------------------------------------------------------
 
+{-# LANGUAGE DeriveAnyClass             #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE DerivingStrategies         #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE DeriveAnyClass #-}
 
 module Eval.Common where
 
-import           GHC.Generics          (Generic)
-import           Data.Hashable
 import qualified Data.HashMap.Strict as H
-import           Data.List                      ( intercalate )
-import qualified Data.Map                   as Map
-import qualified Data.HashSet as S
+import qualified Data.HashSet        as S
+import           Data.Hashable
+import           Data.List           (intercalate)
+import qualified Data.Map            as Map
+import           GHC.Generics        (Generic)
 
-import           Syntax.Types
-import           Syntax.Prgm
+import           CRes
+import           Control.Monad.State
+import           Data.Aeson          hiding (Object)
+import qualified LLVM.AST            as AST
 import           Syntax
+import           Syntax.Prgm
+import           Syntax.Types
 import           Text.Printf
-import Data.Aeson hiding (Object)
-import qualified LLVM.AST as AST
-import CRes
-import Control.Monad.State
-import Utils
+import           Utils
 
 type EvalMeta = Typed
 type ECompAnnot = CompAnnot EvalMeta
@@ -61,19 +61,19 @@ data EvalTreebugOpen = EvalTreebugOpen EObject EArrow
 data EvalTreebugClosed = EvalTreebugClosed EObject EArrow Val [EvalTreebugClosed] String
   deriving (Eq, Generic, Hashable, ToJSON)
 
-data Env = Env { evObjMap :: EObjectMap
-               , evClassMap :: ClassMap
-               , evArgs :: H.HashMap ArgName Val
-               , evExEnv :: ResExEnv
-               , evTbEnv :: TBEnv
-               , evCallStack :: [String]
-               , evCoverage :: H.HashMap EArrow Int
-               , evTreebugOpen :: [EvalTreebugOpen]
+data Env = Env { evObjMap        :: EObjectMap
+               , evClassMap      :: ClassMap
+               , evArgs          :: H.HashMap ArgName Val
+               , evExEnv         :: ResExEnv
+               , evTbEnv         :: TBEnv
+               , evCallStack     :: [String]
+               , evCoverage      :: H.HashMap EArrow Int
+               , evTreebugOpen   :: [EvalTreebugOpen]
                , evTreebugClosed :: [EvalTreebugClosed]
                }
 
 data EvalResult = EvalResult { erCoverage :: H.HashMap EArrow Int
-                             , erTreebug :: [EvalTreebugClosed]
+                             , erTreebug  :: [EvalTreebugClosed]
                              } deriving (Eq, Generic, ToJSON)
 
 type Args = H.HashMap String Val
@@ -117,16 +117,16 @@ instance Show Val where
   show NoVal   = "NoVal"
 
 instance Hashable Val where
-  hashWithSalt s (IntVal i) = s `hashWithSalt` i
-  hashWithSalt s (FloatVal i) = s `hashWithSalt` i
-  hashWithSalt s (StrVal i) = s `hashWithSalt` i
-  hashWithSalt s (TupleVal n as) = s `hashWithSalt` n `hashWithSalt` as
-  hashWithSalt s (IOVal i _) = s `hashWithSalt` i
-  hashWithSalt s (LLVMVal _) = s
-  hashWithSalt s (LLVMQueue _) = s
+  hashWithSalt s (IntVal i)         = s `hashWithSalt` i
+  hashWithSalt s (FloatVal i)       = s `hashWithSalt` i
+  hashWithSalt s (StrVal i)         = s `hashWithSalt` i
+  hashWithSalt s (TupleVal n as)    = s `hashWithSalt` n `hashWithSalt` as
+  hashWithSalt s (IOVal i _)        = s `hashWithSalt` i
+  hashWithSalt s (LLVMVal _)        = s
+  hashWithSalt s (LLVMQueue _)      = s
   hashWithSalt s (LLVMOperand tp _) = s `hashWithSalt` tp
-  hashWithSalt s (LLVMIO _) = s
-  hashWithSalt s NoVal = s
+  hashWithSalt s (LLVMIO _)         = s
+  hashWithSalt s NoVal              = s
 
 instance ToJSON Val where
   toJSON (IntVal v) = object ["tag".=("IntVal" :: String), "contents".=toJSON v]
@@ -156,7 +156,7 @@ getValType LLVMQueue{} = queueLeaf
 getValType (LLVMOperand t _) = case t of
   UnionType leafs -> case splitPartialLeafs leafs of
     [partial] -> partial
-    _ -> error "could not getValType without a single partial"
+    _         -> error "could not getValType without a single partial"
   _ -> error $ printf "could not get non sum getValType %s" (show t)
 getValType LLVMIO{} = ioLeaf
 getValType NoVal = error "getValType of NoVal"
@@ -164,8 +164,8 @@ getValType NoVal = error "getValType of NoVal"
 
 --- ResArrowTree
 data MacroData = MacroData {
-                               mdTbEnv :: TBEnv
-                             , mdObj :: Object Typed
+                               mdTbEnv      :: TBEnv
+                             , mdObj        :: Object Typed
                              , mdObjSrcType :: PartialType
                              }
 newtype MacroFunction = MacroFunction (ResArrowTree -> MacroData -> CRes ResArrowTree)
@@ -175,10 +175,10 @@ type ResBuildEnv = H.HashMap TypeName [ResBuildEnvItem]
 type ResExEnv = H.HashMap (PartialType, Arrow (Expr Typed) Typed) (ResArrowTree, [ResArrowTree]) -- (result, [compAnnot trees])
 
 data TBEnv = TBEnv {
-    tbName :: String
-  , tbResEnv :: ResBuildEnv
-  , tbVals :: H.HashMap PartialType ResArrowTree
-  , tbPrgm :: Prgm (Expr Typed) Typed
+    tbName     :: String
+  , tbResEnv   :: ResBuildEnv
+  , tbVals     :: H.HashMap PartialType ResArrowTree
+  , tbPrgm     :: Prgm (Expr Typed) Typed
   , tbClassMap :: ClassMap
   }
 
@@ -231,9 +231,9 @@ instance Show ResArrowTree where
 
 data LLVMState
   = LLVMState {
-    lsMod :: AST.Module
-  , lTaskArrows :: [TaskArrow]
-  , lTaskStructs :: [TaskStruct]
+    lsMod           :: AST.Module
+  , lTaskArrows     :: [TaskArrow]
+  , lTaskStructs    :: [TaskStruct]
   , lTasksCompleted :: S.HashSet String
                            }
 
@@ -253,12 +253,12 @@ data CodegenState
   = CodegenState {
     currentBlock :: AST.Name                     -- Name of the active block to append to
   , blocks       :: Map.Map AST.Name BlockState  -- Blocks for function
-  , cgArgs         :: H.HashMap ArgName AST.Operand    -- Function scope symbol table
+  , cgArgs       :: H.HashMap ArgName AST.Operand    -- Function scope symbol table
   , blockCount   :: Int                      -- Count of basic blocks
   , count        :: Word                     -- Count of unnamed instructions
   , names        :: Names                    -- Name Supply
-  , taskArrows :: [TaskArrow]
-  , taskStructs :: [TaskStruct]
+  , taskArrows   :: [TaskArrow]
+  , taskStructs  :: [TaskStruct]
   } deriving Show
 
 data BlockState
@@ -296,4 +296,4 @@ buildArrArgs = aux H.empty
     aux acc Object{objArgs} (TupleVal _ tupleArgs) = H.foldrWithKey addArgs acc $ H.intersectionWith (,) objArgs tupleArgs
     aux _ obj val = error $ printf "Invalid buildArrArgs with obj %s and value %s" (show obj) (show val)
     addArgs argName ((_, Nothing), argVal) acc = H.insert argName argVal acc
-    addArgs _ ((_, Just subObj), argVal) acc = aux acc subObj argVal
+    addArgs _ ((_, Just subObj), argVal) acc   = aux acc subObj argVal

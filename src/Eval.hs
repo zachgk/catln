@@ -15,24 +15,24 @@
 
 module Eval where
 
-import Prelude hiding (unzip)
-import Data.Zip
-import qualified Data.HashMap.Strict as H
-import           Syntax.Types
-import           Syntax.Prgm
-import           Syntax
 import           CRes
+import qualified Data.HashMap.Strict as H
+import           Data.Zip
+import           Prelude             hiding (unzip)
+import           Syntax
+import           Syntax.Prgm
+import           Syntax.Types
 
-import TreeBuild
-import Eval.Common
-import Eval.Runtime
-import Eval.Env
+import           Control.Monad
+import           Data.Graph
+import           Data.Maybe
+import           Emit                (codegenExInit)
+import           Eval.Common
+import           Eval.Env
+import           Eval.Runtime
 import           Text.Printf
-import Control.Monad
-import Emit (codegenExInit)
-import Data.Graph
-import Data.Maybe
-import Utils
+import           TreeBuild
+import           Utils
 
 -- Checks if mainx is defined (not declared)
 containsMainx :: String -> EPrgmGraphData -> Bool
@@ -62,14 +62,14 @@ eval env (ResEArrow input object arrow) = do
             evalCompAnnot env4 compAnnot'
   let env5 = case env5s of
         [] -> env3
-        _ -> evalEnvJoinAll env5s
+        _  -> evalEnvJoinAll env5s
   (res, env6) <- evalPopVal <$> eval (evalPush env5 $ printf "ResEArrow %s" (show arrow)) resArrowTree
   return (res, evalEndEArrow env6 res oldArgs)
 eval env (PrimArrow input _ (EPrim _ _ f)) = do
   (input', env2) <- evalPopVal <$> eval (evalPush env "PrimArrow input") input
   case input' of
     (TupleVal _ args) -> return (f args, env2)
-    _ -> error "Unexpected eval PrimArrow input"
+    _                 -> error "Unexpected eval PrimArrow input"
 eval env MacroArrow{} = evalError env $ printf "Can't evaluate a macro - it should be removed during TreeBuild"
 eval env ExprArrow{} = evalError env $ printf "Can't evaluate an expr - it should be removed during TreeBuild"
 eval env (ConstantArrow v) = return (v, env)

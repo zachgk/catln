@@ -14,16 +14,16 @@
 
 module Parser.Type where
 
-import           Control.Applicative            hiding (many, some)
+import           Control.Applicative hiding (many, some)
 import qualified Data.HashMap.Strict as H
-import           Text.Megaparsec hiding (pos1)
+import           Text.Megaparsec     hiding (pos1)
 
-import           Syntax.Types
-import           Syntax.Prgm
-import           Syntax
+import           Data.Maybe
 import           Parser.Lexer
-import Parser.Syntax
-import Data.Maybe
+import           Parser.Syntax
+import           Syntax
+import           Syntax.Prgm
+import           Syntax.Types
 
 pLeafVar :: Parser (TypeVarName, Type)
 pLeafVar = do
@@ -67,13 +67,13 @@ pLeafType :: PLeafTypeMode -> Parser ParseMeta
 pLeafType mode = do
   pos1 <- getSourcePos
   let parseIdentifier = case mode of
-        PLeafTypeData -> tidentifier
-        PLeafTypeAnnot -> pAnnotIdentifier
+        PLeafTypeData        -> tidentifier
+        PLeafTypeAnnot       -> pAnnotIdentifier
         PLeafTypeSealedClass -> tidentifier
   name <- parseIdentifier
   let parseVar = case mode of
-        PLeafTypeData -> pLeafVar
-        PLeafTypeAnnot -> pLeafVar
+        PLeafTypeData        -> pLeafVar
+        PLeafTypeAnnot       -> pLeafVar
         PLeafTypeSealedClass -> pTypeVar
   maybeVars <- optional $ angleBraces $ sepBy1 parseVar (symbol ",")
   maybeArgs <- optional $ parens (sepBy1 pTypeArg (symbol ","))
@@ -105,7 +105,7 @@ pClassStatement = do
     MultiTypeDefStatement . MultiTypeDef name vars <$> pType
   case maybeTypes of
     Just types -> return types
-    Nothing -> return $ RawClassDeclStatement (name, vars)
+    Nothing    -> return $ RawClassDeclStatement (name, vars)
 
 pAnnotDefStatement :: Parser PStatement
 pAnnotDefStatement = do

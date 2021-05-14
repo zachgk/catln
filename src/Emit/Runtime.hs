@@ -15,20 +15,20 @@
 
 module Emit.Runtime where
 
-import qualified Data.HashMap.Strict as H
-import           Syntax.Types
-import           Syntax.Prgm
+import qualified Data.HashMap.Strict       as H
 import           Syntax
+import           Syntax.Prgm
+import           Syntax.Types
 
-import Eval.Common
-import Emit.Codegen
-import qualified LLVM.AST as AST
-import LLVM.AST.Operand (Operand)
+import           Emit.Codegen
+import           Eval.Common
+import qualified LLVM.AST                  as AST
+import qualified LLVM.AST.Constant         as C
 import qualified LLVM.AST.IntegerPredicate as IP
-import qualified LLVM.AST.Constant as C
-import qualified LLVM.AST.Type as ATP
-import Text.Printf
-import qualified LLVM.AST.Typed as ASTT
+import           LLVM.AST.Operand          (Operand)
+import qualified LLVM.AST.Type             as ATP
+import qualified LLVM.AST.Typed            as ASTT
+import           Text.Printf
 
 type Op = (TypeName, [(PartialType, Guard (Expr Typed), ResBuildEnvFunction)])
 
@@ -47,7 +47,7 @@ genType varEnv tp@(UnionType leafs) = case splitPartialLeafs leafs of
     return $ structType $ H.elems args'
   _ -> error "genType does not have a single partial"
 genType varEnv (TypeVar (TVVar v)) = case H.lookup v varEnv of
-  Just t -> genType varEnv t
+  Just t  -> genType varEnv t
   Nothing -> error $ printf "Unknown type var in emit genType: %s" (show v)
 genType _ TopType = return ATP.i32 -- TODO: Should compute the top type
 genType _ t = error $ printf "Unsupported emit genType: %s" (show t)
@@ -58,7 +58,7 @@ true = TupleVal "True" H.empty
 false = TupleVal "False" H.empty
 
 bool :: Bool -> Val
-bool True = true
+bool True  = true
 bool False = false
 
 liftBinOp :: Type -> Type -> Type -> TypeName -> (Operand -> Operand -> AST.Instruction) -> Op

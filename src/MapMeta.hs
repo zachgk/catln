@@ -44,8 +44,8 @@ instance MapMeta Expr where
 
 mapMetaGuard :: (MapMeta e) => (MetaType -> a -> b) -> Guard (e a) -> Guard (e b)
 mapMetaGuard f (IfGuard expr) = IfGuard (mapMeta f expr)
-mapMetaGuard _ ElseGuard = ElseGuard
-mapMetaGuard _ NoGuard = NoGuard
+mapMetaGuard _ ElseGuard      = ElseGuard
+mapMetaGuard _ NoGuard        = NoGuard
 
 mapMetaObjArg :: (MetaType -> a -> b) -> ObjArg a -> ObjArg b
 mapMetaObjArg f (m, maybeObj) = (f ObjArgMeta m, fmap (mapMeta f) maybeObj)

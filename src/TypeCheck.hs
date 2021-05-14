@@ -22,16 +22,16 @@
 module TypeCheck where
 
 import           CRes
+import           Data.Graph
+import qualified Data.HashMap.Strict as H
+import qualified Data.HashSet        as S
+import           Data.Maybe
+import           Syntax.Prgm
 import           TypeCheck.Common
-import           TypeCheck.Encode
 import           TypeCheck.Constrain (runConstraints)
 import           TypeCheck.Decode
-import Syntax.Prgm
-import Utils
-import Data.Graph
-import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet as S
-import Data.Maybe
+import           TypeCheck.Encode
+import           Utils
 
 type TypecheckTuplePrgm = (TPrgm, VPrgm, TraceConstrain)
 type TypecheckFileResult = H.HashMap String (GraphNodes TypecheckTuplePrgm String)

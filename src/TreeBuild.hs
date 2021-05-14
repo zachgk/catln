@@ -21,12 +21,12 @@ import qualified Data.HashSet        as S
 import           Data.Maybe
 import           Text.Printf
 
-import           Syntax.Types
-import           Syntax.Prgm
-import           Syntax
 import           CRes
+import           Control.Monad
 import           Eval.Common
-import Control.Monad
+import           Syntax
+import           Syntax.Prgm
+import           Syntax.Types
 
 type TBMeta = Typed
 type TBExpr = Expr TBMeta
@@ -49,7 +49,7 @@ leafsFromMeta (Typed (UnionType prodTypes) _) = splitPartialLeafs prodTypes
 buildMatch :: ResArrowTree -> Type -> H.HashMap PartialType ResArrowTree -> ResArrowTree
 buildMatch m tp opts = case H.toList opts of
   [(_, t)] -> t
-  _ -> ResArrowMatch m tp opts
+  _        -> ResArrowMatch m tp opts
 
 buildTBEnv :: ResBuildEnv -> TBPrgm -> TBEnv
 buildTBEnv primEnv prgm@(objMap, classMap, _) = baseEnv
@@ -63,15 +63,15 @@ buildTBEnv primEnv prgm@(objMap, classMap, _) = baseEnv
 
 buildExpr :: TBEnv -> ObjSrc -> TBExpr -> CRes ResArrowTree
 buildExpr _ _ (CExpr _ c) = case c of
-  (CInt i) -> return $ ConstantArrow $ IntVal i
+  (CInt i)   -> return $ ConstantArrow $ IntVal i
   (CFloat i) -> return $ ConstantArrow $ FloatVal i
-  (CStr i) -> return $ ConstantArrow $ StrVal i
+  (CStr i)   -> return $ ConstantArrow $ StrVal i
 buildExpr TBEnv{tbVals} _ (Value (Typed (UnionType prodTypes) pos) name) = case splitPartialLeafs prodTypes of
     (_:_:_) -> CErr [MkCNote $ BuildTreeCErr pos $ "Found multiple types for value " ++ name ++ "\n\t" ++ show prodTypes]
     [] -> CErr [MkCNote $ BuildTreeCErr pos $ "Found no types for value " ++ name ++ " with type " ++ show prodTypes]
     [prodType] -> return $ case H.lookup prodType tbVals of
       Just val -> val
-      Nothing -> ResArrowTuple name H.empty
+      Nothing  -> ResArrowTuple name H.empty
 buildExpr TBEnv{tbClassMap} (os, obj) (Arg (Typed (TypeVar (TVArg a)) _) name) = return $ ArgArrow (snd $ fromJust $ H.lookup a $ formArgMetaMapWithSrc tbClassMap obj os) name
 buildExpr _ _ (Arg (Typed tp _) name) = return $ ArgArrow tp name
 buildExpr TBEnv{tbClassMap} _ (TupleApply (Typed tp pos) (Typed baseType _, baseExpr) argName argExpr) = case typesGetArg tbClassMap argName tp of
@@ -93,7 +93,7 @@ envLookupTry env@TBEnv{tbClassMap} objSrc visitedArrows ee srcType destType resA
     visitedArrows' = S.insert resArrow visitedArrows
     objSrc' = case resArrow of
           (ResEArrow _ o _) -> (srcType, o)
-          _ -> objSrc
+          _                 -> objSrc
     buildAfterArrows = \leafType -> do
       v <- envLookup env objSrc' resArrow ee visitedArrows' leafType destType
       return (leafType, v)
@@ -137,7 +137,7 @@ buildGuardArrows env obj input ee visitedArrows srcType destType guards = do
       elseTree' <- ltry elseTree
       return $ case ifTreePairs of
         [] -> (elseTp, elseTree')
-        _ -> (elseTp, ResArrowCond destType ifTreePairs elseTree')
+        _  -> (elseTp, ResArrowCond destType ifTreePairs elseTree')
     ltry tree = envLookupTry env obj visitedArrows ee srcType destType tree
 
 groupArrows :: ResArrowTree -> [ResBuildEnvItem] -> CRes [ArrowGuardGroup]
@@ -237,11 +237,11 @@ buildArrow env objPartial obj@Object{objVars} arrow@(Arrow (Typed am _) compAnno
   let objSrc = (objPartial, obj)
   let am' = case am of
         (TypeVar (TVVar v)) -> case H.lookup v objVars of
-          Just m -> getMetaType m
+          Just m  -> getMetaType m
           Nothing -> error "Bad TVVar in makeBaseEnv"
         (TypeVar (TVArg v)) -> case H.lookup v $ formArgMetaMap obj of
           Just argMeta -> getMetaType argMeta
-          Nothing -> error "Bad TVArg in makeBaseEnv"
+          Nothing      -> error "Bad TVArg in makeBaseEnv"
         _ -> am
   resArrowTree <- resolveTree env' objSrc (ExprArrow expr (getMetaType $ getExprMeta expr) am')
   compAnnots' <- forM compAnnots $ \annot -> do

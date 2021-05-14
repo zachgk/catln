@@ -12,24 +12,24 @@
 -- operations implemented for types.
 --------------------------------------------------------------------
 
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric  #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
 module Syntax.Types where
 
-import           Prelude hiding (unzip)
-import Data.Zip
-import           Data.Hashable
+import           Data.Aeson          (ToJSON)
+import           Data.Aeson.Types    (ToJSONKey)
+import           Data.Bifunctor
 import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet          as S
+import qualified Data.HashSet        as S
+import           Data.Hashable
+import           Data.List           (intercalate)
 import           Data.Maybe
-import           Data.List (intercalate)
-import           GHC.Generics          (Generic)
+import           Data.Zip
+import           GHC.Generics        (Generic)
+import           Prelude             hiding (unzip)
 import           Text.Printf
-import Data.Aeson (ToJSON)
-import Data.Aeson.Types (ToJSONKey)
-import Data.Bifunctor
 
 -- |The name is the basic type used for various kinds of names
 type Name = String
@@ -52,10 +52,10 @@ data PtArgMode
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 data PartialType = PartialType {
-  ptName :: PartialName,
-  ptVars :: H.HashMap TypeVarName Type,
-  ptProps :: H.HashMap (TypeName, TypePropName) Type,
-  ptArgs :: H.HashMap ArgName Type,
+  ptName    :: PartialName,
+  ptVars    :: H.HashMap TypeVarName Type,
+  ptProps   :: H.HashMap (TypeName, TypePropName) Type,
+  ptArgs    :: H.HashMap ArgName Type,
   ptArgMode :: PtArgMode
   } deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
@@ -86,7 +86,7 @@ type ArgEnv = H.HashMap ArgName Type
 instance Show PartialType where
   show (PartialType ptName ptVars ptProps ptArgs _) = concat [showName ptName, showTypeVars ptVars, showProps ptProps, showArgs ptArgs]
     where
-      showName (PTypeName t) = t
+      showName (PTypeName t)  = t
       showName (PClassName t) = t
       showArg (argName, argVal) = argName ++ "=" ++ show argVal
       showProp ((typeName, propName), propVal) = printf "%s_%s = %s" typeName propName (show propVal)
@@ -102,9 +102,9 @@ instance Show Type where
   show (TypeVar v) = show v
   show (UnionType partials) = join $ map show $ splitPartialLeafs partials
     where
-      join [] = "∅"
+      join []  = "∅"
       join [p] = p
-      join ps = "(" ++ intercalate " | " ps ++ ")"
+      join ps  = "(" ++ intercalate " | " ps ++ ")"
 
 
 intLeaf, floatLeaf, trueLeaf, falseLeaf, strLeaf, ioLeaf :: PartialType
@@ -167,17 +167,17 @@ hasPartialWithEnv :: ClassMap -> TypeVarEnv -> TypeArgEnv -> PartialType -> Type
 hasPartialWithEnv _ _ _ _ TopType = True
 hasPartialWithEnv classMap venv aenv sub (TypeVar (TVVar v)) = case H.lookup v venv of
   Just sup -> hasPartialWithEnv classMap venv aenv sub sup
-  Nothing -> error $ printf "hasPartialWithEnv with unknown type var %s" v
+  Nothing  -> error $ printf "hasPartialWithEnv with unknown type var %s" v
 hasPartialWithEnv classMap venv aenv sub (TypeVar (TVArg v)) = case H.lookup v aenv of
   Just sup -> hasPartialWithEnv classMap venv aenv sub sup
-  Nothing -> error $ printf "hasPartialWithEnv with unknown type arg %s" v
+  Nothing  -> error $ printf "hasPartialWithEnv with unknown type arg %s" v
 hasPartialWithEnv classMap@(typeToClass, _) venv aenv sub@(PartialType subName subVars subProps subArgs subArgMode) super@(UnionType superPartials) = case subName of
   (PTypeName typeName) -> checkDirect || any checkSuperClass (H.lookupDefault S.empty typeName typeToClass)
   PClassName{} -> checkDirect || hasTypeWithEnv classMap venv aenv (expandClassPartial classMap sub) super
   where
     checkDirect = case H.lookup subName superPartials of
       Just superArgsOptions -> any hasArgs superArgsOptions
-      Nothing -> False
+      Nothing               -> False
       where
         hasArgs (_, _, superArgs, _) | subArgMode == PtArgExact && H.keysSet subArgs /= H.keysSet superArgs = False
         hasArgs (_, _, superArgs, superArgMode) | superArgMode == PtArgExact && not (H.keysSet subArgs `isSubsetOf` H.keysSet superArgs) = False
@@ -235,12 +235,12 @@ compactJoinPartials classMap partials = joinPartialLeafs $ concat $ H.elems $ fm
     prepGroupJoinable partial@PartialType{ptName, ptArgs, ptVars, ptArgMode} = ((ptName, H.keysSet ptArgs, H.keysSet ptVars, ptArgMode), [partial])
 
     -- Checks pairs of tuples for joins
-    joinMatchArgPartials [] = []
+    joinMatchArgPartials []     = []
     joinMatchArgPartials (p:ps) = joinMatchArgPartialsAux p ps []
     joinMatchArgPartialsAux curPartial [] tried = curPartial:joinMatchArgPartials tried
     joinMatchArgPartialsAux curPartial (toTry:toTrys) tried = case tryJoin curPartial toTry of
       Just joined -> joinMatchArgPartialsAux joined toTrys tried
-      Nothing -> joinMatchArgPartialsAux curPartial toTrys (toTry:tried)
+      Nothing     -> joinMatchArgPartialsAux curPartial toTrys (toTry:tried)
 
     -- if two partials differ by only one arg or var, joins them else Nothing
     tryJoin (PartialType name1 vars1 props1 args1 mode1) (PartialType _ vars2 props2 args2 _) = if numDifferences args1 args2 + numDifferences vars1 vars2 == 1
@@ -302,8 +302,8 @@ intersectTypePartialLeaves classMap venv aPartials bPartials = partials'
       (argsVenvs, args') <- unzip <$> intersectMap venv aArgs bArgs
       let venvs' = mergeVenvs [mergeVenvs propsVenvs, mergeVenvs argsVenvs, vars']
       let argMode' = case (aArgMode, bArgMode) of
-            (PtArgAny, _) -> PtArgAny
-            (_, PtArgAny) -> PtArgAny
+            (PtArgAny, _)            -> PtArgAny
+            (_, PtArgAny)            -> PtArgAny
             (PtArgExact, PtArgExact) -> PtArgExact
       return (mergeVenvs varsVenvs, (venvs', props', args', argMode'))
 
@@ -331,7 +331,7 @@ intersectTypesWithVarEnv _ _ (TypeVar v) t = error $ printf "Can't intersect typ
 intersectTypesWithVarEnv _ _ t (TypeVar v) = error $ printf "Can't intersect type vars %s with %s" (show t) (show v)
 intersectTypesWithVarEnv classMap venv1 (UnionType aPartials) (UnionType bPartials) = (venv5, compactType classMap $ unionTypes classMap $ map UnionType [res1, res2, res3, res4])
   where
-    isTypeLeaf (PTypeName _) _ = True
+    isTypeLeaf (PTypeName _) _  = True
     isTypeLeaf (PClassName _) _ = False
     isClassLeaf name v = not $ isTypeLeaf name v
     aTypePartials = H.filterWithKey isTypeLeaf aPartials
@@ -358,7 +358,7 @@ as `isSubmapOf` bs = and $ H.mapWithKey aux as
 
 -- normal type, type to powerset
 powerset :: [x] -> [[x]]
-powerset [] = [[]]
+powerset []     = [[]]
 powerset (x:xs) = map (x:) (powerset xs) ++ powerset xs
 
 powersetType :: Type -> Type
