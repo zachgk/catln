@@ -15,7 +15,7 @@ jobs:
       - run: sudo apt-get install -y llvm-8
       - uses: actions/checkout@v1
       - name: Cache dependencies
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: ~/.stack
           key: ${{ runner.os }}-store-${{ hashFiles('stack.yaml') }}
