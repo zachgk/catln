@@ -7,6 +7,8 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This module decodes after type checking is completed to produce
+-- the final typechecked program.
 --------------------------------------------------------------------
 {-# LANGUAGE NamedFieldPuns #-}
 

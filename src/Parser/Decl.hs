@@ -7,6 +7,8 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This module is used to define function definitions and
+-- declarations.
 --------------------------------------------------------------------
 
 {-# LANGUAGE OverloadedStrings #-}

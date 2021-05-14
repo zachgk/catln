@@ -8,6 +8,9 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This module defines some of the simplest elements used during
+-- parsing such as numbers and identifiers. It is used by the other
+-- parsers.
 --------------------------------------------------------------------
 
 module Parser.Lexer where

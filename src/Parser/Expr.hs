@@ -7,6 +7,7 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This module is used to parse 'RawExpr'.
 --------------------------------------------------------------------
 
 {-# LANGUAGE OverloadedStrings #-}

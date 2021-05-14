@@ -7,6 +7,8 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This module focuses on defining 'CRes', a monad to store the
+-- results of compiler steps.
 --------------------------------------------------------------------
 
 {-# LANGUAGE GADTs #-}

@@ -7,6 +7,8 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This module is used to produce LLVM Bytecode for compiling using
+-- the llvm() function.
 --------------------------------------------------------------------
 
 {-# LANGUAGE BlockArguments #-}

@@ -7,6 +7,8 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This module defines the common types and structures used for
+-- typechecking.
 --------------------------------------------------------------------
 
 {-# LANGUAGE DeriveGeneric #-}

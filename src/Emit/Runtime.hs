@@ -7,6 +7,10 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This module defines additional functions that are added to the
+-- program as the primitives. The declarations of these functions
+-- are in the Catln core. Most runtime functions are based on either
+-- LLVM operations or functions in the C standard library.
 --------------------------------------------------------------------
 
 module Emit.Runtime where

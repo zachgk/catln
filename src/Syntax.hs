@@ -7,6 +7,9 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This module contains miscellaneous and general syntax elements.
+-- It also contains a the instances of program metadata and some
+-- general syntax-based utilities.
 --------------------------------------------------------------------
 
 {-# LANGUAGE DeriveGeneric #-}

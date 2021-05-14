@@ -1,3 +1,15 @@
+--------------------------------------------------------------------
+-- |
+-- Module    :  Repl
+-- Copyright :  (c) Zach Kimberg 2021
+-- License   :  MIT
+-- Maintainer:  zachary@kimberg.com
+-- Stability :  experimental
+-- Portability: non-portable
+--
+-- This module contains the main code to execute a catln REPL. It
+-- is currently not supported or building.
+--------------------------------------------------------------------
 
 module Repl where
 

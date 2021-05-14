@@ -7,6 +7,7 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This module parses data, class, and annotation declarations.
 --------------------------------------------------------------------
 
 {-# LANGUAGE OverloadedStrings #-}

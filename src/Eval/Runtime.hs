@@ -7,6 +7,10 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This module defines additional functions that are added to the
+-- program as the primitives. The declarations of these functions
+-- are in the Catln core. The function are executed in the interpreter
+-- by executing the backing Haskell functions.
 --------------------------------------------------------------------
 {-# LANGUAGE NamedFieldPuns #-}
 

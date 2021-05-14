@@ -7,6 +7,10 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This module is used to take a rewrite-based program and a desired
+-- function or expression to execute and convert it into a fully
+-- resolved format for executing. It is run by the interpreter
+-- "Eval".
 --------------------------------------------------------------------
 {-# OPTIONS_GHC -Wno-deferred-type-errors #-}
 

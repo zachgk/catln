@@ -7,6 +7,10 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This module is used in the middle of type checking to print
+-- sections of the program (in modified type checking form) out
+-- to the user. It is most often used for printing errors that
+-- occur during type checking.
 --------------------------------------------------------------------
 
 module TypeCheck.Show where

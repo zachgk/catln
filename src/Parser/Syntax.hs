@@ -7,6 +7,7 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This module defines common types for parsing.
 --------------------------------------------------------------------
 
 module Parser.Syntax where

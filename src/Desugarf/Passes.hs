@@ -7,6 +7,9 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This module contains various passes run over the program after
+-- it has finished desugaring. They apply various corrections to
+-- the program left over from the parsing.
 --------------------------------------------------------------------
 {-# LANGUAGE NamedFieldPuns #-}
 

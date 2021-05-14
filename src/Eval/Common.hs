@@ -7,6 +7,8 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This module defines some common types and functions used by
+-- "Eval".
 --------------------------------------------------------------------
 
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}

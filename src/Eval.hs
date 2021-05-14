@@ -7,6 +7,9 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This module is used to run the interpreter (or compiler macro)
+-- on a program. It can build, run, and compute the annotations
+-- for the program.
 --------------------------------------------------------------------
 {-# LANGUAGE NamedFieldPuns #-}
 

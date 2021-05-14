@@ -7,6 +7,9 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This module encodes before type checking to extract all of the
+-- types into isolated variables and all of the constraints that
+-- relate the variables together. It prepares for typechecking.
 --------------------------------------------------------------------
 
 {-# LANGUAGE FlexibleContexts #-}

@@ -7,6 +7,9 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This module defines the 'Type' which are used to represent
+-- Catln types. It also includes functions for the various set
+-- operations implemented for types.
 --------------------------------------------------------------------
 
 {-# LANGUAGE DeriveGeneric #-}
@@ -28,7 +31,7 @@ import Data.Aeson (ToJSON)
 import Data.Aeson.Types (ToJSONKey)
 import Data.Bifunctor
 
--- The name is the basic type used for various kinds of names
+-- |The name is the basic type used for various kinds of names
 type Name = String
 
 type ArgName = Name

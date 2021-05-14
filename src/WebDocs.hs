@@ -7,6 +7,10 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This file defines the server for the Catln webdocs. It has two
+-- modes defined by the 'WDProvider': cached and live. The frontend
+-- for the webdocs is located inside the /webdocs directory of the
+-- repo.
 --------------------------------------------------------------------
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}

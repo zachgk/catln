@@ -7,6 +7,8 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This module defines most of the types that make up a Catln
+-- program.
 --------------------------------------------------------------------
 
 {-# LANGUAGE DeriveGeneric #-}

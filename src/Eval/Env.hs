@@ -7,6 +7,8 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This module defines functions for working with the 'Env' as part
+-- of "Eval".
 --------------------------------------------------------------------
 
 {-# LANGUAGE NamedFieldPuns #-}

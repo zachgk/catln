@@ -7,6 +7,8 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This module is the main module for parsing. It will read in files
+-- from their file paths and then parse into a 'RawPrgm'.
 --------------------------------------------------------------------
 
 {-# LANGUAGE OverloadedStrings #-}

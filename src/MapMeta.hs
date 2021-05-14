@@ -7,6 +7,7 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- MapMeta is a utility to update the metadata across a program.
 --------------------------------------------------------------------
 
 {-# LANGUAGE FlexibleInstances #-}

@@ -7,6 +7,10 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This module defines the 'runConstraints'. It executes the set
+-- of type variable constraints against the type variables until
+-- the variables converge. It tries to execute each constraint
+-- and then determines if it is changing the variable.
 --------------------------------------------------------------------
 {-# LANGUAGE NamedFieldPuns #-}
 

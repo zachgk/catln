@@ -7,6 +7,8 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This module desugars a 'RawPrgm' into a 'Prgm' by removing all
+-- language features outside of a minimalist core set.
 --------------------------------------------------------------------
 
 module Desugarf where

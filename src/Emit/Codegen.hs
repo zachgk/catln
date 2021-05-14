@@ -7,6 +7,9 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This module is used for "Emit" and provides basic primitives
+-- used for LLVM code generation. Most operations are wrappers to
+-- simplify usage of the "LLVM.AST" module.
 --------------------------------------------------------------------
 
 -- Originally from http://www.stephendiehl.com/llvm/#haskell-llvm-bindings

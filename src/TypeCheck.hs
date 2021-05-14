@@ -7,6 +7,15 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
+-- This is the main module for typechecking. It takes a program
+-- with some typing information and computes the rest of the typing
+-- information. It's general goal is to narrow down types as precise
+-- as possible.
+--
+-- The typechecking works through a constraint system. It converts
+-- the code into a number of type variables and rules describing
+-- relationships between those variables. Then, those relationships
+-- are applied until the typing has converged (no more changes).
 --------------------------------------------------------------------
 {-# LANGUAGE NamedFieldPuns #-}
 
