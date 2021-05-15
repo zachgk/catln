@@ -21,7 +21,6 @@ import           Text.Megaparsec            hiding (pos1)
 import qualified Text.Megaparsec.Char.Lexer as L
 
 import           Data.Either
-import qualified Data.HashMap.Strict        as H
 import           Data.List
 import           Parser.Expr
 import           Parser.Lexer
@@ -58,37 +57,14 @@ pArrowRes = do
   pos2 <- getSourcePos
   return $ PreTyped t (Just (pos1, pos2, ""))
 
-pMethodCallerType :: Parser PObjArg
-pMethodCallerType = do
-  pos1 <- getSourcePos
-  t <- singletonType <$> pLeafType
-  pos2 <- getSourcePos
-  _ <- symbol "."
-  return (PreTyped t (Just (pos1, pos2, "")), Nothing)
-
-pMethodCallerObj :: Parser PObjArg
-pMethodCallerObj = do
-  pos1 <- getSourcePos
-  obj <- pObjTree FunctionObj
-  pos2 <- getSourcePos
-  _ <- symbol "."
-  return (emptyMeta pos1 pos2, Just obj)
-
-pMethodCaller :: Parser PObjArg
-pMethodCaller = try pMethodCallerType <|> pMethodCallerObj
-
 pDeclLHS :: Parser PDeclLHS
 pDeclLHS = do
   pos1 <- getSourcePos
-  meth <-  optional $ try pMethodCaller
-  patt@(Pattern obj@Object{objArgs} guard) <- pPattern FunctionObj
-  let patt' = case meth of
-        Just meth' -> Pattern obj{objArgs = H.insert "this" meth' objArgs} guard
-        Nothing    -> patt
+  patt <- pPattern FunctionObj
   maybeArrMeta <- optional pArrowRes
   pos2 <- getSourcePos
   let arrMeta = fromMaybe (emptyMeta pos1 pos2) maybeArrMeta
-  return $ DeclLHS arrMeta patt'
+  return $ DeclLHS arrMeta patt
 
 pComment :: Parser String
 pComment = L.indentBlock scn p

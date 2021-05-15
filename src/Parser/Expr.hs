@@ -195,6 +195,14 @@ pPatternGuard = fromMaybe NoGuard <$> optional (pIfGuard
                                               <|> pElseGuard
                                             )
 
+pMethodCallerType :: Parser PObjArg
+pMethodCallerType = do
+  pos1 <- getSourcePos
+  t <- singletonType <$> pLeafType
+  pos2 <- getSourcePos
+  _ <- symbol "."
+  return (PreTyped t (Just (pos1, pos2, "")), Nothing)
+
 pObjTreeVar :: Parser (TypeVarName, ParseMeta)
 pObjTreeVar = do
   -- TODO: Should support multiple class identifiers such as <Eq Ord $T>
@@ -226,8 +234,8 @@ pObjTreeArgName = do
 pObjTreeArgs :: Parser [(ArgName, PObjArg)]
 pObjTreeArgs = sepBy1 (try pObjTreeArgPattern <|> pObjTreeArgName) (symbol ",")
 
-pObjTree :: ObjectBasis -> Parser PObject
-pObjTree basis = do
+pObjTreeInner :: ObjectBasis -> Parser PObject
+pObjTreeInner basis = do
   pos1 <- getSourcePos
   name <- opIdentifier <|> identifier <|> tidentifier
   vars <- optional $ angleBraces $ sepBy1 pObjTreeVar (symbol ",")
@@ -236,6 +244,18 @@ pObjTree basis = do
   let vars' = maybe H.empty H.fromList vars
   let args' = H.fromList $ fromMaybe [] args
   return $ Object (emptyMeta pos1 pos2) basis name vars' args'
+
+objTreeJoinMethods :: PObject -> PObject -> PObject
+objTreeJoinMethods obj@Object{objM} meth@Object{objArgs=methArgs} = meth{objArgs = H.insert "this" (emptyMetaM "meth" objM, Just obj) methArgs}
+
+pObjTree :: ObjectBasis -> Parser PObject
+pObjTree basis = do
+  maybeStartType <- optional $ try pMethodCallerType
+  objs <- sepBy1 (pObjTreeInner basis) (string ".")
+  let objs'@Object{objArgs} = foldl1 objTreeJoinMethods objs
+  return $ case maybeStartType of
+    Just startType -> objs'{objArgs = H.insert "this" startType objArgs}
+    Nothing        -> objs'
 
 pPattern :: ObjectBasis -> Parser PPattern
 pPattern basis = do
