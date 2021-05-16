@@ -148,9 +148,9 @@ function Guard(props) {
   const {guard, Expr, showExprMetas, Meta} = props;
   switch(guard.tag) {
   case "IfGuard":
-    return <span>if <Expr expr={guard.contents} Meta={Meta} showMetas={showExprMetas}/></span>;
+    return <span> <KeyWord>if</KeyWord> <Expr expr={guard.contents} Meta={Meta} showMetas={showExprMetas}/></span>;
   case "ElseGuard":
-    return "else";
+    return <span> <KeyWord>else</KeyWord></span>;
   case "NoGuard":
     return "";
   default:

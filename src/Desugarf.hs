@@ -106,7 +106,7 @@ currySubFunctions parentArgs decls expr annots = (decls', expr', annots')
 
 desObjDocComment :: [PDeclSubStatement] -> Maybe String
 desObjDocComment (RawDeclSubStatementComment doc: _) = Just doc
-desObjDocComment _ = Nothing
+desObjDocComment _                                   = Nothing
 
 removeSubDeclarations :: PDecl -> [PSemiDecl]
 removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern obj@Object{objM, objName, objArgs} guard1)) subStatements expr1) = decl':subDecls5

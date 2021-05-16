@@ -218,7 +218,7 @@ fromObject prefix isObjArg env (Object m basis name vars args doc) = do
   (vars', env2) <- mapMWithFEnvMapWithKey env1 (fromObjVar m' prefix') vars
   let fakeObjForArgs = Object m' basis name vars' H.empty doc
   (args', env3) <- mapMWithFEnvMapWithKey env2 (addObjArg fakeObjForArgs m' prefix' vars') args
-  let obj' = Object m' basis name vars' args' doc 
+  let obj' = Object m' basis name vars' args' doc
   (objValue, env4) <- fromMeta env3 BUpper (Just obj') (PreTyped (singletonType (PartialType (PTypeName name) H.empty H.empty H.empty PtArgExact)) (labelPos "objValue" $ getMetaPos m)) ("objValue" ++ name)
   let env5 = fInsert env4 name (DefVar objValue)
   let env6 = addConstraints env5 [BoundedByObjs BoundAllObjs m' | isObjArg]

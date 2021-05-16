@@ -311,15 +311,15 @@ function Expr(props) {
   case "RawMatch":
     let [, matchExpr, matchPatterns] = expr.contents;
     let showMPatterns = tagJoin(matchPatterns.map((pattern, patternIndex) => {
-      let [obj, guard] = pattern;
-      return (<span key={patternIndex}><Obj obj={obj} Meta={RawMeta}/><Guard guard={guard} Expr={Expr}/></span>);
+      let [[obj, guard], matchExpr] = pattern;
+      return (<div key={patternIndex}><Obj obj={obj} Meta={RawMeta}/><Guard guard={guard} Expr={Expr}/><KeyWord> =&gt;</KeyWord> <Expr expr={matchExpr} /></div>);
     }), "");
     return (<span><KeyWord>match</KeyWord> <Expr expr={matchExpr}/> <KeyWord>of</KeyWord> <div className={classes.indented}>{showMPatterns}</div></span>);
   case "RawCase":
     let [, caseExpr, casePatterns] = expr.contents;
     let showCPatterns = tagJoin(casePatterns.map((pattern, patternIndex) => {
-      let [obj, guard] = pattern;
-      return (<span key={patternIndex}><Obj obj={obj} Meta={RawMeta}/><Guard guard={guard} Expr={Expr}/></span>);
+      let [[obj, guard], caseExpr] = pattern;
+      return (<div key={patternIndex}><Obj obj={obj} Meta={RawMeta}/><Guard guard={guard} Expr={Expr}/><KeyWord> =&gt;</KeyWord> <Expr expr={caseExpr}/></div>);
     }), "");
     return (<span><KeyWord>case</KeyWord> <Expr expr={caseExpr}/> <KeyWord>of</KeyWord> <div className={classes.indented}>{showCPatterns}</div></span>);
   default:
@@ -379,9 +379,9 @@ export function Comment(props) {
   // Replace usages of [TypeName] and [ClassName] with catn:// link reference
   const regex = /\[(\S+)\][^[(]/g;
   const comment2 = comment.replaceAll(regex, (m, name) => {
-    if(name in classToType) {
+    if(classToType && name in classToType) {
       return `[${name}](catln://class/${name})${m.slice(-1)}`;
-    } else if(name in objNames) {
+    } else if(objNames && name in objNames) {
       return `[${name}](catln://type/${name})${m.slice(-1)}`;
     } else if(obj && name in obj.objArgs){
       return `[${name}](catln://arg/${name})${m.slice(-1)}`;
