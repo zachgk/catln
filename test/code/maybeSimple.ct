@@ -5,4 +5,4 @@ class Maybe<$T> = $T | Nothing
 defInt(Integer x) = x
 defInt(x=Nothing) = 0
 
-mainx(IO io) = io.exit(val=defInt(x=0))
+main{IO io} = io.exit(val=defInt(x=0))

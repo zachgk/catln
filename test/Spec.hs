@@ -45,9 +45,9 @@ runTest includeCore fileName = testCaseSteps fileName $ \step -> do
               assertFailure $ "Could not typecheck:" ++ prettyCNotes errs
             CRes _ tprgm -> do
               -- step $ T.unpack $ pShow $ tprgm
-              when (containsMainx fileName tprgm) $ do
-                step "Eval tests..."
-                case evalMainx fileName tprgm of
+              when (evalRunnable $ evalTargetMode "main" fileName tprgm) $ do
+                step "Eval Run..."
+                case evalRun "main" fileName tprgm of
                   CErr notes -> do
                     assertFailure $ "Could not eval: " ++ prettyCNotes notes
                   CRes notes io -> do
@@ -55,8 +55,8 @@ runTest includeCore fileName = testCaseSteps fileName $ \step -> do
                     case (notes, returnValue) of
                       ([], (0, _)) -> return () -- success
                       _ -> assertFailure $ "Bad result for:\n \t " ++ show (fst returnValue) ++ "\n \tNotes:" ++ prettyCNotes notes
-              step "evalBuild..."
-              case evalMain fileName tprgm of
+              step "Eval Build..."
+              case evalBuild "main" fileName tprgm of
                 CErr notes -> do
                   assertFailure $ "Could not eval: " ++ prettyCNotes notes
                 CRes _ ioRes -> do

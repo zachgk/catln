@@ -9,8 +9,8 @@ import {useParams} from 'react-router-dom';
 import {useApi, Loading, Obj, Val} from './Common';
 
 function Debug(props) {
-  const { prgmName } = useParams();
-  let apiResult = useApi(`/api/treebug?prgmName=${prgmName}`);
+  const { prgmName, fun } = useParams();
+  let apiResult = useApi(`/api/treebug?prgmName=${prgmName}&function=${fun}`);
 
   return (
     <Loading status={apiResult}>

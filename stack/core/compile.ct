@@ -73,14 +73,5 @@ module Catln
   www(String html) = CatlnResult(name="index.html", contents=html)
     # [www] is used to build web results.
 
-  mainx(IO io) -> IO
-    # [mainx] is the main function for calls to `catln run [FILE]`.
-      It matches the signature of an executable.
-
   llvm(c) -> CatlnResult
     # [llvm] runs the [LLVM Compiler](https://llvm.org/) to build the runnable argument [c] into a [CatlnResult] executable.
-
-  main else -> CatlnResult = llvm(c=mainx)
-    # [main] is the main function for calls to `catln build [FILE]`.
-      The default behavior, following this rule, is to find a runnable defined as [mainx] and compile it with [llvm].
-      If a different build is desired, define a [CatlnResult] in the value [main] instead of [mainx].

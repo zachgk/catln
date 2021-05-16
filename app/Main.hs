@@ -1,4 +1,5 @@
 
+{-# OPTIONS_GHC -Wno-type-defaults #-}
 module Main where
 
 import           CRes
@@ -17,8 +18,8 @@ import           Text.Printf
 import           WebDocs             (docServe)
 -- import Repl (repl)
 
-xRun :: String -> IO ()
-xRun prgmName = do
+xRun :: String -> String -> IO ()
+xRun prgmName function = do
   maybeRawPrgm <- readFiles True [prgmName]
   case aux maybeRawPrgm of
     CErr err   -> print err
@@ -32,10 +33,10 @@ xRun prgmName = do
       rawPrgm <- maybeRawPrgm
       desPrgm <- desFiles rawPrgm
       tprgm <- typecheckPrgm desPrgm
-      evalMainx prgmName tprgm
+      evalRun function prgmName tprgm
 
-xBuild :: String -> IO ()
-xBuild prgmName = do
+xBuild :: String -> String -> IO ()
+xBuild prgmName function = do
   maybeRawPrgm <- readFiles True [prgmName]
   case aux maybeRawPrgm of
     CErr err   -> print err
@@ -56,26 +57,30 @@ xBuild prgmName = do
       rawPrgm <- maybeRawPrgm
       desPrgm <- desFiles rawPrgm
       tprgm <- typecheckPrgm desPrgm
-      evalMain prgmName tprgm
+      evalBuild function prgmName tprgm
 
 xDoc :: String -> Bool -> IO ()
 xDoc prgmName cached = docServe cached True prgmName
 
 exec :: Command -> IO ()
-exec (RunFile fname)    = xRun fname
-exec (BuildFile fname)  = xBuild fname
-exec (Doc fname cached) = xDoc fname cached
+exec (RunFile file function)   = xRun file function
+exec (BuildFile file function) = xBuild file function
+exec (Doc fname cached)        = xDoc fname cached
 
 data Command
-  = BuildFile String
-  | RunFile String
+  = BuildFile String String
+  | RunFile String String
   | Doc String Bool
 
 cRun :: Parser Command
-cRun = RunFile <$> argument str (metavar "FILE" <> help "The file to run")
+cRun = RunFile
+  <$> argument str (metavar "FILE" <> help "The file to run")
+  <*> argument str (metavar "FUN" <> value "main" <> help "The function in the file to run")
 
 cBuild :: Parser Command
-cBuild = BuildFile <$> argument str (metavar "FILE" <> help "The file to build")
+cBuild = BuildFile
+  <$> argument str (metavar "FILE" <> help "The file to build")
+  <*> argument str (metavar "FUN" <> value "main" <> help "The function in the file to build")
 
 cDoc :: Parser Command
 cDoc = Doc

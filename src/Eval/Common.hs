@@ -144,6 +144,9 @@ resultLeaf, queueLeaf :: PartialType
 resultLeaf = PartialType (PTypeName "CatlnResult") H.empty H.empty (H.fromList [("name", strType), ("contents", strType)]) PtArgExact
 queueLeaf = PartialType (PTypeName "llvmQueue") H.empty H.empty H.empty PtArgExact
 
+resultType :: Type
+resultType = singletonType resultLeaf
+
 getValType :: Val -> PartialType
 getValType IntVal{} = intLeaf
 getValType FloatVal{} = floatLeaf
@@ -212,17 +215,17 @@ instance Show ResArrowTree where
     where
       showArg (leaf, tree) = show leaf ++ " -> " ++ show tree
       args' = intercalate ", " $ map showArg $ H.toList args
-  show (ResArrowCond _ ifTrees elseTree) = "( [" ++ ifTrees' ++ "] ( else " ++ show elseTree ++ ") )"
+  show (ResArrowCond _ ifTrees elseTree) = "Cond ( [" ++ ifTrees' ++ "] ( else " ++ show elseTree ++ ") )"
     where
       showIfTree (condTree, thenTree) = "if " ++ show condTree ++ " then " ++ show thenTree
       ifTrees' = intercalate ", " $ map showIfTree ifTrees
-  show (ResArrowTuple name args) = if H.null args
+  show (ResArrowTuple name args) = "Tuple " ++ if H.null args
     then name
     else name ++ "(" ++ args' ++ ")"
     where
       showArg (argName, val) = argName ++ " = " ++ show val
       args' = intercalate ", " $ map showArg $ H.toList args
-  show (ResArrowTupleApply base argName argVal) = printf "(%s)(%s = %s)" (show base) argName (show argVal)
+  show (ResArrowTupleApply base argName argVal) = printf "Apply (%s)(%s = %s)" (show base) argName (show argVal)
 
 
 -------------------------------------------------------------------------------

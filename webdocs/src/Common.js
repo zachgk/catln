@@ -246,9 +246,27 @@ function PartialName(props) {
 
 function Obj(props) {
   const {obj, details, Meta} = props;
-  const {objM, objBasis, objName, objVars, objArgs, objDoc} = obj;
-  let showDoc = null;
-  
+  let {objM, objBasis, objName, objVars, objArgs, objDoc} = obj;
+
+  let showContext;
+  if(objName === "Context") {
+    const ctxArgs = Object.assign({}, objArgs);
+    delete ctxArgs.value;
+    showContext = (
+      <span>
+        &#123;
+        {tagJoin(Object.keys(ctxArgs).map(arg => <span key={arg}><Meta data={ctxArgs[arg][0]}/> {arg}</span>), ", ")}
+        &#125;
+      </span>);
+    let valueObj = objArgs.value[1];
+    objM = valueObj.objM;
+    objBasis = valueObj.objBasisi;
+    objName = valueObj.objName;
+    objVars = valueObj.objVars;
+    objArgs = valueObj.objArgs;
+    objDoc = valueObj.objDoc;
+  }
+
   let showVars;
   if(Object.keys(objVars).length > 0) {
     showVars = (
@@ -277,6 +295,7 @@ function Obj(props) {
   }
 
   let showObjDetails;
+  let showDoc = null;
   if(details) {
     if(objDoc) {
       showDoc = (<div><Comment comment={objDoc} obj={obj} /></div>);
@@ -287,7 +306,7 @@ function Obj(props) {
   return (<span>
             {showDoc}
             {showObjDetails}
-            <span>{showCaller}<PTypeName name={objName}/>{showVars}{showArgs}</span>
+            <span>{showCaller}<PTypeName name={objName}/>{showContext}{showVars}{showArgs}</span>
           </span>
          );
 }

@@ -43,6 +43,7 @@ import qualified Data.HashSet         as S
 import           Data.Hashable
 import           Emit.Codegen
 import           Emit.Runtime         (genType, primEnv)
+import           Eval.ExprBuilder
 import qualified LLVM.AST.Float       as F
 import           LLVM.AST.Type        (i32, i8)
 import           LLVM.AST.Typed       (typeOf)
@@ -334,11 +335,6 @@ codegenTasks env@LEnv{lvTbEnv, lvClassMap} = do
               codegenStruct str
               codegenTasks env
         [] -> return ()
-
-applyIO :: EExpr -> EExpr
-applyIO input@(Value m name) = TupleApply applyMeta (m, input) "io" (Arg (Typed ioType Nothing) "io")
-  where applyMeta = Typed (singletonType (PartialType (PTypeName name) H.empty H.empty (H.singleton "io" ioType) PtArgExact)) Nothing
-applyIO _ = error "Bad applyIO"
 
 codegenPrgm :: EExpr -> PartialType -> Type -> EPrgm -> LLVM ()
 codegenPrgm input srcType destType tprgm@(_, classMap, _) = do

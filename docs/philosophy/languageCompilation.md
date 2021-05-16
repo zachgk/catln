@@ -32,7 +32,7 @@ Overall, an expandable import system would help resolve the requirements on code
 
 Potentially the most powerful area is by changing the compiler targets. It is standard to think of a program producing a single binary executable. In the current design, this executable is produced by building the system into a tree form, generating the tree into LLVM, optimizing the LLVM, and saving using LLVM.
 
-However, there is another way to consider it. The main function of the program has the following signature `mainx(IO io) -> IO`. It we create a type `CatlnLLVMExecutable`, the final compiler stages could be described as metaprogramming `llvm(c=runnable(IO io) -> IO) -> CatlnLLVMExecutable`. This function could be written within the standard library instead of the compiler.
+However, there is another way to consider it. The main function of the program has the following signature `main{IO io} -> IO`. It we create a type `CatlnLLVMExecutable`, the final compiler stages could be described as metaprogramming `llvm(c=runnable{IO io} -> IO) -> CatlnLLVMExecutable`. This function could be written within the standard library instead of the compiler.
 
 While it is possible that the code will be more difficult, it shouldn't be too large of a difference. It shouldn't be crazy given the power of implicit conversions, multi-level functions, and macros and will end up fairly similar to simply writing it in catln to begin with.
 

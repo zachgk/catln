@@ -105,11 +105,18 @@ function Statement(props) {
 
   switch(statement.tag) {
   case "RawDeclStatement":
-    const objName = statement.contents[0][1][0].objName;
-    if(objName === "main" || objName === "mainx") {
+    const obj = statement.contents[0][1][0];
+    let objName = obj.objName;
+    const noArgObj = Object.keys(obj.objArgs).length === 0;
+    let contextObj = false;
+    if(obj.objName === "Context" && Object.keys(obj.objArgs['value'][1].objArgs).length === 0) {
+      contextObj = true;
+      objName = obj.objArgs['value'][1].objName;
+    }
+    if(noArgObj || contextObj) {
       return (
         <div>
-          <PlayButton />
+          <PlayButton fun={objName}/>
           <Decl contents={statement.contents} />
         </div>
       );
@@ -333,7 +340,8 @@ function RawMeta(props) {
   return <Type data={tp} />;
 }
 
-function PlayButton() {
+function PlayButton(props) {
+  const {fun} = props;
   let history = useHistory();
   let {prgmName} = useContext(ResMaps);
   const [open, setOpen] = useState(false);
@@ -365,8 +373,8 @@ function PlayButton() {
         open={open}
         onClose={handleClose}
       >
-        <MenuItem onClick={linkClose(`/build/${prgmName}`)}>Build</MenuItem>
-        <MenuItem onClick={linkClose(`/debug/${prgmName}`)}>Debug</MenuItem>
+        <MenuItem onClick={linkClose(`/build/${prgmName}/${fun}`)}>Build</MenuItem>
+        <MenuItem onClick={linkClose(`/debug/${prgmName}/${fun}`)}>Debug</MenuItem>
       </Menu>
     </span>
   );

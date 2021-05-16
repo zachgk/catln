@@ -150,25 +150,27 @@ annot #assert(Boolean test)
 
 ## Programs
 
-There are two kinds of Catln programs, full builds and executables. The type of program is defined based on how you define the appropriate type of main.
+There are two operations that Catln can execute on a program: running and building.
 
-### Executable - mainx
+### Running
 
-A mainx defines an executable program. This is most similar to what you would see in most programming languages. The IO argument will eventually be used to define interactions with stdin, stdout, exiting the process, and program arguments.
-
-The signature for mainx should be:
+A runnable program is one which can be executed. It is most similar to what you would see in most programming languages. It has two signatures:
 
 ```
-mainx(IO io) -> IO
+f -> Showable
+f{IO io} -> IO
 ```
-
 
 ### Build - main
 
 A full build produces a program that does not necessarily consist of just a single executable. The only current example is [the web test](../test/build/web.ct) which produces a single page website. In the future, other types of builds will be created.
 
-The signature for main should be:
+In addition, some runnable functions can also be built. This corresponds to applying the `llvm` macro to compile the runnable into a result. The build results will be created in the `build` directory.
+
+The possible signatures to build are:
 
 ```
-main -> CatlnResult
+f{IO io} -> IO
+f -> CatlnResult
+f{IO io} -> CatlnResult
 ```

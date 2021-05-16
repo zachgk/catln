@@ -5,8 +5,8 @@ import {useParams} from 'react-router-dom';
 import {useApi, Loading, Val} from './Common';
 
 function Build() {
-  const { prgmName } = useParams();
-  let apiResult = useApi(`/api/evalBuild?prgmName=${prgmName}`);
+  const { prgmName, fun } = useParams();
+  let apiResult = useApi(`/api/evalBuild?prgmName=${prgmName}&function=${fun}`);
 
   return (
     <Loading status={apiResult}>

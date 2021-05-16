@@ -56,10 +56,10 @@ function App() {
           <Route path="/typeinfer/:prgmName">
             <TypeInfer />
           </Route>
-          <Route path="/debug/:prgmName">
+          <Route path="/debug/:prgmName/:fun">
             <Debug />
           </Route>
-          <Route path="/build/:prgmName">
+          <Route path="/build/:prgmName/:fun">
             <Build />
           </Route>
         </Switch>

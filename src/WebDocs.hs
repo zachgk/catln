@@ -28,7 +28,7 @@ import           Network.Wai.Middleware.Static
 import           CRes
 import           Data.Maybe                    (fromJust)
 import           Desugarf                      (desFiles)
-import           Eval                          (evalAnnots, evalMain, evalMainx)
+import           Eval                          (evalAnnots, evalBuild, evalRun)
 import           Eval.Common                   (EvalResult, Val (..))
 import           Parser                        (readFiles)
 import           Parser.Syntax                 (DesPrgm, PPrgmGraphData)
@@ -118,26 +118,26 @@ getTPrgmJoined provider = do
   base <- getTPrgm provider
   return (mergePrgms . map fst3 . graphToNodes <$> base)
 
-getTreebug :: WDProvider -> String -> IO EvalResult
-getTreebug provider prgmName = do
+getTreebug :: WDProvider -> String -> String -> IO EvalResult
+getTreebug provider prgmName function = do
   base <- getTPrgm provider
-  let pre = base >>= evalMainx prgmName
+  let pre = base >>= evalRun function prgmName
   case pre of
     CRes _ r -> snd <$> r
     CErr _   -> fail "No eval result found"
 
-getEvaluated :: WDProvider -> String -> IO Integer
-getEvaluated provider prgmName = do
+getEvaluated :: WDProvider -> String -> String -> IO Integer
+getEvaluated provider prgmName function = do
   base <- getTPrgm provider
-  let pre = base >>= evalMainx prgmName
+  let pre = base >>= evalRun function prgmName
   case pre of
     CRes _ r -> fst <$> r
     CErr _   -> return 999
 
-getEvalBuild :: WDProvider -> String -> IO Val
-getEvalBuild provider prgmName = do
+getEvalBuild :: WDProvider -> String -> String -> IO Val
+getEvalBuild provider prgmName function = do
   base <- getTPrgm provider
-  let pre = base >>= evalMain prgmName
+  let pre = base >>= evalBuild function prgmName
   case pre of
     CRes _ r -> fst <$> r
     CErr _   -> return NoVal
@@ -150,10 +150,10 @@ getEvalAnnots provider prgmName = do
     CRes _ r -> return r
     CErr _   -> return []
 
-getWeb :: WDProvider -> String -> IO String
-getWeb provider prgmName = do
+getWeb :: WDProvider -> String -> String -> IO String
+getWeb provider prgmName function = do
   base <- getTPrgm provider
-  let pre = base >>= evalMain prgmName
+  let pre = base >>= evalBuild function prgmName
   case pre of
     CRes _ r -> do
       (TupleVal _ args, _) <- r
@@ -222,22 +222,26 @@ docApiBase provider = do
 
   get "/api/treebug" $ do
     prgmName <- param "prgmName"
-    treebug <- liftAndCatchIO $ getTreebug provider prgmName
+    function <- param "function" `rescue` (\_ -> return "main")
+    treebug <- liftAndCatchIO $ getTreebug provider prgmName function
     json $ Success treebug ([] :: [String])
 
   get "/api/eval" $ do
     prgmName <- param "prgmName"
-    evaluated <- liftAndCatchIO $ getEvaluated provider prgmName
+    function <- param "function" `rescue` (\_ -> return "main")
+    evaluated <- liftAndCatchIO $ getEvaluated provider prgmName function
     json $ Success evaluated ([] :: [String])
 
   get "/api/evalBuild" $ do
     prgmName <- param "prgmName"
-    build <- liftAndCatchIO $ getEvalBuild provider prgmName
+    function <- param "function" `rescue` (\_ -> return "main")
+    build <- liftAndCatchIO $ getEvalBuild provider prgmName function
     json $ Success build ([] :: [String])
 
   get "/api/web" $ do
     prgmName <- param "prgmName"
-    build <- liftAndCatchIO $ getWeb provider prgmName
+    function <- param "function" `rescue` (\_ -> return "main")
+    build <- liftAndCatchIO $ getWeb provider prgmName function
     html (T.pack build)
 
 

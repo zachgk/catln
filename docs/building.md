@@ -35,10 +35,10 @@ Now that it is installed, the compiler should be available in your path. You can
 
 There are several subcommands available within the compiler.
 
-You can use `catln run [FILEPATH]` to run a particular file. It will expect to find a definition of `mainx` within that file. This command must be run from the directory of `$CATLN_HOME`.
+You can use `catln run FILEPATH [FUN]` to run a particular file. It will expect to find a definition of `[FUN]` within that file to run. Passing `[FUN]` is optional and the default is the function named `main`. This command must be run from the directory of `$CATLN_HOME`.
 
-You can use `catln build [FILEPATH]` to build a particular file. It will expect to find a definition of `main` within that file defining what to build. This command must be run from the directory of `$CATLN_HOME`.
+You can use `catln build FILEPATH [FUN]` to build a particular file. It will expect to find a definition of `[FUN]` within that file defining what to build. Passing `[FUN]` is optional and the default is the function named `main`. This command must be run from the directory of `$CATLN_HOME`.
 
-You can use `catln doc [PATH]` to run the doc server on port `8080`. It will serve all `.ct` files located recursively in the `[PATH]` if it is a directory, or just `[PATH]` if not. It will also include all dependencies in the doc build. This command must be run from the directory of `$CATLN_HOME` and requires some additional installation (see above).
+You can use `catln doc PATH` to run the doc server on port `8080`. It will serve all `.ct` files located recursively in the `PATH` if it is a directory, or just `PATH` if not. It will also include all dependencies in the doc build. This command must be run from the directory of `$CATLN_HOME` and requires some additional installation (see above).
 
 There are also several additional options to run in the [building for development document](contrib/building.md).

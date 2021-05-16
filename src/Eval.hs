@@ -12,6 +12,7 @@
 -- for the program.
 --------------------------------------------------------------------
 {-# LANGUAGE NamedFieldPuns #-}
+{-# OPTIONS_GHC -Wno-deferred-type-errors #-}
 
 module Eval where
 
@@ -29,17 +30,54 @@ import           Data.Maybe
 import           Emit                (codegenExInit)
 import           Eval.Common
 import           Eval.Env
+import           Eval.ExprBuilder
 import           Eval.Runtime
 import           Text.Printf
 import           TreeBuild
 import           Utils
 
--- Checks if mainx is defined (not declared)
-containsMainx :: String -> EPrgmGraphData -> Bool
-containsMainx prgmName prgmGraphData = any objArrowsContains objMap
+data EvalMode
+  = EvalRunWithContext -- ^ Run f{IO io} -> IO
+  | EvalRun  -- ^ Run f -> Show
+  | EvalBuildWithContext -- ^ Build f{IO io} -> CatlnResult
+  | EvalBuild -- ^ Build f -> CatlnResult
+  | NoEval -- ^ Can't run or build
+  deriving Eq
+
+evalRunnable :: EvalMode -> Bool
+evalRunnable EvalRunWithContext = True
+evalRunnable EvalRun            = True
+evalRunnable _                  = False
+
+evalBuildable :: EvalMode -> Bool
+evalBuildable EvalRunWithContext   = True
+evalBuildable EvalBuildWithContext = True
+evalBuildable EvalBuild            = True
+evalBuildable _                    = False
+
+-- | Checks if a function is defined (not declared) and finds the 'EvalMode' of the function.
+-- It will look through all of the objects to see if they match the function name or are Context(value=function name).
+-- Then, those found functions can be checked for run/build based on whether the return type is a CatlnResult.
+evalTargetMode :: String -> String -> EPrgmGraphData -> EvalMode
+evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe $ mapMaybe objArrowsContains objMap
   where
-    (objMap, _, _) = prgmFromGraphData prgmName prgmGraphData
-    objArrowsContains (Object{objName}, arrows) = objName == "mainx" && any arrowDefined arrows
+    (objMap, classMap, _) = prgmFromGraphData prgmName prgmGraphData
+    objArrowsContains (_, arrows) | not (any arrowDefined arrows) = Nothing
+    objArrowsContains (Object{objName, objArgs}, Arrow arrM _ _ _:_) = case objName of
+      "Context" -> case H.lookup "value" objArgs of
+        Just (_, Just Object{objName=valObjName}) -> if valObjName == function
+          then Just $ if isBuildable (getMetaType arrM)
+            then EvalBuildWithContext
+            else EvalRunWithContext
+
+          else Nothing
+        _ -> Nothing
+      _ | objName == function -> if isBuildable (getMetaType arrM)
+          then Just EvalBuild
+          else Just EvalRun
+      _ -> Nothing
+    objArrowsContains _ = Nothing
+    isBuildable tp = not $ isBottomType $ intersectTypes classMap tp resultType
     arrowDefined (Arrow _ _ _ maybeExpr) = isJust maybeExpr
 
 evalCompAnnot :: Env -> Val -> CRes Env
@@ -142,30 +180,42 @@ evalAnnots prgmName prgmGraphData = do
     val <- fst <$> eval env tree
     return (annot, val)
 
-evalPrgm :: EExpr -> PartialType -> Type -> String -> EPrgmGraphData -> CRes (IO (Integer, EvalResult))
-evalPrgm input src@PartialType{ptName=PTypeName{}} dest prgmName prgmGraphData = do
+evalRun :: String -> String -> EPrgmGraphData -> CRes (IO (Integer, EvalResult))
+evalRun function prgmName prgmGraphData = do
   let prgm = prgmFromGraphData prgmName prgmGraphData
+  input <-  case evalTargetMode function prgmName prgmGraphData of
+        EvalRunWithContext ->
+          -- Case for eval Context(value=main, io=IO)
+          return $ eApply (eApply (eVal "Context") "value" (eVal function)) "io" ioArg
+        EvalRun ->
+          -- Case for eval main
+          return $ eVal function
+        _ -> CErr [MkCNote $ GenCErr Nothing $ printf "Eval could not find a function %s to run" (show function)]
+  let src = getExprPartialType input
+  let dest = ioType
   (initTree, env) <- evalBuildPrgm input src dest prgm
   let env2 = evalSetArgs env (H.singleton "io" (IOVal 0 $ pure ()))
   (res, env') <- eval env2 initTree
   case res of
     (IOVal r io) -> return (io >> pure (r, evalResult env'))
     _ -> CErr [MkCNote $ GenCErr Nothing "Eval did not return an instance of IO"]
-evalPrgm _ PartialType{ptName=PClassName{}} _ _ _ = error "Can't eval class"
 
-evalMainx :: String -> EPrgmGraphData -> CRes (IO (Integer, EvalResult))
-evalMainx = evalPrgm mainExpr mainPartial ioType
-  where mainPartial = PartialType (PTypeName "mainx") H.empty H.empty (H.singleton "io" ioType) PtArgExact
-        mainPartialEmpty = Typed (singletonType (PartialType (PTypeName "mainx") H.empty H.empty H.empty PtArgExact)) Nothing
-        mainExpr = TupleApply (Typed (singletonType mainPartial) Nothing) (mainPartialEmpty, Value mainPartialEmpty "mainx") "io" (Arg (Typed ioType Nothing) "io")
-
-evalMain :: String -> EPrgmGraphData -> CRes (IO (Val, EvalResult))
-evalMain prgmName prgmGraphData = do
-  let srcName = "main"
-  let src = PartialType (PTypeName srcName) H.empty H.empty H.empty PtArgExact
-  let input = Value (Typed (singletonType src) Nothing) "main"
-  let dest = singletonType (PartialType (PTypeName "CatlnResult") H.empty H.empty (H.fromList [("name", strType), ("contents", strType)]) PtArgExact)
+evalBuild :: String -> String -> EPrgmGraphData -> CRes (IO (Val, EvalResult))
+evalBuild function prgmName prgmGraphData = do
   let prgm = prgmFromGraphData prgmName prgmGraphData
+  input <-  case evalTargetMode function prgmName prgmGraphData of
+        EvalRunWithContext ->
+          -- Case for eval llvm(c=Context(value=main, io=IO))
+          return $ eApply (eVal "llvm") "c" (eVal function)
+        EvalBuildWithContext ->
+          -- Case for buildable Context(value=main, io=IO)
+          return $ eApply (eApply (eVal "Context") "value" (eVal function)) "io" ioArg
+        EvalBuild ->
+          -- Case for buildable main
+          return $ eVal function
+        _ -> CErr [MkCNote $ GenCErr Nothing $ printf "Eval could not find a function %s to build" (show function)]
+  let src = getExprPartialType input
+  let dest = resultType
   (initTree, env) <- evalBuildPrgm input src dest prgm
   (res, env') <- eval env initTree
   case res of

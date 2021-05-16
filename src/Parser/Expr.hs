@@ -238,12 +238,17 @@ pObjTreeInner :: ObjectBasis -> Parser PObject
 pObjTreeInner basis = do
   pos1 <- getSourcePos
   name <- opIdentifier <|> identifier <|> tidentifier
+  maybeCtx <- optional $ curlyBraces $ sepBy pObjTreeArgName (symbol ",")
   vars <- optional $ angleBraces $ sepBy1 pObjTreeVar (symbol ",")
   args <- optional $ parens pObjTreeArgs
   pos2 <- getSourcePos
   let vars' = maybe H.empty H.fromList vars
   let args' = H.fromList $ fromMaybe [] args
-  return $ Object (emptyMeta pos1 pos2) basis name vars' args' Nothing
+  let objMeta = emptyMeta pos1 pos2
+  let obj = Object objMeta basis name vars' args' Nothing
+  return $ case maybeCtx of
+    Just ctx -> Object (emptyMetaM "context" objMeta) basis "Context" H.empty (H.insert "value" (emptyMetaN, Just obj) $ H.fromList ctx) Nothing
+    Nothing -> obj
 
 objTreeJoinMethods :: PObject -> PObject -> PObject
 objTreeJoinMethods obj@Object{objM} meth@Object{objArgs=methArgs} = meth{objArgs = H.insert "this" (emptyMetaM "meth" objM, Just obj) methArgs}

@@ -3,4 +3,4 @@
 fact(Integer x) if x == 1 = 1
 fact(Integer x) else = x * fact(x=x-1)
 
-mainx(IO io) = io.exit(val=fact(3) - 6)
+main{IO io} = io.exit(val=fact(3) - 6)
