@@ -40,3 +40,29 @@ stack repl
 # Unlike the main tests, this one does not include the core library
 *...> test
 ```
+
+### Webdocs
+
+Webdocs can be built using the standard way described in the [main building document](../building.md). In addition, another strategy for building webdocs can be done during development. It benefits from being somewhat faster to run, being runnable from the REPL without building code, and featuring live-reload for making changes to the webdocs.
+
+In one command line, start the webdocs server using:
+
+```
+cd webdocs
+npm start
+```
+
+Then, in another command line, run the webdocs API serving:
+
+```
+# See above for description of stack repl
+stack repl
+*...> :l test/Spec
+
+# Run docs for test name "id" located in "test/code/id.ct"
+*..> mtd "id"
+```
+
+Then, the API server should be available at `localhost:31204`.
+
+The local testing site is available at `localhost:3000`.

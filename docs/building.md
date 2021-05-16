@@ -2,10 +2,11 @@
 
 ## Prerequisites
 
-There are two main prerequisites for installing Catln:
+There are three main prerequisites for installing Catln:
 
 - [Haskell GHC comiler](https://www.haskell.org/ghc/distribution_packages.html)
 - [Haskell Stack](https://docs.haskellstack.org/en/stable/install_and_upgrade/), to build the compiler and manage Haskell dependencies.
+- LLVM 8 which can be installed through a package manager such as `brew install llvm@8` or `apt install llvm-8`
 
 ## Installation
 
