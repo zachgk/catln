@@ -85,7 +85,7 @@ labelPos _ Nothing = Nothing
 
 type ArgMetaMapWithSrc m = H.HashMap ArgName (m, Type)
 formArgMetaMapWithSrc :: ClassMap -> Object m -> PartialType -> ArgMetaMapWithSrc m
-formArgMetaMapWithSrc _ (Object m _ name _ args) src | H.null args = H.singleton name (m, singletonType src)
+formArgMetaMapWithSrc _ (Object m _ name _ args _) src | H.null args = H.singleton name (m, singletonType src)
 formArgMetaMapWithSrc classMap Object{objArgs} PartialType{ptArgs=srcArgs} = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg objArgs
   where
     unionCombine _ _ = error "Duplicate var matched"

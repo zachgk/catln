@@ -134,7 +134,8 @@ data Object m = Object {
   objBasis :: ObjectBasis,
   objName  :: TypeName,
   objVars  :: H.HashMap TypeVarName m,
-  objArgs  :: H.HashMap ArgName (ObjArg m)
+  objArgs  :: H.HashMap ArgName (ObjArg m),
+  objDoc   :: Maybe String
                        }
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
@@ -171,7 +172,7 @@ instance Show e => Show (Guard e) where
 
 instance Show m => Show (Object m) where
   -- show (Object m basis name vars args) = printf "%s %s (%s) %s %s" (show basis) name (show m) maybeVarsString maybeArgsString
-  show (Object _ basis name vars args) = printf "%s %s %s %s" (show basis) name maybeVarsString maybeArgsString
+  show (Object _ basis name vars args _) = printf "%s %s %s %s" (show basis) name maybeVarsString maybeArgsString
     where
       showVar (varName, varVal) = printf "%s = %s" varName (show varVal)
       maybeVarsString :: String
@@ -232,7 +233,7 @@ instance ExprClass IExpr where
 
 type ArgMetaMap m = H.HashMap ArgName m
 formArgMetaMap :: Object m -> ArgMetaMap m
-formArgMetaMap (Object m _ name _ args) | H.null args = H.singleton name m
+formArgMetaMap (Object m _ name _ args _) | H.null args = H.singleton name m
 formArgMetaMap Object{objArgs} = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg objArgs
   where
     unionCombine _ _ = error "Duplicate var matched"

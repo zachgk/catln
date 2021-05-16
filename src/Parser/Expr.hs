@@ -243,7 +243,7 @@ pObjTreeInner basis = do
   pos2 <- getSourcePos
   let vars' = maybe H.empty H.fromList vars
   let args' = H.fromList $ fromMaybe [] args
-  return $ Object (emptyMeta pos1 pos2) basis name vars' args'
+  return $ Object (emptyMeta pos1 pos2) basis name vars' args' Nothing
 
 objTreeJoinMethods :: PObject -> PObject -> PObject
 objTreeJoinMethods obj@Object{objM} meth@Object{objArgs=methArgs} = meth{objArgs = H.insert "this" (emptyMetaM "meth" objM, Just obj) methArgs}
