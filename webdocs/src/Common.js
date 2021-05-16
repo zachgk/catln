@@ -5,6 +5,8 @@ import {Link} from 'react-router-dom';
 
 import SyntaxHighlighter from 'react-syntax-highlighter';
 
+import {Comment} from './DocsPage';
+
 function tagJoin(lst, joinWith) {
   return lst.reduce((acc, x) => acc == null ? [x] : <>{acc}{joinWith}{x}</>, null);
 }
@@ -244,8 +246,9 @@ function PartialName(props) {
 
 function Obj(props) {
   const {obj, details, Meta} = props;
-  const {objM, objBasis, objName, objVars, objArgs} = obj;
-
+  const {objM, objBasis, objName, objVars, objArgs, objDoc} = obj;
+  let showDoc = null;
+  
   let showVars;
   if(Object.keys(objVars).length > 0) {
     showVars = (
@@ -275,10 +278,14 @@ function Obj(props) {
 
   let showObjDetails;
   if(details) {
+    if(objDoc) {
+      showDoc = (<div><Comment comment={objDoc} obj={obj} /></div>);
+    }
     showObjDetails = (<span className={details}>{objBasis} - <Meta data={objM}/></span>);
   }
 
   return (<span>
+            {showDoc}
             {showObjDetails}
             <span>{showCaller}<PTypeName name={objName}/>{showVars}{showArgs}</span>
           </span>

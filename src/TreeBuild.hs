@@ -253,6 +253,6 @@ buildArrow env objPartial obj@Object{objVars} arrow@(Arrow (Typed am _) compAnno
 buildRoot :: TBEnv -> TBExpr -> PartialType -> Type -> CRes ResArrowTree
 buildRoot env input src dest = do
   let env' = env{tbName = printf "root"}
-  let emptyObj = Object (Typed (singletonType src) Nothing) FunctionObj "EmptyObj" H.empty H.empty
+  let emptyObj = Object (Typed (singletonType src) Nothing) FunctionObj "EmptyObj" H.empty H.empty Nothing
   let objSrc = (src, emptyObj)
   resolveTree env' objSrc (ExprArrow input (getMetaType $ getExprMeta input) dest)

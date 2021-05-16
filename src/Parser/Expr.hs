@@ -235,7 +235,7 @@ pObjTree basis = do
   pos2 <- getSourcePos
   let vars' = maybe H.empty H.fromList vars
   let args' = H.fromList $ fromMaybe [] args
-  return $ Object (emptyMeta pos1 pos2) basis name vars' args'
+  return $ Object (emptyMeta pos1 pos2) basis name vars' args' Nothing
 
 pPattern :: ObjectBasis -> Parser PPattern
 pPattern basis = do

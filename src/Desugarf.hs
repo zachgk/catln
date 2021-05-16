@@ -104,9 +104,14 @@ currySubFunctions parentArgs decls expr annots = (decls', expr', annots')
     decls' = map (\(PSemiDecl lhs an e) -> PSemiDecl lhs an (fmap (currySubFunctionsUpdateExpr toUpdate parentArgs) e)) decls2
     annots' = map (currySubFunctionsUpdateExpr toUpdate parentArgs) annots
 
+desObjDocComment :: [PDeclSubStatement] -> Maybe String
+desObjDocComment (RawDeclSubStatementComment doc: _) = Just doc
+desObjDocComment _ = Nothing
+
 removeSubDeclarations :: PDecl -> [PSemiDecl]
 removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern obj@Object{objM, objName, objArgs} guard1)) subStatements expr1) = decl':subDecls5
   where
+    objDoc = desObjDocComment subStatements
     (subDecls, annots1) = splitDeclSubStatements subStatements
     subDecls2 = concatMap removeSubDeclarations subDecls
     (subDecls21, expr2) = traverse semiDesExpr expr1
@@ -115,7 +120,7 @@ removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern obj@Object{objM, objName, 
     subDecls3 = concat [subDecls2, subDecls21, subDecls22, subDecls23]
     (subDecls4, expr3, annots3, objM', arrM') = scopeSubDeclFunNames objName subDecls3 expr2 annots2 objM arrM
     (subDecls5, expr4, annots4) = currySubFunctions objArgs subDecls4 expr3 annots3
-    decl' = PSemiDecl (DeclLHS arrM' (Pattern obj{objM=objM'} guard2)) annots4 expr4
+    decl' = PSemiDecl (DeclLHS arrM' (Pattern obj{objDoc = objDoc, objM=objM'} guard2)) annots4 expr4
 
 desExpr :: PArgMetaMap -> PSExpr -> DesExpr
 desExpr _ (PSCExpr m c) = ICExpr m c
@@ -149,8 +154,8 @@ semiDesExpr r@(RawIfThenElse m i t e) = (concat [subI, subT, subE, [elseDecl, if
     (subI, i') = semiDesExpr i
     (subT, t') = semiDesExpr t
     (subE, e') = semiDesExpr e
-    ifDecl = PSemiDecl (DeclLHS (emptyMetaE "obj" i) (Pattern (Object (emptyMetaE "patt" i) FunctionObj condName H.empty H.empty) (IfGuard i'))) [] (Just t')
-    elseDecl = PSemiDecl (DeclLHS (emptyMetaE "obj" e) (Pattern (Object (emptyMetaE "patt" e) FunctionObj condName H.empty H.empty) ElseGuard)) [] (Just e')
+    ifDecl = PSemiDecl (DeclLHS (emptyMetaE "obj" i) (Pattern (Object (emptyMetaE "patt" i) FunctionObj condName H.empty H.empty Nothing) (IfGuard i'))) [] (Just t')
+    elseDecl = PSemiDecl (DeclLHS (emptyMetaE "obj" e) (Pattern (Object (emptyMetaE "patt" e) FunctionObj condName H.empty H.empty Nothing) ElseGuard)) [] (Just e')
     expr' = PSValue m condName
 semiDesExpr r@(RawMatch m e matchItems) = (subE ++ subMatchItems, expr')
   where
@@ -164,7 +169,7 @@ semiDesExpr r@(RawMatch m e matchItems) = (subE ++ subMatchItems, expr')
         (subPattGuard, pattGuard') = semiDesGuard pattGuard
         (subMatchExpr, matchExpr') = semiDesExpr matchExpr
         matchArg = H.singleton argName (emptyMetaM "arg" m, Just patt)
-        matchItemExpr' = PSemiDecl (DeclLHS (emptyMetaM "obj" m) (Pattern (Object (emptyMetaM "patt" m) FunctionObj condName H.empty matchArg) pattGuard')) [] (Just matchExpr')
+        matchItemExpr' = PSemiDecl (DeclLHS (emptyMetaM "obj" m) (Pattern (Object (emptyMetaM "patt" m) FunctionObj condName H.empty matchArg Nothing) pattGuard')) [] (Just matchExpr')
 semiDesExpr (RawCase _ _ ((Pattern _ ElseGuard, _):_)) = error "Can't use elseguard in match expr"
 semiDesExpr (RawCase _ _ []) = error "Empty case"
 semiDesExpr (RawCase _ _ [(_, matchExpr)]) = semiDesExpr matchExpr
@@ -172,7 +177,7 @@ semiDesExpr r@(RawCase m e ((Pattern firstObj@Object{objM=fm} firstGuard, firstE
   where
     condName = "$" ++ take 6 (printf "%08x" (hash r))
     argName = condName ++ "-arg"
-    declObj = Object (emptyMetaM "obj" m) FunctionObj condName H.empty (H.singleton argName (fm, Just firstObj))
+    declObj = Object (emptyMetaM "obj" m) FunctionObj condName H.empty (H.singleton argName (fm, Just firstObj)) Nothing
     firstDecl = PSemiDecl (DeclLHS m (Pattern declObj firstGuard')) [] (Just firstExpr')
     (subFG, firstGuard') = semiDesGuard firstGuard
     (subFE, firstExpr') = semiDesExpr firstExpr
@@ -203,7 +208,7 @@ desDecl statementEnv decl = map (declToObjArrow statementEnv) $ removeSubDeclara
 typeDefMetaToObj :: H.HashMap TypeVarName Type -> ParseMeta -> Maybe PObject
 typeDefMetaToObj _ (PreTyped TypeVar{} _) = Nothing
 typeDefMetaToObj varReplaceMap (PreTyped (UnionType partials) pos) = case splitPartialLeafs partials of
-  [partial@(PartialType (PTypeName partialName) partialVars _ partialArgs _)] -> Just $ Object m' TypeObj partialName (fmap toMeta partialVars') (fmap (\arg -> (PreTyped arg Nothing, Nothing)) partialArgs)
+  [partial@(PartialType (PTypeName partialName) partialVars _ partialArgs _)] -> Just $ Object m' TypeObj partialName (fmap toMeta partialVars') (fmap (\arg -> (PreTyped arg Nothing, Nothing)) partialArgs) Nothing
     where
       partialVars' = fmap (substituteVarsWithVarEnv varReplaceMap) partialVars
       m' = PreTyped (singletonType partial{ptVars=partialVars'}) $ labelPos "obj" pos

@@ -372,7 +372,7 @@ function PlayButton() {
   );
 }
 
-function Comment(props) {
+export function Comment(props) {
   const {comment, obj} = props;
   let {objNames, classToType} = useContext(ResMaps);
 
