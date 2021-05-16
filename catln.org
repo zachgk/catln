@@ -1,0 +1,170 @@
+#+TITLE: Catln Agenda
+
+** TODO Add subStatements to type declarations and apply in comments
+** TODO Build working operator++ 
+* Docs
+** TODO Laziness and caching
+** TODO Type Inference
+
+Infer local values automatically to save time.
+Infer return values to simplify definitions.
+Infer arguments for behavior based typing.
+Infer modules to enable module system and easier naming.
+Infer unspecified arguments for simplified calls without positions.
+** TODO Guides for programmers coming from language X
+*** TODO Haskell
+    Differentiates =a -> b= from =f(a) -> b= and can have classes on f
+* TODO Macros
+   1. [ ] Remove ArrowTo constraint to avoid infinite types
+   2. [ ] Macros
+      - [ ] Create macros. Use zip as the sample to test with
+* TODO Context
+  
+1. [ ] Working monads
+2. [ ] fmap, mmap, umap
+3. [ ] map syntax (do notation)
+4. [ ] Context type (and macro for mapping it)
+5. [ ] Context syntax
+         
+* TODO Code formatter
+  1. [X] Add comments into the RawPrgm syntax and parser
+  2. [X] Modify the RawPrgm syntax to fully align with all language possibilities
+  3. [ ] Build formatter
+     - [ ] Output format to file
+     - [ ] Check format against file
+
+* TODO Choice
+  1. [ ] Improve inherited annotations
+  2. [ ] Convert the ResArrowTree formating to include sorting of values
+     1. [ ] Sort by specificity
+  3. [ ] Webdocs display of treebuild and choice
+
+* TODO Improve webdocs
+
+  - [ ] Pass function name in run and debug commands
+  - [ ] Show methods in Type files
+  - [ ] Improve display of classmap
+  - [X] Show operators in expressions
+  - [ ] Highlight tests and examples
+  - [ ] Global display of tests, examples, and tutorials
+  - [ ] Link from ListProgram to source location
+  - [-] Special markdown linking
+    - [X] Link to type
+    - [ ] Link with inclusion
+  
+* TODO Property types
+  - [ ] Parse and display property types with only types, not values
+    - [ ] use "List_sorted.sort" as an example
+  - [ ] Declare property type
+  - [ ] Syntax sugar "List_sorted" for "List_sorted<True>"
+
+Dependent typing and property types with values
+Implication statements
+* TODO Implement Core library
+
+References:
+
+Prelude
+https://hackage.haskell.org/package/base-4.14.1.0/docs/Prelude.html#t:Ord
+
+Scala Standard Library 2.13.5 - scala.collection
+https://www.scala-lang.org/api/current/scala/collection/index.html
+
+std::option::Option - Rust
+https://doc.rust-lang.org/std/option/enum.Option.html
+
+* TODO Improve compilation speed
+
+  - [ ] Typecheck in order of function usage graphs
+  - [ ] Cache by files (save in cache files)
+  - [ ] cache by function trees (save in memory)
+
+* TODO Examples
+** TODO Scheme example
+
+   Implement a simple scheme compiler such as CS426
+   This will give an early chance to build compiler tools
+   Build Memory type for state
+   Build parser
+   Build interpreter
+   Build compiler by importing scheme code and processing during compilation
+** TODO Web server
+
+   Build simple web server example in stack
+   This can be used for Catln as a web framework
+** TODO Project Euler
+   Add samples problem solutions from https://projecteuler.net/
+** TODO Programming Language Benchmark Game
+https://benchmarksgame-team.pages.debian.net/benchmarksgame/index.html
+Can be used to start evaluating Catln performance
+* Math and Proofs
+
+  Add proof types as necessary to prove arrows
+  Look to learn theorem proving tutorial as an example
+  Look into how it displays in webdocs (especially as partial proof)
+  Use learn mathlib as an example of things to prove
+  Maybe add values from category theory books
+  
+* Easy Features
+** TODO private vs public
+
+   - [ ] Add private as annotation to functions
+   - [ ] Display private sections specially in webdocs
+   - [ ] Add hide/show button in webdocs for private code
+   - [X] Add private statement that applies to all statements inside it
+   - [ ] Limit typechecking to use private only when correct (inside same module or with absolute module)
+** TODO Modules
+
+   - [X] module statements
+   - [ ] Add module path to all type and function names
+   - [ ] Module inference
+   - [ ] Add module displays to webdocs
+     - [ ] ListProgram in module
+     - [ ] Full index of all objects with module tree
+     - [ ] Show module page as part of type/class page when the module is a type or class
+* Misc    
+Fix parser and test on using multiple applies in a row `fun(a=1)(b=2)`
+Fix multitypedef to recognize references to existing types rather than always create new ones
+Types
+  Type with defaultNames
+  Type Properties
+Typecheck in order of topological sort of function calls
+  Compute with downstream functions as upper bound external
+  Compute one strongly connected component at a time
+ Parse values inside decl rhs 
+    Handle using type or class name in a decl such as length(l=Nil) so Nil is parsed as a value, not pattern match var
+Add caching within the pipeline for reading files, typechecking, expression evaluating, etc.
+Convert arrow guards into properties when possible
+Convert (or create secondary) `abs(Number n) -> Number = ` into `abs(Number $N n)`
+Automatically compute properties of constants
+Typecheck when errors during parsing
+Make desugar curry all values to the closure instead of checking which ones are used, then run a pass that gets rid of unused arguments to a function.
+     Before this, add compiler warnings for all unused values in a function
+Do a pattern match against all expressions to see if they contain a subset which is equivalent to another function. In this case, throw a warning to use the higher function and replace in the code. This can take place during or after desugaring.
+Add tests
+  QuickTest
+  Repl Test
+ArrowTesting
+Fix Debugging tools (Treebugging)
+LSP and IDE Integration
+
+
+Bad input testing
+    Prevent using the same name for both a typeclass and an object
+    Prevent making inner definition with same name as outer definition
+    Prevent using lowercase name for type unless there is also a function def
+    
+Contexts
+Exports
+Handle mutual recursion
+
+Minor
+  Desugarf recognize variable called in itself
+  Desugarf recognize mutually calling variables
+  Detect unused functions and vars (in desugar?)
+
+Research
+  multiple implements type (int monoid with addition, int monoid with multiplication)
+    maybe use property such as "Int_monoid(AddMonoid)" to indicate monoid type is multiple
+  prove function properties (map.map with a function that given two different keys must return different keys will return a map instead of a generic collection)
+  multiple possible uses of a type such as Ord. Given any Ordering, the filter function preserves it. But, there can also be default orderings
