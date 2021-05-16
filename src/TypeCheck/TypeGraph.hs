@@ -39,11 +39,11 @@ buildUnionObj env1@FEnv{feClassMap} vobjs tobjs = do
   let (unionAllObjsPs, env4) = fresh env3 $ TypeCheckResult [] $ SType TopType bottomType "unionAllObjsPs"
   let (unionTypeObjsPs, env5) = fresh env4 $ TypeCheckResult [] $ SType TopType bottomType "unionTypeObjsPs"
 
-  let typecheckedAllType = makeTypechecked tobjs
+  let typecheckedAllType = makeTypechecked $ concatMap getRecursiveObjs tobjs
   let (typecheckedAllObjs, env6) = fresh env5 $ TypeCheckResult [] $ SType typecheckedAllType bottomType "typecheckedAll"
   let typecheckedAllObjs' = VarMeta typecheckedAllObjs emptyMetaN Nothing
 
-  let typecheckedTypeType = makeTypechecked $ filterTypeObjs tobjs
+  let typecheckedTypeType = makeTypechecked $ filterTypeObjs $ concatMap getRecursiveObjs tobjs
   let (typecheckedTypeObjs, env7) = fresh env6 $ TypeCheckResult [] $ SType typecheckedTypeType bottomType "typecheckedType"
   let typecheckedTypeObjs' = VarMeta typecheckedTypeObjs emptyMetaN Nothing
 
@@ -52,17 +52,21 @@ buildUnionObj env1@FEnv{feClassMap} vobjs tobjs = do
   let unionAllObjsPs' = VarMeta unionAllObjsPs emptyMetaN Nothing
   let unionTypeObjsPs' = VarMeta unionTypeObjsPs emptyMetaN Nothing
 
+  let allVobjs = concatMap getRecursiveObjs vobjs
+
   let constraints = [
-        unionObjs unionAllObjs' typecheckedAllObjs' vobjs,
-        unionObjs unionTypeObjs' typecheckedTypeObjs' (filterTypeObjs vobjs),
+        unionObjs unionAllObjs' typecheckedAllObjs' allVobjs,
+        unionObjs unionTypeObjs' typecheckedTypeObjs' (filterTypeObjs allVobjs),
         PowersetTo unionAllObjs' unionAllObjsPs',
         PowersetTo unionTypeObjs' unionTypeObjsPs'
         ]
   let env8 = (\env -> env{feUnionAllObjs=unionAllObjsPs', feUnionTypeObjs=unionTypeObjsPs'}) env7
   addConstraints env8 constraints
                     where
+                      getRecursiveObjs obj@Object{objArgs} = obj : filter notMatchObj (mapMaybe snd (H.elems objArgs))
                       unionObjs pnt known objects = UnionOf pnt (known : map objM objects)
                       filterTypeObjs = filter (\Object{objBasis} -> objBasis == TypeObj)
+                      notMatchObj Object{objBasis} = objBasis /= MatchObj
                       makeTypechecked objs = unionTypes feClassMap $ map (getMetaType . objM) objs
 
 buildTypeEnv :: FEnv -> VObjectMap -> TObjectMap -> FEnv
@@ -128,19 +132,19 @@ reachesPartial env@FEnv{feVTypeGraph, feTTypeGraph, feClassMap} partial@PartialT
 
   return $ ReachesLeaf (catMaybes vtypes ++ catMaybes ttypes)
   where
-    tryVArrow (obj@Object{objM}, arr) = do
+    tryVArrow (obj@Object{objM}, arr) =
       pointUb env objM >>= \objUb -> do
-        -- It is possible to send part of a partial through the arrow, so must compute the valid part
-        -- If none of it is valid, then there is Nothing
-        let potentialSrc@(UnionType potSrcLeafs) = intersectTypes feClassMap (singletonType partial) objUb
-        if not (isBottomType potentialSrc)
-          -- TODO: Should this line below call `reaches` to make this recursive?
-          -- otherwise, no reaches path requiring multiple steps can be found
-          then do
-            sobj <- showObj env obj
-            sarr <- showArrow env arr
-            return $ Just $ unionTypes feClassMap [arrowDestType True feClassMap potentialSrcPartial sobj sarr | potentialSrcPartial <- splitPartialLeafs potSrcLeafs]
-          else return Nothing
+      -- It is possible to send part of a partial through the arrow, so must compute the valid part
+      -- If none of it is valid, then there is Nothing
+      let potentialSrc@(UnionType potSrcLeafs) = intersectTypes feClassMap (singletonType partial) objUb
+      if not (isBottomType potentialSrc)
+        -- TODO: Should this line below call `reaches` to make this recursive?
+        -- otherwise, no reaches path requiring multiple steps can be found
+        then do
+          sobj <- showObj env obj
+          sarr <- showArrow env arr
+          return $ Just $ unionTypes feClassMap [arrowDestType True feClassMap potentialSrcPartial sobj sarr | potentialSrcPartial <- splitPartialLeafs potSrcLeafs]
+        else return Nothing
     tryTArrow (obj@Object{objM}, arr) = do
       -- It is possible to send part of a partial through the arrow, so must compute the valid part
       -- If none of it is valid, then there is Nothing

@@ -191,7 +191,7 @@ addObjArg fakeObj objM prefix varMap env (n, (m, maybeSubObj)) = do
         Just{}  -> BUpper
         Nothing -> BEq
   (m', env2) <- fromMeta env argBound (Just fakeObj) m prefix'
-  let env3 = addConstraints env2 [PropEq (objM, n) m', BoundedByObjs BoundTypeObjs m']
+  let env3 = addConstraints env2 [PropEq (objM, n) m', BoundedByObjs BoundAllObjs m']
   let env4 = case H.lookup n varMap of
         Just varM -> addConstraints env3 [EqPoints m' varM]
         Nothing   -> env3
