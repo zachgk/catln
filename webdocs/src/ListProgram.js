@@ -10,7 +10,6 @@ import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 import {Comment} from './DocsPage';
-import {useParams} from 'react-router-dom';
 import {
   useHistory,
   useLocation,
@@ -130,20 +129,30 @@ function ObjArrows(props) {
 }
 
 function Arrow(props) {
-  const {Meta} = props;
-  const [arrM, , guard, maybeExpr] = props.arrow;
+  const {Meta, showExprMetas} = props;
+  const [arrM, annots, guard, maybeExpr] = props.arrow;
   const classes = useStyles();
 
-  let showExpr;
-  if(maybeExpr) {
-    showExpr = <span> = <Expr expr={maybeExpr} Meta={Meta} showMetas={props.showExprMetas}/></span>;
+  let showAnnots;
+  if(annots.length > 0) {
+    showAnnots = annots.map((annot, index) => <div key={index}><Expr expr={annot} Meta={Meta} showMetas={showExprMetas}/></div>);
   }
 
-  let header = (<span><Guard guard={guard} Expr={Expr} Meta={Meta} showExprMetas={props.showExprMetas}/> -&gt; <Meta data={arrM} /></span>);
+  let arrRes;
+  if(arrM[0].tag !== "TopType") {
+    arrRes = <> -&gt; <Meta data={arrM} /></>;
+  }
+
+  let header = (<span><Guard guard={guard} Expr={Expr} Meta={Meta} showExprMetas={showExprMetas}/>{arrRes}</span>);
+  let showExpr;
+  if(maybeExpr) {
+    showExpr = <span> = <Expr expr={maybeExpr} Meta={Meta} showMetas={showExprMetas}/></span>;
+  }
 
   return (
     <Card className={classes.arrow}>
       <CardContent className={classes.arrowDeclaration}>{header}</CardContent>
+      {showAnnots ? showAnnots : ""}
       <CardContent className={classes.arrowExpression}>{showExpr}</CardContent>
     </Card>
   );
@@ -196,8 +205,8 @@ function Meta(props) {
 }
 
 export function ClassComments(props) {
-  const [_,classMap] = props.data;
-  const [typeToClass, classToType] = classMap;
+  const [,classMap] = props.data;
+  const [, classToType] = classMap;
   const { name } = props;
   let showComments = "";
   const classType = classToType[name] || [];

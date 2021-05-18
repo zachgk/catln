@@ -231,7 +231,7 @@ desClassDecl (className, classVars) subStatements = ([], (H.empty, H.singleton c
 
 desTypeDef :: PTypeDef -> [RawDeclSubStatement ParseMeta] -> DesObjectMap
 desTypeDef (TypeDef tp) subStatements = case typeDefMetaToObj H.empty tp of
-          Just Object{objM, objBasis, objName, objVars, objArgs, objDoc} -> [(Object objM objBasis objName objVars objArgs (desObjDocComment subStatements), [])]
+          Just obj -> [(obj{objDoc = desObjDocComment subStatements}, [])]
           Nothing  -> error "Type def could not be converted into meta"
 
 desClassDef :: Sealed -> RawClassDef -> [RawDeclSubStatement ParseMeta] -> DesPrgm
@@ -239,7 +239,7 @@ desClassDef sealed ((typeName, typeVars), className) subStatements = ([], classM
   where
     classMap = (
         H.singleton typeName (S.singleton className),
-        H.singleton className 
+        H.singleton className
         (sealed, H.empty, [singletonType (PartialType (PTypeName typeName) typeVars H.empty H.empty PtArgExact)], desObjDocComment subStatements)
       )
 
