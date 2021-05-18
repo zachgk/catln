@@ -128,7 +128,8 @@ function Statement(props) {
       );
     }
   case "MultiTypeDefStatement":
-    let [className, classVars, classDatas] = statement.contents;
+    let [multiTypeDecl, multiTypeComments] = statement.contents;
+    let [className, classVars, classDatas] = multiTypeDecl;
 
     let showClassVars;
     if(Object.keys(classVars).length > 0) {
@@ -143,11 +144,20 @@ function Statement(props) {
 
     let showClassDatas = tagJoin(classDatas.map((d, dIndex) => <span key={dIndex}><Type data={d[0]}/></span>), " | ");
 
-    return (<h3 className={classes.noPlay} id={`defClass${className}`}><KeyWord>class</KeyWord> <PClassName name={className}/>{showClassVars} = {showClassDatas}</h3>);
+    return (<div>
+            <h3 className={classes.noPlay} id={`defClass${className}`}><KeyWord>class</KeyWord> <PClassName name={className}/>{showClassVars} = {showClassDatas}</h3>
+            <div><Statements statements={multiTypeComments}/></div>
+            </div>);
   case "TypeDefStatement":
-    return (<h3 className={classes.noPlay}><KeyWord>data</KeyWord> <Type data={statement.contents[0]}/></h3>);
+    let [typeDef, typeDefComments] = statement.contents;
+    return (
+    <div>
+      <h3 className={classes.noPlay}><KeyWord>data</KeyWord> <Type data={typeDef[0]}/></h3>
+      <div><Statements statements={typeDefComments}/></div>
+    </div>);
   case "RawClassDefStatement":
-    let [[instanceType, instanceVars], instanceClass] = statement.contents;
+    let [classDef, classDefComments] = statement.contents;
+    let [[instanceType, instanceVars], instanceClass] = classDef;
 
     let showInstanceVars;
     if(Object.keys(instanceVars).length > 0) {
@@ -160,9 +170,14 @@ function Statement(props) {
       );
     }
 
-    return (<h3 className={classes.noPlay}><KeyWord>every</KeyWord> <PTypeName name={instanceType}/>{showInstanceVars} <KeyWord>isa</KeyWord> <PClassName name={instanceClass}/></h3>);
+    return (<div>
+      <h3 className={classes.noPlay}><KeyWord>every</KeyWord> <PTypeName name={instanceType}/>{showInstanceVars} <KeyWord>isa</KeyWord> <PClassName name={instanceClass}/></h3>
+      <div><Statements statements={classDefComments}/></div>
+      </div>);
   case "RawClassDeclStatement":
-    let [classDeclName, classDeclVars] = statement.contents;
+    let [classDecl, comments] = statement.contents;
+    let [classDeclName, classDeclVars] = classDecl;
+    comments = comments || [];
 
     let showClassDeclVars;
     if(Object.keys(classDeclVars).length > 0) {
@@ -176,7 +191,13 @@ function Statement(props) {
     }
 
 
-    return (<h3 className={classes.noPlay} id={`defClass${classDeclName}`}><KeyWord>class</KeyWord> <PClassName name={classDeclName}/>{showClassDeclVars}</h3>);
+    return (<div>
+      <h3 className={classes.noPlay} id={`defClass${classDeclName}`}>
+        <KeyWord>class</KeyWord> 
+        <PClassName name={classDeclName}/>{showClassDeclVars}
+      </h3>
+      <div><Statements statements={comments}/></div>
+      </div>);
   case "RawGlobalAnnot":
     const [annot, annotSubStatements] = statement.contents;
     let pos = annot.contents[0][1];
@@ -209,6 +230,7 @@ function Statement(props) {
       </div>
     );
   case "RawComment":
+  case "RawDeclSubStatementComment":
     return (<div className={classes.noPlay}><Comment comment={statement.contents} /></div>);
   default:
     console.error("Unknown renderStatement", statement);
@@ -383,6 +405,8 @@ function PlayButton(props) {
 export function Comment(props) {
   const {comment, obj} = props;
   let {objNames, classToType} = useContext(ResMaps);
+  objNames = objNames || {};
+  classToType = classToType || {};
 
   // Replace usages of [TypeName] and [ClassName] with catn:// link reference
   const regex = /\[(\S+)\][^[(]/g;

@@ -31,7 +31,7 @@ import           Text.Printf
 typeNameToClass :: DesPrgm -> DesPrgm -> DesPrgm
 typeNameToClass (_, (_, fullPrgmClassToTypes), _) (objMap, classMap@(typeToClass, classToTypes), annots) = mapMetaPrgm aux (objMap, (typeToClass, classToTypes'), annots)
   where
-    classToTypes' = fmap (\(s, vs, ts) -> (s, fmap mapType vs, fmap mapType ts)) classToTypes
+    classToTypes' = fmap (\(s, vs, ts, doc) -> (s, fmap mapType vs, fmap mapType ts, doc)) classToTypes
     aux _ (PreTyped t p) = PreTyped (mapType t) p
 
     mapType TopType = TopType
@@ -55,7 +55,7 @@ typeNameToClass (_, (_, fullPrgmClassToTypes), _) (objMap, classMap@(typeToClass
 expandDataReferences :: DesPrgm -> DesPrgm -> DesPrgm
 expandDataReferences (fullPrgmObjMap, _, _) (objMap, classMap@(typeToClass, classToTypes), annots) = mapMetaPrgm aux (objMap, (typeToClass, classToTypes'), annots)
   where
-    classToTypes' = fmap (\(s, vs, ts) -> (s, fmap mapType vs, fmap mapType ts)) classToTypes
+    classToTypes' = fmap (\(s, vs, ts, doc) -> (s, fmap mapType vs, fmap mapType ts, doc)) classToTypes
     objExpansions = H.fromList $ concatMap (\(obj@Object{objBasis, objName}, _) -> ([(objName, obj) | objBasis == TypeObj])) fullPrgmObjMap
     aux metaType inM@(PreTyped t p) = case metaType of
       ExprMeta   -> inM

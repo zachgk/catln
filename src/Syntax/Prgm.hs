@@ -114,10 +114,10 @@ type RawClassDecl = (ClassName, H.HashMap TypeVarName Type)
 
 data RawStatement m
   = RawDeclStatement (RawDecl m)
-  | MultiTypeDefStatement (MultiTypeDef m)
-  | TypeDefStatement (TypeDef m)
-  | RawClassDefStatement RawClassDef
-  | RawClassDeclStatement RawClassDecl
+  | MultiTypeDefStatement (MultiTypeDef m) [RawDeclSubStatement m]
+  | TypeDefStatement (TypeDef m) [RawDeclSubStatement m]
+  | RawClassDefStatement RawClassDef [RawDeclSubStatement m]
+  | RawClassDeclStatement RawClassDecl [RawDeclSubStatement m]
   | RawComment String
   | RawGlobalAnnot (CompAnnot (RawExpr m)) [RawStatement m]
   | RawModule String [RawStatement m]
@@ -240,10 +240,16 @@ formArgMetaMap Object{objArgs} = H.foldr (H.unionWith unionCombine) H.empty $ H.
     fromArg k (m, Nothing)  = H.singleton k m
     fromArg _ (_, Just arg) = formArgMetaMap arg
 
+mergeDoc :: Maybe String -> Maybe String -> Maybe String
+mergeDoc (Just a) (Just b) = Just (a ++ " " ++ b)
+mergeDoc (Just a) Nothing  = Just a
+mergeDoc Nothing (Just b)  = Just b
+mergeDoc _ _ = Nothing
+
 mergeClassMaps :: ClassMap -> ClassMap -> ClassMap
 mergeClassMaps classMap@(toClassA, toTypeA) (toClassB, toTypeB) = (H.unionWith S.union toClassA toClassB, H.unionWith mergeClasses toTypeA toTypeB)
-  where mergeClasses (sealedA, classVarsA, setA) (sealedB, classVarsB, setB) = if sealedA == sealedB
-          then (sealedA, H.unionWith (unionType classMap) classVarsA classVarsB, setA ++ setB)
+  where mergeClasses (sealedA, classVarsA, setA, docA) (sealedB, classVarsB, setB, docB) = if sealedA == sealedB
+          then (sealedA, H.unionWith (unionType classMap) classVarsA classVarsB, setA ++ setB, mergeDoc docA docB)
           else error "Added to sealed class definition"
 
 mergePrgm :: Prgm e m -> Prgm e m -> Prgm e m

@@ -24,6 +24,10 @@ import           Parser.Syntax
 import           Syntax
 import           Syntax.Prgm
 import           Syntax.Types
+import           Parser.Decl
+
+import qualified Text.Megaparsec.Char.Lexer as L
+import           Data.Either
 
 pLeafVar :: Parser (TypeVarName, Type)
 pLeafVar = do
@@ -94,38 +98,83 @@ pType = sepBy1 (pLeafType PLeafTypeSealedClass <|> varOption) (symbol "|")
           return $ PreTyped (TypeVar $ TVVar name) (Just (pos1, pos2, ""))
 
 
-pClassStatement :: Parser PStatement
-pClassStatement = do
+pClassStatement' :: Parser
+  (Either
+     (MultiTypeDef ParseMeta) RawClassDecl)
+pClassStatement' = do
   _ <- symbol "class"
   name <- tidentifier
   maybeVars <- optional $ angleBraces $ sepBy1 pLeafVar (symbol ",")
   let vars = maybe H.empty H.fromList maybeVars
   maybeTypes <- optional $ do
     _ <- symbol "="
-    MultiTypeDefStatement . MultiTypeDef name vars <$> pType
+    MultiTypeDef name vars <$> pType
   case maybeTypes of
-    Just types -> return types
-    Nothing    -> return $ RawClassDeclStatement (name, vars)
+    Just types -> return $ Left types
+    Nothing    -> return $ Right (name, vars)
+
+pClassStatement :: Parser PStatement
+pClassStatement = L.indentBlock scn p
+  where
+    pack pclass children = case pclass of
+      Left multi -> case partitionEithers $ map validSubStatementInSingle children of
+        ([], subStatements) -> return $ MultiTypeDefStatement multi subStatements
+        (_, _) -> return $ MultiTypeDefStatement multi []
+      Right pcl -> case partitionEithers $ map validSubStatementInSingle children of
+        ([], subStatements) -> return $ RawClassDeclStatement pcl subStatements
+        (_, _) -> return $ RawClassDeclStatement pcl []
+    childParser :: Parser TreeRes
+    childParser = try (TRComment <$> pComment)
+    p = do
+      rawclass <- pClassStatement'
+      return (L.IndentMany Nothing (pack rawclass) childParser)
 
 pAnnotDefStatement :: Parser PStatement
-pAnnotDefStatement = do
-  _ <- symbol "annot"
-  TypeDefStatement . TypeDef <$> pLeafType PLeafTypeAnnot
+pAnnotDefStatement = L.indentBlock scn p
+  where
+    pack pclass children = case partitionEithers $ map validSubStatementInSingle children of
+        ([], subStatements) -> return $ TypeDefStatement pclass subStatements
+        (_, _) -> return $ TypeDefStatement pclass []
+    childParser :: Parser TreeRes
+    childParser = try (TRComment <$> pComment)
+    p = do
+      rawclass <- do
+        _ <- symbol "annot"
+        TypeDef <$> pLeafType PLeafTypeAnnot
+      return (L.IndentMany Nothing (pack rawclass) childParser)
 
 pTypeDefStatement :: Parser PStatement
-pTypeDefStatement = do
-  _ <- symbol "data"
-  TypeDefStatement . TypeDef <$> pLeafType PLeafTypeData
+pTypeDefStatement = L.indentBlock scn p
+  where
+    pack pclass children = case partitionEithers $ map validSubStatementInSingle children of
+        ([], subStatements) -> return $ TypeDefStatement pclass subStatements
+        (_, _) -> return $ TypeDefStatement pclass []
+    childParser :: Parser TreeRes
+    childParser = try (TRComment <$> pComment)
+    p = do
+      rawclass <- do
+        _ <- symbol "data"
+        TypeDef <$> pLeafType PLeafTypeData
+      return (L.IndentMany Nothing (pack rawclass) childParser)
 
 pClassDefStatement :: Parser PStatement
-pClassDefStatement = do
-  _ <- symbol "every"
-  typeName <- tidentifier
-  maybeVars <- optional $ angleBraces $ sepBy1 pTypeVar (symbol ",")
-  let vars = maybe H.empty H.fromList maybeVars
-  _ <- symbol "isa"
-  className <- tidentifier
-  return $ RawClassDefStatement ((typeName, vars), className)
+pClassDefStatement = L.indentBlock scn p
+  where
+    pack pclass children = case partitionEithers $ map validSubStatementInSingle children of
+        ([], subStatements) -> return $ RawClassDefStatement pclass subStatements
+        (_, _) -> return $ RawClassDefStatement pclass []
+    childParser :: Parser TreeRes
+    childParser = try (TRComment <$> pComment)
+    p = do
+      rawclass <- do
+        _ <- symbol "every"
+        typeName <- tidentifier
+        maybeVars <- optional $ angleBraces $ sepBy1 pTypeVar (symbol ",")
+        let vars = maybe H.empty H.fromList maybeVars
+        _ <- symbol "isa"
+        className <- tidentifier
+        return ((typeName, vars), className)
+      return (L.IndentMany Nothing (pack rawclass) childParser)
 
 pTypeStatement :: Parser PStatement
 pTypeStatement = pClassStatement

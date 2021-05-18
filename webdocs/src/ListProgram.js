@@ -9,6 +9,8 @@ import CardContent from '@material-ui/core/CardContent';
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
+import {Comment} from './DocsPage';
+import {useParams} from 'react-router-dom';
 import {
   useHistory,
   useLocation,
@@ -193,6 +195,18 @@ function Meta(props) {
   return <Type data={tp} />;
 }
 
+export function ClassComments(props) {
+  const [_,classMap] = props.data;
+  const [typeToClass, classToType] = classMap;
+  const { name } = props;
+  let showComments = "";
+  const classType = classToType[name] || [];
+  if (classType[3] && classType[3].length > 0) {
+    showComments = <Comment comment={classType[3]} obj={undefined} />;
+  }
+  return showComments;
+}
+
 function ClassMap(props) {
   const {classMap} = props;
   const [typeToClass, classToType] = classMap;
@@ -217,7 +231,7 @@ function TypeToClassEntry(props) {
 }
 
 function ClassToTypeEntry(props) {
-  const {className, val: [, vars, types]} = props;
+  const {className, val: [, vars, types,]} = props;
 
   let showVars = "";
   if(Object.keys(vars).length > 0) {
@@ -233,7 +247,9 @@ function ClassToTypeEntry(props) {
   let showClassName = <PClassName name={className} />;
   let showTypes = tagJoin(types.map((t, i) => <span key={i}><Type data={t}/></span>), ", ");
 
-  return <div>{showClassName}{showVars} = {showTypes}</div>;
+  return <div>
+  {showClassName}{showVars} = {showTypes}
+  </div>;
 }
 
 export default ListProgram;

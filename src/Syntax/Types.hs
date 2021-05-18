@@ -76,7 +76,7 @@ type Sealed = Bool -- whether the typeclass can be extended or not
 -- TODO: ClassMap should be more granular. Can have class to only a certain object or based on type variables.
 type ClassMap = (
     H.HashMap TypeName (S.HashSet ClassName),
-    H.HashMap ClassName (Sealed, H.HashMap TypeVarName Type, [Type])
+    H.HashMap ClassName (Sealed, H.HashMap TypeVarName Type, [Type], Maybe String)
   )
 
 type TypeVarEnv = H.HashMap TypeVarName Type
@@ -150,7 +150,7 @@ expandClassPartial _ p@PartialType{ptName=PClassName{}, ptArgs} | not (H.null pt
 expandClassPartial classMap@(_, classToType) PartialType{ptName=PClassName className, ptVars} = UnionType $ joinPartialLeafs expanded
   where
     expanded = case H.lookup className classToType of
-      Just (_, classVars, classTypes) -> splitPartialLeafs partials'
+      Just (_, classVars, classTypes, _) -> splitPartialLeafs partials'
         where
           (UnionType partials') = unionTypes classMap $ map mapClassType classTypes
           mapClassType TopType = TopType

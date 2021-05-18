@@ -9,10 +9,10 @@ module Data/Algebra
 
   class Eq
 
-  # The Eq class is used to define values which can be compared for equality.
-    While naive tuple equality often works, some types have equality that behaves differently and must be defined.
-    For example, a TreeSet can insert items in different order and produce different trees, but with equal sets.
-    There are only two operations for eq: [operator==] and [operator!=].
+    # The Eq class is used to define values which can be compared for equality.
+      While naive tuple equality often works, some types have equality that behaves differently and must be defined.
+      For example, a TreeSet can insert items in different order and produce different trees, but with equal sets.
+      There are only two operations for eq: [operator==] and [operator!=].
 
   operator==<Eq $T>($T l, $T r) -> Boolean
 
@@ -26,7 +26,7 @@ module Data/Algebra
 
   operator!=(l, r) = ~(l == r)
 
-  # Given this, creating an instance of Eq only requires defining equality and the != can be produced automatically.
+    # Given this, creating an instance of Eq only requires defining equality and the != can be produced automatically.
 
   # ## Ordering
 
@@ -37,24 +37,24 @@ module Data/Algebra
 
   class Ord
 
-  # Ord is used to define types which can be strictly ordered.
-    Every element, when compared must have one of the following [Ordering] relationships:
+    # Ord is used to define types which can be strictly ordered.
+      Every element, when compared must have one of the following [Ordering] relationships:
 
   class Ordering = LessThan | Equal | GreaterThan
 
-  # The Orderings can relate any like items of Ord. 
+    # The Orderings can relate any like items of Ord. 
 
   class POrd
 
-  # In addition to [Ord], [POrd] defines a partial ordering.
-    Partially ordered items can be compared, but may result in [NoOrdering]:
+    # In addition to [Ord], [POrd] defines a partial ordering.
+      Partially ordered items can be compared, but may result in [NoOrdering]:
 
   class POrdering = Ordering | NoOrdering
 
-  # As an example, sets can be partially ordered by the subset operation.
-    One set A <= B when A is a subset of B.
-    An ordered example is {1} <= {1, 2}.
-    But, two sets like {1} and {2} have no ordering between them.
+    # As an example, sets can be partially ordered by the subset operation.
+      One set A <= B when A is a subset of B.
+      An ordered example is {1} <= {1, 2}.
+      But, two sets like {1} and {2} have no ordering between them.
 
   # There are a few nice properties about ordering.
 
@@ -81,7 +81,7 @@ module Data/Algebra
 
   every POrd isa Eq
 
-  # If something can be compared for order, it should also be comparable for equality by the following relationship:
+    # If something can be compared for order, it should also be comparable for equality by the following relationship:
 
   # operator==<POrd $T>($T l, $T r) = compare(l=l, r=r) == Equal
 
@@ -97,8 +97,8 @@ module Data/Algebra
 
   class Semigroup
 
-  # A semigroup is a type combined with an associative operation called [mappend].
-    For example, integers with the addition operation are a semigroup.
+    # A semigroup is a type combined with an associative operation called [mappend].
+      For example, integers with the addition operation are a semigroup.
 
   every Semigroup isa Eq
 
@@ -111,10 +111,10 @@ module Data/Algebra
 
   class Monoid
 
-  # The [Monoid] builds on top of the [Semigroup].
-    It adds the identity value [mempty].
-    The integers with addition form a [Monoid], and 0 is the value for [mempty].
-    Another example is [String] where "" is the value for [mempty]
+    # The [Monoid] builds on top of the [Semigroup].
+      It adds the identity value [mempty].
+      The integers with addition form a [Monoid], and 0 is the value for [mempty].
+      Another example is [String] where "" is the value for [mempty]
   
   every Monoid isa Semigroup
 
@@ -138,9 +138,9 @@ module Data/Algebra
 
   class CommutativeMonoid
 
-  # The [CommutativeMonoid] builds on top of the [Monoid].
-    It is also called an Abelian Monoid
-    Here, integers with addition are a [CommutativeMonoid], but [String]s are not.
+    # The [CommutativeMonoid] builds on top of the [Monoid].
+      It is also called an Abelian Monoid
+      Here, integers with addition are a [CommutativeMonoid], but [String]s are not.
 
   every CommutativeMonoid isa Monoid
 
@@ -153,17 +153,17 @@ module Data/Algebra
 
   class Group
 
-  # The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-    It adds an inverse operation that finds the opposite of an element.
-    For integers with addition, negation with [operator~] would be the inverse.
-    Something like [String]s would not have an inverse, so it wouldn't be a [Group].
+    # The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
+      It adds an inverse operation that finds the opposite of an element.
+      For integers with addition, negation with [operator~] would be the inverse.
+      Something like [String]s would not have an inverse, so it wouldn't be a [Group].
 
   every Group isa Monoid
 
   inverse<Group $T>($T t) -> $T
 
-  # We can test to ensure that all [Group]s satisfy the inverse requirements.
-    An inverse times itself should result in [mempty].
+    # We can test to ensure that all [Group]s satisfy the inverse requirements.
+      An inverse times itself should result in [mempty].
 
   testGroup<Group $T>($T t) =
     #test

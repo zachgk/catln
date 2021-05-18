@@ -3,7 +3,7 @@ import React from 'react';
 import {useParams} from 'react-router-dom';
 
 import {useApi, Loading} from './Common';
-import {ShowList} from './ListProgram';
+import {ShowList, ClassComments} from './ListProgram'; 
 
 function Class() {
   const { name } = useParams();
@@ -12,8 +12,9 @@ function Class() {
 
   return (
     <div>
-      <h2>{name}</h2>
+      <h2>{name}</h2>   
       <Loading status={apiResult}>
+        <ClassComments data={apiResult.data} name={name}/>
         <ShowList data={apiResult.data}/>
       </Loading>
     </div>
