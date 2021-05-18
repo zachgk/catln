@@ -10,7 +10,7 @@ module Data
 
   data String
 
-  # A [String] is a list of characters.
+    # A [String] is a list of characters.
 
   every String isa Eq
 
@@ -26,17 +26,17 @@ module Data
 
   class Functor<$T>
 
-  # A [Functor] is a basic property of a collection.
-    It has a single operation [fmap] that applies a function to each element in the collection.
+    # A [Functor] is a basic property of a collection.
+      It has a single operation [fmap] that applies a function to each element in the collection.
 
-  # $F<$T=$A>.fmap<Functor $F>(fn($A) -> $B) -> $F<$T=$B>
+    # $F<$T=$A>.fmap<Functor $F>(fn($A) -> $B) -> $F<$T=$B>
 
   # ## Collections
 
   class Option<$T> = $T | None
 
-  # [Option] defines a type that might have a value or [None].
-    It can be used to handle operations that are uncertain if they can produce a response.
+    # [Option] defines a type that might have a value or [None].
+      It can be used to handle operations that are uncertain if they can produce a response.
 
   every Option<$T> isa Functor
   # None.fmap(fn) = None
@@ -48,8 +48,8 @@ module Data
 
   class ConsList<$T> = Cons<$T>($T head, ConsList<$T> tail) | Nil
 
-  # The simplest kind of list can be created by prepending.
-    A [ConsList] defines a list either by prepending to a list or with an empty list.
+    # The simplest kind of list can be created by prepending.
+      A [ConsList] defines a list either by prepending to a list or with an empty list.
 
   operator::<$T>($T l, ConsList<$T> r) = Cons(head=l, tail=r)
     # [operator::] is a utility operator to prepend an element onto a [List].
@@ -72,8 +72,8 @@ module Data
 
   class Enum
 
-  # [Enum] represents a type which can be enumerated.
-    It defines a single function [enum] which lists all of the values in the type.
+    # [Enum] represents a type which can be enumerated.
+      It defines a single function [enum] which lists all of the values in the type.
 
   enum<Enum $T> -> Set<$T>
     # [enum] lists all of the values in a type.

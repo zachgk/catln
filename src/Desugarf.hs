@@ -105,8 +105,8 @@ currySubFunctions parentArgs decls expr annots = (decls', expr', annots')
     annots' = map (currySubFunctionsUpdateExpr toUpdate parentArgs) annots
 
 desObjDocComment :: [PDeclSubStatement] -> Maybe String
-desObjDocComment (RawDeclSubStatementComment doc: _) = Just doc
-desObjDocComment _                                   = Nothing
+desObjDocComment (RawDeclSubStatementComment doc: rest) = Just (++) <*> Just doc <*> desObjDocComment rest
+desObjDocComment _ = Just ""
 
 removeSubDeclarations :: PDecl -> [PSemiDecl]
 removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern obj@Object{objM, objName, objArgs} guard1)) subStatements expr1) = decl':subDecls5
@@ -216,30 +216,31 @@ typeDefMetaToObj varReplaceMap (PreTyped (UnionType partials) pos) = case splitP
   _ -> error "Invalid call to typeDefMetaToObj with UnionType"
 typeDefMetaToObj _ _ = error "Invalid call to typeDefMetaToObj"
 
-desMultiTypeDef :: PMultiTypeDef -> DesPrgm
-desMultiTypeDef (MultiTypeDef className classVars dataMetas) = (objMap', (typeToClass', classToType'), [])
+desMultiTypeDef :: PMultiTypeDef -> [RawDeclSubStatement ParseMeta] -> DesPrgm
+desMultiTypeDef (MultiTypeDef className classVars dataMetas) subStatements = (objMap', (typeToClass', classToType'), [])
     where
       objMap' = map (,[]) objs
       objNames = map objName objs
       dataTypes = map getMetaType dataMetas
       objs = mapMaybe (typeDefMetaToObj classVars) dataMetas
-      classToType' = H.singleton className (True, classVars, dataTypes)
+      classToType' = H.singleton className (True, classVars, dataTypes, desObjDocComment subStatements)
       typeToClass' = H.fromList $ map (,S.singleton className) objNames
 
-desClassDecl :: RawClassDecl -> DesPrgm
-desClassDecl (className, classVars) = ([], (H.empty, H.singleton className (False, classVars, [])), [])
+desClassDecl :: RawClassDecl -> [RawDeclSubStatement ParseMeta] -> DesPrgm
+desClassDecl (className, classVars) subStatements = ([], (H.empty, H.singleton className (False, classVars, [], desObjDocComment subStatements)), [])
 
-desTypeDef :: PTypeDef -> DesObjectMap
-desTypeDef (TypeDef tp) = case typeDefMetaToObj H.empty tp of
-          Just obj -> [(obj, [])]
+desTypeDef :: PTypeDef -> [RawDeclSubStatement ParseMeta] -> DesObjectMap
+desTypeDef (TypeDef tp) subStatements = case typeDefMetaToObj H.empty tp of
+          Just Object{objM, objBasis, objName, objVars, objArgs, objDoc} -> [(Object objM objBasis objName objVars objArgs (desObjDocComment subStatements), [])]
           Nothing  -> error "Type def could not be converted into meta"
 
-desClassDef :: Sealed -> RawClassDef -> DesPrgm
-desClassDef sealed ((typeName, typeVars), className) = ([], classMap, [])
+desClassDef :: Sealed -> RawClassDef -> [RawDeclSubStatement ParseMeta] -> DesPrgm
+desClassDef sealed ((typeName, typeVars), className) subStatements = ([], classMap, [])
   where
     classMap = (
         H.singleton typeName (S.singleton className),
-        H.singleton className (sealed, H.empty, [singletonType (PartialType (PTypeName typeName) typeVars H.empty H.empty PtArgExact)])
+        H.singleton className 
+        (sealed, H.empty, [singletonType (PartialType (PTypeName typeName) typeVars H.empty H.empty PtArgExact)], desObjDocComment subStatements)
       )
 
 emptyClassMap :: ClassMap
@@ -255,10 +256,10 @@ desGlobalAnnot p = case semiDesExpr p of
 
 desStatement :: StatementEnv -> PStatement -> DesPrgm
 desStatement statementEnv (RawDeclStatement decl) = (desDecl statementEnv decl, emptyClassMap, [])
-desStatement _ (MultiTypeDefStatement multiTypeDef) = desMultiTypeDef multiTypeDef
-desStatement _ (TypeDefStatement typeDef) = (desTypeDef typeDef, emptyClassMap, [])
-desStatement _ (RawClassDefStatement classDef) = desClassDef False classDef
-desStatement _ (RawClassDeclStatement classDecls) = desClassDecl classDecls
+desStatement _ (MultiTypeDefStatement multiTypeDef subStatements) = desMultiTypeDef multiTypeDef subStatements
+desStatement _ (TypeDefStatement typeDef subStatements) = (desTypeDef typeDef subStatements, emptyClassMap, [])
+desStatement _ (RawClassDefStatement classDef subStatements) = desClassDef False classDef subStatements
+desStatement _ (RawClassDeclStatement classDecls subStatements) = desClassDecl classDecls subStatements
 desStatement _ RawComment{} = ([], emptyClassMap, [])
 desStatement _ (RawGlobalAnnot a []) = ([], emptyClassMap, [desGlobalAnnot a])
 desStatement (inheritModule, inheritAnnots) (RawGlobalAnnot a subStatements) = mergePrgms $ map (desStatement (inheritModule, desGlobalAnnot a:inheritAnnots)) subStatements

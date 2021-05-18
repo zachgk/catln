@@ -199,6 +199,8 @@ function Type(props) {
       });
     });
     return tagJoin(partials, " | ");
+  case "RawDeclSubStatementComment":
+      return <div><Comment comment={t.contents} obj={undefined} /></div>;
   default:
     console.error("Unknown type", t);
     return "";
