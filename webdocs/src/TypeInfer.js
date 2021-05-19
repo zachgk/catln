@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useContext} from 'react';
 
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
@@ -20,20 +20,24 @@ const useStyles = makeStyles({
   }
 });
 
+const PrgmNameContext = React.createContext(undefined);
+
 function TypeInfer() {
   const { prgmName } = useParams();
   let apiResult = useApi(`/api/constrain?prgmName=${prgmName}`);
 
   return (
-    <Loading status={apiResult}>
-      <Main data={apiResult.data} notes={apiResult.notes} />
-    </Loading>
+    <PrgmNameContext.Provider value={prgmName}>
+      <Loading status={apiResult}>
+        <Main data={apiResult.data} notes={apiResult.notes} />
+      </Loading>
+    </PrgmNameContext.Provider>
   );
 }
 
 function Main(props) {
   let {notes, data: [, prgm, trace]} = props;
-  let { prgmName } = useParams();
+  let prgmName = useContext(PrgmNameContext);
   const classes = useStyles();
 
   var notesMap = {};
@@ -193,7 +197,7 @@ function Scheme(props) {
 
 function Pnt(props) {
   let {pnt} = props;
-  let { prgmName } = useParams();
+  let prgmName = useContext(PrgmNameContext);
   return <Link to={`/typeinfer/${prgmName}/${pnt}`}>{pnt}</Link>;
 }
 
