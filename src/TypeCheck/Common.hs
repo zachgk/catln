@@ -26,6 +26,7 @@ import           GHC.Generics        (Generic)
 import           CRes
 import           Data.Aeson          (ToJSON, toJSON)
 import qualified Data.HashSet        as S
+import           Data.Maybe
 import           Syntax
 import           Syntax.Prgm
 import           Syntax.Types
@@ -248,8 +249,12 @@ tryIntersectTypes FEnv{feClassMap} a b desc = let c = intersectTypes feClassMap 
 
 -- This ensures schemes are correct
 -- It differs from Constrain.checkScheme because it checks for bugs in the internal compiler, not bugs in the user code
-verifyScheme :: ClassMap -> VarMeta -> Scheme -> Scheme -> Bool
-verifyScheme classMap (VarMeta _ _ mobj) (TypeCheckResult _ (SType oldUb _ _)) (TypeCheckResult _ (SType ub _ _)) = verifyTypeVars (mobjVars mobj) ub && verifySchemeUbLowers mobj && verifyCompacted
+verifyScheme :: ClassMap -> VarMeta -> Scheme -> Scheme -> Maybe String
+verifyScheme classMap (VarMeta _ _ mobj) (TypeCheckResult _ (SType oldUb _ _)) (TypeCheckResult _ (SType ub _ _)) = listToMaybe $ catMaybes [
+  if verifyTypeVars (mobjVars mobj) ub then Nothing else Just "verifyTypeVars",
+  if verifySchemeUbLowers mobj then Nothing else Just "verifySchemeUbLowers",
+  if verifyCompacted then Nothing else Just "verifyCompacted"
+  ]
   where
     verifyTypeVars venv (UnionType partialLeafs) = all (verifyTypeVarsPartial venv) $ splitPartialLeafs partialLeafs
     verifyTypeVars venv (TypeVar (TVVar v)) = S.member v venv
@@ -263,8 +268,9 @@ verifyScheme classMap (VarMeta _ _ mobj) (TypeCheckResult _ (SType oldUb _ _)) (
     verifySchemeUbLowers (Just obj) = hasTypeWithObj classMap obj ub oldUb
     verifySchemeUbLowers Nothing    = hasType classMap ub oldUb
     verifyCompacted = ub == compactType classMap ub
-verifyScheme _ _ TypeCheckResE{} TypeCheckResult{} = False
-verifyScheme _ _ _ _ = True
+verifyScheme _ _ TypeCheckResE{} TypeCheckResult{} = Nothing
+verifyScheme _ _ _ _ = Just "fallthrough"
+
 
 -- Point operations
 
@@ -288,10 +294,11 @@ setDescriptor env@FEnv{feClassMap, fePnts, feTrace} m scheme' msg = env{fePnts =
     schemeChanged = scheme /= scheme'
     pnts' = IM.insert p scheme' fePnts
     feTrace' = if schemeChanged
-      then case feTrace of
-             _ | not (verifyScheme feClassMap m scheme scheme') -> error $ printf "Scheme failed verification during typechecking of %s: %s \n\t\t in obj: %s with old scheme: %s" msg (show scheme') (show m) (show scheme)
-             ((curConstraint, curChanged):curEpoch):prevEpochs -> ((curConstraint, (p, scheme'):curChanged):curEpoch):prevEpochs
-             _ -> error "no epochs in feTrace"
+      then case verifyScheme feClassMap m scheme scheme' of
+             Just failVerification -> error $ printf "Scheme failed verification %s during typechecking of %s: %s \n\t\t in obj: %s with old scheme: %s" failVerification msg (show scheme') (show m) (show scheme)
+             Nothing -> case feTrace of
+              ((curConstraint, curChanged):curEpoch):prevEpochs -> ((curConstraint, (p, scheme'):curChanged):curEpoch):prevEpochs
+              _ -> error "no epochs in feTrace"
       else feTrace
 
 pointUb :: FEnv -> VarMeta -> TypeCheckResult Type

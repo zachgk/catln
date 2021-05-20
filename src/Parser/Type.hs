@@ -14,20 +14,20 @@
 
 module Parser.Type where
 
-import           Control.Applicative hiding (many, some)
-import qualified Data.HashMap.Strict as H
-import           Text.Megaparsec     hiding (pos1)
+import           Control.Applicative        hiding (many, some)
+import qualified Data.HashMap.Strict        as H
+import           Text.Megaparsec            hiding (pos1)
 
 import           Data.Maybe
+import           Parser.Decl
 import           Parser.Lexer
 import           Parser.Syntax
 import           Syntax
 import           Syntax.Prgm
 import           Syntax.Types
-import           Parser.Decl
 
-import qualified Text.Megaparsec.Char.Lexer as L
 import           Data.Either
+import qualified Text.Megaparsec.Char.Lexer as L
 
 pLeafVar :: Parser (TypeVarName, Type)
 pLeafVar = do
@@ -122,7 +122,7 @@ pClassStatement = L.indentBlock scn p
         (_, _) -> return $ MultiTypeDefStatement multi []
       Right pcl -> case partitionEithers $ map validSubStatementInSingle children of
         ([], subStatements) -> return $ RawClassDeclStatement pcl subStatements
-        (_, _) -> return $ RawClassDeclStatement pcl []
+        (_, _)              -> return $ RawClassDeclStatement pcl []
     childParser :: Parser TreeRes
     childParser = try (TRComment <$> pComment)
     p = do
@@ -134,7 +134,7 @@ pAnnotDefStatement = L.indentBlock scn p
   where
     pack pclass children = case partitionEithers $ map validSubStatementInSingle children of
         ([], subStatements) -> return $ TypeDefStatement pclass subStatements
-        (_, _) -> return $ TypeDefStatement pclass []
+        (_, _)              -> return $ TypeDefStatement pclass []
     childParser :: Parser TreeRes
     childParser = try (TRComment <$> pComment)
     p = do
@@ -148,7 +148,7 @@ pTypeDefStatement = L.indentBlock scn p
   where
     pack pclass children = case partitionEithers $ map validSubStatementInSingle children of
         ([], subStatements) -> return $ TypeDefStatement pclass subStatements
-        (_, _) -> return $ TypeDefStatement pclass []
+        (_, _)              -> return $ TypeDefStatement pclass []
     childParser :: Parser TreeRes
     childParser = try (TRComment <$> pComment)
     p = do

@@ -244,7 +244,7 @@ mergeDoc :: Maybe String -> Maybe String -> Maybe String
 mergeDoc (Just a) (Just b) = Just (a ++ " " ++ b)
 mergeDoc (Just a) Nothing  = Just a
 mergeDoc Nothing (Just b)  = Just b
-mergeDoc _ _ = Nothing
+mergeDoc _ _               = Nothing
 
 mergeClassMaps :: ClassMap -> ClassMap -> ClassMap
 mergeClassMaps classMap@(toClassA, toTypeA) (toClassB, toTypeB) = (H.unionWith S.union toClassA toClassB, H.unionWith mergeClasses toTypeA toTypeB)
