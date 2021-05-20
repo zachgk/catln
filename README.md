@@ -11,4 +11,6 @@ It is most similar to the functional programming languages, but is not technical
 
 **The language is currently under development. Only some of the critical language features have been implemented in the compiler so code written in the language is still somewhat limited.**
 
-Contact [@zachgk](mailto:zachary@kimberg.com) if you have any thoughts, ideas, questions, feedback, or concerns about the language. I am also looking for collaborators so let me know if you have any interest in working on the language with me.
+Right now, the team developing Catln consists of @zachgk and @githubpradeep.
+
+Feel free to reach out to us on our [Slack](https://join.slack.com/t/catln/shared_invite/zt-qkfr40mp-e7kIhGWYJK03RjUrYFRTDQ) or [GitHub Discussions](https://github.com/zachgk/catln/discussions) if you have any thoughts, ideas, questions, suggestions, feedback, or concerns about the language. You can also join to discuss programming language design, if you are interested in contributing to the language, or are thinking about joining the Catln team.
