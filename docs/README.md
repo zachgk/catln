@@ -50,4 +50,4 @@ You can also view examples of code at [the main stack site](https://stack.catln.
 
 Right now, the team developing Catln consists of @zachgk and @githubpradeep.
 
-Feel free to reach out to us on our [Slack](https://join.slack.com/t/catln/shared_invite/zt-qkfr40mp-e7kIhGWYJK03RjUrYFRTDQ) or [GitHub Discussions](https://github.com/zachgk/catln/discussions) if you have any thoughts, ideas, questions, suggestions, feedback, or concerns about the language. You can also join to discuss programming language design, if you are interested in contributing to the language, or are thinking about joining the Catln team.
+Feel free to reach out to us on our [Slack](https://join.slack.com/t/catln/shared_invite/zt-qkfr40mp-e7kIhGWYJK03RjUrYFRTDQ) or [GitHub Discussions](https://github.com/zachgk/catln/discussions) if you have any thoughts, ideas, questions, suggestions, feedback, or concerns about the language. You can also join to discuss programming language design, if you are interested in contributing to the language, or are interested in joining the Catln team.

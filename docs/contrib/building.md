@@ -18,7 +18,7 @@ stack repl
 
 ### Tests
 
-To run the Catln test suite, execute `stack test`.
+To run the Catln test suite, execute `stack test --pedantic`.
 
 You can also load the tests within the repl:
 
@@ -66,3 +66,11 @@ stack repl
 Then, the API server should be available at `localhost:31204`.
 
 The local testing site is available at `localhost:3000`.
+
+### Formatting
+
+As part of the development, we use [stylish-haskell](https://github.com/haskell/stylish-haskell) to ensure that code has a consistent appearance. The formatter can be run through:
+
+```
+make format
+```
