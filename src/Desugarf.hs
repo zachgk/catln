@@ -114,9 +114,9 @@ removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern obj@Object{objM, objName, 
     objDoc = desObjDocComment subStatements
     (subDecls, annots1) = splitDeclSubStatements subStatements
     subDecls2 = concatMap removeSubDeclarations subDecls
-    (subDecls21, expr2) = traverse semiDesExpr expr1
-    (subDecls22, annots2) = traverse semiDesExpr annots1
-    (subDecls23, guard2) = semiDesGuard guard1
+    (subDecls21, expr2) = traverse (semiDesExpr obj) expr1
+    (subDecls22, annots2) = traverse (semiDesExpr obj) annots1
+    (subDecls23, guard2) = semiDesGuard obj guard1
     subDecls3 = concat [subDecls2, subDecls21, subDecls22, subDecls23]
     (subDecls4, expr3, annots3, objM', arrM') = scopeSubDeclFunNames objName subDecls3 expr2 annots2 objM arrM
     (subDecls5, expr4, annots4) = currySubFunctions objArgs subDecls4 expr3 annots3
@@ -132,68 +132,68 @@ desExpr arrArgs (PSTupleApply m (bm, be) argName argVal) = ITupleApply m (bm, de
 desGuard :: PArgMetaMap -> PSGuard -> DesGuard
 desGuard arrArgs = fmap (desExpr arrArgs)
 
-semiDesExpr :: PExpr -> ([PSemiDecl], PSExpr)
-semiDesExpr (RawCExpr m c) = ([], PSCExpr m c)
-semiDesExpr (RawValue m n) = ([], PSValue m n)
-semiDesExpr (RawTupleApply m'' (bm, be) args) = (\(a, _, PSTupleApply _ (bm'', be'') argName'' argVal'') -> (a, PSTupleApply m'' (bm'', be'') argName'' argVal'')) $ foldl aux (subBe, bm, be') args
+semiDesExpr :: PObject -> PExpr -> ([PSemiDecl], PSExpr)
+semiDesExpr _ (RawCExpr m c) = ([], PSCExpr m c)
+semiDesExpr _ (RawValue m n) = ([], PSValue m n)
+semiDesExpr obj (RawTupleApply m'' (bm, be) args) = (\(a, _, PSTupleApply _ (bm'', be'') argName'' argVal'') -> (a, PSTupleApply m'' (bm'', be'') argName'' argVal'')) $ foldl aux (subBe, bm, be') args
   where
-    (subBe, be') = semiDesExpr be
+    (subBe, be') = semiDesExpr obj be
     aux (sub, m, e) (RawTupleArgNamed argName argVal) = (subArgVal ++ sub, emptyMetaM "res" m'', PSTupleApply (emptyMetaM "app" m'') (m, e) (Just argName) argVal')
-      where (subArgVal, argVal') = semiDesExpr argVal
+      where (subArgVal, argVal') = semiDesExpr obj argVal
     aux (sub, m, e) (RawTupleArgInfer argVal) = (subArgVal ++ sub, emptyMetaM "res" m'', PSTupleApply (emptyMetaM "app" m'') (m, e) Nothing argVal')
-      where (subArgVal, argVal') = semiDesExpr argVal
-semiDesExpr (RawParen e) = semiDesExpr e
-semiDesExpr (RawMethods base methods) = semiDesExpr $ foldl addMethod base methods
+      where (subArgVal, argVal') = semiDesExpr obj argVal
+semiDesExpr obj (RawParen e) = semiDesExpr obj e
+semiDesExpr obj (RawMethods base methods) = semiDesExpr obj $ foldl addMethod base methods
   where
     addMethod b method@RawValue{} = RawTupleApply (emptyMetaE "app" b) (emptyMetaE "appBase" method, method) [RawTupleArgNamed "this" b]
     addMethod b (RawTupleApply m methodVal methodArgs) = RawTupleApply m methodVal (RawTupleArgNamed "this" b : methodArgs)
-    addMethod _ _ = error "Unknown semiDesExpr method"
-semiDesExpr r@(RawIfThenElse m i t e) = (concat [subI, subT, subE, [elseDecl, ifDecl]], expr')
+    addMethod _ _ = error "Unknown semiDesExpr obj method"
+semiDesExpr obj@Object{objVars} r@(RawIfThenElse m i t e) = (concat [subI, subT, subE, [elseDecl, ifDecl]], expr')
   where
     condName = "$" ++ take 6 (printf "%08x" (hash r))
-    (subI, i') = semiDesExpr i
-    (subT, t') = semiDesExpr t
-    (subE, e') = semiDesExpr e
-    ifDecl = PSemiDecl (DeclLHS (emptyMetaE "obj" i) (Pattern (Object (emptyMetaE "patt" i) FunctionObj condName H.empty H.empty Nothing) (IfGuard i'))) [] (Just t')
-    elseDecl = PSemiDecl (DeclLHS (emptyMetaE "obj" e) (Pattern (Object (emptyMetaE "patt" e) FunctionObj condName H.empty H.empty Nothing) ElseGuard)) [] (Just e')
+    (subI, i') = semiDesExpr obj i
+    (subT, t') = semiDesExpr obj t
+    (subE, e') = semiDesExpr obj e
+    ifDecl = PSemiDecl (DeclLHS (emptyMetaE "obj" i) (Pattern (Object (emptyMetaE "patt" i) FunctionObj condName objVars H.empty Nothing) (IfGuard i'))) [] (Just t')
+    elseDecl = PSemiDecl (DeclLHS (emptyMetaE "obj" e) (Pattern (Object (emptyMetaE "patt" e) FunctionObj condName objVars H.empty Nothing) ElseGuard)) [] (Just e')
     expr' = PSValue m condName
-semiDesExpr r@(RawMatch m e matchItems) = (subE ++ subMatchItems, expr')
+semiDesExpr obj@Object{objVars} r@(RawMatch m e matchItems) = (subE ++ subMatchItems, expr')
   where
     condName = "$" ++ take 6 (printf "%08x" (hash r))
     argName = condName ++ "-arg"
-    (subE, e') = semiDesExpr e
+    (subE, e') = semiDesExpr obj e
     expr' = PSTupleApply m (emptyMetaM "app" m, PSValue (emptyMetaM "val" m) condName) (Just argName) e'
     subMatchItems = concatMap semiDesMatchItem matchItems
     semiDesMatchItem (Pattern patt pattGuard, matchExpr) = concat [[matchItemExpr'], subPattGuard, subMatchExpr]
       where
-        (subPattGuard, pattGuard') = semiDesGuard pattGuard
-        (subMatchExpr, matchExpr') = semiDesExpr matchExpr
+        (subPattGuard, pattGuard') = semiDesGuard obj pattGuard
+        (subMatchExpr, matchExpr') = semiDesExpr obj matchExpr
         matchArg = H.singleton argName (emptyMetaM "arg" m, Just patt)
-        matchItemExpr' = PSemiDecl (DeclLHS (emptyMetaM "obj" m) (Pattern (Object (emptyMetaM "patt" m) FunctionObj condName H.empty matchArg Nothing) pattGuard')) [] (Just matchExpr')
-semiDesExpr (RawCase _ _ ((Pattern _ ElseGuard, _):_)) = error "Can't use elseguard in match expr"
-semiDesExpr (RawCase _ _ []) = error "Empty case"
-semiDesExpr (RawCase _ _ [(_, matchExpr)]) = semiDesExpr matchExpr
-semiDesExpr r@(RawCase m e ((Pattern firstObj@Object{objM=fm} firstGuard, firstExpr):restCases)) = (concat [[firstDecl, restDecl], subFG, subFE, subRE, subE], expr')
+        matchItemExpr' = PSemiDecl (DeclLHS (emptyMetaM "obj" m) (Pattern (Object (emptyMetaM "patt" m) FunctionObj condName objVars matchArg Nothing) pattGuard')) [] (Just matchExpr')
+semiDesExpr _ (RawCase _ _ ((Pattern _ ElseGuard, _):_)) = error "Can't use elseguard in match expr"
+semiDesExpr _ (RawCase _ _ []) = error "Empty case"
+semiDesExpr obj (RawCase _ _ [(_, matchExpr)]) = semiDesExpr obj matchExpr
+semiDesExpr obj@Object{objVars} r@(RawCase m e ((Pattern firstObj@Object{objM=fm} firstGuard, firstExpr):restCases)) = (concat [[firstDecl, restDecl], subFG, subFE, subRE, subE], expr')
   where
     condName = "$" ++ take 6 (printf "%08x" (hash r))
     argName = condName ++ "-arg"
-    declObj = Object (emptyMetaM "obj" m) FunctionObj condName H.empty (H.singleton argName (fm, Just firstObj)) Nothing
+    declObj = Object (emptyMetaM "obj" m) FunctionObj condName objVars (H.singleton argName (fm, Just firstObj)) Nothing
     firstDecl = PSemiDecl (DeclLHS m (Pattern declObj firstGuard')) [] (Just firstExpr')
-    (subFG, firstGuard') = semiDesGuard firstGuard
-    (subFE, firstExpr') = semiDesExpr firstExpr
+    (subFG, firstGuard') = semiDesGuard obj firstGuard
+    (subFE, firstExpr') = semiDesExpr obj firstExpr
     restDecl = PSemiDecl (DeclLHS m (Pattern declObj ElseGuard)) [] (Just restExpr')
-    (subRE, restExpr') = semiDesExpr (RawCase m e restCases)
-    (subE, e') = semiDesExpr e
+    (subRE, restExpr') = semiDesExpr obj (RawCase m e restCases)
+    (subE, e') = semiDesExpr obj e
     expr' = PSTupleApply m (emptyMetaM "app" m, PSValue (emptyMetaE "val" e) condName) (Just argName) e'
-semiDesExpr (RawList m []) = semiDesExpr (RawValue m "Nil")
-semiDesExpr (RawList m (l:ls)) = semiDesExpr (RawTupleApply (emptyMetaM "listApp" (getExprMeta l)) (emptyMetaM "listBase" (getExprMeta l), RawValue m "Cons") [RawTupleArgNamed "head" l, RawTupleArgNamed "tail" (RawList m ls)])
+semiDesExpr obj (RawList m []) = semiDesExpr obj (RawValue m "Nil")
+semiDesExpr obj (RawList m (l:ls)) = semiDesExpr obj (RawTupleApply (emptyMetaM "listApp" (getExprMeta l)) (emptyMetaM "listBase" (getExprMeta l), RawValue m "Cons") [RawTupleArgNamed "head" l, RawTupleArgNamed "tail" (RawList m ls)])
 
 
-semiDesGuard :: PGuard -> ([PSemiDecl], PSGuard)
-semiDesGuard (IfGuard e) = (subE, IfGuard e')
-  where (subE, e') = semiDesExpr e
-semiDesGuard ElseGuard = ([], ElseGuard)
-semiDesGuard NoGuard = ([], NoGuard)
+semiDesGuard :: PObject -> PGuard -> ([PSemiDecl], PSGuard)
+semiDesGuard obj (IfGuard e) = (subE, IfGuard e')
+  where (subE, e') = semiDesExpr obj e
+semiDesGuard _ ElseGuard = ([], ElseGuard)
+semiDesGuard _ NoGuard = ([], NoGuard)
 
 declToObjArrow :: StatementEnv -> PSemiDecl -> (DesObject, [DesArrow])
 declToObjArrow (_, inheritAnnots) (PSemiDecl (DeclLHS arrM (Pattern object guard)) annots expr) = (object, [arrow])
@@ -250,7 +250,7 @@ mergeObjMaps :: DesObjectMap -> DesObjectMap -> DesObjectMap
 mergeObjMaps = (++)
 
 desGlobalAnnot :: PCompAnnot -> DesCompAnnot
-desGlobalAnnot p = case semiDesExpr p of
+desGlobalAnnot p = case semiDesExpr undefined p of
   ([], d) -> desExpr H.empty d
   _ -> error "Global annotations do not support sub-expressions and lambdas"
 
