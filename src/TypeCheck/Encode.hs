@@ -95,7 +95,7 @@ fromExpr _ obj env (ICExpr m (CStr s)) = do
   return (ICExpr m' (CStr s), addConstraints env' [EqualsKnown m' strType])
 fromExpr _ obj env1 (IValue m name) = do
   (m', env2) <- fromMeta env1 BUpper obj m ("Value " ++ name)
-  lookupVal <- fLookup env2 name
+  lookupVal <- fLookup env2 obj name
   lookupConstraints <- case lookupVal of
     DefVar lookupM      -> return [EqPoints m' lookupM]
     DefKnown lookupType -> return [BoundedByKnown m' lookupType]

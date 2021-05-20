@@ -232,13 +232,20 @@ instance ExprClass IExpr where
   getExprArg _          = Nothing
 
 type ArgMetaMap m = H.HashMap ArgName m
+-- |
+-- The 'formArgMetaMap' produces a map from the argument name to argument meta.
+-- In an object where arguments are themselves objects, it would match the names used in those subobjects.
+-- For example, in the object real(c=Complex(a, b)), the matched arguments are a and b.
+-- In addition, it would also include all of the arguments of the base object (here c) as those are needed for currying.
 formArgMetaMap :: Object m -> ArgMetaMap m
-formArgMetaMap (Object m _ name _ args _) | H.null args = H.singleton name m
-formArgMetaMap Object{objArgs} = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg objArgs
+formArgMetaMap obj@Object{objArgs=baseArgs} = H.union (aux obj) (fmap fst baseArgs)
   where
-    unionCombine _ _ = error "Duplicate var matched"
-    fromArg k (m, Nothing)  = H.singleton k m
-    fromArg _ (_, Just arg) = formArgMetaMap arg
+    aux Object{objM, objName, objArgs} | H.null objArgs = H.singleton objName objM
+    aux Object{objArgs} = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg objArgs
+      where
+        unionCombine _ _ = error "Duplicate var matched"
+        fromArg k (m, Nothing)  = H.singleton k m
+        fromArg _ (_, Just arg) = formArgMetaMap arg
 
 mergeDoc :: Maybe String -> Maybe String -> Maybe String
 mergeDoc (Just a) (Just b) = Just (a ++ " " ++ b)

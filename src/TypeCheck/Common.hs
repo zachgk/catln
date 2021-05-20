@@ -224,10 +224,10 @@ typeCheckToRes tc = case tc of
 getPnt :: VarMeta -> Pnt
 getPnt (VarMeta p _ _) = p
 
-fLookup :: FEnv -> String -> TypeCheckResult EnvDef
-fLookup FEnv{feDefMap} k = case H.lookup k feDefMap of
+fLookup :: FEnv -> Maybe VObject -> String -> TypeCheckResult EnvDef
+fLookup FEnv{feDefMap} obj k = case H.lookup k feDefMap of
   Just v  -> return v
-  Nothing -> TypeCheckResE [GenTypeCheckError Nothing $ printf "Failed to lookup \"%s\" with keys %s" k (show $ H.keys feDefMap)]
+  Nothing -> TypeCheckResE [GenTypeCheckError Nothing $ printf "Failed to lookup %s in %s with keys %s" k (show obj) (show $ H.keys feDefMap)]
 
 addConstraints :: FEnv -> [Constraint] -> FEnv
 addConstraints env@FEnv{feCons} newCons = env {feCons = newCons ++ feCons}

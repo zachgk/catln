@@ -84,21 +84,26 @@ labelPos s (Just (p1, p2, sPrefix)) = Just (p1, p2, label')
 labelPos _ Nothing = Nothing
 
 type ArgMetaMapWithSrc m = H.HashMap ArgName (m, Type)
+-- |
+-- The 'formArgMetaMapWithSrc' is similar to the 'formArgMetaMap' function.
+-- It differs in that it accepts an additional partial type that is matched by the object and matches against that partial type.
 formArgMetaMapWithSrc :: ClassMap -> Object m -> PartialType -> ArgMetaMapWithSrc m
-formArgMetaMapWithSrc _ (Object m _ name _ args _) src | H.null args = H.singleton name (m, singletonType src)
-formArgMetaMapWithSrc classMap Object{objArgs} PartialType{ptArgs=srcArgs} = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg objArgs
+formArgMetaMapWithSrc classMap obj@Object{objArgs=baseArgs} src@PartialType{ptArgs=srcArgs} = H.union (aux obj) (H.intersectionWith (,) (fmap fst baseArgs) srcArgs)
   where
-    unionCombine _ _ = error "Duplicate var matched"
-    fromArg k (m, Nothing) = case H.lookup k srcArgs of
-      Just srcArg -> H.singleton k (m, srcArg)
-      Nothing     -> H.empty
-    fromArg k (_, Just arg) = case H.lookup k srcArgs of
-      Just (UnionType srcArg) -> mergeMaps $ map (formArgMetaMapWithSrc classMap arg) $ splitPartialLeafs srcArg
-      Just TopType -> (,TopType) <$> formArgMetaMap arg
-      Just _ -> H.empty
-      Nothing -> H.empty
-    mergeMaps [] = H.empty
-    mergeMaps (x:xs) = foldr (H.intersectionWith (\(m1, t1) (_, t2) -> (m1, unionType classMap t1 t2))) x xs
+    aux (Object m _ name _ args _) | H.null args = H.singleton name (m, singletonType src)
+    aux Object{objArgs} = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg objArgs
+      where
+        unionCombine _ _ = error "Duplicate var matched"
+        fromArg k (m, Nothing) = case H.lookup k srcArgs of
+          Just srcArg -> H.singleton k (m, srcArg)
+          Nothing     -> H.empty
+        fromArg k (_, Just arg) = case H.lookup k srcArgs of
+          Just (UnionType srcArg) -> mergeMaps $ map (formArgMetaMapWithSrc classMap arg) $ splitPartialLeafs srcArg
+          Just TopType -> (,TopType) <$> formArgMetaMap arg
+          Just _ -> H.empty
+          Nothing -> H.empty
+        mergeMaps [] = H.empty
+        mergeMaps (x:xs) = foldr (H.intersectionWith (\(m1, t1) (_, t2) -> (m1, unionType classMap t1 t2))) x xs
 
 formVarMap :: ClassMap -> Type -> TypeVarEnv
 formVarMap classMap (UnionType partialLeafs) = unionsWith (unionType classMap) $ map ptVars $ splitPartialLeafs partialLeafs
