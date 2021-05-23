@@ -147,19 +147,19 @@ singletonType partial = UnionType $ joinUnionType [partial]
 expandClassPartial :: ClassMap -> PartialType -> Type
 expandClassPartial _ PartialType{ptName=PTypeName n} = error $ printf "Bad type name %s found in expandClassPartial" n
 expandClassPartial _ p@PartialType{ptName=PClassName{}, ptArgs} | not (H.null ptArgs) = error $ printf "expandClassPartial class with args: %s" (show p)
-expandClassPartial classMap@(_, classToType) PartialType{ptName=PClassName className, ptVars} = UnionType $ joinUnionType expanded
+expandClassPartial classMap@(_, classToType) PartialType{ptName=PClassName className, ptVars=classVarsP} = expanded
   where
     expanded = case H.lookup className classToType of
-      Just (_, classVars, classTypes, _, _) -> splitUnionType partials'
+      Just (_, classVarsDecl, classTypes, _, _) -> unionAllTypes classMap $ map mapClassType classTypes
         where
-          (UnionType partials') = unionAllTypes classMap $ map mapClassType classTypes
+          classVars = H.unionWith (intersectTypes classMap) classVarsP classVarsDecl
           mapClassType TopType = TopType
           mapClassType (TypeVar (TVVar t)) = case H.lookup t classVars of
-            Just v -> intersectTypes classMap v (H.lookupDefault TopType t ptVars)
+            Just v -> intersectTypes classMap v (H.lookupDefault TopType t classVars)
             Nothing -> error $ printf "Unknown var %s in expandClassPartial" t
           mapClassType (TypeVar (TVArg t)) = error $ printf "Arg %s found in expandClassPartial" t
           mapClassType (UnionType p) = UnionType $ joinUnionType $ map mapClassPartial $ splitUnionType p
-          mapClassPartial (PartialType n v p a am) = PartialType n (fmap mapClassType v) (fmap mapClassType p) (fmap mapClassType a) am
+          mapClassPartial tp@PartialType{ptVars} = tp{ptVars=fmap (substituteVarsWithVarEnv classVars) ptVars}
       Nothing -> error $ printf "Unknown class %s in expandClassPartial" className
 
 -- assumes a compacted super type, does not check in superLeafs
