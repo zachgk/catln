@@ -12,13 +12,12 @@ function tagJoin(lst, joinWith) {
 }
 
 const useStyles = makeStyles( theme => ({
-  notesAll: {
-    whiteSpace: 'pre-wrap'
-  },
   notesError: {
-    background: theme.palette.error.main
+    whiteSpace: 'pre-wrap',
+    background: theme.palette.error.main,
   },
   notesWarning: {
+    whiteSpace: 'pre-wrap',
     background: theme.palette.warning.main
   },
   partialNameTp: {
@@ -140,7 +139,7 @@ function Note(props) {
   }
 
   return (
-    <pre classes={`${classes.notesAll} ${noteClass}`}>{note.msg}</pre>
+    <pre className={noteClass}>{note.msg}</pre>
   );
 }
 

@@ -14,9 +14,12 @@ import {useApi, posKey, Loading, Notes, Type} from './Common';
 import {ObjMap} from './ListProgram';
 
 const useStyles = makeStyles({
-  objMap: {
+  holdSideBySide: {
+    maxWidth: '100vw'
+  },
+  sideBySide: {
     maxHeight: '100vh',
-    overflow: 'scroll'
+    overflow: 'auto'
   }
 });
 
@@ -56,13 +59,11 @@ function Main(props) {
   return (
     <div>
       <Notes notes={notes} noPosOnly />
-      <Grid container spacing={2} justify="center">
-        <Grid item xs >
-          <div className={classes.objMap}>
-            <ObjMap objMap={prgm[0]} Meta={Meta} showExprMetas />
-          </div>
+      <Grid container spacing={2} justify="center" className={classes.holdSideBySide}>
+        <Grid item xs className={classes.sideBySide}>
+          <ObjMap objMap={prgm[0]} Meta={Meta} showExprMetas />
         </Grid>
-        <Grid item xs>
+        <Grid item xs className={classes.sideBySide}>
           <Switch>
             <Route exact path={`/typeinfer/${prgmName}`}>
               <Redirect to={`/typeinfer/${prgmName}/0`} />
@@ -128,7 +129,8 @@ function Trace(props) {
   let {trace, Meta} = props;
   let { curMeta } = useParams();
   curMeta = parseInt(curMeta);
-  return trace.map((constraintPair, constraintIndex) => {
+  const forwardTrace = [].concat(trace).reverse();
+  return forwardTrace.map((constraintPair, constraintIndex) => {
     let [constraint, updates] = constraintPair;
 
     let filteredUpdates = updates.filter(update => update[0] === curMeta);
