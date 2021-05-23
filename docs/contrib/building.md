@@ -1,6 +1,6 @@
 ## Building for development
 
-To build the compiler, you can run `stack build` from `$CATLN_HOME`.
+To build the compiler, you can run `stack build --pedantic` from `$CATLN_HOME`.
 
 Once it is built, you can execute the compiler on a Catln file by running `stack exec catln test/code/arith.ct`.
 
