@@ -112,15 +112,18 @@ type RawClassDef = ((TypeName, H.HashMap TypeVarName Type), ClassName)
 
 type RawClassDecl = (ClassName, H.HashMap TypeVarName Type)
 
+data Path = Relative String | Absolute String
+  deriving (Eq, Ord, Show, Generic, ToJSON)
+
 data RawStatement m
   = RawDeclStatement (RawDecl m)
-  | MultiTypeDefStatement (MultiTypeDef m) [RawDeclSubStatement m]
+  | MultiTypeDefStatement (MultiTypeDef m) [RawDeclSubStatement m] Path
   | TypeDefStatement (TypeDef m) [RawDeclSubStatement m]
-  | RawClassDefStatement RawClassDef [RawDeclSubStatement m]
-  | RawClassDeclStatement RawClassDecl [RawDeclSubStatement m]
+  | RawClassDefStatement RawClassDef [RawDeclSubStatement m] Path
+  | RawClassDeclStatement RawClassDecl [RawDeclSubStatement m] Path
   | RawComment String
   | RawGlobalAnnot (CompAnnot (RawExpr m)) [RawStatement m]
-  | RawModule String [RawStatement m]
+  | RawModule String [RawStatement m] Path
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
 type FileImport = String
@@ -135,7 +138,8 @@ data Object m = Object {
   objName  :: TypeName,
   objVars  :: H.HashMap TypeVarName m,
   objArgs  :: H.HashMap ArgName (ObjArg m),
-  objDoc   :: Maybe String
+  objDoc   :: Maybe String,
+  objPath  :: String
                        }
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
@@ -172,7 +176,7 @@ instance Show e => Show (Guard e) where
 
 instance Show m => Show (Object m) where
   -- show (Object m basis name vars args) = printf "%s %s (%s) %s %s" (show basis) name (show m) maybeVarsString maybeArgsString
-  show (Object _ basis name vars args _) = printf "%s %s %s %s" (show basis) name maybeVarsString maybeArgsString
+  show (Object _ basis name vars args _ _) = printf "%s %s %s %s" (show basis) name maybeVarsString maybeArgsString
     where
       showVar (varName, varVal) = printf "%s = %s" varName (show varVal)
       maybeVarsString :: String
@@ -255,8 +259,8 @@ mergeDoc _ _               = Nothing
 
 mergeClassMaps :: ClassMap -> ClassMap -> ClassMap
 mergeClassMaps classMap@(toClassA, toTypeA) (toClassB, toTypeB) = (H.unionWith S.union toClassA toClassB, H.unionWith mergeClasses toTypeA toTypeB)
-  where mergeClasses (sealedA, classVarsA, setA, docA) (sealedB, classVarsB, setB, docB) = if sealedA == sealedB
-          then (sealedA, H.unionWith (unionType classMap) classVarsA classVarsB, setA ++ setB, mergeDoc docA docB)
+  where mergeClasses (sealedA, classVarsA, setA, docA, pathA) (sealedB, classVarsB, setB, docB, _) = if sealedA == sealedB
+          then (sealedA, H.unionWith (unionType classMap) classVarsA classVarsB, setA ++ setB, mergeDoc docA docB, pathA)
           else error "Added to sealed class definition"
 
 mergePrgm :: Prgm e m -> Prgm e m -> Prgm e m

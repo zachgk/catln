@@ -51,13 +51,21 @@ pGlobalAnnot = L.indentBlock scn p
       annot <- pCompAnnot
       return (L.IndentMany Nothing (pack annot) pStatement)
 
+isAbsolutePath :: String -> Bool 
+isAbsolutePath name = "/" `isPrefixOf` name
+
+getPath :: String -> Path 
+getPath name = if isAbsolutePath name then 
+  Absolute name
+  else Relative name
+
 pModule :: Parser PStatement
 pModule = L.indentBlock scn p
   where
-    pack name children = return $ RawModule name children
+    pack name children = return $ RawModule name children (getPath name)
     p = do
       _ <- symbol "module"
-      name <- tidentifier
+      name <- ttypeidentifier
       return (L.IndentMany Nothing (pack name) pStatement)
 
 pStatement :: Parser PStatement

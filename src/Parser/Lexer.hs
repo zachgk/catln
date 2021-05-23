@@ -60,13 +60,21 @@ curlyBraces = between (symbol "{") (symbol "}")
 identifier :: Parser String
 identifier = (lexeme . try) (p >>= check)
   where
-    p       = (:) <$> lowerChar <*> many (alphaNumChar <|> char '/')
+    p       = ((:) <$> lowerChar <*> many (alphaNumChar <|> char '/')) <|> ttypeidentifier
     check x = if x `elem` reservedWords
                  then fail $ "keyword " ++ show x ++ " cannot be an identifier"
                  else return x
 
 tidentifier :: Parser String
 tidentifier = lexeme $ (:) <$> upperChar <*> many (alphaNumChar <|> char '/')
+
+ttypeidentifier :: Parser String
+ttypeidentifier = try $ lexeme $ do
+  first <- upperChar <|> char '/'
+  rest <- case first of
+    '/' -> tidentifier
+    _ -> many (alphaNumChar <|> char '/')
+  return $ first : rest
 
 tvar :: Parser String
 tvar = try $ lexeme $ do

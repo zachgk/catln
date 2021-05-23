@@ -147,7 +147,7 @@ fromGuard _ _ env ElseGuard = return (ElseGuard, env)
 fromGuard _ _ env NoGuard = return (NoGuard, env)
 
 fromArrow :: VObject -> FEnv -> PArrow -> TypeCheckResult (VArrow, FEnv)
-fromArrow obj@(Object _ _ objName objVars _ _) env1 (Arrow m annots aguard maybeExpr) = do
+fromArrow obj@(Object _ _ objName objVars _ _ _) env1 (Arrow m annots aguard maybeExpr) = do
   -- User entered type is not an upper bound, so start with TopType always. The true use of the user entered type is that the expression should have an arrow that has a reachesTree cut that is within the user entered type.
   let jobj = Just obj
   (mUserReturn', env2) <- fromMeta env1 BUpper jobj m (printf "Specified result from %s" (show objName))
@@ -212,13 +212,13 @@ clearMetaArgTypes (PreTyped (UnionType partials) pos) = PreTyped (UnionType $ jo
 clearMetaArgTypes p = p
 
 fromObject :: String -> Bool -> FEnv -> PObject -> TypeCheckResult (VObject, FEnv)
-fromObject prefix isObjArg env (Object m basis name vars args doc) = do
+fromObject prefix isObjArg env (Object m basis name vars args doc path) = do
   let prefix' = prefix ++ "." ++ name
   (m', env1) <- fromMeta env BUpper Nothing (clearMetaArgTypes m) prefix'
   (vars', env2) <- mapMWithFEnvMapWithKey env1 (fromObjVar m' prefix') vars
-  let fakeObjForArgs = Object m' basis name vars' H.empty doc
+  let fakeObjForArgs = Object m' basis name vars' H.empty doc path
   (args', env3) <- mapMWithFEnvMapWithKey env2 (addObjArg fakeObjForArgs m' prefix' vars') args
-  let obj' = Object m' basis name vars' args' doc
+  let obj' = Object m' basis name vars' args' doc path
   (objValue, env4) <- fromMeta env3 BUpper (Just obj') (PreTyped (singletonType (PartialType (PTypeName name) H.empty H.empty H.empty PtArgExact)) (labelPos "objValue" $ getMetaPos m)) ("objValue" ++ name)
   let env5 = fInsert env4 name (DefVar objValue)
   let env6 = addConstraints env5 [BoundedByObjs BoundAllObjs m' | isObjArg]

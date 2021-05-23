@@ -29,6 +29,7 @@ import           Syntax
 import           Syntax.Prgm
 import           Syntax.Types
 import           Utils
+import           Data.List
 
 type StatementEnv = (String, [DesCompAnnot])
 
@@ -148,16 +149,16 @@ semiDesExpr obj (RawMethods base methods) = semiDesExpr obj $ foldl addMethod ba
     addMethod b method@RawValue{} = RawTupleApply (emptyMetaE "app" b) (emptyMetaE "appBase" method, method) [RawTupleArgNamed "this" b]
     addMethod b (RawTupleApply m methodVal methodArgs) = RawTupleApply m methodVal (RawTupleArgNamed "this" b : methodArgs)
     addMethod _ _ = error "Unknown semiDesExpr obj method"
-semiDesExpr obj@Object{objVars} r@(RawIfThenElse m i t e) = (concat [subI, subT, subE, [elseDecl, ifDecl]], expr')
+semiDesExpr obj@Object{objVars, objPath} r@(RawIfThenElse m i t e) = (concat [subI, subT, subE, [elseDecl, ifDecl]], expr')
   where
     condName = "$" ++ take 6 (printf "%08x" (hash r))
     (subI, i') = semiDesExpr obj i
     (subT, t') = semiDesExpr obj t
     (subE, e') = semiDesExpr obj e
-    ifDecl = PSemiDecl (DeclLHS (emptyMetaE "obj" i) (Pattern (Object (emptyMetaE "patt" i) FunctionObj condName objVars H.empty Nothing) (IfGuard i'))) [] (Just t')
-    elseDecl = PSemiDecl (DeclLHS (emptyMetaE "obj" e) (Pattern (Object (emptyMetaE "patt" e) FunctionObj condName objVars H.empty Nothing) ElseGuard)) [] (Just e')
+    ifDecl = PSemiDecl (DeclLHS (emptyMetaE "obj" i) (Pattern (Object (emptyMetaE "patt" i) FunctionObj condName objVars H.empty Nothing objPath) (IfGuard i'))) [] (Just t')
+    elseDecl = PSemiDecl (DeclLHS (emptyMetaE "obj" e) (Pattern (Object (emptyMetaE "patt" e) FunctionObj condName objVars H.empty Nothing objPath) ElseGuard)) [] (Just e')
     expr' = PSValue m condName
-semiDesExpr obj@Object{objVars} r@(RawMatch m e matchItems) = (subE ++ subMatchItems, expr')
+semiDesExpr obj@Object{objVars, objPath} r@(RawMatch m e matchItems) = (subE ++ subMatchItems, expr')
   where
     condName = "$" ++ take 6 (printf "%08x" (hash r))
     argName = condName ++ "-arg"
@@ -169,15 +170,15 @@ semiDesExpr obj@Object{objVars} r@(RawMatch m e matchItems) = (subE ++ subMatchI
         (subPattGuard, pattGuard') = semiDesGuard obj pattGuard
         (subMatchExpr, matchExpr') = semiDesExpr obj matchExpr
         matchArg = H.singleton argName (emptyMetaM "arg" m, Just patt)
-        matchItemExpr' = PSemiDecl (DeclLHS (emptyMetaM "obj" m) (Pattern (Object (emptyMetaM "patt" m) FunctionObj condName objVars matchArg Nothing) pattGuard')) [] (Just matchExpr')
+        matchItemExpr' = PSemiDecl (DeclLHS (emptyMetaM "obj" m) (Pattern (Object (emptyMetaM "patt" m) FunctionObj condName objVars matchArg Nothing objPath) pattGuard')) [] (Just matchExpr')
 semiDesExpr _ (RawCase _ _ ((Pattern _ ElseGuard, _):_)) = error "Can't use elseguard in match expr"
 semiDesExpr _ (RawCase _ _ []) = error "Empty case"
 semiDesExpr obj (RawCase _ _ [(_, matchExpr)]) = semiDesExpr obj matchExpr
-semiDesExpr obj@Object{objVars} r@(RawCase m e ((Pattern firstObj@Object{objM=fm} firstGuard, firstExpr):restCases)) = (concat [[firstDecl, restDecl], subFG, subFE, subRE, subE], expr')
+semiDesExpr obj@Object{objVars, objPath} r@(RawCase m e ((Pattern firstObj@Object{objM=fm} firstGuard, firstExpr):restCases)) = (concat [[firstDecl, restDecl], subFG, subFE, subRE, subE], expr')
   where
     condName = "$" ++ take 6 (printf "%08x" (hash r))
     argName = condName ++ "-arg"
-    declObj = Object (emptyMetaM "obj" m) FunctionObj condName objVars (H.singleton argName (fm, Just firstObj)) Nothing
+    declObj = Object (emptyMetaM "obj" m) FunctionObj condName objVars (H.singleton argName (fm, Just firstObj)) Nothing objPath
     firstDecl = PSemiDecl (DeclLHS m (Pattern declObj firstGuard')) [] (Just firstExpr')
     (subFG, firstGuard') = semiDesGuard obj firstGuard
     (subFE, firstExpr') = semiDesExpr obj firstExpr
@@ -196,51 +197,64 @@ semiDesGuard _ ElseGuard = ([], ElseGuard)
 semiDesGuard _ NoGuard = ([], NoGuard)
 
 declToObjArrow :: StatementEnv -> PSemiDecl -> (DesObject, [DesArrow])
-declToObjArrow (_, inheritAnnots) (PSemiDecl (DeclLHS arrM (Pattern object guard)) annots expr) = (object, [arrow])
+declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl (DeclLHS arrM (Pattern object@Object{objName} guard)) annots expr) = (object', [arrow])
   where
-    argMetaMap = formArgMetaMap object
+    object' = object{objPath  = getPath inheritPath objName}
+    argMetaMap = formArgMetaMap object'
     annots' = map (desExpr argMetaMap) annots
     arrow = Arrow arrM (annots' ++ inheritAnnots) (desGuard argMetaMap guard) (fmap (desExpr argMetaMap) expr)
 
 desDecl :: StatementEnv -> PDecl -> DesObjectMap
 desDecl statementEnv decl = map (declToObjArrow statementEnv) $ removeSubDeclarations decl
 
-typeDefMetaToObj :: H.HashMap TypeVarName Type -> ParseMeta -> Maybe PObject
-typeDefMetaToObj _ (PreTyped TypeVar{} _) = Nothing
-typeDefMetaToObj varReplaceMap (PreTyped (UnionType partials) pos) = case splitPartialLeafs partials of
-  [partial@(PartialType (PTypeName partialName) partialVars _ partialArgs _)] -> Just $ Object m' TypeObj partialName (fmap toMeta partialVars') (fmap (\arg -> (PreTyped arg Nothing, Nothing)) partialArgs) Nothing
+getPath :: String -> String -> String 
+getPath inheritPath name = if "/" `isPrefixOf` name then
+  name
+  else inheritPath ++ "/" ++ name
+
+typeDefMetaToObj :: String -> H.HashMap TypeVarName Type -> ParseMeta -> Maybe PObject
+typeDefMetaToObj _ _ (PreTyped TypeVar{} _) = Nothing
+typeDefMetaToObj inheritPath varReplaceMap (PreTyped (UnionType partials) pos) = case splitPartialLeafs partials of
+  [partial@(PartialType (PTypeName partialName) partialVars _ partialArgs _)] -> Just $ Object m' TypeObj partialName (fmap toMeta partialVars') (fmap (\arg -> (PreTyped arg Nothing, Nothing)) partialArgs) Nothing (getPath inheritPath partialName)
     where
       partialVars' = fmap (substituteVarsWithVarEnv varReplaceMap) partialVars
       m' = PreTyped (singletonType partial{ptVars=partialVars'}) $ labelPos "obj" pos
       toMeta t = PreTyped t Nothing
   _ -> error "Invalid call to typeDefMetaToObj with UnionType"
-typeDefMetaToObj _ _ = error "Invalid call to typeDefMetaToObj"
+typeDefMetaToObj _ _ _ = error "Invalid call to typeDefMetaToObj"
 
-desMultiTypeDef :: PMultiTypeDef -> [RawDeclSubStatement ParseMeta] -> DesPrgm
-desMultiTypeDef (MultiTypeDef className classVars dataMetas) subStatements = (objMap', (typeToClass', classToType'), [])
+desMultiTypeDef :: StatementEnv -> PMultiTypeDef -> [RawDeclSubStatement ParseMeta] -> Path -> DesPrgm
+desMultiTypeDef (inheritPath, _) (MultiTypeDef className classVars dataMetas) subStatements path = (objMap', (typeToClass', classToType'), [])
     where
+      path' =  case path of
+        Absolute path -> path
+        Relative path -> inheritPath ++ "/" ++ path
       objMap' = map (,[]) objs
       objNames = map objName objs
       dataTypes = map getMetaType dataMetas
-      objs = mapMaybe (typeDefMetaToObj classVars) dataMetas
-      classToType' = H.singleton className (True, classVars, dataTypes, desObjDocComment subStatements)
+      objs = mapMaybe (typeDefMetaToObj inheritPath classVars) dataMetas
+      classToType' = H.singleton className (True, classVars, dataTypes, desObjDocComment subStatements, path')
       typeToClass' = H.fromList $ map (,S.singleton className) objNames
 
-desClassDecl :: RawClassDecl -> [RawDeclSubStatement ParseMeta] -> DesPrgm
-desClassDecl (className, classVars) subStatements = ([], (H.empty, H.singleton className (False, classVars, [], desObjDocComment subStatements)), [])
+desClassDecl :: StatementEnv -> RawClassDecl -> [RawDeclSubStatement ParseMeta] -> Path -> DesPrgm
+desClassDecl (inheritPath, _) (className, classVars) subStatements (Relative path) = ([], (H.empty, H.singleton className (False, classVars, [], desObjDocComment subStatements, inheritPath ++ "/" ++ path)), [])
+desClassDecl _ (className, classVars) subStatements (Absolute path) = ([], (H.empty, H.singleton className (False, classVars, [], desObjDocComment subStatements, path)), [])
 
-desTypeDef :: PTypeDef -> [RawDeclSubStatement ParseMeta] -> DesObjectMap
-desTypeDef (TypeDef tp) subStatements = case typeDefMetaToObj H.empty tp of
+desTypeDef :: StatementEnv -> PTypeDef -> [RawDeclSubStatement ParseMeta] -> DesObjectMap
+desTypeDef (inheritPath, _) (TypeDef tp) subStatements = case typeDefMetaToObj inheritPath H.empty tp of
           Just obj -> [(obj{objDoc = desObjDocComment subStatements}, [])]
           Nothing  -> error "Type def could not be converted into meta"
 
-desClassDef :: Sealed -> RawClassDef -> [RawDeclSubStatement ParseMeta] -> DesPrgm
-desClassDef sealed ((typeName, typeVars), className) subStatements = ([], classMap, [])
+desClassDef :: StatementEnv -> Sealed -> RawClassDef -> [RawDeclSubStatement ParseMeta] -> Path -> DesPrgm
+desClassDef (inheritPath, _) sealed ((typeName, typeVars), className) subStatements path = ([], classMap, [])
   where
+    path' =  case path of
+      Absolute path -> path
+      Relative path -> inheritPath ++ "/" ++ path
     classMap = (
         H.singleton typeName (S.singleton className),
         H.singleton className
-        (sealed, H.empty, [singletonType (PartialType (PTypeName typeName) typeVars H.empty H.empty PtArgExact)], desObjDocComment subStatements)
+        (sealed, H.empty, [singletonType (PartialType (PTypeName typeName) typeVars H.empty H.empty PtArgExact)], desObjDocComment subStatements, path')
       )
 
 emptyClassMap :: ClassMap
@@ -256,14 +270,15 @@ desGlobalAnnot p = case semiDesExpr undefined p of
 
 desStatement :: StatementEnv -> PStatement -> DesPrgm
 desStatement statementEnv (RawDeclStatement decl) = (desDecl statementEnv decl, emptyClassMap, [])
-desStatement _ (MultiTypeDefStatement multiTypeDef subStatements) = desMultiTypeDef multiTypeDef subStatements
-desStatement _ (TypeDefStatement typeDef subStatements) = (desTypeDef typeDef subStatements, emptyClassMap, [])
-desStatement _ (RawClassDefStatement classDef subStatements) = desClassDef False classDef subStatements
-desStatement _ (RawClassDeclStatement classDecls subStatements) = desClassDecl classDecls subStatements
+desStatement statementEnv (MultiTypeDefStatement multiTypeDef subStatements path) = desMultiTypeDef statementEnv multiTypeDef subStatements path
+desStatement statementEnv (TypeDefStatement typeDef subStatements) = (desTypeDef  statementEnv typeDef subStatements, emptyClassMap, [])
+desStatement statementEnv (RawClassDefStatement classDef subStatements path) = desClassDef statementEnv False classDef subStatements path
+desStatement statementEnv (RawClassDeclStatement classDecls subStatements path) = desClassDecl statementEnv classDecls subStatements path
 desStatement _ RawComment{} = ([], emptyClassMap, [])
 desStatement _ (RawGlobalAnnot a []) = ([], emptyClassMap, [desGlobalAnnot a])
 desStatement (inheritModule, inheritAnnots) (RawGlobalAnnot a subStatements) = mergePrgms $ map (desStatement (inheritModule, desGlobalAnnot a:inheritAnnots)) subStatements
-desStatement (inheritModule, inheritAnnots) (RawModule name subStatements) = mergePrgms $ map (desStatement (inheritModule ++ "/" ++ name, inheritAnnots)) subStatements
+desStatement (inheritModule, inheritAnnots) (RawModule name subStatements (Absolute path)) = mergePrgms $ map (desStatement (path, inheritAnnots)) subStatements
+desStatement (inheritModule, inheritAnnots) (RawModule name subStatements (Relative path)) = mergePrgms $ map (desStatement (inheritModule ++ "/" ++ path, inheritAnnots)) subStatements
 
 finalPasses :: DesPrgmGraphData -> GraphNodes DesPrgm String -> GraphNodes DesPrgm String
 finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm, prgmName, imports) = (prgm'', prgmName, imports)
