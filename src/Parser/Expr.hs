@@ -245,9 +245,9 @@ pObjTreeInner basis = do
   let vars' = maybe H.empty H.fromList vars
   let args' = H.fromList $ fromMaybe [] args
   let objMeta = emptyMeta pos1 pos2
-  let obj = Object objMeta basis name vars' args' Nothing
+  let obj = Object objMeta basis name vars' args' Nothing name
   return $ case maybeCtx of
-    Just ctx -> Object (emptyMetaM "context" objMeta) basis "Context" H.empty (H.insert "value" (emptyMetaN, Just obj) $ H.fromList ctx) Nothing
+    Just ctx -> Object (emptyMetaM "context" objMeta) basis "Context" H.empty (H.insert "value" (emptyMetaN, Just obj) $ H.fromList ctx) Nothing "Context"
     Nothing -> obj
 
 objTreeJoinMethods :: PObject -> PObject -> PObject

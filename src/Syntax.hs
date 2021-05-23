@@ -90,7 +90,7 @@ type ArgMetaMapWithSrc m = H.HashMap ArgName (m, Type)
 formArgMetaMapWithSrc :: ClassMap -> Object m -> PartialType -> ArgMetaMapWithSrc m
 formArgMetaMapWithSrc classMap obj@Object{objArgs=baseArgs} src@PartialType{ptArgs=srcArgs} = H.union (aux obj) (H.intersectionWith (,) (fmap fst baseArgs) srcArgs)
   where
-    aux (Object m _ name _ args _) | H.null args = H.singleton name (m, singletonType src)
+    aux (Object m _ name _ args _ _) | H.null args = H.singleton name (m, singletonType src)
     aux Object{objArgs} = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg objArgs
       where
         unionCombine _ _ = error "Duplicate var matched"

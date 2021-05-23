@@ -25,6 +25,7 @@ import           Parser.Syntax
 import           Syntax
 import           Syntax.Prgm
 import           Syntax.Types
+import           Data.List
 
 import           Data.Either
 import qualified Text.Megaparsec.Char.Lexer as L
@@ -71,7 +72,7 @@ pLeafType :: PLeafTypeMode -> Parser ParseMeta
 pLeafType mode = do
   pos1 <- getSourcePos
   let parseIdentifier = case mode of
-        PLeafTypeData        -> tidentifier
+        PLeafTypeData        -> ttypeidentifier
         PLeafTypeAnnot       -> pAnnotIdentifier
         PLeafTypeSealedClass -> tidentifier
   name <- parseIdentifier
@@ -103,7 +104,7 @@ pClassStatement' :: Parser
      (MultiTypeDef ParseMeta) RawClassDecl)
 pClassStatement' = do
   _ <- symbol "class"
-  name <- tidentifier
+  name <- ttypeidentifier
   maybeVars <- optional $ angleBraces $ sepBy1 pLeafVar (symbol ",")
   let vars = maybe H.empty H.fromList maybeVars
   maybeTypes <- optional $ do
@@ -113,16 +114,22 @@ pClassStatement' = do
     Just types -> return $ Left types
     Nothing    -> return $ Right (name, vars)
 
+getPath :: String -> Path 
+getPath name = if "/" `isPrefixOf` name then
+  Absolute name
+  else Relative name
+
+
 pClassStatement :: Parser PStatement
 pClassStatement = L.indentBlock scn p
   where
     pack pclass children = case pclass of
-      Left multi -> case partitionEithers $ map validSubStatementInSingle children of
-        ([], subStatements) -> return $ MultiTypeDefStatement multi subStatements
-        (_, _) -> return $ MultiTypeDefStatement multi []
-      Right pcl -> case partitionEithers $ map validSubStatementInSingle children of
-        ([], subStatements) -> return $ RawClassDeclStatement pcl subStatements
-        (_, _)              -> return $ RawClassDeclStatement pcl []
+      Left multi@(MultiTypeDef name _ _) -> case partitionEithers $ map validSubStatementInSingle children of
+        ([], subStatements) -> return $ MultiTypeDefStatement multi subStatements (getPath name)
+        (_, _) -> return $ MultiTypeDefStatement multi [] (getPath name)
+      Right pcl@(name, _) -> case partitionEithers $ map validSubStatementInSingle children of
+        ([], subStatements) -> return $ RawClassDeclStatement pcl subStatements (getPath name)
+        (_, _)              -> return $ RawClassDeclStatement pcl [] (getPath name)
     childParser :: Parser TreeRes
     childParser = try (TRComment <$> pComment)
     p = do
@@ -133,7 +140,7 @@ pAnnotDefStatement :: Parser PStatement
 pAnnotDefStatement = L.indentBlock scn p
   where
     pack pclass children = case partitionEithers $ map validSubStatementInSingle children of
-        ([], subStatements) -> return $ TypeDefStatement pclass subStatements
+        ([], subStatements) -> return $ TypeDefStatement pclass subStatements 
         (_, _)              -> return $ TypeDefStatement pclass []
     childParser :: Parser TreeRes
     childParser = try (TRComment <$> pComment)
@@ -160,9 +167,9 @@ pTypeDefStatement = L.indentBlock scn p
 pClassDefStatement :: Parser PStatement
 pClassDefStatement = L.indentBlock scn p
   where
-    pack pclass children = case partitionEithers $ map validSubStatementInSingle children of
-        ([], subStatements) -> return $ RawClassDefStatement pclass subStatements
-        (_, _) -> return $ RawClassDefStatement pclass []
+    pack pclass@((typeName, _), _) children = case partitionEithers $ map validSubStatementInSingle children of
+        ([], subStatements) -> return $ RawClassDefStatement pclass subStatements (getPath typeName)
+        (_, _) -> return $ RawClassDefStatement pclass [] (getPath typeName)
     childParser :: Parser TreeRes
     childParser = try (TRComment <$> pComment)
     p = do
