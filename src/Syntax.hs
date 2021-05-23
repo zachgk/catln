@@ -98,15 +98,15 @@ formArgMetaMapWithSrc classMap obj@Object{objArgs=baseArgs} src@PartialType{ptAr
           Just srcArg -> H.singleton k (m, srcArg)
           Nothing     -> H.empty
         fromArg k (_, Just arg) = case H.lookup k srcArgs of
-          Just (UnionType srcArg) -> mergeMaps $ map (formArgMetaMapWithSrc classMap arg) $ splitPartialLeafs srcArg
+          Just (UnionType srcArg) -> mergeMaps $ map (formArgMetaMapWithSrc classMap arg) $ splitUnionType srcArg
           Just TopType -> (,TopType) <$> formArgMetaMap arg
           Just _ -> H.empty
           Nothing -> H.empty
         mergeMaps [] = H.empty
-        mergeMaps (x:xs) = foldr (H.intersectionWith (\(m1, t1) (_, t2) -> (m1, unionType classMap t1 t2))) x xs
+        mergeMaps (x:xs) = foldr (H.intersectionWith (\(m1, t1) (_, t2) -> (m1, unionTypes classMap t1 t2))) x xs
 
 formVarMap :: ClassMap -> Type -> TypeVarEnv
-formVarMap classMap (UnionType partialLeafs) = unionsWith (unionType classMap) $ map ptVars $ splitPartialLeafs partialLeafs
+formVarMap classMap (UnionType partialLeafs) = unionsWith (unionTypes classMap) $ map ptVars $ splitUnionType partialLeafs
 formVarMap _ _ = error $ printf "Unknown formVarMap"
 
 -- fullDest means to use the greatest possible type (after implicit).
@@ -117,12 +117,12 @@ arrowDestType fullDest classMap src obj@Object{objM} (Arrow arrM _ _ maybeExpr) 
   _             -> joined
   where
     varEnv = formVarMap classMap $ intersectTypes classMap (getMetaType objM) (singletonType src)
-    argEnv = snd <$> formArgMetaMapWithSrc classMap obj ((\(UnionType pl) -> head $ splitPartialLeafs pl) $ substituteVars $ singletonType src)
+    argEnv = snd <$> formArgMetaMapWithSrc classMap obj ((\(UnionType pl) -> head $ splitUnionType pl) $ substituteVars $ singletonType src)
     substitute = substituteVarsWithVarEnv varEnv . substituteArgsWithArgEnv argEnv
     expr' = fmap (substitute . getMetaType . getExprMeta) maybeExpr
     arr' = substitute $ getMetaType arrM
     joined = if fullDest
-      then unionType classMap (fromMaybe bottomType expr') arr'
+      then unionTypes classMap (fromMaybe bottomType expr') arr'
       else intersectTypes classMap (fromMaybe TopType expr') arr'
 
 metaTypeVar :: (Meta m) => m -> Maybe TypeVarAux
@@ -131,11 +131,11 @@ metaTypeVar m = case getMetaType m of
   _         -> Nothing
 
 
-hasPartialWithObj :: (Meta m) => ClassMap -> Object m -> PartialType -> Type -> Bool
-hasPartialWithObj classMap Object{objVars, objArgs} = hasPartialWithEnv classMap (fmap getMetaType objVars) (fmap (getMetaType . fst) objArgs)
+isSubtypePartialOfWithObj :: (Meta m) => ClassMap -> Object m -> PartialType -> Type -> Bool
+isSubtypePartialOfWithObj classMap Object{objVars, objArgs} = isSubtypePartialOfWithEnv classMap (fmap getMetaType objVars) (fmap (getMetaType . fst) objArgs)
 
-hasTypeWithObj :: (Meta m) => ClassMap -> Object m -> Type -> Type -> Bool
-hasTypeWithObj classMap obj@Object{objVars} = hasTypeWithEnv classMap (fmap getMetaType objVars) (getMetaType <$> formArgMetaMap obj)
+isSubtypeOfWithObj :: (Meta m) => ClassMap -> Object m -> Type -> Type -> Bool
+isSubtypeOfWithObj classMap obj@Object{objVars} = isSubtypeOfWithEnv classMap (fmap getMetaType objVars) (getMetaType <$> formArgMetaMap obj)
 
-hasTypeWithObjSrc :: (Meta m) => ClassMap -> PartialType -> Object m -> Type -> Type -> Bool
-hasTypeWithObjSrc classMap srcType obj@Object{objVars} = hasTypeWithEnv classMap (fmap getMetaType objVars) (snd <$> formArgMetaMapWithSrc classMap obj srcType )
+isSubtypeOfWithObjSrc :: (Meta m) => ClassMap -> PartialType -> Object m -> Type -> Type -> Bool
+isSubtypeOfWithObjSrc classMap srcType obj@Object{objVars} = isSubtypeOfWithEnv classMap (fmap getMetaType objVars) (snd <$> formArgMetaMapWithSrc classMap obj srcType )

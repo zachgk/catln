@@ -72,7 +72,7 @@ toExpr env (ITupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
     _ | getMetaType m' == bottomType -> return result
     _ | getMetaType baseM' == bottomType -> return result
 
-    tp@(Typed (UnionType uType) _) | all (\PartialType{ptArgs=leafArgs} -> not (argName `H.member` leafArgs)) (splitPartialLeafs uType) ->
+    tp@(Typed (UnionType uType) _) | all (\PartialType{ptArgs=leafArgs} -> not (argName `H.member` leafArgs)) (splitUnionType uType) ->
                                         TypeCheckResult [TupleMismatch baseM' baseExpr' tp $ H.singleton argName argExpr'] result
 
     _ -> return result
@@ -83,7 +83,7 @@ toExpr env (ITupleApply m (baseM, baseExpr) Nothing argExpr) = do
   baseExpr' <- toExpr env baseExpr
   argExpr' <- toExpr env argExpr
   argName <- case (getMetaType baseM', getMetaType m') of
-    (UnionType basePartialLeafs, UnionType partialLeafs) -> case (splitPartialLeafs basePartialLeafs, splitPartialLeafs partialLeafs) of
+    (UnionType basePartialLeafs, UnionType partialLeafs) -> case (splitUnionType basePartialLeafs, splitUnionType partialLeafs) of
       ([PartialType{ptArgs=basePartialArgs}], [PartialType{ptArgs}]) -> case S.toList $ S.difference (H.keysSet ptArgs) (H.keysSet basePartialArgs) of
         [argN] -> return argN
         _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to multiple arg options"]

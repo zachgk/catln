@@ -100,7 +100,7 @@ instance Show PartialType where
 instance Show Type where
   show TopType = "TopType"
   show (TypeVar v) = show v
-  show (UnionType partials) = join $ map show $ splitPartialLeafs partials
+  show (UnionType partials) = join $ map show $ splitUnionType partials
     where
       join []  = "∅"
       join [p] = p
@@ -118,7 +118,7 @@ ioLeaf = PartialType (PTypeName "IO") H.empty H.empty H.empty PtArgExact
 intType, floatType, boolType, strType, ioType :: Type
 intType = singletonType intLeaf
 floatType = singletonType floatLeaf
-boolType = UnionType $ joinPartialLeafs [trueLeaf, falseLeaf]
+boolType = UnionType $ joinUnionType [trueLeaf, falseLeaf]
 strType = singletonType strLeaf
 ioType = singletonType ioLeaf
 
@@ -132,48 +132,48 @@ isBottomType :: Type -> Bool
 -- isBottomType t = compactType t == bottomType
 isBottomType t = t == bottomType
 
-splitPartialLeafs :: PartialLeafs -> [PartialType]
-splitPartialLeafs partials = concatMap (\(k, vs) -> map (aux k) vs) $ H.toList $ fmap S.toList partials
+splitUnionType :: PartialLeafs -> [PartialType]
+splitUnionType partials = concatMap (\(k, vs) -> map (aux k) vs) $ H.toList $ fmap S.toList partials
   where aux name (vars, props, args, argMode) = PartialType name vars props args argMode
 
-joinPartialLeafs :: [PartialType] -> PartialLeafs
-joinPartialLeafs = foldr (\(PartialType pName pVars pProps pArgs pArgMode) partials -> H.insertWith S.union pName (S.singleton (pVars, pProps, pArgs, pArgMode)) partials) H.empty
+joinUnionType :: [PartialType] -> PartialLeafs
+joinUnionType = foldr (\(PartialType pName pVars pProps pArgs pArgMode) partials -> H.insertWith S.union pName (S.singleton (pVars, pProps, pArgs, pArgMode)) partials) H.empty
 
 singletonType :: PartialType -> Type
-singletonType partial = UnionType $ joinPartialLeafs [partial]
+singletonType partial = UnionType $ joinUnionType [partial]
 
 -- expands a class partial into a sum of the constituent type partials
 -- TODO: Should preserve type properties when expanding
 expandClassPartial :: ClassMap -> PartialType -> Type
 expandClassPartial _ PartialType{ptName=PTypeName n} = error $ printf "Bad type name %s found in expandClassPartial" n
 expandClassPartial _ p@PartialType{ptName=PClassName{}, ptArgs} | not (H.null ptArgs) = error $ printf "expandClassPartial class with args: %s" (show p)
-expandClassPartial classMap@(_, classToType) PartialType{ptName=PClassName className, ptVars} = UnionType $ joinPartialLeafs expanded
+expandClassPartial classMap@(_, classToType) PartialType{ptName=PClassName className, ptVars} = UnionType $ joinUnionType expanded
   where
     expanded = case H.lookup className classToType of
-      Just (_, classVars, classTypes, _, _) -> splitPartialLeafs partials'
+      Just (_, classVars, classTypes, _, _) -> splitUnionType partials'
         where
-          (UnionType partials') = unionTypes classMap $ map mapClassType classTypes
+          (UnionType partials') = unionAllTypes classMap $ map mapClassType classTypes
           mapClassType TopType = TopType
           mapClassType (TypeVar (TVVar t)) = case H.lookup t classVars of
             Just v -> intersectTypes classMap v (H.lookupDefault TopType t ptVars)
             Nothing -> error $ printf "Unknown var %s in expandClassPartial" t
           mapClassType (TypeVar (TVArg t)) = error $ printf "Arg %s found in expandClassPartial" t
-          mapClassType (UnionType p) = UnionType $ joinPartialLeafs $ map mapClassPartial $ splitPartialLeafs p
+          mapClassType (UnionType p) = UnionType $ joinUnionType $ map mapClassPartial $ splitUnionType p
           mapClassPartial (PartialType n v p a am) = PartialType n (fmap mapClassType v) (fmap mapClassType p) (fmap mapClassType a) am
       Nothing -> error $ printf "Unknown class %s in expandClassPartial" className
 
 -- assumes a compacted super type, does not check in superLeafs
-hasPartialWithEnv :: ClassMap -> TypeVarEnv -> TypeArgEnv -> PartialType -> Type -> Bool
-hasPartialWithEnv _ _ _ _ TopType = True
-hasPartialWithEnv classMap venv aenv sub (TypeVar (TVVar v)) = case H.lookup v venv of
-  Just sup -> hasPartialWithEnv classMap venv aenv sub sup
-  Nothing  -> error $ printf "hasPartialWithEnv with unknown type var %s" v
-hasPartialWithEnv classMap venv aenv sub (TypeVar (TVArg v)) = case H.lookup v aenv of
-  Just sup -> hasPartialWithEnv classMap venv aenv sub sup
-  Nothing  -> error $ printf "hasPartialWithEnv with unknown type arg %s" v
-hasPartialWithEnv classMap@(typeToClass, _) venv aenv sub@(PartialType subName subVars subProps subArgs subArgMode) super@(UnionType superPartials) = case subName of
+isSubtypePartialOfWithEnv :: ClassMap -> TypeVarEnv -> TypeArgEnv -> PartialType -> Type -> Bool
+isSubtypePartialOfWithEnv _ _ _ _ TopType = True
+isSubtypePartialOfWithEnv classMap venv aenv sub (TypeVar (TVVar v)) = case H.lookup v venv of
+  Just sup -> isSubtypePartialOfWithEnv classMap venv aenv sub sup
+  Nothing  -> error $ printf "isSubtypePartialOfWithEnv with unknown type var %s" v
+isSubtypePartialOfWithEnv classMap venv aenv sub (TypeVar (TVArg v)) = case H.lookup v aenv of
+  Just sup -> isSubtypePartialOfWithEnv classMap venv aenv sub sup
+  Nothing  -> error $ printf "isSubtypePartialOfWithEnv with unknown type arg %s" v
+isSubtypePartialOfWithEnv classMap@(typeToClass, _) venv aenv sub@(PartialType subName subVars subProps subArgs subArgMode) super@(UnionType superPartials) = case subName of
   (PTypeName typeName) -> checkDirect || any checkSuperClass (H.lookupDefault S.empty typeName typeToClass)
-  PClassName{} -> checkDirect || hasTypeWithEnv classMap venv aenv (expandClassPartial classMap sub) super
+  PClassName{} -> checkDirect || isSubtypeOfWithEnv classMap venv aenv (expandClassPartial classMap sub) super
   where
     checkDirect = case H.lookup subName superPartials of
       Just superArgsOptions -> any hasArgs superArgsOptions
@@ -185,51 +185,47 @@ hasPartialWithEnv classMap@(typeToClass, _) venv aenv sub@(PartialType subName s
           where
             venv' = substituteVarsWithVarEnv venv <$> H.unionWith (intersectTypes classMap) superVars subVars
             aenv' = substituteArgsWithArgEnv aenv <$> H.unionWith (intersectTypes classMap) superArgs subArgs
-            hasAll sb sp = and $ H.elems $ H.intersectionWith (hasTypeWithEnv classMap venv' aenv') sb sp
+            hasAll sb sp = and $ H.elems $ H.intersectionWith (isSubtypeOfWithEnv classMap venv' aenv') sb sp
     checkSuperClass superClassName = case H.lookup (PClassName superClassName) superPartials of
-      Just superClassArgsOptions -> any (hasPartialWithEnv classMap venv aenv sub . expandClassPartial classMap) $ splitPartialLeafs $ H.singleton (PClassName superClassName) superClassArgsOptions
+      Just superClassArgsOptions -> any (isSubtypePartialOfWithEnv classMap venv aenv sub . expandClassPartial classMap) $ splitUnionType $ H.singleton (PClassName superClassName) superClassArgsOptions
       Nothing -> False
 
-hasPartial :: ClassMap -> PartialType -> Type -> Bool
-hasPartial classMap = hasPartialWithEnv classMap H.empty H.empty
+isSubtypePartialOf :: ClassMap -> PartialType -> Type -> Bool
+isSubtypePartialOf classMap = isSubtypePartialOfWithEnv classMap H.empty H.empty
 
--- Maybe rename to subtypeOf
-hasTypeWithEnv :: ClassMap -> TypeVarEnv -> TypeArgEnv -> Type -> Type -> Bool
-hasTypeWithEnv _ _ _ _ TopType = True
-hasTypeWithEnv _ _ _ t1 t2 | t1 == t2 = True
-hasTypeWithEnv classMap venv aenv (TypeVar (TVVar v)) t2 = case H.lookup v venv of
-  Just t1 -> hasTypeWithEnv classMap venv aenv t1 t2
-  Nothing -> error $ printf "hasTypeWithEnv with unknown type var %s" v
-hasTypeWithEnv classMap venv aenv t1 (TypeVar (TVVar v)) = case H.lookup v venv of
-  Just t2 -> hasTypeWithEnv classMap venv aenv t1 t2
-  Nothing -> error $ printf "hasTypeWithEnv with unknown type var %s" v
-hasTypeWithEnv classMap venv aenv (TypeVar (TVArg v)) t2 = case H.lookup v aenv of
-  Just t1 -> hasTypeWithEnv classMap venv aenv t1 t2
-  Nothing -> error $ printf "hasTypeWithEnv with unknown type arg %s" v
-hasTypeWithEnv classMap venv aenv t1 (TypeVar (TVArg v)) = case H.lookup v aenv of
-  Just t2 -> hasTypeWithEnv classMap venv aenv t1 t2
-  Nothing -> error $ printf "hasTypeWithEnv with unknown type arg %s" v
-hasTypeWithEnv _ _ _ TopType t = t == TopType
-hasTypeWithEnv classMap venv aenv (UnionType subPartials) superType = all (\p -> hasPartialWithEnv classMap venv aenv p superType) $ splitPartialLeafs subPartials
+isSubtypeOfWithEnv :: ClassMap -> TypeVarEnv -> TypeArgEnv -> Type -> Type -> Bool
+isSubtypeOfWithEnv _ _ _ _ TopType = True
+isSubtypeOfWithEnv _ _ _ t1 t2 | t1 == t2 = True
+isSubtypeOfWithEnv classMap venv aenv (TypeVar (TVVar v)) t2 = case H.lookup v venv of
+  Just t1 -> isSubtypeOfWithEnv classMap venv aenv t1 t2
+  Nothing -> error $ printf "isSubtypeOfWithEnv with unknown type var %s" v
+isSubtypeOfWithEnv classMap venv aenv t1 (TypeVar (TVVar v)) = case H.lookup v venv of
+  Just t2 -> isSubtypeOfWithEnv classMap venv aenv t1 t2
+  Nothing -> error $ printf "isSubtypeOfWithEnv with unknown type var %s" v
+isSubtypeOfWithEnv classMap venv aenv (TypeVar (TVArg v)) t2 = case H.lookup v aenv of
+  Just t1 -> isSubtypeOfWithEnv classMap venv aenv t1 t2
+  Nothing -> error $ printf "isSubtypeOfWithEnv with unknown type arg %s" v
+isSubtypeOfWithEnv classMap venv aenv t1 (TypeVar (TVArg v)) = case H.lookup v aenv of
+  Just t2 -> isSubtypeOfWithEnv classMap venv aenv t1 t2
+  Nothing -> error $ printf "isSubtypeOfWithEnv with unknown type arg %s" v
+isSubtypeOfWithEnv _ _ _ TopType t = t == TopType
+isSubtypeOfWithEnv classMap venv aenv (UnionType subPartials) superType = all (\p -> isSubtypePartialOfWithEnv classMap venv aenv p superType) $ splitUnionType subPartials
 
-hasType :: ClassMap -> Type -> Type -> Bool
-hasType classMap = hasTypeWithEnv classMap H.empty H.empty
-
-subPartialOf :: ClassMap -> PartialType -> PartialType -> Bool
-subPartialOf classMap sub sup = hasPartial classMap sub (singletonType sup)
+isSubtypeOf :: ClassMap -> Type -> Type -> Bool
+isSubtypeOf classMap = isSubtypeOfWithEnv classMap H.empty H.empty
 
 -- join partials where one is a subset of another
 compactOverlapping :: ClassMap -> PartialLeafs -> PartialLeafs
 compactOverlapping classMap = H.mapWithKey compactArgOptions
   where
     compactArgOptions partialName argOptions = S.filter (filterOptions partialName argOptions) argOptions
-    filterOptions partialName argOptions option = not $ any (\potentialSuperOption -> option /= potentialSuperOption && hasType classMap (optionToType partialName option) (optionToType partialName potentialSuperOption)) argOptions
+    filterOptions partialName argOptions option = not $ any (\potentialSuperOption -> option /= potentialSuperOption && isSubtypeOf classMap (optionToType partialName option) (optionToType partialName potentialSuperOption)) argOptions
     optionToType name (vars, props, args, argMode) = singletonType (PartialType name vars props args argMode)
 
 -- joins partials with only one difference between their args or vars
 -- TODO: Should check if props are suitable for joining
 compactJoinPartials :: ClassMap -> PartialLeafs -> PartialLeafs
-compactJoinPartials classMap partials = joinPartialLeafs $ concat $ H.elems $ fmap joinMatchArgPartials $ H.fromListWith (++) $ map prepGroupJoinable $ splitPartialLeafs partials
+compactJoinPartials classMap partials = joinUnionType $ concat $ H.elems $ fmap joinMatchArgPartials $ H.fromListWith (++) $ map prepGroupJoinable $ splitUnionType partials
   where
     -- group partials by argSet and varSet to check for joins
     prepGroupJoinable partial@PartialType{ptName, ptArgs, ptVars, ptArgMode} = ((ptName, H.keysSet ptArgs, H.keysSet ptVars, ptArgMode), [partial])
@@ -248,11 +244,11 @@ compactJoinPartials classMap partials = joinPartialLeafs $ concat $ H.elems $ fm
       else Nothing
 
     numDifferences m1 m2 = sum $ fromEnum <$> H.intersectionWith (/=) m1 m2
-    joinMap m1 m2 = H.unionWith (unionType classMap) m1 m2
+    joinMap m1 m2 = H.unionWith (unionTypes classMap) m1 m2
 
 -- compacts partials where a type variable is the bottomType to a bottomType
 compactBottomTypeVars :: PartialLeafs -> PartialLeafs
-compactBottomTypeVars partials = joinPartialLeafs $ mapMaybe aux $ splitPartialLeafs partials
+compactBottomTypeVars partials = joinUnionType $ mapMaybe aux $ splitUnionType partials
   where
     aux partial@PartialType{ptVars} = if any isBottomType ptVars
       then Nothing
@@ -266,20 +262,20 @@ compactType _ t@TypeVar{} = t
 compactType classMap (UnionType partials) = UnionType $ (compactOverlapping classMap . compactJoinPartials classMap . nonEmpty . compactBottomTypeVars) partials
   where nonEmpty = H.filter (not . S.null)
 
-unionType :: ClassMap -> Type -> Type -> Type
-unionType _ TopType _ = TopType
-unionType _ _ TopType = TopType
-unionType _ t1 t2 | isBottomType t2 = t1
-unionType _ t1 t2 | isBottomType t1 = t2
-unionType _ t1 t2 | t1 == t2 = t1
-unionType _ (TypeVar v) t = error $ printf "Can't union type vars %s with %s " (show v) (show t)
-unionType _ t (TypeVar v) = error $ printf "Can't union type vars %s with %s " (show t) (show v)
-unionType classMap (UnionType aPartials) (UnionType bPartials) = compactType classMap $ UnionType partials'
+unionTypes :: ClassMap -> Type -> Type -> Type
+unionTypes _ TopType _ = TopType
+unionTypes _ _ TopType = TopType
+unionTypes _ t1 t2 | isBottomType t2 = t1
+unionTypes _ t1 t2 | isBottomType t1 = t2
+unionTypes _ t1 t2 | t1 == t2 = t1
+unionTypes _ (TypeVar v) t = error $ printf "Can't union type vars %s with %s " (show v) (show t)
+unionTypes _ t (TypeVar v) = error $ printf "Can't union type vars %s with %s " (show t) (show v)
+unionTypes classMap (UnionType aPartials) (UnionType bPartials) = compactType classMap $ UnionType partials'
   where
     partials' = H.unionWith S.union aPartials bPartials
 
-unionTypes :: Foldable f => ClassMap -> f Type -> Type
-unionTypes classMap = foldr (unionType classMap) bottomType
+unionAllTypes :: Foldable f => ClassMap -> f Type -> Type
+unionAllTypes classMap = foldr (unionTypes classMap) bottomType
 
 intersectAllTypes :: Foldable f => ClassMap -> f Type -> Type
 intersectAllTypes classMap = foldr (intersectTypes classMap) TopType
@@ -315,7 +311,7 @@ intersectTypePartialLeaves classMap venv aPartials bPartials = partials'
 
 intersectTypeWithClassPartialLeaves :: ClassMap -> TypeVarEnv -> TypePartialLeafs -> ClassPartialLeafs -> (TypeVarEnv, PartialLeafs)
 intersectTypeWithClassPartialLeaves classMap venv typePartials classPartials = intersectTypePartialLeaves classMap venv typePartials typePartialsFromClassPartials
-  where (UnionType typePartialsFromClassPartials) = unionTypes classMap $ map (expandClassPartial classMap) $ splitPartialLeafs classPartials
+  where (UnionType typePartialsFromClassPartials) = unionAllTypes classMap $ map (expandClassPartial classMap) $ splitUnionType classPartials
 
 intersectClassPartialLeaves :: ClassMap -> TypeVarEnv -> ClassPartialLeafs -> ClassPartialLeafs -> (TypeVarEnv, PartialLeafs)
 intersectClassPartialLeaves = intersectTypePartialLeaves
@@ -329,7 +325,7 @@ intersectTypesWithVarEnv classMap venv tv@(TypeVar (TVVar v)) t = (H.insertWith 
 intersectTypesWithVarEnv classMap venv t tv@(TypeVar (TVVar v)) = (H.insertWith (intersectTypes classMap) v t venv, tv)
 intersectTypesWithVarEnv _ _ (TypeVar v) t = error $ printf "Can't intersect type vars %s with %s" (show v) (show t)
 intersectTypesWithVarEnv _ _ t (TypeVar v) = error $ printf "Can't intersect type vars %s with %s" (show t) (show v)
-intersectTypesWithVarEnv classMap venv1 (UnionType aPartials) (UnionType bPartials) = (venv5, compactType classMap $ unionTypes classMap $ map UnionType [res1, res2, res3, res4])
+intersectTypesWithVarEnv classMap venv1 (UnionType aPartials) (UnionType bPartials) = (venv5, compactType classMap $ unionAllTypes classMap $ map UnionType [res1, res2, res3, res4])
   where
     isTypeLeaf (PTypeName _) _  = True
     isTypeLeaf (PClassName _) _ = False
@@ -366,12 +362,12 @@ powersetType TopType = TopType
 powersetType (TypeVar t) = TypeVar t
 powersetType (UnionType partials) = UnionType partials'
   where
-    partials' = joinPartialLeafs $ concatMap fromPartialType $ splitPartialLeafs partials
+    partials' = joinUnionType $ concatMap fromPartialType $ splitUnionType partials
     fromArgs args = powerset $ H.toList args
     fromPartialType (PartialType name vars props args argMode) = [PartialType name vars (H.fromList p) (H.fromList a) argMode | p <- fromArgs props, a <- fromArgs args]
 
 substituteVarsWithVarEnv :: TypeVarEnv -> Type -> Type
-substituteVarsWithVarEnv venv (UnionType partials) = UnionType $ joinPartialLeafs $ map substitutePartial $ splitPartialLeafs partials
+substituteVarsWithVarEnv venv (UnionType partials) = UnionType $ joinUnionType $ map substitutePartial $ splitUnionType partials
   where substitutePartial partial@PartialType{ptVars, ptProps, ptArgs} = partial{
           ptVars = fmap (substituteVarsWithVarEnv venv) ptVars,
           ptProps = fmap (substituteVarsWithVarEnv ptVars') ptProps,
@@ -387,7 +383,7 @@ substituteVars :: Type -> Type
 substituteVars = substituteVarsWithVarEnv H.empty
 
 substituteArgsWithArgEnv :: ArgEnv -> Type -> Type
-substituteArgsWithArgEnv aenv (UnionType partials) = UnionType $ joinPartialLeafs $ map substitutePartial $ splitPartialLeafs partials
+substituteArgsWithArgEnv aenv (UnionType partials) = UnionType $ joinUnionType $ map substitutePartial $ splitUnionType partials
   where substitutePartial partial@PartialType{ptArgs} = partial{
           ptArgs = fmap (substituteArgsWithArgEnv aenv') ptArgs
                                                                  }
@@ -408,10 +404,10 @@ typeGetArg argName PartialType{ptArgs, ptVars} = do
     TopType -> TopType
     TypeVar (TVVar v) -> H.lookupDefault TopType v ptVars
     TypeVar (TVArg _) -> error $ printf "Not yet implemented"
-    UnionType partialLeafs -> UnionType $ joinPartialLeafs $ map substitutePartial $ splitPartialLeafs partialLeafs
+    UnionType partialLeafs -> UnionType $ joinUnionType $ map substitutePartial $ splitUnionType partialLeafs
       where
         substitutePartial partial@PartialType{ptVars=vs} = partial{ptVars = fmap (substituteVarsWithVarEnv ptVars) vs}
 
 typesGetArg :: ClassMap -> ArgName -> Type -> Maybe Type
-typesGetArg classMap argName (UnionType partialLeafs) = fmap (unionTypes classMap) $ mapM (typeGetArg argName) $ splitPartialLeafs partialLeafs
+typesGetArg classMap argName (UnionType partialLeafs) = fmap (unionAllTypes classMap) $ mapM (typeGetArg argName) $ splitUnionType partialLeafs
 typesGetArg _ _ _ = Nothing

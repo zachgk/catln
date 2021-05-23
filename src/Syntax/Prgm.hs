@@ -260,7 +260,7 @@ mergeDoc _ _               = Nothing
 mergeClassMaps :: ClassMap -> ClassMap -> ClassMap
 mergeClassMaps classMap@(toClassA, toTypeA) (toClassB, toTypeB) = (H.unionWith S.union toClassA toClassB, H.unionWith mergeClasses toTypeA toTypeB)
   where mergeClasses (sealedA, classVarsA, setA, docA, pathA) (sealedB, classVarsB, setB, docB, _) = if sealedA == sealedB
-          then (sealedA, H.unionWith (unionType classMap) classVarsA classVarsB, setA ++ setB, mergeDoc docA docB, pathA)
+          then (sealedA, H.unionWith (unionTypes classMap) classVarsA classVarsB, setA ++ setB, mergeDoc docA docB, pathA)
           else error "Added to sealed class definition"
 
 mergePrgm :: Prgm e m -> Prgm e m -> Prgm e m
