@@ -73,7 +73,7 @@ ttypeidentifier = try $ lexeme $ do
   first <- upperChar <|> char '/'
   rest <- case first of
     '/' -> tidentifier
-    _ -> many (alphaNumChar <|> char '/')
+    _   -> many (alphaNumChar <|> char '/')
   return $ first : rest
 
 tvar :: Parser String

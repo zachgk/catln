@@ -18,6 +18,7 @@ import           Control.Applicative        hiding (many, some)
 import qualified Data.HashMap.Strict        as H
 import           Text.Megaparsec            hiding (pos1)
 
+import           Data.List
 import           Data.Maybe
 import           Parser.Decl
 import           Parser.Lexer
@@ -25,7 +26,6 @@ import           Parser.Syntax
 import           Syntax
 import           Syntax.Prgm
 import           Syntax.Types
-import           Data.List
 
 import           Data.Either
 import qualified Text.Megaparsec.Char.Lexer as L
@@ -114,7 +114,7 @@ pClassStatement' = do
     Just types -> return $ Left types
     Nothing    -> return $ Right (name, vars)
 
-getPath :: String -> Path 
+getPath :: String -> Path
 getPath name = if "/" `isPrefixOf` name then
   Absolute name
   else Relative name
@@ -140,7 +140,7 @@ pAnnotDefStatement :: Parser PStatement
 pAnnotDefStatement = L.indentBlock scn p
   where
     pack pclass children = case partitionEithers $ map validSubStatementInSingle children of
-        ([], subStatements) -> return $ TypeDefStatement pclass subStatements 
+        ([], subStatements) -> return $ TypeDefStatement pclass subStatements
         (_, _)              -> return $ TypeDefStatement pclass []
     childParser :: Parser TreeRes
     childParser = try (TRComment <$> pComment)

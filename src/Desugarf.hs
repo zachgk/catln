@@ -22,14 +22,14 @@ import           Data.Maybe
 import           Text.Printf
 
 import           CRes
-import           Data.Graph
+import           Data.Graph          hiding (path)
+import           Data.List
 import           Desugarf.Passes
 import           Parser.Syntax
 import           Syntax
 import           Syntax.Prgm
 import           Syntax.Types
 import           Utils
-import           Data.List
 
 type StatementEnv = (String, [DesCompAnnot])
 
@@ -207,7 +207,7 @@ declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl (DeclLHS arrM (Pattern ob
 desDecl :: StatementEnv -> PDecl -> DesObjectMap
 desDecl statementEnv decl = map (declToObjArrow statementEnv) $ removeSubDeclarations decl
 
-getPath :: String -> String -> String 
+getPath :: String -> String -> String
 getPath inheritPath name = if "/" `isPrefixOf` name then
   name
   else inheritPath ++ "/" ++ name
@@ -227,8 +227,8 @@ desMultiTypeDef :: StatementEnv -> PMultiTypeDef -> [RawDeclSubStatement ParseMe
 desMultiTypeDef (inheritPath, _) (MultiTypeDef className classVars dataMetas) subStatements path = (objMap', (typeToClass', classToType'), [])
     where
       path' =  case path of
-        Absolute path -> path
-        Relative path -> inheritPath ++ "/" ++ path
+        Absolute p -> p
+        Relative p -> inheritPath ++ "/" ++ p
       objMap' = map (,[]) objs
       objNames = map objName objs
       dataTypes = map getMetaType dataMetas
@@ -249,8 +249,8 @@ desClassDef :: StatementEnv -> Sealed -> RawClassDef -> [RawDeclSubStatement Par
 desClassDef (inheritPath, _) sealed ((typeName, typeVars), className) subStatements path = ([], classMap, [])
   where
     path' =  case path of
-      Absolute path -> path
-      Relative path -> inheritPath ++ "/" ++ path
+      Absolute p -> p
+      Relative p -> inheritPath ++ "/" ++ p
     classMap = (
         H.singleton typeName (S.singleton className),
         H.singleton className
@@ -277,8 +277,8 @@ desStatement statementEnv (RawClassDeclStatement classDecls subStatements path) 
 desStatement _ RawComment{} = ([], emptyClassMap, [])
 desStatement _ (RawGlobalAnnot a []) = ([], emptyClassMap, [desGlobalAnnot a])
 desStatement (inheritModule, inheritAnnots) (RawGlobalAnnot a subStatements) = mergePrgms $ map (desStatement (inheritModule, desGlobalAnnot a:inheritAnnots)) subStatements
-desStatement (inheritModule, inheritAnnots) (RawModule name subStatements (Absolute path)) = mergePrgms $ map (desStatement (path, inheritAnnots)) subStatements
-desStatement (inheritModule, inheritAnnots) (RawModule name subStatements (Relative path)) = mergePrgms $ map (desStatement (inheritModule ++ "/" ++ path, inheritAnnots)) subStatements
+desStatement (_, inheritAnnots) (RawModule _ subStatements (Absolute path)) = mergePrgms $ map (desStatement (path, inheritAnnots)) subStatements
+desStatement (inheritModule, inheritAnnots) (RawModule _ subStatements (Relative path)) = mergePrgms $ map (desStatement (inheritModule ++ "/" ++ path, inheritAnnots)) subStatements
 
 finalPasses :: DesPrgmGraphData -> GraphNodes DesPrgm String -> GraphNodes DesPrgm String
 finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm, prgmName, imports) = (prgm'', prgmName, imports)

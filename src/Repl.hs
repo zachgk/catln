@@ -15,24 +15,17 @@ module Repl where
 
 import qualified Data.HashMap.Strict      as H
 
-import           Desugarf                 (desFiles)
--- import           Emit                     (codegen, initModule)
 import           CRes
-import           Eval
 import           Parser
 import           Parser.Syntax
 import           Syntax
 import           Syntax.Prgm
 import           Syntax.Types
-import           TypeCheck                (typecheckPrgm)
 
-import           Control.Monad
 import           Control.Monad.Trans
 import           Data.List                (isPrefixOf)
 
-import           Data.Graph
 import           System.Console.Haskeline
-import           System.Environment
 import           Utils
 
 type ReplEnv = ([RawStatement PreTyped], GraphData (RawPrgm PreTyped) String)

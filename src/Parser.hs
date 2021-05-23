@@ -51,11 +51,11 @@ pGlobalAnnot = L.indentBlock scn p
       annot <- pCompAnnot
       return (L.IndentMany Nothing (pack annot) pStatement)
 
-isAbsolutePath :: String -> Bool 
+isAbsolutePath :: String -> Bool
 isAbsolutePath name = "/" `isPrefixOf` name
 
-getPath :: String -> Path 
-getPath name = if isAbsolutePath name then 
+getPath :: String -> Path
+getPath name = if isAbsolutePath name then
   Absolute name
   else Relative name
 
