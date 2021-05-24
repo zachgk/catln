@@ -157,7 +157,7 @@ getValType IOVal{} = ioLeaf
 getValType LLVMVal{} = resultLeaf
 getValType LLVMQueue{} = queueLeaf
 getValType (LLVMOperand t _) = case t of
-  UnionType leafs -> case splitPartialLeafs leafs of
+  UnionType leafs -> case splitUnionType leafs of
     [partial] -> partial
     _         -> error "could not getValType without a single partial"
   _ -> error $ printf "could not get non sum getValType %s" (show t)

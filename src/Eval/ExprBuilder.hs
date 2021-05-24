@@ -39,7 +39,7 @@ eVal name = Value m name
 
 getExprPartialType :: EExpr -> PartialType
 getExprPartialType expr = case getMetaType $ getExprMeta expr of
-  UnionType partials -> case splitPartialLeafs partials of
+  UnionType partials -> case splitUnionType partials of
     [partial] -> partial
     _ -> error $ printf "Found non-singleton in getExprPartialType %s" (show expr)
   _ -> error $ printf "Found on-union in getExprPartialType %s" (show expr)

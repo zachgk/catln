@@ -256,7 +256,7 @@ verifyScheme classMap (VarMeta _ _ mobj) (TypeCheckResult _ (SType oldUb _ _)) (
   if verifyCompacted then Nothing else Just "verifyCompacted"
   ]
   where
-    verifyTypeVars venv (UnionType partialLeafs) = all (verifyTypeVarsPartial venv) $ splitPartialLeafs partialLeafs
+    verifyTypeVars venv (UnionType partialLeafs) = all (verifyTypeVarsPartial venv) $ splitUnionType partialLeafs
     verifyTypeVars venv (TypeVar (TVVar v)) = S.member v venv
     verifyTypeVars _ _ = True
     verifyTypeVarsPartial venv PartialType{ptVars, ptArgs, ptProps} = all (verifyTypeVars venv) ptVars
@@ -265,8 +265,8 @@ verifyScheme classMap (VarMeta _ _ mobj) (TypeCheckResult _ (SType oldUb _ _)) (
 
     mobjVars (Just Object{objVars}) = H.keysSet objVars
     mobjVars Nothing                = S.empty
-    verifySchemeUbLowers (Just obj) = hasTypeWithObj classMap obj ub oldUb
-    verifySchemeUbLowers Nothing    = hasType classMap ub oldUb
+    verifySchemeUbLowers (Just obj) = isSubtypeOfWithObj classMap obj ub oldUb
+    verifySchemeUbLowers Nothing    = isSubtypeOf classMap ub oldUb
     verifyCompacted = ub == compactType classMap ub
 verifyScheme _ _ TypeCheckResE{} TypeCheckResult{} = Nothing
 verifyScheme _ _ _ _ = Just "fallthrough"

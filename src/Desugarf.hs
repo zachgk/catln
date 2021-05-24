@@ -214,7 +214,7 @@ getPath inheritPath name = if "/" `isPrefixOf` name then
 
 typeDefMetaToObj :: String -> H.HashMap TypeVarName Type -> ParseMeta -> Maybe PObject
 typeDefMetaToObj _ _ (PreTyped TypeVar{} _) = Nothing
-typeDefMetaToObj inheritPath varReplaceMap (PreTyped (UnionType partials) pos) = case splitPartialLeafs partials of
+typeDefMetaToObj inheritPath varReplaceMap (PreTyped (UnionType partials) pos) = case splitUnionType partials of
   [partial@(PartialType (PTypeName partialName) partialVars _ partialArgs _)] -> Just $ Object m' TypeObj partialName (fmap toMeta partialVars') (fmap (\arg -> (PreTyped arg Nothing, Nothing)) partialArgs) Nothing (getPath inheritPath partialName)
     where
       partialVars' = fmap (substituteVarsWithVarEnv varReplaceMap) partialVars

@@ -301,4 +301,4 @@ pSingleType = pTypeVar
 
 pType :: Parser Type
 pType = pTypeVar
-        <|> UnionType . joinPartialLeafs <$> sepBy1 pLeafType (symbol "|")
+        <|> UnionType . joinUnionType <$> sepBy1 pLeafType (symbol "|")

@@ -116,7 +116,7 @@ eval env@Env{evArgs} (ArgArrow _ name) = case H.lookup name evArgs of
   Nothing -> evalError env $ printf "Unknown arg %s found during evaluation \n\t\t with arg env %s" name (show evArgs)
 eval env@Env{evClassMap} (ResArrowMatch m _ opts) = do
   (m', env2) <- evalPopVal <$> eval (evalPush env "match input") m
-  case H.toList $ H.filterWithKey (\optType _ -> hasPartial evClassMap (getValType m') (singletonType optType)) opts of
+  case H.toList $ H.filterWithKey (\optType _ -> isSubtypePartialOf evClassMap (getValType m') (singletonType optType)) opts of
     [(_, resArrowTree)] -> evalPopVal <$> eval (evalPush env2 $ "match with val " ++ show m') resArrowTree
     [] -> evalError env2 $ printf "Failed match in eval resArrowTree: \n\tVal: %s \n\tOptions: %s" (show m') (show opts)
     (_:_:_) -> evalError env $ printf "Multiple matches in eval resArrowTree: \n\tVal: %s \n\tOptions: %s " (show m') (show opts)
