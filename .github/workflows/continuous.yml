@@ -23,4 +23,4 @@ jobs:
         with:
           enable-stack: true
           stack-version: 'latest'
-      - run: stack test
+      - run: stack test --pedantic
