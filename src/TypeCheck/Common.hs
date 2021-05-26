@@ -268,8 +268,7 @@ verifyScheme classMap (VarMeta _ _ mobj) (TypeCheckResult _ (SType oldUb _ _)) (
     verifySchemeUbLowers (Just obj) = isSubtypeOfWithObj classMap obj ub oldUb
     verifySchemeUbLowers Nothing    = isSubtypeOf classMap ub oldUb
     verifyCompacted = ub == compactType classMap ub
-verifyScheme _ _ TypeCheckResE{} TypeCheckResult{} = Nothing
-verifyScheme _ _ _ _ = Just "fallthrough"
+verifyScheme _ _ _ _ = Nothing
 
 
 -- Point operations

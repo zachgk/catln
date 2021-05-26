@@ -132,7 +132,7 @@ metaTypeVar m = case getMetaType m of
 
 
 isSubtypePartialOfWithObj :: (Meta m) => ClassMap -> Object m -> PartialType -> Type -> Bool
-isSubtypePartialOfWithObj classMap Object{objVars, objArgs} = isSubtypePartialOfWithEnv classMap (fmap getMetaType objVars) (fmap (getMetaType . fst) objArgs)
+isSubtypePartialOfWithObj classMap Object{objVars, objArgs} sub = isSubtypeOfWithEnv classMap (fmap getMetaType objVars) (fmap (getMetaType . fst) objArgs) (singletonType sub)
 
 isSubtypeOfWithObj :: (Meta m) => ClassMap -> Object m -> Type -> Type -> Bool
 isSubtypeOfWithObj classMap obj@Object{objVars} = isSubtypeOfWithEnv classMap (fmap getMetaType objVars) (getMetaType <$> formArgMetaMap obj)

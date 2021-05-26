@@ -20,7 +20,6 @@ module Syntax.Types where
 
 import           Data.Aeson          (ToJSON)
 import           Data.Aeson.Types    (ToJSONKey)
-import           Data.Bifunctor
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Data.Hashable
@@ -139,6 +138,14 @@ splitUnionType partials = concatMap (\(k, vs) -> map (aux k) vs) $ H.toList $ fm
 joinUnionType :: [PartialType] -> PartialLeafs
 joinUnionType = foldr (\(PartialType pName pVars pProps pArgs pArgMode) partials -> H.insertWith S.union pName (S.singleton (pVars, pProps, pArgs, pArgMode)) partials) H.empty
 
+splitUnionTypeByName :: PartialLeafs -> H.HashMap PartialName [PartialType]
+splitUnionTypeByName = H.mapWithKey (\k vs -> map (aux k) (S.toList vs))
+  where aux name (vars, props, args, argMode) = PartialType name vars props args argMode
+
+joinUnionTypeByName :: H.HashMap PartialName [PartialType] -> PartialLeafs
+joinUnionTypeByName = H.map (S.fromList . map typeToArgOption)
+  where typeToArgOption (PartialType _ pVars pProps pArgs pArgMode) = (pVars, pProps, pArgs, pArgMode)
+
 singletonType :: PartialType -> Type
 singletonType partial = UnionType $ joinUnionType [partial]
 
@@ -162,36 +169,20 @@ expandClassPartial classMap@(_, classToType) PartialType{ptName=PClassName class
           mapClassPartial tp@PartialType{ptVars} = tp{ptVars=fmap (substituteVarsWithVarEnv classVars) ptVars}
       Nothing -> error $ printf "Unknown class %s in expandClassPartial" className
 
--- assumes a compacted super type, does not check in superLeafs
-isSubtypePartialOfWithEnv :: ClassMap -> TypeVarEnv -> TypeArgEnv -> PartialType -> Type -> Bool
-isSubtypePartialOfWithEnv _ _ _ _ TopType = True
-isSubtypePartialOfWithEnv classMap venv aenv sub (TypeVar (TVVar v)) = case H.lookup v venv of
-  Just sup -> isSubtypePartialOfWithEnv classMap venv aenv sub sup
-  Nothing  -> error $ printf "isSubtypePartialOfWithEnv with unknown type var %s" v
-isSubtypePartialOfWithEnv classMap venv aenv sub (TypeVar (TVArg v)) = case H.lookup v aenv of
-  Just sup -> isSubtypePartialOfWithEnv classMap venv aenv sub sup
-  Nothing  -> error $ printf "isSubtypePartialOfWithEnv with unknown type arg %s" v
-isSubtypePartialOfWithEnv classMap@(typeToClass, _) venv aenv sub@(PartialType subName subVars subProps subArgs subArgMode) super@(UnionType superPartials) = case subName of
-  (PTypeName typeName) -> checkDirect || any checkSuperClass (H.lookupDefault S.empty typeName typeToClass)
-  PClassName{} -> checkDirect || isSubtypeOfWithEnv classMap venv aenv (expandClassPartial classMap sub) super
+isSubPartialOfWithEnvBase :: ClassMap -> TypeVarEnv -> TypeArgEnv -> PartialType -> PartialType -> Bool
+isSubPartialOfWithEnvBase _ _ _ PartialType{ptName=subName} PartialType{ptName=superName} | subName /= superName = False
+isSubPartialOfWithEnvBase _ _ _ PartialType{ptArgs=subArgs, ptArgMode=subArgMode} PartialType{ptArgs=superArgs} | subArgMode == PtArgExact && H.keysSet subArgs /= H.keysSet superArgs = False
+isSubPartialOfWithEnvBase _ _ _ PartialType{ptArgs=subArgs} PartialType{ptArgs=superArgs, ptArgMode=superArgMode} | superArgMode == PtArgExact && not (H.keysSet subArgs `isSubsetOf` H.keysSet superArgs) = False
+isSubPartialOfWithEnvBase classMap venv aenv PartialType{ptVars=subVars, ptProps=subProps, ptArgs=subArgs} PartialType{ptVars=superVars, ptProps=superProps, ptArgs=superArgs} = hasAll subArgs superArgs && hasAll subProps superProps && hasAll subVars superVars
   where
-    checkDirect = case H.lookup subName superPartials of
-      Just superArgsOptions -> any hasArgs superArgsOptions
-      Nothing               -> False
-      where
-        hasArgs (_, _, superArgs, _) | subArgMode == PtArgExact && H.keysSet subArgs /= H.keysSet superArgs = False
-        hasArgs (_, _, superArgs, superArgMode) | superArgMode == PtArgExact && not (H.keysSet subArgs `isSubsetOf` H.keysSet superArgs) = False
-        hasArgs (superVars, superProps, superArgs, _) = hasAll subArgs superArgs && hasAll subProps superProps && hasAll subVars superVars
-          where
-            venv' = substituteVarsWithVarEnv venv <$> H.unionWith (intersectTypes classMap) superVars subVars
-            aenv' = substituteArgsWithArgEnv aenv <$> H.unionWith (intersectTypes classMap) superArgs subArgs
-            hasAll sb sp = and $ H.elems $ H.intersectionWith (isSubtypeOfWithEnv classMap venv' aenv') sb sp
-    checkSuperClass superClassName = case H.lookup (PClassName superClassName) superPartials of
-      Just superClassArgsOptions -> any (isSubtypePartialOfWithEnv classMap venv aenv sub . expandClassPartial classMap) $ splitUnionType $ H.singleton (PClassName superClassName) superClassArgsOptions
-      Nothing -> False
+    venv' = substituteVarsWithVarEnv venv <$> H.unionWith (intersectTypes classMap) superVars subVars
+    aenv' = substituteArgsWithArgEnv aenv <$> H.unionWith (intersectTypes classMap) superArgs subArgs
+    hasAll sb sp = and $ H.elems $ H.intersectionWith (isSubtypeOfWithEnv classMap venv' aenv') sb sp
 
-isSubtypePartialOf :: ClassMap -> PartialType -> Type -> Bool
-isSubtypePartialOf classMap = isSubtypePartialOfWithEnv classMap H.empty H.empty
+isSubPartialOfWithEnv :: ClassMap -> TypeVarEnv -> TypeArgEnv -> PartialType -> PartialType -> Bool
+isSubPartialOfWithEnv classMap venv aenv sub super | isSubPartialOfWithEnvBase classMap venv aenv sub super = True
+isSubPartialOfWithEnv classMap venv aenv sub super@PartialType{ptName=PClassName{}} = isSubtypeOfWithEnv classMap venv aenv (singletonType sub) (expandClassPartial classMap super)
+isSubPartialOfWithEnv _ _ _ _ _ = False
 
 isSubtypeOfWithEnv :: ClassMap -> TypeVarEnv -> TypeArgEnv -> Type -> Type -> Bool
 isSubtypeOfWithEnv _ _ _ _ TopType = True
@@ -209,25 +200,35 @@ isSubtypeOfWithEnv classMap venv aenv t1 (TypeVar (TVArg v)) = case H.lookup v a
   Just t2 -> isSubtypeOfWithEnv classMap venv aenv t1 t2
   Nothing -> error $ printf "isSubtypeOfWithEnv with unknown type arg %s" v
 isSubtypeOfWithEnv _ _ _ TopType t = t == TopType
-isSubtypeOfWithEnv classMap venv aenv (UnionType subPartials) superType = all (\p -> isSubtypePartialOfWithEnv classMap venv aenv p superType) $ splitUnionType subPartials
+isSubtypeOfWithEnv classMap venv aenv (UnionType subPartials) super@(UnionType superPartials) = all isSubPartial $ splitUnionType subPartials
+  where
+    isSubPartial sub | any (isSubPartialOfWithEnv classMap venv aenv sub) $ splitUnionType superPartials = True
+    isSubPartial sub@PartialType{ptName=PClassName{}} | isSubtypeOfWithEnv classMap venv aenv (expandClassPartial classMap sub) super = True
+    isSubPartial _ = False
 
 isSubtypeOf :: ClassMap -> Type -> Type -> Bool
 isSubtypeOf classMap = isSubtypeOfWithEnv classMap H.empty H.empty
 
+isSubtypePartialOf :: ClassMap -> PartialType -> Type -> Bool
+isSubtypePartialOf classMap subPartial = isSubtypeOf classMap (singletonType subPartial)
+
 -- join partials where one is a subset of another
+-- TODO: This currently joins only with matching names.
+-- More matches could improve the effectiveness of the compaction, but slows down the code significantly
 compactOverlapping :: ClassMap -> PartialLeafs -> PartialLeafs
-compactOverlapping classMap = H.mapWithKey compactArgOptions
+compactOverlapping classMap = joinUnionTypeByName . fmap aux . splitUnionTypeByName
   where
-    compactArgOptions partialName argOptions = S.filter (filterOptions partialName argOptions) argOptions
-    filterOptions partialName argOptions option = not $ any (\potentialSuperOption -> option /= potentialSuperOption && isSubtypeOf classMap (optionToType partialName option) (optionToType partialName potentialSuperOption)) argOptions
-    optionToType name (vars, props, args, argMode) = singletonType (PartialType name vars props args argMode)
+    aux [] = []
+    aux (partial:rest) = if any (isSubtypePartialOf classMap partial . singletonType) rest
+      then aux rest
+      else partial : aux rest
 
 -- joins partials with only one difference between their args or vars
 -- TODO: Should check if props are suitable for joining
 compactJoinPartials :: ClassMap -> PartialLeafs -> PartialLeafs
 compactJoinPartials classMap partials = joinUnionType $ concat $ H.elems $ fmap joinMatchArgPartials $ H.fromListWith (++) $ map prepGroupJoinable $ splitUnionType partials
   where
-    -- group partials by argSet and varSet to check for joins
+    -- group partials by name, argSet, and varSet to check for joins
     prepGroupJoinable partial@PartialType{ptName, ptArgs, ptVars, ptArgMode} = ((ptName, H.keysSet ptArgs, H.keysSet ptVars, ptArgMode), [partial])
 
     -- Checks pairs of tuples for joins
@@ -254,13 +255,11 @@ compactBottomTypeVars partials = joinUnionType $ mapMaybe aux $ splitUnionType p
       then Nothing
       else Just partial
 
--- TODO: This should combine overlapping partials
 -- TODO: This should merge type partials into class partials
 compactType :: ClassMap -> Type -> Type
 compactType _ TopType = TopType
 compactType _ t@TypeVar{} = t
-compactType classMap (UnionType partials) = UnionType $ (compactOverlapping classMap . compactJoinPartials classMap . nonEmpty . compactBottomTypeVars) partials
-  where nonEmpty = H.filter (not . S.null)
+compactType classMap (UnionType partials) = UnionType $ (compactOverlapping classMap . compactJoinPartials classMap . compactBottomTypeVars) partials
 
 unionTypes :: ClassMap -> Type -> Type -> Type
 unionTypes _ TopType _ = TopType
@@ -280,40 +279,39 @@ unionAllTypes classMap = foldr (unionTypes classMap) bottomType
 intersectAllTypes :: Foldable f => ClassMap -> f Type -> Type
 intersectAllTypes classMap = foldr (intersectTypes classMap) TopType
 
-type TypePartialLeafs = PartialLeafs -- leaves only with PTypeName
-type ClassPartialLeafs = PartialLeafs -- leaves only with PClassName
-intersectTypePartialLeaves :: ClassMap -> TypeVarEnv -> TypePartialLeafs -> TypePartialLeafs -> (TypeVarEnv, PartialLeafs)
-intersectTypePartialLeaves classMap venv aPartials bPartials = partials'
+intersectPartialsBase :: ClassMap -> TypeVarEnv -> PartialType -> PartialType -> Maybe (TypeVarEnv, [PartialType])
+intersectPartialsBase _ _ PartialType{ptName=aName} PartialType{ptName=bName} | aName /= bName = Nothing
+intersectPartialsBase _ _ PartialType{ptArgs=aArgs, ptArgMode=aArgMode} PartialType{ptArgs=bArgs, ptArgMode=bArgMode} | aArgMode == PtArgExact && bArgMode == PtArgExact && H.keysSet aArgs /= H.keysSet bArgs = Nothing
+intersectPartialsBase classMap venv (PartialType name aVars aProps aArgs aArgMode) (PartialType _ bVars bProps bArgs bArgMode) = do
+  (varsVenvs, vars') <- unzip <$> intersectMap H.empty aVars bVars
+  (propsVenvs, props') <- unzip <$> intersectMap venv aProps bProps
+  (argsVenvs, args') <- unzip <$> intersectMap venv aArgs bArgs
+  let venvs' = mergeAllVarEnvs classMap [mergeAllVarEnvs classMap propsVenvs, mergeAllVarEnvs classMap argsVenvs, vars']
+  let argMode' = case (aArgMode, bArgMode) of
+        (PtArgAny, _)            -> PtArgAny
+        (_, PtArgAny)            -> PtArgAny
+        (PtArgExact, PtArgExact) -> PtArgExact
+  return (mergeAllVarEnvs classMap varsVenvs, [PartialType name venvs' props' args' argMode'])
   where
-    partials' = first (mergeAllVarEnvs classMap) $ unzip $ H.filter (not . S.null . snd) $ H.intersectionWith intersectArgsOptions (fmap S.toList aPartials) (fmap S.toList bPartials)
-
-    intersectArgsOptions :: [PartialArgsOption] -> [PartialArgsOption] -> (TypeVarEnv, S.HashSet PartialArgsOption)
-    intersectArgsOptions as bs = bimap (mergeAllVarEnvs classMap) S.fromList $ unzip $ catMaybes $ [intersectArgs a b | a <- as, b <- bs]
-
-    intersectArgs :: PartialArgsOption -> PartialArgsOption -> Maybe (TypeVarEnv, PartialArgsOption)
-    intersectArgs (_, _, aArgs, aArgMode) (_, _, bArgs, bArgMode) | aArgMode == PtArgExact && bArgMode == PtArgExact && H.keysSet aArgs /= H.keysSet bArgs = Nothing
-    intersectArgs (aVars, aProps, aArgs, aArgMode) (bVars, bProps, bArgs, bArgMode) = do
-      (varsVenvs, vars') <- unzip <$> intersectMap H.empty aVars bVars
-      (propsVenvs, props') <- unzip <$> intersectMap venv aProps bProps
-      (argsVenvs, args') <- unzip <$> intersectMap venv aArgs bArgs
-      let venvs' = mergeAllVarEnvs classMap [mergeAllVarEnvs classMap propsVenvs, mergeAllVarEnvs classMap argsVenvs, vars']
-      let argMode' = case (aArgMode, bArgMode) of
-            (PtArgAny, _)            -> PtArgAny
-            (_, PtArgAny)            -> PtArgAny
-            (PtArgExact, PtArgExact) -> PtArgExact
-      return (mergeAllVarEnvs classMap varsVenvs, (venvs', props', args', argMode'))
-
     -- intersectMap unions so that all typeVars or props from either a or b are kept
     intersectMap vev a b = traverse subValidate $ H.unionWith subUnion (fmap (vev,) a) (fmap (vev,) b)
     subUnion (aVenv, a) (bVenv, b) = intersectTypesWithVarEnv classMap (mergeAllVarEnvs classMap [aVenv, bVenv]) a b
     subValidate (vev, subTp) = if isBottomType subTp then Nothing else Just (vev, subTp)
 
-intersectTypeWithClassPartialLeaves :: ClassMap -> TypeVarEnv -> TypePartialLeafs -> ClassPartialLeafs -> (TypeVarEnv, PartialLeafs)
-intersectTypeWithClassPartialLeaves classMap venv typePartials classPartials = intersectTypePartialLeaves classMap venv typePartials typePartialsFromClassPartials
-  where (UnionType typePartialsFromClassPartials) = unionAllTypes classMap $ map (expandClassPartial classMap) $ splitUnionType classPartials
-
-intersectClassPartialLeaves :: ClassMap -> TypeVarEnv -> ClassPartialLeafs -> ClassPartialLeafs -> (TypeVarEnv, PartialLeafs)
-intersectClassPartialLeaves = intersectTypePartialLeaves
+intersectPartials :: ClassMap -> TypeVarEnv -> PartialType -> PartialType -> Maybe (TypeVarEnv, [PartialType])
+intersectPartials classMap venv a b = case catMaybes [base, aExpandClass, bExpandClass] of
+  [] -> Nothing
+  combined -> Just $ foldr1 (\(venv1, a') (venv2, b') -> (mergeVarEnvs classMap venv1 venv2, a' ++ b')) combined
+  where
+    base = intersectPartialsBase classMap venv a b
+    typeAsUnion (v, UnionType pl) = (v, splitUnionType pl)
+    typeAsUnion _                 = error "Expected a union"
+    aExpandClass = case a of
+      PartialType{ptName=PClassName{}} -> Just $ typeAsUnion $ intersectTypesWithVarEnv classMap venv (expandClassPartial classMap a) (singletonType b)
+      _ -> Nothing
+    bExpandClass = case b of
+      PartialType{ptName=PClassName{}} -> Just $ typeAsUnion $ intersectTypesWithVarEnv classMap venv (singletonType a) (expandClassPartial classMap b)
+      _ -> Nothing
 
 intersectTypesWithVarEnv :: ClassMap -> TypeVarEnv -> Type -> Type -> (TypeVarEnv, Type)
 intersectTypesWithVarEnv _ venv TopType t = (venv, t)
@@ -324,23 +322,13 @@ intersectTypesWithVarEnv classMap venv tv@(TypeVar (TVVar v)) t = (H.insertWith 
 intersectTypesWithVarEnv classMap venv t tv@(TypeVar (TVVar v)) = (H.insertWith (intersectTypes classMap) v t venv, tv)
 intersectTypesWithVarEnv _ _ (TypeVar v) t = error $ printf "Can't intersect type vars %s with %s" (show v) (show t)
 intersectTypesWithVarEnv _ _ t (TypeVar v) = error $ printf "Can't intersect type vars %s with %s" (show t) (show v)
-intersectTypesWithVarEnv classMap venv (UnionType aPartials) (UnionType bPartials) = (venv', type')
-  where
-    isTypeLeaf (PTypeName _) _  = True
-    isTypeLeaf (PClassName _) _ = False
-    isClassLeaf name v = not $ isTypeLeaf name v
-    aTypePartials = H.filterWithKey isTypeLeaf aPartials
-    aClassPartials = H.filterWithKey isClassLeaf aPartials
-    bTypePartials = H.filterWithKey isTypeLeaf bPartials
-    bClassPartials = H.filterWithKey isClassLeaf bPartials
-
-    (venv1, res1) = intersectTypePartialLeaves classMap venv aTypePartials bTypePartials
-    (venv2, res2) = intersectClassPartialLeaves classMap venv aClassPartials bClassPartials
-    (venv3, res3) = intersectTypeWithClassPartialLeaves classMap venv aTypePartials bClassPartials
-    (venv4, res4) = intersectTypeWithClassPartialLeaves classMap venv bTypePartials aClassPartials
-
-    venv' = mergeAllVarEnvs classMap [venv1, venv2, venv3, venv4]
-    type' = compactType classMap $ unionAllTypes classMap $ map UnionType [res1, res2, res3, res4]
+intersectTypesWithVarEnv _ venv _ t | isBottomType t = (venv, t)
+intersectTypesWithVarEnv _ venv t _ | isBottomType t = (venv, t)
+intersectTypesWithVarEnv classMap venv (UnionType aPartials) (UnionType bPartials) = case catMaybes [intersectPartials classMap venv aPartial bPartial | aPartial <- splitUnionType aPartials, bPartial <- splitUnionType bPartials] of
+  [] -> (venv, bottomType)
+  combined -> do
+    let (venvs', partials') = unzip combined
+    (mergeAllVarEnvs classMap venvs', compactType classMap $ UnionType $ joinUnionType $ concat partials')
 
 intersectTypes :: ClassMap -> Type -> Type -> Type
 intersectTypes classMap a b = snd $ intersectTypesWithVarEnv classMap H.empty a b
@@ -359,10 +347,10 @@ powerset :: [x] -> [[x]]
 powerset []     = [[]]
 powerset (x:xs) = map (x:) (powerset xs) ++ powerset xs
 
-powersetType :: Type -> Type
-powersetType TopType = TopType
-powersetType (TypeVar t) = TypeVar t
-powersetType (UnionType partials) = UnionType partials'
+powersetType :: ClassMap -> Type -> Type
+powersetType _ TopType = TopType
+powersetType _ (TypeVar t) = TypeVar t
+powersetType classMap (UnionType partials) = compactType classMap $ UnionType partials'
   where
     partials' = joinUnionType $ concatMap fromPartialType $ splitUnionType partials
     fromArgs args = powerset $ H.toList args

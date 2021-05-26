@@ -57,8 +57,8 @@ updateSchemeProp env@FEnv{feClassMap} (superM, superScheme@(SType superUb superL
       (env3, pure superScheme, sub'')
     (UnionType supPartials, TypeVar{}) -> do
       let supPartialList = splitUnionType supPartials
-      let intersectPartials sup@PartialType{ptArgs=supArgs} = Just (sup{ptArgs=H.insert propName subUb supArgs})
-      let supPartialList' = catMaybes $ [intersectPartials sup | sup <- supPartialList]
+      let intersectedPartials sup@PartialType{ptArgs=supArgs} = Just (sup{ptArgs=H.insert propName subUb supArgs})
+      let supPartialList' = catMaybes $ [intersectedPartials sup | sup <- supPartialList]
       wrapUbs (compactType feClassMap $ UnionType $ joinUnionType supPartialList', subUb)
     (UnionType supPartials, TopType) -> do
       let supPartialList = splitUnionType supPartials
@@ -67,7 +67,7 @@ updateSchemeProp env@FEnv{feClassMap} (superM, superScheme@(SType superUb superL
     (UnionType supPartials, UnionType subPartials) -> do
       let supPartialList = splitUnionType supPartials
       let subPartialList = splitUnionType subPartials
-      let intersectPartials sup@PartialType{ptArgs=supArgs, ptVars=supVars} sub = case H.lookup propName supArgs of
+      let intersectedPartials sup@PartialType{ptArgs=supArgs, ptVars=supVars} sub = case H.lookup propName supArgs of
             Just (TypeVar (TVVar v)) -> do
               let supVar = H.lookupDefault TopType v supVars
               let newProp = intersectTypes feClassMap supVar (singletonType sub)
@@ -79,7 +79,7 @@ updateSchemeProp env@FEnv{feClassMap} (superM, superScheme@(SType superUb superL
                 then Nothing
                 else Just (sup{ptArgs=H.insert propName newProp supArgs}, newProp)
             Nothing -> Nothing
-      let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectPartials sup sub | sup <- supPartialList, sub <- subPartialList]
+      let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectedPartials sup sub | sup <- supPartialList, sub <- subPartialList]
       wrapUbs (compactType feClassMap $ UnionType $ joinUnionType supPartialList', unionAllTypes feClassMap subPartialList')
   where
     wrapUbs (superUb', subUb') = (env, return $ SType superUb' superLb superDesc, return $ SType subUb' subLb subDesc)
@@ -97,24 +97,24 @@ updateSchemeVar FEnv{feClassMap} (SType superUb superLb superDesc) varName (STyp
       (UnionType supPartials, UnionType subPartials) -> do
         let supPartialList = splitUnionType supPartials
         let subPartialList = splitUnionType subPartials
-        let intersectPartials sup@PartialType{ptVars=supVars} sub = case H.lookup varName supVars of
+        let intersectedPartials sup@PartialType{ptVars=supVars} sub = case H.lookup varName supVars of
               Just supVar -> do
                 let newVar = intersectTypes feClassMap supVar (singletonType sub)
                 if isBottomType newVar
                   then Nothing
                   else Just (sup{ptVars=H.insert varName newVar supVars}, newVar)
               Nothing -> Just (sup{ptVars=H.insert varName (singletonType sub) supVars}, singletonType sub)
-        let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectPartials sup sub | sup <- supPartialList, sub <- subPartialList]
+        let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectedPartials sup sub | sup <- supPartialList, sub <- subPartialList]
         (compactType feClassMap $ UnionType $ joinUnionType supPartialList', unionAllTypes feClassMap subPartialList')
       (UnionType supPartials, subT@TypeVar{}) -> do
         let supPartialList = splitUnionType supPartials
-        let intersectPartials sup@PartialType{ptVars=supVars} = case H.lookup varName supVars of
+        let intersectedPartials sup@PartialType{ptVars=supVars} = case H.lookup varName supVars of
               Just supVar -> do
                 if supVar == subT
                   then Just sup
                   else Nothing
               Nothing -> Nothing
-        let supPartialList' = catMaybes [intersectPartials sup | sup <- supPartialList]
+        let supPartialList' = catMaybes [intersectedPartials sup | sup <- supPartialList]
         (compactType feClassMap $ UnionType $ joinUnionType supPartialList', subT)
       (sup, sub) -> error $ printf "Unsupported updateSchemeVar Ub (%s).%s = %s" (show sup) varName (show sub)
 
@@ -266,7 +266,7 @@ executeConstraint env@FEnv{feClassMap} cons@(PowersetTo srcPnt destPnt) = do
   case sequenceT (srcScheme, destScheme) of
     TypeCheckResE _ -> ([], False, env)
     TypeCheckResult _ (SType ub1 _ _, SType ub2 lb2 description2) -> do
-      let destScheme' = fmap (\ub -> SType ub lb2 description2) (tryIntersectTypes env (compactType feClassMap $ powersetType ub1) ub2 "executeConstraint PowersetTo")
+      let destScheme' = fmap (\ub -> SType ub lb2 description2) (tryIntersectTypes env (powersetType feClassMap ub1) ub2 "executeConstraint PowersetTo")
       let env' = setScheme env destPnt destScheme' "PowersetTo"
       ([cons | not (isSolved destScheme')], destScheme /= destScheme', env')
 executeConstraint env@FEnv{feClassMap} cons@(UnionOf parentPnt childrenM) = do
