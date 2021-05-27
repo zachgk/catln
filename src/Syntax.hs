@@ -31,6 +31,7 @@ import           Syntax.Prgm
 import           Syntax.Types
 import           Text.Megaparsec
 import           Text.Printf
+import           Utils
 
 type ParseErrorRes = ParseErrorBundle String Void
 

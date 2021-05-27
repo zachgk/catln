@@ -31,6 +31,7 @@ import           Syntax.Types
 import           Text.Printf
 import           TypeCheck.Common
 import           TypeCheck.Show
+import           Utils
 
 buildUnionObj :: FEnv -> [VObject] -> [TObject] -> FEnv
 buildUnionObj env1@FEnv{feClassMap} vobjs tobjs = do
