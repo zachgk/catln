@@ -41,7 +41,6 @@ makeBaseFEnv classMap = FEnv{
   fePnts = IM.empty,
   feCons = [],
   feUnionAllObjs = VarMeta 0 emptyMetaN Nothing,
-  feUnionTypeObjs = VarMeta 0 emptyMetaN Nothing,
   feVTypeGraph = H.empty,
   feTTypeGraph = H.empty,
   feClassMap = classMap,
@@ -116,7 +115,7 @@ fromExpr objArgs obj env1 (ITupleApply m (baseM, baseExpr) (Just argName) argExp
   let convertExprMeta' = VarMeta convertExprMeta (PreTyped TopType (labelPos "convert" $ getMetaPos $ getExprMeta argExpr)) obj
   let constraints = [ArrowTo (getExprMeta baseExpr') baseM',
                      AddArg (baseM', argName) m',
-                     BoundedByObjs BoundAllObjs m',
+                     BoundedByObjs m',
                      ArrowTo (getExprMeta argExpr') convertExprMeta',
                      PropEq (m', argName) convertExprMeta'
                     ]
@@ -131,7 +130,7 @@ fromExpr objArgs obj env1 (ITupleApply m (baseM, baseExpr) Nothing argExpr) = do
   let convertExprMeta' = VarMeta convertExprMeta (PreTyped TopType (labelPos "convert" $ getMetaPos $ getExprMeta argExpr)) obj
   let constraints = [ArrowTo (getExprMeta baseExpr') baseM',
                      AddInferArg baseM' m',
-                     BoundedByObjs BoundAllObjs m',
+                     BoundedByObjs m',
                      ArrowTo (getExprMeta argExpr') convertExprMeta'
                     ]
   let env7 = addConstraints env6 constraints
@@ -191,7 +190,7 @@ addObjArg fakeObj objM prefix varMap env (n, (m, maybeSubObj)) = do
         Just{}  -> BUpper
         Nothing -> BEq
   (m', env2) <- fromMeta env argBound (Just fakeObj) m prefix'
-  let env3 = addConstraints env2 [PropEq (objM, n) m', BoundedByObjs BoundAllObjs m']
+  let env3 = addConstraints env2 [PropEq (objM, n) m', BoundedByObjs m']
   let env4 = case H.lookup n varMap of
         Just varM -> addConstraints env3 [EqPoints m' varM]
         Nothing   -> env3
@@ -221,7 +220,7 @@ fromObject prefix isObjArg env (Object m basis name vars args doc path) = do
   let obj' = Object m' basis name vars' args' doc path
   (objValue, env4) <- fromMeta env3 BUpper (Just obj') (PreTyped (singletonType (PartialType (PTypeName name) H.empty H.empty H.empty PtArgExact)) (labelPos "objValue" $ getMetaPos m)) ("objValue" ++ name)
   let env5 = fInsert env4 name (DefVar objValue)
-  let env6 = addConstraints env5 [BoundedByObjs BoundAllObjs m' | isObjArg]
+  let env6 = addConstraints env5 [BoundedByObjs m' | isObjArg]
   let env7 = addConstraints env6 [BoundedByKnown m' (singletonType (PartialType (PTypeName name) (fmap (const TopType) vars) H.empty (fmap (const TopType) args) PtArgExact)) | basis == FunctionObj || basis == PatternObj]
   return (obj', env7)
 

@@ -81,7 +81,7 @@ showCon :: FEnv -> Constraint -> SConstraint
 showCon env (EqualsKnown p t) = SEqualsKnown (descriptor env p) t
 showCon env (EqPoints p1 p2) = showConHelper env SEqPoints p1 p2
 showCon env (BoundedByKnown p t) = SBoundedByKnown (descriptor env p) t
-showCon env (BoundedByObjs b p) = SBoundedByObjs b (descriptor env p)
+showCon env (BoundedByObjs p) = SBoundedByObjs (descriptor env p)
 showCon env (ArrowTo p1 p2) = showConHelper env SArrowTo p1 p2
 showCon env (PropEq (p1, name) p2) = showConHelper env (\s1 s2 -> SPropEq (s1, name) s2) p1 p2
 showCon env (VarEq (p1, name) p2) = showConHelper env (\s1 s2 -> SVarEq (s1, name) s2) p1 p2
