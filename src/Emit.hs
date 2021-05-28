@@ -48,6 +48,7 @@ import qualified LLVM.AST.Float       as F
 import           LLVM.AST.Type        (i32, i8)
 import           LLVM.AST.Typed       (typeOf)
 import           LLVM.Pretty          (ppllvm)
+import           Utils
 
 data LEnv = LEnv { lvTbEnv    :: TBEnv
                  , lvClassMap :: ClassMap

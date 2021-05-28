@@ -14,6 +14,9 @@
 module Utils where
 
 import           Data.Graph
+import qualified Data.HashMap.Strict as H
+import qualified Data.HashSet        as S
+import           Data.Hashable
 
 type GraphNodes node key = (node, key, [key])
 type GraphData node key = (Graph, Vertex -> (node, key, [key]), key -> Maybe Vertex)
@@ -44,3 +47,20 @@ graphToNodes (g, nodeFromVertex, _) = map nodeFromVertex $ vertices g
 
 fmapGraph :: (Ord key) => (node1 -> node2) -> GraphData node1 key -> GraphData node2 key
 fmapGraph f = graphFromEdges . mapFst3 f . graphToNodes
+
+unionsWith :: (Ord k, Hashable k) => (a->a->a) -> [H.HashMap k a] -> H.HashMap k a
+unionsWith f = foldl (H.unionWith f) H.empty
+
+isSubsetOf :: (Eq a, Hashable a) => S.HashSet a -> S.HashSet a -> Bool
+x `isSubsetOf` y = all (`S.member` y) x
+
+isSubmapOf :: (Eq k, Eq v, Hashable k) => H.HashMap k v -> H.HashMap k v -> Bool
+as `isSubmapOf` bs = and $ H.mapWithKey aux as
+  where aux ak av = case H.lookup ak bs of
+          Just bv -> av == bv
+          Nothing -> True
+
+-- normal type, type to powerset
+powerset :: [x] -> [[x]]
+powerset []     = [[]]
+powerset (x:xs) = map (x:) (powerset xs) ++ powerset xs
