@@ -29,7 +29,7 @@ import           Syntax.Prgm
 import           Syntax.Types
 import           Text.Printf
 import           TypeCheck.Common
-import           TypeCheck.TypeGraph (buildTypeEnv)
+import           TypeCheck.TypeGraph (addUnionObjToEnv)
 
 -- represents how a specified variables corresponds to the known types.
 -- It could be a lower bound, upper bound, or exact bound
@@ -265,5 +265,5 @@ fromPrgms env1 pprgms tprgms = do
   (vprgms, env4) <- mapMWithFEnv env3 fromPrgm pprgmsWithVObjs
   let (vjoinObjMap, _, _) = mergePrgms vprgms
   let (tjoinObjMap, _, _) = mergePrgms tprgms
-  let env5 = buildTypeEnv env4 vjoinObjMap tjoinObjMap
+  let env5 = addUnionObjToEnv env4 vjoinObjMap tjoinObjMap
   return (vprgms, env5)

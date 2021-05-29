@@ -33,8 +33,13 @@ import           TypeCheck.Common
 import           TypeCheck.Show
 import           Utils
 
-buildUnionObj :: FEnv -> [VObject] -> [TObject] -> FEnv
-buildUnionObj env1@FEnv{feClassMap} vobjs tobjs = do
+
+-- | This creates 'feUnionAllObjs' and adds it to the 'FEnv'
+addUnionObjToEnv :: FEnv -> VObjectMap -> TObjectMap -> FEnv
+addUnionObjToEnv env1@FEnv{feClassMap} vobjMap tobjMap = do
+  let vobjs = map fst vobjMap
+  let tobjs = map fst tobjMap
+
   let (unionAllObjs, env2) = fresh env1 $ TypeCheckResult [] $ SType TopType bottomType "unionAllObjs"
   let (unionAllObjsPs, env3) = fresh env2 $ TypeCheckResult [] $ SType TopType bottomType "unionAllObjsPs"
 
@@ -58,9 +63,6 @@ buildUnionObj env1@FEnv{feClassMap} vobjs tobjs = do
                       unionObjs pnt known objects = UnionOf pnt (known : map objM objects)
                       notMatchObj Object{objBasis} = objBasis /= MatchObj
                       makeTypechecked objs = unionAllTypes feClassMap $ map (getMetaType . objM) objs
-
-buildTypeEnv :: FEnv -> VObjectMap -> TObjectMap -> FEnv
-buildTypeEnv env vobjMap tobjMap = buildUnionObj env (map fst vobjMap) (map fst tobjMap)
 
 inferArgFromPartial :: FEnv -> PartialType -> Type
 inferArgFromPartial FEnv{feVTypeGraph, feTTypeGraph, feClassMap} partial@PartialType{ptName=PTypeName name, ptArgs} = do
@@ -149,9 +151,9 @@ reachesPartial env@FEnv{feClassMap} partial@PartialType{ptName=PClassName{}} = r
 reaches :: FEnv -> Type -> TypeCheckResult ReachesTree
 reaches _     TopType            = return $ ReachesLeaf [TopType]
 reaches _     (TypeVar v)            = error $ printf "reaches with typevar %s" (show v)
-reaches typeEnv (UnionType src) = do
+reaches env (UnionType src) = do
   let partials = splitUnionType src
-  resultsByPartials <- mapM (reachesPartial typeEnv) partials
+  resultsByPartials <- mapM (reachesPartial env) partials
   return $ ReachesTree $ H.fromList $ zip partials resultsByPartials
 
 rootReachesPartial :: FEnv -> PartialType -> TypeCheckResult (PartialType, ReachesTree)
