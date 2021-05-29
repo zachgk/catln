@@ -33,36 +33,58 @@ import           TypeCheck.Common
 import           TypeCheck.Show
 import           Utils
 
+-- |
+-- The object precedence is used to avoid increasing the scope of objects accidentally.
+-- For example, if a data type is defined, functions using that data type shouldn't change the valid arguments to it
+-- Especially, not specifying bounds should not turn them into TopType.
+-- Similarly, matches or patterns are less effective then functions.
+-- TODO Should prioritize function declarations above definitions
+-- TODO May need to differentiate top level of functions from inner levels
+objectPrecedence :: Object m -> Int
+objectPrecedence Object{objBasis=TypeObj}=    1
+objectPrecedence Object{objBasis=FunctionObj} = 2
+objectPrecedence Object{objBasis=PatternObj}= 3
+objectPrecedence Object{objBasis=MatchObj}=   4
 
 -- | This creates 'feUnionAllObjs' and adds it to the 'FEnv'
 addUnionObjToEnv :: FEnv -> VObjectMap -> TObjectMap -> FEnv
 addUnionObjToEnv env1@FEnv{feClassMap} vobjMap tobjMap = do
-  let vobjs = map fst vobjMap
-  let tobjs = map fst tobjMap
+  let notMatchObj Object{objBasis} = objBasis /= MatchObj
+  let getRecursiveObjs obj@Object{objArgs} = obj : concatMap (filter notMatchObj . concatMap getRecursiveObjs . maybeToList . snd) (H.elems objArgs)
+  let vobjs = concatMap (getRecursiveObjs . fst) vobjMap
+  let tobjs = concatMap (getRecursiveObjs . fst) tobjMap
 
+  -- Finds the best precedence for all each object name
+  let buildPrecedenceMap = fmap (minimum . map objectPrecedence) . H.fromListWith (++) . map (\obj@Object{objName} -> (objName, [obj]))
+  let vPrecedenceMap = buildPrecedenceMap vobjs
+  let tPrecedenceMap = buildPrecedenceMap tobjs
+  let precedenceMap = H.unionWith min vPrecedenceMap tPrecedenceMap
+
+  -- Filter the objects to only those with the best precedence
+  let filterBestPrecedence = filter (\obj@Object{objName} -> objectPrecedence obj == H.lookupDefault (error "Could not find obj in union") objName precedenceMap)
+  let vobjs' = filterBestPrecedence vobjs
+  let tobjs' = filterBestPrecedence tobjs
+
+  -- Builds vars to use for union and union powerset
   let (unionAllObjs, env2) = fresh env1 $ TypeCheckResult [] $ SType TopType bottomType "unionAllObjs"
   let (unionAllObjsPs, env3) = fresh env2 $ TypeCheckResult [] $ SType TopType bottomType "unionAllObjsPs"
 
-  let typecheckedAllType = makeTypechecked $ concatMap getRecursiveObjs tobjs
+  -- Build a variable to store union of tobjs
+  let typecheckedAllType = unionAllTypes feClassMap $ map (getMetaType . objM) tobjs'
   let (typecheckedAllObjs, env4) = fresh env3 $ TypeCheckResult [] $ SType typecheckedAllType bottomType "typecheckedAll"
   let typecheckedAllObjs' = VarMeta typecheckedAllObjs emptyMetaN Nothing
 
+  -- Builds metas to use for union and union powerset
   let unionAllObjs' = VarMeta unionAllObjs emptyMetaN Nothing
   let unionAllObjsPs' = VarMeta unionAllObjsPs emptyMetaN Nothing
 
-  let allVobjs = concatMap getRecursiveObjs vobjs
-
   let constraints = [
-        unionObjs unionAllObjs' typecheckedAllObjs' allVobjs,
+        UnionOf unionAllObjs' (typecheckedAllObjs' : map objM vobjs'),
         PowersetTo unionAllObjs' unionAllObjsPs'
         ]
   let env5 = (\env -> env{feUnionAllObjs=unionAllObjsPs'}) env4
   addConstraints env5 constraints
-                    where
-                      getRecursiveObjs obj@Object{objArgs} = obj : filter notMatchObj (mapMaybe snd (H.elems objArgs))
-                      unionObjs pnt known objects = UnionOf pnt (known : map objM objects)
-                      notMatchObj Object{objBasis} = objBasis /= MatchObj
-                      makeTypechecked objs = unionAllTypes feClassMap $ map (getMetaType . objM) objs
+
 
 inferArgFromPartial :: FEnv -> PartialType -> Type
 inferArgFromPartial FEnv{feVTypeGraph, feTTypeGraph, feClassMap} partial@PartialType{ptName=PTypeName name, ptArgs} = do
