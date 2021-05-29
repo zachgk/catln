@@ -47,27 +47,23 @@ type Pnt = Int
 data EnvDef = DefVar VarMeta | DefKnown Type
   deriving (Show, Generic, Hashable, ToJSON)
 type EnvValMap = (H.HashMap String EnvDef)
-data FEnv = FEnv { fePnts          :: IM.IntMap Scheme
-                 , feCons          :: [Constraint]
-                 , feUnionAllObjs  :: VarMeta -- union of all TypeObj for argument inference
-                 , feUnionTypeObjs :: VarMeta -- union of all Object types for function limiting
-                 , feVTypeGraph    :: VTypeGraph
-                 , feTTypeGraph    :: TTypeGraph
-                 , feClassMap      :: ClassMap
-                 , feDefMap        :: EnvValMap
-                 , feTrace         :: TraceConstrain
+data FEnv = FEnv { fePnts         :: IM.IntMap Scheme
+                 , feCons         :: [Constraint]
+                 , feUnionAllObjs :: VarMeta -- union of all TypeObj for argument inference
+                 , feVTypeGraph   :: VTypeGraph
+                 , feTTypeGraph   :: TTypeGraph
+                 , feClassMap     :: ClassMap
+                 , feDefMap       :: EnvValMap
+                 , feTrace        :: TraceConstrain
                  } deriving (Show)
 
 type UnionObj = (Pnt, Pnt) -- a union of all TypeObj for argument inference, union of all Object types for function limiting
-
-data BoundObjs = BoundAllObjs | BoundTypeObjs
-  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 data Constraint
   = EqualsKnown VarMeta Type
   | EqPoints VarMeta VarMeta
   | BoundedByKnown VarMeta Type
-  | BoundedByObjs BoundObjs VarMeta
+  | BoundedByObjs VarMeta
   | ArrowTo VarMeta VarMeta -- ArrowTo src dest
   | PropEq (VarMeta, ArgName) VarMeta
   | VarEq (VarMeta, TypeVarName) VarMeta
@@ -81,7 +77,7 @@ data SConstraint
   = SEqualsKnown Scheme Type
   | SEqPoints Scheme Scheme
   | SBoundedByKnown Scheme Type
-  | SBoundedByObjs BoundObjs Scheme
+  | SBoundedByObjs Scheme
   | SArrowTo Scheme Scheme
   | SPropEq (Scheme, ArgName) Scheme
   | SVarEq (Scheme, TypeVarName) Scheme
@@ -202,7 +198,7 @@ instance Show SConstraint where
   show (SEqualsKnown s t) = printf "%s == %s" (show s) (show t)
   show (SEqPoints s1 s2) = printf "%s == %s" (show s1) (show s2)
   show (SBoundedByKnown s t) = printf "%s ⊆ %s" (show s) (show t)
-  show (SBoundedByObjs b s) = printf "%s %s" (show b) (show s)
+  show (SBoundedByObjs s) = printf "BoundedByObjs %s" (show s)
   show (SArrowTo f t) = printf "%s -> %s" (show t) (show f)
   show (SPropEq (s1, n) s2) = printf "(%s).%s == %s"  (show s1) n (show s2)
   show (SVarEq (s1, n) s2) = printf "(%s).%s == %s"  (show s1) n (show s2)

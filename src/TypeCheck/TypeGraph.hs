@@ -36,37 +36,26 @@ import           Utils
 buildUnionObj :: FEnv -> [VObject] -> [TObject] -> FEnv
 buildUnionObj env1@FEnv{feClassMap} vobjs tobjs = do
   let (unionAllObjs, env2) = fresh env1 $ TypeCheckResult [] $ SType TopType bottomType "unionAllObjs"
-  let (unionTypeObjs, env3) = fresh env2 $ TypeCheckResult [] $ SType TopType bottomType "unionTypeObjs"
-  let (unionAllObjsPs, env4) = fresh env3 $ TypeCheckResult [] $ SType TopType bottomType "unionAllObjsPs"
-  let (unionTypeObjsPs, env5) = fresh env4 $ TypeCheckResult [] $ SType TopType bottomType "unionTypeObjsPs"
+  let (unionAllObjsPs, env3) = fresh env2 $ TypeCheckResult [] $ SType TopType bottomType "unionAllObjsPs"
 
   let typecheckedAllType = makeTypechecked $ concatMap getRecursiveObjs tobjs
-  let (typecheckedAllObjs, env6) = fresh env5 $ TypeCheckResult [] $ SType typecheckedAllType bottomType "typecheckedAll"
+  let (typecheckedAllObjs, env4) = fresh env3 $ TypeCheckResult [] $ SType typecheckedAllType bottomType "typecheckedAll"
   let typecheckedAllObjs' = VarMeta typecheckedAllObjs emptyMetaN Nothing
 
-  let typecheckedTypeType = makeTypechecked $ filterTypeObjs $ concatMap getRecursiveObjs tobjs
-  let (typecheckedTypeObjs, env7) = fresh env6 $ TypeCheckResult [] $ SType typecheckedTypeType bottomType "typecheckedType"
-  let typecheckedTypeObjs' = VarMeta typecheckedTypeObjs emptyMetaN Nothing
-
   let unionAllObjs' = VarMeta unionAllObjs emptyMetaN Nothing
-  let unionTypeObjs' = VarMeta unionTypeObjs emptyMetaN Nothing
   let unionAllObjsPs' = VarMeta unionAllObjsPs emptyMetaN Nothing
-  let unionTypeObjsPs' = VarMeta unionTypeObjsPs emptyMetaN Nothing
 
   let allVobjs = concatMap getRecursiveObjs vobjs
 
   let constraints = [
         unionObjs unionAllObjs' typecheckedAllObjs' allVobjs,
-        unionObjs unionTypeObjs' typecheckedTypeObjs' (filterTypeObjs allVobjs),
-        PowersetTo unionAllObjs' unionAllObjsPs',
-        PowersetTo unionTypeObjs' unionTypeObjsPs'
+        PowersetTo unionAllObjs' unionAllObjsPs'
         ]
-  let env8 = (\env -> env{feUnionAllObjs=unionAllObjsPs', feUnionTypeObjs=unionTypeObjsPs'}) env7
-  addConstraints env8 constraints
+  let env5 = (\env -> env{feUnionAllObjs=unionAllObjsPs'}) env4
+  addConstraints env5 constraints
                     where
                       getRecursiveObjs obj@Object{objArgs} = obj : filter notMatchObj (mapMaybe snd (H.elems objArgs))
                       unionObjs pnt known objects = UnionOf pnt (known : map objM objects)
-                      filterTypeObjs = filter (\Object{objBasis} -> objBasis == TypeObj)
                       notMatchObj Object{objBasis} = objBasis /= MatchObj
                       makeTypechecked objs = unionAllTypes feClassMap $ map (getMetaType . objM) objs
 
