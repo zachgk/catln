@@ -47,14 +47,15 @@ type Pnt = Int
 data EnvDef = DefVar VarMeta | DefKnown Type
   deriving (Show, Generic, Hashable, ToJSON)
 type EnvValMap = (H.HashMap String EnvDef)
-data FEnv = FEnv { fePnts         :: IM.IntMap Scheme
-                 , feCons         :: [Constraint]
-                 , feUnionAllObjs :: VarMeta -- union of all TypeObj for argument inference
-                 , feVTypeGraph   :: VTypeGraph
-                 , feTTypeGraph   :: TTypeGraph
-                 , feClassMap     :: ClassMap
-                 , feDefMap       :: EnvValMap
-                 , feTrace        :: TraceConstrain
+data FEnv = FEnv { fePnts               :: IM.IntMap Scheme
+                 , feCons               :: [Constraint]
+                 , feUnionAllObjs       :: VarMeta -- union of all TypeObj for argument inference
+                 , feVTypeGraph         :: VTypeGraph
+                 , feTTypeGraph         :: TTypeGraph
+                 , feUpdatedDuringEpoch :: Bool -- ^ If a pnt is updated during the epoch
+                 , feClassMap           :: ClassMap
+                 , feDefMap             :: EnvValMap
+                 , feTrace              :: TraceConstrain
                  } deriving (Show)
 
 type UnionObj = (Pnt, Pnt) -- a union of all TypeObj for argument inference, union of all Object types for function limiting
@@ -248,7 +249,7 @@ tryIntersectTypes FEnv{feClassMap} a b desc = let c = intersectTypes feClassMap 
 verifyScheme :: ClassMap -> VarMeta -> Scheme -> Scheme -> Maybe String
 verifyScheme classMap (VarMeta _ _ mobj) (TypeCheckResult _ (SType oldUb _ _)) (TypeCheckResult _ (SType ub _ _)) = listToMaybe $ catMaybes [
   if verifyTypeVars (mobjVars mobj) ub then Nothing else Just "verifyTypeVars",
-  if verifySchemeUbLowers mobj then Nothing else Just "verifySchemeUbLowers",
+  if verifySchemeUbLowers then Nothing else Just "verifySchemeUbLowers",
   if verifyCompacted then Nothing else Just "verifyCompacted"
   ]
   where
@@ -261,8 +262,7 @@ verifyScheme classMap (VarMeta _ _ mobj) (TypeCheckResult _ (SType oldUb _ _)) (
 
     mobjVars (Just Object{objVars}) = H.keysSet objVars
     mobjVars Nothing                = S.empty
-    verifySchemeUbLowers (Just obj) = isSubtypeOfWithObj classMap obj ub oldUb
-    verifySchemeUbLowers Nothing    = isSubtypeOf classMap ub oldUb
+    verifySchemeUbLowers  = isSubtypeOfWithMaybeObj classMap mobj ub oldUb
     verifyCompacted = ub == compactType classMap ub
 verifyScheme _ _ _ _ = Nothing
 
@@ -282,7 +282,7 @@ fresh env@FEnv{fePnts} scheme = (pnt', env{fePnts = pnts'})
     pnts' = IM.insert pnt' scheme fePnts
 
 setDescriptor :: FEnv -> VarMeta -> Scheme -> String -> FEnv
-setDescriptor env@FEnv{feClassMap, fePnts, feTrace} m scheme' msg = env{fePnts = pnts', feTrace = feTrace'}
+setDescriptor env@FEnv{feClassMap, fePnts, feTrace, feUpdatedDuringEpoch} m scheme' msg = env{fePnts = pnts', feTrace = feTrace', feUpdatedDuringEpoch = feUpdatedDuringEpoch || schemeChanged}
   where
     p = getPnt m
     scheme = fePnts IM.! p
@@ -320,12 +320,13 @@ descriptorResolve env m = do
     _ -> return (m, scheme)
 
 -- trace constrain
-type TraceConstrain = [[(Constraint, [(Pnt, Scheme)])]]
+type TraceConstrainEpoch = [(Constraint, [(Pnt, Scheme)])]
+type TraceConstrain = [TraceConstrainEpoch]
 
 nextConstrainEpoch :: FEnv -> FEnv
 nextConstrainEpoch env@FEnv{feTrace} = case feTrace of
   []         -> env
-  prevEpochs -> env{feTrace = []:prevEpochs}
+  prevEpochs -> env{feTrace = []:prevEpochs, feUpdatedDuringEpoch = False}
 
 startConstraint :: Constraint -> FEnv -> FEnv
 startConstraint c env@FEnv{feTrace = curEpoch:prevEpochs} = env{feTrace = ((c, []):curEpoch):prevEpochs}

@@ -126,10 +126,6 @@ isSubtypePartialOfWithMaybeObj :: (Meta m) => ClassMap -> Maybe (Object m) -> Pa
 isSubtypePartialOfWithMaybeObj classMap (Just obj) = isSubtypePartialOfWithObj classMap obj
 isSubtypePartialOfWithMaybeObj classMap Nothing    = isSubtypePartialOf classMap
 
-isSubtypeOfWithMaybeObj :: (Meta m) => ClassMap -> Maybe (Object m) -> Type -> Type -> Bool
-isSubtypeOfWithMaybeObj classMap (Just obj) = isSubtypeOfWithObj classMap obj
-isSubtypeOfWithMaybeObj classMap Nothing    = isSubtypeOf classMap
-
 reachesHasCutSubtypeOf :: (Meta m) => ClassMap -> Maybe (Object m) -> ReachesTree -> Type -> Bool
 reachesHasCutSubtypeOf classMap mObj (ReachesTree children) superType = all childIsSubtype $ H.toList children
   where childIsSubtype (key, val) = isSubtypePartialOfWithMaybeObj classMap mObj key superType || reachesHasCutSubtypeOf classMap mObj val superType

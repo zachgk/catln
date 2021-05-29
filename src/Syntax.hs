@@ -140,3 +140,7 @@ isSubtypeOfWithObj classMap obj@Object{objVars} = isSubtypeOfWithEnv classMap (f
 
 isSubtypeOfWithObjSrc :: (Meta m) => ClassMap -> PartialType -> Object m -> Type -> Type -> Bool
 isSubtypeOfWithObjSrc classMap srcType obj@Object{objVars} = isSubtypeOfWithEnv classMap (fmap getMetaType objVars) (snd <$> formArgMetaMapWithSrc classMap obj srcType )
+
+isSubtypeOfWithMaybeObj :: (Meta m) => ClassMap -> Maybe (Object m) -> Type -> Type -> Bool
+isSubtypeOfWithMaybeObj classMap (Just obj) = isSubtypeOfWithObj classMap obj
+isSubtypeOfWithMaybeObj classMap Nothing    = isSubtypeOf classMap
