@@ -98,3 +98,8 @@ showPrgm env (objMap, classMap, annots) = do
 
 showConstraints :: FEnv -> [Constraint] -> [SConstraint]
 showConstraints env = map (showCon env)
+
+showTraceConstrainEpoch :: FEnv -> TraceConstrainEpoch -> [(SConstraint, [(Pnt, Scheme)])]
+showTraceConstrainEpoch env = map mapConstraint . filter (not . null . snd)
+  where
+    mapConstraint (con, pnts) = (showCon env con, pnts)

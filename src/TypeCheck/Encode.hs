@@ -43,6 +43,7 @@ makeBaseFEnv classMap = FEnv{
   feUnionAllObjs = VarMeta 0 emptyMetaN Nothing,
   feVTypeGraph = H.empty,
   feTTypeGraph = H.empty,
+  feUpdatedDuringEpoch = False,
   feClassMap = classMap,
   feDefMap = H.empty,
   feTrace = [[]]
