@@ -16,6 +16,10 @@ stack repl
 *...> process "test/code/arith.ct"
 ```
 
+A repl that also keeps a stack trace for finding the source of errors can also be run.
+Use `stack ghci --profile catln --ghci-options "-fexternal-interpreter -prof" --test`.
+This can take a few hours to build the first time it is run.
+
 ### Tests
 
 To run the Catln test suite, execute `stack test --pedantic`.
