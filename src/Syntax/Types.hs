@@ -24,12 +24,12 @@ import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Data.Hashable
 import           Data.List           (intercalate)
+import qualified Data.List           as L
 import           Data.Maybe
 import           Data.Zip
 import           GHC.Generics        (Generic)
 import           Prelude             hiding (unzip)
 import           Text.Printf
-import qualified Data.List as L
 import           Utils
 
 -- |The name is the basic type used for various kinds of names
@@ -178,24 +178,24 @@ joinUnionTypeByName = H.map (S.fromList . map typeToArgOption)
 singletonType :: PartialType -> Type
 singletonType partial = UnionType $ joinUnionType [partial]
 
-suffixLookup :: String -> [String] -> Maybe String 
-suffixLookup s (x:xs) 
+suffixLookup :: String -> [String] -> Maybe String
+suffixLookup s (x:xs)
   | s == x = Just s
   | otherwise = if ss s x then Just x else suffixLookup s xs
-  -- | otherwise = if el `L.isSuffixOf` x then Just x else suffixLookup s xs 
-  --where el = if "/" `L.isPrefixOf` s then s else "/"++s 
+  -- | otherwise = if el `L.isSuffixOf` x then Just x else suffixLookup s xs
+  --where el = if "/" `L.isPrefixOf` s then s else "/"++s
 suffixLookup _ [] = Nothing
 
 
 suffixLookupInDict :: String -> H.HashMap String b -> Maybe b
-suffixLookupInDict s dict = case suffixLookup s (H.keys dict) of 
-  Just k -> H.lookup k dict
+suffixLookupInDict s dict = case suffixLookup s (H.keys dict) of
+  Just k  -> H.lookup k dict
   Nothing -> Nothing
 
 suffixLookupInDictDefault :: b -> String -> H.HashMap String b -> b
-suffixLookupInDictDefault val s dict = case suffixLookup s (H.keys dict) of 
-  Just k -> H.lookupDefault val k dict
-  Nothing -> val  
+suffixLookupInDictDefault val s dict = case suffixLookup s (H.keys dict) of
+  Just k  -> H.lookupDefault val k dict
+  Nothing -> val
 
 -- |
 -- Expands a class partial into a union of the types that make up that class (in the 'ClassMap')
@@ -220,7 +220,7 @@ expandClassPartial classMap@(_, classToType) PartialType{ptName=PClassName class
 
 
 isSubSuffixType :: PartialName -> PartialName -> Bool
-isSubSuffixType t1 t2 | t1 == t2 = True 
+isSubSuffixType t1 t2 | t1 == t2 = True
 isSubSuffixType (PTypeName a) (PTypeName b) = ss a b
 isSubSuffixType (PClassName a) (PClassName b) = ss a b
 isSubSuffixType _ _ = False
@@ -244,17 +244,17 @@ isSubPartialOfWithEnv classMap venv aenv sub super@PartialType{ptName=PClassName
 isSubPartialOfWithEnv _ _ _ _ _ = False
 
 ss :: String -> String -> Bool
-ss a b | a == b = True 
+ss a b | a == b = True
 ss a b = x `L.isSuffixOf` y || y `L.isSuffixOf` x
-  where 
-    x = if "/" `L.isPrefixOf` a then a else "/"++a 
+  where
+    x = if "/" `L.isPrefixOf` a then a else "/"++a
     y = if "/" `L.isPrefixOf` b then b else "/"++b
 
 isSuffixType :: Type -> Type -> Bool
-isSuffixType t1 t2 | t1 == t2 = True 
-isSuffixType (TypeVar (TVVar a)) (TypeVar (TVVar b)) = ss a b 
-isSuffixType (TypeVar (TVArg a)) (TypeVar (TVArg b)) = ss a b 
-isSuffixType _ _ = False 
+isSuffixType t1 t2 | t1 == t2 = True
+isSuffixType (TypeVar (TVVar a)) (TypeVar (TVVar b)) = ss a b
+isSuffixType (TypeVar (TVArg a)) (TypeVar (TVArg b)) = ss a b
+isSuffixType _ _ = False
 
 
 -- | Checks if one type contains another type. In set terminology, it is equivalent to subset or equal to ⊆.
@@ -368,14 +368,14 @@ unionAllTypes classMap = foldr (unionTypes classMap) bottomType
 intersectAllTypes :: Foldable f => ClassMap -> f Type -> Type
 intersectAllTypes classMap = foldr (intersectTypes classMap) TopType
 
-intersectPartial :: PartialName -> PartialName -> Bool 
-intersectPartial (PTypeName a) (PTypeName b) =  ss a b
+intersectPartial :: PartialName -> PartialName -> Bool
+intersectPartial (PTypeName a) (PTypeName b)   =  ss a b
 intersectPartial (PClassName a) (PClassName b) = ss a b
-intersectPartial _ _ = False
+intersectPartial _ _                           = False
 
 -- | A private helper for 'intersectPartialsBase' that intersects while ignore class expansions
 intersectPartialsBase :: ClassMap -> TypeVarEnv -> PartialType -> PartialType -> Maybe (TypeVarEnv, [PartialType])
-intersectPartialsBase _ _ PartialType{ptName=aName} PartialType{ptName=bName} | not $ intersectPartial aName bName = Nothing  
+intersectPartialsBase _ _ PartialType{ptName=aName} PartialType{ptName=bName} | not $ intersectPartial aName bName = Nothing
 intersectPartialsBase _ _ PartialType{ptArgs=aArgs, ptArgMode=aArgMode} PartialType{ptArgs=bArgs, ptArgMode=bArgMode} | aArgMode == PtArgExact && bArgMode == PtArgExact && H.keysSet aArgs /= H.keysSet bArgs = Nothing
 intersectPartialsBase classMap venv (PartialType name aVars aProps aArgs aArgMode) (PartialType _ bVars bProps bArgs bArgMode) = do
   (varsVenvs, vars') <- unzip <$> intersectMap H.empty aVars bVars

@@ -186,7 +186,7 @@ evalRun function prgmName prgmGraphData = do
   input <-  case evalTargetMode function prgmName prgmGraphData of
         EvalRunWithContext ->
           -- Case for eval Context(value=main, io=IO)
-          
+
           return $ eApply (eApply (eVal "/Context") "value" (eVal function)) "io" ioArg
         EvalRun ->
           -- Case for eval main
