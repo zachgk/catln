@@ -250,12 +250,17 @@ isSubtypePartialOf classMap subPartial = isSubtypeOf classMap (singletonType sub
 -- Join partials by checking if one is a subset of another (redundant) and removing it.
 -- TODO: This currently joins only with matching names. More matches could improve the effectiveness of the compaction, but slows down the code significantly
 compactOverlapping :: ClassMap -> PartialLeafs -> PartialLeafs
-compactOverlapping classMap = joinUnionTypeByName . fmap aux . splitUnionTypeByName
+compactOverlapping classMap = joinUnionTypeByName . fmap (\ps -> aux ps ps) . splitUnionTypeByName
   where
-    aux [] = []
-    aux (partial:rest) = if any (isSubtypePartialOf classMap partial . singletonType) rest
-      then aux rest
-      else partial : aux rest
+    -- Tests each partial against all partials to check if it is already handled by it
+    aux [] _ = []
+    aux (partial:rest) allPartials = if any (partialAlreadyCovered partial) allPartials
+      then aux rest allPartials
+      else partial : aux rest allPartials
+
+    -- checks if a partial is covered by the candidate allPartial
+    -- it compares each partial to all others (including itself), so must ignore the self comparison case (partial == allPartial)
+    partialAlreadyCovered partial allPartial = partial /= allPartial && isSubtypePartialOf classMap partial (singletonType allPartial)
 
 -- |
 -- Joins partials with only one difference between their args or vars. Then, it can join the two partials into one partial
