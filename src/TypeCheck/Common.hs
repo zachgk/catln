@@ -53,7 +53,7 @@ data FEnv = FEnv { fePnts               :: IM.IntMap Scheme
                  , feVTypeGraph         :: VTypeGraph
                  , feTTypeGraph         :: TTypeGraph
                  , feUpdatedDuringEpoch :: Bool -- ^ If a pnt is updated during the epoch
-                 , feClassMap           :: ClassMap
+                 , feClassGraph         :: ClassGraph
                  , feDefMap             :: EnvValMap
                  , feTrace              :: TraceConstrain
                  } deriving (Show)
@@ -152,7 +152,7 @@ type VArrow = Arrow VExpr VarMeta
 type VObjArg = ObjArg VarMeta
 type VObject = Object VarMeta
 type VObjectMap = [(VObject, [VArrow])]
-type VPrgm = (VObjectMap, ClassMap, [VCompAnnot])
+type VPrgm = (VObjectMap, ClassGraph, [VCompAnnot])
 type VReplRes = ReplRes VarMeta
 
 type TypedMeta = Typed
@@ -244,15 +244,15 @@ fAddTTypeGraph :: FEnv -> TypeName -> TTypeGraphVal -> FEnv
 fAddTTypeGraph env@FEnv{feTTypeGraph} k v = env {feTTypeGraph = H.insertWith (++) k [v] feTTypeGraph}
 
 tryIntersectTypes :: FEnv -> Type -> Type -> String -> TypeCheckResult Type
-tryIntersectTypes FEnv{feClassMap} a b desc = let c = intersectTypes feClassMap a b
+tryIntersectTypes FEnv{feClassGraph} a b desc = let c = intersectTypes feClassGraph a b
                                                             in if isBottomType c
                                                                   then TypeCheckResE [GenTypeCheckError Nothing $ "Failed to intersect(" ++ desc ++ "): " ++ show a ++ " --- " ++ show b]
                                                                   else return c
 
 -- This ensures schemes are correct
 -- It differs from Constrain.checkScheme because it checks for bugs in the internal compiler, not bugs in the user code
-verifyScheme :: ClassMap -> VarMeta -> Scheme -> Scheme -> Maybe String
-verifyScheme classMap (VarMeta _ _ mobj) (TypeCheckResult _ (SType oldUb _ _)) (TypeCheckResult _ (SType ub _ _)) = listToMaybe $ catMaybes [
+verifyScheme :: ClassGraph -> VarMeta -> Scheme -> Scheme -> Maybe String
+verifyScheme classGraph (VarMeta _ _ mobj) (TypeCheckResult _ (SType oldUb _ _)) (TypeCheckResult _ (SType ub _ _)) = listToMaybe $ catMaybes [
   if verifyTypeVars (mobjVars mobj) ub then Nothing else Just "verifyTypeVars",
   if verifySchemeUbLowers then Nothing else Just "verifySchemeUbLowers",
   if verifyCompacted then Nothing else Just "verifyCompacted"
@@ -267,8 +267,8 @@ verifyScheme classMap (VarMeta _ _ mobj) (TypeCheckResult _ (SType oldUb _ _)) (
 
     mobjVars (Just Object{objVars}) = H.keys objVars
     mobjVars Nothing                = []
-    verifySchemeUbLowers  = isSubtypeOfWithMaybeObj classMap mobj ub oldUb
-    verifyCompacted = ub == compactType classMap ub
+    verifySchemeUbLowers  = isSubtypeOfWithMaybeObj classGraph mobj ub oldUb
+    verifyCompacted = ub == compactType classGraph ub
 verifyScheme _ _ _ _ = Nothing
 
 
@@ -287,14 +287,14 @@ fresh env@FEnv{fePnts} scheme = (pnt', env{fePnts = pnts'})
     pnts' = IM.insert pnt' scheme fePnts
 
 setDescriptor :: FEnv -> VarMeta -> Scheme -> String -> FEnv
-setDescriptor env@FEnv{feClassMap, fePnts, feTrace, feUpdatedDuringEpoch} m scheme' msg = env{fePnts = pnts', feTrace = feTrace', feUpdatedDuringEpoch = feUpdatedDuringEpoch || schemeChanged}
+setDescriptor env@FEnv{feClassGraph, fePnts, feTrace, feUpdatedDuringEpoch} m scheme' msg = env{fePnts = pnts', feTrace = feTrace', feUpdatedDuringEpoch = feUpdatedDuringEpoch || schemeChanged}
   where
     p = getPnt m
     scheme = fePnts IM.! p
     schemeChanged = scheme /= scheme'
     pnts' = IM.insert p scheme' fePnts
     feTrace' = if schemeChanged
-      then case verifyScheme feClassMap m scheme scheme' of
+      then case verifyScheme feClassGraph m scheme scheme' of
              Just failVerification -> error $ printf "Scheme failed verification %s during typechecking of %s: %s \n\t\t in obj: %s with old scheme: %s" failVerification msg (show scheme') (show m) (show scheme)
              Nothing -> case feTrace of
               ((curConstraint, curChanged):curEpoch):prevEpochs -> ((curConstraint, (p, scheme'):curChanged):curEpoch):prevEpochs

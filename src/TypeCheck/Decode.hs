@@ -43,10 +43,10 @@ showMatchingConstraints :: FEnv -> VarMeta -> [SConstraint]
 showMatchingConstraints env@FEnv{feCons} matchVar = map (showCon env) $ filter (matchingConstraint env matchVar) feCons
 
 toMeta :: FEnv -> VarMeta -> String -> TypeCheckResult Typed
-toMeta env@FEnv{feClassMap} m@(VarMeta _ (PreTyped pt pos) _) _ = case pointUb env m of
+toMeta env@FEnv{feClassGraph} m@(VarMeta _ (PreTyped pt pos) _) _ = case pointUb env m of
   TypeCheckResult notes ub -> case pt of
     TypeVar{} -> return $ Typed pt pos
-    _ -> TypeCheckResult notes $ Typed (intersectTypes feClassMap ub pt) pos
+    _ -> TypeCheckResult notes $ Typed (intersectTypes feClassGraph ub pt) pos
   TypeCheckResE notes -> do
     TypeCheckResult notes (Typed bottomType pos)
 
@@ -139,10 +139,10 @@ toObjectArrows env (obj, arrows) = do
   return (obj', arrows')
 
 toPrgm :: FEnv -> VPrgm -> TypeCheckResult TPrgm
-toPrgm env (objMap, classMap, annots) = do
+toPrgm env (objMap, classGraph, annots) = do
   objMap' <- mapM (toObjectArrows env) objMap
   annots' <- mapM (toExpr env) annots
-  return (objMap', classMap, annots')
+  return (objMap', classGraph, annots')
 
 toPrgms :: FEnv -> [VPrgm] -> TypeCheckResult [TPrgm]
 toPrgms env = mapM (toPrgm env)

@@ -62,7 +62,7 @@ data EvalTreebugClosed = EvalTreebugClosed EObject EArrow Val [EvalTreebugClosed
   deriving (Eq, Generic, Hashable, ToJSON)
 
 data Env = Env { evObjMap        :: EObjectMap
-               , evClassMap      :: ClassMap
+               , evClassGraph    :: ClassGraph
                , evArgs          :: H.HashMap ArgName Val
                , evExEnv         :: ResExEnv
                , evTbEnv         :: TBEnv
@@ -178,11 +178,11 @@ type ResBuildEnv = H.HashMap TypeName [ResBuildEnvItem]
 type ResExEnv = H.HashMap (PartialType, Arrow (Expr Typed) Typed) (ResArrowTree, [ResArrowTree]) -- (result, [compAnnot trees])
 
 data TBEnv = TBEnv {
-    tbName     :: String
-  , tbResEnv   :: ResBuildEnv
-  , tbVals     :: H.HashMap PartialType ResArrowTree
-  , tbPrgm     :: Prgm (Expr Typed) Typed
-  , tbClassMap :: ClassMap
+    tbName       :: String
+  , tbResEnv     :: ResBuildEnv
+  , tbVals       :: H.HashMap PartialType ResArrowTree
+  , tbPrgm       :: Prgm (Expr Typed) Typed
+  , tbClassGraph :: ClassGraph
   }
 
 instance Eq MacroFunction where
@@ -282,8 +282,8 @@ type ObjSrc = (PartialType, Object Typed)
 macroData :: TBEnv -> ObjSrc -> MacroData
 macroData tbEnv (objSrcType, obj) = MacroData tbEnv obj objSrcType
 
-resArrowDestType :: ClassMap -> PartialType -> ResArrowTree -> Type
-resArrowDestType classMap src (ResEArrow _ obj arr) = arrowDestType False classMap src obj arr
+resArrowDestType :: ClassGraph -> PartialType -> ResArrowTree -> Type
+resArrowDestType classGraph src (ResEArrow _ obj arr) = arrowDestType False classGraph src obj arr
 resArrowDestType _ _ (PrimArrow _ tp _) = tp
 resArrowDestType _ _ (MacroArrow _ tp _) = tp
 resArrowDestType _ _ (ConstantArrow v) = singletonType $ getValType v

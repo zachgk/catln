@@ -26,6 +26,7 @@ import           GHC.Generics                  (Generic)
 import           Network.Wai.Middleware.Static
 
 import           CRes
+import           Data.Graph
 import           Data.Maybe                    (fromJust)
 import           Desugarf                      (desFiles)
 import           Eval                          (evalAnnots, evalBuild, evalRun)
@@ -48,21 +49,12 @@ maybeJson :: (ToJSON a) => CRes a -> ActionM ()
 maybeJson (CRes notes r) = json $ Success r notes
 maybeJson (CErr notes)   = json (ResFail notes :: ResSuccess () CNote)
 
-filterByObj :: String -> TPrgm -> TPrgm
-filterByObj objPath (objMap, (typeToClass, classToType), _) = (objMap', (typeToClass', classToType'), [])
+-- | Filters a program's object map and class map to only highlight a particular type or class name
+filterByType :: String -> TPrgm -> TPrgm
+filterByType name (objMap, ClassGraph classGraph, _) = (objMap', classGraph', [])
   where
-    objMap' = filter (\(Object{objPath=n}, _) -> relativeNameMatches objPath n) objMap
-    typeToClass' = H.filterWithKey (\n _ -> relativeNameMatches objPath n) typeToClass
-    classToType' = H.filter (\(_, vars, types, _, _) -> any involvesType vars || any involvesType types) classToType
-    involvesType (UnionType leafs) = any involvesPartial $ splitUnionType leafs
-    involvesType _                 = False
-    involvesPartial PartialType{ptName, ptVars, ptProps, ptArgs} = ptName == PTypeName objPath || any involvesType ptVars || any involvesType ptProps || any involvesType ptArgs
-
-filterByClass :: String -> TPrgm -> TPrgm
-filterByClass className (_, (_, classToType), _) = ([], (typeToClass', classToType'), [])
-  where
-    typeToClass' = H.empty
-    classToType' = H.filterWithKey (\n _ -> relativeNameMatches n className) classToType
+    objMap' = filter (\(Object{objPath=n}, _) -> relativeNameMatches name n) objMap
+    classGraph' = ClassGraph $ graphFromEdges $ filter (\(_, n, subTypes) -> relativeNameMatches name n || n `elem` subTypes) $ graphToNodes classGraph
 
 data WDProvider
   = LiveWDProvider Bool String
@@ -210,13 +202,13 @@ docApiBase provider = do
   get "/api/object/:objName" $ do
     objName <- param "objName"
     maybeTprgm <- liftAndCatchIO $ getTPrgmJoined provider
-    let filterTprgm = filterByObj  (T.unpack $ T.replace "|" "/" objName) <$> maybeTprgm
+    let filterTprgm = filterByType objName <$> maybeTprgm
     maybeJson filterTprgm
 
   get "/api/class/:className" $ do
     className <- param "className"
     maybeTprgm <- liftAndCatchIO $ getTPrgmJoined provider
-    let filterTprgm = filterByClass className <$> maybeTprgm
+    let filterTprgm = filterByType className <$> maybeTprgm
     maybeJson filterTprgm
 
   get "/api/treebug" $ do

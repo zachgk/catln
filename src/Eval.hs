@@ -64,7 +64,7 @@ evalBuildable _                      = False
 evalTargetMode :: String -> String -> EPrgmGraphData -> EvalMode
 evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe $ mapMaybe objArrowsContains objMap
   where
-    (objMap, classMap, _) = prgmFromGraphData prgmName prgmGraphData
+    (objMap, classGraph, _) = prgmFromGraphData prgmName prgmGraphData
     objArrowsContains (_, arrows) | not (any arrowDefined arrows) = Nothing
     objArrowsContains (Object{objArgs, objPath}, Arrow arrM _ _ _:_) = case objPath of
       "/Context" -> case H.lookup "value" objArgs of
@@ -80,7 +80,7 @@ evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe 
           else Just $ EvalRun objPath
       _ -> Nothing
     objArrowsContains _ = Nothing
-    isBuildable tp = not $ isBottomType $ intersectTypes classMap tp resultType
+    isBuildable tp = not $ isBottomType $ intersectTypes classGraph tp resultType
     arrowDefined (Arrow _ _ _ maybeExpr) = isJust maybeExpr
 
 evalCompAnnot :: Env -> Val -> CRes Env
@@ -117,9 +117,9 @@ eval env (ConstantArrow v) = return (v, env)
 eval env@Env{evArgs} (ArgArrow _ name) = case H.lookup name evArgs of
   Just arg' -> return (arg', env)
   Nothing -> evalError env $ printf "Unknown arg %s found during evaluation \n\t\t with arg env %s" name (show evArgs)
-eval env@Env{evClassMap} (ResArrowMatch m _ opts) = do
+eval env@Env{evClassGraph} (ResArrowMatch m _ opts) = do
   (m', env2) <- evalPopVal <$> eval (evalPush env "match input") m
-  case H.toList $ H.filterWithKey (\optType _ -> isSubtypePartialOf evClassMap (getValType m') (singletonType optType)) opts of
+  case H.toList $ H.filterWithKey (\optType _ -> isSubtypePartialOf evClassGraph (getValType m') (singletonType optType)) opts of
     [(_, resArrowTree)] -> evalPopVal <$> eval (evalPush env2 $ "match with val " ++ show m') resArrowTree
     [] -> evalError env2 $ printf "Failed match in eval resArrowTree: \n\tVal: %s \n\tOptions: %s" (show m') (show opts)
     (_:_:_) -> evalError env $ printf "Multiple matches in eval resArrowTree: \n\tVal: %s \n\tOptions: %s " (show m') (show opts)
@@ -149,9 +149,9 @@ eval env (ResArrowTupleApply base argName argRATree) = do
     _ -> evalError env "Invalid input to tuple application"
 
 evalBaseEnv :: EPrgm -> Env
-evalBaseEnv prgm@(objMap, classMap, _) = Env {
+evalBaseEnv prgm@(objMap, classGraph, _) = Env {
         evObjMap = objMap,
-        evClassMap = classMap,
+        evClassGraph = classGraph,
         evArgs = H.empty,
         evExEnv = H.empty,
         evTbEnv = buildTBEnv primEnv prgm,

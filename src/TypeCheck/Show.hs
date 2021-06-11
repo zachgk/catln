@@ -91,10 +91,10 @@ showCon env (PowersetTo p1 p2) = showConHelper env SPowersetTo p1 p2
 showCon env (UnionOf p1 p2s) = SUnionOf (descriptor env p1) (map (descriptor env) p2s)
 
 showPrgm :: FEnv -> VPrgm -> TypeCheckResult SPrgm
-showPrgm env (objMap, classMap, annots) = do
+showPrgm env (objMap, classGraph, annots) = do
   objMap' <- mapM (showObjArrows env) objMap
   annots' <- mapM (showExpr env) annots
-  return (objMap', classMap, annots')
+  return (objMap', classGraph, annots')
 
 showConstraints :: FEnv -> [Constraint] -> [SConstraint]
 showConstraints env = map (showCon env)

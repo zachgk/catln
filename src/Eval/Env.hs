@@ -52,7 +52,7 @@ evalEndEArrow env@Env{evTreebugOpen, evTreebugClosed, evCallStack} val newArgs =
     closedId = take 10 (printf "%08x" (hash (evTreebugOpen, evTreebugClosed, evCallStack)))
 
 evalEnvJoin :: Env -> Env -> Env
-evalEnvJoin (Env objMap classMap args exEnv1 tbEnv callStack cov1 treebugOpen treebugClosed1) (Env _ _ _ exEnv2 _ _ cov2 _ treebugClosed2) = Env objMap classMap args (H.union exEnv1 exEnv2) tbEnv callStack (H.unionWith (+) cov1 cov2) treebugOpen (treebugClosed1 ++ treebugClosed2)
+evalEnvJoin (Env objMap classGraph args exEnv1 tbEnv callStack cov1 treebugOpen treebugClosed1) (Env _ _ _ exEnv2 _ _ cov2 _ treebugClosed2) = Env objMap classGraph args (H.union exEnv1 exEnv2) tbEnv callStack (H.unionWith (+) cov1 cov2) treebugOpen (treebugClosed1 ++ treebugClosed2)
 
 evalEnvJoinAll :: Foldable f => f Env -> Env
 evalEnvJoinAll = foldr1 evalEnvJoin

@@ -41,12 +41,12 @@ runConstraintsLimit = 10
 
 typecheckPrgms :: [PPrgm] -> [TPrgm] -> TypeCheckResult [TypecheckTuplePrgm]
 typecheckPrgms pprgms typechecked = do
-  -- determine total classmap
-  let (_, pclassMap, _) = mergePrgms pprgms
-  let (_, tclassMap, _) = mergePrgms typechecked
-  let classMap = mergeClassMaps pclassMap tclassMap
+  -- determine total classGraph
+  let (_, pclassGraph, _) = mergePrgms pprgms
+  let (_, tclassGraph, _) = mergePrgms typechecked
+  let classGraph = mergeClassGraphs pclassGraph tclassGraph
 
-  let baseFEnv = makeBaseFEnv classMap
+  let baseFEnv = makeBaseFEnv classGraph
   (vprgms, env@FEnv{feCons}) <- fromPrgms baseFEnv pprgms typechecked
   env'@FEnv{feTrace} <- runConstraints runConstraintsLimit env feCons
   tprgms <- toPrgms env' vprgms

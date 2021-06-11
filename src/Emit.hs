@@ -50,8 +50,8 @@ import           LLVM.AST.Typed       (typeOf)
 import           LLVM.Pretty          (ppllvm)
 import           Utils
 
-data LEnv = LEnv { lvTbEnv    :: TBEnv
-                 , lvClassMap :: ClassMap
+data LEnv = LEnv { lvTbEnv      :: TBEnv
+                 , lvClassGraph :: ClassGraph
                  }
 
 initModule :: AST.Module
@@ -106,10 +106,10 @@ typeName tp = printf "tp_%s" tpHash
   where tpHash = take 6 (printf "%08x" (hash tp)) :: String
 
 codegenTree :: LEnv -> ResArrowTree -> Val
-codegenTree env@LEnv{lvClassMap} resArrow@(ResEArrow input object arrow) = do
+codegenTree env@LEnv{lvClassGraph} resArrow@(ResEArrow input object arrow) = do
   let val = codegenTree env input
   let arrowSrcType = getValType val
-  let outType = resArrowDestType lvClassMap arrowSrcType resArrow
+  let outType = resArrowDestType lvClassGraph arrowSrcType resArrow
   case val of
     (TupleVal _ args) ->
       LLVMOperand outType $ do
@@ -307,7 +307,7 @@ codegenStruct tp@(UnionType partialLeafs) = do
 codegenStruct tp = error $ printf "Invalid type to codegenStruct: %s" (show tp)
 
 codegenTasks :: LEnv -> LLVM ()
-codegenTasks env@LEnv{lvTbEnv, lvClassMap} = do
+codegenTasks env@LEnv{lvTbEnv, lvClassGraph} = do
   taskArrows <- gets lTaskArrows
   completed <- gets lTasksCompleted
   case taskArrows of
@@ -319,7 +319,7 @@ codegenTasks env@LEnv{lvTbEnv, lvClassMap} = do
         else case buildArrow lvTbEnv arrowSrcType obj arr of
           CRes _ (Just (_, (tree, _))) -> do
             modify $ \s -> s {lTasksCompleted = S.insert nm completed}
-            let destType = arrowDestType False lvClassMap arrowSrcType obj arr
+            let destType = arrowDestType False lvClassGraph arrowSrcType obj arr
             codegenDecls env nm obj (singletonType arrowSrcType) destType tree declInput
             codegenTasks env
           err -> error $ printf "Failed to buildtree to emit arrow: %s" (show err)
@@ -338,11 +338,11 @@ codegenTasks env@LEnv{lvTbEnv, lvClassMap} = do
         [] -> return ()
 
 codegenPrgm :: EExpr -> PartialType -> Type -> EPrgm -> LLVM ()
-codegenPrgm input srcType destType tprgm@(_, classMap, _) = do
+codegenPrgm input srcType destType tprgm@(_, classGraph, _) = do
   let tbEnv = buildTBEnv primEnv tprgm
   case buildRoot tbEnv (applyIO input) srcType destType of
     CRes _ initTree -> do
-      let env = LEnv tbEnv classMap
+      let env = LEnv tbEnv classGraph
       codegenMain env initTree
       codegenTasks env
     CErr err -> error $ printf "Build to buildPrgm in codegen: \n\t%s" (show err)

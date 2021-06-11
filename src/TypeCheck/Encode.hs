@@ -36,15 +36,15 @@ import           TypeCheck.TypeGraph (addUnionObjToEnv)
 data TypeBound = BUpper | BLower | BEq
   deriving (Eq)
 
-makeBaseFEnv :: ClassMap -> FEnv
-makeBaseFEnv classMap = FEnv{
+makeBaseFEnv :: ClassGraph -> FEnv
+makeBaseFEnv classGraph = FEnv{
   fePnts = IM.empty,
   feCons = [],
   feUnionAllObjs = VarMeta 0 emptyMetaN Nothing,
   feVTypeGraph = H.empty,
   feTTypeGraph = H.empty,
   feUpdatedDuringEpoch = False,
-  feClassMap = classMap,
+  feClassGraph = classGraph,
   feDefMap = H.empty,
   feTrace = [[]]
   }
@@ -232,11 +232,11 @@ fromObjects env (obj, arrows) = do
   return ((obj', arrows), env1)
 
 fromPrgm :: FEnv -> (PPrgm, [VObject]) -> TypeCheckResult (VPrgm, FEnv)
-fromPrgm env1 ((objMap1, classMap, annots), vobjs) = do
+fromPrgm env1 ((objMap1, classGraph, annots), vobjs) = do
   let objMap2 = zipWith (\(_, arrows) vobj -> (vobj, arrows)) (reverse objMap1) vobjs
   (objMap3, env2) <- mapMWithFEnv env1 fromObjectMap objMap2
   (annots', env3) <- mapMWithFEnv env2 (fromExpr H.empty Nothing) annots
-  return ((objMap3, classMap, annots'), env3)
+  return ((objMap3, classGraph, annots'), env3)
 
 -- Add all of the objects first for various expressions that call other top level functions, from all programs
 prepObjPrgm :: FEnv -> PPrgm -> TypeCheckResult ((PPrgm, [VObject]), FEnv)

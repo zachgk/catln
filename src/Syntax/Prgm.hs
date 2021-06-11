@@ -17,13 +17,13 @@
 module Syntax.Prgm where
 
 import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet        as S
 import           Data.Hashable
 import           Data.List           (intercalate)
 import           GHC.Generics        (Generic)
 
 import           Data.Aeson          (ToJSONKey)
 import           Data.Aeson.Types    (ToJSON)
+import           Data.Graph
 import           Syntax.Types
 import           Text.Printf
 
@@ -146,7 +146,7 @@ data Arrow e m = Arrow m [CompAnnot e] (Guard e) (Maybe e) -- m is result metada
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
 type ObjectMap e m = [(Object m, [Arrow e m])]
-type Prgm e m = (ObjectMap e m, ClassMap, [CompAnnot e]) -- TODO: Include [Export]
+type Prgm e m = (ObjectMap e m, ClassGraph, [CompAnnot e]) -- TODO: Include [Export]
 
 instance Show m => Show (IExpr m) where
   show (ICExpr _ c) = show c
@@ -175,7 +175,7 @@ instance Show e => Show (Guard e) where
 
 instance Show m => Show (Object m) where
   -- show (Object m basis name vars args) = printf "%s %s (%s) %s %s" (show basis) name (show m) maybeVarsString maybeArgsString
-  show (Object _ basis vars args _ path) = printf "%s %s %s %s" (show basis) path maybeVarsString maybeArgsString
+  show (Object _ basis vars args _ p) = printf "%s %s %s %s" (show basis) p maybeVarsString maybeArgsString
     where
       showVar (varName, varVal) = printf "%s = %s" varName (show varVal)
       maybeVarsString :: String
@@ -256,19 +256,26 @@ mergeDoc (Just a) Nothing  = Just a
 mergeDoc Nothing (Just b)  = Just b
 mergeDoc _ _               = Nothing
 
-mergeClassMaps :: ClassMap -> ClassMap -> ClassMap
-mergeClassMaps classMap@(toClassA, toTypeA) (toClassB, toTypeB) = (H.unionWith S.union toClassA toClassB, H.unionWith mergeClasses toTypeA toTypeB)
-  where mergeClasses (sealedA, classVarsA, setA, docA, pathA) (sealedB, classVarsB, setB, docB, _pathB) = if sealedA == sealedB
-          then (sealedA, H.unionWith (unionTypes classMap) classVarsA classVarsB, setA ++ setB, mergeDoc docA docB, pathA)
-          else error $ printf "Added to sealed class definition %s %s" (show setA) (show setB)
+mergeClassGraphs :: ClassGraph -> ClassGraph -> ClassGraph
+mergeClassGraphs (ClassGraph classGraphA) (ClassGraph classGraphB) = ClassGraph $ mapToGraph $ H.unionWith mergeClasses (graphToMap classGraphA) (graphToMap classGraphB)
+  where
+    graphToMap (g, nodeFromVertex, _) = H.fromList $ map ((\classData@(_, className, _) -> (className, classData)) . nodeFromVertex) $ vertices g
+    mapToGraph = graphFromEdges . H.elems
+    mergeClasses (CGClass (sealedA, classVarsA, setA, docA, pathA), className, subClassNamesA) (CGClass (sealedB, classVarsB, setB, docB, _), _, subClassNamesB) = if sealedA == sealedB
+          then (CGClass (sealedA, H.unionWith (unionTypes (ClassGraph classGraphA)) classVarsA classVarsB, setA ++ setB, mergeDoc docA docB, pathA), className, subClassNamesA ++ subClassNamesB)
+          else error "Added to sealed class definition"
+    mergeClasses node@(CGClass{}, _, _) (CGType{}, _, _) = node
+    mergeClasses (CGType{}, _, _) node@(CGClass{}, _, _) = node
+    mergeClasses (CGType, name, []) (CGType, _, []) = (CGType, name, [])
+    mergeClasses cg1 cg2 = error $ printf "Unexpected input to mergeClassGraphs: \n\t%s \n\t%s" (show cg1) (show cg2)
 
 mergePrgm :: Prgm e m -> Prgm e m -> Prgm e m
-mergePrgm (objMap1, classMap1, annots1) (objMap2, classMap2, annots2) = (
+mergePrgm (objMap1, classGraph1, annots1) (objMap2, classGraph2, annots2) = (
   objMap1 ++ objMap2,
-  mergeClassMaps classMap1 classMap2,
+  mergeClassGraphs classGraph1 classGraph2,
   annots1 ++ annots2
                                                                            )
 
 mergePrgms :: Foldable f => f (Prgm e m) -> Prgm e m
 mergePrgms = foldr mergePrgm emptyPrgm
-  where emptyPrgm = ([], (H.empty, H.empty), [])
+  where emptyPrgm = ([], ClassGraph $ graphFromEdges [], [])
