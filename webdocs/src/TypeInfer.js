@@ -159,7 +159,7 @@ function Constraint(props) {
   case "BoundedByKnown":
     return (<span><Meta data={constraint.contents[0]} withPos /> ⊆ <Type data={constraint.contents[1]}/></span>);
   case "BoundedByObjs":
-    return (<span>{constraint.contents[0]} <Meta data={constraint.contents[1]} withPos /></span>);
+    return (<span>BoundedByObjs <Meta data={constraint.contents} withPos /></span>);
   case "ArrowTo":
     return (<span><Meta data={constraint.contents[0]} withPos /> -&gt; <Meta data={constraint.contents[1]} withPos /></span>);
   case "PropEq":

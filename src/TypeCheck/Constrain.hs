@@ -36,7 +36,7 @@ isSolved _                                 = False
 setScheme :: FEnv -> VarMeta -> Scheme -> String -> FEnv
 setScheme env p scheme msg = setDescriptor env p (checkScheme scheme) msg
   where msg' = printf "Scheme failed check at setScheme %s(point %s): upper bound is bottomType - " msg (show p)
-        checkScheme (TypeCheckResult _ (SType ub _ desc)) | isBottomType ub = error $ msg' ++ desc
+        -- checkScheme (TypeCheckResult _ (SType ub _ desc)) | isBottomType ub = error $ msg' ++ desc
         checkScheme (TypeCheckResult notes (SType ub _ desc)) | isBottomType ub = TypeCheckResE (GenTypeCheckError (getMetaPos p) (msg' ++ desc) : notes)
         checkScheme s = s
 
@@ -185,7 +185,7 @@ executeConstraint env@FEnv{feUnionAllObjs, feClassMap} (BoundedByObjs pnt) = do
       -- but a subset of the arguments in that type
       let ub' = intersectTypes feClassMap ub boundUb
       let scheme' = return $ SType ub' lb desc
-      let env' = setScheme env pnt scheme' $ printf "BoundedByObjs for %s" (show ub)
+      let env' = setScheme env pnt scheme' $ printf "BoundedByObjs for %s\nBound: %s\n" (show ub) (show boundUb)
       (isSolved scheme', env')
 executeConstraint env (ArrowTo srcPnt destPnt) = do
   let srcScheme = descriptor env srcPnt
