@@ -50,6 +50,11 @@ toMeta env@FEnv{feClassMap} m@(VarMeta _ (PreTyped pt pos) _) _ = case pointUb e
   TypeCheckResE notes -> do
     TypeCheckResult notes (Typed bottomType pos)
 
+member :: String -> [String ] -> Bool  
+member x arr = case suffixLookup x arr of
+  Just _ -> True 
+  Nothing -> False 
+
 toExpr :: FEnv -> VExpr -> TypeCheckResult TExpr
 toExpr env (ICExpr m c) = do
   m' <- toMeta env m $ "Constant " ++ show c
@@ -72,7 +77,7 @@ toExpr env (ITupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
     _ | getMetaType m' == bottomType -> return result
     _ | getMetaType baseM' == bottomType -> return result
 
-    tp@(Typed (UnionType uType) _) | all (\PartialType{ptArgs=leafArgs} -> not (argName `H.member` leafArgs)) (splitUnionType uType) ->
+    tp@(Typed (UnionType uType) _) | all (\PartialType{ptArgs=leafArgs} -> not (argName `member` H.keys leafArgs)) (splitUnionType uType) ->
                                         TypeCheckResult [TupleMismatch baseM' baseExpr' tp $ H.singleton argName argExpr'] result
 
     _ -> return result
@@ -120,8 +125,8 @@ toObjArg env prefix (name, (m, maybeObj)) = do
     Nothing -> return (name, (m', Nothing))
 
 toObject :: FEnv -> String -> VObject -> TypeCheckResult TObject
-toObject env prefix obj@Object{objM, objName, objVars, objArgs} = do
-  let prefix' = prefix ++ "_" ++ objName
+toObject env prefix obj@Object{objM, objVars, objArgs, objPath} = do
+  let prefix' = prefix ++ "_" ++ objPath
   m' <- toMeta env objM prefix'
   vars' <- mapM (\(varName, varVal) -> (varName,) <$> toMeta env varVal (prefix' ++ "." ++ varName)) $ H.toList objVars
   args' <- mapM (toObjArg env prefix') $ H.toList objArgs

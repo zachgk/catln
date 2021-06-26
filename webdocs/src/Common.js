@@ -247,7 +247,8 @@ function PartialName(props) {
 
 function Obj(props) {
   const {obj, details, Meta} = props;
-  let {objM, objBasis, objName, objVars, objArgs, objDoc} = obj;
+  let {objM, objBasis, objPath, objVars, objArgs, objDoc} = obj;
+  const objName = objPath;
 
   let showContext;
   if(objName === "Context") {
@@ -262,7 +263,7 @@ function Obj(props) {
     let valueObj = objArgs.value[1];
     objM = valueObj.objM;
     objBasis = valueObj.objBasisi;
-    objName = valueObj.objName;
+    objName = valueObj.objPath;
     objVars = valueObj.objVars;
     objArgs = valueObj.objArgs;
     objDoc = valueObj.objDoc;

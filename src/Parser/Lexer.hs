@@ -95,6 +95,6 @@ operators :: [String]
 operators = words "++ :: - ~ * // + <= >= < > == != & | ^"
 
 opIdentifier :: Parser String
-opIdentifier = try $ lexeme $ (++) <$> string "operator" <*> opChars
+opIdentifier = try $ lexeme $ (++) <$> string "/operator" <*> opChars
   where opChars :: Parser String
         opChars = foldr1 (<|>) (map symbol operators)

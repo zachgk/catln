@@ -63,16 +63,16 @@ evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe 
   where
     (objMap, classMap, _) = prgmFromGraphData prgmName prgmGraphData
     objArrowsContains (_, arrows) | not (any arrowDefined arrows) = Nothing
-    objArrowsContains (Object{objName, objArgs}, Arrow arrM _ _ _:_) = case objName of
-      "Context" -> case H.lookup "value" objArgs of
-        Just (_, Just Object{objName=valObjName}) -> if valObjName == function
+    objArrowsContains (Object{objArgs, objPath}, Arrow arrM _ _ _:_) = case objPath of
+      "/Context" -> case H.lookup "value" objArgs of
+        Just (_, Just Object{objPath=valObjName}) -> if ss valObjName function
           then Just $ if isBuildable (getMetaType arrM)
             then EvalBuildWithContext
             else EvalRunWithContext
 
           else Nothing
         _ -> Nothing
-      _ | objName == function -> if isBuildable (getMetaType arrM)
+      _ | ss objPath function -> if isBuildable (getMetaType arrM)
           then Just EvalBuild
           else Just EvalRun
       _ -> Nothing
@@ -175,7 +175,7 @@ evalAnnots prgmName prgmGraphData = do
     let exprType = getMetaType $ getExprMeta annot
     let inTree = ExprArrow annot exprType exprType
     let emptyType = PartialType (PTypeName "EmptyObj") H.empty H.empty H.empty PtArgExact
-    let emptyObj = Object (Typed (singletonType emptyType) Nothing) FunctionObj "EmptyObj" H.empty H.empty Nothing "EmptyObj"
+    let emptyObj = Object (Typed (singletonType emptyType) Nothing) FunctionObj H.empty H.empty Nothing "EmptyObj"
     tree <- resolveTree evTbEnv (emptyType, emptyObj) inTree
     val <- fst <$> eval env tree
     return (annot, val)
@@ -186,7 +186,8 @@ evalRun function prgmName prgmGraphData = do
   input <-  case evalTargetMode function prgmName prgmGraphData of
         EvalRunWithContext ->
           -- Case for eval Context(value=main, io=IO)
-          return $ eApply (eApply (eVal "Context") "value" (eVal function)) "io" ioArg
+          
+          return $ eApply (eApply (eVal "/Context") "value" (eVal function)) "io" ioArg
         EvalRun ->
           -- Case for eval main
           return $ eVal function
@@ -203,13 +204,14 @@ evalRun function prgmName prgmGraphData = do
 evalBuild :: String -> String -> EPrgmGraphData -> CRes (IO (Val, EvalResult))
 evalBuild function prgmName prgmGraphData = do
   let prgm = prgmFromGraphData prgmName prgmGraphData
+
   input <-  case evalTargetMode function prgmName prgmGraphData of
         EvalRunWithContext ->
           -- Case for eval llvm(c=Context(value=main, io=IO))
           return $ eApply (eVal "llvm") "c" (eVal function)
         EvalBuildWithContext ->
           -- Case for buildable Context(value=main, io=IO)
-          return $ eApply (eApply (eVal "Context") "value" (eVal function)) "io" ioArg
+          return $ eApply (eApply (eVal "/Context") "value" (eVal function)) "io" ioArg
         EvalBuild ->
           -- Case for buildable main
           return $ eVal function

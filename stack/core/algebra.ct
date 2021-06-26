@@ -14,19 +14,19 @@ module Data/Algebra
       For example, a TreeSet can insert items in different order and produce different trees, but with equal sets.
       There are only two operations for eq: [operator==] and [operator!=].
 
-  operator==<Eq $T>($T l, $T r) -> Boolean
+    # /operator==</Data/Algebra/Eq $T>($T l, $T r) -> Boolean
 
     # This checks whether two items are equal.
       Note that it only compares like items with each other, not that you can compare apples to oranges.
 
-  operator!=<Eq $T>($T l, $T r) -> Boolean
+  /operator!=</Data/Algebra/Eq $T>($T l, $T r) -> Boolean
     # This checks if two items are not equal.
 
   # It is the opposite of [operator==] leading to the simple definition:
 
-  operator!=(l, r) = ~(l == r)
+  # /operator!=(l, r) = ~(l == r)
 
-    # Given this, creating an instance of Eq only requires defining equality and the != can be produced automatically.
+    Given this, creating an instance of Eq only requires defining equality and the != can be produced automatically.
 
   # ## Ordering
 
@@ -58,7 +58,7 @@ module Data/Algebra
 
   # There are a few nice properties about ordering.
 
-  every Ord isa POrd
+  every Ord isa /Data/Algebra/POrd
 
   # This means that something fully ordered can still take advantage of many of the same functions as partially ordered ones.
     It just usually has a more specific result.
@@ -74,16 +74,16 @@ module Data/Algebra
 
     Besides compare, there are also some operators to make using ordering easier.
 
-  operator<=<Ord $T>($T l, $T r) -> Boolean
-  operator>=<Ord $T>($T l, $T r) -> Boolean
-  operator<<Ord $T>($T l, $T r) -> Boolean
-  operator><Ord $T>($T l, $T r) -> Boolean
+  /operator<=<Ord $T>($T l, $T r) -> Boolean
+  /operator>=<Ord $T>($T l, $T r) -> Boolean
+  /operator<<Ord $T>($T l, $T r) -> Boolean
+  /operator><Ord $T>($T l, $T r) -> Boolean
 
-  every POrd isa Eq
+  every POrd isa /Data/Algebra/Eq
 
     # If something can be compared for order, it should also be comparable for equality by the following relationship:
 
-  # operator==<POrd $T>($T l, $T r) = compare(l=l, r=r) == Equal
+  # /operator==<POrd $T>($T l, $T r) = compare(l=l, r=r) == Equal
 
   # ### Ordering utility functions
 
@@ -100,9 +100,9 @@ module Data/Algebra
     # A semigroup is a type combined with an associative operation called [operator++].
       For example, integers with the addition operation are a semigroup.
 
-  every Semigroup isa Eq
+  every Semigroup isa /Data/Algebra/Eq
 
-  operator++<Semigroup $T>($T l, $T r) -> $T
+  /operator++<Semigroup $T>($T l, $T r) -> $T
 
   testSemigroupAssociative<Semigroup $T>($T a, $T b, $T c) =
     #test
@@ -116,7 +116,7 @@ module Data/Algebra
       The integers with addition form a [Monoid], and 0 is the value for [mempty].
       Another example is [String] where "" is the value for [mempty]
   
-  every Monoid isa Semigroup
+  every Monoid isa /Data/Algebra/Semigroup
 
   mempty<Monoid $T> -> $T
     # mempty is the "zero" or "empty" value that can be combined with [operator++] to result in the same operation
@@ -124,11 +124,11 @@ module Data/Algebra
   # We can test to verify that [mempty] works with both the left and right.
 
   #test
-    testRightMonoidIdentity<Monoid $T>($T t) =
+    testRightMonoidIdentity</Data/Algebra/Monoid $T>($T t) =
       #assert(test=(t ++ mempty) == t)
       0
 
-    testLeftMonoidIdentity<Monoid $T>($T t) =
+    testLeftMonoidIdentity</Data/Algebra/Monoid $T>($T t) =
       #assert(test=mempty ++ t == t)
       0
 
@@ -142,11 +142,11 @@ module Data/Algebra
       It is also called an Abelian Monoid
       Here, integers with addition are a [CommutativeMonoid], but [String]s are not.
 
-  every CommutativeMonoid isa Monoid
+  every CommutativeMonoid isa /Data/Algebra/Monoid
 
   # We can test to ensure that all [CommutativeMonoid]s satisfy the commutativity requirement.
 
-  testCommutativeMonoid<CommutativeMonoid $T>($T a, $T b) =
+  testCommutativeMonoid</Data/Algebra/CommutativeMonoid $T>($T a, $T b) =
     #test
     #assert(test=a ++ b == b ++ a)
     0
@@ -158,7 +158,7 @@ module Data/Algebra
       For integers with addition, negation with [operator~] would be the inverse.
       Something like [String]s would not have an inverse, so it wouldn't be a [Group].
 
-  every Group isa Monoid
+  every Group isa /Data/Algebra/Monoid
 
   inverse<Group $T>($T t) -> $T
 

@@ -30,11 +30,11 @@ import           Syntax.Types
 
 mkOp1 :: String -> PExpr -> PExpr
 mkOp1 opChars x = RawTupleApply emptyMetaN (emptyMetaN, RawValue emptyMetaN op) [RawTupleArgNamed "a" x]
-  where op = "operator" ++ opChars
+  where op = "/operator" ++ opChars
 
 mkOp2 :: String -> PExpr -> PExpr -> PExpr
 mkOp2 opChars x y = RawTupleApply emptyMetaN (emptyMetaN, RawValue emptyMetaN op) [RawTupleArgNamed "l" x, RawTupleArgNamed "r" y]
-  where op = "operator" ++ opChars
+  where op = "/operator" ++ opChars
 
 ops :: [[Operator Parser PExpr]]
 ops = [
@@ -207,7 +207,7 @@ pObjTreeVar :: Parser (TypeVarName, ParseMeta)
 pObjTreeVar = do
   -- TODO: Should support multiple class identifiers such as <Eq Ord $T>
   pos1 <- getSourcePos
-  maybeClass <- optional tidentifier
+  maybeClass <- optional ttypeidentifier
   var <- tvar
   pos2 <- getSourcePos
   let tp = maybe TopType (\n -> singletonType (PartialType (PTypeName n) H.empty H.empty H.empty PtArgExact)) maybeClass
@@ -245,9 +245,9 @@ pObjTreeInner basis = do
   let vars' = maybe H.empty H.fromList vars
   let args' = H.fromList $ fromMaybe [] args
   let objMeta = emptyMeta pos1 pos2
-  let obj = Object objMeta basis name vars' args' Nothing name
+  let obj = Object objMeta basis vars' args' Nothing name
   return $ case maybeCtx of
-    Just ctx -> Object (emptyMetaM "context" objMeta) basis "Context" H.empty (H.insert "value" (emptyMetaN, Just obj) $ H.fromList ctx) Nothing "Context"
+    Just ctx -> Object (emptyMetaM "context" objMeta) basis  H.empty (H.insert "value" (emptyMetaN, Just obj) $ H.fromList ctx) Nothing "/Context"
     Nothing -> obj
 
 objTreeJoinMethods :: PObject -> PObject -> PObject

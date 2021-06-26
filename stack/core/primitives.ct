@@ -11,59 +11,59 @@ module Data/Primitive
 
   class Boolean = True | False
 
-  every Boolean isa Eq
-  operator==(True l, True r) = True
-  operator==(True l, False r) = False
-  operator==(False l, True r) = False
-  operator==(False l, False r) = True
+  every Boolean isa /Data/Algebra/Eq
+  /operator==(True l, True r) = True
+  /operator==(True l, False r) = False
+  /operator==(False l, True r) = False
+  /operator==(False l, False r) = True
 
-  operator~(Boolean a) -> Boolean
-  operator~(True a) = False
-  operator~(False a) = True
+  /operator~(Boolean a) -> Boolean
+  /operator~(True a) = False
+  /operator~(False a) = True
 
-  operator&(Boolean l, Boolean r) -> Boolean
-  operator&(True l, True r) = True
-  operator&(Boolean l, False r) = False
-  operator&(False l, Boolean r) = False
+  /operator&(Boolean l, Boolean r) -> Boolean
+  /operator&(True l, True r) = True
+  /operator&(Boolean l, False r) = False
+  /operator&(False l, Boolean r) = False
 
-  operator|(Boolean l, Boolean r) -> Boolean
-  operator|(True l, Boolean r) = True
-  operator|(Boolean l, True r) = True
-  operator|(False l, False r) = False
+  /operator|(Boolean l, Boolean r) -> Boolean
+  /operator|(True l, Boolean r) = True
+  /operator|(Boolean l, True r) = True
+  /operator|(False l, False r) = False
 
-  operator^(Boolean l, Boolean r) -> Boolean
-  operator^(True l, True r) = False
-  operator^(True l, False r) = True
-  operator^(False l, True r) = True
-  operator^(False l, False r) = False
+  /operator^(Boolean l, Boolean r) -> Boolean
+  /operator^(True l, True r) = False
+  /operator^(True l, False r) = True
+  /operator^(False l, True r) = True
+  /operator^(False l, False r) = False
 
-  every Boolean isa Enum
+  every Boolean isa /Data/Enum
   # enum<Boolean> = [False, True]
 
 
   # ## Integers
 
   class Number = Integer | Float
-  every Number isa Eq
+  every Number isa /Data/Algebra/Eq
 
-  operator-(Integer a) -> Integer
+  /operator-(Integer a) -> Integer
 
-  operator-(Integer l, Integer r) -> Integer
-  operator+(Integer l, Integer r) -> Integer
-  operator*(Integer l, Integer r) -> Integer
+  /operator-(Integer l, Integer r) -> Integer
+  /operator+(Integer l, Integer r) -> Integer
+  /operator*(Integer l, Integer r) -> Integer
 
-  operator<=(Integer l, Integer r) -> Boolean
-  operator>=(Integer l, Integer r) -> Boolean
-  operator<(Integer l, Integer r) -> Boolean
-  operator>(Integer l, Integer r) -> Boolean
-  operator==(Integer l, Integer r) -> Boolean
-  operator!=(Integer l, Integer r) -> Boolean
+  /operator<=(Integer l, Integer r) -> Boolean
+  /operator>=(Integer l, Integer r) -> Boolean
+  /operator<(Integer l, Integer r) -> Boolean
+  /operator>(Integer l, Integer r) -> Boolean
+  /operator==(Integer l, Integer r) -> Boolean
+  /operator!=(Integer l, Integer r) -> Boolean
 
   # ### Commutative Group
 
-  every Integer isa CommutativeMonoid
-  every Integer isa Group
+  every Integer isa /Data/Algebra/CommutativeMonoid
+  every Integer isa /Data/Algebra/Group
 
-  mempty<Integer $T> = 0
-  mappend<Integer $T>($T l, $T r) = l + r
-  inverse<Integer $T>($T t) = -t
+  # mempty<Integer $T> = 0
+  # mappend<Integer $T>($T l, $T r) = l + r
+  # inverse<Integer $T>($T t) = -t

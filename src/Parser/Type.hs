@@ -179,7 +179,7 @@ pClassDefStatement = L.indentBlock scn p
         maybeVars <- optional $ angleBraces $ sepBy1 pTypeVar (symbol ",")
         let vars = maybe H.empty H.fromList maybeVars
         _ <- symbol "isa"
-        className <- tidentifier
+        className <- ttypeidentifier
         return ((typeName, vars), className)
       return (L.IndentMany Nothing (pack rawclass) childParser)
 
