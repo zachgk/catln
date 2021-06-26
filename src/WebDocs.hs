@@ -49,20 +49,20 @@ maybeJson (CRes notes r) = json $ Success r notes
 maybeJson (CErr notes)   = json (ResFail notes :: ResSuccess () CNote)
 
 filterByObj :: String -> TPrgm -> TPrgm
-filterByObj objName (objMap, (typeToClass, classToType), _) = (objMap', (typeToClass', classToType'), [])
+filterByObj objPath (objMap, (typeToClass, classToType), _) = (objMap', (typeToClass', classToType'), [])
   where
-    objMap' = filter (\(Object{objName=n}, _) -> objName == n) objMap
-    typeToClass' = H.filterWithKey (\n _ -> n == objName) typeToClass
+    objMap' = filter (\(Object{objPath=n}, _) -> ss objPath n) objMap
+    typeToClass' = H.filterWithKey (\n _ -> ss n objPath) typeToClass
     classToType' = H.filter (\(_, vars, types, _, _) -> any involvesType vars || any involvesType types) classToType
     involvesType (UnionType leafs) = any involvesPartial $ splitUnionType leafs
     involvesType _                 = False
-    involvesPartial PartialType{ptName, ptVars, ptProps, ptArgs} = ptName == PTypeName objName || any involvesType ptVars || any involvesType ptProps || any involvesType ptArgs
+    involvesPartial PartialType{ptName, ptVars, ptProps, ptArgs} = ptName == PTypeName objPath || any involvesType ptVars || any involvesType ptProps || any involvesType ptArgs
 
 filterByClass :: String -> TPrgm -> TPrgm
 filterByClass className (_, (_, classToType), _) = ([], (typeToClass', classToType'), [])
   where
     typeToClass' = H.empty
-    classToType' = H.filterWithKey (\n _ -> n == className) classToType
+    classToType' = H.filterWithKey (\n _ -> ss n className) classToType
 
 data WDProvider
   = LiveWDProvider Bool String
@@ -211,7 +211,7 @@ docApiBase provider = do
   get "/api/object/:objName" $ do
     objName <- param "objName"
     maybeTprgm <- liftAndCatchIO $ getTPrgmJoined provider
-    let filterTprgm = filterByObj objName <$> maybeTprgm
+    let filterTprgm = filterByObj  (T.unpack $ T.replace "|" "/" objName) <$> maybeTprgm
     maybeJson filterTprgm
 
   get "/api/class/:className" $ do

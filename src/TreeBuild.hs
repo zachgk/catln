@@ -57,8 +57,8 @@ buildTBEnv primEnv prgm@(objMap, classMap, _) = baseEnv
     baseEnv = TBEnv "" (H.union primEnv resEnv) H.empty prgm classMap
     resEnv = H.fromListWith (++) $ concatMap resFromArrows objMap
     resFromArrows (obj, arrows) = mapMaybe (resFromArrow obj) arrows
-    resFromArrow obj@Object{objM, objName} arrow@(Arrow _ _ aguard expr) = case expr of
-      Just _ -> Just (objName, [(objLeaf, aguard, \input -> ResEArrow input obj arrow) | objLeaf <- leafsFromMeta objM])
+    resFromArrow obj@Object{objM, objPath} arrow@(Arrow _ _ aguard expr) = case expr of
+      Just _ -> Just (objPath, [(objLeaf, aguard, \input -> ResEArrow input obj arrow) | objLeaf <- leafsFromMeta objM])
       Nothing -> Nothing
 
 buildExpr :: TBEnv -> ObjSrc -> TBExpr -> CRes ResArrowTree
@@ -72,7 +72,7 @@ buildExpr TBEnv{tbVals} _ (Value (Typed (UnionType prodTypes) pos) name) = case 
     [prodType] -> return $ case H.lookup prodType tbVals of
       Just val -> val
       Nothing  -> ResArrowTuple name H.empty
-buildExpr TBEnv{tbClassMap} (os, obj) (Arg (Typed (TypeVar (TVArg a)) _) name) = return $ ArgArrow (snd $ fromJust $ H.lookup a $ formArgMetaMapWithSrc tbClassMap obj os) name
+buildExpr TBEnv{tbClassMap} (os, obj) (Arg (Typed (TypeVar (TVArg a)) _) name) = return $ ArgArrow (snd $ fromJust $ suffixLookupInDict a $ formArgMetaMapWithSrc tbClassMap obj os) name
 buildExpr _ _ (Arg (Typed tp _) name) = return $ ArgArrow tp name
 buildExpr TBEnv{tbClassMap} _ (TupleApply (Typed tp pos) (Typed baseType _, baseExpr) argName argExpr) = case typesGetArg tbClassMap argName tp of
     Nothing -> CErr [MkCNote $ BuildTreeCErr pos $ printf "Found no types for tupleApply %s with type %s and expr %s" (show baseExpr) (show tp) (show argExpr)]
@@ -110,7 +110,6 @@ completeTreeSet TBEnv{tbClassMap} fullPartial = aux H.empty bottomType
     aux _ accType [] = CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Could not find arrows equaling input %s only found %s" (show fullType) (show accType)]
     aux accMap accType ((optType, optTree):opts) = do
       let accType' = intersectTypes tbClassMap fullType $ unionTypes tbClassMap accType (singletonType optType)
-
       -- next opt increases accumulation
       if not (isSubtypeOf tbClassMap accType' accType)
         -- Add to accumulation
@@ -154,7 +153,7 @@ groupArrows = aux ([], Nothing)
     aux (_, Just{}) _ ((_, ElseGuard, _):_) = CErr [MkCNote $ BuildTreeCErr Nothing "Multiple ElseGuards found"]
 
 findResArrows :: TBEnv -> PartialType -> Type -> CRes [ResBuildEnvItem]
-findResArrows TBEnv{tbName, tbResEnv, tbClassMap} srcType@PartialType{ptName=PTypeName srcName} destType = case H.lookup srcName tbResEnv of
+findResArrows TBEnv{tbName, tbResEnv, tbClassMap} srcType@PartialType{ptName=PTypeName srcName} destType = case suffixLookupInDict srcName tbResEnv of
   Just resArrowsWithName -> do
     let resArrows = filter (\(arrowType, _, _) -> not $ isBottomType $ intersectTypes tbClassMap (singletonType srcType) (singletonType arrowType)) resArrowsWithName
     -- TODO: Sort resArrows by priority order before trying
@@ -172,10 +171,10 @@ envLookup env obj input ee visitedArrows srcType destType = do
 buildImplicit :: TBEnv -> ObjSrc -> TBExpr -> Type -> Type -> CRes ResArrowTree
 buildImplicit _ _ expr srcType TopType = return $ ExprArrow expr srcType srcType
 buildImplicit _ obj _ TopType destType = error $ printf "Build implicit from top type to %s in %s" (show destType) (show obj)
-buildImplicit env objSrc@(_, Object{objVars}) input (TypeVar (TVVar varName)) destType = case H.lookup varName objVars of
+buildImplicit env objSrc@(_, Object{objVars}) input (TypeVar (TVVar varName)) destType = case suffixLookupInDict varName objVars of
   Just objVarM -> buildImplicit env objSrc input (getMetaType objVarM) destType
   Nothing -> error $ printf "buildImplicit unknown arg %s with obj %s" varName (show objSrc)
-buildImplicit env@TBEnv{tbClassMap} objSrc@(os, obj) input (TypeVar (TVArg argName)) destType = case H.lookup argName $ formArgMetaMapWithSrc tbClassMap obj os of
+buildImplicit env@TBEnv{tbClassMap} objSrc@(os, obj) input (TypeVar (TVArg argName)) destType = case suffixLookupInDict argName $ formArgMetaMapWithSrc tbClassMap obj os of
   Just (_, srcType) -> buildImplicit env objSrc input srcType destType
   Nothing -> error $ printf "buildImplicit unknown arg %s with obj %s" argName (show obj)
 buildImplicit env obj expr srcType@(UnionType srcTypeLeafs) destType = do
@@ -236,10 +235,10 @@ buildArrow env objPartial obj@Object{objVars} arrow@(Arrow (Typed am _) compAnno
   let env' = env{tbName = printf "arrow %s" (show obj)}
   let objSrc = (objPartial, obj)
   let am' = case am of
-        (TypeVar (TVVar v)) -> case H.lookup v objVars of
+        (TypeVar (TVVar v)) -> case suffixLookupInDict v objVars of
           Just m  -> getMetaType m
           Nothing -> error "Bad TVVar in makeBaseEnv"
-        (TypeVar (TVArg v)) -> case H.lookup v $ formArgMetaMap obj of
+        (TypeVar (TVArg v)) -> case suffixLookupInDict v $ formArgMetaMap obj of
           Just argMeta -> getMetaType argMeta
           Nothing      -> error "Bad TVArg in makeBaseEnv"
         _ -> am
@@ -253,6 +252,6 @@ buildArrow env objPartial obj@Object{objVars} arrow@(Arrow (Typed am _) compAnno
 buildRoot :: TBEnv -> TBExpr -> PartialType -> Type -> CRes ResArrowTree
 buildRoot env input src dest = do
   let env' = env{tbName = printf "root"}
-  let emptyObj = Object (Typed (singletonType src) Nothing) FunctionObj "EmptyObj" H.empty H.empty Nothing "EmptyObj"
+  let emptyObj = Object (Typed (singletonType src) Nothing) FunctionObj H.empty H.empty Nothing "EmptyObj"
   let objSrc = (src, emptyObj)
   resolveTree env' objSrc (ExprArrow input (getMetaType $ getExprMeta input) dest)

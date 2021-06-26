@@ -36,7 +36,7 @@ isSolved _                                 = False
 setScheme :: FEnv -> VarMeta -> Scheme -> String -> FEnv
 setScheme env p scheme msg = setDescriptor env p (checkScheme scheme) msg
   where msg' = printf "Scheme failed check at setScheme %s(point %s): upper bound is bottomType - " msg (show p)
-        -- checkScheme (TypeCheckResult _ (SType ub _ desc)) | isBottomType ub = error $ msg' ++ desc
+        checkScheme (TypeCheckResult _ (SType ub _ desc)) | isBottomType ub = error $ msg' ++ desc
         checkScheme (TypeCheckResult notes (SType ub _ desc)) | isBottomType ub = TypeCheckResE (GenTypeCheckError (getMetaPos p) (msg' ++ desc) : notes)
         checkScheme s = s
 

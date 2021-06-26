@@ -25,7 +25,6 @@ import           GHC.Generics        (Generic)
 
 import           CRes
 import           Data.Aeson          (ToJSON, toJSON)
-import qualified Data.HashSet        as S
 import           Data.Maybe
 import           Syntax
 import           Syntax.Prgm
@@ -222,8 +221,10 @@ getPnt :: VarMeta -> Pnt
 getPnt (VarMeta p _ _) = p
 
 fLookup :: FEnv -> Maybe VObject -> String -> TypeCheckResult EnvDef
-fLookup FEnv{feDefMap} obj k = case H.lookup k feDefMap of
-  Just v  -> return v
+fLookup FEnv{feDefMap} obj k = case suffixLookup k (H.keys feDefMap) of
+  Just key -> case suffixLookupInDict key feDefMap of
+    Just v  -> return v
+    Nothing -> TypeCheckResE [GenTypeCheckError Nothing $ printf "Failed to lookup %s in %s with keys %s" k (show obj) (show $ H.keys feDefMap)]
   Nothing -> TypeCheckResE [GenTypeCheckError Nothing $ printf "Failed to lookup %s in %s with keys %s" k (show obj) (show $ H.keys feDefMap)]
 
 addConstraints :: FEnv -> [Constraint] -> FEnv
@@ -254,14 +255,14 @@ verifyScheme classMap (VarMeta _ _ mobj) (TypeCheckResult _ (SType oldUb _ _)) (
   ]
   where
     verifyTypeVars venv (UnionType partialLeafs) = all (verifyTypeVarsPartial venv) $ splitUnionType partialLeafs
-    verifyTypeVars venv (TypeVar (TVVar v)) = S.member v venv
+    verifyTypeVars venv (TypeVar (TVVar v)) = isJust $ suffixLookup v venv
     verifyTypeVars _ _ = True
     verifyTypeVarsPartial venv PartialType{ptVars, ptArgs, ptProps} = all (verifyTypeVars venv) ptVars
-                                                                        && all (verifyTypeVars (H.keysSet ptVars)) ptArgs
-                                                                        && all (verifyTypeVars (H.keysSet ptVars)) ptProps
+                                                                        && all (verifyTypeVars (H.keys ptVars)) ptArgs
+                                                                        && all (verifyTypeVars (H.keys ptVars)) ptProps
 
-    mobjVars (Just Object{objVars}) = H.keysSet objVars
-    mobjVars Nothing                = S.empty
+    mobjVars (Just Object{objVars}) = H.keys objVars
+    mobjVars Nothing                = []
     verifySchemeUbLowers  = isSubtypeOfWithMaybeObj classMap mobj ub oldUb
     verifyCompacted = ub == compactType classMap ub
 verifyScheme _ _ _ _ = Nothing

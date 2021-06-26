@@ -104,7 +104,7 @@ fromExpr objArgs obj env1 (IArg m name) = do
   (m', env2) <- fromMeta env1 BUpper obj m ("Arg " ++ name)
   let varM = PreTyped (TypeVar $ TVArg name) (getMetaPos m)
   (varM', env3) <- fromMeta env2 BUpper obj varM $ "ArgVar " ++ name
-  case H.lookup name objArgs of
+  case suffixLookupInDict name objArgs of
     Nothing -> error $ printf "Could not find arg %s with objArgs %s and obj %s" name (show objArgs) (show obj)
     Just lookupArg -> return (IArg varM' name, addConstraints env3 [EqPoints m' lookupArg])
 fromExpr objArgs obj env1 (ITupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
@@ -147,29 +147,29 @@ fromGuard _ _ env ElseGuard = return (ElseGuard, env)
 fromGuard _ _ env NoGuard = return (NoGuard, env)
 
 fromArrow :: VObject -> FEnv -> PArrow -> TypeCheckResult (VArrow, FEnv)
-fromArrow obj@(Object _ _ objName objVars _ _ _) env1 (Arrow m annots aguard maybeExpr) = do
+fromArrow obj@(Object _ _ objVars _ _ objPath) env1 (Arrow m annots aguard maybeExpr) = do
   -- User entered type is not an upper bound, so start with TopType always. The true use of the user entered type is that the expression should have an arrow that has a reachesTree cut that is within the user entered type.
   let jobj = Just obj
-  (mUserReturn', env2) <- fromMeta env1 BUpper jobj m (printf "Specified result from %s" (show objName))
+  (mUserReturn', env2) <- fromMeta env1 BUpper jobj m (printf "Specified result from %s" (show objPath))
   let argMetaMap = formArgMetaMap obj
   (annots', env3) <- mapMWithFEnv env2 (fromExpr argMetaMap jobj) annots
   (aguard', env4) <- fromGuard argMetaMap jobj env3 aguard
   case maybeExpr of
     Just expr -> do
-      (m', env5) <- fromMeta env4 BUpper jobj (PreTyped TopType (labelPos "res" $ getMetaPos m)) $ printf "Arrow result from %s" (show objName)
+      (m', env5) <- fromMeta env4 BUpper jobj (PreTyped TopType (labelPos "res" $ getMetaPos m)) $ printf "Arrow result from %s" (show objPath)
       (vExpr, env6) <- fromExpr argMetaMap jobj env5 expr
       let env7 = case metaTypeVar m of
-            Just (TVVar typeVarName) -> case H.lookup typeVarName objVars of
+            Just (TVVar typeVarName) -> case suffixLookupInDict typeVarName objVars of
               Just varM -> addConstraints env6 [ArrowTo (getExprMeta vExpr) varM]
               Nothing -> error "unknown type fromArrow"
             Just TVArg{} -> error "Bad TVArg in fromArrow"
             Nothing -> addConstraints env6 [ArrowTo (getExprMeta vExpr) m', ArrowTo (getExprMeta vExpr) mUserReturn']
       let arrow' = Arrow m' annots' aguard' (Just vExpr)
-      let env8 = fAddVTypeGraph env7 objName (obj, arrow')
+      let env8 = fAddVTypeGraph env7 objPath (obj, arrow')
       return (arrow', env8)
     Nothing -> do
       let arrow' = Arrow mUserReturn' annots' aguard' Nothing
-      let env5 = fAddVTypeGraph env4 objName (obj, arrow')
+      let env5 = fAddVTypeGraph env4 objPath (obj, arrow')
       return (arrow', env5)
 
 fromObjectMap :: FEnv -> (VObject, [PArrow]) -> TypeCheckResult ((VObject, [VArrow]), FEnv)
@@ -192,7 +192,7 @@ addObjArg fakeObj objM prefix varMap env (n, (m, maybeSubObj)) = do
         Nothing -> BEq
   (m', env2) <- fromMeta env argBound (Just fakeObj) m prefix'
   let env3 = addConstraints env2 [PropEq (objM, n) m', BoundedByObjs m']
-  let env4 = case H.lookup n varMap of
+  let env4 = case suffixLookupInDict n varMap of
         Just varM -> addConstraints env3 [EqPoints m' varM]
         Nothing   -> env3
   case maybeSubObj of
@@ -212,17 +212,17 @@ clearMetaArgTypes (PreTyped (UnionType partials) pos) = PreTyped (UnionType $ jo
 clearMetaArgTypes p = p
 
 fromObject :: String -> Bool -> FEnv -> PObject -> TypeCheckResult (VObject, FEnv)
-fromObject prefix isObjArg env (Object m basis name vars args doc path) = do
-  let prefix' = prefix ++ "." ++ name
+fromObject prefix isObjArg env (Object m basis vars args doc path) = do
+  let prefix' = prefix ++ "." ++ path
   (m', env1) <- fromMeta env BUpper Nothing (clearMetaArgTypes m) prefix'
   (vars', env2) <- mapMWithFEnvMapWithKey env1 (fromObjVar m' prefix') vars
-  let fakeObjForArgs = Object m' basis name vars' H.empty doc path
+  let fakeObjForArgs = Object m' basis vars' H.empty doc path
   (args', env3) <- mapMWithFEnvMapWithKey env2 (addObjArg fakeObjForArgs m' prefix' vars') args
-  let obj' = Object m' basis name vars' args' doc path
-  (objValue, env4) <- fromMeta env3 BUpper (Just obj') (PreTyped (singletonType (PartialType (PTypeName name) H.empty H.empty H.empty PtArgExact)) (labelPos "objValue" $ getMetaPos m)) ("objValue" ++ name)
-  let env5 = fInsert env4 name (DefVar objValue)
+  let obj' = Object m' basis vars' args' doc path
+  (objValue, env4) <- fromMeta env3 BUpper (Just obj') (PreTyped (singletonType (PartialType (PTypeName path) H.empty H.empty H.empty PtArgExact)) (labelPos "objValue" $ getMetaPos m)) ("objValue" ++ path)
+  let env5 = fInsert env4 path (DefVar objValue)
   let env6 = addConstraints env5 [BoundedByObjs m' | isObjArg]
-  let env7 = addConstraints env6 [BoundedByKnown m' (singletonType (PartialType (PTypeName name) (fmap (const TopType) vars) H.empty (fmap (const TopType) args) PtArgExact)) | basis == FunctionObj || basis == PatternObj]
+  let env7 = addConstraints env6 [BoundedByKnown m' (singletonType (PartialType (PTypeName path) (fmap (const TopType) vars) H.empty (fmap (const TopType) args) PtArgExact)) | basis == FunctionObj || basis == PatternObj]
   return (obj', env7)
 
 -- Add all of the objects first for various expressions that call other top level functions
@@ -245,12 +245,12 @@ prepObjPrgm env1 pprgm@(objMap1, _, _) = do
   return ((pprgm, map fst objMap2), env2)
 
 addTypeGraphArrow :: TObject -> FEnv -> TArrow -> TypeCheckResult ((), FEnv)
-addTypeGraphArrow obj@Object{objName} env arr = return ((), fAddTTypeGraph env objName (obj, arr))
+addTypeGraphArrow obj@Object{objPath} env arr = return ((), fAddTTypeGraph env objPath (obj, arr))
 
 addTypeGraphObjects :: FEnv -> (TObject, [TArrow]) -> TypeCheckResult ((), FEnv)
-addTypeGraphObjects env (obj@Object{objName}, arrows) = do
-  let objValue = singletonType (PartialType (PTypeName objName) H.empty H.empty H.empty PtArgExact)
-  let env' = fInsert env objName (DefKnown objValue)
+addTypeGraphObjects env (obj@Object{objPath}, arrows) = do
+  let objValue = singletonType (PartialType (PTypeName objPath) H.empty H.empty H.empty PtArgExact)
+  let env' = fInsert env objPath (DefKnown objValue)
   (_, env'') <- mapMWithFEnv env' (addTypeGraphArrow obj) arrows
   return ((), env'')
 

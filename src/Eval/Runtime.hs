@@ -40,7 +40,7 @@ bool False = false
 liftIntOp :: TypeName -> (Integer -> Integer -> Integer) -> Op
 liftIntOp name f = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
-    name' = "operator" ++ name
+    name' = "/operator" ++ name
     srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("l", intType), ("r", intType)]) PtArgExact
     resType = intType
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "l" args, H.lookup "r" args) of
@@ -51,7 +51,7 @@ liftIntOp name f = (name', [(srcType, NoGuard, \input -> PrimArrow input resType
 liftCmpOp :: TypeName -> (Integer -> Integer -> Bool) -> Op
 liftCmpOp name f = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
-    name' = "operator" ++ name
+    name' = "/operator" ++ name
     srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("l", intType), ("r", intType)]) PtArgExact
     resType = boolType
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "l" args, H.lookup "r" args) of
@@ -62,7 +62,7 @@ liftCmpOp name f = (name', [(srcType, NoGuard, \input -> PrimArrow input resType
 rneg :: TypeName -> Op
 rneg name = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
-    name' = "operator" ++ name
+    name' = "/operator" ++ name
     srcType = PartialType (PTypeName name') H.empty H.empty (H.singleton "a" intType) PtArgExact
     resType = intType
     prim = EPrim srcType NoGuard (\args -> case H.lookup "a" args of
@@ -73,7 +73,7 @@ rneg name = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)]
 strEq :: Op
 strEq = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
-    name' = "operator=="
+    name' = "/operator=="
     srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("l", strType), ("r", strType)]) PtArgExact
     resType = boolType
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "l" args, H.lookup "r" args) of

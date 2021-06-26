@@ -135,7 +135,6 @@ data ObjectBasis = FunctionObj | TypeObj | PatternObj | MatchObj
 data Object m = Object {
   objM     :: m,
   objBasis :: ObjectBasis,
-  objName  :: TypeName,
   objVars  :: H.HashMap TypeVarName m,
   objArgs  :: H.HashMap ArgName (ObjArg m),
   objDoc   :: Maybe String,
@@ -176,7 +175,7 @@ instance Show e => Show (Guard e) where
 
 instance Show m => Show (Object m) where
   -- show (Object m basis name vars args) = printf "%s %s (%s) %s %s" (show basis) name (show m) maybeVarsString maybeArgsString
-  show (Object _ basis name vars args _ _) = printf "%s %s %s %s" (show basis) name maybeVarsString maybeArgsString
+  show (Object _ basis vars args _ path) = printf "%s %s %s %s" (show basis) path maybeVarsString maybeArgsString
     where
       showVar (varName, varVal) = printf "%s = %s" varName (show varVal)
       maybeVarsString :: String
@@ -244,7 +243,7 @@ type ArgMetaMap m = H.HashMap ArgName m
 formArgMetaMap :: Object m -> ArgMetaMap m
 formArgMetaMap obj@Object{objArgs=baseArgs} = H.union (aux obj) (fmap fst baseArgs)
   where
-    aux Object{objM, objName, objArgs} | H.null objArgs = H.singleton objName objM
+    aux Object{objM, objPath, objArgs} | H.null objArgs = H.singleton objPath objM
     aux Object{objArgs} = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg objArgs
       where
         unionCombine _ _ = error "Duplicate var matched"
@@ -259,9 +258,9 @@ mergeDoc _ _               = Nothing
 
 mergeClassMaps :: ClassMap -> ClassMap -> ClassMap
 mergeClassMaps classMap@(toClassA, toTypeA) (toClassB, toTypeB) = (H.unionWith S.union toClassA toClassB, H.unionWith mergeClasses toTypeA toTypeB)
-  where mergeClasses (sealedA, classVarsA, setA, docA, pathA) (sealedB, classVarsB, setB, docB, _) = if sealedA == sealedB
+  where mergeClasses (sealedA, classVarsA, setA, docA, pathA) (sealedB, classVarsB, setB, docB, _pathB) = if sealedA == sealedB
           then (sealedA, H.unionWith (unionTypes classMap) classVarsA classVarsB, setA ++ setB, mergeDoc docA docB, pathA)
-          else error "Added to sealed class definition"
+          else error $ printf "Added to sealed class definition %s %s" (show setA) (show setB)
 
 mergePrgm :: Prgm e m -> Prgm e m -> Prgm e m
 mergePrgm (objMap1, classMap1, annots1) (objMap2, classMap2, annots2) = (

@@ -37,7 +37,7 @@ type TypecheckTuplePrgm = (TPrgm, VPrgm, TraceConstrain)
 type TypecheckFileResult = H.HashMap String (GraphNodes TypecheckTuplePrgm String)
 
 runConstraintsLimit :: Integer
-runConstraintsLimit = 100
+runConstraintsLimit = 10
 
 typecheckPrgms :: [PPrgm] -> [TPrgm] -> TypeCheckResult [TypecheckTuplePrgm]
 typecheckPrgms pprgms typechecked = do

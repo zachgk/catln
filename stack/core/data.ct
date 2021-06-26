@@ -12,9 +12,9 @@ module Data
 
     # A [String] is a list of characters.
 
-  every String isa Eq
+  every String isa /Data/Algebra/Eq
 
-  operator==(String l, String r) -> Boolean
+  /operator==(String l, String r) -> Boolean
 
   String.toString -> String = this
   Integer.toString -> String
@@ -38,7 +38,7 @@ module Data
     # [Option] defines a type that might have a value or [None].
       It can be used to handle operations that are uncertain if they can produce a response.
 
-  every Option<$T> isa Functor
+  every Option<$T> isa /Data/Functor
   # None.fmap(fn) = None
   # $T.fmap(fn($T)) = fn(this)
 
@@ -51,7 +51,7 @@ module Data
     # The simplest kind of list can be created by prepending.
       A [ConsList] defines a list either by prepending to a list or with an empty list.
 
-  operator::<$T>($T l, ConsList<$T> r) = Cons(head=l, tail=r)
+  # /operator::<$T>($T l, ConsList<$T> r) = Cons(head=l, tail=r)
     # [operator::] is a utility operator to prepend an element onto a [List].
 
   # #### [length]
@@ -61,7 +61,7 @@ module Data
   Nil.length = 0
   Cons(head, tail).length = 1 + tail.length
 
-  every ConsList<$T> isa Functor
+  every ConsList<$T> isa /Data/Functor
   # Nil.fmap(fn) = Nil
   # Cons(head, tail).fmap(fn) = Cons(head=fn(head), tail=tail.fmap(fn))
 

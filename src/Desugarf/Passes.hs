@@ -24,6 +24,11 @@ import           Syntax.Prgm
 import           Syntax.Types
 import           Text.Printf
 
+member :: String -> [String ] -> Bool  
+member x arr = case suffixLookup x arr of
+  Just _ -> True 
+  Nothing -> False 
+
 -- replaces uses of PTypeName with PClassName where it actually contains a class
 -- e.g. PTypeName Boolean ==> PClassName Boolean
 -- uses the mapMeta for objMap and annots, but must map the classMap manually
@@ -40,7 +45,7 @@ typeNameToClass (_, (_, fullPrgmClassToTypes), _) (objMap, classMap@(typeToClass
     mapType (UnionType partials) = unionAllTypes classMap $ map mapPartial $ splitUnionType partials
       where
         mapPartial (PartialType (PTypeName name) partialVars partialProps partialArgs partialArgMode) = singletonType (PartialType name' (fmap mapType partialVars) (fmap mapType partialProps) (fmap mapType partialArgs) partialArgMode)
-          where name' = if H.member name fullPrgmClassToTypes
+          where name' = if member name (H.keys fullPrgmClassToTypes) --problem here todo pradeep
                   -- is a class, replace with class type
                   then PClassName name
 
@@ -56,7 +61,7 @@ expandDataReferences :: DesPrgm -> DesPrgm -> DesPrgm
 expandDataReferences (fullPrgmObjMap, _, _) (objMap, classMap@(typeToClass, classToTypes), annots) = mapMetaPrgm aux (objMap, (typeToClass, classToTypes'), annots)
   where
     classToTypes' = fmap (\(s, vs, ts, doc, path) -> (s, fmap mapType vs, fmap mapType ts, doc, path)) classToTypes
-    objExpansions = H.fromList $ concatMap (\(obj@Object{objBasis, objName}, _) -> ([(objName, obj) | objBasis == TypeObj])) fullPrgmObjMap
+    objExpansions = H.fromList $ concatMap (\(obj@Object{objBasis, objPath}, _) -> ([(objPath, obj) | objBasis == TypeObj])) fullPrgmObjMap
     aux metaType inM@(PreTyped t p) = case metaType of
       ExprMeta   -> inM
       ObjMeta    -> inM
@@ -69,7 +74,9 @@ expandDataReferences (fullPrgmObjMap, _, _) (objMap, classMap@(typeToClass, clas
     mapType (TypeVar TVArg{}) = error "Invalid arg type"
     mapType (UnionType partials) = unionAllTypes classMap $ map mapPartial $ splitUnionType partials
       where
-        mapPartial PartialType{ptName=PTypeName name} = case H.lookup name objExpansions of
-          Just Object{objM} -> getMetaType objM
-          Nothing -> error $ printf "Data not found in expandDataReferences for %s with objExpansions %s" name (show objMap)
+        mapPartial PartialType{ptName=PTypeName name} = case suffixLookup name (H.keys objExpansions) of
+          Just fname -> case H.lookup fname objExpansions of
+            Just Object{objM} -> getMetaType objM
+            Nothing -> error $ printf "Data not found in expandDataReferences for %s with objExpansions %s" name (show $ H.keys objExpansions)
+          Nothing -> error $ printf "Data not found in expandDataReferences for %s with objExpansions %s" name (show $ H.keys objExpansions)
         mapPartial partial@PartialType{ptName=PClassName{}} = singletonType partial
