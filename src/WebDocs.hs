@@ -178,10 +178,10 @@ docApiBase provider = do
   get "/api/page" $ do
     prgmName <- param "prgmName"
     maybeRawPrgms <- liftAndCatchIO $ getRawPrgm provider
-    let maybeRawPrgms' = (\(_, nodeFromVertex, vertexFromKey) -> nodeFromVertex $ fromJust $ vertexFromKey prgmName) <$> maybeRawPrgms
+    let maybeRawPrgms' = fromJust . graphLookup prgmName <$> maybeRawPrgms
 
     maybeTPrgms <- liftAndCatchIO $ getTPrgm provider
-    let maybeTPrgms' = (\(_, nodeFromVertex, vertexFromKey) -> nodeFromVertex $ fromJust $ vertexFromKey prgmName) <$> maybeTPrgms
+    let maybeTPrgms' = fromJust . graphLookup prgmName <$> maybeTPrgms
 
     annots <- liftAndCatchIO $ getEvalAnnots provider prgmName
     maybeJson $ do
@@ -197,11 +197,10 @@ docApiBase provider = do
   get "/api/constrain" $ do
     prgmName <- param "prgmName"
     maybeTprgmWithTraceGraph <- liftAndCatchIO $ getTPrgmWithTrace provider
-    let maybeTprgmWithTrace = maybeTprgmWithTraceGraph >>= \(_, prgmFromVertex, vertexFromName) -> do
-          vertex <- case vertexFromName prgmName of
-            Just v -> return v
+    let maybeTprgmWithTrace = maybeTprgmWithTraceGraph >>= \graphData -> do
+          case graphLookup prgmName graphData of
+            Just v -> return $ fst3 v
             Nothing -> CErr [MkCNote $ GenCErr Nothing "Invalid file to constrain"]
-          return $ fst3 $ prgmFromVertex vertex
     maybeJson maybeTprgmWithTrace
 
   get "/api/typecheck" $ do

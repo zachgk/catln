@@ -24,10 +24,10 @@ import           Syntax.Prgm
 import           Syntax.Types
 import           Text.Printf
 
-member :: String -> [String ] -> Bool  
+member :: String -> [String ] -> Bool
 member x arr = case suffixLookup x arr of
-  Just _ -> True 
-  Nothing -> False 
+  Just _  -> True
+  Nothing -> False
 
 -- replaces uses of PTypeName with PClassName where it actually contains a class
 -- e.g. PTypeName Boolean ==> PClassName Boolean

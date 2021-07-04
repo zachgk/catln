@@ -48,6 +48,9 @@ graphToNodes (g, nodeFromVertex, _) = map nodeFromVertex $ vertices g
 fmapGraph :: (Ord key) => (node1 -> node2) -> GraphData node1 key -> GraphData node2 key
 fmapGraph f = graphFromEdges . mapFst3 f . graphToNodes
 
+graphLookup :: (Ord key) => key -> GraphData node key -> Maybe node
+graphLookup k (_, nodeFromVertex, vertexFromKey) = fst3 . nodeFromVertex <$> vertexFromKey k
+
 unionsWith :: (Ord k, Hashable k) => (a->a->a) -> [H.HashMap k a] -> H.HashMap k a
 unionsWith f = foldl (H.unionWith f) H.empty
 

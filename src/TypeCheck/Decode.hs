@@ -50,10 +50,10 @@ toMeta env@FEnv{feClassMap} m@(VarMeta _ (PreTyped pt pos) _) _ = case pointUb e
   TypeCheckResE notes -> do
     TypeCheckResult notes (Typed bottomType pos)
 
-member :: String -> [String ] -> Bool  
+member :: String -> [String ] -> Bool
 member x arr = case suffixLookup x arr of
-  Just _ -> True 
-  Nothing -> False 
+  Just _  -> True
+  Nothing -> False
 
 toExpr :: FEnv -> VExpr -> TypeCheckResult TExpr
 toExpr env (ICExpr m c) = do
