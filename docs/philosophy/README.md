@@ -6,8 +6,8 @@ Here are a number of the core ideas and directives that drive the project. Many 
 
 - **[basics](basics.md)** - Discusses the basic elements within the type system.
 - **[typeTheory](typeTheory.md)** - Introduction to the ideas behind the type theory.
+- **[choice](choice.md)** - The ability to write code that abstracts over lower level choices and design decisions and express information joining levels of abstraction.
 - [metaprogramming](metaprogramming.md) - Discusses support for meta programming.
-    - [choice](choice.md) - The ability to write code that abstracts over choices such as what sorting algorithm, approximation algorithm, or data type to use.
     - [macros](macros.md) - For a strongly typed language, you must either support unsafe features, require duplicate code, or support macros. This describes the macro usage within the language.
     - [Language Based Compilation](languageCompilation.md) - Move logic from the compiler to the language and library for greater capabilities, faster upgrades, more customization, and ease of use.
     - [compilerErrorStatement](compilerErrorStatement.md) - Declare error messages from within function definitions themselves.
