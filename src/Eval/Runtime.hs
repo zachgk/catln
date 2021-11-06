@@ -30,8 +30,8 @@ import           TreeBuild
 type Op = (TypeName, [(PartialType, Guard (Expr Typed), ResBuildEnvFunction)])
 
 true, false :: Val
-true = TupleVal "True" H.empty
-false = TupleVal "False" H.empty
+true = TupleVal "/Data/Primitive/True" H.empty
+false = TupleVal "/Data/Primitive/False" H.empty
 
 bool :: Bool -> Val
 bool True  = true
@@ -84,7 +84,7 @@ strEq = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
 intToString :: Op
 intToString = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
-    name' = "toString"
+    name' = "/Data/toString"
     srcType = PartialType (PTypeName name') H.empty H.empty (H.singleton "this" intType) PtArgExact
     resType = strType
     prim = EPrim srcType NoGuard (\args -> case H.lookup "this" args of
@@ -96,7 +96,7 @@ intToString = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim
 ioExit :: Op
 ioExit = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
-    name' = "exit"
+    name' = "/Catln/exit"
     srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("this", ioType), ("val", intType)]) PtArgExact
     resType = ioType
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "this" args, H.lookup "val" args) of
@@ -107,7 +107,7 @@ ioExit = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
 println :: Op
 println = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
-    name' = "println"
+    name' = "/Catln/println"
     srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("this", ioType), ("msg", strType)]) PtArgExact
     resType = ioType
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "this" args, H.lookup "msg" args) of
@@ -118,14 +118,14 @@ println = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
 llvm :: Op
 llvm = (name', [(srcType, NoGuard, aux)])
   where
-    name' = "llvm"
+    name' = "/Catln/llvm"
     srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("c", TopType)]) PtArgExact
     aux a = MacroArrow a (singletonType resultLeaf) (MacroFunction macroBuild)
     macroBuild input MacroData{mdTbEnv, mdObj, mdObjSrcType} = do
       input' <- resolveTree mdTbEnv (mdObjSrcType, mdObj) input
       case input' of
         (ResEArrow _ _ (Arrow _ _ _ (Just expr))) -> case expr of
-          (TupleApply _ (_, Value _ "llvm") "c" (Value _ functionToCodegen)) -> buildName functionToCodegen
+          (TupleApply _ (_, Value _ "/Catln/llvm") "c" (Value _ functionToCodegen)) -> buildName functionToCodegen
           _ -> error $ printf "Unknown expr to llvm macro: %s" (show expr)
         (ResArrowTupleApply _ "c" (ResArrowTuple functionToCodegen _)) -> buildName functionToCodegen
         _ -> error $ printf "Unknown input to llvm macro: %s" (show input')
@@ -133,7 +133,7 @@ llvm = (name', [(srcType, NoGuard, aux)])
         buildName functionToCodegen = do
           let TBEnv{tbPrgm} = mdTbEnv
           let codegenSrcTypeInner = singletonType $ PartialType (PTypeName functionToCodegen) H.empty H.empty H.empty PtArgExact
-          let codegenSrcType = PartialType (PTypeName "Context") H.empty H.empty (H.fromList [("value", codegenSrcTypeInner), ("io", ioType)]) PtArgExact
+          let codegenSrcType = PartialType (PTypeName "/Catln/Context") H.empty H.empty (H.fromList [("value", codegenSrcTypeInner), ("io", ioType)]) PtArgExact
           return $ ConstantArrow $ LLVMVal $ codegenPrgm (eVal functionToCodegen) codegenSrcType ioType tbPrgm
 
 primEnv :: ResBuildEnv

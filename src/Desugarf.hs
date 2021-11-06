@@ -50,6 +50,7 @@ scopeSubDeclFunNamesInS prefix replaceNames name = name'
 scopeSubDeclFunNamesInPartialName :: TypeName -> S.HashSet TypeName -> PartialName -> PartialName
 scopeSubDeclFunNamesInPartialName prefix replaceNames (PTypeName name) = PTypeName $ scopeSubDeclFunNamesInS prefix replaceNames name
 scopeSubDeclFunNamesInPartialName prefix replaceNames (PClassName name) = PClassName $ scopeSubDeclFunNamesInS prefix replaceNames name
+scopeSubDeclFunNamesInPartialName prefix replaceNames (PRelativeName name) = PRelativeName $ scopeSubDeclFunNamesInS prefix replaceNames name
 
 scopeSubDeclFunNamesInExpr :: TypeName -> S.HashSet TypeName -> PSExpr -> PSExpr
 scopeSubDeclFunNamesInExpr _ _ e@PSCExpr{} = e
@@ -186,8 +187,8 @@ semiDesExpr obj@Object{objVars} r@(RawCase m e ((Pattern firstObj@Object{objM=fm
     (subRE, restExpr') = semiDesExpr obj (RawCase m e restCases)
     (subE, e') = semiDesExpr obj e
     expr' = PSTupleApply m (emptyMetaM "app" m, PSValue (emptyMetaE "val" e) condName) (Just argName) e'
-semiDesExpr obj (RawList m []) = semiDesExpr obj (RawValue m "Nil")
-semiDesExpr obj (RawList m (l:ls)) = semiDesExpr obj (RawTupleApply (emptyMetaM "listApp" (getExprMeta l)) (emptyMetaM "listBase" (getExprMeta l), RawValue m "Cons") [RawTupleArgNamed "head" l, RawTupleArgNamed "tail" (RawList m ls)])
+semiDesExpr obj (RawList m []) = semiDesExpr obj (RawValue m "/Data/Nil")
+semiDesExpr obj (RawList m (l:ls)) = semiDesExpr obj (RawTupleApply (emptyMetaM "listApp" (getExprMeta l)) (emptyMetaM "listBase" (getExprMeta l), RawValue m "/Data/Cons") [RawTupleArgNamed "head" l, RawTupleArgNamed "tail" (RawList m ls)])
 
 
 semiDesGuard :: PObject -> PGuard -> ([PSemiDecl], PSGuard)
@@ -197,9 +198,15 @@ semiDesGuard _ ElseGuard = ([], ElseGuard)
 semiDesGuard _ NoGuard = ([], NoGuard)
 
 declToObjArrow :: StatementEnv -> PSemiDecl -> (DesObject, [DesArrow])
-declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl (DeclLHS arrM (Pattern object@Object{objPath} guard)) annots expr) = (object', [arrow])
+declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl (DeclLHS arrM (Pattern object@Object{objPath} guard)) annots expr) = (object'', [arrow])
   where
-    object' = object{objPath  = getPath inheritPath objPath}
+    -- Inherit the path in main object name. If main is a context, also inherit in the context function as well
+    updateObjPath o@Object{objPath=originalPath} = o{objPath = getPath inheritPath originalPath}
+    object' = updateObjPath object
+    object'' = case objPath of
+      "/Context" -> object{objArgs=H.adjust (\(m, Just o) -> (m, Just $ updateObjPath o)) "value" $ objArgs object}
+      _ -> object'
+
     argMetaMap = formArgMetaMap object'
     annots' = map (desExpr argMetaMap) annots
     arrow = Arrow arrM (annots' ++ inheritAnnots) (desGuard argMetaMap guard) (fmap (desExpr argMetaMap) expr)
@@ -216,7 +223,7 @@ getPath inheritPath name = if "/" `isPrefixOf` name then
 typeDefMetaToObj :: String -> H.HashMap TypeVarName Type -> ParseMeta -> Maybe PObject
 typeDefMetaToObj _ _ (PreTyped TypeVar{} _) = Nothing
 typeDefMetaToObj inheritPath varReplaceMap (PreTyped (UnionType partials) pos) = case splitUnionType partials of
-  [partial@(PartialType (PTypeName partialName) partialVars _ partialArgs _)] -> Just $ Object m' TypeObj (fmap toMeta partialVars') (fmap (\arg -> (PreTyped arg Nothing, Nothing)) partialArgs) Nothing (getPath inheritPath partialName)
+  [partial@(PartialType (PRelativeName partialName) partialVars _ partialArgs _)] -> Just $ Object m' TypeObj (fmap toMeta partialVars') (fmap (\arg -> (PreTyped arg Nothing, Nothing)) partialArgs) Nothing (getPath inheritPath partialName)
     where
       ptName' = PTypeName $ getPath inheritPath partialName
       partialVars' = fmap (substituteVarsWithVarEnv varReplaceMap) partialVars
@@ -256,7 +263,7 @@ desClassDef (inheritPath, _) sealed ((_typeName, typeVars), className) subStatem
     classMap = (
         H.singleton path' (S.singleton className),
         H.singleton className
-        (sealed, H.empty, [singletonType (PartialType (PTypeName path') typeVars H.empty H.empty PtArgExact)], desObjDocComment subStatements, path')
+        (sealed, H.empty, [singletonType (PartialType (PRelativeName path') typeVars H.empty H.empty PtArgExact)], desObjDocComment subStatements, path')
       )
 
 emptyClassMap :: ClassMap
@@ -290,9 +297,9 @@ finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm, prgmName, impor
     importTree = reachable desPrgmGraph vertex
     fullPrgm = mergePrgms $ map (fst3 . nodeFromVertex) importTree
 
-    -- Run typeNameToClass pass
-    prgm' = typeNameToClass fullPrgm prgm
-    fullPrgm' = typeNameToClass fullPrgm fullPrgm
+    -- Run resolveRelativeNames pass
+    prgm' = resolveRelativeNames fullPrgm prgm
+    fullPrgm' = resolveRelativeNames fullPrgm fullPrgm
 
     -- Run expandDataReferences pass
     prgm'' = expandDataReferences fullPrgm' prgm'

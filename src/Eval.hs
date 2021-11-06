@@ -36,28 +36,31 @@ import           Text.Printf
 import           TreeBuild
 import           Utils
 
+-- | 'EvalMode' contains how to evaluate the function and the 'PTypeName' to eval
 data EvalMode
-  = EvalRunWithContext -- ^ Run f{IO io} -> IO
-  | EvalRun  -- ^ Run f -> Show
-  | EvalBuildWithContext -- ^ Build f{IO io} -> CatlnResult
-  | EvalBuild -- ^ Build f -> CatlnResult
+  = EvalRunWithContext String -- ^ Run f{IO io} -> IO
+  | EvalRun String -- ^ Run f -> Show
+  | EvalBuildWithContext String -- ^ Build f{IO io} -> CatlnResult
+  | EvalBuild String -- ^ Build f -> CatlnResult
   | NoEval -- ^ Can't run or build
-  deriving Eq
+  deriving (Eq, Show)
 
 evalRunnable :: EvalMode -> Bool
-evalRunnable EvalRunWithContext = True
-evalRunnable EvalRun            = True
-evalRunnable _                  = False
+evalRunnable EvalRunWithContext{} = True
+evalRunnable EvalRun{}            = True
+evalRunnable _                    = False
 
 evalBuildable :: EvalMode -> Bool
-evalBuildable EvalRunWithContext   = True
-evalBuildable EvalBuildWithContext = True
-evalBuildable EvalBuild            = True
-evalBuildable _                    = False
+evalBuildable EvalRunWithContext{}   = True
+evalBuildable EvalBuildWithContext{} = True
+evalBuildable EvalBuild{}            = True
+evalBuildable _                      = False
 
 -- | Checks if a function is defined (not declared) and finds the 'EvalMode' of the function.
 -- It will look through all of the objects to see if they match the function name or are Context(value=function name).
 -- Then, those found functions can be checked for run/build based on whether the return type is a CatlnResult.
+-- It also will pass the function name back through EvalMode in order to convert 'PRelativeName' into the matching 'PTypeName'
+-- TODO The use of listToMaybe will secretly discard if multiple evalTargetModes or function names are found. Instead, an error should be thrown
 evalTargetMode :: String -> String -> EPrgmGraphData -> EvalMode
 evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe $ mapMaybe objArrowsContains objMap
   where
@@ -65,28 +68,28 @@ evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe 
     objArrowsContains (_, arrows) | not (any arrowDefined arrows) = Nothing
     objArrowsContains (Object{objArgs, objPath}, Arrow arrM _ _ _:_) = case objPath of
       "/Context" -> case H.lookup "value" objArgs of
-        Just (_, Just Object{objPath=valObjName}) -> if ss valObjName function
+        Just (_, Just Object{objPath=valObjName}) -> if relativeNameMatches function valObjName
           then Just $ if isBuildable (getMetaType arrM)
-            then EvalBuildWithContext
-            else EvalRunWithContext
+            then EvalBuildWithContext valObjName
+            else EvalRunWithContext valObjName
 
           else Nothing
         _ -> Nothing
-      _ | ss objPath function -> if isBuildable (getMetaType arrM)
-          then Just EvalBuild
-          else Just EvalRun
+      _ | relativeNameMatches function objPath -> if isBuildable (getMetaType arrM)
+          then Just $ EvalBuild objPath
+          else Just $ EvalRun objPath
       _ -> Nothing
     objArrowsContains _ = Nothing
     isBuildable tp = not $ isBottomType $ intersectTypes classMap tp resultType
     arrowDefined (Arrow _ _ _ maybeExpr) = isJust maybeExpr
 
 evalCompAnnot :: Env -> Val -> CRes Env
-evalCompAnnot env (TupleVal "#assert" args) = case (H.lookup "test" args, H.lookup "msg" args) of
+evalCompAnnot env (TupleVal "/Catln/#assert" args) = case (H.lookup "test" args, H.lookup "msg" args) of
   (Just b, Just (StrVal _)) | b == true -> return env
   (Just b, Just (StrVal msg)) | b == false -> CErr [MkCNote $ AssertCErr msg]
   (Just b, Nothing) | b == true -> return env
   (Just b, Nothing) | b == false -> CErr [MkCNote $ AssertCErr "Failed assertion"]
-  _ -> evalError env "Invalid assertion"
+  _ -> evalError env $ printf "Invalid assertion with unexpected args %s" (show args)
 evalCompAnnot env (TupleVal name _) = evalError env $ printf "Unknown compiler annotation %s" name
 evalCompAnnot env _ = evalError env "Eval: Invalid compiler annotation type"
 
@@ -184,13 +187,13 @@ evalRun :: String -> String -> EPrgmGraphData -> CRes (IO (Integer, EvalResult))
 evalRun function prgmName prgmGraphData = do
   let prgm = prgmFromGraphData prgmName prgmGraphData
   input <-  case evalTargetMode function prgmName prgmGraphData of
-        EvalRunWithContext ->
+        EvalRunWithContext function' ->
           -- Case for eval Context(value=main, io=IO)
 
-          return $ eApply (eApply (eVal "/Context") "value" (eVal function)) "io" ioArg
-        EvalRun ->
+          return $ eApply (eApply (eVal "/Context") "value" (eVal function')) "io" ioArg
+        EvalRun function' ->
           -- Case for eval main
-          return $ eVal function
+          return $ eVal function'
         _ -> CErr [MkCNote $ GenCErr Nothing $ printf "Eval could not find a function %s to run" (show function)]
   let src = getExprPartialType input
   let dest = ioType
@@ -206,25 +209,25 @@ evalBuild function prgmName prgmGraphData = do
   let prgm = prgmFromGraphData prgmName prgmGraphData
 
   input <-  case evalTargetMode function prgmName prgmGraphData of
-        EvalRunWithContext ->
+        EvalRunWithContext function' ->
           -- Case for eval llvm(c=Context(value=main, io=IO))
-          return $ eApply (eVal "llvm") "c" (eVal function)
-        EvalBuildWithContext ->
+          return $ eApply (eVal "/Catln/llvm") "c" (eVal function')
+        EvalBuildWithContext function' ->
           -- Case for buildable Context(value=main, io=IO)
-          return $ eApply (eApply (eVal "/Context") "value" (eVal function)) "io" ioArg
-        EvalBuild ->
+          return $ eApply (eApply (eVal "/Context") "value" (eVal function')) "io" ioArg
+        EvalBuild function' ->
           -- Case for buildable main
-          return $ eVal function
-        _ -> CErr [MkCNote $ GenCErr Nothing $ printf "Eval could not find a function %s to build" (show function)]
+          return $ eVal function'
+        unexpectedEvalMode -> CErr [MkCNote $ GenCErr Nothing $ printf "Eval could not find a function %s to build with unexpected eval mode %s" (show function) (show unexpectedEvalMode)]
   let src = getExprPartialType input
   let dest = resultType
   (initTree, env) <- evalBuildPrgm input src dest prgm
   (res, env') <- eval env initTree
   case res of
-    val@(TupleVal "CatlnResult" args) -> case (H.lookup "name" args, H.lookup "contents" args) of
+    val@(TupleVal "/Catln/CatlnResult" args) -> case (H.lookup "name" args, H.lookup "contents" args) of
       (Just (StrVal _), Just (StrVal _)) -> return $ return (val, evalResult env')
-      _ -> CErr [MkCNote $ GenCErr Nothing "Eval main returned a CatlnResult with bad args"]
+      _ -> CErr [MkCNote $ GenCErr Nothing $ printf "Eval %s returned a /Catln/CatlnResult with bad args" function]
     (LLVMVal toCodegen) -> return $ do
       llvmStr <- codegenExInit toCodegen
-      return (TupleVal "CatlnResult" (H.fromList [("name", StrVal "out.ll"), ("contents", StrVal llvmStr)]), evalResult env')
-    _ -> CErr [MkCNote $ GenCErr Nothing "Eval main did not return a CatlnResult"]
+      return (TupleVal "/Catln/CatlnResult" (H.fromList [("name", StrVal "out.ll"), ("contents", StrVal llvmStr)]), evalResult env')
+    val -> CErr [MkCNote $ GenCErr Nothing $ printf "Eval %s did not return a /Catln/CatlnResult. Instead it returned %s" function (show val)]

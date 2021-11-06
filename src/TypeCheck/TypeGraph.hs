@@ -110,7 +110,7 @@ inferArgFromPartial FEnv{feVTypeGraph, feTTypeGraph, feClassMap} partial@Partial
       then UnionType $ joinUnionType $ map addArg $ S.toList $ S.difference (H.keysSet objArgs) (H.keysSet ptArgs)
       else bottomType
     addArg arg = partial{ptArgs=H.insertWith (unionTypes feClassMap) arg TopType ptArgs}
-inferArgFromPartial _ PartialType{ptName=PClassName{}} = bottomType
+inferArgFromPartial _ _ = bottomType
 
 isTypeVar :: Type -> Bool
 isTypeVar TypeVar{} = True
@@ -131,6 +131,14 @@ unionReachesTree classMap (ReachesTree children) = do
     ([onlyVar], []) -> onlyVar
     (_, sums)       -> unionAllTypes classMap sums
 unionReachesTree classMap (ReachesLeaf leafs) = unionAllTypes classMap leafs
+
+joinReachesTrees :: ReachesTree -> ReachesTree -> ReachesTree
+joinReachesTrees (ReachesTree a) (ReachesTree b) = ReachesTree $ H.unionWith joinReachesTrees a b
+joinReachesTrees (ReachesLeaf a) (ReachesLeaf b) = ReachesLeaf (a ++ b)
+joinReachesTrees _ _ = error "joinReachesTrees for mixed tree and leaf not yet defined"
+
+joinAllReachesTrees :: Foldable f => f ReachesTree -> ReachesTree
+joinAllReachesTrees = foldr1 joinReachesTrees
 
 isSubtypePartialOfWithMaybeObj :: (Meta m) => ClassMap -> Maybe (Object m) -> PartialType -> Type -> Bool
 isSubtypePartialOfWithMaybeObj classMap (Just obj) = isSubtypePartialOfWithObj classMap obj
@@ -175,6 +183,12 @@ reachesPartial env@FEnv{feVTypeGraph, feTTypeGraph, feClassMap} partial@PartialT
         then return $ Just $ unionAllTypes feClassMap [arrowDestType True feClassMap potentialSrcPartial obj arr | potentialSrcPartial <- splitUnionType potSrcLeafs]
         else return Nothing
 reachesPartial env@FEnv{feClassMap} partial@PartialType{ptName=PClassName{}} = reaches env (expandClassPartial feClassMap partial)
+reachesPartial env@FEnv{feClassMap, feUnionAllObjs} partial@PartialType{ptName=PRelativeName{}} = do
+  reachesAsClass <- reaches env (expandClassPartial feClassMap partial)
+  SType (UnionType allObjsUb) _ _ <- descriptor env feUnionAllObjs
+  reachesAsType <- mapM (reachesPartial env . (\name -> partial{ptName=name})) (H.keys allObjsUb)
+  return $ joinReachesTrees reachesAsClass (joinAllReachesTrees reachesAsType)
+
 
 reaches :: FEnv -> Type -> TypeCheckResult ReachesTree
 reaches _     TopType            = return $ ReachesLeaf [TopType]

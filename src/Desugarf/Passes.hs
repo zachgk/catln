@@ -17,6 +17,7 @@ module Desugarf.Passes where
 
 import qualified Data.HashMap.Strict as H
 
+import           Data.List           (nub)
 import           MapMeta
 import           Parser.Syntax
 import           Syntax
@@ -29,32 +30,46 @@ member x arr = case suffixLookup x arr of
   Just _  -> True
   Nothing -> False
 
--- replaces uses of PTypeName with PClassName where it actually contains a class
--- e.g. PTypeName Boolean ==> PClassName Boolean
+-- replaces uses of PRelativeName with PTypeName or PClassName when it can be determined
+-- e.g. PRelativeName Boolean ==> PClassName /Data/Boolean
 -- uses the mapMeta for objMap and annots, but must map the classMap manually
--- the fullPrgmClassToTypes includes the imports and is used for when the class def is inside an import
-typeNameToClass :: DesPrgm -> DesPrgm -> DesPrgm
-typeNameToClass (_, (_, fullPrgmClassToTypes), _) (objMap, classMap@(typeToClass, classToTypes), annots) = mapMetaPrgm aux (objMap, (typeToClass, classToTypes'), annots)
+-- the fullPrgmClassToTypes includes the imports and is used for when the def is inside an import
+resolveRelativeNames :: DesPrgm -> DesPrgm -> DesPrgm
+resolveRelativeNames (fullPrgmObjMap, (_, fullPrgmClassToTypes), _) (objMap, classMap@(typeToClass, classToTypes), annots) = mapMetaPrgm aux (objMap, (typeToClass, classToTypes'), annots)
   where
-    classToTypes' = fmap (\(s, vs, ts, doc, path) -> (s, fmap mapType vs, fmap mapType ts, doc, path)) classToTypes
-    aux _ (PreTyped t p) = PreTyped (mapType t) p
+    classToTypes' = fmap (\(s, vs, ts, doc, path) -> (s, fmap (mapType True) vs, fmap (mapType True) ts, doc, path)) classToTypes
+    objNames = nub $ map (objPath . fst) fullPrgmObjMap
+    aux _ (PreTyped t p) = PreTyped (mapType False t) p
 
-    mapType TopType = TopType
-    mapType tp@(TypeVar TVVar{}) = tp
-    mapType (TypeVar TVArg{}) = error "Invalid arg type"
-    mapType (UnionType partials) = unionAllTypes classMap $ map mapPartial $ splitUnionType partials
+    -- |
+    -- requireResolveRelative -> type -> updated type
+    -- It is required to resolve for the classmap, but expressions can be left unresolved until type inference
+    mapType :: Bool -> Type -> Type
+    mapType _ TopType = TopType
+    mapType _ tp@(TypeVar TVVar{}) = tp
+    mapType _ (TypeVar TVArg{}) = error "Invalid arg type"
+    mapType reqResolve (UnionType partials) = unionAllTypes classMap $ map mapPartial $ splitUnionType partials
       where
-        mapPartial (PartialType (PTypeName name) partialVars partialProps partialArgs partialArgMode) = singletonType (PartialType name' (fmap mapType partialVars) (fmap mapType partialProps) (fmap mapType partialArgs) partialArgMode)
-          where name' = if member name (H.keys fullPrgmClassToTypes) --problem here todo pradeep
+        mapPartial (PartialType (PRelativeName name) partialVars partialProps partialArgs partialArgMode) = singletonType (PartialType name' (fmap (mapType reqResolve) partialVars) (fmap (mapType reqResolve) partialProps) (fmap (mapType reqResolve) partialArgs) partialArgMode)
+          where name' = case (reqResolve, relativeNameFilter name $ H.keys fullPrgmClassToTypes, relativeNameFilter name objNames) of
                   -- is a class, replace with class type
-                  then PClassName name
+                  (_, [className], []) -> PClassName className
 
                   -- is data, use data after recursively cleaning classes
-                  else PTypeName name
-        mapPartial partial@PartialType{ptName=PClassName{}, ptVars, ptProps, ptArgs} = singletonType $ partial{
-          ptVars = fmap mapType ptVars,
-          ptProps = fmap mapType ptProps,
-          ptArgs = fmap mapType ptArgs
+                  (_, [], [typeName]) -> PTypeName typeName
+
+                  -- This case occurs when a class is used in a multiTypeDef
+                  -- TODO Instead, the incorrect type definition should be removed before this pass is run
+                  (_, [className], [typeName]) | className == typeName -> PClassName className
+
+                  (_, [], []) -> error $ printf "There is no possible types or classes that correspond to name %s in type %s" name  (show $ UnionType partials)
+
+                  (False, _, _) -> PRelativeName name
+                  (True, typeNames, classNames) -> error $ printf "Could not resolve required name: %s \n\t Found possible typeNames: %s \n\t Found possible classNames: %s" name (show typeNames) (show classNames)
+        mapPartial partial@PartialType{ptVars, ptProps, ptArgs} = singletonType $ partial{
+          ptVars = fmap (mapType reqResolve) ptVars,
+          ptProps = fmap (mapType reqResolve) ptProps,
+          ptArgs = fmap (mapType reqResolve) ptArgs
                                                                                                               }
 
 expandDataReferences :: DesPrgm -> DesPrgm -> DesPrgm
@@ -80,3 +95,4 @@ expandDataReferences (fullPrgmObjMap, _, _) (objMap, classMap@(typeToClass, clas
             Nothing -> error $ printf "Data not found in expandDataReferences for %s with objExpansions %s" name (show $ H.keys objExpansions)
           Nothing -> error $ printf "Data not found in expandDataReferences for %s with objExpansions %s" name (show $ H.keys objExpansions)
         mapPartial partial@PartialType{ptName=PClassName{}} = singletonType partial
+        mapPartial partial@PartialType{ptName=PRelativeName{}} = singletonType partial

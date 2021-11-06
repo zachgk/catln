@@ -248,10 +248,10 @@ function PartialName(props) {
 function Obj(props) {
   const {obj, details, Meta} = props;
   let {objM, objBasis, objPath, objVars, objArgs, objDoc} = obj;
-  const objName = objPath;
+  let objName = objPath;
 
   let showContext;
-  if(objName === "Context") {
+  if(objName === "/Catln/Context") {
     const ctxArgs = Object.assign({}, objArgs);
     delete ctxArgs.value;
     showContext = (

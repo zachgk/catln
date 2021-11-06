@@ -142,7 +142,7 @@ strEq = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
 intToString :: Op
 intToString = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
-    name' = "toString"
+    name' = "/Data/toString"
     srcType = PartialType (PTypeName name') H.empty H.empty (H.singleton "this" intType) PtArgExact
     resType = strType
     prim = EPrim srcType NoGuard (\args -> case H.lookup "this" args of
@@ -153,7 +153,7 @@ intToString = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim
 ioExit :: Op
 ioExit = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
-    name' = "exit"
+    name' = "/Catln/exit"
     srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("this", ioType), ("val", intType)]) PtArgExact
     resType = ioType
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "this" args, H.lookup "val" args) of
@@ -167,7 +167,7 @@ ioExit = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
 println :: Op
 println = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
-    name' = "println"
+    name' = "/Catln/println"
     srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("this", ioType), ("msg", strType)]) PtArgExact
     resType = ioType
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "this" args, H.lookup "msg" args) of

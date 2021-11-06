@@ -69,9 +69,10 @@ buildExpr _ _ (CExpr _ c) = case c of
 buildExpr TBEnv{tbVals} _ (Value (Typed (UnionType prodTypes) pos) name) = case splitUnionType prodTypes of
     (_:_:_) -> CErr [MkCNote $ BuildTreeCErr pos $ "Found multiple types for value " ++ name ++ "\n\t" ++ show prodTypes]
     [] -> CErr [MkCNote $ BuildTreeCErr pos $ "Found no types for value " ++ name ++ " with type " ++ show prodTypes]
-    [prodType] -> return $ case H.lookup prodType tbVals of
+    [prodType@PartialType{ptName=PTypeName name'}] -> return $ case H.lookup prodType tbVals of
       Just val -> val
-      Nothing  -> ResArrowTuple name H.empty
+      Nothing  -> ResArrowTuple name' H.empty
+    e -> error $ printf "Found unexpected value type in buildExpr: %s" (show e)
 buildExpr TBEnv{tbClassMap} (os, obj) (Arg (Typed (TypeVar (TVArg a)) _) name) = return $ ArgArrow (snd $ fromJust $ suffixLookupInDict a $ formArgMetaMapWithSrc tbClassMap obj os) name
 buildExpr _ _ (Arg (Typed tp _) name) = return $ ArgArrow tp name
 buildExpr TBEnv{tbClassMap} _ (TupleApply (Typed tp pos) (Typed baseType _, baseExpr) argName argExpr) = case typesGetArg tbClassMap argName tp of
@@ -107,7 +108,7 @@ completeTreeSet TBEnv{tbClassMap} fullPartial = aux H.empty bottomType
   where
     fullType = singletonType fullPartial
     aux accMap accType _ | isSubtypeOf tbClassMap fullType accType = return accMap
-    aux _ accType [] = CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Could not find arrows equaling input %s only found %s" (show fullType) (show accType)]
+    aux _ accType [] = CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Could not find arrows equaling input %s \n\t Only found %s" (show fullType) (show accType)]
     aux accMap accType ((optType, optTree):opts) = do
       let accType' = intersectTypes tbClassMap fullType $ unionTypes tbClassMap accType (singletonType optType)
       -- next opt increases accumulation
@@ -160,6 +161,7 @@ findResArrows TBEnv{tbName, tbResEnv, tbClassMap} srcType@PartialType{ptName=PTy
     return resArrows
   Nothing -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Failed to find any arrows:\n\tWhen building %s\n\tfrom %s to %s" tbName (show srcType) (show destType)]
 findResArrows _ PartialType{ptName=PClassName{}} _ = error "Can't findResArrows for class"
+findResArrows _ PartialType{ptName=PRelativeName{}} _ = error "Can't findResArrows for relative name"
 
 envLookup :: TBEnv -> ObjSrc -> ResArrowTree -> (TBExpr, Type) -> VisitedArrows -> PartialType -> Type -> CRes ResArrowTree
 envLookup TBEnv{tbClassMap} _ input _ _ srcType destType | isSubtypePartialOf tbClassMap srcType destType = return input

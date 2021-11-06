@@ -141,7 +141,7 @@ instance ToJSON Val where
   toJSON NoVal = object ["tag".=("NoVal" :: String)]
 
 resultLeaf, queueLeaf :: PartialType
-resultLeaf = PartialType (PTypeName "CatlnResult") H.empty H.empty (H.fromList [("name", strType), ("contents", strType)]) PtArgExact
+resultLeaf = PartialType (PTypeName "/Catln/CatlnResult") H.empty H.empty (H.fromList [("name", strType), ("contents", strType)]) PtArgExact
 queueLeaf = PartialType (PTypeName "llvmQueue") H.empty H.empty H.empty PtArgExact
 
 resultType :: Type
@@ -295,7 +295,7 @@ buildArrArgs :: EObject -> Val -> Args
 buildArrArgs = aux H.empty
   where
     aux acc Object{objArgs, objPath} val | H.null objArgs = H.insert objPath val acc
-    aux _ Object{objPath} (TupleVal tupleName _) | not $ ss objPath tupleName = error $ printf "Found name mismatch in buildArrArgs: object %s and tuple %s" objPath tupleName
+    aux _ Object{objPath} (TupleVal tupleName _) | objPath /= tupleName = error $ printf "Found name mismatch in buildArrArgs: object %s and tuple %s" objPath tupleName
     aux acc Object{objArgs} (TupleVal _ tupleArgs) = H.foldrWithKey addArgs acc $ H.intersectionWith (,) objArgs tupleArgs
     aux _ obj val = error $ printf "Invalid buildArrArgs with obj %s and value %s" (show obj) (show val)
     addArgs argName ((_, Nothing), argVal) acc = H.insert argName argVal acc

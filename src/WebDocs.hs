@@ -51,8 +51,8 @@ maybeJson (CErr notes)   = json (ResFail notes :: ResSuccess () CNote)
 filterByObj :: String -> TPrgm -> TPrgm
 filterByObj objPath (objMap, (typeToClass, classToType), _) = (objMap', (typeToClass', classToType'), [])
   where
-    objMap' = filter (\(Object{objPath=n}, _) -> ss objPath n) objMap
-    typeToClass' = H.filterWithKey (\n _ -> ss n objPath) typeToClass
+    objMap' = filter (\(Object{objPath=n}, _) -> relativeNameMatches objPath n) objMap
+    typeToClass' = H.filterWithKey (\n _ -> relativeNameMatches objPath n) typeToClass
     classToType' = H.filter (\(_, vars, types, _, _) -> any involvesType vars || any involvesType types) classToType
     involvesType (UnionType leafs) = any involvesPartial $ splitUnionType leafs
     involvesType _                 = False
@@ -62,7 +62,7 @@ filterByClass :: String -> TPrgm -> TPrgm
 filterByClass className (_, (_, classToType), _) = ([], (typeToClass', classToType'), [])
   where
     typeToClass' = H.empty
-    classToType' = H.filterWithKey (\n _ -> ss n className) classToType
+    classToType' = H.filterWithKey (\n _ -> relativeNameMatches n className) classToType
 
 data WDProvider
   = LiveWDProvider Bool String

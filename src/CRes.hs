@@ -23,6 +23,7 @@ import           GHC.Generics          (Generic)
 -- import Text.Pretty.Simple
 import           Text.Printf
 
+import           Control.Monad.Fail
 import           Data.Aeson
 import           Syntax
 import           Text.Megaparsec       (pstateSourcePos)
@@ -112,6 +113,9 @@ instance Monad CRes where
     (CRes notesB b) -> CRes (notesA ++ notesB) b
     (CErr notesB)   -> CErr (notesA ++ notesB)
   (CErr notes) >>= _ = CErr notes
+
+instance MonadFail CRes where
+  fail s = CErr [MkCNote $ GenCErr Nothing s]
 
 failOnErrorNotes :: CRes n -> CRes n
 failOnErrorNotes (CRes [] r) = CRes [] r

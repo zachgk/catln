@@ -6,6 +6,6 @@ class IntList = IntCons(Integer head, IntList tail) | IntNil
 IntList.len -> Integer
 IntNil.len = 0
 # TODO: Fix example below which should work without explicit return value
-IntCons(head, tail).len -> Integer = 1 + tail.len
+/IntCons(head, tail).len -> Integer = 1 + tail.len
 
 main{IO io} = io.exit(val=IntCons(head=5, tail=IntCons(head=3, tail=IntNil)).len - 2)

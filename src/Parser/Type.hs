@@ -35,7 +35,7 @@ pLeafVar = do
   -- TODO: Should support multiple class identifiers such as <Eq Ord $T>
   maybeClass <- optional tidentifier
   var <- tvar
-  let tp = maybe TopType (\n -> singletonType (PartialType (PTypeName n) H.empty H.empty H.empty PtArgExact)) maybeClass
+  let tp = maybe TopType (\n -> singletonType (PartialType (PRelativeName n) H.empty H.empty H.empty PtArgExact)) maybeClass
   return (var, tp)
 
 pTypeVar :: Parser (TypeVarName, Type)
@@ -54,8 +54,8 @@ pIdArg = do
   maybeVars <- optional $ angleBraces $ sepBy1 pTypeVar (symbol ",")
   let vars = maybe H.empty H.fromList maybeVars
   argName <- identifier
-  -- Use PTypeName for now and replace with classes during Desugarf.Passes.typeNameToClass
-  return (argName, singletonType (PartialType (PTypeName tp) vars H.empty H.empty PtArgExact))
+  -- Use PRelativeName for now and replace with classes during Desugarf.Passes.typeNameToClass
+  return (argName, singletonType (PartialType (PRelativeName tp) vars H.empty H.empty PtArgExact))
 
 pVarArg :: Parser (String, Type)
 pVarArg = do
@@ -85,8 +85,8 @@ pLeafType mode = do
   pos2 <- getSourcePos
   let vars = maybe H.empty H.fromList maybeVars
   let args = maybe H.empty H.fromList maybeArgs
-  -- Use PTypeName for now and replace with classes during Desugarf.Passes.typeNameToClass
-  let tp = PreTyped (singletonType (PartialType (PTypeName name) vars H.empty args PtArgExact)) (Just (pos1, pos2, ""))
+  -- Use PRelativeName for now and replace with classes during Desugarf.Passes.typeNameToClass
+  let tp = PreTyped (singletonType (PartialType (PRelativeName name) vars H.empty args PtArgExact)) (Just (pos1, pos2, ""))
   return tp
 
 -- Parses the options for a sealed class definition

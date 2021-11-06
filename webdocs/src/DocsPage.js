@@ -45,7 +45,7 @@ function Main(props) {
   let metaMap = {};
   let objMap = {};
   let objNames = {};
-  typed[0][0].forEach(tObjArrs => {
+  typed[0].forEach(tObjArrs => {
     const [obj, arrs] = tObjArrs;
     const {objM, objName} = obj;
     const [metaType, metaPos] = objM;
@@ -74,12 +74,12 @@ function Main(props) {
     annotsMap[posKey(pos)] = val;
   });
 
-  const statements = page[0][1];
+  const statements = page[1];
   const resMaps = {metaMap, objMap, objNames, classToType, annotsMap, prgmName};
 
   return (
     <ResMaps.Provider value={resMaps}>
-      {page[0][0].map((imp, ind) => <Import key={ind} name={imp}/>)}
+      {page[0].map((imp, ind) => <Import key={ind} name={imp}/>)}
       <br/>
       <Statements statements={statements} />
     </ResMaps.Provider>
@@ -109,7 +109,7 @@ function Statement(props) {
     let objName = obj.objName;
     const noArgObj = Object.keys(obj.objArgs).length === 0;
     let contextObj = false;
-    if(obj.objName === "Context" && Object.keys(obj.objArgs['value'][1].objArgs).length === 0) {
+    if(obj.objName === "/Catln/Context" && Object.keys(obj.objArgs['value'][1].objArgs).length === 0) {
       contextObj = true;
       objName = obj.objArgs['value'][1].objName;
     }

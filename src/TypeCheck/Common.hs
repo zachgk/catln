@@ -24,6 +24,7 @@ import           Data.List
 import           GHC.Generics        (Generic)
 
 import           CRes
+import           Control.Monad.Fail  (MonadFail, fail)
 import           Data.Aeson          (ToJSON, toJSON)
 import           Data.Maybe
 import           Syntax
@@ -94,6 +95,9 @@ data TypeCheckResult r
 
 instance ToJSON r => ToJSON (TypeCheckResult r) where
   toJSON res = toJSON $ typeCheckToRes res
+
+instance MonadFail TypeCheckResult where
+  fail s = TypeCheckResE [GenTypeCheckError Nothing s]
 
 getTCRE :: TypeCheckResult r -> [TypeCheckError]
 getTCRE (TypeCheckResult notes _) = notes

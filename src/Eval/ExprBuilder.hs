@@ -22,7 +22,7 @@ import           Text.Printf
 
 -- Wraps a value v in Context(value=v, io=IO)
 applyIO :: EExpr -> EExpr
-applyIO input = eApply (eApply (eVal "Context") "value" input) "io" ioArg
+applyIO input = eApply (eApply (eVal "/Context") "value" input) "io" ioArg
 
 ioArg :: EExpr
 ioArg = Arg (Typed ioType Nothing) "io"
