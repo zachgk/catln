@@ -140,10 +140,11 @@ data Object m = Object {
                        }
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
-data Arrow e m = Arrow m [CompAnnot e] (Guard e) (Maybe e) -- m is result metadata
+data Arrow e m = Arrow m (Guard e) (Maybe e) -- m is result metadata
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
-type ObjectMap e m = [(Object m, Maybe (Arrow e m))]
+type ObjectMapItem e m = (Object m, [CompAnnot e], Maybe (Arrow e m))
+type ObjectMap e m = [ObjectMapItem e m]
 type Prgm e m = (ObjectMap e m, ClassGraph, [CompAnnot e]) -- TODO: Include [Export]
 
 instance Show m => Show (IExpr m) where
@@ -187,12 +188,10 @@ instance Show m => Show (Object m) where
         else "(" ++ intercalate ", " (map showArg $ H.toList args) ++ ")"
 
 instance (Show m, Show e) => Show (Arrow e m) where
-  show (Arrow m annots guard maybeExpr) = concat $ [show guard, " -> ", show m, " "] ++ showExpr maybeExpr ++ showAnnots annots
+  show (Arrow m guard maybeExpr) = concat $ [show guard, " -> ", show m, " "] ++ showExpr maybeExpr
     where
       showExpr (Just expr) = [" = ", show expr]
       showExpr Nothing     = []
-      showAnnots [] = []
-      showAnnots _  = [" ", show annots]
 
 class ExprClass e where
   getExprMeta ::  e m -> m

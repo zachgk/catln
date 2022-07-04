@@ -67,6 +67,7 @@ type DesGuard = Guard DesExpr
 type DesObjectMap = ObjectMap DesExpr ParseMeta
 type DesObject = Object ParseMeta
 type DesArrow = Arrow DesExpr ParseMeta
+type DesObjectMapItem = ObjectMapItem DesExpr ParseMeta
 type DesPrgm = Prgm DesExpr ParseMeta
 type DesPrgmGraphData = GraphData DesPrgm String
 

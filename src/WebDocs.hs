@@ -53,7 +53,7 @@ maybeJson (CErr notes)   = json (ResFail notes :: ResSuccess () CNote)
 filterByType :: String -> TPrgm -> TPrgm
 filterByType name (objMap, ClassGraph classGraph, _) = (objMap', classGraph', [])
   where
-    objMap' = filter (\(Object{objPath=n}, _) -> relativeNameMatches name n) objMap
+    objMap' = filter (\(Object{objPath=n}, _, _) -> relativeNameMatches name n) objMap
     classGraph' = ClassGraph $ graphFromEdges $ filter (\(_, n, subTypes) -> relativeNameMatches name n || n `elem` subTypes) $ graphToNodes classGraph
 
 data WDProvider

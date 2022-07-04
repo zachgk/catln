@@ -16,6 +16,7 @@
 
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns   #-}
+{-# LANGUAGE TupleSections    #-}
 
 module TypeCheck.TypeGraph where
 
@@ -39,24 +40,24 @@ import           Utils
 -- Especially, not specifying bounds should not turn them into TopType.
 -- Similarly, matches or patterns are less effective then functions.
 -- TODO May need to differentiate top level of functions from inner levels
-objectPrecedence :: (Object m, Maybe (Arrow e m)) -> [Int]
-objectPrecedence (Object{objBasis=TypeObj}, _)=    [1]
-objectPrecedence (Object{objBasis=FunctionObj}, arrs) = [2, declDef]
+objectPrecedence :: ObjectMapItem e m -> [Int]
+objectPrecedence (Object{objBasis=TypeObj}, _, _)=    [1]
+objectPrecedence (Object{objBasis=FunctionObj}, _, arrs) = [2, declDef]
   where
     declDef = if any hasDefinition arrs
       then 2 -- Definition objects have priority [2,2]
       else 1 -- Declaration objects have priority [2,1], better than definitions
-    hasDefinition (Arrow _ _ _ (Just _)) = True
-    hasDefinition (Arrow _ _ _ Nothing)  = False
-objectPrecedence (Object{objBasis=PatternObj}, _)= [3]
-objectPrecedence (Object{objBasis=MatchObj}, _)=   [4]
+    hasDefinition (Arrow _ _ (Just _)) = True
+    hasDefinition (Arrow _ _ Nothing)  = False
+objectPrecedence (Object{objBasis=PatternObj}, _, _) = [3]
+objectPrecedence (Object{objBasis=MatchObj}, _, _) =   [4]
 
 -- | Gets an object and all sub-ojects (recursively) from it's arguments
-getRecursiveObjs :: (Object m, Maybe (Arrow e m)) -> ObjectMap e m
-getRecursiveObjs (obj@Object{objArgs}, arr) = (obj, arr) : subObjMap
+getRecursiveObjs :: ObjectMapItem e m -> ObjectMap e m
+getRecursiveObjs (obj@Object{objArgs}, annots, arr) = (obj, annots, arr) : subObjMap
   where
-    subObjMap = concatMap (filter notMatchObj . concatMap (getRecursiveObjs . (,Nothing)) . maybeToList . snd) (H.elems objArgs)
-    notMatchObj (Object{objBasis}, _) = objBasis /= MatchObj
+    subObjMap = concatMap (filter notMatchObj . concatMap (getRecursiveObjs . (,[],Nothing)) . maybeToList . snd) (H.elems objArgs)
+    notMatchObj (Object{objBasis}, _, _) = objBasis /= MatchObj
 
 -- | This creates 'feUnionAllObjs' and adds it to the 'FEnv'
 addUnionObjToEnv :: FEnv -> VObjectMap -> TObjectMap -> FEnv
@@ -65,15 +66,15 @@ addUnionObjToEnv env1@FEnv{feClassGraph} vobjMap tobjMap = do
   let tobjMapRec = concatMap getRecursiveObjs tobjMap
 
   -- Finds the best precedence for all each object name
-  let buildPrecedenceMap = fmap (minimum . map objectPrecedence) . H.fromListWith (++) . map (\(obj@Object{objPath}, arrs) -> (objPath, [(obj, arrs)]))
+  let buildPrecedenceMap = fmap (minimum . map objectPrecedence) . H.fromListWith (++) . map (\(obj@Object{objPath}, annots, arrs) -> (objPath, [(obj, annots, arrs)]))
   let vPrecedenceMap = buildPrecedenceMap vobjMapRec
   let tPrecedenceMap = buildPrecedenceMap tobjMapRec
   let precedenceMap = H.unionWith min vPrecedenceMap tPrecedenceMap
 
   -- Filter the objects to only those with the best precedence
-  let filterBestPrecedence = filter (\(obj@Object{objPath}, arrs) -> objectPrecedence (obj, arrs) == H.lookupDefault (error "Could not find obj in union") objPath precedenceMap)
-  let vobjs' = map fst $ filterBestPrecedence vobjMapRec
-  let tobjs' = map fst $ filterBestPrecedence tobjMapRec
+  let filterBestPrecedence = filter (\omi@(Object{objPath}, _, _) -> objectPrecedence omi == H.lookupDefault (error "Could not find obj in union") objPath precedenceMap)
+  let vobjs' = map fst3 $ filterBestPrecedence vobjMapRec
+  let tobjs' = map fst3 $ filterBestPrecedence tobjMapRec
 
   -- Builds vars to use for union and union powerset
   let (unionAllObjs, env2) = fresh env1 $ TypeCheckResult [] $ SType TopType bottomType "unionAllObjs"

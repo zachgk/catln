@@ -107,14 +107,14 @@ function ObjMap(props) {
 }
 
 function ObjArrow(props) {
-  const [obj, arrow] = props.obja;
+  const [obj, annots, arrow] = props.obja;
   const classes = useStyles();
 
   let showArrow;
   if(arrow) {
     showArrow = (
       <div>
-        <Arrow arrow={arrow} Meta={props.Meta} showExprMetas={props.showExprMetas}/>
+        <Arrow arrow={arrow} annots={annots} Meta={props.Meta} showExprMetas={props.showExprMetas}/>
       </div>
     );
   }
@@ -129,8 +129,8 @@ function ObjArrow(props) {
 }
 
 function Arrow(props) {
-  const {Meta, showExprMetas} = props;
-  const [arrM, annots, guard, maybeExpr] = props.arrow;
+  const {Meta, showExprMetas, annots} = props;
+  const [arrM, guard, maybeExpr] = props.arrow;
   const classes = useStyles();
 
   let showAnnots;

@@ -124,7 +124,7 @@ llvm = (name', [(srcType, NoGuard, aux)])
     macroBuild input MacroData{mdTbEnv, mdObj, mdObjSrcType} = do
       input' <- resolveTree mdTbEnv (mdObjSrcType, mdObj) input
       case input' of
-        (ResEArrow _ _ (Arrow _ _ _ (Just expr))) -> case expr of
+        (ResEArrow _ _ _ (Arrow _ _ (Just expr))) -> case expr of
           (TupleApply _ (_, Value _ "/Catln/llvm") "c" (Value _ functionToCodegen)) -> buildName functionToCodegen
           _ -> error $ printf "Unknown expr to llvm macro: %s" (show expr)
         (ResArrowTupleApply _ "c" (ResArrowTuple functionToCodegen _)) -> buildName functionToCodegen

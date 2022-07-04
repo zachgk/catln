@@ -48,12 +48,11 @@ showGuard _ ElseGuard = return ElseGuard
 showGuard _ NoGuard = return NoGuard
 
 showArrow :: FEnv -> VArrow -> TypeCheckResult SArrow
-showArrow env (Arrow m annots guard maybeExpr) = do
+showArrow env (Arrow m guard maybeExpr) = do
   m' <- showM env m
-  annots' <- mapM (showExpr env) annots
   guard' <- showGuard env guard
   expr' <- mapM (showExpr env) maybeExpr
-  return $ Arrow m' annots' guard' expr'
+  return $ Arrow m' guard' expr'
 
 showObjArg :: FEnv -> VObjArg -> TypeCheckResult SObjArg
 showObjArg env (m, maybeObj) = do
@@ -68,11 +67,12 @@ showObj env obj@Object{objM, objVars, objArgs} = do
   args' <- mapM (showObjArg env) objArgs
   return $ obj{objM=m', objVars=vars', objArgs=args'}
 
-showObjArrow :: FEnv -> (VObject, Maybe VArrow) -> TypeCheckResult (SObject, Maybe SArrow)
-showObjArrow env (obj, arrow) = do
+showObjArrow :: FEnv -> VObjectMapItem -> TypeCheckResult SObjectMapItem
+showObjArrow env (obj, annots, arrow) = do
   obj' <- showObj env obj
+  annots' <- mapM (showExpr env) annots
   arrow' <- mapM (showArrow env) arrow
-  return (obj', arrow')
+  return (obj', annots', arrow')
 
 showConHelper :: FEnv -> (Scheme -> Scheme -> SConstraint) -> VarMeta -> VarMeta -> SConstraint
 showConHelper env f p1 p2 = f (descriptor env p1) (descriptor env p2)

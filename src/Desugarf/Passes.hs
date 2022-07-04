@@ -38,7 +38,7 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, classGraph
     mapCGNode (CGClass (s, vs, ts, doc, p)) = CGClass (s, fmap (mapType True) vs, fmap (mapType True) ts, doc, p)
     mapCGNode CGType = CGType
     classNames = listClassNames fullPrgmClassGraph
-    objNames = nub $ map (objPath . fst) fullPrgmObjMap
+    objNames = nub $ map (objPath . fst3) fullPrgmObjMap
     aux _ (PreTyped t p) = PreTyped (mapType False t) p
 
     -- |
@@ -78,7 +78,7 @@ expandDataReferences (fullPrgmObjMap, _, _) (objMap, classGraph@(ClassGraph cg),
     classGraph' = ClassGraph $ graphFromEdges $ mapFst3 mapCGNode $ graphToNodes cg
     mapCGNode (CGClass (s, vs, ts, doc, p)) = CGClass (s, fmap mapType vs, fmap mapType ts, doc, p)
     mapCGNode CGType = CGType
-    objExpansions = H.fromList $ concatMap (\(obj@Object{objBasis, objPath}, _) -> ([(objPath, obj) | objBasis == TypeObj])) fullPrgmObjMap
+    objExpansions = H.fromList $ concatMap (\(obj@Object{objBasis, objPath}, _, _) -> ([(objPath, obj) | objBasis == TypeObj])) fullPrgmObjMap
     aux metaType inM@(PreTyped t p) = case metaType of
       ExprMeta   -> inM
       ObjMeta    -> inM

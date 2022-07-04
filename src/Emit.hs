@@ -106,7 +106,7 @@ typeName tp = printf "tp_%s" tpHash
   where tpHash = take 6 (printf "%08x" (hash tp)) :: String
 
 codegenTree :: LEnv -> ResArrowTree -> Val
-codegenTree env@LEnv{lvClassGraph} resArrow@(ResEArrow input object arrow) = do
+codegenTree env@LEnv{lvClassGraph} resArrow@(ResEArrow input object annots arrow) = do
   let val = codegenTree env input
   let arrowSrcType = getValType val
   let outType = resArrowDestType lvClassGraph arrowSrcType resArrow
@@ -114,13 +114,13 @@ codegenTree env@LEnv{lvClassGraph} resArrow@(ResEArrow input object arrow) = do
     (TupleVal _ args) ->
       LLVMOperand outType $ do
         args' <- mapM asOperand $ H.elems args
-        addTaskArrow (arrowSrcType, object, arrow, TupleInput)
+        addTaskArrow (arrowSrcType, object, annots, arrow, TupleInput)
         outType' <- genType H.empty outType
         callf outType' (arrowName arrowSrcType object arrow TupleInput) args'
     _ -> do
       LLVMOperand outType $ do
         val' <- asOperand val
-        addTaskArrow (arrowSrcType, object, arrow, StructInput)
+        addTaskArrow (arrowSrcType, object, annots, arrow, StructInput)
         outType' <- genType H.empty outType
         callf outType' (arrowName arrowSrcType object arrow StructInput) [val']
 codegenTree _ MacroArrow{} = error $ printf "Can't evaluate a macro - it should be removed during TreeBuild"
@@ -311,12 +311,12 @@ codegenTasks env@LEnv{lvTbEnv, lvClassGraph} = do
   taskArrows <- gets lTaskArrows
   completed <- gets lTasksCompleted
   case taskArrows of
-    (arrowSrcType, obj, arr, declInput):tas -> do
+    (arrowSrcType, obj, annots, arr, declInput):tas -> do
       modify $ \s -> s {lTaskArrows = tas}
       let nm = arrowName arrowSrcType obj arr declInput
       if S.member nm completed
         then codegenTasks env
-        else case buildArrow lvTbEnv arrowSrcType obj arr of
+        else case buildArrow lvTbEnv arrowSrcType obj annots arr of
           CRes _ (Just (_, (tree, _))) -> do
             modify $ \s -> s {lTasksCompleted = S.insert nm completed}
             let destType = arrowDestType False lvClassGraph arrowSrcType obj arr

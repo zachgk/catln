@@ -46,7 +46,7 @@ function Main(props) {
   let objMap = {};
   let objNames = {};
   typed[0].forEach(tObjArrs => {
-    const [obj, arrs] = tObjArrs;
+    const [obj, annots, arr] = tObjArrs;
     const {objM, objName} = obj;
     const [metaType, metaPos] = objM;
     metaMap[posKey(metaPos)] = metaType;
@@ -58,13 +58,13 @@ function Main(props) {
     }
     objNames[objName].push(obj);
 
-    arrs.forEach(tArr => {
-      const [, arrAnnots, , expr] = tArr;
-      addExprToMetaMap(metaMap, expr);
-      arrAnnots.forEach(arrAnnot => {
-        addExprToMetaMap(metaMap, arrAnnot);
+    if (arr) {
+      const [, , arrExpr] = arr;
+      addExprToMetaMap(metaMap, arrExpr);
+      annots.forEach(annot => {
+        addExprToMetaMap(metaMap, annot);
       });
-    });
+    }
   });
 
   var annotsMap = {};

@@ -24,21 +24,21 @@ import           Syntax.Types
 import           Text.Printf
 import           TreeBuild           (buildArrow)
 
-evalStartEArrow :: Env -> PartialType -> EObject -> EArrow -> Args -> CRes (ResArrowTree, [ResArrowTree], Args, Env)
-evalStartEArrow env@Env{evExEnv, evTbEnv, evArgs, evCoverage, evTreebugOpen} srcType obj arr newArgs = do
+evalStartEArrow :: Env -> PartialType -> EObject -> [ECompAnnot] -> EArrow -> Args -> CRes (ResArrowTree, [ResArrowTree], Args, Env)
+evalStartEArrow env@Env{evExEnv, evTbEnv, evArgs, evCoverage, evTreebugOpen} srcType obj annots arr newArgs = do
   let env' = env{
                 evArgs=newArgs
                 , evCoverage = H.insertWith (+) arr 1 evCoverage
                 , evTreebugOpen = EvalTreebugOpen obj arr : evTreebugOpen
                 }
   case H.lookup (srcType, arr) evExEnv of
-    Just (tree, annots) -> return (tree, annots, evArgs, env')
+    Just (tree, annots') -> return (tree, annots', evArgs, env')
     Nothing -> do
-      maybeArrow' <- buildArrow evTbEnv srcType obj arr
+      maybeArrow' <- buildArrow evTbEnv srcType obj annots arr
       case maybeArrow' of
-        Just (_, arrow'@(tree, annots)) -> do
+        Just (_, arrow'@(tree, annots')) -> do
           let env'' = env' {evExEnv = H.insert (srcType, arr) arrow' evExEnv}
-          return (tree, annots, evArgs, env'')
+          return (tree, annots', evArgs, env'')
         Nothing -> evalError env $ printf "Failed to find arrow in eval resArrow: %s" (show arr)
 
 evalEndEArrow :: Env -> Val -> Args -> Env

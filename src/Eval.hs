@@ -65,9 +65,9 @@ evalTargetMode :: String -> String -> EPrgmGraphData -> EvalMode
 evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe $ mapMaybe objArrowsContains objMap
   where
     (objMap, classGraph, _) = prgmFromGraphData prgmName prgmGraphData
-    objArrowsContains (_, Nothing) = Nothing
-    objArrowsContains (_, Just a) | not (arrowDefined a) = Nothing
-    objArrowsContains (Object{objArgs, objPath}, Just (Arrow arrM _ _ _)) = case objPath of
+    objArrowsContains (_, _, Nothing) = Nothing
+    objArrowsContains (_, _, Just a) | not (arrowDefined a) = Nothing
+    objArrowsContains (Object{objArgs, objPath}, _, Just (Arrow arrM _ _)) = case objPath of
       "/Context" -> case H.lookup "value" objArgs of
         Just (_, Just Object{objPath=valObjName}) -> if relativeNameMatches function valObjName
           then Just $ if isBuildable (getMetaType arrM)
@@ -81,7 +81,7 @@ evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe 
           else Just $ EvalRun objPath
       _ -> Nothing
     isBuildable tp = not $ isBottomType $ intersectTypes classGraph tp resultType
-    arrowDefined (Arrow _ _ _ maybeExpr) = isJust maybeExpr
+    arrowDefined (Arrow _ _ maybeExpr) = isJust maybeExpr
 
 -- | evaluate annotations such as assertions that require compiler verification
 evalCompAnnot :: Env -> Val -> CRes Env
@@ -95,10 +95,10 @@ evalCompAnnot env TupleVal{} = return env
 evalCompAnnot env _ = evalError env "Eval: Invalid compiler annotation type"
 
 eval :: Env -> ResArrowTree -> CRes (Val, Env)
-eval env (ResEArrow input object arrow) = do
+eval env (ResEArrow input object annots arrow) = do
   (input', env2) <- evalPopVal <$> eval (evalPush env "resEArrow input") input
   let newArrArgs = buildArrArgs object input'
-  (resArrowTree, compAnnots, oldArgs, env3) <- evalStartEArrow env2 (getValType input') object arrow newArrArgs
+  (resArrowTree, compAnnots, oldArgs, env3) <- evalStartEArrow env2 (getValType input') object annots arrow newArrArgs
   env5s <- forM compAnnots $ \compAnnot -> do
             (compAnnot', env4) <- evalPopVal <$> eval (evalPush env3 $ printf "annot %s" (show compAnnot)) compAnnot
             evalCompAnnot env4 compAnnot'

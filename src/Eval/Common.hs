@@ -36,7 +36,7 @@ import           Text.Printf
 import           Utils
 
 type EvalMeta = Typed
-type ECompAnnot = CompAnnot EvalMeta
+type ECompAnnot = CompAnnot (Expr Typed)
 type EExpr = Expr EvalMeta
 type EGuard = Guard EExpr
 type EObject = Object EvalMeta
@@ -192,7 +192,7 @@ instance Hashable MacroFunction where
   s `hashWithSalt` _ = s
 
 data ResArrowTree
-  = ResEArrow ResArrowTree (Object Typed) (Arrow (Expr Typed) Typed)
+  = ResEArrow ResArrowTree (Object Typed) [CompAnnot (Expr Typed)] (Arrow (Expr Typed) Typed)
   | PrimArrow ResArrowTree Type EPrim
   | MacroArrow ResArrowTree Type MacroFunction
   | ExprArrow EExpr Type Type
@@ -205,7 +205,7 @@ data ResArrowTree
   deriving (Eq, Generic, Hashable)
 
 instance Show ResArrowTree where
-  show (ResEArrow _ obj arrow) = printf "(ResEArrow: %s -> %s)" (show obj) (show arrow)
+  show (ResEArrow _ obj _ arrow) = printf "(ResEArrow: %s -> %s)" (show obj) (show arrow)
   show (PrimArrow _ tp _) = "(PrimArrow " ++ show tp ++ ")"
   show (MacroArrow _ tp _) = "(MacroArrow " ++ show tp ++ ")"
   show (ExprArrow _ exprType destType) = "(ExprArrow " ++ show exprType ++ " to " ++ show destType ++ ")"
@@ -247,7 +247,7 @@ data DeclInput
   | StructInput
   deriving (Eq, Ord, Show, Generic, Hashable)
 
-type TaskArrow = (PartialType, Object Typed, Arrow (Expr Typed) Typed, DeclInput)
+type TaskArrow = (PartialType, Object Typed, [CompAnnot (Expr Typed)], Arrow (Expr Typed) Typed, DeclInput)
 type TaskStruct = Type
 
 type Names = Map.Map String Int
@@ -283,7 +283,7 @@ macroData :: TBEnv -> ObjSrc -> MacroData
 macroData tbEnv (objSrcType, obj) = MacroData tbEnv obj objSrcType
 
 resArrowDestType :: ClassGraph -> PartialType -> ResArrowTree -> Type
-resArrowDestType classGraph src (ResEArrow _ obj arr) = arrowDestType False classGraph src obj arr
+resArrowDestType classGraph src (ResEArrow _ obj _ arr) = arrowDestType False classGraph src obj arr
 resArrowDestType _ _ (PrimArrow _ tp _) = tp
 resArrowDestType _ _ (MacroArrow _ tp _) = tp
 resArrowDestType _ _ (ConstantArrow v) = singletonType $ getValType v

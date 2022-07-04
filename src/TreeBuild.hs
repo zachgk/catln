@@ -56,9 +56,9 @@ buildTBEnv primEnv prgm@(objMap, classGraph, _) = baseEnv
   where
     baseEnv = TBEnv "" (H.union primEnv resEnv) H.empty prgm classGraph
     resEnv = H.fromListWith (++) $ mapMaybe resFromMArrow objMap
-    resFromMArrow (obj, marrow) = marrow >>= resFromArrow obj
-    resFromArrow obj@Object{objM, objPath} arrow@(Arrow _ _ aguard expr) = case expr of
-      Just _ -> Just (objPath, [(objLeaf, aguard, \input -> ResEArrow input obj arrow) | objLeaf <- leafsFromMeta objM])
+    resFromMArrow (obj, annots, marrow) = marrow >>= resFromArrow obj annots
+    resFromArrow obj@Object{objM, objPath} annots arrow@(Arrow _ aguard expr) = case expr of
+      Just _ -> Just (objPath, [(objLeaf, aguard, \input -> ResEArrow input obj annots arrow) | objLeaf <- leafsFromMeta objM])
       Nothing -> Nothing
 
 buildExpr :: TBEnv -> ObjSrc -> TBExpr -> CRes ResArrowTree
@@ -93,8 +93,8 @@ envLookupTry env@TBEnv{tbClassGraph} objSrc visitedArrows ee srcType destType re
     (UnionType newLeafTypes) = resArrowDestType tbClassGraph srcType resArrow
     visitedArrows' = S.insert resArrow visitedArrows
     objSrc' = case resArrow of
-          (ResEArrow _ o _) -> (srcType, o)
-          _                 -> objSrc
+          (ResEArrow _ o _ _) -> (srcType, o)
+          _                   -> objSrc
     buildAfterArrows = \leafType -> do
       v <- envLookup env objSrc' resArrow ee visitedArrows' leafType destType
       return (leafType, v)
@@ -131,7 +131,7 @@ buildGuardArrows env obj input ee visitedArrows srcType destType guards = do
   where
     buildGuard (NoGuardGroup tp tree) = (tp,) <$> ltry tree
     buildGuard (CondGuardGroup ifs (elseTp, elseTree)) = do
-      ifTreePairs <- forM ifs $ \(_, ifCond, ifThen@(ResEArrow _ o _)) -> do
+      ifTreePairs <- forM ifs $ \(_, ifCond, ifThen@(ResEArrow _ o _ _)) -> do
             ifTree' <- buildExprImp env (srcType, o) ifCond (getMetaType $ getExprMeta ifCond) boolType
             thenTree' <- ltry ifThen
             return ((ifTree', input, o), thenTree')
@@ -199,9 +199,9 @@ buildExprImp env@TBEnv{tbClassGraph} objSrc@(os, obj) expr exprType destType = d
 
 -- builds all macroArrows and exprArrows into other arrow types
 resolveTree :: TBEnv -> ObjSrc -> ResArrowTree -> CRes ResArrowTree
-resolveTree env obj (ResEArrow input o a) = do
+resolveTree env obj (ResEArrow input o annots a) = do
   input' <- resolveTree env obj input
-  return $ ResEArrow input' o a
+  return $ ResEArrow input' o annots a
 resolveTree env obj (PrimArrow input t f) = do
   input' <- resolveTree env obj input
   return $ PrimArrow input' t f
@@ -232,9 +232,9 @@ resolveTree env obj (ResArrowTupleApply input argName argVal) = do
   return $ ResArrowTupleApply input' argName argVal'
 
 
-buildArrow :: TBEnv -> PartialType -> TBObject -> TBArrow -> CRes (Maybe (TBArrow, (ResArrowTree, [ResArrowTree])))
-buildArrow _ _ _ (Arrow _ _ _ Nothing) = return Nothing
-buildArrow env objPartial obj@Object{objVars} arrow@(Arrow (Typed am _) compAnnots _ (Just expr)) = do
+buildArrow :: TBEnv -> PartialType -> TBObject -> [TBCompAnnot] -> TBArrow -> CRes (Maybe (TBArrow, (ResArrowTree, [ResArrowTree])))
+buildArrow _ _ _ _ (Arrow _ _ Nothing) = return Nothing
+buildArrow env objPartial obj@Object{objVars} compAnnots arrow@(Arrow (Typed am _) _ (Just expr)) = do
   let env' = env{tbName = printf "arrow %s" (show obj)}
   let objSrc = (objPartial, obj)
   let am' = case am of

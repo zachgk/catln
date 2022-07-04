@@ -104,15 +104,14 @@ toGuard _ ElseGuard = return ElseGuard
 toGuard _ NoGuard = return NoGuard
 
 toArrow :: FEnv -> VArrow -> TypeCheckResult TArrow
-toArrow env (Arrow m annots aguard maybeExpr) = do
+toArrow env (Arrow m aguard maybeExpr) = do
   m' <- toMeta env m "Arrow"
-  annots' <- mapM (toExpr env) annots
   aguard' <- toGuard env aguard
   case maybeExpr of
     Just expr -> do
       expr' <- toExpr env expr
-      return $ Arrow m' annots' aguard' (Just expr')
-    Nothing -> return $ Arrow m' annots' aguard' Nothing
+      return $ Arrow m' aguard' (Just expr')
+    Nothing -> return $ Arrow m' aguard' Nothing
 
 toObjArg :: FEnv -> String -> (TypeName, VObjArg) -> TypeCheckResult (TypeName, TObjArg)
 toObjArg env prefix (name, (m, maybeObj)) = do
@@ -132,11 +131,12 @@ toObject env prefix obj@Object{objM, objVars, objArgs, objPath} = do
   args' <- mapM (toObjArg env prefix') $ H.toList objArgs
   return $ obj{objM=m', objVars=H.fromList vars', objArgs=H.fromList args'}
 
-toObjectArrow :: FEnv -> (VObject, Maybe VArrow) -> TypeCheckResult (TObject, Maybe TArrow)
-toObjectArrow env (obj, arrow) = do
+toObjectArrow :: FEnv -> VObjectMapItem -> TypeCheckResult TObjectMapItem
+toObjectArrow env (obj, annots, arrow) = do
   obj' <- toObject env "Object" obj
+  annots' <- mapM (toExpr env) annots
   arrow' <- mapM (toArrow env) arrow
-  return (obj', arrow')
+  return (obj', annots', arrow')
 
 toPrgm :: FEnv -> VPrgm -> TypeCheckResult TPrgm
 toPrgm env (objMap, classGraph, annots) = do

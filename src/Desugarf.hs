@@ -198,8 +198,8 @@ semiDesGuard obj (IfGuard e) = (subE, IfGuard e')
 semiDesGuard _ ElseGuard = ([], ElseGuard)
 semiDesGuard _ NoGuard = ([], NoGuard)
 
-declToObjArrow :: StatementEnv -> PSemiDecl -> (DesObject, Maybe DesArrow)
-declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl (DeclLHS arrM (Pattern object@Object{objPath} guard)) annots expr) = (object'', Just arrow)
+declToObjArrow :: StatementEnv -> PSemiDecl -> DesObjectMapItem
+declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl (DeclLHS arrM (Pattern object@Object{objPath} guard)) annots expr) = (object'', annots' ++ inheritAnnots, Just arrow)
   where
     -- Inherit the path in main object name. If main is a context, also inherit in the context function as well
     updateObjPath o@Object{objPath=originalPath} = o{objPath = getPath inheritPath originalPath}
@@ -210,7 +210,7 @@ declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl (DeclLHS arrM (Pattern ob
 
     argMetaMap = formArgMetaMap object'
     annots' = map (desExpr argMetaMap) annots
-    arrow = Arrow arrM (annots' ++ inheritAnnots) (desGuard argMetaMap guard) (fmap (desExpr argMetaMap) expr)
+    arrow = Arrow arrM (desGuard argMetaMap guard) (fmap (desExpr argMetaMap) expr)
 
 desDecl :: StatementEnv -> PDecl -> DesPrgm
 desDecl statementEnv decl = (objMap, emptyClassGraph, [])
@@ -241,7 +241,7 @@ desMultiTypeDef (inheritPath, _) (MultiTypeDef className classVars dataMetas) su
       path' =  case path of
         Absolute p -> p
         Relative p -> inheritPath ++ "/" ++ p
-      objMap' = map (, Nothing) objs
+      objMap' = map (, [], Nothing) objs
       objPaths = map objPath objs
       dataTypes = map getMetaType dataMetas
       objs = mapMaybe (typeDefMetaToObj inheritPath classVars) dataMetas
@@ -262,7 +262,7 @@ desTypeDef :: StatementEnv -> PTypeDef -> [RawDeclSubStatement ParseMeta] -> Des
 desTypeDef (inheritPath, _) (TypeDef tp) subStatements = (objMap, emptyClassGraph, [])
   where
     objMap = case typeDefMetaToObj inheritPath H.empty tp of
-          Just obj -> [(obj{objDoc = desObjDocComment subStatements}, Nothing)]
+          Just obj -> [(obj{objDoc = desObjDocComment subStatements}, [], Nothing)]
           Nothing  -> error "Type def could not be converted into meta"
 
 desClassDef :: StatementEnv -> Sealed -> RawClassDef -> [RawDeclSubStatement ParseMeta] -> Path -> DesPrgm
