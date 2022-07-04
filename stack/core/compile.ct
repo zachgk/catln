@@ -26,6 +26,12 @@ module Catln
 
     The core annotations are all of the annotations used by the compiler and the web docs program.
 
+  annot #md(String text)
+
+    # [#md] is used to provide markdown text.
+      It is the standard format used for comments.
+      Typically, it is written with the syntax sugar of "# commentText".
+
   annot #assert(Boolean test)
 
     # [#assert] will check if the [test]ed value is true.

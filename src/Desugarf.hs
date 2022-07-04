@@ -39,8 +39,8 @@ splitDeclSubStatements = aux ([], [])
   where
     aux (decls, annots) [] = (decls, annots)
     aux (decls, annots) (RawDeclSubStatementDecl decl : subSt) = aux (decl:decls, annots) subSt
-    aux (decls, annots) (RawDeclSubStatementAnnot annot : subSt) = aux (decls, annot:annots) subSt
-    aux (decls, annots) (RawDeclSubStatementComment _ : subSt) = aux (decls, annots) subSt
+    aux (decls, annots) (RawDeclSubStatementAnnot annot []: subSt) = aux (decls, annot:annots) subSt
+    aux _ (RawDeclSubStatementAnnot _ (_:_):_) = error "Children in RawDeclSubStatementAnnot not currently supported"
 
 scopeSubDeclFunNamesInS :: TypeName -> S.HashSet TypeName -> TypeName -> TypeName
 scopeSubDeclFunNamesInS prefix replaceNames name = name'
@@ -108,7 +108,7 @@ currySubFunctions parentArgs decls expr annots = (decls', expr', annots')
     annots' = map (currySubFunctionsUpdateExpr toUpdate parentArgs) annots
 
 desObjDocComment :: [PDeclSubStatement] -> Maybe String
-desObjDocComment (RawDeclSubStatementComment doc: rest) = Just (++) <*> Just doc <*> desObjDocComment rest
+desObjDocComment (RawDeclSubStatementAnnot (RawTupleApply _ (_, RawValue _ "/Catln/#md") [RawTupleArgNamed "text" (RawCExpr _ (CStr doc))]) _: rest) = Just (++) <*> Just doc <*> desObjDocComment rest
 desObjDocComment _ = Just ""
 
 removeSubDeclarations :: PDecl -> [PSemiDecl]
@@ -290,7 +290,6 @@ desStatement statementEnv (MultiTypeDefStatement multiTypeDef subStatements path
 desStatement statementEnv (TypeDefStatement typeDef subStatements) = desTypeDef  statementEnv typeDef subStatements
 desStatement statementEnv (RawClassDefStatement classDef subStatements path) = desClassDef statementEnv False classDef subStatements path
 desStatement statementEnv (RawClassDeclStatement classDecls subStatements path) = desClassDecl statementEnv classDecls subStatements path
-desStatement _ RawComment{} = ([], emptyClassGraph, [])
 desStatement _ (RawGlobalAnnot a []) = ([], emptyClassGraph, [desGlobalAnnot a])
 desStatement (inheritModule, inheritAnnots) (RawGlobalAnnot a subStatements) = mergePrgms $ map (desStatement (inheritModule, desGlobalAnnot a:inheritAnnots)) subStatements
 desStatement (_, inheritAnnots) (RawModule _ subStatements (Absolute path)) = mergePrgms $ map (desStatement (path, inheritAnnots)) subStatements

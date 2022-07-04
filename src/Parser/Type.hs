@@ -131,7 +131,7 @@ pClassStatement = L.indentBlock scn p
         ([], subStatements) -> return $ RawClassDeclStatement pcl subStatements (getPath name)
         (_, _)              -> return $ RawClassDeclStatement pcl [] (getPath name)
     childParser :: Parser TreeRes
-    childParser = try (TRComment <$> pComment)
+    childParser = try (TRAnnot <$> pComment)
     p = do
       rawclass <- pClassStatement'
       return (L.IndentMany Nothing (pack rawclass) childParser)
@@ -143,7 +143,7 @@ pAnnotDefStatement = L.indentBlock scn p
         ([], subStatements) -> return $ TypeDefStatement pclass subStatements
         (_, _)              -> return $ TypeDefStatement pclass []
     childParser :: Parser TreeRes
-    childParser = try (TRComment <$> pComment)
+    childParser = try (TRAnnot <$> pComment)
     p = do
       rawclass <- do
         _ <- symbol "annot"
@@ -157,7 +157,7 @@ pTypeDefStatement = L.indentBlock scn p
         ([], subStatements) -> return $ TypeDefStatement pclass subStatements
         (_, _)              -> return $ TypeDefStatement pclass []
     childParser :: Parser TreeRes
-    childParser = try (TRComment <$> pComment)
+    childParser = try (TRAnnot <$> pComment)
     p = do
       rawclass <- do
         _ <- symbol "data"
@@ -171,7 +171,7 @@ pClassDefStatement = L.indentBlock scn p
         ([], subStatements) -> return $ RawClassDefStatement pclass subStatements (getPath typeName)
         (_, _) -> return $ RawClassDefStatement pclass [] (getPath typeName)
     childParser :: Parser TreeRes
-    childParser = try (TRComment <$> pComment)
+    childParser = try (TRAnnot <$> pComment)
     p = do
       rawclass <- do
         _ <- symbol "every"

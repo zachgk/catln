@@ -68,9 +68,15 @@ pModule = L.indentBlock scn p
       name <- ttypeidentifier
       return (L.IndentMany Nothing (pack name) pStatement)
 
+pCommentStatement :: Parser PStatement
+pCommentStatement = do
+  c <- pComment
+  return $ RawGlobalAnnot c []
+
+
 pStatement :: Parser PStatement
 pStatement = pTypeStatement
-    <|> RawComment <$> pComment
+    <|> pCommentStatement
     <|> pGlobalAnnot
     <|> pModule
     <|> pRootDecl

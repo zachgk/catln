@@ -83,6 +83,7 @@ evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe 
     isBuildable tp = not $ isBottomType $ intersectTypes classGraph tp resultType
     arrowDefined (Arrow _ _ _ maybeExpr) = isJust maybeExpr
 
+-- | evaluate annotations such as assertions that require compiler verification
 evalCompAnnot :: Env -> Val -> CRes Env
 evalCompAnnot env (TupleVal "/Catln/#assert" args) = case (H.lookup "test" args, H.lookup "msg" args) of
   (Just b, Just (StrVal _)) | b == true -> return env
@@ -90,7 +91,7 @@ evalCompAnnot env (TupleVal "/Catln/#assert" args) = case (H.lookup "test" args,
   (Just b, Nothing) | b == true -> return env
   (Just b, Nothing) | b == false -> CErr [MkCNote $ AssertCErr "Failed assertion"]
   _ -> evalError env $ printf "Invalid assertion with unexpected args %s" (show args)
-evalCompAnnot env (TupleVal name _) = evalError env $ printf "Unknown compiler annotation %s" name
+evalCompAnnot env TupleVal{} = return env
 evalCompAnnot env _ = evalError env "Eval: Invalid compiler annotation type"
 
 eval :: Env -> ResArrowTree -> CRes (Val, Env)

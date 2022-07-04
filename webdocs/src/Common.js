@@ -26,6 +26,9 @@ const useStyles = makeStyles( theme => ({
   partialNameClass: {
     color: 'purple'
   },
+  partialNameRelative: {
+    color: 'black'
+  },
   keyword: {
     fontWeight: 'bold'
   },
@@ -198,8 +201,6 @@ function Type(props) {
       });
     });
     return tagJoin(partials, " | ");
-  case "RawDeclSubStatementComment":
-      return <div><Comment comment={t.contents} obj={undefined} /></div>;
   default:
     console.error("Unknown type", t);
     return "";
@@ -230,6 +231,10 @@ function PartialName(props) {
 
   let cls, link;
   switch(name.tag) {
+  case "PRelativeName":
+    cls = classes.partialNameRelative;
+    link = `/relative/${name.contents}`;
+    break;
   case "PTypeName":
     cls = classes.partialNameTp;
     link = `/type/${name.contents}`;

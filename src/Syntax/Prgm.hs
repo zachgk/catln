@@ -92,8 +92,7 @@ instance Functor Guard where
 
 data RawDeclSubStatement m
   = RawDeclSubStatementDecl (RawDecl m)
-  | RawDeclSubStatementAnnot (CompAnnot (RawExpr m))
-  | RawDeclSubStatementComment String
+  | RawDeclSubStatementAnnot (CompAnnot (RawExpr m)) [RawDeclSubStatement m]
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
 data DeclLHS e m = DeclLHS m (Pattern e m)
@@ -121,7 +120,6 @@ data RawStatement m
   | TypeDefStatement (TypeDef m) [RawDeclSubStatement m]
   | RawClassDefStatement RawClassDef [RawDeclSubStatement m] Path
   | RawClassDeclStatement RawClassDecl [RawDeclSubStatement m] Path
-  | RawComment String
   | RawGlobalAnnot (CompAnnot (RawExpr m)) [RawStatement m]
   | RawModule String [RawStatement m] Path
   deriving (Eq, Ord, Show, Generic, ToJSON)

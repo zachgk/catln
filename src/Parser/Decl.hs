@@ -66,8 +66,13 @@ pDeclLHS = do
   let arrMeta = fromMaybe (emptyMeta pos1 pos2) maybeArrMeta
   return $ DeclLHS arrMeta patt
 
-pComment :: Parser String
-pComment = L.indentBlock scn p
+pComment :: Parser PCompAnnot
+pComment = do
+  pos1 <- getSourcePos
+  c <- L.indentBlock scn p
+  pos2 <- getSourcePos
+  let m = emptyMeta pos1 pos2
+  return $ RawTupleApply (emptyMetaM "appArg" m) (emptyMetaM "valC" m, RawValue (emptyMetaM "val" m) "/Catln/#md") [RawTupleArgNamed "text" (RawCExpr m (CStr c))]
   where
     takeLine = takeWhileP (Just "character") (/= '\n')
     p = do
@@ -80,7 +85,6 @@ data TreeRes
   = TRDecl PDecl
   | TRExpr PExpr
   | TRAnnot PCompAnnot
-  | TRComment String
   deriving (Show)
 
 validDeclTree :: [TreeRes] -> Either String ([PDeclSubStatement], PExpr)
@@ -89,8 +93,7 @@ validDeclTree = aux ([], Nothing)
     aux (_, Nothing) [] = Left "No expression found. The declaration must contain an expression"
     aux (subSt, Just expr) [] = Right (subSt, expr)
     aux (subSt, maybeExpr) ((TRDecl decl):trs) = aux (RawDeclSubStatementDecl decl:subSt, maybeExpr) trs
-    aux (subSt, maybeExpr) ((TRAnnot annot):trs) = aux (RawDeclSubStatementAnnot annot:subSt, maybeExpr) trs
-    aux (subSt, maybeExpr) ((TRComment comment):trs) = aux (RawDeclSubStatementComment comment:subSt, maybeExpr) trs
+    aux (subSt, maybeExpr) ((TRAnnot annot):trs) = aux (RawDeclSubStatementAnnot annot []:subSt, maybeExpr) trs
     aux (subSt, Nothing) ((TRExpr expr):trs) = aux (subSt, Just expr) trs
     aux (_, Just{}) ((TRExpr _):_) = Left "Multiple expressions found. The declaration should only have one expression line"
 
@@ -98,8 +101,7 @@ validDeclTree = aux ([], Nothing)
 validSubStatementInSingle :: TreeRes -> Either String PDeclSubStatement
 validSubStatementInSingle TRDecl{} = Left "Found an unexpected subDefinition when the expression is defined in a single line."
 validSubStatementInSingle TRExpr{} = Left "Found an unexpected subExpression when the expression is defined in a single line."
-validSubStatementInSingle (TRAnnot annot) = return $ RawDeclSubStatementAnnot annot
-validSubStatementInSingle (TRComment comment) = return $ RawDeclSubStatementComment comment
+validSubStatementInSingle (TRAnnot annot) = return $ RawDeclSubStatementAnnot annot []
 
 pDeclTree :: Parser PDecl
 pDeclTree = L.indentBlock scn p
@@ -120,7 +122,7 @@ pDeclTree = L.indentBlock scn p
             _ -> return $ RawDecl lhs subStatements Nothing
           (err:_, _) -> fail err
     childParser :: Parser TreeRes
-    childParser = try (TRDecl <$> pDeclTree) <|>  try (TRComment <$> pComment) <|> try (TRAnnot <$> pCompAnnot) <|> (TRExpr <$> pExpr)
+    childParser = try (TRDecl <$> pDeclTree) <|>  try (TRAnnot <$> pComment) <|> try (TRAnnot <$> pCompAnnot) <|> (TRExpr <$> pExpr)
     p = do
       lhs <- pDeclLHS
       eqAndExpr <- optional $ do

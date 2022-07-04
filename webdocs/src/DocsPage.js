@@ -100,7 +100,6 @@ function Statements(props) {
 
 function Statement(props) {
   let {statement} = props;
-  let {annotsMap} = useContext(ResMaps);
   const classes = useStyles();
 
   switch(statement.tag) {
@@ -193,32 +192,18 @@ function Statement(props) {
 
     return (<div>
       <h3 className={classes.noPlay} id={`defClass${classDeclName}`}>
-        <KeyWord>class</KeyWord> 
+        <KeyWord>class</KeyWord>
         <PClassName name={classDeclName}/>{showClassDeclVars}
       </h3>
       <div><Statements statements={comments}/></div>
       </div>);
+  case "RawDeclSubStatementAnnot":
   case "RawGlobalAnnot":
     const [annot, annotSubStatements] = statement.contents;
-    let pos = annot.contents[0][1];
-    let val = annotsMap[posKey(pos)];
 
-    let showAnnotExpr = <Expr expr={annot} />;
-    let showAnnot;
-    if(val && val.name === "#print") {
-      showAnnot = (
-        <div>
-          {showAnnotExpr}
-          <br />
-          <Val data={val.args.p} />
-        </div>
-      );
-    } else {
-      showAnnot = showAnnotExpr;
-    }
     return (
       <div className={classes.noPlay}>
-        {showAnnot}
+        <Annot annot={annot} />
         <div><Statements statements={annotSubStatements}/></div>
       </div>
     );
@@ -229,9 +214,6 @@ function Statement(props) {
         <div><Statements statements={statement.contents[1]}/></div>
       </div>
     );
-  case "RawComment":
-  case "RawDeclSubStatementComment":
-    return (<div className={classes.noPlay}><Comment comment={statement.contents} /></div>);
   default:
     console.error("Unknown renderStatement", statement);
     return "";
@@ -274,13 +256,44 @@ function DeclSubStatement(props) {
   case "RawDeclSubStatementDecl":
     return <div><Decl contents={subStatement.contents} /></div>;
   case "RawDeclSubStatementAnnot":
-    return <div><Expr expr={subStatement.contents} /></div>;
-  case "RawDeclSubStatementComment":
-    return <div><Comment comment={subStatement.contents} obj={obj} /></div>;
+    return <div><Annot annot={subStatement.contents[0]} obj={obj} /></div>;
   default:
     console.error("Unknown DeclSubStatement", subStatement);
     return "";
   }
+}
+
+function Annot(props) {
+  const {annot, obj} = props;
+  let {annotsMap} = useContext(ResMaps);
+
+  let pos = annot.contents[0][1];
+  let val = annotsMap[posKey(pos)];
+
+  let showAnnotExpr = <Expr expr={annot} obj={obj} />;
+  if(val && val.name === "#print") {
+    return (
+      <div>
+        {showAnnotExpr}
+        <br />
+        <Val data={val.args.p} />
+      </div>
+    );
+  }
+
+  if(val && val.name === "/Catln/#md") {
+    return <Comment comment={val.args.text.contents} />;
+  }
+
+  if (annot.tag === "RawTupleApply") {
+    if (annot.contents[1][1].tag === "RawValue") {
+      if (annot.contents[1][1].contents[1] === "/Catln/#md") {
+        return <Comment comment={annot.contents[2][0].contents[1].contents[1].contents} />;
+      }
+    }
+  }
+
+  return showAnnotExpr;
 }
 
 function Expr(props) {
