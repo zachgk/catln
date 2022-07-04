@@ -68,11 +68,11 @@ showObj env obj@Object{objM, objVars, objArgs} = do
   args' <- mapM (showObjArg env) objArgs
   return $ obj{objM=m', objVars=vars', objArgs=args'}
 
-showObjArrows :: FEnv -> (VObject, [VArrow]) -> TypeCheckResult (SObject, [SArrow])
-showObjArrows env (obj, arrows) = do
+showObjArrow :: FEnv -> (VObject, Maybe VArrow) -> TypeCheckResult (SObject, Maybe SArrow)
+showObjArrow env (obj, arrow) = do
   obj' <- showObj env obj
-  arrows' <- mapM (showArrow env) arrows
-  return (obj', arrows')
+  arrow' <- mapM (showArrow env) arrow
+  return (obj', arrow')
 
 showConHelper :: FEnv -> (Scheme -> Scheme -> SConstraint) -> VarMeta -> VarMeta -> SConstraint
 showConHelper env f p1 p2 = f (descriptor env p1) (descriptor env p2)
@@ -92,7 +92,7 @@ showCon env (UnionOf p1 p2s) = SUnionOf (descriptor env p1) (map (descriptor env
 
 showPrgm :: FEnv -> VPrgm -> TypeCheckResult SPrgm
 showPrgm env (objMap, classGraph, annots) = do
-  objMap' <- mapM (showObjArrows env) objMap
+  objMap' <- mapM (showObjArrow env) objMap
   annots' <- mapM (showExpr env) annots
   return (objMap', classGraph, annots')
 

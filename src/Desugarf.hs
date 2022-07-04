@@ -198,8 +198,8 @@ semiDesGuard obj (IfGuard e) = (subE, IfGuard e')
 semiDesGuard _ ElseGuard = ([], ElseGuard)
 semiDesGuard _ NoGuard = ([], NoGuard)
 
-declToObjArrow :: StatementEnv -> PSemiDecl -> (DesObject, [DesArrow])
-declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl (DeclLHS arrM (Pattern object@Object{objPath} guard)) annots expr) = (object'', [arrow])
+declToObjArrow :: StatementEnv -> PSemiDecl -> (DesObject, Maybe DesArrow)
+declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl (DeclLHS arrM (Pattern object@Object{objPath} guard)) annots expr) = (object'', Just arrow)
   where
     -- Inherit the path in main object name. If main is a context, also inherit in the context function as well
     updateObjPath o@Object{objPath=originalPath} = o{objPath = getPath inheritPath originalPath}
@@ -241,7 +241,7 @@ desMultiTypeDef (inheritPath, _) (MultiTypeDef className classVars dataMetas) su
       path' =  case path of
         Absolute p -> p
         Relative p -> inheritPath ++ "/" ++ p
-      objMap' = map (,[]) objs
+      objMap' = map (, Nothing) objs
       objPaths = map objPath objs
       dataTypes = map getMetaType dataMetas
       objs = mapMaybe (typeDefMetaToObj inheritPath classVars) dataMetas
@@ -262,7 +262,7 @@ desTypeDef :: StatementEnv -> PTypeDef -> [RawDeclSubStatement ParseMeta] -> Des
 desTypeDef (inheritPath, _) (TypeDef tp) subStatements = (objMap, emptyClassGraph, [])
   where
     objMap = case typeDefMetaToObj inheritPath H.empty tp of
-          Just obj -> [(obj{objDoc = desObjDocComment subStatements}, [])]
+          Just obj -> [(obj{objDoc = desObjDocComment subStatements}, Nothing)]
           Nothing  -> error "Type def could not be converted into meta"
 
 desClassDef :: StatementEnv -> Sealed -> RawClassDef -> [RawDeclSubStatement ParseMeta] -> Path -> DesPrgm

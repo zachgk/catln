@@ -58,7 +58,7 @@ mapMetaArrow f (Arrow m annots guard maybeExpr) = Arrow (f ArrMeta m) (map (mapM
 
 mapMetaObjectMap :: (MapMeta e) => (MetaType -> a -> b) -> ObjectMap (e a) a -> ObjectMap (e b) b
 mapMetaObjectMap f = map aux
-  where aux (obj, arrows) = (mapMeta f obj, map (mapMetaArrow f) arrows)
+  where aux (obj, arrow) = (mapMeta f obj, fmap (mapMetaArrow f) arrow)
 
 mapMetaPrgm :: (MapMeta e) => (MetaType -> a -> b) -> Prgm (e a) a -> Prgm (e b) b
 mapMetaPrgm f (objMap, classGraph, annots) = (mapMetaObjectMap f objMap, classGraph, map (mapMeta f) annots)

@@ -100,21 +100,21 @@ function ObjMap(props) {
       {props.objMap
         .sort((obj1, obj2) => obj1[0].objName < obj2[0].objName)
         .map((obj, objIndex) =>
-          <ObjArrows key={objIndex} objas={obj} Meta={props.Meta} showExprMetas={props.showExprMetas}/>
+          <ObjArrow key={objIndex} obja={obj} Meta={props.Meta} showExprMetas={props.showExprMetas}/>
       )}
     </List>
   );
 }
 
-function ObjArrows(props) {
-  const [obj, arrows] = props.objas;
+function ObjArrow(props) {
+  const [obj, arrow] = props.obja;
   const classes = useStyles();
 
-  let showArrows;
-  if(Object.keys(arrows).length > 0) {
-    showArrows = (
+  let showArrow;
+  if(arrow) {
+    showArrow = (
       <div>
-        {arrows.map((arrow, arrowIndex) => <Arrow key={arrowIndex} arrow={arrow} Meta={props.Meta} showExprMetas={props.showExprMetas}/>)}
+        <Arrow arrow={arrow} Meta={props.Meta} showExprMetas={props.showExprMetas}/>
       </div>
     );
   }
@@ -123,7 +123,7 @@ function ObjArrows(props) {
 
   return (
       <ListItem divider>
-        <ListItemText disableTypography primary={primary} secondary={showArrows} />
+        <ListItemText disableTypography primary={primary} secondary={showArrow} />
       </ListItem>
   );
 }

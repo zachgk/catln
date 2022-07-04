@@ -132,15 +132,15 @@ toObject env prefix obj@Object{objM, objVars, objArgs, objPath} = do
   args' <- mapM (toObjArg env prefix') $ H.toList objArgs
   return $ obj{objM=m', objVars=H.fromList vars', objArgs=H.fromList args'}
 
-toObjectArrows :: FEnv -> (VObject, [VArrow]) -> TypeCheckResult (TObject, [TArrow])
-toObjectArrows env (obj, arrows) = do
+toObjectArrow :: FEnv -> (VObject, Maybe VArrow) -> TypeCheckResult (TObject, Maybe TArrow)
+toObjectArrow env (obj, arrow) = do
   obj' <- toObject env "Object" obj
-  arrows' <- mapM (toArrow env) arrows
-  return (obj', arrows')
+  arrow' <- mapM (toArrow env) arrow
+  return (obj', arrow')
 
 toPrgm :: FEnv -> VPrgm -> TypeCheckResult TPrgm
 toPrgm env (objMap, classGraph, annots) = do
-  objMap' <- mapM (toObjectArrows env) objMap
+  objMap' <- mapM (toObjectArrow env) objMap
   annots' <- mapM (toExpr env) annots
   return (objMap', classGraph, annots')
 

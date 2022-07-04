@@ -143,7 +143,7 @@ data Object m = Object {
 data Arrow e m = Arrow m [CompAnnot e] (Guard e) (Maybe e) -- m is result metadata
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
-type ObjectMap e m = [(Object m, [Arrow e m])]
+type ObjectMap e m = [(Object m, Maybe (Arrow e m))]
 type Prgm e m = (ObjectMap e m, ClassGraph, [CompAnnot e]) -- TODO: Include [Export]
 
 instance Show m => Show (IExpr m) where

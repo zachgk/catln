@@ -55,8 +55,8 @@ buildTBEnv :: ResBuildEnv -> TBPrgm -> TBEnv
 buildTBEnv primEnv prgm@(objMap, classGraph, _) = baseEnv
   where
     baseEnv = TBEnv "" (H.union primEnv resEnv) H.empty prgm classGraph
-    resEnv = H.fromListWith (++) $ concatMap resFromArrows objMap
-    resFromArrows (obj, arrows) = mapMaybe (resFromArrow obj) arrows
+    resEnv = H.fromListWith (++) $ mapMaybe resFromMArrow objMap
+    resFromMArrow (obj, marrow) = marrow >>= resFromArrow obj
     resFromArrow obj@Object{objM, objPath} arrow@(Arrow _ _ aguard expr) = case expr of
       Just _ -> Just (objPath, [(objLeaf, aguard, \input -> ResEArrow input obj arrow) | objLeaf <- leafsFromMeta objM])
       Nothing -> Nothing

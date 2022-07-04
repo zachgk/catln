@@ -39,7 +39,7 @@ import           Utils
 -- Especially, not specifying bounds should not turn them into TopType.
 -- Similarly, matches or patterns are less effective then functions.
 -- TODO May need to differentiate top level of functions from inner levels
-objectPrecedence :: (Object m, [Arrow e m]) -> [Int]
+objectPrecedence :: (Object m, Maybe (Arrow e m)) -> [Int]
 objectPrecedence (Object{objBasis=TypeObj}, _)=    [1]
 objectPrecedence (Object{objBasis=FunctionObj}, arrs) = [2, declDef]
   where
@@ -52,10 +52,10 @@ objectPrecedence (Object{objBasis=PatternObj}, _)= [3]
 objectPrecedence (Object{objBasis=MatchObj}, _)=   [4]
 
 -- | Gets an object and all sub-ojects (recursively) from it's arguments
-getRecursiveObjs :: (Object m, [Arrow e m]) -> ObjectMap e m
-getRecursiveObjs (obj@Object{objArgs}, arrs) = (obj, arrs) : subObjMap
+getRecursiveObjs :: (Object m, Maybe (Arrow e m)) -> ObjectMap e m
+getRecursiveObjs (obj@Object{objArgs}, arr) = (obj, arr) : subObjMap
   where
-    subObjMap = concatMap (filter notMatchObj . concatMap (getRecursiveObjs . (,[])) . maybeToList . snd) (H.elems objArgs)
+    subObjMap = concatMap (filter notMatchObj . concatMap (getRecursiveObjs . (,Nothing)) . maybeToList . snd) (H.elems objArgs)
     notMatchObj (Object{objBasis}, _) = objBasis /= MatchObj
 
 -- | This creates 'feUnionAllObjs' and adds it to the 'FEnv'

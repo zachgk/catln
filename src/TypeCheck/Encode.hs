@@ -65,6 +65,12 @@ mapMWithFEnv env f = foldM f' ([], env)
           (b, e') <- f e a
           return (b:acc, e')
 
+mapMWithFEnvMaybe :: FEnv -> (FEnv -> a -> TypeCheckResult (b, FEnv)) -> Maybe a -> TypeCheckResult (Maybe b, FEnv)
+mapMWithFEnvMaybe env _ Nothing = return (Nothing, env)
+mapMWithFEnvMaybe env f (Just a) = do
+  (b, env') <- f env a
+  return (Just b, env')
+
 mapMWithFEnvMap :: (Eq k, Hashable k) => FEnv -> (FEnv -> a -> TypeCheckResult (b, FEnv)) -> H.HashMap k a -> TypeCheckResult (H.HashMap k b, FEnv)
 mapMWithFEnvMap env f hmap = do
   (res, env2) <- mapMWithFEnv env f' (H.toList hmap)
@@ -172,10 +178,10 @@ fromArrow obj@(Object _ _ objVars _ _ objPath) env1 (Arrow m annots aguard maybe
       let env5 = fAddVTypeGraph env4 objPath (obj, arrow')
       return (arrow', env5)
 
-fromObjectMap :: FEnv -> (VObject, [PArrow]) -> TypeCheckResult ((VObject, [VArrow]), FEnv)
-fromObjectMap env1 (obj, arrows) = do
-  (arrows', env2) <- mapMWithFEnv env1 (fromArrow obj) arrows
-  return ((obj, arrows'), env2)
+fromObjectMap :: FEnv -> (VObject, Maybe PArrow) -> TypeCheckResult ((VObject, Maybe VArrow), FEnv)
+fromObjectMap env1 (obj, arrow) = do
+  (arrow', env2) <- mapMWithFEnvMaybe env1 (fromArrow obj) arrow
+  return ((obj, arrow'), env2)
 
 fromObjVar :: VarMeta -> String -> FEnv -> (TypeVarName, PreMeta) -> TypeCheckResult ((TypeVarName, VarMeta), FEnv)
 fromObjVar objM prefix env1 (varName, m) = do
@@ -226,10 +232,10 @@ fromObject prefix isObjArg env (Object m basis vars args doc path) = do
   return (obj', env7)
 
 -- Add all of the objects first for various expressions that call other top level functions
-fromObjects :: FEnv -> (PObject, [PArrow]) -> TypeCheckResult ((VObject, [PArrow]), FEnv)
-fromObjects env (obj, arrows) = do
+fromObjects :: FEnv -> (PObject, Maybe PArrow) -> TypeCheckResult ((VObject, Maybe PArrow), FEnv)
+fromObjects env (obj, arrow) = do
   (obj', env1) <- fromObject "Object" False env obj
-  return ((obj', arrows), env1)
+  return ((obj', arrow), env1)
 
 fromPrgm :: FEnv -> (PPrgm, [VObject]) -> TypeCheckResult (VPrgm, FEnv)
 fromPrgm env1 ((objMap1, classGraph, annots), vobjs) = do
@@ -247,11 +253,11 @@ prepObjPrgm env1 pprgm@(objMap1, _, _) = do
 addTypeGraphArrow :: TObject -> FEnv -> TArrow -> TypeCheckResult ((), FEnv)
 addTypeGraphArrow obj@Object{objPath} env arr = return ((), fAddTTypeGraph env objPath (obj, arr))
 
-addTypeGraphObjects :: FEnv -> (TObject, [TArrow]) -> TypeCheckResult ((), FEnv)
-addTypeGraphObjects env (obj@Object{objPath}, arrows) = do
+addTypeGraphObjects :: FEnv -> (TObject, Maybe TArrow) -> TypeCheckResult ((), FEnv)
+addTypeGraphObjects env (obj@Object{objPath}, arrow) = do
   let objValue = singletonType (PartialType (PTypeName objPath) H.empty H.empty H.empty PtArgExact)
   let env' = fInsert env objPath (DefKnown objValue)
-  (_, env'') <- mapMWithFEnv env' (addTypeGraphArrow obj) arrows
+  (_, env'') <- mapMWithFEnvMaybe env' (addTypeGraphArrow obj) arrow
   return ((), env'')
 
 addTypeGraphPrgm :: FEnv -> TPrgm -> TypeCheckResult ((), FEnv)

@@ -139,6 +139,7 @@ type SGuard = Guard SExpr
 type SArrow = Arrow SExpr ShowMeta
 type SObjArg = ObjArg ShowMeta
 type SObject = Object ShowMeta
+type SObjectMap = ObjectMap SExpr ShowMeta
 type SPrgm = Prgm SExpr ShowMeta
 type SReplRes = ReplRes ShowMeta
 
@@ -151,7 +152,7 @@ type VArgMetaMap = ArgMetaMap VarMeta
 type VArrow = Arrow VExpr VarMeta
 type VObjArg = ObjArg VarMeta
 type VObject = Object VarMeta
-type VObjectMap = [(VObject, [VArrow])]
+type VObjectMap = ObjectMap VExpr VarMeta
 type VPrgm = (VObjectMap, ClassGraph, [VCompAnnot])
 type VReplRes = ReplRes VarMeta
 
@@ -162,7 +163,7 @@ type TGuard = Guard TExpr
 type TArrow = Arrow TExpr TypedMeta
 type TObjArg = ObjArg TypedMeta
 type TObject = Object TypedMeta
-type TObjectMap = [(TObject, [TArrow])]
+type TObjectMap = ObjectMap TExpr TypedMeta
 type TPrgm = Prgm TExpr TypedMeta
 type TReplRes = ReplRes TypedMeta
 
