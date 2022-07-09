@@ -37,6 +37,8 @@ const useStyles = makeStyles( theme => ({
   }
 }));
 
+const TocContext = React.createContext({});
+
 function posKey(pos) {
   const f = p => `${p.name}-${p.line}-${p.col}`;
   return `${f(pos[0])}_${f(pos[1])}_${pos[2]}`;
@@ -373,6 +375,7 @@ function CatlnResult(props) {
 }
 
 export {
+  TocContext,
   tagJoin,
   posKey,
   useApi,

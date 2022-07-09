@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useContext} from 'react';
 
 import { makeStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
@@ -20,7 +20,7 @@ import {
   useRouteMatch
 } from 'react-router-dom';
 
-import {useApi, Loading} from './Common';
+import {TocContext, Loading} from './Common';
 import DocsPage from './DocsPage';
 
 const useStyles = makeStyles({
@@ -52,11 +52,11 @@ const useStyles = makeStyles({
 });
 
 function Docs() {
-  let apiResult = useApi("/api/toc");
+  const tocResult = useContext(TocContext);
 
   return (
-    <Loading status={apiResult}>
-      <Main data={apiResult.data} />
+    <Loading status={tocResult}>
+      <Main data={tocResult.data} />
     </Loading>
   );
 }
