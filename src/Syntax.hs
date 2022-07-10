@@ -27,6 +27,7 @@ import           Text.Megaparsec.Error (ParseErrorBundle)
 
 import           Data.Aeson            hiding (Object)
 import           Data.Maybe
+import           MapMeta
 import           Syntax.Prgm
 import           Syntax.Types
 import           Text.Megaparsec
@@ -66,16 +67,19 @@ class Meta m where
   getMetaType :: m -> Type
   getMetaPos :: m -> CodeRange
   labelPosM :: String -> m -> m
+  emptyMetaN :: m
 
 instance Meta PreTyped where
   getMetaType (PreTyped t _) = t
   getMetaPos (PreTyped _ pos) = pos
   labelPosM s (PreTyped t pos) = PreTyped t (labelPos s pos)
+  emptyMetaN = PreTyped TopType Nothing
 
 instance Meta Typed where
   getMetaType (Typed t _) = t
   getMetaPos (Typed _ pos) = pos
   labelPosM s (Typed t pos) = Typed t (labelPos s pos)
+  emptyMetaN = Typed TopType Nothing
 
 labelPos :: String -> CodeRange -> CodeRange
 labelPos s (Just (p1, p2, sPrefix)) = Just (p1, p2, label')
@@ -86,6 +90,22 @@ labelPos _ Nothing = Nothing
 
 getExprType :: (ExprClass e, Meta m) => e m -> Type
 getExprType = getMetaType . getExprMeta
+
+emptyMetaM :: (Meta m) => String -> m -> m
+emptyMetaM = labelPosM
+
+emptyMetaE :: (Meta m, ExprClass e) => String -> e m -> m
+emptyMetaE s e = labelPosM s $ getExprMeta e
+
+objExpr :: (Meta m) => Object m -> Expr m
+objExpr Object{objM, objVars, objArgs, objPath} = mapMeta (\_ _ -> objM) $ applyArgs $ applyVars $ Value emptyMetaN objPath
+  where
+    applyVars b = foldr applyVar b $ H.toList objVars
+    applyVar (varName, varVal) b = VarApply (emptyMetaE "" b) b varName varVal
+
+    applyArgs b = foldr applyArg b $ H.toList objArgs
+    applyArg (argName, (argM, Just argVal)) b = TupleApply emptyMetaN (emptyMetaE "appArg" b, b) (TupleArgIO argM argName (objExpr argVal))
+    applyArg (argName, (argM, Nothing)) b = TupleApply emptyMetaN (emptyMetaE "appArg" b, b) (TupleArgI argM argName)
 
 type ArgMetaMapWithSrc m = H.HashMap ArgName (m, Type)
 -- |

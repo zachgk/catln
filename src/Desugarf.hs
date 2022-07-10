@@ -58,10 +58,10 @@ scopeSubDeclFunNamesInExpr _ _ e@CExpr{} = e
 scopeSubDeclFunNamesInExpr prefix replaceNames (Value m name) = Value m $ scopeSubDeclFunNamesInS prefix replaceNames name
 scopeSubDeclFunNamesInExpr prefix replaceNames (Arg m name) = Arg m $ scopeSubDeclFunNamesInS prefix replaceNames name
 scopeSubDeclFunNamesInExpr _ _ e@HoleExpr{} = e
-scopeSubDeclFunNamesInExpr prefix replaceNames (TupleApply m (bm, bExpr) argName argVal) = TupleApply m (bm, bExpr') argName argVal'
+scopeSubDeclFunNamesInExpr prefix replaceNames (TupleApply m (bm, bExpr) arg) = TupleApply m (bm, bExpr') arg'
   where
     bExpr' = scopeSubDeclFunNamesInExpr prefix replaceNames bExpr
-    argVal' = scopeSubDeclFunNamesInExpr prefix replaceNames argVal
+    arg' = mapTupleArgValue (scopeSubDeclFunNamesInExpr prefix replaceNames) arg
 scopeSubDeclFunNamesInExpr prefix replaceNames (VarApply m bExpr varName varVal) = VarApply m bExpr' varName varVal
   where
     bExpr' = scopeSubDeclFunNamesInExpr prefix replaceNames bExpr
@@ -96,14 +96,14 @@ currySubFunctionsUpdateExpr :: S.HashSet TypeName -> H.HashMap ArgName PObjArg -
 currySubFunctionsUpdateExpr _ _ c@CExpr{} = c
 currySubFunctionsUpdateExpr _ parentArgs v@Value{} | H.null parentArgs = v
 currySubFunctionsUpdateExpr toUpdate parentArgs v@(Value _ vn) = if S.member vn toUpdate
-  then foldr (\(parentArgName, (parentArgM, _)) e -> TupleApply emptyMetaN (emptyMetaN, e) (Just parentArgName) (Value parentArgM parentArgName)) v $ H.toList parentArgs
+  then foldr (\(parentArgName, (parentArgM, _)) e -> TupleApply emptyMetaN (emptyMetaN, e) (TupleArgIO emptyMetaN parentArgName (Value parentArgM parentArgName))) v $ H.toList parentArgs
   else v
 currySubFunctionsUpdateExpr _ _ Arg{} = error "Only values should be used at this point, yet to disambiguate Value vs Arg"
 currySubFunctionsUpdateExpr _ _ e@HoleExpr{} = e
-currySubFunctionsUpdateExpr toUpdate parentArgs (TupleApply tm (tbm, tbe) tArgName tArgVal) = TupleApply tm (tbm, tbe') tArgName tArgVal'
+currySubFunctionsUpdateExpr toUpdate parentArgs (TupleApply tm (tbm, tbe) targ) = TupleApply tm (tbm, tbe') targ'
   where
     tbe' = currySubFunctionsUpdateExpr toUpdate parentArgs tbe
-    tArgVal' = currySubFunctionsUpdateExpr toUpdate parentArgs tArgVal
+    targ' = mapTupleArgValue (currySubFunctionsUpdateExpr toUpdate parentArgs) targ
 currySubFunctionsUpdateExpr toUpdate parentArgs (VarApply tm tbe tVarName tVarVal) = VarApply tm tbe' tVarName tVarVal
   where
     tbe' = currySubFunctionsUpdateExpr toUpdate parentArgs tbe
@@ -142,7 +142,7 @@ desExpr arrArgs (Value m n) = if H.member n arrArgs
   else Value m n
 desExpr _ Arg{} = error "Only values should be used at this point as it has not yet been disambiguated between Value and Arg"
 desExpr _ (HoleExpr m h) = HoleExpr m h
-desExpr arrArgs (TupleApply m (bm, be) argName argVal) = TupleApply m (bm, desExpr arrArgs be) argName (desExpr arrArgs argVal)
+desExpr arrArgs (TupleApply m (bm, be) arg) = TupleApply m (bm, desExpr arrArgs be) (mapTupleArgValue (desExpr arrArgs) arg)
 desExpr arrArgs (VarApply m be varName varVal) = VarApply m (desExpr arrArgs be) varName varVal
 
 desGuard :: PArgMetaMap -> PSGuard -> DesGuard
@@ -152,12 +152,12 @@ semiDesExpr :: PObject -> PExpr -> ([PSemiDecl], PSExpr)
 semiDesExpr _ (RawCExpr m c) = ([], CExpr m c)
 semiDesExpr _ (RawValue m n) = ([], Value m n)
 semiDesExpr _ (RawHoleExpr m h) = ([], HoleExpr m h)
-semiDesExpr obj (RawTupleApply m'' (bm, be) args) = (\(a, _, TupleApply _ (bm'', be'') argName'' argVal'') -> (a, TupleApply m'' (bm'', be'') argName'' argVal'')) $ foldl aux (subBe, bm, be') args
+semiDesExpr obj (RawTupleApply m'' (bm, be) args) = (\(a, _, TupleApply _ (bm'', be'') arg'') -> (a, TupleApply m'' (bm'', be'') arg'')) $ foldl aux (subBe, bm, be') args
   where
     (subBe, be') = semiDesExpr obj be
-    aux (sub, m, e) (RawTupleArgNamed _ argName argVal) = (subArgVal ++ sub, emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (Just argName) argVal')
+    aux (sub, m, e) (RawTupleArgNamed argM argName argVal) = (subArgVal ++ sub, emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (TupleArgIO argM argName argVal'))
       where (subArgVal, argVal') = semiDesExpr obj argVal
-    aux (sub, m, e) (RawTupleArgInfer _ argVal) = (subArgVal ++ sub, emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) Nothing argVal')
+    aux (sub, m, e) (RawTupleArgInfer argM argVal) = (subArgVal ++ sub, emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (TupleArgO argM argVal'))
       where (subArgVal, argVal') = semiDesExpr obj argVal
 semiDesExpr obj (RawVarsApply m be vs) = (subBe, foldr aux be' vs)
   where
@@ -184,7 +184,7 @@ semiDesExpr obj@Object{objVars} r@(RawMatch m e matchItems) = (subE ++ subMatchI
     condName = "$" ++ take 6 (printf "%08x" (hash r))
     argName = condName ++ "-arg"
     (subE, e') = semiDesExpr obj e
-    expr' = TupleApply m (emptyMetaM "app" m, Value (emptyMetaM "val" m) condName) (Just argName) e'
+    expr' = TupleApply m (emptyMetaM "app" m, Value (emptyMetaM "val" m) condName) (TupleArgIO (emptyMetaE "appArg" e') argName e')
     subMatchItems = concatMap semiDesMatchItem matchItems
     semiDesMatchItem (Pattern patt pattGuard, matchExpr) = concat [[matchItemExpr'], subPattGuard, subMatchExpr]
       where
@@ -206,7 +206,7 @@ semiDesExpr obj@Object{objVars} r@(RawCase m e ((Pattern firstObj@Object{objM=fm
     restDecl = PSemiDecl (DeclLHS m (Pattern declObj ElseGuard)) [] (Just restExpr')
     (subRE, restExpr') = semiDesExpr obj (RawCase m e restCases)
     (subE, e') = semiDesExpr obj e
-    expr' = TupleApply m (emptyMetaM "app" m, Value (emptyMetaE "val" e) condName) (Just argName) e'
+    expr' = TupleApply m (emptyMetaM "app" m, Value (emptyMetaE "val" e) condName) (TupleArgIO (emptyMetaE "appArg" e') argName e')
 semiDesExpr obj (RawList m []) = semiDesExpr obj (RawValue m "/Data/Nil")
 semiDesExpr obj (RawList m (l:ls)) = semiDesExpr obj (RawTupleApply (emptyMetaM "listApp" (getExprMeta l)) (emptyMetaM "listBase" (getExprMeta l), RawValue m "/Data/Cons") [RawTupleArgNamed (emptyMetaE "arg" l) "head" l, RawTupleArgNamed (emptyMetaE "argRemaining" l) "tail" (RawList m ls)])
 

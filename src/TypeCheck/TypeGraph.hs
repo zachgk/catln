@@ -25,7 +25,6 @@ import qualified Data.HashSet        as S
 import           Data.Maybe
 
 import           Data.List           (partition)
-import           Parser.Syntax       (emptyMetaN)
 import           Syntax
 import           Syntax.Prgm
 import           Syntax.Types

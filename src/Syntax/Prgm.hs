@@ -47,6 +47,15 @@ data RawTupleArg m
   | RawTupleArgInfer m (RawExpr m)
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
+-- |
+-- An argument applied in an expression.
+-- TODO Consider replacing the TupleArgI ArgName with an Expr as a generalization. In that case, this ArgName would be equivalent to a Value. It could also include lenses.
+data TupleArg e m
+  = TupleArgI m ArgName -- ^ An input arg. Can be thought of as a key without a value. Used only in input expressions.
+  | TupleArgO m (e m) -- ^ An output arg. Can be thought of as a value with an unknown key. Used only in output expressions before typechecking, as typechecking will determine the matching key.
+  | TupleArgIO m ArgName (e m) -- ^ An arg containing both the name and value.
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+
 -- | The type of hole (a gap where an expression should be). Used in inputs to ignore the expression and outputs.
 data Hole
   = HoleActive (Maybe Name) -- ^ A hole such as _ or _name, where the name is optional and treated as an error
@@ -76,7 +85,7 @@ data Expr m
   | Value m TypeName
   | Arg m ArgName
   | HoleExpr m Hole
-  | TupleApply m (m, Expr m) (Maybe ArgName) (Expr m)
+  | TupleApply m (m, Expr m) (TupleArg Expr m)
   | VarApply m (Expr m) TypeVarName m
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
@@ -156,13 +165,16 @@ instance Show m => Show (Expr m) where
   show (Value _ name) = printf "Value %s" name
   show (Arg m name) = printf "Arg %s %s" (show m) name
   show (HoleExpr m hole) = printf "Hole %s %s" (show m) (show hole)
-  show (TupleApply _ (_, baseExpr) argName argVal) = printf "%s(%s%s)" baseExpr' argName' (show argVal)
+  show (TupleApply _ (_, baseExpr) arg) = printf "%s(%s)" baseExpr' arg'
     where
       baseExpr' = case baseExpr of
         Value _ funName -> funName
         TupleApply{}    -> show baseExpr
         _               -> printf "(%s)" (show baseExpr)
-      argName' = maybe "" (++ " = ") argName
+      arg' = case arg of
+        TupleArgIO _ argName argVal -> argName ++ " = " ++ show argVal
+        TupleArgI _ argName         -> argName
+        TupleArgO _ argVal          -> show argVal
   show (VarApply _ baseExpr varName varVal) = printf "%s<%s%s>" baseExpr' varName (show varVal)
     where
       baseExpr' = case baseExpr of
@@ -219,15 +231,20 @@ instance ExprClass RawExpr where
 
 instance ExprClass Expr where
   getExprMeta expr = case expr of
-    CExpr m _          -> m
-    Value m _          -> m
-    Arg m _            -> m
-    HoleExpr m _       -> m
-    TupleApply m _ _ _ -> m
-    VarApply m _ _ _   -> m
+    CExpr m _        -> m
+    Value m _        -> m
+    Arg m _          -> m
+    HoleExpr m _     -> m
+    TupleApply m _ _ -> m
+    VarApply m _ _ _ -> m
 
   getExprArg (Arg _ n) = Just n
   getExprArg _         = Nothing
+
+mapTupleArgValue :: (e1 m -> e2 m) -> TupleArg e1 m -> TupleArg e2 m
+mapTupleArgValue _ (TupleArgI m n)    = TupleArgI m n
+mapTupleArgValue f (TupleArgO m v)    = TupleArgO m (f v)
+mapTupleArgValue f (TupleArgIO m n v) = TupleArgIO m n (f v)
 
 type ArgMetaMap m = H.HashMap ArgName m
 -- |

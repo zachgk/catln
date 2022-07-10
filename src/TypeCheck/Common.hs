@@ -180,11 +180,13 @@ instance Meta VarMeta where
   getMetaType (VarMeta _ p _) = getMetaType p
   getMetaPos (VarMeta _ p _) = getMetaPos p
   labelPosM s (VarMeta p pos o) = VarMeta p (labelPosM s pos) o
+  emptyMetaN = error "No emptyMetaN for VarMeta"
 
 instance Meta ShowMeta where
   getMetaType (ShowMeta (SType ub _ _) _) = ub
   getMetaPos (ShowMeta _ varMeta) = getMetaPos varMeta
   labelPosM s (ShowMeta scheme pos) = ShowMeta scheme (labelPosM s pos)
+  emptyMetaN = error "No emptyMetaN for ShowMeta"
 
 instance Show TypeCheckError where
   show (GenTypeCheckError _ s) = s

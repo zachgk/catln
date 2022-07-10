@@ -75,7 +75,7 @@ buildExpr TBEnv{tbVals} _ (Value (Typed (UnionType prodTypes) pos) name) = case 
     e -> error $ printf "Found unexpected value type in buildExpr: %s" (show e)
 buildExpr TBEnv{tbClassGraph} (os, obj) (Arg (Typed (TypeVar (TVArg a)) _) name) = return $ ArgArrow (snd $ fromJust $ suffixLookupInDict a $ formArgMetaMapWithSrc tbClassGraph obj os) name
 buildExpr _ _ (Arg (Typed tp _) name) = return $ ArgArrow tp name
-buildExpr TBEnv{tbClassGraph} _ (TupleApply (Typed tp pos) (Typed baseType _, baseExpr) (Just argName) argExpr) = case typesGetArg tbClassGraph argName tp of
+buildExpr TBEnv{tbClassGraph} _ (TupleApply (Typed tp pos) (Typed baseType _, baseExpr) (TupleArgIO _ argName argExpr)) = case typesGetArg tbClassGraph argName tp of
     Nothing -> CErr [MkCNote $ BuildTreeCErr pos $ printf "Found no types for tupleApply %s with type %s and expr %s" (show baseExpr) (show tp) (show argExpr)]
     Just leafArgs -> do
       let baseBuild = ExprArrow baseExpr (getExprType baseExpr) baseType

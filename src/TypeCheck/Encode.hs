@@ -23,7 +23,6 @@ import           Data.Hashable       (Hashable)
 import qualified Data.IntMap.Lazy    as IM
 import           Prelude             hiding (unzip)
 
-import           Parser.Syntax       (emptyMetaN)
 import           Syntax
 import           Syntax.Prgm
 import           Syntax.Types
@@ -117,35 +116,34 @@ fromExpr objArgs obj env1 (Arg m name) = do
 fromExpr _ obj env1 (HoleExpr m hole) = do
   (m', env2) <- fromMeta env1 BUpper obj m ("Hole " ++ show hole)
   return (HoleExpr m' hole, env2)
-fromExpr objArgs obj env1 (TupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
+fromExpr objArgs obj env1 (TupleApply m (baseM, baseExpr) (TupleArgIO argM argName argExpr)) = do
   (m', env2) <- fromMeta env1 BUpper obj m $ printf "TupleApply %s(%s = %s) Meta" (show baseExpr) argName (show argExpr)
   (baseM', env3) <- fromMeta env2 BUpper obj baseM $ printf "TupleApply %s(%s = %s) BaseMeta" (show baseExpr) argName (show argExpr)
   (baseExpr', env4) <- fromExpr objArgs obj env3 baseExpr
   (argExpr', env5) <- fromExpr objArgs obj env4 argExpr
-  let (convertExprMeta, env6) = fresh env5 (TypeCheckResult [] $ SType TopType bottomType "Tuple converted expr meta")
-  let convertExprMeta' = VarMeta convertExprMeta (PreTyped TopType (labelPos "convert" $ getMetaPos $ getExprMeta argExpr)) obj
+  (argM', env6) <- fromMeta env5 BUpper obj argM $ printf "TupleApply %s(%s = %s) ArgMeta" (show baseExpr) argName (show argExpr)
   let constraints = [ArrowTo (getExprMeta baseExpr') baseM',
                      AddArg (baseM', argName) m',
                      BoundedByObjs m',
-                     ArrowTo (getExprMeta argExpr') convertExprMeta',
-                     PropEq (m', argName) convertExprMeta'
+                     ArrowTo (getExprMeta argExpr') argM',
+                     PropEq (m', argName) argM'
                     ]
   let env7 = addConstraints env6 constraints
-  return (TupleApply m' (baseM', baseExpr') (Just argName) argExpr', env7)
-fromExpr objArgs obj env1 (TupleApply m (baseM, baseExpr) Nothing argExpr) = do
+  return (TupleApply m' (baseM', baseExpr') (TupleArgIO argM' argName argExpr'), env7)
+fromExpr objArgs obj env1 (TupleApply m (baseM, baseExpr) (TupleArgO argM argExpr)) = do
   (m', env2) <- fromMeta env1 BUpper obj m $ printf "TupleApplyInfer %s(%s) Meta" (show baseExpr) (show argExpr)
   (baseM', env3) <- fromMeta env2 BUpper obj baseM $ printf "TupleApplyInfer %s(%s) BaseMeta" (show baseExpr) (show argExpr)
   (baseExpr', env4) <- fromExpr objArgs obj env3 baseExpr
   (argExpr', env5) <- fromExpr objArgs obj env4 argExpr
-  let (convertExprMeta, env6) = fresh env5 (TypeCheckResult [] $ SType TopType bottomType "Tuple converted expr meta")
-  let convertExprMeta' = VarMeta convertExprMeta (PreTyped TopType (labelPos "convert" $ getMetaPos $ getExprMeta argExpr)) obj
+  (argM', env6) <- fromMeta env5 BUpper obj argM $ printf "TupleApplyInfer %s(%s) ArgMeta" (show baseExpr) (show argExpr)
   let constraints = [ArrowTo (getExprMeta baseExpr') baseM',
                      AddInferArg baseM' m',
                      BoundedByObjs m',
-                     ArrowTo (getExprMeta argExpr') convertExprMeta'
+                     ArrowTo (getExprMeta argExpr') argM'
                     ]
   let env7 = addConstraints env6 constraints
-  return (TupleApply m' (baseM', baseExpr') Nothing argExpr', env7)
+  return (TupleApply m' (baseM', baseExpr') (TupleArgO argM' argExpr'), env7)
+fromExpr _ _ _ (TupleApply _ _ TupleArgI{}) = error "Unexpected TupleArgI in encode fromExpr"
 fromExpr oArgs obj env1 (VarApply m baseExpr varName varVal) = do
   let baseName = printf "VarApply %s<%s = %s>" (show baseExpr) varName (show varVal) :: String
   (m', env2) <- fromMeta env1 BUpper obj m $ printf "%s Meta" baseName

@@ -30,12 +30,17 @@ class MapMeta m where
 
 --
 
+mapMetaTupleArg :: (MapMeta e) => (MetaType -> a -> b) -> TupleArg e a -> TupleArg e b
+mapMetaTupleArg f (TupleArgI m argName) = TupleArgI (f ExprMeta m) argName
+mapMetaTupleArg f (TupleArgO m argVal) = TupleArgO (f ExprMeta m) (mapMeta f argVal)
+mapMetaTupleArg f (TupleArgIO m argName argVal) = TupleArgIO (f ExprMeta m) argName (mapMeta f argVal)
+
 instance MapMeta Expr where
   mapMeta f (CExpr m c) = CExpr (f ExprMeta m) c
   mapMeta f (Value m n) = Value (f ExprMeta m) n
   mapMeta f (Arg m n) = Arg (f ExprMeta m) n
   mapMeta f (HoleExpr m h) = HoleExpr (f ExprMeta m) h
-  mapMeta f (TupleApply m (bm, be) argName argVal) = TupleApply (f ExprMeta m) (f ExprMeta bm, mapMeta f be) argName (mapMeta f argVal)
+  mapMeta f (TupleApply m (bm, be) arg) = TupleApply (f ExprMeta m) (f ExprMeta bm, mapMeta f be) (mapMetaTupleArg f arg)
   mapMeta f (VarApply m be varName varVal) = VarApply (f ExprMeta m) (mapMeta f be) varName (f ObjVarMeta varVal)
 
 mapMetaGuard :: (MapMeta e) => (MetaType -> a -> b) -> Guard (e a) -> Guard (e b)

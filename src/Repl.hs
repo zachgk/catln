@@ -17,7 +17,6 @@ import qualified Data.HashMap.Strict      as H
 
 import           CRes
 import           Parser
-import           Parser.Syntax
 import           Syntax
 import           Syntax.Prgm
 import           Syntax.Types

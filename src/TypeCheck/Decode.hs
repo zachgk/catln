@@ -68,12 +68,13 @@ toExpr env (Arg m name) = do
 toExpr env (HoleExpr m hole) = do
   m' <- toMeta env m $ "Arg_" ++ show hole
   return $ HoleExpr m' hole
-toExpr env (TupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
+toExpr env (TupleApply m (baseM, baseExpr) (TupleArgIO argM argName argExpr)) = do
   m' <- toMeta env m "TupleApply_M"
   baseM' <- toMeta env baseM "TupleApply_baseM"
   baseExpr' <- toExpr env baseExpr
+  argM' <- toMeta env argM "TupleApply_ArgM"
   argExpr' <- toExpr env argExpr
-  let result = TupleApply m' (baseM', baseExpr') (Just argName) argExpr'
+  let result = TupleApply m' (baseM', baseExpr') (TupleArgIO argM' argName argExpr')
   case m' of -- check for errors
 
     -- Don't check if a bottom type is present
@@ -84,11 +85,12 @@ toExpr env (TupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
                                         TypeCheckResult [TupleMismatch baseM' baseExpr' tp $ H.singleton argName argExpr'] result
 
     _ -> return result
-toExpr env (TupleApply m (baseM, baseExpr) Nothing argExpr) = do
+toExpr env (TupleApply m (baseM, baseExpr) (TupleArgO argM argExpr)) = do
   let pos = getMetaPos m
   m' <- toMeta env m "TupleApplyInfer_M"
   baseM' <- toMeta env baseM "TupleApplyInfer_baseM"
   baseExpr' <- toExpr env baseExpr
+  argM' <- toMeta env argM "TupleApplyInfer_argM"
   argExpr' <- toExpr env argExpr
   argName <- case (getMetaType baseM', getMetaType m') of
     (UnionType basePartialLeafs, UnionType partialLeafs) -> case (splitUnionType basePartialLeafs, splitUnionType partialLeafs) of
@@ -97,7 +99,8 @@ toExpr env (TupleApply m (baseM, baseExpr) Nothing argExpr) = do
         _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to multiple arg options"]
       _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to multiple types"]
     _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to non UnionType"]
-  return $ TupleApply m' (baseM', baseExpr') (Just argName) argExpr'
+  return $ TupleApply m' (baseM', baseExpr') (TupleArgIO argM' argName argExpr')
+toExpr _ (TupleApply _ _ TupleArgI{}) = error "Unexpected TupleArgI in toExpr"
 toExpr env (VarApply m baseExpr varName varVal) = do
   m' <- toMeta env m "VarApply_M"
   baseExpr' <- toExpr env baseExpr

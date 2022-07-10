@@ -67,16 +67,6 @@ type DesPrgmGraphData = GraphData DesPrgm String
 emptyMeta :: SourcePos -> SourcePos -> ParseMeta
 emptyMeta p1 p2 = PreTyped TopType (Just (p1, p2, ""))
 
-emptyMetaN :: ParseMeta
-emptyMetaN = PreTyped TopType Nothing
-
-emptyMetaM :: (Meta m) => String -> m -> m
-emptyMetaM = labelPosM
-
-emptyMetaE :: (Meta m, ExprClass e) => String -> e m -> m
-emptyMetaE s e = labelPosM s $ getExprMeta e
-
-
 rawVal :: String -> PExpr
 rawVal name = RawValue m name
   where m = PreTyped (singletonType $ PartialType (PTypeName name) H.empty H.empty H.empty PtArgExact) Nothing

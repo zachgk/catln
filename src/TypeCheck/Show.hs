@@ -36,12 +36,23 @@ showExpr env (Arg m name) = do
 showExpr env (HoleExpr m hole) = do
   m' <- showM env m
   return $ HoleExpr m' hole
-showExpr env (TupleApply m (bm, base) argName argVal) = do
+showExpr env (TupleApply m (bm, base) arg) = do
   m' <- showM env m
   bm' <- showM env bm
   base' <- showExpr env base
-  argVal' <- showExpr env argVal
-  return $ TupleApply m' (bm', base') argName argVal'
+  arg' <- case arg of
+    TupleArgI argM argName -> do
+      argM' <- showM env argM
+      return $ TupleArgI argM' argName
+    TupleArgO argM argVal -> do
+      argM' <- showM env argM
+      argVal' <- showExpr env argVal
+      return $ TupleArgO argM' argVal'
+    TupleArgIO argM argName argVal -> do
+      argM' <- showM env argM
+      argVal' <- showExpr env argVal
+      return $ TupleArgIO argM' argName argVal'
+  return $ TupleApply m' (bm', base') arg'
 showExpr env (VarApply m base varName varVal) = do
   m' <- showM env m
   base' <- showExpr env base
