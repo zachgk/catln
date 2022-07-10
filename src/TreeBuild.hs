@@ -78,8 +78,8 @@ buildExpr _ _ (Arg (Typed tp _) name) = return $ ArgArrow tp name
 buildExpr TBEnv{tbClassGraph} _ (TupleApply (Typed tp pos) (Typed baseType _, baseExpr) argName argExpr) = case typesGetArg tbClassGraph argName tp of
     Nothing -> CErr [MkCNote $ BuildTreeCErr pos $ printf "Found no types for tupleApply %s with type %s and expr %s" (show baseExpr) (show tp) (show argExpr)]
     Just leafArgs -> do
-      let baseBuild = ExprArrow baseExpr (getMetaType $ getExprMeta baseExpr) baseType
-      let argVal = ExprArrow argExpr (getMetaType $ getExprMeta argExpr) leafArgs
+      let baseBuild = ExprArrow baseExpr (getExprType baseExpr) baseType
+      let argVal = ExprArrow argExpr (getExprType argExpr) leafArgs
       return $ ResArrowTupleApply baseBuild argName argVal
 buildExpr _ _ e = error $ printf "Bad buildExpr %s" (show e)
 
@@ -132,7 +132,7 @@ buildGuardArrows env obj input ee visitedArrows srcType destType guards = do
     buildGuard (NoGuardGroup tp tree) = (tp,) <$> ltry tree
     buildGuard (CondGuardGroup ifs (elseTp, elseTree)) = do
       ifTreePairs <- forM ifs $ \(_, ifCond, ifThen@(ResEArrow _ o _ _)) -> do
-            ifTree' <- buildExprImp env (srcType, o) ifCond (getMetaType $ getExprMeta ifCond) boolType
+            ifTree' <- buildExprImp env (srcType, o) ifCond (getExprType ifCond) boolType
             thenTree' <- ltry ifThen
             return ((ifTree', input, o), thenTree')
       elseTree' <- ltry elseTree
@@ -245,10 +245,10 @@ buildArrow env objPartial obj@Object{objVars} compAnnots arrow@(Arrow (Typed am 
           Just argMeta -> getMetaType argMeta
           Nothing      -> error "Bad TVArg in makeBaseEnv"
         _ -> am
-  resArrowTree <- resolveTree env' objSrc (ExprArrow expr (getMetaType $ getExprMeta expr) am')
+  resArrowTree <- resolveTree env' objSrc (ExprArrow expr (getExprType expr) am')
   compAnnots' <- forM compAnnots $ \annot -> do
                                        let annotEnv = env{tbName = printf "globalAnnot %s" (show annot)}
-                                       let annotType = getMetaType $ getExprMeta annot
+                                       let annotType = getExprType annot
                                        resolveTree annotEnv objSrc (ExprArrow annot annotType annotType)
   return $ Just (arrow, (resArrowTree, compAnnots'))
 
@@ -257,4 +257,4 @@ buildRoot env input src dest = do
   let env' = env{tbName = printf "root"}
   let emptyObj = Object (Typed (singletonType src) Nothing) FunctionObj H.empty H.empty Nothing "EmptyObj"
   let objSrc = (src, emptyObj)
-  resolveTree env' objSrc (ExprArrow input (getMetaType $ getExprMeta input) dest)
+  resolveTree env' objSrc (ExprArrow input (getExprType input) dest)

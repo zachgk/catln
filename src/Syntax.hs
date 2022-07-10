@@ -84,6 +84,9 @@ labelPos s (Just (p1, p2, sPrefix)) = Just (p1, p2, label')
           _  -> printf "%s-%s" sPrefix s
 labelPos _ Nothing = Nothing
 
+getExprType :: (ExprClass e, Meta m) => e m -> Type
+getExprType = getMetaType . getExprMeta
+
 type ArgMetaMapWithSrc m = H.HashMap ArgName (m, Type)
 -- |
 -- The 'formArgMetaMapWithSrc' is similar to the 'formArgMetaMap' function.
@@ -120,7 +123,7 @@ arrowDestType fullDest classGraph src obj@Object{objM} (Arrow arrM _ maybeExpr) 
     varEnv = formVarMap classGraph $ intersectTypes classGraph (getMetaType objM) (singletonType src)
     argEnv = snd <$> formArgMetaMapWithSrc classGraph obj ((\(UnionType pl) -> head $ splitUnionType pl) $ substituteVars $ singletonType src)
     substitute = substituteVarsWithVarEnv varEnv . substituteArgsWithArgEnv argEnv
-    expr' = fmap (substitute . getMetaType . getExprMeta) maybeExpr
+    expr' = fmap (substitute . getExprType) maybeExpr
     arr' = substitute $ getMetaType arrM
     joined = if fullDest
       then unionTypes classGraph (fromMaybe bottomType expr') arr'

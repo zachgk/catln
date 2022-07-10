@@ -30,7 +30,7 @@ ioArg = Arg (Typed ioType Nothing) "io"
 eApply :: EExpr -> String -> EExpr -> EExpr
 eApply baseExpr argName argExpr = TupleApply m (getExprMeta baseExpr, baseExpr) argName argExpr
   where
-    m = Typed (singletonType $ baseType{ptArgs=H.insert argName (getMetaType $ getExprMeta argExpr) baseArgs}) Nothing
+    m = Typed (singletonType $ baseType{ptArgs=H.insert argName (getExprType argExpr) baseArgs}) Nothing
     baseType@PartialType{ptArgs=baseArgs} = getExprPartialType baseExpr
 
 eVal :: String -> EExpr
@@ -38,7 +38,7 @@ eVal name = Value m name
   where m = Typed (singletonType $ PartialType (PTypeName name) H.empty H.empty H.empty PtArgExact) Nothing
 
 getExprPartialType :: EExpr -> PartialType
-getExprPartialType expr = case getMetaType $ getExprMeta expr of
+getExprPartialType expr = case getExprType expr of
   UnionType partials -> case splitUnionType partials of
     [partial] -> partial
     _ -> error $ printf "Found non-singleton in getExprPartialType %s" (show expr)

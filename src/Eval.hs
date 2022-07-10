@@ -176,7 +176,7 @@ evalAnnots prgmName prgmGraphData = do
   let prgm@(_, _, annots) = prgmFromGraphData prgmName prgmGraphData
   let env@Env{evTbEnv} = evalBaseEnv prgm
   forM annots $ \annot -> do
-    let exprType = getMetaType $ getExprMeta annot
+    let exprType = getExprType annot
     let inTree = ExprArrow annot exprType exprType
     let emptyType = PartialType (PTypeName "EmptyObj") H.empty H.empty H.empty PtArgExact
     let emptyObj = Object (Typed (singletonType emptyType) Nothing) FunctionObj H.empty H.empty Nothing "EmptyObj"
