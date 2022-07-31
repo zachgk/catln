@@ -28,7 +28,7 @@ ioArg :: EExpr
 ioArg = Arg (Typed ioType Nothing) "io"
 
 eApply :: EExpr -> String -> EExpr -> EExpr
-eApply baseExpr argName argExpr = TupleApply m (getExprMeta baseExpr, baseExpr) argName argExpr
+eApply baseExpr argName argExpr = TupleApply m (getExprMeta baseExpr, baseExpr) (Just argName) argExpr
   where
     m = Typed (singletonType $ baseType{ptArgs=H.insert argName (getExprType argExpr) baseArgs}) Nothing
     baseType@PartialType{ptArgs=baseArgs} = getExprPartialType baseExpr

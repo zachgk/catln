@@ -73,7 +73,7 @@ toExpr env (ITupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
   baseM' <- toMeta env baseM "TupleApply_baseM"
   baseExpr' <- toExpr env baseExpr
   argExpr' <- toExpr env argExpr
-  let result = TupleApply m' (baseM', baseExpr') argName argExpr'
+  let result = TupleApply m' (baseM', baseExpr') (Just argName) argExpr'
   case m' of -- check for errors
 
     -- Don't check if a bottom type is present
@@ -97,7 +97,7 @@ toExpr env (ITupleApply m (baseM, baseExpr) Nothing argExpr) = do
         _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to multiple arg options"]
       _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to multiple types"]
     _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to non UnionType"]
-  return $ TupleApply m' (baseM', baseExpr') argName argExpr'
+  return $ TupleApply m' (baseM', baseExpr') (Just argName) argExpr'
 toExpr env (IVarApply m baseExpr varName varVal) = do
   m' <- toMeta env m "VarApply_M"
   baseExpr' <- toExpr env baseExpr

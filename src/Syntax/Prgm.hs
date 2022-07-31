@@ -86,7 +86,7 @@ data Expr m
   | Value m TypeName
   | Arg m ArgName
   | HoleExpr m Hole
-  | TupleApply m (m, Expr m) ArgName (Expr m)
+  | TupleApply m (m, Expr m) (Maybe ArgName) (Expr m)
   | VarApply m (Expr m) TypeVarName m
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
@@ -185,9 +185,13 @@ instance Show m => Show (Expr m) where
   show (Value _ name) = printf "Value %s" name
   show (Arg m name) = printf "Arg %s %s" (show m) name
   show (HoleExpr m hole) = printf "Hole %s %s" (show m) (show hole)
-  show (TupleApply _ (_, Value _ funName) argName argVal) = printf "%s(%s = %s)" funName argName (show argVal)
-  show (TupleApply _ (_, baseExpr@TupleApply{}) argName argVal) = printf "%s(%s = %s)" (show baseExpr) argName (show argVal)
-  show (TupleApply _ (_, baseExpr) argName argVal) = printf "(%s)(%s = %s)" (show baseExpr) argName (show argVal)
+  show (TupleApply _ (_, baseExpr) argName argVal) = printf "%s(%s%s)" baseExpr' argName' (show argVal)
+    where
+      baseExpr' = case baseExpr of
+        Value _ funName -> funName
+        TupleApply{}    -> show baseExpr
+        _               -> printf "(%s)" (show baseExpr)
+      argName' = maybe "" (++ " = ") argName
   show (VarApply _ baseExpr varName varVal) = printf "(%s)<%s = %s>" (show baseExpr) varName (show varVal)
 
 instance Show e => Show (Guard e) where
