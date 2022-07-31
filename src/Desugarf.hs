@@ -54,14 +54,15 @@ scopeSubDeclFunNamesInPartialName prefix replaceNames (PClassName name) = PClass
 scopeSubDeclFunNamesInPartialName prefix replaceNames (PRelativeName name) = PRelativeName $ scopeSubDeclFunNamesInS prefix replaceNames name
 
 scopeSubDeclFunNamesInExpr :: TypeName -> S.HashSet TypeName -> PSExpr -> PSExpr
-scopeSubDeclFunNamesInExpr _ _ e@PSCExpr{} = e
-scopeSubDeclFunNamesInExpr prefix replaceNames (PSValue m name) = PSValue m $ scopeSubDeclFunNamesInS prefix replaceNames name
-scopeSubDeclFunNamesInExpr _ _ e@PSHole{} = e
-scopeSubDeclFunNamesInExpr prefix replaceNames (PSTupleApply m (bm, bExpr) argName argVal) = PSTupleApply m (bm, bExpr') argName argVal'
+scopeSubDeclFunNamesInExpr _ _ e@CExpr{} = e
+scopeSubDeclFunNamesInExpr prefix replaceNames (Value m name) = Value m $ scopeSubDeclFunNamesInS prefix replaceNames name
+scopeSubDeclFunNamesInExpr prefix replaceNames (Arg m name) = Arg m $ scopeSubDeclFunNamesInS prefix replaceNames name
+scopeSubDeclFunNamesInExpr _ _ e@HoleExpr{} = e
+scopeSubDeclFunNamesInExpr prefix replaceNames (TupleApply m (bm, bExpr) argName argVal) = TupleApply m (bm, bExpr') argName argVal'
   where
     bExpr' = scopeSubDeclFunNamesInExpr prefix replaceNames bExpr
     argVal' = scopeSubDeclFunNamesInExpr prefix replaceNames argVal
-scopeSubDeclFunNamesInExpr prefix replaceNames (PSVarApply m bExpr varName varVal) = PSVarApply m bExpr' varName varVal
+scopeSubDeclFunNamesInExpr prefix replaceNames (VarApply m bExpr varName varVal) = VarApply m bExpr' varName varVal
   where
     bExpr' = scopeSubDeclFunNamesInExpr prefix replaceNames bExpr
 
@@ -92,17 +93,18 @@ currySubFunctionSignature parentArgs (PSemiDecl (DeclLHS arrM (Pattern obj@Objec
 
 
 currySubFunctionsUpdateExpr :: S.HashSet TypeName -> H.HashMap ArgName PObjArg -> PSExpr -> PSExpr
-currySubFunctionsUpdateExpr _ _ c@PSCExpr{} = c
-currySubFunctionsUpdateExpr _ parentArgs v@PSValue{} | H.null parentArgs = v
-currySubFunctionsUpdateExpr toUpdate parentArgs v@(PSValue _ vn) = if S.member vn toUpdate
-  then foldr (\(parentArgName, (parentArgM, _)) e -> PSTupleApply emptyMetaN (emptyMetaN, e) (Just parentArgName) (PSValue parentArgM parentArgName)) v $ H.toList parentArgs
+currySubFunctionsUpdateExpr _ _ c@CExpr{} = c
+currySubFunctionsUpdateExpr _ parentArgs v@Value{} | H.null parentArgs = v
+currySubFunctionsUpdateExpr toUpdate parentArgs v@(Value _ vn) = if S.member vn toUpdate
+  then foldr (\(parentArgName, (parentArgM, _)) e -> TupleApply emptyMetaN (emptyMetaN, e) (Just parentArgName) (Value parentArgM parentArgName)) v $ H.toList parentArgs
   else v
-currySubFunctionsUpdateExpr _ _ e@PSHole{} = e
-currySubFunctionsUpdateExpr toUpdate parentArgs (PSTupleApply tm (tbm, tbe) tArgName tArgVal) = PSTupleApply tm (tbm, tbe') tArgName tArgVal'
+currySubFunctionsUpdateExpr _ _ Arg{} = error "Only values should be used at this point, yet to disambiguate Value vs Arg"
+currySubFunctionsUpdateExpr _ _ e@HoleExpr{} = e
+currySubFunctionsUpdateExpr toUpdate parentArgs (TupleApply tm (tbm, tbe) tArgName tArgVal) = TupleApply tm (tbm, tbe') tArgName tArgVal'
   where
     tbe' = currySubFunctionsUpdateExpr toUpdate parentArgs tbe
     tArgVal' = currySubFunctionsUpdateExpr toUpdate parentArgs tArgVal
-currySubFunctionsUpdateExpr toUpdate parentArgs (PSVarApply tm tbe tVarName tVarVal) = PSVarApply tm tbe' tVarName tVarVal
+currySubFunctionsUpdateExpr toUpdate parentArgs (VarApply tm tbe tVarName tVarVal) = VarApply tm tbe' tVarName tVarVal
   where
     tbe' = currySubFunctionsUpdateExpr toUpdate parentArgs tbe
 
@@ -134,31 +136,32 @@ removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern obj@Object{objM, objArgs, 
     decl' = PSemiDecl (DeclLHS arrM' (Pattern obj{objDoc = objDoc, objM=objM'} guard2)) annots4 expr4
 
 desExpr :: PArgMetaMap -> PSExpr -> DesExpr
-desExpr _ (PSCExpr m c) = CExpr m c
-desExpr arrArgs (PSValue m n) = if H.member n arrArgs
+desExpr _ (CExpr m c) = CExpr m c
+desExpr arrArgs (Value m n) = if H.member n arrArgs
   then Arg m n
   else Value m n
-desExpr _ (PSHole m h) = HoleExpr m h
-desExpr arrArgs (PSTupleApply m (bm, be) argName argVal) = TupleApply m (bm, desExpr arrArgs be) argName (desExpr arrArgs argVal)
-desExpr arrArgs (PSVarApply m be varName varVal) = VarApply m (desExpr arrArgs be) varName varVal
+desExpr _ Arg{} = error "Only values should be used at this point as it has not yet been disambiguated between Value and Arg"
+desExpr _ (HoleExpr m h) = HoleExpr m h
+desExpr arrArgs (TupleApply m (bm, be) argName argVal) = TupleApply m (bm, desExpr arrArgs be) argName (desExpr arrArgs argVal)
+desExpr arrArgs (VarApply m be varName varVal) = VarApply m (desExpr arrArgs be) varName varVal
 
 desGuard :: PArgMetaMap -> PSGuard -> DesGuard
 desGuard arrArgs = fmap (desExpr arrArgs)
 
 semiDesExpr :: PObject -> PExpr -> ([PSemiDecl], PSExpr)
-semiDesExpr _ (RawCExpr m c) = ([], PSCExpr m c)
-semiDesExpr _ (RawValue m n) = ([], PSValue m n)
-semiDesExpr _ (RawHoleExpr m h) = ([], PSHole m h)
-semiDesExpr obj (RawTupleApply m'' (bm, be) args) = (\(a, _, PSTupleApply _ (bm'', be'') argName'' argVal'') -> (a, PSTupleApply m'' (bm'', be'') argName'' argVal'')) $ foldl aux (subBe, bm, be') args
+semiDesExpr _ (RawCExpr m c) = ([], CExpr m c)
+semiDesExpr _ (RawValue m n) = ([], Value m n)
+semiDesExpr _ (RawHoleExpr m h) = ([], HoleExpr m h)
+semiDesExpr obj (RawTupleApply m'' (bm, be) args) = (\(a, _, TupleApply _ (bm'', be'') argName'' argVal'') -> (a, TupleApply m'' (bm'', be'') argName'' argVal'')) $ foldl aux (subBe, bm, be') args
   where
     (subBe, be') = semiDesExpr obj be
-    aux (sub, m, e) (RawTupleArgNamed _ argName argVal) = (subArgVal ++ sub, emptyMetaM "res" m'', PSTupleApply (emptyMetaM "app" m'') (m, e) (Just argName) argVal')
+    aux (sub, m, e) (RawTupleArgNamed _ argName argVal) = (subArgVal ++ sub, emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (Just argName) argVal')
       where (subArgVal, argVal') = semiDesExpr obj argVal
-    aux (sub, m, e) (RawTupleArgInfer _ argVal) = (subArgVal ++ sub, emptyMetaM "res" m'', PSTupleApply (emptyMetaM "app" m'') (m, e) Nothing argVal')
+    aux (sub, m, e) (RawTupleArgInfer _ argVal) = (subArgVal ++ sub, emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) Nothing argVal')
       where (subArgVal, argVal') = semiDesExpr obj argVal
 semiDesExpr obj (RawVarsApply m be vs) = (subBe, foldr aux be' vs)
   where
-    aux (varName, varVal) base = PSVarApply (emptyMetaM varName m) base varName varVal
+    aux (varName, varVal) base = VarApply (emptyMetaM varName m) base varName varVal
     (subBe, be') = semiDesExpr obj be
 semiDesExpr obj (RawContextApply _ (_, be) ctxs) = semiDesExpr obj $ applyRawArgs (rawVal "/Context") ((Just "value", be) : map (\(ctxName, ctxM) -> (Nothing, RawValue ctxM ctxName)) ctxs)
 semiDesExpr obj (RawParen e) = semiDesExpr obj e
@@ -175,13 +178,13 @@ semiDesExpr obj@Object{objVars} r@(RawIfThenElse m i t e) = (concat [subI, subT,
     (subE, e') = semiDesExpr obj e
     ifDecl = PSemiDecl (DeclLHS (emptyMetaE "obj" i) (Pattern (Object (emptyMetaE "patt" i) FunctionObj objVars H.empty Nothing condName) (IfGuard i'))) [] (Just t')
     elseDecl = PSemiDecl (DeclLHS (emptyMetaE "obj" e) (Pattern (Object (emptyMetaE "patt" e) FunctionObj objVars H.empty Nothing condName) ElseGuard)) [] (Just e')
-    expr' = PSValue m condName
+    expr' = Value m condName
 semiDesExpr obj@Object{objVars} r@(RawMatch m e matchItems) = (subE ++ subMatchItems, expr')
   where
     condName = "$" ++ take 6 (printf "%08x" (hash r))
     argName = condName ++ "-arg"
     (subE, e') = semiDesExpr obj e
-    expr' = PSTupleApply m (emptyMetaM "app" m, PSValue (emptyMetaM "val" m) condName) (Just argName) e'
+    expr' = TupleApply m (emptyMetaM "app" m, Value (emptyMetaM "val" m) condName) (Just argName) e'
     subMatchItems = concatMap semiDesMatchItem matchItems
     semiDesMatchItem (Pattern patt pattGuard, matchExpr) = concat [[matchItemExpr'], subPattGuard, subMatchExpr]
       where
@@ -203,7 +206,7 @@ semiDesExpr obj@Object{objVars} r@(RawCase m e ((Pattern firstObj@Object{objM=fm
     restDecl = PSemiDecl (DeclLHS m (Pattern declObj ElseGuard)) [] (Just restExpr')
     (subRE, restExpr') = semiDesExpr obj (RawCase m e restCases)
     (subE, e') = semiDesExpr obj e
-    expr' = PSTupleApply m (emptyMetaM "app" m, PSValue (emptyMetaE "val" e) condName) (Just argName) e'
+    expr' = TupleApply m (emptyMetaM "app" m, Value (emptyMetaE "val" e) condName) (Just argName) e'
 semiDesExpr obj (RawList m []) = semiDesExpr obj (RawValue m "/Data/Nil")
 semiDesExpr obj (RawList m (l:ls)) = semiDesExpr obj (RawTupleApply (emptyMetaM "listApp" (getExprMeta l)) (emptyMetaM "listBase" (getExprMeta l), RawValue m "/Data/Cons") [RawTupleArgNamed (emptyMetaE "arg" l) "head" l, RawTupleArgNamed (emptyMetaE "argRemaining" l) "tail" (RawList m ls)])
 

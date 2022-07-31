@@ -43,16 +43,7 @@ type PReplRes = ReplRes ParseMeta
 
 
 
--- Intermediate expr during desugaring
-data PSemiExpr m
-  = PSCExpr m Constant
-  | PSValue m TypeName
-  | PSHole m Hole
-  | PSTupleApply m (m, PSemiExpr m) (Maybe ArgName) (PSemiExpr m)
-  | PSVarApply m (PSemiExpr m) TypeVarName m
-  deriving (Eq, Ord, Show)
-type PSExpr = PSemiExpr ParseMeta
-
+type PSExpr = Expr ParseMeta
 type PSCompAnnot = CompAnnot PSExpr
 type PSGuard = Guard PSExpr
 type PSDeclLHS = DeclLHS PSExpr ParseMeta
