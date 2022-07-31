@@ -70,17 +70,7 @@ data RawExpr m
   | RawList m [RawExpr m]
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
--- Expr (to infer) from desugar to typecheck
-data IExpr m
-  = ICExpr m Constant
-  | IValue m TypeName
-  | IArg m ArgName
-  | IHoleExpr m Hole
-  | ITupleApply m (m, IExpr m) (Maybe ArgName) (IExpr m) -- the ArgName is optional. Must be inferred if Nothing
-  | IVarApply m (IExpr m) TypeVarName m
-  deriving (Eq, Ord, Generic, Hashable, ToJSON)
-
--- Expr after typechecking
+-- Expr after desugar
 data Expr m
   = CExpr m Constant
   | Value m TypeName
@@ -161,25 +151,6 @@ type ObjectMapItem e m = (Object m, [CompAnnot e], Maybe (Arrow e m))
 type ObjectMap e m = [ObjectMapItem e m]
 type Prgm e m = (ObjectMap e m, ClassGraph, [CompAnnot e]) -- TODO: Include [Export]
 
-instance Show m => Show (IExpr m) where
-  show (ICExpr _ c) = show c
-  show (IValue _ name) = printf "Value %s" name
-  show (IArg m name) = printf "Arg %s %s" (show m) name
-  show (IHoleExpr m hole) = printf "Hole %s %s" (show m) (show hole)
-  show (ITupleApply _ (_, baseExpr) argName argVal) = printf "%s(%s%s)" baseExpr' argName' (show argVal)
-    where
-      baseExpr' = case baseExpr of
-        IValue _ funName -> funName
-        ITupleApply{}    -> show baseExpr
-        _                -> printf "(%s)" (show baseExpr)
-      argName' = maybe "" (++ " = ") argName
-  show (IVarApply _ baseExpr varName varVal) = printf "%s<%s%s>" baseExpr' varName (show varVal)
-    where
-      baseExpr' = case baseExpr of
-        IValue _ funName -> funName
-        ITupleApply{}    -> show baseExpr
-        _                -> printf "<%s>" (show baseExpr)
-
 instance Show m => Show (Expr m) where
   show (CExpr _ c) = show c
   show (Value _ name) = printf "Value %s" name
@@ -192,7 +163,12 @@ instance Show m => Show (Expr m) where
         TupleApply{}    -> show baseExpr
         _               -> printf "(%s)" (show baseExpr)
       argName' = maybe "" (++ " = ") argName
-  show (VarApply _ baseExpr varName varVal) = printf "(%s)<%s = %s>" (show baseExpr) varName (show varVal)
+  show (VarApply _ baseExpr varName varVal) = printf "%s<%s%s>" baseExpr' varName (show varVal)
+    where
+      baseExpr' = case baseExpr of
+        Value _ funName -> funName
+        TupleApply{}    -> show baseExpr
+        _               -> printf "<%s>" (show baseExpr)
 
 instance Show e => Show (Guard e) where
   show (IfGuard expr) = "if (" ++ show expr ++ ")"
@@ -252,18 +228,6 @@ instance ExprClass Expr where
 
   getExprArg (Arg _ n) = Just n
   getExprArg _         = Nothing
-
-instance ExprClass IExpr where
-  getExprMeta expr = case expr of
-    ICExpr m _          -> m
-    IValue m _          -> m
-    IArg m _            -> m
-    IHoleExpr m _       -> m
-    ITupleApply m _ _ _ -> m
-    IVarApply m _ _ _   -> m
-
-  getExprArg (IArg _ n) = Just n
-  getExprArg _          = Nothing
 
 type ArgMetaMap m = H.HashMap ArgName m
 -- |

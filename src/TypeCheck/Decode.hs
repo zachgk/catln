@@ -56,19 +56,19 @@ member x arr = case suffixLookup x arr of
   Nothing -> False
 
 toExpr :: FEnv -> VExpr -> TypeCheckResult TExpr
-toExpr env (ICExpr m c) = do
+toExpr env (CExpr m c) = do
   m' <- toMeta env m $ "Constant " ++ show c
   return $ CExpr m' c
-toExpr env (IValue m name) = do
+toExpr env (Value m name) = do
   m' <- toMeta env m $ "Value_" ++ name
   return $ Value m' name
-toExpr env (IArg m name) = do
+toExpr env (Arg m name) = do
   m' <- toMeta env m $ "Arg_" ++ name
   return $ Arg m' name
-toExpr env (IHoleExpr m hole) = do
+toExpr env (HoleExpr m hole) = do
   m' <- toMeta env m $ "Arg_" ++ show hole
   return $ HoleExpr m' hole
-toExpr env (ITupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
+toExpr env (TupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
   m' <- toMeta env m "TupleApply_M"
   baseM' <- toMeta env baseM "TupleApply_baseM"
   baseExpr' <- toExpr env baseExpr
@@ -84,7 +84,7 @@ toExpr env (ITupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
                                         TypeCheckResult [TupleMismatch baseM' baseExpr' tp $ H.singleton argName argExpr'] result
 
     _ -> return result
-toExpr env (ITupleApply m (baseM, baseExpr) Nothing argExpr) = do
+toExpr env (TupleApply m (baseM, baseExpr) Nothing argExpr) = do
   let pos = getMetaPos m
   m' <- toMeta env m "TupleApplyInfer_M"
   baseM' <- toMeta env baseM "TupleApplyInfer_baseM"
@@ -98,7 +98,7 @@ toExpr env (ITupleApply m (baseM, baseExpr) Nothing argExpr) = do
       _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to multiple types"]
     _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to non UnionType"]
   return $ TupleApply m' (baseM', baseExpr') (Just argName) argExpr'
-toExpr env (IVarApply m baseExpr varName varVal) = do
+toExpr env (VarApply m baseExpr varName varVal) = do
   m' <- toMeta env m "VarApply_M"
   baseExpr' <- toExpr env baseExpr
   varVal' <- toMeta env varVal "VarApply_val"

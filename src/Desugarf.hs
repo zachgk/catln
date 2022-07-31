@@ -134,13 +134,13 @@ removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern obj@Object{objM, objArgs, 
     decl' = PSemiDecl (DeclLHS arrM' (Pattern obj{objDoc = objDoc, objM=objM'} guard2)) annots4 expr4
 
 desExpr :: PArgMetaMap -> PSExpr -> DesExpr
-desExpr _ (PSCExpr m c) = ICExpr m c
+desExpr _ (PSCExpr m c) = CExpr m c
 desExpr arrArgs (PSValue m n) = if H.member n arrArgs
-  then IArg m n
-  else IValue m n
-desExpr _ (PSHole m h) = IHoleExpr m h
-desExpr arrArgs (PSTupleApply m (bm, be) argName argVal) = ITupleApply m (bm, desExpr arrArgs be) argName (desExpr arrArgs argVal)
-desExpr arrArgs (PSVarApply m be varName varVal) = IVarApply m (desExpr arrArgs be) varName varVal
+  then Arg m n
+  else Value m n
+desExpr _ (PSHole m h) = HoleExpr m h
+desExpr arrArgs (PSTupleApply m (bm, be) argName argVal) = TupleApply m (bm, desExpr arrArgs be) argName (desExpr arrArgs argVal)
+desExpr arrArgs (PSVarApply m be varName varVal) = VarApply m (desExpr arrArgs be) varName varVal
 
 desGuard :: PArgMetaMap -> PSGuard -> DesGuard
 desGuard arrArgs = fmap (desExpr arrArgs)

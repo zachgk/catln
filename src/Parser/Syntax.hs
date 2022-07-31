@@ -63,7 +63,7 @@ data PSemiDecl = PSemiDecl PSDeclLHS [PSCompAnnot] (Maybe PSExpr)
 
 
 
-type DesExpr = IExpr ParseMeta
+type DesExpr = Expr ParseMeta
 type DesCompAnnot = CompAnnot DesExpr
 type DesGuard = Guard DesExpr
 type DesObjectMap = ObjectMap DesExpr ParseMeta

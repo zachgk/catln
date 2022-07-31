@@ -24,29 +24,29 @@ showM env m = do
   return $ ShowMeta stype m
 
 showExpr :: FEnv -> VExpr -> TypeCheckResult SExpr
-showExpr env (ICExpr m c) = do
+showExpr env (CExpr m c) = do
   m' <- showM env m
-  return $ ICExpr m' c
-showExpr env (IValue m name) = do
+  return $ CExpr m' c
+showExpr env (Value m name) = do
   m' <- showM env m
-  return $ IValue m' name
-showExpr env (IArg m name) = do
+  return $ Value m' name
+showExpr env (Arg m name) = do
   m' <- showM env m
-  return $ IArg m' name
-showExpr env (IHoleExpr m hole) = do
+  return $ Arg m' name
+showExpr env (HoleExpr m hole) = do
   m' <- showM env m
-  return $ IHoleExpr m' hole
-showExpr env (ITupleApply m (bm, base) argName argVal) = do
+  return $ HoleExpr m' hole
+showExpr env (TupleApply m (bm, base) argName argVal) = do
   m' <- showM env m
   bm' <- showM env bm
   base' <- showExpr env base
   argVal' <- showExpr env argVal
-  return $ ITupleApply m' (bm', base') argName argVal'
-showExpr env (IVarApply m base varName varVal) = do
+  return $ TupleApply m' (bm', base') argName argVal'
+showExpr env (VarApply m base varName varVal) = do
   m' <- showM env m
   base' <- showExpr env base
   varVal' <- showM env varVal
-  return $ IVarApply m' base' varName varVal'
+  return $ VarApply m' base' varName varVal'
 
 showGuard :: FEnv -> VGuard -> TypeCheckResult SGuard
 showGuard env (IfGuard e) = do

@@ -121,7 +121,7 @@ instance Monad TypeCheckResult where
 
 
 type PreMeta = PreTyped
-type PExpr = IExpr PreMeta
+type PExpr = Expr PreMeta
 type PCompAnnot = CompAnnot PExpr
 type PGuard = Guard PExpr
 type PArrow = Arrow PExpr PreMeta
@@ -133,7 +133,7 @@ type PReplRes = ReplRes PreMeta
 
 data ShowMeta = ShowMeta SType VarMeta
   deriving (Show, Generic, Hashable, ToJSON)
-type SExpr = IExpr ShowMeta
+type SExpr = Expr ShowMeta
 type SCompAnnot = CompAnnot SExpr
 type SGuard = Guard SExpr
 type SArrow = Arrow SExpr ShowMeta
@@ -146,7 +146,7 @@ type SReplRes = ReplRes ShowMeta
 
 data VarMeta = VarMeta Pnt PreTyped (Maybe VObject)
   deriving (Show, Generic, Hashable, ToJSON)
-type VExpr = IExpr VarMeta
+type VExpr = Expr VarMeta
 type VCompAnnot = CompAnnot VExpr
 type VGuard = Guard VExpr
 type VArgMetaMap = ArgMetaMap VarMeta

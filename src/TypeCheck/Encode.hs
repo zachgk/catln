@@ -91,33 +91,33 @@ mapMWithFEnvMapWithKey env f hmap = do
       return ((k2, b), e2)
 
 fromExpr :: VArgMetaMap -> Maybe VObject -> FEnv -> PExpr -> TypeCheckResult (VExpr, FEnv)
-fromExpr _ obj env (ICExpr m (CInt i)) = do
+fromExpr _ obj env (CExpr m (CInt i)) = do
   (m', env') <- fromMeta env BUpper obj m ("Constant int " ++ show i)
-  return (ICExpr m' (CInt i), addConstraints env' [EqualsKnown m' intType])
-fromExpr _ obj env (ICExpr m (CFloat f)) = do
+  return (CExpr m' (CInt i), addConstraints env' [EqualsKnown m' intType])
+fromExpr _ obj env (CExpr m (CFloat f)) = do
   (m', env') <- fromMeta env BUpper obj m ("Constant float " ++ show f)
-  return (ICExpr m' (CFloat f), addConstraints env' [EqualsKnown m' floatType])
-fromExpr _ obj env (ICExpr m (CStr s)) = do
+  return (CExpr m' (CFloat f), addConstraints env' [EqualsKnown m' floatType])
+fromExpr _ obj env (CExpr m (CStr s)) = do
   (m', env') <- fromMeta env BUpper obj m ("Constant str " ++ s)
-  return (ICExpr m' (CStr s), addConstraints env' [EqualsKnown m' strType])
-fromExpr _ obj env1 (IValue m name) = do
+  return (CExpr m' (CStr s), addConstraints env' [EqualsKnown m' strType])
+fromExpr _ obj env1 (Value m name) = do
   (m', env2) <- fromMeta env1 BUpper obj m ("Value " ++ name)
   lookupVal <- fLookup env2 obj name
   lookupConstraints <- case lookupVal of
     DefVar lookupM      -> return [EqPoints m' lookupM]
     DefKnown lookupType -> return [BoundedByKnown m' lookupType]
-  return (IValue m' name, addConstraints env2 lookupConstraints)
-fromExpr objArgs obj env1 (IArg m name) = do
+  return (Value m' name, addConstraints env2 lookupConstraints)
+fromExpr objArgs obj env1 (Arg m name) = do
   (m', env2) <- fromMeta env1 BUpper obj m ("Arg " ++ name)
   let varM = PreTyped (TypeVar $ TVArg name) (getMetaPos m)
   (varM', env3) <- fromMeta env2 BUpper obj varM $ "ArgVar " ++ name
   case suffixLookupInDict name objArgs of
     Nothing -> error $ printf "Could not find arg %s with objArgs %s and obj %s" name (show objArgs) (show obj)
-    Just lookupArg -> return (IArg varM' name, addConstraints env3 [EqPoints m' lookupArg])
-fromExpr _ obj env1 (IHoleExpr m hole) = do
+    Just lookupArg -> return (Arg varM' name, addConstraints env3 [EqPoints m' lookupArg])
+fromExpr _ obj env1 (HoleExpr m hole) = do
   (m', env2) <- fromMeta env1 BUpper obj m ("Hole " ++ show hole)
-  return (IHoleExpr m' hole, env2)
-fromExpr objArgs obj env1 (ITupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
+  return (HoleExpr m' hole, env2)
+fromExpr objArgs obj env1 (TupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
   (m', env2) <- fromMeta env1 BUpper obj m $ printf "TupleApply %s(%s = %s) Meta" (show baseExpr) argName (show argExpr)
   (baseM', env3) <- fromMeta env2 BUpper obj baseM $ printf "TupleApply %s(%s = %s) BaseMeta" (show baseExpr) argName (show argExpr)
   (baseExpr', env4) <- fromExpr objArgs obj env3 baseExpr
@@ -131,8 +131,8 @@ fromExpr objArgs obj env1 (ITupleApply m (baseM, baseExpr) (Just argName) argExp
                      PropEq (m', argName) convertExprMeta'
                     ]
   let env7 = addConstraints env6 constraints
-  return (ITupleApply m' (baseM', baseExpr') (Just argName) argExpr', env7)
-fromExpr objArgs obj env1 (ITupleApply m (baseM, baseExpr) Nothing argExpr) = do
+  return (TupleApply m' (baseM', baseExpr') (Just argName) argExpr', env7)
+fromExpr objArgs obj env1 (TupleApply m (baseM, baseExpr) Nothing argExpr) = do
   (m', env2) <- fromMeta env1 BUpper obj m $ printf "TupleApplyInfer %s(%s) Meta" (show baseExpr) (show argExpr)
   (baseM', env3) <- fromMeta env2 BUpper obj baseM $ printf "TupleApplyInfer %s(%s) BaseMeta" (show baseExpr) (show argExpr)
   (baseExpr', env4) <- fromExpr objArgs obj env3 baseExpr
@@ -145,8 +145,8 @@ fromExpr objArgs obj env1 (ITupleApply m (baseM, baseExpr) Nothing argExpr) = do
                      ArrowTo (getExprMeta argExpr') convertExprMeta'
                     ]
   let env7 = addConstraints env6 constraints
-  return (ITupleApply m' (baseM', baseExpr') Nothing argExpr', env7)
-fromExpr oArgs obj env1 (IVarApply m baseExpr varName varVal) = do
+  return (TupleApply m' (baseM', baseExpr') Nothing argExpr', env7)
+fromExpr oArgs obj env1 (VarApply m baseExpr varName varVal) = do
   let baseName = printf "VarApply %s<%s = %s>" (show baseExpr) varName (show varVal) :: String
   (m', env2) <- fromMeta env1 BUpper obj m $ printf "%s Meta" baseName
   (baseExpr', env3) <- fromExpr oArgs obj env2 baseExpr
@@ -156,7 +156,7 @@ fromExpr oArgs obj env1 (IVarApply m baseExpr varName varVal) = do
                      VarEq (m', varName) varVal'
                     ]
   let env5 = addConstraints env4 constraints
-  return (IVarApply m' baseExpr' varName varVal', env5)
+  return (VarApply m' baseExpr' varName varVal', env5)
 
 fromGuard :: VArgMetaMap -> Maybe VObject -> FEnv -> PGuard -> TypeCheckResult (VGuard, FEnv)
 fromGuard objArgs obj env1 (IfGuard expr) =  do
