@@ -43,15 +43,25 @@ data Pattern e m = Pattern (Object m) (Guard e)
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON, ToJSONKey)
 
 data RawTupleArg m
-  = RawTupleArgNamed ArgName (RawExpr m)
-  | RawTupleArgInfer (RawExpr m)
+  = RawTupleArgNamed m ArgName (RawExpr m)
+  | RawTupleArgInfer m (RawExpr m)
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+
+-- | The type of hole (a gap where an expression should be). Used in inputs to ignore the expression and outputs.
+data Hole
+  = HoleActive (Maybe Name) -- ^ A hole such as _ or _name, where the name is optional and treated as an error
+  | HoleUndefined -- ^ A hole with the keyword undefined that is an error only in runtime
+  | HoleTodefine -- ^ A hole with the keyword todefine that is an error during runtime and commit time
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 -- Expr before desugar
 data RawExpr m
   = RawCExpr m Constant
   | RawValue m TypeName
+  | RawHoleExpr m Hole
   | RawTupleApply m (m, RawExpr m) [RawTupleArg m]
+  | RawVarsApply m (RawExpr m) [(TypeVarName, m)]
+  | RawContextApply m (m, RawExpr m) [(ArgName, m)]
   | RawParen (RawExpr m)
   | RawMethods (RawExpr m) [RawExpr m]
   | RawIfThenElse m (RawExpr m) (RawExpr m) (RawExpr m)
@@ -65,7 +75,9 @@ data IExpr m
   = ICExpr m Constant
   | IValue m TypeName
   | IArg m ArgName
+  | IHoleExpr m Hole
   | ITupleApply m (m, IExpr m) (Maybe ArgName) (IExpr m) -- the ArgName is optional. Must be inferred if Nothing
+  | IVarApply m (IExpr m) TypeVarName m
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 -- Expr after typechecking
@@ -73,7 +85,9 @@ data Expr m
   = CExpr m Constant
   | Value m TypeName
   | Arg m ArgName
+  | HoleExpr m Hole
   | TupleApply m (m, Expr m) ArgName (Expr m)
+  | VarApply m (Expr m) TypeVarName m
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 -- Compiler Annotation
@@ -151,6 +165,7 @@ instance Show m => Show (IExpr m) where
   show (ICExpr _ c) = show c
   show (IValue _ name) = printf "Value %s" name
   show (IArg m name) = printf "Arg %s %s" (show m) name
+  show (IHoleExpr m hole) = printf "Hole %s %s" (show m) (show hole)
   show (ITupleApply _ (_, baseExpr) argName argVal) = printf "%s(%s%s)" baseExpr' argName' (show argVal)
     where
       baseExpr' = case baseExpr of
@@ -158,14 +173,22 @@ instance Show m => Show (IExpr m) where
         ITupleApply{}    -> show baseExpr
         _                -> printf "(%s)" (show baseExpr)
       argName' = maybe "" (++ " = ") argName
+  show (IVarApply _ baseExpr varName varVal) = printf "%s<%s%s>" baseExpr' varName (show varVal)
+    where
+      baseExpr' = case baseExpr of
+        IValue _ funName -> funName
+        ITupleApply{}    -> show baseExpr
+        _                -> printf "<%s>" (show baseExpr)
 
 instance Show m => Show (Expr m) where
   show (CExpr _ c) = show c
   show (Value _ name) = printf "Value %s" name
   show (Arg m name) = printf "Arg %s %s" (show m) name
+  show (HoleExpr m hole) = printf "Hole %s %s" (show m) (show hole)
   show (TupleApply _ (_, Value _ funName) argName argVal) = printf "%s(%s = %s)" funName argName (show argVal)
   show (TupleApply _ (_, baseExpr@TupleApply{}) argName argVal) = printf "%s(%s = %s)" (show baseExpr) argName (show argVal)
   show (TupleApply _ (_, baseExpr) argName argVal) = printf "(%s)(%s = %s)" (show baseExpr) argName (show argVal)
+  show (VarApply _ baseExpr varName varVal) = printf "(%s)<%s = %s>" (show baseExpr) varName (show varVal)
 
 instance Show e => Show (Guard e) where
   show (IfGuard expr) = "if (" ++ show expr ++ ")"
@@ -201,7 +224,10 @@ instance ExprClass RawExpr where
   getExprMeta expr = case expr of
     RawCExpr m _          -> m
     RawValue m _          -> m
+    RawHoleExpr m _       -> m
     RawTupleApply m _ _   -> m
+    RawVarsApply m _ _    -> m
+    RawContextApply m _ _ -> m
     RawParen e            -> getExprMeta e
     RawMethods e _        -> getExprMeta e
     RawIfThenElse m _ _ _ -> m
@@ -216,7 +242,9 @@ instance ExprClass Expr where
     CExpr m _          -> m
     Value m _          -> m
     Arg m _            -> m
+    HoleExpr m _       -> m
     TupleApply m _ _ _ -> m
+    VarApply m _ _ _   -> m
 
   getExprArg (Arg _ n) = Just n
   getExprArg _         = Nothing
@@ -226,7 +254,9 @@ instance ExprClass IExpr where
     ICExpr m _          -> m
     IValue m _          -> m
     IArg m _            -> m
+    IHoleExpr m _       -> m
     ITupleApply m _ _ _ -> m
+    IVarApply m _ _ _   -> m
 
   getExprArg (IArg _ n) = Just n
   getExprArg _          = Nothing

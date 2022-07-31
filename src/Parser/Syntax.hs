@@ -47,7 +47,9 @@ type PReplRes = ReplRes ParseMeta
 data PSemiExpr m
   = PSCExpr m Constant
   | PSValue m TypeName
+  | PSHole m Hole
   | PSTupleApply m (m, PSemiExpr m) (Maybe ArgName) (PSemiExpr m)
+  | PSVarApply m (PSemiExpr m) TypeVarName m
   deriving (Eq, Ord, Show)
 type PSExpr = PSemiExpr ParseMeta
 
@@ -77,8 +79,19 @@ emptyMeta p1 p2 = PreTyped TopType (Just (p1, p2, ""))
 emptyMetaN :: ParseMeta
 emptyMetaN = PreTyped TopType Nothing
 
-emptyMetaM :: (Meta m) => String -> m -> ParseMeta
-emptyMetaM s m = PreTyped TopType (labelPos s $ getMetaPos m)
+emptyMetaM :: (Meta m) => String -> m -> m
+emptyMetaM = labelPosM
 
-emptyMetaE :: (Meta m) => String -> RawExpr m -> ParseMeta
-emptyMetaE s e = PreTyped TopType (labelPos s $ getMetaPos $ getExprMeta e)
+emptyMetaE :: (Meta m, ExprClass e) => String -> e m -> m
+emptyMetaE s e = labelPosM s $ getExprMeta e
+
+
+rawVal :: String -> PExpr
+rawVal name = RawValue m name
+  where m = PreTyped (singletonType $ PartialType (PTypeName name) H.empty H.empty H.empty PtArgExact) Nothing
+
+applyRawArgs :: (Meta m) => RawExpr m -> [(Maybe ArgName, RawExpr m)] -> RawExpr m
+applyRawArgs base args = RawTupleApply (emptyMetaE "app" base) (emptyMetaE "base" base, base) (map mapArg args)
+  where
+    mapArg (Just argName, argVal) = RawTupleArgNamed (emptyMetaE argName base) argName argVal
+    mapArg (Nothing, argVal) = RawTupleArgInfer (emptyMetaE "noArg" base) argVal

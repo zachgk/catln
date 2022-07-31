@@ -33,12 +33,20 @@ showExpr env (IValue m name) = do
 showExpr env (IArg m name) = do
   m' <- showM env m
   return $ IArg m' name
+showExpr env (IHoleExpr m hole) = do
+  m' <- showM env m
+  return $ IHoleExpr m' hole
 showExpr env (ITupleApply m (bm, base) argName argVal) = do
   m' <- showM env m
   bm' <- showM env bm
   base' <- showExpr env base
   argVal' <- showExpr env argVal
   return $ ITupleApply m' (bm', base') argName argVal'
+showExpr env (IVarApply m base varName varVal) = do
+  m' <- showM env m
+  base' <- showExpr env base
+  varVal' <- showM env varVal
+  return $ IVarApply m' base' varName varVal'
 
 showGuard :: FEnv -> VGuard -> TypeCheckResult SGuard
 showGuard env (IfGuard e) = do

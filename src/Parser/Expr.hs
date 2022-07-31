@@ -29,11 +29,11 @@ import           Syntax.Prgm
 import           Syntax.Types
 
 mkOp1 :: String -> PExpr -> PExpr
-mkOp1 opChars x = RawTupleApply emptyMetaN (emptyMetaN, RawValue emptyMetaN op) [RawTupleArgNamed "a" x]
+mkOp1 opChars x = applyRawArgs (RawValue emptyMetaN op) [(Just "a", x)]
   where op = "/operator" ++ opChars
 
 mkOp2 :: String -> PExpr -> PExpr -> PExpr
-mkOp2 opChars x y = RawTupleApply emptyMetaN (emptyMetaN, RawValue emptyMetaN op) [RawTupleArgNamed "l" x, RawTupleArgNamed "r" y]
+mkOp2 opChars x y = applyRawArgs (RawValue emptyMetaN op) [(Just "l", x), (Just "r", y)]
   where op = "/operator" ++ opChars
 
 ops :: [[Operator Parser PExpr]]
@@ -69,8 +69,8 @@ pCallArg = do
     return n
   expr <- pExpr
   return $ case maybeArgName of
-    Just argName -> RawTupleArgNamed argName expr
-    Nothing      -> RawTupleArgInfer expr
+    Just argName -> RawTupleArgNamed emptyMetaN argName expr
+    Nothing      -> RawTupleArgInfer emptyMetaN expr
 
 pCall :: Parser PExpr
 pCall = do

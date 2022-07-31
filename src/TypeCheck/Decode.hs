@@ -65,6 +65,9 @@ toExpr env (IValue m name) = do
 toExpr env (IArg m name) = do
   m' <- toMeta env m $ "Arg_" ++ name
   return $ Arg m' name
+toExpr env (IHoleExpr m hole) = do
+  m' <- toMeta env m $ "Arg_" ++ show hole
+  return $ HoleExpr m' hole
 toExpr env (ITupleApply m (baseM, baseExpr) (Just argName) argExpr) = do
   m' <- toMeta env m "TupleApply_M"
   baseM' <- toMeta env baseM "TupleApply_baseM"
@@ -95,6 +98,17 @@ toExpr env (ITupleApply m (baseM, baseExpr) Nothing argExpr) = do
       _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to multiple types"]
     _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to non UnionType"]
   return $ TupleApply m' (baseM', baseExpr') argName argExpr'
+toExpr env (IVarApply m baseExpr varName varVal) = do
+  m' <- toMeta env m "VarApply_M"
+  baseExpr' <- toExpr env baseExpr
+  varVal' <- toMeta env varVal "VarApply_val"
+  let result = VarApply m' baseExpr' varName varVal'
+  case m' of -- check for errors
+
+    -- Don't check if a bottom type is present
+    _ | getMetaType m' == bottomType -> return result
+
+    _                                -> return result
 
 toGuard :: FEnv -> VGuard -> TypeCheckResult TGuard
 toGuard env (IfGuard expr) = do

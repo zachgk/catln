@@ -56,10 +56,14 @@ scopeSubDeclFunNamesInPartialName prefix replaceNames (PRelativeName name) = PRe
 scopeSubDeclFunNamesInExpr :: TypeName -> S.HashSet TypeName -> PSExpr -> PSExpr
 scopeSubDeclFunNamesInExpr _ _ e@PSCExpr{} = e
 scopeSubDeclFunNamesInExpr prefix replaceNames (PSValue m name) = PSValue m $ scopeSubDeclFunNamesInS prefix replaceNames name
+scopeSubDeclFunNamesInExpr _ _ e@PSHole{} = e
 scopeSubDeclFunNamesInExpr prefix replaceNames (PSTupleApply m (bm, bExpr) argName argVal) = PSTupleApply m (bm, bExpr') argName argVal'
   where
     bExpr' = scopeSubDeclFunNamesInExpr prefix replaceNames bExpr
     argVal' = scopeSubDeclFunNamesInExpr prefix replaceNames argVal
+scopeSubDeclFunNamesInExpr prefix replaceNames (PSVarApply m bExpr varName varVal) = PSVarApply m bExpr' varName varVal
+  where
+    bExpr' = scopeSubDeclFunNamesInExpr prefix replaceNames bExpr
 
 scopeSubDeclFunNamesInMeta :: TypeName -> S.HashSet TypeName -> ParseMeta -> ParseMeta
 scopeSubDeclFunNamesInMeta prefix replaceNames (PreTyped (UnionType partials) pos) = PreTyped (UnionType partials') pos
@@ -93,10 +97,14 @@ currySubFunctionsUpdateExpr _ parentArgs v@PSValue{} | H.null parentArgs = v
 currySubFunctionsUpdateExpr toUpdate parentArgs v@(PSValue _ vn) = if S.member vn toUpdate
   then foldr (\(parentArgName, (parentArgM, _)) e -> PSTupleApply emptyMetaN (emptyMetaN, e) (Just parentArgName) (PSValue parentArgM parentArgName)) v $ H.toList parentArgs
   else v
+currySubFunctionsUpdateExpr _ _ e@PSHole{} = e
 currySubFunctionsUpdateExpr toUpdate parentArgs (PSTupleApply tm (tbm, tbe) tArgName tArgVal) = PSTupleApply tm (tbm, tbe') tArgName tArgVal'
   where
     tbe' = currySubFunctionsUpdateExpr toUpdate parentArgs tbe
     tArgVal' = currySubFunctionsUpdateExpr toUpdate parentArgs tArgVal
+currySubFunctionsUpdateExpr toUpdate parentArgs (PSVarApply tm tbe tVarName tVarVal) = PSVarApply tm tbe' tVarName tVarVal
+  where
+    tbe' = currySubFunctionsUpdateExpr toUpdate parentArgs tbe
 
 currySubFunctions :: H.HashMap ArgName PObjArg -> [PSemiDecl] -> Maybe PSExpr -> [PSCompAnnot] -> ([PSemiDecl], Maybe PSExpr, [PSCompAnnot])
 currySubFunctions parentArgs decls expr annots = (decls', expr', annots')
@@ -108,7 +116,7 @@ currySubFunctions parentArgs decls expr annots = (decls', expr', annots')
     annots' = map (currySubFunctionsUpdateExpr toUpdate parentArgs) annots
 
 desObjDocComment :: [PDeclSubStatement] -> Maybe String
-desObjDocComment (RawDeclSubStatementAnnot (RawTupleApply _ (_, RawValue _ "/Catln/#md") [RawTupleArgNamed "text" (RawCExpr _ (CStr doc))]) _: rest) = Just (++) <*> Just doc <*> desObjDocComment rest
+desObjDocComment (RawDeclSubStatementAnnot (RawTupleApply _ (_, RawValue _ "/Catln/#md") [RawTupleArgNamed _ "text" (RawCExpr _ (CStr doc))]) _: rest) = Just (++) <*> Just doc <*> desObjDocComment rest
 desObjDocComment _ = Just ""
 
 removeSubDeclarations :: PDecl -> [PSemiDecl]
@@ -130,7 +138,9 @@ desExpr _ (PSCExpr m c) = ICExpr m c
 desExpr arrArgs (PSValue m n) = if H.member n arrArgs
   then IArg m n
   else IValue m n
+desExpr _ (PSHole m h) = IHoleExpr m h
 desExpr arrArgs (PSTupleApply m (bm, be) argName argVal) = ITupleApply m (bm, desExpr arrArgs be) argName (desExpr arrArgs argVal)
+desExpr arrArgs (PSVarApply m be varName varVal) = IVarApply m (desExpr arrArgs be) varName varVal
 
 desGuard :: PArgMetaMap -> PSGuard -> DesGuard
 desGuard arrArgs = fmap (desExpr arrArgs)
@@ -138,18 +148,24 @@ desGuard arrArgs = fmap (desExpr arrArgs)
 semiDesExpr :: PObject -> PExpr -> ([PSemiDecl], PSExpr)
 semiDesExpr _ (RawCExpr m c) = ([], PSCExpr m c)
 semiDesExpr _ (RawValue m n) = ([], PSValue m n)
+semiDesExpr _ (RawHoleExpr m h) = ([], PSHole m h)
 semiDesExpr obj (RawTupleApply m'' (bm, be) args) = (\(a, _, PSTupleApply _ (bm'', be'') argName'' argVal'') -> (a, PSTupleApply m'' (bm'', be'') argName'' argVal'')) $ foldl aux (subBe, bm, be') args
   where
     (subBe, be') = semiDesExpr obj be
-    aux (sub, m, e) (RawTupleArgNamed argName argVal) = (subArgVal ++ sub, emptyMetaM "res" m'', PSTupleApply (emptyMetaM "app" m'') (m, e) (Just argName) argVal')
+    aux (sub, m, e) (RawTupleArgNamed _ argName argVal) = (subArgVal ++ sub, emptyMetaM "res" m'', PSTupleApply (emptyMetaM "app" m'') (m, e) (Just argName) argVal')
       where (subArgVal, argVal') = semiDesExpr obj argVal
-    aux (sub, m, e) (RawTupleArgInfer argVal) = (subArgVal ++ sub, emptyMetaM "res" m'', PSTupleApply (emptyMetaM "app" m'') (m, e) Nothing argVal')
+    aux (sub, m, e) (RawTupleArgInfer _ argVal) = (subArgVal ++ sub, emptyMetaM "res" m'', PSTupleApply (emptyMetaM "app" m'') (m, e) Nothing argVal')
       where (subArgVal, argVal') = semiDesExpr obj argVal
+semiDesExpr obj (RawVarsApply m be vs) = (subBe, foldr aux be' vs)
+  where
+    aux (varName, varVal) base = PSVarApply (emptyMetaM varName m) base varName varVal
+    (subBe, be') = semiDesExpr obj be
+semiDesExpr obj (RawContextApply _ (_, be) ctxs) = semiDesExpr obj $ applyRawArgs (rawVal "/Context") ((Just "value", be) : map (\(ctxName, ctxM) -> (Nothing, RawValue ctxM ctxName)) ctxs)
 semiDesExpr obj (RawParen e) = semiDesExpr obj e
 semiDesExpr obj (RawMethods base methods) = semiDesExpr obj $ foldl addMethod base methods
   where
-    addMethod b method@RawValue{} = RawTupleApply (emptyMetaE "app" b) (emptyMetaE "appBase" method, method) [RawTupleArgNamed "this" b]
-    addMethod b (RawTupleApply m methodVal methodArgs) = RawTupleApply m methodVal (RawTupleArgNamed "this" b : methodArgs)
+    addMethod b method@RawValue{} = RawTupleApply (emptyMetaE "app" b) (emptyMetaE "appBase" method, method) [RawTupleArgNamed (emptyMetaE "arg" b) "this" b]
+    addMethod b (RawTupleApply m methodVal methodArgs) = RawTupleApply m methodVal (RawTupleArgNamed (emptyMetaE "arg" b) "this" b : methodArgs)
     addMethod _ _ = error "Unknown semiDesExpr obj method"
 semiDesExpr obj@Object{objVars} r@(RawIfThenElse m i t e) = (concat [subI, subT, subE, [elseDecl, ifDecl]], expr')
   where
@@ -189,7 +205,7 @@ semiDesExpr obj@Object{objVars} r@(RawCase m e ((Pattern firstObj@Object{objM=fm
     (subE, e') = semiDesExpr obj e
     expr' = PSTupleApply m (emptyMetaM "app" m, PSValue (emptyMetaE "val" e) condName) (Just argName) e'
 semiDesExpr obj (RawList m []) = semiDesExpr obj (RawValue m "/Data/Nil")
-semiDesExpr obj (RawList m (l:ls)) = semiDesExpr obj (RawTupleApply (emptyMetaM "listApp" (getExprMeta l)) (emptyMetaM "listBase" (getExprMeta l), RawValue m "/Data/Cons") [RawTupleArgNamed "head" l, RawTupleArgNamed "tail" (RawList m ls)])
+semiDesExpr obj (RawList m (l:ls)) = semiDesExpr obj (RawTupleApply (emptyMetaM "listApp" (getExprMeta l)) (emptyMetaM "listBase" (getExprMeta l), RawValue m "/Data/Cons") [RawTupleArgNamed (emptyMetaE "arg" l) "head" l, RawTupleArgNamed (emptyMetaE "argRemaining" l) "tail" (RawList m ls)])
 
 
 semiDesGuard :: PObject -> PGuard -> ([PSemiDecl], PSGuard)

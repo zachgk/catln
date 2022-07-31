@@ -34,13 +34,17 @@ instance MapMeta IExpr where
   mapMeta f (ICExpr m c) = ICExpr (f ExprMeta m) c
   mapMeta f (IValue m n) = IValue (f ExprMeta m) n
   mapMeta f (IArg m n) = IArg (f ExprMeta m) n
+  mapMeta f (IHoleExpr m h) = IHoleExpr (f ExprMeta m) h
   mapMeta f (ITupleApply m (bm, be) argName argVal) = ITupleApply (f ExprMeta m) (f ExprMeta bm, mapMeta f be) argName (mapMeta f argVal)
+  mapMeta f (IVarApply m be varName varVal) = IVarApply (f ExprMeta m) (mapMeta f be) varName (f ObjVarMeta varVal)
 
 instance MapMeta Expr where
   mapMeta f (CExpr m c) = CExpr (f ExprMeta m) c
   mapMeta f (Value m n) = Value (f ExprMeta m) n
   mapMeta f (Arg m n) = Arg (f ExprMeta m) n
+  mapMeta f (HoleExpr m h) = HoleExpr (f ExprMeta m) h
   mapMeta f (TupleApply m (bm, be) argName argVal) = TupleApply (f ExprMeta m) (f ExprMeta bm, mapMeta f be) argName (mapMeta f argVal)
+  mapMeta f (VarApply m be varName varVal) = VarApply (f ExprMeta m) (mapMeta f be) varName (f ObjVarMeta varVal)
 
 mapMetaGuard :: (MapMeta e) => (MetaType -> a -> b) -> Guard (e a) -> Guard (e b)
 mapMetaGuard f (IfGuard expr) = IfGuard (mapMeta f expr)
