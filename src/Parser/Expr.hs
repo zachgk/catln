@@ -69,8 +69,8 @@ pCallArg = do
     return n
   expr <- pExpr
   return $ case maybeArgName of
-    Just argName -> RawTupleArgNamed emptyMetaN argName expr
-    Nothing      -> RawTupleArgInfer emptyMetaN expr
+    Just argName -> TupleArgIO emptyMetaN argName expr
+    Nothing      -> TupleArgO emptyMetaN expr
 
 pCall :: Parser PExpr
 pCall = do

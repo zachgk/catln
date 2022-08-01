@@ -21,7 +21,7 @@ import           Text.Megaparsec     (SourcePos)
 import           Utils
 
 type ParseMeta = PreTyped
-type PTupleArg = RawTupleArg ParseMeta
+type PTupleArg = TupleArg RawExpr ParseMeta
 type PExpr = RawExpr ParseMeta
 type PPattern = Pattern PExpr ParseMeta
 type PCompAnnot = CompAnnot PExpr
@@ -74,5 +74,5 @@ rawVal name = RawValue m name
 applyRawArgs :: (Meta m) => RawExpr m -> [(Maybe ArgName, RawExpr m)] -> RawExpr m
 applyRawArgs base args = RawTupleApply (emptyMetaE "app" base) (emptyMetaE "base" base, base) (map mapArg args)
   where
-    mapArg (Just argName, argVal) = RawTupleArgNamed (emptyMetaE argName base) argName argVal
-    mapArg (Nothing, argVal) = RawTupleArgInfer (emptyMetaE "noArg" base) argVal
+    mapArg (Just argName, argVal) = TupleArgIO (emptyMetaE argName base) argName argVal
+    mapArg (Nothing, argVal) = TupleArgO (emptyMetaE "noArg" base) argVal

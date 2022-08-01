@@ -72,7 +72,7 @@ pComment = do
   c <- L.indentBlock scn p
   pos2 <- getSourcePos
   let m = emptyMeta pos1 pos2
-  return $ RawTupleApply (emptyMetaM "appArg" m) (emptyMetaM "valC" m, RawValue (emptyMetaM "val" m) "/Catln/#md") [RawTupleArgNamed (emptyMetaM "text" m) "text" (RawCExpr m (CStr c))]
+  return $ RawTupleApply (emptyMetaM "appArg" m) (emptyMetaM "valC" m, RawValue (emptyMetaM "val" m) "/Catln/#md") [TupleArgIO (emptyMetaM "text" m) "text" (RawCExpr m (CStr c))]
   where
     takeLine = takeWhileP (Just "character") (/= '\n')
     p = do

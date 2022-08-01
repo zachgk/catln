@@ -42,11 +42,6 @@ data Constant
 data Pattern e m = Pattern (Object m) (Guard e)
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON, ToJSONKey)
 
-data RawTupleArg m
-  = RawTupleArgNamed m ArgName (RawExpr m)
-  | RawTupleArgInfer m (RawExpr m)
-  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
-
 -- |
 -- An argument applied in an expression.
 -- TODO Consider replacing the TupleArgI ArgName with an Expr as a generalization. In that case, this ArgName would be equivalent to a Value. It could also include lenses.
@@ -68,7 +63,7 @@ data RawExpr m
   = RawCExpr m Constant
   | RawValue m TypeName
   | RawHoleExpr m Hole
-  | RawTupleApply m (m, RawExpr m) [RawTupleArg m]
+  | RawTupleApply m (m, RawExpr m) [TupleArg RawExpr m]
   | RawVarsApply m (RawExpr m) [(TypeVarName, m)]
   | RawContextApply m (m, RawExpr m) [(ArgName, m)]
   | RawParen (RawExpr m)
