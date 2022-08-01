@@ -174,7 +174,7 @@ envLookup env obj input ee visitedArrows srcType destType = do
 buildImplicit :: TBEnv -> ObjSrc -> TBExpr -> Type -> Type -> CRes ResArrowTree
 buildImplicit _ _ expr srcType TopType = return $ ExprArrow expr srcType srcType
 buildImplicit _ obj _ TopType destType = error $ printf "Build implicit from top type to %s in %s" (show destType) (show obj)
-buildImplicit env objSrc@(_, Object{objVars}) input (TypeVar (TVVar varName)) destType = case suffixLookupInDict varName objVars of
+buildImplicit env objSrc@(_, obj) input (TypeVar (TVVar varName)) destType = case suffixLookupInDict varName $ objAppliedVars obj of
   Just objVarM -> buildImplicit env objSrc input (getMetaType objVarM) destType
   Nothing -> error $ printf "buildImplicit unknown arg %s with obj %s" varName (show objSrc)
 buildImplicit env@TBEnv{tbClassGraph} objSrc@(os, obj) input (TypeVar (TVArg argName)) destType = case suffixLookupInDict argName $ formArgMetaMapWithSrc tbClassGraph obj os of
@@ -234,11 +234,11 @@ resolveTree env obj (ResArrowTupleApply input argName argVal) = do
 
 buildArrow :: TBEnv -> PartialType -> TBObject -> [TBCompAnnot] -> TBArrow -> CRes (Maybe (TBArrow, (ResArrowTree, [ResArrowTree])))
 buildArrow _ _ _ _ (Arrow _ _ Nothing) = return Nothing
-buildArrow env objPartial obj@Object{objVars} compAnnots arrow@(Arrow (Typed am _) _ (Just expr)) = do
+buildArrow env objPartial obj compAnnots arrow@(Arrow (Typed am _) _ (Just expr)) = do
   let env' = env{tbName = printf "arrow %s" (show obj)}
   let objSrc = (objPartial, obj)
   let am' = case am of
-        (TypeVar (TVVar v)) -> case suffixLookupInDict v objVars of
+        (TypeVar (TVVar v)) -> case suffixLookupInDict v $ objAppliedVars obj of
           Just m  -> getMetaType m
           Nothing -> error "Bad TVVar in makeBaseEnv"
         (TypeVar (TVArg v)) -> case suffixLookupInDict v $ formArgMetaMap obj of

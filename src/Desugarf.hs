@@ -171,16 +171,16 @@ semiDesExpr obj (RawMethods base methods) = semiDesExpr obj $ foldl addMethod ba
     addMethod b method@RawValue{} = RawTupleApply (emptyMetaE "app" b) (emptyMetaE "appBase" method, method) [TupleArgIO (emptyMetaE "arg" b) "this" b]
     addMethod b (RawTupleApply m methodVal methodArgs) = RawTupleApply m methodVal (TupleArgIO (emptyMetaE "arg" b) "this" b : methodArgs)
     addMethod _ _ = error "Unknown semiDesExpr obj method"
-semiDesExpr obj@Object{objVars} r@(RawIfThenElse m i t e) = (concat [subI, subT, subE, [elseDecl, ifDecl]], expr')
+semiDesExpr obj r@(RawIfThenElse m i t e) = (concat [subI, subT, subE, [elseDecl, ifDecl]], expr')
   where
     condName = "$" ++ take 6 (printf "%08x" (hash r))
     (subI, i') = semiDesExpr obj i
     (subT, t') = semiDesExpr obj t
     (subE, e') = semiDesExpr obj e
-    ifDecl = PSemiDecl (DeclLHS (emptyMetaE "obj" i) (Pattern (Object (emptyMetaE "patt" i) FunctionObj objVars H.empty Nothing condName) (IfGuard i'))) [] (Just t')
-    elseDecl = PSemiDecl (DeclLHS (emptyMetaE "obj" e) (Pattern (Object (emptyMetaE "patt" e) FunctionObj objVars H.empty Nothing condName) ElseGuard)) [] (Just e')
+    ifDecl = PSemiDecl (DeclLHS (emptyMetaE "obj" i) (Pattern (Object (emptyMetaE "patt" i) FunctionObj (objAppliedVars obj) H.empty Nothing condName) (IfGuard i'))) [] (Just t')
+    elseDecl = PSemiDecl (DeclLHS (emptyMetaE "obj" e) (Pattern (Object (emptyMetaE "patt" e) FunctionObj (objAppliedVars obj) H.empty Nothing condName) ElseGuard)) [] (Just e')
     expr' = Value m condName
-semiDesExpr obj@Object{objVars} r@(RawMatch m e matchItems) = (subE ++ subMatchItems, expr')
+semiDesExpr obj r@(RawMatch m e matchItems) = (subE ++ subMatchItems, expr')
   where
     condName = "$" ++ take 6 (printf "%08x" (hash r))
     argName = condName ++ "-arg"
@@ -192,15 +192,15 @@ semiDesExpr obj@Object{objVars} r@(RawMatch m e matchItems) = (subE ++ subMatchI
         (subPattGuard, pattGuard') = semiDesGuard obj pattGuard
         (subMatchExpr, matchExpr') = semiDesExpr obj matchExpr
         matchArg = H.singleton argName (emptyMetaM "arg" m, Just patt)
-        matchItemExpr' = PSemiDecl (DeclLHS (emptyMetaM "obj" m) (Pattern (Object (emptyMetaM "patt" m) FunctionObj objVars matchArg Nothing condName) pattGuard')) [] (Just matchExpr')
+        matchItemExpr' = PSemiDecl (DeclLHS (emptyMetaM "obj" m) (Pattern (Object (emptyMetaM "patt" m) FunctionObj (objAppliedVars obj) matchArg Nothing condName) pattGuard')) [] (Just matchExpr')
 semiDesExpr _ (RawCase _ _ ((Pattern _ ElseGuard, _):_)) = error "Can't use elseguard in match expr"
 semiDesExpr _ (RawCase _ _ []) = error "Empty case"
 semiDesExpr obj (RawCase _ _ [(_, matchExpr)]) = semiDesExpr obj matchExpr
-semiDesExpr obj@Object{objVars} r@(RawCase m e ((Pattern firstObj@Object{objM=fm} firstGuard, firstExpr):restCases)) = (concat [[firstDecl, restDecl], subFG, subFE, subRE, subE], expr')
+semiDesExpr obj r@(RawCase m e ((Pattern firstObj@Object{objM=fm} firstGuard, firstExpr):restCases)) = (concat [[firstDecl, restDecl], subFG, subFE, subRE, subE], expr')
   where
     condName = "$" ++ take 6 (printf "%08x" (hash r))
     argName = condName ++ "-arg"
-    declObj = Object (emptyMetaM "obj" m) FunctionObj objVars (H.singleton argName (fm, Just firstObj)) Nothing condName
+    declObj = Object (emptyMetaM "obj" m) FunctionObj (objAppliedVars obj) (H.singleton argName (fm, Just firstObj)) Nothing condName
     firstDecl = PSemiDecl (DeclLHS m (Pattern declObj firstGuard')) [] (Just firstExpr')
     (subFG, firstGuard') = semiDesGuard obj firstGuard
     (subFE, firstExpr') = semiDesExpr obj firstExpr

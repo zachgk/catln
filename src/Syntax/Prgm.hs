@@ -144,7 +144,7 @@ data ObjectBasis = FunctionObj | TypeObj | PatternObj | MatchObj
 data Object m = Object {
   objM              :: m,
   objBasis          :: ObjectBasis,
-  objVars           :: H.HashMap TypeVarName m,
+  deprecatedObjVars :: H.HashMap TypeVarName m,
   objArgs           :: H.HashMap ArgName (ObjArg m),
   objDoc            :: Maybe String,
   deprecatedObjPath :: String
@@ -216,6 +216,9 @@ class ExprClass e where
   -- | Returns the value at the base of an expression, if it exists
   maybeExprPath :: e m -> Maybe TypeName
 
+  -- | Returns all vars applied to a value
+  exprAppliedVars :: e m -> H.HashMap TypeVarName m
+
 instance ExprClass RawExpr where
   getExprMeta expr = case expr of
     RawCExpr m _          -> m
@@ -241,6 +244,14 @@ instance ExprClass RawExpr where
   maybeExprPath (RawMethods e _)             = maybeExprPath e
   maybeExprPath _                            = Nothing
 
+  exprAppliedVars (RawValue _ _) = H.empty
+  exprAppliedVars (RawTupleApply _ (_, be) _) = exprAppliedVars be
+  exprAppliedVars (RawVarsApply _ e vars) = H.union (exprAppliedVars e) (H.fromList vars)
+  exprAppliedVars (RawContextApply _ (_, e) _) = exprAppliedVars e
+  exprAppliedVars (RawParen e) = exprAppliedVars e
+  exprAppliedVars (RawMethods e _) = exprAppliedVars e
+  exprAppliedVars _ = error "Unsupported RawExpr exprAppliedVars"
+
 
 instance ExprClass Expr where
   getExprMeta expr = case expr of
@@ -258,6 +269,12 @@ instance ExprClass Expr where
   maybeExprPath (TupleApply _ (_, e) _) = maybeExprPath e
   maybeExprPath (VarApply _ e _ _)      = maybeExprPath e
   maybeExprPath _                       = Nothing
+
+  exprAppliedVars (Value _ _) = H.empty
+  exprAppliedVars (TupleApply _ (_, be) _) = exprAppliedVars be
+  exprAppliedVars (VarApply _ e n m) = H.insert n m (exprAppliedVars e)
+  exprAppliedVars _ = error "Unsupported Expr exprAppliedVars"
+
 
 mapTupleArgValue :: (e1 m -> e2 m) -> TupleArg e1 m -> TupleArg e2 m
 mapTupleArgValue _ (TupleArgI m n)    = TupleArgI m n

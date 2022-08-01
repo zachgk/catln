@@ -15,6 +15,7 @@
 
 module TypeCheck.Show where
 
+import           Syntax
 import           Syntax.Prgm
 import           TypeCheck.Common
 
@@ -80,11 +81,11 @@ showObjArg env (m, maybeObj) = do
   return (m', maybeObj')
 
 showObj :: FEnv -> VObject -> TypeCheckResult SObject
-showObj env obj@Object{objM, objVars, objArgs} = do
+showObj env obj@Object{objM, objArgs} = do
   m' <- showM env objM
-  vars' <- mapM (showM env) objVars
+  vars' <- mapM (showM env) $ objAppliedVars obj
   args' <- mapM (showObjArg env) objArgs
-  return $ obj{objM=m', objVars=vars', objArgs=args'}
+  return $ obj{objM=m', deprecatedObjVars=vars', objArgs=args'}
 
 showObjArrow :: FEnv -> VObjectMapItem -> TypeCheckResult SObjectMapItem
 showObjArrow env (obj, annots, arrow) = do

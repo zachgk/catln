@@ -101,9 +101,9 @@ exprPath :: (ExprClass e) => e m -> TypeName
 exprPath = fromJust . maybeExprPath
 
 objExpr :: (Meta m) => Object m -> Expr m
-objExpr Object{objM, objVars, objArgs, deprecatedObjPath} = mapMeta (\_ _ -> objM) $ applyArgs $ applyVars $ Value emptyMetaN deprecatedObjPath
+objExpr Object{objM, deprecatedObjVars, objArgs, deprecatedObjPath} = mapMeta (\_ _ -> objM) $ applyArgs $ applyVars $ Value emptyMetaN deprecatedObjPath
   where
-    applyVars b = foldr applyVar b $ H.toList objVars
+    applyVars b = foldr applyVar b $ H.toList deprecatedObjVars
     applyVar (varName, varVal) b = VarApply (emptyMetaE "" b) b varName varVal
 
     applyArgs b = foldr applyArg b $ H.toList objArgs
@@ -112,6 +112,9 @@ objExpr Object{objM, objVars, objArgs, deprecatedObjPath} = mapMeta (\_ _ -> obj
 
 objPath :: (Meta m) => Object m -> TypeName
 objPath = exprPath . objExpr
+
+objAppliedVars :: (Meta m) => Object m -> H.HashMap TypeVarName m
+objAppliedVars = exprAppliedVars . objExpr
 
 type ArgMetaMap m = H.HashMap ArgName m
 -- |
@@ -178,13 +181,13 @@ metaTypeVar m = case getMetaType m of
 
 
 isSubtypePartialOfWithObj :: (Meta m) => ClassGraph -> Object m -> PartialType -> Type -> Bool
-isSubtypePartialOfWithObj classGraph Object{objVars, objArgs} sub = isSubtypeOfWithEnv classGraph (fmap getMetaType objVars) (fmap (getMetaType . fst) objArgs) (singletonType sub)
+isSubtypePartialOfWithObj classGraph obj sub = isSubtypeOfWithObj classGraph obj (singletonType sub)
 
 isSubtypeOfWithObj :: (Meta m) => ClassGraph -> Object m -> Type -> Type -> Bool
-isSubtypeOfWithObj classGraph obj@Object{objVars} = isSubtypeOfWithEnv classGraph (fmap getMetaType objVars) (getMetaType <$> formArgMetaMap obj)
+isSubtypeOfWithObj classGraph obj = isSubtypeOfWithEnv classGraph (getMetaType <$> objAppliedVars obj) (getMetaType <$> formArgMetaMap obj)
 
 isSubtypeOfWithObjSrc :: (Meta m) => ClassGraph -> PartialType -> Object m -> Type -> Type -> Bool
-isSubtypeOfWithObjSrc classGraph srcType obj@Object{objVars} = isSubtypeOfWithEnv classGraph (fmap getMetaType objVars) (snd <$> formArgMetaMapWithSrc classGraph obj srcType )
+isSubtypeOfWithObjSrc classGraph srcType obj = isSubtypeOfWithEnv classGraph (getMetaType <$> objAppliedVars obj) (snd <$> formArgMetaMapWithSrc classGraph obj srcType )
 
 isSubtypeOfWithMaybeObj :: (Meta m) => ClassGraph -> Maybe (Object m) -> Type -> Type -> Bool
 isSubtypeOfWithMaybeObj classGraph (Just obj) = isSubtypeOfWithObj classGraph obj

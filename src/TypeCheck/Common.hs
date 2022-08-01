@@ -271,8 +271,8 @@ verifyScheme classGraph (VarMeta _ _ mobj) (TypeCheckResult _ (SType oldUb _ _))
                                                                         && all (verifyTypeVars (H.keys ptVars)) ptArgs
                                                                         && all (verifyTypeVars (H.keys ptVars)) ptProps
 
-    mobjVars (Just Object{objVars}) = H.keys objVars
-    mobjVars Nothing                = []
+    mobjVars (Just o) = H.keys $ objAppliedVars o
+    mobjVars Nothing  = []
     verifySchemeUbLowers  = isSubtypeOfWithMaybeObj classGraph mobj ub oldUb
     verifyCompacted = ub == compactType classGraph ub
 verifyScheme _ _ _ _ = Nothing
@@ -313,7 +313,7 @@ pointUb env p = do
   return ub
 
 resolveTypeVar :: TypeVarAux -> VarMeta -> TypeCheckResult VarMeta
-resolveTypeVar (TVVar v) m@(VarMeta _ _ (Just Object{objVars})) = case H.lookup v objVars of
+resolveTypeVar (TVVar v) m@(VarMeta _ _ (Just obj)) = case H.lookup v $ objAppliedVars obj of
   Just m' -> return m'
   Nothing -> TypeCheckResE [GenTypeCheckError (getMetaPos m) "Unknown variable in resolveTypeVar var"]
 resolveTypeVar (TVArg v) m@(VarMeta _ _ (Just Object{objArgs})) = case H.lookup v objArgs of
