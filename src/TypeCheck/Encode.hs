@@ -198,26 +198,26 @@ fromObjectMap env1 (obj, annots, arrow) = do
   return ((obj, annots', arrow'), env3)
 
 fromObjVar :: VarMeta -> String -> FEnv -> (TypeVarName, PreMeta) -> TypeCheckResult ((TypeVarName, VarMeta), FEnv)
-fromObjVar objM prefix env1 (varName, m) = do
+fromObjVar oM prefix env1 (varName, m) = do
   (m', env2) <- fromMeta env1 BUpper Nothing m (prefix ++ "." ++ varName)
-  let env3 = addConstraints env2 [VarEq (objM, varName) m']
+  let env3 = addConstraints env2 [VarEq (oM, varName) m']
   return ((varName, m'), env3)
 
 addObjArg :: VObject -> VarMeta -> String -> H.HashMap TypeVarName VarMeta -> FEnv -> (TypeName, PObjArg) -> TypeCheckResult ((TypeName, VObjArg), FEnv)
-addObjArg fakeObj objM prefix varMap env (n, (m, maybeSubObj)) = do
+addObjArg fakeObj oM prefix varMap env (n, (m, maybeSubObj)) = do
   let prefix' = prefix ++ "." ++ n
   -- requires a fakeObj to pull the type variables from
   let argBound = case maybeSubObj of
         Just{}  -> BUpper
         Nothing -> BEq
   (m', env2) <- fromMeta env argBound (Just fakeObj) m prefix'
-  let env3 = addConstraints env2 [PropEq (objM, n) m', BoundedByObjs m']
+  let env3 = addConstraints env2 [PropEq (oM, n) m', BoundedByObjs m']
   let env4 = case suffixLookupInDict n varMap of
         Just varM -> addConstraints env3 [EqPoints m' varM]
         Nothing   -> env3
   case maybeSubObj of
     Just subObj -> do
-      (subObj'@Object{objM=subM}, env5) <- fromObject prefix' True env4 subObj
+      (subObj'@Object{deprecatedObjM=subM}, env5) <- fromObject prefix' True env4 subObj
       return ((n, (m', Just subObj')), addConstraints env5 [ArrowTo subM m'])
     Nothing -> return ((n, (m', Nothing)), env4)
 

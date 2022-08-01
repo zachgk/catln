@@ -101,7 +101,7 @@ exprPath :: (ExprClass e) => e m -> TypeName
 exprPath = fromJust . maybeExprPath
 
 objExpr :: (Meta m) => Object m -> Expr m
-objExpr Object{objM, deprecatedObjVars, deprecatedObjArgs, deprecatedObjPath} = mapMeta (\_ _ -> objM) $ applyArgs $ applyVars $ Value emptyMetaN deprecatedObjPath
+objExpr Object{deprecatedObjM, deprecatedObjVars, deprecatedObjArgs, deprecatedObjPath} = mapMeta (\_ _ -> deprecatedObjM) $ applyArgs $ applyVars $ Value emptyMetaN deprecatedObjPath
   where
     applyVars b = foldr applyVar b $ H.toList deprecatedObjVars
     applyVar (varName, varVal) b = VarApply (emptyMetaE "" b) b varName varVal
@@ -113,15 +113,18 @@ objExpr Object{objM, deprecatedObjVars, deprecatedObjArgs, deprecatedObjPath} = 
 objPath :: (Meta m) => Object m -> TypeName
 objPath = exprPath . objExpr
 
+objM :: (Meta m) => Object m -> m
+objM = getExprMeta . objExpr
+
 objAppliedArgs :: (Meta m) => Object m -> [TupleArg Expr m]
 objAppliedArgs = exprAppliedArgs . objExpr
 
 objAppliedArgsMap :: (Meta m) => Object m -> H.HashMap ArgName (m, Maybe (Expr m))
 objAppliedArgsMap = H.fromList . mapMaybe fromTupleArg . exprAppliedArgs . objExpr
   where
-    fromTupleArg (TupleArgI m n) = Just (n, (m, Nothing))
+    fromTupleArg (TupleArgI m n)    = Just (n, (m, Nothing))
     fromTupleArg (TupleArgIO m n a) = Just (n, (m, Just a))
-    fromTupleArg TupleArgO{} = Nothing
+    fromTupleArg TupleArgO{}        = Nothing
 
 objAppliedVars :: (Meta m) => Object m -> H.HashMap TypeVarName m
 objAppliedVars = exprAppliedVars . objExpr
@@ -135,7 +138,7 @@ type ArgMetaMap m = H.HashMap ArgName m
 formArgMetaMap :: (Meta m) => Object m -> ArgMetaMap m
 formArgMetaMap obj = H.union (aux obj) (fmap fst (deprecatedObjArgs obj))
   where
-    aux o@Object{objM} | null (objAppliedArgs o) = H.singleton (objPath o) objM
+    aux o | null (objAppliedArgs o) = H.singleton (objPath o) (objM o)
     aux Object{deprecatedObjArgs} = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg deprecatedObjArgs
       where
         unionCombine _ _ = error "Duplicate var matched"
@@ -171,11 +174,11 @@ formVarMap _ _ = error $ printf "Unknown formVarMap"
 -- fullDest means to use the greatest possible type (after implicit).
 -- Otherwise, it uses the minimal type that *must* be reached
 arrowDestType :: (Meta m, Show m, ExprClass e, Show (e m)) => Bool -> ClassGraph -> PartialType -> Object m -> Arrow (e m) m -> Type
-arrowDestType fullDest classGraph src obj@Object{objM} (Arrow arrM _ maybeExpr) = case mapM getExprArg maybeExpr of
+arrowDestType fullDest classGraph src obj (Arrow arrM _ maybeExpr) = case mapM getExprArg maybeExpr of
   Just (Just _) -> fromMaybe (error "Unfound expr") expr'
   _             -> joined
   where
-    varEnv = formVarMap classGraph $ intersectTypes classGraph (getMetaType objM) (singletonType src)
+    varEnv = formVarMap classGraph $ intersectTypes classGraph (getMetaType $ objM obj) (singletonType src)
     argEnv = snd <$> formArgMetaMapWithSrc classGraph obj ((\(UnionType pl) -> head $ splitUnionType pl) $ substituteVars $ singletonType src)
     substitute = substituteVarsWithVarEnv varEnv . substituteArgsWithArgEnv argEnv
     expr' = fmap (substitute . getExprType) maybeExpr

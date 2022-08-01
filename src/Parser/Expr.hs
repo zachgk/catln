@@ -251,7 +251,7 @@ pObjTreeInner basis = do
     Nothing -> obj
 
 objTreeJoinMethods :: PObject -> PObject -> PObject
-objTreeJoinMethods obj@Object{objM} meth@Object{deprecatedObjArgs=methArgs} = meth{deprecatedObjArgs = H.insert "this" (emptyMetaM "meth" objM, Just obj) methArgs}
+objTreeJoinMethods obj meth@Object{deprecatedObjArgs=methArgs} = meth{deprecatedObjArgs = H.insert "this" (emptyMetaM "meth" $ objM obj, Just obj) methArgs}
 
 pObjTree :: ObjectBasis -> Parser PObject
 pObjTree basis = do

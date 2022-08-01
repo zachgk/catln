@@ -93,7 +93,7 @@ expandDataReferences (fullPrgmObjMap, _, _) (objMap, classGraph@(ClassGraph cg),
       where
         mapPartial PartialType{ptName=PTypeName name} = case suffixLookup name (H.keys objExpansions) of
           Just fname -> case H.lookup fname objExpansions of
-            Just Object{objM} -> getMetaType objM
+            Just obj -> getMetaType $ objM obj
             Nothing -> error $ printf "Data not found in expandDataReferences for %s with objExpansions %s" name (show $ H.keys objExpansions)
           Nothing -> error $ printf "Data not found in expandDataReferences for %s with objExpansions %s" name (show $ H.keys objExpansions)
         mapPartial partial@PartialType{ptName=PClassName{}} = singletonType partial

@@ -142,10 +142,10 @@ data ObjectBasis = FunctionObj | TypeObj | PatternObj | MatchObj
 -- Represents an input.
 -- The current plan is to deprecate objM, objVars, objArgs, and objPath and replace them with objExpr. TODO Deprecate the rest.
 data Object m = Object {
-  objM              :: m,
+  deprecatedObjM    :: m,
   objBasis          :: ObjectBasis,
   deprecatedObjVars :: H.HashMap TypeVarName m,
-  deprecatedObjArgs           :: H.HashMap ArgName (ObjArg m),
+  deprecatedObjArgs :: H.HashMap ArgName (ObjArg m),
   objDoc            :: Maybe String,
   deprecatedObjPath :: String
                        }

@@ -168,8 +168,8 @@ reachesPartial env@FEnv{feVTypeGraph, feTTypeGraph, feClassGraph} partial@Partia
 
   return $ ReachesLeaf (catMaybes vtypes ++ catMaybes ttypes)
   where
-    tryVArrow (obj@Object{objM}, arr) =
-      pointUb env objM >>= \objUb -> do
+    tryVArrow (obj, arr) =
+      pointUb env (objM obj) >>= \objUb -> do
       -- It is possible to send part of a partial through the arrow, so must compute the valid part
       -- If none of it is valid, then there is Nothing
       let potentialSrc@(UnionType potSrcLeafs) = intersectTypes feClassGraph (singletonType partial) objUb
@@ -181,10 +181,10 @@ reachesPartial env@FEnv{feVTypeGraph, feTTypeGraph, feClassGraph} partial@Partia
           sarr <- showArrow env arr
           return $ Just $ unionAllTypes feClassGraph [arrowDestType True feClassGraph potentialSrcPartial sobj sarr | potentialSrcPartial <- splitUnionType potSrcLeafs]
         else return Nothing
-    tryTArrow (obj@Object{objM}, arr) = do
+    tryTArrow (obj, arr) = do
       -- It is possible to send part of a partial through the arrow, so must compute the valid part
       -- If none of it is valid, then there is Nothing
-      let potentialSrc@(UnionType potSrcLeafs) = intersectTypes feClassGraph (singletonType partial) (getMetaType objM)
+      let potentialSrc@(UnionType potSrcLeafs) = intersectTypes feClassGraph (singletonType partial) (getMetaType $ objM obj)
       if not (isBottomType potentialSrc)
         -- TODO: Should this line below call `reaches` to make this recursive?
         -- otherwise, no reaches path requiring multiple steps can be found

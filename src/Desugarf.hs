@@ -76,14 +76,14 @@ scopeSubDeclFunNamesInMeta _ _ m@(PreTyped TypeVar{} _) = m
 
 -- Renames sub functions by applying the parent names as a prefix to avoid name collisions
 scopeSubDeclFunNames :: TypeName -> [PSemiDecl] -> Maybe PSExpr -> [PSCompAnnot] -> ParseMeta -> ParseMeta -> ([PSemiDecl], Maybe PSExpr, [PSCompAnnot], ParseMeta, ParseMeta)
-scopeSubDeclFunNames prefix decls maybeExpr annots objM arrM = (decls', expr', annots', objM', arrM')
+scopeSubDeclFunNames prefix decls maybeExpr annots oM arrM = (decls', expr', annots', oM', arrM')
   where
     declNames = S.fromList $ map (\(PSemiDecl (DeclLHS _ (Pattern o _)) _ _) -> objPath o) decls
     addPrefix n = prefix ++ "." ++ n
     scopeM = scopeSubDeclFunNamesInMeta prefix declNames
-    objM' = scopeM objM
+    oM' = scopeM oM
     arrM' = scopeM arrM
-    decls' = map (\(PSemiDecl (DeclLHS aM (Pattern obj@Object{objM=om} guard)) annot subExpr) -> PSemiDecl (DeclLHS (scopeM aM) (Pattern (obj{objM=scopeM om, deprecatedObjPath = addPrefix (objPath obj)}) guard)) annot (fmap (scopeSubDeclFunNamesInExpr prefix declNames) subExpr)) decls
+    decls' = map (\(PSemiDecl (DeclLHS aM (Pattern obj guard)) annot subExpr) -> PSemiDecl (DeclLHS (scopeM aM) (Pattern (obj{deprecatedObjM=scopeM (objM obj), deprecatedObjPath = addPrefix (objPath obj)}) guard)) annot (fmap (scopeSubDeclFunNamesInExpr prefix declNames) subExpr)) decls
     expr' = fmap (scopeSubDeclFunNamesInExpr prefix declNames) maybeExpr
     annots' = map (scopeSubDeclFunNamesInExpr prefix declNames) annots
 
@@ -122,7 +122,7 @@ desObjDocComment (RawDeclSubStatementAnnot (RawTupleApply _ (_, RawValue _ "/Cat
 desObjDocComment _ = Just ""
 
 removeSubDeclarations :: PDecl -> [PSemiDecl]
-removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern obj@Object{objM, deprecatedObjArgs} guard1)) subStatements expr1) = decl':subDecls5
+removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern obj@Object{deprecatedObjArgs} guard1)) subStatements expr1) = decl':subDecls5
   where
     objDoc = desObjDocComment subStatements
     (subDecls, annots1) = splitDeclSubStatements subStatements
@@ -131,9 +131,9 @@ removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern obj@Object{objM, deprecate
     (subDecls22, annots2) = traverse (semiDesExpr obj) annots1
     (subDecls23, guard2) = semiDesGuard obj guard1
     subDecls3 = concat [subDecls2, subDecls21, subDecls22, subDecls23]
-    (subDecls4, expr3, annots3, objM', arrM') = scopeSubDeclFunNames (objPath obj) subDecls3 expr2 annots2 objM arrM
+    (subDecls4, expr3, annots3, objM', arrM') = scopeSubDeclFunNames (objPath obj) subDecls3 expr2 annots2 (objM obj) arrM
     (subDecls5, expr4, annots4) = currySubFunctions deprecatedObjArgs subDecls4 expr3 annots3
-    decl' = PSemiDecl (DeclLHS arrM' (Pattern obj{objDoc = objDoc, objM=objM'} guard2)) annots4 expr4
+    decl' = PSemiDecl (DeclLHS arrM' (Pattern obj{objDoc = objDoc, deprecatedObjM=objM'} guard2)) annots4 expr4
 
 desExpr :: PArgMetaMap -> PSExpr -> DesExpr
 desExpr _ (CExpr m c) = CExpr m c
@@ -196,11 +196,11 @@ semiDesExpr obj r@(RawMatch m e matchItems) = (subE ++ subMatchItems, expr')
 semiDesExpr _ (RawCase _ _ ((Pattern _ ElseGuard, _):_)) = error "Can't use elseguard in match expr"
 semiDesExpr _ (RawCase _ _ []) = error "Empty case"
 semiDesExpr obj (RawCase _ _ [(_, matchExpr)]) = semiDesExpr obj matchExpr
-semiDesExpr obj r@(RawCase m e ((Pattern firstObj@Object{objM=fm} firstGuard, firstExpr):restCases)) = (concat [[firstDecl, restDecl], subFG, subFE, subRE, subE], expr')
+semiDesExpr obj r@(RawCase m e ((Pattern firstObj firstGuard, firstExpr):restCases)) = (concat [[firstDecl, restDecl], subFG, subFE, subRE, subE], expr')
   where
     condName = "$" ++ take 6 (printf "%08x" (hash r))
     argName = condName ++ "-arg"
-    declObj = Object (emptyMetaM "obj" m) FunctionObj (objAppliedVars obj) (H.singleton argName (fm, Just firstObj)) Nothing condName
+    declObj = Object (emptyMetaM "obj" m) FunctionObj (objAppliedVars obj) (H.singleton argName (objM firstObj, Just firstObj)) Nothing condName
     firstDecl = PSemiDecl (DeclLHS m (Pattern declObj firstGuard')) [] (Just firstExpr')
     (subFG, firstGuard') = semiDesGuard obj firstGuard
     (subFE, firstExpr') = semiDesExpr obj firstExpr

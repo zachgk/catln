@@ -221,9 +221,9 @@ codegenTree env (ResArrowTupleApply base argName argRATree) = do
     _ -> error "Invalid input to tuple application"
 
 formArgValMap :: EObject -> Val -> Codegen (H.HashMap ArgName (Typed, AST.Operand))
-formArgValMap obj@Object{objM} (LLVMOperand _ o) | null (objAppliedArgs obj) = do
+formArgValMap obj (LLVMOperand _ o) | null (objAppliedArgs obj) = do
                                                              o' <- o
-                                                             return $ H.singleton (objPath obj) (objM, o')
+                                                             return $ H.singleton (objPath obj) (objM obj, o')
 formArgValMap Object{deprecatedObjArgs} val = do
   valArgs <- getValArgs val
   args' <- mapM (fromArg valArgs) $ H.toList deprecatedObjArgs
