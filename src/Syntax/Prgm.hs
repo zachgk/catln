@@ -145,7 +145,7 @@ data Object m = Object {
   objM              :: m,
   objBasis          :: ObjectBasis,
   deprecatedObjVars :: H.HashMap TypeVarName m,
-  objArgs           :: H.HashMap ArgName (ObjArg m),
+  deprecatedObjArgs           :: H.HashMap ArgName (ObjArg m),
   objDoc            :: Maybe String,
   deprecatedObjPath :: String
                        }
@@ -216,6 +216,9 @@ class ExprClass e where
   -- | Returns the value at the base of an expression, if it exists
   maybeExprPath :: e m -> Maybe TypeName
 
+  -- | Returns all arguments applied to a value
+  exprAppliedArgs :: e m -> [TupleArg e m]
+
   -- | Returns all vars applied to a value
   exprAppliedVars :: e m -> H.HashMap TypeVarName m
 
@@ -244,6 +247,15 @@ instance ExprClass RawExpr where
   maybeExprPath (RawMethods e _)             = maybeExprPath e
   maybeExprPath _                            = Nothing
 
+  exprAppliedArgs (RawValue _ _) = []
+  exprAppliedArgs (RawTupleApply _ (_, be) args) = exprAppliedArgs be ++ args
+  exprAppliedArgs (RawVarsApply _ e _) = exprAppliedArgs e
+  exprAppliedArgs (RawContextApply _ (_, e) _) = exprAppliedArgs e
+  exprAppliedArgs (RawParen e) = exprAppliedArgs e
+  exprAppliedArgs (RawMethods e _) = exprAppliedArgs e
+  exprAppliedArgs _ = error "Unsupported RawExpr exprAppliedArgs"
+
+
   exprAppliedVars (RawValue _ _) = H.empty
   exprAppliedVars (RawTupleApply _ (_, be) _) = exprAppliedVars be
   exprAppliedVars (RawVarsApply _ e vars) = H.union (exprAppliedVars e) (H.fromList vars)
@@ -269,6 +281,11 @@ instance ExprClass Expr where
   maybeExprPath (TupleApply _ (_, e) _) = maybeExprPath e
   maybeExprPath (VarApply _ e _ _)      = maybeExprPath e
   maybeExprPath _                       = Nothing
+
+  exprAppliedArgs (Value _ _) = []
+  exprAppliedArgs (TupleApply _ (_, be) ae) = ae : exprAppliedArgs be
+  exprAppliedArgs (VarApply _ e _ _) = exprAppliedArgs e
+  exprAppliedArgs _ = error "Unsupported Expr exprAppliedArgs"
 
   exprAppliedVars (Value _ _) = H.empty
   exprAppliedVars (TupleApply _ (_, be) _) = exprAppliedVars be

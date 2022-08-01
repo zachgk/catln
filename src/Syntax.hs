@@ -101,17 +101,27 @@ exprPath :: (ExprClass e) => e m -> TypeName
 exprPath = fromJust . maybeExprPath
 
 objExpr :: (Meta m) => Object m -> Expr m
-objExpr Object{objM, deprecatedObjVars, objArgs, deprecatedObjPath} = mapMeta (\_ _ -> objM) $ applyArgs $ applyVars $ Value emptyMetaN deprecatedObjPath
+objExpr Object{objM, deprecatedObjVars, deprecatedObjArgs, deprecatedObjPath} = mapMeta (\_ _ -> objM) $ applyArgs $ applyVars $ Value emptyMetaN deprecatedObjPath
   where
     applyVars b = foldr applyVar b $ H.toList deprecatedObjVars
     applyVar (varName, varVal) b = VarApply (emptyMetaE "" b) b varName varVal
 
-    applyArgs b = foldr applyArg b $ H.toList objArgs
+    applyArgs b = foldr applyArg b $ H.toList deprecatedObjArgs
     applyArg (argName, (argM, Just argVal)) b = TupleApply emptyMetaN (emptyMetaE "appArg" b, b) (TupleArgIO argM argName (objExpr argVal))
     applyArg (argName, (argM, Nothing)) b = TupleApply emptyMetaN (emptyMetaE "appArg" b, b) (TupleArgI argM argName)
 
 objPath :: (Meta m) => Object m -> TypeName
 objPath = exprPath . objExpr
+
+objAppliedArgs :: (Meta m) => Object m -> [TupleArg Expr m]
+objAppliedArgs = exprAppliedArgs . objExpr
+
+objAppliedArgsMap :: (Meta m) => Object m -> H.HashMap ArgName (m, Maybe (Expr m))
+objAppliedArgsMap = H.fromList . mapMaybe fromTupleArg . exprAppliedArgs . objExpr
+  where
+    fromTupleArg (TupleArgI m n) = Just (n, (m, Nothing))
+    fromTupleArg (TupleArgIO m n a) = Just (n, (m, Just a))
+    fromTupleArg TupleArgO{} = Nothing
 
 objAppliedVars :: (Meta m) => Object m -> H.HashMap TypeVarName m
 objAppliedVars = exprAppliedVars . objExpr
@@ -123,10 +133,10 @@ type ArgMetaMap m = H.HashMap ArgName m
 -- For example, in the object real(c=Complex(a, b)), the matched arguments are a and b.
 -- In addition, it would also include all of the arguments of the base object (here c) as those are needed for currying.
 formArgMetaMap :: (Meta m) => Object m -> ArgMetaMap m
-formArgMetaMap obj@Object{objArgs=baseArgs} = H.union (aux obj) (fmap fst baseArgs)
+formArgMetaMap obj = H.union (aux obj) (fmap fst (deprecatedObjArgs obj))
   where
-    aux o@Object{objM, objArgs} | H.null objArgs = H.singleton (objPath o) objM
-    aux Object{objArgs} = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg objArgs
+    aux o@Object{objM} | null (objAppliedArgs o) = H.singleton (objPath o) objM
+    aux Object{deprecatedObjArgs} = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg deprecatedObjArgs
       where
         unionCombine _ _ = error "Duplicate var matched"
         fromArg k (m, Nothing)  = H.singleton k m
@@ -137,10 +147,10 @@ type ArgMetaMapWithSrc m = H.HashMap ArgName (m, Type)
 -- The 'formArgMetaMapWithSrc' is similar to the 'formArgMetaMap' function.
 -- It differs in that it accepts an additional partial type that is matched by the object and matches against that partial type.
 formArgMetaMapWithSrc :: (Meta m) => ClassGraph -> Object m -> PartialType -> ArgMetaMapWithSrc m
-formArgMetaMapWithSrc classGraph obj@Object{objArgs=baseArgs} src@PartialType{ptArgs=srcArgs} = H.union (aux obj) (H.intersectionWith (,) (fmap fst baseArgs) srcArgs)
+formArgMetaMapWithSrc classGraph obj@Object{deprecatedObjArgs=baseArgs} src@PartialType{ptArgs=srcArgs} = H.union (aux obj) (H.intersectionWith (,) (fmap fst baseArgs) srcArgs)
   where
     aux (Object m _ _ args _ path) | H.null args = H.singleton path (m, singletonType src)
-    aux Object{objArgs} = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg objArgs
+    aux Object{deprecatedObjArgs} = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg deprecatedObjArgs
       where
         unionCombine _ _ = error "Duplicate var matched"
         fromArg k (m, Nothing) = case H.lookup k srcArgs of

@@ -251,15 +251,15 @@ pObjTreeInner basis = do
     Nothing -> obj
 
 objTreeJoinMethods :: PObject -> PObject -> PObject
-objTreeJoinMethods obj@Object{objM} meth@Object{objArgs=methArgs} = meth{objArgs = H.insert "this" (emptyMetaM "meth" objM, Just obj) methArgs}
+objTreeJoinMethods obj@Object{objM} meth@Object{deprecatedObjArgs=methArgs} = meth{deprecatedObjArgs = H.insert "this" (emptyMetaM "meth" objM, Just obj) methArgs}
 
 pObjTree :: ObjectBasis -> Parser PObject
 pObjTree basis = do
   maybeStartType <- optional $ try pMethodCallerType
   objs <- sepBy1 (pObjTreeInner basis) (string ".")
-  let objs'@Object{objArgs} = foldl1 objTreeJoinMethods objs
+  let objs'@Object{deprecatedObjArgs} = foldl1 objTreeJoinMethods objs
   return $ case maybeStartType of
-    Just startType -> objs'{objArgs = H.insert "this" startType objArgs}
+    Just startType -> objs'{deprecatedObjArgs = H.insert "this" startType deprecatedObjArgs}
     Nothing        -> objs'
 
 pPattern :: ObjectBasis -> Parser PPattern

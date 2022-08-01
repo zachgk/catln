@@ -88,8 +88,8 @@ scopeSubDeclFunNames prefix decls maybeExpr annots objM arrM = (decls', expr', a
     annots' = map (scopeSubDeclFunNamesInExpr prefix declNames) annots
 
 currySubFunctionSignature :: H.HashMap ArgName PObjArg -> PSemiDecl -> PSemiDecl
-currySubFunctionSignature parentArgs (PSemiDecl (DeclLHS arrM (Pattern obj@Object{objArgs} guard)) annot expr) = PSemiDecl (DeclLHS arrM (Pattern obj{objArgs=objArgs'} guard)) annot expr
-  where objArgs' = H.union objArgs parentArgs
+currySubFunctionSignature parentArgs (PSemiDecl (DeclLHS arrM (Pattern obj@Object{deprecatedObjArgs} guard)) annot expr) = PSemiDecl (DeclLHS arrM (Pattern obj{deprecatedObjArgs=objArgs'} guard)) annot expr
+  where objArgs' = H.union deprecatedObjArgs parentArgs
 
 
 currySubFunctionsUpdateExpr :: S.HashSet TypeName -> H.HashMap ArgName PObjArg -> PSExpr -> PSExpr
@@ -122,7 +122,7 @@ desObjDocComment (RawDeclSubStatementAnnot (RawTupleApply _ (_, RawValue _ "/Cat
 desObjDocComment _ = Just ""
 
 removeSubDeclarations :: PDecl -> [PSemiDecl]
-removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern obj@Object{objM, objArgs} guard1)) subStatements expr1) = decl':subDecls5
+removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern obj@Object{objM, deprecatedObjArgs} guard1)) subStatements expr1) = decl':subDecls5
   where
     objDoc = desObjDocComment subStatements
     (subDecls, annots1) = splitDeclSubStatements subStatements
@@ -132,7 +132,7 @@ removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern obj@Object{objM, objArgs} 
     (subDecls23, guard2) = semiDesGuard obj guard1
     subDecls3 = concat [subDecls2, subDecls21, subDecls22, subDecls23]
     (subDecls4, expr3, annots3, objM', arrM') = scopeSubDeclFunNames (objPath obj) subDecls3 expr2 annots2 objM arrM
-    (subDecls5, expr4, annots4) = currySubFunctions objArgs subDecls4 expr3 annots3
+    (subDecls5, expr4, annots4) = currySubFunctions deprecatedObjArgs subDecls4 expr3 annots3
     decl' = PSemiDecl (DeclLHS arrM' (Pattern obj{objDoc = objDoc, objM=objM'} guard2)) annots4 expr4
 
 desExpr :: PArgMetaMap -> PSExpr -> DesExpr
@@ -225,7 +225,7 @@ declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl (DeclLHS arrM (Pattern ob
     updateObjPath o = o{deprecatedObjPath = getPath inheritPath (objPath o)}
     object' = updateObjPath object
     object'' = case objPath object of
-      "/Context" -> object{objArgs=H.adjust (\(m, Just o) -> (m, Just $ updateObjPath o)) "value" $ objArgs object}
+      "/Context" -> object{deprecatedObjArgs=H.adjust (\(m, Just o) -> (m, Just $ updateObjPath o)) "value" $ deprecatedObjArgs object}
       _ -> object'
 
     argMetaMap = formArgMetaMap object'

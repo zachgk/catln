@@ -63,9 +63,9 @@ filterBestPrecedence precedenceMap = filter (\omi@(obj, _, _) -> objectPrecedenc
 
 -- | Gets an object and all sub-ojects (recursively) from it's arguments
 getRecursiveObjs :: ObjectMapItem e m -> ObjectMap e m
-getRecursiveObjs (obj@Object{objArgs}, annots, arr) = (obj, annots, arr) : subObjMap
+getRecursiveObjs (obj@Object{deprecatedObjArgs}, annots, arr) = (obj, annots, arr) : subObjMap
   where
-    subObjMap = concatMap (filter notMatchObj . concatMap (getRecursiveObjs . (,[],Nothing)) . maybeToList . snd) (H.elems objArgs)
+    subObjMap = concatMap (filter notMatchObj . concatMap (getRecursiveObjs . (,[],Nothing)) . maybeToList . snd) (H.elems deprecatedObjArgs)
     notMatchObj (Object{objBasis}, _, _) = objBasis /= MatchObj
 
 -- | This creates 'feUnionAllObjs' and adds it to the 'FEnv'
@@ -114,8 +114,8 @@ inferArgFromPartial FEnv{feVTypeGraph, feTTypeGraph, feClassGraph} partial@Parti
 
   unionTypes feClassGraph vTypes tTypes
   where
-    tryArrow (Object{objArgs}, _) = if H.keysSet ptArgs `isSubsetOf` H.keysSet objArgs
-      then UnionType $ joinUnionType $ map addArg $ S.toList $ S.difference (H.keysSet objArgs) (H.keysSet ptArgs)
+    tryArrow (obj, _) = if H.keysSet ptArgs `isSubsetOf` H.keysSet (objAppliedArgsMap obj)
+      then UnionType $ joinUnionType $ map addArg $ S.toList $ S.difference (H.keysSet $ objAppliedArgsMap obj) (H.keysSet ptArgs)
       else bottomType
     addArg arg = partial{ptArgs=H.insertWith (unionTypes feClassGraph) arg TopType ptArgs}
 inferArgFromPartial _ _ = bottomType

@@ -67,8 +67,8 @@ evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe 
     (objMap, classGraph, _) = prgmFromGraphData prgmName prgmGraphData
     objArrowsContains (_, _, Nothing) = Nothing
     objArrowsContains (_, _, Just a) | not (arrowDefined a) = Nothing
-    objArrowsContains (obj@Object{objArgs}, _, Just (Arrow arrM _ _)) = case objPath obj of
-      "/Context" -> case H.lookup "value" objArgs of
+    objArrowsContains (obj@Object{deprecatedObjArgs}, _, Just (Arrow arrM _ _)) = case objPath obj of
+      "/Context" -> case H.lookup "value" deprecatedObjArgs of
         Just (_, Just valObj) -> if relativeNameMatches function (objPath valObj)
           then Just $ if isBuildable (getMetaType arrM)
             then EvalBuildWithContext (objPath valObj)

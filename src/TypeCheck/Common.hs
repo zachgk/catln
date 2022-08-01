@@ -316,7 +316,7 @@ resolveTypeVar :: TypeVarAux -> VarMeta -> TypeCheckResult VarMeta
 resolveTypeVar (TVVar v) m@(VarMeta _ _ (Just obj)) = case H.lookup v $ objAppliedVars obj of
   Just m' -> return m'
   Nothing -> TypeCheckResE [GenTypeCheckError (getMetaPos m) "Unknown variable in resolveTypeVar var"]
-resolveTypeVar (TVArg v) m@(VarMeta _ _ (Just Object{objArgs})) = case H.lookup v objArgs of
+resolveTypeVar (TVArg v) m@(VarMeta _ _ (Just Object{deprecatedObjArgs})) = case H.lookup v deprecatedObjArgs of
   Just (m', _) -> return m'
   Nothing -> TypeCheckResE [GenTypeCheckError (getMetaPos m) "Unknown variable in resolveTypeVar arg"]
 resolveTypeVar _ m@(VarMeta _ _ Nothing) = TypeCheckResE [GenTypeCheckError (getMetaPos m) "Tried to resolve a type var without an object"]
