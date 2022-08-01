@@ -141,8 +141,8 @@ toObjArg env prefix (name, (m, maybeObj)) = do
     Nothing -> return (name, (m', Nothing))
 
 toObject :: FEnv -> String -> VObject -> TypeCheckResult TObject
-toObject env prefix obj@Object{objM, objVars, objArgs, objPath} = do
-  let prefix' = prefix ++ "_" ++ objPath
+toObject env prefix obj@Object{objM, objVars, objArgs} = do
+  let prefix' = prefix ++ "_" ++ objPath obj
   m' <- toMeta env objM prefix'
   vars' <- mapM (\(varName, varVal) -> (varName,) <$> toMeta env varVal (prefix' ++ "." ++ varName)) $ H.toList objVars
   args' <- mapM (toObjArg env prefix') $ H.toList objArgs

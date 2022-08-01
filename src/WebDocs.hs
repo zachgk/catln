@@ -33,7 +33,7 @@ import           Eval                          (evalAnnots, evalBuild, evalRun)
 import           Eval.Common                   (EvalResult, Val (..))
 import           Parser                        (readFiles)
 import           Parser.Syntax                 (DesPrgm, PPrgmGraphData)
-import           Syntax                        (Typed)
+import           Syntax
 import           Syntax.Prgm
 import           Syntax.Types
 import           TypeCheck                     (typecheckPrgm,
@@ -53,7 +53,7 @@ maybeJson (CErr notes)   = json (ResFail notes :: ResSuccess () CNote)
 filterByType :: String -> TPrgm -> TPrgm
 filterByType name (objMap, ClassGraph classGraph, _) = (objMap', classGraph', [])
   where
-    objMap' = filter (\(Object{objPath=n}, _, _) -> relativeNameMatches name n) objMap
+    objMap' = filter (\(o, _, _) -> relativeNameMatches name (objPath o)) objMap
     classGraph' = ClassGraph $ graphFromEdges $ filter (\(_, n, subTypes) -> relativeNameMatches name n || n `elem` subTypes) $ graphToNodes classGraph
 
 data WDProvider

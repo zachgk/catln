@@ -78,7 +78,7 @@ expandDataReferences (fullPrgmObjMap, _, _) (objMap, classGraph@(ClassGraph cg),
     classGraph' = ClassGraph $ graphFromEdges $ mapFst3 mapCGNode $ graphToNodes cg
     mapCGNode (CGClass (s, vs, ts, doc, p)) = CGClass (s, fmap mapType vs, fmap mapType ts, doc, p)
     mapCGNode CGType = CGType
-    objExpansions = H.fromList $ concatMap (\(obj@Object{objBasis, objPath}, _, _) -> ([(objPath, obj) | objBasis == TypeObj])) fullPrgmObjMap
+    objExpansions = H.fromList $ concatMap (\(obj@Object{objBasis}, _, _) -> ([(objPath obj, obj) | objBasis == TypeObj])) fullPrgmObjMap
     aux metaType inM@(PreTyped t p) = case metaType of
       ExprMeta   -> inM
       ObjMeta    -> inM

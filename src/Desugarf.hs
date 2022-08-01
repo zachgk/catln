@@ -78,12 +78,12 @@ scopeSubDeclFunNamesInMeta _ _ m@(PreTyped TypeVar{} _) = m
 scopeSubDeclFunNames :: TypeName -> [PSemiDecl] -> Maybe PSExpr -> [PSCompAnnot] -> ParseMeta -> ParseMeta -> ([PSemiDecl], Maybe PSExpr, [PSCompAnnot], ParseMeta, ParseMeta)
 scopeSubDeclFunNames prefix decls maybeExpr annots objM arrM = (decls', expr', annots', objM', arrM')
   where
-    declNames = S.fromList $ map (\(PSemiDecl (DeclLHS _ (Pattern Object{objPath} _)) _ _) -> objPath) decls
+    declNames = S.fromList $ map (\(PSemiDecl (DeclLHS _ (Pattern o _)) _ _) -> objPath o) decls
     addPrefix n = prefix ++ "." ++ n
     scopeM = scopeSubDeclFunNamesInMeta prefix declNames
     objM' = scopeM objM
     arrM' = scopeM arrM
-    decls' = map (\(PSemiDecl (DeclLHS aM (Pattern obj@Object{objM=om, objPath} guard)) annot subExpr) -> PSemiDecl (DeclLHS (scopeM aM) (Pattern (obj{objM=scopeM om, objPath = addPrefix objPath}) guard)) annot (fmap (scopeSubDeclFunNamesInExpr prefix declNames) subExpr)) decls
+    decls' = map (\(PSemiDecl (DeclLHS aM (Pattern obj@Object{objM=om} guard)) annot subExpr) -> PSemiDecl (DeclLHS (scopeM aM) (Pattern (obj{objM=scopeM om, deprecatedObjPath = addPrefix (objPath obj)}) guard)) annot (fmap (scopeSubDeclFunNamesInExpr prefix declNames) subExpr)) decls
     expr' = fmap (scopeSubDeclFunNamesInExpr prefix declNames) maybeExpr
     annots' = map (scopeSubDeclFunNamesInExpr prefix declNames) annots
 
@@ -111,7 +111,7 @@ currySubFunctionsUpdateExpr toUpdate parentArgs (VarApply tm tbe tVarName tVarVa
 currySubFunctions :: H.HashMap ArgName PObjArg -> [PSemiDecl] -> Maybe PSExpr -> [PSCompAnnot] -> ([PSemiDecl], Maybe PSExpr, [PSCompAnnot])
 currySubFunctions parentArgs decls expr annots = (decls', expr', annots')
   where
-    toUpdate = S.fromList $ map (\(PSemiDecl (DeclLHS _ (Pattern Object{objPath} _)) _ _) -> objPath) decls
+    toUpdate = S.fromList $ map (\(PSemiDecl (DeclLHS _ (Pattern o _)) _ _) -> objPath o) decls
     decls2 = map (currySubFunctionSignature parentArgs) decls
     expr' = fmap (currySubFunctionsUpdateExpr toUpdate parentArgs) expr
     decls' = map (\(PSemiDecl lhs an e) -> PSemiDecl lhs an (fmap (currySubFunctionsUpdateExpr toUpdate parentArgs) e)) decls2
@@ -122,7 +122,7 @@ desObjDocComment (RawDeclSubStatementAnnot (RawTupleApply _ (_, RawValue _ "/Cat
 desObjDocComment _ = Just ""
 
 removeSubDeclarations :: PDecl -> [PSemiDecl]
-removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern obj@Object{objM, objArgs, objPath} guard1)) subStatements expr1) = decl':subDecls5
+removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern obj@Object{objM, objArgs} guard1)) subStatements expr1) = decl':subDecls5
   where
     objDoc = desObjDocComment subStatements
     (subDecls, annots1) = splitDeclSubStatements subStatements
@@ -131,7 +131,7 @@ removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern obj@Object{objM, objArgs, 
     (subDecls22, annots2) = traverse (semiDesExpr obj) annots1
     (subDecls23, guard2) = semiDesGuard obj guard1
     subDecls3 = concat [subDecls2, subDecls21, subDecls22, subDecls23]
-    (subDecls4, expr3, annots3, objM', arrM') = scopeSubDeclFunNames objPath subDecls3 expr2 annots2 objM arrM
+    (subDecls4, expr3, annots3, objM', arrM') = scopeSubDeclFunNames (objPath obj) subDecls3 expr2 annots2 objM arrM
     (subDecls5, expr4, annots4) = currySubFunctions objArgs subDecls4 expr3 annots3
     decl' = PSemiDecl (DeclLHS arrM' (Pattern obj{objDoc = objDoc, objM=objM'} guard2)) annots4 expr4
 
@@ -219,12 +219,12 @@ semiDesGuard _ ElseGuard = ([], ElseGuard)
 semiDesGuard _ NoGuard = ([], NoGuard)
 
 declToObjArrow :: StatementEnv -> PSemiDecl -> DesObjectMapItem
-declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl (DeclLHS arrM (Pattern object@Object{objPath} guard)) annots expr) = (object'', annots' ++ inheritAnnots, Just arrow)
+declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl (DeclLHS arrM (Pattern object guard)) annots expr) = (object'', annots' ++ inheritAnnots, Just arrow)
   where
     -- Inherit the path in main object name. If main is a context, also inherit in the context function as well
-    updateObjPath o@Object{objPath=originalPath} = o{objPath = getPath inheritPath originalPath}
+    updateObjPath o = o{deprecatedObjPath = getPath inheritPath (objPath o)}
     object' = updateObjPath object
-    object'' = case objPath of
+    object'' = case objPath object of
       "/Context" -> object{objArgs=H.adjust (\(m, Just o) -> (m, Just $ updateObjPath o)) "value" $ objArgs object}
       _ -> object'
 

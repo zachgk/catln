@@ -138,13 +138,16 @@ type RawPrgm m = ([FileImport], [RawStatement m]) -- TODO: Include [Export]
 type ObjArg m = (m, Maybe (Object m))
 data ObjectBasis = FunctionObj | TypeObj | PatternObj | MatchObj
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+-- |
+-- Represents an input.
+-- The current plan is to deprecate objM, objVars, objArgs, and objPath and replace them with objExpr. TODO Deprecate the rest.
 data Object m = Object {
-  objM     :: m,
-  objBasis :: ObjectBasis,
-  objVars  :: H.HashMap TypeVarName m,
-  objArgs  :: H.HashMap ArgName (ObjArg m),
-  objDoc   :: Maybe String,
-  objPath  :: String
+  objM              :: m,
+  objBasis          :: ObjectBasis,
+  objVars           :: H.HashMap TypeVarName m,
+  objArgs           :: H.HashMap ArgName (ObjArg m),
+  objDoc            :: Maybe String,
+  deprecatedObjPath :: String
                        }
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
@@ -204,8 +207,14 @@ instance (Show m, Show e) => Show (Arrow e m) where
       showExpr Nothing     = []
 
 class ExprClass e where
+  -- | Returns the metadata for the top level of an expression
   getExprMeta ::  e m -> m
+
+  -- | Returns the argname if the expression is an arg, else Nothing
   getExprArg :: e m -> Maybe ArgName
+
+  -- | Returns the value at the base of an expression, if it exists
+  maybeExprPath :: e m -> Maybe TypeName
 
 instance ExprClass RawExpr where
   getExprMeta expr = case expr of
@@ -224,6 +233,15 @@ instance ExprClass RawExpr where
 
   getExprArg _ = Nothing
 
+  maybeExprPath (RawValue _ n)               = Just n
+  maybeExprPath (RawTupleApply _ (_, e) _)   = maybeExprPath e
+  maybeExprPath (RawVarsApply _ e _)         = maybeExprPath e
+  maybeExprPath (RawContextApply _ (_, e) _) = maybeExprPath e
+  maybeExprPath (RawParen e)                 = maybeExprPath e
+  maybeExprPath (RawMethods e _)             = maybeExprPath e
+  maybeExprPath _                            = Nothing
+
+
 instance ExprClass Expr where
   getExprMeta expr = case expr of
     CExpr m _        -> m
@@ -236,26 +254,15 @@ instance ExprClass Expr where
   getExprArg (Arg _ n) = Just n
   getExprArg _         = Nothing
 
+  maybeExprPath (Value _ n)             = Just n
+  maybeExprPath (TupleApply _ (_, e) _) = maybeExprPath e
+  maybeExprPath (VarApply _ e _ _)      = maybeExprPath e
+  maybeExprPath _                       = Nothing
+
 mapTupleArgValue :: (e1 m -> e2 m) -> TupleArg e1 m -> TupleArg e2 m
 mapTupleArgValue _ (TupleArgI m n)    = TupleArgI m n
 mapTupleArgValue f (TupleArgO m v)    = TupleArgO m (f v)
 mapTupleArgValue f (TupleArgIO m n v) = TupleArgIO m n (f v)
-
-type ArgMetaMap m = H.HashMap ArgName m
--- |
--- The 'formArgMetaMap' produces a map from the argument name to argument meta.
--- In an object where arguments are themselves objects, it would match the names used in those subobjects.
--- For example, in the object real(c=Complex(a, b)), the matched arguments are a and b.
--- In addition, it would also include all of the arguments of the base object (here c) as those are needed for currying.
-formArgMetaMap :: Object m -> ArgMetaMap m
-formArgMetaMap obj@Object{objArgs=baseArgs} = H.union (aux obj) (fmap fst baseArgs)
-  where
-    aux Object{objM, objPath, objArgs} | H.null objArgs = H.singleton objPath objM
-    aux Object{objArgs} = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg objArgs
-      where
-        unionCombine _ _ = error "Duplicate var matched"
-        fromArg k (m, Nothing)  = H.singleton k m
-        fromArg _ (_, Just arg) = formArgMetaMap arg
 
 mergeDoc :: Maybe String -> Maybe String -> Maybe String
 mergeDoc (Just a) (Just b) = Just (a ++ " " ++ b)

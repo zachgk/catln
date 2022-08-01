@@ -166,15 +166,15 @@ fromGuard _ _ env ElseGuard = return (ElseGuard, env)
 fromGuard _ _ env NoGuard = return (NoGuard, env)
 
 fromArrow :: VObject -> FEnv -> PArrow -> TypeCheckResult (VArrow, FEnv)
-fromArrow obj@(Object _ _ objVars _ _ objPath) env1 (Arrow m aguard maybeExpr) = do
+fromArrow obj@(Object _ _ objVars _ _ _) env1 (Arrow m aguard maybeExpr) = do
   -- User entered type is not an upper bound, so start with TopType always. The true use of the user entered type is that the expression should have an arrow that has a reachesTree cut that is within the user entered type.
   let jobj = Just obj
-  (mUserReturn', env2) <- fromMeta env1 BUpper jobj m (printf "Specified result from %s" (show objPath))
+  (mUserReturn', env2) <- fromMeta env1 BUpper jobj m (printf "Specified result from %s" (show $ objPath obj))
   let argMetaMap = formArgMetaMap obj
   (aguard', env3) <- fromGuard argMetaMap jobj env2 aguard
   case maybeExpr of
     Just expr -> do
-      (m', env4) <- fromMeta env3 BUpper jobj (PreTyped TopType (labelPos "res" $ getMetaPos m)) $ printf "Arrow result from %s" (show objPath)
+      (m', env4) <- fromMeta env3 BUpper jobj (PreTyped TopType (labelPos "res" $ getMetaPos m)) $ printf "Arrow result from %s" (show $ objPath obj)
       (vExpr, env5) <- fromExpr argMetaMap jobj env4 expr
       let env6 = case metaTypeVar m of
             Just (TVVar typeVarName) -> case suffixLookupInDict typeVarName objVars of
@@ -183,11 +183,11 @@ fromArrow obj@(Object _ _ objVars _ _ objPath) env1 (Arrow m aguard maybeExpr) =
             Just TVArg{} -> error "Bad TVArg in fromArrow"
             Nothing -> addConstraints env5 [ArrowTo (getExprMeta vExpr) m', ArrowTo (getExprMeta vExpr) mUserReturn']
       let arrow' = Arrow m' aguard' (Just vExpr)
-      let env7 = fAddVTypeGraph env6 objPath (obj, arrow')
+      let env7 = fAddVTypeGraph env6 (objPath obj) (obj, arrow')
       return (arrow', env7)
     Nothing -> do
       let arrow' = Arrow mUserReturn' aguard' Nothing
-      let env4 = fAddVTypeGraph env3 objPath (obj, arrow')
+      let env4 = fAddVTypeGraph env3 (objPath obj) (obj, arrow')
       return (arrow', env4)
 
 fromObjectMap :: FEnv -> (VObject, [PCompAnnot], Maybe PArrow) -> TypeCheckResult ((VObject, [VCompAnnot], Maybe VArrow), FEnv)
@@ -265,12 +265,12 @@ prepObjPrgm env1 pprgm@(objMap1, _, _) = do
   return ((pprgm, map fst3 objMap2), env2)
 
 addTypeGraphArrow :: TObject -> FEnv -> TArrow -> TypeCheckResult ((), FEnv)
-addTypeGraphArrow obj@Object{objPath} env arr = return ((), fAddTTypeGraph env objPath (obj, arr))
+addTypeGraphArrow obj env arr = return ((), fAddTTypeGraph env (objPath obj) (obj, arr))
 
 addTypeGraphObjects :: FEnv -> TObjectMapItem -> TypeCheckResult ((), FEnv)
-addTypeGraphObjects env (obj@Object{objPath}, _, arrow) = do
-  let objValue = singletonType (PartialType (PTypeName objPath) H.empty H.empty H.empty PtArgExact)
-  let env' = fInsert env objPath (DefKnown objValue)
+addTypeGraphObjects env (obj, _, arrow) = do
+  let objValue = singletonType (PartialType (PTypeName (objPath obj)) H.empty H.empty H.empty PtArgExact)
+  let env' = fInsert env (objPath obj) (DefKnown objValue)
   (_, env'') <- mapMWithFEnvMaybe env' (addTypeGraphArrow obj) arrow
   return ((), env'')
 

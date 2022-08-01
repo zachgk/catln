@@ -97,8 +97,11 @@ emptyMetaM = labelPosM
 emptyMetaE :: (Meta m, ExprClass e) => String -> e m -> m
 emptyMetaE s e = labelPosM s $ getExprMeta e
 
+exprPath :: (ExprClass e) => e m -> TypeName
+exprPath = fromJust . maybeExprPath
+
 objExpr :: (Meta m) => Object m -> Expr m
-objExpr Object{objM, objVars, objArgs, objPath} = mapMeta (\_ _ -> objM) $ applyArgs $ applyVars $ Value emptyMetaN objPath
+objExpr Object{objM, objVars, objArgs, deprecatedObjPath} = mapMeta (\_ _ -> objM) $ applyArgs $ applyVars $ Value emptyMetaN deprecatedObjPath
   where
     applyVars b = foldr applyVar b $ H.toList objVars
     applyVar (varName, varVal) b = VarApply (emptyMetaE "" b) b varName varVal
@@ -107,11 +110,30 @@ objExpr Object{objM, objVars, objArgs, objPath} = mapMeta (\_ _ -> objM) $ apply
     applyArg (argName, (argM, Just argVal)) b = TupleApply emptyMetaN (emptyMetaE "appArg" b, b) (TupleArgIO argM argName (objExpr argVal))
     applyArg (argName, (argM, Nothing)) b = TupleApply emptyMetaN (emptyMetaE "appArg" b, b) (TupleArgI argM argName)
 
+objPath :: (Meta m) => Object m -> TypeName
+objPath = exprPath . objExpr
+
+type ArgMetaMap m = H.HashMap ArgName m
+-- |
+-- The 'formArgMetaMap' produces a map from the argument name to argument meta.
+-- In an object where arguments are themselves objects, it would match the names used in those subobjects.
+-- For example, in the object real(c=Complex(a, b)), the matched arguments are a and b.
+-- In addition, it would also include all of the arguments of the base object (here c) as those are needed for currying.
+formArgMetaMap :: (Meta m) => Object m -> ArgMetaMap m
+formArgMetaMap obj@Object{objArgs=baseArgs} = H.union (aux obj) (fmap fst baseArgs)
+  where
+    aux o@Object{objM, objArgs} | H.null objArgs = H.singleton (objPath o) objM
+    aux Object{objArgs} = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg objArgs
+      where
+        unionCombine _ _ = error "Duplicate var matched"
+        fromArg k (m, Nothing)  = H.singleton k m
+        fromArg _ (_, Just arg) = formArgMetaMap arg
+
 type ArgMetaMapWithSrc m = H.HashMap ArgName (m, Type)
 -- |
 -- The 'formArgMetaMapWithSrc' is similar to the 'formArgMetaMap' function.
 -- It differs in that it accepts an additional partial type that is matched by the object and matches against that partial type.
-formArgMetaMapWithSrc :: ClassGraph -> Object m -> PartialType -> ArgMetaMapWithSrc m
+formArgMetaMapWithSrc :: (Meta m) => ClassGraph -> Object m -> PartialType -> ArgMetaMapWithSrc m
 formArgMetaMapWithSrc classGraph obj@Object{objArgs=baseArgs} src@PartialType{ptArgs=srcArgs} = H.union (aux obj) (H.intersectionWith (,) (fmap fst baseArgs) srcArgs)
   where
     aux (Object m _ _ args _ path) | H.null args = H.singleton path (m, singletonType src)
