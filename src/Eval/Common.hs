@@ -40,9 +40,9 @@ type ECompAnnot = CompAnnot (Expr Typed)
 type EExpr = Expr EvalMeta
 type EGuard = Guard EExpr
 type EObject = Object EvalMeta
-type EArrow = Arrow EExpr EvalMeta
-type EObjectMap = ObjectMap EExpr EvalMeta
-type EPrgm = Prgm EExpr EvalMeta
+type EArrow = Arrow Expr EvalMeta
+type EObjectMap = ObjectMap Expr EvalMeta
+type EPrgm = Prgm Expr EvalMeta
 type EPrgmGraphData = GraphData EPrgm String
 type EReplRes = ReplRes EvalMeta
 
@@ -85,7 +85,7 @@ data Val
   | TupleVal String (H.HashMap String Val)
   | IOVal Integer (IO ())
   | LLVMVal (LLVM ())
-  | LLVMQueue [(ResArrowTree, Object Typed, Arrow (Expr Typed) Typed)]
+  | LLVMQueue [(ResArrowTree, Object Typed, Arrow Expr Typed)]
   | LLVMOperand Type (Codegen AST.Operand)
   | LLVMIO (Codegen ())
   | NoVal
@@ -175,13 +175,13 @@ newtype MacroFunction = MacroFunction (ResArrowTree -> MacroData -> CRes ResArro
 type ResBuildEnvFunction = ResArrowTree -> ResArrowTree
 type ResBuildEnvItem = (PartialType, Guard (Expr Typed), ResBuildEnvFunction)
 type ResBuildEnv = H.HashMap TypeName [ResBuildEnvItem]
-type ResExEnv = H.HashMap (PartialType, Arrow (Expr Typed) Typed) (ResArrowTree, [ResArrowTree]) -- (result, [compAnnot trees])
+type ResExEnv = H.HashMap (PartialType, Arrow Expr Typed) (ResArrowTree, [ResArrowTree]) -- (result, [compAnnot trees])
 
 data TBEnv = TBEnv {
     tbName       :: String
   , tbResEnv     :: ResBuildEnv
   , tbVals       :: H.HashMap PartialType ResArrowTree
-  , tbPrgm       :: Prgm (Expr Typed) Typed
+  , tbPrgm       :: Prgm Expr Typed
   , tbClassGraph :: ClassGraph
   }
 
@@ -192,7 +192,7 @@ instance Hashable MacroFunction where
   s `hashWithSalt` _ = s
 
 data ResArrowTree
-  = ResEArrow ResArrowTree (Object Typed) [CompAnnot (Expr Typed)] (Arrow (Expr Typed) Typed)
+  = ResEArrow ResArrowTree (Object Typed) [CompAnnot (Expr Typed)] (Arrow Expr Typed)
   | PrimArrow ResArrowTree Type EPrim
   | MacroArrow ResArrowTree Type MacroFunction
   | ExprArrow EExpr Type Type
@@ -247,7 +247,7 @@ data DeclInput
   | StructInput
   deriving (Eq, Ord, Show, Generic, Hashable)
 
-type TaskArrow = (PartialType, Object Typed, [CompAnnot (Expr Typed)], Arrow (Expr Typed) Typed, DeclInput)
+type TaskArrow = (PartialType, Object Typed, [CompAnnot (Expr Typed)], Arrow Expr Typed, DeclInput)
 type TaskStruct = Type
 
 type Names = Map.Map String Int

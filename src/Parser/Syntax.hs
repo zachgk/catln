@@ -23,20 +23,20 @@ import           Utils
 type ParseMeta = PreTyped
 type PTupleArg = TupleArg RawExpr ParseMeta
 type PExpr = RawExpr ParseMeta
-type PPattern = Pattern PExpr ParseMeta
+type PPattern = Pattern RawExpr ParseMeta
 type PCompAnnot = CompAnnot PExpr
 type PGuard = Guard PExpr
 type PDeclSubStatement = RawDeclSubStatement ParseMeta
-type PDeclLHS = DeclLHS PExpr ParseMeta
+type PDeclLHS = DeclLHS RawExpr ParseMeta
 type PDecl = RawDecl ParseMeta
-type PObjectMap = ObjectMap PExpr ParseMeta
+type PObjectMap = ObjectMap RawExpr ParseMeta
 type PMultiTypeDef = MultiTypeDef ParseMeta
 type PTypeDef = TypeDef ParseMeta
 type PStatement = RawStatement ParseMeta
 type PArgMetaMap = H.HashMap ArgName ParseMeta
 type PObjArg = ObjArg ParseMeta
 type PObject = Object ParseMeta
-type PArrow = Arrow PExpr ParseMeta
+type PArrow = Arrow RawExpr ParseMeta
 type PPrgm = RawPrgm ParseMeta
 type PPrgmGraphData = GraphData PPrgm String
 type PReplRes = ReplRes ParseMeta
@@ -46,7 +46,7 @@ type PReplRes = ReplRes ParseMeta
 type PSExpr = Expr ParseMeta
 type PSCompAnnot = CompAnnot PSExpr
 type PSGuard = Guard PSExpr
-type PSDeclLHS = DeclLHS PSExpr ParseMeta
+type PSDeclLHS = DeclLHS Expr ParseMeta
 
 data PSemiDecl = PSemiDecl PSDeclLHS [PSCompAnnot] (Maybe PSExpr)
   deriving (Show)
@@ -57,11 +57,11 @@ data PSemiDecl = PSemiDecl PSDeclLHS [PSCompAnnot] (Maybe PSExpr)
 type DesExpr = Expr ParseMeta
 type DesCompAnnot = CompAnnot DesExpr
 type DesGuard = Guard DesExpr
-type DesObjectMap = ObjectMap DesExpr ParseMeta
+type DesObjectMap = ObjectMap Expr ParseMeta
 type DesObject = Object ParseMeta
-type DesArrow = Arrow DesExpr ParseMeta
-type DesObjectMapItem = ObjectMapItem DesExpr ParseMeta
-type DesPrgm = Prgm DesExpr ParseMeta
+type DesArrow = Arrow Expr ParseMeta
+type DesObjectMapItem = ObjectMapItem Expr ParseMeta
+type DesPrgm = Prgm Expr ParseMeta
 type DesPrgmGraphData = GraphData DesPrgm String
 
 emptyMeta :: SourcePos -> SourcePos -> ParseMeta

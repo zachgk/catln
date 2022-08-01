@@ -26,6 +26,7 @@ import           GHC.Generics          (Generic)
 import           Text.Megaparsec.Error (ParseErrorBundle)
 
 import           Data.Aeson            hiding (Object)
+import           Data.Bifunctor        (second)
 import           Data.Maybe
 import           MapMeta
 import           Syntax.Prgm
@@ -33,7 +34,6 @@ import           Syntax.Types
 import           Text.Megaparsec
 import           Text.Printf
 import           Utils
-import Data.Bifunctor (second)
 
 type ParseErrorRes = ParseErrorBundle String Void
 
@@ -182,7 +182,7 @@ formVarMap _ _ = error $ printf "Unknown formVarMap"
 
 -- fullDest means to use the greatest possible type (after implicit).
 -- Otherwise, it uses the minimal type that *must* be reached
-arrowDestType :: (Meta m, Show m, ExprClass e, Show (e m)) => Bool -> ClassGraph -> PartialType -> Object m -> Arrow (e m) m -> Type
+arrowDestType :: (Meta m, Show m, ExprClass e, Show (e m)) => Bool -> ClassGraph -> PartialType -> Object m -> Arrow e m -> Type
 arrowDestType fullDest classGraph src obj (Arrow arrM _ maybeExpr) = case mapM getExprArg maybeExpr of
   Just (Just _) -> fromMaybe (error "Unfound expr") expr'
   _             -> joined

@@ -39,7 +39,7 @@ data Constant
   | CStr String
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
-data Pattern e m = Pattern (Object m) (Guard e)
+data Pattern e m = Pattern (Object m) (Guard (e m))
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON, ToJSONKey)
 
 -- |
@@ -69,8 +69,8 @@ data RawExpr m
   | RawParen (RawExpr m)
   | RawMethods (RawExpr m) [RawExpr m]
   | RawIfThenElse m (RawExpr m) (RawExpr m) (RawExpr m)
-  | RawMatch m (RawExpr m) [(Pattern (RawExpr m) m, RawExpr m)]
-  | RawCase m (RawExpr m) [(Pattern (RawExpr m) m, RawExpr m)]
+  | RawMatch m (RawExpr m) [(Pattern RawExpr m, RawExpr m)]
+  | RawCase m (RawExpr m) [(Pattern RawExpr m, RawExpr m)]
   | RawList m [RawExpr m]
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
@@ -85,10 +85,10 @@ data Expr m
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 -- Compiler Annotation
-type CompAnnot e = e
+type CompAnnot em = em
 
-data Guard e
-  = IfGuard e
+data Guard em
+  = IfGuard em
   | ElseGuard
   | NoGuard
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
@@ -106,7 +106,7 @@ data RawDeclSubStatement m
 data DeclLHS e m = DeclLHS m (Pattern e m)
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
-data RawDecl m = RawDecl (DeclLHS (RawExpr m) m) [RawDeclSubStatement m] (Maybe (RawExpr m))
+data RawDecl m = RawDecl (DeclLHS RawExpr m) [RawDeclSubStatement m] (Maybe (RawExpr m))
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
 newtype TypeDef m = TypeDef m
@@ -151,12 +151,12 @@ data Object m = Object {
                        }
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
-data Arrow e m = Arrow m (Guard e) (Maybe e) -- m is result metadata
+data Arrow e m = Arrow m (Guard (e m)) (Maybe (e m)) -- m is result metadata
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
-type ObjectMapItem e m = (Object m, [CompAnnot e], Maybe (Arrow e m))
+type ObjectMapItem e m = (Object m, [CompAnnot (e m)], Maybe (Arrow e m))
 type ObjectMap e m = [ObjectMapItem e m]
-type Prgm e m = (ObjectMap e m, ClassGraph, [CompAnnot e]) -- TODO: Include [Export]
+type Prgm e m = (ObjectMap e m, ClassGraph, [CompAnnot (e m)]) -- TODO: Include [Export]
 
 instance Show m => Show (Expr m) where
   show (CExpr _ c) = show c
@@ -200,7 +200,7 @@ instance Show m => Show (Object m) where
         then ""
         else "(" ++ intercalate ", " (map showArg $ H.toList args) ++ ")"
 
-instance (Show m, Show e) => Show (Arrow e m) where
+instance (Show m, Show (e m)) => Show (Arrow e m) where
   show (Arrow m guard maybeExpr) = concat $ [show guard, " -> ", show m, " "] ++ showExpr maybeExpr
     where
       showExpr (Just expr) = [" = ", show expr]
