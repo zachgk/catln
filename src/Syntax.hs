@@ -33,6 +33,7 @@ import           Syntax.Types
 import           Text.Megaparsec
 import           Text.Printf
 import           Utils
+import Data.Bifunctor (second)
 
 type ParseErrorRes = ParseErrorBundle String Void
 
@@ -100,6 +101,13 @@ emptyMetaE s e = labelPosM s $ getExprMeta e
 exprPath :: (ExprClass e) => e m -> TypeName
 exprPath = fromJust . maybeExprPath
 
+exprAppliedArgsMap :: (ExprClass e, Meta m) => e m -> H.HashMap ArgName (m, Maybe (e m))
+exprAppliedArgsMap = H.fromList . mapMaybe fromTupleArg . exprAppliedArgs
+  where
+    fromTupleArg (TupleArgI m n)    = Just (n, (m, Nothing))
+    fromTupleArg (TupleArgIO m n a) = Just (n, (m, Just a))
+    fromTupleArg TupleArgO{}        = Nothing
+
 objExpr :: (Meta m) => Object m -> Expr m
 objExpr Object{deprecatedObjM, deprecatedObjVars, deprecatedObjArgs, deprecatedObjPath} = mapMeta (\_ _ -> deprecatedObjM) $ applyArgs $ applyVars $ Value emptyMetaN deprecatedObjPath
   where
@@ -120,14 +128,15 @@ objAppliedArgs :: (Meta m) => Object m -> [TupleArg Expr m]
 objAppliedArgs = exprAppliedArgs . objExpr
 
 objAppliedArgsMap :: (Meta m) => Object m -> H.HashMap ArgName (m, Maybe (Expr m))
-objAppliedArgsMap = H.fromList . mapMaybe fromTupleArg . exprAppliedArgs . objExpr
-  where
-    fromTupleArg (TupleArgI m n)    = Just (n, (m, Nothing))
-    fromTupleArg (TupleArgIO m n a) = Just (n, (m, Just a))
-    fromTupleArg TupleArgO{}        = Nothing
+objAppliedArgsMap = exprAppliedArgsMap . objExpr
 
 objAppliedVars :: (Meta m) => Object m -> H.HashMap TypeVarName m
 objAppliedVars = exprAppliedVars . objExpr
+
+exprToObj :: (Meta m, ExprClass e) => ObjectBasis -> Maybe String -> e m -> Object m
+exprToObj basis doc expr = Object (getExprMeta expr) basis (exprAppliedVars expr) args' doc (exprPath expr)
+  where
+    args' = second (fmap (exprToObj basis Nothing)) <$> exprAppliedArgsMap expr
 
 type ArgMetaMap m = H.HashMap ArgName m
 -- |
