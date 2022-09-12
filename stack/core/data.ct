@@ -14,7 +14,7 @@ module Data
 
   every String isa /Data/Algebra/Eq
 
-  /operator==(String l, String r) -> Boolean
+  (String _ == String _) -> Boolean
 
   String.toString -> String = this
   Integer.toString -> String

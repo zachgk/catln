@@ -67,7 +67,7 @@ data RawExpr m
   | RawVarsApply m (RawExpr m) [(TypeVarName, m)]
   | RawContextApply m (m, RawExpr m) [(ArgName, m)]
   | RawParen (RawExpr m)
-  | RawMethods (RawExpr m) [RawExpr m]
+  | RawMethod (RawExpr m) (RawExpr m) -- base methodValue
   | RawIfThenElse m (RawExpr m) (RawExpr m) (RawExpr m)
   | RawMatch m (RawExpr m) [(Pattern RawExpr m, RawExpr m)]
   | RawCase m (RawExpr m) [(Pattern RawExpr m, RawExpr m)]
@@ -186,7 +186,7 @@ instance Show e => Show (Guard e) where
   show NoGuard        = ""
 
 instance Show m => Show (Object m) where
-  -- show (Object m basis name vars args) = printf "%s %s (%s) %s %s" (show basis) name (show m) maybeVarsString maybeArgsString
+  -- show (Object m basis vars args _ p) = printf "%s %s (%s) %s %s" (show basis) p (show m) maybeVarsString maybeArgsString
   show (Object _ basis vars args _ p) = printf "%s %s %s %s" (show basis) p maybeVarsString maybeArgsString
     where
       showVar (varName, varVal) = printf "%s = %s" varName (show varVal)
@@ -231,7 +231,7 @@ instance ExprClass RawExpr where
     RawVarsApply m _ _    -> m
     RawContextApply m _ _ -> m
     RawParen e            -> getExprMeta e
-    RawMethods e _        -> getExprMeta e
+    RawMethod e _         -> getExprMeta e
     RawIfThenElse m _ _ _ -> m
     RawMatch m _ _        -> m
     RawCase m _ _         -> m
@@ -244,7 +244,7 @@ instance ExprClass RawExpr where
   maybeExprPath (RawVarsApply _ e _)         = maybeExprPath e
   maybeExprPath (RawContextApply _ (_, e) _) = maybeExprPath e
   maybeExprPath (RawParen e)                 = maybeExprPath e
-  maybeExprPath (RawMethods e _)             = maybeExprPath e
+  maybeExprPath (RawMethod _ e)              = maybeExprPath e
   maybeExprPath _                            = Nothing
 
   exprAppliedArgs (RawValue _ _) = []
@@ -252,7 +252,7 @@ instance ExprClass RawExpr where
   exprAppliedArgs (RawVarsApply _ e _) = exprAppliedArgs e
   exprAppliedArgs (RawContextApply _ (_, e) _) = exprAppliedArgs e
   exprAppliedArgs (RawParen e) = exprAppliedArgs e
-  exprAppliedArgs (RawMethods e _) = exprAppliedArgs e
+  exprAppliedArgs (RawMethod _ e) = exprAppliedArgs e
   exprAppliedArgs _ = error "Unsupported RawExpr exprAppliedArgs"
 
 
@@ -261,7 +261,7 @@ instance ExprClass RawExpr where
   exprAppliedVars (RawVarsApply _ e vars) = H.union (exprAppliedVars e) (H.fromList vars)
   exprAppliedVars (RawContextApply _ (_, e) _) = exprAppliedVars e
   exprAppliedVars (RawParen e) = exprAppliedVars e
-  exprAppliedVars (RawMethods e _) = exprAppliedVars e
+  exprAppliedVars (RawMethod _ e) = exprAppliedVars e
   exprAppliedVars _ = error "Unsupported RawExpr exprAppliedVars"
 
 

@@ -166,11 +166,8 @@ semiDesExpr obj (RawVarsApply m be vs) = (subBe, foldr aux be' vs)
     (subBe, be') = semiDesExpr obj be
 semiDesExpr obj (RawContextApply _ (_, be) ctxs) = semiDesExpr obj $ applyRawArgs (rawVal "/Context") ((Just "value", be) : map (\(ctxName, ctxM) -> (Nothing, RawValue ctxM ctxName)) ctxs)
 semiDesExpr obj (RawParen e) = semiDesExpr obj e
-semiDesExpr obj (RawMethods base methods) = semiDesExpr obj $ foldl addMethod base methods
-  where
-    addMethod b method@RawValue{} = RawTupleApply (emptyMetaE "app" b) (emptyMetaE "appBase" method, method) [TupleArgIO (emptyMetaE "arg" b) "this" b]
-    addMethod b (RawTupleApply m methodVal methodArgs) = RawTupleApply m methodVal (TupleArgIO (emptyMetaE "arg" b) "this" b : methodArgs)
-    addMethod _ _ = error "Unknown semiDesExpr obj method"
+-- semiDesExpr obj (RawMethod (RawValue _ n) method) = semiDesExpr obj $ applyRawArgs method [(Nothing, RawValue (PreTyped (typeVal $ PRelativeName n) Nothing) "this")] -- Parse type methods like Integer.toString, TODO: Only for output expressions
+semiDesExpr obj (RawMethod base method) = semiDesExpr obj $ applyRawArgs method [(Just "this", base)]
 semiDesExpr obj r@(RawIfThenElse m i t e) = (concat [subI, subT, subE, [elseDecl, ifDecl]], expr')
   where
     condName = "$" ++ take 6 (printf "%08x" (hash r))

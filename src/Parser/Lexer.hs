@@ -37,7 +37,7 @@ symbol :: String -> Parser String
 symbol = L.symbol sc
 
 reservedWords :: [String]
-reservedWords = ["if", "else", "assert", "data", "type", "every", "isa", "match", "case", "module"]
+reservedWords = ["if", "else", "data", "type", "every", "isa", "match", "case", "module"]
 
 
   -- Parse simple sequences
@@ -58,7 +58,7 @@ curlyBraces :: Parser a -> Parser a
 curlyBraces = between (symbol "{") (symbol "}")
 
 identifier :: Parser String
-identifier = (lexeme . try) (p >>= check)
+identifier = try (p >>= check)
   where
     p       = ((:) <$> lowerChar <*> many (alphaNumChar <|> char '/')) <|> ttypeidentifier
     check x = if x `elem` reservedWords
@@ -90,11 +90,8 @@ pAnnotIdentifier = do
   rst <- many alphaNumChar
   return ('#':f:rst)
 
-operators :: [String]
--- Note that operators are matched greedily. Those which are prefixes like "+" must come after the larger operators like "++"
-operators = words "++ :: - ~ * // + <= >= < > == != & | ^"
-
-opIdentifier :: Parser String
-opIdentifier = try $ lexeme $ (++) <$> string "/operator" <*> opChars
-  where opChars :: Parser String
-        opChars = foldr1 (<|>) (map symbol operators)
+pHole :: Parser String
+pHole = do
+  _ <- string "_"
+  chars <- many alphaNumChar
+  return ('_':chars)

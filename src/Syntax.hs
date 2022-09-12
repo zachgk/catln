@@ -26,7 +26,6 @@ import           GHC.Generics          (Generic)
 import           Text.Megaparsec.Error (ParseErrorBundle)
 
 import           Data.Aeson            hiding (Object)
-import           Data.Bifunctor        (second)
 import           Data.Maybe
 import           MapMeta
 import           Syntax.Prgm
@@ -99,7 +98,7 @@ emptyMetaE :: (Meta m, ExprClass e) => String -> e m -> m
 emptyMetaE s e = labelPosM s $ getExprMeta e
 
 exprPath :: (ExprClass e) => e m -> TypeName
-exprPath = fromJust . maybeExprPath
+exprPath = fromMaybe (error "No exprPath found") . maybeExprPath
 
 exprAppliedArgsMap :: (ExprClass e, Meta m) => e m -> H.HashMap ArgName (m, Maybe (e m))
 exprAppliedArgsMap = H.fromList . mapMaybe fromTupleArg . exprAppliedArgs
@@ -133,10 +132,32 @@ objAppliedArgsMap = exprAppliedArgsMap . objExpr
 objAppliedVars :: (Meta m) => Object m -> H.HashMap TypeVarName m
 objAppliedVars = exprAppliedVars . objExpr
 
-exprToObj :: (Meta m, ExprClass e) => ObjectBasis -> Maybe String -> e m -> Object m
-exprToObj basis doc expr = Object (getExprMeta expr) basis (exprAppliedVars expr) args' doc (exprPath expr)
+rawExprToObj :: ObjectBasis -> Maybe String -> RawExpr PreTyped -> Object PreTyped
+rawExprToObj basis doc (RawParen expr) = rawExprToObj basis doc expr
+rawExprToObj basis doc (RawMethod (RawValue baseM baseName) valExpr) = valObj{deprecatedObjArgs = H.insert "this" base' (deprecatedObjArgs valObj)}
   where
-    args' = second (fmap (exprToObj basis Nothing)) <$> exprAppliedArgsMap expr
+    base' = (PreTyped (singletonType $ partialVal $ PRelativeName baseName) (getMetaPos baseM), Nothing)
+    valObj = rawExprToObj basis doc valExpr
+rawExprToObj basis doc (RawMethod baseExpr valExpr) = valObj{deprecatedObjArgs = H.insert "this" (emptyMetaM "thisObj" $ objM baseObj, Just baseObj) (deprecatedObjArgs valObj)}
+  where
+    baseObj = rawExprToObj basis doc baseExpr
+    valObj = rawExprToObj basis doc valExpr
+rawExprToObj basis doc (RawContextApply m (baseM, baseExpr) args) = Object m basis H.empty args' doc "/Context"
+  where
+    args' = H.insert "value" (baseM, Just $ rawExprToObj basis Nothing baseExpr) $ (,Nothing) <$> H.fromList args
+rawExprToObj basis doc (RawValue m path) = Object m basis H.empty H.empty doc path
+rawExprToObj basis doc (RawTupleApply _ (_, baseExpr) args) = baseObj{deprecatedObjArgs=H.union (H.fromList $ map parseArg args) (deprecatedObjArgs baseObj)}
+  where
+    baseObj = rawExprToObj basis doc baseExpr
+    parseArg (TupleArgI m n)    = (n, (m, Nothing))
+    parseArg (TupleArgIO _ n (RawParen (RawHoleExpr holeM _))) = (n, (holeM, Nothing))
+    parseArg (TupleArgIO _ n (RawHoleExpr holeM _)) = (n, (holeM, Nothing))
+    parseArg (TupleArgIO m n a) = (n, (m, Just $ rawExprToObj basis Nothing a))
+    parseArg TupleArgO{} = error "Found TupleArgO in rawExprToObj"
+rawExprToObj basis doc (RawVarsApply _ baseExpr vars) = baseObj{deprecatedObjVars=H.union (H.fromList vars) (deprecatedObjVars baseObj)}
+  where
+    baseObj = rawExprToObj basis doc baseExpr
+rawExprToObj _ _ e = error $ printf "Not yet implemented rawExprToObj: %s" (show e)
 
 type ArgMetaMap m = H.HashMap ArgName m
 -- |

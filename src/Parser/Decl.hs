@@ -34,20 +34,13 @@ pDeclArg :: Parser (String, PExpr)
 pDeclArg = do
   argName <- identifier
   _ <- symbol "="
-  expr <- pExpr
+  expr <- pExpr False
   return (argName, expr)
 
 pCompAnnot :: Parser PCompAnnot
 pCompAnnot = do
-  pos1 <- getSourcePos
-  annotName <- pAnnotIdentifier
-  pos2 <- getSourcePos
-  maybeArgVals <- optional $ parens $ sepBy1 pCallArg (symbol ",")
-  pos3 <- getSourcePos
-  let baseValue = RawValue (emptyMeta pos1 pos2) annotName
-  return $ case maybeArgVals of
-    Just argVals -> RawTupleApply (emptyMeta pos2 pos3) (PreTyped TopType (Just (pos1, pos2, "apply")), baseValue) argVals
-    Nothing -> baseValue
+  _ <- lookAhead $ string "#"
+  pExpr False
 
 pArrowRes :: Parser ParseMeta
 pArrowRes = do
@@ -122,12 +115,12 @@ pDeclTree = L.indentBlock scn p
             _ -> return $ RawDecl lhs subStatements Nothing
           (err:_, _) -> fail err
     childParser :: Parser TreeRes
-    childParser = try (TRDecl <$> pDeclTree) <|>  try (TRAnnot <$> pComment) <|> try (TRAnnot <$> pCompAnnot) <|> (TRExpr <$> pExpr)
+    childParser = try (TRDecl <$> pDeclTree) <|>  try (TRAnnot <$> pComment) <|> try (TRAnnot <$> pCompAnnot) <|> (TRExpr <$> pExpr True)
     p = do
       lhs <- pDeclLHS
       eqAndExpr <- optional $ do
         _ <- symbol "="
-        optional . try $ pExpr
+        optional . try $ pExpr True
       return (L.IndentMany Nothing (pack lhs eqAndExpr) childParser)
 
 pRootDecl :: Parser PStatement

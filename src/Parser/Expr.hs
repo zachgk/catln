@@ -27,6 +27,7 @@ import           Parser.Syntax
 import           Syntax
 import           Syntax.Prgm
 import           Syntax.Types
+import           Text.Printf
 
 mkOp1 :: String -> PExpr -> PExpr
 mkOp1 opChars x = applyRawArgs (RawValue emptyMetaN op) [(Just "a", x)]
@@ -61,30 +62,50 @@ ops = [
     ]
   ]
 
-pCallArg :: Parser PTupleArg
-pCallArg = do
-  maybeArgName <- optional . try $ do
-    n <- identifier
-    _ <- symbol "="
-    return n
-  expr <- pExpr
-  return $ case maybeArgName of
-    Just argName -> TupleArgIO emptyMetaN argName expr
-    Nothing      -> TupleArgO emptyMetaN expr
+pTypesAndVal :: Parser (Type, Either Name Hole)
+pTypesAndVal = do
+  let anyId = identifier <|> tidentifier <|> pAnnotIdentifier <|> tvar <|> pHole
+  typesAndVal <- some $ do
+    typeName <- anyId
+    vars <- optional . try $ do
+      vs <- pVarsSuffix
+      -- Need to ensure that vars are not matched if it is the val name and not a type for the val
+      _ <- lookAhead anyId
+      return vs
+    return (typeName, vars)
+  (tp, argValName) <- case typesAndVal of
+        [] -> fail "Nothing found when parsing an argument or value"
+        [(v, Nothing)] -> return (TopType, v)
+        [(typeName, maybeTypeVars), (v, Nothing)] -> do
+          let baseType = fromMaybeTypeName $ Just typeName
+          case maybeTypeVars of
+            Nothing -> return (baseType, v)
+            Just suffix -> do
+              let (VarsSuffix _ vars) = suffix
+              let (UnionType basePartials) = baseType
+              let [partial] = splitUnionType basePartials
+              let partial' = partial{ptVars = getMetaType <$> H.fromList vars}
+              return (singletonType partial', v)
+        _ -> fail $ printf "Multiple types is not yet supported with %s" (show typesAndVal)
 
-pCall :: Parser PExpr
-pCall = do
+  -- check if name is a hole
+  let argValName' = case argValName of
+        "_"         -> Right $ HoleActive Nothing
+        ('_':_)     -> Right $ HoleActive (Just argValName)
+        "undefined" -> Right HoleUndefined
+        "todefine"  -> Right HoleTodefine
+        _           -> Left argValName
+
+  return (tp, argValName')
+
+pArgValue :: Parser PExpr
+pArgValue = do
   pos1 <- getSourcePos
-  funName <- identifier <|> tidentifier
+  (tp, argValName) <- pTypesAndVal
   pos2 <- getSourcePos
-  maybeArgVals <- optional $ parens $ sepBy1 pCallArg (symbol ",")
-  pos3 <- getSourcePos
-  let m1 = emptyMeta pos1 pos2
-  let m2 = emptyMeta pos2 pos3
-  let baseValue = RawValue m1 funName
-  return $ case maybeArgVals of
-    Just argVals -> RawTupleApply m2 (labelPosM "call" m1, baseValue) argVals
-    Nothing      -> baseValue
+  case argValName of
+    Left n  -> return $ RawValue (PreTyped tp (Just (pos1, pos2, ""))) n
+    Right h -> return $ RawHoleExpr (PreTyped tp (Just (pos1, pos2, ""))) h
 
 pStringLiteral :: Parser PExpr
 pStringLiteral = do
@@ -93,57 +114,126 @@ pStringLiteral = do
   pos2 <- getSourcePos
   return $ RawCExpr (emptyMeta pos1 pos2) (CStr s)
 
-parenExpr :: Parser PExpr
-parenExpr = do
-  e <- parens pExpr
+parenExpr :: Bool -> Parser PExpr
+parenExpr outputExpr = do
+  e <- parens (pExpr outputExpr)
   return $ RawParen e
 
-pIfThenElse :: Parser PExpr
-pIfThenElse = do
+pIfThenElse :: Bool -> Parser PExpr
+pIfThenElse outputExpr = do
   pos1 <- getSourcePos
   _ <- symbol "if"
-  condExpr <- pExpr
+  condExpr <- pExpr outputExpr
   _ <- symbol "then"
-  thenExpr <- pExpr
+  thenExpr <- pExpr outputExpr
   _ <- symbol "else"
-  elseExpr <- pExpr
+  elseExpr <- pExpr outputExpr
   pos2 <- getSourcePos
   return $ RawIfThenElse (emptyMeta pos1 pos2) condExpr thenExpr elseExpr
 
-pMatchCaseHelper :: String -> Parser (PExpr, [(PPattern, PExpr)])
-pMatchCaseHelper keyword = L.indentBlock scn p
+pMatchCaseHelper :: Bool -> String -> Parser (PExpr, [(PPattern, PExpr)])
+pMatchCaseHelper outputExpr keyword = L.indentBlock scn p
   where
     pack expr matchItems = return (expr, matchItems)
     pItem = do
       patt <- pPattern MatchObj
       _ <- symbol "=>"
-      expr <- pExpr
+      expr <- pExpr outputExpr
       return (patt, expr)
     p = do
       _ <- symbol keyword
-      expr <- pExpr
+      expr <- pExpr outputExpr
       _ <- symbol "of"
       return $ L.IndentSome Nothing (pack expr) pItem
 
-pCase :: Parser PExpr
-pCase = do
+pCase :: Bool -> Parser PExpr
+pCase outputExpr = do
   pos1 <- getSourcePos
-  (expr, matchItems) <- pMatchCaseHelper "case"
+  (expr, matchItems) <- pMatchCaseHelper outputExpr "case"
   pos2 <- getSourcePos
   return $ RawCase (emptyMeta pos1 pos2) expr matchItems
 
-pMatch :: Parser PExpr
-pMatch = do
+pMatch :: Bool -> Parser PExpr
+pMatch outputExpr = do
   pos1 <- getSourcePos
-  (expr, matchItems) <- pMatchCaseHelper "match"
+  (expr, matchItems) <- pMatchCaseHelper outputExpr "match"
   pos2 <- getSourcePos
   return $ RawMatch (emptyMeta pos1 pos2) expr matchItems
 
-pMethod :: Parser PExpr
+data TermSuffix
+  = MethodSuffix ParseMeta TypeName
+  | ArgsSuffix ParseMeta [PTupleArg]
+  | VarsSuffix ParseMeta [(TypeVarName, ParseMeta)]
+  | ContextSuffix ParseMeta [(ArgName, ParseMeta)]
+  deriving (Show)
+
+pMethod :: Parser TermSuffix
 pMethod = do
   _ <- string "."
-  pCall
+  pos1 <- getSourcePos
+  methodName <- identifier <|> tidentifier
+  pos2 <- getSourcePos
+  return $ MethodSuffix (emptyMeta pos1 pos2) methodName
 
+pArgSuffix :: Bool -> Parser PTupleArg
+pArgSuffix outputExpr = do
+  pos1 <- getSourcePos
+  maybeArgNameType <- optional . try $ do
+    n <- pTypesAndVal
+    _ <- symbol "="
+    return n
+  expr <- pExpr outputExpr
+  pos2 <- getSourcePos
+  case maybeArgNameType of
+    Just (_, Right _) -> fail "Unexpected hole in arg name"
+    Just (tp, Left argName) -> return $ TupleArgIO (PreTyped tp (Just (pos1, pos2, ""))) argName expr
+    Nothing      -> if outputExpr
+      then return $ TupleArgO (emptyMeta pos1 pos2) expr
+      else case expr of
+        RawValue m n -> return $ TupleArgI (PreTyped (getMetaType m) (Just (pos1, pos2, ""))) n
+        _ -> fail $ printf "Unexpected parsed argName: %s" (show expr)
+
+pArgsSuffix :: Bool -> Parser TermSuffix
+pArgsSuffix outputExpr = do
+  pos1 <- getSourcePos
+  args <- parens $ sepBy1 (pArgSuffix outputExpr) (symbol ",")
+  pos2 <- getSourcePos
+  return $ ArgsSuffix (emptyMeta pos1 pos2) args
+
+pVarSuffix :: Parser (TypeVarName, ParseMeta)
+pVarSuffix = do
+  pos1 <- getSourcePos
+  -- TODO: Should support multiple class identifiers such as <Eq Ord $T>
+  maybeClass <- optional ttypeidentifier
+  var <- tvar
+  pos2 <- getSourcePos
+  let tp = fromMaybeTypeName maybeClass
+  return (var, PreTyped tp (Just (pos1, pos2, "")))
+
+pVarsSuffix :: Parser TermSuffix
+pVarsSuffix = do
+  pos1 <- getSourcePos
+  vars <- angleBraces $ sepBy1 pVarSuffix (symbol ",")
+  pos2 <- getSourcePos
+  return $ VarsSuffix (emptyMeta pos1 pos2) vars
+
+pContextElSuffix :: Parser (ArgName, ParseMeta)
+pContextElSuffix = do
+  pos1 <- getSourcePos
+  tp <- tidentifier
+  arg <- identifier
+  pos2 <- getSourcePos
+  return (arg, PreTyped (singletonType (PartialType (PRelativeName tp) H.empty H.empty H.empty PtArgExact)) (Just (pos1, pos2, "")))
+
+pContextSuffix :: Parser TermSuffix
+pContextSuffix = do
+  pos1 <- getSourcePos
+  ctxs <- curlyBraces $ sepBy1 pContextElSuffix (symbol ",")
+  pos2 <- getSourcePos
+  return $ ContextSuffix (emptyMeta pos1 pos2) ctxs
+
+pTermSuffix :: Bool -> Parser TermSuffix
+pTermSuffix outputExpr = pMethod <|> pArgsSuffix outputExpr <|> pVarsSuffix <|> pContextSuffix
 pInt :: Parser PExpr
 pInt = do
   pos1 <- getSourcePos
@@ -151,39 +241,45 @@ pInt = do
   pos2 <- getSourcePos
   return $ RawCExpr (emptyMeta pos1 pos2) (CInt i)
 
-pList :: Parser PExpr
-pList = do
+pList :: Bool -> Parser PExpr
+pList outputExpr = do
   pos1 <- getSourcePos
   _ <- string "["
-  lst <- sepBy pExpr (symbol ",")
+  lst <- sepBy (pExpr outputExpr) (symbol ",")
   _ <- string "]"
   pos2 <- getSourcePos
   return $ RawList (emptyMeta pos1 pos2) lst
 
-term :: Parser PExpr
-term = do
-  base <- parenExpr
-       <|> pIfThenElse
-       <|> pMatch
-       <|> pCase
+applyTermSuffix :: PExpr -> TermSuffix -> PExpr
+applyTermSuffix base (MethodSuffix m n) = RawMethod base (RawValue m n)
+applyTermSuffix base (ArgsSuffix m args) = RawTupleApply m (labelPosM "arg" $ getExprMeta base, base) args
+applyTermSuffix base (VarsSuffix m vars) = RawVarsApply m base vars
+applyTermSuffix base (ContextSuffix m args) = RawContextApply m (labelPosM "ctx" $ getExprMeta base, base) args
+
+term :: Bool -> Parser PExpr
+term outputExpr = do
+  base <- (if outputExpr then pIfThenElse outputExpr
+        <|> pMatch outputExpr
+        <|> pCase outputExpr
+        <|> parenExpr outputExpr
+        else parenExpr outputExpr)
        <|> pStringLiteral
        <|> pInt
-       <|> pList
-       <|> pCall
-  methods <- many pMethod
-  return $ case methods of
-    [] -> base
-    ms -> RawMethods base ms
+       <|> pList outputExpr
+       <|> pArgValue
+  suffixes <- many (pTermSuffix outputExpr)
+  _ <- sc
+  return $ foldl applyTermSuffix base suffixes
 
-pExpr :: Parser PExpr
-pExpr = makeExprParser term ops
+pExpr :: Bool -> Parser PExpr
+pExpr outputExpr = makeExprParser (term outputExpr) ops
 
 -- Pattern
 
 pIfGuard :: Parser PGuard
 pIfGuard = do
   _ <- symbol "if"
-  IfGuard <$> pExpr
+  IfGuard <$> pExpr False
 
 pElseGuard :: Parser PGuard
 pElseGuard = do
@@ -195,77 +291,10 @@ pPatternGuard = fromMaybe NoGuard <$> optional (pIfGuard
                                               <|> pElseGuard
                                             )
 
-pMethodCallerType :: Parser PObjArg
-pMethodCallerType = do
-  pos1 <- getSourcePos
-  t <- singletonType <$> pLeafType
-  pos2 <- getSourcePos
-  _ <- symbol "."
-  return (PreTyped t (Just (pos1, pos2, "")), Nothing)
-
-pObjTreeVar :: Parser (TypeVarName, ParseMeta)
-pObjTreeVar = do
-  -- TODO: Should support multiple class identifiers such as <Eq Ord $T>
-  pos1 <- getSourcePos
-  maybeClass <- optional ttypeidentifier
-  var <- tvar
-  pos2 <- getSourcePos
-  let tp = maybe TopType (\n -> singletonType (PartialType (PRelativeName n) H.empty H.empty H.empty PtArgExact)) maybeClass
-  return (var, PreTyped tp (Just (pos1, pos2, "")))
-
-pObjTreeArgPattern :: Parser (ArgName, PObjArg)
-pObjTreeArgPattern = do
-  pos1 <- getSourcePos
-  val <- identifier
-  _ <- symbol "="
-  subTree <- pObjTree PatternObj
-  pos2 <- getSourcePos
-  return (val, (emptyMeta pos1 pos2, Just subTree))
-
-pObjTreeArgName :: Parser (ArgName, PObjArg)
-pObjTreeArgName = do
-  pos1 <- getSourcePos
-  tp <- try $ optional pType
-  val <- identifier
-  pos2 <- getSourcePos
-  let tp' = maybe (emptyMeta pos1 pos2) (`PreTyped` Just (pos1, pos2, "")) tp
-  return (val, (tp', Nothing))
-
-pObjTreeArgs :: Parser [(ArgName, PObjArg)]
-pObjTreeArgs = sepBy1 (try pObjTreeArgPattern <|> pObjTreeArgName) (symbol ",")
-
-pObjTreeInner :: ObjectBasis -> Parser PObject
-pObjTreeInner basis = do
-  pos1 <- getSourcePos
-  name <- opIdentifier <|> identifier <|> tidentifier
-  maybeCtx <- optional $ curlyBraces $ sepBy pObjTreeArgName (symbol ",")
-  vars <- optional $ angleBraces $ sepBy1 pObjTreeVar (symbol ",")
-  args <- optional $ parens pObjTreeArgs
-  pos2 <- getSourcePos
-  let vars' = maybe H.empty H.fromList vars
-  let args' = H.fromList $ fromMaybe [] args
-  let objMeta = emptyMeta pos1 pos2
-  let obj = Object objMeta basis vars' args' Nothing name
-  return $ case maybeCtx of
-    Just ctx -> Object (emptyMetaM "context" objMeta) basis  H.empty (H.insert "value" (emptyMetaN, Just obj) $ H.fromList ctx) Nothing "/Context"
-    Nothing -> obj
-
-objTreeJoinMethods :: PObject -> PObject -> PObject
-objTreeJoinMethods obj meth@Object{deprecatedObjArgs=methArgs} = meth{deprecatedObjArgs = H.insert "this" (emptyMetaM "meth" $ objM obj, Just obj) methArgs}
-
-pObjTree :: ObjectBasis -> Parser PObject
-pObjTree basis = do
-  maybeStartType <- optional $ try pMethodCallerType
-  objs <- sepBy1 (pObjTreeInner basis) (string ".")
-  let objs'@Object{deprecatedObjArgs} = foldl1 objTreeJoinMethods objs
-  return $ case maybeStartType of
-    Just startType -> objs'{deprecatedObjArgs = H.insert "this" startType deprecatedObjArgs}
-    Nothing        -> objs'
-
 pPattern :: ObjectBasis -> Parser PPattern
 pPattern basis = do
-  objTree <- pObjTree basis
-  Pattern objTree <$> pPatternGuard
+  e <- term False
+  Pattern (rawExprToObj basis Nothing e) <$> pPatternGuard
 
 -- Pattern Types
 

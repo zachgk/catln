@@ -19,7 +19,7 @@ module Data/Algebra
     # This checks whether two items are equal.
       Note that it only compares like items with each other, not that you can compare apples to oranges.
 
-  /operator!=</Data/Algebra/Eq $T>($T l, $T r) -> Boolean
+  ($T _ != $T _)</Data/Algebra/Eq $T> -> Boolean
     # This checks if two items are not equal.
 
   # It is the opposite of [operator==] leading to the simple definition:
@@ -74,10 +74,10 @@ module Data/Algebra
 
     Besides compare, there are also some operators to make using ordering easier.
 
-  /operator<=<Ord $T>($T l, $T r) -> Boolean
-  /operator>=<Ord $T>($T l, $T r) -> Boolean
-  /operator<<Ord $T>($T l, $T r) -> Boolean
-  /operator><Ord $T>($T l, $T r) -> Boolean
+  ($T _ <= $T _)<Ord $T> -> Boolean
+  ($T _ >= $T _)<Ord $T> -> Boolean
+  ($T _ < $T _)<Ord $T> -> Boolean
+  ($T _ > $T _)<Ord $T> -> Boolean
 
   every POrd isa /Data/Algebra/Eq
 
@@ -102,7 +102,7 @@ module Data/Algebra
 
   every Semigroup isa /Data/Algebra/Eq
 
-  /operator++<Semigroup $T>($T l, $T r) -> $T
+  ($T _ ++ $T _)<Semigroup $T> -> $T
 
   testSemigroupAssociative<Semigroup $T>($T a, $T b, $T c) =
     #test
@@ -167,6 +167,6 @@ module Data/Algebra
 
   testGroup<Group $T>($T t) =
     #test
-    #assert(test=t ++ inverse(t) == mempty)
-    #assert(test=inverse(t) ++ t == mempty)
+    #assert(test=t ++ inverse(t=t) == mempty)
+    #assert(test=inverse(t=t) ++ t == mempty)
     0

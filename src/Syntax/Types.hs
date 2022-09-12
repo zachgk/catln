@@ -229,6 +229,14 @@ joinUnionTypeByName = H.map (S.fromList . map typeToArgOption)
 singletonType :: PartialType -> Type
 singletonType partial = UnionType $ joinUnionType [partial]
 
+-- | Helper to create a 'PartialType' for a value (no args, no vars)
+partialVal :: PartialName -> PartialType
+partialVal n = PartialType n H.empty H.empty H.empty PtArgExact
+
+-- | Helper to create a 'Type' for a value (no args, no vars)
+typeVal :: PartialName -> Type
+typeVal = singletonType . partialVal
+
 suffixLookup :: String -> [String] -> Maybe String
 suffixLookup s (x:xs)
   | s == x = Just s

@@ -14,6 +14,7 @@ module Parser.Syntax where
 
 import qualified Data.HashMap.Strict as H
 
+import           Data.List           (isPrefixOf)
 import           Syntax
 import           Syntax.Prgm
 import           Syntax.Types
@@ -63,6 +64,12 @@ type DesArrow = Arrow Expr ParseMeta
 type DesObjectMapItem = ObjectMapItem Expr ParseMeta
 type DesPrgm = Prgm Expr ParseMeta
 type DesPrgmGraphData = GraphData DesPrgm String
+
+fromMaybeTypeName :: Maybe TypeName -> Type
+fromMaybeTypeName = maybe TopType fromName
+  where
+    fromName n | "$" `isPrefixOf` n = TypeVar $ TVVar n
+    fromName n = singletonType (PartialType (PRelativeName n) H.empty H.empty H.empty PtArgExact)
 
 emptyMeta :: SourcePos -> SourcePos -> ParseMeta
 emptyMeta p1 p2 = PreTyped TopType (Just (p1, p2, ""))
