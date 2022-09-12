@@ -46,7 +46,7 @@ pImport = do
 pGlobalAnnot :: Parser PStatement
 pGlobalAnnot = L.indentBlock scn p
   where
-    pack annot children = return $ RawGlobalAnnot annot children
+    pack annot children = return $ RawAnnot annot children
     p = do
       annot <- pCompAnnot
       return (L.IndentMany Nothing (pack annot) pStatement)
@@ -71,7 +71,7 @@ pModule = L.indentBlock scn p
 pCommentStatement :: Parser PStatement
 pCommentStatement = do
   c <- pComment
-  return $ RawGlobalAnnot c []
+  return $ RawAnnot c []
 
 
 pStatement :: Parser PStatement

@@ -197,8 +197,8 @@ function Statement(props) {
       </h3>
       <div><Statements statements={comments}/></div>
       </div>);
-  case "RawDeclSubStatementAnnot":
-  case "RawGlobalAnnot":
+  case "RawAnnot":
+  case "RawAnnot":
     const [annot, annotSubStatements] = statement.contents;
 
     return (
@@ -253,9 +253,9 @@ function DeclSubStatement(props) {
   const {subStatement, obj} = props;
 
   switch(subStatement.tag) {
-  case "RawDeclSubStatementDecl":
+  case "RawDeclStatement":
     return <div><Decl contents={subStatement.contents} /></div>;
-  case "RawDeclSubStatementAnnot":
+  case "RawAnnot":
     return <div><Annot annot={subStatement.contents[0]} obj={obj} /></div>;
   default:
     console.error("Unknown DeclSubStatement", subStatement);

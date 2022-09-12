@@ -30,13 +30,6 @@ import           Syntax.Prgm
 import           Syntax.Types
 import           Text.Megaparsec.Char
 
-pDeclArg :: Parser (String, PExpr)
-pDeclArg = do
-  argName <- identifier
-  _ <- symbol "="
-  expr <- pExpr False
-  return (argName, expr)
-
 pCompAnnot :: Parser PCompAnnot
 pCompAnnot = do
   _ <- lookAhead $ string "#"
@@ -80,21 +73,21 @@ data TreeRes
   | TRAnnot PCompAnnot
   deriving (Show)
 
-validDeclTree :: [TreeRes] -> Either String ([PDeclSubStatement], PExpr)
+validDeclTree :: [TreeRes] -> Either String ([PStatement], PExpr)
 validDeclTree = aux ([], Nothing)
   where
     aux (_, Nothing) [] = Left "No expression found. The declaration must contain an expression"
     aux (subSt, Just expr) [] = Right (subSt, expr)
-    aux (subSt, maybeExpr) ((TRDecl decl):trs) = aux (RawDeclSubStatementDecl decl:subSt, maybeExpr) trs
-    aux (subSt, maybeExpr) ((TRAnnot annot):trs) = aux (RawDeclSubStatementAnnot annot []:subSt, maybeExpr) trs
+    aux (subSt, maybeExpr) ((TRDecl decl):trs) = aux (RawDeclStatement decl:subSt, maybeExpr) trs
+    aux (subSt, maybeExpr) ((TRAnnot annot):trs) = aux (RawAnnot annot []:subSt, maybeExpr) trs
     aux (subSt, Nothing) ((TRExpr expr):trs) = aux (subSt, Just expr) trs
     aux (_, Just{}) ((TRExpr _):_) = Left "Multiple expressions found. The declaration should only have one expression line"
 
 -- Used to verify only annotations or comments used for declarations and single line definitions
-validSubStatementInSingle :: TreeRes -> Either String PDeclSubStatement
+validSubStatementInSingle :: TreeRes -> Either String PStatement
 validSubStatementInSingle TRDecl{} = Left "Found an unexpected subDefinition when the expression is defined in a single line."
 validSubStatementInSingle TRExpr{} = Left "Found an unexpected subExpression when the expression is defined in a single line."
-validSubStatementInSingle (TRAnnot annot) = return $ RawDeclSubStatementAnnot annot []
+validSubStatementInSingle (TRAnnot annot) = return $ RawAnnot annot []
 
 pDeclTree :: Parser PDecl
 pDeclTree = L.indentBlock scn p

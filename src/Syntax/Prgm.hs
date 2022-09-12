@@ -98,15 +98,10 @@ instance Functor Guard where
   fmap _ ElseGuard   = ElseGuard
   fmap _ NoGuard     = NoGuard
 
-data RawDeclSubStatement m
-  = RawDeclSubStatementDecl (RawDecl m)
-  | RawDeclSubStatementAnnot (CompAnnot (RawExpr m)) [RawDeclSubStatement m]
-  deriving (Eq, Ord, Show, Generic, ToJSON)
-
 data DeclLHS e m = DeclLHS m (Pattern e m)
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
-data RawDecl m = RawDecl (DeclLHS RawExpr m) [RawDeclSubStatement m] (Maybe (RawExpr m))
+data RawDecl m = RawDecl (DeclLHS RawExpr m) [RawStatement m] (Maybe (RawExpr m))
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
 newtype TypeDef m = TypeDef m
@@ -124,11 +119,11 @@ data Path = Relative String | Absolute String
 
 data RawStatement m
   = RawDeclStatement (RawDecl m)
-  | MultiTypeDefStatement (MultiTypeDef m) [RawDeclSubStatement m] Path
-  | TypeDefStatement (TypeDef m) [RawDeclSubStatement m]
-  | RawClassDefStatement RawClassDef [RawDeclSubStatement m] Path
-  | RawClassDeclStatement RawClassDecl [RawDeclSubStatement m] Path
-  | RawGlobalAnnot (CompAnnot (RawExpr m)) [RawStatement m]
+  | MultiTypeDefStatement (MultiTypeDef m) [RawStatement m] Path
+  | TypeDefStatement (TypeDef m) [RawStatement m]
+  | RawClassDefStatement RawClassDef [RawStatement m] Path
+  | RawClassDeclStatement RawClassDecl [RawStatement m] Path
+  | RawAnnot (CompAnnot (RawExpr m)) [RawStatement m]
   | RawModule String [RawStatement m] Path
   deriving (Eq, Ord, Show, Generic, ToJSON)
 

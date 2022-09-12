@@ -27,7 +27,6 @@ type PExpr = RawExpr ParseMeta
 type PPattern = Pattern RawExpr ParseMeta
 type PCompAnnot = CompAnnot PExpr
 type PGuard = Guard PExpr
-type PDeclSubStatement = RawDeclSubStatement ParseMeta
 type PDeclLHS = DeclLHS RawExpr ParseMeta
 type PDecl = RawDecl ParseMeta
 type PObjectMap = ObjectMap RawExpr ParseMeta
