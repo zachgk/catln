@@ -74,6 +74,14 @@ fromMaybeTypeName = maybe TopType fromName
 emptyMeta :: SourcePos -> SourcePos -> ParseMeta
 emptyMeta p1 p2 = PreTyped TopType (Just (p1, p2, ""))
 
+isAbsolutePath :: String -> Bool
+isAbsolutePath name = "/" `isPrefixOf` name
+
+getPath :: String -> Path
+getPath name = if isAbsolutePath name then
+  Absolute name
+  else Relative name
+
 rawVal :: String -> PExpr
 rawVal name = RawValue m name
   where m = PreTyped (singletonType $ PartialType (PTypeName name) H.empty H.empty H.empty PtArgExact) Nothing

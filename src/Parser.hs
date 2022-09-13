@@ -51,14 +51,6 @@ liftPStatement pSt = L.indentBlock scn p
       st <- pSt
       return (L.IndentMany Nothing (pack st) pStatementTree)
 
-isAbsolutePath :: String -> Bool
-isAbsolutePath name = "/" `isPrefixOf` name
-
-getPath :: String -> Path
-getPath name = if isAbsolutePath name then
-  Absolute name
-  else Relative name
-
 pModule :: Parser PStatement
 pModule = do
   _ <- symbol "module"
@@ -72,7 +64,7 @@ pCommentStatement = do
 
 
 pStatementTree :: Parser PStatementTree
-pStatementTree = pTypeStatement
+pStatementTree = liftPStatement pTypeStatement
     <|> pCommentStatement
     <|> liftPStatement (RawAnnot <$> pCompAnnot)
     <|> liftPStatement pModule

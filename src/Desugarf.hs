@@ -220,7 +220,7 @@ declToObjArrow :: StatementEnv -> PSemiDecl -> DesObjectMapItem
 declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl (DeclLHS arrM (Pattern object guard)) annots expr) = (object'', annots' ++ inheritAnnots, Just arrow)
   where
     -- Inherit the path in main object name. If main is a context, also inherit in the context function as well
-    updateObjPath o = o{deprecatedObjPath = getPath inheritPath (objPath o)}
+    updateObjPath o = o{deprecatedObjPath = addPath inheritPath (objPath o)}
     object' = updateObjPath object
     object'' = case objPath object of
       "/Context" -> object{deprecatedObjArgs=H.adjust (\(m, Just o) -> (m, Just $ updateObjPath o)) "value" $ deprecatedObjArgs object}
@@ -235,8 +235,8 @@ desDecl statementEnv decl subStatements= (objMap, emptyClassGraph, [])
   where
     objMap = map (declToObjArrow statementEnv) $ removeSubDeclarations (decl, subStatements)
 
-getPath :: String -> String -> String
-getPath inheritPath name = if "/" `isPrefixOf` name then
+addPath :: String -> String -> String
+addPath inheritPath name = if "/" `isPrefixOf` name then
   name
   else inheritPath ++ "/" ++ name
 
@@ -244,17 +244,28 @@ getPath inheritPath name = if "/" `isPrefixOf` name then
 typeDefMetaToObj :: String -> H.HashMap TypeVarName Type -> ParseMeta -> Maybe PObject
 typeDefMetaToObj _ _ (PreTyped TypeVar{} _) = Nothing
 typeDefMetaToObj inheritPath varReplaceMap (PreTyped (UnionType partials) pos) = case splitUnionType partials of
-  [partial@(PartialType (PRelativeName partialName) partialVars _ partialArgs _)] -> Just $ Object m' TypeObj (fmap toMeta partialVars') (fmap (\arg -> (PreTyped arg Nothing, Nothing)) partialArgs) Nothing (getPath inheritPath partialName)
+  [partial@(PartialType (PRelativeName partialName) partialVars _ partialArgs _)] -> Just $ Object m' TypeObj (fmap toMeta partialVars') (fmap (\arg -> (PreTyped arg Nothing, Nothing)) partialArgs) Nothing (addPath inheritPath partialName)
     where
-      ptName' = PTypeName $ getPath inheritPath partialName
+      ptName' = PTypeName $ addPath inheritPath partialName
       partialVars' = fmap (substituteVarsWithVarEnv varReplaceMap) partialVars
       m' = PreTyped (singletonType partial{ptVars=partialVars', ptName=ptName'}) $ labelPos "obj" pos
       toMeta t = PreTyped t Nothing
   _ -> error "Invalid call to typeDefMetaToObj with UnionType"
 typeDefMetaToObj _ _ _ = error "Invalid call to typeDefMetaToObj"
 
+-- | Desugars statements that inherit a path from a main statement
+desInheritingSubstatements :: StatementEnv -> Path -> [PStatementTree] -> (DesPrgm, [DesCompAnnot])
+desInheritingSubstatements (inheritModule, inheritAnnots) path subStatements = (prgm', annots)
+  where
+    path' = case path of
+      (Absolute p) -> p
+      (Relative p) -> inheritModule ++ "/" ++ p
+    statementEnv' = (path', inheritAnnots)
+    (objectMap, classGraph, annots) = mergePrgms $ map (desStatement statementEnv') subStatements
+    prgm' = (objectMap, classGraph, []) -- Annots in subStatements are not global, but local to the main statement
+
 desMultiTypeDef :: StatementEnv -> PMultiTypeDef -> [RawStatementTree ParseMeta] -> Path -> DesPrgm
-desMultiTypeDef (inheritPath, _) (MultiTypeDef className classVars dataMetas) subStatements path = (objMap', classGraph', [])
+desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef className classVars dataMetas) subStatements path = mergePrgm (objMap', classGraph', []) subPrgm
     where
       path' =  case path of
         Absolute p -> p
@@ -264,32 +275,37 @@ desMultiTypeDef (inheritPath, _) (MultiTypeDef className classVars dataMetas) su
       dataTypes = map getMetaType dataMetas
       objs = mapMaybe (typeDefMetaToObj inheritPath classVars) dataMetas
       typeCGNodes = map (CGType, , []) objPaths
-      classCGNode = (CGClass (True, classVars, dataTypes, desObjDocComment subStatements, path'), getPath inheritPath className, objPaths)
+      classCGNode = (CGClass (True, classVars, dataTypes, desObjDocComment subStatements, path'), addPath inheritPath className, objPaths)
       classGraph' = ClassGraph $ graphFromEdges (classCGNode:typeCGNodes)
+      (subPrgm, _) = desInheritingSubstatements statementEnv path subStatements
 
 
 desClassDecl :: StatementEnv -> RawClassDecl -> [RawStatementTree ParseMeta] -> Path -> DesPrgm
-desClassDecl (inheritPath, _) (className, classVars) subStatements path = ([], classGraph', [])
+desClassDecl statementEnv@(inheritPath, _) (className, classVars) subStatements path = mergePrgm ([], classGraph', []) subPrgm
   where
-    classGraph' = ClassGraph $ graphFromEdges [(CGClass (False, classVars, [], desObjDocComment subStatements, path'), getPath inheritPath className, [])]
+    classGraph' = ClassGraph $ graphFromEdges [(CGClass (False, classVars, [], desObjDocComment subStatements, path'), addPath inheritPath className, [])]
     path' = case path of
       Relative p -> inheritPath ++ "/" ++ p
       Absolute p -> p
+    (subPrgm, _) = desInheritingSubstatements statementEnv path subStatements
 
 desTypeDef :: StatementEnv -> PTypeDef -> [RawStatementTree ParseMeta] -> DesPrgm
-desTypeDef (inheritPath, _) (TypeDef tp) subStatements = (objMap, emptyClassGraph, [])
+desTypeDef statementEnv@(inheritPath, _) (TypeDef tp) subStatements = mergePrgm (objMap, emptyClassGraph, []) subPrgm
   where
-    objMap = case typeDefMetaToObj inheritPath H.empty tp of
-          Just obj -> [(obj{objDoc = desObjDocComment subStatements}, [], Nothing)]
-          Nothing  -> error "Type def could not be converted into meta"
+    (subPrgm, annots) = desInheritingSubstatements statementEnv (getPath $ objPath obj) subStatements
+    obj = case typeDefMetaToObj inheritPath H.empty tp of
+          Just o  -> o{objDoc = desObjDocComment subStatements}
+          Nothing -> error "Type def could not be converted into meta"
+    objMap = [(obj, annots, Nothing)]
 
 desClassDef :: StatementEnv -> Sealed -> RawClassDef -> [RawStatementTree ParseMeta] -> Path -> DesPrgm
-desClassDef (inheritPath, _) sealed ((typeName, typeVars), className) subStatements path = ([], classGraph, [])
+desClassDef statementEnv@(inheritPath, _) sealed ((typeName, typeVars), className) subStatements path = mergePrgm ([], classGraph, []) subPrgm
   where
     path' =  case path of
       Absolute p -> p
       Relative p -> inheritPath ++ "/" ++ p
     classGraph = ClassGraph $ graphFromEdges [(CGClass (sealed, H.empty, [singletonType (PartialType (PRelativeName typeName) typeVars H.empty H.empty PtArgExact)], desObjDocComment subStatements, path'), className, [typeName])]
+    (subPrgm, _) = desInheritingSubstatements statementEnv path subStatements
 
 emptyClassGraph :: ClassGraph
 emptyClassGraph = ClassGraph $ graphFromEdges []
@@ -311,8 +327,7 @@ desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree state
   RawClassDeclStatement classDecls path -> desClassDecl statementEnv classDecls subStatements path
   RawAnnot a | null subStatements -> ([], emptyClassGraph, [desGlobalAnnot a])
   RawAnnot a -> mergePrgms $ map (desStatement (inheritModule, desGlobalAnnot a:inheritAnnots)) subStatements
-  RawModule _ (Absolute path) -> mergePrgms $ map (desStatement (path, inheritAnnots)) subStatements
-  RawModule _ (Relative path) -> mergePrgms $ map (desStatement (inheritModule ++ "/" ++ path, inheritAnnots)) subStatements
+  RawModule _ path -> fst $ desInheritingSubstatements statementEnv path subStatements
 
 finalPasses :: DesPrgmGraphData -> GraphNodes DesPrgm String -> GraphNodes DesPrgm String
 finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm, prgmName, imports) = (prgm'', prgmName, imports)
