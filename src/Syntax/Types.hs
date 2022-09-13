@@ -42,6 +42,7 @@ type TypeName = Name
 type ClassName = Name
 type TypePropName = Name
 type RelativeName = Name
+type DocComment = String
 
 -- | The name or tuple-type of a 'PartialType'.
 -- This would be the name of the function, data type, or class.
@@ -101,7 +102,7 @@ newtype ClassGraph = ClassGraph (GraphData CGNode TypeName)
 
 -- | A class or type node within the 'ClassGraph'
 data CGNode
-  = CGClass (Sealed, H.HashMap TypeVarName Type, [Type], Maybe String, String)
+  = CGClass (Sealed, H.HashMap TypeVarName Type, [Type], Maybe DocComment, ClassName)
   | CGType
   deriving (Eq, Ord, Show)
 

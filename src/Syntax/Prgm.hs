@@ -144,7 +144,7 @@ data Object m = Object {
   objBasis          :: ObjectBasis,
   deprecatedObjVars :: H.HashMap TypeVarName m,
   deprecatedObjArgs :: H.HashMap ArgName (ObjArg m),
-  objDoc            :: Maybe String,
+  objDoc            :: Maybe DocComment,
   deprecatedObjPath :: String
                        }
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
