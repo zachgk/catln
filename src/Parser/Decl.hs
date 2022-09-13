@@ -68,44 +68,44 @@ pComment = do
 
 
 data TreeRes
-  = TRDecl PDecl
+  = TRDecl (PDecl, [PStatementTree])
   | TRExpr PExpr
   | TRAnnot PCompAnnot
   deriving (Show)
 
-validDeclTree :: [TreeRes] -> Either String ([PStatement], PExpr)
+validDeclTree :: [TreeRes] -> Either String ([PStatementTree], PExpr)
 validDeclTree = aux ([], Nothing)
   where
     aux (_, Nothing) [] = Left "No expression found. The declaration must contain an expression"
     aux (subSt, Just expr) [] = Right (subSt, expr)
-    aux (subSt, maybeExpr) ((TRDecl decl):trs) = aux (RawDeclStatement decl:subSt, maybeExpr) trs
-    aux (subSt, maybeExpr) ((TRAnnot annot):trs) = aux (RawAnnot annot []:subSt, maybeExpr) trs
+    aux (subSt, maybeExpr) ((TRDecl (decl, declStatements)):trs) = aux (RawStatementTree (RawDeclStatement decl) declStatements:subSt, maybeExpr) trs
+    aux (subSt, maybeExpr) ((TRAnnot annot):trs) = aux (RawStatementTree (RawAnnot annot) []:subSt, maybeExpr) trs
     aux (subSt, Nothing) ((TRExpr expr):trs) = aux (subSt, Just expr) trs
     aux (_, Just{}) ((TRExpr _):_) = Left "Multiple expressions found. The declaration should only have one expression line"
 
 -- Used to verify only annotations or comments used for declarations and single line definitions
-validSubStatementInSingle :: TreeRes -> Either String PStatement
+validSubStatementInSingle :: TreeRes -> Either String PStatementTree
 validSubStatementInSingle TRDecl{} = Left "Found an unexpected subDefinition when the expression is defined in a single line."
 validSubStatementInSingle TRExpr{} = Left "Found an unexpected subExpression when the expression is defined in a single line."
-validSubStatementInSingle (TRAnnot annot) = return $ RawAnnot annot []
+validSubStatementInSingle (TRAnnot annot) = return $ RawStatementTree (RawAnnot annot) []
 
-pDeclTree :: Parser PDecl
+pDeclTree :: Parser (PDecl, [PStatementTree])
 pDeclTree = L.indentBlock scn p
   where
     pack lhs maybeSingleExpr children = case maybeSingleExpr of
       Just (Just singleExpr) -> -- fun(...) = expr
         case partitionEithers $ map validSubStatementInSingle children of
-          ([], subStatements) -> return $ RawDecl lhs subStatements (Just singleExpr)
+          ([], subStatements) -> return (RawDecl lhs (Just singleExpr), subStatements)
           (err:_, _) -> fail err
       Just Nothing -> -- fun(...) = \n defined in next lines
         case validDeclTree children of
-          Right (subStatements, expr) -> return $ RawDecl lhs subStatements (Just expr)
+          Right (subStatements, expr) -> return (RawDecl lhs (Just expr), subStatements)
           Left err -> fail err
       Nothing -> -- fun(...) -> retType   -- Declaration only
         case partitionEithers $ map validSubStatementInSingle children of
           ([], subStatements) -> case lhs of
             (DeclLHS arrMeta _) | getMetaType arrMeta == TopType -> fail "Declaration must include an arrow or an equals"
-            _ -> return $ RawDecl lhs subStatements Nothing
+            _ -> return (RawDecl lhs Nothing, subStatements)
           (err:_, _) -> fail err
     childParser :: Parser TreeRes
     childParser = try (TRDecl <$> pDeclTree) <|>  try (TRAnnot <$> pComment) <|> try (TRAnnot <$> pCompAnnot) <|> (TRExpr <$> pExpr True)
@@ -116,5 +116,7 @@ pDeclTree = L.indentBlock scn p
         optional . try $ pExpr True
       return (L.IndentMany Nothing (pack lhs eqAndExpr) childParser)
 
-pRootDecl :: Parser PStatement
-pRootDecl = RawDeclStatement <$> pDeclTree
+pRootDecl :: Parser PStatementTree
+pRootDecl = do
+  (decl, statements) <- pDeclTree
+  return $ RawStatementTree (RawDeclStatement decl) statements

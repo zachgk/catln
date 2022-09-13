@@ -43,13 +43,13 @@ pImport = do
   _ <- newline
   return imp
 
-pGlobalAnnot :: Parser PStatement
-pGlobalAnnot = L.indentBlock scn p
+liftPStatement :: Parser PStatement -> Parser PStatementTree
+liftPStatement pSt = L.indentBlock scn p
   where
-    pack annot children = return $ RawAnnot annot children
+    pack st children = return $ RawStatementTree st children
     p = do
-      annot <- pCompAnnot
-      return (L.IndentMany Nothing (pack annot) pStatement)
+      st <- pSt
+      return (L.IndentMany Nothing (pack st) pStatementTree)
 
 isAbsolutePath :: String -> Bool
 isAbsolutePath name = "/" `isPrefixOf` name
@@ -60,25 +60,22 @@ getPath name = if isAbsolutePath name then
   else Relative name
 
 pModule :: Parser PStatement
-pModule = L.indentBlock scn p
-  where
-    pack name children = return $ RawModule name children (getPath name)
-    p = do
-      _ <- symbol "module"
-      name <- ttypeidentifier
-      return (L.IndentMany Nothing (pack name) pStatement)
+pModule = do
+  _ <- symbol "module"
+  name <- ttypeidentifier
+  return $ RawModule name (getPath name)
 
-pCommentStatement :: Parser PStatement
+pCommentStatement :: Parser PStatementTree
 pCommentStatement = do
   c <- pComment
-  return $ RawAnnot c []
+  return $ RawStatementTree (RawAnnot c) []
 
 
-pStatement :: Parser PStatement
-pStatement = pTypeStatement
+pStatementTree :: Parser PStatementTree
+pStatementTree = pTypeStatement
     <|> pCommentStatement
-    <|> pGlobalAnnot
-    <|> pModule
+    <|> liftPStatement (RawAnnot <$> pCompAnnot)
+    <|> liftPStatement pModule
     <|> pRootDecl
 
 pNothingNewline :: Parser (Maybe a)
@@ -90,7 +87,7 @@ pPrgm :: Parser PPrgm
 pPrgm = do
   _ <- many newline
   imports <- many pImport
-  statements <- many (Just <$> try pStatement <|> pNothingNewline)
+  statements <- many (Just <$> try pStatementTree <|> pNothingNewline)
   return (imports, catMaybes statements)
 
 contents :: Parser a -> Parser a
@@ -109,7 +106,7 @@ parseRepl s = case runParser (contents p) "<repl>" s of
                 Left e@(ParseErrorBundle _ _) -> ReplErr e
                 Right (Left statement)        -> ReplStatement statement
                 Right (Right expr)            -> ReplExpr expr
-  where p = try (Left <$> pStatement) <|> try (Right <$> pExpr True)
+  where p = try (Left <$> pStatementTree) <|> try (Right <$> pExpr True)
 
 -- replaces imports of a directory with directory/main.ct
 dirImportToMain :: String -> IO String

@@ -120,28 +120,28 @@ getPath name = if "/" `isPrefixOf` name then
   else Relative name
 
 
-pClassStatement :: Parser PStatement
+pClassStatement :: Parser PStatementTree
 pClassStatement = L.indentBlock scn p
   where
     pack pclass children = case pclass of
       Left multi@(MultiTypeDef name _ _) -> case partitionEithers $ map validSubStatementInSingle children of
-        ([], subStatements) -> return $ MultiTypeDefStatement multi subStatements (getPath name)
-        (_, _) -> return $ MultiTypeDefStatement multi [] (getPath name)
+        ([], subStatements) -> return $ RawStatementTree (MultiTypeDefStatement multi (getPath name)) subStatements
+        (_, _) -> return $ RawStatementTree (MultiTypeDefStatement multi (getPath name)) []
       Right pcl@(name, _) -> case partitionEithers $ map validSubStatementInSingle children of
-        ([], subStatements) -> return $ RawClassDeclStatement pcl subStatements (getPath name)
-        (_, _)              -> return $ RawClassDeclStatement pcl [] (getPath name)
+        ([], subStatements) -> return $ RawStatementTree (RawClassDeclStatement pcl (getPath name)) subStatements
+        (_, _)              -> return $ RawStatementTree (RawClassDeclStatement pcl (getPath name)) []
     childParser :: Parser TreeRes
     childParser = try (TRAnnot <$> pComment)
     p = do
       rawclass <- pClassStatement'
       return (L.IndentMany Nothing (pack rawclass) childParser)
 
-pAnnotDefStatement :: Parser PStatement
+pAnnotDefStatement :: Parser PStatementTree
 pAnnotDefStatement = L.indentBlock scn p
   where
     pack pclass children = case partitionEithers $ map validSubStatementInSingle children of
-        ([], subStatements) -> return $ TypeDefStatement pclass subStatements
-        (_, _)              -> return $ TypeDefStatement pclass []
+        ([], subStatements) -> return $ RawStatementTree (TypeDefStatement pclass) subStatements
+        (_, _)              -> return $ RawStatementTree (TypeDefStatement pclass) []
     childParser :: Parser TreeRes
     childParser = try (TRAnnot <$> pComment)
     p = do
@@ -150,12 +150,12 @@ pAnnotDefStatement = L.indentBlock scn p
         TypeDef <$> pLeafType PLeafTypeAnnot
       return (L.IndentMany Nothing (pack rawclass) childParser)
 
-pTypeDefStatement :: Parser PStatement
+pTypeDefStatement :: Parser PStatementTree
 pTypeDefStatement = L.indentBlock scn p
   where
     pack pclass children = case partitionEithers $ map validSubStatementInSingle children of
-        ([], subStatements) -> return $ TypeDefStatement pclass subStatements
-        (_, _)              -> return $ TypeDefStatement pclass []
+        ([], subStatements) -> return $ RawStatementTree (TypeDefStatement pclass) subStatements
+        (_, _)              -> return $ RawStatementTree (TypeDefStatement pclass) []
     childParser :: Parser TreeRes
     childParser = try (TRAnnot <$> pComment)
     p = do
@@ -164,12 +164,12 @@ pTypeDefStatement = L.indentBlock scn p
         TypeDef <$> pLeafType PLeafTypeData
       return (L.IndentMany Nothing (pack rawclass) childParser)
 
-pClassDefStatement :: Parser PStatement
+pClassDefStatement :: Parser PStatementTree
 pClassDefStatement = L.indentBlock scn p
   where
     pack pclass@((typeName, _), _) children = case partitionEithers $ map validSubStatementInSingle children of
-        ([], subStatements) -> return $ RawClassDefStatement pclass subStatements (getPath typeName)
-        (_, _) -> return $ RawClassDefStatement pclass [] (getPath typeName)
+        ([], subStatements) -> return $ RawStatementTree (RawClassDefStatement pclass (getPath typeName)) subStatements
+        (_, _) -> return $ RawStatementTree (RawClassDefStatement pclass (getPath typeName)) []
     childParser :: Parser TreeRes
     childParser = try (TRAnnot <$> pComment)
     p = do
@@ -183,7 +183,7 @@ pClassDefStatement = L.indentBlock scn p
         return ((typeName, vars), className)
       return (L.IndentMany Nothing (pack rawclass) childParser)
 
-pTypeStatement :: Parser PStatement
+pTypeStatement :: Parser PStatementTree
 pTypeStatement = pClassStatement
                  <|> pAnnotDefStatement
                  <|> pTypeDefStatement

@@ -37,7 +37,7 @@ import           Utils
 type ParseErrorRes = ParseErrorBundle String Void
 
 data ReplRes m
-  = ReplStatement (RawStatement m)
+  = ReplStatement (RawStatementTree m)
   | ReplExpr (RawExpr m)
   | ReplErr ParseErrorRes
   deriving (Eq, Show)

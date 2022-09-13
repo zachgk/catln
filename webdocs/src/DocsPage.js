@@ -47,16 +47,19 @@ function Main(props) {
   let objNames = {};
   typed[0].forEach(tObjArrs => {
     const [obj, annots, arr] = tObjArrs;
-    const {objM, objName} = obj;
-    const [metaType, metaPos] = objM;
-    metaMap[posKey(metaPos)] = metaType;
-    objMap[posKey(metaPos)] = obj;
+    const {deprecatedObjM, deprecatedObjPath} = obj;
+    const [metaType, metaPos] = deprecatedObjM;
+
+    if (metaPos) {
+      metaMap[posKey(metaPos)] = metaType;
+      objMap[posKey(metaPos)] = obj;
+    }
 
     // Need to check for functions because "toString" is already defined
-    if(!(objName in objNames) || typeof(objNames[objName]) === "function") {
-      objNames[objName] = [];
+    if(!(deprecatedObjPath in objNames) || typeof(objNames[deprecatedObjPath]) === "function") {
+      objNames[deprecatedObjPath] = [];
     }
-    objNames[objName].push(obj);
+    objNames[deprecatedObjPath].push(obj);
 
     if (arr) {
       const [, , arrExpr] = arr;
@@ -81,7 +84,7 @@ function Main(props) {
     <ResMaps.Provider value={resMaps}>
       {page[0].map((imp, ind) => <Import key={ind} name={imp}/>)}
       <br/>
-      <Statements statements={statements} />
+      <Statements statements={statements} root={true} />
     </ResMaps.Provider>
   );
 }
@@ -95,22 +98,37 @@ function Import(props) {
 }
 
 function Statements(props) {
-  return props.statements.map((statement, index) => <Statement key={index} statement={statement} />);
+  return props.statements.map((statement, index) => <StatementTree key={index} statementTree={statement} root={props.root} />);
+}
+
+function StatementTree(props) {
+  const {statementTree} = props;
+  const [statement, subStatements] = statementTree;
+  const classes = useStyles();
+
+  return (
+    <div>
+      <Statement statement={statement}/>
+      <div className={classes.indented}>
+        {subStatements.map((subStatement, index) => <StatementTree key={index} statementTree={subStatement} />)}
+      </div>
+    </div>
+  );
 }
 
 function Statement(props) {
-  let {statement} = props;
+  const {statement} = props;
   const classes = useStyles();
 
   switch(statement.tag) {
   case "RawDeclStatement":
     const obj = statement.contents[0][1][0];
-    let objName = obj.objName;
-    const noArgObj = Object.keys(obj.objArgs).length === 0;
+    let objName = obj.deprecatedObjPath;
+    const noArgObj = Object.keys(obj.deprecatedObjArgs).length === 0;
     let contextObj = false;
-    if(obj.objName === "/Catln/Context" && Object.keys(obj.objArgs['value'][1].objArgs).length === 0) {
+    if(objName === "/Catln/Context" && Object.keys(obj.deprecatedObjArgs['value'][1].objArgs).length === 0) {
       contextObj = true;
-      objName = obj.objArgs['value'][1].objName;
+      objName = obj.deprecatedObjArgs['value'][1].objName;
     }
     if(noArgObj || contextObj) {
       return (
@@ -127,7 +145,7 @@ function Statement(props) {
       );
     }
   case "MultiTypeDefStatement":
-    let [multiTypeDecl, multiTypeComments] = statement.contents;
+    let [multiTypeDecl] = statement.contents;
     let [className, classVars, classDatas] = multiTypeDecl;
 
     let showClassVars;
@@ -143,19 +161,12 @@ function Statement(props) {
 
     let showClassDatas = tagJoin(classDatas.map((d, dIndex) => <span key={dIndex}><Type data={d[0]}/></span>), " | ");
 
-    return (<div>
-            <h3 className={classes.noPlay} id={`defClass${className}`}><KeyWord>class</KeyWord> <PClassName name={className}/>{showClassVars} = {showClassDatas}</h3>
-            <div><Statements statements={multiTypeComments}/></div>
-            </div>);
+    return <h3 className={classes.noPlay} id={`defClass${className}`}><KeyWord>class</KeyWord> <PClassName name={className}/>{showClassVars} = {showClassDatas}</h3>;
   case "TypeDefStatement":
-    let [typeDef, typeDefComments] = statement.contents;
-    return (
-    <div>
-      <h3 className={classes.noPlay}><KeyWord>data</KeyWord> <Type data={typeDef[0]}/></h3>
-      <div><Statements statements={typeDefComments}/></div>
-    </div>);
+    let typeDef = statement.contents;
+    return <h3 className={classes.noPlay}><KeyWord>data</KeyWord> <Type data={typeDef[0]}/></h3>;
   case "RawClassDefStatement":
-    let [classDef, classDefComments] = statement.contents;
+    let classDef = statement.contents;
     let [[instanceType, instanceVars], instanceClass] = classDef;
 
     let showInstanceVars;
@@ -169,14 +180,10 @@ function Statement(props) {
       );
     }
 
-    return (<div>
-      <h3 className={classes.noPlay}><KeyWord>every</KeyWord> <PTypeName name={instanceType}/>{showInstanceVars} <KeyWord>isa</KeyWord> <PClassName name={instanceClass}/></h3>
-      <div><Statements statements={classDefComments}/></div>
-      </div>);
+    return <h3 className={classes.noPlay}><KeyWord>every</KeyWord> <PTypeName name={instanceType}/>{showInstanceVars} <KeyWord>isa</KeyWord> <PClassName name={instanceClass}/></h3>;
   case "RawClassDeclStatement":
-    let [classDecl, comments] = statement.contents;
+    let classDecl = statement.contents;
     let [classDeclName, classDeclVars] = classDecl;
-    comments = comments || [];
 
     let showClassDeclVars;
     if(Object.keys(classDeclVars).length > 0) {
@@ -190,28 +197,19 @@ function Statement(props) {
     }
 
 
-    return (<div>
-      <h3 className={classes.noPlay} id={`defClass${classDeclName}`}>
-        <KeyWord>class</KeyWord>
-        <PClassName name={classDeclName}/>{showClassDeclVars}
-      </h3>
-      <div><Statements statements={comments}/></div>
-      </div>);
+    return <h3 className={classes.noPlay} id={`defClass${classDeclName}`}> <KeyWord>class</KeyWord> <PClassName name={classDeclName}/>{showClassDeclVars} </h3>;
   case "RawAnnot":
-  case "RawAnnot":
-    const [annot, annotSubStatements] = statement.contents;
+    const annot = statement.contents;
 
     return (
       <div className={classes.noPlay}>
         <Annot annot={annot} />
-        <div><Statements statements={annotSubStatements}/></div>
       </div>
     );
   case "RawModule":
     return (
       <div className={classes.noPlay}>
         <KeyWord>module</KeyWord> {statement.contents[0]}
-        <div><Statements statements={statement.contents[1]}/></div>
       </div>
     );
   default:
@@ -222,14 +220,13 @@ function Statement(props) {
 
 function Decl(props) {
   const {objMap} = useContext(ResMaps);
-  const classes = useStyles();
 
   const {contents} = props;
-  const [lhs, subStatements, maybeExpr] = contents;
+  const [lhs, maybeExpr] = contents;
   const [, [obj, guard]] = lhs;
 
   let showObj = obj;
-  let typedObj = objMap[posKey(obj.objM[1])];
+  let typedObj = objMap[posKey(obj.deprecatedObjM[1])];
   if(typedObj) {
     showObj = typedObj;
   }
@@ -242,25 +239,8 @@ function Decl(props) {
   return (
     <span>
       <Obj obj={showObj} Meta={RawMeta}/><Guard guard={guard} Expr={Expr}/>{showExpr}
-      <div className={classes.indented}>
-        {subStatements.map((subStatement, index) => <DeclSubStatement key={index} obj={showObj} subStatement={subStatement} />)}
-      </div>
     </span>
   );
-}
-
-function DeclSubStatement(props) {
-  const {subStatement, obj} = props;
-
-  switch(subStatement.tag) {
-  case "RawDeclStatement":
-    return <div><Decl contents={subStatement.contents} /></div>;
-  case "RawAnnot":
-    return <div><Annot annot={subStatement.contents[0]} obj={obj} /></div>;
-  default:
-    console.error("Unknown DeclSubStatement", subStatement);
-    return "";
-  }
 }
 
 function Annot(props) {
@@ -288,7 +268,7 @@ function Annot(props) {
   if (annot.tag === "RawTupleApply") {
     if (annot.contents[1][1].tag === "RawValue") {
       if (annot.contents[1][1].contents[1] === "/Catln/#md") {
-        return <Comment comment={annot.contents[2][0].contents[1].contents[1].contents} />;
+        return <Comment comment={annot.contents[2][0].contents[2].contents[1].contents} />;
       }
     }
   }
@@ -328,10 +308,12 @@ function Expr(props) {
     } else {
       let showArgs = tagJoin(args.map((arg, argIndex) => {
         switch(arg.tag) {
-        case "RawTupleArgNamed":
-          return (<span key={argIndex}>{arg.contents[0]} = <Expr expr={arg.contents[1]}/></span>);
-        case "RawTupleArgInfer":
-          return <Expr key={argIndex} expr={arg.contents}/>;
+        case "TupleArgIO":
+          return (<span key={argIndex}>{arg.contents[1]} = <Expr expr={arg.contents[2]}/></span>);
+        case "TupleArgO":
+          return <Expr key={argIndex} expr={arg.contents[1]}/>;
+        case "TupleArgI":
+          return <span>{arg.contents[1]}</span>;
         default:
           console.error("Unknown renderExpr tupleApply arg type");
           return <span key={argIndex}></span>;
@@ -343,10 +325,9 @@ function Expr(props) {
 
   case "RawParen":
     return <span>(<Expr expr={expr.contents}/>)</span>;
-  case "RawMethods":
-    let [mBase, methods] = expr.contents;
-    let showMethods = methods.map((method, methodIndex) => <span key={methodIndex}>.<Expr expr={method}/></span>);
-    return (<span><Expr expr={mBase}/>{showMethods}</span>);
+  case "RawMethod":
+    let [mBase, method] = expr.contents;
+    return (<span><Expr expr={mBase}/>.<Expr expr={method} /></span>);
   case "RawIfThenElse":
     let [, ifExpr, thenExpr, elseExpr] = expr.contents;
     return (<span><KeyWord>if</KeyWord> <Expr expr={ifExpr}/> <KeyWord>then</KeyWord> <Expr expr={thenExpr}/> <KeyWord>else</KeyWord> <Expr expr={elseExpr}/></span>);

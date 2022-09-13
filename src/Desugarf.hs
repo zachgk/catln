@@ -34,13 +34,13 @@ import           Utils
 
 type StatementEnv = (String, [DesCompAnnot])
 
-splitDeclSubStatements :: [PStatement] -> ([PDecl], [PCompAnnot])
+splitDeclSubStatements :: [PStatementTree] -> ([(PDecl, [PStatementTree])], [PCompAnnot])
 splitDeclSubStatements = aux ([], [])
   where
     aux (decls, annots) [] = (decls, annots)
-    aux (decls, annots) (RawDeclStatement decl : subSt) = aux (decl:decls, annots) subSt
-    aux (decls, annots) (RawAnnot annot []: subSt) = aux (decls, annot:annots) subSt
-    aux _ (RawAnnot _ (_:_):_) = error "Children in RawAnnot not currently supported"
+    aux (decls, annots) (RawStatementTree (RawDeclStatement decl) declSubSt : subSt) = aux ((decl, declSubSt):decls, annots) subSt
+    aux (decls, annots) (RawStatementTree (RawAnnot annot) []: subSt) = aux (decls, annot:annots) subSt
+    aux _ (RawStatementTree (RawAnnot _) (_:_):_) = error "Children in RawAnnot not currently supported"
     aux _ s = error $ printf "Not yet supported subDeclStatemnt type: %s" (show s)
 
 scopeSubDeclFunNamesInS :: TypeName -> S.HashSet TypeName -> TypeName -> TypeName
@@ -118,12 +118,12 @@ currySubFunctions parentArgs decls expr annots = (decls', expr', annots')
     decls' = map (\(PSemiDecl lhs an e) -> PSemiDecl lhs an (fmap (currySubFunctionsUpdateExpr toUpdate parentArgs) e)) decls2
     annots' = map (currySubFunctionsUpdateExpr toUpdate parentArgs) annots
 
-desObjDocComment :: [PStatement] -> Maybe String
-desObjDocComment (RawAnnot (RawTupleApply _ (_, RawValue _ "/Catln/#md") [TupleArgIO _ "text" (RawCExpr _ (CStr doc))]) _: rest) = Just (++) <*> Just doc <*> desObjDocComment rest
+desObjDocComment :: [PStatementTree] -> Maybe String
+desObjDocComment ((RawStatementTree (RawAnnot (RawTupleApply _ (_, RawValue _ "/Catln/#md") [TupleArgIO _ "text" (RawCExpr _ (CStr doc))])) _):rest) = Just (++) <*> Just doc <*> desObjDocComment rest
 desObjDocComment _ = Just ""
 
-removeSubDeclarations :: PDecl -> [PSemiDecl]
-removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern obj@Object{deprecatedObjArgs} guard1)) subStatements expr1) = decl':subDecls5
+removeSubDeclarations :: (PDecl, [PStatementTree]) -> [PSemiDecl]
+removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern obj@Object{deprecatedObjArgs} guard1)) expr1, subStatements) = decl':subDecls5
   where
     objDoc = desObjDocComment subStatements
     (subDecls, annots1) = splitDeclSubStatements subStatements
@@ -230,10 +230,10 @@ declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl (DeclLHS arrM (Pattern ob
     annots' = map (desExpr argMetaMap) annots
     arrow = Arrow arrM (desGuard argMetaMap guard) (fmap (desExpr argMetaMap) expr)
 
-desDecl :: StatementEnv -> PDecl -> DesPrgm
-desDecl statementEnv decl = (objMap, emptyClassGraph, [])
+desDecl :: StatementEnv -> PDecl -> [PStatementTree] -> DesPrgm
+desDecl statementEnv decl subStatements= (objMap, emptyClassGraph, [])
   where
-    objMap = map (declToObjArrow statementEnv) $ removeSubDeclarations decl
+    objMap = map (declToObjArrow statementEnv) $ removeSubDeclarations (decl, subStatements)
 
 getPath :: String -> String -> String
 getPath inheritPath name = if "/" `isPrefixOf` name then
@@ -253,7 +253,7 @@ typeDefMetaToObj inheritPath varReplaceMap (PreTyped (UnionType partials) pos) =
   _ -> error "Invalid call to typeDefMetaToObj with UnionType"
 typeDefMetaToObj _ _ _ = error "Invalid call to typeDefMetaToObj"
 
-desMultiTypeDef :: StatementEnv -> PMultiTypeDef -> [RawStatement ParseMeta] -> Path -> DesPrgm
+desMultiTypeDef :: StatementEnv -> PMultiTypeDef -> [RawStatementTree ParseMeta] -> Path -> DesPrgm
 desMultiTypeDef (inheritPath, _) (MultiTypeDef className classVars dataMetas) subStatements path = (objMap', classGraph', [])
     where
       path' =  case path of
@@ -268,7 +268,7 @@ desMultiTypeDef (inheritPath, _) (MultiTypeDef className classVars dataMetas) su
       classGraph' = ClassGraph $ graphFromEdges (classCGNode:typeCGNodes)
 
 
-desClassDecl :: StatementEnv -> RawClassDecl -> [RawStatement ParseMeta] -> Path -> DesPrgm
+desClassDecl :: StatementEnv -> RawClassDecl -> [RawStatementTree ParseMeta] -> Path -> DesPrgm
 desClassDecl (inheritPath, _) (className, classVars) subStatements path = ([], classGraph', [])
   where
     classGraph' = ClassGraph $ graphFromEdges [(CGClass (False, classVars, [], desObjDocComment subStatements, path'), getPath inheritPath className, [])]
@@ -276,14 +276,14 @@ desClassDecl (inheritPath, _) (className, classVars) subStatements path = ([], c
       Relative p -> inheritPath ++ "/" ++ p
       Absolute p -> p
 
-desTypeDef :: StatementEnv -> PTypeDef -> [RawStatement ParseMeta] -> DesPrgm
+desTypeDef :: StatementEnv -> PTypeDef -> [RawStatementTree ParseMeta] -> DesPrgm
 desTypeDef (inheritPath, _) (TypeDef tp) subStatements = (objMap, emptyClassGraph, [])
   where
     objMap = case typeDefMetaToObj inheritPath H.empty tp of
           Just obj -> [(obj{objDoc = desObjDocComment subStatements}, [], Nothing)]
           Nothing  -> error "Type def could not be converted into meta"
 
-desClassDef :: StatementEnv -> Sealed -> RawClassDef -> [RawStatement ParseMeta] -> Path -> DesPrgm
+desClassDef :: StatementEnv -> Sealed -> RawClassDef -> [RawStatementTree ParseMeta] -> Path -> DesPrgm
 desClassDef (inheritPath, _) sealed ((typeName, typeVars), className) subStatements path = ([], classGraph, [])
   where
     path' =  case path of
@@ -302,16 +302,17 @@ desGlobalAnnot p = case semiDesExpr undefined p of
   ([], d) -> desExpr H.empty d
   _ -> error "Global annotations do not support sub-expressions and lambdas"
 
-desStatement :: StatementEnv -> PStatement -> DesPrgm
-desStatement statementEnv (RawDeclStatement decl) = desDecl statementEnv decl
-desStatement statementEnv (MultiTypeDefStatement multiTypeDef subStatements path) = desMultiTypeDef statementEnv multiTypeDef subStatements path
-desStatement statementEnv (TypeDefStatement typeDef subStatements) = desTypeDef  statementEnv typeDef subStatements
-desStatement statementEnv (RawClassDefStatement classDef subStatements path) = desClassDef statementEnv False classDef subStatements path
-desStatement statementEnv (RawClassDeclStatement classDecls subStatements path) = desClassDecl statementEnv classDecls subStatements path
-desStatement _ (RawAnnot a []) = ([], emptyClassGraph, [desGlobalAnnot a])
-desStatement (inheritModule, inheritAnnots) (RawAnnot a subStatements) = mergePrgms $ map (desStatement (inheritModule, desGlobalAnnot a:inheritAnnots)) subStatements
-desStatement (_, inheritAnnots) (RawModule _ subStatements (Absolute path)) = mergePrgms $ map (desStatement (path, inheritAnnots)) subStatements
-desStatement (inheritModule, inheritAnnots) (RawModule _ subStatements (Relative path)) = mergePrgms $ map (desStatement (inheritModule ++ "/" ++ path, inheritAnnots)) subStatements
+desStatement :: StatementEnv -> PStatementTree -> DesPrgm
+desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree statement subStatements) = case statement of
+  RawDeclStatement decl -> desDecl statementEnv decl subStatements
+  MultiTypeDefStatement multiTypeDef path -> desMultiTypeDef statementEnv multiTypeDef subStatements path
+  TypeDefStatement typeDef -> desTypeDef  statementEnv typeDef subStatements
+  RawClassDefStatement classDef path -> desClassDef statementEnv False classDef subStatements path
+  RawClassDeclStatement classDecls path -> desClassDecl statementEnv classDecls subStatements path
+  RawAnnot a | null subStatements -> ([], emptyClassGraph, [desGlobalAnnot a])
+  RawAnnot a -> mergePrgms $ map (desStatement (inheritModule, desGlobalAnnot a:inheritAnnots)) subStatements
+  RawModule _ (Absolute path) -> mergePrgms $ map (desStatement (path, inheritAnnots)) subStatements
+  RawModule _ (Relative path) -> mergePrgms $ map (desStatement (inheritModule ++ "/" ++ path, inheritAnnots)) subStatements
 
 finalPasses :: DesPrgmGraphData -> GraphNodes DesPrgm String -> GraphNodes DesPrgm String
 finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm, prgmName, imports) = (prgm'', prgmName, imports)

@@ -254,7 +254,7 @@ function PartialName(props) {
 
 function Obj(props) {
   const {obj, details, Meta} = props;
-  let {objM, objBasis, objPath, objVars, objArgs, objDoc} = obj;
+  let {deprecatedObjM: objM, objBasis, deprecatedObjPath: objPath, deprecatedObjVars: objVars, deprecatedObjArgs: objArgs, objDoc} = obj;
   let objName = objPath;
 
   let showContext;

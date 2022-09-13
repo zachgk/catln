@@ -101,7 +101,7 @@ instance Functor Guard where
 data DeclLHS e m = DeclLHS m (Pattern e m)
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
-data RawDecl m = RawDecl (DeclLHS RawExpr m) [RawStatement m] (Maybe (RawExpr m))
+data RawDecl m = RawDecl (DeclLHS RawExpr m) (Maybe (RawExpr m))
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
 newtype TypeDef m = TypeDef m
@@ -119,16 +119,19 @@ data Path = Relative String | Absolute String
 
 data RawStatement m
   = RawDeclStatement (RawDecl m)
-  | MultiTypeDefStatement (MultiTypeDef m) [RawStatement m] Path
-  | TypeDefStatement (TypeDef m) [RawStatement m]
-  | RawClassDefStatement RawClassDef [RawStatement m] Path
-  | RawClassDeclStatement RawClassDecl [RawStatement m] Path
-  | RawAnnot (CompAnnot (RawExpr m)) [RawStatement m]
-  | RawModule String [RawStatement m] Path
+  | MultiTypeDefStatement (MultiTypeDef m) Path
+  | TypeDefStatement (TypeDef m)
+  | RawClassDefStatement RawClassDef Path
+  | RawClassDeclStatement RawClassDecl Path
+  | RawAnnot (CompAnnot (RawExpr m))
+  | RawModule String Path
+  deriving (Eq, Ord, Show, Generic, ToJSON)
+
+data RawStatementTree m = RawStatementTree (RawStatement m) [RawStatementTree m]
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
 type FileImport = String
-type RawPrgm m = ([FileImport], [RawStatement m]) -- TODO: Include [Export]
+type RawPrgm m = ([FileImport], [RawStatementTree m]) -- TODO: Include [Export]
 
 type ObjArg m = (m, Maybe (Object m))
 data ObjectBasis = FunctionObj | TypeObj | PatternObj | MatchObj

@@ -33,6 +33,7 @@ type PObjectMap = ObjectMap RawExpr ParseMeta
 type PMultiTypeDef = MultiTypeDef ParseMeta
 type PTypeDef = TypeDef ParseMeta
 type PStatement = RawStatement ParseMeta
+type PStatementTree = RawStatementTree ParseMeta
 type PArgMetaMap = H.HashMap ArgName ParseMeta
 type PObjArg = ObjArg ParseMeta
 type PObject = Object ParseMeta

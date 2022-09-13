@@ -55,8 +55,8 @@ parsingRepl env source = case parseRepl source of
 --         TypeCheckResE err    -> print ("type check err: " ++ show err) >> return env
 --         TypeCheckResult _ tprgm -> codegen initModule tprgm >> return env
 
-mainStatement :: RawExpr PreTyped -> RawStatement PreTyped
-mainStatement expr = RawDeclStatement $ RawDecl lhs [] (Just wrappedExpr)
+mainStatement :: RawExpr PreTyped -> RawStatementTree PreTyped
+mainStatement expr = RawStatementTree (RawDeclStatement (RawDecl lhs (Just wrappedExpr))) []
   where
     lhs = DeclLHS emptyMetaN (Pattern (Object emptyMetaN FunctionObj H.empty (H.singleton "io" (PreTyped (singletonType (PartialType (PTypeName "IO") H.empty H.empty H.empty PtArgAny)) Nothing, Nothing)) Nothing "/main") NoGuard)
     wrappedExpr = RawMethod (RawValue emptyMetaN "io") (RawTupleApply emptyMetaN (emptyMetaN, RawValue emptyMetaN "println") [TupleArgIO emptyMetaN "msg" (RawMethod expr (RawValue emptyMetaN "toString"))])
