@@ -220,6 +220,10 @@ class ExprClass e where
   -- | Returns all vars applied to a value
   exprAppliedVars :: e m -> H.HashMap TypeVarName m
 
+  -- | Returns all arguments located recursively in an expression
+  exprArgs :: e m -> H.HashMap ArgName m
+
+
 instance ExprClass RawExpr where
   getExprMeta expr = case expr of
     RawCExpr m _          -> m
@@ -262,6 +266,19 @@ instance ExprClass RawExpr where
   exprAppliedVars (RawMethod _ e) = exprAppliedVars e
   exprAppliedVars _ = error "Unsupported RawExpr exprAppliedVars"
 
+  exprArgs RawCExpr{} = H.empty
+  exprArgs (RawValue m n) = H.singleton n m
+  exprArgs (RawTupleApply _ (_, be) args) = H.union (exprArgs be) (H.unions $ map exprArg args)
+    where
+      exprArg (TupleArgIO _ _ e) = exprArgs e
+      exprArg (TupleArgO _ e)    = exprArgs e
+      exprArg (TupleArgI m n)    = H.singleton n m
+  exprArgs (RawVarsApply _ e _) = exprArgs e
+  exprArgs (RawContextApply _ (_, e) _) = exprArgs e
+  exprArgs (RawParen e) = exprArgs e
+  exprArgs (RawMethod be me) = H.union (exprArgs be) (exprArgs me)
+  exprArgs _ = error "Unsupported RawExpr exprArgs"
+
 
 instance ExprClass Expr where
   getExprMeta expr = case expr of
@@ -289,6 +306,18 @@ instance ExprClass Expr where
   exprAppliedVars (TupleApply _ (_, be) _) = exprAppliedVars be
   exprAppliedVars (VarApply _ e n m) = H.insert n m (exprAppliedVars e)
   exprAppliedVars _ = error "Unsupported Expr exprAppliedVars"
+
+  exprArgs CExpr{} = H.empty
+  exprArgs Value{} = H.empty
+  exprArgs HoleExpr{} = H.empty
+  exprArgs (Arg m n) = H.singleton n m
+  exprArgs (TupleApply _ (_, be) arg) = H.union (exprArgs be) (exprArg arg)
+    where
+      exprArg (TupleArgIO _ _ e) = exprArgs e
+      exprArg (TupleArgO _ e)    = exprArgs e
+      exprArg (TupleArgI m n)    = H.singleton n m
+  exprArgs (VarApply _ e _ _) = exprArgs e
+
 
 
 mapTupleArgValue :: (e1 m -> e2 m) -> TupleArg e1 m -> TupleArg e2 m

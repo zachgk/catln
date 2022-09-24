@@ -123,7 +123,7 @@ desObjDocComment ((RawStatementTree (RawAnnot (RawTupleApply _ (_, RawValue _ "/
 desObjDocComment _ = Just ""
 
 removeSubDeclarations :: (PDecl, [PStatementTree]) -> [PSemiDecl]
-removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern obj@Object{deprecatedObjArgs} guard1)) expr1, subStatements) = decl':subDecls5
+removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern obj guard1)) expr1, subStatements) = decl':subDecls5
   where
     objDoc = desObjDocComment subStatements
     (subDecls, annots1) = splitDeclSubStatements subStatements
@@ -133,7 +133,7 @@ removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern obj@Object{deprecatedObjAr
     (subDecls23, guard2) = semiDesGuard obj guard1
     subDecls3 = concat [subDecls2, subDecls21, subDecls22, subDecls23]
     (subDecls4, expr3, annots3, objM', arrM') = scopeSubDeclFunNames (objPath obj) subDecls3 expr2 annots2 (objM obj) arrM
-    (subDecls5, expr4, annots4) = currySubFunctions deprecatedObjArgs subDecls4 expr3 annots3
+    (subDecls5, expr4, annots4) = currySubFunctions ((,Nothing) <$> objArgs obj) subDecls4 expr3 annots3
     decl' = PSemiDecl (DeclLHS arrM' (Pattern obj{objDoc = objDoc, deprecatedObjM=objM'} guard2)) annots4 expr4
 
 desExpr :: PArgMetaMap -> PSExpr -> DesExpr

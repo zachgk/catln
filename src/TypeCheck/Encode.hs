@@ -106,21 +106,21 @@ fromExpr _ obj env1 (Value m name) = do
     DefVar lookupM      -> return [EqPoints m' lookupM]
     DefKnown lookupType -> return [BoundedByKnown m' lookupType]
   return (Value m' name, addConstraints env2 lookupConstraints)
-fromExpr objArgs obj env1 (Arg m name) = do
+fromExpr argMetaMap obj env1 (Arg m name) = do
   (m', env2) <- fromMeta env1 BUpper obj m ("Arg " ++ name)
   let varM = PreTyped (TypeVar $ TVArg name) (getMetaPos m)
   (varM', env3) <- fromMeta env2 BUpper obj varM $ "ArgVar " ++ name
-  case suffixLookupInDict name objArgs of
-    Nothing -> error $ printf "Could not find arg %s with objArgs %s and obj %s" name (show objArgs) (show obj)
+  case suffixLookupInDict name argMetaMap of
+    Nothing -> error $ printf "Could not find arg %s with argMetaMap %s and obj %s" name (show argMetaMap) (show obj)
     Just lookupArg -> return (Arg varM' name, addConstraints env3 [EqPoints m' lookupArg])
 fromExpr _ obj env1 (HoleExpr m hole) = do
   (m', env2) <- fromMeta env1 BUpper obj m ("Hole " ++ show hole)
   return (HoleExpr m' hole, env2)
-fromExpr objArgs obj env1 (TupleApply m (baseM, baseExpr) (TupleArgIO argM argName argExpr)) = do
+fromExpr argMetaMap obj env1 (TupleApply m (baseM, baseExpr) (TupleArgIO argM argName argExpr)) = do
   (m', env2) <- fromMeta env1 BUpper obj m $ printf "TupleApply %s(%s = %s) Meta" (show baseExpr) argName (show argExpr)
   (baseM', env3) <- fromMeta env2 BUpper obj baseM $ printf "TupleApply %s(%s = %s) BaseMeta" (show baseExpr) argName (show argExpr)
-  (baseExpr', env4) <- fromExpr objArgs obj env3 baseExpr
-  (argExpr', env5) <- fromExpr objArgs obj env4 argExpr
+  (baseExpr', env4) <- fromExpr argMetaMap obj env3 baseExpr
+  (argExpr', env5) <- fromExpr argMetaMap obj env4 argExpr
   (argM', env6) <- fromMeta env5 BUpper obj argM $ printf "TupleApply %s(%s = %s) ArgMeta" (show baseExpr) argName (show argExpr)
   let constraints = [ArrowTo (getExprMeta baseExpr') baseM',
                      AddArg (baseM', argName) m',
@@ -130,11 +130,11 @@ fromExpr objArgs obj env1 (TupleApply m (baseM, baseExpr) (TupleArgIO argM argNa
                     ]
   let env7 = addConstraints env6 constraints
   return (TupleApply m' (baseM', baseExpr') (TupleArgIO argM' argName argExpr'), env7)
-fromExpr objArgs obj env1 (TupleApply m (baseM, baseExpr) (TupleArgO argM argExpr)) = do
+fromExpr argMetaMap obj env1 (TupleApply m (baseM, baseExpr) (TupleArgO argM argExpr)) = do
   (m', env2) <- fromMeta env1 BUpper obj m $ printf "TupleApplyInfer %s(%s) Meta" (show baseExpr) (show argExpr)
   (baseM', env3) <- fromMeta env2 BUpper obj baseM $ printf "TupleApplyInfer %s(%s) BaseMeta" (show baseExpr) (show argExpr)
-  (baseExpr', env4) <- fromExpr objArgs obj env3 baseExpr
-  (argExpr', env5) <- fromExpr objArgs obj env4 argExpr
+  (baseExpr', env4) <- fromExpr argMetaMap obj env3 baseExpr
+  (argExpr', env5) <- fromExpr argMetaMap obj env4 argExpr
   (argM', env6) <- fromMeta env5 BUpper obj argM $ printf "TupleApplyInfer %s(%s) ArgMeta" (show baseExpr) (show argExpr)
   let constraints = [ArrowTo (getExprMeta baseExpr') baseM',
                      AddInferArg baseM' m',
@@ -157,8 +157,8 @@ fromExpr oArgs obj env1 (VarApply m baseExpr varName varVal) = do
   return (VarApply m' baseExpr' varName varVal', env5)
 
 fromGuard :: VArgMetaMap -> Maybe VObject -> FEnv -> PGuard -> TypeCheckResult (VGuard, FEnv)
-fromGuard objArgs obj env1 (IfGuard expr) =  do
-  (expr', env2) <- fromExpr objArgs obj env1 expr
+fromGuard argMetaMap obj env1 (IfGuard expr) =  do
+  (expr', env2) <- fromExpr argMetaMap obj env1 expr
   let (bool, env3) = fresh env2 $ TypeCheckResult [] $ SType boolType bottomType "ifGuardBool"
   let bool' = VarMeta bool (PreTyped boolType (labelPos "bool" $ getMetaPos $ getExprMeta expr)) obj
   return (IfGuard expr', addConstraints env3 [ArrowTo (getExprMeta expr') bool'])

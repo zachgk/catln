@@ -107,30 +107,35 @@ exprAppliedArgsMap = H.fromList . mapMaybe fromTupleArg . exprAppliedArgs
     fromTupleArg (TupleArgIO m n a) = Just (n, (m, Just a))
     fromTupleArg TupleArgO{}        = Nothing
 
-objExpr :: (Meta m) => Object m -> Expr m
-objExpr Object{deprecatedObjM, deprecatedObjVars, deprecatedObjArgs, deprecatedObjPath} = mapMeta (\_ _ -> deprecatedObjM) $ applyArgs $ applyVars $ Value emptyMetaN deprecatedObjPath
+objExpr :: (Show m, Meta m) => Object m -> Expr m
+objExpr Object{deprecatedObjM=m, deprecatedObjVars=vars, deprecatedObjArgs=args, deprecatedObjPath=path} = mapMeta (\_ _ -> m) $ applyArgs $ applyVars $ Value emptyMetaN path
   where
-    applyVars b = foldr applyVar b $ H.toList deprecatedObjVars
+    applyVars b = foldr applyVar b $ H.toList vars
     applyVar (varName, varVal) b = VarApply (emptyMetaE "" b) b varName varVal
 
-    applyArgs b = foldr applyArg b $ H.toList deprecatedObjArgs
-    applyArg (argName, (argM, Just argVal)) b = TupleApply emptyMetaN (emptyMetaE "appArg" b, b) (TupleArgIO argM argName (objExpr argVal))
-    applyArg (argName, (argM, Nothing)) b = TupleApply emptyMetaN (emptyMetaE "appArg" b, b) (TupleArgI argM argName)
+    applyArgs b = foldr applyArg b $ H.toList args
+    applyArg (argName, (argM, Just argVal)) b = if H.null (deprecatedObjArgs argVal)
+      then TupleApply (emptyMetaM "tupleApplyArg" argM) (emptyMetaE "appArg" b, b) (TupleArgIO argM argName (Arg (deprecatedObjM argVal) (deprecatedObjPath argVal)))
+      else TupleApply (emptyMetaM "tupleApplyArg" argM) (emptyMetaE "appArg" b, b) (TupleArgIO argM argName (objExpr argVal))
+    applyArg (argName, (argM, Nothing)) b = TupleApply (emptyMetaM "tupleApplyArg" argM) (emptyMetaE "appArg" b, b) (TupleArgI argM argName)
 
-objPath :: (Meta m) => Object m -> TypeName
+objPath :: (Show m, Meta m) => Object m -> TypeName
 objPath = exprPath . objExpr
 
-objM :: (Meta m) => Object m -> m
+objM :: (Show m, Meta m) => Object m -> m
 objM = getExprMeta . objExpr
 
-objAppliedArgs :: (Meta m) => Object m -> [TupleArg Expr m]
+objAppliedArgs :: (Show m, Meta m) => Object m -> [TupleArg Expr m]
 objAppliedArgs = exprAppliedArgs . objExpr
 
-objAppliedArgsMap :: (Meta m) => Object m -> H.HashMap ArgName (m, Maybe (Expr m))
+objAppliedArgsMap :: (Show m, Meta m) => Object m -> H.HashMap ArgName (m, Maybe (Expr m))
 objAppliedArgsMap = exprAppliedArgsMap . objExpr
 
-objAppliedVars :: (Meta m) => Object m -> H.HashMap TypeVarName m
+objAppliedVars :: (Show m, Meta m) => Object m -> H.HashMap TypeVarName m
 objAppliedVars = exprAppliedVars . objExpr
+
+objArgs :: (Show m, Meta m) => Object m -> H.HashMap ArgName m
+objArgs = exprArgs . objExpr
 
 rawExprToObj :: ObjectBasis -> Maybe String -> RawExpr PreTyped -> Object PreTyped
 rawExprToObj basis doc (RawParen expr) = rawExprToObj basis doc expr
@@ -164,38 +169,33 @@ type ArgMetaMap m = H.HashMap ArgName m
 -- The 'formArgMetaMap' produces a map from the argument name to argument meta.
 -- In an object where arguments are themselves objects, it would match the names used in those subobjects.
 -- For example, in the object real(c=Complex(a, b)), the matched arguments are a and b.
--- In addition, it would also include all of the arguments of the base object (here c) as those are needed for currying.
-formArgMetaMap :: (Meta m) => Object m -> ArgMetaMap m
-formArgMetaMap obj = H.union (aux obj) (fmap fst (deprecatedObjArgs obj))
+formArgMetaMap :: (Show m, Meta m) => Object m -> ArgMetaMap m
+formArgMetaMap o | null (objAppliedArgs o) = H.singleton (objPath o) (objM o)
+formArgMetaMap Object{deprecatedObjArgs} = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg deprecatedObjArgs
   where
-    aux o | null (objAppliedArgs o) = H.singleton (objPath o) (objM o)
-    aux Object{deprecatedObjArgs} = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg deprecatedObjArgs
-      where
-        unionCombine _ _ = error "Duplicate var matched"
-        fromArg k (m, Nothing)  = H.singleton k m
-        fromArg _ (_, Just arg) = formArgMetaMap arg
+    unionCombine _ _ = error "Duplicate var matched"
+    fromArg k (m, Nothing)  = H.singleton k m
+    fromArg _ (_, Just arg) = formArgMetaMap arg
 
 type ArgMetaMapWithSrc m = H.HashMap ArgName (m, Type)
 -- |
 -- The 'formArgMetaMapWithSrc' is similar to the 'formArgMetaMap' function.
 -- It differs in that it accepts an additional partial type that is matched by the object and matches against that partial type.
-formArgMetaMapWithSrc :: (Meta m) => ClassGraph -> Object m -> PartialType -> ArgMetaMapWithSrc m
-formArgMetaMapWithSrc classGraph obj@Object{deprecatedObjArgs=baseArgs} src@PartialType{ptArgs=srcArgs} = H.union (aux obj) (H.intersectionWith (,) (fmap fst baseArgs) srcArgs)
+formArgMetaMapWithSrc :: (Show m, Meta m) => ClassGraph -> Object m -> PartialType -> ArgMetaMapWithSrc m
+formArgMetaMapWithSrc _ (Object m _ _ args _ path) src | H.null args = H.singleton path (m, singletonType src)
+formArgMetaMapWithSrc classGraph Object{deprecatedObjArgs} PartialType{ptArgs=srcArgs} = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg deprecatedObjArgs
   where
-    aux (Object m _ _ args _ path) | H.null args = H.singleton path (m, singletonType src)
-    aux Object{deprecatedObjArgs} = H.foldr (H.unionWith unionCombine) H.empty $ H.mapWithKey fromArg deprecatedObjArgs
-      where
-        unionCombine _ _ = error "Duplicate var matched"
-        fromArg k (m, Nothing) = case H.lookup k srcArgs of
-          Just srcArg -> H.singleton k (m, srcArg)
-          Nothing     -> H.empty
-        fromArg k (_, Just arg) = case H.lookup k srcArgs of
-          Just (UnionType srcArg) -> mergeMaps $ map (formArgMetaMapWithSrc classGraph arg) $ splitUnionType srcArg
-          Just TopType -> (,TopType) <$> formArgMetaMap arg
-          Just _ -> H.empty
-          Nothing -> H.empty
-        mergeMaps [] = H.empty
-        mergeMaps (x:xs) = foldr (H.intersectionWith (\(m1, t1) (_, t2) -> (m1, unionTypes classGraph t1 t2))) x xs
+    unionCombine _ _ = error "Duplicate var matched"
+    fromArg k (m, Nothing) = case H.lookup k srcArgs of
+      Just srcArg -> H.singleton k (m, srcArg)
+      Nothing     -> H.empty
+    fromArg k (_, Just arg) = case H.lookup k srcArgs of
+      Just (UnionType srcArg) -> mergeMaps $ map (formArgMetaMapWithSrc classGraph arg) $ splitUnionType srcArg
+      Just TopType -> (,TopType) <$> formArgMetaMap arg
+      Just _ -> H.empty
+      Nothing -> H.empty
+    mergeMaps [] = H.empty
+    mergeMaps (x:xs) = foldr (H.intersectionWith (\(m1, t1) (_, t2) -> (m1, unionTypes classGraph t1 t2))) x xs
 
 formVarMap :: ClassGraph -> Type -> TypeVarEnv
 formVarMap classGraph (UnionType partialLeafs) = unionsWith (unionTypes classGraph) $ map ptVars $ splitUnionType partialLeafs
@@ -223,15 +223,15 @@ metaTypeVar m = case getMetaType m of
   _         -> Nothing
 
 
-isSubtypePartialOfWithObj :: (Meta m) => ClassGraph -> Object m -> PartialType -> Type -> Bool
+isSubtypePartialOfWithObj :: (Show m, Meta m) => ClassGraph -> Object m -> PartialType -> Type -> Bool
 isSubtypePartialOfWithObj classGraph obj sub = isSubtypeOfWithObj classGraph obj (singletonType sub)
 
-isSubtypeOfWithObj :: (Meta m) => ClassGraph -> Object m -> Type -> Type -> Bool
+isSubtypeOfWithObj :: (Show m, Meta m) => ClassGraph -> Object m -> Type -> Type -> Bool
 isSubtypeOfWithObj classGraph obj = isSubtypeOfWithEnv classGraph (getMetaType <$> objAppliedVars obj) (getMetaType <$> formArgMetaMap obj)
 
-isSubtypeOfWithObjSrc :: (Meta m) => ClassGraph -> PartialType -> Object m -> Type -> Type -> Bool
+isSubtypeOfWithObjSrc :: (Show m, Meta m) => ClassGraph -> PartialType -> Object m -> Type -> Type -> Bool
 isSubtypeOfWithObjSrc classGraph srcType obj = isSubtypeOfWithEnv classGraph (getMetaType <$> objAppliedVars obj) (snd <$> formArgMetaMapWithSrc classGraph obj srcType )
 
-isSubtypeOfWithMaybeObj :: (Meta m) => ClassGraph -> Maybe (Object m) -> Type -> Type -> Bool
+isSubtypeOfWithMaybeObj :: (Show m, Meta m) => ClassGraph -> Maybe (Object m) -> Type -> Type -> Bool
 isSubtypeOfWithMaybeObj classGraph (Just obj) = isSubtypeOfWithObj classGraph obj
 isSubtypeOfWithMaybeObj classGraph Nothing    = isSubtypeOf classGraph

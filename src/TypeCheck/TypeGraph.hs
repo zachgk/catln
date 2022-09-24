@@ -52,13 +52,13 @@ objectPrecedence (Object{objBasis=PatternObj}, _, _) = [3]
 objectPrecedence (Object{objBasis=MatchObj}, _, _) =   [4]
 
 -- | Finds the 'objectPrecedence' for all types
-buildPrecedenceMap :: (Meta m, ExprClass e) => ObjectMap e m -> H.HashMap TypeName [Int]
+buildPrecedenceMap :: (Show m, Meta m, ExprClass e) => ObjectMap e m -> H.HashMap TypeName [Int]
 buildPrecedenceMap = fmap (minimum . map objectPrecedence) . H.fromListWith (++) . map (\(obj, annots, arrs) -> (objPath obj, [(obj, annots, arrs)]))
 
 -- |
 -- Prunes an objectMap by precendence. If two objects share the same precendence, only the bigger one(s) will be kept.
 -- This is used to ensure that the type of an object can't be changed by other usages, such as a data object by functions using that data
-filterBestPrecedence :: (Meta m, ExprClass e) => H.HashMap TypeName [Int] -> ObjectMap e m -> ObjectMap e m
+filterBestPrecedence :: (Show m, Meta m, ExprClass e) => H.HashMap TypeName [Int] -> ObjectMap e m -> ObjectMap e m
 filterBestPrecedence precedenceMap = filter (\omi@(obj, _, _) -> objectPrecedence omi == H.lookupDefault (error "Could not find obj in union") (objPath obj) precedenceMap)
 
 -- | Gets an object and all sub-ojects (recursively) from it's arguments
@@ -148,11 +148,11 @@ joinReachesTrees _ _ = error "joinReachesTrees for mixed tree and leaf not yet d
 joinAllReachesTrees :: Foldable f => f ReachesTree -> ReachesTree
 joinAllReachesTrees = foldr1 joinReachesTrees
 
-isSubtypePartialOfWithMaybeObj :: (Meta m) => ClassGraph -> Maybe (Object m) -> PartialType -> Type -> Bool
+isSubtypePartialOfWithMaybeObj :: (Show m, Meta m) => ClassGraph -> Maybe (Object m) -> PartialType -> Type -> Bool
 isSubtypePartialOfWithMaybeObj classGraph (Just obj) = isSubtypePartialOfWithObj classGraph obj
 isSubtypePartialOfWithMaybeObj classGraph Nothing    = isSubtypePartialOf classGraph
 
-reachesHasCutSubtypeOf :: (Meta m) => ClassGraph -> Maybe (Object m) -> ReachesTree -> Type -> Bool
+reachesHasCutSubtypeOf :: (Show m, Meta m) => ClassGraph -> Maybe (Object m) -> ReachesTree -> Type -> Bool
 reachesHasCutSubtypeOf classGraph mObj (ReachesTree children) superType = all childIsSubtype $ H.toList children
   where childIsSubtype (key, val) = isSubtypePartialOfWithMaybeObj classGraph mObj key superType || reachesHasCutSubtypeOf classGraph mObj val superType
 reachesHasCutSubtypeOf classGraph mObj (ReachesLeaf leafs) superType = any (\t -> isSubtypeOfWithMaybeObj classGraph mObj t superType) leafs
