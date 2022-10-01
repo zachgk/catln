@@ -42,13 +42,13 @@ matchingConstraint env p (UnionOf p2 p3s) = equivalent env p p2 || any (equivale
 showMatchingConstraints :: FEnv -> VarMeta -> [SConstraint]
 showMatchingConstraints env@FEnv{feCons} matchVar = map (showCon env) $ filter (matchingConstraint env matchVar) feCons
 
-toMeta :: FEnv -> VarMeta -> String -> TypeCheckResult Typed
-toMeta env@FEnv{feClassGraph} m@(VarMeta _ (PreTyped pt pos) _) _ = case pointUb env m of
+toMeta :: FEnv -> VarMeta -> String -> TypeCheckResult (Meta ())
+toMeta env@FEnv{feClassGraph} m@(Meta pt pos _) _ = case pointUb env m of
   TypeCheckResult notes ub -> case pt of
-    TypeVar{} -> return $ Typed pt pos
-    _ -> TypeCheckResult notes $ Typed (intersectTypes feClassGraph ub pt) pos
+    TypeVar{} -> return $ Meta pt pos emptyMetaDat
+    _ -> TypeCheckResult notes $ Meta (intersectTypes feClassGraph ub pt) pos emptyMetaDat
   TypeCheckResE notes -> do
-    TypeCheckResult notes (Typed bottomType pos)
+    TypeCheckResult notes (Meta bottomType pos emptyMetaDat)
 
 member :: String -> [String ] -> Bool
 member x arr = case suffixLookup x arr of
@@ -81,7 +81,7 @@ toExpr env (TupleApply m (baseM, baseExpr) (TupleArgIO argM argName argExpr)) = 
     _ | getMetaType m' == bottomType -> return result
     _ | getMetaType baseM' == bottomType -> return result
 
-    tp@(Typed (UnionType uType) _) | all (\PartialType{ptArgs=leafArgs} -> not (argName `member` H.keys leafArgs)) (splitUnionType uType) ->
+    tp@(Meta (UnionType uType) _ _) | all (\PartialType{ptArgs=leafArgs} -> not (argName `member` H.keys leafArgs)) (splitUnionType uType) ->
                                         TypeCheckResult [TupleMismatch baseM' baseExpr' tp $ H.singleton argName argExpr'] result
 
     _ -> return result

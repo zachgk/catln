@@ -21,7 +21,6 @@ import           Text.Megaparsec     hiding (pos1)
 import           Data.Maybe
 import           Parser.Lexer
 import           Parser.Syntax
-import           Syntax
 import           Syntax.Prgm
 import           Syntax.Types
 
@@ -82,7 +81,7 @@ pLeafType mode = do
   let vars = maybe H.empty H.fromList maybeVars
   let args = maybe H.empty H.fromList maybeArgs
   -- Use PRelativeName for now and replace with classes during Desugarf.Passes.typeNameToClass
-  let tp = PreTyped (singletonType (PartialType (PRelativeName name) vars H.empty args PtArgExact)) (Just (pos1, pos2, ""))
+  let tp = Meta (singletonType (PartialType (PRelativeName name) vars H.empty args PtArgExact)) (Just (pos1, pos2, "")) emptyMetaDat
   return tp
 
 -- Parses the options for a sealed class definition
@@ -92,7 +91,7 @@ pType = sepBy1 (pLeafType PLeafTypeSealedClass <|> varOption) (symbol "|")
           pos1 <- getSourcePos
           name <- tvar
           pos2 <- getSourcePos
-          return $ PreTyped (TypeVar $ TVVar name) (Just (pos1, pos2, ""))
+          return $ Meta (TypeVar $ TVVar name) (Just (pos1, pos2, "")) emptyMetaDat
 
 pClassStatement :: Parser PStatement
 pClassStatement = do

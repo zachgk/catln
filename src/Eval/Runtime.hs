@@ -17,7 +17,6 @@
 module Eval.Runtime where
 
 import qualified Data.HashMap.Strict as H
-import           Syntax
 import           Syntax.Prgm
 import           Syntax.Types
 
@@ -27,7 +26,7 @@ import           Eval.ExprBuilder
 import           Text.Printf
 import           TreeBuild
 
-type Op = (TypeName, [(PartialType, Guard (Expr Typed), ResBuildEnvFunction)])
+type Op = (TypeName, [(PartialType, Guard EExpr, ResBuildEnvFunction)])
 
 true, false :: Val
 true = TupleVal "/Data/Primitive/True" H.empty

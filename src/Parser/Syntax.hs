@@ -21,33 +21,34 @@ import           Syntax.Types
 import           Text.Megaparsec     (SourcePos)
 import           Utils
 
-type ParseMeta = PreTyped
-type PTupleArg = TupleArg RawExpr ParseMeta
-type PExpr = RawExpr ParseMeta
-type PPattern = Pattern RawExpr ParseMeta
+type ParseMetaDat = ()
+type ParseMeta = Meta ParseMetaDat
+type PTupleArg = TupleArg RawExpr ParseMetaDat
+type PExpr = RawExpr ParseMetaDat
+type PPattern = Pattern RawExpr ParseMetaDat
 type PCompAnnot = CompAnnot PExpr
 type PGuard = Guard PExpr
-type PDeclLHS = DeclLHS RawExpr ParseMeta
-type PDecl = RawDecl ParseMeta
-type PObjectMap = ObjectMap RawExpr ParseMeta
-type PMultiTypeDef = MultiTypeDef ParseMeta
-type PTypeDef = TypeDef ParseMeta
-type PStatement = RawStatement ParseMeta
-type PStatementTree = RawStatementTree ParseMeta
+type PDeclLHS = DeclLHS RawExpr ParseMetaDat
+type PDecl = RawDecl ParseMetaDat
+type PObjectMap = ObjectMap RawExpr ParseMetaDat
+type PMultiTypeDef = MultiTypeDef ParseMetaDat
+type PTypeDef = TypeDef ParseMetaDat
+type PStatement = RawStatement ParseMetaDat
+type PStatementTree = RawStatementTree ParseMetaDat
 type PArgMetaMap = H.HashMap ArgName ParseMeta
-type PObjArg = ObjArg ParseMeta
-type PObject = Object ParseMeta
-type PArrow = Arrow RawExpr ParseMeta
-type PPrgm = RawPrgm ParseMeta
+type PObjArg = ObjArg ParseMetaDat
+type PObject = Object ParseMetaDat
+type PArrow = Arrow RawExpr ParseMetaDat
+type PPrgm = RawPrgm ParseMetaDat
 type PPrgmGraphData = GraphData PPrgm String
-type PReplRes = ReplRes ParseMeta
+type PReplRes = ReplRes ParseMetaDat
 
 
 
-type PSExpr = Expr ParseMeta
+type PSExpr = Expr ParseMetaDat
 type PSCompAnnot = CompAnnot PSExpr
 type PSGuard = Guard PSExpr
-type PSDeclLHS = DeclLHS Expr ParseMeta
+type PSDeclLHS = DeclLHS Expr ParseMetaDat
 
 data PSemiDecl = PSemiDecl PSDeclLHS [PSCompAnnot] (Maybe PSExpr)
   deriving (Show)
@@ -55,14 +56,14 @@ data PSemiDecl = PSemiDecl PSDeclLHS [PSCompAnnot] (Maybe PSExpr)
 
 
 
-type DesExpr = Expr ParseMeta
+type DesExpr = Expr ParseMetaDat
 type DesCompAnnot = CompAnnot DesExpr
 type DesGuard = Guard DesExpr
-type DesObjectMap = ObjectMap Expr ParseMeta
-type DesObject = Object ParseMeta
-type DesArrow = Arrow Expr ParseMeta
-type DesObjectMapItem = ObjectMapItem Expr ParseMeta
-type DesPrgm = Prgm Expr ParseMeta
+type DesObjectMap = ObjectMap Expr ParseMetaDat
+type DesObject = Object ParseMetaDat
+type DesArrow = Arrow Expr ParseMetaDat
+type DesObjectMapItem = ObjectMapItem Expr ParseMetaDat
+type DesPrgm = Prgm Expr ParseMetaDat
 type DesPrgmGraphData = GraphData DesPrgm String
 
 fromMaybeTypeName :: Maybe TypeName -> Type
@@ -72,7 +73,7 @@ fromMaybeTypeName = maybe TopType fromName
     fromName n = singletonType (PartialType (PRelativeName n) H.empty H.empty H.empty PtArgExact)
 
 emptyMeta :: SourcePos -> SourcePos -> ParseMeta
-emptyMeta p1 p2 = PreTyped TopType (Just (p1, p2, ""))
+emptyMeta p1 p2 = Meta TopType (Just (p1, p2, "")) emptyMetaDat
 
 isAbsolutePath :: String -> Bool
 isAbsolutePath name = "/" `isPrefixOf` name
@@ -84,9 +85,9 @@ getPath name = if isAbsolutePath name then
 
 rawVal :: String -> PExpr
 rawVal name = RawValue m name
-  where m = PreTyped (singletonType $ PartialType (PTypeName name) H.empty H.empty H.empty PtArgExact) Nothing
+  where m = Meta (singletonType $ PartialType (PTypeName name) H.empty H.empty H.empty PtArgExact) Nothing emptyMetaDat
 
-applyRawArgs :: (Meta m) => RawExpr m -> [(Maybe ArgName, RawExpr m)] -> RawExpr m
+applyRawArgs :: (MetaDat m) => RawExpr m -> [(Maybe ArgName, RawExpr m)] -> RawExpr m
 applyRawArgs base args = RawTupleApply (emptyMetaE "app" base) (emptyMetaE "base" base, base) (map mapArg args)
   where
     mapArg (Just argName, argVal) = TupleArgIO (emptyMetaE argName base) argName argVal

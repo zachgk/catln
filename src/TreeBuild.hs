@@ -28,22 +28,23 @@ import           Syntax
 import           Syntax.Prgm
 import           Syntax.Types
 
-type TBMeta = Typed
-type TBExpr = Expr TBMeta
+type TBMetaDat = ()
+type TBMeta = Meta ()
+type TBExpr = Expr TBMetaDat
 type TBCompAnnot = CompAnnot TBExpr
-type TBObject = Object TBMeta
+type TBObject = Object TBMetaDat
 type TBGuard = Guard TBExpr
-type TBArrow = Arrow Expr TBMeta
-type TBObjectMap = ObjectMap Expr TBMeta
-type TBPrgm = Prgm Expr TBMeta
-type TBReplRes = ReplRes TBMeta
+type TBArrow = Arrow Expr TBMetaDat
+type TBObjectMap = ObjectMap Expr TBMetaDat
+type TBPrgm = Prgm Expr TBMetaDat
+type TBReplRes = ReplRes TBMetaDat
 
 type VisitedArrows = S.HashSet ResArrowTree
 
 leafsFromMeta :: TBMeta -> [PartialType]
-leafsFromMeta (Typed TopType _) = error "leafFromMeta from TopType"
-leafsFromMeta (Typed TypeVar{} _) = error "leafFromMeta from TypeVar"
-leafsFromMeta (Typed (UnionType prodTypes) _) = splitUnionType prodTypes
+leafsFromMeta (Meta TopType _ _) = error "leafFromMeta from TopType"
+leafsFromMeta (Meta TypeVar{} _ _) = error "leafFromMeta from TypeVar"
+leafsFromMeta (Meta (UnionType prodTypes) _ _) = splitUnionType prodTypes
 
 -- Helper to replace matches with a single option with their result
 buildMatch :: ResArrowTree -> Type -> H.HashMap PartialType ResArrowTree -> ResArrowTree
@@ -66,16 +67,16 @@ buildExpr _ _ (CExpr _ c) = case c of
   (CInt i)   -> return $ ConstantArrow $ IntVal i
   (CFloat i) -> return $ ConstantArrow $ FloatVal i
   (CStr i)   -> return $ ConstantArrow $ StrVal i
-buildExpr TBEnv{tbVals} _ (Value (Typed (UnionType prodTypes) pos) name) = case splitUnionType prodTypes of
+buildExpr TBEnv{tbVals} _ (Value (Meta (UnionType prodTypes) pos _) name) = case splitUnionType prodTypes of
     (_:_:_) -> CErr [MkCNote $ BuildTreeCErr pos $ "Found multiple types for value " ++ name ++ "\n\t" ++ show prodTypes]
     [] -> CErr [MkCNote $ BuildTreeCErr pos $ "Found no types for value " ++ name ++ " with type " ++ show prodTypes]
     [prodType@PartialType{ptName=PTypeName name'}] -> return $ case H.lookup prodType tbVals of
       Just val -> val
       Nothing  -> ResArrowTuple name' H.empty
     e -> error $ printf "Found unexpected value type in buildExpr: %s" (show e)
-buildExpr TBEnv{tbClassGraph} (os, obj) (Arg (Typed (TypeVar (TVArg a)) _) name) = return $ ArgArrow (snd $ fromJust $ suffixLookupInDict a $ formArgMetaMapWithSrc tbClassGraph obj os) name
-buildExpr _ _ (Arg (Typed tp _) name) = return $ ArgArrow tp name
-buildExpr TBEnv{tbClassGraph} _ (TupleApply (Typed tp pos) (Typed baseType _, baseExpr) (TupleArgIO _ argName argExpr)) = case typesGetArg tbClassGraph argName tp of
+buildExpr TBEnv{tbClassGraph} (os, obj) (Arg (Meta (TypeVar (TVArg a)) _ _) name) = return $ ArgArrow (snd $ fromJust $ suffixLookupInDict a $ formArgMetaMapWithSrc tbClassGraph obj os) name
+buildExpr _ _ (Arg (Meta tp _ _) name) = return $ ArgArrow tp name
+buildExpr TBEnv{tbClassGraph} _ (TupleApply (Meta tp pos _) (Meta baseType _ _, baseExpr) (TupleArgIO _ argName argExpr)) = case typesGetArg tbClassGraph argName tp of
     Nothing -> CErr [MkCNote $ BuildTreeCErr pos $ printf "Found no types for tupleApply %s with type %s and expr %s" (show baseExpr) (show tp) (show argExpr)]
     Just leafArgs -> do
       let baseBuild = ExprArrow baseExpr (getExprType baseExpr) baseType
@@ -234,7 +235,7 @@ resolveTree env obj (ResArrowTupleApply input argName argVal) = do
 
 buildArrow :: TBEnv -> PartialType -> TBObject -> [TBCompAnnot] -> TBArrow -> CRes (Maybe (TBArrow, (ResArrowTree, [ResArrowTree])))
 buildArrow _ _ _ _ (Arrow _ _ Nothing) = return Nothing
-buildArrow env objPartial obj compAnnots arrow@(Arrow (Typed am _) _ (Just expr)) = do
+buildArrow env objPartial obj compAnnots arrow@(Arrow (Meta am _ _) _ (Just expr)) = do
   let env' = env{tbName = printf "arrow %s" (show obj)}
   let objSrc = (objPartial, obj)
   let am' = case am of
@@ -255,6 +256,6 @@ buildArrow env objPartial obj compAnnots arrow@(Arrow (Typed am _) _ (Just expr)
 buildRoot :: TBEnv -> TBExpr -> PartialType -> Type -> CRes ResArrowTree
 buildRoot env input src dest = do
   let env' = env{tbName = printf "root"}
-  let emptyObj = Object (Typed (singletonType src) Nothing) FunctionObj H.empty H.empty Nothing "EmptyObj"
+  let emptyObj = Object (Meta (singletonType src) Nothing emptyMetaDat) FunctionObj H.empty H.empty Nothing "EmptyObj"
   let objSrc = (src, emptyObj)
   resolveTree env' objSrc (ExprArrow input (getExprType input) dest)

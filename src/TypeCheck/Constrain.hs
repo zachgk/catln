@@ -21,6 +21,7 @@ import           Data.Maybe
 
 import           Data.Tuple.Sequence
 import           Syntax
+import           Syntax.Prgm
 import           Syntax.Types
 import           Text.Printf
 import           TypeCheck.Common
@@ -153,7 +154,7 @@ executeConstraint env (EqualsKnown pnt tp) = case descriptor env pnt of
       (True, env')
     TypeCheckResE _ -> (True, env)
   TypeCheckResE{} -> (True, env)
-executeConstraint env (EqPoints (VarMeta p1 _ _) (VarMeta p2 _ _)) | p1 == p2 = (True, env)
+executeConstraint env (EqPoints (Meta _ _ (VarMetaDat p1 _)) (Meta _ _ (VarMetaDat p2 _))) | p1 == p2 = (True, env)
 executeConstraint env1 (EqPoints p1 p2) = case sequenceT (descriptor env1 p1, descriptor env1 p2) of
   TypeCheckResult notes (s1, s2) -> case equalizeSTypes env1 (s1, s2) "executeConstraint EqPoints" of
     TypeCheckResult notes2 (s1', s2') -> do

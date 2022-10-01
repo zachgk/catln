@@ -16,7 +16,6 @@
 module Emit.Runtime where
 
 import qualified Data.HashMap.Strict       as H
-import           Syntax
 import           Syntax.Prgm
 import           Syntax.Types
 
@@ -30,7 +29,7 @@ import qualified LLVM.AST.Type             as ATP
 import qualified LLVM.AST.Typed            as ASTT
 import           Text.Printf
 
-type Op = (TypeName, [(PartialType, Guard (Expr Typed), ResBuildEnvFunction)])
+type Op = (TypeName, [(PartialType, Guard (Expr EvalMetaDat), ResBuildEnvFunction)])
 
 -- TODO: Add genType with varEnv
 -- TODO: Add genType that is a union of multiple types (with tag)

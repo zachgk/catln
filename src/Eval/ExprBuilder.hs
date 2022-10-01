@@ -25,17 +25,17 @@ applyIO :: EExpr -> EExpr
 applyIO input = eApply (eApply (eVal "/Context") "value" input) "io" ioArg
 
 ioArg :: EExpr
-ioArg = Arg (Typed ioType Nothing) "io"
+ioArg = Arg (Meta ioType Nothing emptyMetaDat) "io"
 
 eApply :: EExpr -> String -> EExpr -> EExpr
 eApply baseExpr argName argExpr = TupleApply m (getExprMeta baseExpr, baseExpr) (TupleArgIO (emptyMetaE "appArg" argExpr) argName argExpr)
   where
-    m = Typed (singletonType $ baseType{ptArgs=H.insert argName (getExprType argExpr) baseArgs}) Nothing
+    m = Meta (singletonType $ baseType{ptArgs=H.insert argName (getExprType argExpr) baseArgs}) Nothing emptyMetaDat
     baseType@PartialType{ptArgs=baseArgs} = getExprPartialType baseExpr
 
 eVal :: String -> EExpr
 eVal name = Value m name
-  where m = Typed (singletonType $ PartialType (PTypeName name) H.empty H.empty H.empty PtArgExact) Nothing
+  where m = Meta (singletonType $ PartialType (PTypeName name) H.empty H.empty H.empty PtArgExact) Nothing emptyMetaDat
 
 getExprPartialType :: EExpr -> PartialType
 getExprPartialType expr = case getExprType expr of

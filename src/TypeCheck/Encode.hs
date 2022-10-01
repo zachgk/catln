@@ -40,7 +40,7 @@ makeBaseFEnv :: ClassGraph -> FEnv
 makeBaseFEnv classGraph = FEnv{
   fePnts = IM.empty,
   feCons = [],
-  feUnionAllObjs = VarMeta 0 emptyMetaN Nothing,
+  feUnionAllObjs = Meta TopType Nothing (VarMetaDat 0 Nothing),
   feVTypeGraph = H.empty,
   feTTypeGraph = H.empty,
   feUpdatedDuringEpoch = False,
@@ -56,7 +56,7 @@ fromMeta env bound obj m description  = do
         BUpper -> fresh env (TypeCheckResult [] $ SType tp bottomType description)
         BLower -> fresh env (TypeCheckResult [] $ SType TopType tp description)
         BEq -> fresh env (TypeCheckResult [] $ SType tp tp description)
-  return (VarMeta p m obj, env')
+  return (mapMetaDat (\_ -> VarMetaDat p obj) m, env')
 
 -- TODO: This might reverse the list to return.
 mapMWithFEnv :: FEnv -> (FEnv -> a -> TypeCheckResult (b, FEnv)) -> [a] -> TypeCheckResult ([b], FEnv)
@@ -108,7 +108,7 @@ fromExpr _ obj env1 (Value m name) = do
   return (Value m' name, addConstraints env2 lookupConstraints)
 fromExpr argMetaMap obj env1 (Arg m name) = do
   (m', env2) <- fromMeta env1 BUpper obj m ("Arg " ++ name)
-  let varM = PreTyped (TypeVar $ TVArg name) (getMetaPos m)
+  let varM = Meta (TypeVar $ TVArg name) (getMetaPos m) emptyMetaDat
   (varM', env3) <- fromMeta env2 BUpper obj varM $ "ArgVar " ++ name
   case suffixLookupInDict name argMetaMap of
     Nothing -> error $ printf "Could not find arg %s with argMetaMap %s and obj %s" name (show argMetaMap) (show obj)
@@ -160,7 +160,7 @@ fromGuard :: VArgMetaMap -> Maybe VObject -> FEnv -> PGuard -> TypeCheckResult (
 fromGuard argMetaMap obj env1 (IfGuard expr) =  do
   (expr', env2) <- fromExpr argMetaMap obj env1 expr
   let (bool, env3) = fresh env2 $ TypeCheckResult [] $ SType boolType bottomType "ifGuardBool"
-  let bool' = VarMeta bool (PreTyped boolType (labelPos "bool" $ getMetaPos $ getExprMeta expr)) obj
+  let bool' = Meta boolType (labelPos "bool" $ getMetaPos $ getExprMeta expr) (VarMetaDat bool obj)
   return (IfGuard expr', addConstraints env3 [ArrowTo (getExprMeta expr') bool'])
 fromGuard _ _ env ElseGuard = return (ElseGuard, env)
 fromGuard _ _ env NoGuard = return (NoGuard, env)
@@ -174,7 +174,7 @@ fromArrow obj@(Object _ _ objVars _ _ _) env1 (Arrow m aguard maybeExpr) = do
   (aguard', env3) <- fromGuard argMetaMap jobj env2 aguard
   case maybeExpr of
     Just expr -> do
-      (m', env4) <- fromMeta env3 BUpper jobj (PreTyped TopType (labelPos "res" $ getMetaPos m)) $ printf "Arrow result from %s" (show $ objPath obj)
+      (m', env4) <- fromMeta env3 BUpper jobj (Meta TopType (labelPos "res" $ getMetaPos m) emptyMetaDat) $ printf "Arrow result from %s" (show $ objPath obj)
       (vExpr, env5) <- fromExpr argMetaMap jobj env4 expr
       let env6 = case metaTypeVar m of
             Just (TVVar typeVarName) -> case suffixLookupInDict typeVarName objVars of
@@ -226,7 +226,7 @@ addObjArg fakeObj oM prefix varMap env (n, (m, maybeSubObj)) = do
 -- However, typeVars only work correctly from the arg version and not the main meta
 -- Likewise, replace the type vars equal to vars with top type for now
 clearMetaArgTypes :: PreMeta -> PreMeta
-clearMetaArgTypes (PreTyped (UnionType partials) pos) = PreTyped (UnionType $ joinUnionType $ map clearPartialTypeArgs $ splitUnionType partials) (labelPos "clear" pos)
+clearMetaArgTypes (Meta (UnionType partials) pos md) = Meta (UnionType $ joinUnionType $ map clearPartialTypeArgs $ splitUnionType partials) (labelPos "clear" pos) md
   where
     clearPartialTypeArgs partial@PartialType{ptArgs} = partial{ptArgs=fmap (const TopType) ptArgs}
 clearMetaArgTypes p = p
@@ -239,7 +239,7 @@ fromObject prefix isObjArg env (Object m basis vars args doc path) = do
   let fakeObjForArgs = Object m' basis vars' H.empty doc path
   (args', env3) <- mapMWithFEnvMapWithKey env2 (addObjArg fakeObjForArgs m' prefix' vars') args
   let obj' = Object m' basis vars' args' doc path
-  (objValue, env4) <- fromMeta env3 BUpper (Just obj') (PreTyped (singletonType (PartialType (PTypeName path) H.empty H.empty H.empty PtArgExact)) (labelPos "objValue" $ getMetaPos m)) ("objValue" ++ path)
+  (objValue, env4) <- fromMeta env3 BUpper (Just obj') (Meta (singletonType (PartialType (PTypeName path) H.empty H.empty H.empty PtArgExact)) (labelPos "objValue" $ getMetaPos m) emptyMetaDat) ("objValue" ++ path)
   let env5 = fInsert env4 path (DefVar objValue)
   let env6 = addConstraints env5 [BoundedByObjs m' | isObjArg]
   let env7 = addConstraints env6 [BoundedByKnown m' (singletonType (PartialType (PTypeName path) (fmap (const TopType) vars) H.empty (fmap (const TopType) args) PtArgExact)) | basis == FunctionObj || basis == PatternObj]

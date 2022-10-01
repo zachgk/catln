@@ -104,8 +104,8 @@ pArgValue = do
   (tp, argValName) <- pTypesAndVal
   pos2 <- getSourcePos
   case argValName of
-    Left n  -> return $ RawValue (PreTyped tp (Just (pos1, pos2, ""))) n
-    Right h -> return $ RawHoleExpr (PreTyped tp (Just (pos1, pos2, ""))) h
+    Left n  -> return $ RawValue (Meta tp (Just (pos1, pos2, "")) emptyMetaDat) n
+    Right h -> return $ RawHoleExpr (Meta tp (Just (pos1, pos2, "")) emptyMetaDat) h
 
 pStringLiteral :: Parser PExpr
 pStringLiteral = do
@@ -186,11 +186,11 @@ pArgSuffix outputExpr = do
   pos2 <- getSourcePos
   case maybeArgNameType of
     Just (_, Right _) -> fail "Unexpected hole in arg name"
-    Just (tp, Left argName) -> return $ TupleArgIO (PreTyped tp (Just (pos1, pos2, ""))) argName expr
+    Just (tp, Left argName) -> return $ TupleArgIO (Meta tp (Just (pos1, pos2, "")) emptyMetaDat) argName expr
     Nothing      -> if outputExpr
       then return $ TupleArgO (emptyMeta pos1 pos2) expr
       else case expr of
-        RawValue m n -> return $ TupleArgI (PreTyped (getMetaType m) (Just (pos1, pos2, ""))) n
+        RawValue m n -> return $ TupleArgI (Meta (getMetaType m) (Just (pos1, pos2, "")) emptyMetaDat) n
         _ -> fail $ printf "Unexpected parsed argName: %s" (show expr)
 
 pArgsSuffix :: Bool -> Parser TermSuffix
@@ -208,7 +208,7 @@ pVarSuffix = do
   var <- tvar
   pos2 <- getSourcePos
   let tp = fromMaybeTypeName maybeClass
-  return (var, PreTyped tp (Just (pos1, pos2, "")))
+  return (var, Meta tp (Just (pos1, pos2, "")) emptyMetaDat)
 
 pVarsSuffix :: Parser TermSuffix
 pVarsSuffix = do
@@ -223,7 +223,7 @@ pContextElSuffix = do
   tp <- tidentifier
   arg <- identifier
   pos2 <- getSourcePos
-  return (arg, PreTyped (singletonType (PartialType (PRelativeName tp) H.empty H.empty H.empty PtArgExact)) (Just (pos1, pos2, "")))
+  return (arg, Meta (singletonType (PartialType (PRelativeName tp) H.empty H.empty H.empty PtArgExact)) (Just (pos1, pos2, "")) emptyMetaDat)
 
 pContextSuffix :: Parser TermSuffix
 pContextSuffix = do

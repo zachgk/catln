@@ -68,12 +68,12 @@ scopeSubDeclFunNamesInExpr prefix replaceNames (VarApply m bExpr varName varVal)
     bExpr' = scopeSubDeclFunNamesInExpr prefix replaceNames bExpr
 
 scopeSubDeclFunNamesInMeta :: TypeName -> S.HashSet TypeName -> ParseMeta -> ParseMeta
-scopeSubDeclFunNamesInMeta prefix replaceNames (PreTyped (UnionType partials) pos) = PreTyped (UnionType partials') pos
+scopeSubDeclFunNamesInMeta prefix replaceNames (Meta (UnionType partials) pos md) = Meta (UnionType partials') pos md
   where
     scopeS = scopeSubDeclFunNamesInPartialName prefix replaceNames
     partials' = H.fromList $ map (first scopeS) $ H.toList partials
-scopeSubDeclFunNamesInMeta _ _ m@(PreTyped TopType _) = m
-scopeSubDeclFunNamesInMeta _ _ m@(PreTyped TypeVar{} _) = m
+scopeSubDeclFunNamesInMeta _ _ m@(Meta TopType _ _) = m
+scopeSubDeclFunNamesInMeta _ _ m@(Meta TypeVar{} _ _) = m
 
 -- Renames sub functions by applying the parent names as a prefix to avoid name collisions
 scopeSubDeclFunNames :: TypeName -> [PSemiDecl] -> Maybe PSExpr -> [PSCompAnnot] -> ParseMeta -> ParseMeta -> ([PSemiDecl], Maybe PSExpr, [PSCompAnnot], ParseMeta, ParseMeta)
@@ -242,14 +242,14 @@ addPath inheritPath name = if "/" `isPrefixOf` name then
 
 -- todo check
 typeDefMetaToObj :: String -> H.HashMap TypeVarName Type -> ParseMeta -> Maybe PObject
-typeDefMetaToObj _ _ (PreTyped TypeVar{} _) = Nothing
-typeDefMetaToObj inheritPath varReplaceMap (PreTyped (UnionType partials) pos) = case splitUnionType partials of
-  [partial@(PartialType (PRelativeName partialName) partialVars _ partialArgs _)] -> Just $ Object m' TypeObj (fmap toMeta partialVars') (fmap (\arg -> (PreTyped arg Nothing, Nothing)) partialArgs) Nothing (addPath inheritPath partialName)
+typeDefMetaToObj _ _ (Meta TypeVar{} _ _) = Nothing
+typeDefMetaToObj inheritPath varReplaceMap (Meta (UnionType partials) pos md) = case splitUnionType partials of
+  [partial@(PartialType (PRelativeName partialName) partialVars _ partialArgs _)] -> Just $ Object m' TypeObj (fmap toMeta partialVars') (fmap (\arg -> (Meta arg Nothing emptyMetaDat, Nothing)) partialArgs) Nothing (addPath inheritPath partialName)
     where
       ptName' = PTypeName $ addPath inheritPath partialName
       partialVars' = fmap (substituteVarsWithVarEnv varReplaceMap) partialVars
-      m' = PreTyped (singletonType partial{ptVars=partialVars', ptName=ptName'}) $ labelPos "obj" pos
-      toMeta t = PreTyped t Nothing
+      m' = Meta (singletonType partial{ptVars=partialVars', ptName=ptName'}) (labelPos "obj" pos) md
+      toMeta t = Meta t Nothing emptyMetaDat
   _ -> error "Invalid call to typeDefMetaToObj with UnionType"
 typeDefMetaToObj _ _ _ = error "Invalid call to typeDefMetaToObj"
 
@@ -264,7 +264,7 @@ desInheritingSubstatements (inheritModule, inheritAnnots) path subStatements = (
     (objectMap, classGraph, annots) = mergePrgms $ map (desStatement statementEnv') subStatements
     prgm' = (objectMap, classGraph, []) -- Annots in subStatements are not global, but local to the main statement
 
-desMultiTypeDef :: StatementEnv -> PMultiTypeDef -> [RawStatementTree ParseMeta] -> Path -> DesPrgm
+desMultiTypeDef :: StatementEnv -> PMultiTypeDef -> [RawStatementTree ParseMetaDat] -> Path -> DesPrgm
 desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef className classVars dataMetas) subStatements path = mergePrgm (objMap', classGraph', []) subPrgm
     where
       path' =  case path of
@@ -280,7 +280,7 @@ desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef className classVars 
       (subPrgm, _) = desInheritingSubstatements statementEnv path subStatements
 
 
-desClassDecl :: StatementEnv -> RawClassDecl -> [RawStatementTree ParseMeta] -> Path -> DesPrgm
+desClassDecl :: StatementEnv -> RawClassDecl -> [RawStatementTree ParseMetaDat] -> Path -> DesPrgm
 desClassDecl statementEnv@(inheritPath, _) (className, classVars) subStatements path = mergePrgm ([], classGraph', []) subPrgm
   where
     classGraph' = ClassGraph $ graphFromEdges [(CGClass (False, classVars, [], desObjDocComment subStatements, path'), addPath inheritPath className, [])]
@@ -289,7 +289,7 @@ desClassDecl statementEnv@(inheritPath, _) (className, classVars) subStatements 
       Absolute p -> p
     (subPrgm, _) = desInheritingSubstatements statementEnv path subStatements
 
-desTypeDef :: StatementEnv -> PTypeDef -> [RawStatementTree ParseMeta] -> DesPrgm
+desTypeDef :: StatementEnv -> PTypeDef -> [RawStatementTree ParseMetaDat] -> DesPrgm
 desTypeDef statementEnv@(inheritPath, _) (TypeDef tp) subStatements = mergePrgm (objMap, emptyClassGraph, []) subPrgm
   where
     (subPrgm, annots) = desInheritingSubstatements statementEnv (getPath $ objPath obj) subStatements
@@ -298,7 +298,7 @@ desTypeDef statementEnv@(inheritPath, _) (TypeDef tp) subStatements = mergePrgm 
           Nothing -> error "Type def could not be converted into meta"
     objMap = [(obj, annots, Nothing)]
 
-desClassDef :: StatementEnv -> Sealed -> RawClassDef -> [RawStatementTree ParseMeta] -> Path -> DesPrgm
+desClassDef :: StatementEnv -> Sealed -> RawClassDef -> [RawStatementTree ParseMetaDat] -> Path -> DesPrgm
 desClassDef statementEnv@(inheritPath, _) sealed ((typeName, typeVars), className) subStatements path = mergePrgm ([], classGraph, []) subPrgm
   where
     path' =  case path of

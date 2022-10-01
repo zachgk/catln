@@ -179,7 +179,7 @@ evalAnnots prgmName prgmGraphData = do
     let exprType = getExprType annot
     let inTree = ExprArrow annot exprType exprType
     let emptyType = PartialType (PTypeName "EmptyObj") H.empty H.empty H.empty PtArgExact
-    let emptyObj = Object (Typed (singletonType emptyType) Nothing) FunctionObj H.empty H.empty Nothing "EmptyObj"
+    let emptyObj = Object (Meta (singletonType emptyType) Nothing emptyMetaDat) FunctionObj H.empty H.empty Nothing "EmptyObj"
     tree <- resolveTree evTbEnv (emptyType, emptyObj) inTree
     val <- fst <$> eval env tree
     return (annot, val)

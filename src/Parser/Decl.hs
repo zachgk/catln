@@ -41,7 +41,7 @@ pArrowRes = do
   pos1 <- getSourcePos
   t <- pSingleType
   pos2 <- getSourcePos
-  return $ PreTyped t (Just (pos1, pos2, ""))
+  return $ Meta t (Just (pos1, pos2, "")) emptyMetaDat
 
 pDeclLHS :: Parser PDeclLHS
 pDeclLHS = do

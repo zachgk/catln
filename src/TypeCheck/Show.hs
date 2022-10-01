@@ -22,7 +22,7 @@ import           TypeCheck.Common
 showM :: FEnv -> VarMeta -> TypeCheckResult ShowMeta
 showM env m = do
   stype <- descriptor env m
-  return $ ShowMeta stype m
+  return $ mapMetaDat (ShowMeta stype) m
 
 showExpr :: FEnv -> VExpr -> TypeCheckResult SExpr
 showExpr env (CExpr m c) = do

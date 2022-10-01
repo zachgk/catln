@@ -134,7 +134,7 @@ getEvalBuild provider prgmName fun = do
     CRes _ r -> fst <$> r
     CErr _   -> return NoVal
 
-getEvalAnnots :: WDProvider -> String -> IO [(Expr Typed, Val)]
+getEvalAnnots :: WDProvider -> String -> IO [(Expr (), Val)]
 getEvalAnnots provider prgmName = do
   base <- getTPrgm provider
   let pre = base >>= evalAnnots prgmName

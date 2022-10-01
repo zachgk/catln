@@ -95,7 +95,7 @@ getValArgs (LLVMOperand tp o) = do
 getValArgs v = error $ printf "Val does not have args: %s" (show v)
 
 genTypeMeta :: (Monad m, TaskState m) => EvalMeta -> m AST.Type
-genTypeMeta (Typed t _) = genType H.empty t
+genTypeMeta (Meta t _ _) = genType H.empty t
 
 arrowName :: PartialType -> EObject -> EArrow -> DeclInput -> String
 arrowName srcType obj arrow di = printf "fun:%s-%s" (objPath obj) arrHash
@@ -220,7 +220,7 @@ codegenTree env (ResArrowTupleApply base argName argRATree) = do
       TupleVal name args'
     _ -> error "Invalid input to tuple application"
 
-formArgValMap :: EObject -> Val -> Codegen (H.HashMap ArgName (Typed, AST.Operand))
+formArgValMap :: EObject -> Val -> Codegen (H.HashMap ArgName (EvalMeta, AST.Operand))
 formArgValMap obj (LLVMOperand _ o) | null (objAppliedArgs obj) = do
                                                              o' <- o
                                                              return $ H.singleton (objPath obj) (objM obj, o')

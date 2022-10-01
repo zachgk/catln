@@ -26,6 +26,7 @@ import           Text.Printf
 import           Control.Monad.Fail
 import           Data.Aeson
 import           Syntax
+import           Syntax.Prgm
 import           Text.Megaparsec       (pstateSourcePos)
 import           Text.Megaparsec.Error
 

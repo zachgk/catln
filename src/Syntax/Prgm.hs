@@ -11,8 +11,10 @@
 -- program.
 --------------------------------------------------------------------
 
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveGeneric  #-}
+{-# LANGUAGE DeriveAnyClass            #-}
+{-# LANGUAGE DeriveGeneric             #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE ExistentialQuantification #-}
 
 module Syntax.Prgm where
 
@@ -21,10 +23,12 @@ import           Data.Hashable
 import           Data.List           (intercalate)
 import           GHC.Generics        (Generic)
 
-import           Data.Aeson          (ToJSONKey)
+import           Data.Aeson          (object)
+import           Data.Aeson          hiding (Object)
 import           Data.Aeson.Types    (ToJSON)
 import           Data.Graph
 import           Syntax.Types
+import           Text.Megaparsec
 import           Text.Printf
 
 newtype Import = Import String
@@ -46,9 +50,9 @@ data Pattern e m = Pattern (Object m) (Guard (e m))
 -- An argument applied in an expression.
 -- TODO Consider replacing the TupleArgI ArgName with an Expr as a generalization. In that case, this ArgName would be equivalent to a Value. It could also include lenses.
 data TupleArg e m
-  = TupleArgI m ArgName -- ^ An input arg. Can be thought of as a key without a value. Used only in input expressions.
-  | TupleArgO m (e m) -- ^ An output arg. Can be thought of as a value with an unknown key. Used only in output expressions before typechecking, as typechecking will determine the matching key.
-  | TupleArgIO m ArgName (e m) -- ^ An arg containing both the name and value.
+  = TupleArgI (Meta m) ArgName -- ^ An input arg. Can be thought of as a key without a value. Used only in input expressions.
+  | TupleArgO (Meta m) (e m) -- ^ An output arg. Can be thought of as a value with an unknown key. Used only in output expressions before typechecking, as typechecking will determine the matching key.
+  | TupleArgIO (Meta m) ArgName (e m) -- ^ An arg containing both the name and value.
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 -- | The type of hole (a gap where an expression should be). Used in inputs to ignore the expression and outputs.
@@ -58,30 +62,41 @@ data Hole
   | HoleTodefine -- ^ A hole with the keyword todefine that is an error during runtime and commit time
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
+-- Metadata for the Programs
+type CodeRange = Maybe (SourcePos, SourcePos, String)
+class (Eq m, Ord m) => MetaDat m where
+  emptyMetaDat :: m
+-- | Contains the type, position, and supplemental 'MetaDat' m
+data Meta m = Meta Type CodeRange m
+  deriving (Eq, Ord, Generic, Hashable, ToJSON)
+-- | MetaDat contains supplemental metadata
+instance MetaDat () where
+  emptyMetaDat = ()
+
 -- Expr before desugar
 data RawExpr m
-  = RawCExpr m Constant
-  | RawValue m TypeName
-  | RawHoleExpr m Hole
-  | RawTupleApply m (m, RawExpr m) [TupleArg RawExpr m]
-  | RawVarsApply m (RawExpr m) [(TypeVarName, m)]
-  | RawContextApply m (m, RawExpr m) [(ArgName, m)]
+  = RawCExpr (Meta m) Constant
+  | RawValue (Meta m) TypeName
+  | RawHoleExpr (Meta m) Hole
+  | RawTupleApply (Meta m) (Meta m, RawExpr m) [TupleArg RawExpr m]
+  | RawVarsApply (Meta m) (RawExpr m) [(TypeVarName, Meta m)]
+  | RawContextApply (Meta m) (Meta m, RawExpr m) [(ArgName, Meta m)]
   | RawParen (RawExpr m)
   | RawMethod (RawExpr m) (RawExpr m) -- base methodValue
-  | RawIfThenElse m (RawExpr m) (RawExpr m) (RawExpr m)
-  | RawMatch m (RawExpr m) [(Pattern RawExpr m, RawExpr m)]
-  | RawCase m (RawExpr m) [(Pattern RawExpr m, RawExpr m)]
-  | RawList m [RawExpr m]
+  | RawIfThenElse (Meta m) (RawExpr m) (RawExpr m) (RawExpr m)
+  | RawMatch (Meta m) (RawExpr m) [(Pattern RawExpr m, RawExpr m)]
+  | RawCase (Meta m) (RawExpr m) [(Pattern RawExpr m, RawExpr m)]
+  | RawList (Meta m) [RawExpr m]
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 -- Expr after desugar
 data Expr m
-  = CExpr m Constant
-  | Value m TypeName
-  | Arg m ArgName
-  | HoleExpr m Hole
-  | TupleApply m (m, Expr m) (TupleArg Expr m)
-  | VarApply m (Expr m) TypeVarName m
+  = CExpr (Meta m) Constant
+  | Value (Meta m) TypeName
+  | Arg (Meta m) ArgName
+  | HoleExpr (Meta m) Hole
+  | TupleApply (Meta m) (Meta m, Expr m) (TupleArg Expr m)
+  | VarApply (Meta m) (Expr m) TypeVarName (Meta m)
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 -- Compiler Annotation
@@ -98,16 +113,16 @@ instance Functor Guard where
   fmap _ ElseGuard   = ElseGuard
   fmap _ NoGuard     = NoGuard
 
-data DeclLHS e m = DeclLHS m (Pattern e m)
+data DeclLHS e m = DeclLHS (Meta m) (Pattern e m)
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
 data RawDecl m = RawDecl (DeclLHS RawExpr m) (Maybe (RawExpr m))
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
-newtype TypeDef m = TypeDef m
+newtype TypeDef m = TypeDef (Meta m)
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
-data MultiTypeDef m = MultiTypeDef ClassName (H.HashMap TypeVarName Type) [m]
+data MultiTypeDef m = MultiTypeDef ClassName (H.HashMap TypeVarName Type) [Meta m]
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
 type RawClassDef = ((TypeName, H.HashMap TypeVarName Type), ClassName)
@@ -133,28 +148,32 @@ data RawStatementTree m = RawStatementTree (RawStatement m) [RawStatementTree m]
 type FileImport = String
 type RawPrgm m = ([FileImport], [RawStatementTree m]) -- TODO: Include [Export]
 
-type ObjArg m = (m, Maybe (Object m))
+type ObjArg m = (Meta m, Maybe (Object m))
 data ObjectBasis = FunctionObj | TypeObj | PatternObj | MatchObj
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 -- |
 -- Represents an input.
 -- The current plan is to deprecate objM, objVars, objArgs, and objPath and replace them with objExpr. TODO Deprecate the rest.
 data Object m = Object {
-  deprecatedObjM    :: m,
+  deprecatedObjM    :: Meta m,
   objBasis          :: ObjectBasis,
-  deprecatedObjVars :: H.HashMap TypeVarName m,
+  deprecatedObjVars :: H.HashMap TypeVarName (Meta m),
   deprecatedObjArgs :: H.HashMap ArgName (ObjArg m),
   objDoc            :: Maybe DocComment,
   deprecatedObjPath :: String
                        }
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
-data Arrow e m = Arrow m (Guard (e m)) (Maybe (e m)) -- m is result metadata
+data Arrow e m = Arrow (Meta m) (Guard (e m)) (Maybe (e m)) -- m is result metadata
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
 type ObjectMapItem e m = (Object m, [CompAnnot (e m)], Maybe (Arrow e m))
 type ObjectMap e m = [ObjectMapItem e m]
 type Prgm e m = (ObjectMap e m, ClassGraph, [CompAnnot (e m)]) -- TODO: Include [Export]
+
+
+instance Show (Meta m) where
+  show (Meta t _ _) = show t
 
 instance Show m => Show (Expr m) where
   show (CExpr _ c) = show c
@@ -204,9 +223,16 @@ instance (Show m, Show (e m)) => Show (Arrow e m) where
       showExpr (Just expr) = [" = ", show expr]
       showExpr Nothing     = []
 
+instance Hashable SourcePos where
+  hashWithSalt s (SourcePos name line col) = s `hashWithSalt` show name `hashWithSalt` unPos line `hashWithSalt` unPos col
+
+instance ToJSON SourcePos where
+  toJSON (SourcePos name line col) = object ["name".=name, "line".=unPos line, "col".=unPos col]
+
+
 class ExprClass e where
   -- | Returns the metadata for the top level of an expression
-  getExprMeta ::  e m -> m
+  getExprMeta ::  e m -> Meta m
 
   -- | Returns the argname if the expression is an arg, else Nothing
   getExprArg :: e m -> Maybe ArgName
@@ -218,10 +244,10 @@ class ExprClass e where
   exprAppliedArgs :: e m -> [TupleArg e m]
 
   -- | Returns all vars applied to a value
-  exprAppliedVars :: e m -> H.HashMap TypeVarName m
+  exprAppliedVars :: e m -> H.HashMap TypeVarName (Meta m)
 
   -- | Returns all arguments located recursively in an expression
-  exprArgs :: e m -> H.HashMap ArgName m
+  exprArgs :: e m -> H.HashMap ArgName (Meta m)
 
 
 instance ExprClass RawExpr where
@@ -318,7 +344,8 @@ instance ExprClass Expr where
       exprArg (TupleArgI m n)    = H.singleton n m
   exprArgs (VarApply _ e _ _) = exprArgs e
 
-
+mapMetaDat :: (m1 -> m2) -> Meta m1 -> Meta m2
+mapMetaDat f (Meta t p md) = Meta t p (f md)
 
 mapTupleArgValue :: (e1 m -> e2 m) -> TupleArg e1 m -> TupleArg e2 m
 mapTupleArgValue _ (TupleArgI m n)    = TupleArgI m n

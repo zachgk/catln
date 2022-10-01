@@ -35,16 +35,17 @@ import           Syntax.Types
 import           Text.Printf
 import           Utils
 
-type EvalMeta = Typed
-type ECompAnnot = CompAnnot (Expr Typed)
-type EExpr = Expr EvalMeta
+type EvalMetaDat = ()
+type EvalMeta = Meta EvalMetaDat
+type ECompAnnot = CompAnnot (Expr EvalMetaDat)
+type EExpr = Expr EvalMetaDat
 type EGuard = Guard EExpr
-type EObject = Object EvalMeta
-type EArrow = Arrow Expr EvalMeta
-type EObjectMap = ObjectMap Expr EvalMeta
-type EPrgm = Prgm Expr EvalMeta
+type EObject = Object EvalMetaDat
+type EArrow = Arrow Expr EvalMetaDat
+type EObjectMap = ObjectMap Expr EvalMetaDat
+type EPrgm = Prgm Expr EvalMetaDat
 type EPrgmGraphData = GraphData EPrgm String
-type EReplRes = ReplRes EvalMeta
+type EReplRes = ReplRes EvalMetaDat
 
 data EPrim = EPrim PartialType EGuard (H.HashMap String Val -> Val)
   deriving (Generic)
@@ -85,7 +86,7 @@ data Val
   | TupleVal String (H.HashMap String Val)
   | IOVal Integer (IO ())
   | LLVMVal (LLVM ())
-  | LLVMQueue [(ResArrowTree, Object Typed, Arrow Expr Typed)]
+  | LLVMQueue [(ResArrowTree, Object EvalMetaDat, Arrow Expr EvalMetaDat)]
   | LLVMOperand Type (Codegen AST.Operand)
   | LLVMIO (Codegen ())
   | NoVal
@@ -168,20 +169,20 @@ getValType NoVal = error "getValType of NoVal"
 --- ResArrowTree
 data MacroData = MacroData {
                                mdTbEnv      :: TBEnv
-                             , mdObj        :: Object Typed
+                             , mdObj        :: Object EvalMetaDat
                              , mdObjSrcType :: PartialType
                              }
 newtype MacroFunction = MacroFunction (ResArrowTree -> MacroData -> CRes ResArrowTree)
 type ResBuildEnvFunction = ResArrowTree -> ResArrowTree
-type ResBuildEnvItem = (PartialType, Guard (Expr Typed), ResBuildEnvFunction)
+type ResBuildEnvItem = (PartialType, Guard (Expr EvalMetaDat), ResBuildEnvFunction)
 type ResBuildEnv = H.HashMap TypeName [ResBuildEnvItem]
-type ResExEnv = H.HashMap (PartialType, Arrow Expr Typed) (ResArrowTree, [ResArrowTree]) -- (result, [compAnnot trees])
+type ResExEnv = H.HashMap (PartialType, Arrow Expr EvalMetaDat) (ResArrowTree, [ResArrowTree]) -- (result, [compAnnot trees])
 
 data TBEnv = TBEnv {
     tbName       :: String
   , tbResEnv     :: ResBuildEnv
   , tbVals       :: H.HashMap PartialType ResArrowTree
-  , tbPrgm       :: Prgm Expr Typed
+  , tbPrgm       :: Prgm Expr EvalMetaDat
   , tbClassGraph :: ClassGraph
   }
 
@@ -192,14 +193,14 @@ instance Hashable MacroFunction where
   s `hashWithSalt` _ = s
 
 data ResArrowTree
-  = ResEArrow ResArrowTree (Object Typed) [CompAnnot (Expr Typed)] (Arrow Expr Typed)
+  = ResEArrow ResArrowTree (Object EvalMetaDat) [CompAnnot (Expr EvalMetaDat)] (Arrow Expr EvalMetaDat)
   | PrimArrow ResArrowTree Type EPrim
   | MacroArrow ResArrowTree Type MacroFunction
   | ExprArrow EExpr Type Type
   | ConstantArrow Val
   | ArgArrow Type String
   | ResArrowMatch ResArrowTree Type (H.HashMap PartialType ResArrowTree)
-  | ResArrowCond Type [((ResArrowTree, ResArrowTree, Object Typed), ResArrowTree)] ResArrowTree -- [((if, ifInput, ifObj), then)] else
+  | ResArrowCond Type [((ResArrowTree, ResArrowTree, Object EvalMetaDat), ResArrowTree)] ResArrowTree -- [((if, ifInput, ifObj), then)] else
   | ResArrowTuple String (H.HashMap String ResArrowTree)
   | ResArrowTupleApply ResArrowTree String ResArrowTree
   deriving (Eq, Generic, Hashable)
@@ -247,7 +248,7 @@ data DeclInput
   | StructInput
   deriving (Eq, Ord, Show, Generic, Hashable)
 
-type TaskArrow = (PartialType, Object Typed, [CompAnnot (Expr Typed)], Arrow Expr Typed, DeclInput)
+type TaskArrow = (PartialType, Object EvalMetaDat, [CompAnnot (Expr EvalMetaDat)], Arrow Expr EvalMetaDat, DeclInput)
 type TaskStruct = Type
 
 type Names = Map.Map String Int
@@ -278,7 +279,7 @@ instance Show (Codegen a) where
   show Codegen{} = "Codegen"
 
 
-type ObjSrc = (PartialType, Object Typed)
+type ObjSrc = (PartialType, Object EvalMetaDat)
 macroData :: TBEnv -> ObjSrc -> MacroData
 macroData tbEnv (objSrcType, obj) = MacroData tbEnv obj objSrcType
 

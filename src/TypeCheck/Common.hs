@@ -35,7 +35,7 @@ import           Utils
 
 data TypeCheckError
   = GenTypeCheckError CodeRange String
-  | TupleMismatch TypedMeta TExpr Typed (H.HashMap String TExpr)
+  | TupleMismatch TypedMeta TExpr (Meta ()) (H.HashMap String TExpr)
   deriving (Eq, Ord, Generic, Hashable)
 
 data SType = SType Type Type String -- SType upper lower (description in type)
@@ -120,55 +120,57 @@ instance Monad TypeCheckResult where
   (TypeCheckResE notes) >>= _ = TypeCheckResE notes
 
 
-type PreMeta = PreTyped
-type PExpr = Expr PreMeta
+type PreMeta = Meta ()
+type PExpr = Expr ()
 type PCompAnnot = CompAnnot PExpr
 type PGuard = Guard PExpr
-type PArrow = Arrow Expr PreMeta
-type PObjArg = ObjArg PreMeta
-type PObject = Object PreMeta
-type PPrgm = Prgm Expr PreMeta
+type PArrow = Arrow Expr ()
+type PObjArg = ObjArg ()
+type PObject = Object ()
+type PPrgm = Prgm Expr ()
 type PPrgmGraphData = GraphData PPrgm String
-type PReplRes = ReplRes PreMeta
+type PReplRes = ReplRes ()
 
-data ShowMeta = ShowMeta SType VarMeta
-  deriving (Show, Generic, Hashable, ToJSON)
-type SExpr = Expr ShowMeta
+data ShowMetaDat = ShowMeta SType VarMetaDat
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+type ShowMeta = Meta ShowMetaDat
+type SExpr = Expr ShowMetaDat
 type SCompAnnot = CompAnnot SExpr
 type SGuard = Guard SExpr
-type SArrow = Arrow Expr ShowMeta
-type SObjArg = ObjArg ShowMeta
-type SObject = Object ShowMeta
-type SObjectMap = ObjectMap Expr ShowMeta
-type SObjectMapItem = ObjectMapItem Expr ShowMeta
-type SPrgm = Prgm Expr ShowMeta
-type SReplRes = ReplRes ShowMeta
+type SArrow = Arrow Expr ShowMetaDat
+type SObjArg = ObjArg ShowMetaDat
+type SObject = Object ShowMetaDat
+type SObjectMap = ObjectMap Expr ShowMetaDat
+type SObjectMapItem = ObjectMapItem Expr ShowMetaDat
+type SPrgm = Prgm Expr ShowMetaDat
+type SReplRes = ReplRes ShowMetaDat
 
-data VarMeta = VarMeta Pnt PreTyped (Maybe VObject)
-  deriving (Show, Generic, Hashable, ToJSON)
-type VExpr = Expr VarMeta
+data VarMetaDat = VarMetaDat Pnt (Maybe VObject)
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+type VarMeta = Meta VarMetaDat
+type VExpr = Expr VarMetaDat
 type VCompAnnot = CompAnnot VExpr
 type VGuard = Guard VExpr
-type VArgMetaMap = ArgMetaMap VarMeta
-type VArrow = Arrow Expr VarMeta
-type VObjArg = ObjArg VarMeta
-type VObject = Object VarMeta
-type VObjectMap = ObjectMap Expr VarMeta
-type VObjectMapItem = ObjectMapItem Expr VarMeta
+type VArgMetaMap = ArgMetaMap VarMetaDat
+type VArrow = Arrow Expr VarMetaDat
+type VObjArg = ObjArg VarMetaDat
+type VObject = Object VarMetaDat
+type VObjectMap = ObjectMap Expr VarMetaDat
+type VObjectMapItem = ObjectMapItem Expr VarMetaDat
 type VPrgm = (VObjectMap, ClassGraph, [VCompAnnot])
-type VReplRes = ReplRes VarMeta
+type VReplRes = ReplRes VarMetaDat
 
-type TypedMeta = Typed
-type TExpr = Expr TypedMeta
+type TypedMeta = Meta ()
+type TExpr = Expr ()
 type TCompAnnot = CompAnnot TExpr
 type TGuard = Guard TExpr
-type TArrow = Arrow Expr TypedMeta
-type TObjArg = ObjArg TypedMeta
-type TObject = Object TypedMeta
-type TObjectMap = ObjectMap Expr TypedMeta
-type TObjectMapItem = ObjectMapItem Expr TypedMeta
-type TPrgm = Prgm Expr TypedMeta
-type TReplRes = ReplRes TypedMeta
+type TArrow = Arrow Expr ()
+type TObjArg = ObjArg ()
+type TObject = Object ()
+type TObjectMap = ObjectMap Expr ()
+type TObjectMapItem = ObjectMapItem Expr ()
+type TPrgm = Prgm Expr ()
+type TReplRes = ReplRes ()
 
 -- implicit graph
 type VTypeGraphVal = (VObject, VArrow) -- (match object type, if matching then can implicit to type in arrow)
@@ -176,17 +178,11 @@ type VTypeGraph = H.HashMap TypeName [VTypeGraphVal] -- H.HashMap (Root tuple na
 type TTypeGraphVal = (TObject, TArrow) -- (match object type, if matching then can implicit to type in arrow)
 type TTypeGraph = H.HashMap TypeName [TTypeGraphVal] -- H.HashMap (Root tuple name for filtering) [vals]
 
-instance Meta VarMeta where
-  getMetaType (VarMeta _ p _) = getMetaType p
-  getMetaPos (VarMeta _ p _) = getMetaPos p
-  labelPosM s (VarMeta p pos o) = VarMeta p (labelPosM s pos) o
-  emptyMetaN = error "No emptyMetaN for VarMeta"
+instance MetaDat VarMetaDat where
+  emptyMetaDat = error "VarMetaDat"
 
-instance Meta ShowMeta where
-  getMetaType (ShowMeta (SType ub _ _) _) = ub
-  getMetaPos (ShowMeta _ varMeta) = getMetaPos varMeta
-  labelPosM s (ShowMeta scheme pos) = ShowMeta scheme (labelPosM s pos)
-  emptyMetaN = error "No emptyMetaN for ShowMeta"
+instance MetaDat ShowMetaDat where
+  emptyMetaDat = error "VarMetaDat"
 
 instance Show TypeCheckError where
   show (GenTypeCheckError _ s) = s
@@ -228,7 +224,7 @@ typeCheckToRes tc = case tc of
   TypeCheckResE notes       -> CErr (map MkCNote notes)
 
 getPnt :: VarMeta -> Pnt
-getPnt (VarMeta p _ _) = p
+getPnt (Meta _ _ (VarMetaDat p _)) = p
 
 fLookup :: FEnv -> Maybe VObject -> String -> TypeCheckResult EnvDef
 fLookup FEnv{feDefMap} obj k = case suffixLookup k (H.keys feDefMap) of
@@ -258,7 +254,7 @@ tryIntersectTypes FEnv{feClassGraph} a b desc = let c = intersectTypes feClassGr
 -- This ensures schemes are correct
 -- It differs from Constrain.checkScheme because it checks for bugs in the internal compiler, not bugs in the user code
 verifyScheme :: ClassGraph -> VarMeta -> Scheme -> Scheme -> Maybe String
-verifyScheme classGraph (VarMeta _ _ mobj) (TypeCheckResult _ (SType oldUb _ _)) (TypeCheckResult _ (SType ub _ _)) = listToMaybe $ catMaybes [
+verifyScheme classGraph (Meta _ _ (VarMetaDat _ mobj)) (TypeCheckResult _ (SType oldUb _ _)) (TypeCheckResult _ (SType ub _ _)) = listToMaybe $ catMaybes [
   if verifyTypeVars (mobjVars mobj) ub then Nothing else Just "verifyTypeVars",
   if verifySchemeUbLowers then Nothing else Just "verifySchemeUbLowers",
   if verifyCompacted then Nothing else Just "verifyCompacted"
@@ -313,13 +309,13 @@ pointUb env p = do
   return ub
 
 resolveTypeVar :: TypeVarAux -> VarMeta -> TypeCheckResult VarMeta
-resolveTypeVar (TVVar v) m@(VarMeta _ _ (Just obj)) = case H.lookup v $ objAppliedVars obj of
+resolveTypeVar (TVVar v) m@(Meta _ _ (VarMetaDat _ (Just obj))) = case H.lookup v $ objAppliedVars obj of
   Just m' -> return m'
   Nothing -> TypeCheckResE [GenTypeCheckError (getMetaPos m) "Unknown variable in resolveTypeVar var"]
-resolveTypeVar (TVArg v) m@(VarMeta _ _ (Just Object{deprecatedObjArgs})) = case H.lookup v deprecatedObjArgs of
+resolveTypeVar (TVArg v) m@(Meta _ _ (VarMetaDat _ (Just Object{deprecatedObjArgs}))) = case H.lookup v deprecatedObjArgs of
   Just (m', _) -> return m'
   Nothing -> TypeCheckResE [GenTypeCheckError (getMetaPos m) "Unknown variable in resolveTypeVar arg"]
-resolveTypeVar _ m@(VarMeta _ _ Nothing) = TypeCheckResE [GenTypeCheckError (getMetaPos m) "Tried to resolve a type var without an object"]
+resolveTypeVar _ m@(Meta _ _ (VarMetaDat _ Nothing)) = TypeCheckResE [GenTypeCheckError (getMetaPos m) "Tried to resolve a type var without an object"]
 
 descriptorResolve :: FEnv -> VarMeta -> TypeCheckResult (VarMeta, SType)
 descriptorResolve env m = do

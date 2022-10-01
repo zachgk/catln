@@ -52,13 +52,13 @@ objectPrecedence (Object{objBasis=PatternObj}, _, _) = [3]
 objectPrecedence (Object{objBasis=MatchObj}, _, _) =   [4]
 
 -- | Finds the 'objectPrecedence' for all types
-buildPrecedenceMap :: (Show m, Meta m, ExprClass e) => ObjectMap e m -> H.HashMap TypeName [Int]
+buildPrecedenceMap :: (Show m, MetaDat m, ExprClass e) => ObjectMap e m -> H.HashMap TypeName [Int]
 buildPrecedenceMap = fmap (minimum . map objectPrecedence) . H.fromListWith (++) . map (\(obj, annots, arrs) -> (objPath obj, [(obj, annots, arrs)]))
 
 -- |
 -- Prunes an objectMap by precendence. If two objects share the same precendence, only the bigger one(s) will be kept.
 -- This is used to ensure that the type of an object can't be changed by other usages, such as a data object by functions using that data
-filterBestPrecedence :: (Show m, Meta m, ExprClass e) => H.HashMap TypeName [Int] -> ObjectMap e m -> ObjectMap e m
+filterBestPrecedence :: (Show m, MetaDat m, ExprClass e) => H.HashMap TypeName [Int] -> ObjectMap e m -> ObjectMap e m
 filterBestPrecedence precedenceMap = filter (\omi@(obj, _, _) -> objectPrecedence omi == H.lookupDefault (error "Could not find obj in union") (objPath obj) precedenceMap)
 
 -- | Gets an object and all sub-ojects (recursively) from it's arguments
@@ -87,14 +87,16 @@ addUnionObjToEnv env1@FEnv{feClassGraph} vobjMap tobjMap = do
   let (unionAllObjs, env2) = fresh env1 $ TypeCheckResult [] $ SType TopType bottomType "unionAllObjs"
   let (unionAllObjsPs, env3) = fresh env2 $ TypeCheckResult [] $ SType TopType bottomType "unionAllObjsPs"
 
+  let mkVarMeta p = Meta TopType Nothing (VarMetaDat p Nothing)
+
   -- Build a variable to store union of tobjs
   let typecheckedAllType = unionAllTypes feClassGraph $ map (getMetaType . objM) tobjs'
   let (typecheckedAllObjs, env4) = fresh env3 $ TypeCheckResult [] $ SType typecheckedAllType bottomType "typecheckedAll"
-  let typecheckedAllObjs' = VarMeta typecheckedAllObjs emptyMetaN Nothing
+  let typecheckedAllObjs' = mkVarMeta typecheckedAllObjs
 
   -- Builds metas to use for union and union powerset
-  let unionAllObjs' = VarMeta unionAllObjs emptyMetaN Nothing
-  let unionAllObjsPs' = VarMeta unionAllObjsPs emptyMetaN Nothing
+  let unionAllObjs' = mkVarMeta unionAllObjs
+  let unionAllObjsPs' = mkVarMeta unionAllObjsPs
 
   let constraints = [
         UnionOf unionAllObjs' (typecheckedAllObjs' : map objM vobjs'),
@@ -148,11 +150,11 @@ joinReachesTrees _ _ = error "joinReachesTrees for mixed tree and leaf not yet d
 joinAllReachesTrees :: Foldable f => f ReachesTree -> ReachesTree
 joinAllReachesTrees = foldr1 joinReachesTrees
 
-isSubtypePartialOfWithMaybeObj :: (Show m, Meta m) => ClassGraph -> Maybe (Object m) -> PartialType -> Type -> Bool
+isSubtypePartialOfWithMaybeObj :: (Show m, MetaDat m) => ClassGraph -> Maybe (Object m) -> PartialType -> Type -> Bool
 isSubtypePartialOfWithMaybeObj classGraph (Just obj) = isSubtypePartialOfWithObj classGraph obj
 isSubtypePartialOfWithMaybeObj classGraph Nothing    = isSubtypePartialOf classGraph
 
-reachesHasCutSubtypeOf :: (Show m, Meta m) => ClassGraph -> Maybe (Object m) -> ReachesTree -> Type -> Bool
+reachesHasCutSubtypeOf :: (Show m, MetaDat m) => ClassGraph -> Maybe (Object m) -> ReachesTree -> Type -> Bool
 reachesHasCutSubtypeOf classGraph mObj (ReachesTree children) superType = all childIsSubtype $ H.toList children
   where childIsSubtype (key, val) = isSubtypePartialOfWithMaybeObj classGraph mObj key superType || reachesHasCutSubtypeOf classGraph mObj val superType
 reachesHasCutSubtypeOf classGraph mObj (ReachesLeaf leafs) superType = any (\t -> isSubtypeOfWithMaybeObj classGraph mObj t superType) leafs
@@ -224,7 +226,7 @@ arrowConstrainUbs env src@(TypeVar v) srcM dest destM = do
   src' <- resolveTypeVar v srcM
   (_, cdest) <- arrowConstrainUbs env (getMetaType src') srcM dest destM
   return (src, cdest)
-arrowConstrainUbs env (UnionType srcPartials) (VarMeta _ _ srcObj) dest _ = do
+arrowConstrainUbs env (UnionType srcPartials) (Meta _ _ (VarMetaDat _ srcObj)) dest _ = do
   let classGraph = feClassGraph env
   let srcPartialList = splitUnionType srcPartials
   srcPartialList' <- mapM (rootReachesPartial env) srcPartialList

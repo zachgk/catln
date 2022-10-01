@@ -39,7 +39,7 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, classGraph
     mapCGNode CGType = CGType
     classNames = listClassNames fullPrgmClassGraph
     objNames = nub $ map (objPath . fst3) fullPrgmObjMap
-    aux _ (PreTyped t p) = PreTyped (mapType False t) p
+    aux _ (Meta t p md) = Meta (mapType False t) p md
 
     -- |
     -- requireResolveRelative -> type -> updated type
@@ -79,12 +79,12 @@ expandDataReferences (fullPrgmObjMap, _, _) (objMap, classGraph@(ClassGraph cg),
     mapCGNode (CGClass (s, vs, ts, doc, p)) = CGClass (s, fmap mapType vs, fmap mapType ts, doc, p)
     mapCGNode CGType = CGType
     objExpansions = H.fromList $ concatMap (\(obj@Object{objBasis}, _, _) -> ([(objPath obj, obj) | objBasis == TypeObj])) fullPrgmObjMap
-    aux metaType inM@(PreTyped t p) = case metaType of
+    aux metaType inM@(Meta t p md) = case metaType of
       ExprMeta   -> inM
       ObjMeta    -> inM
-      ObjArgMeta -> PreTyped (mapType t) p
-      ObjVarMeta -> PreTyped (mapType t) p
-      ArrMeta    -> PreTyped (mapType t) p
+      ObjArgMeta -> Meta (mapType t) p md
+      ObjVarMeta -> Meta (mapType t) p md
+      ArrMeta    -> Meta (mapType t) p md
 
     mapType TopType = TopType
     mapType tp@(TypeVar TVVar{}) = tp
