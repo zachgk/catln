@@ -244,7 +244,7 @@ addPath inheritPath name = if "/" `isPrefixOf` name then
 typeDefMetaToObj :: String -> H.HashMap TypeVarName Type -> ParseMeta -> Maybe PObject
 typeDefMetaToObj _ _ (Meta TypeVar{} _ _) = Nothing
 typeDefMetaToObj inheritPath varReplaceMap (Meta (UnionType partials) pos md) = case splitUnionType partials of
-  [partial@(PartialType (PRelativeName partialName) partialVars _ partialArgs _ _)] -> Just $ Object m' TypeObj (fmap toMeta partialVars') (fmap (\arg -> (Meta arg Nothing emptyMetaDat, Nothing)) partialArgs) Nothing (addPath inheritPath partialName)
+  [partial@(PartialType (PRelativeName partialName) partialVars partialArgs _ _)] -> Just $ Object m' TypeObj (fmap toMeta partialVars') (fmap (\arg -> (Meta arg Nothing emptyMetaDat, Nothing)) partialArgs) Nothing (addPath inheritPath partialName)
     where
       ptName' = PTypeName $ addPath inheritPath partialName
       partialVars' = fmap (substituteVarsWithVarEnv varReplaceMap) partialVars
@@ -304,7 +304,7 @@ desClassDef statementEnv@(inheritPath, _) sealed ((typeName, typeVars), classNam
     path' =  case path of
       Absolute p -> p
       Relative p -> inheritPath ++ "/" ++ p
-    classGraph = ClassGraph $ graphFromEdges [(CGClass (sealed, H.empty, [singletonType (PartialType (PRelativeName typeName) typeVars H.empty H.empty [] PtArgExact)], desObjDocComment subStatements, path'), className, [typeName])]
+    classGraph = ClassGraph $ graphFromEdges [(CGClass (sealed, H.empty, [singletonType (PartialType (PRelativeName typeName) typeVars H.empty [] PtArgExact)], desObjDocComment subStatements, path'), className, [typeName])]
     (subPrgm, _) = desInheritingSubstatements statementEnv path subStatements
 
 emptyClassGraph :: ClassGraph

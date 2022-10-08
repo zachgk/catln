@@ -263,9 +263,8 @@ verifyScheme classGraph (Meta _ _ (VarMetaDat _ mobj)) (TypeCheckResult _ (SType
     verifyTypeVars venv (UnionType partialLeafs) = all (verifyTypeVarsPartial venv) $ splitUnionType partialLeafs
     verifyTypeVars venv (TypeVar (TVVar v)) = isJust $ suffixLookup v venv
     verifyTypeVars _ _ = True
-    verifyTypeVarsPartial venv PartialType{ptVars, ptArgs, ptProps} = all (verifyTypeVars venv) ptVars
+    verifyTypeVarsPartial venv PartialType{ptVars, ptArgs} = all (verifyTypeVars venv) ptVars
                                                                         && all (verifyTypeVars (H.keys ptVars)) ptArgs
-                                                                        && all (verifyTypeVars (H.keys ptVars)) ptProps
 
     mobjVars (Just o) = H.keys $ objAppliedVars o
     mobjVars Nothing  = []

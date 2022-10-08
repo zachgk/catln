@@ -51,7 +51,7 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, classGraph
     mapType reqResolve (UnionType partials) = unionAllTypes classGraph $ map (singletonType . mapPartial) $ splitUnionType partials
       where
         mapPartial :: PartialType -> PartialType
-        mapPartial (PartialType (PRelativeName name) partialVars partialProps partialArgs partialPreds partialArgMode) = PartialType name' (fmap (mapType reqResolve) partialVars) (fmap (mapType reqResolve) partialProps) (fmap (mapType reqResolve) partialArgs) (map mapPartial partialPreds) partialArgMode
+        mapPartial (PartialType (PRelativeName name) partialVars partialArgs partialPreds partialArgMode) = PartialType name' (fmap (mapType reqResolve) partialVars) (fmap (mapType reqResolve) partialArgs) (map mapPartial partialPreds) partialArgMode
           where name' = case (reqResolve, relativeNameFilter name classNames, relativeNameFilter name objNames) of
                   -- is a class, replace with class type
                   (_, [className], []) -> PClassName className
@@ -67,9 +67,8 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, classGraph
 
                   (False, _, _) -> PRelativeName name
                   (True, foundTypeNames, foundClassNames) -> error $ printf "Could not resolve required name: %s \n\t Found possible typeNames: %s \n\t Found possible classNames: %s" name (show foundTypeNames) (show foundClassNames)
-        mapPartial partial@PartialType{ptVars, ptProps, ptArgs, ptPreds} = partial{
+        mapPartial partial@PartialType{ptVars, ptArgs, ptPreds} = partial{
           ptVars = fmap (mapType reqResolve) ptVars,
-          ptProps = fmap (mapType reqResolve) ptProps,
           ptArgs = fmap (mapType reqResolve) ptArgs,
           ptPreds = fmap mapPartial ptPreds
                                                                                                                       }

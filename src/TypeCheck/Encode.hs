@@ -242,7 +242,7 @@ fromObject prefix isObjArg env (Object m basis vars args doc path) = do
   (objValue, env4) <- fromMeta env3 BUpper (Just obj') (Meta (singletonType (partialVal (PTypeName path))) (labelPos "objValue" $ getMetaPos m) emptyMetaDat) ("objValue" ++ path)
   let env5 = fInsert env4 path (DefVar objValue)
   let env6 = addConstraints env5 [BoundedByObjs m' | isObjArg]
-  let env7 = addConstraints env6 [BoundedByKnown m' (singletonType (PartialType (PTypeName path) (fmap (const TopType) vars) H.empty (fmap (const TopType) args) [] PtArgExact)) | basis == FunctionObj || basis == PatternObj]
+  let env7 = addConstraints env6 [BoundedByKnown m' (singletonType (PartialType (PTypeName path) (fmap (const TopType) vars) (fmap (const TopType) args) [] PtArgExact)) | basis == FunctionObj || basis == PatternObj]
   return (obj', env7)
 
 -- Add all of the objects first for various expressions that call other top level functions
