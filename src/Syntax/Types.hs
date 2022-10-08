@@ -68,11 +68,12 @@ data PartialType = PartialType {
   ptVars    :: H.HashMap TypeVarName Type,
   ptProps   :: H.HashMap (TypeName, TypePropName) Type,
   ptArgs    :: H.HashMap ArgName Type,
+  ptPreds   :: [PartialType],
   ptArgMode :: PtArgMode
   } deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 -- | The non-name properties of a 'PartialType'
-type PartialArgsOption = (H.HashMap TypeVarName Type, H.HashMap (TypeName, TypePropName) Type, H.HashMap ArgName Type, PtArgMode)
+type PartialArgsOption = (H.HashMap TypeVarName Type, H.HashMap (TypeName, TypePropName) Type, H.HashMap ArgName Type, [PartialType], PtArgMode)
 
 -- | An alternative format for many 'PartialType's which combine those that share the same name
 type PartialLeafs = (H.HashMap PartialName (S.HashSet PartialArgsOption))
@@ -121,7 +122,7 @@ type TypeVarEnv = H.HashMap TypeVarName Type
 type TypeArgEnv = H.HashMap ArgName Type
 
 instance Show PartialType where
-  show (PartialType ptName ptVars ptProps ptArgs _) = concat [showName ptName, showTypeVars ptVars, showProps ptProps, showArgs ptArgs]
+  show (PartialType ptName ptVars ptProps ptArgs ptPreds _) = concat [showName ptName, showTypeVars ptVars, showProps ptProps, showArgs ptArgs, showPreds ptPreds]
     where
       showName p  = fromPartialName p
       showArg (argName, argVal) = argName ++ "=" ++ show argVal
@@ -132,6 +133,8 @@ instance Show PartialType where
       showProps props = printf "[%s]" (intercalate ", " $ map showProp $ H.toList props)
       showArgs args | H.null args = ""
       showArgs args = printf "(%s)" (intercalate ", " $ map showArg $ H.toList args)
+      showPreds preds | null preds = ""
+      showPreds preds = printf "| %s" (intercalate ", " $ map show preds)
 
 instance Show Type where
   show TopType = "TopType"
@@ -168,12 +171,12 @@ listClassNames (ClassGraph graphData) = map snd3 $ filter isClass $ graphToNodes
 
 -- | Defines some of the standard types used elsewhere in the compiler as 'PartialType'
 intLeaf, floatLeaf, trueLeaf, falseLeaf, strLeaf, ioLeaf :: PartialType
-intLeaf = PartialType (PTypeName "/Data/Primitive/Integer") H.empty H.empty H.empty PtArgExact
-floatLeaf = PartialType (PTypeName "/Data/Primitive/Float") H.empty H.empty H.empty PtArgExact
-trueLeaf = PartialType (PTypeName "/Data/Primitive/True") H.empty H.empty H.empty PtArgExact
-falseLeaf = PartialType (PTypeName "/Data/Primitive/False") H.empty H.empty H.empty PtArgExact
-strLeaf = PartialType (PTypeName "/Data/String") H.empty H.empty H.empty PtArgExact
-ioLeaf = PartialType (PTypeName "/Catln/IO") H.empty H.empty H.empty PtArgExact
+intLeaf = partialVal (PTypeName "/Data/Primitive/Integer")
+floatLeaf = partialVal (PTypeName "/Data/Primitive/Float")
+trueLeaf = partialVal (PTypeName "/Data/Primitive/True")
+falseLeaf = partialVal (PTypeName "/Data/Primitive/False")
+strLeaf = partialVal (PTypeName "/Data/String")
+ioLeaf = partialVal (PTypeName "/Catln/IO")
 
 -- | Defines some of the standard types used elsewhere in the compiler as 'Type'
 intType, floatType, boolType, strType, ioType :: Type
@@ -210,21 +213,21 @@ fromPartialName (PRelativeName n) = n
 -- | Used to convert a 'UnionType' into its components
 splitUnionType :: PartialLeafs -> [PartialType]
 splitUnionType partials = concatMap (\(k, vs) -> map (aux k) vs) $ H.toList $ fmap S.toList partials
-  where aux name (vars, props, args, argMode) = PartialType name vars props args argMode
+  where aux name (vars, props, args, preds, argMode) = PartialType name vars props args preds argMode
 
 -- | Used to combine the component 'PartialType' to form a 'UnionType'
 joinUnionType :: [PartialType] -> PartialLeafs
-joinUnionType = foldr (\(PartialType pName pVars pProps pArgs pArgMode) partials -> H.insertWith S.union pName (S.singleton (pVars, pProps, pArgs, pArgMode)) partials) H.empty
+joinUnionType = foldr (\(PartialType pName pVars pProps pArgs pPreds pArgMode) partials -> H.insertWith S.union pName (S.singleton (pVars, pProps, pArgs, pPreds, pArgMode)) partials) H.empty
 
 -- | Used to convert a 'UnionType' into its components while keeping types with the same name together
 splitUnionTypeByName :: PartialLeafs -> H.HashMap PartialName [PartialType]
 splitUnionTypeByName = H.mapWithKey (\k vs -> map (aux k) (S.toList vs))
-  where aux name (vars, props, args, argMode) = PartialType name vars props args argMode
+  where aux name (vars, props, args, preds, argMode) = PartialType name vars props args preds argMode
 
 -- | Used to combine the component 'PartialType' to form a 'UnionType' while keeping types with the same name together
 joinUnionTypeByName :: H.HashMap PartialName [PartialType] -> PartialLeafs
 joinUnionTypeByName = H.map (S.fromList . map typeToArgOption)
-  where typeToArgOption (PartialType _ pVars pProps pArgs pArgMode) = (pVars, pProps, pArgs, pArgMode)
+  where typeToArgOption (PartialType _ pVars pProps pArgs pPreds pArgMode) = (pVars, pProps, pArgs, pPreds, pArgMode)
 
 -- | Helper to create a 'UnionType' consisting of a single 'PartialType'
 singletonType :: PartialType -> Type
@@ -232,7 +235,7 @@ singletonType partial = UnionType $ joinUnionType [partial]
 
 -- | Helper to create a 'PartialType' for a value (no args, no vars)
 partialVal :: PartialName -> PartialType
-partialVal n = PartialType n H.empty H.empty H.empty PtArgExact
+partialVal n = PartialType n H.empty H.empty H.empty [] PtArgExact
 
 -- | Helper to create a 'Type' for a value (no args, no vars)
 typeVal :: PartialName -> Type
@@ -360,9 +363,10 @@ compactJoinPartials classGraph partials = joinUnionType $ concat $ H.elems $ fma
       Nothing     -> joinMatchArgPartialsAux curPartial toTrys (toTry:tried)
 
     -- if two partials differ by only one arg or var, joins them else Nothing
-    tryJoin (PartialType name1 vars1 props1 args1 mode1) (PartialType _ vars2 props2 args2 _) = if numDifferences args1 args2 + numDifferences vars1 vars2 == 1
-      then Just $ PartialType name1 (joinMap vars1 vars2) (joinMap props1 props2) (joinMap args1 args2) mode1
+    tryJoin (PartialType name1 vars1 props1 args1 [] mode1) (PartialType _ vars2 props2 args2 [] _) = if numDifferences args1 args2 + numDifferences vars1 vars2 == 1
+      then Just $ PartialType name1 (joinMap vars1 vars2) (joinMap props1 props2) (joinMap args1 args2) [] mode1
       else Nothing
+    tryJoin _ _ = Nothing
 
     numDifferences m1 m2 = sum $ fromEnum <$> H.intersectionWith (/=) m1 m2
     joinMap m1 m2 = H.unionWith (unionTypes classGraph) m1 m2
@@ -421,7 +425,7 @@ intersectPartialName _ _                           = Nothing
 intersectPartialsBase :: ClassGraph -> TypeVarEnv -> PartialType -> PartialType -> Maybe (TypeVarEnv, [PartialType])
 intersectPartialsBase _ _ PartialType{ptName=aName} PartialType{ptName=bName} | isNothing (intersectPartialName aName bName) = Nothing
 intersectPartialsBase _ _ PartialType{ptArgs=aArgs, ptArgMode=aArgMode} PartialType{ptArgs=bArgs, ptArgMode=bArgMode} | aArgMode == PtArgExact && bArgMode == PtArgExact && H.keysSet aArgs /= H.keysSet bArgs = Nothing
-intersectPartialsBase classGraph venv (PartialType aName aVars aProps aArgs aArgMode) (PartialType bName bVars bProps bArgs bArgMode) = do
+intersectPartialsBase classGraph venv (PartialType aName aVars aProps aArgs aPreds aArgMode) (PartialType bName bVars bProps bArgs bPreds bArgMode) = do
   (varsVenvs, vars') <- unzip <$> intersectMap H.empty aVars bVars
   (propsVenvs, props') <- unzip <$> intersectMap venv aProps bProps
   (argsVenvs, args') <- unzip <$> intersectMap venv aArgs bArgs
@@ -431,7 +435,8 @@ intersectPartialsBase classGraph venv (PartialType aName aVars aProps aArgs aArg
         (_, PtArgAny)            -> PtArgAny
         (PtArgExact, PtArgExact) -> PtArgExact
   let name' = fromJust $ intersectPartialName aName bName
-  return (mergeAllVarEnvs classGraph varsVenvs, [PartialType name' venvs' props' args' argMode'])
+  let preds' = aPreds ++ bPreds
+  return (mergeAllVarEnvs classGraph varsVenvs, [PartialType name' venvs' props' args' preds' argMode'])
   where
     -- intersectMap unions so that all typeVars or props from either a or b are kept
     intersectMap vev a b = traverse subValidate $ H.unionWith subUnion (fmap (vev,) a) (fmap (vev,) b)
@@ -488,7 +493,7 @@ powersetType classGraph (UnionType partials) = compactType classGraph $ UnionTyp
   where
     partials' = joinUnionType $ concatMap fromPartialType $ splitUnionType partials
     fromArgs args = powerset $ H.toList args
-    fromPartialType (PartialType name vars props args argMode) = [PartialType name vars (H.fromList p) (H.fromList a) argMode | p <- fromArgs props, a <- fromArgs args]
+    fromPartialType (PartialType name vars props args _ argMode) = [PartialType name vars (H.fromList p) (H.fromList a) [] argMode | p <- fromArgs props, a <- fromArgs args]
 
 -- |
 -- Combines two 'TypeVarEnv' to form the one applying the knowledge from both

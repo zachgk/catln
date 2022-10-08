@@ -223,7 +223,7 @@ pContextElSuffix = do
   tp <- tidentifier
   arg <- identifier
   pos2 <- getSourcePos
-  return (arg, Meta (singletonType (PartialType (PRelativeName tp) H.empty H.empty H.empty PtArgExact)) (Just (pos1, pos2, "")) emptyMetaDat)
+  return (arg, Meta (singletonType (partialVal (PRelativeName tp))) (Just (pos1, pos2, "")) emptyMetaDat)
 
 pContextSuffix :: Parser TermSuffix
 pContextSuffix = do
@@ -309,7 +309,7 @@ pTypeArg = do
   argName <- identifier
   _ <- symbol "="
   tp <- tidentifier
-  return (argName, singletonType (PartialType (PRelativeName tp) H.empty H.empty H.empty PtArgExact))
+  return (argName, singletonType (partialVal (PRelativeName tp)))
 
 pTypeVar :: Parser Type
 pTypeVar = TypeVar . TVVar <$> tvar
@@ -322,7 +322,7 @@ pLeafType = do
   maybeArgs <- optional $ parens (sepBy1 pTypeArg (symbol ","))
   let vars = maybe H.empty H.fromList maybeVars
   let args = maybe H.empty H.fromList maybeArgs
-  return (PartialType (PRelativeName name) vars H.empty args PtArgExact)
+  return ((partialVal (PRelativeName name)){ptVars=vars, ptArgs=args})
 
 pSingleType :: Parser Type
 pSingleType = pTypeVar

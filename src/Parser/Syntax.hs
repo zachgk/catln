@@ -70,7 +70,7 @@ fromMaybeTypeName :: Maybe TypeName -> Type
 fromMaybeTypeName = maybe TopType fromName
   where
     fromName n | "$" `isPrefixOf` n = TypeVar $ TVVar n
-    fromName n = singletonType (PartialType (PRelativeName n) H.empty H.empty H.empty PtArgExact)
+    fromName n = singletonType (partialVal (PRelativeName n))
 
 emptyMeta :: SourcePos -> SourcePos -> ParseMeta
 emptyMeta p1 p2 = Meta TopType (Just (p1, p2, "")) emptyMetaDat
@@ -85,7 +85,7 @@ getPath name = if isAbsolutePath name then
 
 rawVal :: String -> PExpr
 rawVal name = RawValue m name
-  where m = Meta (singletonType $ PartialType (PTypeName name) H.empty H.empty H.empty PtArgExact) Nothing emptyMetaDat
+  where m = Meta (singletonType $ partialVal (PTypeName name)) Nothing emptyMetaDat
 
 applyRawArgs :: (MetaDat m) => RawExpr m -> [(Maybe ArgName, RawExpr m)] -> RawExpr m
 applyRawArgs base args = RawTupleApply (emptyMetaE "app" base) (emptyMetaE "base" base, base) (map mapArg args)

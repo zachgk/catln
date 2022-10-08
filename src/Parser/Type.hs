@@ -30,7 +30,7 @@ pLeafVar = do
   -- TODO: Should support multiple class identifiers such as <Eq Ord $T>
   maybeClass <- optional tidentifier
   var <- tvar
-  let tp = maybe TopType (\n -> singletonType (PartialType (PRelativeName n) H.empty H.empty H.empty PtArgExact)) maybeClass
+  let tp = maybe TopType (singletonType . partialVal . PRelativeName) maybeClass
   return (var, tp)
 
 pTypeVar :: Parser (TypeVarName, Type)
@@ -50,7 +50,7 @@ pIdArg = do
   let vars = maybe H.empty H.fromList maybeVars
   argName <- identifier
   -- Use PRelativeName for now and replace with classes during Desugarf.Passes.typeNameToClass
-  return (argName, singletonType (PartialType (PRelativeName tp) vars H.empty H.empty PtArgExact))
+  return (argName, singletonType (partialVal (PRelativeName tp)){ptVars=vars})
 
 pVarArg :: Parser (String, Type)
 pVarArg = do
@@ -81,7 +81,7 @@ pLeafType mode = do
   let vars = maybe H.empty H.fromList maybeVars
   let args = maybe H.empty H.fromList maybeArgs
   -- Use PRelativeName for now and replace with classes during Desugarf.Passes.typeNameToClass
-  let tp = Meta (singletonType (PartialType (PRelativeName name) vars H.empty args PtArgExact)) (Just (pos1, pos2, "")) emptyMetaDat
+  let tp = Meta (singletonType ((partialVal (PRelativeName name)){ptVars=vars, ptArgs=args})) (Just (pos1, pos2, "")) emptyMetaDat
   return tp
 
 -- Parses the options for a sealed class definition

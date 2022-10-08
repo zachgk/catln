@@ -58,7 +58,7 @@ parsingRepl env source = case parseRepl source of
 mainStatement :: RawExpr () -> RawStatementTree ()
 mainStatement expr = RawStatementTree (RawDeclStatement (RawDecl lhs (Just wrappedExpr))) []
   where
-    lhs = DeclLHS emptyMetaN (Pattern (Object emptyMetaN FunctionObj H.empty (H.singleton "io" (Meta (singletonType (PartialType (PTypeName "IO") H.empty H.empty H.empty PtArgAny)) Nothing emptyMetaDat, Nothing)) Nothing "/main") NoGuard)
+    lhs = DeclLHS emptyMetaN (Pattern (Object emptyMetaN FunctionObj H.empty (H.singleton "io" (Meta (singletonType (PartialType (PTypeName "IO") H.empty H.empty H.empty [] PtArgAny)) Nothing emptyMetaDat, Nothing)) Nothing "/main") NoGuard)
     wrappedExpr = RawMethod (RawValue emptyMetaN "io") (RawTupleApply emptyMetaN (emptyMetaN, RawValue emptyMetaN "println") [TupleArgIO emptyMetaN "msg" (RawMethod expr (RawValue emptyMetaN "toString"))])
 
 

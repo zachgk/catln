@@ -35,7 +35,7 @@ eApply baseExpr argName argExpr = TupleApply m (getExprMeta baseExpr, baseExpr) 
 
 eVal :: String -> EExpr
 eVal name = Value m name
-  where m = Meta (singletonType $ PartialType (PTypeName name) H.empty H.empty H.empty PtArgExact) Nothing emptyMetaDat
+  where m = Meta (singletonType $ partialVal (PTypeName name)) Nothing emptyMetaDat
 
 getExprPartialType :: EExpr -> PartialType
 getExprPartialType expr = case getExprType expr of

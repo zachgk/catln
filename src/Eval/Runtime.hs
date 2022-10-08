@@ -40,7 +40,7 @@ liftIntOp :: TypeName -> (Integer -> Integer -> Integer) -> Op
 liftIntOp name f = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "/operator" ++ name
-    srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("l", intType), ("r", intType)]) PtArgExact
+    srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("l", intType), ("r", intType)]) [] PtArgExact
     resType = intType
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "l" args, H.lookup "r" args) of
                            (Just (IntVal l), Just (IntVal r)) -> IntVal $ f l r
@@ -51,7 +51,7 @@ liftCmpOp :: TypeName -> (Integer -> Integer -> Bool) -> Op
 liftCmpOp name f = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "/operator" ++ name
-    srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("l", intType), ("r", intType)]) PtArgExact
+    srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("l", intType), ("r", intType)]) [] PtArgExact
     resType = boolType
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "l" args, H.lookup "r" args) of
                            (Just (IntVal l), Just (IntVal r)) -> bool $ f l r
@@ -62,7 +62,7 @@ rneg :: TypeName -> Op
 rneg name = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "/operator" ++ name
-    srcType = PartialType (PTypeName name') H.empty H.empty (H.singleton "a" intType) PtArgExact
+    srcType = PartialType (PTypeName name') H.empty H.empty (H.singleton "a" intType) [] PtArgExact
     resType = intType
     prim = EPrim srcType NoGuard (\args -> case H.lookup "a" args of
                                   Just (IntVal i) -> IntVal $ -i
@@ -73,7 +73,7 @@ strEq :: Op
 strEq = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "/operator=="
-    srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("l", strType), ("r", strType)]) PtArgExact
+    srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("l", strType), ("r", strType)]) [] PtArgExact
     resType = boolType
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "l" args, H.lookup "r" args) of
                                   (Just (StrVal l), Just (StrVal r)) -> bool $ l == r
@@ -84,7 +84,7 @@ intToString :: Op
 intToString = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "/Data/toString"
-    srcType = PartialType (PTypeName name') H.empty H.empty (H.singleton "this" intType) PtArgExact
+    srcType = PartialType (PTypeName name') H.empty H.empty (H.singleton "this" intType) [] PtArgExact
     resType = strType
     prim = EPrim srcType NoGuard (\args -> case H.lookup "this" args of
                                   (Just (IntVal val)) -> StrVal $ show val
@@ -96,7 +96,7 @@ ioExit :: Op
 ioExit = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "/Catln/exit"
-    srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("this", ioType), ("val", intType)]) PtArgExact
+    srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("this", ioType), ("val", intType)]) [] PtArgExact
     resType = ioType
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "this" args, H.lookup "val" args) of
                                   (Just (IOVal _ io), Just (IntVal val)) -> IOVal val io
@@ -107,7 +107,7 @@ println :: Op
 println = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
   where
     name' = "/Catln/println"
-    srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("this", ioType), ("msg", strType)]) PtArgExact
+    srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("this", ioType), ("msg", strType)]) [] PtArgExact
     resType = ioType
     prim = EPrim srcType NoGuard (\args -> case (H.lookup "this" args, H.lookup "msg" args) of
                                   (Just (IOVal r io), Just (StrVal msg)) -> IOVal r (io >> putStrLn msg)
@@ -118,7 +118,7 @@ llvm :: Op
 llvm = (name', [(srcType, NoGuard, aux)])
   where
     name' = "/Catln/llvm"
-    srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("c", TopType)]) PtArgExact
+    srcType = PartialType (PTypeName name') H.empty H.empty (H.fromList [("c", TopType)]) [] PtArgExact
     aux a = MacroArrow a (singletonType resultLeaf) (MacroFunction macroBuild)
     macroBuild input MacroData{mdTbEnv, mdObj, mdObjSrcType} = do
       input' <- resolveTree mdTbEnv (mdObjSrcType, mdObj) input
@@ -131,8 +131,8 @@ llvm = (name', [(srcType, NoGuard, aux)])
       where
         buildName functionToCodegen = do
           let TBEnv{tbPrgm} = mdTbEnv
-          let codegenSrcTypeInner = singletonType $ PartialType (PTypeName functionToCodegen) H.empty H.empty H.empty PtArgExact
-          let codegenSrcType = PartialType (PTypeName "/Catln/Context") H.empty H.empty (H.fromList [("value", codegenSrcTypeInner), ("io", ioType)]) PtArgExact
+          let codegenSrcTypeInner = singletonType $ PartialType (PTypeName functionToCodegen) H.empty H.empty H.empty [] PtArgExact
+          let codegenSrcType = PartialType (PTypeName "/Catln/Context") H.empty H.empty (H.fromList [("value", codegenSrcTypeInner), ("io", ioType)]) [] PtArgExact
           return $ ConstantArrow $ LLVMVal $ codegenPrgm (eVal functionToCodegen) codegenSrcType ioType tbPrgm
 
 primEnv :: ResBuildEnv

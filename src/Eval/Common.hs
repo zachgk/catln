@@ -142,8 +142,8 @@ instance ToJSON Val where
   toJSON NoVal = object ["tag".=("NoVal" :: String)]
 
 resultLeaf, queueLeaf :: PartialType
-resultLeaf = PartialType (PTypeName "/Catln/CatlnResult") H.empty H.empty (H.fromList [("name", strType), ("contents", strType)]) PtArgExact
-queueLeaf = PartialType (PTypeName "llvmQueue") H.empty H.empty H.empty PtArgExact
+resultLeaf = (partialVal (PTypeName "/Catln/CatlnResult")){ptArgs=H.fromList [("name", strType), ("contents", strType)]}
+queueLeaf = partialVal (PTypeName "llvmQueue")
 
 resultType :: Type
 resultType = singletonType resultLeaf
@@ -152,7 +152,7 @@ getValType :: Val -> PartialType
 getValType IntVal{} = intLeaf
 getValType FloatVal{} = floatLeaf
 getValType StrVal{} = strLeaf
-getValType (TupleVal name args) = PartialType (PTypeName name) H.empty H.empty (fmap fromArg args) PtArgExact
+getValType (TupleVal name args) = (partialVal (PTypeName name)){ptArgs=fmap fromArg args}
   where fromArg arg = singletonType $ getValType arg
 getValType IOVal{} = ioLeaf
 getValType LLVMVal{} = resultLeaf
