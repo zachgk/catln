@@ -21,7 +21,6 @@ import           Text.Megaparsec            hiding (pos1)
 import qualified Text.Megaparsec.Char.Lexer as L
 
 import           Constants
-import           Data.Either
 import           Data.List
 import           Semantics
 import           Semantics.Prgm
@@ -31,6 +30,7 @@ import           Syntax.Ct.Parser.Lexer
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 import           Text.Megaparsec.Char
+import           Text.Printf
 
 pCompAnnot :: Parser PCompAnnot
 pCompAnnot = do
@@ -68,57 +68,27 @@ pComment = do
       l <- takeLine
       return (L.IndentMany Nothing (\ls -> return $ intercalate "\n" (l:ls)) takeLine)
 
+pDeclStatement :: Parser PStatement
+pDeclStatement = do
+  lhs <- pDeclLHS
+  eqAndExpr <- optional $ do
+    _ <- symbol "=>" <|> symbol "="
+    optional $ try $ pExpr ParseOutputExpr
+  case eqAndExpr of
+    -- No equals (declaration or expression)
+    Nothing -> case lhs of
 
-data TreeRes
-  = TRDecl (PDecl, [PStatementTree])
-  | TRExpr PExpr
-  | TRAnnot PCompAnnot
-  deriving (Show)
+      -- expression
+      DeclLHS lhsM (Pattern lhsObj NoGuard) | getMetaType lhsM == TopType -> return $ RawExprStatement (eobjExpr lhsObj)
 
-validDeclTree :: [TreeRes] -> Either String ([PStatementTree], PExpr)
-validDeclTree = aux ([], Nothing)
-  where
-    aux (_, Nothing) [] = Left "No expression found. The declaration must contain an expression"
-    aux (subSt, Just expr) [] = Right (subSt, expr)
-    aux (subSt, maybeExpr) ((TRDecl (decl, declStatements)):trs) = aux (RawStatementTree (RawDeclStatement decl) declStatements:subSt, maybeExpr) trs
-    aux (subSt, maybeExpr) ((TRAnnot annot):trs) = aux (RawStatementTree (RawAnnot annot) []:subSt, maybeExpr) trs
-    aux (subSt, Nothing) ((TRExpr expr):trs) = aux (subSt, Just expr) trs
-    aux (_, Just{}) ((TRExpr _):_) = Left "Multiple expressions found. The declaration should only have one expression line"
+      -- Declaration
+      DeclLHS lhsM _ | getMetaType lhsM /= TopType -> return $ RawDeclStatement $ RawDecl lhs Nothing
 
--- Used to verify only annotations or comments used for declarations and single line definitions
-validSubStatementInSingle :: TreeRes -> Either String PStatementTree
-validSubStatementInSingle TRDecl{} = Left "Found an unexpected subDefinition when the expression is defined in a single line."
-validSubStatementInSingle TRExpr{} = Left "Found an unexpected subExpression when the expression is defined in a single line."
-validSubStatementInSingle (TRAnnot annot) = return $ RawStatementTree (RawAnnot annot) []
+      -- Must be either a declaration or an expression
+      _ -> fail $ printf "Invalid declaration or expression: %s" (show lhs)
 
-pDeclTree :: Parser (PDecl, [PStatementTree])
-pDeclTree = L.indentBlock scn p
-  where
-    pack lhs maybeSingleExpr children = case maybeSingleExpr of
-      Just (Just singleExpr) -> -- fun(...) = expr
-        case partitionEithers $ map validSubStatementInSingle children of
-          ([], subStatements) -> return (RawDecl lhs (Just singleExpr), subStatements)
-          (err:_, _) -> fail err
-      Just Nothing -> -- fun(...) = \n defined in next lines
-        case validDeclTree children of
-          Right (subStatements, expr) -> return (RawDecl lhs (Just expr), subStatements)
-          Left err -> fail err
-      Nothing -> -- fun(...) -> retType   -- Declaration only
-        case partitionEithers $ map validSubStatementInSingle children of
-          ([], subStatements) -> case lhs of
-            (DeclLHS arrMeta _) | getMetaType arrMeta == TopType -> fail "Declaration must include an arrow or an equals"
-            _ -> return (RawDecl lhs Nothing, subStatements)
-          (err:_, _) -> fail err
-    childParser :: Parser TreeRes
-    childParser = try (TRDecl <$> pDeclTree) <|>  try (TRAnnot <$> pComment) <|> try (TRAnnot <$> pCompAnnot) <|> (TRExpr <$> pExpr ParseOutputExpr)
-    p = do
-      lhs <- pDeclLHS
-      eqAndExpr <- optional $ do
-        _ <- symbol "="
-        optional . try $ pExpr ParseOutputExpr
-      return (L.IndentMany Nothing (pack lhs eqAndExpr) childParser)
+    -- Equals but no expr (multi-line definition)
+    Just Nothing -> return $ RawDeclStatement $ RawDecl lhs (Just $ rawVal nestedDeclaration)
 
-pRootDecl :: Parser PStatementTree
-pRootDecl = do
-  (decl, statements) <- pDeclTree
-  return $ RawStatementTree (RawDeclStatement decl) statements
+    -- Equals and expr (inline definition)
+    Just (Just expr) -> return $ RawDeclStatement $ RawDecl lhs (Just expr)

@@ -160,13 +160,6 @@ pCase exprMode = do
   pos2 <- getSourcePos
   return $ RawCase (emptyMeta pos1 pos2) expr matchItems
 
-pMatch :: ExprParseMode -> Parser PExpr
-pMatch exprMode = do
-  pos1 <- getSourcePos
-  (expr, matchItems) <- pMatchCaseHelper exprMode "match"
-  pos2 <- getSourcePos
-  return $ RawMatch (emptyMeta pos1 pos2) expr matchItems
-
 data TermSuffix
   = MethodSuffix ParseMeta TypeName
   | ArgsSuffix ParseMeta [PTupleArg]
@@ -278,7 +271,6 @@ applyTermSuffix base (AliasSuffix m n) = RawAliasExpr base (RawValue m n)
 term :: ExprParseMode -> Parser PExpr
 term exprMode = do
   base <- (if exprMode == ParseOutputExpr then pIfThenElse exprMode
-        <|> pMatch exprMode
         <|> pCase exprMode
         <|> parenExpr exprMode
         else parenExpr exprMode)

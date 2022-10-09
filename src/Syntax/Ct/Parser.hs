@@ -67,7 +67,7 @@ pStatementTree = liftPStatement pTypeStatement
     <|> pCommentStatement
     <|> liftPStatement (RawAnnot <$> pCompAnnot)
     <|> liftPStatement pModule
-    <|> pRootDecl
+    <|> liftPStatement pDeclStatement
 
 pNothingNewline :: Parser (Maybe a)
 pNothingNewline = do

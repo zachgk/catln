@@ -15,3 +15,6 @@ module Constants where
 mdAnnot, mdAnnotText :: String
 mdAnnot = "/Catln/#md"
 mdAnnotText = "text"
+
+nestedDeclaration :: String
+nestedDeclaration = "/Catln/nestedDeclaration"

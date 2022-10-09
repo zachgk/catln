@@ -45,7 +45,7 @@ type PPrgm = RawPrgm ParseMetaDat
 type PPrgmGraphData = GraphData PPrgm String
 type PReplRes = ReplRes ParseMetaDat
 
-
+type PDeclTree = (PDecl, [PStatementTree])
 
 type PSExpr = Expr ParseMetaDat
 type PSCompAnnot = CompAnnot PSExpr
@@ -91,11 +91,14 @@ getPath name = if isAbsolutePath name then
 mWithType :: Type -> ParseMeta -> ParseMeta
 mWithType t (Meta _ p d) = Meta t p d
 
-rawVal :: String -> PExpr
-rawVal name = RawValue m name
-  where m = Meta (singletonType $ partialVal (PTypeName name)) Nothing emptyMetaDat
+rawVal :: (MetaDat m) => String -> RawExpr m
+rawVal = RawValue m
+  where
+    m = emptyMetaN
+    -- m = Meta (singletonType $ partialVal (PTypeName name)) Nothing emptyMetaDat
 
 applyRawArgs :: (MetaDat m) => RawExpr m -> [(Maybe ArgName, RawExpr m)] -> RawExpr m
+applyRawArgs base [] = base
 applyRawArgs base args = RawTupleApply (emptyMetaE "app" base) (emptyMetaE "base" base, base) (map mapArg args)
   where
     mapArg (Just argName, argVal) = TupleArgIO (emptyMetaE argName base) argName argVal
@@ -104,12 +107,17 @@ applyRawArgs base args = RawTupleApply (emptyMetaE "app" base) (emptyMetaE "base
 
 data IArg e = IArgNothing | IArgE (e ()) | IArgM (Meta ())
 applyRawIArgs :: PExpr -> [(ArgName, IArg RawExpr)] -> PExpr
+applyRawIArgs base [] = base
 applyRawIArgs base args = RawTupleApply (emptyMetaE "app" base) (emptyMetaE "base" base, base) (map mapArg args)
   where
     mapArg :: (ArgName, IArg RawExpr) -> TupleArg RawExpr ()
     mapArg (argName, IArgE argVal) = TupleArgIO (emptyMetaE argName base) argName argVal
     mapArg (argName, IArgM argM) = TupleArgI argM argName
     mapArg (argName, IArgNothing) = TupleArgI (emptyMetaE "noArg" base) argName
+
+applyRawExprVars :: (MetaDat m) => RawExpr m -> [(TypeVarName, Meta m)] -> RawExpr m
+applyRawExprVars base []   = base
+applyRawExprVars base vars = RawVarsApply (emptyMetaE "app" base) base vars
 
 exprVal :: (MetaDat m) => String -> Expr m
 exprVal = Value m
@@ -159,6 +167,9 @@ mapExprAppliedArg f argName (TupleApply m (bm, be) (TupleArgIO am an av)) | argN
 mapExprAppliedArg f argName (TupleApply m (bm, be) a) = TupleApply m (bm, mapExprAppliedArg f argName be) a
 mapExprAppliedArg f argName (VarApply m be an av) = VarApply m (mapExprAppliedArg f argName be) an av
 
+
+mkRawExprObj :: (MetaDat m) => ObjectBasis -> [(TypeVarName, Meta m)] -> [(Maybe ArgName, RawExpr m)] -> Maybe DocComment -> String -> ExprObject RawExpr m
+mkRawExprObj basis vars args comment path = ExprObject basis comment (rawVal path `applyRawExprVars` vars `applyRawArgs` args)
 
 mkExprObj :: (MetaDat m) => ObjectBasis -> [(TypeVarName, Meta m)] -> [(Maybe ArgName, Expr m)] -> Maybe DocComment -> String -> ExprObject Expr m
 mkExprObj basis vars args comment path = ExprObject basis comment (exprVal path `applyExprVars` vars `applyExprOArgs` args)

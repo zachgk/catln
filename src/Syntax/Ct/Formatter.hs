@@ -80,16 +80,6 @@ formatExpr indent (RawIfThenElse _ i t e) = build $ do
   literal $ formatIndent indent
   " else "
   literal $ formatExpr (indent+1) e
-formatExpr indent (RawMatch _ e items) = build $ do
-  "match "
-  literal $ formatExpr indent e
-  " of\n"
-  forM_ items $ \(itemPattern, itemOut) -> do
-    literal $ formatIndent (indent + 1)
-    literal $ formatPattern (indent + 1) itemPattern
-    " => "
-    literal $ formatExpr (indent + 1) itemOut
-    "\n"
 formatExpr indent (RawCase _ e cases) = build $ do
   "case "
   literal $ formatExpr indent e
@@ -127,6 +117,7 @@ formatStatement indent statement = do
         showClassVars = if null classVars
               then ""
               else printf "<%s>" $ intercalate ", " $ map (\(n, t) -> printf "%s = %s" n (show t)) $ H.toList classVars
+    RawExprStatement e -> literal $ formatExpr indent e
     RawAnnot annot | exprPath annot == mdAnnot -> literal $ printf "# %s" annotText'
       where
         (Just (_, Just (RawCExpr _ (CStr annotText)))) = H.lookup mdAnnotText $ exprAppliedArgsMap annot

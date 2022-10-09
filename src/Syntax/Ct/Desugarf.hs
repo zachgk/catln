@@ -15,23 +15,24 @@
 module Syntax.Ct.Desugarf where
 
 
-import           Data.Bifunctor            (first, second)
+import           Data.Bifunctor                   (first, second)
 import           Data.Either
-import qualified Data.HashMap.Strict       as H
-import qualified Data.HashSet              as S
+import qualified Data.HashMap.Strict              as H
+import qualified Data.HashSet                     as S
 import           Data.Hashable
 import           Data.Maybe
 import           Text.Printf
 
 import           CRes
 import           Constants
-import           Data.Graph                hiding (path)
+import           Data.Graph                       hiding (path)
 import           Data.List
 import           MapMeta
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Desugarf.Passes
+import           Syntax.Ct.Desugarf.Preprocessors
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 import           Utils
@@ -139,7 +140,7 @@ desObjDocComment ((RawStatementTree (RawAnnot annotExpr) _):rest) | maybeExprPat
     (Just (_, Just (RawCExpr _ (CStr annotText)))) = H.lookup mdAnnotText $ exprAppliedArgsMap annotExpr
 desObjDocComment _ = Just ""
 
-removeSubDeclarations :: (PDecl, [PStatementTree]) -> [PSemiDecl]
+removeSubDeclarations :: PDeclTree -> [PSemiDecl]
 removeSubDeclarations (RawDecl (DeclLHS arrM (Pattern obj@(ExprObject objBasis _ objExpression) guard1)) expr1, subStatements) = decl':subDecls5
   where
     objDoc = desObjDocComment subStatements
@@ -253,6 +254,10 @@ semiDesExpr :: Maybe PObject -> PExpr -> ([PSemiDecl], PSExpr)
 semiDesExpr _ (RawCExpr m c) = ([], CExpr m c)
 semiDesExpr _ (RawValue m n) = ([], Value m n)
 semiDesExpr _ (RawHoleExpr m h) = ([], HoleExpr m h)
+semiDesExpr obj (RawAliasExpr base alias) = (subBase ++ subAlias, AliasExpr base' alias')
+  where
+    (subBase, base') = semiDesExpr obj base
+    (subAlias, alias') = semiDesExpr obj alias
 semiDesExpr obj (RawTupleApply m'' (bm, be) args) = (\(a, _, TupleApply _ (bm'', be'') arg'') -> (a, TupleApply m'' (bm'', be'') arg'')) $ foldl aux (subBe, bm, be') args
   where
     (subBe, be') = semiDesExpr obj be
@@ -279,20 +284,6 @@ semiDesExpr obj@(Just jobj) r@(RawIfThenElse m i t e) = (concat [subI, subT, sub
     ifDecl = PSemiDecl (DeclLHS (emptyMetaE "obj" i) (Pattern (mkExprObj FunctionObj (H.toList $ exprAppliedVars $ eobjExpr jobj) [] Nothing condName) (IfGuard i'))) [] (Just t')
     elseDecl = PSemiDecl (DeclLHS (emptyMetaE "obj" e) (Pattern (mkExprObj FunctionObj (H.toList $ exprAppliedVars $ eobjExpr jobj) [] Nothing condName) ElseGuard)) [] (Just e')
     expr' = Value m condName
-semiDesExpr obj@(Just jobj) r@(RawMatch m e matchItems) = (subE ++ subMatchItems, expr')
-  where
-    condName = "$" ++ take 6 (printf "%08x" (hash r))
-    argName = condName ++ "-arg"
-    (subE, e') = semiDesExpr obj e
-    expr' = TupleApply m (emptyMetaM "app" m, Value (emptyMetaM "val" m) condName) (TupleArgIO (emptyMetaE "appArg" e') argName e')
-    subMatchItems = concatMap semiDesMatchItem matchItems
-    semiDesMatchItem (Pattern (ExprObject _ _ pattObjExpr) pattGuard, matchExpr) = concat [[matchItemExpr'], subPattGuard, subMatchExpr]
-      where
-        (subPattGuard, pattGuard') = semiDesGuard jobj pattGuard
-        (subMatchExpr, matchExpr') = semiDesExpr obj matchExpr
-        ([], pattObjExpr') = semiDesExpr obj pattObjExpr
-        matchArg = [(Just argName, AliasExpr (HoleExpr emptyMetaN (HoleActive Nothing)) pattObjExpr')]
-        matchItemExpr' = PSemiDecl (DeclLHS (emptyMetaM "obj" m) (Pattern (mkExprObj FunctionObj (H.toList $ exprAppliedVars $ eobjExpr jobj) matchArg Nothing condName) pattGuard')) [] (Just matchExpr')
 semiDesExpr _ (RawCase _ _ ((Pattern _ ElseGuard, _):_)) = error "Can't use elseguard in match expr"
 semiDesExpr _ (RawCase _ _ []) = error "Empty case"
 semiDesExpr obj (RawCase _ _ [(_, matchExpr)]) = semiDesExpr obj matchExpr
@@ -311,7 +302,7 @@ semiDesExpr obj@(Just jobj) r@(RawCase m e ((Pattern firstObj firstGuard, firstE
     expr' = TupleApply m (emptyMetaM "app" m, Value (emptyMetaE "val" e) condName) (TupleArgIO (emptyMetaE "appArg" e') argName e')
 semiDesExpr obj (RawList m []) = semiDesExpr obj (RawValue m "/Data/Nil")
 semiDesExpr obj (RawList m (l:ls)) = semiDesExpr obj (RawTupleApply (emptyMetaM "listApp" (getExprMeta l)) (emptyMetaM "listBase" (getExprMeta l), RawValue m "/Data/Cons") [TupleArgIO (emptyMetaE "arg" l) "head" l, TupleArgIO (emptyMetaE "argRemaining" l) "tail" (RawList m ls)])
-semiDesExpr _ _ = error "Unexpected semiDesExpr"
+semiDesExpr _ e = error $ printf "Unexpected semiDesExpr of %s" (show e)
 
 semiDesGuard :: PObject -> PGuard -> ([PSemiDecl], PSGuard)
 semiDesGuard obj (IfGuard e) = (subE, IfGuard e')
@@ -328,10 +319,11 @@ declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl (DeclLHS arrM (Pattern ob
     annots' = map (desExpr argMetaMap) annots
     arrow = Arrow arrM (desGuard argMetaMap guard) (fmap (desExpr argMetaMap) expr)
 
-desDecl :: StatementEnv -> PDecl -> [PStatementTree] -> DesPrgm
-desDecl statementEnv decl subStatements= (objMap, emptyClassGraph, [])
-  where
-    objMap = map (declToObjArrow statementEnv) $ removeSubDeclarations (decl, subStatements)
+desDecl :: StatementEnv -> PDecl -> [PStatementTree] -> CRes DesPrgm
+desDecl statementEnv decl subStatements = do
+  preprocessed <- declPreprocessors (decl, subStatements)
+  let objMap = map (declToObjArrow statementEnv) $ concatMap removeSubDeclarations preprocessed
+  return (objMap, emptyClassGraph, [])
 
 addPath :: String -> String -> String
 addPath inheritPath name = if "/" `isPrefixOf` name then
@@ -431,11 +423,12 @@ desGlobalAnnot p = case semiDesExpr undefined p of
 
 desStatement :: StatementEnv -> PStatementTree -> CRes DesPrgm
 desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree statement subStatements) = case statement of
-  RawDeclStatement decl -> return $ desDecl statementEnv decl subStatements
+  RawDeclStatement decl -> desDecl statementEnv decl subStatements
   MultiTypeDefStatement multiTypeDef path -> desMultiTypeDef statementEnv multiTypeDef subStatements path
   TypeDefStatement typeDef -> desTypeDef  statementEnv typeDef subStatements
   RawClassDefStatement classDef path -> desClassDef statementEnv False classDef subStatements path
   RawClassDeclStatement classDecls path -> desClassDecl statementEnv classDecls subStatements path
+  RawExprStatement e -> CErr [MkCNote $ GenCErr (getMetaPos $ getExprMeta e) $ printf "All expression statements should be in a nested declaration but instead found: %s" (show e)]
   RawAnnot a | null subStatements -> do
                  a' <- desGlobalAnnot a
                  return ([], emptyClassGraph, [a'])

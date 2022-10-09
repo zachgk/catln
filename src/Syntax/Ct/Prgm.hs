@@ -44,29 +44,28 @@ data RawExpr m
   | RawParen (RawExpr m)
   | RawMethod (RawExpr m) (RawExpr m) -- ^ base methodValue
   | RawIfThenElse (Meta m) (RawExpr m) (RawExpr m) (RawExpr m)
-  | RawMatch (Meta m) (RawExpr m) [(Pattern RawExpr m, RawExpr m)]
   | RawCase (Meta m) (RawExpr m) [(Pattern RawExpr m, RawExpr m)]
   | RawList (Meta m) [RawExpr m]
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 data DeclLHS e m = DeclLHS (Meta m) (Pattern e m)
-  deriving (Eq, Ord, Show, Generic, ToJSON)
+  deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 data RawDecl e m = RawDecl (DeclLHS e m) (Maybe (e m))
-  deriving (Eq, Ord, Show, Generic, ToJSON)
+  deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 newtype TypeDef m = TypeDef (RawExpr m)
-  deriving (Eq, Ord, Show, Generic, ToJSON)
+  deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 data MultiTypeDef m = MultiTypeDef ClassName (H.HashMap TypeVarName Type) [RawExpr m]
-  deriving (Eq, Ord, Show, Generic, ToJSON)
+  deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 type RawClassDef m = (RawExpr m, ClassName)
 
 type RawClassDecl = (ClassName, H.HashMap TypeVarName Type)
 
 data Path = Relative String | Absolute String
-  deriving (Eq, Ord, Show, Generic, ToJSON)
+  deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 data RawStatement e m
   = RawDeclStatement (RawDecl e m)
@@ -74,12 +73,13 @@ data RawStatement e m
   | TypeDefStatement (TypeDef m)
   | RawClassDefStatement (RawClassDef m) Path
   | RawClassDeclStatement RawClassDecl Path
+  | RawExprStatement (RawExpr m)
   | RawAnnot (CompAnnot (RawExpr m))
   | RawModule String Path
-  deriving (Eq, Ord, Show, Generic, ToJSON)
+  deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 data RawStatementTree e m = RawStatementTree (RawStatement e m) [RawStatementTree e m]
-  deriving (Eq, Ord, Show, Generic, ToJSON)
+  deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 type FileImport = String
 type RawPrgm m = ([FileImport], [RawStatementTree RawExpr m]) -- TODO: Include [Export]
@@ -103,7 +103,6 @@ instance ExprClass RawExpr where
     RawParen e            -> getExprMeta e
     RawMethod e _         -> getExprMeta e
     RawIfThenElse m _ _ _ -> m
-    RawMatch m _ _        -> m
     RawCase m _ _         -> m
     RawList m _           -> m
 
