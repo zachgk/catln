@@ -186,7 +186,8 @@ executeConstraint env@FEnv{feUnionAllObjs, feClassGraph} (BoundedByObjs pnt) = d
       -- but a subset of the arguments in that type
       let ub' = intersectTypes feClassGraph ub boundUb
       let scheme' = return $ SType ub' lb desc
-      let env' = setScheme env pnt scheme' $ printf "BoundedByObjs for %s\nBound: %s\n" (show ub) (show boundUb)
+      -- let env' = setScheme env pnt scheme' $ printf "BoundedByObjs for %s\nBound: %s\n" (show ub) (show boundUb)
+      let env' = setScheme env pnt scheme' $ printf "BoundedByObjs for %s\n" (show ub)
       (isSolved scheme', env')
 executeConstraint env (ArrowTo srcPnt destPnt) = do
   let srcScheme = descriptor env srcPnt

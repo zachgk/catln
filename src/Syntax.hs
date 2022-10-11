@@ -129,6 +129,12 @@ rawExprToObj basis doc (RawVarsApply _ baseExpr vars) = baseObj{deprecatedObjVar
     baseObj = rawExprToObj basis doc baseExpr
 rawExprToObj _ _ e = error $ printf "Not yet implemented rawExprToObj: %s" (show e)
 
+asExprObjMap :: (MetaDat m) => ObjectMap Expr m -> ExprObjectMap Expr m
+asExprObjMap = map asExprObjectMapItem
+  where
+    asExprObjectMapItem (obj, annots, arr) = (asExprObject obj, annots, arr)
+    asExprObject obj@Object{objBasis, objDoc} = ExprObject objBasis objDoc (objExpr obj)
+
 type ArgMetaMap m = H.HashMap ArgName (Meta m)
 -- |
 -- The 'formArgMetaMap' produces a map from the argument name to argument meta.

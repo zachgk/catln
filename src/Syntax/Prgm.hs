@@ -153,7 +153,7 @@ data ObjectBasis = FunctionObj | TypeObj | PatternObj | MatchObj
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 -- |
 -- Represents an input.
--- The current plan is to deprecate objM, objVars, objArgs, and objPath and replace them with objExpr. TODO Deprecate the rest.
+-- The current plan is to deprecate objM, objVars, objArgs, and objPath and replace them with objExpr. TODO Deprecate the rest (or replace with 'ExprObject').
 data Object m = Object {
   deprecatedObjM    :: Meta m,
   objBasis          :: ObjectBasis,
@@ -164,12 +164,26 @@ data Object m = Object {
                        }
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
+-- |
+-- Represents an input.
+-- The current plan is to replace 'Object' with this, then rename this to standard Object
+data ExprObject e m = ExprObject {
+  eobjBasis :: ObjectBasis,
+  eobjDoc   :: Maybe DocComment,
+  eobjExpr  :: e m
+                       }
+  deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
+
 data Arrow e m = Arrow (Meta m) (Guard (e m)) (Maybe (e m)) -- m is result metadata
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
 type ObjectMapItem e m = (Object m, [CompAnnot (e m)], Maybe (Arrow e m))
 type ObjectMap e m = [ObjectMapItem e m]
 type Prgm e m = (ObjectMap e m, ClassGraph, [CompAnnot (e m)]) -- TODO: Include [Export]
+
+type ExprObjectMapItem e m = (ExprObject e m, [CompAnnot (e m)], Maybe (Arrow e m))
+type ExprObjectMap e m = [ExprObjectMapItem e m]
+type ExprPrgm e m = (ExprObjectMap e m, ClassGraph, [CompAnnot (e m)]) -- TODO: Include [Export]
 
 
 instance Show (Meta m) where
@@ -216,6 +230,9 @@ instance Show m => Show (Object m) where
       maybeArgsString = if H.size args == 0
         then ""
         else "(" ++ intercalate ", " (map showArg $ H.toList args) ++ ")"
+
+instance (Show (e m)) => Show (ExprObject e m) where
+  show (ExprObject basis _ e) = printf "%s %s" (show basis) (show e)
 
 instance (Show m, Show (e m)) => Show (Arrow e m) where
   show (Arrow m guard maybeExpr) = concat $ [show guard, " -> ", show m, " "] ++ showExpr maybeExpr
@@ -319,11 +336,13 @@ instance ExprClass Expr where
   getExprArg _         = Nothing
 
   maybeExprPath (Value _ n)             = Just n
+  maybeExprPath (Arg _ n)               = Just n
   maybeExprPath (TupleApply _ (_, e) _) = maybeExprPath e
   maybeExprPath (VarApply _ e _ _)      = maybeExprPath e
   maybeExprPath _                       = Nothing
 
   exprAppliedArgs (Value _ _) = []
+  exprAppliedArgs (Arg _ _) = []
   exprAppliedArgs (TupleApply _ (_, be) ae) = ae : exprAppliedArgs be
   exprAppliedArgs (VarApply _ e _ _) = exprAppliedArgs e
   exprAppliedArgs _ = error "Unsupported Expr exprAppliedArgs"
