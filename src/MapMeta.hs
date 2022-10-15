@@ -17,11 +17,23 @@ module MapMeta where
 import           Syntax.Prgm
 
 data MetaType
-  = ExprMeta
+  = ExprMeta ExprMetaType
   | ObjMeta
   | ObjArgMeta
   | ObjVarMeta
   | ArrMeta
+  deriving (Eq, Ord, Show)
+
+data ExprMetaType
+  = ExprMetaConstant
+  | ExprMetaVal
+  | ExprMetaArg
+  | ExprMetaHole
+  | ExprMetaApplyArg
+  | ExprMetaApplyArgBase
+  | ExprMetaTupleArg
+  | ExprMetaApplyVar
+  | ExprMetaApplyVarVal
   deriving (Eq, Ord, Show)
 
 type MetaFun a b = MetaType -> Meta a -> Meta b
@@ -32,18 +44,31 @@ class MapMeta m where
 
 --
 
+mapMetaAppliedExpr :: MetaFun m m -> Expr m -> Expr m
+mapMetaAppliedExpr f (CExpr m c) = CExpr (f (ExprMeta ExprMetaConstant) m) c
+mapMetaAppliedExpr f (Value m n) = Value (f (ExprMeta ExprMetaVal) m) n
+mapMetaAppliedExpr f (Arg m n) = Arg (f (ExprMeta ExprMetaArg) m) n
+mapMetaAppliedExpr f (HoleExpr m h) = HoleExpr (f (ExprMeta ExprMetaHole) m) h
+mapMetaAppliedExpr f (TupleApply m (bm, be) arg) = TupleApply (f (ExprMeta ExprMetaApplyArg) m) (f (ExprMeta ExprMetaApplyArgBase) bm, mapMetaAppliedExpr f be) (mapMetaAppliedExprTupleArg f arg)
+  where
+    mapMetaAppliedExprTupleArg :: MetaFun m m -> TupleArg Expr m -> TupleArg Expr m
+    mapMetaAppliedExprTupleArg f2 (TupleArgI argM argName) = TupleArgI (f2 (ExprMeta ExprMetaTupleArg) argM) argName
+    mapMetaAppliedExprTupleArg f2 (TupleArgO argM argVal) = TupleArgO (f2 (ExprMeta ExprMetaTupleArg) argM) argVal
+    mapMetaAppliedExprTupleArg f2 (TupleArgIO argM argName argVal) = TupleArgIO (f2 (ExprMeta ExprMetaTupleArg) argM) argName argVal
+mapMetaAppliedExpr f (VarApply m be varName varVal) = VarApply (f (ExprMeta ExprMetaApplyVar) m) (mapMetaAppliedExpr f be) varName (f (ExprMeta ExprMetaApplyVarVal) varVal)
+
 mapMetaTupleArg :: (MapMeta e) => MetaFun a b -> TupleArg e a -> TupleArg e b
-mapMetaTupleArg f (TupleArgI m argName) = TupleArgI (f ExprMeta m) argName
-mapMetaTupleArg f (TupleArgO m argVal) = TupleArgO (f ExprMeta m) (mapMeta f argVal)
-mapMetaTupleArg f (TupleArgIO m argName argVal) = TupleArgIO (f ExprMeta m) argName (mapMeta f argVal)
+mapMetaTupleArg f (TupleArgI m argName) = TupleArgI (f (ExprMeta ExprMetaTupleArg) m) argName
+mapMetaTupleArg f (TupleArgO m argVal) = TupleArgO (f (ExprMeta ExprMetaTupleArg) m) (mapMeta f argVal)
+mapMetaTupleArg f (TupleArgIO m argName argVal) = TupleArgIO (f (ExprMeta ExprMetaTupleArg) m) argName (mapMeta f argVal)
 
 instance MapMeta Expr where
-  mapMeta f (CExpr m c) = CExpr (f ExprMeta m) c
-  mapMeta f (Value m n) = Value (f ExprMeta m) n
-  mapMeta f (Arg m n) = Arg (f ExprMeta m) n
-  mapMeta f (HoleExpr m h) = HoleExpr (f ExprMeta m) h
-  mapMeta f (TupleApply m (bm, be) arg) = TupleApply (f ExprMeta m) (f ExprMeta bm, mapMeta f be) (mapMetaTupleArg f arg)
-  mapMeta f (VarApply m be varName varVal) = VarApply (f ExprMeta m) (mapMeta f be) varName (f ObjVarMeta varVal)
+  mapMeta f (CExpr m c) = CExpr (f (ExprMeta ExprMetaConstant) m) c
+  mapMeta f (Value m n) = Value (f (ExprMeta ExprMetaVal) m) n
+  mapMeta f (Arg m n) = Arg (f (ExprMeta ExprMetaArg) m) n
+  mapMeta f (HoleExpr m h) = HoleExpr (f (ExprMeta ExprMetaHole) m) h
+  mapMeta f (TupleApply m (bm, be) arg) = TupleApply (f (ExprMeta ExprMetaApplyArg) m) (f (ExprMeta ExprMetaApplyArgBase) bm, mapMeta f be) (mapMetaTupleArg f arg)
+  mapMeta f (VarApply m be varName varVal) = VarApply (f (ExprMeta ExprMetaApplyVar) m) (mapMeta f be) varName (f (ExprMeta ExprMetaApplyVarVal) varVal)
 
 mapMetaGuard :: (MapMeta e) => MetaFun a b -> Guard (e a) -> Guard (e b)
 mapMetaGuard f (IfGuard expr) = IfGuard (mapMeta f expr)

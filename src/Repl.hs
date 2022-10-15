@@ -13,7 +13,6 @@
 
 module Repl where
 
-import qualified Data.HashMap.Strict      as H
 
 import           CRes
 import           Parser
@@ -27,7 +26,7 @@ import           Data.List                (isPrefixOf)
 import           System.Console.Haskeline
 import           Utils
 
-type ReplEnv = ([RawStatement ()], GraphData (RawPrgm ()) String)
+type ReplEnv = ([RawStatement RawExpr ()], GraphData (RawPrgm ()) String)
 
 coreImport :: String
 coreImport = "stack/core/main.ct"
@@ -55,10 +54,10 @@ parsingRepl env source = case parseRepl source of
 --         TypeCheckResE err    -> print ("type check err: " ++ show err) >> return env
 --         TypeCheckResult _ tprgm -> codegen initModule tprgm >> return env
 
-mainStatement :: RawExpr () -> RawStatementTree ()
+mainStatement :: RawExpr () -> RawStatementTree RawExpr ()
 mainStatement expr = RawStatementTree (RawDeclStatement (RawDecl lhs (Just wrappedExpr))) []
   where
-    lhs = DeclLHS emptyMetaN (Pattern (Object emptyMetaN FunctionObj H.empty (H.singleton "io" (Meta (singletonType (PartialType (PTypeName "IO") H.empty H.empty [] PtArgAny)) Nothing emptyMetaDat, Nothing)) Nothing "/main") NoGuard)
+    lhs = DeclLHS emptyMetaN (Pattern (ExprObject FunctionObj Nothing (RawValue (Meta (typeVal $ PTypeName "IO") Nothing emptyMetaDat) "io")) NoGuard)
     wrappedExpr = RawMethod (RawValue emptyMetaN "io") (RawTupleApply emptyMetaN (emptyMetaN, RawValue emptyMetaN "println") [TupleArgIO emptyMetaN "msg" (RawMethod expr (RawValue emptyMetaN "toString"))])
 
 

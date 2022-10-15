@@ -29,7 +29,7 @@ import           Utils
 type ParseErrorRes = ParseErrorBundle String Void
 
 data ReplRes m
-  = ReplStatement (RawStatementTree m)
+  = ReplStatement (RawStatementTree RawExpr m)
   | ReplExpr (RawExpr m)
   | ReplErr ParseErrorRes
   deriving (Eq, Show)
@@ -102,38 +102,38 @@ objAppliedVars = exprAppliedVars . objExpr
 objArgs :: (MetaDat m) => Object m -> H.HashMap ArgName (Meta m)
 objArgs = exprArgs . objExpr
 
-rawExprToObj :: (MetaDat m, Show m) => ObjectBasis -> Maybe String -> RawExpr m -> Object m
-rawExprToObj basis doc (RawParen expr) = rawExprToObj basis doc expr
-rawExprToObj basis doc (RawMethod (RawValue baseM baseName) valExpr) = valObj{deprecatedObjArgs = H.insert "this" base' (deprecatedObjArgs valObj)}
+eobjPath :: (MetaDat m, ExprClass e) => ExprObject e m -> TypeName
+eobjPath = exprPath . eobjExpr
+
+exprToObj :: (MetaDat m, Show m) => ObjectBasis -> Maybe String -> Expr m -> Object m
+exprToObj basis doc (Value m path) = Object m basis H.empty H.empty doc path
+exprToObj basis doc (TupleApply m' (_, baseExpr) arg) = baseObj{deprecatedObjM=m', deprecatedObjArgs=H.insert argName' argVal' (deprecatedObjArgs baseObj)}
   where
-    base' = (Meta (singletonType $ partialVal $ PRelativeName baseName) (getMetaPos baseM) emptyMetaDat, Nothing)
-    valObj = rawExprToObj basis doc valExpr
-rawExprToObj basis doc (RawMethod baseExpr valExpr) = valObj{deprecatedObjArgs = H.insert "this" (emptyMetaM "thisObj" $ objM baseObj, Just baseObj) (deprecatedObjArgs valObj)}
+    baseObj = exprToObj basis doc baseExpr
+    (argName', argVal') = case arg of
+      (TupleArgI m n)    -> (n, (m, Nothing))
+      (TupleArgIO _ n (HoleExpr holeM _)) -> (n, (holeM, Nothing))
+      (TupleArgIO m n a) -> (n, (m, Just $ exprToObj basis Nothing a))
+      TupleArgO{} -> error "Found TupleArgO in exprToObj"
+exprToObj basis doc (VarApply m' baseExpr name varM) = baseObj{deprecatedObjM=m', deprecatedObjVars=H.insert name varM (deprecatedObjVars baseObj)}
   where
-    baseObj = rawExprToObj basis doc baseExpr
-    valObj = rawExprToObj basis doc valExpr
-rawExprToObj basis doc (RawContextApply m (baseM, baseExpr) args) = Object m basis H.empty args' doc "/Context"
-  where
-    args' = H.insert "value" (baseM, Just $ rawExprToObj basis Nothing baseExpr) $ (,Nothing) <$> H.fromList args
-rawExprToObj basis doc (RawValue m path) = Object m basis H.empty H.empty doc path
-rawExprToObj basis doc (RawTupleApply _ (_, baseExpr) args) = baseObj{deprecatedObjArgs=H.union (H.fromList $ map parseArg args) (deprecatedObjArgs baseObj)}
-  where
-    baseObj = rawExprToObj basis doc baseExpr
-    parseArg (TupleArgI m n)    = (n, (m, Nothing))
-    parseArg (TupleArgIO _ n (RawParen (RawHoleExpr holeM _))) = (n, (holeM, Nothing))
-    parseArg (TupleArgIO _ n (RawHoleExpr holeM _)) = (n, (holeM, Nothing))
-    parseArg (TupleArgIO m n a) = (n, (m, Just $ rawExprToObj basis Nothing a))
-    parseArg TupleArgO{} = error "Found TupleArgO in rawExprToObj"
-rawExprToObj basis doc (RawVarsApply _ baseExpr vars) = baseObj{deprecatedObjVars=H.union (H.fromList vars) (deprecatedObjVars baseObj)}
-  where
-    baseObj = rawExprToObj basis doc baseExpr
-rawExprToObj _ _ e = error $ printf "Not yet implemented rawExprToObj: %s" (show e)
+    baseObj = exprToObj basis doc baseExpr
+exprToObj _ _ e = error $ printf "Not yet implemented exprToObj: %s" (show e)
 
 asExprObjMap :: (MetaDat m) => ObjectMap Expr m -> ExprObjectMap Expr m
 asExprObjMap = map asExprObjectMapItem
   where
     asExprObjectMapItem (obj, annots, arr) = (asExprObject obj, annots, arr)
     asExprObject obj@Object{objBasis, objDoc} = ExprObject objBasis objDoc (objExpr obj)
+
+fromExprPrgm :: (MetaDat m, Show m) => ExprPrgm Expr m -> Prgm Expr m
+fromExprPrgm (objMap, classGraph, annots) = (map fromExprObjectMapItem objMap, classGraph, annots)
+  where
+    fromExprObjectMapItem :: (MetaDat m, Show m) => ExprObjectMapItem Expr m -> ObjectMapItem Expr m
+    fromExprObjectMapItem (obj, ann, arr) = (fromExprObject obj, ann, arr)
+
+    fromExprObject :: (MetaDat m, Show m) => ExprObject Expr m -> Object m
+    fromExprObject (ExprObject basis doc expr) = exprToObj basis doc expr
 
 type ArgMetaMap m = H.HashMap ArgName (Meta m)
 -- |

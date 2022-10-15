@@ -29,6 +29,12 @@ import           Syntax.Prgm
 import           Syntax.Types
 import           Text.Printf
 
+data ExprParseMode
+  = ParseInputExpr -- ^ Parses a LHS or input expression
+  | ParseOutputExpr -- ^ Parses a RHS or output expression
+  | ParseTypeExpr -- ^ Parses an object in a multi type (class) definition
+  deriving (Eq, Show)
+
 mkOp1 :: String -> PExpr -> PExpr
 mkOp1 opChars x = applyRawArgs (RawValue emptyMetaN op) [(Just "a", x)]
   where op = "/operator" ++ opChars
@@ -62,13 +68,13 @@ ops = [
     ]
   ]
 
-pTypesAndVal :: Parser (Type, Either Name Hole)
-pTypesAndVal = do
+pTypesAndVal :: ExprParseMode -> Parser (Type, Either Name Hole)
+pTypesAndVal exprMode = do
   let anyId = identifier <|> tidentifier <|> pAnnotIdentifier <|> tvar <|> pHole
   typesAndVal <- some $ do
     typeName <- anyId
     vars <- optional . try $ do
-      vs <- pVarsSuffix
+      vs <- pVarsSuffix exprMode
       -- Need to ensure that vars are not matched if it is the val name and not a type for the val
       _ <- lookAhead anyId
       return vs
@@ -98,10 +104,10 @@ pTypesAndVal = do
 
   return (tp, argValName')
 
-pArgValue :: Parser PExpr
-pArgValue = do
+pArgValue :: ExprParseMode -> Parser PExpr
+pArgValue exprMode = do
   pos1 <- getSourcePos
-  (tp, argValName) <- pTypesAndVal
+  (tp, argValName) <- pTypesAndVal exprMode
   pos2 <- getSourcePos
   case argValName of
     Left n  -> return $ RawValue (Meta tp (Just (pos1, pos2, "")) emptyMetaDat) n
@@ -114,49 +120,49 @@ pStringLiteral = do
   pos2 <- getSourcePos
   return $ RawCExpr (emptyMeta pos1 pos2) (CStr s)
 
-parenExpr :: Bool -> Parser PExpr
-parenExpr outputExpr = do
-  e <- parens (pExpr outputExpr)
+parenExpr :: ExprParseMode -> Parser PExpr
+parenExpr exprMode = do
+  e <- parens (pExpr exprMode)
   return $ RawParen e
 
-pIfThenElse :: Bool -> Parser PExpr
-pIfThenElse outputExpr = do
+pIfThenElse :: ExprParseMode -> Parser PExpr
+pIfThenElse exprMode = do
   pos1 <- getSourcePos
   _ <- symbol "if"
-  condExpr <- pExpr outputExpr
+  condExpr <- pExpr exprMode
   _ <- symbol "then"
-  thenExpr <- pExpr outputExpr
+  thenExpr <- pExpr exprMode
   _ <- symbol "else"
-  elseExpr <- pExpr outputExpr
+  elseExpr <- pExpr exprMode
   pos2 <- getSourcePos
   return $ RawIfThenElse (emptyMeta pos1 pos2) condExpr thenExpr elseExpr
 
-pMatchCaseHelper :: Bool -> String -> Parser (PExpr, [(PPattern, PExpr)])
-pMatchCaseHelper outputExpr keyword = L.indentBlock scn p
+pMatchCaseHelper :: ExprParseMode -> String -> Parser (PExpr, [(PPattern, PExpr)])
+pMatchCaseHelper exprMode keyword = L.indentBlock scn p
   where
     pack expr matchItems = return (expr, matchItems)
     pItem = do
       patt <- pPattern MatchObj
       _ <- symbol "=>"
-      expr <- pExpr outputExpr
+      expr <- pExpr exprMode
       return (patt, expr)
     p = do
       _ <- symbol keyword
-      expr <- pExpr outputExpr
+      expr <- pExpr exprMode
       _ <- symbol "of"
       return $ L.IndentSome Nothing (pack expr) pItem
 
-pCase :: Bool -> Parser PExpr
-pCase outputExpr = do
+pCase :: ExprParseMode -> Parser PExpr
+pCase exprMode = do
   pos1 <- getSourcePos
-  (expr, matchItems) <- pMatchCaseHelper outputExpr "case"
+  (expr, matchItems) <- pMatchCaseHelper exprMode "case"
   pos2 <- getSourcePos
   return $ RawCase (emptyMeta pos1 pos2) expr matchItems
 
-pMatch :: Bool -> Parser PExpr
-pMatch outputExpr = do
+pMatch :: ExprParseMode -> Parser PExpr
+pMatch exprMode = do
   pos1 <- getSourcePos
-  (expr, matchItems) <- pMatchCaseHelper outputExpr "match"
+  (expr, matchItems) <- pMatchCaseHelper exprMode "match"
   pos2 <- getSourcePos
   return $ RawMatch (emptyMeta pos1 pos2) expr matchItems
 
@@ -175,45 +181,47 @@ pMethod = do
   pos2 <- getSourcePos
   return $ MethodSuffix (emptyMeta pos1 pos2) methodName
 
-pArgSuffix :: Bool -> Parser PTupleArg
-pArgSuffix outputExpr = do
+pArgSuffix :: ExprParseMode -> Parser PTupleArg
+pArgSuffix exprMode = do
   pos1 <- getSourcePos
   maybeArgNameType <- optional . try $ do
-    n <- pTypesAndVal
+    n <- pTypesAndVal exprMode
     _ <- symbol "="
     return n
-  expr <- pExpr outputExpr
+  expr <- pExpr exprMode
   pos2 <- getSourcePos
   case maybeArgNameType of
     Just (_, Right _) -> fail "Unexpected hole in arg name"
     Just (tp, Left argName) -> return $ TupleArgIO (Meta tp (Just (pos1, pos2, "")) emptyMetaDat) argName expr
-    Nothing      -> if outputExpr
+    Nothing      -> if exprMode == ParseOutputExpr
       then return $ TupleArgO (emptyMeta pos1 pos2) expr
       else case expr of
         RawValue m n -> return $ TupleArgI (Meta (getMetaType m) (Just (pos1, pos2, "")) emptyMetaDat) n
         _ -> fail $ printf "Unexpected parsed argName: %s" (show expr)
 
-pArgsSuffix :: Bool -> Parser TermSuffix
-pArgsSuffix outputExpr = do
+pArgsSuffix :: ExprParseMode -> Parser TermSuffix
+pArgsSuffix exprMode = do
   pos1 <- getSourcePos
-  args <- parens $ sepBy1 (pArgSuffix outputExpr) (symbol ",")
+  args <- parens $ sepBy1 (pArgSuffix exprMode) (symbol ",")
   pos2 <- getSourcePos
   return $ ArgsSuffix (emptyMeta pos1 pos2) args
 
-pVarSuffix :: Parser (TypeVarName, ParseMeta)
-pVarSuffix = do
+pVarSuffix :: ExprParseMode -> Parser (TypeVarName, ParseMeta)
+pVarSuffix exprMode = do
   pos1 <- getSourcePos
   -- TODO: Should support multiple class identifiers such as <Eq Ord $T>
   maybeClass <- optional ttypeidentifier
   var <- tvar
   pos2 <- getSourcePos
-  let tp = fromMaybeTypeName maybeClass
+  let tp = case (exprMode, maybeClass) of
+        (ParseTypeExpr, Nothing) -> TypeVar (TVVar var) -- For multi types, Just<$T> would be Just<$T=$T>
+        _                        -> fromMaybeTypeName maybeClass
   return (var, Meta tp (Just (pos1, pos2, "")) emptyMetaDat)
 
-pVarsSuffix :: Parser TermSuffix
-pVarsSuffix = do
+pVarsSuffix :: ExprParseMode -> Parser TermSuffix
+pVarsSuffix exprMode = do
   pos1 <- getSourcePos
-  vars <- angleBraces $ sepBy1 pVarSuffix (symbol ",")
+  vars <- angleBraces $ sepBy1 (pVarSuffix exprMode) (symbol ",")
   pos2 <- getSourcePos
   return $ VarsSuffix (emptyMeta pos1 pos2) vars
 
@@ -232,8 +240,8 @@ pContextSuffix = do
   pos2 <- getSourcePos
   return $ ContextSuffix (emptyMeta pos1 pos2) ctxs
 
-pTermSuffix :: Bool -> Parser TermSuffix
-pTermSuffix outputExpr = pMethod <|> pArgsSuffix outputExpr <|> pVarsSuffix <|> pContextSuffix
+pTermSuffix :: ExprParseMode -> Parser TermSuffix
+pTermSuffix exprMode = pMethod <|> pArgsSuffix exprMode <|> pVarsSuffix exprMode <|> pContextSuffix
 pInt :: Parser PExpr
 pInt = do
   pos1 <- getSourcePos
@@ -241,11 +249,11 @@ pInt = do
   pos2 <- getSourcePos
   return $ RawCExpr (emptyMeta pos1 pos2) (CInt i)
 
-pList :: Bool -> Parser PExpr
-pList outputExpr = do
+pList :: ExprParseMode -> Parser PExpr
+pList exprMode = do
   pos1 <- getSourcePos
   _ <- string "["
-  lst <- sepBy (pExpr outputExpr) (symbol ",")
+  lst <- sepBy (pExpr exprMode) (symbol ",")
   _ <- string "]"
   pos2 <- getSourcePos
   return $ RawList (emptyMeta pos1 pos2) lst
@@ -256,30 +264,30 @@ applyTermSuffix base (ArgsSuffix m args) = RawTupleApply m (labelPosM "arg" $ ge
 applyTermSuffix base (VarsSuffix m vars) = RawVarsApply m base vars
 applyTermSuffix base (ContextSuffix m args) = RawContextApply m (labelPosM "ctx" $ getExprMeta base, base) args
 
-term :: Bool -> Parser PExpr
-term outputExpr = do
-  base <- (if outputExpr then pIfThenElse outputExpr
-        <|> pMatch outputExpr
-        <|> pCase outputExpr
-        <|> parenExpr outputExpr
-        else parenExpr outputExpr)
+term :: ExprParseMode -> Parser PExpr
+term exprMode = do
+  base <- (if exprMode == ParseOutputExpr then pIfThenElse exprMode
+        <|> pMatch exprMode
+        <|> pCase exprMode
+        <|> parenExpr exprMode
+        else parenExpr exprMode)
        <|> pStringLiteral
        <|> pInt
-       <|> pList outputExpr
-       <|> pArgValue
-  suffixes <- many (pTermSuffix outputExpr)
+       <|> pList exprMode
+       <|> pArgValue exprMode
+  suffixes <- many (pTermSuffix exprMode)
   _ <- sc
   return $ foldl applyTermSuffix base suffixes
 
-pExpr :: Bool -> Parser PExpr
-pExpr outputExpr = makeExprParser (term outputExpr) ops
+pExpr :: ExprParseMode -> Parser PExpr
+pExpr exprMode = makeExprParser (term exprMode) ops
 
 -- Pattern
 
 pIfGuard :: Parser PGuard
 pIfGuard = do
   _ <- symbol "if"
-  IfGuard <$> pExpr False
+  IfGuard <$> pExpr ParseInputExpr
 
 pElseGuard :: Parser PGuard
 pElseGuard = do
@@ -293,8 +301,8 @@ pPatternGuard = fromMaybe NoGuard <$> optional (pIfGuard
 
 pPattern :: ObjectBasis -> Parser PPattern
 pPattern basis = do
-  e <- term False
-  Pattern (rawExprToObj basis Nothing e) <$> pPatternGuard
+  e <- term ParseInputExpr
+  Pattern (ExprObject basis Nothing e) <$> pPatternGuard
 
 -- Pattern Types
 

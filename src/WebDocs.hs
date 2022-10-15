@@ -32,7 +32,7 @@ import           Desugarf                      (desFiles)
 import           Eval                          (evalAnnots, evalBuild, evalRun)
 import           Eval.Common                   (EvalResult, Val (..))
 import           Parser                        (readFiles)
-import           Parser.Syntax                 (DesPrgm, PPrgmGraphData)
+import           Parser.Syntax                 (FinalDesPrgm, PPrgmGraphData)
 import           Syntax
 import           Syntax.Prgm
 import           Syntax.Types
@@ -62,7 +62,7 @@ data WDProvider
     cCore           :: Bool
   , cBaseFileName   :: String
   , cRaw            :: CRes PPrgmGraphData
-  , cPrgm           :: CRes (GraphData DesPrgm String)
+  , cPrgm           :: CRes (GraphData FinalDesPrgm String)
   , cTPrgmWithTrace :: CRes (GraphData (TPrgm, VPrgm, TraceConstrain) String)
   , cTPrgm          :: CRes (GraphData TPrgm String)
                     }
@@ -87,7 +87,7 @@ getRawPrgm :: WDProvider -> IO (CRes PPrgmGraphData)
 getRawPrgm (LiveWDProvider includeCore baseFileName) = readFiles includeCore [baseFileName]
 getRawPrgm CacheWDProvider{cRaw} = return cRaw
 
-getPrgm :: WDProvider -> IO (CRes (GraphData DesPrgm String))
+getPrgm :: WDProvider -> IO (CRes (GraphData FinalDesPrgm String))
 getPrgm provider@LiveWDProvider{} = do
   base <- getRawPrgm provider
   return (base >>= desFiles)

@@ -82,7 +82,8 @@ testd = docApi False False "test/test.ct"
 standardTests :: IO [String]
 standardTests = do
   fileNames <- listDirectory testDir
-  return $ map (testDir ++) fileNames
+  let fileNames' = filter (isSuffixOf ".ct") fileNames
+  return $ map (testDir ++) fileNames'
 
 mt :: String -> IO ()
 mt k = do

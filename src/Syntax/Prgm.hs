@@ -15,6 +15,7 @@
 {-# LANGUAGE DeriveGeneric             #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE InstanceSigs              #-}
 
 module Syntax.Prgm where
 
@@ -43,7 +44,7 @@ data Constant
   | CStr String
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
-data Pattern e m = Pattern (Object m) (Guard (e m))
+data Pattern e m = Pattern (ExprObject e m) (Guard (e m))
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON, ToJSONKey)
 
 -- |
@@ -116,37 +117,37 @@ instance Functor Guard where
 data DeclLHS e m = DeclLHS (Meta m) (Pattern e m)
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
-data RawDecl m = RawDecl (DeclLHS RawExpr m) (Maybe (RawExpr m))
+data RawDecl e m = RawDecl (DeclLHS e m) (Maybe (e m))
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
-newtype TypeDef m = TypeDef (Meta m)
+newtype TypeDef m = TypeDef (RawExpr m)
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
-data MultiTypeDef m = MultiTypeDef ClassName (H.HashMap TypeVarName Type) [Meta m]
+data MultiTypeDef m = MultiTypeDef ClassName (H.HashMap TypeVarName Type) [RawExpr m]
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
-type RawClassDef = ((TypeName, H.HashMap TypeVarName Type), ClassName)
+type RawClassDef m = (RawExpr m, ClassName)
 
 type RawClassDecl = (ClassName, H.HashMap TypeVarName Type)
 
 data Path = Relative String | Absolute String
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
-data RawStatement m
-  = RawDeclStatement (RawDecl m)
+data RawStatement e m
+  = RawDeclStatement (RawDecl e m)
   | MultiTypeDefStatement (MultiTypeDef m) Path
   | TypeDefStatement (TypeDef m)
-  | RawClassDefStatement RawClassDef Path
+  | RawClassDefStatement (RawClassDef m) Path
   | RawClassDeclStatement RawClassDecl Path
   | RawAnnot (CompAnnot (RawExpr m))
   | RawModule String Path
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
-data RawStatementTree m = RawStatementTree (RawStatement m) [RawStatementTree m]
+data RawStatementTree e m = RawStatementTree (RawStatement e m) [RawStatementTree e m]
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
 type FileImport = String
-type RawPrgm m = ([FileImport], [RawStatementTree m]) -- TODO: Include [Export]
+type RawPrgm m = ([FileImport], [RawStatementTree RawExpr m]) -- TODO: Include [Export]
 
 type ObjArg m = (Meta m, Maybe (Object m))
 data ObjectBasis = FunctionObj | TypeObj | PatternObj | MatchObj
@@ -187,6 +188,7 @@ type ExprPrgm e m = (ExprObjectMap e m, ClassGraph, [CompAnnot (e m)]) -- TODO: 
 
 
 instance Show (Meta m) where
+  show :: Meta m -> String
   show (Meta t _ _) = show t
 
 instance Show m => Show (Expr m) where
@@ -310,7 +312,8 @@ instance ExprClass RawExpr where
   exprAppliedVars _ = error "Unsupported RawExpr exprAppliedVars"
 
   exprArgs RawCExpr{} = H.empty
-  exprArgs (RawValue m n) = H.singleton n m
+  exprArgs RawHoleExpr{} = H.empty
+  exprArgs RawValue{} = H.empty
   exprArgs (RawTupleApply _ (_, be) args) = H.union (exprArgs be) (H.unions $ map exprArg args)
     where
       exprArg (TupleArgIO _ _ e) = exprArgs e
@@ -320,7 +323,7 @@ instance ExprClass RawExpr where
   exprArgs (RawContextApply _ (_, e) _) = exprArgs e
   exprArgs (RawParen e) = exprArgs e
   exprArgs (RawMethod be me) = H.union (exprArgs be) (exprArgs me)
-  exprArgs _ = error "Unsupported RawExpr exprArgs"
+  exprArgs e = error $ printf "Unsupported RawExpr exprArgs for %s" (show e)
 
 
 instance ExprClass Expr where
@@ -371,6 +374,14 @@ mapTupleArgValue _ (TupleArgI m n)    = TupleArgI m n
 mapTupleArgValue f (TupleArgO m v)    = TupleArgO m (f v)
 mapTupleArgValue f (TupleArgIO m n v) = TupleArgIO m n (f v)
 
+constantPartialType :: Constant -> PartialType
+constantPartialType CInt{}   = intLeaf
+constantPartialType CFloat{} = floatLeaf
+constantPartialType CStr{}   = strLeaf
+
+constantType :: Constant -> Type
+constantType = singletonType . constantPartialType
+
 mergeDoc :: Maybe String -> Maybe String -> Maybe String
 mergeDoc (Just a) (Just b) = Just (a ++ " " ++ b)
 mergeDoc (Just a) Nothing  = Just a
@@ -399,4 +410,15 @@ mergePrgm (objMap1, classGraph1, annots1) (objMap2, classGraph2, annots2) = (
 
 mergePrgms :: Foldable f => f (Prgm e m) -> Prgm e m
 mergePrgms = foldr mergePrgm emptyPrgm
+  where emptyPrgm = ([], ClassGraph $ graphFromEdges [], [])
+
+mergeExprPrgm :: ExprPrgm e m -> ExprPrgm e m -> ExprPrgm e m
+mergeExprPrgm (objMap1, classGraph1, annots1) (objMap2, classGraph2, annots2) = (
+  objMap1 ++ objMap2,
+  mergeClassGraphs classGraph1 classGraph2,
+  annots1 ++ annots2
+                                                                           )
+
+mergeExprPrgms :: Foldable f => f (ExprPrgm e m) -> ExprPrgm e m
+mergeExprPrgms = foldr mergeExprPrgm emptyPrgm
   where emptyPrgm = ([], ClassGraph $ graphFromEdges [], [])

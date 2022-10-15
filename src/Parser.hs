@@ -26,7 +26,7 @@ import           Data.Graph
 import           Data.List
 import           Data.Maybe
 import           Parser.Decl
-import           Parser.Expr                (pExpr)
+import           Parser.Expr
 import           Parser.Lexer
 import           Parser.Syntax
 import           Parser.Type                (pTypeStatement)
@@ -98,7 +98,7 @@ parseRepl s = case runParser (contents p) "<repl>" s of
                 Left e@(ParseErrorBundle _ _) -> ReplErr e
                 Right (Left statement)        -> ReplStatement statement
                 Right (Right expr)            -> ReplExpr expr
-  where p = try (Left <$> pStatementTree) <|> try (Right <$> pExpr True)
+  where p = try (Left <$> pStatementTree) <|> try (Right <$> pExpr ParseOutputExpr)
 
 -- replaces imports of a directory with directory/main.ct
 dirImportToMain :: String -> IO String

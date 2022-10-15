@@ -33,7 +33,7 @@ import           Text.Megaparsec.Char
 pCompAnnot :: Parser PCompAnnot
 pCompAnnot = do
   _ <- lookAhead $ string "#"
-  pExpr False
+  pExpr ParseInputExpr
 
 pArrowRes :: Parser ParseMeta
 pArrowRes = do
@@ -108,12 +108,12 @@ pDeclTree = L.indentBlock scn p
             _ -> return (RawDecl lhs Nothing, subStatements)
           (err:_, _) -> fail err
     childParser :: Parser TreeRes
-    childParser = try (TRDecl <$> pDeclTree) <|>  try (TRAnnot <$> pComment) <|> try (TRAnnot <$> pCompAnnot) <|> (TRExpr <$> pExpr True)
+    childParser = try (TRDecl <$> pDeclTree) <|>  try (TRAnnot <$> pComment) <|> try (TRAnnot <$> pCompAnnot) <|> (TRExpr <$> pExpr ParseOutputExpr)
     p = do
       lhs <- pDeclLHS
       eqAndExpr <- optional $ do
         _ <- symbol "="
-        optional . try $ pExpr True
+        optional . try $ pExpr ParseOutputExpr
       return (L.IndentMany Nothing (pack lhs eqAndExpr) childParser)
 
 pRootDecl :: Parser PStatementTree

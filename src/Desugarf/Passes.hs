@@ -31,7 +31,7 @@ import           Utils
 -- e.g. PRelativeName Boolean ==> PClassName /Data/Boolean
 -- uses the mapMeta for objMap and annots, but must map the classGraph manually
 -- the fullPrgmClassToTypes includes the imports and is used for when the def is inside an import
-resolveRelativeNames :: DesPrgm -> DesPrgm -> DesPrgm
+resolveRelativeNames :: FinalDesPrgm -> FinalDesPrgm -> FinalDesPrgm
 resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, classGraph@(ClassGraph cg), annots) = mapMetaPrgm aux (objMap, classGraph', annots)
   where
     classGraph' = ClassGraph $ graphFromEdges $ mapFst3 mapCGNode $ graphToNodes cg
@@ -52,7 +52,10 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, classGraph
       where
         mapPartial :: PartialType -> PartialType
         mapPartial (PartialType (PRelativeName name) partialVars partialArgs partialPreds partialArgMode) = PartialType name' (fmap (mapType reqResolve) partialVars) (fmap (mapType reqResolve) partialArgs) (map mapPartial partialPreds) partialArgMode
-          where name' = case (reqResolve, relativeNameFilter name classNames, relativeNameFilter name objNames) of
+          where
+            typeOptions = relativeNameFilter name objNames
+            classOptions = relativeNameFilter name classNames
+            name' = case (reqResolve, classOptions, typeOptions) of
                   -- is a class, replace with class type
                   (_, [className], []) -> PClassName className
 
@@ -63,7 +66,8 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, classGraph
                   -- TODO Instead, the incorrect type definition should be removed before this pass is run
                   (_, [className], [typeName]) | className == typeName -> PClassName className
 
-                  (_, [], []) -> error $ printf "There is no possible types or classes that correspond to name %s in type %s" name  (show $ UnionType partials)
+                  (_, [], []) -> error $ printf "There is no possible types or classes that correspond to name %s in type %s.\n\n\tType Options: %s\n\n\tClass Options: %s" name  (show $ UnionType partials) (show objNames) (show classNames)
+                  -- (_, [], []) -> error $ printf "There is no possible types or classes that correspond to name %s in type %s" name  (show $ UnionType partials)
 
                   (False, _, _) -> PRelativeName name
                   (True, foundTypeNames, foundClassNames) -> error $ printf "Could not resolve required name: %s \n\t Found possible typeNames: %s \n\t Found possible classNames: %s" name (show foundTypeNames) (show foundClassNames)
@@ -73,7 +77,7 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, classGraph
           ptPreds = fmap mapPartial ptPreds
                                                                                                                       }
 
-expandDataReferences :: DesPrgm -> DesPrgm -> DesPrgm
+expandDataReferences :: FinalDesPrgm -> FinalDesPrgm -> FinalDesPrgm
 expandDataReferences (fullPrgmObjMap, _, _) (objMap, classGraph@(ClassGraph cg), annots) = mapMetaPrgm aux (objMap, classGraph', annots)
   where
     classGraph' = ClassGraph $ graphFromEdges $ mapFst3 mapCGNode $ graphToNodes cg
@@ -81,7 +85,7 @@ expandDataReferences (fullPrgmObjMap, _, _) (objMap, classGraph@(ClassGraph cg),
     mapCGNode CGType = CGType
     objExpansions = H.fromList $ concatMap (\(obj@Object{objBasis}, _, _) -> ([(objPath obj, obj) | objBasis == TypeObj])) fullPrgmObjMap
     aux metaType inM@(Meta t p md) = case metaType of
-      ExprMeta   -> inM
+      ExprMeta _ -> inM
       ObjMeta    -> inM
       ObjArgMeta -> Meta (mapType t) p md
       ObjVarMeta -> Meta (mapType t) p md
