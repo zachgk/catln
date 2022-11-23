@@ -154,6 +154,7 @@ mapExprAppliedArg _ _ e@CExpr{} = e
 mapExprAppliedArg _ _ e@Value{} = e
 mapExprAppliedArg _ _ e@Arg{} = e
 mapExprAppliedArg _ _ e@HoleExpr{} = e
+mapExprAppliedArg f argName (AliasExpr base alias) = AliasExpr (mapExprAppliedArg f argName base) alias
 mapExprAppliedArg f argName (TupleApply m (bm, be) (TupleArgIO am an av)) | argName == an = TupleApply m (bm, be) (TupleArgIO am an (f av))
 mapExprAppliedArg f argName (TupleApply m (bm, be) a) = TupleApply m (bm, mapExprAppliedArg f argName be) a
 mapExprAppliedArg f argName (VarApply m be an av) = VarApply m (mapExprAppliedArg f argName be) an av

@@ -172,6 +172,7 @@ data TermSuffix
   | ArgsSuffix ParseMeta [PTupleArg]
   | VarsSuffix ParseMeta [(TypeVarName, ParseMeta)]
   | ContextSuffix ParseMeta [(ArgName, ParseMeta)]
+  | AliasSuffix ParseMeta TypeName
   deriving (Show)
 
 pMethod :: Parser TermSuffix
@@ -241,8 +242,16 @@ pContextSuffix = do
   pos2 <- getSourcePos
   return $ ContextSuffix (emptyMeta pos1 pos2) ctxs
 
+pAliasSuffix :: Parser TermSuffix
+pAliasSuffix = do
+  _ <- string "@"
+  pos1 <- getSourcePos
+  aliasName <- identifier <|> tidentifier -- TODO Alais can be full term instead
+  pos2 <- getSourcePos
+  return $ AliasSuffix (emptyMeta pos1 pos2) aliasName
+
 pTermSuffix :: ExprParseMode -> Parser TermSuffix
-pTermSuffix exprMode = pMethod <|> pArgsSuffix exprMode <|> pVarsSuffix exprMode <|> pContextSuffix
+pTermSuffix exprMode = pMethod <|> pArgsSuffix exprMode <|> pVarsSuffix exprMode <|> pContextSuffix <|> pAliasSuffix
 pInt :: Parser PExpr
 pInt = do
   pos1 <- getSourcePos
@@ -264,6 +273,7 @@ applyTermSuffix base (MethodSuffix m n) = RawMethod base (RawValue m n)
 applyTermSuffix base (ArgsSuffix m args) = RawTupleApply m (labelPosM "arg" $ getExprMeta base, base) args
 applyTermSuffix base (VarsSuffix m vars) = RawVarsApply m base vars
 applyTermSuffix base (ContextSuffix m args) = RawContextApply m (labelPosM "ctx" $ getExprMeta base, base) args
+applyTermSuffix base (AliasSuffix m n) = RawAliasExpr base (RawValue m n)
 
 term :: ExprParseMode -> Parser PExpr
 term exprMode = do

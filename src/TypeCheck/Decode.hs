@@ -68,6 +68,10 @@ toExpr env (Arg m name) = do
 toExpr env (HoleExpr m hole) = do
   m' <- toMeta env m $ "Arg_" ++ show hole
   return $ HoleExpr m' hole
+toExpr env (AliasExpr base alias) = do
+  base' <- toExpr env base
+  alias' <- toExpr env alias
+  return $ AliasExpr base' alias'
 toExpr env (TupleApply m (baseM, baseExpr) (TupleArgIO argM argName argExpr)) = do
   m' <- toMeta env m "TupleApply_M"
   baseM' <- toMeta env baseM "TupleApply_baseM"

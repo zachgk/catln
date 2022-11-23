@@ -116,6 +116,11 @@ fromExpr argMetaMap obj env1 (Arg m name) = do
 fromExpr _ obj env1 (HoleExpr m hole) = do
   (m', env2) <- fromMeta env1 BUpper obj m ("Hole " ++ show hole)
   return (HoleExpr m' hole, env2)
+fromExpr argMetaMap obj env1 (AliasExpr base alias) = do
+  (base', env2) <- fromExpr argMetaMap obj env1 base
+  (alias', env3) <- fromExpr argMetaMap obj env2 alias
+  let env4 = addConstraints env3 [EqPoints (getExprMeta base') (getExprMeta alias')]
+  return (AliasExpr base' alias', env4)
 fromExpr argMetaMap obj env1 (TupleApply m (baseM, baseExpr) (TupleArgIO argM argName argExpr)) = do
   (m', env2) <- fromMeta env1 BUpper obj m $ printf "TupleApply %s(%s = %s) Meta" (show baseExpr) argName (show argExpr)
   (baseM', env3) <- fromMeta env2 BUpper obj baseM $ printf "TupleApply %s(%s = %s) BaseMeta" (show baseExpr) argName (show argExpr)

@@ -37,6 +37,10 @@ showExpr env (Arg m name) = do
 showExpr env (HoleExpr m hole) = do
   m' <- showM env m
   return $ HoleExpr m' hole
+showExpr env (AliasExpr base alias) = do
+  base' <- showExpr env base
+  alias' <- showExpr env alias
+  return $ AliasExpr base' alias'
 showExpr env (TupleApply m (bm, base) arg) = do
   m' <- showM env m
   bm' <- showM env bm

@@ -63,6 +63,7 @@ scopeSubDeclFunNamesInExpr _ _ e@CExpr{} = e
 scopeSubDeclFunNamesInExpr prefix replaceNames (Value m name) = Value m $ scopeSubDeclFunNamesInS prefix replaceNames name
 scopeSubDeclFunNamesInExpr prefix replaceNames (Arg m name) = Arg m $ scopeSubDeclFunNamesInS prefix replaceNames name
 scopeSubDeclFunNamesInExpr _ _ e@HoleExpr{} = e
+scopeSubDeclFunNamesInExpr prefix replaceNames (AliasExpr b a) = AliasExpr (scopeSubDeclFunNamesInExpr prefix replaceNames b) (scopeSubDeclFunNamesInExpr prefix replaceNames a)
 scopeSubDeclFunNamesInExpr prefix replaceNames (TupleApply m (bm, bExpr) arg) = TupleApply m (bm, bExpr') arg'
   where
     bExpr' = scopeSubDeclFunNamesInExpr prefix replaceNames bExpr
@@ -113,6 +114,7 @@ currySubFunctionsUpdateExpr toUpdate parentArgs v@(Value _ vn) = if S.member vn 
   else v
 currySubFunctionsUpdateExpr _ _ Arg{} = error "Only values should be used at this point, yet to disambiguate Value vs Arg"
 currySubFunctionsUpdateExpr _ _ e@HoleExpr{} = e
+currySubFunctionsUpdateExpr toUpdate parentArgs (AliasExpr b a) = AliasExpr (currySubFunctionsUpdateExpr toUpdate parentArgs b) (currySubFunctionsUpdateExpr toUpdate parentArgs a)
 currySubFunctionsUpdateExpr toUpdate parentArgs (TupleApply tm (tbm, tbe) targ) = TupleApply tm (tbm, tbe') targ'
   where
     tbe' = currySubFunctionsUpdateExpr toUpdate parentArgs tbe
@@ -156,6 +158,7 @@ desExpr arrArgs (Value m n) = if H.member n arrArgs
   else Value m n
 desExpr _ Arg{} = error "Only values should be used at this point as it has not yet been disambiguated between Value and Arg"
 desExpr _ (HoleExpr m h) = HoleExpr m h
+desExpr arrArgs (AliasExpr b a) = AliasExpr (desExpr arrArgs b) (desExpr arrArgs a)
 desExpr arrArgs (TupleApply m (bm, be) arg) = TupleApply m (bm, desExpr arrArgs be) (mapTupleArgValue (desExpr arrArgs) arg)
 desExpr arrArgs (VarApply m be varName varVal) = VarApply m (desExpr arrArgs be) varName varVal
 
@@ -175,6 +178,7 @@ desObjValToArg doeMode _ (Value m n) = case doeMode of
   DOEValMode -> Value m n
 desObjValToArg _ _ (Arg _ n) = error $ printf "Found unexpected arg '%s' in desOjValToArg, expected all args to still be represented with Value" n
 desObjValToArg _ _ (HoleExpr m h) = HoleExpr m h
+desObjValToArg _ useRelativeName (AliasExpr b a) = AliasExpr (desObjValToArg DOEValMode useRelativeName b) (desObjValToArg DOEArgMode useRelativeName a)
 desObjValToArg _ useRelativeName mainExpr@(TupleApply m (bm, be) tupleArg) = TupleApply m (bm, be') tupleArg'
   where
     be' = desObjValToArg DOEValMode useRelativeName be
@@ -196,6 +200,10 @@ desObjPropagateTypes (Value m n) = (Just t, Value (mWithType (singletonType t) m
 desObjPropagateTypes (Arg m n) = (Just t, Arg (mWithType (singletonType t) m) n)
   where t = PartialType (PRelativeName n) H.empty H.empty [] PtArgExact
 desObjPropagateTypes (HoleExpr m h) = (Nothing, HoleExpr m h)
+desObjPropagateTypes (AliasExpr base alias) = (basePartial, AliasExpr base' alias')
+  where
+    (basePartial, base') = desObjPropagateTypes base
+    (_, alias') = desObjPropagateTypes alias
 desObjPropagateTypes mainExpr@(TupleApply m (bm, be) tupleApplyArgs) = do
   let (Just basePartial@PartialType{ptArgs=baseArgs}, be') = desObjPropagateTypes be
   let bm' = mWithType (getMetaType $ getExprMeta be') bm

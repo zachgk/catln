@@ -80,6 +80,7 @@ data Expr m
   | Value (Meta m) TypeName
   | Arg (Meta m) ArgName
   | HoleExpr (Meta m) Hole
+  | AliasExpr (Expr m) (Expr m) -- ^ AliasExpr baseExpr aliasExpr
   | TupleApply (Meta m) (Meta m, Expr m) (TupleArg Expr m)
   | VarApply (Meta m) (Expr m) TypeVarName (Meta m)
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
@@ -145,6 +146,7 @@ instance Show m => Show (Expr m) where
   show (Value _ name) = printf "Value %s" name
   show (Arg m name) = printf "Arg %s %s" (show m) name
   show (HoleExpr m hole) = printf "Hole %s %s" (show m) (show hole)
+  show (AliasExpr base alias) = printf "%s@%s" (show base) (show alias)
   show (TupleApply _ (_, baseExpr) arg) = printf "%s(%s)" baseExpr' arg'
     where
       baseExpr' = case baseExpr of
@@ -224,6 +226,7 @@ instance ExprClass Expr where
     Value m _        -> m
     Arg m _          -> m
     HoleExpr m _     -> m
+    AliasExpr b _    -> getExprMeta b
     TupleApply m _ _ -> m
     VarApply m _ _ _ -> m
 
@@ -249,8 +252,9 @@ instance ExprClass Expr where
 
   exprArgs CExpr{} = H.empty
   exprArgs Value{} = H.empty
-  exprArgs HoleExpr{} = H.empty
   exprArgs (Arg m n) = H.singleton n m
+  exprArgs HoleExpr{} = H.empty
+  exprArgs (AliasExpr base alias) = H.union (exprArgs base) (exprArgs alias)
   exprArgs (TupleApply _ (_, be) arg) = H.union (exprArgs be) (exprArg arg)
     where
       exprArg (TupleArgIO _ _ e) = exprArgs e

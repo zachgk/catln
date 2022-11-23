@@ -18,8 +18,8 @@ import           CRes
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
-import           Syntax.Ct.Prgm
 import           Syntax.Ct.Parser
+import           Syntax.Ct.Prgm
 
 import           Control.Monad.Trans
 import           Data.List                (isPrefixOf)

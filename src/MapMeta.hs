@@ -49,6 +49,7 @@ mapMetaAppliedExpr f (CExpr m c) = CExpr (f (ExprMeta ExprMetaConstant) m) c
 mapMetaAppliedExpr f (Value m n) = Value (f (ExprMeta ExprMetaVal) m) n
 mapMetaAppliedExpr f (Arg m n) = Arg (f (ExprMeta ExprMetaArg) m) n
 mapMetaAppliedExpr f (HoleExpr m h) = HoleExpr (f (ExprMeta ExprMetaHole) m) h
+mapMetaAppliedExpr f (AliasExpr b a) = AliasExpr (mapMetaAppliedExpr f b) (mapMetaAppliedExpr f a)
 mapMetaAppliedExpr f (TupleApply m (bm, be) arg) = TupleApply (f (ExprMeta ExprMetaApplyArg) m) (f (ExprMeta ExprMetaApplyArgBase) bm, mapMetaAppliedExpr f be) (mapMetaAppliedExprTupleArg f arg)
   where
     mapMetaAppliedExprTupleArg :: MetaFun m m -> TupleArg Expr m -> TupleArg Expr m
@@ -67,6 +68,7 @@ instance MapMeta Expr where
   mapMeta f (Value m n) = Value (f (ExprMeta ExprMetaVal) m) n
   mapMeta f (Arg m n) = Arg (f (ExprMeta ExprMetaArg) m) n
   mapMeta f (HoleExpr m h) = HoleExpr (f (ExprMeta ExprMetaHole) m) h
+  mapMeta f (AliasExpr b a) = AliasExpr (mapMeta f b) (mapMeta f a)
   mapMeta f (TupleApply m (bm, be) arg) = TupleApply (f (ExprMeta ExprMetaApplyArg) m) (f (ExprMeta ExprMetaApplyArgBase) bm, mapMeta f be) (mapMetaTupleArg f arg)
   mapMeta f (VarApply m be varName varVal) = VarApply (f (ExprMeta ExprMetaApplyVar) m) (mapMeta f be) varName (f (ExprMeta ExprMetaApplyVarVal) varVal)
 
