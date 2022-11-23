@@ -30,8 +30,8 @@ import           Parser.Expr
 import           Parser.Lexer
 import           Parser.Syntax
 import           Parser.Type                (pTypeStatement)
-import           Syntax
-import           Syntax.Prgm
+import           Semantics
+import           Semantics.Prgm
 import           System.Directory
 import qualified Text.Megaparsec.Char.Lexer as L
 import           Text.Printf

@@ -23,9 +23,9 @@ import           Data.Hashable       (Hashable)
 import qualified Data.IntMap.Lazy    as IM
 import           Prelude             hiding (unzip)
 
-import           Syntax
-import           Syntax.Prgm
-import           Syntax.Types
+import           Semantics
+import           Semantics.Prgm
+import           Semantics.Types
 import           Text.Printf
 import           TypeCheck.Common
 import           TypeCheck.TypeGraph (addUnionObjToEnv)

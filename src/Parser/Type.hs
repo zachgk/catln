@@ -22,7 +22,7 @@ import           Data.Maybe
 import           Parser.Expr
 import           Parser.Lexer
 import           Parser.Syntax
-import           Syntax.Prgm
+import           Semantics.Prgm
 
 
 pMultiTerm :: Parser [PExpr]

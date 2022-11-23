@@ -14,7 +14,7 @@
 
 module MapMeta where
 
-import           Syntax.Prgm
+import           Semantics.Prgm
 
 data MetaType
   = ExprMeta ExprMetaType

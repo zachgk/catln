@@ -27,9 +27,9 @@ import           CRes
 import           Control.Monad.Fail  (MonadFail, fail)
 import           Data.Aeson          (ToJSON, toJSON)
 import           Data.Maybe
-import           Syntax
-import           Syntax.Prgm
-import           Syntax.Types
+import           Semantics
+import           Semantics.Prgm
+import           Semantics.Types
 import           Text.Printf
 import           Utils
 

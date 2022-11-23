@@ -29,9 +29,9 @@ import           CRes
 import           Control.Monad.State
 import           Data.Aeson          hiding (Object)
 import qualified LLVM.AST            as AST
-import           Syntax
-import           Syntax.Prgm
-import           Syntax.Types
+import           Semantics
+import           Semantics.Prgm
+import           Semantics.Types
 import           Text.Printf
 import           Utils
 

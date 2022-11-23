@@ -20,7 +20,7 @@ import qualified Data.HashMap.Strict as H
 import           CRes
 import           Data.Hashable
 import           Eval.Common
-import           Syntax.Types
+import           Semantics.Types
 import           Text.Printf
 import           TreeBuild           (buildArrow)
 

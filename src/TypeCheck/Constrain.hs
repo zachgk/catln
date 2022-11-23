@@ -20,9 +20,9 @@ import qualified Data.HashMap.Strict as H
 import           Data.Maybe
 
 import           Data.Tuple.Sequence
-import           Syntax
-import           Syntax.Prgm
-import           Syntax.Types
+import           Semantics
+import           Semantics.Prgm
+import           Semantics.Types
 import           Text.Printf
 import           TypeCheck.Common
 import           TypeCheck.Show

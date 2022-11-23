@@ -24,9 +24,9 @@ import           Text.Printf
 import           CRes
 import           Control.Monad
 import           Eval.Common
-import           Syntax
-import           Syntax.Prgm
-import           Syntax.Types
+import           Semantics
+import           Semantics.Prgm
+import           Semantics.Types
 
 type TBMetaDat = ()
 type TBMeta = Meta ()

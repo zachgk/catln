@@ -29,9 +29,9 @@ import           Data.List
 import           Desugarf.Passes
 import           MapMeta
 import           Parser.Syntax
-import           Syntax
-import           Syntax.Prgm
-import           Syntax.Types
+import           Semantics
+import           Semantics.Prgm
+import           Semantics.Types
 import           Utils
 
 type StatementEnv = (String, [DesCompAnnot])

@@ -21,9 +21,9 @@ import           Data.Graph
 import           Data.List           (nub)
 import           MapMeta
 import           Parser.Syntax
-import           Syntax
-import           Syntax.Prgm
-import           Syntax.Types
+import           Semantics
+import           Semantics.Prgm
+import           Semantics.Types
 import           Text.Printf
 import           Utils
 

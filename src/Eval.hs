@@ -20,9 +20,9 @@ import           CRes
 import qualified Data.HashMap.Strict as H
 import           Data.Zip
 import           Prelude             hiding (unzip)
-import           Syntax
-import           Syntax.Prgm
-import           Syntax.Types
+import           Semantics
+import           Semantics.Prgm
+import           Semantics.Types
 
 import           Control.Monad
 import           Data.Graph

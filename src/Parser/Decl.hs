@@ -25,9 +25,9 @@ import           Data.List
 import           Parser.Expr
 import           Parser.Lexer
 import           Parser.Syntax
-import           Syntax
-import           Syntax.Prgm
-import           Syntax.Types
+import           Semantics
+import           Semantics.Prgm
+import           Semantics.Types
 import           Text.Megaparsec.Char
 
 pCompAnnot :: Parser PCompAnnot

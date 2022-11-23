@@ -1,6 +1,6 @@
 --------------------------------------------------------------------
 -- |
--- Module    :  Syntax.Prgm
+-- Module    :  Semantics.Prgm
 -- Copyright :  (c) Zach Kimberg 2020
 -- License   :  MIT
 -- Maintainer:  zachary@kimberg.com
@@ -17,7 +17,7 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE InstanceSigs              #-}
 
-module Syntax.Prgm where
+module Semantics.Prgm where
 
 import qualified Data.HashMap.Strict as H
 import           Data.Hashable
@@ -28,7 +28,7 @@ import           Data.Aeson          (object)
 import           Data.Aeson          hiding (Object)
 import           Data.Aeson.Types    (ToJSON)
 import           Data.Graph
-import           Syntax.Types
+import           Semantics.Types
 import           Text.Megaparsec
 import           Text.Printf
 

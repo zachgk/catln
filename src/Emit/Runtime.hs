@@ -16,8 +16,8 @@
 module Emit.Runtime where
 
 import qualified Data.HashMap.Strict       as H
-import           Syntax.Prgm
-import           Syntax.Types
+import           Semantics.Prgm
+import           Semantics.Types
 
 import           Emit.Codegen
 import           Eval.Common

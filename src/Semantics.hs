@@ -1,6 +1,6 @@
 --------------------------------------------------------------------
 -- |
--- Module    :  Syntax
+-- Module    :  Semantics
 -- Copyright :  (c) Zach Kimberg 2019
 -- License   :  MIT
 -- Maintainer:  zachary@kimberg.com
@@ -12,7 +12,7 @@
 -- general syntax-based utilities.
 --------------------------------------------------------------------
 
-module Syntax where
+module Semantics where
 
 import qualified Data.HashMap.Strict   as H
 import           Data.Void             (Void)
@@ -21,8 +21,8 @@ import           Text.Megaparsec.Error (ParseErrorBundle)
 
 import           Data.Maybe
 import           MapMeta
-import           Syntax.Prgm
-import           Syntax.Types
+import           Semantics.Prgm
+import           Semantics.Types
 import           Text.Printf
 import           Utils
 

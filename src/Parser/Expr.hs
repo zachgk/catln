@@ -24,9 +24,9 @@ import qualified Text.Megaparsec.Char.Lexer     as L
 
 import           Parser.Lexer
 import           Parser.Syntax
-import           Syntax
-import           Syntax.Prgm
-import           Syntax.Types
+import           Semantics
+import           Semantics.Prgm
+import           Semantics.Types
 import           Text.Printf
 
 data ExprParseMode

@@ -25,8 +25,8 @@ import           Text.Printf
 
 import           Control.Monad.Fail
 import           Data.Aeson
-import           Syntax
-import           Syntax.Prgm
+import           Semantics
+import           Semantics.Prgm
 import           Text.Megaparsec       (pstateSourcePos)
 import           Text.Megaparsec.Error
 

@@ -26,7 +26,7 @@ import           Data.Graph
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Data.Maybe
-import           Syntax.Prgm
+import           Semantics.Prgm
 import           TypeCheck.Common
 import           TypeCheck.Constrain (runConstraints)
 import           TypeCheck.Decode

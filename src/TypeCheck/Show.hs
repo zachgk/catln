@@ -15,8 +15,8 @@
 
 module TypeCheck.Show where
 
-import           Syntax
-import           Syntax.Prgm
+import           Semantics
+import           Semantics.Prgm
 import           TypeCheck.Common
 
 showM :: FEnv -> VarMeta -> TypeCheckResult ShowMeta

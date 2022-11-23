@@ -31,9 +31,9 @@ import qualified Data.HashMap.Strict  as H
 
 import           CRes
 import           Eval.Common
-import           Syntax
-import           Syntax.Prgm
-import           Syntax.Types
+import           Semantics
+import           Semantics.Prgm
+import           Semantics.Types
 import           Text.Printf
 import           TreeBuild
 -- import Data.Bifunctor

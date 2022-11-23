@@ -1,6 +1,6 @@
 --------------------------------------------------------------------
 -- |
--- Module    :  Syntax.Types
+-- Module    :  Semantics.Types
 -- Copyright :  (c) Zach Kimberg 2020
 -- License   :  MIT
 -- Maintainer:  zachary@kimberg.com
@@ -16,7 +16,7 @@
 {-# LANGUAGE DeriveGeneric  #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
-module Syntax.Types where
+module Semantics.Types where
 
 import           Data.Aeson
 import           Data.Aeson.Types    (ToJSONKey)

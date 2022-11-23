@@ -15,9 +15,9 @@ module Parser.Syntax where
 import qualified Data.HashMap.Strict as H
 
 import           Data.List           (isPrefixOf)
-import           Syntax
-import           Syntax.Prgm
-import           Syntax.Types
+import           Semantics
+import           Semantics.Prgm
+import           Semantics.Types
 import           Text.Megaparsec     (SourcePos)
 import           Text.Printf
 import           Utils

@@ -16,9 +16,9 @@ module Repl where
 
 import           CRes
 import           Parser
-import           Syntax
-import           Syntax.Prgm
-import           Syntax.Types
+import           Semantics
+import           Semantics.Prgm
+import           Semantics.Types
 
 import           Control.Monad.Trans
 import           Data.List                (isPrefixOf)

@@ -17,9 +17,9 @@ module TypeCheck.Decode where
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 
-import           Syntax
-import           Syntax.Prgm
-import           Syntax.Types
+import           Semantics
+import           Semantics.Prgm
+import           Semantics.Types
 import           TypeCheck.Common
 import           TypeCheck.Show      (showCon)
 

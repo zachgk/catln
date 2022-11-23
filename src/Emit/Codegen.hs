@@ -41,7 +41,7 @@ import qualified LLVM.AST.Constant          as C
 import qualified LLVM.AST.Linkage           as L
 import           LLVM.AST.Type
 import           LLVM.AST.Typed
-import           Syntax.Types               (ArgName)
+import           Semantics.Types            (ArgName)
 import           Text.Printf
 
 -------------------------------------------------------------------------------
