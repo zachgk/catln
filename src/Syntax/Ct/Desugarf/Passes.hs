@@ -1,6 +1,6 @@
 --------------------------------------------------------------------
 -- |
--- Module    :  Desugarf.Passes
+-- Module    :  Syntax.Ct.Desugarf.Passes
 -- Copyright :  (c) Zach Kimberg 2020
 -- License   :  MIT
 -- Maintainer:  zachary@kimberg.com
@@ -13,17 +13,17 @@
 --------------------------------------------------------------------
 {-# LANGUAGE NamedFieldPuns #-}
 
-module Desugarf.Passes where
+module Syntax.Ct.Desugarf.Passes where
 
-import qualified Data.HashMap.Strict as H
+import qualified Data.HashMap.Strict     as H
 
 import           Data.Graph
-import           Data.List           (nub)
+import           Data.List               (nub)
 import           MapMeta
-import           Parser.Syntax
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
+import           Syntax.Ct.Parser.Syntax
 import           Text.Printf
 import           Utils
 

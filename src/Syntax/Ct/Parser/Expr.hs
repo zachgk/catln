@@ -1,6 +1,6 @@
 --------------------------------------------------------------------
 -- |
--- Module    :  Parser.Expr
+-- Module    :  Syntax.Ct.Parser.Expr
 -- Copyright :  (c) Zach Kimberg 2020
 -- License   :  MIT
 -- Maintainer:  zachary@kimberg.com
@@ -12,7 +12,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Parser.Expr where
+module Syntax.Ct.Parser.Expr where
 
 import           Control.Applicative            hiding (many, some)
 import           Control.Monad.Combinators.Expr
@@ -22,11 +22,11 @@ import           Text.Megaparsec                hiding (pos1)
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer     as L
 
-import           Parser.Lexer
-import           Parser.Syntax
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
+import           Syntax.Ct.Parser.Lexer
+import           Syntax.Ct.Parser.Syntax
 import           Text.Printf
 
 data ExprParseMode

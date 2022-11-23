@@ -1,6 +1,6 @@
 --------------------------------------------------------------------
 -- |
--- Module    :  Parser
+-- Module    :  Syntax.Ct.Parser
 -- Copyright :  (c) Zach Kimberg 2019
 -- License   :  MIT
 -- Maintainer:  zachary@kimberg.com
@@ -13,7 +13,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Parser where
+module Syntax.Ct.Parser where
 
 import           Control.Applicative        hiding (many, some)
 import qualified Data.HashSet               as S
@@ -25,13 +25,13 @@ import           Control.Monad
 import           Data.Graph
 import           Data.List
 import           Data.Maybe
-import           Parser.Decl
-import           Parser.Expr
-import           Parser.Lexer
-import           Parser.Syntax
-import           Parser.Type                (pTypeStatement)
 import           Semantics
 import           Semantics.Prgm
+import           Syntax.Ct.Parser.Decl
+import           Syntax.Ct.Parser.Expr
+import           Syntax.Ct.Parser.Lexer
+import           Syntax.Ct.Parser.Syntax
+import           Syntax.Ct.Parser.Type      (pTypeStatement)
 import           System.Directory
 import qualified Text.Megaparsec.Char.Lexer as L
 import           Text.Printf

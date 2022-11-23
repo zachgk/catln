@@ -1,6 +1,6 @@
 --------------------------------------------------------------------
 -- |
--- Module    :  Desugarf
+-- Module    :  Syntax.Ct.Desugarf
 -- Copyright :  (c) Zach Kimberg 2019
 -- License   :  MIT
 -- Maintainer:  zachary@kimberg.com
@@ -12,26 +12,26 @@
 --------------------------------------------------------------------
 
 {-# LANGUAGE TupleSections #-}
-module Desugarf where
+module Syntax.Ct.Desugarf where
 
 
-import           Data.Bifunctor      (first, second)
+import           Data.Bifunctor            (first, second)
 import           Data.Either
-import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet        as S
+import qualified Data.HashMap.Strict       as H
+import qualified Data.HashSet              as S
 import           Data.Hashable
 import           Data.Maybe
 import           Text.Printf
 
 import           CRes
-import           Data.Graph          hiding (path)
+import           Data.Graph                hiding (path)
 import           Data.List
-import           Desugarf.Passes
 import           MapMeta
-import           Parser.Syntax
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
+import           Syntax.Ct.Desugarf.Passes
+import           Syntax.Ct.Parser.Syntax
 import           Utils
 
 type StatementEnv = (String, [DesCompAnnot])

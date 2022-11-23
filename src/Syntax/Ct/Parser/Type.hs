@@ -1,6 +1,6 @@
 --------------------------------------------------------------------
 -- |
--- Module    :  Parser.Type
+-- Module    :  Syntax.Ct.Parser.Type
 -- Copyright :  (c) Zach Kimberg 2020
 -- License   :  MIT
 -- Maintainer:  zachary@kimberg.com
@@ -12,17 +12,17 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Parser.Type where
+module Syntax.Ct.Parser.Type where
 
-import           Control.Applicative hiding (many, some)
-import qualified Data.HashMap.Strict as H
-import           Text.Megaparsec     hiding (pos1)
+import           Control.Applicative     hiding (many, some)
+import qualified Data.HashMap.Strict     as H
+import           Text.Megaparsec         hiding (pos1)
 
 import           Data.Maybe
-import           Parser.Expr
-import           Parser.Lexer
-import           Parser.Syntax
 import           Semantics.Prgm
+import           Syntax.Ct.Parser.Expr
+import           Syntax.Ct.Parser.Lexer
+import           Syntax.Ct.Parser.Syntax
 
 
 pMultiTerm :: Parser [PExpr]

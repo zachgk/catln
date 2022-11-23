@@ -10,9 +10,9 @@ import           Text.Printf
 
 import           CRes
 import qualified Data.Text.Lazy     as T
-import           Desugarf           (desFiles)
 import           Eval
-import           Parser             (readFiles)
+import           Syntax.Ct.Desugarf (desFiles)
+import           Syntax.Ct.Parser   (readFiles)
 import           Text.Pretty.Simple
 import           TypeCheck
 import           WebDocs            (docApi)

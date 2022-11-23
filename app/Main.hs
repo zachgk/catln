@@ -3,10 +3,10 @@
 module Main where
 
 import           CRes
-import           Desugarf            (desFiles)
 import           Eval
 import           Options.Applicative
-import           Parser
+import           Syntax.Ct.Desugarf  (desFiles)
+import           Syntax.Ct.Parser
 import           TypeCheck           (typecheckPrgm)
 
 import qualified Data.HashMap.Strict as H

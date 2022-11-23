@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 --------------------------------------------------------------------
 -- |
--- Module    :  Parser.Lexer
+-- Module    :  Syntax.Ct.Parser.Lexer
 -- Copyright :  (c) Zach Kimberg 2019
 -- License   :  MIT
 -- Maintainer:  zachary@kimberg.com
@@ -13,7 +13,7 @@
 -- parsers.
 --------------------------------------------------------------------
 
-module Parser.Lexer where
+module Syntax.Ct.Parser.Lexer where
 
 import           Control.Applicative        hiding (many, some)
 import           Control.Monad              (void)

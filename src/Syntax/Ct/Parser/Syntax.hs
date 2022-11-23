@@ -1,6 +1,6 @@
 --------------------------------------------------------------------
 -- |
--- Module    :  Parser.Syntax
+-- Module    :  Syntax.Ct.Parser.Syntax
 -- Copyright :  (c) Zach Kimberg 2019
 -- License   :  MIT
 -- Maintainer:  zachary@kimberg.com
@@ -10,7 +10,7 @@
 -- This module defines common types for parsing.
 --------------------------------------------------------------------
 
-module Parser.Syntax where
+module Syntax.Ct.Parser.Syntax where
 
 import qualified Data.HashMap.Strict as H
 

@@ -1,6 +1,6 @@
 --------------------------------------------------------------------
 -- |
--- Module    :  Parser.Decl
+-- Module    :  Syntax.Ct.Parser.Decl
 -- Copyright :  (c) Zach Kimberg 2020
 -- License   :  MIT
 -- Maintainer:  zachary@kimberg.com
@@ -13,7 +13,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Parser.Decl where
+module Syntax.Ct.Parser.Decl where
 
 import           Control.Applicative        hiding (many, some)
 import           Data.Maybe
@@ -22,12 +22,12 @@ import qualified Text.Megaparsec.Char.Lexer as L
 
 import           Data.Either
 import           Data.List
-import           Parser.Expr
-import           Parser.Lexer
-import           Parser.Syntax
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
+import           Syntax.Ct.Parser.Expr
+import           Syntax.Ct.Parser.Lexer
+import           Syntax.Ct.Parser.Syntax
 import           Text.Megaparsec.Char
 
 pCompAnnot :: Parser PCompAnnot

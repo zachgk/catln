@@ -28,14 +28,14 @@ import           Network.Wai.Middleware.Static
 import           CRes
 import           Data.Graph
 import           Data.Maybe                    (fromJust)
-import           Desugarf                      (desFiles)
 import           Eval                          (evalAnnots, evalBuild, evalRun)
 import           Eval.Common                   (EvalResult, Val (..))
-import           Parser                        (readFiles)
-import           Parser.Syntax                 (FinalDesPrgm, PPrgmGraphData)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
+import           Syntax.Ct.Desugarf            (desFiles)
+import           Syntax.Ct.Parser              (readFiles)
+import           Syntax.Ct.Parser.Syntax       (FinalDesPrgm, PPrgmGraphData)
 import           TypeCheck                     (typecheckPrgm,
                                                 typecheckPrgmWithTrace)
 import           TypeCheck.Common              (TPrgm, TraceConstrain, VPrgm)
