@@ -18,6 +18,7 @@ import           CRes
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
+import           Syntax.Ct.Prgm
 import           Syntax.Ct.Parser
 
 import           Control.Monad.Trans

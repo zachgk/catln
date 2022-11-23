@@ -18,6 +18,7 @@ import           Data.List           (isPrefixOf)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
+import           Syntax.Ct.Prgm
 import           Text.Megaparsec     (SourcePos)
 import           Text.Printf
 import           Utils

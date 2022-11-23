@@ -32,6 +32,7 @@ import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Desugarf.Passes
 import           Syntax.Ct.Parser.Syntax
+import           Syntax.Ct.Prgm
 import           Utils
 
 type StatementEnv = (String, [DesCompAnnot])

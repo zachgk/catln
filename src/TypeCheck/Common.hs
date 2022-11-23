@@ -129,7 +129,6 @@ type PObjArg = ObjArg ()
 type PObject = Object ()
 type PPrgm = Prgm Expr ()
 type PPrgmGraphData = GraphData PPrgm String
-type PReplRes = ReplRes ()
 
 data ShowMetaDat = ShowMeta SType VarMetaDat
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
@@ -143,7 +142,6 @@ type SObject = Object ShowMetaDat
 type SObjectMap = ObjectMap Expr ShowMetaDat
 type SObjectMapItem = ObjectMapItem Expr ShowMetaDat
 type SPrgm = Prgm Expr ShowMetaDat
-type SReplRes = ReplRes ShowMetaDat
 
 data VarMetaDat = VarMetaDat Pnt (Maybe VObject)
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
@@ -158,7 +156,6 @@ type VObject = Object VarMetaDat
 type VObjectMap = ObjectMap Expr VarMetaDat
 type VObjectMapItem = ObjectMapItem Expr VarMetaDat
 type VPrgm = (VObjectMap, ClassGraph, [VCompAnnot])
-type VReplRes = ReplRes VarMetaDat
 
 type TypedMeta = Meta ()
 type TExpr = Expr ()
@@ -170,7 +167,6 @@ type TObject = Object ()
 type TObjectMap = ObjectMap Expr ()
 type TObjectMapItem = ObjectMapItem Expr ()
 type TPrgm = Prgm Expr ()
-type TReplRes = ReplRes ()
 
 -- implicit graph
 type VTypeGraphVal = (VObject, VArrow) -- (match object type, if matching then can implicit to type in arrow)

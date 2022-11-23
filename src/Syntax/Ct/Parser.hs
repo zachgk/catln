@@ -25,13 +25,12 @@ import           Control.Monad
 import           Data.Graph
 import           Data.List
 import           Data.Maybe
-import           Semantics
-import           Semantics.Prgm
 import           Syntax.Ct.Parser.Decl
 import           Syntax.Ct.Parser.Expr
 import           Syntax.Ct.Parser.Lexer
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Parser.Type      (pTypeStatement)
+import           Syntax.Ct.Prgm
 import           System.Directory
 import qualified Text.Megaparsec.Char.Lexer as L
 import           Text.Printf

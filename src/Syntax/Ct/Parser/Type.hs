@@ -23,6 +23,7 @@ import           Semantics.Prgm
 import           Syntax.Ct.Parser.Expr
 import           Syntax.Ct.Parser.Lexer
 import           Syntax.Ct.Parser.Syntax
+import           Syntax.Ct.Prgm
 
 
 pMultiTerm :: Parser [PExpr]

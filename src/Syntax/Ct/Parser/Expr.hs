@@ -27,6 +27,7 @@ import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Parser.Lexer
 import           Syntax.Ct.Parser.Syntax
+import           Syntax.Ct.Prgm
 import           Text.Printf
 
 data ExprParseMode

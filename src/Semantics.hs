@@ -14,10 +14,7 @@
 
 module Semantics where
 
-import qualified Data.HashMap.Strict   as H
-import           Data.Void             (Void)
-
-import           Text.Megaparsec.Error (ParseErrorBundle)
+import qualified Data.HashMap.Strict as H
 
 import           Data.Maybe
 import           MapMeta
@@ -26,13 +23,6 @@ import           Semantics.Types
 import           Text.Printf
 import           Utils
 
-type ParseErrorRes = ParseErrorBundle String Void
-
-data ReplRes m
-  = ReplStatement (RawStatementTree RawExpr m)
-  | ReplExpr (RawExpr m)
-  | ReplErr ParseErrorRes
-  deriving (Eq, Show)
 
 getMetaType :: Meta m -> Type
 getMetaType (Meta t _ _) = t

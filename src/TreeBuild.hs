@@ -37,7 +37,6 @@ type TBGuard = Guard TBExpr
 type TBArrow = Arrow Expr TBMetaDat
 type TBObjectMap = ObjectMap Expr TBMetaDat
 type TBPrgm = Prgm Expr TBMetaDat
-type TBReplRes = ReplRes TBMetaDat
 
 type VisitedArrows = S.HashSet ResArrowTree
 
