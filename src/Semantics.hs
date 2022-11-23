@@ -103,6 +103,7 @@ exprToObj basis doc (TupleApply m' (_, baseExpr) arg) = baseObj{deprecatedObjM=m
     (argName', argVal') = case arg of
       (TupleArgI m n)    -> (n, (m, Nothing))
       (TupleArgIO _ n (HoleExpr holeM _)) -> (n, (holeM, Nothing))
+      (TupleArgIO _ n (AliasExpr HoleExpr{} (Arg m argName))) -> (n, (m, Just (Object m MatchObj H.empty H.empty Nothing argName)))
       (TupleArgIO m n a) -> (n, (m, Just $ exprToObj basis Nothing a))
       TupleArgO{} -> error "Found TupleArgO in exprToObj"
 exprToObj basis doc (VarApply m' baseExpr name varM) = baseObj{deprecatedObjM=m', deprecatedObjVars=H.insert name varM (deprecatedObjVars baseObj)}

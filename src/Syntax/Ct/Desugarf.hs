@@ -288,7 +288,7 @@ semiDesExpr obj@(Just jobj) r@(RawMatch m e matchItems) = (subE ++ subMatchItems
         (subPattGuard, pattGuard') = semiDesGuard jobj pattGuard
         (subMatchExpr, matchExpr') = semiDesExpr obj matchExpr
         ([], pattObjExpr') = semiDesExpr obj pattObjExpr
-        matchArg = [(Just argName, pattObjExpr')] -- TODO Currently returs (argName = x2) but should instead be (x2@argName) using AliasExpr
+        matchArg = [(Just argName, AliasExpr (HoleExpr emptyMetaN (HoleActive Nothing)) pattObjExpr')]
         matchItemExpr' = PSemiDecl (DeclLHS (emptyMetaM "obj" m) (Pattern (mkExprObj FunctionObj (H.toList $ exprAppliedVars $ eobjExpr jobj) matchArg Nothing condName) pattGuard')) [] (Just matchExpr')
 semiDesExpr _ (RawCase _ _ ((Pattern _ ElseGuard, _):_)) = error "Can't use elseguard in match expr"
 semiDesExpr _ (RawCase _ _ []) = error "Empty case"
@@ -298,7 +298,7 @@ semiDesExpr obj@(Just jobj) r@(RawCase m e ((Pattern firstObj firstGuard, firstE
     condName = "$" ++ take 6 (printf "%08x" (hash r))
     argName = condName ++ "-arg"
     ([], firstObjExpr') = semiDesExpr obj (eobjExpr firstObj)
-    declObj = mkExprObj FunctionObj (H.toList $ exprAppliedVars $ eobjExpr jobj) [(Just argName, firstObjExpr')] Nothing condName -- TODO Currently returs (argName = x2) but should instead be (x2@argName) using AliasExpr
+    declObj = mkExprObj FunctionObj (H.toList $ exprAppliedVars $ eobjExpr jobj) [(Just argName, AliasExpr (HoleExpr emptyMetaN (HoleActive Nothing))firstObjExpr')] Nothing condName
     firstDecl = PSemiDecl (DeclLHS m (Pattern declObj firstGuard')) [] (Just firstExpr')
     (subFG, firstGuard') = semiDesGuard jobj firstGuard
     (subFE, firstExpr') = semiDesExpr obj firstExpr
