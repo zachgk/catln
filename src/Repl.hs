@@ -34,7 +34,7 @@ coreImport = "stack/core/main.ct"
 
 buildReplBaseEnv :: IO ReplEnv
 buildReplBaseEnv = do
-  rawCore <- readFiles True [coreImport]
+  rawCore <- readFiles True True [coreImport]
   case rawCore of
     CRes _ r -> return ([], r)
     CErr _   -> fail "Could not read core"

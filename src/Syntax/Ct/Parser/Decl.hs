@@ -20,6 +20,7 @@ import           Data.Maybe
 import           Text.Megaparsec            hiding (pos1)
 import qualified Text.Megaparsec.Char.Lexer as L
 
+import           Constants
 import           Data.Either
 import           Data.List
 import           Semantics
@@ -59,7 +60,7 @@ pComment = do
   c <- L.indentBlock scn p
   pos2 <- getSourcePos
   let m = emptyMeta pos1 pos2
-  return $ RawTupleApply (emptyMetaM "appArg" m) (emptyMetaM "valC" m, RawValue (emptyMetaM "val" m) "/Catln/#md") [TupleArgIO (emptyMetaM "text" m) "text" (RawCExpr m (CStr c))]
+  return $ RawTupleApply (emptyMetaM "appArg" m) (emptyMetaM "valC" m, RawValue (emptyMetaM "val" m) mdAnnot) [TupleArgIO (emptyMetaM "text" m) "text" (RawCExpr m (CStr c))]
   where
     takeLine = takeWhileP (Just "character") (/= '\n')
     p = do

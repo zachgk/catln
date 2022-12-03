@@ -22,11 +22,15 @@ import           Data.Hashable
 import           Data.Void           (Void)
 import           GHC.Generics        (Generic)
 
+import           Data.Aeson          hiding (Object)
 import           Data.Aeson.Types    (ToJSON)
 import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Megaparsec
 import           Text.Printf
+
+data Pattern e m = Pattern (ExprObject e m) (Guard (e m))
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON, ToJSONKey)
 
 -- Expr before desugar
 data RawExpr m
@@ -38,7 +42,7 @@ data RawExpr m
   | RawVarsApply (Meta m) (RawExpr m) [(TypeVarName, Meta m)]
   | RawContextApply (Meta m) (Meta m, RawExpr m) [(ArgName, Meta m)]
   | RawParen (RawExpr m)
-  | RawMethod (RawExpr m) (RawExpr m) -- base methodValue
+  | RawMethod (RawExpr m) (RawExpr m) -- ^ base methodValue
   | RawIfThenElse (Meta m) (RawExpr m) (RawExpr m) (RawExpr m)
   | RawMatch (Meta m) (RawExpr m) [(Pattern RawExpr m, RawExpr m)]
   | RawCase (Meta m) (RawExpr m) [(Pattern RawExpr m, RawExpr m)]

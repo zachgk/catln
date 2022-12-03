@@ -109,8 +109,8 @@ dirImportToMain f = do
     (False, True) -> f ++ "/main.ct"
     _             -> error "bad dir"
 
-readFiles :: Bool -> [String] -> IO (CRes PPrgmGraphData)
-readFiles includeCore = fmap (fmap (graphFromEdges . snd)) . aux [] S.empty
+readFiles :: Bool -> Bool -> [String] -> IO (CRes PPrgmGraphData)
+readFiles includeCore includeDependencies = fmap (fmap (graphFromEdges . snd)) . aux [] S.empty
   where
     aux acc visited [] = return $ return (visited, acc)
     aux acc visited (nextToVisit:restToVisit) | S.member nextToVisit visited = aux acc visited restToVisit
@@ -128,7 +128,10 @@ readFiles includeCore = fmap (fmap (graphFromEdges . snd)) . aux [] S.empty
                     else parsedImports
               parsedImports'' <- mapM dirImportToMain parsedImports'
               let prgm' = (parsedImports'', statements)
-              aux ((prgm', nextToVisit, parsedImports'') : acc) (S.insert nextToVisit visited) (parsedImports' ++ restToVisit)
+              let restToVisit' = if includeDependencies
+                    then parsedImports' ++ restToVisit
+                    else restToVisit
+              aux ((prgm', nextToVisit, parsedImports'') : acc) (S.insert nextToVisit visited) restToVisit'
         (False, True) -> do -- directory
           files <- listDirectory nextToVisit
           files' <- forM files $ \file -> do

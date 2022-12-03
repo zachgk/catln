@@ -30,7 +30,7 @@ prettyCNotes notes = "\n\n\t\t" ++ intercalate "\n\n\t\t" (map prettyNote notes)
 runTest :: Bool -> String -> TestTree
 runTest includeCore fileName = testCaseSteps fileName $ \step -> do
   step $ printf "Read file %s..." fileName
-  maybeRawPrgm <- readFiles includeCore [fileName]
+  maybeRawPrgm <- readFiles includeCore True [fileName]
   case maybeRawPrgm of
     CErr notes -> assertFailure $ "Could not parse:" ++ prettyCNotes notes
     CRes _ rawPrgm -> do

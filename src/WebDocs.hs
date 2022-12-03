@@ -84,7 +84,7 @@ mkCacheWDProvider includeCore baseFileName = do
                            }
 
 getRawPrgm :: WDProvider -> IO (CRes PPrgmGraphData)
-getRawPrgm (LiveWDProvider includeCore baseFileName) = readFiles includeCore [baseFileName]
+getRawPrgm (LiveWDProvider includeCore baseFileName) = readFiles includeCore True [baseFileName]
 getRawPrgm CacheWDProvider{cRaw} = return cRaw
 
 getPrgm :: WDProvider -> IO (CRes (GraphData FinalDesPrgm String))

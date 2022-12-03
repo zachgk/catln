@@ -44,9 +44,6 @@ data Constant
   | CStr String
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
-data Pattern e m = Pattern (ExprObject e m) (Guard (e m))
-  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON, ToJSONKey)
-
 -- |
 -- An argument applied in an expression.
 -- TODO Consider replacing the TupleArgI ArgName with an Expr as a generalization. In that case, this ArgName would be equivalent to a Value. It could also include lenses.

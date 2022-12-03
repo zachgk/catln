@@ -3,9 +3,12 @@
 module Main where
 
 import           CRes
+import           Control.Monad
+import           Data.String.Builder (build)
 import           Eval
 import           Options.Applicative
 import           Syntax.Ct.Desugarf  (desFiles)
+import           Syntax.Ct.Formatter (formatPrgm)
 import           Syntax.Ct.Parser
 import           TypeCheck           (typecheckPrgm)
 
@@ -15,12 +18,13 @@ import           Data.Semigroup      ((<>))
 import           Eval.Common         (Val (StrVal, TupleVal))
 import           System.Directory
 import           Text.Printf
+import           Utils
 import           WebDocs             (docServe)
 -- import Repl (repl)
 
 xRun :: String -> String -> IO ()
 xRun prgmName function = do
-  maybeRawPrgm <- readFiles True [prgmName]
+  maybeRawPrgm <- readFiles True True [prgmName]
   case aux maybeRawPrgm of
     CErr err   -> print err
     CRes _ resIO -> do
@@ -37,7 +41,7 @@ xRun prgmName function = do
 
 xBuild :: String -> String -> IO ()
 xBuild prgmName function = do
-  maybeRawPrgm <- readFiles True [prgmName]
+  maybeRawPrgm <- readFiles True True [prgmName]
   case aux maybeRawPrgm of
     CErr err   -> print err
     CRes _ resIO -> do
@@ -62,15 +66,28 @@ xBuild prgmName function = do
 xDoc :: String -> Bool -> IO ()
 xDoc prgmName cached = docServe cached True prgmName
 
+xFmt :: String -> IO ()
+xFmt prgmName = do
+  maybeRawPrgm <- readFiles False False [prgmName]
+  case maybeRawPrgm of
+    CErr err   -> print err
+    CRes _ prgmGraphData -> do
+      let prgms = graphToNodes prgmGraphData
+      forM_ prgms $ \(prgm, fileName, _) -> do
+        let prgm' = build $ formatPrgm 0 prgm
+        writeFile fileName prgm'
+
 exec :: Command -> IO ()
 exec (RunFile file function)   = xRun file function
 exec (BuildFile file function) = xBuild file function
 exec (Doc fname cached)        = xDoc fname cached
+exec (Fmt fname)               = xFmt fname
 
 data Command
   = BuildFile String String
   | RunFile String String
   | Doc String Bool
+  | Fmt String
 
 cRun :: Parser Command
 cRun = RunFile
@@ -87,6 +104,10 @@ cDoc = Doc
   <$> argument str (metavar "FILE" <> help "The file to run")
   <*> switch (long "cached" <> help "Cache results instead of reloading live (useful for serving rather than development)")
 
+cFmt :: Parser Command
+cFmt = Fmt
+  <$> argument str (metavar "FILE" <> help "The file to run")
+
 main :: IO ()
 main = exec =<< execParser opts
   where
@@ -98,4 +119,5 @@ main = exec =<< execParser opts
          command "run" (info cRun (progDesc "Runs a program"))
       <> command "build" (info cBuild (progDesc "Builds a program"))
       <> command "doc" (info cDoc (progDesc "Runs webdocs for a program"))
+      <> command "fmt" (info cFmt (progDesc "Runs the Catln formatter for a program"))
                              )

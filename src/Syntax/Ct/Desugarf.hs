@@ -24,6 +24,7 @@ import           Data.Maybe
 import           Text.Printf
 
 import           CRes
+import           Constants
 import           Data.Graph                hiding (path)
 import           Data.List
 import           MapMeta
@@ -133,7 +134,9 @@ currySubFunctions parentArgs decls expr annots = (decls', expr', annots')
     annots' = map (currySubFunctionsUpdateExpr toUpdate parentArgs) annots
 
 desObjDocComment :: [PStatementTree] -> Maybe String
-desObjDocComment ((RawStatementTree (RawAnnot (RawTupleApply _ (_, RawValue _ "/Catln/#md") [TupleArgIO _ "text" (RawCExpr _ (CStr doc))])) _):rest) = Just (++) <*> Just doc <*> desObjDocComment rest
+desObjDocComment ((RawStatementTree (RawAnnot annotExpr) _):rest) | maybeExprPath annotExpr == Just mdAnnot = Just (++) <*> Just annotText <*> desObjDocComment rest
+  where
+    (Just (_, Just (RawCExpr _ (CStr annotText)))) = H.lookup mdAnnotText $ exprAppliedArgsMap annotExpr
 desObjDocComment _ = Just ""
 
 removeSubDeclarations :: (PDecl, [PStatementTree]) -> [PSemiDecl]
