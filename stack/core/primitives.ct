@@ -1,10 +1,9 @@
 import stack/core/algebra.ct
 import stack/core/data.ct
 
+
 module Data/Primitive
-
   # # Catln Core Primitives
-
     These types some of the basic types used in Catln.
 
   # ## Booleans
@@ -12,58 +11,87 @@ module Data/Primitive
   class Boolean = True | False
 
   every Boolean isa /Data/Algebra/Eq
+
   (True _ == True _) = True
+
   (True _ == False _) = False
+
   (False _ == True _) = False
+
   (False _ == False _) = True
 
   (~(Boolean _)) -> Boolean
+
   (~(True _)) = False
+
   (~(False _)) = True
 
   (Boolean _ & Boolean _) -> Boolean
+
   (True _ & True _) = True
+
   (Boolean _ & False _) = False
+
   (False _ & Boolean _) = False
 
   (Boolean _ | Boolean _) -> Boolean
+
   (True _ | Boolean _) = True
+
   (Boolean _ | True _) = True
+
   (False _ | False _) = False
 
   (Boolean _ ^ Boolean _) -> Boolean
+
   (True _ ^ True _) = False
+
   (True _ ^ False _) = True
+
   (False _ ^ True _) = True
+
   (False _ ^ False _) = False
 
   every Boolean isa /Data/Enum
-  # enum<Boolean> = [False, True]
 
+  # enum<Boolean> = [False, True]
 
   # ## Integers
 
   class Number = Integer | Float
+
   every Number isa /Data/Algebra/Eq
 
   (-(Integer _)) -> Integer
 
   (Integer _ - Integer _) -> Integer
+
   (Integer _ + Integer _) -> Integer
+
   (Integer _ * Integer _) -> Integer
 
   (Integer _ <= Integer _) -> Boolean
+
   (Integer _ >= Integer _) -> Boolean
+
   (Integer _ < Integer _) -> Boolean
+
   (Integer _ > Integer _) -> Boolean
+
   (Integer _ == Integer _) -> Boolean
+
   (Integer _ != Integer _) -> Boolean
 
   # ### Commutative Group
 
   every Integer isa /Data/Algebra/CommutativeMonoid
+
   every Integer isa /Data/Algebra/Group
 
   # mempty<Integer $T> = 0
+
   # mappend<Integer $T>($T l, $T r) = l + r
+
   # inverse<Integer $T>($T t) = -t
+
+

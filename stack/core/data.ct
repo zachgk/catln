@@ -1,45 +1,45 @@
 import stack/core/primitives.ct
 
+
 module Data
-
   # # Catln Core Data Types
-
     These define the basic data types used in the language.
 
   # ## String
 
   data String
-
     # A [String] is a list of characters.
+
 
   every String isa /Data/Algebra/Eq
 
   (String _ == String _) -> Boolean
 
   String.toString -> String = this
+
   Integer.toString -> String
 
-
   # ## Collections
-
     Collections are contains that hold elements of a type inside them.
 
   class Functor<$T>
-
     # A [Functor] is a basic property of a collection.
       It has a single operation [fmap] that applies a function to each element in the collection.
 
     # $F<$T=$A>.fmap<Functor $F>(fn($A) -> $B) -> $F<$T=$B>
 
+
   # ## Collections
 
   class Option<$T> = $T | None
-
     # [Option] defines a type that might have a value or [None].
       It can be used to handle operations that are uncertain if they can produce a response.
 
+
   every Option<$T $T> isa /Data/Functor
+
   # None.fmap(fn) = None
+
   # $T.fmap(fn($T)) = fn(this)
 
   class List<$T>
@@ -47,22 +47,24 @@ module Data
   # A [List] is a collection of zero or more ordered items.
 
   class ConsList<$T> = Cons<$T $T>($T head, ConsList<$T $T> tail) | Nil
-
     # The simplest kind of list can be created by prepending.
       A [ConsList] defines a list either by prepending to a list or with an empty list.
+
 
   # /operator::<$T>($T l, ConsList<$T> r) = Cons(head=l, tail=r)
     [operator::] is a utility operator to prepend an element onto a [List].
 
   # #### [length]
-
     The [length] of a [List] is the number of items inside of it.
 
   Nil.length = 0
+
   Cons(head, tail).length = 1 + tail.length
 
   every ConsList<$T $T> isa /Data/Functor
+
   # Nil.fmap(fn) = Nil
+
   # Cons(head, tail).fmap(fn) = Cons(head=fn(head), tail=tail.fmap(fn))
 
   class Set<$T>
@@ -71,9 +73,11 @@ module Data
     It is not ordered.
 
   class Enum
-
     # [Enum] represents a type which can be enumerated.
       It defines a single function [enum] which lists all of the values in the type.
 
+
   enum<Enum $T> -> Set<$T>
     # [enum] lists all of the values in a type.
+
+
