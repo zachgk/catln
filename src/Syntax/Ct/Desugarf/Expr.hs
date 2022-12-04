@@ -40,9 +40,10 @@ desExpr arrArgs (VarApply m be varName varVal) = VarApply m (desExpr arrArgs be)
 desObjPropagateTypes :: DesExpr -> (Maybe PartialType, DesExpr)
 desObjPropagateTypes (CExpr m c) = (Just $ constantPartialType c, CExpr (mWithType (constantType c) m) c)
 desObjPropagateTypes (Value m n) = (Just t, Value (mWithType (singletonType t) m) n)
-  where t = PartialType (PRelativeName n) H.empty H.empty [] PtArgExact
+  where
+    t = partialVal (PRelativeName n)
 desObjPropagateTypes (Arg m n) = (Just t, Arg (mWithType (singletonType t) m) n)
-  where t = PartialType (PRelativeName n) H.empty H.empty [] PtArgExact
+  where t = partialVal (PRelativeName n)
 desObjPropagateTypes (HoleExpr m h) = (Nothing, HoleExpr m h)
 desObjPropagateTypes (AliasExpr base alias) = (basePartial, AliasExpr base' alias')
   where
@@ -76,6 +77,7 @@ semiDesExpr _ (RawCExpr m c) = CExpr m c
 semiDesExpr _ (RawValue m n) = Value m n
 semiDesExpr _ (RawHoleExpr m h) = HoleExpr m h
 semiDesExpr obj (RawAliasExpr base alias) = AliasExpr (semiDesExpr obj base) (semiDesExpr obj alias)
+semiDesExpr obj (RawTupleApply _ (_, RawValue _ "/operator:") [TupleArgIO _ _ e, TupleArgIO _ _ tp]) = semiDesExpr obj (rawExprWithType (exprToType tp) e)
 semiDesExpr obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm'', be'') arg'') -> TupleApply m'' (bm'', be'') arg'') $ foldl aux (bm, be') args
   where
     be' = semiDesExpr obj be
@@ -98,3 +100,7 @@ semiDesExpr obj (RawList m (l:ls)) = semiDesExpr obj (RawTupleApply (emptyMetaM 
 
 exprToPartialType :: PExpr -> PartialType
 exprToPartialType = fromJust . fst . desObjPropagateTypes . desExpr H.empty . semiDesExpr Nothing
+
+exprToType :: PExpr -> Type
+exprToType (RawValue _ n@('$':_)) = TypeVar $ TVVar n
+exprToType t                      = (singletonType . exprToPartialType) t

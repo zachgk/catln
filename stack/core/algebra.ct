@@ -18,7 +18,7 @@ module Data/Algebra
       Note that it only compares like items with each other, not that you can compare apples to oranges.
 
 
-  ($T _ != $T _)[/Data/Algebra/Eq $T] -> Boolean
+  (_ : $T != _ : $T)[$T: /Data/Algebra/Eq] -> Boolean
     # This checks if two items are not equal.
 
   # It is the opposite of [operator==] leading to the simple definition:
@@ -61,9 +61,9 @@ module Data/Algebra
   # This means that something fully ordered can still take advantage of many of the same functions as partially ordered ones.
     It just usually has a more specific result.
 
-  compare[Ord $T]($T l, $T r) -> Ordering
+  compare[$T: Ord](l: $T, r: $T) -> Ordering
 
-  compare[POrd $T]($T l, $T r) -> POrdering
+  compare[$T: POrd](l: $T, r: $T) -> POrdering
 
   # The only major function for ordering is [compare].
     Comparing two [Ord] will result in an [Ordering].
@@ -72,13 +72,13 @@ module Data/Algebra
   # ### Operators for ordering
     Besides compare, there are also some operators to make using ordering easier.
 
-  ($T _ <= $T _)[Ord $T] -> Boolean
+  (_ : $T <= _ : $T)[$T: Ord] -> Boolean
 
-  ($T _ >= $T _)[Ord $T] -> Boolean
+  (_ : $T >= _ : $T)[$T: Ord] -> Boolean
 
-  ($T _ < $T _)[Ord $T] -> Boolean
+  (_ : $T < _ : $T)[$T: Ord] -> Boolean
 
-  ($T _ > $T _)[Ord $T] -> Boolean
+  (_ : $T > _ : $T)[$T: Ord] -> Boolean
 
   every POrd isa /Data/Algebra/Eq
     # If something can be compared for order, it should also be comparable for equality by the following relationship:
@@ -103,9 +103,9 @@ module Data/Algebra
 
   every Semigroup isa /Data/Algebra/Eq
 
-  ($T _ ++ $T _)[Semigroup $T] -> $T
+  (_ : $T ++ _ : $T)[$T: Semigroup] -> $T
 
-  testSemigroupAssociative[Semigroup $T]($T a, $T b, $T c) =
+  testSemigroupAssociative[$T: Semigroup](a: $T, b: $T, c: $T) =
     #test
     #assert(test= (a ++ b) ++ c == a ++ (b ++ c))
     0
@@ -119,17 +119,17 @@ module Data/Algebra
 
   every Monoid isa /Data/Algebra/Semigroup
 
-  mempty[Monoid $T] -> $T
+  mempty[$T: Monoid] -> $T
     # mempty is the "zero" or "empty" value that can be combined with [operator++] to result in the same operation
 
   # We can test to verify that [mempty] works with both the left and right.
 
   #test
-    testRightMonoidIdentity[/Data/Algebra/Monoid $T]($T t) =
+    testRightMonoidIdentity[$T: /Data/Algebra/Monoid](t: $T) =
       #assert(test= (t ++ mempty) == t)
       0
 
-    testLeftMonoidIdentity[/Data/Algebra/Monoid $T]($T t) =
+    testLeftMonoidIdentity[$T: /Data/Algebra/Monoid](t: $T) =
       #assert(test= mempty ++ t == t)
       0
 
@@ -148,7 +148,7 @@ module Data/Algebra
 
   # We can test to ensure that all [CommutativeMonoid]s satisfy the commutativity requirement.
 
-  testCommutativeMonoid[/Data/Algebra/CommutativeMonoid $T]($T a, $T b) =
+  testCommutativeMonoid[$T: /Data/Algebra/CommutativeMonoid](a: $T, b: $T) =
     #test
     #assert(test= a ++ b == b ++ a)
     0
@@ -162,11 +162,11 @@ module Data/Algebra
 
   every Group isa /Data/Algebra/Monoid
 
-  inverse[Group $T]($T t) -> $T
+  inverse[$T: Group](t: $T) -> $T
     # We can test to ensure that all [Group]s satisfy the inverse requirements.
       An inverse times itself should result in [mempty].
 
-  testGroup[Group $T]($T t) =
+  testGroup[$T: Group](t: $T) =
     #test
     #assert(test= t ++ inverse(t= t) == mempty)
     #assert(test= inverse(t= t) ++ t == mempty)

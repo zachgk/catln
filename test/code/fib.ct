@@ -1,8 +1,8 @@
 # Tests recursion with fibonaccci
 
-fib(Integer x) if x > 1 = fib(x= x - 1) + fib(x= x - 2)
+fib(x: Integer) if x > 1 = fib(x= x - 1) + fib(x= x - 2)
 
-fib(Integer x) else = 1
+fib(x: Integer) else = 1
 
-main{IO io} = io.exit(val= fib(3) - 3)
+main{io: IO} = io.exit(val= fib(3) - 3)
 

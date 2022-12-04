@@ -26,6 +26,7 @@ import           Constants
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
+import           Syntax.Ct.Desugarf.Expr
 import           Syntax.Ct.Parser.Lexer
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
@@ -50,6 +51,8 @@ ops = [
     [ Prefix (mkOp1 "-"  <$ symbol "-")
     , Prefix (mkOp1 "~" <$ symbol "~")
     ],
+    [ InfixL (mkOp2 ":" <$ symbol ":")
+    ],
     [ InfixL (mkOp2 "*" <$ symbol "*")
     , InfixL (mkOp2 "//" <$ symbol "//")
     ],
@@ -70,50 +73,20 @@ ops = [
     ]
   ]
 
-pTypesAndVal :: Parser (Type, Either Name Hole)
-pTypesAndVal = do
-  let anyId = identifier <|> tidentifier <|> pAnnotIdentifier <|> tvar <|> pHole
-  typesAndVal <- some $ do
-    typeName <- anyId
-    vars <- optional . try $ do
-      vs <- pVarsSuffix
-      -- Need to ensure that vars are not matched if it is the val name and not a type for the val
-      _ <- lookAhead anyId
-      return vs
-    return (typeName, vars)
-  (tp, argValName) <- case typesAndVal of
-        [] -> fail "Nothing found when parsing an argument or value"
-        [(v, Nothing)] -> return (TopType, v)
-        [(typeName, maybeTypeVars), (v, Nothing)] -> do
-          let baseType = fromMaybeTypeName $ Just typeName
-          case maybeTypeVars of
-            Nothing -> return (baseType, v)
-            Just suffix -> do
-              let (VarsSuffix _ vars) = suffix
-              let (UnionType basePartials) = baseType
-              let [partial] = splitUnionType basePartials
-              let partial' = partial{ptVars = getMetaType <$> H.fromList vars}
-              return (singletonType partial', v)
-        _ -> fail $ printf "Multiple types is not yet supported with %s" (show typesAndVal)
+pValue :: Parser PExpr
+pValue = do
+  pos1 <- getSourcePos
+  name <- identifier <|> tidentifier <|> pAnnotIdentifier <|> tvar <|> pHole
+  pos2 <- getSourcePos
+  let m = emptyMeta pos1 pos2
 
   -- check if name is a hole
-  let argValName' = case argValName of
-        "_"         -> Right $ HoleActive Nothing
-        ('_':_)     -> Right $ HoleActive (Just argValName)
-        "undefined" -> Right HoleUndefined
-        "todefine"  -> Right HoleTodefine
-        _           -> Left argValName
-
-  return (tp, argValName')
-
-pArgValue :: Parser PExpr
-pArgValue = do
-  pos1 <- getSourcePos
-  (tp, argValName) <- pTypesAndVal
-  pos2 <- getSourcePos
-  case argValName of
-    Left n  -> return $ RawValue (Meta tp (Just (pos1, pos2, "")) emptyMetaDat) n
-    Right h -> return $ RawHoleExpr (Meta tp (Just (pos1, pos2, "")) emptyMetaDat) h
+  return $ case name of
+        "_"         -> RawHoleExpr m $ HoleActive Nothing
+        ('_':_)     -> RawHoleExpr m $ HoleActive (Just name)
+        "undefined" -> RawHoleExpr m HoleUndefined
+        "todefine"  -> RawHoleExpr m HoleTodefine
+        _           -> RawValue m name
 
 pStringLiteral :: Parser PExpr
 pStringLiteral = do
@@ -145,21 +118,20 @@ pMethod = do
 
 pArgSuffix :: ExprParseMode -> Parser PTupleArg
 pArgSuffix exprMode = do
-  pos1 <- getSourcePos
-  maybeArgNameType <- optional . try $ do
-    n <- pTypesAndVal
+  expr1 <- pExpr exprMode
+  maybeExpr2 <- optional $ do
     _ <- symbol "="
-    return n
-  expr <- pExpr exprMode
-  pos2 <- getSourcePos
-  case maybeArgNameType of
-    Just (_, Right _) -> fail "Unexpected hole in arg name"
-    Just (tp, Left argName) -> return $ TupleArgIO (Meta tp (Just (pos1, pos2, "")) emptyMetaDat) argName expr
-    Nothing      -> if exprMode == ParseOutputExpr
-      then return $ TupleArgO (emptyMeta pos1 pos2) expr
-      else case expr of
-        RawValue m n -> return $ TupleArgI (Meta (getMetaType m) (Just (pos1, pos2, "")) emptyMetaDat) n
-        _ -> fail $ printf "Unexpected parsed argName: %s" (show expr)
+    pExpr exprMode
+
+  let expr1' = case expr1 of
+        RawTupleApply _ (_, RawValue _ "/operator:") [TupleArgIO _ _ (RawValue m n), TupleArgIO _ _ tp] -> RawValue (mWithType (exprToType tp) m) n
+        _ -> expr1
+
+  case (exprMode, expr1', maybeExpr2) of
+    (_, RawValue m argName, Just expr) -> return $ TupleArgIO m argName expr
+    (ParseOutputExpr, _, Nothing) -> return $ TupleArgO (emptyMetaE "tuple" expr1) expr1
+    (_, RawValue m argName, Nothing) -> return $ TupleArgI m argName
+    _ -> fail $ printf "Unexpected argName: %s" (show expr1)
 
 pArgsSuffix :: ExprParseMode -> Parser TermSuffix
 pArgsSuffix exprMode = do
@@ -172,13 +144,13 @@ pVarSuffix :: Parser (TypeVarName, ParseMeta)
 pVarSuffix = do
   pos1 <- getSourcePos
   -- TODO: Should support multiple class identifiers such as <Eq Ord $T>
-  v1 <- ttypeidentifier <|> tvar -- Either type (<Eq $T>) or var (<$T>)
-  v2 <- optional tvar -- var only with type
+  var <- tvar
+  maybeTp <- optional $ do
+    _ <- symbol ":"
+    ttypeidentifier <|> tvar -- Either type (<Eq $T>) or var (<$T>)
   pos2 <- getSourcePos
-  let (var', tp') = case (v1, v2) of
-        (var, Nothing) -> (var, TopType)
-        (tp, Just var) -> (var, fromMaybeTypeName (Just tp))
-  return (var', Meta tp' (Just (pos1, pos2, "")) emptyMetaDat)
+  let tp = fromMaybeTypeName maybeTp
+  return (var, Meta tp (Just (pos1, pos2, "")) emptyMetaDat)
 
 pVarsSuffix :: Parser TermSuffix
 pVarsSuffix = do
@@ -190,8 +162,9 @@ pVarsSuffix = do
 pContextElSuffix :: Parser (ArgName, ParseMeta)
 pContextElSuffix = do
   pos1 <- getSourcePos
-  tp <- tidentifier
   arg <- identifier
+  _ <- symbol ":"
+  tp <- tidentifier
   pos2 <- getSourcePos
   return (arg, Meta (singletonType (partialVal (PRelativeName tp))) (Just (pos1, pos2, "")) emptyMetaDat)
 
@@ -206,12 +179,13 @@ pAliasSuffix :: Parser TermSuffix
 pAliasSuffix = do
   _ <- string "@"
   pos1 <- getSourcePos
-  aliasName <- identifier <|> tidentifier -- TODO Alais can be full term instead
+  aliasName <- identifier <|> tidentifier -- TODO Alias can be full term instead
   pos2 <- getSourcePos
   return $ AliasSuffix (emptyMeta pos1 pos2) aliasName
 
 pTermSuffix :: ExprParseMode -> Parser TermSuffix
 pTermSuffix exprMode = pMethod <|> pArgsSuffix exprMode <|> pVarsSuffix <|> pContextSuffix <|> pAliasSuffix
+
 pInt :: Parser PExpr
 pInt = do
   pos1 <- getSourcePos
@@ -241,7 +215,7 @@ term exprMode = do
        <|> pStringLiteral
        <|> pInt
        <|> pList exprMode
-       <|> pArgValue
+       <|> pValue
   suffixes <- many (pTermSuffix exprMode)
   _ <- sc
   return $ foldl applyTermSuffix base suffixes
@@ -277,7 +251,10 @@ pPattern basis = do
 pLeafVar :: Parser (TypeVarName, Type)
 pLeafVar = do
   var <- tvar
-  return (var, TopType)
+  maybeTp <- optional $ do
+    _ <- symbol ":"
+    identifier <|> tidentifier <|> tvar
+  return (var, fromMaybeTypeName maybeTp)
 
 pTypeArg :: Parser (String, Type)
 pTypeArg = do

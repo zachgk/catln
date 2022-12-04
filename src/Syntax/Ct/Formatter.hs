@@ -51,7 +51,7 @@ formatType (UnionType partials) = join $ map formatPartialType $ splitUnionType 
         showName p  = fromPartialName p
         showArg (argName, argVal) = if argVal == TopType
           then argName
-          else argName ++ " " ++ formatType argVal
+          else argName ++ ": " ++ formatType argVal
         showTypeVars vars | H.null vars = ""
         showTypeVars vars = printf "[%s]" (intercalate ", " $ map showArg $ H.toList vars)
         showArgs args | H.null args = ""
@@ -62,15 +62,15 @@ formatType (UnionType partials) = join $ map formatPartialType $ splitUnionType 
 formatMeta :: Meta m -> String
 formatMeta m = case getMetaType m of
   TopType -> ""
-  t       -> formatType t ++ " "
+  t       -> ": " ++ formatType t
 
 formatExpr :: Int -> RawExpr m -> String
 formatExpr _ (RawCExpr _ (CInt c)) = show c
 formatExpr _ (RawCExpr _ (CFloat c)) = show c
 formatExpr _ (RawCExpr _ (CStr c)) = show c
-formatExpr _ (RawValue m n) = formatMeta m ++ n
-formatExpr _ (RawHoleExpr m (HoleActive Nothing)) = formatMeta m ++ "_"
-formatExpr _ (RawHoleExpr m (HoleActive (Just a))) = formatMeta m ++ "_" ++ a
+formatExpr _ (RawValue m n) = n ++ formatMeta m
+formatExpr _ (RawHoleExpr m (HoleActive Nothing)) = "_" ++ formatMeta m
+formatExpr _ (RawHoleExpr m (HoleActive (Just a))) = "_" ++ a ++ formatMeta m
 formatExpr _ (RawHoleExpr _ HoleUndefined) = "undefined"
 formatExpr _ (RawHoleExpr _ HoleTodefine) = "todefine"
 formatExpr indent (RawAliasExpr base alias) = printf "%s@%s" (formatExpr indent base) (formatExpr indent alias)
@@ -83,11 +83,11 @@ formatExpr indent (RawTupleApply _ (_, RawValue _ n) args) | operatorPrefix `isP
 formatExpr indent (RawTupleApply _ (_, be) args) = printf "%s(%s)" (formatExpr indent be) (intercalate ", " $ map formatTupleArg args)
   where
     formatTupleArg :: TupleArg RawExpr m -> String
-    formatTupleArg (TupleArgI m n)    = formatMeta m ++ n
+    formatTupleArg (TupleArgI m n)    = n ++ formatMeta m
     formatTupleArg (TupleArgO _ v)    = formatExpr indent v
     formatTupleArg (TupleArgIO _ n v) = printf "%s= %s" n (formatExpr indent v)
-formatExpr indent (RawVarsApply _ be vars) = printf "%s[%s]" (formatExpr indent be) (intercalate ", " $ map (\(varN, varM) -> printf "%s%s" (formatMeta varM) varN) vars)
-formatExpr indent (RawContextApply _ (_, be) ctxs) = printf "%s{%s}" (formatExpr indent be) (intercalate ", " $ map (\(ctxN, ctxM) -> formatMeta ctxM ++ ctxN) ctxs)
+formatExpr indent (RawVarsApply _ be vars) = printf "%s[%s]" (formatExpr indent be) (intercalate ", " $ map (\(varN, varM) -> printf "%s%s" varN (formatMeta varM)) vars)
+formatExpr indent (RawContextApply _ (_, be) ctxs) = printf "%s{%s}" (formatExpr indent be) (intercalate ", " $ map (\(ctxN, ctxM) -> ctxN ++ formatMeta ctxM) ctxs)
 formatExpr indent (RawParen e) = printf "(%s)" (formatExpr indent e)
 formatExpr indent (RawMethod base method) = printf "%s.%s" (formatExpr indent base) (formatExpr indent method)
 formatExpr indent (RawList _ l) = printf "[%s]" $ intercalate ", " $ map (formatExpr indent) l

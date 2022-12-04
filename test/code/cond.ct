@@ -1,8 +1,8 @@
 # Tests using the conditions if and else guards for arrows
 
-abs(Integer x) if x >= 0 = x
+abs(x: Integer) if x >= 0 = x
 
-abs(Integer x) else = x
+abs(x: Integer) else = x
 
-main{IO io} = io.exit(val= abs(0))
+main{io: IO} = io.exit(val= abs(0))
 

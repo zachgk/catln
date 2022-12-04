@@ -91,6 +91,13 @@ getPath name = if isAbsolutePath name then
 mWithType :: Type -> ParseMeta -> ParseMeta
 mWithType t (Meta _ p d) = Meta t p d
 
+rawExprWithType :: Type -> RawExpr ParseMetaDat -> RawExpr ParseMetaDat
+rawExprWithType t (RawCExpr m c) = RawCExpr (mWithType t m) c
+rawExprWithType t (RawValue m n) = RawValue (mWithType t m) n
+rawExprWithType t (RawHoleExpr m h) = RawHoleExpr (mWithType t m) h
+rawExprWithType t (RawList m l) = RawList (mWithType t m) l
+rawExprWithType _ e = error $ printf "rawExprWithType for unexpected type: %s" (show e)
+
 rawVal :: (MetaDat m) => String -> RawExpr m
 rawVal = RawValue m
   where

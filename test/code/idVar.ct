@@ -1,7 +1,7 @@
 # Tests id with type variables.
   This is one of the simplest tests with type variables.
 
-id[$T]($T x) -> $T = x
+id[$T](x: $T) -> $T = x
 
-main{IO io} = io.exit(val= id(x= 0))
+main{io: IO} = io.exit(val= id(x= 0))
 

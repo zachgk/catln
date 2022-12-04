@@ -13,7 +13,7 @@ module Data
 
   every String isa /Data/Algebra/Eq
 
-  (String _ == String _) -> Boolean
+  (_ : String == _ : String) -> Boolean
 
   String.toString -> String = this
 
@@ -36,7 +36,7 @@ module Data
       It can be used to handle operations that are uncertain if they can produce a response.
 
 
-  every Option[$T $T] isa /Data/Functor
+  every Option[$T: $T] isa /Data/Functor
 
   # None.fmap(fn) = None
 
@@ -46,7 +46,7 @@ module Data
 
   # A [List] is a collection of zero or more ordered items.
 
-  class ConsList[$T] = Cons[$T $T]($T head, ConsList[$T $T] tail) | Nil
+  class ConsList[$T] = Cons[$T: $T](head: $T, tail: ConsList[$T: $T]) | Nil
     # The simplest kind of list can be created by prepending.
       A [ConsList] defines a list either by prepending to a list or with an empty list.
 
@@ -61,7 +61,7 @@ module Data
 
   Cons(head, tail).length = 1 + tail.length
 
-  every ConsList[$T $T] isa /Data/Functor
+  every ConsList[$T: $T] isa /Data/Functor
 
   # Nil.fmap(fn) = Nil
 
@@ -77,7 +77,7 @@ module Data
       It defines a single function [enum] which lists all of the values in the type.
 
 
-  enum[Enum $T] -> Set[$T]
+  enum[$T: Enum] -> Set[$T]
     # [enum] lists all of the values in a type.
 
 

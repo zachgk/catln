@@ -1,8 +1,8 @@
 # Tests the "if-then-else" syntax with an absolute value
 
-abs(Integer x) = if(x >= 0)
+abs(x: Integer) = if(x >= 0)
   Then = x
   Else = -1 * x
 
-main{IO io} = io.exit(val= abs(0))
+main{io: IO} = io.exit(val= abs(0))
 
