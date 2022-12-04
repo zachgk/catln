@@ -126,7 +126,7 @@ instance Show PartialType where
       showName p  = fromPartialName p
       showArg (argName, argVal) = argName ++ "=" ++ show argVal
       showTypeVars vars | H.null vars = ""
-      showTypeVars vars = printf "<%s>" (intercalate ", " $ map showArg $ H.toList vars)
+      showTypeVars vars = printf "[%s]" (intercalate ", " $ map showArg $ H.toList vars)
       showArgs args | H.null args = ""
       showArgs args = printf "(%s)" (intercalate ", " $ map showArg $ H.toList args)
       showPreds preds | null preds = ""

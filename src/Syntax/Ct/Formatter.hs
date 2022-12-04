@@ -53,7 +53,7 @@ formatType (UnionType partials) = join $ map formatPartialType $ splitUnionType 
           then argName
           else argName ++ " " ++ formatType argVal
         showTypeVars vars | H.null vars = ""
-        showTypeVars vars = printf "<%s>" (intercalate ", " $ map showArg $ H.toList vars)
+        showTypeVars vars = printf "[%s]" (intercalate ", " $ map showArg $ H.toList vars)
         showArgs args | H.null args = ""
         showArgs args = printf "(%s)" (intercalate ", " $ map showArg $ H.toList args)
         showPreds preds | null preds = ""
@@ -86,7 +86,7 @@ formatExpr indent (RawTupleApply _ (_, be) args) = printf "%s(%s)" (formatExpr i
     formatTupleArg (TupleArgI m n)    = formatMeta m ++ n
     formatTupleArg (TupleArgO _ v)    = formatExpr indent v
     formatTupleArg (TupleArgIO _ n v) = printf "%s= %s" n (formatExpr indent v)
-formatExpr indent (RawVarsApply _ be vars) = printf "%s<%s>" (formatExpr indent be) (intercalate ", " $ map (\(varN, varM) -> printf "%s%s" (formatMeta varM) varN) vars)
+formatExpr indent (RawVarsApply _ be vars) = printf "%s[%s]" (formatExpr indent be) (intercalate ", " $ map (\(varN, varM) -> printf "%s%s" (formatMeta varM) varN) vars)
 formatExpr indent (RawContextApply _ (_, be) ctxs) = printf "%s{%s}" (formatExpr indent be) (intercalate ", " $ map (\(ctxN, ctxM) -> formatMeta ctxM ++ ctxN) ctxs)
 formatExpr indent (RawParen e) = printf "(%s)" (formatExpr indent e)
 formatExpr indent (RawMethod base method) = printf "%s.%s" (formatExpr indent base) (formatExpr indent method)
@@ -113,7 +113,7 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
           showClassVars :: String
           showClassVars = if null classVars
                 then ""
-                else printf "<%s>" $ intercalate ", " $ map showClassVar $ H.toList classVars
+                else printf "[%s]" $ intercalate ", " $ map showClassVar $ H.toList classVars
           showClassVar (n, t) = if t == TopType
             then n
             else printf "%s = %s" n (formatType t)
@@ -128,7 +128,7 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
           showClassVars :: String
           showClassVars = if null classVars
                 then ""
-                else printf "<%s>" $ intercalate ", " $ map showClassVar $ H.toList classVars
+                else printf "[%s]" $ intercalate ", " $ map showClassVar $ H.toList classVars
           showClassVar (n, TopType) = n
           showClassVar (n, t)       = printf "%s = %s" n (formatType t)
       RawExprStatement e -> formatExpr indent e

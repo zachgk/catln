@@ -6,13 +6,13 @@ For example, you might have a method `List.get(Int i)`. If typechecking finds th
 
 ```
 List.get(Int_lt(0) i) = compilerError("You attempted to access a list with an index less than zero")
-List_length<Int_lt(l)>.get(Int_gt(l) i) = compilerError("You attempted to access a list with an index guaranteed to exceed the length of the list")
+List_length[Int_lt(l)].get(Int_gt(l) i) = compilerError("You attempted to access a list with an index guaranteed to exceed the length of the list")
 ```
 
 The most common use of this would be that a method is called with properties that are proven to be bad. Another case might be creating methods that allow the program to typecheck, but still throw the compilerError. This converts a vague typechecking error into a potentially more clear kind of error. One example would be assuming an optional is safe:
 
 ```
-Optional<$T> -> $T = compilerError("You tried to use an optional value as if it was not optional")
+Optional[$T] -> $T = compilerError("You tried to use an optional value as if it was not optional")
 ```
 
 Also under consideration, it might be worth throwing some of these as warnings instead of errors.

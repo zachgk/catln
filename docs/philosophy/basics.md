@@ -70,11 +70,11 @@ Another idea worth mentioning is that type classes, sealed or unsealed, represen
 
 It is also possible to have function, data, and classes that depend on other types. For example:
 ```
-add<Numeric $T>($T left, $T right) -> $T
+add[Numeric $T]($T left, $T right) -> $T
 
-data Complex<Numeric $T>($T real, $T irrational)
+data Complex[Numeric $T]($T real, $T irrational)
 
-class Optional<$T> = Some($T val) | Nothing
+class Optional[$T] = Some($T val) | Nothing
 ```
 
 The type variables are written within angle braces, begin with a dollar sign and a capital letter. Here, several of them require that the type variable be instances of the Numeric type class.
@@ -85,34 +85,34 @@ They behave fairly straightforwardly in that they simply increase what the objec
 
 The other key design feature of the type system is type properties. Type properties are attached to types or typeclasses and add additional metadata about them. The goal of the type checker is to infer the type properties when possible and use them to better inform the choice of objects and arrows.
 
-For example, the `List` type might have a property `List_length<Int>`. This can be used to change the return value of the `head` function depending on the inferred length of the list:
+For example, the `List` type might have a property `List_length[Int]`. This can be used to change the return value of the `head` function depending on the inferred length of the list:
 
 ```
-List<$T>.head -> Optional<$T>
-List_length<Int_gt(0)><$T>.head -> $T
+List[$T].head -> Optional[$T]
+List_length[Int_gt(0)][$T].head -> $T
 ```
 
 Now, calling the head function on a list can give you either an optional or direct value. Therefore, you can directly use the value when it is known to be safe without writing unnecessary code to handle an impossible `Nothing` condition. When the length can't be inferred, then you do have to handle the very real `Nothing` condition. If it can be inferred, you can still treat it as an `Optional`, but it will throw a compiler warning because the `Nothing` handling code is unreachable.
 
 For all lists, you can also assume that the length is at least 0. This leads to the relationship:
 ```
-List -> List_length<Int_gt(0)>
+List -> List_length[Int_gt(0)]
 ```
 
 In addition, it is important to describe how various functions and arrows affect the type properties. For example:
 ```
-List_length<Int_gt(a)>.concat(List_length<Int_gt(b)>) -> List_length<Int_gt(a+b)>
+List_length[Int_gt(a)].concat(List_length[Int_gt(b)]) -> List_length[Int_gt(a+b)]
 ```
 
 Rules defined like this can enable the compiler to infer type properties even when they are not explicitly declared. Higher level functions can use these rules to automatically compute the type properties of return values.
 
-To clarify, type properties can accept an input either as a type or an expression. Types, like usual, are provided using `<>` while expressions use `()`. When they are compared, it checks using the type of the expression and the direct types.
+To clarify, type properties can accept an input either as a type or an expression. Types, like usual, are provided using `[]` while expressions use `()`. When they are compared, it checks using the type of the expression and the direct types.
 
 I recommend thinking about type properties in terms of sets of values. Each object and type class represent a set of possible values. Then, the type properties further restrict the set of possible values of the type into a subset of the original. This allows more information of what is known about various data types to be propagated through the program and used for both static analysis and optimization.
 
 Type properties exist in a somewhat similar space to [refinement types](https://en.wikipedia.org/wiki/Refinement_type). The key difference is that they are defined entirely within Catln itself while most refinement type systems use an external tool such as [Z3](https://en.wikipedia.org/wiki/Z3_Theorem_Prover). That means that the external tool would be limited to operating on preset domains of knowledge while type properties can grow as more things are implemented in the language.
 
-Another difference is that it is also possible to use type properties for more abstract or computed values. You could add a `String_hasPassword<Boolean>` property to help check whether it is possible that a password is contained in a String. This could be used for security to check the values before saving in a database or sending to a browser. Another possible property would be something like `HTML_classList<List<$T=String>>`. This property can be used to compute the possible classes an HTML element could have, useful for pruning unused parts of the CSS file.
+Another difference is that it is also possible to use type properties for more abstract or computed values. You could add a `String_hasPassword[Boolean]` property to help check whether it is possible that a password is contained in a String. This could be used for security to check the values before saving in a database or sending to a browser. Another possible property would be something like `HTML_classList[List[$T=String]]`. This property can be used to compute the possible classes an HTML element could have, useful for pruning unused parts of the CSS file.
 
 ## Arrows
 
@@ -186,11 +186,11 @@ Following the above definitions, there are several interesting possibilities wor
 
 When defining a function, you can use either function overloading and/or default arguments like other languages. Unlike them, a function can accept the same arguments and return different return values.
 
-For example, a `sqrt` function might return `Optional<Number>` where it can only be computed if the input is at least 0. It could also return a `Complex<Number>` including the irrational component. Either of these are reasonable return values for the function.
+For example, a `sqrt` function might return `Optional[Number]` where it can only be computed if the input is at least 0. It could also return a `Complex[Number]` including the irrational component. Either of these are reasonable return values for the function.
 
 In Catln, these two definitions can share the same name and the desired return value will be detected during type inference. While this seems like it could have unintended effects, [arrow testing](arrowTesting.md) guarantees that it should be safe.
 
-Furthermore, implicit conversions mean that multiple return values would be the norm rather than the exception. For example, a complex number with no irrational component can be implicitly converted to an int. The int can then be implicitly wrapped in an optional to form the same `Optional<Number>` anyway.
+Furthermore, implicit conversions mean that multiple return values would be the norm rather than the exception. For example, a complex number with no irrational component can be implicitly converted to an int. The int can then be implicitly wrapped in an optional to form the same `Optional[Number]` anyway.
 
 ### Multiple level functions
 

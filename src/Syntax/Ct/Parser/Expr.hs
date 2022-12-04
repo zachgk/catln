@@ -183,7 +183,7 @@ pVarSuffix = do
 pVarsSuffix :: Parser TermSuffix
 pVarsSuffix = do
   pos1 <- getSourcePos
-  vars <- angleBraces $ sepBy1 pVarSuffix (symbol ",")
+  vars <- squareBraces $ sepBy1 pVarSuffix (symbol ",")
   pos2 <- getSourcePos
   return $ VarsSuffix (emptyMeta pos1 pos2) vars
 
@@ -293,7 +293,7 @@ pTypeVar = TypeVar . TVVar <$> tvar
 pLeafType :: Parser PartialType
 pLeafType = do
   name <- tidentifier
-  maybeVars <- optional $ angleBraces $ sepBy1 pLeafVar (symbol ",")
+  maybeVars <- optional $ squareBraces $ sepBy1 pLeafVar (symbol ",")
   maybeArgs <- optional $ parens (sepBy1 pTypeArg (symbol ","))
   let vars = maybe H.empty H.fromList maybeVars
   let args = maybe H.empty H.fromList maybeArgs

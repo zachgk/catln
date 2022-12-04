@@ -54,6 +54,9 @@ parens = between (symbol "(") (symbol ")")
 angleBraces :: Parser a -> Parser a
 angleBraces = between (symbol "<") (symbol ">")
 
+squareBraces :: Parser a -> Parser a
+squareBraces = between (symbol "[") (symbol "]")
+
 curlyBraces :: Parser a -> Parser a
 curlyBraces = between (symbol "{") (symbol "}")
 

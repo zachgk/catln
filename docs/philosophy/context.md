@@ -12,14 +12,14 @@ The other issue with monads is that they are difficult to combine. If each monad
 
 More than just combining, the combination needs to change easily. You need to add things to the state partway through the computation or prune state when it is no longer needed. This shouldn't be a side part, but one of the key aspects of state management.
 
-One approach which I have seen in more recent systems is effect systems. This is similar to monads, but adds more into combination and a bit into adding/removing parts of state. However, it also falls into the problem that it is based on monads instead of state changes (`$A -> $M<$B>` but should be `$M<$A> -> $M<$B>`) as being convoluted.
+One approach which I have seen in more recent systems is effect systems. This is similar to monads, but adds more into combination and a bit into adding/removing parts of state. However, it also falls into the problem that it is based on monads instead of state changes (`$A -> $M[$B]` but should be `$M[$A] -> $M[$B]`) as being convoluted.
 
 ## Context
 
 The solution that Catln uses is called context. It corresponds to a data object defined in the standard library:
 
 ```
-data Context<$T>($T val, $states...)
+data Context[$T]($T val, $states...)
 ```
 
 The context can be thought of as a collection of values, each with it's own type. The primary operations on the context are to add additional elements of state to the context and to get the elements of the state from the context. The elements in the context are all values that have types, and can be identified by the type.
@@ -48,7 +48,7 @@ x = {valToAddToContext} valInsideContext
 
 # The standard context get requires that exactly one element of that type should be in the context
 # Otherwise, it will throw a syntax error during compilation
-# This syntax stores all elements as a Collection<MyListenerType> which can be zero or many listeners
+# This syntax stores all elements as a Collection[MyListenerType] which can be zero or many listeners
 callWithListeners{MyListenerType... listeners}(...) = ...
 
 # Add an element to the context within a scope

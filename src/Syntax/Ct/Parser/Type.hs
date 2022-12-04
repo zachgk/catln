@@ -33,7 +33,7 @@ pClassStatement :: Parser PStatement
 pClassStatement = do
   _ <- symbol "class"
   name <- ttypeidentifier
-  maybeVars <- optional $ angleBraces $ sepBy1 pLeafVar (symbol ",")
+  maybeVars <- optional $ squareBraces $ sepBy1 pLeafVar (symbol ",")
   let vars = maybe H.empty H.fromList maybeVars
   maybeTypes <- optional $ do
     _ <- symbol "="

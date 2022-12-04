@@ -154,7 +154,7 @@ instance Show m => Show (Expr m) where
         TupleArgIO _ argName argVal -> argName ++ " = " ++ show argVal
         TupleArgI _ argName         -> argName
         TupleArgO _ argVal          -> show argVal
-  show (VarApply _ baseExpr varName varVal) = printf "%s<%s%s>" baseExpr' varName (show varVal)
+  show (VarApply _ baseExpr varName varVal) = printf "%s[%s%s]" baseExpr' varName (show varVal)
     where
       baseExpr' = case baseExpr of
         Value _ funName -> funName
@@ -174,7 +174,7 @@ instance Show m => Show (Object m) where
       maybeVarsString :: String
       maybeVarsString = if H.size vars == 0
         then ""
-        else printf "<%s>" (intercalate ", " $ map showVar $ H.toList vars)
+        else printf "[%s]" (intercalate ", " $ map showVar $ H.toList vars)
       showArg (argName, (_, Just argVal)) = printf "%s = %s" argName (show argVal)
       showArg (argName, (argM, Nothing)) = printf "%s %s" (show argM) argName
       maybeArgsString = if H.size args == 0

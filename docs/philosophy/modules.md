@@ -24,7 +24,7 @@ Any value can be created with a scope by simply specifying a larger scope in the
 ```
 Optional::empty = Nothing
 
-data List<$T>::Cons = Cons($T head, Cons<$T> tail) | Empty
+data List[$T]::Cons = Cons($T head, Cons[$T] tail) | Empty
 ```
 
 It is also possible to add a scope to an entire code block by using an extension:
@@ -59,6 +59,6 @@ Catln features a private keyword that is prefixed to various declarations to mar
 ```
 private List::Array::empty = ...
 
-private<List>
+private[List]
   ...
 ```

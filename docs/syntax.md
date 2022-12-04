@@ -126,7 +126,7 @@ fst(val=Pair(a, b)) = a
 snd(val=Pair(a, b)) = b
 
 # A pair with a type parameter
-data Pair2<$N>($N a, $N b)
+data Pair2[$N]($N a, $N b)
 ```
 
 To create a union type, use a class declaration. Each of the elements of the union (Red, Green, and Blue here) will be treated as new type objects if they don't already exist.
@@ -135,11 +135,11 @@ To create a union type, use a class declaration. Each of the elements of the uni
 class Stoplight = Red | Greed | Blue
 
 # A class with a type parameter and argument
-class Maybe<$T> = Just<$T>($T val) | Nothing
+class Maybe[$T] = Just[$T]($T val) | Nothing
 
 # A union that directly uses $T without creating a new object
 # In this instance, it is not a sum type but a true union type
-class Maybe2<$T> = $T | Nothing
+class Maybe2[$T] = $T | Nothing
 ```
 
 You can also define annotations similarly to data objects:

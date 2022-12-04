@@ -33,20 +33,20 @@ List_len(5)_min(3)
 
 The sum and products can be easily constructed from this backbone. For a product type, the named tuples suffice. A pair could be constructed like:
 ```
-data Pair<$A, $B>($A a, $B b)
+data Pair[$A, $B]($A a, $B b)
 ```
 
 A sum type could be built using the union of types with unique objects:
 ```
-class Maybe<$T> = Just($T val) | Nothing
+class Maybe[$T] = Just($T val) | Nothing
 ```
 
 Unlike a pure sum, it is also possible to have overlapping types. Consider this alternative definition of Maybe:
 ```
-class Maybe<$T> = $T | Nothing
+class Maybe[$T] = $T | Nothing
 ```
 
-This implementation of maybe simplifies a lot of usage by not having to write the verbose `Just` everywhere. It is also not a Sum type. In a sum type, it would be possible to represent `Maybe<Maybe<$T>>`. However, this simplified definition implies that `Maybe<Maybe<$T>> = Maybe<$T>`. I believe this is reasonable to the idea of Maybe and, in cases where you would want to differentiate `Nothing` from `Just<Nothing>`, you should really be using a custom type instead where names could be applied to describe the two forms of Nothing.
+This implementation of maybe simplifies a lot of usage by not having to write the verbose `Just` everywhere. It is also not a Sum type. In a sum type, it would be possible to represent `Maybe[Maybe[$T]]`. However, this simplified definition implies that `Maybe[Maybe[$T]] = Maybe[$T]`. I believe this is reasonable to the idea of Maybe and, in cases where you would want to differentiate `Nothing` from `Just[Nothing]`, you should really be using a custom type instead where names could be applied to describe the two forms of Nothing.
 
 ### Arrows
 
@@ -62,7 +62,7 @@ This also makes handling more complex language features quite simple. Each arrow
 
 The set of values shows a lot of power when considering arrows/functions as well. Each arrow has an input and an output type, which can also be considered the domain and co-domain in set terminology.
 
-A union of two arrows would go from the union of the domain to the union of the co-domain. This is often used for class arrows. If you define an arrow `f(Just<$T> val) -> Bool` and `f(Nothing val) -> Bool`, the union of those arrows would be the arrow `f(Maybe<$T> val) -> Bool`.
+A union of two arrows would go from the union of the domain to the union of the co-domain. This is often used for class arrows. If you define an arrow `f(Just[$T] val) -> Bool` and `f(Nothing val) -> Bool`, the union of those arrows would be the arrow `f(Maybe[$T] val) -> Bool`.
 
 The intersection of two arrows would go from the intersection of the domain to the intersection of the co-domain. As an example, consider overlapping definitions or declarations:
 ```

@@ -103,7 +103,7 @@ Along with the choice of functions is the choice of arguments. These work simila
 As an example, let's say we have the scatter plot function with a title as a choice argument. It would look like:
 
 ```
-plot(List<Num> x, List<Num> y, Optional<String> #title Nothing) -> Image = ...
+plot(List[Num] x, List[Num] y, Optional[String] #title Nothing) -> Image = ...
 ```
 
 In this example. we have the `plot` function with two normal arguments `x` and `y` and a single choice argument `#title`. Title is a choice argument because it's name begins with `#` and it has the default value `Nothing`.
