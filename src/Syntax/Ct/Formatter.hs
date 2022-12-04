@@ -24,7 +24,6 @@ import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Prgm
-import Debug.Trace
 
 formatIndent :: Int -> String
 formatIndent indent = concat $ replicate indent "  "
@@ -44,8 +43,21 @@ formatGuard _ NoGuard          = ""
 formatType :: Type -> String
 formatType TopType = ""
 formatType (TypeVar (TVVar t)) = t
-formatType t@UnionType{} = show t
 formatType (TypeVar TVArg{}) = error "Unexpected TVArg in formatter"
+formatType (UnionType partials) = join $ map formatPartialType $ splitUnionType partials
+  where
+    formatPartialType (PartialType ptName ptVars ptArgs ptPreds _) = concat [showName ptName, showTypeVars ptVars, showArgs ptArgs, showPreds ptPreds]
+      where
+        showName p  = fromPartialName p
+        showArg (argName, argVal) = if argVal == TopType
+          then argName
+          else argName ++ " " ++ formatType argVal
+        showTypeVars vars | H.null vars = ""
+        showTypeVars vars = printf "<%s>" (intercalate ", " $ map showArg $ H.toList vars)
+        showArgs args | H.null args = ""
+        showArgs args = printf "(%s)" (intercalate ", " $ map showArg $ H.toList args)
+        showPreds preds | null preds = ""
+        showPreds preds = printf "| %s" (intercalate ", " $ map formatPartialType preds)
 
 formatMeta :: Meta m -> String
 formatMeta m = case getMetaType m of
@@ -57,8 +69,8 @@ formatExpr _ (RawCExpr _ (CInt c)) = show c
 formatExpr _ (RawCExpr _ (CFloat c)) = show c
 formatExpr _ (RawCExpr _ (CStr c)) = show c
 formatExpr _ (RawValue m n) = formatMeta m ++ n
-formatExpr _ (RawHoleExpr _ (HoleActive Nothing)) = "_"
-formatExpr _ (RawHoleExpr _ (HoleActive (Just a))) = "_" ++ a
+formatExpr _ (RawHoleExpr m (HoleActive Nothing)) = formatMeta m ++ "_"
+formatExpr _ (RawHoleExpr m (HoleActive (Just a))) = formatMeta m ++ "_" ++ a
 formatExpr _ (RawHoleExpr _ HoleUndefined) = "undefined"
 formatExpr _ (RawHoleExpr _ HoleTodefine) = "todefine"
 formatExpr indent (RawAliasExpr base alias) = printf "%s@%s" (formatExpr indent base) (formatExpr indent alias)
@@ -89,7 +101,7 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
           showM :: String
           showM  = case getMetaType m of
             TopType -> ""
-            t -> printf " -> %s " (formatType t)
+            t       -> printf " -> %s" (formatType t)
 
           showArr :: String
           showArr = case maybeArr of
@@ -107,27 +119,44 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
             else printf "%s = %s" n (formatType t)
 
           showObjs = intercalate " | " $ map (formatExpr indent) objs
-      TypeDefStatement (TypeDef typeExpr) -> printf "data %s" (formatExpr indent typeExpr)
+      TypeDefStatement (TypeDef typeExpr) -> if "#" `isPrefixOf` exprPath typeExpr
+        then printf "annot %s" (formatExpr indent typeExpr)
+        else printf "data %s" (formatExpr indent typeExpr)
       RawClassDefStatement (obj, className) _ -> printf "every %s isa %s" (formatExpr indent obj) className
       RawClassDeclStatement (className, classVars) _ -> printf "class %s%s" className showClassVars
         where
           showClassVars :: String
           showClassVars = if null classVars
                 then ""
-                else printf "<%s>" $ intercalate ", " $ map (\(n, t) -> printf "%s = %s" n (formatType t)) $ H.toList classVars
+                else printf "<%s>" $ intercalate ", " $ map showClassVar $ H.toList classVars
+          showClassVar (n, TopType) = n
+          showClassVar (n, t)       = printf "%s = %s" n (formatType t)
       RawExprStatement e -> formatExpr indent e
-      RawAnnot annot | exprPath annot == mdAnnot -> printf "\n# %s\n" annotText'
+      RawAnnot annot | exprPath annot == mdAnnot -> printf "# %s" annotText'
         where
           (Just (_, Just (RawCExpr _ (CStr annotText)))) = H.lookup mdAnnotText $ exprAppliedArgsMap annot
           annotText' = concatMap (\c -> if c == '\n' then "\n" ++ formatIndent (indent + 1) else pure c) annotText
       RawAnnot annot -> formatExpr indent annot
       RawModule modul _ -> printf "module %s" modul
 
-formatStatementTree :: Int -> RawStatementTree RawExpr m -> Builder
-formatStatementTree indent (RawStatementTree statement subTree) = do
+-- |
+-- A root statement has an additional ending newline
+-- Some statement types like modules will have subTrees that are also roots.
+-- Others like declarations will not
+keepRootStatement :: RawStatement RawExpr m -> Bool
+keepRootStatement RawDeclStatement{} = False
+keepRootStatement _                  = True
+
+formatStatementTree :: Bool -> Int -> RawStatementTree RawExpr m -> Builder
+formatStatementTree rootStatement indent (RawStatementTree statement subTree) = do
   literal $ formatStatement indent statement
+
+  -- Check if the subTree should also be a rootStatement with an additional ending newline
+  let subTreeRootStatement = rootStatement && keepRootStatement statement
+
   forM_ subTree $ \s -> do
-    formatStatementTree (indent + 1) s
+    formatStatementTree subTreeRootStatement (indent + 1) s
+  when rootStatement ""
 
 formatPrgm :: Int -> RawPrgm m -> Builder
 formatPrgm indent (imports, statements) = do
@@ -135,5 +164,4 @@ formatPrgm indent (imports, statements) = do
     formatImport imp
   unless (null imports) "\n"
   forM_ statements $ \s -> do
-    formatStatementTree indent s
-    ""
+    formatStatementTree True indent s

@@ -29,7 +29,7 @@ import           Syntax.Ct.Prgm
 import           Text.Printf
 
 showDeclTrees :: [PDeclTree] -> String
-showDeclTrees trees = intercalate "" $ map (\(d, ss) -> build $ formatStatementTree 0 $ RawStatementTree (RawDeclStatement d) ss) trees
+showDeclTrees trees = intercalate "" $ map (\(d, ss) -> build $ formatStatementTree True 0 $ RawStatementTree (RawDeclStatement d) ss) trees
 
 ifDeclPreprocessor :: PDeclTree -> CRes [PDeclTree]
 ifDeclPreprocessor r@(RawDecl declLhs (Just expr), subStatements) = return [(decl', matchDecls ++ subStatements')]

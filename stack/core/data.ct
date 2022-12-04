@@ -38,7 +38,7 @@ module Data
     # [Option] defines a type that might have a value or [None].
       It can be used to handle operations that are uncertain if they can produce a response.
 
-  every Option<$T> isa /Data/Functor
+  every Option<$T $T> isa /Data/Functor
   # None.fmap(fn) = None
   # $T.fmap(fn($T)) = fn(this)
 
@@ -46,7 +46,7 @@ module Data
 
   # A [List] is a collection of zero or more ordered items.
 
-  class ConsList<$T> = Cons<$T>($T head, ConsList<$T> tail) | Nil
+  class ConsList<$T> = Cons<$T $T>($T head, ConsList<$T $T> tail) | Nil
 
     # The simplest kind of list can be created by prepending.
       A [ConsList] defines a list either by prepending to a list or with an empty list.
@@ -61,7 +61,7 @@ module Data
   Nil.length = 0
   Cons(head, tail).length = 1 + tail.length
 
-  every ConsList<$T> isa /Data/Functor
+  every ConsList<$T $T> isa /Data/Functor
   # Nil.fmap(fn) = Nil
   # Cons(head, tail).fmap(fn) = Cons(head=fn(head), tail=tail.fmap(fn))
 

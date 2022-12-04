@@ -70,13 +70,13 @@ ops = [
     ]
   ]
 
-pTypesAndVal :: ExprParseMode -> Parser (Type, Either Name Hole)
-pTypesAndVal exprMode = do
+pTypesAndVal :: Parser (Type, Either Name Hole)
+pTypesAndVal = do
   let anyId = identifier <|> tidentifier <|> pAnnotIdentifier <|> tvar <|> pHole
   typesAndVal <- some $ do
     typeName <- anyId
     vars <- optional . try $ do
-      vs <- pVarsSuffix exprMode
+      vs <- pVarsSuffix
       -- Need to ensure that vars are not matched if it is the val name and not a type for the val
       _ <- lookAhead anyId
       return vs
@@ -106,10 +106,10 @@ pTypesAndVal exprMode = do
 
   return (tp, argValName')
 
-pArgValue :: ExprParseMode -> Parser PExpr
-pArgValue exprMode = do
+pArgValue :: Parser PExpr
+pArgValue = do
   pos1 <- getSourcePos
-  (tp, argValName) <- pTypesAndVal exprMode
+  (tp, argValName) <- pTypesAndVal
   pos2 <- getSourcePos
   case argValName of
     Left n  -> return $ RawValue (Meta tp (Just (pos1, pos2, "")) emptyMetaDat) n
@@ -147,7 +147,7 @@ pArgSuffix :: ExprParseMode -> Parser PTupleArg
 pArgSuffix exprMode = do
   pos1 <- getSourcePos
   maybeArgNameType <- optional . try $ do
-    n <- pTypesAndVal exprMode
+    n <- pTypesAndVal
     _ <- symbol "="
     return n
   expr <- pExpr exprMode
@@ -168,22 +168,22 @@ pArgsSuffix exprMode = do
   pos2 <- getSourcePos
   return $ ArgsSuffix (emptyMeta pos1 pos2) args
 
-pVarSuffix :: ExprParseMode -> Parser (TypeVarName, ParseMeta)
-pVarSuffix exprMode = do
+pVarSuffix :: Parser (TypeVarName, ParseMeta)
+pVarSuffix = do
   pos1 <- getSourcePos
   -- TODO: Should support multiple class identifiers such as <Eq Ord $T>
-  maybeClass <- optional ttypeidentifier
-  var <- tvar
+  v1 <- ttypeidentifier <|> tvar -- Either type (<Eq $T>) or var (<$T>)
+  v2 <- optional tvar -- var only with type
   pos2 <- getSourcePos
-  let tp = case (exprMode, maybeClass) of
-        (ParseTypeExpr, Nothing) -> TypeVar (TVVar var) -- For multi types, Just<$T> would be Just<$T=$T>
-        _                        -> fromMaybeTypeName maybeClass
-  return (var, Meta tp (Just (pos1, pos2, "")) emptyMetaDat)
+  let (var', tp') = case (v1, v2) of
+        (var, Nothing) -> (var, TopType)
+        (tp, Just var) -> (var, fromMaybeTypeName (Just tp))
+  return (var', Meta tp' (Just (pos1, pos2, "")) emptyMetaDat)
 
-pVarsSuffix :: ExprParseMode -> Parser TermSuffix
-pVarsSuffix exprMode = do
+pVarsSuffix :: Parser TermSuffix
+pVarsSuffix = do
   pos1 <- getSourcePos
-  vars <- angleBraces $ sepBy1 (pVarSuffix exprMode) (symbol ",")
+  vars <- angleBraces $ sepBy1 pVarSuffix (symbol ",")
   pos2 <- getSourcePos
   return $ VarsSuffix (emptyMeta pos1 pos2) vars
 
@@ -211,7 +211,7 @@ pAliasSuffix = do
   return $ AliasSuffix (emptyMeta pos1 pos2) aliasName
 
 pTermSuffix :: ExprParseMode -> Parser TermSuffix
-pTermSuffix exprMode = pMethod <|> pArgsSuffix exprMode <|> pVarsSuffix exprMode <|> pContextSuffix <|> pAliasSuffix
+pTermSuffix exprMode = pMethod <|> pArgsSuffix exprMode <|> pVarsSuffix <|> pContextSuffix <|> pAliasSuffix
 pInt :: Parser PExpr
 pInt = do
   pos1 <- getSourcePos
@@ -241,7 +241,7 @@ term exprMode = do
        <|> pStringLiteral
        <|> pInt
        <|> pList exprMode
-       <|> pArgValue exprMode
+       <|> pArgValue
   suffixes <- many (pTermSuffix exprMode)
   _ <- sc
   return $ foldl applyTermSuffix base suffixes
