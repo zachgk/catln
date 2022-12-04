@@ -12,6 +12,12 @@
 
 module Constants where
 
+operatorPrefix, operatorArgUnary, operatorArgL, operatorArgR :: String
+operatorPrefix = "/operator"
+operatorArgUnary = "a"
+operatorArgL = "l"
+operatorArgR = "r"
+
 mdAnnot, mdAnnotText :: String
 mdAnnot = "/Catln/#md"
 mdAnnotText = "text"

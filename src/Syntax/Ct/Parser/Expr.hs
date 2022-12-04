@@ -22,6 +22,7 @@ import           Text.Megaparsec                hiding (pos1)
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer     as L
 
+import           Constants
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
@@ -37,12 +38,12 @@ data ExprParseMode
   deriving (Eq, Show)
 
 mkOp1 :: String -> PExpr -> PExpr
-mkOp1 opChars x = applyRawArgs (RawValue emptyMetaN op) [(Just "a", x)]
-  where op = "/operator" ++ opChars
+mkOp1 opChars x = applyRawArgs (RawValue emptyMetaN op) [(Just operatorArgUnary, x)]
+  where op = operatorPrefix ++ opChars
 
 mkOp2 :: String -> PExpr -> PExpr -> PExpr
-mkOp2 opChars x y = applyRawArgs (RawValue emptyMetaN op) [(Just "l", x), (Just "r", y)]
-  where op = "/operator" ++ opChars
+mkOp2 opChars x y = applyRawArgs (RawValue emptyMetaN op) [(Just operatorArgL, x), (Just operatorArgR, y)]
+  where op = operatorPrefix ++ opChars
 
 ops :: [[Operator Parser PExpr]]
 ops = [
@@ -137,28 +138,6 @@ pIfThenElse exprMode = do
   elseExpr <- pExpr exprMode
   pos2 <- getSourcePos
   return $ RawIfThenElse (emptyMeta pos1 pos2) condExpr thenExpr elseExpr
-
-pMatchCaseHelper :: ExprParseMode -> String -> Parser (PExpr, [(PPattern, PExpr)])
-pMatchCaseHelper exprMode keyword = L.indentBlock scn p
-  where
-    pack expr matchItems = return (expr, matchItems)
-    pItem = do
-      patt <- pPattern MatchObj
-      _ <- symbol "=>"
-      expr <- pExpr exprMode
-      return (patt, expr)
-    p = do
-      _ <- symbol keyword
-      expr <- pExpr exprMode
-      _ <- symbol "of"
-      return $ L.IndentSome Nothing (pack expr) pItem
-
-pCase :: ExprParseMode -> Parser PExpr
-pCase exprMode = do
-  pos1 <- getSourcePos
-  (expr, matchItems) <- pMatchCaseHelper exprMode "case"
-  pos2 <- getSourcePos
-  return $ RawCase (emptyMeta pos1 pos2) expr matchItems
 
 data TermSuffix
   = MethodSuffix ParseMeta TypeName
@@ -271,7 +250,6 @@ applyTermSuffix base (AliasSuffix m n) = RawAliasExpr base (RawValue m n)
 term :: ExprParseMode -> Parser PExpr
 term exprMode = do
   base <- (if exprMode == ParseOutputExpr then pIfThenElse exprMode
-        <|> pCase exprMode
         <|> parenExpr exprMode
         else parenExpr exprMode)
        <|> pStringLiteral

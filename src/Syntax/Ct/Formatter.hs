@@ -59,6 +59,12 @@ formatExpr _ (RawHoleExpr _ (HoleActive (Just a))) = "_" ++ a
 formatExpr _ (RawHoleExpr _ HoleUndefined) = "undefined"
 formatExpr _ (RawHoleExpr _ HoleTodefine) = "todefine"
 formatExpr indent (RawAliasExpr base alias) = printf "%s@%s" (formatExpr indent base) (formatExpr indent alias)
+formatExpr indent (RawTupleApply _ (_, RawValue _ n) args) | operatorPrefix `isPrefixOf` n = case args of
+  [TupleArgIO _ _ a] -> operatorName ++ formatExpr indent a
+  [TupleArgIO _ _ l, TupleArgIO _ _ r] -> printf "%s %s %s" (formatExpr indent l) operatorName (formatExpr indent r)
+  _ -> error "Non unary or binary operator found in formatExpr"
+  where
+    operatorName = drop (length operatorPrefix) n
 formatExpr indent (RawTupleApply _ (_, be) args) = printf "%s(%s)" (formatExpr indent be) (intercalate ", " $ map formatTupleArg args)
   where
     formatTupleArg :: TupleArg RawExpr m -> String
@@ -80,16 +86,6 @@ formatExpr indent (RawIfThenElse _ i t e) = build $ do
   literal $ formatIndent indent
   " else "
   literal $ formatExpr (indent+1) e
-formatExpr indent (RawCase _ e cases) = build $ do
-  "case "
-  literal $ formatExpr indent e
-  " of\n"
-  forM_ cases $ \(itemPattern, itemOut) -> do
-    literal $ formatIndent (indent + 1)
-    literal $ formatPattern (indent + 1) itemPattern
-    " => "
-    literal $ formatExpr (indent + 1) itemOut
-    "\n"
 formatExpr indent (RawList _ l) = printf "[%s]" $ intercalate ", " $ map (formatExpr indent) l
 
 formatStatement :: Int -> RawStatement RawExpr m -> Builder

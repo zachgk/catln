@@ -2,7 +2,7 @@
 
 main{IO io} = io.exit(val=abs(0))
 
-abs(Integer x) = case x of
-                  x2 if x >= 0 => x2
-                  x2 => x2 * -1
+abs(Integer x) = case(x)
+  x2 if x >= 0 => x2
+  x2 => x2 * -1
 
