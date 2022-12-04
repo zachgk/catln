@@ -24,10 +24,7 @@ import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Prgm
-
-buildJust :: Maybe a -> (a -> Builder) -> Builder
-buildJust (Just a) f = f a
-buildJust Nothing _  = ""
+import Debug.Trace
 
 formatIndent :: Int -> String
 formatIndent indent = concat $ replicate indent "  "
@@ -40,14 +37,20 @@ formatPattern :: Int -> Pattern RawExpr m -> String
 formatPattern indent (Pattern (ExprObject _ _ pattExprObj) pattGuard) = formatExpr indent pattExprObj ++ formatGuard indent pattGuard
 
 formatGuard :: Int -> Guard (RawExpr m) -> String
-formatGuard indent (IfGuard e) = printf "| %s" (formatExpr indent e)
+formatGuard indent (IfGuard e) = printf " if %s" (formatExpr indent e)
 formatGuard _ ElseGuard        = " else"
 formatGuard _ NoGuard          = ""
+
+formatType :: Type -> String
+formatType TopType = ""
+formatType (TypeVar (TVVar t)) = t
+formatType t@UnionType{} = show t
+formatType (TypeVar TVArg{}) = error "Unexpected TVArg in formatter"
 
 formatMeta :: Meta m -> String
 formatMeta m = case getMetaType m of
   TopType -> ""
-  t       -> show t ++ " "
+  t       -> formatType t ++ " "
 
 formatExpr :: Int -> RawExpr m -> String
 formatExpr _ (RawCExpr _ (CInt c)) = show c
@@ -68,55 +71,63 @@ formatExpr indent (RawTupleApply _ (_, RawValue _ n) args) | operatorPrefix `isP
 formatExpr indent (RawTupleApply _ (_, be) args) = printf "%s(%s)" (formatExpr indent be) (intercalate ", " $ map formatTupleArg args)
   where
     formatTupleArg :: TupleArg RawExpr m -> String
-    formatTupleArg (TupleArgI _ n)    = n
+    formatTupleArg (TupleArgI m n)    = formatMeta m ++ n
     formatTupleArg (TupleArgO _ v)    = formatExpr indent v
-    formatTupleArg (TupleArgIO _ n v) = printf "%s = %s" n (formatExpr indent v)
+    formatTupleArg (TupleArgIO _ n v) = printf "%s= %s" n (formatExpr indent v)
 formatExpr indent (RawVarsApply _ be vars) = printf "%s<%s>" (formatExpr indent be) (intercalate ", " $ map (\(varN, varM) -> printf "%s%s" (formatMeta varM) varN) vars)
 formatExpr indent (RawContextApply _ (_, be) ctxs) = printf "%s{%s}" (formatExpr indent be) (intercalate ", " $ map (\(ctxN, ctxM) -> formatMeta ctxM ++ ctxN) ctxs)
 formatExpr indent (RawParen e) = printf "(%s)" (formatExpr indent e)
 formatExpr indent (RawMethod base method) = printf "%s.%s" (formatExpr indent base) (formatExpr indent method)
 formatExpr indent (RawList _ l) = printf "[%s]" $ intercalate ", " $ map (formatExpr indent) l
 
-formatStatement :: Int -> RawStatement RawExpr m -> Builder
-formatStatement indent statement = do
-  literal $ formatIndent indent
-  case statement of
-    RawDeclStatement (RawDecl (DeclLHS _ patt) maybeArr) -> literal $ printf "%s%s" (formatPattern indent patt) showArr
-      where
-        showArr :: String
-        showArr = case maybeArr of
-          Just arr -> printf " = %s" (formatExpr indent arr)
-          Nothing  -> ""
-    MultiTypeDefStatement (MultiTypeDef className classVars objs) _ -> literal $ printf "class %s%s = %s" className showClassVars showObjs
-      where
-        showClassVars :: String
-        showClassVars = if null classVars
-              then ""
-              else printf "<%s>" $ intercalate ", " $ map (\(n, t) -> printf "%s = %s" n (show t)) $ H.toList classVars
-        showObjs = intercalate " | " $ map (formatExpr indent) objs
-    TypeDefStatement (TypeDef typeExpr) -> literal $ printf "data %s" (formatExpr indent typeExpr)
-    RawClassDefStatement (obj, className) _ -> literal $ printf "every %s isa %s" (formatExpr indent obj) className
-    RawClassDeclStatement (className, classVars) _ -> literal $ printf "class %s%s" className showClassVars
-      where
-        showClassVars :: String
-        showClassVars = if null classVars
-              then ""
-              else printf "<%s>" $ intercalate ", " $ map (\(n, t) -> printf "%s = %s" n (show t)) $ H.toList classVars
-    RawExprStatement e -> literal $ formatExpr indent e
-    RawAnnot annot | exprPath annot == mdAnnot -> literal $ printf "# %s" annotText'
-      where
-        (Just (_, Just (RawCExpr _ (CStr annotText)))) = H.lookup mdAnnotText $ exprAppliedArgsMap annot
-        annotText' = concatMap (\c -> if c == '\n' then "\n" ++ formatIndent (indent + 1) else pure c) annotText
-    RawAnnot annot -> literal $ formatExpr indent annot
-    RawModule modul _ -> literal $ printf "module %s" modul
-  "\n"
+formatStatement :: Int -> RawStatement RawExpr m -> String
+formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
+  where
+    statement' = case statement of
+      RawDeclStatement (RawDecl (DeclLHS m patt) maybeArr) -> printf "%s%s%s" (formatPattern indent patt) showM showArr
+        where
+          showM :: String
+          showM  = case getMetaType m of
+            TopType -> ""
+            t -> printf " -> %s " (formatType t)
+
+          showArr :: String
+          showArr = case maybeArr of
+            Just (RawValue _ n) | n == nestedDeclaration -> " ="
+            Just arr -> printf " = %s" (formatExpr indent arr)
+            Nothing  -> ""
+      MultiTypeDefStatement (MultiTypeDef className classVars objs) _ -> printf "class %s%s = %s" className showClassVars showObjs
+        where
+          showClassVars :: String
+          showClassVars = if null classVars
+                then ""
+                else printf "<%s>" $ intercalate ", " $ map showClassVar $ H.toList classVars
+          showClassVar (n, t) = if t == TopType
+            then n
+            else printf "%s = %s" n (formatType t)
+
+          showObjs = intercalate " | " $ map (formatExpr indent) objs
+      TypeDefStatement (TypeDef typeExpr) -> printf "data %s" (formatExpr indent typeExpr)
+      RawClassDefStatement (obj, className) _ -> printf "every %s isa %s" (formatExpr indent obj) className
+      RawClassDeclStatement (className, classVars) _ -> printf "class %s%s" className showClassVars
+        where
+          showClassVars :: String
+          showClassVars = if null classVars
+                then ""
+                else printf "<%s>" $ intercalate ", " $ map (\(n, t) -> printf "%s = %s" n (formatType t)) $ H.toList classVars
+      RawExprStatement e -> formatExpr indent e
+      RawAnnot annot | exprPath annot == mdAnnot -> printf "\n# %s\n" annotText'
+        where
+          (Just (_, Just (RawCExpr _ (CStr annotText)))) = H.lookup mdAnnotText $ exprAppliedArgsMap annot
+          annotText' = concatMap (\c -> if c == '\n' then "\n" ++ formatIndent (indent + 1) else pure c) annotText
+      RawAnnot annot -> formatExpr indent annot
+      RawModule modul _ -> printf "module %s" modul
 
 formatStatementTree :: Int -> RawStatementTree RawExpr m -> Builder
 formatStatementTree indent (RawStatementTree statement subTree) = do
-  formatStatement indent statement
+  literal $ formatStatement indent statement
   forM_ subTree $ \s -> do
     formatStatementTree (indent + 1) s
-    when (indent == 0) "\n"
 
 formatPrgm :: Int -> RawPrgm m -> Builder
 formatPrgm indent (imports, statements) = do
@@ -125,3 +136,4 @@ formatPrgm indent (imports, statements) = do
   unless (null imports) "\n"
   forM_ statements $ \s -> do
     formatStatementTree indent s
+    ""
