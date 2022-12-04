@@ -31,6 +31,30 @@ import           Text.Printf
 showDeclTrees :: [PDeclTree] -> String
 showDeclTrees trees = intercalate "" $ map (\(d, ss) -> build $ formatStatementTree 0 $ RawStatementTree (RawDeclStatement d) ss) trees
 
+ifDeclPreprocessor :: PDeclTree -> CRes [PDeclTree]
+ifDeclPreprocessor r@(RawDecl declLhs (Just expr), subStatements) = return [(decl', matchDecls ++ subStatements')]
+  where
+    condName = "$" ++ take 6 (printf "%08x" (hash r))
+    argName = condName ++ "-arg"
+
+    -- Main declaration
+    expr' = case exprAppliedArgs expr of
+      [TupleArgO _ matching] -> rawVal condName `applyRawArgs` [(Just argName, rawVal "/Catln/ThenElse/fromBool" `applyRawArgs` [(Just "v", matching)])]
+      _ -> error "Invalid matching expression"
+    decl' = RawDecl declLhs (Just expr')
+
+    -- Pattern declarations
+    DeclLHS _ (Pattern declObj _) = declLhs
+    (subStatements', matchDecls) = partitionEithers $ map mapEitherMatchStatements subStatements
+    mapEitherMatchStatements (RawStatementTree (RawDeclStatement (RawDecl (DeclLHS matchDeclM (Pattern matchObj matchGuard)) (Just matchExpr))) matchSubStatements) = Right (RawStatementTree (RawDeclStatement (RawDecl matchDeclLhs' (Just matchExpr))) matchSubStatements)
+      where
+        matchArg = [(Just argName, RawAliasExpr (RawHoleExpr emptyMetaN (HoleActive Nothing)) (eobjExpr matchObj))]
+        matchDeclLhs' = DeclLHS (emptyMetaM "obj" matchDeclM) (Pattern (mkRawExprObj FunctionObj (H.toList $ exprAppliedVars $ eobjExpr declObj) matchArg Nothing condName) matchGuard)
+
+    mapEitherMatchStatements statementTree@(RawStatementTree RawAnnot{} _) = Left statementTree
+    mapEitherMatchStatements _ = error "Invalid subStatement in matchDeclPreprocessor"
+ifDeclPreprocessor _ = error "Invalid ifDeclPreprocessor"
+
 matchDeclPreprocessor :: PDeclTree -> CRes [PDeclTree]
 matchDeclPreprocessor r@(RawDecl declLhs (Just expr), subStatements) = return [(decl', matchDecls ++ subStatements')]
   where
@@ -107,10 +131,9 @@ defaultDeclPreprocessor declTree = return [declTree]
 
 declPreprocessors :: PDeclTree -> CRes [PDeclTree]
 declPreprocessors declTree@(RawDecl _ (Just expr), _) = case maybeExprPath expr of
+  Just "if"                             -> ifDeclPreprocessor declTree
   Just "match"                          -> matchDeclPreprocessor declTree
   Just "case"                           -> caseDeclPreprocessor declTree
   Just path | path == nestedDeclaration -> nestedDeclPreprocessor declTree
-  -- "/case" -> _
-  -- "/if" -> _
   _                                     -> defaultDeclPreprocessor declTree
 declPreprocessors declTree = defaultDeclPreprocessor declTree

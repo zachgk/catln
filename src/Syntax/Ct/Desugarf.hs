@@ -19,7 +19,6 @@ import           Data.Bifunctor                   (first, second)
 import           Data.Either
 import qualified Data.HashMap.Strict              as H
 import qualified Data.HashSet                     as S
-import           Data.Hashable
 import           Data.Maybe
 import           Text.Printf
 
@@ -275,18 +274,8 @@ semiDesExpr obj@Nothing (RawContextApply _ (_, be) ctxs) = semiDesExpr obj $ app
 semiDesExpr obj (RawParen e) = semiDesExpr obj e
 semiDesExpr obj@Nothing (RawMethod (RawValue m n) method) = semiDesExpr obj $ RawTupleApply (emptyMetaM "method" m) (emptyMetaE "base" method, method) [TupleArgI (Meta (singletonType $ partialVal $ PRelativeName n) (getMetaPos m) emptyMetaDat) "this"] -- Parse type methods like Integer.toString, Only for input expressions
 semiDesExpr obj (RawMethod base method) = semiDesExpr obj $ applyRawArgs method [(Just "this", base)]
-semiDesExpr obj@(Just jobj) r@(RawIfThenElse m i t e) = (concat [subI, subT, subE, [elseDecl, ifDecl]], expr')
-  where
-    condName = "$" ++ take 6 (printf "%08x" (hash r))
-    (subI, i') = semiDesExpr obj i
-    (subT, t') = semiDesExpr obj t
-    (subE, e') = semiDesExpr obj e
-    ifDecl = PSemiDecl (DeclLHS (emptyMetaE "obj" i) (Pattern (mkExprObj FunctionObj (H.toList $ exprAppliedVars $ eobjExpr jobj) [] Nothing condName) (IfGuard i'))) [] (Just t')
-    elseDecl = PSemiDecl (DeclLHS (emptyMetaE "obj" e) (Pattern (mkExprObj FunctionObj (H.toList $ exprAppliedVars $ eobjExpr jobj) [] Nothing condName) ElseGuard)) [] (Just e')
-    expr' = Value m condName
 semiDesExpr obj (RawList m []) = semiDesExpr obj (RawValue m "/Data/Nil")
 semiDesExpr obj (RawList m (l:ls)) = semiDesExpr obj (RawTupleApply (emptyMetaM "listApp" (getExprMeta l)) (emptyMetaM "listBase" (getExprMeta l), RawValue m "/Data/Cons") [TupleArgIO (emptyMetaE "arg" l) "head" l, TupleArgIO (emptyMetaE "argRemaining" l) "tail" (RawList m ls)])
-semiDesExpr _ e = error $ printf "Unexpected semiDesExpr of %s" (show e)
 
 semiDesGuard :: PObject -> PGuard -> ([PSemiDecl], PSGuard)
 semiDesGuard obj (IfGuard e) = (subE, IfGuard e')

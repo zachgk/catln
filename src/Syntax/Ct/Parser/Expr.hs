@@ -127,18 +127,6 @@ parenExpr exprMode = do
   e <- parens (pExpr exprMode)
   return $ RawParen e
 
-pIfThenElse :: ExprParseMode -> Parser PExpr
-pIfThenElse exprMode = do
-  pos1 <- getSourcePos
-  _ <- symbol "if"
-  condExpr <- pExpr exprMode
-  _ <- symbol "then"
-  thenExpr <- pExpr exprMode
-  _ <- symbol "else"
-  elseExpr <- pExpr exprMode
-  pos2 <- getSourcePos
-  return $ RawIfThenElse (emptyMeta pos1 pos2) condExpr thenExpr elseExpr
-
 data TermSuffix
   = MethodSuffix ParseMeta TypeName
   | ArgsSuffix ParseMeta [PTupleArg]
@@ -249,9 +237,7 @@ applyTermSuffix base (AliasSuffix m n) = RawAliasExpr base (RawValue m n)
 
 term :: ExprParseMode -> Parser PExpr
 term exprMode = do
-  base <- (if exprMode == ParseOutputExpr then pIfThenElse exprMode
-        <|> parenExpr exprMode
-        else parenExpr exprMode)
+  base <- parenExpr exprMode
        <|> pStringLiteral
        <|> pInt
        <|> pList exprMode

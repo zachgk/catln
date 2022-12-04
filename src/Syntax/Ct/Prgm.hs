@@ -43,7 +43,6 @@ data RawExpr m
   | RawContextApply (Meta m) (Meta m, RawExpr m) [(ArgName, Meta m)]
   | RawParen (RawExpr m)
   | RawMethod (RawExpr m) (RawExpr m) -- ^ base methodValue
-  | RawIfThenElse (Meta m) (RawExpr m) (RawExpr m) (RawExpr m)
   | RawList (Meta m) [RawExpr m]
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
@@ -101,7 +100,6 @@ instance ExprClass RawExpr where
     RawContextApply m _ _ -> m
     RawParen e            -> getExprMeta e
     RawMethod e _         -> getExprMeta e
-    RawIfThenElse m _ _ _ -> m
     RawList m _           -> m
 
   getExprArg _ = Nothing

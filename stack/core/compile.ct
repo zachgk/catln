@@ -82,3 +82,9 @@ module Catln
 
   llvm(c) -> CatlnResult
     # [llvm] runs the [LLVM Compiler](https://llvm.org/) to build the runnable argument [c] into a [CatlnResult] executable.
+
+  class ThenElse = Then | Else
+
+    fromBool(Boolean v) -> ThenElse
+    fromBool(True) = Then
+    fromBool(False) = Else

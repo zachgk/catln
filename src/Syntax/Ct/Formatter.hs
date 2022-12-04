@@ -75,17 +75,6 @@ formatExpr indent (RawVarsApply _ be vars) = printf "%s<%s>" (formatExpr indent 
 formatExpr indent (RawContextApply _ (_, be) ctxs) = printf "%s{%s}" (formatExpr indent be) (intercalate ", " $ map (\(ctxN, ctxM) -> formatMeta ctxM ++ ctxN) ctxs)
 formatExpr indent (RawParen e) = printf "(%s)" (formatExpr indent e)
 formatExpr indent (RawMethod base method) = printf "%s.%s" (formatExpr indent base) (formatExpr indent method)
-formatExpr indent (RawIfThenElse _ i t e) = build $ do
-  "if "
-  literal $ formatExpr (indent+1) i
-  "\n"
-  literal $ formatIndent indent
-  "then "
-  literal $ formatExpr (indent+1) t
-  "\n"
-  literal $ formatIndent indent
-  " else "
-  literal $ formatExpr (indent+1) e
 formatExpr indent (RawList _ l) = printf "[%s]" $ intercalate ", " $ map (formatExpr indent) l
 
 formatStatement :: Int -> RawStatement RawExpr m -> Builder
