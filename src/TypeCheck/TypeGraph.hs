@@ -192,9 +192,9 @@ reachesPartial env@FEnv{feVTypeGraph, feTTypeGraph, feClassGraph} partial@Partia
         -- otherwise, no reaches path requiring multiple steps can be found
         then return $ Just $ unionAllTypes feClassGraph [arrowDestType True feClassGraph potentialSrcPartial obj arr | potentialSrcPartial <- splitUnionType potSrcLeafs]
         else return Nothing
-reachesPartial env@FEnv{feClassGraph} partial@PartialType{ptName=PClassName{}} = reaches env (expandClassPartial feClassGraph partial)
+reachesPartial env@FEnv{feClassGraph} partial@PartialType{ptName=PClassName{}} = reaches env (expandPartial feClassGraph partial)
 reachesPartial env@FEnv{feClassGraph, feUnionAllObjs} partial@PartialType{ptName=PRelativeName{}} = do
-  reachesAsClass <- reaches env (expandClassPartial feClassGraph partial)
+  reachesAsClass <- reaches env (expandPartial feClassGraph partial)
   SType (UnionType allObjsUb) _ _ <- descriptor env feUnionAllObjs
   reachesAsType <- mapM (reachesPartial env . (\name -> partial{ptName=name})) (H.keys allObjsUb)
   return $ joinReachesTrees reachesAsClass (joinAllReachesTrees reachesAsType)

@@ -54,7 +54,7 @@ filterByType :: String -> TPrgm -> TPrgm
 filterByType name (objMap, ClassGraph classGraph, _) = (objMap', classGraph', [])
   where
     objMap' = filter (\(o, _, _) -> relativeNameMatches name (objPath o)) objMap
-    classGraph' = ClassGraph $ graphFromEdges $ filter (\(_, n, subTypes) -> relativeNameMatches name n || n `elem` subTypes) $ graphToNodes classGraph
+    classGraph' = ClassGraph $ graphFromEdges $ filter (\(_, n, subTypes) -> relativeNameMatches name (fromPartialName n) || n `elem` subTypes) $ graphToNodes classGraph
 
 data WDProvider
   = LiveWDProvider Bool String

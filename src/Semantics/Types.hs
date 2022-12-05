@@ -97,8 +97,9 @@ type Sealed = Bool
 -- The classGraph contains the possible classes and how they relate to existing types.
 -- Each edge goes from a class to a constituent class/type.
 -- Note that the graph form is an approximation because it fails to account for type variables, so using graph operations can be a fast sanity test but not a substitute for the appropriate type functions.
+-- The keys in the graph are PartialName because the originally inserted values (before desugaring) may use RelativeNames
 -- TODO: ClassGraph should be more granular. Can have class to only a certain object or based on type variables.
-newtype ClassGraph = ClassGraph (GraphData CGNode TypeName)
+newtype ClassGraph = ClassGraph (GraphData CGNode PartialName)
 
 -- | A class or type node within the 'ClassGraph'
 data CGNode
@@ -148,19 +149,26 @@ instance Show ClassGraph where
 asClassMap :: ClassGraph -> ClassMap
 asClassMap (ClassGraph graphData) = (typesToClass, classToTypes)
   where
-    typesToClass = fmap S.fromList $ H.fromListWith (++) $ concatMap getNodeTypeToClass $ graphToNodes graphData
+    typesToClass = fmap S.fromList $ H.fromListWith (++) $ mapMaybe typeToClassFromPartial $ concatMap getNodeTypeToClass $ graphToNodes graphData
+    typeToClassFromPartial (PTypeName t, cs) = Just (t, map fromPartialName cs)
+    typeToClassFromPartial (PClassName{}, _) = Nothing
+    typeToClassFromPartial (PRelativeName{}, _) = error "unexpected PRelativeName in asClassMap." -- Maybe should return Nothing?
     getNodeTypeToClass (CGClass{}, c, ts) = map (,[c]) ts
     getNodeTypeToClass _                  = []
 
-    classToTypes = H.fromList $ mapMaybe getNodeClassToType $ graphToNodes graphData
+    classToTypes = H.fromList $ map classToTypeFromPartial $ mapMaybe getNodeClassToType $ graphToNodes graphData
+    classToTypeFromPartial (c, d) = (fromPartialName c, d)
     getNodeClassToType (CGClass d, n, _) = Just (n, d)
     getNodeClassToType _                 = Nothing
 
 instance ToJSON ClassGraph where
   toJSON classGraph = toJSON $ asClassMap classGraph
 
+listClassGraphNames :: ClassGraph -> [PartialName]
+listClassGraphNames (ClassGraph graphData) = map snd3 (graphToNodes graphData)
+
 listClassNames :: ClassGraph -> [ClassName]
-listClassNames (ClassGraph graphData) = map snd3 $ filter isClass $ graphToNodes graphData
+listClassNames (ClassGraph graphData) = map (fromPartialName . snd3) $ filter isClass $ graphToNodes graphData
   where
     isClass (CGClass{}, _, _) = True
     isClass (CGType{}, _, _)  = False
@@ -199,6 +207,9 @@ relativeNameMatches rn n = split rn `L.isSuffixOf` split n
 
 relativeNameFilter :: RelativeName -> [Name] -> [Name]
 relativeNameFilter rn = filter (relativeNameMatches rn)
+
+relativePartialNameFilter :: RelativeName -> [PartialName] -> [PartialName]
+relativePartialNameFilter rn = filter (relativeNameMatches rn . fromPartialName)
 
 -- | Gets the name String from a partial name
 fromPartialName :: PartialName -> Name
@@ -252,10 +263,10 @@ suffixLookupInDict s dict = case suffixLookup s (H.keys dict) of
 -- Expands a class partial into a union of the types that make up that class (in the 'ClassGraph')
 -- It also expands a relative into the matching types and classes
 -- TODO: Should preserve type properties when expanding
-expandClassPartial :: ClassGraph -> PartialType -> Type
-expandClassPartial _ PartialType{ptName=PTypeName n} = error $ printf "Bad type name %s found in expandClassPartial" n
-expandClassPartial _ p@PartialType{ptName=PClassName{}, ptArgs} | not (H.null ptArgs) = error $ printf "expandClassPartial class with args: %s" (show p)
-expandClassPartial classGraph@(ClassGraph cg) PartialType{ptName=PClassName className, ptVars=classVarsP} = expanded
+expandPartial :: ClassGraph -> PartialType -> Type
+expandPartial _ PartialType{ptName=PTypeName n} = error $ printf "Bad type name %s found in expandPartial" n
+expandPartial _ p@PartialType{ptName=PClassName{}, ptArgs} | not (H.null ptArgs) = error $ printf "expandPartial class with args: %s" (show p)
+expandPartial classGraph@(ClassGraph cg) PartialType{ptName=className@PClassName{}, ptVars=classVarsP} = expanded
   where
     expanded = case graphLookup className cg of
       Just (CGClass (_, classVarsDecl, classTypes, _, _)) -> unionAllTypes classGraph $ map mapClassType classTypes
@@ -264,12 +275,12 @@ expandClassPartial classGraph@(ClassGraph cg) PartialType{ptName=PClassName clas
           mapClassType TopType = TopType
           mapClassType (TypeVar (TVVar t)) = case H.lookup t classVars of
             Just v -> intersectTypes classGraph v (H.lookupDefault TopType t classVars)
-            Nothing -> error $ printf "Unknown var %s in expandClassPartial" t
-          mapClassType (TypeVar (TVArg t)) = error $ printf "Arg %s found in expandClassPartial" t
+            Nothing -> error $ printf "Unknown var %s in expandPartial" t
+          mapClassType (TypeVar (TVArg t)) = error $ printf "Arg %s found in expandPartial" t
           mapClassType (UnionType p) = UnionType $ joinUnionType $ map mapClassPartial $ splitUnionType p
           mapClassPartial tp@PartialType{ptVars} = tp{ptVars=fmap (substituteVarsWithVarEnv classVars) ptVars}
-      _ -> error $ printf "Unknown class %s in expandClassPartial" className
-expandClassPartial classGraph relPartial@PartialType{ptName=PRelativeName relName} = UnionType $ joinUnionType $ map (\className -> relPartial{ptName=PClassName className}) $ relativeNameFilter relName (listClassNames classGraph)
+      r -> error $ printf "Unknown class %s in expandPartial. Found %s" (show className) (show r)
+expandPartial classGraph relPartial@PartialType{ptName=PRelativeName relName} = UnionType $ joinUnionType $ map (\typeName -> relPartial{ptName=typeName}) $ relativePartialNameFilter relName (listClassGraphNames classGraph)
 
 isSubPartialName :: PartialName -> PartialName -> Bool
 isSubPartialName (PTypeName a) (PTypeName b) = a == b
@@ -292,7 +303,7 @@ isSubPartialOfWithEnvBase classGraph venv aenv PartialType{ptVars=subVars, ptArg
 -- | Checks if one type contains another type. In set terminology, it is equivalent to subset or equal to ⊆.
 isSubPartialOfWithEnv :: ClassGraph -> TypeVarEnv -> TypeArgEnv -> PartialType -> PartialType -> Bool
 isSubPartialOfWithEnv classGraph venv aenv sub super | isSubPartialOfWithEnvBase classGraph venv aenv sub super = True
-isSubPartialOfWithEnv classGraph venv aenv sub super@PartialType{ptName=PClassName{}} = isSubtypeOfWithEnv classGraph venv aenv (singletonType sub) (expandClassPartial classGraph super)
+isSubPartialOfWithEnv classGraph venv aenv sub super@PartialType{ptName=PClassName{}} = isSubtypeOfWithEnv classGraph venv aenv (singletonType sub) (expandPartial classGraph super)
 isSubPartialOfWithEnv _ _ _ _ _ = False
 
 -- | Checks if one type contains another type. In set terminology, it is equivalent to subset or equal to ⊆.
@@ -315,7 +326,7 @@ isSubtypeOfWithEnv _ _ _ TopType t = t == TopType
 isSubtypeOfWithEnv classGraph venv aenv (UnionType subPartials) super@(UnionType superPartials) = all isSubPartial $ splitUnionType subPartials
   where
     isSubPartial sub | any (isSubPartialOfWithEnv classGraph venv aenv sub) $ splitUnionType superPartials = True
-    isSubPartial sub@PartialType{ptName=PClassName{}} | isSubtypeOfWithEnv classGraph venv aenv (expandClassPartial classGraph sub) super = True
+    isSubPartial sub@PartialType{ptName=PClassName{}} | isSubtypeOfWithEnv classGraph venv aenv (expandPartial classGraph sub) super = True
     isSubPartial _ = False
 
 -- | Checks if one type contains another type. In set terminology, it is equivalent to subset or equal to ⊆.
@@ -451,10 +462,10 @@ intersectPartials classGraph venv a b = case catMaybes [base, aExpandClass, bExp
     typeAsUnion (v, UnionType pl) = (v, splitUnionType pl)
     typeAsUnion _                 = error "Expected a union"
     aExpandClass = case a of
-      PartialType{ptName=PClassName{}} -> Just $ typeAsUnion $ intersectTypesWithVarEnv classGraph venv (expandClassPartial classGraph a) (singletonType b)
+      PartialType{ptName=PClassName{}} -> Just $ typeAsUnion $ intersectTypesWithVarEnv classGraph venv (expandPartial classGraph a) (singletonType b)
       _ -> Nothing
     bExpandClass = case b of
-      PartialType{ptName=PClassName{}} -> Just $ typeAsUnion $ intersectTypesWithVarEnv classGraph venv (singletonType a) (expandClassPartial classGraph b)
+      PartialType{ptName=PClassName{}} -> Just $ typeAsUnion $ intersectTypesWithVarEnv classGraph venv (singletonType a) (expandPartial classGraph b)
       _ -> Nothing
 
 -- |

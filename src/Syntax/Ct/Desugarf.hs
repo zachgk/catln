@@ -160,11 +160,11 @@ desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef className classVars 
   let dataTypes = map (either id (getExprType . snd . desObjPropagateTypes . semiDesExpr Nothing) . eitherTypeVarExpr) dataExprs
 
   let objs = map (desMultiTypeDefObj inheritPath classVars) $ rights $ map eitherTypeVarExpr dataExprs
-  let objPaths = map eobjPath objs
+  let objPaths = map (PRelativeName . eobjPath) objs
   let objMap' = map (, [], Nothing) objs
 
   let typeCGNodes = map (CGType, , []) objPaths
-  let classCGNode = (CGClass (True, classVars, dataTypes, desObjDocComment subStatements, path'), addPath inheritPath className, objPaths)
+  let classCGNode = (CGClass (True, classVars, dataTypes, desObjDocComment subStatements, path'), PClassName (addPath inheritPath className), objPaths)
   let classGraph' = ClassGraph $ graphFromEdges (classCGNode:typeCGNodes)
 
   (subPrgm, _) <- desInheritingSubstatements statementEnv path subStatements
@@ -180,7 +180,7 @@ desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef className classVars 
 
 desClassDecl :: StatementEnv -> RawClassDecl -> [RawStatementTree RawExpr ParseMetaDat] -> Path -> CRes DesPrgm
 desClassDecl statementEnv@(inheritPath, _) (className, classVars) subStatements path = do
-  let classGraph' = ClassGraph $ graphFromEdges [(CGClass (False, classVars, [], desObjDocComment subStatements, path'), addPath inheritPath className, [])]
+  let classGraph' = ClassGraph $ graphFromEdges [(CGClass (False, classVars, [], desObjDocComment subStatements, path'), PClassName (addPath inheritPath className), [])]
   (subPrgm, _) <- desInheritingSubstatements statementEnv path subStatements
   return $ mergeExprPrgm ([], classGraph', []) subPrgm
   where
@@ -199,7 +199,7 @@ desTypeDef statementEnv@(inheritPath, _) (TypeDef typeExpr) subStatements = do
 desClassDef :: StatementEnv -> Sealed -> RawClassDef ParseMetaDat -> [RawStatementTree RawExpr ParseMetaDat] -> Path -> CRes DesPrgm
 desClassDef statementEnv@(inheritPath, _) sealed (typeExpr, className) subStatements path = do
   let (_, typeExpr') = desObjPropagateTypes $ semiDesExpr Nothing typeExpr
-  let classGraph = ClassGraph $ graphFromEdges [(CGClass (sealed, H.empty, [getExprType typeExpr'], desObjDocComment subStatements, path'), className, [exprPath typeExpr'])]
+  let classGraph = ClassGraph $ graphFromEdges [(CGClass (sealed, H.empty, [getExprType typeExpr'], desObjDocComment subStatements, path'), PClassName className, [PRelativeName $ exprPath typeExpr'])]
   (subPrgm, _) <- desInheritingSubstatements statementEnv path subStatements
   return $ mergeExprPrgm ([], classGraph, []) subPrgm
   where
