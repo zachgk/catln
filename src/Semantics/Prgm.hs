@@ -152,9 +152,9 @@ instance Show m => Show (Expr m) where
         _               -> printf "(%s)" (show baseExpr)
       arg' = case arg of
         TupleArgIO _ argName argVal -> argName ++ " = " ++ show argVal
-        TupleArgI _ argName         -> argName
+        TupleArgI m argName         -> argName ++ " : " ++ show m
         TupleArgO _ argVal          -> show argVal
-  show (VarApply _ baseExpr varName varVal) = printf "%s[%s%s]" baseExpr' varName (show varVal)
+  show (VarApply _ baseExpr varName varVal) = printf "%s[%s : %s]" baseExpr' varName (show varVal)
     where
       baseExpr' = case baseExpr of
         Value _ funName -> funName
@@ -243,6 +243,7 @@ instance ExprClass Expr where
   exprAppliedArgs _ = error "Unsupported Expr exprAppliedArgs"
 
   exprAppliedVars (Value _ _) = H.empty
+  exprAppliedVars (Arg _ _) = H.empty
   exprAppliedVars (TupleApply _ (_, be) _) = exprAppliedVars be
   exprAppliedVars (VarApply _ e n m) = H.insert n m (exprAppliedVars e)
   exprAppliedVars _ = error "Unsupported Expr exprAppliedVars"
