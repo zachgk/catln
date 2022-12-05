@@ -49,7 +49,7 @@ flattenNestedDeclarations (RawDecl (DeclLHS arrM (Pattern obj@(ExprObject objBas
     guard2 = semiDesGuard obj guard1
     (subDecls3, expr3, annots3, arrM') = scopeSubDeclFunNames (eobjPath obj) subDecls2 expr2 annots2 arrM
     objExpression' = semiDesExpr Nothing objExpression
-    (subDecls4, expr4, annots4) = currySubFunctions (exprArgs objExpression) subDecls3 expr3 annots3
+    (subDecls4, expr4, annots4) = currySubFunctions (exprArgsLinear objExpression) subDecls3 expr3 annots3
     decl' = PSemiDecl (DeclLHS arrM' (Pattern (ExprObject objBasis objDoc objExpression') guard2)) annots4 expr4
 
 data DOEMode = DOEArgMode | DOEValMode deriving (Eq, Show)

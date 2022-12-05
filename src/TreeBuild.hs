@@ -73,7 +73,7 @@ buildExpr TBEnv{tbVals} _ (Value (Meta (UnionType prodTypes) pos _) name) = case
       Just val -> val
       Nothing  -> ResArrowTuple name' H.empty
     e -> error $ printf "Found unexpected value type in buildExpr: %s" (show e)
-buildExpr TBEnv{tbClassGraph} (os, obj) (Arg (Meta (TypeVar (TVArg a)) _ _) name) = return $ ArgArrow (snd $ fromJust $ suffixLookupInDict a $ formArgMetaMapWithSrc tbClassGraph obj os) name
+buildExpr TBEnv{tbClassGraph} (os, obj) (Arg (Meta (TypeVar (TVArg a)) _ _) name) = return $ ArgArrow (snd $ fromJust $ suffixLookupInDict a $ exprArgsWithSrc tbClassGraph (objExpr obj) os) name
 buildExpr _ _ (Arg (Meta tp _ _) name) = return $ ArgArrow tp name
 buildExpr TBEnv{tbClassGraph} _ (TupleApply (Meta tp pos _) (Meta baseType _ _, baseExpr) (TupleArgIO _ argName argExpr)) = case typesGetArg tbClassGraph argName tp of
     Nothing -> CErr [MkCNote $ BuildTreeCErr pos $ printf "Found no types for tupleApply %s with type %s and expr %s" (show baseExpr) (show tp) (show argExpr)]
@@ -177,7 +177,7 @@ buildImplicit _ obj _ TopType destType = error $ printf "Build implicit from top
 buildImplicit env objSrc@(_, obj) input (TypeVar (TVVar varName)) destType = case suffixLookupInDict varName $ objAppliedVars obj of
   Just objVarM -> buildImplicit env objSrc input (getMetaType objVarM) destType
   Nothing -> error $ printf "buildImplicit unknown arg %s with obj %s" varName (show objSrc)
-buildImplicit env@TBEnv{tbClassGraph} objSrc@(os, obj) input (TypeVar (TVArg argName)) destType = case suffixLookupInDict argName $ formArgMetaMapWithSrc tbClassGraph obj os of
+buildImplicit env@TBEnv{tbClassGraph} objSrc@(os, obj) input (TypeVar (TVArg argName)) destType = case suffixLookupInDict argName $ exprArgsWithSrc tbClassGraph (objExpr obj) os of
   Just (_, srcType) -> buildImplicit env objSrc input srcType destType
   Nothing -> error $ printf "buildImplicit unknown arg %s with obj %s" argName (show obj)
 buildImplicit env obj expr srcType@(UnionType srcTypeLeafs) destType = do
@@ -241,7 +241,7 @@ buildArrow env objPartial obj compAnnots arrow@(Arrow (Meta am _ _) _ (Just expr
         (TypeVar (TVVar v)) -> case suffixLookupInDict v $ objAppliedVars obj of
           Just m  -> getMetaType m
           Nothing -> error "Bad TVVar in makeBaseEnv"
-        (TypeVar (TVArg v)) -> case suffixLookupInDict v $ formArgMetaMap obj of
+        (TypeVar (TVArg v)) -> case suffixLookupInDict v $ exprArgsLinear $ objExpr obj of
           Just argMeta -> getMetaType argMeta
           Nothing      -> error "Bad TVArg in makeBaseEnv"
         _ -> am

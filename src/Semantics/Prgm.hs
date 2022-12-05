@@ -214,7 +214,7 @@ class ExprClass e where
   exprAppliedVars :: e m -> H.HashMap TypeVarName (Meta m)
 
   -- | Returns all arguments located recursively in an expression
-  exprArgs :: e m -> H.HashMap ArgName (Meta m)
+  exprArgs :: e m -> H.HashMap ArgName [Meta m]
 
 
 instance ExprClass Expr where
@@ -250,14 +250,14 @@ instance ExprClass Expr where
 
   exprArgs CExpr{} = H.empty
   exprArgs Value{} = H.empty
-  exprArgs (Arg m n) = H.singleton n m
+  exprArgs (Arg m n) = H.singleton n [m]
   exprArgs HoleExpr{} = H.empty
-  exprArgs (AliasExpr base alias) = H.union (exprArgs base) (exprArgs alias)
-  exprArgs (TupleApply _ (_, be) arg) = H.union (exprArgs be) (exprArg arg)
+  exprArgs (AliasExpr base alias) = H.unionWith (++) (exprArgs base) (exprArgs alias)
+  exprArgs (TupleApply _ (_, be) arg) = H.unionWith (++) (exprArgs be) (exprArg arg)
     where
       exprArg (TupleArgIO _ _ e) = exprArgs e
       exprArg (TupleArgO _ e)    = exprArgs e
-      exprArg (TupleArgI m n)    = H.singleton n m
+      exprArg (TupleArgI m n)    = H.singleton n [m]
   exprArgs (VarApply _ e _ _) = exprArgs e
 
 mapMetaDat :: (m1 -> m2) -> Meta m1 -> Meta m2

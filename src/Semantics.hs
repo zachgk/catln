@@ -101,7 +101,7 @@ objAppliedArgsMap = exprAppliedArgsMap . objExpr
 objAppliedVars :: (Show m, MetaDat m) => Object m -> H.HashMap TypeVarName (Meta m)
 objAppliedVars = exprAppliedVars . objExpr
 
-objArgs :: (Show m, MetaDat m) => Object m -> H.HashMap ArgName (Meta m)
+objArgs :: (Show m, MetaDat m) => Object m -> H.HashMap ArgName [Meta m]
 objArgs = exprArgs . objExpr
 
 eobjPath :: (MetaDat m, ExprClass e) => ExprObject e m -> TypeName
@@ -138,17 +138,19 @@ fromExprPrgm (objMap, classGraph, annots) = (map fromExprObjectMapItem objMap, c
     fromExprObject :: (MetaDat m, Show m) => ExprObject Expr m -> Object m
     fromExprObject (ExprObject basis doc expr) = exprToObj basis doc expr
 
-type ArgMetaMap m = H.HashMap ArgName (Meta m)
--- |
--- The 'formArgMetaMap' produces a map from the argument name to argument meta.
--- In an object where arguments are themselves objects, it would match the names used in those subobjects.
--- For example, in the object real(c=Complex(a, b)), the matched arguments are a and b.
-formArgMetaMap :: (Show m, MetaDat m) => Object m -> ArgMetaMap m
-formArgMetaMap = exprArgs . objExpr
+type ArgMetaMap m = H.HashMap ArgName [Meta m]
+
+-- TODO: Remove usages of 'exprArgsLinear' to replace fully with 'exprArgs' and support nonLinear use cases
+exprArgsLinear :: (ExprClass e) => e m -> H.HashMap ArgName (Meta m)
+exprArgsLinear = fmap singletonOrError . exprArgs
+  where
+    singletonOrError [x] = x
+    singletonOrError _   = error "Found nonLinear value in exprArgsLinear"
 
 -- |
 -- The 'exprArgsWithSrc' is similar to the 'exprArgs' function.
 -- It differs in that it accepts an additional partial type that is equivalent to the expression and it pull the corresponding parts of the partial matching the args in the expression
+-- TODO: Make nonLinear by changing signature to H.HashMap ArgName ([Meta m], Type)
 type ArgMetaMapWithSrc m = H.HashMap ArgName (Meta m, Type)
 exprArgsWithSrc :: ClassGraph -> Expr m -> PartialType -> ArgMetaMapWithSrc m
 exprArgsWithSrc _ CExpr{} _ = H.empty
@@ -161,7 +163,7 @@ exprArgsWithSrc classGraph (TupleApply _ (_, be) arg) src@PartialType{ptArgs=src
   where
     fromArg (TupleArgIO _ n e) = case H.lookup n srcArgs of
       Just (UnionType srcArg) -> mergeMaps $ map (exprArgsWithSrc classGraph e) $ splitUnionType srcArg
-      Just TopType -> (,TopType) <$> exprArgs e
+      Just TopType -> (,TopType) <$> exprArgsLinear e
       _ -> H.empty
     fromArg (TupleArgO _ e) = exprArgsWithSrc classGraph e src
     fromArg (TupleArgI m n) = case H.lookup n srcArgs of
@@ -189,7 +191,7 @@ arrowDestType fullDest classGraph src obj (Arrow arrM _ maybeExpr) = case mapM g
   _             -> joined
   where
     varEnv = formVarMap classGraph $ intersectTypes classGraph (getMetaType $ objM obj) (singletonType src)
-    argEnv = snd <$> formArgMetaMapWithSrc classGraph obj ((\(UnionType pl) -> head $ splitUnionType pl) $ substituteVars $ singletonType src)
+    argEnv = snd <$> exprArgsWithSrc classGraph (objExpr obj) ((\(UnionType pl) -> head $ splitUnionType pl) $ substituteVars $ singletonType src)
     substitute = substituteVarsWithVarEnv varEnv . substituteArgsWithArgEnv argEnv
     expr' = fmap (substitute . getExprType) maybeExpr
     arr' = substitute $ getMetaType arrM
@@ -207,10 +209,10 @@ isSubtypePartialOfWithObj :: (Show m, MetaDat m) => ClassGraph -> Object m -> Pa
 isSubtypePartialOfWithObj classGraph obj sub = isSubtypeOfWithObj classGraph obj (singletonType sub)
 
 isSubtypeOfWithObj :: (Show m, MetaDat m) => ClassGraph -> Object m -> Type -> Type -> Bool
-isSubtypeOfWithObj classGraph obj = isSubtypeOfWithEnv classGraph (getMetaType <$> objAppliedVars obj) (getMetaType <$> formArgMetaMap obj)
+isSubtypeOfWithObj classGraph obj = isSubtypeOfWithEnv classGraph (getMetaType <$> objAppliedVars obj) (unionAllTypes classGraph . fmap getMetaType <$> exprArgs (objExpr obj))
 
 isSubtypeOfWithObjSrc :: (Show m, MetaDat m) => ClassGraph -> PartialType -> Object m -> Type -> Type -> Bool
-isSubtypeOfWithObjSrc classGraph srcType obj = isSubtypeOfWithEnv classGraph (getMetaType <$> objAppliedVars obj) (snd <$> formArgMetaMapWithSrc classGraph obj srcType )
+isSubtypeOfWithObjSrc classGraph srcType obj = isSubtypeOfWithEnv classGraph (getMetaType <$> objAppliedVars obj) (snd <$> exprArgsWithSrc classGraph (objExpr obj) srcType )
 
 isSubtypeOfWithMaybeObj :: (Show m, MetaDat m) => ClassGraph -> Maybe (Object m) -> Type -> Type -> Bool
 isSubtypeOfWithMaybeObj classGraph (Just obj) = isSubtypeOfWithObj classGraph obj

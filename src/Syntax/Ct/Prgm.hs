@@ -28,6 +28,7 @@ import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Megaparsec
 import           Text.Printf
+import           Utils
 
 data Pattern e m = Pattern (ExprObject e m) (Guard (e m))
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON, ToJSONKey)
@@ -132,15 +133,15 @@ instance ExprClass RawExpr where
   exprArgs RawCExpr{} = H.empty
   exprArgs RawHoleExpr{} = H.empty
   exprArgs RawValue{} = H.empty
-  exprArgs (RawAliasExpr base alias) = H.union (exprArgs base) (exprArgs alias)
-  exprArgs (RawTupleApply _ (_, be) args) = H.union (exprArgs be) (H.unions $ map exprArg args)
+  exprArgs (RawAliasExpr base alias) = H.unionWith (++) (exprArgs base) (exprArgs alias)
+  exprArgs (RawTupleApply _ (_, be) args) = H.unionWith (++) (exprArgs be) (unionsWith (++) $ map exprArg args)
     where
       exprArg (TupleArgIO _ _ e) = exprArgs e
       exprArg (TupleArgO _ e)    = exprArgs e
-      exprArg (TupleArgI m n)    = H.singleton n m
+      exprArg (TupleArgI m n)    = H.singleton n [m]
   exprArgs (RawVarsApply _ e _) = exprArgs e
   exprArgs (RawContextApply _ (_, e) _) = exprArgs e
   exprArgs (RawParen e) = exprArgs e
-  exprArgs (RawMethod be me) = H.union (exprArgs be) (exprArgs me)
+  exprArgs (RawMethod be me) = H.unionWith (++) (exprArgs be) (exprArgs me)
   exprArgs e = error $ printf "Unsupported RawExpr exprArgs for %s" (show e)
 
