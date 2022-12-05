@@ -59,7 +59,7 @@ module Data
 
   Nil.length = 0
 
-  Cons(head, tail).length = 1 + tail.length
+  /Data/Cons(head, tail).length = 1 + tail.length
 
   every ConsList[$T: $T] isa /Data/Functor
 

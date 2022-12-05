@@ -92,3 +92,13 @@ mapMetaObjectMap f = map aux
 
 mapMetaPrgm :: (MapMeta e) => MetaFun a b -> Prgm e a -> Prgm e b
 mapMetaPrgm f (objMap, classGraph, annots) = (mapMetaObjectMap f objMap, classGraph, map (mapMeta f) annots)
+
+mapMetaExprObj :: (MapMeta e) => MetaFun a b -> ExprObject e a -> ExprObject e b
+mapMetaExprObj f (ExprObject basis doc expr) = ExprObject basis doc (mapMeta f expr)
+
+mapMetaExprObjectMap :: (MapMeta e) => MetaFun a b -> ExprObjectMap e a -> ExprObjectMap e b
+mapMetaExprObjectMap f = map aux
+  where aux (obj, annots, arrow) = (mapMetaExprObj f obj, fmap (mapMeta f) annots, fmap (mapMetaArrow f) arrow)
+
+mapMetaExprPrgm :: (MapMeta e) => MetaFun a b -> ExprPrgm e a -> ExprPrgm e b
+mapMetaExprPrgm f (objMap, classGraph, annots) = (mapMetaExprObjectMap f objMap, classGraph, map (mapMeta f) annots)

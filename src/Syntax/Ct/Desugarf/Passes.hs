@@ -27,19 +27,37 @@ import           Syntax.Ct.Parser.Syntax
 import           Text.Printf
 import           Utils
 
+-- Removes objects that match classes
+-- When a class is used in the RHS of a multiTypeDef, it will create an object temporarily
+-- This removes that temporary object and the CGType classGraph entry for it
+removeClassInstanceObjects :: DesPrgm -> DesPrgm -> DesPrgm
+removeClassInstanceObjects (_, fullPrgmClassGraph, _) (objMap, ClassGraph cg, annots) = (objMap', classGraph', annots)
+  where
+    classNames = listClassNames fullPrgmClassGraph
+    notMatchesClassName n = null $ relativeNameFilter n classNames
+
+    classGraph' = ClassGraph $ graphFromEdges $ filter classEntryMatches $ graphToNodes cg
+    objMap' = filter (\(obj, _, _) -> notMatchesClassName (eobjPath obj)) objMap
+
+    classEntryMatches (CGType, PRelativeName n, _) = notMatchesClassName n
+    classEntryMatches _                            = True
+
+
 -- replaces uses of PRelativeName with PTypeName or PClassName when it can be determined
 -- e.g. PRelativeName Boolean ==> PClassName /Data/Boolean
 -- uses the mapMeta for objMap and annots, but must map the classGraph manually
 -- the fullPrgmClassToTypes includes the imports and is used for when the def is inside an import
-resolveRelativeNames :: FinalDesPrgm -> FinalDesPrgm -> FinalDesPrgm
-resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, classGraph@(ClassGraph cg), annots) = mapMetaPrgm aux (objMap, classGraph', annots)
+resolveRelativeNames :: DesPrgm -> DesPrgm -> DesPrgm
+resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, classGraph@(ClassGraph cg), annots) = mapMetaExprPrgm resolveMeta (objMap, classGraph', annots)
   where
-    classGraph' = ClassGraph $ graphFromEdges $ mapFst3 mapCGNode $ graphToNodes cg
+    classGraph' = ClassGraph $ graphFromEdges $ map mapClassEntry $ graphToNodes cg
+    mapClassEntry (node, tp, subTypes) = (mapCGNode node, resolveName True tp, map (resolveName True) subTypes)
     mapCGNode (CGClass (s, vs, ts, doc, p)) = CGClass (s, fmap (mapType True) vs, fmap (mapType True) ts, doc, p)
     mapCGNode CGType = CGType
-    classNames = listClassNames fullPrgmClassGraph
-    objNames = nub $ map (objPath . fst3) fullPrgmObjMap
-    aux _ (Meta t p md) = Meta (mapType False t) p md
+    classNames = nub $ listClassNames fullPrgmClassGraph
+    objNames = nub $ map (eobjPath . fst3) (concatMap getRecursiveExprObjs fullPrgmObjMap)
+
+    resolveMeta _ (Meta t p md) = Meta (mapType False t) p md
 
     -- |
     -- requireResolveRelative -> type -> updated type
@@ -48,14 +66,21 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, classGraph
     mapType _ TopType = TopType
     mapType _ tp@(TypeVar TVVar{}) = tp
     mapType _ (TypeVar TVArg{}) = error "Invalid arg type"
-    mapType reqResolve (UnionType partials) = unionAllTypes classGraph $ map (singletonType . mapPartial) $ splitUnionType partials
-      where
-        mapPartial :: PartialType -> PartialType
-        mapPartial (PartialType (PRelativeName name) partialVars partialArgs partialPreds partialArgMode) = PartialType name' (fmap (mapType reqResolve) partialVars) (fmap (mapType reqResolve) partialArgs) (map mapPartial partialPreds) partialArgMode
-          where
-            typeOptions = relativeNameFilter name objNames
-            classOptions = relativeNameFilter name classNames
-            name' = case (reqResolve, classOptions, typeOptions) of
+    mapType reqResolve (UnionType partials) = unionAllTypes classGraph $ map (singletonType . mapPartial reqResolve) $ splitUnionType partials
+
+    mapPartial :: Bool -> PartialType -> PartialType
+    mapPartial reqResolve partial@PartialType{ptName, ptVars, ptArgs, ptPreds} = partial {
+      ptName = resolveName reqResolve ptName,
+      ptVars = fmap (mapType reqResolve) ptVars,
+      ptArgs = fmap (mapType reqResolve) ptArgs,
+      ptPreds = fmap (mapPartial reqResolve) ptPreds
+                                                                                                                  }
+
+    -- |
+    -- Attempts to convert 'PRelativeName' to either a type or a class
+    -- If reqResolve is true, the conversions must succeed otherwise it can be left optional
+    resolveName :: Bool -> PartialName -> PartialName
+    resolveName reqResolve (PRelativeName name)= case (reqResolve, relativeNameFilter name classNames, relativeNameFilter name objNames) of
                   -- is a class, replace with class type
                   (_, [className], []) -> PClassName className
 
@@ -63,19 +88,14 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, classGraph
                   (_, [], [typeName]) -> PTypeName typeName
 
                   -- This case occurs when a class is used in a multiTypeDef
-                  -- TODO Instead, the incorrect type definition should be removed before this pass is run
-                  (_, [className], [typeName]) | className == typeName -> PClassName className
+                  (_, [className], [typeName]) | className == typeName -> error $ printf "Found duplicate name %s" (show className)
 
-                  (_, [], []) -> error $ printf "There is no possible types or classes that correspond to name %s in type %s.\n\n\tType Options: %s\n\n\tClass Options: %s" name  (show $ UnionType partials) (show objNames) (show classNames)
-                  -- (_, [], []) -> error $ printf "There is no possible types or classes that correspond to name %s in type %s" name  (show $ UnionType partials)
+                  -- (_, [], []) -> error $ printf "There is no possible types or classes that correspond to name %s in type %s.\n\n\tType Options: %s\n\n\tClass Options: %s" name  (show partial) (show objNames) (show classNames)
+                  (_, [], []) -> error $ printf "There is no possible types or classes that correspond to name %s\n\tAvailable types: %s" name (show objNames)
 
                   (False, _, _) -> PRelativeName name
                   (True, foundTypeNames, foundClassNames) -> error $ printf "Could not resolve required name: %s \n\t Found possible typeNames: %s \n\t Found possible classNames: %s" name (show foundTypeNames) (show foundClassNames)
-        mapPartial partial@PartialType{ptVars, ptArgs, ptPreds} = partial{
-          ptVars = fmap (mapType reqResolve) ptVars,
-          ptArgs = fmap (mapType reqResolve) ptArgs,
-          ptPreds = fmap mapPartial ptPreds
-                                                                                                                      }
+    resolveName _ name = name
 
 expandDataReferences :: FinalDesPrgm -> FinalDesPrgm -> FinalDesPrgm
 expandDataReferences (fullPrgmObjMap, _, _) (objMap, classGraph@(ClassGraph cg), annots) = mapMetaPrgm aux (objMap, classGraph', annots)

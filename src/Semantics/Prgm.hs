@@ -28,6 +28,7 @@ import           Data.Aeson          (object)
 import           Data.Aeson          hiding (Object)
 import           Data.Aeson.Types    (ToJSON)
 import           Data.Graph
+import           Data.Maybe
 import           Semantics.Types
 import           Text.Megaparsec
 import           Text.Printf
@@ -316,3 +317,21 @@ mergeExprPrgm (objMap1, classGraph1, annots1) (objMap2, classGraph2, annots2) = 
 mergeExprPrgms :: Foldable f => f (ExprPrgm e m) -> ExprPrgm e m
 mergeExprPrgms = foldr mergeExprPrgm emptyPrgm
   where emptyPrgm = ([], ClassGraph $ graphFromEdges [], [])
+
+-- | Gets all recursive sub expression objects from an expression's arguments. Helper for 'getRecursiveExprObjs'
+getRecursiveExprObjsExpr :: (ExprClass e) => e m -> [e m]
+getRecursiveExprObjsExpr expr = subObjects ++ recursedSubObjects
+  where
+    subObjects = filter (isJust . maybeExprPath) $ mapMaybe exprFromTupleArg $ exprAppliedArgs expr
+    exprFromTupleArg (TupleArgO _ e)    = Just e
+    exprFromTupleArg (TupleArgIO _ _ e) = Just e
+    exprFromTupleArg TupleArgI{}        = Nothing
+    recursedSubObjects = concatMap getRecursiveExprObjsExpr subObjects
+
+-- | Gets an object and all sub-objects (recursively) from it's arguments
+getRecursiveExprObjs :: (ExprClass e, Show m) => ExprObjectMapItem e m -> ExprObjectMap e m
+getRecursiveExprObjs (ExprObject{eobjBasis}, _, _) | eobjBasis == MatchObj = []
+getRecursiveExprObjs baseObj@(ExprObject{eobjBasis, eobjExpr}, _, _) = baseObj : recursedSubObjects
+  where
+    recursedSubObjects = map toObjMapItem $ getRecursiveExprObjsExpr eobjExpr
+    toObjMapItem e = (ExprObject eobjBasis Nothing e, [], Nothing)

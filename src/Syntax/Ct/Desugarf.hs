@@ -234,22 +234,28 @@ desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree state
   RawModule _ path -> fst <$> desInheritingSubstatements statementEnv path subStatements
 
 finalPasses :: DesPrgmGraphData -> GraphNodes DesPrgm String -> GraphNodes FinalDesPrgm String
-finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm1, prgmName, imports) = (prgm4, prgmName, imports)
+finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm1, prgmName, imports) = (prgm5, prgmName, imports)
   where
     -- Build fullPrgm with recursive imports
     vertex = fromJust $ vertexFromKey prgmName
     importTree = reachable desPrgmGraph vertex
     fullPrgm1 = mergeExprPrgms $ map (fst3 . nodeFromVertex) importTree
 
-    prgm2 = fromExprPrgm prgm1
-    fullPrgm2 = fromExprPrgm fullPrgm1
+    -- Run removeClassInstanceObjects
+    prgm2 = removeClassInstanceObjects fullPrgm1 prgm1
+    fullPrgm2 = removeClassInstanceObjects fullPrgm1 fullPrgm1
 
     -- Run resolveRelativeNames pass
     prgm3 = resolveRelativeNames fullPrgm2 prgm2
     fullPrgm3 = resolveRelativeNames fullPrgm2 fullPrgm2
 
+    prgm4 = fromExprPrgm prgm3
+    fullPrgm4 = fromExprPrgm fullPrgm3
+
     -- Run expandDataReferences pass
-    prgm4 = expandDataReferences fullPrgm3 prgm3
+    prgm5 = expandDataReferences fullPrgm4 prgm4
+
+
 
 desPrgm :: PPrgm -> CRes DesPrgm
 desPrgm (_, statements) = do
