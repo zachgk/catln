@@ -150,9 +150,9 @@ desMultiTypeDefObj inheritPath varReplaceMap expr = desObj False inheritPath Use
     -- Consider JOptional<$T> = Just<$T=$T> | Nothing
     -- For the object Just, it needs to be Just<TopType $T> as the classes $T is out of scope
     -- TODO: Consider adding back the following lines of code produced in experimental exprObject branch
-    replaceMetaVar (ExprMeta ExprMetaApplyVarVal) (Meta t pos md) = Meta (substituteVarsWithVarEnv varReplaceMap t) pos md
+    replaceMetaVar (ExprMeta InputMeta ExprMetaApplyVarVal) (Meta t pos md) = Meta (substituteVarsWithVarEnv varReplaceMap t) pos md
     replaceMetaVar _ m = m
-    expr'' = mapMetaAppliedExpr replaceMetaVar expr'
+    expr'' = mapMetaAppliedExpr replaceMetaVar InputMeta expr'
 
 
 desMultiTypeDef :: StatementEnv -> PMultiTypeDef -> [RawStatementTree RawExpr ParseMetaDat] -> Path -> CRes DesPrgm
@@ -249,12 +249,10 @@ finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm1, prgmName, impo
     prgm3 = resolveRelativeNames fullPrgm2 prgm2
     fullPrgm3 = resolveRelativeNames fullPrgm2 fullPrgm2
 
-    prgm4 = fromExprPrgm prgm3
-    fullPrgm4 = fromExprPrgm fullPrgm3
-
     -- Run expandDataReferences pass
-    prgm5 = expandDataReferences fullPrgm4 prgm4
+    prgm4 = expandDataReferences fullPrgm3 prgm3
 
+    prgm5 = fromExprPrgm prgm4
 
 
 desPrgm :: PPrgm -> CRes DesPrgm

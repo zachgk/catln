@@ -97,19 +97,20 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, classGraph
                   (True, foundTypeNames, foundClassNames) -> error $ printf "Could not resolve required name: %s \n\t Found possible typeNames: %s \n\t Found possible classNames: %s" name (show foundTypeNames) (show foundClassNames)
     resolveName _ name = name
 
-expandDataReferences :: FinalDesPrgm -> FinalDesPrgm -> FinalDesPrgm
-expandDataReferences (fullPrgmObjMap, _, _) (objMap, classGraph@(ClassGraph cg), annots) = mapMetaPrgm aux (objMap, classGraph', annots)
+expandDataReferences :: DesPrgm -> DesPrgm -> DesPrgm
+expandDataReferences (fullPrgmObjMap, _, _) (objMap, classGraph@(ClassGraph cg), annots) = mapMetaExprPrgm aux (objMap, classGraph', annots)
   where
     classGraph' = ClassGraph $ graphFromEdges $ mapFst3 mapCGNode $ graphToNodes cg
     mapCGNode (CGClass (s, vs, ts, doc, p)) = CGClass (s, fmap mapType vs, fmap mapType ts, doc, p)
     mapCGNode CGType = CGType
-    objExpansions = H.fromList $ concatMap (\(obj@Object{objBasis}, _, _) -> ([(objPath obj, obj) | objBasis == TypeObj])) fullPrgmObjMap
+    objExpansions = H.fromList $ concatMap (\(obj@ExprObject{eobjBasis}, _, _) -> ([(eobjPath obj, obj) | eobjBasis == TypeObj])) fullPrgmObjMap
     aux metaType inM@(Meta t p md) = case metaType of
-      ExprMeta _ -> inM
-      ObjMeta    -> inM
-      ObjArgMeta -> Meta (mapType t) p md
-      ObjVarMeta -> Meta (mapType t) p md
-      ArrMeta    -> Meta (mapType t) p md
+      ObjMeta               -> inM
+      ExprMeta OutputMeta _ -> inM
+      ExprMeta _ _          -> Meta (mapType t) p md
+      ObjArgMeta            -> Meta (mapType t) p md
+      ObjVarMeta            -> Meta (mapType t) p md
+      ArrMeta               -> Meta (mapType t) p md
 
     mapType TopType = TopType
     mapType tp@(TypeVar TVVar{}) = tp
@@ -118,7 +119,7 @@ expandDataReferences (fullPrgmObjMap, _, _) (objMap, classGraph@(ClassGraph cg),
       where
         mapPartial PartialType{ptName=PTypeName name} = case suffixLookup name (H.keys objExpansions) of
           Just fname -> case H.lookup fname objExpansions of
-            Just obj -> getMetaType $ objM obj
+            Just obj -> getMetaType $ getExprMeta $ eobjExpr obj
             Nothing -> error $ printf "Data not found in expandDataReferences for %s with objExpansions %s" name (show $ H.keys objExpansions)
           Nothing -> error $ printf "Data not found in expandDataReferences for %s with objExpansions %s" name (show $ H.keys objExpansions)
         mapPartial partial@PartialType{ptName=PClassName{}} = singletonType partial
