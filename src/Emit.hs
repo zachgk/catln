@@ -48,7 +48,6 @@ import qualified LLVM.AST.Float       as F
 import           LLVM.AST.Type        (i32, i8)
 import           LLVM.AST.Typed       (typeOf)
 import           LLVM.Pretty          (ppllvm)
-import           Utils
 
 data LEnv = LEnv { lvTbEnv      :: TBEnv
                  , lvClassGraph :: ClassGraph
@@ -179,7 +178,7 @@ codegenTree env cond@(ResArrowCond resType (((ifCondTree, ifCondInput, ifObj), i
       -- Branch on condition
       let ifCondInput' = codegenTree env ifCondInput
       preCondArgs <- getArgs
-      condArgs <- fmap snd <$> formArgValMap ifObj ifCondInput'
+      condArgs <- fmap snd <$> objArgsWithVal ifObj ifCondInput'
       setArgs condArgs
       cond'' <- asOperand $ codegenTree env ifCondTree
       setArgs preCondArgs
@@ -220,21 +219,34 @@ codegenTree env (ResArrowTupleApply base argName argRATree) = do
       TupleVal name args'
     _ -> error "Invalid input to tuple application"
 
-formArgValMap :: EObject -> Val -> Codegen (H.HashMap ArgName (EvalMeta, AST.Operand))
-formArgValMap obj (LLVMOperand _ o) | null (objAppliedArgs obj) = do
-                                                             o' <- o
-                                                             return $ H.singleton (objPath obj) (objM obj, o')
-formArgValMap Object{deprecatedObjArgs} val = do
+objArgsWithVal :: EObject -> Val -> Codegen (H.HashMap ArgName (EvalMeta, AST.Operand))
+objArgsWithVal obj = exprArgsWithVal (objExpr obj)
+
+exprArgsWithVal :: EExpr -> Val -> Codegen (H.HashMap ArgName (EvalMeta, AST.Operand))
+exprArgsWithVal CExpr{} _ = return H.empty
+exprArgsWithVal Value{} _ = return H.empty
+exprArgsWithVal HoleExpr{} _ = return H.empty
+exprArgsWithVal (Arg m n) val = do
+  let (LLVMOperand _ o) = val
+  o' <- o
+  return $ H.singleton n (m, o')
+exprArgsWithVal (AliasExpr base alias) src = do
+  base' <- exprArgsWithVal base src
+  alias' <- exprArgsWithVal alias src
+  return $ H.union base' alias'
+exprArgsWithVal (VarApply _ e _ _) src = exprArgsWithVal e src
+exprArgsWithVal (TupleApply _ (_, be) arg) val = do
   valArgs <- getValArgs val
-  args' <- mapM (fromArg valArgs) $ H.toList deprecatedObjArgs
-  return $ unionsWith (error "Duplicate var matched") args'
-  where
-    fromArg valArgs (argName, (m, Nothing)) = case H.lookup argName valArgs of
-      Just valArg -> return $ H.singleton argName (m, valArg)
+  arg' <- case arg of
+    (TupleArgIO _ n e) -> case H.lookup n valArgs of
+      Just valArg -> exprArgsWithVal e (LLVMOperand (getMetaType $ getExprMeta e) (return valArg))
+      _ -> return H.empty
+    (TupleArgO _ e) -> exprArgsWithVal e val
+    (TupleArgI m n) -> case H.lookup n valArgs of
+      Just valArg -> return $ H.singleton n (m, valArg)
       Nothing     -> return H.empty
-    fromArg valArgs (argName, (_, Just arg)) = case H.lookup argName valArgs of
-      Just valArg -> formArgValMap arg (LLVMOperand (getMetaType $ objM arg) (return valArg))
-      Nothing -> return H.empty
+  be' <- exprArgsWithVal be val
+  return $ H.union be' arg'
 
 codegenDecl :: LEnv -> String -> EObject -> PartialType -> Type -> ResArrowTree -> DeclInput -> LLVM ()
 codegenDecl env name obj srcType@PartialType{ptArgs, ptVars} destType tree declInput = do
@@ -265,7 +277,7 @@ codegenDecl env name obj srcType@PartialType{ptArgs, ptVars} destType tree declI
             StructInput -> return $ LLVMOperand (singletonType srcType) $ do
               srcType' <- genType H.empty (singletonType srcType)
               return $ local srcType' (astName "_i")
-      replaceArgs <- fmap snd <$> formArgValMap obj argVals
+      replaceArgs <- fmap snd <$> objArgsWithVal obj argVals
       setArgs replaceArgs
       res <- asOperand $ codegenTree env tree
       ret res

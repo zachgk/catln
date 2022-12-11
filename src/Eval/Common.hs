@@ -292,11 +292,12 @@ resArrowDestType _ _ t = error $ printf "Not yet implemented resArrowDestType fo
 
 
 buildArrArgs :: EObject -> Val -> Args
-buildArrArgs = aux H.empty
+buildArrArgs obj = aux H.empty (objExpr obj)
   where
-    aux acc obj val | null (objAppliedArgs obj) = H.insert (objPath obj) val acc
-    aux _ obj (TupleVal tupleName _) | objPath obj /= tupleName = error $ printf "Found name mismatch in buildArrArgs: object %s and tuple %s" (objPath obj) tupleName
-    aux acc Object{deprecatedObjArgs} (TupleVal _ tupleArgs) = H.foldrWithKey addArgs acc $ H.intersectionWith (,) deprecatedObjArgs tupleArgs
-    aux _ obj val = error $ printf "Invalid buildArrArgs with obj %s and value %s" (show obj) (show val)
-    addArgs argName ((_, Nothing), argVal) acc = H.insert argName argVal acc
-    addArgs _ ((_, Just subObj), argVal) acc   = aux acc subObj argVal
+    aux acc oExpr val | null (exprAppliedArgs oExpr) = H.insert (exprPath oExpr) val acc
+    aux _ oExpr (TupleVal tupleName _) | exprPath oExpr /= tupleName = error $ printf "Found name mismatch in buildArrArgs: object %s and tuple %s" (exprPath oExpr) tupleName
+    aux acc oExpr (TupleVal _ tupleArgs) = H.foldrWithKey addArgs acc $ H.intersectionWith (,) (exprAppliedArgsMap oExpr) tupleArgs
+    aux _ oExpr val = error $ printf "Invalid buildArrArgs with oExpr %s and value %s" (show oExpr) (show val)
+
+    addArgs argName ((_, Nothing), argVal) acc   = H.insert argName argVal acc
+    addArgs _ ((_, Just subObjExpr), argVal) acc = aux acc subObjExpr argVal
