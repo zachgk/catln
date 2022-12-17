@@ -154,12 +154,12 @@ executeConstraint env (EqualsKnown pnt tp) = case descriptor env pnt of
       (True, env')
     TypeCheckResE _ -> (True, env)
   TypeCheckResE{} -> (True, env)
-executeConstraint env (EqPoints (Meta _ _ (VarMetaDat p1 _)) (Meta _ _ (VarMetaDat p2 _))) | p1 == p2 = (True, env)
-executeConstraint env1 (EqPoints p1 p2) = case sequenceT (descriptor env1 p1, descriptor env1 p2) of
-  TypeCheckResult notes (s1, s2) -> case equalizeSTypes env1 (s1, s2) "executeConstraint EqPoints" of
+executeConstraint env (EqPoints (Meta _ _ (VarMetaDat p1 _ _ _)) (Meta _ _ (VarMetaDat p2 _ _ _))) | p1 == p2 = (True, env)
+executeConstraint env1 (EqPoints p1 p2) = case sequenceT (descriptorResolve env1 p1, descriptorResolve env1 p2) of
+  TypeCheckResult notes ((p1', s1), (p2', s2)) -> case equalizeSTypes env1 (s1, s2) "executeConstraint EqPoints" of
     TypeCheckResult notes2 (s1', s2') -> do
-      let env2 = setScheme env1 p1 (TypeCheckResult (notes ++ notes2) s1') "EqPoints"
-      let env3 = setScheme env2 p2 (return s2') "EqPoints"
+      let env2 = setScheme env1 p1' (TypeCheckResult (notes ++ notes2) s1') "EqPoints"
+      let env3 = setScheme env2 p2' (return s2') "EqPoints"
       (isSolved $ return s1', env3)
     TypeCheckResE notes2 -> do
       let res = TypeCheckResE (notes ++ notes2)

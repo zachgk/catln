@@ -204,6 +204,8 @@ metaTypeVar m = case getMetaType m of
   TypeVar v -> Just v
   _         -> Nothing
 
+type MetaVarEnv m = H.HashMap TypeVarName (Meta m)
+type MetaArgEnv m = H.HashMap ArgName (Meta m)
 
 isSubtypePartialOfWithObj :: (Show m, MetaDat m) => ClassGraph -> Object m -> PartialType -> Type -> Bool
 isSubtypePartialOfWithObj classGraph obj sub = isSubtypeOfWithObj classGraph obj (singletonType sub)
@@ -217,3 +219,13 @@ isSubtypeOfWithObjSrc classGraph srcType obj = isSubtypeOfWithEnv classGraph (ge
 isSubtypeOfWithMaybeObj :: (Show m, MetaDat m) => ClassGraph -> Maybe (Object m) -> Type -> Type -> Bool
 isSubtypeOfWithMaybeObj classGraph (Just obj) = isSubtypeOfWithObj classGraph obj
 isSubtypeOfWithMaybeObj classGraph Nothing    = isSubtypeOf classGraph
+
+isSubtypePartialOfWithMetaEnv :: ClassGraph -> MetaVarEnv m -> MetaArgEnv m -> PartialType -> Type -> Bool
+isSubtypePartialOfWithMetaEnv classGraph varEnv argEnv sub = isSubtypeOfWithEnv classGraph (metaToTypeEnv varEnv) (metaToTypeEnv argEnv) (singletonType sub)
+  where
+    metaToTypeEnv = fmap getMetaType
+
+isSubtypeOfWithMetaEnv :: ClassGraph -> MetaVarEnv m -> MetaArgEnv m -> Type -> Type -> Bool
+isSubtypeOfWithMetaEnv classGraph varEnv argEnv = isSubtypeOfWithEnv classGraph (metaToTypeEnv varEnv) (metaToTypeEnv argEnv)
+  where
+    metaToTypeEnv = fmap getMetaType

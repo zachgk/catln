@@ -87,7 +87,7 @@ addUnionObjToEnv env1@FEnv{feClassGraph} vobjMap tobjMap = do
   let (unionAllObjs, env2) = fresh env1 $ TypeCheckResult [] $ SType TopType bottomType "unionAllObjs"
   let (unionAllObjsPs, env3) = fresh env2 $ TypeCheckResult [] $ SType TopType bottomType "unionAllObjsPs"
 
-  let mkVarMeta p = Meta TopType Nothing (VarMetaDat p Nothing)
+  let mkVarMeta p = Meta TopType Nothing (VarMetaDat p Nothing H.empty H.empty)
 
   -- Build a variable to store union of tobjs
   let typecheckedAllType = unionAllTypes feClassGraph $ map (getMetaType . objM) tobjs'
@@ -154,10 +154,10 @@ isSubtypePartialOfWithMaybeObj :: (Show m, MetaDat m) => ClassGraph -> Maybe (Ob
 isSubtypePartialOfWithMaybeObj classGraph (Just obj) = isSubtypePartialOfWithObj classGraph obj
 isSubtypePartialOfWithMaybeObj classGraph Nothing    = isSubtypePartialOf classGraph
 
-reachesHasCutSubtypeOf :: (Show m, MetaDat m) => ClassGraph -> Maybe (Object m) -> ReachesTree -> Type -> Bool
-reachesHasCutSubtypeOf classGraph mObj (ReachesTree children) superType = all childIsSubtype $ H.toList children
-  where childIsSubtype (key, val) = isSubtypePartialOfWithMaybeObj classGraph mObj key superType || reachesHasCutSubtypeOf classGraph mObj val superType
-reachesHasCutSubtypeOf classGraph mObj (ReachesLeaf leafs) superType = any (\t -> isSubtypeOfWithMaybeObj classGraph mObj t superType) leafs
+reachesHasCutSubtypeOf :: (Show m, MetaDat m) => ClassGraph -> MetaVarEnv m -> MetaArgEnv m -> ReachesTree -> Type -> Bool
+reachesHasCutSubtypeOf classGraph varEnv argEnv (ReachesTree children) superType = all childIsSubtype $ H.toList children
+  where childIsSubtype (key, val) = isSubtypePartialOfWithMetaEnv classGraph varEnv argEnv key superType || reachesHasCutSubtypeOf classGraph varEnv argEnv val superType
+reachesHasCutSubtypeOf classGraph varEnv argEnv (ReachesLeaf leafs) superType = any (\t -> isSubtypeOfWithMetaEnv classGraph varEnv argEnv t superType) leafs
 
 reachesPartial :: FEnv -> PartialType -> TypeCheckResult ReachesTree
 reachesPartial env@FEnv{feVTypeGraph, feTTypeGraph, feClassGraph} partial@PartialType{ptName=PTypeName name} = do
@@ -226,12 +226,12 @@ arrowConstrainUbs env src@(TypeVar v) srcM dest destM = do
   src' <- resolveTypeVar v srcM
   (_, cdest) <- arrowConstrainUbs env (getMetaType src') srcM dest destM
   return (src, cdest)
-arrowConstrainUbs env (UnionType srcPartials) (Meta _ _ (VarMetaDat _ srcObj)) dest _ = do
+arrowConstrainUbs env (UnionType srcPartials) (Meta _ _ (VarMetaDat _ _ varEnv argEnv)) dest _ = do
   let classGraph = feClassGraph env
   let srcPartialList = splitUnionType srcPartials
   srcPartialList' <- mapM (rootReachesPartial env) srcPartialList
   let partialMap = H.fromList srcPartialList'
-  let partialMap' = H.filter (\t -> reachesHasCutSubtypeOf classGraph srcObj t dest) partialMap
+  let partialMap' = H.filter (\t -> reachesHasCutSubtypeOf classGraph varEnv argEnv t dest) partialMap
   let (srcPartialList'', destByPartial) = unzip $ H.toList partialMap'
   let srcPartials' = joinUnionType srcPartialList''
   let destByGraph = unionAllTypes classGraph $ fmap (unionReachesTree classGraph) destByPartial

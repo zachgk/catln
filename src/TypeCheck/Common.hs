@@ -143,13 +143,14 @@ type SObjectMap = ObjectMap Expr ShowMetaDat
 type SObjectMapItem = ObjectMapItem Expr ShowMetaDat
 type SPrgm = Prgm Expr ShowMetaDat
 
-data VarMetaDat = VarMetaDat Pnt (Maybe VObject)
+data VarMetaDat = VarMetaDat Pnt (Maybe VObject) (MetaVarEnv VarMetaDat) (MetaArgEnv VarMetaDat)
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 type VarMeta = Meta VarMetaDat
 type VExpr = Expr VarMetaDat
 type VCompAnnot = CompAnnot VExpr
 type VGuard = Guard VExpr
-type VArgMetaMap = ArgMetaMap VarMetaDat
+type VMetaVarEnv = MetaVarEnv VarMetaDat
+type VMetaArgEnv = MetaArgEnv VarMetaDat
 type VArrow = Arrow Expr VarMetaDat
 type VObjArg = ObjArg VarMetaDat
 type VObject = Object VarMetaDat
@@ -220,7 +221,7 @@ typeCheckToRes tc = case tc of
   TypeCheckResE notes       -> CErr (map MkCNote notes)
 
 getPnt :: VarMeta -> Pnt
-getPnt (Meta _ _ (VarMetaDat p _)) = p
+getPnt (Meta _ _ (VarMetaDat p _ _ _)) = p
 
 fLookup :: FEnv -> Maybe VObject -> String -> TypeCheckResult EnvDef
 fLookup FEnv{feDefMap} obj k = case suffixLookup k (H.keys feDefMap) of
@@ -250,8 +251,8 @@ tryIntersectTypes FEnv{feClassGraph} a b desc = let c = intersectTypes feClassGr
 -- This ensures schemes are correct
 -- It differs from Constrain.checkScheme because it checks for bugs in the internal compiler, not bugs in the user code
 verifyScheme :: ClassGraph -> VarMeta -> Scheme -> Scheme -> Maybe String
-verifyScheme classGraph (Meta _ _ (VarMetaDat _ mobj)) (TypeCheckResult _ (SType oldUb _ _)) (TypeCheckResult _ (SType ub _ _)) = listToMaybe $ catMaybes [
-  if verifyTypeVars (mobjVars mobj) ub then Nothing else Just "verifyTypeVars",
+verifyScheme classGraph (Meta _ _ (VarMetaDat _ _ varEnv argEnv)) (TypeCheckResult _ (SType oldUb _ _)) (TypeCheckResult _ (SType ub _ _)) = listToMaybe $ catMaybes [
+  if verifyTypeVars (H.keys varEnv) ub then Nothing else Just "verifyTypeVars",
   if verifySchemeUbLowers then Nothing else Just "verifySchemeUbLowers",
   if verifyCompacted then Nothing else Just "verifyCompacted"
   ]
@@ -262,9 +263,7 @@ verifyScheme classGraph (Meta _ _ (VarMetaDat _ mobj)) (TypeCheckResult _ (SType
     verifyTypeVarsPartial venv PartialType{ptVars, ptArgs} = all (verifyTypeVars venv) ptVars
                                                                         && all (verifyTypeVars (H.keys ptVars)) ptArgs
 
-    mobjVars (Just o) = H.keys $ objAppliedVars o
-    mobjVars Nothing  = []
-    verifySchemeUbLowers  = isSubtypeOfWithMaybeObj classGraph mobj ub oldUb
+    verifySchemeUbLowers  = isSubtypeOfWithMetaEnv classGraph varEnv argEnv ub oldUb
     verifyCompacted = ub == compactType classGraph ub
 verifyScheme _ _ _ _ = Nothing
 
@@ -304,13 +303,12 @@ pointUb env p = do
   return ub
 
 resolveTypeVar :: TypeVarAux -> VarMeta -> TypeCheckResult VarMeta
-resolveTypeVar (TVVar v) m@(Meta _ _ (VarMetaDat _ (Just obj))) = case H.lookup v $ objAppliedVars obj of
+resolveTypeVar (TVVar v) m@(Meta _ _ (VarMetaDat _ _ objVars _)) = case H.lookup v objVars of
   Just m' -> return m'
   Nothing -> TypeCheckResE [GenTypeCheckError (getMetaPos m) "Unknown variable in resolveTypeVar var"]
-resolveTypeVar (TVArg v) m@(Meta _ _ (VarMetaDat _ (Just Object{deprecatedObjArgs}))) = case H.lookup v deprecatedObjArgs of
-  Just (m', _) -> return m'
+resolveTypeVar (TVArg v) m@(Meta _ _ (VarMetaDat _ _ _ argEnv)) = case H.lookup v argEnv of
+  Just m' -> return m'
   Nothing -> TypeCheckResE [GenTypeCheckError (getMetaPos m) "Unknown variable in resolveTypeVar arg"]
-resolveTypeVar _ m@(Meta _ _ (VarMetaDat _ Nothing)) = TypeCheckResE [GenTypeCheckError (getMetaPos m) "Tried to resolve a type var without an object"]
 
 descriptorResolve :: FEnv -> VarMeta -> TypeCheckResult (VarMeta, SType)
 descriptorResolve env m = do
