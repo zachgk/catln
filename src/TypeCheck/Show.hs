@@ -85,11 +85,12 @@ showObjArg env (m, maybeObj) = do
   return (m', maybeObj')
 
 showObj :: FEnv -> VObject -> TypeCheckResult SObject
-showObj env obj@Object{deprecatedObjArgs} = do
+showObj env obj@Object{deprecatedObjArgs, objDupExpr} = do
   m' <- showM env (objM obj)
   vars' <- mapM (showM env) $ objAppliedVars obj
   args' <- mapM (showObjArg env) deprecatedObjArgs
-  return $ obj{deprecatedObjM=m', deprecatedObjVars=vars', deprecatedObjArgs=args'}
+  objDupExpr' <- showExpr env objDupExpr
+  return $ obj{deprecatedObjM=m', deprecatedObjVars=vars', deprecatedObjArgs=args', objDupExpr=objDupExpr'}
 
 showObjArrow :: FEnv -> VObjectMapItem -> TypeCheckResult SObjectMapItem
 showObjArrow env (obj, annots, arrow) = do

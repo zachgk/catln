@@ -145,12 +145,12 @@ unionReachesTree classGraph (ReachesLeaf leafs) = unionAllTypes classGraph leafs
 joinReachesTrees :: ReachesTree -> ReachesTree -> ReachesTree
 joinReachesTrees (ReachesTree a) (ReachesTree b) = ReachesTree $ H.unionWith joinReachesTrees a b
 joinReachesTrees (ReachesLeaf a) (ReachesLeaf b) = ReachesLeaf (a ++ b)
-joinReachesTrees _ _ = error "joinReachesTrees for mixed tree and leaf not yet defined"
+joinReachesTrees a b = error $ printf "joinReachesTrees for mixed tree and leaf not yet defined: \n\t%s\n\t%s" (show a) (show b)
 
 joinAllReachesTrees :: Foldable f => f ReachesTree -> ReachesTree
 joinAllReachesTrees = foldr1 joinReachesTrees
 
-isSubtypePartialOfWithMaybeObj :: (Show m, MetaDat m) => ClassGraph -> Maybe (Object m) -> PartialType -> Type -> Bool
+isSubtypePartialOfWithMaybeObj :: (Show m, MetaDat m) => ClassGraph -> Maybe (Object e m) -> PartialType -> Type -> Bool
 isSubtypePartialOfWithMaybeObj classGraph (Just obj) = isSubtypePartialOfWithObj classGraph obj
 isSubtypePartialOfWithMaybeObj classGraph Nothing    = isSubtypePartialOf classGraph
 

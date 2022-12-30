@@ -97,18 +97,19 @@ instance Functor Guard where
   fmap _ ElseGuard   = ElseGuard
   fmap _ NoGuard     = NoGuard
 
-type ObjArg m = (Meta m, Maybe (Object m))
+type ObjArg e m = (Meta m, Maybe (Object e m))
 data ObjectBasis = FunctionObj | TypeObj | PatternObj | MatchObj
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 -- |
 -- Represents an input.
 -- The current plan is to deprecate objM, objVars, objArgs, and objPath and replace them with objExpr. TODO Deprecate the rest (or replace with 'ExprObject').
-data Object m = Object {
+data Object e m = Object {
   deprecatedObjM    :: Meta m,
   objBasis          :: ObjectBasis,
   deprecatedObjVars :: H.HashMap TypeVarName (Meta m),
-  deprecatedObjArgs :: H.HashMap ArgName (ObjArg m),
+  deprecatedObjArgs :: H.HashMap ArgName (ObjArg e m),
   objDoc            :: Maybe DocComment,
+  objDupExpr        :: e m,
   deprecatedObjPath :: String
                        }
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
@@ -126,7 +127,7 @@ data ExprObject e m = ExprObject {
 data Arrow e m = Arrow (Meta m) (Guard (e m)) (Maybe (e m)) -- m is result metadata
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
-type ObjectMapItem e m = (Object m, [CompAnnot (e m)], Maybe (Arrow e m))
+type ObjectMapItem e m = (Object e m, [CompAnnot (e m)], Maybe (Arrow e m))
 type ObjectMap e m = [ObjectMapItem e m]
 type Prgm e m = (ObjectMap e m, ClassGraph, [CompAnnot (e m)]) -- TODO: Include [Export]
 
@@ -167,9 +168,9 @@ instance Show e => Show (Guard e) where
   show ElseGuard      = "else"
   show NoGuard        = ""
 
-instance Show m => Show (Object m) where
+instance Show m => Show (Object e m) where
   -- show (Object m basis vars args _ p) = printf "%s %s (%s) %s %s" (show basis) p (show m) maybeVarsString maybeArgsString
-  show (Object _ basis vars args _ p) = printf "%s %s %s %s" (show basis) p maybeVarsString maybeArgsString
+  show (Object _ basis vars args _ _ p) = printf "%s %s %s %s" (show basis) p maybeVarsString maybeArgsString
     where
       showVar (varName, varVal) = printf "%s = %s" varName (show varVal)
       maybeVarsString :: String

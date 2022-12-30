@@ -104,7 +104,12 @@ toExpr env (TupleApply m (baseM, baseExpr) (TupleArgO argM argExpr)) = do
       _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to multiple types"]
     _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to non UnionType"]
   return $ TupleApply m' (baseM', baseExpr') (TupleArgIO argM' argName argExpr')
-toExpr _ (TupleApply _ _ TupleArgI{}) = error "Unexpected TupleArgI in toExpr"
+toExpr env (TupleApply m (baseM, baseExpr) (TupleArgI argM argName)) = do
+  m' <- toMeta env m "TupleApplyI_M"
+  baseM' <- toMeta env baseM "TupleApplyI_baseM"
+  baseExpr' <- toExpr env baseExpr
+  argM' <- toMeta env argM "TupleApplyI_ArgM"
+  return $ TupleApply m' (baseM', baseExpr') (TupleArgI argM' argName)
 toExpr env (VarApply m baseExpr varName varVal) = do
   m' <- toMeta env m "VarApply_M"
   baseExpr' <- toExpr env baseExpr
@@ -145,12 +150,13 @@ toObjArg env prefix (name, (m, maybeObj)) = do
     Nothing -> return (name, (m', Nothing))
 
 toObject :: FEnv -> String -> VObject -> TypeCheckResult TObject
-toObject env prefix obj@Object{deprecatedObjArgs} = do
+toObject env prefix obj@Object{deprecatedObjArgs, objDupExpr} = do
   let prefix' = prefix ++ "_" ++ objPath obj
   m' <- toMeta env (objM obj) prefix'
   vars' <- mapM (\(varName, varVal) -> (varName,) <$> toMeta env varVal (prefix' ++ "." ++ varName)) $ H.toList $ objAppliedVars obj
   args' <- mapM (toObjArg env prefix') $ H.toList deprecatedObjArgs
-  return $ obj{deprecatedObjM=m', deprecatedObjVars=H.fromList vars', deprecatedObjArgs=H.fromList args'}
+  objDupExpr' <- toExpr env objDupExpr
+  return $ obj{deprecatedObjM=m', deprecatedObjVars=H.fromList vars', deprecatedObjArgs=H.fromList args', objDupExpr=objDupExpr'}
 
 toObjectArrow :: FEnv -> VObjectMapItem -> TypeCheckResult TObjectMapItem
 toObjectArrow env (obj, annots, arrow) = do

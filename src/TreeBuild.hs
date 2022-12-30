@@ -32,7 +32,7 @@ type TBMetaDat = ()
 type TBMeta = Meta ()
 type TBExpr = Expr TBMetaDat
 type TBCompAnnot = CompAnnot TBExpr
-type TBObject = Object TBMetaDat
+type TBObject = Object Expr TBMetaDat
 type TBGuard = Guard TBExpr
 type TBArrow = Arrow Expr TBMetaDat
 type TBObjectMap = ObjectMap Expr TBMetaDat
@@ -255,6 +255,6 @@ buildArrow env objPartial obj compAnnots arrow@(Arrow (Meta am _ _) _ (Just expr
 buildRoot :: TBEnv -> TBExpr -> PartialType -> Type -> CRes ResArrowTree
 buildRoot env input src dest = do
   let env' = env{tbName = printf "root"}
-  let emptyObj = Object (Meta (singletonType src) Nothing emptyMetaDat) FunctionObj H.empty H.empty Nothing "EmptyObj"
+  let emptyObj = exprToObj FunctionObj Nothing (Value (Meta (singletonType src) Nothing emptyMetaDat) "EmptyObj")
   let objSrc = (src, emptyObj)
   resolveTree env' objSrc (ExprArrow input (getExprType input) dest)

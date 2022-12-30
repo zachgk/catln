@@ -84,11 +84,11 @@ mapMetaGuard f (IfGuard expr) = IfGuard (mapMeta f GuardMeta expr)
 mapMetaGuard _ ElseGuard      = ElseGuard
 mapMetaGuard _ NoGuard        = NoGuard
 
-mapMetaObjArg :: MetaFun a b -> ObjArg a -> ObjArg b
+mapMetaObjArg :: (MapMeta e) => MetaFun a b -> ObjArg e a -> ObjArg e b
 mapMetaObjArg f (m, maybeObj) = (f ObjArgMeta m, fmap (mapMeta f InputMeta) maybeObj)
 
-instance MapMeta Object where
-  mapMeta f _ (Object m basis vars args doc path) = Object (f ObjMeta m) basis (fmap (f ObjVarMeta) vars) (fmap (mapMetaObjArg f) args) doc path
+instance (MapMeta e) => MapMeta (Object e) where
+  mapMeta f _ (Object m basis vars args doc e path) = Object (f ObjMeta m) basis (fmap (f ObjVarMeta) vars) (fmap (mapMetaObjArg f) args) doc (mapMeta f InputMeta e) path
 
 mapMetaArrow :: (MapMeta e) => MetaFun a b -> Arrow e a -> Arrow e b
 mapMetaArrow f (Arrow m guard maybeExpr) = Arrow (f ArrMeta m) (mapMetaGuard f guard) (fmap (mapMeta f OutputMeta) maybeExpr)

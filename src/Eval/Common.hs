@@ -40,7 +40,7 @@ type EvalMeta = Meta EvalMetaDat
 type ECompAnnot = CompAnnot (Expr EvalMetaDat)
 type EExpr = Expr EvalMetaDat
 type EGuard = Guard EExpr
-type EObject = Object EvalMetaDat
+type EObject = Object Expr EvalMetaDat
 type EArrow = Arrow Expr EvalMetaDat
 type EObjectMap = ObjectMap Expr EvalMetaDat
 type EPrgm = Prgm Expr EvalMetaDat
@@ -85,7 +85,7 @@ data Val
   | TupleVal String (H.HashMap String Val)
   | IOVal Integer (IO ())
   | LLVMVal (LLVM ())
-  | LLVMQueue [(ResArrowTree, Object EvalMetaDat, Arrow Expr EvalMetaDat)]
+  | LLVMQueue [(ResArrowTree, EObject, Arrow Expr EvalMetaDat)]
   | LLVMOperand Type (Codegen AST.Operand)
   | LLVMIO (Codegen ())
   | NoVal
@@ -168,7 +168,7 @@ getValType NoVal = error "getValType of NoVal"
 --- ResArrowTree
 data MacroData = MacroData {
                                mdTbEnv      :: TBEnv
-                             , mdObj        :: Object EvalMetaDat
+                             , mdObj        :: EObject
                              , mdObjSrcType :: PartialType
                              }
 newtype MacroFunction = MacroFunction (ResArrowTree -> MacroData -> CRes ResArrowTree)
@@ -192,14 +192,14 @@ instance Hashable MacroFunction where
   s `hashWithSalt` _ = s
 
 data ResArrowTree
-  = ResEArrow ResArrowTree (Object EvalMetaDat) [CompAnnot (Expr EvalMetaDat)] (Arrow Expr EvalMetaDat)
+  = ResEArrow ResArrowTree EObject [CompAnnot (Expr EvalMetaDat)] (Arrow Expr EvalMetaDat)
   | PrimArrow ResArrowTree Type EPrim
   | MacroArrow ResArrowTree Type MacroFunction
   | ExprArrow EExpr Type Type
   | ConstantArrow Val
   | ArgArrow Type String
   | ResArrowMatch ResArrowTree Type (H.HashMap PartialType ResArrowTree)
-  | ResArrowCond Type [((ResArrowTree, ResArrowTree, Object EvalMetaDat), ResArrowTree)] ResArrowTree -- [((if, ifInput, ifObj), then)] else
+  | ResArrowCond Type [((ResArrowTree, ResArrowTree, EObject), ResArrowTree)] ResArrowTree -- [((if, ifInput, ifObj), then)] else
   | ResArrowTuple String (H.HashMap String ResArrowTree)
   | ResArrowTupleApply ResArrowTree String ResArrowTree
   deriving (Eq, Generic, Hashable)
@@ -247,7 +247,7 @@ data DeclInput
   | StructInput
   deriving (Eq, Ord, Show, Generic, Hashable)
 
-type TaskArrow = (PartialType, Object EvalMetaDat, [CompAnnot (Expr EvalMetaDat)], Arrow Expr EvalMetaDat, DeclInput)
+type TaskArrow = (PartialType, EObject, [CompAnnot (Expr EvalMetaDat)], Arrow Expr EvalMetaDat, DeclInput)
 type TaskStruct = Type
 
 type Names = Map.Map String Int
@@ -278,7 +278,7 @@ instance Show (Codegen a) where
   show Codegen{} = "Codegen"
 
 
-type ObjSrc = (PartialType, Object EvalMetaDat)
+type ObjSrc = (PartialType, EObject)
 macroData :: TBEnv -> ObjSrc -> MacroData
 macroData tbEnv (objSrcType, obj) = MacroData tbEnv obj objSrcType
 
