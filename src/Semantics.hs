@@ -122,7 +122,7 @@ exprToObj basis doc e@(TupleApply m' (_, baseExpr) arg) = baseObj{deprecatedObjM
       (TupleArgIO _ n (AliasExpr HoleExpr{} argExpr@(Arg m argName))) -> (n, (m, Just (Object m MatchObj H.empty H.empty Nothing argExpr argName)))
       (TupleArgIO m n a) -> (n, (m, Just $ exprToObj basis Nothing a))
       TupleArgO{} -> error "Found TupleArgO in exprToObj"
-exprToObj basis doc (VarApply m' baseExpr name varM) = baseObj{deprecatedObjM=m', deprecatedObjVars=H.insert name varM (deprecatedObjVars baseObj)}
+exprToObj basis doc e@(VarApply m' baseExpr name varM) = baseObj{deprecatedObjM=m', deprecatedObjVars=H.insert name varM (deprecatedObjVars baseObj), objDupExpr=e}
   where
     baseObj = exprToObj basis doc baseExpr
 exprToObj _ _ e = error $ printf "Not yet implemented exprToObj: %s" (show e)
