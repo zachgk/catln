@@ -70,6 +70,10 @@ exprWithMeta m (TupleApply _ b a) = TupleApply m b a
 exprWithMeta m (VarApply _ b n v) = VarApply m b n v
 exprWithMeta _ _                  = error "exprWithMeta with unsupported expr"
 
+-- objExpr version that uses objDupExpr
+-- objExpr :: (Show m, MetaDat m) => Object e m -> e m
+-- objExpr Object{objDupExpr} = objDupExpr
+
 objExpr :: (Show m, MetaDat m) => Object e m -> Expr m
 objExpr Object{objBasis, deprecatedObjM=m, deprecatedObjVars=vars, deprecatedObjArgs=args, deprecatedObjPath=path} = exprWithMeta m $ applyArgs $ applyVars $ mkBase emptyMetaN path
   where
@@ -86,22 +90,22 @@ objExpr Object{objBasis, deprecatedObjM=m, deprecatedObjVars=vars, deprecatedObj
       else TupleApply (emptyMetaM "tupleApplyArg" argM) (emptyMetaE "appArg" b, b) (TupleArgIO argM argName (objExpr argVal))
     applyArg (argName, (argM, Nothing)) b = TupleApply (emptyMetaM "tupleApplyArg" argM) (emptyMetaE "appArg" b, b) (TupleArgI argM argName)
 
-objPath :: (Show m, MetaDat m) => Object e m -> TypeName
+objPath :: (Show m, MetaDat m, ExprClass e) => Object e m -> TypeName
 objPath = exprPath . objExpr
 
-objM :: (Show m, MetaDat m) => Object e m -> Meta m
+objM :: (Show m, MetaDat m, ExprClass e) => Object e m -> Meta m
 objM = getExprMeta . objExpr
 
-objAppliedArgs :: (Show m, MetaDat m) => Object e m -> [TupleArg Expr m]
+objAppliedArgs :: (Show m, MetaDat m) => Object Expr m -> [TupleArg Expr m]
 objAppliedArgs = exprAppliedArgs . objExpr
 
-objAppliedArgsMap :: (Show m, MetaDat m) => Object e m -> H.HashMap ArgName (Meta m, Maybe (Expr m))
+objAppliedArgsMap :: (Show m, MetaDat m) => Object Expr m -> H.HashMap ArgName (Meta m, Maybe (Expr m))
 objAppliedArgsMap = exprAppliedArgsMap . objExpr
 
-objAppliedVars :: (Show m, MetaDat m) => Object e m -> H.HashMap TypeVarName (Meta m)
+objAppliedVars :: (Show m, MetaDat m, ExprClass e) => Object e m -> H.HashMap TypeVarName (Meta m)
 objAppliedVars = exprAppliedVars . objExpr
 
-objArgs :: (Show m, MetaDat m) => Object e m -> H.HashMap ArgName [Meta m]
+objArgs :: (Show m, MetaDat m, ExprClass e) => Object e m -> H.HashMap ArgName [Meta m]
 objArgs = exprArgs . objExpr
 
 eobjPath :: (MetaDat m, ExprClass e) => ExprObject e m -> TypeName
@@ -176,7 +180,7 @@ exprArgsWithSrc classGraph (TupleApply _ (_, be) arg) src@PartialType{ptArgs=src
 -- |
 -- The 'formArgMetaMapWithSrc' is similar to the 'formArgMetaMap' function.
 -- It differs in that it accepts an additional partial type that is matched by the object and matches against that partial type.
-formArgMetaMapWithSrc :: (Show m, MetaDat m) => ClassGraph -> Object e m -> PartialType  -> ArgMetaMapWithSrc m
+formArgMetaMapWithSrc :: (Show m, MetaDat m) => ClassGraph -> Object Expr m -> PartialType  -> ArgMetaMapWithSrc m
 formArgMetaMapWithSrc classGraph obj = exprArgsWithSrc classGraph (objExpr obj)
 
 formVarMap :: ClassGraph -> Type -> TypeVarEnv
@@ -185,7 +189,7 @@ formVarMap _ _ = error $ printf "Unknown formVarMap"
 
 -- fullDest means to use the greatest possible type (after implicit).
 -- Otherwise, it uses the minimal type that *must* be reached
-arrowDestType :: (ExprClass e, Show m, MetaDat m) => Bool -> ClassGraph -> PartialType -> Object e m -> Arrow e m -> Type
+arrowDestType :: (Show m, MetaDat m) => Bool -> ClassGraph -> PartialType -> Object Expr m -> Arrow Expr m -> Type
 arrowDestType fullDest classGraph src obj (Arrow arrM _ maybeExpr) = case mapM getExprArg maybeExpr of
   Just (Just _) -> fromMaybe (error "Unfound expr") expr'
   _             -> joined
@@ -207,16 +211,16 @@ metaTypeVar m = case getMetaType m of
 type MetaVarEnv m = H.HashMap TypeVarName (Meta m)
 type MetaArgEnv m = H.HashMap ArgName (Meta m)
 
-isSubtypePartialOfWithObj :: (Show m, MetaDat m) => ClassGraph -> Object e m -> PartialType -> Type -> Bool
+isSubtypePartialOfWithObj :: (Show m, MetaDat m, ExprClass e) => ClassGraph -> Object e m -> PartialType -> Type -> Bool
 isSubtypePartialOfWithObj classGraph obj sub = isSubtypeOfWithObj classGraph obj (singletonType sub)
 
-isSubtypeOfWithObj :: (Show m, MetaDat m) => ClassGraph -> Object e m -> Type -> Type -> Bool
+isSubtypeOfWithObj :: (Show m, MetaDat m, ExprClass e) => ClassGraph -> Object e m -> Type -> Type -> Bool
 isSubtypeOfWithObj classGraph obj = isSubtypeOfWithEnv classGraph (getMetaType <$> objAppliedVars obj) (unionAllTypes classGraph . fmap getMetaType <$> exprArgs (objExpr obj))
 
-isSubtypeOfWithObjSrc :: (Show m, MetaDat m) => ClassGraph -> PartialType -> Object e m -> Type -> Type -> Bool
+isSubtypeOfWithObjSrc :: (Show m, MetaDat m) => ClassGraph -> PartialType -> Object Expr m -> Type -> Type -> Bool
 isSubtypeOfWithObjSrc classGraph srcType obj = isSubtypeOfWithEnv classGraph (getMetaType <$> objAppliedVars obj) (snd <$> exprArgsWithSrc classGraph (objExpr obj) srcType )
 
-isSubtypeOfWithMaybeObj :: (Show m, MetaDat m) => ClassGraph -> Maybe (Object e m) -> Type -> Type -> Bool
+isSubtypeOfWithMaybeObj :: (Show m, MetaDat m) => ClassGraph -> Maybe (Object Expr m) -> Type -> Type -> Bool
 isSubtypeOfWithMaybeObj classGraph (Just obj) = isSubtypeOfWithObj classGraph obj
 isSubtypeOfWithMaybeObj classGraph Nothing    = isSubtypeOf classGraph
 
