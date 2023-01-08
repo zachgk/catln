@@ -26,6 +26,7 @@ import           Data.Graph
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Data.Maybe
+import           Semantics
 import           Semantics.Prgm
 import           TypeCheck.Common
 import           TypeCheck.Constrain (runConstraints)
@@ -34,6 +35,7 @@ import           TypeCheck.Encode
 import           Utils
 
 type TypecheckTuplePrgm = (TPrgm, VPrgm, TraceConstrain)
+type FinalTypecheckTuplePrgm = (FinalTPrgm, VPrgm, TraceConstrain)
 type TypecheckFileResult = H.HashMap String (GraphNodes TypecheckTuplePrgm String)
 
 runConstraintsLimit :: Integer
@@ -64,13 +66,14 @@ typecheckConnComps graphData@(prgmGraph, prgmFromNode, prgmFromName) results (cu
   let results' = foldr (\((_, prgmName, prgmImports), prgm') accResults -> H.insert prgmName (prgm', prgmName, prgmImports) accResults) results (zip pprgms newResults)
   typecheckConnComps graphData results' nextPrgms
 
-typecheckPrgmWithTrace :: PPrgmGraphData -> CRes (GraphData TypecheckTuplePrgm String)
-typecheckPrgmWithTrace pprgms = typeCheckToRes $ do
+typecheckPrgmWithTrace :: InitialPPrgmGraphData -> CRes (GraphData FinalTypecheckTuplePrgm String)
+typecheckPrgmWithTrace initpprgms = typeCheckToRes $ do
+  let pprgms = fmapGraph fromExprPrgm initpprgms
   let pprgmSCC = stronglyConnCompR $ graphToNodes pprgms
   typechecked <- typecheckConnComps pprgms H.empty pprgmSCC
-  return $ graphFromEdges $ H.elems typechecked
+  return $ fmapGraph (applyFst3 toExprPrgm) $ graphFromEdges $ H.elems typechecked
 
-typecheckPrgm :: PPrgmGraphData -> CRes (GraphData TPrgm String)
+typecheckPrgm :: InitialPPrgmGraphData -> CRes (GraphData FinalTPrgm String)
 typecheckPrgm pprgms = do
   graph <- failOnErrorNotes $ typecheckPrgmWithTrace pprgms
   return $ fmapGraph fst3 graph

@@ -30,6 +30,9 @@ snd3 (_, b, _) = b
 thr3 :: (a, b, c) -> c
 thr3 (_, _, c) = c
 
+applyFst3 :: (a -> a') -> (a, b, c) -> (a', b, c)
+applyFst3 f (a, b, c)= (f a, b, c)
+
 mapFst3 :: (Functor f) => (a -> a') -> f (a, b, c) -> f (a', b, c)
 mapFst3 fn = fmap (\(a, b, c) -> (fn a, b, c))
 

@@ -233,8 +233,8 @@ desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree state
     return $ mergeExprPrgms statements'
   RawModule _ path -> fst <$> desInheritingSubstatements statementEnv path subStatements
 
-finalPasses :: DesPrgmGraphData -> GraphNodes DesPrgm String -> GraphNodes FinalDesPrgm String
-finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm1, prgmName, imports) = (prgm5, prgmName, imports)
+finalPasses :: DesPrgmGraphData -> GraphNodes DesPrgm String -> GraphNodes DesPrgm String
+finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm1, prgmName, imports) = (prgm4, prgmName, imports)
   where
     -- Build fullPrgm with recursive imports
     vertex = fromJust $ vertexFromKey prgmName
@@ -252,15 +252,13 @@ finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm1, prgmName, impo
     -- Run expandDataReferences pass
     prgm4 = expandDataReferences fullPrgm3 prgm3
 
-    prgm5 = fromExprPrgm prgm4
-
 
 desPrgm :: PPrgm -> CRes DesPrgm
 desPrgm (_, statements) = do
   statements' <- mapM (desStatement ("", [])) statements
   return $ mergeExprPrgms statements'
 
-desFiles :: PPrgmGraphData -> CRes FinalDesPrgmGraphData
+desFiles :: PPrgmGraphData -> CRes DesPrgmGraphData
 desFiles graphData = do
   -- initial desugar
   prgms' <- mapMFst3 desPrgm (graphToNodes graphData)

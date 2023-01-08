@@ -67,8 +67,8 @@ evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe 
     (objMap, classGraph, _) = prgmFromGraphData prgmName prgmGraphData
     objArrowsContains (_, _, Nothing) = Nothing
     objArrowsContains (_, _, Just a) | not (arrowDefined a) = Nothing
-    objArrowsContains (obj, _, Just (Arrow arrM _ _)) = case objPath obj of
-      "/Context" -> case H.lookup "value" $ objAppliedArgsMap obj of
+    objArrowsContains (obj, _, Just (Arrow arrM _ _)) = case eobjPath obj of
+      "/Context" -> case H.lookup "value" $ exprAppliedArgsMap $ eobjExpr obj of
         Just (_, Just valObjExpr) -> if relativeNameMatches function (exprPath valObjExpr)
           then Just $ if isBuildable (getMetaType arrM)
             then EvalBuildWithContext (exprPath valObjExpr)
@@ -76,9 +76,9 @@ evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe 
 
           else Nothing
         _ -> Nothing
-      _ | relativeNameMatches function (objPath obj) -> if isBuildable (getMetaType arrM)
-          then Just $ EvalBuild (objPath obj)
-          else Just $ EvalRun (objPath obj)
+      _ | relativeNameMatches function (eobjPath obj) -> if isBuildable (getMetaType arrM)
+          then Just $ EvalBuild (eobjPath obj)
+          else Just $ EvalRun (eobjPath obj)
       _ -> Nothing
     isBuildable tp = not $ isBottomType $ intersectTypes classGraph tp resultType
     arrowDefined (Arrow _ _ maybeExpr) = isJust maybeExpr
@@ -163,7 +163,7 @@ evalBaseEnv prgm@(objMap, classGraph, _) = Env {
                 }
 
 prgmFromGraphData :: String -> EPrgmGraphData -> EPrgm
-prgmFromGraphData prgmName (prgmGraph, nodeFromVertex, vertexFromKey) = mergePrgms $ map (fst3 . nodeFromVertex) $ reachable prgmGraph $ fromJust $ vertexFromKey prgmName
+prgmFromGraphData prgmName (prgmGraph, nodeFromVertex, vertexFromKey) = mergeExprPrgms $ map (fst3 . nodeFromVertex) $ reachable prgmGraph $ fromJust $ vertexFromKey prgmName
 
 evalBuildPrgm :: EExpr -> PartialType -> Type -> EPrgm -> CRes (ResArrowTree, Env)
 evalBuildPrgm input srcType destType prgm = do
@@ -179,7 +179,7 @@ evalAnnots prgmName prgmGraphData = do
     let exprType = getExprType annot
     let inTree = ExprArrow annot exprType exprType
     let emptyType = partialVal (PTypeName "EmptyObj")
-    let emptyObj = exprToObj FunctionObj Nothing (Value (Meta (singletonType emptyType) Nothing emptyMetaDat) "EmptyObj")
+    let emptyObj = ExprObject FunctionObj Nothing (Value (Meta (singletonType emptyType) Nothing emptyMetaDat) "EmptyObj")
     tree <- resolveTree evTbEnv (emptyType, emptyObj) inTree
     val <- fst <$> eval env tree
     return (annot, val)

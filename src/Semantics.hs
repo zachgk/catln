@@ -133,6 +133,15 @@ asExprObjMap = map asExprObjectMapItem
     asExprObjectMapItem (obj, annots, arr) = (asExprObject obj, annots, arr)
     asExprObject obj@Object{objBasis, objDoc} = ExprObject objBasis objDoc (objExpr obj)
 
+toExprPrgm :: (MetaDat m, Show m) => Prgm Expr m -> ExprPrgm Expr m
+toExprPrgm (objMap, classGraph, annots) = (map toExprObjectMapItem objMap, classGraph, annots)
+  where
+    toExprObjectMapItem :: (MetaDat m, Show m) => ObjectMapItem Expr m -> ExprObjectMapItem Expr m
+    toExprObjectMapItem (obj, ann, arr) = (toExprObject obj, ann, arr)
+
+    toExprObject :: (MetaDat m, Show m) => Object Expr m -> ExprObject Expr m
+    toExprObject obj@Object{objBasis, objDoc} = ExprObject objBasis objDoc (objExpr obj)
+
 fromExprPrgm :: (MetaDat m, Show m) => ExprPrgm Expr m -> Prgm Expr m
 fromExprPrgm (objMap, classGraph, annots) = (map fromExprObjectMapItem objMap, classGraph, annots)
   where
@@ -203,6 +212,20 @@ arrowDestType fullDest classGraph src obj (Arrow arrM _ maybeExpr) = case mapM g
       then unionTypes classGraph (fromMaybe bottomType expr') arr'
       else intersectTypes classGraph (fromMaybe TopType expr') arr'
 
+earrowDestType :: (Show m, MetaDat m) => Bool -> ClassGraph -> PartialType -> ExprObject Expr m -> Arrow Expr m -> Type
+earrowDestType fullDest classGraph src obj (Arrow arrM _ maybeExpr) = case mapM getExprArg maybeExpr of
+  Just (Just _) -> fromMaybe (error "Unfound expr") expr'
+  _             -> joined
+  where
+    varEnv = formVarMap classGraph $ intersectTypes classGraph (getMetaType $ getExprMeta $ eobjExpr obj) (singletonType src)
+    argEnv = snd <$> exprArgsWithSrc classGraph (eobjExpr obj) ((\(UnionType pl) -> head $ splitUnionType pl) $ substituteVars $ singletonType src)
+    substitute = substituteVarsWithVarEnv varEnv . substituteArgsWithArgEnv argEnv
+    expr' = fmap (substitute . getExprType) maybeExpr
+    arr' = substitute $ getMetaType arrM
+    joined = if fullDest
+      then unionTypes classGraph (fromMaybe bottomType expr') arr'
+      else intersectTypes classGraph (fromMaybe TopType expr') arr'
+
 metaTypeVar :: Meta m -> Maybe TypeVarAux
 metaTypeVar m = case getMetaType m of
   TypeVar v -> Just v
@@ -217,8 +240,8 @@ isSubtypePartialOfWithObj classGraph obj sub = isSubtypeOfWithObj classGraph obj
 isSubtypeOfWithObj :: (Show m, Show (e m), MetaDat m, ExprClass e) => ClassGraph -> Object e m -> Type -> Type -> Bool
 isSubtypeOfWithObj classGraph obj = isSubtypeOfWithEnv classGraph (getMetaType <$> objAppliedVars obj) (unionAllTypes classGraph . fmap getMetaType <$> exprArgs (objExpr obj))
 
-isSubtypeOfWithObjSrc :: (Show m, MetaDat m) => ClassGraph -> PartialType -> Object Expr m -> Type -> Type -> Bool
-isSubtypeOfWithObjSrc classGraph srcType obj = isSubtypeOfWithEnv classGraph (getMetaType <$> objAppliedVars obj) (snd <$> exprArgsWithSrc classGraph (objExpr obj) srcType )
+isSubtypeOfWithObjSrc :: (Show m, MetaDat m) => ClassGraph -> PartialType -> ExprObject Expr m -> Type -> Type -> Bool
+isSubtypeOfWithObjSrc classGraph srcType obj = isSubtypeOfWithEnv classGraph (getMetaType <$> exprAppliedVars (eobjExpr obj)) (snd <$> exprArgsWithSrc classGraph (eobjExpr obj) srcType )
 
 isSubtypeOfWithMaybeObj :: (Show m, MetaDat m) => ClassGraph -> Maybe (Object Expr m) -> Type -> Type -> Bool
 isSubtypeOfWithMaybeObj classGraph (Just obj) = isSubtypeOfWithObj classGraph obj

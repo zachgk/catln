@@ -97,7 +97,7 @@ genTypeMeta :: (Monad m, TaskState m) => EvalMeta -> m AST.Type
 genTypeMeta (Meta t _ _) = genType H.empty t
 
 arrowName :: PartialType -> EObject -> EArrow -> DeclInput -> String
-arrowName srcType obj arrow di = printf "fun:%s-%s" (objPath obj) arrHash
+arrowName srcType obj arrow di = printf "fun:%s-%s" (eobjPath obj) arrHash
   where arrHash = take 6 (printf "%08x" (hash (srcType, arrow, di))) :: String
 
 typeName :: Type -> String
@@ -220,7 +220,7 @@ codegenTree env (ResArrowTupleApply base argName argRATree) = do
     _ -> error "Invalid input to tuple application"
 
 objArgsWithVal :: EObject -> Val -> Codegen (H.HashMap ArgName (EvalMeta, AST.Operand))
-objArgsWithVal obj = exprArgsWithVal (objExpr obj)
+objArgsWithVal obj = exprArgsWithVal (eobjExpr obj)
 
 exprArgsWithVal :: EExpr -> Val -> Codegen (H.HashMap ArgName (EvalMeta, AST.Operand))
 exprArgsWithVal CExpr{} _ = return H.empty
@@ -331,7 +331,7 @@ codegenTasks env@LEnv{lvTbEnv, lvClassGraph} = do
         else case buildArrow lvTbEnv arrowSrcType obj annots arr of
           CRes _ (Just (_, (tree, _))) -> do
             modify $ \s -> s {lTasksCompleted = S.insert nm completed}
-            let destType = arrowDestType False lvClassGraph arrowSrcType obj arr
+            let destType = earrowDestType False lvClassGraph arrowSrcType obj arr
             codegenDecls env nm obj (singletonType arrowSrcType) destType tree declInput
             codegenTasks env
           err -> error $ printf "Failed to buildtree to emit arrow: %s" (show err)

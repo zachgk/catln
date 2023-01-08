@@ -68,9 +68,6 @@ type DesObjectMapItem = ExprObjectMapItem Expr ParseMetaDat
 type DesPrgm = ExprPrgm Expr ParseMetaDat
 type DesPrgmGraphData = GraphData DesPrgm String
 
-type FinalDesPrgm = Prgm Expr ParseMetaDat
-type FinalDesPrgmGraphData = GraphData (Prgm Expr ParseMetaDat) String
-
 fromMaybeTypeName :: Maybe TypeName -> Type
 fromMaybeTypeName = maybe TopType fromName
   where

@@ -35,10 +35,11 @@ import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Desugarf            (desFiles)
 import           Syntax.Ct.Parser              (readFiles)
-import           Syntax.Ct.Parser.Syntax       (FinalDesPrgm, PPrgmGraphData)
+import           Syntax.Ct.Parser.Syntax       (DesPrgm, PPrgmGraphData)
 import           TypeCheck                     (typecheckPrgm,
                                                 typecheckPrgmWithTrace)
-import           TypeCheck.Common              (TPrgm, TraceConstrain, VPrgm)
+import           TypeCheck.Common              (FinalTPrgm, TraceConstrain,
+                                                VPrgm)
 import           Utils
 
 data ResSuccess a n = Success a [n]
@@ -50,10 +51,10 @@ maybeJson (CRes notes r) = json $ Success r notes
 maybeJson (CErr notes)   = json (ResFail notes :: ResSuccess () CNote)
 
 -- | Filters a program's object map and class map to only highlight a particular type or class name
-filterByType :: String -> TPrgm -> TPrgm
+filterByType :: String -> FinalTPrgm -> FinalTPrgm
 filterByType name (objMap, ClassGraph classGraph, _) = (objMap', classGraph', [])
   where
-    objMap' = filter (\(o, _, _) -> relativeNameMatches name (objPath o)) objMap
+    objMap' = filter (\(o, _, _) -> relativeNameMatches name (eobjPath o)) objMap
     classGraph' = ClassGraph $ graphFromEdges $ filter (\(_, n, subTypes) -> relativeNameMatches name (fromPartialName n) || n `elem` subTypes) $ graphToNodes classGraph
 
 data WDProvider
@@ -62,9 +63,9 @@ data WDProvider
     cCore           :: Bool
   , cBaseFileName   :: String
   , cRaw            :: CRes PPrgmGraphData
-  , cPrgm           :: CRes (GraphData FinalDesPrgm String)
-  , cTPrgmWithTrace :: CRes (GraphData (TPrgm, VPrgm, TraceConstrain) String)
-  , cTPrgm          :: CRes (GraphData TPrgm String)
+  , cPrgm           :: CRes (GraphData DesPrgm String)
+  , cTPrgmWithTrace :: CRes (GraphData (FinalTPrgm, VPrgm, TraceConstrain) String)
+  , cTPrgm          :: CRes (GraphData FinalTPrgm String)
                     }
 
 mkCacheWDProvider :: Bool -> String -> IO WDProvider
@@ -87,28 +88,28 @@ getRawPrgm :: WDProvider -> IO (CRes PPrgmGraphData)
 getRawPrgm (LiveWDProvider includeCore baseFileName) = readFiles includeCore True [baseFileName]
 getRawPrgm CacheWDProvider{cRaw} = return cRaw
 
-getPrgm :: WDProvider -> IO (CRes (GraphData FinalDesPrgm String))
+getPrgm :: WDProvider -> IO (CRes (GraphData DesPrgm String))
 getPrgm provider@LiveWDProvider{} = do
   base <- getRawPrgm provider
   return (base >>= desFiles)
 getPrgm CacheWDProvider{cPrgm} = return cPrgm
 
-getTPrgmWithTrace :: WDProvider -> IO (CRes (GraphData (TPrgm, VPrgm, TraceConstrain) String))
+getTPrgmWithTrace :: WDProvider -> IO (CRes (GraphData (FinalTPrgm, VPrgm, TraceConstrain) String))
 getTPrgmWithTrace provider@LiveWDProvider{} = do
   base <- getPrgm provider
   return (base >>= typecheckPrgmWithTrace)
 getTPrgmWithTrace CacheWDProvider{cTPrgmWithTrace} = return cTPrgmWithTrace
 
-getTPrgm :: WDProvider -> IO (CRes (GraphData TPrgm String))
+getTPrgm :: WDProvider -> IO (CRes (GraphData FinalTPrgm String))
 getTPrgm provider@LiveWDProvider{} = do
   base <- getPrgm provider
   return (base >>= typecheckPrgm)
 getTPrgm CacheWDProvider{cTPrgm} = return cTPrgm
 
-getTPrgmJoined :: WDProvider -> IO (CRes TPrgm)
+getTPrgmJoined :: WDProvider -> IO (CRes FinalTPrgm)
 getTPrgmJoined provider = do
   base <- getTPrgm provider
-  return (mergePrgms . map fst3 . graphToNodes <$> base)
+  return (mergeExprPrgms . map fst3 . graphToNodes <$> base)
 
 getTreebug :: WDProvider -> String -> String -> IO EvalResult
 getTreebug provider prgmName fun = do
@@ -183,7 +184,7 @@ docApiBase provider = do
 
   get "/api/desugar" $ do
     maybePrgmGraph <- liftAndCatchIO $ getPrgm provider
-    let maybePrgm = mergePrgms . map fst3 . graphToNodes <$> maybePrgmGraph
+    let maybePrgm = mergeExprPrgms . map fst3 . graphToNodes <$> maybePrgmGraph
     maybeJson maybePrgm
 
   get "/api/constrain" $ do

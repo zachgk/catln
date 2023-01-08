@@ -40,10 +40,10 @@ type EvalMeta = Meta EvalMetaDat
 type ECompAnnot = CompAnnot (Expr EvalMetaDat)
 type EExpr = Expr EvalMetaDat
 type EGuard = Guard EExpr
-type EObject = Object Expr EvalMetaDat
+type EObject = ExprObject Expr EvalMetaDat
 type EArrow = Arrow Expr EvalMetaDat
-type EObjectMap = ObjectMap Expr EvalMetaDat
-type EPrgm = Prgm Expr EvalMetaDat
+type EObjectMap = ExprObjectMap Expr EvalMetaDat
+type EPrgm = ExprPrgm Expr EvalMetaDat
 type EPrgmGraphData = GraphData EPrgm String
 
 data EPrim = EPrim PartialType EGuard (H.HashMap String Val -> Val)
@@ -181,7 +181,7 @@ data TBEnv = TBEnv {
     tbName       :: String
   , tbResEnv     :: ResBuildEnv
   , tbVals       :: H.HashMap PartialType ResArrowTree
-  , tbPrgm       :: Prgm Expr EvalMetaDat
+  , tbPrgm       :: ExprPrgm Expr EvalMetaDat
   , tbClassGraph :: ClassGraph
   }
 
@@ -283,7 +283,7 @@ macroData :: TBEnv -> ObjSrc -> MacroData
 macroData tbEnv (objSrcType, obj) = MacroData tbEnv obj objSrcType
 
 resArrowDestType :: ClassGraph -> PartialType -> ResArrowTree -> Type
-resArrowDestType classGraph src (ResEArrow _ obj _ arr) = arrowDestType False classGraph src obj arr
+resArrowDestType classGraph src (ResEArrow _ obj _ arr) = earrowDestType False classGraph src obj arr
 resArrowDestType _ _ (PrimArrow _ tp _) = tp
 resArrowDestType _ _ (MacroArrow _ tp _) = tp
 resArrowDestType _ _ (ConstantArrow v) = singletonType $ getValType v
@@ -292,7 +292,7 @@ resArrowDestType _ _ t = error $ printf "Not yet implemented resArrowDestType fo
 
 
 buildArrArgs :: EObject -> Val -> Args
-buildArrArgs obj = aux H.empty (objExpr obj)
+buildArrArgs obj = aux H.empty (eobjExpr obj)
   where
     aux acc oExpr val | null (exprAppliedArgs oExpr) = H.insert (exprPath oExpr) val acc
     aux _ oExpr (TupleVal tupleName _) | exprPath oExpr /= tupleName = error $ printf "Found name mismatch in buildArrArgs: object %s and tuple %s" (exprPath oExpr) tupleName
