@@ -102,10 +102,10 @@ objAppliedArgs = exprAppliedArgs . objExpr
 objAppliedArgsMap :: (Show m, MetaDat m) => Object Expr m -> H.HashMap ArgName (Meta m, Maybe (Expr m))
 objAppliedArgsMap = exprAppliedArgsMap . objExpr
 
-objAppliedVars :: (Show m, MetaDat m, ExprClass e) => Object e m -> H.HashMap TypeVarName (Meta m)
+objAppliedVars :: (Show m, Show (e m), MetaDat m, ExprClass e) => Object e m -> H.HashMap TypeVarName (Meta m)
 objAppliedVars = exprAppliedVars . objExpr
 
-objArgs :: (Show m, MetaDat m, ExprClass e) => Object e m -> H.HashMap ArgName [Meta m]
+objArgs :: (Show m, Show (e m), MetaDat m, ExprClass e) => Object e m -> H.HashMap ArgName [Meta m]
 objArgs = exprArgs . objExpr
 
 eobjPath :: (MetaDat m, ExprClass e) => ExprObject e m -> TypeName
@@ -211,10 +211,10 @@ metaTypeVar m = case getMetaType m of
 type MetaVarEnv m = H.HashMap TypeVarName (Meta m)
 type MetaArgEnv m = H.HashMap ArgName (Meta m)
 
-isSubtypePartialOfWithObj :: (Show m, MetaDat m, ExprClass e) => ClassGraph -> Object e m -> PartialType -> Type -> Bool
+isSubtypePartialOfWithObj :: (Show m, Show (e m), MetaDat m, ExprClass e) => ClassGraph -> Object e m -> PartialType -> Type -> Bool
 isSubtypePartialOfWithObj classGraph obj sub = isSubtypeOfWithObj classGraph obj (singletonType sub)
 
-isSubtypeOfWithObj :: (Show m, MetaDat m, ExprClass e) => ClassGraph -> Object e m -> Type -> Type -> Bool
+isSubtypeOfWithObj :: (Show m, Show (e m), MetaDat m, ExprClass e) => ClassGraph -> Object e m -> Type -> Type -> Bool
 isSubtypeOfWithObj classGraph obj = isSubtypeOfWithEnv classGraph (getMetaType <$> objAppliedVars obj) (unionAllTypes classGraph . fmap getMetaType <$> exprArgs (objExpr obj))
 
 isSubtypeOfWithObjSrc :: (Show m, MetaDat m) => ClassGraph -> PartialType -> Object Expr m -> Type -> Type -> Bool

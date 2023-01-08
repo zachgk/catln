@@ -52,13 +52,13 @@ objectPrecedence (Object{objBasis=PatternObj}, _, _) = [3]
 objectPrecedence (Object{objBasis=MatchObj}, _, _) =   [4]
 
 -- | Finds the 'objectPrecedence' for all types
-buildPrecedenceMap :: (Show m, MetaDat m, ExprClass e) => ObjectMap e m -> H.HashMap TypeName [Int]
+buildPrecedenceMap :: (Show m, Show (e m), MetaDat m, ExprClass e) => ObjectMap e m -> H.HashMap TypeName [Int]
 buildPrecedenceMap = fmap (minimum . map objectPrecedence) . H.fromListWith (++) . map (\(obj, annots, arrs) -> (objPath obj, [(obj, annots, arrs)]))
 
 -- |
 -- Prunes an objectMap by precendence. If two objects share the same precendence, only the bigger one(s) will be kept.
 -- This is used to ensure that the type of an object can't be changed by other usages, such as a data object by functions using that data
-filterBestPrecedence :: (Show m, MetaDat m, ExprClass e) => H.HashMap TypeName [Int] -> ObjectMap e m -> ObjectMap e m
+filterBestPrecedence :: (Show m, Show (e m), MetaDat m, ExprClass e) => H.HashMap TypeName [Int] -> ObjectMap e m -> ObjectMap e m
 filterBestPrecedence precedenceMap = filter (\omi@(obj, _, _) -> objectPrecedence omi == H.lookupDefault (error "Could not find obj in union") (objPath obj) precedenceMap)
 
 -- | Gets an object and all sub-ojects (recursively) from it's arguments
@@ -150,7 +150,7 @@ joinReachesTrees a b = error $ printf "joinReachesTrees for mixed tree and leaf 
 joinAllReachesTrees :: Foldable f => f ReachesTree -> ReachesTree
 joinAllReachesTrees = foldr1 joinReachesTrees
 
-isSubtypePartialOfWithMaybeObj :: (Show m, MetaDat m, ExprClass e) => ClassGraph -> Maybe (Object e m) -> PartialType -> Type -> Bool
+isSubtypePartialOfWithMaybeObj :: (Show m, Show (e m), MetaDat m, ExprClass e) => ClassGraph -> Maybe (Object e m) -> PartialType -> Type -> Bool
 isSubtypePartialOfWithMaybeObj classGraph (Just obj) = isSubtypePartialOfWithObj classGraph obj
 isSubtypePartialOfWithMaybeObj classGraph Nothing    = isSubtypePartialOf classGraph
 
