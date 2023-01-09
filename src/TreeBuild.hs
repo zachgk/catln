@@ -87,15 +87,17 @@ envLookupTry ::  TBEnv -> ObjSrc -> VisitedArrows -> (TBExpr, Type) -> PartialTy
 envLookupTry TBEnv{tbClassGraph} _ _ _ srcType destType resArrow | isSubtypeOf tbClassGraph (resArrowDestType tbClassGraph srcType resArrow) destType = return resArrow
 envLookupTry _ _ visitedArrows _ _ _ resArrow | S.member resArrow visitedArrows = CErr [MkCNote $ BuildTreeCErr Nothing "Found cyclical use of function"]
 envLookupTry env@TBEnv{tbClassGraph} objSrc visitedArrows ee srcType destType resArrow = do
+  newLeafTypes <- case resArrowDestType tbClassGraph srcType resArrow of
+    UnionType t -> return t
+    t -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Found impossible type %s in envLookupTry" (show t)]
   afterArrows <- traverse buildAfterArrows $ splitUnionType newLeafTypes
   return $ buildMatch resArrow destType (H.fromList afterArrows)
   where
-    (UnionType newLeafTypes) = resArrowDestType tbClassGraph srcType resArrow
     visitedArrows' = S.insert resArrow visitedArrows
     objSrc' = case resArrow of
           (ResEArrow _ o _ _) -> (srcType, o)
           _                   -> objSrc
-    buildAfterArrows = \leafType -> do
+    buildAfterArrows leafType = do
       v <- envLookup env objSrc' resArrow ee visitedArrows' leafType destType
       return (leafType, v)
 
@@ -139,7 +141,7 @@ buildGuardArrows env obj input ee visitedArrows srcType destType guards = do
       return $ case ifTreePairs of
         [] -> (elseTp, elseTree')
         _  -> (elseTp, ResArrowCond destType ifTreePairs elseTree')
-    ltry tree = envLookupTry env obj visitedArrows ee srcType destType tree
+    ltry = envLookupTry env obj visitedArrows ee srcType destType
 
 groupArrows :: ResArrowTree -> [ResBuildEnvItem] -> CRes [ArrowGuardGroup]
 groupArrows = aux ([], Nothing)

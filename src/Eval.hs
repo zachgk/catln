@@ -27,7 +27,7 @@ import           Semantics.Types
 import           Control.Monad
 import           Data.Graph
 import           Data.Maybe
-import           Emit                (codegenExInit)
+-- import           Emit                (codegenExInit)
 import           Eval.Common
 import           Eval.Env
 import           Eval.ExprBuilder
@@ -228,7 +228,8 @@ evalBuild function prgmName prgmGraphData = do
     val@(TupleVal "/Catln/CatlnResult" args) -> case (H.lookup "name" args, H.lookup "contents" args) of
       (Just (StrVal _), Just (StrVal _)) -> return $ return (val, evalResult env')
       _ -> CErr [MkCNote $ GenCErr Nothing $ printf "Eval %s returned a /Catln/CatlnResult with bad args" function]
-    (LLVMVal toCodegen) -> return $ do
-      llvmStr <- codegenExInit toCodegen
+    (LLVMVal _) -> return $ do
+      -- llvmStr <- codegenExInit toCodegen
+      let llvmStr = "LLVM Placeholder result"
       return (TupleVal "/Catln/CatlnResult" (H.fromList [("name", StrVal "out.ll"), ("contents", StrVal llvmStr)]), evalResult env')
     val -> CErr [MkCNote $ GenCErr Nothing $ printf "Eval %s did not return a /Catln/CatlnResult. Instead it returned %s" function (show val)]

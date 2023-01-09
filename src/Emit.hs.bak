@@ -47,7 +47,6 @@ import           Eval.ExprBuilder
 import qualified LLVM.AST.Float       as F
 import           LLVM.AST.Type        (i32, i8)
 import           LLVM.AST.Typed       (typeOf)
-import           LLVM.Pretty          (ppllvm)
 
 data LEnv = LEnv { lvTbEnv      :: TBEnv
                  , lvClassGraph :: ClassGraph
@@ -359,10 +358,10 @@ codegenPrgm input srcType destType tprgm@(_, classGraph, _) = do
       codegenTasks env
     CErr err -> error $ printf "Build to buildPrgm in codegen: \n\t%s" (show err)
 
-codegenExPrint :: AST.Module -> LLVM () -> String
-codegenExPrint astMod modn = T.unpack $ ppllvm newast
-  where
-    newast = runLLVM astMod modn
+-- codegenExPrint :: AST.Module -> LLVM () -> String
+-- codegenExPrint astMod modn = T.unpack $ ppllvm newast
+--   where
+--     newast = runLLVM astMod modn
 
 codegenExAPI :: AST.Module -> LLVM () -> IO String
 codegenExAPI astMod modn = withContext $ \context ->
@@ -371,7 +370,8 @@ codegenExAPI astMod modn = withContext $ \context ->
     newast = runLLVM astMod modn
 
 codegenEx :: AST.Module -> LLVM () -> IO String
-codegenEx astMod modn = return $ codegenExPrint astMod modn
+codegenEx astMod modn = undefined
+-- codegenEx astMod modn = return $ codegenExPrint astMod modn
 -- codegenEx = codegenExAPI
 
 codegenExInit :: LLVM () -> IO String

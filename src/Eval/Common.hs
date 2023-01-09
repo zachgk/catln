@@ -28,7 +28,7 @@ import           GHC.Generics        (Generic)
 import           CRes
 import           Control.Monad.State
 import           Data.Aeson          hiding (Object)
-import qualified LLVM.AST            as AST
+-- import qualified LLVM.AST            as AST
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
@@ -86,7 +86,7 @@ data Val
   | IOVal Integer (IO ())
   | LLVMVal (LLVM ())
   | LLVMQueue [(ResArrowTree, EObject, Arrow Expr EvalMetaDat)]
-  | LLVMOperand Type (Codegen AST.Operand)
+  -- | LLVMOperand Type (Codegen AST.Operand)
   | LLVMIO (Codegen ())
   | NoVal
 
@@ -112,21 +112,21 @@ instance Show Val where
   show IOVal{}   = "IOVal"
   show LLVMVal{}   = "LLVMVal"
   show LLVMQueue{}   = "LLVMQueue"
-  show (LLVMOperand tp _)   = printf "LLVMOperand<$T=%s>" (show tp)
+  -- show (LLVMOperand tp _)   = printf "LLVMOperand<$T=%s>" (show tp)
   show LLVMIO{}   = "LLVMIO"
   show NoVal   = "NoVal"
 
 instance Hashable Val where
-  hashWithSalt s (IntVal i)         = s `hashWithSalt` i
-  hashWithSalt s (FloatVal i)       = s `hashWithSalt` i
-  hashWithSalt s (StrVal i)         = s `hashWithSalt` i
-  hashWithSalt s (TupleVal n as)    = s `hashWithSalt` n `hashWithSalt` as
-  hashWithSalt s (IOVal i _)        = s `hashWithSalt` i
-  hashWithSalt s (LLVMVal _)        = s
-  hashWithSalt s (LLVMQueue _)      = s
-  hashWithSalt s (LLVMOperand tp _) = s `hashWithSalt` tp
-  hashWithSalt s (LLVMIO _)         = s
-  hashWithSalt s NoVal              = s
+  hashWithSalt s (IntVal i)      = s `hashWithSalt` i
+  hashWithSalt s (FloatVal i)    = s `hashWithSalt` i
+  hashWithSalt s (StrVal i)      = s `hashWithSalt` i
+  hashWithSalt s (TupleVal n as) = s `hashWithSalt` n `hashWithSalt` as
+  hashWithSalt s (IOVal i _)     = s `hashWithSalt` i
+  hashWithSalt s (LLVMVal _)     = s
+  hashWithSalt s (LLVMQueue _)   = s
+  -- hashWithSalt s (LLVMOperand tp _) = s `hashWithSalt` tp
+  hashWithSalt s (LLVMIO _)      = s
+  hashWithSalt s NoVal           = s
 
 instance ToJSON Val where
   toJSON (IntVal v) = object ["tag".=("IntVal" :: String), "contents".=toJSON v]
@@ -136,7 +136,7 @@ instance ToJSON Val where
   toJSON IOVal{} = object ["tag".=("IOVal" :: String)]
   toJSON LLVMVal{} = object ["tag".=("LLVMVal" :: String)]
   toJSON LLVMQueue{} = object ["tag".=("LLVMQueue" :: String)]
-  toJSON LLVMOperand{} = object ["tag".=("LLVMOperand" :: String)]
+  -- toJSON LLVMOperand{} = object ["tag".=("LLVMOperand" :: String)]
   toJSON LLVMIO{} = object ["tag".=("LLVMIO" :: String)]
   toJSON NoVal = object ["tag".=("NoVal" :: String)]
 
@@ -156,11 +156,11 @@ getValType (TupleVal name args) = (partialVal (PTypeName name)){ptArgs=fmap from
 getValType IOVal{} = ioLeaf
 getValType LLVMVal{} = resultLeaf
 getValType LLVMQueue{} = queueLeaf
-getValType (LLVMOperand t _) = case t of
-  UnionType leafs -> case splitUnionType leafs of
-    [partial] -> partial
-    _         -> error "could not getValType without a single partial"
-  _ -> error $ printf "could not get non sum getValType %s" (show t)
+-- getValType (LLVMOperand t _) = case t of
+  -- UnionType leafs -> case splitUnionType leafs of
+    -- [partial] -> partial
+    -- _         -> error "could not getValType without a single partial"
+  -- _ -> error $ printf "could not get non sum getValType %s" (show t)
 getValType LLVMIO{} = ioLeaf
 getValType NoVal = error "getValType of NoVal"
 
@@ -234,8 +234,8 @@ instance Show ResArrowTree where
 
 data LLVMState
   = LLVMState {
-    lsMod           :: AST.Module
-  , lTaskArrows     :: [TaskArrow]
+    -- lsMod           :: AST.Module
+  lTaskArrows       :: [TaskArrow]
   , lTaskStructs    :: [TaskStruct]
   , lTasksCompleted :: S.HashSet String
                            }
@@ -254,21 +254,21 @@ type Names = Map.Map String Int
 
 data CodegenState
   = CodegenState {
-    currentBlock :: AST.Name                     -- Name of the active block to append to
-  , blocks       :: Map.Map AST.Name BlockState  -- Blocks for function
-  , cgArgs       :: H.HashMap ArgName AST.Operand    -- Function scope symbol table
-  , blockCount   :: Int                      -- Count of basic blocks
-  , count        :: Word                     -- Count of unnamed instructions
-  , names        :: Names                    -- Name Supply
-  , taskArrows   :: [TaskArrow]
-  , taskStructs  :: [TaskStruct]
+    -- currentBlock :: AST.Name                     -- Name of the active block to append to
+  -- , blocks       :: Map.Map AST.Name BlockState  -- Blocks for function
+  -- , cgArgs       :: H.HashMap ArgName AST.Operand    -- Function scope symbol table
+  blockCount    :: Int                      -- Count of basic blocks
+  , count       :: Word                     -- Count of unnamed instructions
+  , names       :: Names                    -- Name Supply
+  , taskArrows  :: [TaskArrow]
+  , taskStructs :: [TaskStruct]
   } deriving Show
 
 data BlockState
   = BlockState {
     idx   :: Int                            -- Block index
-  , stack :: [AST.Named AST.Instruction]            -- Stack of instructions
-  , term  :: Maybe (AST.Named AST.Terminator)       -- Block terminator
+  -- , stack :: [AST.Named AST.Instruction]            -- Stack of instructions
+  -- , term  :: Maybe (AST.Named AST.Terminator)       -- Block terminator
   } deriving Show
 
 newtype Codegen a = Codegen { runCodegen :: State CodegenState a }

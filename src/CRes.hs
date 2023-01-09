@@ -23,7 +23,6 @@ import           GHC.Generics          (Generic)
 -- import Text.Pretty.Simple
 import           Text.Printf
 
-import           Control.Monad.Fail
 import           Data.Aeson
 import           Semantics.Prgm
 import           Syntax.Ct.Prgm

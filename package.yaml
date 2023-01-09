@@ -26,36 +26,34 @@ default-extensions:
 
 # Deps from stackage - https://www.stackage.org/lts-14.6
 dependencies:
-- base >= 4.7 && < 5
-- mtl >= 2.2.2 && < 3
-- haskeline >= 0.7.5.0 && < 1
-- containers == 0.6.0.1
-- llvm-hs >= 8.0.0 && < 9
-- llvm-hs-pure >= 8.0.0 && < 9
-- llvm-hs-pretty == 0.6.2.0
-- directory == 1.3.3.0
-- bytestring == 0.10.8.2
-- utf8-string == 1.0.1.1
-- megaparsec == 7.0.5
-- text == 1.2.3.1
-- parser-combinators == 1.1.0
-- haskeline == 0.7.5.0
-- unordered-containers == 0.2.10.0
-- transformers == 0.5.6.2
-- split == 0.2.3.3
-- hspec == 2.7.1
-- tasty == 1.2.3
-- tasty-hunit == 0.10.0.2
-- hashable == 1.2.7.0
-- pretty-simple == 2.2.0.1
-- Hoed == 0.5.1
-- tuple == 0.3.0.2
-- semialign == 1
-- aeson == 1.4.5.0
-- scotty == 0.11.5
-- optparse-applicative == 0.14.3.0
-- wai-middleware-static == 0.8.2
-- stringbuilder == 0.5.1
+- base
+- mtl
+- haskeline
+- containers
+  # - llvm-hs==0.9.0.1
+  # - llvm-hs-pure==9.0.1
+- directory
+- bytestring
+- utf8-string
+- megaparsec
+- text
+- parser-combinators
+- haskeline
+- unordered-containers
+- transformers
+- split
+- hspec
+- tasty
+- tasty-hunit
+- hashable
+- pretty-simple
+- tuple
+- semialign
+- aeson
+- scotty
+- optparse-applicative
+- wai-middleware-static
+- stringbuilder
 
 library:
   source-dirs: src
@@ -65,9 +63,9 @@ executables:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
+      # - -threaded
+      # - -rtsopts
+      # - -with-rtsopts=-N
     - -Wall
     - -Werror
     dependencies:
@@ -78,9 +76,9 @@ tests:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
+      # - -threaded
+      # - -rtsopts
+      # - -with-rtsopts=-N
     - -Wall
     - -Werror
     dependencies:

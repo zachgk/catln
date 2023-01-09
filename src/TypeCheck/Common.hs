@@ -24,7 +24,6 @@ import           Data.List
 import           GHC.Generics        (Generic)
 
 import           CRes
-import           Control.Monad.Fail  (MonadFail, fail)
 import           Data.Aeson          (ToJSON, toJSON)
 import           Data.Maybe
 import           Semantics
@@ -45,7 +44,7 @@ type Scheme = TypeCheckResult SType
 type Pnt = Int
 
 data EnvDef = DefVar VarMeta | DefKnown Type
-  deriving (Show, Generic, Hashable, ToJSON)
+  deriving (Eq, Show, Generic, Hashable, ToJSON)
 type EnvValMap = (H.HashMap String EnvDef)
 data FEnv = FEnv { fePnts               :: IM.IntMap Scheme
                  , feCons               :: [Constraint]

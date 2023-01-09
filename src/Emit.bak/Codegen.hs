@@ -22,6 +22,7 @@ module Emit.Codegen where
 
 import qualified Data.ByteString.Short      as SBS
 import qualified Data.ByteString.UTF8       as BSU
+import           Data.Either
 import           Data.Function
 import           Data.List
 import qualified Data.Map                   as Map
@@ -31,6 +32,7 @@ import           Control.Monad.State
 import           LLVM.AST
 import qualified LLVM.AST                   as AST
 import           LLVM.AST.Global
+import           LLVM.IRBuilder.Module
 
 import qualified Data.HashMap.Strict        as H
 import qualified Data.HashSet               as S
@@ -186,6 +188,13 @@ terminator trm = do
 -- Tasks
 -------------------------------------------------------------------------------
 
+instance MonadModuleBuilder Codegen where
+
+instance MonadFail Codegen where
+  fail s = do
+    panic s
+    return 0
+
 class TaskState m where
   addTaskArrow :: TaskArrow -> m ()
   addTaskStruct :: TaskStruct -> m ()
@@ -275,9 +284,11 @@ cons :: C.Constant -> Operand
 cons = ConstantOperand
 
 getelementptr :: Type -> Operand -> [Operand] -> Codegen Operand
-getelementptr elementType tp ops = case typeOf tp of
-  PointerType{} -> instr (ptr elementType) $ GetElementPtr True tp ops []
-  _             -> error $ printf "Invalid getElementPtr address: %s" (show tp)
+getelementptr elementType tp ops = do
+  tp' <- typeOf tp
+  case tp' of
+    (Right PointerType{}) -> instr (ptr elementType) $ GetElementPtr True tp ops []
+    _             -> error $ printf "Invalid getElementPtr address: %s" (show tp)
 
 typeOperand :: Type -> Operand
 typeOperand = ConstantOperand . C.Undef
@@ -294,7 +305,8 @@ call retType fn ags = instr retType $ Call Nothing CC.C [] (Right fn) (toArgs ag
 
 callf :: Type -> String -> [Operand] -> Codegen Operand
 callf retType fnName args = do
-  let fnType = FunctionType retType (map typeOf args) False
+  args' <- rights <$> mapM typeOf args
+  let fnType = FunctionType retType args' False
   let fn = externf fnType (astName fnName)
   call retType fn args
 
@@ -305,7 +317,10 @@ store :: Operand -> Operand -> Codegen ()
 store pointer val = voidInstr $ Store False pointer val Nothing 0 []
 
 load :: Operand -> Codegen Operand
-load pointer = instr (getElementType $ typeOf pointer) $ Load False pointer Nothing 0 []
+load pointer = do
+  (Right pointer') <- typeOf pointer
+  let (Right pointer'') = getElementType pointer'
+  instr pointer'' $ Load False pointer Nothing 0 []
 
 -- Control Flow
 br :: Name -> Codegen (Named Terminator)

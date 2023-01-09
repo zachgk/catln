@@ -23,7 +23,6 @@ import           Data.Void           (Void)
 import           GHC.Generics        (Generic)
 
 import           Data.Aeson          hiding (Object)
-import           Data.Aeson.Types    (ToJSON)
 import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Megaparsec

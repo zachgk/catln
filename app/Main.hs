@@ -14,7 +14,6 @@ import           TypeCheck           (typecheckPrgm)
 
 import qualified Data.HashMap.Strict as H
 import           Data.Maybe
-import           Data.Semigroup      ((<>))
 import           Eval.Common         (Val (StrVal, TupleVal))
 import           System.Directory
 import           Text.Printf
@@ -51,10 +50,11 @@ xBuild prgmName function = do
           let buildDir = "build"
           removePathForcibly buildDir
           createDirectoryIfMissing True buildDir
-          let (StrVal outFileName) = fromJust $ H.lookup "name" args
-          let (StrVal outContents) = fromJust $ H.lookup "contents" args
-          writeFile (buildDir ++ "/" ++ outFileName) outContents
-          printf "Successfully built %s" (show prgmName)
+          case (fromJust $ H.lookup "name" args, fromJust $ H.lookup "contents" args) of
+              (StrVal outFileName, StrVal outContents) -> do
+                writeFile (buildDir ++ "/" ++ outFileName) outContents
+                printf "Successfully built %s" (show prgmName)
+              _ -> fail "Invalid name or contents found in result as build"
         _ -> error "Failed to build"
   where
     aux maybeRawPrgm = do

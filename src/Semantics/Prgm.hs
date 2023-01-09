@@ -24,9 +24,7 @@ import           Data.Hashable
 import           Data.List           (intercalate)
 import           GHC.Generics        (Generic)
 
-import           Data.Aeson          (object)
 import           Data.Aeson          hiding (Object)
-import           Data.Aeson.Types    (ToJSON)
 import           Data.Graph
 import           Data.Maybe
 import           Semantics.Types

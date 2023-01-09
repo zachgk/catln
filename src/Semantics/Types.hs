@@ -19,7 +19,6 @@
 module Semantics.Types where
 
 import           Data.Aeson
-import           Data.Aeson.Types    (ToJSONKey)
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Data.Hashable
@@ -124,7 +123,7 @@ type TypeArgEnv = H.HashMap ArgName Type
 instance Show PartialType where
   show (PartialType ptName ptVars ptArgs ptPreds _) = concat [showName ptName, showTypeVars ptVars, showArgs ptArgs, showPreds ptPreds]
     where
-      showName p  = fromPartialName p
+      showName = fromPartialName
       showArg (argName, argVal) = argName ++ "=" ++ show argVal
       showTypeVars vars | H.null vars = ""
       showTypeVars vars = printf "[%s]" (intercalate ", " $ map showArg $ H.toList vars)
@@ -377,7 +376,7 @@ compactJoinPartials classGraph partials = joinUnionType $ concat $ H.elems $ fma
     tryJoin _ _ = Nothing
 
     numDifferences m1 m2 = sum $ fromEnum <$> H.intersectionWith (/=) m1 m2
-    joinMap m1 m2 = H.unionWith (unionTypes classGraph) m1 m2
+    joinMap = H.unionWith (unionTypes classGraph)
 
 -- | Removes partials which contain a type variable that is the 'bottomType', because then the whole partial is a 'bottomType'.
 compactBottomTypeVars :: PartialLeafs -> PartialLeafs

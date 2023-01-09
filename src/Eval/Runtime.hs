@@ -20,7 +20,7 @@ import qualified Data.HashMap.Strict as H
 import           Semantics.Prgm
 import           Semantics.Types
 
-import           Emit                (codegenPrgm)
+-- import           Emit                (codegenPrgm)
 import           Eval.Common
 import           Eval.ExprBuilder
 import           Text.Printf
@@ -134,6 +134,7 @@ llvm = (name', [(srcType, NoGuard, aux)])
           let codegenSrcTypeInner = singletonType $ PartialType (PTypeName functionToCodegen) H.empty H.empty [] PtArgExact
           let codegenSrcType = PartialType (PTypeName "/Catln/Context") H.empty (H.fromList [("value", codegenSrcTypeInner), ("io", ioType)]) [] PtArgExact
           return $ ConstantArrow $ LLVMVal $ codegenPrgm (eVal functionToCodegen) codegenSrcType ioType tbPrgm
+        codegenPrgm _ _ _ _ = return ()
 
 primEnv :: ResBuildEnv
 primEnv = H.fromListWith (++) [ liftIntOp "+" (+)
