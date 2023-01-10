@@ -4,21 +4,23 @@ module Main where
 
 import           CRes
 import           Control.Monad
-import           Data.String.Builder (build)
+import           Data.String.Builder  (build)
 import           Eval
 import           Options.Applicative
-import           Syntax.Ct.Desugarf  (desFiles)
-import           Syntax.Ct.Formatter (formatPrgm)
+import           Syntax.Ct.Desugarf   (desFiles)
+import           Syntax.Ct.Formatter  (formatPrgm)
 import           Syntax.Ct.Parser
-import           TypeCheck           (typecheckPrgm)
+import           TypeCheck            (typecheckPrgm)
 
-import qualified Data.HashMap.Strict as H
+import qualified Data.ByteString.Lazy as BSL
+import qualified Data.HashMap.Strict  as H
 import           Data.Maybe
-import           Eval.Common         (Val (StrVal, TupleVal))
+import           Eval.Common          (Val (StrVal, TupleVal))
+import           Syntax.Pandoc.Syntax (documentFormats, toDocument)
 import           System.Directory
 import           Text.Printf
 import           Utils
-import           WebDocs             (docServe)
+import           WebDocs              (docServe)
 -- import Repl (repl)
 
 xRun :: String -> String -> IO ()
@@ -66,6 +68,18 @@ xBuild prgmName function = do
 xDoc :: String -> Bool -> IO ()
 xDoc prgmName cached = docServe cached True prgmName
 
+xDocument :: String -> String -> String -> IO ()
+xDocument prgmName outFname format = do
+  maybeRawPrgm <- readFiles False False [prgmName]
+  case maybeRawPrgm of
+    CErr err   -> print err
+    CRes _ prgmGraphData -> do
+      case graphLookup prgmName prgmGraphData of
+        Just prgm -> do
+          prgm' <- toDocument format prgm
+          BSL.writeFile outFname prgm'
+        Nothing -> fail "Could not find prgm"
+
 xFmt :: String -> IO ()
 xFmt prgmName = do
   maybeRawPrgm <- readFiles False False [prgmName]
@@ -78,15 +92,17 @@ xFmt prgmName = do
         writeFile fileName prgm'
 
 exec :: Command -> IO ()
-exec (RunFile file function)   = xRun file function
-exec (BuildFile file function) = xBuild file function
-exec (Doc fname cached)        = xDoc fname cached
-exec (Fmt fname)               = xFmt fname
+exec (RunFile file function)          = xRun file function
+exec (BuildFile file function)        = xBuild file function
+exec (Doc fname cached)               = xDoc fname cached
+exec (Document fname outFname format) = xDocument fname outFname format
+exec (Fmt fname)                      = xFmt fname
 
 data Command
   = BuildFile String String
   | RunFile String String
   | Doc String Bool
+  | Document String String String
   | Fmt String
 
 cRun :: Parser Command
@@ -104,6 +120,12 @@ cDoc = Doc
   <$> argument str (metavar "FILE" <> help "The file to run")
   <*> switch (long "cached" <> help "Cache results instead of reloading live (useful for serving rather than development)")
 
+cDocument :: Parser Command
+cDocument = Document
+  <$> argument str (metavar "FILE" <> help "The file to run")
+  <*> argument str (metavar "OUT" <> help "The output file path")
+  <*> argument str (metavar "FORMAT" <> help ("The format of document. Possible formats are " ++ show documentFormats))
+
 cFmt :: Parser Command
 cFmt = Fmt
   <$> argument str (metavar "FILE" <> help "The file to run")
@@ -119,5 +141,6 @@ main = exec =<< execParser opts
          command "run" (info cRun (progDesc "Runs a program"))
       <> command "build" (info cBuild (progDesc "Builds a program"))
       <> command "doc" (info cDoc (progDesc "Runs webdocs for a program"))
+      <> command "document" (info cDocument (progDesc "Builds a document for a program file"))
       <> command "fmt" (info cFmt (progDesc "Runs the Catln formatter for a program"))
                              )
