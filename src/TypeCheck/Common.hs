@@ -138,10 +138,10 @@ type SCompAnnot = CompAnnot SExpr
 type SGuard = Guard SExpr
 type SArrow = Arrow Expr ShowMetaDat
 type SObjArg = ObjArg Expr ShowMetaDat
-type SObject = Object Expr ShowMetaDat
-type SObjectMap = ObjectMap Expr ShowMetaDat
-type SObjectMapItem = ObjectMapItem Expr ShowMetaDat
-type SPrgm = Prgm Expr ShowMetaDat
+type SObject = ExprObject Expr ShowMetaDat
+type SObjectMap = ExprObjectMap Expr ShowMetaDat
+type SObjectMapItem = ExprObjectMapItem Expr ShowMetaDat
+type SPrgm = ExprPrgm Expr ShowMetaDat
 
 data VarMetaDat = VarMetaDat Pnt (Maybe VObject) (MetaVarEnv VarMetaDat) (MetaArgEnv VarMetaDat)
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)

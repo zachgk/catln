@@ -131,10 +131,10 @@ mkReachesEnv env@FEnv{feClassGraph, feUnionAllObjs, feVTypeGraph, feTTypeGraph} 
       objUb <- pointUb env (objM vobj)
       sobj <- showObj env vobj
       sarr <- showArrow env varr
-      let sobj' = mapMeta clearMetaDat InputMeta sobj
+      let sobj' = mapMetaExprObj clearMetaDat sobj
       let sarr' = mapMetaArrow clearMetaDat sarr
-      let sobj'' = sobj'{deprecatedObjM=mWithType objUb (deprecatedObjM sobj')}
-      return (asExprObject sobj'', sarr')
+      let sobj'' = sobj'{eobjExpr = exprWithMetaType objUb (eobjExpr sobj')}
+      return (sobj'', sarr')
   let feTTypeGraph' = fmap (map (first asExprObject)) feTTypeGraph
   let typeGraph = H.unionWith (++) feVTypeGraph' feTTypeGraph'
   return $ ReachesEnv feClassGraph unionAll typeGraph

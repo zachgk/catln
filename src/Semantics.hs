@@ -73,6 +73,9 @@ exprWithMeta m (TupleApply _ b a) = TupleApply m b a
 exprWithMeta m (VarApply _ b n v) = VarApply m b n v
 exprWithMeta _ _                  = error "exprWithMeta with unsupported expr"
 
+exprWithMetaType :: Type -> Expr m -> Expr m
+exprWithMetaType t e = exprWithMeta (mWithType t (getExprMeta e)) e
+
 -- objExpr version that uses objDupExpr
 -- objExpr :: (Show m, MetaDat m) => Object e m -> e m
 -- objExpr Object{objDupExpr} = objDupExpr

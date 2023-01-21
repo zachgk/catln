@@ -81,16 +81,21 @@ showArrow env (Arrow m guard maybeExpr) = do
 showObjArg :: FEnv -> VObjArg -> TypeCheckResult SObjArg
 showObjArg env (m, maybeObj) = do
   m' <- showM env m
-  maybeObj' <- mapM (showObj env) maybeObj
+  maybeObj' <- mapM (showObjRec env) maybeObj
   return (m', maybeObj')
 
-showObj :: FEnv -> VObject -> TypeCheckResult SObject
-showObj env obj@Object{deprecatedObjArgs, objDupExpr} = do
+showObjRec :: FEnv -> VObject -> TypeCheckResult (Object Expr ShowMetaDat)
+showObjRec env obj@Object{deprecatedObjArgs, objDupExpr} = do
   m' <- showM env (objM obj)
   vars' <- mapM (showM env) $ objAppliedVars obj
   args' <- mapM (showObjArg env) deprecatedObjArgs
   objDupExpr' <- showExpr env objDupExpr
   return $ obj{deprecatedObjM=m', deprecatedObjVars=vars', deprecatedObjArgs=args', objDupExpr=objDupExpr'}
+
+showObj :: FEnv -> VObject -> TypeCheckResult SObject
+showObj env obj = do
+  obj' <- showObjRec env obj
+  return $ asExprObject obj'
 
 showObjArrow :: FEnv -> VObjectMapItem -> TypeCheckResult SObjectMapItem
 showObjArrow env (obj, annots, arrow) = do
