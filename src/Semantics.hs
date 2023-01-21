@@ -35,6 +35,9 @@ labelPosM s (Meta t pos ext) = Meta t (labelPos s pos) ext
 emptyMetaN :: (MetaDat m) => Meta m
 emptyMetaN = Meta TopType Nothing emptyMetaDat
 
+mWithType :: Type -> Meta m -> Meta m
+mWithType t (Meta _ p d) = Meta t p d
+
 labelPos :: String -> CodeRange -> CodeRange
 labelPos s (Just (p1, p2, sPrefix)) = Just (p1, p2, label')
   where label' = case sPrefix of
@@ -199,6 +202,7 @@ formVarMap _ _ = error $ printf "Unknown formVarMap"
 -- fullDest means to use the greatest possible type (after implicit).
 -- Otherwise, it uses the minimal type that *must* be reached
 arrowDestType :: (Show m, MetaDat m) => Bool -> ClassGraph -> PartialType -> Object Expr m -> Arrow Expr m -> Type
+arrowDestType True _ _ obj _ | getMetaType (objM obj) == TopType = TopType
 arrowDestType fullDest classGraph src obj (Arrow arrM _ maybeExpr) = case mapM getExprArg maybeExpr of
   Just (Just _) -> fromMaybe (error "Unfound expr") expr'
   _             -> joined

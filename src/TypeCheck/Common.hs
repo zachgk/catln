@@ -221,6 +221,14 @@ typeCheckToRes tc = case tc of
   TypeCheckResult notes res -> CRes (map MkCNote notes) res
   TypeCheckResE notes       -> CErr (map MkCNote notes)
 
+resToTypeCheck :: CRes r -> TypeCheckResult r
+resToTypeCheck cres = case cres of
+  CRes notes res -> TypeCheckResult (map fromCNote notes) res
+  CErr notes     -> TypeCheckResE (map fromCNote notes)
+  where
+    fromCNote :: CNote -> TypeCheckError
+    fromCNote note = GenTypeCheckError (posCNote note) (show note)
+
 getPnt :: VarMeta -> Pnt
 getPnt (Meta _ _ (VarMetaDat p _ _ _)) = p
 

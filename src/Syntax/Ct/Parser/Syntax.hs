@@ -85,9 +85,6 @@ getPath name = if isAbsolutePath name then
   Absolute name
   else Relative name
 
-mWithType :: Type -> ParseMeta -> ParseMeta
-mWithType t (Meta _ p d) = Meta t p d
-
 rawExprWithType :: Type -> RawExpr ParseMetaDat -> RawExpr ParseMetaDat
 rawExprWithType t (RawCExpr m c) = RawCExpr (mWithType t m) c
 rawExprWithType t (RawValue m n) = RawValue (mWithType t m) n

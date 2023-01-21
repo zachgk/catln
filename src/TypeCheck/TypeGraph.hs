@@ -24,11 +24,12 @@ import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Data.Maybe
 
-import           Data.List           (partition)
+import           Control.Monad
+import           MapMeta
 import           Semantics
 import           Semantics.Prgm
+import           Semantics.TypeGraph
 import           Semantics.Types
-import           Text.Printf
 import           TypeCheck.Common
 import           TypeCheck.Show
 import           Utils
@@ -122,96 +123,20 @@ inferArgFromPartial FEnv{feVTypeGraph, feTTypeGraph, feClassGraph} partial@Parti
     addArg arg = partial{ptArgs=H.insertWith (unionTypes feClassGraph) arg TopType ptArgs}
 inferArgFromPartial _ _ = bottomType
 
-isTypeVar :: Type -> Bool
-isTypeVar TypeVar{} = True
-isTypeVar _         = False
-
-data ReachesTree
-  = ReachesTree (H.HashMap PartialType ReachesTree)
-  | ReachesLeaf [Type]
-  deriving (Show)
-
-unionReachesTree :: ClassGraph -> ReachesTree -> Type
-unionReachesTree classGraph (ReachesTree children) = do
-  let (keys, vals) = unzip $ H.toList children
-  let keys' = UnionType $ joinUnionType keys
-  let vals' = map (unionReachesTree classGraph) vals
-  let both = keys':vals'
-  case partition isTypeVar both of
-    ([onlyVar], []) -> onlyVar
-    (_, sums)       -> unionAllTypes classGraph sums
-unionReachesTree classGraph (ReachesLeaf leafs) = unionAllTypes classGraph leafs
-
-joinReachesTrees :: ReachesTree -> ReachesTree -> ReachesTree
-joinReachesTrees (ReachesTree a) (ReachesTree b) = ReachesTree $ H.unionWith joinReachesTrees a b
-joinReachesTrees (ReachesLeaf a) (ReachesLeaf b) = ReachesLeaf (a ++ b)
-joinReachesTrees a b = error $ printf "joinReachesTrees for mixed tree and leaf not yet defined: \n\t%s\n\t%s" (show a) (show b)
-
-joinAllReachesTrees :: Foldable f => f ReachesTree -> ReachesTree
-joinAllReachesTrees = foldr1 joinReachesTrees
-
-isSubtypePartialOfWithMaybeObj :: (Show m, Show (e m), MetaDat m, ExprClass e) => ClassGraph -> Maybe (Object e m) -> PartialType -> Type -> Bool
-isSubtypePartialOfWithMaybeObj classGraph (Just obj) = isSubtypePartialOfWithObj classGraph obj
-isSubtypePartialOfWithMaybeObj classGraph Nothing    = isSubtypePartialOf classGraph
-
-reachesHasCutSubtypeOf :: (Show m, MetaDat m) => ClassGraph -> MetaVarEnv m -> MetaArgEnv m -> ReachesTree -> Type -> Bool
-reachesHasCutSubtypeOf classGraph varEnv argEnv (ReachesTree children) superType = all childIsSubtype $ H.toList children
-  where childIsSubtype (key, val) = isSubtypePartialOfWithMetaEnv classGraph varEnv argEnv key superType || reachesHasCutSubtypeOf classGraph varEnv argEnv val superType
-reachesHasCutSubtypeOf classGraph varEnv argEnv (ReachesLeaf leafs) superType = any (\t -> isSubtypeOfWithMetaEnv classGraph varEnv argEnv t superType) leafs
-
-reachesPartial :: FEnv -> PartialType -> TypeCheckResult ReachesTree
-reachesPartial env@FEnv{feVTypeGraph, feTTypeGraph, feClassGraph} partial@PartialType{ptName=PTypeName name} = do
-
-  let vtypeArrows = H.lookupDefault [] name feVTypeGraph
-  vtypes <- mapM tryVArrow vtypeArrows
-
-  let ttypeArrows = H.lookupDefault [] name feTTypeGraph
-  ttypes <- mapM tryTArrow ttypeArrows
-
-  return $ ReachesLeaf (catMaybes vtypes ++ catMaybes ttypes)
-  where
-    tryVArrow (obj, arr) =
-      pointUb env (objM obj) >>= \objUb -> do
-      -- It is possible to send part of a partial through the arrow, so must compute the valid part
-      -- If none of it is valid, then there is Nothing
-      let potentialSrc@(UnionType potSrcLeafs) = intersectTypes feClassGraph (singletonType partial) objUb
-      if not (isBottomType potentialSrc)
-        -- TODO: Should this line below call `reaches` to make this recursive?
-        -- otherwise, no reaches path requiring multiple steps can be found
-        then do
-          sobj <- showObj env obj
-          sarr <- showArrow env arr
-          return $ Just $ unionAllTypes feClassGraph [arrowDestType True feClassGraph potentialSrcPartial sobj sarr | potentialSrcPartial <- splitUnionType potSrcLeafs]
-        else return Nothing
-    tryTArrow (obj, arr) = do
-      -- It is possible to send part of a partial through the arrow, so must compute the valid part
-      -- If none of it is valid, then there is Nothing
-      let potentialSrc@(UnionType potSrcLeafs) = intersectTypes feClassGraph (singletonType partial) (getMetaType $ objM obj)
-      if not (isBottomType potentialSrc)
-        -- TODO: Should this line below call `reaches` to make this recursive?
-        -- otherwise, no reaches path requiring multiple steps can be found
-        then return $ Just $ unionAllTypes feClassGraph [arrowDestType True feClassGraph potentialSrcPartial obj arr | potentialSrcPartial <- splitUnionType potSrcLeafs]
-        else return Nothing
-reachesPartial env@FEnv{feClassGraph} partial@PartialType{ptName=PClassName{}} = reaches env (expandPartial feClassGraph partial)
-reachesPartial env@FEnv{feClassGraph, feUnionAllObjs} partial@PartialType{ptName=PRelativeName{}} = do
-  reachesAsClass <- reaches env (expandPartial feClassGraph partial)
-  SType (UnionType allObjsUb) _ _ <- descriptor env feUnionAllObjs
-  reachesAsType <- mapM (reachesPartial env . (\name -> partial{ptName=name})) (H.keys allObjsUb)
-  return $ joinReachesTrees reachesAsClass (joinAllReachesTrees reachesAsType)
-
-reaches :: FEnv -> Type -> TypeCheckResult ReachesTree
-reaches _     TopType            = return $ ReachesLeaf [TopType]
-reaches _     (TypeVar v)            = error $ printf "reaches with typevar %s" (show v)
-reaches env (UnionType src) = do
-  let partials = splitUnionType src
-  resultsByPartials <- mapM (reachesPartial env) partials
-  return $ ReachesTree $ H.fromList $ zip partials resultsByPartials
-
-rootReachesPartial :: FEnv -> PartialType -> TypeCheckResult (PartialType, ReachesTree)
-rootReachesPartial env src = do
-  reached <- reachesPartial env src
-  let reachedWithId = ReachesTree $ H.singleton src reached
-  return (src, reachedWithId)
+mkReachesEnv :: FEnv -> TypeCheckResult (ReachesEnv ())
+mkReachesEnv env@FEnv{feClassGraph, feUnionAllObjs, feVTypeGraph, feTTypeGraph} = do
+  (SType unionAll _ _) <- descriptor env feUnionAllObjs
+  feVTypeGraph' <- forM feVTypeGraph $ \objArrs -> do
+    forM objArrs $ \(vobj, varr) -> do
+      objUb <- pointUb env (objM vobj)
+      sobj <- showObj env vobj
+      sarr <- showArrow env varr
+      let sobj' = mapMeta clearMetaDat InputMeta sobj
+      let sarr' = mapMetaArrow clearMetaDat sarr
+      let sobj'' = sobj'{deprecatedObjM=mWithType objUb (deprecatedObjM sobj')}
+      return (sobj'', sarr')
+  let typeGraph = H.unionWith (++) feVTypeGraph' feTTypeGraph
+  return $ ReachesEnv feClassGraph unionAll typeGraph
 
 arrowConstrainUbs :: FEnv -> Type -> VarMeta -> Type -> VarMeta -> TypeCheckResult (Type, Type)
 arrowConstrainUbs env@FEnv{feUnionAllObjs} TopType srcM dest@UnionType{} destM = do
@@ -226,14 +151,14 @@ arrowConstrainUbs env src@(TypeVar v) srcM dest destM = do
   src' <- resolveTypeVar v srcM
   (_, cdest) <- arrowConstrainUbs env (getMetaType src') srcM dest destM
   return (src, cdest)
-arrowConstrainUbs env (UnionType srcPartials) (Meta _ _ (VarMetaDat _ _ varEnv argEnv)) dest _ = do
-  let classGraph = feClassGraph env
+arrowConstrainUbs env@FEnv{feClassGraph} (UnionType srcPartials) (Meta _ _ (VarMetaDat _ _ varEnv argEnv)) dest _ = do
   let srcPartialList = splitUnionType srcPartials
-  srcPartialList' <- mapM (rootReachesPartial env) srcPartialList
+  reachesEnv <- mkReachesEnv env
+  srcPartialList' <- mapM (resToTypeCheck . rootReachesPartial reachesEnv) srcPartialList
   let partialMap = H.fromList srcPartialList'
-  let partialMap' = H.filter (\t -> reachesHasCutSubtypeOf classGraph varEnv argEnv t dest) partialMap
+  let partialMap' = H.filter (\t -> reachesHasCutSubtypeOf feClassGraph varEnv argEnv t dest) partialMap
   let (srcPartialList'', destByPartial) = unzip $ H.toList partialMap'
   let srcPartials' = joinUnionType srcPartialList''
-  let destByGraph = unionAllTypes classGraph $ fmap (unionReachesTree classGraph) destByPartial
+  let destByGraph = unionAllTypes feClassGraph $ fmap (unionReachesTree feClassGraph) destByPartial
   dest' <- tryIntersectTypes env dest destByGraph "executeConstraint ArrowTo"
-  return (compactType classGraph $ UnionType srcPartials', dest')
+  return (compactType feClassGraph $ UnionType srcPartials', dest')

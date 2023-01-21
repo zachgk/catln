@@ -49,6 +49,9 @@ class MapMeta m where
   mapMeta :: MetaFun a b -> MetaLocation -> m a -> m b
 
 
+clearMetaDat :: MetaFun a ()
+clearMetaDat _ (Meta p l _) = Meta p l ()
+
 --
 
 mapMetaAppliedExpr :: MetaFun m m -> MetaLocation -> Expr m -> Expr m
