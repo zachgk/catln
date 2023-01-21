@@ -28,7 +28,7 @@ import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
 import           TypeCheck.Common
-import           TypeCheck.TypeGraph (addUnionObjToEnv)
+import           TypeCheck.TypeUtils (addUnionObjToEnv)
 
 -- represents how a specified variables corresponds to the known types.
 -- It could be a lower bound, upper bound, or exact bound

@@ -26,7 +26,7 @@ import           Semantics.Types
 import           Text.Printf
 import           TypeCheck.Common
 import           TypeCheck.Show
-import           TypeCheck.TypeGraph
+import           TypeCheck.TypeUtils
 
 -- | Checks if a scheme is solved because it's upper bound and lower bound are equal
 isSolved :: Scheme -> Bool

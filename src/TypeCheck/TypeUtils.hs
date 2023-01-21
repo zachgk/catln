@@ -1,16 +1,15 @@
 --------------------------------------------------------------------
 -- |
--- Module    :  TypeCheck.TypeGraph
+-- Module    :  TypeCheck.TypeUtils
 -- Copyright :  (c) Zach Kimberg 2019
 -- License   :  MIT
 -- Maintainer:  zachary@kimberg.com
 -- Stability :  experimental
 -- Portability: non-portable
 --
--- This module handles the type graph during type checking.
--- It mainly supports the 'ArrowTo' constraint to compute
--- what resulting types can be produced by using all of the rewrite
--- rules that are in scope. This module also computes what the Any
+-- This module handles some type utilities for type checking.
+-- It supports the 'ArrowTo' constraint to compute resulting types through the typeGraph
+-- This module also computes what the Any
 -- types are which result from joining the types of all objects.
 --------------------------------------------------------------------
 
@@ -18,7 +17,7 @@
 {-# LANGUAGE NamedFieldPuns   #-}
 {-# LANGUAGE TupleSections    #-}
 
-module TypeCheck.TypeGraph where
+module TypeCheck.TypeUtils where
 
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
