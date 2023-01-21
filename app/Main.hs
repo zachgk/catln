@@ -4,23 +4,25 @@ module Main where
 
 import           CRes
 import           Control.Monad
-import           Data.String.Builder  (build)
+import           Data.String.Builder   (build)
 import           Eval
 import           Options.Applicative
-import           Syntax.Ct.Desugarf   (desFiles)
-import           Syntax.Ct.Formatter  (formatPrgm)
+import           Syntax.Ct.Desugarf    (desFiles)
+import           Syntax.Ct.Formatter   (formatPrgm)
 import           Syntax.Ct.Parser
-import           TypeCheck            (typecheckPrgm)
+import           Syntax.Haskell.Syntax
+import           TypeCheck             (typecheckPrgm)
 
-import qualified Data.ByteString.Lazy as BSL
-import qualified Data.HashMap.Strict  as H
+import qualified Data.ByteString       as BS
+import qualified Data.ByteString.Lazy  as BSL
+import qualified Data.HashMap.Strict   as H
 import           Data.Maybe
-import           Eval.Common          (Val (StrVal, TupleVal))
-import           Syntax.Pandoc.Syntax (documentFormats, toDocument)
+import           Eval.Common           (Val (StrVal, TupleVal))
+import           Syntax.Pandoc.Syntax  (documentFormats, toDocument)
 import           System.Directory
 import           Text.Printf
 import           Utils
-import           WebDocs              (docServe)
+import           WebDocs               (docServe)
 -- import Repl (repl)
 
 xRun :: String -> String -> IO ()
@@ -80,6 +82,12 @@ xDocument prgmName outFname format = do
           BSL.writeFile outFname prgm'
         Nothing -> fail "Could not find prgm"
 
+xConvert :: String -> String -> IO ()
+xConvert prgmName _outFname = do
+  f <- BS.readFile prgmName
+  prgm <- parseHaskell f
+  print prgm
+
 xFmt :: String -> IO ()
 xFmt prgmName = do
   maybeRawPrgm <- readFiles False False [prgmName]
@@ -96,6 +104,7 @@ exec (RunFile file function)          = xRun file function
 exec (BuildFile file function)        = xBuild file function
 exec (Doc fname cached)               = xDoc fname cached
 exec (Document fname outFname format) = xDocument fname outFname format
+exec (Convert fname outFname)         = xConvert fname outFname
 exec (Fmt fname)                      = xFmt fname
 
 data Command
@@ -103,6 +112,7 @@ data Command
   | RunFile String String
   | Doc String Bool
   | Document String String String
+  | Convert String String
   | Fmt String
 
 cRun :: Parser Command
@@ -126,6 +136,11 @@ cDocument = Document
   <*> argument str (metavar "OUT" <> help "The output file path")
   <*> argument str (metavar "FORMAT" <> help ("The format of document. Possible formats are " ++ show documentFormats))
 
+cConvert :: Parser Command
+cConvert = Convert
+  <$> argument str (metavar "FILE" <> help "The file to run")
+  <*> argument str (metavar "OUT" <> help "The output file path")
+
 cFmt :: Parser Command
 cFmt = Fmt
   <$> argument str (metavar "FILE" <> help "The file to run")
@@ -142,5 +157,6 @@ main = exec =<< execParser opts
       <> command "build" (info cBuild (progDesc "Builds a program"))
       <> command "doc" (info cDoc (progDesc "Runs webdocs for a program"))
       <> command "document" (info cDocument (progDesc "Builds a document for a program file"))
+      <> command "convert" (info cConvert (progDesc "Converts code in one format to another"))
       <> command "fmt" (info cFmt (progDesc "Runs the Catln formatter for a program"))
                              )

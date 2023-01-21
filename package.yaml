@@ -24,7 +24,7 @@ default-extensions:
 - TupleSections
 - NamedFieldPuns
 
-# Deps from stackage - https://www.stackage.org/lts-14.6
+# Deps from stackage - https://www.stackage.org/lts-18.28
 dependencies:
 - base
 - mtl
@@ -56,6 +56,9 @@ dependencies:
 - stringbuilder
 - pandoc
 - pandoc-types
+- tree-sitter
+- tree-sitter-haskell
+- tree-sitter-python
 
 library:
   source-dirs: src
