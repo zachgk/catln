@@ -130,11 +130,13 @@ exprToObj basis doc e@(VarApply m' baseExpr name varM) = baseObj{deprecatedObjM=
     baseObj = exprToObj basis doc baseExpr
 exprToObj _ _ e = error $ printf "Not yet implemented exprToObj: %s" (show e)
 
+asExprObject :: (Show m, MetaDat m) => Object Expr m -> ExprObject Expr m
+asExprObject obj@Object{objBasis, objDoc} = ExprObject objBasis objDoc (objExpr obj)
+
 asExprObjMap :: (Show m, MetaDat m) => ObjectMap Expr m -> ExprObjectMap Expr m
 asExprObjMap = map asExprObjectMapItem
   where
     asExprObjectMapItem (obj, annots, arr) = (asExprObject obj, annots, arr)
-    asExprObject obj@Object{objBasis, objDoc} = ExprObject objBasis objDoc (objExpr obj)
 
 toExprPrgm :: (MetaDat m, Show m) => Prgm Expr m -> ExprPrgm Expr m
 toExprPrgm (objMap, classGraph, annots) = (map toExprObjectMapItem objMap, classGraph, annots)

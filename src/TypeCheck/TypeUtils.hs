@@ -24,6 +24,7 @@ import qualified Data.HashSet        as S
 import           Data.Maybe
 
 import           Control.Monad
+import           Data.Bifunctor      (first)
 import           MapMeta
 import           Semantics
 import           Semantics.Prgm
@@ -133,8 +134,9 @@ mkReachesEnv env@FEnv{feClassGraph, feUnionAllObjs, feVTypeGraph, feTTypeGraph} 
       let sobj' = mapMeta clearMetaDat InputMeta sobj
       let sarr' = mapMetaArrow clearMetaDat sarr
       let sobj'' = sobj'{deprecatedObjM=mWithType objUb (deprecatedObjM sobj')}
-      return (sobj'', sarr')
-  let typeGraph = H.unionWith (++) feVTypeGraph' feTTypeGraph
+      return (asExprObject sobj'', sarr')
+  let feTTypeGraph' = fmap (map (first asExprObject)) feTTypeGraph
+  let typeGraph = H.unionWith (++) feVTypeGraph' feTTypeGraph'
   return $ ReachesEnv feClassGraph unionAll typeGraph
 
 arrowConstrainUbs :: FEnv -> Type -> VarMeta -> Type -> VarMeta -> TypeCheckResult (Type, Type)
