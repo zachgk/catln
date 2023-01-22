@@ -330,7 +330,7 @@ codegenTasks env@LEnv{lvTbEnv, lvClassGraph} = do
         else case buildArrow lvTbEnv arrowSrcType obj annots arr of
           CRes _ (Just (_, (tree, _))) -> do
             modify $ \s -> s {lTasksCompleted = S.insert nm completed}
-            let destType = earrowDestType False lvClassGraph arrowSrcType obj arr
+            let destType = arrowDestType False lvClassGraph arrowSrcType obj arr
             codegenDecls env nm obj (singletonType arrowSrcType) destType tree declInput
             codegenTasks env
           err -> error $ printf "Failed to buildtree to emit arrow: %s" (show err)

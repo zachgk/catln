@@ -283,7 +283,7 @@ macroData :: TBEnv -> ObjSrc -> MacroData
 macroData tbEnv (objSrcType, obj) = MacroData tbEnv obj objSrcType
 
 resArrowDestType :: ClassGraph -> PartialType -> ResArrowTree -> Type
-resArrowDestType classGraph src (ResEArrow _ obj _ arr) = earrowDestType False classGraph src obj arr
+resArrowDestType classGraph src (ResEArrow _ obj _ arr) = arrowDestType False classGraph src obj arr
 resArrowDestType _ _ (PrimArrow _ tp _) = tp
 resArrowDestType _ _ (MacroArrow _ tp _) = tp
 resArrowDestType _ _ (ConstantArrow v) = singletonType $ getValType v

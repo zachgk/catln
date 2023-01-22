@@ -206,23 +206,8 @@ formVarMap _ _ = error $ printf "Unknown formVarMap"
 
 -- fullDest means to use the greatest possible type (after implicit).
 -- Otherwise, it uses the minimal type that *must* be reached
-arrowDestType :: (Show m, MetaDat m) => Bool -> ClassGraph -> PartialType -> Object Expr m -> Arrow Expr m -> Type
-arrowDestType True _ _ obj _ | getMetaType (objM obj) == TopType = TopType
+arrowDestType :: (Show m, MetaDat m) => Bool -> ClassGraph -> PartialType -> ExprObject Expr m -> Arrow Expr m -> Type
 arrowDestType fullDest classGraph src obj (Arrow arrM _ maybeExpr) = case mapM getExprArg maybeExpr of
-  Just (Just _) -> fromMaybe (error "Unfound expr") expr'
-  _             -> joined
-  where
-    varEnv = formVarMap classGraph $ intersectTypes classGraph (getMetaType $ objM obj) (singletonType src)
-    argEnv = snd <$> exprArgsWithSrc classGraph (objExpr obj) ((\(UnionType pl) -> head $ splitUnionType pl) $ substituteVars $ singletonType src)
-    substitute = substituteVarsWithVarEnv varEnv . substituteArgsWithArgEnv argEnv
-    expr' = fmap (substitute . getExprType) maybeExpr
-    arr' = substitute $ getMetaType arrM
-    joined = if fullDest
-      then unionTypes classGraph (fromMaybe bottomType expr') arr'
-      else intersectTypes classGraph (fromMaybe TopType expr') arr'
-
-earrowDestType :: (Show m, MetaDat m) => Bool -> ClassGraph -> PartialType -> ExprObject Expr m -> Arrow Expr m -> Type
-earrowDestType fullDest classGraph src obj (Arrow arrM _ maybeExpr) = case mapM getExprArg maybeExpr of
   Just (Just _) -> fromMaybe (error "Unfound expr") expr'
   _             -> joined
   where
