@@ -15,9 +15,9 @@ module Data
 
   (_ : String == _ : String) -> Boolean
 
-  String.toString -> String = this
+  :String.toString -> String = this
 
-  Integer.toString -> String
+  :Integer.toString -> String
 
   # ## Collections
     Collections are contains that hold elements of a type inside them.
@@ -57,7 +57,7 @@ module Data
   # #### [length]
     The [length] of a [List] is the number of items inside of it.
 
-  Nil.length = 0
+  :Nil.length = 0
 
   /Data/Cons(head, tail).length = 1 + tail.length
 

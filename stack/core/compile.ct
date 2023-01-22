@@ -15,10 +15,10 @@ module Catln
       But, all of the impurity is managed in this single type.
 
 
-  IO.exit(val: Integer) -> IO
+  :IO.exit(val: Integer) -> IO
     # [exit] will immediately terminate the process and return [val] as the status value.
 
-  IO.println(msg: String) -> IO
+  :IO.println(msg: String) -> IO
     # [println] will print the [msg] to the standard output along with a newline character.
 
   # ## Core Annotations

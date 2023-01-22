@@ -4,13 +4,13 @@ class IntList = IntCons(head: Integer, tail: IntList) | IntNil
 
 # operator::(Integer l, ConsList r) = Cons(head=l, tail=r)
 
-IntList.len -> Integer
+:IntList.len -> Integer
 
-IntNil.len = 0
+:IntNil.len = 0
 
 # TODO: Fix example below which should work without explicit return value
 
-/IntCons(head, tail).len -> Integer = 1 + tail.len
+:/IntCons(head, tail).len -> Integer = 1 + tail.len
 
 main{io: IO} = io.exit(val= IntCons(head= 5, tail= IntCons(head= 3, tail= IntNil)).len - 2)
 

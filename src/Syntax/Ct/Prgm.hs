@@ -37,6 +37,7 @@ data RawExpr m
   = RawCExpr (Meta m) Constant
   | RawValue (Meta m) TypeName
   | RawHoleExpr (Meta m) Hole
+  | RawTheExpr (RawExpr m) -- ^ Written :TypeName and read as The TypeName
   | RawAliasExpr (RawExpr m) (RawExpr m) -- ^ base aliasExpr
   | RawTupleApply (Meta m) (Meta m, RawExpr m) [TupleArg RawExpr m]
   | RawVarsApply (Meta m) (RawExpr m) [(TypeVarName, Meta m)]
@@ -94,6 +95,7 @@ instance ExprClass RawExpr where
     RawCExpr m _          -> m
     RawValue m _          -> m
     RawHoleExpr m _       -> m
+    RawTheExpr e          -> getExprMeta e
     RawAliasExpr b _      -> getExprMeta b
     RawTupleApply m _ _   -> m
     RawVarsApply m _ _    -> m
@@ -132,6 +134,7 @@ instance ExprClass RawExpr where
   exprArgs RawCExpr{} = H.empty
   exprArgs RawHoleExpr{} = H.empty
   exprArgs RawValue{} = H.empty
+  exprArgs RawTheExpr{} = H.empty
   exprArgs (RawAliasExpr base alias) = H.unionWith (++) (exprArgs base) (exprArgs alias)
   exprArgs (RawTupleApply _ (_, be) args) = H.unionWith (++) (exprArgs be) (unionsWith (++) $ map exprArg args)
     where

@@ -24,6 +24,7 @@ import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
+import Data.Char (toLower)
 
 desExpr :: PArgMetaMap -> PSExpr -> DesExpr
 desExpr _ (CExpr m c) = CExpr m c
@@ -76,6 +77,12 @@ semiDesExpr :: Maybe PObject -> PExpr -> PSExpr
 semiDesExpr _ (RawCExpr m c) = CExpr m c
 semiDesExpr _ (RawValue m n) = Value m n
 semiDesExpr _ (RawHoleExpr m h) = HoleExpr m h
+semiDesExpr _ (RawTheExpr t) = Value (mWithType (singletonType t') (getExprMeta t)) defaultName
+  where
+    t' = exprToPartialType t
+    defaultName = lowerCaseFirstLetter $ fromPartialName $ ptName t'
+    lowerCaseFirstLetter (n:ns) = toLower n : ns
+    lowerCaseFirstLetter ns = ns
 semiDesExpr obj (RawAliasExpr base alias) = AliasExpr (semiDesExpr obj base) (semiDesExpr obj alias)
 semiDesExpr obj (RawTupleApply _ (_, RawValue _ "/operator:") [TupleArgIO _ _ e, TupleArgIO _ _ tp]) = semiDesExpr obj (rawExprWithType (exprToType tp) e)
 semiDesExpr obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm'', be'') arg'') -> TupleApply m'' (bm'', be'') arg'') $ foldl aux (bm, be') args
@@ -93,7 +100,7 @@ semiDesExpr obj (RawVarsApply m be vs) = foldr aux be' vs
 semiDesExpr obj@Just{} (RawContextApply _ (_, be) ctxs) = semiDesExpr obj $ applyRawArgs (RawValue emptyMetaN "/Context") ((Just "value", be) : map (\(ctxName, ctxM) -> (Nothing, RawValue ctxM ctxName)) ctxs)
 semiDesExpr obj@Nothing (RawContextApply _ (_, be) ctxs) = semiDesExpr obj $ applyRawIArgs (RawValue emptyMetaN "/Context") (("value", IArgE be) : map (second IArgM) ctxs)
 semiDesExpr obj (RawParen e) = semiDesExpr obj e
-semiDesExpr obj@Nothing (RawMethod (RawValue m n) method) = semiDesExpr obj $ RawTupleApply (emptyMetaM "method" m) (emptyMetaE "base" method, method) [TupleArgI (Meta (singletonType $ partialVal $ PRelativeName n) (getMetaPos m) emptyMetaDat) "this"] -- Parse type methods like Integer.toString, Only for input expressions
+semiDesExpr obj@Nothing (RawMethod (RawTheExpr (RawValue m n)) method) = semiDesExpr obj $ RawTupleApply (emptyMetaM "method" m) (emptyMetaE "base" method, method) [TupleArgI (Meta (singletonType $ partialVal $ PRelativeName n) (getMetaPos m) emptyMetaDat) "this"] -- Parse type methods like :Integer.toString, Only for input expressions
 semiDesExpr obj (RawMethod base method) = semiDesExpr obj $ applyRawArgs method [(Just "this", base)]
 semiDesExpr obj (RawList m []) = semiDesExpr obj (RawValue m "/Data/Nil")
 semiDesExpr obj (RawList m (l:ls)) = semiDesExpr obj (RawTupleApply (emptyMetaM "listApp" (getExprMeta l)) (emptyMetaM "listBase" (getExprMeta l), RawValue m "/Data/Cons") [TupleArgIO (emptyMetaE "arg" l) "head" l, TupleArgIO (emptyMetaE "argRemaining" l) "tail" (RawList m ls)])
