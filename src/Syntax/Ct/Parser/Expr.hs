@@ -136,6 +136,7 @@ pArgSuffix exprMode = do
 
   let expr1' = case expr1 of
         RawTupleApply _ (_, RawValue _ "/operator:") [TupleArgIO _ _ (RawValue m n), TupleArgIO _ _ tp] -> RawValue (mWithType (exprToType tp) m) n
+        RawTheExpr t -> desugarTheExpr t
         _ -> expr1
 
   case (exprMode, expr1', maybeExpr2) of

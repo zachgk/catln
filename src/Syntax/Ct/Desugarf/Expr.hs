@@ -77,12 +77,7 @@ semiDesExpr :: Maybe PObject -> PExpr -> PSExpr
 semiDesExpr _ (RawCExpr m c) = CExpr m c
 semiDesExpr _ (RawValue m n) = Value m n
 semiDesExpr _ (RawHoleExpr m h) = HoleExpr m h
-semiDesExpr _ (RawTheExpr t) = Value (mWithType (singletonType t') (getExprMeta t)) defaultName
-  where
-    t' = exprToPartialType t
-    defaultName = lowerCaseFirstLetter $ fromPartialName $ ptName t'
-    lowerCaseFirstLetter (n:ns) = toLower n : ns
-    lowerCaseFirstLetter ns     = ns
+semiDesExpr obj (RawTheExpr t) = semiDesExpr obj $ desugarTheExpr t
 semiDesExpr obj (RawAliasExpr base alias) = AliasExpr (semiDesExpr obj base) (semiDesExpr obj alias)
 semiDesExpr obj (RawTupleApply _ (_, RawValue _ "/operator:") [TupleArgIO _ _ e, TupleArgIO _ _ tp]) = semiDesExpr obj (rawExprWithType (exprToType tp) e)
 semiDesExpr obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm'', be'') arg'') -> TupleApply m'' (bm'', be'') arg'') $ foldl aux (bm, be') args
@@ -104,6 +99,15 @@ semiDesExpr obj@Nothing (RawMethod (RawTheExpr (RawValue m n)) method) = semiDes
 semiDesExpr obj (RawMethod base method) = semiDesExpr obj $ applyRawArgs method [(Just "this", base)]
 semiDesExpr obj (RawList m []) = semiDesExpr obj (RawValue m "/Data/Nil")
 semiDesExpr obj (RawList m (l:ls)) = semiDesExpr obj (RawTupleApply (emptyMetaM "listApp" (getExprMeta l)) (emptyMetaM "listBase" (getExprMeta l), RawValue m "/Data/Cons") [TupleArgIO (emptyMetaE "arg" l) "head" l, TupleArgIO (emptyMetaE "argRemaining" l) "tail" (RawList m ls)])
+
+-- | Desugars a "TheExpr type" by applying the type to a default name
+desugarTheExpr :: PExpr -> PExpr
+desugarTheExpr t = RawValue (mWithType (singletonType t') (getExprMeta t)) defaultName
+  where
+    t' = exprToPartialType t
+    defaultName = lowerCaseFirstLetter $ fromPartialName $ ptName t'
+    lowerCaseFirstLetter (n:ns) = toLower n : ns
+    lowerCaseFirstLetter ns     = ns
 
 exprToPartialType :: PExpr -> PartialType
 exprToPartialType = fromJust . fst . desObjPropagateTypes . desExpr H.empty . semiDesExpr Nothing
