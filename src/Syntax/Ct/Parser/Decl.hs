@@ -15,7 +15,6 @@
 
 module Syntax.Ct.Parser.Decl where
 
-import           Control.Applicative        hiding (many, some)
 import           Data.Maybe
 import           Text.Megaparsec            hiding (pos1)
 import qualified Text.Megaparsec.Char.Lexer as L
@@ -37,23 +36,6 @@ pCompAnnot = do
   _ <- lookAhead $ string "#"
   pExpr ParseInputExpr
 
-pArrowRes :: Parser ParseMeta
-pArrowRes = do
-  _ <- symbol "->"
-  pos1 <- getSourcePos
-  t <- pSingleType
-  pos2 <- getSourcePos
-  return $ Meta t (Just (pos1, pos2, "")) emptyMetaDat
-
-pDeclLHS :: Parser PDeclLHS
-pDeclLHS = do
-  pos1 <- getSourcePos
-  patt <- pPattern FunctionObj
-  maybeArrMeta <- optional pArrowRes
-  pos2 <- getSourcePos
-  let arrMeta = fromMaybe (emptyMeta pos1 pos2) maybeArrMeta
-  return $ DeclLHS arrMeta patt
-
 pComment :: Parser PCompAnnot
 pComment = do
   pos1 <- getSourcePos
@@ -70,10 +52,9 @@ pComment = do
 
 pDeclStatement :: Parser PStatement
 pDeclStatement = do
-  lhs <- pDeclLHS
-  eqAndExpr <- optional $ do
-    _ <- symbol "=>" <|> symbol "="
-    optional $ try $ pExpr ParseOutputExpr
+  (input, guard, maybeTypeDecl, eqAndExpr) <- pArrowFull Nothing
+  let arrMeta = fromMaybe emptyMetaN maybeTypeDecl
+  let lhs = DeclLHS arrMeta (Pattern (ExprObject FunctionObj Nothing input) guard)
   case eqAndExpr of
     -- No equals (declaration or expression)
     Nothing -> case lhs of

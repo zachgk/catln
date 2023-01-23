@@ -18,8 +18,11 @@ import           Control.Applicative     hiding (many, some)
 import qualified Data.HashMap.Strict     as H
 import           Text.Megaparsec         hiding (pos1)
 
+import           Control.Monad           (unless)
 import           Data.Maybe
 import           Semantics.Prgm
+import           Semantics.Types
+import           Syntax.Ct.Desugarf.Expr (exprToPartialType)
 import           Syntax.Ct.Parser.Expr
 import           Syntax.Ct.Parser.Lexer
 import           Syntax.Ct.Parser.Syntax
@@ -32,9 +35,9 @@ pMultiTerm = sepBy1 (term ParseTypeExpr) (symbol "|")
 pClassStatement :: Parser PStatement
 pClassStatement = do
   _ <- symbol "class"
-  name <- ttypeidentifier
-  maybeVars <- optional $ squareBraces $ sepBy1 pLeafVar (symbol ",")
-  let vars = maybe H.empty H.fromList maybeVars
+  PartialType{ptName, ptArgs, ptVars=vars} <- exprToPartialType <$> term ParseInputExpr
+  unless (H.null ptArgs) $ fail "Classes do not currently support arguments"
+  let name = fromPartialName ptName
   maybeTypes <- optional $ do
     _ <- symbol "="
     MultiTypeDef name vars <$> pMultiTerm

@@ -63,7 +63,9 @@ pCommentStatement = do
 
 
 pStatementTree :: Parser PStatementTree
-pStatementTree = liftPStatement pTypeStatement
+pStatementTree = do
+  notFollowedBy newline
+  liftPStatement pTypeStatement
     <|> pCommentStatement
     <|> liftPStatement (RawAnnot <$> pCompAnnot)
     <|> liftPStatement pModule
@@ -78,7 +80,7 @@ pPrgm :: Parser PPrgm
 pPrgm = do
   _ <- many newline
   imports <- many pImport
-  statements <- many (Just <$> try pStatementTree <|> pNothingNewline)
+  statements <- many (Just <$> pStatementTree <|> pNothingNewline)
   return (imports, catMaybes statements)
 
 contents :: Parser a -> Parser a

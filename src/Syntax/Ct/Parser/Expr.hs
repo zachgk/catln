@@ -16,7 +16,6 @@ module Syntax.Ct.Parser.Expr where
 
 import           Control.Applicative            hiding (many, some)
 import           Control.Monad.Combinators.Expr
-import qualified Data.HashMap.Strict            as H
 import           Data.Maybe
 import           Text.Megaparsec                hiding (pos1)
 import           Text.Megaparsec.Char
@@ -46,9 +45,16 @@ mkOp2 :: String -> PExpr -> PExpr -> PExpr
 mkOp2 opChars x y = applyRawArgs (RawValue emptyMetaN op) [(Just operatorArgL, x), (Just operatorArgR, y)]
   where op = operatorPrefix ++ opChars
 
+pMinus :: Parser String
+pMinus = do
+  isArrow <- optional $ try $ lookAhead $ symbol "->"
+  case isArrow of
+    Just _  -> fail "-> should not be matched for - operator"
+    Nothing -> symbol "-"
+
 ops :: [[Operator Parser PExpr]]
 ops = [
-    [ Prefix (mkOp1 "-"  <$ symbol "-")
+    [ Prefix (mkOp1 "-"  <$ pMinus)
     , Prefix (mkOp1 "~" <$ symbol "~")
     ],
     [ InfixL (mkOp2 ":" <$ symbol ":")
@@ -58,7 +64,7 @@ ops = [
     ],
     [ InfixL (mkOp2 "++" <$ symbol "++")
     , InfixL (mkOp2 "+" <$ symbol "+")
-    , InfixL (mkOp2 "-" <$ symbol "-")
+    , InfixL (mkOp2 "-" <$ pMinus)
     ],
     [ InfixL (mkOp2 "<=" <$ symbol "<=")
     , InfixL (mkOp2 ">=" <$ symbol ">=")
@@ -103,6 +109,18 @@ parenExpr exprMode = do
   e <- parens (pExpr exprMode)
   return $ RawParen e
 
+pArrowFull :: Maybe ExprParseMode -> Parser (PExpr, PGuard, Maybe ParseMeta, Maybe (Maybe PExpr))
+pArrowFull exprMode = do
+  expr1 <- pExpr (fromMaybe ParseInputExpr exprMode)
+  guard <- pPatternGuard
+  maybeDecl <- optional $ do
+    _ <- symbol "->"
+    exprToTypeMeta <$> term ParseInputExpr
+  maybeExpr2 <- optional $ do
+    _ <- symbol "=>" <|> symbol "="
+    optional $ try $ pExpr (fromMaybe ParseOutputExpr exprMode)
+  return (expr1, guard, maybeDecl, maybeExpr2)
+
 data TermSuffix
   = MethodSuffix ParseMeta TypeName
   | ArgsSuffix ParseMeta [PTupleArg]
@@ -121,17 +139,14 @@ pMethod = do
 
 pArgSuffix :: ExprParseMode -> Parser PTupleArg
 pArgSuffix exprMode = do
-  expr1 <- pExpr exprMode
-  maybeExpr2 <- optional $ do
-    _ <- symbol "="
-    pExpr exprMode
+  (expr1, NoGuard, Nothing, maybeExpr2) <- pArrowFull (Just exprMode)
 
   let expr1' = case expr1 of
         RawTupleApply _ (_, RawValue _ "/operator:") [TupleArgIO _ _ (RawValue m n), TupleArgIO _ _ tp] -> RawValue (mWithType (exprToType tp) m) n
         _ -> expr1
 
   case (exprMode, expr1', maybeExpr2) of
-    (_, RawValue m argName, Just expr) -> return $ TupleArgIO m argName expr
+    (_, RawValue m argName, Just (Just expr)) -> return $ TupleArgIO m argName expr
     (ParseOutputExpr, _, Nothing) -> return $ TupleArgO (emptyMetaE "tuple" expr1) expr1
     (_, RawValue m argName, Nothing) -> return $ TupleArgI m argName
     _ -> fail $ printf "Unexpected argName: %s" (show expr1)
@@ -242,47 +257,3 @@ pPatternGuard :: Parser PGuard
 pPatternGuard = fromMaybe NoGuard <$> optional (pIfGuard
                                               <|> pElseGuard
                                             )
-
-pPattern :: ObjectBasis -> Parser PPattern
-pPattern basis = do
-  e <- term ParseInputExpr
-  Pattern (ExprObject basis Nothing e) <$> pPatternGuard
-
--- Pattern Types
-
-
-pLeafVar :: Parser (TypeVarName, Type)
-pLeafVar = do
-  var <- tvar
-  maybeTp <- optional $ do
-    _ <- symbol ":"
-    identifier <|> tidentifier <|> tvar
-  return (var, fromMaybeTypeName maybeTp)
-
-pTypeArg :: Parser (String, Type)
-pTypeArg = do
-  argName <- identifier
-  _ <- symbol "="
-  tp <- tidentifier
-  return (argName, singletonType (partialVal (PRelativeName tp)))
-
-pTypeVar :: Parser Type
-pTypeVar = TypeVar . TVVar <$> tvar
-
--- TODO: Parse type properties
-pLeafType :: Parser PartialType
-pLeafType = do
-  name <- tidentifier
-  maybeVars <- optional $ squareBraces $ sepBy1 pLeafVar (symbol ",")
-  maybeArgs <- optional $ parens (sepBy1 pTypeArg (symbol ","))
-  let vars = maybe H.empty H.fromList maybeVars
-  let args = maybe H.empty H.fromList maybeArgs
-  return ((partialVal (PRelativeName name)){ptVars=vars, ptArgs=args})
-
-pSingleType :: Parser Type
-pSingleType = pTypeVar
-              <|> singletonType <$> pLeafType
-
-pType :: Parser Type
-pType = pTypeVar
-        <|> UnionType . joinUnionType <$> sepBy1 pLeafType (symbol "|")

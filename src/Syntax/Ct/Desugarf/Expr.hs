@@ -19,12 +19,12 @@ import qualified Data.HashMap.Strict     as H
 import           Data.Maybe
 import           Text.Printf
 
+import           Data.Char               (toLower)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
-import Data.Char (toLower)
 
 desExpr :: PArgMetaMap -> PSExpr -> DesExpr
 desExpr _ (CExpr m c) = CExpr m c
@@ -82,7 +82,7 @@ semiDesExpr _ (RawTheExpr t) = Value (mWithType (singletonType t') (getExprMeta 
     t' = exprToPartialType t
     defaultName = lowerCaseFirstLetter $ fromPartialName $ ptName t'
     lowerCaseFirstLetter (n:ns) = toLower n : ns
-    lowerCaseFirstLetter ns = ns
+    lowerCaseFirstLetter ns     = ns
 semiDesExpr obj (RawAliasExpr base alias) = AliasExpr (semiDesExpr obj base) (semiDesExpr obj alias)
 semiDesExpr obj (RawTupleApply _ (_, RawValue _ "/operator:") [TupleArgIO _ _ e, TupleArgIO _ _ tp]) = semiDesExpr obj (rawExprWithType (exprToType tp) e)
 semiDesExpr obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm'', be'') arg'') -> TupleApply m'' (bm'', be'') arg'') $ foldl aux (bm, be') args
@@ -111,3 +111,6 @@ exprToPartialType = fromJust . fst . desObjPropagateTypes . desExpr H.empty . se
 exprToType :: PExpr -> Type
 exprToType (RawValue _ n@('$':_)) = TypeVar $ TVVar n
 exprToType t                      = (singletonType . exprToPartialType) t
+
+exprToTypeMeta :: PExpr -> ParseMeta
+exprToTypeMeta e = mWithType (exprToType e) (getExprMeta e)
