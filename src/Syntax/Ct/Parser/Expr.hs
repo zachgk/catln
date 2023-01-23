@@ -57,6 +57,8 @@ ops = [
     [ Prefix (mkOp1 "-"  <$ pMinus)
     , Prefix (mkOp1 "~" <$ symbol "~")
     ],
+    [ InfixL (RawMethod <$ symbol ".")
+    ],
     [ InfixL (mkOp2 ":" <$ symbol ":")
     ],
     [ InfixL (mkOp2 "*" <$ symbol "*")
@@ -122,20 +124,11 @@ pArrowFull exprMode = do
   return (expr1, guard, maybeDecl, maybeExpr2)
 
 data TermSuffix
-  = MethodSuffix ParseMeta TypeName
-  | ArgsSuffix ParseMeta [PTupleArg]
+  = ArgsSuffix ParseMeta [PTupleArg]
   | VarsSuffix ParseMeta [(TypeVarName, ParseMeta)]
   | ContextSuffix ParseMeta [(ArgName, ParseMeta)]
   | AliasSuffix ParseMeta TypeName
   deriving (Show)
-
-pMethod :: Parser TermSuffix
-pMethod = do
-  _ <- string "."
-  pos1 <- getSourcePos
-  methodName <- identifier <|> tidentifier
-  pos2 <- getSourcePos
-  return $ MethodSuffix (emptyMeta pos1 pos2) methodName
 
 pArgSuffix :: ExprParseMode -> Parser PTupleArg
 pArgSuffix exprMode = do
@@ -202,7 +195,7 @@ pAliasSuffix = do
   return $ AliasSuffix (emptyMeta pos1 pos2) aliasName
 
 pTermSuffix :: ExprParseMode -> Parser TermSuffix
-pTermSuffix exprMode = pMethod <|> pArgsSuffix exprMode <|> pVarsSuffix <|> pContextSuffix <|> pAliasSuffix
+pTermSuffix exprMode = pArgsSuffix exprMode <|> pVarsSuffix <|> pContextSuffix <|> pAliasSuffix
 
 pInt :: Parser PExpr
 pInt = do
@@ -221,7 +214,6 @@ pList exprMode = do
   return $ RawList (emptyMeta pos1 pos2) lst
 
 applyTermSuffix :: PExpr -> TermSuffix -> PExpr
-applyTermSuffix base (MethodSuffix m n) = RawMethod base (RawValue m n)
 applyTermSuffix base (ArgsSuffix m args) = RawTupleApply m (labelPosM "arg" $ getExprMeta base, base) args
 applyTermSuffix base (VarsSuffix m vars) = RawVarsApply m base vars
 applyTermSuffix base (ContextSuffix m args) = RawContextApply m (labelPosM "ctx" $ getExprMeta base, base) args
