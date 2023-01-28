@@ -29,7 +29,6 @@ import           Syntax.Ct.Desugarf.Expr
 import           Syntax.Ct.Parser.Lexer
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
-import           Text.Printf
 
 data ExprParseMode
   = ParseInputExpr -- ^ Parses a LHS or input expression
@@ -111,8 +110,8 @@ parenExpr exprMode = do
   e <- parens (pExpr exprMode)
   return $ RawParen e
 
-pArrowFull :: Maybe ExprParseMode -> Parser (PExpr, PGuard, Maybe ParseMeta, Maybe (Maybe PExpr))
-pArrowFull exprMode = do
+pArrowFull :: Maybe ExprParseMode -> ObjectBasis -> Parser PObjArr
+pArrowFull exprMode basis = do
   expr1 <- pExpr (fromMaybe ParseInputExpr exprMode)
   guard <- pPatternGuard
   maybeDecl <- optional $ do
@@ -121,29 +120,28 @@ pArrowFull exprMode = do
   maybeExpr2 <- optional $ do
     _ <- symbol "=>" <|> symbol "="
     optional $ try $ pExpr (fromMaybe ParseOutputExpr exprMode)
-  return (expr1, guard, maybeDecl, maybeExpr2)
+
+  let arrMeta = fromMaybe emptyMetaN maybeDecl
+  (i', o') <- return $ case (expr1, maybeExpr2) of
+    (i, Just (Just o)) -> (Just (RawGuardExpr i guard), Just (RawGuardExpr o NoGuard))
+    (i, Just Nothing) -> (Just (RawGuardExpr i guard), Just (RawGuardExpr (rawVal nestedDeclaration) NoGuard))
+    (i, Nothing) -> case exprMode of
+      Just ParseInputExpr  -> (Just (RawGuardExpr i guard), Nothing)
+      Just ParseOutputExpr -> (Nothing, Just (RawGuardExpr i guard))
+      Just ParseTypeExpr   -> (Just (RawGuardExpr i guard), Nothing)
+      Nothing              -> (Just (RawGuardExpr i guard), Nothing)
+
+  return $ RawObjArr i' basis [] arrMeta o'
 
 data TermSuffix
-  = ArgsSuffix ParseMeta [PTupleArg]
+  = ArgsSuffix ParseMeta [PObjArr]
   | VarsSuffix ParseMeta [(TypeVarName, ParseMeta)]
   | ContextSuffix ParseMeta [(ArgName, ParseMeta)]
   | AliasSuffix ParseMeta TypeName
   deriving (Show)
 
-pArgSuffix :: ExprParseMode -> Parser PTupleArg
-pArgSuffix exprMode = do
-  (expr1, NoGuard, Nothing, maybeExpr2) <- pArrowFull (Just exprMode)
-
-  let expr1' = case expr1 of
-        RawTupleApply _ (_, RawValue _ "/operator:") [TupleArgIO _ _ (RawValue m n), TupleArgIO _ _ tp] -> RawValue (mWithType (exprToType tp) m) n
-        RawTheExpr t -> desugarTheExpr t
-        _ -> expr1
-
-  case (exprMode, expr1', maybeExpr2) of
-    (_, RawValue m argName, Just (Just expr)) -> return $ TupleArgIO m argName expr
-    (ParseOutputExpr, _, Nothing) -> return $ TupleArgO (emptyMetaE "tuple" expr1) expr1
-    (_, RawValue m argName, Nothing) -> return $ TupleArgI m argName
-    _ -> fail $ printf "Unexpected argName: %s" (show expr1)
+pArgSuffix :: ExprParseMode -> Parser PObjArr
+pArgSuffix exprMode = pArrowFull (Just exprMode) ArgObj
 
 pArgsSuffix :: ExprParseMode -> Parser TermSuffix
 pArgsSuffix exprMode = do

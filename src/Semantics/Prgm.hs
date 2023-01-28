@@ -96,7 +96,7 @@ instance Functor Guard where
   fmap _ NoGuard     = NoGuard
 
 type ObjArg e m = (Meta m, Maybe (Object e m))
-data ObjectBasis = FunctionObj | TypeObj | PatternObj | MatchObj
+data ObjectBasis = FunctionObj | TypeObj | PatternObj | MatchObj | ArgObj
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 -- |
 -- Represents an input.

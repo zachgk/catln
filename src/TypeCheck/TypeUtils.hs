@@ -51,6 +51,7 @@ objectPrecedence (Object{objBasis=FunctionObj}, _, arrs) = [2, declDef]
     hasDefinition (Arrow _ _ Nothing)  = False
 objectPrecedence (Object{objBasis=PatternObj}, _, _) = [3]
 objectPrecedence (Object{objBasis=MatchObj}, _, _) =   [4]
+objectPrecedence (Object{objBasis=ArgObj}, _, _) =   [5]
 
 -- | Finds the 'objectPrecedence' for all types
 buildPrecedenceMap :: (Show m, Show (e m), MetaDat m, ExprClass e) => ObjectMap e m -> H.HashMap TypeName [Int]

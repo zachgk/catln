@@ -14,6 +14,7 @@
 {-# LANGUAGE DeriveGeneric             #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE InstanceSigs              #-}
 
 module Syntax.Ct.Prgm where
 
@@ -39,12 +40,17 @@ data RawExpr m
   | RawHoleExpr (Meta m) Hole
   | RawTheExpr (RawExpr m) -- ^ Written :TypeName and read as The TypeName
   | RawAliasExpr (RawExpr m) (RawExpr m) -- ^ base aliasExpr
-  | RawTupleApply (Meta m) (Meta m, RawExpr m) [TupleArg RawExpr m]
+  | RawTupleApply (Meta m) (Meta m, RawExpr m) [RawObjArr RawExpr m]
   | RawVarsApply (Meta m) (RawExpr m) [(TypeVarName, Meta m)]
   | RawContextApply (Meta m) (Meta m, RawExpr m) [(ArgName, Meta m)]
   | RawParen (RawExpr m)
   | RawMethod (RawExpr m) (RawExpr m) -- ^ base methodValue
   | RawList (Meta m) [RawExpr m]
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+
+data RawGuardExpr e m = RawGuardExpr (e m) (Guard (e m))
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+data RawObjArr e m = RawObjArr (Maybe (RawGuardExpr e m)) ObjectBasis [CompAnnot (e m)] (Meta m) (Maybe (RawGuardExpr e m))
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 data DeclLHS e m = DeclLHS (Meta m) (Pattern e m)
@@ -115,7 +121,12 @@ instance ExprClass RawExpr where
   maybeExprPath _                            = Nothing
 
   exprAppliedArgs (RawValue _ _) = []
-  exprAppliedArgs (RawTupleApply _ (_, be) args) = exprAppliedArgs be ++ args
+  exprAppliedArgs (RawTupleApply _ (_, be) args) = exprAppliedArgs be ++ map mapArgs args
+    where
+      mapArgs (RawObjArr (Just (RawGuardExpr (RawValue _ argName) NoGuard)) _ _ m Nothing) = TupleArgI m argName
+      mapArgs (RawObjArr Nothing _ _ m (Just (RawGuardExpr argVal NoGuard))) = TupleArgO m argVal
+      mapArgs (RawObjArr (Just (RawGuardExpr (RawValue _ argName) _)) _ _ m (Just (RawGuardExpr argVal NoGuard))) = TupleArgIO m argName argVal
+      mapArgs oa = error $ printf "exprAppliedArgs not defined for arg %s" (show oa)
   exprAppliedArgs (RawVarsApply _ e _) = exprAppliedArgs e
   exprAppliedArgs (RawContextApply _ (_, e) _) = exprAppliedArgs e
   exprAppliedArgs (RawParen e) = exprAppliedArgs e
@@ -131,6 +142,7 @@ instance ExprClass RawExpr where
   exprAppliedVars (RawMethod _ e) = exprAppliedVars e
   exprAppliedVars _ = error "Unsupported RawExpr exprAppliedVars"
 
+  exprArgs :: RawExpr m -> H.HashMap ArgName [Meta m]
   exprArgs RawCExpr{} = H.empty
   exprArgs RawHoleExpr{} = H.empty
   exprArgs RawValue{} = H.empty
@@ -138,9 +150,9 @@ instance ExprClass RawExpr where
   exprArgs (RawAliasExpr base alias) = H.unionWith (++) (exprArgs base) (exprArgs alias)
   exprArgs (RawTupleApply _ (_, be) args) = H.unionWith (++) (exprArgs be) (unionsWith (++) $ map exprArg args)
     where
-      exprArg (TupleArgIO _ _ e) = exprArgs e
-      exprArg (TupleArgO _ e)    = exprArgs e
-      exprArg (TupleArgI m n)    = H.singleton n [m]
+      exprArg (RawObjArr (Just (RawGuardExpr (RawValue m argName) NoGuard)) _ _ _ Nothing) = H.singleton argName [m]
+      exprArg (RawObjArr _ _ _ _ (Just (RawGuardExpr argVal NoGuard))) = exprArgs argVal
+      exprArg oa = error $ printf "exprArgs not defined for arg %s" (show oa)
   exprArgs (RawVarsApply _ e _) = exprArgs e
   exprArgs (RawContextApply _ (_, e) _) = exprArgs e
   exprArgs (RawParen e) = exprArgs e

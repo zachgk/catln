@@ -18,6 +18,9 @@ operatorArgUnary = "a"
 operatorArgL = "l"
 operatorArgR = "r"
 
+operatorType :: String
+operatorType = operatorPrefix ++ ":"
+
 mdAnnot, mdAnnotText :: String
 mdAnnot = "/Catln/#md"
 mdAnnotText = "text"

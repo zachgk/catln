@@ -15,7 +15,6 @@
 
 module Syntax.Ct.Parser.Decl where
 
-import           Data.Maybe
 import           Text.Megaparsec            hiding (pos1)
 import qualified Text.Megaparsec.Char.Lexer as L
 
@@ -42,7 +41,7 @@ pComment = do
   c <- L.indentBlock scn p
   pos2 <- getSourcePos
   let m = emptyMeta pos1 pos2
-  return $ RawTupleApply (emptyMetaM "appArg" m) (emptyMetaM "valC" m, RawValue (emptyMetaM "val" m) mdAnnot) [TupleArgIO (emptyMetaM "text" m) "text" (RawCExpr m (CStr c))]
+  return (RawValue (emptyMetaM "val" m) mdAnnot `applyRawArgs` [(Just "text", RawCExpr m (CStr c))])
   where
     takeLine = takeWhileP (Just "character") (/= '\n')
     p = do
@@ -52,10 +51,10 @@ pComment = do
 
 pDeclStatement :: Parser PStatement
 pDeclStatement = do
-  (input, guard, maybeTypeDecl, eqAndExpr) <- pArrowFull Nothing
-  let arrMeta = fromMaybe emptyMetaN maybeTypeDecl
-  let lhs = DeclLHS arrMeta (Pattern (ExprObject FunctionObj Nothing input) guard)
-  case eqAndExpr of
+  (RawObjArr (Just (RawGuardExpr inExpr guard)) basis [] arrMeta out) <- pArrowFull Nothing FunctionObj
+  let lhs = DeclLHS arrMeta (Pattern (ExprObject basis Nothing inExpr) guard)
+
+  case out of
     -- No equals (declaration or expression)
     Nothing -> case lhs of
 
@@ -68,8 +67,7 @@ pDeclStatement = do
       -- Must be either a declaration or an expression
       _ -> fail $ printf "Invalid declaration or expression: %s" (show lhs)
 
-    -- Equals but no expr (multi-line definition)
-    Just Nothing -> return $ RawDeclStatement $ RawDecl lhs (Just $ rawVal nestedDeclaration)
-
     -- Equals and expr (inline definition)
-    Just (Just expr) -> return $ RawDeclStatement $ RawDecl lhs (Just expr)
+    Just (RawGuardExpr expr NoGuard) -> return $ RawDeclStatement $ RawDecl lhs (Just expr)
+
+    Just (RawGuardExpr _ _) -> error $ printf "pDeclStatement does not support output expressions with guards"

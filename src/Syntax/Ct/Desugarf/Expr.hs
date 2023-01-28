@@ -79,15 +79,20 @@ semiDesExpr _ (RawValue m n) = Value m n
 semiDesExpr _ (RawHoleExpr m h) = HoleExpr m h
 semiDesExpr obj (RawTheExpr t) = semiDesExpr obj $ desugarTheExpr t
 semiDesExpr obj (RawAliasExpr base alias) = AliasExpr (semiDesExpr obj base) (semiDesExpr obj alias)
-semiDesExpr obj (RawTupleApply _ (_, RawValue _ "/operator:") [TupleArgIO _ _ e, TupleArgIO _ _ tp]) = semiDesExpr obj (rawExprWithType (exprToType tp) e)
+semiDesExpr obj (RawTupleApply _ (_, RawValue _ "/operator:") [RawObjArr _ _ _ _ (Just (RawGuardExpr e _)), RawObjArr _ _ _ _ (Just (RawGuardExpr tp _))]) = semiDesExpr obj (rawExprWithType (exprToType tp) e)
 semiDesExpr obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm'', be'') arg'') -> TupleApply m'' (bm'', be'') arg'') $ foldl aux (bm, be') args
   where
     be' = semiDesExpr obj be
-    aux (m, e) (TupleArgIO argM argName argVal) = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (TupleArgIO argM argName argVal'))
+    aux (m, e) (RawObjArr (Just (RawGuardExpr argInExpr NoGuard)) _ _ argM (Just (RawGuardExpr argVal NoGuard))) = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (TupleArgIO argM argName' argVal'))
+      where
+        argVal' = semiDesExpr obj argVal
+        (Value _ argName') = semiDesExpr obj argInExpr
+    aux (m, e) (RawObjArr Nothing _ _ argM (Just (RawGuardExpr argVal NoGuard))) = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (TupleArgO argM argVal'))
       where argVal' = semiDesExpr obj argVal
-    aux (m, e) (TupleArgO argM argVal) = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (TupleArgO argM argVal'))
-      where argVal' = semiDesExpr obj argVal
-    aux (m, e) (TupleArgI argM argName) = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (TupleArgI argM argName))
+    aux (m, e) (RawObjArr (Just (RawGuardExpr argInExpr NoGuard)) _ _ _ Nothing) = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (TupleArgI argM' argName'))
+      where
+        (Value argM' argName') = semiDesExpr obj argInExpr
+    aux _ oa = error $ printf "Could not semiDesExpr with unsupported term %s" (show oa)
 semiDesExpr obj (RawVarsApply m be vs) = foldr aux be' vs
   where
     be' = semiDesExpr obj be
@@ -95,10 +100,10 @@ semiDesExpr obj (RawVarsApply m be vs) = foldr aux be' vs
 semiDesExpr obj@Just{} (RawContextApply _ (_, be) ctxs) = semiDesExpr obj $ applyRawArgs (RawValue emptyMetaN "/Context") ((Just "value", be) : map (\(ctxName, ctxM) -> (Nothing, RawValue ctxM ctxName)) ctxs)
 semiDesExpr obj@Nothing (RawContextApply _ (_, be) ctxs) = semiDesExpr obj $ applyRawIArgs (RawValue emptyMetaN "/Context") (("value", IArgE be) : map (second IArgM) ctxs)
 semiDesExpr obj (RawParen e) = semiDesExpr obj e
-semiDesExpr obj@Nothing (RawMethod (RawTheExpr (RawValue m n)) method) = semiDesExpr obj $ RawTupleApply (emptyMetaM "method" m) (emptyMetaE "base" method, method) [TupleArgI (Meta (singletonType $ partialVal $ PRelativeName n) (getMetaPos m) emptyMetaDat) "this"] -- Parse type methods like :Integer.toString, Only for input expressions
+semiDesExpr obj@Nothing (RawMethod (RawTheExpr (RawValue m n)) method) = semiDesExpr obj (method `applyRawIArgs` [("this", IArgM (Meta (singletonType $ partialVal $ PRelativeName n) (getMetaPos m) emptyMetaDat))]) -- Parse type methods like :Integer.toString, Only for input expressions
 semiDesExpr obj (RawMethod base method) = semiDesExpr obj $ applyRawArgs method [(Just "this", base)]
 semiDesExpr obj (RawList m []) = semiDesExpr obj (RawValue m "/Data/Nil")
-semiDesExpr obj (RawList m (l:ls)) = semiDesExpr obj (RawTupleApply (emptyMetaM "listApp" (getExprMeta l)) (emptyMetaM "listBase" (getExprMeta l), RawValue m "/Data/Cons") [TupleArgIO (emptyMetaE "arg" l) "head" l, TupleArgIO (emptyMetaE "argRemaining" l) "tail" (RawList m ls)])
+semiDesExpr obj (RawList m (l:ls)) = semiDesExpr obj (RawValue m "/Data/Cons" `applyRawArgs` [(Just "head", l), (Just "tail", RawList m ls)])
 
 -- | Desugars a "TheExpr type" by applying the type to a default name
 desugarTheExpr :: PExpr -> PExpr
