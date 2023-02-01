@@ -46,14 +46,11 @@ flattenNestedDeclarations (RawDecl oa@RawObjArr{roaObj=Just (RawGuardExpr objExp
     subDecls2 = concatMap flattenNestedDeclarations subDecls
     annots2 = fmap (semiDesExpr (Just objExpression)) annots1
 
-    oa2@RawObjArr{roaObj=Just (RawGuardExpr objExpression' _), roaM, roaArr=roaArr2} = semiDesObjArr oa
+    oa2 = (semiDesObjArr oa){roaAnnots=annots2, roaDoc=objDoc}
 
-    (subDecls3, expr3, annots3, roaM') = scopeSubDeclFunNames (exprPath objExpression) subDecls2 (fmap rgeExpr roaArr2) annots2 roaM
-    (subDecls4, expr4, annots4) = currySubFunctions (exprArgsLinear objExpression') subDecls3 expr3 annots3
-    roaArr4 = case (roaArr2, expr4) of
-      (Just (RawGuardExpr _ arrGuard2), Just jexpr4) -> Just $ RawGuardExpr jexpr4 arrGuard2
-      _ -> Nothing
-    decl' = PSemiDecl oa2{roaM=roaM', roaArr=roaArr4, roaAnnots=annots4, roaDoc=objDoc}
+    (oa3, subDecls3) = scopeSubDeclFunNames oa2 subDecls2
+    (oa4, subDecls4) = currySubFunctions oa3 subDecls3
+    decl' = PSemiDecl oa4
 flattenNestedDeclarations d = error $ printf "flattenNestedDeclarations without input expression: %s" (show d)
 
 data DOEMode = DOEArgMode | DOEValMode deriving (Eq, Show)

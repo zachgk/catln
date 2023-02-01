@@ -69,20 +69,24 @@ scopeSubDeclFunNamesInMeta _ _ m@(Meta TopType _ _) = m
 scopeSubDeclFunNamesInMeta _ _ m@(Meta TypeVar{} _ _) = m
 
 -- Renames sub functions by applying the parent names as a prefix to avoid name collisions
-scopeSubDeclFunNames :: TypeName -> [PSemiDecl] -> Maybe PSExpr -> [PSCompAnnot] -> ParseMeta -> ([PSemiDecl], Maybe PSExpr, [PSCompAnnot], ParseMeta)
-scopeSubDeclFunNames prefix decls maybeExpr annots arrM = (decls', expr', annots', arrM')
+scopeSubDeclFunNames :: PSObjArr -> [PSemiDecl] -> (PSObjArr, [PSemiDecl])
+scopeSubDeclFunNames oa@RawObjArr{roaObj=Just (RawGuardExpr objExpression _), roaM, roaAnnots, roaArr} decls = (oa{roaM=arrM', roaAnnots=annots', roaArr=expr'}, decls')
   where
+    prefix = exprPath objExpression
     declNames = S.fromList $ map (\(PSemiDecl RawObjArr{roaObj=Just (RawGuardExpr o _)}) -> exprPath o) decls
     addPrefix n = prefix ++ "." ++ n
     scopeM = scopeSubDeclFunNamesInMeta prefix declNames
-    arrM' = scopeM arrM
-    decls' = map (\(PSemiDecl oa@RawObjArr{roaM, roaObj=Just (RawGuardExpr obj guard), roaArr}) -> PSemiDecl oa{
-                     roaM=scopeM roaM,
+    arrM' = scopeM roaM
+    decls' = map (\(PSemiDecl doa@RawObjArr{roaM=m, roaObj=Just (RawGuardExpr obj guard), roaArr=droaArr}) -> PSemiDecl doa{
+                     roaM=scopeM m,
                      roaObj=Just (RawGuardExpr (mapExprPath (\(pM, pN) -> Value pM (addPrefix pN)) obj) guard),
-                     roaArr = fmap (\(RawGuardExpr e g) -> RawGuardExpr (scopeSubDeclFunNamesInExpr prefix declNames e) g) roaArr
+                     roaArr = fmap (\(RawGuardExpr e g) -> RawGuardExpr (scopeSubDeclFunNamesInExpr prefix declNames e) g) droaArr
                      }) decls
-    expr' = fmap (scopeSubDeclFunNamesInExpr prefix declNames) maybeExpr
-    annots' = map (scopeSubDeclFunNamesInExpr prefix declNames) annots
+    expr' = case roaArr of
+      Just (RawGuardExpr e g) -> Just (RawGuardExpr (scopeSubDeclFunNamesInExpr prefix declNames e) g)
+      Nothing -> Nothing
+    annots' = map (scopeSubDeclFunNamesInExpr prefix declNames) roaAnnots
+scopeSubDeclFunNames oa _ = error $ printf "scopeSubDeclFunNames without input expression: %s" (show oa)
 
 -- | Apply args to a signature or input expression
 curryApplyParentArgsSignature :: PSExpr -> ParentArgs -> PSExpr
@@ -116,15 +120,19 @@ currySubFunctionsUpdateExpr toUpdate parentArgs (VarApply tm tbe tVarName tVarVa
   where
     tbe' = currySubFunctionsUpdateExpr toUpdate parentArgs tbe
 
-currySubFunctions :: ParentArgs -> [PSemiDecl] -> Maybe PSExpr -> [PSCompAnnot] -> ([PSemiDecl], Maybe PSExpr, [PSCompAnnot])
-currySubFunctions parentArgs decls expr annots = (decls', expr', annots')
+currySubFunctions :: PSObjArr -> [PSemiDecl] -> (PSObjArr, [PSemiDecl])
+currySubFunctions oa@RawObjArr{roaObj=Just (RawGuardExpr objExpression _), roaAnnots, roaArr} decls = (oa{roaAnnots=annots', roaArr=expr'}, decls')
   where
+    parentArgs = exprArgsLinear objExpression
     toUpdate = S.fromList $ map (\(PSemiDecl RawObjArr{roaObj=Just (RawGuardExpr o _)}) -> exprPath o) decls
     decls2 = map (currySubFunctionSignature parentArgs) decls
-    expr' = fmap (currySubFunctionsUpdateExpr toUpdate parentArgs) expr
-    decls' = map (\(PSemiDecl oa@RawObjArr{roaArr}) -> PSemiDecl oa{roaArr=fmap (currySubFunctionsUpdateGuardExpr toUpdate parentArgs) roaArr}) decls2
+    expr' = case roaArr of
+      Just (RawGuardExpr e g) -> Just $ RawGuardExpr (currySubFunctionsUpdateExpr toUpdate parentArgs e) g
+      Nothing -> Nothing
+    decls' = map (\(PSemiDecl doa@RawObjArr{roaArr=droaArr}) -> PSemiDecl doa{roaArr=fmap (currySubFunctionsUpdateGuardExpr toUpdate parentArgs) droaArr}) decls2
     currySubFunctionsUpdateGuardExpr u p (RawGuardExpr e g) = RawGuardExpr (currySubFunctionsUpdateExpr u p e) g
-    annots' = map (currySubFunctionsUpdateExpr toUpdate parentArgs) annots
+    annots' = map (currySubFunctionsUpdateExpr toUpdate parentArgs) roaAnnots
+currySubFunctions oa _ = error $ printf "currySubFunctions without input expression: %s" (show oa)
 
 desObjDocComment :: [PStatementTree] -> Maybe String
 desObjDocComment ((RawStatementTree (RawAnnot annotExpr) _):rest) | maybeExprPath annotExpr == Just mdAnnot = Just (++) <*> Just annotText <*> desObjDocComment rest
