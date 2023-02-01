@@ -39,7 +39,7 @@ type EvalMetaDat = ()
 type EvalMeta = Meta EvalMetaDat
 type ECompAnnot = CompAnnot (Expr EvalMetaDat)
 type EExpr = Expr EvalMetaDat
-type EGuard = Guard EExpr
+type EGuard = Maybe EExpr
 type EObject = ExprObject Expr EvalMetaDat
 type EArrow = Arrow Expr EvalMetaDat
 type EObjectMap = ExprObjectMap Expr EvalMetaDat
@@ -173,7 +173,7 @@ data MacroData = MacroData {
                              }
 newtype MacroFunction = MacroFunction (ResArrowTree -> MacroData -> CRes ResArrowTree)
 type ResBuildEnvFunction = ResArrowTree -> ResArrowTree
-type ResBuildEnvItem = (PartialType, Guard (Expr EvalMetaDat), ResBuildEnvFunction)
+type ResBuildEnvItem = (PartialType, Maybe (Expr EvalMetaDat), Bool, ResBuildEnvFunction)
 type ResBuildEnv = H.HashMap TypeName [ResBuildEnvItem]
 type ResExEnv = H.HashMap (PartialType, Arrow Expr EvalMetaDat) (ResArrowTree, [ResArrowTree]) -- (result, [compAnnot trees])
 

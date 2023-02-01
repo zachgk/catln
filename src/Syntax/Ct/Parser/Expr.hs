@@ -113,7 +113,7 @@ parenExpr exprMode = do
 pArrowFull :: Maybe ExprParseMode -> ObjectBasis -> Parser PObjArr
 pArrowFull exprMode basis = do
   expr1 <- pExpr (fromMaybe ParseInputExpr exprMode)
-  guard <- pPatternGuard
+  (guard, guardAnnots) <- pPatternGuard
   maybeDecl <- optional $ do
     _ <- symbol "->"
     exprToTypeMeta <$> term ParseInputExpr
@@ -123,15 +123,15 @@ pArrowFull exprMode basis = do
 
   let arrMeta = fromMaybe emptyMetaN maybeDecl
   (i', o') <- return $ case (expr1, maybeExpr2) of
-    (i, Just (Just o)) -> (Just (RawGuardExpr i guard), Just (RawGuardExpr o NoGuard))
-    (i, Just Nothing) -> (Just (RawGuardExpr i guard), Just (RawGuardExpr (rawVal nestedDeclaration) NoGuard))
+    (i, Just (Just o)) -> (Just (RawGuardExpr i guard), Just (RawGuardExpr o Nothing))
+    (i, Just Nothing) -> (Just (RawGuardExpr i guard), Just (RawGuardExpr (rawVal nestedDeclaration) Nothing))
     (i, Nothing) -> case exprMode of
       Just ParseInputExpr  -> (Just (RawGuardExpr i guard), Nothing)
       Just ParseOutputExpr -> (Nothing, Just (RawGuardExpr i guard))
       Just ParseTypeExpr   -> (Just (RawGuardExpr i guard), Nothing)
       Nothing              -> (Just (RawGuardExpr i guard), Nothing)
 
-  return $ RawObjArr i' basis Nothing [] arrMeta o'
+  return $ RawObjArr i' basis Nothing guardAnnots arrMeta o'
 
 data TermSuffix
   = ArgsSuffix ParseMeta [PObjArr]
@@ -232,19 +232,11 @@ term exprMode = do
 pExpr :: ExprParseMode -> Parser PExpr
 pExpr exprMode = makeExprParser (term exprMode) ops
 
--- Pattern
-
-pIfGuard :: Parser PGuard
-pIfGuard = do
-  _ <- symbol "if"
-  IfGuard <$> pExpr ParseInputExpr
-
-pElseGuard :: Parser PGuard
-pElseGuard = do
-  _ <- symbol "else"
-  return ElseGuard
-
-pPatternGuard :: Parser PGuard
-pPatternGuard = fromMaybe NoGuard <$> optional (pIfGuard
-                                              <|> pElseGuard
-                                            )
+pPatternGuard :: Parser (Maybe PExpr, [PCompAnnot])
+pPatternGuard = do
+  cond <- optional $ do
+    _ <- symbol "if"
+    pExpr ParseInputExpr
+  els <- optional $ symbol "else"
+  let els' = [rawVal elseAnnot | isJust els]
+  return (cond, els')

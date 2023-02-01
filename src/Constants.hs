@@ -25,5 +25,8 @@ mdAnnot, mdAnnotText :: String
 mdAnnot = "/Catln/#md"
 mdAnnotText = "text"
 
+elseAnnot :: String
+elseAnnot = "/Catln/#else"
+
 nestedDeclaration :: String
 nestedDeclaration = "/Catln/nestedDeclaration"

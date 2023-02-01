@@ -30,6 +30,13 @@ module Catln
       Typically, it is written with the syntax sugar of "# commentText".
 
 
+  annot #else
+    # [#else] is used to create an else arrow (which could also be called an otherwise arrow).
+      An else arrow takes effect only if no other arrows match.
+      It's domain can be considered altered to have no overlap with other domains.
+      It can be used to create "default" behaviors that are overridden and fallthrough logic.
+
+
   annot #assert(test: Boolean)
     # [#assert] will check if the [test]ed value is true.
       The test is used only when testing a function, and is not included as part of the actual build.
@@ -74,7 +81,7 @@ module Catln
       Any global value which has type [CatlnResult] can be called through `catln build [FILE] [VALUE]`.
 
 
-  www(html: String) = CatlnResult(name= "index.html", contents= html)
+  www(html: String)= CatlnResult(name= "index.html", contents= html)
     # [www] is used to build web results.
 
   llvm(c) -> CatlnResult
@@ -83,9 +90,9 @@ module Catln
   class ThenElse = Then | Else
     fromBool(v: Boolean) -> ThenElse
 
-    fromBool(True) = Then
+    fromBool(True)= Then
 
-    fromBool(False) = Else
+    fromBool(False)= Else
 
 
 

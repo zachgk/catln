@@ -26,7 +26,7 @@ import           Eval.ExprBuilder
 import           Text.Printf
 import           TreeBuild
 
-type Op = (TypeName, [(PartialType, Guard EExpr, ResBuildEnvFunction)])
+type Op = (TypeName, [(PartialType, Maybe EExpr, Bool, ResBuildEnvFunction)])
 
 true, false :: Val
 true = TupleVal "/Data/Primitive/True" H.empty
@@ -37,85 +37,85 @@ bool True  = true
 bool False = false
 
 liftIntOp :: TypeName -> (Integer -> Integer -> Integer) -> Op
-liftIntOp name f = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
+liftIntOp name f = (name', [(srcType, Nothing, False, \input -> PrimArrow input resType prim)])
   where
     name' = "/operator" ++ name
     srcType = PartialType (PTypeName name') H.empty (H.fromList [("l", intType), ("r", intType)]) [] PtArgExact
     resType = intType
-    prim = EPrim srcType NoGuard (\args -> case (H.lookup "l" args, H.lookup "r" args) of
+    prim = EPrim srcType Nothing (\args -> case (H.lookup "l" args, H.lookup "r" args) of
                            (Just (IntVal l), Just (IntVal r)) -> IntVal $ f l r
                            _ -> error "Invalid intOp signature"
                            )
 
 liftCmpOp :: TypeName -> (Integer -> Integer -> Bool) -> Op
-liftCmpOp name f = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
+liftCmpOp name f = (name', [(srcType, Nothing, False, \input -> PrimArrow input resType prim)])
   where
     name' = "/operator" ++ name
     srcType = PartialType (PTypeName name') H.empty (H.fromList [("l", intType), ("r", intType)]) [] PtArgExact
     resType = boolType
-    prim = EPrim srcType NoGuard (\args -> case (H.lookup "l" args, H.lookup "r" args) of
+    prim = EPrim srcType Nothing (\args -> case (H.lookup "l" args, H.lookup "r" args) of
                            (Just (IntVal l), Just (IntVal r)) -> bool $ f l r
                            _ -> error "Invalid compOp signature"
                            )
 
 rneg :: TypeName -> Op
-rneg name = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
+rneg name = (name', [(srcType, Nothing, False, \input -> PrimArrow input resType prim)])
   where
     name' = "/operator" ++ name
     srcType = PartialType (PTypeName name') H.empty (H.singleton "a" intType) [] PtArgExact
     resType = intType
-    prim = EPrim srcType NoGuard (\args -> case H.lookup "a" args of
+    prim = EPrim srcType Nothing (\args -> case H.lookup "a" args of
                                   Just (IntVal i) -> IntVal $ -i
                                   _ -> error "Invalid rneg signature"
                               )
 
 strEq :: Op
-strEq = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
+strEq = (name', [(srcType, Nothing, False, \input -> PrimArrow input resType prim)])
   where
     name' = "/operator=="
     srcType = PartialType (PTypeName name') H.empty (H.fromList [("l", strType), ("r", strType)]) [] PtArgExact
     resType = boolType
-    prim = EPrim srcType NoGuard (\args -> case (H.lookup "l" args, H.lookup "r" args) of
+    prim = EPrim srcType Nothing (\args -> case (H.lookup "l" args, H.lookup "r" args) of
                                   (Just (StrVal l), Just (StrVal r)) -> bool $ l == r
                                   _ -> error "Invalid intToString signature"
                               )
 
 intToString :: Op
-intToString = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
+intToString = (name', [(srcType, Nothing, False, \input -> PrimArrow input resType prim)])
   where
     name' = "/Data/toString"
     srcType = PartialType (PTypeName name') H.empty (H.singleton "this" intType) [] PtArgExact
     resType = strType
-    prim = EPrim srcType NoGuard (\args -> case H.lookup "this" args of
+    prim = EPrim srcType Nothing (\args -> case H.lookup "this" args of
                                   (Just (IntVal val)) -> StrVal $ show val
                                   _ -> error "Invalid intToString signature"
                               )
 
 
 ioExit :: Op
-ioExit = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
+ioExit = (name', [(srcType, Nothing, False, \input -> PrimArrow input resType prim)])
   where
     name' = "/Catln/exit"
     srcType = PartialType (PTypeName name') H.empty (H.fromList [("this", ioType), ("val", intType)]) [] PtArgExact
     resType = ioType
-    prim = EPrim srcType NoGuard (\args -> case (H.lookup "this" args, H.lookup "val" args) of
+    prim = EPrim srcType Nothing (\args -> case (H.lookup "this" args, H.lookup "val" args) of
                                   (Just (IOVal _ io), Just (IntVal val)) -> IOVal val io
                                   _ -> error $ printf "Invalid exit signature with args: %s" (show args)
                               )
 
 println :: Op
-println = (name', [(srcType, NoGuard, \input -> PrimArrow input resType prim)])
+println = (name', [(srcType, Nothing, False, \input -> PrimArrow input resType prim)])
   where
     name' = "/Catln/println"
     srcType = PartialType (PTypeName name') H.empty (H.fromList [("this", ioType), ("msg", strType)]) [] PtArgExact
     resType = ioType
-    prim = EPrim srcType NoGuard (\args -> case (H.lookup "this" args, H.lookup "msg" args) of
+    prim = EPrim srcType Nothing (\args -> case (H.lookup "this" args, H.lookup "msg" args) of
                                   (Just (IOVal r io), Just (StrVal msg)) -> IOVal r (io >> putStrLn msg)
                                   _ -> error "Invalid println signature"
                               )
 
 llvm :: Op
-llvm = (name', [(srcType, NoGuard, aux)])
+llvm = (name', [(srcType, Nothing, False, aux)])
   where
     name' = "/Catln/llvm"
     srcType = PartialType (PTypeName name') H.empty (H.fromList [("c", TopType)]) [] PtArgExact

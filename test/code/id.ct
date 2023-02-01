@@ -2,7 +2,7 @@
   It requires using the type of the input argument as the output type of id as well.
   So, it must be read as `id($T) -> $T`, not (id(Any) -> Any).
 
-id(x) = x
+id(x)= x
 
-main{io: IO} = io.exit(val= id(x= 0))
+main{io: IO}= io.exit(val= id(x= 0))
 

@@ -84,17 +84,6 @@ data Expr m
 -- Compiler Annotation
 type CompAnnot em = em
 
-data Guard em
-  = IfGuard em
-  | ElseGuard
-  | NoGuard
-  deriving (Eq, Ord, Generic, Hashable, ToJSON)
-
-instance Functor Guard where
-  fmap f (IfGuard e) = IfGuard (f e)
-  fmap _ ElseGuard   = ElseGuard
-  fmap _ NoGuard     = NoGuard
-
 type ObjArg e m = (Meta m, Maybe (Object e m))
 data ObjectBasis = FunctionObj | TypeObj | PatternObj | MatchObj | ArgObj
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
@@ -122,7 +111,8 @@ data ExprObject e m = ExprObject {
                        }
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
-data Arrow e m = Arrow (Meta m) (Guard (e m)) (Maybe (e m)) -- m is result metadata
+type ExprCond e m = Maybe (e m)
+data Arrow e m = Arrow (Meta m) (ExprCond e m) (Maybe (e m)) -- m is result metadata
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
 type ObjectMapItem e m = (Object e m, [CompAnnot (e m)], Maybe (Arrow e m))
@@ -160,11 +150,6 @@ instance Show m => Show (Expr m) where
         Value _ funName -> funName
         TupleApply{}    -> show baseExpr
         _               -> printf "<%s>" (show baseExpr)
-
-instance Show e => Show (Guard e) where
-  show (IfGuard expr) = "if (" ++ show expr ++ ")"
-  show ElseGuard      = "else"
-  show NoGuard        = ""
 
 instance Show m => Show (Object e m) where
   -- show (Object m basis vars args _ p) = printf "%s %s (%s) %s %s" (show basis) p (show m) maybeVarsString maybeArgsString

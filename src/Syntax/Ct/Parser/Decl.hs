@@ -58,7 +58,7 @@ pDeclStatement = do
     Nothing -> case guard of
 
       -- expression
-      NoGuard | getMetaType arrMeta == TopType -> return $ RawExprStatement inExpr
+      Nothing | getMetaType arrMeta == TopType -> return $ RawExprStatement inExpr
 
       -- Declaration
       _ | getMetaType arrMeta /= TopType -> return $ RawDeclStatement $ RawDecl roa

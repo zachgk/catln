@@ -29,7 +29,6 @@ type PExpr = RawExpr ParseMetaDat
 type PObjExpr = PExpr
 type PPattern = Pattern RawExpr ParseMetaDat
 type PCompAnnot = CompAnnot PExpr
-type PGuard = Guard PExpr
 type PGuardExpr = RawGuardExpr RawExpr ParseMetaDat
 type PDecl = RawDecl RawExpr ParseMetaDat
 type PObjectMap = ObjectMap RawExpr ParseMetaDat
@@ -50,7 +49,6 @@ type PDeclTree = (PDecl, [PStatementTree])
 
 type PSExpr = Expr ParseMetaDat
 type PSCompAnnot = CompAnnot PSExpr
-type PSGuard = Guard PSExpr
 type PSGuardExpr = RawGuardExpr Expr ParseMetaDat
 type PSObjArr = RawObjArr Expr ParseMetaDat
 
@@ -62,7 +60,6 @@ newtype PSemiDecl = PSemiDecl PSObjArr
 
 type DesExpr = Expr ParseMetaDat
 type DesCompAnnot = CompAnnot DesExpr
-type DesGuard = Guard DesExpr
 type DesObjectMap = ExprObjectMap Expr ParseMetaDat
 type DesObject = ExprObject Expr ParseMetaDat
 type DesArrow = Arrow Expr ParseMetaDat
@@ -105,8 +102,8 @@ applyRawArgs base [] = base
 applyRawArgs base args = RawTupleApply (emptyMetaE "app" base) (emptyMetaE "base" base, base) (map mapArg args)
   where
     mapArg :: (Maybe ArgName, RawExpr m) -> RawObjArr RawExpr m
-    mapArg (Just argName, argVal) = RawObjArr (Just (RawGuardExpr (RawValue (emptyMetaE ("in-" ++ argName) argVal) argName) NoGuard)) ArgObj Nothing [] (emptyMetaE argName argVal) (Just (RawGuardExpr argVal NoGuard))
-    mapArg (Nothing, argVal) = RawObjArr Nothing ArgObj Nothing [] (emptyMetaE "noArg" argVal) (Just (RawGuardExpr argVal NoGuard))
+    mapArg (Just argName, argVal) = RawObjArr (Just (RawGuardExpr (RawValue (emptyMetaE ("in-" ++ argName) argVal) argName) Nothing)) ArgObj Nothing [] (emptyMetaE argName argVal) (Just (RawGuardExpr argVal Nothing))
+    mapArg (Nothing, argVal) = RawObjArr Nothing ArgObj Nothing [] (emptyMetaE "noArg" argVal) (Just (RawGuardExpr argVal Nothing))
 
 
 data IArg e = IArgNothing | IArgE (e ()) | IArgM (Meta ())
@@ -115,9 +112,9 @@ applyRawIArgs base [] = base
 applyRawIArgs base args = RawTupleApply (emptyMetaE "app" base) (emptyMetaE "base" base, base) (map mapArg args)
   where
     mapArg :: (ArgName, IArg RawExpr) -> RawObjArr RawExpr ()
-    mapArg (argName, IArgE argVal) = RawObjArr (Just (RawGuardExpr (RawValue (emptyMetaE ("in-" ++ argName) argVal) argName) NoGuard)) ArgObj Nothing [] (emptyMetaE argName argVal) (Just (RawGuardExpr argVal NoGuard))
-    mapArg (argName, IArgM argM) = RawObjArr (Just (RawGuardExpr (RawValue (emptyMetaM ("in-" ++ argName) argM) argName) NoGuard)) ArgObj Nothing [] argM Nothing
-    mapArg (argName, IArgNothing) = RawObjArr (Just (RawGuardExpr (RawValue (emptyMetaE ("in-" ++ argName) base) argName) NoGuard)) ArgObj Nothing [] (emptyMetaE ("m-" ++ argName) base) Nothing
+    mapArg (argName, IArgE argVal) = RawObjArr (Just (RawGuardExpr (RawValue (emptyMetaE ("in-" ++ argName) argVal) argName) Nothing)) ArgObj Nothing [] (emptyMetaE argName argVal) (Just (RawGuardExpr argVal Nothing))
+    mapArg (argName, IArgM argM) = RawObjArr (Just (RawGuardExpr (RawValue (emptyMetaM ("in-" ++ argName) argM) argName) Nothing)) ArgObj Nothing [] argM Nothing
+    mapArg (argName, IArgNothing) = RawObjArr (Just (RawGuardExpr (RawValue (emptyMetaE ("in-" ++ argName) base) argName) Nothing)) ArgObj Nothing [] (emptyMetaE ("m-" ++ argName) base) Nothing
 
 applyRawExprVars :: (MetaDat m) => RawExpr m -> [(TypeVarName, Meta m)] -> RawExpr m
 applyRawExprVars base []   = base

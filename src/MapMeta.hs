@@ -82,11 +82,6 @@ instance MapMeta Expr where
   mapMeta f loc (TupleApply m (bm, be) arg) = TupleApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, mapMeta f loc be) (mapMetaTupleArg f loc arg)
   mapMeta f loc (VarApply m be varName varVal) = VarApply (f (ExprMeta loc ExprMetaApplyVar) m) (mapMeta f loc be) varName (f (ExprMeta loc ExprMetaApplyVarVal) varVal)
 
-mapMetaGuard :: (MapMeta e) => MetaFun a b -> Guard (e a) -> Guard (e b)
-mapMetaGuard f (IfGuard expr) = IfGuard (mapMeta f GuardMeta expr)
-mapMetaGuard _ ElseGuard      = ElseGuard
-mapMetaGuard _ NoGuard        = NoGuard
-
 mapMetaObjArg :: (MapMeta e) => MetaFun a b -> ObjArg e a -> ObjArg e b
 mapMetaObjArg f (m, maybeObj) = (f ObjArgMeta m, fmap (mapMeta f InputMeta) maybeObj)
 
@@ -94,7 +89,7 @@ instance (MapMeta e) => MapMeta (Object e) where
   mapMeta f _ (Object m basis vars args doc e path) = Object (f ObjMeta m) basis (fmap (f ObjVarMeta) vars) (fmap (mapMetaObjArg f) args) doc (mapMeta f InputMeta e) path
 
 mapMetaArrow :: (MapMeta e) => MetaFun a b -> Arrow e a -> Arrow e b
-mapMetaArrow f (Arrow m guard maybeExpr) = Arrow (f ArrMeta m) (mapMetaGuard f guard) (fmap (mapMeta f OutputMeta) maybeExpr)
+mapMetaArrow f (Arrow m guard maybeExpr) = Arrow (f ArrMeta m) (fmap (mapMeta f GuardMeta) guard) (fmap (mapMeta f OutputMeta) maybeExpr)
 
 mapMetaObjectMap :: (MapMeta e) => MetaFun a b -> ObjectMap e a -> ObjectMap e b
 mapMetaObjectMap f = map aux

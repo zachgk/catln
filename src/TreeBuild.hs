@@ -25,6 +25,7 @@ import           CRes
 import           Control.Monad
 import           Eval.Common
 import           Semantics
+import           Semantics.Annots
 import           Semantics.Prgm
 import           Semantics.Types
 
@@ -33,7 +34,7 @@ type TBMeta = Meta ()
 type TBExpr = Expr TBMetaDat
 type TBCompAnnot = CompAnnot TBExpr
 type TBObject = ExprObject Expr TBMetaDat
-type TBGuard = Guard TBExpr
+type TBGuard = Maybe TBExpr
 type TBArrow = Arrow Expr TBMetaDat
 type TBObjectMap = ExprObjectMap Expr TBMetaDat
 type TBPrgm = ExprPrgm Expr TBMetaDat
@@ -58,7 +59,7 @@ buildTBEnv primEnv prgm@(objMap, classGraph, _) = baseEnv
     resEnv = H.fromListWith (++) $ mapMaybe resFromMArrow objMap
     resFromMArrow (obj, annots, marrow) = marrow >>= resFromArrow obj annots
     resFromArrow obj annots arrow@(Arrow _ aguard expr) = case expr of
-      Just _ -> Just (eobjPath obj, [(objLeaf, aguard, \input -> ResEArrow input obj annots arrow) | objLeaf <- leafsFromMeta (getExprMeta $ eobjExpr obj)])
+      Just _ -> Just (eobjPath obj, [(objLeaf, aguard, any isElseAnnot annots, \input -> ResEArrow input obj annots arrow) | objLeaf <- leafsFromMeta (getExprMeta $ eobjExpr obj)])
       Nothing -> Nothing
 
 buildExpr :: TBEnv -> ObjSrc -> TBExpr -> CRes ResArrowTree
@@ -149,17 +150,18 @@ groupArrows = aux ([], Nothing)
     aux ([], Nothing) _ [] = return []
     aux (ifs, Just els) _ [] = return [CondGuardGroup ifs els]
     aux (_, Nothing) _ [] = CErr [MkCNote $ BuildTreeCErr Nothing "No ElseGuards found"]
-    aux acc input ((pt, NoGuard, t):bs) = do
+    aux acc input ((pt, Nothing, False, t):bs) = do
       bs' <- aux acc input bs
       return $ NoGuardGroup pt (t input):bs'
-    aux (ifs, els) input ((pt, IfGuard it, t):bs) = aux ((pt, it, t input):ifs, els) input bs
-    aux (ifs, Nothing) input ((pt, ElseGuard, t):bs) = aux (ifs, Just (pt, t input)) input bs
-    aux (_, Just{}) _ ((_, ElseGuard, _):_) = CErr [MkCNote $ BuildTreeCErr Nothing "Multiple ElseGuards found"]
+    aux (ifs, els) input ((pt, Just it, False, t):bs) = aux ((pt, it, t input):ifs, els) input bs
+    aux (ifs, Nothing) input ((pt, Nothing, True, t):bs) = aux (ifs, Just (pt, t input)) input bs
+    aux (_, Just{}) _ ((_, Nothing, True, _):_) = CErr [MkCNote $ BuildTreeCErr Nothing "Multiple ElseGuards found"]
+    aux (_, _) _ ((_, Just{}, True, _):_) = CErr [MkCNote $ BuildTreeCErr Nothing "ElseGuards with conditions are currently not supported"]
 
 findResArrows :: TBEnv -> PartialType -> Type -> CRes [ResBuildEnvItem]
 findResArrows TBEnv{tbName, tbResEnv, tbClassGraph} srcType@PartialType{ptName=PTypeName srcName} destType = case suffixLookupInDict srcName tbResEnv of
   Just resArrowsWithName -> do
-    let resArrows = filter (\(arrowType, _, _) -> not $ isBottomType $ intersectTypes tbClassGraph (singletonType srcType) (singletonType arrowType)) resArrowsWithName
+    let resArrows = filter (\(arrowType, _, _, _) -> not $ isBottomType $ intersectTypes tbClassGraph (singletonType srcType) (singletonType arrowType)) resArrowsWithName
     -- TODO: Sort resArrows by priority order before trying
     return resArrows
   Nothing -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Failed to find any arrows:\n\tWhen building %s\n\tfrom %s to %s" tbName (show srcType) (show destType)]

@@ -122,17 +122,10 @@ toExpr env (VarApply m baseExpr varName varVal) = do
 
     _                                -> return result
 
-toGuard :: FEnv -> VGuard -> TypeCheckResult TGuard
-toGuard env (IfGuard expr) = do
-  expr' <- toExpr env expr
-  return $ IfGuard expr'
-toGuard _ ElseGuard = return ElseGuard
-toGuard _ NoGuard = return NoGuard
-
 toArrow :: FEnv -> VArrow -> TypeCheckResult TArrow
 toArrow env (Arrow m aguard maybeExpr) = do
   m' <- toMeta env m "Arrow"
-  aguard' <- toGuard env aguard
+  aguard' <- mapM (toExpr env) aguard
   case maybeExpr of
     Just expr -> do
       expr' <- toExpr env expr

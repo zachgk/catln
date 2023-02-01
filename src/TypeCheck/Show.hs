@@ -64,17 +64,10 @@ showExpr env (VarApply m base varName varVal) = do
   varVal' <- showM env varVal
   return $ VarApply m' base' varName varVal'
 
-showGuard :: FEnv -> VGuard -> TypeCheckResult SGuard
-showGuard env (IfGuard e) = do
-  e' <- showExpr env e
-  return $ IfGuard e'
-showGuard _ ElseGuard = return ElseGuard
-showGuard _ NoGuard = return NoGuard
-
 showArrow :: FEnv -> VArrow -> TypeCheckResult SArrow
 showArrow env (Arrow m guard maybeExpr) = do
   m' <- showM env m
-  guard' <- showGuard env guard
+  guard' <- mapM (showExpr env) guard
   expr' <- mapM (showExpr env) maybeExpr
   return $ Arrow m' guard' expr'
 

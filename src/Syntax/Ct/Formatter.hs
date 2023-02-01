@@ -21,6 +21,7 @@ import           Text.Printf
 
 import           Constants
 import           Semantics
+import           Semantics.Annots
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Prgm
@@ -83,9 +84,13 @@ formatExpr (RawMethod base method) = printf "%s.%s" (formatExpr base) (formatExp
 formatExpr (RawList _ l) = printf "[%s]" $ intercalate ", " $ map formatExpr l
 
 formatObjArr :: RawObjArr RawExpr m -> String
-formatObjArr RawObjArr{roaObj, roaM, roaArr} = printf "%s%s%s%s" (showGuardExpr True roaObj) showM showEquals (showGuardExpr False roaArr)
+formatObjArr oa@RawObjArr{roaObj, roaM, roaArr} = printf "%s%s%s%s%s" (showGuardExpr True roaObj) showElse showM showEquals (showGuardExpr False roaArr)
   where
-    showGuardExpr False (Just (RawGuardExpr (RawValue _ n) _)) | n == nestedDeclaration = ""
+    isNestedDeclaration = case roaArr of
+      (Just (RawGuardExpr (RawValue _ n) _)) | n == nestedDeclaration -> True
+      _                                                               -> False
+
+    showGuardExpr False _ | isNestedDeclaration = ""
     showGuardExpr _ (Just (RawGuardExpr e g)) = formatExpr e ++ formatGuard g
     showGuardExpr _ Nothing = ""
 
@@ -96,13 +101,16 @@ formatObjArr RawObjArr{roaObj, roaM, roaArr} = printf "%s%s%s%s" (showGuardExpr 
 
     showEquals :: String
     showEquals = case (roaObj, roaArr) of
-      (Just _, Just _) -> "= "
-      _                -> ""
+      _ | isNestedDeclaration -> " ="
+      (Just _, Just _)        -> "= "
+      _                       -> ""
 
-    formatGuard :: Guard (RawExpr m) -> String
-    formatGuard (IfGuard e) = printf " if %s" (formatExpr e)
-    formatGuard ElseGuard   = " else"
-    formatGuard NoGuard     = ""
+    formatGuard :: ExprCond RawExpr m -> String
+    formatGuard (Just e) = printf " if %s" (formatExpr e)
+    formatGuard Nothing  = ""
+
+    showElse :: String
+    showElse = if hasElseAnnot oa then " else " else ""
 
 formatStatement :: Int -> RawStatement RawExpr m -> String
 formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
@@ -148,9 +156,13 @@ keepRootStatement :: RawStatement RawExpr m -> Bool
 keepRootStatement RawDeclStatement{} = False
 keepRootStatement _                  = True
 
+isHiddenStatement :: RawStatement RawExpr m -> Bool
+isHiddenStatement (RawAnnot annot) | isElseAnnot annot = True
+isHiddenStatement _ = False
+
 formatStatementTree :: Bool -> Int -> RawStatementTree RawExpr m -> Builder
 formatStatementTree rootStatement indent (RawStatementTree statement subTree) = do
-  literal $ formatStatement indent statement
+  unless (isHiddenStatement statement) (literal $ formatStatement indent statement)
 
   -- Check if the subTree should also be a rootStatement with an additional ending newline
   let subTreeRootStatement = rootStatement && keepRootStatement statement

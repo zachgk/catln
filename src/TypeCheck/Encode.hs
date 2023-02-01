@@ -222,14 +222,13 @@ fromObjExpr varEnv argEnv env1 (VarApply m baseExpr varName varVal) = do
   let env5 = addConstraints env4 constraints
   return (VarApply m' baseExpr' varName varVal', env5)
 
-fromGuard :: Maybe VObject -> VMetaVarEnv -> VMetaArgEnv -> FEnv -> PGuard -> TypeCheckResult (VGuard, FEnv)
-fromGuard obj varEnv argEnv env1 (IfGuard expr) =  do
+fromGuard :: Maybe VObject -> VMetaVarEnv -> VMetaArgEnv -> FEnv -> Maybe PExpr -> TypeCheckResult (Maybe VExpr, FEnv)
+fromGuard obj varEnv argEnv env1 (Just expr) =  do
   (expr', env2) <- fromExpr obj varEnv argEnv env1 expr
   let (bool, env3) = fresh env2 $ TypeCheckResult [] $ SType boolType bottomType "ifGuardBool"
   let bool' = Meta boolType (labelPos "bool" $ getMetaPos $ getExprMeta expr) (VarMetaDat bool obj varEnv argEnv)
-  return (IfGuard expr', addConstraints env3 [ArrowTo (getExprMeta expr') bool'])
-fromGuard _ _ _ env ElseGuard = return (ElseGuard, env)
-fromGuard _ _ _ env NoGuard = return (NoGuard, env)
+  return (Just expr', addConstraints env3 [ArrowTo (getExprMeta expr') bool'])
+fromGuard _ _ _ env Nothing = return (Nothing, env)
 
 fromArrow :: VObject -> VMetaVarEnv -> VMetaArgEnv -> FEnv -> PArrow -> TypeCheckResult (VArrow, FEnv)
 fromArrow obj@(Object _ _ objVars _ _ _ _) varEnv argEnv env1 (Arrow m aguard maybeExpr) = do
