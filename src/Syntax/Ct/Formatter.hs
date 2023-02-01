@@ -32,14 +32,6 @@ formatImport :: FileImport -> Builder
 formatImport imp = do
   literal $ "import " ++ imp ++ "\n"
 
-formatPattern :: Pattern RawExpr m -> String
-formatPattern (Pattern (ExprObject _ _ pattExprObj) pattGuard) = formatExpr pattExprObj ++ formatGuard pattGuard
-
-formatGuard :: Guard (RawExpr m) -> String
-formatGuard (IfGuard e) = printf " if %s" (formatExpr e)
-formatGuard ElseGuard   = " else"
-formatGuard NoGuard     = ""
-
 formatType :: Type -> String
 formatType TopType = ""
 formatType (TypeVar (TVVar t)) = t
@@ -76,8 +68,8 @@ formatExpr (RawHoleExpr _ HoleTodefine) = "todefine"
 formatExpr (RawTheExpr t) = printf ":%s" (formatExpr t)
 formatExpr (RawAliasExpr base alias) = printf "%s@%s" (formatExpr base) (formatExpr alias)
 formatExpr (RawTupleApply _ (_, RawValue _ n) args) | operatorPrefix `isPrefixOf` n = case args of
-  [RawObjArr _ _ _ _ (Just (RawGuardExpr a _))] -> operatorName ++ formatExpr a
-  [RawObjArr _ _ _ _ (Just (RawGuardExpr l _)), RawObjArr _ _ _ _ (Just (RawGuardExpr r _))] -> if n == operatorType
+  [RawObjArr{ roaArr=(Just (RawGuardExpr a _))}] -> operatorName ++ formatExpr a
+  [RawObjArr{ roaArr=(Just (RawGuardExpr l _))}, RawObjArr{roaArr=(Just (RawGuardExpr r _))}] -> if n == operatorType
     then printf "%s%s %s" (formatExpr l) operatorName (formatExpr r) -- Show types as "x: 5" instead of "x : 5"
     else printf "%s %s %s" (formatExpr l) operatorName (formatExpr r)
   _ -> error "Non unary or binary operator found in formatExpr"
@@ -91,38 +83,32 @@ formatExpr (RawMethod base method) = printf "%s.%s" (formatExpr base) (formatExp
 formatExpr (RawList _ l) = printf "[%s]" $ intercalate ", " $ map formatExpr l
 
 formatObjArr :: RawObjArr RawExpr m -> String
-formatObjArr (RawObjArr i _ _ m o) = printf "%s%s%s%s" (showGuardExpr True i) showM showEquals (showGuardExpr False o)
+formatObjArr RawObjArr{roaObj, roaM, roaArr} = printf "%s%s%s%s" (showGuardExpr True roaObj) showM showEquals (showGuardExpr False roaArr)
   where
     showGuardExpr False (Just (RawGuardExpr (RawValue _ n) _)) | n == nestedDeclaration = ""
     showGuardExpr _ (Just (RawGuardExpr e g)) = formatExpr e ++ formatGuard g
     showGuardExpr _ Nothing = ""
 
     showM :: String
-    showM  = case getMetaType m of
+    showM  = case getMetaType roaM of
       TopType -> ""
       t       -> printf " -> %s" (formatType t)
 
     showEquals :: String
-    showEquals = case (i, o) of
+    showEquals = case (roaObj, roaArr) of
       (Just _, Just _) -> "= "
       _                -> ""
+
+    formatGuard :: Guard (RawExpr m) -> String
+    formatGuard (IfGuard e) = printf " if %s" (formatExpr e)
+    formatGuard ElseGuard   = " else"
+    formatGuard NoGuard     = ""
 
 formatStatement :: Int -> RawStatement RawExpr m -> String
 formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
   where
     statement' = case statement of
-      RawDeclStatement (RawDecl (DeclLHS m patt) maybeArr) -> printf "%s%s%s" (formatPattern patt) showM showArr
-        where
-          showM :: String
-          showM  = case getMetaType m of
-            TopType -> ""
-            t       -> printf " -> %s" (formatType t)
-
-          showArr :: String
-          showArr = case maybeArr of
-            Just (RawValue _ n) | n == nestedDeclaration -> " ="
-            Just arr -> printf " = %s" (formatExpr arr)
-            Nothing  -> ""
+      RawDeclStatement (RawDecl objArr) -> formatObjArr objArr
       MultiTypeDefStatement (MultiTypeDef className classVars objs) _ -> printf "class %s%s = %s" className showClassVars showObjs
         where
           showClassVars :: String

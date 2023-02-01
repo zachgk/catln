@@ -51,23 +51,20 @@ pComment = do
 
 pDeclStatement :: Parser PStatement
 pDeclStatement = do
-  (RawObjArr (Just (RawGuardExpr inExpr guard)) basis [] arrMeta out) <- pArrowFull Nothing FunctionObj
-  let lhs = DeclLHS arrMeta (Pattern (ExprObject basis Nothing inExpr) guard)
+  roa@RawObjArr{roaObj=(Just (RawGuardExpr inExpr guard)), roaM=arrMeta, roaArr=out} <- pArrowFull Nothing FunctionObj
 
   case out of
     -- No equals (declaration or expression)
-    Nothing -> case lhs of
+    Nothing -> case guard of
 
       -- expression
-      DeclLHS lhsM (Pattern lhsObj NoGuard) | getMetaType lhsM == TopType -> return $ RawExprStatement (eobjExpr lhsObj)
+      NoGuard | getMetaType arrMeta == TopType -> return $ RawExprStatement inExpr
 
       -- Declaration
-      DeclLHS lhsM _ | getMetaType lhsM /= TopType -> return $ RawDeclStatement $ RawDecl lhs Nothing
+      _ | getMetaType arrMeta /= TopType -> return $ RawDeclStatement $ RawDecl roa
 
       -- Must be either a declaration or an expression
-      _ -> fail $ printf "Invalid declaration or expression: %s" (show lhs)
+      _ -> fail $ printf "Invalid declaration or expression: %s" (show roa)
 
     -- Equals and expr (inline definition)
-    Just (RawGuardExpr expr NoGuard) -> return $ RawDeclStatement $ RawDecl lhs (Just expr)
-
-    Just (RawGuardExpr _ _) -> error $ printf "pDeclStatement does not support output expressions with guards"
+    Just{} -> return $ RawDeclStatement $ RawDecl roa

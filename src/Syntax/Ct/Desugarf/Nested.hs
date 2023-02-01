@@ -72,11 +72,15 @@ scopeSubDeclFunNamesInMeta _ _ m@(Meta TypeVar{} _ _) = m
 scopeSubDeclFunNames :: TypeName -> [PSemiDecl] -> Maybe PSExpr -> [PSCompAnnot] -> ParseMeta -> ([PSemiDecl], Maybe PSExpr, [PSCompAnnot], ParseMeta)
 scopeSubDeclFunNames prefix decls maybeExpr annots arrM = (decls', expr', annots', arrM')
   where
-    declNames = S.fromList $ map (\(PSemiDecl (DeclLHS _ (Pattern o _)) _ _) -> eobjPath o) decls
+    declNames = S.fromList $ map (\(PSemiDecl RawObjArr{roaObj=Just (RawGuardExpr o _)}) -> exprPath o) decls
     addPrefix n = prefix ++ "." ++ n
     scopeM = scopeSubDeclFunNamesInMeta prefix declNames
     arrM' = scopeM arrM
-    decls' = map (\(PSemiDecl (DeclLHS aM (Pattern obj guard)) annot subExpr) -> PSemiDecl (DeclLHS (scopeM aM) (Pattern (mapExprObjPath (\(pM, pN) -> Value pM (addPrefix pN)) obj) guard)) annot (fmap (scopeSubDeclFunNamesInExpr prefix declNames) subExpr)) decls
+    decls' = map (\(PSemiDecl oa@RawObjArr{roaM, roaObj=Just (RawGuardExpr obj guard), roaArr}) -> PSemiDecl oa{
+                     roaM=scopeM roaM,
+                     roaObj=Just (RawGuardExpr (mapExprPath (\(pM, pN) -> Value pM (addPrefix pN)) obj) guard),
+                     roaArr = fmap (\(RawGuardExpr e g) -> RawGuardExpr (scopeSubDeclFunNamesInExpr prefix declNames e) g) roaArr
+                     }) decls
     expr' = fmap (scopeSubDeclFunNamesInExpr prefix declNames) maybeExpr
     annots' = map (scopeSubDeclFunNamesInExpr prefix declNames) annots
 
@@ -89,10 +93,11 @@ curryApplyParentArgs :: PSExpr -> ParentArgs -> PSExpr
 curryApplyParentArgs e parentArgs = applyExprIArgs e (map (\(parentArgName, parentArgM) -> (parentArgName, IArgE (Value parentArgM parentArgName))) $ H.toList parentArgs)
 
 currySubFunctionSignature :: ParentArgs -> PSemiDecl -> PSemiDecl
-currySubFunctionSignature parentArgs (PSemiDecl (DeclLHS arrM (Pattern obj guard)) annot expr) = PSemiDecl (DeclLHS arrM (Pattern obj' guard)) annot expr
+currySubFunctionSignature parentArgs (PSemiDecl oa@RawObjArr{roaObj=Just (RawGuardExpr obj guard)}) = PSemiDecl oa{roaObj=Just (RawGuardExpr obj' guard)}
   where
-    obj' = mapExprObjPath applyParentArgsToObjPath obj
+    obj' = mapExprPath applyParentArgsToObjPath obj
     applyParentArgsToObjPath (objPathM, objPathN) = curryApplyParentArgsSignature (Value objPathM objPathN) parentArgs
+currySubFunctionSignature _ d = error $ printf "Invalid currySubFunctionSignature without input expression: %s" (show d)
 
 currySubFunctionsUpdateExpr :: S.HashSet TypeName -> ParentArgs -> PSExpr -> PSExpr
 currySubFunctionsUpdateExpr _ _ c@CExpr{} = c
@@ -114,10 +119,11 @@ currySubFunctionsUpdateExpr toUpdate parentArgs (VarApply tm tbe tVarName tVarVa
 currySubFunctions :: ParentArgs -> [PSemiDecl] -> Maybe PSExpr -> [PSCompAnnot] -> ([PSemiDecl], Maybe PSExpr, [PSCompAnnot])
 currySubFunctions parentArgs decls expr annots = (decls', expr', annots')
   where
-    toUpdate = S.fromList $ map (\(PSemiDecl (DeclLHS _ (Pattern o _)) _ _) -> eobjPath o) decls
+    toUpdate = S.fromList $ map (\(PSemiDecl RawObjArr{roaObj=Just (RawGuardExpr o _)}) -> exprPath o) decls
     decls2 = map (currySubFunctionSignature parentArgs) decls
     expr' = fmap (currySubFunctionsUpdateExpr toUpdate parentArgs) expr
-    decls' = map (\(PSemiDecl lhs an e) -> PSemiDecl lhs an (fmap (currySubFunctionsUpdateExpr toUpdate parentArgs) e)) decls2
+    decls' = map (\(PSemiDecl oa@RawObjArr{roaArr}) -> PSemiDecl oa{roaArr=fmap (currySubFunctionsUpdateGuardExpr toUpdate parentArgs) roaArr}) decls2
+    currySubFunctionsUpdateGuardExpr u p (RawGuardExpr e g) = RawGuardExpr (currySubFunctionsUpdateExpr u p e) g
     annots' = map (currySubFunctionsUpdateExpr toUpdate parentArgs) annots
 
 desObjDocComment :: [PStatementTree] -> Maybe String

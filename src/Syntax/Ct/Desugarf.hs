@@ -39,18 +39,22 @@ type StatementEnv = (String, [DesCompAnnot])
 
 -- | Flattens a declaration tree (with nested declarations)
 flattenNestedDeclarations :: PDeclTree -> [PSemiDecl]
-flattenNestedDeclarations (RawDecl (DeclLHS arrM (Pattern obj@(ExprObject objBasis _ objExpression) guard1)) expr1, subStatements) = decl':subDecls4
+flattenNestedDeclarations (RawDecl oa@RawObjArr{roaObj=Just (RawGuardExpr objExpression _)}, subStatements) = decl':subDecls4
   where
     objDoc = desObjDocComment subStatements
     (subDecls, annots1) = splitDeclSubStatements subStatements
     subDecls2 = concatMap flattenNestedDeclarations subDecls
-    expr2 = fmap (semiDesExpr (Just obj)) expr1
-    annots2 = fmap (semiDesExpr (Just obj)) annots1
-    guard2 = semiDesGuard obj guard1
-    (subDecls3, expr3, annots3, arrM') = scopeSubDeclFunNames (eobjPath obj) subDecls2 expr2 annots2 arrM
-    objExpression' = semiDesExpr Nothing objExpression
+    annots2 = fmap (semiDesExpr (Just objExpression)) annots1
+
+    oa2@RawObjArr{roaObj=Just (RawGuardExpr objExpression' _), roaM, roaArr=roaArr2} = semiDesObjArr oa
+
+    (subDecls3, expr3, annots3, roaM') = scopeSubDeclFunNames (exprPath objExpression) subDecls2 (fmap rgeExpr roaArr2) annots2 roaM
     (subDecls4, expr4, annots4) = currySubFunctions (exprArgsLinear objExpression') subDecls3 expr3 annots3
-    decl' = PSemiDecl (DeclLHS arrM' (Pattern (ExprObject objBasis objDoc objExpression') guard2)) annots4 expr4
+    roaArr4 = case (roaArr2, expr4) of
+      (Just (RawGuardExpr _ arrGuard2), Just jexpr4) -> Just $ RawGuardExpr jexpr4 arrGuard2
+      _ -> Nothing
+    decl' = PSemiDecl oa2{roaM=roaM', roaArr=roaArr4, roaAnnots=annots4, roaDoc=objDoc}
+flattenNestedDeclarations d = error $ printf "flattenNestedDeclarations without input expression: %s" (show d)
 
 data DOEMode = DOEArgMode | DOEValMode deriving (Eq, Show)
 data DOEValName = UseRelativeName | UseTypeName deriving (Eq, Show)
@@ -102,19 +106,35 @@ desObj isDef inheritPath useRelativeName object@ExprObject{eobjExpr} = object'
 desGuard :: PArgMetaMap -> PSGuard -> DesGuard
 desGuard arrArgs = fmap (desExpr arrArgs)
 
-semiDesGuard :: PObject -> PGuard -> PSGuard
-semiDesGuard obj (IfGuard e) = IfGuard (semiDesExpr (Just obj) e)
+semiDesObjArr :: PObjArr -> PSObjArr
+semiDesObjArr oa@RawObjArr{roaObj, roaAnnots, roaArr} = oa{
+  roaObj=fmap (semiDesGuardExpr Nothing) roaObj,
+  roaAnnots = fmap (semiDesExpr oE) roaAnnots,
+  roaArr=fmap (semiDesGuardExpr oE) roaArr
+  }
+  where
+    oE = fmap rgeExpr roaObj
+
+semiDesGuardExpr :: Maybe PObjExpr -> PGuardExpr -> PSGuardExpr
+semiDesGuardExpr obj (RawGuardExpr expr guard) = RawGuardExpr (semiDesExpr obj expr) (semiDesGuard obj guard)
+
+semiDesGuard :: Maybe PObjExpr -> PGuard -> PSGuard
+semiDesGuard obj (IfGuard e) = IfGuard (semiDesExpr obj e)
 semiDesGuard _ ElseGuard     = ElseGuard
 semiDesGuard _ NoGuard       = NoGuard
 
 declToObjArrow :: StatementEnv -> PSemiDecl -> DesObjectMapItem
-declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl (DeclLHS arrM (Pattern object guard)) annots expr) = (object', annots' ++ inheritAnnots, Just arrow)
+declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl RawObjArr{roaObj=Just (RawGuardExpr object guard), roaBasis, roaDoc, roaM, roaAnnots, roaArr}) = (object', annots' ++ inheritAnnots, Just arrow)
   where
-    object' = desObj True inheritPath UseRelativeName object
+    object' = desObj True inheritPath UseRelativeName (ExprObject roaBasis roaDoc object)
 
     argMetaMap = exprArgs $ eobjExpr object'
-    annots' = map (desExpr argMetaMap) annots
-    arrow = Arrow arrM (desGuard argMetaMap guard) (fmap (desExpr argMetaMap) expr)
+    annots' = map (desExpr argMetaMap) roaAnnots
+    expr' = case roaArr of
+      Just (RawGuardExpr e _) -> Just $ desExpr argMetaMap e
+      Nothing                 -> Nothing
+    arrow = Arrow roaM (desGuard argMetaMap guard) expr'
+declToObjArrow _ d = error $ printf "declToObjArrow without input expression: %s" (show d)
 
 desDecl :: StatementEnv -> PDecl -> [PStatementTree] -> CRes DesPrgm
 desDecl statementEnv decl subStatements = do

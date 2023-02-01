@@ -10,21 +10,18 @@
 -- This module contains the main code to execute a catln REPL. It
 -- is currently not supported or building.
 --------------------------------------------------------------------
+{-# OPTIONS_GHC -Wno-typed-holes #-}
 
 module Repl where
 
 
 import           CRes
-import           Semantics
-import           Semantics.Prgm
-import           Semantics.Types
 import           Syntax.Ct.Parser
 import           Syntax.Ct.Prgm
 
 import           Control.Monad.Trans
 import           Data.List                (isPrefixOf)
 
-import           Syntax.Ct.Parser.Syntax
 import           System.Console.Haskeline
 import           Utils
 
@@ -57,10 +54,11 @@ parsingRepl env source = case parseRepl source of
 --         TypeCheckResult _ tprgm -> codegen initModule tprgm >> return env
 
 mainStatement :: RawExpr () -> RawStatementTree RawExpr ()
-mainStatement expr = RawStatementTree (RawDeclStatement (RawDecl lhs (Just wrappedExpr))) []
-  where
-    lhs = DeclLHS emptyMetaN (Pattern (ExprObject FunctionObj Nothing (RawValue (Meta (typeVal $ PTypeName "IO") Nothing emptyMetaDat) "io")) NoGuard)
-    wrappedExpr = RawMethod (RawValue emptyMetaN "io") (RawValue emptyMetaN "println" `applyRawArgs` [(Just "msg", RawMethod expr (RawValue emptyMetaN "toString"))])
+mainStatement = undefined
+-- mainStatement expr = RawStatementTree (RawDeclStatement (RawDecl _)) []
+--   where
+    -- lhs = DeclLHS emptyMetaN (Pattern (ExprObject FunctionObj Nothing (RawValue (Meta (typeVal $ PTypeName "IO") Nothing emptyMetaDat) "io")) NoGuard)
+    -- wrappedExpr = RawMethod (RawValue emptyMetaN "io") (RawValue emptyMetaN "println" `applyRawArgs` [(Just "msg", RawMethod expr (RawValue emptyMetaN "toString"))])
 
 
 processRepl :: ReplEnv -> String -> IO ReplEnv

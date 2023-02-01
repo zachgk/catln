@@ -131,7 +131,7 @@ pArrowFull exprMode basis = do
       Just ParseTypeExpr   -> (Just (RawGuardExpr i guard), Nothing)
       Nothing              -> (Just (RawGuardExpr i guard), Nothing)
 
-  return $ RawObjArr i' basis [] arrMeta o'
+  return $ RawObjArr i' basis Nothing [] arrMeta o'
 
 data TermSuffix
   = ArgsSuffix ParseMeta [PObjArr]
