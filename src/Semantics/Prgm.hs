@@ -125,12 +125,12 @@ data GuardExpr e m = GuardExpr {
                                      }
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 data ObjArr e m = ObjArr {
-  roaObj    :: !(Maybe (GuardExpr e m)),
-  roaBasis  :: !ObjectBasis,
-  roaDoc    :: !(Maybe DocComment),
-  roaAnnots :: ![CompAnnot (e m)],
-  roaM      :: !(Meta m),
-  roaArr    :: !(Maybe (GuardExpr e m))
+  oaObj    :: !(Maybe (GuardExpr e m)),
+  oaBasis  :: !ObjectBasis,
+  oaDoc    :: !(Maybe DocComment),
+  oaAnnots :: ![CompAnnot (e m)],
+  oaM      :: !(Meta m),
+  oaArr    :: !(Maybe (GuardExpr e m))
                                }
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 

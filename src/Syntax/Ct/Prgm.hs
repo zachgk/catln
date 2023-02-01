@@ -112,9 +112,9 @@ instance ExprClass RawExpr where
   exprAppliedArgs (RawValue _ _) = []
   exprAppliedArgs (RawTupleApply _ (_, be) args) = exprAppliedArgs be ++ map mapArgs args
     where
-      mapArgs ObjArr{roaObj=(Just (GuardExpr (RawValue _ argName) Nothing)), roaM, roaArr=Nothing} = TupleArgI roaM argName
-      mapArgs ObjArr{roaObj=Nothing, roaM, roaArr=(Just (GuardExpr argVal Nothing))} = TupleArgO roaM argVal
-      mapArgs ObjArr{roaObj= Just (GuardExpr (RawValue _ argName) _), roaM, roaArr=(Just (GuardExpr argVal Nothing))} = TupleArgIO roaM argName argVal
+      mapArgs ObjArr{oaObj=(Just (GuardExpr (RawValue _ argName) Nothing)), oaM, oaArr=Nothing} = TupleArgI oaM argName
+      mapArgs ObjArr{oaObj=Nothing, oaM, oaArr=(Just (GuardExpr argVal Nothing))} = TupleArgO oaM argVal
+      mapArgs ObjArr{oaObj= Just (GuardExpr (RawValue _ argName) _), oaM, oaArr=(Just (GuardExpr argVal Nothing))} = TupleArgIO oaM argName argVal
       mapArgs oa = error $ printf "exprAppliedArgs not defined for arg %s" (show oa)
   exprAppliedArgs (RawVarsApply _ e _) = exprAppliedArgs e
   exprAppliedArgs (RawContextApply _ (_, e) _) = exprAppliedArgs e
@@ -139,8 +139,8 @@ instance ExprClass RawExpr where
   exprArgs (RawAliasExpr base alias) = H.unionWith (++) (exprArgs base) (exprArgs alias)
   exprArgs (RawTupleApply _ (_, be) args) = H.unionWith (++) (exprArgs be) (unionsWith (++) $ map exprArg args)
     where
-      exprArg ObjArr{roaObj=(Just (GuardExpr (RawValue m argName) Nothing)), roaArr= Nothing} = H.singleton argName [m]
-      exprArg ObjArr{roaArr=(Just (GuardExpr argVal Nothing))} = exprArgs argVal
+      exprArg ObjArr{oaObj=(Just (GuardExpr (RawValue m argName) Nothing)), oaArr= Nothing} = H.singleton argName [m]
+      exprArg ObjArr{oaArr=(Just (GuardExpr argVal Nothing))} = exprArgs argVal
       exprArg oa = error $ printf "exprArgs not defined for arg %s" (show oa)
   exprArgs (RawVarsApply _ e _) = exprArgs e
   exprArgs (RawContextApply _ (_, e) _) = exprArgs e

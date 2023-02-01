@@ -19,4 +19,4 @@ isElseAnnot :: (ExprClass e) => CompAnnot (e m) -> Bool
 isElseAnnot e = exprPath e == elseAnnot
 
 hasElseAnnot :: (ExprClass e) => ObjArr e m -> Bool
-hasElseAnnot ObjArr{roaAnnots} = any isElseAnnot roaAnnots
+hasElseAnnot ObjArr{oaAnnots} = any isElseAnnot oaAnnots

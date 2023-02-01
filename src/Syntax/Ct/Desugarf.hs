@@ -39,14 +39,14 @@ type StatementEnv = (String, [DesCompAnnot])
 
 -- | Flattens a declaration tree (with nested declarations)
 flattenNestedDeclarations :: PDeclTree -> [PSemiDecl]
-flattenNestedDeclarations (RawDecl oa@ObjArr{roaObj=Just (GuardExpr objExpression _), roaAnnots}, subStatements) = decl':subDecls4
+flattenNestedDeclarations (RawDecl oa@ObjArr{oaObj=Just (GuardExpr objExpression _), oaAnnots}, subStatements) = decl':subDecls4
   where
     objDoc = desObjDocComment subStatements
     (subDecls, annots1) = splitDeclSubStatements subStatements
     subDecls2 = concatMap flattenNestedDeclarations subDecls
-    annots2 = fmap (semiDesExpr (Just objExpression)) (annots1 ++ roaAnnots)
+    annots2 = fmap (semiDesExpr (Just objExpression)) (annots1 ++ oaAnnots)
 
-    oa2 = (semiDesObjArr oa){roaAnnots=annots2, roaDoc=objDoc}
+    oa2 = (semiDesObjArr oa){oaAnnots=annots2, oaDoc=objDoc}
 
     (oa3, subDecls3) = scopeSubDeclFunNames oa2 subDecls2
     (oa4, subDecls4) = currySubFunctions oa3 subDecls3
@@ -101,28 +101,28 @@ desObj isDef inheritPath useRelativeName object@ExprObject{eobjExpr} = object'
     object' = object{eobjExpr=objExpr4}
 
 semiDesObjArr :: PObjArr -> PSObjArr
-semiDesObjArr oa@ObjArr{roaObj, roaAnnots, roaArr} = oa{
-  roaObj=fmap (semiDesGuardExpr Nothing) roaObj,
-  roaAnnots = fmap (semiDesExpr oE) roaAnnots,
-  roaArr=fmap (semiDesGuardExpr oE) roaArr
+semiDesObjArr oa@ObjArr{oaObj, oaAnnots, oaArr} = oa{
+  oaObj=fmap (semiDesGuardExpr Nothing) oaObj,
+  oaAnnots = fmap (semiDesExpr oE) oaAnnots,
+  oaArr=fmap (semiDesGuardExpr oE) oaArr
   }
   where
-    oE = fmap rgeExpr roaObj
+    oE = fmap rgeExpr oaObj
 
 semiDesGuardExpr :: Maybe PObjExpr -> PGuardExpr -> PSGuardExpr
 semiDesGuardExpr obj (GuardExpr expr guard) = GuardExpr (semiDesExpr obj expr) (fmap (semiDesExpr obj) guard)
 
 declToObjArrow :: StatementEnv -> PSemiDecl -> DesObjectMapItem
-declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl ObjArr{roaObj=Just (GuardExpr object guard), roaBasis, roaDoc, roaM, roaAnnots, roaArr}) = (object', annots' ++ inheritAnnots, Just arrow)
+declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl ObjArr{oaObj=Just (GuardExpr object guard), oaBasis, oaDoc, oaM, oaAnnots, oaArr}) = (object', annots' ++ inheritAnnots, Just arrow)
   where
-    object' = desObj True inheritPath UseRelativeName (ExprObject roaBasis roaDoc object)
+    object' = desObj True inheritPath UseRelativeName (ExprObject oaBasis oaDoc object)
 
     argMetaMap = exprArgs $ eobjExpr object'
-    annots' = map (desExpr argMetaMap) roaAnnots
-    expr' = case roaArr of
+    annots' = map (desExpr argMetaMap) oaAnnots
+    expr' = case oaArr of
       Just (GuardExpr e _) -> Just $ desExpr argMetaMap e
       Nothing              -> Nothing
-    arrow = Arrow roaM (fmap (desExpr argMetaMap) guard) expr'
+    arrow = Arrow oaM (fmap (desExpr argMetaMap) guard) expr'
 declToObjArrow _ d = error $ printf "declToObjArrow without input expression: %s" (show d)
 
 desDecl :: StatementEnv -> PDecl -> [PStatementTree] -> CRes DesPrgm

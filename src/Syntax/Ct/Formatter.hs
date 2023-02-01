@@ -69,8 +69,8 @@ formatExpr (RawHoleExpr _ HoleTodefine) = "todefine"
 formatExpr (RawTheExpr t) = printf ":%s" (formatExpr t)
 formatExpr (RawAliasExpr base alias) = printf "%s@%s" (formatExpr base) (formatExpr alias)
 formatExpr (RawTupleApply _ (_, RawValue _ n) args) | operatorPrefix `isPrefixOf` n = case args of
-  [ObjArr{ roaArr=(Just (GuardExpr a _))}] -> operatorName ++ formatExpr a
-  [ObjArr{ roaArr=(Just (GuardExpr l _))}, ObjArr{roaArr=(Just (GuardExpr r _))}] -> if n == operatorType
+  [ObjArr{ oaArr=(Just (GuardExpr a _))}] -> operatorName ++ formatExpr a
+  [ObjArr{ oaArr=(Just (GuardExpr l _))}, ObjArr{oaArr=(Just (GuardExpr r _))}] -> if n == operatorType
     then printf "%s%s %s" (formatExpr l) operatorName (formatExpr r) -- Show types as "x: 5" instead of "x : 5"
     else printf "%s %s %s" (formatExpr l) operatorName (formatExpr r)
   _ -> error "Non unary or binary operator found in formatExpr"
@@ -84,9 +84,9 @@ formatExpr (RawMethod base method) = printf "%s.%s" (formatExpr base) (formatExp
 formatExpr (RawList _ l) = printf "[%s]" $ intercalate ", " $ map formatExpr l
 
 formatObjArr :: ObjArr RawExpr m -> String
-formatObjArr oa@ObjArr{roaObj, roaM, roaArr} = printf "%s%s%s%s%s" (showGuardExpr True roaObj) showElse showM showEquals (showGuardExpr False roaArr)
+formatObjArr oa@ObjArr{oaObj, oaM, oaArr} = printf "%s%s%s%s%s" (showGuardExpr True oaObj) showElse showM showEquals (showGuardExpr False oaArr)
   where
-    isNestedDeclaration = case roaArr of
+    isNestedDeclaration = case oaArr of
       (Just (GuardExpr (RawValue _ n) _)) | n == nestedDeclaration -> True
       _                                                            -> False
 
@@ -95,12 +95,12 @@ formatObjArr oa@ObjArr{roaObj, roaM, roaArr} = printf "%s%s%s%s%s" (showGuardExp
     showGuardExpr _ Nothing = ""
 
     showM :: String
-    showM  = case getMetaType roaM of
+    showM  = case getMetaType oaM of
       TopType -> ""
       t       -> printf " -> %s" (formatType t)
 
     showEquals :: String
-    showEquals = case (roaObj, roaArr) of
+    showEquals = case (oaObj, oaArr) of
       _ | isNestedDeclaration -> " ="
       (Just _, Just _)        -> "= "
       _                       -> ""
