@@ -79,17 +79,17 @@ semiDesExpr _ (RawValue m n) = Value m n
 semiDesExpr _ (RawHoleExpr m h) = HoleExpr m h
 semiDesExpr obj (RawTheExpr t) = semiDesExpr obj $ desugarTheExpr t
 semiDesExpr obj (RawAliasExpr base alias) = AliasExpr (semiDesExpr obj base) (semiDesExpr obj alias)
-semiDesExpr obj (RawTupleApply _ (_, RawValue _ "/operator:") [RawObjArr{roaArr=(Just (RawGuardExpr e _))}, RawObjArr{roaArr=(Just (RawGuardExpr tp _))}]) = semiDesExpr obj (rawExprWithType (exprToType tp) e)
+semiDesExpr obj (RawTupleApply _ (_, RawValue _ "/operator:") [ObjArr{roaArr=(Just (GuardExpr e _))}, ObjArr{roaArr=(Just (GuardExpr tp _))}]) = semiDesExpr obj (rawExprWithType (exprToType tp) e)
 semiDesExpr obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm'', be'') arg'') -> TupleApply m'' (bm'', be'') arg'') $ foldl aux (bm, be') args
   where
     be' = semiDesExpr obj be
-    aux (m, e) RawObjArr{roaObj=(Just (RawGuardExpr argInExpr Nothing)), roaM=argM, roaArr=(Just (RawGuardExpr argVal Nothing))} = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (TupleArgIO argM argName' argVal'))
+    aux (m, e) ObjArr{roaObj=(Just (GuardExpr argInExpr Nothing)), roaM=argM, roaArr=(Just (GuardExpr argVal Nothing))} = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (TupleArgIO argM argName' argVal'))
       where
         argVal' = semiDesExpr obj argVal
         (Value _ argName') = semiDesExpr obj argInExpr
-    aux (m, e) RawObjArr{roaObj=Nothing, roaM=argM, roaArr=(Just (RawGuardExpr argVal Nothing))} = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (TupleArgO argM argVal'))
+    aux (m, e) ObjArr{roaObj=Nothing, roaM=argM, roaArr=(Just (GuardExpr argVal Nothing))} = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (TupleArgO argM argVal'))
       where argVal' = semiDesExpr obj argVal
-    aux (m, e) RawObjArr{roaObj=(Just (RawGuardExpr argInExpr Nothing)), roaArr=Nothing} = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (TupleArgI argM' argName'))
+    aux (m, e) ObjArr{roaObj=(Just (GuardExpr argInExpr Nothing)), roaArr=Nothing} = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (TupleArgI argM' argName'))
       where
         (Value argM' argName') = semiDesExpr obj argInExpr
     aux _ oa = error $ printf "Could not semiDesExpr with unsupported term %s" (show oa)

@@ -14,10 +14,9 @@ module Semantics.Annots where
 import           Constants
 import           Semantics      (exprPath)
 import           Semantics.Prgm
-import           Syntax.Ct.Prgm
 
 isElseAnnot :: (ExprClass e) => CompAnnot (e m) -> Bool
 isElseAnnot e = exprPath e == elseAnnot
 
-hasElseAnnot :: (ExprClass e) => RawObjArr e m -> Bool
-hasElseAnnot RawObjArr{roaAnnots} = any isElseAnnot roaAnnots
+hasElseAnnot :: (ExprClass e) => ObjArr e m -> Bool
+hasElseAnnot ObjArr{roaAnnots} = any isElseAnnot roaAnnots

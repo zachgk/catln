@@ -37,7 +37,7 @@ data RawExpr m
   | RawHoleExpr (Meta m) Hole
   | RawTheExpr (RawExpr m) -- ^ Written :TypeName and read as The TypeName
   | RawAliasExpr (RawExpr m) (RawExpr m) -- ^ base aliasExpr
-  | RawTupleApply (Meta m) (Meta m, RawExpr m) [RawObjArr RawExpr m]
+  | RawTupleApply (Meta m) (Meta m, RawExpr m) [ObjArr RawExpr m]
   | RawVarsApply (Meta m) (RawExpr m) [(TypeVarName, Meta m)]
   | RawContextApply (Meta m) (Meta m, RawExpr m) [(ArgName, Meta m)]
   | RawParen (RawExpr m)
@@ -45,22 +45,7 @@ data RawExpr m
   | RawList (Meta m) [RawExpr m]
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
-data RawGuardExpr e m = RawGuardExpr {
-   rgeExpr  :: !(e m),
-   rgeGuard :: !(ExprCond e m)
-                                     }
-  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
-data RawObjArr e m = RawObjArr {
-  roaObj    :: !(Maybe (RawGuardExpr e m)),
-  roaBasis  :: !ObjectBasis,
-  roaDoc    :: Maybe DocComment,
-  roaAnnots :: ![CompAnnot (e m)],
-  roaM      :: !(Meta m),
-  roaArr    :: !(Maybe (RawGuardExpr e m))
-                               }
-  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
-
-newtype RawDecl e m = RawDecl (RawObjArr e m)
+newtype RawDecl e m = RawDecl (ObjArr e m)
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 newtype TypeDef m = TypeDef (RawExpr m)
@@ -127,9 +112,9 @@ instance ExprClass RawExpr where
   exprAppliedArgs (RawValue _ _) = []
   exprAppliedArgs (RawTupleApply _ (_, be) args) = exprAppliedArgs be ++ map mapArgs args
     where
-      mapArgs RawObjArr{roaObj=(Just (RawGuardExpr (RawValue _ argName) Nothing)), roaM, roaArr=Nothing} = TupleArgI roaM argName
-      mapArgs RawObjArr{roaObj=Nothing, roaM, roaArr=(Just (RawGuardExpr argVal Nothing))} = TupleArgO roaM argVal
-      mapArgs RawObjArr{roaObj= Just (RawGuardExpr (RawValue _ argName) _), roaM, roaArr=(Just (RawGuardExpr argVal Nothing))} = TupleArgIO roaM argName argVal
+      mapArgs ObjArr{roaObj=(Just (GuardExpr (RawValue _ argName) Nothing)), roaM, roaArr=Nothing} = TupleArgI roaM argName
+      mapArgs ObjArr{roaObj=Nothing, roaM, roaArr=(Just (GuardExpr argVal Nothing))} = TupleArgO roaM argVal
+      mapArgs ObjArr{roaObj= Just (GuardExpr (RawValue _ argName) _), roaM, roaArr=(Just (GuardExpr argVal Nothing))} = TupleArgIO roaM argName argVal
       mapArgs oa = error $ printf "exprAppliedArgs not defined for arg %s" (show oa)
   exprAppliedArgs (RawVarsApply _ e _) = exprAppliedArgs e
   exprAppliedArgs (RawContextApply _ (_, e) _) = exprAppliedArgs e
@@ -154,8 +139,8 @@ instance ExprClass RawExpr where
   exprArgs (RawAliasExpr base alias) = H.unionWith (++) (exprArgs base) (exprArgs alias)
   exprArgs (RawTupleApply _ (_, be) args) = H.unionWith (++) (exprArgs be) (unionsWith (++) $ map exprArg args)
     where
-      exprArg RawObjArr{roaObj=(Just (RawGuardExpr (RawValue m argName) Nothing)), roaArr= Nothing} = H.singleton argName [m]
-      exprArg RawObjArr{roaArr=(Just (RawGuardExpr argVal Nothing))} = exprArgs argVal
+      exprArg ObjArr{roaObj=(Just (GuardExpr (RawValue m argName) Nothing)), roaArr= Nothing} = H.singleton argName [m]
+      exprArg ObjArr{roaArr=(Just (GuardExpr argVal Nothing))} = exprArgs argVal
       exprArg oa = error $ printf "exprArgs not defined for arg %s" (show oa)
   exprArgs (RawVarsApply _ e _) = exprArgs e
   exprArgs (RawContextApply _ (_, e) _) = exprArgs e

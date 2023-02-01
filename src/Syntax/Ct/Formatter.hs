@@ -69,8 +69,8 @@ formatExpr (RawHoleExpr _ HoleTodefine) = "todefine"
 formatExpr (RawTheExpr t) = printf ":%s" (formatExpr t)
 formatExpr (RawAliasExpr base alias) = printf "%s@%s" (formatExpr base) (formatExpr alias)
 formatExpr (RawTupleApply _ (_, RawValue _ n) args) | operatorPrefix `isPrefixOf` n = case args of
-  [RawObjArr{ roaArr=(Just (RawGuardExpr a _))}] -> operatorName ++ formatExpr a
-  [RawObjArr{ roaArr=(Just (RawGuardExpr l _))}, RawObjArr{roaArr=(Just (RawGuardExpr r _))}] -> if n == operatorType
+  [ObjArr{ roaArr=(Just (GuardExpr a _))}] -> operatorName ++ formatExpr a
+  [ObjArr{ roaArr=(Just (GuardExpr l _))}, ObjArr{roaArr=(Just (GuardExpr r _))}] -> if n == operatorType
     then printf "%s%s %s" (formatExpr l) operatorName (formatExpr r) -- Show types as "x: 5" instead of "x : 5"
     else printf "%s %s %s" (formatExpr l) operatorName (formatExpr r)
   _ -> error "Non unary or binary operator found in formatExpr"
@@ -83,15 +83,15 @@ formatExpr (RawParen e) = printf "(%s)" (formatExpr e)
 formatExpr (RawMethod base method) = printf "%s.%s" (formatExpr base) (formatExpr method)
 formatExpr (RawList _ l) = printf "[%s]" $ intercalate ", " $ map formatExpr l
 
-formatObjArr :: RawObjArr RawExpr m -> String
-formatObjArr oa@RawObjArr{roaObj, roaM, roaArr} = printf "%s%s%s%s%s" (showGuardExpr True roaObj) showElse showM showEquals (showGuardExpr False roaArr)
+formatObjArr :: ObjArr RawExpr m -> String
+formatObjArr oa@ObjArr{roaObj, roaM, roaArr} = printf "%s%s%s%s%s" (showGuardExpr True roaObj) showElse showM showEquals (showGuardExpr False roaArr)
   where
     isNestedDeclaration = case roaArr of
-      (Just (RawGuardExpr (RawValue _ n) _)) | n == nestedDeclaration -> True
-      _                                                               -> False
+      (Just (GuardExpr (RawValue _ n) _)) | n == nestedDeclaration -> True
+      _                                                            -> False
 
     showGuardExpr False _ | isNestedDeclaration = ""
-    showGuardExpr _ (Just (RawGuardExpr e g)) = formatExpr e ++ formatGuard g
+    showGuardExpr _ (Just (GuardExpr e g)) = formatExpr e ++ formatGuard g
     showGuardExpr _ Nothing = ""
 
     showM :: String

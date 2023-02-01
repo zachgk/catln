@@ -119,6 +119,22 @@ type ObjectMapItem e m = (Object e m, [CompAnnot (e m)], Maybe (Arrow e m))
 type ObjectMap e m = [ObjectMapItem e m]
 type Prgm e m = (ObjectMap e m, ClassGraph, [CompAnnot (e m)]) -- TODO: Include [Export]
 
+data GuardExpr e m = GuardExpr {
+   rgeExpr  :: !(e m),
+   rgeGuard :: !(ExprCond e m)
+                                     }
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+data ObjArr e m = ObjArr {
+  roaObj    :: !(Maybe (GuardExpr e m)),
+  roaBasis  :: !ObjectBasis,
+  roaDoc    :: !(Maybe DocComment),
+  roaAnnots :: ![CompAnnot (e m)],
+  roaM      :: !(Meta m),
+  roaArr    :: !(Maybe (GuardExpr e m))
+                               }
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+
+
 type ExprObjectMapItem e m = (ExprObject e m, [CompAnnot (e m)], Maybe (Arrow e m))
 type ExprObjectMap e m = [ExprObjectMapItem e m]
 type ExprPrgm e m = (ExprObjectMap e m, ClassGraph, [CompAnnot (e m)]) -- TODO: Include [Export]

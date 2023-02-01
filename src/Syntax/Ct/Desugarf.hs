@@ -39,7 +39,7 @@ type StatementEnv = (String, [DesCompAnnot])
 
 -- | Flattens a declaration tree (with nested declarations)
 flattenNestedDeclarations :: PDeclTree -> [PSemiDecl]
-flattenNestedDeclarations (RawDecl oa@RawObjArr{roaObj=Just (RawGuardExpr objExpression _), roaAnnots}, subStatements) = decl':subDecls4
+flattenNestedDeclarations (RawDecl oa@ObjArr{roaObj=Just (GuardExpr objExpression _), roaAnnots}, subStatements) = decl':subDecls4
   where
     objDoc = desObjDocComment subStatements
     (subDecls, annots1) = splitDeclSubStatements subStatements
@@ -101,7 +101,7 @@ desObj isDef inheritPath useRelativeName object@ExprObject{eobjExpr} = object'
     object' = object{eobjExpr=objExpr4}
 
 semiDesObjArr :: PObjArr -> PSObjArr
-semiDesObjArr oa@RawObjArr{roaObj, roaAnnots, roaArr} = oa{
+semiDesObjArr oa@ObjArr{roaObj, roaAnnots, roaArr} = oa{
   roaObj=fmap (semiDesGuardExpr Nothing) roaObj,
   roaAnnots = fmap (semiDesExpr oE) roaAnnots,
   roaArr=fmap (semiDesGuardExpr oE) roaArr
@@ -110,18 +110,18 @@ semiDesObjArr oa@RawObjArr{roaObj, roaAnnots, roaArr} = oa{
     oE = fmap rgeExpr roaObj
 
 semiDesGuardExpr :: Maybe PObjExpr -> PGuardExpr -> PSGuardExpr
-semiDesGuardExpr obj (RawGuardExpr expr guard) = RawGuardExpr (semiDesExpr obj expr) (fmap (semiDesExpr obj) guard)
+semiDesGuardExpr obj (GuardExpr expr guard) = GuardExpr (semiDesExpr obj expr) (fmap (semiDesExpr obj) guard)
 
 declToObjArrow :: StatementEnv -> PSemiDecl -> DesObjectMapItem
-declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl RawObjArr{roaObj=Just (RawGuardExpr object guard), roaBasis, roaDoc, roaM, roaAnnots, roaArr}) = (object', annots' ++ inheritAnnots, Just arrow)
+declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl ObjArr{roaObj=Just (GuardExpr object guard), roaBasis, roaDoc, roaM, roaAnnots, roaArr}) = (object', annots' ++ inheritAnnots, Just arrow)
   where
     object' = desObj True inheritPath UseRelativeName (ExprObject roaBasis roaDoc object)
 
     argMetaMap = exprArgs $ eobjExpr object'
     annots' = map (desExpr argMetaMap) roaAnnots
     expr' = case roaArr of
-      Just (RawGuardExpr e _) -> Just $ desExpr argMetaMap e
-      Nothing                 -> Nothing
+      Just (GuardExpr e _) -> Just $ desExpr argMetaMap e
+      Nothing              -> Nothing
     arrow = Arrow roaM (fmap (desExpr argMetaMap) guard) expr'
 declToObjArrow _ d = error $ printf "declToObjArrow without input expression: %s" (show d)
 

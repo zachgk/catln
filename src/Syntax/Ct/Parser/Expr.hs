@@ -123,15 +123,15 @@ pArrowFull exprMode basis = do
 
   let arrMeta = fromMaybe emptyMetaN maybeDecl
   (i', o') <- return $ case (expr1, maybeExpr2) of
-    (i, Just (Just o)) -> (Just (RawGuardExpr i guard), Just (RawGuardExpr o Nothing))
-    (i, Just Nothing) -> (Just (RawGuardExpr i guard), Just (RawGuardExpr (rawVal nestedDeclaration) Nothing))
+    (i, Just (Just o)) -> (Just (GuardExpr i guard), Just (GuardExpr o Nothing))
+    (i, Just Nothing) -> (Just (GuardExpr i guard), Just (GuardExpr (rawVal nestedDeclaration) Nothing))
     (i, Nothing) -> case exprMode of
-      Just ParseInputExpr  -> (Just (RawGuardExpr i guard), Nothing)
-      Just ParseOutputExpr -> (Nothing, Just (RawGuardExpr i guard))
-      Just ParseTypeExpr   -> (Just (RawGuardExpr i guard), Nothing)
-      Nothing              -> (Just (RawGuardExpr i guard), Nothing)
+      Just ParseInputExpr  -> (Just (GuardExpr i guard), Nothing)
+      Just ParseOutputExpr -> (Nothing, Just (GuardExpr i guard))
+      Just ParseTypeExpr   -> (Just (GuardExpr i guard), Nothing)
+      Nothing              -> (Just (GuardExpr i guard), Nothing)
 
-  return $ RawObjArr i' basis Nothing guardAnnots arrMeta o'
+  return $ ObjArr i' basis Nothing guardAnnots arrMeta o'
 
 data TermSuffix
   = ArgsSuffix ParseMeta [PObjArr]
