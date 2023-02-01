@@ -30,9 +30,6 @@ import           Text.Megaparsec
 import           Text.Printf
 import           Utils
 
-data Pattern e m = Pattern (ExprObject e m) (ExprCond e m)
-  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON, ToJSONKey)
-
 -- Expr before desugar
 data RawExpr m
   = RawCExpr (Meta m) Constant
