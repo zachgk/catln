@@ -30,12 +30,6 @@ import           Syntax.Ct.Parser.Lexer
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 
-data ExprParseMode
-  = ParseInputExpr -- ^ Parses a LHS or input expression
-  | ParseOutputExpr -- ^ Parses a RHS or output expression
-  | ParseTypeExpr -- ^ Parses an object in a multi type (class) definition
-  deriving (Eq, Show)
-
 mkOp1 :: String -> PExpr -> PExpr
 mkOp1 opChars x = applyRawArgs (RawValue emptyMetaN op) [(Just operatorArgUnary, x)]
   where op = operatorPrefix ++ opChars
@@ -105,31 +99,27 @@ pStringLiteral = do
   pos2 <- getSourcePos
   return $ RawCExpr (emptyMeta pos1 pos2) (CStr s)
 
-parenExpr :: ExprParseMode -> Parser PExpr
-parenExpr exprMode = do
-  e <- parens (pExpr exprMode)
+parenExpr ::  Parser PExpr
+parenExpr = do
+  e <- parens pExpr
   return $ RawParen e
 
-pArrowFull :: Maybe ExprParseMode -> ObjectBasis -> Parser PObjArr
-pArrowFull exprMode basis = do
-  expr1 <- pExpr (fromMaybe ParseInputExpr exprMode)
+pArrowFull :: ObjectBasis -> Parser PObjArr
+pArrowFull basis = do
+  expr1 <- pExpr
   (guard, guardAnnots) <- pPatternGuard
   maybeDecl <- optional $ do
     _ <- symbol "->"
-    exprToTypeMeta <$> term ParseInputExpr
+    exprToTypeMeta <$> term
   maybeExpr2 <- optional $ do
     _ <- symbol "=>" <|> symbol "="
-    optional $ try $ pExpr (fromMaybe ParseOutputExpr exprMode)
+    optional $ try pExpr
 
   let arrMeta = fromMaybe emptyMetaN maybeDecl
   (i', o') <- return $ case (expr1, maybeExpr2) of
     (i, Just (Just o)) -> (Just (GuardExpr i guard), Just (GuardExpr o Nothing))
     (i, Just Nothing) -> (Just (GuardExpr i guard), Just (GuardExpr (rawVal nestedDeclaration) Nothing))
-    (i, Nothing) -> case exprMode of
-      Just ParseInputExpr  -> (Just (GuardExpr i guard), Nothing)
-      Just ParseOutputExpr -> (Nothing, Just (GuardExpr i guard))
-      Just ParseTypeExpr   -> (Just (GuardExpr i guard), Nothing)
-      Nothing              -> (Just (GuardExpr i guard), Nothing)
+    (i, Nothing) -> (Just (GuardExpr i guard), Nothing) -- If only one expression, always make it as an input and later desugar to proper place
 
   return $ ObjArr i' basis Nothing guardAnnots arrMeta o'
 
@@ -140,13 +130,13 @@ data TermSuffix
   | AliasSuffix ParseMeta TypeName
   deriving (Show)
 
-pArgSuffix :: ExprParseMode -> Parser PObjArr
-pArgSuffix exprMode = pArrowFull (Just exprMode) ArgObj
+pArgSuffix :: Parser PObjArr
+pArgSuffix = pArrowFull ArgObj
 
-pArgsSuffix :: ExprParseMode -> Parser TermSuffix
-pArgsSuffix exprMode = do
+pArgsSuffix :: Parser TermSuffix
+pArgsSuffix = do
   pos1 <- getSourcePos
-  args <- parens $ sepBy1 (pArgSuffix exprMode) (symbol ",")
+  args <- parens $ sepBy1 pArgSuffix (symbol ",")
   pos2 <- getSourcePos
   return $ ArgsSuffix (emptyMeta pos1 pos2) args
 
@@ -193,8 +183,8 @@ pAliasSuffix = do
   pos2 <- getSourcePos
   return $ AliasSuffix (emptyMeta pos1 pos2) aliasName
 
-pTermSuffix :: ExprParseMode -> Parser TermSuffix
-pTermSuffix exprMode = pArgsSuffix exprMode <|> pVarsSuffix <|> pContextSuffix <|> pAliasSuffix
+pTermSuffix :: Parser TermSuffix
+pTermSuffix = pArgsSuffix <|> pVarsSuffix <|> pContextSuffix <|> pAliasSuffix
 
 pInt :: Parser PExpr
 pInt = do
@@ -203,11 +193,11 @@ pInt = do
   pos2 <- getSourcePos
   return $ RawCExpr (emptyMeta pos1 pos2) (CInt i)
 
-pList :: ExprParseMode -> Parser PExpr
-pList exprMode = do
+pList :: Parser PExpr
+pList = do
   pos1 <- getSourcePos
   _ <- string "["
-  lst <- sepBy (pExpr exprMode) (symbol ",")
+  lst <- sepBy pExpr (symbol ",")
   _ <- string "]"
   pos2 <- getSourcePos
   return $ RawList (emptyMeta pos1 pos2) lst
@@ -218,25 +208,25 @@ applyTermSuffix base (VarsSuffix m vars) = RawVarsApply m base vars
 applyTermSuffix base (ContextSuffix m args) = RawContextApply m (labelPosM "ctx" $ getExprMeta base, base) args
 applyTermSuffix base (AliasSuffix m n) = RawAliasExpr base (RawValue m n)
 
-term :: ExprParseMode -> Parser PExpr
-term exprMode = do
-  base <- parenExpr exprMode
+term :: Parser PExpr
+term = do
+  base <- parenExpr
        <|> pStringLiteral
        <|> pInt
-       <|> pList exprMode
+       <|> pList
        <|> pValue
-  suffixes <- many (pTermSuffix exprMode)
+  suffixes <- many pTermSuffix
   _ <- sc
   return $ foldl applyTermSuffix base suffixes
 
-pExpr :: ExprParseMode -> Parser PExpr
-pExpr exprMode = makeExprParser (term exprMode) ops
+pExpr :: Parser PExpr
+pExpr = makeExprParser term ops
 
 pPatternGuard :: Parser (Maybe PExpr, [PCompAnnot])
 pPatternGuard = do
   cond <- optional $ do
     _ <- symbol "if"
-    pExpr ParseInputExpr
+    pExpr
   els <- optional $ symbol "else"
   let els' = [rawVal elseAnnot | isJust els]
   return (cond, els')

@@ -99,7 +99,7 @@ parseRepl s = case runParser (contents p) "<repl>" s of
                 Left e@(ParseErrorBundle _ _) -> ReplErr e
                 Right (Left statement)        -> ReplStatement statement
                 Right (Right expr)            -> ReplExpr expr
-  where p = try (Left <$> pStatementTree) <|> try (Right <$> pExpr ParseOutputExpr)
+  where p = try (Left <$> pStatementTree) <|> try (Right <$> pExpr)
 
 -- replaces imports of a directory with directory/main.ct
 dirImportToMain :: String -> IO String

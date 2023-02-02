@@ -30,12 +30,12 @@ import           Syntax.Ct.Prgm
 
 
 pMultiTerm :: Parser [PExpr]
-pMultiTerm = sepBy1 (term ParseTypeExpr) (symbol "|")
+pMultiTerm = sepBy1 term (symbol "|")
 
 pClassStatement :: Parser PStatement
 pClassStatement = do
   _ <- symbol "class"
-  PartialType{ptName, ptArgs, ptVars=vars} <- exprToPartialType <$> term ParseInputExpr
+  PartialType{ptName, ptArgs, ptVars=vars} <- exprToPartialType <$> term
   unless (H.null ptArgs) $ fail "Classes do not currently support arguments"
   let name = fromPartialName ptName
   maybeTypes <- optional $ do
@@ -48,19 +48,19 @@ pClassStatement = do
 pAnnotDefStatement :: Parser PStatement
 pAnnotDefStatement = do
   _ <- symbol "annot"
-  rawAnnot <- TypeDef <$> term ParseInputExpr
+  rawAnnot <- TypeDef <$> term
   return $ TypeDefStatement rawAnnot
 
 pTypeDefStatement :: Parser PStatement
 pTypeDefStatement = do
   _ <- symbol "data"
-  def <- TypeDef <$> term ParseInputExpr
+  def <- TypeDef <$> term
   return $ TypeDefStatement def
 
 pClassDefStatement :: Parser PStatement
 pClassDefStatement = do
   _ <- symbol "every"
-  instanceTerm <- term ParseTypeExpr
+  instanceTerm <- term
   _ <- symbol "isa"
   className <- ttypeidentifier
   let def = (instanceTerm, className)
