@@ -40,7 +40,7 @@ type EvalMeta = Meta EvalMetaDat
 type ECompAnnot = CompAnnot (Expr EvalMetaDat)
 type EExpr = Expr EvalMetaDat
 type EGuard = Maybe EExpr
-type EObject = ExprObject Expr EvalMetaDat
+type EObjArr = ObjArr Expr EvalMetaDat
 type EArrow = Arrow Expr EvalMetaDat
 type EObjectMap = ExprObjectMap Expr EvalMetaDat
 type EPrgm = ExprPrgm Expr EvalMetaDat
@@ -56,9 +56,8 @@ instance Eq EPrim where
 instance Hashable EPrim where
   hashWithSalt s (EPrim at ag _) = s `hashWithSalt` at `hashWithSalt` ag
 
-data EvalTreebugOpen = EvalTreebugOpen EObject EArrow
-  deriving (Eq, Generic, Hashable)
-data EvalTreebugClosed = EvalTreebugClosed EObject EArrow Val [EvalTreebugClosed] String
+type EvalTreebugOpen = EObjArr
+data EvalTreebugClosed = EvalTreebugClosed EObjArr Val [EvalTreebugClosed] String
   deriving (Eq, Generic, Hashable, ToJSON)
 
 data Env = Env { evObjMap        :: EObjectMap
@@ -67,12 +66,12 @@ data Env = Env { evObjMap        :: EObjectMap
                , evExEnv         :: ResExEnv
                , evTbEnv         :: TBEnv
                , evCallStack     :: [String]
-               , evCoverage      :: H.HashMap EArrow Int
+               , evCoverage      :: H.HashMap EObjArr Int
                , evTreebugOpen   :: [EvalTreebugOpen]
                , evTreebugClosed :: [EvalTreebugClosed]
                }
 
-data EvalResult = EvalResult { erCoverage :: H.HashMap EArrow Int
+data EvalResult = EvalResult { erCoverage :: H.HashMap EObjArr Int
                              , erTreebug  :: [EvalTreebugClosed]
                              } deriving (Eq, Generic, ToJSON)
 
@@ -85,7 +84,7 @@ data Val
   | TupleVal String (H.HashMap String Val)
   | IOVal Integer (IO ())
   | LLVMVal (LLVM ())
-  | LLVMQueue [(ResArrowTree, EObject, Arrow Expr EvalMetaDat)]
+  | LLVMQueue [(ResArrowTree, EObjArr)]
   -- | LLVMOperand Type (Codegen AST.Operand)
   | LLVMIO (Codegen ())
   | NoVal
@@ -168,14 +167,14 @@ getValType NoVal = error "getValType of NoVal"
 --- ResArrowTree
 data MacroData = MacroData {
                                mdTbEnv      :: TBEnv
-                             , mdObj        :: EObject
+                             , mdObj        :: EObjArr
                              , mdObjSrcType :: PartialType
                              }
 newtype MacroFunction = MacroFunction (ResArrowTree -> MacroData -> CRes ResArrowTree)
 type ResBuildEnvFunction = ResArrowTree -> ResArrowTree
 type ResBuildEnvItem = (PartialType, Maybe (Expr EvalMetaDat), Bool, ResBuildEnvFunction)
 type ResBuildEnv = H.HashMap TypeName [ResBuildEnvItem]
-type ResExEnv = H.HashMap (PartialType, Arrow Expr EvalMetaDat) (ResArrowTree, [ResArrowTree]) -- (result, [compAnnot trees])
+type ResExEnv = H.HashMap (PartialType, ObjArr Expr EvalMetaDat) (ResArrowTree, [ResArrowTree]) -- (result, [compAnnot trees])
 
 data TBEnv = TBEnv {
     tbName       :: String
@@ -192,20 +191,20 @@ instance Hashable MacroFunction where
   s `hashWithSalt` _ = s
 
 data ResArrowTree
-  = ResEArrow ResArrowTree EObject [CompAnnot (Expr EvalMetaDat)] (Arrow Expr EvalMetaDat)
+  = ResEArrow ResArrowTree EObjArr
   | PrimArrow ResArrowTree Type EPrim
   | MacroArrow ResArrowTree Type MacroFunction
   | ExprArrow EExpr Type Type
   | ConstantArrow Val
   | ArgArrow Type String
   | ResArrowMatch ResArrowTree Type (H.HashMap PartialType ResArrowTree)
-  | ResArrowCond Type [((ResArrowTree, ResArrowTree, EObject), ResArrowTree)] ResArrowTree -- [((if, ifInput, ifObj), then)] else
+  | ResArrowCond Type [((ResArrowTree, ResArrowTree, EObjArr), ResArrowTree)] ResArrowTree -- [((if, ifInput, ifObj), then)] else
   | ResArrowTuple String (H.HashMap String ResArrowTree)
   | ResArrowTupleApply ResArrowTree String ResArrowTree
   deriving (Eq, Generic, Hashable)
 
 instance Show ResArrowTree where
-  show (ResEArrow _ obj _ arrow) = printf "(ResEArrow: %s -> %s)" (show obj) (show arrow)
+  show (ResEArrow _ oa) = printf "(ResEArrow: %s)" (show oa)
   show (PrimArrow _ tp _) = "(PrimArrow " ++ show tp ++ ")"
   show (MacroArrow _ tp _) = "(MacroArrow " ++ show tp ++ ")"
   show (ExprArrow _ exprType destType) = "(ExprArrow " ++ show exprType ++ " to " ++ show destType ++ ")"
@@ -247,7 +246,7 @@ data DeclInput
   | StructInput
   deriving (Eq, Ord, Show, Generic, Hashable)
 
-type TaskArrow = (PartialType, EObject, [CompAnnot (Expr EvalMetaDat)], Arrow Expr EvalMetaDat, DeclInput)
+type TaskArrow = (PartialType, EObjArr, DeclInput)
 type TaskStruct = Type
 
 type Names = Map.Map String Int
@@ -278,12 +277,12 @@ instance Show (Codegen a) where
   show Codegen{} = "Codegen"
 
 
-type ObjSrc = (PartialType, EObject)
+type ObjSrc = (PartialType, EObjArr)
 macroData :: TBEnv -> ObjSrc -> MacroData
 macroData tbEnv (objSrcType, obj) = MacroData tbEnv obj objSrcType
 
 resArrowDestType :: ClassGraph -> PartialType -> ResArrowTree -> Type
-resArrowDestType classGraph src (ResEArrow _ obj _ arr) = arrowDestType False classGraph src obj arr
+resArrowDestType classGraph src (ResEArrow _ oa) = arrowDestType False classGraph src oa
 resArrowDestType _ _ (PrimArrow _ tp _) = tp
 resArrowDestType _ _ (MacroArrow _ tp _) = tp
 resArrowDestType _ _ (ConstantArrow v) = singletonType $ getValType v
@@ -291,8 +290,8 @@ resArrowDestType _ _ (ArgArrow tp _) = tp
 resArrowDestType _ _ t = error $ printf "Not yet implemented resArrowDestType for %s" (show t)
 
 
-buildArrArgs :: EObject -> Val -> Args
-buildArrArgs obj = aux H.empty (eobjExpr obj)
+buildArrArgs :: EObjArr -> Val -> Args
+buildArrArgs obj = aux H.empty (oaObjExpr obj)
   where
     aux acc oExpr val | null (exprAppliedArgs oExpr) = H.insert (exprPath oExpr) val acc
     aux _ oExpr (TupleVal tupleName _) | exprPath oExpr /= tupleName = error $ printf "Found name mismatch in buildArrArgs: object %s and tuple %s" (exprPath oExpr) tupleName

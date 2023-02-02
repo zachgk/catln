@@ -112,7 +112,7 @@ formatObjArr oa@ObjArr{oaObj, oaM, oaArr} = printf "%s%s%s%s%s" (showGuardExpr T
     showElse :: String
     showElse = if hasElseAnnot oa then " else " else ""
 
-formatStatement :: Int -> RawStatement RawExpr m -> String
+formatStatement :: (Show m) => Int -> RawStatement RawExpr m -> String
 formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
   where
     statement' = case statement of
@@ -160,7 +160,7 @@ isHiddenStatement :: RawStatement RawExpr m -> Bool
 isHiddenStatement (RawAnnot annot) | isElseAnnot annot = True
 isHiddenStatement _ = False
 
-formatStatementTree :: Bool -> Int -> RawStatementTree RawExpr m -> Builder
+formatStatementTree :: (Show m) => Bool -> Int -> RawStatementTree RawExpr m -> Builder
 formatStatementTree rootStatement indent (RawStatementTree statement subTree) = do
   unless (isHiddenStatement statement) (literal $ formatStatement indent statement)
 
@@ -171,7 +171,7 @@ formatStatementTree rootStatement indent (RawStatementTree statement subTree) = 
     formatStatementTree subTreeRootStatement (indent + 1) s
   when rootStatement ""
 
-formatPrgm :: Int -> RawPrgm m -> Builder
+formatPrgm :: (Show m) => Int -> RawPrgm m -> Builder
 formatPrgm indent (imports, statements) = do
   forM_ imports $ \imp -> do
     formatImport imp

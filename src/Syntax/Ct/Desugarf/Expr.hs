@@ -37,6 +37,9 @@ desExpr arrArgs (AliasExpr b a) = AliasExpr (desExpr arrArgs b) (desExpr arrArgs
 desExpr arrArgs (TupleApply m (bm, be) arg) = TupleApply m (bm, desExpr arrArgs be) (mapTupleArgValue (desExpr arrArgs) arg)
 desExpr arrArgs (VarApply m be varName varVal) = VarApply m (desExpr arrArgs be) varName varVal
 
+desGuardExpr :: PArgMetaMap -> PSGuardExpr -> DesGuardExpr
+desGuardExpr arrArgs (GuardExpr e g) = GuardExpr (desExpr arrArgs e) (fmap (desExpr arrArgs) g)
+
 -- | Updates the types based on the format as they are fixed for inputs (due to arrows this does not work for output expressions)
 desObjPropagateTypes :: DesExpr -> (Maybe PartialType, DesExpr)
 desObjPropagateTypes (CExpr m c) = (Just $ constantPartialType c, CExpr (mWithType (constantType c) m) c)

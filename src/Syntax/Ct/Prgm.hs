@@ -131,7 +131,7 @@ instance ExprClass RawExpr where
   exprAppliedVars (RawMethod _ e) = exprAppliedVars e
   exprAppliedVars _ = error "Unsupported RawExpr exprAppliedVars"
 
-  exprArgs :: RawExpr m -> H.HashMap ArgName [Meta m]
+  exprArgs :: (Show m) => RawExpr m -> H.HashMap ArgName [Meta m]
   exprArgs RawCExpr{} = H.empty
   exprArgs RawHoleExpr{} = H.empty
   exprArgs RawValue{} = H.empty

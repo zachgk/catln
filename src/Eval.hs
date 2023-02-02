@@ -65,23 +65,21 @@ evalTargetMode :: String -> String -> EPrgmGraphData -> EvalMode
 evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe $ mapMaybe objArrowsContains objMap
   where
     (objMap, classGraph, _) = prgmFromGraphData prgmName prgmGraphData
-    objArrowsContains (_, _, Nothing) = Nothing
-    objArrowsContains (_, _, Just a) | not (arrowDefined a) = Nothing
-    objArrowsContains (obj, _, Just (Arrow arrM _ _)) = case eobjPath obj of
-      "/Context" -> case H.lookup "value" $ exprAppliedArgsMap $ eobjExpr obj of
+    objArrowsContains ObjArr{oaArr=Nothing} = Nothing
+    objArrowsContains oa@ObjArr{oaM} = case oaObjPath oa of
+      "/Context" -> case H.lookup "value" $ exprAppliedArgsMap $ oaObjExpr oa of
         Just (_, Just valObjExpr) -> if relativeNameMatches function (exprPath valObjExpr)
-          then Just $ if isBuildable (getMetaType arrM)
+          then Just $ if isBuildable (getMetaType oaM)
             then EvalBuildWithContext (exprPath valObjExpr)
             else EvalRunWithContext (exprPath valObjExpr)
 
           else Nothing
         _ -> Nothing
-      _ | relativeNameMatches function (eobjPath obj) -> if isBuildable (getMetaType arrM)
-          then Just $ EvalBuild (eobjPath obj)
-          else Just $ EvalRun (eobjPath obj)
+      _ | relativeNameMatches function (oaObjPath oa) -> if isBuildable (getMetaType oaM)
+          then Just $ EvalBuild (oaObjPath oa)
+          else Just $ EvalRun (oaObjPath oa)
       _ -> Nothing
     isBuildable tp = not $ isBottomType $ intersectTypes classGraph tp resultType
-    arrowDefined (Arrow _ _ maybeExpr) = isJust maybeExpr
 
 -- | evaluate annotations such as assertions that require compiler verification
 evalCompAnnot :: Env -> Val -> CRes Env
@@ -95,17 +93,17 @@ evalCompAnnot env TupleVal{} = return env
 evalCompAnnot env _ = evalError env "Eval: Invalid compiler annotation type"
 
 eval :: Env -> ResArrowTree -> CRes (Val, Env)
-eval env (ResEArrow input object annots arrow) = do
+eval env (ResEArrow input oa) = do
   (input', env2) <- evalPopVal <$> eval (evalPush env "resEArrow input") input
-  let newArrArgs = buildArrArgs object input'
-  (resArrowTree, compAnnots, oldArgs, env3) <- evalStartEArrow env2 (getValType input') object annots arrow newArrArgs
+  let newArrArgs = buildArrArgs oa input'
+  (resArrowTree, compAnnots, oldArgs, env3) <- evalStartEArrow env2 (getValType input') oa newArrArgs
   env5s <- forM compAnnots $ \compAnnot -> do
             (compAnnot', env4) <- evalPopVal <$> eval (evalPush env3 $ printf "annot %s" (show compAnnot)) compAnnot
             evalCompAnnot env4 compAnnot'
   let env5 = case env5s of
         [] -> env3
         _  -> evalEnvJoinAll env5s
-  (res, env6) <- evalPopVal <$> eval (evalPush env5 $ printf "ResEArrow %s" (show arrow)) resArrowTree
+  (res, env6) <- evalPopVal <$> eval (evalPush env5 $ printf "ResEArrow %s" (show oa)) resArrowTree
   return (res, evalEndEArrow env6 res oldArgs)
 eval env (PrimArrow input _ (EPrim _ _ f)) = do
   (input', env2) <- evalPopVal <$> eval (evalPush env "PrimArrow input") input
@@ -179,7 +177,7 @@ evalAnnots prgmName prgmGraphData = do
     let exprType = getExprType annot
     let inTree = ExprArrow annot exprType exprType
     let emptyType = partialVal (PTypeName "EmptyObj")
-    let emptyObj = ExprObject FunctionObj Nothing (Value (Meta (singletonType emptyType) Nothing emptyMetaDat) "EmptyObj")
+    let emptyObj = ObjArr (Just (GuardExpr (Value (Meta (singletonType emptyType) Nothing emptyMetaDat) "EmptyObj") Nothing)) FunctionObj Nothing [] emptyMetaN Nothing
     tree <- resolveTree evTbEnv (emptyType, emptyObj) inTree
     val <- fst <$> eval env tree
     return (annot, val)

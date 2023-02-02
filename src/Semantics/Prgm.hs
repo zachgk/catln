@@ -70,6 +70,9 @@ data Meta m = Meta Type CodeRange m
 instance MetaDat () where
   emptyMetaDat = ()
 
+emptyMetaN :: (MetaDat m) => Meta m
+emptyMetaN = Meta TopType Nothing emptyMetaDat
+
 -- Expr after desugar
 data Expr m
   = CExpr (Meta m) Constant
@@ -101,16 +104,6 @@ data Object e m = Object {
                        }
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
--- |
--- Represents an input.
--- The current plan is to replace 'Object' with this, then rename this to standard Object
-data ExprObject e m = ExprObject {
-  eobjBasis :: ObjectBasis,
-  eobjDoc   :: Maybe DocComment,
-  eobjExpr  :: e m
-                       }
-  deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
-
 type ExprCond e m = Maybe (e m)
 data Arrow e m = Arrow (Meta m) (ExprCond e m) (Maybe (e m)) -- m is result metadata
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
@@ -123,7 +116,7 @@ data GuardExpr e m = GuardExpr {
    rgeExpr  :: !(e m),
    rgeGuard :: !(ExprCond e m)
                                      }
-  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+  deriving (Eq, Ord, Generic, Hashable, ToJSON)
 data ObjArr e m = ObjArr {
   oaObj    :: !(Maybe (GuardExpr e m)),
   oaBasis  :: !ObjectBasis,
@@ -132,10 +125,10 @@ data ObjArr e m = ObjArr {
   oaM      :: !(Meta m),
   oaArr    :: !(Maybe (GuardExpr e m))
                                }
-  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+  deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
 
-type ExprObjectMapItem e m = (ExprObject e m, [CompAnnot (e m)], Maybe (Arrow e m))
+type ExprObjectMapItem e m = ObjArr e m
 type ExprObjectMap e m = [ExprObjectMapItem e m]
 type ExprPrgm e m = (ExprObjectMap e m, ClassGraph, [CompAnnot (e m)]) -- TODO: Include [Export]
 
@@ -167,6 +160,24 @@ instance Show m => Show (Expr m) where
         TupleApply{}    -> show baseExpr
         _               -> printf "<%s>" (show baseExpr)
 
+instance (Show m, Show (e m)) => Show (ObjArr e m) where
+  show ObjArr{oaObj, oaM, oaArr} = printf "%s%s%s%s" (show oaObj) showM showEquals (show oaArr)
+    where
+      showM :: String
+      showM = printf " -> %s" (show oaM)
+
+      showEquals :: String
+      showEquals = case (oaObj, oaArr) of
+        (Just _, Just _) -> "= "
+        _                -> ""
+
+instance (Show m, Show (e m)) => Show (GuardExpr e m) where
+  show (GuardExpr e g) = show e ++ showGuard
+    where
+      showGuard = case g of
+        Nothing -> ""
+        Just g' -> printf " if %s" (show g')
+
 instance Show m => Show (Object e m) where
   -- show (Object m basis vars args _ p) = printf "%s %s (%s) %s %s" (show basis) p (show m) maybeVarsString maybeArgsString
   show (Object _ basis vars args _ _ p) = printf "%s %s %s %s" (show basis) p maybeVarsString maybeArgsString
@@ -181,9 +192,6 @@ instance Show m => Show (Object e m) where
       maybeArgsString = if H.size args == 0
         then ""
         else "(" ++ intercalate ", " (map showArg $ H.toList args) ++ ")"
-
-instance (Show (e m)) => Show (ExprObject e m) where
-  show (ExprObject basis _ e) = printf "%s %s" (show basis) (show e)
 
 instance (Show m, Show (e m)) => Show (Arrow e m) where
   show (Arrow m guard maybeExpr) = concat $ [show guard, " -> ", show m, " "] ++ showExpr maybeExpr
@@ -209,13 +217,13 @@ class ExprClass e where
   maybeExprPath :: e m -> Maybe TypeName
 
   -- | Returns all arguments applied to a value
-  exprAppliedArgs :: e m -> [TupleArg e m]
+  exprAppliedArgs :: (Show m) => e m -> [TupleArg e m]
 
   -- | Returns all vars applied to a value
   exprAppliedVars :: e m -> H.HashMap TypeVarName (Meta m)
 
   -- | Returns all arguments located recursively in an expression
-  exprArgs :: e m -> H.HashMap ArgName [Meta m]
+  exprArgs :: (Show m) => e m -> H.HashMap ArgName [Meta m]
 
 
 instance ExprClass Expr where
@@ -319,7 +327,7 @@ mergeExprPrgms = foldr mergeExprPrgm emptyPrgm
   where emptyPrgm = ([], ClassGraph $ graphFromEdges [], [])
 
 -- | Gets all recursive sub expression objects from an expression's arguments. Helper for 'getRecursiveExprObjs'
-getRecursiveExprObjsExpr :: (ExprClass e) => e m -> [e m]
+getRecursiveExprObjsExpr :: (ExprClass e, Show m) => e m -> [e m]
 getRecursiveExprObjsExpr expr = subObjects ++ recursedSubObjects
   where
     subObjects = filter (isJust . maybeExprPath) $ mapMaybe exprFromTupleArg $ exprAppliedArgs expr
@@ -329,9 +337,11 @@ getRecursiveExprObjsExpr expr = subObjects ++ recursedSubObjects
     recursedSubObjects = concatMap getRecursiveExprObjsExpr subObjects
 
 -- | Gets an object and all sub-objects (recursively) from it's arguments
-getRecursiveExprObjs :: (ExprClass e, Show m) => ExprObjectMapItem e m -> ExprObjectMap e m
-getRecursiveExprObjs (ExprObject{eobjBasis}, _, _) | eobjBasis == MatchObj = []
-getRecursiveExprObjs baseObj@(ExprObject{eobjBasis, eobjExpr}, _, _) = baseObj : recursedSubObjects
+getRecursiveExprObjs :: (ExprClass e, Show m, Show (e m), MetaDat m) => ExprObjectMapItem e m -> ExprObjectMap e m
+getRecursiveExprObjs ObjArr{oaBasis} | oaBasis == MatchObj = []
+getRecursiveExprObjs oa@ObjArr{oaBasis, oaObj=Just (GuardExpr objE _)} = oa : recursedSubObjects
   where
-    recursedSubObjects = map toObjMapItem $ getRecursiveExprObjsExpr eobjExpr
-    toObjMapItem e = (ExprObject eobjBasis Nothing e, [], Nothing)
+    recursedSubObjects = map toObjMapItem $ getRecursiveExprObjsExpr objE
+    -- toObjMapItem e = (ExprObject oaBasis Nothing e, [], Nothing)
+    toObjMapItem e = ObjArr (Just (GuardExpr e Nothing)) oaBasis Nothing [] emptyMetaN Nothing
+getRecursiveExprObjs oa = error $ printf "getRecursiveExprObjs with no input expression: %s" (show oa)

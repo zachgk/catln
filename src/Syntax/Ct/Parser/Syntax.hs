@@ -38,7 +38,6 @@ type PStatement = RawStatement RawExpr ParseMetaDat
 type PStatementTree = RawStatementTree RawExpr ParseMetaDat
 type PArgMetaMap = H.HashMap ArgName [ParseMeta]
 type PObjArg = ObjArg RawExpr ParseMetaDat
-type PObject = ExprObject RawExpr ParseMetaDat
 type PArrow = Arrow RawExpr ParseMetaDat
 type PPrgm = RawPrgm ParseMetaDat
 type PPrgmGraphData = GraphData PPrgm String
@@ -58,11 +57,11 @@ newtype PSemiDecl = PSemiDecl PSObjArr
 
 
 type DesExpr = Expr ParseMetaDat
+type DesGuardExpr = GuardExpr Expr ParseMetaDat
 type DesCompAnnot = CompAnnot DesExpr
-type DesObjectMap = ExprObjectMap Expr ParseMetaDat
-type DesObject = ExprObject Expr ParseMetaDat
-type DesArrow = Arrow Expr ParseMetaDat
+type DesObjArr = ObjArr Expr ParseMetaDat
 type DesObjectMapItem = ExprObjectMapItem Expr ParseMetaDat
+type DesObjectMap = ExprObjectMap Expr ParseMetaDat
 type DesPrgm = ExprPrgm Expr ParseMetaDat
 type DesPrgmGraphData = GraphData DesPrgm String
 
@@ -154,8 +153,8 @@ mapExprPath f (TupleApply m (bm, be) a) = TupleApply m (bm, mapExprPath f be) a
 mapExprPath f (VarApply m be an av) = VarApply m (mapExprPath f be) an av
 mapExprPath _ e = error $ printf "Unexpected expr to mapExprPath: %s" (show e)
 
-mapExprObjPath :: (Show m) => ((Meta m, TypeName) -> Expr m) -> ExprObject Expr m -> ExprObject Expr m
-mapExprObjPath f (ExprObject b d e) = ExprObject b d (mapExprPath f e)
+mapOAObjPath :: (Show m, MetaDat m) => ((Meta m, TypeName) -> Expr m) -> ObjArr Expr m -> ObjArr Expr m
+mapOAObjPath f = mapOAObjExpr (mapExprPath f)
 
 mapExprAppliedArg :: (DesExpr -> DesExpr) -> ArgName -> DesExpr -> DesExpr
 mapExprAppliedArg _ _ e@CExpr{} = e
@@ -166,10 +165,3 @@ mapExprAppliedArg f argName (AliasExpr base alias) = AliasExpr (mapExprAppliedAr
 mapExprAppliedArg f argName (TupleApply m (bm, be) (TupleArgIO am an av)) | argName == an = TupleApply m (bm, be) (TupleArgIO am an (f av))
 mapExprAppliedArg f argName (TupleApply m (bm, be) a) = TupleApply m (bm, mapExprAppliedArg f argName be) a
 mapExprAppliedArg f argName (VarApply m be an av) = VarApply m (mapExprAppliedArg f argName be) an av
-
-
-mkRawExprObj :: (MetaDat m) => ObjectBasis -> [(TypeVarName, Meta m)] -> [(Maybe ArgName, RawExpr m)] -> Maybe DocComment -> String -> ExprObject RawExpr m
-mkRawExprObj basis vars args comment path = ExprObject basis comment (rawVal path `applyRawExprVars` vars `applyRawArgs` args)
-
-mkExprObj :: (MetaDat m) => ObjectBasis -> [(TypeVarName, Meta m)] -> [(Maybe ArgName, Expr m)] -> Maybe DocComment -> String -> ExprObject Expr m
-mkExprObj basis vars args comment path = ExprObject basis comment (exprVal path `applyExprVars` vars `applyExprOArgs` args)

@@ -32,9 +32,6 @@ getMetaPos (Meta _ pos _) = pos
 labelPosM :: String -> Meta m -> Meta m
 labelPosM s (Meta t pos ext) = Meta t (labelPos s pos) ext
 
-emptyMetaN :: (MetaDat m) => Meta m
-emptyMetaN = Meta TopType Nothing emptyMetaDat
-
 mWithType :: Type -> Meta m -> Meta m
 mWithType t (Meta _ p d) = Meta t p d
 
@@ -57,7 +54,7 @@ emptyMetaE s e = labelPosM s $ getExprMeta e
 exprPath :: (ExprClass e) => e m -> TypeName
 exprPath = fromMaybe (error "No exprPath found") . maybeExprPath
 
-exprAppliedArgsMap :: (ExprClass e) => e m -> H.HashMap ArgName (Meta m, Maybe (e m))
+exprAppliedArgsMap :: (ExprClass e, Show m) => e m -> H.HashMap ArgName (Meta m, Maybe (e m))
 exprAppliedArgsMap = H.fromList . mapMaybe fromTupleArg . exprAppliedArgs
   where
     fromTupleArg (TupleArgI m n)    = Just (n, (m, Nothing))
@@ -114,8 +111,20 @@ objAppliedVars = exprAppliedVars . objExpr
 objArgs :: (Show m, Show (e m), MetaDat m, ExprClass e) => Object e m -> H.HashMap ArgName [Meta m]
 objArgs = exprArgs . objExpr
 
-eobjPath :: (MetaDat m, ExprClass e) => ExprObject e m -> TypeName
-eobjPath = exprPath . eobjExpr
+oaObjExpr :: (MetaDat m, ExprClass e, Show m, Show (e m)) => ObjArr e m -> e m
+oaObjExpr ObjArr{oaObj=Just (GuardExpr e _)} = e
+oaObjExpr oa = error $ printf "oaObjExpr with no input expression: %s" (show oa)
+
+mapOAObjExpr :: (MetaDat m, ExprClass e, Show (e m)) => (e m -> e m) -> ObjArr e m -> ObjArr e m
+mapOAObjExpr f oa@ObjArr{oaObj=Just (GuardExpr e g)} = oa{oaObj = Just (GuardExpr (f e) g)}
+mapOAObjExpr _ oa@ObjArr{oaObj=Nothing} = oa
+
+mapOAArrExpr :: (MetaDat m, ExprClass e, Show (e m)) => (e m -> e m) -> ObjArr e m -> ObjArr e m
+mapOAArrExpr f oa@ObjArr{oaArr=Just (GuardExpr e g)} = oa{oaArr = Just (GuardExpr (f e) g)}
+mapOAArrExpr _ oa@ObjArr{oaArr=Nothing} = oa
+
+oaObjPath :: (MetaDat m, ExprClass e, Show m, Show (e m)) =>ObjArr e m -> TypeName
+oaObjPath = exprPath . oaObjExpr
 
 exprToObj :: (MetaDat m, Show m) => ObjectBasis -> Maybe String -> Expr m -> Object Expr m
 exprToObj basis doc e@(Value m path) = Object m basis H.empty H.empty doc e path
@@ -133,36 +142,29 @@ exprToObj basis doc e@(VarApply m' baseExpr name varM) = baseObj{deprecatedObjM=
     baseObj = exprToObj basis doc baseExpr
 exprToObj _ _ e = error $ printf "Not yet implemented exprToObj: %s" (show e)
 
-asExprObject :: (Show m, MetaDat m) => Object Expr m -> ExprObject Expr m
-asExprObject obj@Object{objBasis, objDoc} = ExprObject objBasis objDoc (objExpr obj)
-
-asExprObjMap :: (Show m, MetaDat m) => ObjectMap Expr m -> ExprObjectMap Expr m
-asExprObjMap = map asExprObjectMapItem
-  where
-    asExprObjectMapItem (obj, annots, arr) = (asExprObject obj, annots, arr)
+asExprObjectMapItem :: (Show m, MetaDat m) => ObjectMapItem Expr m -> ExprObjectMapItem Expr m
+asExprObjectMapItem (obj@Object{objBasis, objDoc}, annots, Just (Arrow m guard expr)) = ObjArr (Just (GuardExpr (objExpr obj) guard)) objBasis objDoc annots m (fmap (`GuardExpr` Nothing) expr)
+asExprObjectMapItem (obj@Object{objBasis, objDoc}, annots, Nothing) = ObjArr (Just (GuardExpr (objExpr obj) Nothing)) objBasis objDoc annots emptyMetaN Nothing
 
 toExprPrgm :: (MetaDat m, Show m) => Prgm Expr m -> ExprPrgm Expr m
-toExprPrgm (objMap, classGraph, annots) = (map toExprObjectMapItem objMap, classGraph, annots)
-  where
-    toExprObjectMapItem :: (MetaDat m, Show m) => ObjectMapItem Expr m -> ExprObjectMapItem Expr m
-    toExprObjectMapItem (obj, ann, arr) = (toExprObject obj, ann, arr)
-
-    toExprObject :: (MetaDat m, Show m) => Object Expr m -> ExprObject Expr m
-    toExprObject obj@Object{objBasis, objDoc} = ExprObject objBasis objDoc (objExpr obj)
+toExprPrgm (objMap, classGraph, annots) = (map asExprObjectMapItem objMap, classGraph, annots)
 
 fromExprPrgm :: (MetaDat m, Show m) => ExprPrgm Expr m -> Prgm Expr m
 fromExprPrgm (objMap, classGraph, annots) = (map fromExprObjectMapItem objMap, classGraph, annots)
   where
     fromExprObjectMapItem :: (MetaDat m, Show m) => ExprObjectMapItem Expr m -> ObjectMapItem Expr m
-    fromExprObjectMapItem (obj, ann, arr) = (fromExprObject obj, ann, arr)
-
-    fromExprObject :: (MetaDat m, Show m) => ExprObject Expr m -> Object Expr m
-    fromExprObject (ExprObject basis doc expr) = exprToObj basis doc expr
+    fromExprObjectMapItem (ObjArr (Just (GuardExpr obj guard)) basis doc as m arr) = (exprToObj basis doc obj, as, arr')
+      where
+        arr' = case arr of
+          Just (GuardExpr e _)               -> Just $ Arrow m guard (Just e)
+          Nothing | getMetaType m == TopType -> Nothing
+          Nothing                            -> Just $ Arrow m guard Nothing
+    fromExprObjectMapItem oa = error $ printf "fromExprObjectMapItem with no input expression: %s" (show oa)
 
 type ArgMetaMap m = H.HashMap ArgName [Meta m]
 
 -- TODO: Remove usages of 'exprArgsLinear' to replace fully with 'exprArgs' and support nonLinear use cases
-exprArgsLinear :: (ExprClass e) => e m -> H.HashMap ArgName (Meta m)
+exprArgsLinear :: (ExprClass e, Show m) => e m -> H.HashMap ArgName (Meta m)
 exprArgsLinear = fmap singletonOrError . exprArgs
   where
     singletonOrError [x] = x
@@ -173,7 +175,7 @@ exprArgsLinear = fmap singletonOrError . exprArgs
 -- It differs in that it accepts an additional partial type that is equivalent to the expression and it pull the corresponding parts of the partial matching the args in the expression
 -- TODO: Make nonLinear by changing signature to H.HashMap ArgName ([Meta m], Type)
 type ArgMetaMapWithSrc m = H.HashMap ArgName (Meta m, Type)
-exprArgsWithSrc :: ClassGraph -> Expr m -> PartialType -> ArgMetaMapWithSrc m
+exprArgsWithSrc :: (Show m) => ClassGraph -> Expr m -> PartialType -> ArgMetaMapWithSrc m
 exprArgsWithSrc _ CExpr{} _ = H.empty
 exprArgsWithSrc _ Value{} _ = H.empty
 exprArgsWithSrc _ HoleExpr{} _ = H.empty
@@ -206,16 +208,16 @@ formVarMap _ _ = error $ printf "Unknown formVarMap"
 
 -- fullDest means to use the greatest possible type (after implicit).
 -- Otherwise, it uses the minimal type that *must* be reached
-arrowDestType :: (Show m, MetaDat m) => Bool -> ClassGraph -> PartialType -> ExprObject Expr m -> Arrow Expr m -> Type
-arrowDestType fullDest classGraph src obj (Arrow arrM _ maybeExpr) = case mapM getExprArg maybeExpr of
+arrowDestType :: (Show m, MetaDat m) => Bool -> ClassGraph -> PartialType -> ObjArr Expr m -> Type
+arrowDestType fullDest classGraph src oa@ObjArr{oaM, oaArr} = case mapM (getExprArg . rgeExpr) oaArr of
   Just (Just _) -> fromMaybe (error "Unfound expr") expr'
   _             -> joined
   where
-    varEnv = formVarMap classGraph $ intersectTypes classGraph (getMetaType $ getExprMeta $ eobjExpr obj) (singletonType src)
-    argEnv = snd <$> exprArgsWithSrc classGraph (eobjExpr obj) ((\(UnionType pl) -> head $ splitUnionType pl) $ substituteVars $ singletonType src)
+    varEnv = formVarMap classGraph $ intersectTypes classGraph (getMetaType $ getExprMeta $ oaObjExpr oa) (singletonType src)
+    argEnv = snd <$> exprArgsWithSrc classGraph (oaObjExpr oa) ((\(UnionType pl) -> head $ splitUnionType pl) $ substituteVars $ singletonType src)
     substitute = substituteVarsWithVarEnv varEnv . substituteArgsWithArgEnv argEnv
-    expr' = fmap (substitute . getExprType) maybeExpr
-    arr' = substitute $ getMetaType arrM
+    expr' = fmap (substitute . getExprType . rgeExpr) oaArr
+    arr' = substitute $ getMetaType oaM
     joined = if fullDest
       then unionTypes classGraph (fromMaybe bottomType expr') arr'
       else intersectTypes classGraph (fromMaybe TopType expr') arr'
@@ -234,12 +236,8 @@ isSubtypePartialOfWithObj classGraph obj sub = isSubtypeOfWithObj classGraph obj
 isSubtypeOfWithObj :: (Show m, Show (e m), MetaDat m, ExprClass e) => ClassGraph -> Object e m -> Type -> Type -> Bool
 isSubtypeOfWithObj classGraph obj = isSubtypeOfWithEnv classGraph (getMetaType <$> objAppliedVars obj) (unionAllTypes classGraph . fmap getMetaType <$> exprArgs (objExpr obj))
 
-isSubtypeOfWithObjSrc :: (Show m, MetaDat m) => ClassGraph -> PartialType -> ExprObject Expr m -> Type -> Type -> Bool
-isSubtypeOfWithObjSrc classGraph srcType obj = isSubtypeOfWithEnv classGraph (getMetaType <$> exprAppliedVars (eobjExpr obj)) (snd <$> exprArgsWithSrc classGraph (eobjExpr obj) srcType )
-
-isSubtypeOfWithMaybeObj :: (Show m, MetaDat m) => ClassGraph -> Maybe (Object Expr m) -> Type -> Type -> Bool
-isSubtypeOfWithMaybeObj classGraph (Just obj) = isSubtypeOfWithObj classGraph obj
-isSubtypeOfWithMaybeObj classGraph Nothing    = isSubtypeOf classGraph
+isSubtypeOfWithObjSrc :: (Show m, MetaDat m) => ClassGraph -> PartialType -> ObjArr Expr m -> Type -> Type -> Bool
+isSubtypeOfWithObjSrc classGraph srcType obj = isSubtypeOfWithEnv classGraph (getMetaType <$> exprAppliedVars (oaObjExpr obj)) (snd <$> exprArgsWithSrc classGraph (oaObjExpr obj) srcType )
 
 isSubtypePartialOfWithMetaEnv :: ClassGraph -> MetaVarEnv m -> MetaArgEnv m -> PartialType -> Type -> Bool
 isSubtypePartialOfWithMetaEnv classGraph varEnv argEnv sub = isSubtypeOfWithEnv classGraph (metaToTypeEnv varEnv) (metaToTypeEnv argEnv) (singletonType sub)

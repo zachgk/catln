@@ -98,12 +98,16 @@ mapMetaObjectMap f = map aux
 mapMetaPrgm :: (MapMeta e) => MetaFun a b -> Prgm e a -> Prgm e b
 mapMetaPrgm f (objMap, classGraph, annots) = (mapMetaObjectMap f objMap, classGraph, map (mapMeta f AnnotMeta) annots)
 
-mapMetaExprObj :: (MapMeta e) => MetaFun a b -> ExprObject e a -> ExprObject e b
-mapMetaExprObj f (ExprObject basis doc expr) = ExprObject basis doc (mapMeta f InputMeta expr)
+mapMetaGuardExpr :: (MapMeta e) => MetaFun a b -> MetaLocation -> GuardExpr e a -> GuardExpr e b
+mapMetaGuardExpr f loc (GuardExpr expr guard) = GuardExpr (mapMeta f loc expr) (fmap (mapMeta f GuardMeta) guard)
 
-mapMetaExprObjectMap :: (MapMeta e) => MetaFun a b -> ExprObjectMap e a -> ExprObjectMap e b
-mapMetaExprObjectMap f = map aux
-  where aux (obj, annots, arrow) = (mapMetaExprObj f obj, fmap (mapMeta f AnnotMeta) annots, fmap (mapMetaArrow f) arrow)
+mapMetaObjArr :: (MapMeta e) => MetaFun a b -> ObjArr e a -> ObjArr e b
+mapMetaObjArr f oa@ObjArr{oaObj, oaM, oaAnnots, oaArr} = oa{
+  oaObj = fmap (mapMetaGuardExpr f InputMeta) oaObj,
+  oaM = f ArrMeta oaM,
+  oaAnnots = map (mapMeta f AnnotMeta) oaAnnots,
+  oaArr = fmap (mapMetaGuardExpr f OutputMeta) oaArr
+                                                             }
 
 mapMetaExprPrgm :: (MapMeta e) => MetaFun a b -> ExprPrgm e a -> ExprPrgm e b
-mapMetaExprPrgm f (objMap, classGraph, annots) = (mapMetaExprObjectMap f objMap, classGraph, map (mapMeta f AnnotMeta) annots)
+mapMetaExprPrgm f (objMap, classGraph, annots) = (map (mapMetaObjArr f) objMap, classGraph, map (mapMeta f AnnotMeta) annots)

@@ -24,7 +24,6 @@ import qualified Data.HashSet        as S
 import           Data.Maybe
 
 import           Control.Monad
-import           Data.Bifunctor      (first)
 import           MapMeta
 import           Semantics
 import           Semantics.Prgm
@@ -130,13 +129,11 @@ mkReachesEnv env@FEnv{feClassGraph, feUnionAllObjs, feVTypeGraph, feTTypeGraph} 
   feVTypeGraph' <- forM feVTypeGraph $ \objArrs -> do
     forM objArrs $ \(vobj, varr) -> do
       objUb <- pointUb env (objM vobj)
-      sobj <- showObj env vobj
-      sarr <- showArrow env varr
-      let sobj' = mapMetaExprObj clearMetaDat sobj
-      let sarr' = mapMetaArrow clearMetaDat sarr
-      let sobj'' = sobj'{eobjExpr = exprWithMetaType objUb (eobjExpr sobj')}
-      return (sobj'', sarr')
-  let feTTypeGraph' = fmap (map (first asExprObject)) feTTypeGraph
+      soa <- showObjArrow env (vobj, [], Just varr)
+      let soa' = mapMetaObjArr clearMetaDat soa
+      let soa'' = mapOAObjExpr (exprWithMetaType objUb) soa'
+      return soa''
+  let feTTypeGraph' = fmap (map (asExprObjectMapItem . (\(o, a) -> (o, [], Just a)))) feTTypeGraph
   let typeGraph = H.unionWith (++) feVTypeGraph' feTTypeGraph'
   return $ ReachesEnv feClassGraph unionAll typeGraph
 

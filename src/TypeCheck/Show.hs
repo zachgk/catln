@@ -85,17 +85,12 @@ showObjRec env obj@Object{deprecatedObjArgs, objDupExpr} = do
   objDupExpr' <- showExpr env objDupExpr
   return $ obj{deprecatedObjM=m', deprecatedObjVars=vars', deprecatedObjArgs=args', objDupExpr=objDupExpr'}
 
-showObj :: FEnv -> VObject -> TypeCheckResult SObject
-showObj env obj = do
-  obj' <- showObjRec env obj
-  return $ asExprObject obj'
-
 showObjArrow :: FEnv -> VObjectMapItem -> TypeCheckResult SObjectMapItem
 showObjArrow env (obj, annots, arrow) = do
-  obj' <- showObj env obj
+  obj' <- showObjRec env obj
   annots' <- mapM (showExpr env) annots
   arrow' <- mapM (showArrow env) arrow
-  return (obj', annots', arrow')
+  return $ asExprObjectMapItem (obj', annots', arrow')
 
 showConHelper :: FEnv -> (Scheme -> Scheme -> SConstraint) -> VarMeta -> VarMeta -> SConstraint
 showConHelper env f p1 p2 = f (descriptor env p1) (descriptor env p2)

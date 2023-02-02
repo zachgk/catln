@@ -37,7 +37,7 @@ removeClassInstanceObjects (_, fullPrgmClassGraph, _) (objMap, ClassGraph cg, an
     notMatchesClassName n = null $ relativeNameFilter n classNames
 
     classGraph' = ClassGraph $ graphFromEdges $ filter classEntryMatches $ graphToNodes cg
-    objMap' = filter (\(obj, _, _) -> notMatchesClassName (eobjPath obj)) objMap
+    objMap' = filter (notMatchesClassName . oaObjPath) objMap
 
     classEntryMatches (CGType, PRelativeName n, _) = notMatchesClassName n
     classEntryMatches _                            = True
@@ -55,7 +55,7 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, classGraph
     mapCGNode (CGClass (s, vs, ts, doc, p)) = CGClass (s, fmap (mapType True) vs, fmap (mapType True) ts, doc, p)
     mapCGNode CGType = CGType
     classNames = nub $ listClassNames fullPrgmClassGraph
-    objNames = nub $ map (eobjPath . fst3) (concatMap getRecursiveExprObjs fullPrgmObjMap)
+    objNames = nub $ map oaObjPath (concatMap getRecursiveExprObjs fullPrgmObjMap)
 
     resolveMeta _ (Meta t p md) = Meta (mapType False t) p md
 
@@ -103,7 +103,8 @@ expandDataReferences (fullPrgmObjMap, _, _) (objMap, classGraph@(ClassGraph cg),
     classGraph' = ClassGraph $ graphFromEdges $ mapFst3 mapCGNode $ graphToNodes cg
     mapCGNode (CGClass (s, vs, ts, doc, p)) = CGClass (s, fmap mapType vs, fmap mapType ts, doc, p)
     mapCGNode CGType = CGType
-    objExpansions = H.fromList $ concatMap (\(obj@ExprObject{eobjBasis}, _, _) -> ([(eobjPath obj, obj) | eobjBasis == TypeObj])) fullPrgmObjMap
+    -- objExpansions = H.fromList $ concatMap (\(obj@ExprObject{eobjBasis}, _, _) -> ([(eobjPath obj, obj) | eobjBasis == TypeObj])) fullPrgmObjMap
+    objExpansions = H.fromList $ concatMap (\oa@ObjArr{oaBasis} -> ([(oaObjPath oa, oa) | oaBasis == TypeObj])) fullPrgmObjMap
     aux metaType inM@(Meta t p md) = case metaType of
       ObjMeta               -> inM
       ExprMeta OutputMeta _ -> inM
@@ -119,7 +120,7 @@ expandDataReferences (fullPrgmObjMap, _, _) (objMap, classGraph@(ClassGraph cg),
       where
         mapPartial PartialType{ptName=PTypeName name} = case suffixLookup name (H.keys objExpansions) of
           Just fname -> case H.lookup fname objExpansions of
-            Just obj -> getMetaType $ getExprMeta $ eobjExpr obj
+            Just obj -> getMetaType $ getExprMeta $ oaObjExpr obj
             Nothing -> error $ printf "Data not found in expandDataReferences for %s with objExpansions %s" name (show $ H.keys objExpansions)
           Nothing -> error $ printf "Data not found in expandDataReferences for %s with objExpansions %s" name (show $ H.keys objExpansions)
         mapPartial partial@PartialType{ptName=PClassName{}} = singletonType partial

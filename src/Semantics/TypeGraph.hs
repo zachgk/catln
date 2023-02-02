@@ -33,7 +33,7 @@ data ReachesTree
 data ReachesEnv m = ReachesEnv {
   rClassGraph   :: !ClassGraph,
   rUnionAllType :: !Type,
-  rTypeGraph    :: !(H.HashMap TypeName [(ExprObject Expr m, Arrow Expr m)])
+  rTypeGraph    :: !(H.HashMap TypeName [ObjArr Expr m])
                              }
 
 isTypeVar :: Type -> Bool
@@ -76,14 +76,14 @@ reachesPartial ReachesEnv{rTypeGraph, rClassGraph} partial@PartialType{ptName=PT
 
   return $ ReachesLeaf (catMaybes ttypes)
   where
-    tryTArrow (obj, arr) = do
+    tryTArrow oa = do
       -- It is possible to send part of a partial through the arrow, so must compute the valid part
       -- If none of it is valid, then there is Nothing
-      let potentialSrc@(UnionType potSrcLeafs) = intersectTypes rClassGraph (singletonType partial) (getMetaType $ getExprMeta $ eobjExpr obj)
+      let potentialSrc@(UnionType potSrcLeafs) = intersectTypes rClassGraph (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa)
       if not (isBottomType potentialSrc)
         -- TODO: Should this line below call `reaches` to make this recursive?
         -- otherwise, no reaches path requiring multiple steps can be found
-        then return $ Just $ unionAllTypes rClassGraph [arrowDestType True rClassGraph potentialSrcPartial obj arr | potentialSrcPartial <- splitUnionType potSrcLeafs]
+        then return $ Just $ unionAllTypes rClassGraph [arrowDestType True rClassGraph potentialSrcPartial oa | potentialSrcPartial <- splitUnionType potSrcLeafs]
         else return Nothing
 reachesPartial env@ReachesEnv{rClassGraph} partial@PartialType{ptName=PClassName{}} = reaches env (expandPartial rClassGraph partial)
 reachesPartial env@ReachesEnv{rClassGraph, rUnionAllType} partial@PartialType{ptName=PRelativeName{}} = do
