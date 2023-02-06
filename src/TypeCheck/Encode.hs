@@ -202,7 +202,7 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaM, oaAnnot
         (EncodeIn{}, Just (GuardExpr (Value argM' argName) Nothing), Just (GuardExpr argExpr' Nothing)) ->
           -- Input with (x=x)
           [
-            ArrowTo (getExprMeta baseExpr') baseM',
+            EqPoints (getExprMeta baseExpr') baseM',
                      AddArg (baseM', argName) m',
                      ArrowTo (getExprMeta argExpr') argM',
                      PropEq (m', argName) argM'
@@ -210,7 +210,7 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaM, oaAnnot
         (EncodeIn{}, Just (GuardExpr (Value argM' argName) Nothing), Nothing) ->
           -- Input with (x) matchable
           [
-         ArrowTo (getExprMeta baseExpr') baseM',
+         EqPoints (getExprMeta baseExpr') baseM',
                      AddArg (baseM', argName) m',
                      PropEq (m', argName) argM'
                     ]
@@ -228,9 +228,16 @@ fromExpr est env1 (VarApply m baseExpr varName varVal) = do
   (m', env2) <- fromMeta env1 BUpper est m $ printf "%s Meta" baseName
   (baseExpr', env3) <- fromExpr est env2 baseExpr
   (varVal', env4) <- fromMeta env3 BUpper est varVal $ printf "%s val" baseName
-  let constraints = [ArrowTo (getExprMeta baseExpr') m',
-                     VarEq (m', varName) varVal'
-                    ] ++ [BoundedByObjs m' | isEncodeOut est]
+  let constraints = case est of
+        EncodeOut{} -> [
+                      ArrowTo (getExprMeta baseExpr') m',
+                      VarEq (m', varName) varVal',
+                      BoundedByObjs m'
+                       ]
+        EncodeIn{} -> [
+                      EqPoints (getExprMeta baseExpr') m',
+                      VarEq (m', varName) varVal'
+                      ]
   let env5 = addConstraints env4 constraints
   return (VarApply m' baseExpr' varName varVal', env5)
 
