@@ -188,7 +188,7 @@ exprArgsWithSrc classGraph (TupleApply _ (_, be) arg) src@PartialType{ptArgs=src
       Just (UnionType srcArg) -> mergeMaps $ map (exprArgsWithSrc classGraph e) $ splitUnionType srcArg
       Just TopType -> (,TopType) <$> exprArgsLinear e
       _ -> H.empty
-    fromArg (TupleArgO _ e) = exprArgsWithSrc classGraph e src
+    fromArg (TupleArgO e) = exprArgsWithSrc classGraph e src
     fromArg (TupleArgI m n) = case H.lookup n srcArgs of
       Just srcArg -> H.singleton n (m, srcArg)
       Nothing     -> H.empty

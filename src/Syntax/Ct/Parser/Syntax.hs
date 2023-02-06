@@ -130,7 +130,7 @@ applyExprOArgs = foldl addArg
     addArg b a = TupleApply (emptyMetaE "app" b) (emptyMetaE "base" b, b) (fromTupleArg $ mapArg a)
       where
         mapArg (Just argName, argVal) = TupleArgIO (emptyMetaE argName b) argName argVal
-        mapArg (Nothing, argVal) = TupleArgO (emptyMetaE "noArg" b) argVal
+        mapArg (Nothing, argVal) = TupleArgO argVal
 
 applyExprIArgs :: Expr () -> [(ArgName, IArg Expr)] -> Expr ()
 applyExprIArgs = foldl addArg

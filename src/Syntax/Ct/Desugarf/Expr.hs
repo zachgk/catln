@@ -94,8 +94,8 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm''
       where
         argVal' = semiDesExpr sdm obj argVal
         (Value _ argName') = semiDesExpr sdm obj argInExpr
-    aux (m, e) ObjArr{oaObj=(Just (GuardExpr argExpr Nothing)), oaM=argM, oaArr=Nothing} = case sdm of
-      SDOutput -> (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (fromTupleArg$ TupleArgO argM argVal'))
+    aux (m, e) ObjArr{oaObj=(Just (GuardExpr argExpr Nothing)), oaArr=Nothing} = case sdm of
+      SDOutput -> (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (fromTupleArg$ TupleArgO argVal'))
         where
           argVal' = semiDesExpr sdm obj argExpr
       _ -> (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (fromTupleArg$ TupleArgI argM' argName'))

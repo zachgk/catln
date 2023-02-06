@@ -90,12 +90,11 @@ toExpr env (TupleApply m (baseM, baseExpr) arg) = case toTupleArg arg of
                                           TypeCheckResult [TupleMismatch baseM' baseExpr' tp $ H.singleton argName argExpr'] result
 
       _ -> return result
-  (TupleArgO argM argExpr) -> do
+  (TupleArgO argExpr) -> do
     let pos = getMetaPos m
     m' <- toMeta env m "TupleApplyInfer_M"
     baseM' <- toMeta env baseM "TupleApplyInfer_baseM"
     baseExpr' <- toExpr env baseExpr
-    argM' <- toMeta env argM "TupleApplyInfer_argM"
     argExpr' <- toExpr env argExpr
     argName <- case (getMetaType baseM', getMetaType m') of
       (UnionType basePartialLeafs, UnionType partialLeafs) -> case (splitUnionType basePartialLeafs, splitUnionType partialLeafs) of
@@ -104,7 +103,7 @@ toExpr env (TupleApply m (baseM, baseExpr) arg) = case toTupleArg arg of
           _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to multiple arg options"]
         _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to multiple types"]
       _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to non UnionType"]
-    return $ TupleApply m' (baseM', baseExpr') (fromTupleArg $ TupleArgIO argM' argName argExpr')
+    return $ TupleApply m' (baseM', baseExpr') (fromTupleArg $ TupleArgIO (emptyMetaE "ArgName" argExpr') argName argExpr')
   (TupleArgI argM argName) -> do
     m' <- toMeta env m "TupleApplyI_M"
     baseM' <- toMeta env baseM "TupleApplyI_baseM"

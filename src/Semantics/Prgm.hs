@@ -48,7 +48,7 @@ data Constant
 -- TODO Consider replacing the TupleArgI ArgName with an Expr as a generalization. In that case, this ArgName would be equivalent to a Value. It could also include lenses.
 data TupleArg e m
   = TupleArgI (Meta m) ArgName -- ^ An input arg. Can be thought of as a key without a value. Used only in input expressions.
-  | TupleArgO (Meta m) (e m) -- ^ An output arg. Can be thought of as a value with an unknown key. Used only in output expressions before typechecking, as typechecking will determine the matching key.
+  | TupleArgO (e m) -- ^ An output arg. Can be thought of as a value with an unknown key. Used only in output expressions before typechecking, as typechecking will determine the matching key.
   | TupleArgIO (Meta m) ArgName (e m) -- ^ An arg containing both the name and value.
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
@@ -261,7 +261,7 @@ instance ExprClass Expr where
   exprArgs (TupleApply _ (_, be) arg) = H.unionWith (++) (exprArgs be) (exprArg (toTupleArg arg))
     where
       exprArg (TupleArgIO _ _ e) = exprArgs e
-      exprArg (TupleArgO _ e)    = exprArgs e
+      exprArg (TupleArgO e)      = exprArgs e
       exprArg (TupleArgI m n)    = H.singleton n [m]
   exprArgs (VarApply _ e _ _) = exprArgs e
 
@@ -269,20 +269,20 @@ instance ExprClass Expr where
 toTupleArg :: (Show m) => ObjArr Expr m -> TupleArg Expr m
 toTupleArg ObjArr{oaObj=Just (GuardExpr (Value _ n) Nothing), oaM, oaArr=Just (GuardExpr arr Nothing)} = TupleArgIO oaM n arr
 toTupleArg ObjArr{oaObj=Just (GuardExpr (Value m n) Nothing), oaArr=Nothing} = TupleArgI m n
-toTupleArg ObjArr{oaObj=Nothing, oaM, oaArr=Just (GuardExpr arr Nothing)} = TupleArgO oaM arr
+toTupleArg ObjArr{oaObj=Nothing, oaArr=Just (GuardExpr arr Nothing)} = TupleArgO arr
 toTupleArg oa = error $ printf "Invalid toTupleArg: %s" (show oa)
 
 fromTupleArg :: (MetaDat m, Show m) => TupleArg Expr m -> ObjArr Expr m
 fromTupleArg (TupleArgIO m argName argVal) = ObjArr (Just (GuardExpr (Value m argName) Nothing)) ArgObj Nothing [] emptyMetaN (Just (GuardExpr argVal Nothing))
 fromTupleArg (TupleArgI m argName) = ObjArr (Just (GuardExpr (Value m argName) Nothing)) ArgObj Nothing [] emptyMetaN Nothing
-fromTupleArg (TupleArgO m argVal) = ObjArr Nothing ArgObj Nothing [] m (Just (GuardExpr argVal Nothing))
+fromTupleArg (TupleArgO argVal) = ObjArr Nothing ArgObj Nothing [] emptyMetaN (Just (GuardExpr argVal Nothing))
 
 mapMetaDat :: (m1 -> m2) -> Meta m1 -> Meta m2
 mapMetaDat f (Meta t p md) = Meta t p (f md)
 
 mapTupleArgValue :: (e1 m -> e2 m) -> TupleArg e1 m -> TupleArg e2 m
 mapTupleArgValue _ (TupleArgI m n)    = TupleArgI m n
-mapTupleArgValue f (TupleArgO m v)    = TupleArgO m (f v)
+mapTupleArgValue f (TupleArgO v)      = TupleArgO (f v)
 mapTupleArgValue f (TupleArgIO m n v) = TupleArgIO m n (f v)
 
 constantPartialType :: Constant -> PartialType
@@ -339,7 +339,7 @@ getRecursiveExprObjsExpr :: (ExprClass e, Show m) => e m -> [e m]
 getRecursiveExprObjsExpr expr = subObjects ++ recursedSubObjects
   where
     subObjects = filter (isJust . maybeExprPath) $ mapMaybe exprFromTupleArg $ exprAppliedArgs expr
-    exprFromTupleArg (TupleArgO _ e)    = Just e
+    exprFromTupleArg (TupleArgO e)      = Just e
     exprFromTupleArg (TupleArgIO _ _ e) = Just e
     exprFromTupleArg TupleArgI{}        = Nothing
     recursedSubObjects = concatMap getRecursiveExprObjsExpr subObjects

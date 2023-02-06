@@ -67,7 +67,7 @@ mapMetaAppliedExpr f loc (VarApply m be varName varVal) = VarApply (f (ExprMeta 
 
 mapMetaTupleArg :: (MapMeta e) => MetaFun a b -> MetaLocation -> TupleArg e a -> TupleArg e b
 mapMetaTupleArg f loc (TupleArgI m argName) = TupleArgI (f (ExprMeta loc ExprMetaTupleArg) m) argName
-mapMetaTupleArg f loc (TupleArgO m argVal) = TupleArgO (f (ExprMeta loc ExprMetaTupleArg) m) (mapMeta f loc argVal)
+mapMetaTupleArg f loc (TupleArgO argVal) = TupleArgO (mapMeta f loc argVal)
 mapMetaTupleArg f loc (TupleArgIO m argName argVal) = TupleArgIO (f (ExprMeta loc ExprMetaTupleArg) m) argName (mapMeta f loc argVal)
 
 instance MapMeta Expr where

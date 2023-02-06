@@ -39,7 +39,7 @@ ifDeclPreprocessor r@(RawDecl oa@ObjArr{oaObj=Just (GuardExpr declObj _), oaArr=
 
     -- Main declaration
     expr' = case exprAppliedArgs expr of
-      [TupleArgO _ matching] -> rawVal condName `applyRawArgs` [(Just argName, rawVal "/Catln/ThenElse/fromBool" `applyRawArgs` [(Just "v", matching)])]
+      [TupleArgO matching] -> rawVal condName `applyRawArgs` [(Just argName, rawVal "/Catln/ThenElse/fromBool" `applyRawArgs` [(Just "v", matching)])]
       _ -> error "Invalid matching expression"
     decl' = RawDecl oa{oaArr=Just (GuardExpr expr' Nothing)}
 
@@ -62,7 +62,7 @@ matchDeclPreprocessor r@(RawDecl oa@ObjArr{oaObj=Just (GuardExpr declObj _), oaA
 
     -- Main declaration
     expr' = case exprAppliedArgs expr of
-      [TupleArgO _ matching] -> applyRawArgs (rawVal condName) [(Just argName, matching)]
+      [TupleArgO matching] -> applyRawArgs (rawVal condName) [(Just argName, matching)]
       _ -> error "Invalid matching expression"
     decl' = RawDecl oa{oaArr=Just (GuardExpr expr' Nothing)}
 
@@ -86,7 +86,7 @@ caseDeclPreprocessor r@(RawDecl oa@ObjArr{oaArr=Just (GuardExpr expr _)}, subSta
     condName i = printf "%s-%d" baseCondName i
 
     -- Main Declaration
-    [TupleArgO _ matchingExpr] = exprAppliedArgs expr
+    [TupleArgO matchingExpr] = exprAppliedArgs expr
     expr' = applyRawArgs (rawVal (condName 0)) [(Just argName, matchingExpr)]
     decl' = RawDecl oa{oaArr=Just (GuardExpr expr' Nothing)}
 

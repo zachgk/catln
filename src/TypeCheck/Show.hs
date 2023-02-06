@@ -49,10 +49,9 @@ showExpr env (TupleApply m (bm, base) arg) = do
     TupleArgI argM argName -> do
       argM' <- showM env argM
       return $ TupleArgI argM' argName
-    TupleArgO argM argVal -> do
-      argM' <- showM env argM
+    TupleArgO argVal -> do
       argVal' <- showExpr env argVal
-      return $ TupleArgO argM' argVal'
+      return $ TupleArgO argVal'
     TupleArgIO argM argName argVal -> do
       argM' <- showM env argM
       argVal' <- showExpr env argVal
