@@ -130,7 +130,7 @@ mkReachesEnv env@FEnv{feClassGraph, feUnionAllObjs, feVTypeGraph, feTTypeGraph} 
     forM objArrs $ \(vobj, varr) -> do
       objUb <- pointUb env (objM vobj)
       soa <- showObjArrow env (vobj, [], Just varr)
-      let soa' = mapMetaObjArr clearMetaDat soa
+      let soa' = mapMetaObjArr clearMetaDat Nothing soa
       let soa'' = mapOAObjExpr (exprWithMetaType objUb) soa'
       return soa''
   let feTTypeGraph' = fmap (map (asExprObjectMapItem . (\(o, a) -> (o, [], Just a)))) feTTypeGraph

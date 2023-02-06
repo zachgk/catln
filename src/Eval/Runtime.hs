@@ -124,7 +124,7 @@ llvm = (name', [(srcType, Nothing, False, aux)])
       input' <- resolveTree mdTbEnv (mdObjSrcType, mdObj) input
       case input' of
         (ResEArrow _ ObjArr{oaArr=Just (GuardExpr expr _)}) -> case expr of
-          (TupleApply _ (_, Value _ "/Catln/llvm") (TupleArgIO _ "c" (Value _ functionToCodegen))) -> buildName functionToCodegen
+          (TupleApply _ (_, Value _ "/Catln/llvm") ObjArr{oaObj=Just (GuardExpr (Value _ "c") Nothing), oaArr=Just (GuardExpr (Value _ functionToCodegen) Nothing)}) -> buildName functionToCodegen
           _ -> error $ printf "Unknown expr to llvm macro: %s" (show expr)
         (ResArrowTupleApply _ "c" (ResArrowTuple functionToCodegen _)) -> buildName functionToCodegen
         _ -> error $ printf "Unknown input to llvm macro: %s" (show input')

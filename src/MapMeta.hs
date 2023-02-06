@@ -14,6 +14,8 @@
 
 module MapMeta where
 
+import           Data.Maybe     (fromMaybe)
+import           Semantics
 import           Semantics.Prgm
 
 data MetaLocation
@@ -54,18 +56,13 @@ clearMetaDat _ (Meta p l _) = Meta p l ()
 
 --
 
-mapMetaAppliedExpr :: MetaFun m m -> MetaLocation -> Expr m -> Expr m
+mapMetaAppliedExpr :: (MetaDat m, Show m) => MetaFun m m -> MetaLocation -> Expr m -> Expr m
 mapMetaAppliedExpr f loc (CExpr m c) = CExpr (f (ExprMeta loc ExprMetaConstant) m) c
 mapMetaAppliedExpr f loc (Value m n) = Value (f (ExprMeta loc ExprMetaVal) m) n
 mapMetaAppliedExpr f loc (Arg m n) = Arg (f (ExprMeta loc ExprMetaArg) m) n
 mapMetaAppliedExpr f loc (HoleExpr m h) = HoleExpr (f (ExprMeta loc ExprMetaHole) m) h
 mapMetaAppliedExpr f loc (AliasExpr b a) = AliasExpr (mapMetaAppliedExpr f loc b) (mapMetaAppliedExpr f loc a)
-mapMetaAppliedExpr f loc (TupleApply m (bm, be) arg) = TupleApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, mapMetaAppliedExpr f loc be) (mapMetaAppliedExprTupleArg f arg)
-  where
-    mapMetaAppliedExprTupleArg :: MetaFun m m -> TupleArg Expr m -> TupleArg Expr m
-    mapMetaAppliedExprTupleArg f2 (TupleArgI argM argName) = TupleArgI (f2 (ExprMeta loc ExprMetaTupleArg) argM) argName
-    mapMetaAppliedExprTupleArg f2 (TupleArgO argM argVal) = TupleArgO (f2 (ExprMeta loc ExprMetaTupleArg) argM) argVal
-    mapMetaAppliedExprTupleArg f2 (TupleArgIO argM argName argVal) = TupleArgIO (f2 (ExprMeta loc ExprMetaTupleArg) argM) argName argVal
+mapMetaAppliedExpr f loc (TupleApply m (bm, be) arg) = TupleApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, mapMetaAppliedExpr f loc be) (mapOAObjExpr (mapMeta f loc) arg)
 mapMetaAppliedExpr f loc (VarApply m be varName varVal) = VarApply (f (ExprMeta loc ExprMetaApplyVar) m) (mapMetaAppliedExpr f loc be) varName (f (ExprMeta loc ExprMetaApplyVarVal) varVal)
 
 mapMetaTupleArg :: (MapMeta e) => MetaFun a b -> MetaLocation -> TupleArg e a -> TupleArg e b
@@ -79,7 +76,7 @@ instance MapMeta Expr where
   mapMeta f loc (Arg m n) = Arg (f (ExprMeta loc ExprMetaArg) m) n
   mapMeta f loc (HoleExpr m h) = HoleExpr (f (ExprMeta loc ExprMetaHole) m) h
   mapMeta f loc (AliasExpr b a) = AliasExpr (mapMeta f loc b) (mapMeta f loc a)
-  mapMeta f loc (TupleApply m (bm, be) arg) = TupleApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, mapMeta f loc be) (mapMetaTupleArg f loc arg)
+  mapMeta f loc (TupleApply m (bm, be) arg) = TupleApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, mapMeta f loc be) (mapMetaObjArr f (Just loc) arg)
   mapMeta f loc (VarApply m be varName varVal) = VarApply (f (ExprMeta loc ExprMetaApplyVar) m) (mapMeta f loc be) varName (f (ExprMeta loc ExprMetaApplyVarVal) varVal)
 
 mapMetaObjArg :: (MapMeta e) => MetaFun a b -> ObjArg e a -> ObjArg e b
@@ -101,13 +98,13 @@ mapMetaPrgm f (objMap, classGraph, annots) = (mapMetaObjectMap f objMap, classGr
 mapMetaGuardExpr :: (MapMeta e) => MetaFun a b -> MetaLocation -> GuardExpr e a -> GuardExpr e b
 mapMetaGuardExpr f loc (GuardExpr expr guard) = GuardExpr (mapMeta f loc expr) (fmap (mapMeta f GuardMeta) guard)
 
-mapMetaObjArr :: (MapMeta e) => MetaFun a b -> ObjArr e a -> ObjArr e b
-mapMetaObjArr f oa@ObjArr{oaObj, oaM, oaAnnots, oaArr} = oa{
-  oaObj = fmap (mapMetaGuardExpr f InputMeta) oaObj,
+mapMetaObjArr :: (MapMeta e) => MetaFun a b -> Maybe MetaLocation -> ObjArr e a -> ObjArr e b
+mapMetaObjArr f mloc oa@ObjArr{oaObj, oaM, oaAnnots, oaArr} = oa{
+  oaObj = fmap (mapMetaGuardExpr f (fromMaybe InputMeta mloc)) oaObj,
   oaM = f ArrMeta oaM,
-  oaAnnots = map (mapMeta f AnnotMeta) oaAnnots,
-  oaArr = fmap (mapMetaGuardExpr f OutputMeta) oaArr
+  oaAnnots = map (mapMeta f (fromMaybe AnnotMeta mloc)) oaAnnots,
+  oaArr = fmap (mapMetaGuardExpr f (fromMaybe OutputMeta mloc)) oaArr
                                                              }
 
 mapMetaExprPrgm :: (MapMeta e) => MetaFun a b -> ExprPrgm e a -> ExprPrgm e b
-mapMetaExprPrgm f (objMap, classGraph, annots) = (map (mapMetaObjArr f) objMap, classGraph, map (mapMeta f AnnotMeta) annots)
+mapMetaExprPrgm f (objMap, classGraph, annots) = (map (mapMetaObjArr f Nothing) objMap, classGraph, map (mapMeta f AnnotMeta) annots)

@@ -34,7 +34,7 @@ desExpr arrArgs (Value m n) = if H.member n arrArgs
 desExpr _ Arg{} = error "Only values should be used at this point as it has not yet been disambiguated between Value and Arg"
 desExpr _ (HoleExpr m h) = HoleExpr m h
 desExpr arrArgs (AliasExpr b a) = AliasExpr (desExpr arrArgs b) (desExpr arrArgs a)
-desExpr arrArgs (TupleApply m (bm, be) arg) = TupleApply m (bm, desExpr arrArgs be) (mapTupleArgValue (desExpr arrArgs) arg)
+desExpr arrArgs (TupleApply m (bm, be) arg) = TupleApply m (bm, desExpr arrArgs be) (fromTupleArg $ mapTupleArgValue (desExpr arrArgs) $ toTupleArg arg)
 desExpr arrArgs (VarApply m be varName varVal) = VarApply m (desExpr arrArgs be) varName varVal
 
 desGuardExpr :: PArgMetaMap -> PSGuardExpr -> DesGuardExpr
@@ -56,17 +56,17 @@ desObjPropagateTypes (AliasExpr base alias) = (basePartial, AliasExpr base' alia
 desObjPropagateTypes mainExpr@(TupleApply m (bm, be) tupleApplyArgs) = do
   let (Just basePartial@PartialType{ptArgs=baseArgs}, be') = desObjPropagateTypes be
   let bm' = mWithType (getMetaType $ getExprMeta be') bm
-  case tupleApplyArgs of
+  case toTupleArg tupleApplyArgs of
       TupleArgI argM argName -> do
         let basePartial' = basePartial{ptArgs=H.insert argName (getMetaType argM) baseArgs}
         let m' = mWithType (singletonType basePartial') m
-        (Just basePartial', TupleApply m' (bm', be') (TupleArgI argM argName))
+        (Just basePartial', TupleApply m' (bm', be') (fromTupleArg $ TupleArgI argM argName))
       TupleArgIO argM argName argVal -> do
         let (_, argVal') = desObjPropagateTypes argVal
         let argM' = mWithType (getMetaType $ getExprMeta argVal) argM
         let basePartial' = basePartial{ptArgs=H.insert argName (getExprType argVal') baseArgs}
         let m' = mWithType (singletonType basePartial') m
-        (Just basePartial', TupleApply m' (bm', be') (TupleArgIO argM' argName argVal'))
+        (Just basePartial', TupleApply m' (bm', be') (fromTupleArg $ TupleArgIO argM' argName argVal'))
       TupleArgO{} -> error $ printf "Unexpected TupleArgO in desObjPropagateTypes: %s" (show mainExpr)
 desObjPropagateTypes (VarApply m be varName varVal) = (Just basePartial', VarApply m' be' varName varVal)
   where
@@ -90,15 +90,15 @@ semiDesExpr sdm obj (RawTupleApply _ (_, RawValue _ "/operator:") [ObjArr{oaArr=
 semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm'', be'') arg'') -> TupleApply m'' (bm'', be'') arg'') $ foldl aux (bm, be') args
   where
     be' = semiDesExpr sdm obj be
-    aux (m, e) ObjArr{oaObj=(Just (GuardExpr argInExpr Nothing)), oaM=argM, oaArr=(Just (GuardExpr argVal Nothing))} = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (TupleArgIO argM argName' argVal'))
+    aux (m, e) ObjArr{oaObj=(Just (GuardExpr argInExpr Nothing)), oaM=argM, oaArr=(Just (GuardExpr argVal Nothing))} = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (fromTupleArg$ TupleArgIO argM argName' argVal'))
       where
         argVal' = semiDesExpr sdm obj argVal
         (Value _ argName') = semiDesExpr sdm obj argInExpr
     aux (m, e) ObjArr{oaObj=(Just (GuardExpr argExpr Nothing)), oaM=argM, oaArr=Nothing} = case sdm of
-      SDOutput -> (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (TupleArgO argM argVal'))
+      SDOutput -> (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (fromTupleArg$ TupleArgO argM argVal'))
         where
           argVal' = semiDesExpr sdm obj argExpr
-      _ -> (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (TupleArgI argM' argName'))
+      _ -> (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (fromTupleArg$ TupleArgI argM' argName'))
         where
           (Value argM' argName') = semiDesExpr sdm obj argExpr
     aux _ oa@ObjArr{oaObj=Nothing, oaArr=Just{}} = error $ printf "Unexpected semiDesExpr with oaArr but no oaObj. Should instead be disambiguated during semiDesExpr: %s" (show oa)

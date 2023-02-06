@@ -55,11 +55,11 @@ exprPath :: (ExprClass e) => e m -> TypeName
 exprPath = fromMaybe (error "No exprPath found") . maybeExprPath
 
 exprAppliedArgsMap :: (ExprClass e, Show m) => e m -> H.HashMap ArgName (Meta m, Maybe (e m))
-exprAppliedArgsMap = H.fromList . mapMaybe fromTupleArg . exprAppliedArgs
+exprAppliedArgsMap = H.fromList . mapMaybe mapTupleArg . exprAppliedArgs
   where
-    fromTupleArg (TupleArgI m n)    = Just (n, (m, Nothing))
-    fromTupleArg (TupleArgIO m n a) = Just (n, (m, Just a))
-    fromTupleArg TupleArgO{}        = Nothing
+    mapTupleArg (TupleArgI m n)    = Just (n, (m, Nothing))
+    mapTupleArg (TupleArgIO m n a) = Just (n, (m, Just a))
+    mapTupleArg TupleArgO{}        = Nothing
 
 exprWithMeta :: Meta m -> Expr m -> Expr m
 exprWithMeta m (CExpr _ c)        = CExpr m c
@@ -89,9 +89,9 @@ objExpr Object{objBasis, deprecatedObjM=m, deprecatedObjVars=vars, deprecatedObj
 
     applyArgs b = foldr applyArg b $ H.toList args
     applyArg (argName, (argM, Just argVal)) b = if H.null (deprecatedObjArgs argVal)
-      then TupleApply (emptyMetaM "tupleApplyArg" argM) (emptyMetaE "appArg" b, b) (TupleArgIO argM argName (Arg (deprecatedObjM argVal) (deprecatedObjPath argVal)))
-      else TupleApply (emptyMetaM "tupleApplyArg" argM) (emptyMetaE "appArg" b, b) (TupleArgIO argM argName (objExpr argVal))
-    applyArg (argName, (argM, Nothing)) b = TupleApply (emptyMetaM "tupleApplyArg" argM) (emptyMetaE "appArg" b, b) (TupleArgI argM argName)
+      then TupleApply (emptyMetaM "tupleApplyArg" argM) (emptyMetaE "appArg" b, b) (fromTupleArg $ TupleArgIO argM argName (Arg (deprecatedObjM argVal) (deprecatedObjPath argVal)))
+      else TupleApply (emptyMetaM "tupleApplyArg" argM) (emptyMetaE "appArg" b, b) (fromTupleArg $ TupleArgIO argM argName (objExpr argVal))
+    applyArg (argName, (argM, Nothing)) b = TupleApply (emptyMetaM "tupleApplyArg" argM) (emptyMetaE "appArg" b, b) (fromTupleArg $ TupleArgI argM argName)
 
 objPath :: (Show m, MetaDat m, ExprClass e) => Object e m -> TypeName
 objPath = exprPath . objExpr
@@ -131,7 +131,7 @@ exprToObj basis doc e@(Value m path) = Object m basis H.empty H.empty doc e path
 exprToObj basis doc e@(TupleApply m' (_, baseExpr) arg) = baseObj{deprecatedObjM=m', deprecatedObjArgs=H.insert argName' argVal' (deprecatedObjArgs baseObj), objDupExpr=e}
   where
     baseObj = exprToObj basis doc baseExpr
-    (argName', argVal') = case arg of
+    (argName', argVal') = case toTupleArg arg of
       (TupleArgI m n)    -> (n, (m, Nothing))
       (TupleArgIO _ n (HoleExpr holeM _)) -> (n, (holeM, Nothing))
       (TupleArgIO _ n (AliasExpr HoleExpr{} argExpr@(Arg m argName))) -> (n, (m, Just (Object m MatchObj H.empty H.empty Nothing argExpr argName)))
@@ -182,7 +182,7 @@ exprArgsWithSrc _ HoleExpr{} _ = H.empty
 exprArgsWithSrc _ (Arg m n) src = H.singleton n (m, singletonType src)
 exprArgsWithSrc classGraph (AliasExpr base alias) src = H.union (exprArgsWithSrc classGraph base src) (exprArgsWithSrc classGraph alias src)
 exprArgsWithSrc classGraph (VarApply _ e _ _) src = exprArgsWithSrc classGraph e src
-exprArgsWithSrc classGraph (TupleApply _ (_, be) arg) src@PartialType{ptArgs=srcArgs} = H.union (exprArgsWithSrc classGraph be src) (fromArg arg)
+exprArgsWithSrc classGraph (TupleApply _ (_, be) arg) src@PartialType{ptArgs=srcArgs} = H.union (exprArgsWithSrc classGraph be src) (fromArg $ toTupleArg arg)
   where
     fromArg (TupleArgIO _ n e) = case H.lookup n srcArgs of
       Just (UnionType srcArg) -> mergeMaps $ map (exprArgsWithSrc classGraph e) $ splitUnionType srcArg

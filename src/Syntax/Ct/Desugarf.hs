@@ -73,9 +73,9 @@ desObjValToArg _ useRelativeName (AliasExpr b a) = AliasExpr (desObjValToArg DOE
 desObjValToArg _ useRelativeName mainExpr@(TupleApply m (bm, be) tupleArg) = TupleApply m (bm, be') tupleArg'
   where
     be' = desObjValToArg DOEValMode useRelativeName be
-    tupleArg' = case tupleArg of
+    tupleArg' = case toTupleArg tupleArg of
       TupleArgI{} -> tupleArg
-      TupleArgIO argM argName argVal -> TupleArgIO argM argName argVal'
+      TupleArgIO argM argName argVal -> fromTupleArg $ TupleArgIO argM argName argVal'
         where argVal' = desObjValToArg DOEValMode useRelativeName argVal
       TupleArgO{} -> error $ printf "Unexpected TupleArgO in desObjValToArg: %s" (show mainExpr)
 desObjValToArg _ useRelativeName (VarApply m be varName varVal) = VarApply m be' varName varVal

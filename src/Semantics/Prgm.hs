@@ -80,7 +80,7 @@ data Expr m
   | Arg (Meta m) ArgName
   | HoleExpr (Meta m) Hole
   | AliasExpr (Expr m) (Expr m) -- ^ AliasExpr baseExpr aliasExpr
-  | TupleApply (Meta m) (Meta m, Expr m) (TupleArg Expr m)
+  | TupleApply (Meta m) (Meta m, Expr m) (ObjArr Expr m)
   | VarApply (Meta m) (Expr m) TypeVarName (Meta m)
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
@@ -143,16 +143,12 @@ instance Show m => Show (Expr m) where
   show (Arg m name) = printf "Arg %s %s" (show m) name
   show (HoleExpr m hole) = printf "Hole %s %s" (show m) (show hole)
   show (AliasExpr base alias) = printf "%s@%s" (show base) (show alias)
-  show (TupleApply _ (_, baseExpr) arg) = printf "%s(%s)" baseExpr' arg'
+  show (TupleApply _ (_, baseExpr) arg) = printf "%s(%s)" baseExpr' (show arg)
     where
       baseExpr' = case baseExpr of
         Value _ funName -> funName
         TupleApply{}    -> show baseExpr
         _               -> printf "(%s)" (show baseExpr)
-      arg' = case arg of
-        TupleArgIO _ argName argVal -> argName ++ " = " ++ show argVal
-        TupleArgI m argName         -> argName ++ " : " ++ show m
-        TupleArgO _ argVal          -> show argVal
   show (VarApply _ baseExpr varName varVal) = printf "%s[%s : %s]" baseExpr' varName (show varVal)
     where
       baseExpr' = case baseExpr of
@@ -247,7 +243,7 @@ instance ExprClass Expr where
 
   exprAppliedArgs (Value _ _) = []
   exprAppliedArgs (Arg _ _) = []
-  exprAppliedArgs (TupleApply _ (_, be) ae) = ae : exprAppliedArgs be
+  exprAppliedArgs (TupleApply _ (_, be) ae) = toTupleArg ae : exprAppliedArgs be
   exprAppliedArgs (VarApply _ e _ _) = exprAppliedArgs e
   exprAppliedArgs _ = error "Unsupported Expr exprAppliedArgs"
 
@@ -262,12 +258,24 @@ instance ExprClass Expr where
   exprArgs (Arg m n) = H.singleton n [m]
   exprArgs HoleExpr{} = H.empty
   exprArgs (AliasExpr base alias) = H.unionWith (++) (exprArgs base) (exprArgs alias)
-  exprArgs (TupleApply _ (_, be) arg) = H.unionWith (++) (exprArgs be) (exprArg arg)
+  exprArgs (TupleApply _ (_, be) arg) = H.unionWith (++) (exprArgs be) (exprArg (toTupleArg arg))
     where
       exprArg (TupleArgIO _ _ e) = exprArgs e
       exprArg (TupleArgO _ e)    = exprArgs e
       exprArg (TupleArgI m n)    = H.singleton n [m]
   exprArgs (VarApply _ e _ _) = exprArgs e
+
+-- | To deprecate as part of moving to ObjArr
+toTupleArg :: (Show m) => ObjArr Expr m -> TupleArg Expr m
+toTupleArg ObjArr{oaObj=Just (GuardExpr (Value _ n) Nothing), oaM, oaArr=Just (GuardExpr arr Nothing)} = TupleArgIO oaM n arr
+toTupleArg ObjArr{oaObj=Just (GuardExpr (Value m n) Nothing), oaArr=Nothing} = TupleArgI m n
+toTupleArg ObjArr{oaObj=Nothing, oaM, oaArr=Just (GuardExpr arr Nothing)} = TupleArgO oaM arr
+toTupleArg oa = error $ printf "Invalid toTupleArg: %s" (show oa)
+
+fromTupleArg :: (MetaDat m, Show m) => TupleArg Expr m -> ObjArr Expr m
+fromTupleArg (TupleArgIO m argName argVal) = ObjArr (Just (GuardExpr (Value m argName) Nothing)) ArgObj Nothing [] emptyMetaN (Just (GuardExpr argVal Nothing))
+fromTupleArg (TupleArgI m argName) = ObjArr (Just (GuardExpr (Value m argName) Nothing)) ArgObj Nothing [] emptyMetaN Nothing
+fromTupleArg (TupleArgO m argVal) = ObjArr Nothing ArgObj Nothing [] m (Just (GuardExpr argVal Nothing))
 
 mapMetaDat :: (m1 -> m2) -> Meta m1 -> Meta m2
 mapMetaDat f (Meta t p md) = Meta t p (f md)

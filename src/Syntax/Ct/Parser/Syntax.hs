@@ -124,10 +124,10 @@ exprVal = Value m
     m = emptyMetaN
     -- m = Meta (singletonType $ partialVal (PTypeName name)) Nothing emptyMetaDat
 
-applyExprOArgs :: (MetaDat m) => Expr m -> [(Maybe ArgName, Expr m)] -> Expr m
+applyExprOArgs :: (MetaDat m, Show m) => Expr m -> [(Maybe ArgName, Expr m)] -> Expr m
 applyExprOArgs = foldl addArg
   where
-    addArg b a = TupleApply (emptyMetaE "app" b) (emptyMetaE "base" b, b) (mapArg a)
+    addArg b a = TupleApply (emptyMetaE "app" b) (emptyMetaE "base" b, b) (fromTupleArg $ mapArg a)
       where
         mapArg (Just argName, argVal) = TupleArgIO (emptyMetaE argName b) argName argVal
         mapArg (Nothing, argVal) = TupleArgO (emptyMetaE "noArg" b) argVal
@@ -135,7 +135,7 @@ applyExprOArgs = foldl addArg
 applyExprIArgs :: Expr () -> [(ArgName, IArg Expr)] -> Expr ()
 applyExprIArgs = foldl addArg
   where
-    addArg b a = TupleApply (emptyMetaE "app" b) (emptyMetaE "base" b, b) (mapArg a)
+    addArg b a = TupleApply (emptyMetaE "app" b) (emptyMetaE "base" b, b) (fromTupleArg $ mapArg a)
       where
         mapArg :: (ArgName, IArg Expr) -> TupleArg Expr ()
         mapArg (argName, IArgE argVal) = TupleArgIO (emptyMetaE argName b) argName argVal
@@ -162,6 +162,6 @@ mapExprAppliedArg _ _ e@Value{} = e
 mapExprAppliedArg _ _ e@Arg{} = e
 mapExprAppliedArg _ _ e@HoleExpr{} = e
 mapExprAppliedArg f argName (AliasExpr base alias) = AliasExpr (mapExprAppliedArg f argName base) alias
-mapExprAppliedArg f argName (TupleApply m (bm, be) (TupleArgIO am an av)) | argName == an = TupleApply m (bm, be) (TupleArgIO am an (f av))
+mapExprAppliedArg f argName (TupleApply m (bm, be) oa@ObjArr{oaObj=Just (GuardExpr (Value _ an) Nothing), oaArr=Just (GuardExpr aExpr aGuard)}) | argName == an = TupleApply m (bm, be) oa{oaArr=Just (GuardExpr (f aExpr) aGuard)}
 mapExprAppliedArg f argName (TupleApply m (bm, be) a) = TupleApply m (bm, mapExprAppliedArg f argName be) a
 mapExprAppliedArg f argName (VarApply m be an av) = VarApply m (mapExprAppliedArg f argName be) an av

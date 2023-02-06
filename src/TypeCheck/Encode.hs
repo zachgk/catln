@@ -120,34 +120,41 @@ fromExpr obj varEnv argEnv env1 (AliasExpr base alias) = do
   (alias', env3) <- fromExpr obj varEnv argEnv env2 alias
   let env4 = addConstraints env3 [EqPoints (getExprMeta base') (getExprMeta alias')]
   return (AliasExpr base' alias', env4)
-fromExpr obj varEnv argEnv env1 (TupleApply m (baseM, baseExpr) (TupleArgIO argM argName argExpr)) = do
-  (m', env2) <- fromMeta env1 BUpper obj varEnv argEnv m $ printf "TupleApply %s(%s = %s) Meta" (show baseExpr) argName (show argExpr)
-  (baseM', env3) <- fromMeta env2 BUpper obj varEnv argEnv baseM $ printf "TupleApply %s(%s = %s) BaseMeta" (show baseExpr) argName (show argExpr)
+fromExpr obj varEnv argEnv env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaM, oaAnnots}) = do
+  (m', env2) <- fromMeta env1 BUpper obj varEnv argEnv m $ printf "Tuple %s(%s) Meta" (show baseExpr) (show arg)
+  (baseM', env3) <- fromMeta env2 BUpper obj varEnv argEnv baseM $ printf "Tuple %s(%s) BaseMeta" (show baseExpr) (show arg)
   (baseExpr', env4) <- fromExpr obj varEnv argEnv env3 baseExpr
+  let Just (GuardExpr argExpr Nothing) = oaArr arg
   (argExpr', env5) <- fromExpr obj varEnv argEnv env4 argExpr
-  (argM', env6) <- fromMeta env5 BUpper obj varEnv argEnv argM $ printf "TupleApply %s(%s = %s) ArgMeta" (show baseExpr) argName (show argExpr)
-  let constraints = [ArrowTo (getExprMeta baseExpr') baseM',
-                     AddArg (baseM', argName) m',
-                     BoundedByObjs m',
-                     ArrowTo (getExprMeta argExpr') argM',
-                     PropEq (m', argName) argM'
-                    ]
-  let env7 = addConstraints env6 constraints
-  return (TupleApply m' (baseM', baseExpr') (TupleArgIO argM' argName argExpr'), env7)
-fromExpr obj varEnv argEnv env1 (TupleApply m (baseM, baseExpr) (TupleArgO argM argExpr)) = do
-  (m', env2) <- fromMeta env1 BUpper obj varEnv argEnv m $ printf "TupleApplyInfer %s(%s) Meta" (show baseExpr) (show argExpr)
-  (baseM', env3) <- fromMeta env2 BUpper obj varEnv argEnv baseM $ printf "TupleApplyInfer %s(%s) BaseMeta" (show baseExpr) (show argExpr)
-  (baseExpr', env4) <- fromExpr obj varEnv argEnv env3 baseExpr
-  (argExpr', env5) <- fromExpr obj varEnv argEnv env4 argExpr
-  (argM', env6) <- fromMeta env5 BUpper obj varEnv argEnv argM $ printf "TupleApplyInfer %s(%s) ArgMeta" (show baseExpr) (show argExpr)
-  let constraints = [ArrowTo (getExprMeta baseExpr') baseM',
-                     AddInferArg baseM' m',
-                     BoundedByObjs m',
-                     ArrowTo (getExprMeta argExpr') argM'
-                    ]
-  let env7 = addConstraints env6 constraints
-  return (TupleApply m' (baseM', baseExpr') (TupleArgO argM' argExpr'), env7)
-fromExpr _ _ _ _ (TupleApply _ _ TupleArgI{}) = error "Unexpected TupleArgI in encode fromExpr"
+  (oaM', env6) <- fromMeta env5 BUpper obj varEnv argEnv oaM $ printf "Tuple oaM %s(%s)" (show baseExpr) (show arg)
+  (oaAnnots', env7) <- mapMWithFEnv env6 (fromExpr obj varEnv argEnv) oaAnnots
+  (oaObj', env8) <- case oaObj arg of
+    Just (GuardExpr (Value argM argName) Nothing) -> do
+      (argM', env7a) <- fromMeta env7 BUpper obj varEnv argEnv argM $ printf "Tuple %s(%s) ArgMeta" (show baseExpr) (show arg)
+      let constraints = [ArrowTo (getExprMeta baseExpr') baseM',
+                        AddArg (baseM', argName) m',
+                        BoundedByObjs m',
+                        ArrowTo (getExprMeta argExpr') argM',
+                        PropEq (m', argName) argM'
+                        ]
+      let env7b = addConstraints env7a constraints
+      return (Just (GuardExpr (Value argM' argName) Nothing), env7b)
+    Nothing -> do
+      let constraints = [ArrowTo (getExprMeta baseExpr') baseM',
+                        AddInferArg baseM' m',
+                        BoundedByObjs m',
+                        ArrowTo (getExprMeta argExpr') oaM'
+                        ]
+      let env7a = addConstraints env7 constraints
+      return (Nothing, env7a)
+    Just{} -> error $ printf "Unsupported Object GuardExpr in fromExpr: %s" (show arg)
+  let arg' = arg{
+        oaObj=oaObj',
+        oaArr=Just (GuardExpr argExpr' Nothing),
+        oaM=oaM',
+        oaAnnots=oaAnnots'
+        }
+  return (TupleApply m' (baseM', baseExpr') arg', env8)
 fromExpr obj varEnv argEnv env1 (VarApply m baseExpr varName varVal) = do
   let baseName = printf "VarApply %s<%s = %s>" (show baseExpr) varName (show varVal) :: String
   (m', env2) <- fromMeta env1 BUpper obj varEnv argEnv m $ printf "%s Meta" baseName
@@ -183,33 +190,41 @@ fromObjExpr varEnv argEnv env1 (AliasExpr base alias) = do
   (alias', env3) <- fromObjExpr varEnv argEnv env2 alias
   let env4 = addConstraints env3 [EqPoints (getExprMeta base') (getExprMeta alias')]
   return (AliasExpr base' alias', env4)
-fromObjExpr varEnv argEnv env1 (TupleApply m (baseM, baseExpr) (TupleArgIO argM argName argExpr)) = do
-  (m', env2) <- fromMeta env1 BUpper Nothing varEnv argEnv m $ printf "TupleApply %s(%s = %s) Meta" (show baseExpr) argName (show argExpr)
-  (baseM', env3) <- fromMeta env2 BUpper Nothing varEnv argEnv baseM $ printf "TupleApply %s(%s = %s) BaseMeta" (show baseExpr) argName (show argExpr)
+fromObjExpr varEnv argEnv env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaM, oaAnnots}) = do
+  (m', env2) <- fromMeta env1 BUpper Nothing varEnv argEnv m $ printf "Tuple %s(%s) Meta" (show baseExpr) (show arg)
+  (baseM', env3) <- fromMeta env2 BUpper Nothing varEnv argEnv baseM $ printf "Tuple %s(%s) BaseMeta" (show baseExpr) (show arg)
   (baseExpr', env4) <- fromObjExpr varEnv argEnv env3 baseExpr
-  (argExpr', env5) <- fromObjExpr varEnv argEnv env4 argExpr
-  (argM', env6) <- fromMeta env5 BUpper Nothing varEnv argEnv argM $ printf "TupleApply %s(%s = %s) ArgMeta" (show baseExpr) argName (show argExpr)
-  let constraints = [ArrowTo (getExprMeta baseExpr') baseM',
+  let Just (GuardExpr (Value argM argName) Nothing) = oaObj arg
+  (argM', env5) <- fromMeta env4 BUpper Nothing varEnv argEnv argM $ printf "Tuple argM %s(%s)" (show baseExpr) (show arg)
+  (oaM', env6) <- fromMeta env5 BUpper Nothing varEnv argEnv oaM $ printf "Tuple oaM %s(%s)" (show baseExpr) (show arg)
+  (oaAnnots', env7) <- mapMWithFEnv env6 (fromObjExpr varEnv argEnv) oaAnnots
+  (oaArr', env8) <- case oaArr arg of
+    Just (GuardExpr argExpr Nothing) -> do
+      (argExpr', env7a) <- fromObjExpr varEnv argEnv env7 argExpr
+      let constraints = [ArrowTo (getExprMeta baseExpr') baseM',
                      AddArg (baseM', argName) m',
                      -- BoundedByObjs m',
                      ArrowTo (getExprMeta argExpr') argM',
                      PropEq (m', argName) argM'
                     ]
-  let env7 = addConstraints env6 constraints
-  return (TupleApply m' (baseM', baseExpr') (TupleArgIO argM' argName argExpr'), env7)
-fromObjExpr varEnv argEnv env1 (TupleApply m (baseM, baseExpr) (TupleArgI argM argName)) = do
-  (m', env2) <- fromMeta env1 BUpper Nothing varEnv argEnv m $ printf "TupleApply %s(%s) Meta" (show baseExpr) argName
-  (baseM', env3) <- fromMeta env2 BUpper Nothing varEnv argEnv baseM $ printf "TupleApply %s(%s) BaseMeta" (show baseExpr) argName
-  (baseExpr', env4) <- fromObjExpr varEnv argEnv env3 baseExpr
-  (argM', env5) <- fromMeta env4 BUpper Nothing varEnv argEnv argM $ printf "TupleApply %s(%s) ArgMeta" (show baseExpr) argName
-  let constraints = [ArrowTo (getExprMeta baseExpr') baseM',
+      let env7b = addConstraints env7a constraints
+      return (Just (GuardExpr argExpr' Nothing), env7b)
+    Nothing -> do
+      let constraints = [ArrowTo (getExprMeta baseExpr') baseM',
                      AddArg (baseM', argName) m',
                      -- BoundedByObjs m',
                      PropEq (m', argName) argM'
                     ]
-  let env6 = addConstraints env5 constraints
-  return (TupleApply m' (baseM', baseExpr') (TupleArgI argM' argName), env6)
-fromObjExpr _ _ _ (TupleApply _ _ TupleArgO{}) = error "Unexpected TupleArgO in fromObjExpr"
+      let env7a = addConstraints env7 constraints
+      return (Nothing, env7a)
+    Just{} -> error $ printf "Unsupported Object GuardExpr in fromExpr: %s" (show arg)
+  let arg' = arg{
+        oaObj=Just (GuardExpr (Value argM' argName) Nothing),
+        oaArr=oaArr',
+        oaM=oaM',
+        oaAnnots=oaAnnots'
+        }
+  return (TupleApply m' (baseM', baseExpr') arg', env8)
 fromObjExpr varEnv argEnv env1 (VarApply m baseExpr varName varVal) = do
   let baseName = printf "VarApply %s<%s = %s>" (show baseExpr) varName (show varVal) :: String
   (m', env2) <- fromMeta env1 BUpper Nothing varEnv argEnv m $ printf "%s Meta" baseName
