@@ -121,6 +121,7 @@ instance Monad TypeCheckResult where
 
 type PreMeta = Meta ()
 type PExpr = Expr ()
+type PGuardExpr = GuardExpr Expr ()
 type PCompAnnot = CompAnnot PExpr
 type PArrow = Arrow Expr ()
 type PObjArg = ObjArg Expr ()
@@ -150,6 +151,7 @@ type VMetaVarEnv = MetaVarEnv VarMetaDat
 type VMetaArgEnv = MetaArgEnv VarMetaDat
 type VArrow = Arrow Expr VarMetaDat
 type VObjArg = ObjArg Expr VarMetaDat
+type VGuardExpr = GuardExpr Expr VarMetaDat
 type VObject = Object Expr VarMetaDat
 type VObjectMap = ObjectMap Expr VarMetaDat
 type VObjectMapItem = ObjectMapItem Expr VarMetaDat

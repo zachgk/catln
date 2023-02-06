@@ -44,6 +44,10 @@ isEncodeOut :: EncodeState -> Bool
 isEncodeOut EncodeOut{} = True
 isEncodeOut EncodeIn{}  = False
 
+asEncodeIn :: EncodeState -> EncodeState
+asEncodeIn (EncodeOut _ varEnv argEnv) = EncodeIn varEnv argEnv
+asEncodeIn est@EncodeIn{}              = est
+
 encodeObj :: EncodeState -> Maybe VObject
 encodeObj (EncodeOut obj _ _) = obj
 encodeObj EncodeIn{}          = Nothing
@@ -157,76 +161,68 @@ fromExpr est env1 (AliasExpr base alias) = do
   (alias', env3) <- fromExpr est env2 alias
   let env4 = addConstraints env3 [EqPoints (getExprMeta base') (getExprMeta alias')]
   return (AliasExpr base' alias', env4)
-fromExpr est@EncodeOut{} env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaM, oaAnnots}) = do
+fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaM, oaAnnots, oaArr}) = do
   (m', env2) <- fromMeta env1 BUpper est m $ printf "Tuple %s(%s) Meta" (show baseExpr) (show arg)
   (baseM', env3) <- fromMeta env2 BUpper est baseM $ printf "Tuple %s(%s) BaseMeta" (show baseExpr) (show arg)
   (baseExpr', env4) <- fromExpr est env3 baseExpr
-  let Just (GuardExpr argExpr Nothing) = oaArr arg
-  (argExpr', env5) <- fromExpr est env4 argExpr
+  (oaObj', env5) <- case oaObj of
+    Just (GuardExpr inExpr guardExpr) -> do
+      (inExpr', env5a) <- fromExpr (asEncodeIn est) env4 inExpr
+      (guardExpr', env5b) <- fromGuard est env5a guardExpr
+      -- TODO: Add constraint that input expr' refined by guardExpr'
+      -- For outputs, should instead verify in decode that it refined (is subtype)
+      return (Just $ GuardExpr inExpr' guardExpr', env5b)
+    Nothing -> return (Nothing, env4)
   (oaM', env6) <- fromMeta env5 BUpper est oaM $ printf "Tuple oaM %s(%s)" (show baseExpr) (show arg)
   (oaAnnots', env7) <- mapMWithFEnv env6 (fromExpr est) oaAnnots
-  (oaObj', env8) <- case oaObj arg of
-    Just (GuardExpr (Value argM argName) Nothing) -> do
-      (argM', env7a) <- fromMeta env7 BUpper est argM $ printf "Tuple %s(%s) ArgMeta" (show baseExpr) (show arg)
-      let constraints = [ArrowTo (getExprMeta baseExpr') baseM',
+  (oaArr', env8) <- case oaArr of
+    Just (GuardExpr argExpr guardExpr) -> do
+      (argExpr', env7a) <- fromExpr est env7 argExpr
+      (guardExpr', env7b) <- fromGuard est env7a guardExpr
+      return (Just $ GuardExpr argExpr' guardExpr', env7b)
+    Nothing -> return (Nothing, env7)
+  let constraints = case (est, oaObj', oaArr') of
+        (EncodeOut{}, Just (GuardExpr (Value argM' argName) Nothing), Just (GuardExpr argExpr' Nothing)) ->
+          -- Output with (x=x)
+          [
+            ArrowTo (getExprMeta baseExpr') baseM',
                         AddArg (baseM', argName) m',
                         BoundedByObjs m',
                         ArrowTo (getExprMeta argExpr') argM',
                         PropEq (m', argName) argM'
                         ]
-      let env7b = addConstraints env7a constraints
-      return (Just (GuardExpr (Value argM' argName) Nothing), env7b)
-    Nothing -> do
-      let constraints = [ArrowTo (getExprMeta baseExpr') baseM',
+        (EncodeOut{}, Nothing, Just (GuardExpr argExpr' Nothing)) ->
+          -- Output with (x) infer
+          [
+            ArrowTo (getExprMeta baseExpr') baseM',
                         AddInferArg baseM' m',
                         BoundedByObjs m',
                         ArrowTo (getExprMeta argExpr') oaM'
                         ]
-      let env7a = addConstraints env7 constraints
-      return (Nothing, env7a)
-    Just{} -> error $ printf "Unsupported Object GuardExpr in fromExpr: %s" (show arg)
-  let arg' = arg{
-        oaObj=oaObj',
-        oaArr=Just (GuardExpr argExpr' Nothing),
-        oaM=oaM',
-        oaAnnots=oaAnnots'
-        }
-  return (TupleApply m' (baseM', baseExpr') arg', env8)
-fromExpr est@EncodeIn{} env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaM, oaAnnots}) = do
-  (m', env2) <- fromMeta env1 BUpper est m $ printf "Tuple %s(%s) Meta" (show baseExpr) (show arg)
-  (baseM', env3) <- fromMeta env2 BUpper est baseM $ printf "Tuple %s(%s) BaseMeta" (show baseExpr) (show arg)
-  (baseExpr', env4) <- fromExpr est env3 baseExpr
-  let Just (GuardExpr (Value argM argName) Nothing) = oaObj arg
-  (argM', env5) <- fromMeta env4 BUpper est argM $ printf "Tuple argM %s(%s)" (show baseExpr) (show arg)
-  (oaM', env6) <- fromMeta env5 BUpper est oaM $ printf "Tuple oaM %s(%s)" (show baseExpr) (show arg)
-  (oaAnnots', env7) <- mapMWithFEnv env6 (fromExpr est) oaAnnots
-  (oaArr', env8) <- case oaArr arg of
-    Just (GuardExpr argExpr Nothing) -> do
-      (argExpr', env7a) <- fromExpr est env7 argExpr
-      let constraints = [ArrowTo (getExprMeta baseExpr') baseM',
+        (EncodeIn{}, Just (GuardExpr (Value argM' argName) Nothing), Just (GuardExpr argExpr' Nothing)) ->
+          -- Input with (x=x)
+          [
+            ArrowTo (getExprMeta baseExpr') baseM',
                      AddArg (baseM', argName) m',
-                     -- BoundedByObjs m',
                      ArrowTo (getExprMeta argExpr') argM',
                      PropEq (m', argName) argM'
                     ]
-      let env7b = addConstraints env7a constraints
-      return (Just (GuardExpr argExpr' Nothing), env7b)
-    Nothing -> do
-      let constraints = [ArrowTo (getExprMeta baseExpr') baseM',
+        (EncodeIn{}, Just (GuardExpr (Value argM' argName) Nothing), Nothing) ->
+          -- Input with (x) matchable
+          [
+         ArrowTo (getExprMeta baseExpr') baseM',
                      AddArg (baseM', argName) m',
-                     -- BoundedByObjs m',
                      PropEq (m', argName) argM'
                     ]
-      let env7a = addConstraints env7 constraints
-      return (Nothing, env7a)
-    Just{} -> error $ printf "Unsupported Object GuardExpr in fromExpr: %s" (show arg)
+        _ -> error $ printf "Invalid fromExpr in %s mode for %s" (show est) (show arg)
+  let env9 = addConstraints env8 constraints
   let arg' = arg{
-        oaObj=Just (GuardExpr (Value argM' argName) Nothing),
+        oaObj=oaObj',
         oaArr=oaArr',
         oaM=oaM',
         oaAnnots=oaAnnots'
         }
-  return (TupleApply m' (baseM', baseExpr') arg', env8)
+  return (TupleApply m' (baseM', baseExpr') arg', env9)
 fromExpr est env1 (VarApply m baseExpr varName varVal) = do
   let baseName = printf "VarApply %s<%s = %s>" (show baseExpr) varName (show varVal) :: String
   (m', env2) <- fromMeta env1 BUpper est m $ printf "%s Meta" baseName
