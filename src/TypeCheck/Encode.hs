@@ -40,6 +40,10 @@ data EncodeState
   | EncodeIn !VMetaVarEnv !VMetaArgEnv -- ^ Used for inputs
   deriving (Eq, Ord, Show)
 
+isEncodeOut :: EncodeState -> Bool
+isEncodeOut EncodeOut{} = True
+isEncodeOut EncodeIn{}  = False
+
 encodeObj :: EncodeState -> Maybe VObject
 encodeObj (EncodeOut obj _ _) = obj
 encodeObj EncodeIn{}          = Nothing
@@ -119,14 +123,22 @@ fromExpr :: EncodeState -> FEnv -> PExpr -> TypeCheckResult (VExpr, FEnv)
 fromExpr est env (CExpr m c) = do
   (m', env') <- fromMeta env BUpper est m ("Constant " ++ show c)
   return (CExpr m' c, addConstraints env' [EqualsKnown m' (constantType c)])
-fromExpr est env1 (Value m name) = do
+fromExpr est@EncodeOut{} env1 (Value m name) = do
   (m', env2) <- fromMeta env1 BUpper est m ("Value " ++ name)
   lookupVal <- fLookup env2 (encodeObj est) name
   lookupConstraints <- case lookupVal of
     DefVar lookupM      -> return [EqPoints m' lookupM]
     DefKnown lookupType -> return [BoundedByKnown m' lookupType]
   return (Value m' name, addConstraints env2 lookupConstraints)
-fromExpr est env1 (Arg m name) = do
+fromExpr est@EncodeIn{} env1 (Value m name) = do
+  (m', env2) <- fromMeta env1 BUpper est m ("Value " ++ name)
+  return (Value m' name, env2)
+-- fromObjExpr varEnv argEnv env1 (Value m name) = do
+--   (m', env2) <- fromMeta env1 BUpper Nothing varEnv argEnv m ("Value " ++ name)
+--   (objValue, env3) <- fromMeta env2 BUpper Nothing varEnv argEnv (Meta (singletonType (partialVal (PRelativeName name))) (labelPos "objValue" $ getMetaPos m') emptyMetaDat) ("objValue" ++ name)
+--   let env4 = fInsert env3 name (DefVar objValue)
+--   return (Value m' name, env4)
+fromExpr est@EncodeOut{} env1 (Arg m name) = do
   (m', env2) <- fromMeta env1 BUpper est m ("Arg " ++ name)
   let varM = Meta (TypeVar $ TVArg name) (getMetaPos m) emptyMetaDat
   (varM', env3) <- fromMeta env2 BUpper est varM $ "ArgVar " ++ name
@@ -134,6 +146,9 @@ fromExpr est env1 (Arg m name) = do
   case H.lookup name argEnv of
     Nothing -> error $ printf "Could not find arg %s with argEnv %s and obj %s" name (show argEnv) (show $ encodeObj est)
     Just lookupArgs -> return (Arg varM' name, addConstraints env3 [EqPoints m' lookupArgs])
+fromExpr est@EncodeIn{} env1 (Arg m name) = do
+  (m', env2) <- fromMeta env1 BUpper est m ("Arg " ++ name)
+  return (Arg m' name, env2)
 fromExpr est env1 (HoleExpr m hole) = do
   (m', env2) <- fromMeta env1 BUpper est m ("Hole " ++ show hole)
   return (HoleExpr m' hole, env2)
@@ -142,7 +157,7 @@ fromExpr est env1 (AliasExpr base alias) = do
   (alias', env3) <- fromExpr est env2 alias
   let env4 = addConstraints env3 [EqPoints (getExprMeta base') (getExprMeta alias')]
   return (AliasExpr base' alias', env4)
-fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaM, oaAnnots}) = do
+fromExpr est@EncodeOut{} env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaM, oaAnnots}) = do
   (m', env2) <- fromMeta env1 BUpper est m $ printf "Tuple %s(%s) Meta" (show baseExpr) (show arg)
   (baseM', env3) <- fromMeta env2 BUpper est baseM $ printf "Tuple %s(%s) BaseMeta" (show baseExpr) (show arg)
   (baseExpr', env4) <- fromExpr est env3 baseExpr
@@ -177,52 +192,17 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaM, oaAnnots}) = d
         oaAnnots=oaAnnots'
         }
   return (TupleApply m' (baseM', baseExpr') arg', env8)
-fromExpr est env1 (VarApply m baseExpr varName varVal) = do
-  let baseName = printf "VarApply %s<%s = %s>" (show baseExpr) varName (show varVal) :: String
-  (m', env2) <- fromMeta env1 BUpper est m $ printf "%s Meta" baseName
-  (baseExpr', env3) <- fromExpr est env2 baseExpr
-  (varVal', env4) <- fromMeta env3 BUpper est varVal $ printf "%s val" baseName
-  let constraints = [ArrowTo (getExprMeta baseExpr') m',
-                     BoundedByObjs m',
-                     VarEq (m', varName) varVal'
-                    ]
-  let env5 = addConstraints env4 constraints
-  return (VarApply m' baseExpr' varName varVal', env5)
-
-fromObjExpr :: EncodeState -> FEnv -> PExpr -> TypeCheckResult (VExpr, FEnv)
-fromObjExpr est env (CExpr m c) = do
-  (m', env') <- fromMeta env BUpper est m ("Constant " ++ show c)
-  return (CExpr m' c, addConstraints env' [EqualsKnown m' (constantType c)])
-fromObjExpr est env1 (Value m name) = do
-  (m', env2) <- fromMeta env1 BUpper est m ("Value " ++ name)
-  return (Value m' name, env2)
--- fromObjExpr varEnv argEnv env1 (Value m name) = do
---   (m', env2) <- fromMeta env1 BUpper Nothing varEnv argEnv m ("Value " ++ name)
---   (objValue, env3) <- fromMeta env2 BUpper Nothing varEnv argEnv (Meta (singletonType (partialVal (PRelativeName name))) (labelPos "objValue" $ getMetaPos m') emptyMetaDat) ("objValue" ++ name)
---   let env4 = fInsert env3 name (DefVar objValue)
---   return (Value m' name, env4)
-fromObjExpr est env1 (Arg m name) = do
-  (m', env2) <- fromMeta env1 BUpper est m ("Arg " ++ name)
-  return (Arg m' name, env2)
-fromObjExpr est env1 (HoleExpr m hole) = do
-  (m', env2) <- fromMeta env1 BUpper est m ("Hole " ++ show hole)
-  return (HoleExpr m' hole, env2)
-fromObjExpr est env1 (AliasExpr base alias) = do
-  (base', env2) <- fromObjExpr est env1 base
-  (alias', env3) <- fromObjExpr est env2 alias
-  let env4 = addConstraints env3 [EqPoints (getExprMeta base') (getExprMeta alias')]
-  return (AliasExpr base' alias', env4)
-fromObjExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaM, oaAnnots}) = do
+fromExpr est@EncodeIn{} env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaM, oaAnnots}) = do
   (m', env2) <- fromMeta env1 BUpper est m $ printf "Tuple %s(%s) Meta" (show baseExpr) (show arg)
   (baseM', env3) <- fromMeta env2 BUpper est baseM $ printf "Tuple %s(%s) BaseMeta" (show baseExpr) (show arg)
-  (baseExpr', env4) <- fromObjExpr est env3 baseExpr
+  (baseExpr', env4) <- fromExpr est env3 baseExpr
   let Just (GuardExpr (Value argM argName) Nothing) = oaObj arg
   (argM', env5) <- fromMeta env4 BUpper est argM $ printf "Tuple argM %s(%s)" (show baseExpr) (show arg)
   (oaM', env6) <- fromMeta env5 BUpper est oaM $ printf "Tuple oaM %s(%s)" (show baseExpr) (show arg)
-  (oaAnnots', env7) <- mapMWithFEnv env6 (fromObjExpr est) oaAnnots
+  (oaAnnots', env7) <- mapMWithFEnv env6 (fromExpr est) oaAnnots
   (oaArr', env8) <- case oaArr arg of
     Just (GuardExpr argExpr Nothing) -> do
-      (argExpr', env7a) <- fromObjExpr est env7 argExpr
+      (argExpr', env7a) <- fromExpr est env7 argExpr
       let constraints = [ArrowTo (getExprMeta baseExpr') baseM',
                      AddArg (baseM', argName) m',
                      -- BoundedByObjs m',
@@ -247,15 +227,14 @@ fromObjExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaM, oaAnnots}) 
         oaAnnots=oaAnnots'
         }
   return (TupleApply m' (baseM', baseExpr') arg', env8)
-fromObjExpr est env1 (VarApply m baseExpr varName varVal) = do
+fromExpr est env1 (VarApply m baseExpr varName varVal) = do
   let baseName = printf "VarApply %s<%s = %s>" (show baseExpr) varName (show varVal) :: String
   (m', env2) <- fromMeta env1 BUpper est m $ printf "%s Meta" baseName
-  (baseExpr', env3) <- fromObjExpr est env2 baseExpr
+  (baseExpr', env3) <- fromExpr est env2 baseExpr
   (varVal', env4) <- fromMeta env3 BUpper est varVal $ printf "%s val" baseName
-  let constraints = [EqPoints (getExprMeta baseExpr') m',
-                     -- BoundedByObjs m',
+  let constraints = [ArrowTo (getExprMeta baseExpr') m',
                      VarEq (m', varName) varVal'
-                    ]
+                    ] ++ [BoundedByObjs m' | isEncodeOut est]
   let env5 = addConstraints env4 constraints
   return (VarApply m' baseExpr' varName varVal', env5)
 
@@ -338,7 +317,7 @@ fromObjectRec prefix isObjArg est env (Object m basis vars args doc expr path) =
   (m', env1) <- fromMeta env BUpper est (clearMetaArgTypes m) prefix'
   (vars', env2) <- mapMWithFEnvMapWithKey env1 (fromObjVar m' prefix' est) vars
   (args', env3) <- mapMWithFEnvMapWithKey env2 (addObjArg m' prefix' est) args
-  (expr', env4) <- fromObjExpr est env3 expr
+  (expr', env4) <- fromExpr est env3 expr
   let obj' = Object m' basis vars' args' doc expr' path
   (objValue, env5) <- fromMeta env4 BUpper est (Meta (singletonType (partialVal (PTypeName path))) (labelPos "objValue" $ getMetaPos m) emptyMetaDat) ("objValue" ++ path)
   let env6 = fInsert env5 path (DefVar objValue)
