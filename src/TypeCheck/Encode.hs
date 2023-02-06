@@ -182,14 +182,14 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaM, oaAnnot
       return (Just $ GuardExpr argExpr' guardExpr', env7b)
     Nothing -> return (Nothing, env7)
   let constraints = case (est, oaObj', oaArr') of
-        (EncodeOut{}, Just (GuardExpr (Value argM' argName) Nothing), Just (GuardExpr argExpr' Nothing)) ->
+        (EncodeOut{}, Just (GuardExpr obj Nothing), Just (GuardExpr argExpr' Nothing)) ->
           -- Output with (x=x)
           [
             ArrowTo (getExprMeta baseExpr') baseM',
-                        AddArg (baseM', argName) m',
+                        AddArg (baseM', exprPath obj) m',
                         BoundedByObjs m',
-                        ArrowTo (getExprMeta argExpr') argM',
-                        PropEq (m', argName) argM'
+                        ArrowTo (getExprMeta argExpr') (getExprMeta obj),
+                        PropEq (m', exprPath obj) (getExprMeta obj)
                         ]
         (EncodeOut{}, Nothing, Just (GuardExpr argExpr' Nothing)) ->
           -- Output with (x) infer
@@ -199,20 +199,20 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaM, oaAnnot
                         BoundedByObjs m',
                         ArrowTo (getExprMeta argExpr') oaM'
                         ]
-        (EncodeIn{}, Just (GuardExpr (Value argM' argName) Nothing), Just (GuardExpr argExpr' Nothing)) ->
+        (EncodeIn{}, Just (GuardExpr obj Nothing), Just (GuardExpr argExpr' Nothing)) ->
           -- Input with (x=x)
           [
             EqPoints (getExprMeta baseExpr') baseM',
-                     AddArg (baseM', argName) m',
-                     ArrowTo (getExprMeta argExpr') argM',
-                     PropEq (m', argName) argM'
+                     AddArg (baseM', exprPath obj) m',
+                     ArrowTo (getExprMeta argExpr') (getExprMeta obj),
+                     PropEq (m', exprPath obj) (getExprMeta obj)
                     ]
-        (EncodeIn{}, Just (GuardExpr (Value argM' argName) Nothing), Nothing) ->
+        (EncodeIn{}, Just (GuardExpr obj Nothing), Nothing) ->
           -- Input with (x) matchable
           [
          EqPoints (getExprMeta baseExpr') baseM',
-                     AddArg (baseM', argName) m',
-                     PropEq (m', argName) argM'
+                     AddArg (baseM', exprPath obj) m',
+                     PropEq (m', exprPath obj) (getExprMeta obj)
                     ]
         _ -> error $ printf "Invalid fromExpr in %s mode for %s" (show est) (show arg)
   let env9 = addConstraints env8 constraints
