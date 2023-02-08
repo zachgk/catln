@@ -20,7 +20,6 @@ import qualified Data.HashMap.Strict as H
 import           Data.Maybe
 
 import           Data.Tuple.Sequence
-import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
@@ -38,7 +37,7 @@ setScheme :: FEnv -> VarMeta -> Scheme -> String -> FEnv
 setScheme env p scheme msg = setDescriptor env p (checkScheme scheme) msg
   where msg' = printf "Scheme failed check at setScheme %s(point %s): upper bound is bottomType - " msg (show p)
         -- checkScheme (TypeCheckResult _ (SType ub _ desc)) | isBottomType ub = error $ msg' ++ desc
-        checkScheme (TypeCheckResult notes (SType ub _ desc)) | isBottomType ub = TypeCheckResE (GenTypeCheckError (getMetaPos p) (msg' ++ desc) : notes)
+        checkScheme (TypeCheckResult notes (SType ub _ desc)) | isBottomType ub = TypeCheckResE (mkTracedTypeCheckError env p (getMetaPos p) (msg' ++ desc) : notes)
         checkScheme s = s
 
 -- | Tries to join two 'SType' as equal to each other and returns their updated values
@@ -155,14 +154,14 @@ executeConstraint env (EqualsKnown pnt tp) = case descriptor env pnt of
     TypeCheckResE _ -> (True, env)
   TypeCheckResE{} -> (True, env)
 executeConstraint env (EqPoints (Meta _ _ (VarMetaDat p1 _ _ _)) (Meta _ _ (VarMetaDat p2 _ _ _))) | p1 == p2 = (True, env)
-executeConstraint env1 (EqPoints p1 p2) = case sequenceT (descriptorResolve env1 p1, descriptorResolve env1 p2) of
+executeConstraint env1 con@(EqPoints p1 p2) = case sequenceT (descriptorResolve env1 p1, descriptorResolve env1 p2) of
   TypeCheckResult notes ((p1', s1), (p2', s2)) -> case equalizeSTypes env1 (s1, s2) "executeConstraint EqPoints" of
     TypeCheckResult notes2 (s1', s2') -> do
       let env2 = setScheme env1 p1' (TypeCheckResult (notes ++ notes2) s1') "EqPoints"
       let env3 = setScheme env2 p2' (return s2') "EqPoints"
       (isSolved $ return s1', env3)
     TypeCheckResE notes2 -> do
-      let res = TypeCheckResE (notes ++ notes2)
+      let res = TypeCheckResE [mkConstraintTypeCheckError env1 con (notes ++ notes2)]
       let env2 = setScheme env1 p1 res "EqPoints"
       let env3 = setScheme env2 p2 res "EqPoints"
       (True, env3)

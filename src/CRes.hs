@@ -28,6 +28,8 @@ import           Semantics.Prgm
 import           Syntax.Ct.Prgm
 import           Text.Megaparsec       (pstateSourcePos)
 import           Text.Megaparsec.Error
+import qualified Data.Text.Lazy as T
+import Text.Pretty.Simple
 
 data CNoteType
   = CNoteError
@@ -63,10 +65,10 @@ data CNoteI
   | WrapCN [CNote] String
 
 instance Show CNoteI where
-  show (GenCNote _ s) = printf "Note: %s" s
-  show (GenCErr _ s) = printf "Error: %s" s
+  show (GenCNote _ s) = s
+  show (GenCErr _ s) = s
   show (ParseCErr p) = errorBundlePretty p
-  show (BuildTreeCErr _ s) = printf "Failed to Build Tree: %s" s
+  show (BuildTreeCErr _ s) = printf "Failed to Build Tree: %s" (T.unpack $ pShow s)
   show (AssertCErr s) = printf "Failed assertion: %s" s
   show (EvalCErr st err) = printf "%s\n\tStack trace:\n\t\t%s" err (intercalate "\n\t\t" st)
   show (WrapCN n s) = s ++ "\n\t\t" ++ intercalate "\n\t\t" (map show n)
@@ -116,6 +118,19 @@ instance Monad CRes where
 
 instance MonadFail CRes where
   fail s = CErr [MkCNote $ GenCErr Nothing s]
+
+prettyCNotes :: [CNote] -> String
+prettyCNotes notes = "\n\n\t\t" ++ intercalate "\n\n\t\t" (map prettyNote notes)
+  where
+    prettyNote note = printf "%s%s:\n\t\t%s" (showMsg $ typeCNote note) (showPos $ posCNote note) (show note)
+
+    showMsg :: CNoteType -> String
+    showMsg CNoteError = "Error"
+    showMsg CNoteWarn = "Warning"
+
+    showPos :: CodeRange -> String
+    showPos (Just jcr) = " at " ++ showCodeRange jcr
+    showPos Nothing = ""
 
 failOnErrorNotes :: CRes n -> CRes n
 failOnErrorNotes (CRes [] r) = CRes [] r

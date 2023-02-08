@@ -34,6 +34,8 @@ import           Utils
 
 data TypeCheckError
   = GenTypeCheckError CodeRange String
+  | TracedTypeCheckError VarMeta [SConstraint] CodeRange String
+  | ConstraintTypeCheckError Constraint SConstraint [TypeCheckError]
   | TupleMismatch TypedMeta TExpr (Meta ()) (H.HashMap String TExpr)
   deriving (Eq, Ord, Generic, Hashable)
 
@@ -71,7 +73,7 @@ data Constraint
   | AddInferArg VarMeta VarMeta -- AddInferArg base arg
   | PowersetTo VarMeta VarMeta
   | UnionOf VarMeta [VarMeta]
-  deriving (Show, Generic, ToJSON)
+  deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 data SConstraint
   = SEqualsKnown Scheme Type
@@ -182,6 +184,8 @@ instance MetaDat ShowMetaDat where
 
 instance Show TypeCheckError where
   show (GenTypeCheckError _ s) = s
+  show (TracedTypeCheckError _ trc _ msg) = printf "%s\n%s" msg (showTraceConstrain trc)
+  show (ConstraintTypeCheckError c sc subErrs) = printf "Failed to typecheck constraint %s\n\t\tUsing Points: %s\n\t%s" (show sc) (show $ map showCodeRange $ mapMaybe getMetaPos $ constraintMetas c) (intercalate "\n\t" $ map show subErrs)
   show (TupleMismatch baseM baseExpr m args) = printf "Tuple Apply Mismatch:\n\t(%s %s)(%s) ≠ %s\n\t" (show baseM) (show baseExpr) args' (show m)
     where
       showArg (argName, argVal) = printf "%s = %s" argName (show argVal)
@@ -189,12 +193,15 @@ instance Show TypeCheckError where
 
 instance CNoteTC TypeCheckError where
   posCNote (GenTypeCheckError pos _) = pos
+  posCNote (TracedTypeCheckError _ _ pos _) = pos
   posCNote (TupleMismatch _ _ m _)   = getMetaPos m
+  posCNote ConstraintTypeCheckError{}   = Nothing
 
   typeCNote _ = CNoteError
 
 instance Show SType where
-  show (SType upper lower desc) = concat [show upper, " ⊇ ", desc, " ⊇ ", show lower]
+  show (SType upper lower desc) | isBottomType lower = printf "(%s ⊇ %s)" (show upper) desc
+  show (SType upper lower desc) = printf "(%s ⊇ %s ⊇  %s)" (show upper) desc (show lower)
 
 instance Show SConstraint where
   show (SEqualsKnown s t) = printf "%s == %s" (show s) (show t)
@@ -226,6 +233,19 @@ resToTypeCheck cres = case cres of
   where
     fromCNote :: CNote -> TypeCheckError
     fromCNote note = GenTypeCheckError (posCNote note) (show note)
+
+constraintMetas :: Constraint -> [VarMeta]
+constraintMetas (EqualsKnown p2 _) = [p2]
+constraintMetas (EqPoints p2 p3) = [p2, p3]
+constraintMetas (BoundedByKnown p2 _) = [p2]
+constraintMetas (BoundedByObjs p2) = [p2]
+constraintMetas (ArrowTo p2 p3) = [p2, p3]
+constraintMetas (PropEq (p2, _) p3) = [p2, p3]
+constraintMetas (VarEq (p2, _) p3) = [p2, p3]
+constraintMetas (AddArg (p2, _) p3) = [p2, p3]
+constraintMetas (AddInferArg p2 p3) = [p2, p3]
+constraintMetas (PowersetTo p2 p3) = [p2, p3]
+constraintMetas (UnionOf p2 p3s) = p2:p3s
 
 getPnt :: VarMeta -> Pnt
 getPnt (Meta _ _ (VarMetaDat p _ _ _)) = p
@@ -329,6 +349,7 @@ descriptorResolve env m = do
 -- trace constrain
 type TraceConstrainEpoch = [(Constraint, [(Pnt, Scheme)])]
 type TraceConstrain = [TraceConstrainEpoch]
+type STraceConstrain = [(SConstraint, [(Pnt, Scheme)])]
 
 nextConstrainEpoch :: FEnv -> FEnv
 nextConstrainEpoch env@FEnv{feTrace} = case feTrace of
@@ -338,3 +359,8 @@ nextConstrainEpoch env@FEnv{feTrace} = case feTrace of
 startConstraint :: Constraint -> FEnv -> FEnv
 startConstraint c env@FEnv{feTrace = curEpoch:prevEpochs} = env{feTrace = ((c, []):curEpoch):prevEpochs}
 startConstraint _ _ = error "bad input to startConstraint"
+
+showTraceConstrain :: [SConstraint] -> String
+showTraceConstrain epochs = intercalate "\n" $ map showConstraintPair $ reverse epochs
+  where
+    showConstraintPair pair = show pair

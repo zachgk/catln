@@ -21,26 +21,7 @@ import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
 import           TypeCheck.Common
-import           TypeCheck.Show      (showCon)
-
-matchingConstraintHelper :: FEnv -> VarMeta -> VarMeta -> VarMeta -> Bool
-matchingConstraintHelper env p p2 p3 = equivalent env p p2 || equivalent env p p3
-
-matchingConstraint :: FEnv -> VarMeta -> Constraint -> Bool
-matchingConstraint env p (EqualsKnown p2 _) = equivalent env p p2
-matchingConstraint env p (EqPoints p2 p3) = matchingConstraintHelper env p p2 p3
-matchingConstraint env p (BoundedByKnown p2 _) = equivalent env p p2
-matchingConstraint env p (BoundedByObjs p2) = equivalent env p p2
-matchingConstraint env p (ArrowTo p2 p3) = matchingConstraintHelper env p p2 p3
-matchingConstraint env p (PropEq (p2, _) p3) = matchingConstraintHelper env p p2 p3
-matchingConstraint env p (VarEq (p2, _) p3) = matchingConstraintHelper env p p2 p3
-matchingConstraint env p (AddArg (p2, _) p3) = matchingConstraintHelper env p p2 p3
-matchingConstraint env p (AddInferArg p2 p3) = matchingConstraintHelper env p p2 p3
-matchingConstraint env p (PowersetTo p2 p3) = matchingConstraintHelper env p p2 p3
-matchingConstraint env p (UnionOf p2 p3s) = equivalent env p p2 || any (equivalent env p) p3s
-
-showMatchingConstraints :: FEnv -> VarMeta -> [SConstraint]
-showMatchingConstraints env@FEnv{feCons} matchVar = map (showCon env) $ filter (matchingConstraint env matchVar) feCons
+import Text.Printf
 
 toMeta :: FEnv -> VarMeta -> String -> TypeCheckResult (Meta ())
 toMeta env@FEnv{feClassGraph} m@(Meta pt pos _) _ = case pointUb env m of
@@ -101,7 +82,7 @@ toExpr env (TupleApply m (baseM, baseExpr) arg) = case toTupleArg arg of
         ([PartialType{ptArgs=basePartialArgs}], [PartialType{ptArgs}]) -> case S.toList $ S.difference (H.keysSet ptArgs) (H.keysSet basePartialArgs) of
           [argN] -> return argN
           _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to multiple arg options"]
-        _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to multiple types"]
+        (base, result) -> TypeCheckResE [GenTypeCheckError pos $ printf "Failed argument inference due to multiple types with base %s and result %s" (show base) (show result)]
       _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to non UnionType"]
     return $ TupleApply m' (baseM', baseExpr') (fromTupleArg $ TupleArgIO (emptyMetaE "ArgName" argExpr') argName argExpr')
   (TupleArgI argM argName) -> do
@@ -149,6 +130,7 @@ toObject env prefix obj@Object{deprecatedObjArgs, objDupExpr} = do
   vars' <- mapM (\(varName, varVal) -> (varName,) <$> toMeta env varVal (prefix' ++ "." ++ varName)) $ H.toList $ objAppliedVars obj
   args' <- mapM (toObjArg env prefix') $ H.toList deprecatedObjArgs
   objDupExpr' <- toExpr env objDupExpr
+  -- return $ exprToObj (objBasis obj) (objDoc obj) objDupExpr'
   return $ obj{deprecatedObjM=m', deprecatedObjVars=H.fromList vars', deprecatedObjArgs=H.fromList args', objDupExpr=objDupExpr'}
 
 toObjectArrow :: FEnv -> VObjectMapItem -> TypeCheckResult TObjectMapItem

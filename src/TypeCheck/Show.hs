@@ -120,3 +120,18 @@ showTraceConstrainEpoch :: FEnv -> TraceConstrainEpoch -> [(SConstraint, [(Pnt, 
 showTraceConstrainEpoch env = map mapConstraint . filter (not . null . snd)
   where
     mapConstraint (con, pnts) = (showCon env con, pnts)
+
+matchingConstraintHelper :: FEnv -> VarMeta -> VarMeta -> VarMeta -> Bool
+matchingConstraintHelper env p p2 p3 = equivalent env p p2 || equivalent env p p3
+
+matchingConstraint :: FEnv -> VarMeta -> Constraint -> Bool
+matchingConstraint env p con = any (equivalent env p) $ constraintMetas con
+
+showMatchingConstraints :: FEnv -> VarMeta -> [SConstraint]
+showMatchingConstraints env@FEnv{feCons} matchVar = map (showCon env) $ filter (matchingConstraint env matchVar) feCons
+
+mkTracedTypeCheckError :: FEnv -> VarMeta -> CodeRange -> String -> TypeCheckError
+mkTracedTypeCheckError env m = TracedTypeCheckError m (showMatchingConstraints env m)
+
+mkConstraintTypeCheckError :: FEnv -> Constraint -> [TypeCheckError] -> TypeCheckError
+mkConstraintTypeCheckError env c = ConstraintTypeCheckError c (showCon env c)

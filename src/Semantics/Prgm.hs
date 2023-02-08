@@ -73,6 +73,15 @@ instance MetaDat () where
 emptyMetaN :: (MetaDat m) => Meta m
 emptyMetaN = Meta TopType Nothing emptyMetaDat
 
+getMetaType :: Meta m -> Type
+getMetaType (Meta t _ _) = t
+
+getMetaPos :: Meta m -> CodeRange
+getMetaPos (Meta _ pos _) = pos
+
+showCodeRange :: (SourcePos, SourcePos, String) -> String
+showCodeRange (start, end, _) = printf "%s:%d:%d-%d:%d" (sourceName start) (unPos $ sourceLine start) (unPos $ sourceColumn start) (unPos $ sourceLine end) (unPos $ sourceColumn end)
+
 -- Expr after desugar
 data Expr m
   = CExpr (Meta m) Constant
@@ -157,10 +166,16 @@ instance Show m => Show (Expr m) where
         _               -> printf "<%s>" (show baseExpr)
 
 instance (Show m, Show (e m)) => Show (ObjArr e m) where
-  show ObjArr{oaObj, oaM, oaArr} = printf "%s%s%s%s" (show oaObj) showM showEquals (show oaArr)
+  show ObjArr{oaObj, oaM, oaArr} = printf "%s%s%s%s" (showNoMaybe oaObj) showM showEquals (showNoMaybe oaArr)
     where
+      showNoMaybe :: (Show a) => Maybe a -> String
+      showNoMaybe (Just a) = show a
+      showNoMaybe Nothing = ""
+
       showM :: String
-      showM = printf " -> %s" (show oaM)
+      showM = if getMetaType oaM /= TopType
+        then printf " -> %s " (show oaM)
+        else ""
 
       showEquals :: String
       showEquals = case (oaObj, oaArr) of
@@ -267,14 +282,14 @@ instance ExprClass Expr where
 
 -- | To deprecate as part of moving to ObjArr
 toTupleArg :: (Show m) => ObjArr Expr m -> TupleArg Expr m
-toTupleArg ObjArr{oaObj=Just (GuardExpr (Value _ n) Nothing), oaM, oaArr=Just (GuardExpr arr Nothing)} = TupleArgIO oaM n arr
-toTupleArg ObjArr{oaObj=Just (GuardExpr (Value m n) Nothing), oaArr=Nothing} = TupleArgI m n
+toTupleArg ObjArr{oaObj=Just (GuardExpr (Arg _ n) Nothing), oaM, oaArr=Just (GuardExpr arr Nothing)} = TupleArgIO oaM n arr
+toTupleArg ObjArr{oaObj=Just (GuardExpr (Arg m n) Nothing), oaArr=Nothing} = TupleArgI m n
 toTupleArg ObjArr{oaObj=Nothing, oaArr=Just (GuardExpr arr Nothing)} = TupleArgO arr
 toTupleArg oa = error $ printf "Invalid toTupleArg: %s" (show oa)
 
 fromTupleArg :: (MetaDat m, Show m) => TupleArg Expr m -> ObjArr Expr m
-fromTupleArg (TupleArgIO m argName argVal) = ObjArr (Just (GuardExpr (Value m argName) Nothing)) ArgObj Nothing [] emptyMetaN (Just (GuardExpr argVal Nothing))
-fromTupleArg (TupleArgI m argName) = ObjArr (Just (GuardExpr (Value m argName) Nothing)) ArgObj Nothing [] emptyMetaN Nothing
+fromTupleArg (TupleArgIO m argName argVal) = ObjArr (Just (GuardExpr (Arg m argName) Nothing)) ArgObj Nothing [] emptyMetaN (Just (GuardExpr argVal Nothing))
+fromTupleArg (TupleArgI m argName) = ObjArr (Just (GuardExpr (Arg m argName) Nothing)) ArgObj Nothing [] emptyMetaN Nothing
 fromTupleArg (TupleArgO argVal) = ObjArr Nothing ArgObj Nothing [] emptyMetaN (Just (GuardExpr argVal Nothing))
 
 mapMetaDat :: (m1 -> m2) -> Meta m1 -> Meta m2

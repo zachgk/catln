@@ -135,8 +135,9 @@ fromExpr est@EncodeOut{} env1 (Value m name) = do
     DefKnown lookupType -> return [BoundedByKnown m' lookupType]
   return (Value m' name, addConstraints env2 lookupConstraints)
 fromExpr est@EncodeIn{} env1 (Value m name) = do
-  (m', env2) <- fromMeta env1 BUpper est m ("Value " ++ name)
-  return (Value m' name, env2)
+  -- let m' = mWithType (singletonType $ partialVal $ PTypeName name) m
+  (m'', env2) <- fromMeta env1 BUpper est m ("Value " ++ name)
+  return (Value m'' name, env2)
 -- fromObjExpr varEnv argEnv env1 (Value m name) = do
 --   (m', env2) <- fromMeta env1 BUpper Nothing varEnv argEnv m ("Value " ++ name)
 --   (objValue, env3) <- fromMeta env2 BUpper Nothing varEnv argEnv (Meta (singletonType (partialVal (PRelativeName name))) (labelPos "objValue" $ getMetaPos m') emptyMetaDat) ("objValue" ++ name)
@@ -210,7 +211,7 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaM, oaAnnot
         (EncodeIn{}, Just (GuardExpr obj Nothing), Nothing) ->
           -- Input with (x) matchable
           [
-         EqPoints (getExprMeta baseExpr') baseM',
+         -- EqPoints (getExprMeta baseExpr') baseM',
                      AddArg (baseM', exprPath obj) m',
                      PropEq (m', exprPath obj) (getExprMeta obj)
                     ]
@@ -235,7 +236,7 @@ fromExpr est env1 (VarApply m baseExpr varName varVal) = do
                       BoundedByObjs m'
                        ]
         EncodeIn{} -> [
-                      EqPoints (getExprMeta baseExpr') m',
+                      -- EqPoints (getExprMeta baseExpr') m',
                       VarEq (m', varName) varVal'
                       ]
   let env5 = addConstraints env4 constraints

@@ -23,12 +23,6 @@ import           Text.Printf
 import           Utils
 
 
-getMetaType :: Meta m -> Type
-getMetaType (Meta t _ _) = t
-
-getMetaPos :: Meta m -> CodeRange
-getMetaPos (Meta _ pos _) = pos
-
 labelPosM :: String -> Meta m -> Meta m
 labelPosM s (Meta t pos ext) = Meta t (labelPos s pos) ext
 

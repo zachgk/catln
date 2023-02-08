@@ -9,23 +9,14 @@ import           Test.Tasty.HUnit
 import           Text.Printf
 
 import           CRes
-import qualified Data.Text.Lazy     as T
 import           Eval
 import           Syntax.Ct.Desugarf (desFiles)
 import           Syntax.Ct.Parser   (readFiles)
-import           Text.Pretty.Simple
 import           TypeCheck
 import           WebDocs            (docApi)
 
 testDir :: String
 testDir = "test/code/"
-
-prettyCNotes :: [CNote] -> String
-prettyCNotes notes = "\n\n\t\t" ++ intercalate "\n\n\t\t" (map prettyNote notes)
-  where
-    prettyNote note = case posCNote note of
-      Just pos -> printf "%s\n\t\t%s" (show pos) (T.unpack $ pShow note)
-      Nothing  -> T.unpack $ pShow note
 
 runTest :: Bool -> String -> TestTree
 runTest includeCore fileName = testCaseSteps fileName $ \step -> do
