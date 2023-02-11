@@ -24,7 +24,7 @@ import           Semantics.Types
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 
-type ParentArgs = H.HashMap ArgName ParseMeta
+type ParentArgs = H.HashMap ArgName [ParseMeta]
 
 splitDeclSubStatements :: [PStatementTree] -> ([(PDecl, [PStatementTree])], [PCompAnnot])
 splitDeclSubStatements = aux ([], [])
@@ -90,11 +90,11 @@ scopeSubDeclFunNames oa _ = error $ printf "scopeSubDeclFunNames without input e
 
 -- | Apply args to a signature or input expression
 curryApplyParentArgsSignature :: PSExpr -> ParentArgs -> PSExpr
-curryApplyParentArgsSignature e parentArgs = applyExprIArgs e (map (second IArgM) $ H.toList parentArgs)
+curryApplyParentArgsSignature e parentArgs = applyExprIArgs e (map (second IArgM) $ H.toList $ fmap head parentArgs)
 
 -- | Apply args to an output expression
 curryApplyParentArgs :: PSExpr -> ParentArgs -> PSExpr
-curryApplyParentArgs e parentArgs = applyExprIArgs e (map (\(parentArgName, parentArgM) -> (parentArgName, IArgE (Value parentArgM parentArgName))) $ H.toList parentArgs)
+curryApplyParentArgs e parentArgs = applyExprIArgs e (map (\(parentArgName, parentArgM) -> (parentArgName, IArgE (Value parentArgM parentArgName))) $ H.toList $ fmap head parentArgs)
 
 currySubFunctionSignature :: ParentArgs -> PSemiDecl -> PSemiDecl
 currySubFunctionSignature parentArgs (PSemiDecl oa@ObjArr{oaObj=Just (GuardExpr obj guard)}) = PSemiDecl oa{oaObj=Just (GuardExpr obj' guard)}
@@ -123,7 +123,7 @@ currySubFunctionsUpdateExpr toUpdate parentArgs (VarApply tm tbe tVarName tVarVa
 currySubFunctions :: PSObjArr -> [PSemiDecl] -> (PSObjArr, [PSemiDecl])
 currySubFunctions oa@ObjArr{oaObj=Just (GuardExpr objExpression _), oaAnnots, oaArr} decls = (oa{oaAnnots=annots', oaArr=expr'}, decls')
   where
-    parentArgs = exprArgsLinear objExpression
+    parentArgs = exprArgs objExpression
     toUpdate = S.fromList $ map (\(PSemiDecl ObjArr{oaObj=Just (GuardExpr o _)}) -> exprPath o) decls
     decls2 = map (currySubFunctionSignature parentArgs) decls
     expr' = case oaArr of

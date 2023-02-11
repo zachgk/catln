@@ -157,44 +157,31 @@ fromExprPrgm (objMap, classGraph, annots) = (map fromExprObjectMapItem objMap, c
 
 type ArgMetaMap m = H.HashMap ArgName [Meta m]
 
--- TODO: Remove usages of 'exprArgsLinear' to replace fully with 'exprArgs' and support nonLinear use cases
-exprArgsLinear :: (ExprClass e, Show m) => e m -> H.HashMap ArgName (Meta m)
-exprArgsLinear = fmap singletonOrError . exprArgs
-  where
-    singletonOrError [x] = x
-    singletonOrError _   = error "Found nonLinear value in exprArgsLinear"
-
 -- |
 -- The 'exprArgsWithSrc' is similar to the 'exprArgs' function.
 -- It differs in that it accepts an additional partial type that is equivalent to the expression and it pull the corresponding parts of the partial matching the args in the expression
 -- TODO: Make nonLinear by changing signature to H.HashMap ArgName ([Meta m], Type)
-type ArgMetaMapWithSrc m = H.HashMap ArgName (Meta m, Type)
+type ArgMetaMapWithSrc m = H.HashMap ArgName ([Meta m], Type)
 exprArgsWithSrc :: (Show m) => ClassGraph -> Expr m -> PartialType -> ArgMetaMapWithSrc m
 exprArgsWithSrc _ CExpr{} _ = H.empty
 exprArgsWithSrc _ Value{} _ = H.empty
 exprArgsWithSrc _ HoleExpr{} _ = H.empty
-exprArgsWithSrc _ (Arg m n) src = H.singleton n (m, singletonType src)
+exprArgsWithSrc _ (Arg m n) src = H.singleton n ([m], singletonType src)
 exprArgsWithSrc classGraph (AliasExpr base alias) src = H.union (exprArgsWithSrc classGraph base src) (exprArgsWithSrc classGraph alias src)
 exprArgsWithSrc classGraph (VarApply _ e _ _) src = exprArgsWithSrc classGraph e src
 exprArgsWithSrc classGraph (TupleApply _ (_, be) arg) src@PartialType{ptArgs=srcArgs} = H.union (exprArgsWithSrc classGraph be src) (fromArg $ toTupleArg arg)
   where
     fromArg (TupleArgIO _ n e) = case H.lookup n srcArgs of
       Just (UnionType srcArg) -> mergeMaps $ map (exprArgsWithSrc classGraph e) $ splitUnionType srcArg
-      Just TopType -> (,TopType) <$> exprArgsLinear e
+      Just TopType -> (,TopType) <$> exprArgs e
       _ -> H.empty
     fromArg (TupleArgO e) = exprArgsWithSrc classGraph e src
     fromArg (TupleArgI m n) = case H.lookup n srcArgs of
-      Just srcArg -> H.singleton n (m, srcArg)
+      Just srcArg -> H.singleton n ([m], srcArg)
       Nothing     -> H.empty
 
     mergeMaps [] = H.empty
-    mergeMaps (x:xs) = foldr (H.intersectionWith (\(m1, t1) (_, t2) -> (m1, unionTypes classGraph t1 t2))) x xs
-
--- |
--- The 'formArgMetaMapWithSrc' is similar to the 'formArgMetaMap' function.
--- It differs in that it accepts an additional partial type that is matched by the object and matches against that partial type.
-formArgMetaMapWithSrc :: (Show m, MetaDat m) => ClassGraph -> Object Expr m -> PartialType  -> ArgMetaMapWithSrc m
-formArgMetaMapWithSrc classGraph obj = exprArgsWithSrc classGraph (objExpr obj)
+    mergeMaps (x:xs) = foldr (H.intersectionWith (\(m1s, t1) (m2s, t2) -> (m1s ++ m2s, unionTypes classGraph t1 t2))) x xs
 
 formVarMap :: ClassGraph -> Type -> TypeVarEnv
 formVarMap classGraph (UnionType partialLeafs) = unionsWith (unionTypes classGraph) $ map ptVars $ splitUnionType partialLeafs

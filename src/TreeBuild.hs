@@ -242,15 +242,15 @@ resolveTree env obj (ResArrowTupleApply input argName argVal) = do
 buildArrow :: TBEnv -> PartialType -> TBObjArr -> CRes (Maybe (TBObjArr, (ResArrowTree, [ResArrowTree])))
 buildArrow _ _ ObjArr{oaArr=Nothing} = return Nothing
 -- buildArrow env objPartial obj compAnnots arrow@(Arrow (Meta am _ _) _ (Just expr)) = do
-buildArrow env objPartial oa@ObjArr{oaAnnots, oaM=(Meta am _ _), oaArr=Just (GuardExpr expr _)} = do
+buildArrow env@TBEnv{tbClassGraph} objPartial oa@ObjArr{oaAnnots, oaM=(Meta am _ _), oaArr=Just (GuardExpr expr _)} = do
   let env' = env{tbName = printf "arrow %s" (show oa)}
   let objSrc = (objPartial, oa)
   let am' = case am of
         (TypeVar (TVVar v)) -> case suffixLookupInDict v $ exprAppliedVars $ oaObjExpr oa of
           Just m  -> getMetaType m
           Nothing -> error "Bad TVVar in makeBaseEnv"
-        (TypeVar (TVArg v)) -> case suffixLookupInDict v $ exprArgsLinear $ oaObjExpr oa of
-          Just argMeta -> getMetaType argMeta
+        (TypeVar (TVArg v)) -> case suffixLookupInDict v $ exprArgs $ oaObjExpr oa of
+          Just argMetas -> intersectAllTypes tbClassGraph $ map getMetaType argMetas
           Nothing      -> error "Bad TVArg in makeBaseEnv"
         _ -> am
   resArrowTree <- resolveTree env' objSrc (ExprArrow expr (getExprType expr) am')

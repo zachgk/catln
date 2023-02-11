@@ -333,7 +333,7 @@ fromObject ::  FEnv -> PObject -> TypeCheckResult (VObject, VMetaVarEnv, VMetaAr
 fromObject env1 obj = do
   let envEst = EncodeIn H.empty H.empty -- An EncodeState for computing varEnv and argEnv
   (varEnv, env2) <- mapMWithFEnvMap env1 (\e m -> fromMeta e BUpper envEst m "var") $ exprAppliedVars $ objExpr obj
-  (argEnv, env3) <- mapMWithFEnvMap env2 (\e m -> fromMeta e BUpper envEst m "arg") $ exprArgsLinear $ objExpr obj
+  (argEnv, env3) <- mapMWithFEnvMap env2 (\e m -> fromMeta e BUpper envEst m "arg") $ fmap head $ exprArgs $ objExpr obj
 
   let est = EncodeIn varEnv argEnv
   (obj', env4) <- fromObjectRec "Object" False est env3 obj
