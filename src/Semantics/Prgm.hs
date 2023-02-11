@@ -170,7 +170,7 @@ instance (Show m, Show (e m)) => Show (ObjArr e m) where
     where
       showNoMaybe :: (Show a) => Maybe a -> String
       showNoMaybe (Just a) = show a
-      showNoMaybe Nothing = ""
+      showNoMaybe Nothing  = ""
 
       showM :: String
       showM = if getMetaType oaM /= TopType
@@ -284,6 +284,8 @@ instance ExprClass Expr where
 toTupleArg :: (Show m) => ObjArr Expr m -> TupleArg Expr m
 toTupleArg ObjArr{oaObj=Just (GuardExpr (Arg _ n) Nothing), oaM, oaArr=Just (GuardExpr arr Nothing)} = TupleArgIO oaM n arr
 toTupleArg ObjArr{oaObj=Just (GuardExpr (Arg m n) Nothing), oaArr=Nothing} = TupleArgI m n
+toTupleArg ObjArr{oaObj=Just (GuardExpr (Value _ n) Nothing), oaM, oaArr=Just (GuardExpr arr Nothing)} = TupleArgIO oaM n arr
+toTupleArg ObjArr{oaObj=Just (GuardExpr (Value m n) Nothing), oaArr=Nothing} = TupleArgI m n
 toTupleArg ObjArr{oaObj=Nothing, oaArr=Just (GuardExpr arr Nothing)} = TupleArgO arr
 toTupleArg oa = error $ printf "Invalid toTupleArg: %s" (show oa)
 
@@ -295,10 +297,9 @@ fromTupleArg (TupleArgO argVal) = ObjArr Nothing ArgObj Nothing [] emptyMetaN (J
 mapMetaDat :: (m1 -> m2) -> Meta m1 -> Meta m2
 mapMetaDat f (Meta t p md) = Meta t p (f md)
 
-mapTupleArgValue :: (e1 m -> e2 m) -> TupleArg e1 m -> TupleArg e2 m
-mapTupleArgValue _ (TupleArgI m n)    = TupleArgI m n
-mapTupleArgValue f (TupleArgO v)      = TupleArgO (f v)
-mapTupleArgValue f (TupleArgIO m n v) = TupleArgIO m n (f v)
+-- | Maps the objArr.oaArr.expr
+mapTupleArgValue :: (e m -> e m) -> ObjArr e m -> ObjArr e m
+mapTupleArgValue f oa@ObjArr{oaArr} = oa{oaArr=fmap (\(GuardExpr e g) -> GuardExpr (f e) g) oaArr}
 
 constantPartialType :: Constant -> PartialType
 constantPartialType CInt{}   = intLeaf

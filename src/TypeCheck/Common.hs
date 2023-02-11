@@ -154,6 +154,7 @@ type VMetaArgEnv = MetaArgEnv VarMetaDat
 type VArrow = Arrow Expr VarMetaDat
 type VObjArg = ObjArg Expr VarMetaDat
 type VGuardExpr = GuardExpr Expr VarMetaDat
+type VObjArr = ObjArr Expr VarMetaDat
 type VObject = Object Expr VarMetaDat
 type VObjectMap = ObjectMap Expr VarMetaDat
 type VObjectMapItem = ObjectMapItem Expr VarMetaDat
@@ -192,10 +193,10 @@ instance Show TypeCheckError where
       args' = intercalate ", " $ map showArg $ H.toList args
 
 instance CNoteTC TypeCheckError where
-  posCNote (GenTypeCheckError pos _) = pos
+  posCNote (GenTypeCheckError pos _)        = pos
   posCNote (TracedTypeCheckError _ _ pos _) = pos
-  posCNote (TupleMismatch _ _ m _)   = getMetaPos m
-  posCNote ConstraintTypeCheckError{}   = Nothing
+  posCNote (TupleMismatch _ _ m _)          = getMetaPos m
+  posCNote ConstraintTypeCheckError{}       = Nothing
 
   typeCNote _ = CNoteError
 
@@ -235,17 +236,17 @@ resToTypeCheck cres = case cres of
     fromCNote note = GenTypeCheckError (posCNote note) (show note)
 
 constraintMetas :: Constraint -> [VarMeta]
-constraintMetas (EqualsKnown p2 _) = [p2]
-constraintMetas (EqPoints p2 p3) = [p2, p3]
+constraintMetas (EqualsKnown p2 _)    = [p2]
+constraintMetas (EqPoints p2 p3)      = [p2, p3]
 constraintMetas (BoundedByKnown p2 _) = [p2]
-constraintMetas (BoundedByObjs p2) = [p2]
-constraintMetas (ArrowTo p2 p3) = [p2, p3]
-constraintMetas (PropEq (p2, _) p3) = [p2, p3]
-constraintMetas (VarEq (p2, _) p3) = [p2, p3]
-constraintMetas (AddArg (p2, _) p3) = [p2, p3]
-constraintMetas (AddInferArg p2 p3) = [p2, p3]
-constraintMetas (PowersetTo p2 p3) = [p2, p3]
-constraintMetas (UnionOf p2 p3s) = p2:p3s
+constraintMetas (BoundedByObjs p2)    = [p2]
+constraintMetas (ArrowTo p2 p3)       = [p2, p3]
+constraintMetas (PropEq (p2, _) p3)   = [p2, p3]
+constraintMetas (VarEq (p2, _) p3)    = [p2, p3]
+constraintMetas (AddArg (p2, _) p3)   = [p2, p3]
+constraintMetas (AddInferArg p2 p3)   = [p2, p3]
+constraintMetas (PowersetTo p2 p3)    = [p2, p3]
+constraintMetas (UnionOf p2 p3s)      = p2:p3s
 
 getPnt :: VarMeta -> Pnt
 getPnt (Meta _ _ (VarMetaDat p _ _ _)) = p

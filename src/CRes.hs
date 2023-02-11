@@ -24,12 +24,12 @@ import           GHC.Generics          (Generic)
 import           Text.Printf
 
 import           Data.Aeson
+import qualified Data.Text.Lazy        as T
 import           Semantics.Prgm
 import           Syntax.Ct.Prgm
 import           Text.Megaparsec       (pstateSourcePos)
 import           Text.Megaparsec.Error
-import qualified Data.Text.Lazy as T
-import Text.Pretty.Simple
+import           Text.Pretty.Simple
 
 data CNoteType
   = CNoteError
@@ -126,11 +126,11 @@ prettyCNotes notes = "\n\n\t\t" ++ intercalate "\n\n\t\t" (map prettyNote notes)
 
     showMsg :: CNoteType -> String
     showMsg CNoteError = "Error"
-    showMsg CNoteWarn = "Warning"
+    showMsg CNoteWarn  = "Warning"
 
     showPos :: CodeRange -> String
     showPos (Just jcr) = " at " ++ showCodeRange jcr
-    showPos Nothing = ""
+    showPos Nothing    = ""
 
 failOnErrorNotes :: CRes n -> CRes n
 failOnErrorNotes (CRes [] r) = CRes [] r

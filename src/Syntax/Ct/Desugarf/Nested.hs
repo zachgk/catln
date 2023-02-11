@@ -55,7 +55,7 @@ scopeSubDeclFunNamesInExpr prefix replaceNames (AliasExpr b a) = AliasExpr (scop
 scopeSubDeclFunNamesInExpr prefix replaceNames (TupleApply m (bm, bExpr) arg) = TupleApply m (bm, bExpr') arg'
   where
     bExpr' = scopeSubDeclFunNamesInExpr prefix replaceNames bExpr
-    arg' = fromTupleArg $ mapTupleArgValue (scopeSubDeclFunNamesInExpr prefix replaceNames) $ toTupleArg arg
+    arg' = mapTupleArgValue (scopeSubDeclFunNamesInExpr prefix replaceNames) arg
 scopeSubDeclFunNamesInExpr prefix replaceNames (VarApply m bExpr varName varVal) = VarApply m bExpr' varName varVal
   where
     bExpr' = scopeSubDeclFunNamesInExpr prefix replaceNames bExpr
@@ -115,7 +115,7 @@ currySubFunctionsUpdateExpr toUpdate parentArgs (AliasExpr b a) = AliasExpr (cur
 currySubFunctionsUpdateExpr toUpdate parentArgs (TupleApply tm (tbm, tbe) targ) = TupleApply tm (tbm, tbe') targ'
   where
     tbe' = currySubFunctionsUpdateExpr toUpdate parentArgs tbe
-    targ' = fromTupleArg $ mapTupleArgValue (currySubFunctionsUpdateExpr toUpdate parentArgs) $ toTupleArg targ
+    targ' = mapTupleArgValue (currySubFunctionsUpdateExpr toUpdate parentArgs) targ
 currySubFunctionsUpdateExpr toUpdate parentArgs (VarApply tm tbe tVarName tVarVal) = VarApply tm tbe' tVarName tVarVal
   where
     tbe' = currySubFunctionsUpdateExpr toUpdate parentArgs tbe

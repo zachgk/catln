@@ -34,7 +34,7 @@ desExpr arrArgs (Value m n) = if H.member n arrArgs
 desExpr _ Arg{} = error "Only values should be used at this point as it has not yet been disambiguated between Value and Arg"
 desExpr _ (HoleExpr m h) = HoleExpr m h
 desExpr arrArgs (AliasExpr b a) = AliasExpr (desExpr arrArgs b) (desExpr arrArgs a)
-desExpr arrArgs (TupleApply m (bm, be) arg) = TupleApply m (bm, desExpr arrArgs be) (fromTupleArg $ mapTupleArgValue (desExpr arrArgs) $ toTupleArg arg)
+desExpr arrArgs (TupleApply m (bm, be) arg) = TupleApply m (bm, desExpr arrArgs be) (mapTupleArgValue (desExpr arrArgs) arg)
 desExpr arrArgs (VarApply m be varName varVal) = VarApply m (desExpr arrArgs be) varName varVal
 
 desGuardExpr :: PArgMetaMap -> PSGuardExpr -> DesGuardExpr
@@ -90,19 +90,22 @@ semiDesExpr sdm obj (RawTupleApply _ (_, RawValue _ "/operator:") [ObjArr{oaArr=
 semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm'', be'') arg'') -> TupleApply m'' (bm'', be'') arg'') $ foldl aux (bm, be') args
   where
     be' = semiDesExpr sdm obj be
-    aux (m, e) ObjArr{oaObj=(Just (GuardExpr argInExpr Nothing)), oaM=argM, oaArr=(Just (GuardExpr argVal Nothing))} = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (fromTupleArg$ TupleArgIO argM argName' argVal'))
+    aux (m, e) arg@ObjArr{oaObj=argObj, oaAnnots=argAnnots, oaArr=argArr} = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) arg'')
       where
-        argVal' = semiDesExpr sdm obj argVal
-        (Value _ argName') = semiDesExpr sdm obj argInExpr
-    aux (m, e) ObjArr{oaObj=(Just (GuardExpr argExpr Nothing)), oaArr=Nothing} = case sdm of
-      SDOutput -> (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (fromTupleArg$ TupleArgO argVal'))
-        where
-          argVal' = semiDesExpr sdm obj argExpr
-      _ -> (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (fromTupleArg$ TupleArgI argM' argName'))
-        where
-          (Value argM' argName') = semiDesExpr sdm obj argExpr
-    aux _ oa@ObjArr{oaObj=Nothing, oaArr=Just{}} = error $ printf "Unexpected semiDesExpr with oaArr but no oaObj. Should instead be disambiguated during semiDesExpr: %s" (show oa)
-    aux _ oa = error $ printf "Could not semiDesExpr with unsupported term %s" (show oa)
+        -- SemiDes all sub-expressions
+        arg' = arg{
+          oaObj=fmap semiDesGuardExpr argObj,
+          oaAnnots=fmap (semiDesExpr sdm obj) argAnnots,
+          oaArr=fmap semiDesGuardExpr argArr
+          }
+
+        -- Currently uses oaObj as "first and only expr"
+        -- This disambiguates it between whether the only expression is an obj or an arr
+        arg'' = case (sdm, arg') of
+          (SDOutput, ObjArr{oaObj, oaArr=Nothing}) -> arg'{oaObj=Nothing, oaArr=oaObj}
+          (_, _) -> arg'
+
+        semiDesGuardExpr (GuardExpr ge gg) = GuardExpr (semiDesExpr sdm obj ge) (fmap (semiDesExpr sdm obj) gg)
 semiDesExpr sdm obj (RawVarsApply m be vs) = foldr aux be' vs
   where
     be' = semiDesExpr sdm obj be

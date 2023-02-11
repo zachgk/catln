@@ -26,7 +26,7 @@ module Data
     # A [Functor] is a basic property of a collection.
       It has a single operation [fmap] that applies a function to each element in the collection.
 
-    # $F<$T=$A>.fmap<Functor $F>(fn($A) -> $B) -> $F<$T=$B>
+    # $F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]
 
 
   # ## Collections

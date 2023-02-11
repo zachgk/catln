@@ -70,14 +70,10 @@ desObjValToArg doeMode _ (Value m n) = case doeMode of
 desObjValToArg _ _ (Arg _ n) = error $ printf "Found unexpected arg '%s' in desOjValToArg, expected all args to still be represented with Value" n
 desObjValToArg _ _ (HoleExpr m h) = HoleExpr m h
 desObjValToArg _ useRelativeName (AliasExpr b a) = AliasExpr (desObjValToArg DOEValMode useRelativeName b) (desObjValToArg DOEArgMode useRelativeName a)
-desObjValToArg _ useRelativeName mainExpr@(TupleApply m (bm, be) tupleArg) = TupleApply m (bm, be') tupleArg'
+desObjValToArg _ useRelativeName (TupleApply m (bm, be) arg) = TupleApply m (bm, be') arg'
   where
     be' = desObjValToArg DOEValMode useRelativeName be
-    tupleArg' = case toTupleArg tupleArg of
-      TupleArgI{} -> tupleArg
-      TupleArgIO argM argName argVal -> fromTupleArg $ TupleArgIO argM argName argVal'
-        where argVal' = desObjValToArg DOEValMode useRelativeName argVal
-      TupleArgO{} -> error $ printf "Unexpected TupleArgO in desObjValToArg: %s" (show mainExpr)
+    arg' = mapTupleArgValue (desObjValToArg DOEValMode useRelativeName) arg
 desObjValToArg _ useRelativeName (VarApply m be varName varVal) = VarApply m be' varName varVal
   where
     be' = desObjValToArg DOEValMode useRelativeName be

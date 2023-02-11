@@ -20,8 +20,8 @@ import qualified Data.HashSet        as S
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
+import           Text.Printf
 import           TypeCheck.Common
-import Text.Printf
 
 toMeta :: FEnv -> VarMeta -> String -> TypeCheckResult (Meta ())
 toMeta env@FEnv{feClassGraph} m@(Meta pt pos _) _ = case pointUb env m of

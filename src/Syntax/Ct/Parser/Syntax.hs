@@ -127,20 +127,20 @@ exprVal = Value m
 applyExprOArgs :: (MetaDat m, Show m) => Expr m -> [(Maybe ArgName, Expr m)] -> Expr m
 applyExprOArgs = foldl addArg
   where
-    addArg b a = TupleApply (emptyMetaE "app" b) (emptyMetaE "base" b, b) (fromTupleArg $ mapArg a)
+    addArg b a = TupleApply (emptyMetaE "app" b) (emptyMetaE "base" b, b) (mapArg a)
       where
-        mapArg (Just argName, argVal) = TupleArgIO (emptyMetaE argName b) argName argVal
-        mapArg (Nothing, argVal) = TupleArgO argVal
+        mapArg (Just argName, argVal) = ObjArr (Just (GuardExpr (Arg (emptyMetaE argName b) argName) Nothing)) ArgObj Nothing [] (emptyMetaE "argRes" argVal) (Just (GuardExpr argVal Nothing))
+        mapArg (Nothing, argVal) = ObjArr Nothing ArgObj Nothing [] (emptyMetaE "argRes" argVal) (Just (GuardExpr argVal Nothing))
 
 applyExprIArgs :: Expr () -> [(ArgName, IArg Expr)] -> Expr ()
 applyExprIArgs = foldl addArg
   where
-    addArg b a = TupleApply (emptyMetaE "app" b) (emptyMetaE "base" b, b) (fromTupleArg $ mapArg a)
+    addArg b a = TupleApply (emptyMetaE "app" b) (emptyMetaE "base" b, b) (mapArg a)
       where
-        mapArg :: (ArgName, IArg Expr) -> TupleArg Expr ()
-        mapArg (argName, IArgE argVal) = TupleArgIO (emptyMetaE argName b) argName argVal
-        mapArg (argName, IArgM argM) = TupleArgI argM argName
-        mapArg (argName, IArgNothing) = TupleArgI (emptyMetaE "noArg" b) argName
+        mapArg :: (ArgName, IArg Expr) -> ObjArr Expr ()
+        mapArg (argName, IArgE argVal) = ObjArr (Just (GuardExpr (Arg (emptyMetaE argName b) argName) Nothing)) ArgObj Nothing [] (emptyMetaE "argRes" argVal) (Just (GuardExpr argVal Nothing))
+        mapArg (argName, IArgM argM) = ObjArr (Just (GuardExpr (Arg argM argName) Nothing)) ArgObj Nothing [] (emptyMetaE ("argRes" ++ argName) b) Nothing
+        mapArg (argName, IArgNothing) = ObjArr (Just (GuardExpr (Arg (emptyMetaE argName b) argName) Nothing)) ArgObj Nothing [] (emptyMetaE ("argRes" ++ argName) b) Nothing
 
 applyExprVars :: (MetaDat m) => Expr m -> [(TypeVarName, Meta m)] -> Expr m
 applyExprVars = foldl addVar

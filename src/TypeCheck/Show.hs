@@ -45,23 +45,27 @@ showExpr env (TupleApply m (bm, base) arg) = do
   m' <- showM env m
   bm' <- showM env bm
   base' <- showExpr env base
-  arg' <- case toTupleArg arg of
-    TupleArgI argM argName -> do
-      argM' <- showM env argM
-      return $ TupleArgI argM' argName
-    TupleArgO argVal -> do
-      argVal' <- showExpr env argVal
-      return $ TupleArgO argVal'
-    TupleArgIO argM argName argVal -> do
-      argM' <- showM env argM
-      argVal' <- showExpr env argVal
-      return $ TupleArgIO argM' argName argVal'
-  return $ TupleApply m' (bm', base') (fromTupleArg arg')
+  arg' <- showObjArr env arg
+  return $ TupleApply m' (bm', base') arg'
 showExpr env (VarApply m base varName varVal) = do
   m' <- showM env m
   base' <- showExpr env base
   varVal' <- showM env varVal
   return $ VarApply m' base' varName varVal'
+
+showGuardExpr :: FEnv -> VGuardExpr -> TypeCheckResult (GuardExpr Expr ShowMetaDat)
+showGuardExpr env (GuardExpr e g) = do
+  e' <- showExpr env e
+  g' <- mapM (showExpr env) g
+  return $ GuardExpr e' g'
+
+showObjArr :: FEnv -> VObjArr -> TypeCheckResult SObjectMapItem
+showObjArr env oa@ObjArr{oaObj, oaAnnots, oaM, oaArr} = do
+  oaObj' <- mapM (showGuardExpr env) oaObj
+  oaAnnots' <- mapM (showExpr env) oaAnnots
+  oaM' <- showM env oaM
+  oaArr' <- mapM (showGuardExpr env) oaArr
+  return oa{oaObj=oaObj', oaAnnots=oaAnnots', oaM=oaM', oaArr=oaArr'}
 
 showArrow :: FEnv -> VArrow -> TypeCheckResult SArrow
 showArrow env (Arrow m guard maybeExpr) = do
@@ -109,7 +113,7 @@ showCon env (UnionOf p1 p2s) = SUnionOf (descriptor env p1) (map (descriptor env
 
 showPrgm :: FEnv -> VPrgm -> TypeCheckResult SPrgm
 showPrgm env (objMap, classGraph, annots) = do
-  objMap' <- mapM (showObjArrow env) objMap
+  objMap' <- mapM (showObjArr env . asExprObjectMapItem) objMap
   annots' <- mapM (showExpr env) annots
   return (objMap', classGraph, annots')
 
