@@ -11,7 +11,7 @@ import           Text.Printf
 import           CRes
 import           Eval
 import           Syntax.Ct.Desugarf (desFiles)
-import           Syntax.Ct.Parser   (readFiles)
+import           Syntax.Parsers     (readFiles)
 import           TypeCheck
 import           WebDocs            (docApi)
 

@@ -13,6 +13,7 @@
 
 module Syntax.Pandoc.Syntax where
 
+import           CRes
 import qualified Data.ByteString.Lazy    as BS
 import qualified Data.Text               as T
 import qualified Data.Text.Lazy          as L
@@ -52,3 +53,7 @@ toDocument format prgm = do
 
 documentFormats :: [String]
 documentFormats = map (T.unpack . fst) (writers :: [(T.Text, Writer PandocIO)])
+
+pandocParser :: String -> IO (CRes (RawPrgm ()))
+pandocParser = undefined
+-- See https://github.com/jgm/pandoc/blob/e5fed51529120067672b840ba80084281761649e/src/Text/Pandoc/App/FormatHeuristics.hs#L36

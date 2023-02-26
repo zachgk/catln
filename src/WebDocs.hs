@@ -34,8 +34,8 @@ import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Desugarf            (desFiles)
-import           Syntax.Ct.Parser              (readFiles)
 import           Syntax.Ct.Parser.Syntax       (DesPrgm, PPrgmGraphData)
+import           Syntax.Parsers                (readFiles)
 import           TypeCheck                     (typecheckPrgm,
                                                 typecheckPrgmWithTrace)
 import           TypeCheck.Common              (FinalTPrgm, TraceConstrain,

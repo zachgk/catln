@@ -22,6 +22,7 @@ import           Syntax.Ct.Prgm
 import           Control.Monad.Trans
 import           Data.List                (isPrefixOf)
 
+import           Syntax.Parsers           (readFiles)
 import           System.Console.Haskeline
 import           Utils
 

@@ -9,8 +9,8 @@ import           Eval
 import           Options.Applicative
 import           Syntax.Ct.Desugarf    (desFiles)
 import           Syntax.Ct.Formatter   (formatPrgm)
-import           Syntax.Ct.Parser
 import           Syntax.Haskell.Syntax
+import           Syntax.Parsers
 import           TypeCheck             (typecheckPrgm)
 
 import qualified Data.ByteString       as BS
