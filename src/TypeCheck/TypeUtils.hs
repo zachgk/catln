@@ -53,13 +53,13 @@ objectPrecedence (Object{objBasis=MatchObj}, _, _) =   [4]
 objectPrecedence (Object{objBasis=ArgObj}, _, _) =   [5]
 
 -- | Finds the 'objectPrecedence' for all types
-buildPrecedenceMap :: (Show m, Show (e m), MetaDat m, ExprClass e) => ObjectMap e m -> H.HashMap TypeName [Int]
+buildPrecedenceMap :: (Show m, MetaDat m) => ObjectMap Expr m -> H.HashMap TypeName [Int]
 buildPrecedenceMap = fmap (minimum . map objectPrecedence) . H.fromListWith (++) . map (\(obj, annots, arrs) -> (objPath obj, [(obj, annots, arrs)]))
 
 -- |
 -- Prunes an objectMap by precendence. If two objects share the same precendence, only the bigger one(s) will be kept.
 -- This is used to ensure that the type of an object can't be changed by other usages, such as a data object by functions using that data
-filterBestPrecedence :: (Show m, Show (e m), MetaDat m, ExprClass e) => H.HashMap TypeName [Int] -> ObjectMap e m -> ObjectMap e m
+filterBestPrecedence :: (Show m, MetaDat m) => H.HashMap TypeName [Int] -> ObjectMap Expr m -> ObjectMap Expr m
 filterBestPrecedence precedenceMap = filter (\omi@(obj, _, _) -> objectPrecedence omi == H.lookupDefault (error "Could not find obj in union") (objPath obj) precedenceMap)
 
 -- | Gets an object and all sub-ojects (recursively) from it's arguments
