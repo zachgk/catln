@@ -150,14 +150,14 @@ arrowConstrainUbs env src@(TypeVar v) srcM dest destM = do
   src' <- resolveTypeVar v srcM
   (_, cdest) <- arrowConstrainUbs env (getMetaType src') srcM dest destM
   return (src, cdest)
-arrowConstrainUbs env@FEnv{feClassGraph} (UnionType srcPartials) (Meta _ _ (VarMetaDat _ _ varEnv argEnv)) dest _ = do
+arrowConstrainUbs env@FEnv{feClassGraph} (UnionType srcPartials) _ dest _ = do
   let srcPartialList = splitUnionType srcPartials
   reachesEnv <- mkReachesEnv env
   srcPartialList' <- mapM (resToTypeCheck . rootReachesPartial reachesEnv) srcPartialList
   let partialMap = H.fromList srcPartialList'
-  let partialMap' = H.filter (\t -> reachesHasCutSubtypeOf feClassGraph varEnv argEnv t dest) partialMap
-  let (srcPartialList'', destByPartial) = unzip $ H.toList partialMap'
+  -- let partialMap' = H.filter (\t -> reachesHasCutSubtypeOf feClassGraph varEnv argEnv t dest) partialMap
+  let (srcPartialList'', destByPartial) = unzip $ H.toList partialMap
   let srcPartials' = joinUnionType srcPartialList''
   let destByGraph = unionAllTypes feClassGraph $ fmap (unionReachesTree feClassGraph) destByPartial
-  dest' <- tryIntersectTypes env dest destByGraph "executeConstraint ArrowTo"
+  let dest' = intersectTypes feClassGraph dest destByGraph
   return (compactType feClassGraph $ UnionType srcPartials', dest')

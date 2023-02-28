@@ -270,12 +270,6 @@ fAddVTypeGraph env@FEnv{feVTypeGraph} k v = env {feVTypeGraph = H.insertWith (++
 fAddTTypeGraph :: FEnv -> TypeName -> TTypeGraphVal -> FEnv
 fAddTTypeGraph env@FEnv{feTTypeGraph} k v = env {feTTypeGraph = H.insertWith (++) k [v] feTTypeGraph}
 
-tryIntersectTypes :: FEnv -> Type -> Type -> String -> TypeCheckResult Type
-tryIntersectTypes FEnv{feClassGraph} a b desc = let c = intersectTypes feClassGraph a b
-                                                            in if isBottomType c
-                                                                  then TypeCheckResE [GenTypeCheckError Nothing $ "Failed to intersect(" ++ desc ++ "): " ++ show a ++ " --- " ++ show b]
-                                                                  else return c
-
 -- This ensures schemes are correct
 -- It differs from Constrain.checkScheme because it checks for bugs in the internal compiler, not bugs in the user code
 verifyScheme :: ClassGraph -> VarMeta -> Scheme -> Scheme -> Maybe String

@@ -42,12 +42,10 @@ setScheme env p scheme msg = setDescriptor env p (checkScheme scheme) msg
 
 -- | Tries to join two 'SType' as equal to each other and returns their updated values
 equalizeSTypes :: FEnv -> (SType, SType) -> String -> TypeCheckResult (SType, SType)
-equalizeSTypes env@FEnv{feClassGraph} (SType ub1 lb1 desc1, SType ub2 lb2 desc2) d = do
+equalizeSTypes FEnv{feClassGraph} (SType ub1 lb1 desc1, SType ub2 lb2 desc2) _ = do
   let lbBoth = unionTypes feClassGraph lb1 lb2
-  ubBoth <- tryIntersectTypes env ub1 ub2 $ "equalizeSTypes(" ++ d ++ ")"
-  if isSubtypeOf feClassGraph lbBoth ubBoth
-    then return (SType ubBoth lbBoth desc1, SType ubBoth lbBoth desc2)
-    else TypeCheckResE [GenTypeCheckError Nothing (printf "Type mismatched: %s is not a subtype of %s" (show lbBoth) (show ubBoth))]
+  let ubBoth = intersectTypes feClassGraph ub1 ub2
+  return (SType ubBoth lbBoth desc1, SType ubBoth lbBoth desc2)
 
 -- | A helper for the 'PropEq' 'Constraint'
 updateSchemeProp :: FEnv -> (VarMeta, SType) -> ArgName -> (VarMeta, SType) -> (FEnv, Scheme, Scheme)
@@ -166,12 +164,12 @@ executeConstraint env1 con@(EqPoints p1 p2) = case sequenceT (descriptorResolve 
       let env3 = setScheme env2 p2 res "EqPoints"
       (True, env3)
   TypeCheckResE _ -> (True, env1)
-executeConstraint env (BoundedByKnown subPnt boundTp) = do
+executeConstraint env@FEnv{feClassGraph} (BoundedByKnown subPnt boundTp) = do
   let subScheme = descriptor env subPnt
   case subScheme of
     TypeCheckResE _ -> (True, env)
     TypeCheckResult _ (SType ub lb description) -> do
-      let subScheme' = fmap (\ub' -> SType ub' lb description) (tryIntersectTypes env ub boundTp "executeConstraint BoundedByKnown")
+      let subScheme' = return $ SType (intersectTypes feClassGraph ub boundTp) lb description
       let env' = setScheme env subPnt subScheme' "BoundedByKnown"
       (True, env')
 executeConstraint env@FEnv{feUnionAllObjs, feClassGraph} (BoundedByObjs pnt) = do
@@ -229,7 +227,7 @@ executeConstraint env (VarEq (superPnt, varName) subPnt) = do
           let env'' = setScheme env' subPnt subScheme' "VarEq sub"
           (isSolved subScheme, env'')
         TypeCheckResE _ -> (True, env)
-executeConstraint env (AddArg (srcPnt, newArgName) destPnt) = do
+executeConstraint env@FEnv{feClassGraph} (AddArg (srcPnt, newArgName) destPnt) = do
   let srcScheme = descriptor env srcPnt
   let destScheme = descriptor env destPnt
   let checkName = printf "AddArg %s" (show newArgName)
@@ -238,18 +236,13 @@ executeConstraint env (AddArg (srcPnt, newArgName) destPnt) = do
     TypeCheckResult _ (SType TopType _ _, _) -> (False, env)
     TypeCheckResult notes (SType srcUb _ _, SType destUb destLb destDesc) ->
       case addArgToType env srcUb newArgName of
-        Just destUb' ->
-          case tryIntersectTypes env destUb' destUb checkName of
-            TypeCheckResult notes2 destUb'' -> do
-              let destScheme' = TypeCheckResult (notes ++ notes2) (SType destUb'' destLb destDesc)
-              let env' = setScheme env destPnt destScheme' checkName
-              (isSolved srcScheme || isSolved destScheme, env')
-            TypeCheckResE notes2 -> do
-              let res = TypeCheckResE (notes ++ notes2)
-              let env' = setScheme env destPnt res checkName
-              (True, env')
+        Just destUb' -> do
+          let destUb'' = intersectTypes feClassGraph destUb' destUb
+          let destScheme' = TypeCheckResult notes (SType destUb'' destLb destDesc)
+          let env' = setScheme env destPnt destScheme' checkName
+          (isSolved srcScheme || isSolved destScheme, env')
         Nothing -> (False, env)
-executeConstraint env (AddInferArg srcPnt destPnt) = do
+executeConstraint env@FEnv{feClassGraph} (AddInferArg srcPnt destPnt) = do
   let srcScheme = descriptor env srcPnt
   let destScheme = descriptor env destPnt
   case sequenceT (srcScheme, destScheme) of
@@ -257,16 +250,11 @@ executeConstraint env (AddInferArg srcPnt destPnt) = do
     TypeCheckResult _ (SType TopType _ _, _) -> (False, env)
     TypeCheckResult notes (SType srcUb _ _, SType destUb destLb destDesc) ->
       case addInferArgToType env srcUb of
-        Just destUb' ->
-          case tryIntersectTypes env destUb' destUb "AddInferArg intersect" of
-            TypeCheckResult notes2 destUb'' -> do
-              let destScheme' = TypeCheckResult (notes ++ notes2) (SType destUb'' destLb destDesc)
-              let env' = setScheme env destPnt destScheme' "AddInferArg dest"
-              (isSolved srcScheme || isSolved destScheme, env')
-            TypeCheckResE notes2 -> do
-              let res = TypeCheckResE (notes ++ notes2)
-              let env' = setScheme env destPnt res "AddInferArg error"
-              (True, env')
+        Just destUb' -> do
+          let destUb'' = intersectTypes feClassGraph destUb' destUb
+          let destScheme' = TypeCheckResult notes (SType destUb'' destLb destDesc)
+          let env' = setScheme env destPnt destScheme' "AddInferArg dest"
+          (isSolved srcScheme || isSolved destScheme, env')
         Nothing -> (False, env)
 executeConstraint env@FEnv{feClassGraph} (PowersetTo srcPnt destPnt) = do
   let srcScheme = descriptor env srcPnt
@@ -274,7 +262,7 @@ executeConstraint env@FEnv{feClassGraph} (PowersetTo srcPnt destPnt) = do
   case sequenceT (srcScheme, destScheme) of
     TypeCheckResE _ -> (True, env)
     TypeCheckResult _ (SType ub1 _ _, SType ub2 lb2 description2) -> do
-      let destScheme' = fmap (\ub -> SType ub lb2 description2) (tryIntersectTypes env (powersetType feClassGraph ub1) ub2 "executeConstraint PowersetTo")
+      let destScheme' = return $ SType (intersectTypes feClassGraph (powersetType feClassGraph ub1) ub2) lb2 description2
       let env' = setScheme env destPnt destScheme' "PowersetTo"
       (isSolved destScheme', env')
 executeConstraint env@FEnv{feClassGraph} (UnionOf parentPnt childrenM) = do
