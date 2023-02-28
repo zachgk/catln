@@ -165,20 +165,20 @@ executeConstraint env1 (EqPoints p1 p2) = case sequenceT (descriptorResolve env1
     (isSolved $ return s1', env3)
   TypeCheckResE _ -> (True, env1)
 executeConstraint env@FEnv{feClassGraph} (BoundedByKnown subPnt boundTp) = do
-  let subScheme = descriptor env subPnt
+  let subScheme = pointUb env subPnt
   case subScheme of
     TypeCheckResE _ -> (True, env)
-    TypeCheckResult _ (SType ub _ _) -> do
+    TypeCheckResult _ ub -> do
       let ub' = intersectTypes feClassGraph ub boundTp
       let env' = setSchemeUb env subPnt ub' "BoundedByKnown"
       (True, env')
 executeConstraint env@FEnv{feUnionAllObjs, feClassGraph} (BoundedByObjs pnt) = do
-  let scheme = descriptor env pnt
-  let boundScheme = descriptor env feUnionAllObjs
+  let scheme = pointUb env pnt
+  let boundScheme = pointUb env feUnionAllObjs
   case sequenceT (scheme, boundScheme) of
     TypeCheckResE _ -> (True, env)
-    TypeCheckResult _ (SType TopType _ _, _) -> (False, env)
-    TypeCheckResult _ (SType ub _ _, SType boundUb _ _) -> do
+    TypeCheckResult _ (TopType, _) -> (False, env)
+    TypeCheckResult _ (ub, boundUb) -> do
       -- A partially applied tuple would not be a raw type on the unionObj,
       -- but a subset of the arguments in that type
       let ub' = intersectTypes feClassGraph ub boundUb
@@ -186,11 +186,11 @@ executeConstraint env@FEnv{feUnionAllObjs, feClassGraph} (BoundedByObjs pnt) = d
       let env' = setSchemeUb env pnt ub' $ printf "BoundedByObjs for %s\n" (show ub)
       (False, env')
 executeConstraint env (ArrowTo srcPnt destPnt) = do
-  let srcScheme = descriptor env srcPnt
-  let destScheme = descriptor env destPnt
+  let srcScheme = pointUb env srcPnt
+  let destScheme = pointUb env destPnt
   case sequenceT (srcScheme, destScheme) of
     TypeCheckResE _ -> (True, env)
-    TypeCheckResult _ (SType srcUb _ _, SType destUb _ _) -> do
+    TypeCheckResult _ (srcUb, destUb) -> do
       let constrained = arrowConstrainUbs env srcUb srcPnt destUb destPnt
       case constrained of
         TypeCheckResult _ (srcUb', destUb') -> do
@@ -225,38 +225,38 @@ executeConstraint env (VarEq (superPnt, varName) subPnt) = do
           (isSolved subScheme, env'')
         TypeCheckResE _ -> (True, env)
 executeConstraint env@FEnv{feClassGraph} (AddArg (srcPnt, newArgName) destPnt) = do
-  let srcScheme = descriptor env srcPnt
-  let destScheme = descriptor env destPnt
+  let srcScheme = pointUb env srcPnt
+  let destScheme = pointUb env destPnt
   let checkName = printf "AddArg %s" (show newArgName)
   case sequenceT (srcScheme, destScheme) of
     TypeCheckResE _ -> (True, env)
-    TypeCheckResult _ (SType TopType _ _, _) -> (False, env)
-    TypeCheckResult _ (SType srcUb _ _, SType destUb _ _) ->
+    TypeCheckResult _ (TopType, _) -> (False, env)
+    TypeCheckResult _ (srcUb, destUb) ->
       case addArgToType env srcUb newArgName of
         Just destUb' -> do
           let destUb'' = intersectTypes feClassGraph destUb' destUb
           let env' = setSchemeUb env destPnt destUb'' checkName
-          (isSolved srcScheme || isSolved destScheme, env')
+          (False, env')
         Nothing -> (False, env)
 executeConstraint env@FEnv{feClassGraph} (AddInferArg srcPnt destPnt) = do
-  let srcScheme = descriptor env srcPnt
-  let destScheme = descriptor env destPnt
+  let srcScheme = pointUb env srcPnt
+  let destScheme = pointUb env destPnt
   case sequenceT (srcScheme, destScheme) of
     TypeCheckResE _ -> (True, env)
-    TypeCheckResult _ (SType TopType _ _, _) -> (False, env)
-    TypeCheckResult _ (SType srcUb _ _, SType destUb _ _) ->
+    TypeCheckResult _ (TopType, _) -> (False, env)
+    TypeCheckResult _ (srcUb, destUb) ->
       case addInferArgToType env srcUb of
         Just destUb' -> do
           let destUb'' = intersectTypes feClassGraph destUb' destUb
           let env' = setSchemeUb env destPnt destUb'' "AddInferArg dest"
-          (isSolved srcScheme || isSolved destScheme, env')
+          (False, env')
         Nothing -> (False, env)
 executeConstraint env@FEnv{feClassGraph} (PowersetTo srcPnt destPnt) = do
-  let srcScheme = descriptor env srcPnt
-  let destScheme = descriptor env destPnt
+  let srcScheme = pointUb env srcPnt
+  let destScheme = pointUb env destPnt
   case sequenceT (srcScheme, destScheme) of
     TypeCheckResE _ -> (True, env)
-    TypeCheckResult _ (SType ub1 _ _, SType ub2 _ _) -> do
+    TypeCheckResult _ (ub1, ub2) -> do
       let ub2' = intersectTypes feClassGraph (powersetType feClassGraph ub1) ub2
       let env' = setSchemeUb env destPnt ub2' "PowersetTo"
       (False, env')
