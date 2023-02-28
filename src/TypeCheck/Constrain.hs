@@ -47,11 +47,11 @@ setSchemeUb env p t msg = setScheme env p scheme' ("Ub " ++ msg)
     scheme' = fmap (\(SType _ lb d) -> SType t lb d) scheme
 
 -- | Tries to join two 'SType' as equal to each other and returns their updated values
-equalizeSTypes :: FEnv -> (SType, SType) -> String -> TypeCheckResult (SType, SType)
-equalizeSTypes FEnv{feClassGraph} (SType ub1 lb1 desc1, SType ub2 lb2 desc2) _ = do
+equalizeSTypes :: FEnv -> (SType, SType) -> (SType, SType)
+equalizeSTypes FEnv{feClassGraph} (SType ub1 lb1 desc1, SType ub2 lb2 desc2) = do
   let lbBoth = unionTypes feClassGraph lb1 lb2
   let ubBoth = intersectTypes feClassGraph ub1 ub2
-  return (SType ubBoth lbBoth desc1, SType ubBoth lbBoth desc2)
+  (SType ubBoth lbBoth desc1, SType ubBoth lbBoth desc2)
 
 -- | A helper for the 'PropEq' 'Constraint'
 updateSchemeProp :: FEnv -> (VarMeta, SType) -> ArgName -> (VarMeta, SType) -> (FEnv, Scheme, Scheme)
@@ -150,25 +150,19 @@ addInferArgToType env@FEnv{feClassGraph} (UnionType partials) = Just $ unionAllT
 -- If it is done, it can be safely removed and no longer needs to be executed.
 executeConstraint :: FEnv -> Constraint -> (Bool, FEnv)
 executeConstraint env (EqualsKnown pnt tp) = case descriptor env pnt of
-  (TypeCheckResult notes stype) -> case equalizeSTypes env (stype, SType tp tp "") "executeConstraint EqualsKnown" of
-    TypeCheckResult notes2 (stype', _) -> do
-      let scheme' = TypeCheckResult (notes ++ notes2) stype'
-      let env' = setScheme env pnt scheme' "EqualsKnown"
-      (True, env')
-    TypeCheckResE _ -> (True, env)
+  (TypeCheckResult notes stype) -> do
+    let (stype', _) = equalizeSTypes env (stype, SType tp tp "")
+    let scheme' = TypeCheckResult notes stype'
+    let env' = setScheme env pnt scheme' "EqualsKnown"
+    (True, env')
   TypeCheckResE{} -> (True, env)
 executeConstraint env (EqPoints (Meta _ _ (VarMetaDat p1 _ _ _)) (Meta _ _ (VarMetaDat p2 _ _ _))) | p1 == p2 = (True, env)
-executeConstraint env1 con@(EqPoints p1 p2) = case sequenceT (descriptorResolve env1 p1, descriptorResolve env1 p2) of
-  TypeCheckResult notes ((p1', s1), (p2', s2)) -> case equalizeSTypes env1 (s1, s2) "executeConstraint EqPoints" of
-    TypeCheckResult notes2 (s1', s2') -> do
-      let env2 = setScheme env1 p1' (TypeCheckResult (notes ++ notes2) s1') "EqPoints"
-      let env3 = setScheme env2 p2' (return s2') "EqPoints"
-      (isSolved $ return s1', env3)
-    TypeCheckResE notes2 -> do
-      let res = TypeCheckResE [mkConstraintTypeCheckError env1 con (notes ++ notes2)]
-      let env2 = setScheme env1 p1 res "EqPoints"
-      let env3 = setScheme env2 p2 res "EqPoints"
-      (True, env3)
+executeConstraint env1 (EqPoints p1 p2) = case sequenceT (descriptorResolve env1 p1, descriptorResolve env1 p2) of
+  TypeCheckResult notes ((p1', s1), (p2', s2)) -> do
+    let (s1', s2') = equalizeSTypes env1 (s1, s2)
+    let env2 = setScheme env1 p1' (TypeCheckResult notes s1') "EqPoints"
+    let env3 = setScheme env2 p2' (return s2') "EqPoints"
+    (isSolved $ return s1', env3)
   TypeCheckResE _ -> (True, env1)
 executeConstraint env@FEnv{feClassGraph} (BoundedByKnown subPnt boundTp) = do
   let subScheme = descriptor env subPnt
@@ -274,15 +268,10 @@ executeConstraint env@FEnv{feClassGraph} (UnionOf parentPnt childrenM) = do
     TypeCheckResult notes (parentSType, childrenSchemes) -> do
       let accumulateChild (SType ub lb _) (accUb, accLb) = (unionTypes feClassGraph ub accUb, unionTypes feClassGraph lb accLb)
       let (chUb, chLb) = foldr accumulateChild (bottomType, bottomType) childrenSchemes
-      case equalizeSTypes env (parentSType, SType (compactType feClassGraph chUb) chLb "") "executeConstraint UnionOf" of
-        TypeCheckResult notes2 (parentST', _) -> do
-          let parentScheme' = TypeCheckResult (notes ++ notes2) parentST'
-          let env' = setScheme env parentPnt parentScheme' "UnionOf"
-          (isSolved parentScheme', env')
-        TypeCheckResE notes2 -> do
-          let res = TypeCheckResE (notes ++ notes2)
-          let env' = setScheme env parentPnt res "UnionOf"
-          (True, env')
+      let (parentST', _) = equalizeSTypes env (parentSType, SType (compactType feClassGraph chUb) chLb "")
+      let parentScheme' = TypeCheckResult notes parentST'
+      let env' = setScheme env parentPnt parentScheme' "UnionOf"
+      (isSolved parentScheme', env')
 
 -- | Calls 'executeConstraint' for a list of constraints
 executeConstraints :: FEnv -> [Constraint] -> ([Bool], FEnv)
