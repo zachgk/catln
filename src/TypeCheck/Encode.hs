@@ -87,9 +87,9 @@ fromMeta env bound est m description  = do
         EncodeOut{} -> m
   let tp = getMetaType m'
   let (p, env') = case bound of
-        BUpper -> fresh env (TypeCheckResult [] $ SType tp bottomType description)
+        BUpper -> fresh env (TypeCheckResult [] $ SType tp TopType description)
         BLower -> fresh env (TypeCheckResult [] $ SType TopType tp description)
-        BEq -> fresh env (TypeCheckResult [] $ SType tp tp description)
+        BEq    -> fresh env (TypeCheckResult [] $ SType tp tp description)
   return (mapMetaDat (\_ -> mkVarMetaDat est p) m', env')
 
 -- TODO: This might reverse the list to return.
@@ -245,7 +245,7 @@ fromExpr est env1 (VarApply m baseExpr varName varVal) = do
 fromGuard :: EncodeState -> FEnv -> Maybe PExpr -> TypeCheckResult (Maybe VExpr, FEnv)
 fromGuard est env1 (Just expr) =  do
   (expr', env2) <- fromExpr est env1 expr
-  let (bool, env3) = fresh env2 $ TypeCheckResult [] $ SType boolType bottomType "ifGuardBool"
+  let (bool, env3) = fresh env2 $ TypeCheckResult [] $ SType TopType boolType "ifGuardBool"
   let bool' = Meta boolType (labelPos "bool" $ getMetaPos $ getExprMeta expr) (mkVarMetaDat est bool)
   return (Just expr', addConstraints env3 [ArrowTo (getExprMeta expr') bool'])
 fromGuard _ env Nothing = return (Nothing, env)

@@ -85,14 +85,14 @@ addUnionObjToEnv env1@FEnv{feClassGraph} vobjMap tobjMap = do
   let tobjs' = map fst3 $ filterBestPrecedence precedenceMap tobjMapRec
 
   -- Builds vars to use for union and union powerset
-  let (unionAllObjs, env2) = fresh env1 $ TypeCheckResult [] $ SType TopType bottomType "unionAllObjs"
-  let (unionAllObjsPs, env3) = fresh env2 $ TypeCheckResult [] $ SType TopType bottomType "unionAllObjsPs"
+  let (unionAllObjs, env2) = fresh env1 $ TypeCheckResult [] $ SType TopType TopType "unionAllObjs"
+  let (unionAllObjsPs, env3) = fresh env2 $ TypeCheckResult [] $ SType TopType TopType "unionAllObjsPs"
 
   let mkVarMeta p = Meta TopType Nothing (VarMetaDat p Nothing H.empty H.empty)
 
   -- Build a variable to store union of tobjs
   let typecheckedAllType = unionAllTypes feClassGraph $ map (getMetaType . objM) tobjs'
-  let (typecheckedAllObjs, env4) = fresh env3 $ TypeCheckResult [] $ SType typecheckedAllType bottomType "typecheckedAll"
+  let (typecheckedAllObjs, env4) = fresh env3 $ TypeCheckResult [] $ SType typecheckedAllType TopType "typecheckedAll"
   let typecheckedAllObjs' = mkVarMeta typecheckedAllObjs
 
   -- Builds metas to use for union and union powerset

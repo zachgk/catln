@@ -39,10 +39,12 @@ data TypeCheckError
   | TupleMismatch TypedMeta TExpr (Meta ()) (H.HashMap String TExpr)
   deriving (Eq, Ord, Generic, Hashable)
 
--- | SType upper lower (description in type)
+-- | SType actual required (description in type)
+-- Contains what the type actually is, and what the requirements are (both upper bounds)
+-- Covered by the relationship that the actual should be a subset of the required
 data SType = SType {
-  stypeUb   :: !Type,
-  stypeLb   :: !Type,
+  stypeAct  :: !Type,
+  stypeReq  :: !Type,
   stypeDesc :: !String
                    }
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
@@ -286,9 +288,10 @@ fAddTTypeGraph env@FEnv{feTTypeGraph} k v = env {feTTypeGraph = H.insertWith (++
 -- This ensures schemes are correct
 -- It differs from Constrain.checkScheme because it checks for bugs in the internal compiler, not bugs in the user code
 verifyScheme :: ClassGraph -> VarMeta -> Scheme -> Scheme -> Maybe String
-verifyScheme classGraph (Meta _ _ (VarMetaDat _ _ varEnv argEnv)) (TypeCheckResult _ (SType oldUb _ _)) (TypeCheckResult _ (SType ub _ _)) = listToMaybe $ catMaybes [
-  if verifyTypeVars (H.keys varEnv) ub then Nothing else Just "verifyTypeVars",
-  if verifySchemeUbLowers then Nothing else Just "verifySchemeUbLowers",
+verifyScheme classGraph (Meta _ _ (VarMetaDat _ _ varEnv argEnv)) (TypeCheckResult _ (SType oldAct oldReq _)) (TypeCheckResult _ (SType act req _)) = listToMaybe $ catMaybes [
+  if verifyTypeVars (H.keys varEnv) act then Nothing else Just "verifyTypeVars",
+  if verifySchemeActLowers then Nothing else Just "verifySchemeActLowers",
+  if verifySchemeReqLowers then Nothing else Just "verifySchemeReqLowers",
   if verifyCompacted then Nothing else Just "verifyCompacted"
   ]
   where
@@ -298,8 +301,9 @@ verifyScheme classGraph (Meta _ _ (VarMetaDat _ _ varEnv argEnv)) (TypeCheckResu
     verifyTypeVarsPartial venv PartialType{ptVars, ptArgs} = all (verifyTypeVars venv) ptVars
                                                                         && all (verifyTypeVars (H.keys ptVars)) ptArgs
 
-    verifySchemeUbLowers  = isSubtypeOfWithMetaEnv classGraph varEnv argEnv ub oldUb
-    verifyCompacted = ub == compactType classGraph ub
+    verifySchemeActLowers  = isSubtypeOfWithMetaEnv classGraph varEnv argEnv act oldAct
+    verifySchemeReqLowers  = isSubtypeOfWithMetaEnv classGraph varEnv argEnv req oldReq
+    verifyCompacted = act == compactType classGraph act
 verifyScheme _ _ _ _ = Nothing
 
 
@@ -324,8 +328,8 @@ setDescriptor env@FEnv{feClassGraph, fePnts, feTrace, feUpdatedDuringEpoch} m@(M
     scheme = fePnts IM.! p
     schemeChanged :: Bool
     schemeChanged = fromMaybe False $ tcreToMaybe $ do
-      showVenv <- fmap stypeUb <$> mapM (descriptor env) venv
-      showAenv <- fmap stypeUb <$> mapM (descriptor env) aenv
+      showVenv <- fmap stypeAct <$> mapM (descriptor env) venv
+      showAenv <- fmap stypeAct <$> mapM (descriptor env) aenv
       return $ not (eqScheme env showVenv showAenv scheme scheme')
     pnts' = if schemeChanged then IM.insert p scheme' fePnts else fePnts -- Only update if changed to avoid meaningless updates
     feTrace' = if schemeChanged

@@ -30,16 +30,20 @@ import           TypeCheck.TypeUtils
 
 -- | Checks if a scheme is solved because it's upper bound and lower bound are equal
 isSolved :: Scheme -> Bool
-isSolved (TypeCheckResult _ (SType a b _)) = a == b
 isSolved _                                 = False
 
 -- | Updates a 'VarMeta' point to a new 'Scheme' value
 setScheme :: FEnv -> VarMeta -> Scheme -> String -> FEnv
-setScheme env p scheme msg = setDescriptor env p (checkScheme scheme) msg
-  where msg' = printf "Scheme failed check at setScheme %s(point %s): upper bound is bottomType - " msg (show p)
-        -- checkScheme (TypeCheckResult _ (SType ub _ desc)) | isBottomType ub = error $ msg' ++ desc
-        checkScheme (TypeCheckResult notes (SType ub _ desc)) | isBottomType ub = TypeCheckResE (mkTracedTypeCheckError env p (getMetaPos p) (msg' ++ desc) : notes)
-        checkScheme s = s
+setScheme env@FEnv{feClassGraph} p scheme baseMsg = setDescriptor env p (checkScheme scheme) (msg "" "")
+  where
+    -- checkScheme (TypeCheckResult _ (SType ub _ desc)) | isBottomType ub = error $ msg' ++ desc
+    checkScheme (TypeCheckResult notes (SType ub _ desc)) | isBottomType ub = TypeCheckResE (mkTracedTypeCheckError env p (getMetaPos p) (msg desc "Actual type is bottomType") : notes)
+    checkScheme (TypeCheckResult notes (SType _ req desc)) | isBottomType req = TypeCheckResE (mkTracedTypeCheckError env p (getMetaPos p) (msg desc "Required type is bottomType") : notes)
+    checkScheme (TypeCheckResult notes (SType act req desc)) | not (isSubtypeOf feClassGraph act req) = TypeCheckResE (mkTracedTypeCheckError env p (getMetaPos p) (msg desc "Required type is bottomType") : notes)
+    checkScheme s = s
+
+    msg :: String -> String -> String
+    msg desc problem = printf "Scheme failed check at setScheme %s(point %s): \n\t %s - %s" baseMsg (show p) problem desc
 
 setSchemeUb :: FEnv -> VarMeta -> Type -> String -> FEnv
 setSchemeUb env p t msg = setScheme env p scheme' ("Ub " ++ msg)
@@ -49,10 +53,10 @@ setSchemeUb env p t msg = setScheme env p scheme' ("Ub " ++ msg)
 
 -- | Tries to join two 'SType' as equal to each other and returns their updated values
 equalizeSTypes :: FEnv -> (SType, SType) -> (SType, SType)
-equalizeSTypes FEnv{feClassGraph} (SType ub1 lb1 desc1, SType ub2 lb2 desc2) = do
-  let lbBoth = unionTypes feClassGraph lb1 lb2
-  let ubBoth = intersectTypes feClassGraph ub1 ub2
-  (SType ubBoth lbBoth desc1, SType ubBoth lbBoth desc2)
+equalizeSTypes FEnv{feClassGraph} (SType act1 req1 desc1, SType act2 req2 desc2) = do
+  let actBoth = intersectTypes feClassGraph act1 act2
+  let reqBoth = intersectTypes feClassGraph req1 req2
+  (SType actBoth reqBoth desc1, SType actBoth reqBoth desc2)
 
 -- | A helper for the 'PropEq' 'Constraint'
 updateSchemeProp :: FEnv -> (VarMeta, SType) -> ArgName -> (VarMeta, SType) -> (FEnv, Scheme, Scheme)
