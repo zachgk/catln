@@ -83,7 +83,8 @@ updateSchemeProp env@FEnv{feClassGraph} (superM, superScheme@(SType superUb supe
               Just (sup{ptVars=H.insert v newProp supVars}, newProp)
             Just (TypeVar TVArg{}) -> error $ printf "Not yet implemented"
             Just supProp -> do
-              let newProp = intersectTypes feClassGraph supProp (singletonType sub)
+              let supProp' = substituteVarsWithVarEnv supVars supProp
+              let newProp = intersectTypes feClassGraph supProp' (singletonType sub)
               if isBottomType newProp
                 then Nothing
                 else Just (sup{ptArgs=H.insert propName newProp supArgs}, newProp)
