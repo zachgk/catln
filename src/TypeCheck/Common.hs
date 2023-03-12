@@ -50,6 +50,9 @@ data SType = SType {
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 type Scheme = TypeCheckResult SType
 
+data SchemeActReq = SchemeAct | SchemeReq
+  deriving (Eq, Show)
+
 type Pnt = Int
 
 data EnvDef = DefVar VarMeta | DefKnown Type
@@ -69,17 +72,17 @@ data FEnv = FEnv { fePnts               :: IM.IntMap Scheme
 type UnionObj = (Pnt, Pnt) -- a union of all TypeObj for argument inference, union of all Object types for function limiting
 
 data Constraint
-  = EqualsKnown VarMeta Type
-  | EqPoints VarMeta VarMeta
+  = EqualsKnown VarMeta Type -- ^ Both Actual and Req
+  | EqPoints VarMeta VarMeta -- ^ Both Actual and Req
   | BoundedByKnown VarMeta Type
   | BoundedByObjs VarMeta
   | ArrowTo VarMeta VarMeta -- ArrowTo src dest
-  | PropEq (VarMeta, ArgName) VarMeta
+  | PropEq (VarMeta, ArgName) VarMeta -- ^ Both Actual and Req
   | VarEq (VarMeta, TypeVarName) VarMeta
   | AddArg (VarMeta, String) VarMeta
   | AddInferArg VarMeta VarMeta -- AddInferArg base arg
   | PowersetTo VarMeta VarMeta
-  | UnionOf VarMeta [VarMeta]
+  | UnionOf VarMeta [VarMeta] -- ^ Both Actual and Req
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 data SConstraint
@@ -241,6 +244,10 @@ typeCheckToRes tc = case tc of
 eqScheme :: FEnv -> TypeVarEnv -> TypeArgEnv -> Scheme -> Scheme -> Bool
 eqScheme FEnv{feClassGraph} venv aenv (TypeCheckResult _ (SType ub1 lb1 _)) (TypeCheckResult _ (SType ub2 lb2 _)) = isEqTypeWithEnv feClassGraph venv aenv ub1 ub2 && isEqTypeWithEnv feClassGraph venv aenv lb1 lb2
 eqScheme _ _ _ a b = a == b
+
+getStypeActReq :: SchemeActReq -> SType -> Type
+getStypeActReq SchemeAct SType{stypeAct} = stypeAct
+getStypeActReq SchemeReq SType{stypeReq} = stypeReq
 
 resToTypeCheck :: CRes r -> TypeCheckResult r
 resToTypeCheck cres = case cres of

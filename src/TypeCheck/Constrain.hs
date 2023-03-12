@@ -45,11 +45,21 @@ setScheme env@FEnv{feClassGraph} p scheme baseMsg = setDescriptor env p (checkSc
     msg :: String -> String -> String
     msg desc problem = printf "Scheme failed check at setScheme %s(point %s): \n\t %s - %s" baseMsg (show p) problem desc
 
-setSchemeUb :: FEnv -> VarMeta -> Type -> String -> FEnv
-setSchemeUb env p t msg = setScheme env p scheme' ("Ub " ++ msg)
+setSchemeAct :: FEnv -> VarMeta -> Type -> String -> FEnv
+setSchemeAct env p t msg = setScheme env p scheme' ("Act " ++ msg)
   where
     scheme = descriptor env p
     scheme' = fmap (\(SType _ lb d) -> SType t lb d) scheme
+
+setSchemeReq :: FEnv -> VarMeta -> Type -> String -> FEnv
+setSchemeReq env p t msg = setScheme env p scheme' ("Req " ++ msg)
+  where
+    scheme = descriptor env p
+    scheme' = fmap (\(SType a _ d) -> SType a t d) scheme
+
+setSchemeActReq :: FEnv -> SchemeActReq -> VarMeta -> Type -> String -> FEnv
+setSchemeActReq env SchemeAct p t msg = setSchemeAct env p t msg
+setSchemeActReq env SchemeReq p t msg = setSchemeReq env p t msg
 
 -- | Tries to join two 'SType' as equal to each other and returns their updated values
 equalizeSTypes :: FEnv -> (SType, SType) -> (SType, SType)
@@ -58,25 +68,25 @@ equalizeSTypes FEnv{feClassGraph} (SType act1 req1 desc1, SType act2 req2 desc2)
   let reqBoth = intersectTypes feClassGraph req1 req2
   (SType actBoth reqBoth desc1, SType actBoth reqBoth desc2)
 
--- | A helper for the 'PropEq' 'Constraint'
-updateSchemeProp :: FEnv -> (VarMeta, SType) -> ArgName -> (VarMeta, SType) -> (FEnv, Scheme, Scheme)
-updateSchemeProp env@FEnv{feClassGraph} (superM, superScheme@(SType superUb superLb superDesc)) propName (subM, subScheme@(SType subUb subLb subDesc)) = case (superUb, subUb) of
-    (TopType, _) -> wrapUbs (TopType, subUb)
+-- | A helper for "updateSchemeProp" for either the actual or required
+updateTypeProp :: FEnv -> SchemeActReq -> (VarMeta, Type) -> ArgName -> (VarMeta, Type) -> (FEnv, Type, Type)
+updateTypeProp env@FEnv{feClassGraph} actOrReq (superM, superType) propName (subM, subType) = case (superType, subType) of
+    (TopType, _) -> wrapUbs (TopType, subType)
     (TypeVar v, _) -> do
       let (TypeCheckResult _ superM') = resolveTypeVar v superM
       let (TypeCheckResult _ super') = pure superM' >>= descriptor env
-      let (env2, super'', sub'') = updateSchemeProp env (superM, super') propName (subM, subScheme)
-      let env3 = setScheme env2 superM' super'' "PropEq var super"
-      (env3, pure superScheme, sub'')
+      let (env2, super'', sub'') = updateTypeProp env actOrReq (superM, getStypeActReq actOrReq super') propName (subM, subType)
+      let env3 = setSchemeActReq env2 actOrReq superM' super'' "PropEq var super"
+      (env3, superType, sub'')
     (UnionType supPartials, TypeVar{}) -> do
       let supPartialList = splitUnionType supPartials
-      let intersectedPartials sup@PartialType{ptArgs=supArgs} = Just (sup{ptArgs=H.insert propName subUb supArgs})
+      let intersectedPartials sup@PartialType{ptArgs=supArgs} = Just (sup{ptArgs=H.insert propName subType supArgs})
       let supPartialList' = catMaybes $ [intersectedPartials sup | sup <- supPartialList]
-      wrapUbs (compactType feClassGraph $ UnionType $ joinUnionType supPartialList', subUb)
+      wrapUbs (compactType feClassGraph $ UnionType $ joinUnionType supPartialList', subType)
     (UnionType supPartials, TopType) -> do
       let supPartialList = splitUnionType supPartials
       let sub' = unionAllTypes feClassGraph $ mapMaybe (typeGetArg propName) supPartialList
-      wrapUbs (superUb, sub')
+      wrapUbs (superType, sub')
     (UnionType supPartials, UnionType subPartials) -> do
       let supPartialList = splitUnionType supPartials
       let subPartialList = splitUnionType subPartials
@@ -96,7 +106,14 @@ updateSchemeProp env@FEnv{feClassGraph} (superM, superScheme@(SType superUb supe
       let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectedPartials sup sub | sup <- supPartialList, sub <- subPartialList]
       wrapUbs (compactType feClassGraph $ UnionType $ joinUnionType supPartialList', unionAllTypes feClassGraph subPartialList')
   where
-    wrapUbs (superUb', subUb') = (env, return $ SType superUb' superLb superDesc, return $ SType subUb' subLb subDesc)
+    wrapUbs (superUb', subUb') = (env, superUb', subUb')
+
+-- | A helper for the 'PropEq' 'Constraint' that applies to both the actual and required types
+updateSchemeProp :: FEnv -> (VarMeta, SType) -> ArgName -> (VarMeta, SType) -> (FEnv, Scheme, Scheme)
+updateSchemeProp env1 (superM, SType superAct superReq superDesc) propName (subM, SType subAct subReq subDesc) = (env3, pure $ SType superAct' superReq' superDesc, pure $ SType subAct' subReq' subDesc)
+  where
+    (env2, superAct', subAct') = updateTypeProp env1 SchemeAct (superM, superAct) propName (subM, subAct)
+    (env3, superReq', subReq') = updateTypeProp env2 SchemeReq (superM, superReq) propName (subM, subReq)
 
 -- | A helper for the 'VarEq' 'Constraint'
 updateSchemeVar :: FEnv -> SType -> TypeVarName -> SType -> (Scheme, Scheme)
@@ -176,7 +193,7 @@ executeConstraint env@FEnv{feClassGraph} (BoundedByKnown subPnt boundTp) = do
     TypeCheckResE _ -> (True, env)
     TypeCheckResult _ ub -> do
       let ub' = intersectTypes feClassGraph ub boundTp
-      let env' = setSchemeUb env subPnt ub' "BoundedByKnown"
+      let env' = setSchemeAct env subPnt ub' "BoundedByKnown"
       (True, env')
 executeConstraint env@FEnv{feUnionAllObjs, feClassGraph} (BoundedByObjs pnt) = do
   let scheme = pointUb env pnt
@@ -189,7 +206,7 @@ executeConstraint env@FEnv{feUnionAllObjs, feClassGraph} (BoundedByObjs pnt) = d
       -- but a subset of the arguments in that type
       let ub' = intersectTypes feClassGraph ub boundUb
       -- let env' = setScheme env pnt scheme' $ printf "BoundedByObjs for %s\nBound: %s\n" (show ub) (show boundUb)
-      let env' = setSchemeUb env pnt ub' $ printf "BoundedByObjs for %s\n" (show ub)
+      let env' = setSchemeAct env pnt ub' $ printf "BoundedByObjs for %s\n" (show ub)
       (False, env')
 executeConstraint env (ArrowTo srcPnt destPnt) = do
   let srcScheme = pointUb env srcPnt
@@ -200,8 +217,8 @@ executeConstraint env (ArrowTo srcPnt destPnt) = do
       let constrained = arrowConstrainUbs env srcUb srcPnt destUb destPnt
       case constrained of
         TypeCheckResult _ (srcUb', destUb') -> do
-          let env' = setSchemeUb env srcPnt srcUb' "ArrowTo src"
-          let env'' = setSchemeUb env' destPnt destUb' "ArrowTo dest"
+          let env' = setSchemeAct env srcPnt srcUb' "ArrowTo src"
+          let env'' = setSchemeAct env' destPnt destUb' "ArrowTo dest"
           (False, env'')
         TypeCheckResE _ -> (True, env)
 executeConstraint env (PropEq (superPnt, propName) subPnt) = do
@@ -241,7 +258,7 @@ executeConstraint env@FEnv{feClassGraph} (AddArg (srcPnt, newArgName) destPnt) =
       case addArgToType env srcUb newArgName of
         Just destUb' -> do
           let destUb'' = intersectTypes feClassGraph destUb' destUb
-          let env' = setSchemeUb env destPnt destUb'' checkName
+          let env' = setSchemeAct env destPnt destUb'' checkName
           (False, env')
         Nothing -> (False, env)
 executeConstraint env@FEnv{feClassGraph} (AddInferArg srcPnt destPnt) = do
@@ -254,7 +271,7 @@ executeConstraint env@FEnv{feClassGraph} (AddInferArg srcPnt destPnt) = do
       case addInferArgToType env srcUb of
         Just destUb' -> do
           let destUb'' = intersectTypes feClassGraph destUb' destUb
-          let env' = setSchemeUb env destPnt destUb'' "AddInferArg dest"
+          let env' = setSchemeAct env destPnt destUb'' "AddInferArg dest"
           (False, env')
         Nothing -> (False, env)
 executeConstraint env@FEnv{feClassGraph} (PowersetTo srcPnt destPnt) = do
@@ -264,7 +281,7 @@ executeConstraint env@FEnv{feClassGraph} (PowersetTo srcPnt destPnt) = do
     TypeCheckResE _ -> (True, env)
     TypeCheckResult _ (ub1, ub2) -> do
       let ub2' = intersectTypes feClassGraph (powersetType feClassGraph ub1) ub2
-      let env' = setSchemeUb env destPnt ub2' "PowersetTo"
+      let env' = setSchemeAct env destPnt ub2' "PowersetTo"
       (False, env')
 executeConstraint env@FEnv{feClassGraph} (UnionOf parentPnt childrenM) = do
   let parentScheme = descriptor env parentPnt
