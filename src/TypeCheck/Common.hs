@@ -39,7 +39,12 @@ data TypeCheckError
   | TupleMismatch TypedMeta TExpr (Meta ()) (H.HashMap String TExpr)
   deriving (Eq, Ord, Generic, Hashable)
 
-data SType = SType Type Type String -- SType upper lower (description in type)
+-- | SType upper lower (description in type)
+data SType = SType {
+  stypeUb   :: !Type,
+  stypeLb   :: !Type,
+  stypeDesc :: !String
+                   }
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 type Scheme = TypeCheckResult SType
 
@@ -103,6 +108,10 @@ instance MonadFail TypeCheckResult where
 getTCRE :: TypeCheckResult r -> [TypeCheckError]
 getTCRE (TypeCheckResult notes _) = notes
 getTCRE (TypeCheckResE notes)     = notes
+
+tcreToMaybe :: TypeCheckResult r -> Maybe r
+tcreToMaybe (TypeCheckResult _ r) = Just r
+tcreToMaybe TypeCheckResE{}       = Nothing
 
 instance Functor TypeCheckResult where
   fmap f (TypeCheckResult notes r) = TypeCheckResult notes (f r)
@@ -227,6 +236,10 @@ typeCheckToRes tc = case tc of
   TypeCheckResult notes res -> CRes (map MkCNote notes) res
   TypeCheckResE notes       -> CErr (map MkCNote notes)
 
+eqScheme :: FEnv -> TypeVarEnv -> TypeArgEnv -> Scheme -> Scheme -> Bool
+eqScheme FEnv{feClassGraph} venv aenv (TypeCheckResult _ (SType ub1 lb1 _)) (TypeCheckResult _ (SType ub2 lb2 _)) = isEqTypeWithEnv feClassGraph venv aenv ub1 ub2 && isEqTypeWithEnv feClassGraph venv aenv lb1 lb2
+eqScheme _ _ _ a b = a == b
+
 resToTypeCheck :: CRes r -> TypeCheckResult r
 resToTypeCheck cres = case cres of
   CRes notes res -> TypeCheckResult (map fromCNote notes) res
@@ -305,12 +318,16 @@ fresh env@FEnv{fePnts} scheme = (pnt', env{fePnts = pnts'})
     pnts' = IM.insert pnt' scheme fePnts
 
 setDescriptor :: FEnv -> VarMeta -> Scheme -> String -> FEnv
-setDescriptor env@FEnv{feClassGraph, fePnts, feTrace, feUpdatedDuringEpoch} m scheme' msg = env{fePnts = pnts', feTrace = feTrace', feUpdatedDuringEpoch = feUpdatedDuringEpoch || schemeChanged}
+setDescriptor env@FEnv{feClassGraph, fePnts, feTrace, feUpdatedDuringEpoch} m@(Meta _ _ (VarMetaDat _ _ venv aenv)) scheme' msg = env{fePnts = pnts', feTrace = feTrace', feUpdatedDuringEpoch = feUpdatedDuringEpoch || schemeChanged}
   where
     p = getPnt m
     scheme = fePnts IM.! p
-    schemeChanged = scheme /= scheme'
-    pnts' = IM.insert p scheme' fePnts
+    schemeChanged :: Bool
+    schemeChanged = fromMaybe False $ tcreToMaybe $ do
+      showVenv <- fmap stypeUb <$> mapM (descriptor env) venv
+      showAenv <- fmap stypeUb <$> mapM (descriptor env) aenv
+      return $ not (eqScheme env showVenv showAenv scheme scheme')
+    pnts' = if schemeChanged then IM.insert p scheme' fePnts else fePnts -- Only update if changed to avoid meaningless updates
     feTrace' = if schemeChanged
       then case verifyScheme feClassGraph m scheme scheme' of
              Just failVerification -> error $ printf "Scheme failed verification %s during typechecking of %s: %s \n\t\t in obj: %s with old scheme: %s" failVerification msg (show scheme') (show m) (show scheme)

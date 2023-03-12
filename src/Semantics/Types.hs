@@ -336,6 +336,14 @@ isSubtypeOf classGraph = isSubtypeOfWithEnv classGraph H.empty H.empty
 isSubtypePartialOf :: ClassGraph -> PartialType -> Type -> Bool
 isSubtypePartialOf classGraph subPartial = isSubtypeOf classGraph (singletonType subPartial)
 
+isEqType :: ClassGraph -> Type -> Type -> Bool
+isEqType _ a b | a == b = True
+isEqType classGraph a b = isSubtypeOf classGraph a b && isSubtypeOf classGraph b a
+
+isEqTypeWithEnv :: ClassGraph -> TypeVarEnv -> TypeArgEnv -> Type -> Type -> Bool
+isEqTypeWithEnv _ _ _ a b | a == b = True
+isEqTypeWithEnv classGraph venv aenv a b = isSubtypeOfWithEnv classGraph venv aenv a b && isSubtypeOfWithEnv classGraph venv aenv b a
+
 -- |
 -- Join partials by checking if one is a subset of another (redundant) and removing it.
 -- TODO: This currently joins only with matching names. More matches could improve the effectiveness of the compaction, but slows down the code significantly
@@ -453,6 +461,8 @@ intersectPartialsBase classGraph venv (PartialType aName aVars aArgs aPreds aArg
 -- Takes the intersection of two 'PartialType' or returns Nothing if their intersection is 'bottomType'
 -- It uses the 'TypeVarEnv' for type variable arguments and determines any possible changes to the surrounding 'TypeVarEnv'.
 intersectPartials :: ClassGraph -> TypeVarEnv -> PartialType -> PartialType -> Maybe (TypeVarEnv, [PartialType])
+intersectPartials classGraph venv a b | ptName a /= ptName b && isSubPartialOfWithEnv classGraph venv H.empty a b = Just (venv, [a])
+intersectPartials classGraph venv a b | ptName a /= ptName b && isSubPartialOfWithEnv classGraph venv H.empty b a = Just (venv, [b])
 intersectPartials classGraph venv a b = case catMaybes [base, aExpandClass, bExpandClass] of
   [] -> Nothing
   combined -> Just $ foldr1 (\(venv1, a') (venv2, b') -> (mergeVarEnvs classGraph venv1 venv2, a' ++ b')) combined
