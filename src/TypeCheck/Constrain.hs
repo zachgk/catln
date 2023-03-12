@@ -216,12 +216,14 @@ executeConstraint env1 (EqPoints p1 p2) = case sequenceT (descriptorResolve env1
     (isSolved $ return s1', env3)
   TypeCheckResE _ -> (True, env1)
 executeConstraint env@FEnv{feClassGraph} (BoundedByKnown subPnt boundTp) = do
-  let subScheme = pointUb env subPnt
+  let subScheme = descriptor env subPnt
   case subScheme of
     TypeCheckResE _ -> (True, env)
-    TypeCheckResult _ ub -> do
-      let ub' = intersectTypes feClassGraph ub boundTp
-      let env' = setSchemeAct env subPnt ub' "BoundedByKnown"
+    TypeCheckResult _ (SType act req desc) -> do
+      let act' = intersectTypes feClassGraph act boundTp
+      let req' = intersectTypes feClassGraph req boundTp
+      let scheme' = pure $ SType act' req' desc
+      let env' = setScheme env subPnt scheme' "BoundedByKnown"
       (True, env')
 executeConstraint env@FEnv{feUnionAllObjs, feClassGraph} (BoundedByObjs pnt) = do
   let scheme = pointUb env pnt

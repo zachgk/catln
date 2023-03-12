@@ -77,7 +77,7 @@ type UnionObj = (Pnt, Pnt) -- a union of all TypeObj for argument inference, uni
 data Constraint
   = EqualsKnown VarMeta Type -- ^ Both Actual and Req
   | EqPoints VarMeta VarMeta -- ^ Both Actual and Req
-  | BoundedByKnown VarMeta Type
+  | BoundedByKnown VarMeta Type -- ^ Both Actual and Req
   | BoundedByObjs VarMeta
   | ArrowTo VarMeta VarMeta -- ArrowTo src dest
   | PropEq (VarMeta, ArgName) VarMeta -- ^ Both Actual and Req
