@@ -165,6 +165,17 @@ addArgToType FEnv{feClassGraph} (UnionType partials) newArg = Just $ UnionType p
     partials' = joinUnionType $ map fromPartial $ splitUnionType partials
     fromPartial partial@PartialType{ptArgs} = partial{ptArgs=H.insertWith (unionTypes feClassGraph) newArg TopType ptArgs}
 
+-- | A helper for the 'AddArg' 'Constraint'
+addArgToScheme :: FEnv -> SType -> ArgName -> SType -> SType
+addArgToScheme env@FEnv{feClassGraph} (SType srcAct srcReq _) newArgName (SType destAct destReq destDesc) = SType destAct' destReq' destDesc
+  where
+    destAct' = case addArgToType env srcAct newArgName of
+      Just addDestAct -> intersectTypes feClassGraph destAct addDestAct
+      Nothing         -> destAct
+    destReq' = case addArgToType env srcReq newArgName of
+      Just addDestReq -> intersectTypes feClassGraph destReq addDestReq
+      Nothing         -> destReq
+
 -- | A helper for the 'AddInferArg' 'Constraint'
 addInferArgToType :: FEnv -> Type -> Maybe Type
 addInferArgToType _ TopType = Nothing
@@ -172,6 +183,17 @@ addInferArgToType _ TypeVar{} = error "addInferArgToType TypeVar"
 addInferArgToType env@FEnv{feClassGraph} (UnionType partials) = Just $ unionAllTypes feClassGraph partials'
   where
     partials' = map (inferArgFromPartial env) $ splitUnionType partials
+
+-- | A helper for the 'AddArg' 'Constraint'
+addInferArgToScheme :: FEnv -> SType -> SType -> SType
+addInferArgToScheme env@FEnv{feClassGraph} (SType srcAct srcReq _) (SType destAct destReq destDesc) = SType destAct' destReq' destDesc
+  where
+    destAct' = case addInferArgToType env srcAct of
+      Just addDestAct -> intersectTypes feClassGraph destAct addDestAct
+      Nothing         -> destAct
+    destReq' = case addInferArgToType env srcReq of
+      Just addDestReq -> intersectTypes feClassGraph destReq addDestReq
+      Nothing         -> destReq
 
 -- |
 -- This takes a constraint and tries to apply it in the environment.
@@ -253,33 +275,25 @@ executeConstraint env (VarEq (superPnt, varName) subPnt) = do
           let env'' = setScheme env' subPnt subScheme' "VarEq sub"
           (isSolved subScheme, env'')
         TypeCheckResE _ -> (True, env)
-executeConstraint env@FEnv{feClassGraph} (AddArg (srcPnt, newArgName) destPnt) = do
-  let srcScheme = pointUb env srcPnt
-  let destScheme = pointUb env destPnt
+executeConstraint env (AddArg (srcPnt, newArgName) destPnt) = do
+  let srcScheme = descriptor env srcPnt
+  let destScheme = descriptor env destPnt
   let checkName = printf "AddArg %s" (show newArgName)
   case sequenceT (srcScheme, destScheme) of
     TypeCheckResE _ -> (True, env)
-    TypeCheckResult _ (TopType, _) -> (False, env)
-    TypeCheckResult _ (srcUb, destUb) ->
-      case addArgToType env srcUb newArgName of
-        Just destUb' -> do
-          let destUb'' = intersectTypes feClassGraph destUb' destUb
-          let env' = setSchemeAct env destPnt destUb'' checkName
-          (False, env')
-        Nothing -> (False, env)
-executeConstraint env@FEnv{feClassGraph} (AddInferArg srcPnt destPnt) = do
-  let srcScheme = pointUb env srcPnt
-  let destScheme = pointUb env destPnt
+    TypeCheckResult _ (src, dest) -> do
+      let dest' = pure $ addArgToScheme env src newArgName dest
+      let env' = setScheme env destPnt dest' checkName
+      (False, env')
+executeConstraint env (AddInferArg srcPnt destPnt) = do
+  let srcScheme = descriptor env srcPnt
+  let destScheme = descriptor env destPnt
   case sequenceT (srcScheme, destScheme) of
     TypeCheckResE _ -> (True, env)
-    TypeCheckResult _ (TopType, _) -> (False, env)
-    TypeCheckResult _ (srcUb, destUb) ->
-      case addInferArgToType env srcUb of
-        Just destUb' -> do
-          let destUb'' = intersectTypes feClassGraph destUb' destUb
-          let env' = setSchemeAct env destPnt destUb'' "AddInferArg dest"
-          (False, env')
-        Nothing -> (False, env)
+    TypeCheckResult _ (src, dest) -> do
+      let dest' = pure $ addInferArgToScheme env src dest
+      let env' = setScheme env destPnt dest' "AddInferArg dest"
+      (False, env')
 executeConstraint env@FEnv{feClassGraph} (PowersetTo srcPnt destPnt) = do
   let srcScheme = pointUb env srcPnt
   let destScheme = pointUb env destPnt

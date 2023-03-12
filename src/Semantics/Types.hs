@@ -19,6 +19,8 @@
 module Semantics.Types where
 
 import           Data.Aeson
+import           Data.Bifunctor      (Bifunctor (bimap, first))
+import           Data.Either
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Data.Hashable
@@ -120,6 +122,16 @@ type TypeVarEnv = H.HashMap TypeVarName Type
 -- | The arguments in the surrounding context that could be referred to by a 'TypeVar' 'TVArg'
 type TypeArgEnv = H.HashMap ArgName Type
 
+-- | The arguments in the surrounding context that could be referred to by a 'TypeVar' 'TVArg'
+-- TODO: Use this as an intermediate step to combine vars and args completely (i.e. to(String) not to[String])
+--         Will need to deal with the issue that TVArg currently behaves locally.
+--         It is used mostly for id functions so that arrowDestType can keep the same id
+--         Will need to replace that with an alternative mechanism
+--         Perhaps, can make two types of TypeVar - local and foreign. Foreign are outside of partial and local inside.
+--         Substitute would then only affect foreign and various get operations would move references from local to foreign.
+--         Will also need support for non-linear pattern matching.
+type TypeVarArgEnv = H.HashMap TypeVarAux Type
+
 instance Show PartialType where
   show (PartialType ptName ptVars ptArgs ptPreds _) = concat [showName ptName, showTypeVars ptVars, showArgs ptArgs, showPreds ptPreds]
     where
@@ -199,6 +211,21 @@ bottomType = UnionType H.empty
 isBottomType :: Type -> Bool
 -- isBottomType t = compactType t == bottomType
 isBottomType t = t == bottomType
+
+ptVarArg :: PartialType -> TypeVarArgEnv
+ptVarArg PartialType{ptArgs, ptVars} = joinVarArgEnv ptVars ptArgs
+
+joinVarArgEnv :: TypeVarEnv -> TypeArgEnv -> TypeVarArgEnv
+joinVarArgEnv venv aenv = H.fromList (venv' ++ aenv')
+  where
+    venv' = map (first TVVar) $ H.toList venv
+    aenv' = map (first TVArg) $ H.toList aenv
+
+splitVarArgEnv :: TypeVarArgEnv -> (TypeVarEnv, TypeArgEnv)
+splitVarArgEnv vaenv = bimap H.fromList H.fromList $ partitionEithers $ map eitherVarArg $ H.toList vaenv
+  where
+    eitherVarArg (TVVar v, t) = Left (v, t)
+    eitherVarArg (TVArg v, t) = Right (v, t)
 
 relativeNameMatches :: RelativeName -> Name -> Bool
 relativeNameMatches rn n = split rn `L.isSuffixOf` split n
@@ -288,49 +315,42 @@ isSubPartialName a (PRelativeName b) = relativeNameMatches b (fromPartialName a)
 isSubPartialName _ _ = False
 
 -- | A private helper for 'isSubPartialOfWithEnv' that checks while ignore class expansions
-isSubPartialOfWithEnvBase :: ClassGraph -> TypeVarEnv -> TypeArgEnv -> PartialType -> PartialType -> Bool
-isSubPartialOfWithEnvBase _ _ _ PartialType{ptName=subName} PartialType{ptName=superName} | not $ isSubPartialName subName superName = False
-isSubPartialOfWithEnvBase _ _ _ PartialType{ptArgs=subArgs, ptArgMode=subArgMode} PartialType{ptArgs=superArgs} | subArgMode == PtArgExact && H.keysSet subArgs /= H.keysSet superArgs = False
-isSubPartialOfWithEnvBase _ _ _ PartialType{ptArgs=subArgs} PartialType{ptArgs=superArgs, ptArgMode=superArgMode} | superArgMode == PtArgExact && not (H.keysSet subArgs `isSubsetOf` H.keysSet superArgs) = False
-isSubPartialOfWithEnvBase classGraph venv aenv PartialType{ptVars=subVars, ptArgs=subArgs, ptPreds=subPreds} PartialType{ptVars=superVars, ptArgs=superArgs, ptPreds=superPreds} = hasAll subArgs superArgs && hasAllPreds && hasAll subVars superVars
+isSubPartialOfWithEnvBase :: ClassGraph -> TypeVarArgEnv -> PartialType -> PartialType -> Bool
+isSubPartialOfWithEnvBase _ _ PartialType{ptName=subName} PartialType{ptName=superName} | not $ isSubPartialName subName superName = False
+isSubPartialOfWithEnvBase _ _ PartialType{ptArgs=subArgs, ptArgMode=subArgMode} PartialType{ptArgs=superArgs} | subArgMode == PtArgExact && H.keysSet subArgs /= H.keysSet superArgs = False
+isSubPartialOfWithEnvBase _ _ PartialType{ptArgs=subArgs} PartialType{ptArgs=superArgs, ptArgMode=superArgMode} | superArgMode == PtArgExact && not (H.keysSet subArgs `isSubsetOf` H.keysSet superArgs) = False
+isSubPartialOfWithEnvBase classGraph vaenv sub@PartialType{ptVars=subVars, ptArgs=subArgs, ptPreds=subPreds} super@PartialType{ptVars=superVars, ptArgs=superArgs, ptPreds=superPreds} = hasAll subArgs superArgs && hasAllPreds && hasAll subVars superVars
   where
-    venv' = substituteVarsWithVarEnv venv <$> H.unionWith (intersectTypes classGraph) superVars subVars
-    aenv' = substituteArgsWithArgEnv aenv <$> H.unionWith (intersectTypes classGraph) superArgs subArgs
-    hasAll sb sp = and $ H.elems $ H.intersectionWith (isSubtypeOfWithEnv classGraph venv' aenv') sb sp
-    hasAllPreds = all (\subPred -> isSubtypeOfWithEnv classGraph venv' aenv' (singletonType subPred) (UnionType $ joinUnionType superPreds)) subPreds
+    vaenv' = substituteWithVarArgEnv vaenv <$> H.unionWith (intersectTypes classGraph) (ptVarArg super) (ptVarArg sub)
+    hasAll sb sp = and $ H.elems $ H.intersectionWith (isSubtypeOfWithEnv classGraph vaenv') sb sp
+    hasAllPreds = all (\subPred -> isSubtypeOfWithEnv classGraph vaenv' (singletonType subPred) (UnionType $ joinUnionType superPreds)) subPreds
 
 -- | Checks if one type contains another type. In set terminology, it is equivalent to subset or equal to ⊆.
-isSubPartialOfWithEnv :: ClassGraph -> TypeVarEnv -> TypeArgEnv -> PartialType -> PartialType -> Bool
-isSubPartialOfWithEnv classGraph venv aenv sub super | isSubPartialOfWithEnvBase classGraph venv aenv sub super = True
-isSubPartialOfWithEnv classGraph venv aenv sub super@PartialType{ptName=PClassName{}} = isSubtypeOfWithEnv classGraph venv aenv (singletonType sub) (expandPartial classGraph super)
-isSubPartialOfWithEnv _ _ _ _ _ = False
+isSubPartialOfWithEnv :: ClassGraph -> TypeVarArgEnv -> PartialType -> PartialType -> Bool
+isSubPartialOfWithEnv classGraph vaenv sub super | isSubPartialOfWithEnvBase classGraph vaenv sub super = True
+isSubPartialOfWithEnv classGraph vaenv sub super@PartialType{ptName=PClassName{}} = isSubtypeOfWithEnv classGraph vaenv (singletonType sub) (expandPartial classGraph super)
+isSubPartialOfWithEnv _ _ _ _ = False
 
 -- | Checks if one type contains another type. In set terminology, it is equivalent to subset or equal to ⊆.
-isSubtypeOfWithEnv :: ClassGraph -> TypeVarEnv -> TypeArgEnv -> Type -> Type -> Bool
-isSubtypeOfWithEnv _ _ _ _ TopType = True
-isSubtypeOfWithEnv _ _ _ t1 t2 | t1 == t2 = True
-isSubtypeOfWithEnv classGraph venv aenv (TypeVar (TVVar v)) t2 = case H.lookup v venv of
-  Just t1 -> isSubtypeOfWithEnv classGraph venv aenv t1 t2
-  Nothing -> error $ printf "isSubtypeOfWithEnv with unknown type var %s" v
-isSubtypeOfWithEnv classGraph venv aenv t1 (TypeVar (TVVar v)) = case H.lookup v venv of
-  Just t2 -> isSubtypeOfWithEnv classGraph venv aenv t1 t2
-  Nothing -> error $ printf "isSubtypeOfWithEnv with unknown type var %s" v
-isSubtypeOfWithEnv classGraph venv aenv (TypeVar (TVArg v)) t2 = case H.lookup v aenv of
-  Just t1 -> isSubtypeOfWithEnv classGraph venv aenv t1 t2
-  Nothing -> error $ printf "isSubtypeOfWithEnv with unknown type arg %s" v
-isSubtypeOfWithEnv classGraph venv aenv t1 (TypeVar (TVArg v)) = case H.lookup v aenv of
-  Just t2 -> isSubtypeOfWithEnv classGraph venv aenv t1 t2
-  Nothing -> error $ printf "isSubtypeOfWithEnv with unknown type arg %s" v
-isSubtypeOfWithEnv _ _ _ TopType t = t == TopType
-isSubtypeOfWithEnv classGraph venv aenv (UnionType subPartials) super@(UnionType superPartials) = all isSubPartial $ splitUnionType subPartials
+isSubtypeOfWithEnv :: ClassGraph -> TypeVarArgEnv -> Type -> Type -> Bool
+isSubtypeOfWithEnv _ _ _ TopType = True
+isSubtypeOfWithEnv _ _ t1 t2 | t1 == t2 = True
+isSubtypeOfWithEnv classGraph vaenv (TypeVar v) t2 = case H.lookup v vaenv of
+  Just t1 -> isSubtypeOfWithEnv classGraph vaenv t1 t2
+  Nothing -> error $ printf "isSubtypeOfWithEnv with unknown type var or arg %s" (show v)
+isSubtypeOfWithEnv classGraph vaenv t1 (TypeVar v) = case H.lookup v vaenv of
+  Just t2 -> isSubtypeOfWithEnv classGraph vaenv t1 t2
+  Nothing -> error $ printf "isSubtypeOfWithEnv with unknown type var or arg %s" (show v)
+isSubtypeOfWithEnv _ _ TopType t = t == TopType
+isSubtypeOfWithEnv classGraph vaenv (UnionType subPartials) super@(UnionType superPartials) = all isSubPartial $ splitUnionType subPartials
   where
-    isSubPartial sub | any (isSubPartialOfWithEnv classGraph venv aenv sub) $ splitUnionType superPartials = True
-    isSubPartial sub@PartialType{ptName=PClassName{}} | isSubtypeOfWithEnv classGraph venv aenv (expandPartial classGraph sub) super = True
+    isSubPartial sub | any (isSubPartialOfWithEnv classGraph vaenv sub) $ splitUnionType superPartials = True
+    isSubPartial sub@PartialType{ptName=PClassName{}} | isSubtypeOfWithEnv classGraph vaenv (expandPartial classGraph sub) super = True
     isSubPartial _ = False
 
 -- | Checks if one type contains another type. In set terminology, it is equivalent to subset or equal to ⊆.
 isSubtypeOf :: ClassGraph -> Type -> Type -> Bool
-isSubtypeOf classGraph = isSubtypeOfWithEnv classGraph H.empty H.empty
+isSubtypeOf classGraph = isSubtypeOfWithEnv classGraph H.empty
 
 -- | Checks if one type contains another type. In set terminology, it is equivalent to subset or equal to ⊆.
 isSubtypePartialOf :: ClassGraph -> PartialType -> Type -> Bool
@@ -340,9 +360,9 @@ isEqType :: ClassGraph -> Type -> Type -> Bool
 isEqType _ a b | a == b = True
 isEqType classGraph a b = isSubtypeOf classGraph a b && isSubtypeOf classGraph b a
 
-isEqTypeWithEnv :: ClassGraph -> TypeVarEnv -> TypeArgEnv -> Type -> Type -> Bool
-isEqTypeWithEnv _ _ _ a b | a == b = True
-isEqTypeWithEnv classGraph venv aenv a b = isSubtypeOfWithEnv classGraph venv aenv a b && isSubtypeOfWithEnv classGraph venv aenv b a
+isEqTypeWithEnv :: ClassGraph -> TypeVarArgEnv -> Type -> Type -> Bool
+isEqTypeWithEnv _ _ a b | a == b = True
+isEqTypeWithEnv classGraph vaenv a b = isSubtypeOfWithEnv classGraph vaenv a b && isSubtypeOfWithEnv classGraph vaenv b a
 
 -- |
 -- Join partials by checking if one is a subset of another (redundant) and removing it.
@@ -461,8 +481,8 @@ intersectPartialsBase classGraph venv (PartialType aName aVars aArgs aPreds aArg
 -- Takes the intersection of two 'PartialType' or returns Nothing if their intersection is 'bottomType'
 -- It uses the 'TypeVarEnv' for type variable arguments and determines any possible changes to the surrounding 'TypeVarEnv'.
 intersectPartials :: ClassGraph -> TypeVarEnv -> PartialType -> PartialType -> Maybe (TypeVarEnv, [PartialType])
-intersectPartials classGraph venv a b | ptName a /= ptName b && isSubPartialOfWithEnv classGraph venv H.empty a b = Just (venv, [a])
-intersectPartials classGraph venv a b | ptName a /= ptName b && isSubPartialOfWithEnv classGraph venv H.empty b a = Just (venv, [b])
+intersectPartials classGraph venv a b | ptName a /= ptName b && isSubPartialOfWithEnv classGraph (joinVarArgEnv venv H.empty) a b = Just (venv, [a])
+intersectPartials classGraph venv a b | ptName a /= ptName b && isSubPartialOfWithEnv classGraph (joinVarArgEnv venv H.empty) b a = Just (venv, [b])
 intersectPartials classGraph venv a b = case catMaybes [base, aExpandClass, bExpandClass] of
   [] -> Nothing
   combined -> Just $ foldr1 (\(venv1, a') (venv2, b') -> (mergeVarEnvs classGraph venv1 venv2, a' ++ b')) combined
@@ -552,9 +572,10 @@ substituteArgsWithArgEnv aenv (TypeVar (TVArg v)) = case H.lookup v aenv of
   Nothing -> error $ printf "Could not substitute unknown type arg %s" v
 substituteArgsWithArgEnv _ t = t
 
--- | Replaces the argument type variables 'TVArg' in a 'Type'
-substituteArgs :: Type -> Type
-substituteArgs = substituteArgsWithArgEnv H.empty
+substituteWithVarArgEnv :: TypeVarArgEnv -> Type -> Type
+substituteWithVarArgEnv vaenv = substituteArgsWithArgEnv aenv . substituteVarsWithVarEnv venv
+  where
+    (venv, aenv) = splitVarArgEnv vaenv
 
 -- | Gets an arg from a type while substituting the variables used in the types ptVars
 typeGetArg :: ArgName -> PartialType -> Maybe Type

@@ -216,17 +216,17 @@ isSubtypePartialOfWithObj :: (Show m, MetaDat m) => ClassGraph -> Object Expr m 
 isSubtypePartialOfWithObj classGraph obj sub = isSubtypeOfWithObj classGraph obj (singletonType sub)
 
 isSubtypeOfWithObj :: (Show m, MetaDat m) => ClassGraph -> Object Expr m -> Type -> Type -> Bool
-isSubtypeOfWithObj classGraph obj = isSubtypeOfWithEnv classGraph (getMetaType <$> objAppliedVars obj) (unionAllTypes classGraph . fmap getMetaType <$> exprArgs (objExpr obj))
+isSubtypeOfWithObj classGraph obj = isSubtypeOfWithEnv classGraph (joinVarArgEnv (getMetaType <$> objAppliedVars obj) (unionAllTypes classGraph . fmap getMetaType <$> exprArgs (objExpr obj)))
 
 isSubtypeOfWithObjSrc :: (Show m, MetaDat m) => ClassGraph -> PartialType -> ObjArr Expr m -> Type -> Type -> Bool
-isSubtypeOfWithObjSrc classGraph srcType obj = isSubtypeOfWithEnv classGraph (getMetaType <$> exprAppliedVars (oaObjExpr obj)) (snd <$> exprArgsWithSrc classGraph (oaObjExpr obj) srcType )
+isSubtypeOfWithObjSrc classGraph srcType obj = isSubtypeOfWithEnv classGraph (joinVarArgEnv (getMetaType <$> exprAppliedVars (oaObjExpr obj)) (snd <$> exprArgsWithSrc classGraph (oaObjExpr obj) srcType ))
 
 isSubtypePartialOfWithMetaEnv :: ClassGraph -> MetaVarEnv m -> MetaArgEnv m -> PartialType -> Type -> Bool
-isSubtypePartialOfWithMetaEnv classGraph varEnv argEnv sub = isSubtypeOfWithEnv classGraph (metaToTypeEnv varEnv) (metaToTypeEnv argEnv) (singletonType sub)
+isSubtypePartialOfWithMetaEnv classGraph varEnv argEnv sub = isSubtypeOfWithEnv classGraph (joinVarArgEnv (metaToTypeEnv varEnv) (metaToTypeEnv argEnv)) (singletonType sub)
   where
     metaToTypeEnv = fmap getMetaType
 
 isSubtypeOfWithMetaEnv :: ClassGraph -> MetaVarEnv m -> MetaArgEnv m -> Type -> Type -> Bool
-isSubtypeOfWithMetaEnv classGraph varEnv argEnv = isSubtypeOfWithEnv classGraph (metaToTypeEnv varEnv) (metaToTypeEnv argEnv)
+isSubtypeOfWithMetaEnv classGraph varEnv argEnv = isSubtypeOfWithEnv classGraph (joinVarArgEnv (metaToTypeEnv varEnv) (metaToTypeEnv argEnv))
   where
     metaToTypeEnv = fmap getMetaType

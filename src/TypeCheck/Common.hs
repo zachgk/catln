@@ -82,9 +82,9 @@ data Constraint
   | ArrowTo VarMeta VarMeta -- ArrowTo src dest
   | PropEq (VarMeta, ArgName) VarMeta -- ^ Both Actual and Req
   | VarEq (VarMeta, TypeVarName) VarMeta -- ^ Both Actual and Req
-  | AddArg (VarMeta, String) VarMeta
-  | AddInferArg VarMeta VarMeta -- AddInferArg base arg
-  | PowersetTo VarMeta VarMeta
+  | AddArg (VarMeta, String) VarMeta -- ^ Both Actual and Req,
+  | AddInferArg VarMeta VarMeta -- ^ Both Actual and Req, AddInferArg base arg
+  | PowersetTo VarMeta VarMeta -- ^ Actual (maybe should make it req too)
   | UnionOf VarMeta [VarMeta] -- ^ Both Actual and Req
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
@@ -245,7 +245,9 @@ typeCheckToRes tc = case tc of
   TypeCheckResE notes       -> CErr (map MkCNote notes)
 
 eqScheme :: FEnv -> TypeVarEnv -> TypeArgEnv -> Scheme -> Scheme -> Bool
-eqScheme FEnv{feClassGraph} venv aenv (TypeCheckResult _ (SType ub1 lb1 _)) (TypeCheckResult _ (SType ub2 lb2 _)) = isEqTypeWithEnv feClassGraph venv aenv ub1 ub2 && isEqTypeWithEnv feClassGraph venv aenv lb1 lb2
+eqScheme FEnv{feClassGraph} venv aenv (TypeCheckResult _ (SType ub1 lb1 _)) (TypeCheckResult _ (SType ub2 lb2 _)) = isEqTypeWithEnv feClassGraph vaenv ub1 ub2 && isEqTypeWithEnv feClassGraph vaenv lb1 lb2
+  where
+    vaenv = joinVarArgEnv venv aenv
 eqScheme _ _ _ a b = a == b
 
 getStypeActReq :: SchemeActReq -> SType -> Type
