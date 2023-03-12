@@ -170,14 +170,14 @@ exprArgsWithSrc _ HoleExpr{} _ = H.empty
 exprArgsWithSrc _ (Arg m n) src = H.singleton n ([m], singletonType src)
 exprArgsWithSrc classGraph (AliasExpr base alias) src = H.union (exprArgsWithSrc classGraph base src) (exprArgsWithSrc classGraph alias src)
 exprArgsWithSrc classGraph (VarApply _ e _ _) src = exprArgsWithSrc classGraph e src
-exprArgsWithSrc classGraph (TupleApply _ (_, be) arg) src@PartialType{ptArgs=srcArgs} = H.union (exprArgsWithSrc classGraph be src) (fromArg $ toTupleArg arg)
+exprArgsWithSrc classGraph (TupleApply _ (_, be) arg) src = H.union (exprArgsWithSrc classGraph be src) (fromArg $ toTupleArg arg)
   where
-    fromArg (TupleArgIO _ n e) = case H.lookup n srcArgs of
+    fromArg (TupleArgIO _ n e) = case typeGetArg n src of
       Just (UnionType srcArg) -> mergeMaps $ map (exprArgsWithSrc classGraph e) $ splitUnionType srcArg
       Just TopType -> (,TopType) <$> exprArgs e
       _ -> H.empty
     fromArg (TupleArgO e) = exprArgsWithSrc classGraph e src
-    fromArg (TupleArgI m n) = case H.lookup n srcArgs of
+    fromArg (TupleArgI m n) = case typeGetArg n src of
       Just srcArg -> H.singleton n ([m], srcArg)
       Nothing     -> H.empty
 

@@ -90,15 +90,14 @@ updateTypeProp env@FEnv{feClassGraph} actOrReq (superM, superType) propName (sub
     (UnionType supPartials, UnionType subPartials) -> do
       let supPartialList = splitUnionType supPartials
       let subPartialList = splitUnionType subPartials
-      let intersectedPartials sup@PartialType{ptArgs=supArgs, ptVars=supVars} sub = case H.lookup propName supArgs of
+      let intersectedPartials sup@PartialType{ptArgs=supArgs, ptVars=supVars} sub = case typeGetArg propName sup of
             Just (TypeVar (TVVar v)) -> do
               let supVar = H.lookupDefault TopType v supVars
               let newProp = intersectTypes feClassGraph supVar (singletonType sub)
               Just (sup{ptVars=H.insert v newProp supVars}, newProp)
             Just (TypeVar TVArg{}) -> error $ printf "Not yet implemented"
             Just supProp -> do
-              let supProp' = substituteVarsWithVarEnv supVars supProp
-              let newProp = intersectTypes feClassGraph supProp' (singletonType sub)
+              let newProp = intersectTypes feClassGraph supProp (singletonType sub)
               if isBottomType newProp
                 then Nothing
                 else Just (sup{ptArgs=H.insert propName newProp supArgs}, newProp)
@@ -116,16 +115,16 @@ updateSchemeProp env1 (superM, SType superAct superReq superDesc) propName (subM
     (env3, superReq', subReq') = updateTypeProp env2 SchemeReq (superM, superReq) propName (subM, subReq)
 
 -- | A helper for the 'VarEq' 'Constraint'
-updateSchemeVar :: FEnv -> SType -> TypeVarName -> SType -> (Scheme, Scheme)
-updateSchemeVar FEnv{feClassGraph} (SType superUb superLb superDesc) varName (SType subUb subLb subDesc) = (return $ SType superUb' superLb superDesc, return $ SType subUb' subLb subDesc)
+updateTypeVar :: FEnv -> Type -> TypeVarName -> Type -> (Type, Type)
+updateTypeVar FEnv{feClassGraph} superType varName subType = (superType', subType')
   where
-    (superUb', subUb') = case (superUb, subUb) of
+    (superType', subType') = case (superType, subType) of
       (TopType, sub) -> (TopType, sub)
       (UnionType supPartials, TopType) -> do
         let supPartialList = splitUnionType supPartials
         let getVar PartialType{ptVars=supVars} = H.lookup varName supVars
         let sub = unionAllTypes feClassGraph $ mapMaybe getVar supPartialList
-        (superUb, sub)
+        (superType, sub)
       (UnionType supPartials, UnionType subPartials) -> do
         let supPartialList = splitUnionType supPartials
         let subPartialList = splitUnionType subPartials
@@ -149,6 +148,13 @@ updateSchemeVar FEnv{feClassGraph} (SType superUb superLb superDesc) varName (ST
         let supPartialList' = catMaybes [intersectedPartials sup | sup <- supPartialList]
         (compactType feClassGraph $ UnionType $ joinUnionType supPartialList', subT)
       (sup, sub) -> error $ printf "Unsupported updateSchemeVar Ub (%s).%s = %s" (show sup) varName (show sub)
+
+-- | A helper for the 'VarEq' 'Constraint'
+updateSchemeVar :: FEnv -> SType -> TypeVarName -> SType -> (Scheme, Scheme)
+updateSchemeVar env (SType superAct superReq superDesc) varName (SType subAct subReq subDesc) = (return $ SType superAct' superReq' superDesc, return $ SType subAct' subReq' subDesc)
+  where
+    (superAct', subAct') = updateTypeVar env superAct varName subAct
+    (superReq', subReq') = updateTypeVar env superReq varName subReq
 
 -- | A helper for the 'AddArg' 'Constraint'
 addArgToType :: FEnv -> Type -> ArgName -> Maybe Type

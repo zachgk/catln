@@ -71,6 +71,9 @@ data FEnv = FEnv { fePnts               :: IM.IntMap Scheme
 
 type UnionObj = (Pnt, Pnt) -- a union of all TypeObj for argument inference, union of all Object types for function limiting
 
+-- |
+-- Constraints represent known relationships between VarMeta formed during Encode
+-- Each constraint can affect other the actual type, the required type, or both for the "Scheme".
 data Constraint
   = EqualsKnown VarMeta Type -- ^ Both Actual and Req
   | EqPoints VarMeta VarMeta -- ^ Both Actual and Req
@@ -78,7 +81,7 @@ data Constraint
   | BoundedByObjs VarMeta
   | ArrowTo VarMeta VarMeta -- ArrowTo src dest
   | PropEq (VarMeta, ArgName) VarMeta -- ^ Both Actual and Req
-  | VarEq (VarMeta, TypeVarName) VarMeta
+  | VarEq (VarMeta, TypeVarName) VarMeta -- ^ Both Actual and Req
   | AddArg (VarMeta, String) VarMeta
   | AddInferArg VarMeta VarMeta -- AddInferArg base arg
   | PowersetTo VarMeta VarMeta
