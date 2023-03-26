@@ -38,7 +38,7 @@ function DocsPage(props) {
 
 function Main(props) {
   const {prgmName} = props;
-  let [page, typed, annots] = props.data;
+  let [page, annots] = props.data;
 
   const classToType = typed[0][1][1];
 

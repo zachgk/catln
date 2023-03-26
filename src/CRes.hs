@@ -139,6 +139,10 @@ failOnErrorNotes (CRes notes r) = if any (\n -> typeCNote n == CNoteError) notes
   else CRes notes r
 failOnErrorNotes (CErr notes) = CErr notes
 
+cresToMaybe :: CRes r -> Maybe r
+cresToMaybe (CRes _ r) = Just r
+cresToMaybe CErr{}     = Nothing
+
 catCRes :: [CRes r] -> CRes [r]
 catCRes [] = return []
 catCRes (CRes notes r:rs) = do

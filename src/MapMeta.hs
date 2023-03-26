@@ -14,7 +14,8 @@
 
 module MapMeta where
 
-import           Data.Maybe     (fromMaybe)
+import qualified Data.HashMap.Strict as H
+import           Data.Maybe          (fromMaybe)
 import           Semantics
 import           Semantics.Prgm
 
@@ -53,6 +54,15 @@ class MapMeta m where
 
 clearMetaDat :: MetaFun a ()
 clearMetaDat _ (Meta p l _) = Meta p l ()
+
+interleaveMeta :: H.HashMap CodeRangeDat a -> MetaFun () (Maybe a)
+interleaveMeta dat _ (Meta t p _) = Meta t p (p >>= (`H.lookup` dat))
+
+zipMetaFun :: MetaFun a b -> MetaFun a c -> MetaFun a (b, c)
+zipMetaFun f1 f2 tp m@(Meta t p _) = Meta t p (db, dc)
+  where
+    (Meta _ _ db) = f1 tp m
+    (Meta _ _ dc) = f2 tp m
 
 --
 

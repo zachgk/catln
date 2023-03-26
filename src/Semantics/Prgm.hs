@@ -60,7 +60,8 @@ data Hole
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 -- Metadata for the Programs
-type CodeRange = Maybe (SourcePos, SourcePos, String)
+type CodeRangeDat = (SourcePos, SourcePos, String)
+type CodeRange = Maybe CodeRangeDat
 class (Eq m, Ord m) => MetaDat m where
   emptyMetaDat :: m
 -- | Contains the type, position, and supplemental 'MetaDat' m
@@ -79,7 +80,7 @@ getMetaType (Meta t _ _) = t
 getMetaPos :: Meta m -> CodeRange
 getMetaPos (Meta _ pos _) = pos
 
-showCodeRange :: (SourcePos, SourcePos, String) -> String
+showCodeRange :: CodeRangeDat -> String
 showCodeRange (start, end, _) = printf "%s:%d:%d-%d:%d" (sourceName start) (unPos $ sourceLine start) (unPos $ sourceColumn start) (unPos $ sourceLine end) (unPos $ sourceColumn end)
 
 -- Expr after desugar

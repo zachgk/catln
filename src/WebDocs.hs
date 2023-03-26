@@ -26,14 +26,18 @@ import           GHC.Generics                  (Generic)
 import           Network.Wai.Middleware.Static
 
 import           CRes
+import           Data.Bifunctor                (Bifunctor (first))
 import           Data.Graph
 import           Data.Maybe                    (fromJust)
 import           Eval                          (evalAnnots, evalBuild, evalRun)
 import           Eval.Common                   (EvalResult, Val (..))
+import           MapMeta                       (interleaveMeta, zipMetaFun)
 import           Semantics
+import           Semantics.Interleave          (interleavePrgm)
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Desugarf            (desFiles)
+import           Syntax.Ct.MapRawMeta          (mapMetaRawPrgm)
 import           Syntax.Ct.Parser.Syntax       (DesPrgm, PPrgmGraphData)
 import           Syntax.Parsers                (readFiles)
 import           TypeCheck                     (typecheckPrgm,
@@ -179,8 +183,10 @@ docApiBase provider = do
     annots <- liftAndCatchIO $ getEvalAnnots provider prgmName
     maybeJson $ do
       rawPrgm <- maybeRawPrgms'
-      tprgm <- maybeTPrgms'
-      return (rawPrgm, tprgm, annots)
+      let tprgm' = maybe H.empty interleavePrgm (cresToMaybe maybeTPrgms')
+      let annots' = H.fromList $ map (first (fromJust . getMetaPos . getExprMeta)) annots
+      let rawPrgm' = mapMetaRawPrgm (zipMetaFun (interleaveMeta tprgm') (interleaveMeta annots')) rawPrgm
+      return rawPrgm'
 
   get "/api/desugar" $ do
     maybePrgmGraph <- liftAndCatchIO $ getPrgm provider
