@@ -33,24 +33,25 @@ formatImport :: FileImport -> Builder
 formatImport imp = do
   literal $ "import " ++ imp ++ "\n"
 
+formatPartialType :: PartialType -> String
+formatPartialType (PartialType ptName ptVars ptArgs ptPreds _) = concat [showName ptName, showTypeVars ptVars, showArgs ptArgs, showPreds ptPreds]
+  where
+    showName p  = fromPartialName p
+    showArg (argName, argVal) = if argVal == TopType
+      then argName
+      else argName ++ ": " ++ formatType argVal
+    showTypeVars vars | H.null vars = ""
+    showTypeVars vars = printf "[%s]" (intercalate ", " $ map showArg $ H.toList vars)
+    showArgs args | H.null args = ""
+    showArgs args = printf "(%s)" (intercalate ", " $ map showArg $ H.toList args)
+    showPreds preds | null preds = ""
+    showPreds preds = printf "| %s" (intercalate ", " $ map formatPartialType preds)
+
 formatType :: Type -> String
 formatType TopType = ""
 formatType (TypeVar (TVVar t)) = t
 formatType (TypeVar TVArg{}) = error "Unexpected TVArg in formatter"
 formatType (UnionType partials) = join $ map formatPartialType $ splitUnionType partials
-  where
-    formatPartialType (PartialType ptName ptVars ptArgs ptPreds _) = concat [showName ptName, showTypeVars ptVars, showArgs ptArgs, showPreds ptPreds]
-      where
-        showName p  = fromPartialName p
-        showArg (argName, argVal) = if argVal == TopType
-          then argName
-          else argName ++ ": " ++ formatType argVal
-        showTypeVars vars | H.null vars = ""
-        showTypeVars vars = printf "[%s]" (intercalate ", " $ map showArg $ H.toList vars)
-        showArgs args | H.null args = ""
-        showArgs args = printf "(%s)" (intercalate ", " $ map showArg $ H.toList args)
-        showPreds preds | null preds = ""
-        showPreds preds = printf "| %s" (intercalate ", " $ map formatPartialType preds)
 
 formatMeta :: Meta m -> String
 formatMeta m = case getMetaType m of
@@ -117,29 +118,14 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
   where
     statement' = case statement of
       RawDeclStatement objArr -> formatObjArr objArr
-      MultiTypeDefStatement (MultiTypeDef className classVars objs) _ -> printf "class %s%s = %s" className showClassVars showObjs
+      MultiTypeDefStatement (MultiTypeDef clss objs) _ -> printf "class %s = %s" (formatPartialType clss) showObjs
         where
-          showClassVars :: String
-          showClassVars = if null classVars
-                then ""
-                else printf "[%s]" $ intercalate ", " $ map showClassVar $ H.toList classVars
-          showClassVar (n, t) = if t == TopType
-            then n
-            else printf "%s = %s" n (formatType t)
-
           showObjs = intercalate " | " $ map formatExpr objs
       TypeDefStatement typeExpr -> if "#" `isPrefixOf` exprPath typeExpr
         then printf "annot %s" (formatExpr typeExpr)
         else printf "data %s" (formatExpr typeExpr)
       RawClassDefStatement (obj, className) _ -> printf "every %s isa %s" (formatExpr obj) className
-      RawClassDeclStatement (className, classVars) _ -> printf "class %s%s" className showClassVars
-        where
-          showClassVars :: String
-          showClassVars = if null classVars
-                then ""
-                else printf "[%s]" $ intercalate ", " $ map showClassVar $ H.toList classVars
-          showClassVar (n, TopType) = n
-          showClassVar (n, t)       = printf "%s = %s" n (formatType t)
+      RawClassDeclStatement clss _ -> printf "class %s" (formatPartialType clss)
       RawExprStatement e -> formatExpr e
       RawAnnot annot | exprPath annot == mdAnnot -> printf "# %s" annotText'
         where

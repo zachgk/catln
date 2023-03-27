@@ -33,7 +33,7 @@ instance MapMeta RawExpr where
 
 mapMetaRawStatement :: (MapMeta e) => MetaFun a b -> RawStatement e a -> RawStatement e b
 mapMetaRawStatement f (RawDeclStatement objArr) = RawDeclStatement (mapMetaObjArr f Nothing objArr)
-mapMetaRawStatement f (MultiTypeDefStatement (MultiTypeDef className vars objs) path) = MultiTypeDefStatement (MultiTypeDef className vars (map (mapMeta f InputMeta) objs)) path
+mapMetaRawStatement f (MultiTypeDefStatement (MultiTypeDef clss objs) path) = MultiTypeDefStatement (MultiTypeDef clss (map (mapMeta f InputMeta) objs)) path
 mapMetaRawStatement f (TypeDefStatement obj) = TypeDefStatement (mapMeta f InputMeta obj)
 mapMetaRawStatement f (RawClassDefStatement (typeExpr, className) path) = RawClassDefStatement (mapMeta f InputMeta typeExpr, className) path
 mapMetaRawStatement _ (RawClassDeclStatement d p) = RawClassDeclStatement d p

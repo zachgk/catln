@@ -45,12 +45,10 @@ data RawExpr m
   | RawList (Meta m) [RawExpr m]
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
-data MultiTypeDef m = MultiTypeDef ClassName (H.HashMap TypeVarName Type) [RawExpr m]
+data MultiTypeDef m = MultiTypeDef PartialType [RawExpr m]
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 type RawClassDef m = (RawExpr m, ClassName)
-
-type RawClassDecl = (ClassName, H.HashMap TypeVarName Type)
 
 data Path = Relative String | Absolute String
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
@@ -60,7 +58,7 @@ data RawStatement e m
   | MultiTypeDefStatement (MultiTypeDef m) Path
   | TypeDefStatement (RawExpr m)
   | RawClassDefStatement (RawClassDef m) Path
-  | RawClassDeclStatement RawClassDecl Path
+  | RawClassDeclStatement PartialType Path
   | RawExprStatement (RawExpr m)
   | RawAnnot (CompAnnot (RawExpr m))
   | RawModule String Path

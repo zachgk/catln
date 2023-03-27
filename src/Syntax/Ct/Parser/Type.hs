@@ -35,15 +35,15 @@ pMultiTerm = sepBy1 term (symbol "|")
 pClassStatement :: Parser PStatement
 pClassStatement = do
   _ <- symbol "class"
-  PartialType{ptName, ptArgs, ptVars=vars} <- exprToPartialType <$> term
+  clss@PartialType{ptName, ptArgs} <- exprToPartialType <$> term
   unless (H.null ptArgs) $ fail "Classes do not currently support arguments"
   let name = fromPartialName ptName
   maybeTypes <- optional $ do
     _ <- symbol "="
-    MultiTypeDef name vars <$> pMultiTerm
+    MultiTypeDef clss <$> pMultiTerm
   return $ case maybeTypes of
     Just types -> MultiTypeDefStatement types (getPath name)
-    Nothing    -> RawClassDeclStatement (name, vars) (getPath name)
+    Nothing    -> RawClassDeclStatement clss (getPath name)
 
 pAnnotDefStatement :: Parser PStatement
 pAnnotDefStatement = do
