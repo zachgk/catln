@@ -104,7 +104,7 @@ newtype ClassGraph = ClassGraph (GraphData CGNode PartialName)
 
 -- | A class or type node within the 'ClassGraph'
 data CGNode
-  = CGClass (Sealed, H.HashMap TypeVarName Type, [Type], Maybe DocComment, ClassName)
+  = CGClass (Sealed, PartialType, [Type], Maybe DocComment)
   | CGType
   deriving (Eq, Ord, Show)
 
@@ -113,7 +113,7 @@ data CGNode
 -- It is still used as the JSON representation.
 type ClassMap = (
     H.HashMap TypeName (S.HashSet ClassName),
-    H.HashMap ClassName (Sealed, H.HashMap TypeVarName Type, [Type], Maybe String, String)
+    H.HashMap ClassName (Sealed, PartialType, [Type], Maybe String)
   )
 
 -- | The type variables in the surrounding context that could be referred to by a 'TypeVar' 'TVVar'
@@ -295,7 +295,7 @@ expandPartial _ p@PartialType{ptName=PClassName{}, ptArgs} | not (H.null ptArgs)
 expandPartial classGraph@(ClassGraph cg) PartialType{ptName=className@PClassName{}, ptVars=classVarsP} = expanded
   where
     expanded = case graphLookup className cg of
-      Just (CGClass (_, classVarsDecl, classTypes, _, _)) -> unionAllTypes classGraph $ map mapClassType classTypes
+      Just (CGClass (_, PartialType{ptVars=classVarsDecl}, classTypes, _)) -> unionAllTypes classGraph $ map mapClassType classTypes
         where
           classVars = H.unionWith (intersectTypes classGraph) classVarsP classVarsDecl
           mapClassType TopType = TopType

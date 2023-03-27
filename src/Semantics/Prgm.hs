@@ -321,13 +321,15 @@ mergeClassGraphs (ClassGraph classGraphA) (ClassGraph classGraphB) = ClassGraph 
   where
     graphToMap (g, nodeFromVertex, _) = H.fromList $ map ((\classData@(_, className, _) -> (className, classData)) . nodeFromVertex) $ vertices g
     mapToGraph = graphFromEdges . H.elems
-    mergeClasses (CGClass (sealedA, classVarsA, setA, docA, pathA), className, subClassNamesA) (CGClass (sealedB, classVarsB, setB, docB, _), _, subClassNamesB) = if sealedA == sealedB
-          then (CGClass (sealedA, H.unionWith (unionTypes (ClassGraph classGraphA)) classVarsA classVarsB, setA ++ setB, mergeDoc docA docB, pathA), className, subClassNamesA ++ subClassNamesB)
+    mergeClasses (CGClass (sealedA, classA, setA, docA), className, subClassNamesA) (CGClass (sealedB, classB, setB, docB), _, subClassNamesB) = if sealedA == sealedB
+          then (CGClass (sealedA, mergeClassPartials classA classB, setA ++ setB, mergeDoc docA docB), className, subClassNamesA ++ subClassNamesB)
           else error "Added to sealed class definition"
     mergeClasses node@(CGClass{}, _, _) (CGType{}, _, _) = node
     mergeClasses (CGType{}, _, _) node@(CGClass{}, _, _) = node
     mergeClasses (CGType, name, []) (CGType, _, []) = (CGType, name, [])
     mergeClasses cg1 cg2 = error $ printf "Unexpected input to mergeClassGraphs: \n\t%s \n\t%s" (show cg1) (show cg2)
+
+    mergeClassPartials clss@PartialType{ptVars=varsA} PartialType{ptVars=varsB} = clss{ptVars = H.unionWith (unionTypes (ClassGraph classGraphA)) varsA varsB}
 
 mergePrgm :: Prgm e m -> Prgm e m -> Prgm e m
 mergePrgm (objMap1, classGraph1, annots1) (objMap2, classGraph2, annots2) = (

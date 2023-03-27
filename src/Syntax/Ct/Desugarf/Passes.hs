@@ -52,7 +52,7 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, classGraph
   where
     classGraph' = ClassGraph $ graphFromEdges $ map mapClassEntry $ graphToNodes cg
     mapClassEntry (node, tp, subTypes) = (mapCGNode node, resolveName True tp, map (resolveName True) subTypes)
-    mapCGNode (CGClass (s, vs, ts, doc, p)) = CGClass (s, fmap (mapType True) vs, fmap (mapType True) ts, doc, p)
+    mapCGNode (CGClass (s, clss, ts, doc)) = CGClass (s, mapPartial True clss, fmap (mapType True) ts, doc)
     mapCGNode CGType = CGType
     classNames = nub $ listClassNames fullPrgmClassGraph
     objNames = nub $ map oaObjPath (concatMap getRecursiveExprObjs fullPrgmObjMap)
@@ -101,7 +101,7 @@ expandDataReferences :: DesPrgm -> DesPrgm -> DesPrgm
 expandDataReferences (fullPrgmObjMap, _, _) (objMap, classGraph@(ClassGraph cg), annots) = mapMetaExprPrgm aux (objMap, classGraph', annots)
   where
     classGraph' = ClassGraph $ graphFromEdges $ mapFst3 mapCGNode $ graphToNodes cg
-    mapCGNode (CGClass (s, vs, ts, doc, p)) = CGClass (s, fmap mapType vs, fmap mapType ts, doc, p)
+    mapCGNode (CGClass (s, clss, ts, doc)) = CGClass (s, clss, fmap mapType ts, doc)
     mapCGNode CGType = CGType
     -- objExpansions = H.fromList $ concatMap (\(obj@ExprObject{eobjBasis}, _, _) -> ([(eobjPath obj, obj) | eobjBasis == TypeObj])) fullPrgmObjMap
     objExpansions = H.fromList $ concatMap (\oa@ObjArr{oaBasis} -> ([(oaObjPath oa, oa) | oaBasis == TypeObj])) fullPrgmObjMap
@@ -117,11 +117,11 @@ expandDataReferences (fullPrgmObjMap, _, _) (objMap, classGraph@(ClassGraph cg),
     mapType tp@(TypeVar TVVar{}) = tp
     mapType (TypeVar TVArg{}) = error "Invalid arg type"
     mapType (UnionType partials) = unionAllTypes classGraph $ map mapPartial $ splitUnionType partials
-      where
-        mapPartial PartialType{ptName=PTypeName name} = case suffixLookup name (H.keys objExpansions) of
-          Just fname -> case H.lookup fname objExpansions of
-            Just obj -> getMetaType $ getExprMeta $ oaObjExpr obj
-            Nothing -> error $ printf "Data not found in expandDataReferences for %s with objExpansions %s" name (show $ H.keys objExpansions)
-          Nothing -> error $ printf "Data not found in expandDataReferences for %s with objExpansions %s" name (show $ H.keys objExpansions)
-        mapPartial partial@PartialType{ptName=PClassName{}} = singletonType partial
-        mapPartial partial@PartialType{ptName=PRelativeName{}} = singletonType partial
+
+    mapPartial PartialType{ptName=PTypeName name} = case suffixLookup name (H.keys objExpansions) of
+      Just fname -> case H.lookup fname objExpansions of
+        Just obj -> getMetaType $ getExprMeta $ oaObjExpr obj
+        Nothing -> error $ printf "Data not found in expandDataReferences for %s with objExpansions %s" name (show $ H.keys objExpansions)
+      Nothing -> error $ printf "Data not found in expandDataReferences for %s with objExpansions %s" name (show $ H.keys objExpansions)
+    mapPartial partial@PartialType{ptName=PClassName{}} = singletonType partial
+    mapPartial partial@PartialType{ptName=PRelativeName{}} = singletonType partial
