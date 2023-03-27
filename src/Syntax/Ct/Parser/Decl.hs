@@ -61,10 +61,10 @@ pDeclStatement = do
       Nothing | getMetaType arrMeta == TopType -> return $ RawExprStatement inExpr
 
       -- Declaration
-      _ | getMetaType arrMeta /= TopType -> return $ RawDeclStatement $ RawDecl roa
+      _ | getMetaType arrMeta /= TopType -> return $ RawDeclStatement roa
 
       -- Must be either a declaration or an expression
       _ -> fail $ printf "Invalid declaration or expression: %s" (show roa)
 
     -- Equals and expr (inline definition)
-    Just{} -> return $ RawDeclStatement $ RawDecl roa
+    Just{} -> return $ RawDeclStatement roa

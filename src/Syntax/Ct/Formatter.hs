@@ -116,7 +116,7 @@ formatStatement :: (Show m) => Int -> RawStatement RawExpr m -> String
 formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
   where
     statement' = case statement of
-      RawDeclStatement (RawDecl objArr) -> formatObjArr objArr
+      RawDeclStatement objArr -> formatObjArr objArr
       MultiTypeDefStatement (MultiTypeDef className classVars objs) _ -> printf "class %s%s = %s" className showClassVars showObjs
         where
           showClassVars :: String

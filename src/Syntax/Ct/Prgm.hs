@@ -45,9 +45,6 @@ data RawExpr m
   | RawList (Meta m) [RawExpr m]
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
-newtype RawDecl e m = RawDecl (ObjArr e m)
-  deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
-
 newtype TypeDef m = TypeDef (RawExpr m)
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
@@ -62,7 +59,7 @@ data Path = Relative String | Absolute String
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 data RawStatement e m
-  = RawDeclStatement (RawDecl e m)
+  = RawDeclStatement (ObjArr e m)
   | MultiTypeDefStatement (MultiTypeDef m) Path
   | TypeDefStatement (TypeDef m)
   | RawClassDefStatement (RawClassDef m) Path

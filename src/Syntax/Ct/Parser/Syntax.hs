@@ -29,7 +29,6 @@ type PExpr = RawExpr ParseMetaDat
 type PObjExpr = PExpr
 type PCompAnnot = CompAnnot PExpr
 type PGuardExpr = GuardExpr RawExpr ParseMetaDat
-type PDecl = RawDecl RawExpr ParseMetaDat
 type PObjectMap = ObjectMap RawExpr ParseMetaDat
 type PMultiTypeDef = MultiTypeDef ParseMetaDat
 type PTypeDef = TypeDef ParseMetaDat
@@ -43,7 +42,7 @@ type PPrgm = RawPrgm ParseMetaDat
 type PPrgmGraphData = GraphData PPrgm String
 type PReplRes = ReplRes ParseMetaDat
 
-type PDeclTree = (PDecl, [PStatementTree])
+type PDeclTree = (PObjArr, [PStatementTree])
 
 type PSExpr = Expr ParseMetaDat
 type PSCompAnnot = CompAnnot PSExpr

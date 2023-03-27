@@ -26,7 +26,7 @@ import           Syntax.Ct.Prgm
 
 type ParentArgs = H.HashMap ArgName [ParseMeta]
 
-splitDeclSubStatements :: [PStatementTree] -> ([(PDecl, [PStatementTree])], [PCompAnnot])
+splitDeclSubStatements :: [PStatementTree] -> ([(PObjArr, [PStatementTree])], [PCompAnnot])
 splitDeclSubStatements = aux ([], [])
   where
     aux (decls, annots) [] = (decls, annots)

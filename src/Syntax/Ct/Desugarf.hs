@@ -39,7 +39,7 @@ type StatementEnv = (String, [DesCompAnnot])
 
 -- | Flattens a declaration tree (with nested declarations)
 flattenNestedDeclarations :: PDeclTree -> [PSemiDecl]
-flattenNestedDeclarations (RawDecl oa@ObjArr{oaObj=Just (GuardExpr objExpression _), oaAnnots}, subStatements) = decl':subDecls4
+flattenNestedDeclarations (oa@ObjArr{oaObj=Just (GuardExpr objExpression _), oaAnnots}, subStatements) = decl':subDecls4
   where
     objDoc = desObjDocComment subStatements
     (subDecls, annots1) = splitDeclSubStatements subStatements
@@ -123,7 +123,7 @@ declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl oa@ObjArr{oaAnnots, oaArr
       oaArr = fmap (desGuardExpr argMetaMap) oaArr
       }
 
-desDecl :: StatementEnv -> PDecl -> [PStatementTree] -> CRes DesPrgm
+desDecl :: StatementEnv -> PObjArr -> [PStatementTree] -> CRes DesPrgm
 desDecl statementEnv decl subStatements = do
   preprocessed <- declPreprocessors (decl, subStatements)
   let objMap = map (declToObjArrow statementEnv) $ concatMap flattenNestedDeclarations preprocessed
