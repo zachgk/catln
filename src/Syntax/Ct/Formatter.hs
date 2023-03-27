@@ -128,7 +128,7 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
             else printf "%s = %s" n (formatType t)
 
           showObjs = intercalate " | " $ map formatExpr objs
-      TypeDefStatement (TypeDef typeExpr) -> if "#" `isPrefixOf` exprPath typeExpr
+      TypeDefStatement typeExpr -> if "#" `isPrefixOf` exprPath typeExpr
         then printf "annot %s" (formatExpr typeExpr)
         else printf "data %s" (formatExpr typeExpr)
       RawClassDefStatement (obj, className) _ -> printf "every %s isa %s" (formatExpr obj) className

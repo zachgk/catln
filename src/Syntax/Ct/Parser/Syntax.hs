@@ -31,7 +31,6 @@ type PCompAnnot = CompAnnot PExpr
 type PGuardExpr = GuardExpr RawExpr ParseMetaDat
 type PObjectMap = ObjectMap RawExpr ParseMetaDat
 type PMultiTypeDef = MultiTypeDef ParseMetaDat
-type PTypeDef = TypeDef ParseMetaDat
 type PObjArr = ObjArr RawExpr ParseMetaDat
 type PStatement = RawStatement RawExpr ParseMetaDat
 type PStatementTree = RawStatementTree RawExpr ParseMetaDat

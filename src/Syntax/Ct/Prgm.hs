@@ -45,9 +45,6 @@ data RawExpr m
   | RawList (Meta m) [RawExpr m]
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
-newtype TypeDef m = TypeDef (RawExpr m)
-  deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
-
 data MultiTypeDef m = MultiTypeDef ClassName (H.HashMap TypeVarName Type) [RawExpr m]
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
@@ -61,7 +58,7 @@ data Path = Relative String | Absolute String
 data RawStatement e m
   = RawDeclStatement (ObjArr e m)
   | MultiTypeDefStatement (MultiTypeDef m) Path
-  | TypeDefStatement (TypeDef m)
+  | TypeDefStatement (RawExpr m)
   | RawClassDefStatement (RawClassDef m) Path
   | RawClassDeclStatement RawClassDecl Path
   | RawExprStatement (RawExpr m)

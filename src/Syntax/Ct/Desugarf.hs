@@ -194,8 +194,8 @@ desClassDecl statementEnv@(inheritPath, _) (className, classVars) subStatements 
       Relative p -> inheritPath ++ "/" ++ p
       Absolute p -> p
 
-desTypeDef :: StatementEnv -> PTypeDef -> [RawStatementTree RawExpr ParseMetaDat] -> CRes DesPrgm
-desTypeDef statementEnv@(inheritPath, _) (TypeDef typeExpr) subStatements = do
+desTypeDef :: StatementEnv -> PExpr -> [RawStatementTree RawExpr ParseMetaDat] -> CRes DesPrgm
+desTypeDef statementEnv@(inheritPath, _) typeExpr subStatements = do
   (subPrgm, annots) <- desInheritingSubstatements statementEnv (getPath $ exprPath typeExpr) subStatements
   let typeExpr' = semiDesExpr SDInput Nothing typeExpr
   let obj = desObj False inheritPath UseRelativeName $ ObjArr (Just (GuardExpr typeExpr' Nothing)) TypeObj (desObjDocComment subStatements) annots emptyMetaN Nothing

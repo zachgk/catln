@@ -48,14 +48,12 @@ pClassStatement = do
 pAnnotDefStatement :: Parser PStatement
 pAnnotDefStatement = do
   _ <- symbol "annot"
-  rawAnnot <- TypeDef <$> term
-  return $ TypeDefStatement rawAnnot
+  TypeDefStatement <$> term
 
 pTypeDefStatement :: Parser PStatement
 pTypeDefStatement = do
   _ <- symbol "data"
-  def <- TypeDef <$> term
-  return $ TypeDefStatement def
+  TypeDefStatement <$> term
 
 pClassDefStatement :: Parser PStatement
 pClassDefStatement = do
