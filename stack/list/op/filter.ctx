@@ -1,0 +1,32 @@
+# # Filtering
+
+  The filter is a basic higher-order operation on a [List].
+  It will apply a predicate function to the [List] and keep only the operations that pass the predicate.
+  Here is an example:
+
+> [1, 2, 3, 4, 5].filter(even)
+
+:List<$T>.filter(f(x: $T) -> Bool) -> List<$T>
+
+:List<$T>.filter(f=predicate) = this.flatMap(f(x) = predicate(x).if(then=[x], else=[]))
+  # The simplest definition of filter can be done in terms of the [flatMap] operation.
+
+# In addition, there are a number of useful refinements to [filter].
+
+#refinement
+
+  :List<$T>.filter(f(x: $T) -> True) = this
+    # If the list is passed a predicate which is always [True], then it returns the main list.
+
+  :List<$T>.filter(f(x: $T) -> False) = []
+    # If the list is passed a predicate which is always [False], then it returns nothing.
+
+  :List_size(size).filter(f) -> List_size(Int_lte(size))
+    # As [filter] only removes elements from the list, we know that the resulting list has at most the same size
+
+  :List<$T>.filter(f(x: $T) -> Bool) -> List<$T2: $T> | f($T2) ?-> True
+    # The type of the filtered list is not exactly the same as the input list.
+      Only the type of elements that pass the predicate can be found in the filtered list.
+
+      In the example earlier, we filter based on even numbers.
+      Therefore, we know that the filtered list contains not just [Int], but more precisely [Int_even].

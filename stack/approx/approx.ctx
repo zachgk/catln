@@ -1,0 +1,26 @@
+# # Approximation
+
+  Approximation is a fundamental primitive to bridge the gap between idealism and reality.
+  It is a combination of several concepts: probaility, uncertainty, and obviously approximation.
+
+class Approx<$T>
+  # The basic idea of [Approx] is fairly simple.
+  You have an object of type [$T], but you don't quite know which element of [$T] it is.
+
+  Take [Num] as an example.
+  There are various scenarios in which you might not have a [Num] but not be sure about it.
+
+  With [Approx], there are two levels of knowledge.
+  The first is type-level knowledge.
+  This is known before the code is run.
+  For example, if you have a dice roll then the result can be represented as an [Approx<Num>].
+  Before it is rolled, you know it is from 1 to 6 but you don't know which it is.
+
+  The other level of knowledge is runtime-level.
+  This contains probabilities or uncertainties that are not figured out until runtime.
+  For example, if you are playing a game and learn your roll is >3, it changes the precision of the approximation.
+
+data Probability = Num_from(0)_until(1)
+
+  data Distribution<$T>(p(x: $T) -> Prob)
+    # A [Probability/Distribution] is a function that ascribes a probability to every possible value.
