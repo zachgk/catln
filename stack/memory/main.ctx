@@ -1,0 +1,83 @@
+# # Memory
+
+  The [Memory] is designed to work as part of [Context].
+  The fundamental idea of [Memory] is change.
+
+  It can best be pictured by a visualization where you see the program state with a slider on the bottom.
+  Moving the slider forwards moves time forwards and shows later values of the memory.
+  Moving it backwords will show earlier values of the memory.
+  If this isn't the way you would picture and understand the application, it is probably not a good fit for the task.
+
+  It also enables imperative code.
+  Imperative code is defined by the usage of [Memory].
+  However, [Memory] is not a fundamental aspect and shouldn't be built-in.
+  Instead, using it as a library helps to bridge it with other concepts, but still enables the same programming strategies as imperative languages.
+
+class Memory[$V: Var]
+  # The basic class [Memory] should be put inside the [Context] to enable memory-based programming.
+
+  class Var[$T]
+    # The class representing a variable within the [Memory].
+      If you think of the [Memory] as a map, then the [Var] is a key.
+
+  var[$T]{:Memory} -> Var[$T]{Memory}
+    # Creates a new undefined variable
+
+  var[$T](v: $T){:Memory} -> Var[$T]{Memory}
+    # Creates a new variable with the initial value of [v].
+
+  free(v: Var){:Memory} -> (){Memory}
+    # Removes a variable from memory, potentially reclaiming the memory to be reused.
+
+  :Var[$T].(){:Memory} -> $T{Memory}
+    # Gets the value of the variable [this] from memory.
+
+  (:Var[$T] := val: $T){:Memory} -> $T{Memory}
+    # Sets a variale in [Memory] and replaces the previous value.
+
+  :Memory.vars -> Set[Var]
+    # Lists the vars within [this] [Memory]
+
+  # ## [MemoryMap]
+
+  data MemoryMap(:Map[$K=VarInt, $V=Optional], counter: Int) isa Memory
+    # The [MemoryMap] is one of the simplest [Memory] that implements it using a [Map].
+      While most [Memory] are built using things like hardware or external services, this helps make sure that [Memory] can be used wherever.
+
+    Empty = MemoryMap(map=Empty, counter=0)
+
+    data VarInt[$T](:Int)
+
+    var[$T]{:MemoryMap} =
+      i = :MemoryMap.counter
+      v = VarInt[$T](i)
+      v{MemoryMap(map.=insert(v, Nothing), counter.=inc)}
+
+    var[$T](v){:MemoryMap} =
+      i = :MemoryMap.counter
+      v = VarInt[$T](i)
+      v{MemoryMap(map.=insert(v, v), counter.=inc)}
+
+    free(v: Var){:MemoryMap} = (){:MemoryMap(map.=remove(v))}
+
+    :Var[$T].(){:MemoryMap} = :MemoryMap.map.get(var)
+
+    (:Var[$T] := val: $T){:MemoryMap} = val{:MemoryMap(map.=set(var, val))}
+
+    :MemoryMap.vars = this.map.keys
+
+  imperative{}(f{;Memory} -> $R) -> $R
+    # The imperative allows you to define an imperative block of code.
+      The key goal is to enable support for imperative algorithms.
+      It will add a [Memory] into scope if necessary and clear it afterwards if one was created.
+
+      The basic behavior is that it allows defining isolated imperative behavior.
+      Maybe you want to define a [sort] function imperatively.
+      Then, you would define it within the imperative block.
+      Outside of the [sort] function, whether it contained an imperative block or not has no effect.
+
+  imperative"existing"{;Memory}(f) = f{}
+    # The simplest definition of [imperative] is when it happens where [Memory] is already in [Context].
+      In that case, no effect is necessary.
+
+  imperative"map"{;~Memory}(f) = withContext(context=[MemoryMap/Empty], f=f)

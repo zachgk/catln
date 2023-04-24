@@ -1,0 +1,155 @@
+# # Int
+
+class Int
+
+  data Zero
+
+  class Peano = Succ(i=Peano) | Zero isa Int
+
+    class One = Succ(Zero)
+    class Two = Succ(Succ(Zero))
+
+  class NPeano = Pred(i=NPeano) | Zero isa Int
+
+
+  # ## Equality
+
+  (Zero == Zero) = True
+  (_: Succ(_) == Zero) = False
+  (Zero == Succ(_)) = False
+  (_: Pred(_) == Zero) = False
+  (Zero == Pred(_)) = False
+  (_: Pred(_) == _: Succ(_)) = False
+  (_: Succ(_) == Pred(_)) = False
+  (Succ(l) == Succ(r)) = (l == r)
+  (Pred(l) == Pred(r)) = (l == r)
+
+  (l: Int != r: Int) = ~(l == r)
+
+  # ## Comparison
+
+  (_: Peano < Zero) = False
+  (Zero < Succ(_)) = True
+  (Pred(_) < _: Peano) = True
+  (Succ(_) < Pred(_)) = False
+  (Succ(l) < Succ(r)) = l < r
+  (Pred(l) < Pred(r)) = l < r
+
+  (l: Int > r: Int) = r < l
+
+  (Zero <= Zero) = True
+  (Succ(_) <= Zero) = False
+  (Zero <= Succ(_)) = True
+  (Pred(_) <= _: Peano) = True
+  (Succ(_) <= Pred(_)) = False
+
+  (l: Int >= r: Int) = r <= l
+
+  (~(l: Int < r: Int)) = l >= r
+  (~(l: Int <= r: Int)) = l > r
+  (~(l: Int > r: Int)) = l <= r
+  (~(l: Int >= r: Int)) = l < r
+  (l: Int < r: Int || l == r) = l <= r
+  (l: Int > r: Int || l == r) = l >= r
+  
+  :Int.gt(r: Int) = this > r
+  :Int.lt(r: Int) = this < r
+  :Int.gte(r: Int) = this >= r
+  :Int.lte(r: Int) = this <= r
+
+  :Peano.gte(0) = True
+  :Peano.lt(0) = False
+  :NPeano.lte(0) = True
+  :NPeano.gt(0) = False
+
+  # ## Addition
+
+  (l: Peano + Zero) = l
+  (l: NPeano + Zero) = l
+  (l: Peano + _: Succ(r)) = Succ(l) + r
+  (l: NPeano + _: Pred(r)) = Pred(l) + r
+  (l: Succ(l) + _: Pred(r)) = l + r
+  (l: Pred(l) + _: Succ(r)) = l + r
+
+  (_: Int__gt(l) + _: Int__gt(r)) -> Int__gt(l+r)
+  (_: Int__lt(l) + _: Int__lt(r)) -> Int__lt(l+r)
+  (_: Int__gte(l) + _: Int__gte(r)) -> Int__gte(l+r)
+  (_: Int__lte(l) + _: Int__lte(r)) -> Int__lte(l+r)
+
+  (i: Int + _: Peano) -> Int__gte(i)
+  (i: Int + Succ(_)) -> Int__gt(i)
+  (_: Peano + i: Int) -> Int__gte(i)
+  (Succ(_) + i: Int) -> Int__gt(i)
+
+  (i: Int + _: NPeano) -> Int__lte(i)
+  (i: Int + Pred(_)) -> Int__lt(i)
+  (_: NPeano + i: Int) -> Int__lte(i)
+  (Pred(_) + i: Int) -> Int__lt(i)
+
+  # ## Negation and Subtraction
+
+  (-Zero) = Zero
+  (-Succ(i)) = Pred(-i)
+  (-Pred(i)) = Succ(-i)
+  (-(-(i))) = i
+
+  (l: Int - r: Int) = l + (-r)
+
+  # ## Increment and Decrement
+
+  :Int.inc -> Int = :Int + 1
+
+  :Int.dec -> Int = :Int - 1
+
+  # ## Multiplication
+
+  (Zero * _: Int) = Zero
+  (_: Int * Zero) = Zero
+  (One * i: Int) = i
+  (i: Int * One) = i
+  (Two * i: Int) = i + i
+  (i: Int * Two) = i + i
+  (l: Peano * Succ(r)) = l + (l*r)
+  (l: NPeano * r: Int) = -( (-l) * r)
+  (l: Int * r: NPeano) = -( l * (-r))
+  (l: NPeano * r: NPeano) = -( (-l) * (-r))
+
+  # ## Division
+
+  data Division(dividend: Int, divisor: Int, quotient: Int, remainder: Int)
+  (_: Peano // _: Int__gt(0)) -> Division
+  (dividend: Int // divisor: Int) = if (dividend < divisor)
+    Then = Division(dividend=dividend, divisor=divisor, quotient=0, remainder=dividend)
+    Else = (dividend - divisor // divisor)(dividend=dividend, quotient.=inc)
+
+  # ## Skewed Int
+  data Skewed(m: ConstantInt__gt(0), x: Int, b: ConstantInt) isa Int
+    # A utility for [Int] that represents something like [`m*x+b`].
+      It can be used to help avoid unnecessary computations and to fit [x] into a smaller data type.
+
+  Skewed(m, x, b) -> Int = m*x + b
+    # If desired, can be converted into a full [Int] at any point.
+
+  :Int -> Skewed = Skewed(m=1, x=:Int, b=0)
+    # Any [Int] can be lifted into a [Skewed] to allow operations containing both.
+
+  # Comparisons and equality
+
+  (Skewed(m, x=x1, b) == Skewed(m, x=x2, b)) = x1 == x2
+  (Skewed(m, x=x1, b) < Skewed(m, x=x2, b)) = x1 < x2
+  (Skewed(m, x=x1, b) <= Skewed(m, x=x2, b)) = x1 <= x2
+
+  # Addition and Subtraction
+
+  (i: ConstantInt__multipleOf(m) + s@Skewed(m, x, b)) = s(b=b + (i // m))
+  (s@Skewed(m, x, b) + i: ConstantInt__multipleOf(m)) = s(b=b + (i // m))
+  (-Skewed(m, x, b)) = Skewed(m=m, x=-x, b=-b) 
+
+  # Multiplication
+
+  (i: ConstantInt * s@Skewed(m, x, b)) = s(m=m*i)
+  (s@Skewed(m, x, b) * i: ConstantInt) = s(m=m*i)
+
+  # Division
+
+  (s@Skewed(m, x, b) // i: ConstantInt__factorOf(m)) = s(m=m // i)

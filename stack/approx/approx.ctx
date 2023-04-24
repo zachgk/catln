@@ -20,7 +20,37 @@ class Approx<$T>
   This contains probabilities or uncertainties that are not figured out until runtime.
   For example, if you are playing a game and learn your roll is >3, it changes the precision of the approximation.
 
-data Probability = Num_from(0)_until(1)
+class Probability = Num_from(0)_until(1)
+class Prob = Probability
 
-  data Distribution<$T>(p(x: $T) -> Prob)
+  class Distribution<$T> isa Approx<$T>
     # A [Probability/Distribution] is a function that ascribes a probability to every possible value.
+
+  :Distribution.get(x: $T -> Prob)
+
+  testDistributionNormalized(d: Distribution<$T>) =
+    #test
+    assert(enum<$T>.map(f(x)= d.get(x)).sum == 1)
+    ()
+
+    data Fun<$T>(p(x: $T) -> Prob)
+    :Fun(p).get(x) = p(x)
+
+:Approx.isPerfect -> Bool
+  # Checks if an approximation is perfectly precise
+
+data LiftApprox<$T>(val: $T) isa Approx<$T>
+
+  (val: $T ~: Approx) -> Approx<$T> = LiftApprox(val=val)
+    # Any non-approximation can be turned into an approximation by wrapping it in the LiftApprox.
+      This allows mixing operations between approximations and non-approximations.
+
+  :LiftApprox.isPerfect = True
+
+class ProbMap<$T> = ProbMap/Unnormalized<$T>(vals) where sum(vals) == 1
+
+  data ProbMap/Unnormalized<$T>(vals: Map<$T, Probability>) isa isa Approx<$T>, Distribution<$T>
+
+  :ProbMap/Unnormalized(vals) 
+
+  :ProbMap.get(x) = vals.get(x, default=0)
