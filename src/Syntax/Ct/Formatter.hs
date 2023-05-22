@@ -144,6 +144,7 @@ keepRootStatement _                  = True
 
 isHiddenStatement :: RawStatement RawExpr m -> Bool
 isHiddenStatement (RawAnnot annot) | isElseAnnot annot = True
+isHiddenStatement (RawAnnot annot) | isCtxAnnot annot = True
 isHiddenStatement _ = False
 
 formatStatementTree :: (Show m) => Bool -> Int -> RawStatementTree RawExpr m -> Builder

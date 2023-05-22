@@ -20,7 +20,9 @@ import           Text.Megaparsec
 import           Text.Megaparsec.Char
 
 import           CRes
+import           Constants
 import           Data.Maybe
+import           Semantics.Prgm
 import           Syntax.Ct.Parser.Decl
 import           Syntax.Ct.Parser.Expr
 import           Syntax.Ct.Parser.Lexer
@@ -89,6 +91,13 @@ ctParser fileName = do
   return $ case runParser (contents pPrgm) fileName fileContents of
     Left err   -> CErr [MkCNote $ ParseCErr err]
     Right prgm -> return prgm
+
+ctxParser :: String -> IO (CRes PPrgm)
+ctxParser fileName = do
+  cp <- ctParser fileName
+  return $ fmap annotate cp
+  where
+    annotate (imports, statements) = (imports, RawStatementTree (RawAnnot (RawValue emptyMetaN ctxAnnot)) [] :statements)
 
 parseRepl :: String -> PReplRes
 parseRepl s = case runParser (contents p) "<repl>" s of

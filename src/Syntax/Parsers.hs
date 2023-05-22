@@ -24,7 +24,7 @@ import qualified Data.HashMap.Strict as H
 import           Data.List
 import           Data.List.Split
 import           Data.Maybe
-import           Syntax.Ct.Parser    (ctParser)
+import           Syntax.Ct.Parser    (ctParser, ctxParser)
 import           Syntax.Ct.Prgm
 import           System.Directory
 import           Text.Printf
@@ -32,7 +32,8 @@ import           Utils
 
 fileExtensionParsers :: H.HashMap String (String -> IO (CRes (RawPrgm ())))
 fileExtensionParsers = H.fromList [
-  ("ct", ctParser)
+  ("ct", ctParser),
+  ("ctx", ctxParser)
                              ]
 
 isSupportedFileExtension :: String -> Bool

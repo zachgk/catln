@@ -1,11 +1,13 @@
-module Web/Http
 
+module Web/Http
   data Request
 
-  data Response(Int code, Bag<Response/Header> headers, Optional<String> body)
+  data Response(code: Int, headers: Bag[$T: Response/Header], body: Optional[$T: String])
 
-  server(f(Request request) -> Response)
+  server(f(request: Request) -> Response)
 
   class Error
 
   Error.code -> Int
+
+

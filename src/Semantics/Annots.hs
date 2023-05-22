@@ -18,5 +18,8 @@ import           Semantics.Prgm
 isElseAnnot :: (ExprClass e) => CompAnnot (e m) -> Bool
 isElseAnnot e = exprPath e == elseAnnot
 
+isCtxAnnot :: (ExprClass e) => CompAnnot (e m) -> Bool
+isCtxAnnot e = exprPath e == ctxAnnot
+
 hasElseAnnot :: (ExprClass e) => ObjArr e m -> Bool
 hasElseAnnot ObjArr{oaAnnots} = any isElseAnnot oaAnnots

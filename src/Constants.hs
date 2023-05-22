@@ -25,6 +25,9 @@ mdAnnot, mdAnnotText :: String
 mdAnnot = "/Catln/#md"
 mdAnnotText = "text"
 
+ctxAnnot :: String
+ctxAnnot = "/Catln/#ctx"
+
 elseAnnot :: String
 elseAnnot = "/Catln/#else"
 
