@@ -109,7 +109,8 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm''
 semiDesExpr sdm obj (RawVarsApply m be vs) = foldr aux be' vs
   where
     be' = semiDesExpr sdm obj be
-    aux (varName, varVal) base = VarApply (emptyMetaM varName m) base varName varVal
+    aux (varExpr, varVal) base = VarApply (emptyMetaM varName m) base varName varVal
+      where varName = fromPartialName $ ptName $ exprToPartialType varExpr
 semiDesExpr sdm obj@Just{} (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawArgs (RawValue emptyMetaN "/Context") ((Just "value", be) : map (\(ctxName, ctxM) -> (Nothing, RawValue ctxM ctxName)) ctxs)
 semiDesExpr sdm obj@Nothing (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawIArgs (RawValue emptyMetaN "/Context") (("value", IArgE be) : map (second IArgM) ctxs)
 semiDesExpr sdm obj (RawParen e) = semiDesExpr sdm obj e

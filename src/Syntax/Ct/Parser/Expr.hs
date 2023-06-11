@@ -125,7 +125,7 @@ pArrowFull basis = do
 
 data TermSuffix
   = ArgsSuffix ParseMeta [PObjArr]
-  | VarsSuffix ParseMeta [(TypeVarName, ParseMeta)]
+  | VarsSuffix ParseMeta [(PExpr, ParseMeta)]
   | ContextSuffix ParseMeta [(ArgName, ParseMeta)]
   | AliasSuffix ParseMeta TypeName
   deriving (Show)
@@ -140,11 +140,11 @@ pArgsSuffix = do
   pos2 <- getSourcePos
   return $ ArgsSuffix (emptyMeta pos1 pos2) args
 
-pVarSuffix :: Parser (TypeVarName, ParseMeta)
+pVarSuffix :: Parser (PExpr, ParseMeta)
 pVarSuffix = do
   pos1 <- getSourcePos
   -- TODO: Should support multiple class identifiers such as <Eq Ord $T>
-  var <- tvar
+  var <- term
   maybeTp <- optional $ do
     _ <- symbol ":"
     ttypeidentifier <|> tvar -- Either type (<Eq $T>) or var (<$T>)

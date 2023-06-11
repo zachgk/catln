@@ -13,7 +13,7 @@ module Web
       It can be used to convert many of the HTML tag combining features into equivalent webpack combining.
       Especially when some are webpacks and others are merely HTML.
 
-  Try[$R:Webpack].to[Http/Response] = match this of
+  Try[$R:Webpack].to[Http/Response] = match(this)
     e: Http/Error => Response(code=e.code, headers=empty, body=Nothing)
     w: Webpack => Response(code=200, headers=undefined, body=undefined)
 

@@ -12,4 +12,5 @@ format:
 ctformat:
 	stack install
 	catln fmt test/code
-	catln fmt stack
+	find stack -name "*.ct" -exec catln fmt {} \;
+# catln fmt stack

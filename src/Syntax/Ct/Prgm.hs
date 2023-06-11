@@ -38,7 +38,7 @@ data RawExpr m
   | RawTheExpr (RawExpr m) -- ^ Written :TypeName and read as The TypeName
   | RawAliasExpr (RawExpr m) (RawExpr m) -- ^ base aliasExpr
   | RawTupleApply (Meta m) (Meta m, RawExpr m) [ObjArr RawExpr m]
-  | RawVarsApply (Meta m) (RawExpr m) [(TypeVarName, Meta m)]
+  | RawVarsApply (Meta m) (RawExpr m) [(RawExpr m, Meta m)]
   | RawContextApply (Meta m) (Meta m, RawExpr m) [(ArgName, Meta m)]
   | RawParen (RawExpr m)
   | RawMethod (RawExpr m) (RawExpr m) -- ^ base methodValue
@@ -117,7 +117,8 @@ instance ExprClass RawExpr where
 
   exprAppliedVars (RawValue _ _) = H.empty
   exprAppliedVars (RawTupleApply _ (_, be) _) = exprAppliedVars be
-  exprAppliedVars (RawVarsApply _ e vars) = H.union (exprAppliedVars e) (H.fromList vars)
+  -- exprAppliedVars (RawVarsApply _ e vars) = H.union (exprAppliedVars e) (H.fromList vars)
+  exprAppliedVars RawVarsApply{} = error "Not implemented"
   exprAppliedVars (RawContextApply _ (_, e) _) = exprAppliedVars e
   exprAppliedVars (RawParen e) = exprAppliedVars e
   exprAppliedVars (RawMethod _ e) = exprAppliedVars e

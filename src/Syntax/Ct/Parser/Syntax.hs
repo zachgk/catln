@@ -14,6 +14,7 @@ module Syntax.Ct.Parser.Syntax where
 
 import qualified Data.HashMap.Strict as H
 
+import           Data.Bifunctor
 import           Data.List           (isPrefixOf)
 import           Semantics
 import           Semantics.Prgm
@@ -114,7 +115,7 @@ applyRawIArgs base args = RawTupleApply (emptyMetaE "app" base) (emptyMetaE "bas
 
 applyRawExprVars :: (MetaDat m) => RawExpr m -> [(TypeVarName, Meta m)] -> RawExpr m
 applyRawExprVars base []   = base
-applyRawExprVars base vars = RawVarsApply (emptyMetaE "app" base) base vars
+applyRawExprVars base vars = RawVarsApply (emptyMetaE "app" base) base (map (first (\n -> RawValue (emptyMetaE ("var" ++ n) base) n)) vars)
 
 exprVal :: (MetaDat m) => String -> Expr m
 exprVal = Value m
