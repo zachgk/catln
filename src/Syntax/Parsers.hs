@@ -52,7 +52,7 @@ dirImportToMain f = do
   return $ case (isFile, isDir) of
     (True, False) -> f
     (False, True) -> f ++ "/main.ct"
-    _             -> error "bad dir"
+    _             -> error $ printf "Invalid directory %s" f
 
 readFiles :: Bool -> Bool -> [String] -> IO (CRes (GraphData (RawPrgm ()) String))
 readFiles includeCore includeDependencies = fmap (fmap (graphFromEdges . snd)) . aux [] S.empty

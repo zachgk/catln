@@ -113,11 +113,11 @@ pArrowFull basis = do
     exprToTypeMeta <$> term
   maybeExpr2 <- optional $ do
     _ <- symbol "=>" <|> symbol "="
-    optional $ try pExpr
+    optional $ try $ pExprWithPostCond
 
   let arrMeta = fromMaybe emptyMetaN maybeDecl
   (i', o') <- return $ case (expr1, maybeExpr2) of
-    (i, Just (Just o)) -> (Just (GuardExpr i guard), Just (GuardExpr o Nothing))
+    (i, Just (Just o)) -> (Just (GuardExpr i guard), Just o)
     (i, Just Nothing) -> (Just (GuardExpr i guard), Just (GuardExpr (rawVal nestedDeclaration) Nothing))
     (i, Nothing) -> (Just (GuardExpr i guard), Nothing) -- If only one expression, always make it as an input and later desugar to proper place
 
@@ -171,7 +171,7 @@ pContextElSuffix = do
 pContextSuffix :: Parser TermSuffix
 pContextSuffix = do
   pos1 <- getSourcePos
-  ctxs <- curlyBraces $ sepBy1 pContextElSuffix (symbol ",")
+  ctxs <- curlyBraces $ sepBy pContextElSuffix (symbol ",")
   pos2 <- getSourcePos
   return $ ContextSuffix (emptyMeta pos1 pos2) ctxs
 
@@ -230,3 +230,21 @@ pPatternGuard = do
   els <- optional $ symbol "else"
   let els' = [rawVal elseAnnot | isJust els]
   return (cond, els')
+
+pWithPostCond :: Parser a -> Parser (a, Maybe PExpr)
+pWithPostCond pE = do
+  e <- pE
+  cond <- optional $ do
+    _ <- symbol "where"
+    pExpr
+  return (e, cond)
+
+pTermWithPostCond :: Parser PGuardExpr
+pTermWithPostCond = do
+  (e, g) <- pWithPostCond term
+  return $ GuardExpr e g
+
+pExprWithPostCond :: Parser PGuardExpr
+pExprWithPostCond = do
+  (e, g) <- pWithPostCond pExpr
+  return $ GuardExpr e g

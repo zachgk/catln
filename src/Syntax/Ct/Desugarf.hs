@@ -163,7 +163,8 @@ desMultiTypeDefObj inheritPath varReplaceMap expr = desObj False inheritPath Use
 
 
 desMultiTypeDef :: StatementEnv -> PMultiTypeDef -> [RawStatementTree RawExpr ParseMetaDat] -> Path -> CRes DesPrgm
-desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef clss@PartialType{ptVars=classVars} dataExprs) subStatements path = do
+desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef clss@PartialType{ptVars=classVars} dataGuardExprs) subStatements path = do
+  let dataExprs = map rgeExpr dataGuardExprs -- TODO: Handle GuardExpr guards
   let className = fromPartialName $ ptName clss
   let dataTypes = map (either id (getExprType . snd . desObjPropagateTypes . semiDesExpr SDInput Nothing) . eitherTypeVarExpr) dataExprs
 

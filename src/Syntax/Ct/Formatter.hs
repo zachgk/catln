@@ -120,7 +120,11 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
       RawDeclStatement objArr -> formatObjArr objArr
       MultiTypeDefStatement (MultiTypeDef clss objs) _ -> printf "class %s = %s" (formatPartialType clss) showObjs
         where
-          showObjs = intercalate " | " $ map formatExpr objs
+          formatGuardExpr :: GuardExpr RawExpr m -> String
+          formatGuardExpr (GuardExpr e Nothing) = formatExpr e
+          formatGuardExpr (GuardExpr e (Just g)) = printf "%s where %s" (formatExpr e) (formatExpr g)
+
+          showObjs = intercalate " | " $ map formatGuardExpr objs
       TypeDefStatement typeExpr -> if "#" `isPrefixOf` exprPath typeExpr
         then printf "annot %s" (formatExpr typeExpr)
         else printf "data %s" (formatExpr typeExpr)

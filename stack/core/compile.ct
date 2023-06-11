@@ -30,6 +30,10 @@ module Catln
       Typically, it is written with the syntax sugar of "# commentText".
 
 
+  annot #name(name: String)
+    # A [#name] is used to differentiate multiple definitions of the same function.
+
+
   annot #else
     # [#else] is used to create an else arrow (which could also be called an otherwise arrow).
       An else arrow takes effect only if no other arrows match.

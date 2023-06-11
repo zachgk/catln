@@ -1,53 +1,57 @@
-import stack/web/http
+import stack/web/http.ctx
+
+
 
 module Web
-
   # # Web
     This defines some of the basic primitives for building a web site.
 
-  data Webpack(page: Html, resources: Map[$K:String, $V:File])
+  data Webpack(page: Html, resources: Map[$K: String, $V: File])
     # [Html] refers to the HTML tag html.
 
-  (page: Html) -> Webpack = Webpack(page=page, resources=empty)
+
+  (page: Html) -> Webpack= Webpack(page= page, resources= empty)
     # This interop converts an HTML page into a webpack
       It can be used to convert many of the HTML tag combining features into equivalent webpack combining.
       Especially when some are webpacks and others are merely HTML.
 
-  Try[$R:Webpack].to[Http/Response] = match(this)
-    e: Http/Error => Response(code=e.code, headers=empty, body=Nothing)
-    w: Webpack => Response(code=200, headers=undefined, body=undefined)
+  Try[$R: Webpack].to[Http/Response]= match(this)
+    e: Http/Error= Response(code= e.code, headers= empty, body= Nothing)
+    w: Webpack= Response(code= 200, headers= undefined, body= undefined)
 
   class WebFunction
     # A [WebFunction] is used to define a website
 
-    WebFunction{} -> Try[$R=Webpack]
+    WebFunction{} -> Try[$R: Webpack]
       # All WebFunctions must be able to build the website
       # TODO: should pass in data to the function through some context which has not yet been defined.
 
     # TODO Add test forall webfunctions, the resources must be constant with respect to context inputs
+
 
   website(f: WebFunction) -> Catln/Result
     # [website] produces an HTTP server that serves a site.
       The site can be defined using the page builder [f].
       It is possible to have different implementations of the website function.
     #variant
-  
-  website"server"(f) =
+
+  website(f) =
+    #name("server")
     # The server website uses server side rendering to build a website.
       The web page is built entirely on the server and then sent to the client.
-
       In the general case, it can be slower and more expensive then single page apps.
       However, it also has several advantages.
       It does not require javascript so it can work for old browsers, slow machines, and those that block javascript.
       It can also be better for use with web crawlers to ensure that the site is indexed properly.
-
     httpFunction(request: Request) =
       # TODO Add request into the function context
       f.to[Http/Response]
+    Http/server(f= httpFunction)
 
-    Http/server(f=httpFunction)
-
-  website"singlePage"(f) = undefined
+  website(f)= undefined
+    #name("singlePage")
     # The single page app uses client side rendering.
       This means that it can save time by avoiding many network calls.
       Even the necessary calls will be faster as they can transmit data in a denser format.
+
+

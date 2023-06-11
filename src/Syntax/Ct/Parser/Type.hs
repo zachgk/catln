@@ -29,8 +29,8 @@ import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 
 
-pMultiTerm :: Parser [PExpr]
-pMultiTerm = sepBy1 term (symbol "|")
+pMultiTerm :: Parser [PGuardExpr]
+pMultiTerm = sepBy1 pTermWithPostCond (symbol "|")
 
 pClassStatement :: Parser PStatement
 pClassStatement = do
