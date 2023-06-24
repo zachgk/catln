@@ -20,5 +20,5 @@ isElseAnnot e = exprPath e == elseAnnot
 isCtxAnnot :: (ExprClass e) => CompAnnot (e m) -> Bool
 isCtxAnnot e = exprPath e == ctxAnnot
 
-hasElseAnnot :: (ExprClass e) => ObjArr e m -> Bool
-hasElseAnnot ObjArr{oaAnnots} = any isElseAnnot oaAnnots
+hasElseAnnot :: (ObjArrClass oa, ExprClass e) => oa e m -> Bool
+hasElseAnnot oa = any isElseAnnot $ getOaAnnots oa

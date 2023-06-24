@@ -39,14 +39,14 @@ type StatementEnv = (String, [DesCompAnnot])
 
 -- | Flattens a declaration tree (with nested declarations)
 flattenNestedDeclarations :: PDeclTree -> [PSemiDecl]
-flattenNestedDeclarations (oa@ObjArr{oaObj=Just (GuardExpr objExpression _), oaAnnots}, subStatements) = decl':subDecls4
+flattenNestedDeclarations (roa@RawObjArr{roaObj=Just (GuardExpr objExpression _), roaAnnots}, subStatements) = decl':subDecls4
   where
     objDoc = desObjDocComment subStatements
     (subDecls, annots1) = splitDeclSubStatements subStatements
     subDecls2 = concatMap flattenNestedDeclarations subDecls
-    annots2 = fmap (semiDesExpr SDOutput (Just objExpression)) (annots1 ++ oaAnnots)
+    annots2 = fmap (semiDesExpr SDOutput (Just objExpression)) (annots1 ++ roaAnnots)
 
-    oa2 = (semiDesObjArr oa){oaAnnots=annots2, oaDoc=objDoc}
+    oa2 = (semiDesObjArr roa){oaAnnots=annots2, oaDoc=objDoc}
 
     (oa3, subDecls3) = scopeSubDeclFunNames oa2 subDecls2
     (oa4, subDecls4) = currySubFunctions oa3 subDecls3
@@ -101,12 +101,13 @@ desObj isDef inheritPath useRelativeName oa@ObjArr{oaObj=Just (GuardExpr objE ob
 desObj _ _ _ oa = error $ printf "Unexpected desObj with no input exrpression: %s" (show oa)
 
 semiDesObjArr :: PObjArr -> PSObjArr
-semiDesObjArr oa@ObjArr{oaObj=Just (GuardExpr oE oG), oaAnnots, oaArr} = oa{
+semiDesObjArr roa@RawObjArr{roaObj=Just{}} = oa{
   oaObj=Just (GuardExpr oE' oG'),
   oaAnnots = fmap (semiDesExpr SDOutput (Just oE)) oaAnnots,
   oaArr=oaArr'
   }
   where
+    [oa@ObjArr{oaObj=Just (GuardExpr oE oG), oaAnnots, oaArr}] = desObjArr roa
     oE' = semiDesExpr SDInput Nothing oE
     oG' = fmap (semiDesExpr SDOutput (Just oE)) oG
     oaArr' = fmap (\(GuardExpr aE aG) -> GuardExpr (semiDesExpr SDOutput (Just oE) aE) (fmap (semiDesExpr SDOutput (Just oE)) aG)) oaArr

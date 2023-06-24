@@ -51,7 +51,7 @@ pComment = do
 
 pDeclStatement :: Parser PStatement
 pDeclStatement = do
-  roa@ObjArr{oaObj=(Just (GuardExpr inExpr guard)), oaM=arrMeta, oaArr=out} <- pArrowFull FunctionObj
+  roa@RawObjArr{roaObj=(Just (GuardExpr inExpr guard)), roaM=arrMeta, roaArr=out} <- pArrowFull FunctionObj
 
   case out of
     -- No equals (declaration or expression)

@@ -265,13 +265,25 @@ instance ExprClass Expr where
   exprVarArgs (Arg m n) = H.singleton (TVArg TVInt n) [m]
   exprVarArgs HoleExpr{} = H.empty
   exprVarArgs (AliasExpr base alias) = H.unionWith (++) (exprVarArgs base) (exprVarArgs alias)
-  exprVarArgs (TupleApply _ (_, be) arg) = H.unionWith (++) (exprVarArgs be) (exprArg arg)
+  exprVarArgs (TupleApply _ (_, be) arg) = H.unionWith (++) (exprVarArgs be) (oaVarArgs arg)
+  exprVarArgs (VarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar TVInt n) [m])
+
+class ObjArrClass oa where
+  -- | See exprArgs
+  oaVarArgs :: (ExprClass e, Show m, Show (e m)) => oa e m -> H.HashMap TypeVarAux [Meta m]
+
+  getOaAnnots :: oa e m -> [CompAnnot (e m)]
+
+instance ObjArrClass ObjArr where
+
+  oaVarArgs oa = exprArg oa
     where
       exprArg ObjArr{oaArr=Just (GuardExpr e Nothing)} = exprVarArgs e
       exprArg ObjArr{oaObj=Just (GuardExpr obj Nothing)} = case exprPathM obj of
         (n, m) -> H.singleton (TVArg TVInt n) [m]
-      exprArg oa = error $ printf "Invalid oa %s" (show oa)
-  exprVarArgs (VarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar TVInt n) [m])
+      exprArg _ = error $ printf "Invalid oa %s" (show oa)
+
+  getOaAnnots = oaAnnots
 
 mkIOObjArr :: (MetaDat m, Show m) => Meta m -> ArgName -> Expr m -> ObjArr Expr m
 mkIOObjArr m argName argVal = ObjArr (Just (GuardExpr (Arg m argName) Nothing)) ArgObj Nothing [] emptyMetaN (Just (GuardExpr argVal Nothing))

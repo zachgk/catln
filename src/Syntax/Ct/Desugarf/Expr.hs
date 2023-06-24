@@ -88,12 +88,13 @@ semiDesExpr _ _ (RawValue m n) = Value m n
 semiDesExpr _ _ (RawHoleExpr m h) = HoleExpr m h
 semiDesExpr sdm obj (RawTheExpr t) = semiDesExpr sdm obj $ desugarTheExpr t
 semiDesExpr sdm obj (RawAliasExpr base alias) = AliasExpr (semiDesExpr sdm obj base) (semiDesExpr sdm obj alias)
-semiDesExpr sdm obj (RawTupleApply _ (_, RawValue _ "/operator:") [ObjArr{oaArr=(Just (GuardExpr e _))}, ObjArr{oaArr=(Just (GuardExpr tp _))}]) = semiDesExpr sdm obj (rawExprWithType (exprToType tp) e)
+semiDesExpr sdm obj (RawTupleApply _ (_, RawValue _ "/operator:") [RawObjArr{roaArr=(Just (GuardExpr e _))}, RawObjArr{roaArr=(Just (GuardExpr tp _))}]) = semiDesExpr sdm obj (rawExprWithType (exprToType tp) e)
 semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm'', be'') arg'') -> TupleApply m'' (bm'', be'') arg'') $ foldl aux (bm, be') args
   where
     be' = semiDesExpr sdm obj be
-    aux (m, e) arg@ObjArr{oaObj=argObj, oaAnnots=argAnnots, oaArr=argArr} = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) arg'')
+    aux (m, e) rarg = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) arg'')
       where
+        [arg@ObjArr{oaObj=argObj, oaAnnots=argAnnots, oaArr=argArr}] = desObjArr rarg
         -- SemiDes all sub-expressions
         arg' = arg{
           oaObj=fmap semiDesGuardExpr argObj,

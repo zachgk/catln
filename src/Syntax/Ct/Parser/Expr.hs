@@ -113,7 +113,7 @@ pArrowFull basis = do
     exprToTypeMeta <$> term
   maybeExpr2 <- optional $ do
     _ <- symbol "=>" <|> symbol "="
-    optional $ try $ pExprWithPostCond
+    optional $ try pExprWithPostCond
 
   let arrMeta = fromMaybe emptyMetaN maybeDecl
   (i', o') <- return $ case (expr1, maybeExpr2) of
@@ -121,7 +121,7 @@ pArrowFull basis = do
     (i, Just Nothing) -> (Just (GuardExpr i guard), Just (GuardExpr (rawVal nestedDeclaration) Nothing))
     (i, Nothing) -> (Just (GuardExpr i guard), Nothing) -- If only one expression, always make it as an input and later desugar to proper place
 
-  return $ ObjArr i' basis Nothing guardAnnots arrMeta o'
+  return $ RawObjArr i' basis Nothing guardAnnots arrMeta o' Nothing
 
 data TermSuffix
   = ArgsSuffix ParseMeta [PObjArr]
