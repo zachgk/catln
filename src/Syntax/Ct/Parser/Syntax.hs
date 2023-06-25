@@ -67,9 +67,9 @@ type DesPrgmGraphData = GraphData DesPrgm String
 fromMaybeTypeName :: Maybe TypeName -> Type
 fromMaybeTypeName = maybe TopType fromName
   where
-    fromName n | "$_" `isPrefixOf` n = TypeVar $ TVVar TVExt n
-    fromName n | "$" `isPrefixOf` n = TypeVar $ TVVar TVInt n
-    fromName n = singletonType (partialVal (PRelativeName n))
+    fromName ('$':'_':n) = TypeVar $ TVVar TVExt n
+    fromName ('$':n)     = TypeVar $ TVVar TVInt n
+    fromName n           = singletonType (partialVal (PRelativeName n))
 
 emptyMeta :: SourcePos -> SourcePos -> ParseMeta
 emptyMeta p1 p2 = Meta TopType (Just (p1, p2, "")) emptyMetaDat

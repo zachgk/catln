@@ -561,7 +561,7 @@ substituteVarsWithVarEnv venv (UnionType partials) = UnionType $ joinUnionType $
           where ptVars' = fmap (substituteVarsWithVarEnv venv) ptVars
 substituteVarsWithVarEnv venv (TypeVar (TVVar TVInt v)) = case H.lookup v venv of
   Just v' -> v'
-  Nothing -> error $ printf "Could not substitute unknown type var %s" v
+  Nothing -> error $ printf "Could not substitute unknown type var %s with venv keys %s" v (show $ H.keys venv)
 substituteVarsWithVarEnv _ t = t
 
 -- | Replaces the type variables 'TVVar' in a 'Type'

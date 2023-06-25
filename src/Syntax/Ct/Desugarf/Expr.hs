@@ -110,7 +110,9 @@ semiDesExpr sdm obj (RawVarsApply m be vs) = foldr aux be' vs
   where
     be' = semiDesExpr sdm obj be
     aux (varExpr, varVal) base = VarApply (emptyMetaM varName m) base varName varVal
-      where varName = fromPartialName $ ptName $ exprToPartialType varExpr
+      where varName = case fromPartialName $ ptName $ exprToPartialType varExpr of
+              '$':n -> n
+              n     -> n
 semiDesExpr sdm obj@Just{} (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawArgs (RawValue emptyMetaN "/Context") ((Just "value", be) : map (\(ctxName, ctxM) -> (Nothing, RawValue ctxM ctxName)) ctxs)
 semiDesExpr sdm obj@Nothing (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawIArgs (RawValue emptyMetaN "/Context") (("value", IArgE be) : map (second IArgM) ctxs)
 semiDesExpr sdm obj (RawParen e) = semiDesExpr sdm obj e
@@ -132,9 +134,9 @@ exprToPartialType :: PExpr -> PartialType
 exprToPartialType = fromJust . fst . desObjPropagateTypes . desExpr H.empty . semiDesExpr SDType Nothing
 
 exprToType :: PExpr -> Type
-exprToType (RawValue _ n@('$':'_':_)) = TypeVar $ TVVar TVExt n
-exprToType (RawValue _ n@('$':_))     = TypeVar $ TVVar TVInt n
-exprToType t                          = (singletonType . exprToPartialType) t
+exprToType (RawValue _ ('$':'_':n)) = TypeVar $ TVVar TVExt n
+exprToType (RawValue _ ('$':n))     = TypeVar $ TVVar TVInt n
+exprToType t                        = (singletonType . exprToPartialType) t
 
 exprToTypeMeta :: PExpr -> ParseMeta
 exprToTypeMeta e = mWithType (exprToType e) (getExprMeta e)

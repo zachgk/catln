@@ -82,9 +82,12 @@ ttypeidentifier = try $ lexeme $ do
 tvar :: Parser String
 tvar = try $ lexeme $ do
   _ <- string "$"
+  ext <- optional $ string "_"
   first <- upperChar
   rest <- many alphaNumChar
-  return $ '$' : first : rest
+  return $ case ext of
+    Just{} -> '$' : '_' : first : rest
+    Nothing -> '$' : first : rest
 
 pAnnotIdentifier :: Parser String
 pAnnotIdentifier = do
