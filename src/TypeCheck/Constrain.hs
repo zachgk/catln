@@ -91,10 +91,11 @@ updateTypeProp env@FEnv{feClassGraph} actOrReq (superM, superType) propName (sub
       let supPartialList = splitUnionType supPartials
       let subPartialList = splitUnionType subPartials
       let intersectedPartials sup@PartialType{ptArgs=supArgs, ptVars=supVars} sub = case typeGetArg propName sup of
-            Just (TypeVar (TVVar v)) -> do
+            Just (TypeVar (TVVar TVInt v)) -> do
               let supVar = H.lookupDefault TopType v supVars
               let newProp = intersectTypes feClassGraph supVar (singletonType sub)
               Just (sup{ptVars=H.insert v newProp supVars}, newProp)
+            Just (TypeVar (TVVar TVExt _)) -> error $ printf "Not yet implemented"
             Just (TypeVar TVArg{}) -> error $ printf "Not yet implemented"
             Just supProp -> do
               let newProp = intersectTypes feClassGraph supProp (singletonType sub)

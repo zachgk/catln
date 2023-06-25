@@ -49,7 +49,9 @@ formatPartialType (PartialType ptName ptVars ptArgs ptPreds _) = concat [showNam
 
 formatType :: Type -> String
 formatType TopType = ""
-formatType (TypeVar (TVVar t)) = t
+formatType (TypeVar (TVVar TVInt t)) = t
+formatType (TypeVar (TVVar TVExt (_:t))) = "$_" ++ t
+formatType (TypeVar (TVVar TVExt [])) = error "Invalid empty TVVar name in formatType"
 formatType (TypeVar TVArg{}) = error "Unexpected TVArg in formatter"
 formatType (UnionType partials) = join $ map formatPartialType $ splitUnionType partials
 

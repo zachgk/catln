@@ -145,7 +145,7 @@ fromExpr est@EncodeIn{} env1 (Value m name) = do
 --   return (Value m' name, env4)
 fromExpr est@EncodeOut{} env1 (Arg m name) = do
   (m', env2) <- fromMeta env1 BUpper est m ("Arg " ++ name)
-  let varM = Meta (TypeVar $ TVArg name) (getMetaPos m) emptyMetaDat
+  let varM = Meta (TypeVar $ TVArg TVInt name) (getMetaPos m) emptyMetaDat
   (varM', env3) <- fromMeta env2 BUpper est varM $ "ArgVar " ++ name
   let argEnv = encodeArgs est
   case H.lookup name argEnv of
@@ -261,9 +261,10 @@ fromArrow est env1 (Arrow m aguard maybeExpr) = do
       (m', env4) <- fromMeta env3 BUpper est (Meta TopType (labelPos "res" $ getMetaPos m) emptyMetaDat) $ printf "Arrow result from %s" (show $ objPath obj)
       (vExpr, env5) <- fromExpr est env4 expr
       let env6 = case metaTypeVar m of
-            Just (TVVar typeVarName) -> case suffixLookupInDict typeVarName objVars of
+            Just (TVVar TVInt typeVarName) -> case suffixLookupInDict typeVarName objVars of
               Just varM -> addConstraints env5 [ArrowTo (getExprMeta vExpr) varM]
               Nothing -> error "unknown type fromArrow"
+            Just TVVar{} -> error "Bad TVVar (TVExt) in fromArrow"
             Just TVArg{} -> error "Bad TVArg in fromArrow"
             Nothing -> addConstraints env5 [ArrowTo (getExprMeta vExpr) m', ArrowTo (getExprMeta vExpr) mUserReturn']
       let arrow' = Arrow m' aguard' (Just vExpr)

@@ -85,10 +85,18 @@ data Type
   | TopType -- ^ A type which refers to any possible value or the universal set of values
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
+-- | Indicates whether a type var or arg is located internally to the object or externally.
+-- | Internal is if it is defined in the type as an argument or variable.
+-- | External is if it is from a parent object or outer context.
+data TypeVarLoc
+  = TVInt
+  | TVExt -- ^ TODO: Begin using TVExt. Right now, only TVInt is used.
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+
 -- | A type because two kinds of type variables are supported
 data TypeVarAux
-  = TVVar TypeVarName -- ^ A type variable stored from the 'PartialType' ptVars
-  | TVArg ArgName -- ^ A type variable referring to an arguments type
+  = TVVar TypeVarLoc TypeVarName -- ^ A type variable stored from the 'PartialType' ptVars
+  | TVArg TypeVarLoc ArgName -- ^ A type variable referring to an arguments type
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 -- | Whether the typeclass can be extended or not
@@ -218,14 +226,14 @@ ptVarArg PartialType{ptArgs, ptVars} = joinVarArgEnv ptVars ptArgs
 joinVarArgEnv :: TypeVarEnv -> TypeArgEnv -> TypeVarArgEnv
 joinVarArgEnv venv aenv = H.fromList (venv' ++ aenv')
   where
-    venv' = map (first TVVar) $ H.toList venv
-    aenv' = map (first TVArg) $ H.toList aenv
+    venv' = map (first (TVVar TVInt)) $ H.toList venv
+    aenv' = map (first (TVArg TVInt)) $ H.toList aenv
 
 splitVarArgEnv :: TypeVarArgEnv -> (TypeVarEnv, TypeArgEnv)
 splitVarArgEnv vaenv = bimap H.fromList H.fromList $ partitionEithers $ map eitherVarArg $ H.toList vaenv
   where
-    eitherVarArg (TVVar v, t) = Left (v, t)
-    eitherVarArg (TVArg v, t) = Right (v, t)
+    eitherVarArg (TVVar _ v, t) = Left (v, t)
+    eitherVarArg (TVArg _ v, t) = Right (v, t)
 
 relativeNameMatches :: RelativeName -> Name -> Bool
 relativeNameMatches rn n = split rn `L.isSuffixOf` split n
@@ -299,10 +307,10 @@ expandPartial classGraph@(ClassGraph cg) PartialType{ptName=className@PClassName
         where
           classVars = H.unionWith (intersectTypes classGraph) classVarsP classVarsDecl
           mapClassType TopType = TopType
-          mapClassType (TypeVar (TVVar t)) = case H.lookup t classVars of
+          mapClassType (TypeVar (TVVar _ t)) = case H.lookup t classVars of
             Just v -> intersectTypes classGraph v (H.lookupDefault TopType t classVars)
             Nothing -> error $ printf "Unknown var %s in expandPartial" t
-          mapClassType (TypeVar (TVArg t)) = error $ printf "Arg %s found in expandPartial" t
+          mapClassType (TypeVar (TVArg _ t)) = error $ printf "Arg %s found in expandPartial" t
           mapClassType (UnionType p) = UnionType $ joinUnionType $ map mapClassPartial $ splitUnionType p
           mapClassPartial tp@PartialType{ptVars} = tp{ptVars=fmap (substituteVarsWithVarEnv classVars) ptVars}
       r -> error $ printf "Unknown class %s in expandPartial. Found %s" (show className) (show r)
@@ -505,8 +513,8 @@ intersectTypesWithVarEnv _ venv TopType t = (venv, t)
 intersectTypesWithVarEnv _ venv t TopType = (venv, t)
 intersectTypesWithVarEnv _ venv t1 t2 | t1 == t2 = (venv, t1)
 intersectTypesWithVarEnv _ _ (TypeVar v1) (TypeVar v2) = error $ printf "Can't intersect type vars %s with %s" (show v1) (show v2)
-intersectTypesWithVarEnv classGraph venv tv@(TypeVar (TVVar v)) t = (H.insertWith (intersectTypes classGraph) v t venv, tv)
-intersectTypesWithVarEnv classGraph venv t tv@(TypeVar (TVVar v)) = (H.insertWith (intersectTypes classGraph) v t venv, tv)
+intersectTypesWithVarEnv classGraph venv tv@(TypeVar (TVVar TVInt v)) t = (H.insertWith (intersectTypes classGraph) v t venv, tv)
+intersectTypesWithVarEnv classGraph venv t tv@(TypeVar (TVVar TVInt v)) = (H.insertWith (intersectTypes classGraph) v t venv, tv)
 intersectTypesWithVarEnv _ _ (TypeVar v) t = error $ printf "Can't intersect type vars %s with %s" (show v) (show t)
 intersectTypesWithVarEnv _ _ t (TypeVar v) = error $ printf "Can't intersect type vars %s with %s" (show t) (show v)
 intersectTypesWithVarEnv _ venv _ t | isBottomType t = (venv, t)
@@ -551,7 +559,7 @@ substituteVarsWithVarEnv venv (UnionType partials) = UnionType $ joinUnionType $
           ptPreds = map (substitutePartial ptVars') ptPreds
                                                                         }
           where ptVars' = fmap (substituteVarsWithVarEnv venv) ptVars
-substituteVarsWithVarEnv venv (TypeVar (TVVar v)) = case H.lookup v venv of
+substituteVarsWithVarEnv venv (TypeVar (TVVar TVInt v)) = case H.lookup v venv of
   Just v' -> v'
   Nothing -> error $ printf "Could not substitute unknown type var %s" v
 substituteVarsWithVarEnv _ t = t
@@ -567,7 +575,7 @@ substituteArgsWithArgEnv aenv (UnionType partials) = UnionType $ joinUnionType $
           ptArgs = fmap (substituteArgsWithArgEnv aenv') ptArgs
                                                                  }
           where aenv' = H.union aenv ptArgs
-substituteArgsWithArgEnv aenv (TypeVar (TVArg v)) = case H.lookup v aenv of
+substituteArgsWithArgEnv aenv (TypeVar (TVArg TVInt v)) = case H.lookup v aenv of
   Just v' -> v'
   Nothing -> error $ printf "Could not substitute unknown type arg %s" v
 substituteArgsWithArgEnv _ t = t
@@ -583,8 +591,9 @@ typeGetArg argName PartialType{ptArgs, ptVars} = do
   arg <- H.lookup argName ptArgs
   return $ case arg of
     TopType -> TopType
-    TypeVar (TVVar v) -> H.lookupDefault TopType v ptVars
-    TypeVar (TVArg _) -> error $ printf "Not yet implemented"
+    TypeVar (TVVar TVInt v) -> H.lookupDefault TopType v ptVars
+    TypeVar (TVVar TVExt _) -> error $ printf "Not yet implemented"
+    TypeVar (TVArg _ _) -> error $ printf "Not yet implemented"
     UnionType partialLeafs -> UnionType $ joinUnionType $ map substitutePartial $ splitUnionType partialLeafs
       where
         substitutePartial partial@PartialType{ptVars=vs} = partial{ptVars = fmap (substituteVarsWithVarEnv ptVars) vs}

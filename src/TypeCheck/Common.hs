@@ -308,7 +308,7 @@ verifyScheme classGraph (Meta _ _ (VarMetaDat _ _ varEnv argEnv)) (TypeCheckResu
   ]
   where
     verifyTypeVars venv (UnionType partialLeafs) = all (verifyTypeVarsPartial venv) $ splitUnionType partialLeafs
-    verifyTypeVars venv (TypeVar (TVVar v)) = isJust $ suffixLookup v venv
+    verifyTypeVars venv (TypeVar (TVVar _ v)) = isJust $ suffixLookup v venv
     verifyTypeVars _ _ = True
     verifyTypeVarsPartial venv PartialType{ptVars, ptArgs} = all (verifyTypeVars venv) ptVars
                                                                         && all (verifyTypeVars (H.keys ptVars)) ptArgs
@@ -358,10 +358,10 @@ pointUb env p = do
   return ub
 
 resolveTypeVar :: TypeVarAux -> VarMeta -> TypeCheckResult VarMeta
-resolveTypeVar (TVVar v) m@(Meta _ _ (VarMetaDat _ _ objVars _)) = case H.lookup v objVars of
+resolveTypeVar (TVVar _ v) m@(Meta _ _ (VarMetaDat _ _ objVars _)) = case H.lookup v objVars of
   Just m' -> return m'
   Nothing -> TypeCheckResE [GenTypeCheckError (getMetaPos m) "Unknown variable in resolveTypeVar var"]
-resolveTypeVar (TVArg v) m@(Meta _ _ (VarMetaDat _ _ _ argEnv)) = case H.lookup v argEnv of
+resolveTypeVar (TVArg _ v) m@(Meta _ _ (VarMetaDat _ _ _ argEnv)) = case H.lookup v argEnv of
   Just m' -> return m'
   Nothing -> TypeCheckResE [GenTypeCheckError (getMetaPos m) "Unknown variable in resolveTypeVar arg"]
 

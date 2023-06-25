@@ -59,7 +59,7 @@ buildTBEnv primEnv prgm@(objMap, classGraph, _) = baseEnv
     resEnv = H.fromListWith (++) $ mapMaybe resFromArrow objMap
 
     resFromArrow oa@ObjArr{oaObj=Just (GuardExpr _ aguard), oaArr, oaAnnots} = case oaArr of
-      Just _ -> Just (oaObjPath oa, [(objLeaf, aguard, any isElseAnnot oaAnnots, \input -> ResEArrow input oa) | objLeaf <- leafsFromMeta (getExprMeta $ oaObjExpr oa)])
+      Just _ -> Just (oaObjPath oa, [(objLeaf, aguard, any isElseAnnot oaAnnots, (`ResEArrow` oa)) | objLeaf <- leafsFromMeta (getExprMeta $ oaObjExpr oa)])
       Nothing -> Nothing
     resFromArrow oa = error $ printf "resFromArrow with no input expression: %s" (show oa)
 
@@ -75,7 +75,7 @@ buildExpr TBEnv{tbVals} _ (Value (Meta (UnionType prodTypes) pos _) name) = case
       Just val -> val
       Nothing  -> ResArrowTuple name' H.empty
     e -> error $ printf "Found unexpected value type in buildExpr: %s" (show e)
-buildExpr TBEnv{tbClassGraph} (os, obj) (Arg (Meta (TypeVar (TVArg a)) _ _) name) = return $ ArgArrow (snd $ fromJust $ suffixLookupInDict a $ exprArgsWithSrc tbClassGraph (oaObjExpr obj) os) name
+buildExpr TBEnv{tbClassGraph} (os, obj) (Arg (Meta (TypeVar (TVArg TVInt a)) _ _) name) = return $ ArgArrow (snd $ fromJust $ suffixLookupInDict a $ exprArgsWithSrc tbClassGraph (oaObjExpr obj) os) name
 buildExpr _ _ (Arg (Meta tp _ _) name) = return $ ArgArrow tp name
 buildExpr TBEnv{tbClassGraph} _ (TupleApply (Meta tp pos _) (Meta baseType _ _, baseExpr) oa@ObjArr{oaObj=Just{}, oaArr=Just{}}) = do
   let TupleArgIO _ argName argExpr = toTupleArg oa
@@ -181,10 +181,10 @@ envLookup env obj input ee visitedArrows srcType destType = do
 buildImplicit :: TBEnv -> ObjSrc -> TBExpr -> Type -> Type -> CRes ResArrowTree
 buildImplicit _ _ expr srcType TopType = return $ ExprArrow expr srcType srcType
 buildImplicit _ obj _ TopType destType = error $ printf "Build implicit from top type to %s in %s" (show destType) (show obj)
-buildImplicit env objSrc@(_, obj) input (TypeVar (TVVar varName)) destType = case suffixLookupInDict varName $ exprAppliedVars $ oaObjExpr obj of
+buildImplicit env objSrc@(_, obj) input (TypeVar (TVVar TVInt varName)) destType = case suffixLookupInDict varName $ exprAppliedVars $ oaObjExpr obj of
   Just objVarM -> buildImplicit env objSrc input (getMetaType objVarM) destType
   Nothing -> error $ printf "buildImplicit unknown arg %s with obj %s" varName (show objSrc)
-buildImplicit env@TBEnv{tbClassGraph} objSrc@(os, obj) input (TypeVar (TVArg argName)) destType = case suffixLookupInDict argName $ exprArgsWithSrc tbClassGraph (oaObjExpr obj) os of
+buildImplicit env@TBEnv{tbClassGraph} objSrc@(os, obj) input (TypeVar (TVArg TVInt argName)) destType = case suffixLookupInDict argName $ exprArgsWithSrc tbClassGraph (oaObjExpr obj) os of
   Just (_, srcType) -> buildImplicit env objSrc input srcType destType
   Nothing -> error $ printf "buildImplicit unknown arg %s with obj %s" argName (show obj)
 buildImplicit env obj expr srcType@(UnionType srcTypeLeafs) destType = do
@@ -195,6 +195,7 @@ buildImplicit env obj expr srcType@(UnionType srcTypeLeafs) destType = do
     v <- envLookup env obj leafInput (expr, leafInputType) S.empty leafSrcType destType
     return (leafSrcType, v)
   return (buildMatch wholeInput destType (H.fromList matchVal))
+buildImplicit _ _ _ _ _ = undefined
 
 -- executes an expression and then an implicit to a desired dest type
 buildExprImp :: TBEnv -> ObjSrc -> TBExpr -> Type -> Type -> CRes ResArrowTree
@@ -246,10 +247,10 @@ buildArrow env@TBEnv{tbClassGraph} objPartial oa@ObjArr{oaAnnots, oaM=(Meta am _
   let env' = env{tbName = printf "arrow %s" (show oa)}
   let objSrc = (objPartial, oa)
   let am' = case am of
-        (TypeVar (TVVar v)) -> case suffixLookupInDict v $ exprAppliedVars $ oaObjExpr oa of
+        (TypeVar (TVVar TVInt v)) -> case suffixLookupInDict v $ exprAppliedVars $ oaObjExpr oa of
           Just m  -> getMetaType m
           Nothing -> error "Bad TVVar in makeBaseEnv"
-        (TypeVar (TVArg v)) -> case suffixLookupInDict v $ exprArgs $ oaObjExpr oa of
+        (TypeVar (TVArg TVInt v)) -> case suffixLookupInDict v $ exprArgs $ oaObjExpr oa of
           Just argMetas -> intersectAllTypes tbClassGraph $ map getMetaType argMetas
           Nothing      -> error "Bad TVArg in makeBaseEnv"
         _ -> am
