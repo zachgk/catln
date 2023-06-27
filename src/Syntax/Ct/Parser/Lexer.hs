@@ -86,7 +86,7 @@ tvar = try $ lexeme $ do
   first <- upperChar
   rest <- many alphaNumChar
   return $ case ext of
-    Just{} -> '$' : '_' : first : rest
+    Just{}  -> '$' : '_' : first : rest
     Nothing -> '$' : first : rest
 
 pAnnotIdentifier :: Parser String

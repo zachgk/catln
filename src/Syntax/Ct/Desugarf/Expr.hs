@@ -134,8 +134,9 @@ exprToPartialType :: PExpr -> PartialType
 exprToPartialType = fromJust . fst . desObjPropagateTypes . desExpr H.empty . semiDesExpr SDType Nothing
 
 exprToType :: PExpr -> Type
-exprToType (RawValue _ ('$':'_':n)) = TypeVar $ TVVar TVExt n
-exprToType (RawValue _ ('$':n))     = TypeVar $ TVVar TVInt n
+exprToType t@(RawValue _ n) = case parseTVVar n of
+      Just t' -> t'
+      Nothing -> (singletonType . exprToPartialType) t
 exprToType t                        = (singletonType . exprToPartialType) t
 
 exprToTypeMeta :: PExpr -> ParseMeta

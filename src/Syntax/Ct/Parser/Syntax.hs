@@ -64,12 +64,17 @@ type DesObjectMap = ExprObjectMap Expr ParseMetaDat
 type DesPrgm = ExprPrgm Expr ParseMetaDat
 type DesPrgmGraphData = GraphData DesPrgm String
 
+parseTVVar :: String -> Maybe Type
+parseTVVar ('$':'_':n) = Just $ TypeVar $ TVVar TVExt n
+parseTVVar ('$':n)     = Just $ TypeVar $ TVVar TVInt n
+parseTVVar _           = Nothing
+
 fromMaybeTypeName :: Maybe TypeName -> Type
 fromMaybeTypeName = maybe TopType fromName
   where
-    fromName ('$':'_':n) = TypeVar $ TVVar TVExt n
-    fromName ('$':n)     = TypeVar $ TVVar TVInt n
-    fromName n           = singletonType (partialVal (PRelativeName n))
+    fromName n = case parseTVVar n of
+      Just t  -> t
+      Nothing -> singletonType (partialVal (PRelativeName n))
 
 emptyMeta :: SourcePos -> SourcePos -> ParseMeta
 emptyMeta p1 p2 = Meta TopType (Just (p1, p2, "")) emptyMetaDat

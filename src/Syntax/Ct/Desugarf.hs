@@ -182,8 +182,9 @@ desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef clss@PartialType{ptV
         Absolute p -> p
         Relative p -> inheritPath ++ "/" ++ p
 
-      eitherTypeVarExpr (RawValue _ ('$':'_':n)) = Left $ TypeVar $ TVVar TVExt n
-      eitherTypeVarExpr (RawValue _ ('$':n)) = Left $ TypeVar $ TVVar TVInt n
+      eitherTypeVarExpr e@(RawValue _ n) = case parseTVVar n of
+        Just t  -> Left t
+        Nothing -> Right e
       eitherTypeVarExpr e                      = Right e
 
 desClassDecl :: StatementEnv -> PartialType -> [RawStatementTree RawExpr ParseMetaDat] -> Path -> CRes DesPrgm
