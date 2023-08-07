@@ -56,18 +56,20 @@ desObjPropagateTypes (AliasExpr base alias) = (basePartial, AliasExpr base' alia
 desObjPropagateTypes mainExpr@(TupleApply m (bm, be) tupleApplyArgs) = do
   let (Just basePartial@PartialType{ptArgs=baseArgs}, be') = desObjPropagateTypes be
   let bm' = mWithType (getMetaType $ getExprMeta be') bm
-  case toTupleArg tupleApplyArgs of
-      TupleArgI argM argName -> do
-        let basePartial' = basePartial{ptArgs=H.insert argName (getMetaType argM) baseArgs}
-        let m' = mWithType (singletonType basePartial') m
-        (Just basePartial', TupleApply m' (bm', be') (fromTupleArg $ TupleArgI argM argName))
-      TupleArgIO argM argName argVal -> do
+  case tupleApplyArgs of
+      ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=Just (GuardExpr argVal _)} -> do
+        let (argName, argM) = exprPathM argObj
         let (_, argVal') = desObjPropagateTypes argVal
         let argM' = mWithType (getMetaType $ getExprMeta argVal) argM
         let basePartial' = basePartial{ptArgs=H.insert argName (getExprType argVal') baseArgs}
         let m' = mWithType (singletonType basePartial') m
-        (Just basePartial', TupleApply m' (bm', be') (fromTupleArg $ TupleArgIO argM' argName argVal'))
-      TupleArgO{} -> error $ printf "Unexpected TupleArgO in desObjPropagateTypes: %s" (show mainExpr)
+        (Just basePartial', TupleApply m' (bm', be') (mkIOObjArr argM' argName argVal'))
+      ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=Nothing} -> do
+        let (argName, argM) = exprPathM argObj
+        let basePartial' = basePartial{ptArgs=H.insert argName (getMetaType argM) baseArgs}
+        let m' = mWithType (singletonType basePartial') m
+        (Just basePartial', TupleApply m' (bm', be') (mkIObjArr argM argName))
+      _ -> error $ printf "Unexpected ObjArr in desObjPropagateTypes (probably because arrow only ObjArr): %s" (show mainExpr)
 desObjPropagateTypes (VarApply m be varName varVal) = (Just basePartial', VarApply m' be' varName varVal)
   where
     (Just basePartial@PartialType{ptVars=baseVars}, be') = desObjPropagateTypes be

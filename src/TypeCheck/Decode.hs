@@ -53,14 +53,15 @@ toExpr env (AliasExpr base alias) = do
   base' <- toExpr env base
   alias' <- toExpr env alias
   return $ AliasExpr base' alias'
-toExpr env (TupleApply m (baseM, baseExpr) arg) = case toTupleArg arg of
-  (TupleArgIO argM argName argExpr) -> do
+toExpr env (TupleApply m (baseM, baseExpr) arg) = case arg of
+  ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=Just (GuardExpr argExpr _)} -> do
+    let (argName, argM) = exprPathM argObj
     m' <- toMeta env m "TupleApply_M"
     baseM' <- toMeta env baseM "TupleApply_baseM"
     baseExpr' <- toExpr env baseExpr
     argM' <- toMeta env argM "TupleApply_ArgM"
     argExpr' <- toExpr env argExpr
-    let result = TupleApply m' (baseM', baseExpr') (fromTupleArg $ TupleArgIO argM' argName argExpr')
+    let result = TupleApply m' (baseM', baseExpr') (mkIOObjArr argM' argName argExpr')
     case m' of -- check for errors
 
       -- Don't check if a bottom type is present
@@ -71,7 +72,7 @@ toExpr env (TupleApply m (baseM, baseExpr) arg) = case toTupleArg arg of
                                           TypeCheckResult [TupleMismatch baseM' baseExpr' tp $ H.singleton argName argExpr'] result
 
       _ -> return result
-  (TupleArgO argExpr) -> do
+  ObjArr{oaArr=Just (GuardExpr argExpr _)} -> do
     let pos = getMetaPos m
     m' <- toMeta env m "TupleApplyInfer_M"
     baseM' <- toMeta env baseM "TupleApplyInfer_baseM"
@@ -84,13 +85,15 @@ toExpr env (TupleApply m (baseM, baseExpr) arg) = case toTupleArg arg of
           _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to multiple arg options"]
         (base, result) -> TypeCheckResE [GenTypeCheckError pos $ printf "Failed argument inference due to multiple types with base %s and result %s" (show base) (show result)]
       _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to non UnionType"]
-    return $ TupleApply m' (baseM', baseExpr') (fromTupleArg $ TupleArgIO (emptyMetaE "ArgName" argExpr') argName argExpr')
-  (TupleArgI argM argName) -> do
+    return $ TupleApply m' (baseM', baseExpr') (mkIOObjArr (emptyMetaE "ArgName" argExpr') argName argExpr')
+  ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=Nothing} -> do
+    let (argName, argM) = exprPathM argObj
     m' <- toMeta env m "TupleApplyI_M"
     baseM' <- toMeta env baseM "TupleApplyI_baseM"
     baseExpr' <- toExpr env baseExpr
     argM' <- toMeta env argM "TupleApplyI_ArgM"
-    return $ TupleApply m' (baseM', baseExpr') (fromTupleArg $ TupleArgI argM' argName)
+    return $ TupleApply m' (baseM', baseExpr') (mkIObjArr argM' argName)
+  oa -> error $ printf "Invalid oa %s" (show oa)
 toExpr env (VarApply m baseExpr varName varVal) = do
   m' <- toMeta env m "VarApply_M"
   baseExpr' <- toExpr env baseExpr

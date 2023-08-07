@@ -165,16 +165,18 @@ exprArgsWithSrc _ HoleExpr{} _ = H.empty
 exprArgsWithSrc _ (Arg m n) src = H.singleton n ([m], singletonType src)
 exprArgsWithSrc classGraph (AliasExpr base alias) src = H.union (exprArgsWithSrc classGraph base src) (exprArgsWithSrc classGraph alias src)
 exprArgsWithSrc classGraph (VarApply _ e _ _) src = exprArgsWithSrc classGraph e src
-exprArgsWithSrc classGraph (TupleApply _ (_, be) arg) src = H.union (exprArgsWithSrc classGraph be src) (fromArg $ toTupleArg arg)
+exprArgsWithSrc classGraph (TupleApply _ (_, be) arg) src = H.union (exprArgsWithSrc classGraph be src) (fromArg arg)
   where
-    fromArg (TupleArgIO _ n e) = case typeGetArg n src of
+    fromArg ObjArr{oaObj=Just (GuardExpr obj _), oaArr=Just (GuardExpr e _)} = case typeGetArg (exprPath obj) src of
       Just (UnionType srcArg) -> mergeMaps $ map (exprArgsWithSrc classGraph e) $ splitUnionType srcArg
       Just TopType -> (,TopType) <$> exprArgs e
       _ -> H.empty
-    fromArg (TupleArgO e) = exprArgsWithSrc classGraph e src
-    fromArg (TupleArgI m n) = case typeGetArg n src of
-      Just srcArg -> H.singleton n ([m], srcArg)
+    fromArg ObjArr{oaArr=Just (GuardExpr e _)} = exprArgsWithSrc classGraph e src
+    fromArg ObjArr {oaObj=Just (GuardExpr obj _)} = case typeGetArg (exprPath obj) src of
+      Just srcArg -> case exprPathM obj of
+        (n, m) -> H.singleton n ([m], srcArg)
       Nothing     -> H.empty
+    fromArg oa = error $ printf "Invalid oa %s" (show oa)
 
     mergeMaps [] = H.empty
     mergeMaps (x:xs) = foldr (H.intersectionWith (\(m1s, t1) (m2s, t2) -> (m1s ++ m2s, unionTypes classGraph t1 t2))) x xs

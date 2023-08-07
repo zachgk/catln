@@ -75,11 +75,6 @@ mapMetaAppliedExpr f loc (AliasExpr b a) = AliasExpr (mapMetaAppliedExpr f loc b
 mapMetaAppliedExpr f loc (TupleApply m (bm, be) arg) = TupleApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, mapMetaAppliedExpr f loc be) (mapOAObjExpr (mapMeta f loc) arg)
 mapMetaAppliedExpr f loc (VarApply m be varName varVal) = VarApply (f (ExprMeta loc ExprMetaApplyVar) m) (mapMetaAppliedExpr f loc be) varName (f (ExprMeta loc ExprMetaApplyVarVal) varVal)
 
-mapMetaTupleArg :: (MapMeta e) => MetaFun a b -> MetaLocation -> TupleArg e a -> TupleArg e b
-mapMetaTupleArg f loc (TupleArgI m argName) = TupleArgI (f (ExprMeta loc ExprMetaTupleArg) m) argName
-mapMetaTupleArg f loc (TupleArgO argVal) = TupleArgO (mapMeta f loc argVal)
-mapMetaTupleArg f loc (TupleArgIO m argName argVal) = TupleArgIO (f (ExprMeta loc ExprMetaTupleArg) m) argName (mapMeta f loc argVal)
-
 instance MapMeta Expr where
   mapMeta f loc (CExpr m c) = CExpr (f (ExprMeta loc ExprMetaConstant) m) c
   mapMeta f loc (Value m n) = Value (f (ExprMeta loc ExprMetaVal) m) n

@@ -43,15 +43,6 @@ data Constant
   | CStr String
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
--- |
--- An argument applied in an expression.
--- TODO Consider replacing the TupleArgI ArgName with an Expr as a generalization. In that case, this ArgName would be equivalent to a Value. It could also include lenses.
-data TupleArg e m
-  = TupleArgI (Meta m) ArgName -- ^ An input arg. Can be thought of as a key without a value. Used only in input expressions.
-  | TupleArgO (e m) -- ^ An output arg. Can be thought of as a value with an unknown key. Used only in output expressions before typechecking, as typechecking will determine the matching key.
-  | TupleArgIO (Meta m) ArgName (e m) -- ^ An arg containing both the name and value.
-  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
-
 -- | The type of hole (a gap where an expression should be). Used in inputs to ignore the expression and outputs.
 data Hole
   = HoleActive (Maybe Name) -- ^ A hole such as _ or _name, where the name is optional and treated as an error
@@ -282,18 +273,15 @@ instance ExprClass Expr where
       exprArg oa = error $ printf "Invalid oa %s" (show oa)
   exprVarArgs (VarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar TVInt n) [m])
 
--- | To deprecate as part of moving to ObjArr
-toTupleArg :: (Show m) => ObjArr Expr m -> TupleArg Expr m
-toTupleArg ObjArr{oaObj=Just (GuardExpr obj Nothing), oaM, oaArr=Just (GuardExpr arr Nothing)} = TupleArgIO oaM (exprPath obj) arr
-toTupleArg ObjArr{oaObj=Just (GuardExpr obj Nothing), oaArr=Nothing} = case exprPathM obj of
-  (n, m) -> TupleArgI m n
-toTupleArg ObjArr{oaObj=Nothing, oaArr=Just (GuardExpr arr Nothing)} = TupleArgO arr
-toTupleArg oa = error $ printf "Invalid toTupleArg: %s" (show oa)
+mkIOObjArr :: (MetaDat m, Show m) => Meta m -> ArgName -> Expr m -> ObjArr Expr m
+mkIOObjArr m argName argVal = ObjArr (Just (GuardExpr (Arg m argName) Nothing)) ArgObj Nothing [] emptyMetaN (Just (GuardExpr argVal Nothing))
 
-fromTupleArg :: (MetaDat m, Show m) => TupleArg Expr m -> ObjArr Expr m
-fromTupleArg (TupleArgIO m argName argVal) = ObjArr (Just (GuardExpr (Arg m argName) Nothing)) ArgObj Nothing [] emptyMetaN (Just (GuardExpr argVal Nothing))
-fromTupleArg (TupleArgI m argName) = ObjArr (Just (GuardExpr (Arg m argName) Nothing)) ArgObj Nothing [] emptyMetaN Nothing
-fromTupleArg (TupleArgO argVal) = ObjArr Nothing ArgObj Nothing [] emptyMetaN (Just (GuardExpr argVal Nothing))
+mkIObjArr :: (MetaDat m, Show m) => Meta m -> ArgName -> ObjArr Expr m
+mkIObjArr m argName = ObjArr (Just (GuardExpr (Arg m argName) Nothing)) ArgObj Nothing [] emptyMetaN Nothing
+
+mkOObjArr :: (MetaDat m, Show m) => Expr m -> ObjArr Expr m
+mkOObjArr argVal = ObjArr Nothing ArgObj Nothing [] emptyMetaN (Just (GuardExpr argVal Nothing))
+
 
 mapMetaDat :: (m1 -> m2) -> Meta m1 -> Meta m2
 mapMetaDat f (Meta t p md) = Meta t p (f md)
