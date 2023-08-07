@@ -124,20 +124,21 @@ instance ExprClass RawExpr where
   exprAppliedVars (RawMethod _ e) = exprAppliedVars e
   exprAppliedVars _ = error "Unsupported RawExpr exprAppliedVars"
 
-  exprArgs :: (Show m) => RawExpr m -> H.HashMap ArgName [Meta m]
-  exprArgs RawCExpr{} = H.empty
-  exprArgs RawHoleExpr{} = H.empty
-  exprArgs RawValue{} = H.empty
-  exprArgs RawTheExpr{} = H.empty
-  exprArgs (RawAliasExpr base alias) = H.unionWith (++) (exprArgs base) (exprArgs alias)
-  exprArgs (RawTupleApply _ (_, be) args) = H.unionWith (++) (exprArgs be) (unionsWith (++) $ map exprArg args)
+  exprVarArgs RawCExpr{} = H.empty
+  exprVarArgs RawHoleExpr{} = H.empty
+  exprVarArgs RawValue{} = H.empty
+  exprVarArgs RawTheExpr{} = H.empty
+  exprVarArgs (RawAliasExpr base alias) = H.unionWith (++) (exprVarArgs base) (exprVarArgs alias)
+  exprVarArgs (RawTupleApply _ (_, be) args) = H.unionWith (++) (exprVarArgs be) (unionsWith (++) $ map exprArg args)
     where
-      exprArg ObjArr{oaObj=(Just (GuardExpr (RawValue m argName) Nothing)), oaArr= Nothing} = H.singleton argName [m]
-      exprArg ObjArr{oaArr=(Just (GuardExpr argVal Nothing))} = exprArgs argVal
-      exprArg oa = error $ printf "exprArgs not defined for arg %s" (show oa)
-  exprArgs (RawVarsApply _ e _) = exprArgs e
-  exprArgs (RawContextApply _ (_, e) _) = exprArgs e
-  exprArgs (RawParen e) = exprArgs e
-  exprArgs (RawMethod be me) = H.unionWith (++) (exprArgs be) (exprArgs me)
-  exprArgs e = error $ printf "Unsupported RawExpr exprArgs for %s" (show e)
+      exprArg ObjArr{oaObj=(Just (GuardExpr (RawValue m argName) Nothing)), oaArr= Nothing} = H.singleton (TVArg TVInt argName) [m]
+      exprArg ObjArr{oaArr=(Just (GuardExpr argVal Nothing))} = exprVarArgs argVal
+      exprArg oa = error $ printf "exprVarArgs not defined for arg %s" (show oa)
+  exprVarArgs (RawVarsApply _ e vars) = H.unionWith (++) (exprVarArgs e) (unionsWith (++) $ map aux vars)
+    where
+      aux (n, m) = H.singleton (TVVar TVInt $ exprPath n) [m]
+  exprVarArgs (RawContextApply _ (_, e) _) = exprVarArgs e
+  exprVarArgs (RawParen e) = exprVarArgs e
+  exprVarArgs (RawMethod be me) = H.unionWith (++) (exprVarArgs be) (exprVarArgs me)
+  exprVarArgs e = error $ printf "Unsupported RawExpr exprVarArgs for %s" (show e)
 

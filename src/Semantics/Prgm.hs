@@ -235,7 +235,7 @@ class ExprClass e where
   exprAppliedVars :: e m -> H.HashMap TypeVarName (Meta m)
 
   -- | Returns all arguments located recursively in an expression
-  exprArgs :: (Show m) => e m -> H.HashMap ArgName [Meta m]
+  exprVarArgs :: (Show m) => e m -> H.HashMap TypeVarAux [Meta m]
 
 
 instance ExprClass Expr where
@@ -269,18 +269,18 @@ instance ExprClass Expr where
   exprAppliedVars (VarApply _ e n m) = H.insert n m (exprAppliedVars e)
   exprAppliedVars _ = error "Unsupported Expr exprAppliedVars"
 
-  exprArgs CExpr{} = H.empty
-  exprArgs Value{} = H.empty
-  exprArgs (Arg m n) = H.singleton n [m]
-  exprArgs HoleExpr{} = H.empty
-  exprArgs (AliasExpr base alias) = H.unionWith (++) (exprArgs base) (exprArgs alias)
-  exprArgs (TupleApply _ (_, be) arg) = H.unionWith (++) (exprArgs be) (exprArg arg)
+  exprVarArgs CExpr{} = H.empty
+  exprVarArgs Value{} = H.empty
+  exprVarArgs (Arg m n) = H.singleton (TVArg TVInt n) [m]
+  exprVarArgs HoleExpr{} = H.empty
+  exprVarArgs (AliasExpr base alias) = H.unionWith (++) (exprVarArgs base) (exprVarArgs alias)
+  exprVarArgs (TupleApply _ (_, be) arg) = H.unionWith (++) (exprVarArgs be) (exprArg arg)
     where
-      exprArg ObjArr{oaArr=Just (GuardExpr e Nothing)} = exprArgs e
+      exprArg ObjArr{oaArr=Just (GuardExpr e Nothing)} = exprVarArgs e
       exprArg ObjArr{oaObj=Just (GuardExpr obj Nothing)} = case exprPathM obj of
-        (n, m) -> H.singleton n [m]
+        (n, m) -> H.singleton (TVArg TVInt n) [m]
       exprArg oa = error $ printf "Invalid oa %s" (show oa)
-  exprArgs (VarApply _ e _ _) = exprArgs e
+  exprVarArgs (VarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar TVInt n) [m])
 
 -- | To deprecate as part of moving to ObjArr
 toTupleArg :: (Show m) => ObjArr Expr m -> TupleArg Expr m
@@ -318,6 +318,12 @@ exprPathM = fromMaybe (error "No exprPath found") . maybeExprPathM
 
 exprPath :: (ExprClass e) => e m -> TypeName
 exprPath = fst . exprPathM
+
+exprArgs :: (ExprClass e, Show m) => e m -> H.HashMap ArgName [Meta m]
+exprArgs e = H.fromList $ mapMaybe aux $ H.toList $ exprVarArgs e
+  where
+    aux (TVArg _ a, ms) = Just (a, ms)
+    aux (TVVar _ _, _)  = Nothing
 
 mergeDoc :: Maybe String -> Maybe String -> Maybe String
 mergeDoc (Just a) (Just b) = Just (a ++ " " ++ b)
