@@ -102,12 +102,7 @@ instance ExprClass RawExpr where
   maybeExprPathM _                            = Nothing
 
   exprAppliedArgs (RawValue _ _) = []
-  exprAppliedArgs (RawTupleApply _ (_, be) args) = exprAppliedArgs be ++ map mapArgs args
-    where
-      mapArgs ObjArr{oaObj= Just (GuardExpr (RawValue _ argName) _), oaM, oaArr=(Just (GuardExpr argVal Nothing))} = TupleArgIO oaM argName argVal
-      mapArgs ObjArr{oaObj=(Just (GuardExpr e Nothing)), oaArr=Nothing} = TupleArgO e -- Both TupleArgI and TupleArgO will show as TupleArgO because input/output has not yet been disambiguated
-      mapArgs oa@ObjArr{oaObj=Nothing, oaArr=Just{}} = error $ printf "Unexpected exprAppliedArgs because single expressions should always be treated as inputs after parsing: %s" (show oa)
-      mapArgs oa = error $ printf "exprAppliedArgs not defined for arg %s" (show oa)
+  exprAppliedArgs (RawTupleApply _ (_, be) args) = exprAppliedArgs be ++ args
   exprAppliedArgs (RawVarsApply _ e _) = exprAppliedArgs e
   exprAppliedArgs (RawContextApply _ (_, e) _) = exprAppliedArgs e
   exprAppliedArgs (RawParen e) = exprAppliedArgs e

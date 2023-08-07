@@ -229,7 +229,7 @@ class ExprClass e where
   maybeExprPathM :: e m -> Maybe (TypeName, Meta m)
 
   -- | Returns all arguments applied to a value
-  exprAppliedArgs :: (Show m) => e m -> [TupleArg e m]
+  exprAppliedArgs :: (Show m) => e m -> [ObjArr e m]
 
   -- | Returns all vars applied to a value
   exprAppliedVars :: e m -> H.HashMap TypeVarName (Meta m)
@@ -259,7 +259,7 @@ instance ExprClass Expr where
 
   exprAppliedArgs (Value _ _) = []
   exprAppliedArgs (Arg _ _) = []
-  exprAppliedArgs (TupleApply _ (_, be) ae) = toTupleArg ae : exprAppliedArgs be
+  exprAppliedArgs (TupleApply _ (_, be) ae) = ae : exprAppliedArgs be
   exprAppliedArgs (VarApply _ e _ _) = exprAppliedArgs e
   exprAppliedArgs _ = error "Unsupported Expr exprAppliedArgs"
 
@@ -373,9 +373,8 @@ getRecursiveExprObjsExpr :: (ExprClass e, Show m) => e m -> [e m]
 getRecursiveExprObjsExpr expr = subObjects ++ recursedSubObjects
   where
     subObjects = filter (isJust . maybeExprPath) $ mapMaybe exprFromTupleArg $ exprAppliedArgs expr
-    exprFromTupleArg (TupleArgO e)      = Just e
-    exprFromTupleArg (TupleArgIO _ _ e) = Just e
-    exprFromTupleArg TupleArgI{}        = Nothing
+    exprFromTupleArg ObjArr{oaArr=Just (GuardExpr e _)} = Just e
+    exprFromTupleArg _                                  = Nothing
     recursedSubObjects = concatMap getRecursiveExprObjsExpr subObjects
 
 -- | Gets an object and all sub-objects (recursively) from it's arguments

@@ -47,11 +47,12 @@ emptyMetaE :: (ExprClass e) => String -> e m -> Meta m
 emptyMetaE s e = labelPosM s $ getExprMeta e
 
 exprAppliedArgsMap :: (ExprClass e, Show m) => e m -> H.HashMap ArgName (Meta m, Maybe (e m))
-exprAppliedArgsMap = H.fromList . mapMaybe mapTupleArg . exprAppliedArgs
+exprAppliedArgsMap = H.fromList . mapMaybe mapArg . exprAppliedArgs
   where
-    mapTupleArg (TupleArgI m n)    = Just (n, (m, Nothing))
-    mapTupleArg (TupleArgIO m n a) = Just (n, (m, Just a))
-    mapTupleArg TupleArgO{}        = Nothing
+    mapArg ObjArr{oaObj=Just (GuardExpr oe _), oaArr=Just (GuardExpr ae _), oaM} = Just (exprPath oe, (oaM, Just ae))
+    mapArg ObjArr{oaObj=Just (GuardExpr oe _)} = case exprPathM oe of
+      (n, m) -> Just (n, (m, Nothing))
+    mapArg _ = Nothing
 
 exprWithMeta :: Meta m -> Expr m -> Expr m
 exprWithMeta m (CExpr _ c)        = CExpr m c
@@ -90,9 +91,6 @@ objPath = exprPath . objExpr
 
 objM :: (Show m, MetaDat m) => Object Expr m -> Meta m
 objM = getExprMeta . objExpr
-
-objAppliedArgs :: (Show m, MetaDat m) => Object Expr m -> [TupleArg Expr m]
-objAppliedArgs = exprAppliedArgs . objExpr
 
 objAppliedArgsMap :: (Show m, MetaDat m) => Object Expr m -> H.HashMap ArgName (Meta m, Maybe (Expr m))
 objAppliedArgsMap = exprAppliedArgsMap . objExpr
