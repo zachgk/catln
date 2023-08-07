@@ -93,13 +93,13 @@ instance ExprClass RawExpr where
 
   getExprArg _ = Nothing
 
-  maybeExprPath (RawValue _ n)               = Just n
-  maybeExprPath (RawTupleApply _ (_, e) _)   = maybeExprPath e
-  maybeExprPath (RawVarsApply _ e _)         = maybeExprPath e
-  maybeExprPath (RawContextApply _ (_, e) _) = maybeExprPath e
-  maybeExprPath (RawParen e)                 = maybeExprPath e
-  maybeExprPath (RawMethod _ e)              = maybeExprPath e
-  maybeExprPath _                            = Nothing
+  maybeExprPathM (RawValue m n)               = Just (n, m)
+  maybeExprPathM (RawTupleApply _ (_, e) _)   = maybeExprPathM e
+  maybeExprPathM (RawVarsApply _ e _)         = maybeExprPathM e
+  maybeExprPathM (RawContextApply _ (_, e) _) = maybeExprPathM e
+  maybeExprPathM (RawParen e)                 = maybeExprPathM e
+  maybeExprPathM (RawMethod _ e)              = maybeExprPathM e
+  maybeExprPathM _                            = Nothing
 
   exprAppliedArgs (RawValue _ _) = []
   exprAppliedArgs (RawTupleApply _ (_, be) args) = exprAppliedArgs be ++ map mapArgs args

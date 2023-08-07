@@ -46,9 +46,6 @@ emptyMetaM = labelPosM
 emptyMetaE :: (ExprClass e) => String -> e m -> Meta m
 emptyMetaE s e = labelPosM s $ getExprMeta e
 
-exprPath :: (ExprClass e) => e m -> TypeName
-exprPath = fromMaybe (error "No exprPath found") . maybeExprPath
-
 exprAppliedArgsMap :: (ExprClass e, Show m) => e m -> H.HashMap ArgName (Meta m, Maybe (e m))
 exprAppliedArgsMap = H.fromList . mapMaybe mapTupleArg . exprAppliedArgs
   where

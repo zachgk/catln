@@ -226,7 +226,7 @@ class ExprClass e where
   getExprArg :: e m -> Maybe ArgName
 
   -- | Returns the value at the base of an expression, if it exists
-  maybeExprPath :: e m -> Maybe TypeName
+  maybeExprPathM :: e m -> Maybe (TypeName, Meta m)
 
   -- | Returns all arguments applied to a value
   exprAppliedArgs :: (Show m) => e m -> [TupleArg e m]
@@ -251,11 +251,11 @@ instance ExprClass Expr where
   getExprArg (Arg _ n) = Just n
   getExprArg _         = Nothing
 
-  maybeExprPath (Value _ n)             = Just n
-  maybeExprPath (Arg _ n)               = Just n
-  maybeExprPath (TupleApply _ (_, e) _) = maybeExprPath e
-  maybeExprPath (VarApply _ e _ _)      = maybeExprPath e
-  maybeExprPath _                       = Nothing
+  maybeExprPathM (Value m n)             = Just (n, m)
+  maybeExprPathM (Arg m n)               = Just (n, m)
+  maybeExprPathM (TupleApply _ (_, e) _) = maybeExprPathM e
+  maybeExprPathM (VarApply _ e _ _)      = maybeExprPathM e
+  maybeExprPathM _                       = Nothing
 
   exprAppliedArgs (Value _ _) = []
   exprAppliedArgs (Arg _ _) = []
@@ -274,19 +274,19 @@ instance ExprClass Expr where
   exprArgs (Arg m n) = H.singleton n [m]
   exprArgs HoleExpr{} = H.empty
   exprArgs (AliasExpr base alias) = H.unionWith (++) (exprArgs base) (exprArgs alias)
-  exprArgs (TupleApply _ (_, be) arg) = H.unionWith (++) (exprArgs be) (exprArg (toTupleArg arg))
+  exprArgs (TupleApply _ (_, be) arg) = H.unionWith (++) (exprArgs be) (exprArg arg)
     where
-      exprArg (TupleArgIO _ _ e) = exprArgs e
-      exprArg (TupleArgO e)      = exprArgs e
-      exprArg (TupleArgI m n)    = H.singleton n [m]
+      exprArg ObjArr{oaArr=Just (GuardExpr e Nothing)} = exprArgs e
+      exprArg ObjArr{oaObj=Just (GuardExpr obj Nothing)} = case exprPathM obj of
+        (n, m) -> H.singleton n [m]
+      exprArg oa = error $ printf "Invalid oa %s" (show oa)
   exprArgs (VarApply _ e _ _) = exprArgs e
 
 -- | To deprecate as part of moving to ObjArr
 toTupleArg :: (Show m) => ObjArr Expr m -> TupleArg Expr m
-toTupleArg ObjArr{oaObj=Just (GuardExpr (Arg _ n) Nothing), oaM, oaArr=Just (GuardExpr arr Nothing)} = TupleArgIO oaM n arr
-toTupleArg ObjArr{oaObj=Just (GuardExpr (Arg m n) Nothing), oaArr=Nothing} = TupleArgI m n
-toTupleArg ObjArr{oaObj=Just (GuardExpr (Value _ n) Nothing), oaM, oaArr=Just (GuardExpr arr Nothing)} = TupleArgIO oaM n arr
-toTupleArg ObjArr{oaObj=Just (GuardExpr (Value m n) Nothing), oaArr=Nothing} = TupleArgI m n
+toTupleArg ObjArr{oaObj=Just (GuardExpr obj Nothing), oaM, oaArr=Just (GuardExpr arr Nothing)} = TupleArgIO oaM (exprPath obj) arr
+toTupleArg ObjArr{oaObj=Just (GuardExpr obj Nothing), oaArr=Nothing} = case exprPathM obj of
+  (n, m) -> TupleArgI m n
 toTupleArg ObjArr{oaObj=Nothing, oaArr=Just (GuardExpr arr Nothing)} = TupleArgO arr
 toTupleArg oa = error $ printf "Invalid toTupleArg: %s" (show oa)
 
@@ -309,6 +309,15 @@ constantPartialType CStr{}   = strLeaf
 
 constantType :: Constant -> Type
 constantType = singletonType . constantPartialType
+
+maybeExprPath :: (ExprClass e) => e m -> Maybe TypeName
+maybeExprPath = fmap fst . maybeExprPathM
+
+exprPathM :: (ExprClass e) => e m -> (TypeName, Meta m)
+exprPathM = fromMaybe (error "No exprPath found") . maybeExprPathM
+
+exprPath :: (ExprClass e) => e m -> TypeName
+exprPath = fst . exprPathM
 
 mergeDoc :: Maybe String -> Maybe String -> Maybe String
 mergeDoc (Just a) (Just b) = Just (a ++ " " ++ b)
