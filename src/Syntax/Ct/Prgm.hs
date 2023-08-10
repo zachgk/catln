@@ -46,6 +46,7 @@ data RawExpr m
   = RawCExpr (Meta m) Constant
   | RawValue (Meta m) TypeName
   | RawHoleExpr (Meta m) Hole
+  | RawMacroValue (Meta m) TypeName
   | RawTheExpr (RawExpr m) -- ^ Written :TypeName and read as The TypeName
   | RawAliasExpr (RawExpr m) (RawExpr m) -- ^ base aliasExpr
   | RawTupleApply (Meta m) (Meta m, RawExpr m) [RawObjArr RawExpr m]
@@ -61,6 +62,11 @@ data MultiTypeDef m = MultiTypeDef PartialType [GuardExpr RawExpr m]
 
 type RawClassDef m = (RawExpr m, ClassName)
 
+data RawApplyTerm e m = RATermDeep (e m) | RATermChild (e m)
+  deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
+newtype RawApply e m = RawApply [RawApplyTerm e m]
+  deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
+
 data Path = Relative String | Absolute String
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
@@ -72,6 +78,7 @@ data RawStatement e m
   | RawClassDeclStatement PartialType Path
   | RawExprStatement (e m)
   | RawAnnot (CompAnnot (e m))
+  | RawApplyStatement (RawApply e m)
   | RawModule String Path
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
@@ -93,6 +100,7 @@ instance ExprClass RawExpr where
     RawCExpr m _          -> m
     RawValue m _          -> m
     RawHoleExpr m _       -> m
+    RawMacroValue m _     -> m
     RawTheExpr e          -> getExprMeta e
     RawAliasExpr b _      -> getExprMeta b
     RawTupleApply m _ _   -> m

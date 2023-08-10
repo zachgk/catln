@@ -22,6 +22,7 @@ instance MapMeta RawExpr where
   mapMeta f loc (RawCExpr m c) = RawCExpr (f (ExprMeta loc ExprMetaConstant) m) c
   mapMeta f loc (RawValue m n) = RawValue (f (ExprMeta loc ExprMetaVal) m) n
   mapMeta f loc (RawHoleExpr m h) = RawHoleExpr (f (ExprMeta loc ExprMetaHole) m) h
+  mapMeta f loc (RawMacroValue m n) = RawMacroValue (f (ExprMeta loc ExprMetaMacroVal) m) n
   mapMeta f loc (RawTheExpr e) = RawTheExpr (mapMeta f loc e)
   mapMeta f loc (RawAliasExpr b a) = RawAliasExpr (mapMeta f loc b) (mapMeta f loc a)
   mapMeta f loc (RawTupleApply m (bm, be) args) = RawTupleApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, mapMeta f loc be) (map (mapMetaRawObjArr f (Just loc)) args)
@@ -50,6 +51,10 @@ mapMetaRawStatement f (RawClassDefStatement (typeExpr, className) path) = RawCla
 mapMetaRawStatement _ (RawClassDeclStatement d p) = RawClassDeclStatement d p
 mapMetaRawStatement f (RawExprStatement e) = RawExprStatement (mapMeta f OutputMeta e)
 mapMetaRawStatement f (RawAnnot e) = RawAnnot (mapMeta f AnnotMeta e)
+mapMetaRawStatement f (RawApplyStatement (RawApply terms)) = RawApplyStatement $ RawApply $ map mapTerm terms
+  where
+    mapTerm (RATermDeep e)  = RATermDeep $ mapMeta f ApplyMeta e
+    mapTerm (RATermChild e) = RATermChild $ mapMeta f ApplyMeta e
 mapMetaRawStatement _ (RawModule m p) = RawModule m p
 
 mapMetaRawStatementTree :: (MapMeta e) => MetaFun a b -> RawStatementTree e a -> RawStatementTree e b

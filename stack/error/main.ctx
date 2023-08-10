@@ -23,19 +23,19 @@ class Err
   apply ${fun} > error(cause: Err)
     #msg("An error occurred when running [fun] due to [cause]")
 
-  data Result<$R, $E: Err> = $R | $E
+  class Result[$R, $E: Err] = $R | $E
     # The standard handling of the [Err] is by wrapping things into a [Result].
 
-    :Result<$R, $E>.default(def: $R) = match(this)
+    :Result[$R, $E].default(def: $R) = match(this)
       val: $R = val
       _: $E = def
 
-    every Result<$R=$T, $E> isa Functor<$T>
+    every Result[$R: $T, $E] isa Functor
 
-    :Result<$R, $E>.map(f) = match(this)
+    :Result[$R, $E].map(f) = match(this)
       val: $R = f(val)
       e: $E = e
 
-    :Result<$R>.to[Optional] = match(this)
+    :Result[$R].to[Optional] = match(this)
       val: $R = val
       _: $E = Nothing

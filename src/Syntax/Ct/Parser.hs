@@ -30,6 +30,7 @@ import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Parser.Type      (pTypeStatement)
 import           Syntax.Ct.Prgm
 import qualified Text.Megaparsec.Char.Lexer as L
+import           Text.Printf
 
 pImport :: Parser String
 pImport = do
@@ -52,6 +53,19 @@ pModule = do
   name <- ttypeidentifier
   return $ RawModule name (getPath name)
 
+pApply :: Parser PStatement
+pApply = do
+  _ <- symbol "apply"
+  term1 <- RATermDeep <$> term
+  termRest <- many $ do
+    sep <- symbol ">" <|> symbol " "
+    val <- term
+    return $ case sep of
+      ">" -> RATermChild val
+      " " -> RATermDeep val
+      _   -> error $ printf "Unexpected seperator " (show sep)
+  return $ RawApplyStatement $ RawApply (term1 : termRest)
+
 pCommentStatement :: Parser PStatementTree
 pCommentStatement = do
   c <- pComment
@@ -65,6 +79,7 @@ pStatementTree = do
     <|> pCommentStatement
     <|> liftPStatement (RawAnnot <$> pCompAnnot)
     <|> liftPStatement pModule
+    <|> liftPStatement pApply
     <|> liftPStatement pDeclStatement
 
 pNothingNewline :: Parser (Maybe a)

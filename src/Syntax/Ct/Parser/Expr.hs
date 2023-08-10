@@ -114,6 +114,9 @@ pArrowFull basis = do
   maybeExpr2 <- optional $ do
     _ <- symbol "=>" <|> symbol "="
     optional $ try pExprWithPostCond
+  maybeDef <- optional $ do
+    _ <- symbol "?"
+    try pExpr
 
   let arrMeta = fromMaybe emptyMetaN maybeDecl
   (i', o') <- return $ case (expr1, maybeExpr2) of
@@ -121,7 +124,7 @@ pArrowFull basis = do
     (i, Just Nothing) -> (Just (GuardExpr i guard), Just (GuardExpr (rawVal nestedDeclaration) Nothing))
     (i, Nothing) -> (Just (GuardExpr i guard), Nothing) -- If only one expression, always make it as an input and later desugar to proper place
 
-  return $ RawObjArr i' basis Nothing guardAnnots arrMeta o' Nothing
+  return $ RawObjArr i' basis Nothing guardAnnots arrMeta o' maybeDef
 
 data TermSuffix
   = ArgsSuffix ParseMeta [PObjArr]
@@ -202,6 +205,15 @@ pList = do
   pos2 <- getSourcePos
   return $ RawList (emptyMeta pos1 pos2) lst
 
+pMacroValue :: Parser PExpr
+pMacroValue = do
+  pos1 <- getSourcePos
+  _ <- string "${"
+  n <- identifier <|> tidentifier
+  _ <- string "}"
+  pos2 <- getSourcePos
+  return $ RawMacroValue (emptyMeta pos1 pos2) n
+
 applyTermSuffix :: PExpr -> TermSuffix -> PExpr
 applyTermSuffix base (ArgsSuffix m args) = RawTupleApply m (labelPosM "arg" $ getExprMeta base, base) args
 applyTermSuffix base (VarsSuffix m vars) = RawVarsApply m base vars
@@ -214,6 +226,7 @@ term = do
        <|> pStringLiteral
        <|> pInt
        <|> pList
+       <|> pMacroValue
        <|> pValue
   suffixes <- many pTermSuffix
   _ <- sc

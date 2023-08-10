@@ -237,6 +237,7 @@ desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree state
     a' <- desGlobalAnnot a
     statements' <- mapM (desStatement (inheritModule, a':inheritAnnots)) subStatements
     return $ mergeExprPrgms statements'
+  RawApplyStatement{} -> error "Not yet implemented"
   RawModule _ path -> fst <$> desInheritingSubstatements statementEnv path subStatements
 
 finalPasses :: DesPrgmGraphData -> GraphNodes DesPrgm String -> GraphNodes DesPrgm String

@@ -64,6 +64,7 @@ formatExpr (RawCExpr _ (CInt c)) = show c
 formatExpr (RawCExpr _ (CFloat c)) = show c
 formatExpr (RawCExpr _ (CStr c)) = show c
 formatExpr (RawValue m n) = n ++ formatMeta m
+formatExpr (RawMacroValue _ n) = "${" ++ n ++ "}"
 formatExpr (RawHoleExpr m (HoleActive Nothing)) = "_" ++ formatMeta m
 formatExpr (RawHoleExpr m (HoleActive (Just a))) = "_" ++ a ++ formatMeta m
 formatExpr (RawHoleExpr _ HoleUndefined) = "undefined"
@@ -86,7 +87,7 @@ formatExpr (RawMethod base method) = printf "%s.%s" (formatExpr base) (formatExp
 formatExpr (RawList _ l) = printf "[%s]" $ intercalate ", " $ map formatExpr l
 
 formatObjArr :: RawObjArr RawExpr m -> String
-formatObjArr roa@RawObjArr{roaObj, roaM, roaArr} = printf "%s%s%s%s%s" (showGuardExpr True roaObj) showElse showM showEquals (showGuardExpr False roaArr)
+formatObjArr roa@RawObjArr{roaObj, roaM, roaArr, roaDef} = printf "%s%s%s%s%s%s" (showGuardExpr True roaObj) showElse showM showEquals (showGuardExpr False roaArr) showDef
   where
     isNestedDeclaration = case roaArr of
       (Just (GuardExpr (RawValue _ n) _)) | n == nestedDeclaration -> True
@@ -114,6 +115,11 @@ formatObjArr roa@RawObjArr{roaObj, roaM, roaArr} = printf "%s%s%s%s%s" (showGuar
     showElse :: String
     showElse = if hasElseAnnot roa then " else " else ""
 
+    showDef :: String
+    showDef = case roaDef of
+      Just d  -> printf " ? %s" (formatExpr d)
+      Nothing -> ""
+
 formatStatement :: (Show m) => Int -> RawStatement RawExpr m -> String
 formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
   where
@@ -137,6 +143,13 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
           (Just (_, Just (RawCExpr _ (CStr annotText)))) = H.lookup mdAnnotText $ exprAppliedArgsMap annot
           annotText' = concatMap (\c -> if c == '\n' then "\n" ++ formatIndent (indent + 1) else pure c) annotText
       RawAnnot annot -> formatExpr annot
+      RawApplyStatement (RawApply terms) -> "apply " ++ unwords (formatExpr term1 : map formatTerm termsRest)
+        where
+          (RATermDeep term1:termsRest) = terms
+
+          formatTerm :: RawApplyTerm RawExpr m -> String
+          formatTerm (RATermDeep e)  = formatExpr e
+          formatTerm (RATermChild e) = "> " ++ formatExpr e
       RawModule modul _ -> printf "module %s" modul
 
 -- |

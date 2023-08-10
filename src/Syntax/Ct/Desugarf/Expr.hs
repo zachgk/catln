@@ -86,6 +86,7 @@ semiDesExpr :: SemiDesMode -> Maybe PObjExpr -> PExpr -> PSExpr
 semiDesExpr _ _ (RawCExpr m c) = CExpr m c
 semiDesExpr _ _ (RawValue m n) = Value m n
 semiDesExpr _ _ (RawHoleExpr m h) = HoleExpr m h
+semiDesExpr _ _ RawMacroValue{} = error "Not yet implemented"
 semiDesExpr sdm obj (RawTheExpr t) = semiDesExpr sdm obj $ desugarTheExpr t
 semiDesExpr sdm obj (RawAliasExpr base alias) = AliasExpr (semiDesExpr sdm obj base) (semiDesExpr sdm obj alias)
 semiDesExpr sdm obj (RawTupleApply _ (_, RawValue _ "/operator:") [RawObjArr{roaArr=(Just (GuardExpr e _))}, RawObjArr{roaArr=(Just (GuardExpr tp _))}]) = semiDesExpr sdm obj (rawExprWithType (exprToType tp) e)

@@ -23,6 +23,7 @@ data MetaLocation
   = OutputMeta
   | InputMeta
   | AnnotMeta
+  | ApplyMeta
   | GuardMeta
   deriving (Eq, Ord, Show)
 
@@ -39,6 +40,7 @@ data ExprMetaType
   | ExprMetaVal
   | ExprMetaArg
   | ExprMetaHole
+  | ExprMetaMacroVal
   | ExprMetaApplyArg
   | ExprMetaApplyArgBase
   | ExprMetaTupleArg
