@@ -1,17 +1,16 @@
-# Error Handling
 
+# Error Handling
   When performing operations, it is sometimes possible for errors to occur.
   Those errors are represented using [Err].
 
 class Err
-  
   # The only basic expected data for an [Err] is [msg].
 
   :Err.msg -> String
 
   # The standard way of creating an [Err] is by calling [err]
 
-  error(#msg: String, cause: Optional[Err] ? Nothing) -> Err = Basic(msg=msg, cause=cause)
+  error(#msg: String, cause: Optional[Err] ? Nothing) -> Err= Basic(msg= msg, cause= cause)
 
   data Basic(msg: String, cause: Optional[Err])
 
@@ -20,22 +19,27 @@ class Err
   apply ${fun} > error
     #msg("An error occurred when running [fun]")
 
+
   apply ${fun} > error(cause: Err)
     #msg("An error occurred when running [fun] due to [cause]")
+
 
   class Result[$R, $E: Err] = $R | $E
     # The standard handling of the [Err] is by wrapping things into a [Result].
 
-    :Result[$R, $E].default(def: $R) = match(this)
-      val: $R = val
-      _: $E = def
+    :Result[$R, $E].default(def: $R)= match(this)
+      val: $R= val
+      _: $E= def
 
     every Result[$R: $T, $E] isa Functor
 
-    :Result[$R, $E].map(f) = match(this)
-      val: $R = f(val)
-      e: $E = e
+    :Result[$R, $E].map(f)= match(this)
+      val: $R= f(val)
+      e: $E= e
 
-    :Result[$R].to[Optional] = match(this)
-      val: $R = val
-      _: $E = Nothing
+    :Result[$R].to[Optional]= match(this)
+      val: $R= val
+      _: $E= Nothing
+
+
+

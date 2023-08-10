@@ -15,14 +15,10 @@
 module Syntax.Ct.Parser.Type where
 
 import           Control.Applicative     hiding (many, some)
-import qualified Data.HashMap.Strict     as H
 import           Text.Megaparsec         hiding (pos1)
 
-import           Control.Monad           (unless)
 import           Data.Maybe
 import           Semantics.Prgm
-import           Semantics.Types
-import           Syntax.Ct.Desugarf.Expr (exprToPartialType)
 import           Syntax.Ct.Parser.Expr
 import           Syntax.Ct.Parser.Lexer
 import           Syntax.Ct.Parser.Syntax
@@ -35,9 +31,8 @@ pMultiTerm = sepBy1 pTermWithPostCond (symbol "|")
 pClassStatement :: Parser PStatement
 pClassStatement = do
   _ <- symbol "class"
-  clss@PartialType{ptName, ptArgs} <- exprToPartialType <$> term
-  unless (H.null ptArgs) $ fail "Classes do not currently support arguments"
-  let name = fromPartialName ptName
+  clss <- term
+  let name = exprPath clss
   maybeTypes <- optional $ do
     _ <- symbol "="
     MultiTypeDef clss <$> pMultiTerm

@@ -164,7 +164,8 @@ desMultiTypeDefObj inheritPath varReplaceMap expr = desObj False inheritPath Use
 
 
 desMultiTypeDef :: StatementEnv -> PMultiTypeDef -> [RawStatementTree RawExpr ParseMetaDat] -> Path -> CRes DesPrgm
-desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef clss@PartialType{ptVars=classVars} dataGuardExprs) subStatements path = do
+desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef clssExpr dataGuardExprs) subStatements path = do
+  let clss@PartialType{ptVars=classVars} = exprToPartialType clssExpr
   let dataExprs = map rgeExpr dataGuardExprs -- TODO: Handle GuardExpr guards
   let className = fromPartialName $ ptName clss
   let dataTypes = map (either id (getExprType . snd . desObjPropagateTypes . semiDesExpr SDInput Nothing) . eitherTypeVarExpr) dataExprs
@@ -188,8 +189,9 @@ desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef clss@PartialType{ptV
         Nothing -> Right e
       eitherTypeVarExpr e                      = Right e
 
-desClassDecl :: StatementEnv -> PartialType -> [RawStatementTree RawExpr ParseMetaDat] -> Path -> CRes DesPrgm
-desClassDecl statementEnv@(inheritPath, _) clss subStatements path = do
+desClassDecl :: StatementEnv -> PExpr -> [RawStatementTree RawExpr ParseMetaDat] -> Path -> CRes DesPrgm
+desClassDecl statementEnv@(inheritPath, _) clssExpr subStatements path = do
+  let clss = exprToPartialType clssExpr
   let className = fromPartialName $ ptName clss
   let classGraph' = ClassGraph $ graphFromEdges [(CGClass (False, clss, [], desObjDocComment subStatements), PClassName (addPath inheritPath className), [])]
   (subPrgm, _) <- desInheritingSubstatements statementEnv path subStatements

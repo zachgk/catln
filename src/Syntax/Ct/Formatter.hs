@@ -125,7 +125,7 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
   where
     statement' = case statement of
       RawDeclStatement objArr -> formatObjArr objArr
-      MultiTypeDefStatement (MultiTypeDef clss objs) _ -> printf "class %s = %s" (formatPartialType clss) showObjs
+      MultiTypeDefStatement (MultiTypeDef clss objs) _ -> printf "class %s = %s" (formatExpr clss) showObjs
         where
           formatGuardExpr :: GuardExpr RawExpr m -> String
           formatGuardExpr (GuardExpr e Nothing) = formatExpr e
@@ -136,7 +136,7 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
         then printf "annot %s" (formatExpr typeExpr)
         else printf "data %s" (formatExpr typeExpr)
       RawClassDefStatement (obj, className) _ -> printf "every %s isa %s" (formatExpr obj) className
-      RawClassDeclStatement clss _ -> printf "class %s" (formatPartialType clss)
+      RawClassDeclStatement clss _ -> printf "class %s" (formatExpr clss)
       RawExprStatement e -> formatExpr e
       RawAnnot annot | exprPath annot == mdAnnot -> printf "# %s" annotText'
         where

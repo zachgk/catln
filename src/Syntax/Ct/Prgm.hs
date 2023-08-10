@@ -57,7 +57,7 @@ data RawExpr m
   | RawList (Meta m) [RawExpr m]
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
-data MultiTypeDef m = MultiTypeDef PartialType [GuardExpr RawExpr m]
+data MultiTypeDef m = MultiTypeDef (RawExpr m) [GuardExpr RawExpr m]
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 type RawClassDef m = (RawExpr m, ClassName)
@@ -75,7 +75,7 @@ data RawStatement e m
   | MultiTypeDefStatement (MultiTypeDef m) Path
   | TypeDefStatement (e m)
   | RawClassDefStatement (RawClassDef m) Path
-  | RawClassDeclStatement PartialType Path
+  | RawClassDeclStatement (e m) Path
   | RawExprStatement (e m)
   | RawAnnot (CompAnnot (e m))
   | RawApplyStatement (RawApply e m)
