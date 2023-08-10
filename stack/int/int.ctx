@@ -49,8 +49,8 @@ class Int
   (~(l: Int <= r: Int)) = l > r
   (~(l: Int > r: Int)) = l <= r
   (~(l: Int >= r: Int)) = l < r
-  (l: Int < r: Int || l == r) = l <= r
-  (l: Int > r: Int || l == r) = l >= r
+  (l: Int < r: Int) if l == r = l <= r
+  (l: Int > r: Int) if l == r = l >= r
   
   :Int.gt(r: Int) = this > r
   :Int.lt(r: Int) = this < r
@@ -118,9 +118,9 @@ class Int
 
   data Division(dividend: Int, divisor: Int, quotient: Int, remainder: Int)
   (_: Peano // _: Int__gt(0)) -> Division
-  (dividend: Int // divisor: Int) = if (dividend < divisor)
+  (dividend: Int // divisor: Int) = if(dividend < divisor)
     Then = Division(dividend=dividend, divisor=divisor, quotient=0, remainder=dividend)
-    Else = (dividend - divisor // divisor)(dividend=dividend, quotient.=inc)
+    Else = (dividend - divisor // divisor)(dividend=dividend, quotient=inc(quotient))
 
   # ## Skewed Int
   data Skewed(m: ConstantInt__gt(0), x: Int, b: ConstantInt) isa Int

@@ -46,6 +46,7 @@ data ExprMetaType
   | ExprMetaTupleArg
   | ExprMetaApplyVar
   | ExprMetaApplyVarVal
+  | ExprMetaTypeProp
   deriving (Eq, Ord, Show)
 
 type MetaFun a b = MetaType -> Meta a -> Meta b

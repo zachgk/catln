@@ -202,9 +202,11 @@ strLeaf = partialVal (PTypeName "/Data/String")
 ioLeaf = partialVal (PTypeName "/Catln/IO")
 
 -- | Defines some of the standard types used elsewhere in the compiler as 'Type'
-intType, floatType, boolType, strType, ioType :: Type
+intType, floatType, trueType, falseType, boolType, strType, ioType :: Type
 intType = singletonType intLeaf
 floatType = singletonType floatLeaf
+trueType = singletonType trueLeaf
+falseType = singletonType falseLeaf
 boolType = UnionType $ joinUnionType [trueLeaf, falseLeaf]
 strType = singletonType strLeaf
 ioType = singletonType ioLeaf

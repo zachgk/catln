@@ -85,9 +85,12 @@ formatExpr (RawContextApply _ (_, be) ctxs) = printf "%s{%s}" (formatExpr be) (i
 formatExpr (RawParen e) = printf "(%s)" (formatExpr e)
 formatExpr (RawMethod base method) = printf "%s.%s" (formatExpr base) (formatExpr method)
 formatExpr (RawList _ l) = printf "[%s]" $ intercalate ", " $ map formatExpr l
+formatExpr (RawTypeProp _ base (TypePropProj p (RawValue _ vn))) | vn == truePrim = printf "%s_%s" (formatExpr base) p
+formatExpr (RawTypeProp _ base (TypePropProj p v)) = printf "%s_%s(%s)" (formatExpr base) p (formatExpr v)
+formatExpr (RawTypeProp _ base (TypePropRel p v)) = printf "%s__%s(%s)" (formatExpr base) p (formatExpr v)
 
 formatIsa :: ExtendedClasses -> String
-formatIsa [] = ""
+formatIsa []      = ""
 formatIsa classes = " isa " ++ intercalate ", " classes
 
 formatObjArr :: RawObjArr RawExpr m -> String

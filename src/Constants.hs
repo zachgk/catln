@@ -21,6 +21,14 @@ operatorArgR = "r"
 operatorType :: String
 operatorType = operatorPrefix ++ ":"
 
+intPrim, floatPrim, truePrim, falsePrim, strPrim, ioPrim :: String
+intPrim = "/Data/Primitive/Integer"
+floatPrim = "/Data/Primitive/Float"
+truePrim = "/Data/Primitive/True"
+falsePrim = "/Data/Primitive/False"
+strPrim = "/Data/String"
+ioPrim = "/Catln/IO"
+
 mdAnnot, mdAnnotText :: String
 mdAnnot = "/Catln/#md"
 mdAnnotText = "text"

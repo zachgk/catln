@@ -124,6 +124,7 @@ semiDesExpr sdm obj@Nothing (RawMethod (RawTheExpr (RawValue m n)) method) = sem
 semiDesExpr sdm obj (RawMethod base method) = semiDesExpr sdm obj $ applyRawArgs method [(Just "this", base)]
 semiDesExpr sdm obj (RawList m []) = semiDesExpr sdm obj (RawValue m "/Data/Nil")
 semiDesExpr sdm obj (RawList m (l:ls)) = semiDesExpr sdm obj (RawValue m "/Data/Cons" `applyRawArgs` [(Just "head", l), (Just "tail", RawList m ls)])
+semiDesExpr _ _ RawTypeProp{} = error "Not yet implemented"
 
 -- | Desugars a "TheExpr type" by applying the type to a default name
 desugarTheExpr :: PExpr -> PExpr

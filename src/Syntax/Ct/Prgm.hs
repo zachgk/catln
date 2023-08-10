@@ -41,6 +41,11 @@ data RawObjArr e m = RawObjArr {
                                }
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
+data TypeProperty e m
+  = TypePropProj TypeName (e m)
+  | TypePropRel TypeName (e m)
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+
 -- Expr before desugar
 data RawExpr m
   = RawCExpr (Meta m) Constant
@@ -55,6 +60,7 @@ data RawExpr m
   | RawParen (RawExpr m)
   | RawMethod (RawExpr m) (RawExpr m) -- ^ base methodValue
   | RawList (Meta m) [RawExpr m]
+  | RawTypeProp (Meta m) (RawExpr m) (TypeProperty RawExpr m)
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 -- | Helper for the X isa Y where this is the Y
@@ -113,6 +119,7 @@ instance ExprClass RawExpr where
     RawParen e            -> getExprMeta e
     RawMethod e _         -> getExprMeta e
     RawList m _           -> m
+    RawTypeProp m _ _     -> m
 
   getExprArg _ = Nothing
 

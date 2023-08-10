@@ -131,6 +131,7 @@ data TermSuffix
   | VarsSuffix ParseMeta [(PExpr, ParseMeta)]
   | ContextSuffix ParseMeta [(ArgName, ParseMeta)]
   | AliasSuffix ParseMeta TypeName
+  | TypePropSuffix ParseMeta (TypeProperty RawExpr ParseMetaDat)
   deriving (Show)
 
 pArgSuffix :: Parser PObjArr
@@ -186,8 +187,28 @@ pAliasSuffix = do
   pos2 <- getSourcePos
   return $ AliasSuffix (emptyMeta pos1 pos2) aliasName
 
+pTypePropRelSuffix :: Parser TermSuffix
+pTypePropRelSuffix = do
+  _ <- string "__"
+  pos1 <- getSourcePos
+  p <- identifier
+  v <- parens pExpr
+  pos2 <- getSourcePos
+  return $ TypePropSuffix (emptyMeta pos1 pos2) $ TypePropRel p v
+
+pTypePropProjSuffix :: Parser TermSuffix
+pTypePropProjSuffix = do
+  _ <- string "_"
+  pos1 <- getSourcePos
+  p <- identifier
+  v <- optional $ parens pExpr
+  pos2 <- getSourcePos
+  let v' = fromMaybe (RawValue (mWithType trueType (emptyMeta pos1 pos2)) truePrim) v
+  return $ TypePropSuffix (emptyMeta pos1 pos2) $ TypePropProj p v'
+
+
 pTermSuffix :: Parser TermSuffix
-pTermSuffix = pArgsSuffix <|> pVarsSuffix <|> pContextSuffix <|> pAliasSuffix
+pTermSuffix = pArgsSuffix <|> pVarsSuffix <|> pContextSuffix <|> pAliasSuffix <|> pTypePropRelSuffix <|> pTypePropProjSuffix
 
 pInt :: Parser PExpr
 pInt = do
@@ -219,6 +240,7 @@ applyTermSuffix base (ArgsSuffix m args) = RawTupleApply m (labelPosM "arg" $ ge
 applyTermSuffix base (VarsSuffix m vars) = RawVarsApply m base vars
 applyTermSuffix base (ContextSuffix m args) = RawContextApply m (labelPosM "ctx" $ getExprMeta base, base) args
 applyTermSuffix base (AliasSuffix m n) = RawAliasExpr base (RawValue m n)
+applyTermSuffix base (TypePropSuffix m p) = RawTypeProp m base p
 
 term :: Parser PExpr
 term = do
