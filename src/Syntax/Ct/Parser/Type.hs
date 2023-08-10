@@ -28,6 +28,11 @@ import           Syntax.Ct.Prgm
 pMultiTerm :: Parser [PGuardExpr]
 pMultiTerm = sepBy1 pTermWithPostCond (symbol "|")
 
+pExtends :: Parser ExtendedClasses
+pExtends = do
+  _ <- symbol "isa"
+  sepBy1 ttypeidentifier (symbol ",")
+
 pClassStatement :: Parser PStatement
 pClassStatement = do
   _ <- symbol "class"
@@ -35,9 +40,11 @@ pClassStatement = do
   let name = exprPath clss
   maybeTypes <- optional $ do
     _ <- symbol "="
-    MultiTypeDef clss <$> pMultiTerm
+    terms <- pMultiTerm
+    extends <- optional pExtends
+    return (terms, fromMaybe [] extends)
   return $ case maybeTypes of
-    Just types -> MultiTypeDefStatement types (getPath name)
+    Just (types, extends) -> MultiTypeDefStatement (MultiTypeDef clss types extends) (getPath name)
     Nothing    -> RawClassDeclStatement clss (getPath name)
 
 pAnnotDefStatement :: Parser PStatement
@@ -54,9 +61,8 @@ pClassDefStatement :: Parser PStatement
 pClassDefStatement = do
   _ <- symbol "every"
   instanceTerm <- term
-  _ <- symbol "isa"
-  className <- ttypeidentifier
-  let def = (instanceTerm, className)
+  extends <- pExtends
+  let def = (instanceTerm, extends)
   return $ RawClassDefStatement def (getPath $ fromJust $ maybeExprPath instanceTerm)
 
 pTypeStatement :: Parser PStatement

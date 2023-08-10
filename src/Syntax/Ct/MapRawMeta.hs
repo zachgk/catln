@@ -45,7 +45,7 @@ mapMetaRawObjArr f mloc roa@RawObjArr{roaObj, roaM, roaAnnots, roaArr, roaDef} =
 
 mapMetaRawStatement :: (MapMeta e) => MetaFun a b -> RawStatement e a -> RawStatement e b
 mapMetaRawStatement f (RawDeclStatement objArr) = RawDeclStatement (mapMetaRawObjArr f Nothing objArr)
-mapMetaRawStatement f (MultiTypeDefStatement (MultiTypeDef clss objs) path) = MultiTypeDefStatement (MultiTypeDef (mapMeta f InputMeta clss) (map (mapMetaGuardExpr f InputMeta) objs)) path
+mapMetaRawStatement f (MultiTypeDefStatement (MultiTypeDef clss objs extends) path) = MultiTypeDefStatement (MultiTypeDef (mapMeta f InputMeta clss) (map (mapMetaGuardExpr f InputMeta) objs) extends) path
 mapMetaRawStatement f (TypeDefStatement obj) = TypeDefStatement (mapMeta f InputMeta obj)
 mapMetaRawStatement f (RawClassDefStatement (typeExpr, className) path) = RawClassDefStatement (mapMeta f InputMeta typeExpr, className) path
 mapMetaRawStatement f (RawClassDeclStatement clss p) = RawClassDeclStatement (mapMeta f InputMeta clss) p

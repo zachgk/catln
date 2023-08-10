@@ -86,6 +86,10 @@ formatExpr (RawParen e) = printf "(%s)" (formatExpr e)
 formatExpr (RawMethod base method) = printf "%s.%s" (formatExpr base) (formatExpr method)
 formatExpr (RawList _ l) = printf "[%s]" $ intercalate ", " $ map formatExpr l
 
+formatIsa :: ExtendedClasses -> String
+formatIsa [] = ""
+formatIsa classes = " isa " ++ intercalate ", " classes
+
 formatObjArr :: RawObjArr RawExpr m -> String
 formatObjArr roa@RawObjArr{roaObj, roaM, roaArr, roaDef} = printf "%s%s%s%s%s%s" (showGuardExpr True roaObj) showElse showM showEquals (showGuardExpr False roaArr) showDef
   where
@@ -125,7 +129,7 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
   where
     statement' = case statement of
       RawDeclStatement objArr -> formatObjArr objArr
-      MultiTypeDefStatement (MultiTypeDef clss objs) _ -> printf "class %s = %s" (formatExpr clss) showObjs
+      MultiTypeDefStatement (MultiTypeDef clss objs extends) _ -> printf "class %s = %s%s" (formatExpr clss) showObjs (formatIsa extends)
         where
           formatGuardExpr :: GuardExpr RawExpr m -> String
           formatGuardExpr (GuardExpr e Nothing) = formatExpr e
@@ -135,7 +139,7 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
       TypeDefStatement typeExpr -> if "#" `isPrefixOf` exprPath typeExpr
         then printf "annot %s" (formatExpr typeExpr)
         else printf "data %s" (formatExpr typeExpr)
-      RawClassDefStatement (obj, className) _ -> printf "every %s isa %s" (formatExpr obj) className
+      RawClassDefStatement (obj, className) _ -> printf "every %s%s" (formatExpr obj) (formatIsa className)
       RawClassDeclStatement clss _ -> printf "class %s" (formatExpr clss)
       RawExprStatement e -> formatExpr e
       RawAnnot annot | exprPath annot == mdAnnot -> printf "# %s" annotText'
