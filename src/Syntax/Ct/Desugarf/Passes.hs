@@ -73,7 +73,7 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, classGraph
       ptName = resolveName reqResolve ptName,
       ptVars = fmap (mapType reqResolve) ptVars,
       ptArgs = fmap (mapType reqResolve) ptArgs,
-      ptPreds = fmap (mapPartial reqResolve) ptPreds
+      ptPreds = fmap (mapTypePred (mapPartial reqResolve)) ptPreds
                                                                                                                   }
 
     -- |

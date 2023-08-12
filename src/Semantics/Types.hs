@@ -61,7 +61,11 @@ data PtArgMode
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 -- | A predicate applied to a type
-type TypePredicates = [PartialType]
+data TypePredicate
+  = PredExpr PartialType
+  | PredClass PartialType
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+type TypePredicates = [TypePredicate]
 
 -- |
 -- A particle type describes a simple set of types.
@@ -76,7 +80,7 @@ data PartialType = PartialType {
   } deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 -- | The non-name properties of a 'PartialType'
-type PartialArgsOption = (H.HashMap TypeVarName Type, H.HashMap ArgName Type, [PartialType], PtArgMode)
+type PartialArgsOption = (H.HashMap TypeVarName Type, H.HashMap ArgName Type, TypePredicates, PtArgMode)
 
 -- | An alternative format for many 'PartialType's which combine those that share the same name
 type PartialLeafs = (H.HashMap PartialName (S.HashSet PartialArgsOption))
@@ -186,6 +190,10 @@ asClassMap (ClassGraph graphData) = (typesToClass, classToTypes)
 
 instance ToJSON ClassGraph where
   toJSON classGraph = toJSON $ asClassMap classGraph
+
+mapTypePred :: (PartialType -> PartialType) -> TypePredicate -> TypePredicate
+mapTypePred f (PredExpr p)  = PredExpr (f p)
+mapTypePred f (PredClass p) = PredClass (f p)
 
 listClassGraphNames :: ClassGraph -> [PartialName]
 listClassGraphNames (ClassGraph graphData) = map snd3 (graphToNodes graphData)
@@ -332,6 +340,10 @@ isSubPartialName (PClassName a) (PClassName b) = a == b
 isSubPartialName a (PRelativeName b) = relativeNameMatches b (fromPartialName a)
 isSubPartialName _ _ = False
 
+isSubPredicateOfWithEnv :: ClassGraph -> TypeVarArgEnv -> TypePredicate -> TypePredicate -> Bool
+isSubPredicateOfWithEnv classGraph vaenv (PredExpr sub) (PredExpr super) = isSubPartialOfWithEnv classGraph vaenv sub super
+isSubPredicateOfWithEnv _ _ _ _ = undefined
+
 -- | A private helper for 'isSubPartialOfWithEnv' that checks while ignore class expansions
 isSubPartialOfWithEnvBase :: ClassGraph -> TypeVarArgEnv -> PartialType -> PartialType -> Bool
 isSubPartialOfWithEnvBase _ _ PartialType{ptName=subName} PartialType{ptName=superName} | not $ isSubPartialName subName superName = False
@@ -341,7 +353,7 @@ isSubPartialOfWithEnvBase classGraph vaenv sub@PartialType{ptVars=subVars, ptArg
   where
     vaenv' = substituteWithVarArgEnv vaenv <$> H.unionWith (intersectTypes classGraph) (ptVarArg super) (ptVarArg sub)
     hasAll sb sp = and $ H.elems $ H.intersectionWith (isSubtypeOfWithEnv classGraph vaenv') sb sp
-    hasAllPreds = all (\subPred -> isSubtypeOfWithEnv classGraph vaenv' (singletonType subPred) (UnionType $ joinUnionType superPreds)) subPreds
+    hasAllPreds = all (\subPred -> any (isSubPredicateOfWithEnv classGraph vaenv' subPred) superPreds) subPreds
 
 -- | Checks if one type contains another type. In set terminology, it is equivalent to subset or equal to ⊆.
 isSubPartialOfWithEnv :: ClassGraph -> TypeVarArgEnv -> PartialType -> PartialType -> Bool
@@ -576,7 +588,7 @@ substituteVarsWithVarEnv venv (UnionType partials) = UnionType $ joinUnionType $
   where substitutePartial pVenv partial@PartialType{ptVars, ptArgs, ptPreds} = partial{
           ptVars = fmap (substituteVarsWithVarEnv pVenv) ptVars,
           ptArgs = fmap (substituteVarsWithVarEnv ptVars') ptArgs,
-          ptPreds = map (substitutePartial ptVars') ptPreds
+          ptPreds = map (mapTypePred (substitutePartial ptVars')) ptPreds
                                                                         }
           where ptVars' = fmap (substituteVarsWithVarEnv venv) ptVars
 substituteVarsWithVarEnv venv (TypeVar (TVVar TVInt v)) = case H.lookup v venv of

@@ -45,11 +45,12 @@ formatPartialType (PartialType ptName ptVars ptArgs ptPreds _) = concat [showNam
     showArgs args | H.null args = ""
     showArgs args = printf "(%s)" (intercalate ", " $ map showArg $ H.toList args)
     showPreds preds | null preds = ""
-    showPreds preds = printf "| %s" (intercalate ", " $ map formatPartialType preds)
+    -- showPreds preds = printf "| %s" (intercalate ", " $ map formatPartialType preds)
+    showPreds _ = undefined
 
 formatType :: Type -> String
 formatType (TopType []) = ""
-formatType (TopType preds) = printf "Any | %s" (intercalate ", " $ map formatPartialType preds)
+formatType (TopType _) = undefined
 formatType (TypeVar (TVVar TVInt t)) = "$" ++ t
 formatType (TypeVar (TVVar TVExt t)) = "$_" ++ t
 formatType (TypeVar TVArg{}) = error "Unexpected TVArg in formatter"
