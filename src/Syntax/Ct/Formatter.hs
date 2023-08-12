@@ -118,7 +118,7 @@ formatObjArr roa@RawObjArr{roaObj, roaM, roaArr, roaDef} = printf "%s%s%s%s%s%s"
       _                       -> ""
 
     formatGuard :: ExprCond RawExpr m -> String
-    formatGuard (Just e) = printf " if %s" (formatExpr e)
+    formatGuard (Just e) = printf " | %s" (formatExpr e)
     formatGuard Nothing  = ""
 
     showElse :: String
@@ -138,7 +138,7 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
         where
           formatGuardExpr :: GuardExpr RawExpr m -> String
           formatGuardExpr (GuardExpr e Nothing) = formatExpr e
-          formatGuardExpr (GuardExpr e (Just g)) = printf "%s where %s" (formatExpr e) (formatExpr g)
+          formatGuardExpr (GuardExpr e (Just g)) = printf "%s | %s" (formatExpr e) (formatExpr g)
 
           showObjs = intercalate " | " $ map formatGuardExpr objs
       TypeDefStatement typeExpr -> if "#" `isPrefixOf` exprPath typeExpr

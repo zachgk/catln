@@ -1,6 +1,6 @@
 # Tests recursion
 
-fact(x: Integer) if x == 1= 1
+fact(x: Integer) | x == 1= 1
 
 fact(x: Integer) else = x * fact(x= x - 1)
 

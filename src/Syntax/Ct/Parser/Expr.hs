@@ -260,7 +260,7 @@ pExpr = makeExprParser term ops
 pPatternGuard :: Parser (Maybe PExpr, [PCompAnnot])
 pPatternGuard = do
   cond <- optional $ do
-    _ <- symbol "if"
+    _ <- symbol "|"
     pExpr
   els <- optional $ symbol "else"
   let els' = [rawVal elseAnnot | isJust els]
@@ -270,14 +270,9 @@ pWithPostCond :: Parser a -> Parser (a, Maybe PExpr)
 pWithPostCond pE = do
   e <- pE
   cond <- optional $ do
-    _ <- symbol "where"
+    _ <- symbol "|"
     pExpr
   return (e, cond)
-
-pTermWithPostCond :: Parser PGuardExpr
-pTermWithPostCond = do
-  (e, g) <- pWithPostCond term
-  return $ GuardExpr e g
 
 pExprWithPostCond :: Parser PGuardExpr
 pExprWithPostCond = do

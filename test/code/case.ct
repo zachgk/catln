@@ -3,6 +3,6 @@
 main{io: IO}= io.exit(val= abs(0))
 
 abs(x: Integer)= case(x)
-  x2 if x >= 0= x2
+  x2 | x >= 0= x2
   x2= x2 * -1
 

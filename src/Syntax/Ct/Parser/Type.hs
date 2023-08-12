@@ -26,7 +26,9 @@ import           Syntax.Ct.Prgm
 
 
 pMultiTerm :: Parser [PGuardExpr]
-pMultiTerm = sepBy1 pTermWithPostCond (symbol "|")
+pMultiTerm = do
+  terms <- sepBy1 term (symbol "|")
+  return $ map (`GuardExpr` Nothing) terms
 
 pExtends :: Parser ExtendedClasses
 pExtends = do
