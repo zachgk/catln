@@ -60,6 +60,9 @@ data PtArgMode
   | PtArgAny -- ^ matches with any additional args
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
+-- | A predicate applied to a type
+type TypePredicates = [PartialType]
+
 -- |
 -- A particle type describes a simple set of types.
 -- It corresponds to what could be matched by a single object or data declaration.
@@ -68,7 +71,7 @@ data PartialType = PartialType {
   ptName    :: PartialName,
   ptVars    :: H.HashMap TypeVarName Type,
   ptArgs    :: H.HashMap ArgName Type,
-  ptPreds   :: [PartialType],
+  ptPreds   :: TypePredicates,
   ptArgMode :: PtArgMode
   } deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
@@ -82,7 +85,7 @@ type PartialLeafs = (H.HashMap PartialName (S.HashSet PartialArgsOption))
 data Type
   = UnionType PartialLeafs -- ^ The main format, 'UnionType', is a union of 'PartialType's
   | TypeVar TypeVarAux -- ^ A type which refers to some variable in the surrounding context
-  | TopType -- ^ A type which refers to any possible value or the universal set of values
+  | TopType TypePredicates -- ^ A type which refers to any possible value or the universal set of values (passing the predicates)
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 -- | Indicates whether a type var or arg is located internally to the object or externally.
@@ -153,7 +156,8 @@ instance Show PartialType where
       showPreds preds = printf "| %s" (intercalate ", " $ map show preds)
 
 instance Show Type where
-  show TopType = "TopType"
+  show (TopType []) = "TopType"
+  show (TopType preds) = printf "(TopType | %s)" (intercalate ", " $ map show preds)
   show (TypeVar v) = show v
   show (UnionType partials) = join $ map show $ splitUnionType partials
     where
@@ -210,6 +214,10 @@ falseType = singletonType falseLeaf
 boolType = UnionType $ joinUnionType [trueLeaf, falseLeaf]
 strType = singletonType strLeaf
 ioType = singletonType ioLeaf
+
+-- | The 'Type' containing all possible values, equivalent to the universal.
+topType :: Type
+topType = TopType []
 
 -- | The 'Type' containing no possible values, equivalent to the empty set ∅.
 -- It often corresponds to errors in the type inference process and indicates the error type.
@@ -308,9 +316,9 @@ expandPartial classGraph@(ClassGraph cg) PartialType{ptName=className@PClassName
       Just (CGClass (_, PartialType{ptVars=classVarsDecl}, classTypes, _)) -> unionAllTypes classGraph $ map mapClassType classTypes
         where
           classVars = H.unionWith (intersectTypes classGraph) classVarsP classVarsDecl
-          mapClassType TopType = TopType
+          mapClassType (TopType ps) = TopType ps
           mapClassType (TypeVar (TVVar _ t)) = case H.lookup t classVars of
-            Just v -> intersectTypes classGraph v (H.lookupDefault TopType t classVars)
+            Just v -> intersectTypes classGraph v (H.lookupDefault topType t classVars)
             Nothing -> error $ printf "Unknown var %s in expandPartial" t
           mapClassType (TypeVar (TVArg _ t)) = error $ printf "Arg %s found in expandPartial" t
           mapClassType (UnionType p) = UnionType $ joinUnionType $ map mapClassPartial $ splitUnionType p
@@ -343,7 +351,7 @@ isSubPartialOfWithEnv _ _ _ _ = False
 
 -- | Checks if one type contains another type. In set terminology, it is equivalent to subset or equal to ⊆.
 isSubtypeOfWithEnv :: ClassGraph -> TypeVarArgEnv -> Type -> Type -> Bool
-isSubtypeOfWithEnv _ _ _ TopType = True
+isSubtypeOfWithEnv _ _ _ (TopType []) = True
 isSubtypeOfWithEnv _ _ t1 t2 | t1 == t2 = True
 isSubtypeOfWithEnv classGraph vaenv (TypeVar v) t2 = case H.lookup v vaenv of
   Just t1 -> isSubtypeOfWithEnv classGraph vaenv t1 t2
@@ -351,7 +359,9 @@ isSubtypeOfWithEnv classGraph vaenv (TypeVar v) t2 = case H.lookup v vaenv of
 isSubtypeOfWithEnv classGraph vaenv t1 (TypeVar v) = case H.lookup v vaenv of
   Just t2 -> isSubtypeOfWithEnv classGraph vaenv t1 t2
   Nothing -> error $ printf "isSubtypeOfWithEnv with unknown type var or arg %s" (show v)
-isSubtypeOfWithEnv _ _ TopType t = t == TopType
+isSubtypeOfWithEnv _ _ (TopType []) t = t == topType
+isSubtypeOfWithEnv _ _ _ (TopType _) = undefined
+isSubtypeOfWithEnv _ _ (TopType _) _ = undefined
 isSubtypeOfWithEnv classGraph vaenv (UnionType subPartials) super@(UnionType superPartials) = all isSubPartial $ splitUnionType subPartials
   where
     isSubPartial sub | any (isSubPartialOfWithEnv classGraph vaenv sub) $ splitUnionType superPartials = True
@@ -429,14 +439,16 @@ compactBottomTypeVars partials = joinUnionType $ mapMaybe aux $ splitUnionType p
 -- It has several internal passes that apply various optimizations to a type.
 -- TODO: This should merge type partials into class partials
 compactType :: ClassGraph -> Type -> Type
-compactType _ TopType = TopType
+compactType _ (TopType ps) = TopType ps
 compactType _ t@TypeVar{} = t
 compactType classGraph (UnionType partials) = UnionType $ (compactOverlapping classGraph . compactJoinPartials classGraph . compactBottomTypeVars) partials
 
 -- | Takes the union of two types (∪)
 unionTypes :: ClassGraph -> Type -> Type -> Type
-unionTypes _ TopType _ = TopType
-unionTypes _ _ TopType = TopType
+unionTypes _ (TopType []) _ = topType
+unionTypes _ _ (TopType []) = topType
+unionTypes _ (TopType _) _ = undefined
+unionTypes _ _ (TopType _) = undefined
 unionTypes _ t1 t2 | isBottomType t2 = t1
 unionTypes _ t1 t2 | isBottomType t1 = t2
 unionTypes _ t1 t2 | t1 == t2 = t1
@@ -452,7 +464,7 @@ unionAllTypes classGraph = foldr (unionTypes classGraph) bottomType
 
 -- | Takes the 'intersectTypes' of many types
 intersectAllTypes :: Foldable f => ClassGraph -> f Type -> Type
-intersectAllTypes classGraph = foldr (intersectTypes classGraph) TopType
+intersectAllTypes classGraph = foldr (intersectTypes classGraph) topType
 
 intersectPartialName :: PartialName -> PartialName -> Maybe PartialName
 intersectPartialName a b   | a == b = Just a
@@ -511,8 +523,9 @@ intersectPartials classGraph venv a b = case catMaybes [base, aExpandClass, bExp
 -- Takes the intersection of two 'Type'.
 -- It uses the 'TypeVarEnv' for type variable arguments and determines any possible changes to the surrounding 'TypeVarEnv'.
 intersectTypesWithVarEnv :: ClassGraph -> TypeVarEnv -> Type -> Type -> (TypeVarEnv, Type)
-intersectTypesWithVarEnv _ venv TopType t = (venv, t)
-intersectTypesWithVarEnv _ venv t TopType = (venv, t)
+intersectTypesWithVarEnv _ venv (TopType []) t = (venv, t)
+intersectTypesWithVarEnv _ venv t (TopType []) = (venv, t)
+intersectTypesWithVarEnv _ venv (TopType ps1) (TopType ps2) = (venv, TopType (ps1 ++ ps2))
 intersectTypesWithVarEnv _ venv t1 t2 | t1 == t2 = (venv, t1)
 intersectTypesWithVarEnv _ _ (TypeVar v1) (TypeVar v2) = error $ printf "Can't intersect type vars %s with %s" (show v1) (show v2)
 intersectTypesWithVarEnv classGraph venv tv@(TypeVar (TVVar TVInt v)) t = (H.insertWith (intersectTypes classGraph) v t venv, tv)
@@ -521,6 +534,10 @@ intersectTypesWithVarEnv _ _ (TypeVar v) t = error $ printf "Can't intersect typ
 intersectTypesWithVarEnv _ _ t (TypeVar v) = error $ printf "Can't intersect type vars %s with %s" (show t) (show v)
 intersectTypesWithVarEnv _ venv _ t | isBottomType t = (venv, t)
 intersectTypesWithVarEnv _ venv t _ | isBottomType t = (venv, t)
+intersectTypesWithVarEnv _ venv (UnionType partials) (TopType topPreds) = (venv, UnionType $ joinUnionType $ map addPreds $ splitUnionType partials)
+  where
+    addPreds partial@PartialType{ptPreds} = partial{ptPreds = topPreds ++ ptPreds}
+intersectTypesWithVarEnv classGraph venv t1@TopType{} t2@UnionType{} = intersectTypesWithVarEnv classGraph venv t2 t1
 intersectTypesWithVarEnv classGraph venv (UnionType aPartials) (UnionType bPartials) = case catMaybes [intersectPartials classGraph venv aPartial bPartial | aPartial <- splitUnionType aPartials, bPartial <- splitUnionType bPartials] of
   [] -> (venv, bottomType)
   combined -> do
@@ -533,7 +550,8 @@ intersectTypes classGraph a b = snd $ intersectTypesWithVarEnv classGraph H.empt
 
 -- | Takes the powerset of a 'Type' with the powerset of the arguments in the type.
 powersetType :: ClassGraph -> Type -> Type
-powersetType _ TopType = TopType
+powersetType _ (TopType []) = topType
+powersetType _ TopType{} = undefined
 powersetType _ (TypeVar t) = TypeVar t
 powersetType classGraph (UnionType partials) = compactType classGraph $ UnionType partials'
   where
@@ -592,8 +610,8 @@ typeGetArg :: ArgName -> PartialType -> Maybe Type
 typeGetArg argName PartialType{ptArgs, ptVars} = do
   arg <- H.lookup argName ptArgs
   return $ case arg of
-    TopType -> TopType
-    TypeVar (TVVar TVInt v) -> H.lookupDefault TopType v ptVars
+    (TopType _) -> topType
+    TypeVar (TVVar TVInt v) -> H.lookupDefault topType v ptVars
     TypeVar (TVVar TVExt _) -> error $ printf "Not yet implemented"
     TypeVar (TVArg _ _) -> error $ printf "Not yet implemented"
     UnionType partialLeafs -> UnionType $ joinUnionType $ map substitutePartial $ splitUnionType partialLeafs

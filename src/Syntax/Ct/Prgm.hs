@@ -180,7 +180,7 @@ instance (Show m, Show (e m)) => Show (RawObjArr e m) where
       showNoMaybe Nothing  = ""
 
       showM :: String
-      showM = if getMetaType roaM /= TopType
+      showM = if getMetaType roaM /= topType
         then printf " -> %s " (show roaM)
         else ""
 

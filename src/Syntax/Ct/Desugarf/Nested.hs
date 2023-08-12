@@ -65,7 +65,8 @@ scopeSubDeclFunNamesInMeta prefix replaceNames (Meta (UnionType partials) pos md
   where
     scopeS = scopeSubDeclFunNamesInPartialName prefix replaceNames
     partials' = H.fromList $ map (first scopeS) $ H.toList partials
-scopeSubDeclFunNamesInMeta _ _ m@(Meta TopType _ _) = m
+scopeSubDeclFunNamesInMeta _ _ m@(Meta (TopType []) _ _) = m
+scopeSubDeclFunNamesInMeta _ _ (Meta (TopType _) _ _) = undefined
 scopeSubDeclFunNamesInMeta _ _ m@(Meta TypeVar{} _ _) = m
 
 -- Renames sub functions by applying the parent names as a prefix to avoid name collisions

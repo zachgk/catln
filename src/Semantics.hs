@@ -147,7 +147,7 @@ fromExprPrgm (objMap, classGraph, annots) = (map fromExprObjectMapItem objMap, c
       where
         arr' = case arr of
           Just (GuardExpr e _)               -> Just $ Arrow m guard (Just e)
-          Nothing | getMetaType m == TopType -> Nothing
+          Nothing | getMetaType m == topType -> Nothing
           Nothing                            -> Just $ Arrow m guard Nothing
     fromExprObjectMapItem oa = error $ printf "fromExprObjectMapItem with no input expression: %s" (show oa)
 
@@ -169,7 +169,7 @@ exprArgsWithSrc classGraph (TupleApply _ (_, be) arg) src = H.union (exprArgsWit
   where
     fromArg ObjArr{oaObj=Just (GuardExpr obj _), oaArr=Just (GuardExpr e _)} = case typeGetArg (exprPath obj) src of
       Just (UnionType srcArg) -> mergeMaps $ map (exprArgsWithSrc classGraph e) $ splitUnionType srcArg
-      Just TopType -> (,TopType) <$> exprArgs e
+      Just t@TopType{} -> (,t) <$> exprArgs e
       _ -> H.empty
     fromArg ObjArr{oaArr=Just (GuardExpr e _)} = exprArgsWithSrc classGraph e src
     fromArg ObjArr {oaObj=Just (GuardExpr obj _)} = case typeGetArg (exprPath obj) src of
@@ -199,7 +199,7 @@ arrowDestType fullDest classGraph src oa@ObjArr{oaM, oaArr} = case mapM (getExpr
     arr' = substitute $ getMetaType oaM
     joined = if fullDest
       then unionTypes classGraph (fromMaybe bottomType expr') arr'
-      else intersectTypes classGraph (fromMaybe TopType expr') arr'
+      else intersectTypes classGraph (fromMaybe topType expr') arr'
 
 metaTypeVar :: Meta m -> Maybe TypeVarAux
 metaTypeVar m = case getMetaType m of

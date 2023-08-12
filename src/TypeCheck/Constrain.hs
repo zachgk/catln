@@ -71,7 +71,7 @@ equalizeSTypes FEnv{feClassGraph} (SType act1 req1 desc1, SType act2 req2 desc2)
 -- | A helper for "updateSchemeProp" for either the actual or required
 updateTypeProp :: FEnv -> SchemeActReq -> (VarMeta, Type) -> ArgName -> (VarMeta, Type) -> (FEnv, Type, Type)
 updateTypeProp env@FEnv{feClassGraph} actOrReq (superM, superType) propName (subM, subType) = case (superType, subType) of
-    (TopType, _) -> wrapUbs (TopType, subType)
+    (TopType [], _) -> wrapUbs (topType, subType)
     (TypeVar v, _) -> do
       let (TypeCheckResult _ superM') = resolveTypeVar v superM
       let (TypeCheckResult _ super') = pure superM' >>= descriptor env
@@ -83,16 +83,18 @@ updateTypeProp env@FEnv{feClassGraph} actOrReq (superM, superType) propName (sub
       let intersectedPartials sup@PartialType{ptArgs=supArgs} = Just (sup{ptArgs=H.insert propName subType supArgs})
       let supPartialList' = catMaybes $ [intersectedPartials sup | sup <- supPartialList]
       wrapUbs (compactType feClassGraph $ UnionType $ joinUnionType supPartialList', subType)
-    (UnionType supPartials, TopType) -> do
+    (UnionType supPartials, TopType []) -> do
       let supPartialList = splitUnionType supPartials
       let sub' = unionAllTypes feClassGraph $ mapMaybe (typeGetArg propName) supPartialList
       wrapUbs (superType, sub')
+    (TopType _, _) -> undefined
+    (_, TopType _) -> undefined
     (UnionType supPartials, UnionType subPartials) -> do
       let supPartialList = splitUnionType supPartials
       let subPartialList = splitUnionType subPartials
       let intersectedPartials sup@PartialType{ptArgs=supArgs, ptVars=supVars} sub = case typeGetArg propName sup of
             Just (TypeVar (TVVar TVInt v)) -> do
-              let supVar = H.lookupDefault TopType v supVars
+              let supVar = H.lookupDefault topType v supVars
               let newProp = intersectTypes feClassGraph supVar (singletonType sub)
               Just (sup{ptVars=H.insert v newProp supVars}, newProp)
             Just (TypeVar (TVVar TVExt _)) -> error $ printf "Not yet implemented"
@@ -120,8 +122,8 @@ updateTypeVar :: FEnv -> Type -> TypeVarName -> Type -> (Type, Type)
 updateTypeVar FEnv{feClassGraph} superType varName subType = (superType', subType')
   where
     (superType', subType') = case (superType, subType) of
-      (TopType, sub) -> (TopType, sub)
-      (UnionType supPartials, TopType) -> do
+      (TopType [], sub) -> (topType, sub)
+      (UnionType supPartials, TopType []) -> do
         let supPartialList = splitUnionType supPartials
         let getVar PartialType{ptVars=supVars} = H.lookup varName supVars
         let sub = unionAllTypes feClassGraph $ mapMaybe getVar supPartialList
@@ -159,12 +161,12 @@ updateSchemeVar env (SType superAct superReq superDesc) varName (SType subAct su
 
 -- | A helper for the 'AddArg' 'Constraint'
 addArgToType :: FEnv -> Type -> ArgName -> Maybe Type
-addArgToType _ TopType _ = Nothing
+addArgToType _ (TopType _) _ = Nothing
 addArgToType _ TypeVar{} _ = error "addArgToType TypeVar"
 addArgToType FEnv{feClassGraph} (UnionType partials) newArg = Just $ UnionType partials'
   where
     partials' = joinUnionType $ map fromPartial $ splitUnionType partials
-    fromPartial partial@PartialType{ptArgs} = partial{ptArgs=H.insertWith (unionTypes feClassGraph) newArg TopType ptArgs}
+    fromPartial partial@PartialType{ptArgs} = partial{ptArgs=H.insertWith (unionTypes feClassGraph) newArg topType ptArgs}
 
 -- | A helper for the 'AddArg' 'Constraint'
 addArgToScheme :: FEnv -> SType -> ArgName -> SType -> SType
@@ -179,7 +181,7 @@ addArgToScheme env@FEnv{feClassGraph} (SType srcAct srcReq _) newArgName (SType 
 
 -- | A helper for the 'AddInferArg' 'Constraint'
 addInferArgToType :: FEnv -> Type -> Maybe Type
-addInferArgToType _ TopType = Nothing
+addInferArgToType _ (TopType _) = Nothing
 addInferArgToType _ TypeVar{} = error "addInferArgToType TypeVar"
 addInferArgToType env@FEnv{feClassGraph} (UnionType partials) = Just $ unionAllTypes feClassGraph partials'
   where
@@ -231,7 +233,7 @@ executeConstraint env@FEnv{feUnionAllObjs, feClassGraph} (BoundedByObjs pnt) = d
   let boundScheme = pointUb env feUnionAllObjs
   case sequenceT (scheme, boundScheme) of
     TypeCheckResE _ -> (True, env)
-    TypeCheckResult _ (TopType, _) -> (False, env)
+    TypeCheckResult _ (TopType [], _) -> (False, env)
     TypeCheckResult _ (ub, boundUb) -> do
       -- A partially applied tuple would not be a raw type on the unionObj,
       -- but a subset of the arguments in that type

@@ -118,7 +118,7 @@ llvm :: Op
 llvm = (name', [(srcType, Nothing, False, aux)])
   where
     name' = "/Catln/llvm"
-    srcType = PartialType (PTypeName name') H.empty (H.fromList [("c", TopType)]) [] PtArgExact
+    srcType = PartialType (PTypeName name') H.empty (H.fromList [("c", topType)]) [] PtArgExact
     aux a = MacroArrow a (singletonType resultLeaf) (MacroFunction macroBuild)
     macroBuild input MacroData{mdTbEnv, mdObj, mdObjSrcType} = do
       input' <- resolveTree mdTbEnv (mdObjSrcType, mdObj) input

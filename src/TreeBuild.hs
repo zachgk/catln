@@ -42,7 +42,7 @@ type TBPrgm = ExprPrgm Expr TBMetaDat
 type VisitedArrows = S.HashSet ResArrowTree
 
 leafsFromMeta :: TBMeta -> [PartialType]
-leafsFromMeta (Meta TopType _ _) = error "leafFromMeta from TopType"
+leafsFromMeta (Meta TopType{} _ _) = error "leafFromMeta from TopType"
 leafsFromMeta (Meta TypeVar{} _ _) = error "leafFromMeta from TypeVar"
 leafsFromMeta (Meta (UnionType prodTypes) _ _) = splitUnionType prodTypes
 
@@ -179,8 +179,8 @@ envLookup env obj input ee visitedArrows srcType destType = do
   buildGuardArrows env obj input ee visitedArrows srcType destType guards
 
 buildImplicit :: TBEnv -> ObjSrc -> TBExpr -> Type -> Type -> CRes ResArrowTree
-buildImplicit _ _ expr srcType TopType = return $ ExprArrow expr srcType srcType
-buildImplicit _ obj _ TopType destType = error $ printf "Build implicit from top type to %s in %s" (show destType) (show obj)
+buildImplicit _ _ expr srcType (TopType []) = return $ ExprArrow expr srcType srcType
+buildImplicit _ obj _ (TopType []) destType = error $ printf "Build implicit from top type to %s in %s" (show destType) (show obj)
 buildImplicit env objSrc@(_, obj) input (TypeVar (TVVar TVInt varName)) destType = case suffixLookupInDict varName $ exprAppliedVars $ oaObjExpr obj of
   Just objVarM -> buildImplicit env objSrc input (getMetaType objVarM) destType
   Nothing -> error $ printf "buildImplicit unknown arg %s with obj %s" varName (show objSrc)

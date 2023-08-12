@@ -58,10 +58,10 @@ pDeclStatement = do
     Nothing -> case guard of
 
       -- expression
-      Nothing | getMetaType arrMeta == TopType -> return $ RawExprStatement inExpr
+      Nothing | getMetaType arrMeta == topType -> return $ RawExprStatement inExpr
 
       -- Declaration
-      _ | getMetaType arrMeta /= TopType -> return $ RawDeclStatement roa
+      _ | getMetaType arrMeta /= topType -> return $ RawDeclStatement roa
 
       -- Must be either a declaration or an expression
       _ -> fail $ printf "Invalid declaration or expression: %s" (show roa)

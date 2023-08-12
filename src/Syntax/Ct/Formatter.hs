@@ -37,7 +37,7 @@ formatPartialType :: PartialType -> String
 formatPartialType (PartialType ptName ptVars ptArgs ptPreds _) = concat [showName ptName, showTypeVars ptVars, showArgs ptArgs, showPreds ptPreds]
   where
     showName p  = fromPartialName p
-    showArg (argName, argVal) = if argVal == TopType
+    showArg (argName, argVal) = if argVal == topType
       then '$':argName
       else argName ++ ": " ++ formatType argVal
     showTypeVars vars | H.null vars = ""
@@ -48,7 +48,8 @@ formatPartialType (PartialType ptName ptVars ptArgs ptPreds _) = concat [showNam
     showPreds preds = printf "| %s" (intercalate ", " $ map formatPartialType preds)
 
 formatType :: Type -> String
-formatType TopType = ""
+formatType (TopType []) = ""
+formatType (TopType preds) = printf "Any | %s" (intercalate ", " $ map formatPartialType preds)
 formatType (TypeVar (TVVar TVInt t)) = "$" ++ t
 formatType (TypeVar (TVVar TVExt t)) = "$_" ++ t
 formatType (TypeVar TVArg{}) = error "Unexpected TVArg in formatter"
@@ -56,8 +57,8 @@ formatType (UnionType partials) = join $ map formatPartialType $ splitUnionType 
 
 formatMeta :: Meta m -> String
 formatMeta m = case getMetaType m of
-  TopType -> ""
-  t       -> ": " ++ formatType t
+  (TopType []) -> ""
+  t            -> ": " ++ formatType t
 
 formatExpr ::  RawExpr m -> String
 formatExpr (RawCExpr _ (CInt c)) = show c
@@ -106,8 +107,8 @@ formatObjArr roa@RawObjArr{roaObj, roaM, roaArr, roaDef} = printf "%s%s%s%s%s%s"
 
     showM :: String
     showM  = case getMetaType roaM of
-      TopType -> ""
-      t       -> printf " -> %s" (formatType t)
+      (TopType []) -> ""
+      t            -> printf " -> %s" (formatType t)
 
     showEquals :: String
     showEquals = case (roaObj, roaArr) of

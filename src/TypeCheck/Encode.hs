@@ -64,7 +64,7 @@ makeBaseFEnv :: ClassGraph -> FEnv
 makeBaseFEnv classGraph = FEnv{
   fePnts = IM.empty,
   feCons = [],
-  feUnionAllObjs = Meta TopType Nothing (VarMetaDat 0 Nothing H.empty H.empty),
+  feUnionAllObjs = Meta topType Nothing (VarMetaDat 0 Nothing H.empty H.empty),
   feVTypeGraph = H.empty,
   feTTypeGraph = H.empty,
   feUpdatedDuringEpoch = False,
@@ -87,8 +87,8 @@ fromMeta env bound est m description  = do
         EncodeOut{} -> m
   let tp = getMetaType m'
   let (p, env') = case bound of
-        BUpper -> fresh env (TypeCheckResult [] $ SType tp TopType description)
-        BLower -> fresh env (TypeCheckResult [] $ SType TopType tp description)
+        BUpper -> fresh env (TypeCheckResult [] $ SType tp topType description)
+        BLower -> fresh env (TypeCheckResult [] $ SType topType tp description)
         BEq    -> fresh env (TypeCheckResult [] $ SType tp tp description)
   return (mapMetaDat (\_ -> mkVarMetaDat est p) m', env')
 
@@ -245,7 +245,7 @@ fromExpr est env1 (VarApply m baseExpr varName varVal) = do
 fromGuard :: EncodeState -> FEnv -> Maybe PExpr -> TypeCheckResult (Maybe VExpr, FEnv)
 fromGuard est env1 (Just expr) =  do
   (expr', env2) <- fromExpr est env1 expr
-  let (bool, env3) = fresh env2 $ TypeCheckResult [] $ SType TopType boolType "ifGuardBool"
+  let (bool, env3) = fresh env2 $ TypeCheckResult [] $ SType topType boolType "ifGuardBool"
   let bool' = Meta boolType (labelPos "bool" $ getMetaPos $ getExprMeta expr) (mkVarMetaDat est bool)
   return (Just expr', addConstraints env3 [ArrowTo (getExprMeta expr') bool'])
 fromGuard _ env Nothing = return (Nothing, env)
@@ -258,7 +258,7 @@ fromArrow est env1 (Arrow m aguard maybeExpr) = do
   (aguard', env3) <- fromGuard est env2 aguard
   case maybeExpr of
     Just expr -> do
-      (m', env4) <- fromMeta env3 BUpper est (Meta TopType (labelPos "res" $ getMetaPos m) emptyMetaDat) $ printf "Arrow result from %s" (show $ objPath obj)
+      (m', env4) <- fromMeta env3 BUpper est (Meta topType (labelPos "res" $ getMetaPos m) emptyMetaDat) $ printf "Arrow result from %s" (show $ objPath obj)
       (vExpr, env5) <- fromExpr est env4 expr
       let env6 = case metaTypeVar m of
             Just (TVVar TVInt typeVarName) -> case suffixLookupInDict typeVarName objVars of
@@ -313,7 +313,7 @@ addObjArg oM prefix est env (n, (m, maybeSubObj)) = do
 clearMetaArgTypes :: PreMeta -> PreMeta
 clearMetaArgTypes (Meta (UnionType partials) pos md) = Meta (UnionType $ joinUnionType $ map clearPartialTypeArgs $ splitUnionType partials) (labelPos "clear" pos) md
   where
-    clearPartialTypeArgs partial@PartialType{ptArgs} = partial{ptArgs=fmap (const TopType) ptArgs}
+    clearPartialTypeArgs partial@PartialType{ptArgs} = partial{ptArgs=fmap (const topType) ptArgs}
 clearMetaArgTypes p = p
 
 fromObjectRec :: String -> Bool -> EncodeState -> FEnv -> PObject -> TypeCheckResult (VObject, FEnv)
@@ -327,7 +327,7 @@ fromObjectRec prefix isObjArg est env (Object m basis vars args doc expr path) =
   (objValue, env5) <- fromMeta env4 BUpper est (Meta (singletonType (partialVal (PTypeName path))) (labelPos "objValue" $ getMetaPos m) emptyMetaDat) ("objValue" ++ path)
   let env6 = fInsert env5 path (DefVar objValue)
   let env7 = addConstraints env6 [BoundedByObjs m' | isObjArg]
-  let env8 = addConstraints env7 [BoundedByKnown m' (singletonType (PartialType (PTypeName path) (fmap (const TopType) vars) (fmap (const TopType) args) [] PtArgExact)) | basis == FunctionObj || basis == PatternObj]
+  let env8 = addConstraints env7 [BoundedByKnown m' (singletonType (PartialType (PTypeName path) (fmap (const topType) vars) (fmap (const topType) args) [] PtArgExact)) | basis == FunctionObj || basis == PatternObj]
   return (obj', env8)
 
 fromObject ::  FEnv -> PObject -> TypeCheckResult (VObject, VMetaVarEnv, VMetaArgEnv, FEnv)

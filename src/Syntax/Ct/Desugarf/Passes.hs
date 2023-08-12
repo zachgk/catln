@@ -63,7 +63,7 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, classGraph
     -- requireResolveRelative -> type -> updated type
     -- It is required to resolve for the classGraph, but expressions can be left unresolved until type inference
     mapType :: Bool -> Type -> Type
-    mapType _ TopType = TopType
+    mapType _ (TopType ps) = TopType ps
     mapType _ tp@(TypeVar TVVar{}) = tp
     mapType _ (TypeVar TVArg{}) = error "Invalid arg type"
     mapType reqResolve (UnionType partials) = unionAllTypes classGraph $ map (singletonType . mapPartial reqResolve) $ splitUnionType partials
@@ -113,7 +113,7 @@ expandDataReferences (fullPrgmObjMap, _, _) (objMap, classGraph@(ClassGraph cg),
       ObjVarMeta            -> Meta (mapType t) p md
       ArrMeta               -> Meta (mapType t) p md
 
-    mapType TopType = TopType
+    mapType (TopType ps) = TopType ps
     mapType tp@(TypeVar TVVar{}) = tp
     mapType (TypeVar TVArg{}) = error "Invalid arg type"
     mapType (UnionType partials) = unionAllTypes classGraph $ map mapPartial $ splitUnionType partials

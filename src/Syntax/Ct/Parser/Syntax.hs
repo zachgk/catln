@@ -70,14 +70,14 @@ parseTVVar ('$':n)     = Just $ TypeVar $ TVVar TVInt n
 parseTVVar _           = Nothing
 
 fromMaybeTypeName :: Maybe TypeName -> Type
-fromMaybeTypeName = maybe TopType fromName
+fromMaybeTypeName = maybe topType fromName
   where
     fromName n = case parseTVVar n of
       Just t  -> t
       Nothing -> singletonType (partialVal (PRelativeName n))
 
 emptyMeta :: SourcePos -> SourcePos -> ParseMeta
-emptyMeta p1 p2 = Meta TopType (Just (p1, p2, "")) emptyMetaDat
+emptyMeta p1 p2 = Meta topType (Just (p1, p2, "")) emptyMetaDat
 
 isAbsolutePath :: String -> Bool
 isAbsolutePath name = "/" `isPrefixOf` name

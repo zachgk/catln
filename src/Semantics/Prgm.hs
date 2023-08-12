@@ -63,7 +63,7 @@ instance MetaDat () where
   emptyMetaDat = ()
 
 emptyMetaN :: (MetaDat m) => Meta m
-emptyMetaN = Meta TopType Nothing emptyMetaDat
+emptyMetaN = Meta topType Nothing emptyMetaDat
 
 getMetaType :: Meta m -> Type
 getMetaType (Meta t _ _) = t
@@ -165,7 +165,7 @@ instance (Show m, Show (e m)) => Show (ObjArr e m) where
       showNoMaybe Nothing  = ""
 
       showM :: String
-      showM = if getMetaType oaM /= TopType
+      showM = if getMetaType oaM /= topType
         then printf " -> %s " (show oaM)
         else ""
 
