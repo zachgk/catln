@@ -41,6 +41,13 @@ module Catln
       It can be used to create "default" behaviors that are overridden and fallthrough logic.
 
 
+  annot #argStart
+    # [#argStart] is used internally to annotate the first argument in a parenthesis.
+
+  annot #argEnd
+    # [#argEnd] is used internally to annotate the last argument in a parenthesis.
+
+
   annot #assert(test: Boolean)
     # [#assert] will check if the [test]ed value is true.
       The test is used only when testing a function, and is not included as part of the actual build.

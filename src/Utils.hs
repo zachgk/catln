@@ -14,9 +14,9 @@
 module Utils where
 
 import           Data.Graph
+import           Data.Hashable
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
-import           Data.Hashable
 
 type GraphNodes node key = (node, key, [key])
 type GraphData node key = (Graph, Vertex -> (node, key, [key]), key -> Maybe Vertex)

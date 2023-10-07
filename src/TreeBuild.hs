@@ -21,8 +21,8 @@ import qualified Data.HashSet        as S
 import           Data.Maybe
 import           Text.Printf
 
-import           CRes
 import           Control.Monad
+import           CRes
 import           Eval.Common
 import           Semantics
 import           Semantics.Annots

@@ -21,9 +21,9 @@ module Semantics.Types where
 import           Data.Aeson
 import           Data.Bifunctor      (Bifunctor (bimap, first))
 import           Data.Either
+import           Data.Hashable
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
-import           Data.Hashable
 import           Data.List           (intercalate)
 import qualified Data.List           as L
 import           Data.List.Split     (splitOn)

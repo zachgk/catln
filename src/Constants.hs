@@ -39,5 +39,9 @@ ctxAnnot = "/Catln/#ctx"
 elseAnnot :: String
 elseAnnot = "/Catln/#else"
 
+argStartAnnot, argEndAnnot :: String
+argStartAnnot = "/Catln/#argStart"
+argEndAnnot = "/Catln/#argEnd"
+
 nestedDeclaration :: String
 nestedDeclaration = "/Catln/nestedDeclaration"

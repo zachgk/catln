@@ -17,8 +17,8 @@
 
 module TypeCheck.Common where
 
-import qualified Data.HashMap.Strict as H
 import           Data.Hashable
+import qualified Data.HashMap.Strict as H
 import qualified Data.IntMap.Lazy    as IM
 import           Data.List
 import           GHC.Generics        (Generic)

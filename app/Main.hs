@@ -2,8 +2,8 @@
 {-# OPTIONS_GHC -Wno-type-defaults #-}
 module Main where
 
-import           CRes
 import           Control.Monad
+import           CRes
 import           Data.String.Builder   (build)
 import           Eval
 import           Options.Applicative

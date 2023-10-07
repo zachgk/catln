@@ -19,8 +19,8 @@
 
 module Semantics.Prgm where
 
-import qualified Data.HashMap.Strict as H
 import           Data.Hashable
+import qualified Data.HashMap.Strict as H
 import           Data.List           (intercalate)
 import           GHC.Generics        (Generic)
 

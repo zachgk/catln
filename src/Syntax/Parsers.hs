@@ -17,8 +17,8 @@ module Syntax.Parsers where
 
 import qualified Data.HashSet        as S
 
-import           CRes
 import           Control.Monad
+import           CRes
 import           Data.Graph
 import qualified Data.HashMap.Strict as H
 import           Data.List

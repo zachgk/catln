@@ -18,8 +18,8 @@
 
 module Syntax.Ct.Prgm where
 
-import qualified Data.HashMap.Strict as H
 import           Data.Hashable
+import qualified Data.HashMap.Strict as H
 import           Data.Void           (Void)
 import           GHC.Generics        (Generic)
 

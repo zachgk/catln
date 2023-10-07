@@ -18,15 +18,15 @@
 
 module Eval.Common where
 
+import           Data.Hashable
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
-import           Data.Hashable
 import           Data.List           (intercalate)
 import qualified Data.Map            as Map
 import           GHC.Generics        (Generic)
 
-import           CRes
 import           Control.Monad.State
+import           CRes
 import           Data.Aeson          hiding (Object)
 -- import qualified LLVM.AST            as AST
 import           Semantics

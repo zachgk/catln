@@ -14,11 +14,11 @@
 
 module Syntax.Ct.Desugarf.Preprocessors where
 
-import           CRes
 import           Constants
+import           CRes
 import           Data.Either
-import qualified Data.HashMap.Strict     as H
 import           Data.Hashable
+import qualified Data.HashMap.Strict     as H
 import           Data.List               (intercalate)
 import           Data.String.Builder     (build)
 import           Semantics

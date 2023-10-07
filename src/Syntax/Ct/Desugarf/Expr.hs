@@ -19,6 +19,7 @@ import qualified Data.HashMap.Strict     as H
 import           Data.Maybe
 import           Text.Printf
 
+import           Constants
 import           Data.Char               (toLower)
 import           Semantics
 import           Semantics.Prgm
@@ -90,16 +91,19 @@ semiDesExpr _ _ RawMacroValue{} = error "Not yet implemented"
 semiDesExpr sdm obj (RawTheExpr t) = semiDesExpr sdm obj $ desugarTheExpr t
 semiDesExpr sdm obj (RawAliasExpr base alias) = AliasExpr (semiDesExpr sdm obj base) (semiDesExpr sdm obj alias)
 semiDesExpr sdm obj (RawTupleApply _ (_, RawValue _ "/operator:") [RawObjArr{roaArr=(Just (GuardExpr e _))}, RawObjArr{roaArr=(Just (GuardExpr tp _))}]) = semiDesExpr sdm obj (rawExprWithType (exprToType tp) e)
-semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm'', be'') arg'') -> TupleApply m'' (bm'', be'') arg'') $ foldl aux (bm, be') args
+semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm'', be'') arg'') -> TupleApply m'' (bm'', be'') arg'') $ foldl aux (bm, be') (zip [0..] args)
   where
     be' = semiDesExpr sdm obj be
-    aux (m, e) rarg = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) arg'')
+    aux (m, e) (argIndex, rarg) = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) arg'')
       where
         [arg@ObjArr{oaObj=argObj, oaAnnots=argAnnots, oaArr=argArr}] = desObjArr rarg
+
+        indexAnnots = [exprVal argStartAnnot | argIndex == 0] ++ [exprVal argEndAnnot | argIndex == length args - 1]
+
         -- SemiDes all sub-expressions
         arg' = arg{
           oaObj=fmap semiDesGuardExpr argObj,
-          oaAnnots=fmap (semiDesExpr sdm obj) argAnnots,
+          oaAnnots=indexAnnots ++ fmap (semiDesExpr sdm obj) argAnnots,
           oaArr=fmap semiDesGuardExpr argArr
           }
 

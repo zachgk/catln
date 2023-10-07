@@ -19,8 +19,8 @@ import           Control.Applicative        hiding (many, some)
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
 
-import           CRes
 import           Constants
+import           CRes
 import           Data.Maybe
 import           Semantics.Prgm
 import           Syntax.Ct.Parser.Decl
