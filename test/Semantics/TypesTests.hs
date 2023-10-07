@@ -3,20 +3,20 @@ module Semantics.TypesTests where
 import           Common.TestCommon   (findCt)
 import           Control.Monad
 import           CRes                (fromCRes)
+import qualified Data.HashMap.Strict as H
+import           Data.Maybe
 import           Hedgehog
 import qualified Hedgehog.Gen        as HG
+import           Semantics           (getExprType, oaObjPath)
 import           Semantics.Prgm
-import qualified Data.HashMap.Strict as H
 import           Semantics.Types
 import           Syntax.Ct.Desugarf  (desFiles)
 import           Syntax.Parsers      (readFiles)
 import           Test.Tasty
 import           Test.Tasty.Hedgehog as HG
+import           Text.Printf
 import           TypeCheck           (typecheckPrgm)
 import           Utils
-import Data.Maybe
-import Text.Printf
-import Semantics (getExprType, oaObjPath)
 
 type Prgms = H.HashMap String (ExprPrgm Expr ())
 
@@ -58,15 +58,27 @@ genType prgm@(objMap, ClassGraph cg, _) = HG.choice gens
 
     gens = if graphEmpty cg
       then [genBasic]
-      else [genBasic, genCG, genObjM, genObj]
+      else [genBasic, genCGOld, genCG, genCGRel, genObjM, genObj]
 
     genBasic :: Gen Type
     genBasic = HG.element [topType, bottomType]
 
+    genCGOld :: Gen Type
+    genCGOld = do
+      classNode <- HG.element $ graphToNodes cg
+      return $ typeVal $ snd3 classNode
+
     genCG :: Gen Type
     genCG = do
       classNode <- HG.element $ graphToNodes cg
-      return $ typeVal $ snd3 classNode
+      return $ case snd3 classNode of
+        cls@PClassName{} -> TopType [PredClass $ partialVal cls]
+        t                -> typeVal t
+
+    genCGRel :: Gen Type
+    genCGRel = do
+      classNode <- HG.element $ graphToNodes cg
+      return $ TopType [PredRel $ partialVal $ PRelativeName $ fromPartialName $ snd3 classNode]
 
     genObjM :: Gen Type
     genObjM = do
@@ -142,6 +154,7 @@ propSubtypeByUnion prgms = property $ do
   let subtype = isSubtypeOf classGraph a b
   annotate $ printf "subtype = %s" (show subtype)
   let byUnion = isEqType classGraph (unionTypes classGraph a b) b
+  annotate $ printf "a∪b = %s" (show $ unionTypes classGraph a b)
   annotate $ printf "byUnion = %s" (show byUnion)
   subtype === byUnion
 
@@ -155,6 +168,7 @@ propSubtypeByIntersection prgms = property $ do
   let subtype = isSubtypeOf classGraph a b
   annotate $ printf "subtype = %s" (show subtype)
   let byIntersection = isEqType classGraph (intersectTypes classGraph a b) a
+  annotate $ printf "a∩b = %s" (show $ intersectTypes classGraph a b)
   annotate $ printf "byIntersection = %s" (show byIntersection)
   subtype === byIntersection
 
@@ -194,7 +208,17 @@ propIntersectionCommutative prgms = property $ do
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   c <- forAll $ genType prgm
-  assert $ isEqType classGraph (intersectAllTypes classGraph [a, b, c]) (intersectAllTypes classGraph [c, b, a])
+
+  let abc = intersectAllTypes classGraph [a, b, c]
+  annotate $ printf "a∩b∩c = %s" (show abc)
+
+  let cba = intersectAllTypes classGraph [c, b, a]
+  annotate $ printf "c∩b∩a = %s" (show cba)
+
+  annotate $ printf "a∩b∩c ⊆ c∩b∩a = %s" (show $ isSubtypeOf classGraph abc cba)
+  annotate $ printf "c∩b∩a ⊆ a∩b∩c = %s" (show $ isSubtypeOf classGraph cba abc)
+
+  assert $ isEqType classGraph abc cba
 
 propIntersectionDistributesUnion :: Prgms -> Property
 propIntersectionDistributesUnion prgms = property $ do
@@ -246,7 +270,7 @@ typeTests = do
                                   ]
   where
     p prop = prop
-    -- p prop = withTests 10000 prop
+    -- p prop = withTests 100000 prop
 
 main :: IO ()
 main = do

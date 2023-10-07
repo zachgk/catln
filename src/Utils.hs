@@ -57,7 +57,7 @@ fmapGraph f = graphFromEdges . mapFst3 f . graphToNodes
 graphLookup :: (Ord key) => key -> GraphData node key -> Maybe node
 graphLookup k (_, nodeFromVertex, vertexFromKey) = fst3 . nodeFromVertex <$> vertexFromKey k
 
-unionsWith :: (Ord k, Hashable k) => (a->a->a) -> [H.HashMap k a] -> H.HashMap k a
+unionsWith :: (Foldable f, Ord k, Hashable k) => (a->a->a) -> f (H.HashMap k a) -> H.HashMap k a
 unionsWith f = foldl (H.unionWith f) H.empty
 
 isSubsetOf :: (Eq a, Hashable a) => S.HashSet a -> S.HashSet a -> Bool

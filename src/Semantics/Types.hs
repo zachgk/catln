@@ -19,7 +19,7 @@
 module Semantics.Types where
 
 import           Data.Aeson
-import           Data.Bifunctor      (Bifunctor (bimap, first))
+import           Data.Bifunctor      (Bifunctor (bimap, first, second))
 import           Data.Either
 import           Data.Graph          (graphFromEdges)
 import           Data.Hashable
@@ -64,7 +64,8 @@ data PtArgMode
 -- | A predicate applied to a type
 data TypePredicate
   = PredExpr PartialType
-  | PredClass PartialType
+  | PredClass PartialType -- A hasClass predicate
+  | PredRel PartialType -- a isa predicate. Represented by val : classOrModuleOrType
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 type TypePredicates = [TypePredicate]
 
@@ -84,7 +85,7 @@ data PartialType = PartialType {
 type PartialArgsOption = (H.HashMap TypeVarName Type, H.HashMap ArgName Type, TypePredicates, PtArgMode)
 
 -- | An alternative format for many 'PartialType's which combine those that share the same name
-type PartialLeafs = (H.HashMap PartialName (S.HashSet PartialArgsOption))
+type PartialLeafs = H.HashMap PartialName (S.HashSet PartialArgsOption)
 
 -- | The basic format of a 'Type' in Catln and the several formats it comes in.
 data Type
@@ -195,6 +196,7 @@ instance ToJSON ClassGraph where
 mapTypePred :: (PartialType -> PartialType) -> TypePredicate -> TypePredicate
 mapTypePred f (PredExpr p)  = PredExpr (f p)
 mapTypePred f (PredClass p) = PredClass (f p)
+mapTypePred f (PredRel p)   = PredRel (f p)
 
 listClassGraphNames :: ClassGraph -> [PartialName]
 listClassGraphNames (ClassGraph graphData) = map snd3 (graphToNodes graphData)
@@ -315,6 +317,35 @@ suffixLookupInDict s dict = case suffixLookup s (H.keys dict) of
   Just k  -> H.lookup k dict
   Nothing -> Nothing
 
+expandType :: ClassGraph -> Type -> Type
+expandType _ t@UnionType{} = t
+expandType _ t@TypeVar{} = error $ printf "Can't expandTypeToLeafs with type var %s" (show t)
+expandType classGraph (TopType preds) = intersectAllTypes classGraph $ map expandPred preds
+  where
+    expandPred (PredClass clss) = expandClassPartial classGraph clss
+    expandPred (PredRel rel)    = expandRelPartial classGraph rel
+    expandPred (PredExpr _)     = undefined
+
+expandClassPartial :: ClassGraph -> PartialType -> Type
+expandClassPartial classGraph@(ClassGraph cg) PartialType{ptName, ptVars=classVarsP} = expanded
+  where
+    className = PClassName $ fromPartialName ptName
+    expanded = case graphLookup className cg of
+      Just (CGClass (_, PartialType{ptVars=classVarsDecl}, classTypes, _)) -> unionAllTypes classGraph $ map mapClassType classTypes
+        where
+          classVars = H.unionWith (intersectTypes classGraph) classVarsP classVarsDecl
+          mapClassType (TopType ps) = expandType classGraph $ TopType ps
+          mapClassType (TypeVar (TVVar _ t)) = case H.lookup t classVars of
+            Just v -> expandType classGraph $ intersectTypes classGraph v (H.lookupDefault topType t classVars)
+            Nothing -> error $ printf "Unknown var %s in expandPartial" t
+          mapClassType (TypeVar (TVArg _ t)) = error $ printf "Arg %s found in expandPartial" t
+          mapClassType (UnionType p) = UnionType $ joinUnionType $ map mapClassPartial $ splitUnionType p
+          mapClassPartial tp@PartialType{ptVars} = tp{ptVars=fmap (substituteVarsWithVarEnv classVars) ptVars}
+      r -> error $ printf "Unknown class %s in expandPartial. Found %s" (show className) (show r)
+
+expandRelPartial :: ClassGraph -> PartialType -> Type
+expandRelPartial classGraph relPartial@PartialType{ptName} = UnionType $ joinUnionType $ map (\typeName -> relPartial{ptName=typeName}) $ relativePartialNameFilter (fromPartialName ptName) (listClassGraphNames classGraph)
+
 -- |
 -- Expands a class partial into a union of the types that make up that class (in the 'ClassGraph')
 -- It also expands a relative into the matching types and classes
@@ -376,8 +407,12 @@ isSubtypeOfWithEnv classGraph vaenv t1 (TypeVar v) = case H.lookup v vaenv of
   Just t2 -> isSubtypeOfWithEnv classGraph vaenv t1 t2
   Nothing -> error $ printf "isSubtypeOfWithEnv with unknown type var or arg %s" (show v)
 isSubtypeOfWithEnv _ _ (TopType []) t = t == topType
-isSubtypeOfWithEnv _ _ _ (TopType _) = undefined
-isSubtypeOfWithEnv _ _ (TopType _) _ = undefined
+isSubtypeOfWithEnv classGraph vaenv t1 t2@(TopType (_:_)) = isSubtypeOfWithEnv classGraph vaenv t1 t2'
+  where
+    t2' = expandType classGraph t2
+isSubtypeOfWithEnv classGraph vaenv t1@(TopType (_:_)) t2 = isSubtypeOfWithEnv classGraph vaenv t1' t2
+  where
+    t1' = expandType classGraph t1
 isSubtypeOfWithEnv classGraph vaenv (UnionType subPartials) super@(UnionType superPartials) = all isSubPartial $ splitUnionType subPartials
   where
     isSubPartial sub | any (isSubPartialOfWithEnv classGraph vaenv sub) $ splitUnionType superPartials = True
@@ -441,6 +476,30 @@ compactJoinPartials classGraph partials = joinUnionType $ concat $ H.elems $ fma
     numDifferences m1 m2 = sum $ fromEnum <$> H.intersectionWith (/=) m1 m2
     joinMap = H.unionWith (unionTypes classGraph)
 
+-- | Processes partials that have a 'PredClass' predicate
+compactPartialsWithClassPred :: ClassGraph -> PartialLeafs -> PartialLeafs
+compactPartialsWithClassPred classGraph partials = unionPartialLeafs $ map aux $ splitUnionType partials
+  where
+    aux partial@PartialType{ptPreds} = if null classPreds && null relPreds
+      then joinUnionType [partial]
+      else asLeafs $ intersectAllTypes classGraph (singletonType partial' : map (expandRelPartial classGraph) relPreds ++ map (expandClassPartial classGraph) classPreds)
+      where
+        -- Take class preds out of partial
+        (exprPreds, classPreds, relPreds) = splitPreds ptPreds
+        partial' = partial{ptPreds = map PredExpr exprPreds}
+
+        asLeafs (UnionType leafs) = leafs
+        asLeafs t                 = asLeafs $ expandType classGraph t
+
+        splitPreds :: [TypePredicate] -> ([PartialType], [PartialType], [PartialType])
+        splitPreds [] = ([], [], [])
+        splitPreds (p:ps) = case p of
+          PredExpr p'  -> (p':exprs', classes', rels')
+          PredClass p' -> (exprs', p':classes', rels')
+          PredRel p'   -> (exprs', classes', p':rels')
+          where
+            (exprs', classes', rels') = splitPreds ps
+
 -- | Removes partials which contain a type variable that is the 'bottomType', because then the whole partial is a 'bottomType'.
 compactBottomTypeVars :: PartialLeafs -> PartialLeafs
 compactBottomTypeVars partials = joinUnionType $ mapMaybe aux $ splitUnionType partials
@@ -456,22 +515,23 @@ compactBottomTypeVars partials = joinUnionType $ mapMaybe aux $ splitUnionType p
 compactType :: ClassGraph -> Type -> Type
 compactType _ (TopType ps) = TopType ps
 compactType _ t@TypeVar{} = t
-compactType classGraph (UnionType partials) = UnionType $ (compactOverlapping classGraph . compactJoinPartials classGraph . compactBottomTypeVars) partials
+compactType classGraph (UnionType partials) = UnionType $ (compactOverlapping classGraph . compactJoinPartials classGraph . compactPartialsWithClassPred classGraph . compactBottomTypeVars) partials
+
+unionPartialLeafs :: Foldable f => f PartialLeafs -> PartialLeafs
+unionPartialLeafs = unionsWith S.union
 
 -- | Takes the union of two types (∪)
 unionTypes :: ClassGraph -> Type -> Type -> Type
 unionTypes _ (TopType []) _ = topType
 unionTypes _ _ (TopType []) = topType
-unionTypes _ (TopType _) _ = undefined
-unionTypes _ _ (TopType _) = undefined
 unionTypes _ t1 t2 | isBottomType t2 = t1
 unionTypes _ t1 t2 | isBottomType t1 = t2
 unionTypes _ t1 t2 | t1 == t2 = t1
+unionTypes classGraph t1@(TopType (_:_)) t2 = unionTypes classGraph (expandType classGraph t1) t2
+unionTypes classGraph t1 t2@(TopType (_:_)) = unionTypes classGraph t1 (expandType classGraph t2)
 unionTypes _ (TypeVar v) t = error $ printf "Can't union type vars %s with %s " (show v) (show t)
 unionTypes _ t (TypeVar v) = error $ printf "Can't union type vars %s with %s " (show t) (show v)
-unionTypes classGraph (UnionType aPartials) (UnionType bPartials) = compactType classGraph $ UnionType partials'
-  where
-    partials' = H.unionWith S.union aPartials bPartials
+unionTypes classGraph (UnionType aPartials) (UnionType bPartials) = compactType classGraph $ UnionType $ unionPartialLeafs [aPartials, bPartials]
 
 -- | Takes the 'unionTypes' of many types
 unionAllTypes :: Foldable f => ClassGraph -> f Type -> Type
@@ -479,7 +539,8 @@ unionAllTypes classGraph = foldr (unionTypes classGraph) bottomType
 
 -- | Takes the 'intersectTypes' of many types
 intersectAllTypes :: Foldable f => ClassGraph -> f Type -> Type
-intersectAllTypes classGraph = foldr (intersectTypes classGraph) topType
+intersectAllTypes _ types | null types = bottomType
+intersectAllTypes classGraph types = foldr1 (intersectTypes classGraph) types
 
 intersectPartialName :: PartialName -> PartialName -> Maybe PartialName
 intersectPartialName a b   | a == b = Just a
@@ -514,15 +575,32 @@ intersectPartialsBase classGraph venv (PartialType aName aVars aArgs aPreds aArg
     subUnion (aVenv, a) (bVenv, b) = intersectTypesWithVarEnv classGraph (mergeAllVarEnvs classGraph [aVenv, bVenv]) a b
     subValidate (vev, subTp) = if isBottomType subTp then Nothing else Just (vev, subTp)
 
+intersectPartials :: ClassGraph -> TypeVarEnv -> PartialType -> PartialType -> (TypeVarEnv, Type)
+-- intersectPartials classGraph venv a@PartialType{ptName=PClassName{}} b@PartialType{ptName=PClassName{}} | trace (printf "intersectPartialsNew with %s and %s \n\t\tOld: %s \n\t\tNew: %s" (show a) (show b) old new) False = undefined
+--   where
+--     old = show $ intersectPartialsReal classGraph venv a b
+--     new = show $ intersectTypesWithVarEnv classGraph venv (TopType [PredClass a]) (TopType [PredClass b])
+    -- eq = isEqTypeWithEnv classGraph (H.fromList $ map (first (TVVar TVInt)) $ H.toList venv) (singletonType a) (singletonType b)
+    -- eqMsg = (if eq then "" else "NOTEQ") :: String
+intersectPartials classGraph venv a@PartialType{ptName=PClassName{}} b@PartialType{ptName=PClassName{}} = intersectTypesWithVarEnv classGraph venv (TopType [PredClass a]) (TopType [PredClass b])
+intersectPartials classGraph venv a b@PartialType{ptName=PClassName{}} = intersectTypesWithVarEnv classGraph venv (singletonType a) (TopType [PredClass b])
+intersectPartials classGraph venv a@PartialType{ptName=PClassName{}} b = intersectTypesWithVarEnv classGraph venv (TopType [PredClass a]) (singletonType b)
+intersectPartials classGraph venv a b = case intersectPartialsBase classGraph venv a b of
+  Just (venv', partials') -> (venv', UnionType $ joinUnionType partials')
+  Nothing                 -> (venv, bottomType)
+
 -- |
--- Takes the intersection of two 'PartialType' or returns Nothing if their intersection is 'bottomType'
+-- Takes the intersection of two 'PartialType'
 -- It uses the 'TypeVarEnv' for type variable arguments and determines any possible changes to the surrounding 'TypeVarEnv'.
-intersectPartials :: ClassGraph -> TypeVarEnv -> PartialType -> PartialType -> Maybe (TypeVarEnv, [PartialType])
-intersectPartials classGraph venv a b | ptName a /= ptName b && isSubPartialOfWithEnv classGraph (joinVarArgEnv venv H.empty) a b = Just (venv, [a])
-intersectPartials classGraph venv a b | ptName a /= ptName b && isSubPartialOfWithEnv classGraph (joinVarArgEnv venv H.empty) b a = Just (venv, [b])
-intersectPartials classGraph venv a b = case catMaybes [base, aExpandClass, bExpandClass] of
-  [] -> Nothing
-  combined -> Just $ foldr1 (\(venv1, a') (venv2, b') -> (mergeVarEnvs classGraph venv1 venv2, a' ++ b')) combined
+intersectPartialsReal :: ClassGraph -> TypeVarEnv -> PartialType -> PartialType -> (TypeVarEnv, Type)
+intersectPartialsReal classGraph venv a b | ptName a /= ptName b && isSubPartialOfWithEnv classGraph (joinVarArgEnv venv H.empty) a b = (venv, singletonType a)
+intersectPartialsReal classGraph venv a b | ptName a /= ptName b && isSubPartialOfWithEnv classGraph (joinVarArgEnv venv H.empty) b a = (venv, singletonType b)
+-- intersectPartials classGraph venv a@PartialType{ptName=PClassName{}} b@PartialType{ptName=PClassName{}} = intersectTypesWithVarEnv classGraph venv (TopType [PredClass a]) (TopType [PredClass b])
+-- intersectPartials classGraph venv a@PartialType{ptName=PClassName{}} b = intersectTypesWithVarEnv classGraph venv (TopType [PredClass a]) (singletonType b)
+-- intersectPartials classGraph venv a b@PartialType{ptName=PClassName{}} = intersectTypesWithVarEnv classGraph venv (singletonType a) (TopType [PredClass b])
+intersectPartialsReal classGraph venv a b = case catMaybes [base, aExpandClass, bExpandClass] of
+  [] -> (venv, bottomType)
+  combined -> second (UnionType . joinUnionType) $ foldr1 (\(venv1, a') (venv2, b') -> (mergeVarEnvs classGraph venv1 venv2, a' ++ b')) combined
   where
     base = intersectPartialsBase classGraph venv a b
     typeAsUnion (v, UnionType pl) = (v, splitUnionType pl)
@@ -549,15 +627,18 @@ intersectTypesWithVarEnv _ _ (TypeVar v) t = error $ printf "Can't intersect typ
 intersectTypesWithVarEnv _ _ t (TypeVar v) = error $ printf "Can't intersect type vars %s with %s" (show t) (show v)
 intersectTypesWithVarEnv _ venv _ t | isBottomType t = (venv, t)
 intersectTypesWithVarEnv _ venv t _ | isBottomType t = (venv, t)
-intersectTypesWithVarEnv _ venv (UnionType partials) (TopType topPreds) = (venv, UnionType $ joinUnionType $ map addPreds $ splitUnionType partials)
+intersectTypesWithVarEnv classGraph venv (UnionType partials) (TopType topPreds) = (venv, compactType classGraph $ UnionType $ joinUnionType $ map addPreds $ splitUnionType partials)
   where
     addPreds partial@PartialType{ptPreds} = partial{ptPreds = topPreds ++ ptPreds}
+    -- addPreds partial = foldr addPred partial topPreds
+    -- addPred _ partial | partial == bottomType = bottomType
+    -- addPred (PredClass p) partial = _
 intersectTypesWithVarEnv classGraph venv t1@TopType{} t2@UnionType{} = intersectTypesWithVarEnv classGraph venv t2 t1
-intersectTypesWithVarEnv classGraph venv (UnionType aPartials) (UnionType bPartials) = case catMaybes [intersectPartials classGraph venv aPartial bPartial | aPartial <- splitUnionType aPartials, bPartial <- splitUnionType bPartials] of
+intersectTypesWithVarEnv classGraph venv (UnionType aPartials) (UnionType bPartials) = case [intersectPartials classGraph venv aPartial bPartial | aPartial <- splitUnionType aPartials, bPartial <- splitUnionType bPartials] of
   [] -> (venv, bottomType)
   combined -> do
-    let (venvs', partials') = unzip combined
-    (mergeAllVarEnvs classGraph venvs', compactType classGraph $ UnionType $ joinUnionType $ concat partials')
+    let (venvs', intersected) = unzip combined
+    (mergeAllVarEnvs classGraph venvs', unionAllTypes classGraph intersected)
 
 -- | Takes the intersection of two 'Type' (∩).
 intersectTypes :: ClassGraph -> Type -> Type -> Type
