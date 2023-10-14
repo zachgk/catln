@@ -285,6 +285,13 @@ instance ObjArrClass ObjArr where
 
   getOaAnnots = oaAnnots
 
+
+emptyPrgm :: Prgm e m
+emptyPrgm = ([], emptyClassGraph, [])
+
+emptyExprPrgm :: ExprPrgm e m
+emptyExprPrgm = ([], emptyClassGraph, [])
+
 mkIOObjArr :: (MetaDat m, Show m) => Meta m -> ArgName -> Expr m -> ObjArr Expr m
 mkIOObjArr m argName argVal = ObjArr (Just (GuardExpr (Arg m argName) Nothing)) ArgObj Nothing [] emptyMetaN (Just (GuardExpr argVal Nothing))
 
@@ -355,7 +362,6 @@ mergePrgm (objMap1, classGraph1, annots1) (objMap2, classGraph2, annots2) = (
 
 mergePrgms :: Foldable f => f (Prgm e m) -> Prgm e m
 mergePrgms = foldr mergePrgm emptyPrgm
-  where emptyPrgm = ([], ClassGraph $ graphFromEdges [], [])
 
 mergeExprPrgm :: ExprPrgm e m -> ExprPrgm e m -> ExprPrgm e m
 mergeExprPrgm (objMap1, classGraph1, annots1) (objMap2, classGraph2, annots2) = (
@@ -365,8 +371,7 @@ mergeExprPrgm (objMap1, classGraph1, annots1) (objMap2, classGraph2, annots2) = 
                                                                            )
 
 mergeExprPrgms :: Foldable f => f (ExprPrgm e m) -> ExprPrgm e m
-mergeExprPrgms = foldr mergeExprPrgm emptyPrgm
-  where emptyPrgm = ([], ClassGraph $ graphFromEdges [], [])
+mergeExprPrgms = foldr mergeExprPrgm emptyExprPrgm
 
 -- | Gets all recursive sub expression objects from an expression's arguments. Helper for 'getRecursiveExprObjs'
 getRecursiveExprObjsExpr :: (ExprClass e, Show m) => e m -> [e m]

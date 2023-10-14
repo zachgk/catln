@@ -5,7 +5,7 @@ import           Control.Monad
 import           CRes                (fromCRes)
 import           Hedgehog
 import qualified Hedgehog.Gen        as HG
-import           Semantics.Prgm      (mergeExprPrgms)
+import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Desugarf  (desFiles)
 import           Syntax.Parsers      (readFiles)
@@ -13,23 +13,35 @@ import           Test.Tasty
 import           Test.Tasty.Hedgehog as HG
 import           TypeCheck           (typecheckPrgm)
 import           Utils
+import Data.Maybe
+import Text.Printf
 
-type ClassGraphs = [ClassGraph]
+type Prgms = [ExprPrgm Expr ()]
 
-findClassGraphs :: IO ClassGraphs
-findClassGraphs = do
-  let classGraphDir = "test/Semantics/classGraphs/"
+findPrgms :: IO Prgms
+findPrgms = do
+  let classGraphDir = "test/Semantics/code/"
   fileNames <- findCt classGraphDir
-  classGraphs <- forM fileNames $ \fileName -> do
+  prgms <- forM fileNames $ \fileName -> do
     rawPrgm <- fromCRes <$> readFiles False True [fileName]
     let prgm = fromCRes $ desFiles rawPrgm
     let tprgm = fromCRes $ typecheckPrgm prgm
-    return $ snd3 $ mergeExprPrgms $ map fst3 $ graphToNodes tprgm
-  return (emptyClassGraph : classGraphs)
+    return $ mergeExprPrgms $ map fst3 $ graphToNodes tprgm
+  return (emptyExprPrgm : prgms)
 
-genType :: ClassGraph -> Gen Type
-genType (ClassGraph cg) = HG.choice $ genBasic: [genCG | not (graphEmpty cg)]
+genTypeFromExpr :: ExprPrgm Expr () -> Expr () -> Gen Type
+genTypeFromExpr _ (CExpr _ c) = return $ constantType c
+genTypeFromExpr _ (Value _ n) = return $ typeVal $ PTypeName n
+genTypeFromExpr _ e = error $ printf "Unimplemented genTypeFromExpr for %s" (show e)
+
+genType :: ExprPrgm Expr () -> Gen Type
+genType prgm@(objMap, ClassGraph cg, _) = HG.choice gens
   where
+
+    gens = if graphEmpty cg
+      then [genBasic]
+      else [genBasic, genCG, genObj]
+
     genBasic :: Gen Type
     genBasic = HG.element [topType, bottomType]
 
@@ -38,84 +50,104 @@ genType (ClassGraph cg) = HG.choice $ genBasic: [genCG | not (graphEmpty cg)]
       classNode <- HG.element $ graphToNodes cg
       return $ typeVal $ snd3 classNode
 
-propSubtypeByUnion :: ClassGraphs -> Property
-propSubtypeByUnion classGraphs = property $ do
-  classGraph <- forAll $ HG.element classGraphs
-  a <- forAll $ genType classGraph
-  b <- forAll $ genType classGraph
+    genObj :: Gen Type
+    genObj = do
+      oa <- HG.element $ objMap
+      let (GuardExpr objExpr Nothing) = fromJust $ oaObj oa
+      genTypeFromExpr prgm objExpr
+
+
+propSubtypeByUnion :: Prgms -> Property
+propSubtypeByUnion prgms = property $ do
+  prgm <- forAll $ HG.element prgms
+  let classGraph = snd3 prgm
+  a <- forAll $ genType prgm
+  b <- forAll $ genType prgm
   let subtype = isSubtypeOf classGraph a b
   let byUnion = isEqType classGraph (unionTypes classGraph a b) b
   subtype === byUnion
 
-propSubtypeByIntersection :: ClassGraphs -> Property
-propSubtypeByIntersection classGraphs = property $ do
-  classGraph <- forAll $ HG.element classGraphs
-  a <- forAll $ genType classGraph
-  b <- forAll $ genType classGraph
+propSubtypeByIntersection :: Prgms -> Property
+propSubtypeByIntersection prgms = property $ do
+  prgm <- forAll $ HG.element prgms
+  let classGraph = snd3 prgm
+  a <- forAll $ genType prgm
+  b <- forAll $ genType prgm
   let subtype = isSubtypeOf classGraph a b
   let byIntersection = isEqType classGraph (intersectTypes classGraph a b) a
   subtype === byIntersection
 
-propUnionReflexive :: ClassGraphs -> Property
-propUnionReflexive classGraphs = property $ do
-  classGraph <- forAll $ HG.element classGraphs
-  a <- forAll $ genType classGraph
-  b <- forAll $ genType classGraph
+propUnionReflexive :: Prgms -> Property
+propUnionReflexive prgms = property $ do
+  prgm <- forAll $ HG.element prgms
+  let classGraph = snd3 prgm
+  a <- forAll $ genType prgm
+  b <- forAll $ genType prgm
   assert $ isEqType classGraph (unionTypes classGraph a b) (unionTypes classGraph b a)
 
-propUnionCommutative :: ClassGraphs -> Property
-propUnionCommutative classGraphs = property $ do
-  classGraph <- forAll $ HG.element classGraphs
-  a <- forAll $ genType classGraph
-  b <- forAll $ genType classGraph
-  c <- forAll $ genType classGraph
+propUnionCommutative :: Prgms -> Property
+propUnionCommutative prgms = property $ do
+  prgm <- forAll $ HG.element prgms
+  let classGraph = snd3 prgm
+  a <- forAll $ genType prgm
+  b <- forAll $ genType prgm
+  c <- forAll $ genType prgm
   assert $ isEqType classGraph (unionAllTypes classGraph [a, b, c]) (unionAllTypes classGraph [c, b, a])
 
-propIntersectionReflexive :: ClassGraphs -> Property
-propIntersectionReflexive classGraphs = property $ do
-  classGraph <- forAll $ HG.element classGraphs
-  a <- forAll $ genType classGraph
-  b <- forAll $ genType classGraph
+propIntersectionReflexive :: Prgms -> Property
+propIntersectionReflexive prgms = property $ do
+  prgm <- forAll $ HG.element prgms
+  let classGraph = snd3 prgm
+  a <- forAll $ genType prgm
+  b <- forAll $ genType prgm
   assert $ isEqType classGraph (intersectTypes classGraph a b) (intersectTypes classGraph b a)
 
-propIntersectionCommutative :: ClassGraphs -> Property
-propIntersectionCommutative classGraphs = property $ do
-  classGraph <- forAll $ HG.element classGraphs
-  a <- forAll $ genType classGraph
-  b <- forAll $ genType classGraph
-  c <- forAll $ genType classGraph
+propIntersectionCommutative :: Prgms -> Property
+propIntersectionCommutative prgms = property $ do
+  prgm <- forAll $ HG.element prgms
+  let classGraph = snd3 prgm
+  a <- forAll $ genType prgm
+  b <- forAll $ genType prgm
+  c <- forAll $ genType prgm
   assert $ isEqType classGraph (intersectAllTypes classGraph [a, b, c]) (intersectAllTypes classGraph [c, b, a])
 
-propIntersectionDistributesUnion :: ClassGraphs -> Property
-propIntersectionDistributesUnion classGraphs = property $ do
-  classGraph <- forAll $ HG.element classGraphs
-  a <- forAll $ genType classGraph
-  b <- forAll $ genType classGraph
-  c <- forAll $ genType classGraph
+propIntersectionDistributesUnion :: Prgms -> Property
+propIntersectionDistributesUnion prgms = property $ do
+  prgm <- forAll $ HG.element prgms
+  let classGraph = snd3 prgm
+  a <- forAll $ genType prgm
+  b <- forAll $ genType prgm
+  c <- forAll $ genType prgm
   let f = intersectTypes classGraph a (unionTypes classGraph b c)
   let d = unionTypes classGraph (intersectTypes classGraph a b) (intersectTypes classGraph a c)
   assert $ isEqType classGraph f d
 
-propUnionDistributesIntersection :: ClassGraphs -> Property
-propUnionDistributesIntersection classGraphs = property $ do
-  classGraph <- forAll $ HG.element classGraphs
-  a <- forAll $ genType classGraph
-  b <- forAll $ genType classGraph
-  c <- forAll $ genType classGraph
+propUnionDistributesIntersection :: Prgms -> Property
+propUnionDistributesIntersection prgms = property $ do
+  prgm <- forAll $ HG.element prgms
+  let classGraph = snd3 prgm
+  a <- forAll $ genType prgm
+  b <- forAll $ genType prgm
+  c <- forAll $ genType prgm
   let f = unionTypes classGraph a (intersectTypes classGraph b c)
   let d = intersectTypes classGraph (unionTypes classGraph a b) (unionTypes classGraph a c)
   assert $ isEqType classGraph f d
 
 typeTests :: IO TestTree
 typeTests = do
-  classGraphs <- findClassGraphs
+  prgms <- findPrgms
   return $ testGroup "TypeTests" [
-    HG.testProperty "Subtype by union" (propSubtypeByUnion classGraphs)
-    , HG.testProperty "Subtype by intersection" (propSubtypeByIntersection classGraphs)
-    , HG.testProperty "Union is Reflexive" (propUnionReflexive classGraphs)
-    , HG.testProperty "Union is Commutative" (propUnionCommutative classGraphs)
-    , HG.testProperty "Intersection is Reflexive" (propIntersectionReflexive classGraphs)
-    , HG.testProperty "Intersection is Commutative" (propIntersectionCommutative classGraphs)
-    , HG.testProperty "Intersection distributes over union" (propIntersectionDistributesUnion classGraphs)
-    , HG.testProperty "Union distributes over intersection" (propUnionDistributesIntersection classGraphs)
+    HG.testProperty "Subtype by union" (propSubtypeByUnion prgms)
+    , HG.testProperty "Subtype by intersection" (propSubtypeByIntersection prgms)
+    , HG.testProperty "Union is Reflexive" (propUnionReflexive prgms)
+    , HG.testProperty "Union is Commutative" (propUnionCommutative prgms)
+    , HG.testProperty "Intersection is Reflexive" (propIntersectionReflexive prgms)
+    , HG.testProperty "Intersection is Commutative" (propIntersectionCommutative prgms)
+    , HG.testProperty "Intersection distributes over union" (propIntersectionDistributesUnion prgms)
+    , HG.testProperty "Union distributes over intersection" (propUnionDistributesIntersection prgms)
                                   ]
+
+main :: IO ()
+main = do
+  ts <- typeTests
+  defaultMain ts
