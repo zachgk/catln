@@ -219,9 +219,6 @@ desClassDef statementEnv@(inheritPath, _) sealed (typeExpr, extends) subStatemen
       Absolute p -> p
       Relative p -> inheritPath ++ "/" ++ p
 
-emptyClassGraph :: ClassGraph
-emptyClassGraph = ClassGraph $ graphFromEdges []
-
 mergeObjMaps :: DesObjectMap -> DesObjectMap -> DesObjectMap
 mergeObjMaps = (++)
 

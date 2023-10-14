@@ -21,6 +21,7 @@ module Semantics.Types where
 import           Data.Aeson
 import           Data.Bifunctor      (Bifunctor (bimap, first))
 import           Data.Either
+import           Data.Graph          (graphFromEdges)
 import           Data.Hashable
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
@@ -237,6 +238,9 @@ bottomType = UnionType H.empty
 isBottomType :: Type -> Bool
 -- isBottomType t = compactType t == bottomType
 isBottomType t = t == bottomType
+
+emptyClassGraph :: ClassGraph
+emptyClassGraph = ClassGraph $ graphFromEdges []
 
 ptVarArg :: PartialType -> TypeVarArgEnv
 ptVarArg PartialType{ptArgs, ptVars} = joinVarArgEnv ptVars ptArgs
