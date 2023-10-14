@@ -404,17 +404,16 @@ isEqTypeWithEnv classGraph vaenv a b = isSubtypeOfWithEnv classGraph vaenv a b &
 -- Join partials by checking if one is a subset of another (redundant) and removing it.
 -- TODO: This currently joins only with matching names. More matches could improve the effectiveness of the compaction, but slows down the code significantly
 compactOverlapping :: ClassGraph -> PartialLeafs -> PartialLeafs
-compactOverlapping classGraph = joinUnionTypeByName . fmap (\ps -> aux ps ps) . splitUnionTypeByName
+compactOverlapping classGraph = joinUnionTypeByName . fmap ((aux . reverse) . aux) . splitUnionTypeByName
   where
-    -- Tests each partial against all partials to check if it is already handled by it
-    aux [] _ = []
-    aux (partial:rest) allPartials = if any (partialAlreadyCovered partial) allPartials
-      then aux rest allPartials
-      else partial : aux rest allPartials
+    -- Tests each partial against all following partials to check if it is already handled by it
+    aux [] = []
+    aux (partial:rest) = if any (partialAlreadyCovered partial) rest
+      then aux rest
+      else partial : aux rest
 
-    -- checks if a partial is covered by the candidate allPartial
-    -- it compares each partial to all others (including itself), so must ignore the self comparison case (partial == allPartial)
-    partialAlreadyCovered partial allPartial = partial /= allPartial && isSubtypePartialOf classGraph partial (singletonType allPartial)
+    -- checks if a partial is covered by the candidate from rest
+    partialAlreadyCovered partial restPartial = isSubtypePartialOf classGraph partial (singletonType restPartial)
 
 -- |
 -- Joins partials with only one difference between their args or vars. Then, it can join the two partials into one partial
