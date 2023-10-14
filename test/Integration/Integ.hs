@@ -1,8 +1,6 @@
 module Integration.Integ where
 
 import           Control.Monad
-import           Data.List
-import           System.Directory
 import           Test.Tasty
 import           Test.Tasty.HUnit
 import           Text.Printf
@@ -11,6 +9,7 @@ import           CRes
 import           Eval
 import           Syntax.Ct.Desugarf (desFiles)
 import           Syntax.Parsers     (readFiles)
+import           TestCommon
 import           TypeCheck
 import           WebDocs            (docApi)
 
@@ -70,10 +69,7 @@ testd :: IO ()
 testd = docApi False False "test/test.ct"
 
 standardTests :: IO [String]
-standardTests = do
-  fileNames <- listDirectory testDir
-  let fileNames' = filter (isSuffixOf ".ct") fileNames
-  return $ map (testDir ++) fileNames'
+standardTests = findCt testDir
 
 integrationTests :: IO TestTree
 integrationTests = runTests True <$> standardTests

@@ -26,5 +26,6 @@ mtd k = do
 main :: IO ()
 main = do
   integrationTests' <- integrationTests
-  let catlnTests = testGroup "CatlnTests" [integrationTests', typeTests]
+  typeTests' <- typeTests
+  let catlnTests = testGroup "CatlnTests" [integrationTests', typeTests']
   defaultMain catlnTests

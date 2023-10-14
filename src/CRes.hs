@@ -143,6 +143,10 @@ cresToMaybe :: CRes r -> Maybe r
 cresToMaybe (CRes _ r) = Just r
 cresToMaybe CErr{}     = Nothing
 
+fromCRes :: CRes r -> r
+fromCRes (CRes _ r) = r
+fromCRes (CErr e)   = error $ printf "Failed fromCRes with error: %s" (show e)
+
 catCRes :: [CRes r] -> CRes [r]
 catCRes [] = return []
 catCRes (CRes notes r:rs) = do
