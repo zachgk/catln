@@ -80,6 +80,57 @@ genType prgm@(objMap, ClassGraph cg, _) = HG.choice gens
       let (GuardExpr objExpr Nothing) = fromJust $ oaObj oa
       singletonType <$> genTypeFromExpr prgm objExpr
 
+genPartialType :: ExprPrgm Expr () -> Gen PartialType
+genPartialType prgm@(objMap, ClassGraph cg, _) = do
+  gen <- if graphEmpty cg
+    then HG.discard
+    else return [genCG, genObj]
+  HG.choice gen
+  where
+    genCG :: Gen PartialType
+    genCG = do
+      classNode <- HG.element $ graphToNodes cg
+      return $ partialVal $ snd3 classNode
+
+    genObj :: Gen PartialType
+    genObj = do
+      oa <- HG.element objMap
+      let (GuardExpr objExpr Nothing) = fromJust $ oaObj oa
+      genTypeFromExpr prgm objExpr
+
+propCompactNoChanges :: Prgms -> Property
+propCompactNoChanges prgms = property $ do
+  prgmName <- forAll $ HG.element $ H.keys prgms
+  let prgm = fromJust $ H.lookup prgmName prgms
+  let classGraph = snd3 prgm
+  a <- forAll $ genType prgm
+  let compacted = compactType classGraph a
+  annotate $ printf "compacted = %s" (show compacted)
+  assert $ isEqType classGraph a compacted
+
+propCompactIdempotent :: Prgms -> Property
+propCompactIdempotent prgms = property $ do
+  prgmName <- forAll $ HG.element $ H.keys prgms
+  let prgm = fromJust $ H.lookup prgmName prgms
+  let classGraph = snd3 prgm
+  a <- forAll $ genType prgm
+  let compact1 = compactType classGraph a
+  let compact2 = compactType classGraph compact1
+  annotate $ printf "compact once to %s" (show compact1)
+  annotate $ printf "compact twice to %s" (show compact2)
+  compact1 === compact2
+
+
+propExpandEq :: Prgms -> Property
+propExpandEq prgms = property $ do
+  prgmName <- forAll $ HG.element $ H.keys (H.delete "empty" prgms)
+  let prgm = fromJust $ H.lookup prgmName prgms
+  let classGraph = snd3 prgm
+  a <- forAll $ genPartialType prgm
+  let expanded = expandPartial classGraph a
+  annotate $ printf "expanded = %s" (show expanded)
+  assert $ isEqType classGraph (singletonType a) expanded
+
 
 propSubtypeByUnion :: Prgms -> Property
 propSubtypeByUnion prgms = property $ do
@@ -181,15 +232,21 @@ typeTests :: IO TestTree
 typeTests = do
   prgms <- findPrgms
   return $ testGroup "TypeTests" [
-    HG.testProperty "(propSubtypeByUnion prgms)" (propSubtypeByUnion prgms)
-    , HG.testProperty "(propSubtypeByIntersection prgms)" (propSubtypeByIntersection prgms)
-    , HG.testProperty "(propUnionReflexive prgms)" (propUnionReflexive prgms)
-    , HG.testProperty "(propUnionCommutative prgms)" (propUnionCommutative prgms)
-    , HG.testProperty "(propIntersectionReflexive prgms)" (propIntersectionReflexive prgms)
-    , HG.testProperty "(propIntersectionCommutative prgms)" (propIntersectionCommutative prgms)
-    , HG.testProperty "(propIntersectionDistributesUnion prgms)" (propIntersectionDistributesUnion prgms)
-    , HG.testProperty "(propUnionDistributesIntersection prgms)" (propUnionDistributesIntersection prgms)
+    HG.testProperty "(propCompactNoChanges prgms)" (p $ propCompactNoChanges prgms)
+    , HG.testProperty "(propCompactIdempotent prgms)" (p $ propCompactIdempotent prgms)
+    , HG.testProperty "(propExpandEq prgms)" (p $ propExpandEq prgms)
+    , HG.testProperty "(propSubtypeByUnion prgms)" (p $ propSubtypeByUnion prgms)
+    , HG.testProperty "(propSubtypeByIntersection prgms)" (p $ propSubtypeByIntersection prgms)
+    , HG.testProperty "(propUnionReflexive prgms)" (p $ propUnionReflexive prgms)
+    , HG.testProperty "(propUnionCommutative prgms)" (p $ propUnionCommutative prgms)
+    , HG.testProperty "(propIntersectionReflexive prgms)" (p $ propIntersectionReflexive prgms)
+    , HG.testProperty "(propIntersectionCommutative prgms)" (p $ propIntersectionCommutative prgms)
+    , HG.testProperty "(propIntersectionDistributesUnion prgms)" (p $ propIntersectionDistributesUnion prgms)
+    , HG.testProperty "(propUnionDistributesIntersection prgms)" (p $ propUnionDistributesIntersection prgms)
                                   ]
+  where
+    p prop = prop
+    -- p prop = withTests 10000 prop
 
 main :: IO ()
 main = do

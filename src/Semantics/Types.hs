@@ -320,7 +320,7 @@ suffixLookupInDict s dict = case suffixLookup s (H.keys dict) of
 -- It also expands a relative into the matching types and classes
 -- TODO: Should preserve type properties when expanding
 expandPartial :: ClassGraph -> PartialType -> Type
-expandPartial _ PartialType{ptName=PTypeName n} = error $ printf "Bad type name %s found in expandPartial" n
+expandPartial _ partial@PartialType{ptName=PTypeName{}} = singletonType partial
 expandPartial _ p@PartialType{ptName=PClassName{}, ptArgs} | not (H.null ptArgs) = error $ printf "expandPartial class with args: %s" (show p)
 expandPartial classGraph@(ClassGraph cg) PartialType{ptName=className@PClassName{}, ptVars=classVarsP} = expanded
   where
