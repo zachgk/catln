@@ -135,12 +135,12 @@ fromExpr est@EncodeOut{} env1 (Value m name) = do
     DefKnown lookupType -> return [BoundedByKnown m' lookupType]
   return (Value m' name, addConstraints env2 lookupConstraints)
 fromExpr est@EncodeIn{} env1 (Value m name) = do
-  -- let m' = mWithType (singletonType $ partialVal $ PTypeName name) m
+  -- let m' = mWithType (typeVal $ PTypeName name) m
   (m'', env2) <- fromMeta env1 BUpper est m ("Value " ++ name)
   return (Value m'' name, env2)
 -- fromObjExpr varEnv argEnv env1 (Value m name) = do
 --   (m', env2) <- fromMeta env1 BUpper Nothing varEnv argEnv m ("Value " ++ name)
---   (objValue, env3) <- fromMeta env2 BUpper Nothing varEnv argEnv (Meta (singletonType (partialVal (PRelativeName name))) (labelPos "objValue" $ getMetaPos m') emptyMetaDat) ("objValue" ++ name)
+--   (objValue, env3) <- fromMeta env2 BUpper Nothing varEnv argEnv (Meta (typeVal (PRelativeName name)) (labelPos "objValue" $ getMetaPos m') emptyMetaDat) ("objValue" ++ name)
 --   let env4 = fInsert env3 name (DefVar objValue)
 --   return (Value m' name, env4)
 fromExpr est@EncodeOut{} env1 (Arg m name) = do
@@ -324,7 +324,7 @@ fromObjectRec prefix isObjArg est env (Object m basis vars args doc expr path) =
   (args', env3) <- mapMWithFEnvMapWithKey env2 (addObjArg m' prefix' est) args
   (expr', env4) <- fromExpr est env3 expr
   let obj' = Object m' basis vars' args' doc expr' path
-  (objValue, env5) <- fromMeta env4 BUpper est (Meta (singletonType (partialVal (PTypeName path))) (labelPos "objValue" $ getMetaPos m) emptyMetaDat) ("objValue" ++ path)
+  (objValue, env5) <- fromMeta env4 BUpper est (Meta (typeVal (PTypeName path)) (labelPos "objValue" $ getMetaPos m) emptyMetaDat) ("objValue" ++ path)
   let env6 = fInsert env5 path (DefVar objValue)
   let env7 = addConstraints env6 [BoundedByObjs m' | isObjArg]
   let env8 = addConstraints env7 [BoundedByKnown m' (singletonType (PartialType (PTypeName path) (fmap (const topType) vars) (fmap (const topType) args) [] PtArgExact)) | basis == FunctionObj || basis == PatternObj]
@@ -364,7 +364,7 @@ addTypeGraphArrow obj env arr = return ((), fAddTTypeGraph env (objPath obj) (ob
 
 addTypeGraphObjects :: FEnv -> TObjectMapItem -> TypeCheckResult ((), FEnv)
 addTypeGraphObjects env (obj, _, arrow) = do
-  let objValue = singletonType (partialVal (PTypeName (objPath obj)))
+  let objValue = typeVal (PTypeName (objPath obj))
   let env' = fInsert env (objPath obj) (DefKnown objValue)
   (_, env'') <- mapMWithFEnvMaybe env' (addTypeGraphArrow obj) arrow
   return ((), env'')

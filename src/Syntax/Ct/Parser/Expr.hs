@@ -170,7 +170,7 @@ pContextElSuffix = do
   _ <- symbol ":"
   tp <- tidentifier
   pos2 <- getSourcePos
-  return (arg, Meta (singletonType (partialVal (PRelativeName tp))) (Just (pos1, pos2, "")) emptyMetaDat)
+  return (arg, Meta (typeVal (PRelativeName tp)) (Just (pos1, pos2, "")) emptyMetaDat)
 
 pContextSuffix :: Parser TermSuffix
 pContextSuffix = do
