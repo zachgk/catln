@@ -1,8 +1,9 @@
 class Animal
 
-class Fish isa Animal
-class Lizard isa Animal
+class Fish
+class Lizard
 
-class Mammal isa Animal
-class Cat isa Mammal
-class Dog isa Mammal
+every Fish isa /Animal
+every Lizard isa /Animal
+
+class Mammal = Cat | Dog isa /Animal

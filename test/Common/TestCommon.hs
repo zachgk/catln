@@ -1,4 +1,4 @@
-module TestCommon where
+module Common.TestCommon where
 import           Data.List        (isSuffixOf)
 import           System.Directory
 

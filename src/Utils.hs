@@ -45,6 +45,9 @@ mapMFst3 f = mapM aux
           a' <- f a
           return (a', b, c)
 
+graphEmpty :: GraphData node key -> Bool
+graphEmpty (g, _, _) = null $ vertices g
+
 graphToNodes :: GraphData node key -> [GraphNodes node key]
 graphToNodes (g, nodeFromVertex, _) = map nodeFromVertex $ vertices g
 

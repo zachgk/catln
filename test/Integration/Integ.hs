@@ -5,11 +5,11 @@ import           Test.Tasty
 import           Test.Tasty.HUnit
 import           Text.Printf
 
+import           Common.TestCommon
 import           CRes
 import           Eval
 import           Syntax.Ct.Desugarf (desFiles)
 import           Syntax.Parsers     (readFiles)
-import           TestCommon
 import           TypeCheck
 import           WebDocs            (docApi)
 
