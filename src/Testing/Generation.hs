@@ -13,10 +13,12 @@
 
 module Testing.Generation where
 
+import           Data.Graph          (graphFromEdges)
 import qualified Data.HashMap.Strict as H
 import           Data.Maybe
 import           Hedgehog
 import qualified Hedgehog.Gen        as HG
+import           Hedgehog.Range      (linear)
 import           Semantics           (getExprType, oaObjPath)
 import           Semantics.Prgm
 import           Semantics.Types
@@ -101,3 +103,23 @@ genPartialType prgm@(objMap, ClassGraph cg, _) = do
       oa <- HG.element objMap
       let (GuardExpr objExpr Nothing) = fromJust $ oaObj oa
       genTypeFromExpr prgm objExpr
+
+genInputExpr :: Gen (Expr ())
+genInputExpr = do
+  HG.choice [
+    do -- Value
+      name <- HG.string (linear 5 10) HG.lower
+      return $ Value emptyMetaN name
+            ]
+
+genPrgm :: Gen (ExprPrgm Expr ())
+genPrgm = do
+  inputs <- HG.list (linear 0 20) genInputExpr
+  let objMap = map (\obj -> ObjArr (Just (GuardExpr obj Nothing)) FunctionObj Nothing [] emptyMetaN Nothing) inputs
+  return (objMap, ClassGraph $ graphFromEdges [], [])
+
+genPrgms :: Gen [GraphNodes (ExprPrgm Expr ()) String]
+genPrgms = do
+  prgm <- genPrgm
+  prgmName <- HG.string (linear 5 10) HG.lower
+  return [(prgm, prgmName, [])]
