@@ -19,6 +19,7 @@ import           TypeCheck           (typecheckPrgm)
 import           Utils
 
 type Prgms = H.HashMap String (ExprPrgm Expr ())
+type GenPrgm = Gen (ExprPrgm Expr ())
 
 findPrgms :: IO Prgms
 findPrgms = do
@@ -31,20 +32,25 @@ findPrgms = do
     return (fileName, mergeExprPrgms $ map fst3 $ graphToNodes tprgm)
   return (H.insert "empty" emptyExprPrgm $ H.fromList prgms)
 
-propCompactNoChanges :: Prgms -> Property
-propCompactNoChanges prgms = property $ do
-  prgmName <- forAll $ HG.element $ H.keys prgms
-  let prgm = fromJust $ H.lookup prgmName prgms
+ggPrgm :: Prgms -> GenPrgm
+ggPrgm prgms = HG.choice [genPremade, genPrgm]
+  where
+    genPremade = do
+      prgmName <- HG.element $ H.keys prgms
+      return $ fromJust $ H.lookup prgmName prgms
+
+propCompactNoChanges :: GenPrgm -> Property
+propCompactNoChanges gPrgm = property $ do
+  prgm <- forAll gPrgm
   let classGraph = snd3 prgm
   a <- forAll $ genType prgm
   let compacted = compactType classGraph a
   annotate $ printf "compacted = %s" (show compacted)
   assert $ isEqType classGraph a compacted
 
-propCompactIdempotent :: Prgms -> Property
-propCompactIdempotent prgms = property $ do
-  prgmName <- forAll $ HG.element $ H.keys prgms
-  let prgm = fromJust $ H.lookup prgmName prgms
+propCompactIdempotent :: GenPrgm -> Property
+propCompactIdempotent gPrgm = property $ do
+  prgm <- forAll gPrgm
   let classGraph = snd3 prgm
   a <- forAll $ genType prgm
   let compact1 = compactType classGraph a
@@ -54,10 +60,9 @@ propCompactIdempotent prgms = property $ do
   compact1 === compact2
 
 
-propExpandEq :: Prgms -> Property
-propExpandEq prgms = property $ do
-  prgmName <- forAll $ HG.element $ H.keys (H.delete "empty" prgms)
-  let prgm = fromJust $ H.lookup prgmName prgms
+propExpandEq :: GenPrgm -> Property
+propExpandEq gPrgm = property $ do
+  prgm <- forAll gPrgm
   let classGraph = snd3 prgm
   a <- forAll $ genPartialType prgm
   let expanded = expandPartial classGraph a
@@ -65,10 +70,9 @@ propExpandEq prgms = property $ do
   assert $ isEqType classGraph (singletonType a) expanded
 
 
-propSubtypeByUnion :: Prgms -> Property
-propSubtypeByUnion prgms = property $ do
-  prgmName <- forAll $ HG.element $ H.keys prgms
-  let prgm = fromJust $ H.lookup prgmName prgms
+propSubtypeByUnion :: GenPrgm -> Property
+propSubtypeByUnion gPrgm = property $ do
+  prgm <- forAll gPrgm
   let classGraph = snd3 prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
@@ -79,10 +83,9 @@ propSubtypeByUnion prgms = property $ do
   annotate $ printf "byUnion = %s" (show byUnion)
   subtype === byUnion
 
-propSubtypeByIntersection :: Prgms -> Property
-propSubtypeByIntersection prgms = property $ do
-  prgmName <- forAll $ HG.element $ H.keys prgms
-  let prgm = fromJust $ H.lookup prgmName prgms
+propSubtypeByIntersection :: GenPrgm -> Property
+propSubtypeByIntersection gPrgm = property $ do
+  prgm <- forAll gPrgm
   let classGraph = snd3 prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
@@ -93,38 +96,34 @@ propSubtypeByIntersection prgms = property $ do
   annotate $ printf "byIntersection = %s" (show byIntersection)
   subtype === byIntersection
 
-propUnionReflexive :: Prgms -> Property
-propUnionReflexive prgms = property $ do
-  prgmName <- forAll $ HG.element $ H.keys prgms
-  let prgm = fromJust $ H.lookup prgmName prgms
+propUnionReflexive :: GenPrgm -> Property
+propUnionReflexive gPrgm = property $ do
+  prgm <- forAll gPrgm
   let classGraph = snd3 prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   assert $ isEqType classGraph (unionTypes classGraph a b) (unionTypes classGraph b a)
 
-propUnionCommutative :: Prgms -> Property
-propUnionCommutative prgms = property $ do
-  prgmName <- forAll $ HG.element $ H.keys prgms
-  let prgm = fromJust $ H.lookup prgmName prgms
+propUnionCommutative :: GenPrgm -> Property
+propUnionCommutative gPrgm = property $ do
+  prgm <- forAll gPrgm
   let classGraph = snd3 prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   c <- forAll $ genType prgm
   assert $ isEqType classGraph (unionAllTypes classGraph [a, b, c]) (unionAllTypes classGraph [c, b, a])
 
-propIntersectionReflexive :: Prgms -> Property
-propIntersectionReflexive prgms = property $ do
-  prgmName <- forAll $ HG.element $ H.keys prgms
-  let prgm = fromJust $ H.lookup prgmName prgms
+propIntersectionReflexive :: GenPrgm -> Property
+propIntersectionReflexive gPrgm = property $ do
+  prgm <- forAll gPrgm
   let classGraph = snd3 prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   assert $ isEqType classGraph (intersectTypes classGraph a b) (intersectTypes classGraph b a)
 
-propIntersectionCommutative :: Prgms -> Property
-propIntersectionCommutative prgms = property $ do
-  prgmName <- forAll $ HG.element $ H.keys prgms
-  let prgm = fromJust $ H.lookup prgmName prgms
+propIntersectionCommutative :: GenPrgm -> Property
+propIntersectionCommutative gPrgm = property $ do
+  prgm <- forAll gPrgm
   let classGraph = snd3 prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
@@ -141,10 +140,9 @@ propIntersectionCommutative prgms = property $ do
 
   assert $ isEqType classGraph abc cba
 
-propIntersectionDistributesUnion :: Prgms -> Property
-propIntersectionDistributesUnion prgms = property $ do
-  prgmName <- forAll $ HG.element $ H.keys prgms
-  let prgm = fromJust $ H.lookup prgmName prgms
+propIntersectionDistributesUnion :: GenPrgm -> Property
+propIntersectionDistributesUnion gPrgm = property $ do
+  prgm <- forAll gPrgm
   let classGraph = snd3 prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
@@ -157,10 +155,9 @@ propIntersectionDistributesUnion prgms = property $ do
   annotate $ printf "d = %s" (show d)
   assert $ isEqType classGraph f d
 
-propUnionDistributesIntersection :: Prgms -> Property
-propUnionDistributesIntersection prgms = property $ do
-  prgmName <- forAll $ HG.element $ H.keys prgms
-  let prgm = fromJust $ H.lookup prgmName prgms
+propUnionDistributesIntersection :: GenPrgm  -> Property
+propUnionDistributesIntersection gPrgm = property $ do
+  prgm <- forAll gPrgm
   let classGraph = snd3 prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
@@ -176,18 +173,19 @@ propUnionDistributesIntersection prgms = property $ do
 typeTests :: IO TestTree
 typeTests = do
   prgms <- findPrgms
+  let gPrgm = ggPrgm prgms
   return $ testGroup "TypeTests" [
-    HG.testProperty "(propCompactNoChanges prgms)" (p $ propCompactNoChanges prgms)
-    , HG.testProperty "(propCompactIdempotent prgms)" (p $ propCompactIdempotent prgms)
-    , HG.testProperty "(propExpandEq prgms)" (p $ propExpandEq prgms)
-    , HG.testProperty "(propSubtypeByUnion prgms)" (p $ propSubtypeByUnion prgms)
-    , HG.testProperty "(propSubtypeByIntersection prgms)" (p $ propSubtypeByIntersection prgms)
-    , HG.testProperty "(propUnionReflexive prgms)" (p $ propUnionReflexive prgms)
-    , HG.testProperty "(propUnionCommutative prgms)" (p $ propUnionCommutative prgms)
-    , HG.testProperty "(propIntersectionReflexive prgms)" (p $ propIntersectionReflexive prgms)
-    , HG.testProperty "(propIntersectionCommutative prgms)" (p $ propIntersectionCommutative prgms)
-    , HG.testProperty "(propIntersectionDistributesUnion prgms)" (p $ propIntersectionDistributesUnion prgms)
-    , HG.testProperty "(propUnionDistributesIntersection prgms)" (p $ propUnionDistributesIntersection prgms)
+    HG.testProperty "(propCompactNoChanges gPrgm)" (p $ propCompactNoChanges gPrgm)
+    , HG.testProperty "(propCompactIdempotent gPrgm)" (p $ propCompactIdempotent gPrgm)
+    , HG.testProperty "(propExpandEq gPrgm)" (p $ propExpandEq gPrgm)
+    , HG.testProperty "(propSubtypeByUnion gPrgm)" (p $ propSubtypeByUnion gPrgm)
+    , HG.testProperty "(propSubtypeByIntersection gPrgm)" (p $ propSubtypeByIntersection gPrgm)
+    , HG.testProperty "(propUnionReflexive gPrgm)" (p $ propUnionReflexive gPrgm)
+    , HG.testProperty "(propUnionCommutative gPrgm)" (p $ propUnionCommutative gPrgm)
+    , HG.testProperty "(propIntersectionReflexive gPrgm)" (p $ propIntersectionReflexive gPrgm)
+    , HG.testProperty "(propIntersectionCommutative gPrgm)" (p $ propIntersectionCommutative gPrgm)
+    , HG.testProperty "(propIntersectionDistributesUnion gPrgm)" (p $ propIntersectionDistributesUnion gPrgm)
+    , HG.testProperty "(propUnionDistributesIntersection gPrgm)" (p $ propUnionDistributesIntersection gPrgm)
                                   ]
   where
     p prop = prop

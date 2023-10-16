@@ -89,7 +89,9 @@ genType prgm@(objMap, ClassGraph cg, _) = HG.choice gens
 genPartialType :: ExprPrgm Expr () -> Gen PartialType
 genPartialType prgm@(objMap, ClassGraph cg, _) = do
   gen <- if graphEmpty cg
-    then HG.discard
+    then if null objMap
+      then HG.discard
+      else return [genObj]
     else return [genCG, genObj]
   HG.choice gen
   where
@@ -114,8 +116,9 @@ genInputExpr = do
 
 genPrgm :: Gen (ExprPrgm Expr ())
 genPrgm = do
-  inputs <- HG.list (linear 0 20) genInputExpr
+  inputs <- HG.list (linear 1 20) genInputExpr
   let objMap = map (\obj -> ObjArr (Just (GuardExpr obj Nothing)) FunctionObj Nothing [] emptyMetaN Nothing) inputs
+
   return (objMap, ClassGraph $ graphFromEdges [], [])
 
 genPrgms :: Gen [GraphNodes (ExprPrgm Expr ()) String]
