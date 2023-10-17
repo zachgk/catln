@@ -19,6 +19,7 @@ import           Semantics.Prgm      (mergeExprPrgms)
 import           Test.Tasty
 import qualified Test.Tasty.Hedgehog as HG
 import           Testing.Generation  (genPrgms)
+import           Text.Printf
 import           TypeCheck           (typecheckPrgm)
 import           TypeCheck.Common    (FEnv (feCons), tcreToMaybe)
 import           TypeCheck.Constrain (executeConstraint)
@@ -34,6 +35,7 @@ propEncodeDecode = property $ do
   let fenv = makeBaseFEnv classGraph
   (encoded, fenv') <- evalMaybe $ tcreToMaybe $ fromPrgms fenv (map fromExprPrgm prgms) []
   decoded <- evalMaybe $ tcreToMaybe $ toPrgms fenv' encoded
+  annotate $ printf "Decoded to: \n\t%s" (show decoded)
   map fst3 prgms === map (fst3 . toExprPrgm) decoded
 
 propConstraint :: Property

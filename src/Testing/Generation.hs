@@ -13,6 +13,7 @@
 
 module Testing.Generation where
 
+import           Control.Monad
 import           Data.Graph          (graphFromEdges)
 import qualified Data.HashMap.Strict as H
 import           Data.Maybe
@@ -107,17 +108,34 @@ genPartialType prgm@(objMap, ClassGraph cg, _) = do
       genTypeFromExpr prgm objExpr
 
 genInputExpr :: Gen (Expr ())
-genInputExpr = do
-  HG.choice [
-    do -- Value
+genInputExpr = HG.recursive HG.choice [genValue] [genApply]
+  where
+    genValue = do
       name <- HG.string (linear 5 10) HG.lower
       return $ Value emptyMetaN name
-            ]
+    genApply = do
+      argName <- HG.string (linear 5 10) HG.lower
+      base <- genInputExpr
+      return $ TupleApply emptyMetaN (emptyMetaN, base) (ObjArr (Just (GuardExpr (Arg emptyMetaN argName) Nothing)) ArgObj Nothing [] emptyMetaN Nothing)
+
+genOutputExpr :: [Expr ()] -> Expr () -> Gen (Expr ())
+genOutputExpr vals _input = do
+   val <- HG.element vals
+   return $ Value emptyMetaN (exprPath val)
+
 
 genPrgm :: Gen (ExprPrgm Expr ())
 genPrgm = do
-  inputs <- HG.list (linear 1 20) genInputExpr
-  let objMap = map (\obj -> ObjArr (Just (GuardExpr obj Nothing)) FunctionObj Nothing [] emptyMetaN Nothing) inputs
+  dataTypes <- HG.list (linear 1 20) genInputExpr
+  let dataObjs = map (\obj -> ObjArr (Just (GuardExpr obj Nothing)) TypeObj Nothing [] emptyMetaN Nothing) dataTypes
+
+  funs <- HG.list (linear 1 20) genInputExpr
+  let allInputs = dataTypes ++ funs
+  funObjs <- forM funs $ \obj -> do
+                                arr <- genOutputExpr allInputs obj
+                                return $ ObjArr (Just (GuardExpr obj Nothing)) FunctionObj Nothing [] emptyMetaN (Just (GuardExpr arr Nothing))
+
+  let objMap = dataObjs ++ funObjs
 
   return (objMap, ClassGraph $ graphFromEdges [], [])
 

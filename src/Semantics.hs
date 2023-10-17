@@ -71,20 +71,16 @@ exprWithMetaType t e = exprWithMeta (mWithType t (getExprMeta e)) e
 -- objExpr Object{objDupExpr} = objDupExpr
 
 objExpr :: (Show m, MetaDat m) => Object Expr m -> Expr m
-objExpr Object{objBasis, deprecatedObjM=m, deprecatedObjVars=vars, deprecatedObjArgs=args, deprecatedObjPath=path} = exprWithMeta m $ applyArgs $ applyVars $ mkBase emptyMetaN path
+objExpr Object{deprecatedObjM=m, deprecatedObjVars=vars, deprecatedObjArgs=args, deprecatedObjPath=path, objDupExpr} = exprWithMeta m $ applyArgs $ applyVars $ Value emptyMetaN path
   where
-    mkBase = case objBasis of
-      MatchObj -> Arg
-      _        -> Value
-
     applyVars b = foldr applyVar b $ H.toList vars
     applyVar (varName, varVal) b = VarApply (emptyMetaE "" b) b varName varVal
 
-    applyArgs b = foldr applyArg b $ H.toList args
+    applyArgs b = foldr (applyArg . ((\argName -> (argName, fromJust $ H.lookup argName args)) . oaObjPath)) b (exprAppliedArgs objDupExpr)
     applyArg (argName, (argM, Just argVal)) b = if H.null (deprecatedObjArgs argVal)
       then TupleApply (emptyMetaM "tupleApplyArg" argM) (emptyMetaE "appArg" b, b) (ObjArr (Just (GuardExpr (Arg emptyMetaN argName) Nothing)) ArgObj Nothing [] argM (Just (GuardExpr (Arg (deprecatedObjM argVal) (deprecatedObjPath argVal)) Nothing)))
       else TupleApply (emptyMetaM "tupleApplyArg" argM) (emptyMetaE "appArg" b, b) (ObjArr (Just (GuardExpr (Arg emptyMetaN argName) Nothing)) ArgObj Nothing [] argM (Just (GuardExpr (objExpr argVal) Nothing)))
-    applyArg (argName, (argM, Nothing)) b = TupleApply (emptyMetaM "tupleApplyArg" argM) (emptyMetaE "appArg" b, b) (ObjArr (Just (GuardExpr (Value argM argName) Nothing)) ArgObj Nothing [] emptyMetaN Nothing)
+    applyArg (argName, (argM, Nothing)) b = TupleApply (emptyMetaM "tupleApplyArg" argM) (emptyMetaE "appArg" b, b) (ObjArr (Just (GuardExpr (Arg argM argName) Nothing)) ArgObj Nothing [] emptyMetaN Nothing)
 
 objPath :: (Show m, MetaDat m) => Object Expr m -> TypeName
 objPath = exprPath . objExpr
