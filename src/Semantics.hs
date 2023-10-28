@@ -73,7 +73,7 @@ exprWithMetaType t e = exprWithMeta (mWithType t (getExprMeta e)) e
 objExpr :: (Show m, MetaDat m) => Object Expr m -> Expr m
 objExpr Object{deprecatedObjM=m, deprecatedObjVars=vars, deprecatedObjArgs=args, deprecatedObjPath=path, objDupExpr} = exprWithMeta m $ applyArgs $ applyVars $ Value emptyMetaN path
   where
-    applyVars b = foldr applyVar b $ H.toList vars
+    applyVars b = foldr (\(varName,  _) b' -> applyVar (varName, fromJust $ H.lookup varName vars) b') b (exprAppliedOrdVars objDupExpr)
     applyVar (varName, varVal) b = VarApply (emptyMetaE "" b) b varName varVal
 
     applyArgs b = foldr (applyArg . ((\argName -> (argName, fromJust $ H.lookup argName args)) . oaObjPath)) b (exprAppliedArgs objDupExpr)

@@ -140,14 +140,14 @@ instance ExprClass RawExpr where
   exprAppliedArgs _ = error "Unsupported RawExpr exprAppliedArgs"
 
 
-  exprAppliedVars (RawValue _ _) = H.empty
-  exprAppliedVars (RawTupleApply _ (_, be) _) = exprAppliedVars be
-  -- exprAppliedVars (RawVarsApply _ e vars) = H.union (exprAppliedVars e) (H.fromList vars)
-  exprAppliedVars RawVarsApply{} = error "Not implemented"
-  exprAppliedVars (RawContextApply _ (_, e) _) = exprAppliedVars e
-  exprAppliedVars (RawParen e) = exprAppliedVars e
-  exprAppliedVars (RawMethod _ e) = exprAppliedVars e
-  exprAppliedVars _ = error "Unsupported RawExpr exprAppliedVars"
+  exprAppliedOrdVars (RawValue _ _) = []
+  exprAppliedOrdVars (RawTupleApply _ (_, be) _) = exprAppliedOrdVars be
+  -- exprAppliedOrdVars (RawVarsApply _ e vars) = H.union (exprAppliedOrdVars e) (H.fromList vars)
+  exprAppliedOrdVars RawVarsApply{} = error "Not implemented"
+  exprAppliedOrdVars (RawContextApply _ (_, e) _) = exprAppliedOrdVars e
+  exprAppliedOrdVars (RawParen e) = exprAppliedOrdVars e
+  exprAppliedOrdVars (RawMethod _ e) = exprAppliedOrdVars e
+  exprAppliedOrdVars _ = error "Unsupported RawExpr exprAppliedOrdVars"
 
   exprVarArgs RawCExpr{} = H.empty
   exprVarArgs RawHoleExpr{} = H.empty

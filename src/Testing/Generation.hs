@@ -108,15 +108,21 @@ genPartialType prgm@(objMap, ClassGraph cg, _) = do
       genTypeFromExpr prgm objExpr
 
 genInputExpr :: Gen (Expr ())
-genInputExpr = HG.recursive HG.choice [genValue] [genApply]
+genInputExpr = genObj
   where
+    genObj = HG.recursive HG.choice [genValueVars] [genApply genObj]
+    genValueVars = HG.recursive HG.choice [genValue] [genVar genValueVars]
     genValue = do
       name <- HG.string (linear 5 10) HG.lower
       return $ Value emptyMetaN name
-    genApply = do
+    genApply genBase = do
       argName <- HG.string (linear 5 10) HG.lower
-      base <- genInputExpr
+      base <- genBase
       return $ TupleApply emptyMetaN (emptyMetaN, base) (ObjArr (Just (GuardExpr (Arg emptyMetaN argName) Nothing)) ArgObj Nothing [] emptyMetaN Nothing)
+    genVar genBase = do
+      varName <- HG.string (linear 5 10) HG.lower
+      base <- genBase
+      return $ VarApply emptyMetaN base varName emptyMetaN
 
 genOutputExpr :: [Expr ()] -> Expr () -> Gen (Expr ())
 genOutputExpr vals _input = do
