@@ -5,35 +5,58 @@ import           Test.Tasty
 import           Test.Tasty.HUnit
 import           Text.Printf
 
-import           Common.TestCommon
+import           Common.TestCommon  (findCt)
 import           CRes
+import           Data.List          (isPrefixOf)
 import           Eval
 import           Syntax.Ct.Desugarf (desFiles)
 import           Syntax.Parsers     (readFiles)
+import           System.Directory   (doesFileExist)
+import           System.FilePath    (takeBaseName)
 import           TypeCheck
+import           Utils
 import           WebDocs            (docApi)
+import qualified Data.Text.Lazy as T
+import Text.Pretty.Simple (pShowNoColor)
 
 testDir :: String
 testDir = "test/Integration/code/"
+
+goldenDesugarDir :: String
+goldenDesugarDir = "test/Integration/goldenDesugar/"
 
 runTest :: Bool -> String -> TestTree
 runTest includeCore fileName = testCaseSteps fileName $ \step -> do
   step $ printf "Read file %s..." fileName
   maybeRawPrgm <- readFiles includeCore True [fileName]
+
+
   case maybeRawPrgm of
     CErr notes -> assertFailure $ "Could not parse:" ++ prettyCNotes notes
     CRes _ rawPrgm -> do
-      -- step $ T.unpack $ pShow rawPrgm
+      -- step $ T.unpack $ pShowNoColor rawPrgm
       case desFiles rawPrgm of
         CErr notes -> assertFailure $ "Could not desguar:" ++ prettyCNotes notes
         CRes _ prgm -> do
-          -- step $ T.unpack $ pShow prgm
+
+          let goldenDesugarPath = goldenDesugarDir ++ takeBaseName fileName
+          goldenDesugarExists <- doesFileExist goldenDesugarPath
+          let showPrgm = T.unpack $ pShowNoColor $ graphToNodes prgm
+          if testDir `isPrefixOf` fileName && goldenDesugarExists
+            then do
+              step "Golden test desugar..."
+              golden <- readFile goldenDesugarPath
+              assertEqual "Desugar doesn't match golden test" golden showPrgm
+            else do
+              step "No golden test. Writing"
+              writeFile goldenDesugarPath showPrgm
+
           step "Typecheck..."
           case typecheckPrgm prgm of
             CErr errs -> do
               assertFailure $ "Could not typecheck:" ++ prettyCNotes errs
             CRes _ tprgm -> do
-              -- step $ T.unpack $ pShow $ tprgm
+              -- step $ T.unpack $ pShowNoColor $ tprgm
               when (evalRunnable $ evalTargetMode "main" fileName tprgm) $ do
                 step "Eval Run..."
                 case evalRun "main" fileName tprgm of
