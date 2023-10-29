@@ -8,22 +8,25 @@ import           Text.Printf
 import           Common.TestCommon  (findCt)
 import           CRes
 import           Data.List          (isPrefixOf)
+import qualified Data.Text.Lazy     as T
 import           Eval
 import           Syntax.Ct.Desugarf (desFiles)
 import           Syntax.Parsers     (readFiles)
 import           System.Directory   (doesFileExist)
 import           System.FilePath    (takeBaseName)
+import           Text.Pretty.Simple (pShowNoColor)
 import           TypeCheck
 import           Utils
 import           WebDocs            (docApi)
-import qualified Data.Text.Lazy as T
-import Text.Pretty.Simple (pShowNoColor)
 
 testDir :: String
 testDir = "test/Integration/code/"
 
 goldenDesugarDir :: String
 goldenDesugarDir = "test/Integration/goldenDesugar/"
+
+goldenTypecheckDir :: String
+goldenTypecheckDir = "test/Integration/goldenTypecheck/"
 
 runTest :: Bool -> String -> TestTree
 runTest includeCore fileName = testCaseSteps fileName $ \step -> do
@@ -34,7 +37,6 @@ runTest includeCore fileName = testCaseSteps fileName $ \step -> do
   case maybeRawPrgm of
     CErr notes -> assertFailure $ "Could not parse:" ++ prettyCNotes notes
     CRes _ rawPrgm -> do
-      -- step $ T.unpack $ pShowNoColor rawPrgm
       case desFiles rawPrgm of
         CErr notes -> assertFailure $ "Could not desguar:" ++ prettyCNotes notes
         CRes _ prgm -> do
@@ -48,7 +50,7 @@ runTest includeCore fileName = testCaseSteps fileName $ \step -> do
               golden <- readFile goldenDesugarPath
               assertEqual "Desugar doesn't match golden test" golden showPrgm
             else do
-              step "No golden test. Writing"
+              step "No golden test for desugar. Writing"
               writeFile goldenDesugarPath showPrgm
 
           step "Typecheck..."
@@ -56,7 +58,19 @@ runTest includeCore fileName = testCaseSteps fileName $ \step -> do
             CErr errs -> do
               assertFailure $ "Could not typecheck:" ++ prettyCNotes errs
             CRes _ tprgm -> do
-              -- step $ T.unpack $ pShowNoColor $ tprgm
+
+              let goldenTypecheckPath = goldenTypecheckDir ++ takeBaseName fileName
+              goldenTypecheckExists <- doesFileExist goldenTypecheckPath
+              let showTPrgm = T.unpack $ pShowNoColor $ graphToNodes prgm
+              if testDir `isPrefixOf` fileName && goldenTypecheckExists
+                then do
+                  step "Golden test typecheck..."
+                  golden <- readFile goldenTypecheckPath
+                  assertEqual "Typecheck doesn't match golden test" golden showTPrgm
+                else do
+                  step "No golden test for typecheck. Writing"
+                  writeFile goldenTypecheckPath showTPrgm
+
               when (evalRunnable $ evalTargetMode "main" fileName tprgm) $ do
                 step "Eval Run..."
                 case evalRun "main" fileName tprgm of
