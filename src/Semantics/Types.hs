@@ -555,90 +555,88 @@ intersectPartialName (PRelativeName a) b = if a `relativeNameMatches` fromPartia
 intersectPartialName _ _                           = Nothing
 
 -- | A private helper for 'intersectPartialsBase' that intersects while ignore class expansions
-intersectPartialsBase :: ClassGraph -> TypeVarEnv -> PartialType -> PartialType -> Maybe (TypeVarEnv, [PartialType])
+intersectPartialsBase :: ClassGraph -> TypeVarArgEnv -> PartialType -> PartialType -> Maybe (TypeVarArgEnv, [PartialType])
 intersectPartialsBase _ _ PartialType{ptName=aName} PartialType{ptName=bName} | isNothing (intersectPartialName aName bName) = Nothing
 intersectPartialsBase _ _ PartialType{ptArgs=aArgs, ptArgMode=aArgMode} PartialType{ptArgs=bArgs, ptArgMode=bArgMode} | aArgMode == PtArgExact && bArgMode == PtArgExact && H.keysSet aArgs /= H.keysSet bArgs = Nothing
-intersectPartialsBase classGraph venv (PartialType aName aVars aArgs aPreds aArgMode) (PartialType bName bVars bArgs bPreds bArgMode) = do
-  (varsVenvs, vars') <- unzip <$> intersectMap H.empty aVars bVars
-  (argsVenvs, args') <- unzip <$> intersectMap venv aArgs bArgs
-  let venvs' = mergeAllVarEnvs classGraph [mergeAllVarEnvs classGraph argsVenvs, vars']
+intersectPartialsBase classGraph vaenv (PartialType aName aVars aArgs aPreds aArgMode) (PartialType bName bVars bArgs bPreds bArgMode) = do
+  (varsVaenvs, vars') <- unzip <$> intersectMap H.empty aVars bVars
+  (argsVaenvs, args') <- unzip <$> intersectMap vaenv aArgs bArgs
+  let venvs' = mergeAllVarEnvs classGraph [fst $ splitVarArgEnv $ mergeAllVarEnvs classGraph argsVaenvs, vars']
   let argMode' = case (aArgMode, bArgMode) of
         (PtArgAny, _)            -> PtArgAny
         (_, PtArgAny)            -> PtArgAny
         (PtArgExact, PtArgExact) -> PtArgExact
   let name' = fromJust $ intersectPartialName aName bName
   let preds' = aPreds ++ bPreds
-  return (mergeAllVarEnvs classGraph varsVenvs, [PartialType name' venvs' args' preds' argMode'])
+  return (mergeAllVarEnvs classGraph varsVaenvs, [PartialType name' venvs' args' preds' argMode'])
   where
     -- intersectMap unions so that all typeVars from either a or b are kept
     intersectMap vev a b = traverse subValidate $ H.unionWith subUnion (fmap (vev,) a) (fmap (vev,) b)
-    subUnion (aVenv, a) (bVenv, b) = intersectTypesWithVarEnv classGraph (mergeAllVarEnvs classGraph [aVenv, bVenv]) a b
+    subUnion (aVaenv, a) (bVaenv, b) = intersectTypesWithVarEnv classGraph (mergeAllVarEnvs classGraph [aVaenv, bVaenv]) a b
     subValidate (vev, subTp) = if isBottomType subTp then Nothing else Just (vev, subTp)
 
-intersectPartials :: ClassGraph -> TypeVarEnv -> PartialType -> PartialType -> (TypeVarEnv, Type)
--- intersectPartials classGraph venv a@PartialType{ptName=PClassName{}} b@PartialType{ptName=PClassName{}} | trace (printf "intersectPartialsNew with %s and %s \n\t\tOld: %s \n\t\tNew: %s" (show a) (show b) old new) False = undefined
+intersectPartials :: ClassGraph -> TypeVarArgEnv -> PartialType -> PartialType -> (TypeVarArgEnv, Type)
+-- intersectPartials classGraph vaenv a@PartialType{ptName=PClassName{}} b@PartialType{ptName=PClassName{}} | trace (printf "intersectPartialsNew with %s and %s \n\t\tOld: %s \n\t\tNew: %s" (show a) (show b) old new) False = undefined
 --   where
---     old = show $ intersectPartialsReal classGraph venv a b
---     new = show $ intersectTypesWithVarEnv classGraph venv (TopType [PredClass a]) (TopType [PredClass b])
-    -- eq = isEqTypeWithEnv classGraph (H.fromList $ map (first (TVVar TVInt)) $ H.toList venv) (singletonType a) (singletonType b)
+--     old = show $ intersectPartialsReal classGraph vaenv a b
+--     new = show $ intersectTypesWithVarEnv classGraph vaenv (TopType [PredClass a]) (TopType [PredClass b])
+    -- eq = isEqTypeWithEnv classGraph (H.fromList $ map (first (TVVar TVInt)) $ H.toList vaenv) (singletonType a) (singletonType b)
     -- eqMsg = (if eq then "" else "NOTEQ") :: String
-intersectPartials classGraph venv a@PartialType{ptName=PClassName{}} b@PartialType{ptName=PClassName{}} = intersectTypesWithVarEnv classGraph venv (TopType [PredClass a]) (TopType [PredClass b])
-intersectPartials classGraph venv a b@PartialType{ptName=PClassName{}} = intersectTypesWithVarEnv classGraph venv (singletonType a) (TopType [PredClass b])
-intersectPartials classGraph venv a@PartialType{ptName=PClassName{}} b = intersectTypesWithVarEnv classGraph venv (TopType [PredClass a]) (singletonType b)
-intersectPartials classGraph venv a b = case intersectPartialsBase classGraph venv a b of
-  Just (venv', partials') -> (venv', UnionType $ joinUnionType partials')
-  Nothing                 -> (venv, bottomType)
+intersectPartials classGraph vaenv a@PartialType{ptName=PClassName{}} b@PartialType{ptName=PClassName{}} = intersectTypesWithVarEnv classGraph vaenv (TopType [PredClass a]) (TopType [PredClass b])
+intersectPartials classGraph vaenv a b@PartialType{ptName=PClassName{}} = intersectTypesWithVarEnv classGraph vaenv (singletonType a) (TopType [PredClass b])
+intersectPartials classGraph vaenv a@PartialType{ptName=PClassName{}} b = intersectTypesWithVarEnv classGraph vaenv (TopType [PredClass a]) (singletonType b)
+intersectPartials classGraph vaenv a b = case intersectPartialsBase classGraph vaenv a b of
+  Just (vaenv', partials') -> (vaenv', UnionType $ joinUnionType partials')
+  Nothing                  -> (vaenv, bottomType)
 
 -- |
 -- Takes the intersection of two 'PartialType'
 -- It uses the 'TypeVarEnv' for type variable arguments and determines any possible changes to the surrounding 'TypeVarEnv'.
-intersectPartialsReal :: ClassGraph -> TypeVarEnv -> PartialType -> PartialType -> (TypeVarEnv, Type)
-intersectPartialsReal classGraph venv a b | ptName a /= ptName b && isSubPartialOfWithEnv classGraph (joinVarArgEnv venv H.empty) a b = (venv, singletonType a)
-intersectPartialsReal classGraph venv a b | ptName a /= ptName b && isSubPartialOfWithEnv classGraph (joinVarArgEnv venv H.empty) b a = (venv, singletonType b)
--- intersectPartials classGraph venv a@PartialType{ptName=PClassName{}} b@PartialType{ptName=PClassName{}} = intersectTypesWithVarEnv classGraph venv (TopType [PredClass a]) (TopType [PredClass b])
--- intersectPartials classGraph venv a@PartialType{ptName=PClassName{}} b = intersectTypesWithVarEnv classGraph venv (TopType [PredClass a]) (singletonType b)
--- intersectPartials classGraph venv a b@PartialType{ptName=PClassName{}} = intersectTypesWithVarEnv classGraph venv (singletonType a) (TopType [PredClass b])
-intersectPartialsReal classGraph venv a b = case catMaybes [base, aExpandClass, bExpandClass] of
-  [] -> (venv, bottomType)
-  combined -> second (UnionType . joinUnionType) $ foldr1 (\(venv1, a') (venv2, b') -> (mergeVarEnvs classGraph venv1 venv2, a' ++ b')) combined
+intersectPartialsReal :: ClassGraph -> TypeVarArgEnv -> PartialType -> PartialType -> (TypeVarArgEnv, Type)
+intersectPartialsReal classGraph vaenv a b | ptName a /= ptName b && isSubPartialOfWithEnv classGraph vaenv a b = (vaenv, singletonType a)
+intersectPartialsReal classGraph vaenv a b | ptName a /= ptName b && isSubPartialOfWithEnv classGraph vaenv b a = (vaenv, singletonType b)
+-- intersectPartials classGraph vaenv a@PartialType{ptName=PClassName{}} b@PartialType{ptName=PClassName{}} = intersectTypesWithVarEnv classGraph vaenv (TopType [PredClass a]) (TopType [PredClass b])
+-- intersectPartials classGraph vaenv a@PartialType{ptName=PClassName{}} b = intersectTypesWithVarEnv classGraph vaenv (TopType [PredClass a]) (singletonType b)
+-- intersectPartials classGraph vaenv a b@PartialType{ptName=PClassName{}} = intersectTypesWithVarEnv classGraph vaenv (singletonType a) (TopType [PredClass b])
+intersectPartialsReal classGraph vaenv a b = case catMaybes [base, aExpandClass, bExpandClass] of
+  [] -> (vaenv, bottomType)
+  combined -> second (UnionType . joinUnionType) $ foldr1 (\(vaenv1, a') (vaenv2, b') -> (mergeVarEnvs classGraph vaenv1 vaenv2, a' ++ b')) combined
   where
-    base = intersectPartialsBase classGraph venv a b
+    base = intersectPartialsBase classGraph vaenv a b
     typeAsUnion (v, UnionType pl) = (v, splitUnionType pl)
     typeAsUnion _                 = error "Expected a union"
     aExpandClass = case a of
-      PartialType{ptName=PClassName{}} -> Just $ typeAsUnion $ intersectTypesWithVarEnv classGraph venv (expandPartial classGraph a) (singletonType b)
+      PartialType{ptName=PClassName{}} -> Just $ typeAsUnion $ intersectTypesWithVarEnv classGraph vaenv (expandPartial classGraph a) (singletonType b)
       _ -> Nothing
     bExpandClass = case b of
-      PartialType{ptName=PClassName{}} -> Just $ typeAsUnion $ intersectTypesWithVarEnv classGraph venv (singletonType a) (expandPartial classGraph b)
+      PartialType{ptName=PClassName{}} -> Just $ typeAsUnion $ intersectTypesWithVarEnv classGraph vaenv (singletonType a) (expandPartial classGraph b)
       _ -> Nothing
 
 -- |
 -- Takes the intersection of two 'Type'.
 -- It uses the 'TypeVarEnv' for type variable arguments and determines any possible changes to the surrounding 'TypeVarEnv'.
-intersectTypesWithVarEnv :: ClassGraph -> TypeVarEnv -> Type -> Type -> (TypeVarEnv, Type)
-intersectTypesWithVarEnv _ venv (TopType []) t = (venv, t)
-intersectTypesWithVarEnv _ venv t (TopType []) = (venv, t)
-intersectTypesWithVarEnv _ venv (TopType ps1) (TopType ps2) = (venv, TopType (ps1 ++ ps2))
-intersectTypesWithVarEnv _ venv t1 t2 | t1 == t2 = (venv, t1)
+intersectTypesWithVarEnv :: ClassGraph -> TypeVarArgEnv -> Type -> Type -> (TypeVarArgEnv, Type)
+intersectTypesWithVarEnv _ vaenv (TopType []) t = (vaenv, t)
+intersectTypesWithVarEnv _ vaenv t (TopType []) = (vaenv, t)
+intersectTypesWithVarEnv _ vaenv (TopType ps1) (TopType ps2) = (vaenv, TopType (ps1 ++ ps2))
+intersectTypesWithVarEnv _ vaenv t1 t2 | t1 == t2 = (vaenv, t1)
 intersectTypesWithVarEnv _ _ (TypeVar v1) (TypeVar v2) = error $ printf "Can't intersect type vars %s with %s" (show v1) (show v2)
-intersectTypesWithVarEnv classGraph venv tv@(TypeVar (TVVar TVInt v)) t = (H.insertWith (intersectTypes classGraph) v t venv, tv)
-intersectTypesWithVarEnv classGraph venv t tv@(TypeVar (TVVar TVInt v)) = (H.insertWith (intersectTypes classGraph) v t venv, tv)
-intersectTypesWithVarEnv _ _ (TypeVar v) t = error $ printf "Can't intersect type vars %s with %s" (show v) (show t)
-intersectTypesWithVarEnv _ _ t (TypeVar v) = error $ printf "Can't intersect type vars %s with %s" (show t) (show v)
-intersectTypesWithVarEnv _ venv _ t | isBottomType t = (venv, t)
-intersectTypesWithVarEnv _ venv t _ | isBottomType t = (venv, t)
-intersectTypesWithVarEnv classGraph venv (UnionType partials) (TopType topPreds) = (venv, compactType classGraph $ UnionType $ joinUnionType $ map addPreds $ splitUnionType partials)
+intersectTypesWithVarEnv classGraph vaenv tv@(TypeVar v) t = (H.insertWith (intersectTypes classGraph) v t vaenv, tv)
+intersectTypesWithVarEnv classGraph vaenv t tv@(TypeVar v) = (H.insertWith (intersectTypes classGraph) v t vaenv, tv)
+intersectTypesWithVarEnv _ vaenv _ t | isBottomType t = (vaenv, t)
+intersectTypesWithVarEnv _ vaenv t _ | isBottomType t = (vaenv, t)
+intersectTypesWithVarEnv classGraph vaenv (UnionType partials) (TopType topPreds) = (vaenv, compactType classGraph $ UnionType $ joinUnionType $ map addPreds $ splitUnionType partials)
   where
     addPreds partial@PartialType{ptPreds} = partial{ptPreds = topPreds ++ ptPreds}
     -- addPreds partial = foldr addPred partial topPreds
     -- addPred _ partial | partial == bottomType = bottomType
     -- addPred (PredClass p) partial = _
-intersectTypesWithVarEnv classGraph venv t1@TopType{} t2@UnionType{} = intersectTypesWithVarEnv classGraph venv t2 t1
-intersectTypesWithVarEnv classGraph venv (UnionType aPartials) (UnionType bPartials) = case [intersectPartials classGraph venv aPartial bPartial | aPartial <- splitUnionType aPartials, bPartial <- splitUnionType bPartials] of
-  [] -> (venv, bottomType)
+intersectTypesWithVarEnv classGraph vaenv t1@TopType{} t2@UnionType{} = intersectTypesWithVarEnv classGraph vaenv t2 t1
+intersectTypesWithVarEnv classGraph vaenv (UnionType aPartials) (UnionType bPartials) = case [intersectPartials classGraph vaenv aPartial bPartial | aPartial <- splitUnionType aPartials, bPartial <- splitUnionType bPartials] of
+  [] -> (vaenv, bottomType)
   combined -> do
-    let (venvs', intersected) = unzip combined
-    (mergeAllVarEnvs classGraph venvs', unionAllTypes classGraph intersected)
+    let (vaenvs', intersected) = unzip combined
+    (mergeAllVarEnvs classGraph vaenvs', unionAllTypes classGraph intersected)
 
 -- | Takes the intersection of two 'Type' (∩).
 intersectTypes :: ClassGraph -> Type -> Type -> Type
@@ -658,12 +656,12 @@ powersetType classGraph (UnionType partials) = compactType classGraph $ UnionTyp
 -- |
 -- Combines two 'TypeVarEnv' to form the one applying the knowledge from both
 -- It takes the union of all variables from either, and shared variables combine knowledge by intersection
-mergeVarEnvs :: ClassGraph -> TypeVarEnv -> TypeVarEnv -> TypeVarEnv
+mergeVarEnvs :: (Eq k, Hashable k) => ClassGraph -> H.HashMap k Type -> H.HashMap k Type -> H.HashMap k Type
 mergeVarEnvs classGraph = H.unionWith (intersectTypes classGraph)
 
 
 -- | Applies 'mergeVarEnvs' to many 'TypeVarEnv'
-mergeAllVarEnvs :: Foldable f => ClassGraph -> f TypeVarEnv -> TypeVarEnv
+mergeAllVarEnvs :: (Foldable f, Eq k, Hashable k) => ClassGraph -> f (H.HashMap k Type) -> H.HashMap k Type
 mergeAllVarEnvs classGraph = foldr (mergeVarEnvs classGraph) H.empty
 
 -- | Replaces the type variables 'TVVar' in a 'Type' based on the variables in a provided 'TypeVarEnv'
