@@ -187,6 +187,9 @@ type TObjectMap = ObjectMap Expr ()
 type TObjectMapItem = ObjectMapItem Expr ()
 type TPrgm = Prgm Expr ()
 type FinalTPrgm = ExprPrgm Expr ()
+type TEObjectMap = ExprObjectMap Expr ()
+type TEObjectMapItem = ExprObjectMapItem Expr ()
+type TEPrgm = ExprPrgm Expr ()
 
 -- implicit graph
 type VTypeGraphVal = (VObject, VArrow) -- (match object type, if matching then can implicit to type in arrow)

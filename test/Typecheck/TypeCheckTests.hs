@@ -23,7 +23,7 @@ import           Text.Printf
 import           TypeCheck           (typecheckPrgm)
 import           TypeCheck.Common    (FEnv (feCons), tcreToMaybe)
 import           TypeCheck.Constrain (executeConstraint)
-import           TypeCheck.Decode    (toPrgms)
+import           TypeCheck.Decode    (decodeExprPrgms, toPrgms)
 import           TypeCheck.Encode    (fromPrgms, makeBaseFEnv)
 import           Utils
 
@@ -37,6 +37,17 @@ propEncodeDecode = property $ do
   decoded <- evalMaybe $ tcreToMaybe $ toPrgms fenv' encoded
   annotate $ printf "Decoded to: \n\t%s" (show decoded)
   map fst3 prgms === map (fst3 . toExprPrgm) decoded
+
+propExprEncodeDecode :: Property
+propExprEncodeDecode = property $ do
+  prgmsNodes <- forAll genPrgms
+  let prgms = map fst3 prgmsNodes
+  let classGraph = snd3 $ mergeExprPrgms prgms
+  let fenv = makeBaseFEnv classGraph
+  (encoded, fenv') <- evalMaybe $ tcreToMaybe $ fromPrgms fenv (map fromExprPrgm prgms) []
+  decoded <- evalMaybe $ tcreToMaybe $ decodeExprPrgms fenv' encoded
+  annotate $ printf "Decoded to: \n\t%s" (show decoded)
+  map fst3 prgms === map fst3 decoded
 
 propConstraint :: Property
 propConstraint = property $ do
@@ -61,6 +72,7 @@ propTypeChecks = property $ do
 typecheckTests :: TestTree
 typecheckTests = testGroup "TypeCheckTests" [
     HG.testProperty "propEncodeDecode" (p propEncodeDecode)
+    , HG.testProperty "propExprEncodeDecode" (p propExprEncodeDecode)
     , HG.testProperty "propConstraint" (p propConstraint)
     , HG.testProperty "propTypeChecks" (p propTypeChecks)
                                   ]
