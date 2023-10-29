@@ -61,7 +61,7 @@ runTest includeCore fileName = testCaseSteps fileName $ \step -> do
 
               let goldenTypecheckPath = goldenTypecheckDir ++ takeBaseName fileName
               goldenTypecheckExists <- doesFileExist goldenTypecheckPath
-              let showTPrgm = T.unpack $ pShowNoColor $ graphToNodes prgm
+              let showTPrgm = T.unpack $ pShowNoColor $ graphToNodes tprgm
               if testDir `isPrefixOf` fileName && goldenTypecheckExists
                 then do
                   step "Golden test typecheck..."
