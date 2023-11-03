@@ -40,7 +40,7 @@ type StatementEnv = (String, [DesCompAnnot])
 
 -- | Flattens a declaration tree (with nested declarations)
 flattenNestedDeclarations :: PDeclTree -> [PSemiDecl]
-flattenNestedDeclarations (roa@RawObjArr{roaObj=Just (GuardExpr objExpression _), roaAnnots}, subStatements) = decl':subDecls4
+flattenNestedDeclarations (roa@RawObjArr{roaObj=Just objExpression, roaAnnots}, subStatements) = decl':subDecls4
   where
     objDoc = desObjDocComment subStatements
     (subDecls, annots1) = splitDeclSubStatements subStatements
@@ -67,6 +67,7 @@ desObjValToArg _ (CExpr m c) = CExpr m c
 desObjValToArg _ (Value m n) = Value m n
 desObjValToArg _ (HoleExpr m h) = HoleExpr m h
 desObjValToArg useRelativeName (AliasExpr b a) = AliasExpr (desObjValToArg useRelativeName b) (desObjValToArg useRelativeName a)
+desObjValToArg useRelativeName (EWhere b a) = EWhere (desObjValToArg useRelativeName b) (desObjValToArg useRelativeName a)
 desObjValToArg useRelativeName (TupleApply m (bm, be) arg) = TupleApply m (bm, be') arg'
   where
     be' = desObjValToArg useRelativeName be
@@ -78,7 +79,7 @@ desObjValToArg useRelativeName (VarApply m be varName varVal) = VarApply m be' v
 
 
 desObj :: Bool -> String -> DOEValName -> DesObjArr -> DesObjArr
-desObj isDef inheritPath useRelativeName oa@ObjArr{oaObj=Just (GuardExpr objE objG)} = oa{oaObj=Just (GuardExpr objExpr4 objG2)}
+desObj isDef inheritPath useRelativeName oa@ObjArr{oaObj=Just objE} = oa{oaObj=Just objExpr4}
   where
     objExpr2 = desObjValToArg useRelativeName objE
 
@@ -91,22 +92,18 @@ desObj isDef inheritPath useRelativeName oa@ObjArr{oaObj=Just (GuardExpr objE ob
     objExpr4 = case oaObjPath oa of
       "/Context" -> mapExprAppliedArg updateExprPath (partialKey "value") objExpr3
       _          -> updateExprPath objExpr3
-
-
-    objG2 = fmap desExpr objG
 desObj _ _ _ oa = error $ printf "Unexpected desObj with no input exrpression: %s" (show oa)
 
 semiDesObjArr :: PObjArr -> PSObjArr
 semiDesObjArr roa@RawObjArr{roaObj=Just{}} = oa{
-  oaObj=Just (GuardExpr oE' oG'),
+  oaObj=Just oE',
   oaAnnots = fmap (semiDesExpr SDOutput (Just oE)) oaAnnots,
   oaArr=oaArr'
   }
   where
-    [oa@ObjArr{oaObj=Just (GuardExpr oE oG), oaAnnots, oaArr}] = desObjArr roa
+    [oa@ObjArr{oaObj=Just oE, oaAnnots, oaArr}] = desObjArr roa
     oE' = semiDesExpr (SDInput False) Nothing oE
-    oG' = fmap (semiDesExpr SDOutput (Just oE)) oG
-    oaArr' = first (fmap (\(GuardExpr aE aG) -> GuardExpr (semiDesExpr SDOutput (Just oE) aE) (fmap (semiDesExpr SDOutput (Just oE)) aG))) oaArr
+    oaArr' = first (fmap (semiDesExpr SDOutput (Just oE))) oaArr
 semiDesObjArr oa = error $ printf "Unexpected semiDesObjArr with no input expression: %s" (show oa)
 
 declToObjArrow :: StatementEnv -> PSemiDecl -> DesObjectMapItem
@@ -116,7 +113,7 @@ declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl oa@ObjArr{oaAnnots, oaArr
 
     oa3 = oa2{
       oaAnnots=map desExpr oaAnnots ++ inheritAnnots,
-      oaArr = first (fmap desGuardExpr) oaArr
+      oaArr = first (fmap desExpr) oaArr
       }
 
 desDecl :: StatementEnv -> PObjArr -> [PStatementTree] -> CRes DesPrgm
@@ -145,7 +142,7 @@ desInheritingSubstatements (inheritModule, inheritAnnots) path subStatements = d
 
 -- | Parses an object from a 'MultiTypeDefData'
 desMultiTypeDefObj :: String -> H.HashMap TypeVarName Type -> PExpr -> DesObjArr
-desMultiTypeDefObj inheritPath varReplaceMap expr = desObj False inheritPath UseRelativeName $ ObjArr (Just $ GuardExpr expr'' Nothing) TypeObj Nothing [] (Nothing, emptyMetaE "" expr'')
+desMultiTypeDefObj inheritPath varReplaceMap expr = desObj False inheritPath UseRelativeName $ ObjArr (Just expr'') TypeObj Nothing [] (Nothing, emptyMetaE "" expr'')
   where
     expr' = semiDesExpr SDType Nothing expr
 
@@ -158,12 +155,11 @@ desMultiTypeDefObj inheritPath varReplaceMap expr = desObj False inheritPath Use
 
 
 desMultiTypeDef :: StatementEnv -> PMultiTypeDef -> [RawStatementTree RawExpr ParseMetaDat] -> CRes DesPrgm
-desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef clssExpr dataGuardExprs extends) subStatements = do
+desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef clssExpr dataExprs extends) subStatements = do
 
   let clss@PartialType{ptName=className, ptVars=classVars} = exprToPartialType clssExpr
   let clss' = clss{ptName=path'}
 
-  let dataExprs = map rgeExpr dataGuardExprs -- TODO: Handle GuardExpr guards
   let dataTypes = map (either id (getExprType . desObjPropagateTypes . semiDesExpr SDType Nothing) . eitherTypeVarExpr) dataExprs
 
   let objs = map (desMultiTypeDefObj inheritPath classVars) $ rights $ map eitherTypeVarExpr dataExprs
@@ -199,7 +195,7 @@ desTypeDef :: StatementEnv -> PExpr -> [RawStatementTree RawExpr ParseMetaDat] -
 desTypeDef statementEnv@(inheritPath, _) typeExpr subStatements = do
   (subPrgm, annots) <- desInheritingSubstatements statementEnv (getPath $ exprPath typeExpr) subStatements
   let typeExpr' = semiDesExpr SDType Nothing typeExpr
-  let obj = desObj False inheritPath UseRelativeName $ ObjArr (Just (GuardExpr typeExpr' Nothing)) TypeObj (desObjDocComment subStatements) annots (Nothing, emptyMetaE "arrM" typeExpr)
+  let obj = desObj False inheritPath UseRelativeName $ ObjArr (Just typeExpr') TypeObj (desObjDocComment subStatements) annots (Nothing, emptyMetaE "arrM" typeExpr)
   let objMap = [obj]
   return $ mergePrgm (objMap, classGraphFromObjs objMap, []) subPrgm
 

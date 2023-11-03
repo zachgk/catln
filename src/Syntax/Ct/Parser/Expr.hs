@@ -71,7 +71,8 @@ ops = [
     [ InfixL (mkOp2 "&&" <$ symbol "&&")
     , InfixL (mkOp2 "||" <$ symbol "||")
     , InfixL (mkOp2 "^" <$ symbol "^")
-    ]
+    ],
+    [ InfixL (RawWhere <$ symbol "|") ]
   ]
 
 pValue :: Parser PExpr
@@ -110,13 +111,13 @@ parenExpr = do
 pArrowFull :: ObjectBasis -> Parser PObjArr
 pArrowFull basis = do
   expr1 <- pExpr
-  (guard, guardAnnots) <- pPatternGuard
+  guardAnnots <- pPatternGuard
   maybeDecl <- optional $ do
     _ <- symbol "->" <|> symbol ":"
     exprToTypeMeta <$> term
   maybeExpr2 <- optional $ do
     _ <- symbol "=>" <|> symbol "="
-    optional $ try pExprWithPostCond
+    optional $ try pExpr
   maybeDef <- optional $ do
     _ <- symbol "?"
     try pExpr
@@ -124,16 +125,16 @@ pArrowFull basis = do
   let arrMeta = fromMaybe emptyMetaN maybeDecl
   (i', o') <- return $ case (maybeDecl, expr1, maybeExpr2) of
     -- Input, equals, and in expression
-    (_, i, Just (Just o)) -> (Just (GuardExpr i guard), Just (Just o, arrMeta))
+    (_, i, Just (Just o)) -> (Just i, Just (Just o, arrMeta))
 
     -- Input, equals, but no out expression
-    (_, i, Just Nothing) -> (Just (GuardExpr i guard), Just (Just (GuardExpr (rawVal nestedDeclaration) Nothing), arrMeta))
+    (_, i, Just Nothing) -> (Just i, Just (Just (rawVal nestedDeclaration), arrMeta))
 
     -- Input, no equals, but declaration
-    (Just am, i, Nothing) -> (Just (GuardExpr i guard), Just (Nothing, am)) -- If only one expression, always make it as an input and later desugar to proper place
+    (Just am, i, Nothing) -> (Just i, Just (Nothing, am)) -- If only one expression, always make it as an input and later desugar to proper place
 
     -- Input, no equals nor declaration
-    (Nothing, i, Nothing) -> (Just (GuardExpr i guard), Nothing) -- If only one expression, always make it as an input and later desugar to proper place
+    (Nothing, i, Nothing) -> (Just i, Nothing) -- If only one expression, always make it as an input and later desugar to proper place
 
   return $ RawObjArr i' basis Nothing guardAnnots o' maybeDef
 
@@ -268,24 +269,8 @@ term = do
 pExpr :: Parser PExpr
 pExpr = makeExprParser term ops
 
-pPatternGuard :: Parser (Maybe PExpr, [PCompAnnot])
+pPatternGuard :: Parser [PCompAnnot]
 pPatternGuard = do
-  cond <- optional $ do
-    _ <- symbol "|"
-    pExpr
   els <- optional $ symbol "else"
   let els' = [rawVal elseAnnot | isJust els]
-  return (cond, els')
-
-pWithPostCond :: Parser a -> Parser (a, Maybe PExpr)
-pWithPostCond pE = do
-  e <- pE
-  cond <- optional $ do
-    _ <- symbol "|"
-    pExpr
-  return (e, cond)
-
-pExprWithPostCond :: Parser PGuardExpr
-pExprWithPostCond = do
-  (e, g) <- pWithPostCond pExpr
-  return $ GuardExpr e g
+  return els'

@@ -140,7 +140,6 @@ instance Monad TypeCheckResult where
 
 type PreMeta = Meta ()
 type PExpr = Expr ()
-type PGuardExpr = GuardExpr Expr ()
 type PCompAnnot = CompAnnot PExpr
 type PObjArr = ObjArr Expr ()
 type PPrgm = Prgm Expr ()
@@ -160,8 +159,6 @@ type VarMeta = Meta VarMetaDat
 type VExpr = Expr VarMetaDat
 type VCompAnnot = CompAnnot VExpr
 type VMetaVarArgEnv = MetaVarArgEnv VarMetaDat
-type VIOMetaVarArgEnv = H.HashMap TypeVarAux (VarMeta, VarMeta)
-type VGuardExpr = GuardExpr Expr VarMetaDat
 type VObjArr = ObjArr Expr VarMetaDat
 type VObject = VExpr
 type VObjectMap = ObjectMap Expr VarMetaDat
@@ -171,7 +168,6 @@ type VPrgm = (VObjectMap, ClassGraph, [VCompAnnot])
 type TypedMeta = Meta ()
 type TExpr = Expr ()
 type TCompAnnot = CompAnnot TExpr
-type TGuardExpr = GuardExpr Expr ()
 type TObjArr = ObjArr Expr ()
 type TObjectMap = ObjectMap Expr ()
 type TPrgm = Prgm Expr ()

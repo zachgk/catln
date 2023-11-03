@@ -37,7 +37,7 @@ genTypeFromExpr prgm (TupleApply _ (_, baseExpr) oa) = do
   shouldAddArg <- HG.bool
   if shouldAddArg
     then case oaArr oa of
-           (Just (GuardExpr arrExpr _), _) -> do
+           (Just arrExpr, _) -> do
              arrExpr' <- genTypeFromExpr prgm arrExpr
              return base{ptArgs = H.insert (inExprSingleton $ oaObjExpr oa) (singletonType arrExpr') baseArgs}
            (Nothing, oaM) -> return base{ptArgs = H.insert (inExprSingleton $ oaObjExpr oa) (getMetaType oaM) baseArgs}
@@ -81,13 +81,13 @@ genType prgm@(objMap, ClassGraph cg, _) = HG.choice gens
     genObjM :: Gen Type
     genObjM = do
       oa <- HG.element objMap
-      let (GuardExpr objExpr Nothing) = fromJust $ oaObj oa
+      let objExpr = fromJust $ oaObj oa
       return $ getExprType objExpr
 
     genObj :: Gen Type
     genObj = do
       oa <- HG.element objMap
-      let (GuardExpr objExpr Nothing) = fromJust $ oaObj oa
+      let objExpr = fromJust $ oaObj oa
       singletonType <$> genTypeFromExpr prgm objExpr
 
 genPartialType :: Prgm Expr () -> Gen PartialType
@@ -107,7 +107,7 @@ genPartialType prgm@(objMap, ClassGraph cg, _) = do
     genObj :: Gen PartialType
     genObj = do
       oa <- HG.element objMap
-      let (GuardExpr objExpr Nothing) = fromJust $ oaObj oa
+      let objExpr = fromJust $ oaObj oa
       genTypeFromExpr prgm objExpr
 
 genInputExpr :: Gen (Expr ())
@@ -124,7 +124,7 @@ genInputExpr = do
     genVar base varName = do
       return $ VarApply emptyMetaN base varName emptyMetaN
     genArg base argName = do
-      return $ TupleApply emptyMetaN (emptyMetaN, base) (ObjArr (Just (GuardExpr (Value emptyMetaN argName) Nothing)) ArgObj Nothing [] (Nothing, emptyMetaN))
+      return $ TupleApply emptyMetaN (emptyMetaN, base) (ObjArr (Just (Value emptyMetaN argName)) ArgObj Nothing [] (Nothing, emptyMetaN))
 
 -- | Generates an output expression equivalent to an input expression
 genOutputExpr :: Expr () -> Expr () -> Gen (Expr ())
@@ -133,10 +133,10 @@ genOutputExpr (TupleApply _ (_, b) _) input = genOutputExpr b input
 -- genOutputExpr (TupleApply _ (_, b) arg@ObjArr{oaArr}) input = do
 --   b' <- genOutputExpr b input
 --   oaArr' <- case oaArr of
---     (Just (GuardExpr e _), _) -> do
+--     (Just e, _) -> do
 --       e' <- genOutputExpr e input
---       return (Just (GuardExpr e' Nothing), emptyMetaN)
---     (Nothing, _) -> return (Just (GuardExpr (HoleExpr emptyMetaN (HoleActive Nothing)) Nothing), emptyMetaN)
+--       return (Just e', emptyMetaN)
+--     (Nothing, _) -> return (Just (HoleExpr emptyMetaN (HoleActive Nothing)), emptyMetaN)
 --   return $ TupleApply emptyMetaN (emptyMetaN, b') arg{oaArr=oaArr'}
 genOutputExpr (VarApply _ b _ _) input = genOutputExpr b input
 -- genOutputExpr (VarApply _ b varName _) input = do
@@ -149,17 +149,17 @@ genPrgm :: Gen (Prgm Expr ())
 genPrgm = do
   inputExprs <- HG.list (linear 1 5) (HG.either_ genInputExpr genInputExpr)
   let (dataTypes, funs) = partitionEithers inputExprs
-  let dataObjs = map (\obj -> ObjArr (Just (GuardExpr obj Nothing)) TypeObj Nothing [] (Nothing, emptyMetaN)) dataTypes
+  let dataObjs = map (\obj -> ObjArr (Just obj) TypeObj Nothing [] (Nothing, emptyMetaN)) dataTypes
 
   let allInputs = dataTypes ++ funs
   funObjs <- forM funs $ \obj -> do
                                 let otherInputs = filter (/= obj) allInputs
                                 if null otherInputs
-                                  then return $ ObjArr (Just (GuardExpr obj Nothing)) FunctionObj Nothing [] (Nothing, emptyMetaN)
+                                  then return $ ObjArr (Just obj) FunctionObj Nothing [] (Nothing, emptyMetaN)
                                   else do
                                     arrGoal <- HG.element otherInputs
                                     arr <- genOutputExpr arrGoal obj
-                                    return $ ObjArr (Just (GuardExpr obj Nothing)) FunctionObj Nothing [] (Just (GuardExpr arr Nothing), emptyMetaN)
+                                    return $ ObjArr (Just obj) FunctionObj Nothing [] (Just arr, emptyMetaN)
 
   let objMap = dataObjs ++ funObjs
 

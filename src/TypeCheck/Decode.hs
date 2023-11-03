@@ -52,13 +52,17 @@ toExpr env (AliasExpr base alias) = do
   base' <- toExpr env base
   alias' <- toExpr env alias
   return $ AliasExpr base' alias'
+toExpr env (EWhere base cond) = do
+  base' <- toExpr env base
+  cond' <- toExpr env cond
+  return $ EWhere base' cond'
 toExpr env (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaArr=(oaArrExpr, oaArrM), oaAnnots}) = do
   let pos = getMetaPos m
   m' <- toMeta env m "TupleApply_M"
   baseM' <- toMeta env baseM "TupleApply_baseM"
   baseExpr' <- toExpr env baseExpr
   oaObj' <- case oaObj of
-    Just joaObj -> Just <$> toGuardExpr env joaObj
+    Just joaObj -> Just <$> toExpr env joaObj
     Nothing -> do
       argName <- case (getMetaType baseM', getMetaType m') of
         (UnionType basePartialLeafs, UnionType partialLeafs) -> case (splitUnionType basePartialLeafs, splitUnionType partialLeafs) of
@@ -67,8 +71,8 @@ toExpr env (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaArr=(oaArrExpr, o
             _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to multiple arg options"]
           (base, result) -> TypeCheckResE [GenTypeCheckError pos $ printf "Failed argument inference due to multiple types with base %s and result %s" (show base) (show result)]
         (baseM'', m'') -> TypeCheckResE [GenTypeCheckError pos $ printf "Failed argument inference due to non UnionType in baseMeta %s or meta %s" (show baseM'') (show m'')]
-      return $ Just $ GuardExpr (Value (mWithType (singletonType $ partialToType argName) $ emptyMetaM "inferArg" m') (pkName argName)) Nothing
-  oaArrExpr' <- mapM (toGuardExpr env) oaArrExpr
+      return $ Just $ Value (mWithType (singletonType $ partialToType argName) $ emptyMetaM "inferArg" m') (pkName argName)
+  oaArrExpr' <- mapM (toExpr env) oaArrExpr
   oaArrM' <- toMeta env oaArrM "TupleApply_argM"
   oaAnnots' <- mapM (toExpr env) oaAnnots
   let arg' = arg{oaObj=oaObj', oaArr=(oaArrExpr', oaArrM'), oaAnnots=oaAnnots'}
@@ -85,16 +89,10 @@ toExpr env (VarApply m baseExpr varName varVal) = do
 
     _                                -> return result
 
-toGuardExpr :: FEnv -> VGuardExpr -> TypeCheckResult TGuardExpr
-toGuardExpr env (GuardExpr e g) = do
-  e' <- toExpr env e
-  g' <- mapM (toExpr env) g
-  return $ GuardExpr e' g'
-
 toObjArr :: FEnv -> VObjArr -> TypeCheckResult TObjArr
 toObjArr env oa@ObjArr{oaObj, oaArr=(arrE, arrM), oaAnnots} = do
-  oaObj' <- mapM (toGuardExpr env) oaObj
-  arrE' <- mapM (toGuardExpr env) arrE
+  oaObj' <- mapM (toExpr env) oaObj
+  arrE' <- mapM (toExpr env) arrE
   arrM' <- toMeta env arrM "arrMeta"
   oaAnnots' <- mapM (toExpr env) oaAnnots
   return oa{oaObj=oaObj', oaArr=(arrE', arrM'), oaAnnots=oaAnnots'}

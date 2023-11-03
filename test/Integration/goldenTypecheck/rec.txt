@@ -482,7 +482,7 @@
                         ( Value /r -> /Data/Primitive/Integer = CInt 1 )
                     )
                 )
-            , /fact ( Value /x -> /Data/Primitive/Integer ) if /operator== ( Value /l -> TVArg /x = Value /x )
+            , /fact ( Value /x -> /Data/Primitive/Integer ) | /operator== ( Value /l -> TVArg /x = Value /x )
                 ( Value /r -> /Data/Primitive/Integer = CInt 1 ) -> /Data/Primitive/Integer = CInt 1
             ]
         ,

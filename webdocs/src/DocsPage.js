@@ -6,7 +6,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import {useHistory} from 'react-router-dom';
 
-import {RawExpr, RawGuardExpr, RawObjArr} from './Common/Syntax';
+import {RawExpr, RawObjArr} from './Common/Syntax';
 import {useApi, Loading, KeyWord, PClassName, tagJoin} from './Common/Common';
 
 const useStyles = makeStyles({
@@ -89,7 +89,7 @@ function Statement(props) {
     );
   case "MultiTypeDefStatement":
     let [mcls, classDatas, mextends] = statement.contents[0];
-    let showClassDatas = tagJoin(classDatas.map((d, dIndex) => <span key={dIndex}><RawGuardExpr expr={d}/></span>), " | ");
+    let showClassDatas = tagJoin(classDatas.map((d, dIndex) => <span key={dIndex}><RawExpr expr={d}/></span>), " | ");
 
     let showMExtends;
     if (mextends) {

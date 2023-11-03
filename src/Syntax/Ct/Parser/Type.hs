@@ -18,17 +18,14 @@ import           Control.Applicative     hiding (many, some)
 import           Text.Megaparsec         hiding (pos1)
 
 import           Data.Maybe
-import           Semantics.Prgm
 import           Syntax.Ct.Parser.Expr
 import           Syntax.Ct.Parser.Lexer
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 
 
-pMultiTerm :: Parser [PGuardExpr]
-pMultiTerm = do
-  terms <- sepBy1 term (symbol "|")
-  return $ map (`GuardExpr` Nothing) terms
+pMultiTerm :: Parser [PExpr]
+pMultiTerm = sepBy1 term (symbol "|")
 
 pExtends :: Parser ExtendedClasses
 pExtends = do

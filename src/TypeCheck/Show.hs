@@ -37,6 +37,10 @@ showExpr env (AliasExpr base alias) = do
   base' <- showExpr env base
   alias' <- showExpr env alias
   return $ AliasExpr base' alias'
+showExpr env (EWhere base cond) = do
+  base' <- showExpr env base
+  cond' <- showExpr env cond
+  return $ EWhere base' cond'
 showExpr env (TupleApply m (bm, base) arg) = do
   m' <- showM env m
   bm' <- showM env bm
@@ -49,17 +53,11 @@ showExpr env (VarApply m base varName varVal) = do
   varVal' <- showM env varVal
   return $ VarApply m' base' varName varVal'
 
-showGuardExpr :: FEnv -> VGuardExpr -> TypeCheckResult (GuardExpr Expr ShowMetaDat)
-showGuardExpr env (GuardExpr e g) = do
-  e' <- showExpr env e
-  g' <- mapM (showExpr env) g
-  return $ GuardExpr e' g'
-
 showObjArr :: FEnv -> VObjArr -> TypeCheckResult SObjArr
 showObjArr env oa@ObjArr{oaObj, oaAnnots, oaArr=(arrE, arrM)} = do
-  oaObj' <- mapM (showGuardExpr env) oaObj
+  oaObj' <- mapM (showExpr env) oaObj
   oaAnnots' <- mapM (showExpr env) oaAnnots
-  arrE' <- mapM (showGuardExpr env) arrE
+  arrE' <- mapM (showExpr env) arrE
   arrM' <- showM env arrM
   return oa{oaObj=oaObj', oaAnnots=oaAnnots', oaArr=(arrE', arrM')}
 

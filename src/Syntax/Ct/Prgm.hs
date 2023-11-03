@@ -31,11 +31,11 @@ import           Text.Printf
 import           Utils
 
 data RawObjArr e m = RawObjArr {
-  roaObj    :: !(Maybe (GuardExpr e m)),
+  roaObj    :: !(Maybe (e m)),
   roaBasis  :: !ObjectBasis,
   roaDoc    :: !(Maybe DocComment),
   roaAnnots :: ![CompAnnot (e m)],
-  roaArr    :: !(Maybe (Maybe (GuardExpr e m), Meta m)),
+  roaArr    :: !(Maybe (Maybe (e m), Meta m)),
   roaDef    :: !(Maybe (e m))
                                }
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
@@ -57,6 +57,7 @@ data RawExpr m
   | RawTupleApply (Meta m) (Meta m, RawExpr m) [RawObjArr RawExpr m]
   | RawVarsApply (Meta m) (RawExpr m) [(RawExpr m, Meta m)]
   | RawContextApply (Meta m) (Meta m, RawExpr m) [(ArgName, Meta m)]
+  | RawWhere (RawExpr m) (RawExpr m) -- ^ base cond
   | RawParen (RawExpr m)
   | RawMethod (RawExpr m) (RawExpr m) -- ^ base methodValue
   | RawList (Meta m) [RawExpr m]
@@ -67,7 +68,7 @@ data RawExpr m
 type ExtendedClass = ClassName
 type ExtendedClasses = [ExtendedClass]
 
-data MultiTypeDef m = MultiTypeDef (RawExpr m) [GuardExpr RawExpr m] ExtendedClasses
+data MultiTypeDef m = MultiTypeDef (RawExpr m) [RawExpr m] ExtendedClasses
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 type RawClassDef m = (RawExpr m, ExtendedClasses)
@@ -116,6 +117,7 @@ instance ExprClass RawExpr where
     RawTheExpr e          -> getExprMeta e
     RawSpread e           -> getExprMeta e
     RawAliasExpr b _      -> getExprMeta b
+    RawWhere b _          -> getExprMeta b
     RawTupleApply m _ _   -> m
     RawVarsApply m _ _    -> m
     RawContextApply m _ _ -> m
@@ -130,6 +132,7 @@ instance ExprClass RawExpr where
   maybeExprPathM (RawContextApply _ (_, e) _) = maybeExprPathM e
   maybeExprPathM (RawParen e)                 = maybeExprPathM e
   maybeExprPathM (RawMethod _ e)              = maybeExprPathM e
+  maybeExprPathM (RawWhere b _)               = maybeExprPathM b
   maybeExprPathM _                            = Nothing
 
   exprAppliedArgs (RawValue _ _) = []
@@ -167,8 +170,8 @@ instance ExprClass RawExpr where
 instance ObjArrClass RawObjArr where
   oaVarArgs roa = exprArg roa
     where
-      exprArg RawObjArr{roaArr=(Just (Just (GuardExpr argVal Nothing), _))} = exprVarArgs argVal
-      exprArg RawObjArr{roaObj=(Just (GuardExpr obj Nothing)), roaArr= Nothing} = H.singleton (TVArg $ inExprSingleton obj) [(obj, emptyMetaE "res" obj)]
+      exprArg RawObjArr{roaArr=(Just (Just argVal, _))} = exprVarArgs argVal
+      exprArg RawObjArr{roaObj=(Just obj), roaArr= Nothing} = H.singleton (TVArg $ inExprSingleton obj) [(obj, emptyMetaE "res" obj)]
       exprArg oa = error $ printf "exprVarArgs not defined for arg %s" (show oa)
   getOaAnnots = roaAnnots
 
@@ -195,7 +198,7 @@ instance (Show m, Show (e m)) => Show (RawObjArr e m) where
         Nothing  -> ""
 
 desObjArr :: (ExprClass e, MetaDat m, Show m, Show (e m)) => RawObjArr e m -> [ObjArr e m]
-desObjArr (RawObjArr obj@(Just (GuardExpr objExpr _)) basis doc annots arr Nothing) = [ObjArr obj basis doc annots arr']
+desObjArr (RawObjArr obj@(Just objExpr) basis doc annots arr Nothing) = [ObjArr obj basis doc annots arr']
   where
     arr' = fromMaybe (Nothing, emptyMetaE "arrM" objExpr) arr
 desObjArr (RawObjArr obj basis doc annots (Just arr) Nothing) = [ObjArr obj basis doc annots arr]

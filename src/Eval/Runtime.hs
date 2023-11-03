@@ -120,7 +120,7 @@ llvm = (name', [(srcType, Nothing, False, TCMacro (singletonType resultLeaf) (Ma
     srcType = PartialType name' H.empty (H.fromList [(partialKey "/c", topType)]) [] PtArgExact
     macroBuild input MacroData{mdTbEnv} = do
       case input of
-        (TTupleApply _ (_, TValue _ "/Catln/llvm") ObjArr{oaObj=Just (GuardExpr (TValue _ "/c") Nothing), oaArr=(Just (GuardExpr (TValue _ functionToCodegen) Nothing), _)}) -> buildName functionToCodegen
+        (TTupleApply _ (_, TValue _ "/Catln/llvm") ObjArr{oaObj=Just (TValue _ "/c"), oaArr=(Just (TValue _ functionToCodegen), _)}) -> buildName functionToCodegen
         _ -> error $ printf "Unknown expr to llvm macro: %s" (show input)
       where
         buildName functionToCodegen = do

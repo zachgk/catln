@@ -440,7 +440,7 @@
 ,
     (
         (
-            [ /fact ( Value x -> /Data/Primitive/Integer ) if /operator== ( Value /l= Value x )
+            [ /fact ( Value x -> /Data/Primitive/Integer ) | /operator== ( Value /l= Value x )
                 ( Value /r= CInt 1 ) = CInt 1
             , /fact ( Value x -> /Data/Primitive/Integer ) = /operator* ( Value /l= Value x )
                 ( Value /r= fact

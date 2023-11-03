@@ -72,6 +72,7 @@ mapMetaAppliedExpr f loc (CExpr m c) = CExpr (f (ExprMeta loc ExprMetaConstant) 
 mapMetaAppliedExpr f loc (Value m n) = Value (f (ExprMeta loc ExprMetaVal) m) n
 mapMetaAppliedExpr f loc (HoleExpr m h) = HoleExpr (f (ExprMeta loc ExprMetaHole) m) h
 mapMetaAppliedExpr f loc (AliasExpr b a) = AliasExpr (mapMetaAppliedExpr f loc b) (mapMetaAppliedExpr f loc a)
+mapMetaAppliedExpr f loc (EWhere b a) = EWhere (mapMetaAppliedExpr f loc b) (mapMetaAppliedExpr f loc a)
 mapMetaAppliedExpr f loc (TupleApply m (bm, be) arg) = TupleApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, mapMetaAppliedExpr f loc be) (mapOAObjExpr (mapMeta f loc) arg)
 mapMetaAppliedExpr f loc (VarApply m be varName varVal) = VarApply (f (ExprMeta loc ExprMetaApplyVar) m) (mapMetaAppliedExpr f loc be) varName (f (ExprMeta loc ExprMetaApplyVarVal) varVal)
 
@@ -80,17 +81,15 @@ instance MapMeta Expr where
   mapMeta f loc (Value m n) = Value (f (ExprMeta loc ExprMetaVal) m) n
   mapMeta f loc (HoleExpr m h) = HoleExpr (f (ExprMeta loc ExprMetaHole) m) h
   mapMeta f loc (AliasExpr b a) = AliasExpr (mapMeta f loc b) (mapMeta f loc a)
+  mapMeta f loc (EWhere b a) = EWhere (mapMeta f loc b) (mapMeta f loc a)
   mapMeta f loc (TupleApply m (bm, be) arg) = TupleApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, mapMeta f loc be) (mapMetaObjArr f (Just loc) arg)
   mapMeta f loc (VarApply m be varName varVal) = VarApply (f (ExprMeta loc ExprMetaApplyVar) m) (mapMeta f loc be) varName (f (ExprMeta loc ExprMetaApplyVarVal) varVal)
 
-mapMetaGuardExpr :: (MapMeta e) => MetaFun a b -> MetaLocation -> GuardExpr e a -> GuardExpr e b
-mapMetaGuardExpr f loc (GuardExpr expr guard) = GuardExpr (mapMeta f loc expr) (fmap (mapMeta f GuardMeta) guard)
-
 mapMetaObjArr :: (MapMeta e) => MetaFun a b -> Maybe MetaLocation -> ObjArr e a -> ObjArr e b
 mapMetaObjArr f mloc oa@ObjArr{oaObj, oaAnnots, oaArr} = oa{
-  oaObj = fmap (mapMetaGuardExpr f (fromMaybe InputMeta mloc)) oaObj,
+  oaObj = fmap (mapMeta f (fromMaybe InputMeta mloc)) oaObj,
   oaAnnots = map (mapMeta f (fromMaybe AnnotMeta mloc)) oaAnnots,
-  oaArr = bimap (fmap (mapMetaGuardExpr f (fromMaybe OutputMeta mloc))) (f ArrMeta) oaArr
+  oaArr = bimap (fmap (mapMeta f (fromMaybe OutputMeta mloc))) (f ArrMeta) oaArr
                                                              }
 
 mapMetaPrgm :: (MapMeta e) => MetaFun a b -> Prgm e a -> Prgm e b

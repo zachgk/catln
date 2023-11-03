@@ -36,7 +36,7 @@ isSupportedFileExtension fileName = any ((`isSuffixOf` fileName) . ('.':)) (H.ke
 
 dirParser :: ImportParser
 dirParser imp = do
-  let [ObjArr{oaArr=(Just (GuardExpr (RawCExpr _ (CStr name)) _), _)}] = exprAppliedArgs imp
+  let [ObjArr{oaArr=(Just (RawCExpr _ (CStr name)), _)}] = exprAppliedArgs imp
   files <- listDirectory name
   files' <- forM files $ \file -> do
     let file' = name ++ "/" ++ file
@@ -53,7 +53,7 @@ dirParser imp = do
 
 rawImportToStr :: RawFileImport -> Maybe String
 rawImportToStr imp = case exprAppliedArgs imp of
-  (ObjArr{oaArr=(Just (GuardExpr (RawCExpr _ (CStr s)) _), _)}:_) | isSupportedFileExtension s -> Just s
+  (ObjArr{oaArr=(Just (RawCExpr _ (CStr s)), _)}:_) | isSupportedFileExtension s -> Just s
   _ -> Nothing
 
 inferRawImportStr :: String -> IO RawFileImport

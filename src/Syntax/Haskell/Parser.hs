@@ -107,7 +107,7 @@ runParser flags filename str parser = unP parser parseState
 
 hsParser :: ImportParser
 hsParser imp = do
-  let [ObjArr{oaArr=(Just (GuardExpr (RawCExpr _ (CStr filename)) _), _)}] = exprAppliedArgs imp
+  let [ObjArr{oaArr=(Just (RawCExpr _ (CStr filename)), _)}] = exprAppliedArgs imp
   str <- readFile filename
   maybeFlags <-
           parsePragmasIntoDynFlags

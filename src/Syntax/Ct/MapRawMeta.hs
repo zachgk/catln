@@ -26,6 +26,7 @@ instance MapMeta RawExpr where
   mapMeta f loc (RawTheExpr e) = RawTheExpr (mapMeta f loc e)
   mapMeta f loc (RawSpread e) = RawSpread (mapMeta f loc e)
   mapMeta f loc (RawAliasExpr b a) = RawAliasExpr (mapMeta f loc b) (mapMeta f loc a)
+  mapMeta f loc (RawWhere b a) = RawWhere (mapMeta f loc b) (mapMeta f loc a)
   mapMeta f loc (RawTupleApply m (bm, be) args) = RawTupleApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, mapMeta f loc be) (map (mapMetaRawObjArr f (Just loc)) args)
   mapMeta f loc (RawVarsApply m be vars) = RawVarsApply (f (ExprMeta loc ExprMetaApplyVar) m) (mapMeta f loc be) (map mapVar vars)
     where
@@ -39,15 +40,15 @@ instance MapMeta RawExpr where
 
 mapMetaRawObjArr :: (MapMeta e) => MetaFun a b -> Maybe MetaLocation -> RawObjArr e a -> RawObjArr e b
 mapMetaRawObjArr f mloc roa@RawObjArr{roaObj, roaAnnots, roaArr, roaDef} = roa{
-  roaObj = fmap (mapMetaGuardExpr f (fromMaybe InputMeta mloc)) roaObj,
+  roaObj = fmap (mapMeta f (fromMaybe InputMeta mloc)) roaObj,
   roaAnnots = map (mapMeta f (fromMaybe AnnotMeta mloc)) roaAnnots,
-  roaArr = fmap (bimap (fmap (mapMetaGuardExpr f (fromMaybe OutputMeta mloc))) (f ArrMeta)) roaArr,
+  roaArr = fmap (bimap (fmap (mapMeta f (fromMaybe OutputMeta mloc))) (f ArrMeta)) roaArr,
   roaDef = fmap (mapMeta f (fromMaybe InputMeta mloc)) roaDef
                                                              }
 
 mapMetaRawStatement :: (MapMeta e) => MetaFun a b -> RawStatement e a -> RawStatement e b
 mapMetaRawStatement f (RawDeclStatement objArr) = RawDeclStatement (mapMetaRawObjArr f Nothing objArr)
-mapMetaRawStatement f (MultiTypeDefStatement (MultiTypeDef clss objs extends)) = MultiTypeDefStatement (MultiTypeDef (mapMeta f InputMeta clss) (map (mapMetaGuardExpr f InputMeta) objs) extends)
+mapMetaRawStatement f (MultiTypeDefStatement (MultiTypeDef clss objs extends)) = MultiTypeDefStatement (MultiTypeDef (mapMeta f InputMeta clss) (map (mapMeta f InputMeta) objs) extends)
 mapMetaRawStatement f (TypeDefStatement obj) = TypeDefStatement (mapMeta f InputMeta obj)
 mapMetaRawStatement f (RawClassDefStatement (typeExpr, className)) = RawClassDefStatement (mapMeta f InputMeta typeExpr, className)
 mapMetaRawStatement f (RawClassDeclStatement clss) = RawClassDeclStatement (mapMeta f InputMeta clss)

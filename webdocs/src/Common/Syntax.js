@@ -8,7 +8,7 @@ function RawObjArr(props) {
 
   let showObj;
   if (roaObj) {
-    showObj = <RawGuardExpr expr={roaObj} />;
+    showObj = <RawExpr expr={roaObj} />;
   }
 
   let showArr;
@@ -16,7 +16,7 @@ function RawObjArr(props) {
     const [roaArrExpr, roaArrM] = roaArr;
     let showArrExpr;
     if (roaArrExpr) {
-      showArrExpr = <span> = <RawGuardExpr expr={roaArrExpr}/></span>;
+      showArrExpr = <span> = <RawExpr expr={roaArrExpr}/></span>;
     }
 
     let showArrM;
@@ -32,18 +32,6 @@ function RawObjArr(props) {
   }
 
   return <span>{showObj}{showArr}{showDef}</span>;
-}
-
-function RawGuardExpr(props) {
-  const {Meta, showExprMetas, expr} = props;
-  const {rgeExpr, rgeGuard} = expr;
-
-  let showGuard;
-  if (rgeGuard) {
-    showGuard = <span> | <RawExpr expr={rgeGuard} Meta={Meta} showMetas={showExprMetas}/></span>;
-  }
-
-  return <span><RawExpr expr={rgeExpr} Meta={Meta} showMetas={showExprMetas} />{showGuard}</span>;
 }
 
 function RawExpr(props) {
@@ -141,6 +129,5 @@ function RawMeta(props) {
 
 export {
   RawExpr,
-  RawGuardExpr,
   RawObjArr,
 }

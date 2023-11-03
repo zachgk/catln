@@ -63,25 +63,13 @@ function Expr(props) {
   }
 }
 
-function GuardExpr(props) {
-  const {Meta, showMetas, expr} = props;
-  const {rgeExpr, rgeGuard} = expr;
-
-  let showGuard;
-  if (rgeGuard) {
-    showGuard = <span> | <Expr expr={rgeGuard} Meta={Meta} showMetas={showMetas}/></span>;
-  }
-
-  return <span><Expr expr={rgeExpr} Meta={Meta} showMetas={showMetas} />{showGuard}</span>;
-}
-
 function ObjArr(props) {
   const {Meta, showExprMetas, multiLine, oa} = props;
   const {oaObj, oaArr} = oa;
 
   let showObj;
   if (oaObj) {
-    showObj = <GuardExpr expr={oaObj} Meta={Meta} showMetas={showExprMetas} />;
+    showObj = <Expr expr={oaObj} Meta={Meta} showMetas={showExprMetas} />;
   }
 
   let showArr;
@@ -90,7 +78,7 @@ function ObjArr(props) {
     let showArrExpr;
     if (oaArrExpr) {
       let showMultiLine = multiLine ? <span><br />&nbsp;&nbsp;&nbsp;&nbsp;</span> : "";
-      showArrExpr = <span> ={showMultiLine} <GuardExpr expr={oaArrExpr} Meta={Meta} showMetas={showExprMetas}/></span>;
+      showArrExpr = <span> ={showMultiLine} <Expr expr={oaArrExpr} Meta={Meta} showMetas={showExprMetas}/></span>;
     }
 
     let showArrType;
@@ -161,6 +149,5 @@ function TCallTree(props) {
 
 export {
   Expr,
-  GuardExpr,
   ObjArr,
 }

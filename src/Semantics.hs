@@ -42,27 +42,38 @@ emptyMetaM s m = Meta topType (labelPos s $ getMetaPos m) emptyMetaDat
 emptyMetaE :: (ExprClass e, MetaDat m) => String -> e m -> Meta m
 emptyMetaE s e = emptyMetaM s (getExprMeta e)
 
-exprWithMeta :: Meta m -> Expr m -> Expr m
+exprWithMeta :: (Show m) => Meta m -> Expr m -> Expr m
 exprWithMeta m (CExpr _ c)        = CExpr m c
 exprWithMeta m (Value _ n)        = Value m n
 exprWithMeta m (HoleExpr _ h)     = HoleExpr m h
+exprWithMeta m (EWhere base cond) = EWhere (exprWithMeta m base) cond
 exprWithMeta m (TupleApply _ b a) = TupleApply m b a
 exprWithMeta m (VarApply _ b n v) = VarApply m b n v
-exprWithMeta _ _                  = error "exprWithMeta with unsupported expr"
+exprWithMeta _ e                  = error $ printf "exprWithMeta with unsupported expr %s" (show e)
 
-exprWithMetaType :: Type -> Expr m -> Expr m
+-- | Returns the EWhere conditions in an expression
+exprWhereConds :: Expr m -> [Expr m]
+exprWhereConds CExpr{} = []
+exprWhereConds Value{} = []
+exprWhereConds HoleExpr{} = []
+exprWhereConds (AliasExpr b _) = exprWhereConds b
+exprWhereConds (EWhere _ c) = [c]
+exprWhereConds (TupleApply _ (_, b) ObjArr{oaArr=(me, _)}) = exprWhereConds b ++ maybe [] exprWhereConds me
+exprWhereConds (VarApply _ b _ _) = exprWhereConds b
+
+exprWithMetaType :: (Show m) => Type -> Expr m -> Expr m
 exprWithMetaType t e = exprWithMeta (mWithType t (getExprMeta e)) e
 
 classGraphFromObjs :: (ExprClass e, MetaDat m, Show m, Show (e m)) => ObjectMap e m -> ClassGraph
 classGraphFromObjs objMap = ClassGraph $ graphFromEdges $ map (\oa -> (CGType, PTypeName (oaObjPath oa), [])) objMap
 
 mapOAObjExpr :: (MetaDat m, ExprClass e, Show (e m)) => (e m -> e m) -> ObjArr e m -> ObjArr e m
-mapOAObjExpr f oa@ObjArr{oaObj=Just (GuardExpr e g)} = oa{oaObj = Just (GuardExpr (f e) g)}
+mapOAObjExpr f oa@ObjArr{oaObj=Just e}  = oa{oaObj = Just (f e)}
 mapOAObjExpr _ oa@ObjArr{oaObj=Nothing} = oa
 
 mapOAArrExpr :: (MetaDat m, ExprClass e, Show (e m)) => (e m -> e m) -> ObjArr e m -> ObjArr e m
-mapOAArrExpr f oa@ObjArr{oaArr=(Just (GuardExpr e g), m)} = oa{oaArr = (Just (GuardExpr (f e) g), m)}
-mapOAArrExpr _ oa = oa
+mapOAArrExpr f oa@ObjArr{oaArr=(Just e, m)} = oa{oaArr = (Just (f e), m)}
+mapOAArrExpr _ oa                           = oa
 
 -- |
 -- The 'exprVarArgsWithSrc' is similar to the 'exprArgs' function.
@@ -73,16 +84,17 @@ exprVarArgsWithSrc :: (MetaDat m, Show m) => TypeEnv -> Expr m -> PartialType ->
 exprVarArgsWithSrc _ CExpr{} _ = H.empty
 exprVarArgsWithSrc _ Value{} _ = H.empty
 exprVarArgsWithSrc _ HoleExpr{} _ = H.empty
+exprVarArgsWithSrc typeEnv (EWhere base _) src = exprVarArgsWithSrc typeEnv base src
 exprVarArgsWithSrc typeEnv (AliasExpr base n) src = H.insert (TVArg $ inExprSingleton n) ([(n, getExprMeta base)], singletonType src) (exprVarArgsWithSrc typeEnv base src)
 exprVarArgsWithSrc typeEnv (VarApply _ b n m) src = H.insert (TVVar n) ([(Value (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)], H.lookupDefault topType n (ptVars src)) $ exprVarArgsWithSrc typeEnv b src
 exprVarArgsWithSrc typeEnv (TupleApply _ (_, be) arg) src = H.union (exprVarArgsWithSrc typeEnv be src) (fromArg arg)
   where
-    fromArg ObjArr{oaObj=Just (GuardExpr obj _), oaArr=(Just (GuardExpr e _), _)} = case typeGetArg (inExprSingleton obj) src of
+    fromArg ObjArr{oaObj=Just obj, oaArr=(Just e, _)} = case typeGetArg (inExprSingleton obj) src of
       Just (UnionType srcArg) -> mergeMaps $ map (exprVarArgsWithSrc typeEnv e) $ splitUnionType srcArg
       Just t@TopType{} -> (,t) <$> exprVarArgs e
       _ -> H.empty
-    fromArg ObjArr{oaArr=(Just (GuardExpr e _), _)} = exprVarArgsWithSrc typeEnv e src
-    fromArg ObjArr {oaObj=Just (GuardExpr obj _), oaArr=(Nothing, arrM)} = case typeGetArg (inExprSingleton obj) src of
+    fromArg ObjArr{oaArr=(Just e, _)} = exprVarArgsWithSrc typeEnv e src
+    fromArg ObjArr {oaObj=Just obj, oaArr=(Nothing, arrM)} = case typeGetArg (inExprSingleton obj) src of
       Just srcArg -> H.singleton (TVArg $ inExprSingleton obj) ([(obj, arrM)], srcArg)
       Nothing     -> H.empty
     fromArg oa = error $ printf "Invalid oa %s" (show oa)
@@ -100,12 +112,12 @@ exprVarArgsWithObjSrcs typeEnv os = exprVarArgsWithSrcs typeEnv $ map (\(src, ob
 -- Otherwise, it uses the minimal type that *must* be reached
 arrowDestType :: (Show m, MetaDat m) => Bool -> TypeEnv -> PartialType -> ObjArr Expr m -> Type
 arrowDestType fullDest typeEnv src oa@ObjArr{oaArr=(oaArrExpr, oaM)} = case oaArrExpr of
-  Just (GuardExpr n _) | isJust (maybeExprPath n) -> fromMaybe joined (H.lookup (TVArg $ inExprSingleton n) vaenv)
+  Just n | isJust (maybeExprPath n) -> fromMaybe joined (H.lookup (TVArg $ inExprSingleton n) vaenv)
   _                              -> joined
   where
     vaenv = snd <$> exprVarArgsWithSrc typeEnv (oaObjExpr oa) ((\(UnionType pl) -> head $ splitUnionType pl) $ substituteVars $ singletonType src)
     substitute = substituteWithVarArgEnv vaenv
-    expr' = fmap (substitute . getExprType . rgeExpr) oaArrExpr
+    expr' = fmap (substitute . getExprType) oaArrExpr
     arr' = substitute $ getMetaType oaM
     joined = if fullDest
       then unionTypes typeEnv (fromMaybe bottomType expr') arr'

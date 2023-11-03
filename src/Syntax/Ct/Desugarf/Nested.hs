@@ -46,6 +46,7 @@ scopeSubDeclFunNamesInExpr _ _ e@CExpr{} = e
 scopeSubDeclFunNamesInExpr prefix replaceNames (Value m name) = Value (scopeSubDeclFunNamesInMeta prefix replaceNames m) $ scopeSubDeclFunNamesInS prefix replaceNames name
 scopeSubDeclFunNamesInExpr _ _ e@HoleExpr{} = e
 scopeSubDeclFunNamesInExpr prefix replaceNames (AliasExpr b a) = AliasExpr (scopeSubDeclFunNamesInExpr prefix replaceNames b) (scopeSubDeclFunNamesInExpr prefix replaceNames a)
+scopeSubDeclFunNamesInExpr prefix replaceNames (EWhere b a) = EWhere (scopeSubDeclFunNamesInExpr prefix replaceNames b) (scopeSubDeclFunNamesInExpr prefix replaceNames a)
 scopeSubDeclFunNamesInExpr prefix replaceNames (TupleApply m (bm, bExpr) arg) = TupleApply m (bm, bExpr') arg'
   where
     bExpr' = scopeSubDeclFunNamesInExpr prefix replaceNames bExpr
@@ -69,18 +70,18 @@ scopeSubDeclFunNamesInMeta _ _ m@(Meta TypeVar{} _ _) = m
 
 -- Renames sub functions by applying the parent names as a prefix to avoid name collisions
 scopeSubDeclFunNames :: PSObjArr -> [PSemiDecl] -> (PSObjArr, [PSemiDecl])
-scopeSubDeclFunNames oa@ObjArr{oaObj=Just (GuardExpr objExpression _), oaAnnots, oaArr} decls = (oa{oaAnnots=annots', oaArr=oaArr'}, decls')
+scopeSubDeclFunNames oa@ObjArr{oaObj=Just objExpression, oaAnnots, oaArr} decls = (oa{oaAnnots=annots', oaArr=oaArr'}, decls')
   where
     prefix = exprPath objExpression
-    declNames = S.fromList $ map (\(PSemiDecl ObjArr{oaObj=Just (GuardExpr o _)}) -> exprPath o) decls
+    declNames = S.fromList $ map (\(PSemiDecl ObjArr{oaObj=Just o}) -> exprPath o) decls
     addPrefix n = prefix ++ "." ++ n
     scopeM = scopeSubDeclFunNamesInMeta prefix declNames
-    decls' = map (\(PSemiDecl doa@ObjArr{oaObj=Just (GuardExpr obj guard), oaArr=(doaArr, m)}) -> PSemiDecl doa{
-                     oaObj=Just (GuardExpr (mapExprPath (\(pM, pN) -> Value (scopeSubDeclFunNamesInMeta prefix (S.singleton pN) pM) (addPrefix pN)) obj) guard),
-                     oaArr = (fmap (\(GuardExpr e g) -> GuardExpr (scopeSubDeclFunNamesInExpr prefix declNames e) g) doaArr, scopeM m)
+    decls' = map (\(PSemiDecl doa@ObjArr{oaObj=Just obj, oaArr=(doaArr, m)}) -> PSemiDecl doa{
+                     oaObj=Just (mapExprPath (\(pM, pN) -> Value (scopeSubDeclFunNamesInMeta prefix (S.singleton pN) pM) (addPrefix pN)) obj),
+                     oaArr = (fmap (scopeSubDeclFunNamesInExpr prefix declNames) doaArr, scopeM m)
                      }) decls
     oaArr' = case oaArr of
-      (Just (GuardExpr e g), oaM) -> (Just (GuardExpr (scopeSubDeclFunNamesInExpr prefix declNames e) g), scopeM oaM)
+      (Just e, oaM) -> (Just (scopeSubDeclFunNamesInExpr prefix declNames e), scopeM oaM)
       (Nothing, oaM) -> (Nothing, scopeM oaM)
     annots' = map (scopeSubDeclFunNamesInExpr prefix declNames) oaAnnots
 scopeSubDeclFunNames oa _ = error $ printf "scopeSubDeclFunNames without input expression: %s" (show oa)
@@ -94,7 +95,7 @@ curryApplyParentArgs :: PSExpr -> ParentArgs -> PSExpr
 curryApplyParentArgs e parentArgs = applyExprIArgs e (map (\(parentArgName, parentArgM) -> (parentArgName, IArgE (Value (emptyMetaM "nest" parentArgM) (pkName parentArgName)))) $ H.toList $ fmap head parentArgs)
 
 currySubFunctionSignature :: ParentArgs -> PSemiDecl -> PSemiDecl
-currySubFunctionSignature parentArgs (PSemiDecl oa@ObjArr{oaObj=Just (GuardExpr obj guard)}) = PSemiDecl oa{oaObj=Just (GuardExpr obj' guard)}
+currySubFunctionSignature parentArgs (PSemiDecl oa@ObjArr{oaObj=Just obj}) = PSemiDecl oa{oaObj=Just obj'}
   where
     obj' = mapExprPath applyParentArgsToObjPath obj
     applyParentArgsToObjPath (objPathM, objPathN) = curryApplyParentArgsSignature (Value objPathM objPathN) parentArgs
@@ -108,6 +109,7 @@ currySubFunctionsUpdateExpr toUpdate parentArgs v@(Value _ vn) = if S.member vn 
   else v
 currySubFunctionsUpdateExpr _ _ e@HoleExpr{} = e
 currySubFunctionsUpdateExpr toUpdate parentArgs (AliasExpr b a) = AliasExpr (currySubFunctionsUpdateExpr toUpdate parentArgs b) (currySubFunctionsUpdateExpr toUpdate parentArgs a)
+currySubFunctionsUpdateExpr toUpdate parentArgs (EWhere b a) = EWhere (currySubFunctionsUpdateExpr toUpdate parentArgs b) (currySubFunctionsUpdateExpr toUpdate parentArgs a)
 currySubFunctionsUpdateExpr toUpdate parentArgs (TupleApply tm (tbm, tbe) targ) = TupleApply tm (tbm, tbe') targ'
   where
     tbe' = currySubFunctionsUpdateExpr toUpdate parentArgs tbe
@@ -117,16 +119,15 @@ currySubFunctionsUpdateExpr toUpdate parentArgs (VarApply tm tbe tVarName tVarVa
     tbe' = currySubFunctionsUpdateExpr toUpdate parentArgs tbe
 
 currySubFunctions :: PSObjArr -> [PSemiDecl] -> (PSObjArr, [PSemiDecl])
-currySubFunctions oa@ObjArr{oaObj=Just (GuardExpr objExpression _), oaAnnots, oaArr} decls = (oa{oaAnnots=annots', oaArr=oaArr'}, decls')
+currySubFunctions oa@ObjArr{oaObj=Just objExpression, oaAnnots, oaArr} decls = (oa{oaAnnots=annots', oaArr=oaArr'}, decls')
   where
     parentArgs = map snd <$> exprArgs objExpression
-    toUpdate = S.fromList $ map (\(PSemiDecl ObjArr{oaObj=Just (GuardExpr o _)}) -> exprPath o) decls
+    toUpdate = S.fromList $ map (\(PSemiDecl ObjArr{oaObj=Just o}) -> exprPath o) decls
     decls2 = map (currySubFunctionSignature parentArgs) decls
     oaArr' = case oaArr of
-      (Just (GuardExpr e g), m) -> (Just (GuardExpr (currySubFunctionsUpdateExpr toUpdate parentArgs e) g), m)
+      (Just e, m) -> (Just (currySubFunctionsUpdateExpr toUpdate parentArgs e), m)
       (Nothing, m) -> (Nothing, m)
-    decls' = map (\(PSemiDecl doa@ObjArr{oaArr=doaArr}) -> PSemiDecl doa{oaArr=first (fmap (currySubFunctionsUpdateGuardExpr toUpdate parentArgs)) doaArr}) decls2
-    currySubFunctionsUpdateGuardExpr u p (GuardExpr e g) = GuardExpr (currySubFunctionsUpdateExpr u p e) g
+    decls' = map (\(PSemiDecl doa@ObjArr{oaArr=doaArr}) -> PSemiDecl doa{oaArr=first (fmap (currySubFunctionsUpdateExpr toUpdate parentArgs)) doaArr}) decls2
     annots' = map (currySubFunctionsUpdateExpr toUpdate parentArgs) oaAnnots
 currySubFunctions oa _ = error $ printf "currySubFunctions without input expression: %s" (show oa)
 

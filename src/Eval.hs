@@ -89,6 +89,13 @@ evalCompAnnot env (TupleVal "/Catln/#assert" args) = case (H.lookup "/test" args
 evalCompAnnot env TupleVal{} = return env
 evalCompAnnot env _ = evalError env "Eval: Invalid compiler annotation type"
 
+evalGuards :: Env -> Val -> EObjArr -> CRes (Bool, Env)
+evalGuards = undefined
+  -- case cond' of
+  --   b | b == true -> evalPopVal <$> evalCallTree (evalPush env4 $ "then for " ++ show ifObj) m ifThenTree
+  --   b | b == false -> evalPopVal <$> evalCallTree (evalPush env4 $ "else for " ++ show ifObj) m (TCCond resType restIfTrees elseTree)
+  --   _ -> error "Non-Bool eval resArrowCond"
+
 evalCallTree :: Env -> Val -> TCallTree -> CRes (Val, Env)
 -- evalCallTree _ v ct | trace (printf "evalCallTree %s using %s" (show v) (show ct)) False = undefined
 evalCallTree env v TCTId = return (v, env)
@@ -140,7 +147,8 @@ evalExpr env (TValue m _) = do
   return (TupleVal ptName H.empty, env)
 evalExpr _ (THoleExpr m h) = CErr [MkCNote $ GenCErr (getMetaPos m) $ printf "Can't evaluate hole %s" (show h)]
 evalExpr env (TAliasExpr b _) = evalExpr env b
-evalExpr env@Env{evArgs} (TTupleApply _ (_, b) oa@ObjArr{oaObj=Just (GuardExpr (TValue _ "/io") Nothing), oaArr=(Nothing, _)}) = do
+evalExpr env (TWhere b _) = evalExpr env b
+evalExpr env@Env{evArgs} (TTupleApply _ (_, b) oa@ObjArr{oaObj=Just (TValue _ "/io"), oaArr=(Nothing, _)}) = do
   (TupleVal n args, env') <- evalExpr env b
   case H.lookup "/io" evArgs of
     Just io -> return (TupleVal n (H.insert (oaObjPath oa) io args), env')
@@ -148,9 +156,9 @@ evalExpr env@Env{evArgs} (TTupleApply _ (_, b) oa@ObjArr{oaObj=Just (GuardExpr (
 evalExpr env (TTupleApply _ (_, b) oa) = do
   (TupleVal n args, env') <- evalExpr env b
   (v, env'') <- case oaArr oa of
-    (Just (GuardExpr oaExpr _), _) -> case oaObj oa of
-      Just (GuardExpr TValue{} _) -> evalExpr env' oaExpr
-      Just (GuardExpr TTupleApply{} _) -> return (ObjArrVal oa, env')
+    (Just oaExpr, _) -> case oaObj oa of
+      Just TValue{} -> evalExpr env' oaExpr
+      Just TTupleApply{} -> return (ObjArrVal oa, env')
       _ -> error $ printf "Unsupported eval argument of %s" (show oa)
     (Nothing, _) -> error $ printf "Missing arrExpr in evalExpr TupleApply with %s - %s" (show b) (show oa)
   return (TupleVal n (H.insert (oaObjPath oa) v args), env'')
@@ -199,7 +207,7 @@ evalAnnots prgmName prgmGraphData = do
   let env@Env{evTbEnv} = evalBaseEnv prgm
   forM annots $ \annot -> do
     let emptyType = partialVal "EmptyObj"
-    let emptyObj = ObjArr (Just (GuardExpr (Value (Meta (singletonType emptyType) Nothing emptyMetaDat) "EmptyObj") Nothing)) FunctionObj Nothing [] (Nothing, emptyMetaN)
+    let emptyObj = ObjArr (Just (Value (Meta (singletonType emptyType) Nothing emptyMetaDat) "EmptyObj")) FunctionObj Nothing [] (Nothing, emptyMetaN)
     tree <- toTExpr evTbEnv [(emptyType, emptyObj)] annot
     val <- fst <$> evalExpr env tree
     return (annot, val)

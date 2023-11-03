@@ -35,14 +35,11 @@ interleaveExpr (VarApply m be _ argM) = H.unions [
                                                       ]
 interleaveExpr e = interleaveM $ getExprMeta  e
 
-interleaveGuardExpr :: GuardExpr Expr m -> H.HashMap CodeRangeDat (Meta m)
-interleaveGuardExpr (GuardExpr e g) = H.unions [interleaveExpr e, maybe H.empty interleaveExpr g]
-
 interleaveObjArr :: ObjArr Expr m -> H.HashMap CodeRangeDat (Meta m)
 interleaveObjArr ObjArr{oaObj, oaAnnots, oaArr} = H.unions [
-  maybe H.empty interleaveGuardExpr oaObj,
+  maybe H.empty interleaveExpr oaObj,
   H.unions $ map interleaveExpr oaAnnots,
-  (uncurry H.union . bimap (maybe H.empty interleaveGuardExpr) interleaveM) oaArr
+  (uncurry H.union . bimap (maybe H.empty interleaveExpr) interleaveM) oaArr
   ]
 
 interleavePrgm :: Prgm Expr m -> H.HashMap CodeRangeDat (Meta m)

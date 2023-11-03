@@ -75,9 +75,10 @@ formatExpr (RawHoleExpr _ HoleTodefine) = "todefine"
 formatExpr (RawTheExpr t) = printf ":%s" (formatExpr t)
 formatExpr (RawSpread t) = printf "%s.." (formatExpr t)
 formatExpr (RawAliasExpr base alias) = printf "%s@%s" (formatExpr base) (formatExpr alias)
+formatExpr (RawWhere base cond) = printf "%s | %s" (formatExpr base) (formatExpr cond)
 formatExpr (RawTupleApply _ (_, RawValue _ n) args) | operatorPrefix `isPrefixOf` n = case args of
-  [RawObjArr{ roaArr=(Just (Just (GuardExpr a _), _))}] -> operatorName ++ formatExpr a
-  [RawObjArr{ roaArr=(Just (Just (GuardExpr l _), _))}, RawObjArr{roaArr=(Just (Just (GuardExpr r _), _))}] -> if n == operatorType
+  [RawObjArr{ roaArr=(Just (Just a, _))}] -> operatorName ++ formatExpr a
+  [RawObjArr{ roaArr=(Just (Just l, _))}, RawObjArr{roaArr=(Just (Just r, _))}] -> if n == operatorType
     then printf "%s%s %s" (formatExpr l) operatorName (formatExpr r) -- Show types as "x: 5" instead of "x : 5"
     else printf "%s %s %s" (formatExpr l) operatorName (formatExpr r)
   _ -> error "Non unary or binary operator found in formatExpr"
@@ -98,17 +99,17 @@ formatIsa []      = ""
 formatIsa classes = " isa " ++ intercalate ", " classes
 
 formatObjArr :: RawObjArr RawExpr m -> String
-formatObjArr roa@RawObjArr{roaObj, roaArr, roaDef} = printf "%s%s%s%s%s%s" (showGuardExpr True roaObj) showElse showM showEquals (showGuardExpr False roaArrExpr) showDef
+formatObjArr roa@RawObjArr{roaObj, roaArr, roaDef} = printf "%s%s%s%s%s%s" (showE True roaObj) showElse showM showEquals (showE False roaArrExpr) showDef
   where
     roaArrExpr = fst =<< roaArr
 
     isNestedDeclaration = case roaArr of
-      (Just (Just (GuardExpr (RawValue _ n) _), _)) | n == nestedDeclaration -> True
-      _                                                            -> False
+      (Just (Just (RawValue _ n), _)) | n == nestedDeclaration -> True
+      _                                                        -> False
 
-    showGuardExpr False _ | isNestedDeclaration = ""
-    showGuardExpr _ (Just (GuardExpr e g)) = formatExpr e ++ formatGuard g
-    showGuardExpr _ Nothing = ""
+    showE False _ | isNestedDeclaration = ""
+    showE _ (Just e) = formatExpr e
+    showE _ Nothing = ""
 
     showM :: String
     showM  = case fmap (getMetaType . snd) roaArr of
@@ -121,10 +122,6 @@ formatObjArr roa@RawObjArr{roaObj, roaArr, roaDef} = printf "%s%s%s%s%s%s" (show
       _ | isNestedDeclaration    -> " ="
       (Just _, Just (Just{}, _)) -> "= "
       _                          -> ""
-
-    formatGuard :: ExprCond RawExpr m -> String
-    formatGuard (Just e) = printf " | %s" (formatExpr e)
-    formatGuard Nothing  = ""
 
     showElse :: String
     showElse = if hasElseAnnot roa then " else " else ""
@@ -141,11 +138,7 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
       RawDeclStatement objArr -> formatObjArr objArr
       MultiTypeDefStatement (MultiTypeDef clss objs extends) -> printf "class %s = %s%s" (formatExpr clss) showObjs (formatIsa extends)
         where
-          formatGuardExpr :: GuardExpr RawExpr m -> String
-          formatGuardExpr (GuardExpr e Nothing) = formatExpr e
-          formatGuardExpr (GuardExpr e (Just g)) = printf "%s | %s" (formatExpr e) (formatExpr g)
-
-          showObjs = intercalate " | " $ map formatGuardExpr objs
+          showObjs = intercalate " | " $ map formatExpr objs
       TypeDefStatement typeExpr -> if "#" `isPrefixOf` exprPath typeExpr
         then printf "annot %s" (formatExpr typeExpr)
         else printf "data %s" (formatExpr typeExpr)

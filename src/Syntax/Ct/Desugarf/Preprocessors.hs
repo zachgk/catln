@@ -33,53 +33,53 @@ showDeclTrees :: [PDeclTree] -> String
 showDeclTrees trees = intercalate "" $ map (\(d, ss) -> build $ formatStatementTree True 0 $ RawStatementTree (RawDeclStatement d) ss) trees
 
 ifDeclPreprocessor :: PDeclTree -> CRes [PDeclTree]
-ifDeclPreprocessor (roa@RawObjArr{roaObj=Just (GuardExpr declObj _), roaArr=Just (Just (GuardExpr expr Nothing), _)}, subStatements) = return [(decl', matchDecls ++ subStatements')]
+ifDeclPreprocessor (roa@RawObjArr{roaObj=Just declObj, roaArr=Just (Just expr, _)}, subStatements) = return [(decl', matchDecls ++ subStatements')]
   where
     condName = "$" ++ take 6 (printf "%08x" (hash roa))
     argName = condName ++ "-arg"
 
     -- Main declaration
     expr' = case exprAppliedArgs expr of
-      [ObjArr{oaObj=Just (GuardExpr matching _)}] -> rawVal condName `applyRawArgs` [(Just $ partialKey argName, rawVal "/Catln/ThenElse/fromBool" `applyRawArgs` [(Just $ partialKey "v", matching)])]
+      [ObjArr{oaObj=Just matching}] -> rawVal condName `applyRawArgs` [(Just $ partialKey argName, rawVal "/Catln/ThenElse/fromBool" `applyRawArgs` [(Just $ partialKey "v", matching)])]
       _ -> error "Invalid matching expression"
-    decl' = roa{roaArr=Just (Just (GuardExpr expr' Nothing), emptyMetaE "arrM" expr')}
+    decl' = roa{roaArr=Just (Just expr', emptyMetaE "arrM" expr')}
 
     -- Pattern declarations
     (subStatements', matchDecls) = partitionEithers $ map mapEitherMatchStatements subStatements
-    mapEitherMatchStatements (RawStatementTree (RawDeclStatement RawObjArr{roaObj=(Just (GuardExpr matchObj matchGuard)), roaAnnots, roaArr=(Just (Just (GuardExpr matchExpr _), matchDeclM))}) matchSubStatements) = Right (RawStatementTree (RawDeclStatement matchDeclLhs') matchSubStatements)
+    mapEitherMatchStatements (RawStatementTree (RawDeclStatement RawObjArr{roaObj=(Just matchObj), roaAnnots, roaArr=(Just (Just matchExpr, matchDeclM))}) matchSubStatements) = Right (RawStatementTree (RawDeclStatement matchDeclLhs') matchSubStatements)
       where
         matchArg = [(Just $ partialKey argName, RawAliasExpr (RawHoleExpr emptyMetaN (HoleActive Nothing)) matchObj)]
-        matchDeclLhs' = RawObjArr (Just $ GuardExpr (rawVal condName `applyRawExprVars` H.toList (exprAppliedVars declObj)`applyRawArgs` matchArg) matchGuard) FunctionObj Nothing roaAnnots (Just (Just (GuardExpr matchExpr Nothing), emptyMetaM "obj" matchDeclM)) Nothing
+        matchDeclLhs' = RawObjArr (Just $ rawVal condName `applyRawExprVars` H.toList (exprAppliedVars declObj)`applyRawArgs` matchArg) FunctionObj Nothing roaAnnots (Just (Just matchExpr, emptyMetaM "obj" matchDeclM)) Nothing
 
     mapEitherMatchStatements statementTree@(RawStatementTree RawAnnot{} _) = Left statementTree
     mapEitherMatchStatements _ = error "Invalid subStatement in matchDeclPreprocessor"
 ifDeclPreprocessor _ = error "Invalid ifDeclPreprocessor"
 
 matchDeclPreprocessor :: PDeclTree -> CRes [PDeclTree]
-matchDeclPreprocessor (roa@RawObjArr{roaObj=Just (GuardExpr declObj _), roaArr=Just (Just (GuardExpr expr Nothing), _)}, subStatements) = return [(decl', matchDecls ++ subStatements')]
+matchDeclPreprocessor (roa@RawObjArr{roaObj=Just declObj, roaArr=Just (Just expr, _)}, subStatements) = return [(decl', matchDecls ++ subStatements')]
   where
     condName = "$" ++ take 6 (printf "%08x" (hash roa))
     argName = condName ++ "-arg"
 
     -- Main declaration
     expr' = case exprAppliedArgs expr of
-      [ObjArr{oaObj=Just (GuardExpr matching _)}] -> applyRawArgs (rawVal condName) [(Just $ partialKey argName, matching)]
+      [ObjArr{oaObj=Just matching}] -> applyRawArgs (rawVal condName) [(Just $ partialKey argName, matching)]
       _ -> error "Invalid matching expression"
-    decl' = roa{roaArr=Just (Just (GuardExpr expr' Nothing), emptyMetaE "arrM" expr')}
+    decl' = roa{roaArr=Just (Just expr', emptyMetaE "arrM" expr')}
 
     -- Pattern declarations
     (subStatements', matchDecls) = partitionEithers $ map mapEitherMatchStatements subStatements
-    mapEitherMatchStatements (RawStatementTree (RawDeclStatement RawObjArr{roaObj=(Just (GuardExpr matchObj matchGuard)), roaAnnots, roaArr=(Just (Just (GuardExpr matchExpr _), matchDeclM))}) matchSubStatements) = Right (RawStatementTree (RawDeclStatement matchDeclLhs') matchSubStatements)
+    mapEitherMatchStatements (RawStatementTree (RawDeclStatement RawObjArr{roaObj=(Just matchObj), roaAnnots, roaArr=(Just (Just matchExpr, matchDeclM))}) matchSubStatements) = Right (RawStatementTree (RawDeclStatement matchDeclLhs') matchSubStatements)
       where
         matchArg = [(Just $ partialKey argName, RawAliasExpr (RawHoleExpr emptyMetaN (HoleActive Nothing)) matchObj)]
-        matchDeclLhs' = RawObjArr (Just $ GuardExpr (rawVal condName `applyRawExprVars` H.toList (exprAppliedVars declObj)`applyRawArgs` matchArg) matchGuard) FunctionObj Nothing roaAnnots (Just (Just (GuardExpr matchExpr Nothing), emptyMetaM "obj" matchDeclM)) Nothing
+        matchDeclLhs' = RawObjArr (Just $ rawVal condName `applyRawExprVars` H.toList (exprAppliedVars declObj)`applyRawArgs` matchArg) FunctionObj Nothing roaAnnots (Just (Just matchExpr, emptyMetaM "obj" matchDeclM)) Nothing
 
     mapEitherMatchStatements statementTree@(RawStatementTree RawAnnot{} _) = Left statementTree
     mapEitherMatchStatements _ = error "Invalid subStatement in matchDeclPreprocessor"
 matchDeclPreprocessor _ = error "Invalid matchDeclPreprocessor"
 
 caseDeclPreprocessor :: PDeclTree -> CRes [PDeclTree]
-caseDeclPreprocessor (roa@RawObjArr{roaArr=Just (Just (GuardExpr expr _), _)}, subStatements) = return [(decl', cases' ++ subStatements')]
+caseDeclPreprocessor (roa@RawObjArr{roaArr=Just (Just expr, _)}, subStatements) = return [(decl', cases' ++ subStatements')]
   where
     baseCondName = "$" ++ take 6 (printf "%08x" (hash roa))
     argName = baseCondName ++ "-arg"
@@ -87,9 +87,9 @@ caseDeclPreprocessor (roa@RawObjArr{roaArr=Just (Just (GuardExpr expr _), _)}, s
     condName i = printf "%s-%d" baseCondName i
 
     -- Main Declaration
-    [ObjArr{oaObj=Just (GuardExpr matchingExpr _)}] = exprAppliedArgs expr
+    [ObjArr{oaObj=Just matchingExpr}] = exprAppliedArgs expr
     expr' = applyRawArgs (rawVal (condName 0)) [(Just $ partialKey argName, matchingExpr)]
-    decl' = roa{roaArr=Just (Just (GuardExpr expr' Nothing), emptyMetaE "arrM" expr')}
+    decl' = roa{roaArr=Just (Just expr', emptyMetaE "arrM" expr')}
 
     -- Find cases
     (subStatements', cases) = partitionEithers $ map mapEitherCaseStatements subStatements
@@ -98,24 +98,24 @@ caseDeclPreprocessor (roa@RawObjArr{roaArr=Just (Just (GuardExpr expr _), _)}, s
     mapEitherCaseStatements _ = error "Invalid subStatement in case preprocessor"
 
     initCase' = zipWith (curry buildInitCase) [0..] (init cases)
-    buildInitCase (i, (RawObjArr{roaObj=(Just (GuardExpr caseObj caseGuard)), roaAnnots, roaArr=(Just (Just (GuardExpr caseExpr _), caseDeclM))}, caseSubStatements)) = [matchingCase, fallthroughCase]
+    buildInitCase (i, (RawObjArr{roaObj=(Just caseObj), roaAnnots, roaArr=(Just (Just caseExpr, caseDeclM))}, caseSubStatements)) = [matchingCase, fallthroughCase]
       where
         declObj = rawVal (condName i) `applyRawArgs` [(Just $ partialKey argName, RawAliasExpr (RawHoleExpr emptyMetaN (HoleActive Nothing)) caseObj)]
-        matchingCase = RawStatementTree (RawDeclStatement (RawObjArr (Just (GuardExpr declObj caseGuard)) FunctionObj Nothing roaAnnots (Just (Just (GuardExpr caseExpr Nothing), emptyMetaM "matching" caseDeclM)) Nothing)) caseSubStatements
+        matchingCase = RawStatementTree (RawDeclStatement (RawObjArr (Just declObj) FunctionObj Nothing roaAnnots (Just (Just caseExpr, emptyMetaM "matching" caseDeclM)) Nothing)) caseSubStatements
         fallthroughExpr = applyRawArgs (rawVal (condName $ i + 1)) [(Just $ partialKey argName, matchingExpr)]
-        fallthroughCase = RawStatementTree (RawDeclStatement (RawObjArr (Just (GuardExpr declObj Nothing)) FunctionObj Nothing [rawVal elseAnnot] (Just (Just (GuardExpr fallthroughExpr Nothing), emptyMetaM "fallthrough" caseDeclM)) Nothing)) []
+        fallthroughCase = RawStatementTree (RawDeclStatement (RawObjArr (Just declObj) FunctionObj Nothing [rawVal elseAnnot] (Just (Just fallthroughExpr, emptyMetaM "fallthrough" caseDeclM)) Nothing)) []
     buildInitCase (_, decl) = error $ printf "Missing expression in buildInitCase %s" (show decl)
 
-    (RawObjArr{roaObj=(Just (GuardExpr lastCaseObj lastCaseGuard)), roaArr=(Just (Just (GuardExpr lastCaseExpr _), lastCaseDeclM))}, lastCaseSubStatements) = last cases
+    (RawObjArr{roaObj=(Just lastCaseObj), roaArr=(Just (Just lastCaseExpr, lastCaseDeclM))}, lastCaseSubStatements) = last cases
     lastCaseDeclObj = rawVal (condName $ length cases - 1) `applyRawArgs` [(Just $ partialKey argName, RawAliasExpr (RawHoleExpr emptyMetaN (HoleActive Nothing)) lastCaseObj)]
-    lastCase' = RawStatementTree (RawDeclStatement (RawObjArr (Just (GuardExpr lastCaseDeclObj lastCaseGuard)) FunctionObj Nothing [] (Just (Just (GuardExpr lastCaseExpr Nothing), emptyMetaM "fallthrough" lastCaseDeclM)) Nothing)) lastCaseSubStatements
+    lastCase' = RawStatementTree (RawDeclStatement (RawObjArr (Just lastCaseDeclObj) FunctionObj Nothing [] (Just (Just lastCaseExpr, emptyMetaM "fallthrough" lastCaseDeclM)) Nothing)) lastCaseSubStatements
     cases' = concat initCase' ++ [lastCase']
 caseDeclPreprocessor _ = error "Invalid caseDeclPreprocessor"
 
 -- | A declPreprocessor for multi-line expressions. Will search for the final result expression and move it to the top
 nestedDeclPreprocessor :: PDeclTree -> CRes [PDeclTree]
 nestedDeclPreprocessor (oa, subStatements) = case exprs' of
-  [e] -> return [(oa{roaArr=Just (Just (GuardExpr e Nothing), emptyMetaE "arrM" e)}, subStatements')]
+  [e] -> return [(oa{roaArr=Just (Just e, emptyMetaE "arrM" e)}, subStatements')]
   [] -> fail $ printf "Found no output expressions in nested declaration: %s" (show oa)
   (_:_:_) -> fail $ printf "Found multiple output expressions in nested declaration: %s" (show oa)
 
@@ -129,7 +129,7 @@ defaultDeclPreprocessor :: PDeclTree -> CRes [PDeclTree]
 defaultDeclPreprocessor declTree = return [declTree]
 
 declPreprocessors :: PDeclTree -> CRes [PDeclTree]
-declPreprocessors declTree@(RawObjArr{roaArr=Just (Just (GuardExpr expr _), _)}, _) = case maybeExprPath expr of
+declPreprocessors declTree@(RawObjArr{roaArr=Just (Just expr, _)}, _) = case maybeExprPath expr of
   Just "if"                             -> ifDeclPreprocessor declTree
   Just "match"                          -> matchDeclPreprocessor declTree
   Just "case"                           -> caseDeclPreprocessor declTree

@@ -79,7 +79,7 @@ convertTypeToExpr flags _ p = error $ printf "Convert unsupported type:\n%s" (sh
 convertTypeToObj :: DynFlags -> String -> HsType GhcPs -> RawObjArr RawExpr ()
 convertTypeToObj flags _ p@HsForAllTy{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
 convertTypeToObj flags _ p@HsAppKindTy{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
-convertTypeToObj flags i (HsFunTy _ base app) = RawObjArr (Just (GuardExpr (convertTypeToExpr flags (Just $ RawValue emptyMetaN i) $ unLoc base) Nothing)) FunctionObj Nothing [] (Just (Nothing, emptyMetaT $ exprToType $ convertTypeToExpr flags Nothing $ unLoc app)) Nothing
+convertTypeToObj flags i (HsFunTy _ base app) = RawObjArr (Just (convertTypeToExpr flags (Just $ RawValue emptyMetaN i) $ unLoc base)) FunctionObj Nothing [] (Just (Nothing, emptyMetaT $ exprToType $ convertTypeToExpr flags Nothing $ unLoc app)) Nothing
 convertTypeToObj flags _ p@HsListTy{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
 convertTypeToObj flags _ p@HsTupleTy{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
 convertTypeToObj flags _ p@HsSumTy{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
@@ -97,7 +97,7 @@ convertTypeToObj flags _ p@HsExplicitTupleTy{} = error $ printf "Convert unsuppo
 convertTypeToObj flags _ p@HsTyLit{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
 convertTypeToObj flags _ p@HsWildCardTy{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
 convertTypeToObj flags _ p@XHsType{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
-convertTypeToObj flags i p = RawObjArr (Just (GuardExpr (convertTypeToExpr flags (Just $ RawValue emptyMetaN i) p) Nothing)) FunctionObj Nothing [] Nothing Nothing -- Fallback to using expr obj
+convertTypeToObj flags i p = RawObjArr (Just (convertTypeToExpr flags (Just $ RawValue emptyMetaN i) p)) FunctionObj Nothing [] Nothing Nothing -- Fallback to using expr obj
 
 convertRecordFields :: DynFlags -> RawExpr () -> HsRecFields GhcPs (LPat GhcPs) -> RawExpr ()
 convertRecordFields flags base (HsRecFields fields Nothing) = foldl convertRecordField base (map unLoc fields)
@@ -232,7 +232,7 @@ convertStmtLR flags (BindStmt _ pat body _ _) = [RawStatementTree (RawDeclStatem
     -- TODO: Should use bind rather than basic objArr
     pat' = convertPattern flags Nothing $ unLoc pat
     (expr', subStatements) = convertExpr flags $ unLoc body
-    oa = RawObjArr (Just (GuardExpr pat' Nothing)) FunctionObj Nothing [] (Just (Just (GuardExpr expr' Nothing), emptyMetaN)) Nothing
+    oa = RawObjArr (Just pat') FunctionObj Nothing [] (Just (Just expr', emptyMetaN)) Nothing
 convertStmtLR flags p@ApplicativeStmt{} = error $ printf "Convert unsupported stmtLR:\n%s" (showSDoc flags $ ppr p)
 convertStmtLR flags (BodyStmt _ body _ _) = [RawStatementTree (RawExprStatement expr') subStatements]
   where
@@ -280,7 +280,11 @@ convertMatch :: DynFlags -> Maybe String -> Match GhcPs (LHsExpr GhcPs) -> (RawO
 convertMatch flags i (Match _ _ pats grhs) = (oa, subStatements)
   where
     (arr, subStatements, guard) = convertGRHSs flags grhs
-    oa = RawObjArr (Just (GuardExpr (fromJust (foldl (\p b -> Just $ convertPattern flags p b) (fmap rawVal i) (map unLoc pats))) guard)) FunctionObj Nothing [] (Just (Just (GuardExpr arr Nothing), emptyMetaN)) Nothing
+    objExpr = fromJust (foldl (\p b -> Just $ convertPattern flags p b) (fmap rawVal i) (map unLoc pats))
+    guardObjExpr = case guard of
+      Just g  -> RawWhere objExpr g
+      Nothing -> objExpr
+    oa = RawObjArr (Just guardObjExpr) FunctionObj Nothing [] (Just (Just arr, emptyMetaN)) Nothing
 convertMatch flags _ p = error $ printf "Convert unsupported match:\n%s" (showSDoc flags $ ppr p)
 
 -- https://www.stackage.org/haddock/lts-18.28/ghc-lib-parser-8.10.7.20220219/GHC-Hs-Binds.html#t:HsBindLR
@@ -304,9 +308,9 @@ convertConDeclDetails :: DynFlags -> RawExpr () -> HsConDeclDetails GhcPs -> Raw
 convertConDeclDetails flags base (PrefixCon args) = foldl (convertTypeToExpr flags . Just) base $ map unLoc args
 convertConDeclDetails flags _ p = error $ printf "Convert unsupported ConDeclDetails:\n%s" (showSDoc flags $ ppr p)
 
-convertConDecl :: DynFlags -> ConDecl GhcPs -> GuardExpr RawExpr ()
+convertConDecl :: DynFlags -> ConDecl GhcPs -> RawExpr ()
 convertConDecl flags p@ConDeclGADT{} = error $ printf "Convert unsupported ConDecl:\n%s" (showSDoc flags $ ppr p)
-convertConDecl flags (ConDeclH98 _ name _ [] Nothing args Nothing) = GuardExpr (convertConDeclDetails flags (rawVal (convertIdP flags $ unLoc name)) args) Nothing
+convertConDecl flags (ConDeclH98 _ name _ [] Nothing args Nothing) = convertConDeclDetails flags (rawVal (convertIdP flags $ unLoc name)) args
 convertConDecl flags p@XConDecl{} = error $ printf "Convert unsupported ConDecl:\n%s" (showSDoc flags $ ppr p)
 convertConDecl flags p = error $ printf "Convert unsupported ConDecl:\n%s" (showSDoc flags $ ppr p)
 
@@ -328,7 +332,7 @@ convertQTyVars flags _ p = error $ printf "Convert unsupported DerivingClause:\n
 -- https://www.stackage.org/haddock/lts-18.28/ghc-lib-parser-8.10.7.20220219/GHC-Hs-Decls.html#t:TyClDecl
 convertTyClDecl :: DynFlags -> TyClDecl GhcPs -> [RawStatementTree RawExpr ()]
 convertTyClDecl flags p@FamDecl{} = error $ printf "Convert unsupported TyClDecl:\n%s" (showSDoc flags $ ppr p)
-convertTyClDecl flags (SynDecl _ name vars _ rhs) = [RawStatementTree (MultiTypeDefStatement $ MultiTypeDef (convertQTyVars flags (convertIdP flags $ unLoc name) vars) [GuardExpr (convertTypeToExpr flags Nothing $ unLoc rhs) Nothing] []) []]
+convertTyClDecl flags (SynDecl _ name vars _ rhs) = [RawStatementTree (MultiTypeDefStatement $ MultiTypeDef (convertQTyVars flags (convertIdP flags $ unLoc name) vars) [convertTypeToExpr flags Nothing $ unLoc rhs] []) []]
 convertTyClDecl flags (DataDecl _ name vars _fixity (HsDataDefn _ _ _ Nothing Nothing cons derivs)) = [RawStatementTree (MultiTypeDefStatement $ MultiTypeDef (convertQTyVars flags (convertIdP flags $ unLoc name) vars) (map (convertConDecl flags . unLoc) cons) (concatMap (convertDerivingClause flags . unLoc) $ unLoc derivs)) []]
 -- convertTyClDecl flags (ClassDecl _ _ name vars _ fds sigs defs ats atDefs docs) | trace (printf "fds: %d, sigs: %d, ats: %d, atDefs: %d, docs: %d" (length fds) (length sigs) (length ats) (length atDefs) (length docs)) False = undefined
 convertTyClDecl flags (ClassDecl _ _ name vars _ [] sigs defs [] [] []) = [RawStatementTree (RawClassDeclStatement $ convertQTyVars flags (convertIdP flags $ unLoc name) vars) (sigs' ++ defs')]

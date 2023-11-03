@@ -469,7 +469,7 @@
                     ( Value /x -> /Data/Primitive/Integer = CInt 0 )
                 ) ( Value /this -> TVArg /io = Value /io )
             , /abs ( Value /x -> /Data/Primitive/Integer ) -> TVArg /x = Value /x
-            , /abs ( Value /x -> /Data/Primitive/Integer ) if /operator>= ( Value /l -> TVArg /x = Value /x )
+            , /abs ( Value /x -> /Data/Primitive/Integer ) | /operator>= ( Value /l -> TVArg /x = Value /x )
                 ( Value /r -> /Data/Primitive/Integer = CInt 0 ) -> TVArg /x = Value /x
             ]
         ,

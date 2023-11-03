@@ -440,7 +440,7 @@
 ,
     (
         (
-            [ /fib ( Value integer -> /Data/Primitive/Integer ) if /operator> ( Value /l= Value integer )
+            [ /fib ( Value integer -> /Data/Primitive/Integer ) | /operator> ( Value /l= Value integer )
                 ( Value /r= CInt 1 ) = /operator+
                 ( Value /l= fib
                     ( Value integer= /operator- ( Value /l= Value integer )
