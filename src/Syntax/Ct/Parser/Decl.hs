@@ -22,13 +22,11 @@ import           Constants
 import           Data.List
 import           Semantics
 import           Semantics.Prgm
-import           Semantics.Types
 import           Syntax.Ct.Parser.Expr
 import           Syntax.Ct.Parser.Lexer
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 import           Text.Megaparsec.Char
-import           Text.Printf
 
 pCompAnnot :: Parser PCompAnnot
 pCompAnnot = do
@@ -51,20 +49,14 @@ pComment = do
 
 pDeclStatement :: Parser PStatement
 pDeclStatement = do
-  roa@RawObjArr{roaObj=(Just (GuardExpr inExpr guard)), roaM=arrMeta, roaArr=out} <- pArrowFull FunctionObj
+  roa@RawObjArr{roaObj=(Just (GuardExpr inExpr _)), roaArr=out} <- pArrowFull FunctionObj
 
   case out of
-    -- No equals (declaration or expression)
-    Nothing -> case guard of
-
-      -- expression
-      Nothing | getMetaType arrMeta == topType -> return $ RawExprStatement inExpr
-
-      -- Declaration
-      _ | getMetaType arrMeta /= topType -> return $ RawDeclStatement roa
-
-      -- Must be either a declaration or an expression
-      _ -> fail $ printf "Invalid declaration or expression: %s" (show roa)
+    -- No equals but meta so declaration
+    (Just (Nothing, _)) -> return $ RawDeclStatement roa
 
     -- Equals and expr (inline definition)
-    Just{} -> return $ RawDeclStatement roa
+    (Just (Just{}, _))  -> return $ RawDeclStatement roa
+
+    -- Must be either a declaration or an expression
+    Nothing             -> return $ RawExprStatement inExpr

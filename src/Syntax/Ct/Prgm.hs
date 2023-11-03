@@ -24,6 +24,7 @@ import           Data.Void           (Void)
 import           GHC.Generics        (Generic)
 
 import           Data.Aeson          hiding (Object)
+import           Data.Maybe          (isJust)
 import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Megaparsec
@@ -35,8 +36,7 @@ data RawObjArr e m = RawObjArr {
   roaBasis  :: !ObjectBasis,
   roaDoc    :: !(Maybe DocComment),
   roaAnnots :: ![CompAnnot (e m)],
-  roaM      :: !(Meta m),
-  roaArr    :: !(Maybe (GuardExpr e m)),
+  roaArr    :: !(Maybe (Maybe (GuardExpr e m), Meta m)),
   roaDef    :: !(Maybe (e m))
                                }
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
@@ -166,28 +166,27 @@ instance ExprClass RawExpr where
 instance ObjArrClass RawObjArr where
   oaVarArgs roa = exprArg roa
     where
-      exprArg RawObjArr{roaArr=(Just (GuardExpr argVal Nothing))} = exprVarArgs argVal
+      exprArg RawObjArr{roaArr=(Just (Just (GuardExpr argVal Nothing), _))} = exprVarArgs argVal
       exprArg RawObjArr{roaObj=(Just (GuardExpr obj Nothing)), roaArr= Nothing} = case exprPathM obj of
         (n, m) -> H.singleton (TVArg TVInt n) [m]
       exprArg oa = error $ printf "exprVarArgs not defined for arg %s" (show oa)
   getOaAnnots = roaAnnots
 
 instance (Show m, Show (e m)) => Show (RawObjArr e m) where
-  show RawObjArr{roaObj, roaM, roaArr, roaDef} = printf "%s%s%s%s%s" (showNoMaybe roaObj) showM showEquals (showNoMaybe roaArr) showDef
+  show RawObjArr{roaObj, roaArr, roaDef} = printf "%s%s%s" (showNoMaybe roaObj) showArr showDef
     where
       showNoMaybe :: (Show a) => Maybe a -> String
       showNoMaybe (Just a) = show a
       showNoMaybe Nothing  = ""
 
-      showM :: String
-      showM = if getMetaType roaM /= topType
-        then printf " -> %s " (show roaM)
-        else ""
-
-      showEquals :: String
-      showEquals = case (roaObj, roaArr) of
-        (Just _, Just _) -> "= "
-        _                -> ""
+      showArr :: String
+      showArr = case roaArr of
+        Just (Just e, m) | getMetaType m /= topType -> printf " -> %s = %s" (show m) (show e)
+        Just (Just e, _) | isJust roaObj -> printf "= %s" (show e)
+        Just (Just e, _) -> show e
+        Just (Nothing, m) | getMetaType m /= topType -> printf " -> %s" (show m)
+        Just (Nothing, _) -> ""
+        Nothing -> ""
 
       showDef :: String
       -- showDef = maybe "" show roaDef
@@ -196,5 +195,5 @@ instance (Show m, Show (e m)) => Show (RawObjArr e m) where
         Nothing  -> ""
 
 desObjArr :: (Show m, Show (e m)) => RawObjArr e m -> [ObjArr e m]
-desObjArr (RawObjArr obj basis doc annots m arr Nothing) = [ObjArr obj basis doc annots m arr]
+desObjArr (RawObjArr obj basis doc annots arr Nothing) = [ObjArr obj basis doc annots arr]
 desObjArr roa = error $ printf "Not yet implemented: %s" (show roa)

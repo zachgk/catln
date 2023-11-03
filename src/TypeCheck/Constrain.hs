@@ -87,26 +87,30 @@ updateTypeProp env@FEnv{feClassGraph} actOrReq (superM, superType) propName (sub
       let supPartialList = splitUnionType supPartials
       let sub' = unionAllTypes feClassGraph $ mapMaybe (typeGetArg propName) supPartialList
       wrapUbs (superType, sub')
-    (TopType _, _) -> undefined
-    (_, TopType _) -> undefined
-    (UnionType supPartials, UnionType subPartials) -> do
+    (TopType _, _) -> error $ printf "Not yet implemented updateTypeProp with super %s" (show superType)
+    (UnionType supPartials, _) -> do
       let supPartialList = splitUnionType supPartials
-      let subPartialList = splitUnionType subPartials
       let intersectedPartials sup@PartialType{ptArgs=supArgs, ptVars=supVars} sub = case typeGetArg propName sup of
             Just (TypeVar (TVVar TVInt v)) -> do
               let supVar = H.lookupDefault topType v supVars
-              let newProp = intersectTypes feClassGraph supVar (singletonType sub)
+              let newProp = intersectTypes feClassGraph supVar sub
               Just (sup{ptVars=H.insert v newProp supVars}, newProp)
             Just (TypeVar (TVVar TVExt _)) -> error $ printf "Not yet implemented"
             Just (TypeVar TVArg{}) -> error $ printf "Not yet implemented"
             Just supProp -> do
-              let newProp = intersectTypes feClassGraph supProp (singletonType sub)
+              let newProp = intersectTypes feClassGraph supProp sub
               if isBottomType newProp
                 then Nothing
                 else Just (sup{ptArgs=H.insert propName newProp supArgs}, newProp)
             Nothing -> Nothing
-      let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectedPartials sup sub | sup <- supPartialList, sub <- subPartialList]
-      wrapUbs (compactType feClassGraph $ UnionType $ joinUnionType supPartialList', unionAllTypes feClassGraph subPartialList')
+      case subType of
+        UnionType subPartials -> do
+          let subPartialList = splitUnionType subPartials
+          let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectedPartials sup (singletonType sub) | sup <- supPartialList, sub <- subPartialList]
+          wrapUbs (compactType feClassGraph $ UnionType $ joinUnionType supPartialList', unionAllTypes feClassGraph subPartialList')
+        _ -> do
+          let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectedPartials sup subType | sup <- supPartialList]
+          wrapUbs (compactType feClassGraph $ UnionType $ joinUnionType supPartialList', unionAllTypes feClassGraph subPartialList')
   where
     wrapUbs (superUb', subUb') = (env, superUb', subUb')
 

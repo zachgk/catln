@@ -34,10 +34,11 @@ genTypeFromExpr prgm (TupleApply _ (_, baseExpr) oa) = do
   shouldAddArg <- HG.bool
   if shouldAddArg
     then case oaArr oa of
-           Just (GuardExpr arrExpr _) -> do
+           Just (Just (GuardExpr arrExpr _), _) -> do
              arrExpr' <- genTypeFromExpr prgm arrExpr
              return base{ptArgs = H.insert (oaObjPath oa) (singletonType arrExpr') baseArgs}
-           Nothing -> return base{ptArgs = H.insert (oaObjPath oa) (getMetaType $ oaM oa) baseArgs}
+           Just (Nothing, oaM) -> return base{ptArgs = H.insert (oaObjPath oa) (getMetaType oaM) baseArgs}
+           Nothing -> return base -- no arg to add
     else return base
 genTypeFromExpr prgm (VarApply _ baseExpr varName m) = do
   base@PartialType{ptVars=baseVars} <- genTypeFromExpr prgm baseExpr
@@ -118,7 +119,7 @@ genInputExpr = genObj
     genApply genBase = do
       argName <- HG.string (linear 5 10) HG.lower
       base <- genBase
-      return $ TupleApply emptyMetaN (emptyMetaN, base) (ObjArr (Just (GuardExpr (Arg emptyMetaN argName) Nothing)) ArgObj Nothing [] emptyMetaN Nothing)
+      return $ TupleApply emptyMetaN (emptyMetaN, base) (ObjArr (Just (GuardExpr (Arg emptyMetaN argName) Nothing)) ArgObj Nothing [] Nothing)
     genVar genBase = do
       varName <- HG.string (linear 5 10) HG.lower
       base <- genBase
@@ -133,13 +134,13 @@ genOutputExpr vals _input = do
 genPrgm :: Gen (ExprPrgm Expr ())
 genPrgm = do
   dataTypes <- HG.list (linear 1 20) genInputExpr
-  let dataObjs = map (\obj -> ObjArr (Just (GuardExpr obj Nothing)) TypeObj Nothing [] emptyMetaN Nothing) dataTypes
+  let dataObjs = map (\obj -> ObjArr (Just (GuardExpr obj Nothing)) TypeObj Nothing [] Nothing) dataTypes
 
   funs <- HG.list (linear 1 20) genInputExpr
   let allInputs = dataTypes ++ funs
   funObjs <- forM funs $ \obj -> do
                                 arr <- genOutputExpr allInputs obj
-                                return $ ObjArr (Just (GuardExpr obj Nothing)) FunctionObj Nothing [] emptyMetaN (Just (GuardExpr arr Nothing))
+                                return $ ObjArr (Just (GuardExpr obj Nothing)) FunctionObj Nothing [] (Just (Just (GuardExpr arr Nothing), emptyMetaN))
 
   let objMap = dataObjs ++ funObjs
 

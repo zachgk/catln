@@ -461,11 +461,10 @@
                     ( Arg /Data/Primitive/Integer x= CInt 0 )
                 )
                 ( Arg /Catln/IO this= Arg TVArg TVInt "io" io )
-            , /abs ( Arg /Data/Primitive/Integer x ) = abs.$ 167 aca- 0
+            , /abs ( Arg /Data/Primitive/Integer x ) = abs.$d29b28- 0
                 ( Arg /Data/Primitive/Integer x= Arg TVArg TVInt "x" x )
-                ( Arg /Data/Primitive/Integer $ 167 aca-arg= Arg TVArg TVInt "x" x )
-            , /abs.$ 167 aca- 1 ( Arg /Data/Primitive/Integer x )
-                ( Arg TopType $ 167 aca-arg= Arg TopType x2 ) ->
+                ( Arg /Data/Primitive/Integer $d29b28-arg= Arg TVArg TVInt "x" x )
+            , /abs.$d29b28- 1 ( Arg /Data/Primitive/Integer x ) ( Arg TopType $d29b28-arg= Arg TopType x2 ) ->
                 ( /operator*
                     ( l=/Data/Primitive/Integer
                     , r=/Data/Primitive/Integer
@@ -475,12 +474,10 @@
                 ( Arg /Data/Primitive/Integer r= /operator-
                     ( Arg /Data/Primitive/Integer a= CInt 1 )
                 )
-            , /abs.$ 167 aca- 0 ( Arg /Data/Primitive/Integer x )
-                ( Arg TopType $ 167 aca-arg= Arg TopType x2 ) = abs.$ 167 aca- 1
+            , /abs.$d29b28- 0 ( Arg /Data/Primitive/Integer x ) ( Arg TopType $d29b28-arg= Arg TopType x2 ) = abs.$d29b28- 1
                 ( Arg /Data/Primitive/Integer x= Arg TVArg TVInt "x" x )
-                ( Arg /Data/Primitive/Integer $ 167 aca-arg= Arg TVArg TVInt "x" x )
-            , /abs.$ 167 aca- 0 ( Arg /Data/Primitive/Integer x )
-                ( Arg TopType $ 167 aca-arg= Arg TopType x2 ) if /operator>=
+                ( Arg /Data/Primitive/Integer $d29b28-arg= Arg TVArg TVInt "x" x )
+            , /abs.$d29b28- 0 ( Arg /Data/Primitive/Integer x ) ( Arg TopType $d29b28-arg= Arg TopType x2 ) if /operator>=
                 ( Arg /Data/Primitive/Integer l= Arg TVArg TVInt "x" x )
                 ( Arg /Data/Primitive/Integer r= CInt 0 ) = Arg TVArg TVInt "x2" x2
             ]

@@ -11,7 +11,7 @@ format:
 
 ctformat:
 	stack install
-	catln fmt test/code
+	catln fmt test/Integration/code
 	find stack -name "*.ct" -exec catln fmt {} \;
 # catln fmt stack
 

@@ -119,12 +119,20 @@ pArrowFull basis = do
     try pExpr
 
   let arrMeta = fromMaybe emptyMetaN maybeDecl
-  (i', o') <- return $ case (expr1, maybeExpr2) of
-    (i, Just (Just o)) -> (Just (GuardExpr i guard), Just o)
-    (i, Just Nothing) -> (Just (GuardExpr i guard), Just (GuardExpr (rawVal nestedDeclaration) Nothing))
-    (i, Nothing) -> (Just (GuardExpr i guard), Nothing) -- If only one expression, always make it as an input and later desugar to proper place
+  (i', o') <- return $ case (maybeDecl, expr1, maybeExpr2) of
+    -- Input, equals, and in expression
+    (_, i, Just (Just o)) -> (Just (GuardExpr i guard), Just (Just o, arrMeta))
 
-  return $ RawObjArr i' basis Nothing guardAnnots arrMeta o' maybeDef
+    -- Input, equals, but no out expression
+    (_, i, Just Nothing) -> (Just (GuardExpr i guard), Just (Just (GuardExpr (rawVal nestedDeclaration) Nothing), arrMeta))
+
+    -- Input, no equals, but declaration
+    (Just am, i, Nothing) -> (Just (GuardExpr i guard), Just (Nothing, am)) -- If only one expression, always make it as an input and later desugar to proper place
+
+    -- Input, no equals nor declaration
+    (Nothing, i, Nothing) -> (Just (GuardExpr i guard), Nothing) -- If only one expression, always make it as an input and later desugar to proper place
+
+  return $ RawObjArr i' basis Nothing guardAnnots o' maybeDef
 
 data TermSuffix
   = ArgsSuffix ParseMeta [PObjArr]

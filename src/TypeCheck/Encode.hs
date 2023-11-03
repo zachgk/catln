@@ -162,7 +162,7 @@ fromExpr est env1 (AliasExpr base alias) = do
   (alias', env3) <- fromExpr est env2 alias
   let env4 = addConstraints env3 [EqPoints (getExprMeta base') (getExprMeta alias')]
   return (AliasExpr base' alias', env4)
-fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaM, oaAnnots, oaArr}) = do
+fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaAnnots, oaArr}) = do
   (m', env2) <- fromMeta env1 BUpper est m $ printf "Tuple %s(%s) Meta" (show baseExpr) (show arg)
   (baseM', env3) <- fromMeta env2 BUpper est baseM $ printf "Tuple %s(%s) BaseMeta" (show baseExpr) (show arg)
   (baseExpr', env4) <- fromExpr est env3 baseExpr
@@ -174,38 +174,51 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaM, oaAnnot
       -- For outputs, should instead verify in decode that it refined (is subtype)
       return (Just $ GuardExpr inExpr' guardExpr', env5b)
     Nothing -> return (Nothing, env4)
-  (oaM', env6) <- fromMeta env5 BUpper est oaM $ printf "Tuple oaM %s(%s)" (show baseExpr) (show arg)
-  (oaAnnots', env7) <- mapMWithFEnv env6 (fromExpr est) oaAnnots
-  (oaArr', env8) <- case oaArr of
-    Just (GuardExpr argExpr guardExpr) -> do
-      (argExpr', env7a) <- fromExpr est env7 argExpr
-      (guardExpr', env7b) <- fromGuard est env7a guardExpr
-      return (Just $ GuardExpr argExpr' guardExpr', env7b)
-    Nothing -> return (Nothing, env7)
+  (oaAnnots', env6) <- mapMWithFEnv env5 (fromExpr est) oaAnnots
+  (oaArr', env7) <- case oaArr of
+    Just (arrGuardExpr, arrM) -> do
+      (arrM', env6a) <- fromMeta env6 BUpper est arrM $ printf "Tuple oaM %s(%s)" (show baseExpr) (show arg)
+      case arrGuardExpr of
+        Just (GuardExpr argExpr guardExpr) -> do
+          (argExpr', env6b) <- fromExpr est env6a argExpr
+          (guardExpr', env6c) <- fromGuard est env6b guardExpr
+          return (Just (Just (GuardExpr argExpr' guardExpr'), arrM'), env6c)
+        Nothing -> return (Just (Nothing, arrM'), env6a)
+    Nothing -> return (Nothing, env6)
   let constraints = case (est, oaObj', oaArr') of
-        (EncodeOut{}, Just (GuardExpr obj Nothing), Just (GuardExpr argExpr' Nothing)) ->
+        (EncodeOut{}, Just (GuardExpr obj Nothing), Just (Just (GuardExpr argExpr' Nothing), arrM')) ->
           -- Output with (x=x)
           [
             ArrowTo (getExprMeta baseExpr') baseM',
                         AddArg (baseM', exprPath obj) m',
                         BoundedByObjs m',
-                        ArrowTo (getExprMeta argExpr') (getExprMeta obj),
-                        PropEq (m', exprPath obj) (getExprMeta obj)
+                        ArrowTo (getExprMeta argExpr') arrM',
+                        EqPoints (getExprMeta obj) arrM',
+                        PropEq (m', exprPath obj) arrM'
                         ]
-        (EncodeOut{}, Nothing, Just (GuardExpr argExpr' Nothing)) ->
+        (EncodeOut{}, Nothing, Just (Just (GuardExpr argExpr' Nothing), arrM')) ->
           -- Output with (x) infer
           [
             ArrowTo (getExprMeta baseExpr') baseM',
                         AddInferArg baseM' m',
                         BoundedByObjs m',
-                        ArrowTo (getExprMeta argExpr') oaM'
+                        ArrowTo (getExprMeta argExpr') arrM'
                         ]
-        (EncodeIn{}, Just (GuardExpr obj Nothing), Just (GuardExpr argExpr' Nothing)) ->
+        (EncodeIn{}, Just (GuardExpr obj Nothing), Just (Just (GuardExpr argExpr' Nothing), arrM')) ->
           -- Input with (x=x)
           [
             EqPoints (getExprMeta baseExpr') baseM',
                      AddArg (baseM', exprPath obj) m',
-                     ArrowTo (getExprMeta argExpr') (getExprMeta obj),
+                     EqPoints (getExprMeta argExpr') arrM',
+                     EqPoints (getExprMeta obj) arrM',
+                     PropEq (m', exprPath obj) arrM'
+                    ]
+        (EncodeIn{}, Just (GuardExpr obj Nothing), Just (Nothing, arrM')) ->
+          -- Input with (x -> T)
+          [
+         -- EqPoints (getExprMeta baseExpr') baseM',
+                     AddArg (baseM', exprPath obj) m',
+                     EqPoints (getExprMeta obj) arrM',
                      PropEq (m', exprPath obj) (getExprMeta obj)
                     ]
         (EncodeIn{}, Just (GuardExpr obj Nothing), Nothing) ->
@@ -216,14 +229,13 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaM, oaAnnot
                      PropEq (m', exprPath obj) (getExprMeta obj)
                     ]
         _ -> error $ printf "Invalid fromExpr in %s mode for %s" (show est) (show arg)
-  let env9 = addConstraints env8 constraints
+  let env8 = addConstraints env7 constraints
   let arg' = arg{
         oaObj=oaObj',
         oaArr=oaArr',
-        oaM=oaM',
         oaAnnots=oaAnnots'
         }
-  return (TupleApply m' (baseM', baseExpr') arg', env9)
+  return (TupleApply m' (baseM', baseExpr') arg', env8)
 fromExpr est env1 (VarApply m baseExpr varName varVal) = do
   let baseName = printf "VarApply %s<%s = %s>" (show baseExpr) varName (show varVal) :: String
   (m', env2) <- fromMeta env1 BUpper est m $ printf "%s Meta" baseName

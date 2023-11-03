@@ -412,18 +412,13 @@
                 ( Value val= abs
                     ( CInt 0 )
                 ) ( Value this= Arg TopType io )
-            , /abs ( Value x ) = abs.$ 167 aca- 0 ( Arg TopType x -> /Data/Primitive/Integer = Arg /Data/Primitive/Integer x )
-                ( Value $ 167 aca-arg= Arg TopType x )
-            , /abs.$ 167 aca- 1 ( Arg /Data/Primitive/Integer x )
-                ( Value $ 167 aca-arg= Hole TopType HoleActive Nothing@Arg TopType x2 ) = /operator* ( Value l= Arg TopType x2 )
+            , /abs ( Value x ) = abs.$d29b28- 0 ( Arg TopType x -> /Data/Primitive/Integer = Arg /Data/Primitive/Integer x ) ( Value $d29b28-arg= Arg TopType x )
+            , /abs.$d29b28- 1 ( Arg /Data/Primitive/Integer x ) ( Value $d29b28-arg= Hole TopType HoleActive Nothing@Arg TopType x2 ) = /operator* ( Value l= Arg TopType x2 )
                 ( Value r= /operator-
                     ( Value a= CInt 1 )
                 )
-            , /abs.$ 167 aca- 0 ( Arg /Data/Primitive/Integer x )
-                ( Value $ 167 aca-arg= Hole TopType HoleActive Nothing@Arg TopType x2 ) = abs.$ 167 aca- 1 ( Arg TopType x -> /Data/Primitive/Integer = Arg /Data/Primitive/Integer x )
-                ( Value $ 167 aca-arg= Arg TopType x )
-            , /abs.$ 167 aca- 0 ( Arg /Data/Primitive/Integer x )
-                ( Value $ 167 aca-arg= Hole TopType HoleActive Nothing@Arg TopType x2 ) if /operator>= ( Value l= Arg TopType x )
+            , /abs.$d29b28- 0 ( Arg /Data/Primitive/Integer x ) ( Value $d29b28-arg= Hole TopType HoleActive Nothing@Arg TopType x2 ) = abs.$d29b28- 1 ( Arg TopType x -> /Data/Primitive/Integer = Arg /Data/Primitive/Integer x ) ( Value $d29b28-arg= Arg TopType x )
+            , /abs.$d29b28- 0 ( Arg /Data/Primitive/Integer x ) ( Value $d29b28-arg= Hole TopType HoleActive Nothing@Arg TopType x2 ) if /operator>= ( Value l= Arg TopType x )
                 ( Value r= CInt 0 ) = Arg TopType x2
             ]
         , []

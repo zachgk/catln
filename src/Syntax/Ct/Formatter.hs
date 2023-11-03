@@ -74,8 +74,8 @@ formatExpr (RawHoleExpr _ HoleTodefine) = "todefine"
 formatExpr (RawTheExpr t) = printf ":%s" (formatExpr t)
 formatExpr (RawAliasExpr base alias) = printf "%s@%s" (formatExpr base) (formatExpr alias)
 formatExpr (RawTupleApply _ (_, RawValue _ n) args) | operatorPrefix `isPrefixOf` n = case args of
-  [RawObjArr{ roaArr=(Just (GuardExpr a _))}] -> operatorName ++ formatExpr a
-  [RawObjArr{ roaArr=(Just (GuardExpr l _))}, RawObjArr{roaArr=(Just (GuardExpr r _))}] -> if n == operatorType
+  [RawObjArr{ roaArr=(Just (Just (GuardExpr a _), _))}] -> operatorName ++ formatExpr a
+  [RawObjArr{ roaArr=(Just (Just (GuardExpr l _), _))}, RawObjArr{roaArr=(Just (Just (GuardExpr r _), _))}] -> if n == operatorType
     then printf "%s%s %s" (formatExpr l) operatorName (formatExpr r) -- Show types as "x: 5" instead of "x : 5"
     else printf "%s %s %s" (formatExpr l) operatorName (formatExpr r)
   _ -> error "Non unary or binary operator found in formatExpr"
@@ -96,10 +96,12 @@ formatIsa []      = ""
 formatIsa classes = " isa " ++ intercalate ", " classes
 
 formatObjArr :: RawObjArr RawExpr m -> String
-formatObjArr roa@RawObjArr{roaObj, roaM, roaArr, roaDef} = printf "%s%s%s%s%s%s" (showGuardExpr True roaObj) showElse showM showEquals (showGuardExpr False roaArr) showDef
+formatObjArr roa@RawObjArr{roaObj, roaArr, roaDef} = printf "%s%s%s%s%s%s" (showGuardExpr True roaObj) showElse showM showEquals (showGuardExpr False roaArrExpr) showDef
   where
+    roaArrExpr = fst =<< roaArr
+
     isNestedDeclaration = case roaArr of
-      (Just (GuardExpr (RawValue _ n) _)) | n == nestedDeclaration -> True
+      (Just (Just (GuardExpr (RawValue _ n) _), _)) | n == nestedDeclaration -> True
       _                                                            -> False
 
     showGuardExpr False _ | isNestedDeclaration = ""
@@ -107,15 +109,16 @@ formatObjArr roa@RawObjArr{roaObj, roaM, roaArr, roaDef} = printf "%s%s%s%s%s%s"
     showGuardExpr _ Nothing = ""
 
     showM :: String
-    showM  = case getMetaType roaM of
-      (TopType []) -> ""
-      t            -> printf " -> %s" (formatType t)
+    showM  = case fmap (getMetaType . snd) roaArr of
+      Nothing             -> ""
+      (Just (TopType [])) -> ""
+      (Just t)            -> printf " -> %s" (formatType t)
 
     showEquals :: String
     showEquals = case (roaObj, roaArr) of
-      _ | isNestedDeclaration -> " ="
-      (Just _, Just _)        -> "= "
-      _                       -> ""
+      _ | isNestedDeclaration    -> " ="
+      (Just _, Just (Just{}, _)) -> "= "
+      _                          -> ""
 
     formatGuard :: ExprCond RawExpr m -> String
     formatGuard (Just e) = printf " | %s" (formatExpr e)

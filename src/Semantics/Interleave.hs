@@ -11,6 +11,7 @@
 --------------------------------------------------------------------
 
 module Semantics.Interleave where
+import           Data.Bifunctor      (bimap)
 import qualified Data.HashMap.Strict as H
 import           Semantics.Prgm
 
@@ -38,11 +39,10 @@ interleaveGuardExpr :: GuardExpr Expr m -> H.HashMap CodeRangeDat (Meta m)
 interleaveGuardExpr (GuardExpr e g) = H.unions [interleaveExpr e, maybe H.empty interleaveExpr g]
 
 interleaveObjArr :: ObjArr Expr m -> H.HashMap CodeRangeDat (Meta m)
-interleaveObjArr ObjArr{oaObj, oaAnnots, oaM, oaArr} = H.unions [
+interleaveObjArr ObjArr{oaObj, oaAnnots, oaArr} = H.unions [
   maybe H.empty interleaveGuardExpr oaObj,
   H.unions $ map interleaveExpr oaAnnots,
-  interleaveM oaM,
-  maybe H.empty interleaveGuardExpr oaArr
+  maybe H.empty (uncurry H.union . bimap (maybe H.empty interleaveGuardExpr) interleaveM) oaArr
   ]
 
 interleavePrgm :: ExprPrgm Expr m -> H.HashMap CodeRangeDat (Meta m)

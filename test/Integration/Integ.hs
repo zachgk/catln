@@ -48,7 +48,7 @@ runTest includeCore fileName = testCaseSteps fileName $ \step -> do
             then do
               step "Golden test desugar..."
               golden <- readFile goldenDesugarPath
-              assertEqual "Desugar doesn't match golden test" golden showPrgm
+              when (golden /= showPrgm) (assertFailure "Desugar doesn't match golden test" )
             else do
               step "No golden test for desugar. Writing"
               writeFile goldenDesugarPath showPrgm
@@ -66,7 +66,7 @@ runTest includeCore fileName = testCaseSteps fileName $ \step -> do
                 then do
                   step "Golden test typecheck..."
                   golden <- readFile goldenTypecheckPath
-                  assertEqual "Typecheck doesn't match golden test" golden showTPrgm
+                  when (golden /= showTPrgm) (assertFailure "Typecheck doesn't match golden test" )
                 else do
                   step "No golden test for typecheck. Writing"
                   writeFile goldenTypecheckPath showTPrgm

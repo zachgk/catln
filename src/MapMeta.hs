@@ -14,6 +14,7 @@
 
 module MapMeta where
 
+import           Data.Bifunctor      (Bifunctor (bimap))
 import qualified Data.HashMap.Strict as H
 import           Data.Maybe          (fromMaybe)
 import           Semantics
@@ -107,11 +108,10 @@ mapMetaGuardExpr :: (MapMeta e) => MetaFun a b -> MetaLocation -> GuardExpr e a 
 mapMetaGuardExpr f loc (GuardExpr expr guard) = GuardExpr (mapMeta f loc expr) (fmap (mapMeta f GuardMeta) guard)
 
 mapMetaObjArr :: (MapMeta e) => MetaFun a b -> Maybe MetaLocation -> ObjArr e a -> ObjArr e b
-mapMetaObjArr f mloc oa@ObjArr{oaObj, oaM, oaAnnots, oaArr} = oa{
+mapMetaObjArr f mloc oa@ObjArr{oaObj, oaAnnots, oaArr} = oa{
   oaObj = fmap (mapMetaGuardExpr f (fromMaybe InputMeta mloc)) oaObj,
-  oaM = f ArrMeta oaM,
   oaAnnots = map (mapMeta f (fromMaybe AnnotMeta mloc)) oaAnnots,
-  oaArr = fmap (mapMetaGuardExpr f (fromMaybe OutputMeta mloc)) oaArr
+  oaArr = fmap (bimap (fmap (mapMetaGuardExpr f (fromMaybe OutputMeta mloc))) (f ArrMeta)) oaArr
                                                              }
 
 mapMetaExprPrgm :: (MapMeta e) => MetaFun a b -> ExprPrgm e a -> ExprPrgm e b

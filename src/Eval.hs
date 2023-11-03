@@ -66,7 +66,7 @@ evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe 
   where
     (objMap, classGraph, _) = prgmFromGraphData prgmName prgmGraphData
     objArrowsContains ObjArr{oaArr=Nothing} = Nothing
-    objArrowsContains oa@ObjArr{oaM} = case oaObjPath oa of
+    objArrowsContains oa@ObjArr{oaArr=Just (_, oaM)} = case oaObjPath oa of
       "/Context" -> case H.lookup "value" $ exprAppliedArgsMap $ oaObjExpr oa of
         Just (_, Just valObjExpr) -> if relativeNameMatches function (exprPath valObjExpr)
           then Just $ if isBuildable (getMetaType oaM)
@@ -177,7 +177,7 @@ evalAnnots prgmName prgmGraphData = do
     let exprType = getExprType annot
     let inTree = ExprArrow annot exprType exprType
     let emptyType = partialVal (PTypeName "EmptyObj")
-    let emptyObj = ObjArr (Just (GuardExpr (Value (Meta (singletonType emptyType) Nothing emptyMetaDat) "EmptyObj") Nothing)) FunctionObj Nothing [] emptyMetaN Nothing
+    let emptyObj = ObjArr (Just (GuardExpr (Value (Meta (singletonType emptyType) Nothing emptyMetaDat) "EmptyObj") Nothing)) FunctionObj Nothing [] Nothing
     tree <- resolveTree evTbEnv (emptyType, emptyObj) inTree
     val <- fst <$> eval env tree
     return (annot, val)

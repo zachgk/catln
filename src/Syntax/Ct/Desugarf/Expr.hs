@@ -14,7 +14,7 @@
 module Syntax.Ct.Desugarf.Expr where
 
 
-import           Data.Bifunctor          (second)
+import           Data.Bifunctor          (Bifunctor (first), second)
 import qualified Data.HashMap.Strict     as H
 import           Data.Maybe
 import           Text.Printf
@@ -58,7 +58,7 @@ desObjPropagateTypes mainExpr@(TupleApply m (bm, be) tupleApplyArgs) = do
   let (Just basePartial@PartialType{ptArgs=baseArgs}, be') = desObjPropagateTypes be
   let bm' = mWithType (getMetaType $ getExprMeta be') bm
   case tupleApplyArgs of
-      ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=Just (GuardExpr argVal _)} -> do
+      ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=Just (Just (GuardExpr argVal _), _)} -> do
         let (argName, argM) = exprPathM argObj
         let (_, argVal') = desObjPropagateTypes argVal
         let argM' = mWithType (getMetaType $ getExprMeta argVal) argM
@@ -90,7 +90,7 @@ semiDesExpr _ _ (RawHoleExpr m h) = HoleExpr m h
 semiDesExpr _ _ RawMacroValue{} = error "Not yet implemented"
 semiDesExpr sdm obj (RawTheExpr t) = semiDesExpr sdm obj $ desugarTheExpr t
 semiDesExpr sdm obj (RawAliasExpr base alias) = AliasExpr (semiDesExpr sdm obj base) (semiDesExpr sdm obj alias)
-semiDesExpr sdm obj (RawTupleApply _ (_, RawValue _ "/operator:") [RawObjArr{roaArr=(Just (GuardExpr e _))}, RawObjArr{roaArr=(Just (GuardExpr tp _))}]) = semiDesExpr sdm obj (rawExprWithType (exprToType tp) e)
+semiDesExpr sdm obj (RawTupleApply _ (_, RawValue _ "/operator:") [RawObjArr{roaArr=(Just (Just (GuardExpr e _), _))}, RawObjArr{roaArr=(Just (Just (GuardExpr tp _), _))}]) = semiDesExpr sdm obj (rawExprWithType (exprToType tp) e)
 semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm'', be'') arg'') -> TupleApply m'' (bm'', be'') arg'') $ foldl aux (bm, be') (zip [0..] args)
   where
     be' = semiDesExpr sdm obj be
@@ -104,13 +104,13 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm''
         arg' = arg{
           oaObj=fmap semiDesGuardExpr argObj,
           oaAnnots=indexAnnots ++ fmap (semiDesExpr sdm obj) argAnnots,
-          oaArr=fmap semiDesGuardExpr argArr
+          oaArr=fmap (first (fmap semiDesGuardExpr)) argArr
           }
 
         -- Currently uses oaObj as "first and only expr"
         -- This disambiguates it between whether the only expression is an obj or an arr
         arg'' = case (sdm, arg') of
-          (SDOutput, ObjArr{oaObj, oaArr=Nothing}) -> arg'{oaObj=Nothing, oaArr=oaObj}
+          (SDOutput, ObjArr{oaObj, oaArr=Nothing}) -> arg'{oaObj=Nothing, oaArr=fmap ((,emptyMetaE "" $ rgeExpr $ fromJust oaObj) . Just) oaObj}
           (_, _) -> arg'
 
         semiDesGuardExpr (GuardExpr ge gg) = GuardExpr (semiDesExpr sdm obj ge) (fmap (semiDesExpr sdm obj) gg)

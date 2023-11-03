@@ -408,19 +408,19 @@
 ,
     (
         (
-            [ /abs ( Value x ) = abs.$ 4 a44bf ( Arg TopType x -> /Data/Primitive/Integer = Arg /Data/Primitive/Integer x )
-                ( Value $ 4 a44bf-arg= /Catln/ThenElse/fromBool
+            [ /abs ( Value x ) = abs.$ 2 ec733 ( Arg TopType x -> /Data/Primitive/Integer = Arg /Data/Primitive/Integer x )
+                ( Value $ 2 ec733-arg= /Catln/ThenElse/fromBool
                     ( Value v= /operator>= ( Value l= Arg TopType x )
                         ( Value r= CInt 0 )
                     )
                 )
-            , /abs.$ 4 a44bf ( Arg /Data/Primitive/Integer x )
-                ( Value $ 4 a44bf-arg= Hole TopType HoleActive Nothing@Arg TopType Else ) = /operator*
+            , /abs.$ 2 ec733 ( Arg /Data/Primitive/Integer x )
+                ( Value $ 2 ec733-arg= Hole TopType HoleActive Nothing@Arg TopType Else ) = /operator*
                 ( Value l= /operator-
                     ( Value a= CInt 1 )
                 ) ( Value r= Arg TopType x )
-            , /abs.$ 4 a44bf ( Arg /Data/Primitive/Integer x )
-                ( Value $ 4 a44bf-arg= Hole TopType HoleActive Nothing@Arg TopType Then ) = Arg TopType x
+            , /abs.$ 2 ec733 ( Arg /Data/Primitive/Integer x )
+                ( Value $ 2 ec733-arg= Hole TopType HoleActive Nothing@Arg TopType Then ) = Arg TopType x
             , /Context ( Value value= Value /main ) ( Value io -> /Catln/IO ) = exit
                 ( Value val= abs
                     ( CInt 0 )

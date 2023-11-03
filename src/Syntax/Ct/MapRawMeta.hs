@@ -13,7 +13,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Syntax.Ct.MapRawMeta where
-import           Data.Bifunctor (Bifunctor (second))
+import           Data.Bifunctor (Bifunctor (bimap, second))
 import           Data.Maybe     (fromMaybe)
 import           MapMeta
 import           Syntax.Ct.Prgm
@@ -37,11 +37,10 @@ instance MapMeta RawExpr where
   mapMeta f loc (RawTypeProp m b (TypePropRel p v)) = RawTypeProp (f (ExprMeta loc ExprMetaTypeProp) m) (mapMeta f loc b) (TypePropRel p (mapMeta f loc v))
 
 mapMetaRawObjArr :: (MapMeta e) => MetaFun a b -> Maybe MetaLocation -> RawObjArr e a -> RawObjArr e b
-mapMetaRawObjArr f mloc roa@RawObjArr{roaObj, roaM, roaAnnots, roaArr, roaDef} = roa{
+mapMetaRawObjArr f mloc roa@RawObjArr{roaObj, roaAnnots, roaArr, roaDef} = roa{
   roaObj = fmap (mapMetaGuardExpr f (fromMaybe InputMeta mloc)) roaObj,
-  roaM = f ArrMeta roaM,
   roaAnnots = map (mapMeta f (fromMaybe AnnotMeta mloc)) roaAnnots,
-  roaArr = fmap (mapMetaGuardExpr f (fromMaybe OutputMeta mloc)) roaArr,
+  roaArr = fmap (bimap (fmap (mapMetaGuardExpr f (fromMaybe OutputMeta mloc))) (f ArrMeta)) roaArr,
   roaDef = fmap (mapMeta f (fromMaybe InputMeta mloc)) roaDef
                                                              }
 

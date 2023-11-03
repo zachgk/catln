@@ -461,10 +461,10 @@
                     ( Arg /Data/Primitive/Integer x= CInt 0 )
                 )
                 ( Arg /Catln/IO this= Arg TVArg TVInt "io" io )
-            , /abs ( Arg /Data/Primitive/Integer x ) = abs.$fcd890
+            , /abs ( Arg /Data/Primitive/Integer x ) = abs.$e254cd
                 ( Arg /Data/Primitive/Integer x= Arg TVArg TVInt "x" x )
-                ( Arg /Data/Primitive/Integer $fcd890-arg= Arg TVArg TVInt "x" x )
-            , /abs.$fcd890 ( Arg /Data/Primitive/Integer x ) ( Arg TopType $fcd890-arg= Arg TopType x2 ) ->
+                ( Arg /Data/Primitive/Integer $e254cd-arg= Arg TVArg TVInt "x" x )
+            , /abs.$e254cd ( Arg /Data/Primitive/Integer x ) ( Arg TopType $e254cd-arg= Arg TopType x2 ) ->
                 ( /operator*
                     ( l=/Data/Primitive/Integer
                     , r=/Data/Primitive/Integer
@@ -474,7 +474,7 @@
                 ( Arg /Data/Primitive/Integer r= /operator-
                     ( Arg /Data/Primitive/Integer a= CInt 1 )
                 )
-            , /abs.$fcd890 ( Arg /Data/Primitive/Integer x ) ( Arg TopType $fcd890-arg= Arg TopType x2 ) if /operator>=
+            , /abs.$e254cd ( Arg /Data/Primitive/Integer x ) ( Arg TopType $e254cd-arg= Arg TopType x2 ) if /operator>=
                 ( Arg /Data/Primitive/Integer l= Arg TVArg TVInt "x" x )
                 ( Arg /Data/Primitive/Integer r= CInt 0 ) = Arg TVArg TVInt "x2" x2
             ]
