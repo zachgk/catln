@@ -51,9 +51,9 @@ formatPartialType (PartialType ptName ptVars ptArgs ptPreds _) = concat [showNam
 formatType :: Type -> String
 formatType (TopType []) = ""
 formatType (TopType _) = undefined
-formatType (TypeVar (TVVar TVInt t)) = "$" ++ t
-formatType (TypeVar (TVVar TVExt t)) = "$_" ++ t
-formatType (TypeVar TVArg{}) = error "Unexpected TVArg in formatter"
+formatType (TypeVar (TVVar t) TVInt) = "$" ++ t
+formatType (TypeVar (TVVar t) TVExt) = "$_" ++ t
+formatType (TypeVar TVArg{} _) = error "Unexpected TVArg in formatter"
 formatType (UnionType partials) = join $ map formatPartialType $ splitUnionType partials
 
 formatMeta :: Meta m -> String

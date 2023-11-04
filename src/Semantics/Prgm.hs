@@ -261,11 +261,11 @@ instance ExprClass Expr where
 
   exprVarArgs CExpr{} = H.empty
   exprVarArgs Value{} = H.empty
-  exprVarArgs (Arg m n) = H.singleton (TVArg TVInt n) [m]
+  exprVarArgs (Arg m n) = H.singleton (TVArg n) [m]
   exprVarArgs HoleExpr{} = H.empty
   exprVarArgs (AliasExpr base alias) = H.unionWith (++) (exprVarArgs base) (exprVarArgs alias)
   exprVarArgs (TupleApply _ (_, be) arg) = H.unionWith (++) (exprVarArgs be) (oaVarArgs arg)
-  exprVarArgs (VarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar TVInt n) [m])
+  exprVarArgs (VarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar n) [m])
 
 class ObjArrClass oa where
   -- | See exprArgs
@@ -279,7 +279,7 @@ instance ObjArrClass ObjArr where
     where
       exprArg ObjArr{oaArr=Just (Just (GuardExpr e Nothing), _)} = exprVarArgs e
       exprArg ObjArr{oaObj=Just (GuardExpr obj Nothing)} = case exprPathM obj of
-        (n, m) -> H.singleton (TVArg TVInt n) [m]
+        (n, m) -> H.singleton (TVArg n) [m]
       exprArg _ = error $ printf "Invalid oa %s" (show oa)
 
   getOaAnnots = oaAnnots
@@ -332,8 +332,8 @@ exprPath = fst . exprPathM
 exprArgs :: (ExprClass e, Show m) => e m -> H.HashMap ArgName [Meta m]
 exprArgs e = H.fromList $ mapMaybe aux $ H.toList $ exprVarArgs e
   where
-    aux (TVArg _ a, ms) = Just (a, ms)
-    aux (TVVar _ _, _)  = Nothing
+    aux (TVArg a, ms) = Just (a, ms)
+    aux (TVVar _, _)  = Nothing
 
 mergeDoc :: Maybe String -> Maybe String -> Maybe String
 mergeDoc (Just a) (Just b) = Just (a ++ " " ++ b)

@@ -202,8 +202,8 @@ arrowDestType fullDest classGraph src oa@ObjArr{oaArr=Just (oaArrExpr, oaM)} = c
 
 metaTypeVar :: Meta m -> Maybe TypeVarAux
 metaTypeVar m = case getMetaType m of
-  TypeVar v -> Just v
-  _         -> Nothing
+  TypeVar v _ -> Just v
+  _           -> Nothing
 
 type MetaVarArgEnv m = H.HashMap TypeVarAux (Meta m)
 

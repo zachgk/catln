@@ -147,7 +147,7 @@ arrowConstrainUbs env@FEnv{feUnionAllObjs} con (TopType []) srcM dest@UnionType{
     _ -> return (topType, dest)
 arrowConstrainUbs _ _ (TopType []) _ dest _ = return (topType, dest)
 arrowConstrainUbs _ _ (TopType _) _ _ _ = undefined
-arrowConstrainUbs env con src@(TypeVar v) srcM dest destM = do
+arrowConstrainUbs env con src@(TypeVar v _) srcM dest destM = do
   src' <- resolveTypeVar v con
   (_, cdest) <- arrowConstrainUbs env con (getMetaType src') srcM dest destM
   return (src, cdest)

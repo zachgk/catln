@@ -2,8 +2,8 @@
     (
         (
             [ /operator!=
-                ( Value l= Hole TVVar TVInt "T" HoleActive Nothing )
-                ( Value r= Hole TVVar TVInt "T" HoleActive Nothing ) [ T : /Data/Algebra/Eq ] -> /Data/Primitive/Boolean
+                ( Value l= Hole TVVar "T" HoleActive Nothing )
+                ( Value r= Hole TVVar "T" HoleActive Nothing ) [ T : /Data/Algebra/Eq ] -> /Data/Primitive/Boolean
             , Value /Data/Algebra/LessThan
             , Value /Data/Algebra/Equal
             , Value /Data/Algebra/GreaterThan
@@ -13,23 +13,23 @@
             ,
                 ( /Data/Algebra/compare [ T : /Data/Algebra/POrd ] ) ( Value l ) ( Value r ) -> /Data/Algebra/POrdering
             , /operator<=
-                ( Value l= Hole TVVar TVInt "T" HoleActive Nothing )
-                ( Value r= Hole TVVar TVInt "T" HoleActive Nothing ) [ T : /Data/Algebra/Ord ] -> /Data/Primitive/Boolean
+                ( Value l= Hole TVVar "T" HoleActive Nothing )
+                ( Value r= Hole TVVar "T" HoleActive Nothing ) [ T : /Data/Algebra/Ord ] -> /Data/Primitive/Boolean
             , /operator>=
-                ( Value l= Hole TVVar TVInt "T" HoleActive Nothing )
-                ( Value r= Hole TVVar TVInt "T" HoleActive Nothing ) [ T : /Data/Algebra/Ord ] -> /Data/Primitive/Boolean
+                ( Value l= Hole TVVar "T" HoleActive Nothing )
+                ( Value r= Hole TVVar "T" HoleActive Nothing ) [ T : /Data/Algebra/Ord ] -> /Data/Primitive/Boolean
             , /operator<
-                ( Value l= Hole TVVar TVInt "T" HoleActive Nothing )
-                ( Value r= Hole TVVar TVInt "T" HoleActive Nothing ) [ T : /Data/Algebra/Ord ] -> /Data/Primitive/Boolean
+                ( Value l= Hole TVVar "T" HoleActive Nothing )
+                ( Value r= Hole TVVar "T" HoleActive Nothing ) [ T : /Data/Algebra/Ord ] -> /Data/Primitive/Boolean
             , /operator>
-                ( Value l= Hole TVVar TVInt "T" HoleActive Nothing )
-                ( Value r= Hole TVVar TVInt "T" HoleActive Nothing ) [ T : /Data/Algebra/Ord ] -> /Data/Primitive/Boolean
+                ( Value l= Hole TVVar "T" HoleActive Nothing )
+                ( Value r= Hole TVVar "T" HoleActive Nothing ) [ T : /Data/Algebra/Ord ] -> /Data/Primitive/Boolean
             , /operator++
-                ( Value l= Hole TVVar TVInt "T" HoleActive Nothing )
-                ( Value r= Hole TVVar TVInt "T" HoleActive Nothing ) [ T : /Data/Algebra/Semigroup ] -> TVVar TVInt "T"
+                ( Value l= Hole TVVar "T" HoleActive Nothing )
+                ( Value r= Hole TVVar "T" HoleActive Nothing ) [ T : /Data/Algebra/Semigroup ] -> TVVar "T"
             ,
                 ( /Data/Algebra/testSemigroupAssociative [ T : /Data/Algebra/Semigroup ] ) ( Value a ) ( Value b ) ( Value c ) = CInt 0
-            , /Data/Algebra/mempty [ T : /Data/Algebra/Monoid ] -> TVVar TVInt "T"
+            , /Data/Algebra/mempty [ T : /Data/Algebra/Monoid ] -> TVVar "T"
             ,
                 ( /Data/Algebra/testRightMonoidIdentity [ T : /Data/Algebra/Monoid ] ) ( Value t ) = CInt 0
             ,
@@ -37,7 +37,7 @@
             ,
                 ( /Data/Algebra/testCommutativeMonoid [ T : /Data/Algebra/CommutativeMonoid ] ) ( Value a ) ( Value b ) = CInt 0
             ,
-                ( /Data/Algebra/inverse [ T : /Data/Algebra/Group ] ) ( Value t ) -> TVVar TVInt "T"
+                ( /Data/Algebra/inverse [ T : /Data/Algebra/Group ] ) ( Value t ) -> TVVar "T"
             ,
                 ( /Data/Algebra/testGroup [ T : /Data/Algebra/Group ] ) ( Value t ) = CInt 0
             ]
@@ -205,9 +205,9 @@
             , Value /Data/None
             ,
                 ( /Data/Cons [ T : TopType ] )
-                ( Arg TVVar TVInt "T" head )
+                ( Arg TVVar "T" head )
                 ( Arg /Data/ConsList
-                    [ T=TVVar TVInt "T" ] tail
+                    [ T=TVVar "T" ] tail
                 )
             , Value /Data/Nil
             , /Data/length ( Value this -> /Data/Nil ) = CInt 0
@@ -232,9 +232,9 @@
                 , /Data/ConsList [ T=TopType ]
                 ,
                     [ /Data/Cons [ T=TopType ]
-                        ( head=TVVar TVInt "T"
+                        ( head=TVVar "T"
                         , tail=/Data/ConsList
-                            [ T=TVVar TVInt "T" ]
+                            [ T=TVVar "T" ]
                         )
                     , /Data/Nil
                     ]
@@ -253,9 +253,9 @@
                 , /Data/Functor [ T=TopType ]
                 ,
                     [ /Data/Option
-                        [ T=TVVar TVInt "T" ]
+                        [ T=TVVar "T" ]
                     , /Data/ConsList
-                        [ T=TVVar TVInt "T" ]
+                        [ T=TVVar "T" ]
                     ]
                 , Just "A [Functor] is a basic property of a collection.
                   It has a single operation [fmap] that applies a function to each element in the collection.$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]  "
@@ -270,7 +270,7 @@
                 ( True
                 , /Data/Option [ T=TopType ]
                 ,
-                    [ TVVar TVInt "T"
+                    [ TVVar "T"
                     , /Data/None
                     ]
                 , Just "[Option] defines a type that might have a value or [None].
@@ -422,7 +422,7 @@
                 ( True
                 , /Maybe [ T=TopType ]
                 ,
-                    [ TVVar TVInt "T"
+                    [ TVVar "T"
                     , /Nothing
                     ]
                 , Just ""

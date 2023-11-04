@@ -75,7 +75,7 @@ buildExpr TBEnv{tbVals} _ (Value (Meta (UnionType prodTypes) pos _) name) = case
       Just val -> val
       Nothing  -> ResArrowTuple name' H.empty
     e -> error $ printf "Found unexpected value type in buildExpr: %s" (show e)
-buildExpr TBEnv{tbClassGraph} (os, obj) (Arg (Meta (TypeVar (TVArg TVInt a)) _ _) name) = return $ ArgArrow (snd $ fromJust $ suffixLookupInDict a $ exprArgsWithSrc tbClassGraph (oaObjExpr obj) os) name
+buildExpr TBEnv{tbClassGraph} (os, obj) (Arg (Meta (TypeVar (TVArg a) TVInt) _ _) name) = return $ ArgArrow (snd $ fromJust $ suffixLookupInDict a $ exprArgsWithSrc tbClassGraph (oaObjExpr obj) os) name
 buildExpr _ _ (Arg (Meta tp _ _) name) = return $ ArgArrow tp name
 buildExpr TBEnv{tbClassGraph} _ (TupleApply (Meta tp pos _) (Meta baseType _ _, baseExpr) ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=Just (Just (GuardExpr argExpr _), _)}) = do
   let argName = exprPath argObj
@@ -181,10 +181,10 @@ envLookup env obj input ee visitedArrows srcType destType = do
 buildImplicit :: TBEnv -> ObjSrc -> TBExpr -> Type -> Type -> CRes ResArrowTree
 buildImplicit _ _ expr srcType (TopType []) = return $ ExprArrow expr srcType srcType
 buildImplicit _ obj _ (TopType []) destType = error $ printf "Build implicit from top type to %s in %s" (show destType) (show obj)
-buildImplicit env objSrc@(_, obj) input (TypeVar (TVVar TVInt varName)) destType = case suffixLookupInDict varName $ exprAppliedVars $ oaObjExpr obj of
+buildImplicit env objSrc@(_, obj) input (TypeVar (TVVar varName) TVInt) destType = case suffixLookupInDict varName $ exprAppliedVars $ oaObjExpr obj of
   Just objVarM -> buildImplicit env objSrc input (getMetaType objVarM) destType
   Nothing -> error $ printf "buildImplicit unknown arg %s with obj %s" varName (show objSrc)
-buildImplicit env@TBEnv{tbClassGraph} objSrc@(os, obj) input (TypeVar (TVArg TVInt argName)) destType = case suffixLookupInDict argName $ exprArgsWithSrc tbClassGraph (oaObjExpr obj) os of
+buildImplicit env@TBEnv{tbClassGraph} objSrc@(os, obj) input (TypeVar (TVArg argName) TVInt) destType = case suffixLookupInDict argName $ exprArgsWithSrc tbClassGraph (oaObjExpr obj) os of
   Just (_, srcType) -> buildImplicit env objSrc input srcType destType
   Nothing -> error $ printf "buildImplicit unknown arg %s with obj %s" argName (show obj)
 buildImplicit env obj expr srcType@(UnionType srcTypeLeafs) destType = do
@@ -248,10 +248,10 @@ buildArrow env@TBEnv{tbClassGraph} objPartial oa@ObjArr{oaAnnots, oaArr=Just (Ju
   let env' = env{tbName = printf "arrow %s" (show oa)}
   let objSrc = (objPartial, oa)
   let am' = case am of
-        (TypeVar (TVVar TVInt v)) -> case suffixLookupInDict v $ exprAppliedVars $ oaObjExpr oa of
+        (TypeVar (TVVar v) TVInt) -> case suffixLookupInDict v $ exprAppliedVars $ oaObjExpr oa of
           Just m  -> getMetaType m
           Nothing -> error "Bad TVVar in makeBaseEnv"
-        (TypeVar (TVArg TVInt v)) -> case suffixLookupInDict v $ exprArgs $ oaObjExpr oa of
+        (TypeVar (TVArg v) TVInt) -> case suffixLookupInDict v $ exprArgs $ oaObjExpr oa of
           Just argMetas -> intersectAllTypes tbClassGraph $ map getMetaType argMetas
           Nothing      -> error "Bad TVArg in makeBaseEnv"
         _ -> am

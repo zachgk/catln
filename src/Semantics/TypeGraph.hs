@@ -95,7 +95,7 @@ reachesPartial env@ReachesEnv{rClassGraph, rUnionAllType} partial@PartialType{pt
 reaches :: (MetaDat m, Show m) => ReachesEnv m -> Type -> CRes ReachesTree
 reaches _     (TopType [])            = return $ ReachesLeaf [topType]
 reaches _     (TopType _)            = undefined
-reaches _     (TypeVar v)            = error $ printf "reaches with typevar %s" (show v)
+reaches _     (TypeVar v _)            = error $ printf "reaches with typevar %s" (show v)
 reaches env (UnionType src) = do
   let partials = splitUnionType src
   resultsByPartials <- mapM (reachesPartial env) partials

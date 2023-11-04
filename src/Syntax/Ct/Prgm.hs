@@ -157,7 +157,7 @@ instance ExprClass RawExpr where
   exprVarArgs (RawTupleApply _ (_, be) args) = H.unionWith (++) (exprVarArgs be) (unionsWith (++) $ map oaVarArgs args)
   exprVarArgs (RawVarsApply _ e vars) = H.unionWith (++) (exprVarArgs e) (unionsWith (++) $ map aux vars)
     where
-      aux (n, m) = H.singleton (TVVar TVInt $ exprPath n) [m]
+      aux (n, m) = H.singleton (TVVar $ exprPath n) [m]
   exprVarArgs (RawContextApply _ (_, e) _) = exprVarArgs e
   exprVarArgs (RawParen e) = exprVarArgs e
   exprVarArgs (RawMethod be me) = H.unionWith (++) (exprVarArgs be) (exprVarArgs me)
@@ -168,7 +168,7 @@ instance ObjArrClass RawObjArr where
     where
       exprArg RawObjArr{roaArr=(Just (Just (GuardExpr argVal Nothing), _))} = exprVarArgs argVal
       exprArg RawObjArr{roaObj=(Just (GuardExpr obj Nothing)), roaArr= Nothing} = case exprPathM obj of
-        (n, m) -> H.singleton (TVArg TVInt n) [m]
+        (n, m) -> H.singleton (TVArg n) [m]
       exprArg oa = error $ printf "exprVarArgs not defined for arg %s" (show oa)
   getOaAnnots = roaAnnots
 

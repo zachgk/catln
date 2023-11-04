@@ -65,8 +65,8 @@ type DesPrgm = ExprPrgm Expr ParseMetaDat
 type DesPrgmGraphData = GraphData DesPrgm String
 
 parseTVVar :: String -> Maybe Type
-parseTVVar ('$':'_':n) = Just $ TypeVar $ TVVar TVExt n
-parseTVVar ('$':n)     = Just $ TypeVar $ TVVar TVInt n
+parseTVVar ('$':'_':n) = Just $ TypeVar (TVVar n) TVExt
+parseTVVar ('$':n)     = Just $ TypeVar (TVVar n) TVInt
 parseTVVar _           = Nothing
 
 fromMaybeTypeName :: Maybe TypeName -> Type

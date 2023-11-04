@@ -3,62 +3,62 @@
         (
             [
                 ( /operator!= [ T : /Data/Algebra/Eq ] )
-                ( Arg TVVar TVInt "T" l )
-                ( Arg TVVar TVInt "T" r ) -> /Data/Primitive/Boolean
+                ( Arg TVVar "T" l )
+                ( Arg TVVar "T" r ) -> /Data/Primitive/Boolean
             , Value /Data/Algebra/LessThan
             , Value /Data/Algebra/Equal
             , Value /Data/Algebra/GreaterThan
             , Value /Data/Algebra/NoOrdering
             ,
                 ( /Data/Algebra/compare [ T : /Data/Algebra/Ord ] )
-                ( Arg TVVar TVInt "T" l )
-                ( Arg TVVar TVInt "T" r ) -> /Data/Algebra/Ordering
+                ( Arg TVVar "T" l )
+                ( Arg TVVar "T" r ) -> /Data/Algebra/Ordering
             ,
                 ( /Data/Algebra/compare [ T : /Data/Algebra/POrd ] )
-                ( Arg TVVar TVInt "T" l )
-                ( Arg TVVar TVInt "T" r ) -> /Data/Algebra/POrdering
+                ( Arg TVVar "T" l )
+                ( Arg TVVar "T" r ) -> /Data/Algebra/POrdering
             ,
                 ( /operator<= [ T : /Data/Algebra/Ord ] )
-                ( Arg TVVar TVInt "T" l )
-                ( Arg TVVar TVInt "T" r ) -> /Data/Primitive/Boolean
+                ( Arg TVVar "T" l )
+                ( Arg TVVar "T" r ) -> /Data/Primitive/Boolean
             ,
                 ( /operator>= [ T : /Data/Algebra/Ord ] )
-                ( Arg TVVar TVInt "T" l )
-                ( Arg TVVar TVInt "T" r ) -> /Data/Primitive/Boolean
+                ( Arg TVVar "T" l )
+                ( Arg TVVar "T" r ) -> /Data/Primitive/Boolean
             ,
                 ( /operator< [ T : /Data/Algebra/Ord ] )
-                ( Arg TVVar TVInt "T" l )
-                ( Arg TVVar TVInt "T" r ) -> /Data/Primitive/Boolean
+                ( Arg TVVar "T" l )
+                ( Arg TVVar "T" r ) -> /Data/Primitive/Boolean
             ,
                 ( /operator> [ T : /Data/Algebra/Ord ] )
-                ( Arg TVVar TVInt "T" l )
-                ( Arg TVVar TVInt "T" r ) -> /Data/Primitive/Boolean
+                ( Arg TVVar "T" l )
+                ( Arg TVVar "T" r ) -> /Data/Primitive/Boolean
             ,
                 ( /operator++ [ T : /Data/Algebra/Semigroup ] )
-                ( Arg TVVar TVInt "T" l )
-                ( Arg TVVar TVInt "T" r ) -> TVVar TVInt "T"
+                ( Arg TVVar "T" l )
+                ( Arg TVVar "T" r ) -> TVVar "T"
             ,
                 ( /Data/Algebra/testSemigroupAssociative [ T : /Data/Algebra/Semigroup ] )
-                ( Arg TVVar TVInt "T" a )
-                ( Arg TVVar TVInt "T" b )
-                ( Arg TVVar TVInt "T" c ) -> /Data/Primitive/Integer = CInt 0
-            , /Data/Algebra/mempty [ T : /Data/Algebra/Monoid ] -> TVVar TVInt "T"
+                ( Arg TVVar "T" a )
+                ( Arg TVVar "T" b )
+                ( Arg TVVar "T" c ) -> /Data/Primitive/Integer = CInt 0
+            , /Data/Algebra/mempty [ T : /Data/Algebra/Monoid ] -> TVVar "T"
             ,
                 ( /Data/Algebra/testRightMonoidIdentity [ T : /Data/Algebra/Monoid ] )
-                ( Arg TVVar TVInt "T" t ) -> /Data/Primitive/Integer = CInt 0
+                ( Arg TVVar "T" t ) -> /Data/Primitive/Integer = CInt 0
             ,
                 ( /Data/Algebra/testLeftMonoidIdentity [ T : /Data/Algebra/Monoid ] )
-                ( Arg TVVar TVInt "T" t ) -> /Data/Primitive/Integer = CInt 0
+                ( Arg TVVar "T" t ) -> /Data/Primitive/Integer = CInt 0
             ,
                 ( /Data/Algebra/testCommutativeMonoid [ T : /Data/Algebra/CommutativeMonoid ] )
-                ( Arg TVVar TVInt "T" a )
-                ( Arg TVVar TVInt "T" b ) -> /Data/Primitive/Integer = CInt 0
+                ( Arg TVVar "T" a )
+                ( Arg TVVar "T" b ) -> /Data/Primitive/Integer = CInt 0
             ,
                 ( /Data/Algebra/inverse [ T : /Data/Algebra/Group ] )
-                ( Arg TVVar TVInt "T" t ) -> TVVar TVInt "T"
+                ( Arg TVVar "T" t ) -> TVVar "T"
             ,
                 ( /Data/Algebra/testGroup [ T : /Data/Algebra/Group ] )
-                ( Arg TVVar TVInt "T" t ) -> /Data/Primitive/Integer = CInt 0
+                ( Arg TVVar "T" t ) -> /Data/Primitive/Integer = CInt 0
             ]
         ,
             [ CGType
@@ -186,7 +186,7 @@
                 , contents=/Data/String
                 ) = CatlnResult
                 ( Arg /Data/String name= CStr "index.html" )
-                ( Arg /Data/String contents= Arg TVArg TVInt "html" html )
+                ( Arg /Data/String contents= Arg TVArg "html" html )
             , /Catln/llvm ( Arg TopType c ) -> /Catln/CatlnResult
                 ( name=/Data/String
                 , contents=/Data/String
@@ -223,14 +223,14 @@
         (
             [ Value /Data/String
             , /operator== ( Arg /Data/String l ) ( Arg /Data/String r ) -> /Data/Primitive/Boolean
-            , /Data/toString ( Arg /Data/String this ) -> /Data/String = Arg TVArg TVInt "this" this
+            , /Data/toString ( Arg /Data/String this ) -> /Data/String = Arg TVArg "this" this
             , /Data/toString ( Arg /Data/Primitive/Integer this ) -> /Data/String
             , Value /Data/None
             ,
                 ( /Data/Cons [ T : TopType ] )
-                ( Arg TVVar TVInt "T" head )
+                ( Arg TVVar "T" head )
                 ( Arg /Data/ConsList
-                    [ T=TVVar TVInt "T" ] tail
+                    [ T=TVVar "T" ] tail
                 )
             , Value /Data/Nil
             , /Data/length ( Arg /Data/Nil this ) -> /Data/Primitive/Integer = CInt 0
@@ -238,7 +238,7 @@
                 ( Arg TopType this -> /Data/Cons [ T=TopType ]
                     ( head=TopType
                     , tail=/Data/ConsList
-                        [ T=TVVar TVInt "T" ]
+                        [ T=TVVar "T" ]
                     ) = /Data/Cons ( Arg TopType head )
                     ( Arg /Data/ConsList [ T=TopType ] tail )
                 ) ->
@@ -253,9 +253,9 @@
                         ( /Data/Nil | /Data/Cons [ T=TopType ]
                             ( head=TopType
                             , tail=/Data/ConsList
-                                [ T=TVVar TVInt "T" ]
+                                [ T=TVVar "T" ]
                             )
-                        ) this= Arg TVArg TVInt "tail" tail
+                        ) this= Arg TVArg "tail" tail
                     )
                 )
             , /Data/enum [ T : /Data/Enum ] -> /Data/Set [ T=TopType ]
@@ -275,9 +275,9 @@
                 , /Data/ConsList [ T=TopType ]
                 ,
                     [ /Data/Cons [ T=TopType ]
-                        ( head=TVVar TVInt "T"
+                        ( head=TVVar "T"
                         , tail=/Data/ConsList
-                            [ T=TVVar TVInt "T" ]
+                            [ T=TVVar "T" ]
                         )
                     , /Data/Nil
                     ]
@@ -296,9 +296,9 @@
                 , /Data/Functor [ T=TopType ]
                 ,
                     [ /Data/Option
-                        [ T=TVVar TVInt "T" ]
+                        [ T=TVVar "T" ]
                     , /Data/ConsList
-                        [ T=TVVar TVInt "T" ]
+                        [ T=TVVar "T" ]
                     ]
                 , Just "A [Functor] is a basic property of a collection.
                   It has a single operation [fmap] that applies a function to each element in the collection.$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]  "
@@ -313,7 +313,7 @@
                 ( True
                 , /Data/Option [ T=TopType ]
                 ,
-                    [ TVVar TVInt "T"
+                    [ TVVar "T"
                     , /Data/None
                     ]
                 , Just "[Option] defines a type that might have a value or [None].
@@ -452,7 +452,7 @@
     (
         (
             [ Value /Nothing
-            , /defInt ( Arg /Data/Primitive/Integer x ) -> /Data/Primitive/Integer = Arg TVArg TVInt "x" x
+            , /defInt ( Arg /Data/Primitive/Integer x ) -> /Data/Primitive/Integer = Arg TVArg "x" x
             , /defInt ( Arg TopType x -> Nothing = Arg Nothing Nothing ) -> /Data/Primitive/Integer = CInt 0
             , /Context ( Arg TopType value -> /main = Arg /main /main ) ( Arg /Catln/IO io ) ->
                 ( /Catln/exit
@@ -463,7 +463,7 @@
                 ( Arg /Data/Primitive/Integer val= defInt
                     ( Arg /Data/Primitive/Integer x= CInt 0 )
                 )
-                ( Arg /Catln/IO this= Arg TVArg TVInt "io" io )
+                ( Arg /Catln/IO this= Arg TVArg "io" io )
             ]
         ,
             [ CGType
@@ -471,7 +471,7 @@
                 ( True
                 , /Maybe [ T=TopType ]
                 ,
-                    [ TVVar TVInt "T"
+                    [ TVVar "T"
                     , /Nothing
                     ]
                 , Just ""
