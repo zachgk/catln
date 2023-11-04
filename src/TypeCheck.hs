@@ -26,7 +26,6 @@ import           Data.Graph
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Data.Maybe
-import           Semantics
 import           Semantics.Prgm
 import           TypeCheck.Common
 import           TypeCheck.Constrain (runConstraints)
@@ -34,27 +33,27 @@ import           TypeCheck.Decode
 import           TypeCheck.Encode
 import           Utils
 
-type TypecheckTuplePrgm = (TEPrgm, VPrgm, TraceConstrain)
-type FinalTypecheckTuplePrgm = (FinalTPrgm, VPrgm, TraceConstrain)
+type TypecheckTuplePrgm = (TEPrgm, VEPrgm, TraceConstrain)
+type FinalTypecheckTuplePrgm = (FinalTPrgm, VEPrgm, TraceConstrain)
 type TypecheckFileResult = H.HashMap String (GraphNodes TypecheckTuplePrgm String)
 
 runConstraintsLimit :: Integer
 runConstraintsLimit = 10
 
-typecheckPrgms :: [PPrgm] -> [TEPrgm] -> TypeCheckResult [TypecheckTuplePrgm]
+typecheckPrgms :: [PEPrgm] -> [TEPrgm] -> TypeCheckResult [TypecheckTuplePrgm]
 typecheckPrgms pprgms typechecked = do
   -- determine total classGraph
-  let (_, pclassGraph, _) = mergePrgms pprgms
+  let (_, pclassGraph, _) = mergeExprPrgms pprgms
   let (_, tclassGraph, _) = mergeExprPrgms typechecked
   let classGraph = mergeClassGraphs pclassGraph tclassGraph
 
   let baseFEnv = makeBaseFEnv classGraph
   (vprgms, env@FEnv{feCons}) <- fromPrgms baseFEnv pprgms typechecked
   env'@FEnv{feTrace} <- runConstraints runConstraintsLimit env feCons
-  tprgms <- decodeExprPrgms env' vprgms
+  tprgms <- toPrgms env' vprgms
   return $ zip3 tprgms vprgms (repeat feTrace)
 
-typecheckConnComps :: PPrgmGraphData -> TypecheckFileResult -> [SCC (GraphNodes PPrgm String)] -> TypeCheckResult TypecheckFileResult
+typecheckConnComps :: PEPrgmGraphData -> TypecheckFileResult -> [SCC (GraphNodes PEPrgm String)] -> TypeCheckResult TypecheckFileResult
 typecheckConnComps _ res [] = return res
 typecheckConnComps graphData@(prgmGraph, prgmFromNode, prgmFromName) results (curPrgm:nextPrgms) = do
   let pprgms = flattenSCC curPrgm
@@ -67,8 +66,7 @@ typecheckConnComps graphData@(prgmGraph, prgmFromNode, prgmFromName) results (cu
   typecheckConnComps graphData results' nextPrgms
 
 typecheckPrgmWithTrace :: InitialPPrgmGraphData -> CRes (GraphData FinalTypecheckTuplePrgm String)
-typecheckPrgmWithTrace initpprgms = typeCheckToRes $ do
-  let pprgms = fmapGraph fromExprPrgm initpprgms
+typecheckPrgmWithTrace pprgms = typeCheckToRes $ do
   let pprgmSCC = stronglyConnCompR $ graphToNodes pprgms
   typechecked <- typecheckConnComps pprgms H.empty pprgmSCC
   return $ graphFromEdges $ H.elems typechecked

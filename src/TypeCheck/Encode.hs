@@ -60,7 +60,7 @@ makeBaseFEnv :: ClassGraph -> FEnv
 makeBaseFEnv classGraph = FEnv{
   fePnts = IM.empty,
   feCons = [],
-  feUnionAllObjs = Meta topType Nothing (VarMetaDat 0 Nothing),
+  feUnionAllObjs = Meta topType Nothing (VarMetaDat (Just 0) Nothing),
   feVTypeGraph = H.empty,
   feTTypeGraph = H.empty,
   feUpdatedDuringEpoch = False,
@@ -70,8 +70,8 @@ makeBaseFEnv classGraph = FEnv{
   }
 
 mkVarMetaDat :: EncodeState -> Pnt -> VarMetaDat
-mkVarMetaDat (EncodeOut obj _) p = VarMetaDat p obj
-mkVarMetaDat (EncodeIn _) p      = VarMetaDat p Nothing
+mkVarMetaDat (EncodeOut obj _) p = VarMetaDat (Just p) obj
+mkVarMetaDat (EncodeIn _) p      = VarMetaDat (Just p) Nothing
 
 fromMeta :: FEnv -> TypeBound -> EncodeState -> PreMeta -> String -> TypeCheckResult (VarMeta, FEnv)
 fromMeta env bound est m description  = do
@@ -384,12 +384,12 @@ addTypeGraphPrgm env (objMap, _, _) = do
   (_, env') <- mapMWithFEnv env addTypeGraphObjects objMap
   return ((), env')
 
-fromPrgms :: FEnv -> [PPrgm] -> [TEPrgm] -> TypeCheckResult ([VPrgm], FEnv)
+fromPrgms :: FEnv -> [PEPrgm] -> [TEPrgm] -> TypeCheckResult ([VEPrgm], FEnv)
 fromPrgms env1 pprgms tprgms = do
   (_, env2) <- mapMWithFEnv env1 addTypeGraphPrgm tprgms
-  (pprgmsWithVObjs, env3) <- mapMWithFEnv env2 prepObjPrgm pprgms
+  (pprgmsWithVObjs, env3) <- mapMWithFEnv env2 prepObjPrgm (map fromExprPrgm pprgms)
   (vprgms, env4) <- mapMWithFEnv env3 fromPrgm pprgmsWithVObjs
   let (vjoinObjMap, _, _) = mergePrgms vprgms
   let (tjoinObjMap, _, _) = mergeExprPrgms tprgms
   let env5 = addUnionObjToEnv env4 vjoinObjMap tjoinObjMap
-  return (vprgms, env5)
+  return (map toExprPrgm vprgms, env5)

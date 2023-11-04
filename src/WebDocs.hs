@@ -43,7 +43,7 @@ import           Syntax.Parsers                (readFiles)
 import           TypeCheck                     (typecheckPrgm,
                                                 typecheckPrgmWithTrace)
 import           TypeCheck.Common              (FinalTPrgm, TraceConstrain,
-                                                VPrgm)
+                                                VEPrgm)
 import           Utils
 
 data ResSuccess a n = Success a [n]
@@ -68,7 +68,7 @@ data WDProvider
   , cBaseFileName   :: String
   , cRaw            :: CRes PPrgmGraphData
   , cPrgm           :: CRes (GraphData DesPrgm String)
-  , cTPrgmWithTrace :: CRes (GraphData (FinalTPrgm, VPrgm, TraceConstrain) String)
+  , cTPrgmWithTrace :: CRes (GraphData (FinalTPrgm, VEPrgm, TraceConstrain) String)
   , cTPrgm          :: CRes (GraphData FinalTPrgm String)
                     }
 
@@ -98,7 +98,7 @@ getPrgm provider@LiveWDProvider{} = do
   return (base >>= desFiles)
 getPrgm CacheWDProvider{cPrgm} = return cPrgm
 
-getTPrgmWithTrace :: WDProvider -> IO (CRes (GraphData (FinalTPrgm, VPrgm, TraceConstrain) String))
+getTPrgmWithTrace :: WDProvider -> IO (CRes (GraphData (FinalTPrgm, VEPrgm, TraceConstrain) String))
 getTPrgmWithTrace provider@LiveWDProvider{} = do
   base <- getPrgm provider
   return (base >>= typecheckPrgmWithTrace)

@@ -17,6 +17,7 @@ module TypeCheck.Decode where
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 
+import           Control.Monad       (forM)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
@@ -65,13 +66,13 @@ toExpr env (TupleApply m (baseM, baseExpr) arg) = case arg of
     case m' of -- check for errors
 
       -- Don't check if a bottom type is present
-      _ | getMetaType m' == bottomType -> return result
+      _ | getMetaType m' == bottomType     -> return result
       _ | getMetaType baseM' == bottomType -> return result
 
-      tp@(Meta (UnionType uType) _ _) | all (\PartialType{ptArgs=leafArgs} -> not (argName `member` H.keys leafArgs)) (splitUnionType uType) ->
-                                          TypeCheckResult [TupleMismatch baseM' baseExpr' tp $ H.singleton argName argExpr'] result
+      -- tp@(Meta (UnionType uType) _ _) | all (\PartialType{ptArgs=leafArgs} -> not (argName `member` H.keys leafArgs)) (splitUnionType uType) ->
+      --                                     TypeCheckResult [TupleMismatch baseM' baseExpr' tp $ H.singleton argName argExpr'] result
 
-      _ -> return result
+      _                                    -> return result
   ObjArr{oaArr=Just (Just (GuardExpr argExpr _), _)} -> do
     let pos = getMetaPos m
     m' <- toMeta env m "TupleApplyInfer_M"
@@ -106,56 +107,27 @@ toExpr env (VarApply m baseExpr varName varVal) = do
 
     _                                -> return result
 
-toArrow :: FEnv -> VArrow -> TypeCheckResult TArrow
-toArrow env (Arrow m aguard maybeExpr) = do
-  m' <- toMeta env m "Arrow"
-  aguard' <- mapM (toExpr env) aguard
-  case maybeExpr of
-    Just expr -> do
-      expr' <- toExpr env expr
-      return $ Arrow m' aguard' (Just expr')
-    Nothing -> return $ Arrow m' aguard' Nothing
+toGuardExpr :: FEnv -> VGuardExpr -> TypeCheckResult TGuardExpr
+toGuardExpr env (GuardExpr e g) = do
+  e' <- toExpr env e
+  g' <- mapM (toExpr env) g
+  return $ GuardExpr e' g'
 
-toObjArg :: FEnv -> String -> (TypeName, VObjArg) -> TypeCheckResult (TypeName, TObjArg)
-toObjArg env prefix (name, (m, maybeObj)) = do
-  let prefix' = prefix ++ "_" ++ name
-  m' <- toMeta env m prefix'
-  case maybeObj of
-    Just obj -> do
-      obj' <- toObject env prefix' obj
-      return (name, (m', Just obj'))
-    Nothing -> return (name, (m', Nothing))
+toObjArr :: FEnv -> VObjArr -> TypeCheckResult TEObjectMapItem
+toObjArr env oa@ObjArr{oaObj, oaArr, oaAnnots} = do
+  oaObj' <- mapM (toGuardExpr env) oaObj
+  oaArr' <- forM oaArr $ \(ge, m) -> do
+    ge' <- mapM (toGuardExpr env) ge
+    m' <- toMeta env m "arrMeta"
+    return (ge', m')
+  oaAnnots' <- mapM (toExpr env) oaAnnots
+  return oa{oaObj=oaObj', oaArr=oaArr', oaAnnots=oaAnnots'}
 
-toObject :: FEnv -> String -> VObject -> TypeCheckResult TObject
-toObject env prefix obj@Object{deprecatedObjArgs, objDupExpr} = do
-  let prefix' = prefix ++ "_" ++ objPath obj
-  _m' <- toMeta env (objM obj) prefix'
-  _vars' <- mapM (\(varName, varVal) -> (varName,) <$> toMeta env varVal (prefix' ++ "." ++ varName)) $ H.toList $ objAppliedVars obj
-  _args' <- mapM (toObjArg env prefix') $ H.toList deprecatedObjArgs
-  objDupExpr' <- toExpr env objDupExpr
-  return $ exprToObj (objBasis obj) (objDoc obj) objDupExpr'
-  -- return $ obj{deprecatedObjM=m', deprecatedObjVars=H.fromList vars', deprecatedObjArgs=H.fromList args', objDupExpr=objDupExpr'}
-
-toObjectArrow :: FEnv -> VObjectMapItem -> TypeCheckResult TObjectMapItem
-toObjectArrow env (obj, annots, arrow) = do
-  obj' <- toObject env "Object" obj
-  annots' <- mapM (toExpr env) annots
-  arrow' <- mapM (toArrow env) arrow
-  return (obj', annots', arrow')
-
-toExprObjectArrow :: FEnv -> VObjectMapItem -> TypeCheckResult TEObjectMapItem
-toExprObjectArrow env item@(Object{objDupExpr}, _, _) = do
-  objDupExpr' <- toExpr env objDupExpr
-  item' <- toObjectArrow env item
-  case asExprObjectMapItem item' of
-    oa@ObjArr{oaObj=Just (GuardExpr _ g)} -> return $ oa{oaObj=Just (GuardExpr objDupExpr' g)}
-    oa@ObjArr{oaObj=Nothing} -> return $ oa{oaObj=Just (GuardExpr objDupExpr' Nothing)}
-
-decodeExprPrgm :: FEnv -> VPrgm -> TypeCheckResult TEPrgm
-decodeExprPrgm env (objMap, classGraph, annots) = do
-  objMap' <- mapM (toExprObjectArrow env) objMap
+toPrgm :: FEnv -> VEPrgm -> TypeCheckResult TEPrgm
+toPrgm env (objMap, classGraph, annots) = do
+  objMap' <- mapM (toObjArr env) objMap
   annots' <- mapM (toExpr env) annots
   return (objMap', classGraph, annots')
 
-decodeExprPrgms :: FEnv -> [VPrgm] -> TypeCheckResult [TEPrgm]
-decodeExprPrgms env = mapM (decodeExprPrgm env)
+toPrgms :: FEnv -> [VEPrgm] -> TypeCheckResult [TEPrgm]
+toPrgms env = mapM (toPrgm env)

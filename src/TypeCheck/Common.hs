@@ -145,7 +145,9 @@ type PArrow = Arrow Expr ()
 type PObjArg = ObjArg Expr ()
 type PObject = Object Expr ()
 type PPrgm = Prgm Expr ()
+type PEPrgm = ExprPrgm Expr ()
 type PPrgmGraphData = GraphData PPrgm String
+type PEPrgmGraphData = GraphData PEPrgm String
 type InitialPPrgmGraphData = GraphData (ExprPrgm Expr ()) String
 
 data ShowMetaDat = ShowMeta SType VarMetaDat
@@ -160,7 +162,7 @@ type SObjectMap = ExprObjectMap Expr ShowMetaDat
 type SObjectMapItem = ExprObjectMapItem Expr ShowMetaDat
 type SPrgm = ExprPrgm Expr ShowMetaDat
 
-data VarMetaDat = VarMetaDat Pnt (Maybe VObject)
+data VarMetaDat = VarMetaDat (Maybe Pnt) (Maybe VObject)
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 type VarMeta = Meta VarMetaDat
 type VExpr = Expr VarMetaDat
@@ -181,6 +183,7 @@ type VEPrgm = (VEObjectMap, ClassGraph, [VCompAnnot])
 type TypedMeta = Meta ()
 type TExpr = Expr ()
 type TCompAnnot = CompAnnot TExpr
+type TGuardExpr = GuardExpr Expr ()
 type TArrow = Arrow Expr ()
 type TObjArg = ObjArg Expr ()
 type TObject = Object Expr ()
@@ -199,7 +202,7 @@ type TTypeGraphVal = (TObject, TArrow) -- (match object type, if matching then c
 type TTypeGraph = H.HashMap TypeName [TTypeGraphVal] -- H.HashMap (Root tuple name for filtering) [vals]
 
 instance MetaDat VarMetaDat where
-  emptyMetaDat = error "VarMetaDat"
+  emptyMetaDat = VarMetaDat Nothing Nothing
 
 instance MetaDat ShowMetaDat where
   emptyMetaDat = error "VarMetaDat"
@@ -287,7 +290,7 @@ constraintVarArgEnv (AddInferArg vaenv _ _)    = vaenv
 constraintVarArgEnv (PowersetTo vaenv _ _)     = vaenv
 constraintVarArgEnv (UnionOf vaenv _ _)        = vaenv
 
-getPnt :: VarMeta -> Pnt
+getPnt :: VarMeta -> Maybe Pnt
 getPnt (Meta _ _ (VarMetaDat p _)) = p
 
 fLookup :: FEnv -> Maybe VObject -> String -> TypeCheckResult EnvDef
@@ -327,10 +330,12 @@ verifyScheme _ _ _ _ _ = Nothing
 -- Point operations
 
 descriptor :: FEnv -> VarMeta -> Scheme
-descriptor FEnv{fePnts} p = fePnts IM.! getPnt p
+descriptor FEnv{fePnts} m = case getPnt m of
+  Just p  -> fePnts IM.! p
+  Nothing -> pure (SType (getMetaType m) (getMetaType m) "noPnt descriptor")
 
 equivalent :: FEnv -> VarMeta -> VarMeta -> Bool
-equivalent FEnv{fePnts} m1 m2 = (fePnts IM.! getPnt m1) == (fePnts IM.! getPnt m2)
+equivalent env m1 m2 = descriptor env m1 == descriptor env m2
 
 fresh :: FEnv -> Scheme -> (Pnt, FEnv)
 fresh env@FEnv{fePnts} scheme = (pnt', env{fePnts = pnts'})
@@ -339,10 +344,10 @@ fresh env@FEnv{fePnts} scheme = (pnt', env{fePnts = pnts'})
     pnts' = IM.insert pnt' scheme fePnts
 
 setDescriptor :: FEnv -> Constraint -> VarMeta -> Scheme -> String -> FEnv
-setDescriptor env@FEnv{feClassGraph, fePnts, feTrace, feUpdatedDuringEpoch} con m@(Meta _ _ (VarMetaDat _ _)) scheme' msg = env{fePnts = pnts', feTrace = feTrace', feUpdatedDuringEpoch = feUpdatedDuringEpoch || schemeChanged}
+setDescriptor env _ (Meta _ _ (VarMetaDat Nothing _)) _ _ = env
+setDescriptor env@FEnv{feClassGraph, fePnts, feTrace, feUpdatedDuringEpoch} con m@(Meta _ _ (VarMetaDat (Just p) _)) scheme' msg = env{fePnts = pnts', feTrace = feTrace', feUpdatedDuringEpoch = feUpdatedDuringEpoch || schemeChanged}
   where
-    p = getPnt m
-    scheme = fePnts IM.! p
+    scheme = descriptor env m
     schemeChanged :: Bool
     schemeChanged = fromMaybe False $ tcreToMaybe $ do
       showVaenv <- fmap stypeAct <$> mapM (descriptor env) (constraintVarArgEnv con)

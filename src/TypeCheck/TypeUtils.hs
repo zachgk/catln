@@ -115,7 +115,7 @@ addUnionObjToEnv env1@FEnv{feClassGraph} vobjMap tobjMap = do
   let (unionAllObjs, env2) = fresh env1 $ TypeCheckResult [] $ SType topType topType "unionAllObjs"
   let (unionAllObjsPs, env3) = fresh env2 $ TypeCheckResult [] $ SType topType topType "unionAllObjsPs"
 
-  let mkVarMeta p = Meta topType Nothing (VarMetaDat p Nothing)
+  let mkVarMeta p = Meta topType Nothing (VarMetaDat (Just p) Nothing)
 
   -- Build a variable to store union of tobjs
   let typecheckedAllType = unionAllTypes feClassGraph $ map (getMetaType . objM) tobjs'
