@@ -40,7 +40,7 @@ setScheme env@FEnv{feClassGraph} con p scheme baseMsg = setDescriptor env con p 
     -- checkScheme (TypeCheckResult _ (SType ub _ desc)) | isBottomType ub = error $ msg' ++ desc
     checkScheme (TypeCheckResult notes (SType ub _ desc)) | isBottomType ub = TypeCheckResE (mkTracedTypeCheckError env p (getMetaPos p) (msg desc "Actual type is bottomType") : notes)
     checkScheme (TypeCheckResult notes (SType _ req desc)) | isBottomType req = TypeCheckResE (mkTracedTypeCheckError env p (getMetaPos p) (msg desc "Required type is bottomType") : notes)
-    checkScheme (TypeCheckResult notes (SType act req desc)) | not (isSubtypeOf feClassGraph act req) = TypeCheckResE (mkTracedTypeCheckError env p (getMetaPos p) (msg desc "Required type is bottomType") : notes)
+    checkScheme (TypeCheckResult notes (SType act req desc)) | not (isSubtypeOfWithEnv feClassGraph (fmap stypeAct $ fromJust $ tcreToMaybe $ descriptorConVaenv env con) act req) = TypeCheckResE (mkTracedTypeCheckError env p (getMetaPos p) (msg desc "Required type is bottomType") : notes)
     checkScheme s = s
 
     msg :: String -> String -> String

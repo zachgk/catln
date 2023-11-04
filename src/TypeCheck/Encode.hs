@@ -335,7 +335,8 @@ fromObjectRec prefix isObjArg est env (Object m basis vars args doc expr path) =
   let env6 = fInsert env5 path (DefVar objValue)
   let env7 = addConstraints env6 [BoundedByObjs (encodeVarArgs est) m' | isObjArg]
   let env8 = addConstraints env7 [BoundedByKnown (encodeVarArgs est) m' (singletonType (PartialType (PTypeName path) (fmap (const topType) vars) (fmap (const topType) args) [] PtArgExact)) | basis == FunctionObj || basis == PatternObj]
-  return (obj', env8)
+  let env9 = addConstraints env8 [EqPoints (encodeVarArgs est) m' (getExprMeta expr')]
+  return (obj', env9)
 
 fromObject ::  FEnv -> PObject -> TypeCheckResult (VObject, VMetaVarArgEnv, FEnv)
 fromObject env1 obj = do
