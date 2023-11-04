@@ -454,7 +454,7 @@
             [
                 ( /id [ T : TopType ] )
                 ( Arg TVVar "T" x ) = Arg TVArg "x" x
-            , /Context ( Arg TopType value -> /main = Arg /main /main ) ( Arg /Catln/IO io ) ->
+            , /Context ( Arg TopType value= Arg TopType /main ) ( Arg /Catln/IO io ) ->
                 ( /Catln/exit
                     ( val=/Data/Primitive/Integer
                     , this=/Catln/IO

@@ -472,7 +472,7 @@
                     )
                 )
             , /fib ( Arg /Data/Primitive/Integer integer ) -> /Data/Primitive/Integer = CInt 1
-            , /Context ( Arg TopType value -> /main = Arg /main /main ) ( Arg /Catln/IO io ) ->
+            , /Context ( Arg TopType value= Arg TopType /main ) ( Arg /Catln/IO io ) ->
                 ( /Catln/exit
                     ( val=/Data/Primitive/Integer
                     , this=/Catln/IO

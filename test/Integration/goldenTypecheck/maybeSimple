@@ -454,7 +454,7 @@
             [ Value /Nothing
             , /defInt ( Arg /Data/Primitive/Integer x ) -> /Data/Primitive/Integer = Arg TVArg "x" x
             , /defInt ( Arg TopType x -> Nothing = Arg Nothing Nothing ) -> /Data/Primitive/Integer = CInt 0
-            , /Context ( Arg TopType value -> /main = Arg /main /main ) ( Arg /Catln/IO io ) ->
+            , /Context ( Arg TopType value= Arg TopType /main ) ( Arg /Catln/IO io ) ->
                 ( /Catln/exit
                     ( val=/Data/Primitive/Integer
                     , this=/Catln/IO

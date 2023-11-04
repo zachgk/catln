@@ -129,12 +129,12 @@ toObjArg env prefix (name, (m, maybeObj)) = do
 toObject :: FEnv -> String -> VObject -> TypeCheckResult TObject
 toObject env prefix obj@Object{deprecatedObjArgs, objDupExpr} = do
   let prefix' = prefix ++ "_" ++ objPath obj
-  m' <- toMeta env (objM obj) prefix'
-  vars' <- mapM (\(varName, varVal) -> (varName,) <$> toMeta env varVal (prefix' ++ "." ++ varName)) $ H.toList $ objAppliedVars obj
-  args' <- mapM (toObjArg env prefix') $ H.toList deprecatedObjArgs
+  _m' <- toMeta env (objM obj) prefix'
+  _vars' <- mapM (\(varName, varVal) -> (varName,) <$> toMeta env varVal (prefix' ++ "." ++ varName)) $ H.toList $ objAppliedVars obj
+  _args' <- mapM (toObjArg env prefix') $ H.toList deprecatedObjArgs
   objDupExpr' <- toExpr env objDupExpr
-  -- return $ exprToObj (objBasis obj) (objDoc obj) objDupExpr'
-  return $ obj{deprecatedObjM=m', deprecatedObjVars=H.fromList vars', deprecatedObjArgs=H.fromList args', objDupExpr=objDupExpr'}
+  return $ exprToObj (objBasis obj) (objDoc obj) objDupExpr'
+  -- return $ obj{deprecatedObjM=m', deprecatedObjVars=H.fromList vars', deprecatedObjArgs=H.fromList args', objDupExpr=objDupExpr'}
 
 toObjectArrow :: FEnv -> VObjectMapItem -> TypeCheckResult TObjectMapItem
 toObjectArrow env (obj, annots, arrow) = do

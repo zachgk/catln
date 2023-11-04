@@ -465,7 +465,7 @@
                     , r=/Data/Primitive/False
                     ) | /Data/Primitive/True
                 ) = /operator|| ( Arg /Data/Primitive/True l= Value True ) ( Arg /Data/Primitive/False r= Value False )
-            , /Context ( Arg TopType value -> /main = Arg /main /main ) ( Arg /Catln/IO io ) -> /Catln/IO = Arg TVArg "io" io
+            , /Context ( Arg TopType value= Arg TopType /main ) ( Arg /Catln/IO io ) -> /Catln/IO = Arg TVArg "io" io
             ]
         , []
         ,
