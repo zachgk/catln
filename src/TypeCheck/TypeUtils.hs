@@ -100,16 +100,16 @@ getRecursiveObjs (obj@Object{deprecatedObjArgs}, annots, arr) = (obj, annots, ar
 addUnionObjToEnv :: FEnv -> VObjectMap -> TEObjectMap -> FEnv
 addUnionObjToEnv env1@FEnv{feClassGraph} vobjMap tobjMap = do
   let vobjMapRec = concatMap getRecursiveObjs vobjMap
-  let tobjMapRec = concatMap getRecursiveObjs (map fromExprObjectMapItem tobjMap)
+  let tobjMapRec = concatMap getRecursiveExprObjs tobjMap
 
   -- Finds the best precedence for all each object name
   let vPrecedenceMap = buildPrecedenceMap vobjMapRec
-  let tPrecedenceMap = buildPrecedenceMap tobjMapRec
+  let tPrecedenceMap = buildEPrecedenceMap tobjMapRec
   let precedenceMap = H.unionWith min vPrecedenceMap tPrecedenceMap
 
   -- Filter the objects to only those with the best precedence
   let vobjs' = map fst3 $ filterBestPrecedence precedenceMap vobjMapRec
-  let tobjs' = map fst3 $ filterBestPrecedence precedenceMap tobjMapRec
+  let tobjs' = filterBestEPrecedence precedenceMap tobjMapRec
 
   -- Builds vars to use for union and union powerset
   let (unionAllObjs, env2) = fresh env1 $ TypeCheckResult [] $ SType topType topType "unionAllObjs"
@@ -118,7 +118,7 @@ addUnionObjToEnv env1@FEnv{feClassGraph} vobjMap tobjMap = do
   let mkVarMeta p = Meta topType Nothing (VarMetaDat (Just p) Nothing)
 
   -- Build a variable to store union of tobjs
-  let typecheckedAllType = unionAllTypes feClassGraph $ map (getMetaType . objM) tobjs'
+  let typecheckedAllType = unionAllTypes feClassGraph $ map (getMetaType . getExprMeta . oaObjExpr) tobjs'
   let (typecheckedAllObjs, env4) = fresh env3 $ TypeCheckResult [] $ SType typecheckedAllType topType "typecheckedAll"
   let typecheckedAllObjs' = mkVarMeta typecheckedAllObjs
 

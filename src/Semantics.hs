@@ -114,6 +114,7 @@ oaObjPath = exprPath . oaObjExpr
 
 exprToObj :: (MetaDat m, Show m, Hashable m) => ObjectBasis -> Maybe String -> Expr m -> Object Expr m
 exprToObj basis doc e@(Value m path) = Object m basis H.empty H.empty doc e path
+exprToObj basis doc e@(Arg m path) = Object m basis H.empty H.empty doc e path
 exprToObj basis doc e@(TupleApply m' (_, baseExpr) arg@ObjArr{oaArr=argArr}) = baseObj{deprecatedObjM=m', deprecatedObjArgs=H.insert argName' argVal' (deprecatedObjArgs baseObj), objDupExpr=e}
   where
     baseObj = exprToObj basis doc baseExpr
