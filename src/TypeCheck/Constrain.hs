@@ -18,8 +18,9 @@ module TypeCheck.Constrain where
 
 import qualified Data.HashMap.Strict as H
 import           Data.Maybe
+import qualified Data.Zip            as Z
 
-import           Data.List
+import           Data.List           (intercalate)
 import           Data.Tuple.Sequence
 import           Semantics.Prgm
 import           Semantics.Types
@@ -61,12 +62,16 @@ setSchemeActReq :: FEnv -> Constraint -> SchemeActReq -> VarMeta -> Type -> Stri
 setSchemeActReq env con SchemeAct p t msg = setSchemeAct env con p t msg
 setSchemeActReq env con SchemeReq p t msg = setSchemeReq env con p t msg
 
+setSchemeConVaenv :: FEnv -> Constraint -> SchemeActReq -> TypeVarArgEnv -> String -> FEnv
+setSchemeConVaenv env con actOrReq types msg = foldr (\(m, t) env' -> setSchemeActReq env' con actOrReq m t msg) env (H.elems $ Z.zip (constraintVarArgEnv con) types)
+
 -- | Tries to join two 'SType' as equal to each other and returns their updated values
-equalizeSTypes :: FEnv -> (SType, SType) -> (SType, SType)
-equalizeSTypes FEnv{feClassGraph} (SType act1 req1 desc1, SType act2 req2 desc2) = do
-  let actBoth = intersectTypes feClassGraph act1 act2
-  let reqBoth = intersectTypes feClassGraph req1 req2
-  (SType actBoth reqBoth desc1, SType actBoth reqBoth desc2)
+equalizeSTypes :: FEnv -> TypeVarArgEnv -> (SType, SType) -> (TypeVarArgEnv, SType, SType)
+equalizeSTypes FEnv{feClassGraph} vaenv (SType act1 req1 desc1, SType act2 req2 desc2) = do
+  let (vaenv'1, actBoth) = intersectTypesWithVarEnv feClassGraph vaenv act1 act2
+  let (vaenv'2, reqBoth) = intersectTypesWithVarEnv feClassGraph vaenv req1 req2
+  let vaenv' = H.unionWith (intersectTypes feClassGraph) vaenv'1 vaenv'2
+  (vaenv', SType actBoth reqBoth desc1, SType actBoth reqBoth desc2)
 
 -- | A helper for "updateSchemeProp" for either the actual or required
 updateTypeProp :: FEnv -> Constraint -> SchemeActReq -> (VarMeta, Type) -> ArgName -> (VarMeta, Type) -> (FEnv, Type, Type)
@@ -207,19 +212,20 @@ addInferArgToScheme env@FEnv{feClassGraph} (SType srcAct srcReq _) (SType destAc
 -- It will return the updated environment and a boolean that is true if the constraint is done.
 -- If it is done, it can be safely removed and no longer needs to be executed.
 executeConstraint :: FEnv -> Constraint -> (Bool, FEnv)
-executeConstraint env con@(EqualsKnown _ pnt tp) = case descriptor env pnt of
-  (TypeCheckResult notes stype) -> do
-    let (stype', _) = equalizeSTypes env (stype, SType tp tp "")
+executeConstraint env con@(EqualsKnown _ pnt tp) = case sequenceT (descriptor env pnt, descriptorConVaenv env con) of
+  TypeCheckResult notes (stype, vaenv) -> do
+    let (vaenv', stype', _) = equalizeSTypes env vaenv (stype, SType tp tp "")
     let scheme' = TypeCheckResult notes stype'
     let env' = setScheme env con pnt scheme' "EqualsKnown"
-    (True, env')
+    let env'' = setSchemeConVaenv env' con SchemeAct vaenv' "EqualsKnown env"
+    (True, env'')
   TypeCheckResE{} -> (True, env)
 executeConstraint env (EqPoints _ (Meta _ _ (VarMetaDat p1 _)) (Meta _ _ (VarMetaDat p2 _))) | p1 == p2 = (True, env)
-executeConstraint env1 con@(EqPoints _ p1 p2) = case sequenceT (descriptorResolve env1 con p1, descriptorResolve env1 con p2) of
-  TypeCheckResult notes ((p1', s1), (p2', s2)) -> do
-    let (s1', s2') = equalizeSTypes env1 (s1, s2)
-    let env2 = setScheme env1 con p1' (TypeCheckResult notes s1') "EqPoints"
-    let env3 = setScheme env2 con p2' (return s2') "EqPoints"
+executeConstraint env1 con@(EqPoints _ p1 p2) = case sequenceT (descriptor env1 p1, descriptor env1 p2, descriptorConVaenv env1 con) of
+  TypeCheckResult notes (s1, s2, vaenv) -> do
+    let (_, s1', s2') = equalizeSTypes env1 vaenv (s1, s2)
+    let env2 = setScheme env1 con p1 (TypeCheckResult notes s1') "EqPoints"
+    let env3 = setScheme env2 con p2 (return s2') "EqPoints"
     (isSolved $ return s1', env3)
   TypeCheckResE _ -> (True, env1)
 executeConstraint env@FEnv{feClassGraph} con@(BoundedByKnown _ subPnt boundTp) = do
@@ -315,15 +321,16 @@ executeConstraint env@FEnv{feClassGraph} con@(PowersetTo _ srcPnt destPnt) = do
 executeConstraint env@FEnv{feClassGraph} con@(UnionOf _ parentPnt childrenM) = do
   let parentScheme = descriptor env parentPnt
   let tcresChildrenSchemes = fmap (descriptor env) childrenM
-  case sequenceT (parentScheme, sequence tcresChildrenSchemes) of
+  case sequenceT (parentScheme, sequence tcresChildrenSchemes, descriptorConVaenv env con) of
     TypeCheckResE _ -> (True, env)
-    TypeCheckResult notes (parentSType, childrenSchemes) -> do
+    TypeCheckResult notes (parentSType, childrenSchemes, vaenv) -> do
       let accumulateChild (SType ub lb _) (accUb, accLb) = (unionTypes feClassGraph ub accUb, unionTypes feClassGraph lb accLb)
       let (chUb, chLb) = foldr accumulateChild (bottomType, bottomType) childrenSchemes
-      let (parentST', _) = equalizeSTypes env (parentSType, SType (compactType feClassGraph chUb) chLb "")
+      let (vaenv', parentST', _) = equalizeSTypes env vaenv (parentSType, SType (compactType feClassGraph chUb) chLb "")
       let parentScheme' = TypeCheckResult notes parentST'
       let env' = setScheme env con parentPnt parentScheme' "UnionOf"
-      (isSolved parentScheme', env')
+      let env'' = setSchemeConVaenv env' con SchemeAct vaenv' "EqualsKnown env"
+      (isSolved parentScheme', env'')
 
 -- | Calls 'executeConstraint' for a list of constraints
 executeConstraints :: FEnv -> [Constraint] -> ([Bool], FEnv)

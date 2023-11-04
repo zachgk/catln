@@ -23,6 +23,7 @@ import qualified Data.IntMap.Lazy    as IM
 import           Data.List
 import           GHC.Generics        (Generic)
 
+import           Control.Monad       (forM)
 import           CRes
 import           Data.Aeson          (ToJSON, toJSON)
 import           Data.Maybe
@@ -351,7 +352,7 @@ setDescriptor env@FEnv{feClassGraph, fePnts, feTrace, feUpdatedDuringEpoch} con 
     pnts' = if schemeChanged then IM.insert p scheme' fePnts else fePnts -- Only update if changed to avoid meaningless updates
     feTrace' = if schemeChanged
       then case verifyScheme feClassGraph (constraintVarArgEnv con) m scheme scheme' of
-             Just failVerification -> error $ printf "Scheme failed verification %s during typechecking of %s: %s \n\t\t in obj: %s with old scheme: %s" failVerification msg (show scheme') (show m) (show scheme)
+             Just failVerification -> error $ printf "Scheme failed verification %s during typechecking of %s:\n\t\t New Scheme: %s \n\t\t Old Scheme: %s\n\t\t Obj: %s" failVerification msg (show scheme') (show scheme) (show m)
              Nothing -> case feTrace of
               ((curConstraint, curChanged):curEpoch):prevEpochs -> ((curConstraint, (p, scheme'):curChanged):curEpoch):prevEpochs
               _ -> error "no epochs in feTrace"
@@ -367,14 +368,11 @@ resolveTypeVar v con = case H.lookup v (constraintVarArgEnv con) of
   Just m' -> return m'
   Nothing -> TypeCheckResE [GenTypeCheckError Nothing $ printf "Unknown variable in resolveTypeVar var: %s" (show v)]
 
-descriptorResolve :: FEnv -> Constraint -> VarMeta -> TypeCheckResult (VarMeta, SType)
-descriptorResolve env con m = do
-  scheme@(SType ub _ _) <- descriptor env m
-  case ub of
-    (TypeVar v) -> do
-      m' <- resolveTypeVar v con
-      descriptorResolve env con m'
-    _ -> return (m, scheme)
+descriptorConVaenv :: FEnv -> Constraint -> TypeCheckResult TypeVarArgEnv
+descriptorConVaenv env con = do
+  forM (constraintVarArgEnv con) $ \v -> do
+    SType act _ _ <- descriptor env v
+    return act
 
 -- trace constrain
 type TraceConstrainEpoch = [(Constraint, [(Pnt, Scheme)])]
