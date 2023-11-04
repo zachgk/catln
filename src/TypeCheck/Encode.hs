@@ -391,5 +391,5 @@ fromPrgms env1 pprgms tprgms = do
   (vprgms, env4) <- mapMWithFEnv env3 fromPrgm pprgmsWithVObjs
   let (vjoinObjMap, _, _) = mergePrgms vprgms
   let (tjoinObjMap, _, _) = mergeExprPrgms tprgms
-  let env5 = addUnionObjToEnv env4 vjoinObjMap (map fromExprObjectMapItem tjoinObjMap)
+  let env5 = addUnionObjToEnv env4 vjoinObjMap tjoinObjMap
   return (vprgms, env5)

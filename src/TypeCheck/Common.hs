@@ -174,6 +174,9 @@ type VObject = Object Expr VarMetaDat
 type VObjectMap = ObjectMap Expr VarMetaDat
 type VObjectMapItem = ObjectMapItem Expr VarMetaDat
 type VPrgm = (VObjectMap, ClassGraph, [VCompAnnot])
+type VEObjectMap = ExprObjectMap Expr VarMetaDat
+type VEObjectMapItem = ExprObjectMapItem Expr VarMetaDat
+type VEPrgm = (VEObjectMap, ClassGraph, [VCompAnnot])
 
 type TypedMeta = Meta ()
 type TExpr = Expr ()

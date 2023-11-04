@@ -21,7 +21,7 @@ import qualified Test.Tasty.Hedgehog as HG
 import           Testing.Generation  (genPrgms)
 import           Text.Printf
 import           TypeCheck           (typecheckPrgm)
-import           TypeCheck.Common    (tcreToMaybe, feCons)
+import           TypeCheck.Common    (feCons, tcreToMaybe)
 import           TypeCheck.Constrain (executeConstraint)
 import           TypeCheck.Decode    (decodeExprPrgms)
 import           TypeCheck.Encode    (fromPrgms, makeBaseFEnv)

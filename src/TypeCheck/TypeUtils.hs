@@ -39,6 +39,33 @@ import           Utils
 -- Especially, not specifying bounds should not turn them into TopType.
 -- Similarly, matches or patterns are less effective then functions.
 -- TODO May need to differentiate top level of functions from inner levels
+exprObjectPrecedence :: (Show m, Show (e m)) => ExprObjectMapItem e m -> [Int]
+exprObjectPrecedence ObjArr{oaBasis=TypeObj}=    [1]
+exprObjectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=Just (Nothing, _)} = [2, 1] -- Declaration objects have priority [2,1], better than definitions
+exprObjectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=Just (Just{}, _)} = [2, 2] -- Definition objects have priority [2,2]
+exprObjectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=Nothing} = [2, 2]
+exprObjectPrecedence ObjArr{oaBasis=PatternObj} = [3]
+exprObjectPrecedence ObjArr{oaBasis=MatchObj} =   [4]
+exprObjectPrecedence ObjArr{oaBasis=ArgObj} =   [5]
+
+-- | Finds the 'objectPrecedence' for all types
+buildEPrecedenceMap :: (Show m, MetaDat m) => ExprObjectMap Expr m -> H.HashMap TypeName [Int]
+buildEPrecedenceMap = fmap (minimum . map exprObjectPrecedence) . H.fromListWith (++) . map (\oa -> (oaObjPath oa, [oa]))
+
+-- |
+-- Prunes an objectMap by precendence. If two objects share the same precendence, only the bigger one(s) will be kept.
+-- This is used to ensure that the type of an object can't be changed by other usages, such as a data object by functions using that data
+filterBestEPrecedence :: (Show m, MetaDat m) => H.HashMap TypeName [Int] -> ExprObjectMap Expr m -> ExprObjectMap Expr m
+filterBestEPrecedence precedenceMap = filter (\oa -> exprObjectPrecedence oa == H.lookupDefault (error "Could not find obj in union") (oaObjPath oa) precedenceMap)
+
+
+
+-- |
+-- The object precedence is used to avoid increasing the scope of objects accidentally.
+-- For example, if a data type is defined, functions using that data type shouldn't change the valid arguments to it
+-- Especially, not specifying bounds should not turn them into TopType.
+-- Similarly, matches or patterns are less effective then functions.
+-- TODO May need to differentiate top level of functions from inner levels
 objectPrecedence :: ObjectMapItem e m -> [Int]
 objectPrecedence (Object{objBasis=TypeObj}, _, _)=    [1]
 objectPrecedence (Object{objBasis=FunctionObj}, _, arrs) = [2, declDef]
@@ -70,10 +97,10 @@ getRecursiveObjs (obj@Object{deprecatedObjArgs}, annots, arr) = (obj, annots, ar
     notMatchObj (Object{objBasis}, _, _) = objBasis /= MatchObj
 
 -- | This creates 'feUnionAllObjs' and adds it to the 'FEnv'
-addUnionObjToEnv :: FEnv -> VObjectMap -> TObjectMap -> FEnv
+addUnionObjToEnv :: FEnv -> VObjectMap -> TEObjectMap -> FEnv
 addUnionObjToEnv env1@FEnv{feClassGraph} vobjMap tobjMap = do
   let vobjMapRec = concatMap getRecursiveObjs vobjMap
-  let tobjMapRec = concatMap getRecursiveObjs tobjMap
+  let tobjMapRec = concatMap getRecursiveObjs (map fromExprObjectMapItem tobjMap)
 
   -- Finds the best precedence for all each object name
   let vPrecedenceMap = buildPrecedenceMap vobjMapRec
