@@ -699,6 +699,10 @@ substituteWithVarArgEnv vaenv = substituteArgsWithArgEnv aenv . substituteVarsWi
   where
     (venv, aenv) = splitVarArgEnv vaenv
 
+typeGetAux :: TypeVarAux -> PartialType -> Maybe Type
+typeGetAux (TVVar _ v) p = H.lookup v $ ptVars p
+typeGetAux (TVArg _ v) p = typeGetArg v p
+
 -- | Gets an arg from a type while substituting the variables used in the types ptVars
 typeGetArg :: ArgName -> PartialType -> Maybe Type
 typeGetArg argName PartialType{ptArgs, ptVars} = do
@@ -716,3 +720,49 @@ typeGetArg argName PartialType{ptArgs, ptVars} = do
 typesGetArg :: ClassGraph -> ArgName -> Type -> Maybe Type
 typesGetArg classGraph argName (UnionType partialLeafs) = fmap (unionAllTypes classGraph) $ mapM (typeGetArg argName) $ splitUnionType partialLeafs
 typesGetArg _ _ _ = Nothing
+
+typeSetAux :: TypeVarAux -> Type -> PartialType -> PartialType
+typeSetAux (TVVar _ k) v p@PartialType{ptVars} = p{ptVars=H.insert k v ptVars}
+typeSetAux (TVArg _ k) v p@PartialType{ptArgs} = p{ptArgs=H.insert k v ptArgs}
+
+updateTypeProp :: ClassGraph -> TypeVarArgEnv -> Type -> TypeVarAux -> Type -> (TypeVarArgEnv, Type, Type)
+updateTypeProp classGraph vaenv superType propName subType = case (superType, subType) of
+    (TopType [], _) -> (vaenv, topType, subType)
+    (TypeVar v, _) -> do
+      let (vaenv', superType', subType') = updateTypeProp classGraph vaenv (H.lookupDefault topType v vaenv) propName subType
+      (H.insert v superType' vaenv', superType, subType')
+    (TopType _, _) -> error $ printf "Not yet implemented updateTypeProp with super %s" (show superType)
+    (UnionType supPartials, _) -> do
+      let supPartialList = splitUnionType supPartials
+      let intersectedPartials sup@PartialType{ptVars=supVars} sub = case typeGetAux propName sup of
+            Just (TypeVar (TVVar TVInt v)) -> do
+              let supVar = H.lookupDefault topType v supVars
+              let newProp = intersectTypes classGraph supVar sub
+              Just (sup{ptVars=H.insert v newProp supVars}, newProp)
+            Just (TypeVar (TVVar TVExt _)) -> error $ printf "Not yet implemented"
+            Just (TypeVar TVArg{}) -> error $ printf "Not yet implemented"
+            Just supProp -> do
+              let newProp = intersectTypes classGraph supProp sub
+              if isBottomType newProp
+                then Nothing
+                else Just (typeSetAux propName newProp sup, newProp)
+            Nothing -> Nothing
+      case subType of
+        UnionType subPartials -> do
+          let subPartialList = splitUnionType subPartials
+          let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectedPartials sup (singletonType sub) | sup <- supPartialList, sub <- subPartialList]
+          (vaenv, compactType classGraph $ UnionType $ joinUnionType supPartialList', unionAllTypes classGraph subPartialList')
+        TypeVar v -> do
+          -- Update super to use TypeVar
+          let superType' = UnionType $ joinUnionType $ map (typeSetAux propName subType) supPartialList
+
+          -- Update vaenv.v with supPartials
+          let vaenv' = H.insert v (intersectAllTypes classGraph $ H.lookupDefault topType v vaenv : mapMaybe (typeGetAux propName) supPartialList) vaenv
+
+          (vaenv', compactType classGraph superType', subType)
+        TopType [] -> do
+          let sub' = unionAllTypes classGraph $ mapMaybe (typeGetAux propName) supPartialList
+          (vaenv, superType, sub')
+        _ -> do
+          let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectedPartials sup subType | sup <- supPartialList]
+          (vaenv, compactType classGraph $ UnionType $ joinUnionType supPartialList', unionAllTypes classGraph subPartialList')

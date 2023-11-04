@@ -368,11 +368,11 @@ resolveTypeVar v con = case H.lookup v (constraintVarArgEnv con) of
   Just m' -> return m'
   Nothing -> TypeCheckResE [GenTypeCheckError Nothing $ printf "Unknown variable in resolveTypeVar var: %s" (show v)]
 
-descriptorConVaenv :: FEnv -> Constraint -> TypeCheckResult TypeVarArgEnv
+type STypeVarArgEnv = H.HashMap TypeVarAux SType
+descriptorConVaenv :: FEnv -> Constraint -> TypeCheckResult STypeVarArgEnv
 descriptorConVaenv env con = do
   forM (constraintVarArgEnv con) $ \v -> do
-    SType act _ _ <- descriptor env v
-    return act
+    descriptor env v
 
 -- trace constrain
 type TraceConstrainEpoch = [(Constraint, [(Pnt, Scheme)])]

@@ -73,100 +73,14 @@ equalizeSTypes FEnv{feClassGraph} vaenv (SType act1 req1 desc1, SType act2 req2 
   let vaenv' = H.unionWith (intersectTypes feClassGraph) vaenv'1 vaenv'2
   (vaenv', SType actBoth reqBoth desc1, SType actBoth reqBoth desc2)
 
--- | A helper for "updateSchemeProp" for either the actual or required
-updateTypeProp :: FEnv -> Constraint -> SchemeActReq -> (VarMeta, Type) -> ArgName -> (VarMeta, Type) -> (FEnv, Type, Type)
-updateTypeProp env@FEnv{feClassGraph} con actOrReq (superM, superType) propName (subM, subType) = case (superType, subType) of
-    (TopType [], _) -> wrapUbs (topType, subType)
-    (TypeVar v, _) -> do
-      let (TypeCheckResult _ superM') = resolveTypeVar v con
-      let (TypeCheckResult _ super') = pure superM' >>= descriptor env
-      let (env2, super'', sub'') = updateTypeProp env con actOrReq (superM, getStypeActReq actOrReq super') propName (subM, subType)
-      let env3 = setSchemeActReq env2 con actOrReq superM' super'' "PropEq var super"
-      (env3, superType, sub'')
-    (UnionType supPartials, TypeVar{}) -> do
-      let supPartialList = splitUnionType supPartials
-      let intersectedPartials sup@PartialType{ptArgs=supArgs} = Just (sup{ptArgs=H.insert propName subType supArgs})
-      let supPartialList' = catMaybes $ [intersectedPartials sup | sup <- supPartialList]
-      wrapUbs (compactType feClassGraph $ UnionType $ joinUnionType supPartialList', subType)
-    (UnionType supPartials, TopType []) -> do
-      let supPartialList = splitUnionType supPartials
-      let sub' = unionAllTypes feClassGraph $ mapMaybe (typeGetArg propName) supPartialList
-      wrapUbs (superType, sub')
-    (TopType _, _) -> error $ printf "Not yet implemented updateTypeProp with super %s" (show superType)
-    (UnionType supPartials, _) -> do
-      let supPartialList = splitUnionType supPartials
-      let intersectedPartials sup@PartialType{ptArgs=supArgs, ptVars=supVars} sub = case typeGetArg propName sup of
-            Just (TypeVar (TVVar TVInt v)) -> do
-              let supVar = H.lookupDefault topType v supVars
-              let newProp = intersectTypes feClassGraph supVar sub
-              Just (sup{ptVars=H.insert v newProp supVars}, newProp)
-            Just (TypeVar (TVVar TVExt _)) -> error $ printf "Not yet implemented"
-            Just (TypeVar TVArg{}) -> error $ printf "Not yet implemented"
-            Just supProp -> do
-              let newProp = intersectTypes feClassGraph supProp sub
-              if isBottomType newProp
-                then Nothing
-                else Just (sup{ptArgs=H.insert propName newProp supArgs}, newProp)
-            Nothing -> Nothing
-      case subType of
-        UnionType subPartials -> do
-          let subPartialList = splitUnionType subPartials
-          let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectedPartials sup (singletonType sub) | sup <- supPartialList, sub <- subPartialList]
-          wrapUbs (compactType feClassGraph $ UnionType $ joinUnionType supPartialList', unionAllTypes feClassGraph subPartialList')
-        _ -> do
-          let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectedPartials sup subType | sup <- supPartialList]
-          wrapUbs (compactType feClassGraph $ UnionType $ joinUnionType supPartialList', unionAllTypes feClassGraph subPartialList')
-  where
-    wrapUbs (superUb', subUb') = (env, superUb', subUb')
 
 -- | A helper for the 'PropEq' 'Constraint' that applies to both the actual and required types
-updateSchemeProp :: FEnv -> Constraint -> (VarMeta, SType) -> ArgName -> (VarMeta, SType) -> (FEnv, Scheme, Scheme)
-updateSchemeProp env1 con (superM, SType superAct superReq superDesc) propName (subM, SType subAct subReq subDesc) = (env3, pure $ SType superAct' superReq' superDesc, pure $ SType subAct' subReq' subDesc)
+updateSchemeProp :: FEnv -> Constraint -> SType -> TypeVarAux -> SType -> (FEnv, Scheme, Scheme)
+updateSchemeProp env1@FEnv{feClassGraph} con (SType superAct superReq superDesc) propName (SType subAct subReq subDesc) = (env1, pure $ SType superAct' superReq' superDesc, pure $ SType subAct' subReq' subDesc)
   where
-    (env2, superAct', subAct') = updateTypeProp env1 con SchemeAct (superM, superAct) propName (subM, subAct)
-    (env3, superReq', subReq') = updateTypeProp env2 con SchemeReq (superM, superReq) propName (subM, subReq)
-
--- | A helper for the 'VarEq' 'Constraint'
-updateTypeVar :: FEnv -> Type -> TypeVarName -> Type -> (Type, Type)
-updateTypeVar FEnv{feClassGraph} superType varName subType = (superType', subType')
-  where
-    (superType', subType') = case (superType, subType) of
-      (TopType [], sub) -> (topType, sub)
-      (UnionType supPartials, TopType []) -> do
-        let supPartialList = splitUnionType supPartials
-        let getVar PartialType{ptVars=supVars} = H.lookup varName supVars
-        let sub = unionAllTypes feClassGraph $ mapMaybe getVar supPartialList
-        (superType, sub)
-      (UnionType supPartials, UnionType subPartials) -> do
-        let supPartialList = splitUnionType supPartials
-        let subPartialList = splitUnionType subPartials
-        let intersectedPartials sup@PartialType{ptVars=supVars} sub = case H.lookup varName supVars of
-              Just supVar -> do
-                let newVar = intersectTypes feClassGraph supVar (singletonType sub)
-                if isBottomType newVar
-                  then Nothing
-                  else Just (sup{ptVars=H.insert varName newVar supVars}, newVar)
-              Nothing -> Just (sup{ptVars=H.insert varName (singletonType sub) supVars}, singletonType sub)
-        let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectedPartials sup sub | sup <- supPartialList, sub <- subPartialList]
-        (compactType feClassGraph $ UnionType $ joinUnionType supPartialList', unionAllTypes feClassGraph subPartialList')
-      (UnionType supPartials, subT@TypeVar{}) -> do
-        let supPartialList = splitUnionType supPartials
-        let intersectedPartials sup@PartialType{ptVars=supVars} = case H.lookup varName supVars of
-              Just supVar -> do
-                if supVar == subT
-                  then Just sup
-                  else Nothing
-              Nothing -> Nothing
-        let supPartialList' = catMaybes [intersectedPartials sup | sup <- supPartialList]
-        (compactType feClassGraph $ UnionType $ joinUnionType supPartialList', subT)
-      (sup, sub) -> error $ printf "Unsupported updateSchemeVar Ub (%s).%s = %s" (show sup) varName (show sub)
-
--- | A helper for the 'VarEq' 'Constraint'
-updateSchemeVar :: FEnv -> SType -> TypeVarName -> SType -> (Scheme, Scheme)
-updateSchemeVar env (SType superAct superReq superDesc) varName (SType subAct subReq subDesc) = (return $ SType superAct' superReq' superDesc, return $ SType subAct' subReq' subDesc)
-  where
-    (superAct', subAct') = updateTypeVar env superAct varName subAct
-    (superReq', subReq') = updateTypeVar env superReq varName subReq
+    TypeCheckResult _ vaenv = descriptorConVaenv env1 con
+    (_actVaenv', superAct', subAct') = updateTypeProp feClassGraph (fmap stypeAct vaenv) superAct propName subAct
+    (_reqVaenv', superReq', subReq') = updateTypeProp feClassGraph (fmap stypeReq vaenv) superReq propName subReq
 
 -- | A helper for the 'AddArg' 'Constraint'
 addArgToType :: FEnv -> Type -> ArgName -> Maybe Type
@@ -214,7 +128,7 @@ addInferArgToScheme env@FEnv{feClassGraph} (SType srcAct srcReq _) (SType destAc
 executeConstraint :: FEnv -> Constraint -> (Bool, FEnv)
 executeConstraint env con@(EqualsKnown _ pnt tp) = case sequenceT (descriptor env pnt, descriptorConVaenv env con) of
   TypeCheckResult notes (stype, vaenv) -> do
-    let (vaenv', stype', _) = equalizeSTypes env vaenv (stype, SType tp tp "")
+    let (vaenv', stype', _) = equalizeSTypes env (fmap stypeAct vaenv) (stype, SType tp tp "")
     let scheme' = TypeCheckResult notes stype'
     let env' = setScheme env con pnt scheme' "EqualsKnown"
     let env'' = setSchemeConVaenv env' con SchemeAct vaenv' "EqualsKnown env"
@@ -223,7 +137,7 @@ executeConstraint env con@(EqualsKnown _ pnt tp) = case sequenceT (descriptor en
 executeConstraint env (EqPoints _ (Meta _ _ (VarMetaDat p1 _)) (Meta _ _ (VarMetaDat p2 _))) | p1 == p2 = (True, env)
 executeConstraint env1 con@(EqPoints _ p1 p2) = case sequenceT (descriptor env1 p1, descriptor env1 p2, descriptorConVaenv env1 con) of
   TypeCheckResult notes (s1, s2, vaenv) -> do
-    let (_, s1', s2') = equalizeSTypes env1 vaenv (s1, s2)
+    let (_, s1', s2') = equalizeSTypes env1 (fmap stypeAct vaenv) (s1, s2)
     let env2 = setScheme env1 con p1 (TypeCheckResult notes s1') "EqPoints"
     let env3 = setScheme env2 con p2 (return s2') "EqPoints"
     (isSolved $ return s1', env3)
@@ -272,7 +186,7 @@ executeConstraint env con@(PropEq _ (superPnt, propName) subPnt) = do
     (TypeCheckResult _ _) ->
       case sequenceT (superScheme, subScheme) of
         TypeCheckResult _ (superSType, subSType) -> do
-          let (env2, superScheme', subScheme') = updateSchemeProp env con (superPnt, superSType) propName (subPnt, subSType)
+          let (env2, superScheme', subScheme') = updateSchemeProp env con superSType (TVArg TVInt propName) subSType
           let env3 = setScheme env2 con superPnt superScheme' (printf "PropEq super (%s)" propName)
           let env4 = setScheme env3 con subPnt subScheme' (printf"PropEq sub (%s)" propName)
           (isSolved subScheme, env4)
@@ -285,10 +199,10 @@ executeConstraint env con@(VarEq _ (superPnt, varName) subPnt) = do
     (TypeCheckResult _ _) ->
       case sequenceT (superScheme, subScheme) of
         TypeCheckResult _ (superSType, subSType) -> do
-          let (superScheme', subScheme') = updateSchemeVar env superSType varName subSType
-          let env' = setScheme env con superPnt superScheme' "VarEq super"
-          let env'' = setScheme env' con subPnt subScheme' "VarEq sub"
-          (isSolved subScheme, env'')
+          let (env2, superScheme', subScheme') = updateSchemeProp env con superSType (TVVar TVInt varName) subSType
+          let env3 = setScheme env2 con superPnt superScheme' "VarEq super"
+          let env4 = setScheme env3 con subPnt subScheme' "VarEq sub"
+          (isSolved subScheme, env4)
         TypeCheckResE _ -> (True, env)
 executeConstraint env con@(AddArg _ (srcPnt, newArgName) destPnt) = do
   let srcScheme = descriptor env srcPnt
@@ -326,7 +240,7 @@ executeConstraint env@FEnv{feClassGraph} con@(UnionOf _ parentPnt childrenM) = d
     TypeCheckResult notes (parentSType, childrenSchemes, vaenv) -> do
       let accumulateChild (SType ub lb _) (accUb, accLb) = (unionTypes feClassGraph ub accUb, unionTypes feClassGraph lb accLb)
       let (chUb, chLb) = foldr accumulateChild (bottomType, bottomType) childrenSchemes
-      let (vaenv', parentST', _) = equalizeSTypes env vaenv (parentSType, SType (compactType feClassGraph chUb) chLb "")
+      let (vaenv', parentST', _) = equalizeSTypes env (fmap stypeAct vaenv) (parentSType, SType (compactType feClassGraph chUb) chLb "")
       let parentScheme' = TypeCheckResult notes parentST'
       let env' = setScheme env con parentPnt parentScheme' "UnionOf"
       let env'' = setSchemeConVaenv env' con SchemeAct vaenv' "EqualsKnown env"
