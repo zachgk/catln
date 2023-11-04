@@ -186,22 +186,9 @@ executeConstraint env con@(PropEq _ (superPnt, propName) subPnt) = do
     (TypeCheckResult _ _) ->
       case sequenceT (superScheme, subScheme) of
         TypeCheckResult _ (superSType, subSType) -> do
-          let (env2, superScheme', subScheme') = updateSchemeProp env con superSType (TVArg TVInt propName) subSType
-          let env3 = setScheme env2 con superPnt superScheme' (printf "PropEq super (%s)" propName)
-          let env4 = setScheme env3 con subPnt subScheme' (printf"PropEq sub (%s)" propName)
-          (isSolved subScheme, env4)
-        TypeCheckResE _ -> (True, env)
-executeConstraint env con@(VarEq _ (superPnt, varName) subPnt) = do
-  let superScheme = descriptor env superPnt
-  let subScheme = descriptor env subPnt
-  case sequenceT (superScheme, subScheme) of
-    TypeCheckResE _ -> (True, env)
-    (TypeCheckResult _ _) ->
-      case sequenceT (superScheme, subScheme) of
-        TypeCheckResult _ (superSType, subSType) -> do
-          let (env2, superScheme', subScheme') = updateSchemeProp env con superSType (TVVar TVInt varName) subSType
-          let env3 = setScheme env2 con superPnt superScheme' "VarEq super"
-          let env4 = setScheme env3 con subPnt subScheme' "VarEq sub"
+          let (env2, superScheme', subScheme') = updateSchemeProp env con superSType propName subSType
+          let env3 = setScheme env2 con superPnt superScheme' (printf "PropEq super (%s)" (show propName))
+          let env4 = setScheme env3 con subPnt subScheme' (printf "PropEq sub (%s)" (show propName))
           (isSolved subScheme, env4)
         TypeCheckResE _ -> (True, env)
 executeConstraint env con@(AddArg _ (srcPnt, newArgName) destPnt) = do

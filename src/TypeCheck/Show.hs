@@ -108,7 +108,6 @@ showCon env (BoundedByKnown _ p t) = SBoundedByKnown (descriptor env p) t
 showCon env (BoundedByObjs _ p) = SBoundedByObjs (descriptor env p)
 showCon env (ArrowTo _ p1 p2) = showConHelper env SArrowTo p1 p2
 showCon env (PropEq _ (p1, name) p2) = showConHelper env (\s1 s2 -> SPropEq (s1, name) s2) p1 p2
-showCon env (VarEq _ (p1, name) p2) = showConHelper env (\s1 s2 -> SVarEq (s1, name) s2) p1 p2
 showCon env (AddArg _ (p1, argName) p2) = showConHelper env (\s1 s2 -> SAddArg (s1, argName) s2) p1 p2
 showCon env (AddInferArg _ p1 p2) = showConHelper env SAddInferArg p1 p2
 showCon env (PowersetTo _ p1 p2) = showConHelper env SPowersetTo p1 p2

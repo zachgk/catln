@@ -81,8 +81,7 @@ data Constraint
   | BoundedByKnown VMetaVarArgEnv VarMeta Type -- ^ Both Actual and Req
   | BoundedByObjs VMetaVarArgEnv VarMeta
   | ArrowTo VMetaVarArgEnv VarMeta VarMeta -- ArrowTo src dest
-  | PropEq VMetaVarArgEnv (VarMeta, ArgName) VarMeta -- ^ Both Actual and Req
-  | VarEq VMetaVarArgEnv (VarMeta, TypeVarName) VarMeta -- ^ Both Actual and Req
+  | PropEq VMetaVarArgEnv (VarMeta, TypeVarAux) VarMeta -- ^ Both Actual and Req
   | AddArg VMetaVarArgEnv (VarMeta, String) VarMeta -- ^ Both Actual and Req,
   | AddInferArg VMetaVarArgEnv VarMeta VarMeta -- ^ Both Actual and Req, AddInferArg base arg
   | PowersetTo VMetaVarArgEnv VarMeta VarMeta -- ^ Actual (maybe should make it req too)
@@ -95,8 +94,7 @@ data SConstraint
   | SBoundedByKnown Scheme Type
   | SBoundedByObjs Scheme
   | SArrowTo Scheme Scheme
-  | SPropEq (Scheme, ArgName) Scheme
-  | SVarEq (Scheme, TypeVarName) Scheme
+  | SPropEq (Scheme, TypeVarAux) Scheme
   | SAddArg (Scheme, String) Scheme
   | SAddInferArg Scheme Scheme
   | SPowersetTo Scheme Scheme
@@ -230,8 +228,7 @@ instance Show SConstraint where
   show (SBoundedByKnown s t) = printf "%s ⊆ %s" (show s) (show t)
   show (SBoundedByObjs s) = printf "BoundedByObjs %s" (show s)
   show (SArrowTo f t) = printf "%s -> %s" (show t) (show f)
-  show (SPropEq (s1, n) s2) = printf "(%s).%s == %s"  (show s1) n (show s2)
-  show (SVarEq (s1, n) s2) = printf "(%s).%s == %s"  (show s1) n (show s2)
+  show (SPropEq (s1, n) s2) = printf "(%s).%s == %s"  (show s1) (show n) (show s2)
   show (SAddArg (base, arg) res) = printf "(%s)(%s) == %s" (show base) arg (show res)
   show (SAddInferArg base res) = printf "(%s)(?) == %s" (show base) (show res)
   show (SPowersetTo s t) = printf "𝒫(%s) ⊇ %s" (show s) (show t)
@@ -270,7 +267,6 @@ constraintMetas (BoundedByKnown _ p2 _) = [p2]
 constraintMetas (BoundedByObjs _ p2)    = [p2]
 constraintMetas (ArrowTo _ p2 p3)       = [p2, p3]
 constraintMetas (PropEq _ (p2, _) p3)   = [p2, p3]
-constraintMetas (VarEq _ (p2, _) p3)    = [p2, p3]
 constraintMetas (AddArg _ (p2, _) p3)   = [p2, p3]
 constraintMetas (AddInferArg _ p2 p3)   = [p2, p3]
 constraintMetas (PowersetTo _ p2 p3)    = [p2, p3]
@@ -283,7 +279,6 @@ constraintVarArgEnv (BoundedByKnown vaenv _ _) = vaenv
 constraintVarArgEnv (BoundedByObjs vaenv _)    = vaenv
 constraintVarArgEnv (ArrowTo vaenv _ _)        = vaenv
 constraintVarArgEnv (PropEq vaenv _ _)         = vaenv
-constraintVarArgEnv (VarEq vaenv _ _)          = vaenv
 constraintVarArgEnv (AddArg vaenv _ _)         = vaenv
 constraintVarArgEnv (AddInferArg vaenv _ _)    = vaenv
 constraintVarArgEnv (PowersetTo vaenv _ _)     = vaenv

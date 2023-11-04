@@ -190,7 +190,7 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaAnnots, oa
                         BoundedByObjs (encodeVarArgs est) m',
                         ArrowTo (encodeVarArgs est) (getExprMeta argExpr') arrM',
                         EqPoints (encodeVarArgs est) (getExprMeta obj) arrM',
-                        PropEq (encodeVarArgs est) (m', exprPath obj) arrM'
+                        PropEq (encodeVarArgs est) (m', TVArg TVInt $ exprPath obj) arrM'
                         ]
         (EncodeOut{}, Nothing, Just (Just (GuardExpr argExpr' Nothing), arrM')) ->
           -- Output with (x) infer
@@ -207,7 +207,7 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaAnnots, oa
                      AddArg (encodeVarArgs est) (baseM', exprPath obj) m',
                      EqPoints (encodeVarArgs est) (getExprMeta argExpr') arrM',
                      EqPoints (encodeVarArgs est) (getExprMeta obj) arrM',
-                     PropEq (encodeVarArgs est) (m', exprPath obj) arrM'
+                     PropEq (encodeVarArgs est) (m', TVArg TVInt $ exprPath obj) arrM'
                     ]
         (EncodeIn{}, Just (GuardExpr obj Nothing), Just (Nothing, arrM')) ->
           -- Input with (x -> T)
@@ -215,14 +215,14 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaAnnots, oa
          -- EqPoints (getExprMeta baseExpr') baseM',
                      AddArg (encodeVarArgs est) (baseM', exprPath obj) m',
                      EqPoints (encodeVarArgs est) (getExprMeta obj) arrM',
-                     PropEq (encodeVarArgs est) (m', exprPath obj) (getExprMeta obj)
+                     PropEq (encodeVarArgs est) (m', TVArg TVInt $ exprPath obj) (getExprMeta obj)
                     ]
         (EncodeIn{}, Just (GuardExpr obj Nothing), Nothing) ->
           -- Input with (x) matchable
           [
          -- EqPoints (encodeVarArgs est) (getExprMeta baseExpr') baseM',
                      AddArg (encodeVarArgs est) (baseM', exprPath obj) m',
-                     PropEq (encodeVarArgs est) (m', exprPath obj) (getExprMeta obj)
+                     PropEq (encodeVarArgs est) (m', TVArg TVInt $ exprPath obj) (getExprMeta obj)
                     ]
         _ -> error $ printf "Invalid fromExpr in %s mode for %s" (show est) (show arg)
   let env8 = addConstraints env7 constraints
@@ -240,12 +240,12 @@ fromExpr est env1 (VarApply m baseExpr varName varVal) = do
   let constraints = case est of
         EncodeOut{} -> [
                       ArrowTo (encodeVarArgs est) (getExprMeta baseExpr') m',
-                      VarEq (encodeVarArgs est) (m', varName) varVal',
+                      PropEq (encodeVarArgs est) (m', TVVar TVInt varName) varVal',
                       BoundedByObjs (encodeVarArgs est) m'
                        ]
         EncodeIn{} -> [
                       -- EqPoints (getExprMeta baseExpr') m',
-                      VarEq (encodeVarArgs est) (m', varName) varVal'
+                      PropEq (encodeVarArgs est) (m', TVVar TVInt varName) varVal'
                       ]
   let env5 = addConstraints env4 constraints
   return (VarApply m' baseExpr' varName varVal', env5)
@@ -293,7 +293,7 @@ fromObjectMap env1 (obj, vaenv, annots, arrow) = do
 fromObjVar :: VarMeta -> String -> EncodeState -> FEnv -> (TypeVarName, PreMeta) -> TypeCheckResult ((TypeVarName, VarMeta), FEnv)
 fromObjVar oM prefix est env1 (varName, m) = do
   (m', env2) <- fromMeta env1 BUpper est m (prefix ++ "." ++ varName)
-  let env3 = addConstraints env2 [VarEq (encodeVarArgs est) (oM, varName) m']
+  let env3 = addConstraints env2 [PropEq (encodeVarArgs est) (oM, TVVar TVInt varName) m']
   return ((varName, m'), env3)
 
 addObjArg :: VarMeta -> String -> EncodeState -> FEnv -> (TypeName, PObjArg) -> TypeCheckResult ((TypeName, VObjArg), FEnv)
@@ -304,7 +304,7 @@ addObjArg oM prefix est env (n, (m, maybeSubObj)) = do
         Just{}  -> BUpper
         Nothing -> BEq
   (m', env2) <- fromMeta env argBound est m prefix'
-  let env3 = addConstraints env2 [PropEq (encodeVarArgs est) (oM, n) m', BoundedByObjs (encodeVarArgs est) m']
+  let env3 = addConstraints env2 [PropEq (encodeVarArgs est) (oM, TVArg TVInt n) m', BoundedByObjs (encodeVarArgs est) m']
   let env4 = case suffixLookupInDict n (snd $ splitVarArgEnv $ encodeVarArgs est) of
         Just varM -> addConstraints env3 [EqPoints (encodeVarArgs est) m' varM]
         Nothing   -> env3
