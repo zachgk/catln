@@ -143,20 +143,13 @@ toObjectArrow env (obj, annots, arrow) = do
   arrow' <- mapM (toArrow env) arrow
   return (obj', annots', arrow')
 
-toPrgm :: FEnv -> VPrgm -> TypeCheckResult TPrgm
-toPrgm env (objMap, classGraph, annots) = do
-  objMap' <- mapM (toObjectArrow env) objMap
-  annots' <- mapM (toExpr env) annots
-  return (objMap', classGraph, annots')
-
-toPrgms :: FEnv -> [VPrgm] -> TypeCheckResult [TPrgm]
-toPrgms env = mapM (toPrgm env)
-
 toExprObjectArrow :: FEnv -> VObjectMapItem -> TypeCheckResult TEObjectMapItem
 toExprObjectArrow env item@(Object{objDupExpr}, _, _) = do
   objDupExpr' <- toExpr env objDupExpr
   item' <- toObjectArrow env item
-  return $ (asExprObjectMapItem item'){oaObj=Just (GuardExpr objDupExpr' Nothing)}
+  case asExprObjectMapItem item' of
+    oa@ObjArr{oaObj=Just (GuardExpr _ g)} -> return $ oa{oaObj=Just (GuardExpr objDupExpr' g)}
+    oa@ObjArr{oaObj=Nothing} -> return $ oa{oaObj=Just (GuardExpr objDupExpr' Nothing)}
 
 decodeExprPrgm :: FEnv -> VPrgm -> TypeCheckResult TEPrgm
 decodeExprPrgm env (objMap, classGraph, annots) = do

@@ -20,23 +20,12 @@ import           Test.Tasty
 import qualified Test.Tasty.Hedgehog as HG
 import           Testing.Generation  (genPrgms)
 import           Text.Printf
-import           TypeCheck           (runConstraintsLimit, typecheckPrgm)
-import           TypeCheck.Common    (FEnv (FEnv, feCons), tcreToMaybe)
-import           TypeCheck.Constrain (executeConstraint, runConstraints)
-import           TypeCheck.Decode    (decodeExprPrgms, toPrgms)
+import           TypeCheck           (typecheckPrgm)
+import           TypeCheck.Common    (tcreToMaybe, feCons)
+import           TypeCheck.Constrain (executeConstraint)
+import           TypeCheck.Decode    (decodeExprPrgms)
 import           TypeCheck.Encode    (fromPrgms, makeBaseFEnv)
 import           Utils
-
-propEncodeDecode :: Property
-propEncodeDecode = property $ do
-  prgmsNodes <- forAll genPrgms
-  let prgms = map fst3 prgmsNodes
-  let classGraph = snd3 $ mergeExprPrgms prgms
-  let fenv = makeBaseFEnv classGraph
-  (encoded, fenv') <- evalMaybe $ tcreToMaybe $ fromPrgms fenv (map fromExprPrgm prgms) []
-  decoded <- evalMaybe $ tcreToMaybe $ toPrgms fenv' encoded
-  annotate $ printf "Decoded to: \n\t%s" (show decoded)
-  map fst3 prgms === map (fst3 . toExprPrgm) decoded
 
 propExprEncodeDecode :: Property
 propExprEncodeDecode = property $ do
@@ -61,20 +50,6 @@ propConstraint = property $ do
   let _fenv'' = executeConstraint fenv' con
   return ()
 
-propConstrainMatchesNew :: Property
-propConstrainMatchesNew = property $ do
-  prgmsNodes <- forAll genPrgms
-  let prgms = map fst3 prgmsNodes
-  let classGraph = snd3 $ mergeExprPrgms prgms
-  let fenv = makeBaseFEnv classGraph
-  (encoded, fenv'@FEnv{feCons}) <- evalMaybe $ tcreToMaybe $ fromPrgms fenv (map fromExprPrgm prgms) []
-  fenv'' <- evalMaybe $ tcreToMaybe $ runConstraints runConstraintsLimit fenv' feCons
-  decodedByOld <- evalMaybe $ tcreToMaybe $ toPrgms fenv'' encoded
-  annotate $ printf "Decoded by old to: \n\t%s" (show $ map toExprPrgm decodedByOld)
-  decodedByNew <- evalMaybe $ tcreToMaybe $ decodeExprPrgms fenv'' encoded
-  annotate $ printf "Decoded by new to: \n\t%s" (show decodedByNew)
-  map (fst3 . toExprPrgm) decodedByOld === map fst3 decodedByNew
-
 propTypeChecks :: Property
 propTypeChecks = property $ do
   prgms <- forAll genPrgms
@@ -85,10 +60,8 @@ propTypeChecks = property $ do
 
 typecheckTests :: TestTree
 typecheckTests = testGroup "TypeCheckTests" [
-    HG.testProperty "propEncodeDecode" (p propEncodeDecode)
-    , HG.testProperty "propExprEncodeDecode" (p propExprEncodeDecode)
+    HG.testProperty "propExprEncodeDecode" (p propExprEncodeDecode)
     , HG.testProperty "propConstraint" (p propConstraint)
-    , HG.testProperty "propConstrainMatchesNew" (p propConstrainMatchesNew)
     , HG.testProperty "propTypeChecks" (p propTypeChecks)
                                   ]
   where

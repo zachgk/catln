@@ -245,18 +245,21 @@ instance ExprClass Expr where
   maybeExprPathM (Arg m n)               = Just (n, m)
   maybeExprPathM (TupleApply _ (_, e) _) = maybeExprPathM e
   maybeExprPathM (VarApply _ e _ _)      = maybeExprPathM e
+  maybeExprPathM (AliasExpr _ b)         = maybeExprPathM b
   maybeExprPathM _                       = Nothing
 
   exprAppliedArgs (Value _ _) = []
   exprAppliedArgs (Arg _ _) = []
   exprAppliedArgs (TupleApply _ (_, be) ae) = ae : exprAppliedArgs be
   exprAppliedArgs (VarApply _ e _ _) = exprAppliedArgs e
-  exprAppliedArgs _ = error "Unsupported Expr exprAppliedArgs"
+  exprAppliedArgs (AliasExpr _ b) = exprAppliedArgs b
+  exprAppliedArgs e = error $ printf "Unsupported Expr exprAppliedArgs for %s" (show e)
 
   exprAppliedOrdVars (Value _ _) = []
   exprAppliedOrdVars (Arg _ _) = []
   exprAppliedOrdVars (TupleApply _ (_, be) _) = exprAppliedOrdVars be
   exprAppliedOrdVars (VarApply _ e n m) = (n, m) : exprAppliedOrdVars e
+  exprAppliedOrdVars (AliasExpr _ b) = exprAppliedOrdVars b
   exprAppliedOrdVars _ = error "Unsupported Expr exprAppliedOrdVars"
 
   exprVarArgs CExpr{} = H.empty

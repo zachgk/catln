@@ -371,24 +371,25 @@ prepObjPrgm env1 pprgm@(objMap1, _, _) = do
 addTypeGraphArrow :: TObject -> FEnv -> TArrow -> TypeCheckResult ((), FEnv)
 addTypeGraphArrow obj env arr = return ((), fAddTTypeGraph env (objPath obj) (obj, arr))
 
-addTypeGraphObjects :: FEnv -> TObjectMapItem -> TypeCheckResult ((), FEnv)
-addTypeGraphObjects env (obj, _, arrow) = do
+addTypeGraphObjects :: FEnv -> TEObjectMapItem -> TypeCheckResult ((), FEnv)
+addTypeGraphObjects env oa = do
+  let (obj, _, arrow) = fromExprObjectMapItem oa
   let objValue = typeVal (PTypeName (objPath obj))
   let env' = fInsert env (objPath obj) (DefKnown objValue)
   (_, env'') <- mapMWithFEnvMaybe env' (addTypeGraphArrow obj) arrow
   return ((), env'')
 
-addTypeGraphPrgm :: FEnv -> TPrgm -> TypeCheckResult ((), FEnv)
+addTypeGraphPrgm :: FEnv -> TEPrgm -> TypeCheckResult ((), FEnv)
 addTypeGraphPrgm env (objMap, _, _) = do
   (_, env') <- mapMWithFEnv env addTypeGraphObjects objMap
   return ((), env')
 
-fromPrgms :: FEnv -> [PPrgm] -> [TPrgm] -> TypeCheckResult ([VPrgm], FEnv)
+fromPrgms :: FEnv -> [PPrgm] -> [TEPrgm] -> TypeCheckResult ([VPrgm], FEnv)
 fromPrgms env1 pprgms tprgms = do
   (_, env2) <- mapMWithFEnv env1 addTypeGraphPrgm tprgms
   (pprgmsWithVObjs, env3) <- mapMWithFEnv env2 prepObjPrgm pprgms
   (vprgms, env4) <- mapMWithFEnv env3 fromPrgm pprgmsWithVObjs
   let (vjoinObjMap, _, _) = mergePrgms vprgms
-  let (tjoinObjMap, _, _) = mergePrgms tprgms
-  let env5 = addUnionObjToEnv env4 vjoinObjMap tjoinObjMap
+  let (tjoinObjMap, _, _) = mergeExprPrgms tprgms
+  let env5 = addUnionObjToEnv env4 vjoinObjMap (map fromExprObjectMapItem tjoinObjMap)
   return (vprgms, env5)

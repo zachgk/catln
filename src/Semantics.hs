@@ -136,18 +136,19 @@ asExprObjectMapItem (obj@Object{objBasis, objDoc}, annots, Nothing) = ObjArr (Ju
 toExprPrgm :: (MetaDat m, Show m) => Prgm Expr m -> ExprPrgm Expr m
 toExprPrgm (objMap, classGraph, annots) = (map asExprObjectMapItem objMap, classGraph, annots)
 
+fromExprObjectMapItem :: (MetaDat m, Show m, Hashable m) => ExprObjectMapItem Expr m -> ObjectMapItem Expr m
+fromExprObjectMapItem (ObjArr (Just (GuardExpr obj guard)) basis doc as arr) = (exprToObj basis doc obj, as, arr')
+  where
+    arr' = case arr of
+      Just (Just (GuardExpr e _), m)         -> Just $ Arrow m guard (Just e)
+      Just (_, m) | isJust guard             -> Just $ Arrow m guard Nothing
+      Just (_, m) | getMetaType m == topType -> Nothing
+      Just (_, m)                            -> Just $ Arrow m guard Nothing
+      Nothing                                -> Nothing
+fromExprObjectMapItem oa = error $ printf "fromExprObjectMapItem with no input expression: %s" (show oa)
+
 fromExprPrgm :: (MetaDat m, Show m, Hashable m) => ExprPrgm Expr m -> Prgm Expr m
 fromExprPrgm (objMap, classGraph, annots) = (map fromExprObjectMapItem objMap, classGraph, annots)
-  where
-    fromExprObjectMapItem :: (MetaDat m, Show m, Hashable m) => ExprObjectMapItem Expr m -> ObjectMapItem Expr m
-    fromExprObjectMapItem (ObjArr (Just (GuardExpr obj guard)) basis doc as arr) = (exprToObj basis doc obj, as, arr')
-      where
-        arr' = case arr of
-          Just (Just (GuardExpr e _), m)               -> Just $ Arrow m guard (Just e)
-          Just (_, m) | getMetaType m == topType -> Nothing
-          Just (_, m) -> Just $ Arrow m guard Nothing
-          Nothing                            -> Nothing
-    fromExprObjectMapItem oa = error $ printf "fromExprObjectMapItem with no input expression: %s" (show oa)
 
 type ArgMetaMap m = H.HashMap ArgName [Meta m]
 
