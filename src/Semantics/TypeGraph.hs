@@ -63,10 +63,10 @@ isSubtypePartialOfWithMaybeObj :: (Show m, MetaDat m) => ClassGraph -> Maybe (Ob
 isSubtypePartialOfWithMaybeObj classGraph (Just obj) = isSubtypePartialOfWithObj classGraph obj
 isSubtypePartialOfWithMaybeObj classGraph Nothing    = isSubtypePartialOf classGraph
 
-reachesHasCutSubtypeOf :: (Show m, MetaDat m) => ClassGraph -> MetaVarEnv m -> MetaArgEnv m -> ReachesTree -> Type -> Bool
-reachesHasCutSubtypeOf classGraph varEnv argEnv (ReachesTree children) superType = all childIsSubtype $ H.toList children
-  where childIsSubtype (key, val) = isSubtypePartialOfWithMetaEnv classGraph varEnv argEnv key superType || reachesHasCutSubtypeOf classGraph varEnv argEnv val superType
-reachesHasCutSubtypeOf classGraph varEnv argEnv (ReachesLeaf leafs) superType = any (\t -> isSubtypeOfWithMetaEnv classGraph varEnv argEnv t superType) leafs
+reachesHasCutSubtypeOf :: (Show m, MetaDat m) => ClassGraph -> MetaVarArgEnv m -> ReachesTree -> Type -> Bool
+reachesHasCutSubtypeOf classGraph vaenv (ReachesTree children) superType = all childIsSubtype $ H.toList children
+  where childIsSubtype (key, val) = isSubtypePartialOfWithMetaEnv classGraph vaenv key superType || reachesHasCutSubtypeOf classGraph vaenv val superType
+reachesHasCutSubtypeOf classGraph vaenv (ReachesLeaf leafs) superType = any (\t -> isSubtypeOfWithMetaEnv classGraph vaenv t superType) leafs
 
 reachesPartial :: (MetaDat m, Show m) => ReachesEnv m -> PartialType -> CRes ReachesTree
 reachesPartial ReachesEnv{rTypeGraph, rClassGraph} partial@PartialType{ptName=PTypeName name} = do

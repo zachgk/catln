@@ -36,8 +36,8 @@ data TypeBound = BUpper | BLower | BEq
   deriving (Eq)
 
 data EncodeState
-  = EncodeOut !(Maybe VObject) !VMetaVarEnv !VMetaArgEnv -- ^ Used for outputs including in definitions (with object) and global annots (without obj)
-  | EncodeIn !VMetaVarEnv !VMetaArgEnv -- ^ Used for inputs
+  = EncodeOut !(Maybe VObject) !VMetaVarArgEnv -- ^ Used for outputs including in definitions (with object) and global annots (without obj)
+  | EncodeIn !VMetaVarArgEnv -- ^ Used for inputs
   deriving (Eq, Ord, Show)
 
 isEncodeOut :: EncodeState -> Bool
@@ -45,26 +45,22 @@ isEncodeOut EncodeOut{} = True
 isEncodeOut EncodeIn{}  = False
 
 asEncodeIn :: EncodeState -> EncodeState
-asEncodeIn (EncodeOut _ varEnv argEnv) = EncodeIn varEnv argEnv
-asEncodeIn est@EncodeIn{}              = est
+asEncodeIn (EncodeOut _ vaenv) = EncodeIn vaenv
+asEncodeIn est@EncodeIn{}      = est
 
 encodeObj :: EncodeState -> Maybe VObject
-encodeObj (EncodeOut obj _ _) = obj
-encodeObj EncodeIn{}          = Nothing
+encodeObj (EncodeOut obj _) = obj
+encodeObj EncodeIn{}        = Nothing
 
-encodeVars :: EncodeState -> VMetaVarEnv
-encodeVars (EncodeOut _ varEnv _) = varEnv
-encodeVars (EncodeIn varEnv _)    = varEnv
-
-encodeArgs :: EncodeState -> VMetaArgEnv
-encodeArgs (EncodeOut _ _ argEnv) = argEnv
-encodeArgs (EncodeIn _ argEnv)    = argEnv
+encodeVarArgs :: EncodeState -> VMetaVarArgEnv
+encodeVarArgs (EncodeOut _ vaenv) = vaenv
+encodeVarArgs (EncodeIn vaenv)    = vaenv
 
 makeBaseFEnv :: ClassGraph -> FEnv
 makeBaseFEnv classGraph = FEnv{
   fePnts = IM.empty,
   feCons = [],
-  feUnionAllObjs = Meta topType Nothing (VarMetaDat 0 Nothing H.empty H.empty),
+  feUnionAllObjs = Meta topType Nothing (VarMetaDat 0 Nothing),
   feVTypeGraph = H.empty,
   feTTypeGraph = H.empty,
   feUpdatedDuringEpoch = False,
@@ -74,8 +70,8 @@ makeBaseFEnv classGraph = FEnv{
   }
 
 mkVarMetaDat :: EncodeState -> Pnt -> VarMetaDat
-mkVarMetaDat (EncodeOut obj varEnv argEnv) p = VarMetaDat p obj varEnv argEnv
-mkVarMetaDat (EncodeIn varEnv argEnv) p = VarMetaDat p Nothing varEnv argEnv
+mkVarMetaDat (EncodeOut obj _) p = VarMetaDat p obj
+mkVarMetaDat (EncodeIn _) p      = VarMetaDat p Nothing
 
 fromMeta :: FEnv -> TypeBound -> EncodeState -> PreMeta -> String -> TypeCheckResult (VarMeta, FEnv)
 fromMeta env bound est m description  = do
@@ -126,13 +122,13 @@ mapMWithFEnvMapWithKey env f hmap = do
 fromExpr :: EncodeState -> FEnv -> PExpr -> TypeCheckResult (VExpr, FEnv)
 fromExpr est env (CExpr m c) = do
   (m', env') <- fromMeta env BUpper est m ("Constant " ++ show c)
-  return (CExpr m' c, addConstraints env' [EqualsKnown m' (constantType c)])
+  return (CExpr m' c, addConstraints env' [EqualsKnown (encodeVarArgs est) m' (constantType c)])
 fromExpr est@EncodeOut{} env1 (Value m name) = do
   (m', env2) <- fromMeta env1 BUpper est m ("Value " ++ name)
   lookupVal <- fLookup env2 (encodeObj est) name
   lookupConstraints <- case lookupVal of
-    DefVar lookupM      -> return [EqPoints m' lookupM]
-    DefKnown lookupType -> return [BoundedByKnown m' lookupType]
+    DefVar lookupM      -> return [EqPoints (encodeVarArgs est) m' lookupM]
+    DefKnown lookupType -> return [BoundedByKnown (encodeVarArgs est) m' lookupType]
   return (Value m' name, addConstraints env2 lookupConstraints)
 fromExpr est@EncodeIn{} env1 (Value m name) = do
   -- let m' = mWithType (typeVal $ PTypeName name) m
@@ -147,10 +143,10 @@ fromExpr est@EncodeOut{} env1 (Arg m name) = do
   (m', env2) <- fromMeta env1 BUpper est m ("Arg " ++ name)
   let varM = Meta (TypeVar $ TVArg TVInt name) (getMetaPos m) emptyMetaDat
   (varM', env3) <- fromMeta env2 BUpper est varM $ "ArgVar " ++ name
-  let argEnv = encodeArgs est
+  let argEnv = snd $ splitVarArgEnv $ encodeVarArgs est
   case H.lookup name argEnv of
     Nothing -> error $ printf "Could not find arg %s with argEnv %s and obj %s" name (show argEnv) (show $ encodeObj est)
-    Just lookupArgs -> return (Arg varM' name, addConstraints env3 [EqPoints m' lookupArgs])
+    Just lookupArgs -> return (Arg varM' name, addConstraints env3 [EqPoints (encodeVarArgs est) m' lookupArgs])
 fromExpr est@EncodeIn{} env1 (Arg m name) = do
   (m', env2) <- fromMeta env1 BUpper est m ("Arg " ++ name)
   return (Arg m' name, env2)
@@ -160,7 +156,7 @@ fromExpr est env1 (HoleExpr m hole) = do
 fromExpr est env1 (AliasExpr base alias) = do
   (base', env2) <- fromExpr est env1 base
   (alias', env3) <- fromExpr est env2 alias
-  let env4 = addConstraints env3 [EqPoints (getExprMeta base') (getExprMeta alias')]
+  let env4 = addConstraints env3 [EqPoints (encodeVarArgs est) (getExprMeta base') (getExprMeta alias')]
   return (AliasExpr base' alias', env4)
 fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaAnnots, oaArr}) = do
   (m', env2) <- fromMeta env1 BUpper est m $ printf "Tuple %s(%s) Meta" (show baseExpr) (show arg)
@@ -189,44 +185,44 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaAnnots, oa
         (EncodeOut{}, Just (GuardExpr obj Nothing), Just (Just (GuardExpr argExpr' Nothing), arrM')) ->
           -- Output with (x=x)
           [
-            ArrowTo (getExprMeta baseExpr') baseM',
-                        AddArg (baseM', exprPath obj) m',
-                        BoundedByObjs m',
-                        ArrowTo (getExprMeta argExpr') arrM',
-                        EqPoints (getExprMeta obj) arrM',
-                        PropEq (m', exprPath obj) arrM'
+            ArrowTo (encodeVarArgs est) (getExprMeta baseExpr') baseM',
+                        AddArg (encodeVarArgs est) (baseM', exprPath obj) m',
+                        BoundedByObjs (encodeVarArgs est) m',
+                        ArrowTo (encodeVarArgs est) (getExprMeta argExpr') arrM',
+                        EqPoints (encodeVarArgs est) (getExprMeta obj) arrM',
+                        PropEq (encodeVarArgs est) (m', exprPath obj) arrM'
                         ]
         (EncodeOut{}, Nothing, Just (Just (GuardExpr argExpr' Nothing), arrM')) ->
           -- Output with (x) infer
           [
-            ArrowTo (getExprMeta baseExpr') baseM',
-                        AddInferArg baseM' m',
-                        BoundedByObjs m',
-                        ArrowTo (getExprMeta argExpr') arrM'
+            ArrowTo (encodeVarArgs est) (getExprMeta baseExpr') baseM',
+                        AddInferArg (encodeVarArgs est) baseM' m',
+                        BoundedByObjs (encodeVarArgs est) m',
+                        ArrowTo (encodeVarArgs est) (getExprMeta argExpr') arrM'
                         ]
         (EncodeIn{}, Just (GuardExpr obj Nothing), Just (Just (GuardExpr argExpr' Nothing), arrM')) ->
           -- Input with (x=x)
           [
-            EqPoints (getExprMeta baseExpr') baseM',
-                     AddArg (baseM', exprPath obj) m',
-                     EqPoints (getExprMeta argExpr') arrM',
-                     EqPoints (getExprMeta obj) arrM',
-                     PropEq (m', exprPath obj) arrM'
+            EqPoints (encodeVarArgs est) (getExprMeta baseExpr') baseM',
+                     AddArg (encodeVarArgs est) (baseM', exprPath obj) m',
+                     EqPoints (encodeVarArgs est) (getExprMeta argExpr') arrM',
+                     EqPoints (encodeVarArgs est) (getExprMeta obj) arrM',
+                     PropEq (encodeVarArgs est) (m', exprPath obj) arrM'
                     ]
         (EncodeIn{}, Just (GuardExpr obj Nothing), Just (Nothing, arrM')) ->
           -- Input with (x -> T)
           [
          -- EqPoints (getExprMeta baseExpr') baseM',
-                     AddArg (baseM', exprPath obj) m',
-                     EqPoints (getExprMeta obj) arrM',
-                     PropEq (m', exprPath obj) (getExprMeta obj)
+                     AddArg (encodeVarArgs est) (baseM', exprPath obj) m',
+                     EqPoints (encodeVarArgs est) (getExprMeta obj) arrM',
+                     PropEq (encodeVarArgs est) (m', exprPath obj) (getExprMeta obj)
                     ]
         (EncodeIn{}, Just (GuardExpr obj Nothing), Nothing) ->
           -- Input with (x) matchable
           [
-         -- EqPoints (getExprMeta baseExpr') baseM',
-                     AddArg (baseM', exprPath obj) m',
-                     PropEq (m', exprPath obj) (getExprMeta obj)
+         -- EqPoints (encodeVarArgs est) (getExprMeta baseExpr') baseM',
+                     AddArg (encodeVarArgs est) (baseM', exprPath obj) m',
+                     PropEq (encodeVarArgs est) (m', exprPath obj) (getExprMeta obj)
                     ]
         _ -> error $ printf "Invalid fromExpr in %s mode for %s" (show est) (show arg)
   let env8 = addConstraints env7 constraints
@@ -243,13 +239,13 @@ fromExpr est env1 (VarApply m baseExpr varName varVal) = do
   (varVal', env4) <- fromMeta env3 BUpper est varVal $ printf "%s val" baseName
   let constraints = case est of
         EncodeOut{} -> [
-                      ArrowTo (getExprMeta baseExpr') m',
-                      VarEq (m', varName) varVal',
-                      BoundedByObjs m'
+                      ArrowTo (encodeVarArgs est) (getExprMeta baseExpr') m',
+                      VarEq (encodeVarArgs est) (m', varName) varVal',
+                      BoundedByObjs (encodeVarArgs est) m'
                        ]
         EncodeIn{} -> [
                       -- EqPoints (getExprMeta baseExpr') m',
-                      VarEq (m', varName) varVal'
+                      VarEq (encodeVarArgs est) (m', varName) varVal'
                       ]
   let env5 = addConstraints env4 constraints
   return (VarApply m' baseExpr' varName varVal', env5)
@@ -259,7 +255,7 @@ fromGuard est env1 (Just expr) =  do
   (expr', env2) <- fromExpr est env1 expr
   let (bool, env3) = fresh env2 $ TypeCheckResult [] $ SType topType boolType "ifGuardBool"
   let bool' = Meta boolType (labelPos "bool" $ getMetaPos $ getExprMeta expr) (mkVarMetaDat est bool)
-  return (Just expr', addConstraints env3 [ArrowTo (getExprMeta expr') bool'])
+  return (Just expr', addConstraints env3 [ArrowTo (encodeVarArgs est) (getExprMeta expr') bool'])
 fromGuard _ env Nothing = return (Nothing, env)
 
 fromArrow :: EncodeState -> FEnv -> PArrow -> TypeCheckResult (VArrow, FEnv)
@@ -274,11 +270,11 @@ fromArrow est env1 (Arrow m aguard maybeExpr) = do
       (vExpr, env5) <- fromExpr est env4 expr
       let env6 = case metaTypeVar m of
             Just (TVVar TVInt typeVarName) -> case suffixLookupInDict typeVarName objVars of
-              Just varM -> addConstraints env5 [ArrowTo (getExprMeta vExpr) varM]
+              Just varM -> addConstraints env5 [ArrowTo (encodeVarArgs est) (getExprMeta vExpr) varM]
               Nothing -> error "unknown type fromArrow"
             Just TVVar{} -> error "Bad TVVar (TVExt) in fromArrow"
             Just TVArg{} -> error "Bad TVArg in fromArrow"
-            Nothing -> addConstraints env5 [ArrowTo (getExprMeta vExpr) m', ArrowTo (getExprMeta vExpr) mUserReturn']
+            Nothing -> addConstraints env5 [ArrowTo (encodeVarArgs est) (getExprMeta vExpr) m', ArrowTo (encodeVarArgs est) (getExprMeta vExpr) mUserReturn']
       let arrow' = Arrow m' aguard' (Just vExpr)
       let env7 = fAddVTypeGraph env6 (objPath obj) (obj, arrow')
       return (arrow', env7)
@@ -287,9 +283,9 @@ fromArrow est env1 (Arrow m aguard maybeExpr) = do
       let env4 = fAddVTypeGraph env3 (objPath obj) (obj, arrow')
       return (arrow', env4)
 
-fromObjectMap :: FEnv -> (VObject, VMetaVarEnv, VMetaArgEnv, [PCompAnnot], Maybe PArrow) -> TypeCheckResult ((VObject, [VCompAnnot], Maybe VArrow), FEnv)
-fromObjectMap env1 (obj, varEnv, argEnv, annots, arrow) = do
-  let est = EncodeOut (Just obj) varEnv argEnv
+fromObjectMap :: FEnv -> (VObject, VMetaVarArgEnv, [PCompAnnot], Maybe PArrow) -> TypeCheckResult ((VObject, [VCompAnnot], Maybe VArrow), FEnv)
+fromObjectMap env1 (obj, vaenv, annots, arrow) = do
+  let est = EncodeOut (Just obj) vaenv
   (arrow', env2) <- mapMWithFEnvMaybe env1 (fromArrow est) arrow
   (annots', env3) <- mapMWithFEnv env2 (fromExpr est) annots
   return ((obj, annots', arrow'), env3)
@@ -297,7 +293,7 @@ fromObjectMap env1 (obj, varEnv, argEnv, annots, arrow) = do
 fromObjVar :: VarMeta -> String -> EncodeState -> FEnv -> (TypeVarName, PreMeta) -> TypeCheckResult ((TypeVarName, VarMeta), FEnv)
 fromObjVar oM prefix est env1 (varName, m) = do
   (m', env2) <- fromMeta env1 BUpper est m (prefix ++ "." ++ varName)
-  let env3 = addConstraints env2 [VarEq (oM, varName) m']
+  let env3 = addConstraints env2 [VarEq (encodeVarArgs est) (oM, varName) m']
   return ((varName, m'), env3)
 
 addObjArg :: VarMeta -> String -> EncodeState -> FEnv -> (TypeName, PObjArg) -> TypeCheckResult ((TypeName, VObjArg), FEnv)
@@ -308,14 +304,14 @@ addObjArg oM prefix est env (n, (m, maybeSubObj)) = do
         Just{}  -> BUpper
         Nothing -> BEq
   (m', env2) <- fromMeta env argBound est m prefix'
-  let env3 = addConstraints env2 [PropEq (oM, n) m', BoundedByObjs m']
-  let env4 = case suffixLookupInDict n (encodeVars est) of
-        Just varM -> addConstraints env3 [EqPoints m' varM]
+  let env3 = addConstraints env2 [PropEq (encodeVarArgs est) (oM, n) m', BoundedByObjs (encodeVarArgs est) m']
+  let env4 = case suffixLookupInDict n (snd $ splitVarArgEnv $ encodeVarArgs est) of
+        Just varM -> addConstraints env3 [EqPoints (encodeVarArgs est) m' varM]
         Nothing   -> env3
   case maybeSubObj of
     Just subObj -> do
       (subObj'@Object{deprecatedObjM=subM}, env5) <- fromObjectRec prefix' True est env4 subObj
-      return ((n, (m', Just subObj')), addConstraints env5 [ArrowTo subM m'])
+      return ((n, (m', Just subObj')), addConstraints env5 [ArrowTo (encodeVarArgs est) subM m'])
     Nothing -> return ((n, (m', Nothing)), env4)
 
 -- Remove constraints on args from the main meta in an Object.
@@ -338,38 +334,39 @@ fromObjectRec prefix isObjArg est env (Object m basis vars args doc expr path) =
   let obj' = Object m' basis vars' args' doc expr' path
   (objValue, env5) <- fromMeta env4 BUpper est (Meta (typeVal (PTypeName path)) (labelPos "objValue" $ getMetaPos m) emptyMetaDat) ("objValue" ++ path)
   let env6 = fInsert env5 path (DefVar objValue)
-  let env7 = addConstraints env6 [BoundedByObjs m' | isObjArg]
-  let env8 = addConstraints env7 [BoundedByKnown m' (singletonType (PartialType (PTypeName path) (fmap (const topType) vars) (fmap (const topType) args) [] PtArgExact)) | basis == FunctionObj || basis == PatternObj]
+  let env7 = addConstraints env6 [BoundedByObjs (encodeVarArgs est) m' | isObjArg]
+  let env8 = addConstraints env7 [BoundedByKnown (encodeVarArgs est) m' (singletonType (PartialType (PTypeName path) (fmap (const topType) vars) (fmap (const topType) args) [] PtArgExact)) | basis == FunctionObj || basis == PatternObj]
   return (obj', env8)
 
-fromObject ::  FEnv -> PObject -> TypeCheckResult (VObject, VMetaVarEnv, VMetaArgEnv, FEnv)
+fromObject ::  FEnv -> PObject -> TypeCheckResult (VObject, VMetaVarArgEnv, FEnv)
 fromObject env1 obj = do
-  let envEst = EncodeIn H.empty H.empty -- An EncodeState for computing varEnv and argEnv
+  let envEst = EncodeIn H.empty -- An EncodeState for computing varEnv and argEnv
   (varEnv, env2) <- mapMWithFEnvMap env1 (\e m -> fromMeta e BUpper envEst m "var") $ exprAppliedVars $ objExpr obj
   (argEnv, env3) <- mapMWithFEnvMap env2 (\e m -> fromMeta e BUpper envEst m "arg") $ fmap head $ exprArgs $ objExpr obj
 
-  let est = EncodeIn varEnv argEnv
+  let vaenv = joinVarArgEnv varEnv argEnv
+  let est = EncodeIn vaenv
   (obj', env4) <- fromObjectRec "Object" False est env3 obj
-  return (obj', varEnv, argEnv, env4)
+  return (obj', vaenv, env4)
 
 -- Add all of the objects first for various expressions that call other top level functions
-fromObjects :: FEnv -> (PObject, [PCompAnnot], Maybe PArrow) -> TypeCheckResult ((VObject, VMetaVarEnv, VMetaArgEnv, [PCompAnnot], Maybe PArrow), FEnv)
+fromObjects :: FEnv -> (PObject, [PCompAnnot], Maybe PArrow) -> TypeCheckResult ((VObject, VMetaVarArgEnv, [PCompAnnot], Maybe PArrow), FEnv)
 fromObjects env (obj, annots, arrow) = do
-  (obj', varEnv, argEnv, env1) <- fromObject env obj
-  return ((obj', varEnv, argEnv, annots, arrow), env1)
+  (obj', vaenv, env1) <- fromObject env obj
+  return ((obj', vaenv, annots, arrow), env1)
 
-fromPrgm :: FEnv -> (PPrgm, [(VObject, VMetaVarEnv, VMetaArgEnv)]) -> TypeCheckResult (VPrgm, FEnv)
+fromPrgm :: FEnv -> (PPrgm, [(VObject, VMetaVarArgEnv)]) -> TypeCheckResult (VPrgm, FEnv)
 fromPrgm env1 ((objMap1, classGraph, annots), vobjs) = do
-  let objMap2 = zipWith (\(_, oans, arrows) (vobj, varEnv, argEnv) -> (vobj, varEnv, argEnv, oans, arrows)) (reverse objMap1) vobjs
+  let objMap2 = zipWith (\(_, oans, arrows) (vobj, vaenv) -> (vobj, vaenv, oans, arrows)) (reverse objMap1) vobjs
   (objMap3, env2) <- mapMWithFEnv env1 fromObjectMap objMap2
-  (annots', env3) <- mapMWithFEnv env2 (fromExpr (EncodeOut Nothing H.empty H.empty)) annots
+  (annots', env3) <- mapMWithFEnv env2 (fromExpr (EncodeOut Nothing H.empty)) annots
   return ((objMap3, classGraph, annots'), env3)
 
 -- Add all of the objects first for various expressions that call other top level functions, from all programs
-prepObjPrgm :: FEnv -> PPrgm -> TypeCheckResult ((PPrgm, [(VObject, VMetaVarEnv, VMetaArgEnv)]), FEnv)
+prepObjPrgm :: FEnv -> PPrgm -> TypeCheckResult ((PPrgm, [(VObject, VMetaVarArgEnv)]), FEnv)
 prepObjPrgm env1 pprgm@(objMap1, _, _) = do
   (objMap2, env2) <- mapMWithFEnv env1 fromObjects objMap1
-  return ((pprgm, map (\(obj, varEnv, argEnv, _, _) -> (obj, varEnv, argEnv)) objMap2), env2)
+  return ((pprgm, map (\(obj, vaenv, _, _) -> (obj, vaenv)) objMap2), env2)
 
 addTypeGraphArrow :: TObject -> FEnv -> TArrow -> TypeCheckResult ((), FEnv)
 addTypeGraphArrow obj env arr = return ((), fAddTTypeGraph env (objPath obj) (obj, arr))

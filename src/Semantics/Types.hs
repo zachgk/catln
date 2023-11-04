@@ -106,7 +106,7 @@ data TypeVarLoc
 data TypeVarAux
   = TVVar TypeVarLoc TypeVarName -- ^ A type variable stored from the 'PartialType' ptVars
   | TVArg TypeVarLoc ArgName -- ^ A type variable referring to an arguments type
-  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON, ToJSONKey)
 
 -- | Whether the typeclass can be extended or not
 type Sealed = Bool
@@ -247,13 +247,13 @@ emptyClassGraph = ClassGraph $ graphFromEdges []
 ptVarArg :: PartialType -> TypeVarArgEnv
 ptVarArg PartialType{ptArgs, ptVars} = joinVarArgEnv ptVars ptArgs
 
-joinVarArgEnv :: TypeVarEnv -> TypeArgEnv -> TypeVarArgEnv
+joinVarArgEnv :: H.HashMap TypeVarName v -> H.HashMap ArgName v -> H.HashMap TypeVarAux v
 joinVarArgEnv venv aenv = H.fromList (venv' ++ aenv')
   where
     venv' = map (first (TVVar TVInt)) $ H.toList venv
     aenv' = map (first (TVArg TVInt)) $ H.toList aenv
 
-splitVarArgEnv :: TypeVarArgEnv -> (TypeVarEnv, TypeArgEnv)
+splitVarArgEnv :: H.HashMap TypeVarAux v -> (H.HashMap TypeVarName v, H.HashMap ArgName v)
 splitVarArgEnv vaenv = bimap H.fromList H.fromList $ partitionEithers $ map eitherVarArg $ H.toList vaenv
   where
     eitherVarArg (TVVar _ v, t) = Left (v, t)

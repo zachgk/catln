@@ -75,17 +75,17 @@ type UnionObj = (Pnt, Pnt) -- a union of all TypeObj for argument inference, uni
 -- Constraints represent known relationships between VarMeta formed during Encode
 -- Each constraint can affect other the actual type, the required type, or both for the "Scheme".
 data Constraint
-  = EqualsKnown VarMeta Type -- ^ Both Actual and Req
-  | EqPoints VarMeta VarMeta -- ^ Both Actual and Req
-  | BoundedByKnown VarMeta Type -- ^ Both Actual and Req
-  | BoundedByObjs VarMeta
-  | ArrowTo VarMeta VarMeta -- ArrowTo src dest
-  | PropEq (VarMeta, ArgName) VarMeta -- ^ Both Actual and Req
-  | VarEq (VarMeta, TypeVarName) VarMeta -- ^ Both Actual and Req
-  | AddArg (VarMeta, String) VarMeta -- ^ Both Actual and Req,
-  | AddInferArg VarMeta VarMeta -- ^ Both Actual and Req, AddInferArg base arg
-  | PowersetTo VarMeta VarMeta -- ^ Actual (maybe should make it req too)
-  | UnionOf VarMeta [VarMeta] -- ^ Both Actual and Req
+  = EqualsKnown VMetaVarArgEnv VarMeta Type -- ^ Both Actual and Req
+  | EqPoints VMetaVarArgEnv VarMeta VarMeta -- ^ Both Actual and Req
+  | BoundedByKnown VMetaVarArgEnv VarMeta Type -- ^ Both Actual and Req
+  | BoundedByObjs VMetaVarArgEnv VarMeta
+  | ArrowTo VMetaVarArgEnv VarMeta VarMeta -- ArrowTo src dest
+  | PropEq VMetaVarArgEnv (VarMeta, ArgName) VarMeta -- ^ Both Actual and Req
+  | VarEq VMetaVarArgEnv (VarMeta, TypeVarName) VarMeta -- ^ Both Actual and Req
+  | AddArg VMetaVarArgEnv (VarMeta, String) VarMeta -- ^ Both Actual and Req,
+  | AddInferArg VMetaVarArgEnv VarMeta VarMeta -- ^ Both Actual and Req, AddInferArg base arg
+  | PowersetTo VMetaVarArgEnv VarMeta VarMeta -- ^ Actual (maybe should make it req too)
+  | UnionOf VMetaVarArgEnv VarMeta [VarMeta] -- ^ Both Actual and Req
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 data SConstraint
@@ -161,13 +161,12 @@ type SObjectMap = ExprObjectMap Expr ShowMetaDat
 type SObjectMapItem = ExprObjectMapItem Expr ShowMetaDat
 type SPrgm = ExprPrgm Expr ShowMetaDat
 
-data VarMetaDat = VarMetaDat Pnt (Maybe VObject) (MetaVarEnv VarMetaDat) (MetaArgEnv VarMetaDat)
+data VarMetaDat = VarMetaDat Pnt (Maybe VObject)
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 type VarMeta = Meta VarMetaDat
 type VExpr = Expr VarMetaDat
 type VCompAnnot = CompAnnot VExpr
-type VMetaVarEnv = MetaVarEnv VarMetaDat
-type VMetaArgEnv = MetaArgEnv VarMetaDat
+type VMetaVarArgEnv = MetaVarArgEnv VarMetaDat
 type VArrow = Arrow Expr VarMetaDat
 type VObjArg = ObjArg Expr VarMetaDat
 type VGuardExpr = GuardExpr Expr VarMetaDat
@@ -247,11 +246,9 @@ typeCheckToRes tc = case tc of
   TypeCheckResult notes res -> CRes (map MkCNote notes) res
   TypeCheckResE notes       -> CErr (map MkCNote notes)
 
-eqScheme :: FEnv -> TypeVarEnv -> TypeArgEnv -> Scheme -> Scheme -> Bool
-eqScheme FEnv{feClassGraph} venv aenv (TypeCheckResult _ (SType ub1 lb1 _)) (TypeCheckResult _ (SType ub2 lb2 _)) = isEqTypeWithEnv feClassGraph vaenv ub1 ub2 && isEqTypeWithEnv feClassGraph vaenv lb1 lb2
-  where
-    vaenv = joinVarArgEnv venv aenv
-eqScheme _ _ _ a b = a == b
+eqScheme :: FEnv -> TypeVarArgEnv -> Scheme -> Scheme -> Bool
+eqScheme FEnv{feClassGraph} vaenv (TypeCheckResult _ (SType ub1 lb1 _)) (TypeCheckResult _ (SType ub2 lb2 _)) = isEqTypeWithEnv feClassGraph vaenv ub1 ub2 && isEqTypeWithEnv feClassGraph vaenv lb1 lb2
+eqScheme _ _ a b = a == b
 
 getStypeActReq :: SchemeActReq -> SType -> Type
 getStypeActReq SchemeAct SType{stypeAct} = stypeAct
@@ -266,20 +263,33 @@ resToTypeCheck cres = case cres of
     fromCNote note = GenTypeCheckError (posCNote note) (show note)
 
 constraintMetas :: Constraint -> [VarMeta]
-constraintMetas (EqualsKnown p2 _)    = [p2]
-constraintMetas (EqPoints p2 p3)      = [p2, p3]
-constraintMetas (BoundedByKnown p2 _) = [p2]
-constraintMetas (BoundedByObjs p2)    = [p2]
-constraintMetas (ArrowTo p2 p3)       = [p2, p3]
-constraintMetas (PropEq (p2, _) p3)   = [p2, p3]
-constraintMetas (VarEq (p2, _) p3)    = [p2, p3]
-constraintMetas (AddArg (p2, _) p3)   = [p2, p3]
-constraintMetas (AddInferArg p2 p3)   = [p2, p3]
-constraintMetas (PowersetTo p2 p3)    = [p2, p3]
-constraintMetas (UnionOf p2 p3s)      = p2:p3s
+constraintMetas (EqualsKnown _ p2 _)    = [p2]
+constraintMetas (EqPoints _ p2 p3)      = [p2, p3]
+constraintMetas (BoundedByKnown _ p2 _) = [p2]
+constraintMetas (BoundedByObjs _ p2)    = [p2]
+constraintMetas (ArrowTo _ p2 p3)       = [p2, p3]
+constraintMetas (PropEq _ (p2, _) p3)   = [p2, p3]
+constraintMetas (VarEq _ (p2, _) p3)    = [p2, p3]
+constraintMetas (AddArg _ (p2, _) p3)   = [p2, p3]
+constraintMetas (AddInferArg _ p2 p3)   = [p2, p3]
+constraintMetas (PowersetTo _ p2 p3)    = [p2, p3]
+constraintMetas (UnionOf _ p2 p3s)      = p2:p3s
+
+constraintVarArgEnv :: Constraint -> VMetaVarArgEnv
+constraintVarArgEnv (EqualsKnown vaenv _ _)    = vaenv
+constraintVarArgEnv (EqPoints vaenv _ _)       = vaenv
+constraintVarArgEnv (BoundedByKnown vaenv _ _) = vaenv
+constraintVarArgEnv (BoundedByObjs vaenv _)    = vaenv
+constraintVarArgEnv (ArrowTo vaenv _ _)        = vaenv
+constraintVarArgEnv (PropEq vaenv _ _)         = vaenv
+constraintVarArgEnv (VarEq vaenv _ _)          = vaenv
+constraintVarArgEnv (AddArg vaenv _ _)         = vaenv
+constraintVarArgEnv (AddInferArg vaenv _ _)    = vaenv
+constraintVarArgEnv (PowersetTo vaenv _ _)     = vaenv
+constraintVarArgEnv (UnionOf vaenv _ _)        = vaenv
 
 getPnt :: VarMeta -> Pnt
-getPnt (Meta _ _ (VarMetaDat p _ _ _)) = p
+getPnt (Meta _ _ (VarMetaDat p _)) = p
 
 fLookup :: FEnv -> Maybe VObject -> String -> TypeCheckResult EnvDef
 fLookup FEnv{feDefMap} obj k = case suffixLookup k (H.keys feDefMap) of
@@ -302,24 +312,17 @@ fAddTTypeGraph env@FEnv{feTTypeGraph} k v = env {feTTypeGraph = H.insertWith (++
 
 -- This ensures schemes are correct
 -- It differs from Constrain.checkScheme because it checks for bugs in the internal compiler, not bugs in the user code
-verifyScheme :: ClassGraph -> VarMeta -> Scheme -> Scheme -> Maybe String
-verifyScheme classGraph (Meta _ _ (VarMetaDat _ _ varEnv argEnv)) (TypeCheckResult _ (SType oldAct oldReq _)) (TypeCheckResult _ (SType act req _)) = listToMaybe $ catMaybes [
-  if verifyTypeVars (H.keys varEnv) act then Nothing else Just "verifyTypeVars",
+verifyScheme :: ClassGraph -> VMetaVarArgEnv -> VarMeta -> Scheme -> Scheme -> Maybe String
+verifyScheme classGraph vaenv (Meta _ _ (VarMetaDat _ _)) (TypeCheckResult _ (SType oldAct oldReq _)) (TypeCheckResult _ (SType act req _)) = listToMaybe $ catMaybes [
   if verifySchemeActLowers then Nothing else Just "verifySchemeActLowers",
   if verifySchemeReqLowers then Nothing else Just "verifySchemeReqLowers",
   if verifyCompacted then Nothing else Just "verifyCompacted"
   ]
   where
-    verifyTypeVars venv (UnionType partialLeafs) = all (verifyTypeVarsPartial venv) $ splitUnionType partialLeafs
-    verifyTypeVars venv (TypeVar (TVVar _ v)) = isJust $ suffixLookup v venv
-    verifyTypeVars _ _ = True
-    verifyTypeVarsPartial venv PartialType{ptVars, ptArgs} = all (verifyTypeVars venv) ptVars
-                                                                        && all (verifyTypeVars (H.keys ptVars)) ptArgs
-
-    verifySchemeActLowers  = isSubtypeOfWithMetaEnv classGraph varEnv argEnv act oldAct
-    verifySchemeReqLowers  = isSubtypeOfWithMetaEnv classGraph varEnv argEnv req oldReq
+    verifySchemeActLowers  = isSubtypeOfWithMetaEnv classGraph vaenv act oldAct
+    verifySchemeReqLowers  = isSubtypeOfWithMetaEnv classGraph vaenv req oldReq
     verifyCompacted = act == compactType classGraph act
-verifyScheme _ _ _ _ = Nothing
+verifyScheme _ _ _ _ _ = Nothing
 
 
 -- Point operations
@@ -336,19 +339,18 @@ fresh env@FEnv{fePnts} scheme = (pnt', env{fePnts = pnts'})
     pnt' = IM.size fePnts
     pnts' = IM.insert pnt' scheme fePnts
 
-setDescriptor :: FEnv -> VarMeta -> Scheme -> String -> FEnv
-setDescriptor env@FEnv{feClassGraph, fePnts, feTrace, feUpdatedDuringEpoch} m@(Meta _ _ (VarMetaDat _ _ venv aenv)) scheme' msg = env{fePnts = pnts', feTrace = feTrace', feUpdatedDuringEpoch = feUpdatedDuringEpoch || schemeChanged}
+setDescriptor :: FEnv -> Constraint -> VarMeta -> Scheme -> String -> FEnv
+setDescriptor env@FEnv{feClassGraph, fePnts, feTrace, feUpdatedDuringEpoch} con m@(Meta _ _ (VarMetaDat _ _)) scheme' msg = env{fePnts = pnts', feTrace = feTrace', feUpdatedDuringEpoch = feUpdatedDuringEpoch || schemeChanged}
   where
     p = getPnt m
     scheme = fePnts IM.! p
     schemeChanged :: Bool
     schemeChanged = fromMaybe False $ tcreToMaybe $ do
-      showVenv <- fmap stypeAct <$> mapM (descriptor env) venv
-      showAenv <- fmap stypeAct <$> mapM (descriptor env) aenv
-      return $ not (eqScheme env showVenv showAenv scheme scheme')
+      showVaenv <- fmap stypeAct <$> mapM (descriptor env) (constraintVarArgEnv con)
+      return $ not (eqScheme env showVaenv scheme scheme')
     pnts' = if schemeChanged then IM.insert p scheme' fePnts else fePnts -- Only update if changed to avoid meaningless updates
     feTrace' = if schemeChanged
-      then case verifyScheme feClassGraph m scheme scheme' of
+      then case verifyScheme feClassGraph (constraintVarArgEnv con) m scheme scheme' of
              Just failVerification -> error $ printf "Scheme failed verification %s during typechecking of %s: %s \n\t\t in obj: %s with old scheme: %s" failVerification msg (show scheme') (show m) (show scheme)
              Nothing -> case feTrace of
               ((curConstraint, curChanged):curEpoch):prevEpochs -> ((curConstraint, (p, scheme'):curChanged):curEpoch):prevEpochs
@@ -360,21 +362,18 @@ pointUb env p = do
   (SType ub _ _) <- descriptor env p
   return ub
 
-resolveTypeVar :: TypeVarAux -> VarMeta -> TypeCheckResult VarMeta
-resolveTypeVar (TVVar _ v) m@(Meta _ _ (VarMetaDat _ _ objVars _)) = case H.lookup v objVars of
+resolveTypeVar :: TypeVarAux -> Constraint -> TypeCheckResult VarMeta
+resolveTypeVar v con = case H.lookup v (constraintVarArgEnv con) of
   Just m' -> return m'
-  Nothing -> TypeCheckResE [GenTypeCheckError (getMetaPos m) "Unknown variable in resolveTypeVar var"]
-resolveTypeVar (TVArg _ v) m@(Meta _ _ (VarMetaDat _ _ _ argEnv)) = case H.lookup v argEnv of
-  Just m' -> return m'
-  Nothing -> TypeCheckResE [GenTypeCheckError (getMetaPos m) "Unknown variable in resolveTypeVar arg"]
+  Nothing -> TypeCheckResE [GenTypeCheckError Nothing $ printf "Unknown variable in resolveTypeVar var: %s" (show v)]
 
-descriptorResolve :: FEnv -> VarMeta -> TypeCheckResult (VarMeta, SType)
-descriptorResolve env m = do
+descriptorResolve :: FEnv -> Constraint -> VarMeta -> TypeCheckResult (VarMeta, SType)
+descriptorResolve env con m = do
   scheme@(SType ub _ _) <- descriptor env m
   case ub of
     (TypeVar v) -> do
-      m' <- resolveTypeVar v m
-      descriptorResolve env m'
+      m' <- resolveTypeVar v con
+      descriptorResolve env con m'
     _ -> return (m, scheme)
 
 -- trace constrain
