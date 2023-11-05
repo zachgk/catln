@@ -758,7 +758,9 @@ updateTypeProp classGraph vaenv superType propName subType = case (superType, su
 
           (vaenv', superType, subType)
         TopType [] -> do
-          let sub' = unionAllTypes classGraph $ mapMaybe (typeGetAux propName) supPartialList
+          let sub' = case mapMaybe (typeGetAux propName) supPartialList of
+                []       -> topType
+                supProps -> unionAllTypes classGraph supProps
           (vaenv, superType, sub')
         _ -> do
           let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectedPartials sup subType | sup <- supPartialList]

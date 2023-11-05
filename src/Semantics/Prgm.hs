@@ -149,13 +149,15 @@ instance Show m => Show (Expr m) where
       baseExpr' = case baseExpr of
         Value _ funName -> funName
         TupleApply{}    -> show baseExpr
+        VarApply{}      -> show baseExpr
         _               -> printf "(%s)" (show baseExpr)
   show (VarApply _ baseExpr varName varVal) = printf "%s[%s : %s]" baseExpr' varName (show varVal)
     where
       baseExpr' = case baseExpr of
         Value _ funName -> funName
         TupleApply{}    -> show baseExpr
-        _               -> printf "<%s>" (show baseExpr)
+        VarApply{}      -> show baseExpr
+        _               -> printf "(%s)" (show baseExpr)
 
 instance (Show m, Show (e m)) => Show (ObjArr e m) where
   show ObjArr{oaObj, oaArr} = printf "%s%s" (showNoMaybe oaObj) showArr

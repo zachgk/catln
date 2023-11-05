@@ -16,12 +16,12 @@ import           Hedgehog
 import qualified Hedgehog.Gen        as HG
 import           Semantics.Prgm      (mergeExprPrgms)
 import           Test.Tasty
-import qualified Test.Tasty.Hedgehog as HG
+import qualified Test.Tasty.Hedgehog as THG
 import           Testing.Generation  (genPrgms)
 import           Text.Printf
 import           TypeCheck           (typecheckPrgm)
 import           TypeCheck.Common    (feCons, tcreToMaybe)
-import           TypeCheck.Constrain (executeConstraint)
+import           TypeCheck.Constrain (executeConstraint, executeConstraints)
 import           TypeCheck.Decode    (toPrgms)
 import           TypeCheck.Encode    (fromPrgms, makeBaseFEnv)
 import           Utils
@@ -49,6 +49,18 @@ propConstraint = property $ do
   let _fenv'' = executeConstraint fenv' con
   return ()
 
+propConstraints :: Property
+propConstraints = property $ do
+  prgmsNodes <- forAll genPrgms
+  let prgms = map fst3 prgmsNodes
+  let classGraph = snd3 $ mergeExprPrgms prgms
+  let fenv = makeBaseFEnv classGraph
+  (_, fenv') <- evalMaybe $ tcreToMaybe $ fromPrgms fenv prgms []
+  let cons = feCons fenv'
+  usedCons <- forAll $ HG.subsequence (concat $ replicate 4 cons)
+  let _fenv'' = executeConstraints fenv' usedCons
+  return ()
+
 propTypeChecks :: Property
 propTypeChecks = property $ do
   prgms <- forAll genPrgms
@@ -59,13 +71,14 @@ propTypeChecks = property $ do
 
 typecheckTests :: TestTree
 typecheckTests = testGroup "TypeCheckTests" [
-    HG.testProperty "propExprEncodeDecode" (p propExprEncodeDecode)
-    , HG.testProperty "propConstraint" (p propConstraint)
-    , HG.testProperty "propTypeChecks" (p propTypeChecks)
+    THG.testProperty "propExprEncodeDecode" (p propExprEncodeDecode)
+    , THG.testProperty "propConstraint" (p propConstraint)
+    , THG.testProperty "propConstraints" (p propConstraints)
+    , THG.testProperty "propTypeChecks" (p propTypeChecks)
                                   ]
   where
     p prop = prop
-    -- p prop = withTests 100000 prop
+    -- p prop = withTests 10000 prop
 
 main :: IO ()
 main = defaultMain typecheckTests

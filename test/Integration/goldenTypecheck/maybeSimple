@@ -8,12 +8,10 @@
             , Value /Data/Algebra/Equal
             , Value /Data/Algebra/GreaterThan
             , Value /Data/Algebra/NoOrdering
-            ,
-                ( /Data/Algebra/compare [ T : /Data/Algebra/Ord ] )
+            , /Data/Algebra/compare [ T : /Data/Algebra/Ord ]
                 ( Arg TVVar "T" l )
                 ( Arg TVVar "T" r ) -> /Data/Algebra/Ordering
-            ,
-                ( /Data/Algebra/compare [ T : /Data/Algebra/POrd ] )
+            , /Data/Algebra/compare [ T : /Data/Algebra/POrd ]
                 ( Arg TVVar "T" l )
                 ( Arg TVVar "T" r ) -> /Data/Algebra/POrdering
             , /operator<=
@@ -31,27 +29,21 @@
             , /operator++
                 ( Arg TVVar "T" l= Hole TVVar "T" HoleActive Nothing )
                 ( Arg TVVar "T" r= Hole TVVar "T" HoleActive Nothing ) [ T : /Data/Algebra/Semigroup ] -> TVVar "T"
-            ,
-                ( /Data/Algebra/testSemigroupAssociative [ T : /Data/Algebra/Semigroup ] )
+            , /Data/Algebra/testSemigroupAssociative [ T : /Data/Algebra/Semigroup ]
                 ( Arg TVVar "T" a )
                 ( Arg TVVar "T" b )
                 ( Arg TVVar "T" c ) -> /Data/Primitive/Integer = CInt 0
             , /Data/Algebra/mempty [ T : /Data/Algebra/Monoid ] -> TVVar "T"
-            ,
-                ( /Data/Algebra/testRightMonoidIdentity [ T : /Data/Algebra/Monoid ] )
+            , /Data/Algebra/testRightMonoidIdentity [ T : /Data/Algebra/Monoid ]
                 ( Arg TVVar "T" t ) -> /Data/Primitive/Integer = CInt 0
-            ,
-                ( /Data/Algebra/testLeftMonoidIdentity [ T : /Data/Algebra/Monoid ] )
+            , /Data/Algebra/testLeftMonoidIdentity [ T : /Data/Algebra/Monoid ]
                 ( Arg TVVar "T" t ) -> /Data/Primitive/Integer = CInt 0
-            ,
-                ( /Data/Algebra/testCommutativeMonoid [ T : /Data/Algebra/CommutativeMonoid ] )
+            , /Data/Algebra/testCommutativeMonoid [ T : /Data/Algebra/CommutativeMonoid ]
                 ( Arg TVVar "T" a )
                 ( Arg TVVar "T" b ) -> /Data/Primitive/Integer = CInt 0
-            ,
-                ( /Data/Algebra/inverse [ T : /Data/Algebra/Group ] )
+            , /Data/Algebra/inverse [ T : /Data/Algebra/Group ]
                 ( Arg TVVar "T" t ) -> TVVar "T"
-            ,
-                ( /Data/Algebra/testGroup [ T : /Data/Algebra/Group ] )
+            , /Data/Algebra/testGroup [ T : /Data/Algebra/Group ]
                 ( Arg TVVar "T" t ) -> /Data/Primitive/Integer = CInt 0
             ]
         ,
@@ -221,8 +213,7 @@
             , /Data/toString ( Arg /Data/String this ) -> /Data/String = Arg TVArg "this" this
             , /Data/toString ( Arg /Data/Primitive/Integer this ) -> /Data/String
             , Value /Data/None
-            ,
-                ( /Data/Cons [ T : TopType ] )
+            , /Data/Cons [ T : TopType ]
                 ( Arg TVVar "T" head )
                 ( Arg /Data/ConsList
                     [ T=TVVar "T" ] tail

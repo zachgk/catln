@@ -26,7 +26,8 @@ import           GHC.Generics        (Generic)
 import           Control.Monad       (forM)
 import           CRes
 import           Data.Aeson          (ToJSON, toJSON)
-import           Data.Maybe
+import           Data.Maybe          (catMaybes, fromMaybe, listToMaybe,
+                                      mapMaybe)
 import           Data.String.Builder (literal)
 import           Semantics
 import           Semantics.Prgm
@@ -233,9 +234,9 @@ instance Show SType where
   show (SType upper lower desc) = printf "(%s ⊇ %s ⊇  %s)" (show upper) desc (show lower)
 
 instance Show SConstraint where
-  show (SEqualsKnown s t) = printf "%s == %s" (show s) (show t)
+  show (SEqualsKnown s t) = printf "%s ==_Known %s" (show s) (show t)
   show (SEqPoints s1 s2) = printf "%s == %s" (show s1) (show s2)
-  show (SBoundedByKnown s t) = printf "%s ⊆ %s" (show s) (show t)
+  show (SBoundedByKnown s t) = printf "%s ⊆_Known %s" (show s) (show t)
   show (SBoundedByObjs s) = printf "BoundedByObjs %s" (show s)
   show (SArrowTo f t) = printf "%s -> %s" (show t) (show f)
   show (SPropEq (s1, n) s2) = printf "(%s).%s == %s"  (show s1) (show n) (show s2)
