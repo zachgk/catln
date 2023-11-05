@@ -102,9 +102,9 @@ module Catln
   class ThenElse = Then | Else
     fromBool(v: Boolean) -> ThenElse
 
-    fromBool(True)= Then
+    fromBool(v=/Data/Primitive/True)= Then
 
-    fromBool(False)= Else
+    fromBool(v=/Data/Primitive/False)= Else
 
 
 

@@ -109,12 +109,13 @@ envLookupTry env@TBEnv{tbClassGraph} objSrc visitedArrows ee srcType destType re
 -- It returns the map of what each arrow should cover for a match tree or a CErr
 -- It is used for arrow declarations that require multiple arrows definitions to constitute
 -- TODO: This would be drastically improved with type difference
-completeTreeSet :: TBEnv -> PartialType -> [(PartialType, ResArrowTree)] -> CRes (H.HashMap PartialType ResArrowTree)
+completeTreeSet :: TBEnv -> PartialType -> [(PartialType, ResArrowTree)] -> Either Type (H.HashMap PartialType ResArrowTree)
 completeTreeSet TBEnv{tbClassGraph} fullPartial = aux H.empty bottomType
   where
     fullType = singletonType fullPartial
+    aux :: H.HashMap PartialType ResArrowTree -> Type -> [(PartialType, ResArrowTree)] -> Either Type (H.HashMap PartialType ResArrowTree)
     aux accMap accType _ | isSubtypeOf tbClassGraph fullType accType = return accMap
-    aux _ accType [] = CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Could not find arrows equaling input %s \n\t Only found %s" (show fullType) (show accType)]
+    aux _ accType [] = Left accType
     aux accMap accType ((optType, optTree):opts) = do
       let accType' = intersectTypes tbClassGraph fullType $ unionTypes tbClassGraph accType (singletonType optType)
 
@@ -129,10 +130,14 @@ completeTreeSet TBEnv{tbClassGraph} fullPartial = aux H.empty bottomType
 data ArrowGuardGroup
   = NoGuardGroup PartialType ResArrowTree
   | CondGuardGroup [(PartialType, TBExpr, ResArrowTree)] (PartialType, ResArrowTree)
+  deriving Show
 buildGuardArrows :: TBEnv -> ObjSrc -> ResArrowTree -> (TBExpr, Type) -> VisitedArrows -> PartialType -> Type -> [ArrowGuardGroup] -> CRes ResArrowTree
 buildGuardArrows env obj input ee visitedArrows srcType destType guards = do
+  let builtGuards = map buildGuard guards
   treeOptions <- catCRes $ map buildGuard guards
-  finalTrees <- completeTreeSet env srcType treeOptions
+  finalTrees <- case completeTreeSet env srcType treeOptions of
+    Left completingAccType -> CErr [MkCNote $ GenMapCErr Nothing (printf "Failed to buildGuardArrows from %s to %s. Could not find enough arrows for the src. Only found %s. Tried guards:" (show srcType) (show destType) (show completingAccType)) (zip (map show guards) (map (fmap show) builtGuards))]
+    Right r -> return r
   return $ buildMatch input destType finalTrees
   where
     buildGuard (NoGuardGroup tp tree) = (tp,) <$> ltry tree

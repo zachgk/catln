@@ -12,6 +12,8 @@ module Data/Primitive
 
   every Boolean isa /Data/Algebra/Eq
 
+  (_: Boolean == _: Boolean) -> Boolean
+
   (_: True == _: True)= True
 
   (_: True == _: False)= False

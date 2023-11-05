@@ -23,7 +23,9 @@ import           GHC.Generics          (Generic)
 -- import Text.Pretty.Simple
 import           Text.Printf
 
+import           Control.Monad         (forM_)
 import           Data.Aeson
+import           Data.String.Builder   (Builder, build, literal)
 import qualified Data.Text.Lazy        as T
 import           Semantics.Prgm
 import           Syntax.Ct.Prgm
@@ -39,6 +41,7 @@ data CNoteType
 class CNoteTC n where
   posCNote :: n -> CodeRange
   typeCNote :: n -> CNoteType
+  showRecursiveCNote :: Int -> n -> Builder
 
 data CNote
   where
@@ -47,6 +50,7 @@ data CNote
 instance CNoteTC CNote where
   posCNote (MkCNote a) = posCNote a
   typeCNote (MkCNote a) = typeCNote a
+  showRecursiveCNote i (MkCNote a) = showRecursiveCNote i a
 
 instance Show CNote
   where
@@ -58,15 +62,31 @@ instance ToJSON CNote where
 data CNoteI
   = GenCNote CodeRange String
   | GenCErr CodeRange String
+  | GenMapCErr CodeRange String [(String, CRes String)]
   | ParseCErr ParseErrorRes
   | BuildTreeCErr CodeRange String
   | AssertCErr String
   | EvalCErr [String] String
   | WrapCN [CNote] String
 
+withIndent :: Int -> String -> Builder
+withIndent indent s = literal (replicate (4*indent) ' ' ++ s ++ "\n")
+
+showRecursiveCNoteI :: Int -> CNoteI -> Builder
+showRecursiveCNoteI indent (GenMapCErr _ s subs) = do
+  withIndent indent s
+  forM_ subs $ \sub -> do
+    case sub of
+      (subKey, CRes _ r) -> withIndent (indent+1) (subKey ++ " - " ++ r)
+      (subKey, CErr n) -> do
+        withIndent (indent+1) ("Failed: " ++ subKey)
+        mapM_ (showRecursiveCNote (indent + 2)) n
+showRecursiveCNoteI _ n = literal (show n)
+
 instance Show CNoteI where
   show (GenCNote _ s) = s
   show (GenCErr _ s) = s
+  show n@GenMapCErr{} = build $ showRecursiveCNoteI 0 n
   show (ParseCErr p) = errorBundlePretty p
   show (BuildTreeCErr _ s) = printf "Failed to Build Tree: %s" (T.unpack $ pShow s)
   show (AssertCErr s) = printf "Failed assertion: %s" s
@@ -80,6 +100,8 @@ instance CNoteTC CNoteI where
 
   typeCNote GenCNote{} = CNoteWarn
   typeCNote _          = CNoteError
+
+  showRecursiveCNote i n = showRecursiveCNoteI i n
 
 wrapCErr :: [CNote] -> String -> CRes r
 wrapCErr notes s = CErr [MkCNote $ WrapCN notes s]

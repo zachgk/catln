@@ -27,6 +27,7 @@ import           Control.Monad       (forM)
 import           CRes
 import           Data.Aeson          (ToJSON, toJSON)
 import           Data.Maybe
+import           Data.String.Builder (literal)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
@@ -223,6 +224,7 @@ instance CNoteTC TypeCheckError where
   posCNote ConstraintTypeCheckError{}       = Nothing
 
   typeCNote _ = CNoteError
+  showRecursiveCNote _ n = literal $ show n
 
 instance Show SType where
   show (SType upper lower desc) | isBottomType lower = printf "(%s ⊇ %s)" (show upper) desc

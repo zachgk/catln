@@ -194,8 +194,8 @@
             , Value /Catln/Then
             , Value /Catln/Else
             , /Catln/ThenElse/fromBool ( Arg /Data/Primitive/Boolean v ) -> /Catln/ThenElse
-            , /Catln/ThenElse/fromBool ( Arg TopType True ) -> /Catln/Then = Value Then
-            , /Catln/ThenElse/fromBool ( Arg TopType False ) -> /Catln/Else = Value Else
+            , /Catln/ThenElse/fromBool ( Arg TopType v= Arg /Data/Primitive/True /Data/Primitive/True ) -> /Catln/Then = Value Then
+            , /Catln/ThenElse/fromBool ( Arg TopType v= Arg /Data/Primitive/False /Data/Primitive/False ) -> /Catln/Else = Value Else
             ]
         ,
             [ CGType
@@ -223,6 +223,7 @@
         (
             [ Value /Data/String
             , /operator== ( Arg /Data/String l ) ( Arg /Data/String r ) -> /Data/Primitive/Boolean
+            , /Data/toString ( Arg /Data/String this ) -> /Data/String
             , /Data/toString ( Arg /Data/String this ) -> /Data/String = Arg TVArg "this" this
             , /Data/toString ( Arg /Data/Primitive/Integer this ) -> /Data/String
             , Value /Data/None
@@ -352,6 +353,7 @@
         (
             [ Value /Data/Primitive/True
             , Value /Data/Primitive/False
+            , /operator== ( Arg /Data/Primitive/Boolean l ) ( Arg /Data/Primitive/Boolean r ) -> /Data/Primitive/Boolean
             , /operator== ( Arg /Data/Primitive/True l ) ( Arg /Data/Primitive/True r ) -> /Data/Primitive/True = Value True
             , /operator== ( Arg /Data/Primitive/True l ) ( Arg /Data/Primitive/False r ) -> /Data/Primitive/False = Value False
             , /operator== ( Arg /Data/Primitive/False l ) ( Arg /Data/Primitive/True r ) -> /Data/Primitive/False = Value False

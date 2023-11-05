@@ -15,7 +15,8 @@ module Data
 
   (_: String == _: String) -> Boolean
 
-  :String.toString -> String= this
+  :String.toString -> String
+  :String.toString = this
 
   :Integer.toString -> String
 

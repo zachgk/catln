@@ -204,6 +204,7 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaAnnots, oa
           -- Input with (x=x)
           [
             EqPoints (encodeVarArgs est) (getExprMeta baseExpr') baseM',
+            BoundedByObjs (encodeVarArgs est) m',
                      AddArg (encodeVarArgs est) (baseM', exprPath obj) m',
                      EqPoints (encodeVarArgs est) (getExprMeta argExpr') arrM',
                      EqPoints (encodeVarArgs est) (getExprMeta obj) arrM',
@@ -213,6 +214,7 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaAnnots, oa
           -- Input with (x -> T)
           [
          EqPoints (encodeVarArgs est) (getExprMeta baseExpr') baseM',
+            BoundedByObjs (encodeVarArgs est) m',
                      AddArg (encodeVarArgs est) (baseM', exprPath obj) m',
                      EqPoints (encodeVarArgs est) (getExprMeta obj) arrM',
                      PropEq (encodeVarArgs est) (m', TVArg $ exprPath obj) (getExprMeta obj)
@@ -221,6 +223,7 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaAnnots, oa
           -- Input with (x) matchable
           [
                   EqPoints (encodeVarArgs est) (getExprMeta baseExpr') baseM',
+            BoundedByObjs (encodeVarArgs est) m',
                      AddArg (encodeVarArgs est) (baseM', exprPath obj) m',
                      PropEq (encodeVarArgs est) (m', TVArg $ exprPath obj) (getExprMeta obj)
                     ]

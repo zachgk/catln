@@ -171,8 +171,8 @@
             , Value /Catln/Then
             , Value /Catln/Else
             , /Catln/ThenElse/fromBool ( Value v ) -> /Catln/ThenElse
-            , /Catln/ThenElse/fromBool ( Value True ) = Value Then
-            , /Catln/ThenElse/fromBool ( Value False ) = Value Else
+            , /Catln/ThenElse/fromBool ( Value v= Value /Data/Primitive/True ) = Value Then
+            , /Catln/ThenElse/fromBool ( Value v= Value /Data/Primitive/False ) = Value Else
             ]
         ,
             [ CGType
@@ -200,7 +200,8 @@
         (
             [ Value /Data/String
             , /operator== ( Value l= Hole /Data/String HoleActive Nothing ) ( Value r= Hole /Data/String HoleActive Nothing ) -> /Data/Primitive/Boolean
-            , /Data/toString ( Value this -> /Data/String ) -> /Data/String = Arg TopType this
+            , /Data/toString ( Value this -> /Data/String ) -> /Data/String
+            , /Data/toString ( Value this -> /Data/String ) = Arg TopType this
             , /Data/toString ( Value this -> /Data/Primitive/Integer ) -> /Data/String
             , Value /Data/None
             ,
@@ -313,6 +314,7 @@
         (
             [ Value /Data/Primitive/True
             , Value /Data/Primitive/False
+            , /operator== ( Value l= Hole /Data/Primitive/Boolean HoleActive Nothing ) ( Value r= Hole /Data/Primitive/Boolean HoleActive Nothing ) -> /Data/Primitive/Boolean
             , /operator== ( Value l= Hole /Data/Primitive/True HoleActive Nothing ) ( Value r= Hole /Data/Primitive/True HoleActive Nothing ) = Value True
             , /operator== ( Value l= Hole /Data/Primitive/True HoleActive Nothing ) ( Value r= Hole /Data/Primitive/False HoleActive Nothing ) = Value False
             , /operator== ( Value l= Hole /Data/Primitive/False HoleActive Nothing ) ( Value r= Hole /Data/Primitive/True HoleActive Nothing ) = Value False
