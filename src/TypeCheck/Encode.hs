@@ -207,6 +207,7 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaAnnots, oa
           [
             EqPoints (encodeVarArgs est) (getExprMeta baseExpr') baseM',
             BoundedByObjs (encodeVarArgs est) m',
+            BoundedByObjs (encodeVarArgs est) (getExprMeta argExpr'),
                      AddArg (encodeVarArgs est) (baseM', exprPath obj) m',
                      EqPoints (encodeVarArgs est) (getExprMeta argExpr') arrM',
                      EqPoints (encodeVarArgs est) (getExprMeta obj) arrM',
@@ -403,5 +404,5 @@ fromPrgms env1 pprgms tprgms = do
   let (vobjMap, vprgms) = unzip vprgmsWithObjMap
   let vjoinObjMap = concat vobjMap
   let (tjoinObjMap, _, _) = mergeExprPrgms tprgms
-  let env5 = addUnionObjToEnv env4 vjoinObjMap tjoinObjMap
+  let env5 = addUnionObjToEnv env4 vjoinObjMap (concatMap fst3 vprgms) tjoinObjMap
   return (vprgms, env5)

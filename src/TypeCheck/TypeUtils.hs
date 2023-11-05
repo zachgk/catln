@@ -43,7 +43,7 @@ exprObjectPrecedence :: (Show m, Show (e m)) => ExprObjectMapItem e m -> [Int]
 exprObjectPrecedence ObjArr{oaBasis=TypeObj}=    [1]
 exprObjectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=Just (Nothing, _)} = [2, 1] -- Declaration objects have priority [2,1], better than definitions
 exprObjectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=Just (Just{}, _)} = [2, 2] -- Definition objects have priority [2,2]
-exprObjectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=Nothing} = [2, 2] -- A part of a declaration or refinition
+exprObjectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=Nothing} = [2, 1] -- A part of a declaration or refinition
 exprObjectPrecedence ObjArr{oaBasis=PatternObj} = [3]
 exprObjectPrecedence ObjArr{oaBasis=MatchObj} =   [4]
 exprObjectPrecedence ObjArr{oaBasis=ArgObj} =   [5]
@@ -97,19 +97,27 @@ getRecursiveObjs (obj@Object{deprecatedObjArgs}, annots, arr) = (obj, annots, ar
     notMatchObj (Object{objBasis}, _, _) = objBasis /= MatchObj
 
 -- | This creates 'feUnionAllObjs' and adds it to the 'FEnv'
-addUnionObjToEnv :: FEnv -> VObjectMap -> TEObjectMap -> FEnv
-addUnionObjToEnv env1@FEnv{feClassGraph} vobjMap tobjMap = do
+addUnionObjToEnv :: FEnv -> VObjectMap -> VEObjectMap -> TEObjectMap -> FEnv
+addUnionObjToEnv env1@FEnv{feClassGraph} vobjMap veobjMap tobjMap = do
   let vobjMapRec = concatMap getRecursiveObjs vobjMap
+  let veobjMapRec = concatMap getRecursiveExprObjs veobjMap
   let tobjMapRec = concatMap getRecursiveExprObjs tobjMap
 
   -- Finds the best precedence for all each object name
-  let vPrecedenceMap = buildPrecedenceMap vobjMapRec
+  let _vPrecedenceMap = buildPrecedenceMap vobjMapRec
+  let vePrecedenceMap = buildEPrecedenceMap veobjMapRec
   let tPrecedenceMap = buildEPrecedenceMap tobjMapRec
-  let precedenceMap = H.unionWith min vPrecedenceMap tPrecedenceMap
+  -- let precedenceMap = trace (printf "Precedence:\n\tv: %s\n\tve: %s" (show $ map (oaObjExpr . asExprObjectMapItem) vobjMapRec) (show $ map oaObjExpr veobjMapRec)) $ H.unionWith min vePrecedenceMap tPrecedenceMap
+  let precedenceMap = H.unionWith min vePrecedenceMap tPrecedenceMap
 
   -- Filter the objects to only those with the best precedence
-  let vobjs' = map fst3 $ filterBestPrecedence precedenceMap vobjMapRec
+  let vobjs' = filterBestPrecedence precedenceMap vobjMapRec
+  let veobjs' = filterBestEPrecedence precedenceMap veobjMapRec
   let tobjs' = filterBestEPrecedence precedenceMap tobjMapRec
+
+  let vobjMetas = map (objM . fst3) vobjs'
+  let _veobjMetas = map (getExprMeta . oaObjExpr) veobjs'
+  let tobjMetas = map (getMetaType . getExprMeta . oaObjExpr) tobjs'
 
   -- Builds vars to use for union and union powerset
   let (unionAllObjs, env2) = fresh env1 $ TypeCheckResult [] $ SType topType topType "unionAllObjs"
@@ -118,8 +126,9 @@ addUnionObjToEnv env1@FEnv{feClassGraph} vobjMap tobjMap = do
   let mkVarMeta p = Meta topType Nothing (VarMetaDat (Just p) Nothing)
 
   -- Build a variable to store union of tobjs
-  let typecheckedAllType = unionAllTypes feClassGraph $ map (getMetaType . getExprMeta . oaObjExpr) tobjs'
+  let typecheckedAllType = unionAllTypes feClassGraph tobjMetas
   let (typecheckedAllObjs, env4) = fresh env3 $ TypeCheckResult [] $ SType typecheckedAllType topType "typecheckedAll"
+  -- let typecheckedAllObjs' = trace (printf "Filtered:\n\tv: %s\n\tve: %s" (show $ map (getExprMeta . oaObjExpr . asExprObjectMapItem) vobjs') (show $ map (getExprMeta . oaObjExpr) veobjs')) $ mkVarMeta typecheckedAllObjs
   let typecheckedAllObjs' = mkVarMeta typecheckedAllObjs
 
   -- Builds metas to use for union and union powerset
@@ -127,7 +136,7 @@ addUnionObjToEnv env1@FEnv{feClassGraph} vobjMap tobjMap = do
   let unionAllObjsPs' = mkVarMeta unionAllObjsPs
 
   let constraints = [
-        UnionOf H.empty unionAllObjs' (typecheckedAllObjs' : map objM vobjs'),
+        UnionOf H.empty unionAllObjs' (typecheckedAllObjs' : vobjMetas),
         PowersetTo H.empty unionAllObjs' unionAllObjsPs'
         ]
   let env5 = (\env -> env{feUnionAllObjs=unionAllObjsPs'}) env4

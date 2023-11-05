@@ -753,13 +753,10 @@ updateTypeProp classGraph vaenv superType propName subType = case (superType, su
           let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectedPartials sup (singletonType sub) | sup <- supPartialList, sub <- subPartialList]
           (vaenv, compactType classGraph $ UnionType $ joinUnionType supPartialList', unionAllTypes classGraph subPartialList')
         TypeVar v _ -> do
-          -- Update super to use TypeVar
-          let superType' = UnionType $ joinUnionType $ map (typeSetAux propName subType) supPartialList
-
           -- Update vaenv.v with supPartials
           let vaenv' = H.insert v (intersectAllTypes classGraph $ H.lookupDefault topType v vaenv : mapMaybe (typeGetAux propName) supPartialList) vaenv
 
-          (vaenv', compactType classGraph superType', subType)
+          (vaenv', superType, subType)
         TopType [] -> do
           let sub' = unionAllTypes classGraph $ mapMaybe (typeGetAux propName) supPartialList
           (vaenv, superType, sub')
