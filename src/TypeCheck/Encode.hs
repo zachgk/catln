@@ -23,12 +23,14 @@ import qualified Data.HashMap.Strict as H
 import qualified Data.IntMap.Lazy    as IM
 import           Prelude             hiding (unzip)
 
+import           Data.List           (unzip)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
 import           TypeCheck.Common
 import           TypeCheck.TypeUtils (addUnionObjToEnv)
+import           Utils
 
 -- represents how a specified variables corresponds to the known types.
 -- It could be a lower bound, upper bound, or exact bound
@@ -285,12 +287,17 @@ fromArrow est env1 (Arrow m aguard maybeExpr) = do
       let env4 = fAddVTypeGraph env3 (objPath obj) (obj, arrow')
       return (arrow', env4)
 
-fromObjectMap :: FEnv -> (VObject, VMetaVarArgEnv, [PCompAnnot], Maybe PArrow) -> TypeCheckResult ((VObject, [VCompAnnot], Maybe VArrow), FEnv)
-fromObjectMap env1 (obj, vaenv, annots, arrow) = do
+fromObjectMap :: FEnv -> (PObjArr, VObject, VEObject, VMetaVarArgEnv) -> TypeCheckResult ((VObjectMapItem, VObjArr), FEnv)
+fromObjectMap env1 (oa@ObjArr{oaAnnots, oaObj=Just (GuardExpr _ g), oaArr}, obj, eobj, vaenv) = do
   let est = EncodeOut (Just obj) vaenv
-  (arrow', env2) <- mapMWithFEnvMaybe env1 (fromArrow est) arrow
-  (annots', env3) <- mapMWithFEnv env2 (fromExpr est) annots
-  return ((obj, annots', arrow'), env3)
+  (oaAnnots', env2) <- mapMWithFEnv env1 (fromExpr est) oaAnnots
+  case oaArr of
+    Just (a, m) -> do
+      let arrow = Arrow m g (fmap rgeExpr a)
+      (arrow'@(Arrow m' guard' arrExpr'), env3) <- fromArrow est env2 arrow
+      return (((obj, oaAnnots', Just arrow'), oa{oaObj=Just (GuardExpr eobj guard'), oaArr=Just (fmap (`GuardExpr` Nothing) arrExpr', m'), oaAnnots=oaAnnots'}), env3)
+    Nothing -> return (((obj, oaAnnots', Nothing), oa{oaObj=Just (GuardExpr eobj Nothing), oaArr=Nothing, oaAnnots=oaAnnots'}), env2)
+fromObjectMap _ (oa, _, _, _) = error $ printf "Invalid oa in fromObjectMap %s" (show oa)
 
 fromObjVar :: VarMeta -> String -> EncodeState -> FEnv -> (TypeVarName, PreMeta) -> TypeCheckResult ((TypeVarName, VarMeta), FEnv)
 fromObjVar oM prefix est env1 (varName, m) = do
@@ -353,23 +360,24 @@ fromObject env1 obj = do
   return (obj', vaenv, env4)
 
 -- Add all of the objects first for various expressions that call other top level functions
-fromObjects :: FEnv -> (PObject, [PCompAnnot], Maybe PArrow) -> TypeCheckResult ((VObject, VMetaVarArgEnv, [PCompAnnot], Maybe PArrow), FEnv)
-fromObjects env (obj, annots, arrow) = do
-  (obj', vaenv, env1) <- fromObject env obj
-  return ((obj', vaenv, annots, arrow), env1)
+fromObjects :: FEnv -> PObjArr -> TypeCheckResult ((VObject, VEObject, VMetaVarArgEnv), FEnv)
+fromObjects env oa = do
+  (obj', vaenv, env1) <- fromObject env (fst3 $ fromExprObjectMapItem oa)
+  return ((obj', objDupExpr obj', vaenv), env1)
 
-fromPrgm :: FEnv -> (PPrgm, [(VObject, VMetaVarArgEnv)]) -> TypeCheckResult (VPrgm, FEnv)
+fromPrgm :: FEnv -> (PEPrgm, [(VObject, VEObject, VMetaVarArgEnv)]) -> TypeCheckResult ((VObjectMap, VEPrgm), FEnv)
 fromPrgm env1 ((objMap1, classGraph, annots), vobjs) = do
-  let objMap2 = zipWith (\(_, oans, arrows) (vobj, vaenv) -> (vobj, vaenv, oans, arrows)) (reverse objMap1) vobjs
+  let objMap2 = zipWith (\oa (vobj, veobj, vaenv) -> (oa, vobj, veobj, vaenv)) (reverse objMap1) vobjs
   (objMap3, env2) <- mapMWithFEnv env1 fromObjectMap objMap2
   (annots', env3) <- mapMWithFEnv env2 (fromExpr (EncodeOut Nothing H.empty)) annots
-  return ((objMap3, classGraph, annots'), env3)
+  let (objMap4, eobjMap4) = unzip objMap3
+  return ((objMap4, (eobjMap4, classGraph, annots')), env3)
 
 -- Add all of the objects first for various expressions that call other top level functions, from all programs
-prepObjPrgm :: FEnv -> PPrgm -> TypeCheckResult ((PPrgm, [(VObject, VMetaVarArgEnv)]), FEnv)
+prepObjPrgm :: FEnv -> PEPrgm -> TypeCheckResult ((PEPrgm, [(VObject, VEObject, VMetaVarArgEnv)]), FEnv)
 prepObjPrgm env1 pprgm@(objMap1, _, _) = do
   (objMap2, env2) <- mapMWithFEnv env1 fromObjects objMap1
-  return ((pprgm, map (\(obj, vaenv, _, _) -> (obj, vaenv)) objMap2), env2)
+  return ((pprgm, map (\(obj, eobj, vaenv) -> (obj, eobj, vaenv)) objMap2), env2)
 
 addTypeGraphArrow :: TObject -> FEnv -> TArrow -> TypeCheckResult ((), FEnv)
 addTypeGraphArrow obj env arr = return ((), fAddTTypeGraph env (objPath obj) (obj, arr))
@@ -390,9 +398,10 @@ addTypeGraphPrgm env (objMap, _, _) = do
 fromPrgms :: FEnv -> [PEPrgm] -> [TEPrgm] -> TypeCheckResult ([VEPrgm], FEnv)
 fromPrgms env1 pprgms tprgms = do
   (_, env2) <- mapMWithFEnv env1 addTypeGraphPrgm tprgms
-  (pprgmsWithVObjs, env3) <- mapMWithFEnv env2 prepObjPrgm (map fromExprPrgm pprgms)
-  (vprgms, env4) <- mapMWithFEnv env3 fromPrgm pprgmsWithVObjs
-  let (vjoinObjMap, _, _) = mergePrgms vprgms
+  (pprgmsWithVObjs, env3) <- mapMWithFEnv env2 prepObjPrgm pprgms
+  (vprgmsWithObjMap, env4) <- mapMWithFEnv env3 fromPrgm pprgmsWithVObjs
+  let (vobjMap, vprgms) = unzip vprgmsWithObjMap
+  let vjoinObjMap = concat vobjMap
   let (tjoinObjMap, _, _) = mergeExprPrgms tprgms
   let env5 = addUnionObjToEnv env4 vjoinObjMap tjoinObjMap
-  return (map toExprPrgm vprgms, env5)
+  return (vprgms, env5)

@@ -43,7 +43,7 @@ exprObjectPrecedence :: (Show m, Show (e m)) => ExprObjectMapItem e m -> [Int]
 exprObjectPrecedence ObjArr{oaBasis=TypeObj}=    [1]
 exprObjectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=Just (Nothing, _)} = [2, 1] -- Declaration objects have priority [2,1], better than definitions
 exprObjectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=Just (Just{}, _)} = [2, 2] -- Definition objects have priority [2,2]
-exprObjectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=Nothing} = [2, 2]
+exprObjectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=Nothing} = [2, 2] -- A part of a declaration or refinition
 exprObjectPrecedence ObjArr{oaBasis=PatternObj} = [3]
 exprObjectPrecedence ObjArr{oaBasis=MatchObj} =   [4]
 exprObjectPrecedence ObjArr{oaBasis=ArgObj} =   [5]
