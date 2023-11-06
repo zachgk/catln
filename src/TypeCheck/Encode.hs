@@ -339,11 +339,12 @@ fromObjectRec prefix isObjArg est env (Object m basis vars args doc expr path) =
   let env9 = addConstraints env8 [EqPoints (encodeVarArgs est) m' (getExprMeta expr')]
   return (obj', env9)
 
-fromObject ::  FEnv -> PObject -> TypeCheckResult (VObject, VMetaVarArgEnv, FEnv)
-fromObject env1 obj = do
+fromObject ::  FEnv -> PObjArr -> TypeCheckResult (VObject, VMetaVarArgEnv, FEnv)
+fromObject env1 oa = do
+  let obj = fst3 $ fromExprObjectMapItem oa
   let envEst = EncodeIn H.empty -- An EncodeState for computing varEnv and argEnv
-  (varEnv, env2) <- mapMWithFEnvMap env1 (\e m -> fromMeta e BUpper envEst m "var") $ exprAppliedVars $ objExpr obj
-  (argEnv, env3) <- mapMWithFEnvMap env2 (\e m -> fromMeta e BUpper envEst m "arg") $ fmap head $ exprArgs $ objExpr obj
+  (varEnv, env2) <- mapMWithFEnvMap env1 (\e m -> fromMeta e BUpper envEst m "var") $ exprAppliedVars $ oaObjExpr oa
+  (argEnv, env3) <- mapMWithFEnvMap env2 (\e m -> fromMeta e BUpper envEst m "arg") $ fmap head $ exprArgs $ oaObjExpr oa
 
   let vaenv = joinVarArgEnv varEnv argEnv
   let est = EncodeIn vaenv
@@ -353,7 +354,7 @@ fromObject env1 obj = do
 -- Add all of the objects first for various expressions that call other top level functions
 fromObjects :: FEnv -> PObjArr -> TypeCheckResult ((VObject, VEObject, VMetaVarArgEnv), FEnv)
 fromObjects env oa = do
-  (obj', vaenv, env1) <- fromObject env (fst3 $ fromExprObjectMapItem oa)
+  (obj', vaenv, env1) <- fromObject env oa
   return ((obj', objDupExpr obj', vaenv), env1)
 
 fromPrgm :: FEnv -> (PEPrgm, [(VObject, VEObject, VMetaVarArgEnv)]) -> TypeCheckResult ((VObjectMap, VEPrgm), FEnv)
