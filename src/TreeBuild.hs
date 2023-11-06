@@ -59,8 +59,8 @@ buildTBEnv primEnv prgm@(objMap, classGraph, _) = baseEnv
     resEnv = H.fromListWith (++) $ mapMaybe resFromArrow objMap
 
     resFromArrow oa@ObjArr{oaObj=Just (GuardExpr _ aguard), oaArr, oaAnnots} = case oaArr of
-      Just _ -> Just (oaObjPath oa, [(objLeaf, aguard, any isElseAnnot oaAnnots, (`ResEArrow` oa)) | objLeaf <- leafsFromMeta (getExprMeta $ oaObjExpr oa)])
-      Nothing -> Nothing
+      (Just _, _) -> Just (oaObjPath oa, [(objLeaf, aguard, any isElseAnnot oaAnnots, (`ResEArrow` oa)) | objLeaf <- leafsFromMeta (getExprMeta $ oaObjExpr oa)])
+      (Nothing, _) -> Nothing
     resFromArrow oa = error $ printf "resFromArrow with no input expression: %s" (show oa)
 
 buildExpr :: TBEnv -> ObjSrc -> TBExpr -> CRes ResArrowTree
@@ -77,7 +77,7 @@ buildExpr TBEnv{tbVals} _ (Value (Meta (UnionType prodTypes) pos _) name) = case
     e -> error $ printf "Found unexpected value type in buildExpr: %s" (show e)
 buildExpr TBEnv{tbClassGraph} (os, obj) (Arg (Meta (TypeVar (TVArg a) TVInt) _ _) name) = return $ ArgArrow (snd $ fromJust $ suffixLookupInDict a $ exprArgsWithSrc tbClassGraph (oaObjExpr obj) os) name
 buildExpr _ _ (Arg (Meta tp _ _) name) = return $ ArgArrow tp name
-buildExpr TBEnv{tbClassGraph} _ (TupleApply (Meta tp pos _) (Meta baseType _ _, baseExpr) ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=Just (Just (GuardExpr argExpr _), _)}) = do
+buildExpr TBEnv{tbClassGraph} _ (TupleApply (Meta tp pos _) (Meta baseType _ _, baseExpr) ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=(Just (GuardExpr argExpr _), _)}) = do
   let argName = exprPath argObj
   case typesGetArg tbClassGraph argName tp of
     Nothing -> CErr [MkCNote $ BuildTreeCErr pos $ printf "Found no types for tupleApply %s with type %s and expr %s" (show baseExpr) (show tp) (show argExpr)]
@@ -246,10 +246,9 @@ resolveTree env obj (ResArrowTupleApply input argName argVal) = do
 
 
 buildArrow :: TBEnv -> PartialType -> TBObjArr -> CRes (Maybe (TBObjArr, (ResArrowTree, [ResArrowTree])))
-buildArrow _ _ ObjArr{oaArr=Nothing} = return Nothing
-buildArrow _ _ ObjArr{oaArr=Just (Nothing, _)} = return Nothing
+buildArrow _ _ ObjArr{oaArr=(Nothing, _)} = return Nothing
 -- buildArrow env objPartial obj compAnnots arrow@(Arrow (Meta am _ _) _ (Just expr)) = do
-buildArrow env@TBEnv{tbClassGraph} objPartial oa@ObjArr{oaAnnots, oaArr=Just (Just (GuardExpr expr _), Meta am _ _)} = do
+buildArrow env@TBEnv{tbClassGraph} objPartial oa@ObjArr{oaAnnots, oaArr=(Just (GuardExpr expr _), Meta am _ _)} = do
   let env' = env{tbName = printf "arrow %s" (show oa)}
   let objSrc = (objPartial, oa)
   let am' = case am of
@@ -270,6 +269,6 @@ buildArrow env@TBEnv{tbClassGraph} objPartial oa@ObjArr{oaAnnots, oaArr=Just (Ju
 buildRoot :: TBEnv -> TBExpr -> PartialType -> Type -> CRes ResArrowTree
 buildRoot env input src dest = do
   let env' = env{tbName = printf "root"}
-  let emptyObj = ObjArr (Just $ GuardExpr (Value (Meta (singletonType src) Nothing emptyMetaDat) "EmptyObj") Nothing) FunctionObj Nothing [] Nothing
+  let emptyObj = ObjArr (Just $ GuardExpr (Value (Meta (singletonType src) Nothing emptyMetaDat) "EmptyObj") Nothing) FunctionObj Nothing [] (Nothing, emptyMetaN)
   let objSrc = (src, emptyObj)
   resolveTree env' objSrc (ExprArrow input (getExprType input) dest)

@@ -17,7 +17,6 @@ module TypeCheck.Decode where
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 
-import           Control.Monad       (forM)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
@@ -55,7 +54,7 @@ toExpr env (AliasExpr base alias) = do
   alias' <- toExpr env alias
   return $ AliasExpr base' alias'
 toExpr env (TupleApply m (baseM, baseExpr) arg) = case arg of
-  ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=Just (Just (GuardExpr argExpr _), _)} -> do
+  ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=(Just (GuardExpr argExpr _), _)} -> do
     let (argName, argM) = exprPathM argObj
     m' <- toMeta env m "TupleApply_M"
     baseM' <- toMeta env baseM "TupleApply_baseM"
@@ -73,7 +72,7 @@ toExpr env (TupleApply m (baseM, baseExpr) arg) = case arg of
       --                                     TypeCheckResult [TupleMismatch baseM' baseExpr' tp $ H.singleton argName argExpr'] result
 
       _                                    -> return result
-  ObjArr{oaArr=Just (Just (GuardExpr argExpr _), _)} -> do
+  ObjArr{oaArr=(Just (GuardExpr argExpr _), _)} -> do
     let pos = getMetaPos m
     m' <- toMeta env m "TupleApplyInfer_M"
     baseM' <- toMeta env baseM "TupleApplyInfer_baseM"
@@ -114,14 +113,12 @@ toGuardExpr env (GuardExpr e g) = do
   return $ GuardExpr e' g'
 
 toObjArr :: FEnv -> VObjArr -> TypeCheckResult TEObjectMapItem
-toObjArr env oa@ObjArr{oaObj, oaArr, oaAnnots} = do
+toObjArr env oa@ObjArr{oaObj, oaArr=(arrE, arrM), oaAnnots} = do
   oaObj' <- mapM (toGuardExpr env) oaObj
-  oaArr' <- forM oaArr $ \(ge, m) -> do
-    ge' <- mapM (toGuardExpr env) ge
-    m' <- toMeta env m "arrMeta"
-    return (ge', m')
+  arrE' <- mapM (toGuardExpr env) arrE
+  arrM' <- toMeta env arrM "arrMeta"
   oaAnnots' <- mapM (toExpr env) oaAnnots
-  return oa{oaObj=oaObj', oaArr=oaArr', oaAnnots=oaAnnots'}
+  return oa{oaObj=oaObj', oaArr=(arrE', arrM'), oaAnnots=oaAnnots'}
 
 toPrgm :: FEnv -> VEPrgm -> TypeCheckResult TEPrgm
 toPrgm env (objMap, classGraph, annots) = do

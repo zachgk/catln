@@ -174,17 +174,16 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaAnnots, oa
     Nothing -> return (Nothing, env4)
   (oaAnnots', env6) <- mapMWithFEnv env5 (fromExpr est) oaAnnots
   (oaArr', env7) <- case oaArr of
-    Just (arrGuardExpr, arrM) -> do
+    (arrGuardExpr, arrM) -> do
       (arrM', env6a) <- fromMeta env6 BUpper est arrM $ printf "Tuple oaM %s(%s)" (show baseExpr) (show arg)
       case arrGuardExpr of
         Just (GuardExpr argExpr guardExpr) -> do
           (argExpr', env6b) <- fromExpr est env6a argExpr
           (guardExpr', env6c) <- fromGuard est env6b guardExpr
-          return (Just (Just (GuardExpr argExpr' guardExpr'), arrM'), env6c)
-        Nothing -> return (Just (Nothing, arrM'), env6a)
-    Nothing -> return (Nothing, env6)
+          return ((Just (GuardExpr argExpr' guardExpr'), arrM'), env6c)
+        Nothing -> return ((Nothing, arrM'), env6a)
   let constraints = case (est, oaObj', oaArr') of
-        (EncodeOut{}, Just (GuardExpr obj Nothing), Just (Just (GuardExpr argExpr' Nothing), arrM')) ->
+        (EncodeOut{}, Just (GuardExpr obj Nothing), (Just (GuardExpr argExpr' Nothing), arrM')) ->
           -- Output with (x=x)
           [
             ArrowTo (encodeVarArgs est) (getExprMeta baseExpr') baseM',
@@ -194,7 +193,7 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaAnnots, oa
                         EqPoints (encodeVarArgs est) (getExprMeta obj) arrM',
                         PropEq (encodeVarArgs est) (m', TVArg $ exprPath obj) arrM'
                         ]
-        (EncodeOut{}, Nothing, Just (Just (GuardExpr argExpr' Nothing), arrM')) ->
+        (EncodeOut{}, Nothing, (Just (GuardExpr argExpr' Nothing), arrM')) ->
           -- Output with (x) infer
           [
             ArrowTo (encodeVarArgs est) (getExprMeta baseExpr') baseM',
@@ -202,7 +201,7 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaAnnots, oa
                         BoundedByObjs (encodeVarArgs est) m',
                         ArrowTo (encodeVarArgs est) (getExprMeta argExpr') arrM'
                         ]
-        (EncodeIn{}, Just (GuardExpr obj Nothing), Just (Just (GuardExpr argExpr' Nothing), arrM')) ->
+        (EncodeIn{}, Just (GuardExpr obj Nothing), (Just (GuardExpr argExpr' Nothing), arrM')) ->
           -- Input with (x=x)
           [
             EqPoints (encodeVarArgs est) (getExprMeta baseExpr') baseM',
@@ -213,21 +212,13 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaAnnots, oa
                      EqPoints (encodeVarArgs est) (getExprMeta obj) arrM',
                      PropEq (encodeVarArgs est) (m', TVArg $ exprPath obj) arrM'
                     ]
-        (EncodeIn{}, Just (GuardExpr obj Nothing), Just (Nothing, arrM')) ->
+        (EncodeIn{}, Just (GuardExpr obj Nothing), (Nothing, arrM')) ->
           -- Input with (x -> T)
           [
          EqPoints (encodeVarArgs est) (getExprMeta baseExpr') baseM',
             BoundedByObjs (encodeVarArgs est) m',
                      AddArg (encodeVarArgs est) (baseM', exprPath obj) m',
                      EqPoints (encodeVarArgs est) (getExprMeta obj) arrM',
-                     PropEq (encodeVarArgs est) (m', TVArg $ exprPath obj) (getExprMeta obj)
-                    ]
-        (EncodeIn{}, Just (GuardExpr obj Nothing), Nothing) ->
-          -- Input with (x) matchable
-          [
-                  EqPoints (encodeVarArgs est) (getExprMeta baseExpr') baseM',
-            BoundedByObjs (encodeVarArgs est) m',
-                     AddArg (encodeVarArgs est) (baseM', exprPath obj) m',
                      PropEq (encodeVarArgs est) (m', TVArg $ exprPath obj) (getExprMeta obj)
                     ]
         _ -> error $ printf "Invalid fromExpr in %s mode for %s" (show est) (show arg)
@@ -293,11 +284,10 @@ fromObjectMap env1 (oa@ObjArr{oaAnnots, oaObj=Just (GuardExpr _ g), oaArr}, obj,
   let est = EncodeOut (Just obj) vaenv
   (oaAnnots', env2) <- mapMWithFEnv env1 (fromExpr est) oaAnnots
   case oaArr of
-    Just (a, m) -> do
+    (a, m) -> do
       let arrow = Arrow m g (fmap rgeExpr a)
       (arrow'@(Arrow m' guard' arrExpr'), env3) <- fromArrow est env2 arrow
-      return (((obj, oaAnnots', Just arrow'), oa{oaObj=Just (GuardExpr eobj guard'), oaArr=Just (fmap (`GuardExpr` Nothing) arrExpr', m'), oaAnnots=oaAnnots'}), env3)
-    Nothing -> return (((obj, oaAnnots', Nothing), oa{oaObj=Just (GuardExpr eobj Nothing), oaArr=Nothing, oaAnnots=oaAnnots'}), env2)
+      return (((obj, oaAnnots', Just arrow'), oa{oaObj=Just (GuardExpr eobj guard'), oaArr=(fmap (`GuardExpr` Nothing) arrExpr', m'), oaAnnots=oaAnnots'}), env3)
 fromObjectMap _ (oa, _, _, _) = error $ printf "Invalid oa in fromObjectMap %s" (show oa)
 
 fromObjVar :: VarMeta -> String -> EncodeState -> FEnv -> (TypeVarName, PreMeta) -> TypeCheckResult ((TypeVarName, VarMeta), FEnv)

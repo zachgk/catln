@@ -40,13 +40,12 @@ import           Utils
 -- Similarly, matches or patterns are less effective then functions.
 -- TODO May need to differentiate top level of functions from inner levels
 exprObjectPrecedence :: (Show m, Show (e m)) => ExprObjectMapItem e m -> [Int]
-exprObjectPrecedence ObjArr{oaBasis=TypeObj}=    [1]
-exprObjectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=Just (Nothing, _)} = [2, 1] -- Declaration objects have priority [2,1], better than definitions
-exprObjectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=Just (Just{}, _)} = [2, 2] -- Definition objects have priority [2,2]
-exprObjectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=Nothing} = [2, 1] -- A part of a declaration or refinition
-exprObjectPrecedence ObjArr{oaBasis=PatternObj} = [3]
-exprObjectPrecedence ObjArr{oaBasis=MatchObj} =   [4]
-exprObjectPrecedence ObjArr{oaBasis=ArgObj} =   [5]
+exprObjectPrecedence ObjArr{oaBasis=TypeObj}=                        [1]
+exprObjectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=(Nothing, _)} = [2, 1] -- Declaration objects have priority [2,1], better than definitions
+exprObjectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=(Just{}, _)}  = [2, 2] -- Definition objects have priority [2,2]
+exprObjectPrecedence ObjArr{oaBasis=PatternObj}                      = [3]
+exprObjectPrecedence ObjArr{oaBasis=MatchObj}                        =   [4]
+exprObjectPrecedence ObjArr{oaBasis=ArgObj}                          =   [5]
 
 -- | Finds the 'objectPrecedence' for all types
 buildEPrecedenceMap :: (Show m, MetaDat m) => ExprObjectMap Expr m -> H.HashMap TypeName [Int]

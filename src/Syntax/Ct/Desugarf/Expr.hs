@@ -58,14 +58,14 @@ desObjPropagateTypes mainExpr@(TupleApply m (bm, be) tupleApplyArgs) = do
   let (Just basePartial@PartialType{ptArgs=baseArgs}, be') = desObjPropagateTypes be
   let bm' = mWithType (getMetaType $ getExprMeta be') bm
   case tupleApplyArgs of
-      ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=Just (Just (GuardExpr argVal _), _)} -> do
+      ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=(Just (GuardExpr argVal _), _)} -> do
         let (argName, argM) = exprPathM argObj
         let (_, argVal') = desObjPropagateTypes argVal
         let argM' = mWithType (getMetaType $ getExprMeta argVal) argM
         let basePartial' = basePartial{ptArgs=H.insert argName (getExprType argVal') baseArgs}
         let m' = mWithType (singletonType basePartial') m
         (Just basePartial', TupleApply m' (bm', be') (mkIOObjArr argM' argName argVal'))
-      ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=Nothing} -> do
+      ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=(Nothing, _)} -> do
         let (argName, argM) = exprPathM argObj
         let basePartial' = basePartial{ptArgs=H.insert argName (getMetaType argM) baseArgs}
         let m' = mWithType (singletonType basePartial') m
@@ -104,13 +104,13 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm''
         arg' = arg{
           oaObj=fmap semiDesGuardExpr argObj,
           oaAnnots=indexAnnots ++ fmap (semiDesExpr sdm obj) argAnnots,
-          oaArr=fmap (first (fmap semiDesGuardExpr)) argArr
+          oaArr=first (fmap semiDesGuardExpr) argArr
           }
 
         -- Currently uses oaObj as "first and only expr"
         -- This disambiguates it between whether the only expression is an obj or an arr
         arg'' = case (sdm, arg') of
-          (SDOutput, ObjArr{oaObj, oaArr=Nothing}) -> arg'{oaObj=Nothing, oaArr=fmap ((,emptyMetaE "" $ rgeExpr $ fromJust oaObj) . Just) oaObj}
+          (SDOutput, ObjArr{oaObj, oaArr=(Nothing, _)}) -> arg'{oaObj=Nothing, oaArr=(,emptyMetaE "arrM" $ rgeExpr $ fromJust oaObj) oaObj}
           (_, _) -> arg'
 
         semiDesGuardExpr (GuardExpr ge gg) = GuardExpr (semiDesExpr sdm obj ge) (fmap (semiDesExpr sdm obj) gg)

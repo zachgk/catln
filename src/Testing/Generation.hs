@@ -38,11 +38,10 @@ genTypeFromExpr prgm (TupleApply _ (_, baseExpr) oa) = do
   shouldAddArg <- HG.bool
   if shouldAddArg
     then case oaArr oa of
-           Just (Just (GuardExpr arrExpr _), _) -> do
+           (Just (GuardExpr arrExpr _), _) -> do
              arrExpr' <- genTypeFromExpr prgm arrExpr
              return base{ptArgs = H.insert (oaObjPath oa) (singletonType arrExpr') baseArgs}
-           Just (Nothing, oaM) -> return base{ptArgs = H.insert (oaObjPath oa) (getMetaType oaM) baseArgs}
-           Nothing -> return base -- no arg to add
+           (Nothing, oaM) -> return base{ptArgs = H.insert (oaObjPath oa) (getMetaType oaM) baseArgs}
     else return base
 genTypeFromExpr prgm (VarApply _ baseExpr varName m) = do
   base@PartialType{ptVars=baseVars} <- genTypeFromExpr prgm baseExpr
@@ -126,7 +125,7 @@ genInputExpr = do
     genVar base varName = do
       return $ VarApply emptyMetaN base varName emptyMetaN
     genArg base argName = do
-      return $ TupleApply emptyMetaN (emptyMetaN, base) (ObjArr (Just (GuardExpr (Arg emptyMetaN argName) Nothing)) ArgObj Nothing [] Nothing)
+      return $ TupleApply emptyMetaN (emptyMetaN, base) (ObjArr (Just (GuardExpr (Arg emptyMetaN argName) Nothing)) ArgObj Nothing [] (Nothing, emptyMetaN))
 
 -- | Generates an output expression equivalent to an input expression
 genOutputExpr :: Expr () -> Expr () -> Gen (Expr ())
@@ -134,11 +133,10 @@ genOutputExpr (Value _ n) _ = return $ Value emptyMetaN n
 genOutputExpr (TupleApply _ (_, b) arg@ObjArr{oaArr}) input = do
   b' <- genOutputExpr b input
   oaArr' <- case oaArr of
-    Just (Just (GuardExpr e _), _) -> do
+    (Just (GuardExpr e _), _) -> do
       e' <- genOutputExpr e input
-      return $ Just (Just (GuardExpr e' Nothing), emptyMetaN)
-    Nothing -> return $ Just (Just (GuardExpr (HoleExpr emptyMetaN (HoleActive Nothing)) Nothing), emptyMetaN)
-    _ -> error $ printf "Not yet implemented getOutputExpr oaArr for %s" (show oaArr)
+      return (Just (GuardExpr e' Nothing), emptyMetaN)
+    (Nothing, _) -> return (Just (GuardExpr (HoleExpr emptyMetaN (HoleActive Nothing)) Nothing), emptyMetaN)
   return $ TupleApply emptyMetaN (emptyMetaN, b') arg{oaArr=oaArr'}
 genOutputExpr (VarApply _ b varName _) input = do
   b' <- genOutputExpr b input
@@ -150,13 +148,13 @@ genPrgm :: Gen (ExprPrgm Expr ())
 genPrgm = do
   inputExprs <- HG.list (linear 1 5) (HG.either_ genInputExpr genInputExpr)
   let (dataTypes, funs) = partitionEithers inputExprs
-  let dataObjs = map (\obj -> ObjArr (Just (GuardExpr obj Nothing)) TypeObj Nothing [] Nothing) dataTypes
+  let dataObjs = map (\obj -> ObjArr (Just (GuardExpr obj Nothing)) TypeObj Nothing [] (Nothing, emptyMetaN)) dataTypes
 
   let allInputs = dataTypes ++ funs
   funObjs <- forM funs $ \obj -> do
                                 arrGoal <- HG.element allInputs
                                 arr <- genOutputExpr arrGoal obj
-                                return $ ObjArr (Just (GuardExpr obj Nothing)) FunctionObj Nothing [] (Just (Just (GuardExpr arr Nothing), emptyMetaN))
+                                return $ ObjArr (Just (GuardExpr obj Nothing)) FunctionObj Nothing [] (Just (GuardExpr arr Nothing), emptyMetaN)
 
   let objMap = dataObjs ++ funObjs
 

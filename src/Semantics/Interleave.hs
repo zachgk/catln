@@ -42,7 +42,7 @@ interleaveObjArr :: ObjArr Expr m -> H.HashMap CodeRangeDat (Meta m)
 interleaveObjArr ObjArr{oaObj, oaAnnots, oaArr} = H.unions [
   maybe H.empty interleaveGuardExpr oaObj,
   H.unions $ map interleaveExpr oaAnnots,
-  maybe H.empty (uncurry H.union . bimap (maybe H.empty interleaveGuardExpr) interleaveM) oaArr
+  (uncurry H.union . bimap (maybe H.empty interleaveGuardExpr) interleaveM) oaArr
   ]
 
 interleavePrgm :: ExprPrgm Expr m -> H.HashMap CodeRangeDat (Meta m)

@@ -24,7 +24,8 @@ import           Data.Void           (Void)
 import           GHC.Generics        (Generic)
 
 import           Data.Aeson          hiding (Object)
-import           Data.Maybe          (isJust)
+import           Data.Maybe          (fromMaybe, isJust)
+import           Semantics           (emptyMetaE)
 import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Megaparsec
@@ -194,6 +195,8 @@ instance (Show m, Show (e m)) => Show (RawObjArr e m) where
         Just def -> printf " ? %s" (show def)
         Nothing  -> ""
 
-desObjArr :: (Show m, Show (e m)) => RawObjArr e m -> [ObjArr e m]
-desObjArr (RawObjArr obj basis doc annots arr Nothing) = [ObjArr obj basis doc annots arr]
+desObjArr :: (ExprClass e, Show m, Show (e m)) => RawObjArr e m -> [ObjArr e m]
+desObjArr (RawObjArr obj@(Just (GuardExpr objExpr _)) basis doc annots arr Nothing) = [ObjArr obj basis doc annots arr']
+  where
+    arr' = fromMaybe (Nothing, emptyMetaE "arrM" objExpr) arr
 desObjArr roa = error $ printf "Not yet implemented: %s" (show roa)

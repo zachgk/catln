@@ -15,7 +15,6 @@
 
 module TypeCheck.Show where
 
-import           Control.Monad    (forM)
 import           Semantics
 import           Semantics.Prgm
 import           TypeCheck.Common
@@ -61,14 +60,12 @@ showGuardExpr env (GuardExpr e g) = do
   return $ GuardExpr e' g'
 
 showObjArr :: FEnv -> VObjArr -> TypeCheckResult SObjectMapItem
-showObjArr env oa@ObjArr{oaObj, oaAnnots, oaArr} = do
+showObjArr env oa@ObjArr{oaObj, oaAnnots, oaArr=(arrE, arrM)} = do
   oaObj' <- mapM (showGuardExpr env) oaObj
   oaAnnots' <- mapM (showExpr env) oaAnnots
-  oaArr' <- forM oaArr $ \(e, m) -> do
-    e' <- mapM (showGuardExpr env) e
-    m' <- showM env m
-    return (e', m')
-  return oa{oaObj=oaObj', oaAnnots=oaAnnots', oaArr=oaArr'}
+  arrE' <- mapM (showGuardExpr env) arrE
+  arrM' <- showM env arrM
+  return oa{oaObj=oaObj', oaAnnots=oaAnnots', oaArr=(arrE', arrM')}
 
 showArrow :: FEnv -> VArrow -> TypeCheckResult SArrow
 showArrow env (Arrow m guard maybeExpr) = do

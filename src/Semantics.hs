@@ -49,7 +49,7 @@ emptyMetaE s e = labelPosM s $ getExprMeta e
 exprAppliedArgsMap :: (ExprClass e, Show m) => e m -> H.HashMap ArgName (Meta m, Maybe (e m))
 exprAppliedArgsMap = H.fromList . mapMaybe mapArg . exprAppliedArgs
   where
-    mapArg ObjArr{oaObj=Just (GuardExpr oe _), oaArr=Just (Just (GuardExpr ae _), oaM)} = Just (exprPath oe, (oaM, Just ae))
+    mapArg ObjArr{oaObj=Just (GuardExpr oe _), oaArr=(Just (GuardExpr ae _), oaM)} = Just (exprPath oe, (oaM, Just ae))
     mapArg ObjArr{oaObj=Just (GuardExpr oe _)} = case exprPathM oe of
       (n, m) -> Just (n, (m, Nothing))
     mapArg _ = Nothing
@@ -74,13 +74,13 @@ objExpr :: (Show m, MetaDat m) => Object Expr m -> Expr m
 objExpr Object{deprecatedObjM=m, deprecatedObjVars=vars, deprecatedObjArgs=args, deprecatedObjPath=path, objDupExpr} = exprWithMeta m $ applyArgs $ applyVars $ Value emptyMetaN path
   where
     applyVars b = foldr (\(varName,  _) b' -> applyVar (varName, fromJust $ H.lookup varName vars) b') b (exprAppliedOrdVars objDupExpr)
-    applyVar (varName, varVal) b = VarApply (emptyMetaE "" b) b varName varVal
+    applyVar (varName, varVal) b = VarApply (emptyMetaE "var" b) b varName varVal
 
     applyArgs b = foldr (applyArg . ((\argName -> (argName, fromJust $ H.lookup argName args)) . oaObjPath)) b (exprAppliedArgs objDupExpr)
     applyArg (argName, (argM, Just argVal)) b = if H.null (deprecatedObjArgs argVal)
-      then TupleApply (emptyMetaM "tupleApplyArg" argM) (emptyMetaE "appArg" b, b) (ObjArr (Just (GuardExpr (Arg emptyMetaN argName) Nothing)) ArgObj Nothing [] (Just (Just (GuardExpr (Arg (deprecatedObjM argVal) (deprecatedObjPath argVal)) Nothing), argM)))
-      else TupleApply (emptyMetaM "tupleApplyArg" argM) (emptyMetaE "appArg" b, b) (ObjArr (Just (GuardExpr (Arg emptyMetaN argName) Nothing)) ArgObj Nothing [] (Just (Just (GuardExpr (objExpr argVal) Nothing), argM)))
-    applyArg (argName, (argM, Nothing)) b = TupleApply (emptyMetaM "tupleApplyArg" argM) (emptyMetaE "appArg" b, b) (ObjArr (Just (GuardExpr (Arg argM argName) Nothing)) ArgObj Nothing [] Nothing)
+      then TupleApply (emptyMetaM "tupleApplyArg" argM) (emptyMetaE "appArg" b, b) (ObjArr (Just (GuardExpr (Arg emptyMetaN argName) Nothing)) ArgObj Nothing [] (Just (GuardExpr (Arg (deprecatedObjM argVal) (deprecatedObjPath argVal)) Nothing), argM))
+      else TupleApply (emptyMetaM "tupleApplyArg" argM) (emptyMetaE "appArg" b, b) (ObjArr (Just (GuardExpr (Arg emptyMetaN argName) Nothing)) ArgObj Nothing [] (Just (GuardExpr (objExpr argVal) Nothing), argM))
+    applyArg (argName, (argM, Nothing)) b = TupleApply (emptyMetaM "tupleApplyArg" argM) (emptyMetaE "appArg" b, b) (ObjArr (Just (GuardExpr (Arg argM argName) Nothing)) ArgObj Nothing [] (Nothing, emptyMetaM "argArr" argM))
 
 objPath :: (Show m, MetaDat m) => Object Expr m -> TypeName
 objPath = exprPath . objExpr
@@ -106,7 +106,7 @@ mapOAObjExpr f oa@ObjArr{oaObj=Just (GuardExpr e g)} = oa{oaObj = Just (GuardExp
 mapOAObjExpr _ oa@ObjArr{oaObj=Nothing} = oa
 
 mapOAArrExpr :: (MetaDat m, ExprClass e, Show (e m)) => (e m -> e m) -> ObjArr e m -> ObjArr e m
-mapOAArrExpr f oa@ObjArr{oaArr=Just (Just (GuardExpr e g), m)} = oa{oaArr = Just (Just (GuardExpr (f e) g), m)}
+mapOAArrExpr f oa@ObjArr{oaArr=(Just (GuardExpr e g), m)} = oa{oaArr = (Just (GuardExpr (f e) g), m)}
 mapOAArrExpr _ oa = oa
 
 oaObjPath :: (MetaDat m, ExprClass e, Show m, Show (e m)) =>ObjArr e m -> TypeName
@@ -120,19 +120,18 @@ exprToObj basis doc e@(TupleApply m' (_, baseExpr) arg@ObjArr{oaArr=argArr}) = b
     baseObj = exprToObj basis doc baseExpr
     argName' = exprPath $ oaObjExpr arg
     argVal' = case argArr of
-      Nothing    -> (getExprMeta $ oaObjExpr arg, Nothing)
-      Just (Nothing, _)    -> (getExprMeta $ oaObjExpr arg, Nothing)
-      Just (Just (GuardExpr (HoleExpr holeM _) _), _) -> (holeM, Nothing)
-      Just (Just (GuardExpr (AliasExpr HoleExpr{} argExpr@(Arg m argName)) _), _) -> (m, Just (Object m MatchObj H.empty H.empty Nothing argExpr argName))
-      Just (Just (GuardExpr argE _), _) -> (getExprMeta argE, Just $ exprToObj basis Nothing argE)
+      (Nothing, _)    -> (getExprMeta $ oaObjExpr arg, Nothing)
+      (Just (GuardExpr (HoleExpr holeM _) _), _) -> (holeM, Nothing)
+      (Just (GuardExpr (AliasExpr HoleExpr{} argExpr@(Arg m argName)) _), _) -> (m, Just (Object m MatchObj H.empty H.empty Nothing argExpr argName))
+      (Just (GuardExpr argE _), _) -> (getExprMeta argE, Just $ exprToObj basis Nothing argE)
 exprToObj basis doc e@(VarApply m' baseExpr name varM) = baseObj{deprecatedObjM=m', deprecatedObjVars=H.insert name varM (deprecatedObjVars baseObj), objDupExpr=e}
   where
     baseObj = exprToObj basis doc baseExpr
 exprToObj _ _ e = error $ printf "Not yet implemented exprToObj: %s" (show e)
 
 asExprObjectMapItem :: (Show m, MetaDat m) => ObjectMapItem Expr m -> ExprObjectMapItem Expr m
-asExprObjectMapItem (obj@Object{objBasis, objDoc}, annots, Just (Arrow m guard expr)) = ObjArr (Just (GuardExpr (objExpr obj) guard)) objBasis objDoc annots (Just (fmap (`GuardExpr` Nothing) expr, m))
-asExprObjectMapItem (obj@Object{objBasis, objDoc}, annots, Nothing) = ObjArr (Just (GuardExpr (objExpr obj) Nothing)) objBasis objDoc annots Nothing
+asExprObjectMapItem (obj@Object{objBasis, objDoc}, annots, Just (Arrow m guard expr)) = ObjArr (Just (GuardExpr (objExpr obj) guard)) objBasis objDoc annots (fmap (`GuardExpr` Nothing) expr, m)
+asExprObjectMapItem (obj@Object{objBasis, objDoc, deprecatedObjM}, annots, Nothing) = ObjArr (Just (GuardExpr (objExpr obj) Nothing)) objBasis objDoc annots (Nothing, deprecatedObjM)
 
 toExprPrgm :: (MetaDat m, Show m) => Prgm Expr m -> ExprPrgm Expr m
 toExprPrgm (objMap, classGraph, annots) = (map asExprObjectMapItem objMap, classGraph, annots)
@@ -141,11 +140,10 @@ fromExprObjectMapItem :: (MetaDat m, Show m, Hashable m) => ExprObjectMapItem Ex
 fromExprObjectMapItem (ObjArr (Just (GuardExpr obj guard)) basis doc as arr) = (exprToObj basis doc obj, as, arr')
   where
     arr' = case arr of
-      Just (Just (GuardExpr e _), m)         -> Just $ Arrow m guard (Just e)
-      Just (_, m) | isJust guard             -> Just $ Arrow m guard Nothing
-      Just (_, m) | getMetaType m == topType -> Nothing
-      Just (_, m)                            -> Just $ Arrow m guard Nothing
-      Nothing                                -> Nothing
+      (Just (GuardExpr e _), m)         -> Just $ Arrow m guard (Just e)
+      (_, m) | isJust guard             -> Just $ Arrow m guard Nothing
+      (_, m) | getMetaType m == topType -> Nothing
+      (_, m)                            -> Just $ Arrow m guard Nothing
 fromExprObjectMapItem oa = error $ printf "fromExprObjectMapItem with no input expression: %s" (show oa)
 
 fromExprPrgm :: (MetaDat m, Show m, Hashable m) => ExprPrgm Expr m -> Prgm Expr m
@@ -167,11 +165,11 @@ exprArgsWithSrc classGraph (AliasExpr base alias) src = H.union (exprArgsWithSrc
 exprArgsWithSrc classGraph (VarApply _ e _ _) src = exprArgsWithSrc classGraph e src
 exprArgsWithSrc classGraph (TupleApply _ (_, be) arg) src = H.union (exprArgsWithSrc classGraph be src) (fromArg arg)
   where
-    fromArg ObjArr{oaObj=Just (GuardExpr obj _), oaArr=Just (Just (GuardExpr e _), _)} = case typeGetArg (exprPath obj) src of
+    fromArg ObjArr{oaObj=Just (GuardExpr obj _), oaArr=(Just (GuardExpr e _), _)} = case typeGetArg (exprPath obj) src of
       Just (UnionType srcArg) -> mergeMaps $ map (exprArgsWithSrc classGraph e) $ splitUnionType srcArg
       Just t@TopType{} -> (,t) <$> exprArgs e
       _ -> H.empty
-    fromArg ObjArr{oaArr=Just (Just (GuardExpr e _), _)} = exprArgsWithSrc classGraph e src
+    fromArg ObjArr{oaArr=(Just (GuardExpr e _), _)} = exprArgsWithSrc classGraph e src
     fromArg ObjArr {oaObj=Just (GuardExpr obj _)} = case typeGetArg (exprPath obj) src of
       Just srcArg -> case exprPathM obj of
         (n, m) -> H.singleton n ([m], srcArg)
@@ -188,8 +186,7 @@ formVarMap _ _ = error $ printf "Unknown formVarMap"
 -- fullDest means to use the greatest possible type (after implicit).
 -- Otherwise, it uses the minimal type that *must* be reached
 arrowDestType :: (Show m, MetaDat m) => Bool -> ClassGraph -> PartialType -> ObjArr Expr m -> Type
-arrowDestType _ _ _ oa@ObjArr{oaArr=Nothing} = getExprType $ oaObjExpr oa
-arrowDestType fullDest classGraph src oa@ObjArr{oaArr=Just (oaArrExpr, oaM)} = case oaArrExpr >>= getExprArg . rgeExpr of
+arrowDestType fullDest classGraph src oa@ObjArr{oaArr=(oaArrExpr, oaM)} = case oaArrExpr >>= getExprArg . rgeExpr of
   Just _ -> fromMaybe (error "Unfound expr") expr'
   _      -> joined
   where

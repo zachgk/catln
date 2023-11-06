@@ -111,7 +111,7 @@ mapMetaObjArr :: (MapMeta e) => MetaFun a b -> Maybe MetaLocation -> ObjArr e a 
 mapMetaObjArr f mloc oa@ObjArr{oaObj, oaAnnots, oaArr} = oa{
   oaObj = fmap (mapMetaGuardExpr f (fromMaybe InputMeta mloc)) oaObj,
   oaAnnots = map (mapMeta f (fromMaybe AnnotMeta mloc)) oaAnnots,
-  oaArr = fmap (bimap (fmap (mapMetaGuardExpr f (fromMaybe OutputMeta mloc))) (f ArrMeta)) oaArr
+  oaArr = bimap (fmap (mapMetaGuardExpr f (fromMaybe OutputMeta mloc))) (f ArrMeta) oaArr
                                                              }
 
 mapMetaExprPrgm :: (MapMeta e) => MetaFun a b -> ExprPrgm e a -> ExprPrgm e b
