@@ -160,7 +160,9 @@ exprArgsWithSrc :: (Show m) => ClassGraph -> Expr m -> PartialType -> ArgMetaMap
 exprArgsWithSrc _ CExpr{} _ = H.empty
 exprArgsWithSrc _ Value{} _ = H.empty
 exprArgsWithSrc _ HoleExpr{} _ = H.empty
-exprArgsWithSrc _ (Arg m n) src = H.singleton n ([m], singletonType src)
+exprArgsWithSrc _ Arg{} _ = H.empty
+exprArgsWithSrc classGraph (AliasExpr base (Arg m n)) src = H.insert n ([m], singletonType src) (exprArgsWithSrc classGraph base src)
+exprArgsWithSrc classGraph (AliasExpr base (Value m n)) src = H.insert n ([m], singletonType src) (exprArgsWithSrc classGraph base src)
 exprArgsWithSrc classGraph (AliasExpr base alias) src = H.union (exprArgsWithSrc classGraph base src) (exprArgsWithSrc classGraph alias src)
 exprArgsWithSrc classGraph (VarApply _ e _ _) src = exprArgsWithSrc classGraph e src
 exprArgsWithSrc classGraph (TupleApply _ (_, be) arg) src = H.union (exprArgsWithSrc classGraph be src) (fromArg arg)
@@ -170,7 +172,7 @@ exprArgsWithSrc classGraph (TupleApply _ (_, be) arg) src = H.union (exprArgsWit
       Just t@TopType{} -> (,t) <$> exprArgs e
       _ -> H.empty
     fromArg ObjArr{oaArr=(Just (GuardExpr e _), _)} = exprArgsWithSrc classGraph e src
-    fromArg ObjArr {oaObj=Just (GuardExpr obj _)} = case typeGetArg (exprPath obj) src of
+    fromArg ObjArr {oaObj=Just (GuardExpr obj _), oaArr=(Nothing, _)} = case typeGetArg (exprPath obj) src of
       Just srcArg -> case exprPathM obj of
         (n, m) -> H.singleton n ([m], srcArg)
       Nothing     -> H.empty
