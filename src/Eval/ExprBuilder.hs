@@ -20,18 +20,26 @@ import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
 
--- Wraps a value v in Context(value=v, io=IO)
-applyIO :: EExpr -> EExpr
-applyIO input = eApply (eApply (eVal "/Context") "value" input) "io" ioArg
+ioM :: EvalMeta
+ioM = Meta ioType Nothing emptyMetaDat
 
 ioArg :: EExpr
-ioArg = Arg (Meta ioType Nothing emptyMetaDat) "io"
+ioArg = Value ioM "io"
 
 eApply :: EExpr -> String -> EExpr -> EExpr
-eApply baseExpr argName argExpr = TupleApply m (getExprMeta baseExpr, baseExpr) (mkIOObjArr (emptyMetaE "appArg" argExpr) argName argExpr)
+eApply baseExpr argName argExpr = TupleApply m (getExprMeta baseExpr, baseExpr) (mkIOObjArr (mWithType argExprType $ emptyMetaE "appArg" argExpr) argName argExpr)
   where
-    m = Meta (singletonType $ baseType{ptArgs=H.insert argName (getExprType argExpr) baseArgs}) Nothing emptyMetaDat
+    argExprType = getExprType argExpr
+    m = Meta (singletonType $ baseType{ptArgs=H.insert argName argExprType baseArgs}) Nothing emptyMetaDat
     baseType@PartialType{ptArgs=baseArgs} = getExprPartialType baseExpr
+
+eApplyM :: EExpr -> String -> EvalMeta -> EExpr
+eApplyM baseExpr argName argM = TupleApply m (getExprMeta baseExpr, baseExpr) (mkIObjArr argM argName)
+  where
+    argExprType = getMetaType argM
+    m = Meta (singletonType $ baseType{ptArgs=H.insert argName argExprType baseArgs}) Nothing emptyMetaDat
+    baseType@PartialType{ptArgs=baseArgs} = getExprPartialType baseExpr
+
 
 eVal :: String -> EExpr
 eVal name = Value m name

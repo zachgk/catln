@@ -39,7 +39,7 @@ type TBArrow = Arrow Expr TBMetaDat
 type TBObjectMap = ExprObjectMap Expr TBMetaDat
 type TBPrgm = ExprPrgm Expr TBMetaDat
 
-type VisitedArrows = S.HashSet ResArrowTree
+type VisitedArrows = S.HashSet TCallTree
 
 leafsFromMeta :: TBMeta -> [PartialType]
 leafsFromMeta (Meta TopType{} _ _) = error "leafFromMeta from TopType"
@@ -47,10 +47,10 @@ leafsFromMeta (Meta TypeVar{} _ _) = error "leafFromMeta from TypeVar"
 leafsFromMeta (Meta (UnionType prodTypes) _ _) = splitUnionType prodTypes
 
 -- Helper to replace matches with a single option with their result
-buildMatch :: ResArrowTree -> Type -> H.HashMap PartialType ResArrowTree -> ResArrowTree
-buildMatch m tp opts = case H.toList opts of
+buildMatch :: Type -> H.HashMap PartialType TCallTree -> TCallTree
+buildMatch _tp opts = case H.toList opts of
   [(_, t)] -> t
-  _        -> ResArrowMatch m tp opts
+  _        -> TCMatch opts
 
 buildTBEnv :: ResBuildEnv -> TBPrgm -> TBEnv
 buildTBEnv primEnv prgm@(objMap, classGraph, _) = baseEnv
@@ -59,7 +59,8 @@ buildTBEnv primEnv prgm@(objMap, classGraph, _) = baseEnv
     resEnv = H.fromListWith (++) $ mapMaybe resFromArrow objMap
 
     resFromArrow oa@ObjArr{oaObj=Just (GuardExpr _ aguard), oaArr, oaAnnots} = case oaArr of
-      (Just _, _) -> Just (oaObjPath oa, [(objLeaf, aguard, any isElseAnnot oaAnnots, (`ResEArrow` oa)) | objLeaf <- leafsFromMeta (getExprMeta $ oaObjExpr oa)])
+      _ | getExprType (oaObjExpr oa) == topType -> error $ printf "buildTBEnv failed with a topType input in %s" (show oa)
+      (Just _, _) -> Just (oaObjPath oa, [(objLeaf, aguard, any isElseAnnot oaAnnots, TCObjArr oa) | objLeaf <- leafsFromMeta (getExprMeta $ oaObjExpr oa)])
       (Nothing, _) -> Nothing
     resFromArrow oa = error $ printf "resFromArrow with no input expression: %s" (show oa)
 
@@ -75,8 +76,6 @@ buildExpr TBEnv{tbVals} _ (Value (Meta (UnionType prodTypes) pos _) name) = case
       Just val -> val
       Nothing  -> ResArrowTuple name' H.empty
     e -> error $ printf "Found unexpected value type in buildExpr: %s" (show e)
-buildExpr TBEnv{tbClassGraph} (os, obj) (Arg (Meta (TypeVar (TVArg a) TVInt) _ _) name) = return $ ArgArrow (snd $ fromJust $ suffixLookupInDict a $ snd $ splitVarArgEnv $ exprVarArgsWithSrc tbClassGraph (oaObjExpr obj) os) name
-buildExpr _ _ (Arg (Meta tp _ _) name) = return $ ArgArrow tp name
 buildExpr TBEnv{tbClassGraph} _ (TupleApply (Meta tp pos _) (Meta baseType _ _, baseExpr) ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=(Just (GuardExpr argExpr _), _)}) = do
   let argName = exprPath argObj
   case typesGetArg tbClassGraph argName tp of
@@ -87,33 +86,33 @@ buildExpr TBEnv{tbClassGraph} _ (TupleApply (Meta tp pos _) (Meta baseType _ _, 
       return $ ResArrowTupleApply baseBuild argName argVal
 buildExpr _ _ e = error $ printf "Bad buildExpr %s" (show e)
 
-envLookupTry ::  TBEnv -> ObjSrc -> VisitedArrows -> (TBExpr, Type) -> PartialType -> Type -> ResArrowTree -> CRes ResArrowTree
-envLookupTry TBEnv{tbClassGraph} _ _ _ srcType destType resArrow | isSubtypeOf tbClassGraph (resArrowDestType tbClassGraph srcType resArrow) destType = return resArrow
-envLookupTry _ _ visitedArrows _ _ _ resArrow | S.member resArrow visitedArrows = CErr [MkCNote $ BuildTreeCErr Nothing "Found cyclical use of function"]
-envLookupTry env@TBEnv{tbClassGraph} objSrc visitedArrows ee srcType destType resArrow = do
+envLookupTry ::  TBEnv -> ObjSrc -> VisitedArrows -> PartialType -> Type -> TCallTree -> CRes TCallTree
+envLookupTry TBEnv{tbClassGraph} (os, obj) _ srcType destType resArrow | isSubtypeOfWithObjSrc tbClassGraph os obj (resArrowDestType tbClassGraph srcType resArrow) destType = return resArrow
+envLookupTry _ _ visitedArrows _ _ resArrow | S.member resArrow visitedArrows = CErr [MkCNote $ BuildTreeCErr Nothing "Found cyclical use of function"]
+envLookupTry env@TBEnv{tbClassGraph} objSrc visitedArrows srcType destType resArrow = do
   newLeafTypes <- case resArrowDestType tbClassGraph srcType resArrow of
     UnionType t -> return t
     t -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Found impossible type %s in envLookupTry" (show t)]
   afterArrows <- traverse buildAfterArrows $ splitUnionType newLeafTypes
-  return $ buildMatch resArrow destType (H.fromList afterArrows)
+  return $ TCSeq resArrow (buildMatch destType (H.fromList afterArrows))
   where
     visitedArrows' = S.insert resArrow visitedArrows
     objSrc' = case resArrow of
-          (ResEArrow _ oa) -> (srcType, oa)
-          _                -> objSrc
+          (TCObjArr oa) -> (srcType, oa)
+          _             -> objSrc
     buildAfterArrows leafType = do
-      v <- envLookup env objSrc' resArrow ee visitedArrows' leafType destType
+      v <- envLookup env objSrc' visitedArrows' leafType destType
       return (leafType, v)
 
 -- This function takes a desired type, arrows with various inputs in sorted order of preference
 -- It returns the map of what each arrow should cover for a match tree or a CErr
 -- It is used for arrow declarations that require multiple arrows definitions to constitute
 -- TODO: This would be drastically improved with type difference
-completeTreeSet :: TBEnv -> PartialType -> [(PartialType, ResArrowTree)] -> Either Type (H.HashMap PartialType ResArrowTree)
+completeTreeSet :: TBEnv -> PartialType -> [(PartialType, TCallTree)] -> Either Type (H.HashMap PartialType TCallTree)
 completeTreeSet TBEnv{tbClassGraph} fullPartial = aux H.empty bottomType
   where
     fullType = singletonType fullPartial
-    aux :: H.HashMap PartialType ResArrowTree -> Type -> [(PartialType, ResArrowTree)] -> Either Type (H.HashMap PartialType ResArrowTree)
+    aux :: H.HashMap PartialType TCallTree -> Type -> [(PartialType, TCallTree)] -> Either Type (H.HashMap PartialType TCallTree)
     aux accMap accType _ | isSubtypeOf tbClassGraph fullType accType = return accMap
     aux _ accType [] = Left accType
     aux accMap accType ((optType, optTree):opts) = do
@@ -128,147 +127,145 @@ completeTreeSet TBEnv{tbClassGraph} fullPartial = aux H.empty bottomType
         else aux accMap accType opts
 
 data ArrowGuardGroup
-  = NoGuardGroup PartialType ResArrowTree
-  | CondGuardGroup [(PartialType, TBExpr, ResArrowTree)] (PartialType, ResArrowTree)
+  = NoGuardGroup PartialType TCallTree
+  | CondGuardGroup [(TBExpr, TCallTree)] (PartialType, TCallTree)
   deriving Show
-buildGuardArrows :: TBEnv -> ObjSrc -> ResArrowTree -> (TBExpr, Type) -> VisitedArrows -> PartialType -> Type -> [ArrowGuardGroup] -> CRes ResArrowTree
-buildGuardArrows env obj input ee visitedArrows srcType destType guards = do
+buildGuardArrows :: TBEnv -> ObjSrc -> VisitedArrows -> PartialType -> Type -> [ArrowGuardGroup] -> CRes TCallTree
+buildGuardArrows env obj visitedArrows srcType destType guards = do
   let builtGuards = map buildGuard guards
   treeOptions <- catCRes $ map buildGuard guards
   finalTrees <- case completeTreeSet env srcType treeOptions of
     Left completingAccType -> CErr [MkCNote $ GenMapCErr Nothing (printf "Failed to buildGuardArrows from %s to %s. Could not find enough arrows for the src. Only found %s. Tried guards:" (show srcType) (show destType) (show completingAccType)) (zip (map show guards) (map (fmap show) builtGuards))]
     Right r -> return r
-  return $ buildMatch input destType finalTrees
+  return $ buildMatch destType finalTrees
   where
-    buildGuard (NoGuardGroup tp tree) = (tp,) <$> ltry tree
+    buildGuard :: ArrowGuardGroup -> CRes (PartialType, TCallTree)
+    buildGuard (NoGuardGroup tp tree) = do
+      tree' <- ltry tree
+      return (tp, tree')
+    buildGuard (CondGuardGroup [] els) = return els
     buildGuard (CondGuardGroup ifs (elseTp, elseTree)) = do
-      ifTreePairs <- forM ifs $ \(_, ifCond, ifThen@(ResEArrow _ oa)) -> do
-            ifTree' <- buildExprImp env (srcType, oa) ifCond (getExprType ifCond) boolType
-            thenTree' <- ltry ifThen
-            return ((ifTree', input, oa), thenTree')
+      ifTreePairs <- forM ifs $ \(ifCond, ifThen@(TCObjArr oa)) -> do
+        ifCond' <- toTExprDest env (srcType, oa) ifCond (emptyMetaT boolType)
+        ifThen' <- ltry ifThen
+        return ((ifCond', oa), ifThen')
       elseTree' <- ltry elseTree
-      return $ case ifTreePairs of
-        [] -> (elseTp, elseTree')
-        _  -> (elseTp, ResArrowCond destType ifTreePairs elseTree')
-    ltry = envLookupTry env obj visitedArrows ee srcType destType
+      return (elseTp, TCCond destType ifTreePairs elseTree')
+      -- return $ TCCond destType ifTreePairs elseTree
+    ltry = envLookupTry env obj visitedArrows srcType destType
 
-groupArrows :: ResArrowTree -> [ResBuildEnvItem] -> CRes [ArrowGuardGroup]
+groupArrows :: [ResBuildEnvItem] -> CRes [ArrowGuardGroup]
 groupArrows = aux ([], Nothing)
   where
-    aux ([], Nothing) _ [] = return []
-    aux (ifs, Just els) _ [] = return [CondGuardGroup ifs els]
-    aux (_, Nothing) _ [] = CErr [MkCNote $ BuildTreeCErr Nothing "No ElseGuards found"]
-    aux acc input ((pt, Nothing, False, t):bs) = do
-      bs' <- aux acc input bs
-      return $ NoGuardGroup pt (t input):bs'
-    aux (ifs, els) input ((pt, Just it, False, t):bs) = aux ((pt, it, t input):ifs, els) input bs
-    aux (ifs, Nothing) input ((pt, Nothing, True, t):bs) = aux (ifs, Just (pt, t input)) input bs
-    aux (_, Just{}) _ ((_, Nothing, True, _):_) = CErr [MkCNote $ BuildTreeCErr Nothing "Multiple ElseGuards found"]
-    aux (_, _) _ ((_, Just{}, True, _):_) = CErr [MkCNote $ BuildTreeCErr Nothing "ElseGuards with conditions are currently not supported"]
+    aux ([], Nothing) [] = return []
+    aux (ifs, Just els) [] = return [CondGuardGroup ifs els]
+    aux (_, Nothing) [] = CErr [MkCNote $ BuildTreeCErr Nothing "No ElseGuards found"]
+    aux acc ((pt, Nothing, False, t):bs) = do
+      bs' <- aux acc bs
+      return $ NoGuardGroup pt t:bs'
+    aux (ifs, els) ((_, Just it, False, t):bs) = aux ((it, t):ifs, els) bs
+    aux (ifs, Nothing) ((pt, Nothing, True, t):bs) = aux (ifs, Just (pt, t)) bs
+    aux (_, Just{}) ((_, Nothing, True, _):_) = CErr [MkCNote $ BuildTreeCErr Nothing "Multiple ElseGuards found"]
+    aux (_, _) ((_, Just{}, True, _):_) = CErr [MkCNote $ BuildTreeCErr Nothing "ElseGuards with conditions are currently not supported"]
 
-findResArrows :: TBEnv -> PartialType -> Type -> CRes [ResBuildEnvItem]
-findResArrows TBEnv{tbName, tbResEnv, tbClassGraph} srcType@PartialType{ptName=PTypeName srcName} destType = case suffixLookupInDict srcName tbResEnv of
-  Just resArrowsWithName -> do
-    let resArrows = filter (\(arrowType, _, _, _) -> not $ isBottomType $ intersectTypes tbClassGraph (singletonType srcType) (singletonType arrowType)) resArrowsWithName
-    -- TODO: Sort resArrows by priority order before trying
-    return resArrows
-  Nothing -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Failed to find any arrows:\n\tWhen building %s\n\tfrom %s to %s" tbName (show srcType) (show destType)]
-findResArrows _ PartialType{ptName=PClassName{}} _ = error "Can't findResArrows for class"
-findResArrows _ PartialType{ptName=PRelativeName{}} _ = error "Can't findResArrows for relative name"
+findResArrows :: TBEnv -> ObjSrc -> PartialType -> Type -> CRes [ResBuildEnvItem]
+findResArrows TBEnv{tbName, tbResEnv, tbClassGraph} (os, obj) srcType@PartialType{ptName=PTypeName srcName} destType = case argArrows ++ globalArrows of
+  arrows@(_:_) -> return arrows
+  [] -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Failed to find any arrows:\n\tWhen building %s\n\tfrom %s to %s" tbName (show srcType) (show destType)]
+  where
+    globalArrows = case suffixLookupInDict srcName tbResEnv of
+      -- TODO: Sort resArrows by priority order before trying
+      Just resArrowsWithName -> filter (\(arrowType, _, _, _) -> not $ isBottomType $ intersectTypes tbClassGraph (singletonType srcType) (singletonType arrowType)) resArrowsWithName
+      Nothing -> []
+    argArrows :: [ResBuildEnvItem]
+    argArrows = case suffixLookupInDict srcName $ snd $ splitVarArgEnv $ exprVarArgsWithSrc tbClassGraph (oaObjExpr obj) os of
+      Just (_, argArrowType) -> [(srcType, Nothing, False, TCArg argArrowType srcName)]
+      Nothing -> []
+findResArrows _ _ PartialType{ptName=PClassName{}} _ = error "Can't findResArrows for class"
+findResArrows _ _ PartialType{ptName=PRelativeName{}} _ = error "Can't findResArrows for relative name"
 
-envLookup :: TBEnv -> ObjSrc -> ResArrowTree -> (TBExpr, Type) -> VisitedArrows -> PartialType -> Type -> CRes ResArrowTree
-envLookup TBEnv{tbClassGraph} _ input _ _ srcType destType | isSubtypePartialOf tbClassGraph srcType destType = return input
-envLookup env obj input ee visitedArrows srcType destType = do
-  resArrows <- findResArrows env srcType destType
-  guards <- groupArrows input resArrows
-  buildGuardArrows env obj input ee visitedArrows srcType destType guards
-
-buildImplicit :: TBEnv -> ObjSrc -> TBExpr -> Type -> Type -> CRes ResArrowTree
-buildImplicit _ _ expr srcType (TopType []) = return $ ExprArrow expr srcType srcType
-buildImplicit _ obj _ (TopType []) destType = error $ printf "Build implicit from top type to %s in %s" (show destType) (show obj)
-buildImplicit env objSrc@(_, obj) input (TypeVar (TVVar varName) TVInt) destType = case suffixLookupInDict varName $ exprAppliedVars $ oaObjExpr obj of
-  Just objVarM -> buildImplicit env objSrc input (getMetaType objVarM) destType
-  Nothing -> error $ printf "buildImplicit unknown arg %s with obj %s" varName (show objSrc)
-buildImplicit env@TBEnv{tbClassGraph} objSrc@(os, obj) input (TypeVar (TVArg argName) TVInt) destType = case suffixLookupInDict argName $ snd $ splitVarArgEnv $ exprVarArgsWithSrc tbClassGraph (oaObjExpr obj) os of
-  Just (_, srcType) -> buildImplicit env objSrc input srcType destType
-  Nothing -> error $ printf "buildImplicit unknown arg %s with obj %s" argName (show obj)
-buildImplicit env obj expr srcType@(UnionType srcTypeLeafs) destType = do
-  let wholeInput = ExprArrow expr srcType srcType
-  matchVal <- forM (splitUnionType srcTypeLeafs) $ \leafSrcType -> do
-    let leafInputType = singletonType leafSrcType
-    let leafInput = ExprArrow expr leafInputType leafInputType
-    v <- envLookup env obj leafInput (expr, leafInputType) S.empty leafSrcType destType
-    return (leafSrcType, v)
-  return (buildMatch wholeInput destType (H.fromList matchVal))
-buildImplicit _ _ _ _ _ = undefined
-
--- executes an expression and then an implicit to a desired dest type
-buildExprImp :: TBEnv -> ObjSrc -> TBExpr -> Type -> Type -> CRes ResArrowTree
-buildExprImp env@TBEnv{tbClassGraph} objSrc@(os, obj) expr exprType destType = do
-  res' <- if isSubtypeOfWithObjSrc tbClassGraph os obj exprType destType
-    then buildExpr env objSrc expr
-    else buildImplicit env objSrc expr exprType destType
-  resolveTree env objSrc res'
-
--- builds all macroArrows and exprArrows into other arrow types
-resolveTree :: TBEnv -> ObjSrc -> ResArrowTree -> CRes ResArrowTree
-resolveTree env obj (ResEArrow input oa) = do
-  input' <- resolveTree env obj input
-  return $ ResEArrow input' oa
-resolveTree env obj (PrimArrow input t f) = do
-  input' <- resolveTree env obj input
-  return $ PrimArrow input' t f
-resolveTree env obj (MacroArrow input _ (MacroFunction f)) = do
-  input' <- f input (macroData env obj)
-  resolveTree env obj input'
-resolveTree env obj (ExprArrow e exprType destType) = buildExprImp env obj e exprType destType
-resolveTree _ _ a@ConstantArrow{} = return a
-resolveTree _ _ a@ArgArrow{} = return a
-resolveTree env obj (ResArrowMatch input tp matches) = do
-  input' <- resolveTree env obj input
-  matches' <- mapM (resolveTree env obj) matches
-  return $ ResArrowMatch input' tp matches'
-resolveTree env obj (ResArrowCond tp ifs elseTree) = do
-  ifs' <- forM ifs $ \((ifCondTree, ifCondInput, ifObj), ifThenTree) -> do
-    ifCondTree' <- resolveTree env obj ifCondTree
-    ifCondInput' <- resolveTree env obj ifCondInput
-    ifThenTree' <- resolveTree env obj ifThenTree
-    return ((ifCondTree', ifCondInput', ifObj), ifThenTree')
-  elseTree' <- resolveTree env obj elseTree
-  return $ ResArrowCond tp ifs' elseTree'
-resolveTree env obj (ResArrowTuple name args) = do
-  args' <- mapM (resolveTree env obj) args
-  return $ ResArrowTuple name args'
-resolveTree env obj (ResArrowTupleApply input argName argVal) = do
-  input' <- resolveTree env obj input
-  argVal' <- resolveTree env obj argVal
-  return $ ResArrowTupleApply input' argName argVal'
+envLookup :: TBEnv -> ObjSrc -> VisitedArrows -> PartialType -> Type -> CRes TCallTree
+envLookup TBEnv{tbClassGraph} (os, obj) _ srcType destType | isSubtypePartialOfWithObjSrc tbClassGraph os obj srcType destType = return TCTId
+envLookup env obj visitedArrows srcType destType = do
+  resArrows <- findResArrows env obj srcType destType
+  guards <- groupArrows resArrows
+  buildGuardArrows env obj visitedArrows srcType destType guards
 
 
-buildArrow :: TBEnv -> PartialType -> TBObjArr -> CRes (Maybe (TBObjArr, (ResArrowTree, [ResArrowTree])))
+buildCallTree :: TBEnv -> ObjSrc -> Type -> Type -> CRes TCallTree
+buildCallTree TBEnv{tbClassGraph} (os, obj) srcType destType | isSubtypeOfWithObjSrc tbClassGraph os obj srcType destType = return TCTId
+buildCallTree _ _ _ (TopType []) = return TCTId
+buildCallTree _ _ (TopType []) _ = error $ printf "buildCallTree from top type"
+buildCallTree env@TBEnv{tbClassGraph} objSrc@(os, obj) (TypeVar v _) destType = case H.lookup v (exprVarArgsWithSrc tbClassGraph (oaObjExpr obj) os) of
+  Just (_, srcType') -> buildCallTree env objSrc srcType' destType
+  Nothing -> error $ printf "Unknown TypeVar %s in buildCallTree" (show v)
+buildCallTree env os (UnionType srcLeafs) destType = do
+  matchVal <- forM (splitUnionType srcLeafs) $ \srcPartial -> do
+    t <- envLookup env os S.empty srcPartial destType
+    return (srcPartial, t)
+  return $ buildMatch destType $ H.fromList matchVal
+buildCallTree _ _ _ _ = error "Unimplemented buildCallTree"
+
+toTExpr :: TBEnv -> ObjSrc -> Expr () -> CRes (TExpr ())
+toTExpr _ _ (CExpr m (CInt c)) = return $ TCExpr m (IntVal c)
+toTExpr _ _ (CExpr m (CFloat c)) = return $ TCExpr m (FloatVal c)
+toTExpr _ _ (CExpr m (CStr c)) = return $ TCExpr m (StrVal c)
+toTExpr _ _ (Value m n) = return $ TValue m n
+toTExpr _ _ (HoleExpr m h) = return $ THoleExpr m h
+toTExpr env os (AliasExpr b a) = do
+  b' <- toTExpr env os b
+  a' <- toTExpr env os a
+  return $ TAliasExpr b' a'
+toTExpr env os (TupleApply m (bm, be) oa@ObjArr{oaObj, oaAnnots, oaArr=(arrExpr, arrM)}) = do
+  oaObj' <- forM oaObj $ \(GuardExpr e g) -> do
+    e' <- toTExpr env os e
+    g' <- mapM (toTExpr env os) g
+    return $ GuardExpr e' g'
+  arrExpr' <- forM arrExpr $ \(GuardExpr e g) -> do
+    e' <- toTExprDest env os e arrM
+    g' <- mapM (toTExpr env os) g
+    return $ GuardExpr e' g'
+  oaAnnots' <- mapM (toTExpr env os) oaAnnots
+  base' <- toTExprDest env os be bm
+  let oa' = oa{oaObj=oaObj', oaAnnots=oaAnnots', oaArr=(arrExpr', arrM)}
+  return $ TTupleApply m base' oa'
+toTExpr env os (VarApply m b n v) = do
+  b' <- toTExpr env os b
+  return $ TVarApply m b' n v
+
+texprDest :: TBEnv -> ObjSrc -> TExpr () -> EvalMeta -> CRes (TExpr ())
+texprDest env os e m = do
+  ct <- buildCallTree env os (getMetaType $ getExprMeta e) (getMetaType m)
+  case ct of
+    TCTId -> return e
+    TCMacro _ (MacroFunction f) -> do
+      e' <- f e (macroData env os)
+      texprDest env os e' m
+    _ -> return $ TCalls m e ct
+
+toTExprDest :: TBEnv -> ObjSrc -> Expr () -> EvalMeta -> CRes (TExpr ())
+-- toTExprDest env os e m | trace (printf "toExprDest %s to %s \n\twith %s" (show e) (show m) (show os)) False = undefined
+toTExprDest env os e m = do
+  e' <- toTExpr env os e
+  texprDest env os e' m
+
+buildArrow :: TBEnv -> PartialType -> TBObjArr -> CRes (Maybe (TBObjArr, (TExpr TBMetaDat, [TExpr TBMetaDat])))
 buildArrow _ _ ObjArr{oaArr=(Nothing, _)} = return Nothing
 -- buildArrow env objPartial obj compAnnots arrow@(Arrow (Meta am _ _) _ (Just expr)) = do
-buildArrow env@TBEnv{tbClassGraph} objPartial oa@ObjArr{oaAnnots, oaArr=(Just (GuardExpr expr _), Meta am _ _)} = do
+buildArrow env objPartial oa@ObjArr{oaAnnots, oaArr=(Just (GuardExpr expr _), am)} = do
   let env' = env{tbName = printf "arrow %s" (show oa)}
   let objSrc = (objPartial, oa)
-  let am' = case am of
-        (TypeVar (TVVar v) TVInt) -> case suffixLookupInDict v $ exprAppliedVars $ oaObjExpr oa of
-          Just m  -> getMetaType m
-          Nothing -> error "Bad TVVar in makeBaseEnv"
-        (TypeVar (TVArg v) TVInt) -> case suffixLookupInDict v $ exprArgs $ oaObjExpr oa of
-          Just argMetas -> intersectAllTypes tbClassGraph $ map getMetaType argMetas
-          Nothing      -> error "Bad TVArg in makeBaseEnv"
-        _ -> am
-  resArrowTree <- resolveTree env' objSrc (ExprArrow expr (getExprType expr) am')
+  -- resArrowTree <- resolveTree env' objSrc (ExprArrow expr (getExprType expr) am)
+  resArrowTree <- toTExprDest env' objSrc expr am
   compAnnots' <- forM oaAnnots $ \annot -> do
                                        let annotEnv = env{tbName = printf "globalAnnot %s" (show annot)}
-                                       let annotType = getExprType annot
-                                       resolveTree annotEnv objSrc (ExprArrow annot annotType annotType)
+                                       toTExpr annotEnv objSrc annot
   return $ Just (oa, (resArrowTree, compAnnots'))
 
-buildRoot :: TBEnv -> TBExpr -> PartialType -> Type -> CRes ResArrowTree
+buildRoot :: TBEnv -> TBExpr -> PartialType -> Type -> CRes (TExpr TBMetaDat)
 buildRoot env input src dest = do
   let env' = env{tbName = printf "root"}
-  let emptyObj = ObjArr (Just $ GuardExpr (Value (Meta (singletonType src) Nothing emptyMetaDat) "EmptyObj") Nothing) FunctionObj Nothing [] (Nothing, emptyMetaN)
+  -- let emptyObj = ObjArr (Just $ GuardExpr (Value (Meta (singletonType src) Nothing emptyMetaDat) "EmptyObj") Nothing) FunctionObj Nothing [] (Nothing, emptyMetaN)
+  let emptyObj = ObjArr (Just $ GuardExpr input Nothing) FunctionObj Nothing [] (Nothing, emptyMetaN)
   let objSrc = (src, emptyObj)
-  resolveTree env' objSrc (ExprArrow input (getExprType input) dest)
+  toTExprDest env' objSrc input  (emptyMetaT dest)

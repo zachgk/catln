@@ -63,8 +63,11 @@ data Meta m = Meta Type CodeRange m
 instance MetaDat () where
   emptyMetaDat = ()
 
+emptyMetaT :: (MetaDat m) => Type -> Meta m
+emptyMetaT t = Meta t Nothing emptyMetaDat
+
 emptyMetaN :: (MetaDat m) => Meta m
-emptyMetaN = Meta topType Nothing emptyMetaDat
+emptyMetaN = emptyMetaT topType
 
 getMetaType :: Meta m -> Type
 getMetaType (Meta t _ _) = t
@@ -79,7 +82,6 @@ showCodeRange (start, end, _) = printf "%s:%d:%d-%d:%d" (sourceName start) (unPo
 data Expr m
   = CExpr (Meta m) Constant
   | Value (Meta m) TypeName
-  | Arg (Meta m) ArgName
   | HoleExpr (Meta m) Hole
   | AliasExpr (Expr m) (Expr m) -- ^ AliasExpr baseExpr aliasExpr
   | TupleApply (Meta m) (Meta m, Expr m) (ObjArr Expr m)
@@ -134,14 +136,14 @@ type ExprObjectMap e m = [ExprObjectMapItem e m]
 type ExprPrgm e m = (ExprObjectMap e m, ClassGraph, [CompAnnot (e m)]) -- TODO: Include [Export]
 
 
-instance Show (Meta m) where
+instance (Show m) => Show (Meta m) where
   show :: Meta m -> String
   show (Meta t _ _) = show t
+  -- show (Meta t p d) = printf "(Meta %s %s (%s))" (show t) (show p) (show d)
 
 instance Show m => Show (Expr m) where
   show (CExpr _ c) = show c
   show (Value _ name) = printf "Value %s" name
-  show (Arg m name) = printf "Arg %s %s" (show m) name
   show (HoleExpr m hole) = printf "Hole %s %s" (show m) (show hole)
   show (AliasExpr base alias) = printf "%s@%s" (show base) (show alias)
   show (TupleApply _ (_, baseExpr) arg) = printf "%s(%s)" baseExpr' (show arg)
@@ -213,14 +215,11 @@ class ExprClass e where
   -- | Returns the metadata for the top level of an expression
   getExprMeta ::  e m -> Meta m
 
-  -- | Returns the argname if the expression is an arg, else Nothing
-  getExprArg :: e m -> Maybe ArgName
-
   -- | Returns the value at the base of an expression, if it exists
   maybeExprPathM :: e m -> Maybe (TypeName, Meta m)
 
   -- | Returns all arguments applied to a value
-  exprAppliedArgs :: (Show m) => e m -> [ObjArr e m]
+  exprAppliedArgs :: (Show m, MetaDat m) => e m -> [ObjArr e m]
 
   -- | Returns all vars applied to a value
   exprAppliedOrdVars :: e m -> [(TypeVarName, Meta m)]
@@ -233,31 +232,24 @@ instance ExprClass Expr where
   getExprMeta expr = case expr of
     CExpr m _        -> m
     Value m _        -> m
-    Arg m _          -> m
     HoleExpr m _     -> m
     AliasExpr b _    -> getExprMeta b
     TupleApply m _ _ -> m
     VarApply m _ _ _ -> m
 
-  getExprArg (Arg _ n) = Just n
-  getExprArg _         = Nothing
-
   maybeExprPathM (Value m n)             = Just (n, m)
-  maybeExprPathM (Arg m n)               = Just (n, m)
   maybeExprPathM (TupleApply _ (_, e) _) = maybeExprPathM e
   maybeExprPathM (VarApply _ e _ _)      = maybeExprPathM e
-  maybeExprPathM (AliasExpr _ b)         = maybeExprPathM b
+  maybeExprPathM (AliasExpr b _)         = maybeExprPathM b
   maybeExprPathM _                       = Nothing
 
   exprAppliedArgs (Value _ _) = []
-  exprAppliedArgs (Arg _ _) = []
   exprAppliedArgs (TupleApply _ (_, be) ae) = ae : exprAppliedArgs be
   exprAppliedArgs (VarApply _ e _ _) = exprAppliedArgs e
   exprAppliedArgs (AliasExpr _ b) = exprAppliedArgs b
   exprAppliedArgs e = error $ printf "Unsupported Expr exprAppliedArgs for %s" (show e)
 
   exprAppliedOrdVars (Value _ _) = []
-  exprAppliedOrdVars (Arg _ _) = []
   exprAppliedOrdVars (TupleApply _ (_, be) _) = exprAppliedOrdVars be
   exprAppliedOrdVars (VarApply _ e n m) = (n, m) : exprAppliedOrdVars e
   exprAppliedOrdVars (AliasExpr _ b) = exprAppliedOrdVars b
@@ -265,12 +257,10 @@ instance ExprClass Expr where
 
   exprVarArgs CExpr{} = H.empty
   exprVarArgs Value{} = H.empty
-  exprVarArgs Arg{} = H.empty
   exprVarArgs HoleExpr{} = H.empty
-  exprVarArgs (AliasExpr base (Arg m n)) = H.insertWith (++) (TVArg n) [m] (exprVarArgs base)
+  exprVarArgs (AliasExpr base (Value _ n)) = H.insertWith (++) (TVArg n) [getExprMeta base] (exprVarArgs base)
   exprVarArgs (AliasExpr base alias) = H.unionWith (++) (exprVarArgs base) (exprVarArgs alias)
-  exprVarArgs (TupleApply _ (_, be) ObjArr{oaObj=Just (GuardExpr (Arg m n) _), oaArr=(Nothing, _arrM)}) = H.insertWith (++) (TVArg n) [m] (exprVarArgs be)
-  exprVarArgs (TupleApply _ (_, be) ObjArr{oaObj=Just (GuardExpr (Value m n) _), oaArr=(Nothing, _arrM)}) = H.insertWith (++) (TVArg n) [m] (exprVarArgs be)
+  exprVarArgs (TupleApply _ (_, be) ObjArr{oaObj=Just (GuardExpr (Value _ n) _), oaArr=(Nothing, arrM)}) = H.insertWith (++) (TVArg n) [arrM] (exprVarArgs be)
   exprVarArgs (TupleApply _ _ ObjArr{oaObj, oaArr=(Nothing, _)}) = error $ printf "Unexpected unhandled obj type in exprVarArgs: %s" (show oaObj)
   exprVarArgs (TupleApply _ (_, be) ObjArr{oaArr=(Just (GuardExpr e _), _)}) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)
   exprVarArgs (VarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar n) [m])
@@ -300,10 +290,10 @@ emptyExprPrgm :: ExprPrgm e m
 emptyExprPrgm = ([], emptyClassGraph, [])
 
 mkIOObjArr :: (MetaDat m, Show m) => Meta m -> ArgName -> Expr m -> ObjArr Expr m
-mkIOObjArr m argName argVal = ObjArr (Just (GuardExpr (Arg m argName) Nothing)) ArgObj Nothing [] (Just (GuardExpr argVal Nothing), emptyMetaN)
+mkIOObjArr m argName argVal = ObjArr (Just (GuardExpr (Value (emptyMetaT $ typeVal $ PTypeName argName) argName) Nothing)) ArgObj Nothing [] (Just (GuardExpr argVal Nothing), m)
 
 mkIObjArr :: (MetaDat m, Show m) => Meta m -> ArgName -> ObjArr Expr m
-mkIObjArr m argName = ObjArr (Just (GuardExpr (Arg m argName) Nothing)) ArgObj Nothing [] (Nothing, emptyMetaN)
+mkIObjArr m argName = ObjArr (Just (GuardExpr (Value (emptyMetaT $ typeVal $ PTypeName argName) argName) Nothing)) ArgObj Nothing [] (Nothing, m)
 
 mkOObjArr :: (MetaDat m, Show m) => Expr m -> ObjArr Expr m
 mkOObjArr argVal = ObjArr Nothing ArgObj Nothing [] (Just (GuardExpr argVal Nothing), emptyMetaN )
@@ -385,7 +375,8 @@ mergeExprPrgms :: Foldable f => f (ExprPrgm e m) -> ExprPrgm e m
 mergeExprPrgms = foldr mergeExprPrgm emptyExprPrgm
 
 -- | Gets all recursive sub expression objects from an expression's arguments. Helper for 'getRecursiveExprObjs'
-getRecursiveExprObjsExpr :: (ExprClass e, Show m) => e m -> [e m]
+getRecursiveExprObjsExpr :: (ExprClass e, MetaDat m, Show m) => e m -> [e m]
+getRecursiveExprObjsExpr expr | isNothing (maybeExprPath expr) = []
 getRecursiveExprObjsExpr expr = subObjects ++ recursedSubObjects
   where
     subObjects = filter (isJust . maybeExprPath) $ mapMaybe exprFromTupleArg $ exprAppliedArgs expr

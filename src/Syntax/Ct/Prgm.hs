@@ -122,8 +122,6 @@ instance ExprClass RawExpr where
     RawList m _           -> m
     RawTypeProp m _ _     -> m
 
-  getExprArg _ = Nothing
-
   maybeExprPathM (RawValue m n)               = Just (n, m)
   maybeExprPathM (RawTupleApply _ (_, e) _)   = maybeExprPathM e
   maybeExprPathM (RawVarsApply _ e _)         = maybeExprPathM e
@@ -195,7 +193,7 @@ instance (Show m, Show (e m)) => Show (RawObjArr e m) where
         Just def -> printf " ? %s" (show def)
         Nothing  -> ""
 
-desObjArr :: (ExprClass e, Show m, Show (e m)) => RawObjArr e m -> [ObjArr e m]
+desObjArr :: (ExprClass e, MetaDat m, Show m, Show (e m)) => RawObjArr e m -> [ObjArr e m]
 desObjArr (RawObjArr obj@(Just (GuardExpr objExpr _)) basis doc annots arr Nothing) = [ObjArr obj basis doc annots arr']
   where
     arr' = fromMaybe (Nothing, emptyMetaE "arrM" objExpr) arr

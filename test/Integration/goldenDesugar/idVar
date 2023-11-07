@@ -2,45 +2,72 @@
     (
         (
             [ /operator!=
-                ( Value l= Hole TVVar "T" HoleActive Nothing )
-                ( Value r= Hole TVVar "T" HoleActive Nothing ) [ T : /Data/Algebra/Eq ] -> /Data/Primitive/Boolean
+                ( Value l -> TVVar "T" = Hole TopType HoleActive Nothing )
+                ( Value r -> TVVar "T" = Hole TopType HoleActive Nothing ) [ T : ∀/Data/Algebra/Eq ] -> ∀/Data/Primitive/Boolean
             , Value /Data/Algebra/LessThan
             , Value /Data/Algebra/Equal
             , Value /Data/Algebra/GreaterThan
             , Value /Data/Algebra/NoOrdering
-            , /Data/Algebra/compare [ T : /Data/Algebra/Ord ] ( Value l ) ( Value r ) -> /Data/Algebra/Ordering
-            , /Data/Algebra/compare [ T : /Data/Algebra/POrd ] ( Value l ) ( Value r ) -> /Data/Algebra/POrdering
+            , /Data/Algebra/compare [ T : ∀/Data/Algebra/Ord ]
+                ( Value l -> TVVar "T" )
+                ( Value r -> TVVar "T" ) -> ∀/Data/Algebra/Ordering
+            , /Data/Algebra/compare [ T : ∀/Data/Algebra/POrd ]
+                ( Value l -> TVVar "T" )
+                ( Value r -> TVVar "T" ) -> ∀/Data/Algebra/POrdering
             , /operator<=
-                ( Value l= Hole TVVar "T" HoleActive Nothing )
-                ( Value r= Hole TVVar "T" HoleActive Nothing ) [ T : /Data/Algebra/Ord ] -> /Data/Primitive/Boolean
+                ( Value l -> TVVar "T" = Hole TopType HoleActive Nothing )
+                ( Value r -> TVVar "T" = Hole TopType HoleActive Nothing ) [ T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean
             , /operator>=
-                ( Value l= Hole TVVar "T" HoleActive Nothing )
-                ( Value r= Hole TVVar "T" HoleActive Nothing ) [ T : /Data/Algebra/Ord ] -> /Data/Primitive/Boolean
+                ( Value l -> TVVar "T" = Hole TopType HoleActive Nothing )
+                ( Value r -> TVVar "T" = Hole TopType HoleActive Nothing ) [ T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean
             , /operator<
-                ( Value l= Hole TVVar "T" HoleActive Nothing )
-                ( Value r= Hole TVVar "T" HoleActive Nothing ) [ T : /Data/Algebra/Ord ] -> /Data/Primitive/Boolean
+                ( Value l -> TVVar "T" = Hole TopType HoleActive Nothing )
+                ( Value r -> TVVar "T" = Hole TopType HoleActive Nothing ) [ T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean
             , /operator>
-                ( Value l= Hole TVVar "T" HoleActive Nothing )
-                ( Value r= Hole TVVar "T" HoleActive Nothing ) [ T : /Data/Algebra/Ord ] -> /Data/Primitive/Boolean
+                ( Value l -> TVVar "T" = Hole TopType HoleActive Nothing )
+                ( Value r -> TVVar "T" = Hole TopType HoleActive Nothing ) [ T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean
             , /operator++
-                ( Value l= Hole TVVar "T" HoleActive Nothing )
-                ( Value r= Hole TVVar "T" HoleActive Nothing ) [ T : /Data/Algebra/Semigroup ] -> TVVar "T"
-            , /Data/Algebra/testSemigroupAssociative [ T : /Data/Algebra/Semigroup ] ( Value a ) ( Value b ) ( Value c ) = CInt 0
-            , /Data/Algebra/mempty [ T : /Data/Algebra/Monoid ] -> TVVar "T"
-            , /Data/Algebra/testRightMonoidIdentity [ T : /Data/Algebra/Monoid ] ( Value t ) = CInt 0
-            , /Data/Algebra/testLeftMonoidIdentity [ T : /Data/Algebra/Monoid ] ( Value t ) = CInt 0
-            , /Data/Algebra/testCommutativeMonoid [ T : /Data/Algebra/CommutativeMonoid ] ( Value a ) ( Value b ) = CInt 0
-            , /Data/Algebra/inverse [ T : /Data/Algebra/Group ] ( Value t ) -> TVVar "T"
-            , /Data/Algebra/testGroup [ T : /Data/Algebra/Group ] ( Value t ) = CInt 0
+                ( Value l -> TVVar "T" = Hole TopType HoleActive Nothing )
+                ( Value r -> TVVar "T" = Hole TopType HoleActive Nothing ) [ T : ∀/Data/Algebra/Semigroup ] -> TVVar "T"
+            , /Data/Algebra/testSemigroupAssociative [ T : ∀/Data/Algebra/Semigroup ]
+                ( Value a -> TVVar "T" )
+                ( Value b -> TVVar "T" )
+                ( Value c -> TVVar "T" ) = CInt 0
+            , /Data/Algebra/mempty [ T : ∀/Data/Algebra/Monoid ] -> TVVar "T"
+            , /Data/Algebra/testRightMonoidIdentity [ T : ∀/Data/Algebra/Monoid ]
+                ( Value t -> TVVar "T" ) = CInt 0
+            , /Data/Algebra/testLeftMonoidIdentity [ T : ∀/Data/Algebra/Monoid ]
+                ( Value t -> TVVar "T" ) = CInt 0
+            , /Data/Algebra/testCommutativeMonoid [ T : ∀/Data/Algebra/CommutativeMonoid ]
+                ( Value a -> TVVar "T" )
+                ( Value b -> TVVar "T" ) = CInt 0
+            , /Data/Algebra/inverse [ T : ∀/Data/Algebra/Group ]
+                ( Value t -> TVVar "T" ) -> TVVar "T"
+            , /Data/Algebra/testGroup [ T : ∀/Data/Algebra/Group ]
+                ( Value t -> TVVar "T" ) = CInt 0
             ]
         ,
             [ CGType
             , CGType
             , CGType
             , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
             , CGClass
                 ( False
-                , /Data/Algebra/CommutativeMonoid
+                , ∀/Data/Algebra/CommutativeMonoid
                 , []
                 , Just "The [CommutativeMonoid] builds on top of the [Monoid].
                   It is also called an Abelian Monoid
@@ -48,10 +75,10 @@
                 )
             , CGClass
                 ( False
-                , /Data/Algebra/Eq
+                , ∀/Data/Algebra/Eq
                 ,
-                    [ /Data/Algebra/POrd
-                    , /Data/Algebra/Semigroup
+                    [ ∀/Data/Algebra/POrd
+                    , ∀/Data/Algebra/Semigroup
                     ]
                 , Just "The Eq class is used to define values which can be compared for equality.
                   While naive tuple equality often works, some types have equality that behaves differently and must be defined.
@@ -61,7 +88,7 @@
                 )
             , CGClass
                 ( False
-                , /Data/Algebra/Group
+                , ∀/Data/Algebra/Group
                 , []
                 , Just "The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
                   It adds an inverse operation that finds the opposite of an element.
@@ -70,10 +97,10 @@
                 )
             , CGClass
                 ( False
-                , /Data/Algebra/Monoid
+                , ∀/Data/Algebra/Monoid
                 ,
-                    [ /Data/Algebra/CommutativeMonoid
-                    , /Data/Algebra/Group
+                    [ ∀/Data/Algebra/CommutativeMonoid
+                    , ∀/Data/Algebra/Group
                     ]
                 , Just "The [Monoid] builds on top of the [Semigroup].
                   It adds the identity value [mempty].
@@ -82,14 +109,14 @@
                 )
             , CGClass
                 ( False
-                , /Data/Algebra/Ord
-                , []
+                , ∀/Data/Algebra/Ord
+                , [ ∀/Data/Primitive/Number ]
                 , Just "Ord is used to define types which can be strictly ordered.
-                  Every element, when compared must have one of the following [Ordering] relationships:"
+                  Every element, when compared must have one of the following [Ordering] relationships: "
                 )
             , CGClass
                 ( True
-                , /Data/Algebra/Ordering
+                , ∀/Data/Algebra/Ordering
                 ,
                     [ /Data/Algebra/LessThan
                     , /Data/Algebra/Equal
@@ -99,16 +126,16 @@
                 )
             , CGClass
                 ( False
-                , /Data/Algebra/POrd
-                , [ /Data/Algebra/Ord ]
+                , ∀/Data/Algebra/POrd
+                , [ ∀/Data/Algebra/Ord ]
                 , Just "In addition to [Ord], [POrd] defines a partial ordering.
                   Partially ordered items can be compared, but may result in [NoOrdering]: "
                 )
             , CGClass
                 ( True
-                , /Data/Algebra/POrdering
+                , ∀/Data/Algebra/POrdering
                 ,
-                    [ /Data/Algebra/Ordering
+                    [ ∀/Data/Algebra/Ordering
                     , /Data/Algebra/NoOrdering
                     ]
                 , Just "As an example, sets can be partially ordered by the subset operation.
@@ -118,8 +145,8 @@
                 )
             , CGClass
                 ( False
-                , /Data/Algebra/Semigroup
-                , [ /Data/Algebra/Monoid ]
+                , ∀/Data/Algebra/Semigroup
+                , [ ∀/Data/Algebra/Monoid ]
                 , Just "A semigroup is a type combined with an associative operation called [operator++].
                   For example, integers with the addition operation are a semigroup. "
                 )
@@ -136,42 +163,47 @@
     (
         (
             [ Value /Catln/IO
-            , /Catln/exit ( Value val ) ( Value this -> /Catln/IO ) -> /Catln/IO
-            , /Catln/println ( Value msg ) ( Value this -> /Catln/IO ) -> /Catln/IO
-            , /Catln/#md ( Arg /Data/String text )
-            , /Catln/#name ( Arg /Data/String name )
+            , /Catln/exit ( Value val -> /Data/Primitive/Integer ) ( Value this -> /Catln/IO ) -> /Catln/IO
+            , /Catln/println ( Value msg -> /Data/String ) ( Value this -> /Catln/IO ) -> /Catln/IO
+            , /Catln/#md ( Value text -> /Data/String )
+            , /Catln/#name ( Value name -> /Data/String )
             , Value /Catln/#else
             , Value /Catln/#argStart
             , Value /Catln/#argEnd
-            , /Catln/#assert ( Arg /Data/Primitive/Boolean test )
-            , /Catln/#assert ( Arg /Data/Primitive/Boolean test ) ( Arg /Data/String msg )
+            , /Catln/#assert ( Value test -> ∀/Data/Primitive/Boolean )
+            , /Catln/#assert ( Value test -> ∀/Data/Primitive/Boolean ) ( Value msg -> /Data/String )
             , /Catln/#print
-                ( Arg /Catln/CatlnResult
+                ( Value p -> /Catln/CatlnResult
                     ( name=/Data/String
                     , contents=/Data/String
-                    ) p
+                    )
                 )
             , Value /Catln/#test
             , Value /Catln/#example
-            , /Catln/CatlnResult ( Arg /Data/String name ) ( Arg /Data/String contents )
-            , /Catln/www ( Value html ) = CatlnResult
-                ( Value name= CStr "index.html" ) ( Value contents= Arg TopType html )
+            , /Catln/CatlnResult ( Value name -> /Data/String ) ( Value contents -> /Data/String )
+            , /Catln/www ( Value html -> /Data/String ) = CatlnResult
+                ( Value name= CStr "index.html" ) ( Value contents= Value html )
             , /Catln/llvm ( Value c ) -> /Catln/CatlnResult
                 ( name=/Data/String
                 , contents=/Data/String
                 )
             , Value /Catln/Then
             , Value /Catln/Else
-            , /Catln/ThenElse/fromBool ( Value v ) -> /Catln/ThenElse
+            , /Catln/ThenElse/fromBool ( Value v -> ∀/Data/Primitive/Boolean ) -> ∀/Catln/ThenElse
             , /Catln/ThenElse/fromBool ( Value v= Value /Data/Primitive/True ) = Value Then
             , /Catln/ThenElse/fromBool ( Value v= Value /Data/Primitive/False ) = Value Else
             ]
         ,
             [ CGType
             , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
             , CGClass
                 ( True
-                , /Catln/ThenElse
+                , ∀/Catln/ThenElse
                 ,
                     [ /Catln/Then
                     , /Catln/Else
@@ -191,41 +223,45 @@
     (
         (
             [ Value /Data/String
-            , /operator== ( Value l= Hole /Data/String HoleActive Nothing ) ( Value r= Hole /Data/String HoleActive Nothing ) -> /Data/Primitive/Boolean
+            , /operator== ( Value l -> /Data/String = Hole TopType HoleActive Nothing ) ( Value r -> /Data/String = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
             , /Data/toString ( Value this -> /Data/String ) -> /Data/String
-            , /Data/toString ( Value this -> /Data/String ) = Arg TopType this
+            , /Data/toString ( Value this -> /Data/String ) = Value this
             , /Data/toString ( Value this -> /Data/Primitive/Integer ) -> /Data/String
             , Value /Data/None
             , /Data/Cons [ T : TopType ]
-                ( Arg TVVar "T" head )
-                ( Arg /Data/ConsList
-                    [ T=TVVar "T" ] tail
+                ( Value head -> TVVar "T" )
+                ( Value tail -> ∀/Data/ConsList
+                    [ T=TVVar "T" ]
                 )
             , Value /Data/Nil
             , /Data/length ( Value this -> /Data/Nil ) = CInt 0
             , /Data/length
                 ( Value this= /Data/Cons ( Value head ) ( Value tail ) ) = /operator+
                 ( Value l= CInt 1 )
-                ( Value r= length ( Value this= Arg TopType tail ) )
-            , /Data/enum [ T : /Data/Enum ] -> /Data/Set [ T=TopType ]
+                ( Value r= length ( Value this= Value tail ) )
+            , /Data/enum [ T : ∀/Data/Enum ] -> ∀/Data/Set [ T=TopType ]
             ]
         ,
             [ CGType
             , CGType
             , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
             , CGClass
                 ( False
-                , /Data/String
+                , ∀/Data/String
                 , [ /Data/String ]
                 , Just ""
                 )
             , CGClass
                 ( True
-                , /Data/ConsList [ T=TopType ]
+                , ∀/Data/ConsList [ T=TopType ]
                 ,
                     [ /Data/Cons [ T=TopType ]
                         ( head=TVVar "T"
-                        , tail=/Data/ConsList
+                        , tail=∀/Data/ConsList
                             [ T=TVVar "T" ]
                         )
                     , /Data/Nil
@@ -235,18 +271,18 @@
                 )
             , CGClass
                 ( False
-                , /Data/Enum
+                , ∀/Data/Enum
                 , []
                 , Just "[Enum] represents a type which can be enumerated.
                   It defines a single function [enum] which lists all of the values in the type."
                 )
             , CGClass
                 ( False
-                , /Data/Functor [ T=TopType ]
+                , ∀/Data/Functor [ T=TopType ]
                 ,
-                    [ /Data/Option
+                    [ ∀/Data/Option
                         [ T=TVVar "T" ]
-                    , /Data/ConsList
+                    , ∀/Data/ConsList
                         [ T=TVVar "T" ]
                     ]
                 , Just "A [Functor] is a basic property of a collection.
@@ -254,13 +290,13 @@
                 )
             , CGClass
                 ( False
-                , /Data/List [ T=TopType ]
+                , ∀/Data/List [ T=TopType ]
                 , []
                 , Just ""
                 )
             , CGClass
                 ( True
-                , /Data/Option [ T=TopType ]
+                , ∀/Data/Option [ T=TopType ]
                 ,
                     [ TVVar "T"
                     , /Data/None
@@ -270,7 +306,7 @@
                 )
             , CGClass
                 ( False
-                , /Data/Set [ T=TopType ]
+                , ∀/Data/Set [ T=TopType ]
                 , []
                 , Just ""
                 )
@@ -305,75 +341,88 @@
         (
             [ Value /Data/Primitive/True
             , Value /Data/Primitive/False
-            , /operator== ( Value l= Hole /Data/Primitive/Boolean HoleActive Nothing ) ( Value r= Hole /Data/Primitive/Boolean HoleActive Nothing ) -> /Data/Primitive/Boolean
-            , /operator== ( Value l= Hole /Data/Primitive/True HoleActive Nothing ) ( Value r= Hole /Data/Primitive/True HoleActive Nothing ) = Value True
-            , /operator== ( Value l= Hole /Data/Primitive/True HoleActive Nothing ) ( Value r= Hole /Data/Primitive/False HoleActive Nothing ) = Value False
-            , /operator== ( Value l= Hole /Data/Primitive/False HoleActive Nothing ) ( Value r= Hole /Data/Primitive/True HoleActive Nothing ) = Value False
-            , /operator== ( Value l= Hole /Data/Primitive/False HoleActive Nothing ) ( Value r= Hole /Data/Primitive/False HoleActive Nothing ) = Value True
-            , /operator~ ( Value a= Hole /Data/Primitive/Boolean HoleActive Nothing ) -> /Data/Primitive/Boolean
+            , /operator== ( Value l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) ( Value r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+            , /operator== ( Value l -> /Data/Primitive/True = Hole TopType HoleActive Nothing ) ( Value r -> /Data/Primitive/True = Hole TopType HoleActive Nothing ) = Value True
+            , /operator== ( Value l -> /Data/Primitive/True = Hole TopType HoleActive Nothing ) ( Value r -> /Data/Primitive/False = Hole TopType HoleActive Nothing ) = Value False
+            , /operator== ( Value l -> /Data/Primitive/False = Hole TopType HoleActive Nothing ) ( Value r -> /Data/Primitive/True = Hole TopType HoleActive Nothing ) = Value False
+            , /operator== ( Value l -> /Data/Primitive/False = Hole TopType HoleActive Nothing ) ( Value r -> /Data/Primitive/False = Hole TopType HoleActive Nothing ) = Value True
+            , /operator~ ( Value a= Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
             , /operator~ ( Value a= Hole /Data/Primitive/True HoleActive Nothing ) = Value False
             , /operator~ ( Value a= Hole /Data/Primitive/False HoleActive Nothing ) = Value True
-            , /operator&& ( Value l= Hole /Data/Primitive/Boolean HoleActive Nothing ) ( Value r= Hole /Data/Primitive/Boolean HoleActive Nothing ) -> /Data/Primitive/Boolean
-            , /operator&& ( Value l= Hole /Data/Primitive/True HoleActive Nothing ) ( Value r= Hole /Data/Primitive/True HoleActive Nothing ) = Value True
-            , /operator&& ( Value l= Hole /Data/Primitive/Boolean HoleActive Nothing ) ( Value r= Hole /Data/Primitive/False HoleActive Nothing ) = Value False
-            , /operator&& ( Value l= Hole /Data/Primitive/False HoleActive Nothing ) ( Value r= Hole /Data/Primitive/Boolean HoleActive Nothing ) = Value False
-            , /operator|| ( Value l= Hole /Data/Primitive/Boolean HoleActive Nothing ) ( Value r= Hole /Data/Primitive/Boolean HoleActive Nothing ) -> /Data/Primitive/Boolean
-            , /operator|| ( Value l= Hole /Data/Primitive/True HoleActive Nothing ) ( Value r= Hole /Data/Primitive/Boolean HoleActive Nothing ) = Value True
-            , /operator|| ( Value l= Hole /Data/Primitive/Boolean HoleActive Nothing ) ( Value r= Hole /Data/Primitive/True HoleActive Nothing ) = Value True
-            , /operator|| ( Value l= Hole /Data/Primitive/False HoleActive Nothing ) ( Value r= Hole /Data/Primitive/False HoleActive Nothing ) = Value False
-            , /operator^ ( Value l= Hole /Data/Primitive/Boolean HoleActive Nothing ) ( Value r= Hole /Data/Primitive/Boolean HoleActive Nothing ) -> /Data/Primitive/Boolean
-            , /operator^ ( Value l= Hole /Data/Primitive/True HoleActive Nothing ) ( Value r= Hole /Data/Primitive/True HoleActive Nothing ) = Value False
-            , /operator^ ( Value l= Hole /Data/Primitive/True HoleActive Nothing ) ( Value r= Hole /Data/Primitive/False HoleActive Nothing ) = Value True
-            , /operator^ ( Value l= Hole /Data/Primitive/False HoleActive Nothing ) ( Value r= Hole /Data/Primitive/True HoleActive Nothing ) = Value True
-            , /operator^ ( Value l= Hole /Data/Primitive/False HoleActive Nothing ) ( Value r= Hole /Data/Primitive/False HoleActive Nothing ) = Value False
+            , /operator&& ( Value l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) ( Value r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+            , /operator&& ( Value l -> /Data/Primitive/True = Hole TopType HoleActive Nothing ) ( Value r -> /Data/Primitive/True = Hole TopType HoleActive Nothing ) = Value True
+            , /operator&& ( Value l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) ( Value r -> /Data/Primitive/False = Hole TopType HoleActive Nothing ) = Value False
+            , /operator&& ( Value l -> /Data/Primitive/False = Hole TopType HoleActive Nothing ) ( Value r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) = Value False
+            , /operator|| ( Value l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) ( Value r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+            , /operator|| ( Value l -> /Data/Primitive/True = Hole TopType HoleActive Nothing ) ( Value r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) = Value True
+            , /operator|| ( Value l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) ( Value r -> /Data/Primitive/True = Hole TopType HoleActive Nothing ) = Value True
+            , /operator|| ( Value l -> /Data/Primitive/False = Hole TopType HoleActive Nothing ) ( Value r -> /Data/Primitive/False = Hole TopType HoleActive Nothing ) = Value False
+            , /operator^ ( Value l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) ( Value r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+            , /operator^ ( Value l -> /Data/Primitive/True = Hole TopType HoleActive Nothing ) ( Value r -> /Data/Primitive/True = Hole TopType HoleActive Nothing ) = Value False
+            , /operator^ ( Value l -> /Data/Primitive/True = Hole TopType HoleActive Nothing ) ( Value r -> /Data/Primitive/False = Hole TopType HoleActive Nothing ) = Value True
+            , /operator^ ( Value l -> /Data/Primitive/False = Hole TopType HoleActive Nothing ) ( Value r -> /Data/Primitive/True = Hole TopType HoleActive Nothing ) = Value True
+            , /operator^ ( Value l -> /Data/Primitive/False = Hole TopType HoleActive Nothing ) ( Value r -> /Data/Primitive/False = Hole TopType HoleActive Nothing ) = Value False
             , Value /Data/Primitive/Integer
             , Value /Data/Primitive/Float
             , /operator- ( Value a= Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
-            , /operator- ( Value l= Hole /Data/Primitive/Integer HoleActive Nothing ) ( Value r= Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
-            , /operator+ ( Value l= Hole /Data/Primitive/Integer HoleActive Nothing ) ( Value r= Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
-            , /operator* ( Value l= Hole /Data/Primitive/Integer HoleActive Nothing ) ( Value r= Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
-            , /operator<= ( Value l= Hole /Data/Primitive/Integer HoleActive Nothing ) ( Value r= Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Boolean
-            , /operator>= ( Value l= Hole /Data/Primitive/Integer HoleActive Nothing ) ( Value r= Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Boolean
-            , /operator< ( Value l= Hole /Data/Primitive/Integer HoleActive Nothing ) ( Value r= Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Boolean
-            , /operator> ( Value l= Hole /Data/Primitive/Integer HoleActive Nothing ) ( Value r= Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Boolean
-            , /operator== ( Value l= Hole /Data/Primitive/Integer HoleActive Nothing ) ( Value r= Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Boolean
-            , /operator!= ( Value l= Hole /Data/Primitive/Integer HoleActive Nothing ) ( Value r= Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Boolean
+            , /operator- ( Value l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) ( Value r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Integer
+            , /operator+ ( Value l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) ( Value r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Integer
+            , /operator* ( Value l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) ( Value r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Integer
+            , /operator<= ( Value l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) ( Value r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+            , /operator>= ( Value l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) ( Value r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+            , /operator< ( Value l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) ( Value r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+            , /operator> ( Value l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) ( Value r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+            , /operator== ( Value l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) ( Value r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+            , /operator!= ( Value l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) ( Value r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
             ]
         ,
             [ CGType
             , CGType
             , CGType
             , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
             , CGClass
                 ( False
-                , /Data/Primitive/Integer
+                , ∀/Data/Primitive/Integer
                 , [ /Data/Primitive/Integer ]
                 , Just ""
                 )
             , CGClass
                 ( False
-                , /Data/Primitive/Boolean
+                , ∀/Data/Primitive/Boolean
                 ,
-                    [ /Data/Primitive/Boolean
-                    , /Data/Primitive/Number
+                    [ ∀/Data/Primitive/Boolean
+                    , ∀/Data/Primitive/Number
                     ]
                 , Just " "
                 )
             , CGClass
                 ( False
-                , /Data/Primitive/Integer
+                , ∀/Data/Primitive/Integer
                 , [ /Data/Primitive/Integer ]
                 , Just ""
                 )
             , CGClass
                 ( False
-                , /Data/Primitive/Boolean
-                , [ /Data/Primitive/Boolean ]
+                , ∀/Data/Primitive/Boolean
+                , [ ∀/Data/Primitive/Boolean ]
                 , Just ""
                 )
             , CGClass
                 ( True
-                , /Data/Primitive/Boolean
+                , ∀/Data/Primitive/Boolean
                 ,
                     [ /Data/Primitive/True
                     , /Data/Primitive/False
@@ -382,7 +431,7 @@
                 )
             , CGClass
                 ( True
-                , /Data/Primitive/Number
+                , ∀/Data/Primitive/Number
                 ,
                     [ /Data/Primitive/Integer
                     , /Data/Primitive/Float
@@ -401,13 +450,17 @@
 ,
     (
         (
-            [ /id [ T : TopType ] ( Value x ) -> TVVar "T" = Arg TopType x
+            [ /id [ T : TopType ]
+                ( Value x -> TVVar "T" ) -> TVVar "T" = Value x
             , /Context ( Value value= Value /main ) ( Value io -> /Catln/IO ) = exit
                 ( Value val= id
                     ( Value x= CInt 0 )
-                ) ( Value this= Arg TopType io )
+                ) ( Value this= Value io )
             ]
-        , []
+        ,
+            [ CGType
+            , CGType
+            ]
         ,
             [ /Catln/#md
                 ( Value text= CStr "Tests id with type variables.

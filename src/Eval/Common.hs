@@ -103,7 +103,7 @@ instance Show Val where
   show (IntVal i)   = show i
   show (FloatVal d) = show d
   show (StrVal s)   = show s
-  show (TupleVal name args) = name ++ showArgs args
+  show (TupleVal name args) = "TupleVal " ++ name ++ showArgs args
     where
       showArgs as | H.null as = ""
       showArgs as = printf "(%s)" (intercalate ", " $ map showArg $ H.toList as)
@@ -170,11 +170,11 @@ data MacroData = MacroData {
                              , mdObj        :: EObjArr
                              , mdObjSrcType :: PartialType
                              }
-newtype MacroFunction = MacroFunction (ResArrowTree -> MacroData -> CRes ResArrowTree)
-type ResBuildEnvFunction = ResArrowTree -> ResArrowTree
+newtype MacroFunction = MacroFunction (TExpr () -> MacroData -> CRes (TExpr ()))
+type ResBuildEnvFunction = TCallTree
 type ResBuildEnvItem = (PartialType, Maybe (Expr EvalMetaDat), Bool, ResBuildEnvFunction)
 type ResBuildEnv = H.HashMap TypeName [ResBuildEnvItem]
-type ResExEnv = H.HashMap (PartialType, ObjArr Expr EvalMetaDat) (ResArrowTree, [ResArrowTree]) -- (result, [compAnnot trees])
+type ResExEnv = H.HashMap (PartialType, ObjArr Expr EvalMetaDat) (TExpr (), [TExpr ()]) -- (result, [compAnnot trees])
 
 data TBEnv = TBEnv {
     tbName       :: String
@@ -225,6 +225,79 @@ instance Show ResArrowTree where
       showArg (argName, val) = argName ++ " = " ++ show val
       args' = intercalate ", " $ map showArg $ H.toList args
   show (ResArrowTupleApply base argName argVal) = printf "Apply (%s)(%s = %s)" (show base) argName (show argVal)
+
+instance Show TCallTree where
+  show TCTId = "TCTId"
+  show (TCMatch opts) = printf "TCMatch (%s)" (show opts)
+  show (TCSeq a b) = printf "TCSeq (%s) (%s)" (show a) (show b)
+  show (TCCond t ifs els) = printf "TCCond %s (%s) (%s)" (show t) (show ifs) (show els)
+  show (TCArg t _) = printf "TCArg %s" (show t)
+  show (TCObjArr oa) = printf "TCObjArr %s" (show oa)
+  show (TCPrim t _) = printf "TCPrim %s" (show t)
+  show (TCMacro t _) = printf "TCMacro %s" (show t)
+
+data TCallTree
+  = TCTId
+  | TCMatch (H.HashMap PartialType TCallTree)
+  | TCSeq TCallTree TCallTree
+  | TCCond Type [((TExpr (), EObjArr), TCallTree)] TCallTree -- [((if, ifObj), then)] else
+  | TCArg Type String
+  | TCObjArr EObjArr
+  | TCPrim Type EPrim
+  | TCMacro Type MacroFunction
+  deriving (Eq, Generic, Hashable)
+
+data TExpr m
+  = TCExpr (Meta m) Val
+  | TValue (Meta m) TypeName
+  | THoleExpr (Meta m) Hole
+  | TAliasExpr (TExpr m) (TExpr m) -- ^ AliasTExpr baseExpr aliasExpr
+  | TTupleApply (Meta m) (TExpr m) (ObjArr TExpr m)
+  | TVarApply (Meta m) (TExpr m) TypeVarName (Meta m)
+  | TCalls (Meta m) (TExpr m) TCallTree
+  deriving (Eq, Show, Generic, Hashable)
+
+instance ExprClass TExpr where
+  getExprMeta expr = case expr of
+    TCExpr m _        -> m
+    TValue m _        -> m
+    THoleExpr m _     -> m
+    TAliasExpr b _    -> getExprMeta b
+    TTupleApply m _ _ -> m
+    TVarApply m _ _ _ -> m
+    TCalls m _ _      -> m
+
+  maybeExprPathM (TValue m n)        = Just (n, m)
+  maybeExprPathM (TTupleApply _ e _) = maybeExprPathM e
+  maybeExprPathM (TVarApply _ e _ _) = maybeExprPathM e
+  maybeExprPathM (TAliasExpr b _)    = maybeExprPathM b
+  maybeExprPathM (TCalls _ b _)      = maybeExprPathM b
+  maybeExprPathM _                   = Nothing
+
+  exprAppliedArgs (TValue _ _) = []
+  exprAppliedArgs (TTupleApply _ be ae) = ae : exprAppliedArgs be
+  exprAppliedArgs (TVarApply _ e _ _) = exprAppliedArgs e
+  exprAppliedArgs (TAliasExpr _ b) = exprAppliedArgs b
+  exprAppliedArgs (TCalls _ b _) = exprAppliedArgs b
+  exprAppliedArgs e = error $ printf "Unsupported Expr exprAppliedArgs for %s" (show e)
+
+  exprAppliedOrdVars (TValue _ _) = []
+  exprAppliedOrdVars (TTupleApply _ be _) = exprAppliedOrdVars be
+  exprAppliedOrdVars (TVarApply _ e n m) = (n, m) : exprAppliedOrdVars e
+  exprAppliedOrdVars (TAliasExpr _ b) = exprAppliedOrdVars b
+  exprAppliedOrdVars (TCalls _ b _) = exprAppliedOrdVars b
+  exprAppliedOrdVars _ = error "Unsupported Expr exprAppliedOrdVars"
+
+  exprVarArgs TCExpr{} = H.empty
+  exprVarArgs TValue{} = H.empty
+  exprVarArgs THoleExpr{} = H.empty
+  exprVarArgs (TAliasExpr base (TValue _ n)) = H.insertWith (++) (TVArg n) [getExprMeta base] (exprVarArgs base)
+  exprVarArgs (TAliasExpr base alias) = H.unionWith (++) (exprVarArgs base) (exprVarArgs alias)
+  exprVarArgs (TTupleApply _ be ObjArr{oaObj=Just (GuardExpr (TValue _ n) _), oaArr=(Nothing, arrM)}) = H.insertWith (++) (TVArg n) [arrM] (exprVarArgs be)
+  exprVarArgs (TTupleApply _ _ ObjArr{oaObj, oaArr=(Nothing, _)}) = error $ printf "Unexpected unhandled obj type in exprVarArgs: %s" (show oaObj)
+  exprVarArgs (TTupleApply _ be ObjArr{oaArr=(Just (GuardExpr e _), _)}) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)
+  exprVarArgs (TVarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar n) [m])
+  exprVarArgs (TCalls _ b _) = exprVarArgs b
 
 
 -------------------------------------------------------------------------------
@@ -281,12 +354,12 @@ type ObjSrc = (PartialType, EObjArr)
 macroData :: TBEnv -> ObjSrc -> MacroData
 macroData tbEnv (objSrcType, obj) = MacroData tbEnv obj objSrcType
 
-resArrowDestType :: ClassGraph -> PartialType -> ResArrowTree -> Type
-resArrowDestType classGraph src (ResEArrow _ oa) = arrowDestType False classGraph src oa
-resArrowDestType _ _ (PrimArrow _ tp _) = tp
-resArrowDestType _ _ (MacroArrow _ tp _) = tp
-resArrowDestType _ _ (ConstantArrow v) = singletonType $ getValType v
-resArrowDestType _ _ (ArgArrow tp _) = tp
+resArrowDestType :: ClassGraph -> PartialType -> TCallTree -> Type
+resArrowDestType classGraph src (TCObjArr oa) = arrowDestType False classGraph src oa
+resArrowDestType _ _ (TCPrim tp _) = tp
+resArrowDestType _ _ (TCMacro tp _) = tp
+-- resArrowDestType _ _ (ConstantArrow v) = singletonType $ getValType v
+resArrowDestType _ _ (TCArg tp _) = tp
 resArrowDestType _ _ t = error $ printf "Not yet implemented resArrowDestType for %s" (show t)
 
 

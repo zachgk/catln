@@ -13,7 +13,7 @@ module Data
 
   every String isa /Data/Algebra/Eq
 
-  (_: String == _: String) -> Boolean
+  (_:: String == _:: String) -> Boolean
 
   :String.toString -> String
   :String.toString = this
@@ -52,8 +52,8 @@ module Data
       A [ConsList] defines a list either by prepending to a list or with an empty list.
 
 
-  # /operator::<$T>($T l, ConsList<$T> r) = Cons(head=l, tail=r)
-    [operator::] is a utility operator to prepend an element onto a [List].
+  # /operator+:<$T>($T l, ConsList<$T> r) = Cons(head=l, tail=r)
+    [operator+:] is a utility operator to prepend an element onto a [List].
 
   # #### [length]
     The [length] of a [List] is the number of items inside of it.

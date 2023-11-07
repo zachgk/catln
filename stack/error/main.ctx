@@ -29,7 +29,7 @@ class Err
 
     :Result[$R, $E].default(def: $R)= match(this)
       val: $R= val
-      _: $E= def
+      _:: $E= def
 
     every Result[$R: $T, $E] isa Functor
 
@@ -39,7 +39,7 @@ class Err
 
     :Result[$R].to[Optional]= match(this)
       val: $R= val
-      _: $E= Nothing
+      _:: $E= Nothing
 
 
 

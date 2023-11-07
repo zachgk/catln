@@ -31,9 +31,6 @@ showExpr env (CExpr m c) = do
 showExpr env (Value m name) = do
   m' <- showM env m
   return $ Value m' name
-showExpr env (Arg m name) = do
-  m' <- showM env m
-  return $ Arg m' name
 showExpr env (HoleExpr m hole) = do
   m' <- showM env m
   return $ HoleExpr m' hole
@@ -98,17 +95,17 @@ showObjArrow env (obj, annots, arrow) = do
 showConHelper :: FEnv -> (Scheme -> Scheme -> SConstraint) -> VarMeta -> VarMeta -> SConstraint
 showConHelper env f p1 p2 = f (descriptor env p1) (descriptor env p2)
 
-showCon :: FEnv -> Constraint -> SConstraint
-showCon env (EqualsKnown _ p t) = SEqualsKnown (descriptor env p) t
-showCon env (EqPoints _ p1 p2) = showConHelper env SEqPoints p1 p2
-showCon env (BoundedByKnown _ p t) = SBoundedByKnown (descriptor env p) t
-showCon env (BoundedByObjs _ p) = SBoundedByObjs (descriptor env p)
-showCon env (ArrowTo _ p1 p2) = showConHelper env SArrowTo p1 p2
-showCon env (PropEq _ (p1, name) p2) = showConHelper env (\s1 s2 -> SPropEq (s1, name) s2) p1 p2
-showCon env (AddArg _ (p1, argName) p2) = showConHelper env (\s1 s2 -> SAddArg (s1, argName) s2) p1 p2
-showCon env (AddInferArg _ p1 p2) = showConHelper env SAddInferArg p1 p2
-showCon env (PowersetTo _ p1 p2) = showConHelper env SPowersetTo p1 p2
-showCon env (UnionOf _ p1 p2s) = SUnionOf (descriptor env p1) (map (descriptor env) p2s)
+showCon :: FEnv -> VConstraint -> SConstraint
+showCon env (EqualsKnown i vaenv p t) = EqualsKnown i (descriptorVaenv env vaenv) (descriptor env p) t
+showCon env (EqPoints i vaenv p1 p2) = showConHelper env (EqPoints i (descriptorVaenv env vaenv)) p1 p2
+showCon env (BoundedByKnown i vaenv p t) = BoundedByKnown i (descriptorVaenv env vaenv)(descriptor env p) t
+showCon env (BoundedByObjs i vaenv p) = BoundedByObjs i (descriptorVaenv env vaenv)(descriptor env p)
+showCon env (ArrowTo i vaenv p1 p2) = showConHelper env (ArrowTo i (descriptorVaenv env vaenv)) p1 p2
+showCon env (PropEq i vaenv (p1, name) p2) = showConHelper env (\s1 s2 -> PropEq i (descriptorVaenv env vaenv)(s1, name) s2) p1 p2
+showCon env (AddArg i vaenv (p1, argName) p2) = showConHelper env (\s1 s2 -> AddArg i (descriptorVaenv env vaenv)(s1, argName) s2) p1 p2
+showCon env (AddInferArg i vaenv p1 p2) = showConHelper env (AddInferArg i (descriptorVaenv env vaenv)) p1 p2
+showCon env (PowersetTo i vaenv p1 p2) = showConHelper env (PowersetTo i (descriptorVaenv env vaenv)) p1 p2
+showCon env (UnionOf i vaenv p1 p2s) = UnionOf i (descriptorVaenv env vaenv)(descriptor env p1) (map (descriptor env) p2s)
 
 showPrgm :: FEnv -> VPrgm -> TypeCheckResult SPrgm
 showPrgm env (objMap, classGraph, annots) = do
@@ -116,7 +113,7 @@ showPrgm env (objMap, classGraph, annots) = do
   annots' <- mapM (showExpr env) annots
   return (objMap', classGraph, annots')
 
-showConstraints :: FEnv -> [Constraint] -> [SConstraint]
+showConstraints :: FEnv -> [VConstraint] -> [SConstraint]
 showConstraints env = map (showCon env)
 
 showTraceConstrainEpoch :: FEnv -> TraceConstrainEpoch -> [(SConstraint, [(Pnt, Scheme)])]
@@ -127,7 +124,7 @@ showTraceConstrainEpoch env = map mapConstraint . filter (not . null . snd)
 matchingConstraintHelper :: FEnv -> VarMeta -> VarMeta -> VarMeta -> Bool
 matchingConstraintHelper env p p2 p3 = equivalent env p p2 || equivalent env p p3
 
-matchingConstraint :: FEnv -> VarMeta -> Constraint -> Bool
+matchingConstraint :: FEnv -> VarMeta -> VConstraint -> Bool
 matchingConstraint env p con = any (equivalent env p) $ constraintMetas con
 
 showMatchingConstraints :: FEnv -> VarMeta -> [SConstraint]
@@ -136,5 +133,5 @@ showMatchingConstraints env@FEnv{feCons} matchVar = map (showCon env) $ filter (
 mkTracedTypeCheckError :: FEnv -> VarMeta -> CodeRange -> String -> TypeCheckError
 mkTracedTypeCheckError env m = TracedTypeCheckError m (showMatchingConstraints env m)
 
-mkConstraintTypeCheckError :: FEnv -> Constraint -> [TypeCheckError] -> TypeCheckError
+mkConstraintTypeCheckError :: FEnv -> VConstraint -> [TypeCheckError] -> TypeCheckError
 mkConstraintTypeCheckError env c = ConstraintTypeCheckError c (showCon env c)

@@ -39,7 +39,6 @@ data MetaType
 data ExprMetaType
   = ExprMetaConstant
   | ExprMetaVal
-  | ExprMetaArg
   | ExprMetaHole
   | ExprMetaMacroVal
   | ExprMetaApplyArg
@@ -73,7 +72,6 @@ zipMetaFun f1 f2 tp m@(Meta t p _) = Meta t p (db, dc)
 mapMetaAppliedExpr :: (MetaDat m, Show m) => MetaFun m m -> MetaLocation -> Expr m -> Expr m
 mapMetaAppliedExpr f loc (CExpr m c) = CExpr (f (ExprMeta loc ExprMetaConstant) m) c
 mapMetaAppliedExpr f loc (Value m n) = Value (f (ExprMeta loc ExprMetaVal) m) n
-mapMetaAppliedExpr f loc (Arg m n) = Arg (f (ExprMeta loc ExprMetaArg) m) n
 mapMetaAppliedExpr f loc (HoleExpr m h) = HoleExpr (f (ExprMeta loc ExprMetaHole) m) h
 mapMetaAppliedExpr f loc (AliasExpr b a) = AliasExpr (mapMetaAppliedExpr f loc b) (mapMetaAppliedExpr f loc a)
 mapMetaAppliedExpr f loc (TupleApply m (bm, be) arg) = TupleApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, mapMetaAppliedExpr f loc be) (mapOAObjExpr (mapMeta f loc) arg)
@@ -82,7 +80,6 @@ mapMetaAppliedExpr f loc (VarApply m be varName varVal) = VarApply (f (ExprMeta 
 instance MapMeta Expr where
   mapMeta f loc (CExpr m c) = CExpr (f (ExprMeta loc ExprMetaConstant) m) c
   mapMeta f loc (Value m n) = Value (f (ExprMeta loc ExprMetaVal) m) n
-  mapMeta f loc (Arg m n) = Arg (f (ExprMeta loc ExprMetaArg) m) n
   mapMeta f loc (HoleExpr m h) = HoleExpr (f (ExprMeta loc ExprMetaHole) m) h
   mapMeta f loc (AliasExpr b a) = AliasExpr (mapMeta f loc b) (mapMeta f loc a)
   mapMeta f loc (TupleApply m (bm, be) arg) = TupleApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, mapMeta f loc be) (mapMetaObjArr f (Just loc) arg)

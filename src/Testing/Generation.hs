@@ -16,7 +16,6 @@ module Testing.Generation where
 import           Control.Monad
 import           Data.Bifunctor      (bimap)
 import           Data.Either         (partitionEithers)
-import           Data.Graph          (graphFromEdges)
 import qualified Data.HashMap.Strict as H
 import           Data.List           (partition)
 import           Data.Maybe
@@ -24,7 +23,8 @@ import qualified Data.Set            as S
 import           Hedgehog
 import qualified Hedgehog.Gen        as HG
 import           Hedgehog.Range      (linear, singleton)
-import           Semantics           (getExprType, oaObjPath)
+import           Semantics           (classGraphFromObjs, getExprType,
+                                      oaObjPath)
 import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
@@ -117,7 +117,7 @@ genInputExpr = do
   varArgNames <- HG.set (linear 0 5) genName
   varOrArg <- HG.list (singleton $ S.size varArgNames) HG.bool
   let (varNames, argNames) = bimap (map fst) (map fst) $ partition snd $ zip (S.toList varArgNames) varOrArg
-  let val = Value emptyMetaN n
+  let val = Value (emptyMetaT $ typeVal $ PTypeName n) n
   withVars <- foldM genVar val varNames
   foldM genArg withVars argNames
   where
@@ -125,22 +125,24 @@ genInputExpr = do
     genVar base varName = do
       return $ VarApply emptyMetaN base varName emptyMetaN
     genArg base argName = do
-      return $ TupleApply emptyMetaN (emptyMetaN, base) (ObjArr (Just (GuardExpr (Arg emptyMetaN argName) Nothing)) ArgObj Nothing [] (Nothing, emptyMetaN))
+      return $ TupleApply emptyMetaN (emptyMetaN, base) (ObjArr (Just (GuardExpr (Value emptyMetaN argName) Nothing)) ArgObj Nothing [] (Nothing, emptyMetaN))
 
 -- | Generates an output expression equivalent to an input expression
 genOutputExpr :: Expr () -> Expr () -> Gen (Expr ())
 genOutputExpr (Value _ n) _ = return $ Value emptyMetaN n
-genOutputExpr (TupleApply _ (_, b) arg@ObjArr{oaArr}) input = do
-  b' <- genOutputExpr b input
-  oaArr' <- case oaArr of
-    (Just (GuardExpr e _), _) -> do
-      e' <- genOutputExpr e input
-      return (Just (GuardExpr e' Nothing), emptyMetaN)
-    (Nothing, _) -> return (Just (GuardExpr (HoleExpr emptyMetaN (HoleActive Nothing)) Nothing), emptyMetaN)
-  return $ TupleApply emptyMetaN (emptyMetaN, b') arg{oaArr=oaArr'}
-genOutputExpr (VarApply _ b varName _) input = do
-  b' <- genOutputExpr b input
-  return $ VarApply emptyMetaN b' varName emptyMetaN
+genOutputExpr (TupleApply _ (_, b) _) input = genOutputExpr b input
+-- genOutputExpr (TupleApply _ (_, b) arg@ObjArr{oaArr}) input = do
+--   b' <- genOutputExpr b input
+--   oaArr' <- case oaArr of
+--     (Just (GuardExpr e _), _) -> do
+--       e' <- genOutputExpr e input
+--       return (Just (GuardExpr e' Nothing), emptyMetaN)
+--     (Nothing, _) -> return (Just (GuardExpr (HoleExpr emptyMetaN (HoleActive Nothing)) Nothing), emptyMetaN)
+--   return $ TupleApply emptyMetaN (emptyMetaN, b') arg{oaArr=oaArr'}
+genOutputExpr (VarApply _ b _ _) input = genOutputExpr b input
+-- genOutputExpr (VarApply _ b varName _) input = do
+--   b' <- genOutputExpr b input
+--   return $ VarApply emptyMetaN b' varName emptyMetaN
 genOutputExpr e _ = error $ printf "Not yet implemented getOutputExpr for %s" (show e)
 
 
@@ -152,13 +154,17 @@ genPrgm = do
 
   let allInputs = dataTypes ++ funs
   funObjs <- forM funs $ \obj -> do
-                                arrGoal <- HG.element allInputs
-                                arr <- genOutputExpr arrGoal obj
-                                return $ ObjArr (Just (GuardExpr obj Nothing)) FunctionObj Nothing [] (Just (GuardExpr arr Nothing), emptyMetaN)
+                                let otherInputs = filter (/= obj) allInputs
+                                if null otherInputs
+                                  then return $ ObjArr (Just (GuardExpr obj Nothing)) FunctionObj Nothing [] (Nothing, emptyMetaN)
+                                  else do
+                                    arrGoal <- HG.element otherInputs
+                                    arr <- genOutputExpr arrGoal obj
+                                    return $ ObjArr (Just (GuardExpr obj Nothing)) FunctionObj Nothing [] (Just (GuardExpr arr Nothing), emptyMetaN)
 
   let objMap = dataObjs ++ funObjs
 
-  return (objMap, ClassGraph $ graphFromEdges [], [])
+  return (objMap, classGraphFromObjs objMap, [])
 
 genPrgms :: Gen [GraphNodes (ExprPrgm Expr ()) String]
 genPrgms = do

@@ -18,7 +18,7 @@ module Data/Algebra
       Note that it only compares like items with each other, not that you can compare apples to oranges.
 
 
-  (_: $T != _: $T)[$T: /Data/Algebra/Eq] -> Boolean
+  (_:: $T != _:: $T)[$T: /Data/Algebra/Eq] -> Boolean
     # This checks if two items are not equal.
 
   # It is the opposite of [operator==] leading to the simple definition:
@@ -37,6 +37,7 @@ module Data/Algebra
     # Ord is used to define types which can be strictly ordered.
       Every element, when compared must have one of the following [Ordering] relationships:
 
+  every Number isa /Data/Algebra/Ord
 
   class Ordering = LessThan | Equal | GreaterThan
     # The Orderings can relate any like items of Ord. 
@@ -72,13 +73,13 @@ module Data/Algebra
   # ### Operators for ordering
     Besides compare, there are also some operators to make using ordering easier.
 
-  (_: $T <= _: $T)[$T: Ord] -> Boolean
+  (_:: $T <= _:: $T)[$T: Ord] -> Boolean
 
-  (_: $T >= _: $T)[$T: Ord] -> Boolean
+  (_:: $T >= _:: $T)[$T: Ord] -> Boolean
 
-  (_: $T < _: $T)[$T: Ord] -> Boolean
+  (_:: $T < _:: $T)[$T: Ord] -> Boolean
 
-  (_: $T > _: $T)[$T: Ord] -> Boolean
+  (_:: $T > _:: $T)[$T: Ord] -> Boolean
 
   every POrd isa /Data/Algebra/Eq
     # If something can be compared for order, it should also be comparable for equality by the following relationship:
@@ -103,7 +104,7 @@ module Data/Algebra
 
   every Semigroup isa /Data/Algebra/Eq
 
-  (_: $T ++ _: $T)[$T: Semigroup] -> $T
+  (_:: $T ++ _:: $T)[$T: Semigroup] -> $T
 
   testSemigroupAssociative[$T: Semigroup](a: $T, b: $T, c: $T) =
     #test

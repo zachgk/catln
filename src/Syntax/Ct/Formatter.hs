@@ -132,7 +132,7 @@ formatObjArr roa@RawObjArr{roaObj, roaArr, roaDef} = printf "%s%s%s%s%s%s" (show
       Just d  -> printf " ? %s" (formatExpr d)
       Nothing -> ""
 
-formatStatement :: (Show m) => Int -> RawStatement RawExpr m -> String
+formatStatement :: (MetaDat m, Show m) => Int -> RawStatement RawExpr m -> String
 formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
   where
     statement' = case statement of
@@ -177,7 +177,7 @@ isHiddenStatement (RawAnnot annot) | isElseAnnot annot = True
 isHiddenStatement (RawAnnot annot) | isCtxAnnot annot = True
 isHiddenStatement _ = False
 
-formatStatementTree :: (Show m) => Bool -> Int -> RawStatementTree RawExpr m -> Builder
+formatStatementTree :: (MetaDat m, Show m) => Bool -> Int -> RawStatementTree RawExpr m -> Builder
 formatStatementTree rootStatement indent (RawStatementTree statement subTree) = do
   unless (isHiddenStatement statement) (literal $ formatStatement indent statement)
 
@@ -188,7 +188,7 @@ formatStatementTree rootStatement indent (RawStatementTree statement subTree) = 
     formatStatementTree subTreeRootStatement (indent + 1) s
   when rootStatement ""
 
-formatPrgm :: (Show m) => Int -> RawPrgm m -> Builder
+formatPrgm :: (MetaDat m, Show m) => Int -> RawPrgm m -> Builder
 formatPrgm indent (imports, statements) = do
   forM_ imports $ \imp -> do
     formatImport imp

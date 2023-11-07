@@ -52,7 +52,7 @@ ops = [
     ],
     [ InfixL (RawMethod <$ symbol ".")
     ],
-    [ InfixL (mkOp2 ":" <$ symbol ":")
+    [ InfixL (mkOp2 "::" <$ symbol "::")
     ],
     [ InfixL (mkOp2 "*" <$ symbol "*")
     , InfixL (mkOp2 "//" <$ symbol "//")
@@ -109,7 +109,7 @@ pArrowFull basis = do
   expr1 <- pExpr
   (guard, guardAnnots) <- pPatternGuard
   maybeDecl <- optional $ do
-    _ <- symbol "->"
+    _ <- symbol "->" <|> symbol ":"
     exprToTypeMeta <$> term
   maybeExpr2 <- optional $ do
     _ <- symbol "=>" <|> symbol "="

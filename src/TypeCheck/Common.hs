@@ -23,7 +23,6 @@ import qualified Data.IntMap.Lazy    as IM
 import           Data.List
 import           GHC.Generics        (Generic)
 
-import           Control.Monad       (forM)
 import           CRes
 import           Data.Aeson          (ToJSON, toJSON)
 import           Data.Maybe          (catMaybes, fromMaybe, listToMaybe,
@@ -38,7 +37,7 @@ import           Utils
 data TypeCheckError
   = GenTypeCheckError CodeRange String
   | TracedTypeCheckError VarMeta [SConstraint] CodeRange String
-  | ConstraintTypeCheckError Constraint SConstraint [TypeCheckError]
+  | ConstraintTypeCheckError VConstraint SConstraint [TypeCheckError]
   | TupleMismatch TypedMeta TExpr (Meta ()) (H.HashMap String TExpr)
   deriving (Eq, Ord, Generic, Hashable)
 
@@ -58,17 +57,13 @@ data SchemeActReq = SchemeAct | SchemeReq
 
 type Pnt = Int
 
-data EnvDef = DefVar VarMeta | DefKnown Type
-  deriving (Eq, Show, Generic, Hashable, ToJSON)
-type EnvValMap = (H.HashMap String EnvDef)
 data FEnv = FEnv { fePnts               :: IM.IntMap Scheme
-                 , feCons               :: [Constraint]
+                 , feCons               :: [VConstraint]
                  , feUnionAllObjs       :: VarMeta -- union of all TypeObj for argument inference
                  , feVTypeGraph         :: VTypeGraph
                  , feTTypeGraph         :: TTypeGraph
                  , feUpdatedDuringEpoch :: Bool -- ^ If a pnt is updated during the epoch
                  , feClassGraph         :: ClassGraph
-                 , feDefMap             :: EnvValMap
                  , feTrace              :: TraceConstrain
                  } deriving (Show)
 
@@ -77,31 +72,23 @@ type UnionObj = (Pnt, Pnt) -- a union of all TypeObj for argument inference, uni
 -- |
 -- Constraints represent known relationships between VarMeta formed during Encode
 -- Each constraint can affect other the actual type, the required type, or both for the "Scheme".
-data Constraint
-  = EqualsKnown VMetaVarArgEnv VarMeta Type -- ^ Both Actual and Req
-  | EqPoints VMetaVarArgEnv VarMeta VarMeta -- ^ Both Actual and Req
-  | BoundedByKnown VMetaVarArgEnv VarMeta Type -- ^ Both Actual and Req
-  | BoundedByObjs VMetaVarArgEnv VarMeta
-  | ArrowTo VMetaVarArgEnv VarMeta VarMeta -- ArrowTo src dest
-  | PropEq VMetaVarArgEnv (VarMeta, TypeVarAux) VarMeta -- ^ Both Actual and Req
-  | AddArg VMetaVarArgEnv (VarMeta, String) VarMeta -- ^ Both Actual and Req,
-  | AddInferArg VMetaVarArgEnv VarMeta VarMeta -- ^ Both Actual and Req, AddInferArg base arg
-  | PowersetTo VMetaVarArgEnv VarMeta VarMeta -- ^ Actual (maybe should make it req too)
-  | UnionOf VMetaVarArgEnv VarMeta [VarMeta] -- ^ Both Actual and Req
-  deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
+type CVarArgEnv p = H.HashMap TypeVarAux p
+data Constraint p
+  = EqualsKnown Int (CVarArgEnv p) p Type -- ^ Both Actual and Req
+  | EqPoints Int (CVarArgEnv p) p p -- ^ Both Actual and Req
+  | BoundedByKnown Int (CVarArgEnv p) p Type -- ^ Both Actual and Req
+  | BoundedByObjs Int (CVarArgEnv p) p
+  | ArrowTo Int (CVarArgEnv p) p p -- ArrowTo src dest
+  | PropEq Int (CVarArgEnv p) (p, TypeVarAux) p -- ^ Both Actual and Req
+  | AddArg Int (CVarArgEnv p) (p, String) p -- ^ Both Actual and Req,
+  | AddInferArg Int (CVarArgEnv p) p p -- ^ Both Actual and Req, AddInferArg base arg
+  | PowersetTo Int (CVarArgEnv p) p p -- ^ Actual (maybe should make it req too)
+  | UnionOf Int (CVarArgEnv p) p [p] -- ^ Both Actual and Req
+  deriving (Eq, Ord, Hashable, Generic, ToJSON)
 
-data SConstraint
-  = SEqualsKnown Scheme Type
-  | SEqPoints Scheme Scheme
-  | SBoundedByKnown Scheme Type
-  | SBoundedByObjs Scheme
-  | SArrowTo Scheme Scheme
-  | SPropEq (Scheme, TypeVarAux) Scheme
-  | SAddArg (Scheme, String) Scheme
-  | SAddInferArg Scheme Scheme
-  | SPowersetTo Scheme Scheme
-  | SUnionOf Scheme [Scheme]
-  deriving (Eq, Ord, Generic, Hashable)
+type VConstraint = Constraint VarMeta
+type SConstraint = Constraint Scheme
+type RConstraint = Constraint SType
 
 data TypeCheckResult r
   = TypeCheckResult [TypeCheckError] r
@@ -165,7 +152,7 @@ type SObjectMap = ExprObjectMap Expr ShowMetaDat
 type SObjectMapItem = ExprObjectMapItem Expr ShowMetaDat
 type SPrgm = ExprPrgm Expr ShowMetaDat
 
-data VarMetaDat = VarMetaDat (Maybe Pnt) (Maybe VObject)
+data VarMetaDat = VarMetaDat (Maybe Pnt) (Maybe VEObject)
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 type VarMeta = Meta VarMetaDat
 type VExpr = Expr VarMetaDat
@@ -193,6 +180,7 @@ type TObjArg = ObjArg Expr ()
 type TObject = Object Expr ()
 type TObjectMap = ObjectMap Expr ()
 type TObjectMapItem = ObjectMapItem Expr ()
+type TObjArr = ObjArr Expr ()
 type TPrgm = Prgm Expr ()
 type FinalTPrgm = ExprPrgm Expr ()
 type TEObjectMap = ExprObjectMap Expr ()
@@ -200,10 +188,8 @@ type TEObjectMapItem = ExprObjectMapItem Expr ()
 type TEPrgm = ExprPrgm Expr ()
 
 -- implicit graph
-type VTypeGraphVal = (VObject, VArrow) -- (match object type, if matching then can implicit to type in arrow)
-type VTypeGraph = H.HashMap TypeName [VTypeGraphVal] -- H.HashMap (Root tuple name for filtering) [vals]
-type TTypeGraphVal = (TObject, TArrow) -- (match object type, if matching then can implicit to type in arrow)
-type TTypeGraph = H.HashMap TypeName [TTypeGraphVal] -- H.HashMap (Root tuple name for filtering) [vals]
+type VTypeGraph = H.HashMap TypeName [VObjArr] -- H.HashMap (Root tuple name for filtering) [vals]
+type TTypeGraph = H.HashMap TypeName [TObjArr] -- H.HashMap (Root tuple name for filtering) [vals]
 
 instance MetaDat VarMetaDat where
   emptyMetaDat = VarMetaDat Nothing Nothing
@@ -230,20 +216,19 @@ instance CNoteTC TypeCheckError where
   showRecursiveCNote _ n = literal $ show n
 
 instance Show SType where
-  show (SType upper lower desc) | isBottomType lower = printf "(%s ⊇ %s)" (show upper) desc
-  show (SType upper lower desc) = printf "(%s ⊇ %s ⊇  %s)" (show upper) desc (show lower)
+  show (SType act req desc) = printf "{%s :: ACT %s; REQ  %s}" desc (show act) (show req)
 
-instance Show SConstraint where
-  show (SEqualsKnown s t) = printf "%s ==_Known %s" (show s) (show t)
-  show (SEqPoints s1 s2) = printf "%s == %s" (show s1) (show s2)
-  show (SBoundedByKnown s t) = printf "%s ⊆_Known %s" (show s) (show t)
-  show (SBoundedByObjs s) = printf "BoundedByObjs %s" (show s)
-  show (SArrowTo f t) = printf "%s -> %s" (show t) (show f)
-  show (SPropEq (s1, n) s2) = printf "(%s).%s == %s"  (show s1) (show n) (show s2)
-  show (SAddArg (base, arg) res) = printf "(%s)(%s) == %s" (show base) arg (show res)
-  show (SAddInferArg base res) = printf "(%s)(?) == %s" (show base) (show res)
-  show (SPowersetTo s t) = printf "𝒫(%s) ⊇ %s" (show s) (show t)
-  show (SUnionOf s _) = printf "SUnionOf for %s" (show s)
+instance (Show p) => Show (Constraint p) where
+  show (EqualsKnown i _ s t) = printf "%s %d==_Known %s" (show s) i (show t)
+  show (EqPoints i _ s1 s2) = printf "%s %d== %s" (show s1) i (show s2)
+  show (BoundedByKnown i _ s t) = printf "%s %d⊆_Known %s" (show s) i (show t)
+  show (BoundedByObjs i _ s) = printf "BoundedByObjs%d %s" i (show s)
+  show (ArrowTo i _ s d) = printf "%s %d-> %s" (show s) i (show d)
+  show (PropEq i _ (s1, n) s2) = printf "(%s).%s %d== %s"  (show s1) (show n) i (show s2)
+  show (AddArg i _ (base, arg) res) = printf "(%s)(%s) %d== %s" (show base) arg i (show res)
+  show (AddInferArg i _ base res) = printf "(%s)(?) %d== %s" (show base) i (show res)
+  show (PowersetTo i _ s t) = printf "𝒫(%s) %d⊇ %s" (show s) i (show t)
+  show (UnionOf i _ s _) = printf "SUnionOf %d for %s" i (show s)
 
 instance Show r => Show (TypeCheckResult r) where
   show (TypeCheckResult [] r) = show r
@@ -271,50 +256,40 @@ resToTypeCheck cres = case cres of
     fromCNote :: CNote -> TypeCheckError
     fromCNote note = GenTypeCheckError (posCNote note) (show note)
 
-constraintMetas :: Constraint -> [VarMeta]
-constraintMetas (EqualsKnown _ p2 _)    = [p2]
-constraintMetas (EqPoints _ p2 p3)      = [p2, p3]
-constraintMetas (BoundedByKnown _ p2 _) = [p2]
-constraintMetas (BoundedByObjs _ p2)    = [p2]
-constraintMetas (ArrowTo _ p2 p3)       = [p2, p3]
-constraintMetas (PropEq _ (p2, _) p3)   = [p2, p3]
-constraintMetas (AddArg _ (p2, _) p3)   = [p2, p3]
-constraintMetas (AddInferArg _ p2 p3)   = [p2, p3]
-constraintMetas (PowersetTo _ p2 p3)    = [p2, p3]
-constraintMetas (UnionOf _ p2 p3s)      = p2:p3s
+constraintMetas :: Constraint p -> [p]
+constraintMetas (EqualsKnown _ _ p2 _)    = [p2]
+constraintMetas (EqPoints _ _ p2 p3)      = [p2, p3]
+constraintMetas (BoundedByKnown _ _ p2 _) = [p2]
+constraintMetas (BoundedByObjs _ _ p2)    = [p2]
+constraintMetas (ArrowTo _ _ p2 p3)       = [p2, p3]
+constraintMetas (PropEq _ _ (p2, _) p3)   = [p2, p3]
+constraintMetas (AddArg _ _ (p2, _) p3)   = [p2, p3]
+constraintMetas (AddInferArg _ _ p2 p3)   = [p2, p3]
+constraintMetas (PowersetTo _ _ p2 p3)    = [p2, p3]
+constraintMetas (UnionOf _ _ p2 p3s)      = p2:p3s
 
-constraintVarArgEnv :: Constraint -> VMetaVarArgEnv
-constraintVarArgEnv (EqualsKnown vaenv _ _)    = vaenv
-constraintVarArgEnv (EqPoints vaenv _ _)       = vaenv
-constraintVarArgEnv (BoundedByKnown vaenv _ _) = vaenv
-constraintVarArgEnv (BoundedByObjs vaenv _)    = vaenv
-constraintVarArgEnv (ArrowTo vaenv _ _)        = vaenv
-constraintVarArgEnv (PropEq vaenv _ _)         = vaenv
-constraintVarArgEnv (AddArg vaenv _ _)         = vaenv
-constraintVarArgEnv (AddInferArg vaenv _ _)    = vaenv
-constraintVarArgEnv (PowersetTo vaenv _ _)     = vaenv
-constraintVarArgEnv (UnionOf vaenv _ _)        = vaenv
+constraintVarArgEnv :: Constraint p -> CVarArgEnv p
+constraintVarArgEnv (EqualsKnown _ vaenv _ _)    = vaenv
+constraintVarArgEnv (EqPoints _ vaenv _ _)       = vaenv
+constraintVarArgEnv (BoundedByKnown _ vaenv _ _) = vaenv
+constraintVarArgEnv (BoundedByObjs _ vaenv _)    = vaenv
+constraintVarArgEnv (ArrowTo _ vaenv _ _)        = vaenv
+constraintVarArgEnv (PropEq _ vaenv _ _)         = vaenv
+constraintVarArgEnv (AddArg _ vaenv _ _)         = vaenv
+constraintVarArgEnv (AddInferArg _ vaenv _ _)    = vaenv
+constraintVarArgEnv (PowersetTo _ vaenv _ _)     = vaenv
+constraintVarArgEnv (UnionOf _ vaenv _ _)        = vaenv
 
 getPnt :: VarMeta -> Maybe Pnt
 getPnt (Meta _ _ (VarMetaDat p _)) = p
 
-fLookup :: FEnv -> Maybe VObject -> String -> TypeCheckResult EnvDef
-fLookup FEnv{feDefMap} obj k = case suffixLookup k (H.keys feDefMap) of
-  Just key -> case suffixLookupInDict key feDefMap of
-    Just v  -> return v
-    Nothing -> TypeCheckResE [GenTypeCheckError Nothing $ printf "Failed to lookup %s in %s with keys %s" k (show obj) (show $ H.keys feDefMap)]
-  Nothing -> TypeCheckResE [GenTypeCheckError Nothing $ printf "Failed to lookup %s in %s with keys %s" k (show obj) (show $ H.keys feDefMap)]
-
-addConstraints :: FEnv -> [Constraint] -> FEnv
+addConstraints :: FEnv -> [VConstraint] -> FEnv
 addConstraints env@FEnv{feCons} newCons = env {feCons = newCons ++ feCons}
 
-fInsert :: FEnv -> String -> EnvDef -> FEnv
-fInsert env@FEnv{feDefMap} k v = env{feDefMap = H.insert k v feDefMap}
-
-fAddVTypeGraph :: FEnv -> TypeName -> VTypeGraphVal -> FEnv
+fAddVTypeGraph :: FEnv -> TypeName -> VObjArr -> FEnv
 fAddVTypeGraph env@FEnv{feVTypeGraph} k v = env {feVTypeGraph = H.insertWith (++) k [v] feVTypeGraph}
 
-fAddTTypeGraph :: FEnv -> TypeName -> TTypeGraphVal -> FEnv
+fAddTTypeGraph :: FEnv -> TypeName -> TObjArr -> FEnv
 fAddTTypeGraph env@FEnv{feTTypeGraph} k v = env {feTTypeGraph = H.insertWith (++) k [v] feTTypeGraph}
 
 -- This ensures schemes are correct
@@ -326,7 +301,9 @@ verifyScheme classGraph vaenv (Meta _ _ (VarMetaDat _ _)) (TypeCheckResult _ (ST
   if verifyCompacted then Nothing else Just "verifyCompacted"
   ]
   where
-    verifySchemeActLowers  = isSubtypeOfWithMetaEnv classGraph vaenv act oldAct
+    verifySchemeActLowers  = case act of
+      TypeVar{} -> True
+      _         -> isSubtypeOfWithMetaEnv classGraph vaenv act oldAct
     verifySchemeReqLowers  = isSubtypeOfWithMetaEnv classGraph vaenv req oldReq
     verifyCompacted = act == compactType classGraph act
 verifyScheme _ _ _ _ _ = Nothing
@@ -348,15 +325,17 @@ fresh env@FEnv{fePnts} scheme = (pnt', env{fePnts = pnts'})
     pnt' = IM.size fePnts
     pnts' = IM.insert pnt' scheme fePnts
 
-setDescriptor :: FEnv -> Constraint -> VarMeta -> Scheme -> String -> FEnv
+setDescriptor :: FEnv -> VConstraint -> VarMeta -> Scheme -> String -> FEnv
 setDescriptor env _ (Meta _ _ (VarMetaDat Nothing _)) _ _ = env
 setDescriptor env@FEnv{feClassGraph, fePnts, feTrace, feUpdatedDuringEpoch} con m@(Meta _ _ (VarMetaDat (Just p) _)) scheme' msg = env{fePnts = pnts', feTrace = feTrace', feUpdatedDuringEpoch = feUpdatedDuringEpoch || schemeChanged}
   where
     scheme = descriptor env m
     schemeChanged :: Bool
-    schemeChanged = fromMaybe False $ tcreToMaybe $ do
-      showVaenv <- fmap stypeAct <$> mapM (descriptor env) (constraintVarArgEnv con)
-      return $ not (eqScheme env showVaenv scheme scheme')
+    schemeChanged = case (scheme, scheme') of
+      (TypeCheckResult _ (SType TopType{} _ _), TypeCheckResult _ (SType TypeVar{} _ _)) -> True
+      _ ->  fromMaybe False $ tcreToMaybe $ do
+        showVaenv <- fmap stypeAct <$> mapM (descriptor env) (constraintVarArgEnv con)
+        return $ not (eqScheme env showVaenv scheme scheme')
     pnts' = if schemeChanged then IM.insert p scheme' fePnts else fePnts -- Only update if changed to avoid meaningless updates
     feTrace' = if schemeChanged
       then case verifyScheme feClassGraph (constraintVarArgEnv con) m scheme scheme' of
@@ -371,19 +350,23 @@ pointUb env p = do
   (SType ub _ _) <- descriptor env p
   return ub
 
-resolveTypeVar :: TypeVarAux -> Constraint -> TypeCheckResult VarMeta
+resolveTypeVar :: TypeVarAux -> VConstraint -> TypeCheckResult VarMeta
 resolveTypeVar v con = case H.lookup v (constraintVarArgEnv con) of
   Just m' -> return m'
   Nothing -> TypeCheckResE [GenTypeCheckError Nothing $ printf "Unknown variable in resolveTypeVar var: %s" (show v)]
 
+descriptorVaenv :: FEnv -> CVarArgEnv VarMeta -> CVarArgEnv Scheme
+descriptorVaenv env = fmap (descriptor env)
+
+descriptorSTypeVaenv :: FEnv -> CVarArgEnv VarMeta -> TypeCheckResult STypeVarArgEnv
+descriptorSTypeVaenv env vaenv = sequence $ descriptorVaenv env vaenv
+
 type STypeVarArgEnv = H.HashMap TypeVarAux SType
-descriptorConVaenv :: FEnv -> Constraint -> TypeCheckResult STypeVarArgEnv
-descriptorConVaenv env con = do
-  forM (constraintVarArgEnv con) $ \v -> do
-    descriptor env v
+descriptorConVaenv :: FEnv -> VConstraint -> TypeCheckResult STypeVarArgEnv
+descriptorConVaenv env con = descriptorSTypeVaenv env (constraintVarArgEnv con)
 
 -- trace constrain
-type TraceConstrainEpoch = [(Constraint, [(Pnt, Scheme)])]
+type TraceConstrainEpoch = [(VConstraint, [(Pnt, Scheme)])]
 type TraceConstrain = [TraceConstrainEpoch]
 type STraceConstrain = [(SConstraint, [(Pnt, Scheme)])]
 
@@ -392,7 +375,7 @@ nextConstrainEpoch env@FEnv{feTrace} = case feTrace of
   []         -> env
   prevEpochs -> env{feTrace = []:prevEpochs, feUpdatedDuringEpoch = False}
 
-startConstraint :: Constraint -> FEnv -> FEnv
+startConstraint :: VConstraint -> FEnv -> FEnv
 startConstraint c env@FEnv{feTrace = curEpoch:prevEpochs} = env{feTrace = ((c, []):curEpoch):prevEpochs}
 startConstraint _ _ = error "bad input to startConstraint"
 

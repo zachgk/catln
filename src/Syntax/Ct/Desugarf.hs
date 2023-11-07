@@ -54,7 +54,6 @@ flattenNestedDeclarations (roa@RawObjArr{roaObj=Just (GuardExpr objExpression _)
     decl' = PSemiDecl oa4
 flattenNestedDeclarations d = error $ printf "flattenNestedDeclarations without input expression: %s" (show d)
 
-data DOEMode = DOEArgMode | DOEValMode deriving (Eq, Show)
 data DOEValName = UseRelativeName | UseTypeName deriving (Eq, Show)
 
 -- |
@@ -63,28 +62,25 @@ data DOEValName = UseRelativeName | UseTypeName deriving (Eq, Show)
 -- Calls not in an arg size or at the root would need to parse the foo with varMode
 -- When it creates a val, it requires the second boolean arg "useRelativeName" to know whether to create a relative or absolute val name
 -- TODO: The useRelativeName arg (and all DOEValName) seem to not be used, so should remove
-desObjValToArg :: DOEMode -> DOEValName -> DesExpr -> DesExpr
-desObjValToArg _ _ (CExpr m c) = CExpr m c
-desObjValToArg doeMode _ (Value m n) = case doeMode of
-  DOEArgMode -> Arg m n
-  DOEValMode -> Value m n
-desObjValToArg _ _ (Arg _ n) = error $ printf "Found unexpected arg '%s' in desOjValToArg, expected all args to still be represented with Value" n
-desObjValToArg _ _ (HoleExpr m h) = HoleExpr m h
-desObjValToArg _ useRelativeName (AliasExpr b a) = AliasExpr (desObjValToArg DOEValMode useRelativeName b) (desObjValToArg DOEArgMode useRelativeName a)
-desObjValToArg _ useRelativeName (TupleApply m (bm, be) arg) = TupleApply m (bm, be') arg'
+desObjValToArg :: DOEValName -> DesExpr -> DesExpr
+desObjValToArg _ (CExpr m c) = CExpr m c
+desObjValToArg _ (Value m n) = Value m n
+desObjValToArg _ (HoleExpr m h) = HoleExpr m h
+desObjValToArg useRelativeName (AliasExpr b a) = AliasExpr (desObjValToArg useRelativeName b) (desObjValToArg useRelativeName a)
+desObjValToArg useRelativeName (TupleApply m (bm, be) arg) = TupleApply m (bm, be') arg'
   where
-    be' = desObjValToArg DOEValMode useRelativeName be
-    arg' = mapTupleArgValue (desObjValToArg DOEValMode useRelativeName) arg
-desObjValToArg _ useRelativeName (VarApply m be varName varVal) = VarApply m be' varName varVal
+    be' = desObjValToArg useRelativeName be
+    arg' = mapTupleArgValue (desObjValToArg useRelativeName) arg
+desObjValToArg useRelativeName (VarApply m be varName varVal) = VarApply m be' varName varVal
   where
-    be' = desObjValToArg DOEValMode useRelativeName be
+    be' = desObjValToArg useRelativeName be
 
 
 
 desObj :: Bool -> String -> DOEValName -> DesObjArr -> DesObjArr
 desObj isDef inheritPath useRelativeName oa@ObjArr{oaObj=Just (GuardExpr objE objG)} = oa{oaObj=Just (GuardExpr objExpr4 objG2)}
   where
-    objExpr2 = desObjValToArg DOEValMode useRelativeName objE
+    objExpr2 = desObjValToArg useRelativeName objE
 
     objExpr3 = if isDef
       then objExpr2
@@ -97,8 +93,7 @@ desObj isDef inheritPath useRelativeName oa@ObjArr{oaObj=Just (GuardExpr objE ob
       _          -> updateExprPath objExpr3
 
 
-    argMetaMap = exprArgs objExpr4
-    objG2 = fmap (desExpr argMetaMap) objG
+    objG2 = fmap desExpr objG
 desObj _ _ _ oa = error $ printf "Unexpected desObj with no input exrpression: %s" (show oa)
 
 semiDesObjArr :: PObjArr -> PSObjArr
@@ -119,17 +114,16 @@ declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl oa@ObjArr{oaAnnots, oaArr
   where
     oa2 = desObj True inheritPath UseRelativeName oa
 
-    argMetaMap = exprArgs $ oaObjExpr oa2
     oa3 = oa2{
-      oaAnnots=map (desExpr argMetaMap) oaAnnots ++ inheritAnnots,
-      oaArr = first (fmap (desGuardExpr argMetaMap)) oaArr
+      oaAnnots=map desExpr oaAnnots ++ inheritAnnots,
+      oaArr = first (fmap desGuardExpr) oaArr
       }
 
 desDecl :: StatementEnv -> PObjArr -> [PStatementTree] -> CRes DesPrgm
 desDecl statementEnv decl subStatements = do
   preprocessed <- declPreprocessors (decl, subStatements)
   let objMap = map (declToObjArrow statementEnv) $ concatMap flattenNestedDeclarations preprocessed
-  return (objMap, emptyClassGraph, [])
+  return (objMap, classGraphFromObjs objMap, [])
 
 addPath :: String -> String -> String
 addPath inheritPath name = if "/" `isPrefixOf` name then
@@ -224,7 +218,7 @@ mergeObjMaps :: DesObjectMap -> DesObjectMap -> DesObjectMap
 mergeObjMaps = (++)
 
 desGlobalAnnot :: PCompAnnot -> CRes DesCompAnnot
-desGlobalAnnot = return . desExpr H.empty . semiDesExpr SDOutput Nothing
+desGlobalAnnot = return . desExpr . semiDesExpr SDOutput Nothing
 
 desStatement :: StatementEnv -> PStatementTree -> CRes DesPrgm
 desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree statement subStatements) = case statement of

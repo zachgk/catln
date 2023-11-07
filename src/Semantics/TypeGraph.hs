@@ -33,6 +33,7 @@ data ReachesTree
 data ReachesEnv m = ReachesEnv {
   rClassGraph   :: !ClassGraph,
   rUnionAllType :: !Type,
+  rVaenv        :: !TypeVarArgEnv,
   rTypeGraph    :: !(H.HashMap TypeName [ObjArr Expr m])
                              }
 
@@ -48,12 +49,16 @@ unionReachesTree classGraph (ReachesTree children) = do
   let both = keys':vals'
   case partition isTypeVar both of
     ([onlyVar], []) -> onlyVar
-    (_, sums)       -> unionAllTypes classGraph sums
+    ([], sums)       -> unionAllTypes classGraph sums
+    ([t@(TypeVar (TVArg argName) _)], [UnionType leafs]) | all (\PartialType{ptName} -> fromPartialName ptName == argName) (splitUnionType leafs) -> t
+    (_, _)       -> error $ printf "Not yet implemented unionReachesTree with vars and partials of %s" (show both)
 unionReachesTree classGraph (ReachesLeaf leafs) = unionAllTypes classGraph leafs
 
 joinReachesTrees :: ReachesTree -> ReachesTree -> ReachesTree
 joinReachesTrees (ReachesTree a) (ReachesTree b) = ReachesTree $ H.unionWith joinReachesTrees a b
 joinReachesTrees (ReachesLeaf a) (ReachesLeaf b) = ReachesLeaf (a ++ b)
+joinReachesTrees (ReachesTree t) v | H.null t = v
+joinReachesTrees v (ReachesTree t) | H.null t = v
 joinReachesTrees a b = error $ printf "joinReachesTrees for mixed tree and leaf not yet defined: \n\t%s\n\t%s" (show a) (show b)
 
 joinAllReachesTrees :: Foldable f => f ReachesTree -> ReachesTree
@@ -69,6 +74,7 @@ reachesHasCutSubtypeOf classGraph vaenv (ReachesTree children) superType = all c
 reachesHasCutSubtypeOf classGraph vaenv (ReachesLeaf leafs) superType = any (\t -> isSubtypeOfWithMetaEnv classGraph vaenv t superType) leafs
 
 reachesPartial :: (MetaDat m, Show m) => ReachesEnv m -> PartialType -> CRes ReachesTree
+reachesPartial ReachesEnv{rVaenv} PartialType{ptName=PTypeName argName} | TVArg argName `H.member` rVaenv = return $ ReachesLeaf [TypeVar (TVArg argName) TVInt]
 reachesPartial ReachesEnv{rTypeGraph, rClassGraph} partial@PartialType{ptName=PTypeName name} = do
 
   let ttypeArrows = H.lookupDefault [] name rTypeGraph
@@ -86,11 +92,7 @@ reachesPartial ReachesEnv{rTypeGraph, rClassGraph} partial@PartialType{ptName=PT
         then return $ Just $ unionAllTypes rClassGraph [arrowDestType True rClassGraph potentialSrcPartial oa | potentialSrcPartial <- splitUnionType potSrcLeafs]
         else return Nothing
 reachesPartial env@ReachesEnv{rClassGraph} partial@PartialType{ptName=PClassName{}} = reaches env (expandPartial rClassGraph partial)
-reachesPartial env@ReachesEnv{rClassGraph, rUnionAllType} partial@PartialType{ptName=PRelativeName{}} = do
-  reachesAsClass <- reaches env (expandPartial rClassGraph partial)
-  let (UnionType allObjsUb) = rUnionAllType
-  reachesAsType <- mapM (reachesPartial env . (\name -> partial{ptName=name})) (H.keys allObjsUb)
-  return $ joinReachesTrees reachesAsClass (joinAllReachesTrees reachesAsType)
+reachesPartial env@ReachesEnv{rClassGraph} partial@PartialType{ptName=PRelativeName{}} = reaches env (expandRelPartial rClassGraph partial)
 
 reaches :: (MetaDat m, Show m) => ReachesEnv m -> Type -> CRes ReachesTree
 reaches _     (TopType [])            = return $ ReachesLeaf [topType]

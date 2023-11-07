@@ -104,7 +104,7 @@ applyRawArgs :: (MetaDat m) => RawExpr m -> [(Maybe ArgName, RawExpr m)] -> RawE
 applyRawArgs base [] = base
 applyRawArgs base args = RawTupleApply (emptyMetaE "app" base) (emptyMetaE "base" base, base) (map mapArg args)
   where
-    mapArg :: (Maybe ArgName, RawExpr m) -> RawObjArr RawExpr m
+    mapArg :: (MetaDat m) => (Maybe ArgName, RawExpr m) -> RawObjArr RawExpr m
     mapArg (Just argName, argVal) = RawObjArr (Just (GuardExpr (RawValue (emptyMetaE ("in-" ++ argName) argVal) argName) Nothing)) ArgObj Nothing [] (Just (Just (GuardExpr argVal Nothing), emptyMetaE argName argVal)) Nothing
     mapArg (Nothing, argVal) = RawObjArr Nothing ArgObj Nothing [] (Just (Just (GuardExpr argVal Nothing), emptyMetaE "noArg" argVal)) Nothing
 
@@ -134,7 +134,7 @@ applyExprOArgs = foldl addArg
   where
     addArg b a = TupleApply (emptyMetaE "app" b) (emptyMetaE "base" b, b) (mapArg a)
       where
-        mapArg (Just argName, argVal) = ObjArr (Just (GuardExpr (Arg (emptyMetaE argName b) argName) Nothing)) ArgObj Nothing [] (Just (GuardExpr argVal Nothing), emptyMetaE "argRes" argVal)
+        mapArg (Just argName, argVal) = ObjArr (Just (GuardExpr (Value (emptyMetaE argName b) argName) Nothing)) ArgObj Nothing [] (Just (GuardExpr argVal Nothing), emptyMetaE "argRes" argVal)
         mapArg (Nothing, argVal) = ObjArr Nothing ArgObj Nothing [] (Just (GuardExpr argVal Nothing), emptyMetaE "argRes" argVal)
 
 applyExprIArgs :: Expr () -> [(ArgName, IArg Expr)] -> Expr ()
@@ -143,9 +143,9 @@ applyExprIArgs = foldl addArg
     addArg b a = TupleApply (emptyMetaE "app" b) (emptyMetaE "base" b, b) (mapArg a)
       where
         mapArg :: (ArgName, IArg Expr) -> ObjArr Expr ()
-        mapArg (argName, IArgE argVal) = ObjArr (Just (GuardExpr (Arg (emptyMetaE argName b) argName) Nothing)) ArgObj Nothing [] (Just (GuardExpr argVal Nothing), emptyMetaE "argRes" argVal)
-        mapArg (argName, IArgM argM) = ObjArr (Just (GuardExpr (Arg argM argName) Nothing)) ArgObj Nothing [] (Nothing, emptyMetaE ("argRes" ++ argName) b)
-        mapArg (argName, IArgNothing) = ObjArr (Just (GuardExpr (Arg (emptyMetaE argName b) argName) Nothing)) ArgObj Nothing [] (Nothing, emptyMetaE ("argRes" ++ argName) b)
+        mapArg (argName, IArgE argVal) = ObjArr (Just (GuardExpr (Value (emptyMetaE argName b) argName) Nothing)) ArgObj Nothing [] (Just (GuardExpr argVal Nothing), emptyMetaE "argRes" argVal)
+        mapArg (argName, IArgM argM) = ObjArr (Just (GuardExpr (Value argM argName) Nothing)) ArgObj Nothing [] (Nothing, emptyMetaE ("argRes" ++ argName) b)
+        mapArg (argName, IArgNothing) = ObjArr (Just (GuardExpr (Value (emptyMetaE argName b) argName) Nothing)) ArgObj Nothing [] (Nothing, emptyMetaE ("argRes" ++ argName) b)
 
 applyExprVars :: (MetaDat m) => Expr m -> [(TypeVarName, Meta m)] -> Expr m
 applyExprVars = foldl addVar
@@ -164,7 +164,6 @@ mapOAObjPath f = mapOAObjExpr (mapExprPath f)
 mapExprAppliedArg :: (DesExpr -> DesExpr) -> ArgName -> DesExpr -> DesExpr
 mapExprAppliedArg _ _ e@CExpr{} = e
 mapExprAppliedArg _ _ e@Value{} = e
-mapExprAppliedArg _ _ e@Arg{} = e
 mapExprAppliedArg _ _ e@HoleExpr{} = e
 mapExprAppliedArg f argName (AliasExpr base alias) = AliasExpr (mapExprAppliedArg f argName base) alias
 mapExprAppliedArg f argName (TupleApply m (bm, be) oa@ObjArr{oaObj=Just (GuardExpr (Value _ an) Nothing), oaArr=(Just (GuardExpr aExpr aGuard), oaM)}) | argName == an = TupleApply m (bm, be) oa{oaArr=(Just (GuardExpr (f aExpr) aGuard), oaM)}

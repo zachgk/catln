@@ -15,12 +15,12 @@ class Int
   # ## Equality
 
   (Zero == Zero) = True
-  (_: Succ(_) == Zero) = False
+  (_:: Succ(_) == Zero) = False
   (Zero == Succ(_)) = False
-  (_: Pred(_) == Zero) = False
+  (_:: Pred(_) == Zero) = False
   (Zero == Pred(_)) = False
-  (_: Pred(_) == _: Succ(_)) = False
-  (_: Succ(_) == Pred(_)) = False
+  (_:: Pred(_) == _:: Succ(_)) = False
+  (_:: Succ(_) == Pred(_)) = False
   (Succ(l) == Succ(r)) = (l == r)
   (Pred(l) == Pred(r)) = (l == r)
 
@@ -28,9 +28,9 @@ class Int
 
   # ## Comparison
 
-  (_: Peano < Zero) = False
+  (_:: Peano < Zero) = False
   (Zero < Succ(_)) = True
-  (Pred(_) < _: Peano) = True
+  (Pred(_) < _:: Peano) = True
   (Succ(_) < Pred(_)) = False
   (Succ(l) < Succ(r)) = l < r
   (Pred(l) < Pred(r)) = l < r
@@ -40,7 +40,7 @@ class Int
   (Zero <= Zero) = True
   (Succ(_) <= Zero) = False
   (Zero <= Succ(_)) = True
-  (Pred(_) <= _: Peano) = True
+  (Pred(_) <= _:: Peano) = True
   (Succ(_) <= Pred(_)) = False
 
   (l: Int >= r: Int) = r <= l
@@ -66,24 +66,24 @@ class Int
 
   (l: Peano + Zero) = l
   (l: NPeano + Zero) = l
-  (l: Peano + _: Succ(r)) = Succ(l) + r
-  (l: NPeano + _: Pred(r)) = Pred(l) + r
-  (l: Succ(l) + _: Pred(r)) = l + r
-  (l: Pred(l) + _: Succ(r)) = l + r
+  (l: Peano + _:: Succ(r)) = Succ(l) + r
+  (l: NPeano + _:: Pred(r)) = Pred(l) + r
+  (l: Succ(l) + _:: Pred(r)) = l + r
+  (l: Pred(l) + _:: Succ(r)) = l + r
 
-  (_: Int__gt(l) + _: Int__gt(r)) -> Int__gt(l+r)
-  (_: Int__lt(l) + _: Int__lt(r)) -> Int__lt(l+r)
-  (_: Int__gte(l) + _: Int__gte(r)) -> Int__gte(l+r)
-  (_: Int__lte(l) + _: Int__lte(r)) -> Int__lte(l+r)
+  (_:: Int__gt(l) + _:: Int__gt(r)) -> Int__gt(l+r)
+  (_:: Int__lt(l) + _:: Int__lt(r)) -> Int__lt(l+r)
+  (_:: Int__gte(l) + _:: Int__gte(r)) -> Int__gte(l+r)
+  (_:: Int__lte(l) + _:: Int__lte(r)) -> Int__lte(l+r)
 
-  (i: Int + _: Peano) -> Int__gte(i)
+  (i: Int + _:: Peano) -> Int__gte(i)
   (i: Int + Succ(_)) -> Int__gt(i)
-  (_: Peano + i: Int) -> Int__gte(i)
+  (_:: Peano + i: Int) -> Int__gte(i)
   (Succ(_) + i: Int) -> Int__gt(i)
 
-  (i: Int + _: NPeano) -> Int__lte(i)
+  (i: Int + _:: NPeano) -> Int__lte(i)
   (i: Int + Pred(_)) -> Int__lt(i)
-  (_: NPeano + i: Int) -> Int__lte(i)
+  (_:: NPeano + i: Int) -> Int__lte(i)
   (Pred(_) + i: Int) -> Int__lt(i)
 
   # ## Negation and Subtraction
@@ -103,8 +103,8 @@ class Int
 
   # ## Multiplication
 
-  (Zero * _: Int) = Zero
-  (_: Int * Zero) = Zero
+  (Zero * _:: Int) = Zero
+  (_:: Int * Zero) = Zero
   (One * i: Int) = i
   (i: Int * One) = i
   (Two * i: Int) = i + i
@@ -117,7 +117,7 @@ class Int
   # ## Division
 
   data Division(dividend: Int, divisor: Int, quotient: Int, remainder: Int)
-  (_: Peano // _: Int__gt(0)) -> Division
+  (_:: Peano // _:: Int__gt(0)) -> Division
   (dividend: Int // divisor: Int) = if(dividend < divisor)
     Then = Division(dividend=dividend, divisor=divisor, quotient=0, remainder=dividend)
     Else = (dividend - divisor // divisor)(dividend=dividend, quotient=inc(quotient))
