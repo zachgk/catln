@@ -21,7 +21,6 @@ import           Data.Maybe
 import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
-import           Utils
 
 
 labelPosM :: String -> Meta m -> Meta m
@@ -152,38 +151,34 @@ fromExprPrgm (objMap, classGraph, annots) = (map fromExprObjectMapItem objMap, c
 type ArgMetaMap m = H.HashMap ArgName [Meta m]
 
 -- |
--- The 'exprArgsWithSrc' is similar to the 'exprArgs' function.
+-- The 'exprVarArgsWithSrc' is similar to the 'exprArgs' function.
 -- It differs in that it accepts an additional partial type that is equivalent to the expression and it pull the corresponding parts of the partial matching the args in the expression
 -- TODO: Make nonLinear by changing signature to H.HashMap ArgName ([Meta m], Type)
-type ArgMetaMapWithSrc m = H.HashMap ArgName ([Meta m], Type)
-exprArgsWithSrc :: (Show m) => ClassGraph -> Expr m -> PartialType -> ArgMetaMapWithSrc m
-exprArgsWithSrc _ CExpr{} _ = H.empty
-exprArgsWithSrc _ Value{} _ = H.empty
-exprArgsWithSrc _ HoleExpr{} _ = H.empty
-exprArgsWithSrc _ Arg{} _ = H.empty
-exprArgsWithSrc classGraph (AliasExpr base (Arg m n)) src = H.insert n ([m], singletonType src) (exprArgsWithSrc classGraph base src)
-exprArgsWithSrc classGraph (AliasExpr base (Value m n)) src = H.insert n ([m], singletonType src) (exprArgsWithSrc classGraph base src)
-exprArgsWithSrc classGraph (AliasExpr base alias) src = H.union (exprArgsWithSrc classGraph base src) (exprArgsWithSrc classGraph alias src)
-exprArgsWithSrc classGraph (VarApply _ e _ _) src = exprArgsWithSrc classGraph e src
-exprArgsWithSrc classGraph (TupleApply _ (_, be) arg) src = H.union (exprArgsWithSrc classGraph be src) (fromArg arg)
+type ArgMetaMapWithSrc m = H.HashMap TypeVarAux ([Meta m], Type)
+exprVarArgsWithSrc :: (Show m) => ClassGraph -> Expr m -> PartialType -> ArgMetaMapWithSrc m
+exprVarArgsWithSrc _ CExpr{} _ = H.empty
+exprVarArgsWithSrc _ Value{} _ = H.empty
+exprVarArgsWithSrc _ HoleExpr{} _ = H.empty
+exprVarArgsWithSrc _ Arg{} _ = H.empty
+exprVarArgsWithSrc classGraph (AliasExpr base (Arg m n)) src = H.insert (TVArg n) ([m], singletonType src) (exprVarArgsWithSrc classGraph base src)
+exprVarArgsWithSrc classGraph (AliasExpr base (Value m n)) src = H.insert (TVArg n) ([m], singletonType src) (exprVarArgsWithSrc classGraph base src)
+exprVarArgsWithSrc classGraph (AliasExpr base alias) src = H.union (exprVarArgsWithSrc classGraph base src) (exprVarArgsWithSrc classGraph alias src)
+exprVarArgsWithSrc classGraph (VarApply _ b n m) src = H.insert (TVVar n) ([m], H.lookupDefault topType n (ptVars src)) $ exprVarArgsWithSrc classGraph b src
+exprVarArgsWithSrc classGraph (TupleApply _ (_, be) arg) src = H.union (exprVarArgsWithSrc classGraph be src) (fromArg arg)
   where
     fromArg ObjArr{oaObj=Just (GuardExpr obj _), oaArr=(Just (GuardExpr e _), _)} = case typeGetArg (exprPath obj) src of
-      Just (UnionType srcArg) -> mergeMaps $ map (exprArgsWithSrc classGraph e) $ splitUnionType srcArg
-      Just t@TopType{} -> (,t) <$> exprArgs e
+      Just (UnionType srcArg) -> mergeMaps $ map (exprVarArgsWithSrc classGraph e) $ splitUnionType srcArg
+      Just t@TopType{} -> (,t) <$> exprVarArgs e
       _ -> H.empty
-    fromArg ObjArr{oaArr=(Just (GuardExpr e _), _)} = exprArgsWithSrc classGraph e src
+    fromArg ObjArr{oaArr=(Just (GuardExpr e _), _)} = exprVarArgsWithSrc classGraph e src
     fromArg ObjArr {oaObj=Just (GuardExpr obj _), oaArr=(Nothing, _)} = case typeGetArg (exprPath obj) src of
       Just srcArg -> case exprPathM obj of
-        (n, m) -> H.singleton n ([m], srcArg)
+        (n, m) -> H.singleton (TVArg n) ([m], srcArg)
       Nothing     -> H.empty
     fromArg oa = error $ printf "Invalid oa %s" (show oa)
 
     mergeMaps [] = H.empty
     mergeMaps (x:xs) = foldr (H.intersectionWith (\(m1s, t1) (m2s, t2) -> (m1s ++ m2s, unionTypes classGraph t1 t2))) x xs
-
-formVarMap :: ClassGraph -> Type -> TypeVarEnv
-formVarMap classGraph (UnionType partialLeafs) = unionsWith (unionTypes classGraph) $ map ptVars $ splitUnionType partialLeafs
-formVarMap _ _ = error $ printf "Unknown formVarMap"
 
 -- fullDest means to use the greatest possible type (after implicit).
 -- Otherwise, it uses the minimal type that *must* be reached
@@ -192,9 +187,8 @@ arrowDestType fullDest classGraph src oa@ObjArr{oaArr=(oaArrExpr, oaM)} = case o
   Just _ -> fromMaybe (error "Unfound expr") expr'
   _      -> joined
   where
-    varEnv = formVarMap classGraph $ intersectTypes classGraph (getMetaType $ getExprMeta $ oaObjExpr oa) (singletonType src)
-    argEnv = snd <$> exprArgsWithSrc classGraph (oaObjExpr oa) ((\(UnionType pl) -> head $ splitUnionType pl) $ substituteVars $ singletonType src)
-    substitute = substituteVarsWithVarEnv varEnv . substituteArgsWithArgEnv argEnv
+    vaenv = snd <$> exprVarArgsWithSrc classGraph (oaObjExpr oa) ((\(UnionType pl) -> head $ splitUnionType pl) $ substituteVars $ singletonType src)
+    substitute = substituteWithVarArgEnv vaenv
     expr' = fmap (substitute . getExprType . rgeExpr) oaArrExpr
     arr' = substitute $ getMetaType oaM
     joined = if fullDest
@@ -215,7 +209,7 @@ isSubtypeOfWithObj :: (Show m, MetaDat m) => ClassGraph -> Object Expr m -> Type
 isSubtypeOfWithObj classGraph obj = isSubtypeOfWithEnv classGraph (joinVarArgEnv (getMetaType <$> objAppliedVars obj) (unionAllTypes classGraph . fmap getMetaType <$> exprArgs (objExpr obj)))
 
 isSubtypeOfWithObjSrc :: (Show m, MetaDat m) => ClassGraph -> PartialType -> ObjArr Expr m -> Type -> Type -> Bool
-isSubtypeOfWithObjSrc classGraph srcType obj = isSubtypeOfWithEnv classGraph (joinVarArgEnv (getMetaType <$> exprAppliedVars (oaObjExpr obj)) (snd <$> exprArgsWithSrc classGraph (oaObjExpr obj) srcType ))
+isSubtypeOfWithObjSrc classGraph srcType obj = isSubtypeOfWithEnv classGraph (snd <$> exprVarArgsWithSrc classGraph (oaObjExpr obj) srcType)
 
 isSubtypePartialOfWithMetaEnv :: ClassGraph -> MetaVarArgEnv m -> PartialType -> Type -> Bool
 isSubtypePartialOfWithMetaEnv classGraph vaenv sub = isSubtypeOfWithEnv classGraph (metaToTypeEnv vaenv) (singletonType sub)
