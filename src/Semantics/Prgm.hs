@@ -21,7 +21,6 @@ module Semantics.Prgm where
 
 import           Data.Hashable
 import qualified Data.HashMap.Strict as H
-import           Data.List           (intercalate)
 import           GHC.Generics        (Generic)
 
 import           Data.Aeson          hiding (Object)
@@ -91,36 +90,16 @@ data Expr m
 -- Compiler Annotation
 type CompAnnot em = em
 
-type ObjArg e m = (Meta m, Maybe (Object e m))
-data ObjectBasis = FunctionObj | TypeObj | PatternObj | MatchObj | ArgObj
-  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
--- |
--- Represents an input.
--- The current plan is to deprecate objM, objVars, objArgs, and objPath and replace them with objExpr. TODO Deprecate the rest (or replace with 'ExprObject').
-data Object e m = Object {
-  deprecatedObjM    :: Meta m,
-  objBasis          :: ObjectBasis,
-  deprecatedObjVars :: H.HashMap TypeVarName (Meta m),
-  deprecatedObjArgs :: H.HashMap ArgName (ObjArg e m),
-  objDoc            :: Maybe DocComment,
-  objDupExpr        :: e m,
-  deprecatedObjPath :: String
-                       }
-  deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
 type ExprCond e m = Maybe (e m)
-data Arrow e m = Arrow (Meta m) (ExprCond e m) (Maybe (e m)) -- m is result metadata
-  deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
-
-type ObjectMapItem e m = (Object e m, [CompAnnot (e m)], Maybe (Arrow e m))
-type ObjectMap e m = [ObjectMapItem e m]
-type Prgm e m = (ObjectMap e m, ClassGraph, [CompAnnot (e m)]) -- TODO: Include [Export]
 
 data GuardExpr e m = GuardExpr {
    rgeExpr  :: !(e m),
    rgeGuard :: !(ExprCond e m)
                                      }
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
+data ObjectBasis = FunctionObj | TypeObj | PatternObj | MatchObj | ArgObj
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 data ObjArr e m = ObjArr {
   oaObj    :: !(Maybe (GuardExpr e m)),
   oaBasis  :: !ObjectBasis,
@@ -182,27 +161,6 @@ instance (Show m, Show (e m)) => Show (GuardExpr e m) where
       showGuard = case g of
         Nothing -> ""
         Just g' -> printf " if %s" (show g')
-
-instance Show m => Show (Object e m) where
-  -- show (Object m basis vars args _ p) = printf "%s %s (%s) %s %s" (show basis) p (show m) maybeVarsString maybeArgsString
-  show (Object _ basis vars args _ _ p) = printf "%s %s %s %s" (show basis) p maybeVarsString maybeArgsString
-    where
-      showVar (varName, varVal) = printf "%s = %s" varName (show varVal)
-      maybeVarsString :: String
-      maybeVarsString = if H.size vars == 0
-        then ""
-        else printf "[%s]" (intercalate ", " $ map showVar $ H.toList vars)
-      showArg (argName, (_, Just argVal)) = printf "%s = %s" argName (show argVal)
-      showArg (argName, (argM, Nothing)) = printf "%s %s" (show argM) argName
-      maybeArgsString = if H.size args == 0
-        then ""
-        else "(" ++ intercalate ", " (map showArg $ H.toList args) ++ ")"
-
-instance (Show m, Show (e m)) => Show (Arrow e m) where
-  show (Arrow m guard maybeExpr) = concat $ [show guard, " -> ", show m, " "] ++ showExpr maybeExpr
-    where
-      showExpr (Just expr) = [" = ", show expr]
-      showExpr Nothing     = []
 
 instance Hashable SourcePos where
   hashWithSalt s (SourcePos name line col) = s `hashWithSalt` show name `hashWithSalt` unPos line `hashWithSalt` unPos col
@@ -283,9 +241,6 @@ instance ObjArrClass ObjArr where
   getOaAnnots = oaAnnots
 
 
-emptyPrgm :: Prgm e m
-emptyPrgm = ([], emptyClassGraph, [])
-
 emptyExprPrgm :: ExprPrgm e m
 emptyExprPrgm = ([], emptyClassGraph, [])
 
@@ -353,16 +308,6 @@ mergeClassGraphs (ClassGraph classGraphA) (ClassGraph classGraphB) = ClassGraph 
     mergeClasses cg1 cg2 = error $ printf "Unexpected input to mergeClassGraphs: \n\t%s \n\t%s" (show cg1) (show cg2)
 
     mergeClassPartials clss@PartialType{ptVars=varsA} PartialType{ptVars=varsB} = clss{ptVars = H.unionWith (unionTypes (ClassGraph classGraphA)) varsA varsB}
-
-mergePrgm :: Prgm e m -> Prgm e m -> Prgm e m
-mergePrgm (objMap1, classGraph1, annots1) (objMap2, classGraph2, annots2) = (
-  objMap1 ++ objMap2,
-  mergeClassGraphs classGraph1 classGraph2,
-  annots1 ++ annots2
-                                                                           )
-
-mergePrgms :: Foldable f => f (Prgm e m) -> Prgm e m
-mergePrgms = foldr mergePrgm emptyPrgm
 
 mergeExprPrgm :: ExprPrgm e m -> ExprPrgm e m -> ExprPrgm e m
 mergeExprPrgm (objMap1, classGraph1, annots1) (objMap2, classGraph2, annots2) = (

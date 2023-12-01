@@ -35,7 +35,6 @@ type TBExpr = Expr TBMetaDat
 type TBCompAnnot = CompAnnot TBExpr
 type TBObjArr = ObjArr Expr TBMetaDat
 type TBGuard = Maybe TBExpr
-type TBArrow = Arrow Expr TBMetaDat
 type TBObjectMap = ExprObjectMap Expr TBMetaDat
 type TBPrgm = ExprPrgm Expr TBMetaDat
 

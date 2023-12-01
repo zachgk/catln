@@ -41,7 +41,6 @@ type ECompAnnot = CompAnnot (Expr EvalMetaDat)
 type EExpr = Expr EvalMetaDat
 type EGuard = Maybe EExpr
 type EObjArr = ObjArr Expr EvalMetaDat
-type EArrow = Arrow Expr EvalMetaDat
 type EObjectMap = ExprObjectMap Expr EvalMetaDat
 type EPrgm = ExprPrgm Expr EvalMetaDat
 type EPrgmGraphData = GraphData EPrgm String

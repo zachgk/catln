@@ -64,10 +64,6 @@ joinReachesTrees a b = error $ printf "joinReachesTrees for mixed tree and leaf 
 joinAllReachesTrees :: Foldable f => f ReachesTree -> ReachesTree
 joinAllReachesTrees = foldr1 joinReachesTrees
 
-isSubtypePartialOfWithMaybeObj :: (Show m, MetaDat m) => ClassGraph -> Maybe (Object Expr m) -> PartialType -> Type -> Bool
-isSubtypePartialOfWithMaybeObj classGraph (Just obj) = isSubtypePartialOfWithObj classGraph obj
-isSubtypePartialOfWithMaybeObj classGraph Nothing    = isSubtypePartialOf classGraph
-
 reachesHasCutSubtypeOf :: (Show m, MetaDat m) => ClassGraph -> MetaVarArgEnv m -> ReachesTree -> Type -> Bool
 reachesHasCutSubtypeOf classGraph vaenv (ReachesTree children) superType = all childIsSubtype $ H.toList children
   where childIsSubtype (key, val) = isSubtypePartialOfWithMetaEnv classGraph vaenv key superType || reachesHasCutSubtypeOf classGraph vaenv val superType

@@ -85,22 +85,6 @@ instance MapMeta Expr where
   mapMeta f loc (TupleApply m (bm, be) arg) = TupleApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, mapMeta f loc be) (mapMetaObjArr f (Just loc) arg)
   mapMeta f loc (VarApply m be varName varVal) = VarApply (f (ExprMeta loc ExprMetaApplyVar) m) (mapMeta f loc be) varName (f (ExprMeta loc ExprMetaApplyVarVal) varVal)
 
-mapMetaObjArg :: (MapMeta e) => MetaFun a b -> ObjArg e a -> ObjArg e b
-mapMetaObjArg f (m, maybeObj) = (f ObjArgMeta m, fmap (mapMeta f InputMeta) maybeObj)
-
-instance (MapMeta e) => MapMeta (Object e) where
-  mapMeta f _ (Object m basis vars args doc e path) = Object (f ObjMeta m) basis (fmap (f ObjVarMeta) vars) (fmap (mapMetaObjArg f) args) doc (mapMeta f InputMeta e) path
-
-mapMetaArrow :: (MapMeta e) => MetaFun a b -> Arrow e a -> Arrow e b
-mapMetaArrow f (Arrow m guard maybeExpr) = Arrow (f ArrMeta m) (fmap (mapMeta f GuardMeta) guard) (fmap (mapMeta f OutputMeta) maybeExpr)
-
-mapMetaObjectMap :: (MapMeta e) => MetaFun a b -> ObjectMap e a -> ObjectMap e b
-mapMetaObjectMap f = map aux
-  where aux (obj, annots, arrow) = (mapMeta f InputMeta obj, fmap (mapMeta f AnnotMeta) annots, fmap (mapMetaArrow f) arrow)
-
-mapMetaPrgm :: (MapMeta e) => MetaFun a b -> Prgm e a -> Prgm e b
-mapMetaPrgm f (objMap, classGraph, annots) = (mapMetaObjectMap f objMap, classGraph, map (mapMeta f AnnotMeta) annots)
-
 mapMetaGuardExpr :: (MapMeta e) => MetaFun a b -> MetaLocation -> GuardExpr e a -> GuardExpr e b
 mapMetaGuardExpr f loc (GuardExpr expr guard) = GuardExpr (mapMeta f loc expr) (fmap (mapMeta f GuardMeta) guard)
 

@@ -15,7 +15,6 @@
 
 module TypeCheck.Show where
 
-import           Semantics
 import           Semantics.Prgm
 import           TypeCheck.Common
 
@@ -64,34 +63,6 @@ showObjArr env oa@ObjArr{oaObj, oaAnnots, oaArr=(arrE, arrM)} = do
   arrM' <- showM env arrM
   return oa{oaObj=oaObj', oaAnnots=oaAnnots', oaArr=(arrE', arrM')}
 
-showArrow :: FEnv -> VArrow -> TypeCheckResult SArrow
-showArrow env (Arrow m guard maybeExpr) = do
-  m' <- showM env m
-  guard' <- mapM (showExpr env) guard
-  expr' <- mapM (showExpr env) maybeExpr
-  return $ Arrow m' guard' expr'
-
-showObjArg :: FEnv -> VObjArg -> TypeCheckResult SObjArg
-showObjArg env (m, maybeObj) = do
-  m' <- showM env m
-  maybeObj' <- mapM (showObjRec env) maybeObj
-  return (m', maybeObj')
-
-showObjRec :: FEnv -> VObject -> TypeCheckResult (Object Expr ShowMetaDat)
-showObjRec env obj@Object{deprecatedObjArgs, objDupExpr} = do
-  m' <- showM env (objM obj)
-  vars' <- mapM (showM env) $ objAppliedVars obj
-  args' <- mapM (showObjArg env) deprecatedObjArgs
-  objDupExpr' <- showExpr env objDupExpr
-  return $ obj{deprecatedObjM=m', deprecatedObjVars=vars', deprecatedObjArgs=args', objDupExpr=objDupExpr'}
-
-showObjArrow :: FEnv -> VObjectMapItem -> TypeCheckResult SObjectMapItem
-showObjArrow env (obj, annots, arrow) = do
-  obj' <- showObjRec env obj
-  annots' <- mapM (showExpr env) annots
-  arrow' <- mapM (showArrow env) arrow
-  return $ asExprObjectMapItem (obj', annots', arrow')
-
 showConHelper :: FEnv -> (Scheme -> Scheme -> SConstraint) -> VarMeta -> VarMeta -> SConstraint
 showConHelper env f p1 p2 = f (descriptor env p1) (descriptor env p2)
 
@@ -106,12 +77,6 @@ showCon env (AddArg i vaenv (p1, argName) p2) = showConHelper env (\s1 s2 -> Add
 showCon env (AddInferArg i vaenv p1 p2) = showConHelper env (AddInferArg i (descriptorVaenv env vaenv)) p1 p2
 showCon env (PowersetTo i vaenv p1 p2) = showConHelper env (PowersetTo i (descriptorVaenv env vaenv)) p1 p2
 showCon env (UnionOf i vaenv p1 p2s) = UnionOf i (descriptorVaenv env vaenv)(descriptor env p1) (map (descriptor env) p2s)
-
-showPrgm :: FEnv -> VPrgm -> TypeCheckResult SPrgm
-showPrgm env (objMap, classGraph, annots) = do
-  objMap' <- mapM (showObjArr env . asExprObjectMapItem) objMap
-  annots' <- mapM (showExpr env) annots
-  return (objMap', classGraph, annots')
 
 showConstraints :: FEnv -> [VConstraint] -> [SConstraint]
 showConstraints env = map (showCon env)
