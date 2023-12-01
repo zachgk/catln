@@ -83,7 +83,7 @@ data Val
   | TupleVal String (H.HashMap String Val)
   | IOVal Integer (IO ())
   | LLVMVal (LLVM ())
-  | LLVMQueue [(ResArrowTree, EObjArr)]
+  | LLVMQueue [(TExpr (), EObjArr)]
   -- | LLVMOperand Type (Codegen AST.Operand)
   | LLVMIO (Codegen ())
   | NoVal
@@ -178,7 +178,6 @@ type ResExEnv = H.HashMap (PartialType, ObjArr Expr EvalMetaDat) (TExpr (), [TEx
 data TBEnv = TBEnv {
     tbName       :: String
   , tbResEnv     :: ResBuildEnv
-  , tbVals       :: H.HashMap PartialType ResArrowTree
   , tbPrgm       :: Prgm Expr EvalMetaDat
   , tbClassGraph :: ClassGraph
   }
@@ -188,42 +187,6 @@ instance Eq MacroFunction where
 
 instance Hashable MacroFunction where
   s `hashWithSalt` _ = s
-
-data ResArrowTree
-  = ResEArrow ResArrowTree EObjArr
-  | PrimArrow ResArrowTree Type EPrim
-  | MacroArrow ResArrowTree Type MacroFunction
-  | ExprArrow EExpr Type Type
-  | ConstantArrow Val
-  | ArgArrow Type String
-  | ResArrowMatch ResArrowTree Type (H.HashMap PartialType ResArrowTree)
-  | ResArrowCond Type [((ResArrowTree, ResArrowTree, EObjArr), ResArrowTree)] ResArrowTree -- [((if, ifInput, ifObj), then)] else
-  | ResArrowTuple String (H.HashMap String ResArrowTree)
-  | ResArrowTupleApply ResArrowTree String ResArrowTree
-  deriving (Eq, Generic, Hashable)
-
-instance Show ResArrowTree where
-  show (ResEArrow _ oa) = printf "(ResEArrow: %s)" (show oa)
-  show (PrimArrow _ tp _) = "(PrimArrow " ++ show tp ++ ")"
-  show (MacroArrow _ tp _) = "(MacroArrow " ++ show tp ++ ")"
-  show (ExprArrow _ exprType destType) = "(ExprArrow " ++ show exprType ++ " to " ++ show destType ++ ")"
-  show (ConstantArrow c) = "(ConstantArrow " ++ show c ++ ")"
-  show (ArgArrow tp n) = "(ArgArrow " ++ show tp ++ " " ++ n ++ ")"
-  show (ResArrowMatch m _ args) = printf "match (%s) {%s}" (show m) args'
-    where
-      showArg (leaf, tree) = show leaf ++ " -> " ++ show tree
-      args' = intercalate ", " $ map showArg $ H.toList args
-  show (ResArrowCond _ ifTrees elseTree) = "Cond ( [" ++ ifTrees' ++ "] ( else " ++ show elseTree ++ ") )"
-    where
-      showIfTree (condTree, thenTree) = "if " ++ show condTree ++ " then " ++ show thenTree
-      ifTrees' = intercalate ", " $ map showIfTree ifTrees
-  show (ResArrowTuple name args) = "Tuple " ++ if H.null args
-    then name
-    else name ++ "(" ++ args' ++ ")"
-    where
-      showArg (argName, val) = argName ++ " = " ++ show val
-      args' = intercalate ", " $ map showArg $ H.toList args
-  show (ResArrowTupleApply base argName argVal) = printf "Apply (%s)(%s = %s)" (show base) argName (show argVal)
 
 instance Show TCallTree where
   show TCTId = "TCTId"
