@@ -226,66 +226,37 @@ fromGuard est env1 (Just expr) =  do
   return (Just expr', addConstraints env3 [ArrowTo 30 (encodeVarArgs est) (getExprMeta expr') bool'])
 fromGuard _ env Nothing = return (Nothing, env)
 
-fromArrow :: EncodeState -> FEnv -> PArrow -> TypeCheckResult (VArrow, FEnv)
-fromArrow est env1 (Arrow m aguard maybeExpr) = do
-  -- User entered type is not an upper bound, so start with TopType always. The true use of the user entered type is that the expression should have an arrow that has a reachesTree cut that is within the user entered type.
-  let objE = encodeObj est
-  (mUserReturn', env2) <- fromMeta env1 BUpper est m (printf "Specified result from %s" (show $ fmap exprPath objE))
-  (aguard', env3) <- fromGuard est env2 aguard
-  case maybeExpr of
-    Just expr -> do
-      (m', env4) <- fromMeta env3 BUpper est (Meta topType (labelPos "res" $ getMetaPos m) emptyMetaDat) $ printf "Arrow result from %s" (show $ fmap exprPath objE)
-      (vExpr, env5) <- fromExpr est env4 expr
-      let env6 = addConstraints env5 [ArrowTo 32 (encodeVarArgs est) (getExprMeta vExpr) m', ArrowTo 33 (encodeVarArgs est) (getExprMeta vExpr) mUserReturn']
-      let arrow' = Arrow m' aguard' (Just vExpr)
-      return (arrow', env6)
-    Nothing -> do
-      let arrow' = Arrow mUserReturn' aguard' Nothing
-      return (arrow', env3)
-
-fromObjectMap :: FEnv -> (PObjArr, VEObject, VMetaVarArgEnv) -> TypeCheckResult (VObjArr, FEnv)
-fromObjectMap env1 (oa@ObjArr{oaBasis, oaAnnots, oaObj=Just (GuardExpr _ g), oaArr}, eobj, vaenv) = do
-  let est = EncodeOut (Just eobj) vaenv
-  (oaAnnots', env2) <- mapMWithFEnv env1 (fromExpr est) oaAnnots
-  case oaArr of
-    (a, m) -> do
-      let arrow = Arrow m g (fmap rgeExpr a)
-      (Arrow m' guard' arrExpr', env3) <- fromArrow est env2 arrow
-      let oa' = oa{oaObj=Just (GuardExpr eobj guard'), oaArr=(fmap (`GuardExpr` Nothing) arrExpr', m'), oaAnnots=oaAnnots'}
-      let env4 = fAddVTypeGraph env3 (oaObjPath oa) oa'
-      let env5 = addConstraints env4 [EqPoints 34 (encodeVarArgs est) (getExprMeta eobj) m' | oaBasis == TypeObj]
-      return (oa', env5)
-fromObjectMap _ (oa, _, _) = error $ printf "Invalid oa in fromObjectMap %s" (show oa)
-
-fromObject ::  FEnv -> PObjArr -> TypeCheckResult (VEObject, VMetaVarArgEnv, FEnv)
-fromObject env1 oa = do
+fromObjectMap :: FEnv -> PObjArr -> TypeCheckResult (VObjArr, FEnv)
+fromObjectMap env1 oa@ObjArr{oaBasis, oaAnnots, oaObj=Just (GuardExpr obj g), oaArr=(maybeArrE, arrM)} = do
   let envEst = EncodeIn H.empty -- An EncodeState for computing varEnv and argEnv
   (varEnv, env2) <- mapMWithFEnvMap env1 (\e m -> fromMeta e BUpper envEst m "var") $ exprAppliedVars $ oaObjExpr oa
   (argEnv, env3) <- mapMWithFEnvMap env2 (\e m -> fromMeta e BUpper envEst m "arg") $ fmap head $ exprArgs $ oaObjExpr oa
 
   let vaenv = joinVarArgEnv varEnv argEnv
-  let est = EncodeIn vaenv
-  (obj', env4) <- fromExpr est env3 $ oaObjExpr oa
-  return (obj', vaenv, env4)
+  let inEst = EncodeIn vaenv
+  (obj', env4) <- fromExpr inEst env3 obj
 
--- Add all of the objects first for various expressions that call other top level functions
-fromObjects :: FEnv -> PObjArr -> TypeCheckResult ((VEObject, VMetaVarArgEnv), FEnv)
-fromObjects env oa = do
-  (obj', vaenv, env1) <- fromObject env oa
-  return ((obj', vaenv), env1)
+  let est = EncodeOut (Just obj') vaenv
+  (oaAnnots', env5) <- mapMWithFEnv env4 (fromExpr est) oaAnnots
+  (mUserReturn', env6) <- fromMeta env5 BUpper est arrM (printf "Specified result from %s" (show $ exprPath obj'))
+  (g', env7) <- fromGuard est env6 g
+  (oaArr'@(_, arrM'), env8) <- case maybeArrE of
+    Just (GuardExpr arrE _) -> do
+      (vExpr, env7a) <- fromExpr est env7 arrE
+      (arrM', env7b) <- fromMeta env7a BUpper est (Meta topType (labelPos "res" $ getMetaPos arrM) emptyMetaDat) $ printf "Arrow result from %s" (show $ exprPath obj')
+      return ((Just (GuardExpr vExpr Nothing), arrM'), addConstraints env7b [ArrowTo 32 (encodeVarArgs est) (getExprMeta vExpr) arrM', ArrowTo 33 (encodeVarArgs est) (getExprMeta vExpr) mUserReturn'])
+    Nothing -> return ((Nothing, mUserReturn'), env7)
+  let oa' = oa{oaObj=Just (GuardExpr obj' g'), oaArr=oaArr', oaAnnots=oaAnnots'}
+  let env9 = fAddVTypeGraph env8 (oaObjPath oa) oa'
+  let env10 = addConstraints env9 [EqPoints 34 (encodeVarArgs est) (getExprMeta obj') arrM' | oaBasis == TypeObj]
+  return (oa', env10)
+fromObjectMap _ oa = error $ printf "Invalid oa in fromObjectMap %s" (show oa)
 
-fromPrgm :: FEnv -> (PEPrgm, [(VEObject, VMetaVarArgEnv)]) -> TypeCheckResult (VEPrgm, FEnv)
-fromPrgm env1 ((objMap1, classGraph, annots), vobjs) = do
-  let objMap2 = zipWith (\oa (vobj, vaenv) -> (oa, vobj, vaenv)) (reverse objMap1) vobjs
-  (objMap3, env2) <- mapMWithFEnv env1 fromObjectMap objMap2
+fromPrgm :: FEnv -> PEPrgm -> TypeCheckResult (VEPrgm, FEnv)
+fromPrgm env1 (objMap, classGraph, annots) = do
+  (objMap', env2) <- mapMWithFEnv env1 fromObjectMap objMap
   (annots', env3) <- mapMWithFEnv env2 (fromExpr (EncodeOut Nothing H.empty)) annots
-  return ((objMap3, classGraph, annots'), env3)
-
--- Add all of the objects first for various expressions that call other top level functions, from all programs
-prepObjPrgm :: FEnv -> PEPrgm -> TypeCheckResult ((PEPrgm, [(VEObject, VMetaVarArgEnv)]), FEnv)
-prepObjPrgm env1 pprgm@(objMap1, _, _) = do
-  (objMap2, env2) <- mapMWithFEnv env1 fromObjects objMap1
-  return ((pprgm, map (\(obj, vaenv) -> (obj, vaenv)) objMap2), env2)
+  return ((objMap', classGraph, annots'), env3)
 
 addTypeGraphArrow :: FEnv -> TObjArr -> TypeCheckResult ((), FEnv)
 addTypeGraphArrow env oa = return ((), fAddTTypeGraph env (oaObjPath oa) oa)
@@ -303,8 +274,7 @@ addTypeGraphPrgm env (objMap, _, _) = do
 fromPrgms :: FEnv -> [PEPrgm] -> [TEPrgm] -> TypeCheckResult ([VEPrgm], FEnv)
 fromPrgms env1 pprgms tprgms = do
   (_, env2) <- mapMWithFEnv env1 addTypeGraphPrgm tprgms
-  (pprgmsWithVObjs, env3) <- mapMWithFEnv env2 prepObjPrgm pprgms
-  (vprgms, env4) <- mapMWithFEnv env3 fromPrgm pprgmsWithVObjs
+  (vprgms, env3) <- mapMWithFEnv env2 fromPrgm pprgms
   let (tjoinObjMap, _, _) = mergeExprPrgms tprgms
-  let env5 = addUnionObjToEnv env4 (concatMap fst3 vprgms) tjoinObjMap
-  return (vprgms, env5)
+  let env4 = addUnionObjToEnv env3 (concatMap fst3 vprgms) tjoinObjMap
+  return (vprgms, env4)
