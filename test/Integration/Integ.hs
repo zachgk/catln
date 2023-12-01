@@ -41,7 +41,7 @@ runTest includeCore fileName = testCaseSteps fileName $ \step -> do
         CErr notes -> assertFailure $ "Could not desguar:" ++ prettyCNotes notes
         CRes _ prgm -> do
 
-          let goldenDesugarPath = goldenDesugarDir ++ takeBaseName fileName
+          let goldenDesugarPath = goldenDesugarDir ++ takeBaseName fileName ++ ".txt"
           goldenDesugarExists <- doesFileExist goldenDesugarPath
           let showPrgm = T.unpack $ pShowNoColor $ graphToNodes prgm
           if testDir `isPrefixOf` fileName && goldenDesugarExists
@@ -59,7 +59,7 @@ runTest includeCore fileName = testCaseSteps fileName $ \step -> do
               assertFailure $ "Could not typecheck:" ++ prettyCNotes errs
             CRes _ tprgm -> do
 
-              let goldenTypecheckPath = goldenTypecheckDir ++ takeBaseName fileName
+              let goldenTypecheckPath = goldenTypecheckDir ++ takeBaseName fileName ++ ".txt"
               goldenTypecheckExists <- doesFileExist goldenTypecheckPath
               let showTPrgm = T.unpack $ pShowNoColor $ graphToNodes tprgm
               if testDir `isPrefixOf` fileName && goldenTypecheckExists
