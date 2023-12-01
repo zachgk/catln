@@ -37,7 +37,7 @@ data TypeBound = BUpper | BLower | BEq
   deriving (Eq)
 
 data EncodeState
-  = EncodeOut !(Maybe VEObject) !VMetaVarArgEnv -- ^ Used for outputs including in definitions (with object) and global annots (without obj)
+  = EncodeOut !(Maybe VObject) !VMetaVarArgEnv -- ^ Used for outputs including in definitions (with object) and global annots (without obj)
   | EncodeIn !VMetaVarArgEnv -- ^ Used for inputs
   deriving (Eq, Ord, Show)
 
@@ -49,7 +49,7 @@ asEncodeIn :: EncodeState -> EncodeState
 asEncodeIn (EncodeOut _ vaenv) = EncodeIn vaenv
 asEncodeIn est@EncodeIn{}      = est
 
-encodeObj :: EncodeState -> Maybe VEObject
+encodeObj :: EncodeState -> Maybe VObject
 encodeObj (EncodeOut obj _) = obj
 encodeObj EncodeIn{}        = Nothing
 
@@ -252,7 +252,7 @@ fromObjectMap env1 oa@ObjArr{oaBasis, oaAnnots, oaObj=Just (GuardExpr obj g), oa
   return (oa', env10)
 fromObjectMap _ oa = error $ printf "Invalid oa in fromObjectMap %s" (show oa)
 
-fromPrgm :: FEnv -> PEPrgm -> TypeCheckResult (VEPrgm, FEnv)
+fromPrgm :: FEnv -> PPrgm -> TypeCheckResult (VPrgm, FEnv)
 fromPrgm env1 (objMap, classGraph, annots) = do
   (objMap', env2) <- mapMWithFEnv env1 fromObjectMap objMap
   (annots', env3) <- mapMWithFEnv env2 (fromExpr (EncodeOut Nothing H.empty)) annots
@@ -261,20 +261,20 @@ fromPrgm env1 (objMap, classGraph, annots) = do
 addTypeGraphArrow :: FEnv -> TObjArr -> TypeCheckResult ((), FEnv)
 addTypeGraphArrow env oa = return ((), fAddTTypeGraph env (oaObjPath oa) oa)
 
-addTypeGraphObjects :: FEnv -> TEObjectMapItem -> TypeCheckResult ((), FEnv)
+addTypeGraphObjects :: FEnv -> TObjArr -> TypeCheckResult ((), FEnv)
 addTypeGraphObjects env oa = do
   (_, env') <- addTypeGraphArrow env oa
   return ((), env')
 
-addTypeGraphPrgm :: FEnv -> TEPrgm -> TypeCheckResult ((), FEnv)
+addTypeGraphPrgm :: FEnv -> TPrgm -> TypeCheckResult ((), FEnv)
 addTypeGraphPrgm env (objMap, _, _) = do
   (_, env') <- mapMWithFEnv env addTypeGraphObjects objMap
   return ((), env')
 
-fromPrgms :: FEnv -> [PEPrgm] -> [TEPrgm] -> TypeCheckResult ([VEPrgm], FEnv)
+fromPrgms :: FEnv -> [PPrgm] -> [TPrgm] -> TypeCheckResult ([VPrgm], FEnv)
 fromPrgms env1 pprgms tprgms = do
   (_, env2) <- mapMWithFEnv env1 addTypeGraphPrgm tprgms
   (vprgms, env3) <- mapMWithFEnv env2 fromPrgm pprgms
-  let (tjoinObjMap, _, _) = mergeExprPrgms tprgms
+  let (tjoinObjMap, _, _) = mergePrgms tprgms
   let env4 = addUnionObjToEnv env3 (concatMap fst3 vprgms) tjoinObjMap
   return (vprgms, env4)

@@ -131,9 +131,8 @@ type PExpr = Expr ()
 type PGuardExpr = GuardExpr Expr ()
 type PCompAnnot = CompAnnot PExpr
 type PObjArr = ObjArr Expr ()
-type PEPrgm = ExprPrgm Expr ()
-type PEPrgmGraphData = GraphData PEPrgm String
-type InitialPPrgmGraphData = GraphData (ExprPrgm Expr ()) String
+type PPrgm = Prgm Expr ()
+type PPrgmGraphData = GraphData PPrgm String
 
 data ShowMetaDat = ShowMeta SType VarMetaDat
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
@@ -141,11 +140,9 @@ type ShowMeta = Meta ShowMetaDat
 type SExpr = Expr ShowMetaDat
 type SCompAnnot = CompAnnot SExpr
 type SObjArr = ObjArr Expr ShowMetaDat
-type SObjectMap = ExprObjectMap Expr ShowMetaDat
-type SObjectMapItem = ExprObjectMapItem Expr ShowMetaDat
-type SPrgm = ExprPrgm Expr ShowMetaDat
+type SPrgm = Prgm Expr ShowMetaDat
 
-data VarMetaDat = VarMetaDat (Maybe Pnt) (Maybe VEObject)
+data VarMetaDat = VarMetaDat (Maybe Pnt) (Maybe VObject)
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 type VarMeta = Meta VarMetaDat
 type VExpr = Expr VarMetaDat
@@ -153,20 +150,18 @@ type VCompAnnot = CompAnnot VExpr
 type VMetaVarArgEnv = MetaVarArgEnv VarMetaDat
 type VGuardExpr = GuardExpr Expr VarMetaDat
 type VObjArr = ObjArr Expr VarMetaDat
-type VEObject = VExpr
-type VEObjectMap = ExprObjectMap Expr VarMetaDat
-type VEObjectMapItem = ExprObjectMapItem Expr VarMetaDat
-type VEPrgm = (VEObjectMap, ClassGraph, [VCompAnnot])
+type VObject = VExpr
+type VObjectMap = ObjectMap Expr VarMetaDat
+type VObjectMapItem = ObjArr Expr VarMetaDat
+type VPrgm = (VObjectMap, ClassGraph, [VCompAnnot])
 
 type TypedMeta = Meta ()
 type TExpr = Expr ()
 type TCompAnnot = CompAnnot TExpr
 type TGuardExpr = GuardExpr Expr ()
 type TObjArr = ObjArr Expr ()
-type FinalTPrgm = ExprPrgm Expr ()
-type TEObjectMap = ExprObjectMap Expr ()
-type TEObjectMapItem = ExprObjectMapItem Expr ()
-type TEPrgm = ExprPrgm Expr ()
+type TObjectMap = ObjectMap Expr ()
+type TPrgm = Prgm Expr ()
 
 -- implicit graph
 type VTypeGraph = H.HashMap TypeName [VObjArr] -- H.HashMap (Root tuple name for filtering) [vals]

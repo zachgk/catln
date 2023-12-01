@@ -41,8 +41,8 @@ type ECompAnnot = CompAnnot (Expr EvalMetaDat)
 type EExpr = Expr EvalMetaDat
 type EGuard = Maybe EExpr
 type EObjArr = ObjArr Expr EvalMetaDat
-type EObjectMap = ExprObjectMap Expr EvalMetaDat
-type EPrgm = ExprPrgm Expr EvalMetaDat
+type EObjectMap = ObjectMap Expr EvalMetaDat
+type EPrgm = Prgm Expr EvalMetaDat
 type EPrgmGraphData = GraphData EPrgm String
 
 data EPrim = EPrim PartialType EGuard (H.HashMap String Val -> Val)
@@ -179,7 +179,7 @@ data TBEnv = TBEnv {
     tbName       :: String
   , tbResEnv     :: ResBuildEnv
   , tbVals       :: H.HashMap PartialType ResArrowTree
-  , tbPrgm       :: ExprPrgm Expr EvalMetaDat
+  , tbPrgm       :: Prgm Expr EvalMetaDat
   , tbClassGraph :: ClassGraph
   }
 

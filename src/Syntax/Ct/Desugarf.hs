@@ -135,7 +135,7 @@ desInheritingSubstatements :: StatementEnv -> Path -> [PStatementTree] -> CRes (
 desInheritingSubstatements (inheritModule, inheritAnnots) path subStatements = do
   let statementEnv' = (path', inheritAnnots)
   subStatements' <- mapM (desStatement statementEnv') subStatements
-  let (objectMap, classGraph, annots) = mergeExprPrgms subStatements'
+  let (objectMap, classGraph, annots) = mergePrgms subStatements'
   let prgm' = (objectMap, classGraph, []) -- Annots in subStatements are not global, but local to the main statement
   return (prgm', annots)
   where
@@ -152,7 +152,6 @@ desMultiTypeDefObj inheritPath varReplaceMap expr = desObj False inheritPath Use
     -- This replaces references from obj vars of class vars
     -- Consider JOptional<$T> = Just<$T=$T> | Nothing
     -- For the object Just, it needs to be Just<TopType $T> as the classes $T is out of scope
-    -- TODO: Consider adding back the following lines of code produced in experimental exprObject branch
     replaceMetaVar (ExprMeta InputMeta ExprMetaApplyVarVal) (Meta t pos md) = Meta (substituteVarsWithVarEnv varReplaceMap t) pos md
     replaceMetaVar _ m = m
     expr'' = mapMetaAppliedExpr replaceMetaVar InputMeta expr'
@@ -177,7 +176,7 @@ desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef clssExpr dataGuardEx
   let classGraph' = ClassGraph $ graphFromEdges (classCGNode:extendNodes ++ typeCGNodes)
 
   (subPrgm, _) <- desInheritingSubstatements statementEnv path subStatements
-  return $ mergeExprPrgm (objs, classGraph', []) subPrgm
+  return $ mergePrgm (objs, classGraph', []) subPrgm
     where
       path' =  case path of
         Absolute p -> p
@@ -194,21 +193,21 @@ desClassDecl statementEnv@(inheritPath, _) clssExpr subStatements path = do
   let className = fromPartialName $ ptName clss
   let classGraph' = ClassGraph $ graphFromEdges [(CGClass (False, clss, [], desObjDocComment subStatements), PClassName (addPath inheritPath className), [])]
   (subPrgm, _) <- desInheritingSubstatements statementEnv path subStatements
-  return $ mergeExprPrgm ([], classGraph', []) subPrgm
+  return $ mergePrgm ([], classGraph', []) subPrgm
 
 desTypeDef :: StatementEnv -> PExpr -> [RawStatementTree RawExpr ParseMetaDat] -> CRes DesPrgm
 desTypeDef statementEnv@(inheritPath, _) typeExpr subStatements = do
   (subPrgm, annots) <- desInheritingSubstatements statementEnv (getPath $ exprPath typeExpr) subStatements
   let typeExpr' = semiDesExpr SDInput Nothing typeExpr
   let obj = desObj False inheritPath UseRelativeName $ ObjArr (Just (GuardExpr typeExpr' Nothing)) TypeObj (desObjDocComment subStatements) annots (Nothing, emptyMetaE "arrM" typeExpr)
-  return $ mergeExprPrgm ([obj], emptyClassGraph, []) subPrgm
+  return $ mergePrgm ([obj], emptyClassGraph, []) subPrgm
 
 desClassDef :: StatementEnv -> Sealed -> RawClassDef ParseMetaDat -> [RawStatementTree RawExpr ParseMetaDat] -> Path -> CRes DesPrgm
 desClassDef statementEnv@(inheritPath, _) sealed (typeExpr, extends) subStatements path = do
   let (_, typeExpr') = desObjPropagateTypes $ semiDesExpr SDInput Nothing typeExpr
   let classGraph = ClassGraph $ graphFromEdges [(CGClass (sealed, partialVal (PClassName path'), [getExprType typeExpr'], desObjDocComment subStatements), PClassName className, [PRelativeName $ exprPath typeExpr']) | className <- extends ]
   (subPrgm, _) <- desInheritingSubstatements statementEnv path subStatements
-  return $ mergeExprPrgm ([], classGraph, []) subPrgm
+  return $ mergePrgm ([], classGraph, []) subPrgm
   where
     path' =  case path of
       Absolute p -> p
@@ -234,7 +233,7 @@ desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree state
   RawAnnot a -> do
     a' <- desGlobalAnnot a
     statements' <- mapM (desStatement (inheritModule, a':inheritAnnots)) subStatements
-    return $ mergeExprPrgms statements'
+    return $ mergePrgms statements'
   RawApplyStatement{} -> error "Not yet implemented"
   RawModule _ path -> fst <$> desInheritingSubstatements statementEnv path subStatements
 
@@ -244,7 +243,7 @@ finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm1, prgmName, impo
     -- Build fullPrgm with recursive imports
     vertex = fromJust $ vertexFromKey prgmName
     importTree = reachable desPrgmGraph vertex
-    fullPrgm1 = mergeExprPrgms $ map (fst3 . nodeFromVertex) importTree
+    fullPrgm1 = mergePrgms $ map (fst3 . nodeFromVertex) importTree
 
     -- Run removeClassInstanceObjects
     prgm2 = removeClassInstanceObjects fullPrgm1 prgm1
@@ -261,7 +260,7 @@ finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm1, prgmName, impo
 desPrgm :: PPrgm -> CRes DesPrgm
 desPrgm (_, statements) = do
   statements' <- mapM (desStatement ("", [])) statements
-  return $ mergeExprPrgms statements'
+  return $ mergePrgms statements'
 
 desFiles :: PPrgmGraphData -> CRes DesPrgmGraphData
 desFiles graphData = do

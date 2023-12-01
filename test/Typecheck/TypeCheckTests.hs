@@ -14,7 +14,7 @@ import           CRes
 import           Data.Graph          (graphFromEdges)
 import           Hedgehog
 import qualified Hedgehog.Gen        as HG
-import           Semantics.Prgm      (mergeExprPrgms)
+import           Semantics.Prgm      (mergePrgms)
 import           Test.Tasty
 import qualified Test.Tasty.Hedgehog as THG
 import           Testing.Generation  (genPrgms)
@@ -31,7 +31,7 @@ propExprEncodeDecode = property $ do
   prgmsNodes <- forAll genPrgms
   let prgms = map fst3 prgmsNodes
   annotate $ printf "Programs: \n\t%s" (show prgms)
-  let classGraph = snd3 $ mergeExprPrgms prgms
+  let classGraph = snd3 $ mergePrgms prgms
   let fenv = makeBaseFEnv classGraph
   (encoded, fenv') <- evalMaybe $ tcreToMaybe $ fromPrgms fenv prgms []
   decoded <- evalMaybe $ tcreToMaybe $ toPrgms fenv' encoded
@@ -42,7 +42,7 @@ propConstraint :: Property
 propConstraint = property $ do
   prgmsNodes <- forAll genPrgms
   let prgms = map fst3 prgmsNodes
-  let classGraph = snd3 $ mergeExprPrgms prgms
+  let classGraph = snd3 $ mergePrgms prgms
   let fenv = makeBaseFEnv classGraph
   (_, fenv') <- evalMaybe $ tcreToMaybe $ fromPrgms fenv prgms []
   let cons = feCons fenv'
@@ -54,7 +54,7 @@ propConstraints :: Property
 propConstraints = property $ do
   prgmsNodes <- forAll genPrgms
   let prgms = map fst3 prgmsNodes
-  let classGraph = snd3 $ mergeExprPrgms prgms
+  let classGraph = snd3 $ mergePrgms prgms
   let fenv = makeBaseFEnv classGraph
   (_, fenv') <- evalMaybe $ tcreToMaybe $ fromPrgms fenv prgms []
   let cons = feCons fenv'

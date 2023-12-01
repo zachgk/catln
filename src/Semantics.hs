@@ -64,7 +64,7 @@ exprWithMeta _ _                  = error "exprWithMeta with unsupported expr"
 exprWithMetaType :: Type -> Expr m -> Expr m
 exprWithMetaType t e = exprWithMeta (mWithType t (getExprMeta e)) e
 
-classGraphFromObjs :: (ExprClass e, MetaDat m, Show m, Show (e m)) => ExprObjectMap e m -> ClassGraph
+classGraphFromObjs :: (ExprClass e, MetaDat m, Show m, Show (e m)) => ObjectMap e m -> ClassGraph
 classGraphFromObjs objMap = ClassGraph $ graphFromEdges $ map (\oa -> (CGType, PTypeName (oaObjPath oa), [])) objMap
 
 oaObjExpr :: (MetaDat m, ExprClass e, Show m, Show (e m)) => ObjArr e m -> e m

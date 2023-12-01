@@ -109,7 +109,7 @@ toGuardExpr env (GuardExpr e g) = do
   g' <- mapM (toExpr env) g
   return $ GuardExpr e' g'
 
-toObjArr :: FEnv -> VObjArr -> TypeCheckResult TEObjectMapItem
+toObjArr :: FEnv -> VObjArr -> TypeCheckResult TObjArr
 toObjArr env oa@ObjArr{oaObj, oaArr=(arrE, arrM), oaAnnots} = do
   oaObj' <- mapM (toGuardExpr env) oaObj
   arrE' <- mapM (toGuardExpr env) arrE
@@ -117,11 +117,11 @@ toObjArr env oa@ObjArr{oaObj, oaArr=(arrE, arrM), oaAnnots} = do
   oaAnnots' <- mapM (toExpr env) oaAnnots
   return oa{oaObj=oaObj', oaArr=(arrE', arrM'), oaAnnots=oaAnnots'}
 
-toPrgm :: FEnv -> VEPrgm -> TypeCheckResult TEPrgm
+toPrgm :: FEnv -> VPrgm -> TypeCheckResult TPrgm
 toPrgm env (objMap, classGraph, annots) = do
   objMap' <- mapM (toObjArr env) objMap
   annots' <- mapM (toExpr env) annots
   return (objMap', classGraph, annots')
 
-toPrgms :: FEnv -> [VEPrgm] -> TypeCheckResult [TEPrgm]
+toPrgms :: FEnv -> [VPrgm] -> TypeCheckResult [TPrgm]
 toPrgms env = mapM (toPrgm env)

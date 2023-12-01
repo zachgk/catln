@@ -18,8 +18,8 @@ import           Text.Printf
 import           TypeCheck           (typecheckPrgm)
 import           Utils
 
-type Prgms = H.HashMap String (ExprPrgm Expr ())
-type GenPrgm = Gen (ExprPrgm Expr ())
+type Prgms = H.HashMap String (Prgm Expr ())
+type GenPrgm = Gen (Prgm Expr ())
 
 findPrgms :: IO Prgms
 findPrgms = do
@@ -29,8 +29,8 @@ findPrgms = do
     rawPrgm <- fromCRes <$> readFiles False True [fileName]
     let prgm = fromCRes $ desFiles rawPrgm
     let tprgm = fromCRes $ typecheckPrgm prgm
-    return (fileName, mergeExprPrgms $ map fst3 $ graphToNodes tprgm)
-  return (H.insert "empty" emptyExprPrgm $ H.fromList prgms)
+    return (fileName, mergePrgms $ map fst3 $ graphToNodes tprgm)
+  return (H.insert "empty" emptyPrgm $ H.fromList prgms)
 
 ggPrgm :: Prgms -> GenPrgm
 ggPrgm prgms = HG.choice [genPremade, genPrgm]

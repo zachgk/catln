@@ -30,7 +30,7 @@ import           Semantics.Types
 import           Text.Printf
 import           Utils
 
-genTypeFromExpr :: ExprPrgm Expr () -> Expr () -> Gen PartialType
+genTypeFromExpr :: Prgm Expr () -> Expr () -> Gen PartialType
 genTypeFromExpr _ (CExpr _ c) = return $ constantPartialType c
 genTypeFromExpr _ (Value _ n) = return $ partialVal $ PTypeName n
 genTypeFromExpr prgm (TupleApply _ (_, baseExpr) oa) = do
@@ -51,7 +51,7 @@ genTypeFromExpr prgm (VarApply _ baseExpr varName m) = do
     else base
 genTypeFromExpr _ e = error $ printf "Unimplemented genTypeFromExpr for %s" (show e)
 
-genType :: ExprPrgm Expr () -> Gen Type
+genType :: Prgm Expr () -> Gen Type
 genType prgm@(objMap, ClassGraph cg, _) = HG.choice gens
   where
 
@@ -91,7 +91,7 @@ genType prgm@(objMap, ClassGraph cg, _) = HG.choice gens
       let (GuardExpr objExpr Nothing) = fromJust $ oaObj oa
       singletonType <$> genTypeFromExpr prgm objExpr
 
-genPartialType :: ExprPrgm Expr () -> Gen PartialType
+genPartialType :: Prgm Expr () -> Gen PartialType
 genPartialType prgm@(objMap, ClassGraph cg, _) = do
   gen <- if graphEmpty cg
     then if null objMap
@@ -146,7 +146,7 @@ genOutputExpr (VarApply _ b _ _) input = genOutputExpr b input
 genOutputExpr e _ = error $ printf "Not yet implemented getOutputExpr for %s" (show e)
 
 
-genPrgm :: Gen (ExprPrgm Expr ())
+genPrgm :: Gen (Prgm Expr ())
 genPrgm = do
   inputExprs <- HG.list (linear 1 5) (HG.either_ genInputExpr genInputExpr)
   let (dataTypes, funs) = partitionEithers inputExprs
@@ -166,7 +166,7 @@ genPrgm = do
 
   return (objMap, classGraphFromObjs objMap, [])
 
-genPrgms :: Gen [GraphNodes (ExprPrgm Expr ()) String]
+genPrgms :: Gen [GraphNodes (Prgm Expr ()) String]
 genPrgms = do
   prgm <- genPrgm
   prgmName <- HG.string (linear 5 10) HG.lower

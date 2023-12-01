@@ -55,7 +55,7 @@ showGuardExpr env (GuardExpr e g) = do
   g' <- mapM (showExpr env) g
   return $ GuardExpr e' g'
 
-showObjArr :: FEnv -> VObjArr -> TypeCheckResult SObjectMapItem
+showObjArr :: FEnv -> VObjArr -> TypeCheckResult SObjArr
 showObjArr env oa@ObjArr{oaObj, oaAnnots, oaArr=(arrE, arrM)} = do
   oaObj' <- mapM (showGuardExpr env) oaObj
   oaAnnots' <- mapM (showExpr env) oaAnnots

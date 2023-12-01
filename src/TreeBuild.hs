@@ -35,8 +35,8 @@ type TBExpr = Expr TBMetaDat
 type TBCompAnnot = CompAnnot TBExpr
 type TBObjArr = ObjArr Expr TBMetaDat
 type TBGuard = Maybe TBExpr
-type TBObjectMap = ExprObjectMap Expr TBMetaDat
-type TBPrgm = ExprPrgm Expr TBMetaDat
+type TBObjectMap = ObjectMap Expr TBMetaDat
+type TBPrgm = Prgm Expr TBMetaDat
 
 type VisitedArrows = S.HashSet TCallTree
 

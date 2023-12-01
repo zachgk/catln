@@ -56,9 +56,9 @@ type DesExpr = Expr ParseMetaDat
 type DesGuardExpr = GuardExpr Expr ParseMetaDat
 type DesCompAnnot = CompAnnot DesExpr
 type DesObjArr = ObjArr Expr ParseMetaDat
-type DesObjectMapItem = ExprObjectMapItem Expr ParseMetaDat
-type DesObjectMap = ExprObjectMap Expr ParseMetaDat
-type DesPrgm = ExprPrgm Expr ParseMetaDat
+type DesObjectMapItem = ObjArr Expr ParseMetaDat
+type DesObjectMap = ObjectMap Expr ParseMetaDat
+type DesPrgm = Prgm Expr ParseMetaDat
 type DesPrgmGraphData = GraphData DesPrgm String
 
 parseTVVar :: String -> Maybe Type

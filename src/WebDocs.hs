@@ -42,8 +42,7 @@ import           Syntax.Ct.Parser.Syntax       (DesPrgm, PPrgmGraphData)
 import           Syntax.Parsers                (readFiles)
 import           TypeCheck                     (typecheckPrgm,
                                                 typecheckPrgmWithTrace)
-import           TypeCheck.Common              (FinalTPrgm, TraceConstrain,
-                                                VEPrgm)
+import           TypeCheck.Common              (TPrgm, TraceConstrain, VPrgm)
 import           Utils
 
 data ResSuccess a n = Success a [n]
@@ -55,7 +54,7 @@ maybeJson (CRes notes r) = json $ Success r notes
 maybeJson (CErr notes)   = json (ResFail notes :: ResSuccess () CNote)
 
 -- | Filters a program's object map and class map to only highlight a particular type or class name
-filterByType :: String -> FinalTPrgm -> FinalTPrgm
+filterByType :: String -> TPrgm -> TPrgm
 filterByType name (objMap, ClassGraph classGraph, _) = (objMap', classGraph', [])
   where
     objMap' = filter (relativeNameMatches name . oaObjPath) objMap
@@ -68,8 +67,8 @@ data WDProvider
   , cBaseFileName   :: String
   , cRaw            :: CRes PPrgmGraphData
   , cPrgm           :: CRes (GraphData DesPrgm String)
-  , cTPrgmWithTrace :: CRes (GraphData (FinalTPrgm, VEPrgm, TraceConstrain) String)
-  , cTPrgm          :: CRes (GraphData FinalTPrgm String)
+  , cTPrgmWithTrace :: CRes (GraphData (TPrgm, VPrgm, TraceConstrain) String)
+  , cTPrgm          :: CRes (GraphData TPrgm String)
                     }
 
 mkCacheWDProvider :: Bool -> String -> IO WDProvider
@@ -98,22 +97,22 @@ getPrgm provider@LiveWDProvider{} = do
   return (base >>= desFiles)
 getPrgm CacheWDProvider{cPrgm} = return cPrgm
 
-getTPrgmWithTrace :: WDProvider -> IO (CRes (GraphData (FinalTPrgm, VEPrgm, TraceConstrain) String))
+getTPrgmWithTrace :: WDProvider -> IO (CRes (GraphData (TPrgm, VPrgm, TraceConstrain) String))
 getTPrgmWithTrace provider@LiveWDProvider{} = do
   base <- getPrgm provider
   return (base >>= typecheckPrgmWithTrace)
 getTPrgmWithTrace CacheWDProvider{cTPrgmWithTrace} = return cTPrgmWithTrace
 
-getTPrgm :: WDProvider -> IO (CRes (GraphData FinalTPrgm String))
+getTPrgm :: WDProvider -> IO (CRes (GraphData TPrgm String))
 getTPrgm provider@LiveWDProvider{} = do
   base <- getPrgm provider
   return (base >>= typecheckPrgm)
 getTPrgm CacheWDProvider{cTPrgm} = return cTPrgm
 
-getTPrgmJoined :: WDProvider -> IO (CRes FinalTPrgm)
+getTPrgmJoined :: WDProvider -> IO (CRes TPrgm)
 getTPrgmJoined provider = do
   base <- getTPrgm provider
-  return (mergeExprPrgms . map fst3 . graphToNodes <$> base)
+  return (mergePrgms . map fst3 . graphToNodes <$> base)
 
 getTreebug :: WDProvider -> String -> String -> IO EvalResult
 getTreebug provider prgmName fun = do
@@ -190,7 +189,7 @@ docApiBase provider = do
 
   get "/api/desugar" $ do
     maybePrgmGraph <- liftAndCatchIO $ getPrgm provider
-    let maybePrgm = mergeExprPrgms . map fst3 . graphToNodes <$> maybePrgmGraph
+    let maybePrgm = mergePrgms . map fst3 . graphToNodes <$> maybePrgmGraph
     maybeJson maybePrgm
 
   get "/api/constrain" $ do

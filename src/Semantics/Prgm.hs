@@ -110,9 +110,8 @@ data ObjArr e m = ObjArr {
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
 
-type ExprObjectMapItem e m = ObjArr e m
-type ExprObjectMap e m = [ExprObjectMapItem e m]
-type ExprPrgm e m = (ExprObjectMap e m, ClassGraph, [CompAnnot (e m)]) -- TODO: Include [Export]
+type ObjectMap e m = [ObjArr e m]
+type Prgm e m = (ObjectMap e m, ClassGraph, [CompAnnot (e m)]) -- TODO: Include [Export]
 
 
 instance (Show m) => Show (Meta m) where
@@ -241,8 +240,8 @@ instance ObjArrClass ObjArr where
   getOaAnnots = oaAnnots
 
 
-emptyExprPrgm :: ExprPrgm e m
-emptyExprPrgm = ([], emptyClassGraph, [])
+emptyPrgm :: Prgm e m
+emptyPrgm = ([], emptyClassGraph, [])
 
 mkIOObjArr :: (MetaDat m, Show m) => Meta m -> ArgName -> Expr m -> ObjArr Expr m
 mkIOObjArr m argName argVal = ObjArr (Just (GuardExpr (Value (emptyMetaT $ typeVal $ PTypeName argName) argName) Nothing)) ArgObj Nothing [] (Just (GuardExpr argVal Nothing), m)
@@ -309,32 +308,31 @@ mergeClassGraphs (ClassGraph classGraphA) (ClassGraph classGraphB) = ClassGraph 
 
     mergeClassPartials clss@PartialType{ptVars=varsA} PartialType{ptVars=varsB} = clss{ptVars = H.unionWith (unionTypes (ClassGraph classGraphA)) varsA varsB}
 
-mergeExprPrgm :: ExprPrgm e m -> ExprPrgm e m -> ExprPrgm e m
-mergeExprPrgm (objMap1, classGraph1, annots1) (objMap2, classGraph2, annots2) = (
+mergePrgm :: Prgm e m -> Prgm e m -> Prgm e m
+mergePrgm (objMap1, classGraph1, annots1) (objMap2, classGraph2, annots2) = (
   objMap1 ++ objMap2,
   mergeClassGraphs classGraph1 classGraph2,
   annots1 ++ annots2
                                                                            )
 
-mergeExprPrgms :: Foldable f => f (ExprPrgm e m) -> ExprPrgm e m
-mergeExprPrgms = foldr mergeExprPrgm emptyExprPrgm
+mergePrgms :: Foldable f => f (Prgm e m) -> Prgm e m
+mergePrgms = foldr mergePrgm emptyPrgm
 
--- | Gets all recursive sub expression objects from an expression's arguments. Helper for 'getRecursiveExprObjs'
-getRecursiveExprObjsExpr :: (ExprClass e, MetaDat m, Show m) => e m -> [e m]
-getRecursiveExprObjsExpr expr | isNothing (maybeExprPath expr) = []
-getRecursiveExprObjsExpr expr = subObjects ++ recursedSubObjects
+-- | Gets all recursive sub expression objects from an expression's arguments. Helper for 'getRecursiveObjs'
+getRecursiveObjsExpr :: (ExprClass e, MetaDat m, Show m) => e m -> [e m]
+getRecursiveObjsExpr expr | isNothing (maybeExprPath expr) = []
+getRecursiveObjsExpr expr = subObjects ++ recursedSubObjects
   where
     subObjects = filter (isJust . maybeExprPath) $ mapMaybe exprFromTupleArg $ exprAppliedArgs expr
     exprFromTupleArg ObjArr{oaArr=(Just (GuardExpr e _), _)} = Just e
     exprFromTupleArg _                                       = Nothing
-    recursedSubObjects = concatMap getRecursiveExprObjsExpr subObjects
+    recursedSubObjects = concatMap getRecursiveObjsExpr subObjects
 
 -- | Gets an object and all sub-objects (recursively) from it's arguments
-getRecursiveExprObjs :: (ExprClass e, Show m, Show (e m), MetaDat m) => ExprObjectMapItem e m -> ExprObjectMap e m
-getRecursiveExprObjs ObjArr{oaBasis} | oaBasis == MatchObj = []
-getRecursiveExprObjs oa@ObjArr{oaBasis, oaObj=Just (GuardExpr objE _)} = oa : recursedSubObjects
+getRecursiveObjs :: (ExprClass e, Show m, Show (e m), MetaDat m) => ObjArr e m -> ObjectMap e m
+getRecursiveObjs ObjArr{oaBasis} | oaBasis == MatchObj = []
+getRecursiveObjs oa@ObjArr{oaBasis, oaObj=Just (GuardExpr objE _)} = oa : recursedSubObjects
   where
-    recursedSubObjects = map toObjMapItem $ getRecursiveExprObjsExpr objE
-    -- toObjMapItem e = (ExprObject oaBasis Nothing e, [], Nothing)
+    recursedSubObjects = map toObjMapItem $ getRecursiveObjsExpr objE
     toObjMapItem e = ObjArr (Just (GuardExpr e Nothing)) oaBasis Nothing [] (Nothing, emptyMetaN)
-getRecursiveExprObjs oa = error $ printf "getRecursiveExprObjs with no input expression: %s" (show oa)
+getRecursiveObjs oa = error $ printf "getRecursiveObjs with no input expression: %s" (show oa)

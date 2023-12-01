@@ -168,7 +168,7 @@ evalBaseEnv prgm@(objMap, classGraph, _) = Env {
                 }
 
 prgmFromGraphData :: String -> EPrgmGraphData -> EPrgm
-prgmFromGraphData prgmName (prgmGraph, nodeFromVertex, vertexFromKey) = mergeExprPrgms $ map (fst3 . nodeFromVertex) $ reachable prgmGraph $ fromJust $ vertexFromKey prgmName
+prgmFromGraphData prgmName (prgmGraph, nodeFromVertex, vertexFromKey) = mergePrgms $ map (fst3 . nodeFromVertex) $ reachable prgmGraph $ fromJust $ vertexFromKey prgmName
 
 evalBuildPrgm :: EExpr -> PartialType -> Type -> EPrgm -> CRes (TExpr (), Env)
 evalBuildPrgm input srcType destType prgm = do

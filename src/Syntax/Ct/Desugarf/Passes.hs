@@ -48,14 +48,14 @@ removeClassInstanceObjects (_, fullPrgmClassGraph, _) (objMap, ClassGraph cg, an
 -- uses the mapMeta for objMap and annots, but must map the classGraph manually
 -- the fullPrgmClassToTypes includes the imports and is used for when the def is inside an import
 resolveRelativeNames :: DesPrgm -> DesPrgm -> DesPrgm
-resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, classGraph@(ClassGraph cg), annots) = mapMetaExprPrgm resolveMeta (objMap, classGraph', annots)
+resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, classGraph@(ClassGraph cg), annots) = mapMetaPrgm resolveMeta (objMap, classGraph', annots)
   where
     classGraph' = ClassGraph $ graphFromEdges $ map mapClassEntry $ graphToNodes cg
     mapClassEntry (node, tp, subTypes) = (mapCGNode node, resolveName True tp, map (resolveName True) subTypes)
     mapCGNode (CGClass (s, clss, ts, doc)) = CGClass (s, mapPartial True clss, fmap (mapType True) ts, doc)
     mapCGNode CGType = CGType
     classNames = nub $ listClassNames fullPrgmClassGraph
-    objNames = nub $ map oaObjPath (concatMap getRecursiveExprObjs fullPrgmObjMap)
+    objNames = nub $ map oaObjPath (concatMap getRecursiveObjs fullPrgmObjMap)
 
     resolveMeta _ (Meta t p md) = Meta (mapType False t) p md
 
@@ -98,12 +98,11 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, classGraph
     resolveName _ name = name
 
 expandDataReferences :: DesPrgm -> DesPrgm -> DesPrgm
-expandDataReferences (fullPrgmObjMap, _, _) (objMap, classGraph@(ClassGraph cg), annots) = mapMetaExprPrgm aux (objMap, classGraph', annots)
+expandDataReferences (fullPrgmObjMap, _, _) (objMap, classGraph@(ClassGraph cg), annots) = mapMetaPrgm aux (objMap, classGraph', annots)
   where
     classGraph' = ClassGraph $ graphFromEdges $ mapFst3 mapCGNode $ graphToNodes cg
     mapCGNode (CGClass (s, clss, ts, doc)) = CGClass (s, clss, fmap mapType ts, doc)
     mapCGNode CGType = CGType
-    -- objExpansions = H.fromList $ concatMap (\(obj@ExprObject{eobjBasis}, _, _) -> ([(eobjPath obj, obj) | eobjBasis == TypeObj])) fullPrgmObjMap
     objExpansions = H.fromList $ concatMap (\oa@ObjArr{oaBasis} -> ([(oaObjPath oa, oa) | oaBasis == TypeObj])) fullPrgmObjMap
     aux metaType inM@(Meta t p md) = case metaType of
       ObjMeta               -> inM
