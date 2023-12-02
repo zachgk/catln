@@ -203,13 +203,13 @@ instance ExprClass Expr where
   exprAppliedArgs (Value _ _) = []
   exprAppliedArgs (TupleApply _ (_, be) ae) = ae : exprAppliedArgs be
   exprAppliedArgs (VarApply _ e _ _) = exprAppliedArgs e
-  exprAppliedArgs (AliasExpr _ b) = exprAppliedArgs b
+  exprAppliedArgs (AliasExpr b _) = exprAppliedArgs b
   exprAppliedArgs e = error $ printf "Unsupported Expr exprAppliedArgs for %s" (show e)
 
   exprAppliedOrdVars (Value _ _) = []
   exprAppliedOrdVars (TupleApply _ (_, be) _) = exprAppliedOrdVars be
   exprAppliedOrdVars (VarApply _ e n m) = (n, m) : exprAppliedOrdVars e
-  exprAppliedOrdVars (AliasExpr _ b) = exprAppliedOrdVars b
+  exprAppliedOrdVars (AliasExpr b _) = exprAppliedOrdVars b
   exprAppliedOrdVars _ = error "Unsupported Expr exprAppliedOrdVars"
 
   exprVarArgs CExpr{} = H.empty

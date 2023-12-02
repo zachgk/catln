@@ -239,14 +239,14 @@ instance ExprClass TExpr where
   exprAppliedArgs (TValue _ _) = []
   exprAppliedArgs (TTupleApply _ be ae) = ae : exprAppliedArgs be
   exprAppliedArgs (TVarApply _ e _ _) = exprAppliedArgs e
-  exprAppliedArgs (TAliasExpr _ b) = exprAppliedArgs b
+  exprAppliedArgs (TAliasExpr b _) = exprAppliedArgs b
   exprAppliedArgs (TCalls _ b _) = exprAppliedArgs b
   exprAppliedArgs e = error $ printf "Unsupported Expr exprAppliedArgs for %s" (show e)
 
   exprAppliedOrdVars (TValue _ _) = []
   exprAppliedOrdVars (TTupleApply _ be _) = exprAppliedOrdVars be
   exprAppliedOrdVars (TVarApply _ e n m) = (n, m) : exprAppliedOrdVars e
-  exprAppliedOrdVars (TAliasExpr _ b) = exprAppliedOrdVars b
+  exprAppliedOrdVars (TAliasExpr b _) = exprAppliedOrdVars b
   exprAppliedOrdVars (TCalls _ b _) = exprAppliedOrdVars b
   exprAppliedOrdVars _ = error "Unsupported Expr exprAppliedOrdVars"
 
