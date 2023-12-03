@@ -37,8 +37,8 @@ data TypeBound = BUpper | BLower | BEq
   deriving (Eq)
 
 data EncodeState
-  = EncodeOut !(Maybe VObject) !VMetaVarArgEnv -- ^ Used for outputs including in definitions (with object) and global annots (without obj)
-  | EncodeIn !VMetaVarArgEnv -- ^ Used for inputs
+  = EncodeOut !(Maybe VObject) !VIOMetaVarArgEnv -- ^ Used for outputs including in definitions (with object) and global annots (without obj)
+  | EncodeIn !VIOMetaVarArgEnv -- ^ Used for inputs
   deriving (Eq, Ord, Show)
 
 isEncodeOut :: EncodeState -> Bool
@@ -53,7 +53,7 @@ encodeObj :: EncodeState -> Maybe VObject
 encodeObj (EncodeOut obj _) = obj
 encodeObj EncodeIn{}        = Nothing
 
-encodeVarArgs :: EncodeState -> VMetaVarArgEnv
+encodeVarArgs :: EncodeState -> VIOMetaVarArgEnv
 encodeVarArgs (EncodeOut _ vaenv) = vaenv
 encodeVarArgs (EncodeIn vaenv)    = vaenv
 
@@ -226,10 +226,16 @@ fromGuard est env1 (Just expr) =  do
   return (Just expr', addConstraints env3 [ArrowTo 30 (encodeVarArgs est) (getExprMeta expr') bool'])
 fromGuard _ env Nothing = return (Nothing, env)
 
+fromVaenvItem :: EncodeState -> FEnv -> (PExpr, PreMeta) -> TypeCheckResult ((VarMeta, VarMeta), FEnv)
+fromVaenvItem est env1 (inE, outM) = do
+  (inM', env2) <- fromMeta env1 BUpper est (getExprMeta inE) "argIn"
+  (outM', env3) <- fromMeta env2 BUpper est outM "argOut"
+  return ((inM', outM'), env3)
+
 fromObjectMap :: FEnv -> PObjArr -> TypeCheckResult (VObjArr, FEnv)
 fromObjectMap env1 oa@ObjArr{oaBasis, oaAnnots, oaObj=Just (GuardExpr obj g), oaArr=(maybeArrE, arrM)} = do
   let envEst = EncodeIn H.empty -- An EncodeState for computing varEnv and argEnv
-  (vaenv, env3) <- mapMWithFEnvMap env1 (\e m -> fromMeta e BUpper envEst m "arg") $ fmap (head . map snd) (exprVarArgs $ oaObjExpr oa)
+  (vaenv, env3) <- mapMWithFEnvMap env1 (fromVaenvItem envEst) $ fmap head (exprVarArgs $ oaObjExpr oa)
 
   let inEst = EncodeIn vaenv
   (obj', env4) <- fromExpr inEst env3 obj

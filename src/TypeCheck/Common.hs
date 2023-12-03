@@ -25,6 +25,7 @@ import           GHC.Generics        (Generic)
 
 import           CRes
 import           Data.Aeson          (ToJSON, toJSON)
+import           Data.Bifunctor      (bimap)
 import           Data.Maybe          (catMaybes, fromMaybe, listToMaybe,
                                       mapMaybe)
 import           Data.String.Builder (literal)
@@ -72,7 +73,8 @@ type UnionObj = (Pnt, Pnt) -- a union of all TypeObj for argument inference, uni
 -- |
 -- Constraints represent known relationships between VarMeta formed during Encode
 -- Each constraint can affect other the actual type, the required type, or both for the "Scheme".
-type CVarArgEnv p = H.HashMap TypeVarAux p
+type CVarArgEnv p = H.HashMap TypeVarAux (p, p)
+type COVarArgEnv p = H.HashMap TypeVarAux p
 data Constraint p
   = EqualsKnown Int (CVarArgEnv p) p Type -- ^ Both Actual and Req
   | EqPoints Int (CVarArgEnv p) p p -- ^ Both Actual and Req
@@ -148,6 +150,7 @@ type VarMeta = Meta VarMetaDat
 type VExpr = Expr VarMetaDat
 type VCompAnnot = CompAnnot VExpr
 type VMetaVarArgEnv = MetaVarArgEnv VarMetaDat
+type VIOMetaVarArgEnv = H.HashMap TypeVarAux (VarMeta, VarMeta)
 type VGuardExpr = GuardExpr Expr VarMetaDat
 type VObjArr = ObjArr Expr VarMetaDat
 type VObject = VExpr
@@ -244,17 +247,20 @@ constraintMetas (AddInferArg _ _ p2 p3)   = [p2, p3]
 constraintMetas (PowersetTo _ _ p2 p3)    = [p2, p3]
 constraintMetas (UnionOf _ _ p2 p3s)      = p2:p3s
 
-constraintVarArgEnv :: Constraint p -> CVarArgEnv p
-constraintVarArgEnv (EqualsKnown _ vaenv _ _)    = vaenv
-constraintVarArgEnv (EqPoints _ vaenv _ _)       = vaenv
-constraintVarArgEnv (BoundedByKnown _ vaenv _ _) = vaenv
-constraintVarArgEnv (BoundedByObjs _ vaenv _)    = vaenv
-constraintVarArgEnv (ArrowTo _ vaenv _ _)        = vaenv
-constraintVarArgEnv (PropEq _ vaenv _ _)         = vaenv
-constraintVarArgEnv (AddArg _ vaenv _ _)         = vaenv
-constraintVarArgEnv (AddInferArg _ vaenv _ _)    = vaenv
-constraintVarArgEnv (PowersetTo _ vaenv _ _)     = vaenv
-constraintVarArgEnv (UnionOf _ vaenv _ _)        = vaenv
+constraintVarArgEnvIO :: Constraint p -> CVarArgEnv p
+constraintVarArgEnvIO (EqualsKnown _ vaenv _ _)    = vaenv
+constraintVarArgEnvIO (EqPoints _ vaenv _ _)       = vaenv
+constraintVarArgEnvIO (BoundedByKnown _ vaenv _ _) = vaenv
+constraintVarArgEnvIO (BoundedByObjs _ vaenv _)    = vaenv
+constraintVarArgEnvIO (ArrowTo _ vaenv _ _)        = vaenv
+constraintVarArgEnvIO (PropEq _ vaenv _ _)         = vaenv
+constraintVarArgEnvIO (AddArg _ vaenv _ _)         = vaenv
+constraintVarArgEnvIO (AddInferArg _ vaenv _ _)    = vaenv
+constraintVarArgEnvIO (PowersetTo _ vaenv _ _)     = vaenv
+constraintVarArgEnvIO (UnionOf _ vaenv _ _)        = vaenv
+
+constraintVarArgEnv :: Constraint p -> COVarArgEnv p
+constraintVarArgEnv = fmap snd . constraintVarArgEnvIO
 
 getPnt :: VarMeta -> Maybe Pnt
 getPnt (Meta _ _ (VarMetaDat p _)) = p
@@ -331,15 +337,30 @@ resolveTypeVar v con = case H.lookup v (constraintVarArgEnv con) of
   Just m' -> return m'
   Nothing -> TypeCheckResE [GenTypeCheckError Nothing $ printf "Unknown variable in resolveTypeVar var: %s" (show v)]
 
-descriptorVaenv :: FEnv -> CVarArgEnv VarMeta -> CVarArgEnv Scheme
+descriptorVaenv :: FEnv -> COVarArgEnv VarMeta -> COVarArgEnv Scheme
 descriptorVaenv env = fmap (descriptor env)
 
-descriptorSTypeVaenv :: FEnv -> CVarArgEnv VarMeta -> TypeCheckResult STypeVarArgEnv
+descriptorVaenvIO :: FEnv -> CVarArgEnv VarMeta -> CVarArgEnv Scheme
+descriptorVaenvIO env = fmap (bimap (descriptor env) (descriptor env))
+
+descriptorSTypeVaenv :: FEnv -> COVarArgEnv VarMeta -> TypeCheckResult STypeVarArgEnv
 descriptorSTypeVaenv env vaenv = sequence $ descriptorVaenv env vaenv
 
+descriptorSTypeVaenvIO :: FEnv -> CVarArgEnv VarMeta -> TypeCheckResult STypeIOVarArgEnv
+descriptorSTypeVaenvIO env vaenv = mapM both (descriptorVaenvIO env vaenv)
+  where
+    both (a, b) = do
+      a' <- a
+      b' <- b
+      return (a', b')
+
 type STypeVarArgEnv = H.HashMap TypeVarAux SType
+type STypeIOVarArgEnv = H.HashMap TypeVarAux (SType, SType)
 descriptorConVaenv :: FEnv -> VConstraint -> TypeCheckResult STypeVarArgEnv
 descriptorConVaenv env con = descriptorSTypeVaenv env (constraintVarArgEnv con)
+
+descriptorConVaenvIO :: FEnv -> VConstraint -> TypeCheckResult STypeIOVarArgEnv
+descriptorConVaenvIO env con = descriptorSTypeVaenvIO env (constraintVarArgEnvIO con)
 
 -- trace constrain
 type TraceConstrainEpoch = [(VConstraint, [(Pnt, Scheme)])]

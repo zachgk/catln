@@ -148,6 +148,7 @@ type TypeArgEnv = H.HashMap ArgName Type
 --         Substitute would then only affect foreign and various get operations would move references from local to foreign.
 --         Will also need support for non-linear pattern matching.
 type TypeVarArgEnv = H.HashMap TypeVarAux Type
+type TypeIOVarArgEnv = H.HashMap TypeVarAux (Type, Type)
 
 instance Show PartialType where
   show (PartialType ptName ptVars ptArgs ptPreds _) = concat [showName ptName, showTypeVars ptVars, showArgs ptArgs, showPreds ptPreds]

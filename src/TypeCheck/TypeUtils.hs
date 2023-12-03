@@ -22,6 +22,7 @@ import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 
 import           Control.Monad
+import           Data.Bifunctor      (Bifunctor (bimap))
 import           MapMeta
 import           Semantics
 import           Semantics.Prgm
@@ -114,7 +115,7 @@ inferArgFromPartial FEnv{feVTypeGraph, feTTypeGraph, feClassGraph} partial@Parti
     addArg arg = partial{ptArgs=H.insertWith (unionTypes feClassGraph) arg topType ptArgs}
 inferArgFromPartial _ _ = bottomType
 
-mkReachesEnv :: FEnv -> TypeVarArgEnv -> TypeCheckResult (ReachesEnv ())
+mkReachesEnv :: FEnv -> TypeIOVarArgEnv -> TypeCheckResult (ReachesEnv ())
 mkReachesEnv env@FEnv{feClassGraph, feUnionAllObjs, feVTypeGraph, feTTypeGraph} vaenv = do
   (SType unionAll _ _) <- descriptor env feUnionAllObjs
   feVTypeGraph' <- forM feVTypeGraph $ \objArrs -> do
@@ -124,10 +125,10 @@ mkReachesEnv env@FEnv{feClassGraph, feUnionAllObjs, feVTypeGraph, feTTypeGraph} 
       let soa' = mapMetaObjArr clearMetaDat Nothing soa
       let soa'' = mapOAObjExpr (exprWithMetaType objUb) soa'
       return soa''
-  let argTypeGraph = H.mapWithKey (\argName argType -> [ObjArr (Just (GuardExpr (Value (emptyMetaT $ typeVal $ PTypeName argName) argName) Nothing)) ArgObj Nothing [] (Nothing, emptyMetaT (substituteWithVarArgEnv vaenv argType))]) (snd $ splitVarArgEnv vaenv)
+  let argTypeGraph = H.mapWithKey (\argName (_argTypeIn, argTypeOut) -> [ObjArr (Just (GuardExpr (Value (emptyMetaT $ typeVal $ PTypeName argName) argName) Nothing)) ArgObj Nothing [] (Nothing, emptyMetaT (substituteWithVarArgEnv (fmap snd vaenv) argTypeOut))]) (snd $ splitVarArgEnv vaenv)
   let argClassGraph = classGraphFromObjs (concat $ H.elems argTypeGraph)
   let typeGraph = unionsWith (++) [argTypeGraph, feVTypeGraph', feTTypeGraph]
-  return $ ReachesEnv (mergeClassGraphs argClassGraph feClassGraph) unionAll vaenv typeGraph
+  return $ ReachesEnv (mergeClassGraphs argClassGraph feClassGraph) unionAll (fmap snd vaenv) typeGraph
 
 arrowConstrainUbs :: FEnv -> VConstraint -> Type -> VarMeta -> Type -> VarMeta -> TypeCheckResult (Type, Type)
 arrowConstrainUbs env@FEnv{feUnionAllObjs} con (TopType []) srcM dest@UnionType{} destM = do
@@ -145,8 +146,8 @@ arrowConstrainUbs env con src@(TypeVar v _) srcM dest destM = do
   return (src, cdest)
 arrowConstrainUbs env@FEnv{feClassGraph} con (UnionType srcPartials) _ dest _ = do
   let srcPartialList = splitUnionType srcPartials
-  vaenv <- descriptorConVaenv env con
-  reachesEnv <- mkReachesEnv env (fmap stypeAct vaenv)
+  vaenv <- descriptorConVaenvIO env con
+  reachesEnv <- mkReachesEnv env (fmap (bimap stypeAct stypeAct) vaenv)
   srcPartialList' <- mapM (resToTypeCheck . rootReachesPartial reachesEnv) srcPartialList
   let partialMap = H.fromList srcPartialList'
   let (srcPartialList'', destByPartial) = unzip $ H.toList partialMap
