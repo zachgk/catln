@@ -229,10 +229,8 @@ fromGuard _ env Nothing = return (Nothing, env)
 fromObjectMap :: FEnv -> PObjArr -> TypeCheckResult (VObjArr, FEnv)
 fromObjectMap env1 oa@ObjArr{oaBasis, oaAnnots, oaObj=Just (GuardExpr obj g), oaArr=(maybeArrE, arrM)} = do
   let envEst = EncodeIn H.empty -- An EncodeState for computing varEnv and argEnv
-  (varEnv, env2) <- mapMWithFEnvMap env1 (\e m -> fromMeta e BUpper envEst m "var") $ exprAppliedVars $ oaObjExpr oa
-  (argEnv, env3) <- mapMWithFEnvMap env2 (\e m -> fromMeta e BUpper envEst m "arg") $ fmap (head . map snd) (exprArgs $ oaObjExpr oa)
+  (vaenv, env3) <- mapMWithFEnvMap env1 (\e m -> fromMeta e BUpper envEst m "arg") $ fmap (head . map snd) (exprVarArgs $ oaObjExpr oa)
 
-  let vaenv = joinVarArgEnv varEnv argEnv
   let inEst = EncodeIn vaenv
   (obj', env4) <- fromExpr inEst env3 obj
 
