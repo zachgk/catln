@@ -63,20 +63,23 @@ showObjArr env oa@ObjArr{oaObj, oaAnnots, oaArr=(arrE, arrM)} = do
   arrM' <- showM env arrM
   return oa{oaObj=oaObj', oaAnnots=oaAnnots', oaArr=(arrE', arrM')}
 
-showConHelper :: FEnv -> (Scheme -> Scheme -> SConstraint) -> VarMeta -> VarMeta -> SConstraint
-showConHelper env f p1 p2 = f (descriptor env p1) (descriptor env p2)
+showConDatHelper :: FEnv -> (Scheme -> Scheme -> SConstraintDat) -> VarMeta -> VarMeta -> SConstraintDat
+showConDatHelper env f p1 p2 = f (descriptor env p1) (descriptor env p2)
+
+showConDat :: FEnv -> VConstraintDat -> SConstraintDat
+showConDat env (EqualsKnown i p t) = EqualsKnown i (descriptor env p) t
+showConDat env (EqPoints i p1 p2) = showConDatHelper env (EqPoints i) p1 p2
+showConDat env (BoundedByKnown i p t) = BoundedByKnown i (descriptor env p) t
+showConDat env (BoundedByObjs i p) = BoundedByObjs i (descriptor env p)
+showConDat env (ArrowTo i p1 p2) = showConDatHelper env (ArrowTo i) p1 p2
+showConDat env (PropEq i (p1, name) p2) = showConDatHelper env (\s1 s2 -> PropEq i (s1, name) s2) p1 p2
+showConDat env (AddArg i (p1, argName) p2) = showConDatHelper env (\s1 s2 -> AddArg i (s1, argName) s2) p1 p2
+showConDat env (AddInferArg i p1 p2) = showConDatHelper env (AddInferArg i) p1 p2
+showConDat env (PowersetTo i p1 p2) = showConDatHelper env (PowersetTo i) p1 p2
+showConDat env (UnionOf i p1 p2s) = UnionOf i (descriptor env p1) (map (descriptor env) p2s)
 
 showCon :: FEnv -> VConstraint -> SConstraint
-showCon env (EqualsKnown i vaenv p t) = EqualsKnown i (descriptorVaenvIO env vaenv) (descriptor env p) t
-showCon env (EqPoints i vaenv p1 p2) = showConHelper env (EqPoints i (descriptorVaenvIO env vaenv)) p1 p2
-showCon env (BoundedByKnown i vaenv p t) = BoundedByKnown i (descriptorVaenvIO env vaenv)(descriptor env p) t
-showCon env (BoundedByObjs i vaenv p) = BoundedByObjs i (descriptorVaenvIO env vaenv)(descriptor env p)
-showCon env (ArrowTo i vaenv p1 p2) = showConHelper env (ArrowTo i (descriptorVaenvIO env vaenv)) p1 p2
-showCon env (PropEq i vaenv (p1, name) p2) = showConHelper env (\s1 s2 -> PropEq i (descriptorVaenvIO env vaenv)(s1, name) s2) p1 p2
-showCon env (AddArg i vaenv (p1, argName) p2) = showConHelper env (\s1 s2 -> AddArg i (descriptorVaenvIO env vaenv)(s1, argName) s2) p1 p2
-showCon env (AddInferArg i vaenv p1 p2) = showConHelper env (AddInferArg i (descriptorVaenvIO env vaenv)) p1 p2
-showCon env (PowersetTo i vaenv p1 p2) = showConHelper env (PowersetTo i (descriptorVaenvIO env vaenv)) p1 p2
-showCon env (UnionOf i vaenv p1 p2s) = UnionOf i (descriptorVaenvIO env vaenv)(descriptor env p1) (map (descriptor env) p2s)
+showCon env (Constraint vaenv dat) = Constraint (descriptorVaenvIO env vaenv) (showConDat env dat)
 
 showConstraints :: FEnv -> [VConstraint] -> [SConstraint]
 showConstraints env = map (showCon env)

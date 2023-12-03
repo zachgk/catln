@@ -91,11 +91,12 @@ addUnionObjToEnv env1@FEnv{feClassGraph} vobjMap tobjMap = do
   let unionAllObjsPs' = mkVarMeta unionAllObjsPs
 
   let constraints = [
-        UnionOf 1 H.empty unionAllObjs' (typecheckedAllObjs' : vobjMetas),
-        PowersetTo 2 H.empty unionAllObjs' unionAllObjsPs'
+        UnionOf 1 unionAllObjs' (typecheckedAllObjs' : vobjMetas),
+        PowersetTo 2 unionAllObjs' unionAllObjsPs'
         ]
   let env5 = (\env -> env{feUnionAllObjs=unionAllObjsPs'}) env4
-  addConstraints env5 constraints
+  let env6 = addConstraints env5 constraints
+  saveConstraints env6 H.empty
 
 
 inferArgFromPartial :: FEnv -> PartialType -> Type

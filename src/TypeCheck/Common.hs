@@ -59,6 +59,7 @@ data SchemeActReq = SchemeAct | SchemeReq
 type Pnt = Int
 
 data FEnv = FEnv { fePnts               :: IM.IntMap Scheme
+                 , feConsDats           :: [VConstraintDat]
                  , feCons               :: [VConstraint]
                  , feUnionAllObjs       :: VarMeta -- union of all TypeObj for argument inference
                  , feVTypeGraph         :: VTypeGraph
@@ -75,22 +76,27 @@ type UnionObj = (Pnt, Pnt) -- a union of all TypeObj for argument inference, uni
 -- Each constraint can affect other the actual type, the required type, or both for the "Scheme".
 type CVarArgEnv p = H.HashMap TypeVarAux (p, p)
 type COVarArgEnv p = H.HashMap TypeVarAux p
-data Constraint p
-  = EqualsKnown Int (CVarArgEnv p) p Type -- ^ Both Actual and Req
-  | EqPoints Int (CVarArgEnv p) p p -- ^ Both Actual and Req
-  | BoundedByKnown Int (CVarArgEnv p) p Type -- ^ Both Actual and Req
-  | BoundedByObjs Int (CVarArgEnv p) p
-  | ArrowTo Int (CVarArgEnv p) p p -- ArrowTo src dest
-  | PropEq Int (CVarArgEnv p) (p, TypeVarAux) p -- ^ Both Actual and Req
-  | AddArg Int (CVarArgEnv p) (p, String) p -- ^ Both Actual and Req,
-  | AddInferArg Int (CVarArgEnv p) p p -- ^ Both Actual and Req, AddInferArg base arg
-  | PowersetTo Int (CVarArgEnv p) p p -- ^ Actual (maybe should make it req too)
-  | UnionOf Int (CVarArgEnv p) p [p] -- ^ Both Actual and Req
+data ConstraintDat p
+  = EqualsKnown Int p Type -- ^ Both Actual and Req
+  | EqPoints Int p p -- ^ Both Actual and Req
+  | BoundedByKnown Int p Type -- ^ Both Actual and Req
+  | BoundedByObjs Int p
+  | ArrowTo Int p p -- ArrowTo src dest
+  | PropEq Int (p, TypeVarAux) p -- ^ Both Actual and Req
+  | AddArg Int (p, String) p -- ^ Both Actual and Req,
+  | AddInferArg Int p p -- ^ Both Actual and Req, AddInferArg base arg
+  | PowersetTo Int p p -- ^ Actual (maybe should make it req too)
+  | UnionOf Int p [p] -- ^ Both Actual and Req
   deriving (Eq, Ord, Hashable, Generic, ToJSON)
 
+data Constraint p = Constraint (CVarArgEnv p) (ConstraintDat p)
+  deriving (Eq, Ord, Hashable, Generic, ToJSON)
+type VConstraintDat = ConstraintDat VarMeta
 type VConstraint = Constraint VarMeta
 type SConstraint = Constraint Scheme
+type SConstraintDat = ConstraintDat Scheme
 type RConstraint = Constraint SType
+type RConstraintDat = ConstraintDat SType
 
 data TypeCheckResult r
   = TypeCheckResult [TypeCheckError] r
@@ -197,17 +203,20 @@ instance CNoteTC TypeCheckError where
 instance Show SType where
   show (SType act req desc) = printf "{%s :: ACT %s; REQ  %s}" desc (show act) (show req)
 
+instance (Show p) => Show (ConstraintDat p) where
+  show (EqualsKnown i s t) = printf "%s %d==_Known %s" (show s) i (show t)
+  show (EqPoints i s1 s2) = printf "%s %d== %s" (show s1) i (show s2)
+  show (BoundedByKnown i s t) = printf "%s %d⊆_Known %s" (show s) i (show t)
+  show (BoundedByObjs i s) = printf "BoundedByObjs%d %s" i (show s)
+  show (ArrowTo i s d) = printf "%s %d-> %s" (show s) i (show d)
+  show (PropEq i (s1, n) s2) = printf "(%s).%s %d== %s"  (show s1) (show n) i (show s2)
+  show (AddArg i (base, arg) res) = printf "(%s)(%s) %d== %s" (show base) arg i (show res)
+  show (AddInferArg i base res) = printf "(%s)(?) %d== %s" (show base) i (show res)
+  show (PowersetTo i s t) = printf "𝒫(%s) %d⊇ %s" (show s) i (show t)
+  show (UnionOf i s _) = printf "SUnionOf %d for %s" i (show s)
+
 instance (Show p) => Show (Constraint p) where
-  show (EqualsKnown i _ s t) = printf "%s %d==_Known %s" (show s) i (show t)
-  show (EqPoints i _ s1 s2) = printf "%s %d== %s" (show s1) i (show s2)
-  show (BoundedByKnown i _ s t) = printf "%s %d⊆_Known %s" (show s) i (show t)
-  show (BoundedByObjs i _ s) = printf "BoundedByObjs%d %s" i (show s)
-  show (ArrowTo i _ s d) = printf "%s %d-> %s" (show s) i (show d)
-  show (PropEq i _ (s1, n) s2) = printf "(%s).%s %d== %s"  (show s1) (show n) i (show s2)
-  show (AddArg i _ (base, arg) res) = printf "(%s)(%s) %d== %s" (show base) arg i (show res)
-  show (AddInferArg i _ base res) = printf "(%s)(?) %d== %s" (show base) i (show res)
-  show (PowersetTo i _ s t) = printf "𝒫(%s) %d⊇ %s" (show s) i (show t)
-  show (UnionOf i _ s _) = printf "SUnionOf %d for %s" i (show s)
+  show (Constraint _ d) = show d
 
 instance Show r => Show (TypeCheckResult r) where
   show (TypeCheckResult [] r) = show r
@@ -235,29 +244,23 @@ resToTypeCheck cres = case cres of
     fromCNote :: CNote -> TypeCheckError
     fromCNote note = GenTypeCheckError (posCNote note) (show note)
 
+constraintDatMetas :: ConstraintDat p -> [p]
+constraintDatMetas (EqualsKnown _ p2 _)    = [p2]
+constraintDatMetas (EqPoints _ p2 p3)      = [p2, p3]
+constraintDatMetas (BoundedByKnown _ p2 _) = [p2]
+constraintDatMetas (BoundedByObjs _ p2)    = [p2]
+constraintDatMetas (ArrowTo _ p2 p3)       = [p2, p3]
+constraintDatMetas (PropEq _ (p2, _) p3)   = [p2, p3]
+constraintDatMetas (AddArg _ (p2, _) p3)   = [p2, p3]
+constraintDatMetas (AddInferArg _ p2 p3)   = [p2, p3]
+constraintDatMetas (PowersetTo _ p2 p3)    = [p2, p3]
+constraintDatMetas (UnionOf _ p2 p3s)      = p2:p3s
+
 constraintMetas :: Constraint p -> [p]
-constraintMetas (EqualsKnown _ _ p2 _)    = [p2]
-constraintMetas (EqPoints _ _ p2 p3)      = [p2, p3]
-constraintMetas (BoundedByKnown _ _ p2 _) = [p2]
-constraintMetas (BoundedByObjs _ _ p2)    = [p2]
-constraintMetas (ArrowTo _ _ p2 p3)       = [p2, p3]
-constraintMetas (PropEq _ _ (p2, _) p3)   = [p2, p3]
-constraintMetas (AddArg _ _ (p2, _) p3)   = [p2, p3]
-constraintMetas (AddInferArg _ _ p2 p3)   = [p2, p3]
-constraintMetas (PowersetTo _ _ p2 p3)    = [p2, p3]
-constraintMetas (UnionOf _ _ p2 p3s)      = p2:p3s
+constraintMetas (Constraint _ d) = constraintDatMetas d
 
 constraintVarArgEnvIO :: Constraint p -> CVarArgEnv p
-constraintVarArgEnvIO (EqualsKnown _ vaenv _ _)    = vaenv
-constraintVarArgEnvIO (EqPoints _ vaenv _ _)       = vaenv
-constraintVarArgEnvIO (BoundedByKnown _ vaenv _ _) = vaenv
-constraintVarArgEnvIO (BoundedByObjs _ vaenv _)    = vaenv
-constraintVarArgEnvIO (ArrowTo _ vaenv _ _)        = vaenv
-constraintVarArgEnvIO (PropEq _ vaenv _ _)         = vaenv
-constraintVarArgEnvIO (AddArg _ vaenv _ _)         = vaenv
-constraintVarArgEnvIO (AddInferArg _ vaenv _ _)    = vaenv
-constraintVarArgEnvIO (PowersetTo _ vaenv _ _)     = vaenv
-constraintVarArgEnvIO (UnionOf _ vaenv _ _)        = vaenv
+constraintVarArgEnvIO (Constraint vaenv _) = vaenv
 
 constraintVarArgEnv :: Constraint p -> COVarArgEnv p
 constraintVarArgEnv = fmap snd . constraintVarArgEnvIO
@@ -265,8 +268,11 @@ constraintVarArgEnv = fmap snd . constraintVarArgEnvIO
 getPnt :: VarMeta -> Maybe Pnt
 getPnt (Meta _ _ (VarMetaDat p _)) = p
 
-addConstraints :: FEnv -> [VConstraint] -> FEnv
-addConstraints env@FEnv{feCons} newCons = env {feCons = newCons ++ feCons}
+addConstraints :: FEnv -> [VConstraintDat] -> FEnv
+addConstraints env@FEnv{feConsDats} newCons = env {feConsDats = newCons ++ feConsDats}
+
+saveConstraints :: FEnv -> CVarArgEnv VarMeta -> FEnv
+saveConstraints env@FEnv{feConsDats, feCons} vaenv = env{feConsDats=[], feCons = map (Constraint vaenv) feConsDats ++ feCons}
 
 fAddVTypeGraph :: FEnv -> TypeName -> VObjArr -> FEnv
 fAddVTypeGraph env@FEnv{feVTypeGraph} k v = env {feVTypeGraph = H.insertWith (++) k [v] feVTypeGraph}
