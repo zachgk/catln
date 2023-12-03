@@ -48,9 +48,7 @@ emptyMetaE s e = emptyMetaM s (getExprMeta e)
 exprAppliedArgsMap :: (ExprClass e, MetaDat m, Show m) => e m -> H.HashMap ArgName (Meta m, Maybe (e m))
 exprAppliedArgsMap = H.fromList . mapMaybe mapArg . exprAppliedArgs
   where
-    mapArg ObjArr{oaObj=Just (GuardExpr oe _), oaArr=(Just (GuardExpr ae _), oaM)} = Just (exprPath oe, (oaM, Just ae))
-    mapArg ObjArr{oaObj=Just (GuardExpr oe _)} = case exprPathM oe of
-      (n, m) -> Just (n, (m, Nothing))
+    mapArg ObjArr{oaObj=Just (GuardExpr oe _), oaArr=(arrExpr, oaM)} = Just (exprPath oe, (oaM, fmap rgeExpr arrExpr))
     mapArg _ = Nothing
 
 exprWithMeta :: Meta m -> Expr m -> Expr m
@@ -102,8 +100,7 @@ exprVarArgsWithSrc classGraph (TupleApply _ (_, be) arg) src = H.union (exprVarA
       _ -> H.empty
     fromArg ObjArr{oaArr=(Just (GuardExpr e _), _)} = exprVarArgsWithSrc classGraph e src
     fromArg ObjArr {oaObj=Just (GuardExpr obj _), oaArr=(Nothing, arrM)} = case typeGetArg (exprPath obj) src of
-      Just srcArg -> case exprPathM obj of
-        (n, _) -> H.singleton (TVArg n) ([arrM], srcArg)
+      Just srcArg -> H.singleton (TVArg $ exprPath obj) ([arrM], srcArg)
       Nothing     -> H.empty
     fromArg oa = error $ printf "Invalid oa %s" (show oa)
 

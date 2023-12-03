@@ -233,8 +233,7 @@ instance ObjArrClass ObjArr where
   oaVarArgs oa = exprArg oa
     where
       exprArg ObjArr{oaArr=(Just (GuardExpr e Nothing), _)} = exprVarArgs e
-      exprArg ObjArr{oaObj=Just (GuardExpr obj Nothing)} = case exprPathM obj of
-        (n, m) -> H.singleton (TVArg n) [m]
+      exprArg ObjArr{oaObj=Just (GuardExpr obj Nothing), oaArr=(_, m)} = H.singleton (TVArg $ exprPath obj) [m]
       exprArg _ = error $ printf "Invalid oa %s" (show oa)
 
   getOaAnnots = oaAnnots
