@@ -28,8 +28,8 @@ goldenDesugarDir = "test/Integration/goldenDesugar/"
 goldenTypecheckDir :: String
 goldenTypecheckDir = "test/Integration/goldenTypecheck/"
 
-runTest :: Bool -> String -> TestTree
-runTest includeCore fileName = testCaseSteps fileName $ \step -> do
+runTest :: Bool -> Bool -> String -> TestTree
+runTest runGolden includeCore fileName = testCaseSteps fileName $ \step -> do
   step $ printf "Read file %s..." fileName
   maybeRawPrgm <- readFiles includeCore True [fileName]
 
@@ -41,17 +41,18 @@ runTest includeCore fileName = testCaseSteps fileName $ \step -> do
         CErr notes -> assertFailure $ "Could not desguar:" ++ prettyCNotes notes
         CRes _ prgm -> do
 
-          let goldenDesugarPath = goldenDesugarDir ++ takeBaseName fileName ++ ".txt"
-          goldenDesugarExists <- doesFileExist goldenDesugarPath
-          let showPrgm = T.unpack $ pShowNoColor $ graphToNodes prgm
-          if testDir `isPrefixOf` fileName && goldenDesugarExists
-            then do
-              step "Golden test desugar..."
-              golden <- readFile goldenDesugarPath
-              when (golden /= showPrgm) (assertFailure "Desugar doesn't match golden test" )
-            else do
-              step "No golden test for desugar. Writing"
-              writeFile goldenDesugarPath showPrgm
+          when runGolden $ do
+            let goldenDesugarPath = goldenDesugarDir ++ takeBaseName fileName ++ ".txt"
+            goldenDesugarExists <- doesFileExist goldenDesugarPath
+            let showPrgm = T.unpack $ pShowNoColor $ graphToNodes prgm
+            if testDir `isPrefixOf` fileName && goldenDesugarExists
+              then do
+                step "Golden test desugar..."
+                golden <- readFile goldenDesugarPath
+                when (golden /= showPrgm) (assertFailure "Desugar doesn't match golden test" )
+              else do
+                step "No golden test for desugar. Writing"
+                writeFile goldenDesugarPath showPrgm
 
           step "Typecheck..."
           case typecheckPrgm prgm of
@@ -59,17 +60,18 @@ runTest includeCore fileName = testCaseSteps fileName $ \step -> do
               assertFailure $ "Could not typecheck:" ++ prettyCNotes errs
             CRes _ tprgm -> do
 
-              let goldenTypecheckPath = goldenTypecheckDir ++ takeBaseName fileName ++ ".txt"
-              goldenTypecheckExists <- doesFileExist goldenTypecheckPath
-              let showTPrgm = T.unpack $ pShowNoColor $ graphToNodes tprgm
-              if testDir `isPrefixOf` fileName && goldenTypecheckExists
-                then do
-                  step "Golden test typecheck..."
-                  golden <- readFile goldenTypecheckPath
-                  when (golden /= showTPrgm) (assertFailure "Typecheck doesn't match golden test" )
-                else do
-                  step "No golden test for typecheck. Writing"
-                  writeFile goldenTypecheckPath showTPrgm
+              when runGolden $ do
+                let goldenTypecheckPath = goldenTypecheckDir ++ takeBaseName fileName ++ ".txt"
+                goldenTypecheckExists <- doesFileExist goldenTypecheckPath
+                let showTPrgm = T.unpack $ pShowNoColor $ graphToNodes tprgm
+                if testDir `isPrefixOf` fileName && goldenTypecheckExists
+                  then do
+                    step "Golden test typecheck..."
+                    golden <- readFile goldenTypecheckPath
+                    when (golden /= showTPrgm) (assertFailure "Typecheck doesn't match golden test" )
+                  else do
+                    step "No golden test for typecheck. Writing"
+                    writeFile goldenTypecheckPath showTPrgm
 
               when (evalRunnable $ evalTargetMode "main" fileName tprgm) $ do
                 step "Eval Run..."
@@ -95,12 +97,12 @@ runTest includeCore fileName = testCaseSteps fileName $ \step -> do
                 CRes _ _ -> return () -- success
               step "Done"
 
-runTests :: Bool -> [String] -> TestTree
-runTests includeCore testFiles = testGroup "Tests" testTrees
-  where testTrees = map (runTest includeCore) testFiles
+runTests :: Bool -> Bool -> [String] -> TestTree
+runTests runGolden includeCore testFiles = testGroup "Tests" testTrees
+  where testTrees = map (runTest runGolden includeCore) testFiles
 
 test :: IO ()
-test = defaultMain $ runTests False ["test/test.ct"]
+test = defaultMain $ runTests False False ["test/test.ct"]
 
 testd :: IO ()
 testd = docApi False False "test/test.ct"
@@ -109,15 +111,21 @@ standardTests :: IO [String]
 standardTests = findCt testDir
 
 integrationTests :: IO TestTree
-integrationTests = runTests True <$> standardTests
+integrationTests = runTests True True <$> standardTests
 
-mt :: String -> IO ()
-mt k = do
+mtBase :: Bool -> String -> IO ()
+mtBase runGolden k = do
   let fileName = testDir ++ k ++ ".ct"
   tests <- standardTests
   if fileName `elem` tests
-     then defaultMain $ runTests True [fileName]
+     then defaultMain $ runTests runGolden True [fileName]
      else error $ printf "invalid test name %s in %s" fileName (show tests)
+
+mt :: String -> IO ()
+mt = mtBase False
+
+mtg :: String -> IO ()
+mtg = mtBase True
 
 mtd :: String -> IO ()
 mtd k = do

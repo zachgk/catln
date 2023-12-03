@@ -217,7 +217,7 @@ instance ExprClass Expr where
   exprVarArgs HoleExpr{} = H.empty
   exprVarArgs (AliasExpr base (Value _ n)) = H.insertWith (++) (TVArg n) [getExprMeta base] (exprVarArgs base)
   exprVarArgs (AliasExpr base alias) = H.unionWith (++) (exprVarArgs base) (exprVarArgs alias)
-  exprVarArgs (TupleApply _ (_, be) ObjArr{oaObj=Just (GuardExpr (Value _ n) _), oaArr=(Nothing, arrM)}) = H.insertWith (++) (TVArg n) [arrM] (exprVarArgs be)
+  exprVarArgs (TupleApply _ (_, be) ObjArr{oaObj=Just (GuardExpr n _), oaArr=(Nothing, arrM)}) = H.insertWith (++) (TVArg $ exprPath n) [arrM] (exprVarArgs be)
   exprVarArgs (TupleApply _ _ ObjArr{oaObj, oaArr=(Nothing, _)}) = error $ printf "Unexpected unhandled obj type in exprVarArgs: %s" (show oaObj)
   exprVarArgs (TupleApply _ (_, be) ObjArr{oaArr=(Just (GuardExpr e _), _)}) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)
   exprVarArgs (VarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar n) [m])
