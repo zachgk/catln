@@ -89,7 +89,7 @@ data ConstraintDat p
   | UnionOf Int p [p] -- ^ Both Actual and Req
   deriving (Eq, Ord, Hashable, Generic, ToJSON)
 
-data Constraint p = Constraint (CVarArgEnv p) (ConstraintDat p)
+data Constraint p = Constraint (Maybe VObjArr) (CVarArgEnv p) (ConstraintDat p)
   deriving (Eq, Ord, Hashable, Generic, ToJSON)
 type VConstraintDat = ConstraintDat VarMeta
 type VConstraint = Constraint VarMeta
@@ -216,7 +216,7 @@ instance (Show p) => Show (ConstraintDat p) where
   show (UnionOf i s _) = printf "SUnionOf %d for %s" i (show s)
 
 instance (Show p) => Show (Constraint p) where
-  show (Constraint _ d) = show d
+  show (Constraint _ _ d) = show d
 
 instance Show r => Show (TypeCheckResult r) where
   show (TypeCheckResult [] r) = show r
@@ -257,10 +257,10 @@ constraintDatMetas (PowersetTo _ p2 p3)    = [p2, p3]
 constraintDatMetas (UnionOf _ p2 p3s)      = p2:p3s
 
 constraintMetas :: Constraint p -> [p]
-constraintMetas (Constraint _ d) = constraintDatMetas d
+constraintMetas (Constraint _ _ d) = constraintDatMetas d
 
 constraintVarArgEnvIO :: Constraint p -> CVarArgEnv p
-constraintVarArgEnvIO (Constraint vaenv _) = vaenv
+constraintVarArgEnvIO (Constraint _ vaenv _) = vaenv
 
 constraintVarArgEnv :: Constraint p -> COVarArgEnv p
 constraintVarArgEnv = fmap snd . constraintVarArgEnvIO
@@ -271,8 +271,8 @@ getPnt (Meta _ _ (VarMetaDat p _)) = p
 addConstraints :: FEnv -> [VConstraintDat] -> FEnv
 addConstraints env@FEnv{feConsDats} newCons = env {feConsDats = newCons ++ feConsDats}
 
-saveConstraints :: FEnv -> CVarArgEnv VarMeta -> FEnv
-saveConstraints env@FEnv{feConsDats, feCons} vaenv = env{feConsDats=[], feCons = map (Constraint vaenv) feConsDats ++ feCons}
+saveConstraints :: FEnv -> Maybe VObjArr -> CVarArgEnv VarMeta -> FEnv
+saveConstraints env@FEnv{feConsDats, feCons} oa vaenv = env{feConsDats=[], feCons = map (Constraint oa vaenv) feConsDats ++ feCons}
 
 fAddVTypeGraph :: FEnv -> TypeName -> VObjArr -> FEnv
 fAddVTypeGraph env@FEnv{feVTypeGraph} k v = env {feVTypeGraph = H.insertWith (++) k [v] feVTypeGraph}

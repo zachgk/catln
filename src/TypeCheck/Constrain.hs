@@ -130,7 +130,7 @@ addInferArgToScheme env@FEnv{feClassGraph} vaenv (SType srcAct srcReq _) (SType 
 -- It will return the updated environment and a boolean that is true if the constraint is done.
 -- If it is done, it can be safely removed and no longer needs to be executed.
 executeConstraint :: FEnv -> VConstraint -> (Bool, FEnv)
-executeConstraint env con@(Constraint _ (EqualsKnown _ pnt tp)) = case sequenceT (descriptor env pnt, descriptorConVaenv env con) of
+executeConstraint env con@(Constraint _ _ (EqualsKnown _ pnt tp)) = case sequenceT (descriptor env pnt, descriptorConVaenv env con) of
   TypeCheckResult notes (stype, vaenv) -> do
     let (vaenv', stype', _) = equalizeSTypes env (fmap stypeAct vaenv) (stype, SType tp tp "")
     let scheme' = TypeCheckResult notes stype'
@@ -138,15 +138,15 @@ executeConstraint env con@(Constraint _ (EqualsKnown _ pnt tp)) = case sequenceT
     let env'' = setSchemeConVaenv env' con SchemeAct vaenv' "EqualsKnown env"
     (True, env'')
   TypeCheckResE{} -> (True, env)
-executeConstraint env (Constraint _ (EqPoints _ (Meta _ _ (VarMetaDat p1 _)) (Meta _ _ (VarMetaDat p2 _)))) | p1 == p2 = (True, env)
-executeConstraint env1 con@(Constraint _ (EqPoints _ p1 p2)) = case sequenceT (descriptor env1 p1, descriptor env1 p2, descriptorConVaenv env1 con) of
+executeConstraint env (Constraint _ _ (EqPoints _ (Meta _ _ (VarMetaDat p1 _)) (Meta _ _ (VarMetaDat p2 _)))) | p1 == p2 = (True, env)
+executeConstraint env1 con@(Constraint _ _ (EqPoints _ p1 p2)) = case sequenceT (descriptor env1 p1, descriptor env1 p2, descriptorConVaenv env1 con) of
   TypeCheckResult notes (s1, s2, vaenv) -> do
     let (_, s1', s2') = equalizeSTypes env1 (fmap stypeAct vaenv) (s1, s2)
     let env2 = setScheme env1 con p1 (TypeCheckResult notes s1') "EqPoints"
     let env3 = setScheme env2 con p2 (return s2') "EqPoints"
     (isSolved $ return s1', env3)
   TypeCheckResE _ -> (True, env1)
-executeConstraint env@FEnv{feClassGraph} con@(Constraint _ (BoundedByKnown _ subPnt boundTp)) = do
+executeConstraint env@FEnv{feClassGraph} con@(Constraint _ _ (BoundedByKnown _ subPnt boundTp)) = do
   let subScheme = descriptor env subPnt
   case subScheme of
     TypeCheckResE _ -> (True, env)
@@ -156,7 +156,7 @@ executeConstraint env@FEnv{feClassGraph} con@(Constraint _ (BoundedByKnown _ sub
       let scheme' = pure $ SType act' req' desc
       let env' = setScheme env con subPnt scheme' "BoundedByKnown"
       (True, env')
-executeConstraint env@FEnv{feUnionAllObjs, feClassGraph} con@(Constraint _ (BoundedByObjs _ pnt)) = do
+executeConstraint env@FEnv{feUnionAllObjs, feClassGraph} con@(Constraint _ _ (BoundedByObjs _ pnt)) = do
   let scheme = pointUb env pnt
   let boundScheme = pointUb env feUnionAllObjs
   case sequenceT (scheme, boundScheme, descriptorConVaenv env con) of
@@ -174,7 +174,7 @@ executeConstraint env@FEnv{feUnionAllObjs, feClassGraph} con@(Constraint _ (Boun
       -- let env' = setScheme env pnt scheme' $ printf "BoundedByObjs for %s\nBound: %s\n" (show ub) (show boundUb)
       let env' = setSchemeAct env con pnt ub' $ printf "BoundedByObjs for %s\n" (show ub)
       (False, env')
-executeConstraint env con@(Constraint _ (ArrowTo _ srcPnt destPnt)) = do
+executeConstraint env con@(Constraint _ _ (ArrowTo _ srcPnt destPnt)) = do
   let srcScheme = pointUb env srcPnt
   let destScheme = pointUb env destPnt
   case sequenceT (srcScheme, destScheme) of
@@ -187,7 +187,7 @@ executeConstraint env con@(Constraint _ (ArrowTo _ srcPnt destPnt)) = do
           let env'' = setSchemeAct env' con destPnt destUb' "ArrowTo dest"
           (False, env'')
         TypeCheckResE _ -> (True, env)
-executeConstraint env con@(Constraint _ (PropEq _ (superPnt, propName) subPnt)) = do
+executeConstraint env con@(Constraint _ _ (PropEq _ (superPnt, propName) subPnt)) = do
   let superScheme = descriptor env superPnt
   let subScheme = descriptor env subPnt
   case sequenceT (superScheme, subScheme) of
@@ -200,7 +200,7 @@ executeConstraint env con@(Constraint _ (PropEq _ (superPnt, propName) subPnt)) 
           let env4 = setScheme env3 con subPnt subScheme' (printf "PropEq sub (%s)" (show propName))
           (isSolved subScheme, env4)
         TypeCheckResE _ -> (True, env)
-executeConstraint env con@(Constraint _ (AddArg _ (srcPnt, newArgName) destPnt)) = do
+executeConstraint env con@(Constraint _ _ (AddArg _ (srcPnt, newArgName) destPnt)) = do
   let srcScheme = descriptor env srcPnt
   let destScheme = descriptor env destPnt
   let checkName = printf "AddArg %s" (show newArgName)
@@ -210,7 +210,7 @@ executeConstraint env con@(Constraint _ (AddArg _ (srcPnt, newArgName) destPnt))
       let dest' = pure $ addArgToScheme env vaenv src newArgName dest
       let env' = setScheme env con destPnt dest' checkName
       (False, env')
-executeConstraint env con@(Constraint _ (AddInferArg _ srcPnt destPnt)) = do
+executeConstraint env con@(Constraint _ _ (AddInferArg _ srcPnt destPnt)) = do
   let srcScheme = descriptor env srcPnt
   let destScheme = descriptor env destPnt
   case sequenceT (srcScheme, destScheme, descriptorConVaenv env con) of
@@ -219,7 +219,7 @@ executeConstraint env con@(Constraint _ (AddInferArg _ srcPnt destPnt)) = do
       let dest' = pure $ addInferArgToScheme env vaenv src dest
       let env' = setScheme env con destPnt dest' "AddInferArg dest"
       (False, env')
-executeConstraint env@FEnv{feClassGraph} con@(Constraint _ (PowersetTo _ srcPnt destPnt)) = do
+executeConstraint env@FEnv{feClassGraph} con@(Constraint _ _ (PowersetTo _ srcPnt destPnt)) = do
   let srcScheme = pointUb env srcPnt
   let destScheme = pointUb env destPnt
   case sequenceT (srcScheme, destScheme) of
@@ -228,7 +228,7 @@ executeConstraint env@FEnv{feClassGraph} con@(Constraint _ (PowersetTo _ srcPnt 
       let ub2' = intersectTypes feClassGraph (powersetType feClassGraph ub1) ub2
       let env' = setSchemeAct env con destPnt ub2' "PowersetTo"
       (False, env')
-executeConstraint env@FEnv{feClassGraph} con@(Constraint _ (UnionOf _ parentPnt childrenM)) = do
+executeConstraint env@FEnv{feClassGraph} con@(Constraint _ _ (UnionOf _ parentPnt childrenM)) = do
   let parentScheme = descriptor env parentPnt
   let tcresChildrenSchemes = fmap (descriptor env) childrenM
   case sequenceT (parentScheme, sequence tcresChildrenSchemes, descriptorConVaenv env con) of

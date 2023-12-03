@@ -96,7 +96,7 @@ addUnionObjToEnv env1@FEnv{feClassGraph} vobjMap tobjMap = do
         ]
   let env5 = (\env -> env{feUnionAllObjs=unionAllObjsPs'}) env4
   let env6 = addConstraints env5 constraints
-  saveConstraints env6 H.empty
+  saveConstraints env6 Nothing H.empty
 
 
 inferArgFromPartial :: FEnv -> PartialType -> Type
@@ -116,8 +116,13 @@ inferArgFromPartial FEnv{feVTypeGraph, feTTypeGraph, feClassGraph} partial@Parti
     addArg arg = partial{ptArgs=H.insertWith (unionTypes feClassGraph) arg topType ptArgs}
 inferArgFromPartial _ _ = bottomType
 
-mkReachesEnv :: FEnv -> TypeIOVarArgEnv -> TypeCheckResult (ReachesEnv ())
-mkReachesEnv env@FEnv{feClassGraph, feUnionAllObjs, feVTypeGraph, feTTypeGraph} vaenv = do
+mkReachesEnv :: FEnv -> VConstraint -> TypeCheckResult (ReachesEnv ())
+mkReachesEnv env@FEnv{feClassGraph, feUnionAllObjs, feVTypeGraph, feTTypeGraph} con@(Constraint maybeConOa _ _) = do
+
+  schemeVaenv <- descriptorConVaenvIO env con
+  let vaenv = fmap (bimap stypeAct stypeAct) schemeVaenv
+
+  -- Env (typeGraph) from variables
   (SType unionAll _ _) <- descriptor env feUnionAllObjs
   feVTypeGraph' <- forM feVTypeGraph $ \objArrs -> do
     forM objArrs $ \voa -> do
@@ -126,7 +131,17 @@ mkReachesEnv env@FEnv{feClassGraph, feUnionAllObjs, feVTypeGraph, feTTypeGraph} 
       let soa' = mapMetaObjArr clearMetaDat Nothing soa
       let soa'' = mapOAObjExpr (exprWithMetaType objUb) soa'
       return soa''
-  let argTypeGraph = H.mapWithKey (\argName (_argTypeIn, argTypeOut) -> [ObjArr (Just (GuardExpr (Value (emptyMetaT $ typeVal $ PTypeName argName) argName) Nothing)) ArgObj Nothing [] (Nothing, emptyMetaT (substituteWithVarArgEnv (fmap snd vaenv) argTypeOut))]) (snd $ splitVarArgEnv vaenv)
+
+  -- Env (typeGraph) from args
+  -- TODO Remove the call to head below to support nonLinear args
+  let argVaenv = maybe H.empty (fmap head . snd . splitVarArgEnv . exprVarArgs . oaObjExpr) maybeConOa
+  argVaenv' <- forM argVaenv $ \(inExpr, outM) -> do
+    inExpr' <- showExpr env inExpr
+    outM' <- showM env outM
+    return (mapMeta clearMetaDat InputMeta inExpr', outM')
+  let argTypeGraph = fmap (\(inExpr, outM) -> [ObjArr (Just (GuardExpr inExpr Nothing)) ArgObj Nothing [] (Nothing, emptyMetaT (substituteWithVarArgEnv (fmap snd vaenv) (getMetaType outM)))]) argVaenv'
+
+  -- final ReachesEnv
   let argClassGraph = classGraphFromObjs (concat $ H.elems argTypeGraph)
   let typeGraph = unionsWith (++) [argTypeGraph, feVTypeGraph', feTTypeGraph]
   return $ ReachesEnv (mergeClassGraphs argClassGraph feClassGraph) unionAll (fmap snd vaenv) typeGraph
@@ -147,8 +162,7 @@ arrowConstrainUbs env con src@(TypeVar v _) srcM dest destM = do
   return (src, cdest)
 arrowConstrainUbs env@FEnv{feClassGraph} con (UnionType srcPartials) _ dest _ = do
   let srcPartialList = splitUnionType srcPartials
-  vaenv <- descriptorConVaenvIO env con
-  reachesEnv <- mkReachesEnv env (fmap (bimap stypeAct stypeAct) vaenv)
+  reachesEnv <- mkReachesEnv env con
   srcPartialList' <- mapM (resToTypeCheck . rootReachesPartial reachesEnv) srcPartialList
   let partialMap = H.fromList srcPartialList'
   let (srcPartialList'', destByPartial) = unzip $ H.toList partialMap

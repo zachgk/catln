@@ -248,7 +248,7 @@ fromObjectMap env1 oa@ObjArr{oaBasis, oaAnnots, oaObj=Just (GuardExpr obj g), oa
   let oa' = oa{oaObj=Just (GuardExpr obj' g'), oaArr=oaArr', oaAnnots=oaAnnots'}
   let env7 = fAddVTypeGraph env6 (oaObjPath oa) oa'
   let env8 = addConstraints env7 [EqPoints 34 (getExprMeta obj') arrM' | oaBasis == TypeObj]
-  let env9 = saveConstraints env8 (first getExprMeta . head <$> exprVarArgs obj')
+  let env9 = saveConstraints env8 (Just oa') (first getExprMeta . head <$> exprVarArgs obj')
   return (oa', env9)
 fromObjectMap _ oa = error $ printf "Invalid oa in fromObjectMap %s" (show oa)
 
@@ -256,7 +256,7 @@ fromPrgm :: FEnv -> PPrgm -> TypeCheckResult (VPrgm, FEnv)
 fromPrgm env1 (objMap, classGraph, annots) = do
   (objMap', env2) <- mapMWithFEnv env1 fromObjectMap objMap
   (annots', env3) <- mapMWithFEnv env2 (fromExpr (EncodeOut Nothing)) annots
-  let env4 = saveConstraints env3 H.empty
+  let env4 = saveConstraints env3 Nothing H.empty
   return ((objMap', classGraph, annots'), env4)
 
 addTypeGraphArrow :: FEnv -> TObjArr -> TypeCheckResult ((), FEnv)

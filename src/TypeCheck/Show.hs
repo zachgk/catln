@@ -79,7 +79,7 @@ showConDat env (PowersetTo i p1 p2) = showConDatHelper env (PowersetTo i) p1 p2
 showConDat env (UnionOf i p1 p2s) = UnionOf i (descriptor env p1) (map (descriptor env) p2s)
 
 showCon :: FEnv -> VConstraint -> SConstraint
-showCon env (Constraint vaenv dat) = Constraint (descriptorVaenvIO env vaenv) (showConDat env dat)
+showCon env (Constraint oa vaenv dat) = Constraint oa (descriptorVaenvIO env vaenv) (showConDat env dat)
 
 showConstraints :: FEnv -> [VConstraint] -> [SConstraint]
 showConstraints env = map (showCon env)
