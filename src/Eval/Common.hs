@@ -253,12 +253,11 @@ instance ExprClass TExpr where
   exprVarArgs TCExpr{} = H.empty
   exprVarArgs TValue{} = H.empty
   exprVarArgs THoleExpr{} = H.empty
-  exprVarArgs (TAliasExpr base (TValue _ n)) = H.insertWith (++) (TVArg n) [getExprMeta base] (exprVarArgs base)
-  exprVarArgs (TAliasExpr base alias) = H.unionWith (++) (exprVarArgs base) (exprVarArgs alias)
-  exprVarArgs (TTupleApply _ be ObjArr{oaObj=Just (GuardExpr (TValue _ n) _), oaArr=(Nothing, arrM)}) = H.insertWith (++) (TVArg n) [arrM] (exprVarArgs be)
+  exprVarArgs (TAliasExpr base n) = H.insertWith (++) (TVArg $ exprPath n) [(n, getExprMeta base)] (exprVarArgs base)
+  exprVarArgs (TTupleApply _ be ObjArr{oaObj=Just (GuardExpr n _), oaArr=(Nothing, arrM)}) = H.insertWith (++) (TVArg $ exprPath n) [(n, arrM)] (exprVarArgs be)
   exprVarArgs (TTupleApply _ _ ObjArr{oaObj, oaArr=(Nothing, _)}) = error $ printf "Unexpected unhandled obj type in exprVarArgs: %s" (show oaObj)
   exprVarArgs (TTupleApply _ be ObjArr{oaArr=(Just (GuardExpr e _), _)}) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)
-  exprVarArgs (TVarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar n) [m])
+  exprVarArgs (TVarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar n) [(TValue (emptyMetaT $ typeVal $ PTypeName n) n, m)])
   exprVarArgs (TCalls _ b _) = exprVarArgs b
 
 

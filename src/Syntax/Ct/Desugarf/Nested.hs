@@ -120,7 +120,7 @@ currySubFunctionsUpdateExpr toUpdate parentArgs (VarApply tm tbe tVarName tVarVa
 currySubFunctions :: PSObjArr -> [PSemiDecl] -> (PSObjArr, [PSemiDecl])
 currySubFunctions oa@ObjArr{oaObj=Just (GuardExpr objExpression _), oaAnnots, oaArr} decls = (oa{oaAnnots=annots', oaArr=oaArr'}, decls')
   where
-    parentArgs = exprArgs objExpression
+    parentArgs = map snd <$> exprArgs objExpression
     toUpdate = S.fromList $ map (\(PSemiDecl ObjArr{oaObj=Just (GuardExpr o _)}) -> exprPath o) decls
     decls2 = map (currySubFunctionSignature parentArgs) decls
     oaArr' = case oaArr of

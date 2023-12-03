@@ -182,7 +182,7 @@ class ExprClass e where
   exprAppliedOrdVars :: e m -> [(TypeVarName, Meta m)]
 
   -- | Returns all arguments located recursively in an expression
-  exprVarArgs :: (Show m) => e m -> H.HashMap TypeVarAux [Meta m]
+  exprVarArgs :: (MetaDat m, Show m) => e m -> H.HashMap TypeVarAux [(e m, Meta m)]
 
 
 instance ExprClass Expr where
@@ -215,16 +215,15 @@ instance ExprClass Expr where
   exprVarArgs CExpr{} = H.empty
   exprVarArgs Value{} = H.empty
   exprVarArgs HoleExpr{} = H.empty
-  exprVarArgs (AliasExpr base (Value _ n)) = H.insertWith (++) (TVArg n) [getExprMeta base] (exprVarArgs base)
-  exprVarArgs (AliasExpr base alias) = H.unionWith (++) (exprVarArgs base) (exprVarArgs alias)
-  exprVarArgs (TupleApply _ (_, be) ObjArr{oaObj=Just (GuardExpr n _), oaArr=(Nothing, arrM)}) = H.insertWith (++) (TVArg $ exprPath n) [arrM] (exprVarArgs be)
+  exprVarArgs (AliasExpr base n) = H.insertWith (++) (TVArg $ exprPath n) [(n, getExprMeta base)] (exprVarArgs base)
+  exprVarArgs (TupleApply _ (_, be) ObjArr{oaObj=Just (GuardExpr n _), oaArr=(Nothing, arrM)}) = H.insertWith (++) (TVArg $ exprPath n) [(n, arrM)] (exprVarArgs be)
   exprVarArgs (TupleApply _ _ ObjArr{oaObj, oaArr=(Nothing, _)}) = error $ printf "Unexpected unhandled obj type in exprVarArgs: %s" (show oaObj)
   exprVarArgs (TupleApply _ (_, be) ObjArr{oaArr=(Just (GuardExpr e _), _)}) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)
-  exprVarArgs (VarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar n) [m])
+  exprVarArgs (VarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar n) [(Value (emptyMetaT $ typeVal $ PTypeName n) n, m)])
 
 class ObjArrClass oa where
   -- | See exprArgs
-  oaVarArgs :: (ExprClass e, Show m, Show (e m)) => oa e m -> H.HashMap TypeVarAux [Meta m]
+  oaVarArgs :: (ExprClass e, MetaDat m, Show m, Show (e m)) => oa e m -> H.HashMap TypeVarAux [(e m, Meta m)]
 
   getOaAnnots :: oa e m -> [CompAnnot (e m)]
 
@@ -233,7 +232,7 @@ instance ObjArrClass ObjArr where
   oaVarArgs oa = exprArg oa
     where
       exprArg ObjArr{oaArr=(Just (GuardExpr e Nothing), _)} = exprVarArgs e
-      exprArg ObjArr{oaObj=Just (GuardExpr obj Nothing), oaArr=(_, m)} = H.singleton (TVArg $ exprPath obj) [m]
+      exprArg ObjArr{oaObj=Just (GuardExpr obj Nothing), oaArr=(_, m)} = H.singleton (TVArg $ exprPath obj) [(obj, m)]
       exprArg _ = error $ printf "Invalid oa %s" (show oa)
 
   getOaAnnots = oaAnnots
@@ -280,7 +279,7 @@ exprPathM = fromMaybe (error "No exprPath found") . maybeExprPathM
 exprPath :: (ExprClass e) => e m -> TypeName
 exprPath = fst . exprPathM
 
-exprArgs :: (ExprClass e, Show m) => e m -> H.HashMap ArgName [Meta m]
+exprArgs :: (ExprClass e, MetaDat m, Show m) => e m -> H.HashMap ArgName [(e m, Meta m)]
 exprArgs e = H.fromList $ mapMaybe aux $ H.toList $ exprVarArgs e
   where
     aux (TVArg a, ms) = Just (a, ms)

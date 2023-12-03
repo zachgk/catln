@@ -84,14 +84,13 @@ oaObjPath = exprPath . oaObjExpr
 -- The 'exprVarArgsWithSrc' is similar to the 'exprArgs' function.
 -- It differs in that it accepts an additional partial type that is equivalent to the expression and it pull the corresponding parts of the partial matching the args in the expression
 -- TODO: Make nonLinear by changing signature to H.HashMap ArgName ([Meta m], Type)
-type ArgMetaMapWithSrc m = H.HashMap TypeVarAux ([Meta m], Type)
-exprVarArgsWithSrc :: (Show m) => ClassGraph -> Expr m -> PartialType -> ArgMetaMapWithSrc m
+type ArgMetaMapWithSrc m = H.HashMap TypeVarAux ([(Expr m, Meta m)], Type)
+exprVarArgsWithSrc :: (MetaDat m, Show m) => ClassGraph -> Expr m -> PartialType -> ArgMetaMapWithSrc m
 exprVarArgsWithSrc _ CExpr{} _ = H.empty
 exprVarArgsWithSrc _ Value{} _ = H.empty
 exprVarArgsWithSrc _ HoleExpr{} _ = H.empty
-exprVarArgsWithSrc classGraph (AliasExpr base (Value _ n)) src = H.insert (TVArg n) ([getExprMeta base], singletonType src) (exprVarArgsWithSrc classGraph base src)
-exprVarArgsWithSrc classGraph (AliasExpr base alias) src = H.union (exprVarArgsWithSrc classGraph base src) (exprVarArgsWithSrc classGraph alias src)
-exprVarArgsWithSrc classGraph (VarApply _ b n m) src = H.insert (TVVar n) ([m], H.lookupDefault topType n (ptVars src)) $ exprVarArgsWithSrc classGraph b src
+exprVarArgsWithSrc classGraph (AliasExpr base n) src = H.insert (TVArg $ exprPath n) ([(n, getExprMeta base)], singletonType src) (exprVarArgsWithSrc classGraph base src)
+exprVarArgsWithSrc classGraph (VarApply _ b n m) src = H.insert (TVVar n) ([(Value (emptyMetaT $ typeVal $ PTypeName n) n, m)], H.lookupDefault topType n (ptVars src)) $ exprVarArgsWithSrc classGraph b src
 exprVarArgsWithSrc classGraph (TupleApply _ (_, be) arg) src = H.union (exprVarArgsWithSrc classGraph be src) (fromArg arg)
   where
     fromArg ObjArr{oaObj=Just (GuardExpr obj _), oaArr=(Just (GuardExpr e _), _)} = case typeGetArg (exprPath obj) src of
@@ -100,7 +99,7 @@ exprVarArgsWithSrc classGraph (TupleApply _ (_, be) arg) src = H.union (exprVarA
       _ -> H.empty
     fromArg ObjArr{oaArr=(Just (GuardExpr e _), _)} = exprVarArgsWithSrc classGraph e src
     fromArg ObjArr {oaObj=Just (GuardExpr obj _), oaArr=(Nothing, arrM)} = case typeGetArg (exprPath obj) src of
-      Just srcArg -> H.singleton (TVArg $ exprPath obj) ([arrM], srcArg)
+      Just srcArg -> H.singleton (TVArg $ exprPath obj) ([(obj, arrM)], srcArg)
       Nothing     -> H.empty
     fromArg oa = error $ printf "Invalid oa %s" (show oa)
 
