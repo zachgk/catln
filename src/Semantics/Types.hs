@@ -667,12 +667,12 @@ intersectTypesWithVarEnv classGraph vaenv tv@(TypeVar v _) t = case (v, H.lookup
 intersectTypesWithVarEnv classGraph vaenv t tv@TypeVar{} = intersectTypesWithVarEnv classGraph vaenv tv t
 intersectTypesWithVarEnv _ vaenv _ t | isBottomType t = (vaenv, t)
 intersectTypesWithVarEnv _ vaenv t _ | isBottomType t = (vaenv, t)
-intersectTypesWithVarEnv classGraph vaenv (UnionType partials) (TopType topPreds) = (vaenv, compactType classGraph $ UnionType $ joinUnionType $ map addPreds $ splitUnionType partials)
-  where
-    addPreds partial@PartialType{ptPreds} = partial{ptPreds = topPreds ++ ptPreds}
-    -- addPreds partial = foldr addPred partial topPreds
-    -- addPred _ partial | partial == bottomType = bottomType
-    -- addPred (PredClass p) partial = _
+intersectTypesWithVarEnv classGraph vaenv t1@(UnionType partials) t2@TopType{} = case expandType classGraph t2 of
+  t2'@UnionType{} -> intersectTypesWithVarEnv classGraph vaenv t1 t2'
+  TypeVar{} -> undefined
+  TopType topPreds -> (vaenv, compactType classGraph $ UnionType $ joinUnionType $ map addPreds $ splitUnionType partials)
+    where
+      addPreds partial@PartialType{ptPreds} = partial{ptPreds = topPreds ++ ptPreds}
 intersectTypesWithVarEnv classGraph vaenv t1@TopType{} t2@UnionType{} = intersectTypesWithVarEnv classGraph vaenv t2 t1
 intersectTypesWithVarEnv classGraph vaenv (UnionType aPartials) (UnionType bPartials) = case [intersectPartials classGraph vaenv aPartial bPartial | aPartial <- splitUnionType aPartials, bPartial <- splitUnionType bPartials] of
   [] -> (vaenv, bottomType)
