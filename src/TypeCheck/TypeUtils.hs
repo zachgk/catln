@@ -146,21 +146,21 @@ mkReachesEnv env@FEnv{feClassGraph, feUnionAllObjs, feVTypeGraph, feTTypeGraph} 
   let typeGraph = unionsWith (++) [argTypeGraph, feVTypeGraph', feTTypeGraph]
   return $ ReachesEnv (mergeClassGraphs argClassGraph feClassGraph) unionAll (fmap snd vaenv) typeGraph
 
-arrowConstrainUbs :: FEnv -> VConstraint -> Type -> VarMeta -> Type -> VarMeta -> TypeCheckResult (Type, Type)
-arrowConstrainUbs env@FEnv{feUnionAllObjs} con (TopType []) srcM dest@UnionType{} destM = do
+arrowConstrainUbs :: FEnv -> VConstraint -> Type -> Type -> TypeCheckResult (Type, Type)
+arrowConstrainUbs env@FEnv{feUnionAllObjs} con (TopType []) dest@UnionType{} = do
   unionPnt <- descriptor env feUnionAllObjs
   case unionPnt of
     (SType unionUb@UnionType{} _ _) -> do
-      (src', dest') <- arrowConstrainUbs env con unionUb srcM dest destM
+      (src', dest') <- arrowConstrainUbs env con unionUb dest
       return (src', dest')
     _ -> return (topType, dest)
-arrowConstrainUbs _ _ (TopType []) _ dest _ = return (topType, dest)
-arrowConstrainUbs _ _ (TopType _) _ _ _ = undefined
-arrowConstrainUbs env con src@(TypeVar v _) srcM dest destM = do
+arrowConstrainUbs _ _ (TopType []) dest = return (topType, dest)
+arrowConstrainUbs _ _ (TopType _) _ = undefined
+arrowConstrainUbs env con src@(TypeVar v _) dest = do
   src' <- resolveTypeVar v con
-  (_, cdest) <- arrowConstrainUbs env con (getMetaType src') srcM dest destM
+  (_, cdest) <- arrowConstrainUbs env con (getMetaType src') dest
   return (src, cdest)
-arrowConstrainUbs env@FEnv{feClassGraph} con (UnionType srcPartials) _ dest _ = do
+arrowConstrainUbs env@FEnv{feClassGraph} con (UnionType srcPartials) dest = do
   let srcPartialList = splitUnionType srcPartials
   reachesEnv <- mkReachesEnv env con
   srcPartialList' <- mapM (resToTypeCheck . rootReachesPartial reachesEnv) srcPartialList

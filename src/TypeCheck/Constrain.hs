@@ -180,7 +180,7 @@ executeConstraint env con@(Constraint _ _ (ArrowTo _ srcPnt destPnt)) = do
   case sequenceT (srcScheme, destScheme) of
     TypeCheckResE _ -> (True, env)
     TypeCheckResult _ (srcUb, destUb) -> do
-      let constrained = arrowConstrainUbs env con srcUb srcPnt destUb destPnt
+      let constrained = arrowConstrainUbs env con srcUb destUb
       case constrained of
         TypeCheckResult _ (srcUb', destUb') -> do
           let env' = setSchemeAct env con srcPnt srcUb' "ArrowTo src"
