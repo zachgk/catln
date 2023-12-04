@@ -65,7 +65,7 @@ data PtArgMode
 data TypePredicate
   = PredExpr PartialType
   | PredClass PartialType -- A hasClass predicate
-  | PredRel PartialType -- a isa predicate. Represented by val : classOrModuleOrType
+  | PredRel Name -- a isa predicate. Represented by val : classOrModuleOrType
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 type TypePredicates = [TypePredicate]
 
@@ -199,7 +199,7 @@ instance ToJSON ClassGraph where
 mapTypePred :: (PartialType -> PartialType) -> TypePredicate -> TypePredicate
 mapTypePred f (PredExpr p)  = PredExpr (f p)
 mapTypePred f (PredClass p) = PredClass (f p)
-mapTypePred f (PredRel p)   = PredRel (f p)
+mapTypePred _ (PredRel p)   = PredRel p
 
 listClassGraphNames :: ClassGraph -> [PartialName]
 listClassGraphNames (ClassGraph graphData) = map snd3 (graphToNodes graphData)
@@ -320,7 +320,7 @@ typeVal = singletonType . partialVal
 
 -- | Helper to create a relative 'Type' for a value (no args, no vars)
 relTypeVal :: TypeName -> Type
-relTypeVal n = TopType [PredRel $ partialVal $ PTypeName n]
+relTypeVal n = TopType [PredRel n]
 
 getSingleton :: Type -> PartialType
 getSingleton (UnionType leafs) = case splitUnionType leafs of
@@ -365,8 +365,8 @@ expandClassPartial classGraph@(ClassGraph cg) PartialType{ptName, ptVars=classVa
           mapClassPartial tp@PartialType{ptVars} = tp{ptVars=fmap (substituteVarsWithVarEnv classVars) ptVars}
       r -> error $ printf "Unknown class %s in expandPartial. Found %s" (show className) (show r)
 
-expandRelPartial :: ClassGraph -> PartialType -> Type
-expandRelPartial classGraph relPartial@PartialType{ptName} = UnionType $ joinUnionType $ map (\typeName -> relPartial{ptName=typeName}) $ relativePartialNameFilter (fromPartialName ptName) (listClassGraphNames classGraph)
+expandRelPartial :: ClassGraph -> Name -> Type
+expandRelPartial classGraph name = UnionType $ joinUnionType $ map partialVal $ relativePartialNameFilter name (listClassGraphNames classGraph)
 
 -- |
 -- Expands a class partial into a union of the types that make up that class (in the 'ClassGraph')
@@ -513,7 +513,7 @@ compactPartialsWithClassPred classGraph partials = unionPartialLeafs $ map aux $
         asLeafs (UnionType leafs) = leafs
         asLeafs t                 = asLeafs $ expandType classGraph t
 
-        splitPreds :: [TypePredicate] -> ([PartialType], [PartialType], [PartialType])
+        splitPreds :: [TypePredicate] -> ([PartialType], [PartialType], [Name])
         splitPreds [] = ([], [], [])
         splitPreds (p:ps) = case p of
           PredExpr p'  -> (p':exprs', classes', rels')

@@ -77,7 +77,7 @@ genType prgm@(objMap, ClassGraph cg, _) = HG.choice gens
     genCGRel :: Gen Type
     genCGRel = do
       classNode <- HG.element $ graphToNodes cg
-      return $ TopType [PredRel $ partialVal $ PRelativeName $ fromPartialName $ snd3 classNode]
+      return $ TopType [PredRel $ fromPartialName $ snd3 classNode]
 
     genObjM :: Gen Type
     genObjM = do
