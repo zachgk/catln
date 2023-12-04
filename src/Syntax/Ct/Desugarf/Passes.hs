@@ -105,12 +105,9 @@ expandDataReferences (fullPrgmObjMap, _, _) (objMap, classGraph@(ClassGraph cg),
     mapCGNode CGType = CGType
     objExpansions = H.fromList $ concatMap (\oa@ObjArr{oaBasis} -> ([(oaObjPath oa, oa) | oaBasis == TypeObj])) fullPrgmObjMap
     aux metaType inM@(Meta t p md) = case metaType of
-      ObjMeta               -> inM
-      ExprMeta OutputMeta _ -> inM
-      ExprMeta _ _          -> Meta (mapType t) p md
-      ObjArgMeta            -> Meta (mapType t) p md
-      ObjVarMeta            -> Meta (mapType t) p md
-      ArrMeta               -> Meta (mapType t) p md
+      ObjMeta      -> inM
+      ExprMeta _ _ -> inM
+      ArrMeta      -> Meta (mapType t) p md
 
     mapType (TopType ps) = TopType ps
     mapType tp@(TypeVar TVVar{} _) = tp

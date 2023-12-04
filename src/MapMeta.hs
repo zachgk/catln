@@ -31,8 +31,6 @@ data MetaLocation
 data MetaType
   = ExprMeta MetaLocation ExprMetaType
   | ObjMeta
-  | ObjArgMeta
-  | ObjVarMeta
   | ArrMeta
   deriving (Eq, Ord, Show)
 
