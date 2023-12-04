@@ -166,8 +166,7 @@ instance ObjArrClass RawObjArr where
   oaVarArgs roa = exprArg roa
     where
       exprArg RawObjArr{roaArr=(Just (Just (GuardExpr argVal Nothing), _))} = exprVarArgs argVal
-      exprArg RawObjArr{roaObj=(Just (GuardExpr obj Nothing)), roaArr= Nothing} = case exprPathM obj of
-        (n, m) -> H.singleton (TVArg n) [(obj, m)]
+      exprArg RawObjArr{roaObj=(Just (GuardExpr obj Nothing)), roaArr= Nothing} = H.singleton (TVArg $ exprPath obj) [(obj, emptyMetaE "arr" obj)]
       exprArg oa = error $ printf "exprVarArgs not defined for arg %s" (show oa)
   getOaAnnots = roaAnnots
 

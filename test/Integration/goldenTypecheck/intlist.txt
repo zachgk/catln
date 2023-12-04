@@ -367,7 +367,7 @@
         (
             [ /Data/enum [ T : ∀/Data/Enum ] -> ∀/Data/Set [ T=TopType ]
             , /Data/length
-                ( Value this -> /Data/Cons [ T=TopType ]
+                ( Value this -> /Data/Cons
                     ( head=TopType
                     , tail=∀/Data/ConsList
                         [ T=TVVar "T" ]
@@ -389,7 +389,7 @@
                 ( Value head -> TVVar "T" )
                 ( Value tail -> ∀/Data/ConsList
                     [ T=TVVar "T" ]
-                ) -> /Data/Cons [ T=TopType ]
+                ) -> /Data/Cons
                 ( head=TopType
                 , tail=∀/Data/ConsList
                     [ T=TVVar "T" ]

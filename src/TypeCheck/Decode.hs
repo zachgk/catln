@@ -81,7 +81,7 @@ toExpr env (TupleApply m (baseM, baseExpr) arg) = case arg of
           [argN] -> return argN
           _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to multiple arg options"]
         (base, result) -> TypeCheckResE [GenTypeCheckError pos $ printf "Failed argument inference due to multiple types with base %s and result %s" (show base) (show result)]
-      _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to non UnionType"]
+      (baseM'', m'') -> TypeCheckResE [GenTypeCheckError pos $ printf "Failed argument inference due to non UnionType in baseMeta %s or meta %s" (show baseM'') (show m'')]
     return $ TupleApply m' (baseM', baseExpr') (mkIOObjArr arrM' argName argExpr')
   ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=(Nothing, arrM)} -> do
     let argName = exprPath argObj
