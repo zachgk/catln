@@ -23,8 +23,7 @@ import qualified Data.Set            as S
 import           Hedgehog
 import qualified Hedgehog.Gen        as HG
 import           Hedgehog.Range      (linear, singleton)
-import           Semantics           (classGraphFromObjs, getExprType,
-                                      oaObjPath)
+import           Semantics           (classGraphFromObjs, oaObjExpr)
 import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
@@ -40,8 +39,8 @@ genTypeFromExpr prgm (TupleApply _ (_, baseExpr) oa) = do
     then case oaArr oa of
            (Just (GuardExpr arrExpr _), _) -> do
              arrExpr' <- genTypeFromExpr prgm arrExpr
-             return base{ptArgs = H.insert (oaObjPath oa) (singletonType arrExpr') baseArgs}
-           (Nothing, oaM) -> return base{ptArgs = H.insert (oaObjPath oa) (getMetaType oaM) baseArgs}
+             return base{ptArgs = H.insert (inExprSingleton $ oaObjExpr oa) (singletonType arrExpr') baseArgs}
+           (Nothing, oaM) -> return base{ptArgs = H.insert (inExprSingleton $ oaObjExpr oa) (getMetaType oaM) baseArgs}
     else return base
 genTypeFromExpr prgm (VarApply _ baseExpr varName m) = do
   base@PartialType{ptVars=baseVars} <- genTypeFromExpr prgm baseExpr
@@ -118,7 +117,7 @@ genInputExpr = do
   varOrArg <- HG.list (singleton $ S.size varArgNames) HG.bool
   let (varNames, argNames) = bimap (map fst) (map fst) $ partition snd $ zip (S.toList varArgNames) varOrArg
   let val = Value (emptyMetaT $ typeVal $ PTypeName n) n
-  withVars <- foldM genVar val varNames
+  withVars <- foldM genVar val (map partialKey varNames)
   foldM genArg withVars argNames
   where
     genName = HG.string (linear 5 10) HG.lower

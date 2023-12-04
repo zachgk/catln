@@ -60,7 +60,7 @@ evalEnvJoinAll = foldr1 evalEnvJoin
 evalError :: Env -> String -> CRes a
 evalError Env{evCallStack} msg = CErr [MkCNote $ EvalCErr evCallStack msg]
 
-evalSetArgs :: Env -> H.HashMap ArgName Val -> Env
+evalSetArgs :: Env -> Args -> Env
 evalSetArgs env args' = env{evArgs=args'}
 
 evalPush :: Env -> String -> Env

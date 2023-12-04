@@ -36,20 +36,11 @@ labelPos s (Just (p1, p2, sPrefix)) = Just (p1, p2, label')
           _  -> printf "%s-%s" sPrefix s
 labelPos _ Nothing = Nothing
 
-getExprType :: (ExprClass e) => e m -> Type
-getExprType = getMetaType . getExprMeta
-
 emptyMetaM :: (MetaDat m) => String -> Meta m -> Meta m
 emptyMetaM s m = Meta topType (labelPos s $ getMetaPos m) emptyMetaDat
 
 emptyMetaE :: (ExprClass e, MetaDat m) => String -> e m -> Meta m
 emptyMetaE s e = emptyMetaM s (getExprMeta e)
-
-exprAppliedArgsMap :: (ExprClass e, MetaDat m, Show m) => e m -> H.HashMap ArgName (Meta m, Maybe (e m))
-exprAppliedArgsMap = H.fromList . mapMaybe mapArg . exprAppliedArgs
-  where
-    mapArg ObjArr{oaObj=Just (GuardExpr oe _), oaArr=(arrExpr, oaM)} = Just (exprPath oe, (oaM, fmap rgeExpr arrExpr))
-    mapArg _ = Nothing
 
 exprWithMeta :: Meta m -> Expr m -> Expr m
 exprWithMeta m (CExpr _ c)        = CExpr m c
@@ -89,17 +80,17 @@ exprVarArgsWithSrc :: (MetaDat m, Show m) => ClassGraph -> Expr m -> PartialType
 exprVarArgsWithSrc _ CExpr{} _ = H.empty
 exprVarArgsWithSrc _ Value{} _ = H.empty
 exprVarArgsWithSrc _ HoleExpr{} _ = H.empty
-exprVarArgsWithSrc classGraph (AliasExpr base n) src = H.insert (TVArg $ exprPath n) ([(n, getExprMeta base)], singletonType src) (exprVarArgsWithSrc classGraph base src)
-exprVarArgsWithSrc classGraph (VarApply _ b n m) src = H.insert (TVVar n) ([(Value (emptyMetaT $ typeVal $ PTypeName n) n, m)], H.lookupDefault topType n (ptVars src)) $ exprVarArgsWithSrc classGraph b src
+exprVarArgsWithSrc classGraph (AliasExpr base n) src = H.insert (TVArg $ inExprSingleton n) ([(n, getExprMeta base)], singletonType src) (exprVarArgsWithSrc classGraph base src)
+exprVarArgsWithSrc classGraph (VarApply _ b n m) src = H.insert (TVVar n) ([(Value (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)], H.lookupDefault topType n (ptVars src)) $ exprVarArgsWithSrc classGraph b src
 exprVarArgsWithSrc classGraph (TupleApply _ (_, be) arg) src = H.union (exprVarArgsWithSrc classGraph be src) (fromArg arg)
   where
-    fromArg ObjArr{oaObj=Just (GuardExpr obj _), oaArr=(Just (GuardExpr e _), _)} = case typeGetArg (exprPath obj) src of
+    fromArg ObjArr{oaObj=Just (GuardExpr obj _), oaArr=(Just (GuardExpr e _), _)} = case typeGetArg (inExprSingleton obj) src of
       Just (UnionType srcArg) -> mergeMaps $ map (exprVarArgsWithSrc classGraph e) $ splitUnionType srcArg
       Just t@TopType{} -> (,t) <$> exprVarArgs e
       _ -> H.empty
     fromArg ObjArr{oaArr=(Just (GuardExpr e _), _)} = exprVarArgsWithSrc classGraph e src
-    fromArg ObjArr {oaObj=Just (GuardExpr obj _), oaArr=(Nothing, arrM)} = case typeGetArg (exprPath obj) src of
-      Just srcArg -> H.singleton (TVArg $ exprPath obj) ([(obj, arrM)], srcArg)
+    fromArg ObjArr {oaObj=Just (GuardExpr obj _), oaArr=(Nothing, arrM)} = case typeGetArg (inExprSingleton obj) src of
+      Just srcArg -> H.singleton (TVArg $ inExprSingleton obj) ([(obj, arrM)], srcArg)
       Nothing     -> H.empty
     fromArg oa = error $ printf "Invalid oa %s" (show oa)
 
@@ -110,7 +101,7 @@ exprVarArgsWithSrc classGraph (TupleApply _ (_, be) arg) src = H.union (exprVarA
 -- Otherwise, it uses the minimal type that *must* be reached
 arrowDestType :: (Show m, MetaDat m) => Bool -> ClassGraph -> PartialType -> ObjArr Expr m -> Type
 arrowDestType fullDest classGraph src oa@ObjArr{oaArr=(oaArrExpr, oaM)} = case oaArrExpr of
-  Just (GuardExpr (Value _ n) _) -> fromMaybe joined (H.lookup (TVArg n) vaenv)
+  Just (GuardExpr n _) | isJust (maybeExprPath n) -> fromMaybe joined (H.lookup (TVArg $ inExprSingleton n) vaenv)
   _                              -> joined
   where
     vaenv = snd <$> exprVarArgsWithSrc classGraph (oaObjExpr oa) ((\(UnionType pl) -> head $ splitUnionType pl) $ substituteVars $ singletonType src)

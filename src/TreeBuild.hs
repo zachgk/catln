@@ -155,7 +155,7 @@ findResArrows TBEnv{tbName, tbResEnv, tbClassGraph} (os, obj) srcType@PartialTyp
       Just resArrowsWithName -> filter (\(arrowType, _, _, _) -> not $ isBottomType $ intersectTypes tbClassGraph (singletonType srcType) (singletonType arrowType)) resArrowsWithName
       Nothing -> []
     argArrows :: [ResBuildEnvItem]
-    argArrows = case suffixLookupInDict srcName $ snd $ splitVarArgEnv $ exprVarArgsWithSrc tbClassGraph (oaObjExpr obj) os of
+    argArrows = case suffixLookupInDict srcName $ H.mapKeys pkName $ snd $ splitVarArgEnv $ exprVarArgsWithSrc tbClassGraph (oaObjExpr obj) os of
       Just (_, argArrowType) -> [(srcType, Nothing, False, TCArg argArrowType srcName)]
       Nothing -> []
 findResArrows _ _ PartialType{ptName=PClassName{}} _ = error "Can't findResArrows for class"

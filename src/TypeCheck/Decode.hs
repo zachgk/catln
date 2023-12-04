@@ -51,7 +51,7 @@ toExpr env (AliasExpr base alias) = do
   return $ AliasExpr base' alias'
 toExpr env (TupleApply m (baseM, baseExpr) arg) = case arg of
   ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=(Just (GuardExpr argExpr _), arrM)} -> do
-    let argName = exprPath argObj
+    let argName = inExprSingleton argObj
     m' <- toMeta env m "TupleApply_M"
     baseM' <- toMeta env baseM "TupleApply_baseM"
     baseExpr' <- toExpr env baseExpr
@@ -84,7 +84,7 @@ toExpr env (TupleApply m (baseM, baseExpr) arg) = case arg of
       (baseM'', m'') -> TypeCheckResE [GenTypeCheckError pos $ printf "Failed argument inference due to non UnionType in baseMeta %s or meta %s" (show baseM'') (show m'')]
     return $ TupleApply m' (baseM', baseExpr') (mkIOObjArr arrM' argName argExpr')
   ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=(Nothing, arrM)} -> do
-    let argName = exprPath argObj
+    let argName = inExprSingleton argObj
     m' <- toMeta env m "TupleApplyI_M"
     baseM' <- toMeta env baseM "TupleApplyI_baseM"
     baseExpr' <- toExpr env baseExpr

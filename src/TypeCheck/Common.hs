@@ -83,7 +83,7 @@ data ConstraintDat p
   | BoundedByObjs Int p
   | ArrowTo Int p p -- ArrowTo src dest
   | PropEq Int (p, TypeVarAux) p -- ^ Both Actual and Req
-  | AddArg Int (p, String) p -- ^ Both Actual and Req,
+  | AddArg Int (p, ArgName) p -- ^ Both Actual and Req,
   | AddInferArg Int p p -- ^ Both Actual and Req, AddInferArg base arg
   | PowersetTo Int p p -- ^ Actual (maybe should make it req too)
   | UnionOf Int p [p] -- ^ Both Actual and Req
@@ -210,7 +210,7 @@ instance (Show p) => Show (ConstraintDat p) where
   show (BoundedByObjs i s) = printf "BoundedByObjs%d %s" i (show s)
   show (ArrowTo i s d) = printf "%s %d-> %s" (show s) i (show d)
   show (PropEq i (s1, n) s2) = printf "(%s).%s %d== %s"  (show s1) (show n) i (show s2)
-  show (AddArg i (base, arg) res) = printf "(%s)(%s) %d== %s" (show base) arg i (show res)
+  show (AddArg i (base, arg) res) = printf "(%s)(%s) %d== %s" (show base) (show arg) i (show res)
   show (AddInferArg i base res) = printf "(%s)(?) %d== %s" (show base) i (show res)
   show (PowersetTo i s t) = printf "𝒫(%s) %d⊇ %s" (show s) i (show t)
   show (UnionOf i s _) = printf "SUnionOf %d for %s" i (show s)

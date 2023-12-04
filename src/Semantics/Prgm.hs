@@ -131,7 +131,7 @@ instance Show m => Show (Expr m) where
         TupleApply{}    -> show baseExpr
         VarApply{}      -> show baseExpr
         _               -> printf "(%s)" (show baseExpr)
-  show (VarApply _ baseExpr varName varVal) = printf "%s[%s : %s]" baseExpr' varName (show varVal)
+  show (VarApply _ baseExpr varName varVal) = printf "%s[%s : %s]" baseExpr' (show varName) (show varVal)
     where
       baseExpr' = case baseExpr of
         Value _ funName -> funName
@@ -215,11 +215,11 @@ instance ExprClass Expr where
   exprVarArgs CExpr{} = H.empty
   exprVarArgs Value{} = H.empty
   exprVarArgs HoleExpr{} = H.empty
-  exprVarArgs (AliasExpr base n) = H.insertWith (++) (TVArg $ exprPath n) [(n, getExprMeta base)] (exprVarArgs base)
-  exprVarArgs (TupleApply _ (_, be) ObjArr{oaObj=Just (GuardExpr n _), oaArr=(Nothing, arrM)}) = H.insertWith (++) (TVArg $ exprPath n) [(n, arrM)] (exprVarArgs be)
+  exprVarArgs (AliasExpr base n) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, getExprMeta base)] (exprVarArgs base)
+  exprVarArgs (TupleApply _ (_, be) ObjArr{oaObj=Just (GuardExpr n _), oaArr=(Nothing, arrM)}) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, arrM)] (exprVarArgs be)
   exprVarArgs (TupleApply _ _ ObjArr{oaObj, oaArr=(Nothing, _)}) = error $ printf "Unexpected unhandled obj type in exprVarArgs: %s" (show oaObj)
   exprVarArgs (TupleApply _ (_, be) ObjArr{oaArr=(Just (GuardExpr e _), _)}) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)
-  exprVarArgs (VarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar n) [(Value (emptyMetaT $ typeVal $ PTypeName n) n, m)])
+  exprVarArgs (VarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar n) [(Value (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)])
 
 class ObjArrClass oa where
   -- | See exprArgs
@@ -232,7 +232,7 @@ instance ObjArrClass ObjArr where
   oaVarArgs oa = exprArg oa
     where
       exprArg ObjArr{oaArr=(Just (GuardExpr e Nothing), _)} = exprVarArgs e
-      exprArg ObjArr{oaObj=Just (GuardExpr obj Nothing), oaArr=(_, m)} = H.singleton (TVArg $ exprPath obj) [(obj, m)]
+      exprArg ObjArr{oaObj=Just (GuardExpr obj Nothing), oaArr=(_, m)} = H.singleton (TVArg $ inExprSingleton obj) [(obj, m)]
       exprArg _ = error $ printf "Invalid oa %s" (show oa)
 
   getOaAnnots = oaAnnots
@@ -242,10 +242,10 @@ emptyPrgm :: Prgm e m
 emptyPrgm = ([], emptyClassGraph, [])
 
 mkIOObjArr :: (MetaDat m, Show m) => Meta m -> ArgName -> Expr m -> ObjArr Expr m
-mkIOObjArr m argName argVal = ObjArr (Just (GuardExpr (Value (emptyMetaT $ typeVal $ PTypeName argName) argName) Nothing)) ArgObj Nothing [] (Just (GuardExpr argVal Nothing), m)
+mkIOObjArr m argName argVal = ObjArr (Just (GuardExpr (Value (emptyMetaT $ partialToTypeSingleton argName) (pkName argName)) Nothing)) ArgObj Nothing [] (Just (GuardExpr argVal Nothing), m)
 
 mkIObjArr :: (MetaDat m, Show m) => Meta m -> ArgName -> ObjArr Expr m
-mkIObjArr m argName = ObjArr (Just (GuardExpr (Value (emptyMetaT $ typeVal $ PTypeName argName) argName) Nothing)) ArgObj Nothing [] (Nothing, m)
+mkIObjArr m argName = ObjArr (Just (GuardExpr (Value (emptyMetaT $ partialToTypeSingleton argName) (pkName argName)) Nothing)) ArgObj Nothing [] (Nothing, m)
 
 mkOObjArr :: (MetaDat m, Show m) => Expr m -> ObjArr Expr m
 mkOObjArr argVal = ObjArr Nothing ArgObj Nothing [] (Just (GuardExpr argVal Nothing), emptyMetaN )
@@ -270,6 +270,13 @@ constantType = singletonType . constantPartialType
 exprAppliedVars :: (ExprClass e) => e m -> H.HashMap TypeVarName (Meta m)
 exprAppliedVars = H.fromList . exprAppliedOrdVars
 
+getExprType :: (ExprClass e) => e m -> Type
+getExprType = getMetaType . getExprMeta
+
+inExprSingleton :: (ExprClass e, MetaDat m, Show m, Show (e m)) => e m -> ArgName
+inExprSingleton e = maybe
+  (partialKey $ exprPath e) {pkArgs = H.keysSet $ exprAppliedArgsMap e, pkVars = H.keysSet $ exprAppliedVars e} partialToKey (maybeGetSingleton (getExprType e))
+
 maybeExprPath :: (ExprClass e) => e m -> Maybe TypeName
 maybeExprPath = fmap fst . maybeExprPathM
 
@@ -284,6 +291,13 @@ exprArgs e = H.fromList $ mapMaybe aux $ H.toList $ exprVarArgs e
   where
     aux (TVArg a, ms) = Just (a, ms)
     aux (TVVar _, _)  = Nothing
+
+exprAppliedArgsMap :: (ExprClass e, MetaDat m, Show m, Show (e m)) => e m -> H.HashMap ArgName (Meta m, Maybe (e m))
+exprAppliedArgsMap = H.fromList . mapMaybe mapArg . exprAppliedArgs
+  where
+    mapArg ObjArr{oaObj=Just (GuardExpr oe _), oaArr=(arrExpr, oaM)} = Just (inExprSingleton oe, (oaM, fmap rgeExpr arrExpr))
+    mapArg _ = Nothing
+
 
 mergeDoc :: Maybe String -> Maybe String -> Maybe String
 mergeDoc (Just a) (Just b) = Just (a ++ " " ++ b)

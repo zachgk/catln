@@ -65,7 +65,7 @@ evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe 
     (objMap, classGraph, _) = prgmFromGraphData prgmName prgmGraphData
     objArrowsContains ObjArr{oaArr=(Nothing, _)} = Nothing
     objArrowsContains oa@ObjArr{oaArr=(_, oaM)} = case oaObjPath oa of
-      "/Context" -> case H.lookup "value" $ exprAppliedArgsMap $ oaObjExpr oa of
+      "/Context" -> case H.lookup (partialKey "value") $ exprAppliedArgsMap $ oaObjExpr oa of
         Just (_, Just valObjExpr) -> if relativeNameMatches function (exprPath valObjExpr)
           then Just $ if isBuildable oa (getMetaType oaM)
             then EvalBuildWithContext (exprPath valObjExpr)

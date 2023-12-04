@@ -89,7 +89,7 @@ desObj isDef inheritPath useRelativeName oa@ObjArr{oaObj=Just (GuardExpr objE ob
     -- Inherit the path in main object name. If main is a context, instead inherit in the context function as well
     updateExprPath = mapExprPath (\(eM, eN) -> Value eM (addPath inheritPath eN))
     objExpr4 = case oaObjPath oa of
-      "/Context" -> mapExprAppliedArg updateExprPath "value" objExpr3
+      "/Context" -> mapExprAppliedArg updateExprPath (partialKey "value") objExpr3
       _          -> updateExprPath objExpr3
 
 

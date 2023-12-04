@@ -31,11 +31,11 @@ import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 
 mkOp1 :: String -> PExpr -> PExpr
-mkOp1 opChars x = applyRawArgs (RawValue emptyMetaN op) [(Just operatorArgUnary, x)]
+mkOp1 opChars x = applyRawArgs (RawValue emptyMetaN op) [(Just $ partialKey operatorArgUnary, x)]
   where op = operatorPrefix ++ opChars
 
 mkOp2 :: String -> PExpr -> PExpr -> PExpr
-mkOp2 opChars x y = applyRawArgs (RawValue emptyMetaN op) [(Just operatorArgL, x), (Just operatorArgR, y)]
+mkOp2 opChars x y = applyRawArgs (RawValue emptyMetaN op) [(Just $ partialKey operatorArgL, x), (Just $ partialKey operatorArgR, y)]
   where op = operatorPrefix ++ opChars
 
 pMinus :: Parser String
@@ -181,7 +181,7 @@ pContextElSuffix = do
   _ <- symbol ":"
   tp <- tidentifier
   pos2 <- getSourcePos
-  return (arg, Meta (typeVal (PRelativeName tp)) (Just (pos1, pos2, "")) emptyMetaDat)
+  return (partialKey arg, Meta (typeVal (PRelativeName tp)) (Just (pos1, pos2, "")) emptyMetaDat)
 
 pContextSuffix :: Parser TermSuffix
 pContextSuffix = do

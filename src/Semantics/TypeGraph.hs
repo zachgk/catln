@@ -50,7 +50,7 @@ unionReachesTree classGraph (ReachesTree children) = do
   case partition isTypeVar both of
     ([onlyVar], []) -> onlyVar
     ([], sums)       -> unionAllTypes classGraph sums
-    ([t@(TypeVar (TVArg argName) _)], [UnionType leafs]) | all (\PartialType{ptName} -> fromPartialName ptName == argName) (splitUnionType leafs) -> t
+    ([t@(TypeVar (TVArg argName) _)], [UnionType leafs]) | all (\PartialType{ptName=n} -> fromPartialName n == pkName argName) (splitUnionType leafs) -> t
     (_, _)       -> error $ printf "Not yet implemented unionReachesTree with vars and partials of %s" (show both)
 unionReachesTree classGraph (ReachesLeaf leafs) = unionAllTypes classGraph leafs
 
@@ -70,7 +70,7 @@ reachesHasCutSubtypeOf classGraph vaenv (ReachesTree children) superType = all c
 reachesHasCutSubtypeOf classGraph vaenv (ReachesLeaf leafs) superType = any (\t -> isSubtypeOfWithMetaEnv classGraph vaenv t superType) leafs
 
 reachesPartial :: (MetaDat m, Show m) => ReachesEnv m -> PartialType -> CRes ReachesTree
-reachesPartial ReachesEnv{rVaenv} PartialType{ptName=PTypeName argName} | TVArg argName `H.member` rVaenv = return $ ReachesLeaf [TypeVar (TVArg argName) TVInt]
+reachesPartial ReachesEnv{rVaenv} PartialType{ptName=PTypeName argName} | TVArg (partialKey argName) `H.member` rVaenv = return $ ReachesLeaf [TypeVar (TVArg $ partialKey argName) TVInt]
 reachesPartial ReachesEnv{rTypeGraph, rClassGraph} partial@PartialType{ptName=PTypeName name} = do
 
   let ttypeArrows = H.lookupDefault [] name rTypeGraph

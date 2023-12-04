@@ -59,9 +59,10 @@ type EvalTreebugOpen = EObjArr
 data EvalTreebugClosed = EvalTreebugClosed EObjArr Val [EvalTreebugClosed] String
   deriving (Eq, Generic, Hashable, ToJSON)
 
+type Args = H.HashMap String Val
 data Env = Env { evObjMap        :: EObjectMap
                , evClassGraph    :: ClassGraph
-               , evArgs          :: H.HashMap ArgName Val
+               , evArgs          :: Args
                , evExEnv         :: ResExEnv
                , evTbEnv         :: TBEnv
                , evCallStack     :: [String]
@@ -73,8 +74,6 @@ data Env = Env { evObjMap        :: EObjectMap
 data EvalResult = EvalResult { erCoverage :: H.HashMap EObjArr Int
                              , erTreebug  :: [EvalTreebugClosed]
                              } deriving (Eq, Generic, ToJSON)
-
-type Args = H.HashMap String Val
 
 data Val
   = IntVal Integer
@@ -139,7 +138,7 @@ instance ToJSON Val where
   toJSON NoVal = object ["tag".=("NoVal" :: String)]
 
 resultLeaf, queueLeaf :: PartialType
-resultLeaf = (partialVal (PTypeName "/Catln/CatlnResult")){ptArgs=H.fromList [("name", strType), ("contents", strType)]}
+resultLeaf = (partialVal (PTypeName "/Catln/CatlnResult")){ptArgs=H.fromList [(partialKey "name", strType), (partialKey "contents", strType)]}
 queueLeaf = partialVal (PTypeName "llvmQueue")
 
 resultType :: Type
@@ -149,8 +148,8 @@ getValType :: Val -> PartialType
 getValType IntVal{} = intLeaf
 getValType FloatVal{} = floatLeaf
 getValType StrVal{} = strLeaf
-getValType (TupleVal name args) = (partialVal (PTypeName name)){ptArgs=fmap fromArg args}
-  where fromArg arg = singletonType $ getValType arg
+getValType (TupleVal name args) = (partialVal (PTypeName name)){ptArgs=H.fromList $ map fromArg $ H.toList args}
+  where fromArg (argName, argVal) = (partialKey argName, singletonType $ getValType argVal)
 getValType IOVal{} = ioLeaf
 getValType LLVMVal{} = resultLeaf
 getValType LLVMQueue{} = queueLeaf
@@ -253,11 +252,11 @@ instance ExprClass TExpr where
   exprVarArgs TCExpr{} = H.empty
   exprVarArgs TValue{} = H.empty
   exprVarArgs THoleExpr{} = H.empty
-  exprVarArgs (TAliasExpr base n) = H.insertWith (++) (TVArg $ exprPath n) [(n, getExprMeta base)] (exprVarArgs base)
-  exprVarArgs (TTupleApply _ be ObjArr{oaObj=Just (GuardExpr n _), oaArr=(Nothing, arrM)}) = H.insertWith (++) (TVArg $ exprPath n) [(n, arrM)] (exprVarArgs be)
+  exprVarArgs (TAliasExpr base n) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, getExprMeta base)] (exprVarArgs base)
+  exprVarArgs (TTupleApply _ be ObjArr{oaObj=Just (GuardExpr n _), oaArr=(Nothing, arrM)}) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, arrM)] (exprVarArgs be)
   exprVarArgs (TTupleApply _ _ ObjArr{oaObj, oaArr=(Nothing, _)}) = error $ printf "Unexpected unhandled obj type in exprVarArgs: %s" (show oaObj)
   exprVarArgs (TTupleApply _ be ObjArr{oaArr=(Just (GuardExpr e _), _)}) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)
-  exprVarArgs (TVarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar n) [(TValue (emptyMetaT $ typeVal $ PTypeName n) n, m)])
+  exprVarArgs (TVarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar n) [(TValue (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)])
   exprVarArgs (TCalls _ b _) = exprVarArgs b
 
 
@@ -329,7 +328,7 @@ buildArrArgs obj = aux H.empty (oaObjExpr obj)
   where
     aux acc oExpr val | null (exprAppliedArgs oExpr) = H.insert (exprPath oExpr) val acc
     aux _ oExpr (TupleVal tupleName _) | exprPath oExpr /= tupleName = error $ printf "Found name mismatch in buildArrArgs: object %s and tuple %s" (exprPath oExpr) tupleName
-    aux acc oExpr (TupleVal _ tupleArgs) = H.foldrWithKey addArgs acc $ H.intersectionWith (,) (exprAppliedArgsMap oExpr) tupleArgs
+    aux acc oExpr (TupleVal _ tupleArgs) = H.foldrWithKey addArgs acc $ H.intersectionWith (,) (H.mapKeys pkName $ exprAppliedArgsMap oExpr) tupleArgs
     aux _ oExpr val = error $ printf "Invalid buildArrArgs with oExpr %s and value %s" (show oExpr) (show val)
 
     addArgs argName ((_, Nothing), argVal) acc   = H.insert argName argVal acc

@@ -63,7 +63,7 @@ scopeSubDeclFunNamesInMeta :: TypeName -> S.HashSet TypeName -> ParseMeta -> Par
 scopeSubDeclFunNamesInMeta prefix replaceNames (Meta (UnionType partials) pos md) = Meta (UnionType partials') pos md
   where
     scopeS = scopeSubDeclFunNamesInPartialName prefix replaceNames
-    partials' = H.fromList $ map (first scopeS) $ H.toList partials
+    partials' = H.mapKeys scopeS partials
 scopeSubDeclFunNamesInMeta _ _ m@(Meta (TopType []) _ _) = m
 scopeSubDeclFunNamesInMeta _ _ (Meta (TopType _) _ _) = undefined
 scopeSubDeclFunNamesInMeta _ _ m@(Meta TypeVar{} _ _) = m
@@ -92,7 +92,7 @@ curryApplyParentArgsSignature e parentArgs = applyExprIArgs e (map (second IArgM
 
 -- | Apply args to an output expression
 curryApplyParentArgs :: PSExpr -> ParentArgs -> PSExpr
-curryApplyParentArgs e parentArgs = applyExprIArgs e (map (\(parentArgName, parentArgM) -> (parentArgName, IArgE (Value (emptyMetaM "nest" parentArgM) parentArgName))) $ H.toList $ fmap head parentArgs)
+curryApplyParentArgs e parentArgs = applyExprIArgs e (map (\(parentArgName, parentArgM) -> (parentArgName, IArgE (Value (emptyMetaM "nest" parentArgM) (pkName parentArgName)))) $ H.toList $ fmap head parentArgs)
 
 currySubFunctionSignature :: ParentArgs -> PSemiDecl -> PSemiDecl
 currySubFunctionSignature parentArgs (PSemiDecl oa@ObjArr{oaObj=Just (GuardExpr obj guard)}) = PSemiDecl oa{oaObj=Just (GuardExpr obj' guard)}
@@ -134,5 +134,5 @@ currySubFunctions oa _ = error $ printf "currySubFunctions without input express
 desObjDocComment :: [PStatementTree] -> Maybe String
 desObjDocComment ((RawStatementTree (RawAnnot annotExpr) _):rest) | maybeExprPath annotExpr == Just mdAnnot = Just (++) <*> Just annotText <*> desObjDocComment rest
   where
-    (Just (_, Just (RawCExpr _ (CStr annotText)))) = H.lookup mdAnnotText $ exprAppliedArgsMap annotExpr
+    (Just (_, Just (RawCExpr _ (CStr annotText)))) = H.lookup (partialKey mdAnnotText) $ exprAppliedArgsMap annotExpr
 desObjDocComment _ = Just ""

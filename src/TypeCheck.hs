@@ -50,6 +50,7 @@ typecheckPrgms pprgms typechecked = do
   let baseFEnv = makeBaseFEnv classGraph
   (vprgms, env@FEnv{feCons}) <- fromPrgms baseFEnv pprgms typechecked
   env'@FEnv{feTrace} <- runConstraints runConstraintsLimit env feCons
+  -- _ <- trace (printf "Found feUnionAllObjs %s" (show $ descriptor env' $ feUnionAllObjs env')) (return ())
   tprgms <- toPrgms env' vprgms
   return $ zip3 tprgms vprgms (repeat feTrace)
 

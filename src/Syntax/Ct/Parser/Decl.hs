@@ -22,6 +22,7 @@ import           Constants
 import           Data.List
 import           Semantics
 import           Semantics.Prgm
+import           Semantics.Types
 import           Syntax.Ct.Parser.Expr
 import           Syntax.Ct.Parser.Lexer
 import           Syntax.Ct.Parser.Syntax
@@ -39,7 +40,7 @@ pComment = do
   c <- L.indentBlock scn p
   pos2 <- getSourcePos
   let m = emptyMeta pos1 pos2
-  return (RawValue (emptyMetaM "val" m) mdAnnot `applyRawArgs` [(Just "text", RawCExpr m (CStr c))])
+  return (RawValue (emptyMetaM "val" m) mdAnnot `applyRawArgs` [(Just $ partialKey "text", RawCExpr m (CStr c))])
   where
     takeLine = takeWhileP (Just "character") (/= '\n')
     p = do

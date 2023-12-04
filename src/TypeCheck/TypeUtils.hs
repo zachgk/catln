@@ -139,7 +139,7 @@ mkReachesEnv env@FEnv{feClassGraph, feUnionAllObjs, feVTypeGraph, feTTypeGraph} 
     inExpr' <- showExpr env inExpr
     outM' <- showM env outM
     return (mapMeta clearMetaDat InputMeta inExpr', outM')
-  let argTypeGraph = fmap (\(inExpr, outM) -> [ObjArr (Just (GuardExpr inExpr Nothing)) ArgObj Nothing [] (Nothing, emptyMetaT (substituteWithVarArgEnv (fmap snd vaenv) (getMetaType outM)))]) argVaenv'
+  let argTypeGraph = H.fromList $ map (\(argName, (inExpr, outM)) -> (pkName argName, [ObjArr (Just (GuardExpr inExpr Nothing)) ArgObj Nothing [] (Nothing, emptyMetaT (substituteWithVarArgEnv (fmap snd vaenv) (getMetaType outM)))])) $ H.toList argVaenv'
 
   -- final ReachesEnv
   let argClassGraph = classGraphFromObjs (concat $ H.elems argTypeGraph)

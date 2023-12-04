@@ -165,14 +165,14 @@ executeConstraint env@FEnv{feUnionAllObjs, feClassGraph} con@(Constraint _ _ (Bo
     TypeCheckResult _ (ub, objMapBoundUb, vaenv) -> do
 
       -- Add the local args to the bound (maybe?)
-      let argsBoundUb = UnionType $ joinUnionType $ map (partialVal . PTypeName) $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con
+      let argsBoundUb = UnionType $ joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con
       let boundUb = unionTypes feClassGraph objMapBoundUb argsBoundUb
 
       -- A partially applied tuple would not be a raw type on the unionObj,
       -- but a subset of the arguments in that type
       let (_, ub') = intersectTypesWithVarEnv feClassGraph (fmap stypeAct vaenv) ub boundUb
-      -- let env' = setScheme env pnt scheme' $ printf "BoundedByObjs for %s\nBound: %s\n" (show ub) (show boundUb)
-      let env' = setSchemeAct env con pnt ub' $ printf "BoundedByObjs for %s\n" (show ub)
+      let env' = setSchemeAct env con pnt ub' $ printf "BoundedByObjs for %s\n\tArgsBound: %s\n\tBound: %s\n" (show ub) (show argsBoundUb) (show boundUb)
+      -- let env' = setSchemeAct env con pnt ub' $ printf "BoundedByObjs for %s\n" (show ub)
       (False, env')
 executeConstraint env con@(Constraint _ _ (ArrowTo _ srcPnt destPnt)) = do
   let srcScheme = pointUb env srcPnt

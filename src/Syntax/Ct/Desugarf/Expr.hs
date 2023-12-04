@@ -55,13 +55,13 @@ desObjPropagateTypes mainExpr@(TupleApply m (bm, be) tupleApplyArgs) = do
   let bm' = mWithType (getMetaType $ getExprMeta be') bm
   case tupleApplyArgs of
       ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=(Just (GuardExpr argVal _), argM)} -> do
-        let argName = exprPath argObj
+        let argName = inExprSingleton argObj
         let (_, argVal') = desObjPropagateTypes argVal
         let basePartial' = basePartial{ptArgs=H.insert argName (getExprType argVal') baseArgs}
         let m' = mWithType (singletonType basePartial') m
         (Just basePartial', TupleApply m' (bm', be') (mkIOObjArr argM argName argVal'))
       ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=(Nothing, argM)} -> do
-        let argName = exprPath argObj
+        let argName = inExprSingleton argObj
         let basePartial' = basePartial{ptArgs=H.insert argName (getMetaType argM) baseArgs}
         let m' = mWithType (singletonType basePartial') m
         (Just basePartial', TupleApply m' (bm', be') (mkIObjArr argM argName))
@@ -128,17 +128,17 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm''
 semiDesExpr sdm obj (RawVarsApply m be vs) = foldr aux be' vs
   where
     be' = semiDesExpr sdm obj be
-    aux (varExpr, varVal) base = VarApply (emptyMetaM varName m) base varName varVal
+    aux (varExpr, varVal) base = VarApply (emptyMetaM (show varName) m) base varName varVal
       where varName = case fromPartialName $ ptName $ exprToPartialType varExpr of
-              '$':n -> n
-              n     -> n
-semiDesExpr sdm obj@Just{} (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawArgs (RawValue emptyMetaN "/Context") ((Just "value", be) : map (\(ctxName, ctxM) -> (Nothing, RawValue ctxM ctxName)) ctxs)
-semiDesExpr sdm obj@Nothing (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawIArgs (RawValue emptyMetaN "/Context") (("value", IArgE be) : map (second IArgM) ctxs)
+              '$':n -> partialKey n
+              n     -> partialKey n
+semiDesExpr sdm obj@Just{} (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawArgs (RawValue emptyMetaN "/Context") ((Just $ partialKey "value", be) : map (\(ctxName, ctxM) -> (Nothing, RawValue ctxM (pkName ctxName))) ctxs)
+semiDesExpr sdm obj@Nothing (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawIArgs (RawValue emptyMetaN "/Context") ((partialKey "value", IArgE be) : map (second IArgM) ctxs)
 semiDesExpr sdm obj (RawParen e) = semiDesExpr sdm obj e
-semiDesExpr sdm obj@Nothing (RawMethod (RawTheExpr (RawValue m n)) method) = semiDesExpr sdm obj (method `applyRawIArgs` [("this", IArgM (Meta (typeVal $ PRelativeName n) (getMetaPos m) emptyMetaDat))]) -- Parse type methods like :Integer.toString, Only for input expressions
-semiDesExpr sdm obj (RawMethod base method) = semiDesExpr sdm obj $ applyRawArgs method [(Just "this", base)]
+semiDesExpr sdm obj@Nothing (RawMethod (RawTheExpr (RawValue m n)) method) = semiDesExpr sdm obj (method `applyRawIArgs` [(partialKey "this", IArgM (Meta (typeVal $ PRelativeName n) (getMetaPos m) emptyMetaDat))]) -- Parse type methods like :Integer.toString, Only for input expressions
+semiDesExpr sdm obj (RawMethod base method) = semiDesExpr sdm obj $ applyRawArgs method [(Just $ partialKey "this", base)]
 semiDesExpr sdm obj (RawList m []) = semiDesExpr sdm obj (RawValue m "/Data/Nil")
-semiDesExpr sdm obj (RawList m (l:ls)) = semiDesExpr sdm obj (RawValue m "/Data/Cons" `applyRawArgs` [(Just "head", l), (Just "tail", RawList m ls)])
+semiDesExpr sdm obj (RawList m (l:ls)) = semiDesExpr sdm obj (RawValue m "/Data/Cons" `applyRawArgs` [(Just $ partialKey "head", l), (Just $ partialKey "tail", RawList m ls)])
 semiDesExpr _ _ e = error $ printf "Not yet implemented semiDesExpr for %s" (show e)
 
 -- | Desugars a "TheExpr type" by applying the type to a default name

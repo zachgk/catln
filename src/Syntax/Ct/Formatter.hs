@@ -20,7 +20,6 @@ import           Data.String.Builder
 import           Text.Printf
 
 import           Constants
-import           Semantics
 import           Semantics.Annots
 import           Semantics.Prgm
 import           Semantics.Types
@@ -33,13 +32,16 @@ formatImport :: FileImport -> Builder
 formatImport imp = do
   literal $ "import " ++ imp ++ "\n"
 
+formatPartialKey :: PartialKey -> String
+formatPartialKey = formatPartialType . partialToType
+
 formatPartialType :: PartialType -> String
 formatPartialType (PartialType ptName ptVars ptArgs ptPreds _) = concat [showName ptName, showTypeVars ptVars, showArgs ptArgs, showPreds ptPreds]
   where
     showName p  = fromPartialName p
     showArg (argName, argVal) = if argVal == topType
-      then '$':argName
-      else argName ++ ": " ++ formatType argVal
+      then '$':formatPartialKey argName
+      else formatPartialKey argName ++ ": " ++ formatType argVal
     showTypeVars vars | H.null vars = ""
     showTypeVars vars = printf "[%s]" (intercalate ", " $ map showArg $ H.toList vars)
     showArgs args | H.null args = ""
@@ -51,8 +53,8 @@ formatPartialType (PartialType ptName ptVars ptArgs ptPreds _) = concat [showNam
 formatType :: Type -> String
 formatType (TopType []) = ""
 formatType (TopType _) = undefined
-formatType (TypeVar (TVVar t) TVInt) = "$" ++ t
-formatType (TypeVar (TVVar t) TVExt) = "$_" ++ t
+formatType (TypeVar (TVVar t) TVInt) = "$" ++ formatPartialKey t
+formatType (TypeVar (TVVar t) TVExt) = "$_" ++ formatPartialKey t
 formatType (TypeVar TVArg{} _) = error "Unexpected TVArg in formatter"
 formatType (UnionType partials) = join $ map formatPartialType $ splitUnionType partials
 
@@ -84,7 +86,7 @@ formatExpr (RawTupleApply _ (_, RawValue _ n) args) | operatorPrefix `isPrefixOf
     operatorName = drop (length operatorPrefix) n
 formatExpr (RawTupleApply _ (_, be) args) = printf "%s(%s)" (formatExpr be) (intercalate ", " $ map formatObjArr args)
 formatExpr (RawVarsApply _ be vars) = printf "%s[%s]" (formatExpr be) (intercalate ", " $ map (\(varN, varM) -> printf "%s%s" (formatExpr varN) (formatMeta varM)) vars)
-formatExpr (RawContextApply _ (_, be) ctxs) = printf "%s{%s}" (formatExpr be) (intercalate ", " $ map (\(ctxN, ctxM) -> ctxN ++ formatMeta ctxM) ctxs)
+formatExpr (RawContextApply _ (_, be) ctxs) = printf "%s{%s}" (formatExpr be) (intercalate ", " $ map (\(ctxN, ctxM) -> formatPartialKey ctxN ++ formatMeta ctxM) ctxs)
 formatExpr (RawParen e) = printf "(%s)" (formatExpr e)
 formatExpr (RawMethod base method) = printf "%s.%s" (formatExpr base) (formatExpr method)
 formatExpr (RawList _ l) = printf "[%s]" $ intercalate ", " $ map formatExpr l
@@ -153,7 +155,7 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
       RawExprStatement e -> formatExpr e
       RawAnnot annot | exprPath annot == mdAnnot -> printf "# %s" annotText'
         where
-          (Just (_, Just (RawCExpr _ (CStr annotText)))) = H.lookup mdAnnotText $ exprAppliedArgsMap annot
+          (Just (_, Just (RawCExpr _ (CStr annotText)))) = H.lookup (partialKey mdAnnotText) $ exprAppliedArgsMap annot
           annotText' = concatMap (\c -> if c == '\n' then "\n" ++ formatIndent (indent + 1) else pure c) annotText
       RawAnnot annot -> formatExpr annot
       RawApplyStatement (RawApply terms) -> "apply " ++ unwords (formatExpr term1 : map formatTerm termsRest)

@@ -1,4 +1,4 @@
---------------------------------------------------------------------
+-------------------------------------------------------------------
 -- |
 -- Module    :  Semantics.Types
 -- Copyright :  (c) Zach Kimberg 2020
@@ -38,8 +38,8 @@ import           Utils
 -- |The name is the basic type used for various kinds of names
 type Name = String
 
-type ArgName = Name
-type TypeVarName = Name
+type ArgName = PartialKey
+type TypeVarName = PartialKey
 type TypeName = Name
 type ClassName = Name
 type TypePropName = Name
@@ -68,6 +68,12 @@ data TypePredicate
   | PredRel Name -- a isa predicate. Represented by val : classOrModuleOrType
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 type TypePredicates = [TypePredicate]
+
+data PartialKey = PartialKey {
+  pkName :: Name,
+  pkVars :: S.HashSet PartialKey,
+  pkArgs :: S.HashSet PartialKey
+  } deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
 -- |
 -- A particle type describes a simple set of types.
@@ -156,7 +162,7 @@ instance Show PartialType where
       showName (PTypeName n)     = n
       showName (PRelativeName n) = "~" ++ n
       showName (PClassName n)    = "∀" ++ n
-      showArg (argName, argVal) = argName ++ "=" ++ show argVal
+      showArg (argName, argVal) = show argName ++ "=" ++ show argVal
       showTypeVars vars | H.null vars = ""
       showTypeVars vars = printf "[%s]" (intercalate ", " $ map showArg $ H.toList vars)
       showArgs args | H.null args = ""
@@ -166,6 +172,9 @@ instance Show PartialType where
       showPtArgMode = case ptArgMode of
         PtArgExact -> ""
         PtArgAny   -> ".."
+
+instance Show PartialKey where
+  show pk = show $ partialToType pk
 
 instance Show Type where
   show (TopType []) = "TopType"
@@ -313,6 +322,21 @@ joinUnionTypeByName = H.map (S.fromList . map typeToArgOption)
 singletonType :: PartialType -> Type
 singletonType partial = UnionType $ joinUnionType [partial]
 
+-- | Helper to create a 'PartialKey' for a value (no args, no vars)
+partialKey :: Name -> PartialKey
+partialKey n = PartialKey n S.empty S.empty
+
+partialToKey :: PartialType -> PartialKey
+partialToKey PartialType{ptName, ptVars, ptArgs} = PartialKey (fromPartialName ptName) (H.keysSet ptVars) (H.keysSet ptArgs)
+
+partialToType :: PartialKey -> PartialType
+partialToType PartialKey{pkName, pkVars, pkArgs} = (partialVal $ PTypeName pkName){ptVars = asArgs pkVars, ptArgs = asArgs pkArgs}
+  where
+    asArgs = fmap (const topType) . S.toMap
+
+partialToTypeSingleton :: PartialKey -> Type
+partialToTypeSingleton = singletonType . partialToType
+
 -- | Helper to create a 'PartialType' for a value (no args, no vars)
 partialVal :: PartialName -> PartialType
 partialVal n = PartialType n H.empty H.empty [] PtArgExact
@@ -362,8 +386,8 @@ expandClassPartial classGraph@(ClassGraph cg) PartialType{ptName, ptVars=classVa
           mapClassType (TopType ps) = expandType classGraph $ TopType ps
           mapClassType (TypeVar (TVVar t) _) = case H.lookup t classVars of
             Just v -> expandType classGraph $ intersectTypes classGraph v (H.lookupDefault topType t classVars)
-            Nothing -> error $ printf "Unknown var %s in expandPartial" t
-          mapClassType (TypeVar (TVArg t) _) = error $ printf "Arg %s found in expandPartial" t
+            Nothing -> error $ printf "Unknown var %s in expandPartial" (show t)
+          mapClassType (TypeVar (TVArg t) _) = error $ printf "Arg %s found in expandPartial" (show t)
           mapClassType (UnionType p) = UnionType $ joinUnionType $ map mapClassPartial $ splitUnionType p
           mapClassPartial tp@PartialType{ptVars} = tp{ptVars=fmap (substituteVarsWithVarEnv classVars) ptVars}
       r -> error $ printf "Unknown class %s in expandPartial. Found %s" (show className) (show r)
@@ -387,8 +411,8 @@ expandPartial classGraph@(ClassGraph cg) PartialType{ptName=className@PClassName
           mapClassType (TopType ps) = TopType ps
           mapClassType (TypeVar (TVVar t) _) = case H.lookup t classVars of
             Just v -> intersectTypes classGraph v (H.lookupDefault topType t classVars)
-            Nothing -> error $ printf "Unknown var %s in expandPartial" t
-          mapClassType (TypeVar (TVArg t) _) = error $ printf "Arg %s found in expandPartial" t
+            Nothing -> error $ printf "Unknown var %s in expandPartial" (show t)
+          mapClassType (TypeVar (TVArg t) _) = error $ printf "Arg %s found in expandPartial" (show t)
           mapClassType (UnionType p) = UnionType $ joinUnionType $ map mapClassPartial $ splitUnionType p
           mapClassPartial tp@PartialType{ptVars} = tp{ptVars=fmap (substituteVarsWithVarEnv classVars) ptVars}
       r -> error $ printf "Unknown class %s in expandPartial. Found %s" (show className) (show r)
@@ -734,7 +758,7 @@ substituteArgsWithArgEnv aenv (UnionType partials) = UnionType $ joinUnionType $
           where aenv' = H.union aenv ptArgs
 substituteArgsWithArgEnv aenv (TypeVar (TVArg v) TVInt) = case H.lookup v aenv of
   Just v' -> v'
-  Nothing -> error $ printf "Could not substitute unknown type arg %s" v
+  Nothing -> error $ printf "Could not substitute unknown type arg %s" (show v)
 substituteArgsWithArgEnv _ t = t
 
 substituteWithVarArgEnv :: TypeVarArgEnv -> Type -> Type
