@@ -773,7 +773,7 @@ updateTypeProp classGraph vaenv superType propName subType = case (superType, su
     (TypeVar v _, _) -> do
       let (vaenv', superType', subType') = updateTypeProp classGraph vaenv (H.lookupDefault topType v vaenv) propName subType
       (H.insert v superType' vaenv', superType, subType')
-    (TopType _, _) -> error $ printf "Not yet implemented updateTypeProp with super %s" (show superType)
+    (TopType _, _) -> updateTypeProp classGraph vaenv (expandType classGraph superType) propName subType
     (UnionType supPartials, _) -> do
       let supPartialList = splitUnionType supPartials
       let intersectedPartials sup@PartialType{ptVars=supVars} sub = case typeGetAux propName sup of

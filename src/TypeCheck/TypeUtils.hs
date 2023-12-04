@@ -155,7 +155,7 @@ arrowConstrainUbs env@FEnv{feUnionAllObjs} con (TopType []) dest@UnionType{} = d
       return (src', dest')
     _ -> return (topType, dest)
 arrowConstrainUbs _ _ (TopType []) dest = return (topType, dest)
-arrowConstrainUbs _ _ (TopType _) _ = undefined
+arrowConstrainUbs env@FEnv{feClassGraph} con src@TopType{} dest = arrowConstrainUbs env con (expandType feClassGraph src) dest
 arrowConstrainUbs env con src@(TypeVar v _) dest = do
   src' <- resolveTypeVar v con
   (_, cdest) <- arrowConstrainUbs env con (getMetaType src') dest
