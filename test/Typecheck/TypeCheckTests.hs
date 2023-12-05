@@ -72,7 +72,7 @@ propTypeChecks = property $ do
 
 typecheckTests :: TestTree
 typecheckTests = testGroup "TypeCheckTests" [
-    -- THG.testProperty "propExprEncodeDecode" (p propExprEncodeDecode) -- TODO: Re-enable and remove mWithType from encode
+    -- THG.testProperty "propExprEncodeDecode" (p propExprEncodeDecode) -- TODO: Debug
     THG.testProperty "propConstraint" (p propConstraint)
     , THG.testProperty "propConstraints" (p propConstraints)
     , THG.testProperty "propTypeChecks" (p propTypeChecks)

@@ -131,8 +131,8 @@ fromExpr est env1 (AliasExpr base alias) = do
   let env4 = addConstraints env3 [BoundedByKnown 6 (getExprMeta base') (TypeVar (TVArg $ exprPath alias) TVInt)]
   return (AliasExpr base' alias', env4)
 fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaAnnots, oaArr}) = do
-  (m', env2) <- fromMeta env1 BUpper est (mWithType topType m) $ printf "Tuple Meta %s(%s)" (show baseExpr) (show arg)
-  (baseM', env3) <- fromMeta env2 BUpper est (mWithType topType baseM) $ printf "Tuple BaseMeta %s(%s)" (show baseExpr) (show arg)
+  (m', env2) <- fromMeta env1 BUpper est m $ printf "Tuple Meta %s(%s)" (show baseExpr) (show arg)
+  (baseM', env3) <- fromMeta env2 BUpper est baseM $ printf "Tuple BaseMeta %s(%s)" (show baseExpr) (show arg)
   (baseExpr', env4) <- fromExpr est env3 baseExpr
   (oaObj', env5) <- case oaObj of
     Just (GuardExpr inExpr guardExpr) -> do
@@ -200,7 +200,7 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaAnnots, oa
   return (TupleApply m' (baseM', baseExpr') arg', env8)
 fromExpr est env1 (VarApply m baseExpr varName varVal) = do
   let baseName = printf "VarApply %s[%s = %s]" (show baseExpr) varName (show varVal) :: String
-  (m', env2) <- fromMeta env1 BUpper est (mWithType topType m) $ printf "%s Meta" baseName
+  (m', env2) <- fromMeta env1 BUpper est m $ printf "%s Meta" baseName
   (baseExpr', env3) <- fromExpr est env2 baseExpr
   (varVal', env4) <- fromMeta env3 BUpper est varVal $ printf "%s val" baseName
   let constraints = case est of
