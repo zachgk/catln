@@ -322,11 +322,11 @@ typeVal = singletonType . partialVal
 relTypeVal :: TypeName -> Type
 relTypeVal n = TopType [PredRel n]
 
-getSingleton :: Type -> PartialType
-getSingleton (UnionType leafs) = case splitUnionType leafs of
-  [p] -> p
-  ps  -> error $ printf "Can't getSingleton of non-singleton %s" (show ps)
-getSingleton e = error $ printf "Can't getSingleton from %s" (show e)
+maybeGetSingleton :: Type -> Maybe PartialType
+maybeGetSingleton (UnionType leafs) = case splitUnionType leafs of
+  [p] -> Just p
+  _   -> Nothing
+maybeGetSingleton _ = Nothing
 
 suffixLookup :: String -> [String] -> Maybe String
 suffixLookup s (x:xs)

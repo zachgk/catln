@@ -40,6 +40,7 @@ desGuardExpr (GuardExpr e g) = GuardExpr (desExpr e) (fmap desExpr g)
 
 -- | Updates the types based on the format as they are fixed for inputs (due to arrows this does not work for output expressions)
 desObjPropagateTypes :: DesExpr -> (Maybe PartialType, DesExpr)
+desObjPropagateTypes e | isJust (maybeGetSingleton $ getExprType e) = (maybeGetSingleton $ getExprType e, e)
 desObjPropagateTypes (CExpr m c) = (Just $ constantPartialType c, CExpr (mWithType (constantType c) m) c)
 desObjPropagateTypes (Value m n) = (Just t, Value (mWithType (singletonType t) m) n)
   where
