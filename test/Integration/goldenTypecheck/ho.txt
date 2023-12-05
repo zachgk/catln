@@ -431,6 +431,8 @@
     (
         (
             [ /Context ( Value value -> /main = Value /main ) ( Value io -> /Catln/IO ) -> TVArg io = Value io
+            , /test ( Value f -> ∀/Data/Primitive/Boolean ) ( Value this -> /T ) ->
+                ( ∀/Data/Primitive/Boolean | f ( x=/T ) ) = f ( Value x -> TVArg this = Value this )
             , /test ( Value f -> ∀/Data/Primitive/Boolean ) ( Value this -> /T ) -> ∀/Data/Primitive/Boolean
             , /T ( Value x -> /Data/Primitive/Integer ) -> /T ( x=/Data/Primitive/Integer )
             ]
@@ -440,8 +442,6 @@
             ]
         ,
             [ /Catln/#md
-                ( Value text -> /Data/String = CStr ":T.test(f(x -> T) -> Boolean) = f(x=this)" )
-            , /Catln/#md
                 ( Value text -> /Data/String = CStr "Tests higher order functions" )
             ]
         )
