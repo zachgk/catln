@@ -10,10 +10,7 @@
                 ( name=/Data/String
                 , contents=/Data/String
                 )
-            , /Catln/www ( Value html -> /Data/String ) -> ~CatlnResult
-                ( name=TopType
-                , contents=/Data/String
-                ) = CatlnResult
+            , /Catln/www ( Value html -> /Data/String ) = CatlnResult
                 ( Value name -> /Data/String = CStr "index.html" )
                 ( Value contents -> TVArg "html" = Value html )
             , /Catln/CatlnResult ( Value name -> /Data/String ) ( Value contents -> /Data/String ) -> /Catln/CatlnResult

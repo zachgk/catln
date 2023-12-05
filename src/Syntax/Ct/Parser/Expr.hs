@@ -90,7 +90,7 @@ pValue = do
         "todefine"  -> RawHoleExpr m HoleTodefine
         _           -> case usingTheExpr of
           Just _  -> RawTheExpr (RawValue m name)
-          Nothing -> RawValue m name
+          Nothing -> RawValue (mWithType (typeVal $ PRelativeName name) m) name
 
 pStringLiteral :: Parser PExpr
 pStringLiteral = do

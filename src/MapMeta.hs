@@ -30,7 +30,6 @@ data MetaLocation
 
 data MetaType
   = ExprMeta MetaLocation ExprMetaType
-  | ObjMeta
   | ArrMeta
   deriving (Eq, Ord, Show)
 

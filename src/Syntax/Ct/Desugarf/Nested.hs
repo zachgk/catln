@@ -48,7 +48,7 @@ scopeSubDeclFunNamesInPartialName prefix replaceNames (PRelativeName name) = PRe
 
 scopeSubDeclFunNamesInExpr :: TypeName -> S.HashSet TypeName -> PSExpr -> PSExpr
 scopeSubDeclFunNamesInExpr _ _ e@CExpr{} = e
-scopeSubDeclFunNamesInExpr prefix replaceNames (Value m name) = Value m $ scopeSubDeclFunNamesInS prefix replaceNames name
+scopeSubDeclFunNamesInExpr prefix replaceNames (Value m name) = Value (scopeSubDeclFunNamesInMeta prefix replaceNames m) $ scopeSubDeclFunNamesInS prefix replaceNames name
 scopeSubDeclFunNamesInExpr _ _ e@HoleExpr{} = e
 scopeSubDeclFunNamesInExpr prefix replaceNames (AliasExpr b a) = AliasExpr (scopeSubDeclFunNamesInExpr prefix replaceNames b) (scopeSubDeclFunNamesInExpr prefix replaceNames a)
 scopeSubDeclFunNamesInExpr prefix replaceNames (TupleApply m (bm, bExpr) arg) = TupleApply m (bm, bExpr') arg'
@@ -77,7 +77,7 @@ scopeSubDeclFunNames oa@ObjArr{oaObj=Just (GuardExpr objExpression _), oaAnnots,
     addPrefix n = prefix ++ "." ++ n
     scopeM = scopeSubDeclFunNamesInMeta prefix declNames
     decls' = map (\(PSemiDecl doa@ObjArr{oaObj=Just (GuardExpr obj guard), oaArr=(doaArr, m)}) -> PSemiDecl doa{
-                     oaObj=Just (GuardExpr (mapExprPath (\(pM, pN) -> Value pM (addPrefix pN)) obj) guard),
+                     oaObj=Just (GuardExpr (mapExprPath (\(pM, pN) -> Value (scopeSubDeclFunNamesInMeta prefix (S.singleton pN) pM) (addPrefix pN)) obj) guard),
                      oaArr = (fmap (\(GuardExpr e g) -> GuardExpr (scopeSubDeclFunNamesInExpr prefix declNames e) g) doaArr, scopeM m)
                      }) decls
     oaArr' = case oaArr of
