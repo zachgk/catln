@@ -79,6 +79,7 @@ pValue = do
   pos1 <- getSourcePos
   usingTheExpr <- optional $ string ":"
   name <- identifier <|> tidentifier <|> pAnnotIdentifier <|> tvar <|> pHole
+  spread <- optional $ string ".."
   pos2 <- getSourcePos
   let m = emptyMeta pos1 pos2
 
@@ -88,9 +89,11 @@ pValue = do
         ('_':_)     -> RawHoleExpr m $ HoleActive (Just name)
         "undefined" -> RawHoleExpr m HoleUndefined
         "todefine"  -> RawHoleExpr m HoleTodefine
-        _           -> case usingTheExpr of
-          Just _  -> RawTheExpr (RawValue m name)
-          Nothing -> RawValue (mWithType (typeVal $ PRelativeName name) m) name
+        _           -> case (usingTheExpr, spread) of
+          (Just{}, Nothing)  -> RawTheExpr (RawValue m name)
+          (Nothing, Just{}) -> RawSpread $ RawValue (mWithType (singletonType $ partialVal $ PRelativeName name) m) name
+          (Nothing, Nothing) -> RawValue (mWithType (typeVal $ PRelativeName name) m) name
+          (Just{}, Just{}) -> undefined
 
 pStringLiteral :: Parser PExpr
 pStringLiteral = do

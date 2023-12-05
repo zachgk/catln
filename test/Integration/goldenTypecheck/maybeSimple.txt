@@ -6,10 +6,7 @@
             , /Catln/ThenElse/fromBool ( Value v -> ∀/Data/Primitive/Boolean ) -> ∀/Catln/ThenElse
             , Value /Catln/Else -> /Catln/Else
             , Value /Catln/Then -> /Catln/Then
-            , /Catln/llvm ( Value c ) -> /Catln/CatlnResult
-                ( name=/Data/String
-                , contents=/Data/String
-                )
+            , /Catln/llvm ( Value c ) -> /Catln/CatlnResult..
             , /Catln/www ( Value html -> /Data/String ) = CatlnResult
                 ( Value name -> /Data/String = CStr "index.html" )
                 ( Value contents -> TVArg "html" = Value html )
@@ -19,17 +16,7 @@
                 )
             , Value /Catln/#example -> /Catln/#example
             , Value /Catln/#test -> /Catln/#test
-            , /Catln/#print
-                ( Value p -> /Catln/CatlnResult
-                    ( name=/Data/String
-                    , contents=/Data/String
-                    )
-                ) -> /Catln/#print
-                ( p=/Catln/CatlnResult
-                    ( name=/Data/String
-                    , contents=/Data/String
-                    )
-                )
+            , /Catln/#print ( Value p -> /Catln/CatlnResult.. ) -> /Catln/#print ( p=/Catln/CatlnResult.. )
             , /Catln/#assert ( Value test -> ∀/Data/Primitive/Boolean ) ( Value msg -> /Data/String ) -> /Catln/#assert
                 ( msg=/Data/String
                 , test=∀/Data/Primitive/Boolean
@@ -416,7 +403,8 @@
                 ( True
                 , ∀/Data/ConsList [ T=TopType ]
                 ,
-                    [ /Data/Cons [ T=TopType ]
+                    [ /Data/Cons
+                        [ T=TVVar "T" ]
                         ( head=TVVar "T"
                         , tail=∀/Data/ConsList
                             [ T=TVVar "T" ]

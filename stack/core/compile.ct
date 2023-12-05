@@ -61,7 +61,7 @@ module Catln
     # The [#assert] can also include a [msg] to be displayed for debugging purposes.
 
 
-  annot #print(p: CatlnResult)
+  annot #print(p: CatlnResult..)
     # The print annotation is used to display computed values inside webdocs.
       It can be used to avoid manually writing computed values into code, display temporary values, and visualizations.
 
@@ -96,7 +96,7 @@ module Catln
   www(html: String)= CatlnResult(name= "index.html", contents= html)
     # [www] is used to build web results.
 
-  llvm(c) -> CatlnResult
+  llvm(c) -> CatlnResult..
     # [llvm] runs the [LLVM Compiler](https://llvm.org/) to build the runnable argument [c] into a [CatlnResult] executable.
 
   class ThenElse = Then | Else

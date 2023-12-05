@@ -72,6 +72,7 @@ formatExpr (RawHoleExpr m (HoleActive (Just a))) = "_" ++ a ++ formatMeta m
 formatExpr (RawHoleExpr _ HoleUndefined) = "undefined"
 formatExpr (RawHoleExpr _ HoleTodefine) = "todefine"
 formatExpr (RawTheExpr t) = printf ":%s" (formatExpr t)
+formatExpr (RawSpread t) = printf "%s.." (formatExpr t)
 formatExpr (RawAliasExpr base alias) = printf "%s@%s" (formatExpr base) (formatExpr alias)
 formatExpr (RawTupleApply _ (_, RawValue _ n) args) | operatorPrefix `isPrefixOf` n = case args of
   [RawObjArr{ roaArr=(Just (Just (GuardExpr a _), _))}] -> operatorName ++ formatExpr a

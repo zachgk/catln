@@ -54,6 +54,7 @@ data RawExpr m
   | RawHoleExpr (Meta m) Hole
   | RawMacroValue (Meta m) TypeName
   | RawTheExpr (RawExpr m) -- ^ Written :TypeName and read as The TypeName
+  | RawSpread (RawExpr m) -- ^ Written TypeName.. and uses PtArgAny
   | RawAliasExpr (RawExpr m) (RawExpr m) -- ^ base aliasExpr
   | RawTupleApply (Meta m) (Meta m, RawExpr m) [RawObjArr RawExpr m]
   | RawVarsApply (Meta m) (RawExpr m) [(RawExpr m, Meta m)]
@@ -113,6 +114,7 @@ instance ExprClass RawExpr where
     RawHoleExpr m _       -> m
     RawMacroValue m _     -> m
     RawTheExpr e          -> getExprMeta e
+    RawSpread e           -> getExprMeta e
     RawAliasExpr b _      -> getExprMeta b
     RawTupleApply m _ _   -> m
     RawVarsApply m _ _    -> m

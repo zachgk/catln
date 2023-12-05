@@ -86,6 +86,10 @@ semiDesExpr _ _ RawMacroValue{} = error "Not yet implemented"
 semiDesExpr _ _ (RawTheExpr t) = Value (emptyMetaM "the" tM) tN
   where
     (tM, tN) = desugarTheExpr t
+semiDesExpr sdm obj (RawSpread e) = Value m' n
+  where
+    Value m n = semiDesExpr sdm obj e
+    m' = mWithType (singletonType (fromJust $ maybeGetSingleton $ getMetaType m){ptArgMode=PtArgAny}) m
 semiDesExpr sdm obj (RawAliasExpr base alias) = AliasExpr (semiDesExpr sdm obj base) (semiDesExpr sdm obj alias)
 semiDesExpr sdm obj (RawTupleApply _ (_, RawValue _ "/operator::") [RawObjArr{roaArr=(Just (Just (GuardExpr e _), _))}, RawObjArr{roaArr=(Just (Just (GuardExpr tp _), _))}]) = semiDesExpr sdm obj (rawExprWithType (exprToType tp) e)
 semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm'', be'') arg'') -> TupleApply m'' (bm'', be'') arg'') $ foldl aux (bm, be') (zip [0..] args)

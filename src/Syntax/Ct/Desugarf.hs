@@ -238,7 +238,7 @@ desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree state
   RawModule _ path -> fst <$> desInheritingSubstatements statementEnv path subStatements
 
 finalPasses :: DesPrgmGraphData -> GraphNodes DesPrgm String -> GraphNodes DesPrgm String
-finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm1, prgmName, imports) = (prgm4, prgmName, imports)
+finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm1, prgmName, imports) = (prgm3, prgmName, imports)
   where
     -- Build fullPrgm with recursive imports
     vertex = fromJust $ vertexFromKey prgmName
@@ -251,10 +251,6 @@ finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm1, prgmName, impo
 
     -- Run resolveRelativeNames pass
     prgm3 = resolveRelativeNames fullPrgm2 prgm2
-    fullPrgm3 = resolveRelativeNames fullPrgm2 fullPrgm2
-
-    -- Run expandDataReferences pass
-    prgm4 = expandDataReferences fullPrgm3 prgm3
 
 
 desPrgm :: PPrgm -> CRes DesPrgm

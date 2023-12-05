@@ -15,17 +15,15 @@
 
 module Syntax.Ct.Desugarf.Passes where
 
-import qualified Data.HashMap.Strict     as H
-
 import           Data.Graph
 import           Data.List               (nub)
 import           MapMeta
 import           Semantics
-import           Semantics.Prgm
+import           Semantics.Prgm          (Meta (Meta), getRecursiveObjs)
 import           Semantics.Types
 import           Syntax.Ct.Parser.Syntax
 import           Text.Printf
-import           Utils
+import           Utils                   (graphToNodes)
 
 -- Removes objects that match classes
 -- When a class is used in the RHS of a multiTypeDef, it will create an object temporarily
@@ -97,27 +95,3 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, classGraph
                   (False, _, _) -> PRelativeName name
                   (True, foundTypeNames, foundClassNames) -> error $ printf "Could not resolve required name: %s \n\t Found possible typeNames: %s \n\t Found possible classNames: %s" name (show foundTypeNames) (show foundClassNames)
     resolveName _ name = name
-
-expandDataReferences :: DesPrgm -> DesPrgm -> DesPrgm
-expandDataReferences (fullPrgmObjMap, _, _) (objMap, classGraph@(ClassGraph cg), annots) = mapMetaPrgm aux (objMap, classGraph', annots)
-  where
-    classGraph' = ClassGraph $ graphFromEdges $ mapFst3 mapCGNode $ graphToNodes cg
-    mapCGNode (CGClass (s, clss, ts, doc)) = CGClass (s, clss, fmap mapType ts, doc)
-    mapCGNode CGType = CGType
-    objExpansions = H.fromList $ concatMap (\oa@ObjArr{oaBasis} -> ([(oaObjPath oa, oa) | oaBasis == TypeObj])) fullPrgmObjMap
-    aux metaType inM@(Meta t p md) = case metaType of
-      ExprMeta _ _ -> inM
-      ArrMeta      -> Meta (mapType t) p md
-
-    mapType (TopType ps) = TopType ps
-    mapType tp@(TypeVar TVVar{} _) = tp
-    mapType (TypeVar TVArg{} _) = error "Invalid arg type"
-    mapType (UnionType partials) = unionAllTypes classGraph $ map mapPartial $ splitUnionType partials
-
-    mapPartial PartialType{ptName=PTypeName name} = case suffixLookup name (H.keys objExpansions) of
-      Just fname -> case H.lookup fname objExpansions of
-        Just obj -> getMetaType $ getExprMeta $ oaObjExpr obj
-        Nothing  -> typeVal $ PTypeName fname
-      Nothing -> typeVal $ PTypeName name
-    mapPartial partial@PartialType{ptName=PClassName{}} = singletonType partial
-    mapPartial partial@PartialType{ptName=PRelativeName{}} = singletonType partial

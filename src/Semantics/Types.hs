@@ -151,7 +151,7 @@ type TypeVarArgEnv = H.HashMap TypeVarAux Type
 type TypeIOVarArgEnv = H.HashMap TypeVarAux (Type, Type)
 
 instance Show PartialType where
-  show (PartialType ptName ptVars ptArgs ptPreds _) = concat [showName ptName, showTypeVars ptVars, showArgs ptArgs, showPreds ptPreds]
+  show (PartialType ptName ptVars ptArgs ptPreds ptArgMode) = concat [showName ptName, showTypeVars ptVars, showArgs ptArgs, showPreds ptPreds, showPtArgMode]
     where
       showName (PTypeName n)     = n
       showName (PRelativeName n) = "~" ++ n
@@ -163,6 +163,9 @@ instance Show PartialType where
       showArgs args = printf "(%s)" (intercalate ", " $ map showArg $ H.toList args)
       showPreds preds | null preds = ""
       showPreds preds = printf "| %s" (intercalate ", " $ map show preds)
+      showPtArgMode = case ptArgMode of
+        PtArgExact -> ""
+        PtArgAny   -> ".."
 
 instance Show Type where
   show (TopType []) = "TopType"
@@ -404,7 +407,7 @@ isSubPredicateOfWithEnv _ _ _ _ = undefined
 -- | A private helper for 'isSubPartialOfWithEnv' that checks while ignore class expansions
 isSubPartialOfWithEnvBase :: ClassGraph -> TypeVarArgEnv -> PartialType -> PartialType -> Bool
 isSubPartialOfWithEnvBase _ _ PartialType{ptName=subName} PartialType{ptName=superName} | not $ isSubPartialName subName superName = False
-isSubPartialOfWithEnvBase _ _ PartialType{ptArgs=subArgs, ptArgMode=subArgMode} PartialType{ptArgs=superArgs} | subArgMode == PtArgExact && H.keysSet subArgs /= H.keysSet superArgs = False
+isSubPartialOfWithEnvBase _ _ PartialType{ptArgs=subArgs, ptArgMode=subArgMode} PartialType{ptArgs=superArgs, ptArgMode=superArgMode} | subArgMode == PtArgExact && superArgMode == PtArgExact && H.keysSet subArgs /= H.keysSet superArgs = False
 isSubPartialOfWithEnvBase _ _ PartialType{ptArgs=subArgs} PartialType{ptArgs=superArgs, ptArgMode=superArgMode} | superArgMode == PtArgExact && not (H.keysSet subArgs `isSubsetOf` H.keysSet superArgs) = False
 isSubPartialOfWithEnvBase classGraph vaenv sub@PartialType{ptVars=subVars, ptArgs=subArgs, ptPreds=subPreds} super@PartialType{ptVars=superVars, ptArgs=superArgs, ptPreds=superPreds} = hasAll subArgs superArgs && hasAllPreds && hasAll subVars superVars
   where
