@@ -190,7 +190,7 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaAnnots, oa
                      AddArg 24 (baseM', inExprSingleton obj) m',
                      PropEq 25 (m', TVArg $ inExprSingleton obj) arrM'
                     ]
-        _ -> error $ printf "Invalid fromExpr in %s mode for %s" (show est) (show arg)
+        _ -> error $ printf "Invalid fromExpr in %s mode for %s (obj %s and arr %s)" (show est) (show arg) (show oaObj) (show oaArr)
   let env8 = addConstraints env7 constraints
   let arg' = arg{
         oaObj=oaObj',

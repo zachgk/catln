@@ -107,24 +107,24 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm''
           Nothing        -> Just (Nothing, vM)
     aux (m, e) (argIndex, rarg) = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) arg'')
       where
-        [arg@ObjArr{oaObj=argObj, oaAnnots=argAnnots, oaArr=argArr}] = desObjArr rarg
+        [arg] = desObjArr rarg
 
         indexAnnots = [exprVal argStartAnnot | argIndex == 0] ++ [exprVal argEndAnnot | argIndex == length args - 1]
 
-        -- SemiDes all sub-expressions
-        arg' = arg{
-          oaObj=fmap semiDesGuardExpr argObj,
-          oaAnnots=indexAnnots ++ fmap (semiDesExpr sdm obj) argAnnots,
-          oaArr=first (fmap semiDesGuardExpr) argArr
-          }
-
         -- Currently uses oaObj as "first and only expr"
         -- This disambiguates it between whether the only expression is an obj or an arr
-        arg'' = case (sdm, arg') of
-          (SDOutput, ObjArr{oaObj, oaArr=(Nothing, _)}) -> arg'{oaObj=Nothing, oaArr=(,emptyMetaE "arrM" $ rgeExpr $ fromJust oaObj) oaObj}
-          (_, _) -> arg'
+        arg' = case (sdm, arg) of
+          (SDOutput, ObjArr{oaObj, oaArr=(Nothing, _)}) -> arg{oaObj=Nothing, oaArr=(,emptyMetaE "arrM" $ rgeExpr $ fromJust oaObj) oaObj}
+          (_, _) -> arg
 
-        semiDesGuardExpr (GuardExpr ge gg) = GuardExpr (semiDesExpr sdm obj ge) (fmap (semiDesExpr sdm obj) gg)
+        -- SemiDes all sub-expressions
+        arg'' = arg'{
+          oaObj=fmap (semiDesGuardExpr SDInput) (oaObj arg'),
+          oaAnnots=indexAnnots ++ fmap (semiDesExpr sdm obj) (oaAnnots arg'),
+          oaArr=first (fmap (semiDesGuardExpr sdm)) (oaArr arg')
+          }
+
+        semiDesGuardExpr sdm' (GuardExpr ge gg) = GuardExpr (semiDesExpr sdm' obj ge) (fmap (semiDesExpr SDOutput obj) gg)
 semiDesExpr sdm obj (RawVarsApply m be vs) = foldr aux be' vs
   where
     be' = semiDesExpr sdm obj be
