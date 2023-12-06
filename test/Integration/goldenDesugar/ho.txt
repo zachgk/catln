@@ -416,17 +416,23 @@
                 ( f ( Value x -> /T ) -> ∀/Data/Primitive/Boolean ) ( Value this -> /T ) -> ∀/Data/Primitive/Boolean
             , /test
                 ( f ( Value x -> /T ) -> ∀/Data/Primitive/Boolean ) ( Value this -> /T ) = f ( Value x= Value this )
+            , Value /t= test
+                ( f ( Value x ) = /operator== ( Value l= Value x )
+                    ( Value r= CInt 0 )
+                )
+                ( Value this= T
+                    ( CInt 0 )
+                )
             , /Context ( Value value= Value /main ) ( Value io -> /Catln/IO ) = Value io
             ]
         ,
             [ CGType
             , CGType
+            , CGType
             ]
         ,
             [ /Catln/#md
                 ( Value text= CStr "Tests higher order functions" )
-            , /Catln/#md
-                ( Value text= CStr "t = T(0).test(f(x)= x == 0)" )
             ]
         )
     , "test/Integration/code/ho.ct"

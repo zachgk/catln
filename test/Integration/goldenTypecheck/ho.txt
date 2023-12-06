@@ -431,6 +431,18 @@
     (
         (
             [ /Context ( Value value -> /main = Value /main ) ( Value io -> /Catln/IO ) -> TVArg io = Value io
+            , Value /t ->
+                ( ∀/Data/Primitive/Boolean | /test
+                    ( this=TopType
+                    , f ( x=TopType ) =TopType
+                    )
+                ) = test
+                ( Value f -> ∀/Data/Primitive/Boolean = /operator== ( Value l -> TVArg x = Value x )
+                    ( Value r -> /Data/Primitive/Integer = CInt 0 )
+                )
+                ( Value this -> /T = T
+                    ( Value x -> /Data/Primitive/Integer = CInt 0 )
+                )
             , /test ( Value f -> ∀/Data/Primitive/Boolean ) ( Value this -> /T ) ->
                 ( ∀/Data/Primitive/Boolean | f ( x=/T ) ) = f ( Value x -> TVArg this = Value this )
             , /test ( Value f -> ∀/Data/Primitive/Boolean ) ( Value this -> /T ) -> ∀/Data/Primitive/Boolean
@@ -439,11 +451,10 @@
         ,
             [ CGType
             , CGType
+            , CGType
             ]
         ,
             [ /Catln/#md
-                ( Value text -> /Data/String = CStr "t = T(0).test(f(x)= x == 0)" )
-            , /Catln/#md
                 ( Value text -> /Data/String = CStr "Tests higher order functions" )
             ]
         )

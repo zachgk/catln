@@ -95,8 +95,8 @@ addUnionObjToEnv env1@FEnv{feClassGraph} vobjMap tobjMap = do
         PowersetTo 2 unionAllObjs' unionAllObjsPs'
         ]
   let env5 = (\env -> env{feUnionAllObjs=unionAllObjsPs'}) env4
-  let env6 = addConstraints env5 constraints
-  saveConstraints env6 Nothing H.empty
+  let env6 = addConstraints (startConstrainBlock env5) constraints
+  endConstraintBlock env6 Nothing H.empty
 
 
 inferArgFromPartial :: FEnv -> PartialType -> Type
@@ -134,7 +134,7 @@ mkReachesEnv env@FEnv{feClassGraph, feUnionAllObjs, feVTypeGraph, feTTypeGraph} 
 
   -- Env (typeGraph) from args
   -- TODO Remove the call to head below to support nonLinear args
-  let argVaenv = maybe H.empty (fmap head . snd . splitVarArgEnv . exprVarArgs . oaObjExpr) maybeConOa
+  let argVaenv = H.unions $ map (fmap head . snd . splitVarArgEnv . exprVarArgs . oaObjExpr) maybeConOa
   argVaenv' <- forM argVaenv $ \(inExpr, outM) -> do
     inExpr' <- showExpr env inExpr
     outM' <- showM env outM

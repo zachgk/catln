@@ -27,7 +27,7 @@ import           CRes
 import           Data.Aeson          (ToJSON, toJSON)
 import           Data.Bifunctor      (bimap)
 import           Data.Maybe          (catMaybes, fromMaybe, listToMaybe,
-                                      mapMaybe)
+                                      mapMaybe, maybeToList)
 import           Data.String.Builder (literal)
 import           Semantics
 import           Semantics.Prgm
@@ -59,7 +59,7 @@ data SchemeActReq = SchemeAct | SchemeReq
 type Pnt = Int
 
 data FEnv = FEnv { fePnts               :: IM.IntMap Scheme
-                 , feConsDats           :: [VConstraintDat]
+                 , feConsDats           :: [[VConstraint]]
                  , feCons               :: [VConstraint]
                  , feUnionAllObjs       :: VarMeta -- union of all TypeObj for argument inference
                  , feVTypeGraph         :: VTypeGraph
@@ -89,7 +89,7 @@ data ConstraintDat p
   | UnionOf Int p [p] -- ^ Both Actual and Req
   deriving (Eq, Ord, Hashable, Generic, ToJSON)
 
-data Constraint p = Constraint (Maybe VObjArr) (CVarArgEnv p) (ConstraintDat p)
+data Constraint p = Constraint [VObjArr] (CVarArgEnv p) (ConstraintDat p)
   deriving (Eq, Ord, Hashable, Generic, ToJSON)
 type VConstraintDat = ConstraintDat VarMeta
 type VConstraint = Constraint VarMeta
@@ -269,10 +269,19 @@ getPnt :: VarMeta -> Maybe Pnt
 getPnt (Meta _ _ (VarMetaDat p _)) = p
 
 addConstraints :: FEnv -> [VConstraintDat] -> FEnv
-addConstraints env@FEnv{feConsDats} newCons = env {feConsDats = newCons ++ feConsDats}
+addConstraints env@FEnv{feConsDats=curCons:parentCons} newCons = env {feConsDats = (map (Constraint [] H.empty) newCons ++ curCons):parentCons}
+addConstraints FEnv{feConsDats=[]} _ = error $ printf "No constraint stack found in addConstraints"
 
-saveConstraints :: FEnv -> Maybe VObjArr -> CVarArgEnv VarMeta -> FEnv
-saveConstraints env@FEnv{feConsDats, feCons} oa vaenv = env{feConsDats=[], feCons = map (Constraint oa vaenv) feConsDats ++ feCons}
+-- | Starts a block of constraints, adding it to the block stack, where each block is associated with an ObjArr and its varargs
+-- | In higher order functions, it is associated with both the main ObjArr and the higher order definition
+startConstrainBlock :: FEnv -> FEnv
+startConstrainBlock env@FEnv{feConsDats} = env{feConsDats=[]:feConsDats}
+
+-- | Ends  the constraint block, popping it off the stack and adding its contents to either the block underneath or to the list of finished constraints
+endConstraintBlock :: FEnv -> Maybe VObjArr -> CVarArgEnv VarMeta -> FEnv
+endConstraintBlock env@FEnv{feConsDats=[newCons], feCons} oa vaenv = env{feConsDats=[], feCons = map (\(Constraint oas vaenvs d) -> Constraint (maybeToList oa ++ oas) (H.union vaenv vaenvs) d) newCons ++ feCons}
+endConstraintBlock env@FEnv{feConsDats=d1:d2:ds} oa vaenv = env{feConsDats=(map (\(Constraint oas vaenvs d) -> Constraint (maybeToList oa ++ oas) (H.union vaenv vaenvs) d) d1 ++ d2):ds}
+endConstraintBlock FEnv{feConsDats=[]} _ _ = error $ printf "No constraint stack found in endConstraintBlock"
 
 fAddVTypeGraph :: FEnv -> TypeName -> VObjArr -> FEnv
 fAddVTypeGraph env@FEnv{feVTypeGraph} k v = env {feVTypeGraph = H.insertWith (++) k [v] feVTypeGraph}

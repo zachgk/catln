@@ -24,6 +24,7 @@ import qualified Data.IntMap.Lazy    as IM
 import           Prelude             hiding (unzip)
 
 import           Data.Bifunctor      (Bifunctor (first))
+import           Data.Maybe
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
@@ -142,7 +143,7 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaAnnots, oa
       -- For outputs, should instead verify in decode that it refined (is subtype)
       return (Just $ GuardExpr inExpr' guardExpr', env5b)
     Nothing -> return (Nothing, env4)
-  (oaAnnots', env6) <- mapMWithFEnv env5 (fromExpr est) oaAnnots
+  (oaAnnots', env6) <- mapMWithFEnv (startConstrainBlock env5) (fromExpr est) oaAnnots
   (oaArr', env7) <- case oaArr of
     (arrGuardExpr, arrM) -> do
       (arrM', env6a) <- fromMeta env6 BUpper est arrM $ printf "Tuple arrM %s(%s)" (show baseExpr) (show arg)
@@ -197,7 +198,7 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaAnnots, oa
         oaArr=oaArr',
         oaAnnots=oaAnnots'
         }
-  return (TupleApply m' (baseM', baseExpr') arg', env8)
+  return (TupleApply m' (baseM', baseExpr') arg', endConstraintBlock env8 (if isJust oaObj' then Just arg' else Nothing) (maybe H.empty (fmap (first getExprMeta . head) . exprVarArgs . rgeExpr) oaObj'))
 fromExpr est env1 (VarApply m baseExpr varName varVal) = do
   let baseName = printf "VarApply %s[%s = %s]" (show baseExpr) (show varName) (show varVal) :: String
   (m', env2) <- fromMeta env1 BUpper est m $ printf "%s Meta" baseName
@@ -233,7 +234,7 @@ fromVaenvItem est env1 (inE, outM) = do
 fromObjectMap :: FEnv -> PObjArr -> TypeCheckResult (VObjArr, FEnv)
 fromObjectMap env1 oa@ObjArr{oaBasis, oaAnnots, oaObj=Just (GuardExpr obj g), oaArr=(maybeArrE, arrM)} = do
   let inEst = EncodeIn
-  (obj', env2) <- fromExpr inEst env1 obj
+  (obj', env2) <- fromExpr inEst (startConstrainBlock env1) obj
 
   let est = EncodeOut (Just obj')
   (oaAnnots', env3) <- mapMWithFEnv env2 (fromExpr est) oaAnnots
@@ -248,15 +249,17 @@ fromObjectMap env1 oa@ObjArr{oaBasis, oaAnnots, oaObj=Just (GuardExpr obj g), oa
   let oa' = oa{oaObj=Just (GuardExpr obj' g'), oaArr=oaArr', oaAnnots=oaAnnots'}
   let env7 = fAddVTypeGraph env6 (oaObjPath oa) oa'
   let env8 = addConstraints env7 [EqPoints 34 (getExprMeta obj') arrM' | oaBasis == TypeObj]
-  let env9 = saveConstraints env8 (Just oa') (first getExprMeta . head <$> exprVarArgs obj')
+  let env9 = endConstraintBlock env8 (Just oa') (first getExprMeta . head <$> exprVarArgs obj')
   return (oa', env9)
 fromObjectMap _ oa = error $ printf "Invalid oa in fromObjectMap %s" (show oa)
 
 fromPrgm :: FEnv -> PPrgm -> TypeCheckResult (VPrgm, FEnv)
 fromPrgm env1 (objMap, classGraph, annots) = do
   (objMap', env2) <- mapMWithFEnv env1 fromObjectMap objMap
-  (annots', env3) <- mapMWithFEnv env2 (fromExpr (EncodeOut Nothing)) annots
-  let env4 = saveConstraints env3 Nothing H.empty
+
+  (annots', env3) <- mapMWithFEnv (startConstrainBlock env2) (fromExpr (EncodeOut Nothing)) annots
+  let env4 = endConstraintBlock env3 Nothing H.empty
+
   return ((objMap', classGraph, annots'), env4)
 
 addTypeGraphArrow :: FEnv -> TObjArr -> TypeCheckResult ((), FEnv)

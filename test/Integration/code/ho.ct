@@ -5,7 +5,7 @@ data T(x: Integer)
 :T.test(f(x -> T) -> Boolean) -> Boolean
 :T.test(f(x -> T) -> Boolean) = f(x=this)
 
-# t = T(0).test(f(x)= x == 0)
+t = T(0).test(f(x)= x == 0)
 
 main{io: IO} =
   # #assert(test= showInt)
