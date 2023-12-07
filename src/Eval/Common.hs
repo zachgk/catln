@@ -164,9 +164,8 @@ getValType NoVal = error "getValType of NoVal"
 
 --- ResArrowTree
 data MacroData = MacroData {
-                               mdTbEnv      :: TBEnv
-                             , mdObj        :: EObjArr
-                             , mdObjSrcType :: PartialType
+                               mdTbEnv  :: TBEnv
+                             , mdObjSrc :: [ObjSrc]
                              }
 newtype MacroFunction = MacroFunction (TExpr () -> MacroData -> CRes (TExpr ()))
 type ResBuildEnvFunction = TCallTree
@@ -311,8 +310,6 @@ instance Show (Codegen a) where
 
 
 type ObjSrc = (PartialType, EObjArr)
-macroData :: TBEnv -> ObjSrc -> MacroData
-macroData tbEnv (objSrcType, obj) = MacroData tbEnv obj objSrcType
 
 resArrowDestType :: ClassGraph -> PartialType -> TCallTree -> Type
 resArrowDestType classGraph src (TCObjArr oa) = arrowDestType False classGraph src oa

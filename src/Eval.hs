@@ -12,7 +12,6 @@
 -- for the program.
 --------------------------------------------------------------------
 {-# LANGUAGE NamedFieldPuns #-}
-{-# OPTIONS_GHC -Wno-deferred-type-errors #-}
 
 module Eval where
 
@@ -183,7 +182,7 @@ evalAnnots prgmName prgmGraphData = do
   forM annots $ \annot -> do
     let emptyType = partialVal (PTypeName "EmptyObj")
     let emptyObj = ObjArr (Just (GuardExpr (Value (Meta (singletonType emptyType) Nothing emptyMetaDat) "EmptyObj") Nothing)) FunctionObj Nothing [] (Nothing, emptyMetaN)
-    tree <- toTExpr evTbEnv (emptyType, emptyObj) annot
+    tree <- toTExpr evTbEnv [(emptyType, emptyObj)] annot
     val <- fst <$> evalExpr env tree
     return (annot, val)
 

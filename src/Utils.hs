@@ -9,7 +9,6 @@
 --
 -- This module contains minor utility functions.
 --------------------------------------------------------------------
-{-# OPTIONS_GHC -Wno-deferred-type-errors #-}
 
 module Utils where
 

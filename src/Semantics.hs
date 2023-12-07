@@ -97,6 +97,12 @@ exprVarArgsWithSrc classGraph (TupleApply _ (_, be) arg) src = H.union (exprVarA
     mergeMaps [] = H.empty
     mergeMaps (x:xs) = foldr (H.intersectionWith (\(m1s, t1) (m2s, t2) -> (m1s ++ m2s, unionTypes classGraph t1 t2))) x xs
 
+exprVarArgsWithSrcs :: (MetaDat m, Show m) => ClassGraph -> [(Expr m, PartialType)] -> ArgMetaMapWithSrc m
+exprVarArgsWithSrcs classGraph os = H.unions (map (uncurry (exprVarArgsWithSrc classGraph)) os)
+
+exprVarArgsWithObjSrcs :: (MetaDat m, Show m) => ClassGraph -> [(PartialType, ObjArr Expr m)] -> ArgMetaMapWithSrc m
+exprVarArgsWithObjSrcs classGraph os = exprVarArgsWithSrcs classGraph $ map (\(src, obj) -> (oaObjExpr obj, src)) os
+
 -- fullDest means to use the greatest possible type (after implicit).
 -- Otherwise, it uses the minimal type that *must* be reached
 arrowDestType :: (Show m, MetaDat m) => Bool -> ClassGraph -> PartialType -> ObjArr Expr m -> Type
@@ -124,6 +130,9 @@ isSubtypePartialOfWithObjSrc classGraph os obj sub = isSubtypeOfWithObjSrc class
 
 isSubtypeOfWithObjSrc :: (Show m, MetaDat m) => ClassGraph -> PartialType -> ObjArr Expr m -> Type -> Type -> Bool
 isSubtypeOfWithObjSrc classGraph srcType obj = isSubtypeOfWithEnv classGraph (snd <$> exprVarArgsWithSrc classGraph (oaObjExpr obj) srcType)
+
+isSubtypeOfWithObjSrcs :: (Show m, MetaDat m) => ClassGraph -> [(PartialType, ObjArr Expr m)] -> Type -> Type -> Bool
+isSubtypeOfWithObjSrcs classGraph objSrcs = isSubtypeOfWithEnv classGraph (snd <$> exprVarArgsWithObjSrcs classGraph objSrcs)
 
 isSubtypePartialOfWithMetaEnv :: ClassGraph -> MetaVarArgEnv m -> PartialType -> Type -> Bool
 isSubtypePartialOfWithMetaEnv classGraph vaenv sub = isSubtypeOfWithEnv classGraph (metaToTypeEnv vaenv) (singletonType sub)

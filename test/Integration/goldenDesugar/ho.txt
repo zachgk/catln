@@ -430,18 +430,10 @@
             , /tst
                 ( Value d= T ( Value x ) )
                 ( f ( Value y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ) = f ( Value y= Value x )
-            , Value /res= tst
-                ( Value d= T
-                    ( CInt 0 )
-                )
-                ( f ( Value y ) = /operator== ( Value l= Value y )
-                    ( Value r= CInt 0 )
-                )
             , /Context ( Value value= Value /main ) ( Value io -> /Catln/IO ) = Value io
             ]
         ,
             [ CGType
-            , CGType
             , CGType
             , CGType
             ]

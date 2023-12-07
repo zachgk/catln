@@ -5,9 +5,7 @@ data T(x: Integer)
 tst(d=T(x), f(y -> Integer) -> Boolean) -> Boolean
 tst(d=T(x), f(y -> Integer) -> Boolean) = f(y=x)
 
-res = tst(d=T(0), f(y)= y == 0)
-
 main{io: IO} =
-  # #assert(test= res)
+  # #assert(test= tst(d=T(0), f(y)= y == 0))
   io
 
