@@ -74,7 +74,7 @@ desObjPropagateTypes (VarApply m be varName varVal) = (Just basePartial', VarApp
     m' = mWithType (singletonType basePartial') m
 
 data SemiDesMode
-  = SDInput -- Used for parsing input expressions
+  = SDInput Bool -- Used for parsing input expressions and indicates it is in a method
   | SDOutput -- Used for parsing input expressions
   | SDType -- Used for parsing type expressions
 
@@ -83,7 +83,8 @@ semiDesExpr _ _ (RawCExpr m c) = CExpr m c
 semiDesExpr _ _ (RawValue m n) = Value m n
 semiDesExpr _ _ (RawHoleExpr m h) = HoleExpr m h
 semiDesExpr _ _ RawMacroValue{} = error "Not yet implemented"
-semiDesExpr _ _ (RawTheExpr t) = Value (emptyMetaM "the" tM) tN
+semiDesExpr sdm@(SDInput True) obj (RawTheExpr t) = semiDesExpr sdm obj t
+semiDesExpr SDInput{} _ (RawTheExpr t) = Value (emptyMetaM "the" tM) tN
   where
     (tM, tN) = desugarTheExpr t
 semiDesExpr sdm obj (RawSpread e) = Value m' n
@@ -118,8 +119,11 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm''
           (_, _) -> arg
 
         -- SemiDes all sub-expressions
+        objSdm = case sdm of
+          SDInput{} -> sdm
+          _         -> SDInput False
         arg'' = arg'{
-          oaObj=fmap (semiDesGuardExpr SDInput) (oaObj arg'),
+          oaObj=fmap (semiDesGuardExpr objSdm) (oaObj arg'),
           oaAnnots=indexAnnots ++ fmap (semiDesExpr sdm obj) (oaAnnots arg'),
           oaArr=first (fmap (semiDesGuardExpr sdm)) (oaArr arg')
           }
@@ -135,8 +139,16 @@ semiDesExpr sdm obj (RawVarsApply m be vs) = foldr aux be' vs
 semiDesExpr sdm obj@Just{} (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawArgs (RawValue emptyMetaN "/Context") ((Just $ partialKey "value", be) : map (\(ctxName, ctxM) -> (Nothing, RawValue ctxM (pkName ctxName))) ctxs)
 semiDesExpr sdm obj@Nothing (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawIArgs (RawValue emptyMetaN "/Context") ((partialKey "value", IArgE be) : map (second IArgM) ctxs)
 semiDesExpr sdm obj (RawParen e) = semiDesExpr sdm obj e
-semiDesExpr sdm obj@Nothing (RawMethod (RawTheExpr (RawValue m n)) method) = semiDesExpr sdm obj (method `applyRawIArgs` [(partialKey "this", IArgM (Meta (typeVal $ PRelativeName n) (getMetaPos m) emptyMetaDat))]) -- Parse type methods like :Integer.toString, Only for input expressions
-semiDesExpr sdm obj (RawMethod base method) = semiDesExpr sdm obj $ applyRawArgs method [(Just $ partialKey "this", base)]
+semiDesExpr sdm obj@Nothing (RawMethod (RawTheExpr n) method) = semiDesExpr sdm' obj (method `applyRawIArgs` [(partialKey "this", IArgM (Meta (exprToType n) (getMetaPos $ getExprMeta n) emptyMetaDat))]) -- Parse type methods like :Integer.toString, Only for input expressions
+  where
+    sdm' = case sdm of
+      SDInput _ -> SDInput True
+      _         -> sdm
+semiDesExpr sdm obj (RawMethod base method) = semiDesExpr sdm' obj $ applyRawArgs method [(Just $ partialKey "this", base)]
+  where
+    sdm' = case sdm of
+      SDInput _ -> SDInput True
+      _         -> sdm
 semiDesExpr sdm obj (RawList m []) = semiDesExpr sdm obj (RawValue m "/Data/Nil")
 semiDesExpr sdm obj (RawList m (l:ls)) = semiDesExpr sdm obj (RawValue m "/Data/Cons" `applyRawArgs` [(Just $ partialKey "head", l), (Just $ partialKey "tail", RawList m ls)])
 semiDesExpr _ _ e = error $ printf "Not yet implemented semiDesExpr for %s" (show e)

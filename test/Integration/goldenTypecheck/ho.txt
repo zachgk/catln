@@ -431,26 +431,15 @@
     (
         (
             [ /Context ( Value value -> /main = Value /main ) ( Value io -> /Catln/IO ) -> TVArg io = Value io
-            , Value /t ->
-                ( ∀/Data/Primitive/Boolean | /test
-                    ( this=TopType
-                    , f ( x=TopType ) =TopType
-                    )
-                ) = test
-                ( Value f -> ∀/Data/Primitive/Boolean = /operator== ( Value l -> TVArg x = Value x )
-                    ( Value r -> /Data/Primitive/Integer = CInt 0 )
-                )
-                ( Value this -> /T = T
-                    ( Value x -> /Data/Primitive/Integer = CInt 0 )
-                )
-            , /test ( Value f -> ∀/Data/Primitive/Boolean ) ( Value this -> /T ) ->
-                ( ∀/Data/Primitive/Boolean | f ( x=/T ) ) = f ( Value x -> TVArg this = Value this )
-            , /test ( Value f -> ∀/Data/Primitive/Boolean ) ( Value this -> /T ) -> ∀/Data/Primitive/Boolean
+            , /tst ( Value f -> ∀/Data/Primitive/Boolean )
+                ( Value this -> T ( x=TopType ) = T ( Value x ) ) ->
+                ( ∀/Data/Primitive/Boolean | f ( y=TopType ) ) = f ( Value y -> TVArg x = Value x )
+            , /tst ( Value f -> ∀/Data/Primitive/Boolean )
+                ( Value this -> T ( x=TopType ) = T ( Value x ) ) -> ∀/Data/Primitive/Boolean
             , /T ( Value x -> /Data/Primitive/Integer ) -> /T ( x=/Data/Primitive/Integer )
             ]
         ,
             [ CGType
-            , CGType
             , CGType
             ]
         ,
