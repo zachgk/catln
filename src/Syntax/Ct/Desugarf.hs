@@ -200,7 +200,8 @@ desTypeDef statementEnv@(inheritPath, _) typeExpr subStatements = do
   (subPrgm, annots) <- desInheritingSubstatements statementEnv (getPath $ exprPath typeExpr) subStatements
   let typeExpr' = semiDesExpr (SDInput False) Nothing typeExpr
   let obj = desObj False inheritPath UseRelativeName $ ObjArr (Just (GuardExpr typeExpr' Nothing)) TypeObj (desObjDocComment subStatements) annots (Nothing, emptyMetaE "arrM" typeExpr)
-  return $ mergePrgm ([obj], emptyClassGraph, []) subPrgm
+  let objMap = [obj]
+  return $ mergePrgm (objMap, classGraphFromObjs objMap, []) subPrgm
 
 desClassDef :: StatementEnv -> Sealed -> RawClassDef ParseMetaDat -> [RawStatementTree RawExpr ParseMetaDat] -> Path -> CRes DesPrgm
 desClassDef statementEnv@(inheritPath, _) sealed (typeExpr, extends) subStatements path = do

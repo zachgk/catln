@@ -104,24 +104,14 @@ addArgToScheme env@FEnv{feClassGraph} vaenv (SType srcAct srcReq _) newArgName (
       Just addDestReq -> intersectTypes feClassGraph destReq addDestReq
       Nothing         -> destReq
 
--- | A helper for the 'AddInferArg' 'Constraint'
-addInferArgToType :: FEnv -> STypeVarArgEnv -> Type -> Maybe Type
-addInferArgToType _ _ (TopType _) = Nothing
-addInferArgToType env vaenv (TypeVar t _) = case stypeAct <$> H.lookup t vaenv of
-  Just t' -> addInferArgToType env vaenv t'
-  Nothing -> error $ printf "Failed to find %s in addInferArgToType" (show t)
-addInferArgToType env@FEnv{feClassGraph} _ (UnionType partials) = Just $ unionAllTypes feClassGraph partials'
-  where
-    partials' = map (inferArgFromPartial env) $ splitUnionType partials
-
 -- | A helper for the 'AddArg' 'Constraint'
 addInferArgToScheme :: FEnv -> STypeVarArgEnv -> SType -> SType -> SType
 addInferArgToScheme env@FEnv{feClassGraph} vaenv (SType srcAct srcReq _) (SType destAct destReq destDesc) = SType destAct' destReq' destDesc
   where
-    destAct' = case addInferArgToType env vaenv srcAct of
+    destAct' = case addInferArgToType env (fmap stypeAct vaenv) srcAct of
       Just addDestAct -> intersectTypes feClassGraph destAct addDestAct
       Nothing         -> destAct
-    destReq' = case addInferArgToType env vaenv srcReq of
+    destReq' = case addInferArgToType env (fmap stypeAct vaenv) srcReq of
       Just addDestReq -> intersectTypes feClassGraph destReq addDestReq
       Nothing         -> destReq
 

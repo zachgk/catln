@@ -23,11 +23,13 @@ import qualified Data.HashSet        as S
 
 import           Control.Monad
 import           Data.Bifunctor      (Bifunctor (bimap))
+import           Data.Maybe
 import           MapMeta
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.TypeGraph
 import           Semantics.Types
+import           Text.Printf
 import           TypeCheck.Common
 import           TypeCheck.Show
 import           Utils
@@ -98,9 +100,19 @@ addUnionObjToEnv env1@FEnv{feClassGraph} vobjMap tobjMap = do
   let env6 = addConstraints (startConstrainBlock env5) constraints
   endConstraintBlock env6 Nothing H.empty
 
+-- | A helper for the 'AddInferArg' 'Constraint'
+addInferArgToType :: FEnv -> TypeVarArgEnv -> Type -> Maybe Type
+addInferArgToType _ _ (TopType []) = Nothing
+addInferArgToType env@FEnv{feClassGraph} vaenv t@TopType{} = addInferArgToType env vaenv (expandType feClassGraph t)
+addInferArgToType env vaenv (TypeVar t _) = case H.lookup t vaenv of
+  Just t' -> addInferArgToType env vaenv t'
+  Nothing -> error $ printf "Failed to find %s in addInferArgToType" (show t)
+addInferArgToType env@FEnv{feClassGraph} vaenv (UnionType partials) = Just $ unionAllTypes feClassGraph partials'
+  where
+    partials' = map (addInferArgToPartial env vaenv) $ splitUnionType partials
 
-inferArgFromPartial :: FEnv -> PartialType -> Type
-inferArgFromPartial FEnv{feVTypeGraph, feTTypeGraph, feClassGraph} partial@PartialType{ptName=PTypeName name, ptArgs} = do
+addInferArgToPartial :: FEnv -> TypeVarArgEnv -> PartialType -> Type
+addInferArgToPartial FEnv{feVTypeGraph, feTTypeGraph, feClassGraph} _ partial@PartialType{ptName=PTypeName name, ptArgs} = do
   let vtypeArrows = H.lookupDefault [] name feVTypeGraph
   let vTypes = unionAllTypes feClassGraph $ map tryArrow vtypeArrows
 
@@ -114,7 +126,7 @@ inferArgFromPartial FEnv{feVTypeGraph, feTTypeGraph, feClassGraph} partial@Parti
       then UnionType $ joinUnionType $ map addArg $ S.toList $ S.difference (H.keysSet $ exprAppliedArgsMap $ oaObjExpr oa) (H.keysSet ptArgs)
       else bottomType
     addArg arg = partial{ptArgs=H.insertWith (unionTypes feClassGraph) arg topType ptArgs}
-inferArgFromPartial _ _ = bottomType
+addInferArgToPartial env@FEnv{feClassGraph} vaenv partial = fromMaybe bottomType $ addInferArgToType env vaenv (expandPartial feClassGraph partial)
 
 mkReachesEnv :: FEnv -> VConstraint -> TypeCheckResult (ReachesEnv ())
 mkReachesEnv env@FEnv{feClassGraph, feUnionAllObjs, feVTypeGraph, feTTypeGraph} con@(Constraint maybeConOa _ _) = do

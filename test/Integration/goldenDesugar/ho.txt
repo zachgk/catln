@@ -168,6 +168,17 @@
             , CGType
             , CGType
             , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
             , CGClass
                 ( True
                 , ∀/Catln/ThenElse
@@ -207,6 +218,7 @@
             ]
         ,
             [ CGType
+            , CGType
             , CGType
             , CGType
             , CGType
@@ -413,15 +425,24 @@
         (
             [ /T ( Value x -> /Data/Primitive/Integer )
             , /tst
-                ( f ( Value y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean )
-                ( Value this= T ( Value x ) ) -> ∀/Data/Primitive/Boolean
+                ( Value d= T ( Value x ) )
+                ( f ( Value y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
             , /tst
-                ( f ( Value y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean )
-                ( Value this= T ( Value x ) ) = f ( Value y= Value x )
+                ( Value d= T ( Value x ) )
+                ( f ( Value y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ) = f ( Value y= Value x )
+            , Value /res= tst
+                ( Value d= T
+                    ( CInt 0 )
+                )
+                ( f ( Value y ) = /operator== ( Value l= Value y )
+                    ( Value r= CInt 0 )
+                )
             , /Context ( Value value= Value /main ) ( Value io -> /Catln/IO ) = Value io
             ]
         ,
             [ CGType
+            , CGType
+            , CGType
             , CGType
             ]
         ,

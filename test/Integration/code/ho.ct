@@ -2,10 +2,12 @@
 
 data T(x: Integer)
 
-:T(x).tst(f(y -> Integer) -> Boolean) -> Boolean
-:T(x).tst(f(y -> Integer) -> Boolean) = f(y=x)
+tst(d=T(x), f(y -> Integer) -> Boolean) -> Boolean
+tst(d=T(x), f(y -> Integer) -> Boolean) = f(y=x)
+
+res = tst(d=T(0), f(y)= y == 0)
 
 main{io: IO} =
-  # #assert(test= T(0).tst(f(y)= y == 0))
+  # #assert(test= res)
   io
 

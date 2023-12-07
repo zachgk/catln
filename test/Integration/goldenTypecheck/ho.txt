@@ -38,6 +38,17 @@
             , CGType
             , CGType
             , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
+            , CGType
             , CGClass
                 ( True
                 , ∀/Catln/ThenElse
@@ -360,6 +371,7 @@
             , CGType
             , CGType
             , CGType
+            , CGType
             , CGClass
                 ( False
                 , ∀/Data/String
@@ -431,15 +443,29 @@
     (
         (
             [ /Context ( Value value -> /main = Value /main ) ( Value io -> /Catln/IO ) -> TVArg io = Value io
-            , /tst ( Value f -> ∀/Data/Primitive/Boolean )
-                ( Value this -> T ( x=TopType ) = T ( Value x ) ) ->
+            , Value /res ->
+                ( ∀/Data/Primitive/Boolean | /tst
+                    ( f ( y=TopType ) =TopType
+                    , d=TopType
+                    )
+                ) = tst
+                ( Value d -> T ( x=TopType ) = T
+                    ( Value x -> /Data/Primitive/Integer = CInt 0 )
+                )
+                ( Value f -> ∀/Data/Primitive/Boolean = /operator== ( Value l -> TVArg y = Value y )
+                    ( Value r -> /Data/Primitive/Integer = CInt 0 )
+                )
+            , /tst
+                ( Value d -> T ( x=TopType ) = T ( Value x ) ) ( Value f -> ∀/Data/Primitive/Boolean ) ->
                 ( ∀/Data/Primitive/Boolean | f ( y=TopType ) ) = f ( Value y -> TVArg x = Value x )
-            , /tst ( Value f -> ∀/Data/Primitive/Boolean )
-                ( Value this -> T ( x=TopType ) = T ( Value x ) ) -> ∀/Data/Primitive/Boolean
+            , /tst
+                ( Value d -> T ( x=TopType ) = T ( Value x ) ) ( Value f -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
             , /T ( Value x -> /Data/Primitive/Integer ) -> /T ( x=/Data/Primitive/Integer )
             ]
         ,
             [ CGType
+            , CGType
+            , CGType
             , CGType
             ]
         ,
