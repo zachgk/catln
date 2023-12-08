@@ -302,7 +302,7 @@ verifyScheme classGraph vaenv (Meta _ _ (VarMetaDat _ _)) (TypeCheckResult _ (ST
       TypeVar{} -> True
       _         -> isSubtypeOfWithMetaEnv classGraph vaenv act oldAct
     verifySchemeReqLowers  = isSubtypeOfWithMetaEnv classGraph vaenv req oldReq
-    verifyCompacted = act == compactType classGraph act
+    verifyCompacted = act == compactType classGraph (fmap getMetaType vaenv) act
 verifyScheme _ _ _ _ _ = Nothing
 
 

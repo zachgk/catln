@@ -44,7 +44,7 @@ propCompactNoChanges gPrgm = property $ do
   prgm <- forAll gPrgm
   let classGraph = snd3 prgm
   a <- forAll $ genType prgm
-  let compacted = compactType classGraph a
+  let compacted = compactType classGraph H.empty a
   annotate $ printf "compacted = %s" (show compacted)
   assert $ isEqType classGraph a compacted
 
@@ -53,8 +53,8 @@ propCompactIdempotent gPrgm = property $ do
   prgm <- forAll gPrgm
   let classGraph = snd3 prgm
   a <- forAll $ genType prgm
-  let compact1 = compactType classGraph a
-  let compact2 = compactType classGraph compact1
+  let compact1 = compactType classGraph H.empty a
+  let compact2 = compactType classGraph H.empty compact1
   annotate $ printf "compact once to %s" (show compact1)
   annotate $ printf "compact twice to %s" (show compact2)
   compact1 === compact2
@@ -65,7 +65,7 @@ propExpandEq gPrgm = property $ do
   prgm <- forAll gPrgm
   let classGraph = snd3 prgm
   a <- forAll $ genPartialType prgm
-  let expanded = expandPartial classGraph a
+  let expanded = expandPartial classGraph H.empty a
   annotate $ printf "expanded = %s" (show expanded)
   assert $ isEqType classGraph (singletonType a) expanded
 

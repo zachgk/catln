@@ -103,7 +103,7 @@ addUnionObjToEnv env1@FEnv{feClassGraph} vobjMap tobjMap = do
 -- | A helper for the 'AddInferArg' 'Constraint'
 addInferArgToType :: FEnv -> TypeVarArgEnv -> Type -> Maybe Type
 addInferArgToType _ _ (TopType []) = Nothing
-addInferArgToType env@FEnv{feClassGraph} vaenv t@TopType{} = addInferArgToType env vaenv (expandType feClassGraph t)
+addInferArgToType env@FEnv{feClassGraph} vaenv t@TopType{} = addInferArgToType env vaenv (expandType feClassGraph vaenv t)
 addInferArgToType env vaenv (TypeVar t _) = case H.lookup t vaenv of
   Just t' -> addInferArgToType env vaenv t'
   Nothing -> error $ printf "Failed to find %s in addInferArgToType" (show t)
@@ -126,7 +126,7 @@ addInferArgToPartial FEnv{feVTypeGraph, feTTypeGraph, feClassGraph} _ partial@Pa
       then UnionType $ joinUnionType $ map addArg $ S.toList $ S.difference (H.keysSet $ exprAppliedArgsMap $ oaObjExpr oa) (H.keysSet ptArgs)
       else bottomType
     addArg arg = partial{ptArgs=H.insertWith (unionTypes feClassGraph) arg topType ptArgs}
-addInferArgToPartial env@FEnv{feClassGraph} vaenv partial = fromMaybe bottomType $ addInferArgToType env vaenv (expandPartial feClassGraph partial)
+addInferArgToPartial env@FEnv{feClassGraph} vaenv partial = fromMaybe bottomType $ addInferArgToType env vaenv (expandPartial feClassGraph vaenv partial)
 
 mkReachesEnv :: FEnv -> VConstraint -> TypeCheckResult (ReachesEnv ())
 mkReachesEnv env@FEnv{feClassGraph, feUnionAllObjs, feVTypeGraph, feTTypeGraph} con@(Constraint maybeConOa _ _) = do
@@ -167,12 +167,15 @@ arrowConstrainUbs env@FEnv{feUnionAllObjs} con (TopType []) dest@UnionType{} = d
       return (src', dest')
     _ -> return (topType, dest)
 arrowConstrainUbs _ _ (TopType []) dest = return (topType, dest)
-arrowConstrainUbs env@FEnv{feClassGraph} con src@TopType{} dest = arrowConstrainUbs env con (expandType feClassGraph src) dest
+arrowConstrainUbs env@FEnv{feClassGraph} con src@TopType{} dest = do
+  vaenv <- descriptorConVaenv env con
+  arrowConstrainUbs env con (expandType feClassGraph (fmap stypeAct vaenv) src) dest
 arrowConstrainUbs env con src@(TypeVar v _) dest = do
   src' <- resolveTypeVar v con
   (_, cdest) <- arrowConstrainUbs env con (getMetaType src') dest
   return (src, cdest)
 arrowConstrainUbs env@FEnv{feClassGraph} con (UnionType srcPartials) dest = do
+  vaenv <- descriptorConVaenv env con
   let srcPartialList = splitUnionType srcPartials
   reachesEnv <- mkReachesEnv env con
   srcPartialList' <- mapM (resToTypeCheck . rootReachesPartial reachesEnv) srcPartialList
@@ -181,4 +184,4 @@ arrowConstrainUbs env@FEnv{feClassGraph} con (UnionType srcPartials) dest = do
   let srcPartials' = joinUnionType srcPartialList''
   let destByGraph = unionAllTypes feClassGraph $ fmap (unionReachesTree feClassGraph) destByPartial
   let dest' = intersectTypes feClassGraph dest destByGraph
-  return (compactType feClassGraph $ UnionType srcPartials', dest')
+  return (compactType feClassGraph (fmap stypeAct vaenv) $ UnionType srcPartials', dest')

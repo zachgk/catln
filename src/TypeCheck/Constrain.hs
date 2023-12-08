@@ -90,7 +90,7 @@ addArgToType env vaenv (TypeVar v _) newArg = case H.lookup v vaenv of
   Nothing -> error $ printf "Unknown type in addArgToType: %s" (show v)
 addArgToType env@FEnv{feClassGraph} vaenv (UnionType partials) newArg = Just $ unionAllTypes feClassGraph $ mapMaybe fromPartial $ splitUnionType partials
   where
-    fromPartial partial@PartialType{ptName=PClassName{}} = addArgToType env vaenv (expandClassPartial feClassGraph partial) newArg
+    fromPartial partial@PartialType{ptName=PClassName{}} = addArgToType env vaenv (expandClassPartial feClassGraph vaenv partial) newArg
     fromPartial partial@PartialType{ptArgs} = Just $ singletonType partial{ptArgs=H.insertWith (unionTypes feClassGraph) newArg topType ptArgs}
 
 -- | A helper for the 'AddArg' 'Constraint'
@@ -138,11 +138,13 @@ executeConstraint env1 con@(Constraint _ _ (EqPoints _ p1 p2)) = case sequenceT 
   TypeCheckResE _ -> (True, env1)
 executeConstraint env@FEnv{feClassGraph} con@(Constraint _ _ (BoundedByKnown _ subPnt boundTp)) = do
   let subScheme = descriptor env subPnt
-  case subScheme of
+  case sequenceT (subScheme, descriptorConVaenv env con) of
     TypeCheckResE _ -> (True, env)
-    TypeCheckResult _ (SType act req desc) -> do
-      let act' = intersectTypes feClassGraph act boundTp
-      let req' = intersectTypes feClassGraph req boundTp
+    TypeCheckResult _ (SType act req desc, vaenv) -> do
+      let tvaenv = fmap stypeAct vaenv
+      let boundTp' = expandType feClassGraph tvaenv boundTp
+      let act' = snd $ intersectTypesWithVarEnv feClassGraph tvaenv act boundTp'
+      let req' = snd $ intersectTypesWithVarEnv feClassGraph tvaenv req boundTp'
       let scheme' = pure $ SType act' req' desc
       let env' = setScheme env con subPnt scheme' "BoundedByKnown"
       (True, env')
@@ -155,7 +157,7 @@ executeConstraint env@FEnv{feUnionAllObjs, feClassGraph} con@(Constraint _ _ (Bo
     TypeCheckResult _ (ub, objMapBoundUb, vaenv) -> do
 
       -- Add the local args to the bound (maybe?)
-      let argsBoundUb = powersetType feClassGraph $ UnionType $ joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con
+      let argsBoundUb = powersetType feClassGraph (fmap stypeAct vaenv) $ UnionType $ joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con
       let boundUb = unionTypes feClassGraph objMapBoundUb argsBoundUb
 
       -- A partially applied tuple would not be a raw type on the unionObj,
@@ -212,10 +214,10 @@ executeConstraint env con@(Constraint _ _ (AddInferArg _ srcPnt destPnt)) = do
 executeConstraint env@FEnv{feClassGraph} con@(Constraint _ _ (PowersetTo _ srcPnt destPnt)) = do
   let srcScheme = pointUb env srcPnt
   let destScheme = pointUb env destPnt
-  case sequenceT (srcScheme, destScheme) of
+  case sequenceT (srcScheme, destScheme, descriptorConVaenv env con) of
     TypeCheckResE _ -> (True, env)
-    TypeCheckResult _ (ub1, ub2) -> do
-      let ub2' = intersectTypes feClassGraph (powersetType feClassGraph ub1) ub2
+    TypeCheckResult _ (ub1, ub2, vaenv) -> do
+      let ub2' = intersectTypes feClassGraph (powersetType feClassGraph (fmap stypeAct vaenv) ub1) ub2
       let env' = setSchemeAct env con destPnt ub2' "PowersetTo"
       (False, env')
 executeConstraint env@FEnv{feClassGraph} con@(Constraint _ _ (UnionOf _ parentPnt childrenM)) = do
@@ -226,7 +228,7 @@ executeConstraint env@FEnv{feClassGraph} con@(Constraint _ _ (UnionOf _ parentPn
     TypeCheckResult notes (parentSType, childrenSchemes, vaenv) -> do
       let accumulateChild (SType ub lb _) (accUb, accLb) = (unionTypes feClassGraph ub accUb, unionTypes feClassGraph lb accLb)
       let (chUb, chLb) = foldr accumulateChild (bottomType, bottomType) childrenSchemes
-      let (vaenv', parentST', _) = equalizeSTypes env (fmap stypeAct vaenv) (parentSType, SType (compactType feClassGraph chUb) chLb "")
+      let (vaenv', parentST', _) = equalizeSTypes env (fmap stypeAct vaenv) (parentSType, SType (compactType feClassGraph (fmap stypeAct vaenv) chUb) chLb "")
       let parentScheme' = TypeCheckResult notes parentST'
       let env' = setScheme env con parentPnt parentScheme' "UnionOf"
       let env'' = setSchemeConVaenv env' con SchemeAct vaenv' "EqualsKnown env"
