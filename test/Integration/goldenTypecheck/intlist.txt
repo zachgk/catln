@@ -1,13 +1,13 @@
 [
     (
         (
-            [ /Catln/ThenElse/fromBool ( Value v -> /Data/Primitive/False = Value /Data/Primitive/False ) = Value Else
-            , /Catln/ThenElse/fromBool ( Value v -> /Data/Primitive/True = Value /Data/Primitive/True ) = Value Then
+            [ /Catln/ThenElse/fromBool ( Value v -> /Data/Primitive/False = Value /Data/Primitive/False ) = Value /Catln/Else
+            , /Catln/ThenElse/fromBool ( Value v -> /Data/Primitive/True = Value /Data/Primitive/True ) = Value /Catln/Then
             , /Catln/ThenElse/fromBool ( Value v -> ∀/Data/Primitive/Boolean ) -> ∀/Catln/ThenElse
             , Value /Catln/Else -> /Catln/Else
             , Value /Catln/Then -> /Catln/Then
             , /Catln/llvm ( Value c ) -> /Catln/CatlnResult..
-            , /Catln/www ( Value html -> /Data/String ) = CatlnResult
+            , /Catln/www ( Value html -> /Data/String ) = /Catln/CatlnResult
                 ( Value name -> /Data/String = CStr "index.html" ) ( Value contents -> TVArg html = Value html )
             , /Catln/CatlnResult ( Value name -> /Data/String ) ( Value contents -> /Data/String ) -> /Catln/CatlnResult
                 ( name=/Data/String
@@ -218,26 +218,26 @@
             , /operator- ( Value a -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
             , Value /Data/Primitive/Float -> /Data/Primitive/Float
             , Value /Data/Primitive/Integer -> /Data/Primitive/Integer
-            , /operator^ ( Value l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) ( Value r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) = Value False
-            , /operator^ ( Value l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) ( Value r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) = Value True
-            , /operator^ ( Value l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) ( Value r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) = Value True
-            , /operator^ ( Value l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) ( Value r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) = Value False
+            , /operator^ ( Value l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) ( Value r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) = Value /Data/Primitive/False
+            , /operator^ ( Value l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) ( Value r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) = Value /Data/Primitive/True
+            , /operator^ ( Value l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) ( Value r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) = Value /Data/Primitive/True
+            , /operator^ ( Value l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) ( Value r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) = Value /Data/Primitive/False
             , /operator^ ( Value l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) ( Value r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-            , /operator|| ( Value l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) ( Value r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) = Value False
-            , /operator|| ( Value l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) ( Value r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) = Value True
-            , /operator|| ( Value l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) ( Value r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) = Value True
+            , /operator|| ( Value l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) ( Value r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) = Value /Data/Primitive/False
+            , /operator|| ( Value l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) ( Value r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) = Value /Data/Primitive/True
+            , /operator|| ( Value l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) ( Value r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) = Value /Data/Primitive/True
             , /operator|| ( Value l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) ( Value r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-            , /operator&& ( Value l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) ( Value r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) = Value False
-            , /operator&& ( Value l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) ( Value r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) = Value False
-            , /operator&& ( Value l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) ( Value r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) = Value True
+            , /operator&& ( Value l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) ( Value r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) = Value /Data/Primitive/False
+            , /operator&& ( Value l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) ( Value r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) = Value /Data/Primitive/False
+            , /operator&& ( Value l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) ( Value r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) = Value /Data/Primitive/True
             , /operator&& ( Value l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) ( Value r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-            , /operator~ ( Value a -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) = Value True
-            , /operator~ ( Value a -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) = Value False
+            , /operator~ ( Value a -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) = Value /Data/Primitive/True
+            , /operator~ ( Value a -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) = Value /Data/Primitive/False
             , /operator~ ( Value a -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-            , /operator== ( Value l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) ( Value r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) = Value True
-            , /operator== ( Value l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) ( Value r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) = Value False
-            , /operator== ( Value l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) ( Value r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) = Value False
-            , /operator== ( Value l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) ( Value r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) = Value True
+            , /operator== ( Value l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) ( Value r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) = Value /Data/Primitive/True
+            , /operator== ( Value l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) ( Value r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) = Value /Data/Primitive/False
+            , /operator== ( Value l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) ( Value r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) = Value /Data/Primitive/False
+            , /operator== ( Value l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) ( Value r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) = Value /Data/Primitive/True
             , /operator== ( Value l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) ( Value r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
             , Value /Data/Primitive/False -> /Data/Primitive/False
             , Value /Data/Primitive/True -> /Data/Primitive/True
@@ -348,7 +348,7 @@
                     )
                 ) = /operator+
                 ( Value l -> /Data/Primitive/Integer = CInt 1 )
-                ( Value r -> /Data/Primitive/Integer = length ( Value this -> TVArg tail = Value tail ) )
+                ( Value r -> /Data/Primitive/Integer = /Data/length ( Value this -> TVArg tail = Value tail ) )
             , /Data/length ( Value this -> /Data/Nil ) = CInt 0
             , Value /Data/Nil -> /Data/Nil
             , /Data/Cons [ T : TopType ] ( Value head -> TVVar T )
@@ -447,13 +447,13 @@
                     ( val=/Data/Primitive/Integer
                     , this=/Catln/IO
                     ) | /Catln/IO
-                ) = exit
+                ) = /Catln/exit
                 ( Value val -> /Data/Primitive/Integer = /operator-
-                    ( Value l -> /Data/Primitive/Integer = len
-                        ( Value this -> ∀/IntList = IntCons
+                    ( Value l -> /Data/Primitive/Integer = /len
+                        ( Value this -> ∀/IntList = /IntCons
                             ( Value head -> /Data/Primitive/Integer = CInt 5 )
-                            ( Value tail -> ∀/IntList = IntCons
-                                ( Value head -> /Data/Primitive/Integer = CInt 3 ) ( Value tail -> ∀/IntList = Value IntNil )
+                            ( Value tail -> ∀/IntList = /IntCons
+                                ( Value head -> /Data/Primitive/Integer = CInt 3 ) ( Value tail -> ∀/IntList = Value /IntNil )
                             )
                         )
                     )
@@ -471,7 +471,7 @@
                     )
                 ) = /operator+
                 ( Value l -> /Data/Primitive/Integer = CInt 1 )
-                ( Value r -> /Data/Primitive/Integer = len ( Value this -> TVArg tail = Value tail ) )
+                ( Value r -> /Data/Primitive/Integer = /len ( Value this -> TVArg tail = Value tail ) )
             , /len ( Value this -> /IntNil ) -> /Data/Primitive/Integer = CInt 0
             , /len ( Value this -> ∀/IntList ) -> /Data/Primitive/Integer
             , Value /IntNil -> /IntNil

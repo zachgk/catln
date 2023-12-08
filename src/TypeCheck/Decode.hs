@@ -40,8 +40,11 @@ toExpr env (CExpr m c) = do
   m' <- toMeta env m $ "Constant " ++ show c
   return $ CExpr m' c
 toExpr env (Value m name) = do
-  m' <- toMeta env m $ "Value_" ++ name
-  return $ Value m' name
+  let name' = case maybeGetSingleton $ getMetaType m of
+        Just PartialType{ptName=PTypeName n} -> n
+        _                                    -> name -- TODO Maybe consider this an exception
+  m' <- toMeta env m $ "Value_" ++ name'
+  return $ Value m' name'
 toExpr env (HoleExpr m hole) = do
   m' <- toMeta env m $ "Arg_" ++ show hole
   return $ HoleExpr m' hole
