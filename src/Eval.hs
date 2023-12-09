@@ -62,6 +62,7 @@ evalTargetMode :: String -> String -> EPrgmGraphData -> EvalMode
 evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe $ mapMaybe objArrowsContains objMap
   where
     (objMap, classGraph, _) = prgmFromGraphData prgmName prgmGraphData
+    typeEnv = TypeEnv classGraph
     objArrowsContains ObjArr{oaArr=(Nothing, _)} = Nothing
     objArrowsContains oa@ObjArr{oaArr=(_, oaM)} = case oaObjPath oa of
       "/Context" -> case H.lookup (partialKey "value") $ exprAppliedArgsMap $ oaObjExpr oa of
@@ -76,7 +77,7 @@ evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe 
           then Just $ EvalBuild (oaObjPath oa)
           else Just $ EvalRun (oaObjPath oa)
       _ -> Nothing
-    isBuildable oa tp = not $ isBottomType $ snd $ intersectTypesWithVarEnv classGraph (fmap ((intersectAllTypes classGraph . fmap getMetaType) . map snd) (exprVarArgs $ oaObjExpr oa)) tp resultType
+    isBuildable oa tp = not $ isBottomType $ snd $ intersectTypesWithVarEnv typeEnv (fmap ((intersectAllTypes typeEnv . fmap getMetaType) . map snd) (exprVarArgs $ oaObjExpr oa)) tp resultType
 
 -- | evaluate annotations such as assertions that require compiler verification
 evalCompAnnot :: Env -> Val -> CRes Env
@@ -91,8 +92,8 @@ evalCompAnnot env _ = evalError env "Eval: Invalid compiler annotation type"
 
 evalCallTree :: Env -> Val -> TCallTree -> CRes (Val, Env)
 evalCallTree env v TCTId = return (v, env)
-evalCallTree env1@Env{evClassGraph} m (TCMatch opts) = do
-  case H.toList $ H.filterWithKey (\optType _ -> isSubtypePartialOf evClassGraph (getValType m) (singletonType optType)) opts of
+evalCallTree env1@Env{evTypeEnv} m (TCMatch opts) = do
+  case H.toList $ H.filterWithKey (\optType _ -> isSubtypePartialOf evTypeEnv (getValType m) (singletonType optType)) opts of
     [(_, resArrowTree)] -> evalPopVal <$> evalCallTree (evalPush env1 $ "match with val " ++ show m) m resArrowTree
     [] -> evalError env1 $ printf "Failed match in eval callTree: \n\tVal: %s \n\tVal type: %s\n\tOptions: %s" (show m) (show $ getValType m) (show opts)
     (_:_:_) -> evalError env1 $ printf "Multiple matches in eval callTree: \n\tVal: %s \n\tOptions: %s " (show m) (show opts)
@@ -156,7 +157,7 @@ evalExpr env (TCalls _ b callTree) = do
 evalBaseEnv :: EPrgm -> Env
 evalBaseEnv prgm@(objMap, classGraph, _) = Env {
         evObjMap = objMap,
-        evClassGraph = classGraph,
+        evTypeEnv = TypeEnv classGraph,
         evArgs = H.empty,
         evExEnv = H.empty,
         evTbEnv = buildTBEnv primEnv prgm,

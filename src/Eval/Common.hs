@@ -61,7 +61,7 @@ data EvalTreebugClosed = EvalTreebugClosed EObjArr Val [EvalTreebugClosed] Strin
 
 type Args = H.HashMap String Val
 data Env = Env { evObjMap        :: EObjectMap
-               , evClassGraph    :: ClassGraph
+               , evTypeEnv       :: TypeEnv
                , evArgs          :: Args
                , evExEnv         :: ResExEnv
                , evTbEnv         :: TBEnv
@@ -174,10 +174,10 @@ type ResBuildEnv = H.HashMap TypeName [ResBuildEnvItem]
 type ResExEnv = H.HashMap (PartialType, ObjArr Expr EvalMetaDat) (TExpr (), [TExpr ()]) -- (result, [compAnnot trees])
 
 data TBEnv = TBEnv {
-    tbName       :: String
-  , tbResEnv     :: ResBuildEnv
-  , tbPrgm       :: Prgm Expr EvalMetaDat
-  , tbClassGraph :: ClassGraph
+    tbName    :: String
+  , tbResEnv  :: ResBuildEnv
+  , tbPrgm    :: Prgm Expr EvalMetaDat
+  , tbTypeEnv :: TypeEnv
   }
 
 instance Eq MacroFunction where
@@ -295,7 +295,7 @@ data CodegenState
   , taskStructs :: [TaskStruct]
   } deriving Show
 
-data BlockState
+newtype BlockState
   = BlockState {
     idx   :: Int                            -- Block index
   -- , stack :: [AST.Named AST.Instruction]            -- Stack of instructions
@@ -311,8 +311,8 @@ instance Show (Codegen a) where
 
 type ObjSrc = (PartialType, EObjArr)
 
-resArrowDestType :: ClassGraph -> PartialType -> TCallTree -> Type
-resArrowDestType classGraph src (TCObjArr oa) = arrowDestType False classGraph src oa
+resArrowDestType :: TypeEnv -> PartialType -> TCallTree -> Type
+resArrowDestType typeEnv src (TCObjArr oa) = arrowDestType False typeEnv src oa
 resArrowDestType _ _ (TCPrim tp _) = tp
 resArrowDestType _ _ (TCMacro tp _) = tp
 -- resArrowDestType _ _ (ConstantArrow v) = singletonType $ getValType v

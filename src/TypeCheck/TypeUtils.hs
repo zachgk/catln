@@ -61,7 +61,7 @@ filterBestPrecedence precedenceMap = filter (\oa -> objectPrecedence oa == H.loo
 
 -- | This creates 'feUnionAllObjs' and adds it to the 'FEnv'
 addUnionObjToEnv :: FEnv -> VObjectMap -> TObjectMap -> FEnv
-addUnionObjToEnv env1@FEnv{feClassGraph} vobjMap tobjMap = do
+addUnionObjToEnv env1@FEnv{feTypeEnv} vobjMap tobjMap = do
   let vobjMapRec = concatMap getRecursiveObjs vobjMap
   let tobjMapRec = concatMap getRecursiveObjs tobjMap
 
@@ -84,7 +84,7 @@ addUnionObjToEnv env1@FEnv{feClassGraph} vobjMap tobjMap = do
   let mkVarMeta p = Meta topType Nothing (VarMetaDat (Just p) Nothing)
 
   -- Build a variable to store union of tobjs
-  let typecheckedAllType = unionAllTypes feClassGraph tobjMetas
+  let typecheckedAllType = unionAllTypes feTypeEnv tobjMetas
   let (typecheckedAllObjs, env4) = fresh env3 $ TypeCheckResult [] $ SType typecheckedAllType topType "typecheckedAll"
   let typecheckedAllObjs' = mkVarMeta typecheckedAllObjs
 
@@ -103,33 +103,33 @@ addUnionObjToEnv env1@FEnv{feClassGraph} vobjMap tobjMap = do
 -- | A helper for the 'AddInferArg' 'Constraint'
 addInferArgToType :: FEnv -> TypeVarArgEnv -> Type -> Maybe Type
 addInferArgToType _ _ (TopType []) = Nothing
-addInferArgToType env@FEnv{feClassGraph} vaenv t@TopType{} = addInferArgToType env vaenv (expandType feClassGraph vaenv t)
+addInferArgToType env@FEnv{feTypeEnv} vaenv t@TopType{} = addInferArgToType env vaenv (expandType feTypeEnv vaenv t)
 addInferArgToType env vaenv (TypeVar t _) = case H.lookup t vaenv of
   Just t' -> addInferArgToType env vaenv t'
   Nothing -> error $ printf "Failed to find %s in addInferArgToType" (show t)
-addInferArgToType env@FEnv{feClassGraph} vaenv (UnionType partials) = Just $ unionAllTypes feClassGraph partials'
+addInferArgToType env@FEnv{feTypeEnv} vaenv (UnionType partials) = Just $ unionAllTypes feTypeEnv partials'
   where
     partials' = map (addInferArgToPartial env vaenv) $ splitUnionType partials
 
 addInferArgToPartial :: FEnv -> TypeVarArgEnv -> PartialType -> Type
-addInferArgToPartial FEnv{feVTypeGraph, feTTypeGraph, feClassGraph} _ partial@PartialType{ptName=PTypeName name, ptArgs} = do
+addInferArgToPartial FEnv{feVTypeGraph, feTTypeGraph, feTypeEnv} _ partial@PartialType{ptName=PTypeName name, ptArgs} = do
   let vtypeArrows = H.lookupDefault [] name feVTypeGraph
-  let vTypes = unionAllTypes feClassGraph $ map tryArrow vtypeArrows
+  let vTypes = unionAllTypes feTypeEnv $ map tryArrow vtypeArrows
 
   let ttypeArrows = H.lookupDefault [] name feTTypeGraph
-  let tTypes = unionAllTypes feClassGraph $ map tryArrow ttypeArrows
+  let tTypes = unionAllTypes feTypeEnv $ map tryArrow ttypeArrows
 
-  unionTypes feClassGraph vTypes tTypes
+  unionTypes feTypeEnv vTypes tTypes
   where
     tryArrow :: (MetaDat m, Show m) => ObjArr Expr m -> Type
     tryArrow oa = if H.keysSet ptArgs `isSubsetOf` H.keysSet (exprAppliedArgsMap $ oaObjExpr oa)
       then UnionType $ joinUnionType $ map addArg $ S.toList $ S.difference (H.keysSet $ exprAppliedArgsMap $ oaObjExpr oa) (H.keysSet ptArgs)
       else bottomType
-    addArg arg = partial{ptArgs=H.insertWith (unionTypes feClassGraph) arg topType ptArgs}
-addInferArgToPartial env@FEnv{feClassGraph} vaenv partial = fromMaybe bottomType $ addInferArgToType env vaenv (expandPartial feClassGraph vaenv partial)
+    addArg arg = partial{ptArgs=H.insertWith (unionTypes feTypeEnv) arg topType ptArgs}
+addInferArgToPartial env@FEnv{feTypeEnv} vaenv partial = fromMaybe bottomType $ addInferArgToType env vaenv (expandPartial feTypeEnv vaenv partial)
 
 mkReachesEnv :: FEnv -> VConstraint -> TypeCheckResult (ReachesEnv ())
-mkReachesEnv env@FEnv{feClassGraph, feUnionAllObjs, feVTypeGraph, feTTypeGraph} con@(Constraint maybeConOa _ _) = do
+mkReachesEnv env@FEnv{feTypeEnv, feUnionAllObjs, feVTypeGraph, feTTypeGraph} con@(Constraint maybeConOa _ _) = do
 
   schemeVaenv <- descriptorConVaenvIO env con
   let vaenv = fmap (bimap stypeAct stypeAct) schemeVaenv
@@ -154,9 +154,9 @@ mkReachesEnv env@FEnv{feClassGraph, feUnionAllObjs, feVTypeGraph, feTTypeGraph} 
   let argTypeGraph = H.fromList $ map (\(argName, (inExpr, outM)) -> (pkName argName, [ObjArr (Just (GuardExpr inExpr Nothing)) ArgObj Nothing [] (Nothing, emptyMetaT (substituteWithVarArgEnv (fmap snd vaenv) (getMetaType outM)))])) $ H.toList argVaenv'
 
   -- final ReachesEnv
-  let argClassGraph = classGraphFromObjs (concat $ H.elems argTypeGraph)
+  let argTypeEnv = TypeEnv $ classGraphFromObjs (concat $ H.elems argTypeGraph)
   let typeGraph = unionsWith (++) [argTypeGraph, feVTypeGraph', feTTypeGraph]
-  return $ ReachesEnv (mergeClassGraphs argClassGraph feClassGraph) unionAll (fmap snd vaenv) typeGraph
+  return $ ReachesEnv (mergeTypeEnv argTypeEnv feTypeEnv) unionAll (fmap snd vaenv) typeGraph
 
 arrowConstrainUbs :: FEnv -> VConstraint -> Type -> Type -> TypeCheckResult (Type, Type)
 arrowConstrainUbs env@FEnv{feUnionAllObjs} con (TopType []) dest@UnionType{} = do
@@ -167,14 +167,14 @@ arrowConstrainUbs env@FEnv{feUnionAllObjs} con (TopType []) dest@UnionType{} = d
       return (src', dest')
     _ -> return (topType, dest)
 arrowConstrainUbs _ _ (TopType []) dest = return (topType, dest)
-arrowConstrainUbs env@FEnv{feClassGraph} con src@TopType{} dest = do
+arrowConstrainUbs env@FEnv{feTypeEnv} con src@TopType{} dest = do
   vaenv <- descriptorConVaenv env con
-  arrowConstrainUbs env con (expandType feClassGraph (fmap stypeAct vaenv) src) dest
+  arrowConstrainUbs env con (expandType feTypeEnv (fmap stypeAct vaenv) src) dest
 arrowConstrainUbs env con src@(TypeVar v _) dest = do
   src' <- resolveTypeVar v con
   (_, cdest) <- arrowConstrainUbs env con (getMetaType src') dest
   return (src, cdest)
-arrowConstrainUbs env@FEnv{feClassGraph} con (UnionType srcPartials) dest = do
+arrowConstrainUbs env@FEnv{feTypeEnv} con (UnionType srcPartials) dest = do
   vaenv <- descriptorConVaenv env con
   let srcPartialList = splitUnionType srcPartials
   reachesEnv <- mkReachesEnv env con
@@ -182,6 +182,6 @@ arrowConstrainUbs env@FEnv{feClassGraph} con (UnionType srcPartials) dest = do
   let partialMap = H.fromList srcPartialList'
   let (srcPartialList'', destByPartial) = unzip $ H.toList partialMap
   let srcPartials' = joinUnionType srcPartialList''
-  let destByGraph = unionAllTypes feClassGraph $ fmap (unionReachesTree feClassGraph) destByPartial
-  let dest' = intersectTypes feClassGraph dest destByGraph
-  return (compactType feClassGraph (fmap stypeAct vaenv) $ UnionType srcPartials', dest')
+  let destByGraph = unionAllTypes feTypeEnv $ fmap (unionReachesTree feTypeEnv) destByPartial
+  let dest' = intersectTypes feTypeEnv dest destByGraph
+  return (compactType feTypeEnv (fmap stypeAct vaenv) $ UnionType srcPartials', dest')

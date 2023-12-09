@@ -318,7 +318,10 @@ mergeClassGraphs (ClassGraph classGraphA) (ClassGraph classGraphB) = ClassGraph 
     mergeClasses (CGType, name, []) (CGType, _, []) = (CGType, name, [])
     mergeClasses cg1 cg2 = error $ printf "Unexpected input to mergeClassGraphs: \n\t%s \n\t%s" (show cg1) (show cg2)
 
-    mergeClassPartials clss@PartialType{ptVars=varsA} PartialType{ptVars=varsB} = clss{ptVars = H.unionWith (unionTypes (ClassGraph classGraphA)) varsA varsB}
+    mergeClassPartials clss@PartialType{ptVars=varsA} PartialType{ptVars=varsB} = clss{ptVars = H.unionWith (unionTypes (TypeEnv (ClassGraph classGraphA))) varsA varsB}
+
+mergeTypeEnv :: TypeEnv -> TypeEnv -> TypeEnv
+mergeTypeEnv (TypeEnv cg1) (TypeEnv cg2) = TypeEnv (mergeClassGraphs cg1 cg2)
 
 mergePrgm :: Prgm e m -> Prgm e m -> Prgm e m
 mergePrgm (objMap1, classGraph1, annots1) (objMap2, classGraph2, annots2) = (

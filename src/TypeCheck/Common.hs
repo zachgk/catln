@@ -65,7 +65,7 @@ data FEnv = FEnv { fePnts               :: IM.IntMap Scheme
                  , feVTypeGraph         :: VTypeGraph
                  , feTTypeGraph         :: TTypeGraph
                  , feUpdatedDuringEpoch :: Bool -- ^ If a pnt is updated during the epoch
-                 , feClassGraph         :: ClassGraph
+                 , feTypeEnv            :: TypeEnv
                  , feTrace              :: TraceConstrain
                  } deriving (Show)
 
@@ -229,7 +229,7 @@ typeCheckToRes tc = case tc of
   TypeCheckResE notes       -> CErr (map MkCNote notes)
 
 eqScheme :: FEnv -> TypeVarArgEnv -> Scheme -> Scheme -> Bool
-eqScheme FEnv{feClassGraph} vaenv (TypeCheckResult _ (SType ub1 lb1 _)) (TypeCheckResult _ (SType ub2 lb2 _)) = isEqTypeWithEnv feClassGraph vaenv ub1 ub2 && isEqTypeWithEnv feClassGraph vaenv lb1 lb2
+eqScheme FEnv{feTypeEnv} vaenv (TypeCheckResult _ (SType ub1 lb1 _)) (TypeCheckResult _ (SType ub2 lb2 _)) = isEqTypeWithEnv feTypeEnv vaenv ub1 ub2 && isEqTypeWithEnv feTypeEnv vaenv lb1 lb2
 eqScheme _ _ a b = a == b
 
 getStypeActReq :: SchemeActReq -> SType -> Type
@@ -291,8 +291,8 @@ fAddTTypeGraph env@FEnv{feTTypeGraph} k v = env {feTTypeGraph = H.insertWith (++
 
 -- This ensures schemes are correct
 -- It differs from Constrain.checkScheme because it checks for bugs in the internal compiler, not bugs in the user code
-verifyScheme :: ClassGraph -> VMetaVarArgEnv -> VarMeta -> Scheme -> Scheme -> Maybe String
-verifyScheme classGraph vaenv (Meta _ _ (VarMetaDat _ _)) (TypeCheckResult _ (SType oldAct oldReq _)) (TypeCheckResult _ (SType act req _)) = listToMaybe $ catMaybes [
+verifyScheme :: TypeEnv -> VMetaVarArgEnv -> VarMeta -> Scheme -> Scheme -> Maybe String
+verifyScheme typeEnv vaenv (Meta _ _ (VarMetaDat _ _)) (TypeCheckResult _ (SType oldAct oldReq _)) (TypeCheckResult _ (SType act req _)) = listToMaybe $ catMaybes [
   if verifySchemeActLowers then Nothing else Just "verifySchemeActLowers",
   if verifySchemeReqLowers then Nothing else Just "verifySchemeReqLowers",
   if verifyCompacted then Nothing else Just "verifyCompacted"
@@ -300,9 +300,9 @@ verifyScheme classGraph vaenv (Meta _ _ (VarMetaDat _ _)) (TypeCheckResult _ (ST
   where
     verifySchemeActLowers  = case act of
       TypeVar{} -> True
-      _         -> isSubtypeOfWithMetaEnv classGraph vaenv act oldAct
-    verifySchemeReqLowers  = isSubtypeOfWithMetaEnv classGraph vaenv req oldReq
-    verifyCompacted = act == compactType classGraph (fmap getMetaType vaenv) act
+      _         -> isSubtypeOfWithMetaEnv typeEnv vaenv act oldAct
+    verifySchemeReqLowers  = isSubtypeOfWithMetaEnv typeEnv vaenv req oldReq
+    verifyCompacted = act == compactType typeEnv (fmap getMetaType vaenv) act
 verifyScheme _ _ _ _ _ = Nothing
 
 
@@ -324,7 +324,7 @@ fresh env@FEnv{fePnts} scheme = (pnt', env{fePnts = pnts'})
 
 setDescriptor :: FEnv -> VConstraint -> VarMeta -> Scheme -> String -> FEnv
 setDescriptor env _ (Meta _ _ (VarMetaDat Nothing _)) _ _ = env
-setDescriptor env@FEnv{feClassGraph, fePnts, feTrace, feUpdatedDuringEpoch} con m@(Meta _ _ (VarMetaDat (Just p) _)) scheme' msg = env{fePnts = pnts', feTrace = feTrace', feUpdatedDuringEpoch = feUpdatedDuringEpoch || schemeChanged}
+setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@(Meta _ _ (VarMetaDat (Just p) _)) scheme' msg = env{fePnts = pnts', feTrace = feTrace', feUpdatedDuringEpoch = feUpdatedDuringEpoch || schemeChanged}
   where
     scheme = descriptor env m
     schemeChanged :: Bool
@@ -335,7 +335,7 @@ setDescriptor env@FEnv{feClassGraph, fePnts, feTrace, feUpdatedDuringEpoch} con 
         return $ not (eqScheme env showVaenv scheme scheme')
     pnts' = if schemeChanged then IM.insert p scheme' fePnts else fePnts -- Only update if changed to avoid meaningless updates
     feTrace' = if schemeChanged
-      then case verifyScheme feClassGraph (constraintVarArgEnv con) m scheme scheme' of
+      then case verifyScheme feTypeEnv (constraintVarArgEnv con) m scheme scheme' of
              Just failVerification -> error $ printf "Scheme failed verification %s during typechecking of %s:\n\t\t New Scheme: %s \n\t\t Old Scheme: %s\n\t\t Obj: %s" failVerification msg (show scheme') (show scheme) (show m)
              Nothing -> case feTrace of
               ((curConstraint, curChanged):curEpoch):prevEpochs -> ((curConstraint, (p, scheme'):curChanged):curEpoch):prevEpochs

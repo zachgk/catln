@@ -31,7 +31,7 @@ data ReachesTree
   deriving (Show)
 
 data ReachesEnv m = ReachesEnv {
-  rClassGraph   :: !ClassGraph,
+  rTypeEnv      :: !TypeEnv,
   rUnionAllType :: !Type,
   rVaenv        :: !TypeVarArgEnv,
   rTypeGraph    :: !(H.HashMap TypeName [ObjArr Expr m])
@@ -41,7 +41,7 @@ isTypeVar :: Type -> Bool
 isTypeVar TypeVar{} = True
 isTypeVar _         = False
 
-unionReachesTree :: ClassGraph -> ReachesTree -> Type
+unionReachesTree :: TypeEnv -> ReachesTree -> Type
 unionReachesTree classGraph (ReachesTree children) = do
   let (keys, vals) = unzip $ H.toList children
   let keys' = UnionType $ joinUnionType keys
@@ -64,14 +64,14 @@ joinReachesTrees a b = error $ printf "joinReachesTrees for mixed tree and leaf 
 joinAllReachesTrees :: Foldable f => f ReachesTree -> ReachesTree
 joinAllReachesTrees = foldr1 joinReachesTrees
 
-reachesHasCutSubtypeOf :: (Show m, MetaDat m) => ClassGraph -> MetaVarArgEnv m -> ReachesTree -> Type -> Bool
+reachesHasCutSubtypeOf :: (Show m, MetaDat m) => TypeEnv -> MetaVarArgEnv m -> ReachesTree -> Type -> Bool
 reachesHasCutSubtypeOf classGraph vaenv (ReachesTree children) superType = all childIsSubtype $ H.toList children
   where childIsSubtype (key, val) = isSubtypePartialOfWithMetaEnv classGraph vaenv key superType || reachesHasCutSubtypeOf classGraph vaenv val superType
 reachesHasCutSubtypeOf classGraph vaenv (ReachesLeaf leafs) superType = any (\t -> isSubtypeOfWithMetaEnv classGraph vaenv t superType) leafs
 
 reachesPartial :: (MetaDat m, Show m) => ReachesEnv m -> PartialType -> CRes ReachesTree
 reachesPartial ReachesEnv{rVaenv} PartialType{ptName=PTypeName argName} | TVArg (partialKey argName) `H.member` rVaenv = return $ ReachesLeaf [TypeVar (TVArg $ partialKey argName) TVInt]
-reachesPartial ReachesEnv{rTypeGraph, rClassGraph} partial@PartialType{ptName=PTypeName name} = do
+reachesPartial ReachesEnv{rTypeGraph, rTypeEnv} partial@PartialType{ptName=PTypeName name} = do
 
   let ttypeArrows = H.lookupDefault [] name rTypeGraph
   ttypes <- mapM tryTArrow ttypeArrows
@@ -81,14 +81,14 @@ reachesPartial ReachesEnv{rTypeGraph, rClassGraph} partial@PartialType{ptName=PT
     tryTArrow oa = do
       -- It is possible to send part of a partial through the arrow, so must compute the valid part
       -- If none of it is valid, then there is Nothing
-      let potentialSrc@(UnionType potSrcLeafs) = intersectTypes rClassGraph (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa)
+      let potentialSrc@(UnionType potSrcLeafs) = intersectTypes rTypeEnv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa)
       if not (isBottomType potentialSrc)
         -- TODO: Should this line below call `reaches` to make this recursive?
         -- otherwise, no reaches path requiring multiple steps can be found
-        then return $ Just $ unionAllTypes rClassGraph [arrowDestType True rClassGraph potentialSrcPartial oa | potentialSrcPartial <- splitUnionType potSrcLeafs]
+        then return $ Just $ unionAllTypes rTypeEnv [arrowDestType True rTypeEnv potentialSrcPartial oa | potentialSrcPartial <- splitUnionType potSrcLeafs]
         else return Nothing
-reachesPartial env@ReachesEnv{rClassGraph} partial@PartialType{ptName=PClassName{}} = reaches env (expandPartial rClassGraph H.empty partial)
-reachesPartial env@ReachesEnv{rClassGraph} PartialType{ptName=(PRelativeName name)} = reaches env (expandRelPartial rClassGraph H.empty name)
+reachesPartial env@ReachesEnv{rTypeEnv} partial@PartialType{ptName=PClassName{}} = reaches env (expandPartial rTypeEnv H.empty partial)
+reachesPartial env@ReachesEnv{rTypeEnv} PartialType{ptName=(PRelativeName name)} = reaches env (expandRelPartial rTypeEnv H.empty name)
 
 reaches :: (MetaDat m, Show m) => ReachesEnv m -> Type -> CRes ReachesTree
 reaches _     (TopType [])            = return $ ReachesLeaf [topType]

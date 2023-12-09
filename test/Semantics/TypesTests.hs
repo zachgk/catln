@@ -42,19 +42,19 @@ ggPrgm prgms = HG.choice [genPremade, genPrgm]
 propCompactNoChanges :: GenPrgm -> Property
 propCompactNoChanges gPrgm = property $ do
   prgm <- forAll gPrgm
-  let classGraph = snd3 prgm
+  let typeEnv = TypeEnv (snd3 prgm)
   a <- forAll $ genType prgm
-  let compacted = compactType classGraph H.empty a
+  let compacted = compactType typeEnv H.empty a
   annotate $ printf "compacted = %s" (show compacted)
-  assert $ isEqType classGraph a compacted
+  assert $ isEqType typeEnv a compacted
 
 propCompactIdempotent :: GenPrgm -> Property
 propCompactIdempotent gPrgm = property $ do
   prgm <- forAll gPrgm
-  let classGraph = snd3 prgm
+  let typeEnv = TypeEnv (snd3 prgm)
   a <- forAll $ genType prgm
-  let compact1 = compactType classGraph H.empty a
-  let compact2 = compactType classGraph H.empty compact1
+  let compact1 = compactType typeEnv H.empty a
+  let compact2 = compactType typeEnv H.empty compact1
   annotate $ printf "compact once to %s" (show compact1)
   annotate $ printf "compact twice to %s" (show compact2)
   compact1 === compact2
@@ -63,112 +63,112 @@ propCompactIdempotent gPrgm = property $ do
 propExpandEq :: GenPrgm -> Property
 propExpandEq gPrgm = property $ do
   prgm <- forAll gPrgm
-  let classGraph = snd3 prgm
+  let typeEnv = TypeEnv (snd3 prgm)
   a <- forAll $ genPartialType prgm
-  let expanded = expandPartial classGraph H.empty a
+  let expanded = expandPartial typeEnv H.empty a
   annotate $ printf "expanded = %s" (show expanded)
-  assert $ isEqType classGraph (singletonType a) expanded
+  assert $ isEqType typeEnv (singletonType a) expanded
 
 
 propSubtypeByUnion :: GenPrgm -> Property
 propSubtypeByUnion gPrgm = property $ do
   prgm <- forAll gPrgm
-  let classGraph = snd3 prgm
+  let typeEnv = TypeEnv (snd3 prgm)
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
-  let subtype = isSubtypeOf classGraph a b
+  let subtype = isSubtypeOf typeEnv a b
   annotate $ printf "subtype = %s" (show subtype)
-  let byUnion = isEqType classGraph (unionTypes classGraph a b) b
-  annotate $ printf "a∪b = %s" (show $ unionTypes classGraph a b)
+  let byUnion = isEqType typeEnv (unionTypes typeEnv a b) b
+  annotate $ printf "a∪b = %s" (show $ unionTypes typeEnv a b)
   annotate $ printf "byUnion = %s" (show byUnion)
   subtype === byUnion
 
 propSubtypeByIntersection :: GenPrgm -> Property
 propSubtypeByIntersection gPrgm = property $ do
   prgm <- forAll gPrgm
-  let classGraph = snd3 prgm
+  let typeEnv = TypeEnv (snd3 prgm)
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
-  let subtype = isSubtypeOf classGraph a b
+  let subtype = isSubtypeOf typeEnv a b
   annotate $ printf "subtype = %s" (show subtype)
-  let byIntersection = isEqType classGraph (intersectTypes classGraph a b) a
-  annotate $ printf "a∩b = %s" (show $ intersectTypes classGraph a b)
+  let byIntersection = isEqType typeEnv (intersectTypes typeEnv a b) a
+  annotate $ printf "a∩b = %s" (show $ intersectTypes typeEnv a b)
   annotate $ printf "byIntersection = %s" (show byIntersection)
   subtype === byIntersection
 
 propUnionReflexive :: GenPrgm -> Property
 propUnionReflexive gPrgm = property $ do
   prgm <- forAll gPrgm
-  let classGraph = snd3 prgm
+  let typeEnv = TypeEnv (snd3 prgm)
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
-  assert $ isEqType classGraph (unionTypes classGraph a b) (unionTypes classGraph b a)
+  assert $ isEqType typeEnv (unionTypes typeEnv a b) (unionTypes typeEnv b a)
 
 propUnionCommutative :: GenPrgm -> Property
 propUnionCommutative gPrgm = property $ do
   prgm <- forAll gPrgm
-  let classGraph = snd3 prgm
+  let typeEnv = TypeEnv (snd3 prgm)
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   c <- forAll $ genType prgm
-  assert $ isEqType classGraph (unionAllTypes classGraph [a, b, c]) (unionAllTypes classGraph [c, b, a])
+  assert $ isEqType typeEnv (unionAllTypes typeEnv [a, b, c]) (unionAllTypes typeEnv [c, b, a])
 
 propIntersectionReflexive :: GenPrgm -> Property
 propIntersectionReflexive gPrgm = property $ do
   prgm <- forAll gPrgm
-  let classGraph = snd3 prgm
+  let typeEnv = TypeEnv (snd3 prgm)
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
-  assert $ isEqType classGraph (intersectTypes classGraph a b) (intersectTypes classGraph b a)
+  assert $ isEqType typeEnv (intersectTypes typeEnv a b) (intersectTypes typeEnv b a)
 
 propIntersectionCommutative :: GenPrgm -> Property
 propIntersectionCommutative gPrgm = property $ do
   prgm <- forAll gPrgm
-  let classGraph = snd3 prgm
+  let typeEnv = TypeEnv (snd3 prgm)
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   c <- forAll $ genType prgm
 
-  let abc = intersectAllTypes classGraph [a, b, c]
+  let abc = intersectAllTypes typeEnv [a, b, c]
   annotate $ printf "a∩b∩c = %s" (show abc)
 
-  let cba = intersectAllTypes classGraph [c, b, a]
+  let cba = intersectAllTypes typeEnv [c, b, a]
   annotate $ printf "c∩b∩a = %s" (show cba)
 
-  annotate $ printf "a∩b∩c ⊆ c∩b∩a = %s" (show $ isSubtypeOf classGraph abc cba)
-  annotate $ printf "c∩b∩a ⊆ a∩b∩c = %s" (show $ isSubtypeOf classGraph cba abc)
+  annotate $ printf "a∩b∩c ⊆ c∩b∩a = %s" (show $ isSubtypeOf typeEnv abc cba)
+  annotate $ printf "c∩b∩a ⊆ a∩b∩c = %s" (show $ isSubtypeOf typeEnv cba abc)
 
-  assert $ isEqType classGraph abc cba
+  assert $ isEqType typeEnv abc cba
 
 propIntersectionDistributesUnion :: GenPrgm -> Property
 propIntersectionDistributesUnion gPrgm = property $ do
   prgm <- forAll gPrgm
-  let classGraph = snd3 prgm
+  let typeEnv = TypeEnv (snd3 prgm)
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   c <- forAll $ genType prgm
-  let f = intersectTypes classGraph a (unionTypes classGraph b c)
+  let f = intersectTypes typeEnv a (unionTypes typeEnv b c)
   annotate $ printf "f = %s" (show f)
-  let d = unionTypes classGraph (intersectTypes classGraph a b) (intersectTypes classGraph a c)
-  annotate $ printf "a∩b = %s" (show $ intersectTypes classGraph a b)
-  annotate $ printf "a∩c = %s" (show $ intersectTypes classGraph a c)
+  let d = unionTypes typeEnv (intersectTypes typeEnv a b) (intersectTypes typeEnv a c)
+  annotate $ printf "a∩b = %s" (show $ intersectTypes typeEnv a b)
+  annotate $ printf "a∩c = %s" (show $ intersectTypes typeEnv a c)
   annotate $ printf "d = %s" (show d)
-  assert $ isEqType classGraph f d
+  assert $ isEqType typeEnv f d
 
 propUnionDistributesIntersection :: GenPrgm  -> Property
 propUnionDistributesIntersection gPrgm = property $ do
   prgm <- forAll gPrgm
-  let classGraph = snd3 prgm
+  let typeEnv = TypeEnv (snd3 prgm)
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   c <- forAll $ genType prgm
-  let f = unionTypes classGraph a (intersectTypes classGraph b c)
+  let f = unionTypes typeEnv a (intersectTypes typeEnv b c)
   annotate $ printf "f = %s" (show f)
-  let d = intersectTypes classGraph (unionTypes classGraph a b) (unionTypes classGraph a c)
-  annotate $ printf "a∪b = %s" (show $ unionTypes classGraph a b)
-  annotate $ printf "a∪c = %s" (show $ unionTypes classGraph a c)
+  let d = intersectTypes typeEnv (unionTypes typeEnv a b) (unionTypes typeEnv a c)
+  annotate $ printf "a∪b = %s" (show $ unionTypes typeEnv a b)
+  annotate $ printf "a∪c = %s" (show $ unionTypes typeEnv a c)
   annotate $ printf "d = %s" (show d)
-  assert $ isEqType classGraph f d
+  assert $ isEqType typeEnv f d
 
 typeTests :: IO TestTree
 typeTests = do

@@ -23,10 +23,10 @@ import           Text.Printf
 import           TypeCheck.Common
 
 toMeta :: FEnv -> VarMeta -> String -> TypeCheckResult (Meta ())
-toMeta env@FEnv{feClassGraph} m@(Meta pt pos _) _ = case pointUb env m of
+toMeta env@FEnv{feTypeEnv} m@(Meta pt pos _) _ = case pointUb env m of
   TypeCheckResult notes ub -> case pt of
     TypeVar{} -> return $ Meta pt pos emptyMetaDat
-    _ -> TypeCheckResult notes $ Meta (intersectTypes feClassGraph ub pt) pos emptyMetaDat
+    _ -> TypeCheckResult notes $ Meta (intersectTypes feTypeEnv ub pt) pos emptyMetaDat
   TypeCheckResE notes -> do
     TypeCheckResult notes (Meta bottomType pos emptyMetaDat)
 

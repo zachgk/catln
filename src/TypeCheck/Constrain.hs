@@ -35,12 +35,12 @@ isSolved _                                 = False
 
 -- | Updates a 'VarMeta' point to a new 'Scheme' value
 setScheme :: FEnv -> VConstraint -> VarMeta -> Scheme -> String -> FEnv
-setScheme env@FEnv{feClassGraph} con p scheme baseMsg = setDescriptor env con p (checkScheme scheme) (msg "" "")
+setScheme env@FEnv{feTypeEnv} con p scheme baseMsg = setDescriptor env con p (checkScheme scheme) (msg "" "")
   where
     -- checkScheme (TypeCheckResult _ (SType ub _ desc)) | containsBottomType ub = error $ msg desc $ printf "Actual type contains bottomType: %s" (show ub)
     checkScheme (TypeCheckResult notes (SType ub _ desc)) | containsBottomType ub = TypeCheckResE (mkTracedTypeCheckError env p (getMetaPos p) (msg desc "Actual type contains bottomType") : notes)
     checkScheme (TypeCheckResult notes (SType _ req desc)) | containsBottomType req = TypeCheckResE (mkTracedTypeCheckError env p (getMetaPos p) (msg desc "Required type contains bottomType") : notes)
-    checkScheme (TypeCheckResult notes (SType act req desc)) | not (isSubtypeOfWithEnv feClassGraph (fmap stypeAct $ fromJust $ tcreToMaybe $ descriptorConVaenv env con) act req) = TypeCheckResE (mkTracedTypeCheckError env p (getMetaPos p) (msg desc "Act is not less than reqe") : notes)
+    checkScheme (TypeCheckResult notes (SType act req desc)) | not (isSubtypeOfWithEnv feTypeEnv (fmap stypeAct $ fromJust $ tcreToMaybe $ descriptorConVaenv env con) act req) = TypeCheckResE (mkTracedTypeCheckError env p (getMetaPos p) (msg desc "Act is not less than reqe") : notes)
     checkScheme s = s
 
     msg :: String -> String -> String
@@ -67,20 +67,20 @@ setSchemeConVaenv env con actOrReq types msg = foldr (\(m, t) env' -> setSchemeA
 
 -- | Tries to join two 'SType' as equal to each other and returns their updated values
 equalizeSTypes :: FEnv -> TypeVarArgEnv -> (SType, SType) -> (TypeVarArgEnv, SType, SType)
-equalizeSTypes FEnv{feClassGraph} vaenv (SType act1 req1 desc1, SType act2 req2 desc2) = do
-  let (vaenv'1, actBoth) = intersectTypesWithVarEnv feClassGraph vaenv act1 act2
-  let (vaenv'2, reqBoth) = intersectTypesWithVarEnv feClassGraph vaenv req1 req2
-  let vaenv' = H.unionWith (intersectTypes feClassGraph) vaenv'1 vaenv'2
+equalizeSTypes FEnv{feTypeEnv} vaenv (SType act1 req1 desc1, SType act2 req2 desc2) = do
+  let (vaenv'1, actBoth) = intersectTypesWithVarEnv feTypeEnv vaenv act1 act2
+  let (vaenv'2, reqBoth) = intersectTypesWithVarEnv feTypeEnv vaenv req1 req2
+  let vaenv' = H.unionWith (intersectTypes feTypeEnv) vaenv'1 vaenv'2
   (vaenv', SType actBoth reqBoth desc1, SType actBoth reqBoth desc2)
 
 
 -- | A helper for the 'PropEq' 'Constraint' that applies to both the actual and required types
 updateSchemeProp :: FEnv -> VConstraint -> SType -> TypeVarAux -> SType -> (FEnv, Scheme, Scheme)
-updateSchemeProp env1@FEnv{feClassGraph} con (SType superAct superReq superDesc) propName (SType subAct subReq subDesc) = (env1, pure $ SType superAct' superReq' superDesc, pure $ SType subAct' subReq' subDesc)
+updateSchemeProp env1@FEnv{feTypeEnv} con (SType superAct superReq superDesc) propName (SType subAct subReq subDesc) = (env1, pure $ SType superAct' superReq' superDesc, pure $ SType subAct' subReq' subDesc)
   where
     TypeCheckResult _ vaenv = descriptorConVaenv env1 con
-    (_actVaenv', superAct', subAct') = updateTypeProp feClassGraph (fmap stypeAct vaenv) superAct propName subAct
-    (_reqVaenv', superReq', subReq') = updateTypeProp feClassGraph (fmap stypeReq vaenv) superReq propName subReq
+    (_actVaenv', superAct', subAct') = updateTypeProp feTypeEnv (fmap stypeAct vaenv) superAct propName subAct
+    (_reqVaenv', superReq', subReq') = updateTypeProp feTypeEnv (fmap stypeReq vaenv) superReq propName subReq
 
 -- | A helper for the 'AddArg' 'Constraint'
 addArgToType :: FEnv -> TypeVarArgEnv -> Type -> ArgName -> Maybe Type
@@ -88,31 +88,31 @@ addArgToType _ _ (TopType _) _ = Nothing
 addArgToType env vaenv (TypeVar v _) newArg = case H.lookup v vaenv of
   Just t  -> addArgToType env vaenv t newArg
   Nothing -> error $ printf "Unknown type in addArgToType: %s" (show v)
-addArgToType env@FEnv{feClassGraph} vaenv (UnionType partials) newArg = Just $ unionAllTypes feClassGraph $ mapMaybe fromPartial $ splitUnionType partials
+addArgToType env@FEnv{feTypeEnv} vaenv (UnionType partials) newArg = Just $ unionAllTypes feTypeEnv $ mapMaybe fromPartial $ splitUnionType partials
   where
-    fromPartial partial@PartialType{ptName=PClassName{}} = addArgToType env vaenv (expandClassPartial feClassGraph vaenv partial) newArg
-    fromPartial partial@PartialType{ptArgs} = Just $ singletonType partial{ptArgs=H.insertWith (unionTypes feClassGraph) newArg topType ptArgs}
+    fromPartial partial@PartialType{ptName=PClassName{}} = addArgToType env vaenv (expandClassPartial feTypeEnv vaenv partial) newArg
+    fromPartial partial@PartialType{ptArgs} = Just $ singletonType partial{ptArgs=H.insertWith (unionTypes feTypeEnv) newArg topType ptArgs}
 
 -- | A helper for the 'AddArg' 'Constraint'
 addArgToScheme :: FEnv -> STypeVarArgEnv -> SType -> ArgName -> SType -> SType
-addArgToScheme env@FEnv{feClassGraph} vaenv (SType srcAct srcReq _) newArgName (SType destAct destReq destDesc) = SType destAct' destReq' destDesc
+addArgToScheme env@FEnv{feTypeEnv} vaenv (SType srcAct srcReq _) newArgName (SType destAct destReq destDesc) = SType destAct' destReq' destDesc
   where
     destAct' = case addArgToType env (fmap stypeAct vaenv) srcAct newArgName of
-      Just addDestAct -> intersectTypes feClassGraph destAct addDestAct
+      Just addDestAct -> intersectTypes feTypeEnv destAct addDestAct
       Nothing         -> destAct
     destReq' = case addArgToType env (fmap stypeReq vaenv) srcReq newArgName of
-      Just addDestReq -> intersectTypes feClassGraph destReq addDestReq
+      Just addDestReq -> intersectTypes feTypeEnv destReq addDestReq
       Nothing         -> destReq
 
 -- | A helper for the 'AddArg' 'Constraint'
 addInferArgToScheme :: FEnv -> STypeVarArgEnv -> SType -> SType -> SType
-addInferArgToScheme env@FEnv{feClassGraph} vaenv (SType srcAct srcReq _) (SType destAct destReq destDesc) = SType destAct' destReq' destDesc
+addInferArgToScheme env@FEnv{feTypeEnv} vaenv (SType srcAct srcReq _) (SType destAct destReq destDesc) = SType destAct' destReq' destDesc
   where
     destAct' = case addInferArgToType env (fmap stypeAct vaenv) srcAct of
-      Just addDestAct -> intersectTypes feClassGraph destAct addDestAct
+      Just addDestAct -> intersectTypes feTypeEnv destAct addDestAct
       Nothing         -> destAct
     destReq' = case addInferArgToType env (fmap stypeAct vaenv) srcReq of
-      Just addDestReq -> intersectTypes feClassGraph destReq addDestReq
+      Just addDestReq -> intersectTypes feTypeEnv destReq addDestReq
       Nothing         -> destReq
 
 -- |
@@ -136,19 +136,19 @@ executeConstraint env1 con@(Constraint _ _ (EqPoints _ p1 p2)) = case sequenceT 
     let env3 = setScheme env2 con p2 (return s2') "EqPoints"
     (isSolved $ return s1', env3)
   TypeCheckResE _ -> (True, env1)
-executeConstraint env@FEnv{feClassGraph} con@(Constraint _ _ (BoundedByKnown _ subPnt boundTp)) = do
+executeConstraint env@FEnv{feTypeEnv} con@(Constraint _ _ (BoundedByKnown _ subPnt boundTp)) = do
   let subScheme = descriptor env subPnt
   case sequenceT (subScheme, descriptorConVaenv env con) of
     TypeCheckResE _ -> (True, env)
     TypeCheckResult _ (SType act req desc, vaenv) -> do
       let tvaenv = fmap stypeAct vaenv
-      let boundTp' = expandType feClassGraph tvaenv boundTp
-      let act' = snd $ intersectTypesWithVarEnv feClassGraph tvaenv act boundTp'
-      let req' = snd $ intersectTypesWithVarEnv feClassGraph tvaenv req boundTp'
+      let boundTp' = expandType feTypeEnv tvaenv boundTp
+      let act' = snd $ intersectTypesWithVarEnv feTypeEnv tvaenv act boundTp'
+      let req' = snd $ intersectTypesWithVarEnv feTypeEnv tvaenv req boundTp'
       let scheme' = pure $ SType act' req' desc
       let env' = setScheme env con subPnt scheme' "BoundedByKnown"
       (True, env')
-executeConstraint env@FEnv{feUnionAllObjs, feClassGraph} con@(Constraint _ _ (BoundedByObjs _ pnt)) = do
+executeConstraint env@FEnv{feUnionAllObjs, feTypeEnv} con@(Constraint _ _ (BoundedByObjs _ pnt)) = do
   let scheme = pointUb env pnt
   let boundScheme = pointUb env feUnionAllObjs
   case sequenceT (scheme, boundScheme, descriptorConVaenv env con) of
@@ -157,12 +157,12 @@ executeConstraint env@FEnv{feUnionAllObjs, feClassGraph} con@(Constraint _ _ (Bo
     TypeCheckResult _ (ub, objMapBoundUb, vaenv) -> do
 
       -- Add the local args to the bound (maybe?)
-      let argsBoundUb = powersetType feClassGraph (fmap stypeAct vaenv) $ UnionType $ joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con
-      let boundUb = unionTypes feClassGraph objMapBoundUb argsBoundUb
+      let argsBoundUb = powersetType feTypeEnv (fmap stypeAct vaenv) $ UnionType $ joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con
+      let boundUb = unionTypes feTypeEnv objMapBoundUb argsBoundUb
 
       -- A partially applied tuple would not be a raw type on the unionObj,
       -- but a subset of the arguments in that type
-      let (_, ub') = intersectTypesWithVarEnv feClassGraph (fmap stypeAct vaenv) ub boundUb
+      let (_, ub') = intersectTypesWithVarEnv feTypeEnv (fmap stypeAct vaenv) ub boundUb
       let env' = setSchemeAct env con pnt ub' $ printf "BoundedByObjs for %s\n\tArgsBound: %s\n\tBound: %s\n" (show ub) (show argsBoundUb) (show boundUb)
       -- let env' = setSchemeAct env con pnt ub' $ printf "BoundedByObjs for %s\n" (show ub)
       (False, env')
@@ -211,24 +211,24 @@ executeConstraint env con@(Constraint _ _ (AddInferArg _ srcPnt destPnt)) = do
       let dest' = pure $ addInferArgToScheme env vaenv src dest
       let env' = setScheme env con destPnt dest' "AddInferArg dest"
       (False, env')
-executeConstraint env@FEnv{feClassGraph} con@(Constraint _ _ (PowersetTo _ srcPnt destPnt)) = do
+executeConstraint env@FEnv{feTypeEnv} con@(Constraint _ _ (PowersetTo _ srcPnt destPnt)) = do
   let srcScheme = pointUb env srcPnt
   let destScheme = pointUb env destPnt
   case sequenceT (srcScheme, destScheme, descriptorConVaenv env con) of
     TypeCheckResE _ -> (True, env)
     TypeCheckResult _ (ub1, ub2, vaenv) -> do
-      let ub2' = intersectTypes feClassGraph (powersetType feClassGraph (fmap stypeAct vaenv) ub1) ub2
+      let ub2' = intersectTypes feTypeEnv (powersetType feTypeEnv (fmap stypeAct vaenv) ub1) ub2
       let env' = setSchemeAct env con destPnt ub2' "PowersetTo"
       (False, env')
-executeConstraint env@FEnv{feClassGraph} con@(Constraint _ _ (UnionOf _ parentPnt childrenM)) = do
+executeConstraint env@FEnv{feTypeEnv} con@(Constraint _ _ (UnionOf _ parentPnt childrenM)) = do
   let parentScheme = descriptor env parentPnt
   let tcresChildrenSchemes = fmap (descriptor env) childrenM
   case sequenceT (parentScheme, sequence tcresChildrenSchemes, descriptorConVaenv env con) of
     TypeCheckResE _ -> (True, env)
     TypeCheckResult notes (parentSType, childrenSchemes, vaenv) -> do
-      let accumulateChild (SType ub lb _) (accUb, accLb) = (unionTypes feClassGraph ub accUb, unionTypes feClassGraph lb accLb)
+      let accumulateChild (SType ub lb _) (accUb, accLb) = (unionTypes feTypeEnv ub accUb, unionTypes feTypeEnv lb accLb)
       let (chUb, chLb) = foldr accumulateChild (bottomType, bottomType) childrenSchemes
-      let (vaenv', parentST', _) = equalizeSTypes env (fmap stypeAct vaenv) (parentSType, SType (compactType feClassGraph (fmap stypeAct vaenv) chUb) chLb "")
+      let (vaenv', parentST', _) = equalizeSTypes env (fmap stypeAct vaenv) (parentSType, SType (compactType feTypeEnv (fmap stypeAct vaenv) chUb) chLb "")
       let parentScheme' = TypeCheckResult notes parentST'
       let env' = setScheme env con parentPnt parentScheme' "UnionOf"
       let env'' = setSchemeConVaenv env' con SchemeAct vaenv' "EqualsKnown env"

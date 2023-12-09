@@ -53,7 +53,7 @@ buildMatch _tp opts = case H.toList opts of
 buildTBEnv :: ResBuildEnv -> TBPrgm -> TBEnv
 buildTBEnv primEnv prgm@(objMap, classGraph, _) = baseEnv
   where
-    baseEnv = TBEnv "" (H.union primEnv resEnv) prgm classGraph
+    baseEnv = TBEnv "" (H.union primEnv resEnv) prgm (TypeEnv classGraph)
     resEnv = H.fromListWith (++) $ mapMaybe resFromArrow objMap
 
     resFromArrow oa@ObjArr{oaObj=Just (GuardExpr _ aguard), oaArr, oaAnnots} = case oaArr of
@@ -63,10 +63,10 @@ buildTBEnv primEnv prgm@(objMap, classGraph, _) = baseEnv
     resFromArrow oa = error $ printf "resFromArrow with no input expression: %s" (show oa)
 
 envLookupTry ::  TBEnv -> [ObjSrc] -> VisitedArrows -> PartialType -> Type -> TCallTree -> CRes TCallTree
-envLookupTry TBEnv{tbClassGraph} os _ srcType destType resArrow | isSubtypeOfWithObjSrcs tbClassGraph os (resArrowDestType tbClassGraph srcType resArrow) destType = return resArrow
+envLookupTry TBEnv{tbTypeEnv} os _ srcType destType resArrow | isSubtypeOfWithObjSrcs tbTypeEnv os (resArrowDestType tbTypeEnv srcType resArrow) destType = return resArrow
 envLookupTry _ _ visitedArrows _ _ resArrow | S.member resArrow visitedArrows = CErr [MkCNote $ BuildTreeCErr Nothing "Found cyclical use of function"]
-envLookupTry env@TBEnv{tbClassGraph} objSrc visitedArrows srcType destType resArrow = do
-  newLeafTypes <- case resArrowDestType tbClassGraph srcType resArrow of
+envLookupTry env@TBEnv{tbTypeEnv} objSrc visitedArrows srcType destType resArrow = do
+  newLeafTypes <- case resArrowDestType tbTypeEnv srcType resArrow of
     UnionType t -> return t
     t -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Found impossible type %s in envLookupTry" (show t)]
   afterArrows <- traverse buildAfterArrows $ splitUnionType newLeafTypes
@@ -85,17 +85,17 @@ envLookupTry env@TBEnv{tbClassGraph} objSrc visitedArrows srcType destType resAr
 -- It is used for arrow declarations that require multiple arrows definitions to constitute
 -- TODO: This would be drastically improved with type difference
 completeTreeSet :: TBEnv -> PartialType -> [(PartialType, TCallTree)] -> Either Type (H.HashMap PartialType TCallTree)
-completeTreeSet TBEnv{tbClassGraph} fullPartial = aux H.empty bottomType
+completeTreeSet TBEnv{tbTypeEnv} fullPartial = aux H.empty bottomType
   where
     fullType = singletonType fullPartial
     aux :: H.HashMap PartialType TCallTree -> Type -> [(PartialType, TCallTree)] -> Either Type (H.HashMap PartialType TCallTree)
-    aux accMap accType _ | isSubtypeOf tbClassGraph fullType accType = return accMap
+    aux accMap accType _ | isSubtypeOf tbTypeEnv fullType accType = return accMap
     aux _ accType [] = Left accType
     aux accMap accType ((optType, optTree):opts) = do
-      let accType' = intersectTypes tbClassGraph fullType $ unionTypes tbClassGraph accType (singletonType optType)
+      let accType' = intersectTypes tbTypeEnv fullType $ unionTypes tbTypeEnv accType (singletonType optType)
 
       -- next opt increases accumulation
-      if not (isSubtypeOf tbClassGraph accType' accType)
+      if not (isSubtypeOf tbTypeEnv accType' accType)
         -- Add to accumulation
         -- TODO: Should use ((optType - accType) ∩ fullType) for insertion, otherwise order may not be correct in matching and match not precise
         then aux (H.insert optType optTree accMap) accType' opts
@@ -145,23 +145,23 @@ groupArrows = aux ([], Nothing)
     aux (_, _) ((_, Just{}, True, _):_) = CErr [MkCNote $ BuildTreeCErr Nothing "ElseGuards with conditions are currently not supported"]
 
 findResArrows :: TBEnv -> [ObjSrc] -> PartialType -> Type -> CRes [ResBuildEnvItem]
-findResArrows TBEnv{tbName, tbResEnv, tbClassGraph} os srcType@PartialType{ptName=PTypeName srcName} destType = case argArrows ++ globalArrows of
+findResArrows TBEnv{tbName, tbResEnv, tbTypeEnv} os srcType@PartialType{ptName=PTypeName srcName} destType = case argArrows ++ globalArrows of
   arrows@(_:_) -> return arrows
   [] -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Failed to find any arrows:\n\tWhen building %s\n\tfrom %s to %s" tbName (show srcType) (show destType)]
   where
     globalArrows = case suffixLookupInDict srcName tbResEnv of
       -- TODO: Sort resArrows by priority order before trying
-      Just resArrowsWithName -> filter (\(arrowType, _, _, _) -> not $ isBottomType $ intersectTypes tbClassGraph (singletonType srcType) (singletonType arrowType)) resArrowsWithName
+      Just resArrowsWithName -> filter (\(arrowType, _, _, _) -> not $ isBottomType $ intersectTypes tbTypeEnv (singletonType srcType) (singletonType arrowType)) resArrowsWithName
       Nothing -> []
     argArrows :: [ResBuildEnvItem]
-    argArrows = case suffixLookupInDict srcName $ H.mapKeys pkName $ snd $ splitVarArgEnv $ exprVarArgsWithObjSrcs tbClassGraph os of
+    argArrows = case suffixLookupInDict srcName $ H.mapKeys pkName $ snd $ splitVarArgEnv $ exprVarArgsWithObjSrcs tbTypeEnv os of
       Just (_, argArrowType) -> [(srcType, Nothing, False, TCArg argArrowType srcName)]
       Nothing -> []
 findResArrows _ _ PartialType{ptName=PClassName{}} _ = error "Can't findResArrows for class"
 findResArrows _ _ PartialType{ptName=PRelativeName{}} _ = error "Can't findResArrows for relative name"
 
 envLookup :: TBEnv -> [ObjSrc] -> VisitedArrows -> PartialType -> Type -> CRes TCallTree
-envLookup TBEnv{tbClassGraph} os _ srcType destType | isSubtypeOfWithObjSrcs tbClassGraph os (singletonType srcType) destType = return TCTId
+envLookup TBEnv{tbTypeEnv} os _ srcType destType | isSubtypeOfWithObjSrcs tbTypeEnv os (singletonType srcType) destType = return TCTId
 envLookup env obj visitedArrows srcType destType = do
   resArrows <- findResArrows env obj srcType destType
   guards <- groupArrows resArrows
@@ -169,10 +169,10 @@ envLookup env obj visitedArrows srcType destType = do
 
 
 buildCallTree :: TBEnv -> [ObjSrc] -> Type -> Type -> CRes TCallTree
-buildCallTree TBEnv{tbClassGraph} os srcType destType | isSubtypeOfWithObjSrcs tbClassGraph os srcType destType = return TCTId
+buildCallTree TBEnv{tbTypeEnv} os srcType destType | isSubtypeOfWithObjSrcs tbTypeEnv os srcType destType = return TCTId
 buildCallTree _ _ _ (TopType []) = return TCTId
 buildCallTree _ _ (TopType []) _ = error $ printf "buildCallTree from top type"
-buildCallTree env@TBEnv{tbClassGraph} objSrcs (TypeVar v _) destType = case H.lookup v (exprVarArgsWithObjSrcs tbClassGraph objSrcs) of
+buildCallTree env@TBEnv{tbTypeEnv} objSrcs (TypeVar v _) destType = case H.lookup v (exprVarArgsWithObjSrcs tbTypeEnv objSrcs) of
   Just (_, srcType') -> buildCallTree env objSrcs srcType' destType
   Nothing -> error $ printf "Unknown TypeVar %s in buildCallTree" (show v)
 buildCallTree env os (UnionType srcLeafs) destType = do

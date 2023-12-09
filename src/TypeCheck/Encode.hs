@@ -64,7 +64,7 @@ makeBaseFEnv classGraph = FEnv{
   feVTypeGraph = H.empty,
   feTTypeGraph = H.empty,
   feUpdatedDuringEpoch = False,
-  feClassGraph = classGraph,
+  feTypeEnv = TypeEnv classGraph,
   feTrace = [[]]
   }
 
