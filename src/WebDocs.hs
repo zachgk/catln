@@ -32,7 +32,6 @@ import           Data.Maybe                    (fromJust)
 import           Eval                          (evalAnnots, evalBuild, evalRun)
 import           Eval.Common                   (EvalResult, Val (..))
 import           MapMeta                       (interleaveMeta, zipMetaFun)
-import           Semantics
 import           Semantics.Interleave          (interleavePrgm)
 import           Semantics.Prgm
 import           Semantics.Types

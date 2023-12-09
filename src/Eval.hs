@@ -17,7 +17,6 @@ module Eval where
 
 import           CRes
 import qualified Data.HashMap.Strict as H
-import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
 
@@ -61,8 +60,8 @@ evalBuildable _                      = False
 evalTargetMode :: String -> String -> EPrgmGraphData -> EvalMode
 evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe $ mapMaybe objArrowsContains objMap
   where
-    (objMap, classGraph, _) = prgmFromGraphData prgmName prgmGraphData
-    typeEnv = TypeEnv classGraph
+    prgm@(objMap, _, _) = prgmFromGraphData prgmName prgmGraphData
+    typeEnv = mkTypeEnv prgm
     objArrowsContains ObjArr{oaArr=(Nothing, _)} = Nothing
     objArrowsContains oa@ObjArr{oaArr=(_, oaM)} = case oaObjPath oa of
       "/Context" -> case H.lookup (partialKey "value") $ exprAppliedArgsMap $ oaObjExpr oa of
@@ -155,9 +154,9 @@ evalExpr env (TCalls _ b callTree) = do
   evalCallTree env' b' callTree
 
 evalBaseEnv :: EPrgm -> Env
-evalBaseEnv prgm@(objMap, classGraph, _) = Env {
+evalBaseEnv prgm@(objMap, _, _) = Env {
         evObjMap = objMap,
-        evTypeEnv = TypeEnv classGraph,
+        evTypeEnv = mkTypeEnv prgm,
         evArgs = H.empty,
         evExEnv = H.empty,
         evTbEnv = buildTBEnv primEnv prgm,

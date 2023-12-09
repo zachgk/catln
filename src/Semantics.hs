@@ -56,10 +56,6 @@ exprWithMetaType t e = exprWithMeta (mWithType t (getExprMeta e)) e
 classGraphFromObjs :: (ExprClass e, MetaDat m, Show m, Show (e m)) => ObjectMap e m -> ClassGraph
 classGraphFromObjs objMap = ClassGraph $ graphFromEdges $ map (\oa -> (CGType, PTypeName (oaObjPath oa), [])) objMap
 
-oaObjExpr :: (MetaDat m, ExprClass e, Show m, Show (e m)) => ObjArr e m -> e m
-oaObjExpr ObjArr{oaObj=Just (GuardExpr e _)} = e
-oaObjExpr oa = error $ printf "oaObjExpr with no input expression: %s" (show oa)
-
 mapOAObjExpr :: (MetaDat m, ExprClass e, Show (e m)) => (e m -> e m) -> ObjArr e m -> ObjArr e m
 mapOAObjExpr f oa@ObjArr{oaObj=Just (GuardExpr e g)} = oa{oaObj = Just (GuardExpr (f e) g)}
 mapOAObjExpr _ oa@ObjArr{oaObj=Nothing} = oa
@@ -67,9 +63,6 @@ mapOAObjExpr _ oa@ObjArr{oaObj=Nothing} = oa
 mapOAArrExpr :: (MetaDat m, ExprClass e, Show (e m)) => (e m -> e m) -> ObjArr e m -> ObjArr e m
 mapOAArrExpr f oa@ObjArr{oaArr=(Just (GuardExpr e g), m)} = oa{oaArr = (Just (GuardExpr (f e) g), m)}
 mapOAArrExpr _ oa = oa
-
-oaObjPath :: (MetaDat m, ExprClass e, Show m, Show (e m)) => ObjArr e m -> TypeName
-oaObjPath = exprPath . oaObjExpr
 
 -- |
 -- The 'exprVarArgsWithSrc' is similar to the 'exprArgs' function.

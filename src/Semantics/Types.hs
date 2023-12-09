@@ -125,7 +125,7 @@ type Sealed = Bool
 -- TODO: ClassGraph should be more granular. Can have class to only a certain object or based on type variables.
 newtype ClassGraph = ClassGraph (GraphData CGNode PartialName)
 
-newtype TypeEnv = TypeEnv ClassGraph
+data TypeEnv = TypeEnv ClassGraph (S.HashSet Name)
   deriving (Show)
 
 -- | A class or type node within the 'ClassGraph'
@@ -216,8 +216,11 @@ mapTypePred f (PredExpr p)  = PredExpr (f p)
 mapTypePred f (PredClass p) = PredClass (f p)
 mapTypePred _ (PredRel p)   = PredRel p
 
-listClassGraphNames :: TypeEnv -> [PartialName]
-listClassGraphNames (TypeEnv (ClassGraph graphData)) = map snd3 (graphToNodes graphData)
+listTypeEnvNames :: TypeEnv -> [PartialName]
+listTypeEnvNames (TypeEnv classGraph names) = tpNames ++ clsNames
+  where
+    tpNames = map PTypeName $ S.toList names
+    clsNames = map PClassName $ listClassNames classGraph
 
 listClassNames :: ClassGraph -> [ClassName]
 listClassNames (ClassGraph graphData) = map (fromPartialName . snd3) $ filter isClass $ graphToNodes graphData
@@ -379,7 +382,7 @@ expandType typeEnv vaenv (TopType preds) = intersectAllTypes typeEnv $ map expan
     expandPred (PredExpr _)     = undefined
 
 expandClassPartial :: TypeEnv -> TypeVarArgEnv -> PartialType -> Type
-expandClassPartial typeEnv@(TypeEnv (ClassGraph cg)) vaenv PartialType{ptName, ptVars=classVarsP} = expanded
+expandClassPartial typeEnv@(TypeEnv (ClassGraph cg) _) vaenv PartialType{ptName, ptVars=classVarsP} = expanded
   where
     className = PClassName $ fromPartialName ptName
     expanded = case graphLookup className cg of
@@ -396,9 +399,9 @@ expandClassPartial typeEnv@(TypeEnv (ClassGraph cg)) vaenv PartialType{ptName, p
       r -> error $ printf "Unknown class %s in expandPartial. Found %s" (show className) (show r)
 
 expandRelPartial :: TypeEnv -> TypeVarArgEnv -> Name -> Type
-expandRelPartial typeEnv vaenv name = UnionType $ joinUnionType (fromArgs ++ fromClassGraph)
+expandRelPartial typeEnv vaenv name = UnionType $ joinUnionType (fromArgs ++ fromTypeEnv)
   where
-    fromClassGraph = map partialVal $ relativePartialNameFilter name (listClassGraphNames typeEnv)
+    fromTypeEnv = map partialVal $ relativePartialNameFilter name (listTypeEnvNames typeEnv)
     fromArgs = map (partialVal . PTypeName) $ relativeNameFilter name $ map pkName $ H.keys $ snd $ splitVarArgEnv vaenv
 
 -- |

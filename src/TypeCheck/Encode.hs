@@ -55,8 +55,8 @@ encodeObj :: EncodeState -> Maybe VObject
 encodeObj (EncodeOut obj) = obj
 encodeObj EncodeIn{}      = Nothing
 
-makeBaseFEnv :: ClassGraph -> FEnv
-makeBaseFEnv classGraph = FEnv{
+makeBaseFEnv :: PPrgm -> FEnv
+makeBaseFEnv prgm = FEnv{
   fePnts = IM.empty,
   feConsDats = [],
   feCons = [],
@@ -64,7 +64,7 @@ makeBaseFEnv classGraph = FEnv{
   feVTypeGraph = H.empty,
   feTTypeGraph = H.empty,
   feUpdatedDuringEpoch = False,
-  feTypeEnv = TypeEnv classGraph,
+  feTypeEnv = mkTypeEnv prgm,
   feTrace = [[]]
   }
 

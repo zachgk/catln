@@ -31,8 +31,8 @@ propExprEncodeDecode = property $ do
   prgmsNodes <- forAll genPrgms
   let prgms = map fst3 prgmsNodes
   annotate $ printf "Programs: \n\t%s" (show prgms)
-  let classGraph = snd3 $ mergePrgms prgms
-  let fenv = makeBaseFEnv classGraph
+  let prgm = mergePrgms prgms
+  let fenv = makeBaseFEnv prgm
   (encoded, fenv') <- evalMaybe $ tcreToMaybe $ fromPrgms fenv prgms []
   decoded <- evalMaybe $ tcreToMaybe $ toPrgms fenv' encoded
   annotate $ printf "Decoded to: \n\t%s" (show decoded)
@@ -42,8 +42,8 @@ propConstraint :: Property
 propConstraint = property $ do
   prgmsNodes <- forAll genPrgms
   let prgms = map fst3 prgmsNodes
-  let classGraph = snd3 $ mergePrgms prgms
-  let fenv = makeBaseFEnv classGraph
+  let prgm = mergePrgms prgms
+  let fenv = makeBaseFEnv prgm
   (_, fenv') <- evalMaybe $ tcreToMaybe $ fromPrgms fenv prgms []
   let cons = feCons fenv'
   con <- forAll $ HG.element cons
@@ -54,8 +54,8 @@ propConstraints :: Property
 propConstraints = property $ do
   prgmsNodes <- forAll genPrgms
   let prgms = map fst3 prgmsNodes
-  let classGraph = snd3 $ mergePrgms prgms
-  let fenv = makeBaseFEnv classGraph
+  let prgm = mergePrgms prgms
+  let fenv = makeBaseFEnv prgm
   (_, fenv') <- evalMaybe $ tcreToMaybe $ fromPrgms fenv prgms []
   let cons = feCons fenv'
   usedCons <- forAll $ HG.subsequence (concat $ replicate 4 cons)

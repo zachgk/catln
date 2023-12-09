@@ -18,8 +18,7 @@ module Syntax.Ct.Desugarf.Passes where
 import           Data.Graph
 import           Data.List               (nub)
 import           MapMeta
-import           Semantics
-import           Semantics.Prgm          (Meta (Meta), getRecursiveObjs)
+import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Parser.Syntax
 import           Text.Printf
@@ -46,7 +45,7 @@ removeClassInstanceObjects (_, fullPrgmClassGraph, _) (objMap, ClassGraph cg, an
 -- uses the mapMeta for objMap and annots, but must map the classGraph manually
 -- the fullPrgmClassToTypes includes the imports and is used for when the def is inside an import
 resolveRelativeNames :: DesPrgm -> DesPrgm -> DesPrgm
-resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, classGraph@(ClassGraph cg), annots) = mapMetaPrgm resolveMeta (objMap, classGraph', annots)
+resolveRelativeNames fullPrgm@(fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, ClassGraph cg, annots) = mapMetaPrgm resolveMeta (objMap, classGraph', annots)
   where
     classGraph' = ClassGraph $ graphFromEdges $ map mapClassEntry $ graphToNodes cg
     mapClassEntry (node, tp, subTypes) = (mapCGNode node, resolveName True tp, map (resolveName True) subTypes)
@@ -64,7 +63,7 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, classGraph
     mapType _ (TopType ps) = TopType ps
     mapType _ tp@(TypeVar TVVar{} _) = tp
     mapType _ (TypeVar TVArg{} _) = error "Invalid arg type"
-    mapType reqResolve (UnionType partials) = unionAllTypes (TypeEnv classGraph) $ map (singletonType . mapPartial reqResolve) $ splitUnionType partials
+    mapType reqResolve (UnionType partials) = unionAllTypes (mkTypeEnv fullPrgm) $ map (singletonType . mapPartial reqResolve) $ splitUnionType partials
 
     mapPartial :: Bool -> PartialType -> PartialType
     mapPartial reqResolve partial@PartialType{ptName, ptVars, ptArgs, ptPreds} = partial {

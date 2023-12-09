@@ -26,6 +26,7 @@ import           GHC.Generics        (Generic)
 import           Data.Aeson          hiding (Object)
 import           Data.Bifunctor      (first)
 import           Data.Graph
+import qualified Data.HashSet        as S
 import           Data.Maybe
 import           Semantics.Types
 import           Text.Megaparsec
@@ -298,6 +299,13 @@ exprAppliedArgsMap = H.fromList . mapMaybe mapArg . exprAppliedArgs
     mapArg ObjArr{oaObj=Just (GuardExpr oe _), oaArr=(arrExpr, oaM)} = Just (inExprSingleton oe, (oaM, fmap rgeExpr arrExpr))
     mapArg _ = Nothing
 
+oaObjExpr :: (MetaDat m, ExprClass e, Show m, Show (e m)) => ObjArr e m -> e m
+oaObjExpr ObjArr{oaObj=Just (GuardExpr e _)} = e
+oaObjExpr oa = error $ printf "oaObjExpr with no input expression: %s" (show oa)
+
+
+oaObjPath :: (MetaDat m, ExprClass e, Show m, Show (e m)) => ObjArr e m -> TypeName
+oaObjPath = exprPath . oaObjExpr
 
 mergeDoc :: Maybe String -> Maybe String -> Maybe String
 mergeDoc (Just a) (Just b) = Just (a ++ " " ++ b)
@@ -318,10 +326,10 @@ mergeClassGraphs (ClassGraph classGraphA) (ClassGraph classGraphB) = ClassGraph 
     mergeClasses (CGType, name, []) (CGType, _, []) = (CGType, name, [])
     mergeClasses cg1 cg2 = error $ printf "Unexpected input to mergeClassGraphs: \n\t%s \n\t%s" (show cg1) (show cg2)
 
-    mergeClassPartials clss@PartialType{ptVars=varsA} PartialType{ptVars=varsB} = clss{ptVars = H.unionWith (unionTypes (TypeEnv (ClassGraph classGraphA))) varsA varsB}
+    mergeClassPartials clss@PartialType{ptVars=varsA} PartialType{ptVars=varsB} = clss{ptVars = H.unionWith (unionTypes (TypeEnv (ClassGraph classGraphA) S.empty)) varsA varsB}
 
 mergeTypeEnv :: TypeEnv -> TypeEnv -> TypeEnv
-mergeTypeEnv (TypeEnv cg1) (TypeEnv cg2) = TypeEnv (mergeClassGraphs cg1 cg2)
+mergeTypeEnv (TypeEnv cg1 n1) (TypeEnv cg2 n2) = TypeEnv (mergeClassGraphs cg1 cg2) (S.union n1 n2)
 
 mergePrgm :: Prgm e m -> Prgm e m -> Prgm e m
 mergePrgm (objMap1, classGraph1, annots1) (objMap2, classGraph2, annots2) = (
@@ -351,3 +359,8 @@ getRecursiveObjs oa@ObjArr{oaBasis, oaObj=Just (GuardExpr objE _)} = oa : recurs
     recursedSubObjects = map toObjMapItem $ getRecursiveObjsExpr objE
     toObjMapItem e = ObjArr (Just (GuardExpr e Nothing)) oaBasis Nothing [] (Nothing, emptyMetaN)
 getRecursiveObjs oa = error $ printf "getRecursiveObjs with no input expression: %s" (show oa)
+
+mkTypeEnv :: (ExprClass e, Show m, Show (e m), MetaDat m) => Prgm e m -> TypeEnv
+mkTypeEnv (objMap, classGraph, _) = TypeEnv classGraph typeNames
+  where
+    typeNames = S.fromList $ map oaObjPath $ concatMap getRecursiveObjs objMap

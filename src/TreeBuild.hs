@@ -51,9 +51,9 @@ buildMatch _tp opts = case H.toList opts of
   _        -> TCMatch opts
 
 buildTBEnv :: ResBuildEnv -> TBPrgm -> TBEnv
-buildTBEnv primEnv prgm@(objMap, classGraph, _) = baseEnv
+buildTBEnv primEnv prgm@(objMap, _, _) = baseEnv
   where
-    baseEnv = TBEnv "" (H.union primEnv resEnv) prgm (TypeEnv classGraph)
+    baseEnv = TBEnv "" (H.union primEnv resEnv) prgm (mkTypeEnv prgm)
     resEnv = H.fromListWith (++) $ mapMaybe resFromArrow objMap
 
     resFromArrow oa@ObjArr{oaObj=Just (GuardExpr _ aguard), oaArr, oaAnnots} = case oaArr of

@@ -42,7 +42,7 @@ ggPrgm prgms = HG.choice [genPremade, genPrgm]
 propCompactNoChanges :: GenPrgm -> Property
 propCompactNoChanges gPrgm = property $ do
   prgm <- forAll gPrgm
-  let typeEnv = TypeEnv (snd3 prgm)
+  let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   let compacted = compactType typeEnv H.empty a
   annotate $ printf "compacted = %s" (show compacted)
@@ -51,7 +51,7 @@ propCompactNoChanges gPrgm = property $ do
 propCompactIdempotent :: GenPrgm -> Property
 propCompactIdempotent gPrgm = property $ do
   prgm <- forAll gPrgm
-  let typeEnv = TypeEnv (snd3 prgm)
+  let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   let compact1 = compactType typeEnv H.empty a
   let compact2 = compactType typeEnv H.empty compact1
@@ -63,7 +63,7 @@ propCompactIdempotent gPrgm = property $ do
 propExpandEq :: GenPrgm -> Property
 propExpandEq gPrgm = property $ do
   prgm <- forAll gPrgm
-  let typeEnv = TypeEnv (snd3 prgm)
+  let typeEnv = mkTypeEnv prgm
   a <- forAll $ genPartialType prgm
   let expanded = expandPartial typeEnv H.empty a
   annotate $ printf "expanded = %s" (show expanded)
@@ -73,7 +73,7 @@ propExpandEq gPrgm = property $ do
 propSubtypeByUnion :: GenPrgm -> Property
 propSubtypeByUnion gPrgm = property $ do
   prgm <- forAll gPrgm
-  let typeEnv = TypeEnv (snd3 prgm)
+  let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   let subtype = isSubtypeOf typeEnv a b
@@ -86,7 +86,7 @@ propSubtypeByUnion gPrgm = property $ do
 propSubtypeByIntersection :: GenPrgm -> Property
 propSubtypeByIntersection gPrgm = property $ do
   prgm <- forAll gPrgm
-  let typeEnv = TypeEnv (snd3 prgm)
+  let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   let subtype = isSubtypeOf typeEnv a b
@@ -99,7 +99,7 @@ propSubtypeByIntersection gPrgm = property $ do
 propUnionReflexive :: GenPrgm -> Property
 propUnionReflexive gPrgm = property $ do
   prgm <- forAll gPrgm
-  let typeEnv = TypeEnv (snd3 prgm)
+  let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   assert $ isEqType typeEnv (unionTypes typeEnv a b) (unionTypes typeEnv b a)
@@ -107,7 +107,7 @@ propUnionReflexive gPrgm = property $ do
 propUnionCommutative :: GenPrgm -> Property
 propUnionCommutative gPrgm = property $ do
   prgm <- forAll gPrgm
-  let typeEnv = TypeEnv (snd3 prgm)
+  let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   c <- forAll $ genType prgm
@@ -116,7 +116,7 @@ propUnionCommutative gPrgm = property $ do
 propIntersectionReflexive :: GenPrgm -> Property
 propIntersectionReflexive gPrgm = property $ do
   prgm <- forAll gPrgm
-  let typeEnv = TypeEnv (snd3 prgm)
+  let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   assert $ isEqType typeEnv (intersectTypes typeEnv a b) (intersectTypes typeEnv b a)
@@ -124,7 +124,7 @@ propIntersectionReflexive gPrgm = property $ do
 propIntersectionCommutative :: GenPrgm -> Property
 propIntersectionCommutative gPrgm = property $ do
   prgm <- forAll gPrgm
-  let typeEnv = TypeEnv (snd3 prgm)
+  let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   c <- forAll $ genType prgm
@@ -143,7 +143,7 @@ propIntersectionCommutative gPrgm = property $ do
 propIntersectionDistributesUnion :: GenPrgm -> Property
 propIntersectionDistributesUnion gPrgm = property $ do
   prgm <- forAll gPrgm
-  let typeEnv = TypeEnv (snd3 prgm)
+  let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   c <- forAll $ genType prgm
@@ -158,7 +158,7 @@ propIntersectionDistributesUnion gPrgm = property $ do
 propUnionDistributesIntersection :: GenPrgm  -> Property
 propUnionDistributesIntersection gPrgm = property $ do
   prgm <- forAll gPrgm
-  let typeEnv = TypeEnv (snd3 prgm)
+  let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   c <- forAll $ genType prgm

@@ -23,7 +23,7 @@ import qualified Data.Set            as S
 import           Hedgehog
 import qualified Hedgehog.Gen        as HG
 import           Hedgehog.Range      (linear, singleton)
-import           Semantics           (classGraphFromObjs, oaObjExpr)
+import           Semantics           (classGraphFromObjs)
 import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
