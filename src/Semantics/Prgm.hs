@@ -201,11 +201,12 @@ instance ExprClass Expr where
   maybeExprPathM (AliasExpr b _)         = maybeExprPathM b
   maybeExprPathM _                       = Nothing
 
-  exprAppliedArgs (Value _ _) = []
+  exprAppliedArgs (Value _ _)               = []
+  exprAppliedArgs CExpr{}                   = []
+  exprAppliedArgs HoleExpr{}                = []
   exprAppliedArgs (TupleApply _ (_, be) ae) = ae : exprAppliedArgs be
-  exprAppliedArgs (VarApply _ e _ _) = exprAppliedArgs e
-  exprAppliedArgs (AliasExpr b _) = exprAppliedArgs b
-  exprAppliedArgs e = error $ printf "Unsupported Expr exprAppliedArgs for %s" (show e)
+  exprAppliedArgs (VarApply _ e _ _)        = exprAppliedArgs e
+  exprAppliedArgs (AliasExpr b _)           = exprAppliedArgs b
 
   exprAppliedOrdVars (Value _ _) = []
   exprAppliedOrdVars (TupleApply _ (_, be) _) = exprAppliedOrdVars be
@@ -360,7 +361,13 @@ getRecursiveObjs oa@ObjArr{oaBasis, oaObj=Just (GuardExpr objE _)} = oa : recurs
     toObjMapItem e = ObjArr (Just (GuardExpr e Nothing)) oaBasis Nothing [] (Nothing, emptyMetaN)
 getRecursiveObjs oa = error $ printf "getRecursiveObjs with no input expression: %s" (show oa)
 
+getAllObjArrNames :: (ExprClass e, MetaDat m, Show m) => ObjArr e m -> [Name]
+getAllObjArrNames ObjArr{oaObj, oaArr=(oaArrExpr, _)} = maybe [] (getAllExprNames . rgeExpr) oaObj ++ maybe [] (getAllExprNames . rgeExpr) oaArrExpr
+
+getAllExprNames :: (ExprClass e, MetaDat m, Show m) => e m -> [Name]
+getAllExprNames e = maybeToList (maybeExprPath e) ++ concatMap getAllObjArrNames (exprAppliedArgs e)
+
 mkTypeEnv :: (ExprClass e, Show m, Show (e m), MetaDat m) => Prgm e m -> TypeEnv
 mkTypeEnv (objMap, classGraph, _) = TypeEnv classGraph typeNames
   where
-    typeNames = S.fromList $ map oaObjPath $ concatMap getRecursiveObjs objMap
+    typeNames = S.fromList $ concatMap getAllObjArrNames objMap

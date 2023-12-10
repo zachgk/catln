@@ -143,8 +143,8 @@ executeConstraint env@FEnv{feTypeEnv} con@(Constraint _ _ (BoundedByKnown _ subP
     TypeCheckResult _ (SType act req desc, vaenv) -> do
       let tvaenv = fmap stypeAct vaenv
       let boundTp' = expandType feTypeEnv tvaenv boundTp
-      let act' = snd $ intersectTypesWithVarEnv feTypeEnv tvaenv act boundTp'
-      let req' = snd $ intersectTypesWithVarEnv feTypeEnv tvaenv req boundTp'
+      let act' = intersectTypesEnv feTypeEnv tvaenv act boundTp'
+      let req' = intersectTypesEnv feTypeEnv tvaenv req boundTp'
       let scheme' = pure $ SType act' req' desc
       let env' = setScheme env con subPnt scheme' "BoundedByKnown"
       (True, env')

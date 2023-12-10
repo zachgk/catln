@@ -451,7 +451,8 @@
                 ( Value val -> /Data/Primitive/Integer = /defInt
                     ( Value x -> /Data/Primitive/Integer = CInt 0 )
                 ) ( Value this -> TVArg io = Value io )
-            , /defInt ( Value x -> Nothing = Value Nothing ) -> /Data/Primitive/Integer = CInt 0
+            , /defInt
+                ( Value x -> ( /Nothing | Nothing ) = Value Nothing ) -> /Data/Primitive/Integer = CInt 0
             , /defInt ( Value x -> /Data/Primitive/Integer ) -> TVArg x = Value x
             , Value /Nothing -> /Nothing
             ]

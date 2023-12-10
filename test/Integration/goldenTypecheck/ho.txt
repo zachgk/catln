@@ -444,10 +444,14 @@
         (
             [ /Context ( Value value -> /main = Value /main ) ( Value io -> /Catln/IO ) -> TVArg io = Value io
             , /tst
-                ( Value d -> T ( x=TopType ) = T ( Value x ) ) ( Value f -> ∀/Data/Primitive/Boolean ) ->
+                ( Value d ->
+                    ( T ( x=TopType ) | /T ( x=TopType ) ) = T ( Value x )
+                ) ( Value f -> ∀/Data/Primitive/Boolean ) ->
                 ( ∀/Data/Primitive/Boolean | f ( y=TopType ) ) = f ( Value y -> TVArg x = Value x )
             , /tst
-                ( Value d -> T ( x=TopType ) = T ( Value x ) ) ( Value f -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
+                ( Value d ->
+                    ( T ( x=TopType ) | /T ( x=TopType ) ) = T ( Value x )
+                ) ( Value f -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
             , /T ( Value x -> /Data/Primitive/Integer ) -> /T ( x=/Data/Primitive/Integer )
             ]
         ,

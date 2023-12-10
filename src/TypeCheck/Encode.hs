@@ -120,9 +120,8 @@ fromExpr est@EncodeOut{} env1 (Value m name) = do
   (m', env2) <- fromMeta env1 BUpper est m ("Out Val " ++ name)
   return (Value m' name, addConstraints env2 [BoundedByKnown 4 m' (relTypeVal name), BoundedByObjs 4 m'])
 fromExpr est@EncodeIn{} env1 (Value m name) = do
-  -- TODO The mWithType is a fix due to a bug. It should not be necessary as the value should be either the correct val or empty type. Same for all other usages of mWithType during encode. After removing, try re-enabling TypecheckTests.testEncodeDecode
   (m', env2) <- fromMeta env1 BUpper est m ("In Val " ++ name)
-  return (Value m' name, addConstraints env2 [BoundedByKnown 5 m' (typeVal $ PTypeName name)])
+  return (Value m' name, addConstraints env2 [BoundedByKnown 5 m' (relTypeVal name)])
 fromExpr est env1 (HoleExpr m hole) = do
   (m', env2) <- fromMeta env1 BUpper est m ("Hole " ++ show hole)
   return (HoleExpr m' hole, env2)
