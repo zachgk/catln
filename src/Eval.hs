@@ -64,7 +64,7 @@ evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe 
     typeEnv = mkTypeEnv prgm
     objArrowsContains ObjArr{oaArr=(Nothing, _)} = Nothing
     objArrowsContains oa@ObjArr{oaArr=(_, oaM)} = case oaObjPath oa of
-      "/Context" -> case H.lookup (partialKey "value") $ exprAppliedArgsMap $ oaObjExpr oa of
+      "/Context" -> case H.lookup (partialKey "/value") $ exprAppliedArgsMap $ oaObjExpr oa of
         Just (_, Just valObjExpr) -> if relativeNameMatches function (exprPath valObjExpr)
           then Just $ if isBuildable oa (getMetaType oaM)
             then EvalBuildWithContext (exprPath valObjExpr)
@@ -80,7 +80,7 @@ evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe 
 
 -- | evaluate annotations such as assertions that require compiler verification
 evalCompAnnot :: Env -> Val -> CRes Env
-evalCompAnnot env (TupleVal "/Catln/#assert" args) = case (H.lookup "test" args, H.lookup "msg" args) of
+evalCompAnnot env (TupleVal "/Catln/#assert" args) = case (H.lookup "/test" args, H.lookup "/msg" args) of
   (Just b, Just (StrVal _)) | b == true -> return env
   (Just b, Just (StrVal msg)) | b == false -> CErr [MkCNote $ AssertCErr msg]
   (Just b, Nothing) | b == true -> return env
@@ -136,9 +136,9 @@ evalExpr env (TValue m _) = do
   return (TupleVal (fromPartialName ptName) H.empty, env)
 evalExpr _ (THoleExpr m h) = CErr [MkCNote $ GenCErr (getMetaPos m) $ printf "Can't evaluate hole %s" (show h)]
 evalExpr env (TAliasExpr b _) = evalExpr env b
-evalExpr env@Env{evArgs} (TTupleApply _ b oa@ObjArr{oaObj=Just (GuardExpr (TValue _ "io") Nothing), oaArr=(Nothing, _)}) = do
+evalExpr env@Env{evArgs} (TTupleApply _ b oa@ObjArr{oaObj=Just (GuardExpr (TValue _ "/io") Nothing), oaArr=(Nothing, _)}) = do
   (TupleVal n args, env') <- evalExpr env b
-  case H.lookup "io" evArgs of
+  case H.lookup "/io" evArgs of
     Just io -> return (TupleVal n (H.insert (oaObjPath oa) io args), env')
     Nothing -> error $ printf "evalExpr with no io"
 evalExpr env (TTupleApply _ b oa) = do
@@ -193,7 +193,7 @@ evalRun function prgmName prgmGraphData = do
         EvalRunWithContext function' ->
           -- Case for eval Context(value=main, io=IO)
 
-          return $ eApplyM (eApply (eVal "/Context") "value" (eVal function')) "io" ioM
+          return $ eApplyM (eApply (eVal "/Context") "/value" (eVal function')) "/io" ioM
         EvalRun function' ->
           -- Case for eval main
           return $ eVal function'
@@ -201,7 +201,7 @@ evalRun function prgmName prgmGraphData = do
   let src = getExprPartialType input
   let dest = ioType
   (expr, env) <- evalBuildPrgm input src dest prgm
-  let env2 = evalSetArgs env (H.singleton "io" (IOVal 0 $ pure ()))
+  let env2 = evalSetArgs env (H.singleton "/io" (IOVal 0 $ pure ()))
   (res, env') <- evalExpr env2 expr
   case res of
     (IOVal r io) -> return (io >> pure (r, evalResult env'))
@@ -214,10 +214,10 @@ evalBuild function prgmName prgmGraphData = do
   input <-  case evalTargetMode function prgmName prgmGraphData of
         EvalRunWithContext function' ->
           -- Case for eval llvm(c=Context(value=main, io=IO))
-          return $ eApply (eVal "/Catln/llvm") "c" (eVal function')
+          return $ eApply (eVal "/Catln/llvm") "/c" (eVal function')
         EvalBuildWithContext function' ->
           -- Case for buildable Context(value=main, io=IO)
-          return $ eApplyM (eApply (eVal "/Context") "value" (eVal function')) "io" ioM
+          return $ eApplyM (eApply (eVal "/Context") "/value" (eVal function')) "/io" ioM
         EvalBuild function' ->
           -- Case for buildable main
           return $ eVal function'
@@ -227,11 +227,11 @@ evalBuild function prgmName prgmGraphData = do
   (expr, env) <- evalBuildPrgm input src dest prgm
   (res, env') <- evalExpr env expr
   case res of
-    val@(TupleVal "/Catln/CatlnResult" args) -> case (H.lookup "name" args, H.lookup "contents" args) of
+    val@(TupleVal "/Catln/CatlnResult" args) -> case (H.lookup "/name" args, H.lookup "/contents" args) of
       (Just (StrVal _), Just (StrVal _)) -> return $ return (val, evalResult env')
       _ -> CErr [MkCNote $ GenCErr Nothing $ printf "Eval %s returned a /Catln/CatlnResult with bad args" function]
     (LLVMVal _) -> return $ do
       -- llvmStr <- codegenExInit toCodegen
       let llvmStr = "LLVM Placeholder result"
-      return (TupleVal "/Catln/CatlnResult" (H.fromList [("name", StrVal "out.ll"), ("contents", StrVal llvmStr)]), evalResult env')
+      return (TupleVal "/Catln/CatlnResult" (H.fromList [("/name", StrVal "out.ll"), ("/contents", StrVal llvmStr)]), evalResult env')
     val -> CErr [MkCNote $ GenCErr Nothing $ printf "Eval %s did not return a /Catln/CatlnResult. Instead it returned %s" function (show val)]

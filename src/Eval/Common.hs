@@ -215,7 +215,7 @@ data TExpr m
   | TTupleApply (Meta m) (TExpr m) (ObjArr TExpr m)
   | TVarApply (Meta m) (TExpr m) TypeVarName (Meta m)
   | TCalls (Meta m) (TExpr m) TCallTree
-  deriving (Eq, Show, Generic, Hashable)
+  deriving (Eq, Generic, Hashable)
 
 instance ExprClass TExpr where
   getExprMeta expr = case expr of
@@ -307,6 +307,27 @@ newtype Codegen a = Codegen { runCodegen :: State CodegenState a }
 
 instance Show (Codegen a) where
   show Codegen{} = "Codegen"
+
+instance Show m => Show (TExpr m) where
+  show (TCExpr _ c) = show c
+  show (TValue _ name) = printf "Value %s" name
+  show (THoleExpr m hole) = printf "Hole %s %s" (show m) (show hole)
+  show (TAliasExpr base alias) = printf "%s@%s" (show base) (show alias)
+  show (TTupleApply _ baseExpr arg) = printf "%s(%s)" baseExpr' (show arg)
+    where
+      baseExpr' = case baseExpr of
+        TValue _ funName -> funName
+        TTupleApply{}    -> show baseExpr
+        TVarApply{}      -> show baseExpr
+        _                -> printf "(%s)" (show baseExpr)
+  show (TVarApply _ baseExpr varName varVal) = printf "%s[%s : %s]" baseExpr' (show varName) (show varVal)
+    where
+      baseExpr' = case baseExpr of
+        TValue _ funName -> funName
+        TTupleApply{}    -> show baseExpr
+        TVarApply{}      -> show baseExpr
+        _                -> printf "(%s)" (show baseExpr)
+  show (TCalls m e _) = printf "(%s ↦ %s)" (show e) (show $ getMetaType m)
 
 
 type ObjSrc = (PartialType, EObjArr)

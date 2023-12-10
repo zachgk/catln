@@ -289,6 +289,14 @@ splitVarArgEnv vaenv = bimap H.fromList H.fromList $ partitionEithers $ map eith
     eitherVarArg (TVVar v, t) = Left (v, t)
     eitherVarArg (TVArg v, t) = Right (v, t)
 
+
+makeAbsoluteName :: Name -> Name
+makeAbsoluteName n@('/':_) = n
+makeAbsoluteName n         = '/':n
+
+makeAbsolutePk :: PartialKey -> PartialKey
+makeAbsolutePk (PartialKey name vars args)= PartialKey (makeAbsoluteName name) (S.map makeAbsolutePk vars) (S.map makeAbsolutePk args)
+
 relativeNameMatches :: RelativeName -> Name -> Bool
 relativeNameMatches rn n = split rn `L.isSuffixOf` split n
   where split = splitOn "/"
@@ -330,10 +338,10 @@ singletonType partial = UnionType $ joinUnionType [partial]
 
 -- | Helper to create a 'PartialKey' for a value (no args, no vars)
 partialKey :: Name -> PartialKey
-partialKey n = PartialKey n S.empty S.empty
+partialKey n = PartialKey (makeAbsoluteName n) S.empty S.empty
 
 partialToKey :: PartialType -> PartialKey
-partialToKey PartialType{ptName, ptVars, ptArgs} = PartialKey (fromPartialName ptName) (H.keysSet ptVars) (H.keysSet ptArgs)
+partialToKey PartialType{ptName, ptVars, ptArgs} = makeAbsolutePk $ PartialKey (fromPartialName ptName) (H.keysSet ptVars) (H.keysSet ptArgs)
 
 partialToType :: PartialKey -> PartialType
 partialToType PartialKey{pkName, pkVars, pkArgs} = (partialVal $ PTypeName pkName){ptVars = asArgs pkVars, ptArgs = asArgs pkArgs}
@@ -590,7 +598,7 @@ unionTypesWithEnv typeEnv vaenv t1@(TopType (_:_)) t2 = unionTypesWithEnv typeEn
 unionTypesWithEnv typeEnv vaenv t1 t2@(TopType (_:_)) = unionTypesWithEnv typeEnv vaenv t1 (expandType typeEnv vaenv t2)
 unionTypesWithEnv typeEnv vaenv (TypeVar v _) t = case H.lookup v vaenv of
   Just v' -> unionTypesWithEnv typeEnv vaenv v' t
-  Nothing -> error $ printf "Can't union unknown type vars %s with %s " (show t) (show v)
+  Nothing -> error $ printf "Can't union unknown type vars %s with %s with env %s" (show t) (show v) (show $ H.keys vaenv)
 unionTypesWithEnv typeEnv vaenv t v@TypeVar{} = unionTypesWithEnv typeEnv vaenv v t
 unionTypesWithEnv typeEnv vaenv (UnionType aPartials) (UnionType bPartials) = compactType typeEnv vaenv $ UnionType $ unionPartialLeafs [aPartials, bPartials]
 

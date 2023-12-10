@@ -50,7 +50,7 @@ unionReachesTree classGraph (ReachesTree children) = do
   case partition isTypeVar both of
     ([onlyVar], []) -> onlyVar
     ([], sums)       -> unionAllTypes classGraph sums
-    ([t@(TypeVar (TVArg argName) _)], [UnionType leafs]) | all (\PartialType{ptName=n} -> fromPartialName n == pkName argName) (splitUnionType leafs) -> t
+    ([TypeVar (TVArg argName) tl], [UnionType leafs]) | all (\PartialType{ptName=n} -> makeAbsoluteName (fromPartialName n) == makeAbsoluteName (pkName argName)) (splitUnionType leafs) -> TypeVar (TVArg $ makeAbsolutePk argName) tl
     (_, _)       -> error $ printf "Not yet implemented unionReachesTree with vars and partials of %s" (show both)
 unionReachesTree classGraph (ReachesLeaf leafs) = unionAllTypes classGraph leafs
 

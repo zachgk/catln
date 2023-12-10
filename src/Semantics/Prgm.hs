@@ -277,7 +277,7 @@ getExprType = getMetaType . getExprMeta
 
 inExprSingleton :: (ExprClass e, MetaDat m, Show m, Show (e m)) => e m -> ArgName
 inExprSingleton e = maybe
-  (partialKey $ exprPath e) {pkArgs = H.keysSet $ exprAppliedArgsMap e, pkVars = H.keysSet $ exprAppliedVars e} partialToKey (maybeGetSingleton (getExprType e))
+  (partialKey $ makeAbsoluteName $ exprPath e) {pkArgs = H.keysSet $ exprAppliedArgsMap e, pkVars = H.keysSet $ exprAppliedVars e} partialToKey (maybeGetSingleton (getExprType e))
 
 maybeExprPath :: (ExprClass e) => e m -> Maybe TypeName
 maybeExprPath = fmap fst . maybeExprPathM
@@ -370,4 +370,4 @@ getAllExprNames e = maybeToList (maybeExprPath e) ++ concatMap getAllObjArrNames
 mkTypeEnv :: (ExprClass e, Show m, Show (e m), MetaDat m) => Prgm e m -> TypeEnv
 mkTypeEnv (objMap, classGraph, _) = TypeEnv classGraph typeNames
   where
-    typeNames = S.fromList $ concatMap getAllObjArrNames objMap
+    typeNames = S.fromList $ map makeAbsoluteName $ concatMap getAllObjArrNames objMap

@@ -112,7 +112,7 @@ genPartialType prgm@(objMap, ClassGraph cg, _) = do
 
 genInputExpr :: Gen (Expr ())
 genInputExpr = do
-  n <- genName
+  n <- makeAbsoluteName <$> genName
   varArgNames <- HG.set (linear 0 5) genName
   varOrArg <- HG.list (singleton $ S.size varArgNames) HG.bool
   let (varNames, argNames) = bimap (map fst) (map fst) $ partition snd $ zip (S.toList varArgNames) varOrArg

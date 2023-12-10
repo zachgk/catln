@@ -39,9 +39,9 @@ liftIntOp :: TypeName -> (Integer -> Integer -> Integer) -> Op
 liftIntOp name f = (name', [(srcType, Nothing, False, TCPrim resType prim)])
   where
     name' = "/operator" ++ name
-    srcType = PartialType (PTypeName name') H.empty (H.fromList [(partialKey "l", intType), (partialKey "r", intType)]) [] PtArgExact
+    srcType = PartialType (PTypeName name') H.empty (H.fromList [(partialKey "/l", intType), (partialKey "/r", intType)]) [] PtArgExact
     resType = intType
-    prim = EPrim srcType Nothing (\args -> case (H.lookup "l" args, H.lookup "r" args) of
+    prim = EPrim srcType Nothing (\args -> case (H.lookup "/l" args, H.lookup "/r" args) of
                            (Just (IntVal l), Just (IntVal r)) -> IntVal $ f l r
                            _ -> error "Invalid intOp signature"
                            )
@@ -50,9 +50,9 @@ liftCmpOp :: TypeName -> (Integer -> Integer -> Bool) -> Op
 liftCmpOp name f = (name', [(srcType, Nothing, False, TCPrim resType prim)])
   where
     name' = "/operator" ++ name
-    srcType = PartialType (PTypeName name') H.empty (H.fromList [(partialKey "l", intType), (partialKey "r", intType)]) [] PtArgExact
+    srcType = PartialType (PTypeName name') H.empty (H.fromList [(partialKey "/l", intType), (partialKey "/r", intType)]) [] PtArgExact
     resType = boolType
-    prim = EPrim srcType Nothing (\args -> case (H.lookup "l" args, H.lookup "r" args) of
+    prim = EPrim srcType Nothing (\args -> case (H.lookup "/l" args, H.lookup "/r" args) of
                            (Just (IntVal l), Just (IntVal r)) -> bool $ f l r
                            _ -> error "Invalid compOp signature"
                            )
@@ -61,9 +61,9 @@ rneg :: TypeName -> Op
 rneg name = (name', [(srcType, Nothing, False, TCPrim resType prim)])
   where
     name' = "/operator" ++ name
-    srcType = PartialType (PTypeName name') H.empty (H.singleton (partialKey "a") intType) [] PtArgExact
+    srcType = PartialType (PTypeName name') H.empty (H.singleton (partialKey "/a") intType) [] PtArgExact
     resType = intType
-    prim = EPrim srcType Nothing (\args -> case H.lookup "a" args of
+    prim = EPrim srcType Nothing (\args -> case H.lookup "/a" args of
                                   Just (IntVal i) -> IntVal $ -i
                                   _ -> error "Invalid rneg signature"
                               )
@@ -72,9 +72,9 @@ strEq :: Op
 strEq = (name', [(srcType, Nothing, False, TCPrim resType prim)])
   where
     name' = "/operator=="
-    srcType = PartialType (PTypeName name') H.empty (H.fromList [(partialKey "l", strType), (partialKey "r", strType)]) [] PtArgExact
+    srcType = PartialType (PTypeName name') H.empty (H.fromList [(partialKey "/l", strType), (partialKey "/r", strType)]) [] PtArgExact
     resType = boolType
-    prim = EPrim srcType Nothing (\args -> case (H.lookup "l" args, H.lookup "r" args) of
+    prim = EPrim srcType Nothing (\args -> case (H.lookup "/l" args, H.lookup "/r" args) of
                                   (Just (StrVal l), Just (StrVal r)) -> bool $ l == r
                                   _ -> error "Invalid intToString signature"
                               )
@@ -83,9 +83,9 @@ intToString :: Op
 intToString = (name', [(srcType, Nothing, False, TCPrim resType prim)])
   where
     name' = "/Data/toString"
-    srcType = PartialType (PTypeName name') H.empty (H.singleton (partialKey "this") intType) [] PtArgExact
+    srcType = PartialType (PTypeName name') H.empty (H.singleton (partialKey "/this") intType) [] PtArgExact
     resType = strType
-    prim = EPrim srcType Nothing (\args -> case H.lookup "this" args of
+    prim = EPrim srcType Nothing (\args -> case H.lookup "/this" args of
                                   (Just (IntVal val)) -> StrVal $ show val
                                   _ -> error "Invalid intToString signature"
                               )
@@ -95,9 +95,9 @@ ioExit :: Op
 ioExit = (name', [(srcType, Nothing, False, TCPrim resType prim)])
   where
     name' = "/Catln/exit"
-    srcType = PartialType (PTypeName name') H.empty (H.fromList [(partialKey "this", ioType), (partialKey "val", intType)]) [] PtArgExact
+    srcType = PartialType (PTypeName name') H.empty (H.fromList [(partialKey "/this", ioType), (partialKey "/val", intType)]) [] PtArgExact
     resType = ioType
-    prim = EPrim srcType Nothing (\args -> case (H.lookup "this" args, H.lookup "val" args) of
+    prim = EPrim srcType Nothing (\args -> case (H.lookup "/this" args, H.lookup "/val" args) of
                                   (Just (IOVal _ io), Just (IntVal val)) -> IOVal val io
                                   _ -> error $ printf "Invalid exit signature with args: %s" (show args)
                               )
@@ -106,9 +106,9 @@ println :: Op
 println = (name', [(srcType, Nothing, False, TCPrim resType prim)])
   where
     name' = "/Catln/println"
-    srcType = PartialType (PTypeName name') H.empty (H.fromList [(partialKey "this", ioType), (partialKey "msg", strType)]) [] PtArgExact
+    srcType = PartialType (PTypeName name') H.empty (H.fromList [(partialKey "/this", ioType), (partialKey "/msg", strType)]) [] PtArgExact
     resType = ioType
-    prim = EPrim srcType Nothing (\args -> case (H.lookup "this" args, H.lookup "msg" args) of
+    prim = EPrim srcType Nothing (\args -> case (H.lookup "/this" args, H.lookup "/msg" args) of
                                   (Just (IOVal r io), Just (StrVal msg)) -> IOVal r (io >> putStrLn msg)
                                   _ -> error "Invalid println signature"
                               )
@@ -117,16 +117,16 @@ llvm :: Op
 llvm = (name', [(srcType, Nothing, False, TCMacro (singletonType resultLeaf) (MacroFunction macroBuild))])
   where
     name' = "/Catln/llvm"
-    srcType = PartialType (PTypeName name') H.empty (H.fromList [(partialKey "c", topType)]) [] PtArgExact
+    srcType = PartialType (PTypeName name') H.empty (H.fromList [(partialKey "/c", topType)]) [] PtArgExact
     macroBuild input MacroData{mdTbEnv} = do
       case input of
-        (TTupleApply _ (TValue _ "/Catln/llvm") ObjArr{oaObj=Just (GuardExpr (TValue _ "c") Nothing), oaArr=(Just (GuardExpr (TValue _ functionToCodegen) Nothing), _)}) -> buildName functionToCodegen
+        (TTupleApply _ (TValue _ "/Catln/llvm") ObjArr{oaObj=Just (GuardExpr (TValue _ "/c") Nothing), oaArr=(Just (GuardExpr (TValue _ functionToCodegen) Nothing), _)}) -> buildName functionToCodegen
         _ -> error $ printf "Unknown expr to llvm macro: %s" (show input)
       where
         buildName functionToCodegen = do
           let TBEnv{tbPrgm} = mdTbEnv
           let codegenSrcTypeInner = singletonType $ PartialType (PTypeName functionToCodegen) H.empty H.empty [] PtArgExact
-          let codegenSrcType = PartialType (PTypeName "/Catln/Context") H.empty (H.fromList [(partialKey "value", codegenSrcTypeInner), (partialKey "oaObjExprio", ioType)]) [] PtArgExact
+          let codegenSrcType = PartialType (PTypeName "/Catln/Context") H.empty (H.fromList [(partialKey "/value", codegenSrcTypeInner), (partialKey "/oaObjExprio", ioType)]) [] PtArgExact
           let val = LLVMVal $ codegenPrgm (eVal functionToCodegen) codegenSrcType ioType tbPrgm
           return $ TCExpr (emptyMetaT $ singletonType $ getValType val) val
         codegenPrgm _ _ _ _ = return ()
