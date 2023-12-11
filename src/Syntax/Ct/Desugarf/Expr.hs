@@ -19,7 +19,6 @@ import qualified Data.HashMap.Strict     as H
 import           Data.Maybe
 import           Text.Printf
 
-import           Constants
 import           Data.Char               (toLower)
 import           Semantics
 import           Semantics.Prgm
@@ -54,12 +53,12 @@ desObjPropagateTypes mainExpr@(TupleApply m (bm, be) tupleApplyArgs) = do
   let (Just basePartial@PartialType{ptArgs=baseArgs}, be') = desObjPropagateTypes be
   let bm' = mWithType (getMetaType $ getExprMeta be') bm
   case tupleApplyArgs of
-      ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=(Just (GuardExpr argVal _), argM)} -> do
+      arg@ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=(Just (GuardExpr argVal arrG), argM)} -> do
         let argName = inExprSingleton argObj
         let (_, argVal') = desObjPropagateTypes argVal
         let basePartial' = basePartial{ptArgs=H.insert argName (getExprType argVal') baseArgs}
         let m' = mWithType (singletonType basePartial') m
-        (Just basePartial', TupleApply m' (bm', be') (mkIOObjArr argM argName argVal'))
+        (Just basePartial', TupleApply m' (bm', be') arg{oaArr=(Just (GuardExpr argVal' arrG), argM)})
       ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=(Nothing, argM)} -> do
         let argName = inExprSingleton argObj
         let basePartial' = basePartial{ptArgs=H.insert argName (getMetaType argM) baseArgs}
@@ -106,11 +105,12 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm''
         roaArr' = case roaArr of
           Just (arrE, _) -> Just (arrE, vM)
           Nothing        -> Just (Nothing, vM)
-    aux (m, e) (argIndex, rarg) = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) arg'')
+    aux (m, e) (_argIndex, rarg) = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) arg'')
       where
         [arg] = desObjArr rarg
 
-        indexAnnots = [exprVal argStartAnnot | argIndex == 0] ++ [exprVal argEndAnnot | argIndex == length args - 1]
+        -- indexAnnots = [exprVal argStartAnnot | argIndex == 0] ++ [exprVal argEndAnnot | argIndex == length args - 1]
+        indexAnnots = [] -- TODO: Consider whether to re-add start and end annots
 
         -- Currently uses oaObj as "first and only expr"
         -- This disambiguates it between whether the only expression is an obj or an arr

@@ -16,7 +16,7 @@ module TypeCheck.Decode where
 
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
-
+import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
@@ -52,48 +52,27 @@ toExpr env (AliasExpr base alias) = do
   base' <- toExpr env base
   alias' <- toExpr env alias
   return $ AliasExpr base' alias'
-toExpr env (TupleApply m (baseM, baseExpr) arg) = case arg of
-  ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=(Just (GuardExpr argExpr _), arrM)} -> do
-    let argName = inExprSingleton argObj
-    m' <- toMeta env m "TupleApply_M"
-    baseM' <- toMeta env baseM "TupleApply_baseM"
-    baseExpr' <- toExpr env baseExpr
-    arrM' <- toMeta env arrM "TupleApply_arrM"
-    argExpr' <- toExpr env argExpr
-    let result = TupleApply m' (baseM', baseExpr') (mkIOObjArr arrM' argName argExpr')
-    case m' of -- check for errors
-
-      -- Don't check if a bottom type is present
-      _ | getMetaType m' == bottomType     -> return result
-      _ | getMetaType baseM' == bottomType -> return result
-
-      -- tp@(Meta (UnionType uType) _ _) | all (\PartialType{ptArgs=leafArgs} -> not (argName `member` H.keys leafArgs)) (splitUnionType uType) ->
-      --                                     TypeCheckResult [TupleMismatch baseM' baseExpr' tp $ H.singleton argName argExpr'] result
-
-      _                                    -> return result
-  ObjArr{oaObj=Nothing, oaArr=(Just (GuardExpr argExpr _), arrM)} -> do
-    let pos = getMetaPos m
-    m' <- toMeta env m "TupleApplyInfer_M"
-    baseM' <- toMeta env baseM "TupleApplyInfer_baseM"
-    baseExpr' <- toExpr env baseExpr
-    argExpr' <- toExpr env argExpr
-    arrM' <- toMeta env arrM "TupleApply_arrM"
-    argName <- case (getMetaType baseM', getMetaType m') of
-      (UnionType basePartialLeafs, UnionType partialLeafs) -> case (splitUnionType basePartialLeafs, splitUnionType partialLeafs) of
-        ([PartialType{ptArgs=basePartialArgs}], [PartialType{ptArgs}]) -> case S.toList $ S.difference (H.keysSet ptArgs) (H.keysSet basePartialArgs) of
-          [argN] -> return argN
-          _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to multiple arg options"]
-        (base, result) -> TypeCheckResE [GenTypeCheckError pos $ printf "Failed argument inference due to multiple types with base %s and result %s" (show base) (show result)]
-      (baseM'', m'') -> TypeCheckResE [GenTypeCheckError pos $ printf "Failed argument inference due to non UnionType in baseMeta %s or meta %s" (show baseM'') (show m'')]
-    return $ TupleApply m' (baseM', baseExpr') (mkIOObjArr arrM' argName argExpr')
-  ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=(Nothing, arrM)} -> do
-    let argName = inExprSingleton argObj
-    m' <- toMeta env m "TupleApplyI_M"
-    baseM' <- toMeta env baseM "TupleApplyI_baseM"
-    baseExpr' <- toExpr env baseExpr
-    arrM' <- toMeta env arrM "TupleApplyI_arrM"
-    return $ TupleApply m' (baseM', baseExpr') (mkIObjArr arrM' argName)
-  oa -> error $ printf "Invalid oa %s" (show oa)
+toExpr env (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaArr=(oaArrExpr, oaArrM), oaAnnots}) = do
+  let pos = getMetaPos m
+  m' <- toMeta env m "TupleApply_M"
+  baseM' <- toMeta env baseM "TupleApply_baseM"
+  baseExpr' <- toExpr env baseExpr
+  oaObj' <- case oaObj of
+    Just joaObj -> Just <$> toGuardExpr env joaObj
+    Nothing -> do
+      argName <- case (getMetaType baseM', getMetaType m') of
+        (UnionType basePartialLeafs, UnionType partialLeafs) -> case (splitUnionType basePartialLeafs, splitUnionType partialLeafs) of
+          ([PartialType{ptArgs=basePartialArgs}], [PartialType{ptArgs}]) -> case S.toList $ S.difference (H.keysSet ptArgs) (H.keysSet basePartialArgs) of
+            [argN] -> return argN
+            _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to multiple arg options"]
+          (base, result) -> TypeCheckResE [GenTypeCheckError pos $ printf "Failed argument inference due to multiple types with base %s and result %s" (show base) (show result)]
+        (baseM'', m'') -> TypeCheckResE [GenTypeCheckError pos $ printf "Failed argument inference due to non UnionType in baseMeta %s or meta %s" (show baseM'') (show m'')]
+      return $ Just $ GuardExpr (Value (mWithType (singletonType $ partialToType argName) $ emptyMetaM "inferArg" m') (pkName argName)) Nothing
+  oaArrExpr' <- mapM (toGuardExpr env) oaArrExpr
+  oaArrM' <- toMeta env oaArrM "TupleApply_argM"
+  oaAnnots' <- mapM (toExpr env) oaAnnots
+  let arg' = arg{oaObj=oaObj', oaArr=(oaArrExpr', oaArrM'), oaAnnots=oaAnnots'}
+  return $ TupleApply m' (baseM', baseExpr') arg'
 toExpr env (VarApply m baseExpr varName varVal) = do
   m' <- toMeta env m "VarApply_M"
   baseExpr' <- toExpr env baseExpr
