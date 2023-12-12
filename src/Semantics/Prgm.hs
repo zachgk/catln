@@ -347,9 +347,8 @@ getRecursiveObjsExpr :: (ExprClass e, MetaDat m, Show m) => e m -> [e m]
 getRecursiveObjsExpr expr | isNothing (maybeExprPath expr) = []
 getRecursiveObjsExpr expr = subObjects ++ recursedSubObjects
   where
-    subObjects = filter (isJust . maybeExprPath) $ mapMaybe exprFromTupleArg $ exprAppliedArgs expr
-    exprFromTupleArg ObjArr{oaArr=(Just (GuardExpr e _), _)} = Just e
-    exprFromTupleArg _                                       = Nothing
+    subObjects = filter (isJust . maybeExprPath) $ concatMap exprFromTupleArg $ exprAppliedArgs expr
+    exprFromTupleArg ObjArr{oaObj, oaArr=(maybeOaObjExpr, _)} = map rgeExpr (maybeToList oaObj ++ maybeToList maybeOaObjExpr)
     recursedSubObjects = concatMap getRecursiveObjsExpr subObjects
 
 -- | Gets an object and all sub-objects (recursively) from it's arguments

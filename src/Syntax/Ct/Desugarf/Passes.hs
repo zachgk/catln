@@ -79,10 +79,10 @@ resolveRelativeNames fullPrgm@(fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, C
     resolveName :: Bool -> PartialName -> PartialName
     resolveName reqResolve (PRelativeName name)= case (reqResolve, relativeNameFilter name classNames, relativeNameFilter name objNames) of
                   -- is a class, replace with class type
-                  (_, [className], []) -> PClassName className
+                  (_, [className], []) -> PClassName $ makeAbsoluteName className
 
                   -- is data, use data after recursively cleaning classes
-                  (_, [], [typeName]) -> PTypeName typeName
+                  (_, [], [typeName]) -> PTypeName $ makeAbsoluteName typeName
 
                   -- This case occurs when a class is used in a multiTypeDef
                   (_, [className], [typeName]) | className == typeName -> error $ printf "Found duplicate name %s" (show className)
