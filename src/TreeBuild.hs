@@ -154,7 +154,7 @@ findResArrows TBEnv{tbName, tbResEnv, tbTypeEnv} os srcType@PartialType{ptName=P
       Just resArrowsWithName -> filter (\(arrowType, _, _, _) -> not $ isBottomType $ intersectTypes tbTypeEnv (singletonType srcType) (singletonType arrowType)) resArrowsWithName
       Nothing -> []
     argArrows :: [ResBuildEnvItem]
-    argArrows = case suffixLookupInDict srcName $ H.mapKeys pkName $ snd $ splitVarArgEnv $ exprVarArgsWithObjSrcs tbTypeEnv os of
+    argArrows = case H.lookup (partialToKey srcType) $ snd $ splitVarArgEnv $ exprVarArgsWithObjSrcs tbTypeEnv os of
       Just (_, argArrowType) -> [(srcType, Nothing, False, TCArg argArrowType srcName)]
       Nothing -> []
 findResArrows _ _ PartialType{ptName=PClassName{}} _ = error "Can't findResArrows for class"
@@ -229,12 +229,11 @@ toTExprDest env os e m = do
   texprDest env os e' m
 
 buildArrow :: TBEnv -> PartialType -> TBObjArr -> CRes (Maybe (TBObjArr, (TExpr TBMetaDat, [TExpr TBMetaDat])))
+-- buildArrow _ src oa | trace (printf "buildArrow %s: %s" (show src) (show oa)) False = undefined
 buildArrow _ _ ObjArr{oaArr=(Nothing, _)} = return Nothing
--- buildArrow env objPartial obj compAnnots arrow@(Arrow (Meta am _ _) _ (Just expr)) = do
 buildArrow env objPartial oa@ObjArr{oaAnnots, oaArr=(Just (GuardExpr expr _), am)} = do
   let env' = env{tbName = printf "arrow %s" (show oa)}
   let objSrc = (objPartial, oa)
-  -- resArrowTree <- resolveTree env' objSrc (ExprArrow expr (getExprType expr) am)
   resArrowTree <- toTExprDest env' [objSrc] expr am
   compAnnots' <- forM oaAnnots $ \annot -> do
                                        let annotEnv = env{tbName = printf "globalAnnot %s" (show annot)}
@@ -244,7 +243,6 @@ buildArrow env objPartial oa@ObjArr{oaAnnots, oaArr=(Just (GuardExpr expr _), am
 buildRoot :: TBEnv -> TBExpr -> PartialType -> Type -> CRes (TExpr TBMetaDat)
 buildRoot env input src dest = do
   let env' = env{tbName = printf "root"}
-  -- let emptyObj = ObjArr (Just $ GuardExpr (Value (Meta (singletonType src) Nothing emptyMetaDat) "EmptyObj") Nothing) FunctionObj Nothing [] (Nothing, emptyMetaN)
   let emptyObj = ObjArr (Just $ GuardExpr input Nothing) FunctionObj Nothing [] (Nothing, emptyMetaN)
   let objSrc = (src, emptyObj)
   toTExprDest env' [objSrc] input  (emptyMetaT dest)

@@ -29,6 +29,7 @@ import           Control.Monad.State
 import           CRes
 import           Data.Aeson          hiding (Object)
 -- import qualified LLVM.AST            as AST
+import           Data.Maybe
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
@@ -80,6 +81,7 @@ data Val
   | FloatVal Double
   | StrVal String
   | TupleVal String (H.HashMap String Val)
+  | ObjArrVal (ObjArr TExpr ())
   | IOVal Integer (IO ())
   | LLVMVal (LLVM ())
   | LLVMQueue [(TExpr (), EObjArr)]
@@ -106,6 +108,7 @@ instance Show Val where
       showArgs as | H.null as = ""
       showArgs as = printf "(%s)" (intercalate ", " $ map showArg $ H.toList as)
       showArg (argName, val) = argName ++ " = " ++ show val
+  show (ObjArrVal oa)   = printf "(ObjArrVal %s)" (show oa)
   show IOVal{}   = "IOVal"
   show LLVMVal{}   = "LLVMVal"
   show LLVMQueue{}   = "LLVMQueue"
@@ -118,6 +121,7 @@ instance Hashable Val where
   hashWithSalt s (FloatVal i)    = s `hashWithSalt` i
   hashWithSalt s (StrVal i)      = s `hashWithSalt` i
   hashWithSalt s (TupleVal n as) = s `hashWithSalt` n `hashWithSalt` as
+  hashWithSalt s (ObjArrVal oa)  = s `hashWithSalt` oa
   hashWithSalt s (IOVal i _)     = s `hashWithSalt` i
   hashWithSalt s (LLVMVal _)     = s
   hashWithSalt s (LLVMQueue _)   = s
@@ -130,6 +134,7 @@ instance ToJSON Val where
   toJSON (FloatVal v) = object ["tag".=("FloatVal" :: String), "contents".=toJSON v]
   toJSON (StrVal v) = object ["tag".=("StrVal" :: String), "contents".=toJSON v]
   toJSON (TupleVal name args) = object ["tag".=("TupleVal" :: String), "name".=name, "args".=toJSON args]
+  toJSON (ObjArrVal _) = object ["tag".=("ObjArrVal" :: String)]
   toJSON IOVal{} = object ["tag".=("IOVal" :: String)]
   toJSON LLVMVal{} = object ["tag".=("LLVMVal" :: String)]
   toJSON LLVMQueue{} = object ["tag".=("LLVMQueue" :: String)]
@@ -150,6 +155,7 @@ getValType FloatVal{} = floatLeaf
 getValType StrVal{} = strLeaf
 getValType (TupleVal name args) = (partialVal (PTypeName name)){ptArgs=H.fromList $ map fromArg $ H.toList args}
   where fromArg (argName, argVal) = (partialKey argName, singletonType $ getValType argVal)
+getValType (ObjArrVal oa) = fromJust $ maybeGetSingleton $ getExprType $ oaObjExpr oa
 getValType IOVal{} = ioLeaf
 getValType LLVMVal{} = resultLeaf
 getValType LLVMQueue{} = queueLeaf

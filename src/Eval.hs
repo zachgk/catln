@@ -90,6 +90,7 @@ evalCompAnnot env TupleVal{} = return env
 evalCompAnnot env _ = evalError env "Eval: Invalid compiler annotation type"
 
 evalCallTree :: Env -> Val -> TCallTree -> CRes (Val, Env)
+-- evalCallTree _ v ct | trace (printf "evalCallTree %s using %s" (show v) (show ct)) False = undefined
 evalCallTree env v TCTId = return (v, env)
 evalCallTree env1@Env{evTypeEnv} m (TCMatch opts) = do
   case H.toList $ H.filterWithKey (\optType _ -> isSubtypePartialOf evTypeEnv (getValType m) (singletonType optType)) opts of
@@ -129,6 +130,7 @@ evalCallTree env1 input (TCPrim _ (EPrim _ _ f)) = do
 evalCallTree env _ TCMacro{} = evalError env $ printf "Can't evaluate a macro - it should be removed during TreeBuild"
 
 evalExpr :: Env -> TExpr () -> CRes (Val, Env)
+-- evalExpr _ e | trace (printf "eval %s" (show e)) False = undefined
 evalExpr env (TCExpr _ v) = return (v, env)
 evalExpr env (TValue m _) = do
   let UnionType leafs = getMetaType m
@@ -143,11 +145,13 @@ evalExpr env@Env{evArgs} (TTupleApply _ b oa@ObjArr{oaObj=Just (GuardExpr (TValu
     Nothing -> error $ printf "evalExpr with no io"
 evalExpr env (TTupleApply _ b oa) = do
   (TupleVal n args, env') <- evalExpr env b
-  case oaArr oa of
-    (Just (GuardExpr oaExpr _), _) -> do
-      (v, env'') <- evalExpr env' oaExpr
-      return (TupleVal n (H.insert (oaObjPath oa) v args), env'')
+  (v, env'') <- case oaArr oa of
+    (Just (GuardExpr oaExpr _), _) -> case oaObj oa of
+      Just (GuardExpr TValue{} _) -> evalExpr env' oaExpr
+      Just (GuardExpr TTupleApply{} _) -> return (ObjArrVal oa, env')
+      _ -> error $ printf "Unsupported eval argument of %s" (show oa)
     (Nothing, _) -> error $ printf "Missing arrExpr in evalExpr TupleApply with %s - %s" (show b) (show oa)
+  return (TupleVal n (H.insert (oaObjPath oa) v args), env'')
 evalExpr env (TVarApply _ b _ _) = evalExpr env b
 evalExpr env (TCalls _ b callTree) = do
   (b', env') <- evalExpr env b
