@@ -199,7 +199,7 @@ toTExpr env os (TupleApply m (bm, be) oa@ObjArr{oaObj, oaAnnots, oaArr=(arrExpr,
     g' <- mapM (toTExpr env os) g
     return $ GuardExpr e' g'
   let os' = if isJust oaObj && isJust arrExpr
-        then (partialVal $ PTypeName $ oaObjPath oa, oa) : os
+        then (fromJust $ maybeGetSingleton $ getExprType $ oaObjExpr oa, oa) : os
         else os
   arrExpr' <- forM arrExpr $ \(GuardExpr e g) -> do
     e' <- toTExprDest env os' e arrM
@@ -223,7 +223,7 @@ texprDest env os e m = do
     _ -> return $ TCalls m e ct
 
 toTExprDest :: TBEnv -> [ObjSrc] -> Expr () -> EvalMeta -> CRes (TExpr ())
--- toTExprDest env os e m | trace (printf "toExprDest %s to %s \n\twith %s" (show e) (show m) (show os)) False = undefined
+-- toTExprDest _ os e m | trace (printf "toExprDest %s to %s \n\twith %s" (show e) (show m) (show os)) False = undefined
 toTExprDest env os e m = do
   e' <- toTExpr env os e
   texprDest env os e' m
