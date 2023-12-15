@@ -1,5 +1,6 @@
 import "core/primitives.ct"
 import "core/data.ct"
+import "core/webdoc.ct"
 
 
 module(Catln)
@@ -44,7 +45,8 @@ module(Catln)
       If you call a function during testing that features an assertion, that assertion will still be checked.
   annot(#assert(test -> Boolean, msg -> String))
     # The [#assert] can also include a [msg] to be displayed for debugging purposes.
-  annot(#print(p -> CatlnResult..))
+
+  annot(#print(p -> DShow))
     # The print annotation is used to display computed values inside webdocs.
       It can be used to avoid manually writing computed values into code, display temporary values, and visualizations.
   annot(#test)

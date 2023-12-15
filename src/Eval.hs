@@ -28,14 +28,15 @@ import           Data.Maybe
 import           Control.Monad.State
 import           CtConstants
 import qualified Data.HashSet        as S
-import           Data.UUID           (UUID, nil)
+import           Data.UUID           (UUID)
 import           Eval.Common
 import           Eval.Env
 import           Eval.ExprBuilder
 import           Eval.Runtime
 import           Semantics
 import           Semantics.TypeGraph (ReachesEnv (ReachesEnv),
-                                      reachesHasCutSubtypeOf, reachesPartials)
+                                      reachesHasCutSubtypeOf, reachesPartials,
+                                      reachesTo)
 import           Text.Printf
 import           TreeBuild
 import           Utils
@@ -240,22 +241,23 @@ evalBuildPrgm input srcType destType prgm = do
 evalAnnots :: FileImport -> EPrgmGraphData -> CRes [(EExpr, Val)]
 evalAnnots prgmName prgmGraphData = do
   prgm@(objMap, _, globalAnnots) <- prgmFromGraphData prgmName prgmGraphData
-  let env@Env{evTbEnv} = evalBaseEnv prgm
-  globalAnnots' <- forM globalAnnots $ \annot -> do
-    let emptyType = partialVal "EmptyObj"
-    let emptyObj = ObjArr (Just (Value (Meta (singletonType emptyType) Nothing nil emptyMetaDat) "EmptyObj")) FunctionObj Nothing [] Nothing
-    tree <- toTExpr evTbEnv [(emptyType, emptyObj)] annot
-    val <- evalStateT (evalExpr tree) env
-    return (annot, val)
+  let env = evalBaseEnv prgm
+  globalAnnots' <- buildAnnots env [] globalAnnots
   objMapAnnots' <- forM objMap $ \oa -> do
-    forM (oaAnnots oa) $ \annot -> do
-      -- TODO Make the obj annots non-optional when passing
-      -- TODO Make this build annots within arguments
-      let maybeVal = cresToMaybe $ do
-            tree <- toTExpr evTbEnv [(getExprPartialType $ oaObjExpr oa, oa)] annot
-            evalStateT (evalExpr tree) env
-      return $ fmap (annot,) maybeVal
-  return $ concat (globalAnnots' : map catMaybes objMapAnnots')
+    -- TODO Make this build annots within arguments
+    buildAnnots env [(getExprPartialType $ oaObjExpr oa, oa)] (oaAnnots oa)
+  return $ concat (globalAnnots' : objMapAnnots')
+  where
+    showAnnot a = eVal "/Catln/Doc/dshow" `eApply ` ("/s", a)
+    destType = classPartial $ partialVal "/Catln/Doc/DShow"
+    destM = emptyMetaT destType
+    canBuild typeEnv annot = reachesTo typeEnv H.empty (getExprType $ showAnnot annot) destType
+    buildAnnots env@Env{evTbEnv, evTypeEnv} os annots = do
+      let annots' = filter (canBuild evTypeEnv) annots
+      forM annots' $ \annot -> do
+        tree <- toTExprDest evTbEnv os (showAnnot annot) destM
+        val <- evalStateT (evalExpr tree) env
+        return (annot, val)
 
 evalRun :: String -> FileImport -> EPrgmGraphData -> CResT IO (Integer, EvalResult)
 evalRun function prgmName prgmGraphData = do

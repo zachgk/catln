@@ -101,3 +101,9 @@ reaches :: (TypeGraph tg) => ReachesEnv tg -> Type -> ReachesTree
 reaches _     TopType{}     = ReachesLeaf
 reaches _     (TypeVar v _) = error $ printf "reaches with typevar %s" (show v)
 reaches env (UnionType src) = reachesPartials env $ splitUnionType src
+
+reachesTo :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Bool
+reachesTo typeEnv vaenv srcType = reachesHasCutSubtypeOf typeEnv vaenv reached
+  where
+    reachesEnv = ReachesEnv typeEnv vaenv S.empty
+    reached = reaches reachesEnv srcType

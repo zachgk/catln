@@ -1,0 +1,22 @@
+import "core/compile.ct"
+
+module(Catln/Doc)
+  # # Catln WebDocs
+
+    This provides common components and annotations used in Webdocs.
+    These include the ones
+
+  class(DShow)
+    # Represents objects which can be shown in the webdocs.
+
+  # dshow(s) -> /Catln/Doc/DShow
+  dshow(s -> DShow) = s
+  every(String, isa= [/Catln/Doc/DShow])
+  every(CatlnResult.., isa= [/Catln/Doc/DShow])
+  every(www.., isa= [/Catln/Doc/DShow])
+  
+  data(Show/MD(text: String))
+  every(Show/MD.., isa= [/Catln/Doc/DShow])
+  dshow(s= #md(text)) = Show/MD(text=text)
+
+  dshow(s= #print(p)) = p

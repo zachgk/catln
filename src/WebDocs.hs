@@ -30,6 +30,7 @@ import           Control.Monad.Trans           (lift)
 import           CRes
 import           Data.Bifunctor                (Bifunctor (first))
 import           Data.Graph
+import           Data.Maybe
 import           Eval                          (evalAllTargetModes, evalAnnots,
                                                 evalBuild, evalBuildAll,
                                                 evalRun, prgmFromGraphData)
@@ -79,6 +80,7 @@ data WDProvider
   , cTPrgmWithTrace :: CRes (GraphData (TPrgm, VPrgm, TraceConstrain) FileImport)
   , cTPrgm          :: CRes (GraphData TPrgm FileImport)
   , cTBPrgm          :: CRes (GraphData TBPrgm FileImport)
+  , cAnnots          :: CRes (GraphData [(Expr EvalMetaDat, Val)] FileImport)
                     }
 
 mkWDProvider :: Bool -> [String] -> IO WDProvider
@@ -90,6 +92,7 @@ mkWDProvider includeCore baseFileNames = do
     let withTrace = typecheckPrgmWithTrace prgm
     let tprgm = fmap (fmapGraph fst3) withTrace
     let tbprgm = tprgm >>= evalBuildAll
+    let annots' = tprgm >>= (\jtprgm -> fmap graphFromEdges $ traverse (\(_, n, deps) -> (, n, deps) <$> evalAnnots n jtprgm) $  graphToNodes jtprgm)
     return $ WDProvider {
         cCore = includeCore
       , cBaseFileNames = baseFileNames
@@ -98,6 +101,7 @@ mkWDProvider includeCore baseFileNames = do
       , cTPrgmWithTrace = withTrace
       , cTPrgm = tprgm
       , cTBPrgm = tbprgm
+      , cAnnots = annots'
                             }
   case p of
     CRes notes r -> do
@@ -157,8 +161,8 @@ getEvalBuild provider prgmName fun = do
 
 getEvalAnnots :: WDProvider -> FileImport -> CResT IO [(Expr EvalMetaDat, Val)]
 getEvalAnnots provider prgmName = do
-  base <- getTPrgm provider
-  asCResT $ evalAnnots prgmName base
+  annotsGraph <- asCResT $ cAnnots provider
+  return $ fromMaybe [] $ graphLookup prgmName annotsGraph
 
 getWeb :: WDProvider -> FileImport -> String -> CResT IO String
 getWeb provider prgmName fun = do

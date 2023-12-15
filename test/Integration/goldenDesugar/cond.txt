@@ -151,7 +151,7 @@
             , Value /Catln/#argEnd
             , /Catln/#assert ( Value /test -> ∀/Data/Primitive/Boolean )
             , /Catln/#assert ( Value /test -> ∀/Data/Primitive/Boolean ) ( Value /msg -> /Data/String )
-            , /Catln/#print ( Value /p -> /Catln/CatlnResult.. )
+            , /Catln/#print ( Value /p -> ∀/Catln/Doc/DShow )
             , Value /Catln/#test
             , Value /Catln/#example
             , /operator?-> ( Value /l= Hole TopType HoleActive Nothing ) ( Value /r= Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
@@ -205,6 +205,8 @@
             ( CStr "/repo/dir/stack/core/primitives.ct" )
         , ct
             ( CStr "/repo/dir/stack/core/data.ct" )
+        , ct
+            ( CStr "/repo/dir/stack/core/webdoc.ct" )
         ]
     )
 ,
@@ -333,6 +335,8 @@
             ( CStr "/repo/dir/stack/core/data.ct" )
         , ct
             ( CStr "/repo/dir/stack/core/compile.ct" )
+        , ct
+            ( CStr "/repo/dir/stack/core/webdoc.ct" )
         ]
     )
 ,
@@ -449,6 +453,40 @@
             ( CStr "/repo/dir/stack/core/algebra.ct" )
         , ct
             ( CStr "/repo/dir/stack/core/data.ct" )
+        ]
+    )
+,
+    (
+        (
+            [ /Catln/Doc/dshow ( Value s -> ∀/Catln/Doc/DShow ) = Value s
+            , /Catln/Doc/Show/MD ( Value /text -> /Data/String )
+            , /Catln/Doc/dshow
+                ( Value s= #md ( Value text ) ) = Show/MD ( Value text= Value text )
+            , /Catln/Doc/dshow
+                ( Value s= #print ( Value p ) ) = Value p
+            ]
+        ,
+            [ CGType
+            , CGType
+            , CGClass
+                ( False
+                , /Catln/Doc/DShow
+                ,
+                    [ /Data/String
+                    , /Catln/CatlnResult..
+                    , /Catln/www..
+                    , /Catln/Doc/Show/MD..
+                    ]
+                , Just "Represents objects which can be shown in the webdocs.    "
+                )
+            ]
+        , []
+        )
+    , ct
+        ( CStr "/repo/dir/stack/core/webdoc.ct" )
+    ,
+        [ ct
+            ( CStr "/repo/dir/stack/core/compile.ct" )
         ]
     )
 ,
