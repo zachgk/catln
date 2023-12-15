@@ -20,7 +20,7 @@ import {
   useRouteMatch
 } from 'react-router-dom';
 
-import {TocContext, Loading} from './Common';
+import {TocContext, Loading} from './Common/Common';
 import DocsPage from './DocsPage';
 
 const useStyles = makeStyles({

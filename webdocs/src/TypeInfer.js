@@ -10,7 +10,7 @@ import {
   useParams
 } from 'react-router-dom';
 
-import {useApi, posKey, Loading, Notes, Type} from './Common';
+import {useApi, posKey, Loading, Notes, Type} from './Common/Common';
 import {ObjMap} from './ListProgram';
 
 const useStyles = makeStyles({

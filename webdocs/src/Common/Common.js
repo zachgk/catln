@@ -3,9 +3,6 @@ import React, {useState, useEffect} from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import {Link} from 'react-router-dom';
 
-import SyntaxHighlighter from 'react-syntax-highlighter';
-
-import {Comment} from './DocsPage';
 
 function tagJoin(lst, joinWith) {
   return lst.reduce((acc, x) => acc == null ? [x] : <>{acc}{joinWith}{x}</>, null);
@@ -148,19 +145,52 @@ function Note(props) {
   );
 }
 
-function Guard(props) {
-  const {guard, Expr, showExprMetas, Meta} = props;
-  switch(guard.tag) {
-  case "IfGuard":
-    return <span> <KeyWord>if</KeyWord> <Expr expr={guard.contents} Meta={Meta} showMetas={showExprMetas}/></span>;
-  case "ElseGuard":
-    return <span> <KeyWord>else</KeyWord></span>;
-  case "NoGuard":
-    return "";
-  default:
-    console.error("Unknown guard: ", guard);
-    return "";
+function PartialType(props) {
+  const {ptName, ptVars, ptArgs, ptPreds, ptArgMode} = props.data;
+
+  let showVars = "";
+  if(Object.keys(ptVars).length > 0) {
+    showVars = (
+      <span>
+        &lt;
+        {tagJoin(ptVars.map((v, index) => <span key={index}><PartialKey data={v[0]}/>: <Type data={v[1]}/></span>), ", ")}
+        &gt;
+      </span>
+    );
   }
+
+  let showArgs = "";
+  if(Object.keys(ptArgs).length > 0) {
+    showArgs = (
+        <span>
+        (
+        {tagJoin(ptArgs.map((v, index) => <span key={index}><PartialKey data={v[0]}/>: <Type data={v[1]}/></span>), ", ")}
+        )
+      </span>
+    );
+  }
+
+  let showArgMode;
+  if (ptArgMode.tag === "PtArgAny") {
+    showArgMode = "..";
+  }
+
+  let showPreds;
+  if (ptPreds.length > 0) {
+    console.error("Show type preds", ptPreds);
+  }
+
+  return (
+    <span><PartialName name={ptName}/>{showVars}{showArgs}{showArgMode}{showPreds}</span>
+  );
+}
+
+function PartialKey(props) {
+  const {pkName, pkArgs, pkVars} = props.data;
+  if (pkArgs.length > 0 || pkVars.length > 0) {
+    return "PartialKeyWith";
+  }
+  return <PTypeName name={pkName} />;
 }
 
 function Type(props) {
@@ -169,37 +199,15 @@ function Type(props) {
   case "TopType":
     return "";
   case "TypeVar":
-    return <TypeVar>{t.contents.contents}</TypeVar>;
+    return <TypeVar><PartialKey data={t.contents[0].contents} /></TypeVar>;
   case "UnionType":
     var partials = [];
     t.contents.forEach(partialOptions => {
       let [partialName, options] = partialOptions;
       options.forEach((partialData, partialIndex) => {
-        let [partialVars, , partialArgs] = partialData;
-
-        let showVars = "";
-        if(Object.keys(partialVars).length > 0) {
-          showVars = (
-            <span>
-              &lt;
-            {tagJoin(Object.keys(partialVars).map(v => <span key={v}><Type data={partialVars[v]}/> {v}</span>), ", ")}
-              &gt;
-            </span>
-          );
-        }
-
-        let showArgs = "";
-        if(Object.keys(partialArgs).length > 0) {
-          showArgs = (
-              <span>
-              (
-                {tagJoin(Object.keys(partialArgs).map(arg => <span key={arg}><Type data={partialArgs[arg]}/> {arg}</span>), ", ")}
-              )
-            </span>
-          );
-        }
-
-        partials.push(<span key={[partialName, partialIndex]}><PartialName name={partialName}/>{showVars}{showArgs}</span>);
+        let [partialVars, partialArgs, preds, argMode] = partialData;
+        let ptData = {ptName: partialName, ptVars: partialVars, ptArgs: partialArgs, ptPreds: preds, ptArgMode: argMode};
+        partials.push(<PartialType key={[partialName, partialIndex]} data={ptData}/>);
       });
     });
     return tagJoin(partials, " | ");
@@ -252,128 +260,6 @@ function PartialName(props) {
 }
 
 
-function Obj(props) {
-  const {obj, details, Meta} = props;
-  let {deprecatedObjM: objM, objBasis, deprecatedObjPath: objPath, deprecatedObjVars: objVars, deprecatedObjArgs: objArgs, objDoc} = obj;
-  let objName = objPath;
-
-  let showContext;
-  if(objName === "/Catln/Context") {
-    const ctxArgs = Object.assign({}, objArgs);
-    delete ctxArgs.value;
-    showContext = (
-      <span>
-        &#123;
-        {tagJoin(Object.keys(ctxArgs).map(arg => <span key={arg}><Meta data={ctxArgs[arg][0]}/> {arg}</span>), ", ")}
-        &#125;
-      </span>);
-    let valueObj = objArgs.value[1];
-    objM = valueObj.objM;
-    objBasis = valueObj.objBasisi;
-    objName = valueObj.objPath;
-    objVars = valueObj.objVars;
-    objArgs = valueObj.objArgs;
-    objDoc = valueObj.objDoc;
-  }
-
-  let showVars;
-  if(Object.keys(objVars).length > 0) {
-    showVars = (
-      <span>
-        &lt;
-        {tagJoin(Object.keys(objVars).map(v => <span key={v}><Meta data={objVars[v]}/> <TypeVar>{v}</TypeVar></span>), ", ")}
-        &gt;
-      </span>);
-  }
-
-  let showCaller;
-  let argsCall = Object.assign({}, objArgs);
-  if('this' in objArgs) {
-    showCaller = <span><Meta data={objArgs['this'][0]}/>.</span>;
-    delete argsCall['this'];
-  }
-
-  let showArgs;
-  if(Object.keys(argsCall).length > 0) {
-    showArgs = (
-      <span>
-      (
-        {tagJoin(Object.keys(argsCall).map(arg => <span key={arg}><Meta data={argsCall[arg][0]}/> {arg}</span>), ", ")}
-      )
-      </span>);
-  }
-
-  let showObjDetails;
-  let showDoc = null;
-  if(details) {
-    if(objDoc) {
-      showDoc = (<div><Comment comment={objDoc} obj={obj} /></div>);
-    }
-    showObjDetails = (<span className={details}>{objBasis} - <Meta data={objM}/></span>);
-  }
-
-  return (<span>
-            {showDoc}
-            {showObjDetails}
-            <span>{showCaller}<PTypeName name={objName}/>{showContext}{showVars}{showArgs}</span>
-          </span>
-         );
-}
-
-function Val(props) {
-  let val = props.data;
-  switch(val.tag) {
-  case "IntVal":
-  case "FloatVal":
-  case "StrVal":
-    return <span>{val.contents}</span>;
-  case "TupleVal":
-    switch(val.name) {
-    case "CatlnResult":
-      return <CatlnResult data={val}/>;
-    default:
-      let showArgs = "";
-      if(Object.keys(val.args).length > 0) {
-        showArgs = (
-          <span>
-            (
-            {tagJoin(Object.keys(val.args).map(arg => <span key={arg}>{arg} = <Val key={arg} data={val.args[arg]}/></span>), ", ")}
-            )
-          </span>
-        );
-      }
-
-      return <span>{val.name}{showArgs}</span>;
-    }
-  case "IOVal":
-    return <span>IOVal</span>;
-  case "NoVal":
-    return <span>NoVal</span>;
-  default:
-    console.error("Unknown val tag", val);
-    return <span>Unknown Val tag</span>;
-  }
-}
-
-function CatlnResult(props) {
-  let data = props.data;
-  let fileName = data.args.name.contents;
-  let fileContents = data.args.contents.contents;
-  if(fileName.endsWith(".ll")) {
-    return (
-      <SyntaxHighlighter language="llvm">
-        {fileContents}
-      </SyntaxHighlighter>
-    );
-  } else if(fileName.endsWith(".html")) {
-    return <iframe srcDoc={fileContents} title={fileName} />;
-  } else {
-    return (
-      <pre>{fileContents}</pre>
-    );
-  }
-}
-
 export {
   TocContext,
   tagJoin,
@@ -381,13 +267,12 @@ export {
   useApi,
   Loading,
   Notes,
-  Guard,
+  PartialKey,
+  PartialType,
   Type,
   KeyWord,
   TypeVar,
   PTypeName,
   PClassName,
-  PartialName,
-  Obj,
-  Val
+  PartialName
 };

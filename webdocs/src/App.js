@@ -20,7 +20,7 @@ import {
   useHistory
 } from 'react-router-dom';
 
-import {useApi, TocContext} from './Common';
+import {useApi, TocContext} from './Common/Common';
 import ListProgram from './ListProgram';
 import Build from './Build';
 import Docs from './Docs';

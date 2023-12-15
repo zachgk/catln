@@ -4,19 +4,17 @@ import { makeStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
-import Card from '@material-ui/core/Card';
-import CardContent from '@material-ui/core/CardContent';
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
-import {Comment} from './DocsPage';
 import {
   useHistory,
   useLocation,
   useRouteMatch
 } from 'react-router-dom';
 
-import {useApi, tagJoin, Loading, Guard, PTypeName, PClassName, Type, Obj} from './Common';
+import {useApi, tagJoin, Loading, PTypeName, PClassName, PartialType, Type} from './Common/Common';
+import {ObjArr} from './Common/Semantics';
 
 const useStyles = makeStyles({
   objDetails: {
@@ -98,105 +96,23 @@ function ObjMap(props) {
   return (
     <List component="nav">
       {props.objMap
-        .sort((obj1, obj2) => obj1[0].objName < obj2[0].objName)
-        .map((obj, objIndex) =>
-          <ObjArrow key={objIndex} obja={obj} Meta={props.Meta} showExprMetas={props.showExprMetas}/>
+        .map((oa, objIndex) =>
+          <RootObjArr key={objIndex} oa={oa} Meta={props.Meta} showExprMetas={props.showExprMetas}/>
       )}
     </List>
   );
 }
 
-function ObjArrow(props) {
-  const [obj, annots, arrow] = props.obja;
+function RootObjArr(props) {
   const classes = useStyles();
 
-  let showArrow;
-  if(arrow) {
-    showArrow = (
-      <div>
-        <Arrow arrow={arrow} annots={annots} Meta={props.Meta} showExprMetas={props.showExprMetas}/>
-      </div>
-    );
-  }
-
-  let primary = <Obj obj={obj} details={classes.objDetails} Meta={props.Meta}/>;
+  let primary = <ObjArr oa={props.oa} details={classes.objDetails} Meta={props.Meta}/>;
 
   return (
       <ListItem divider>
-        <ListItemText disableTypography primary={primary} secondary={showArrow} />
+        <ListItemText disableTypography primary={primary} />
       </ListItem>
   );
-}
-
-function Arrow(props) {
-  const {Meta, showExprMetas, annots} = props;
-  const [arrM, guard, maybeExpr] = props.arrow;
-  const classes = useStyles();
-
-  let showAnnots;
-  if(annots.length > 0) {
-    showAnnots = annots.map((annot, index) => <div key={index}><Expr expr={annot} Meta={Meta} showMetas={showExprMetas}/></div>);
-  }
-
-  let arrRes;
-  if(arrM[0].tag !== "TopType") {
-    arrRes = <> -&gt; <Meta data={arrM} /></>;
-  }
-
-  let header = (<span><Guard guard={guard} Expr={Expr} Meta={Meta} showExprMetas={showExprMetas}/>{arrRes}</span>);
-  let showExpr;
-  if(maybeExpr) {
-    showExpr = <span> = <Expr expr={maybeExpr} Meta={Meta} showMetas={showExprMetas}/></span>;
-  }
-
-  return (
-    <Card className={classes.arrow}>
-      <CardContent className={classes.arrowDeclaration}>{header}</CardContent>
-      {showAnnots ? showAnnots : ""}
-      <CardContent className={classes.arrowExpression}>{showExpr}</CardContent>
-    </Card>
-  );
-}
-
-function Expr(props) {
-  let {expr, Meta, showMetas} = props;
-  switch(expr.tag) {
-  case "ICExpr":
-  case "CExpr":
-    return "" + expr.contents[1].contents;
-  case "IValue":
-  case "Value":
-    return "" + expr.contents[1];
-  case "IArg":
-  case "Arg":
-    return "" + expr.contents[1];
-  case "ITupleApply":
-  case "TupleApply":
-    const [m, [baseM ,base], arg, subExpr] = expr.contents;
-
-    let showArg;
-    if(arg) {
-      showArg = `${arg} = `;
-    }
-
-    let showBaseM;
-    if(showMetas) {
-      showBaseM = <i><Meta data={baseM}/></i>;
-    }
-
-    let showM;
-    if(showMetas) {
-      showM = <i>[<Meta data={m}/>]</i>;
-    }
-
-    let showBase = <Expr expr={base} Meta={Meta} showMetas={showMetas}/>;
-    let showSubExpr = <Expr expr={subExpr} Meta={Meta} showMetas={showMetas}/>;
-
-    return <span>{showBase}({showArg} {showBaseM} {showSubExpr}){showM}</span>;
-  default:
-    console.error("Unknown renderExpr", expr);
-    return "";
-  }
 }
 
 function Meta(props) {
@@ -210,9 +126,9 @@ export function ClassComments(props) {
   const { name } = props;
   let showComments = "";
   const classType = classToType[name] || [];
-  if (classType[3] && classType[3].length > 0) {
-    showComments = <Comment comment={classType[3]} obj={undefined} />;
-  }
+  // if (classType[3] && classType[3].length > 0) {
+  //   showComments = <Comment comment={classType[3]} obj={undefined} />;
+  // }
   return showComments;
 }
 
@@ -240,25 +156,15 @@ function TypeToClassEntry(props) {
 }
 
 function ClassToTypeEntry(props) {
-  const {className, val: [, vars, types,]} = props;
+  const [, cls, types,] = props.val;
 
-  let showVars = "";
-  if(Object.keys(vars).length > 0) {
-    showVars = (
-      <span>
-        &lt;
-        {tagJoin(Object.keys(vars).map(v => <span key={v}><Type data={vars[v]}/> {v}</span>), ", ")}
-        &gt;
-      </span>
-    );
-  }
-
-  let showClassName = <PClassName name={className} />;
   let showTypes = tagJoin(types.map((t, i) => <span key={i}><Type data={t}/></span>), ", ");
 
-  return <div>
-  {showClassName}{showVars} = {showTypes}
-  </div>;
+  return (
+    <div>
+      <PartialType data={cls} /> = {showTypes}
+    </div>
+  );
 }
 
 export default ListProgram;

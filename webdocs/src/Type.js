@@ -2,7 +2,7 @@ import React from 'react';
 
 import {useParams} from 'react-router-dom';
 
-import {useApi, Loading} from './Common';
+import {useApi, Loading} from './Common/Common';
 import {ShowList} from './ListProgram';
 
 function TypePage() {

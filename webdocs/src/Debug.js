@@ -6,7 +6,8 @@ import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import TreeItem from '@material-ui/lab/TreeItem';
 import {useParams} from 'react-router-dom';
 
-import {useApi, Loading, Obj, Val} from './Common';
+import {Value} from './Common/Value';
+import {useApi, Loading} from './Common/Common';
 
 function Debug(props) {
   const { prgmName, fun } = useParams();
@@ -35,7 +36,9 @@ function Main(props) {
 function TreebugNode(props) {
   let [obj, , val, children, id] = props.data;
 
-  let label = <span><Obj obj={obj} Meta={ObjMeta}/> => <Val data={val} /></span>;
+  // let label = <span><Obj obj={obj} Meta={ObjMeta}/> => <Value data={val} /></span>;
+  console.log(props);
+  let label = "Label";
   return (
     <TreeItem nodeId={id} label={label}>
       {children.map(child => <TreebugNode data={child} key={child[4]} />)}

@@ -2,7 +2,8 @@ import React from 'react';
 
 import {useParams} from 'react-router-dom';
 
-import {useApi, Loading, Val} from './Common';
+import {Value} from './Common/Value';
+import {useApi, Loading} from './Common/Common';
 
 function Build() {
   const { prgmName, fun } = useParams();
@@ -16,7 +17,7 @@ function Build() {
 }
 
 function Main(props) {
-  return <Val data={props.data}/>;
+  return <Value data={props.data}/>;
 }
 
 export default Build;
