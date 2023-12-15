@@ -92,7 +92,7 @@ completeTreeSet TBEnv{tbTypeEnv} fullPartial = aux H.empty bottomType
     aux accMap accType _ | isSubtypeOf tbTypeEnv fullType accType = return accMap
     aux _ accType [] = Left accType
     aux accMap accType ((optType, optTree):opts) = do
-      let accType' = intersectTypes tbTypeEnv fullType $ unionTypes tbTypeEnv accType (singletonType optType)
+      let accType' = intersectTypes tbTypeEnv fullType $ compactType tbTypeEnv H.empty $ unionTypes tbTypeEnv accType (singletonType optType)
 
       -- next opt increases accumulation
       if not (isSubtypeOf tbTypeEnv accType' accType)
