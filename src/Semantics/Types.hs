@@ -182,7 +182,7 @@ instance Show PartialKey where
 instance Show Type where
   show (TopType []) = "TopType"
   show (TopType [PredClass c]) = "∀" ++ show c
-  show (TopType [PredRel c n]) = "~" ++ show c ++ (if n == PtArgAny then ".." else "")
+  show (TopType [PredRel c n]) = "~" ++ c ++ (if n == PtArgAny then ".." else "")
   show (TopType preds) = printf "(TopType | %s)" (intercalate ", " $ map show preds)
   show (TypeVar v _) = show v
   show (UnionType partials) = join $ map show $ splitUnionType partials
@@ -729,6 +729,7 @@ setArgMode _ mode (UnionType leafs) = UnionType $ joinUnionType $ map (\p -> p{p
 setArgMode vaenv mode (TypeVar v _) = setArgMode vaenv mode (fromJust $ H.lookup v vaenv)
 setArgMode _ _ (TopType []) = TopType []
 setArgMode _ mode (TopType [PredRel n _]) = TopType [PredRel n mode]
+setArgMode _ _ t@(TopType [PredClass{}]) = t
 setArgMode _ _ t = error $ printf "Unimplemented setArgMode for %s" (show t)
 
 -- |

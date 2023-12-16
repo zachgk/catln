@@ -41,9 +41,9 @@ desGuardExpr (GuardExpr e g) = GuardExpr (desExpr e) (fmap desExpr g)
 desObjPropagateTypes :: DesExpr -> (Maybe PartialType, DesExpr)
 desObjPropagateTypes e | isJust (maybeGetSingleton $ getExprType e) = (maybeGetSingleton $ getExprType e, e)
 desObjPropagateTypes (CExpr m c) = (Just $ constantPartialType c, CExpr (mWithType (constantType c) m) c)
-desObjPropagateTypes (Value m n) = (Just t, Value (mWithType (singletonType t) m) n)
+desObjPropagateTypes (Value m n) = (Nothing, Value (mWithType t m) n)
   where
-    t = partialVal (PRelativeName n)
+    t = relTypeVal n
 desObjPropagateTypes (HoleExpr m h) = (Nothing, HoleExpr m h)
 desObjPropagateTypes (AliasExpr base alias) = (basePartial, AliasExpr base' alias')
   where
@@ -155,21 +155,25 @@ semiDesExpr _ _ e = error $ printf "Not yet implemented semiDesExpr for %s" (sho
 
 -- | Desugars a "TheExpr type" by applying the type to a default name
 desugarTheExpr :: PExpr -> (ParseMeta, Name)
-desugarTheExpr t = (mWithType (singletonType t') (getExprMeta t), defaultName)
+desugarTheExpr t = (mWithType t' (getExprMeta t), defaultName)
   where
-    t' = exprToPartialType t
-    defaultName = lowerCaseFirstLetter $ fromPartialName $ ptName t'
+    t' = exprToType t
+    n' = case t' of
+      _ | isJust (maybeGetSingleton t') -> fromPartialName $ ptName $ fromJust $ maybeGetSingleton t'
+      TopType [PredRel tn _] -> tn
+      _ -> error $ printf "desugarTheExpr can't get name from %s" (show t')
+    defaultName = lowerCaseFirstLetter n'
     lowerCaseFirstLetter (n:ns) = toLower n : ns
     lowerCaseFirstLetter ns     = ns
 
 exprToPartialType :: PExpr -> PartialType
-exprToPartialType = fromJust . fst . desObjPropagateTypes . desExpr . semiDesExpr SDType Nothing
+exprToPartialType e = case desObjPropagateTypes $ desExpr $ semiDesExpr SDType Nothing e of
+  (Just t', _) -> t'
+  (Nothing, e') -> error $ printf "Failed exprToPartialType with type %s in expr %s" (show $ getExprType e') (show e')
 
 exprToType :: PExpr -> Type
-exprToType t@(RawValue _ n) = case parseTVVar n of
-      Just t' -> t'
-      Nothing -> (singletonType . exprToPartialType) t
-exprToType t                        = (singletonType . exprToPartialType) t
+exprToType (RawValue _ n) | isJust (parseTVVar n) = fromJust $ parseTVVar n
+exprToType e                        = getExprType $ snd $ desObjPropagateTypes $ desExpr $ semiDesExpr SDType Nothing e
 
 exprToTypeMeta :: PExpr -> ParseMeta
 exprToTypeMeta e = mWithType (exprToType e) (getExprMeta e)
