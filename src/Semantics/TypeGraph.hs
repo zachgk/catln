@@ -88,7 +88,7 @@ reachesPartial ReachesEnv{rTypeGraph, rTypeEnv} partial@PartialType{ptName=PType
         then return $ Just $ unionAllTypes rTypeEnv [arrowDestType True rTypeEnv potentialSrcPartial oa | potentialSrcPartial <- splitUnionType potSrcLeafs]
         else return Nothing
 reachesPartial env@ReachesEnv{rTypeEnv} partial@PartialType{ptName=PClassName{}} = reaches env (expandPartial rTypeEnv H.empty partial)
-reachesPartial env@ReachesEnv{rTypeEnv} PartialType{ptName=(PRelativeName name)} = reaches env (expandRelPartial rTypeEnv H.empty name)
+reachesPartial env@ReachesEnv{rTypeEnv} PartialType{ptName=(PRelativeName name), ptArgMode} = reaches env (expandRelPartial rTypeEnv H.empty name ptArgMode)
 
 reaches :: (MetaDat m, Show m) => ReachesEnv m -> Type -> CRes ReachesTree
 reaches _     (TopType [])            = return $ ReachesLeaf [topType]
