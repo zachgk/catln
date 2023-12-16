@@ -227,9 +227,9 @@ executeConstraint env@FEnv{feTypeEnv} con@(Constraint _ _ (UnionOf _ parentPnt c
   case sequenceT (parentScheme, sequence tcresChildrenSchemes, descriptorConVaenv env con) of
     TypeCheckResE _ -> (True, env)
     TypeCheckResult notes (parentSType, childrenSchemes, vaenv) -> do
-      let accumulateChild (SType ub lb _) (accUb, accLb) = (unionTypes feTypeEnv ub accUb, unionTypes feTypeEnv lb accLb)
-      let (chUb, chLb) = foldr accumulateChild (bottomType, bottomType) childrenSchemes
-      let (vaenv', parentST', _) = equalizeSTypes env (fmap stypeAct vaenv) (parentSType, SType (compactType feTypeEnv (fmap stypeAct vaenv) chUb) chLb "")
+      let chAct = unionAllTypesWithEnv feTypeEnv H.empty $ map stypeAct childrenSchemes
+      let chReq = unionAllTypesWithEnv feTypeEnv H.empty $ map stypeReq childrenSchemes
+      let (vaenv', parentST', _) = equalizeSTypes env (fmap stypeAct vaenv) (parentSType, SType (compactType feTypeEnv (fmap stypeAct vaenv) chAct) chReq "")
       let parentScheme' = TypeCheckResult notes parentST'
       let env' = setScheme env con parentPnt parentScheme' "UnionOf"
       let env'' = setSchemeConVaenv env' con SchemeAct vaenv' "EqualsKnown env"
