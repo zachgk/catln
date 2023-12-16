@@ -72,3 +72,6 @@ as `isSubmapOf` bs = and $ H.mapWithKey aux as
 powerset :: [x] -> [[x]]
 powerset []     = [[]]
 powerset (x:xs) = map (x:) (powerset xs) ++ powerset xs
+
+uniq :: (Eq x, Hashable x) => [x] -> [x]
+uniq = S.toList . S.fromList

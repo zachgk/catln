@@ -157,8 +157,9 @@ executeConstraint env@FEnv{feUnionAllObjs, feTypeEnv} con@(Constraint _ _ (Bound
     TypeCheckResult _ (ub, objMapBoundUb, vaenv) -> do
 
       -- Add the local args to the bound (maybe?)
-      let argsBoundUb = powersetType feTypeEnv (fmap stypeAct vaenv) $ UnionType $ joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con
-      let boundUb = unionTypes feTypeEnv objMapBoundUb argsBoundUb
+      let vaenv' = fmap stypeAct vaenv
+      let argsBoundUb = powersetType feTypeEnv vaenv' $ UnionType $ joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con
+      let boundUb = setArgMode vaenv' PtArgExact $ unionTypes feTypeEnv objMapBoundUb argsBoundUb
 
       -- A partially applied tuple would not be a raw type on the unionObj,
       -- but a subset of the arguments in that type

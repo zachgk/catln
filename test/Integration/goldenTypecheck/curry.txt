@@ -51,7 +51,7 @@
             , CGType
             , CGClass
                 ( True
-                , ∀/Catln/ThenElse
+                , /Catln/ThenElse
                 ,
                     [ /Catln/Then
                     , /Catln/Else
@@ -111,7 +111,7 @@
             , CGType
             , CGClass
                 ( False
-                , ∀/Data/Algebra/CommutativeMonoid
+                , /Data/Algebra/CommutativeMonoid
                 , []
                 , Just "The [CommutativeMonoid] builds on top of the [Monoid].
                   It is also called an Abelian Monoid
@@ -119,7 +119,7 @@
                 )
             , CGClass
                 ( False
-                , ∀/Data/Algebra/Eq
+                , /Data/Algebra/Eq
                 ,
                     [ ∀/Data/Algebra/POrd
                     , ∀/Data/Algebra/Semigroup
@@ -132,7 +132,7 @@
                 )
             , CGClass
                 ( False
-                , ∀/Data/Algebra/Group
+                , /Data/Algebra/Group
                 , []
                 , Just "The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
                   It adds an inverse operation that finds the opposite of an element.
@@ -141,7 +141,7 @@
                 )
             , CGClass
                 ( False
-                , ∀/Data/Algebra/Monoid
+                , /Data/Algebra/Monoid
                 ,
                     [ ∀/Data/Algebra/CommutativeMonoid
                     , ∀/Data/Algebra/Group
@@ -153,14 +153,14 @@
                 )
             , CGClass
                 ( False
-                , ∀/Data/Algebra/Ord
+                , /Data/Algebra/Ord
                 , [ ∀/Data/Primitive/Number ]
                 , Just "Ord is used to define types which can be strictly ordered.
                   Every element, when compared must have one of the following [Ordering] relationships: "
                 )
             , CGClass
                 ( True
-                , ∀/Data/Algebra/Ordering
+                , /Data/Algebra/Ordering
                 ,
                     [ /Data/Algebra/LessThan
                     , /Data/Algebra/Equal
@@ -170,14 +170,14 @@
                 )
             , CGClass
                 ( False
-                , ∀/Data/Algebra/POrd
+                , /Data/Algebra/POrd
                 , [ ∀/Data/Algebra/Ord ]
                 , Just "In addition to [Ord], [POrd] defines a partial ordering.
                   Partially ordered items can be compared, but may result in [NoOrdering]: "
                 )
             , CGClass
                 ( True
-                , ∀/Data/Algebra/POrdering
+                , /Data/Algebra/POrdering
                 ,
                     [ ∀/Data/Algebra/Ordering
                     , /Data/Algebra/NoOrdering
@@ -189,7 +189,7 @@
                 )
             , CGClass
                 ( False
-                , ∀/Data/Algebra/Semigroup
+                , /Data/Algebra/Semigroup
                 , [ ∀/Data/Algebra/Monoid ]
                 , Just "A semigroup is a type combined with an associative operation called [operator++].
                   For example, integers with the addition operation are a semigroup. "
@@ -262,13 +262,13 @@
             , CGType
             , CGClass
                 ( False
-                , ∀/Data/Primitive/Integer
+                , /Data/Primitive/Integer
                 , [ /Data/Primitive/Integer ]
                 , Just ""
                 )
             , CGClass
                 ( False
-                , ∀/Data/Primitive/Boolean
+                , /Data/Primitive/Boolean
                 ,
                     [ ∀/Data/Primitive/Boolean
                     , ∀/Data/Primitive/Number
@@ -277,19 +277,19 @@
                 )
             , CGClass
                 ( False
-                , ∀/Data/Primitive/Integer
+                , /Data/Primitive/Integer
                 , [ /Data/Primitive/Integer ]
                 , Just ""
                 )
             , CGClass
                 ( False
-                , ∀/Data/Primitive/Boolean
+                , /Data/Primitive/Boolean
                 , [ ∀/Data/Primitive/Boolean ]
                 , Just ""
                 )
             , CGClass
                 ( True
-                , ∀/Data/Primitive/Boolean
+                , /Data/Primitive/Boolean
                 ,
                     [ /Data/Primitive/True
                     , /Data/Primitive/False
@@ -298,7 +298,7 @@
                 )
             , CGClass
                 ( True
-                , ∀/Data/Primitive/Number
+                , /Data/Primitive/Number
                 ,
                     [ /Data/Primitive/Integer
                     , /Data/Primitive/Float
@@ -340,7 +340,7 @@
                     ( /tail=∀/Data/ConsList [ /T=TVVar /T ]
                     , /head=TVVar /T
                     ) = /Data/Cons ( Value /head )
-                    ( Value /tail -> ∀/Data/ConsList [ /T=TopType ] )
+                    ( Value /tail -> ∀/Data/ConsList [ /T=TVVar /T ] )
                 ) ->
                 ( /Data/Primitive/Integer | /operator+
                     ( /l=/Data/Primitive/Integer
@@ -374,13 +374,13 @@
             , CGType
             , CGClass
                 ( False
-                , ∀/Data/String
+                , /Data/String
                 , [ /Data/String ]
                 , Just ""
                 )
             , CGClass
                 ( True
-                , ∀/Data/ConsList [ /T=TopType ]
+                , /Data/ConsList [ /T=TopType ]
                 ,
                     [ /Data/Cons [ /T=TVVar /T ]
                         ( /tail=∀/Data/ConsList [ /T=TVVar /T ]
@@ -393,14 +393,14 @@
                 )
             , CGClass
                 ( False
-                , ∀/Data/Enum
+                , /Data/Enum
                 , []
                 , Just "[Enum] represents a type which can be enumerated.
                   It defines a single function [enum] which lists all of the values in the type."
                 )
             , CGClass
                 ( False
-                , ∀/Data/Functor [ /T=TopType ]
+                , /Data/Functor [ /T=TopType ]
                 ,
                     [ ∀/Data/Option [ /T=TVVar /T ]
                     , ∀/Data/ConsList [ /T=TVVar /T ]
@@ -410,13 +410,13 @@
                 )
             , CGClass
                 ( False
-                , ∀/Data/List [ /T=TopType ]
+                , /Data/List [ /T=TopType ]
                 , []
                 , Just ""
                 )
             , CGClass
                 ( True
-                , ∀/Data/Option [ /T=TopType ]
+                , /Data/Option [ /T=TopType ]
                 ,
                     [ TVVar /T
                     , /Data/None
@@ -426,7 +426,7 @@
                 )
             , CGClass
                 ( False
-                , ∀/Data/Set [ /T=TopType ]
+                , /Data/Set [ /T=TopType ]
                 , []
                 , Just ""
                 )
