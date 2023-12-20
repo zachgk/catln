@@ -65,7 +65,7 @@ data PtArgMode
 data TypePredicate
   = PredExpr PartialType
   | PredClass PartialType -- A hasClass predicate
-  | PredRel Name PtArgMode -- a isa predicate. Represented by val : classOrModuleOrType
+  | PredRel PartialType -- a isa predicate. Represented by val : classOrModuleOrType
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 type TypePredicates = [TypePredicate]
 
@@ -182,7 +182,7 @@ instance Show PartialKey where
 instance Show Type where
   show (TopType []) = "TopType"
   show (TopType [PredClass c]) = "∀" ++ show c
-  show (TopType [PredRel c n]) = "~" ++ c ++ (if n == PtArgAny then ".." else "")
+  show (TopType [PredRel c]) = "~" ++ show c
   show (TopType preds) = printf "(TopType | %s)" (intercalate ", " $ map show preds)
   show (TypeVar v _) = show v
   show (UnionType partials) = join $ map show $ splitUnionType partials
@@ -216,7 +216,7 @@ instance ToJSON ClassGraph where
 mapTypePred :: (PartialType -> PartialType) -> TypePredicate -> TypePredicate
 mapTypePred f (PredExpr p)  = PredExpr (f p)
 mapTypePred f (PredClass p) = PredClass (f p)
-mapTypePred _ (PredRel p r) = PredRel p r
+mapTypePred f (PredRel p)   = PredRel (f p)
 
 listTypeEnvNames :: TypeEnv -> [PartialName]
 listTypeEnvNames (TypeEnv classGraph names) = tpNames ++ clsNames
@@ -363,7 +363,7 @@ typeVal = singletonType . partialVal
 
 -- | Helper to create a relative 'Type' for a value (no args, no vars)
 relTypeVal :: TypeName -> Type
-relTypeVal n = TopType [PredRel n PtArgExact]
+relTypeVal n = TopType [PredRel $ partialVal $ PTypeName n]
 
 classPartial :: PartialType -> Type
 classPartial p = TopType [PredClass p]
@@ -395,7 +395,7 @@ expandType _ _ t@TypeVar{} = error $ printf "Can't expandTypeToLeafs with type v
 expandType typeEnv vaenv (TopType preds) = intersectAllTypes typeEnv $ map expandPred preds
   where
     expandPred (PredClass clss) = expandClassPartial typeEnv vaenv clss
-    expandPred (PredRel rel m)  = expandRelPartial typeEnv vaenv rel m
+    expandPred (PredRel rel)    = expandRelPartial typeEnv vaenv rel
     expandPred (PredExpr _)     = undefined
 
 expandClassPartial :: TypeEnv -> TypeVarArgEnv -> PartialType -> Type
@@ -415,12 +415,12 @@ expandClassPartial typeEnv@(TypeEnv (ClassGraph cg) _) vaenv PartialType{ptName,
           mapClassPartial tp@PartialType{ptVars} = tp{ptVars=fmap (substituteVarsWithVarEnv classVars) ptVars}
       r -> error $ printf "Unknown class %s in expandPartial. Found %s" (show className) (show r)
 
-expandRelPartial :: TypeEnv -> TypeVarArgEnv -> Name -> PtArgMode -> Type
-expandRelPartial typeEnv vaenv name mode = UnionType $ joinUnionType $ withMode (fromArgs ++ fromTypeEnv)
+expandRelPartial :: TypeEnv -> TypeVarArgEnv -> PartialType -> Type
+expandRelPartial typeEnv vaenv relPartial = UnionType $ joinUnionType (fromArgs ++ fromTypeEnv)
   where
-    fromTypeEnv = map partialVal $ relativePartialNameFilter name (listTypeEnvNames typeEnv)
-    fromArgs = map (partialVal . PTypeName) $ relativeNameFilter name $ map pkName $ H.keys $ snd $ splitVarArgEnv vaenv
-    withMode = map (\p -> p{ptArgMode=mode})
+    name = fromPartialName $ ptName relPartial
+    fromTypeEnv = map (\n -> relPartial{ptName=n}) $ relativePartialNameFilter name (listTypeEnvNames typeEnv)
+    fromArgs = map (\n -> relPartial{ptName=PTypeName n}) $ relativeNameFilter name $ map pkName $ H.keys $ snd $ splitVarArgEnv vaenv
 
 -- |
 -- Expands a class partial into a union of the types that make up that class (in the 'ClassGraph')
@@ -429,7 +429,7 @@ expandRelPartial typeEnv vaenv name mode = UnionType $ joinUnionType $ withMode 
 expandPartial :: TypeEnv -> TypeVarArgEnv -> PartialType -> Type
 expandPartial _ _ partial@PartialType{ptName=PTypeName{}} = singletonType partial
 expandPartial typeEnv vaenv partial@PartialType{ptName=PClassName{}} = expandClassPartial typeEnv vaenv partial
-expandPartial typeEnv vaenv PartialType{ptName=PRelativeName relName, ptArgMode} = expandRelPartial typeEnv vaenv relName ptArgMode
+expandPartial typeEnv vaenv partial = expandRelPartial typeEnv vaenv partial
 
 isSubPartialName :: PartialName -> PartialName -> Bool
 isSubPartialName (PTypeName a) (PTypeName b) = a == b
@@ -544,7 +544,7 @@ compactPartialsWithClassPred typeEnv vaenv partials = unionPartialLeafs $ map au
   where
     aux partial@PartialType{ptPreds} = if null classPreds && null relPreds
       then joinUnionType [partial]
-      else asLeafs $ intersectAllTypes typeEnv (singletonType partial' : map (uncurry (expandRelPartial typeEnv vaenv)) relPreds ++ map (expandClassPartial typeEnv vaenv) classPreds)
+      else asLeafs $ intersectAllTypes typeEnv (singletonType partial' : map (expandRelPartial typeEnv vaenv) relPreds ++ map (expandClassPartial typeEnv vaenv) classPreds)
       where
         -- Take class preds out of partial
         (exprPreds, classPreds, relPreds) = splitPreds ptPreds
@@ -553,12 +553,12 @@ compactPartialsWithClassPred typeEnv vaenv partials = unionPartialLeafs $ map au
         asLeafs (UnionType leafs) = leafs
         asLeafs t                 = asLeafs $ expandType typeEnv vaenv t
 
-        splitPreds :: [TypePredicate] -> ([PartialType], [PartialType], [(Name, PtArgMode)])
+        splitPreds :: [TypePredicate] -> ([PartialType], [PartialType], [PartialType])
         splitPreds [] = ([], [], [])
         splitPreds (p:ps) = case p of
-          PredExpr p'   -> (p':exprs', classes', rels')
-          PredClass p'  -> (exprs', p':classes', rels')
-          PredRel p' r' -> (exprs', classes', (p', r'):rels')
+          PredExpr p'  -> (p':exprs', classes', rels')
+          PredClass p' -> (exprs', p':classes', rels')
+          PredRel p'   -> (exprs', classes', p':rels')
           where
             (exprs', classes', rels') = splitPreds ps
 
@@ -728,7 +728,7 @@ setArgMode :: TypeVarArgEnv -> PtArgMode -> Type -> Type
 setArgMode _ mode (UnionType leafs) = UnionType $ joinUnionType $ map (\p -> p{ptArgMode=mode}) $ splitUnionType leafs
 setArgMode vaenv mode (TypeVar v _) = setArgMode vaenv mode (fromJust $ H.lookup v vaenv)
 setArgMode _ _ (TopType []) = TopType []
-setArgMode _ mode (TopType [PredRel n _]) = TopType [PredRel n mode]
+setArgMode _ mode (TopType [PredRel n]) = TopType [PredRel n{ptArgMode=mode}]
 setArgMode _ _ t@(TopType [PredClass{}]) = t
 setArgMode _ _ t = error $ printf "Unimplemented setArgMode for %s" (show t)
 

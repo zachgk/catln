@@ -62,9 +62,9 @@ resolveRelativeNames fullPrgm@(fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, C
     -- requireResolveRelative -> type -> updated type
     -- It is required to resolve for the classGraph, but expressions can be left unresolved until type inference
     mapType :: Bool -> Type -> Type
-    mapType reqResolve t@(TopType [PredRel n m]) = case resolveName reqResolve (PRelativeName n) of
-      PTypeName n'       -> setArgMode H.empty m $ singletonType $ partialVal $ PTypeName n'
-      PClassName n'      -> setArgMode H.empty m $ classPartial $ partialVal $ PTypeName n'
+    mapType reqResolve t@(TopType [PredRel p]) = case resolveName reqResolve (PRelativeName $ fromPartialName $ ptName p) of
+      PTypeName n'    -> singletonType p{ptName=PTypeName n'}
+      PClassName n'   -> classPartial $ partialVal $ PTypeName n'
       PRelativeName{} -> t
     mapType _ (TopType ps) = TopType ps
     mapType _ tp@(TypeVar TVVar{} _) = tp

@@ -160,7 +160,7 @@ desugarTheExpr t = (mWithType t' (getExprMeta t), defaultName)
     t' = exprToType t
     n' = case t' of
       _ | isJust (maybeGetSingleton t') -> fromPartialName $ ptName $ fromJust $ maybeGetSingleton t'
-      TopType [PredRel tn _] -> tn
+      TopType [PredRel tn] -> fromPartialName $ ptName tn
       _ -> error $ printf "desugarTheExpr can't get name from %s" (show t')
     defaultName = lowerCaseFirstLetter n'
     lowerCaseFirstLetter (n:ns) = toLower n : ns
