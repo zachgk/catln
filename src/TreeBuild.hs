@@ -145,7 +145,7 @@ groupArrows = aux ([], Nothing)
     aux (_, _) ((_, Just{}, True, _):_) = CErr [MkCNote $ BuildTreeCErr Nothing "ElseGuards with conditions are currently not supported"]
 
 findResArrows :: TBEnv -> [ObjSrc] -> PartialType -> Type -> CRes [ResBuildEnvItem]
-findResArrows TBEnv{tbName, tbResEnv, tbTypeEnv} os srcType@PartialType{ptName=PTypeName srcName} destType = case argArrows ++ globalArrows of
+findResArrows TBEnv{tbName, tbResEnv, tbTypeEnv} os srcType@PartialType{ptName=srcName} destType = case argArrows ++ globalArrows of
   arrows@(_:_) -> return arrows
   [] -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Failed to find any arrows:\n\tWhen building %s\n\tfrom %s to %s" tbName (show srcType) (show destType)]
   where
@@ -157,8 +157,6 @@ findResArrows TBEnv{tbName, tbResEnv, tbTypeEnv} os srcType@PartialType{ptName=P
     argArrows = case H.lookup (partialToKey srcType) $ snd $ splitVarArgEnv $ exprVarArgsWithObjSrcs tbTypeEnv os of
       Just (_, argArrowType) -> [(srcType, Nothing, False, TCArg argArrowType srcName)]
       Nothing -> []
-findResArrows _ _ PartialType{ptName=PClassName{}} _ = error "Can't findResArrows for class"
-findResArrows _ _ PartialType{ptName=PRelativeName{}} _ = error "Can't findResArrows for relative name"
 
 envLookup :: TBEnv -> [ObjSrc] -> VisitedArrows -> PartialType -> Type -> CRes TCallTree
 envLookup TBEnv{tbTypeEnv} os _ srcType destType | isSubtypeOfWithObjSrcs tbTypeEnv os (singletonType srcType) destType = return TCTId

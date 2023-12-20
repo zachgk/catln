@@ -71,7 +71,7 @@ fromMaybeTypeName = maybe topType fromName
   where
     fromName n = case parseTVVar n of
       Just t  -> t
-      Nothing -> typeVal (PRelativeName n)
+      Nothing -> relTypeVal n
 
 emptyMeta :: SourcePos -> SourcePos -> ParseMeta
 emptyMeta p1 p2 = Meta topType (Just (p1, p2, "")) emptyMetaDat

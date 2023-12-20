@@ -36,9 +36,8 @@ formatPartialKey :: PartialKey -> String
 formatPartialKey = formatPartialType . partialToType
 
 formatPartialType :: PartialType -> String
-formatPartialType (PartialType ptName ptVars ptArgs ptPreds _) = concat [showName ptName, showTypeVars ptVars, showArgs ptArgs, showPreds ptPreds]
+formatPartialType (PartialType ptName ptVars ptArgs ptPreds _) = concat [ptName, showTypeVars ptVars, showArgs ptArgs, showPreds ptPreds]
   where
-    showName p  = fromPartialName p
     showArg (argName, argVal) = if argVal == topType
       then '$':formatPartialKey argName
       else formatPartialKey argName ++ ": " ++ formatType argVal

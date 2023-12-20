@@ -50,7 +50,7 @@ unionReachesTree classGraph (ReachesTree children) = do
   case partition isTypeVar both of
     ([onlyVar], []) -> onlyVar
     ([], sums)       -> unionAllTypes classGraph sums
-    ([TypeVar (TVArg argName) tl], [UnionType leafs]) | all (\PartialType{ptName=n} -> makeAbsoluteName (fromPartialName n) == makeAbsoluteName (pkName argName)) (splitUnionType leafs) -> TypeVar (TVArg $ makeAbsolutePk argName) tl
+    ([TypeVar (TVArg argName) tl], [UnionType leafs]) | all (\PartialType{ptName=n} -> makeAbsoluteName n == makeAbsoluteName (pkName argName)) (splitUnionType leafs) -> TypeVar (TVArg $ makeAbsolutePk argName) tl
     (_, _)       -> error $ printf "Not yet implemented unionReachesTree with vars and partials of %s" (show both)
 unionReachesTree classGraph (ReachesLeaf leafs) = unionAllTypes classGraph leafs
 
@@ -70,8 +70,8 @@ reachesHasCutSubtypeOf classGraph vaenv (ReachesTree children) superType = all c
 reachesHasCutSubtypeOf classGraph vaenv (ReachesLeaf leafs) superType = any (\t -> isSubtypeOfWithMetaEnv classGraph vaenv t superType) leafs
 
 reachesPartial :: (MetaDat m, Show m) => ReachesEnv m -> PartialType -> CRes ReachesTree
-reachesPartial ReachesEnv{rVaenv} PartialType{ptName=PTypeName argName} | TVArg (partialKey argName) `H.member` rVaenv = return $ ReachesLeaf [TypeVar (TVArg $ partialKey argName) TVInt]
-reachesPartial ReachesEnv{rTypeGraph, rTypeEnv} partial@PartialType{ptName=PTypeName name} = do
+reachesPartial ReachesEnv{rVaenv} PartialType{ptName=argName} | TVArg (partialKey argName) `H.member` rVaenv = return $ ReachesLeaf [TypeVar (TVArg $ partialKey argName) TVInt]
+reachesPartial ReachesEnv{rTypeGraph, rTypeEnv} partial@PartialType{ptName=name} = do
 
   let ttypeArrows = H.lookupDefault [] name rTypeGraph
   ttypes <- mapM tryTArrow ttypeArrows
@@ -87,8 +87,6 @@ reachesPartial ReachesEnv{rTypeGraph, rTypeEnv} partial@PartialType{ptName=PType
         -- otherwise, no reaches path requiring multiple steps can be found
         then return $ Just $ unionAllTypes rTypeEnv [arrowDestType True rTypeEnv potentialSrcPartial oa | potentialSrcPartial <- splitUnionType potSrcLeafs]
         else return Nothing
-reachesPartial env@ReachesEnv{rTypeEnv} partial@PartialType{ptName=PClassName{}} = reaches env (expandPartial rTypeEnv H.empty partial)
-reachesPartial env@ReachesEnv{rTypeEnv} partial@PartialType{ptName=PRelativeName{}} = reaches env (expandRelPartial rTypeEnv H.empty partial)
 
 reaches :: (MetaDat m, Show m) => ReachesEnv m -> Type -> CRes ReachesTree
 reaches _     (TopType [])            = return $ ReachesLeaf [topType]

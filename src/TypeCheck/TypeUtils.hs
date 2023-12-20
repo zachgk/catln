@@ -23,7 +23,6 @@ import qualified Data.HashSet        as S
 
 import           Control.Monad
 import           Data.Bifunctor      (Bifunctor (bimap))
-import           Data.Maybe
 import           MapMeta
 import           Semantics
 import           Semantics.Prgm
@@ -112,7 +111,7 @@ addInferArgToType env@FEnv{feTypeEnv} vaenv (UnionType partials) = Just $ unionA
     partials' = map (addInferArgToPartial env vaenv) $ splitUnionType partials
 
 addInferArgToPartial :: FEnv -> TypeVarArgEnv -> PartialType -> Type
-addInferArgToPartial FEnv{feVTypeGraph, feTTypeGraph, feTypeEnv} _ partial@PartialType{ptName=PTypeName name, ptArgs} = do
+addInferArgToPartial FEnv{feVTypeGraph, feTTypeGraph, feTypeEnv} _ partial@PartialType{ptName=name, ptArgs} = do
   let vtypeArrows = H.lookupDefault [] name feVTypeGraph
   let vTypes = unionAllTypes feTypeEnv $ map tryArrow vtypeArrows
 
@@ -126,7 +125,6 @@ addInferArgToPartial FEnv{feVTypeGraph, feTTypeGraph, feTypeEnv} _ partial@Parti
       then UnionType $ joinUnionType $ map addArg $ S.toList $ S.difference (H.keysSet $ exprAppliedArgsMap $ oaObjExpr oa) (H.keysSet ptArgs)
       else bottomType
     addArg arg = partial{ptArgs=H.insertWith (unionTypes feTypeEnv) arg topType ptArgs}
-addInferArgToPartial env@FEnv{feTypeEnv} vaenv partial = fromMaybe bottomType $ addInferArgToType env vaenv (expandPartial feTypeEnv vaenv partial)
 
 mkReachesEnv :: FEnv -> VConstraint -> TypeCheckResult (ReachesEnv ())
 mkReachesEnv env@FEnv{feTypeEnv, feUnionAllObjs, feVTypeGraph, feTTypeGraph} con@(Constraint maybeConOa _ _) = do

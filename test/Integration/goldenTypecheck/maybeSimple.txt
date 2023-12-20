@@ -8,24 +8,24 @@
             , Value /Catln/Then -> /Catln/Then
             , /Catln/llvm ( Value /c ) -> /Catln/CatlnResult..
             , /Catln/www ( Value /html -> /Data/String ) = /Catln/CatlnResult
-                ( Value /name -> /Data/String = CStr "index.html" ) ( Value /contents -> TVArg /html = Value /html )
+                ( Value /name -> ~String = CStr "index.html" ) ( Value /contents -> TVArg /html = Value /html )
             , /Catln/CatlnResult ( Value /name -> /Data/String ) ( Value /contents -> /Data/String ) -> /Catln/CatlnResult
-                ( /name=/Data/String
-                , /contents=/Data/String
+                ( /name=~String
+                , /contents=~String
                 )
             , Value /Catln/#example -> /Catln/#example
             , Value /Catln/#test -> /Catln/#test
             , /Catln/#print ( Value /p -> /Catln/CatlnResult.. ) -> /Catln/#print ( /p=/Catln/CatlnResult.. )
             , /Catln/#assert ( Value /test -> ∀/Data/Primitive/Boolean ) ( Value /msg -> /Data/String ) -> /Catln/#assert
-                ( /msg=/Data/String
-                , /test=∀/Data/Primitive/Boolean
+                ( /msg=~String
+                , /test=~Boolean
                 )
-            , /Catln/#assert ( Value /test -> ∀/Data/Primitive/Boolean ) -> /Catln/#assert ( /test=∀/Data/Primitive/Boolean )
+            , /Catln/#assert ( Value /test -> ∀/Data/Primitive/Boolean ) -> /Catln/#assert ( /test=~Boolean )
             , Value /Catln/#argEnd -> /Catln/#argEnd
             , Value /Catln/#argStart -> /Catln/#argStart
             , Value /Catln/#else -> /Catln/#else
-            , /Catln/#name ( Value /name -> /Data/String ) -> /Catln/#name ( /name=/Data/String )
-            , /Catln/#md ( Value /text -> /Data/String ) -> /Catln/#md ( /text=/Data/String )
+            , /Catln/#name ( Value /name -> /Data/String ) -> /Catln/#name ( /name=~String )
+            , /Catln/#md ( Value /text -> /Data/String ) -> /Catln/#md ( /text=~String )
             , /Catln/println ( Value /msg -> /Data/String ) ( Value /this -> /Catln/IO ) -> /Catln/IO
             , /Catln/exit ( Value /val -> /Data/Primitive/Integer ) ( Value /this -> /Catln/IO ) -> /Catln/IO
             , Value /Catln/IO -> /Catln/IO
@@ -334,13 +334,13 @@
 ,
     (
         (
-            [ /Data/enum [ /T : ∀/Data/Enum ] -> ∀/Data/Set [ /T=TopType ]
+            [ /Data/enum [ /T : ∀/Data/Enum ] -> ∀/Data/Set
             , /Data/length
                 ( Value /this -> /Data/Cons [ /T=TopType ]
-                    ( /tail=∀/Data/ConsList [ /T=TVVar /T ]
+                    ( /tail=~ConsList [ /T=TVVar /T ]
                     , /head=TVVar /T
                     ) = /Data/Cons ( Value /head )
-                    ( Value /tail -> ∀/Data/ConsList [ /T=TVVar /T ] )
+                    ( Value /tail -> ~ConsList [ /T=TVVar /T ] )
                 ) ->
                 ( /Data/Primitive/Integer | /operator+
                     ( /l=/Data/Primitive/Integer
@@ -351,9 +351,8 @@
                 ( Value /r -> /Data/Primitive/Integer = /Data/length ( Value /this -> TVArg /tail = Value /tail ) )
             , /Data/length ( Value /this -> /Data/Nil ) = CInt 0
             , Value /Data/Nil -> /Data/Nil
-            , /Data/Cons [ /T : TopType ] ( Value /head -> TVVar /T )
-                ( Value /tail -> ∀/Data/ConsList [ /T=TVVar /T ] ) -> /Data/Cons [ /T=TopType ]
-                ( /tail=∀/Data/ConsList [ /T=TVVar /T ]
+            , /Data/Cons [ /T : TopType ] ( Value /head -> TVVar /T ) ( Value /tail -> ∀/Data/ConsList ) -> /Data/Cons [ /T=TopType ]
+                ( /tail=~ConsList [ /T=TVVar /T ]
                 , /head=TVVar /T
                 )
             , Value /Data/None -> /Data/None
@@ -380,10 +379,10 @@
                 )
             , CGClass
                 ( True
-                , /Data/ConsList [ /T=TopType ]
+                , /Data/ConsList
                 ,
                     [ /Data/Cons [ /T=TVVar /T ]
-                        ( /tail=∀/Data/ConsList [ /T=TVVar /T ]
+                        ( /tail=~ConsList [ /T=TVVar /T ]
                         , /head=TVVar /T
                         )
                     , /Data/Nil
@@ -400,23 +399,23 @@
                 )
             , CGClass
                 ( False
-                , /Data/Functor [ /T=TopType ]
+                , /Data/Functor
                 ,
-                    [ ∀/Data/Option [ /T=TVVar /T ]
-                    , ∀/Data/ConsList [ /T=TVVar /T ]
+                    [ ∀/Data/Option
+                    , ∀/Data/ConsList
                     ]
                 , Just "A [Functor] is a basic property of a collection.
                   It has a single operation [fmap] that applies a function to each element in the collection.$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]  "
                 )
             , CGClass
                 ( False
-                , /Data/List [ /T=TopType ]
+                , /Data/List
                 , []
                 , Just ""
                 )
             , CGClass
                 ( True
-                , /Data/Option [ /T=TopType ]
+                , /Data/Option
                 ,
                     [ TVVar /T
                     , /Data/None
@@ -426,7 +425,7 @@
                 )
             , CGClass
                 ( False
-                , /Data/Set [ /T=TopType ]
+                , /Data/Set
                 , []
                 , Just ""
                 )
@@ -451,7 +450,7 @@
                 ( Value /val -> /Data/Primitive/Integer = /defInt
                     ( Value /x -> /Data/Primitive/Integer = CInt 0 )
                 ) ( Value /this -> TVArg /io = Value /io )
-            , /defInt ( Value /x -> /Nothing.. = Value /Nothing ) -> /Data/Primitive/Integer = CInt 0
+            , /defInt ( Value /x -> /Nothing = Value /Nothing ) -> /Data/Primitive/Integer = CInt 0
             , /defInt ( Value /x -> /Data/Primitive/Integer ) -> TVArg /x = Value /x
             , Value /Nothing -> /Nothing
             ]
@@ -461,7 +460,7 @@
             , CGType
             , CGClass
                 ( True
-                , /Maybe [ /T=TopType ]
+                , /Maybe
                 ,
                     [ TVVar /T
                     , /Nothing

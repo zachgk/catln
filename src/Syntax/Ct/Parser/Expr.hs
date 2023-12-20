@@ -91,8 +91,8 @@ pValue = do
         "todefine"  -> RawHoleExpr m HoleTodefine
         _           -> case (usingTheExpr, spread) of
           (Just{}, Nothing)  -> RawTheExpr (RawValue m name)
-          (Nothing, Just{}) -> RawSpread $ RawValue (mWithType (singletonType $ partialVal $ PRelativeName name) m) name
-          (Nothing, Nothing) -> RawValue (mWithType (typeVal $ PRelativeName name) m) name
+          (Nothing, Just{}) -> RawSpread $ RawValue (mWithType (relTypeVal name) m) name
+          (Nothing, Nothing) -> RawValue (mWithType (relTypeVal name) m) name
           (Just{}, Just{}) -> undefined
 
 pStringLiteral :: Parser PExpr
@@ -181,7 +181,7 @@ pContextElSuffix = do
   _ <- symbol ":"
   tp <- tidentifier
   pos2 <- getSourcePos
-  return (partialKey arg, Meta (typeVal (PRelativeName tp)) (Just (pos1, pos2, "")) emptyMetaDat)
+  return (partialKey arg, Meta (relTypeVal tp) (Just (pos1, pos2, "")) emptyMetaDat)
 
 pContextSuffix :: Parser TermSuffix
 pContextSuffix = do

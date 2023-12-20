@@ -39,38 +39,38 @@ desGuardExpr (GuardExpr e g) = GuardExpr (desExpr e) (fmap desExpr g)
 
 -- | Updates the types based on the format as they are fixed for inputs (due to arrows this does not work for output expressions)
 desObjPropagateTypes :: DesExpr -> (Maybe PartialType, DesExpr)
-desObjPropagateTypes e | isJust (maybeGetSingleton $ getExprType e) = (maybeGetSingleton $ getExprType e, e)
 desObjPropagateTypes (CExpr m c) = (Just $ constantPartialType c, CExpr (mWithType (constantType c) m) c)
-desObjPropagateTypes (Value m n) = (Nothing, Value (mWithType t m) n)
+desObjPropagateTypes (Value m n) | getMetaType m == TopType [] = (Nothing, Value (mWithType t m) n)
   where
     t = relTypeVal n
+desObjPropagateTypes (Value m n) = (maybeGetSingleton $ getMetaType m, Value m n)
 desObjPropagateTypes (HoleExpr m h) = (Nothing, HoleExpr m h)
 desObjPropagateTypes (AliasExpr base alias) = (basePartial, AliasExpr base' alias')
   where
     (basePartial, base') = desObjPropagateTypes base
     (_, alias') = desObjPropagateTypes alias
 desObjPropagateTypes mainExpr@(TupleApply m (bm, be) tupleApplyArgs) = do
-  let (Just basePartial@PartialType{ptArgs=baseArgs}, be') = desObjPropagateTypes be
+  let be' = snd $ desObjPropagateTypes be
   let bm' = mWithType (getMetaType $ getExprMeta be') bm
   case tupleApplyArgs of
       arg@ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=(Just (GuardExpr argVal arrG), argM)} -> do
         let argName = inExprSingleton argObj
         let (_, argVal') = desObjPropagateTypes argVal
-        let basePartial' = basePartial{ptArgs=H.insert argName (getExprType argVal') baseArgs}
-        let m' = mWithType (singletonType basePartial') m
-        (Just basePartial', TupleApply m' (bm', be') arg{oaArr=(Just (GuardExpr argVal' arrG), argM)})
+        let tp' = typeSetArg argName (getExprType argVal') (getExprType be')
+        let m' = mWithType tp' m
+        (maybeGetSingleton tp', TupleApply m' (bm', be') arg{oaArr=(Just (GuardExpr argVal' arrG), argM)})
       ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=(Nothing, argM)} -> do
         let argName = inExprSingleton argObj
-        let basePartial' = basePartial{ptArgs=H.insert argName (getMetaType argM) baseArgs}
-        let m' = mWithType (singletonType basePartial') m
-        (Just basePartial', TupleApply m' (bm', be') (mkIObjArr argM argName))
+        let tp' = typeSetArg argName (getMetaType argM) (getExprType be')
+        let m' = mWithType tp' m
+        (maybeGetSingleton tp', TupleApply m' (bm', be') (mkIObjArr argM argName))
       _ -> error $ printf "Unexpected ObjArr in desObjPropagateTypes (probably because arrow only ObjArr): %s" (show mainExpr)
-desObjPropagateTypes (VarApply m be varName varVal) = (Just basePartial', VarApply m' be' varName varVal)
+desObjPropagateTypes (VarApply m be varName varVal) = (maybeGetSingleton tp', VarApply m' be' varName varVal)
   where
-    (Just basePartial@PartialType{ptVars=baseVars}, be') = desObjPropagateTypes be
+    be' = snd $ desObjPropagateTypes be
 
-    basePartial' = basePartial{ptVars=H.insert varName (getMetaType varVal) baseVars}
-    m' = mWithType (singletonType basePartial') m
+    tp' = typeSetVar varName (getMetaType varVal) (getExprType be')
+    m' = mWithType tp' m
 
 data SemiDesMode
   = SDInput Bool -- Used for parsing input expressions and indicates it is in a method
@@ -133,9 +133,10 @@ semiDesExpr sdm obj (RawVarsApply m be vs) = foldr aux be' vs
   where
     be' = semiDesExpr sdm obj be
     aux (varExpr, varVal) base = VarApply (emptyMetaM (show varName) m) base varName varVal
-      where varName = case fromPartialName $ ptName $ exprToPartialType varExpr of
-              '$':n -> partialKey n
-              n     -> partialKey n
+      where varName = case maybeExprPath varExpr of
+              Just ('$':n) -> partialKey n
+              Just n     -> partialKey n
+              Nothing -> error $ printf "No type name found in varExpr %s (type %s)" (show varExpr) (show $ exprToType varExpr)
 semiDesExpr sdm obj@Just{} (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawArgs (RawValue emptyMetaN "/Context") ((Just $ partialKey "value", be) : map (\(ctxName, ctxM) -> (Nothing, RawValue ctxM (pkName ctxName))) ctxs)
 semiDesExpr sdm obj@Nothing (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawIArgs (RawValue emptyMetaN "/Context") ((partialKey "value", IArgE be) : map (second IArgM) ctxs)
 semiDesExpr sdm obj (RawParen e) = semiDesExpr sdm obj e
@@ -158,10 +159,7 @@ desugarTheExpr :: PExpr -> (ParseMeta, Name)
 desugarTheExpr t = (mWithType t' (getExprMeta t), defaultName)
   where
     t' = exprToType t
-    n' = case t' of
-      _ | isJust (maybeGetSingleton t') -> fromPartialName $ ptName $ fromJust $ maybeGetSingleton t'
-      TopType [PredRel tn] -> fromPartialName $ ptName tn
-      _ -> error $ printf "desugarTheExpr can't get name from %s" (show t')
+    n' = fromMaybe (error $ printf "desugarTheExpr can't get name from %s" (show t')) $ maybeGetTypeName t'
     defaultName = lowerCaseFirstLetter n'
     lowerCaseFirstLetter (n:ns) = toLower n : ns
     lowerCaseFirstLetter ns     = ns
@@ -169,7 +167,9 @@ desugarTheExpr t = (mWithType t' (getExprMeta t), defaultName)
 exprToPartialType :: PExpr -> PartialType
 exprToPartialType e = case desObjPropagateTypes $ desExpr $ semiDesExpr SDType Nothing e of
   (Just t', _) -> t'
-  (Nothing, e') -> error $ printf "Failed exprToPartialType with type %s in expr %s" (show $ getExprType e') (show e')
+  (Nothing, e') -> case getExprType e' of
+    TopType [PredRel n] -> n
+    t' -> error $ printf "Failed exprToPartialType with type %s in expr %s" (show t') (show e')
 
 exprToType :: PExpr -> Type
 exprToType (RawValue _ n) | isJust (parseTVVar n) = fromJust $ parseTVVar n

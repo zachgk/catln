@@ -41,11 +41,6 @@ scopeSubDeclFunNamesInS prefix replaceNames name = name'
     addPrefix n = prefix ++ "." ++ n
     name' = if S.member name replaceNames then addPrefix name else name
 
-scopeSubDeclFunNamesInPartialName :: TypeName -> S.HashSet TypeName -> PartialName -> PartialName
-scopeSubDeclFunNamesInPartialName prefix replaceNames (PTypeName name) = PTypeName $ scopeSubDeclFunNamesInS prefix replaceNames name
-scopeSubDeclFunNamesInPartialName prefix replaceNames (PClassName name) = PClassName $ scopeSubDeclFunNamesInS prefix replaceNames name
-scopeSubDeclFunNamesInPartialName prefix replaceNames (PRelativeName name) = PRelativeName $ scopeSubDeclFunNamesInS prefix replaceNames name
-
 scopeSubDeclFunNamesInExpr :: TypeName -> S.HashSet TypeName -> PSExpr -> PSExpr
 scopeSubDeclFunNamesInExpr _ _ e@CExpr{} = e
 scopeSubDeclFunNamesInExpr prefix replaceNames (Value m name) = Value (scopeSubDeclFunNamesInMeta prefix replaceNames m) $ scopeSubDeclFunNamesInS prefix replaceNames name
@@ -62,10 +57,14 @@ scopeSubDeclFunNamesInExpr prefix replaceNames (VarApply m bExpr varName varVal)
 scopeSubDeclFunNamesInMeta :: TypeName -> S.HashSet TypeName -> ParseMeta -> ParseMeta
 scopeSubDeclFunNamesInMeta prefix replaceNames (Meta (UnionType partials) pos md) = Meta (UnionType partials') pos md
   where
-    scopeS = scopeSubDeclFunNamesInPartialName prefix replaceNames
+    scopeS = scopeSubDeclFunNamesInS prefix replaceNames
     partials' = H.mapKeys scopeS partials
 scopeSubDeclFunNamesInMeta _ _ m@(Meta (TopType []) _ _) = m
-scopeSubDeclFunNamesInMeta _ _ (Meta (TopType _) _ _) = undefined
+scopeSubDeclFunNamesInMeta prefix replaceNames (Meta (TopType preds) pos md) = Meta (TopType preds') pos md
+  where
+    preds' = map scopePred preds
+    scopePred (PredRel p@PartialType{ptName}) = PredRel p{ptName=scopeSubDeclFunNamesInS prefix replaceNames ptName}
+    scopePred p = p
 scopeSubDeclFunNamesInMeta _ _ m@(Meta TypeVar{} _ _) = m
 
 -- Renames sub functions by applying the parent names as a prefix to avoid name collisions

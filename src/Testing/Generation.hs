@@ -31,7 +31,7 @@ import           Utils
 
 genTypeFromExpr :: Prgm Expr () -> Expr () -> Gen PartialType
 genTypeFromExpr _ (CExpr _ c) = return $ constantPartialType c
-genTypeFromExpr _ (Value _ n) = return $ partialVal $ PTypeName n
+genTypeFromExpr _ (Value _ n) = return $ partialVal n
 genTypeFromExpr prgm (TupleApply _ (_, baseExpr) oa) = do
   base@PartialType{ptArgs=baseArgs} <- genTypeFromExpr prgm baseExpr
   shouldAddArg <- HG.bool
@@ -64,14 +64,14 @@ genType prgm@(objMap, ClassGraph cg, _) = HG.choice gens
     genCGOld :: Gen Type
     genCGOld = do
       classNode <- HG.element $ graphToNodes cg
-      return $ typeVal $ snd3 classNode
+      return $ typeVal $ fromPartialName $ snd3 classNode
 
     genCG :: Gen Type
     genCG = do
       classNode <- HG.element $ graphToNodes cg
       return $ case snd3 classNode of
-        cls@PClassName{} -> TopType [PredClass $ partialVal cls]
-        t                -> typeVal t
+        cls@PClassName{} -> TopType [PredClass $ partialVal $ fromPartialName cls]
+        t                -> typeVal $ fromPartialName t
 
     genCGRel :: Gen Type
     genCGRel = do
@@ -102,7 +102,7 @@ genPartialType prgm@(objMap, ClassGraph cg, _) = do
     genCG :: Gen PartialType
     genCG = do
       classNode <- HG.element $ graphToNodes cg
-      return $ partialVal $ snd3 classNode
+      return $ partialVal $ fromPartialName $ snd3 classNode
 
     genObj :: Gen PartialType
     genObj = do
@@ -116,7 +116,7 @@ genInputExpr = do
   varArgNames <- HG.set (linear 0 5) genName
   varOrArg <- HG.list (singleton $ S.size varArgNames) HG.bool
   let (varNames, argNames) = bimap (map fst) (map fst) $ partition snd $ zip (S.toList varArgNames) varOrArg
-  let val = Value (emptyMetaT $ typeVal $ PTypeName n) n
+  let val = Value (emptyMetaT $ typeVal n) n
   withVars <- foldM genVar val (map partialKey varNames)
   foldM genArg withVars argNames
   where

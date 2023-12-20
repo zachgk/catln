@@ -16,7 +16,6 @@
 module Syntax.Ct.Desugarf.Passes where
 
 import           Data.Graph
-import qualified Data.HashMap.Strict     as H
 import           Data.List               (nub)
 import           Data.Maybe
 import           MapMeta
@@ -47,11 +46,11 @@ removeClassInstanceObjects (_, fullPrgmClassGraph, _) (objMap, ClassGraph cg, an
 -- uses the mapMeta for objMap and annots, but must map the classGraph manually
 -- the fullPrgmClassToTypes includes the imports and is used for when the def is inside an import
 resolveRelativeNames :: DesPrgm -> DesPrgm -> DesPrgm
-resolveRelativeNames fullPrgm@(fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, ClassGraph cg, annots) = mapMetaPrgm resolveMeta (objMap, classGraph', annots)
+resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, ClassGraph cg, annots) = mapMetaPrgm resolveMeta (objMap, classGraph', annots)
   where
     classGraph' = ClassGraph $ graphFromEdges $ map mapClassEntry $ graphToNodes cg
     mapClassEntry (node, tp, subTypes) = (mapCGNode node, resolveName True tp, map (resolveName True) subTypes)
-    mapCGNode (CGClass (s, clss, ts, doc)) = CGClass (s, fromJust $ maybeGetClassSingleton $ mapPartial True clss, fmap (mapType True) ts, doc)
+    mapCGNode (CGClass (s, clss, ts, doc)) = CGClass (s, resolveClassPartial True clss, fmap (mapType True) ts, doc)
     mapCGNode CGType = CGType
     classNames = nub $ listClassNames fullPrgmClassGraph
     objNames = nub $ map oaObjPath (concatMap getRecursiveObjs fullPrgmObjMap)
@@ -62,28 +61,33 @@ resolveRelativeNames fullPrgm@(fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, C
     -- requireResolveRelative -> type -> updated type
     -- It is required to resolve for the classGraph, but expressions can be left unresolved until type inference
     mapType :: Bool -> Type -> Type
-    mapType reqResolve t@(TopType [PredRel p]) = case resolveName reqResolve (PRelativeName $ fromPartialName $ ptName p) of
-      PTypeName n'    -> singletonType p{ptName=PTypeName n'}
-      PClassName n'   -> classPartial $ partialVal $ PTypeName n'
-      PRelativeName{} -> t
+    mapType reqResolve (TopType [PredRel p]) = resolveRelPartial reqResolve p
     mapType _ (TopType ps) = TopType ps
     mapType _ tp@(TypeVar TVVar{} _) = tp
     mapType _ (TypeVar TVArg{} _) = error "Invalid arg type"
-    mapType reqResolve (UnionType partials) = unionAllTypes (mkTypeEnv fullPrgm) $ map (mapPartial reqResolve) $ splitUnionType partials
+    mapType reqResolve (UnionType partials) = UnionType $ joinUnionType $ map (mapPartial reqResolve) $ splitUnionType partials
 
-    mapPartial :: Bool -> PartialType -> Type
-    mapPartial reqResolve partial@PartialType{ptName, ptVars, ptArgs, ptPreds} = case name' of
-      PTypeName{}       -> singletonType partial'
-      PClassName{}      -> classPartial partial'
-      (PRelativeName n) -> spreadType H.empty $ relTypeVal n
-      where
-        name' = resolveName reqResolve ptName
-        partial' = partial {
-          ptName = PTypeName $ fromPartialName name',
+    mapPartial :: Bool -> PartialType -> PartialType
+    mapPartial reqResolve partial@PartialType{ptVars, ptArgs, ptPreds} = partial{
           ptVars = fmap (mapType reqResolve) ptVars,
           ptArgs = fmap (mapType reqResolve) ptArgs,
-          ptPreds = fmap (mapTypePred (fromJust . maybeGetSingleton . mapPartial reqResolve)) ptPreds
+          ptPreds = fmap (mapTypePred (mapPartial reqResolve)) ptPreds
                                                                                                                       }
+
+    -- | Resolves possibilities for a relative partial for use in the class graph
+    resolveClassPartial :: Bool -> PartialType -> PartialType
+    resolveClassPartial reqResolve p = case resolveRelPartial reqResolve p of
+      (TopType [PredClass p']) -> p'
+      t | isJust (maybeGetSingleton t) -> fromJust $ maybeGetSingleton t
+      p' -> error $ printf "Unexpected resolved class partial %s" (show p')
+
+    -- | Resolves possibilities for a relative partial
+    resolveRelPartial :: Bool -> PartialType -> Type
+    resolveRelPartial reqResolve p = case resolveName reqResolve (PRelativeName $ ptName p) of
+      PTypeName n'    -> singletonType p{ptName=n'}
+      PClassName n'   -> classPartial $ partialVal n'
+      PRelativeName{} -> TopType [PredRel p]
+
 
     -- |
     -- Attempts to convert 'PRelativeName' to either a type or a class

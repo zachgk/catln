@@ -206,15 +206,14 @@
             , /Data/toString ( Value /this -> /Data/String ) = Value this
             , /Data/toString ( Value /this -> /Data/Primitive/Integer ) -> /Data/String
             , Value /Data/None
-            , /Data/Cons [ /T : TopType ] ( Value /head -> TVVar /T )
-                ( Value /tail -> ∀/Data/ConsList [ /T=TVVar /T ] )
+            , /Data/Cons [ /T : TopType ] ( Value /head -> TVVar /T ) ( Value /tail -> ∀/Data/ConsList )
             , Value /Data/Nil
             , /Data/length ( Value /this -> /Data/Nil ) = CInt 0
             , /Data/length
                 ( Value /this= /Data/Cons ( Value head ) ( Value tail ) ) = /operator+
                 ( Value /l= CInt 1 )
                 ( Value /r= length ( Value /this= Value tail ) )
-            , /Data/enum [ /T : ∀/Data/Enum ] -> ∀/Data/Set [ /T=TopType ]
+            , /Data/enum [ /T : ∀/Data/Enum ] -> ∀/Data/Set
             ]
         ,
             [ CGType
@@ -233,10 +232,10 @@
                 )
             , CGClass
                 ( True
-                , /Data/ConsList [ /T=TopType ]
+                , /Data/ConsList
                 ,
                     [ /Data/Cons [ /T=TVVar /T ]
-                        ( /tail=∀/Data/ConsList [ /T=TVVar /T ]
+                        ( /tail=~ConsList [ /T=TVVar /T ]
                         , /head=TVVar /T
                         )
                     , /Data/Nil
@@ -253,23 +252,23 @@
                 )
             , CGClass
                 ( False
-                , /Data/Functor [ /T=TopType ]
+                , /Data/Functor
                 ,
-                    [ ∀/Data/Option [ /T=TVVar /T ]
-                    , ∀/Data/ConsList [ /T=TVVar /T ]
+                    [ ∀/Data/Option
+                    , ∀/Data/ConsList
                     ]
                 , Just "A [Functor] is a basic property of a collection.
                   It has a single operation [fmap] that applies a function to each element in the collection.$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]  "
                 )
             , CGClass
                 ( False
-                , /Data/List [ /T=TopType ]
+                , /Data/List
                 , []
                 , Just ""
                 )
             , CGClass
                 ( True
-                , /Data/Option [ /T=TopType ]
+                , /Data/Option
                 ,
                     [ TVVar /T
                     , /Data/None
@@ -279,7 +278,7 @@
                 )
             , CGClass
                 ( False
-                , /Data/Set [ /T=TopType ]
+                , /Data/Set
                 , []
                 , Just ""
                 )
@@ -454,8 +453,8 @@
                 , /IntList
                 ,
                     [ /IntCons
-                        ( /tail=∀/IntList
-                        , /head=/Data/Primitive/Integer
+                        ( /tail=~IntList
+                        , /head=~Integer
                         )
                     , /IntNil
                     ]

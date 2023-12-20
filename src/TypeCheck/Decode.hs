@@ -41,8 +41,8 @@ toExpr env (CExpr m c) = do
   return $ CExpr m' c
 toExpr env (Value m name) = do
   let name' = case maybeGetSingleton $ getMetaType m of
-        Just PartialType{ptName=PTypeName n} -> n
-        _                                    -> makeAbsoluteName name -- TODO Maybe consider this an exception
+        Just PartialType{ptName=n} -> n
+        _                          -> makeAbsoluteName name -- TODO Maybe consider this an exception
   m' <- toMeta env m $ "Value_" ++ name'
   return $ Value m' name'
 toExpr env (HoleExpr m hole) = do

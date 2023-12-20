@@ -88,9 +88,8 @@ addArgToType _ _ (TopType _) _ = Nothing
 addArgToType env vaenv (TypeVar v _) newArg = case H.lookup v vaenv of
   Just t  -> addArgToType env vaenv t newArg
   Nothing -> error $ printf "Unknown type in addArgToType: %s" (show v)
-addArgToType env@FEnv{feTypeEnv} vaenv (UnionType partials) newArg = Just $ unionAllTypes feTypeEnv $ mapMaybe fromPartial $ splitUnionType partials
+addArgToType FEnv{feTypeEnv} _ (UnionType partials) newArg = Just $ unionAllTypes feTypeEnv $ mapMaybe fromPartial $ splitUnionType partials
   where
-    fromPartial partial@PartialType{ptName=PClassName{}} = addArgToType env vaenv (expandClassPartial feTypeEnv vaenv partial) newArg
     fromPartial partial@PartialType{ptArgs} = Just $ singletonType partial{ptArgs=H.insertWith (unionTypes feTypeEnv) newArg topType ptArgs}
 
 -- | A helper for the 'AddArg' 'Constraint'

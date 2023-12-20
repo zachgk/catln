@@ -64,10 +64,10 @@ propExpandEq :: GenPrgm -> Property
 propExpandEq gPrgm = property $ do
   prgm <- forAll gPrgm
   let typeEnv = mkTypeEnv prgm
-  a <- forAll $ genPartialType prgm
-  let expanded = expandPartial typeEnv H.empty a
+  a <- forAll $ genType prgm
+  let expanded = expandType typeEnv H.empty a
   annotate $ printf "expanded = %s" (show expanded)
-  assert $ isEqType typeEnv (singletonType a) expanded
+  assert $ isEqType typeEnv a expanded
 
 
 propSubtypeByUnion :: GenPrgm -> Property

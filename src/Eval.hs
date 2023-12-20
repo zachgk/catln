@@ -135,7 +135,7 @@ evalExpr env (TCExpr _ v) = return (v, env)
 evalExpr env (TValue m _) = do
   let UnionType leafs = getMetaType m
   let [PartialType{ptName}] = splitUnionType leafs
-  return (TupleVal (fromPartialName ptName) H.empty, env)
+  return (TupleVal ptName H.empty, env)
 evalExpr _ (THoleExpr m h) = CErr [MkCNote $ GenCErr (getMetaPos m) $ printf "Can't evaluate hole %s" (show h)]
 evalExpr env (TAliasExpr b _) = evalExpr env b
 evalExpr env@Env{evArgs} (TTupleApply _ b oa@ObjArr{oaObj=Just (GuardExpr (TValue _ "/io") Nothing), oaArr=(Nothing, _)}) = do
@@ -184,7 +184,7 @@ evalAnnots prgmName prgmGraphData = do
   let prgm@(_, _, annots) = prgmFromGraphData prgmName prgmGraphData
   let env@Env{evTbEnv} = evalBaseEnv prgm
   forM annots $ \annot -> do
-    let emptyType = partialVal (PTypeName "EmptyObj")
+    let emptyType = partialVal "EmptyObj"
     let emptyObj = ObjArr (Just (GuardExpr (Value (Meta (singletonType emptyType) Nothing emptyMetaDat) "EmptyObj") Nothing)) FunctionObj Nothing [] (Nothing, emptyMetaN)
     tree <- toTExpr evTbEnv [(emptyType, emptyObj)] annot
     val <- fst <$> evalExpr env tree
