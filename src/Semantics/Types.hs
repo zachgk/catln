@@ -329,7 +329,7 @@ splitUnionTypeByName = H.mapWithKey (\k vs -> map (aux k) (S.toList vs))
 
 -- | Used to combine the component 'PartialType' to form a 'UnionType' while keeping types with the same name together
 joinUnionTypeByName :: H.HashMap TypeName [PartialType] -> PartialLeafs
-joinUnionTypeByName = H.map (S.fromList . map typeToArgOption)
+joinUnionTypeByName leafs = H.map (S.fromList . map typeToArgOption) $ H.filter (not . null) leafs
   where typeToArgOption (PartialType _ pVars pArgs pPreds pArgMode) = (pVars, pArgs, pPreds, pArgMode)
 
 -- | Helper to create a 'UnionType' consisting of a single 'PartialType'
@@ -633,10 +633,10 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds aArgMo
     subUnion (aVaenv, a) (bVaenv, b) = intersectTypesWithVarEnv typeEnv (mergeAllVarEnvs typeEnv [aVaenv, bVaenv]) a b
     subValidate (vev, subTp) = if isBottomType subTp then Nothing else Just (vev, subTp)
 
-intersectPartials :: TypeEnv -> TypeVarArgEnv -> PartialType -> PartialType -> (TypeVarArgEnv, Type)
+intersectPartials :: TypeEnv -> TypeVarArgEnv -> PartialType -> PartialType -> (TypeVarArgEnv, [PartialType])
 intersectPartials typeEnv vaenv a b = case intersectPartialsBase typeEnv vaenv a b of
-  Just (vaenv', partials') -> (vaenv', UnionType $ joinUnionType partials')
-  Nothing                  -> (vaenv, bottomType)
+  Just (vaenv', partials') -> (vaenv', partials')
+  Nothing                  -> (vaenv, [])
 
 -- |
 -- Takes the intersection of two 'Type'.
@@ -660,11 +660,11 @@ intersectTypesWithVarEnv typeEnv vaenv t1@(UnionType partials) t2@TopType{} = ca
     where
       addPreds partial@PartialType{ptPreds} = partial{ptPreds = topPreds ++ ptPreds}
 intersectTypesWithVarEnv typeEnv vaenv t1@TopType{} t2@UnionType{} = intersectTypesWithVarEnv typeEnv vaenv t2 t1
-intersectTypesWithVarEnv typeEnv vaenv (UnionType aPartials) (UnionType bPartials) = case [intersectPartials typeEnv vaenv aPartial bPartial | aPartial <- splitUnionType aPartials, bPartial <- splitUnionType bPartials] of
-  [] -> (vaenv, bottomType)
-  combined -> do
-    let (vaenvs', intersected) = unzip combined
-    (mergeAllVarEnvs typeEnv vaenvs', unionAllTypes typeEnv intersected)
+intersectTypesWithVarEnv typeEnv vaenv (UnionType aPartials) (UnionType bPartials) = (vaenv', type')
+  where
+    intersected = H.intersectionWith (\as bs -> [intersectPartials typeEnv vaenv a b | a <- as, b <- bs]) (splitUnionTypeByName aPartials) (splitUnionTypeByName bPartials)
+    vaenv' = mergeAllVarEnvs typeEnv $ fmap fst $ concat $ H.elems intersected
+    type' = UnionType $ joinUnionTypeByName $ fmap (concatMap snd) intersected
 
 intersectTypesEnv :: TypeEnv -> TypeVarArgEnv -> Type -> Type -> Type
 intersectTypesEnv typeEnv vaenv t1 t2 = snd $ intersectTypesWithVarEnv typeEnv vaenv t1 t2
