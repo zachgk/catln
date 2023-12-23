@@ -78,3 +78,12 @@ As part of the development, we use [stylish-haskell](https://github.com/haskell/
 ```
 make format
 ```
+
+### Profiling
+
+To profile, it can be done by running `stack test --profile`.
+This produces the file `catln-test.prof`.
+
+To make it easier to understand, there are tools to provide visualizations of the results.
+One can be done by running `profiteur catln-tet.prof`.
+This produces a file `catln-test.prof.html` which can be viewed.
