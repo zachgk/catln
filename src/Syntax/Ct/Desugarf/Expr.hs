@@ -38,36 +38,36 @@ desGuardExpr :: PSGuardExpr -> DesGuardExpr
 desGuardExpr (GuardExpr e g) = GuardExpr (desExpr e) (fmap desExpr g)
 
 -- | Updates the types based on the format as they are fixed for inputs (due to arrows this does not work for output expressions)
-desObjPropagateTypes :: DesExpr -> (Maybe PartialType, DesExpr)
-desObjPropagateTypes (CExpr m c) = (Just $ constantPartialType c, CExpr (mWithType (constantType c) m) c)
-desObjPropagateTypes (Value m n) | getMetaType m == TopType [] = (Nothing, Value (mWithType t m) n)
+desObjPropagateTypes :: DesExpr -> DesExpr
+desObjPropagateTypes (CExpr m c) = CExpr (mWithType (constantType c) m) c
+desObjPropagateTypes (Value m n) | getMetaType m == TopType [] = Value (mWithType t m) n
   where
     t = relTypeVal n
-desObjPropagateTypes (Value m n) = (maybeGetSingleton $ getMetaType m, Value m n)
-desObjPropagateTypes (HoleExpr m h) = (Nothing, HoleExpr m h)
-desObjPropagateTypes (AliasExpr base alias) = (basePartial, AliasExpr base' alias')
+desObjPropagateTypes (Value m n) = Value m n
+desObjPropagateTypes (HoleExpr m h) = HoleExpr m h
+desObjPropagateTypes (AliasExpr base alias) = AliasExpr base' alias'
   where
-    (basePartial, base') = desObjPropagateTypes base
-    (_, alias') = desObjPropagateTypes alias
+    base' = desObjPropagateTypes base
+    alias' = desObjPropagateTypes alias
 desObjPropagateTypes mainExpr@(TupleApply m (bm, be) tupleApplyArgs) = do
-  let be' = snd $ desObjPropagateTypes be
+  let be' = desObjPropagateTypes be
   let bm' = mWithType (getMetaType $ getExprMeta be') bm
   case tupleApplyArgs of
       arg@ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=(Just (GuardExpr argVal arrG), argM)} -> do
         let argName = inExprSingleton argObj
-        let (_, argVal') = desObjPropagateTypes argVal
+        let argVal' = desObjPropagateTypes argVal
         let tp' = typeSetArg argName (getExprType argVal') (getExprType be')
         let m' = mWithType tp' m
-        (maybeGetSingleton tp', TupleApply m' (bm', be') arg{oaArr=(Just (GuardExpr argVal' arrG), argM)})
+        TupleApply m' (bm', be') arg{oaArr=(Just (GuardExpr argVal' arrG), argM)}
       ObjArr{oaObj=Just (GuardExpr argObj _), oaArr=(Nothing, argM)} -> do
         let argName = inExprSingleton argObj
         let tp' = typeSetArg argName (getMetaType argM) (getExprType be')
         let m' = mWithType tp' m
-        (maybeGetSingleton tp', TupleApply m' (bm', be') (mkIObjArr argM argName))
+        TupleApply m' (bm', be') (mkIObjArr argM argName)
       _ -> error $ printf "Unexpected ObjArr in desObjPropagateTypes (probably because arrow only ObjArr): %s" (show mainExpr)
-desObjPropagateTypes (VarApply m be varName varVal) = (maybeGetSingleton tp', VarApply m' be' varName varVal)
+desObjPropagateTypes (VarApply m be varName varVal) = VarApply m' be' varName varVal
   where
-    be' = snd $ desObjPropagateTypes be
+    be' = desObjPropagateTypes be
 
     tp' = typeSetVar varName (getMetaType varVal) (getExprType be')
     m' = mWithType tp' m
@@ -165,15 +165,17 @@ desugarTheExpr t = (mWithType t' (getExprMeta t), defaultName)
     lowerCaseFirstLetter ns     = ns
 
 exprToPartialType :: PExpr -> PartialType
-exprToPartialType e = case desObjPropagateTypes $ desExpr $ semiDesExpr SDType Nothing e of
-  (Just t', _) -> t'
-  (Nothing, e') -> case getExprType e' of
-    TopType [PredRel n] -> n
-    t' -> error $ printf "Failed exprToPartialType with type %s in expr %s" (show t') (show e')
+exprToPartialType e = case maybeGetSingleton $ getExprType des of
+    Just t' -> t'
+    Nothing -> case getExprType des of
+      TopType [PredRel n] -> n
+      t' -> error $ printf "Failed exprToPartialType with type %s in expr %s" (show t') (show des)
+  where
+    des = desObjPropagateTypes $ desExpr $ semiDesExpr SDType Nothing e
 
 exprToType :: PExpr -> Type
 exprToType (RawValue _ n) | isJust (parseTVVar n) = fromJust $ parseTVVar n
-exprToType e                        = getExprType $ snd $ desObjPropagateTypes $ desExpr $ semiDesExpr SDType Nothing e
+exprToType e                        = getExprType $ desObjPropagateTypes $ desExpr $ semiDesExpr SDType Nothing e
 
 exprToTypeMeta :: PExpr -> ParseMeta
 exprToTypeMeta e = mWithType (exprToType e) (getExprMeta e)
