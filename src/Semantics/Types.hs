@@ -648,8 +648,8 @@ intersectTypesWithVarEnv _ vaenv (TopType ps1) (TopType ps2) = (vaenv, TopType $
 intersectTypesWithVarEnv _ vaenv t1 t2 | t1 == t2 = (vaenv, t1)
 intersectTypesWithVarEnv typeEnv vaenv tv@(TypeVar v _) t = case (v, H.lookup v vaenv) of
   (TVArg{}, Nothing) -> error $ printf "Failed to intersect with unknown TVArg %s in vaenv %s" (show v) (show vaenv)
-  (_, Just l) | isBottomType (snd $ intersectTypesWithVarEnv typeEnv vaenv l t) -> (vaenv, bottomType)
-  _ -> (H.insertWith (\t1 t2 -> snd $ intersectTypesWithVarEnv typeEnv vaenv t1 t2) v t vaenv, tv)
+  (_, Just l) | isBottomType (intersectTypesEnv typeEnv vaenv l t) -> (vaenv, bottomType)
+  _ -> (H.insertWith (intersectTypesEnv typeEnv vaenv) v t vaenv, tv)
 intersectTypesWithVarEnv typeEnv vaenv t tv@TypeVar{} = intersectTypesWithVarEnv typeEnv vaenv tv t
 intersectTypesWithVarEnv _ vaenv _ t | isBottomType t = (vaenv, t)
 intersectTypesWithVarEnv _ vaenv t _ | isBottomType t = (vaenv, t)
@@ -671,7 +671,7 @@ intersectTypesEnv typeEnv vaenv t1 t2 = snd $ intersectTypesWithVarEnv typeEnv v
 
 -- | Takes the intersection of two 'Type' (∩).
 intersectTypes :: TypeEnv -> Type -> Type -> Type
-intersectTypes typeEnv a b = snd $ intersectTypesWithVarEnv typeEnv H.empty a b
+intersectTypes typeEnv = intersectTypesEnv typeEnv H.empty
 
 -- | Takes the powerset of a 'Type' with the powerset of the arguments in the type.
 powersetType :: TypeEnv -> TypeVarArgEnv -> Type -> Type

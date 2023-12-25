@@ -76,7 +76,7 @@ evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe 
           then Just $ EvalBuild (oaObjPath oa)
           else Just $ EvalRun (oaObjPath oa)
       _ -> Nothing
-    isBuildable oa tp = not $ isBottomType $ snd $ intersectTypesWithVarEnv typeEnv (fmap ((intersectAllTypes typeEnv . fmap getMetaType) . map snd) (exprVarArgs $ oaObjExpr oa)) tp resultType
+    isBuildable oa tp = not $ isBottomType $ intersectTypesEnv typeEnv (fmap ((intersectAllTypes typeEnv . fmap getMetaType) . map snd) (exprVarArgs $ oaObjExpr oa)) tp resultType
 
 -- | evaluate annotations such as assertions that require compiler verification
 evalCompAnnot :: Env -> Val -> CRes Env
