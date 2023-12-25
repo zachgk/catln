@@ -8,11 +8,19 @@ function Expr(props) {
   case "CExpr":
     return "" + expr.contents[1].contents;
   case "Value":
-    return <PTypeName name={expr.contents[1]} />;
+    let showValM;
+    if (showMetas) {
+      showValM = <Meta data={expr.contents[0]}/>;
+    }
+    return <span><PTypeName name={expr.contents[1]} />{showValM}</span>;
   case "HoleExpr":
-    return "_";
+    let showHoleM;
+    if (showMetas) {
+      showHoleM = <Meta data={expr.contents[0]}/>;
+    }
+    return <span>_{showHoleM}</span>;
   case "AliasExpr":
-    return <span><Expr expr={expr.contents[0]}/>@<Expr expr={expr.contents[1]}/></span>;
+    return <span><Expr expr={expr.contents[0]} Meta={Meta} showMetas={showMetas}/>@<Expr expr={expr.contents[1]} Meta={Meta} showMetas={showMetas} /></span>;
   case "TupleApply":
     const [m, [baseM ,base], arg] = expr.contents;
 
@@ -28,7 +36,7 @@ function Expr(props) {
 
     let showBase = <Expr expr={base} Meta={Meta} showMetas={showMetas}/>;
 
-    return <span>{showBase}({showBaseM} <ObjArr oa={arg} />){showM}</span>;
+    return <span>{showBase}{showBaseM}(<ObjArr oa={arg} Meta={Meta} showExprMetas={showMetas} />){showM}</span>;
   case "VarApply":
     const [vm, vbase, varName, varVal] = expr.contents;
 
@@ -75,11 +83,15 @@ function ObjArr(props) {
       showArrExpr = <span> = <GuardExpr expr={oaArrExpr} Meta={Meta} showMetas={showExprMetas}/></span>;
     }
 
-    let showArrM;
+    let showArrType;
     if (oaArrM[0].tag !== "TopType" || oaArrM[0].contents !== []) {
-      showArrM = <span> -&gt; <Type data={oaArrM[0]} /></span>;
+      showArrType = <span> -&gt; <Type data={oaArrM[0]} /></span>;
     }
-    showArr = <span>{showArrM}{showArrExpr}</span>;
+    let showArrM;
+    if (showExprMetas) {
+      showArrM = <Meta data={oaArrM}/>;
+    }
+    showArr = <span>{showArrType}{showArrM}{showArrExpr}</span>;
   }
 
   return <span>{showObj}{showArr}</span>;

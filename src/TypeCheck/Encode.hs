@@ -178,6 +178,7 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaAnnots, oa
             EqPoints 16 (getExprMeta baseExpr') baseM',
             BoundedByObjs 17 m',
             BoundedByObjs 18 (getExprMeta argExpr'),
+            BoundedByKnown 18 (getExprMeta argExpr') (TypeVar (TVArg $ inExprSingleton obj) TVInt),
                      AddArg 19 (baseM', inExprSingleton obj) m',
                      EqPoints 20 (getExprMeta argExpr') arrM',
                      PropEq 21 (m', TVArg $ inExprSingleton obj) arrM'
