@@ -11,6 +11,8 @@ function Expr(props) {
     return <PTypeName name={expr.contents[1]} />;
   case "HoleExpr":
     return "_";
+  case "AliasExpr":
+    return <span><Expr expr={expr.contents[0]}/>@<Expr expr={expr.contents[1]}/></span>;
   case "TupleApply":
     const [m, [baseM ,base], arg] = expr.contents;
 
@@ -45,15 +47,15 @@ function Expr(props) {
 }
 
 function GuardExpr(props) {
-  const {Meta, showExprMetas, expr} = props;
+  const {Meta, showMetas, expr} = props;
   const {rgeExpr, rgeGuard} = expr;
 
   let showGuard;
   if (rgeGuard) {
-    showGuard = <span> | <Expr expr={rgeGuard} Meta={Meta} showMetas={showExprMetas}/></span>;
+    showGuard = <span> | <Expr expr={rgeGuard} Meta={Meta} showMetas={showMetas}/></span>;
   }
 
-  return <span><Expr expr={rgeExpr} Meta={Meta} showMetas={showExprMetas} />{showGuard}</span>;
+  return <span><Expr expr={rgeExpr} Meta={Meta} showMetas={showMetas} />{showGuard}</span>;
 }
 
 function ObjArr(props) {
@@ -74,7 +76,7 @@ function ObjArr(props) {
     }
 
     let showArrM;
-    if (oaArrM[0].tag != "TopType" || oaArrM[0].contents != []) {
+    if (oaArrM[0].tag !== "TopType" || oaArrM[0].contents !== []) {
       showArrM = <span> -&gt; <Type data={oaArrM[0]} /></span>;
     }
     showArr = <span>{showArrM}{showArrExpr}</span>;

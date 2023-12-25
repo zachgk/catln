@@ -10,7 +10,7 @@ import {
   useParams
 } from 'react-router-dom';
 
-import {useApi, posKey, Loading, Notes, Type} from './Common/Common';
+import {useApi, posKey, Loading, Notes, Type, PartialKey} from './Common/Common';
 import {ObjMap} from './ListProgram';
 
 const useStyles = makeStyles({
@@ -79,7 +79,7 @@ function Main(props) {
 }
 
 let VarMeta = (notesMap) => (props) => {
-  const [pnt, [tp, pos], ] = props.data;
+  const [tp, pos, [pnt,]] = props.data;
   var style = {};
 
   let showPos;
@@ -150,32 +150,32 @@ function Trace(props) {
 }
 
 function Constraint(props) {
-  let {constraint, Meta} = props;
-  switch(constraint.tag) {
+  let {constraint: [,,dat], Meta} = props;
+  switch(dat.tag) {
   case "EqualsKnown":
-    return (<span><Meta data={constraint.contents[0]} withPos /> k== <Type data={constraint.contents[1]}/></span>);
+    return (<span><Meta data={dat.contents[1]} withPos /> k== <Type data={dat.contents[2]}/></span>);
   case "EqPoints":
-    return (<span><Meta data={constraint.contents[0]} withPos /> p== <Meta data={constraint.contents[1]} withPos /></span>);
+    return (<span><Meta data={dat.contents[1]} withPos /> p== <Meta data={dat.contents[2]} withPos /></span>);
   case "BoundedByKnown":
-    return (<span><Meta data={constraint.contents[0]} withPos /> ⊆ <Type data={constraint.contents[1]}/></span>);
+    return (<span><Meta data={dat.contents[1]} withPos /> ⊆ <Type data={dat.contents[2]}/></span>);
   case "BoundedByObjs":
-    return (<span>BoundedByObjs <Meta data={constraint.contents} withPos /></span>);
+    return (<span>BoundedByObjs <Meta data={dat.contents[1]} withPos /></span>);
   case "ArrowTo":
-    return (<span><Meta data={constraint.contents[0]} withPos /> -&gt; <Meta data={constraint.contents[1]} withPos /></span>);
+    return (<span><Meta data={dat.contents[1]} withPos /> -&gt; <Meta data={dat.contents[2]} withPos /></span>);
   case "PropEq":
-    return (<span>(<Meta data={constraint.contents[0][0]} withPos />).{constraint.contents[0][1]} == <Meta data={constraint.contents[1]} withPos /></span>);
+    return (<span>(<Meta data={dat.contents[1][0]} withPos />).<PartialKey data={dat.contents[1][1].contents}/> == <Meta data={dat.contents[2]} withPos /></span>);
   case "VarEq":
-    return (<span>(<Meta data={constraint.contents[0][0]} withPos />).{constraint.contents[0][1]} == <Meta data={constraint.contents[1]} withPos /></span>);
+    return (<span>(<Meta data={dat.contents[1][0]} withPos />).{dat.contents[1][1]} == <Meta data={dat.contents[2]} withPos /></span>);
   case "AddArg":
-    return (<span>(<Meta data={constraint.contents[0][0]} withPos />)({constraint.contents[0][1]}) arg== <Meta data={constraint.contents[1]} withPos /></span>);
+    return (<span>(<Meta data={dat.contents[1][0]} withPos />)(<PartialKey data={dat.contents[1][1]}/>) arg== <Meta data={dat.contents[2]} withPos /></span>);
   case "AddInferArg":
-    return (<span>(<Meta data={constraint.contents[0]} withPos />)(?) iarg== <Meta data={constraint.contents[1]} withPos /></span>);
+    return (<span>(<Meta data={dat.contents[1]} withPos />)(?) iarg== <Meta data={dat.contents[2]} withPos /></span>);
   case "PowersetTo":
-    return (<span>P(<Meta data={constraint.contents[0]} withPos />) ps== <Meta data={constraint.contents[1]} withPos /></span>);
+    return (<span>P(<Meta data={dat.contents[1]} withPos />) ps== <Meta data={dat.contents[2]} withPos /></span>);
   case "UnionOf":
-    return (<span>UnionOf <Meta data={constraint.contents[0]} withPos /></span>);
+    return (<span>UnionOf <Meta data={dat.contents[1]} withPos /></span>);
   default:
-    console.error("Unknown renderConstraint", constraint);
+    console.error("Unknown renderConstraint dat", dat);
     return "";
   }
 }
@@ -184,10 +184,10 @@ function Scheme(props) {
   let {scheme} = props;
   switch (scheme.tag) {
   case "CRes":
-    const [notes, [upper, lower, desc]] = scheme.contents;
+    const [notes, {stypeAct, stypeReq, stypeDesc}] = scheme.contents;
     return <div>
              <Notes notes={notes}/>
-             <Type data={upper}/> ⊇ {desc} ⊇ <Type data={lower}/>
+             &#123;{stypeDesc} :: ACT <Type data={stypeAct}/>; REQ <Type data={stypeReq}/>&#125;
            </div>;
   case "CErr":
     return <Notes notes={scheme.contents}/>;

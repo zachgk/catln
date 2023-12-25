@@ -106,7 +106,7 @@ function ObjMap(props) {
 function RootObjArr(props) {
   const classes = useStyles();
 
-  let primary = <ObjArr oa={props.oa} details={classes.objDetails} Meta={props.Meta}/>;
+  let primary = <ObjArr oa={props.oa} details={classes.objDetails} Meta={props.Meta} showExprMetas={props.showExprMetas}/>;
 
   return (
       <ListItem divider>
@@ -121,15 +121,16 @@ function Meta(props) {
 }
 
 export function ClassComments(props) {
-  const [,classMap] = props.data;
-  const [, classToType] = classMap;
-  const { name } = props;
-  let showComments = "";
-  const classType = classToType[name] || [];
+  return "ClassComments";
+  // const [,classMap] = props.data;
+  // const [, classToType] = classMap;
+  // const { name } = props;
+  // let showComments = "";
+  // const classType = classToType[name] || [];
   // if (classType[3] && classType[3].length > 0) {
   //   showComments = <Comment comment={classType[3]} obj={undefined} />;
   // }
-  return showComments;
+  // return showComments;
 }
 
 function ClassMap(props) {

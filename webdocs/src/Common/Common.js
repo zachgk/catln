@@ -181,7 +181,7 @@ function PartialType(props) {
   }
 
   return (
-    <span><PartialName name={ptName}/>{showVars}{showArgs}{showArgMode}{showPreds}</span>
+    <span><PTypeName name={ptName}/>{showVars}{showArgs}{showArgMode}{showPreds}</span>
   );
 }
 
@@ -202,7 +202,7 @@ function Type(props) {
     return <TypeVar><PartialKey data={t.contents[0].contents} /></TypeVar>;
   case "UnionType":
     var partials = [];
-    t.contents.forEach(partialOptions => {
+    Object.entries(t.contents).forEach(partialOptions => {
       let [partialName, options] = partialOptions;
       options.forEach((partialData, partialIndex) => {
         let [partialVars, partialArgs, preds, argMode] = partialData;

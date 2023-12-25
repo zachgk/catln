@@ -196,7 +196,7 @@ docApiBase provider = do
     maybeTprgmWithTraceGraph <- liftAndCatchIO $ getTPrgmWithTrace provider
     let maybeTprgmWithTrace = maybeTprgmWithTraceGraph >>= \graphData -> do
           case graphLookup prgmName graphData of
-            Just v -> return $ fst3 v
+            Just v -> return v
             Nothing -> CErr [MkCNote $ GenCErr Nothing "Invalid file to constrain"]
     maybeJson maybeTprgmWithTrace
 

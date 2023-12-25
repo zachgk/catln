@@ -408,7 +408,7 @@ suffixLookupInDict s dict = case suffixLookup s (H.keys dict) of
 
 expandType :: TypeEnv -> TypeVarArgEnv -> Type -> Type
 expandType _ _ t@UnionType{} = t
-expandType _ _ t@TypeVar{} = error $ printf "Can't expandTypeToLeafs with type var %s" (show t)
+expandType typeEnv vaenv (TypeVar v _) = expandType typeEnv vaenv $ H.lookupDefault topType v vaenv
 expandType _ _ (TopType []) = TopType []
 expandType typeEnv vaenv (TopType preds) = intersectAllTypes typeEnv $ map expandPred preds
   where
