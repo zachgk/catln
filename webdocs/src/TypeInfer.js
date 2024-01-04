@@ -150,32 +150,33 @@ function Trace(props) {
 }
 
 function Constraint(props) {
-  let {constraint: [,,dat], Meta} = props;
-  switch(dat.tag) {
+  const {constraint, Meta} = props;
+  const {conDat} = constraint;
+  switch(conDat.tag) {
   case "EqualsKnown":
-    return (<span><Meta data={dat.contents[1]} withPos /> k== <Type data={dat.contents[2]}/></span>);
+    return (<span><Meta data={conDat.contents[1]} withPos /> k== <Type data={conDat.contents[2]}/></span>);
   case "EqPoints":
-    return (<span><Meta data={dat.contents[1]} withPos /> p== <Meta data={dat.contents[2]} withPos /></span>);
+    return (<span><Meta data={conDat.contents[1]} withPos /> p== <Meta data={conDat.contents[2]} withPos /></span>);
   case "BoundedByKnown":
-    return (<span><Meta data={dat.contents[1]} withPos /> ⊆ <Type data={dat.contents[2]}/></span>);
+    return (<span><Meta data={conDat.contents[1]} withPos /> ⊆ <Type data={conDat.contents[2]}/></span>);
   case "BoundedByObjs":
-    return (<span>BoundedByObjs <Meta data={dat.contents[1]} withPos /></span>);
+    return (<span>BoundedByObjs <Meta data={conDat.contents[1]} withPos /></span>);
   case "ArrowTo":
-    return (<span><Meta data={dat.contents[1]} withPos /> -&gt; <Meta data={dat.contents[2]} withPos /></span>);
+    return (<span><Meta data={conDat.contents[1]} withPos /> -&gt; <Meta data={conDat.contents[2]} withPos /></span>);
   case "PropEq":
-    return (<span>(<Meta data={dat.contents[1][0]} withPos />).<PartialKey data={dat.contents[1][1].contents}/> == <Meta data={dat.contents[2]} withPos /></span>);
+    return (<span>(<Meta data={conDat.contents[1][0]} withPos />).<PartialKey data={conDat.contents[1][1].contents}/> == <Meta data={conDat.contents[2]} withPos /></span>);
   case "VarEq":
-    return (<span>(<Meta data={dat.contents[1][0]} withPos />).{dat.contents[1][1]} == <Meta data={dat.contents[2]} withPos /></span>);
+    return (<span>(<Meta data={conDat.contents[1][0]} withPos />).{conDat.contents[1][1]} == <Meta data={conDat.contents[2]} withPos /></span>);
   case "AddArg":
-    return (<span>(<Meta data={dat.contents[1][0]} withPos />)(<PartialKey data={dat.contents[1][1]}/>) arg== <Meta data={dat.contents[2]} withPos /></span>);
+    return (<span>(<Meta data={conDat.contents[1][0]} withPos />)(<PartialKey data={conDat.contents[1][1]}/>) arg== <Meta data={conDat.contents[2]} withPos /></span>);
   case "AddInferArg":
-    return (<span>(<Meta data={dat.contents[1]} withPos />)(?) iarg== <Meta data={dat.contents[2]} withPos /></span>);
+    return (<span>(<Meta data={conDat.contents[1]} withPos />)(?) iarg== <Meta data={conDat.contents[2]} withPos /></span>);
   case "PowersetTo":
-    return (<span>P(<Meta data={dat.contents[1]} withPos />) ps== <Meta data={dat.contents[2]} withPos /></span>);
+    return (<span>P(<Meta data={conDat.contents[1]} withPos />) ps== <Meta data={conDat.contents[2]} withPos /></span>);
   case "UnionOf":
-    return (<span>UnionOf <Meta data={dat.contents[1]} withPos /></span>);
+    return (<span>UnionOf <Meta data={conDat.contents[1]} withPos /></span>);
   default:
-    console.error("Unknown renderConstraint dat", dat);
+    console.error("Unknown renderConstraint dat", conDat);
     return "";
   }
 }
