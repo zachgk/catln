@@ -84,14 +84,14 @@ data Path = Relative String | Absolute String
 
 data RawStatement e m
   = RawDeclStatement (RawObjArr e m)
-  | MultiTypeDefStatement (MultiTypeDef m) Path
+  | MultiTypeDefStatement (MultiTypeDef m)
   | TypeDefStatement (e m)
-  | RawClassDefStatement (RawClassDef m) Path
-  | RawClassDeclStatement (e m) Path
+  | RawClassDefStatement (RawClassDef m)
+  | RawClassDeclStatement (e m)
   | RawExprStatement (e m)
   | RawAnnot (CompAnnot (e m))
   | RawApplyStatement (RawApply e m)
-  | RawModule String Path
+  | RawModule String
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 data RawStatementTree e m = RawStatementTree (RawStatement e m) [RawStatementTree e m]

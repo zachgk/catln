@@ -39,15 +39,14 @@ pClassStatement :: Parser PStatement
 pClassStatement = do
   _ <- symbol "class"
   clss <- term
-  let name = exprPath clss
   maybeTypes <- optional $ do
     _ <- symbol "="
     terms <- pMultiTerm
     extends <- optional pExtends
     return (terms, fromMaybe [] extends)
   return $ case maybeTypes of
-    Just (types, extends) -> MultiTypeDefStatement (MultiTypeDef clss types extends) (getPath name)
-    Nothing    -> RawClassDeclStatement clss (getPath name)
+    Just (types, extends) -> MultiTypeDefStatement (MultiTypeDef clss types extends)
+    Nothing    -> RawClassDeclStatement clss
 
 pAnnotDefStatement :: Parser PStatement
 pAnnotDefStatement = do
@@ -65,7 +64,7 @@ pClassDefStatement = do
   instanceTerm <- term
   extends <- pExtends
   let def = (instanceTerm, extends)
-  return $ RawClassDefStatement def (getPath $ fromJust $ maybeExprPath instanceTerm)
+  return $ RawClassDefStatement def
 
 pTypeStatement :: Parser PStatement
 pTypeStatement = pClassStatement

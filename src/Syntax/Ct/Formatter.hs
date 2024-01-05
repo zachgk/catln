@@ -139,7 +139,7 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
   where
     statement' = case statement of
       RawDeclStatement objArr -> formatObjArr objArr
-      MultiTypeDefStatement (MultiTypeDef clss objs extends) _ -> printf "class %s = %s%s" (formatExpr clss) showObjs (formatIsa extends)
+      MultiTypeDefStatement (MultiTypeDef clss objs extends) -> printf "class %s = %s%s" (formatExpr clss) showObjs (formatIsa extends)
         where
           formatGuardExpr :: GuardExpr RawExpr m -> String
           formatGuardExpr (GuardExpr e Nothing) = formatExpr e
@@ -149,8 +149,8 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
       TypeDefStatement typeExpr -> if "#" `isPrefixOf` exprPath typeExpr
         then printf "annot %s" (formatExpr typeExpr)
         else printf "data %s" (formatExpr typeExpr)
-      RawClassDefStatement (obj, className) _ -> printf "every %s%s" (formatExpr obj) (formatIsa className)
-      RawClassDeclStatement clss _ -> printf "class %s" (formatExpr clss)
+      RawClassDefStatement (obj, className) -> printf "every %s%s" (formatExpr obj) (formatIsa className)
+      RawClassDeclStatement clss -> printf "class %s" (formatExpr clss)
       RawExprStatement e -> formatExpr e
       RawAnnot annot | exprPath annot == mdAnnot -> printf "# %s" annotText'
         where
@@ -164,7 +164,7 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
           formatTerm :: RawApplyTerm RawExpr m -> String
           formatTerm (RATermDeep e)  = formatExpr e
           formatTerm (RATermChild e) = "> " ++ formatExpr e
-      RawModule modul _ -> printf "module %s" modul
+      RawModule modul -> printf "module %s" modul
 
 -- |
 -- A root statement has an additional ending newline

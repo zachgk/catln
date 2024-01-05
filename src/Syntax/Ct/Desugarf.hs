@@ -157,8 +157,8 @@ desMultiTypeDefObj inheritPath varReplaceMap expr = desObj False inheritPath Use
     expr'' = mapMetaAppliedExpr replaceMetaVar InputMeta expr'
 
 
-desMultiTypeDef :: StatementEnv -> PMultiTypeDef -> [RawStatementTree RawExpr ParseMetaDat] -> Path -> CRes DesPrgm
-desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef clssExpr dataGuardExprs extends) subStatements path = do
+desMultiTypeDef :: StatementEnv -> PMultiTypeDef -> [RawStatementTree RawExpr ParseMetaDat] -> CRes DesPrgm
+desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef clssExpr dataGuardExprs extends) subStatements = do
 
   let clss@PartialType{ptName=className, ptVars=classVars} = exprToPartialType clssExpr
   let clss' = clss{ptName=path'}
@@ -177,6 +177,7 @@ desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef clssExpr dataGuardEx
   (subPrgm, _) <- desInheritingSubstatements statementEnv path subStatements
   return $ mergePrgm (objs, classGraph', []) subPrgm
     where
+      path = getPath $ exprPath clssExpr
       path' =  case path of
         Absolute p -> p
         Relative p -> inheritPath ++ "/" ++ p
@@ -186,8 +187,9 @@ desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef clssExpr dataGuardEx
         Nothing -> Right e
       eitherTypeVarExpr e                      = Right e
 
-desClassDecl :: StatementEnv -> PExpr -> [RawStatementTree RawExpr ParseMetaDat] -> Path -> CRes DesPrgm
-desClassDecl statementEnv@(inheritPath, _) clssExpr subStatements path = do
+desClassDecl :: StatementEnv -> PExpr -> [RawStatementTree RawExpr ParseMetaDat] -> CRes DesPrgm
+desClassDecl statementEnv@(inheritPath, _) clssExpr subStatements = do
+  let path = getPath $ exprPath clssExpr
   let clss@PartialType{ptName=className} = exprToPartialType clssExpr
   let classGraph' = ClassGraph $ graphFromEdges [(CGClass (False, clss, [], desObjDocComment subStatements), PClassName (addPath inheritPath className), [])]
   (subPrgm, _) <- desInheritingSubstatements statementEnv path subStatements
@@ -201,13 +203,14 @@ desTypeDef statementEnv@(inheritPath, _) typeExpr subStatements = do
   let objMap = [obj]
   return $ mergePrgm (objMap, classGraphFromObjs objMap, []) subPrgm
 
-desClassDef :: StatementEnv -> Sealed -> RawClassDef ParseMetaDat -> [RawStatementTree RawExpr ParseMetaDat] -> Path -> CRes DesPrgm
-desClassDef statementEnv@(inheritPath, _) sealed (typeExpr, extends) subStatements path = do
+desClassDef :: StatementEnv -> Sealed -> RawClassDef ParseMetaDat -> [RawStatementTree RawExpr ParseMetaDat] -> CRes DesPrgm
+desClassDef statementEnv@(inheritPath, _) sealed (typeExpr, extends) subStatements = do
   let typeExpr' = desObjPropagateTypes $ semiDesExpr SDType Nothing typeExpr
   let classGraph = ClassGraph $ graphFromEdges [(CGClass (sealed, partialVal path', [getExprType typeExpr'], desObjDocComment subStatements), PClassName className, [PRelativeName $ exprPath typeExpr']) | className <- extends ]
   (subPrgm, _) <- desInheritingSubstatements statementEnv path subStatements
   return $ mergePrgm ([], classGraph, []) subPrgm
   where
+    path = getPath $ fromJust $ maybeExprPath typeExpr
     path' =  case path of
       Absolute p -> p
       Relative p -> inheritPath ++ "/" ++ p
@@ -221,10 +224,10 @@ desGlobalAnnot = return . desExpr . semiDesExpr SDOutput Nothing
 desStatement :: StatementEnv -> PStatementTree -> CRes DesPrgm
 desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree statement subStatements) = case statement of
   RawDeclStatement decl -> desDecl statementEnv decl subStatements
-  MultiTypeDefStatement multiTypeDef path -> desMultiTypeDef statementEnv multiTypeDef subStatements path
+  MultiTypeDefStatement multiTypeDef -> desMultiTypeDef statementEnv multiTypeDef subStatements
   TypeDefStatement typeDef -> desTypeDef statementEnv typeDef subStatements
-  RawClassDefStatement classDef path -> desClassDef statementEnv False classDef subStatements path
-  RawClassDeclStatement classDecls path -> desClassDecl statementEnv classDecls subStatements path
+  RawClassDefStatement classDef -> desClassDef statementEnv False classDef subStatements
+  RawClassDeclStatement classDecls -> desClassDecl statementEnv classDecls subStatements
   RawExprStatement e -> CErr [MkCNote $ GenCErr (getMetaPos $ getExprMeta e) $ printf "All expression statements should be in a nested declaration but instead found: %s" (show e)]
   RawAnnot a | null subStatements -> do
                  a' <- desGlobalAnnot a
@@ -234,7 +237,7 @@ desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree state
     statements' <- mapM (desStatement (inheritModule, a':inheritAnnots)) subStatements
     return $ mergePrgms statements'
   RawApplyStatement{} -> error "Not yet implemented"
-  RawModule _ path -> fst <$> desInheritingSubstatements statementEnv path subStatements
+  RawModule name -> fst <$> desInheritingSubstatements statementEnv (getPath name) subStatements
 
 finalPasses :: DesPrgmGraphData -> GraphNodes DesPrgm String -> GraphNodes DesPrgm String
 finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm1, prgmName, imports) = (prgm3, prgmName, imports)

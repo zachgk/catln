@@ -15,18 +15,18 @@
 
 module Syntax.Parsers where
 
-import qualified Data.HashSet        as S
+import qualified Data.HashSet          as S
 
 import           Control.Monad
 import           CRes
 import           Data.Graph
-import qualified Data.HashMap.Strict as H
+import qualified Data.HashMap.Strict   as H
 import           Data.List
 import           Data.List.Split
 import           Data.Maybe
-import           Syntax.Ct.Parser    (ctParser, ctxParser)
+import           Syntax.Ct.Parser      (ctParser, ctxParser)
 import           Syntax.Ct.Prgm
-import           Syntax.Haskell.Parser    (hsParser)
+import           Syntax.Haskell.Parser (hsParser)
 import           System.Directory
 import           Text.Printf
 import           Utils

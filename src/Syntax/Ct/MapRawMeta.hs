@@ -47,17 +47,17 @@ mapMetaRawObjArr f mloc roa@RawObjArr{roaObj, roaAnnots, roaArr, roaDef} = roa{
 
 mapMetaRawStatement :: (MapMeta e) => MetaFun a b -> RawStatement e a -> RawStatement e b
 mapMetaRawStatement f (RawDeclStatement objArr) = RawDeclStatement (mapMetaRawObjArr f Nothing objArr)
-mapMetaRawStatement f (MultiTypeDefStatement (MultiTypeDef clss objs extends) path) = MultiTypeDefStatement (MultiTypeDef (mapMeta f InputMeta clss) (map (mapMetaGuardExpr f InputMeta) objs) extends) path
+mapMetaRawStatement f (MultiTypeDefStatement (MultiTypeDef clss objs extends)) = MultiTypeDefStatement (MultiTypeDef (mapMeta f InputMeta clss) (map (mapMetaGuardExpr f InputMeta) objs) extends)
 mapMetaRawStatement f (TypeDefStatement obj) = TypeDefStatement (mapMeta f InputMeta obj)
-mapMetaRawStatement f (RawClassDefStatement (typeExpr, className) path) = RawClassDefStatement (mapMeta f InputMeta typeExpr, className) path
-mapMetaRawStatement f (RawClassDeclStatement clss p) = RawClassDeclStatement (mapMeta f InputMeta clss) p
+mapMetaRawStatement f (RawClassDefStatement (typeExpr, className)) = RawClassDefStatement (mapMeta f InputMeta typeExpr, className)
+mapMetaRawStatement f (RawClassDeclStatement clss) = RawClassDeclStatement (mapMeta f InputMeta clss)
 mapMetaRawStatement f (RawExprStatement e) = RawExprStatement (mapMeta f OutputMeta e)
 mapMetaRawStatement f (RawAnnot e) = RawAnnot (mapMeta f AnnotMeta e)
 mapMetaRawStatement f (RawApplyStatement (RawApply terms)) = RawApplyStatement $ RawApply $ map mapTerm terms
   where
     mapTerm (RATermDeep e)  = RATermDeep $ mapMeta f ApplyMeta e
     mapTerm (RATermChild e) = RATermChild $ mapMeta f ApplyMeta e
-mapMetaRawStatement _ (RawModule m p) = RawModule m p
+mapMetaRawStatement _ (RawModule m) = RawModule m
 
 mapMetaRawStatementTree :: (MapMeta e) => MetaFun a b -> RawStatementTree e a -> RawStatementTree e b
 mapMetaRawStatementTree f (RawStatementTree s tree) = RawStatementTree (mapMetaRawStatement f s) (map (mapMetaRawStatementTree f) tree)

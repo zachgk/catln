@@ -4,23 +4,23 @@ module Main where
 
 import           Control.Monad
 import           CRes
-import           Data.String.Builder   (build)
+import           Data.String.Builder  (build)
 import           Eval
 import           Options.Applicative
-import           Syntax.Ct.Desugarf    (desFiles)
-import           Syntax.Ct.Formatter   (formatPrgm)
+import           Syntax.Ct.Desugarf   (desFiles)
+import           Syntax.Ct.Formatter  (formatPrgm)
 import           Syntax.Parsers
-import           TypeCheck             (typecheckPrgm)
+import           TypeCheck            (typecheckPrgm)
 
-import qualified Data.ByteString.Lazy  as BSL
-import qualified Data.HashMap.Strict   as H
+import qualified Data.ByteString.Lazy as BSL
+import qualified Data.HashMap.Strict  as H
 import           Data.Maybe
-import           Eval.Common           (Val (StrVal, TupleVal))
-import           Syntax.Pandoc.Syntax  (documentFormats, toDocument)
+import           Eval.Common          (Val (StrVal, TupleVal))
+import           Syntax.Pandoc.Syntax (documentFormats, toDocument)
 import           System.Directory
 import           Text.Printf
 import           Utils
-import           WebDocs               (docServe)
+import           WebDocs              (docServe)
 -- import Repl (repl)
 
 xRun :: String -> String -> IO ()

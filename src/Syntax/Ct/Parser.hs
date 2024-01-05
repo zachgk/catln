@@ -50,8 +50,7 @@ liftPStatement pSt = L.indentBlock scn p
 pModule :: Parser PStatement
 pModule = do
   _ <- symbol "module"
-  name <- ttypeidentifier
-  return $ RawModule name (getPath name)
+  RawModule <$> ttypeidentifier
 
 pApply :: Parser PStatement
 pApply = do
