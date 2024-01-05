@@ -1,6 +1,6 @@
 --------------------------------------------------------------------
 -- |
--- Module    :  Syntax.Haskell.Syntax
+-- Module    :  Syntax.Haskell.TreeSitter.Syntax
 -- Copyright :  (c) Zach Kimberg 2023
 -- License   :  MIT
 -- Maintainer:  zachary@kimberg.com
@@ -10,16 +10,18 @@
 -- This module defines conversions to and from haskell syntax
 --------------------------------------------------------------------
 
-module Syntax.Haskell.Syntax where
+module Syntax.Haskell.TreeSitter.Syntax where
 
 import           Control.Monad
-import           Data.ByteString          as BS hiding (concat, reverse)
-import qualified Data.HashMap.Strict      as H
-import           Foreign                  (Ptr)
+import           CRes
+import           Data.ByteString                as BS hiding (concat, reverse)
+import qualified Data.HashMap.Strict            as H
+import           Foreign                        (Ptr)
 import           Syntax.Common.TreeSitter
-import           Syntax.Haskell.Prgm
+import           Syntax.Ct.Prgm
+import           Syntax.Haskell.TreeSitter.Prgm
 import           Text.Printf
-import           TreeSitter.Haskell       (tree_sitter_haskell)
+import           TreeSitter.Haskell             (tree_sitter_haskell)
 import           TreeSitter.Node
 import           TreeSitter.Parser
 import           TreeSitter.Tree
@@ -66,3 +68,12 @@ parseHaskell fileContents = do
   withParseTree parser fileContents $ \tree -> do
     withRootNode tree $ \node -> do
       parseHaskellModule fileContents node
+
+convertHaskell :: HsModule -> RawPrgm ()
+convertHaskell = undefined
+
+treesitterHsParser :: String -> IO (CRes (RawPrgm ()))
+treesitterHsParser fileName = do
+  file <- BS.readFile fileName
+  prgm <- parseHaskell file
+  return $ pure $ convertHaskell prgm

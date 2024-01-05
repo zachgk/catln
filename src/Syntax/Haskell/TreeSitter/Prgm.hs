@@ -1,6 +1,6 @@
 --------------------------------------------------------------------
 -- |
--- Module    :  Syntax.Haskell.Prgm
+-- Module    :  Syntax.Haskell.TreeSitter.Prgm
 -- Copyright :  (c) Zach Kimberg 2023
 -- License   :  MIT
 -- Maintainer:  zachary@kimberg.com
@@ -10,7 +10,7 @@
 -- This module defines a Haskell program syntax
 --------------------------------------------------------------------
 
-module Syntax.Haskell.Prgm where
+module Syntax.Haskell.TreeSitter.Prgm where
 
 type HsMComment = String
 type HsPragma = String

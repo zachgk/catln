@@ -26,6 +26,7 @@ import           Data.List.Split
 import           Data.Maybe
 import           Syntax.Ct.Parser    (ctParser, ctxParser)
 import           Syntax.Ct.Prgm
+import           Syntax.Haskell.Parser    (hsParser)
 import           System.Directory
 import           Text.Printf
 import           Utils
@@ -33,11 +34,13 @@ import           Utils
 fileExtensionParsers :: H.HashMap String (String -> IO (CRes (RawPrgm ())))
 fileExtensionParsers = H.fromList [
   ("ct", ctParser),
-  ("ctx", ctxParser)
+  ("ctx", ctxParser),
+  ("hs", hsParser)
                              ]
 
 isSupportedFileExtension :: String -> Bool
-isSupportedFileExtension fileName = any (`isSuffixOf` fileName) $ H.keys fileExtensionParsers
+-- isSupportedFileExtension fileName = any ((`isSuffixOf` fileName) . ('.':)) (H.keys fileExtensionParsers)
+isSupportedFileExtension fileName = ".ct" `isSuffixOf` fileName || ".ctx" `isSuffixOf` fileName
 
 parseFile :: String -> IO (CRes (RawPrgm ()))
 parseFile fileName = case H.lookup (last $ splitOn "." fileName) fileExtensionParsers of

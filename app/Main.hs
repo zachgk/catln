@@ -9,11 +9,9 @@ import           Eval
 import           Options.Applicative
 import           Syntax.Ct.Desugarf    (desFiles)
 import           Syntax.Ct.Formatter   (formatPrgm)
-import           Syntax.Haskell.Syntax
 import           Syntax.Parsers
 import           TypeCheck             (typecheckPrgm)
 
-import qualified Data.ByteString       as BS
 import qualified Data.ByteString.Lazy  as BSL
 import qualified Data.HashMap.Strict   as H
 import           Data.Maybe
@@ -84,9 +82,14 @@ xDocument prgmName outFname format = do
 
 xConvert :: String -> String -> IO ()
 xConvert prgmName _outFname = do
-  f <- BS.readFile prgmName
-  prgm <- parseHaskell f
-  print prgm
+  maybeRawPrgm <- readFiles False False [prgmName]
+  case maybeRawPrgm of
+    CErr err   -> print err
+    CRes _ prgmGraphData -> do
+      let prgms = graphToNodes prgmGraphData
+      forM_ prgms $ \(prgm, _fileName, _) -> do
+        let prgm' = build $ formatPrgm 0 prgm
+        print prgm'
 
 xFmt :: String -> IO ()
 xFmt prgmName = do
