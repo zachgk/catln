@@ -19,19 +19,18 @@ import           Data.List
 import           DynFlags
 import           FastString
 import           GHC.Fingerprint
-import           GHC.Hs              (GhcPs, HsModule)
 import           GHC.Platform
 import           HeaderInfo
 import           HscTypes
 import           Lexer
-import           Outputable
 import           Panic
-import           Parser              (parseModule)
+import           Parser                 (parseModule)
 import           SrcLoc
 import           StringBuffer
-import           Syntax.Ct.Prgm      (RawPrgm)
-import           Text.Megaparsec     (mkPos)
-import           Text.Megaparsec.Pos (SourcePos (SourcePos))
+import           Syntax.Ct.Prgm         (RawPrgm)
+import           Syntax.Haskell.Convert (convertModule)
+import           Text.Megaparsec        (mkPos)
+import           Text.Megaparsec.Pos    (SourcePos (SourcePos))
 import           Text.Printf
 import           ToolSettings
 
@@ -106,9 +105,6 @@ runParser flags filename str parser = unP parser parseState
     buffer = stringToStringBuffer str
     parseState = mkPState flags buffer location
 
-convert :: DynFlags -> HsModule GhcPs -> RawPrgm ()
-convert flags p = error $ printf "Convert:\n%s" (showSDoc flags $ ppr p)
-
 hsParser :: String -> IO (CRes (RawPrgm ()))
 hsParser filename = do
   str <- readFile filename
@@ -120,7 +116,7 @@ hsParser filename = do
     Just flags -> do
       let parsed = runParser flags filename str parseModule
       return $ case parsed of
-        POk _ v -> pure $ convert flags $ unLoc v
+        POk _ v -> pure $ convertModule flags $ unLoc v
         PFailed pstate ->
           let realSpan = last_loc pstate
               errMsg = printErrorBag $ snd $ messages pstate flags
