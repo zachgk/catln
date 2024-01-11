@@ -165,8 +165,8 @@ genPrgm = do
 
   return (objMap, classGraphFromObjs objMap, [])
 
-genPrgms :: Gen [GraphNodes (Prgm Expr ()) String]
+genPrgms :: Gen [GraphNodes (Prgm Expr ()) FileImport]
 genPrgms = do
   prgm <- genPrgm
   prgmName <- HG.string (linear 5 10) HG.lower
-  return [(prgm, prgmName, [])]
+  return [(prgm, CExpr emptyMetaN $ CStr prgmName, [])]

@@ -38,6 +38,8 @@ import           Semantics.Types
 import           Syntax.Ct.Desugarf            (desFiles)
 import           Syntax.Ct.MapRawMeta          (mapMetaRawPrgm)
 import           Syntax.Ct.Parser.Syntax       (DesPrgm, PPrgmGraphData)
+import           Syntax.InferImport            (inferImportStr,
+                                                inferRawImportStr)
 import           Syntax.Parsers                (readFiles)
 import           TypeCheck                     (typecheckPrgm,
                                                 typecheckPrgmWithTrace)
@@ -65,9 +67,9 @@ data WDProvider
     cCore           :: Bool
   , cBaseFileName   :: String
   , cRaw            :: CRes PPrgmGraphData
-  , cPrgm           :: CRes (GraphData DesPrgm String)
-  , cTPrgmWithTrace :: CRes (GraphData (TPrgm, VPrgm, TraceConstrain) String)
-  , cTPrgm          :: CRes (GraphData TPrgm String)
+  , cPrgm           :: CRes (GraphData DesPrgm FileImport)
+  , cTPrgmWithTrace :: CRes (GraphData (TPrgm, VPrgm, TraceConstrain) FileImport)
+  , cTPrgm          :: CRes (GraphData TPrgm FileImport)
                     }
 
 mkCacheWDProvider :: Bool -> String -> IO WDProvider
@@ -87,22 +89,24 @@ mkCacheWDProvider includeCore baseFileName = do
                            }
 
 getRawPrgm :: WDProvider -> IO (CRes PPrgmGraphData)
-getRawPrgm (LiveWDProvider includeCore baseFileName) = readFiles includeCore True [baseFileName]
+getRawPrgm (LiveWDProvider includeCore baseFileName) = do
+  baseFileName' <- inferRawImportStr baseFileName
+  readFiles includeCore True [baseFileName']
 getRawPrgm CacheWDProvider{cRaw} = return cRaw
 
-getPrgm :: WDProvider -> IO (CRes (GraphData DesPrgm String))
+getPrgm :: WDProvider -> IO (CRes (GraphData DesPrgm FileImport))
 getPrgm provider@LiveWDProvider{} = do
   base <- getRawPrgm provider
   return (base >>= desFiles)
 getPrgm CacheWDProvider{cPrgm} = return cPrgm
 
-getTPrgmWithTrace :: WDProvider -> IO (CRes (GraphData (TPrgm, VPrgm, TraceConstrain) String))
+getTPrgmWithTrace :: WDProvider -> IO (CRes (GraphData (TPrgm, VPrgm, TraceConstrain) FileImport))
 getTPrgmWithTrace provider@LiveWDProvider{} = do
   base <- getPrgm provider
   return (base >>= typecheckPrgmWithTrace)
 getTPrgmWithTrace CacheWDProvider{cTPrgmWithTrace} = return cTPrgmWithTrace
 
-getTPrgm :: WDProvider -> IO (CRes (GraphData TPrgm String))
+getTPrgm :: WDProvider -> IO (CRes (GraphData TPrgm FileImport))
 getTPrgm provider@LiveWDProvider{} = do
   base <- getPrgm provider
   return (base >>= typecheckPrgm)
@@ -113,7 +117,7 @@ getTPrgmJoined provider = do
   base <- getTPrgm provider
   return (mergePrgms . map fst3 . graphToNodes <$> base)
 
-getTreebug :: WDProvider -> String -> String -> IO EvalResult
+getTreebug :: WDProvider -> FileImport -> String -> IO EvalResult
 getTreebug provider prgmName fun = do
   base <- getTPrgm provider
   let pre = base >>= evalRun fun prgmName
@@ -121,7 +125,7 @@ getTreebug provider prgmName fun = do
     CRes _ r -> snd <$> r
     CErr _   -> fail "No eval result found"
 
-getEvaluated :: WDProvider -> String -> String -> IO Integer
+getEvaluated :: WDProvider -> FileImport -> String -> IO Integer
 getEvaluated provider prgmName fun = do
   base <- getTPrgm provider
   let pre = base >>= evalRun fun prgmName
@@ -129,7 +133,7 @@ getEvaluated provider prgmName fun = do
     CRes _ r -> fst <$> r
     CErr _   -> return 999
 
-getEvalBuild :: WDProvider -> String -> String -> IO Val
+getEvalBuild :: WDProvider -> FileImport -> String -> IO Val
 getEvalBuild provider prgmName fun = do
   base <- getTPrgm provider
   let pre = base >>= evalBuild fun prgmName
@@ -137,7 +141,7 @@ getEvalBuild provider prgmName fun = do
     CRes _ r -> fst <$> r
     CErr _   -> return NoVal
 
-getEvalAnnots :: WDProvider -> String -> IO [(Expr (), Val)]
+getEvalAnnots :: WDProvider -> FileImport -> IO [(Expr (), Val)]
 getEvalAnnots provider prgmName = do
   base <- getTPrgm provider
   let pre = base >>= evalAnnots prgmName
@@ -145,7 +149,7 @@ getEvalAnnots provider prgmName = do
     CRes _ r -> return r
     CErr _   -> return []
 
-getWeb :: WDProvider -> String -> String -> IO String
+getWeb :: WDProvider -> FileImport -> String -> IO String
 getWeb provider prgmName fun = do
   base <- getTPrgm provider
   let pre = base >>= evalBuild fun prgmName
@@ -172,13 +176,15 @@ docApiBase provider = do
 
   get "/api/page" $ do
     prgmName <- param "prgmName"
+    prgmNameRaw <- liftAndCatchIO $ inferRawImportStr prgmName
+    prgmName' <- liftAndCatchIO $ inferImportStr prgmName
     maybeRawPrgms <- liftAndCatchIO $ getRawPrgm provider
-    let maybeRawPrgms' = fromJust . graphLookup prgmName <$> maybeRawPrgms
+    let maybeRawPrgms' = fromJust . graphLookup prgmNameRaw <$> maybeRawPrgms
 
     maybeTPrgms <- liftAndCatchIO $ getTPrgm provider
-    let maybeTPrgms' = fromJust . graphLookup prgmName <$> maybeTPrgms
+    let maybeTPrgms' = fromJust . graphLookup prgmName' <$> maybeTPrgms
 
-    annots <- liftAndCatchIO $ getEvalAnnots provider prgmName
+    annots <- liftAndCatchIO $ getEvalAnnots provider prgmName'
     maybeJson $ do
       rawPrgm <- maybeRawPrgms'
       let tprgm' = maybe H.empty interleavePrgm (cresToMaybe maybeTPrgms')
@@ -193,9 +199,10 @@ docApiBase provider = do
 
   get "/api/constrain" $ do
     prgmName <- param "prgmName"
+    prgmName' <- liftAndCatchIO $ inferImportStr prgmName
     maybeTprgmWithTraceGraph <- liftAndCatchIO $ getTPrgmWithTrace provider
     let maybeTprgmWithTrace = maybeTprgmWithTraceGraph >>= \graphData -> do
-          case graphLookup prgmName graphData of
+          case graphLookup prgmName' graphData of
             Just v -> return v
             Nothing -> CErr [MkCNote $ GenCErr Nothing "Invalid file to constrain"]
     maybeJson maybeTprgmWithTrace
@@ -218,26 +225,30 @@ docApiBase provider = do
 
   get "/api/treebug" $ do
     prgmName <- param "prgmName"
+    prgmName' <- liftAndCatchIO $ inferImportStr prgmName
     fun <- param "function" `rescue` (\_ -> return "main")
-    treebug <- liftAndCatchIO $ getTreebug provider prgmName fun
+    treebug <- liftAndCatchIO $ getTreebug provider prgmName' fun
     json $ Success treebug ([] :: [String])
 
   get "/api/eval" $ do
     prgmName <- param "prgmName"
+    prgmName' <- liftAndCatchIO $ inferImportStr prgmName
     fun <- param "function" `rescue` (\_ -> return "main")
-    evaluated <- liftAndCatchIO $ getEvaluated provider prgmName fun
+    evaluated <- liftAndCatchIO $ getEvaluated provider prgmName' fun
     json $ Success evaluated ([] :: [String])
 
   get "/api/evalBuild" $ do
     prgmName <- param "prgmName"
+    prgmName' <- liftAndCatchIO $ inferImportStr prgmName
     fun <- param "function" `rescue` (\_ -> return "main")
-    build <- liftAndCatchIO $ getEvalBuild provider prgmName fun
+    build <- liftAndCatchIO $ getEvalBuild provider prgmName' fun
     json $ Success build ([] :: [String])
 
   get "/api/web" $ do
     prgmName <- param "prgmName"
+    prgmName' <- liftAndCatchIO $ inferImportStr prgmName
     fun <- param "function" `rescue` (\_ -> return "main")
-    build <- liftAndCatchIO $ getWeb provider prgmName fun
+    build <- liftAndCatchIO $ getWeb provider prgmName' fun
     html (T.pack build)
 
 

@@ -26,6 +26,7 @@ data MetaLocation
   | AnnotMeta
   | ApplyMeta
   | GuardMeta
+  | ImportMeta
   deriving (Eq, Ord, Show)
 
 data MetaType

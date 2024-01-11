@@ -28,7 +28,6 @@ import           Data.Aeson
 import           Data.String.Builder   (Builder, build, literal)
 import qualified Data.Text.Lazy        as T
 import           Semantics.Prgm
-import           Syntax.Ct.Prgm
 import           Text.Megaparsec       (pstateSourcePos)
 import           Text.Megaparsec.Error
 import           Text.Pretty.Simple

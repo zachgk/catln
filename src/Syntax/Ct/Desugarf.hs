@@ -239,7 +239,13 @@ desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree state
   RawApplyStatement{} -> error "Not yet implemented"
   RawModule name -> fst <$> desInheritingSubstatements statementEnv (getPath name) subStatements
 
-finalPasses :: DesPrgmGraphData -> GraphNodes DesPrgm String -> GraphNodes DesPrgm String
+desImports :: (DesPrgm, RawFileImport, [RawFileImport]) -> CRes (DesPrgm, FileImport, [FileImport])
+desImports (prgm, name, imports) = do
+  let name' = semiDesExpr SDOutput Nothing name
+  let imports' = fmap (semiDesExpr SDOutput Nothing) imports
+  return (prgm, name', imports')
+
+finalPasses :: DesPrgmGraphData -> DesPrgmGraphNodes -> DesPrgmGraphNodes
 finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm1, prgmName, imports) = (prgm3, prgmName, imports)
   where
     -- Build fullPrgm with recursive imports
@@ -264,8 +270,9 @@ desFiles :: PPrgmGraphData -> CRes DesPrgmGraphData
 desFiles graphData = do
   -- initial desugar
   prgms' <- mapMFst3 desPrgm (graphToNodes graphData)
-  let graphData' = graphFromEdges prgms'
+  prgms'' <- mapM desImports prgms'
+  let graphData' = graphFromEdges prgms''
 
   -- final passes
-  let prgms'' = map (finalPasses graphData') prgms'
-  return $ graphFromEdges prgms''
+  let prgms''' = map (finalPasses graphData') prgms''
+  return $ graphFromEdges prgms'''

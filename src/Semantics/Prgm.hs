@@ -28,6 +28,7 @@ import           Data.Bifunctor      (first)
 import           Data.Graph
 import qualified Data.HashSet        as S
 import           Data.Maybe
+import           Data.Void           (Void)
 import           Semantics.Types
 import           Text.Megaparsec
 import           Text.Printf
@@ -52,6 +53,7 @@ data Hole
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 -- Metadata for the Programs
+type ParseErrorRes = ParseErrorBundle String Void
 type CodeRangeDat = (SourcePos, SourcePos, String)
 type CodeRange = Maybe CodeRangeDat
 class (Eq m, Ord m) => MetaDat m where
@@ -90,6 +92,7 @@ data Expr m
 
 -- Compiler Annotation
 type CompAnnot em = em
+type FileImport = Expr ()
 
 
 type ExprCond e m = Maybe (e m)

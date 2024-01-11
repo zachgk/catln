@@ -14,7 +14,6 @@
 module Syntax.Haskell.Parser where
 import           Bag
 import           Config
-import           CRes
 import           Data.List
 import           DynFlags
 import           FastString
@@ -25,9 +24,10 @@ import           HscTypes
 import           Lexer
 import           Panic
 import           Parser                 (parseModule)
+import           Semantics.Prgm
 import           SrcLoc
 import           StringBuffer
-import           Syntax.Ct.Prgm         (RawPrgm)
+import           Syntax.Ct.Prgm
 import           Syntax.Haskell.Convert (convertModule)
 import           Text.Megaparsec        (mkPos)
 import           Text.Megaparsec.Pos    (SourcePos (SourcePos))
@@ -105,18 +105,19 @@ runParser flags filename str parser = unP parser parseState
     buffer = stringToStringBuffer str
     parseState = mkPState flags buffer location
 
-hsParser :: String -> IO (CRes (RawPrgm ()))
-hsParser filename = do
+hsParser :: ImportParser
+hsParser imp = do
+  let [ObjArr{oaArr=(Just (GuardExpr (RawCExpr _ (CStr filename)) _), _)}] = exprAppliedArgs imp
   str <- readFile filename
   maybeFlags <-
           parsePragmasIntoDynFlags
              filename str
   case maybeFlags of
-    Nothing -> return $ CErr [MkCNote $ GenCErr Nothing $ printf "Failed to read flags from %s" filename]
+    Nothing -> fail $ printf "Failed to read flags from %s" filename
     Just flags -> do
       let parsed = runParser flags filename str parseModule
-      return $ case parsed of
-        POk _ v -> pure $ convertModule flags $ unLoc v
+      case parsed of
+        POk _ v -> return (convertModule flags $ unLoc v, [])
         PFailed pstate ->
           let realSpan = last_loc pstate
               errMsg = printErrorBag $ snd $ messages pstate flags
@@ -124,7 +125,8 @@ hsParser filename = do
               colStart = srcLocCol $ SrcLoc.realSrcSpanStart realSpan
               lnEnd = srcLocLine $ SrcLoc.realSrcSpanEnd realSpan
               colEnd = srcLocCol $ SrcLoc.realSrcSpanEnd realSpan
-          in CErr [MkCNote $ GenCErr (Just (SourcePos filename (mkPos lnStart) (mkPos colStart), SourcePos filename (mkPos lnEnd) (mkPos colEnd), filename)) errMsg]
+              _srcPos = Just (SourcePos filename (mkPos lnStart) (mkPos colStart), SourcePos filename (mkPos lnEnd) (mkPos colEnd), filename)
+          in fail errMsg
 
   where
     printErrorBag bag = joinLines . map show $ bagToList bag

@@ -20,7 +20,6 @@ module Syntax.Ct.Prgm where
 
 import           Data.Hashable
 import qualified Data.HashMap.Strict as H
-import           Data.Void           (Void)
 import           GHC.Generics        (Generic)
 
 import           Data.Aeson          hiding (Object)
@@ -28,7 +27,6 @@ import           Data.Maybe          (fromMaybe, isJust)
 import           Semantics           (emptyMetaE)
 import           Semantics.Prgm
 import           Semantics.Types
-import           Text.Megaparsec
 import           Text.Printf
 import           Utils
 
@@ -97,15 +95,17 @@ data RawStatement e m
 data RawStatementTree e m = RawStatementTree (RawStatement e m) [RawStatementTree e m]
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
-type FileImport = String
-type RawPrgm m = ([FileImport], [RawStatementTree RawExpr m]) -- TODO: Include [Export]
+type RawFileImport = RawExpr ()
+type RawPrgm m = ([RawFileImport], [RawStatementTree RawExpr m]) -- TODO: Include [Export]
 
-type ParseErrorRes = ParseErrorBundle String Void
 data ReplRes m
   = ReplStatement (RawStatementTree RawExpr m)
   | ReplExpr (RawExpr m)
   | ReplErr ParseErrorRes
   deriving (Eq, Show)
+
+type ImportParseResult = IO (RawPrgm (), [RawExpr ()])
+type ImportParser = RawExpr () -> ImportParseResult
 
 instance ExprClass RawExpr where
   getExprMeta expr = case expr of
@@ -198,4 +198,5 @@ desObjArr :: (ExprClass e, MetaDat m, Show m, Show (e m)) => RawObjArr e m -> [O
 desObjArr (RawObjArr obj@(Just (GuardExpr objExpr _)) basis doc annots arr Nothing) = [ObjArr obj basis doc annots arr']
   where
     arr' = fromMaybe (Nothing, emptyMetaE "arrM" objExpr) arr
+desObjArr (RawObjArr obj basis doc annots (Just arr) Nothing) = [ObjArr obj basis doc annots arr]
 desObjArr roa = error $ printf "Not yet implemented: %s" (show roa)

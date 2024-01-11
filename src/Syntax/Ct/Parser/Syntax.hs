@@ -36,7 +36,7 @@ type PStatement = RawStatement RawExpr ParseMetaDat
 type PStatementTree = RawStatementTree RawExpr ParseMetaDat
 type PArgMetaMap = H.HashMap ArgName [ParseMeta]
 type PPrgm = RawPrgm ParseMetaDat
-type PPrgmGraphData = GraphData PPrgm String
+type PPrgmGraphData = GraphData PPrgm RawFileImport
 type PReplRes = ReplRes ParseMetaDat
 
 type PDeclTree = (PObjArr, [PStatementTree])
@@ -59,7 +59,8 @@ type DesObjArr = ObjArr Expr ParseMetaDat
 type DesObjectMapItem = ObjArr Expr ParseMetaDat
 type DesObjectMap = ObjectMap Expr ParseMetaDat
 type DesPrgm = Prgm Expr ParseMetaDat
-type DesPrgmGraphData = GraphData DesPrgm String
+type DesPrgmGraphNodes = GraphNodes DesPrgm FileImport
+type DesPrgmGraphData = GraphData DesPrgm FileImport
 
 parseTVVar :: String -> Maybe Type
 parseTVVar ('$':'_':n) = Just $ TypeVar (TVVar $ partialKey n) TVExt
@@ -119,6 +120,9 @@ applyRawIArgs base args = RawTupleApply (emptyMetaE "app" base) (emptyMetaE "bas
 applyRawExprVars :: (MetaDat m) => RawExpr m -> [(TypeVarName, Meta m)] -> RawExpr m
 applyRawExprVars base []   = base
 applyRawExprVars base vars = RawVarsApply (emptyMetaE "app" base) base (map (first (\n -> RawValue (emptyMetaE ("var" ++ show n) base) (pkName n))) vars)
+
+rawStr :: (MetaDat m) => String -> RawExpr m
+rawStr = RawCExpr emptyMetaN . CStr
 
 exprVal :: (MetaDat m) => String -> Expr m
 exprVal = Value m

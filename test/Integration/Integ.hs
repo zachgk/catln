@@ -11,6 +11,7 @@ import           Data.List          (isPrefixOf)
 import qualified Data.Text.Lazy     as T
 import           Eval
 import           Syntax.Ct.Desugarf (desFiles)
+import           Syntax.InferImport (inferImportStr, inferRawImportStr)
 import           Syntax.Parsers     (readFiles)
 import           System.Directory   (doesFileExist)
 import           System.FilePath    (takeBaseName)
@@ -29,9 +30,11 @@ goldenTypecheckDir :: String
 goldenTypecheckDir = "test/Integration/goldenTypecheck/"
 
 runTest :: Bool -> Bool -> String -> TestTree
-runTest runGolden includeCore fileName = testCaseSteps fileName $ \step -> do
-  step $ printf "Read file %s..." fileName
-  maybeRawPrgm <- readFiles includeCore True [fileName]
+runTest runGolden includeCore fileNameStr = testCaseSteps fileNameStr $ \step -> do
+  step $ printf "Read file %s..." fileNameStr
+  fileNameRaw <- inferRawImportStr fileNameStr
+  fileName <- inferImportStr fileNameStr
+  maybeRawPrgm <- readFiles includeCore True [fileNameRaw]
 
 
   case maybeRawPrgm of
@@ -42,10 +45,10 @@ runTest runGolden includeCore fileName = testCaseSteps fileName $ \step -> do
         CRes _ prgm -> do
 
           when runGolden $ do
-            let goldenDesugarPath = goldenDesugarDir ++ takeBaseName fileName ++ ".txt"
+            let goldenDesugarPath = goldenDesugarDir ++ takeBaseName fileNameStr ++ ".txt"
             goldenDesugarExists <- doesFileExist goldenDesugarPath
             let showPrgm = T.unpack $ pShowNoColor $ graphToNodes prgm
-            if testDir `isPrefixOf` fileName && goldenDesugarExists
+            if testDir `isPrefixOf` fileNameStr && goldenDesugarExists
               then do
                 step "Golden test desugar..."
                 golden <- readFile goldenDesugarPath
@@ -61,10 +64,10 @@ runTest runGolden includeCore fileName = testCaseSteps fileName $ \step -> do
             CRes _ tprgm -> do
 
               when runGolden $ do
-                let goldenTypecheckPath = goldenTypecheckDir ++ takeBaseName fileName ++ ".txt"
+                let goldenTypecheckPath = goldenTypecheckDir ++ takeBaseName fileNameStr ++ ".txt"
                 goldenTypecheckExists <- doesFileExist goldenTypecheckPath
                 let showTPrgm = T.unpack $ pShowNoColor $ graphToNodes tprgm
-                if testDir `isPrefixOf` fileName && goldenTypecheckExists
+                if testDir `isPrefixOf` fileNameStr && goldenTypecheckExists
                   then do
                     step "Golden test typecheck..."
                     golden <- readFile goldenTypecheckPath

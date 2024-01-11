@@ -140,7 +140,7 @@ type PGuardExpr = GuardExpr Expr ()
 type PCompAnnot = CompAnnot PExpr
 type PObjArr = ObjArr Expr ()
 type PPrgm = Prgm Expr ()
-type PPrgmGraphData = GraphData PPrgm String
+type PPrgmGraphData = GraphData PPrgm FileImport
 
 data ShowMetaDat = ShowMeta SType VarMetaDat
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)

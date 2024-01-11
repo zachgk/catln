@@ -21,12 +21,15 @@ import           System.Directory
 import           Text.Printf
 import           Utils
 import           WebDocs              (docServe)
+import           Syntax.InferImport (inferImportStr, inferRawImportStr)
 -- import Repl (repl)
 
 xRun :: String -> String -> IO ()
 xRun prgmName function = do
-  maybeRawPrgm <- readFiles True True [prgmName]
-  case aux maybeRawPrgm of
+  prgmName' <- inferRawImportStr prgmName
+  prgmName'' <- inferImportStr prgmName
+  maybeRawPrgm <- readFiles True True [prgmName']
+  case aux maybeRawPrgm prgmName'' of
     CErr err   -> print err
     CRes _ resIO -> do
       returnValue <- resIO
@@ -34,16 +37,18 @@ xRun prgmName function = do
         (0, _) -> return ()
         (i, _) -> print $ "error code " ++ show i
   where
-    aux maybeRawPrgm = do
+    aux maybeRawPrgm prgmName'' = do
       rawPrgm <- maybeRawPrgm
       desPrgm <- desFiles rawPrgm
       tprgm <- typecheckPrgm desPrgm
-      evalRun function prgmName tprgm
+      evalRun function prgmName'' tprgm
 
 xBuild :: String -> String -> IO ()
 xBuild prgmName function = do
-  maybeRawPrgm <- readFiles True True [prgmName]
-  case aux maybeRawPrgm of
+  prgmName' <- inferRawImportStr prgmName
+  prgmName'' <- inferImportStr prgmName
+  maybeRawPrgm <- readFiles True True [prgmName']
+  case aux maybeRawPrgm prgmName'' of
     CErr err   -> print err
     CRes _ resIO -> do
       returnValue <- resIO
@@ -59,22 +64,23 @@ xBuild prgmName function = do
               _ -> fail "Invalid name or contents found in result as build"
         _ -> error "Failed to build"
   where
-    aux maybeRawPrgm = do
+    aux maybeRawPrgm prgmName'' = do
       rawPrgm <- maybeRawPrgm
       desPrgm <- desFiles rawPrgm
       tprgm <- typecheckPrgm desPrgm
-      evalBuild function prgmName tprgm
+      evalBuild function prgmName'' tprgm
 
 xDoc :: String -> Bool -> IO ()
 xDoc prgmName cached = docServe cached True prgmName
 
 xDocument :: String -> String -> String -> IO ()
 xDocument prgmName outFname format = do
-  maybeRawPrgm <- readFiles False False [prgmName]
+  prgmName' <- inferRawImportStr prgmName
+  maybeRawPrgm <- readFiles False False [prgmName']
   case maybeRawPrgm of
     CErr err   -> print err
     CRes _ prgmGraphData -> do
-      case graphLookup prgmName prgmGraphData of
+      case graphLookup prgmName' prgmGraphData of
         Just prgm -> do
           prgm' <- toDocument format prgm
           BSL.writeFile outFname prgm'
@@ -82,7 +88,8 @@ xDocument prgmName outFname format = do
 
 xConvert :: String -> String -> IO ()
 xConvert prgmName _outFname = do
-  maybeRawPrgm <- readFiles False False [prgmName]
+  prgmName' <- inferRawImportStr prgmName
+  maybeRawPrgm <- readFiles False False [prgmName']
   case maybeRawPrgm of
     CErr err   -> print err
     CRes _ prgmGraphData -> do
@@ -93,14 +100,14 @@ xConvert prgmName _outFname = do
 
 xFmt :: String -> IO ()
 xFmt prgmName = do
-  maybeRawPrgm <- readFiles False False [prgmName]
+  prgmName' <- inferRawImportStr prgmName
+  maybeRawPrgm <- readFiles False False [prgmName']
   case maybeRawPrgm of
     CErr err   -> print err
     CRes _ prgmGraphData -> do
-      let prgms = graphToNodes prgmGraphData
-      forM_ prgms $ \(prgm, fileName, _) -> do
-        let prgm' = build $ formatPrgm 0 prgm
-        writeFile fileName prgm'
+      let [(prgm, _, _)] = graphToNodes prgmGraphData
+      let prgm' = build $ formatPrgm 0 prgm
+      writeFile prgmName prgm'
 
 exec :: Command -> IO ()
 exec (RunFile file function)          = xRun file function

@@ -15,14 +15,12 @@
 module Repl where
 
 
-import           CRes
 import           Syntax.Ct.Parser
 import           Syntax.Ct.Prgm
 
 import           Control.Monad.Trans
 import           Data.List                (isPrefixOf)
 
-import           Syntax.Parsers           (readFiles)
 import           System.Console.Haskeline
 import           Utils
 
@@ -32,11 +30,12 @@ coreImport :: String
 coreImport = "stack/core/main.ct"
 
 buildReplBaseEnv :: IO ReplEnv
-buildReplBaseEnv = do
-  rawCore <- readFiles True True [coreImport]
-  case rawCore of
-    CRes _ r -> return ([], r)
-    CErr _   -> fail "Could not read core"
+buildReplBaseEnv = undefined
+-- buildReplBaseEnv = do
+  -- rawCore <- readFiles True True [coreImport]
+  -- case rawCore of
+  --   CRes _ r -> return ([], r)
+  --   CErr _   -> fail "Could not read core"
 
 parsingRepl :: ReplEnv -> String -> IO ReplEnv
 parsingRepl env source = case parseRepl source of

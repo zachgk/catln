@@ -17,6 +17,7 @@ import           Testing.Generation
 import           Text.Printf
 import           TypeCheck           (typecheckPrgm)
 import           Utils
+import Syntax.InferImport (inferRawImportStr)
 
 type Prgms = H.HashMap String (Prgm Expr ())
 type GenPrgm = Gen (Prgm Expr ())
@@ -26,7 +27,8 @@ findPrgms = do
   let classGraphDir = "test/Semantics/code/"
   fileNames <- findCt classGraphDir
   prgms <- forM fileNames $ \fileName -> do
-    rawPrgm <- fromCRes <$> readFiles False True [fileName]
+    fileName' <- inferRawImportStr fileName
+    rawPrgm <- fromCRes <$> readFiles False True [fileName']
     let prgm = fromCRes $ desFiles rawPrgm
     let tprgm = fromCRes $ typecheckPrgm prgm
     return (fileName, mergePrgms $ map fst3 $ graphToNodes tprgm)

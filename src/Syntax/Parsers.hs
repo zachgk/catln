@@ -15,82 +15,60 @@
 
 module Syntax.Parsers where
 
-import qualified Data.HashSet          as S
+import qualified Data.HashSet            as S
 
-import           Control.Monad
 import           CRes
 import           Data.Graph
-import qualified Data.HashMap.Strict   as H
+import qualified Data.HashMap.Strict     as H
 import           Data.List
-import           Data.List.Split
-import           Data.Maybe
-import           Syntax.Ct.Parser      (ctParser, ctxParser)
+import           Semantics.Prgm
+import           Syntax.Ct.Parser        (ctParser, ctxParser)
+import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
-import           Syntax.Haskell.Parser (hsParser)
-import           System.Directory
+import           Syntax.Haskell.Parser   (hsParser)
+import           Syntax.InferImport      (dirParser, inferRawImportStr)
 import           Text.Printf
 import           Utils
 
-fileExtensionParsers :: H.HashMap String (String -> IO (CRes (RawPrgm ())))
-fileExtensionParsers = H.fromList [
+importParsers :: H.HashMap String ImportParser
+importParsers = H.fromList [
+  ("dir", dirParser),
   ("ct", ctParser),
   ("ctx", ctxParser),
   ("hs", hsParser)
                              ]
 
-isSupportedFileExtension :: String -> Bool
--- isSupportedFileExtension fileName = any ((`isSuffixOf` fileName) . ('.':)) (H.keys fileExtensionParsers)
-isSupportedFileExtension fileName = ".ct" `isSuffixOf` fileName || ".ctx" `isSuffixOf` fileName
+readImport :: RawFileImport -> ImportParseResult
+readImport (RawCExpr _ (CStr name)) = do
+  imp' <- inferRawImportStr name
+  readImport imp'
+readImport imp = case maybeExprPath imp of
+  Nothing -> fail $ printf "Invalid import %s must be string or oject" (show imp)
+  Just impPath -> case H.lookup impPath importParsers of
+    Nothing -> fail $ printf "No parser available for oject name in %s" (show imp)
+    Just parser -> parser imp
 
-parseFile :: String -> IO (CRes (RawPrgm ()))
-parseFile fileName = case H.lookup (last $ splitOn "." fileName) fileExtensionParsers of
-  Just parser -> parser fileName
-  Nothing -> return $ CErr [MkCNote $ GenCErr Nothing $ printf "Unexpected file extension %s" fileName]
-
--- replaces imports of a directory with directory/main.ct
-dirImportToMain :: String -> IO String
-dirImportToMain f = do
-  isFile <- doesFileExist f
-  isDir <- doesDirectoryExist f
-  return $ case (isFile, isDir) of
-    (True, False) -> f
-    (False, True) -> f ++ "/main.ct"
-    _             -> error $ printf "Invalid directory %s" f
-
-readFiles :: Bool -> Bool -> [String] -> IO (CRes (GraphData (RawPrgm ()) String))
-readFiles includeCore includeDependencies = fmap (fmap (graphFromEdges . snd)) . aux [] S.empty
+processParsed :: Bool -> RawFileImport -> (RawPrgm (), [RawFileImport]) -> (GraphNodes (RawPrgm ()) RawFileImport, [RawFileImport])
+processParsed includeCore imp (prgm@(prgmImports, _), extraImports) = ((prgm, imp, prgmImports'), totalImports)
   where
-    aux acc visited [] = return $ return (visited, acc)
+    name = case imp of
+      RawCExpr _ (CStr n) -> n
+      RawTupleApply _ _ [RawObjArr{roaArr=Just (Just (GuardExpr (RawCExpr _ (CStr n)) _), _)}] -> n
+      _ -> ""
+    prgmImports' = if includeCore && not ("stack/core" `isInfixOf` name)
+      then rawStr "stack/core" : prgmImports
+      else prgmImports
+    totalImports = extraImports ++ prgmImports'
+
+readFiles :: Bool -> Bool -> [RawFileImport] -> IO (CRes (GraphData (RawPrgm ()) RawFileImport))
+readFiles includeCore includeDependencies = fmap (pure . graphFromEdges) . aux [] S.empty
+  where
+    aux :: [GraphNodes (RawPrgm ()) RawFileImport] -> S.HashSet RawFileImport -> [RawFileImport] -> IO [GraphNodes (RawPrgm ()) RawFileImport]
+    aux acc _ [] = return acc
     aux acc visited (nextToVisit:restToVisit) | S.member nextToVisit visited = aux acc visited restToVisit
     aux acc visited (nextToVisit:restToVisit) = do
-      isFile <- doesFileExist nextToVisit
-      isDir <- doesDirectoryExist nextToVisit
-      case (isFile, isDir) of
-        (True, False) -> do -- file
-          parsed <- parseFile nextToVisit
-          case parsed of
-            CErr notes -> return $ CErr notes
-            CRes _ (parsedImports, statements) -> do
-              let parsedImports' = if includeCore && not ("stack/core" `isPrefixOf` nextToVisit)
-                    then "stack/core":parsedImports
-                    else parsedImports
-              parsedImports'' <- mapM dirImportToMain parsedImports'
-              let prgm' = (parsedImports'', statements)
-              let restToVisit' = if includeDependencies
-                    then parsedImports' ++ restToVisit
-                    else restToVisit
-              aux ((prgm', nextToVisit, parsedImports'') : acc) (S.insert nextToVisit visited) restToVisit'
-        (False, True) -> do -- directory
-          files <- listDirectory nextToVisit
-          files' <- forM files $ \file -> do
-            let file' = nextToVisit ++ "/" ++ file
-            isF <- doesFileExist file'
-            isD <- doesDirectoryExist file'
-            case (isF, isD) of
-              (True, False) -> if not ("." `isPrefixOf` file) && isSupportedFileExtension file'
-                then return (Just file')
-                else return Nothing
-              (False, True) -> return (Just file')
-              _ -> error $ printf "Found non-file or directory: %s" file'
-          aux acc visited (catMaybes files' ++ restToVisit)
-        _ -> return $ CErr [MkCNote $ GenCErr Nothing $ printf "Could not find file or directory %s" nextToVisit]
+      (newPrgm, newToVisit) <- processParsed includeCore nextToVisit <$> readImport nextToVisit
+      let restToVisit' = if includeDependencies
+            then newToVisit ++ restToVisit
+            else restToVisit
+      aux (newPrgm : acc) (S.insert nextToVisit visited) restToVisit'

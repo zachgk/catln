@@ -15,17 +15,19 @@ import           DynFlags
 import           GHC.Hs
 import           Module
 import           Outputable
+import           Semantics.Prgm
 import           SrcLoc
 import           Syntax.Ct.Prgm
 import           Text.Printf
 
-convertImport :: DynFlags -> ImportDecl GhcPs -> String
-convertImport _ (ImportDecl _ _ name Nothing False False NotQualified _ Nothing Nothing) = moduleNameSlashes $ unLoc name
+convertImport :: DynFlags -> ImportDecl GhcPs -> RawFileImport
+convertImport _ (ImportDecl _ _ name Nothing False False NotQualified _ Nothing Nothing) = RawCExpr emptyMetaN $ CStr $ moduleNameSlashes $ unLoc name
 convertImport flags p = error $ printf "Convert unsupported import:\n%s" (showSDoc flags $ ppr p)
 
 convertDecl :: DynFlags -> HsDecl GhcPs -> RawStatementTree RawExpr ()
 convertDecl flags p = error $ printf "Convert unsupported decl:\n%s" (showSDoc flags $ ppr p)
 
+-- https://www.stackage.org/haddock/lts-18.28/ghc-lib-parser-8.10.7.20220219/GHC-Hs.html#t:HsModule
 convertModule :: DynFlags -> HsModule GhcPs -> RawPrgm ()
 convertModule flags (HsModule (Just name) Nothing imports decls Nothing Nothing) = (map (convertImport flags . unLoc) imports, [RawStatementTree (RawModule $ moduleNameSlashes $ unLoc name) (map (convertDecl flags . unLoc) decls)])
 convertModule flags p = error $ printf "Convert unsupported Module:\n%s" (showSDoc flags $ ppr p)

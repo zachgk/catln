@@ -57,7 +57,7 @@ evalBuildable _                      = False
 -- Then, those found functions can be checked for run/build based on whether the return type is a CatlnResult.
 -- It also will pass the function name back through EvalMode in order to convert 'PRelativeName' into the matching 'PTypeName'
 -- TODO The use of listToMaybe will secretly discard if multiple evalTargetModes or function names are found. Instead, an error should be thrown
-evalTargetMode :: String -> String -> EPrgmGraphData -> EvalMode
+evalTargetMode :: String -> FileImport -> EPrgmGraphData -> EvalMode
 evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe $ mapMaybe objArrowsContains objMap
   where
     prgm@(objMap, _, _) = prgmFromGraphData prgmName prgmGraphData
@@ -170,7 +170,7 @@ evalBaseEnv prgm@(objMap, _, _) = Env {
         evTreebugClosed = []
                 }
 
-prgmFromGraphData :: String -> EPrgmGraphData -> EPrgm
+prgmFromGraphData :: FileImport -> EPrgmGraphData -> EPrgm
 prgmFromGraphData prgmName (prgmGraph, nodeFromVertex, vertexFromKey) = mergePrgms $ map (fst3 . nodeFromVertex) $ reachable prgmGraph $ fromJust $ vertexFromKey prgmName
 
 evalBuildPrgm :: EExpr -> PartialType -> Type -> EPrgm -> CRes (TExpr (), Env)
@@ -179,7 +179,7 @@ evalBuildPrgm input srcType destType prgm = do
   initTree <- buildRoot evTbEnv input srcType destType
   return (initTree, env)
 
-evalAnnots :: String -> EPrgmGraphData -> CRes [(EExpr, Val)]
+evalAnnots :: FileImport -> EPrgmGraphData -> CRes [(EExpr, Val)]
 evalAnnots prgmName prgmGraphData = do
   let prgm@(_, _, annots) = prgmFromGraphData prgmName prgmGraphData
   let env@Env{evTbEnv} = evalBaseEnv prgm
@@ -190,7 +190,7 @@ evalAnnots prgmName prgmGraphData = do
     val <- fst <$> evalExpr env tree
     return (annot, val)
 
-evalRun :: String -> String -> EPrgmGraphData -> CRes (IO (Integer, EvalResult))
+evalRun :: String -> FileImport -> EPrgmGraphData -> CRes (IO (Integer, EvalResult))
 evalRun function prgmName prgmGraphData = do
   let prgm = prgmFromGraphData prgmName prgmGraphData
   input <-  case evalTargetMode function prgmName prgmGraphData of
@@ -211,7 +211,7 @@ evalRun function prgmName prgmGraphData = do
     (IOVal r io) -> return (io >> pure (r, evalResult env'))
     _ -> CErr [MkCNote $ GenCErr Nothing $ printf "Eval did not return an instance of IO \n\tInstead returned %s \n\t With expr %s" (show res) (show expr)]
 
-evalBuild :: String -> String -> EPrgmGraphData -> CRes (IO (Val, EvalResult))
+evalBuild :: String -> FileImport -> EPrgmGraphData -> CRes (IO (Val, EvalResult))
 evalBuild function prgmName prgmGraphData = do
   let prgm = prgmFromGraphData prgmName prgmGraphData
 

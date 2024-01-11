@@ -28,9 +28,9 @@ import           Syntax.Ct.Prgm
 formatIndent :: Int -> String
 formatIndent indent = concat $ replicate indent "  "
 
-formatImport :: FileImport -> Builder
+formatImport :: RawFileImport -> Builder
 formatImport imp = do
-  literal $ "import " ++ imp ++ "\n"
+  literal $ "import " ++ formatExpr imp ++ "\n"
 
 formatPartialKey :: PartialKey -> String
 formatPartialKey = formatPartialType . partialToType

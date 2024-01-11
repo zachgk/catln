@@ -20,7 +20,7 @@ import           Text.Megaparsec
 import           Text.Megaparsec.Char
 
 import           Constants
-import           CRes
+import           Data.Bifunctor             (Bifunctor (first))
 import           Data.Maybe
 import           Semantics.Prgm
 import           Syntax.Ct.Parser.Decl
@@ -32,12 +32,12 @@ import           Syntax.Ct.Prgm
 import qualified Text.Megaparsec.Char.Lexer as L
 import           Text.Printf
 
-pImport :: Parser String
+pImport :: Parser RawFileImport
 pImport = do
   _ <- symbol "import"
   imp <- some printChar
   _ <- newline
-  return imp
+  return $ rawStr imp
 
 liftPStatement :: Parser PStatement -> Parser PStatementTree
 liftPStatement pSt = L.indentBlock scn p
@@ -99,17 +99,18 @@ contents p = do
   eof
   return r
 
-ctParser :: String -> IO (CRes PPrgm)
-ctParser fileName = do
+ctParser :: ImportParser
+ctParser imp = do
+  let [ObjArr{oaArr=(Just (GuardExpr (RawCExpr _ (CStr fileName)) _), _)}] = exprAppliedArgs imp
   fileContents <- readFile fileName
-  return $ case runParser (contents pPrgm) fileName fileContents of
-    Left err   -> CErr [MkCNote $ ParseCErr err]
-    Right prgm -> return prgm
+  case runParser (contents pPrgm) fileName fileContents of
+    Left err   -> fail $ show err
+    Right prgm -> return (prgm, [])
 
-ctxParser :: String -> IO (CRes PPrgm)
+ctxParser :: ImportParser
 ctxParser fileName = do
   cp <- ctParser fileName
-  return $ fmap annotate cp
+  return $ first annotate cp
   where
     annotate (imports, statements) = (imports, RawStatementTree (RawAnnot (RawValue emptyMetaN ctxAnnot)) [] :statements)
 
