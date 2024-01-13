@@ -91,7 +91,7 @@ mkCacheWDProvider includeCore baseFileName = do
 getRawPrgm :: WDProvider -> IO (CRes PPrgmGraphData)
 getRawPrgm (LiveWDProvider includeCore baseFileName) = do
   baseFileName' <- inferRawImportStr baseFileName
-  readFiles includeCore True [baseFileName']
+  readFiles includeCore [baseFileName']
 getRawPrgm CacheWDProvider{cRaw} = return cRaw
 
 getPrgm :: WDProvider -> IO (CRes (GraphData DesPrgm FileImport))

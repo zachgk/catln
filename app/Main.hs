@@ -1,34 +1,31 @@
-
 {-# OPTIONS_GHC -Wno-type-defaults #-}
 module Main where
 
-import           Control.Monad
 import           CRes
 import           Data.String.Builder  (build)
 import           Eval
 import           Options.Applicative
 import           Syntax.Ct.Desugarf   (desFiles)
 import           Syntax.Ct.Formatter  (formatPrgm)
-import           Syntax.Parsers
+import           Syntax.Parsers       (parseFile, readFiles)
 import           TypeCheck            (typecheckPrgm)
 
 import qualified Data.ByteString.Lazy as BSL
 import qualified Data.HashMap.Strict  as H
 import           Data.Maybe
 import           Eval.Common          (Val (StrVal, TupleVal))
+import           Syntax.InferImport   (inferImportStr, inferRawImportStr)
 import           Syntax.Pandoc.Syntax (documentFormats, toDocument)
 import           System.Directory
 import           Text.Printf
-import           Utils
 import           WebDocs              (docServe)
-import           Syntax.InferImport (inferImportStr, inferRawImportStr)
 -- import Repl (repl)
 
 xRun :: String -> String -> IO ()
 xRun prgmName function = do
   prgmName' <- inferRawImportStr prgmName
   prgmName'' <- inferImportStr prgmName
-  maybeRawPrgm <- readFiles True True [prgmName']
+  maybeRawPrgm <- readFiles True [prgmName']
   case aux maybeRawPrgm prgmName'' of
     CErr err   -> print err
     CRes _ resIO -> do
@@ -47,7 +44,7 @@ xBuild :: String -> String -> IO ()
 xBuild prgmName function = do
   prgmName' <- inferRawImportStr prgmName
   prgmName'' <- inferImportStr prgmName
-  maybeRawPrgm <- readFiles True True [prgmName']
+  maybeRawPrgm <- readFiles True [prgmName']
   case aux maybeRawPrgm prgmName'' of
     CErr err   -> print err
     CRes _ resIO -> do
@@ -76,36 +73,30 @@ xDoc prgmName cached = docServe cached True prgmName
 xDocument :: String -> String -> String -> IO ()
 xDocument prgmName outFname format = do
   prgmName' <- inferRawImportStr prgmName
-  maybeRawPrgm <- readFiles False False [prgmName']
+  maybeRawPrgm <- parseFile False prgmName'
   case maybeRawPrgm of
     CErr err   -> print err
-    CRes _ prgmGraphData -> do
-      case graphLookup prgmName' prgmGraphData of
-        Just prgm -> do
-          prgm' <- toDocument format prgm
-          BSL.writeFile outFname prgm'
-        Nothing -> fail "Could not find prgm"
+    CRes _ (prgm, _, _) -> do
+      prgm' <- toDocument format prgm
+      BSL.writeFile outFname prgm'
 
 xConvert :: String -> String -> IO ()
 xConvert prgmName _outFname = do
   prgmName' <- inferRawImportStr prgmName
-  maybeRawPrgm <- readFiles False False [prgmName']
+  maybeRawPrgm <- parseFile False prgmName'
   case maybeRawPrgm of
     CErr err   -> print err
-    CRes _ prgmGraphData -> do
-      let prgms = graphToNodes prgmGraphData
-      forM_ prgms $ \(prgm, _fileName, _) -> do
-        let prgm' = build $ formatPrgm 0 prgm
-        print prgm'
+    CRes _ (prgm, _fileName, _) -> do
+      let prgm' = build $ formatPrgm 0 prgm
+      print prgm'
 
 xFmt :: String -> IO ()
 xFmt prgmName = do
   prgmName' <- inferRawImportStr prgmName
-  maybeRawPrgm <- readFiles False False [prgmName']
+  maybeRawPrgm <- parseFile False prgmName'
   case maybeRawPrgm of
     CErr err   -> print err
-    CRes _ prgmGraphData -> do
-      let [(prgm, _, _)] = graphToNodes prgmGraphData
+    CRes _ (prgm, _, _) -> do
       let prgm' = build $ formatPrgm 0 prgm
       writeFile prgmName prgm'
 

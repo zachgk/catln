@@ -34,7 +34,7 @@ runTest runGolden includeCore fileNameStr = testCaseSteps fileNameStr $ \step ->
   step $ printf "Read file %s..." fileNameStr
   fileNameRaw <- inferRawImportStr fileNameStr
   fileName <- inferImportStr fileNameStr
-  maybeRawPrgm <- readFiles includeCore True [fileNameRaw]
+  maybeRawPrgm <- readFiles includeCore [fileNameRaw]
 
 
   case maybeRawPrgm of

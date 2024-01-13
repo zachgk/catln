@@ -60,15 +60,16 @@ processParsed includeCore imp (prgm@(prgmImports, _), extraImports) = ((prgm, im
       else prgmImports
     totalImports = extraImports ++ prgmImports'
 
-readFiles :: Bool -> Bool -> [RawFileImport] -> IO (CRes (GraphData (RawPrgm ()) RawFileImport))
-readFiles includeCore includeDependencies = fmap (pure . graphFromEdges) . aux [] S.empty
+parseFile :: Bool -> RawFileImport -> IO (CRes (GraphNodes (RawPrgm ()) RawFileImport))
+parseFile includeCore imp = pure . fst . processParsed includeCore imp <$> readImport imp
+
+readFiles :: Bool -> [RawFileImport] -> IO (CRes (GraphData (RawPrgm ()) RawFileImport))
+readFiles includeCore = fmap (pure . graphFromEdges) . aux [] S.empty
   where
     aux :: [GraphNodes (RawPrgm ()) RawFileImport] -> S.HashSet RawFileImport -> [RawFileImport] -> IO [GraphNodes (RawPrgm ()) RawFileImport]
     aux acc _ [] = return acc
     aux acc visited (nextToVisit:restToVisit) | S.member nextToVisit visited = aux acc visited restToVisit
     aux acc visited (nextToVisit:restToVisit) = do
       (newPrgm, newToVisit) <- processParsed includeCore nextToVisit <$> readImport nextToVisit
-      let restToVisit' = if includeDependencies
-            then newToVisit ++ restToVisit
-            else restToVisit
+      let restToVisit' = newToVisit ++ restToVisit
       aux (newPrgm : acc) (S.insert nextToVisit visited) restToVisit'

@@ -10,6 +10,7 @@ import qualified Hedgehog.Gen        as HG
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Desugarf  (desFiles)
+import           Syntax.InferImport  (inferRawImportStr)
 import           Syntax.Parsers      (readFiles)
 import           Test.Tasty
 import           Test.Tasty.Hedgehog as HG
@@ -17,7 +18,6 @@ import           Testing.Generation
 import           Text.Printf
 import           TypeCheck           (typecheckPrgm)
 import           Utils
-import Syntax.InferImport (inferRawImportStr)
 
 type Prgms = H.HashMap String (Prgm Expr ())
 type GenPrgm = Gen (Prgm Expr ())
@@ -28,7 +28,7 @@ findPrgms = do
   fileNames <- findCt classGraphDir
   prgms <- forM fileNames $ \fileName -> do
     fileName' <- inferRawImportStr fileName
-    rawPrgm <- fromCRes <$> readFiles False True [fileName']
+    rawPrgm <- fromCRes <$> readFiles False [fileName']
     let prgm = fromCRes $ desFiles rawPrgm
     let tprgm = fromCRes $ typecheckPrgm prgm
     return (fileName, mergePrgms $ map fst3 $ graphToNodes tprgm)
