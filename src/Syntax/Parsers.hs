@@ -35,7 +35,7 @@ importParsers = H.fromList [
   ("dir", dirParser),
   ("ct", ctParser),
   ("ctx", ctxParser),
-  ("hs", hsParser)
+  ("haskell", hsParser)
                              ]
 
 readImport :: RawFileImport -> ImportParseResult

@@ -45,3 +45,18 @@ argEndAnnot = "/Catln/#argEnd"
 
 nestedDeclaration :: String
 nestedDeclaration = "/Catln/nestedDeclaration"
+
+ctIf, ctThen, ctElse :: String
+ctIf = "if"
+ctThen = "then"
+ctElse = "else"
+
+ctMatch, ctCase :: String
+ctMatch = "match"
+ctCase = "case"
+
+ctListType, ctListCons, ctListConsHead, ctListConsTail :: String
+ctListType = "/Data/ConsList"
+ctListCons = "/Data/Cons"
+ctListConsHead = "head"
+ctListConsTail = "tail"
