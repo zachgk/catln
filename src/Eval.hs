@@ -125,7 +125,9 @@ evalCallTree env1 input (TCObjArr oa) = do
   return (res, evalEndEArrow env5 res oldArgs)
 evalCallTree env1 input (TCPrim _ (EPrim _ _ f)) = do
   case input of
-    (TupleVal _ args) -> return (f args, env1)
+    (TupleVal _ args) -> case f args of
+      Right val -> return (val, env1)
+      Left err  -> evalError env1 err
     _                 -> error "Unexpected eval PrimArrow input"
 evalCallTree env _ TCMacro{} = evalError env $ printf "Can't evaluate a macro - it should be removed during TreeBuild"
 

@@ -46,7 +46,7 @@ type EObjectMap = ObjectMap Expr EvalMetaDat
 type EPrgm = Prgm Expr EvalMetaDat
 type EPrgmGraphData = GraphData EPrgm FileImport
 
-data EPrim = EPrim PartialType EGuard (H.HashMap String Val -> Val)
+data EPrim = EPrim PartialType EGuard (H.HashMap String Val -> Either String Val)
   deriving (Generic)
 
 -- TODO: Maybe should include result type?

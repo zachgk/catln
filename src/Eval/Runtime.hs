@@ -42,8 +42,8 @@ liftIntOp name f = (name', [(srcType, Nothing, False, TCPrim resType prim)])
     srcType = PartialType name' H.empty (H.fromList [(partialKey "/l", intType), (partialKey "/r", intType)]) [] PtArgExact
     resType = intType
     prim = EPrim srcType Nothing (\args -> case (H.lookup "/l" args, H.lookup "/r" args) of
-                           (Just (IntVal l), Just (IntVal r)) -> IntVal $ f l r
-                           _ -> error "Invalid intOp signature"
+                           (Just (IntVal l), Just (IntVal r)) -> Right $ IntVal $ f l r
+                           _ -> Left "Invalid intOp signature"
                            )
 
 liftCmpOp :: TypeName -> (Integer -> Integer -> Bool) -> Op
@@ -53,8 +53,8 @@ liftCmpOp name f = (name', [(srcType, Nothing, False, TCPrim resType prim)])
     srcType = PartialType name' H.empty (H.fromList [(partialKey "/l", intType), (partialKey "/r", intType)]) [] PtArgExact
     resType = boolType
     prim = EPrim srcType Nothing (\args -> case (H.lookup "/l" args, H.lookup "/r" args) of
-                           (Just (IntVal l), Just (IntVal r)) -> bool $ f l r
-                           _ -> error "Invalid compOp signature"
+                           (Just (IntVal l), Just (IntVal r)) -> Right $ bool $ f l r
+                           _ -> Left "Invalid compOp signature"
                            )
 
 rneg :: TypeName -> Op
@@ -64,8 +64,8 @@ rneg name = (name', [(srcType, Nothing, False, TCPrim resType prim)])
     srcType = PartialType name' H.empty (H.singleton (partialKey "/a") intType) [] PtArgExact
     resType = intType
     prim = EPrim srcType Nothing (\args -> case H.lookup "/a" args of
-                                  Just (IntVal i) -> IntVal $ -i
-                                  _ -> error "Invalid rneg signature"
+                                  Just (IntVal i) -> Right $ IntVal $ -i
+                                  _ -> Left "Invalid rneg signature"
                               )
 
 strEq :: Op
@@ -75,8 +75,8 @@ strEq = (name', [(srcType, Nothing, False, TCPrim resType prim)])
     srcType = PartialType name' H.empty (H.fromList [(partialKey "/l", strType), (partialKey "/r", strType)]) [] PtArgExact
     resType = boolType
     prim = EPrim srcType Nothing (\args -> case (H.lookup "/l" args, H.lookup "/r" args) of
-                                  (Just (StrVal l), Just (StrVal r)) -> bool $ l == r
-                                  _ -> error "Invalid intToString signature"
+                                  (Just (StrVal l), Just (StrVal r)) -> Right $ bool $ l == r
+                                  _ -> Left "Invalid intToString signature"
                               )
 
 intToString :: Op
@@ -86,8 +86,8 @@ intToString = (name', [(srcType, Nothing, False, TCPrim resType prim)])
     srcType = PartialType name' H.empty (H.singleton (partialKey "/this") intType) [] PtArgExact
     resType = strType
     prim = EPrim srcType Nothing (\args -> case H.lookup "/this" args of
-                                  (Just (IntVal val)) -> StrVal $ show val
-                                  _ -> error "Invalid intToString signature"
+                                  (Just (IntVal val)) -> Right $ StrVal $ show val
+                                  _ -> Left "Invalid intToString signature"
                               )
 
 
@@ -98,8 +98,8 @@ ioExit = (name', [(srcType, Nothing, False, TCPrim resType prim)])
     srcType = PartialType name' H.empty (H.fromList [(partialKey "/this", ioType), (partialKey "/val", intType)]) [] PtArgExact
     resType = ioType
     prim = EPrim srcType Nothing (\args -> case (H.lookup "/this" args, H.lookup "/val" args) of
-                                  (Just (IOVal _ io), Just (IntVal val)) -> IOVal val io
-                                  _ -> error $ printf "Invalid exit signature with args: %s" (show args)
+                                  (Just (IOVal _ io), Just (IntVal val)) -> Right $ IOVal val io
+                                  _ -> Left $ printf "Invalid exit signature with args: %s" (show args)
                               )
 
 println :: Op
@@ -109,8 +109,8 @@ println = (name', [(srcType, Nothing, False, TCPrim resType prim)])
     srcType = PartialType name' H.empty (H.fromList [(partialKey "/this", ioType), (partialKey "/msg", strType)]) [] PtArgExact
     resType = ioType
     prim = EPrim srcType Nothing (\args -> case (H.lookup "/this" args, H.lookup "/msg" args) of
-                                  (Just (IOVal r io), Just (StrVal msg)) -> IOVal r (io >> putStrLn msg)
-                                  _ -> error "Invalid println signature"
+                                  (Just (IOVal r io), Just (StrVal msg)) -> Right $ IOVal r (io >> putStrLn msg)
+                                  _ -> Left "Invalid println signature"
                               )
 
 llvm :: Op
