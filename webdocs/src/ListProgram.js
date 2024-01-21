@@ -6,8 +6,8 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Switch from '@material-ui/core/Switch';
-import {
+import Radio from '@material-ui/core/Radio';
+import RadioGroup from '@material-ui/core/RadioGroup';import {
   useHistory,
   useLocation,
   useRouteMatch
@@ -37,18 +37,29 @@ function ListProgram(props) {
   let query = useQuery();
   let history = useHistory();
 
-  let noTypecheck = (query.get("noTypecheck") || "false") === "true";
+  let mode = query.get("mode") || "";
   let dataPath;
-  if(noTypecheck) {
+  switch(mode) {
+  case "noTypecheck":
     dataPath = "/api/desugar";
-  } else {
+    break;
+  case "treeBuild":
+    dataPath = "/api/treebuild";
+    break;
+  default:
     dataPath = "/api/typecheck";
+    break;
   }
   let apiResult = useApi(dataPath);
   let { path } = useRouteMatch();
 
   let switchTypecheck = (event) => {
-    query.set("noTypecheck", !noTypecheck);
+    if (event.target.value) {
+      query.set("mode", event.target.value);
+    } else {
+      query.delete("mode");
+    }
+
     history.push({
       pathname: path,
       search: `?${query.toString()}`
@@ -60,13 +71,12 @@ function ListProgram(props) {
       <FormGroup row>
         <FormControlLabel
           control={
-            <Switch
-              checked={noTypecheck}
-              onChange={switchTypecheck}
-              color="primary"
-            />
+            <RadioGroup aria-label="mode" defaultValue="" value={mode} onChange={switchTypecheck}>
+                    <FormControlLabel value="noTypecheck" control={<Radio />} label="No Typecheck" />
+                    <FormControlLabel value="" control={<Radio />} label="List" />
+                    <FormControlLabel value="treeBuild" control={<Radio />} label="TreeBuild" />
+            </RadioGroup>
           }
-          label="No Typecheck"
         />
       </FormGroup>
       <Loading status={apiResult}>
@@ -106,7 +116,7 @@ function ObjMap(props) {
 function RootObjArr(props) {
   const classes = useStyles();
 
-  let primary = <ObjArr oa={props.oa} details={classes.objDetails} Meta={props.Meta} showExprMetas={props.showExprMetas}/>;
+  let primary = <ObjArr oa={props.oa} details={classes.objDetails} multiLine={true} Meta={props.Meta} showExprMetas={props.showExprMetas}/>;
 
   return (
       <ListItem divider>

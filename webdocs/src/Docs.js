@@ -62,8 +62,15 @@ function Docs() {
 }
 
 function Main(props) {
-  let pages = props.data;
+  let pageExprs = props.data;
   let { path } = useRouteMatch();
+
+  let pages = [];
+  pageExprs.forEach(pe => {
+    if (pe[0]) {
+      pages.push(pe[0]);
+    }
+  });
 
   const startingPage = encodeURIComponent(pages[pages.length - 1]);
   const basePageTree = buildPageTree(pages);

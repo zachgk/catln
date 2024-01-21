@@ -56,6 +56,10 @@ instance Eq EPrim where
 instance Hashable EPrim where
   hashWithSalt s (EPrim at ag _) = s `hashWithSalt` at `hashWithSalt` ag
 
+instance ToJSON EPrim where
+  toJSON EPrim{} = object ["type".=("EPrim" :: String)]
+
+
 type EvalTreebugOpen = EObjArr
 data EvalTreebugClosed = EvalTreebugClosed EObjArr Val [EvalTreebugClosed] String
   deriving (Eq, Generic, Hashable, ToJSON)
@@ -192,6 +196,9 @@ instance Eq MacroFunction where
 instance Hashable MacroFunction where
   s `hashWithSalt` _ = s
 
+instance ToJSON MacroFunction where
+  toJSON MacroFunction{} = object ["type".=("MacroFunction" :: String)]
+
 instance Show TCallTree where
   show TCTId = "TCTId"
   show (TCMatch opts) = printf "TCMatch (%s)" (show opts)
@@ -211,17 +218,17 @@ data TCallTree
   | TCObjArr EObjArr
   | TCPrim Type EPrim
   | TCMacro Type MacroFunction
-  deriving (Eq, Generic, Hashable)
+  deriving (Eq, Generic, Hashable, ToJSON)
 
 data TExpr m
   = TCExpr (Meta m) Val
   | TValue (Meta m) TypeName
   | THoleExpr (Meta m) Hole
   | TAliasExpr (TExpr m) (TExpr m) -- ^ AliasTExpr baseExpr aliasExpr
-  | TTupleApply (Meta m) (TExpr m) (ObjArr TExpr m)
+  | TTupleApply (Meta m) (Meta m, TExpr m) (ObjArr TExpr m)
   | TVarApply (Meta m) (TExpr m) TypeVarName (Meta m)
   | TCalls (Meta m) (TExpr m) TCallTree
-  deriving (Eq, Generic, Hashable)
+  deriving (Eq, Generic, Hashable, ToJSON)
 
 instance ExprClass TExpr where
   getExprMeta expr = case expr of
@@ -233,22 +240,22 @@ instance ExprClass TExpr where
     TVarApply m _ _ _ -> m
     TCalls m _ _      -> m
 
-  maybeExprPathM (TValue m n)        = Just (n, m)
-  maybeExprPathM (TTupleApply _ e _) = maybeExprPathM e
-  maybeExprPathM (TVarApply _ e _ _) = maybeExprPathM e
-  maybeExprPathM (TAliasExpr b _)    = maybeExprPathM b
-  maybeExprPathM (TCalls _ b _)      = maybeExprPathM b
-  maybeExprPathM _                   = Nothing
+  maybeExprPathM (TValue m n)             = Just (n, m)
+  maybeExprPathM (TTupleApply _ (_, e) _) = maybeExprPathM e
+  maybeExprPathM (TVarApply _ e _ _)      = maybeExprPathM e
+  maybeExprPathM (TAliasExpr b _)         = maybeExprPathM b
+  maybeExprPathM (TCalls _ b _)           = maybeExprPathM b
+  maybeExprPathM _                        = Nothing
 
   exprAppliedArgs (TValue _ _) = []
-  exprAppliedArgs (TTupleApply _ be ae) = ae : exprAppliedArgs be
+  exprAppliedArgs (TTupleApply _ (_, be) ae) = ae : exprAppliedArgs be
   exprAppliedArgs (TVarApply _ e _ _) = exprAppliedArgs e
   exprAppliedArgs (TAliasExpr b _) = exprAppliedArgs b
   exprAppliedArgs (TCalls _ b _) = exprAppliedArgs b
   exprAppliedArgs e = error $ printf "Unsupported Expr exprAppliedArgs for %s" (show e)
 
   exprAppliedOrdVars (TValue _ _) = []
-  exprAppliedOrdVars (TTupleApply _ be _) = exprAppliedOrdVars be
+  exprAppliedOrdVars (TTupleApply _ (_, be) _) = exprAppliedOrdVars be
   exprAppliedOrdVars (TVarApply _ e n m) = (n, m) : exprAppliedOrdVars e
   exprAppliedOrdVars (TAliasExpr b _) = exprAppliedOrdVars b
   exprAppliedOrdVars (TCalls _ b _) = exprAppliedOrdVars b
@@ -258,9 +265,9 @@ instance ExprClass TExpr where
   exprVarArgs TValue{} = H.empty
   exprVarArgs THoleExpr{} = H.empty
   exprVarArgs (TAliasExpr base n) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, getExprMeta base)] (exprVarArgs base)
-  exprVarArgs (TTupleApply _ be ObjArr{oaObj=Just (GuardExpr n _), oaArr=(Nothing, arrM)}) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, arrM)] (exprVarArgs be)
+  exprVarArgs (TTupleApply _ (_, be) ObjArr{oaObj=Just (GuardExpr n _), oaArr=(Nothing, arrM)}) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, arrM)] (exprVarArgs be)
   exprVarArgs (TTupleApply _ _ ObjArr{oaObj, oaArr=(Nothing, _)}) = error $ printf "Unexpected unhandled obj type in exprVarArgs: %s" (show oaObj)
-  exprVarArgs (TTupleApply _ be ObjArr{oaArr=(Just (GuardExpr e _), _)}) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)
+  exprVarArgs (TTupleApply _ (_, be) ObjArr{oaArr=(Just (GuardExpr e _), _)}) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)
   exprVarArgs (TVarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar n) [(TValue (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)])
   exprVarArgs (TCalls _ b _) = exprVarArgs b
 
@@ -319,7 +326,7 @@ instance Show m => Show (TExpr m) where
   show (TValue _ name) = printf "Value %s" name
   show (THoleExpr m hole) = printf "Hole %s %s" (show m) (show hole)
   show (TAliasExpr base alias) = printf "%s@%s" (show base) (show alias)
-  show (TTupleApply _ baseExpr arg) = printf "%s(%s)" baseExpr' (show arg)
+  show (TTupleApply _ (_, baseExpr) arg) = printf "%s(%s)" baseExpr' (show arg)
     where
       baseExpr' = case baseExpr of
         TValue _ funName -> funName

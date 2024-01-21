@@ -53,7 +53,7 @@ function Import(props) {
   const {name} = props;
   const classes = useStyles();
   return (
-    <div className={classes.noPlay}><KeyWord>import</KeyWord> {name}</div>
+    <div className={classes.noPlay}><KeyWord>import</KeyWord> <RawExpr expr={name} /></div>
   );
 }
 

@@ -29,8 +29,9 @@ import           CRes
 import           Data.Bifunctor                (Bifunctor (first))
 import           Data.Graph
 import           Data.Maybe                    (fromJust)
-import           Eval                          (evalAnnots, evalBuild, evalRun)
-import           Eval.Common                   (EvalResult, Val (..))
+import           Eval                          (evalAnnots, evalBuild,
+                                                evalBuildAll, evalRun)
+import           Eval.Common                   (EvalResult, TExpr, Val (..))
 import           MapMeta                       (interleaveMeta, zipMetaFun)
 import           Semantics.Interleave          (interleavePrgm)
 import           Semantics.Prgm
@@ -39,12 +40,15 @@ import           Syntax.Ct.Desugarf            (desFiles)
 import           Syntax.Ct.MapRawMeta          (mapMetaRawPrgm)
 import           Syntax.Ct.Parser.Syntax       (DesPrgm, PPrgmGraphData)
 import           Syntax.InferImport            (inferImportStr,
-                                                inferRawImportStr)
+                                                inferRawImportStr,
+                                                rawImportToStr)
 import           Syntax.Parsers                (readFiles)
 import           TypeCheck                     (typecheckPrgm,
                                                 typecheckPrgmWithTrace)
 import           TypeCheck.Common              (TPrgm, TraceConstrain, VPrgm)
 import           Utils
+
+type TBPrgm = Prgm TExpr ()
 
 data ResSuccess a n = Success a [n]
   | ResFail [n]
@@ -70,6 +74,7 @@ data WDProvider
   , cPrgm           :: CRes (GraphData DesPrgm FileImport)
   , cTPrgmWithTrace :: CRes (GraphData (TPrgm, VPrgm, TraceConstrain) FileImport)
   , cTPrgm          :: CRes (GraphData TPrgm FileImport)
+  , cTBPrgm          :: CRes (GraphData TBPrgm FileImport)
                     }
 
 mkCacheWDProvider :: Bool -> String -> IO WDProvider
@@ -79,6 +84,7 @@ mkCacheWDProvider includeCore baseFileName = do
   prgm <- getPrgm live
   withTrace <- getTPrgmWithTrace live
   tprgm <- getTPrgm live
+  tbprgm <- getTBPrgm live
   return $ CacheWDProvider {
       cCore = includeCore
     , cBaseFileName = baseFileName
@@ -86,6 +92,7 @@ mkCacheWDProvider includeCore baseFileName = do
     , cPrgm = prgm
     , cTPrgmWithTrace = withTrace
     , cTPrgm = tprgm
+    , cTBPrgm = tbprgm
                            }
 
 getRawPrgm :: WDProvider -> IO (CRes PPrgmGraphData)
@@ -115,6 +122,17 @@ getTPrgm CacheWDProvider{cTPrgm} = return cTPrgm
 getTPrgmJoined :: WDProvider -> IO (CRes TPrgm)
 getTPrgmJoined provider = do
   base <- getTPrgm provider
+  return (mergePrgms . map fst3 . graphToNodes <$> base)
+
+getTBPrgm :: WDProvider -> IO (CRes (GraphData TBPrgm FileImport))
+getTBPrgm provider@LiveWDProvider{} = do
+  base <- getTPrgm provider
+  return (base >>= evalBuildAll)
+getTBPrgm CacheWDProvider{cTBPrgm} = return cTBPrgm
+
+getTBPrgmJoined :: WDProvider -> IO (CRes TBPrgm)
+getTBPrgmJoined provider = do
+  base <- getTBPrgm provider
   return (mergePrgms . map fst3 . graphToNodes <$> base)
 
 getTreebug :: WDProvider -> FileImport -> String -> IO EvalResult
@@ -172,7 +190,8 @@ docApiBase provider = do
   get "/api/toc" $ do
     maybeRawPrgms <- liftAndCatchIO $ getRawPrgm provider
     let maybeRawPrgms' = map snd3 . graphToNodes <$> maybeRawPrgms
-    maybeJson maybeRawPrgms'
+    let maybeRawPrgms'' = (\ps -> zip (map rawImportToStr ps) ps) <$> maybeRawPrgms'
+    maybeJson maybeRawPrgms''
 
   get "/api/page" $ do
     prgmName <- param "prgmName"
@@ -210,6 +229,10 @@ docApiBase provider = do
   get "/api/typecheck" $ do
     maybeTprgm <- liftAndCatchIO $ getTPrgmJoined provider
     maybeJson maybeTprgm
+
+  get "/api/treebuild" $ do
+    maybeTBprgm <- liftAndCatchIO $ getTBPrgmJoined provider
+    maybeJson maybeTBprgm
 
   get "/api/object/:objName" $ do
     objName <- param "objName"

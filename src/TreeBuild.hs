@@ -190,8 +190,16 @@ toTExpr env os (AliasExpr b a) = do
   b' <- toTExpr env os b
   a' <- toTExpr env os a
   return $ TAliasExpr b' a'
-toTExpr env os (TupleApply m (bm, be) oa@ObjArr{oaObj, oaAnnots, oaArr=(arrExpr, arrM)}) = do
-  base' <- toTExprDest env os be bm
+toTExpr env os (TupleApply m (bm, be) oa) = do
+  be' <- toTExprDest env os be bm
+  oa' <- toTEObjArr env os oa
+  return $ TTupleApply m (bm, be') oa'
+toTExpr env os (VarApply m b n v) = do
+  b' <- toTExpr env os b
+  return $ TVarApply m b' n v
+
+toTEObjArr :: TBEnv -> [ObjSrc] -> EObjArr -> CRes (ObjArr TExpr ())
+toTEObjArr env os oa@ObjArr{oaObj, oaAnnots, oaArr=(arrExpr, arrM)} = do
   oaObj' <- forM oaObj $ \(GuardExpr e g) -> do
     e' <- toTExpr env os e
     g' <- mapM (toTExpr env os) g
@@ -204,11 +212,7 @@ toTExpr env os (TupleApply m (bm, be) oa@ObjArr{oaObj, oaAnnots, oaArr=(arrExpr,
     g' <- mapM (toTExpr env os') g
     return $ GuardExpr e' g'
   oaAnnots' <- mapM (toTExpr env os') oaAnnots
-  let oa' = oa{oaObj=oaObj', oaAnnots=oaAnnots', oaArr=(arrExpr', arrM)}
-  return $ TTupleApply m base' oa'
-toTExpr env os (VarApply m b n v) = do
-  b' <- toTExpr env os b
-  return $ TVarApply m b' n v
+  return oa{oaObj=oaObj', oaAnnots=oaAnnots', oaArr=(arrExpr', arrM)}
 
 texprDest :: TBEnv -> [ObjSrc] -> TExpr () -> EvalMeta -> CRes (TExpr ())
 texprDest env os e m = do

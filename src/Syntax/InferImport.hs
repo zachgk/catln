@@ -31,8 +31,8 @@ fileExtensionParsers = H.fromList [
                              ]
 
 isSupportedFileExtension :: String -> Bool
--- isSupportedFileExtension fileName = any ((`isSuffixOf` fileName) . ('.':)) (H.keys fileExtensionParsers)
-isSupportedFileExtension fileName = ".ct" `isSuffixOf` fileName || ".ctx" `isSuffixOf` fileName
+isSupportedFileExtension fileName = any ((`isSuffixOf` fileName) . ('.':)) (H.keys fileExtensionParsers)
+-- isSupportedFileExtension fileName = ".ct" `isSuffixOf` fileName || ".ctx" `isSuffixOf` fileName
 
 dirParser :: ImportParser
 dirParser imp = do
@@ -50,6 +50,11 @@ dirParser imp = do
       _ -> error $ printf "Found non-file or directory: %s" file'
   let dirPrgm = ([rawStr (name ++ "/main.ct")], [])
   return (dirPrgm, map rawStr $ catMaybes files')
+
+rawImportToStr :: RawFileImport -> Maybe String
+rawImportToStr imp = case exprAppliedArgs imp of
+  (ObjArr{oaArr=(Just (GuardExpr (RawCExpr _ (CStr s)) _), _)}:_) | isSupportedFileExtension s -> Just s
+  _ -> Nothing
 
 inferRawImportStr :: String -> IO RawFileImport
 inferRawImportStr name = do

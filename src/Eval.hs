@@ -138,12 +138,12 @@ evalExpr env (TValue m _) = do
   return (TupleVal ptName H.empty, env)
 evalExpr _ (THoleExpr m h) = CErr [MkCNote $ GenCErr (getMetaPos m) $ printf "Can't evaluate hole %s" (show h)]
 evalExpr env (TAliasExpr b _) = evalExpr env b
-evalExpr env@Env{evArgs} (TTupleApply _ b oa@ObjArr{oaObj=Just (GuardExpr (TValue _ "/io") Nothing), oaArr=(Nothing, _)}) = do
+evalExpr env@Env{evArgs} (TTupleApply _ (_, b) oa@ObjArr{oaObj=Just (GuardExpr (TValue _ "/io") Nothing), oaArr=(Nothing, _)}) = do
   (TupleVal n args, env') <- evalExpr env b
   case H.lookup "/io" evArgs of
     Just io -> return (TupleVal n (H.insert (oaObjPath oa) io args), env')
     Nothing -> error $ printf "evalExpr with no io"
-evalExpr env (TTupleApply _ b oa) = do
+evalExpr env (TTupleApply _ (_, b) oa) = do
   (TupleVal n args, env') <- evalExpr env b
   (v, env'') <- case oaArr oa of
     (Just (GuardExpr oaExpr _), _) -> case oaObj oa of
@@ -172,6 +172,18 @@ evalBaseEnv prgm@(objMap, _, _) = Env {
 
 prgmFromGraphData :: FileImport -> EPrgmGraphData -> EPrgm
 prgmFromGraphData prgmName (prgmGraph, nodeFromVertex, vertexFromKey) = mergePrgms $ map (fst3 . nodeFromVertex) $ reachable prgmGraph $ fromJust $ vertexFromKey prgmName
+
+-- | Tries to TreeBuild all ObjArrs, returning all built successfully
+evalBuildAll :: EPrgmGraphData -> CRes (GraphData (Prgm TExpr ()) FileImport)
+evalBuildAll prgmGraphData = do
+  let prgms = graphToNodes prgmGraphData
+  prgms' <- forM prgms $ \((objMap, cg, annots), prgmName, deps) -> do
+    let evalPrgm = prgmFromGraphData prgmName prgmGraphData
+    let Env{evTbEnv} = evalBaseEnv evalPrgm
+    objMap' <- catCRes $ fmap (toTEObjArr evTbEnv []) objMap
+    annots' <- catCRes $ fmap (toTExpr evTbEnv []) annots
+    return ((objMap', cg, annots'), prgmName, deps)
+  return $ graphFromEdges prgms'
 
 evalBuildPrgm :: EExpr -> PartialType -> Type -> EPrgm -> CRes (TExpr (), Env)
 evalBuildPrgm input srcType destType prgm = do
