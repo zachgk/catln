@@ -89,7 +89,11 @@ data ConstraintDat p
   | UnionOf Int p [p] -- ^ Both Actual and Req
   deriving (Eq, Ord, Hashable, Generic, ToJSON)
 
-data Constraint p = Constraint [VObjArr] (CVarArgEnv p) (ConstraintDat p)
+data Constraint p = Constraint {
+  conOs    :: [VObjArr],
+  conVaenv :: CVarArgEnv p,
+  conDat   :: ConstraintDat p
+                               }
   deriving (Eq, Ord, Hashable, Generic, ToJSON)
 type VConstraintDat = ConstraintDat VarMeta
 type VConstraint = Constraint VarMeta
