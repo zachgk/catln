@@ -43,6 +43,7 @@ data Constant
   = CInt Integer
   | CFloat Double
   | CStr String
+  | CChar Char
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 -- | The type of hole (a gap where an expression should be). Used in inputs to ignore the expression and outputs.
@@ -261,6 +262,7 @@ constantPartialType :: Constant -> PartialType
 constantPartialType CInt{}   = intLeaf
 constantPartialType CFloat{} = floatLeaf
 constantPartialType CStr{}   = strLeaf
+constantPartialType CChar{}  = charLeaf
 
 constantType :: Constant -> Type
 constantType = singletonType . constantPartialType

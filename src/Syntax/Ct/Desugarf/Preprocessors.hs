@@ -14,8 +14,8 @@
 
 module Syntax.Ct.Desugarf.Preprocessors where
 
-import           Constants
 import           CRes
+import           CtConstants
 import           Data.Either
 import           Data.Hashable
 import qualified Data.HashMap.Strict     as H

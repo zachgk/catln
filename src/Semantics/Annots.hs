@@ -11,7 +11,7 @@
 --------------------------------------------------------------------
 
 module Semantics.Annots where
-import           Constants
+import           CtConstants
 import           Semantics.Prgm
 
 isElseAnnot :: (ExprClass e) => CompAnnot (e m) -> Bool

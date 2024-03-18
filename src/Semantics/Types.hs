@@ -229,12 +229,13 @@ listClassNames (ClassGraph graphData) = map (fromPartialName . snd3) $ filter is
     isClass (CGType{}, _, _)  = False
 
 -- | Defines some of the standard types used elsewhere in the compiler as 'PartialType'
-intLeaf, floatLeaf, trueLeaf, falseLeaf, strLeaf, ioLeaf :: PartialType
+intLeaf, floatLeaf, trueLeaf, falseLeaf, strLeaf, charLeaf, ioLeaf :: PartialType
 intLeaf = partialVal "/Data/Primitive/Integer"
 floatLeaf = partialVal "/Data/Primitive/Float"
 trueLeaf = partialVal "/Data/Primitive/True"
 falseLeaf = partialVal "/Data/Primitive/False"
 strLeaf = partialVal "/Data/String"
+charLeaf = partialVal "/Data/Char"
 ioLeaf = partialVal "/Catln/IO"
 
 -- | Defines some of the standard types used elsewhere in the compiler as 'Type'

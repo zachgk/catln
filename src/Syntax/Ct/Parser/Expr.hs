@@ -21,7 +21,7 @@ import           Text.Megaparsec                hiding (pos1)
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer     as L
 
-import           Constants
+import           CtConstants
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types

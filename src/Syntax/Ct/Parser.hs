@@ -19,7 +19,7 @@ import           Control.Applicative        hiding (many, some)
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
 
-import           Constants
+import           CtConstants
 import           Data.Bifunctor             (Bifunctor (first))
 import           Data.Maybe
 import           Semantics.Prgm

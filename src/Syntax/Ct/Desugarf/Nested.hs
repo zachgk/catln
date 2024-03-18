@@ -17,7 +17,7 @@ import qualified Data.HashMap.Strict     as H
 import qualified Data.HashSet            as S
 import           Text.Printf
 
-import           Constants
+import           CtConstants
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types

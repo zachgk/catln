@@ -12,7 +12,8 @@
 
 module Syntax.Haskell.Convert where
 import           Bag                     (bagToList)
-import           Constants
+import           BasicTypes
+import           CtConstants
 import           Data.Bifunctor          (first)
 import           Data.Maybe              (fromJust, maybeToList)
 import           DynFlags
@@ -178,11 +179,19 @@ convertExpr flags p@HsConLikeOut{} = error $ printf "Convert unsupported expr:\n
 convertExpr flags p@HsRecFld{} = error $ printf "Convert unsupported expr:\n%s" (showSDoc flags $ ppr p)
 convertExpr flags p@HsOverLabel{} = error $ printf "Convert unsupported expr:\n%s" (showSDoc flags $ ppr p)
 convertExpr flags p@HsIPVar{} = error $ printf "Convert unsupported expr:\n%s" (showSDoc flags $ ppr p)
-convertExpr flags p@HsOverLit{} = error $ printf "Convert unsupported expr:\n%s" (showSDoc flags $ ppr p)
+convertExpr flags (HsOverLit _ literal) = (convertLiteral literal, [])
+  where
+    convertLiteral :: HsOverLit GhcPs -> RawExpr ()
+    convertLiteral (OverLit _ (HsIntegral (IL _ _ c)) _) = RawCExpr emptyMetaN $ CInt c
+    convertLiteral (OverLit _ (HsFractional (FL _ _ c)) _) = RawCExpr emptyMetaN $ CFloat $ fromRational c
+    convertLiteral (OverLit _ (HsIsString _ s) _) = RawCExpr emptyMetaN $ CStr $ unpackFS s
+    convertLiteral l = error $ printf "Convert unsupported overlit:\n%s" (showSDoc flags $ ppr l)
 convertExpr flags (HsLit _ literal) = (convertLiteral literal, [])
   where
     convertLiteral :: HsLit GhcPs -> RawExpr ()
     convertLiteral (HsString _ s) = RawCExpr emptyMetaN $ CStr $ unpackFS s
+    convertLiteral (HsChar _ c) = RawCExpr emptyMetaN $ CChar c
+    convertLiteral (HsCharPrim _ c) = RawCExpr emptyMetaN $ CChar c
     convertLiteral l = error $ printf "Convert unsupported lit:\n%s" (showSDoc flags $ ppr l)
 convertExpr flags p@HsLam{} = error $ printf "Convert unsupported expr:\n%s" (showSDoc flags $ ppr p)
 convertExpr flags p@HsLamCase{} = error $ printf "Convert unsupported expr:\n%s" (showSDoc flags $ ppr p)
@@ -308,11 +317,15 @@ convertConDeclDetails :: DynFlags -> RawExpr () -> HsConDeclDetails GhcPs -> Raw
 convertConDeclDetails flags base (PrefixCon args) = foldl (convertTypeToExpr flags . Just) base $ map unLoc args
 convertConDeclDetails flags _ p = error $ printf "Convert unsupported ConDeclDetails:\n%s" (showSDoc flags $ ppr p)
 
+-- https://www.stackage.org/haddock/lts-18.28/ghc-lib-parser-8.10.7.20220219/GHC-Hs-Decls.html#t:ConDecl
 convertConDecl :: DynFlags -> ConDecl GhcPs -> RawExpr ()
-convertConDecl flags p@ConDeclGADT{} = error $ printf "Convert unsupported ConDecl:\n%s" (showSDoc flags $ ppr p)
+convertConDecl flags (ConDeclGADT _ [name] _ quants _ctx args _res _) = convertQTyVars flags beforeQuant quants
+  where
+    beforeQuant = convertConDeclDetails flags (rawVal (convertIdP flags $ unLoc name)) args
+convertConDecl flags p@ConDeclGADT{} = error $ printf "Convert unsupported ConDeclGADT:\n%s" (showSDoc flags $ ppr p)
 convertConDecl flags (ConDeclH98 _ name _ [] Nothing args Nothing) = convertConDeclDetails flags (rawVal (convertIdP flags $ unLoc name)) args
-convertConDecl flags p@XConDecl{} = error $ printf "Convert unsupported ConDecl:\n%s" (showSDoc flags $ ppr p)
-convertConDecl flags p = error $ printf "Convert unsupported ConDecl:\n%s" (showSDoc flags $ ppr p)
+convertConDecl flags p@ConDeclH98{} = error $ printf "Convert unsupported ConDeclH98:\n%s" (showSDoc flags $ ppr p)
+convertConDecl flags p@XConDecl{} = error $ printf "Convert unsupported XConDecl:\n%s" (showSDoc flags $ ppr p)
 
 convertDerivingClause :: DynFlags -> HsDerivingClause GhcPs -> ExtendedClasses
 convertDerivingClause flags (HsDerivingClause _ Nothing c) = map (fromRawExpr . convertTypeToExpr flags Nothing . unLoc . convertIB) $ unLoc c
@@ -325,17 +338,17 @@ convertDerivingClause flags (HsDerivingClause _ Nothing c) = map (fromRawExpr . 
     fromRawExpr e = error $ printf "Unsupported Deriving %s" (show e)
 convertDerivingClause flags p = error $ printf "Convert unsupported DerivingClause:\n%s" (showSDoc flags $ ppr p)
 
-convertQTyVars :: DynFlags -> String -> LHsQTyVars GhcPs -> RawExpr ()
-convertQTyVars flags name (HsQTvs _ vars) = rawVal name `applyRawExprVars` map ((, emptyMetaN) . convertTyVarBndr flags . unLoc) vars
+convertQTyVars :: DynFlags -> RawExpr () -> LHsQTyVars GhcPs -> RawExpr ()
+convertQTyVars flags base (HsQTvs _ vars) = base `applyRawExprVars` map ((, emptyMetaN) . convertTyVarBndr flags . unLoc) vars
 convertQTyVars flags _ p = error $ printf "Convert unsupported DerivingClause:\n%s" (showSDoc flags $ ppr p)
 
 -- https://www.stackage.org/haddock/lts-18.28/ghc-lib-parser-8.10.7.20220219/GHC-Hs-Decls.html#t:TyClDecl
 convertTyClDecl :: DynFlags -> TyClDecl GhcPs -> [RawStatementTree RawExpr ()]
 convertTyClDecl flags p@FamDecl{} = error $ printf "Convert unsupported TyClDecl:\n%s" (showSDoc flags $ ppr p)
-convertTyClDecl flags (SynDecl _ name vars _ rhs) = [RawStatementTree (MultiTypeDefStatement $ MultiTypeDef (convertQTyVars flags (convertIdP flags $ unLoc name) vars) [convertTypeToExpr flags Nothing $ unLoc rhs] []) []]
-convertTyClDecl flags (DataDecl _ name vars _fixity (HsDataDefn _ _ _ Nothing Nothing cons derivs)) = [RawStatementTree (MultiTypeDefStatement $ MultiTypeDef (convertQTyVars flags (convertIdP flags $ unLoc name) vars) (map (convertConDecl flags . unLoc) cons) (concatMap (convertDerivingClause flags . unLoc) $ unLoc derivs)) []]
+convertTyClDecl flags (SynDecl _ name vars _ rhs) = [RawStatementTree (MultiTypeDefStatement $ MultiTypeDef (convertQTyVars flags (rawVal $ convertIdP flags $ unLoc name) vars) [convertTypeToExpr flags Nothing $ unLoc rhs] []) []]
+convertTyClDecl flags (DataDecl _ name vars _fixity (HsDataDefn _ _ _ Nothing Nothing cons derivs)) = [RawStatementTree (MultiTypeDefStatement $ MultiTypeDef (convertQTyVars flags (rawVal $ convertIdP flags $ unLoc name) vars) (map (convertConDecl flags . unLoc) cons) (concatMap (convertDerivingClause flags . unLoc) $ unLoc derivs)) []]
 -- convertTyClDecl flags (ClassDecl _ _ name vars _ fds sigs defs ats atDefs docs) | trace (printf "fds: %d, sigs: %d, ats: %d, atDefs: %d, docs: %d" (length fds) (length sigs) (length ats) (length atDefs) (length docs)) False = undefined
-convertTyClDecl flags (ClassDecl _ _ name vars _ [] sigs defs [] [] []) = [RawStatementTree (RawClassDeclStatement $ convertQTyVars flags (convertIdP flags $ unLoc name) vars) (sigs' ++ defs')]
+convertTyClDecl flags (ClassDecl _ _ name vars _ [] sigs defs [] [] []) = [RawStatementTree (RawClassDeclStatement $ convertQTyVars flags (rawVal $ convertIdP flags $ unLoc name) vars) (sigs' ++ defs')]
   where
     sigs' = concatMap (convertSignature flags . unLoc) sigs
     defs' = concatMap (convertBindLR flags . unLoc) $ bagToList defs

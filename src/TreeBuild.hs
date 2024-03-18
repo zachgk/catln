@@ -184,6 +184,7 @@ toTExpr :: TBEnv -> [ObjSrc] -> Expr () -> CRes (TExpr ())
 toTExpr _ _ (CExpr m (CInt c)) = return $ TCExpr m (IntVal c)
 toTExpr _ _ (CExpr m (CFloat c)) = return $ TCExpr m (FloatVal c)
 toTExpr _ _ (CExpr m (CStr c)) = return $ TCExpr m (StrVal c)
+toTExpr _ _ (CExpr m (CChar c)) = return $ TCExpr m (CharVal c)
 toTExpr _ _ (Value m n) = return $ TValue m n
 toTExpr _ _ (HoleExpr m h) = return $ THoleExpr m h
 toTExpr env os (AliasExpr b a) = do

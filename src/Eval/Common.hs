@@ -85,6 +85,7 @@ data Val
   = IntVal Integer
   | FloatVal Double
   | StrVal String
+  | CharVal Char
   | TupleVal String (H.HashMap String Val)
   | ObjArrVal (ObjArr TExpr ())
   | IOVal Integer (IO ())
@@ -108,6 +109,7 @@ instance Show Val where
   show (IntVal i)   = show i
   show (FloatVal d) = show d
   show (StrVal s)   = show s
+  show (CharVal c)   = show c
   show (TupleVal name args) = "TupleVal " ++ name ++ showArgs args
     where
       showArgs as | H.null as = ""
@@ -125,6 +127,7 @@ instance Hashable Val where
   hashWithSalt s (IntVal i)      = s `hashWithSalt` i
   hashWithSalt s (FloatVal i)    = s `hashWithSalt` i
   hashWithSalt s (StrVal i)      = s `hashWithSalt` i
+  hashWithSalt s (CharVal i)     = s `hashWithSalt` i
   hashWithSalt s (TupleVal n as) = s `hashWithSalt` n `hashWithSalt` as
   hashWithSalt s (ObjArrVal oa)  = s `hashWithSalt` oa
   hashWithSalt s (IOVal i _)     = s `hashWithSalt` i
@@ -138,6 +141,7 @@ instance ToJSON Val where
   toJSON (IntVal v) = object ["tag".=("IntVal" :: String), "contents".=toJSON v]
   toJSON (FloatVal v) = object ["tag".=("FloatVal" :: String), "contents".=toJSON v]
   toJSON (StrVal v) = object ["tag".=("StrVal" :: String), "contents".=toJSON v]
+  toJSON (CharVal v) = object ["tag".=("CharVal" :: String), "contents".=toJSON v]
   toJSON (TupleVal name args) = object ["tag".=("TupleVal" :: String), "name".=name, "args".=toJSON args]
   toJSON (ObjArrVal _) = object ["tag".=("ObjArrVal" :: String)]
   toJSON IOVal{} = object ["tag".=("IOVal" :: String)]
@@ -158,6 +162,7 @@ getValType :: Val -> PartialType
 getValType IntVal{} = intLeaf
 getValType FloatVal{} = floatLeaf
 getValType StrVal{} = strLeaf
+getValType CharVal{} = charLeaf
 getValType (TupleVal name args) = (partialVal name){ptArgs=H.fromList $ map fromArg $ H.toList args}
   where fromArg (argName, argVal) = (partialKey argName, singletonType $ getValType argVal)
 getValType (ObjArrVal oa) = fromJust $ maybeGetSingleton $ getExprType $ oaObjExpr oa

@@ -18,7 +18,7 @@ module Syntax.Ct.Parser.Decl where
 import           Text.Megaparsec            hiding (pos1)
 import qualified Text.Megaparsec.Char.Lexer as L
 
-import           Constants
+import           CtConstants
 import           Data.List
 import           Semantics
 import           Semantics.Prgm

@@ -1,6 +1,6 @@
 --------------------------------------------------------------------
 -- |
--- Module    :  Constants
+-- Module    :  CtConstants
 -- Copyright :  (c) Zach Kimberg 2020
 -- License   :  MIT
 -- Maintainer:  zachary@kimberg.com
@@ -10,7 +10,7 @@
 -- This module defines simple constants
 --------------------------------------------------------------------
 
-module Constants where
+module CtConstants where
 
 operatorPrefix, operatorArgUnary, operatorArgL, operatorArgR :: String
 operatorPrefix = "/operator"

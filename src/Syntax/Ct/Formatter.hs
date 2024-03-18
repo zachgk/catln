@@ -19,7 +19,7 @@ import           Data.List
 import           Data.String.Builder
 import           Text.Printf
 
-import           Constants
+import           CtConstants
 import           Semantics.Annots
 import           Semantics.Prgm
 import           Semantics.Types
@@ -66,6 +66,7 @@ formatExpr ::  RawExpr m -> String
 formatExpr (RawCExpr _ (CInt c)) = show c
 formatExpr (RawCExpr _ (CFloat c)) = show c
 formatExpr (RawCExpr _ (CStr c)) = show c
+formatExpr (RawCExpr _ (CChar c)) = show c
 formatExpr (RawValue m n) = n ++ formatMeta m
 formatExpr (RawMacroValue _ n) = "${" ++ n ++ "}"
 formatExpr (RawHoleExpr m (HoleActive Nothing)) = "_" ++ formatMeta m
