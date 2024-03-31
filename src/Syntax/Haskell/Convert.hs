@@ -15,7 +15,8 @@ import           Bag                     (bagToList)
 import           BasicTypes
 import           CtConstants
 import           Data.Bifunctor          (first)
-import           Data.Maybe              (fromJust, maybeToList, fromMaybe, mapMaybe)
+import           Data.Maybe              (fromJust, fromMaybe, mapMaybe,
+                                          maybeToList)
 import           DynFlags
 import           FastString              (unpackFS)
 import           GHC.Hs
@@ -35,10 +36,15 @@ import           Text.Printf
 type MLHSArgs = Maybe (RawExpr ()) -- Maybe base with lhs arguments, is present when a lambda modifies the base args
 
 -- https://wiki.haskell.org/Import
+-- https://www.stackage.org/haddock/lts-18.28/ghc-lib-parser-8.10.7.20220219/GHC-Hs-ImpExp.html#t:ImportDecl
 convertImport :: DynFlags -> ImportDecl GhcPs -> RawFileImport
-convertImport _ (ImportDecl _ _ name Nothing _ _ NotQualified _ Nothing Nothing) = RawCExpr emptyMetaN $ CStr $ moduleNameSlashes $ unLoc name
-convertImport _ (ImportDecl _ _ name Nothing _ _ _ _ maybeQualifiedAlias Nothing) = rawVal "haskell" `applyRawArgs` [(Nothing, RawCExpr emptyMetaN $ CStr $ moduleNameSlashes $ unLoc name), (Just $ partialKey "qualified", rawVal "True")] `applyRawArgs` [(Just $ partialKey "alias", RawCExpr emptyMetaN $ CStr $ moduleNameSlashes $ unLoc qualifiedAlias) | qualifiedAlias <- maybeToList maybeQualifiedAlias]
-convertImport _ (ImportDecl _ _ name Nothing _ _ NotQualified _ Nothing (Just (_hiding, _names))) = RawCExpr emptyMetaN $ CStr $ moduleNameSlashes $ unLoc name -- TODO: Handle hiding and partial import
+convertImport _ (ImportDecl _ _ name Nothing _ _ qualifiedStyle _ maybeQualifiedAlias _maybeHiding) = rawVal "haskell" `applyRawArgs` concat [moduleArg, qualifiedArg, aliasArg]
+  where
+    moduleArg = [(Nothing, RawCExpr emptyMetaN $ CStr $ moduleNameSlashes $ unLoc name)]
+    qualifiedArg = [(Just $ partialKey "qualified", rawVal "True") | qualifiedStyle /= NotQualified]
+    aliasArg = [(Just $ partialKey "alias", RawCExpr emptyMetaN $ CStr $ moduleNameSlashes $ unLoc qualifiedAlias) | qualifiedAlias <- maybeToList maybeQualifiedAlias]
+    -- hidingArg = case maybeHiding of
+    --   Just (hiding, names) -> _
 convertImport flags p = error $ printf "Convert unsupported import:\n%s\n%s" (showSDoc flags $ ppr p) (showSDocDebug flags $ ppr p)
 
 convertIdP :: DynFlags -> IdP GhcPs -> String
@@ -222,8 +228,8 @@ convertExpr flags base (ExplicitTuple _ t _) = (fmap mapBase base, e', concat su
 
     convertTupleArgPat :: Int -> HsTupArg GhcPs -> Maybe PartialKey
     convertTupleArgPat _ Present{} = Nothing
-    convertTupleArgPat i Missing{}             = Just $ partialKey ("tupleArg" ++ show i)
-    convertTupleArgPat _ _             = error "Unexpected TupleArg"
+    convertTupleArgPat i Missing{} = Just $ partialKey ("tupleArg" ++ show i)
+    convertTupleArgPat _ _         = error "Unexpected TupleArg"
 
     convertTupleArg :: Int -> HsTupArg GhcPs -> (MLHSArgs, RawExpr (), [RawStatementTree RawExpr ()])
     convertTupleArg _ (Present _ a) = convertExpr flags Nothing $ unLoc a
