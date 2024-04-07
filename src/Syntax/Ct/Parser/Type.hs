@@ -27,10 +27,10 @@ import           Syntax.Ct.Prgm
 pMultiTerm :: Parser [PExpr]
 pMultiTerm = sepBy1 term (symbol "|")
 
-pExtends :: Parser ExtendedClasses
+pExtends :: Parser (ExtendedClasses RawExpr ParseMetaDat)
 pExtends = do
   _ <- symbol "isa"
-  sepBy1 ttypeidentifier (symbol ",")
+  sepBy1 term (symbol ",")
 
 pClassStatement :: Parser PStatement
 pClassStatement = do

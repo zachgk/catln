@@ -65,13 +65,12 @@ data RawExpr m
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 -- | Helper for the X isa Y where this is the Y
-type ExtendedClass = ClassName
-type ExtendedClasses = [ExtendedClass]
+type ExtendedClasses e m = [e m]
 
-data MultiTypeDef m = MultiTypeDef (RawExpr m) [RawExpr m] ExtendedClasses
+data MultiTypeDef m = MultiTypeDef (RawExpr m) [RawExpr m] (ExtendedClasses RawExpr m)
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
-type RawClassDef m = (RawExpr m, ExtendedClasses)
+type RawClassDef m = (RawExpr m, ExtendedClasses RawExpr m)
 
 data RawApplyTerm e m = RATermDeep (e m) | RATermChild (e m)
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)

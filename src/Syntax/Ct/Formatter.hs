@@ -99,9 +99,9 @@ formatExpr (RawTypeProp _ base (TypePropProj p (RawValue _ vn))) | vn == truePri
 formatExpr (RawTypeProp _ base (TypePropProj p v)) = printf "%s_%s(%s)" (formatExpr base) p (formatExpr v)
 formatExpr (RawTypeProp _ base (TypePropRel p v)) = printf "%s__%s(%s)" (formatExpr base) p (formatExpr v)
 
-formatIsa :: ExtendedClasses -> String
+formatIsa :: ExtendedClasses RawExpr m -> String
 formatIsa []      = ""
-formatIsa classes = " isa " ++ intercalate ", " classes
+formatIsa classes = " isa " ++ intercalate ", " (map formatExpr classes)
 
 formatObjArr :: RawObjArr RawExpr m -> String
 formatObjArr roa@RawObjArr{roaObj, roaArr, roaDef} = printf "%s%s%s%s%s%s" (showE True roaObj) showElse showM showEquals (showE False roaArrExpr) showDef

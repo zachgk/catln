@@ -416,11 +416,8 @@ convertImplicitBndrs _ (HsIB _ t) = t
 convertImplicitBndrs flags p = error $ printf "Convert unsupported DerivingClause:\n%s" (showSDoc flags $ ppr p)
 
 -- https://www.stackage.org/haddock/lts-18.28/ghc-lib-parser-8.10.7.20220219/GHC-Hs-Decls.html#t:HsDerivingClause
-convertDerivingClause :: DynFlags -> HsDerivingClause GhcPs -> ExtendedClasses
-convertDerivingClause flags (HsDerivingClause _ _derivingStrategy c) = map (fromRawExpr . convertTypeToExpr flags Nothing . unLoc . convertImplicitBndrs flags) $ unLoc c
-  where
-    fromRawExpr (RawValue _ n) = n
-    fromRawExpr e = error $ printf "Unsupported Deriving %s" (show e)
+convertDerivingClause :: DynFlags -> HsDerivingClause GhcPs -> ExtendedClasses RawExpr ()
+convertDerivingClause flags (HsDerivingClause _ _derivingStrategy c) = map (convertTypeToExpr flags Nothing . unLoc . convertImplicitBndrs flags) $ unLoc c
 convertDerivingClause flags p = error $ printf "Convert unsupported DerivingClause:\n%s" (showSDoc flags $ ppr p)
 
 convertQTyVars :: DynFlags -> RawExpr () -> LHsQTyVars GhcPs -> RawExpr ()
@@ -444,7 +441,7 @@ convertTyClDecl flags p = error $ printf "Convert unsupported TyClDecl:\n%s" (sh
 convertInstDecl :: DynFlags -> InstDecl GhcPs -> [RawStatementTree RawExpr ()]
 convertInstDecl flags (ClsInstD _ (ClsInstDecl _ (HsIB _ polyTy) binds sigs [] [] _)) = [RawStatementTree (RawClassDefStatement $ mkClassDef $ convertTypeToExpr flags Nothing $ unLoc polyTy) (sigs' ++ binds')]
   where
-    mkClassDef (RawVarsApply _ (RawValue _ b) [v]) = (fst v, [b])
+    mkClassDef (RawVarsApply _ (RawValue _ b) [v]) = (fst v, [rawVal b])
     mkClassDef (RawWhere b c) = let (b', clsB) = mkClassDef b
                                     (_, clsC) = mkClassDef c
                                  in (b', clsB ++ clsC)
