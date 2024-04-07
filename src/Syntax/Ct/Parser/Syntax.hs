@@ -103,6 +103,12 @@ applyRawArgs base args = RawTupleApply (emptyMetaE "app" base) (emptyMetaE "base
     mapArg (Just argName, argVal) = RawObjArr (Just (RawValue (emptyMetaE ("in-" ++ show argName) argVal) (pkName argName))) ArgObj Nothing [] (Just (Just argVal, emptyMetaE (show argName) argVal)) Nothing
     mapArg (Nothing, argVal) = RawObjArr Nothing ArgObj Nothing [] (Just (Just argVal, emptyMetaE "noArg" argVal)) Nothing
 
+applyRawINArgs :: PExpr -> [PExpr] -> PExpr
+applyRawINArgs base [] = base
+applyRawINArgs base args = RawTupleApply (emptyMetaE "app" base) (emptyMetaE "base" base, base) (map mapArg args)
+  where
+    mapArg :: PExpr -> RawObjArr RawExpr ()
+    mapArg argName = RawObjArr (Just argName) ArgObj Nothing [] (Just (Nothing, emptyMetaE ("m-" ++ show argName) base)) Nothing
 
 data IArg e = IArgNothing | IArgE (e ()) | IArgM (Meta ())
 applyRawIArgs :: PExpr -> [(ArgName, IArg RawExpr)] -> PExpr

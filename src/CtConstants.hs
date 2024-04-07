@@ -18,8 +18,11 @@ operatorArgUnary = "a"
 operatorArgL = "l"
 operatorArgR = "r"
 
+operatorName :: String -> String
+operatorName n = operatorPrefix ++ n
+
 operatorType :: String
-operatorType = operatorPrefix ++ ":"
+operatorType = operatorName ":"
 
 intPrim, floatPrim, truePrim, falsePrim, strPrim, ioPrim :: String
 intPrim = "/Data/Primitive/Integer"

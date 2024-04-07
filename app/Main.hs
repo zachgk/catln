@@ -80,14 +80,16 @@ xDocument prgmName outFname format = do
       prgm' <- toDocument format prgm
       BSL.writeFile outFname prgm'
 
-xConvert :: String -> String -> IO ()
+xConvert :: String -> Maybe String -> IO ()
 xConvert prgmName _outFname = do
   prgmName' <- inferRawImportStr prgmName
   maybeRawPrgm <- parseFile False prgmName'
   case maybeRawPrgm of
     CErr err   -> print err
     CRes _ (prgm, _fileName, _) -> do
+      -- TODO Print to file if outFname
       let prgm' = build $ formatPrgm 0 prgm
+      print prgmName
       print prgm'
 
 xFmt :: String -> IO ()
@@ -113,7 +115,7 @@ data Command
   | RunFile String String
   | Doc String Bool
   | Document String String String
-  | Convert String String
+  | Convert String (Maybe String)
   | Fmt String
 
 cRun :: Parser Command
@@ -140,7 +142,7 @@ cDocument = Document
 cConvert :: Parser Command
 cConvert = Convert
   <$> argument str (metavar "FILE" <> help "The file to run")
-  <*> argument str (metavar "OUT" <> help "The output file path")
+  <*> option auto (metavar "OUT" <> value Nothing <> help "The output file path")
 
 cFmt :: Parser Command
 cFmt = Fmt

@@ -32,11 +32,11 @@ import           Syntax.Ct.Prgm
 
 mkOp1 :: String -> PExpr -> PExpr
 mkOp1 opChars x = applyRawArgs (RawValue emptyMetaN op) [(Just $ partialKey operatorArgUnary, x)]
-  where op = operatorPrefix ++ opChars
+  where op = operatorName opChars
 
 mkOp2 :: String -> PExpr -> PExpr -> PExpr
 mkOp2 opChars x y = applyRawArgs (RawValue emptyMetaN op) [(Just $ partialKey operatorArgL, x), (Just $ partialKey operatorArgR, y)]
-  where op = operatorPrefix ++ opChars
+  where op = operatorName opChars
 
 pMinus :: Parser String
 pMinus = do

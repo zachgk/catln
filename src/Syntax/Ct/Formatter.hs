@@ -35,6 +35,11 @@ formatImport imp = do
 formatPartialKey :: PartialKey -> String
 formatPartialKey = formatPartialType . partialToType
 
+formatTypePredicate :: TypePredicate -> String
+formatTypePredicate (PredExpr p)  = printf "$this :? " (formatPartialType p)
+formatTypePredicate (PredClass p) = printf "$this :? " (formatPartialType p)
+formatTypePredicate (PredRel p)   = formatPartialType p
+
 formatPartialType :: PartialType -> String
 formatPartialType (PartialType ptName ptVars ptArgs ptPreds _) = concat [ptName, showTypeVars ptVars, showArgs ptArgs, showPreds ptPreds]
   where
@@ -46,12 +51,11 @@ formatPartialType (PartialType ptName ptVars ptArgs ptPreds _) = concat [ptName,
     showArgs args | H.null args = ""
     showArgs args = printf "(%s)" (intercalate ", " $ map showArg $ H.toList args)
     showPreds preds | null preds = ""
-    -- showPreds preds = printf "| %s" (intercalate ", " $ map formatPartialType preds)
-    showPreds _ = undefined
+    showPreds preds = printf "| %s" (intercalate " && " $ map formatTypePredicate preds)
 
 formatType :: Type -> String
 formatType (TopType []) = ""
-formatType (TopType _) = undefined
+formatType (TopType preds) = printf "Any | %s" (intercalate " && " $ map formatTypePredicate preds)
 formatType (TypeVar (TVVar t) TVInt) = "$" ++ formatPartialKey t
 formatType (TypeVar (TVVar t) TVExt) = "$_" ++ formatPartialKey t
 formatType (TypeVar TVArg{} _) = error "Unexpected TVArg in formatter"
@@ -78,13 +82,13 @@ formatExpr (RawSpread t) = printf "%s.." (formatExpr t)
 formatExpr (RawAliasExpr base alias) = printf "%s@%s" (formatExpr base) (formatExpr alias)
 formatExpr (RawWhere base cond) = printf "%s | %s" (formatExpr base) (formatExpr cond)
 formatExpr (RawTupleApply _ (_, RawValue _ n) args) | operatorPrefix `isPrefixOf` n = case args of
-  [RawObjArr{ roaArr=(Just (Just a, _))}] -> operatorName ++ formatExpr a
+  [RawObjArr{ roaArr=(Just (Just a, _))}] -> op ++ formatExpr a
   [RawObjArr{ roaArr=(Just (Just l, _))}, RawObjArr{roaArr=(Just (Just r, _))}] -> if n == operatorType
-    then printf "%s%s %s" (formatExpr l) operatorName (formatExpr r) -- Show types as "x: 5" instead of "x : 5"
-    else printf "%s %s %s" (formatExpr l) operatorName (formatExpr r)
+    then printf "%s%s %s" (formatExpr l) op (formatExpr r) -- Show types as "x: 5" instead of "x : 5"
+    else printf "%s %s %s" (formatExpr l) op (formatExpr r)
   _ -> error "Non unary or binary operator found in formatExpr"
   where
-    operatorName = drop (length operatorPrefix) n
+    op = drop (length operatorPrefix) n
 formatExpr (RawTupleApply _ (_, be) args) = printf "%s(%s)" (formatExpr be) (intercalate ", " $ map formatObjArr args)
 formatExpr (RawVarsApply _ be vars) = printf "%s[%s]" (formatExpr be) (intercalate ", " $ map (\(varN, varM) -> printf "%s%s" (formatExpr varN) (formatMeta varM)) vars)
 formatExpr (RawContextApply _ (_, be) ctxs) = printf "%s{%s}" (formatExpr be) (intercalate ", " $ map (\(ctxN, ctxM) -> formatPartialKey ctxN ++ formatMeta ctxM) ctxs)
