@@ -212,7 +212,7 @@ convertExpr flags _ (HsOverLit _ literal) = (Nothing, convertOverLit literal, []
 convertExpr flags _ (HsLit _ literal) = (Nothing, convertLiteral flags literal, [])
 convertExpr flags b (HsLam _ (MG _ matches _)) = (base' >>= const (roaObj oa'), fromJust $ fst $ fromJust $ roaArr oa', subs)
   where
-    [(base', oa', subs)] = map (convertMatch flags b . unLoc) $ unLoc matches
+    [(base', oa', subs)] = concatMap (convertMatch flags b . unLoc) $ unLoc matches
 convertExpr flags _ p@HsLamCase{} = error $ printf "Convert unsupported expr:\n%s" (showSDoc flags $ ppr p)
 convertExpr flags eb (HsApp _ base app) = (baseMatch, baseE `applyRawArgs` [(Nothing, appE)], baseSubs ++ appSubs)
   where
@@ -258,7 +258,8 @@ convertExpr flags base (ExplicitTuple _ t _) = (fmap mapBase base, e', concat su
 convertExpr flags _ p@ExplicitSum{} = error $ printf "Convert unsupported expr:\n%s" (showSDoc flags $ ppr p)
 convertExpr flags _ (HsCase _ cas (MG _ lmatches _)) = (Nothing, rawVal ctCase `applyRawArgs` [(Nothing, convertSimpleExpr "Case" flags $ unLoc cas)], map (uncurry RawStatementTree . first RawDeclStatement . mapBC . convertMatch flags Nothing . unLoc) $ unLoc lmatches)
   where
-    mapBC (_a, b, c) = (b, c)
+    mapBC [(_a, b, c)] = (b, c)
+    mapBC _            = error "Not yet implemented HsCase mapBC"
 convertExpr flags _ (HsIf _ _ i t e) = (Nothing, RawMethod (convertSimpleExpr "If" flags (unLoc i)) (rawVal ctIf `applyRawArgs` [(Just $ partialKey ctThen, convertSimpleExpr "Then" flags $ unLoc t), (Just $ partialKey ctElse, convertSimpleExpr "Else" flags $ unLoc e)]), [])
 convertExpr flags _ p@HsMultiIf{} = error $ printf "Convert unsupported expr:\n%s" (showSDoc flags $ ppr p)
 convertExpr flags base (HsLet _ binds e) = (base', e', convertLocalBindsLR flags (unLoc binds) ++ subs')
@@ -347,36 +348,40 @@ convertLocalBindsLR flags p@XHsLocalBindsLR{} = error $ printf "Convert unsuppor
 convertLocalBindsLR flags p = error $ printf "Convert unsupported localBindsLR:\n%s" (showSDoc flags $ ppr p)
 
 -- https://www.stackage.org/haddock/lts-18.28/ghc-lib-parser-8.10.7.20220219/GHC-Hs-Expr.html#t:GRHSs
-convertGRHSs :: DynFlags -> GRHSs GhcPs (LHsExpr GhcPs) -> (MLHSArgs, RawExpr (), [RawStatementTree RawExpr ()], Maybe (RawExpr ()))
-convertGRHSs flags (GRHSs _ [grhs] binds) = (base', rhs', binds' ++ subStatements, guard')
+convertGRHSs :: DynFlags -> GRHSs GhcPs (LHsExpr GhcPs) -> [(MLHSArgs, RawExpr (), [RawStatementTree RawExpr ()], Maybe (RawExpr ()))]
+convertGRHSs flags (GRHSs _ grhss binds) = map (aux . unLoc) grhss
   where
-    (base', rhs', subStatements, guard') = convertGRHS flags $ unLoc grhs
     binds' = convertLocalBindsLR flags $ unLoc binds
-convertGRHSs _ (GRHSs _ ghrs _) = error $ printf "Convert unsupported grhs count %d" (length ghrs)
+    aux :: GRHS GhcPs (LHsExpr GhcPs) -> (MLHSArgs, RawExpr (), [RawStatementTree RawExpr ()], Maybe (RawExpr ()))
+    aux grhs = (base', rhs', binds' ++ subStatements, guard')
+      where
+        (base', rhs', subStatements, guard') = convertGRHS flags grhs
 convertGRHSs _ _ = error $ printf "Convert unsupported grhs:\n"
 
 -- https://www.stackage.org/haddock/lts-18.28/ghc-lib-parser-8.10.7.20220219/GHC-Hs-Expr.html#t:MatchGroup
-convertMatch :: DynFlags -> Maybe (RawExpr ()) -> Match GhcPs (LHsExpr GhcPs) -> (MLHSArgs, RawObjArr RawExpr (), [RawStatementTree RawExpr ()])
-convertMatch flags i (Match _ _ pats grhs) = (base', oa, subStatements)
+convertMatch :: DynFlags -> Maybe (RawExpr ()) -> Match GhcPs (LHsExpr GhcPs) -> [(MLHSArgs, RawObjArr RawExpr (), [RawStatementTree RawExpr ()])]
+convertMatch flags i (Match _ _ pats grhs) = map aux $ convertGRHSs flags grhs
   where
-    (base', arr, subStatements, guard) = convertGRHSs flags grhs
-    objExpr = fromJust (foldl (\p b -> Just $ convertPattern flags p b) i (map unLoc pats))
-    guardObjExpr = case guard of
-      Just g  -> RawWhere objExpr g
-      Nothing -> objExpr
-    oa = RawObjArr (Just guardObjExpr) FunctionObj Nothing [] (Just (Just arr, emptyMetaN)) Nothing
+    aux (base', arr, subStatements, guard) = (base', oa, subStatements)
+      where
+        objExpr = fromJust (foldl (\p b -> Just $ convertPattern flags p b) i (map unLoc pats))
+        guardObjExpr = case guard of
+          Just g  -> RawWhere objExpr g
+          Nothing -> objExpr
+        oa = RawObjArr (Just guardObjExpr) FunctionObj Nothing [] (Just (Just arr, emptyMetaN)) Nothing
 convertMatch flags _ p = error $ printf "Convert unsupported match:\n%s" (showSDoc flags $ ppr p)
 
 -- https://www.stackage.org/haddock/lts-18.28/ghc-lib-parser-8.10.7.20220219/GHC-Hs-Binds.html#t:HsBindLR
 convertBindLR :: DynFlags -> HsBind GhcPs -> [RawStatementTree RawExpr ()]
-convertBindLR flags (FunBind _ i (MG _ lmatches _) _ _) = map (aux . unLoc) $ unLoc lmatches
+convertBindLR flags p@(FunBind _ i (MG _ lmatches _) _ _) = map wrap $ concatMap (conv . unLoc) $ unLoc lmatches
   where
-    aux match = let (Nothing, oa, subStatements) = convertMatch flags (Just $ rawVal $ convertIdP flags $ unLoc i) match
-                 in RawStatementTree (RawDeclStatement oa) subStatements
+    conv match = convertMatch flags (Just $ rawVal $ convertIdP flags $ unLoc i) match
+    wrap (Nothing, oa, subStatements) = RawStatementTree (RawDeclStatement oa) subStatements
+    wrap _ = error $ printf "Convert unsupported convertBindLR wrap:\n%s" (showSDoc flags $ ppr p)
 convertBindLR flags (PatBind _ lhs rhs _) = [RawStatementTree (RawDeclStatement $ RawObjArr (Just guardObj) PatternObj Nothing [] (Just (Just arrExpr, emptyMetaN)) Nothing) subs]
   where
     obj = convertPattern flags Nothing $ unLoc lhs
-    (Nothing, arrExpr, subs, maybeGuard) = convertGRHSs flags rhs
+    [(Nothing, arrExpr, subs, maybeGuard)] = convertGRHSs flags rhs
     guardObj = maybe obj (RawWhere obj) maybeGuard
 convertBindLR flags p@VarBind{} = error $ printf "Convert unsupported bindLR:\n%s" (showSDoc flags $ ppr p)
 convertBindLR flags p@AbsBinds{} = error $ printf "Convert unsupported bindLR:\n%s" (showSDoc flags $ ppr p)
