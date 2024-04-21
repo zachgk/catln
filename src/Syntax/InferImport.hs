@@ -48,7 +48,14 @@ dirParser imp = do
         else return Nothing
       (False, True) -> return (Just file')
       _ -> error $ printf "Found non-file or directory: %s" file'
-  let dirPrgm = ([rawStr (name ++ "/main.ct")], [])
+
+  -- Main program
+  let mainPath = name ++ "/main.ct"
+  mainExists <- doesFileExist mainPath
+  let dirPrgm = if mainExists
+        then ([rawStr mainPath], [])
+        else ([], [])
+
   return (dirPrgm, map rawStr $ catMaybes files')
 
 rawImportToStr :: RawFileImport -> Maybe String

@@ -33,6 +33,7 @@ import           Text.Megaparsec        (mkPos)
 import           Text.Megaparsec.Pos    (SourcePos (SourcePos))
 import           Text.Printf
 import           ToolSettings
+import System.Directory (doesFileExist)
 
 fakeLlvmConfig :: LlvmConfig
 fakeLlvmConfig = LlvmConfig [] []
@@ -107,26 +108,30 @@ runParser flags filename str parser = unP parser parseState
 
 hsParser :: ImportParser
 hsParser imp = do
-  let [ObjArr{oaArr=(Just (RawCExpr _ (CStr filename)), _)}] = exprAppliedArgs imp
-  str <- readFile filename
-  maybeFlags <-
-          parsePragmasIntoDynFlags
-             filename str
-  case maybeFlags of
-    Nothing -> fail $ printf "Failed to read flags from %s" filename
-    Just flags -> do
-      let parsed = runParser flags filename str parseModule
-      case parsed of
-        POk _ v -> return (convertModule flags $ unLoc v, [])
-        PFailed pstate ->
-          let realSpan = last_loc pstate
-              errMsg = printErrorBag $ snd $ messages pstate flags
-              lnStart = srcLocLine $ SrcLoc.realSrcSpanStart realSpan
-              colStart = srcLocCol $ SrcLoc.realSrcSpanStart realSpan
-              lnEnd = srcLocLine $ SrcLoc.realSrcSpanEnd realSpan
-              colEnd = srcLocCol $ SrcLoc.realSrcSpanEnd realSpan
-              _srcPos = Just (SourcePos filename (mkPos lnStart) (mkPos colStart), SourcePos filename (mkPos lnEnd) (mkPos colEnd), filename)
-          in fail errMsg
+  let (ObjArr{oaArr=(Just (RawCExpr _ (CStr filename)), _)}:_impArgs) = exprAppliedArgs imp
+  isFile <- doesFileExist filename
+  if isFile
+    then do
+      str <- readFile filename
+      maybeFlags <-
+              parsePragmasIntoDynFlags
+                filename str
+      case maybeFlags of
+        Nothing -> fail $ printf "Failed to read flags from %s" filename
+        Just flags -> do
+          let parsed = runParser flags filename str parseModule
+          case parsed of
+            POk _ v -> return (convertModule flags $ unLoc v, [])
+            PFailed pstate ->
+              let realSpan = last_loc pstate
+                  errMsg = printErrorBag $ snd $ messages pstate flags
+                  lnStart = srcLocLine $ SrcLoc.realSrcSpanStart realSpan
+                  colStart = srcLocCol $ SrcLoc.realSrcSpanStart realSpan
+                  lnEnd = srcLocLine $ SrcLoc.realSrcSpanEnd realSpan
+                  colEnd = srcLocCol $ SrcLoc.realSrcSpanEnd realSpan
+                  _srcPos = Just (SourcePos filename (mkPos lnStart) (mkPos colStart), SourcePos filename (mkPos lnEnd) (mkPos colEnd), filename)
+              in fail errMsg
+     else return (([], []), [])
 
   where
     printErrorBag bag = joinLines . map show $ bagToList bag
