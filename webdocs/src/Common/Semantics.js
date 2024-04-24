@@ -1,6 +1,6 @@
 import React  from 'react';
 
-import {PartialKey, PartialType, PTypeName, Type, KeyWord} from './Common';
+import {PartialKey, PartialType, PTypeName, isTopType, Type, KeyWord} from './Common';
 
 function Expr(props) {
   let {expr, Meta, showMetas} = props;
@@ -14,6 +14,9 @@ function Expr(props) {
     if (showMetas) {
       showValM = <Meta data={expr.contents[0]}/>;
     }
+    if (expr.contents[1] === "") {
+      return <span>(){showValM}</span>;
+    }
     return <span><PTypeName name={expr.contents[1]} />{showValM}</span>;
   case "HoleExpr":
   case "THoleExpr":
@@ -25,6 +28,10 @@ function Expr(props) {
   case "AliasExpr":
   case "TAliasExpr":
     return <span><Expr expr={expr.contents[0]} Meta={Meta} showMetas={showMetas}/>@<Expr expr={expr.contents[1]} Meta={Meta} showMetas={showMetas} /></span>;
+  case "EWhere":
+  case "TWhere":
+    let [whBase, whCond] = expr.contents;
+    return <span><Expr expr={whBase} Meta={Meta} showMetas={showMetas}/> | <Expr expr={whCond} Meta={Meta} showMetas={showMetas}/></span>;
   case "TupleApply":
   case "TTupleApply":
     const [m, [baseM ,base], arg] = expr.contents;
@@ -40,8 +47,13 @@ function Expr(props) {
     }
 
     let showBase = <Expr expr={base} Meta={Meta} showMetas={showMetas}/>;
+    let showArg = (<ObjArr oa={arg} Meta={Meta} showExprMetas={showMetas} />);
 
-    return <span>{showBase}{showBaseM}(<ObjArr oa={arg} Meta={Meta} showExprMetas={showMetas} />){showM}</span>;
+    if ((base.tag === "Value" || base.tag === "TValue") && base.contents[1] === "") { // Anonymous tuple
+      return <span>{showArg}{showM}</span>;
+    }
+
+    return <span>{showBase}{showBaseM}{showArg}{showM}</span>;
   case "VarApply":
   case "TVarApply":
     const [vm, vbase, varName, varVal] = expr.contents;
@@ -53,7 +65,11 @@ function Expr(props) {
 
     let showvBase = <Expr expr={vbase} Meta={Meta} showMetas={showMetas}/>;
 
-    return <span>{showvBase}[<PartialKey data={varName} />: <Type data={varVal[0]} />]{showvM}</span>;
+    if (isTopType(varVal[0])) {
+      return <span>{showvBase}[<PartialKey data={varName} />]{showvM}</span>;
+    } else {
+      return <span>{showvBase}[<PartialKey data={varName} />: <Type data={varVal[0]} />]{showvM}</span>;
+    }
   case "TCalls":
     const [,callE,callTree] = expr.contents;
     return <span><Expr expr={callE} Meta={Meta} showMetas={showMetas}/>↦<TCallTree tree={callTree} /></span>;
@@ -82,7 +98,7 @@ function ObjArr(props) {
     }
 
     let showArrType;
-    if (oaArrM[0].tag !== "TopType" || oaArrM[0].contents !== []) {
+    if (!isTopType(oaArrM[0])) {
       showArrType = <span> -&gt; <Type data={oaArrM[0]} /></span>;
     }
     let showArrM;

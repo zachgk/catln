@@ -152,9 +152,9 @@ function PartialType(props) {
   if(Object.keys(ptVars).length > 0) {
     showVars = (
       <span>
-        &lt;
-        {tagJoin(ptVars.map((v, index) => <span key={index}><PartialKey data={v[0]}/>: <Type data={v[1]}/></span>), ", ")}
-        &gt;
+        [
+        {tagJoin(ptVars.map((v, index) => <span key={index}><PartialKey data={v[0]}/><TypeWithPrefix prefix=": " data={v[1]}/></span>), ", ")}
+        ]
       </span>
     );
   }
@@ -164,7 +164,7 @@ function PartialType(props) {
     showArgs = (
         <span>
         (
-        {tagJoin(ptArgs.map((v, index) => <span key={index}><PartialKey data={v[0]}/>: <Type data={v[1]}/></span>), ", ")}
+          {tagJoin(ptArgs.map((v, index) => <span key={index}><PartialKey data={v[0]}/><TypeWithPrefix prefix=": " data={v[1]}/></span>), ", ")}
         )
       </span>
     );
@@ -193,11 +193,30 @@ function PartialKey(props) {
   return <PTypeName name={pkName} />;
 }
 
+function isTopType(t) {
+  return t.tag === "TopType" && t.contents.length === 0;
+}
+
+function TypeWithPrefix(props) {
+  const {prefix, data} = props;
+  if (isTopType(data)) {
+    return "";
+  }
+  return <span>{prefix}<Type data={data}/></span>;
+}
+
 function Type(props) {
   let t = props.data;
   switch(t.tag) {
   case "TopType":
-    return "";
+    if (t.contents.length === 0) {
+      return "";
+    } else if (t.contents.length === 1 && t.contents[0].tag === "PredRel") {
+      return <PartialType data={t.contents[0].contents} />;
+    } else {
+      console.log("Missing topType args for ", t);
+      return "Any | ???";
+    }
   case "TypeVar":
     return <TypeVar><PartialKey data={t.contents[0].contents} /></TypeVar>;
   case "UnionType":
@@ -269,6 +288,7 @@ export {
   Notes,
   PartialKey,
   PartialType,
+  isTopType,
   Type,
   KeyWord,
   TypeVar,

@@ -59,7 +59,7 @@ ctMatch = "match"
 ctCase = "case"
 
 ctListType, ctListCons, ctListConsHead, ctListConsTail :: String
-ctListType = "/Data/ConsList"
+ctListType = "List"
 ctListCons = "/Data/Cons"
 ctListConsHead = "head"
 ctListConsTail = "tail"

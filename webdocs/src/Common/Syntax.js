@@ -1,7 +1,7 @@
 import React  from 'react';
 
 import {tryValue} from './Value';
-import {KeyWord, PartialKey, PTypeName, Type, tagJoin} from './Common';
+import {KeyWord, PartialKey, PTypeName, isTopType, Type, tagJoin} from './Common';
 
 function RawObjArr(props) {
   const {roaObj, roaArr, roaDef} = props.roa;
@@ -16,14 +16,19 @@ function RawObjArr(props) {
     const [roaArrExpr, roaArrM] = roaArr;
     let showArrExpr;
     if (roaArrExpr) {
-      showArrExpr = <span> = <RawExpr expr={roaArrExpr}/></span>;
+      showArrExpr = <RawExpr expr={roaArrExpr}/>;
     }
 
     let showArrM;
-    if (roaArrM[0].tag != "TopType" || roaArrM[0].contents != []) {
+    if (!isTopType(roaArrM[0])) {
       showArrM = <span> -&gt; <Type data={roaArrM[0]} /></span>;
     }
     showArr = <span>{showArrM}{showArrExpr}</span>;
+  }
+
+  let showEq;
+  if (showObj && roaArr && roaArr[0]) {
+    showEq = " = ";
   }
 
   let showDef;
@@ -31,7 +36,7 @@ function RawObjArr(props) {
     showDef = <span> ? <RawExpr expr={roaDef}/></span>;
   }
 
-  return <span>{showObj}{showArr}{showDef}</span>;
+  return <span>{showObj}{showEq}{showArr}{showDef}</span>;
 }
 
 function RawExpr(props) {
@@ -42,6 +47,9 @@ function RawExpr(props) {
     return "" + expr.contents[1].contents;
   case "RawValue":
     const [, val] = expr.contents;
+    if (val === "") {
+      return "()";
+    }
     return <PTypeName name={val}/>;
   case "RawHoleExpr":
     return "_";
@@ -61,22 +69,25 @@ function RawExpr(props) {
       return fromVal;
     }
 
-    if(base.tag === "RawValue" && base.contents[1].startsWith("/operator")) {
+    if(base.tag === "RawValue" && base.contents[1].startsWith("/operator")) { // Operator
       const op = base.contents[1].substring("/operator".length);
 
       if(args.length === 1) {
-        return (<span>{op}<RawExpr expr={args[0].roaArr[0].rgeExpr}/></span>);
+        return (<span>{op}<RawExpr expr={args[0].roaArr[0]}/></span>);
       } else {
-        return (<span><RawExpr expr={args[0].roaArr[0].rgeExpr} /> {op} <RawExpr expr={args[1].roaArr[0].rgeExpr}/></span>);
+        return (<span><RawExpr expr={args[0].roaArr[0]} /> {op} <RawExpr expr={args[1].roaArr[0]}/></span>);
       }
 
-    } else {
-      let showArgs = tagJoin(args.map((arg, argIndex) => {
-        return <RawObjArr key={argIndex} roa={arg}/>;
-      }), ", ");
-
-      return (<span><RawExpr expr={base}/>({showArgs})</span>);
     }
+    let showArgs = tagJoin(args.map((arg, argIndex) => {
+      return <RawObjArr key={argIndex} roa={arg}/>;
+    }), ", ");
+
+    if (base.tag === "RawValue" && base.contents[1] === "") { // Anonymous tuple
+      return (<span>({showArgs})</span>);
+    }
+
+    return (<span><RawExpr expr={base}/>({showArgs})</span>);
   case "RawVarsApply":
     const [vtupleM, vbase, vars] = expr.contents;
 
@@ -85,7 +96,11 @@ function RawExpr(props) {
       return vfromVal;
     }
     let showVars = tagJoin(vars.map((vr, argIndex) => {
-      return <span key={argIndex}><RawExpr expr={vr[0]}/>: <RawMeta data={vr[1]} /></span>;
+      if (isEmptyMeta(vr[1])) {
+        return <RawExpr key={argIndex} expr={vr[0]}/>;
+      } else {
+        return <span key={argIndex}><RawExpr expr={vr[0]}/>: <RawMeta data={vr[1]} /></span>;
+      }
     }), ", ");
 
     return (<span><RawExpr expr={vbase}/>[{showVars}]</span>);
@@ -93,6 +108,9 @@ function RawExpr(props) {
     const [,[,cxbase], cxargs] = expr.contents;
     const showCxargs = tagJoin(cxargs.map((arg, argIndex) => (<span key={argIndex}><PartialKey data={arg[0]}/>: <RawMeta data={arg[1]}/></span>)), ", ");
     return (<span><RawExpr expr={cxbase}/>&#123;{showCxargs}&#125;</span>);
+  case "RawWhere":
+    let [whBase, whCond] = expr.contents;
+    return <span><RawExpr expr={whBase}/> | <RawExpr expr={whCond}/></span>;
   case "RawParen":
     return <span>(<RawExpr expr={expr.contents}/>)</span>;
   case "RawMethod":
@@ -120,6 +138,11 @@ function TypeProperty(props) {
     console.error("Unknown TypeProperty", props);
     return "Prop";
   }
+}
+
+function isEmptyMeta(m) {
+  let [tp,,] = m;
+  return isTopType(tp);
 }
 
 function RawMeta(props) {

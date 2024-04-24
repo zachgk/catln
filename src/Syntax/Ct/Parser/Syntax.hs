@@ -95,12 +95,22 @@ rawVal = RawValue m
     m = emptyMetaN
     -- m = Meta (typeVal (PTypeName name)) Nothing emptyMetaDat
 
-applyRawArgs :: (MetaDat m) => RawExpr m -> [(Maybe ArgName, RawExpr m)] -> RawExpr m
-applyRawArgs base [] = base
-applyRawArgs base args = RawTupleApply (emptyMetaE "app" base) (emptyMetaE "base" base, base) (map mapArg args)
+applyRawArgs :: (MetaDat m, Show m) => RawExpr m -> [(Maybe ArgName, RawExpr m)] -> RawExpr m
+applyRawArgs base args = applyRawEArgs base (map mapArg args)
   where
-    mapArg :: (MetaDat m) => (Maybe ArgName, RawExpr m) -> RawObjArr RawExpr m
-    mapArg (Just argName, argVal) = RawObjArr (Just (RawValue (emptyMetaE ("in-" ++ show argName) argVal) (pkName argName))) ArgObj Nothing [] (Just (Just argVal, emptyMetaE (show argName) argVal)) Nothing
+    mapArg :: (MetaDat m) => (Maybe ArgName, RawExpr m) -> (Maybe (RawExpr m), RawExpr m)
+    mapArg (Just argName, argVal) = (Just $ RawValue (emptyMetaE ("in-" ++ show argName) argVal) (pkName argName), argVal)
+    mapArg (Nothing, argVal) = (Nothing, argVal)
+
+applyRawEArgs :: (MetaDat m, Show m) => RawExpr m -> [(Maybe (RawExpr m), RawExpr m)] -> RawExpr m
+applyRawEArgs base [] = base
+applyRawEArgs base args = case base of
+  (RawTupleApply m base' baseArgs) -> RawTupleApply m base' (baseArgs ++ args')
+  _ -> RawTupleApply (emptyMetaE "app" base) (emptyMetaE "base" base, base) args'
+  where
+    args' = map mapArg args
+    mapArg :: (MetaDat m, Show m) => (Maybe (RawExpr m), RawExpr m) -> RawObjArr RawExpr m
+    mapArg (Just argName, argVal) = RawObjArr (Just argName) ArgObj Nothing [] (Just (Just argVal, emptyMetaE (show argName) argVal)) Nothing
     mapArg (Nothing, argVal) = RawObjArr Nothing ArgObj Nothing [] (Just (Just argVal, emptyMetaE "noArg" argVal)) Nothing
 
 data IArg e = IArgNothing | IArgE (e ()) | IArgM (Meta ())
@@ -114,16 +124,26 @@ applyRawIArgs base args = applyRawEIArgs base (map mapArg args)
 
 applyRawEIArgs :: PExpr -> [(PExpr, IArg RawExpr)] -> PExpr
 applyRawEIArgs base [] = base
-applyRawEIArgs base args = RawTupleApply (emptyMetaE "app" base) (emptyMetaE "base" base, base) (map mapArg args)
+applyRawEIArgs base args = case base of
+  (RawTupleApply m base' baseArgs) -> RawTupleApply m base' (baseArgs ++ args')
+  _ -> RawTupleApply (emptyMetaE "app" base) (emptyMetaE "base" base, base) args'
   where
+    args' = map mapArg args
     mapArg :: (PExpr, IArg RawExpr) -> RawObjArr RawExpr ()
     mapArg (argName, IArgE argVal) = RawObjArr (Just argName) ArgObj Nothing [] (Just (Just argVal, emptyMetaE (show argName) argVal)) Nothing
     mapArg (argName, IArgM argM) = RawObjArr (Just argName) ArgObj Nothing [] (Just (Nothing, argM)) Nothing
     mapArg (argName, IArgNothing) = RawObjArr (Just argName) ArgObj Nothing [] (Just (Nothing, emptyMetaE ("m-" ++ show argName) base)) Nothing
 
 applyRawExprVars :: (MetaDat m) => RawExpr m -> [(TypeVarName, Meta m)] -> RawExpr m
-applyRawExprVars base []   = base
-applyRawExprVars base vars = RawVarsApply (emptyMetaE "app" base) base (map (first (\n -> RawValue (emptyMetaE ("var" ++ show n) base) (pkName n))) vars)
+applyRawExprVars base vars = applyRawExprEVars base vars'
+  where
+    vars' = map (first (\n -> RawValue (emptyMetaE ("var" ++ show n) base) (pkName n))) vars
+
+applyRawExprEVars :: (MetaDat m) => RawExpr m -> [(RawExpr m, Meta m)] -> RawExpr m
+applyRawExprEVars base []   = base
+applyRawExprEVars base vars = case base of
+  (RawVarsApply m base' baseArgs) -> RawVarsApply m base' (baseArgs ++ vars)
+  _ -> RawVarsApply (emptyMetaE "app" base) base vars
 
 rawStr :: (MetaDat m) => String -> RawExpr m
 rawStr = RawCExpr emptyMetaN . CStr

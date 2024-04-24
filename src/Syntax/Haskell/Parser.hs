@@ -29,11 +29,11 @@ import           SrcLoc
 import           StringBuffer
 import           Syntax.Ct.Prgm
 import           Syntax.Haskell.Convert (convertModule)
+import           System.Directory       (doesFileExist)
 import           Text.Megaparsec        (mkPos)
 import           Text.Megaparsec.Pos    (SourcePos (SourcePos))
 import           Text.Printf
 import           ToolSettings
-import System.Directory (doesFileExist)
 
 fakeLlvmConfig :: LlvmConfig
 fakeLlvmConfig = LlvmConfig [] []
