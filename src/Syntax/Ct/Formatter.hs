@@ -162,3 +162,6 @@ formatPrgm indent (imports, statements) = do
   unless (null imports) "\n"
   forM_ statements $ \s -> do
     formatStatementTree True indent s
+
+formatRootPrgm :: (MetaDat m, Show m) => RawPrgm m -> String
+formatRootPrgm = build . formatPrgm 0

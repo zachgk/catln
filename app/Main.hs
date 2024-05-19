@@ -2,11 +2,10 @@
 module Main where
 
 import           CRes
-import           Data.String.Builder  (build)
 import           Eval
 import           Options.Applicative
 import           Syntax.Ct.Desugarf   (desFiles)
-import           Syntax.Ct.Formatter  (formatPrgm)
+import           Syntax.Ct.Formatter  (formatRootPrgm)
 import           Syntax.Parsers       (mkDesCanonicalImportStr,
                                        mkRawCanonicalImportStr, parseFile,
                                        readFiles)
@@ -89,7 +88,7 @@ xConvert prgmName _outFname = do
     CErr err   -> print err
     CRes _ (prgm, _fileName, _) -> do
       -- TODO Print to file if outFname
-      let prgm' = build $ formatPrgm 0 prgm
+      let prgm' = formatRootPrgm prgm
       print prgmName
       print prgm'
 
@@ -100,7 +99,7 @@ xFmt prgmName = do
   case maybeRawPrgm of
     CErr err   -> print err
     CRes _ (prgm, _, _) -> do
-      let prgm' = build $ formatPrgm 0 prgm
+      let prgm' = formatRootPrgm prgm
       writeFile prgmName prgm'
 
 exec :: Command -> IO ()
