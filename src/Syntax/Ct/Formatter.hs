@@ -30,7 +30,7 @@ formatIndent indent = concat $ replicate indent "  "
 
 formatImport :: RawFileImport -> Builder
 formatImport imp = do
-  literal $ "import " ++ formatExpr imp ++ "\n"
+  literal $ "import \"" ++ formatExpr imp ++ "\"\n"
 
 formatPartialKey :: PartialKey -> String
 formatPartialKey = formatPartialType . partialToType
@@ -55,6 +55,7 @@ formatPartialType (PartialType ptName ptVars ptArgs ptPreds _) = concat [ptName,
 
 formatType :: Type -> String
 formatType (TopType []) = ""
+formatType (TopType [PredRel r]) = formatPartialType r
 formatType (TopType preds) = printf "Any | %s" (intercalate " && " $ map formatTypePredicate preds)
 formatType (TypeVar (TVVar t) TVInt) = "$" ++ formatPartialKey t
 formatType (TypeVar (TVVar t) TVExt) = "$_" ++ formatPartialKey t
@@ -71,10 +72,10 @@ formatExpr (RawCExpr _ (CInt c)) = show c
 formatExpr (RawCExpr _ (CFloat c)) = show c
 formatExpr (RawCExpr _ (CStr c)) = show c
 formatExpr (RawCExpr _ (CChar c)) = show c
-formatExpr (RawValue m n) = n ++ formatMeta m
+formatExpr (RawValue _ n) = n
 formatExpr (RawMacroValue _ n) = "${" ++ n ++ "}"
-formatExpr (RawHoleExpr m (HoleActive Nothing)) = "_" ++ formatMeta m
-formatExpr (RawHoleExpr m (HoleActive (Just a))) = "_" ++ a ++ formatMeta m
+formatExpr (RawHoleExpr _ (HoleActive Nothing)) = "_"
+formatExpr (RawHoleExpr _ (HoleActive (Just a))) = "_" ++ a
 formatExpr (RawHoleExpr _ HoleUndefined) = "undefined"
 formatExpr (RawHoleExpr _ HoleTodefine) = "todefine"
 formatExpr (RawTheExpr t) = printf ":%s" (formatExpr t)
