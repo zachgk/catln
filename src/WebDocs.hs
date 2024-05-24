@@ -39,10 +39,10 @@ import           Semantics.Types
 import           Syntax.Ct.Desugarf            (desFiles)
 import           Syntax.Ct.MapRawMeta          (mapMetaRawPrgm)
 import           Syntax.Ct.Parser.Syntax       (DesPrgm, PPrgmGraphData)
-import           Syntax.InferImport            (inferImportStr,
-                                                inferRawImportStr,
-                                                rawImportToStr)
-import           Syntax.Parsers                (readFiles)
+import           Syntax.Ct.Prgm                (rawImpDisp)
+import           Syntax.Parsers                (mkDesCanonicalImportStr,
+                                                mkRawCanonicalImportStr,
+                                                readFiles)
 import           TypeCheck                     (typecheckPrgm,
                                                 typecheckPrgmWithTrace)
 import           TypeCheck.Common              (TPrgm, TraceConstrain, VPrgm)
@@ -97,7 +97,7 @@ mkCacheWDProvider includeCore baseFileName = do
 
 getRawPrgm :: WDProvider -> IO (CRes PPrgmGraphData)
 getRawPrgm (LiveWDProvider includeCore baseFileName) = do
-  baseFileName' <- inferRawImportStr baseFileName
+  baseFileName' <- mkRawCanonicalImportStr baseFileName
   readFiles includeCore [baseFileName']
 getRawPrgm CacheWDProvider{cRaw} = return cRaw
 
@@ -190,13 +190,13 @@ docApiBase provider = do
   get "/api/toc" $ do
     maybeRawPrgms <- liftAndCatchIO $ getRawPrgm provider
     let maybeRawPrgms' = map snd3 . graphToNodes <$> maybeRawPrgms
-    let maybeRawPrgms'' = (\ps -> zip (map rawImportToStr ps) ps) <$> maybeRawPrgms'
+    let maybeRawPrgms'' = (\ps -> zip (map rawImpDisp ps) ps) <$> maybeRawPrgms'
     maybeJson maybeRawPrgms''
 
   get "/api/page" $ do
     prgmName <- param "prgmName"
-    prgmNameRaw <- liftAndCatchIO $ inferRawImportStr prgmName
-    prgmName' <- liftAndCatchIO $ inferImportStr prgmName
+    prgmNameRaw <- liftAndCatchIO $ mkRawCanonicalImportStr prgmName
+    prgmName' <- liftAndCatchIO $ mkDesCanonicalImportStr prgmName
     maybeRawPrgms <- liftAndCatchIO $ getRawPrgm provider
     let maybeRawPrgms' = fromJust . graphLookup prgmNameRaw <$> maybeRawPrgms
 
@@ -218,7 +218,7 @@ docApiBase provider = do
 
   get "/api/constrain" $ do
     prgmName <- param "prgmName"
-    prgmName' <- liftAndCatchIO $ inferImportStr prgmName
+    prgmName' <- liftAndCatchIO $ mkDesCanonicalImportStr prgmName
     maybeTprgmWithTraceGraph <- liftAndCatchIO $ getTPrgmWithTrace provider
     let maybeTprgmWithTrace = maybeTprgmWithTraceGraph >>= \graphData -> do
           case graphLookup prgmName' graphData of
@@ -248,28 +248,28 @@ docApiBase provider = do
 
   get "/api/treebug" $ do
     prgmName <- param "prgmName"
-    prgmName' <- liftAndCatchIO $ inferImportStr prgmName
+    prgmName' <- liftAndCatchIO $ mkDesCanonicalImportStr prgmName
     fun <- param "function" `rescue` (\_ -> return "main")
     treebug <- liftAndCatchIO $ getTreebug provider prgmName' fun
     json $ Success treebug ([] :: [String])
 
   get "/api/eval" $ do
     prgmName <- param "prgmName"
-    prgmName' <- liftAndCatchIO $ inferImportStr prgmName
+    prgmName' <- liftAndCatchIO $ mkDesCanonicalImportStr prgmName
     fun <- param "function" `rescue` (\_ -> return "main")
     evaluated <- liftAndCatchIO $ getEvaluated provider prgmName' fun
     json $ Success evaluated ([] :: [String])
 
   get "/api/evalBuild" $ do
     prgmName <- param "prgmName"
-    prgmName' <- liftAndCatchIO $ inferImportStr prgmName
+    prgmName' <- liftAndCatchIO $ mkDesCanonicalImportStr prgmName
     fun <- param "function" `rescue` (\_ -> return "main")
     build <- liftAndCatchIO $ getEvalBuild provider prgmName' fun
     json $ Success build ([] :: [String])
 
   get "/api/web" $ do
     prgmName <- param "prgmName"
-    prgmName' <- liftAndCatchIO $ inferImportStr prgmName
+    prgmName' <- liftAndCatchIO $ mkDesCanonicalImportStr prgmName
     fun <- param "function" `rescue` (\_ -> return "main")
     build <- liftAndCatchIO $ getWeb provider prgmName' fun
     html (T.pack build)

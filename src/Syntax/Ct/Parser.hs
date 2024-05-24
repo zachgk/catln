@@ -37,7 +37,7 @@ pImport = do
   _ <- symbol "import"
   imp <- some printChar
   _ <- newline
-  return $ rawStr imp
+  return $ mkRawFileImport $ rawStr imp
 
 liftPStatement :: Parser PStatement -> Parser PStatementTree
 liftPStatement pSt = L.indentBlock scn p

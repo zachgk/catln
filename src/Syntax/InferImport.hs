@@ -25,9 +25,9 @@ import           Text.Printf
 
 fileExtensionParsers :: H.HashMap String (String -> RawFileImport)
 fileExtensionParsers = H.fromList [
-  ("ct", \n -> rawVal "ct" `applyRawArgs` [(Nothing, rawStr n)]),
-  ("ctx", \n -> rawVal "ctx" `applyRawArgs` [(Nothing, rawStr n)]),
-  ("hs", \n -> rawVal "haskell" `applyRawArgs` [(Nothing, rawStr n)])
+  ("ct", \n -> mkRawFileImport $ rawVal "ct" `applyRawArgs` [(Nothing, rawStr n)]),
+  ("ctx", \n -> mkRawFileImport $ rawVal "ctx" `applyRawArgs` [(Nothing, rawStr n)]),
+  ("hs", \n -> mkRawFileImport $ rawVal "haskell" `applyRawArgs` [(Nothing, rawStr n)])
                              ]
 
 isSupportedFileExtension :: String -> Bool
@@ -53,15 +53,10 @@ dirParser imp = do
   let mainPath = name ++ "/main.ct"
   mainExists <- doesFileExist mainPath
   let dirPrgm = if mainExists
-        then ([rawStr mainPath], [])
+        then ([mkRawFileImport $ rawStr mainPath], [])
         else ([], [])
 
-  return (dirPrgm, map rawStr $ catMaybes files')
-
-rawImportToStr :: RawFileImport -> Maybe String
-rawImportToStr imp = case exprAppliedArgs imp of
-  (ObjArr{oaArr=(Just (RawCExpr _ (CStr s)), _)}:_) | isSupportedFileExtension s -> Just s
-  _ -> Nothing
+  return (dirPrgm, map (mkRawFileImport . rawStr) $ catMaybes files')
 
 inferRawImportStr :: String -> IO RawFileImport
 inferRawImportStr name = do
@@ -75,8 +70,8 @@ inferRawImportStr name = do
         Nothing -> fail $ printf "Unexpected file extension in import %s" name
     (False, True) -> do -- directory
       absName <- makeAbsolute name
-      return (rawVal "dir" `applyRawArgs` [(Nothing, rawStr absName)])
+      return $ mkRawFileImport (rawVal "dir" `applyRawArgs` [(Nothing, rawStr absName)])
     _ -> fail $ printf "Could not find file or directory %s" name
 
 inferImportStr :: String -> IO FileImport
-inferImportStr = fmap (semiDesExpr SDOutput Nothing) . inferRawImportStr
+inferImportStr = fmap (semiDesExpr SDOutput Nothing . rawImpAbs) . inferRawImportStr

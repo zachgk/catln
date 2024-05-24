@@ -22,6 +22,7 @@ import           Data.Graph
 import qualified Data.HashMap.Strict     as H
 import           Data.List
 import           Semantics.Prgm
+import           Syntax.Ct.Desugarf.Expr (SemiDesMode (SDOutput), semiDesExpr)
 import           Syntax.Ct.Parser        (ctParser, ctxParser)
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
@@ -38,24 +39,34 @@ importParsers = H.fromList [
   ("haskell", hsParser)
                              ]
 
--- Converts import into a standard form of an object with absolute paths
+-- Processes an import, producing the rawImpAbs and rawImpDisp
 canonicalImport :: RawFileImport -> IO RawFileImport
-canonicalImport (RawCExpr _ (CStr name)) = inferRawImportStr name
-canonicalImport imp = case maybeExprPath imp of
+canonicalImport RawFileImport{rawImpAbs=(RawCExpr _ (CStr name))} = inferRawImportStr name >>= canonicalImport
+canonicalImport imp = case maybeExprPath $ rawImpAbs imp of
   Nothing -> fail $ printf "Invalid import %s must be string or oject" (show imp)
-  Just _ -> return imp
+  Just _ -> return imp{rawImpDisp=disp'}
+  where
+    disp' = case exprAppliedArgs $ rawImpAbs imp of
+      (ObjArr{oaArr=(Just (RawCExpr _ (CStr s)), _)}:_) -> Just s
+      _                                                 -> Nothing
+
+mkRawCanonicalImportStr :: String -> IO RawFileImport
+mkRawCanonicalImportStr = canonicalImport . mkRawFileImport . RawCExpr emptyMetaN . CStr
+
+mkDesCanonicalImportStr :: String -> IO FileImport
+mkDesCanonicalImportStr = fmap (semiDesExpr SDOutput Nothing . rawImpAbs) . mkRawCanonicalImportStr
 
 readImport :: RawFileImport -> ImportParseResult
-readImport imp = case maybeExprPath imp of
+readImport imp = case maybeExprPath (rawImpAbs imp) of
   Nothing -> fail $ printf "Invalid import %s must be string or oject" (show imp)
   Just impPath -> case H.lookup impPath importParsers of
     Nothing -> fail $ printf "No parser available for oject name in %s" (show imp)
-    Just parser -> parser imp
+    Just parser -> parser $ rawImpAbs imp
 
 processParsed :: Bool -> RawFileImport -> (RawPrgm (), [RawFileImport]) -> IO (GraphNodes (RawPrgm ()) RawFileImport, [RawFileImport])
 processParsed includeCore imp ((prgmImports, statements), extraImports) = do
   let prgmImports' = if includeCore && not ("stack/core" `isInfixOf` name)
-      then rawStr "stack/core" : prgmImports
+      then mkRawFileImport (rawStr "stack/core") : prgmImports
       else prgmImports
   prgmImports'' <- mapM canonicalImport prgmImports'
   extraImports' <- mapM canonicalImport extraImports
@@ -63,7 +74,7 @@ processParsed includeCore imp ((prgmImports, statements), extraImports) = do
   let prgm' = (prgmImports'', statements)
   return ((prgm', imp, prgmImports''), totalImports)
   where
-    name = case imp of
+    name = case rawImpRaw imp of
       RawCExpr _ (CStr n) -> n
       RawTupleApply _ _ [RawObjArr{roaArr=Just (Just (RawCExpr _ (CStr n)), _)}] -> n
       _ -> ""

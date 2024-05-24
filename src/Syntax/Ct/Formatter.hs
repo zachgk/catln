@@ -29,8 +29,8 @@ formatIndent :: Int -> String
 formatIndent indent = concat $ replicate indent "  "
 
 formatImport :: RawFileImport -> Builder
-formatImport imp = do
-  literal $ "import \"" ++ formatExpr imp ++ "\"\n"
+formatImport RawFileImport{rawImpRaw} = do
+  literal $ "import \"" ++ formatExpr rawImpRaw ++ "\"\n"
 
 formatPartialKey :: PartialKey -> String
 formatPartialKey = formatPartialType . partialToType

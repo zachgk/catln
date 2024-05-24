@@ -7,14 +7,15 @@ import           Eval
 import           Options.Applicative
 import           Syntax.Ct.Desugarf   (desFiles)
 import           Syntax.Ct.Formatter  (formatPrgm)
-import           Syntax.Parsers       (parseFile, readFiles)
+import           Syntax.Parsers       (mkDesCanonicalImportStr,
+                                       mkRawCanonicalImportStr, parseFile,
+                                       readFiles)
 import           TypeCheck            (typecheckPrgm)
 
 import qualified Data.ByteString.Lazy as BSL
 import qualified Data.HashMap.Strict  as H
 import           Data.Maybe
 import           Eval.Common          (Val (StrVal, TupleVal))
-import           Syntax.InferImport   (inferImportStr, inferRawImportStr)
 import           Syntax.Pandoc.Syntax (documentFormats, toDocument)
 import           System.Directory
 import           Text.Printf
@@ -23,8 +24,8 @@ import           WebDocs              (docServe)
 
 xRun :: String -> String -> IO ()
 xRun prgmName function = do
-  prgmName' <- inferRawImportStr prgmName
-  prgmName'' <- inferImportStr prgmName
+  prgmName' <- mkRawCanonicalImportStr prgmName
+  prgmName'' <- mkDesCanonicalImportStr prgmName
   maybeRawPrgm <- readFiles True [prgmName']
   case aux maybeRawPrgm prgmName'' of
     CErr err   -> print err
@@ -42,8 +43,8 @@ xRun prgmName function = do
 
 xBuild :: String -> String -> IO ()
 xBuild prgmName function = do
-  prgmName' <- inferRawImportStr prgmName
-  prgmName'' <- inferImportStr prgmName
+  prgmName' <- mkRawCanonicalImportStr prgmName
+  prgmName'' <- mkDesCanonicalImportStr prgmName
   maybeRawPrgm <- readFiles True [prgmName']
   case aux maybeRawPrgm prgmName'' of
     CErr err   -> print err
@@ -72,7 +73,7 @@ xDoc prgmName cached = docServe cached True prgmName
 
 xDocument :: String -> String -> String -> IO ()
 xDocument prgmName outFname format = do
-  prgmName' <- inferRawImportStr prgmName
+  prgmName' <- mkRawCanonicalImportStr prgmName
   maybeRawPrgm <- parseFile False prgmName'
   case maybeRawPrgm of
     CErr err   -> print err
@@ -82,7 +83,7 @@ xDocument prgmName outFname format = do
 
 xConvert :: String -> Maybe String -> IO ()
 xConvert prgmName _outFname = do
-  prgmName' <- inferRawImportStr prgmName
+  prgmName' <- mkRawCanonicalImportStr prgmName
   maybeRawPrgm <- parseFile False prgmName'
   case maybeRawPrgm of
     CErr err   -> print err
@@ -94,7 +95,7 @@ xConvert prgmName _outFname = do
 
 xFmt :: String -> IO ()
 xFmt prgmName = do
-  prgmName' <- inferRawImportStr prgmName
+  prgmName' <- mkRawCanonicalImportStr prgmName
   maybeRawPrgm <- parseFile False prgmName'
   case maybeRawPrgm of
     CErr err   -> print err

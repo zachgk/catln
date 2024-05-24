@@ -11,8 +11,8 @@ import           Data.List          (isPrefixOf)
 import qualified Data.Text.Lazy     as T
 import           Eval
 import           Syntax.Ct.Desugarf (desFiles)
-import           Syntax.InferImport (inferImportStr, inferRawImportStr)
-import           Syntax.Parsers     (readFiles)
+import           Syntax.Parsers     (mkDesCanonicalImportStr,
+                                     mkRawCanonicalImportStr, readFiles)
 import           System.Directory   (doesFileExist)
 import           System.FilePath    (takeBaseName)
 import           Text.Pretty.Simple (pShowNoColor)
@@ -32,8 +32,8 @@ goldenTypecheckDir = "test/Integration/goldenTypecheck/"
 runTest :: Bool -> Bool -> String -> TestTree
 runTest runGolden includeCore fileNameStr = testCaseSteps fileNameStr $ \step -> do
   step $ printf "Read file %s..." fileNameStr
-  fileNameRaw <- inferRawImportStr fileNameStr
-  fileName <- inferImportStr fileNameStr
+  fileNameRaw <- mkRawCanonicalImportStr fileNameStr
+  fileName <- mkDesCanonicalImportStr fileNameStr
   maybeRawPrgm <- readFiles includeCore [fileNameRaw]
 
 

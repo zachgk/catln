@@ -10,8 +10,7 @@ import qualified Hedgehog.Gen        as HG
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Desugarf  (desFiles)
-import           Syntax.InferImport  (inferRawImportStr)
-import           Syntax.Parsers      (readFiles)
+import           Syntax.Parsers      (readFiles, mkRawCanonicalImportStr)
 import           Test.Tasty
 import           Test.Tasty.Hedgehog as HG
 import           Testing.Generation
@@ -27,7 +26,7 @@ findPrgms = do
   let classGraphDir = "test/Semantics/code/"
   fileNames <- findCt classGraphDir
   prgms <- forM fileNames $ \fileName -> do
-    fileName' <- inferRawImportStr fileName
+    fileName' <- mkRawCanonicalImportStr fileName
     rawPrgm <- fromCRes <$> readFiles False [fileName']
     let prgm = fromCRes $ desFiles rawPrgm
     let tprgm = fromCRes $ typecheckPrgm prgm

@@ -38,7 +38,7 @@ type MLHSArgs = Maybe (RawExpr ()) -- Maybe base with lhs arguments, is present 
 -- https://wiki.haskell.org/Import
 -- https://www.stackage.org/haddock/lts-18.28/ghc-lib-parser-8.10.7.20220219/GHC-Hs-ImpExp.html#t:ImportDecl
 convertImport :: DynFlags -> ImportDecl GhcPs -> RawFileImport
-convertImport _ (ImportDecl _ _ name Nothing _ _ qualifiedStyle _ maybeQualifiedAlias _maybeHiding) = rawVal "haskell" `applyRawArgs` concat [moduleArg, qualifiedArg, aliasArg]
+convertImport _ (ImportDecl _ _ name Nothing _ _ qualifiedStyle _ maybeQualifiedAlias _maybeHiding) = mkRawFileImport $ rawVal "haskell" `applyRawArgs` concat [moduleArg, qualifiedArg, aliasArg]
   where
     moduleArg = [(Nothing, RawCExpr emptyMetaN $ CStr $ moduleNameSlashes $ unLoc name)]
     qualifiedArg = [(Just $ partialKey "qualified", rawVal "True") | qualifiedStyle /= NotQualified]

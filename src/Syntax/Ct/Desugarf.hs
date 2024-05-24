@@ -237,8 +237,8 @@ desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree state
 
 desImports :: (DesPrgm, RawFileImport, [RawFileImport]) -> CRes (DesPrgm, FileImport, [FileImport])
 desImports (prgm, name, imports) = do
-  let name' = semiDesExpr SDOutput Nothing name
-  let imports' = fmap (semiDesExpr SDOutput Nothing) imports
+  let name' = semiDesExpr SDOutput Nothing $ rawImpAbs name
+  let imports' = fmap (semiDesExpr SDOutput Nothing . rawImpAbs) imports
   return (prgm, name', imports')
 
 finalPasses :: DesPrgmGraphData -> DesPrgmGraphNodes -> DesPrgmGraphNodes
