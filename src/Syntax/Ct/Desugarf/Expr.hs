@@ -130,11 +130,14 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm''
 semiDesExpr sdm obj (RawVarsApply m be vs) = foldr aux be' vs
   where
     be' = semiDesExpr sdm obj be
-    aux (varExpr, varVal) base = VarApply (emptyMetaM (show varName) m) base varName varVal
-      where varName = case maybeExprPath varExpr of
+    aux RawObjArr{roaObj=Just varExpr, roaArr} base = VarApply (emptyMetaM (show varName) m) base varName varVal
+      where
+        varName = case maybeExprPath varExpr of
               Just ('$':n) -> partialKey n
               Just n     -> partialKey n
               Nothing -> error $ printf "No type name found in varExpr %s (type %s)" (show varExpr) (show $ exprToType varExpr)
+        varVal = maybe emptyMetaN snd roaArr
+    aux roa _ = error $ printf "Unexpected semiDesExpr var: %s" (show roa)
 semiDesExpr sdm obj@Just{} (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawArgs (RawValue emptyMetaN "/Context") ((Just $ partialKey "value", be) : map (\(ctxName, ctxM) -> (Nothing, RawValue ctxM (pkName ctxName))) ctxs)
 semiDesExpr sdm obj@Nothing (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawIArgs (RawValue emptyMetaN "/Context") ((partialKey "value", IArgE be) : map (second IArgM) ctxs)
 semiDesExpr sdm obj (RawParen e) = semiDesExpr sdm obj e

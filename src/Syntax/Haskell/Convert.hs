@@ -460,7 +460,7 @@ convertTyClDecl flags p = error $ printf "Convert unsupported TyClDecl:\n%s" (sh
 convertInstDecl :: DynFlags -> InstDecl GhcPs -> [RawStatementTree RawExpr ()]
 convertInstDecl flags (ClsInstD _ (ClsInstDecl _ (HsIB _ polyTy) binds sigs [] [] _)) = [RawStatementTree (RawClassDefStatement $ mkClassDef $ convertTypeToExpr flags Nothing $ unLoc polyTy) (sigs' ++ binds')]
   where
-    mkClassDef (RawVarsApply _ (RawValue _ b) [v]) = (fst v, [rawVal b])
+    mkClassDef (RawVarsApply _ (RawValue _ b) [v]) = (fromJust $ roaObj v, [rawVal b])
     mkClassDef (RawWhere b c) = let (b', clsB) = mkClassDef b
                                     (_, clsC) = mkClassDef c
                                  in (b', clsB ++ clsC)

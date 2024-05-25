@@ -24,6 +24,7 @@ import           GHC.Generics        (Generic)
 
 import           Data.Aeson          hiding (Object)
 import           Data.Maybe          (fromMaybe, isJust)
+import           Maybes              (fromJust)
 import           Semantics           (emptyMetaE)
 import           Semantics.Prgm
 import           Semantics.Types
@@ -55,7 +56,7 @@ data RawExpr m
   | RawSpread (RawExpr m) -- ^ Written TypeName.. and uses PtArgAny
   | RawAliasExpr (RawExpr m) (RawExpr m) -- ^ base aliasExpr
   | RawTupleApply (Meta m) (Meta m, RawExpr m) [RawObjArr RawExpr m]
-  | RawVarsApply (Meta m) (RawExpr m) [(RawExpr m, Meta m)]
+  | RawVarsApply (Meta m) (RawExpr m) [RawObjArr RawExpr m]
   | RawContextApply (Meta m) (Meta m, RawExpr m) [(ArgName, Meta m)]
   | RawWhere (RawExpr m) (RawExpr m) -- ^ base cond
   | RawParen (RawExpr m)
@@ -164,7 +165,7 @@ instance ExprClass RawExpr where
   exprVarArgs (RawTupleApply _ (_, be) args) = H.unionWith (++) (exprVarArgs be) (unionsWith (++) $ map oaVarArgs args)
   exprVarArgs (RawVarsApply _ e vars) = H.unionWith (++) (exprVarArgs e) (unionsWith (++) $ map aux vars)
     where
-      aux (n, m) = H.singleton (TVVar $ inExprSingleton n) [(n, m)]
+      aux var = H.singleton (TVVar $ inExprSingleton $ fromJust $ roaObj var) [(fromJust $ roaObj var, snd $ fromJust $ roaArr var)]
   exprVarArgs (RawContextApply _ (_, e) _) = exprVarArgs e
   exprVarArgs (RawParen e) = exprVarArgs e
   exprVarArgs (RawMethod be me) = H.unionWith (++) (exprVarArgs be) (exprVarArgs me)

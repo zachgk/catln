@@ -142,8 +142,11 @@ applyRawExprVars base vars = applyRawExprEVars base vars'
 applyRawExprEVars :: (MetaDat m) => RawExpr m -> [(RawExpr m, Meta m)] -> RawExpr m
 applyRawExprEVars base []   = base
 applyRawExprEVars base vars = case base of
-  (RawVarsApply m base' baseArgs) -> RawVarsApply m base' (baseArgs ++ vars)
-  _ -> RawVarsApply (emptyMetaE "app" base) base vars
+  (RawVarsApply m base' baseArgs) -> RawVarsApply m base' (baseArgs ++ vars')
+  _ -> RawVarsApply (emptyMetaE "app" base) base vars'
+  where
+    vars' = map aux vars
+    aux (n, m) = RawObjArr (Just n) ArgObj Nothing [] (Just (Nothing, m)) Nothing
 
 rawStr :: (MetaDat m) => String -> RawExpr m
 rawStr = RawCExpr emptyMetaN . CStr

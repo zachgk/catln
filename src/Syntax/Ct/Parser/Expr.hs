@@ -29,6 +29,7 @@ import           Syntax.Ct.Desugarf.Expr
 import           Syntax.Ct.Parser.Lexer
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
+import           Text.Printf
 
 mkOp1 :: String -> PExpr -> PExpr
 mkOp1 opChars x = applyRawArgs (RawValue emptyMetaN op) [(Just $ partialKey operatorArgUnary, x)]
@@ -140,7 +141,7 @@ pArrowFull basis = do
 
 data TermSuffix
   = ArgsSuffix ParseMeta [PObjArr]
-  | VarsSuffix ParseMeta [(PExpr, ParseMeta)]
+  | VarsSuffix ParseMeta [PObjArr]
   | ContextSuffix ParseMeta [(ArgName, ParseMeta)]
   | AliasSuffix ParseMeta TypeName
   | TypePropSuffix ParseMeta (TypeProperty RawExpr ParseMetaDat)
@@ -156,17 +157,12 @@ pArgsSuffix = do
   pos2 <- getSourcePos
   return $ ArgsSuffix (emptyMeta pos1 pos2) args
 
-pVarSuffix :: Parser (PExpr, ParseMeta)
+pVarSuffix :: Parser PObjArr
 pVarSuffix = do
-  pos1 <- getSourcePos
-  -- TODO: Should support multiple class identifiers such as <Eq Ord $T>
-  var <- term
-  maybeTp <- optional $ do
-    _ <- symbol ":"
-    ttypeidentifier <|> tvar -- Either type (<Eq $T>) or var (<$T>)
-  pos2 <- getSourcePos
-  let tp = fromMaybeTypeName maybeTp
-  return (var, Meta tp (Just (pos1, pos2, "")) emptyMetaDat)
+  var <- pArrowFull ArgObj
+  case var of
+    RawObjArr{roaObj=Just (RawValue _ ('$':_))} -> return var
+    _ -> fail $ printf "Invalid type var: %s" (show var)
 
 pVarsSuffix :: Parser TermSuffix
 pVarsSuffix = do

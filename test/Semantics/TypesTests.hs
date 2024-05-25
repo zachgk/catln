@@ -10,7 +10,7 @@ import qualified Hedgehog.Gen        as HG
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Desugarf  (desFiles)
-import           Syntax.Parsers      (readFiles, mkRawCanonicalImportStr)
+import           Syntax.Parsers      (mkRawCanonicalImportStr, readFiles)
 import           Test.Tasty
 import           Test.Tasty.Hedgehog as HG
 import           Testing.Generation
