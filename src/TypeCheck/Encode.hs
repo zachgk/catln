@@ -141,25 +141,12 @@ fromExpr est env1 (EWhere base cond) = do
   let bool' = Meta boolType (labelPos "bool" $ getMetaPos $ getExprMeta cond) (mkVarMetaDat est bool)
   let env5 = addConstraints env4 [ArrowTo 30 (getExprMeta cond') bool']
   return (EWhere base' cond', env5)
-fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaAnnots, oaArr}) = do
+fromExpr est env1 (TupleApply m (baseM, baseExpr) arg) = do
   (m', env2) <- fromMeta env1 BUpper est m $ printf "Tuple Meta %s(%s)" (show baseExpr) (show arg)
   (baseM', env3) <- fromMeta env2 BUpper est baseM $ printf "Tuple BaseMeta %s(%s)" (show baseExpr) (show arg)
   (baseExpr', env4) <- fromExpr est env3 baseExpr
-  (oaObj', env5) <- case oaObj of
-    Just inExpr -> do
-      (inExpr', env5a) <- fromExpr (asEncodeIn est) env4 inExpr
-      return (Just inExpr', env5a)
-    Nothing -> return (Nothing, env4)
-  (oaAnnots', env6) <- mapMWithFEnv (startConstrainBlock env5) (fromExpr est) oaAnnots
-  (oaArr', env7) <- case oaArr of
-    (arrExpr, arrM) -> do
-      (arrM', env6a) <- fromMeta env6 BUpper est arrM $ printf "Tuple arrM %s(%s)" (show baseExpr) (show arg)
-      case arrExpr of
-        Just argExpr -> do
-          (argExpr', env6b) <- fromExpr est env6a argExpr
-          return ((Just argExpr', arrM'), env6b)
-        Nothing -> return ((Nothing, arrM'), env6a)
-  let constraints = case (est, oaObj', oaArr') of
+  (arg', env5) <- fromObjArr est env4 arg
+  let constraints = case (est, oaObj arg', oaArr arg') of
         (EncodeOut{}, Just obj, (Just argExpr', arrM')) ->
           -- Output with (x=x)
           [
@@ -198,14 +185,9 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaAnnots, oa
                      AddArg 24 (baseM', inExprSingleton obj) m',
                      PropEq 25 (m', TVArg $ inExprSingleton obj) arrM'
                     ]
-        _ -> error $ printf "Invalid fromExpr in %s mode for %s (obj %s and arr %s)" (show est) (show arg) (show oaObj) (show oaArr)
-  let env8 = addConstraints env7 constraints
-  let arg' = arg{
-        oaObj=oaObj',
-        oaArr=oaArr',
-        oaAnnots=oaAnnots'
-        }
-  return (TupleApply m' (baseM', baseExpr') arg', endConstraintBlock env8 (if isJust oaObj' then Just arg' else Nothing) (maybe H.empty (fmap (first getExprMeta . head) . exprVarArgs) oaObj'))
+        _ -> error $ printf "Invalid fromExpr in %s mode for %s" (show est) (show arg)
+  let env6 = addConstraints env5 constraints
+  return (TupleApply m' (baseM', baseExpr') arg', endConstraintBlock env6 (if isJust (oaObj arg') then Just arg' else Nothing) (maybe H.empty (fmap (first getExprMeta . head) . exprVarArgs) (oaObj arg')))
 fromExpr est env1 (VarApply m baseExpr varName varVal) = do
   let baseName = printf "VarApply %s[%s = %s]" (show baseExpr) (show varName) (show varVal) :: String
   (m', env2) <- fromMeta env1 BUpper est m $ printf "%s Meta" baseName
@@ -223,6 +205,31 @@ fromExpr est env1 (VarApply m baseExpr varName varVal) = do
                       ]
   let env5 = addConstraints env4 constraints
   return (VarApply m' baseExpr' varName varVal', env5)
+
+fromObjArr :: EncodeState -> FEnv -> PObjArr -> TypeCheckResult (VObjArr, FEnv)
+fromObjArr est env1 oa@ObjArr{oaObj, oaAnnots, oaArr} = do
+  (oaObj', env2) <- case oaObj of
+    Just inExpr -> do
+      (inExpr', env2a) <- fromExpr (asEncodeIn est) env1 inExpr
+      return (Just inExpr', env2a)
+    Nothing -> return (Nothing, env1)
+  (oaAnnots', env3) <- mapMWithFEnv (startConstrainBlock env2) (fromExpr est) oaAnnots
+  (oaArr', env4) <- case oaArr of
+    (arrExpr, arrM) -> do
+      (arrM', env3a) <- fromMeta env3 BUpper est arrM $ printf "oa arrM %s" (show oa)
+      case arrExpr of
+        Just argExpr -> do
+          (argExpr', env3b) <- fromExpr est env3a argExpr
+          return ((Just argExpr', arrM'), env3b)
+        Nothing -> return ((Nothing, arrM'), env3a)
+  let constraints = [] -- TODO Move constraints from fromExpr TupleApply
+  let env5 = addConstraints env4 constraints
+  let oa' = oa{
+        oaObj=oaObj',
+        oaArr=oaArr',
+        oaAnnots=oaAnnots'
+        }
+  return (oa', env5)
 
 fromObjectMap :: FEnv -> PObjArr -> TypeCheckResult (VObjArr, FEnv)
 fromObjectMap env1 oa@ObjArr{oaBasis, oaAnnots, oaObj=Just obj, oaArr=(maybeArrE, arrM)} = do
