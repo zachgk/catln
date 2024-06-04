@@ -36,7 +36,7 @@ isSolved _                                 = False
 setScheme :: FEnv -> VConstraint -> VarMeta -> Scheme -> String -> FEnv
 setScheme env@FEnv{feTypeEnv} con p scheme baseMsg = setDescriptor env con p (checkScheme scheme) (msg "" "")
   where
-    -- checkScheme (TypeCheckResult _ (SType ub _ desc)) | containsBottomType ub = error $ msg desc $ printf "Actual type contains bottomType: %s" (show ub)
+    checkScheme (TypeCheckResult _ (SType ub _ desc)) | containsBottomType ub = error $ msg desc $ printf "Actual type contains bottomType: %s" (show ub)
     checkScheme (TypeCheckResult notes (SType ub _ desc)) | containsBottomType ub = TypeCheckResE (mkTracedTypeCheckError env p (getMetaPos p) (msg desc "Actual type contains bottomType") : notes)
     checkScheme (TypeCheckResult notes (SType _ req desc)) | containsBottomType req = TypeCheckResE (mkTracedTypeCheckError env p (getMetaPos p) (msg desc "Required type contains bottomType") : notes)
     checkScheme (TypeCheckResult notes (SType act req desc)) | not (isSubtypeOfWithEnv feTypeEnv (fmap stypeAct $ fromJust $ tcreToMaybe $ descriptorConVaenv env con) act req) = TypeCheckResE (mkTracedTypeCheckError env p (getMetaPos p) (msg desc "Act is not less than reqe") : notes)
@@ -185,7 +185,10 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByObjs i p@STy
     (_, pAct') = intersectTypesWithVarEnv feTypeEnv vaenv' pAct boundUb
 computeConstraint env con@(Constraint _ _ (ArrowTo i src dest)) = (False, con{conDat=ArrowTo i src{stypeAct=src'} dest{stypeAct=dest'}})
   where
-    (src', dest') = fromJust $ tcreToMaybe $ arrowConstrainUbs env con (stypeAct src) (stypeAct dest)
+    -- (src', dest') = fromJust $ tcreToMaybe $ arrowConstrainUbs env con (stypeAct src) (stypeAct dest)
+    (src', dest') = case arrowConstrainUbs env con (stypeAct src) (stypeAct dest) of
+      TypeCheckResult _ r -> r
+      TypeCheckResE notes -> error $ printf "Fail compute ArrowTo: %s" (show notes)
 computeConstraint env con@(Constraint _ vaenv (PropEq i (super, name) sub)) = (False, con{conDat=PropEq i (super', name) sub'})
   where
     (super', sub') = updateSchemeProp env (fmap snd vaenv) super name sub

@@ -801,7 +801,7 @@ updateTypeProp typeEnv vaenv superType propName subType = case (superType, subTy
           let tp' = intersectAllTypes typeEnv $ H.lookupDefault topType v vaenv : mapMaybe (typeGetAux propName) supPartialList
           let vaenv' = H.insert v tp' vaenv
           let tp'' = substituteWithVarArgEnv vaenv' tp'
-          let superType' = compactType typeEnv vaenv $ UnionType $ joinUnionType $ map (\p -> typeSetAux propName (intersectTypes typeEnv (fromMaybe topType $ typeGetAux propName p) tp'') p) $ splitUnionType supPartials
+          let superType' = compactType typeEnv vaenv $ UnionType $ joinUnionType $ map (\p -> typeSetAux propName (intersectTypes typeEnv (fromMaybe topType $ typeGetAux propName p) tp'') p) $ filter (isJust . typeGetAux propName) $ splitUnionType supPartials
 
           (vaenv', superType', subType)
         TopType [] -> do

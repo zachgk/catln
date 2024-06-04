@@ -147,34 +147,27 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg) = do
   (baseExpr', env4) <- fromExpr est env3 baseExpr
   (arg', env5) <- fromObjArr est env4 arg
   let constraints = case (est, oaObj arg', oaArr arg') of
-        (EncodeOut{}, Just obj, (Just argExpr', arrM')) ->
+        (EncodeOut{}, Just obj, (Just _argExpr', arrM')) ->
           -- Output with (x=x)
           [
             ArrowTo 7 (getExprMeta baseExpr') baseM',
                         AddArg 8 (baseM', inExprSingleton obj) m',
                         BoundedByObjs 9 m' topType,
-                        BoundedByObjs 10 arrM' topType,
-                        ArrowTo 10 (getExprMeta argExpr') arrM',
                         PropEq 11 (m', TVArg $ inExprSingleton obj) arrM'
                         ]
-        (EncodeOut{}, Nothing, (Just argExpr', arrM')) ->
+        (EncodeOut{}, Nothing, (Just _argExpr', _arrM')) ->
           -- Output with (x) infer
           [
             ArrowTo 12 (getExprMeta baseExpr') baseM',
                         AddInferArg 13 baseM' m',
-                        BoundedByObjs 14 m' topType,
-                        BoundedByObjs 15 arrM' topType,
-                        ArrowTo 15 (getExprMeta argExpr') arrM'
+                        BoundedByObjs 14 m' topType
                         ]
-        (EncodeIn{}, Just obj, (Just argExpr', arrM')) ->
+        (EncodeIn{}, Just obj, (Just _argExpr', arrM')) ->
           -- Input with (x=x)
           [
             EqPoints 16 (getExprMeta baseExpr') baseM',
             BoundedByObjs 17 m' topType,
-            BoundedByObjs 18 (getExprMeta argExpr') topType,
-            BoundedByKnown 18 (getExprMeta argExpr') (TypeVar (TVArg $ inExprSingleton obj) TVInt),
                      AddArg 19 (baseM', inExprSingleton obj) m',
-                     EqPoints 20 (getExprMeta argExpr') arrM',
                      PropEq 21 (m', TVArg $ inExprSingleton obj) arrM'
                     ]
         (EncodeIn{}, Just obj, (Nothing, arrM')) ->
@@ -222,7 +215,29 @@ fromObjArr est env1 oa@ObjArr{oaObj, oaAnnots, oaArr} = do
           (argExpr', env3b) <- fromExpr est env3a argExpr
           return ((Just argExpr', arrM'), env3b)
         Nothing -> return ((Nothing, arrM'), env3a)
-  let constraints = [] -- TODO Move constraints from fromExpr TupleApply
+  let constraints = case (est, oaObj', oaArr') of
+        (EncodeOut{}, Just _obj, (Just argExpr', arrM')) ->
+          -- Output with (x=x)
+          [
+                        BoundedByObjs 10 arrM' topType,
+                        ArrowTo 10 (getExprMeta argExpr') arrM'
+                        ]
+        (EncodeOut{}, Nothing, (Just argExpr', arrM')) ->
+          -- Output with (x) infer
+          [
+                        BoundedByObjs 15 arrM' topType,
+                        ArrowTo 15 (getExprMeta argExpr') arrM'
+                        ]
+        (EncodeIn{}, Just obj, (Just argExpr', arrM')) ->
+          -- Input with (x=x)
+          [
+            BoundedByObjs 18 (getExprMeta argExpr') topType,
+            BoundedByKnown 18 (getExprMeta argExpr') (TypeVar (TVArg $ inExprSingleton obj) TVInt),
+                     EqPoints 20 (getExprMeta argExpr') arrM'
+                    ]
+        (EncodeIn{}, Just _obj, (Nothing, _arrM')) ->
+          -- Input with (x -> T)
+          []
   let env5 = addConstraints env4 constraints
   let oa' = oa{
         oaObj=oaObj',
