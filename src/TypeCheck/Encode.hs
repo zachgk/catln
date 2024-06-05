@@ -119,7 +119,7 @@ fromExpr est env (CExpr m c) = do
   return (CExpr m' c, addConstraints env' [EqualsKnown 3 m' (constantType c)])
 fromExpr est@EncodeOut{} env1 (Value m name) = do
   (m', env2) <- fromMeta env1 BUpper est m ("Out Val " ++ name)
-  return (Value m' name, addConstraints env2 [BoundedByKnown 4 m' (relTypeVal name), BoundedByObjs 4 m'])
+  return (Value m' name, addConstraints env2 [BoundedByKnown 4 m' (relTypeVal name), BoundedByObjs 4 m' topType])
 fromExpr est@EncodeIn{} env1 (Value m name) = do
   (m', env2) <- fromMeta env1 BUpper est m ("In Val " ++ name)
   return (Value m' name, addConstraints env2 [BoundedByKnown 5 m' (relTypeVal name)])
@@ -152,8 +152,8 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg) = do
           [
             ArrowTo 7 (getExprMeta baseExpr') baseM',
                         AddArg 8 (baseM', inExprSingleton obj) m',
-                        BoundedByObjs 9 m',
-                        BoundedByObjs 10 arrM',
+                        BoundedByObjs 9 m' topType,
+                        BoundedByObjs 10 arrM' topType,
                         ArrowTo 10 (getExprMeta argExpr') arrM',
                         PropEq 11 (m', TVArg $ inExprSingleton obj) arrM'
                         ]
@@ -162,16 +162,16 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg) = do
           [
             ArrowTo 12 (getExprMeta baseExpr') baseM',
                         AddInferArg 13 baseM' m',
-                        BoundedByObjs 14 m',
-                        BoundedByObjs 15 arrM',
+                        BoundedByObjs 14 m' topType,
+                        BoundedByObjs 15 arrM' topType,
                         ArrowTo 15 (getExprMeta argExpr') arrM'
                         ]
         (EncodeIn{}, Just obj, (Just argExpr', arrM')) ->
           -- Input with (x=x)
           [
             EqPoints 16 (getExprMeta baseExpr') baseM',
-            BoundedByObjs 17 m',
-            BoundedByObjs 18 (getExprMeta argExpr'),
+            BoundedByObjs 17 m' topType,
+            BoundedByObjs 18 (getExprMeta argExpr') topType,
             BoundedByKnown 18 (getExprMeta argExpr') (TypeVar (TVArg $ inExprSingleton obj) TVInt),
                      AddArg 19 (baseM', inExprSingleton obj) m',
                      EqPoints 20 (getExprMeta argExpr') arrM',
@@ -181,7 +181,7 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg) = do
           -- Input with (x -> T)
           [
          EqPoints 22 (getExprMeta baseExpr') baseM',
-            BoundedByObjs 23 m',
+            BoundedByObjs 23 m' topType,
                      AddArg 24 (baseM', inExprSingleton obj) m',
                      PropEq 25 (m', TVArg $ inExprSingleton obj) arrM'
                     ]
@@ -197,7 +197,7 @@ fromExpr est env1 (VarApply m baseExpr varName varVal) = do
         EncodeOut{} -> [
                       ArrowTo 26 (getExprMeta baseExpr') m',
                       PropEq 27 (m', TVVar varName) varVal',
-                      BoundedByObjs 28 m'
+                      BoundedByObjs 28 m' topType
                        ]
         EncodeIn{} -> [
                       EqPoints 29 (getExprMeta baseExpr') m',

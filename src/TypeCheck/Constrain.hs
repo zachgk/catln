@@ -75,10 +75,9 @@ equalizeSTypes FEnv{feTypeEnv} vaenv (SType act1 req1 desc1, SType act2 req2 des
 
 
 -- | A helper for the 'PropEq' 'Constraint' that applies to both the actual and required types
-updateSchemeProp :: FEnv -> VConstraint -> SType -> TypeVarAux -> SType -> (FEnv, Scheme, Scheme)
-updateSchemeProp env1@FEnv{feTypeEnv} con (SType superAct superReq superDesc) propName (SType subAct subReq subDesc) = (env1, pure $ SType superAct' superReq' superDesc, pure $ SType subAct' subReq' subDesc)
+updateSchemeProp :: FEnv -> STypeVarArgEnv -> SType -> TypeVarAux -> SType -> (SType, SType)
+updateSchemeProp FEnv{feTypeEnv} vaenv (SType superAct superReq superDesc) propName (SType subAct subReq subDesc) = (SType superAct' superReq' superDesc, SType subAct' subReq' subDesc)
   where
-    TypeCheckResult _ vaenv = descriptorConVaenv env1 con
     (_actVaenv', superAct', subAct') = updateTypeProp feTypeEnv (fmap stypeAct vaenv) superAct propName subAct
     (_reqVaenv', superReq', subReq') = updateTypeProp feTypeEnv (fmap stypeReq vaenv) superReq propName subReq
 
@@ -124,9 +123,9 @@ stypeConstraintDat (EqPoints i p1 p2) = do
 stypeConstraintDat (BoundedByKnown i p t) = do
   p' <- p
   return $ BoundedByKnown i p' t
-stypeConstraintDat (BoundedByObjs i p) = do
+stypeConstraintDat (BoundedByObjs i p t) = do
   p' <- p
-  return $ BoundedByObjs i p'
+  return $ BoundedByObjs i p' t
 stypeConstraintDat (ArrowTo i p1 p2) = do
   p1' <- p1
   ArrowTo i p1' <$> p2
@@ -175,24 +174,21 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByKnown i p@ST
     boundTp' = expandType feTypeEnv (fmap (stypeAct . snd) vaenv) boundTp
     act' = intersectTypesEnv feTypeEnv (fmap (stypeAct . snd) vaenv) act boundTp'
     req' = intersectTypesEnv feTypeEnv (fmap (stypeReq . snd) vaenv) req boundTp'
-computeConstraint _ (Constraint _ _ BoundedByObjs{}) = undefined
--- computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByObjs i p@SType{stypeAct=pAct} objMapBoundUb)) = (False, con{conDat=BoundedByObjs i (p{stypeAct=pAct'}) objMapBoundUb})
---   where
---     vaenv' = fmap (stypeAct . snd) vaenv
---     argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType $ joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con
---     boundUb = unionTypes feTypeEnv objMapBoundUb argsBoundUb
+computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByObjs i p@SType{stypeAct=pAct} objMapBoundUb)) = (False, con{conDat=BoundedByObjs i (p{stypeAct=pAct'}) objMapBoundUb})
+  where
+    vaenv' = fmap (stypeAct . snd) vaenv
+    argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType $ joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con
+    boundUb = unionTypes feTypeEnv objMapBoundUb argsBoundUb
 
---     -- A partially applied tuple would not be a raw type on the unionObj,
---     -- but a subset of the arguments in that type
---     (_, pAct') = intersectTypesWithVarEnv feTypeEnv vaenv' pAct boundUb
-computeConstraint _ (Constraint _ _ ArrowTo{}) = undefined
--- computeConstraint env con@(Constraint _ _ (ArrowTo i src dest)) = (False, con{conDat=ArrowTo i src{stypeAct=src'} dest{stypeAct=dest'}})
---   where
---     (src', dest') = fromJust $ tcreToMaybe $ arrowConstrainUbs env con (stypeAct src) (stypeAct dest)
-computeConstraint _ (Constraint _ _ PropEq{}) = undefined
--- computeConstraint env con@(Constraint _ vaenv (PropEq i (super, name) sub)) = (False, con{conDat=PropEq i (super', name) sub'})
---   where
---     (super', sub') = updateSchemeProp env (fmap snd vaenv) super name sub
+    -- A partially applied tuple would not be a raw type on the unionObj,
+    -- but a subset of the arguments in that type
+    (_, pAct') = intersectTypesWithVarEnv feTypeEnv vaenv' pAct boundUb
+computeConstraint env con@(Constraint _ _ (ArrowTo i src dest)) = (False, con{conDat=ArrowTo i src{stypeAct=src'} dest{stypeAct=dest'}})
+  where
+    (src', dest') = fromJust $ tcreToMaybe $ arrowConstrainUbs env con (stypeAct src) (stypeAct dest)
+computeConstraint env con@(Constraint _ vaenv (PropEq i (super, name) sub)) = (False, con{conDat=PropEq i (super', name) sub'})
+  where
+    (super', sub') = updateSchemeProp env (fmap snd vaenv) super name sub
 computeConstraint env con@(Constraint _ vaenv (AddArg i (src, newArgName) dest)) = (False, con{conDat=AddArg i (src, newArgName) dest'})
   where
     dest' = addArgToScheme env (fmap snd vaenv) src newArgName dest
@@ -224,7 +220,7 @@ saveConstraint env vals new = saveDat $ saveVaenv env
 -- It will return the updated environment and a boolean that is true if the constraint is done.
 -- If it is done, it can be safely removed and no longer needs to be executed.
 executeConstraint :: FEnv -> VConstraint -> (Bool, FEnv)
-executeConstraint env@FEnv{feUnionAllObjs, feTypeEnv} con@(Constraint _ _ (BoundedByObjs _ pnt)) = do
+executeConstraint env@FEnv{feUnionAllObjs, feTypeEnv} con@(Constraint _ _ (BoundedByObjs _ pnt _)) = do
   let scheme = pointUb env pnt
   let boundScheme = pointUb env feUnionAllObjs
   case sequenceT (scheme, boundScheme, descriptorConVaenv env con) of
@@ -243,32 +239,6 @@ executeConstraint env@FEnv{feUnionAllObjs, feTypeEnv} con@(Constraint _ _ (Bound
       let env' = setSchemeAct env con pnt ub' $ printf "BoundedByObjs for %s\n\tArgsBound: %s\n\tBound: %s\n" (show ub) (show argsBoundUb) (show boundUb)
       -- let env' = setSchemeAct env con pnt ub' $ printf "BoundedByObjs for %s\n" (show ub)
       (False, env')
-executeConstraint env con@(Constraint _ _ (ArrowTo _ srcPnt destPnt)) = do
-  let srcScheme = pointUb env srcPnt
-  let destScheme = pointUb env destPnt
-  case sequenceT (srcScheme, destScheme) of
-    TypeCheckResE _ -> (True, env)
-    TypeCheckResult _ (srcUb, destUb) -> do
-      let constrained = arrowConstrainUbs env con srcUb destUb
-      case constrained of
-        TypeCheckResult _ (srcUb', destUb') -> do
-          let env' = setSchemeAct env con srcPnt srcUb' "ArrowTo src"
-          let env'' = setSchemeAct env' con destPnt destUb' "ArrowTo dest"
-          (False, env'')
-        TypeCheckResE _ -> (True, env)
-executeConstraint env con@(Constraint _ _ (PropEq _ (superPnt, propName) subPnt)) = do
-  let superScheme = descriptor env superPnt
-  let subScheme = descriptor env subPnt
-  case sequenceT (superScheme, subScheme) of
-    TypeCheckResE _ -> (True, env)
-    (TypeCheckResult _ _) ->
-      case sequenceT (superScheme, subScheme) of
-        TypeCheckResult _ (superSType, subSType) -> do
-          let (env2, superScheme', subScheme') = updateSchemeProp env con superSType propName subSType
-          let env3 = setScheme env2 con superPnt superScheme' (printf "PropEq super (%s)" (show propName))
-          let env4 = setScheme env3 con subPnt subScheme' (printf "PropEq sub (%s)" (show propName))
-          (isSolved subScheme, env4)
-        TypeCheckResE _ -> (True, env)
 executeConstraint env@FEnv{feTypeEnv} con@(Constraint _ _ (UnionOf _ parentPnt childrenM)) = do
   let parentScheme = descriptor env parentPnt
   let tcresChildrenSchemes = fmap (descriptor env) childrenM

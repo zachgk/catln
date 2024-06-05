@@ -15,6 +15,7 @@
 
 module TypeCheck.Show where
 
+import           Data.Maybe       (fromJust)
 import           Semantics.Prgm
 import           TypeCheck.Common
 
@@ -68,7 +69,7 @@ showConDat :: FEnv -> VConstraintDat -> SConstraintDat
 showConDat env (EqualsKnown i p t) = EqualsKnown i (descriptor env p) t
 showConDat env (EqPoints i p1 p2) = showConDatHelper env (EqPoints i) p1 p2
 showConDat env (BoundedByKnown i p t) = BoundedByKnown i (descriptor env p) t
-showConDat env (BoundedByObjs i p) = BoundedByObjs i (descriptor env p)
+showConDat env@FEnv{feUnionAllObjs} (BoundedByObjs i p _) = BoundedByObjs i (descriptor env p) (stypeAct $ fromJust $ tcreToMaybe $ descriptor env feUnionAllObjs)
 showConDat env (ArrowTo i p1 p2) = showConDatHelper env (ArrowTo i) p1 p2
 showConDat env (PropEq i (p1, name) p2) = showConDatHelper env (\s1 s2 -> PropEq i (s1, name) s2) p1 p2
 showConDat env (AddArg i (p1, argName) p2) = showConDatHelper env (\s1 s2 -> AddArg i (s1, argName) s2) p1 p2
