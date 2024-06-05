@@ -114,39 +114,116 @@ addInferArgToScheme env@FEnv{feTypeEnv} vaenv (SType srcAct srcReq _) (SType des
       Just addDestReq -> intersectTypes feTypeEnv destReq addDestReq
       Nothing         -> destReq
 
+stypeConstraintDat :: SConstraintDat -> TypeCheckResult RConstraintDat
+stypeConstraintDat (EqualsKnown i p t) = do
+  p' <- p
+  return $ EqualsKnown i p' t
+stypeConstraintDat (EqPoints i p1 p2) = do
+  p1' <- p1
+  EqPoints i p1' <$> p2
+stypeConstraintDat (BoundedByKnown i p t) = do
+  p' <- p
+  return $ BoundedByKnown i p' t
+stypeConstraintDat (BoundedByObjs i p) = do
+  p' <- p
+  return $ BoundedByObjs i p'
+stypeConstraintDat (ArrowTo i p1 p2) = do
+  p1' <- p1
+  ArrowTo i p1' <$> p2
+stypeConstraintDat (PropEq i (p1, name) p2) = do
+  p1' <- p1
+  PropEq i (p1', name) <$> p2
+stypeConstraintDat (AddArg i (p1, argName) p2) = do
+  p1' <- p1
+  AddArg i (p1', argName) <$> p2
+stypeConstraintDat (AddInferArg i p1 p2) = do
+  p1' <- p1
+  AddInferArg i p1' <$> p2
+stypeConstraintDat (PowersetTo i p1 p2) = do
+  p1' <- p1
+  PowersetTo i p1' <$> p2
+stypeConstraintDat (UnionOf i p1 p2s) = do
+  p1' <- p1
+  p2s' <- sequence p2s
+  return $ UnionOf i p1' p2s'
+
+stypeConstraint :: SConstraint -> TypeCheckResult RConstraint
+stypeConstraint (Constraint oa vaenv dat) = do
+  vaenv' <- mapM both vaenv
+  dat' <- stypeConstraintDat dat
+  return $ Constraint oa vaenv' dat'
+  where
+    both (a, b) = do
+      a' <- a
+      b' <- b
+      return (a', b')
+
+
+updateCOVarArgEnvAct :: TypeVarArgEnv -> CVarArgEnv SType -> CVarArgEnv SType
+updateCOVarArgEnvAct oVaenv' ioVaenv = H.intersectionWith (\(si, so) oAct' -> (si, so{stypeAct=oAct'})) ioVaenv oVaenv'
+
+computeConstraint :: FEnv -> RConstraint -> (Bool, RConstraint)
+computeConstraint env con@(Constraint _ vaenv (EqualsKnown i p tp)) = (True, con{conVaenv = updateCOVarArgEnvAct vaenv' vaenv, conDat=EqualsKnown i stype' tp})
+  where
+    (vaenv', stype', _) = equalizeSTypes env (fmap (stypeAct . snd) vaenv) (p, SType tp tp "")
+computeConstraint _ con@(Constraint _ _ (EqPoints _ p1 p2)) | p1 == p2 = (True, con)
+computeConstraint env con@(Constraint _ vaenv (EqPoints i p1 p2)) = (False, con{conVaenv = updateCOVarArgEnvAct vaenv' vaenv, conDat=EqPoints i stype' stype'})
+  where
+    (vaenv', stype', _) = equalizeSTypes env (fmap (stypeAct . snd) vaenv) (p1, p2)
+computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByKnown i p@SType{stypeAct=act, stypeReq=req} boundTp)) = (True, con{conDat=BoundedByKnown i (p{stypeAct=act', stypeReq=req'}) boundTp})
+  where
+    boundTp' = expandType feTypeEnv (fmap (stypeAct . snd) vaenv) boundTp
+    act' = intersectTypesEnv feTypeEnv (fmap (stypeAct . snd) vaenv) act boundTp'
+    req' = intersectTypesEnv feTypeEnv (fmap (stypeReq . snd) vaenv) req boundTp'
+computeConstraint _ (Constraint _ _ BoundedByObjs{}) = undefined
+-- computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByObjs i p@SType{stypeAct=pAct} objMapBoundUb)) = (False, con{conDat=BoundedByObjs i (p{stypeAct=pAct'}) objMapBoundUb})
+--   where
+--     vaenv' = fmap (stypeAct . snd) vaenv
+--     argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType $ joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con
+--     boundUb = unionTypes feTypeEnv objMapBoundUb argsBoundUb
+
+--     -- A partially applied tuple would not be a raw type on the unionObj,
+--     -- but a subset of the arguments in that type
+--     (_, pAct') = intersectTypesWithVarEnv feTypeEnv vaenv' pAct boundUb
+computeConstraint _ (Constraint _ _ ArrowTo{}) = undefined
+-- computeConstraint env con@(Constraint _ _ (ArrowTo i src dest)) = (False, con{conDat=ArrowTo i src{stypeAct=src'} dest{stypeAct=dest'}})
+--   where
+--     (src', dest') = fromJust $ tcreToMaybe $ arrowConstrainUbs env con (stypeAct src) (stypeAct dest)
+computeConstraint _ (Constraint _ _ PropEq{}) = undefined
+-- computeConstraint env con@(Constraint _ vaenv (PropEq i (super, name) sub)) = (False, con{conDat=PropEq i (super', name) sub'})
+--   where
+--     (super', sub') = updateSchemeProp env (fmap snd vaenv) super name sub
+computeConstraint env con@(Constraint _ vaenv (AddArg i (src, newArgName) dest)) = (False, con{conDat=AddArg i (src, newArgName) dest'})
+  where
+    dest' = addArgToScheme env (fmap snd vaenv) src newArgName dest
+computeConstraint env con@(Constraint _ vaenv (AddInferArg i src dest)) = (False, con{conDat=AddInferArg i src dest'})
+  where
+    dest' = addInferArgToScheme env (fmap snd vaenv) src dest
+computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (PowersetTo i src@SType{stypeAct=srcAct} dest@SType{stypeAct=destAct})) = (False, con{conDat=PowersetTo i src dest{stypeAct=destAct'}})
+  where
+    destAct' = intersectTypes feTypeEnv (powersetType feTypeEnv (fmap (stypeAct . snd) vaenv) srcAct) destAct
+computeConstraint env@FEnv{feTypeEnv} con@(Constraint _ vaenv (UnionOf i parent children)) = (False, con{conVaenv=updateCOVarArgEnvAct vaenv' vaenv, conDat=UnionOf i parentST' children})
+  where
+    chAct = unionAllTypesWithEnv feTypeEnv H.empty $ map stypeAct children
+    chReq = unionAllTypesWithEnv feTypeEnv H.empty $ map stypeReq children
+    actVaenv = fmap (stypeAct . snd) vaenv
+    (vaenv', parentST', _) = equalizeSTypes env actVaenv (parent, SType (compactType feTypeEnv actVaenv chAct) chReq "")
+
+saveConstraint :: FEnv -> VConstraint -> RConstraint -> FEnv
+saveConstraint env vals new = saveDat $ saveVaenv env
+  where
+    saveDat en = foldr (\(p, v) e -> setScheme e vals p (pure v) (show v)) en (zip (constraintDatMetas $ conDat vals) (constraintDatMetas $ conDat new))
+    saveVaenv en = foldr saveVaenvPair en (H.elems $ H.intersectionWith (,) (conVaenv vals) (conVaenv new))
+    saveVaenvPair ((pIn, pOut), (vIn, vOut)) en = en''
+      where
+        en' = setScheme en vals pIn (pure vIn) (show vIn)
+        en'' = setScheme en' vals pOut (pure vOut) (show vOut)
+
 -- |
 -- This takes a constraint and tries to apply it in the environment.
 -- It will return the updated environment and a boolean that is true if the constraint is done.
 -- If it is done, it can be safely removed and no longer needs to be executed.
 executeConstraint :: FEnv -> VConstraint -> (Bool, FEnv)
-executeConstraint env con@(Constraint _ _ (EqualsKnown _ pnt tp)) = case sequenceT (descriptor env pnt, descriptorConVaenv env con) of
-  TypeCheckResult notes (stype, vaenv) -> do
-    let (vaenv', stype', _) = equalizeSTypes env (fmap stypeAct vaenv) (stype, SType tp tp "")
-    let scheme' = TypeCheckResult notes stype'
-    let env' = setScheme env con pnt scheme' "EqualsKnown"
-    let env'' = setSchemeConVaenv env' con SchemeAct vaenv' "EqualsKnown env"
-    (True, env'')
-  TypeCheckResE{} -> (True, env)
-executeConstraint env (Constraint _ _ (EqPoints _ (Meta _ _ (VarMetaDat p1 _)) (Meta _ _ (VarMetaDat p2 _)))) | p1 == p2 = (True, env)
-executeConstraint env1 con@(Constraint _ _ (EqPoints _ p1 p2)) = case sequenceT (descriptor env1 p1, descriptor env1 p2, descriptorConVaenv env1 con) of
-  TypeCheckResult notes (s1, s2, vaenv) -> do
-    let (_, s1', s2') = equalizeSTypes env1 (fmap stypeAct vaenv) (s1, s2)
-    let env2 = setScheme env1 con p1 (TypeCheckResult notes s1') "EqPoints"
-    let env3 = setScheme env2 con p2 (return s2') "EqPoints"
-    (isSolved $ return s1', env3)
-  TypeCheckResE _ -> (True, env1)
-executeConstraint env@FEnv{feTypeEnv} con@(Constraint _ _ (BoundedByKnown _ subPnt boundTp)) = do
-  let subScheme = descriptor env subPnt
-  case sequenceT (subScheme, descriptorConVaenv env con) of
-    TypeCheckResE _ -> (True, env)
-    TypeCheckResult _ (SType act req desc, vaenv) -> do
-      let tvaenv = fmap stypeAct vaenv
-      let boundTp' = expandType feTypeEnv tvaenv boundTp
-      let act' = intersectTypesEnv feTypeEnv tvaenv act boundTp'
-      let req' = intersectTypesEnv feTypeEnv tvaenv req boundTp'
-      let scheme' = pure $ SType act' req' desc
-      let env' = setScheme env con subPnt scheme' "BoundedByKnown"
-      (True, env')
 executeConstraint env@FEnv{feUnionAllObjs, feTypeEnv} con@(Constraint _ _ (BoundedByObjs _ pnt)) = do
   let scheme = pointUb env pnt
   let boundScheme = pointUb env feUnionAllObjs
@@ -192,34 +269,6 @@ executeConstraint env con@(Constraint _ _ (PropEq _ (superPnt, propName) subPnt)
           let env4 = setScheme env3 con subPnt subScheme' (printf "PropEq sub (%s)" (show propName))
           (isSolved subScheme, env4)
         TypeCheckResE _ -> (True, env)
-executeConstraint env con@(Constraint _ _ (AddArg _ (srcPnt, newArgName) destPnt)) = do
-  let srcScheme = descriptor env srcPnt
-  let destScheme = descriptor env destPnt
-  let checkName = printf "AddArg %s" (show newArgName)
-  case sequenceT (srcScheme, destScheme, descriptorConVaenv env con) of
-    TypeCheckResE _ -> (True, env)
-    TypeCheckResult _ (src, dest, vaenv) -> do
-      let dest' = pure $ addArgToScheme env vaenv src newArgName dest
-      let env' = setScheme env con destPnt dest' checkName
-      (False, env')
-executeConstraint env con@(Constraint _ _ (AddInferArg _ srcPnt destPnt)) = do
-  let srcScheme = descriptor env srcPnt
-  let destScheme = descriptor env destPnt
-  case sequenceT (srcScheme, destScheme, descriptorConVaenv env con) of
-    TypeCheckResE _ -> (True, env)
-    TypeCheckResult _ (src, dest, vaenv) -> do
-      let dest' = pure $ addInferArgToScheme env vaenv src dest
-      let env' = setScheme env con destPnt dest' "AddInferArg dest"
-      (False, env')
-executeConstraint env@FEnv{feTypeEnv} con@(Constraint _ _ (PowersetTo _ srcPnt destPnt)) = do
-  let srcScheme = pointUb env srcPnt
-  let destScheme = pointUb env destPnt
-  case sequenceT (srcScheme, destScheme, descriptorConVaenv env con) of
-    TypeCheckResE _ -> (True, env)
-    TypeCheckResult _ (ub1, ub2, vaenv) -> do
-      let ub2' = intersectTypes feTypeEnv (powersetType feTypeEnv (fmap stypeAct vaenv) ub1) ub2
-      let env' = setSchemeAct env con destPnt ub2' "PowersetTo"
-      (False, env')
 executeConstraint env@FEnv{feTypeEnv} con@(Constraint _ _ (UnionOf _ parentPnt childrenM)) = do
   let parentScheme = descriptor env parentPnt
   let tcresChildrenSchemes = fmap (descriptor env) childrenM
@@ -233,6 +282,12 @@ executeConstraint env@FEnv{feTypeEnv} con@(Constraint _ _ (UnionOf _ parentPnt c
       let env' = setScheme env con parentPnt parentScheme' "UnionOf"
       let env'' = setSchemeConVaenv env' con SchemeAct vaenv' "EqualsKnown env"
       (isSolved parentScheme', env'')
+executeConstraint env con = case stypeConstraint $ showCon env con of
+  TypeCheckResE _ -> (True, env)
+  TypeCheckResult _ con' -> (prune, env')
+    where
+      (prune, con'') = computeConstraint env con'
+      env' = saveConstraint env con con''
 
 -- | Calls 'executeConstraint' for a list of constraints
 executeConstraints :: FEnv -> [VConstraint] -> ([Bool], FEnv)
