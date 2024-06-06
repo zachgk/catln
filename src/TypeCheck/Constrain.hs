@@ -174,6 +174,7 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByKnown i p@ST
     boundTp' = expandType feTypeEnv (fmap (stypeAct . snd) vaenv) boundTp
     act' = intersectTypesEnv feTypeEnv (fmap (stypeAct . snd) vaenv) act boundTp'
     req' = intersectTypesEnv feTypeEnv (fmap (stypeReq . snd) vaenv) req boundTp'
+computeConstraint _ con@(Constraint _ _ (BoundedByObjs _ SType{stypeAct=TopType []} _)) = (False, con)
 computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByObjs i p@SType{stypeAct=pAct} objMapBoundUb)) = (False, con{conDat=BoundedByObjs i (p{stypeAct=pAct'}) objMapBoundUb})
   where
     vaenv' = fmap (stypeAct . snd) vaenv
@@ -220,25 +221,6 @@ saveConstraint env vals new = saveDat $ saveVaenv env
 -- It will return the updated environment and a boolean that is true if the constraint is done.
 -- If it is done, it can be safely removed and no longer needs to be executed.
 executeConstraint :: FEnv -> VConstraint -> (Bool, FEnv)
-executeConstraint env@FEnv{feUnionAllObjs, feTypeEnv} con@(Constraint _ _ (BoundedByObjs _ pnt _)) = do
-  let scheme = pointUb env pnt
-  let boundScheme = pointUb env feUnionAllObjs
-  case sequenceT (scheme, boundScheme, descriptorConVaenv env con) of
-    TypeCheckResE _ -> (True, env)
-    TypeCheckResult _ (TopType [], _, _) -> (False, env)
-    TypeCheckResult _ (ub, objMapBoundUb, vaenv) -> do
-
-      -- Add the local args to the bound (maybe?)
-      let vaenv' = fmap stypeAct vaenv
-      let argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType $ joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con
-      let boundUb = unionTypes feTypeEnv objMapBoundUb argsBoundUb
-
-      -- A partially applied tuple would not be a raw type on the unionObj,
-      -- but a subset of the arguments in that type
-      let (_, ub') = intersectTypesWithVarEnv feTypeEnv (fmap stypeAct vaenv) ub boundUb
-      let env' = setSchemeAct env con pnt ub' $ printf "BoundedByObjs for %s\n\tArgsBound: %s\n\tBound: %s\n" (show ub) (show argsBoundUb) (show boundUb)
-      -- let env' = setSchemeAct env con pnt ub' $ printf "BoundedByObjs for %s\n" (show ub)
-      (False, env')
 executeConstraint env@FEnv{feTypeEnv} con@(Constraint _ _ (UnionOf _ parentPnt childrenM)) = do
   let parentScheme = descriptor env parentPnt
   let tcresChildrenSchemes = fmap (descriptor env) childrenM
