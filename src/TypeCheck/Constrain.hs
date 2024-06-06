@@ -21,7 +21,6 @@ import           Data.Maybe
 import qualified Data.Zip            as Z
 
 import           Data.List           (intercalate)
-import           Data.Tuple.Sequence
 import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
@@ -207,6 +206,11 @@ computeConstraint env@FEnv{feTypeEnv} con@(Constraint _ vaenv (UnionOf i parent 
     (vaenv', parentST', _) = equalizeSTypes env actVaenv (parent, SType (compactType feTypeEnv actVaenv chAct) chReq "")
 
 saveConstraint :: FEnv -> VConstraint -> RConstraint -> FEnv
+saveConstraint env con@(Constraint _ _ (UnionOf _ parentPnt _)) (Constraint _ vaenv' (UnionOf _ parent' _)) = env''
+  -- TODO Delete special case of saveConstraint for UnionOf by fixing the bug
+  where
+    env' = setScheme env con parentPnt (return parent') "UnionOf"
+    env'' = setSchemeConVaenv env' con SchemeAct (fmap (stypeAct . snd) vaenv') "EqualsKnown env"
 saveConstraint env vals new = saveDat $ saveVaenv env
   where
     saveDat en = foldr (\(p, v) e -> setScheme e vals p (pure v) (show v)) en (zip (constraintDatMetas $ conDat vals) (constraintDatMetas $ conDat new))
@@ -221,19 +225,6 @@ saveConstraint env vals new = saveDat $ saveVaenv env
 -- It will return the updated environment and a boolean that is true if the constraint is done.
 -- If it is done, it can be safely removed and no longer needs to be executed.
 executeConstraint :: FEnv -> VConstraint -> (Bool, FEnv)
-executeConstraint env@FEnv{feTypeEnv} con@(Constraint _ _ (UnionOf _ parentPnt childrenM)) = do
-  let parentScheme = descriptor env parentPnt
-  let tcresChildrenSchemes = fmap (descriptor env) childrenM
-  case sequenceT (parentScheme, sequence tcresChildrenSchemes, descriptorConVaenv env con) of
-    TypeCheckResE _ -> (True, env)
-    TypeCheckResult notes (parentSType, childrenSchemes, vaenv) -> do
-      let chAct = unionAllTypesWithEnv feTypeEnv H.empty $ map stypeAct childrenSchemes
-      let chReq = unionAllTypesWithEnv feTypeEnv H.empty $ map stypeReq childrenSchemes
-      let (vaenv', parentST', _) = equalizeSTypes env (fmap stypeAct vaenv) (parentSType, SType (compactType feTypeEnv (fmap stypeAct vaenv) chAct) chReq "")
-      let parentScheme' = TypeCheckResult notes parentST'
-      let env' = setScheme env con parentPnt parentScheme' "UnionOf"
-      let env'' = setSchemeConVaenv env' con SchemeAct vaenv' "EqualsKnown env"
-      (isSolved parentScheme', env'')
 executeConstraint env con = case stypeConstraint $ showCon env con of
   TypeCheckResE _ -> (True, env)
   TypeCheckResult _ con' -> (prune, env')
