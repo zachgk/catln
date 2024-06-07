@@ -35,8 +35,8 @@ import           TypeCheck.TypeUtils (addUnionObjToEnv)
 import           Utils
 
 -- represents how a specified variables corresponds to the known types.
--- It could be a lower bound, upper bound, or exact bound
-data TypeBound = BUpper | BLower | BEq
+-- It could be a bound on actual, required, or both
+data TypeBound = BAct | BReq | BActReq
   deriving (Eq)
 
 data EncodeState
@@ -77,9 +77,9 @@ fromMeta :: FEnv -> TypeBound -> EncodeState -> PreMeta -> String -> TypeCheckRe
 fromMeta env bound est m description  = do
   let tp = getMetaType m
   let (p, env') = case bound of
-        BUpper -> fresh env (TypeCheckResult [] $ SType tp topType description)
-        BLower -> fresh env (TypeCheckResult [] $ SType topType tp description)
-        BEq    -> fresh env (TypeCheckResult [] $ SType tp tp description)
+        BAct    -> fresh env (TypeCheckResult [] $ SType tp topType description)
+        BReq    -> fresh env (TypeCheckResult [] $ SType topType tp description)
+        BActReq -> fresh env (TypeCheckResult [] $ SType tp tp description)
   return (mapMetaDat (\_ -> mkVarMetaDat est p) m, env')
 
 -- TODO: This might reverse the list to return.
@@ -115,16 +115,16 @@ mapMWithFEnvMapWithKey env f hmap = do
 
 fromExpr :: EncodeState -> FEnv -> PExpr -> TypeCheckResult (VExpr, FEnv)
 fromExpr est env (CExpr m c) = do
-  (m', env') <- fromMeta env BUpper est m ("Constant " ++ show c)
+  (m', env') <- fromMeta env BAct est m ("Constant " ++ show c)
   return (CExpr m' c, addConstraints env' [EqualsKnown 3 m' (constantType c)])
 fromExpr est@EncodeOut{} env1 (Value m name) = do
-  (m', env2) <- fromMeta env1 BUpper est m ("Out Val " ++ name)
+  (m', env2) <- fromMeta env1 BAct est m ("Out Val " ++ name)
   return (Value m' name, addConstraints env2 [BoundedByKnown 4 m' (relTypeVal name), BoundedByObjs 4 m' topType])
 fromExpr est@EncodeIn{} env1 (Value m name) = do
-  (m', env2) <- fromMeta env1 BUpper est m ("In Val " ++ name)
+  (m', env2) <- fromMeta env1 BAct est m ("In Val " ++ name)
   return (Value m' name, addConstraints env2 [BoundedByKnown 5 m' (relTypeVal name)])
 fromExpr est env1 (HoleExpr m hole) = do
-  (m', env2) <- fromMeta env1 BUpper est m ("Hole " ++ show hole)
+  (m', env2) <- fromMeta env1 BAct est m ("Hole " ++ show hole)
   return (HoleExpr m' hole, env2)
 fromExpr est env1 (AliasExpr base alias) = do
   (base', env2) <- fromExpr est env1 base
@@ -142,8 +142,8 @@ fromExpr est env1 (EWhere base cond) = do
   let env5 = addConstraints env4 [ArrowTo 30 (getExprMeta cond') bool']
   return (EWhere base' cond', env5)
 fromExpr est env1 (TupleApply m (baseM, baseExpr) arg) = do
-  (m', env2) <- fromMeta env1 BUpper est m $ printf "Tuple Meta %s(%s)" (show baseExpr) (show arg)
-  (baseM', env3) <- fromMeta env2 BUpper est baseM $ printf "Tuple BaseMeta %s(%s)" (show baseExpr) (show arg)
+  (m', env2) <- fromMeta env1 BAct est m $ printf "Tuple Meta %s(%s)" (show baseExpr) (show arg)
+  (baseM', env3) <- fromMeta env2 BAct est baseM $ printf "Tuple BaseMeta %s(%s)" (show baseExpr) (show arg)
   (baseExpr', env4) <- fromExpr est env3 baseExpr
   (arg', env5) <- fromObjArr est env4 arg
   let constraints = case (est, oaObj arg', oaArr arg') of
@@ -183,9 +183,9 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg) = do
   return (TupleApply m' (baseM', baseExpr') arg', endConstraintBlock env6 (if isJust (oaObj arg') then Just arg' else Nothing) (maybe H.empty (fmap (first getExprMeta . head) . exprVarArgs) (oaObj arg')))
 fromExpr est env1 (VarApply m baseExpr varName varVal) = do
   let baseName = printf "VarApply %s[%s = %s]" (show baseExpr) (show varName) (show varVal) :: String
-  (m', env2) <- fromMeta env1 BUpper est m $ printf "%s Meta" baseName
+  (m', env2) <- fromMeta env1 BAct est m $ printf "%s Meta" baseName
   (baseExpr', env3) <- fromExpr est env2 baseExpr
-  (varVal', env4) <- fromMeta env3 BUpper est varVal $ printf "%s val" baseName
+  (varVal', env4) <- fromMeta env3 BAct est varVal $ printf "%s val" baseName
   let constraints = case est of
         EncodeOut{} -> [
                       ArrowTo 26 (getExprMeta baseExpr') m',
@@ -209,7 +209,7 @@ fromObjArr est env1 oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   (oaAnnots', env3) <- mapMWithFEnv (startConstrainBlock env2) (fromExpr est) oaAnnots
   (oaArr', env4) <- case oaArr of
     (arrExpr, arrM) -> do
-      (arrM', env3a) <- fromMeta env3 BUpper est arrM $ printf "oa arrM %s" (show oa)
+      (arrM', env3a) <- fromMeta env3 BAct est arrM $ printf "oa arrM %s" (show oa)
       case arrExpr of
         Just argExpr -> do
           (argExpr', env3b) <- fromExpr est env3a argExpr
@@ -253,11 +253,11 @@ fromObjectMap env1 oa@ObjArr{oaBasis, oaAnnots, oaObj=Just obj, oaArr=(maybeArrE
 
   let est = EncodeOut (Just obj')
   (oaAnnots', env3) <- mapMWithFEnv env2 (fromExpr est) oaAnnots
-  (mUserReturn', env4) <- fromMeta env3 BUpper est arrM (printf "Specified result from %s" (show $ exprPath obj'))
+  (mUserReturn', env4) <- fromMeta env3 BAct est arrM (printf "Specified result from %s" (show $ exprPath obj'))
   (oaArr'@(_, arrM'), env5) <- case maybeArrE of
     Just arrE -> do
       (vExpr, env4a) <- fromExpr est env4 arrE
-      (arrM', env4b) <- fromMeta env4a BUpper est (Meta topType (labelPos "res" $ getMetaPos arrM) emptyMetaDat) $ printf "Arrow result from %s" (show $ exprPath obj')
+      (arrM', env4b) <- fromMeta env4a BAct est (Meta topType (labelPos "res" $ getMetaPos arrM) emptyMetaDat) $ printf "Arrow result from %s" (show $ exprPath obj')
       return ((Just vExpr, arrM'), addConstraints env4b [ArrowTo 32 (getExprMeta vExpr) arrM', ArrowTo 33 (getExprMeta vExpr) mUserReturn'])
     Nothing -> return ((Nothing, mUserReturn'), env4)
   let oa' = oa{oaObj=Just obj', oaArr=oaArr', oaAnnots=oaAnnots'}
