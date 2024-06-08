@@ -42,7 +42,7 @@ function Main(props) {
 
   return (
     <div>
-      {imports.map((imp, ind) => <Import key={ind} name={imp}/>)}
+      {imports.map((imp, ind) => <Import key={ind} imp={imp}/>)}
       <br/>
       <Statements statements={statements} root={true} />
     </div>
@@ -50,10 +50,10 @@ function Main(props) {
 }
 
 function Import(props) {
-  const {name} = props;
+  const {imp} = props;
   const classes = useStyles();
   return (
-    <div className={classes.noPlay}><KeyWord>import</KeyWord> <RawExpr expr={name} /></div>
+    <div className={classes.noPlay}><KeyWord>import</KeyWord> <RawExpr expr={imp.rawImpRaw} /></div>
   );
 }
 
