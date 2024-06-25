@@ -30,7 +30,7 @@ formatIndent indent = concat $ replicate indent "  "
 
 formatImport :: RawFileImport -> Builder
 formatImport RawFileImport{rawImpRaw} = do
-  literal $ "import \"" ++ formatExpr rawImpRaw ++ "\"\n"
+  literal $ "import " ++ formatExpr rawImpRaw ++ "\n"
 
 formatPartialKey :: PartialKey -> String
 formatPartialKey = formatPartialType . partialToType
@@ -41,7 +41,7 @@ formatTypePredicate (PredClass p) = printf "$this :? " (formatPartialType p)
 formatTypePredicate (PredRel p)   = formatPartialType p
 
 formatPartialType :: PartialType -> String
-formatPartialType (PartialType ptName ptVars ptArgs ptPreds _) = concat [ptName, showTypeVars ptVars, showArgs ptArgs, showPreds ptPreds]
+formatPartialType (PartialType ptName ptVars ptArgs ptPreds ptArgMode) = concat [ptName, showTypeVars ptVars, showArgs ptArgs, showPreds ptPreds, showPtArgMode]
   where
     showArg (argName, argVal) = if argVal == topType
       then '$':formatPartialKey argName
@@ -52,6 +52,10 @@ formatPartialType (PartialType ptName ptVars ptArgs ptPreds _) = concat [ptName,
     showArgs args = printf "(%s)" (intercalate ", " $ map showArg $ H.toList args)
     showPreds preds | null preds = ""
     showPreds preds = printf "| %s" (intercalate " && " $ map formatTypePredicate preds)
+    showPtArgMode = case ptArgMode of
+      PtArgExact -> ""
+      PtArgAny   -> ".."
+
 
 formatType :: Type -> String
 formatType (TopType []) = ""
