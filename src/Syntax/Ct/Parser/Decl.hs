@@ -54,10 +54,10 @@ pDeclStatement = do
 
   case out of
     -- No equals but meta so declaration
-    (Just (Nothing, _)) -> return $ RawDeclStatement roa
+    (Just (Nothing, _, _)) -> return $ RawDeclStatement roa
 
     -- Equals and expr (inline definition)
-    (Just (Just{}, _))  -> return $ RawDeclStatement roa
+    (Just (Just{}, _, _))  -> return $ RawDeclStatement roa
 
     -- Must be either a declaration or an expression
-    Nothing             -> return $ RawExprStatement inExpr
+    Nothing                -> return $ RawExprStatement inExpr

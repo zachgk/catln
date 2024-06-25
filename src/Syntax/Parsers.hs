@@ -76,7 +76,7 @@ processParsed includeCore imp ((prgmImports, statements), extraImports) = do
   where
     name = case rawImpRaw imp of
       RawCExpr _ (CStr n) -> n
-      RawTupleApply _ _ [RawObjArr{roaArr=Just (Just (RawCExpr _ (CStr n)), _)}] -> n
+      RawTupleApply _ _ [RawObjArr{roaArr=Just (Just (RawCExpr _ (CStr n)), _, _)}] -> n
       _ -> ""
 
 parseFile :: Bool -> RawFileImport -> IO (CRes (GraphNodes (RawPrgm ()) RawFileImport))

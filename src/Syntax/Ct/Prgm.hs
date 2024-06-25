@@ -23,7 +23,7 @@ import qualified Data.HashMap.Strict as H
 import           GHC.Generics        (Generic)
 
 import           Data.Aeson          hiding (Object)
-import           Data.Maybe          (fromMaybe, isJust)
+import           Data.Maybe          (isJust)
 import           Maybes              (fromJust)
 import           Semantics           (emptyMetaE)
 import           Semantics.Prgm
@@ -36,7 +36,7 @@ data RawObjArr e m = RawObjArr {
   roaBasis  :: !ObjectBasis,
   roaDoc    :: !(Maybe DocComment),
   roaAnnots :: ![CompAnnot (e m)],
-  roaArr    :: !(Maybe (Maybe (e m), Meta m)),
+  roaArr    :: !(Maybe (Maybe (e m), Maybe (e m), Meta m)), -- (arrExpr, arrMetaExpr for formatter, arrMeta)
   roaDef    :: !(Maybe (e m))
                                }
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
@@ -165,7 +165,7 @@ instance ExprClass RawExpr where
   exprVarArgs (RawTupleApply _ (_, be) args) = H.unionWith (++) (exprVarArgs be) (unionsWith (++) $ map oaVarArgs args)
   exprVarArgs (RawVarsApply _ e vars) = H.unionWith (++) (exprVarArgs e) (unionsWith (++) $ map aux vars)
     where
-      aux var = H.singleton (TVVar $ inExprSingleton $ fromJust $ roaObj var) [(fromJust $ roaObj var, snd $ fromJust $ roaArr var)]
+      aux var = H.singleton (TVVar $ inExprSingleton $ fromJust $ roaObj var) [(fromJust $ roaObj var, thr3 $ fromJust $ roaArr var)]
   exprVarArgs (RawContextApply _ (_, e) _) = exprVarArgs e
   exprVarArgs (RawParen e) = exprVarArgs e
   exprVarArgs (RawMethod be me) = H.unionWith (++) (exprVarArgs be) (exprVarArgs me)
@@ -174,7 +174,7 @@ instance ExprClass RawExpr where
 instance ObjArrClass RawObjArr where
   oaVarArgs roa = exprArg roa
     where
-      exprArg RawObjArr{roaArr=(Just (Just argVal, _))} = exprVarArgs argVal
+      exprArg RawObjArr{roaArr=(Just (Just argVal, _, _))} = exprVarArgs argVal
       exprArg RawObjArr{roaObj=(Just obj), roaArr= Nothing} = H.singleton (TVArg $ inExprSingleton obj) [(obj, emptyMetaE "res" obj)]
       exprArg oa = error $ printf "exprVarArgs not defined for arg %s" (show oa)
   getOaAnnots = roaAnnots
@@ -188,11 +188,11 @@ instance (Show m, Show (e m)) => Show (RawObjArr e m) where
 
       showArr :: String
       showArr = case roaArr of
-        Just (Just e, m) | getMetaType m /= topType -> printf " -> %s = %s" (show m) (show e)
-        Just (Just e, _) | isJust roaObj -> printf "= %s" (show e)
-        Just (Just e, _) -> show e
-        Just (Nothing, m) | getMetaType m /= topType -> printf " -> %s" (show m)
-        Just (Nothing, _) -> ""
+        Just (Just e, _, m) | getMetaType m /= topType -> printf " -> %s = %s" (show m) (show e)
+        Just (Just e, _, _) | isJust roaObj -> printf "= %s" (show e)
+        Just (Just e, _, _) -> show e
+        Just (Nothing, _, m) | getMetaType m /= topType -> printf " -> %s" (show m)
+        Just (Nothing, _, _) -> ""
         Nothing -> ""
 
       showDef :: String
@@ -207,6 +207,6 @@ mkRawFileImport e = RawFileImport e e Nothing
 desObjArr :: (ExprClass e, MetaDat m, Show m, Show (e m)) => RawObjArr e m -> [ObjArr e m]
 desObjArr (RawObjArr obj@(Just objExpr) basis doc annots arr Nothing) = [ObjArr obj basis doc annots arr']
   where
-    arr' = fromMaybe (Nothing, emptyMetaE "arrM" objExpr) arr
-desObjArr (RawObjArr obj basis doc annots (Just arr) Nothing) = [ObjArr obj basis doc annots arr]
+    arr' = maybe (Nothing, emptyMetaE "arrM" objExpr) (\(arrE, _, arrM) -> (arrE, arrM)) arr
+desObjArr (RawObjArr obj basis doc annots (Just (arrE, _, arrM)) Nothing) = [ObjArr obj basis doc annots (arrE, arrM)]
 desObjArr roa = error $ printf "Not yet implemented: %s" (show roa)

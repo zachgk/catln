@@ -115,7 +115,7 @@ pArrowFull basis = do
   guardAnnots <- pPatternGuard
   maybeDecl <- optional $ do
     _ <- symbol "->" <|> symbol ":"
-    exprToTypeMeta <$> term
+    term
   maybeExpr2 <- optional $ do
     _ <- symbol "=>" <|> symbol "="
     optional $ try pExpr
@@ -123,16 +123,16 @@ pArrowFull basis = do
     _ <- symbol "?"
     try pExpr
 
-  let arrMeta = fromMaybe emptyMetaN maybeDecl
+  let (arrMetaExpr, arrMeta) = maybe (Nothing, emptyMetaN) (\decl -> (Just decl, exprToTypeMeta decl)) maybeDecl
   (i', o') <- return $ case (maybeDecl, expr1, maybeExpr2) of
     -- Input, equals, and in expression
-    (_, i, Just (Just o)) -> (Just i, Just (Just o, arrMeta))
+    (_, i, Just (Just o)) -> (Just i, Just (Just o, arrMetaExpr, arrMeta))
 
     -- Input, equals, but no out expression
-    (_, i, Just Nothing) -> (Just i, Just (Just (rawVal nestedDeclaration), arrMeta))
+    (_, i, Just Nothing) -> (Just i, Just (Just (rawVal nestedDeclaration), arrMetaExpr, arrMeta))
 
     -- Input, no equals, but declaration
-    (Just am, i, Nothing) -> (Just i, Just (Nothing, am)) -- If only one expression, always make it as an input and later desugar to proper place
+    (Just _, i, Nothing) -> (Just i, Just (Nothing, arrMetaExpr, arrMeta)) -- If only one expression, always make it as an input and later desugar to proper place
 
     -- Input, no equals nor declaration
     (Nothing, i, Nothing) -> (Just i, Nothing) -- If only one expression, always make it as an input and later desugar to proper place

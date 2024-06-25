@@ -13,7 +13,6 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Syntax.Ct.MapRawMeta where
-import           Data.Bifunctor (Bifunctor (bimap))
 import           Data.Maybe     (fromMaybe)
 import           MapMeta
 import           Syntax.Ct.Prgm
@@ -40,7 +39,7 @@ mapMetaRawObjArr :: (MapMeta e) => MetaFun a b -> Maybe MetaLocation -> RawObjAr
 mapMetaRawObjArr f mloc roa@RawObjArr{roaObj, roaAnnots, roaArr, roaDef} = roa{
   roaObj = fmap (mapMeta f (fromMaybe InputMeta mloc)) roaObj,
   roaAnnots = map (mapMeta f (fromMaybe AnnotMeta mloc)) roaAnnots,
-  roaArr = fmap (bimap (fmap (mapMeta f (fromMaybe OutputMeta mloc))) (f ArrMeta)) roaArr,
+  roaArr = fmap (\(arrE, arrME, arrM) -> (fmap (mapMeta f (fromMaybe OutputMeta mloc)) arrE, fmap (mapMeta f (fromMaybe OutputMeta mloc)) arrME, f ArrMeta arrM)) roaArr,
   roaDef = fmap (mapMeta f (fromMaybe InputMeta mloc)) roaDef
                                                              }
 

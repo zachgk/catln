@@ -24,6 +24,7 @@ import           Semantics.Annots
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Prgm
+import           Utils               (fst3, snd3)
 
 formatIndent :: Int -> String
 formatIndent indent = concat $ replicate indent "  "
@@ -31,45 +32,6 @@ formatIndent indent = concat $ replicate indent "  "
 formatImport :: RawFileImport -> Builder
 formatImport RawFileImport{rawImpRaw} = do
   literal $ "import " ++ formatExpr rawImpRaw ++ "\n"
-
-formatPartialKey :: PartialKey -> String
-formatPartialKey = formatPartialType . partialToType
-
-formatTypePredicate :: TypePredicate -> String
-formatTypePredicate (PredExpr p)  = printf "$this :? " (formatPartialType p)
-formatTypePredicate (PredClass p) = printf "$this :? " (formatPartialType p)
-formatTypePredicate (PredRel p)   = formatPartialType p
-
-formatPartialType :: PartialType -> String
-formatPartialType (PartialType ptName ptVars ptArgs ptPreds ptArgMode) = concat [ptName, showTypeVars ptVars, showArgs ptArgs, showPreds ptPreds, showPtArgMode]
-  where
-    showArg (argName, argVal) = if argVal == topType
-      then '$':formatPartialKey argName
-      else formatPartialKey argName ++ ": " ++ formatType argVal
-    showTypeVars vars | H.null vars = ""
-    showTypeVars vars = printf "[%s]" (intercalate ", " $ map showArg $ H.toList vars)
-    showArgs args | H.null args = ""
-    showArgs args = printf "(%s)" (intercalate ", " $ map showArg $ H.toList args)
-    showPreds preds | null preds = ""
-    showPreds preds = printf "| %s" (intercalate " && " $ map formatTypePredicate preds)
-    showPtArgMode = case ptArgMode of
-      PtArgExact -> ""
-      PtArgAny   -> ".."
-
-
-formatType :: Type -> String
-formatType (TopType []) = ""
-formatType (TopType [PredRel r]) = formatPartialType r
-formatType (TopType preds) = printf "Any | %s" (intercalate " && " $ map formatTypePredicate preds)
-formatType (TypeVar (TVVar t) TVInt) = "$" ++ formatPartialKey t
-formatType (TypeVar (TVVar t) TVExt) = "$_" ++ formatPartialKey t
-formatType (TypeVar TVArg{} _) = error "Unexpected TVArg in formatter"
-formatType (UnionType partials) = join $ map formatPartialType $ splitUnionType partials
-
-formatMeta :: Meta m -> String
-formatMeta m = case getMetaType m of
-  (TopType []) -> ""
-  t            -> ": " ++ formatType t
 
 formatExpr ::  RawExpr m -> String
 formatExpr (RawCExpr _ (CInt c)) = show c
@@ -87,8 +49,8 @@ formatExpr (RawSpread t) = printf "%s.." (formatExpr t)
 formatExpr (RawAliasExpr base alias) = printf "%s@%s" (formatExpr base) (formatExpr alias)
 formatExpr (RawWhere base cond) = printf "%s | %s" (formatExpr base) (formatExpr cond)
 formatExpr (RawTupleApply _ (_, RawValue _ n) args) | operatorPrefix `isPrefixOf` n = case args of
-  [RawObjArr{ roaArr=(Just (Just a, _))}] -> op ++ formatExpr a
-  [RawObjArr{ roaArr=(Just (Just l, _))}, RawObjArr{roaArr=(Just (Just r, _))}] -> if n == operatorType
+  [RawObjArr{ roaArr=(Just (Just a, _, _))}] -> op ++ formatExpr a
+  [RawObjArr{ roaArr=(Just (Just l, _, _))}, RawObjArr{roaArr=(Just (Just r, _, _))}] -> if n == operatorType
     then printf "%s%s %s" (formatExpr l) op (formatExpr r) -- Show types as "x: 5" instead of "x : 5"
     else printf "%s %s %s" (formatExpr l) op (formatExpr r)
   _ -> error "Non unary or binary operator found in formatExpr"
@@ -111,27 +73,27 @@ formatIsa classes = " isa " ++ intercalate ", " (map formatExpr classes)
 formatObjArr :: RawObjArr RawExpr m -> String
 formatObjArr roa@RawObjArr{roaObj, roaArr, roaDef} = printf "%s%s%s%s%s%s" (showE True roaObj) showElse showM showEquals (showE False roaArrExpr) showDef
   where
-    roaArrExpr = fst =<< roaArr
+    roaArrExpr = fst3 =<< roaArr
 
     isNestedDeclaration = case roaArr of
-      (Just (Just (RawValue _ n), _)) | n == nestedDeclaration -> True
-      _                                                        -> False
+      (Just (Just (RawValue _ n), _, _)) | n == nestedDeclaration -> True
+      _                                                           -> False
 
     showE False _ | isNestedDeclaration = ""
     showE _ (Just e) = formatExpr e
     showE _ Nothing = ""
 
     showM :: String
-    showM  = case fmap (getMetaType . snd) roaArr of
-      Nothing             -> ""
-      (Just (TopType [])) -> ""
-      (Just t)            -> printf " -> %s" (formatType t)
+    showM  = case fmap snd3 roaArr of
+      Nothing         -> ""
+      Just Nothing    -> ""
+      (Just (Just t)) -> printf " -> %s" (formatExpr t)
 
     showEquals :: String
     showEquals = case (roaObj, roaArr) of
-      _ | isNestedDeclaration    -> " ="
-      (Just _, Just (Just{}, _)) -> "= "
-      _                          -> ""
+      _ | isNestedDeclaration       -> " ="
+      (Just _, Just (Just{}, _, _)) -> "= "
+      _                             -> ""
 
     showElse :: String
     showElse = if hasElseAnnot roa then " else " else ""

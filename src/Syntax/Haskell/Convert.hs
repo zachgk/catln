@@ -32,6 +32,7 @@ import           Syntax.Ct.Desugarf.Expr (exprToType)
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 import           Text.Printf
+import           Utils
 
 type MLHSArgs = Maybe (RawExpr ()) -- Maybe base with lhs arguments, is present when a lambda modifies the base args
 
@@ -91,7 +92,9 @@ convertTypeToExpr flags _ p@XHsType{} = error $ printf "Convert unsupported type
 convertTypeToObj :: DynFlags -> String -> HsType GhcPs -> RawObjArr RawExpr ()
 convertTypeToObj flags _ p@HsForAllTy{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
 convertTypeToObj flags _ p@HsAppKindTy{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
-convertTypeToObj flags i (HsFunTy _ base app) = RawObjArr (Just (convertTypeToExpr flags (Just $ rawVal i) $ unLoc base)) FunctionObj Nothing [] (Just (Nothing, emptyMetaT $ exprToType $ convertTypeToExpr flags Nothing $ unLoc app)) Nothing
+convertTypeToObj flags i (HsFunTy _ base app) = RawObjArr (Just (convertTypeToExpr flags (Just $ rawVal i) $ unLoc base)) FunctionObj Nothing [] (Just (Nothing, Just appExpr, emptyMetaT $ exprToType $ appExpr)) Nothing
+  where
+    appExpr = convertTypeToExpr flags Nothing $ unLoc app
 convertTypeToObj flags _ p@HsSumTy{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
 convertTypeToObj flags _ p@HsOpTy{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
 convertTypeToObj flags _ p@HsParTy{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
@@ -212,7 +215,7 @@ convertExpr flags _ p@HsOverLabel{} = error $ printf "Convert unsupported expr:\
 convertExpr flags _ p@HsIPVar{} = error $ printf "Convert unsupported expr:\n%s" (showSDoc flags $ ppr p)
 convertExpr flags _ (HsOverLit _ literal) = (Nothing, convertOverLit flags literal, [])
 convertExpr flags _ (HsLit _ literal) = (Nothing, convertLiteral flags literal, [])
-convertExpr flags b (HsLam _ (MG _ matches _)) = (base' >>= const (roaObj oa'), fromJust $ fst $ fromJust $ roaArr oa', subs)
+convertExpr flags b (HsLam _ (MG _ matches _)) = (base' >>= const (roaObj oa'), fromJust $ fst3 $ fromJust $ roaArr oa', subs)
   where
     [(base', oa', subs)] = concatMap (convertMatch flags b . unLoc) $ unLoc matches
 convertExpr flags _ p@HsLamCase{} = error $ printf "Convert unsupported expr:\n%s" (showSDoc flags $ ppr p)
@@ -326,7 +329,7 @@ convertStmtLR flags _ (BindStmt _ pat body _ _) = (Nothing, [RawStatementTree (R
     -- TODO: Should use bind rather than basic objArr
     pat' = convertPattern flags Nothing $ unLoc pat
     (maybePat'', expr', subStatements) = convertExpr flags (Just pat') $ unLoc body
-    oa = RawObjArr (Just $ fromMaybe pat' maybePat'') FunctionObj Nothing [] (Just (Just expr', emptyMetaN)) Nothing
+    oa = RawObjArr (Just $ fromMaybe pat' maybePat'') FunctionObj Nothing [] (Just (Just expr', Nothing, emptyMetaN)) Nothing
 convertStmtLR flags _ p@ApplicativeStmt{} = error $ printf "Convert unsupported stmtLR:\n%s" (showSDoc flags $ ppr p)
 convertStmtLR flags base (BodyStmt _ body _ _) = (base', [RawStatementTree (RawExprStatement expr') subStatements])
   where
@@ -382,7 +385,7 @@ convertMatch flags i (Match _ _ pats grhs) = map aux $ convertGRHSs flags grhs
         guardObjExpr = case guard of
           Just g  -> RawWhere objExpr g
           Nothing -> objExpr
-        oa = RawObjArr (Just guardObjExpr) FunctionObj Nothing [] (Just (Just arr, emptyMetaN)) Nothing
+        oa = RawObjArr (Just guardObjExpr) FunctionObj Nothing [] (Just (Just arr, Nothing, emptyMetaN)) Nothing
 convertMatch flags _ p = error $ printf "Convert unsupported match:\n%s" (showSDoc flags $ ppr p)
 
 -- https://www.stackage.org/haddock/lts-18.28/ghc-lib-parser-8.10.7.20220219/GHC-Hs-Binds.html#t:HsBindLR
@@ -392,7 +395,7 @@ convertBindLR flags p@(FunBind _ i (MG _ lmatches _) _ _) = map wrap $ concatMap
     conv match = convertMatch flags (Just $ rawVal $ convertIdP flags $ unLoc i) match
     wrap (Nothing, oa, subStatements) = RawStatementTree (RawDeclStatement oa) subStatements
     wrap _ = error $ printf "Convert unsupported convertBindLR wrap:\n%s" (showSDoc flags $ ppr p)
-convertBindLR flags (PatBind _ lhs rhs _) = [RawStatementTree (RawDeclStatement $ RawObjArr (Just guardObj) PatternObj Nothing [] (Just (Just arrExpr, emptyMetaN)) Nothing) subs]
+convertBindLR flags (PatBind _ lhs rhs _) = [RawStatementTree (RawDeclStatement $ RawObjArr (Just guardObj) PatternObj Nothing [] (Just (Just arrExpr, Nothing, emptyMetaN)) Nothing) subs]
   where
     obj = convertPattern flags Nothing $ unLoc lhs
     [(Nothing, arrExpr, subs, maybeGuard)] = convertGRHSs flags rhs
