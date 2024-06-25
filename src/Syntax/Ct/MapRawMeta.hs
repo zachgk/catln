@@ -13,7 +13,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Syntax.Ct.MapRawMeta where
-import           Data.Bifunctor (Bifunctor (bimap, second))
+import           Data.Bifunctor (Bifunctor (bimap))
 import           Data.Maybe     (fromMaybe)
 import           MapMeta
 import           Syntax.Ct.Prgm
@@ -29,7 +29,7 @@ instance MapMeta RawExpr where
   mapMeta f loc (RawWhere b a) = RawWhere (mapMeta f loc b) (mapMeta f loc a)
   mapMeta f loc (RawTupleApply m (bm, be) args) = RawTupleApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, mapMeta f loc be) (map (mapMetaRawObjArr f (Just loc)) args)
   mapMeta f loc (RawVarsApply m be vars) = RawVarsApply (f (ExprMeta loc ExprMetaApplyVar) m) (mapMeta f loc be) (map (mapMetaRawObjArr f (Just loc)) vars)
-  mapMeta f loc (RawContextApply m (bm, be) args) = RawContextApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, mapMeta f loc be) (map (second (f (ExprMeta loc ExprMetaTupleArg))) args)
+  mapMeta f loc (RawContextApply m (bm, be) args) = RawContextApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, mapMeta f loc be) (map (mapMetaRawObjArr f (Just loc)) args)
   mapMeta f loc (RawParen e) = RawParen (mapMeta f loc e)
   mapMeta f loc (RawMethod b m) = RawMethod (mapMeta f loc b) (mapMeta f loc m)
   mapMeta f loc (RawList m lst) = RawList (f (ExprMeta loc ExprMetaTupleArg) m) (map (mapMeta f loc) lst)

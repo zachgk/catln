@@ -57,7 +57,7 @@ data RawExpr m
   | RawAliasExpr (RawExpr m) (RawExpr m) -- ^ base aliasExpr
   | RawTupleApply (Meta m) (Meta m, RawExpr m) [RawObjArr RawExpr m]
   | RawVarsApply (Meta m) (RawExpr m) [RawObjArr RawExpr m]
-  | RawContextApply (Meta m) (Meta m, RawExpr m) [(ArgName, Meta m)]
+  | RawContextApply (Meta m) (Meta m, RawExpr m) [RawObjArr RawExpr m]
   | RawWhere (RawExpr m) (RawExpr m) -- ^ base cond
   | RawParen (RawExpr m)
   | RawMethod (RawExpr m) (RawExpr m) -- ^ base methodValue

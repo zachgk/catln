@@ -142,7 +142,7 @@ pArrowFull basis = do
 data TermSuffix
   = ArgsSuffix ParseMeta [PObjArr]
   | VarsSuffix ParseMeta [PObjArr]
-  | ContextSuffix ParseMeta [(ArgName, ParseMeta)]
+  | ContextSuffix ParseMeta [PObjArr]
   | AliasSuffix ParseMeta TypeName
   | TypePropSuffix ParseMeta (TypeProperty RawExpr ParseMetaDat)
   deriving (Show)
@@ -171,19 +171,10 @@ pVarsSuffix = do
   pos2 <- getSourcePos
   return $ VarsSuffix (emptyMeta pos1 pos2) vars
 
-pContextElSuffix :: Parser (ArgName, ParseMeta)
-pContextElSuffix = do
-  pos1 <- getSourcePos
-  arg <- identifier
-  _ <- symbol ":"
-  tp <- tidentifier
-  pos2 <- getSourcePos
-  return (partialKey arg, Meta (relTypeVal tp) (Just (pos1, pos2, "")) emptyMetaDat)
-
 pContextSuffix :: Parser TermSuffix
 pContextSuffix = do
   pos1 <- getSourcePos
-  ctxs <- curlyBraces $ sepBy pContextElSuffix (symbol ",")
+  ctxs <- curlyBraces $ sepBy (pArrowFull ArgObj) (symbol ",")
   pos2 <- getSourcePos
   return $ ContextSuffix (emptyMeta pos1 pos2) ctxs
 

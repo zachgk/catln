@@ -96,7 +96,7 @@ formatExpr (RawTupleApply _ (_, RawValue _ n) args) | operatorPrefix `isPrefixOf
     op = drop (length operatorPrefix) n
 formatExpr (RawTupleApply _ (_, be) args) = printf "%s(%s)" (formatExpr be) (intercalate ", " $ map formatObjArr args)
 formatExpr (RawVarsApply _ be vars) = printf "%s[%s]" (formatExpr be) (intercalate ", " $ map formatObjArr vars)
-formatExpr (RawContextApply _ (_, be) ctxs) = printf "%s{%s}" (formatExpr be) (intercalate ", " $ map (\(ctxN, ctxM) -> formatPartialKey ctxN ++ formatMeta ctxM) ctxs)
+formatExpr (RawContextApply _ (_, be) ctxs) = printf "%s{%s}" (formatExpr be) (intercalate ", " $ map formatObjArr ctxs)
 formatExpr (RawParen e) = printf "(%s)" (formatExpr e)
 formatExpr (RawMethod base method) = printf "%s.%s" (formatExpr base) (formatExpr method)
 formatExpr (RawList _ l) = printf "[%s]" $ intercalate ", " $ map formatExpr l
