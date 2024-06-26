@@ -23,6 +23,7 @@ import           CtConstants
 import           Data.Bifunctor             (Bifunctor (first))
 import           Data.Maybe
 import           Semantics.Prgm
+import           Semantics.Types            (partialKey)
 import           Syntax.Ct.Parser.Decl
 import           Syntax.Ct.Parser.Expr
 import           Syntax.Ct.Parser.Lexer
@@ -70,12 +71,20 @@ pCommentStatement = do
   c <- pComment
   return $ RawStatementTree (RawAnnot c) []
 
+pPrintStatement :: Parser PStatementTree
+pPrintStatement = do
+  _ <- string "> "
+  e <- pExpr
+  let annot = rawVal printAnnot `applyRawArgs` [(Just $ partialKey printAnnotText, e)]
+  return $ RawStatementTree (RawAnnot annot) []
+
 
 pStatementTree :: Parser PStatementTree
 pStatementTree = do
   notFollowedBy newline
   liftPStatement pTypeStatement
     <|> pCommentStatement
+    <|> pPrintStatement
     <|> liftPStatement (RawAnnot <$> pCompAnnot)
     <|> liftPStatement pModule
     <|> liftPStatement pApply

@@ -36,6 +36,10 @@ mdAnnot, mdAnnotText :: String
 mdAnnot = "/Catln/#md"
 mdAnnotText = "text"
 
+printAnnot, printAnnotText :: String
+printAnnot = "/Catln/#print"
+printAnnotText = "p"
+
 ctxAnnot :: String
 ctxAnnot = "/Catln/#ctx"
 

@@ -122,6 +122,9 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
         where
           (Just (_, Just (RawCExpr _ (CStr annotText)))) = H.lookup (partialKey mdAnnotText) $ exprAppliedArgsMap annot
           annotText' = concatMap (\c -> if c == '\n' then "\n" ++ formatIndent (indent + 1) else pure c) annotText
+      RawAnnot annot | exprPath annot == printAnnot -> case H.lookup (partialKey printAnnotText) $ exprAppliedArgsMap annot of
+                         (Just (_, Just (RawCExpr _ (CStr t)))) -> printf "> %s" t
+                         e -> error $ printf "Can't format unexpected print annot %s" (show e)
       RawAnnot annot -> formatExpr annot
       RawApplyStatement (RawApply terms) -> "apply " ++ unwords (formatExpr term1 : map formatTerm termsRest)
         where
