@@ -17,17 +17,16 @@ import           Data.List
 import           Data.List.Split
 import           Data.Maybe
 import           Semantics.Prgm
-import           Syntax.Ct.Desugarf.Expr (SemiDesMode (SDOutput), semiDesExpr)
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 import           System.Directory
 import           Text.Printf
 
-fileExtensionParsers :: H.HashMap String (String -> RawFileImport)
+fileExtensionParsers :: H.HashMap String (String -> RawExpr ())
 fileExtensionParsers = H.fromList [
-  ("ct", \n -> mkRawFileImport $ rawVal "ct" `applyRawArgs` [(Nothing, rawStr n)]),
-  ("ctx", \n -> mkRawFileImport $ rawVal "ctx" `applyRawArgs` [(Nothing, rawStr n)]),
-  ("hs", \n -> mkRawFileImport $ rawVal "haskell" `applyRawArgs` [(Nothing, rawStr n)])
+  ("ct", \n -> rawVal "ct" `applyRawArgs` [(Nothing, rawStr n)]),
+  ("ctx", \n -> rawVal "ctx" `applyRawArgs` [(Nothing, rawStr n)]),
+  ("hs", \n -> rawVal "haskell" `applyRawArgs` [(Nothing, rawStr n)])
                              ]
 
 isSupportedFileExtension :: String -> Bool
@@ -58,7 +57,7 @@ dirParser imp = do
 
   return (dirPrgm, map (mkRawFileImport . rawStr) $ catMaybes files')
 
-inferRawImportStr :: String -> IO RawFileImport
+inferRawImportStr :: String -> IO (RawExpr ())
 inferRawImportStr name = do
   isFile <- doesFileExist name
   isDir <- doesDirectoryExist name
@@ -70,8 +69,5 @@ inferRawImportStr name = do
         Nothing -> fail $ printf "Unexpected file extension in import %s" name
     (False, True) -> do -- directory
       absName <- makeAbsolute name
-      return $ mkRawFileImport (rawVal "dir" `applyRawArgs` [(Nothing, rawStr absName)])
+      return (rawVal "dir" `applyRawArgs` [(Nothing, rawStr absName)])
     _ -> fail $ printf "Could not find file or directory %s" name
-
-inferImportStr :: String -> IO FileImport
-inferImportStr = fmap (semiDesExpr SDOutput Nothing . rawImpAbs) . inferRawImportStr

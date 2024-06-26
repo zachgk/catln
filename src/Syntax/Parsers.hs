@@ -41,14 +41,16 @@ importParsers = H.fromList [
 
 -- Processes an import, producing the rawImpAbs and rawImpDisp
 canonicalImport :: RawFileImport -> IO RawFileImport
-canonicalImport RawFileImport{rawImpAbs=(RawCExpr _ (CStr name))} = inferRawImportStr name >>= canonicalImport
+canonicalImport imp@RawFileImport{rawImpAbs=(RawCExpr _ (CStr name))} = do
+  inferred <- inferRawImportStr name
+  canonicalImport imp{rawImpAbs=inferred}
 canonicalImport imp = case maybeExprPath $ rawImpAbs imp of
   Nothing -> fail $ printf "Invalid import %s must be string or oject" (show imp)
   Just _ -> return imp{rawImpDisp=disp'}
   where
     disp' = case exprAppliedArgs $ rawImpAbs imp of
-      (ObjArr{oaArr=(Just (RawCExpr _ (CStr s)), _)}:_) -> Just s
-      _                                                 -> Nothing
+      [ObjArr{oaArr=(Just (RawCExpr _ (CStr s)), _)}] -> Just s
+      _                                               -> Nothing
 
 mkRawCanonicalImportStr :: String -> IO RawFileImport
 mkRawCanonicalImportStr = canonicalImport . mkRawFileImport . RawCExpr emptyMetaN . CStr
@@ -74,15 +76,16 @@ processParsed includeCore imp ((prgmImports, statements), extraImports) = do
   let prgm' = (prgmImports'', statements)
   return ((prgm', imp, prgmImports''), totalImports)
   where
-    name = case rawImpRaw imp of
+    name = case rawImpAbs imp of
       RawCExpr _ (CStr n) -> n
       RawTupleApply _ _ [RawObjArr{roaArr=Just (Just (RawCExpr _ (CStr n)), _, _)}] -> n
       _ -> ""
 
 parseFile :: Bool -> RawFileImport -> IO (CRes (GraphNodes (RawPrgm ()) RawFileImport))
 parseFile includeCore imp = do
-  r <- readImport imp
-  p <- processParsed includeCore imp r
+  imp' <- canonicalImport imp
+  r <- readImport imp'
+  p <- processParsed includeCore imp' r
   return $ pure $ fst p
 
 readFiles :: Bool -> [RawFileImport] -> IO (CRes (GraphData (RawPrgm ()) RawFileImport))
@@ -90,9 +93,12 @@ readFiles includeCore = fmap (pure . graphFromEdges) . aux [] S.empty
   where
     aux :: [GraphNodes (RawPrgm ()) RawFileImport] -> S.HashSet RawFileImport -> [RawFileImport] -> IO [GraphNodes (RawPrgm ()) RawFileImport]
     aux acc _ [] = return acc
-    aux acc visited (nextToVisit:restToVisit) | S.member nextToVisit visited = aux acc visited restToVisit
     aux acc visited (nextToVisit:restToVisit) = do
-      r <- readImport nextToVisit
-      (newPrgm, newToVisit) <- processParsed includeCore nextToVisit r
-      let restToVisit' = newToVisit ++ restToVisit
-      aux (newPrgm : acc) (S.insert nextToVisit visited) restToVisit'
+      nextToVisit' <- canonicalImport nextToVisit
+      if S.member nextToVisit' visited
+        then aux acc visited restToVisit
+        else do
+          r <- readImport nextToVisit'
+          (newPrgm, newToVisit) <- processParsed includeCore nextToVisit' r
+          let restToVisit' = newToVisit ++ restToVisit
+          aux (newPrgm : acc) (S.insert nextToVisit' visited) restToVisit'
