@@ -115,7 +115,7 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
         then printf "annot %s" (formatExpr typeExpr)
         else printf "data %s" (formatExpr typeExpr)
       RawClassDefStatement (obj, className) -> printf "every %s%s" (formatExpr obj) (formatIsa className)
-      RawClassDeclStatement clss -> printf "class %s" (formatExpr clss)
+      RawClassDeclStatement clss extends -> printf "class %s%s" (formatExpr clss) (formatIsa extends)
       RawExprStatement e -> formatExpr e
       RawAnnot annot | exprPath annot == mdAnnot -> printf "# %s" annotText'
         where

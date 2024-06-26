@@ -86,7 +86,7 @@ data RawStatement e m
   | MultiTypeDefStatement (MultiTypeDef m)
   | TypeDefStatement (e m)
   | RawClassDefStatement (RawClassDef m)
-  | RawClassDeclStatement (e m)
+  | RawClassDeclStatement (e m) (ExtendedClasses RawExpr m)
   | RawExprStatement (e m)
   | RawAnnot (CompAnnot (e m))
   | RawApplyStatement (RawApply e m)

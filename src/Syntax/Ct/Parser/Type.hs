@@ -38,12 +38,12 @@ pClassStatement = do
   clss <- term
   maybeTypes <- optional $ do
     _ <- symbol "="
-    terms <- pMultiTerm
-    extends <- optional pExtends
-    return (terms, fromMaybe [] extends)
+    pMultiTerm
+  extends <- optional pExtends
+  let extends' = fromMaybe [] extends
   return $ case maybeTypes of
-    Just (types, extends) -> MultiTypeDefStatement (MultiTypeDef clss types extends)
-    Nothing    -> RawClassDeclStatement clss
+    Just types -> MultiTypeDefStatement (MultiTypeDef clss types extends')
+    Nothing    -> RawClassDeclStatement clss extends'
 
 pAnnotDefStatement :: Parser PStatement
 pAnnotDefStatement = do

@@ -183,11 +183,12 @@ desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef clssExpr dataExprs e
         Nothing -> Right e
       eitherTypeVarExpr e                      = Right e
 
-desClassDecl :: StatementEnv -> PExpr -> [RawStatementTree RawExpr ParseMetaDat] -> CRes DesPrgm
-desClassDecl statementEnv@(inheritPath, _) clssExpr subStatements = do
+desClassDecl :: StatementEnv -> PExpr -> ExtendedClasses RawExpr ParseMetaDat -> [RawStatementTree RawExpr ParseMetaDat] -> CRes DesPrgm
+desClassDecl statementEnv@(inheritPath, _) clssExpr extends subStatements = do
   let path = getPath $ exprPath clssExpr
   let clss@PartialType{ptName=className} = exprToPartialType clssExpr
-  let classGraph' = ClassGraph $ graphFromEdges [(CGClass (False, clss, [], desObjDocComment subStatements), PClassName (addPath inheritPath className), [])]
+  let extendNodes = [(CGClass (False, exprToPartialType extendClass, [singletonType clss], Nothing), PClassName (exprPath extendClass), [PClassName $ ptName clss]) | extendClass <- extends]
+  let classGraph' = ClassGraph $ graphFromEdges ((CGClass (False, clss, [], desObjDocComment subStatements), PClassName (addPath inheritPath className), []):extendNodes)
   (subPrgm, _) <- desInheritingSubstatements statementEnv path subStatements
   return $ mergePrgm ([], classGraph', []) subPrgm
 
@@ -223,7 +224,7 @@ desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree state
   MultiTypeDefStatement multiTypeDef -> desMultiTypeDef statementEnv multiTypeDef subStatements
   TypeDefStatement typeDef -> desTypeDef statementEnv typeDef subStatements
   RawClassDefStatement classDef -> desClassDef statementEnv False classDef subStatements
-  RawClassDeclStatement classDecls -> desClassDecl statementEnv classDecls subStatements
+  RawClassDeclStatement classDecls extends -> desClassDecl statementEnv classDecls extends subStatements
   RawExprStatement e -> CErr [MkCNote $ GenCErr (getMetaPos $ getExprMeta e) $ printf "All expression statements should be in a nested declaration but instead found: %s" (show e)]
   RawAnnot a | null subStatements -> do
                  a' <- desGlobalAnnot a
