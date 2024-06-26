@@ -23,9 +23,17 @@ import           Syntax.Ct.Parser.Lexer
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 
-
 pMultiTerm :: Parser [PExpr]
-pMultiTerm = sepBy1 term (symbol "||")
+pMultiTerm = sepBy1 item (symbol "||")
+  where
+    item = do
+      t <- term
+      maybeWhere <- optional $ do
+        _ <- symbol "| "
+        term
+      case maybeWhere of
+        Nothing -> return t
+        Just wh -> return $ RawWhere t wh
 
 pExtends :: Parser (ExtendedClasses RawExpr ParseMetaDat)
 pExtends = do

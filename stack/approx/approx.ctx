@@ -48,7 +48,7 @@ data LiftApprox[$T](val -> $T) isa Approx[$T]
   :LiftApprox.isPerfect= True
 
 
-class ProbMap[$T] = ProbMap/Unnormalized[$T](vals) where sum(vals) == 1
+class ProbMap[$T] = ProbMap/Unnormalized[$T](vals) | (sum(vals) == 1)
 
 data ProbMap/Unnormalized[$T](vals -> Map[$T, Probability]) isa Approx[$T], Distribution[$T]
 
