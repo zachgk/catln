@@ -73,6 +73,8 @@ ops = [
     , InfixL (mkOp2 "||" <$ symbol "||")
     , InfixL (mkOp2 "^" <$ symbol "^")
     ],
+    [ InfixL (mkOp2 "?->" <$ symbol "?->")
+    ],
     [ InfixL (RawWhere <$ symbol "|") ]
   ]
 

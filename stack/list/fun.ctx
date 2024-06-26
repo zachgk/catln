@@ -1,25 +1,25 @@
-# # Function List
-
 import "iterator.ctx"
 
-module Data/List
+# # Function List
 
-  data FunList<$T>(length: Int, f(x: Int_from(0)_to(length)) -> $T)
+module Data/List
+  data FunList[$T](length -> Int, f(x -> Int_from(0)_to(length)) -> $T)
     # A virtual [List] represented by a function.
       Similarly to the [Iterator], it can act as a glue between [List] types and operations.
       However, it applies only to randomly accessible lists and to parallel operations.
 
-  every FunList<$T> isa List<$T>
 
-FunList<$T>(length, f) -> Iterator<$T=$T> =
+  every FunList[$T] isa List[$T]
+
+
+FunList[$T](length, f) -> Iterator[$T -> $T] =
   # Every [FunList] can be converted into an [Iterator]
+  f2(x -> Int_from(0)_to(length)) -> IteratorResult
+  f2(x= length)= IteratorDone
+  f2(x -> Int_lt(length))= IteratorNext(nextState= x + 1, val= f(x))
+  Iterator(length= length, f= f2)
 
-  f2(x: Int_from(0)_to(length)) -> IteratorResult
-  f2(x = length) = IteratorDone
-  f2(x: Int_lt(length)) = IteratorNext(nextState= x+1, val=f(x))
-
-  Iterator(length=length, f=f2)
-
-:FunList<$T>(length, f=f1).map(f(x: $T) -> $T2=f2) = FunList<$T2>(length=length, f(x)=f2(f1(x)))
+:FunList[$T](length, f= f1).map(f(x -> $T) -> $T2= f2)= FunList[$T2](length= length, f(x)= f2(f1(x)))
   # One useful aspect of the [FunList] is that it allows deferring map operations.
     Here, we can use the map to create a variant [FunList] that applies both functions.
+
