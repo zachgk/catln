@@ -1,5 +1,5 @@
-import stack/core/primitives.ct
-import stack/core/data.ct
+import "stack/core/primitives.ct"
+import "stack/core/data.ct"
 
 
 module Catln
@@ -15,22 +15,22 @@ module Catln
       But, all of the impurity is managed in this single type.
 
 
-  :IO.exit(val: Integer) -> IO
+  :IO.exit(val -> Integer) -> IO
     # [exit] will immediately terminate the process and return [val] as the status value.
 
-  :IO.println(msg: String) -> IO
+  :IO.println(msg -> String) -> IO
     # [println] will print the [msg] to the standard output along with a newline character.
 
   # ## Core Annotations
     The core annotations are all of the annotations used by the compiler and the web docs program.
 
-  annot #md(text: String)
+  annot #md(text -> String)
     # [#md] is used to provide markdown text.
       It is the standard format used for comments.
       Typically, it is written with the syntax sugar of "# commentText".
 
 
-  annot #name(name: String)
+  annot #name(name -> String)
     # A [#name] is used to differentiate multiple definitions of the same function.
 
 
@@ -49,7 +49,7 @@ module Catln
     # [#argEnd] is used internally to annotate the last argument in a parenthesis.
 
 
-  annot #assert(test: Boolean)
+  annot #assert(test -> Boolean)
     # [#assert] will check if the [test]ed value is true.
       The test is used only when testing a function, and is not included as part of the actual build.
       It can be used to illustrate properties which are known about a particular value in a function or ways to verify the correctness of a value.
@@ -57,11 +57,11 @@ module Catln
       If you call a function during testing that features an assertion, that assertion will still be checked.
 
 
-  annot #assert(test: Boolean, msg: String)
+  annot #assert(test -> Boolean, msg -> String)
     # The [#assert] can also include a [msg] to be displayed for debugging purposes.
 
 
-  annot #print(p: CatlnResult..)
+  annot #print(p -> CatlnResult..)
     # The print annotation is used to display computed values inside webdocs.
       It can be used to avoid manually writing computed values into code, display temporary values, and visualizations.
 
@@ -86,25 +86,25 @@ module Catln
 
   # ## Result Classes
 
-  data CatlnResult(name: String, contents: String)
+  data CatlnResult(name -> String, contents -> String)
     # The [CatlnResult] represents the result of a catln build.
       The most typical results are compiled executables.
       But, they could also be other kinds of results such as websites or cloud configurations.
       Any global value which has type [CatlnResult] can be called through `catln build [FILE] [VALUE]`.
 
 
-  www(html: String)= CatlnResult(name= "index.html", contents= html)
+  www(html -> String)= CatlnResult(name= "index.html", contents= html)
     # [www] is used to build web results.
 
   llvm(c) -> CatlnResult..
     # [llvm] runs the [LLVM Compiler](https://llvm.org/) to build the runnable argument [c] into a [CatlnResult] executable.
 
   class ThenElse = Then | Else
-    fromBool(v: Boolean) -> ThenElse
+    fromBool(v -> Boolean) -> ThenElse
 
-    fromBool(v=/Data/Primitive/True)= Then
+    fromBool(v= /Data/Primitive/True)= Then
 
-    fromBool(v=/Data/Primitive/False)= Else
+    fromBool(v= /Data/Primitive/False)= Else
 
 
 

@@ -1,5 +1,5 @@
-import stack/core/primitives.ct
-import stack/core/compile.ct
+import "stack/core/primitives.ct"
+import "stack/core/compile.ct"
 
 
 module Data/Algebra
@@ -18,7 +18,7 @@ module Data/Algebra
       Note that it only compares like items with each other, not that you can compare apples to oranges.
 
 
-  (_:: $T != _:: $T)[$T: /Data/Algebra/Eq] -> Boolean
+  (_ :: $T != _ :: $T)[$T -> /Data/Algebra/Eq] -> Boolean
     # This checks if two items are not equal.
 
   # It is the opposite of [operator==] leading to the simple definition:
@@ -36,6 +36,7 @@ module Data/Algebra
   class Ord
     # Ord is used to define types which can be strictly ordered.
       Every element, when compared must have one of the following [Ordering] relationships:
+
 
   every Number isa /Data/Algebra/Ord
 
@@ -62,9 +63,9 @@ module Data/Algebra
   # This means that something fully ordered can still take advantage of many of the same functions as partially ordered ones.
     It just usually has a more specific result.
 
-  compare[$T: Ord](l: $T, r: $T) -> Ordering
+  compare[$T -> Ord](l -> $T, r -> $T) -> Ordering
 
-  compare[$T: POrd](l: $T, r: $T) -> POrdering
+  compare[$T -> POrd](l -> $T, r -> $T) -> POrdering
 
   # The only major function for ordering is [compare].
     Comparing two [Ord] will result in an [Ordering].
@@ -73,13 +74,13 @@ module Data/Algebra
   # ### Operators for ordering
     Besides compare, there are also some operators to make using ordering easier.
 
-  (_:: $T <= _:: $T)[$T: Ord] -> Boolean
+  (_ :: $T <= _ :: $T)[$T -> Ord] -> Boolean
 
-  (_:: $T >= _:: $T)[$T: Ord] -> Boolean
+  (_ :: $T >= _ :: $T)[$T -> Ord] -> Boolean
 
-  (_:: $T < _:: $T)[$T: Ord] -> Boolean
+  (_ :: $T < _ :: $T)[$T -> Ord] -> Boolean
 
-  (_:: $T > _:: $T)[$T: Ord] -> Boolean
+  (_ :: $T > _ :: $T)[$T -> Ord] -> Boolean
 
   every POrd isa /Data/Algebra/Eq
     # If something can be compared for order, it should also be comparable for equality by the following relationship:
@@ -104,9 +105,9 @@ module Data/Algebra
 
   every Semigroup isa /Data/Algebra/Eq
 
-  (_:: $T ++ _:: $T)[$T: Semigroup] -> $T
+  (_ :: $T ++ _ :: $T)[$T -> Semigroup] -> $T
 
-  testSemigroupAssociative[$T: Semigroup](a: $T, b: $T, c: $T) =
+  testSemigroupAssociative[$T -> Semigroup](a -> $T, b -> $T, c -> $T) =
     #test
     #assert(test= (a ++ b) ++ c == a ++ (b ++ c))
     0
@@ -120,17 +121,17 @@ module Data/Algebra
 
   every Monoid isa /Data/Algebra/Semigroup
 
-  mempty[$T: Monoid] -> $T
+  mempty[$T -> Monoid] -> $T
     # mempty is the "zero" or "empty" value that can be combined with [operator++] to result in the same operation
 
   # We can test to verify that [mempty] works with both the left and right.
 
   #test
-    testRightMonoidIdentity[$T: /Data/Algebra/Monoid](t: $T) =
+    testRightMonoidIdentity[$T -> /Data/Algebra/Monoid](t -> $T) =
       #assert(test= (t ++ mempty) == t)
       0
 
-    testLeftMonoidIdentity[$T: /Data/Algebra/Monoid](t: $T) =
+    testLeftMonoidIdentity[$T -> /Data/Algebra/Monoid](t -> $T) =
       #assert(test= mempty ++ t == t)
       0
 
@@ -149,7 +150,7 @@ module Data/Algebra
 
   # We can test to ensure that all [CommutativeMonoid]s satisfy the commutativity requirement.
 
-  testCommutativeMonoid[$T: /Data/Algebra/CommutativeMonoid](a: $T, b: $T) =
+  testCommutativeMonoid[$T -> /Data/Algebra/CommutativeMonoid](a -> $T, b -> $T) =
     #test
     #assert(test= a ++ b == b ++ a)
     0
@@ -163,11 +164,11 @@ module Data/Algebra
 
   every Group isa /Data/Algebra/Monoid
 
-  inverse[$T: Group](t: $T) -> $T
+  inverse[$T -> Group](t -> $T) -> $T
     # We can test to ensure that all [Group]s satisfy the inverse requirements.
       An inverse times itself should result in [mempty].
 
-  testGroup[$T: Group](t: $T) =
+  testGroup[$T -> Group](t -> $T) =
     #test
     #assert(test= t ++ inverse(t= t) == mempty)
     #assert(test= inverse(t= t) ++ t == mempty)

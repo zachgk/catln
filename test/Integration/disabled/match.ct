@@ -1,8 +1,8 @@
 # Tests the match syntax
 
-main{io: IO}= io.exit(val= abs(0))
+main{io -> IO}= io.exit(val= abs(0))
 
-abs(x: Integer)= match(x)
+abs(x -> Integer)= match(x)
   x2 | x >= 0= x2
   x2 else = x2 * -1
 

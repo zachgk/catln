@@ -1,11 +1,12 @@
 # Tests higher order functions
 
-data T(x: Integer)
+data T(x -> Integer)
 
-tst(d=T(x), f(y -> Integer) -> Boolean) -> Boolean
-tst(d=T(x), f(y -> Integer) -> Boolean) = f(y=x)
+tst(d= T(x), f(y -> Integer) -> Boolean) -> Boolean
 
-main{io: IO} =
+tst(d= T(x), f(y -> Integer) -> Boolean)= f(y= x)
+
+main{io -> IO} =
   # #assert(test= tst(d=T(0), f(y)= y == 0))
   io
 

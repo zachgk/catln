@@ -6,7 +6,7 @@ b= True && True
 
 c= True || False
 
-main{io: IO} =
+main{io -> IO} =
   #assert(test= a)
   #assert(test= b)
   #assert(test= c)

@@ -2,9 +2,9 @@
 
 class Maybe[$T] = $T | /Nothing
 
-defInt(x: Integer)= x
+defInt(x -> Integer)= x
 
 defInt(x= Nothing)= 0
 
-main{io: IO}= io.exit(val= defInt(x= 0))
+main{io -> IO}= io.exit(val= defInt(x= 0))
 

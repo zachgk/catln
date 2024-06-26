@@ -4,5 +4,5 @@ fib(:Integer) | integer > 1= fib(integer= integer - 1) + fib(integer= integer - 
 
 fib(:Integer) else = 1
 
-main{io: IO}= io.exit(val= fib(3) - 3)
+main{io -> IO}= io.exit(val= fib(3) - 3)
 

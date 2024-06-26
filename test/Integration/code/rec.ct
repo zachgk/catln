@@ -1,8 +1,8 @@
 # Tests recursion
 
-fact(x: Integer) | x == 1= 1
+fact(x -> Integer) | x == 1= 1
 
-fact(x: Integer) else = x * fact(x= x - 1)
+fact(x -> Integer) else = x * fact(x= x - 1)
 
-main{io: IO}= io.exit(val= fact(3) - 6)
+main{io -> IO}= io.exit(val= fact(3) - 6)
 

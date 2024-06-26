@@ -35,9 +35,9 @@ import           Text.Printf
 pImport :: Parser RawFileImport
 pImport = do
   _ <- symbol "import"
-  imp <- some printChar
+  imp <- term
   _ <- newline
-  return $ mkRawFileImport $ rawStr imp
+  return $ mkRawFileImport imp
 
 liftPStatement :: Parser PStatement -> Parser PStatementTree
 liftPStatement pSt = L.indentBlock scn p
