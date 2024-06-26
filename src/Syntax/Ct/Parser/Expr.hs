@@ -54,6 +54,7 @@ ops = [
     [ InfixL (RawMethod <$ symbol ".")
     ],
     [ InfixL (mkOp2 "::" <$ symbol "::")
+    , InfixL (mkOp2 "~::" <$ symbol "~::")
     ],
     [ InfixL (mkOp2 "*" <$ symbol "*")
     , InfixL (mkOp2 "//" <$ symbol "//")
@@ -163,17 +164,10 @@ pArgsSuffix = do
   pos2 <- getSourcePos
   return $ ArgsSuffix (emptyMeta pos1 pos2) args
 
-pVarSuffix :: Parser PObjArr
-pVarSuffix = do
-  var <- pArrowFull ArgObj
-  case var of
-    RawObjArr{roaObj=Just (RawValue _ ('$':_))} -> return var
-    _ -> fail $ printf "Invalid type var: %s" (show var)
-
 pVarsSuffix :: Parser TermSuffix
 pVarsSuffix = do
   pos1 <- getSourcePos
-  vars <- squareBraces $ sepBy1 pVarSuffix (symbol ",")
+  vars <- squareBraces $ sepBy1 pArgSuffix (symbol ",")
   pos2 <- getSourcePos
   return $ VarsSuffix (emptyMeta pos1 pos2) vars
 
