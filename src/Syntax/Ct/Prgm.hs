@@ -84,7 +84,7 @@ data Path = Relative String | Absolute String
 data RawStatement e m
   = RawDeclStatement (RawObjArr e m)
   | MultiTypeDefStatement (MultiTypeDef m)
-  | TypeDefStatement (e m)
+  | TypeDefStatement (e m) (ExtendedClasses RawExpr m)
   | RawClassDefStatement (RawClassDef m)
   | RawClassDeclStatement (e m) (ExtendedClasses RawExpr m)
   | RawExprStatement (e m)

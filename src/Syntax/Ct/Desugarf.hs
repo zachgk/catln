@@ -192,13 +192,16 @@ desClassDecl statementEnv@(inheritPath, _) clssExpr extends subStatements = do
   (subPrgm, _) <- desInheritingSubstatements statementEnv path subStatements
   return $ mergePrgm ([], classGraph', []) subPrgm
 
-desTypeDef :: StatementEnv -> PExpr -> [RawStatementTree RawExpr ParseMetaDat] -> CRes DesPrgm
-desTypeDef statementEnv@(inheritPath, _) typeExpr subStatements = do
+desTypeDef :: StatementEnv -> PExpr -> ExtendedClasses RawExpr ParseMetaDat -> [RawStatementTree RawExpr ParseMetaDat] -> CRes DesPrgm
+desTypeDef statementEnv@(inheritPath, _) typeExpr extends subStatements = do
   (subPrgm, annots) <- desInheritingSubstatements statementEnv (getPath $ exprPath typeExpr) subStatements
   let typeExpr' = semiDesExpr SDType Nothing typeExpr
+  let type' = exprToPartialType typeExpr
   let obj = desObj False inheritPath UseRelativeName $ ObjArr (Just typeExpr') TypeObj (desObjDocComment subStatements) annots (Nothing, emptyMetaE "arrM" typeExpr)
   let objMap = [obj]
-  return $ mergePrgm (objMap, classGraphFromObjs objMap, []) subPrgm
+  let extendNodes = [(CGClass (False, exprToPartialType extendClass, [singletonType type'], Nothing), PClassName (exprPath extendClass), [PTypeName $ ptName type']) | extendClass <- extends]
+  let classGraph = mergeClassGraphs (classGraphFromObjs objMap) (ClassGraph $ graphFromEdges extendNodes)
+  return $ mergePrgm (objMap, classGraph, []) subPrgm
 
 desClassDef :: StatementEnv -> Sealed -> RawClassDef ParseMetaDat -> [RawStatementTree RawExpr ParseMetaDat] -> CRes DesPrgm
 desClassDef statementEnv@(inheritPath, _) sealed (typeExpr, extends) subStatements = do
@@ -222,7 +225,7 @@ desStatement :: StatementEnv -> PStatementTree -> CRes DesPrgm
 desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree statement subStatements) = case statement of
   RawDeclStatement decl -> desDecl statementEnv decl subStatements
   MultiTypeDefStatement multiTypeDef -> desMultiTypeDef statementEnv multiTypeDef subStatements
-  TypeDefStatement typeDef -> desTypeDef statementEnv typeDef subStatements
+  TypeDefStatement typeDef extends -> desTypeDef statementEnv typeDef extends subStatements
   RawClassDefStatement classDef -> desClassDef statementEnv False classDef subStatements
   RawClassDeclStatement classDecls extends -> desClassDecl statementEnv classDecls extends subStatements
   RawExprStatement e -> CErr [MkCNote $ GenCErr (getMetaPos $ getExprMeta e) $ printf "All expression statements should be in a nested declaration but instead found: %s" (show e)]

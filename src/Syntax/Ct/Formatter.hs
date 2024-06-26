@@ -111,9 +111,10 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
       MultiTypeDefStatement (MultiTypeDef clss objs extends) -> printf "class %s = %s%s" (formatExpr clss) showObjs (formatIsa extends)
         where
           showObjs = intercalate " | " $ map formatExpr objs
-      TypeDefStatement typeExpr -> if "#" `isPrefixOf` exprPath typeExpr
-        then printf "annot %s" (formatExpr typeExpr)
-        else printf "data %s" (formatExpr typeExpr)
+      TypeDefStatement typeExpr extends -> printf "%s %s%s" kw (formatExpr typeExpr) (formatIsa extends)
+        where
+          kw :: String
+          kw = if "#" `isPrefixOf` exprPath typeExpr then "annot" else "data"
       RawClassDefStatement (obj, className) -> printf "every %s%s" (formatExpr obj) (formatIsa className)
       RawClassDeclStatement clss extends -> printf "class %s%s" (formatExpr clss) (formatIsa extends)
       RawExprStatement e -> formatExpr e

@@ -45,15 +45,13 @@ pClassStatement = do
     Just types -> MultiTypeDefStatement (MultiTypeDef clss types extends')
     Nothing    -> RawClassDeclStatement clss extends'
 
-pAnnotDefStatement :: Parser PStatement
-pAnnotDefStatement = do
-  _ <- symbol "annot"
-  TypeDefStatement <$> term
-
 pTypeDefStatement :: Parser PStatement
 pTypeDefStatement = do
-  _ <- symbol "data"
-  TypeDefStatement <$> term
+  _ <- symbol "data" <|> symbol "annot"
+  d <- term
+  extends <- optional pExtends
+  let extends' = fromMaybe [] extends
+  return $ TypeDefStatement d extends'
 
 pClassDefStatement :: Parser PStatement
 pClassDefStatement = do
@@ -65,6 +63,5 @@ pClassDefStatement = do
 
 pTypeStatement :: Parser PStatement
 pTypeStatement = pClassStatement
-                 <|> pAnnotDefStatement
                  <|> pTypeDefStatement
                  <|> pClassDefStatement
