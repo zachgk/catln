@@ -1,9 +1,12 @@
 # Tests two functions that are recursive by mutually calling each other.
 
-even(Integer x) if x == 0 = 0
-even(Integer x) else = odd(x=x-1)
+even(x -> Integer) | x == 0= 0
 
-odd(Integer x) if x == 0 = 1
-odd(Integer x) else = even(x=x-1)
+even(x -> Integer) else = odd(x= x - 1)
 
-main{IO io} = io.exit(val=odd(x=4))
+odd(x -> Integer) | x == 0= 1
+
+odd(x -> Integer) else = even(x= x - 1)
+
+main{io -> IO}= io.exit(val= odd(x= 4))
+

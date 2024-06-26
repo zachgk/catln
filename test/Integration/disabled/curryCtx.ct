@@ -1,9 +1,10 @@
 # Tests currying values with context
 
-outerVar = 5 - 3 == 2
+outerVar= 5 - 3 == 2
 
-main{IO io} =
-  innerVar = 1 + 1 == 2
-  #assert(test=outerVar)
-  #assert(test=innerVar)
+main{io -> IO} =
+  innerVar= 1 + 1 == 2
+  #assert(test= outerVar)
+  #assert(test= innerVar)
   io
+

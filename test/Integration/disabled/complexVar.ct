@@ -1,7 +1,8 @@
 # Tests data classes and matching values in functions (c=Type(...)) with type vars
 
-data Complex<Number $N>($N a, $N b)
+data Complex[$N -> Number](a -> $N, b -> $N)
 
-real(c=Complex(a, b)) = a
+real(c= Complex(a, b))= a
 
-main{IO io} = io.exit(val=real(c=Complex(a=0, b=7)))
+main{io -> IO}= io.exit(val= real(c= Complex(a= 0, b= 7)))
+

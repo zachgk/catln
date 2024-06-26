@@ -1,8 +1,10 @@
 # Tests a simple data structure with a sum type
 
-class Maybe<$T> = Just<$T>($T val) | Nothing
+class Maybe[$T] = Just[$T](val -> $T) | Nothing
 
-defInt(x=Just(Integer val)) = val
-defInt(x=Nothing) = 0
+defInt(x= Just(val -> Integer))= val
 
-main{IO io} = io.exit(val=defInt(x=Just(val=0)))
+defInt(x= Nothing)= 0
+
+main{io -> IO}= io.exit(val= defInt(x= Just(val= 0)))
+

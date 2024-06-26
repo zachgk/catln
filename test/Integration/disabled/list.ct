@@ -1,7 +1,10 @@
 # The list tests recursive data structures without type variables
 
 # TODO: Use core length rather than llength
-Nil.llength = 0
-Cons(head, tail).llength = 1 + tail.llength
 
-main{IO io} = io.exit(val=[5, 3].llength - 2)
+Nil.llength= 0
+
+Cons(head, tail).llength= 1 + tail.llength
+
+main{io -> IO}= io.exit(val= [5, 3].llength - 2)
+
