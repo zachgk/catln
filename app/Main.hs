@@ -27,7 +27,7 @@ xRun prgmName function = do
   prgmName'' <- mkDesCanonicalImportStr prgmName
   maybeRawPrgm <- readFiles True [prgmName']
   case aux maybeRawPrgm prgmName'' of
-    CErr err   -> print err
+    CErr err   -> print $ prettyCNotes err
     CRes _ resIO -> do
       returnValue <- resIO
       case returnValue of
@@ -46,7 +46,7 @@ xBuild prgmName function = do
   prgmName'' <- mkDesCanonicalImportStr prgmName
   maybeRawPrgm <- readFiles True [prgmName']
   case aux maybeRawPrgm prgmName'' of
-    CErr err   -> print err
+    CErr err   -> print $ prettyCNotes err
     CRes _ resIO -> do
       returnValue <- resIO
       case returnValue of
@@ -75,7 +75,7 @@ xDocument prgmName outFname format = do
   prgmName' <- mkRawCanonicalImportStr prgmName
   maybeRawPrgm <- parseFile False prgmName'
   case maybeRawPrgm of
-    CErr err   -> print err
+    CErr err   -> print $ prettyCNotes err
     CRes _ (prgm, _, _) -> do
       prgm' <- toDocument format prgm
       BSL.writeFile outFname prgm'
@@ -85,7 +85,7 @@ xConvert prgmName _outFname = do
   prgmName' <- mkRawCanonicalImportStr prgmName
   maybeRawPrgm <- parseFile False prgmName'
   case maybeRawPrgm of
-    CErr err   -> print err
+    CErr err   -> print $ prettyCNotes err
     CRes _ (prgm, _fileName, _) -> do
       -- TODO Print to file if outFname
       let prgm' = formatRootPrgm prgm
@@ -97,7 +97,7 @@ xFmt prgmName = do
   prgmName' <- mkRawCanonicalImportStr prgmName
   maybeRawPrgm <- parseFile False prgmName'
   case maybeRawPrgm of
-    CErr err   -> print err
+    CErr err   -> print $ prettyCNotes err
     CRes _ (prgm, _, _) -> do
       let prgm' = formatRootPrgm prgm
       writeFile prgmName prgm'
