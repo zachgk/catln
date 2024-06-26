@@ -106,8 +106,14 @@ pStringLiteral = do
 
 parenExpr ::  Parser PExpr
 parenExpr = do
-  e <- parens pExpr
-  return $ RawParen e
+  pos1 <- getSourcePos
+  e <- parens (try (Left <$> pExpr) <|> (Right <$> sepBy pArgSuffix (symbol ",")))
+  pos2 <- getSourcePos
+  return $ case e of
+    Left e' -> RawParen e' -- Paren
+    Right args -> do -- Tuple
+      let base = RawValue emptyMetaN ""
+      RawTupleApply (emptyMeta pos1 pos2) (labelPosM "arg" $ getExprMeta base, base) args
 
 pArrowFull :: ObjectBasis -> Parser PObjArr
 pArrowFull basis = do
