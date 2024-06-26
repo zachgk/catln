@@ -33,7 +33,7 @@ module Data
 
   # ## Collections
 
-  class Option[$T] = $T | None
+  class Option[$T] = $T || None
     # [Option] defines a type that might have a value or [None].
       It can be used to handle operations that are uncertain if they can produce a response.
 
@@ -48,7 +48,7 @@ module Data
 
   # A [List] is a collection of zero or more ordered items.
 
-  class ConsList[$T] = Cons[$T -> $T](head -> $T, tail -> ConsList[$T -> $T]) | Nil
+  class ConsList[$T] = Cons[$T -> $T](head -> $T, tail -> ConsList[$T -> $T]) || Nil
     # The simplest kind of list can be created by prepending.
       A [ConsList] defines a list either by prepending to a list or with an empty list.
 

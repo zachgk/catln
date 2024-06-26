@@ -110,7 +110,7 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
       RawDeclStatement objArr -> formatObjArr objArr
       MultiTypeDefStatement (MultiTypeDef clss objs extends) -> printf "class %s = %s%s" (formatExpr clss) showObjs (formatIsa extends)
         where
-          showObjs = intercalate " | " $ map formatExpr objs
+          showObjs = intercalate " || " $ map formatExpr objs
       TypeDefStatement typeExpr extends -> printf "%s %s%s" kw (formatExpr typeExpr) (formatIsa extends)
         where
           kw :: String

@@ -40,7 +40,7 @@ module Data/Algebra
 
   every Number isa /Data/Algebra/Ord
 
-  class Ordering = LessThan | Equal | GreaterThan
+  class Ordering = LessThan || Equal || GreaterThan
     # The Orderings can relate any like items of Ord. 
 
 
@@ -49,7 +49,7 @@ module Data/Algebra
       Partially ordered items can be compared, but may result in [NoOrdering]:
 
 
-  class POrdering = Ordering | NoOrdering
+  class POrdering = Ordering || NoOrdering
     # As an example, sets can be partially ordered by the subset operation.
       One set A <= B when A is a subset of B.
       An ordered example is {1} <= {1, 2}.

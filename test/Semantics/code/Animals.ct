@@ -3,11 +3,14 @@ data Number
 class Animal
 
 class Fish
+
 class Lizard
 
 every Fish isa /Animal
+
 every Lizard isa /Animal
 
-class Mammal = Cat | Dog isa /Animal
+class Mammal = Cat || Dog isa /Animal
 
 :Animal.weight -> Number
+

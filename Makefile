@@ -11,8 +11,7 @@ format:
 
 ctformat:
 	stack install
-	find stack -name "*.ct" -exec catln fmt {} \;
-	find test/Integration -name "*.ct" -exec catln fmt {} \;
+	find . -name "*.ct" -exec catln fmt {} \;
 
 ctxformat:
 	stack install

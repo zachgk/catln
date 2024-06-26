@@ -1,6 +1,6 @@
 # The intlist tests recursive data structures without type variables
 
-class IntList = IntCons(head -> Integer, tail -> IntList) | IntNil
+class IntList = IntCons(head -> Integer, tail -> IntList) || IntNil
 
 # operator+:(Integer l, ConsList r) = Cons(head=l, tail=r)
 

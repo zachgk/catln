@@ -29,7 +29,6 @@ import           Syntax.Ct.Desugarf.Expr
 import           Syntax.Ct.Parser.Lexer
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
-import           Text.Printf
 
 mkOp1 :: String -> PExpr -> PExpr
 mkOp1 opChars x = applyRawArgs (RawValue emptyMetaN op) [(Just $ partialKey operatorArgUnary, x)]

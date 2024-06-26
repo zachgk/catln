@@ -8,7 +8,7 @@ module Data/Primitive
 
   # ## Booleans
 
-  class Boolean = True | False
+  class Boolean = True || False
 
   every Boolean isa /Data/Algebra/Eq
 
@@ -60,7 +60,7 @@ module Data/Primitive
 
   # ## Integers
 
-  class Number = Integer | Float
+  class Number = Integer || Float
 
   every Number isa /Data/Algebra/Eq
 

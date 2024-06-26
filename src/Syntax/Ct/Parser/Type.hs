@@ -25,7 +25,7 @@ import           Syntax.Ct.Prgm
 
 
 pMultiTerm :: Parser [PExpr]
-pMultiTerm = sepBy1 term (symbol "|")
+pMultiTerm = sepBy1 term (symbol "||")
 
 pExtends :: Parser (ExtendedClasses RawExpr ParseMetaDat)
 pExtends = do
