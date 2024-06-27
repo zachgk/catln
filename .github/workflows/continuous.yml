@@ -10,17 +10,24 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
-      - run: sudo apt-get update && sudo apt-get install -y llvm-8
-      - uses: actions/checkout@v1
-      - name: Cache dependencies
-        uses: actions/cache@v2
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        name: Cache ~/.stack
         with:
           path: ~/.stack
-          key: ${{ runner.os }}-store-${{ hashFiles('stack.yaml') }}
-      - uses: haskell/actions/setup@v1
+          key: ${{ runner.os }}-stack-global-${{ hashFiles('stack.yaml') }}-${{ hashFiles('package.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-stack-global-
+      - uses: actions/cache@v4
+        name: Cache .stack-work
+        with:
+          path: .stack-work
+          key: ${{ runner.os }}-stack-work-${{ hashFiles('stack.yaml') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('**/*.hs') }}
+          restore-keys: |
+            ${{ runner.os }}-stack-work-
+      - uses: haskell-actions/setup@v2
         with:
           enable-stack: true
-          stack-version: 'latest'
       - run: stack test --pedantic
