@@ -1,3 +1,4 @@
+
 # # NDArray
 
 class NDArray[$T]
@@ -8,18 +9,24 @@ class NDArray[$T]
     # A shape represents the dimensionality and sizes along each dimension.
       For example, a scalar is length 0, vector is length 1, matrix is length 2, etc.
 
+
   :NDArray.shape -> Shape
 
-  :NDArray.size = this.shape.prod
+  :NDArray.size= this.shape.prod
     # The number of elements in the [NDArray]
 
   :NDArray[$T].flatten -> List[$T]
 
-  data ListNDArray/Invalid[$T](:Shape, flatten: List[$T])
-  class ListNDArray[$T] = ListNDArray/Invalid[$T] where shape.prod == flatten.length
+  data ListNDArray/Invalid[$T](:Shape, flatten -> List[$T])
+
+  class ListNDArray[$T] = ListNDArray/Invalid[$T] | (shape.prod == flatten.length)
     # A simple definition for the 
 
-  :ListNDArray.size = this.flatten.size
 
-  every NDArray[$T: $T] isa Functor
-  :NDArray.map(f) = ListNDArray(shape=this.shape, flatten=this.flatten.map(f))
+  :ListNDArray.size= this.flatten.size
+
+  every NDArray[$T -> $T] isa Functor
+
+  :NDArray.map(f)= ListNDArray(shape= this.shape, flatten= this.flatten.map(f))
+
+

@@ -2,9 +2,9 @@
 module Web/Http
   data Request
 
-  data Response(code: Int, headers: Bag[$T: Response/Header], body: Optional[$T: String])
+  data Response(code -> Int, headers -> Bag[$T -> Response/Header], body -> Optional[$T -> String])
 
-  server(f(request: Request) -> Response)
+  server(f(request -> Request) -> Response)
 
   class Error
 

@@ -198,9 +198,19 @@ pVarsSuffix = do
 pContextSuffix :: Parser TermSuffix
 pContextSuffix = do
   pos1 <- getSourcePos
-  ctxs <- curlyBraces $ sepBy (pArrowFullOA ArgObj) (symbol ",")
+  ctxsRW <- curlyBraces $ do
+    rw <- sepBy (pArrowFullOA ArgObj) (symbol ",")
+    ctxsRO <- optional $ do
+      _ <- symbol ";"
+      curlyBraces $ sepBy (pArrowFullOA ArgObj) (symbol ",")
+    ctxsCover <- optional $ do
+      _ <- symbol ";"
+      curlyBraces $ sepBy (pArrowFullOA ArgObj) (symbol ",")
+    case (ctxsRO, ctxsCover) of
+      (Nothing, Nothing) -> return rw
+      _ -> fail "Context with read-only or covered components are not yet supported"
   pos2 <- getSourcePos
-  return $ ContextSuffix (emptyMeta pos1 pos2) ctxs
+  return $ ContextSuffix (emptyMeta pos1 pos2) ctxsRW
 
 pAliasSuffix :: Parser TermSuffix
 pAliasSuffix = do
