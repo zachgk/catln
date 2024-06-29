@@ -22,6 +22,7 @@ import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer     as L
 
 import           CtConstants
+import           Maybes                         (rightToMaybe)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
@@ -117,6 +118,12 @@ parenExpr = do
       let base = RawValue emptyMetaN ""
       RawTupleApply (emptyMeta pos1 pos2) (labelPosM "arg" $ getExprMeta base, base) args
 
+pEndOfLine :: Parser ()
+pEndOfLine = do
+  _ <- many $ string " "
+  _ <- lookAhead newline
+  return ()
+
 pArrowFull :: ObjectBasis -> Parser PObjArr
 pArrowFull basis = do
   expr1 <- pExpr
@@ -126,7 +133,8 @@ pArrowFull basis = do
     term
   maybeExpr2 <- optional $ do
     _ <- symbol "=>" <|> symbol "="
-    optional $ try pExpr
+    afterEquals <- (Left <$> pEndOfLine) <|> (Right <$> pExpr)
+    return $ rightToMaybe afterEquals
   maybeDef <- optional $ do
     _ <- symbol "?"
     try pExpr

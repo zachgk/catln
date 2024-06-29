@@ -60,7 +60,7 @@ canonicalImport caller imp = case maybeExprPath $ rawImpAbs imp of
     calledDir' = rawImpDir =<< caller
 
 mkRawCanonicalImportStr :: String -> IO RawFileImport
-mkRawCanonicalImportStr = canonicalImport Nothing . mkRawFileImport . RawCExpr emptyMetaN . CStr
+mkRawCanonicalImportStr = canonicalImport Nothing . mkRawFileImport . rawStr
 
 mkDesCanonicalImportStr :: String -> IO FileImport
 mkDesCanonicalImportStr = fmap (semiDesExpr SDOutput Nothing . rawImpAbs) . mkRawCanonicalImportStr
