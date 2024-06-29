@@ -28,6 +28,7 @@ import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 import           Syntax.Haskell.Parser   (hsParser)
 import           Syntax.InferImport      (dirParser, inferRawImportStr)
+import           System.FilePath         (isAbsolute, joinPath, takeDirectory)
 import           Text.Printf
 import           Utils
 
@@ -40,20 +41,26 @@ importParsers = H.fromList [
                              ]
 
 -- Processes an import, producing the rawImpAbs and rawImpDisp
-canonicalImport :: RawFileImport -> IO RawFileImport
-canonicalImport imp@RawFileImport{rawImpAbs=(RawCExpr _ (CStr name))} = do
-  inferred <- inferRawImportStr name
-  canonicalImport imp{rawImpAbs=inferred}
-canonicalImport imp = case maybeExprPath $ rawImpAbs imp of
+canonicalImport :: Maybe RawFileImport -> RawFileImport -> IO RawFileImport
+canonicalImport caller imp@RawFileImport{rawImpAbs=(RawCExpr _ (CStr name))} = do
+  inferred <- inferRawImportStr caller name
+  canonicalImport caller imp{rawImpAbs=inferred}
+canonicalImport caller imp = case maybeExprPath $ rawImpAbs imp of
   Nothing -> fail $ printf "Invalid import %s must be string or oject" (show imp)
-  Just _ -> return imp{rawImpDisp=disp'}
+  Just _ -> do
+    impDir' <- case (calledDir', disp') of
+      (_, Just b) | isAbsolute b -> return $ Just $ takeDirectory b
+      (Just a, Just b)           -> return $ Just $ takeDirectory $ joinPath [a, b]
+      _                          -> return Nothing
+    return imp{rawImpDisp=disp', rawImpCalledDir=calledDir', rawImpDir=impDir'}
   where
     disp' = case exprAppliedArgs $ rawImpAbs imp of
       [ObjArr{oaArr=(Just (RawCExpr _ (CStr s)), _)}] -> Just s
       _                                               -> Nothing
+    calledDir' = rawImpDir =<< caller
 
 mkRawCanonicalImportStr :: String -> IO RawFileImport
-mkRawCanonicalImportStr = canonicalImport . mkRawFileImport . RawCExpr emptyMetaN . CStr
+mkRawCanonicalImportStr = canonicalImport Nothing . mkRawFileImport . RawCExpr emptyMetaN . CStr
 
 mkDesCanonicalImportStr :: String -> IO FileImport
 mkDesCanonicalImportStr = fmap (semiDesExpr SDOutput Nothing . rawImpAbs) . mkRawCanonicalImportStr
@@ -70,8 +77,8 @@ processParsed includeCore imp ((prgmImports, statements), extraImports) = do
   let prgmImports' = if includeCore && not ("stack/core" `isInfixOf` name)
       then mkRawFileImport (rawStr "stack/core") : prgmImports
       else prgmImports
-  prgmImports'' <- mapM canonicalImport prgmImports'
-  extraImports' <- mapM canonicalImport extraImports
+  prgmImports'' <- mapM (canonicalImport (Just imp)) prgmImports'
+  extraImports' <- mapM (canonicalImport (Just imp)) extraImports
   let totalImports = extraImports' ++ prgmImports''
   let prgm' = (prgmImports'', statements)
   return ((prgm', imp, prgmImports''), totalImports)
@@ -83,22 +90,23 @@ processParsed includeCore imp ((prgmImports, statements), extraImports) = do
 
 parseFile :: Bool -> RawFileImport -> IO (CRes (GraphNodes (RawPrgm ()) RawFileImport))
 parseFile includeCore imp = do
-  imp' <- canonicalImport imp
+  imp' <- canonicalImport Nothing imp
   r <- readImport imp'
   p <- processParsed includeCore imp' r
   return $ pure $ fst p
 
 readFiles :: Bool -> [RawFileImport] -> IO (CRes (GraphData (RawPrgm ()) RawFileImport))
-readFiles includeCore = fmap (pure . graphFromEdges) . aux [] S.empty
+readFiles includeCore initialImps = do
+  initialImps' <- mapM (canonicalImport Nothing) initialImps
+  pure . graphFromEdges <$> aux [] S.empty initialImps'
   where
     aux :: [GraphNodes (RawPrgm ()) RawFileImport] -> S.HashSet RawFileImport -> [RawFileImport] -> IO [GraphNodes (RawPrgm ()) RawFileImport]
     aux acc _ [] = return acc
     aux acc visited (nextToVisit:restToVisit) = do
-      nextToVisit' <- canonicalImport nextToVisit
-      if S.member nextToVisit' visited
+      if S.member nextToVisit visited
         then aux acc visited restToVisit
         else do
-          r <- readImport nextToVisit'
-          (newPrgm, newToVisit) <- processParsed includeCore nextToVisit' r
+          r <- readImport nextToVisit
+          (newPrgm, newToVisit) <- processParsed includeCore nextToVisit r
           let restToVisit' = newToVisit ++ restToVisit
-          aux (newPrgm : acc) (S.insert nextToVisit' visited) restToVisit'
+          aux (newPrgm : acc) (S.insert nextToVisit visited) restToVisit'

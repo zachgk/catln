@@ -20,6 +20,7 @@ import           Semantics.Prgm
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 import           System.Directory
+import           System.FilePath         (isAbsolute, joinPath)
 import           Text.Printf
 
 fileExtensionParsers :: H.HashMap String (String -> RawExpr ())
@@ -32,6 +33,14 @@ fileExtensionParsers = H.fromList [
 isSupportedFileExtension :: String -> Bool
 isSupportedFileExtension fileName = any ((`isSuffixOf` fileName) . ('.':)) (H.keys fileExtensionParsers)
 -- isSupportedFileExtension fileName = ".ct" `isSuffixOf` fileName || ".ctx" `isSuffixOf` fileName
+
+findExistingPath :: [FilePath] -> IO (Maybe FilePath)
+findExistingPath [] = return Nothing
+findExistingPath (p:ps) = do
+  exists <- doesPathExist p
+  if exists
+    then Just <$> makeAbsolute p
+    else findExistingPath ps
 
 dirParser :: ImportParser
 dirParser imp = do
@@ -57,17 +66,20 @@ dirParser imp = do
 
   return (dirPrgm, map (mkRawFileImport . rawStr) $ catMaybes files')
 
-inferRawImportStr :: String -> IO (RawExpr ())
-inferRawImportStr name = do
-  isFile <- doesFileExist name
-  isDir <- doesDirectoryExist name
-  case (isFile, isDir) of
-    (True, False) -> do -- file
-      absName <- makeAbsolute name
-      case H.lookup (last $ splitOn "." name) fileExtensionParsers of
-        Just parser -> return $ parser absName
-        Nothing -> fail $ printf "Unexpected file extension in import %s" name
-    (False, True) -> do -- directory
-      absName <- makeAbsolute name
-      return (rawVal "dir" `applyRawArgs` [(Nothing, rawStr absName)])
-    _ -> fail $ printf "Could not find file or directory %s" name
+inferRawImportStr :: Maybe RawFileImport -> String -> IO (RawExpr ())
+inferRawImportStr caller name = do
+  let paths = if isAbsolute name
+        then [name]
+        else catMaybes [caller >>= rawImpDir >>= (\p -> Just $ joinPath [p, name]), Just name]
+  name' <- findExistingPath paths
+  case name' of
+    Nothing -> fail $ printf "Could not find file or directory %s" name
+    Just name'' -> do
+      isFile <- doesFileExist name''
+      if isFile
+        then do
+          case H.lookup (last $ splitOn "." name'') fileExtensionParsers of
+            Just parser -> return $ parser name''
+            Nothing -> fail $ printf "Unexpected file extension in import %s" name''
+        else do
+          return (rawVal "dir" `applyRawArgs` [(Nothing, rawStr name'')])

@@ -97,9 +97,11 @@ data RawStatementTree e m = RawStatementTree (RawStatement e m) [RawStatementTre
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 data RawFileImport = RawFileImport {
-  rawImpRaw  :: RawExpr (),
-  rawImpAbs  :: RawExpr (),
-  rawImpDisp :: Maybe String
+  rawImpRaw       :: RawExpr (),
+  rawImpAbs       :: RawExpr (),
+  rawImpDisp      :: Maybe String,
+  rawImpCalledDir :: Maybe FilePath,
+  rawImpDir       :: Maybe FilePath
                                    } deriving (Show, Generic, ToJSON)
 type RawPrgm m = ([RawFileImport], [RawStatementTree RawExpr m]) -- TODO: Include [Export]
 
@@ -211,7 +213,7 @@ instance (Show m, Show (e m)) => Show (RawObjArr e m) where
         Nothing  -> ""
 
 mkRawFileImport :: RawExpr () -> RawFileImport
-mkRawFileImport e = RawFileImport e e Nothing
+mkRawFileImport e = RawFileImport e e Nothing Nothing Nothing
 
 desObjArr :: (ExprClass e, MetaDat m, Show m, Show (e m)) => RawObjArr e m -> [ObjArr e m]
 desObjArr (RawObjArr obj@(Just objExpr) basis doc annots arr Nothing) = [ObjArr obj basis doc annots arr']
