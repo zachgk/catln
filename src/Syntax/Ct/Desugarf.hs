@@ -228,6 +228,7 @@ desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree state
   TypeDefStatement typeDef extends -> desTypeDef statementEnv typeDef extends subStatements
   RawClassDefStatement classDef -> desClassDef statementEnv False classDef subStatements
   RawClassDeclStatement classDecls extends -> desClassDecl statementEnv classDecls extends subStatements
+  RawBindStatement{} -> error $ printf "Not yet implemented"
   RawExprStatement e -> CErr [MkCNote $ GenCErr (getMetaPos $ getExprMeta e) $ printf "All expression statements should be in a nested declaration but instead found: %s" (show e)]
   RawAnnot a | null subStatements -> do
                  a' <- desGlobalAnnot a

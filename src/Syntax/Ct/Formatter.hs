@@ -70,8 +70,9 @@ formatIsa :: ExtendedClasses RawExpr m -> String
 formatIsa []      = ""
 formatIsa classes = " isa " ++ intercalate ", " (map formatExpr classes)
 
-formatObjArr :: RawObjArr RawExpr m -> String
-formatObjArr roa@RawObjArr{roaObj, roaArr, roaDef} = printf "%s%s%s%s%s%s" (showE True roaObj) showElse showM showEquals (showE False roaArrExpr) showDef
+-- | Formats either ObjArr or Bind Statement
+formatObjArrLike :: String -> RawObjArr RawExpr m -> String
+formatObjArrLike eq roa@RawObjArr{roaObj, roaArr, roaDef} = printf "%s%s%s%s%s%s" (showE True roaObj) showElse showM showEquals (showE False roaArrExpr) showDef
   where
     roaArrExpr = fst3 =<< roaArr
 
@@ -91,8 +92,8 @@ formatObjArr roa@RawObjArr{roaObj, roaArr, roaDef} = printf "%s%s%s%s%s%s" (show
 
     showEquals :: String
     showEquals = case (roaObj, roaArr) of
-      _ | isNestedDeclaration       -> " ="
-      (Just _, Just (Just{}, _, _)) -> "= "
+      _ | isNestedDeclaration       -> " " ++ eq
+      (Just _, Just (Just{}, _, _)) -> eq ++ " "
       _                             -> ""
 
     showElse :: String
@@ -102,6 +103,9 @@ formatObjArr roa@RawObjArr{roaObj, roaArr, roaDef} = printf "%s%s%s%s%s%s" (show
     showDef = case roaDef of
       Just d  -> printf " ? %s" (formatExpr d)
       Nothing -> ""
+
+formatObjArr :: RawObjArr RawExpr m -> String
+formatObjArr = formatObjArrLike "="
 
 formatStatement :: (MetaDat m, Show m) => Int -> RawStatement RawExpr m -> String
 formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
@@ -117,6 +121,7 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
           kw = if "#" `isPrefixOf` exprPath typeExpr then "annot" else "data"
       RawClassDefStatement (obj, className) -> printf "every %s%s" (formatExpr obj) (formatIsa className)
       RawClassDeclStatement clss extends -> printf "class %s%s" (formatExpr clss) (formatIsa extends)
+      RawBindStatement oa -> formatObjArrLike "<-" oa
       RawExprStatement e -> formatExpr e
       RawAnnot annot | exprPath annot == mdAnnot -> printf "# %s" annotText'
         where

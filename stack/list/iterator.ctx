@@ -21,11 +21,11 @@ every Iterator[$T] isa List[$T]
 
 :Iterator[$T, $State](length, initState, f).flatMap(f=mapFun) =
   f2(x) =
-    - imperative
-    - returns
+    _ <- imperative
+    _ <- returns
     state <- var(x)
     while(state.().vals.length < 0)
-      - match(f(state.().s))
+      _ <- match(f(state.().s))
         IteratorNext(nextState, val) = state := (vals=mapFun(val), s=nextState)
         IteratorDone = return(IteratorDone)
     (vals=v+:vs, s) = state.()

@@ -75,6 +75,7 @@ ops = [
     , InfixL (mkOp2 "^" <$ symbol "^")
     ],
     [ InfixL (mkOp2 "?->" <$ symbol "?->")
+    , InfixL (mkOp2 ":=" <$ symbol ":=")
     ],
     [ InfixL (RawWhere <$ symbol "|") ]
   ]
@@ -127,7 +128,7 @@ pEndOfLine = do
   _ <- lookAhead newline
   return ()
 
-pArrowFull :: ObjectBasis -> Parser PObjArr
+pArrowFull :: ObjectBasis -> Parser (Either PStatement PObjArr)
 pArrowFull basis = do
   expr1 <- pExpr
   guardAnnots <- pPatternGuard
@@ -135,9 +136,9 @@ pArrowFull basis = do
     _ <- symbol "->" <|> symbol ":"
     term
   maybeExpr2 <- optional $ do
-    _ <- symbol "=>" <|> symbol "="
+    s <- (Left <$> symbol "=>") <|> (Left <$> symbol "=") <|> (Right <$> symbol "<-")
     afterEquals <- (Left <$> pEndOfLine) <|> (Right <$> pExpr)
-    return $ rightToMaybe afterEquals
+    return (s, rightToMaybe afterEquals)
   maybeDef <- optional $ do
     _ <- symbol "?"
     try pExpr
@@ -145,10 +146,10 @@ pArrowFull basis = do
   let (arrMetaExpr, arrMeta) = maybe (Nothing, emptyMetaN) (\decl -> (Just decl, exprToTypeMeta decl)) maybeDecl
   (i', o') <- return $ case (maybeDecl, expr1, maybeExpr2) of
     -- Input, equals, and in expression
-    (_, i, Just (Just o)) -> (Just i, Just (Just o, arrMetaExpr, arrMeta))
+    (_, i, Just (_, Just o)) -> (Just i, Just (Just o, arrMetaExpr, arrMeta))
 
     -- Input, equals, but no out expression
-    (_, i, Just Nothing) -> (Just i, Just (Just (rawVal nestedDeclaration), arrMetaExpr, arrMeta))
+    (_, i, Just (_, Nothing)) -> (Just i, Just (Just (rawVal nestedDeclaration), arrMetaExpr, arrMeta))
 
     -- Input, no equals, but declaration
     (Just _, i, Nothing) -> (Just i, Just (Nothing, arrMetaExpr, arrMeta)) -- If only one expression, always make it as an input and later desugar to proper place
@@ -156,7 +157,17 @@ pArrowFull basis = do
     -- Input, no equals nor declaration
     (Nothing, i, Nothing) -> (Just i, Nothing) -- If only one expression, always make it as an input and later desugar to proper place
 
-  return $ RawObjArr i' basis Nothing guardAnnots o' maybeDef
+  let oa = RawObjArr i' basis Nothing guardAnnots o' maybeDef
+  return $ case maybeExpr2 of
+    Just (Right{}, _) -> Left $ RawBindStatement oa
+    _                 -> Right oa
+
+pArrowFullOA :: ObjectBasis -> Parser PObjArr
+pArrowFullOA basis = do
+  oa <- pArrowFull basis
+  case oa of
+    Right oa' -> return oa'
+    Left _    -> fail "Found unexpected bind object arrow"
 
 data TermSuffix
   = ArgsSuffix ParseMeta [PObjArr]
@@ -167,7 +178,7 @@ data TermSuffix
   deriving (Show)
 
 pArgSuffix :: Parser PObjArr
-pArgSuffix = pArrowFull ArgObj
+pArgSuffix = pArrowFullOA ArgObj
 
 pArgsSuffix :: Parser TermSuffix
 pArgsSuffix = do
@@ -186,7 +197,7 @@ pVarsSuffix = do
 pContextSuffix :: Parser TermSuffix
 pContextSuffix = do
   pos1 <- getSourcePos
-  ctxs <- curlyBraces $ sepBy (pArrowFull ArgObj) (symbol ",")
+  ctxs <- curlyBraces $ sepBy (pArrowFullOA ArgObj) (symbol ",")
   pos2 <- getSourcePos
   return $ ContextSuffix (emptyMeta pos1 pos2) ctxs
 

@@ -324,7 +324,7 @@ convertStmtLR :: DynFlags -> Maybe (RawExpr ()) -> StmtLR GhcPs GhcPs (LHsExpr G
 convertStmtLR flags base (LastStmt _ body _ _) = (base', [RawStatementTree (RawExprStatement expr') subStatements])
   where
     (base', expr', subStatements) = convertExpr flags base $ unLoc body
-convertStmtLR flags _ (BindStmt _ pat body _ _) = (Nothing, [RawStatementTree (RawDeclStatement oa) subStatements])
+convertStmtLR flags _ (BindStmt _ pat body _ _) = (Nothing, [RawStatementTree (RawBindStatement oa) subStatements])
   where
     -- TODO: Should use bind rather than basic objArr
     pat' = convertPattern flags Nothing $ unLoc pat
