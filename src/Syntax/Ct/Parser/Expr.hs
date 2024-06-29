@@ -30,6 +30,7 @@ import           Syntax.Ct.Desugarf.Expr
 import           Syntax.Ct.Parser.Lexer
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
+import           Text.Printf
 
 mkOp1 :: String -> PExpr -> PExpr
 mkOp1 opChars x = applyRawArgs (RawValue emptyMetaN op) [(Just $ partialKey operatorArgUnary, x)]
@@ -39,16 +40,16 @@ mkOp2 :: String -> PExpr -> PExpr -> PExpr
 mkOp2 opChars x y = applyRawArgs (RawValue emptyMetaN op) [(Just $ partialKey operatorArgL, x), (Just $ partialKey operatorArgR, y)]
   where op = operatorName opChars
 
-pMinus :: Parser String
-pMinus = do
-  isArrow <- optional $ try $ lookAhead $ symbol "->"
-  case isArrow of
-    Just _  -> fail "-> should not be matched for - operator"
-    Nothing -> symbol "-"
+symbolExcludes :: String -> [String] -> Parser String
+symbolExcludes goal excludes = do
+  checkExcludes <- mapM (optional . try . lookAhead . symbol) excludes
+  case catMaybes checkExcludes of
+    []     -> symbol goal -- Zero excludes, so parse goal
+    (ex:_) -> fail $ printf "%s should not be matched for %s operator" ex goal
 
 ops :: [[Operator Parser PExpr]]
 ops = [
-    [ Prefix (mkOp1 "-"  <$ pMinus)
+    [ Prefix (mkOp1 "-"  <$ symbolExcludes "-" ["->"])
     , Prefix (mkOp1 "~" <$ symbol "~")
     ],
     [ InfixL (RawMethod <$ symbol ".")
@@ -61,11 +62,11 @@ ops = [
     ],
     [ InfixL (mkOp2 "++" <$ symbol "++")
     , InfixL (mkOp2 "+" <$ symbol "+")
-    , InfixL (mkOp2 "-" <$ pMinus)
+    , InfixL (mkOp2 "-" <$ symbolExcludes "-" ["->"])
     ],
     [ InfixL (mkOp2 "<=" <$ symbol "<=")
     , InfixL (mkOp2 ">=" <$ symbol ">=")
-    , InfixL (mkOp2 "<" <$ symbol "<")
+    , InfixL (mkOp2 "<" <$ symbolExcludes "<" ["<-"])
     , InfixL (mkOp2 ">" <$ symbol ">")
     , InfixL (mkOp2 "==" <$ symbol "==")
     , InfixL (mkOp2 "!=" <$ symbol "!=")

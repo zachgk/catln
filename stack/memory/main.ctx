@@ -51,18 +51,18 @@ class Memory[$V: Var]
     var[$T]{:MemoryMap} =
       i = :MemoryMap.counter
       v = VarInt[$T](i)
-      v{MemoryMap(map.=insert(v, Nothing), counter.=inc)}
+      v{MemoryMap(map=:MemoryMap.map.insert(v, Nothing), counter=i+1)}
 
     var[$T](v){:MemoryMap} =
       i = :MemoryMap.counter
       v = VarInt[$T](i)
-      v{MemoryMap(map.=insert(v, v), counter.=inc)}
+      v{MemoryMap(map=:MemoryMap.map.insert(v, v), counter=i+1)}
 
-    free(v: Var){:MemoryMap} = (){:MemoryMap(map.=remove(v))}
+    free(v: Var){:MemoryMap} = (){:MemoryMap(map=:MemoryMap.map.remove(v))}
 
     :Var[$T].(){:MemoryMap} = :MemoryMap.map.get(var)
 
-    (:Var[$T] := val: $T){:MemoryMap} = val{:MemoryMap(map.=set(var, val))}
+    (:Var[$T] := val: $T){:MemoryMap} = val{:MemoryMap(map=:MemoryMap.map.set(var, val))}
 
     :MemoryMap.vars = this.map.keys
 

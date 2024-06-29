@@ -1,3 +1,4 @@
+
 # # Logarithms and Exponents
 
 :Num.log -> Num
@@ -8,11 +9,14 @@
 
 # The natural logarithm and exponent are opposites and counter each other out
 
-:Num.log.exp = this
-:Num.exp.log = this
+:Num.log.exp= this
+
+:Num.exp.log= this
 
 # One useful strategy is to use logarithms as a representation for numbers, especially probabilities.
   It is advantageous because it allows them to be represented with better and converts multiplications into cheapter additions.
 
-(l: Num_from(0)_to(1) * r: Num_from(0)_to(1)) = (l.log + r.log).exp
-:List<Num_from(0)_to(1)>.prod = this.map(f(x) = x.log).sum.exp
+(l :: Num_from(0)_to(1) * r :: Num_from(0)_to(1))= (l.log + r.log).exp
+
+:List[Num_from(0)_to(1)].prod= this.map(f(x)= x.log).sum.exp
+

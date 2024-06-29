@@ -1,75 +1,73 @@
-# LLVM Compiler
 
+# LLVM Compiler
   This package is a compiler based on the [LLVM Compiler Infrastructure](https://llvm.org/).
 
 module LLVM
-
-  class Expr<$T>
+  class Expr[$T]
     # Used to represent expression-equivalent data.
 
-  data Operand<$T>(repr: String) isa Expr<$T>
+
+  data Operand[$T](repr -> String) isa Expr[$T]
     # An operand is an expression value in [LLVM].
       The most common is a register storing values and typically represented like `%1`.
       It can also be used for constants.
 
-  :Expr<$T>{} -> Operand<$T>
+
+  :Expr[$T]{} -> Operand[$T]
     # When evaluating, any [Expr] can be converted into the processed [Operand] form.
 
-  expr(e: $T){} -> Expr<$T>
+  expr(e -> $T){} -> Expr[$T]
     # The [LLVM] expression compiler.
-
     # ## Constant Expressions
-
-    expr(:ConstantTrue) = Operand<Bool>("true")
-    expr(:ConstantFalse) = Operand<Bool>("false")
-
+    expr(:ConstantTrue)= Operand[Bool]("true")
+    expr(:ConstantFalse)= Operand[Bool]("false")
     # ### Unsigned int
-
-    expr(i: ConstantInt__from(0)__until(2^8)) = Operand<Int>("i8 " ++ i)
-    expr(i: ConstantInt__from(0)__until(2^16)) = Operand<Int>("i16 " ++ i)
-    expr(i: ConstantInt__from(0)__until(2^32)) = Operand<Int>("i32 " ++ i)
-    expr(i: ConstantInt__from(0)__until(2^64)) = Operand<Int>("i64 " ++ i)
-
+    expr(i -> ConstantInt__from(0)__until(2 ^ 8))= Operand[Int]("i8 " ++ i)
+    expr(i -> ConstantInt__from(0)__until(2 ^ 16))= Operand[Int]("i16 " ++ i)
+    expr(i -> ConstantInt__from(0)__until(2 ^ 32))= Operand[Int]("i32 " ++ i)
+    expr(i -> ConstantInt__from(0)__until(2 ^ 64))= Operand[Int]("i64 " ++ i)
     # ### Signed int
-
-    expr(i: ConstantInt__from(-2^7)__until(2^7)) = Operand<Int>("i8 " ++ i)
-    expr(i: ConstantInt__from(-2^15)__until(2^15)) = Operand<Int>("i16 " ++ i)
-    expr(i: ConstantInt__from(-2^31)__until(2^16)) = Operand<Int>("i32 " ++ i)
-    expr(i: ConstantInt__from(-2^63)__until(2^32)) = Operand<Int>("i64 " ++ i)
-
+    expr(i -> ConstantInt__from(-2 ^ 7)__until(2 ^ 7))= Operand[Int]("i8 " ++ i)
+    expr(i -> ConstantInt__from(-2 ^ 15)__until(2 ^ 15))= Operand[Int]("i16 " ++ i)
+    expr(i -> ConstantInt__from(-2 ^ 31)__until(2 ^ 16))= Operand[Int]("i32 " ++ i)
+    expr(i -> ConstantInt__from(-2 ^ 63)__until(2 ^ 32))= Operand[Int]("i64 " ++ i)
 
   # ## Apply Implicit Conversions
 
-  :Expr<$T1 -> $T2> -> Expr<$T> = implicit<$T2>(this)
+  :Expr[$T1 -> $T2] -> Expr[$T]= implicit[$T2](this)
     # Applies an implicit convesion to an expression to typecheck
 
-  implicit<$T2>(e: Expr<$T1>){} -> Expr<$T2>
+  implicit[$T2](e -> Expr[$T1]){} -> Expr[$T2]
     # Applies an implicit convesion to an expression
       Includes several options such as strict, lazy, and async.
-
-    implicit"strict"<$T2>(e: Expr<$T1>){} = implicitBase<$T>(e)
+    implicit[$T2](e -> Expr[$T1]){}= implicitBase[$T](e)
+      #name("strict")
 
   # ## Lazyness
 
-  class LazyData<$T1, $T2> = LazyUncomputed<$T2>(e: $T1) | LazyComputed(v: Expr<$T2>) isa Expr<$T2>
-  data LazyExpr<$T1, $T2>(val: Var<LazyData<$T1=$T1, $T2=$T2>>)
+  class LazyData[$T1, $T2] = LazyUncomputed[$T2](e -> $T1) | LazyComputed(v -> Expr[$T2]) isa Expr[$T2]
 
-  implicit"lazy"<$T2>(e: ){} =
-    d <- var<LazyData>(LazyUncomputed<$T2>(e))
-    LazyExpr(val=d)
+  data LazyExpr[$T1, $T2](val -> Var[LazyData[$T1= $T1, $T2= $T2]])
 
-  LazyExpr<$T2>(val) -> Operand<$T2> =
-    v <- val[]
-    - match(v)
-      LazyComputed(v) = v
+  implicit[$T2](e){} =
+    #name("lazy")
+    d<- var[LazyData](LazyUncomputed[$T2](e))
+    LazyExpr(val= d)
+
+  LazyExpr[$T2](val) -> Operand[$T2] =
+    v<- val.()
+    _<- match(v)
+      LazyComputed(v)= v
       LazyUncomputed(e) =
-        res <- implicitBase<$T2>(e)
-        val := LazyComputed(v=res)
+        res<- implicitBase[$T2](e)
+        val := LazyComputed(v= res)
         res
 
   # ## implicitBase Calls
 
-  implicitBase<$T2>(e: Expr<$T1 -> $T2>){} -> Expr<$T2>
+  implicitBase[$T2](e -> Expr[$T1 -> $T2]){} -> Expr[$T2]
     # This looks up the claimed implicit(s).
       There can be multiple if they are partial or have conditions.
       Then, it will match as necessary and call the base functions.
+
+

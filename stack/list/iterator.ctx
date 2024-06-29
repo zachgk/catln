@@ -1,33 +1,36 @@
+
 # # Iterator List
 
 module Data/List
+  class IteratorResult[$T, $State] = IteratorNext(nextState -> $State, val -> $T) | IteratorDone
 
-  class IteratorResult[$T, $State] = IteratorNext(nextState: $State, val: $T) | IteratorDone
-
-  data Iterator[$T, $State](length: Int, initState: $State, f(x: $State) -> IteratorResult[$T=$T, $State=$State])
+  data Iterator[$T, $State](length -> Int, initState -> $State, f(x -> $State) -> IteratorResult[$T= $T, $State= $State])
     # A virtual [List] represented by an iterator.
       The iterator has an internal state of type [$State] and by applying [f] it produces the next value of the iterator and a next state.
       The [Iterator] is a fundamental type as almost all [List] operations can be defined in terms of it.
       Similarly, many [List] types can be converted to/from it.
 
+
+
 every Iterator[$T] isa List[$T]
 
-:Iterator[$T, $State](length, initState, f).map(f=mapFun) =
-  f2(x: $State) =
+:Iterator[$T, $State](length, initState, f).map(f= mapFun) =
+  f2(x -> $State) =
     match(f(x))
-      IteratorNext(nextState, val) = (nextState, mapFun(val))
-      IteratorDone = IteratorDone
-  Iterator[$T=$T2, $State=$State](length=length, initState=initState, f= f2)
+      IteratorNext(nextState, val)= (nextState, mapFun(val))
+      IteratorDone= IteratorDone
+  Iterator[$T= $T2, $State= $State](length= length, initState= initState, f= f2)
 
-:Iterator[$T, $State](length, initState, f).flatMap(f=mapFun) =
+:Iterator[$T, $State](length, initState, f).flatMap(f= mapFun) =
   f2(x) =
-    _ <- imperative
-    _ <- returns
-    state <- var(x)
+    _<- imperative
+    _<- returns
+    state<- var(x)
     while(state.().vals.length < 0)
-      _ <- match(f(state.().s))
-        IteratorNext(nextState, val) = state := (vals=mapFun(val), s=nextState)
-        IteratorDone = return(IteratorDone)
-    (vals=v+:vs, s) = state.()
-    return(IteratorNext(nextState=(vals=vs, s=s)), val=v)
-  Iterator[$T: $T2, $State=(vals=List[$T: $T2], s=$State)](length=length, initState=initState, f= f2)
+      _<- match(f(state.().s))
+        IteratorNext(nextState, val)= state := (vals= mapFun(val), s= nextState)
+        IteratorDone= return(IteratorDone)
+    (vals= v + :vs, s)= state.()
+    return(IteratorNext(nextState= (vals= vs, s= s)), val= v)
+  Iterator[$T -> $T2, $State= (vals= List[$T -> $T2], s= $State)](length= length, initState= initState, f= f2)
+
