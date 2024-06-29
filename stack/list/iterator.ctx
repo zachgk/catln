@@ -24,10 +24,10 @@ every Iterator[$T] isa List[$T]
     - imperative
     - returns
     state <- var(x)
-    while(state[].vals.length < 0)
-      - match(f(state[].s))
+    while(state.().vals.length < 0)
+      - match(f(state.().s))
         IteratorNext(nextState, val) = state := (vals=mapFun(val), s=nextState)
         IteratorDone = return(IteratorDone)
-    (vals=v+:vs, s) = state[]
+    (vals=v+:vs, s) = state.()
     return(IteratorNext(nextState=(vals=vs, s=s)), val=v)
   Iterator[$T: $T2, $State=(vals=List[$T: $T2], s=$State)](length=length, initState=initState, f= f2)
