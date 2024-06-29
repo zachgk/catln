@@ -74,8 +74,8 @@ readImport imp = case maybeExprPath (rawImpAbs imp) of
 
 processParsed :: Bool -> RawFileImport -> (RawPrgm (), [RawFileImport]) -> IO (GraphNodes (RawPrgm ()) RawFileImport, [RawFileImport])
 processParsed includeCore imp ((prgmImports, statements), extraImports) = do
-  let prgmImports' = if includeCore && not ("stack/core" `isInfixOf` name)
-      then mkRawFileImport (rawStr "stack/core") : prgmImports
+  let prgmImports' = if includeCore && not ("core" `isInfixOf` name)
+      then mkRawFileImport (rawStr "core") : prgmImports
       else prgmImports
   prgmImports'' <- mapM (canonicalImport (Just imp)) prgmImports'
   extraImports' <- mapM (canonicalImport (Just imp)) extraImports

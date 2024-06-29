@@ -27,7 +27,7 @@ import           Utils
 type ReplEnv = ([RawStatement RawExpr ()], GraphData (RawPrgm ()) String)
 
 coreImport :: String
-coreImport = "stack/core/main.ct"
+coreImport = "core/main.ct"
 
 buildReplBaseEnv :: IO ReplEnv
 buildReplBaseEnv = undefined
