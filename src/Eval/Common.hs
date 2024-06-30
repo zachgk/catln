@@ -365,14 +365,27 @@ resArrowDestType _ _ (TCMacro tp _) = tp
 resArrowDestType _ _ (TCArg tp _) = tp
 resArrowDestType _ _ t = error $ printf "Not yet implemented resArrowDestType for %s" (show t)
 
+-- | Extracts the arguments from a value using a matching expression
+-- | As there are no vars stored in the value, it only gets arguments
+exprArgsWithVal :: (MetaDat m, Show m) => Expr m -> Val -> Args
+exprArgsWithVal CExpr{} _ = H.empty
+exprArgsWithVal (Value _ n) (TupleVal tupleName _) | n /= tupleName = error $ printf "Found name mismatch in exprArgsWithVal. Expression name is %s but value name is %s" n tupleName
+exprArgsWithVal Value{} _ = H.empty
+exprArgsWithVal HoleExpr{} _ = H.empty
+exprArgsWithVal (EWhere base _) val = exprArgsWithVal base val
+exprArgsWithVal (AliasExpr base n) val = H.insert (exprPath n) val (exprArgsWithVal base val)
+exprArgsWithVal (VarApply _ b _ _) val = exprArgsWithVal b val
+exprArgsWithVal (TupleApply _ (_, be) arg) val = H.union (exprArgsWithVal be val) (fromArg arg val)
+  where
+    fromArg :: (MetaDat m, Show m) => ObjArr Expr m -> Val -> Args
+    fromArg ObjArr{oaObj=Just obj, oaArr=(Just e, _)} (TupleVal _ tupleArgs) = case H.lookup (exprPath obj) tupleArgs of
+      Just val' -> exprArgsWithVal e val'
+      Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
+    fromArg ObjArr{oaObj=Nothing, oaArr=(Just e, _)} _ = exprArgsWithVal e val
+    fromArg ObjArr{oaObj=Just obj, oaArr=(Nothing, _)} (TupleVal _ tupleArgs) = case H.lookup (exprPath obj) tupleArgs of
+      Just val' -> H.singleton (exprPath obj) val'
+      Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
+    fromArg oa _ = error $ printf "Invalid exprArgsWithVal fromArg of %s and %s" (show oa) (show val)
 
 buildArrArgs :: EObjArr -> Val -> Args
-buildArrArgs obj = aux H.empty (oaObjExpr obj)
-  where
-    aux acc oExpr val | null (exprAppliedArgs oExpr) = H.insert (exprPath oExpr) val acc
-    aux _ oExpr (TupleVal tupleName _) | exprPath oExpr /= tupleName = error $ printf "Found name mismatch in buildArrArgs: object %s and tuple %s" (exprPath oExpr) tupleName
-    aux acc oExpr (TupleVal _ tupleArgs) = H.foldrWithKey addArgs acc $ H.intersectionWith (,) (H.mapKeys pkName $ exprAppliedArgsMap oExpr) tupleArgs
-    aux _ oExpr val = error $ printf "Invalid buildArrArgs with oExpr %s and value %s" (show oExpr) (show val)
-
-    addArgs argName ((_, Nothing), argVal) acc   = H.insert argName argVal acc
-    addArgs _ ((_, Just subObjExpr), argVal) acc = aux acc subObjExpr argVal
+buildArrArgs oa = exprArgsWithVal (oaObjExpr oa)
