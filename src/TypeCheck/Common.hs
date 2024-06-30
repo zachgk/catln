@@ -336,7 +336,7 @@ setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@(
     pnts' = if schemeChanged then IM.insert p scheme' fePnts else fePnts -- Only update if changed to avoid meaningless updates
     feTrace' = if schemeChanged
       then case verifyScheme feTypeEnv (constraintVarArgEnv con) m scheme scheme' of
-             Just failVerification -> error $ printf "Scheme failed verification %s during typechecking of %s:\n\t\t New Scheme: %s \n\t\t Old Scheme: %s\n\t\t Obj: %s" failVerification msg (show scheme') (show scheme) (show m)
+             Just failVerification -> error $ printf "Scheme failed verification %s during typechecking of %s:\n\t\t New Scheme: %s \n\t\t Old Scheme: %s\n\t\t Obj: %s\n\t\t Con: %s" failVerification msg (show scheme') (show scheme) (show m) (show con)
              Nothing -> case feTrace of
               ((curConstraint, curChanged):curEpoch):prevEpochs -> ((curConstraint, (p, scheme'):curChanged):curEpoch):prevEpochs
               _ -> error "no epochs in feTrace"
