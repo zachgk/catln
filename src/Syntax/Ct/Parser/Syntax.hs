@@ -15,7 +15,6 @@ module Syntax.Ct.Parser.Syntax where
 import qualified Data.HashMap.Strict as H
 
 import           Data.Bifunctor
-import           Data.List           (isPrefixOf)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
@@ -73,14 +72,6 @@ fromMaybeTypeName = maybe topType fromName
 
 emptyMeta :: SourcePos -> SourcePos -> ParseMeta
 emptyMeta p1 p2 = Meta topType (Just (p1, p2, "")) emptyMetaDat
-
-isAbsolutePath :: String -> Bool
-isAbsolutePath name = "/" `isPrefixOf` name
-
-getPath :: String -> Path
-getPath name = if isAbsolutePath name then
-  Absolute name
-  else Relative name
 
 rawExprWithType :: Type -> RawExpr ParseMetaDat -> RawExpr ParseMetaDat
 rawExprWithType t (RawCExpr m c) = RawCExpr (mWithType t m) c

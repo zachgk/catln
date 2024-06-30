@@ -38,6 +38,10 @@ import           Utils
 -- |The name is the basic type used for various kinds of names
 type Name = String
 
+-- | A NPath (name path) is used for names with namespaces, either absolutely referenced to with only part of it
+data NPath = Relative [String] | Absolute [String]
+  deriving (Eq, Ord, Hashable, Generic, ToJSON)
+
 type ArgName = PartialKey
 type TypeVarName = PartialKey
 type TypeName = Name
@@ -290,13 +294,25 @@ splitVarArgEnv vaenv = bimap H.fromList H.fromList $ partitionEithers $ map eith
     eitherVarArg (TVVar v, t) = Left (v, t)
     eitherVarArg (TVArg v, t) = Right (v, t)
 
-
 makeAbsoluteName :: Name -> Name
 makeAbsoluteName n@('/':_) = n
 makeAbsoluteName n         = '/':n
 
 makeAbsolutePk :: PartialKey -> PartialKey
 makeAbsolutePk (PartialKey name vars args)= PartialKey (makeAbsoluteName name) (S.map makeAbsolutePk vars) (S.map makeAbsolutePk args)
+
+instance Show NPath where
+  show (Absolute n) = '/':intercalate "/" n
+  show (Relative n) = intercalate "/" n
+
+getPath :: String -> NPath
+getPath name = case splitOn "/" name of
+  ("":n) -> Absolute n
+  n      -> Relative n
+
+relPathAddPrefix :: String -> NPath -> NPath
+relPathAddPrefix _ (Absolute n)      = Absolute n
+relPathAddPrefix prefix (Relative n) = Relative (splitOn "/" prefix ++ n)
 
 relativeNameMatches :: RelativeName -> Name -> Bool
 relativeNameMatches rn n = split rn `L.isSuffixOf` split n

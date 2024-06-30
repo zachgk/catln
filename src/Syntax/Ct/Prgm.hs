@@ -78,9 +78,6 @@ data RawApplyTerm e m = RATermDeep (e m) | RATermChild (e m)
 newtype RawApply e m = RawApply [RawApplyTerm e m]
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
-data Path = Relative String | Absolute String
-  deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
-
 data RawStatement e m
   = RawDeclStatement (RawObjArr e m)
   | MultiTypeDefStatement (MultiTypeDef m)
