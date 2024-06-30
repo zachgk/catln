@@ -174,7 +174,7 @@ class ExprClass e where
   exprAppliedArgs :: (Show m, MetaDat m) => e m -> [ObjArr e m]
 
   -- | Returns all vars applied to a value
-  exprAppliedOrdVars :: e m -> [(TypeVarName, Meta m)]
+  exprAppliedOrdVars :: (Show m, MetaDat m) => e m -> [(TypeVarName, Meta m)]
 
   -- | Returns all arguments located recursively in an expression
   exprVarArgs :: (MetaDat m, Show m) => e m -> H.HashMap TypeVarAux [(e m, Meta m)]
@@ -209,7 +209,8 @@ instance ExprClass Expr where
   exprAppliedOrdVars (TupleApply _ (_, be) _) = exprAppliedOrdVars be
   exprAppliedOrdVars (VarApply _ e n m) = (n, m) : exprAppliedOrdVars e
   exprAppliedOrdVars (AliasExpr b _) = exprAppliedOrdVars b
-  exprAppliedOrdVars _ = error "Unsupported Expr exprAppliedOrdVars"
+  exprAppliedOrdVars (EWhere b _) = exprAppliedOrdVars b
+  exprAppliedOrdVars e = error $ printf "Unsupported Expr exprAppliedOrdVars: %s" (show e)
 
   exprVarArgs CExpr{} = H.empty
   exprVarArgs Value{} = H.empty
@@ -267,7 +268,7 @@ constantPartialType CChar{}  = charLeaf
 constantType :: Constant -> Type
 constantType = singletonType . constantPartialType
 
-exprAppliedVars :: (ExprClass e) => e m -> H.HashMap TypeVarName (Meta m)
+exprAppliedVars :: (ExprClass e, Show m, MetaDat m) => e m -> H.HashMap TypeVarName (Meta m)
 exprAppliedVars = H.fromList . exprAppliedOrdVars
 
 getExprType :: (ExprClass e) => e m -> Type
