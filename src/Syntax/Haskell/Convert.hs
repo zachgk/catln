@@ -237,18 +237,22 @@ convertExpr flags base (NegApp _ e _) = (base', rawVal (operatorName "-") `apply
   where
     (base', e', subs') = convertExpr flags base (unLoc e)
 convertExpr flags base (HsPar _ p) = convertExpr flags base $ unLoc p
-convertExpr flags (Just base) (SectionL _ fun arg) = (Just base', fun' `applyRawArgs` [(Nothing, arg'), sectionArg], [])
+convertExpr flags base (SectionL _ fun arg) = (Just base', fun' `applyRawArgs` [(Nothing, arg'), sectionArg], [])
   where
     fun' = convertSimpleExpr "SectionRFun" flags $ unLoc fun
     arg' = convertSimpleExpr "SectionRArg" flags $ unLoc arg
     sectionArg = (Nothing, rawVal "sectionArg")
-    base' = base `applyRawArgs` [sectionArg]
-convertExpr flags (Just base) (SectionR _ fun arg) = (Just base', fun' `applyRawArgs` [sectionArg, (Nothing, arg')], [])
+    base' = case base of
+      Just b  -> b `applyRawArgs` [sectionArg]
+      Nothing -> rawVal "" `applyRawArgs` [sectionArg]
+convertExpr flags base (SectionR _ fun arg) = (Just base', fun' `applyRawArgs` [sectionArg, (Nothing, arg')], [])
   where
     fun' = convertSimpleExpr "SectionRFun" flags $ unLoc fun
     arg' = convertSimpleExpr "SectionRArg" flags $ unLoc arg
     sectionArg = (Nothing, rawVal "sectionArg")
-    base' = base `applyRawArgs` [sectionArg]
+    base' = case base of
+      Just b  -> b `applyRawArgs` [sectionArg]
+      Nothing -> rawVal "" `applyRawArgs` [sectionArg]
 convertExpr flags base (ExplicitTuple _ t _) = (fmap mapBase base, e', concat subs)
   where
     e' = rawVal "" `applyRawArgs` map (Nothing,) outT

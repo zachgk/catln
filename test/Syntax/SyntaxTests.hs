@@ -1,6 +1,6 @@
 module Syntax.SyntaxTests where
 
-import           Common.TestCommon       (findCt)
+import           Common.TestCommon       (filesWithExtension)
 import           Control.Monad
 import           CRes                    (fromCRes)
 import qualified Data.HashMap.Strict     as H
@@ -19,9 +19,9 @@ import           Text.Printf
 type Prgms = H.HashMap String (RawPrgm ())
 type GenPrgm = Gen (Prgm Expr ())
 
-findPrgms :: String -> IO Prgms
-findPrgms prgmDir = do
-  fileNames <- findCt prgmDir
+findPrgms :: (String, String) -> IO Prgms
+findPrgms (extension, prgmDir) = do
+  fileNames <- filesWithExtension extension prgmDir
   prgms <- forM fileNames $ \fileName -> do
     rawPrgm <- parseFile False $ mkRawFileImport $ rawStr fileName
     let (prgm, _, _) = fromCRes rawPrgm
@@ -41,9 +41,11 @@ testPrgm (name, p1) = do
 
 syntaxTests :: IO TestTree
 syntaxTests = do
-  ctTestPrgms <- findPrgms "test/Integration/code/"
-  ctCorePrgms <- findPrgms "stack/core/"
-  return $ testGroup "FormatTests" (map testPrgm $ concatMap H.toList [ctTestPrgms, ctCorePrgms])
+  -- TODO: Add hs prgmDirs
+  -- let prgmDirs = [(".ct",  "test/Integration/code/"), (".ct", "stack/core/"), (".hs", "src/")]
+  let prgmDirs = [(".ct",  "test/Integration/code/"), (".ct", "stack/core/")]
+  prgms <- mapM findPrgms prgmDirs
+  return $ testGroup "FormatTests" (map testPrgm $ concatMap H.toList prgms)
 
 main :: IO ()
 main = do
