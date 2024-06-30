@@ -100,7 +100,7 @@ exprVarArgsWithSrc typeEnv (TupleApply _ (_, be) arg) src = H.union (exprVarArgs
     fromArg oa = error $ printf "Invalid oa %s" (show oa)
 
     mergeMaps [] = H.empty
-    mergeMaps (x:xs) = foldr (H.intersectionWith (\(m1s, t1) (m2s, t2) -> (m1s ++ m2s, unionTypes typeEnv t1 t2))) x xs
+    mergeMaps (x:xs) = foldr (H.unionWith (\(m1s, t1) (m2s, t2) -> (m1s ++ m2s, unionTypes typeEnv t1 t2))) x xs
 
 exprVarArgsWithSrcs :: (MetaDat m, Show m) => TypeEnv -> [(Expr m, PartialType)] -> ArgMetaMapWithSrc m
 exprVarArgsWithSrcs typeEnv os = H.unions (map (uncurry (exprVarArgsWithSrc typeEnv)) os)
@@ -115,7 +115,7 @@ arrowDestType fullDest typeEnv src oa@ObjArr{oaArr=(oaArrExpr, oaM)} = case oaAr
   Just n | isJust (maybeExprPath n) -> fromMaybe joined (H.lookup (TVArg $ inExprSingleton n) vaenv)
   _                              -> joined
   where
-    vaenv = snd <$> exprVarArgsWithSrc typeEnv (oaObjExpr oa) ((\(UnionType pl) -> head $ splitUnionType pl) $ substituteVars $ singletonType src)
+    vaenv = snd <$> exprVarArgsWithSrc typeEnv (oaObjExpr oa) (fromJust $ maybeGetSingleton $ substituteVars $ singletonType src)
     substitute = substituteWithVarArgEnv vaenv
     expr' = fmap (substitute . getExprType) oaArrExpr
     arr' = substitute $ getMetaType oaM

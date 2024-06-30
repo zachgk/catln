@@ -761,7 +761,7 @@ substituteArgsWithArgEnv aenv (UnionType partials) = UnionType $ joinUnionType $
           where aenv' = H.union aenv ptArgs
 substituteArgsWithArgEnv aenv (TypeVar (TVArg v) TVInt) = case H.lookup v aenv of
   Just v' -> v'
-  Nothing -> error $ printf "Could not substitute unknown type arg %s" (show v)
+  Nothing -> error $ printf "Could not substitute unknown type arg %s. Only found args %s" (show v) (show aenv)
 substituteArgsWithArgEnv _ t = t
 
 substituteWithVarArgEnv :: TypeVarArgEnv -> Type -> Type
