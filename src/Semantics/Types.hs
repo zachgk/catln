@@ -25,7 +25,7 @@ import           Data.Graph          (graphFromEdges)
 import           Data.Hashable
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
-import           Data.List           (intercalate)
+import           Data.List           (intercalate, partition)
 import qualified Data.List           as L
 import           Data.List.Split     (splitOn)
 import           Data.Maybe
@@ -310,9 +310,19 @@ getPath name = case splitOn "/" name of
   ("":n) -> Absolute n
   n      -> Relative n
 
+isAbsNPath :: NPath -> Bool
+isAbsNPath Absolute{} = True
+isAbsNPath Relative{} = False
+
 relPathAddPrefix :: String -> NPath -> NPath
 relPathAddPrefix _ (Absolute n)      = Absolute n
 relPathAddPrefix prefix (Relative n) = Relative (splitOn "/" prefix ++ n)
+
+matchesNPath :: NPath -> NPath -> Bool
+matchesNPath (Absolute rn) (Absolute n) = rn == n
+matchesNPath (Relative rn) (Absolute n) = rn `L.isSuffixOf` n
+matchesNPath (Relative rn) (Relative n) = rn `L.isSuffixOf` n
+matchesNPath (Absolute _) (Relative _)  = False
 
 relativeNameMatches :: RelativeName -> Name -> Bool
 relativeNameMatches rn n = split rn `L.isSuffixOf` split n
@@ -321,8 +331,13 @@ relativeNameMatches rn n = split rn `L.isSuffixOf` split n
 relativeNameFilter :: RelativeName -> [Name] -> [Name]
 relativeNameFilter rn = filter (relativeNameMatches rn)
 
-relativePartialNameFilter :: RelativeName -> [TypeName] -> [TypeName]
-relativePartialNameFilter rn = filter (relativeNameMatches rn)
+-- | Takes a list of relative and abs names, and prunes the relative names describing an absolute one
+relAbsNamePrune :: [TypeName] -> [TypeName]
+relAbsNamePrune names = map show (absNames ++ filter matchesNoAbsName relNames)
+  where
+    names' = map getPath names
+    (absNames, relNames) = partition isAbsNPath names'
+    matchesNoAbsName n = not $ any (matchesNPath n) absNames
 
 -- | Gets the name String from a partial name
 fromPartialName :: PartialName -> Name

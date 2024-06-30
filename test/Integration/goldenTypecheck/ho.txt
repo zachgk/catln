@@ -467,7 +467,7 @@
             , /tst
                 ( Value /d -> /T ( /x=TopType ) = /T ( Value /x ) )
                 ( /f ( Value /y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
-            , /T ( Value /x -> /Data/Primitive/Integer ) -> ~T ( /x=~Integer )
+            , /T ( Value /x -> /Data/Primitive/Integer ) -> /T ( /x=~Integer )
             ]
         ,
             [ CGType

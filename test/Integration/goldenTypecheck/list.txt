@@ -469,17 +469,12 @@
                     ( Value /l -> /Data/Primitive/Integer = /llength
                         ( Value /this -> /Data/Cons [ /T=TopType ]
                             ( /tail=~ConsList [ /T=TVVar /T ]
-                            , /head=TVVar /T
+                            , /head=TopType
                             ) = /Data/Cons
                             ( Value /head -> /Data/Primitive/Integer = CInt 5 )
                             ( Value /tail -> /Data/Cons [ /T=TopType ]
-                                ( /tail=
-                                    ( /Data/Nil | /Data/Cons [ /T=TopType ]
-                                        ( /tail=~ConsList [ /T=TVVar /T ]
-                                        , /head=TVVar /T
-                                        )
-                                    )
-                                , /head=TVVar /T
+                                ( /tail=~ConsList [ /T=TVVar /T ]
+                                , /head=TopType
                                 ) = /Data/Cons
                                 ( Value /head -> /Data/Primitive/Integer = CInt 3 ) ( Value /tail -> /Data/Nil = Value /Data/Nil )
                             )
@@ -488,11 +483,10 @@
                     ( Value /r -> /Data/Primitive/Integer = CInt 2 )
                 ) ( Value /this -> TVArg /io = Value /io )
             , /llength
-                ( Value /this -> /Data/Cons [ /T=TopType ]
-                    ( /tail=~ConsList [ /T=TVVar /T ]
-                    , /head=TVVar /T
-                    ) = /Data/Cons ( Value /head )
-                    ( Value /tail -> ~ConsList [ /T=TVVar /T ] )
+                ( Value /this -> /Data/Cons
+                    ( /tail=TopType
+                    , /head=TopType
+                    ) = /Data/Cons ( Value /head ) ( Value /tail )
                 ) ->
                 ( /Data/Primitive/Integer | /operator+
                     ( /l=/Data/Primitive/Integer

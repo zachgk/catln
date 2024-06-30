@@ -2,9 +2,9 @@
 
 # TODO: Use core length rather than llength
 
-/Data/Nil.llength= 0
+Nil.llength= 0
 
-/Data/Cons(head, tail).llength= 1 + tail.llength
+Cons(head, tail).llength= 1 + tail.llength
 
 main{io -> IO}= io.exit(val= [5, 3].llength - 2)
 

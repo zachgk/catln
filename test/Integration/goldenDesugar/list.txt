@@ -440,9 +440,9 @@
 ,
     (
         (
-            [ /llength ( Value /this= Value /Data/Nil ) = CInt 0
+            [ /llength ( Value /this= Value Nil ) = CInt 0
             , /llength
-                ( Value /this= /Data/Cons ( Value head ) ( Value tail ) ) = /operator+
+                ( Value /this= Cons ( Value head ) ( Value tail ) ) = /operator+
                 ( Value /l= CInt 1 )
                 ( Value /r= llength ( Value /this= Value tail ) )
             , /Context ( Value /value= Value /main ) ( Value /io -> /Catln/IO ) = exit

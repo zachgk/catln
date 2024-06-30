@@ -53,7 +53,7 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, ClassGraph
     mapCGNode (CGClass (s, clss, ts, doc)) = CGClass (s, resolveClassPartial True clss, fmap (mapType True) ts, doc)
     mapCGNode CGType = CGType
     classNames = nub $ listClassNames fullPrgmClassGraph
-    objNames = nub $ map oaObjPath (concatMap getRecursiveObjs fullPrgmObjMap)
+    objNames = relAbsNamePrune $ nub $ map oaObjPath (concatMap getRecursiveObjs fullPrgmObjMap)
 
     resolveMeta _ (Meta t p md) = Meta (mapType False t) p md
 
