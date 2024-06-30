@@ -39,7 +39,10 @@ import           Utils
 type Name = String
 
 -- | A NPath (name path) is used for names with namespaces, either absolutely referenced to with only part of it
-data NPath = Relative [String] | Absolute [String]
+data NPath = NPath {
+  npathIsAbs :: Bool,
+  npathPath  :: [String]
+                   }
   deriving (Eq, Ord, Hashable, Generic, ToJSON)
 
 type ArgName = PartialKey
@@ -302,27 +305,21 @@ makeAbsolutePk :: PartialKey -> PartialKey
 makeAbsolutePk (PartialKey name vars args)= PartialKey (makeAbsoluteName name) (S.map makeAbsolutePk vars) (S.map makeAbsolutePk args)
 
 instance Show NPath where
-  show (Absolute n) = '/':intercalate "/" n
-  show (Relative n) = intercalate "/" n
+  show (NPath a n) = (if a then "/" else "") ++ intercalate "/" n
 
 getPath :: String -> NPath
 getPath name = case splitOn "/" name of
-  ("":n) -> Absolute n
-  n      -> Relative n
-
-isAbsNPath :: NPath -> Bool
-isAbsNPath Absolute{} = True
-isAbsNPath Relative{} = False
+  ("":n) -> NPath True n
+  n      -> NPath False n
 
 relPathAddPrefix :: String -> NPath -> NPath
-relPathAddPrefix _ (Absolute n)      = Absolute n
-relPathAddPrefix prefix (Relative n) = Relative (splitOn "/" prefix ++ n)
+relPathAddPrefix _ p@NPath{npathIsAbs=True}      = p
+relPathAddPrefix prefix (NPath False n) = NPath False (splitOn "/" prefix ++ n)
 
 matchesNPath :: NPath -> NPath -> Bool
-matchesNPath (Absolute rn) (Absolute n) = rn == n
-matchesNPath (Relative rn) (Absolute n) = rn `L.isSuffixOf` n
-matchesNPath (Relative rn) (Relative n) = rn `L.isSuffixOf` n
-matchesNPath (Absolute _) (Relative _)  = False
+matchesNPath (NPath True rn) (NPath True n) = rn == n
+matchesNPath (NPath False rn) (NPath _ n)   = rn `L.isSuffixOf` n
+matchesNPath (NPath True _) (NPath False _) = False
 
 relativeNameMatches :: RelativeName -> Name -> Bool
 relativeNameMatches rn n = split rn `L.isSuffixOf` split n
@@ -336,7 +333,7 @@ relAbsNamePrune :: [TypeName] -> [TypeName]
 relAbsNamePrune names = map show (absNames ++ filter matchesNoAbsName relNames)
   where
     names' = map getPath names
-    (absNames, relNames) = partition isAbsNPath names'
+    (absNames, relNames) = partition npathIsAbs names'
     matchesNoAbsName n = not $ any (matchesNPath n) absNames
 
 -- | Gets the name String from a partial name
