@@ -212,7 +212,7 @@ toTEObjArr env os oa@ObjArr{oaObj, oaAnnots, oaArr} = do
         _ -> os
   oaArr' <- forM oaArr $ \(arrExpr, arrM) -> do
     arrExpr' <- forM arrExpr $ \e ->
-      toTExprDest env os e arrM
+      toTExprDest env os' e arrM
     return (arrExpr', arrM)
   oaAnnots' <- mapM (toTExpr env os') oaAnnots
   return oa{oaObj=oaObj', oaAnnots=oaAnnots', oaArr=oaArr'}
