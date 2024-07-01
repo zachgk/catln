@@ -69,7 +69,7 @@ envLookupTry _ _ visitedArrows _ _ resArrow | S.member resArrow visitedArrows = 
 envLookupTry env@TBEnv{tbTypeEnv} objSrc visitedArrows srcType destType resArrow = do
   newLeafTypes <- case resArrowDestType tbTypeEnv srcType resArrow of
     UnionType t -> return t
-    t -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Found impossible type %s in envLookupTry" (show t)]
+    t -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Found impossible type %s in envLookupTry for destType of %s with src %s" (show t) (show resArrow) (show srcType)]
   afterArrows <- traverse buildAfterArrows $ splitUnionType newLeafTypes
   return $ TCSeq resArrow (buildMatch destType (H.fromList afterArrows))
   where
