@@ -78,14 +78,14 @@ addUnionObjToEnv env1@FEnv{feTypeEnv} vobjMap tobjMap = do
   let tobjMetas = map (getMetaType . getExprMeta . oaObjExpr) tobjs'
 
   -- Builds vars to use for union and union powerset
-  let (unionAllObjs, env2) = fresh env1 $ TypeCheckResult [] $ SType topType topType "unionAllObjs"
-  let (unionAllObjsPs, env3) = fresh env2 $ TypeCheckResult [] $ SType topType topType "unionAllObjsPs"
+  let (unionAllObjs, env2) = fresh env1 $ TypeCheckResult [] $ SType PTopType PTopType "unionAllObjs"
+  let (unionAllObjsPs, env3) = fresh env2 $ TypeCheckResult [] $ SType PTopType PTopType "unionAllObjsPs"
 
-  let mkVarMeta p = Meta topType Nothing (VarMetaDat (Just p) Nothing)
+  let mkVarMeta p = Meta PTopType Nothing (VarMetaDat (Just p) Nothing)
 
   -- Build a variable to store union of tobjs
   let typecheckedAllType = unionAllTypes feTypeEnv tobjMetas
-  let (typecheckedAllObjs, env4) = fresh env3 $ TypeCheckResult [] $ SType typecheckedAllType topType "typecheckedAll"
+  let (typecheckedAllObjs, env4) = fresh env3 $ TypeCheckResult [] $ SType typecheckedAllType PTopType "typecheckedAll"
   let typecheckedAllObjs' = mkVarMeta typecheckedAllObjs
 
   -- Builds metas to use for union and union powerset
@@ -102,7 +102,7 @@ addUnionObjToEnv env1@FEnv{feTypeEnv} vobjMap tobjMap = do
 
 -- | A helper for the 'AddInferArg' 'Constraint'
 addInferArgToType :: FEnv -> TypeVarArgEnv -> Type -> Maybe Type
-addInferArgToType _ _ (TopType []) = Nothing
+addInferArgToType _ _ PTopType = Nothing
 addInferArgToType env@FEnv{feTypeEnv} vaenv t@TopType{} = addInferArgToType env vaenv (expandType feTypeEnv vaenv t)
 addInferArgToType env vaenv (TypeVar t _) = case H.lookup t vaenv of
   Just t' -> addInferArgToType env vaenv t'
@@ -124,8 +124,8 @@ addInferArgToPartial FEnv{feVTypeGraph, feTTypeGraph, feTypeEnv} _ partial@Parti
     tryArrow :: (MetaDat m, Show m) => ObjArr Expr m -> Type
     tryArrow oa = if H.keysSet ptArgs `isSubsetOf` H.keysSet (exprAppliedArgsMap $ oaObjExpr oa)
       then UnionType $ joinUnionType $ map addArg $ S.toList $ S.difference (H.keysSet $ exprAppliedArgsMap $ oaObjExpr oa) (H.keysSet ptArgs)
-      else bottomType
-    addArg arg = partial{ptArgs=H.insertWith (unionTypes feTypeEnv) arg topType ptArgs}
+      else BottomType
+    addArg arg = partial{ptArgs=H.insertWith (unionTypes feTypeEnv) arg PTopType ptArgs}
 
 mkReachesEnv :: FEnv -> RConstraint -> TypeCheckResult (ReachesEnv ())
 mkReachesEnv env@FEnv{feTypeEnv, feUnionAllObjs, feVTypeGraph, feTTypeGraph} (Constraint maybeConOa stypeVaenv _) = do
@@ -158,14 +158,14 @@ mkReachesEnv env@FEnv{feTypeEnv, feUnionAllObjs, feVTypeGraph, feTTypeGraph} (Co
   return $ ReachesEnv (mergeTypeEnv argTypeEnv feTypeEnv) unionAll (fmap snd vaenv) typeGraph
 
 arrowConstrainUbs :: FEnv -> RConstraint -> Type -> Type -> TypeCheckResult (Type, Type)
-arrowConstrainUbs env@FEnv{feUnionAllObjs} con (TopType []) dest@UnionType{} = do
+arrowConstrainUbs env@FEnv{feUnionAllObjs} con PTopType dest@UnionType{} = do
   unionPnt <- descriptor env feUnionAllObjs
   case unionPnt of
     (SType unionUb@UnionType{} _ _) -> do
       (src', dest') <- arrowConstrainUbs env con unionUb dest
       return (src', dest')
-    _ -> return (topType, dest)
-arrowConstrainUbs _ _ (TopType []) dest = return (topType, dest)
+    _ -> return (PTopType, dest)
+arrowConstrainUbs _ _ PTopType dest = return (PTopType, dest)
 arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} src@TopType{} dest = do
   arrowConstrainUbs env con (expandType feTypeEnv (fmap (stypeAct . snd) conVaenv) src) dest
 arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} src@TypeVar{} dest = do

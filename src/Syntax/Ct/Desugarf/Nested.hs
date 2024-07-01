@@ -60,7 +60,7 @@ scopeSubDeclFunNamesInMeta prefix replaceNames (Meta (UnionType partials) pos md
   where
     scopeS = scopeSubDeclFunNamesInS prefix replaceNames
     partials' = H.mapKeys scopeS partials
-scopeSubDeclFunNamesInMeta _ _ m@(Meta (TopType []) _ _) = m
+scopeSubDeclFunNamesInMeta _ _ m@(Meta PTopType _ _) = m
 scopeSubDeclFunNamesInMeta prefix replaceNames (Meta (TopType preds) pos md) = Meta (TopType preds') pos md
   where
     preds' = map scopePred preds
@@ -86,7 +86,7 @@ scopeSubDeclFunNames oa _ = error $ printf "scopeSubDeclFunNames without input e
 
 -- | Apply args to a signature or input expression
 curryApplyParentArgsSignature :: PSExpr -> ParentArgs -> PSExpr
-curryApplyParentArgsSignature e parentArgs = applyExprIArgs e (map (second IArgM) $ H.toList $ fmap (mWithType topType . head) parentArgs)
+curryApplyParentArgsSignature e parentArgs = applyExprIArgs e (map (second IArgM) $ H.toList $ fmap (mWithType PTopType . head) parentArgs)
 
 -- | Apply args to an output expression
 curryApplyParentArgs :: PSExpr -> ParentArgs -> PSExpr

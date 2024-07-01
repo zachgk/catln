@@ -37,7 +37,7 @@ labelPos s (Just (p1, p2, sPrefix)) = Just (p1, p2, label')
 labelPos _ Nothing = Nothing
 
 emptyMetaM :: (MetaDat m) => String -> Meta m -> Meta m
-emptyMetaM s m = Meta topType (labelPos s $ getMetaPos m) emptyMetaDat
+emptyMetaM s m = Meta PTopType (labelPos s $ getMetaPos m) emptyMetaDat
 
 emptyMetaE :: (ExprClass e, MetaDat m) => String -> e m -> Meta m
 emptyMetaE s e = emptyMetaM s (getExprMeta e)
@@ -87,7 +87,7 @@ exprVarArgsWithSrc _ Value{} _ = H.empty
 exprVarArgsWithSrc _ HoleExpr{} _ = H.empty
 exprVarArgsWithSrc typeEnv (EWhere base _) src = exprVarArgsWithSrc typeEnv base src
 exprVarArgsWithSrc typeEnv (AliasExpr base n) src = H.insert (TVArg $ inExprSingleton n) ([(n, getExprMeta base)], singletonType src) (exprVarArgsWithSrc typeEnv base src)
-exprVarArgsWithSrc typeEnv (VarApply _ b n m) src = H.insert (TVVar n) ([(Value (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)], H.lookupDefault topType n (ptVars src)) $ exprVarArgsWithSrc typeEnv b src
+exprVarArgsWithSrc typeEnv (VarApply _ b n m) src = H.insert (TVVar n) ([(Value (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)], H.lookupDefault PTopType n (ptVars src)) $ exprVarArgsWithSrc typeEnv b src
 exprVarArgsWithSrc typeEnv (TupleApply _ (_, be) arg) src = H.union (exprVarArgsWithSrc typeEnv be src) (fromArg arg)
   where
     fromArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)} = case typeGetArg (inExprSingleton obj) src of
@@ -121,8 +121,8 @@ arrowDestType fullDest typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, oaM)} = case
     expr' = fmap (substitute . getExprType) oaArrExpr
     arr' = substitute $ getMetaType oaM
     joined = if fullDest
-      then unionTypes typeEnv (fromMaybe bottomType expr') arr'
-      else intersectTypes typeEnv (fromMaybe topType expr') arr'
+      then unionTypes typeEnv (fromMaybe BottomType expr') arr'
+      else intersectTypes typeEnv (fromMaybe PTopType expr') arr'
 arrowDestType _ _ _ oa@ObjArr{oaArr=Nothing} = error $ printf "Unexpected call to arrowDestType with type obj (which has no arrow to find the dest type of): %s" (show oa)
 
 metaTypeVar :: Meta m -> Maybe TypeVarAux

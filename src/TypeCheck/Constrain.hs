@@ -88,7 +88,7 @@ addArgToType env vaenv (TypeVar v _) newArg = case H.lookup v vaenv of
   Nothing -> error $ printf "Unknown type in addArgToType: %s" (show v)
 addArgToType FEnv{feTypeEnv} _ (UnionType partials) newArg = Just $ unionAllTypes feTypeEnv $ mapMaybe fromPartial $ splitUnionType partials
   where
-    fromPartial partial@PartialType{ptArgs} = Just $ singletonType partial{ptArgs=H.insertWith (unionTypes feTypeEnv) newArg topType ptArgs}
+    fromPartial partial@PartialType{ptArgs} = Just $ singletonType partial{ptArgs=H.insertWith (unionTypes feTypeEnv) newArg PTopType ptArgs}
 
 -- | A helper for the 'AddArg' 'Constraint'
 addArgToScheme :: FEnv -> STypeVarArgEnv -> SType -> ArgName -> SType -> SType
@@ -173,7 +173,7 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByKnown i p@ST
     boundTp' = expandType feTypeEnv (fmap (stypeAct . snd) vaenv) boundTp
     act' = intersectTypesEnv feTypeEnv (fmap (stypeAct . snd) vaenv) act boundTp'
     req' = intersectTypesEnv feTypeEnv (fmap (stypeReq . snd) vaenv) req boundTp'
-computeConstraint _ con@(Constraint _ _ (BoundedByObjs _ SType{stypeAct=TopType []} _)) = (False, con)
+computeConstraint _ con@(Constraint _ _ (BoundedByObjs _ SType{stypeAct=PTopType} _)) = (False, con)
 computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByObjs i p@SType{stypeAct=pAct} objMapBoundUb)) = (False, con{conDat=BoundedByObjs i (p{stypeAct=pAct'}) objMapBoundUb})
   where
     vaenv' = fmap (stypeAct . snd) vaenv

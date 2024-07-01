@@ -29,7 +29,7 @@ toMeta env@FEnv{feTypeEnv} m@(Meta pt pos _) _ = case pointUb env m of
     TypeVar{} -> return $ Meta pt pos emptyMetaDat
     _ -> TypeCheckResult notes $ Meta (intersectTypes feTypeEnv ub pt) pos emptyMetaDat
   TypeCheckResE notes -> do
-    TypeCheckResult notes (Meta bottomType pos emptyMetaDat)
+    TypeCheckResult notes (Meta BottomType pos emptyMetaDat)
 
 member :: String -> [String ] -> Bool
 member x arr = case suffixLookup x arr of
@@ -88,7 +88,7 @@ toExpr env (VarApply m baseExpr varName varVal) = do
   case m' of -- check for errors
 
     -- Don't check if a bottom type is present
-    _ | getMetaType m' == bottomType -> return result
+    _ | getMetaType m' == BottomType -> return result
 
     _                                -> return result
 

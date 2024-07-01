@@ -39,7 +39,7 @@ desExpr (VarApply m be varName varVal) = VarApply m (desExpr be) varName varVal
 -- | Updates the types based on the format as they are fixed for inputs (due to arrows this does not work for output expressions)
 desObjPropagateTypes :: DesExpr -> DesExpr
 desObjPropagateTypes (CExpr m c) = CExpr (mWithType (constantType c) m) c
-desObjPropagateTypes (Value m n) | getMetaType m == TopType [] = Value (mWithType t m) n
+desObjPropagateTypes (Value m n) | getMetaType m == PTopType = Value (mWithType t m) n
   where
     t = relTypeVal n
 desObjPropagateTypes (Value m n) = Value m n

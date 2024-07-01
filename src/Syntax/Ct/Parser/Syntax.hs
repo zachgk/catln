@@ -64,14 +64,14 @@ parseTVVar ('$':n)     = Just $ TypeVar (TVVar $ partialKey n) TVInt
 parseTVVar _           = Nothing
 
 fromMaybeTypeName :: Maybe TypeName -> Type
-fromMaybeTypeName = maybe topType fromName
+fromMaybeTypeName = maybe PTopType fromName
   where
     fromName n = case parseTVVar n of
       Just t  -> t
       Nothing -> relTypeVal n
 
 emptyMeta :: SourcePos -> SourcePos -> ParseMeta
-emptyMeta p1 p2 = Meta topType (Just (p1, p2, "")) emptyMetaDat
+emptyMeta p1 p2 = Meta PTopType (Just (p1, p2, "")) emptyMetaDat
 
 rawExprWithType :: Type -> RawExpr ParseMetaDat -> RawExpr ParseMetaDat
 rawExprWithType t (RawCExpr m c) = RawCExpr (mWithType t m) c

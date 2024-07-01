@@ -70,7 +70,7 @@ emptyMetaT :: (MetaDat m) => Type -> Meta m
 emptyMetaT t = Meta t Nothing emptyMetaDat
 
 emptyMetaN :: (MetaDat m) => Meta m
-emptyMetaN = emptyMetaT topType
+emptyMetaN = emptyMetaT PTopType
 
 getMetaType :: Meta m -> Type
 getMetaType (Meta t _ _) = t
@@ -150,10 +150,10 @@ instance (Show m, Show (e m)) => Show (ObjArr e m) where
 
       showArr :: String
       showArr = case oaArr of
-        Just (Just e, m) | getMetaType m /= topType -> printf " -> %s = %s" (show m) (show e)
+        Just (Just e, m) | getMetaType m /= PTopType -> printf " -> %s = %s" (show m) (show e)
         Just (Just e, _) | isJust oaObj -> printf "= %s" (show e)
         Just (Just e, _) -> show e
-        Just (Nothing, m) | getMetaType m /= topType -> printf " -> %s" (show m)
+        Just (Nothing, m) | getMetaType m /= PTopType -> printf " -> %s" (show m)
         Just (Nothing, _) -> ""
         Nothing -> ""
 

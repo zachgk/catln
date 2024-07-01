@@ -197,10 +197,10 @@ instance (Show m, Show (e m)) => Show (RawObjArr e m) where
 
       showArr :: String
       showArr = case roaArr of
-        Just (Just e, _, m) | getMetaType m /= topType -> printf " -> %s = %s" (show m) (show e)
+        Just (Just e, _, m) | getMetaType m /= PTopType -> printf " -> %s = %s" (show m) (show e)
         Just (Just e, _, _) | isJust roaObj -> printf "= %s" (show e)
         Just (Just e, _, _) -> show e
-        Just (Nothing, _, m) | getMetaType m /= topType -> printf " -> %s" (show m)
+        Just (Nothing, _, m) | getMetaType m /= PTopType -> printf " -> %s" (show m)
         Just (Nothing, _, _) -> ""
         Nothing -> ""
 

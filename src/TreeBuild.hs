@@ -57,7 +57,7 @@ buildTBEnv primEnv prgm@(objMap, _, _) = baseEnv
     resEnv = H.fromListWith (++) $ mapMaybe resFromArrow objMap
 
     resFromArrow oa@ObjArr{oaObj=Just obj, oaArr, oaAnnots} = case oaArr of
-      _ | getExprType (oaObjExpr oa) == topType -> error $ printf "buildTBEnv failed with a topType input in %s" (show oa)
+      _ | getExprType (oaObjExpr oa) == PTopType -> error $ printf "buildTBEnv failed with a topType input in %s" (show oa)
       Just (Just _, _) -> Just (oaObjPath oa, [(objLeaf, listToMaybe (exprWhereConds obj), any isElseAnnot oaAnnots, TCObjArr oa) | objLeaf <- leafsFromMeta (getExprMeta $ oaObjExpr oa)])
       Just (Nothing, _) -> Nothing
       Nothing -> Nothing
@@ -86,7 +86,7 @@ envLookupTry env@TBEnv{tbTypeEnv} objSrc visitedArrows srcType destType resArrow
 -- It is used for arrow declarations that require multiple arrows definitions to constitute
 -- TODO: This would be drastically improved with type difference
 completeTreeSet :: TBEnv -> PartialType -> [(PartialType, TCallTree)] -> Either Type (H.HashMap PartialType TCallTree)
-completeTreeSet TBEnv{tbTypeEnv} fullPartial = aux H.empty bottomType
+completeTreeSet TBEnv{tbTypeEnv} fullPartial = aux H.empty BottomType
   where
     fullType = singletonType fullPartial
     aux :: H.HashMap PartialType TCallTree -> Type -> [(PartialType, TCallTree)] -> Either Type (H.HashMap PartialType TCallTree)
@@ -169,8 +169,8 @@ envLookup env obj visitedArrows srcType destType = do
 
 buildCallTree :: TBEnv -> [ObjSrc] -> Type -> Type -> CRes TCallTree
 buildCallTree TBEnv{tbTypeEnv} os srcType destType | isSubtypeOfWithObjSrcs tbTypeEnv os srcType destType = return TCTId
-buildCallTree _ _ _ (TopType []) = return TCTId
-buildCallTree _ _ (TopType []) _ = error $ printf "buildCallTree from top type"
+buildCallTree _ _ _ PTopType = return TCTId
+buildCallTree _ _ PTopType _ = error $ printf "buildCallTree from top type"
 buildCallTree env@TBEnv{tbTypeEnv} objSrcs (TypeVar v _) destType = case H.lookup v (exprVarArgsWithObjSrcs tbTypeEnv objSrcs) of
   Just (_, srcType') -> buildCallTree env objSrcs srcType' destType
   Nothing -> error $ printf "Unknown TypeVar %s in buildCallTree" (show v)

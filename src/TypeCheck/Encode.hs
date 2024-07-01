@@ -61,7 +61,7 @@ makeBaseFEnv prgm = FEnv{
   fePnts = IM.empty,
   feConsDats = [],
   feCons = [],
-  feUnionAllObjs = Meta topType Nothing (VarMetaDat (Just 0) Nothing),
+  feUnionAllObjs = Meta PTopType Nothing (VarMetaDat (Just 0) Nothing),
   feVTypeGraph = H.empty,
   feTTypeGraph = H.empty,
   feUpdatedDuringEpoch = False,
@@ -77,8 +77,8 @@ fromMeta :: FEnv -> TypeBound -> EncodeState -> PreMeta -> String -> TypeCheckRe
 fromMeta env bound est m description  = do
   let tp = getMetaType m
   let (p, env') = case bound of
-        BAct    -> fresh env (TypeCheckResult [] $ SType tp topType description)
-        BReq    -> fresh env (TypeCheckResult [] $ SType topType tp description)
+        BAct    -> fresh env (TypeCheckResult [] $ SType tp PTopType description)
+        BReq    -> fresh env (TypeCheckResult [] $ SType PTopType tp description)
         BActReq -> fresh env (TypeCheckResult [] $ SType tp tp description)
   return (mapMetaDat (\_ -> mkVarMetaDat est p) m, env')
 
@@ -119,7 +119,7 @@ fromExpr est env (CExpr m c) = do
   return (CExpr m' c, addConstraints env' [EqualsKnown 3 m' (constantType c)])
 fromExpr est@EncodeOut{} env1 (Value m name) = do
   (m', env2) <- fromMeta env1 BAct est m ("Out Val " ++ name)
-  return (Value m' name, addConstraints env2 [BoundedByKnown 4 m' (relTypeVal name), BoundedByObjs 4 m' topType])
+  return (Value m' name, addConstraints env2 [BoundedByKnown 4 m' (relTypeVal name), BoundedByObjs 4 m' PTopType])
 fromExpr est@EncodeIn{} env1 (Value m name) = do
   (m', env2) <- fromMeta env1 BAct est m ("In Val " ++ name)
   return (Value m' name, addConstraints env2 [BoundedByKnown 5 m' (relTypeVal name)])
@@ -137,7 +137,7 @@ fromExpr est env1 (EWhere base cond) = do
         EncodeIn -> EncodeOut Nothing
         _        -> est
   (cond', env3) <- fromExpr condEst env2 cond
-  let (bool, env4) = fresh env3 $ TypeCheckResult [] $ SType topType boolType "ifGuardBool"
+  let (bool, env4) = fresh env3 $ TypeCheckResult [] $ SType PTopType boolType "ifGuardBool"
   let bool' = Meta boolType (labelPos "bool" $ getMetaPos $ getExprMeta cond) (mkVarMetaDat est bool)
   let env5 = addConstraints env4 [ArrowTo 30 (getExprMeta cond') bool']
   return (EWhere base' cond', env5)
@@ -152,7 +152,7 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg) = do
           [
             ArrowTo 7 (getExprMeta baseExpr') baseM',
                         AddArg 8 (baseM', inExprSingleton obj) m',
-                        BoundedByObjs 9 m' topType,
+                        BoundedByObjs 9 m' PTopType,
                         PropEq 11 (m', TVArg $ inExprSingleton obj) arrM'
                         ]
         (EncodeOut{}, Nothing, Just (Just _argExpr', _arrM')) ->
@@ -160,13 +160,13 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg) = do
           [
             ArrowTo 12 (getExprMeta baseExpr') baseM',
                         AddInferArg 13 baseM' m',
-                        BoundedByObjs 14 m' topType
+                        BoundedByObjs 14 m' PTopType
                         ]
         (EncodeIn{}, Just obj, Just (Just _argExpr', arrM')) ->
           -- Input with (x=x)
           [
             EqPoints 16 (getExprMeta baseExpr') baseM',
-            BoundedByObjs 17 m' topType,
+            BoundedByObjs 17 m' PTopType,
                      AddArg 19 (baseM', inExprSingleton obj) m',
                      PropEq 21 (m', TVArg $ inExprSingleton obj) arrM'
                     ]
@@ -174,7 +174,7 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg) = do
           -- Input with (x -> T)
           [
          EqPoints 22 (getExprMeta baseExpr') baseM',
-            BoundedByObjs 23 m' topType,
+            BoundedByObjs 23 m' PTopType,
                      AddArg 24 (baseM', inExprSingleton obj) m',
                      PropEq 25 (m', TVArg $ inExprSingleton obj) arrM'
                     ]
@@ -190,7 +190,7 @@ fromExpr est env1 (VarApply m baseExpr varName varVal) = do
         EncodeOut{} -> [
                       ArrowTo 26 (getExprMeta baseExpr') m',
                       PropEq 27 (m', TVVar varName) varVal',
-                      BoundedByObjs 28 m' topType
+                      BoundedByObjs 28 m' PTopType
                        ]
         EncodeIn{} -> [
                       EqPoints 29 (getExprMeta baseExpr') m',
@@ -220,19 +220,19 @@ fromObjArr est env1 oa@ObjArr{oaObj, oaAnnots, oaArr} = do
         (EncodeOut{}, Just _obj, Just (Just argExpr', arrM')) ->
           -- Output with (x=x)
           [
-                        BoundedByObjs 10 arrM' topType,
+                        BoundedByObjs 10 arrM' PTopType,
                         ArrowTo 10 (getExprMeta argExpr') arrM'
                         ]
         (EncodeOut{}, Nothing, Just (Just argExpr', arrM')) ->
           -- Output with (x) infer
           [
-                        BoundedByObjs 15 arrM' topType,
+                        BoundedByObjs 15 arrM' PTopType,
                         ArrowTo 15 (getExprMeta argExpr') arrM'
                         ]
         (EncodeIn{}, Just obj, Just (Just argExpr', arrM')) ->
           -- Input with (x=x)
           [
-            BoundedByObjs 18 (getExprMeta argExpr') topType,
+            BoundedByObjs 18 (getExprMeta argExpr') PTopType,
             BoundedByKnown 18 (getExprMeta argExpr') (TypeVar (TVArg $ inExprSingleton obj) TVInt),
                      EqPoints 20 (getExprMeta argExpr') arrM'
                     ]
@@ -259,7 +259,7 @@ fromObjectMap env1 oa@ObjArr{oaBasis, oaAnnots, oaObj=Just obj, oaArr} = do
     (maybeArrE'@(_, arrM'), env5a) <- case maybeArrE of
       Just arrE -> do
         (vExpr, env4a) <- fromExpr est env4 arrE
-        (arrM', env4b) <- fromMeta env4a BAct est (Meta topType (labelPos "res" $ getMetaPos arrM) emptyMetaDat) $ printf "Arrow result from %s" (show $ exprPath obj')
+        (arrM', env4b) <- fromMeta env4a BAct est (Meta PTopType (labelPos "res" $ getMetaPos arrM) emptyMetaDat) $ printf "Arrow result from %s" (show $ exprPath obj')
         return ((Just vExpr, arrM'), addConstraints env4b [ArrowTo 32 (getExprMeta vExpr) arrM', ArrowTo 33 (getExprMeta vExpr) mUserReturn'])
       Nothing -> return ((Nothing, mUserReturn'), env4)
     let env5b = addConstraints env5a [EqPoints 34 (getExprMeta obj') arrM' | oaBasis == TypeObj]

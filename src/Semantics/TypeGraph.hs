@@ -90,7 +90,7 @@ reachesPartial ReachesEnv{rTypeGraph, rTypeEnv} partial@PartialType{ptName=name}
     tryTArrow ObjArr{oaArr=Nothing} = return Nothing
 
 reaches :: (MetaDat m, Show m) => ReachesEnv m -> Type -> CRes ReachesTree
-reaches _     (TopType [])            = return $ ReachesLeaf [topType]
+reaches _     PTopType            = return $ ReachesLeaf [PTopType]
 reaches _     (TopType _)            = undefined
 reaches _     (TypeVar v _)            = error $ printf "reaches with typevar %s" (show v)
 reaches env (UnionType src) = do

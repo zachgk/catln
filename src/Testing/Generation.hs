@@ -60,7 +60,7 @@ genType prgm@(objMap, ClassGraph cg, _) = HG.choice gens
       else [genBasic, genCGOld, genCG, genCGRel, genObjM, genObj]
 
     genBasic :: Gen Type
-    genBasic = HG.element [topType, bottomType]
+    genBasic = HG.element [PTopType, BottomType]
 
     genCGOld :: Gen Type
     genCGOld = do

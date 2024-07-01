@@ -117,7 +117,7 @@ llvm :: Op
 llvm = (name', [(srcType, Nothing, False, TCMacro (singletonType resultLeaf) (MacroFunction macroBuild))])
   where
     name' = "/Catln/llvm"
-    srcType = PartialType name' H.empty (H.fromList [(partialKey "/c", topType)]) [] PtArgExact
+    srcType = PartialType name' H.empty (H.fromList [(partialKey "/c", PTopType)]) [] PtArgExact
     macroBuild input MacroData{mdTbEnv} = do
       case input of
         (TTupleApply _ (_, TValue _ "/Catln/llvm") ObjArr{oaObj=Just (TValue _ "/c"), oaArr=Just (Just (TValue _ functionToCodegen), _)}) -> buildName functionToCodegen
