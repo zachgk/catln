@@ -78,7 +78,7 @@ reachesPartial ReachesEnv{rTypeGraph, rTypeEnv} partial@PartialType{ptName=name}
 
   return $ ReachesLeaf (catMaybes ttypes)
   where
-    tryTArrow oa = do
+    tryTArrow oa@ObjArr{oaArr=Just{}} = do
       -- It is possible to send part of a partial through the arrow, so must compute the valid part
       -- If none of it is valid, then there is Nothing
       let potentialSrc@(UnionType potSrcLeafs) = intersectTypes rTypeEnv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa)
@@ -87,6 +87,7 @@ reachesPartial ReachesEnv{rTypeGraph, rTypeEnv} partial@PartialType{ptName=name}
         -- otherwise, no reaches path requiring multiple steps can be found
         then return $ Just $ unionAllTypes rTypeEnv [arrowDestType True rTypeEnv potentialSrcPartial oa | potentialSrcPartial <- splitUnionType potSrcLeafs]
         else return Nothing
+    tryTArrow ObjArr{oaArr=Nothing} = return Nothing
 
 reaches :: (MetaDat m, Show m) => ReachesEnv m -> Type -> CRes ReachesTree
 reaches _     (TopType [])            = return $ ReachesLeaf [topType]

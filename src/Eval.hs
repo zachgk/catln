@@ -62,10 +62,11 @@ evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe 
   where
     prgm@(objMap, _, _) = prgmFromGraphData prgmName prgmGraphData
     typeEnv = mkTypeEnv prgm
-    objArrowsContains ObjArr{oaArr=(Nothing, _)} = Nothing
-    objArrowsContains oa@ObjArr{oaArr=(_, oaM)} = case oaObjPath oa of
+    objArrowsContains ObjArr{oaArr=Nothing} = Nothing
+    objArrowsContains ObjArr{oaArr=Just (Nothing, _)} = Nothing
+    objArrowsContains oa@ObjArr{oaArr=Just (_, oaM)} = case oaObjPath oa of
       "/Context" -> case H.lookup (partialKey "/value") $ exprAppliedArgsMap $ oaObjExpr oa of
-        Just (_, Just valObjExpr) -> if relativeNameMatches function (exprPath valObjExpr)
+        Just (Just (_, Just valObjExpr)) -> if relativeNameMatches function (exprPath valObjExpr)
           then Just $ if isBuildable oa (getMetaType oaM)
             then EvalBuildWithContext (exprPath valObjExpr)
             else EvalRunWithContext (exprPath valObjExpr)
@@ -148,7 +149,7 @@ evalExpr env (TValue m _) = do
 evalExpr _ (THoleExpr m h) = CErr [MkCNote $ GenCErr (getMetaPos m) $ printf "Can't evaluate hole %s" (show h)]
 evalExpr env (TAliasExpr b _) = evalExpr env b
 evalExpr env (TWhere b _) = evalExpr env b
-evalExpr env@Env{evArgs} (TTupleApply _ (_, b) oa@ObjArr{oaObj=Just (TValue _ "/io"), oaArr=(Nothing, _)}) = do
+evalExpr env@Env{evArgs} (TTupleApply _ (_, b) oa@ObjArr{oaObj=Just (TValue _ "/io"), oaArr=Just (Nothing, _)}) = do
   (TupleVal n args, env') <- evalExpr env b
   case H.lookup "/io" evArgs of
     Just io -> return (TupleVal n (H.insert (oaObjPath oa) io args), env')
@@ -156,11 +157,12 @@ evalExpr env@Env{evArgs} (TTupleApply _ (_, b) oa@ObjArr{oaObj=Just (TValue _ "/
 evalExpr env (TTupleApply _ (_, b) oa) = do
   (TupleVal n args, env') <- evalExpr env b
   (v, env'') <- case oaArr oa of
-    (Just oaExpr, _) -> case oaObj oa of
+    Just (Just oaExpr, _) -> case oaObj oa of
       Just TValue{} -> evalExpr env' oaExpr
       Just TTupleApply{} -> return (ObjArrVal oa, env')
       _ -> error $ printf "Unsupported eval argument of %s" (show oa)
-    (Nothing, _) -> error $ printf "Missing arrExpr in evalExpr TupleApply with %s - %s" (show b) (show oa)
+    Just (Nothing, _) -> error $ printf "Missing arrExpr in evalExpr TupleApply with %s - %s" (show b) (show oa)
+    Nothing -> error $ printf "Missing arrExpr in evalExpr TupleApply with %s - %s" (show b) (show oa)
   return (TupleVal n (H.insert (oaObjPath oa) v args), env'')
 evalExpr env (TVarApply _ b _ _) = evalExpr env b
 evalExpr env (TCalls _ b callTree) = do
@@ -207,7 +209,7 @@ evalAnnots prgmName prgmGraphData = do
   let env@Env{evTbEnv} = evalBaseEnv prgm
   forM annots $ \annot -> do
     let emptyType = partialVal "EmptyObj"
-    let emptyObj = ObjArr (Just (Value (Meta (singletonType emptyType) Nothing emptyMetaDat) "EmptyObj")) FunctionObj Nothing [] (Nothing, emptyMetaN)
+    let emptyObj = ObjArr (Just (Value (Meta (singletonType emptyType) Nothing emptyMetaDat) "EmptyObj")) FunctionObj Nothing [] Nothing
     tree <- toTExpr evTbEnv [(emptyType, emptyObj)] annot
     val <- fst <$> evalExpr env tree
     return (annot, val)

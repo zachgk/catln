@@ -276,9 +276,10 @@ instance ExprClass TExpr where
   exprVarArgs THoleExpr{} = H.empty
   exprVarArgs (TAliasExpr base n) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, getExprMeta base)] (exprVarArgs base)
   exprVarArgs (TWhere base _) = exprVarArgs base
-  exprVarArgs (TTupleApply _ (_, be) ObjArr{oaObj=Just n, oaArr=(Nothing, arrM)}) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, arrM)] (exprVarArgs be)
-  exprVarArgs (TTupleApply _ _ ObjArr{oaObj, oaArr=(Nothing, _)}) = error $ printf "Unexpected unhandled obj type in exprVarArgs: %s" (show oaObj)
-  exprVarArgs (TTupleApply _ (_, be) ObjArr{oaArr=(Just e, _)}) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)
+  exprVarArgs (TTupleApply _ (_, be) ObjArr{oaObj=Just n, oaArr=Just (Nothing, arrM)}) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, arrM)] (exprVarArgs be)
+  exprVarArgs (TTupleApply _ _ ObjArr{oaObj, oaArr=Just (Nothing, _)}) = error $ printf "Unexpected unhandled obj type in exprVarArgs: %s" (show oaObj)
+  exprVarArgs (TTupleApply _ (_, be) ObjArr{oaArr=Just (Just e, _)}) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)
+  exprVarArgs (TTupleApply _ _ ObjArr{oaObj, oaArr=Nothing}) = error $ printf "Not yet implemented: %s" (show oaObj)
   exprVarArgs (TVarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar n) [(TValue (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)])
   exprVarArgs (TCalls _ b _) = exprVarArgs b
 
@@ -378,11 +379,11 @@ exprArgsWithVal (VarApply _ b _ _) val = exprArgsWithVal b val
 exprArgsWithVal (TupleApply _ (_, be) arg) val = H.union (exprArgsWithVal be val) (fromArg arg val)
   where
     fromArg :: (MetaDat m, Show m) => ObjArr Expr m -> Val -> Args
-    fromArg ObjArr{oaObj=Just obj, oaArr=(Just e, _)} (TupleVal _ tupleArgs) = case H.lookup (exprPath obj) tupleArgs of
+    fromArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)} (TupleVal _ tupleArgs) = case H.lookup (exprPath obj) tupleArgs of
       Just val' -> exprArgsWithVal e val'
       Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
-    fromArg ObjArr{oaObj=Nothing, oaArr=(Just e, _)} _ = exprArgsWithVal e val
-    fromArg ObjArr{oaObj=Just obj, oaArr=(Nothing, _)} (TupleVal _ tupleArgs) = case H.lookup (exprPath obj) tupleArgs of
+    fromArg ObjArr{oaObj=Nothing, oaArr=Just (Just e, _)} _ = exprArgsWithVal e val
+    fromArg ObjArr{oaObj=Just obj, oaArr=Just (Nothing, _)} (TupleVal _ tupleArgs) = case H.lookup (exprPath obj) tupleArgs of
       Just val' -> H.singleton (exprPath obj) val'
       Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
     fromArg oa _ = error $ printf "Invalid exprArgsWithVal fromArg of %s and %s" (show oa) (show val)

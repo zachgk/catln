@@ -102,7 +102,7 @@ semiDesObjArr roa@RawObjArr{roaObj=Just{}} = oa{
   where
     [oa@ObjArr{oaObj=Just oE, oaAnnots, oaArr}] = desObjArr roa
     oE' = semiDesExpr (SDInput False) Nothing oE
-    oaArr' = first (fmap (semiDesExpr SDOutput (Just oE))) oaArr
+    oaArr' = fmap (first (fmap (semiDesExpr SDOutput (Just oE)))) oaArr
 semiDesObjArr oa = error $ printf "Unexpected semiDesObjArr with no input expression: %s" (show oa)
 
 declToObjArrow :: StatementEnv -> PSemiDecl -> DesObjectMapItem
@@ -112,7 +112,7 @@ declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl oa@ObjArr{oaAnnots, oaArr
 
     oa3 = oa2{
       oaAnnots=map desExpr oaAnnots ++ inheritAnnots,
-      oaArr = first (fmap desExpr) oaArr
+      oaArr = fmap (first (fmap desExpr)) oaArr
       }
 
 desDecl :: StatementEnv -> PObjArr -> [PStatementTree] -> CRes DesPrgm
@@ -134,7 +134,7 @@ desInheritingSubstatements (inheritModule, inheritAnnots) path subStatements = d
 
 -- | Parses an object from a 'MultiTypeDefData'
 desMultiTypeDefObj :: String -> H.HashMap TypeVarName Type -> PExpr -> DesObjArr
-desMultiTypeDefObj inheritPath varReplaceMap expr = desObj False inheritPath UseRelativeName $ ObjArr (Just expr'') TypeObj Nothing [] (Nothing, emptyMetaE "" expr'')
+desMultiTypeDefObj inheritPath varReplaceMap expr = desObj False inheritPath UseRelativeName $ ObjArr (Just expr'') TypeObj Nothing [] Nothing
   where
     expr' = semiDesExpr SDType Nothing expr
 
@@ -187,7 +187,7 @@ desTypeDef statementEnv@(inheritPath, _) typeExpr extends subStatements = do
   (subPrgm, annots) <- desInheritingSubstatements statementEnv (getPath $ exprPath typeExpr) subStatements
   let typeExpr' = semiDesExpr SDType Nothing typeExpr
   let type' = exprToPartialType typeExpr
-  let obj = desObj False inheritPath UseRelativeName $ ObjArr (Just typeExpr') TypeObj (desObjDocComment subStatements) annots (Nothing, emptyMetaE "arrM" typeExpr)
+  let obj = desObj False inheritPath UseRelativeName $ ObjArr (Just typeExpr') TypeObj (desObjDocComment subStatements) annots Nothing
   let objMap = [obj]
   let extendNodes = [(CGClass (False, exprToPartialType extendClass, [singletonType type'], Nothing), PClassName (exprPath extendClass), [PTypeName $ ptName type']) | extendClass <- extends]
   let classGraph = mergeClassGraphs (classGraphFromObjs objMap) (ClassGraph $ graphFromEdges extendNodes)

@@ -40,12 +40,13 @@ import           Utils
 -- Similarly, matches or patterns are less effective then functions.
 -- TODO May need to differentiate top level of functions from inner levels
 objectPrecedence :: (Show m, Show (e m)) => ObjArr e m -> [Int]
-objectPrecedence ObjArr{oaBasis=TypeObj}=                        [1]
-objectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=(Nothing, _)} = [2, 1] -- Declaration objects have priority [2,1], better than definitions
-objectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=(Just{}, _)}  = [2, 2] -- Definition objects have priority [2,2]
-objectPrecedence ObjArr{oaBasis=PatternObj}                      = [3]
-objectPrecedence ObjArr{oaBasis=MatchObj}                        =   [4]
-objectPrecedence ObjArr{oaBasis=ArgObj}                          =   [5]
+objectPrecedence ObjArr{oaBasis=TypeObj}=                             [1]
+objectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=Nothing}           = [2, 1] -- Type objects have priority
+objectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=Just (Nothing, _)} = [2, 2] -- Declaration objects have priority [2,2], better than definitions
+objectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=Just (Just{}, _)}  = [2, 3] -- Definition objects have priority [2,3]
+objectPrecedence ObjArr{oaBasis=PatternObj}                           = [3]
+objectPrecedence ObjArr{oaBasis=MatchObj}                             =   [4]
+objectPrecedence ObjArr{oaBasis=ArgObj}                               =   [5]
 
 -- | Finds the 'objectPrecedence' for all types
 buildPrecedenceMap :: (Show m, MetaDat m) => ObjectMap Expr m -> H.HashMap TypeName [Int]
@@ -148,7 +149,7 @@ mkReachesEnv env@FEnv{feTypeEnv, feUnionAllObjs, feVTypeGraph, feTTypeGraph} (Co
     inExpr' <- showExpr env inExpr
     outM' <- showM env outM
     return (mapMeta clearMetaDat InputMeta inExpr', outM')
-  let argTypeGraph = H.fromList $ map (\(argName, (inExpr, outM)) -> (makeAbsoluteName $ pkName argName, [ObjArr (Just inExpr) ArgObj Nothing [] (Nothing, emptyMetaT (substituteWithVarArgEnv (fmap snd vaenv) (getMetaType outM)))])) $ H.toList argVaenv'
+  let argTypeGraph = H.fromList $ map (\(argName, (inExpr, outM)) -> (makeAbsoluteName $ pkName argName, [ObjArr (Just inExpr) ArgObj Nothing [] (Just (Nothing, emptyMetaT (substituteWithVarArgEnv (fmap snd vaenv) (getMetaType outM))))])) $ H.toList argVaenv'
   let argObjMap = concat $ H.elems argTypeGraph
 
   -- final ReachesEnv

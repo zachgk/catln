@@ -106,7 +106,7 @@ data ObjArr e m = ObjArr {
   oaBasis  :: !ObjectBasis,
   oaDoc    :: !(Maybe DocComment),
   oaAnnots :: ![CompAnnot (e m)],
-  oaArr    :: !(Maybe (e m), Meta m)
+  oaArr    :: !(Maybe (Maybe (e m), Meta m))
                                }
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
@@ -150,11 +150,12 @@ instance (Show m, Show (e m)) => Show (ObjArr e m) where
 
       showArr :: String
       showArr = case oaArr of
-        (Just e, m) | getMetaType m /= topType -> printf " -> %s = %s" (show m) (show e)
-        (Just e, _) | isJust oaObj -> printf "= %s" (show e)
-        (Just e, _) -> show e
-        (Nothing, m) | getMetaType m /= topType -> printf " -> %s" (show m)
-        (Nothing, _) -> ""
+        Just (Just e, m) | getMetaType m /= topType -> printf " -> %s = %s" (show m) (show e)
+        Just (Just e, _) | isJust oaObj -> printf "= %s" (show e)
+        Just (Just e, _) -> show e
+        Just (Nothing, m) | getMetaType m /= topType -> printf " -> %s" (show m)
+        Just (Nothing, _) -> ""
+        Nothing -> ""
 
 instance Hashable SourcePos where
   hashWithSalt s (SourcePos name line col) = s `hashWithSalt` show name `hashWithSalt` unPos line `hashWithSalt` unPos col
@@ -217,9 +218,10 @@ instance ExprClass Expr where
   exprVarArgs HoleExpr{} = H.empty
   exprVarArgs (AliasExpr base n) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, getExprMeta base)] (exprVarArgs base)
   exprVarArgs (EWhere base _) = exprVarArgs base
-  exprVarArgs (TupleApply _ (_, be) ObjArr{oaObj=Just n, oaArr=(Nothing, arrM)}) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, arrM)] (exprVarArgs be)
-  exprVarArgs (TupleApply _ _ ObjArr{oaObj, oaArr=(Nothing, _)}) = error $ printf "Unexpected unhandled obj type in exprVarArgs: %s" (show oaObj)
-  exprVarArgs (TupleApply _ (_, be) ObjArr{oaArr=(Just e, _)}) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)
+  exprVarArgs (TupleApply _ (_, be) ObjArr{oaObj=Just n, oaArr=Just (Nothing, arrM)}) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, arrM)] (exprVarArgs be)
+  exprVarArgs (TupleApply _ _ ObjArr{oaObj, oaArr=Just (Nothing, _)}) = error $ printf "Unexpected unhandled obj type in exprVarArgs: %s" (show oaObj)
+  exprVarArgs (TupleApply _ (_, be) ObjArr{oaArr=Just (Just e, _)}) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)
+  exprVarArgs (TupleApply _ _ ObjArr{oaObj, oaArr=Nothing}) = error $ printf "Not yet implemented: %s" (show oaObj)
   exprVarArgs (VarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar n) [(Value (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)])
 
 class ObjArrClass oa where
@@ -232,8 +234,8 @@ instance ObjArrClass ObjArr where
 
   oaVarArgs oa = exprArg oa
     where
-      exprArg ObjArr{oaArr=(Just e, _)} = exprVarArgs e
-      exprArg ObjArr{oaObj=Just obj, oaArr=(_, m)} = H.singleton (TVArg $ inExprSingleton obj) [(obj, m)]
+      exprArg ObjArr{oaArr=Just (Just e, _)} = exprVarArgs e
+      exprArg ObjArr{oaObj=Just obj, oaArr=Just (_, m)} = H.singleton (TVArg $ inExprSingleton obj) [(obj, m)]
       exprArg _ = error $ printf "Invalid oa %s" (show oa)
 
   getOaAnnots = oaAnnots
@@ -243,13 +245,13 @@ emptyPrgm :: Prgm e m
 emptyPrgm = ([], emptyClassGraph, [])
 
 mkIOObjArr :: (MetaDat m, Show m) => Meta m -> ArgName -> Expr m -> ObjArr Expr m
-mkIOObjArr m argName argVal = ObjArr (Just (Value (emptyMetaT $ partialToTypeSingleton argName) (pkName argName))) ArgObj Nothing [] (Just argVal, m)
+mkIOObjArr m argName argVal = ObjArr (Just (Value (emptyMetaT $ partialToTypeSingleton argName) (pkName argName))) ArgObj Nothing [] (Just (Just argVal, m))
 
 mkIObjArr :: (MetaDat m, Show m) => Meta m -> ArgName -> ObjArr Expr m
-mkIObjArr m argName = ObjArr (Just (Value (emptyMetaT $ partialToTypeSingleton argName) (pkName argName))) ArgObj Nothing [] (Nothing, m)
+mkIObjArr m argName = ObjArr (Just (Value (emptyMetaT $ partialToTypeSingleton argName) (pkName argName))) ArgObj Nothing [] (Just (Nothing, m))
 
 mkOObjArr :: (MetaDat m, Show m) => Expr m -> ObjArr Expr m
-mkOObjArr argVal = ObjArr Nothing ArgObj Nothing [] (Just argVal, emptyMetaN )
+mkOObjArr argVal = ObjArr Nothing ArgObj Nothing [] (Just (Just argVal, emptyMetaN ))
 
 
 mapMetaDat :: (m1 -> m2) -> Meta m1 -> Meta m2
@@ -257,7 +259,7 @@ mapMetaDat f (Meta t p md) = Meta t p (f md)
 
 -- | Maps the objArr.oaArr.expr
 mapTupleArgValue :: (e m -> e m) -> ObjArr e m -> ObjArr e m
-mapTupleArgValue f oa@ObjArr{oaArr} = oa{oaArr=first (fmap f) oaArr}
+mapTupleArgValue f oa@ObjArr{oaArr} = oa{oaArr=fmap (first (fmap f)) oaArr}
 
 constantPartialType :: Constant -> PartialType
 constantPartialType CInt{}   = intLeaf
@@ -293,10 +295,11 @@ exprArgs e = H.fromList $ mapMaybe aux $ H.toList $ exprVarArgs e
     aux (TVArg a, ms) = Just (a, ms)
     aux (TVVar _, _)  = Nothing
 
-exprAppliedArgsMap :: (ExprClass e, MetaDat m, Show m, Show (e m)) => e m -> H.HashMap ArgName (Meta m, Maybe (e m))
+exprAppliedArgsMap :: (ExprClass e, MetaDat m, Show m, Show (e m)) => e m -> H.HashMap ArgName (Maybe (Meta m, Maybe (e m)))
 exprAppliedArgsMap = H.fromList . mapMaybe mapArg . exprAppliedArgs
   where
-    mapArg ObjArr{oaObj=Just oe, oaArr=(arrExpr, oaM)} = Just (inExprSingleton oe, (oaM, arrExpr))
+    mapArg ObjArr{oaObj=Just oe, oaArr=Just (arrExpr, oaM)} = Just (inExprSingleton oe, Just (oaM, arrExpr))
+    mapArg ObjArr{oaObj=Just oe, oaArr=Nothing} = Just (inExprSingleton oe, Nothing)
     mapArg _ = Nothing
 
 oaObjExpr :: (MetaDat m, ExprClass e, Show m, Show (e m)) => ObjArr e m -> e m
@@ -347,7 +350,8 @@ getRecursiveObjsExpr expr | isNothing (maybeExprPath expr) = []
 getRecursiveObjsExpr expr = subObjects ++ recursedSubObjects
   where
     subObjects = filter (isJust . maybeExprPath) $ concatMap exprFromTupleArg $ exprAppliedArgs expr
-    exprFromTupleArg ObjArr{oaObj, oaArr=(maybeOaObjExpr, _)} = maybeToList oaObj ++ maybeToList maybeOaObjExpr
+    exprFromTupleArg ObjArr{oaObj, oaArr=Just (maybeOaObjExpr, _)} = maybeToList oaObj ++ maybeToList maybeOaObjExpr
+    exprFromTupleArg ObjArr{oaArr=Nothing} = []
     recursedSubObjects = concatMap getRecursiveObjsExpr subObjects
 
 -- | Gets an object and all sub-objects (recursively) from it's arguments
@@ -356,13 +360,14 @@ getRecursiveObjs ObjArr{oaBasis} | oaBasis == MatchObj = []
 getRecursiveObjs oa@ObjArr{oaBasis, oaObj=Just objE} = oa : recursedSubObjects
   where
     recursedSubObjects = map toObjMapItem $ getRecursiveObjsExpr objE
-    toObjMapItem e = ObjArr (Just e) oaBasis Nothing [] (Nothing, emptyMetaN)
+    toObjMapItem e = ObjArr (Just e) oaBasis Nothing [] Nothing
 getRecursiveObjs oa = error $ printf "getRecursiveObjs with no input expression: %s" (show oa)
 
-getAllObjArrNames :: (ExprClass e, MetaDat m, Show m) => ObjArr e m -> [Name]
-getAllObjArrNames ObjArr{oaObj, oaArr=(oaArrExpr, _)} = maybe [] getAllExprNames oaObj ++ maybe [] getAllExprNames oaArrExpr
+getAllObjArrNames :: (ExprClass e, MetaDat m, Show m, Show (e m)) => ObjArr e m -> [Name]
+getAllObjArrNames ObjArr{oaObj, oaArr=Just (oaArrExpr, _)} = maybe [] getAllExprNames oaObj ++ maybe [] getAllExprNames oaArrExpr
+getAllObjArrNames ObjArr{oaObj, oaArr=Nothing} = maybe [] getAllExprNames oaObj
 
-getAllExprNames :: (ExprClass e, MetaDat m, Show m) => e m -> [Name]
+getAllExprNames :: (ExprClass e, MetaDat m, Show m, Show (e m)) => e m -> [Name]
 getAllExprNames e = maybeToList (maybeExprPath e) ++ concatMap getAllObjArrNames (exprAppliedArgs e)
 
 mkTypeEnv :: (ExprClass e, Show m, Show (e m), MetaDat m) => Prgm e m -> TypeEnv

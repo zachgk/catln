@@ -55,8 +55,8 @@ canonicalImport caller imp = case maybeExprPath $ rawImpAbs imp of
     return imp{rawImpDisp=disp', rawImpCalledDir=calledDir', rawImpDir=impDir'}
   where
     disp' = case exprAppliedArgs $ rawImpAbs imp of
-      [ObjArr{oaArr=(Just (RawCExpr _ (CStr s)), _)}] -> Just s
-      _                                               -> Nothing
+      [ObjArr{oaArr=Just (Just (RawCExpr _ (CStr s)), _)}] -> Just s
+      _                                                    -> Nothing
     calledDir' = rawImpDir =<< caller
 
 mkRawCanonicalImportStr :: String -> IO RawFileImport

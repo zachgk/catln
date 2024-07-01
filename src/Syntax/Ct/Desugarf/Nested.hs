@@ -12,7 +12,7 @@
 
 module Syntax.Ct.Desugarf.Nested where
 
-import           Data.Bifunctor          (first, second)
+import           Data.Bifunctor          (bimap, first, second)
 import qualified Data.HashMap.Strict     as H
 import qualified Data.HashSet            as S
 import           Text.Printf
@@ -76,13 +76,11 @@ scopeSubDeclFunNames oa@ObjArr{oaObj=Just objExpression, oaAnnots, oaArr} decls 
     declNames = S.fromList $ map (\(PSemiDecl ObjArr{oaObj=Just o}) -> exprPath o) decls
     addPrefix n = prefix ++ "." ++ n
     scopeM = scopeSubDeclFunNamesInMeta prefix declNames
-    decls' = map (\(PSemiDecl doa@ObjArr{oaObj=Just obj, oaArr=(doaArr, m)}) -> PSemiDecl doa{
+    decls' = map (\(PSemiDecl doa@ObjArr{oaObj=Just obj, oaArr=Just (doaArr, m)}) -> PSemiDecl doa{
                      oaObj=Just (mapExprPath (\(pM, pN) -> Value (scopeSubDeclFunNamesInMeta prefix (S.singleton pN) pM) (addPrefix pN)) obj),
-                     oaArr = (fmap (scopeSubDeclFunNamesInExpr prefix declNames) doaArr, scopeM m)
+                     oaArr = Just (fmap (scopeSubDeclFunNamesInExpr prefix declNames) doaArr, scopeM m)
                      }) decls
-    oaArr' = case oaArr of
-      (Just e, oaM) -> (Just (scopeSubDeclFunNamesInExpr prefix declNames e), scopeM oaM)
-      (Nothing, oaM) -> (Nothing, scopeM oaM)
+    oaArr' = fmap (bimap (fmap (scopeSubDeclFunNamesInExpr prefix declNames)) scopeM) oaArr
     annots' = map (scopeSubDeclFunNamesInExpr prefix declNames) oaAnnots
 scopeSubDeclFunNames oa _ = error $ printf "scopeSubDeclFunNames without input expression: %s" (show oa)
 
@@ -124,15 +122,13 @@ currySubFunctions oa@ObjArr{oaObj=Just objExpression, oaAnnots, oaArr} decls = (
     parentArgs = map snd <$> exprArgs objExpression
     toUpdate = S.fromList $ map (\(PSemiDecl ObjArr{oaObj=Just o}) -> exprPath o) decls
     decls2 = map (currySubFunctionSignature parentArgs) decls
-    oaArr' = case oaArr of
-      (Just e, m) -> (Just (currySubFunctionsUpdateExpr toUpdate parentArgs e), m)
-      (Nothing, m) -> (Nothing, m)
-    decls' = map (\(PSemiDecl doa@ObjArr{oaArr=doaArr}) -> PSemiDecl doa{oaArr=first (fmap (currySubFunctionsUpdateExpr toUpdate parentArgs)) doaArr}) decls2
+    oaArr' = fmap (first (fmap (currySubFunctionsUpdateExpr toUpdate parentArgs))) oaArr
+    decls' = map (\(PSemiDecl doa@ObjArr{oaArr=doaArr}) -> PSemiDecl doa{oaArr=fmap (first (fmap (currySubFunctionsUpdateExpr toUpdate parentArgs))) doaArr}) decls2
     annots' = map (currySubFunctionsUpdateExpr toUpdate parentArgs) oaAnnots
 currySubFunctions oa _ = error $ printf "currySubFunctions without input expression: %s" (show oa)
 
 desObjDocComment :: [PStatementTree] -> Maybe String
 desObjDocComment ((RawStatementTree (RawAnnot annotExpr) _):rest) | maybeExprPath annotExpr == Just mdAnnot = Just (++) <*> Just annotText <*> desObjDocComment rest
   where
-    (Just (_, Just (RawCExpr _ (CStr annotText)))) = H.lookup (partialKey mdAnnotText) $ exprAppliedArgsMap annotExpr
+    (Just (Just (_, Just (RawCExpr _ (CStr annotText))))) = H.lookup (partialKey mdAnnotText) $ exprAppliedArgsMap annotExpr
 desObjDocComment _ = Just ""

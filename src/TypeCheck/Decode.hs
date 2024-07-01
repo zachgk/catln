@@ -14,6 +14,7 @@
 
 module TypeCheck.Decode where
 
+import           Control.Monad       (forM)
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Semantics
@@ -56,7 +57,7 @@ toExpr env (EWhere base cond) = do
   base' <- toExpr env base
   cond' <- toExpr env cond
   return $ EWhere base' cond'
-toExpr env (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaArr=(oaArrExpr, oaArrM), oaAnnots}) = do
+toExpr env (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaArr, oaAnnots}) = do
   let pos = getMetaPos m
   m' <- toMeta env m "TupleApply_M"
   baseM' <- toMeta env baseM "TupleApply_baseM"
@@ -72,10 +73,12 @@ toExpr env (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaArr=(oaArrExpr, o
           (base, result) -> TypeCheckResE [GenTypeCheckError pos $ printf "Failed argument inference due to multiple types with base %s and result %s" (show base) (show result)]
         (baseM'', m'') -> TypeCheckResE [GenTypeCheckError pos $ printf "Failed argument inference due to non UnionType in baseMeta %s or meta %s" (show baseM'') (show m'')]
       return $ Just $ Value (mWithType (singletonType $ partialToType argName) $ emptyMetaM "inferArg" m') (pkName argName)
-  oaArrExpr' <- mapM (toExpr env) oaArrExpr
-  oaArrM' <- toMeta env oaArrM "TupleApply_argM"
+  oaArr' <- forM oaArr $ \(oaArrExpr, oaArrM) -> do
+    oaArrExpr' <- mapM (toExpr env) oaArrExpr
+    oaArrM' <- toMeta env oaArrM "TupleApply_argM"
+    return (oaArrExpr', oaArrM')
   oaAnnots' <- mapM (toExpr env) oaAnnots
-  let arg' = arg{oaObj=oaObj', oaArr=(oaArrExpr', oaArrM'), oaAnnots=oaAnnots'}
+  let arg' = arg{oaObj=oaObj', oaArr=oaArr', oaAnnots=oaAnnots'}
   return $ TupleApply m' (baseM', baseExpr') arg'
 toExpr env (VarApply m baseExpr varName varVal) = do
   m' <- toMeta env m "VarApply_M"
@@ -90,12 +93,14 @@ toExpr env (VarApply m baseExpr varName varVal) = do
     _                                -> return result
 
 toObjArr :: FEnv -> VObjArr -> TypeCheckResult TObjArr
-toObjArr env oa@ObjArr{oaObj, oaArr=(arrE, arrM), oaAnnots} = do
+toObjArr env oa@ObjArr{oaObj, oaArr, oaAnnots} = do
   oaObj' <- mapM (toExpr env) oaObj
-  arrE' <- mapM (toExpr env) arrE
-  arrM' <- toMeta env arrM "arrMeta"
+  oaArr' <- forM oaArr $ \(arrE, arrM) -> do
+    arrE' <- mapM (toExpr env) arrE
+    arrM' <- toMeta env arrM "arrMeta"
+    return (arrE', arrM')
   oaAnnots' <- mapM (toExpr env) oaAnnots
-  return oa{oaObj=oaObj', oaArr=(arrE', arrM'), oaAnnots=oaAnnots'}
+  return oa{oaObj=oaObj', oaArr=oaArr', oaAnnots=oaAnnots'}
 
 toPrgm :: FEnv -> VPrgm -> TypeCheckResult TPrgm
 toPrgm env (objMap, classGraph, annots) = do

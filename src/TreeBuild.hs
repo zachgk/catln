@@ -58,8 +58,9 @@ buildTBEnv primEnv prgm@(objMap, _, _) = baseEnv
 
     resFromArrow oa@ObjArr{oaObj=Just obj, oaArr, oaAnnots} = case oaArr of
       _ | getExprType (oaObjExpr oa) == topType -> error $ printf "buildTBEnv failed with a topType input in %s" (show oa)
-      (Just _, _) -> Just (oaObjPath oa, [(objLeaf, listToMaybe (exprWhereConds obj), any isElseAnnot oaAnnots, TCObjArr oa) | objLeaf <- leafsFromMeta (getExprMeta $ oaObjExpr oa)])
-      (Nothing, _) -> Nothing
+      Just (Just _, _) -> Just (oaObjPath oa, [(objLeaf, listToMaybe (exprWhereConds obj), any isElseAnnot oaAnnots, TCObjArr oa) | objLeaf <- leafsFromMeta (getExprMeta $ oaObjExpr oa)])
+      Just (Nothing, _) -> Nothing
+      Nothing -> Nothing
     resFromArrow oa = error $ printf "resFromArrow with no input expression: %s" (show oa)
 
 envLookupTry ::  TBEnv -> [ObjSrc] -> VisitedArrows -> PartialType -> Type -> TCallTree -> CRes TCallTree
@@ -204,15 +205,17 @@ toTExpr env os (VarApply m b n v) = do
   return $ TVarApply m b' n v
 
 toTEObjArr :: TBEnv -> [ObjSrc] -> EObjArr -> CRes (ObjArr TExpr ())
-toTEObjArr env os oa@ObjArr{oaObj, oaAnnots, oaArr=(arrExpr, arrM)} = do
+toTEObjArr env os oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   oaObj' <- mapM (toTExpr env os) oaObj
-  let os' = if isJust oaObj && isJust arrExpr
-        then (fromJust $ maybeGetSingleton $ getExprType $ oaObjExpr oa, oa) : os
-        else os
-  arrExpr' <- forM arrExpr $ \e ->
-    toTExprDest env os e arrM
+  let os' = case oa of
+        ObjArr{oaObj=Just{}, oaArr=Just (Just{}, _)} -> (fromJust $ maybeGetSingleton $ getExprType $ oaObjExpr oa, oa) : os
+        _ -> os
+  oaArr' <- forM oaArr $ \(arrExpr, arrM) -> do
+    arrExpr' <- forM arrExpr $ \e ->
+      toTExprDest env os e arrM
+    return (arrExpr', arrM)
   oaAnnots' <- mapM (toTExpr env os') oaAnnots
-  return oa{oaObj=oaObj', oaAnnots=oaAnnots', oaArr=(arrExpr', arrM)}
+  return oa{oaObj=oaObj', oaAnnots=oaAnnots', oaArr=oaArr'}
 
 texprDest :: TBEnv -> [ObjSrc] -> TExpr () -> EvalMeta -> CRes (TExpr ())
 texprDest env os e m = do
@@ -232,8 +235,9 @@ toTExprDest env os e m = do
 
 buildArrow :: TBEnv -> PartialType -> TBObjArr -> CRes (Maybe (TBObjArr, (TExpr TBMetaDat, [TExpr TBMetaDat])))
 -- buildArrow _ src oa | trace (printf "buildArrow %s: %s" (show src) (show oa)) False = undefined
-buildArrow _ _ ObjArr{oaArr=(Nothing, _)} = return Nothing
-buildArrow env objPartial oa@ObjArr{oaAnnots, oaArr=(Just expr, am)} = do
+buildArrow _ _ ObjArr{oaArr=Nothing} = return Nothing
+buildArrow _ _ ObjArr{oaArr=Just (Nothing, _)} = return Nothing
+buildArrow env objPartial oa@ObjArr{oaAnnots, oaArr=Just (Just expr, am)} = do
   let env' = env{tbName = printf "arrow %s" (show oa)}
   let objSrc = (objPartial, oa)
   resArrowTree <- toTExprDest env' [objSrc] expr am
@@ -245,6 +249,6 @@ buildArrow env objPartial oa@ObjArr{oaAnnots, oaArr=(Just expr, am)} = do
 buildRoot :: TBEnv -> TBExpr -> PartialType -> Type -> CRes (TExpr TBMetaDat)
 buildRoot env input src dest = do
   let env' = env{tbName = printf "root"}
-  let emptyObj = ObjArr (Just input) FunctionObj Nothing [] (Nothing, emptyMetaN)
+  let emptyObj = ObjArr (Just input) FunctionObj Nothing [] Nothing
   let objSrc = (src, emptyObj)
   toTExprDest env' [objSrc] input  (emptyMetaT dest)

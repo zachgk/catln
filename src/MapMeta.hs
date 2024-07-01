@@ -89,7 +89,7 @@ mapMetaObjArr :: (MapMeta e) => MetaFun a b -> Maybe MetaLocation -> ObjArr e a 
 mapMetaObjArr f mloc oa@ObjArr{oaObj, oaAnnots, oaArr} = oa{
   oaObj = fmap (mapMeta f (fromMaybe InputMeta mloc)) oaObj,
   oaAnnots = map (mapMeta f (fromMaybe AnnotMeta mloc)) oaAnnots,
-  oaArr = bimap (fmap (mapMeta f (fromMaybe OutputMeta mloc))) (f ArrMeta) oaArr
+  oaArr = fmap (bimap (fmap (mapMeta f (fromMaybe OutputMeta mloc))) (f ArrMeta)) oaArr
                                                              }
 
 mapMetaPrgm :: (MapMeta e) => MetaFun a b -> Prgm e a -> Prgm e b

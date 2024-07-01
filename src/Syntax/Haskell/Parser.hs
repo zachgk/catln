@@ -108,7 +108,7 @@ runParser flags filename str parser = unP parser parseState
 
 hsParser :: ImportParser
 hsParser imp = do
-  let (ObjArr{oaArr=(Just (RawCExpr _ (CStr filename)), _)}:_impArgs) = exprAppliedArgs imp
+  let (ObjArr{oaArr=Just (Just (RawCExpr _ (CStr filename)), _)}:_impArgs) = exprAppliedArgs imp
   isFile <- doesFileExist filename
   if isFile
     then do

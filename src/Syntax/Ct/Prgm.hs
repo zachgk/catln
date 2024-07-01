@@ -214,8 +214,11 @@ mkRawFileImport :: RawExpr () -> RawFileImport
 mkRawFileImport e = RawFileImport e e Nothing Nothing Nothing
 
 desObjArr :: (ExprClass e, MetaDat m, Show m, Show (e m)) => RawObjArr e m -> [ObjArr e m]
-desObjArr (RawObjArr obj@(Just objExpr) basis doc annots arr Nothing) = [ObjArr obj basis doc annots arr']
+desObjArr (RawObjArr obj basis@TypeObj doc annots arr Nothing) = [ObjArr obj basis doc annots arr']
+  where
+    arr' = fmap (\(arrE, _, arrM) -> (arrE, arrM)) arr
+desObjArr (RawObjArr obj@(Just objExpr) basis doc annots arr Nothing) = [ObjArr obj basis doc annots (Just arr')]
   where
     arr' = maybe (Nothing, emptyMetaE "arrM" objExpr) (\(arrE, _, arrM) -> (arrE, arrM)) arr
-desObjArr (RawObjArr obj basis doc annots (Just (arrE, _, arrM)) Nothing) = [ObjArr obj basis doc annots (arrE, arrM)]
+desObjArr (RawObjArr obj basis doc annots (Just (arrE, _, arrM)) Nothing) = [ObjArr obj basis doc annots (Just (arrE, arrM))]
 desObjArr roa = error $ printf "Not yet implemented: %s" (show roa)

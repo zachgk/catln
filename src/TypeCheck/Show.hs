@@ -15,6 +15,7 @@
 
 module TypeCheck.Show where
 
+import           Control.Monad    (forM)
 import           Data.Maybe       (fromJust)
 import           Semantics.Prgm
 import           TypeCheck.Common
@@ -55,12 +56,14 @@ showExpr env (VarApply m base varName varVal) = do
   return $ VarApply m' base' varName varVal'
 
 showObjArr :: FEnv -> VObjArr -> TypeCheckResult SObjArr
-showObjArr env oa@ObjArr{oaObj, oaAnnots, oaArr=(arrE, arrM)} = do
+showObjArr env oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   oaObj' <- mapM (showExpr env) oaObj
   oaAnnots' <- mapM (showExpr env) oaAnnots
-  arrE' <- mapM (showExpr env) arrE
-  arrM' <- showM env arrM
-  return oa{oaObj=oaObj', oaAnnots=oaAnnots', oaArr=(arrE', arrM')}
+  oaArr' <- forM oaArr $ \(arrE, arrM) -> do
+    arrE' <- mapM (showExpr env) arrE
+    arrM' <- showM env arrM
+    return (arrE', arrM')
+  return oa{oaObj=oaObj', oaAnnots=oaAnnots', oaArr=oaArr'}
 
 showConDatHelper :: FEnv -> (Scheme -> Scheme -> SConstraintDat) -> VarMeta -> VarMeta -> SConstraintDat
 showConDatHelper env f p1 p2 = f (descriptor env p1) (descriptor env p2)

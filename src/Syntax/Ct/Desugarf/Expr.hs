@@ -53,13 +53,13 @@ desObjPropagateTypes mainExpr@(TupleApply m (bm, be) tupleApplyArgs) = do
   let be' = desObjPropagateTypes be
   let bm' = mWithType (getMetaType $ getExprMeta be') bm
   case tupleApplyArgs of
-      arg@ObjArr{oaObj=Just argObj, oaArr=(Just argVal, argM)} -> do
+      arg@ObjArr{oaObj=Just argObj, oaArr=Just (Just argVal, argM)} -> do
         let argName = inExprSingleton argObj
         let argVal' = desObjPropagateTypes argVal
         let tp' = typeSetArg argName (getExprType argVal') (getExprType be')
         let m' = mWithType tp' m
-        TupleApply m' (bm', be') arg{oaArr=(Just argVal', argM)}
-      ObjArr{oaObj=Just argObj, oaArr=(Nothing, argM)} -> do
+        TupleApply m' (bm', be') arg{oaArr=Just (Just argVal', argM)}
+      ObjArr{oaObj=Just argObj, oaArr=Just (Nothing, argM)} -> do
         let argName = inExprSingleton argObj
         let tp' = typeSetArg argName (getMetaType argM) (getExprType be')
         let m' = mWithType tp' m
@@ -98,7 +98,7 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm''
     be' = semiDesExpr sdm obj be
     aux :: (ParseMeta, PSExpr) -> (Int, PObjArr) -> (ParseMeta, PSExpr)
     aux (m, e) (argIndex, rarg@RawObjArr{roaArr=Just (Just (RawTupleApply _ (_, RawValue _ "/operator::") [RawObjArr{roaArr=(Just newArr)}, RawObjArr{roaArr=(Just (Just tp, _, _))}]), _, _)}) = case aux (m, e) (argIndex, rarg{roaArr=Just newArr}) of
-      (tam, TupleApply tamm tab taoa@ObjArr{oaArr=(tboaArrE, tboaArrM)}) -> (tam, TupleApply tamm tab taoa{oaArr=(tboaArrE, mWithType (exprToType tp) tboaArrM)})
+      (tam, TupleApply tamm tab taoa@ObjArr{oaArr=Just (tboaArrE, tboaArrM)}) -> (tam, TupleApply tamm tab taoa{oaArr=Just (tboaArrE, mWithType (exprToType tp) tboaArrM)})
       _ -> error $ printf "Unexpected result in semiDesExpr TupleApply aux"
     aux (m, e) (argIndex, rarg@RawObjArr{roaObj=Just (RawTheExpr v), roaArr}) = aux (m, e) (argIndex, rarg{roaObj=Just (RawValue (emptyMetaM "the" vM) vN), roaArr=roaArr'})
       where
@@ -116,7 +116,7 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm''
         -- Currently uses oaObj as "first and only expr"
         -- This disambiguates it between whether the only expression is an obj or an arr
         arg' = case (sdm, arg) of
-          (SDOutput, ObjArr{oaObj, oaArr=(Nothing, _)}) -> arg{oaObj=Nothing, oaArr=(,emptyMetaE "arrM" $ fromJust oaObj) oaObj}
+          (SDOutput, ObjArr{oaObj, oaArr=Just (Nothing, _)}) -> arg{oaObj=Nothing, oaArr=Just ((,emptyMetaE "arrM" $ fromJust oaObj) oaObj)}
           (_, _) -> arg
 
         -- SemiDes all sub-expressions
@@ -126,7 +126,7 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm''
         arg'' = arg'{
           oaObj=fmap (semiDesExpr objSdm Nothing) (oaObj arg'),
           oaAnnots=indexAnnots ++ fmap (semiDesExpr sdm obj) (oaAnnots arg'),
-          oaArr=first (fmap (semiDesExpr sdm (oaObj arg'))) (oaArr arg')
+          oaArr=fmap (first (fmap (semiDesExpr sdm (oaObj arg')))) (oaArr arg')
           }
 semiDesExpr sdm obj (RawVarsApply m be vs) = foldr aux be' vs
   where

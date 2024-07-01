@@ -147,7 +147,7 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg) = do
   (baseExpr', env4) <- fromExpr est env3 baseExpr
   (arg', env5) <- fromObjArr est env4 arg
   let constraints = case (est, oaObj arg', oaArr arg') of
-        (EncodeOut{}, Just obj, (Just _argExpr', arrM')) ->
+        (EncodeOut{}, Just obj, Just (Just _argExpr', arrM')) ->
           -- Output with (x=x)
           [
             ArrowTo 7 (getExprMeta baseExpr') baseM',
@@ -155,14 +155,14 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg) = do
                         BoundedByObjs 9 m' topType,
                         PropEq 11 (m', TVArg $ inExprSingleton obj) arrM'
                         ]
-        (EncodeOut{}, Nothing, (Just _argExpr', _arrM')) ->
+        (EncodeOut{}, Nothing, Just (Just _argExpr', _arrM')) ->
           -- Output with (x) infer
           [
             ArrowTo 12 (getExprMeta baseExpr') baseM',
                         AddInferArg 13 baseM' m',
                         BoundedByObjs 14 m' topType
                         ]
-        (EncodeIn{}, Just obj, (Just _argExpr', arrM')) ->
+        (EncodeIn{}, Just obj, Just (Just _argExpr', arrM')) ->
           -- Input with (x=x)
           [
             EqPoints 16 (getExprMeta baseExpr') baseM',
@@ -170,7 +170,7 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg) = do
                      AddArg 19 (baseM', inExprSingleton obj) m',
                      PropEq 21 (m', TVArg $ inExprSingleton obj) arrM'
                     ]
-        (EncodeIn{}, Just obj, (Nothing, arrM')) ->
+        (EncodeIn{}, Just obj, Just (Nothing, arrM')) ->
           -- Input with (x -> T)
           [
          EqPoints 22 (getExprMeta baseExpr') baseM',
@@ -208,34 +208,35 @@ fromObjArr est env1 oa@ObjArr{oaObj, oaAnnots, oaArr} = do
     Nothing -> return (Nothing, env1)
   (oaAnnots', env3) <- mapMWithFEnv (startConstrainBlock env2) (fromExpr est) oaAnnots
   (oaArr', env4) <- case oaArr of
-    (arrExpr, arrM) -> do
+    Nothing -> return (Nothing, env3)
+    Just (arrExpr, arrM) -> do
       (arrM', env3a) <- fromMeta env3 BAct est arrM $ printf "oa arrM %s" (show oa)
       case arrExpr of
         Just argExpr -> do
           (argExpr', env3b) <- fromExpr est env3a argExpr
-          return ((Just argExpr', arrM'), env3b)
-        Nothing -> return ((Nothing, arrM'), env3a)
+          return (Just (Just argExpr', arrM'), env3b)
+        Nothing -> return (Just (Nothing, arrM'), env3a)
   let constraints = case (est, oaObj', oaArr') of
-        (EncodeOut{}, Just _obj, (Just argExpr', arrM')) ->
+        (EncodeOut{}, Just _obj, Just (Just argExpr', arrM')) ->
           -- Output with (x=x)
           [
                         BoundedByObjs 10 arrM' topType,
                         ArrowTo 10 (getExprMeta argExpr') arrM'
                         ]
-        (EncodeOut{}, Nothing, (Just argExpr', arrM')) ->
+        (EncodeOut{}, Nothing, Just (Just argExpr', arrM')) ->
           -- Output with (x) infer
           [
                         BoundedByObjs 15 arrM' topType,
                         ArrowTo 15 (getExprMeta argExpr') arrM'
                         ]
-        (EncodeIn{}, Just obj, (Just argExpr', arrM')) ->
+        (EncodeIn{}, Just obj, Just (Just argExpr', arrM')) ->
           -- Input with (x=x)
           [
             BoundedByObjs 18 (getExprMeta argExpr') topType,
             BoundedByKnown 18 (getExprMeta argExpr') (TypeVar (TVArg $ inExprSingleton obj) TVInt),
                      EqPoints 20 (getExprMeta argExpr') arrM'
                     ]
-        (EncodeIn{}, Just _obj, (Nothing, _arrM')) ->
+        (EncodeIn{}, Just _obj, Just (Nothing, _arrM')) ->
           -- Input with (x -> T)
           []
   let env5 = addConstraints env4 constraints
@@ -247,24 +248,28 @@ fromObjArr est env1 oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   return (oa', env5)
 
 fromObjectMap :: FEnv -> PObjArr -> TypeCheckResult (VObjArr, FEnv)
-fromObjectMap env1 oa@ObjArr{oaBasis, oaAnnots, oaObj=Just obj, oaArr=(maybeArrE, arrM)} = do
+fromObjectMap env1 oa@ObjArr{oaBasis, oaAnnots, oaObj=Just obj, oaArr} = do
   let inEst = EncodeIn
   (obj', env2) <- fromExpr inEst (startConstrainBlock env1) obj
 
   let est = EncodeOut (Just obj')
   (oaAnnots', env3) <- mapMWithFEnv env2 (fromExpr est) oaAnnots
-  (mUserReturn', env4) <- fromMeta env3 BAct est arrM (printf "Specified result from %s" (show $ exprPath obj'))
-  (oaArr'@(_, arrM'), env5) <- case maybeArrE of
-    Just arrE -> do
-      (vExpr, env4a) <- fromExpr est env4 arrE
-      (arrM', env4b) <- fromMeta env4a BAct est (Meta topType (labelPos "res" $ getMetaPos arrM) emptyMetaDat) $ printf "Arrow result from %s" (show $ exprPath obj')
-      return ((Just vExpr, arrM'), addConstraints env4b [ArrowTo 32 (getExprMeta vExpr) arrM', ArrowTo 33 (getExprMeta vExpr) mUserReturn'])
-    Nothing -> return ((Nothing, mUserReturn'), env4)
+  oaArrEnv' <- forM oaArr $ \(maybeArrE, arrM) -> do
+    (mUserReturn', env4) <- fromMeta env3 BAct est arrM (printf "Specified result from %s" (show $ exprPath obj'))
+    (maybeArrE'@(_, arrM'), env5a) <- case maybeArrE of
+      Just arrE -> do
+        (vExpr, env4a) <- fromExpr est env4 arrE
+        (arrM', env4b) <- fromMeta env4a BAct est (Meta topType (labelPos "res" $ getMetaPos arrM) emptyMetaDat) $ printf "Arrow result from %s" (show $ exprPath obj')
+        return ((Just vExpr, arrM'), addConstraints env4b [ArrowTo 32 (getExprMeta vExpr) arrM', ArrowTo 33 (getExprMeta vExpr) mUserReturn'])
+      Nothing -> return ((Nothing, mUserReturn'), env4)
+    let env5b = addConstraints env5a [EqPoints 34 (getExprMeta obj') arrM' | oaBasis == TypeObj]
+    return (maybeArrE', env5b)
+  let oaArr' = fmap fst oaArrEnv'
+  let env5 = maybe env3 snd oaArrEnv'
   let oa' = oa{oaObj=Just obj', oaArr=oaArr', oaAnnots=oaAnnots'}
   let env6 = fAddVTypeGraph env5 (oaObjPath oa) oa'
-  let env7 = addConstraints env6 [EqPoints 34 (getExprMeta obj') arrM' | oaBasis == TypeObj]
-  let env8 = endConstraintBlock env7 (Just oa') (first getExprMeta . head <$> exprVarArgs obj')
-  return (oa', env8)
+  let env7 = endConstraintBlock env6 (Just oa') (first getExprMeta . head <$> exprVarArgs obj')
+  return (oa', env7)
 fromObjectMap _ oa = error $ printf "Invalid oa in fromObjectMap %s" (show oa)
 
 fromPrgm :: FEnv -> PPrgm -> TypeCheckResult (VPrgm, FEnv)

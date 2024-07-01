@@ -37,10 +37,11 @@ genTypeFromExpr prgm (TupleApply _ (_, baseExpr) oa) = do
   shouldAddArg <- HG.bool
   if shouldAddArg
     then case oaArr oa of
-           (Just arrExpr, _) -> do
+           (Just (Just arrExpr, _)) -> do
              arrExpr' <- genTypeFromExpr prgm arrExpr
              return base{ptArgs = H.insert (inExprSingleton $ oaObjExpr oa) (singletonType arrExpr') baseArgs}
-           (Nothing, oaM) -> return base{ptArgs = H.insert (inExprSingleton $ oaObjExpr oa) (getMetaType oaM) baseArgs}
+           (Just (Nothing, oaM)) -> return base{ptArgs = H.insert (inExprSingleton $ oaObjExpr oa) (getMetaType oaM) baseArgs}
+           Nothing -> return base
     else return base
 genTypeFromExpr prgm (VarApply _ baseExpr varName m) = do
   base@PartialType{ptVars=baseVars} <- genTypeFromExpr prgm baseExpr
@@ -124,7 +125,7 @@ genInputExpr = do
     genVar base varName = do
       return $ VarApply emptyMetaN base varName emptyMetaN
     genArg base argName = do
-      return $ TupleApply emptyMetaN (emptyMetaN, base) (ObjArr (Just (Value emptyMetaN argName)) ArgObj Nothing [] (Nothing, emptyMetaN))
+      return $ TupleApply emptyMetaN (emptyMetaN, base) (ObjArr (Just (Value emptyMetaN argName)) ArgObj Nothing [] (Just (Nothing, emptyMetaN)))
 
 -- | Generates an output expression equivalent to an input expression
 genOutputExpr :: Expr () -> Expr () -> Gen (Expr ())
@@ -149,17 +150,17 @@ genPrgm :: Gen (Prgm Expr ())
 genPrgm = do
   inputExprs <- HG.list (linear 1 5) (HG.either_ genInputExpr genInputExpr)
   let (dataTypes, funs) = partitionEithers inputExprs
-  let dataObjs = map (\obj -> ObjArr (Just obj) TypeObj Nothing [] (Nothing, emptyMetaN)) dataTypes
+  let dataObjs = map (\obj -> ObjArr (Just obj) TypeObj Nothing [] Nothing) dataTypes
 
   let allInputs = dataTypes ++ funs
   funObjs <- forM funs $ \obj -> do
                                 let otherInputs = filter (/= obj) allInputs
                                 if null otherInputs
-                                  then return $ ObjArr (Just obj) FunctionObj Nothing [] (Nothing, emptyMetaN)
+                                  then return $ ObjArr (Just obj) FunctionObj Nothing [] (Just (Nothing, emptyMetaN))
                                   else do
                                     arrGoal <- HG.element otherInputs
                                     arr <- genOutputExpr arrGoal obj
-                                    return $ ObjArr (Just obj) FunctionObj Nothing [] (Just arr, emptyMetaN)
+                                    return $ ObjArr (Just obj) FunctionObj Nothing [] (Just (Just arr, emptyMetaN))
 
   let objMap = dataObjs ++ funObjs
 
