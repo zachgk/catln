@@ -63,7 +63,7 @@ scopeSubDeclFunNamesInMeta prefix replaceNames (Meta (UnionType partials) pos md
 scopeSubDeclFunNamesInMeta _ _ m@(Meta PTopType _ _) = m
 scopeSubDeclFunNamesInMeta prefix replaceNames (Meta (TopType preds) pos md) = Meta (TopType preds') pos md
   where
-    preds' = map scopePred preds
+    preds' = mapTypePreds scopePred preds
     scopePred (PredRel p@PartialType{ptName}) = PredRel p{ptName=scopeSubDeclFunNamesInS prefix replaceNames ptName}
     scopePred p = p
 scopeSubDeclFunNamesInMeta _ _ m@(Meta TypeVar{} _ _) = m

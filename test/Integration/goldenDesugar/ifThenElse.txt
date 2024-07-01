@@ -440,17 +440,19 @@
 ,
     (
         (
-            [ /abs ( Value x -> /Data/Primitive/Integer ) = abs.$c2e9fd ( Value /x= Value /x )
-                ( Value /$c2e9fd-arg= /Catln/ThenElse/fromBool
+            [ /abs ( Value x -> /Data/Primitive/Integer ) = abs.$ 5151 cc ( Value /x= Value /x )
+                ( Value /$ 5151 cc-arg= /Catln/ThenElse/fromBool
                     ( Value /v= /operator>= ( Value /l= Value x )
                         ( Value /r= CInt 0 )
                     )
                 )
-            , /abs.$c2e9fd ( Value /x ) ( Value /$c2e9fd-arg= Hole TopType HoleActive Nothing@Value Else ) = /operator*
+            , /abs.$ 5151 cc ( Value /x )
+                ( Value /$ 5151 cc-arg= Hole TopType HoleActive Nothing@Value Else ) = /operator*
                 ( Value /l= /operator-
                     ( Value /a= CInt 1 )
                 ) ( Value /r= Value x )
-            , /abs.$c2e9fd ( Value /x ) ( Value /$c2e9fd-arg= Hole TopType HoleActive Nothing@Value Then ) = Value x
+            , /abs.$ 5151 cc ( Value /x )
+                ( Value /$ 5151 cc-arg= Hole TopType HoleActive Nothing@Value Then ) = Value x
             , /Context ( Value /value= Value /main ) ( Value /io -> /Catln/IO ) = exit
                 ( Value val= abs
                     ( CInt 0 )

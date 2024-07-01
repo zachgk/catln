@@ -61,7 +61,7 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, ClassGraph
     -- requireResolveRelative -> type -> updated type
     -- It is required to resolve for the classGraph, but expressions can be left unresolved until type inference
     mapType :: Bool -> Type -> Type
-    mapType reqResolve (TopType [PredRel p]) = resolveRelPartial reqResolve p
+    mapType reqResolve (TopType (PredsOne (PredRel p))) = resolveRelPartial reqResolve p
     mapType _ (TopType ps) = TopType ps
     mapType _ tp@(TypeVar TVVar{} _) = tp
     mapType _ (TypeVar TVArg{} _) = error "Invalid arg type"
@@ -71,13 +71,13 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, ClassGraph
     mapPartial reqResolve partial@PartialType{ptVars, ptArgs, ptPreds} = partial{
           ptVars = fmap (mapType reqResolve) ptVars,
           ptArgs = fmap (mapType reqResolve) ptArgs,
-          ptPreds = fmap (mapTypePred (mapPartial reqResolve)) ptPreds
+          ptPreds = mapTypePreds (mapTypePred (mapPartial reqResolve)) ptPreds
                                                                                                                       }
 
     -- | Resolves possibilities for a relative partial for use in the class graph
     resolveClassPartial :: Bool -> PartialType -> PartialType
     resolveClassPartial reqResolve p = case resolveRelPartial reqResolve p of
-      (TopType [PredClass p']) -> p'
+      (TopType (PredsOne (PredClass p'))) -> p'
       t | isJust (maybeGetSingleton t) -> fromJust $ maybeGetSingleton t
       p' -> error $ printf "Unexpected resolved class partial %s" (show p')
 
@@ -86,7 +86,7 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, ClassGraph
     resolveRelPartial reqResolve p = case resolveName reqResolve (PRelativeName $ ptName p) of
       PTypeName n'    -> singletonType p{ptName=n'}
       PClassName n'   -> classPartial $ partialVal n'
-      PRelativeName{} -> TopType [PredRel p]
+      PRelativeName{} -> TopType (PredsOne $ PredRel p)
 
 
     -- |

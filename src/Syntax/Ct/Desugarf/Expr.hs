@@ -170,7 +170,7 @@ exprToPartialType :: PExpr -> PartialType
 exprToPartialType e = case maybeGetSingleton $ getExprType des of
     Just t' -> t'
     Nothing -> case getExprType des of
-      TopType [PredRel n] -> n
+      TopType (PredsOne (PredRel n)) -> n
       t' -> error $ printf "Failed exprToPartialType with type %s in expr %s" (show t') (show des)
   where
     des = desObjPropagateTypes $ desExpr $ semiDesExpr SDType Nothing e
