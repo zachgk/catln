@@ -637,6 +637,32 @@ unionAllTypesWithEnv typeEnv vaenv = foldr (unionTypesWithEnv typeEnv vaenv) bot
 unionAllTypes :: Foldable f => TypeEnv -> f Type -> Type
 unionAllTypes typeEnv = foldr (unionTypes typeEnv) bottomType
 
+differenceTypeWithEnv :: TypeEnv -> TypeVarArgEnv -> Type -> Type -> Type
+differenceTypeWithEnv _ _ _ (TopType []) = bottomType
+differenceTypeWithEnv _ _ t t2 | isBottomType t2 = t
+differenceTypeWithEnv _ _ t1 t2 | t1 == t2 = bottomType
+differenceTypeWithEnv _ _ (UnionType posPartials) (TopType _negPreds) = UnionType $ joinUnionType $ map addNegPreds $ splitUnionType posPartials
+  where
+    addNegPreds :: PartialType -> PartialType
+    addNegPreds _p = undefined
+differenceTypeWithEnv typeEnv vaenv (UnionType posPartials) (UnionType negPartials) = unionAllTypesWithEnv typeEnv vaenv $ map differenceAllNegPartials $ splitUnionType posPartials
+  where
+    differenceAllNegPartials :: PartialType -> Type
+    differenceAllNegPartials p = intersectAllTypesWithEnv typeEnv vaenv $ map (differencePartials p) $ splitUnionType negPartials
+
+    differencePartials :: PartialType -> PartialType -> Type
+    differencePartials p1@PartialType{ptName=n1} PartialType{ptName=n2} | n1 /= n2 = singletonType p1
+    differencePartials pos neg = error $ printf "Not yet implemented differencePartials for %s - %s" (show pos) (show neg)
+differenceTypeWithEnv _ _ t t2 = error $ printf "Not yet implemented differenceTypeWithEnv for %s - %s" (show t) (show t2)
+
+differenceTypeEnv :: TypeEnv -> Type -> Type -> Type
+differenceTypeEnv typeEnv = differenceTypeWithEnv typeEnv H.empty
+
+-- | Takes the 'intersectTypes' of many types
+intersectAllTypesWithEnv :: Foldable f => TypeEnv -> TypeVarArgEnv -> f Type -> Type
+intersectAllTypesWithEnv _ _ types | null types = bottomType
+intersectAllTypesWithEnv typeEnv vaenv types = foldr1 (intersectTypesEnv typeEnv vaenv) types
+
 -- | Takes the 'intersectTypes' of many types
 intersectAllTypes :: Foldable f => TypeEnv -> f Type -> Type
 intersectAllTypes _ types | null types = bottomType
