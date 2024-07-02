@@ -81,6 +81,7 @@ data ConstraintDat p
   | EqPoints Int p p -- ^ Both Actual and Req
   | BoundedByKnown Int p Type -- ^ Both Actual and Req
   | BoundedByObjs Int p Type
+  | NoReturnArg Int p
   | ArrowTo Int p p -- ArrowTo src dest
   | PropEq Int (p, TypeVarAux) p -- ^ Both Actual and Req
   | AddArg Int (p, ArgName) p -- ^ Both Actual and Req,
@@ -208,6 +209,7 @@ instance (Show p) => Show (ConstraintDat p) where
   show (EqPoints i s1 s2) = printf "%s %d== %s" (show s1) i (show s2)
   show (BoundedByKnown i s t) = printf "%s %d⊆_Known %s" (show s) i (show t)
   show (BoundedByObjs i s _) = printf "BoundedByObjs%d %s" i (show s)
+  show (NoReturnArg i s) = printf "NoReturnArg%d %s" i (show s)
   show (ArrowTo i s d) = printf "%s %d-> %s" (show s) i (show d)
   show (PropEq i (s1, n) s2) = printf "(%s).%s %d== %s"  (show s1) (show n) i (show s2)
   show (AddArg i (base, arg) res) = printf "(%s)(%s) %d== %s" (show base) (show arg) i (show res)
@@ -249,6 +251,7 @@ constraintDatMetas (EqualsKnown _ p2 _)    = [p2]
 constraintDatMetas (EqPoints _ p2 p3)      = [p2, p3]
 constraintDatMetas (BoundedByKnown _ p2 _) = [p2]
 constraintDatMetas (BoundedByObjs _ p2 _)  = [p2]
+constraintDatMetas (NoReturnArg _ p2)      = [p2]
 constraintDatMetas (ArrowTo _ p2 p3)       = [p2, p3]
 constraintDatMetas (PropEq _ (p2, _) p3)   = [p2, p3]
 constraintDatMetas (AddArg _ (p2, _) p3)   = [p2, p3]

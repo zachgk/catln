@@ -260,7 +260,7 @@ fromObjectMap env1 oa@ObjArr{oaBasis, oaAnnots, oaObj=Just obj, oaArr} = do
       Just arrE -> do
         (vExpr, env4a) <- fromExpr est env4 arrE
         (arrM', env4b) <- fromMeta env4a BAct est (Meta PTopType (labelPos "res" $ getMetaPos arrM) emptyMetaDat) $ printf "Arrow result from %s" (show $ exprPath obj')
-        return ((Just vExpr, arrM'), addConstraints env4b [ArrowTo 32 (getExprMeta vExpr) arrM', ArrowTo 33 (getExprMeta vExpr) mUserReturn'])
+        return ((Just vExpr, arrM'), addConstraints env4b [ArrowTo 32 (getExprMeta vExpr) arrM', ArrowTo 33 (getExprMeta vExpr) mUserReturn', NoReturnArg 33 arrM'])
       Nothing -> return ((Nothing, mUserReturn'), env4)
     let env5b = addConstraints env5a [EqPoints 34 (getExprMeta obj') arrM' | oaBasis == TypeObj]
     return (maybeArrE', env5b)
