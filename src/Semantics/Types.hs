@@ -251,6 +251,10 @@ predsAnd (PredsAnd ps) p             = PredsAnd (uniq (p:ps))
 predsAnd p (PredsAnd ps)             = PredsAnd (uniq (p:ps))
 predsAnd a b                         = PredsAnd (uniq [a, b])
 
+predsNot :: TypePredicates -> TypePredicates
+predsNot (PredsNot p) = p
+predsNot p            = PredsNot p
+
 partialAddPreds :: PartialType -> TypePredicates -> PartialType
 partialAddPreds partial@PartialType{ptPreds} newPreds = partial{ptPreds = predsAnd newPreds ptPreds}
 
@@ -523,9 +527,9 @@ isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subAr
     hasAll sb sp = and $ H.elems $ H.intersectionWith (isSubtypeOfWithEnv typeEnv vaenv') sb sp
 
     hasAllPreds :: TypePredicates -> TypePredicates -> Bool
-    hasAllPreds supPs (PredsAnd subPs) = all (hasAllPreds supPs) subPs
-    hasAllPreds (PredsAnd supPs) subPs@PredsOne{} = any (`hasAllPreds` subPs) supPs
-    hasAllPreds (PredsOne supPs) (PredsOne subPs) = isSubPredicateOfWithEnv typeEnv vaenv' subPs supPs
+    hasAllPreds (PredsAnd subPs) supPs = all (`hasAllPreds` supPs) subPs
+    hasAllPreds subPs@PredsOne{} (PredsAnd supPs) = any (hasAllPreds subPs) supPs
+    hasAllPreds (PredsOne subPs) (PredsOne supPs) = isSubPredicateOfWithEnv typeEnv vaenv' subPs supPs
     hasAllPreds supPs subPs = error $ printf "Unimplemented hasAllPreds for sup (%s) and sub (%s)" (show supPs) (show subPs)
 
 -- | Checks if one type contains another type. In set terminology, it is equivalent to subset or equal to ⊆.
@@ -688,27 +692,6 @@ unionAllTypesWithEnv typeEnv vaenv = foldr (unionTypesWithEnv typeEnv vaenv) Bot
 unionAllTypes :: Foldable f => TypeEnv -> f Type -> Type
 unionAllTypes typeEnv = foldr (unionTypes typeEnv) BottomType
 
-differenceTypeWithEnv :: TypeEnv -> TypeVarArgEnv -> Type -> Type -> Type
-differenceTypeWithEnv _ _ _ PTopType = BottomType
-differenceTypeWithEnv _ _ t BottomType = t
-differenceTypeWithEnv _ _ t1 t2 | t1 == t2 = BottomType
-differenceTypeWithEnv _ _ (UnionType posPartials) (TopType _negPreds) = UnionType $ joinUnionType $ map addNegPreds $ splitUnionType posPartials
-  where
-    addNegPreds :: PartialType -> PartialType
-    addNegPreds _p = undefined
-differenceTypeWithEnv typeEnv vaenv (UnionType posPartials) (UnionType negPartials) = unionAllTypesWithEnv typeEnv vaenv $ map differenceAllNegPartials $ splitUnionType posPartials
-  where
-    differenceAllNegPartials :: PartialType -> Type
-    differenceAllNegPartials p = intersectAllTypesWithEnv typeEnv vaenv $ map (differencePartials p) $ splitUnionType negPartials
-
-    differencePartials :: PartialType -> PartialType -> Type
-    differencePartials p1@PartialType{ptName=n1} PartialType{ptName=n2} | n1 /= n2 = singletonType p1
-    differencePartials pos neg = error $ printf "Not yet implemented differencePartials for %s - %s" (show pos) (show neg)
-differenceTypeWithEnv _ _ t t2 = error $ printf "Not yet implemented differenceTypeWithEnv for %s - %s" (show t) (show t2)
-
-differenceTypeEnv :: TypeEnv -> Type -> Type -> Type
-differenceTypeEnv typeEnv = differenceTypeWithEnv typeEnv H.empty
-
 -- | Takes the 'intersectTypes' of many types
 intersectAllTypesWithEnv :: Foldable f => TypeEnv -> TypeVarArgEnv -> f Type -> Type
 intersectAllTypesWithEnv _ _ types | null types = BottomType
@@ -776,6 +759,42 @@ intersectTypesEnv typeEnv vaenv t1 t2 = snd $ intersectTypesWithVarEnv typeEnv v
 -- | Takes the intersection of two 'Type' (∩).
 intersectTypes :: TypeEnv -> Type -> Type -> Type
 intersectTypes typeEnv = intersectTypesEnv typeEnv H.empty
+
+differenceTypeWithEnv :: TypeEnv -> TypeVarArgEnv -> Type -> Type -> Type
+differenceTypeWithEnv _ _ _ PTopType = BottomType
+differenceTypeWithEnv _ _ t BottomType = t
+differenceTypeWithEnv _ _ t1 t2 | t1 == t2 = BottomType
+differenceTypeWithEnv _ _ (UnionType posPartials) (TopType negPreds) = UnionType $ joinUnionType $ map addNegPreds $ splitUnionType posPartials
+  where
+    addNegPreds :: PartialType -> PartialType
+    addNegPreds p = partialAddPreds p (predsNot negPreds)
+differenceTypeWithEnv typeEnv vaenv (UnionType posPartials) (UnionType negPartials) = unionAllTypesWithEnv typeEnv vaenv $ map differenceAllNegPartials $ splitUnionType posPartials
+  where
+    differenceAllNegPartials :: PartialType -> Type
+    differenceAllNegPartials p = intersectAllTypesWithEnv typeEnv vaenv $ map (differencePartials p) $ splitUnionType negPartials
+
+    differencePartials :: PartialType -> PartialType -> Type
+    differencePartials p1 p2 | p1 == p2 = BottomType
+    differencePartials p1@PartialType{ptName=n1} PartialType{ptName=n2} | n1 /= n2 = singletonType p1
+    differencePartials p1@PartialType{ptArgs=posArgs, ptArgMode=PtArgExact} PartialType{ptArgs=negArgs, ptArgMode=PtArgExact} | H.keysSet posArgs /= H.keysSet negArgs = singletonType p1
+    differencePartials p1@PartialType{ptArgs=posArgs, ptVars=posVars, ptArgMode=PtArgExact} PartialType{ptArgs=negArgs, ptVars=negVars, ptArgMode=PtArgExact} = unionAllTypesWithEnv typeEnv vaenv (map subtractArg (H.toList negArgs) ++ map subtractVar (H.toList negVars))
+      where
+        subtractArg (_, PTopType) = BottomType
+        subtractArg (argName, negArgVal) = case H.lookup argName posArgs of
+          Just posArgVal -> singletonType p1{ptArgs=H.insert argName (differenceTypeWithEnv typeEnv vaenv posArgVal negArgVal) posArgs}
+          Nothing -> error "Missing argName in differencePartials"
+        subtractVar (_, PTopType) = BottomType
+        subtractVar (varName, negVarVal) = singletonType p1{ptVars=H.insert varName (differenceTypeWithEnv typeEnv vaenv (H.lookupDefault PTopType varName posVars) negVarVal) posArgs}
+    differencePartials pos neg = error $ printf "Not yet implemented differencePartials for %s - %s" (show pos) (show neg)
+differenceTypeWithEnv _ _ PTopType _ = error $ printf "Not yet implemented differenceTypeWithEnv with PTopType LHS"
+differenceTypeWithEnv typeEnv vaenv t1@TopType{} t2 = differenceTypeWithEnv typeEnv vaenv (expandType typeEnv vaenv t1) t2
+differenceTypeWithEnv _ _ t t2 = error $ printf "Not yet implemented differenceTypeWithEnv for %s - %s" (show t) (show t2)
+
+differenceTypeEnv :: TypeEnv -> Type -> Type -> Type
+differenceTypeEnv typeEnv = differenceTypeWithEnv typeEnv H.empty
+
+complementTypeEnv :: TypeEnv -> Type -> Type
+complementTypeEnv typeEnv = differenceTypeWithEnv typeEnv H.empty PTopType
 
 -- | Takes the powerset of a 'Type' with the powerset of the arguments in the type.
 powersetType :: TypeEnv -> TypeVarArgEnv -> Type -> Type
