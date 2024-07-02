@@ -82,7 +82,7 @@ updateSchemeProp FEnv{feTypeEnv} vaenv (SType superAct superReq superDesc) propN
 
 -- | A helper for the 'AddArg' 'Constraint'
 addArgToType :: FEnv -> TypeVarArgEnv -> Type -> ArgName -> Maybe Type
-addArgToType _ _ (TopType _) _ = Nothing
+addArgToType _ _ TopType{} _ = Nothing
 addArgToType env vaenv (TypeVar v _) newArg = case H.lookup v vaenv of
   Just t  -> addArgToType env vaenv t newArg
   Nothing -> error $ printf "Unknown type in addArgToType: %s" (show v)

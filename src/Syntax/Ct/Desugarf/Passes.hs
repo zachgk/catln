@@ -16,6 +16,7 @@
 module Syntax.Ct.Desugarf.Passes where
 
 import           Data.Graph
+import qualified Data.HashMap.Strict     as H
 import           Data.List               (nub)
 import           Data.Maybe
 import           MapMeta
@@ -61,8 +62,8 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, ClassGraph
     -- requireResolveRelative -> type -> updated type
     -- It is required to resolve for the classGraph, but expressions can be left unresolved until type inference
     mapType :: Bool -> Type -> Type
-    mapType reqResolve (TopType (PredsOne (PredRel p))) = resolveRelPartial reqResolve p
-    mapType _ (TopType ps) = TopType ps
+    mapType reqResolve (TopType np (PredsOne (PredRel p))) | H.null np = resolveRelPartial reqResolve p
+    mapType _ (TopType np ps) = TopType np ps
     mapType _ tp@(TypeVar TVVar{} _) = tp
     mapType _ (TypeVar TVArg{} _) = error "Invalid arg type"
     mapType reqResolve (UnionType partials) = UnionType $ joinUnionType $ map (mapPartial reqResolve) $ splitUnionType partials
@@ -77,7 +78,7 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, ClassGraph
     -- | Resolves possibilities for a relative partial for use in the class graph
     resolveClassPartial :: Bool -> PartialType -> PartialType
     resolveClassPartial reqResolve p = case resolveRelPartial reqResolve p of
-      (TopType (PredsOne (PredClass p'))) -> p'
+      (TopType np (PredsOne (PredClass p'))) | H.null np -> p'
       t | isJust (maybeGetSingleton t) -> fromJust $ maybeGetSingleton t
       p' -> error $ printf "Unexpected resolved class partial %s" (show p')
 
@@ -86,7 +87,7 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, ClassGraph
     resolveRelPartial reqResolve p = case resolveName reqResolve (PRelativeName $ ptName p) of
       PTypeName n'    -> singletonType p{ptName=n'}
       PClassName n'   -> classPartial $ partialVal n'
-      PRelativeName{} -> TopType (PredsOne $ PredRel p)
+      PRelativeName{} -> TopType H.empty (PredsOne $ PredRel p)
 
 
     -- |

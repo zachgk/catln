@@ -111,7 +111,7 @@ type PartialLeafs = H.HashMap TypeName (S.HashSet PartialArgsOption)
 data Type
   = UnionType PartialLeafs -- ^ The main format, 'UnionType', is a union of 'PartialType's
   | TypeVar TypeVarAux TypeVarLoc -- ^ A type which refers to some variable in the surrounding context
-  | TopType TypePredicates -- ^ A type which refers to any possible value or the universal set of values (passing the predicates)
+  | TopType PartialLeafs TypePredicates -- ^ A type which refers to any possible value or the universal set of values, excluding the partial leafs and passing the predicates
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 -- | Indicates whether a type var or arg is located internally to the object or externally.
@@ -198,11 +198,15 @@ instance Show PartialKey where
 
 instance Show Type where
   show PTopType = "TopType"
-  show (TopType (PredsOne (PredClass c))) = "∀" ++ show c
-  show (TopType (PredsAnd [PredsOne (PredClass c)])) = "∀" ++ show c
-  show (TopType (PredsOne (PredRel c))) = "~" ++ show c
-  show (TopType (PredsAnd [PredsOne (PredRel c)])) = "~" ++ show c
-  show (TopType p) = printf "(TopType | %s)" (show p)
+  show (TopType negPartials p) = p' ++ negPartials'
+    where
+      p' = case tryPredsToList p of
+                Just [PredClass c] -> "∀" ++ show c
+                Just [PredRel c]   -> "~" ++ show c
+                _                  -> printf "(TopType | %s)" (show p)
+      negPartials' = if H.null negPartials
+        then ""
+        else " - " ++ show (UnionType negPartials)
   show (TypeVar v _) = show v
   show (UnionType partials) = join $ map show $ splitUnionType partials
     where
@@ -258,6 +262,11 @@ predsNot p            = PredsNot p
 partialAddPreds :: PartialType -> TypePredicates -> PartialType
 partialAddPreds partial@PartialType{ptPreds} newPreds = partial{ptPreds = predsAnd newPreds ptPreds}
 
+tryPredsToList :: TypePredicates -> Maybe [TypePredicate]
+tryPredsToList (PredsOne p)  = Just [p]
+tryPredsToList (PredsAnd ps) = concat <$> mapM tryPredsToList ps
+tryPredsToList (PredsNot _)  = Nothing
+
 typeEnvNamesMatching :: TypeEnv -> PartialType -> [Type]
 typeEnvNamesMatching (TypeEnv classGraph names) relPartial = tpNames ++ clsNames
   where
@@ -293,7 +302,8 @@ ioType = singletonType ioLeaf
 
 -- | The 'Type' containing all possible values, equivalent to the universal.
 pattern PTopType :: Type
-pattern PTopType = TopType PredsNone
+pattern PTopType <- TopType (H.null -> True) PredsNone
+  where PTopType = TopType H.empty PredsNone
 
 -- | The 'Type' containing no possible values, equivalent to the empty set ∅.
 -- It often corresponds to errors in the type inference process and indicates the error type.
@@ -427,10 +437,10 @@ typeVal = singletonType . partialVal
 
 -- | Helper to create a relative 'Type' for a value (no args, no vars)
 relTypeVal :: TypeName -> Type
-relTypeVal n = TopType (PredsOne (PredRel $ partialVal n))
+relTypeVal n = TopType H.empty (PredsOne (PredRel $ partialVal n))
 
 classPartial :: PartialType -> Type
-classPartial p = TopType (PredsOne (PredClass p))
+classPartial p = TopType H.empty (PredsOne (PredClass p))
 
 maybeGetSingleton :: Type -> Maybe PartialType
 maybeGetSingleton (UnionType leafs) = case splitUnionType leafs of
@@ -439,26 +449,26 @@ maybeGetSingleton (UnionType leafs) = case splitUnionType leafs of
 maybeGetSingleton _ = Nothing
 
 maybeGetClassSingleton :: Type -> Maybe PartialType
-maybeGetClassSingleton (TopType (PredsOne (PredClass c))) = Just c
-maybeGetClassSingleton _                                  = Nothing
+maybeGetClassSingleton (TopType _ (PredsOne (PredClass c))) = Just c
+maybeGetClassSingleton _                                    = Nothing
 
 maybeGetTypeName :: Type -> Maybe TypeName
 maybeGetTypeName t | isJust (maybeGetSingleton t) = Just $ ptName $ fromJust $ maybeGetSingleton t
-maybeGetTypeName (TopType (PredsOne (PredRel p))) = Just $ ptName p
+maybeGetTypeName (TopType _ (PredsOne (PredRel p))) = Just $ ptName p
 maybeGetTypeName _ = Nothing
 
 typeSetArg :: ArgName -> Type -> Type -> Type
 typeSetArg argName argVal (UnionType leafs) = UnionType $ joinUnionType $ map aux $ splitUnionType leafs
   where
     aux p@PartialType{ptArgs} = p{ptArgs=H.insert argName argVal ptArgs}
-typeSetArg argName argVal (TopType (PredsOne (PredRel p@PartialType{ptArgs}))) = TopType (PredsOne $ PredRel p{ptArgs=H.insert argName argVal ptArgs})
+typeSetArg argName argVal (TopType negPartials (PredsOne (PredRel p@PartialType{ptArgs}))) = TopType negPartials (PredsOne $ PredRel p{ptArgs=H.insert argName argVal ptArgs})
 typeSetArg _ _ tp = error $ printf "Unimplemented typeSetArg for %s" (show tp)
 
 typeSetVar :: TypeVarName -> Type -> Type -> Type
 typeSetVar varName varVal (UnionType leafs) = UnionType $ joinUnionType $ map aux $ splitUnionType leafs
   where
     aux p@PartialType{ptVars} = p{ptVars=H.insert varName varVal ptVars}
-typeSetVar varName varVal (TopType (PredsOne (PredRel p@PartialType{ptVars}))) = TopType (PredsOne $ PredRel p{ptVars=H.insert varName varVal ptVars})
+typeSetVar varName varVal (TopType negPartials (PredsOne (PredRel p@PartialType{ptVars}))) = TopType negPartials (PredsOne $ PredRel p{ptVars=H.insert varName varVal ptVars})
 typeSetVar _ _ tp = error $ printf "Unimplemented typeSetVar for %s" (show tp)
 
 suffixLookup :: String -> [String] -> Maybe String
@@ -476,7 +486,7 @@ expandType :: TypeEnv -> TypeVarArgEnv -> Type -> Type
 expandType _ _ t@UnionType{} = t
 expandType typeEnv vaenv (TypeVar v _) = expandType typeEnv vaenv $ H.lookupDefault PTopType v vaenv
 expandType _ _ PTopType = PTopType
-expandType typeEnv vaenv (TopType preds) = expandPreds preds
+expandType typeEnv vaenv (TopType negPartials preds) = differenceTypeWithEnv typeEnv vaenv (expandPreds preds) (UnionType negPartials)
   where
     expandPreds :: TypePredicates -> Type
     expandPreds (PredsOne p)  = expandPred p
@@ -496,7 +506,7 @@ expandClassPartial typeEnv@(TypeEnv (ClassGraph cg) _) vaenv PartialType{ptName,
       Just (CGClass (_, PartialType{ptVars=classVarsDecl}, classTypes, _)) -> unionAllTypes typeEnv $ map mapClassType classTypes
         where
           classVars = H.unionWith (intersectTypesEnv typeEnv vaenv) classVarsP classVarsDecl
-          mapClassType (TopType ps) = expandType typeEnv vaenv $ TopType ps
+          mapClassType (TopType negPartials ps) = differenceTypeWithEnv typeEnv vaenv (expandType typeEnv vaenv $ TopType H.empty ps) (UnionType negPartials)
           mapClassType (TypeVar (TVVar t) _) = case H.lookup t classVars of
             Just v -> expandType typeEnv vaenv $ intersectTypesEnv typeEnv vaenv v (H.lookupDefault PTopType t classVars)
             Nothing -> error $ printf "Unknown var %s in expandPartial" (show t)
@@ -543,10 +553,10 @@ isSubtypeOfWithEnv typeEnv vaenv t1 (TypeVar v _) = case H.lookup v vaenv of
   Just t2 -> isSubtypeOfWithEnv typeEnv vaenv t1 t2
   Nothing -> error $ printf "isSubtypeOfWithEnv with unknown type var or arg %s" (show v)
 isSubtypeOfWithEnv _ _ PTopType t = t == PTopType
-isSubtypeOfWithEnv typeEnv vaenv t1 t2@(TopType _) = isSubtypeOfWithEnv typeEnv vaenv t1 t2'
+isSubtypeOfWithEnv typeEnv vaenv t1 t2@TopType{} = isSubtypeOfWithEnv typeEnv vaenv t1 t2'
   where
     t2' = expandType typeEnv vaenv t2
-isSubtypeOfWithEnv typeEnv vaenv t1@(TopType _) t2 = isSubtypeOfWithEnv typeEnv vaenv t1' t2
+isSubtypeOfWithEnv typeEnv vaenv t1@TopType{} t2 = isSubtypeOfWithEnv typeEnv vaenv t1' t2
   where
     t1' = expandType typeEnv vaenv t1
 isSubtypeOfWithEnv typeEnv vaenv (UnionType subPartials) (UnionType superPartials) = all isSubPartial $ splitUnionType subPartials
@@ -641,11 +651,6 @@ compactPartialsWithClassPred typeEnv vaenv partials = unionPartialLeafs $ map tr
           where
             (exprs', classes', rels') = splitPreds ps
 
-    tryPredsToList :: TypePredicates -> Maybe [TypePredicate]
-    tryPredsToList (PredsOne p)  = Just [p]
-    tryPredsToList (PredsAnd ps) = concat <$> mapM tryPredsToList ps
-    tryPredsToList (PredsNot _)  = Nothing
-
 -- | Removes partials which contain a type variable that is the 'bottomType', because then the whole partial is a 'bottomType'.
 compactBottomType :: PartialLeafs -> PartialLeafs
 compactBottomType partials = joinUnionType $ mapMaybe aux $ splitUnionType partials
@@ -659,7 +664,7 @@ compactBottomType partials = joinUnionType $ mapMaybe aux $ splitUnionType parti
 -- It has several internal passes that apply various optimizations to a type.
 -- TODO: This should merge type partials into class partials
 compactType :: TypeEnv -> TypeVarArgEnv -> Type -> Type
-compactType _ _ (TopType ps) = TopType ps
+compactType _ _ (TopType np ps) = TopType np ps
 compactType _ _ t@TypeVar{} = t
 compactType typeEnv vaenv (UnionType partials) = UnionType $ (compactOverlapping typeEnv . compactJoinPartials typeEnv . compactPartialsWithClassPred typeEnv vaenv . compactBottomType) partials
 
@@ -673,8 +678,8 @@ unionTypesWithEnv _ _ _ PTopType = PTopType
 unionTypesWithEnv _ _ t BottomType = t
 unionTypesWithEnv _ _ BottomType t = t
 unionTypesWithEnv _ _ t1 t2 | t1 == t2 = t1
-unionTypesWithEnv typeEnv vaenv t1@(TopType _) t2 = unionTypesWithEnv typeEnv vaenv (expandType typeEnv vaenv t1) t2
-unionTypesWithEnv typeEnv vaenv t1 t2@(TopType _) = unionTypesWithEnv typeEnv vaenv t1 (expandType typeEnv vaenv t2)
+unionTypesWithEnv typeEnv vaenv t1@TopType{} t2 = unionTypesWithEnv typeEnv vaenv (expandType typeEnv vaenv t1) t2
+unionTypesWithEnv typeEnv vaenv t1 t2@TopType{} = unionTypesWithEnv typeEnv vaenv t1 (expandType typeEnv vaenv t2)
 unionTypesWithEnv typeEnv vaenv (TypeVar v _) t = case H.lookup v vaenv of
   Just v' -> unionTypesWithEnv typeEnv vaenv v' t
   Nothing -> error $ printf "Can't union unknown type vars %s with %s with env %s" (show t) (show v) (show $ H.keys vaenv)
@@ -733,7 +738,7 @@ intersectPartials typeEnv vaenv a b = case intersectPartialsBase typeEnv vaenv a
 intersectTypesWithVarEnv :: TypeEnv -> TypeVarArgEnv -> Type -> Type -> (TypeVarArgEnv, Type)
 intersectTypesWithVarEnv _ vaenv PTopType t = (vaenv, t)
 intersectTypesWithVarEnv _ vaenv t PTopType = (vaenv, t)
-intersectTypesWithVarEnv _ vaenv (TopType ps1) (TopType ps2) = (vaenv, TopType (predsAnd ps1 ps2))
+intersectTypesWithVarEnv _ vaenv (TopType np1 ps1) (TopType np2 ps2) = (vaenv, TopType (unionPartialLeafs [np1, np2]) (predsAnd ps1 ps2))
 intersectTypesWithVarEnv _ vaenv t1 t2 | t1 == t2 = (vaenv, t1)
 intersectTypesWithVarEnv typeEnv vaenv tv@(TypeVar v _) t = case (v, H.lookup v vaenv) of
   (TVArg{}, Nothing) -> error $ printf "Failed to intersect with unknown TVArg %s in vaenv %s" (show v) (show vaenv)
@@ -745,7 +750,7 @@ intersectTypesWithVarEnv _ vaenv BottomType _ = (vaenv, BottomType)
 intersectTypesWithVarEnv typeEnv vaenv t1@(UnionType partials) t2@TopType{} = case expandType typeEnv vaenv t2 of
   t2'@UnionType{} -> intersectTypesWithVarEnv typeEnv vaenv t1 t2'
   TypeVar{} -> undefined
-  TopType topPreds -> (vaenv, compactType typeEnv vaenv $ UnionType $ joinUnionType $ map (`partialAddPreds` topPreds) $ splitUnionType partials)
+  TopType topNegPartials topPreds -> (vaenv, compactType typeEnv vaenv $ differenceTypeWithEnv typeEnv vaenv (UnionType $ joinUnionType $ map (`partialAddPreds` topPreds) $ splitUnionType partials) (UnionType topNegPartials))
 intersectTypesWithVarEnv typeEnv vaenv t1@TopType{} t2@UnionType{} = intersectTypesWithVarEnv typeEnv vaenv t2 t1
 intersectTypesWithVarEnv typeEnv vaenv (UnionType aPartials) (UnionType bPartials) = (vaenv', type')
   where
@@ -764,7 +769,7 @@ differenceTypeWithEnv :: TypeEnv -> TypeVarArgEnv -> Type -> Type -> Type
 differenceTypeWithEnv _ _ _ PTopType = BottomType
 differenceTypeWithEnv _ _ t BottomType = t
 differenceTypeWithEnv _ _ t1 t2 | t1 == t2 = BottomType
-differenceTypeWithEnv _ _ (UnionType posPartials) (TopType negPreds) = UnionType $ joinUnionType $ map addNegPreds $ splitUnionType posPartials
+differenceTypeWithEnv typeEnv vaenv (UnionType posPartials) (TopType negPartials negPreds) = differenceTypeWithEnv typeEnv vaenv (UnionType $ joinUnionType $ map addNegPreds $ splitUnionType posPartials) (UnionType negPartials)
   where
     addNegPreds :: PartialType -> PartialType
     addNegPreds p = partialAddPreds p (predsNot negPreds)
@@ -815,8 +820,8 @@ setArgMode :: TypeVarArgEnv -> PtArgMode -> Type -> Type
 setArgMode _ mode (UnionType leafs) = UnionType $ joinUnionType $ map (\p -> p{ptArgMode=mode}) $ splitUnionType leafs
 setArgMode vaenv mode (TypeVar v _) = setArgMode vaenv mode (fromJust $ H.lookup v vaenv)
 setArgMode _ _ PTopType = PTopType
-setArgMode _ mode (TopType (PredsOne (PredRel n))) = TopType (PredsOne $ PredRel n{ptArgMode=mode})
-setArgMode _ _ t@(TopType (PredsOne PredClass{})) = t
+setArgMode _ mode (TopType negPartials (PredsOne (PredRel n))) = TopType negPartials (PredsOne $ PredRel n{ptArgMode=mode})
+setArgMode _ _ t@(TopType _ (PredsOne PredClass{})) = t
 setArgMode _ _ t = error $ printf "Unimplemented setArgMode for %s" (show t)
 
 -- |
@@ -897,7 +902,7 @@ updateTypeProp typeEnv vaenv superType propName subType = case (superType, subTy
     (TypeVar v _, _) -> do
       let (vaenv', superType', subType') = updateTypeProp typeEnv vaenv (H.lookupDefault PTopType v vaenv) propName subType
       (H.insert v superType' vaenv', superType, subType')
-    (TopType _, _) -> updateTypeProp typeEnv vaenv (expandType typeEnv vaenv superType) propName subType
+    (TopType{}, _) -> updateTypeProp typeEnv vaenv (expandType typeEnv vaenv superType) propName subType
     (UnionType supPartials, _) -> do
       let supPartialList = splitUnionType supPartials
       let intersectedPartials sup@PartialType{ptVars=supVars} sub = case typeGetAux propName sup of
