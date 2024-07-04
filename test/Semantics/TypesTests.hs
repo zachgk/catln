@@ -179,6 +179,7 @@ propDifferenceShrinks gPrgm = property $ do
   b <- forAll $ genType prgm
   assert $ isSubtypeOf typeEnv (differenceTypeEnv typeEnv a b) a
 
+-- A∪A=U
 propUnionWithComplement :: GenPrgm -> Property
 propUnionWithComplement gPrgm = property $ do
   prgm <- forAll gPrgm
@@ -190,13 +191,28 @@ propUnionWithComplement gPrgm = property $ do
   annotate $ printf "combined = %s" (show combined)
   assert $ isEqType typeEnv combined PTopType
 
+-- A∩A=∅
+propIntersectionWithComplement :: GenPrgm -> Property
+propIntersectionWithComplement gPrgm = property $ do
+  prgm <- forAll gPrgm
+  let typeEnv = mkTypeEnv prgm
+  a <- forAll $ genType prgm
+  let a' = complementTypeEnv typeEnv a
+  annotate $ printf "a' = %s" (show a')
+  let combined = intersectTypes typeEnv a a'
+  annotate $ printf "combined = %s" (show combined)
+  assert $ isEqType typeEnv combined BottomType
+
+-- A^c^c=A
 propComplementInverse :: GenPrgm -> Property
 propComplementInverse gPrgm = property $ do
   prgm <- forAll gPrgm
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   let a' = complementTypeEnv typeEnv a
+  annotate $ printf "a' = %s" (show a')
   let a'' = complementTypeEnv typeEnv a'
+  annotate $ printf "a'' = %s" (show a'')
   assert $ isEqType typeEnv a a''
 
 
@@ -216,9 +232,10 @@ typeTests = do
     , HG.testProperty "(propIntersectionCommutative gPrgm)" (p $ propIntersectionCommutative gPrgm)
     , HG.testProperty "(propIntersectionDistributesUnion gPrgm)" (p $ propIntersectionDistributesUnion gPrgm)
     , HG.testProperty "(propUnionDistributesIntersection gPrgm)" (p $ propUnionDistributesIntersection gPrgm)
-      -- HG.testProperty "(propDifferenceShrinks gPrgm)" (p $ propDifferenceShrinks gPrgm)
-      -- HG.testProperty "(propUnionWithComplement gPrgm)" (p $ propUnionWithComplement gPrgm)
-      -- HG.testProperty "(propComplementInverse gPrgm)" (p $ propComplementInverse gPrgm)
+    , HG.testProperty "(propDifferenceShrinks gPrgm)" (p $ propDifferenceShrinks gPrgm)
+    , HG.testProperty "(propUnionWithComplement gPrgm)" (p $ propUnionWithComplement gPrgm)
+    ,   HG.testProperty "(propIntersectionWithComplement gPrgm)" (p $ propIntersectionWithComplement gPrgm)
+    , HG.testProperty "(propComplementInverse gPrgm)" (p $ propComplementInverse gPrgm)
                                   ]
   where
     p prop = prop
