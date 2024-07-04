@@ -203,6 +203,7 @@ instance Show Type where
       p' = case tryPredsToList p of
                 Just [PredClass c] -> "∀" ++ show c
                 Just [PredRel c]   -> "~" ++ show c
+                Just []            -> "TopType"
                 _                  -> printf "(TopType | %s)" (show p)
       negPartials' = if H.null negPartials
         then ""
@@ -257,6 +258,7 @@ predsAnd a b                         = PredsAnd (uniq [a, b])
 
 predsNot :: TypePredicates -> TypePredicates
 predsNot (PredsNot p) = p
+predsNot PredsNone    = PredsNone
 predsNot p            = PredsNot p
 
 partialAddPreds :: PartialType -> TypePredicates -> PartialType
@@ -491,7 +493,7 @@ expandType typeEnv vaenv (TopType negPartials preds) = differenceTypeWithEnv typ
     expandPreds :: TypePredicates -> Type
     expandPreds (PredsOne p)  = expandPred p
     expandPreds (PredsAnd ps) = intersectAllTypes typeEnv $ map expandPreds ps
-    expandPreds (PredsNot _p) = undefined
+    expandPreds (PredsNot p)  = complementTypeEnv typeEnv $ expandPreds p
 
     expandPred :: TypePredicate -> Type
     expandPred (PredClass clss) = expandClassPartial typeEnv vaenv clss
@@ -664,6 +666,9 @@ compactBottomType partials = joinUnionType $ mapMaybe aux $ splitUnionType parti
 -- It has several internal passes that apply various optimizations to a type.
 -- TODO: This should merge type partials into class partials
 compactType :: TypeEnv -> TypeVarArgEnv -> Type -> Type
+compactType typeEnv vaenv t@(TopType np (PredsNot (PredsOne (PredRel rp)))) | H.null np = case expandRelPartial typeEnv vaenv rp of
+                                                                    (UnionType rp') -> TopType rp' PredsNone
+                                                                    _ -> t
 compactType _ _ (TopType np ps) = TopType np ps
 compactType _ _ t@TypeVar{} = t
 compactType typeEnv vaenv (UnionType partials) = UnionType $ (compactOverlapping typeEnv . compactJoinPartials typeEnv . compactPartialsWithClassPred typeEnv vaenv . compactBottomType) partials
@@ -678,8 +683,11 @@ unionTypesWithEnv _ _ _ PTopType = PTopType
 unionTypesWithEnv _ _ t BottomType = t
 unionTypesWithEnv _ _ BottomType t = t
 unionTypesWithEnv _ _ t1 t2 | t1 == t2 = t1
+unionTypesWithEnv typeEnv vaenv t1@(TopType negPartials PredsNone) t2@UnionType{} | isSubtypeOfWithEnv typeEnv vaenv t2 (UnionType negPartials) = case differenceTypeWithEnv typeEnv vaenv (UnionType negPartials) t2 of
+                                                                                   (UnionType negPartials') -> TopType negPartials' PredsNone
+                                                                                   _ -> unionTypesWithEnv typeEnv vaenv (expandType typeEnv vaenv t1) t2
 unionTypesWithEnv typeEnv vaenv t1@TopType{} t2 = unionTypesWithEnv typeEnv vaenv (expandType typeEnv vaenv t1) t2
-unionTypesWithEnv typeEnv vaenv t1 t2@TopType{} = unionTypesWithEnv typeEnv vaenv t1 (expandType typeEnv vaenv t2)
+unionTypesWithEnv typeEnv vaenv t1 t2@TopType{} = unionTypesWithEnv typeEnv vaenv t2 t1
 unionTypesWithEnv typeEnv vaenv (TypeVar v _) t = case H.lookup v vaenv of
   Just v' -> unionTypesWithEnv typeEnv vaenv v' t
   Nothing -> error $ printf "Can't union unknown type vars %s with %s with env %s" (show t) (show v) (show $ H.keys vaenv)
@@ -766,6 +774,7 @@ intersectTypes :: TypeEnv -> Type -> Type -> Type
 intersectTypes typeEnv = intersectTypesEnv typeEnv H.empty
 
 differenceTypeWithEnv :: TypeEnv -> TypeVarArgEnv -> Type -> Type -> Type
+-- differenceTypeWithEnv _ _ t1 t2 | trace (printf "difference %s - %s" (show t1) (show t2)) False = undefined
 differenceTypeWithEnv _ _ _ PTopType = BottomType
 differenceTypeWithEnv _ _ t BottomType = t
 differenceTypeWithEnv _ _ t1 t2 | t1 == t2 = BottomType
@@ -791,8 +800,9 @@ differenceTypeWithEnv typeEnv vaenv (UnionType posPartials) (UnionType negPartia
         subtractVar (_, PTopType) = BottomType
         subtractVar (varName, negVarVal) = singletonType p1{ptVars=H.insert varName (differenceTypeWithEnv typeEnv vaenv (H.lookupDefault PTopType varName posVars) negVarVal) posArgs}
     differencePartials pos neg = error $ printf "Not yet implemented differencePartials for %s - %s" (show pos) (show neg)
-differenceTypeWithEnv _ _ PTopType _ = error $ printf "Not yet implemented differenceTypeWithEnv with PTopType LHS"
-differenceTypeWithEnv typeEnv vaenv t1@TopType{} t2 = differenceTypeWithEnv typeEnv vaenv (expandType typeEnv vaenv t1) t2
+differenceTypeWithEnv _ _ (TopType negPartials1 preds) (UnionType negPartials2) = TopType (unionPartialLeafs [negPartials1, negPartials2]) preds
+differenceTypeWithEnv typeEnv vaenv (TopType negPartials posPreds) (TopType posPartials negPreds) = compactType typeEnv vaenv $ unionTypesWithEnv typeEnv vaenv (TopType negPartials (predsAnd posPreds (predsNot negPreds))) (UnionType posPartials)
+-- differenceTypeWithEnv typeEnv vaenv t1@TopType{} t2 = differenceTypeWithEnv typeEnv vaenv (expandType typeEnv vaenv t1) t2 -- Remove due to infinite loop
 differenceTypeWithEnv _ _ t t2 = error $ printf "Not yet implemented differenceTypeWithEnv for %s - %s" (show t) (show t2)
 
 differenceTypeEnv :: TypeEnv -> Type -> Type -> Type

@@ -179,6 +179,17 @@ propDifferenceShrinks gPrgm = property $ do
   b <- forAll $ genType prgm
   assert $ isSubtypeOf typeEnv (differenceTypeEnv typeEnv a b) a
 
+propUnionWithComplement :: GenPrgm -> Property
+propUnionWithComplement gPrgm = property $ do
+  prgm <- forAll gPrgm
+  let typeEnv = mkTypeEnv prgm
+  a <- forAll $ genType prgm
+  let a' = complementTypeEnv typeEnv a
+  annotate $ printf "a' = %s" (show a')
+  let combined = unionTypes typeEnv a a'
+  annotate $ printf "combined = %s" (show combined)
+  assert $ isEqType typeEnv combined PTopType
+
 propComplementInverse :: GenPrgm -> Property
 propComplementInverse gPrgm = property $ do
   prgm <- forAll gPrgm
@@ -205,8 +216,9 @@ typeTests = do
     , HG.testProperty "(propIntersectionCommutative gPrgm)" (p $ propIntersectionCommutative gPrgm)
     , HG.testProperty "(propIntersectionDistributesUnion gPrgm)" (p $ propIntersectionDistributesUnion gPrgm)
     , HG.testProperty "(propUnionDistributesIntersection gPrgm)" (p $ propUnionDistributesIntersection gPrgm)
-    -- -- , HG.testProperty "(propDifferenceShrinks gPrgm)" (p $ propDifferenceShrinks gPrgm)
-    --   HG.testProperty "(propComplementInverse gPrgm)" (p $ propComplementInverse gPrgm)
+      -- HG.testProperty "(propDifferenceShrinks gPrgm)" (p $ propDifferenceShrinks gPrgm)
+      -- HG.testProperty "(propUnionWithComplement gPrgm)" (p $ propUnionWithComplement gPrgm)
+      -- HG.testProperty "(propComplementInverse gPrgm)" (p $ propComplementInverse gPrgm)
                                   ]
   where
     p prop = prop
