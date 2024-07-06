@@ -177,7 +177,9 @@ propDifferenceShrinks gPrgm = property $ do
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
-  assert $ isSubtypeOf typeEnv (differenceTypeEnv typeEnv a b) a
+  let diff' = differenceTypeEnv typeEnv a b
+  annotate $ printf "diff' = %s" (show diff')
+  assert $ isSubtypeOf typeEnv diff' a
 
 -- A∪A=U
 propUnionWithComplement :: GenPrgm -> Property
@@ -215,6 +217,36 @@ propComplementInverse gPrgm = property $ do
   annotate $ printf "a'' = %s" (show a'')
   assert $ isEqType typeEnv a a''
 
+-- A∩B=A-(A-B)
+propIntersectByDifference :: GenPrgm -> Property
+propIntersectByDifference gPrgm = property $ do
+  prgm <- forAll gPrgm
+  let typeEnv = mkTypeEnv prgm
+  a <- forAll $ genType prgm
+  b <- forAll $ genType prgm
+  let intersect' = intersectTypes typeEnv a b
+  annotate $ printf "intersect' = %s" (show intersect')
+  let subDiff' = differenceTypeEnv typeEnv a b
+  let diff' = differenceTypeEnv typeEnv a subDiff'
+  annotate $ printf "a-b' = %s" (show subDiff')
+  annotate $ printf "diff' = a-(a-b) = %s" (show diff')
+  assert $ isEqType typeEnv intersect' diff'
+
+-- A-B=A-(A∩B)
+propDifferenceByIntersection :: GenPrgm -> Property
+propDifferenceByIntersection gPrgm = property $ do
+  prgm <- forAll gPrgm
+  let typeEnv = mkTypeEnv prgm
+  a <- forAll $ genType prgm
+  b <- forAll $ genType prgm
+  let diff' = differenceTypeEnv typeEnv a b
+  annotate $ printf "diff' = %s" (show diff')
+  let subInter' = intersectTypes typeEnv a b
+  let withInter' = differenceTypeEnv typeEnv a subInter'
+  annotate $ printf "a∩b' = %s" (show subInter')
+  annotate $ printf "withInter' = a-(a∩b) = %s" (show withInter')
+  assert $ isEqType typeEnv diff' withInter'
+
 
 typeTests :: IO TestTree
 typeTests = do
@@ -236,6 +268,8 @@ typeTests = do
     , HG.testProperty "(propUnionWithComplement gPrgm)" (p $ propUnionWithComplement gPrgm)
     ,   HG.testProperty "(propIntersectionWithComplement gPrgm)" (p $ propIntersectionWithComplement gPrgm)
     , HG.testProperty "(propComplementInverse gPrgm)" (p $ propComplementInverse gPrgm)
+    -- , HG.testProperty "(propIntersectByDifference gPrgm)" (p $ propIntersectByDifference gPrgm)
+    -- , HG.testProperty "(propDifferenceByIntersection gPrgm)" (p $ propDifferenceByIntersection gPrgm)
                                   ]
   where
     p prop = prop
