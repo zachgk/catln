@@ -51,7 +51,8 @@ unionReachesTree classGraph (ReachesTree children) = do
     ([onlyVar], []) -> onlyVar
     ([], sums)       -> unionAllTypes classGraph sums
     ([TypeVar (TVArg argName) tl], [UnionType leafs]) | all (\PartialType{ptName=n} -> makeAbsoluteName n == makeAbsoluteName (pkName argName)) (splitUnionType leafs) -> TypeVar (TVArg $ makeAbsolutePk argName) tl
-    (_, _)       -> error $ printf "Not yet implemented unionReachesTree with vars and partials of %s" (show both)
+    ([TypeVar (TVVar varName) tl], [UnionType _]) -> TypeVar (TVVar $ makeAbsolutePk varName) tl
+    (vars, partials)       -> error $ printf "Not yet implemented unionReachesTree with vars %s and partials %s" (show vars) (show partials)
 unionReachesTree classGraph (ReachesLeaf leafs) = unionAllTypes classGraph leafs
 
 joinReachesTrees :: ReachesTree -> ReachesTree -> ReachesTree

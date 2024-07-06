@@ -95,9 +95,7 @@ exprVarArgsWithSrc typeEnv (TupleApply _ (_, be) arg) src = H.union (exprVarArgs
       Just t@TopType{} -> (,t) <$> exprVarArgs e
       _ -> H.empty
     fromArg ObjArr{oaArr=Just (Just e, _)} = exprVarArgsWithSrc typeEnv e src
-    fromArg ObjArr {oaObj=Just obj, oaArr=Just (Nothing, arrM)} = case typeGetArg (inExprSingleton obj) src of
-      Just srcArg -> H.singleton (TVArg $ inExprSingleton obj) ([(obj, arrM)], srcArg)
-      Nothing     -> H.empty
+    fromArg ObjArr {oaObj=Just obj, oaArr=Just (Nothing, arrM)} = H.singleton (TVArg $ inExprSingleton obj) ([(obj, arrM)], fromMaybe (getMetaType arrM) (typeGetArg (inExprSingleton obj) src))
     fromArg oa = error $ printf "Invalid oa %s" (show oa)
 
     mergeMaps [] = H.empty
@@ -113,7 +111,7 @@ exprVarArgsWithObjSrcs typeEnv os = exprVarArgsWithSrcs typeEnv $ map (\(src, ob
 -- Otherwise, it uses the minimal type that *must* be reached
 arrowDestType :: (Show m, MetaDat m) => Bool -> TypeEnv -> PartialType -> ObjArr Expr m -> Type
 arrowDestType fullDest typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, oaM)} = case oaArrExpr of
-  Just n | isJust (maybeExprPath n) -> fromMaybe joined (H.lookup (TVArg $ inExprSingleton n) vaenv)
+  Just n | isJust (maybeExprPath n) -> maybe joined substitute (H.lookup (TVArg $ inExprSingleton n) vaenv)
   _                              -> joined
   where
     vaenv = snd <$> exprVarArgsWithSrc typeEnv (oaObjExpr oa) (fromJust $ maybeGetSingleton $ substituteVars $ singletonType src)
