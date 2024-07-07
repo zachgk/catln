@@ -20,8 +20,9 @@ import           TypeCheck
 import           Utils
 import           WebDocs            (docApi)
 
-testDir :: String
+testDir, disabledTestDir :: String
 testDir = "test/Integration/code/"
+disabledTestDir = "test/Integration/disabled/"
 
 goldenDesugarDir :: String
 goldenDesugarDir = "test/Integration/goldenDesugar/"
@@ -115,10 +116,14 @@ integrationTests = runTests True True <$> standardTests
 mtBase :: Bool -> String -> IO ()
 mtBase runGolden k = do
   let fileName = testDir ++ k ++ ".ct"
-  tests <- standardTests
-  if fileName `elem` tests
-     then defaultMain $ runTests runGolden True [fileName]
-     else error $ printf "invalid test name %s in %s" fileName (show tests)
+  fileNameExists <- doesFileExist fileName
+  let disabledFileName = disabledTestDir ++ k ++ ".ct"
+  disabledFileNameExists <- doesFileExist disabledFileName
+  fileName' <- case () of
+        _ | fileNameExists -> return fileName
+        _ | disabledFileNameExists -> return disabledFileName
+        _ -> fail $ printf "invalid test name %s" fileName
+  defaultMain $ runTests runGolden True [fileName']
 
 mt :: String -> IO ()
 mt = mtBase False
