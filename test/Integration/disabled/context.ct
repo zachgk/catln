@@ -1,0 +1,10 @@
+# Tests using the context
+  It requires using the type of the input argument as the output type of id as well.
+  So, it must be read as `id($T) -> $T`, not (id(Any) -> Any).
+
+data Counter(i -> Integer)
+
+main{io -> IO} =
+  _<- (){Counter(0)}
+  io.exit(val= 0)
+

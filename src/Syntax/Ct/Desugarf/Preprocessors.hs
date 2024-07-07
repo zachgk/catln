@@ -114,15 +114,21 @@ caseDeclPreprocessor _ = error "Invalid caseDeclPreprocessor"
 
 -- | A declPreprocessor for multi-line expressions. Will search for the final result expression and move it to the top
 nestedDeclPreprocessor :: PDeclTree -> CRes [PDeclTree]
-nestedDeclPreprocessor (oa, subStatements) = case exprs' of
-  [e] -> return [(oa{roaArr=Just (Just e, Nothing, emptyMetaE "arrM" e)}, subStatements')]
-  [] -> fail $ printf "Found no output expressions in nested declaration: %s" (show oa)
-  (_:_:_) -> fail $ printf "Found multiple output expressions in nested declaration: %s" (show oa)
-
+nestedDeclPreprocessor (oa, subStatements) = aux [] subStatements
   where
-    (subStatements', exprs') = partitionEithers $ map findExpression subStatements
-    findExpression (RawStatementTree (RawExprStatement expr) _) = Right expr
-    findExpression e                                            = Left e
+    aux :: [PStatementTree] -> [PStatementTree] -> CRes [PDeclTree]
+    aux accStmts (s@(RawStatementTree RawDeclStatement{} _) : restStmt) = aux (s:accStmts) restStmt
+    aux accStmts (s@(RawStatementTree RawAnnot{} _) : restStmt) = aux (s:accStmts) restStmt
+    aux accStmts [RawStatementTree (RawExprStatement e) []] = return [(oa{roaArr=Just (Just e, Nothing, emptyMetaE "arrM" e)}, accStmts)]
+    aux accStmts [] = return [(oa{roaArr=Just (Just $ rawVal "", Nothing, emptyMetaN)}, accStmts)]
+    aux accStmts (RawStatementTree (RawBindStatement roa@RawObjArr{roaObj=Just objExpr, roaArr=Just (Just arrExpr, _, arrM)}) []:restStmt) = return [(oa{roaArr=Just (Just subExpr, Nothing, arrM)}, accStmts ++ [subDef])]
+      where
+        subName = "$" ++ take 6 (printf "%08x" (hash roa))
+        subArgName = subName ++ "-arg"
+        subExpr = rawVal subName `applyRawArgs` [(Just $ partialKey subArgName, arrExpr)]
+        subObjExpr = rawVal subName `applyRawIArgs` [(partialKey subArgName, IArgE objExpr)]
+        subDef = RawStatementTree (RawDeclStatement (RawObjArr (Just subObjExpr) TypeObj Nothing [] (Just (Just $ rawVal nestedDeclaration, Nothing, emptyMetaN)) Nothing)) restStmt
+    aux _ s = fail $ printf "Unsupported subDeclStatemnt type: %s" (show s)
 
 -- | Used for no declPreprocessor
 defaultDeclPreprocessor :: PDeclTree -> CRes [PDeclTree]
