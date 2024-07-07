@@ -310,6 +310,10 @@ oaObjExpr oa = error $ printf "oaObjExpr with no input expression: %s" (show oa)
 oaObjPath :: (MetaDat m, ExprClass e, Show m, Show (e m)) => ObjArr e m -> TypeName
 oaObjPath = exprPath . oaObjExpr
 
+getOaArrExpr :: (MetaDat m, ExprClass e, Show m, Show (e m)) => ObjArr e m -> e m
+getOaArrExpr ObjArr{oaArr=Just (Just e, _)} = e
+getOaArrExpr oa = error $ printf "oaArrExpr with no output expression: %s" (show oa)
+
 mergeDoc :: Maybe String -> Maybe String -> Maybe String
 mergeDoc (Just a) (Just b) = Just (a ++ " " ++ b)
 mergeDoc (Just a) Nothing  = Just a

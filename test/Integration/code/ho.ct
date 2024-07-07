@@ -2,11 +2,12 @@
 
 data T(x -> Integer)
 
-tst(d= T(x), f(y -> Integer) -> Boolean) -> Boolean
+tst(d= T(x -> Integer), f(y -> Integer) -> Boolean) -> Boolean
+  # TODO Remove explicit Integer in T(x)
 
-tst(d= T(x), f(y -> Integer) -> Boolean)= f(y= x)
+tst(d= T(x -> Integer), f(y -> Integer) -> Boolean)= f(y= x)
 
 main{io -> IO} =
-  # #assert(test= tst(d=T(0), f(y)= y == 0))
+  #assert(test= tst(d=T(0), f(y)= y == 0))
   io
 

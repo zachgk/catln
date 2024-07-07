@@ -20,26 +20,30 @@ import qualified Data.HashMap.Strict as H
 import           CRes
 import           Data.Hashable
 import           Eval.Common
+import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
 import           TreeBuild           (buildArrow)
 
-evalStartEArrow :: Env -> PartialType -> EObjArr -> Args -> CRes (TExpr (), [TExpr ()], Args, Env)
+evalStartEArrow :: Env -> PartialType -> AnyObjArr -> Args -> CRes (TExpr (), [TExpr ()], Args, Env)
 evalStartEArrow env@Env{evExEnv, evTbEnv, evArgs, evCoverage, evTreebugOpen} srcType oa newArgs = do
   let env' = env{
                 evArgs=newArgs
-                , evCoverage = H.insertWith (+) oa 1 evCoverage
                 , evTreebugOpen = oa : evTreebugOpen
                 }
-  case H.lookup (srcType, oa) evExEnv of
-    Just (tree, annots') -> return (tree, annots', evArgs, env')
-    Nothing -> do
-      maybeArrow' <- buildArrow evTbEnv srcType oa
-      case maybeArrow' of
-        Just (_, arrow'@(tree, annots')) -> do
-          let env'' = env' {evExEnv = H.insert (srcType, oa) arrow' evExEnv}
-          return (tree, annots', evArgs, env'')
-        Nothing -> evalError env $ printf "Failed to find arrow in eval resArrow: %s" (show oa)
+  case oa of
+    Right oa' -> return (getOaArrExpr oa', oaAnnots oa', evArgs, env')
+    Left oa' -> do
+      let env'' = env'{evCoverage = H.insertWith (+) oa' 1 evCoverage}
+      case H.lookup (srcType, oa') evExEnv of
+        Just (tree, annots') -> return (tree, annots', evArgs, env'')
+        Nothing -> do
+          maybeArrow' <- buildArrow evTbEnv srcType oa'
+          case maybeArrow' of
+            Just (_, arrow'@(tree, annots')) -> do
+              let env''' = env'' {evExEnv = H.insert (srcType, oa') arrow' evExEnv}
+              return (tree, annots', evArgs, env''')
+            Nothing -> evalError env $ printf "Failed to find arrow in eval resArrow: %s" (show oa')
 
 evalEndEArrow :: Env -> Val -> Args -> Env
 evalEndEArrow Env{evTreebugOpen} _ _ | null evTreebugOpen = error $ printf "Tried to evalEndEArrow with an empty treebug open"

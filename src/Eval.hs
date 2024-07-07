@@ -97,6 +97,19 @@ evalGuards = undefined
   --   b | b == false -> evalPopVal <$> evalCallTree (evalPush env4 $ "else for " ++ show ifObj) m (TCCond resType restIfTrees elseTree)
   --   _ -> error "Non-Bool eval resArrowCond"
 
+evalObjArr :: Env -> Val -> AnyObjArr -> CRes (Val, Env)
+evalObjArr env1 input oa = do
+  let newArrArgs = buildArrArgs oa input
+  (resArrowTree, compAnnots, oldArgs, env2) <- evalStartEArrow env1 (getValType input) oa newArrArgs
+  env4s <- forM compAnnots $ \compAnnot -> do
+            (compAnnot', env3) <- evalPopVal <$> evalExpr (evalPush env2 $ printf "annot %s" (show compAnnot)) compAnnot
+            evalCompAnnot env3 compAnnot'
+  let env4 = case env4s of
+        [] -> env2
+        _  -> evalEnvJoinAll env4s
+  (res, env5) <- evalPopVal <$> evalExpr (evalPush env4 $ printf "ResEArrow %s" (show oa)) resArrowTree
+  return (res, evalEndEArrow env5 res oldArgs)
+
 evalCallTree :: Env -> Val -> TCallTree -> CRes (Val, Env)
 -- evalCallTree _ v ct | trace (printf "evalCallTree %s using %s" (show v) (show ct)) False = undefined
 evalCallTree env v TCTId = return (v, env)
@@ -110,27 +123,18 @@ evalCallTree env v (TCSeq a b) = do
   evalCallTree env' v' b
 evalCallTree env m (TCCond _ [] elseTree) = evalCallTree env m elseTree
 evalCallTree env1@Env{evArgs} m (TCCond resType (((ifCondTree, ifObj), ifThenTree):restIfTrees) elseTree) = do
-  let env2 = evalSetArgs env1 $ buildArrArgs ifObj m
+  let env2 = evalSetArgs env1 $ buildArrArgs (Left ifObj) m
   (cond', env3) <- evalPopVal <$> evalExpr (evalPush env2 "cond") ifCondTree
   let env4 = evalSetArgs env3 evArgs
   case cond' of
     b | b == true -> evalPopVal <$> evalCallTree (evalPush env4 $ "then for " ++ show ifCondTree) m ifThenTree
     b | b == false -> evalPopVal <$> evalCallTree (evalPush env4 $ "else for " ++ show ifCondTree) m (TCCond resType restIfTrees elseTree)
     _ -> error "Non-Bool eval resArrowCond"
-evalCallTree env@Env{evArgs} _ (TCArg _ name) = case H.lookup name evArgs of
+evalCallTree env@Env{evArgs} input (TCArg _ name) = case H.lookup name evArgs of
+  Just (ObjArrVal oa) -> evalObjArr env input (Right oa)
   Just arg' -> return (arg', env)
   Nothing -> evalError env $ printf "Unknown arg %s found during evaluation \n\t\t with arg env %s" name (show evArgs)
-evalCallTree env1 input (TCObjArr oa) = do
-  let newArrArgs = buildArrArgs oa input
-  (resArrowTree, compAnnots, oldArgs, env2) <- evalStartEArrow env1 (getValType input) oa newArrArgs
-  env4s <- forM compAnnots $ \compAnnot -> do
-            (compAnnot', env3) <- evalPopVal <$> evalExpr (evalPush env2 $ printf "annot %s" (show compAnnot)) compAnnot
-            evalCompAnnot env3 compAnnot'
-  let env4 = case env4s of
-        [] -> env2
-        _  -> evalEnvJoinAll env4s
-  (res, env5) <- evalPopVal <$> evalExpr (evalPush env4 $ printf "ResEArrow %s" (show oa)) resArrowTree
-  return (res, evalEndEArrow env5 res oldArgs)
+evalCallTree env1 input (TCObjArr oa) = evalObjArr env1 input (Left oa)
 evalCallTree env1 input (TCPrim _ (EPrim _ _ f)) = do
   case input of
     (TupleVal _ args) -> case f args of

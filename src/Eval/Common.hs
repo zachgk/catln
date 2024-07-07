@@ -61,8 +61,8 @@ instance ToJSON EPrim where
   toJSON EPrim{} = object ["type".=("EPrim" :: String)]
 
 
-type EvalTreebugOpen = EObjArr
-data EvalTreebugClosed = EvalTreebugClosed EObjArr Val [EvalTreebugClosed] String
+type EvalTreebugOpen = AnyObjArr
+data EvalTreebugClosed = EvalTreebugClosed AnyObjArr Val [EvalTreebugClosed] String
   deriving (Eq, Generic, Hashable, ToJSON)
 
 type Args = H.HashMap String Val
@@ -237,6 +237,8 @@ data TExpr m
   | TCalls (Meta m) (TExpr m) TCallTree
   deriving (Eq, Generic, Hashable, ToJSON)
 
+type AnyObjArr = Either EObjArr (ObjArr TExpr ())
+
 instance ExprClass TExpr where
   getExprMeta :: TExpr m -> Meta m
   getExprMeta expr = case expr of
@@ -388,5 +390,29 @@ exprArgsWithVal (TupleApply _ (_, be) arg) val = H.union (exprArgsWithVal be val
       Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
     fromArg oa _ = error $ printf "Invalid exprArgsWithVal fromArg of %s and %s" (show oa) (show val)
 
-buildArrArgs :: EObjArr -> Val -> Args
-buildArrArgs oa = exprArgsWithVal (oaObjExpr oa)
+-- | Extracts the arguments from a value using a matching expression
+-- | As there are no vars stored in the value, it only gets arguments
+texprArgsWithVal :: (MetaDat m, Show m) => TExpr m -> Val -> Args
+texprArgsWithVal TCExpr{} _ = H.empty
+texprArgsWithVal (TValue _ n) (TupleVal tupleName _) | n /= tupleName = error $ printf "Found name mismatch in exprArgsWithVal. Expression name is %s but value name is %s" n tupleName
+texprArgsWithVal TValue{} _ = H.empty
+texprArgsWithVal THoleExpr{} _ = H.empty
+texprArgsWithVal (TWhere base _) val = texprArgsWithVal base val
+texprArgsWithVal (TAliasExpr base n) val = H.insert (exprPath n) val (texprArgsWithVal base val)
+texprArgsWithVal (TVarApply _ b _ _) val = texprArgsWithVal b val
+texprArgsWithVal (TTupleApply _ (_, be) arg) val = H.union (texprArgsWithVal be val) (fromArg arg val)
+  where
+    fromArg :: (MetaDat m, Show m) => ObjArr TExpr m -> Val -> Args
+    fromArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)} (TupleVal _ tupleArgs) = case H.lookup (exprPath obj) tupleArgs of
+      Just val' -> texprArgsWithVal e val'
+      Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
+    fromArg ObjArr{oaObj=Nothing, oaArr=Just (Just e, _)} _ = texprArgsWithVal e val
+    fromArg ObjArr{oaObj=Just obj, oaArr=Just (Nothing, _)} (TupleVal _ tupleArgs) = case H.lookup (exprPath obj) tupleArgs of
+      Just val' -> H.singleton (exprPath obj) val'
+      Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
+    fromArg oa _ = error $ printf "Invalid exprArgsWithVal fromArg of %s and %s" (show oa) (show val)
+texprArgsWithVal (TCalls _ e _) val = texprArgsWithVal e val
+
+buildArrArgs :: AnyObjArr -> Val -> Args
+buildArrArgs (Left oa)  = exprArgsWithVal (oaObjExpr oa)
+buildArrArgs (Right oa) = texprArgsWithVal (oaObjExpr oa)

@@ -455,10 +455,10 @@
         (
             [ /Context ( Value /value -> /main = Value /main ) ( Value /io -> /Catln/IO ) -> TVArg /io = Value /io
             , /tst
-                ( Value /d -> /T ( /x=TopType ) = /T ( Value /x ) )
+                ( Value /d -> /T ( /x=/Data/Primitive/Integer ) = /T ( Value /x -> /Data/Primitive/Integer ) )
                 ( /f ( Value /y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ) -> ( /Data/Primitive/False | /Data/Primitive/True ) = /f ( Value /y -> TVArg /x = Value /x )
             , /tst
-                ( Value /d -> /T ( /x=TopType ) = /T ( Value /x ) )
+                ( Value /d -> /T ( /x=/Data/Primitive/Integer ) = /T ( Value /x -> /Data/Primitive/Integer ) )
                 ( /f ( Value /y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
             , /T ( Value /x -> /Data/Primitive/Integer )
             ]
