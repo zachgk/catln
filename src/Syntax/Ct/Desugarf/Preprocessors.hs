@@ -130,15 +130,22 @@ nestedDeclPreprocessor (oa, subStatements) = aux [] subStatements
         subDef = RawStatementTree (RawDeclStatement (RawObjArr (Just subObjExpr) TypeObj Nothing [] (Just (Just $ rawVal nestedDeclaration, Nothing, emptyMetaN)) Nothing)) restStmt
     aux _ s = fail $ printf "Unsupported subDeclStatemnt type: %s" (show s)
 
+declPreprocessorList :: H.HashMap String (PDeclTree -> CRes [PDeclTree])
+declPreprocessorList = H.fromList [
+  ("if", ifDeclPreprocessor),
+  ("match", matchDeclPreprocessor),
+  ("case", caseDeclPreprocessor),
+  (nestedDeclaration, nestedDeclPreprocessor)
+                               ]
+
 -- | Used for no declPreprocessor
 defaultDeclPreprocessor :: PDeclTree -> CRes [PDeclTree]
 defaultDeclPreprocessor declTree = return [declTree]
 
 declPreprocessors :: PDeclTree -> CRes [PDeclTree]
 declPreprocessors declTree@(RawObjArr{roaArr=Just (Just expr, _, _)}, _) = case maybeExprPath expr of
-  Just "if"                             -> ifDeclPreprocessor declTree
-  Just "match"                          -> matchDeclPreprocessor declTree
-  Just "case"                           -> caseDeclPreprocessor declTree
-  Just path | path == nestedDeclaration -> nestedDeclPreprocessor declTree
-  _                                     -> defaultDeclPreprocessor declTree
+  Just p -> case H.lookup p declPreprocessorList of
+    Just preprocessor -> preprocessor declTree
+    Nothing           -> defaultDeclPreprocessor declTree
+  Nothing -> defaultDeclPreprocessor declTree
 declPreprocessors declTree = defaultDeclPreprocessor declTree
