@@ -48,11 +48,6 @@ liftPStatement pSt = L.indentBlock scn p
       st <- pSt
       return (L.IndentMany Nothing (pack st) pStatementTree)
 
-pModule :: Parser PStatement
-pModule = do
-  _ <- symbol "module"
-  RawModule <$> ttypeidentifier
-
 pApply :: Parser PStatement
 pApply = do
   _ <- symbol "apply"
@@ -86,7 +81,6 @@ pStatementTree = do
     <|> pCommentStatement
     <|> pPrintStatement
     <|> liftPStatement (RawAnnot <$> pCompAnnot)
-    <|> liftPStatement pModule
     <|> liftPStatement pApply
     <|> liftPStatement pDeclStatement
 

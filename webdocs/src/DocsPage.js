@@ -116,7 +116,6 @@ function Statement(props) {
         <KeyWord>class</KeyWord> <RawExpr expr={statement.contents[0]} />
       </div>
     );
-  case "RawExprStatement":
   case "RawAnnot":
     return (
       <div className={classes.noPlay}>

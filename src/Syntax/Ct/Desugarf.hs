@@ -118,8 +118,11 @@ declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl oa@ObjArr{oaAnnots, oaArr
 desDecl :: StatementEnv -> PObjArr -> [PStatementTree] -> CRes DesPrgm
 desDecl statementEnv decl subStatements = do
   preprocessed <- declPreprocessors (decl, subStatements)
-  let objMap = map (declToObjArrow statementEnv) $ concatMap flattenNestedDeclarations preprocessed
-  return (objMap, classGraphFromObjs objMap, [])
+  case preprocessed of
+    Just newStatements -> mergePrgms <$> mapM (desStatement statementEnv) newStatements
+    Nothing -> do
+      let objMap = map (declToObjArrow statementEnv) $ flattenNestedDeclarations (decl, subStatements)
+      return (objMap, classGraphFromObjs objMap, [])
 
 -- | Desugars statements that inherit a path from a main statement
 desInheritingSubstatements :: StatementEnv -> NPath -> [PStatementTree] -> CRes (DesPrgm, [DesCompAnnot])
@@ -217,7 +220,6 @@ desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree state
   RawClassDefStatement classDef -> desClassDef statementEnv False classDef subStatements
   RawClassDeclStatement classDecls extends -> desClassDecl statementEnv classDecls extends subStatements
   RawBindStatement{} -> error $ printf "Not yet implemented"
-  RawExprStatement e -> CErr [MkCNote $ GenCErr (getMetaPos $ getExprMeta e) $ printf "All expression statements should be in a nested declaration but instead found: %s" (show e)]
   RawAnnot a | null subStatements -> do
                  a' <- desGlobalAnnot a
                  return ([], emptyClassGraph, [a'])

@@ -4,7 +4,7 @@ import "iterator.ctx"
 
 # # Sparse List
 
-module Data/List
+module(Data/List)
   data Sparse[$T](length -> Int, def -> $T, vals -> Map[$K= Int_from(0)_to(length), $V= $T])
     # A sparse list with a default value [def] for all values not specified in the value map [vals].
       It is best used when the list is expected to have very few non-default values.

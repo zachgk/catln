@@ -28,7 +28,6 @@ import           Syntax.Ct.Parser.Lexer
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 import           Text.Megaparsec.Char
-import           Text.Printf
 
 pCompAnnot :: Parser PCompAnnot
 pCompAnnot = do
@@ -54,12 +53,4 @@ pDeclStatement = do
   af <- pArrowFull FunctionObj
   case af of
     Left stmt -> return stmt
-    Right roa@RawObjArr{roaObj=(Just inExpr), roaArr=out} -> case out of -- No equals but meta so declaration
-      (Just (Nothing, _, _)) -> return $ RawDeclStatement roa
-
-      -- Equals and expr (inline definition)
-      (Just (Just{}, _, _))  -> return $ RawDeclStatement roa
-
-      -- Must be either a declaration or an expression
-      Nothing                -> return $ RawExprStatement inExpr
-    Right roa -> fail $ printf "Unexpected decl statement found during parsing: %s" (show roa)
+    Right roa -> return $ RawDeclStatement roa

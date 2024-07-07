@@ -323,9 +323,12 @@ convertExpr flags _ p@HsWrap{} = error $ printf "Convert unsupported expr:\n%s" 
 convertExpr flags _ p@XExpr{} = error $ printf "Convert unsupported expr:\n%s" (showSDoc flags $ ppr p)
 convertExpr flags _ p = error $ printf "Convert unsupported expr:\n%s" (showSDoc flags $ ppr p)
 
+rawExprStatement :: RawExpr () -> RawStatement RawExpr ()
+rawExprStatement e = RawDeclStatement $ RawObjArr (Just e) FunctionObj Nothing [] Nothing Nothing
+
 -- https://www.stackage.org/haddock/lts-18.28/ghc-lib-parser-8.10.7.20220219/GHC-Hs-Expr.html#t:StmtLR
 convertStmtLR :: DynFlags -> Maybe (RawExpr ()) -> StmtLR GhcPs GhcPs (LHsExpr GhcPs) -> (MLHSArgs, [RawStatementTree RawExpr ()])
-convertStmtLR flags base (LastStmt _ body _ _) = (base', [RawStatementTree (RawExprStatement expr') subStatements])
+convertStmtLR flags base (LastStmt _ body _ _) = (base', [RawStatementTree (rawExprStatement expr') subStatements])
   where
     (base', expr', subStatements) = convertExpr flags base $ unLoc body
 convertStmtLR flags _ (BindStmt _ pat body _ _) = (Nothing, [RawStatementTree (RawBindStatement oa) subStatements])
@@ -335,7 +338,7 @@ convertStmtLR flags _ (BindStmt _ pat body _ _) = (Nothing, [RawStatementTree (R
     (maybePat'', expr', subStatements) = convertExpr flags (Just pat') $ unLoc body
     oa = RawObjArr (Just $ fromMaybe pat' maybePat'') FunctionObj Nothing [] (Just (Just expr', Nothing, emptyMetaN)) Nothing
 convertStmtLR flags _ p@ApplicativeStmt{} = error $ printf "Convert unsupported stmtLR:\n%s" (showSDoc flags $ ppr p)
-convertStmtLR flags base (BodyStmt _ body _ _) = (base', [RawStatementTree (RawExprStatement expr') subStatements])
+convertStmtLR flags base (BodyStmt _ body _ _) = (base', [RawStatementTree (rawExprStatement expr') subStatements])
   where
     (base', expr', subStatements) = convertExpr flags base $ unLoc body
 convertStmtLR flags _ (LetStmt _ l) = (Nothing, convertLocalBindsLR flags $ unLoc l)

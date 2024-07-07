@@ -4,7 +4,7 @@ import "iterator.ctx"
 
 # # Function List
 
-module Data/List
+module(Data/List)
   data FunList[$T](length -> Int, f(x -> Int_from(0)_to(length)) -> $T)
     # A virtual [List] represented by a function.
       Similarly to the [Iterator], it can act as a glue between [List] types and operations.

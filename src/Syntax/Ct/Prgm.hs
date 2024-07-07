@@ -85,7 +85,6 @@ data RawStatement e m
   | RawClassDefStatement (RawClassDef m)
   | RawClassDeclStatement (e m) (ExtendedClasses RawExpr m)
   | RawBindStatement (RawObjArr e m) -- Uses <-
-  | RawExprStatement (e m)
   | RawAnnot (CompAnnot (e m))
   | RawApplyStatement (RawApply e m)
   | RawModule String

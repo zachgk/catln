@@ -122,7 +122,6 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
       RawClassDefStatement (obj, className) -> printf "every %s%s" (formatExpr obj) (formatIsa className)
       RawClassDeclStatement clss extends -> printf "class %s%s" (formatExpr clss) (formatIsa extends)
       RawBindStatement oa -> formatObjArrLike "<-" oa
-      RawExprStatement e -> formatExpr e
       RawAnnot annot | exprPath annot == mdAnnot -> printf "# %s" annotText'
         where
           (Just (Just (_, Just (RawCExpr _ (CStr annotText))))) = H.lookup (partialKey mdAnnotText) $ exprAppliedArgsMap annot
@@ -138,7 +137,7 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
           formatTerm :: RawApplyTerm RawExpr m -> String
           formatTerm (RATermDeep e)  = formatExpr e
           formatTerm (RATermChild e) = "> " ++ formatExpr e
-      RawModule modul -> printf "module %s" modul
+      RawModule modul -> printf "module(%s)" modul
 
 -- |
 -- A root statement has an additional ending newline

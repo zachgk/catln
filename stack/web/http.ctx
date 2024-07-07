@@ -1,5 +1,5 @@
 
-module Web/Http
+module(Web/Http)
   data Request
 
   data Response(code -> Int, headers -> Bag[$T -> Response/Header], body -> Optional[$T -> String])

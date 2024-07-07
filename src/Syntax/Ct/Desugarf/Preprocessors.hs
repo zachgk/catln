@@ -32,8 +32,8 @@ import           Text.Printf
 showDeclTrees :: [PDeclTree] -> String
 showDeclTrees trees = intercalate "" $ map (\(d, ss) -> build $ formatStatementTree True 0 $ RawStatementTree (RawDeclStatement d) ss) trees
 
-ifDeclPreprocessor :: PDeclTree -> CRes [PDeclTree]
-ifDeclPreprocessor (roa@RawObjArr{roaObj=Just declObj, roaArr=Just (Just expr, _, _)}, subStatements) = return [(decl', matchDecls ++ subStatements')]
+ifDeclPreprocessor :: PDeclTree -> CRes [PStatementTree]
+ifDeclPreprocessor (roa@RawObjArr{roaObj=Just declObj, roaArr=Just (Just expr, _, _)}, subStatements) = return [RawStatementTree (RawDeclStatement decl') (matchDecls ++ subStatements')]
   where
     condName = "$" ++ take 6 (printf "%08x" (hash roa))
     argName = condName ++ "-arg"
@@ -53,10 +53,10 @@ ifDeclPreprocessor (roa@RawObjArr{roaObj=Just declObj, roaArr=Just (Just expr, _
 
     mapEitherMatchStatements statementTree@(RawStatementTree RawAnnot{} _) = Left statementTree
     mapEitherMatchStatements _ = error "Invalid subStatement in matchDeclPreprocessor"
-ifDeclPreprocessor _ = error "Invalid ifDeclPreprocessor"
+ifDeclPreprocessor _ = fail "Invalid ifDeclPreprocessor"
 
-matchDeclPreprocessor :: PDeclTree -> CRes [PDeclTree]
-matchDeclPreprocessor (roa@RawObjArr{roaObj=Just declObj, roaArr=Just (Just expr, _, _)}, subStatements) = return [(decl', matchDecls ++ subStatements')]
+matchDeclPreprocessor :: PDeclTree -> CRes [PStatementTree]
+matchDeclPreprocessor (roa@RawObjArr{roaObj=Just declObj, roaArr=Just (Just expr, _, _)}, subStatements) = return [RawStatementTree (RawDeclStatement decl') (matchDecls ++ subStatements')]
   where
     condName = "$" ++ take 6 (printf "%08x" (hash roa))
     argName = condName ++ "-arg"
@@ -76,10 +76,10 @@ matchDeclPreprocessor (roa@RawObjArr{roaObj=Just declObj, roaArr=Just (Just expr
 
     mapEitherMatchStatements statementTree@(RawStatementTree RawAnnot{} _) = Left statementTree
     mapEitherMatchStatements _ = error "Invalid subStatement in matchDeclPreprocessor"
-matchDeclPreprocessor _ = error "Invalid matchDeclPreprocessor"
+matchDeclPreprocessor _ = fail "Invalid matchDeclPreprocessor"
 
-caseDeclPreprocessor :: PDeclTree -> CRes [PDeclTree]
-caseDeclPreprocessor (roa@RawObjArr{roaArr=Just (Just expr, _, _)}, subStatements) = return [(decl', cases' ++ subStatements')]
+caseDeclPreprocessor :: PDeclTree -> CRes [PStatementTree]
+caseDeclPreprocessor (roa@RawObjArr{roaArr=Just (Just expr, _, _)}, subStatements) = return [RawStatementTree (RawDeclStatement decl') (cases' ++ subStatements')]
   where
     baseCondName = "$" ++ take 6 (printf "%08x" (hash roa))
     argName = baseCondName ++ "-arg"
@@ -110,18 +110,26 @@ caseDeclPreprocessor (roa@RawObjArr{roaArr=Just (Just expr, _, _)}, subStatement
     lastCaseDeclObj = rawVal (condName $ length cases - 1) `applyRawArgs` [(Just $ partialKey argName, RawAliasExpr (RawHoleExpr emptyMetaN (HoleActive Nothing)) lastCaseObj)]
     lastCase' = RawStatementTree (RawDeclStatement (RawObjArr (Just lastCaseDeclObj) FunctionObj Nothing [] (Just (Just lastCaseExpr, Nothing, emptyMetaM "fallthrough" lastCaseDeclM)) Nothing)) lastCaseSubStatements
     cases' = concat initCase' ++ [lastCase']
-caseDeclPreprocessor _ = error "Invalid caseDeclPreprocessor"
+caseDeclPreprocessor _ = fail "Invalid caseDeclPreprocessor"
+
+modDeclPreprocessor :: PDeclTree -> CRes [PStatementTree]
+modDeclPreprocessor (roa@RawObjArr{roaArr=Just (Just modNameExpr, _, _)}, subStatements) = do
+  modName <- case exprAppliedArgs modNameExpr of
+    [ObjArr{oaObj=Just (RawValue _ modName)}] -> return modName
+    args -> fail $ printf "Invalid arguments to module from %s.\n\tParsed args to %s" (show roa) (show args)
+  return [RawStatementTree (RawModule modName) subStatements]
+modDeclPreprocessor (roa, _) = fail $ printf "Invalid modDeclPreprocessor: %s" (show roa)
 
 -- | A declPreprocessor for multi-line expressions. Will search for the final result expression and move it to the top
-nestedDeclPreprocessor :: PDeclTree -> CRes [PDeclTree]
+nestedDeclPreprocessor :: PDeclTree -> CRes [PStatementTree]
 nestedDeclPreprocessor (oa, subStatements) = aux [] subStatements
   where
-    aux :: [PStatementTree] -> [PStatementTree] -> CRes [PDeclTree]
+    aux :: [PStatementTree] -> [PStatementTree] -> CRes [PStatementTree]
+    aux accStmts [RawStatementTree (RawDeclStatement RawObjArr{roaObj=Just e, roaArr=Nothing}) []] = return [RawStatementTree (RawDeclStatement oa{roaArr=Just (Just e, Nothing, emptyMetaE "arrM" e)}) accStmts] -- expr statement
     aux accStmts (s@(RawStatementTree RawDeclStatement{} _) : restStmt) = aux (s:accStmts) restStmt
     aux accStmts (s@(RawStatementTree RawAnnot{} _) : restStmt) = aux (s:accStmts) restStmt
-    aux accStmts [RawStatementTree (RawExprStatement e) []] = return [(oa{roaArr=Just (Just e, Nothing, emptyMetaE "arrM" e)}, accStmts)]
-    aux accStmts [] = return [(oa{roaArr=Just (Just $ rawVal "", Nothing, emptyMetaN)}, accStmts)]
-    aux accStmts (RawStatementTree (RawBindStatement roa@RawObjArr{roaObj=Just objExpr, roaArr=Just (Just arrExpr, _, arrM)}) []:restStmt) = return [(oa{roaArr=Just (Just subExpr, Nothing, arrM)}, accStmts ++ [subDef])]
+    aux accStmts [] = return [RawStatementTree (RawDeclStatement oa{roaArr=Just (Just $ rawVal "", Nothing, emptyMetaN)}) accStmts]
+    aux accStmts (RawStatementTree (RawBindStatement roa@RawObjArr{roaObj=Just objExpr, roaArr=Just (Just arrExpr, _, arrM)}) []:restStmt) = return [RawStatementTree (RawDeclStatement oa{roaArr=Just (Just subExpr, Nothing, arrM)}) (accStmts ++ [subDef])]
       where
         subName = "$" ++ take 6 (printf "%08x" (hash roa))
         subArgName = subName ++ "-arg"
@@ -130,22 +138,24 @@ nestedDeclPreprocessor (oa, subStatements) = aux [] subStatements
         subDef = RawStatementTree (RawDeclStatement (RawObjArr (Just subObjExpr) TypeObj Nothing [] (Just (Just $ rawVal nestedDeclaration, Nothing, emptyMetaN)) Nothing)) restStmt
     aux _ s = fail $ printf "Unsupported subDeclStatemnt type: %s" (show s)
 
-declPreprocessorList :: H.HashMap String (PDeclTree -> CRes [PDeclTree])
+declPreprocessorList :: H.HashMap String (PDeclTree -> CRes [PStatementTree])
 declPreprocessorList = H.fromList [
   ("if", ifDeclPreprocessor),
   ("match", matchDeclPreprocessor),
   ("case", caseDeclPreprocessor),
+  (modStr, modDeclPreprocessor),
   (nestedDeclaration, nestedDeclPreprocessor)
                                ]
 
--- | Used for no declPreprocessor
-defaultDeclPreprocessor :: PDeclTree -> CRes [PDeclTree]
-defaultDeclPreprocessor declTree = return [declTree]
-
-declPreprocessors :: PDeclTree -> CRes [PDeclTree]
+declPreprocessors :: PDeclTree -> CRes (Maybe [PStatementTree])
+declPreprocessors (roa@RawObjArr{roaObj=Just expr, roaArr=Nothing}, declSubStatements) = case maybeExprPath expr of
+  Just p -> case H.lookup p declPreprocessorList of
+    Just preprocessor -> Just <$> preprocessor (roa{roaObj=Nothing, roaArr=Just (Just expr, Nothing, emptyMetaE "dpp" expr)}, declSubStatements)
+    Nothing           -> return Nothing
+  Nothing -> return Nothing
 declPreprocessors declTree@(RawObjArr{roaArr=Just (Just expr, _, _)}, _) = case maybeExprPath expr of
   Just p -> case H.lookup p declPreprocessorList of
-    Just preprocessor -> preprocessor declTree
-    Nothing           -> defaultDeclPreprocessor declTree
-  Nothing -> defaultDeclPreprocessor declTree
-declPreprocessors declTree = defaultDeclPreprocessor declTree
+    Just preprocessor -> Just <$> preprocessor declTree
+    Nothing           -> return Nothing
+  Nothing -> return Nothing
+declPreprocessors _ = return Nothing

@@ -50,7 +50,6 @@ mapMetaRawStatement f (TypeDefStatement obj extends) = TypeDefStatement (mapMeta
 mapMetaRawStatement f (RawClassDefStatement (typeExpr, className)) = RawClassDefStatement (mapMeta f InputMeta typeExpr, map (mapMeta f InputMeta) className)
 mapMetaRawStatement f (RawClassDeclStatement clss extends) = RawClassDeclStatement (mapMeta f InputMeta clss) (map (mapMeta f InputMeta) extends)
 mapMetaRawStatement f (RawBindStatement objArr) = RawBindStatement (mapMetaRawObjArr f Nothing objArr)
-mapMetaRawStatement f (RawExprStatement e) = RawExprStatement (mapMeta f OutputMeta e)
 mapMetaRawStatement f (RawAnnot e) = RawAnnot (mapMeta f AnnotMeta e)
 mapMetaRawStatement f (RawApplyStatement (RawApply terms)) = RawApplyStatement $ RawApply $ map mapTerm terms
   where

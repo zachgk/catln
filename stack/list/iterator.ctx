@@ -1,7 +1,7 @@
 
 # # Iterator List
 
-module Data/List
+module(Data/List)
   class IteratorResult[$T, $State] = IteratorNext(nextState -> $State, val -> $T) | IteratorDone
 
   data Iterator[$T, $State](length -> Int, initState -> $State, f(x -> $State) -> IteratorResult[$T= $T, $State= $State])
