@@ -33,8 +33,8 @@ isSolved :: Scheme -> Bool
 isSolved _                                 = False
 
 -- | Updates a 'VarMeta' point to a new 'Scheme' value
-setScheme :: FEnv -> VConstraint -> VarMeta -> Scheme -> String -> FEnv
-setScheme env@FEnv{feTypeEnv} con p scheme baseMsg = setDescriptor env con p (checkScheme scheme) (msg "" "")
+setScheme :: FEnv -> VConstraint -> (RConstraint, RConstraint) -> VarMeta -> Scheme -> String -> FEnv
+setScheme env@FEnv{feTypeEnv} con (oldCon, newCon) p scheme baseMsg = setDescriptor env con p (checkScheme scheme) (msg "" "")
   where
     checkScheme (TypeCheckResult _ (SType ub _ desc)) | containsBottomType ub = error $ msg desc $ printf "Actual type contains bottomType: %s" (show ub)
     checkScheme (TypeCheckResult notes (SType ub _ desc)) | containsBottomType ub = TypeCheckResE (mkTracedTypeCheckError env p (getMetaPos p) (msg desc "Actual type contains bottomType") : notes)
@@ -43,26 +43,26 @@ setScheme env@FEnv{feTypeEnv} con p scheme baseMsg = setDescriptor env con p (ch
     checkScheme s = s
 
     msg :: String -> String -> String
-    msg desc problem = printf "Scheme failed check at setScheme %s(point %s): \n\t %s - %s" baseMsg (show p) problem desc
+    msg desc problem = printf "Scheme failed check at setScheme %s(point %s): \n\t %s - %s \n\t Constraining %s to %s" baseMsg (show p) problem desc (show oldCon) (show newCon)
 
-setSchemeAct :: FEnv -> VConstraint -> VarMeta -> Type -> String -> FEnv
-setSchemeAct env con p t msg = setScheme env con p scheme' ("Act " ++ msg)
+setSchemeAct :: FEnv -> VConstraint -> (RConstraint, RConstraint) -> VarMeta -> Type -> String -> FEnv
+setSchemeAct env con cons p t msg = setScheme env con cons p scheme' ("Act " ++ msg)
   where
     scheme = descriptor env p
     scheme' = fmap (\(SType _ lb d) -> SType t lb d) scheme
 
-setSchemeReq :: FEnv -> VConstraint -> VarMeta -> Type -> String -> FEnv
-setSchemeReq env con p t msg = setScheme env con p scheme' ("Req " ++ msg)
+setSchemeReq :: FEnv -> VConstraint -> (RConstraint, RConstraint) -> VarMeta -> Type -> String -> FEnv
+setSchemeReq env con cons p t msg = setScheme env con cons p scheme' ("Req " ++ msg)
   where
     scheme = descriptor env p
     scheme' = fmap (\(SType a _ d) -> SType a t d) scheme
 
-setSchemeActReq :: FEnv -> VConstraint -> SchemeActReq -> VarMeta -> Type -> String -> FEnv
-setSchemeActReq env con SchemeAct p t msg = setSchemeAct env con p t msg
-setSchemeActReq env con SchemeReq p t msg = setSchemeReq env con p t msg
+setSchemeActReq :: FEnv -> VConstraint -> (RConstraint, RConstraint) -> SchemeActReq -> VarMeta -> Type -> String -> FEnv
+setSchemeActReq env con cons SchemeAct p t msg = setSchemeAct env con cons p t msg
+setSchemeActReq env con cons SchemeReq p t msg = setSchemeReq env con cons p t msg
 
-setSchemeConVaenv :: FEnv -> VConstraint -> SchemeActReq -> TypeVarArgEnv -> String -> FEnv
-setSchemeConVaenv env con actOrReq types msg = foldr (\(m, t) env' -> setSchemeActReq env' con actOrReq m t msg) env (H.elems $ Z.zip (constraintVarArgEnv con) types)
+setSchemeConVaenv :: FEnv -> VConstraint -> (RConstraint, RConstraint) -> SchemeActReq -> TypeVarArgEnv -> String -> FEnv
+setSchemeConVaenv env con cons actOrReq types msg = foldr (\(m, t) env' -> setSchemeActReq env' con cons actOrReq m t msg) env (H.elems $ Z.zip (constraintVarArgEnv con) types)
 
 -- | Tries to join two 'SType' as equal to each other and returns their updated values
 equalizeSTypes :: FEnv -> TypeVarArgEnv -> (SType, SType) -> (TypeVarArgEnv, SType, SType)
@@ -215,20 +215,20 @@ computeConstraint env@FEnv{feTypeEnv} con@(Constraint _ vaenv (UnionOf i parent 
     actVaenv = fmap (stypeAct . snd) vaenv
     (vaenv', parentST', _) = equalizeSTypes env actVaenv (parent, SType (compactType feTypeEnv actVaenv chAct) chReq "")
 
-saveConstraint :: FEnv -> VConstraint -> RConstraint -> FEnv
-saveConstraint env con@(Constraint _ _ (UnionOf _ parentPnt _)) (Constraint _ vaenv' (UnionOf _ parent' _)) = env''
+saveConstraint :: FEnv -> VConstraint -> RConstraint -> RConstraint -> FEnv
+saveConstraint env con@(Constraint _ _ (UnionOf _ parentPnt _)) oldCon newCon@(Constraint _ vaenv' (UnionOf _ parent' _)) = env''
   -- TODO Delete special case of saveConstraint for UnionOf by fixing the bug
   where
-    env' = setScheme env con parentPnt (return parent') "UnionOf"
-    env'' = setSchemeConVaenv env' con SchemeAct (fmap (stypeAct . snd) vaenv') "EqualsKnown env"
-saveConstraint env vals new = saveDat $ saveVaenv env
+    env' = setScheme env con (oldCon, newCon) parentPnt (return parent') "UnionOf"
+    env'' = setSchemeConVaenv env' con (oldCon, newCon) SchemeAct (fmap (stypeAct . snd) vaenv') "EqualsKnown env"
+saveConstraint env vals old new = saveDat $ saveVaenv env
   where
-    saveDat en = foldr (\(p, v) e -> setScheme e vals p (pure v) (show v)) en (zip (constraintDatMetas $ conDat vals) (constraintDatMetas $ conDat new))
+    saveDat en = foldr (\(p, v) e -> setScheme e vals (old, new) p (pure v) (show v)) en (zip (constraintDatMetas $ conDat vals) (constraintDatMetas $ conDat new))
     saveVaenv en = foldr saveVaenvPair en (H.elems $ H.intersectionWith (,) (conVaenv vals) (conVaenv new))
     saveVaenvPair ((pIn, pOut), (vIn, vOut)) en = en''
       where
-        en' = setScheme en vals pIn (pure vIn) (show vIn)
-        en'' = setScheme en' vals pOut (pure vOut) (show vOut)
+        en' = setScheme en vals (old, new) pIn (pure vIn) (show vIn)
+        en'' = setScheme en' vals (old, new) pOut (pure vOut) (show vOut)
 
 -- |
 -- This takes a constraint and tries to apply it in the environment.
@@ -240,7 +240,7 @@ executeConstraint env con = case stypeConstraint $ showCon env con of
   TypeCheckResult _ con' -> (prune, env')
     where
       (prune, con'') = computeConstraint env con'
-      env' = saveConstraint env con con''
+      env' = saveConstraint env con con' con''
 
 -- | Calls 'executeConstraint' for a list of constraints
 executeConstraints :: FEnv -> [VConstraint] -> ([Bool], FEnv)
