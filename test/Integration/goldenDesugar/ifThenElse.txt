@@ -446,11 +446,11 @@
                         ( Value /r= CInt 0 )
                     )
                 )
+            , abs.$e48eb7 ( Value /x ) ( Value /$e48eb7-arg= Hole TopType HoleActive Nothing@Value Then ) = Value x
             , abs.$e48eb7 ( Value /x ) ( Value /$e48eb7-arg= Hole TopType HoleActive Nothing@Value Else ) = /operator*
                 ( Value /l= /operator-
                     ( Value /a= CInt 1 )
                 ) ( Value /r= Value x )
-            , abs.$e48eb7 ( Value /x ) ( Value /$e48eb7-arg= Hole TopType HoleActive Nothing@Value Then ) = Value x
             , /Context ( Value /value= Value main ) ( Value /io -> /Catln/IO ) = exit
                 ( Value val= abs
                     ( CInt 0 )

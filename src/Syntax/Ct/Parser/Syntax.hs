@@ -40,8 +40,6 @@ type PSExpr = Expr ParseMetaDat
 type PSCompAnnot = CompAnnot PSExpr
 type PSObjArr = ObjArr Expr ParseMetaDat
 
-newtype PSemiDecl = PSemiDecl PSObjArr
-  deriving (Show)
 
 
 

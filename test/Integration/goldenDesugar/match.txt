@@ -445,14 +445,14 @@
                     ( CInt 0 )
                 ) ( Value /this= Value io )
             , abs ( Value x -> /Data/Primitive/Integer ) = abs.$e6e359 ( Value /x= Value /x ) ( Value /$e6e359-arg= Value x )
-            , abs.$e6e359 ( Value /x ) ( Value /$e6e359-arg= Hole TopType HoleActive Nothing@Value x2 ) = /operator* ( Value /l= Value x2 )
-                ( Value /r= /operator-
-                    ( Value /a= CInt 1 )
-                )
             , abs.$e6e359 ( Value /x )
                 ( Value /$e6e359-arg= Hole TopType HoleActive Nothing@Value x2 | /operator>= ( Value /l= Value x )
                     ( Value /r= CInt 0 )
                 ) = Value x2
+            , abs.$e6e359 ( Value /x ) ( Value /$e6e359-arg= Hole TopType HoleActive Nothing@Value x2 ) = /operator* ( Value /l= Value x2 )
+                ( Value /r= /operator-
+                    ( Value /a= CInt 1 )
+                )
             ]
         ,
             [ CGType

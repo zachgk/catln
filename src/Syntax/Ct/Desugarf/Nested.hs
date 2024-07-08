@@ -27,15 +27,6 @@ import           Syntax.Ct.Prgm
 
 type ParentArgs = H.HashMap ArgName [ParseMeta]
 
-splitDeclSubStatements :: [PStatementTree] -> ([(PObjArr, [PStatementTree])], [PCompAnnot])
-splitDeclSubStatements = aux ([], [])
-  where
-    aux (decls, annots) [] = (decls, annots)
-    aux (decls, annots) (RawStatementTree (RawDeclStatement decl) declSubSt : subSt) = aux ((decl, declSubSt):decls, annots) subSt
-    aux (decls, annots) (RawStatementTree (RawAnnot annot) []: subSt) = aux (decls, annot:annots) subSt
-    aux _ (RawStatementTree (RawAnnot _) (_:_):_) = error "Children in RawAnnot not currently supported"
-    aux _ s = error $ printf "Not yet supported subDeclStatemnt type: %s" (show s)
-
 scopeSubDeclFunNamesInS :: TypeName -> S.HashSet TypeName -> TypeName -> TypeName
 scopeSubDeclFunNamesInS prefix replaceNames name = name'
   where
@@ -70,14 +61,14 @@ scopeSubDeclFunNamesInMeta prefix replaceNames (Meta (TopType ps preds) pos md) 
 scopeSubDeclFunNamesInMeta _ _ m@(Meta TypeVar{} _ _) = m
 
 -- Renames sub functions by applying the parent names as a prefix to avoid name collisions
-scopeSubDeclFunNames :: PSObjArr -> [PSemiDecl] -> (PSObjArr, [PSemiDecl])
+scopeSubDeclFunNames :: PSObjArr -> DesObjectMap -> (PSObjArr, DesObjectMap)
 scopeSubDeclFunNames oa@ObjArr{oaObj=Just objExpression, oaAnnots, oaArr} decls = (oa{oaAnnots=annots', oaArr=oaArr'}, decls')
   where
     prefix = exprPath objExpression
-    declNames = S.fromList $ map (\(PSemiDecl ObjArr{oaObj=Just o}) -> exprPath o) decls
+    declNames = S.fromList $ map oaObjPath decls
     addPrefix n = prefix ++ "." ++ n
     scopeM = scopeSubDeclFunNamesInMeta prefix declNames
-    decls' = map (\(PSemiDecl doa@ObjArr{oaObj=Just obj, oaArr=Just (doaArr, m)}) -> PSemiDecl doa{
+    decls' = map (\doa@ObjArr{oaObj=Just obj, oaArr=Just (doaArr, m)} -> doa{
                      oaObj=Just (mapExprPath (\(pM, pN) -> Value (scopeSubDeclFunNamesInMeta prefix (S.singleton pN) pM) (addPrefix pN)) obj),
                      oaArr = Just (fmap (scopeSubDeclFunNamesInExpr prefix declNames) doaArr, scopeM m)
                      }) decls
@@ -93,8 +84,8 @@ curryApplyParentArgsSignature e parentArgs = applyExprIArgs e (map (second IArgM
 curryApplyParentArgs :: PSExpr -> ParentArgs -> PSExpr
 curryApplyParentArgs e parentArgs = applyExprIArgs e (map (\(parentArgName, parentArgM) -> (parentArgName, IArgE (Value (emptyMetaM "nest" parentArgM) (pkName parentArgName)))) $ H.toList $ fmap head parentArgs)
 
-currySubFunctionSignature :: ParentArgs -> PSemiDecl -> PSemiDecl
-currySubFunctionSignature parentArgs (PSemiDecl oa@ObjArr{oaObj=Just obj}) = PSemiDecl oa{oaObj=Just obj'}
+currySubFunctionSignature :: ParentArgs -> DesObjectMapItem -> DesObjectMapItem
+currySubFunctionSignature parentArgs oa@ObjArr{oaObj=Just obj} = oa{oaObj=Just obj'}
   where
     obj' = mapExprPath applyParentArgsToObjPath obj
     applyParentArgsToObjPath (objPathM, objPathN) = curryApplyParentArgsSignature (Value objPathM objPathN) parentArgs
@@ -117,14 +108,14 @@ currySubFunctionsUpdateExpr toUpdate parentArgs (VarApply tm tbe tVarName tVarVa
   where
     tbe' = currySubFunctionsUpdateExpr toUpdate parentArgs tbe
 
-currySubFunctions :: PSObjArr -> [PSemiDecl] -> (PSObjArr, [PSemiDecl])
+currySubFunctions :: PSObjArr -> DesObjectMap -> (PSObjArr, DesObjectMap)
 currySubFunctions oa@ObjArr{oaObj=Just objExpression, oaAnnots, oaArr} decls = (oa{oaAnnots=annots', oaArr=oaArr'}, decls')
   where
     parentArgs = map snd <$> exprArgs objExpression
-    toUpdate = S.fromList $ map (\(PSemiDecl ObjArr{oaObj=Just o}) -> exprPath o) decls
+    toUpdate = S.fromList $ map oaObjPath decls
     decls2 = map (currySubFunctionSignature parentArgs) decls
     oaArr' = fmap (first (fmap (currySubFunctionsUpdateExpr toUpdate parentArgs))) oaArr
-    decls' = map (\(PSemiDecl doa@ObjArr{oaArr=doaArr}) -> PSemiDecl doa{oaArr=fmap (first (fmap (currySubFunctionsUpdateExpr toUpdate parentArgs))) doaArr}) decls2
+    decls' = map (\doa@ObjArr{oaArr=doaArr} -> doa{oaArr=fmap (first (fmap (currySubFunctionsUpdateExpr toUpdate parentArgs))) doaArr}) decls2
     annots' = map (currySubFunctionsUpdateExpr toUpdate parentArgs) oaAnnots
 currySubFunctions oa _ = error $ printf "currySubFunctions without input expression: %s" (show oa)
 

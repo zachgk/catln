@@ -38,20 +38,19 @@ import           Utils
 type StatementEnv = (String, [DesCompAnnot])
 
 -- | Flattens a declaration tree (with nested declarations)
-flattenNestedDeclarations :: PDeclTree -> [PSemiDecl]
-flattenNestedDeclarations (roa@RawObjArr{roaObj=Just objExpression, roaAnnots}, subStatements) = decl':subDecls4
-  where
-    objDoc = desObjDocComment subStatements
-    (subDecls, annots1) = splitDeclSubStatements subStatements
-    subDecls2 = concatMap flattenNestedDeclarations subDecls
-    annots2 = fmap (semiDesExpr SDOutput (Just objExpression)) (annots1 ++ roaAnnots)
+flattenNestedDeclarations :: StatementEnv -> PDeclTree -> CRes (DesObjArr, DesObjectMap)
+flattenNestedDeclarations statementEnv (roa@RawObjArr{roaObj=Just objExpression, roaAnnots}, subStatements) = do
+  let objDoc = desObjDocComment subStatements
+  subStatements' <- mapM (desStatement statementEnv) subStatements
+  let (subDecls, _, annots1) = mergePrgms subStatements'
+  let annots2 = annots1 ++ fmap (semiDesExpr SDOutput (Just objExpression)) roaAnnots
 
-    oa2 = (semiDesObjArr roa){oaAnnots=annots2, oaDoc=objDoc}
+  let oa2 = (semiDesObjArr roa){oaAnnots=annots2, oaDoc=objDoc}
 
-    (oa3, subDecls3) = scopeSubDeclFunNames oa2 subDecls2
-    (oa4, subDecls4) = currySubFunctions oa3 subDecls3
-    decl' = PSemiDecl oa4
-flattenNestedDeclarations d = error $ printf "flattenNestedDeclarations without input expression: %s" (show d)
+  let (oa3, subDecls2) = scopeSubDeclFunNames oa2 subDecls
+  let (oa4, subDecls3) = currySubFunctions oa3 subDecls2
+  return (oa4, subDecls3)
+flattenNestedDeclarations _ d = error $ printf "flattenNestedDeclarations without input expression: %s" (show d)
 
 data DOEValName = UseRelativeName | UseTypeName deriving (Eq, Show)
 
@@ -105,8 +104,8 @@ semiDesObjArr roa@RawObjArr{roaObj=Just{}} = oa{
     oaArr' = fmap (first (fmap (semiDesExpr SDOutput (Just oE)))) oaArr
 semiDesObjArr oa = error $ printf "Unexpected semiDesObjArr with no input expression: %s" (show oa)
 
-declToObjArrow :: StatementEnv -> PSemiDecl -> DesObjectMapItem
-declToObjArrow (inheritPath, inheritAnnots) (PSemiDecl oa@ObjArr{oaAnnots, oaArr}) = oa3
+declToObjArrow :: StatementEnv -> DesObjArr -> DesObjectMapItem
+declToObjArrow (inheritPath, inheritAnnots) oa@ObjArr{oaAnnots, oaArr} = oa3
   where
     oa2 = desObj True inheritPath UseRelativeName oa
 
@@ -121,7 +120,9 @@ desDecl statementEnv decl subStatements = do
   case preprocessed of
     DPPStatements newStatements -> mergePrgms <$> mapM (desStatement statementEnv) newStatements
     DPPNothing -> do
-      let objMap = map (declToObjArrow statementEnv) $ flattenNestedDeclarations (decl, subStatements)
+      (decl', subObjMap) <- flattenNestedDeclarations statementEnv (decl, subStatements)
+      let decl'' = declToObjArrow statementEnv decl'
+      let objMap = decl'' : subObjMap
       return (objMap, classGraphFromObjs objMap, [])
     DPPStTree st subStatements' -> case st of
       MultiTypeDefStatement multiTypeDef -> desMultiTypeDef statementEnv multiTypeDef subStatements'
