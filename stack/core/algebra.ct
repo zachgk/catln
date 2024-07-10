@@ -5,173 +5,109 @@ import "core/compile.ct"
 module(Data/Algebra)
   # # Catln Core Abstract Algebra Types
     These types define some of the basic relationship between types and ways classes can relate to themselves.
-
   class Eq
     # The Eq class is used to define values which can be compared for equality.
       While naive tuple equality often works, some types have equality that behaves differently and must be defined.
       For example, a TreeSet can insert items in different order and produce different trees, but with equal sets.
       There are only two operations for eq: [operator==] and [operator!=].
-
     # /operator==</Data/Algebra/Eq $T>($T l, $T r) -> Boolean
-
     # This checks whether two items are equal.
       Note that it only compares like items with each other, not that you can compare apples to oranges.
-
-
   (_ :: $T != _ :: $T)[$T -> /Data/Algebra/Eq] -> Boolean
     # This checks if two items are not equal.
-
   # It is the opposite of [operator==] leading to the simple definition:
-
   # /operator!=(l, r) = ~(l == r)
     Given this, creating an instance of Eq only requires defining equality and the != can be produced automatically.
-
   # ## Ordering
-
   # Ordering is used to define operations that have a natural ability to be ordered or sorted.
     Some examples include numbers which are sorted from smallest to largest or strings which are sorted alphabetically.
-
   # There are two different forms of ordering:
-
   class Ord
     # Ord is used to define types which can be strictly ordered.
       Every element, when compared must have one of the following [Ordering] relationships:
-
-
   every Number isa /Data/Algebra/Ord
-
   class Ordering = LessThan || Equal || GreaterThan
     # The Orderings can relate any like items of Ord. 
-
-
   class POrd
     # In addition to [Ord], [POrd] defines a partial ordering.
       Partially ordered items can be compared, but may result in [NoOrdering]:
-
-
   class POrdering = Ordering || NoOrdering
     # As an example, sets can be partially ordered by the subset operation.
       One set A <= B when A is a subset of B.
       An ordered example is {1} <= {1, 2}.
       But, two sets like {1} and {2} have no ordering between them.
-
-
   # There are a few nice properties about ordering.
-
   every Ord isa /Data/Algebra/POrd
-
   # This means that something fully ordered can still take advantage of many of the same functions as partially ordered ones.
     It just usually has a more specific result.
-
   compare[$T -> Ord](l -> $T, r -> $T) -> Ordering
-
   compare[$T -> POrd](l -> $T, r -> $T) -> POrdering
-
   # The only major function for ordering is [compare].
     Comparing two [Ord] will result in an [Ordering].
     Likewise, comparing two partially orderables [POrd] results in a [POrdering].
-
   # ### Operators for ordering
     Besides compare, there are also some operators to make using ordering easier.
-
   (_ :: $T <= _ :: $T)[$T -> Ord] -> Boolean
-
   (_ :: $T >= _ :: $T)[$T -> Ord] -> Boolean
-
   (_ :: $T < _ :: $T)[$T -> Ord] -> Boolean
-
   (_ :: $T > _ :: $T)[$T -> Ord] -> Boolean
-
   every POrd isa /Data/Algebra/Eq
     # If something can be compared for order, it should also be comparable for equality by the following relationship:
-
-
   # /operator==<POrd $T>($T l, $T r) = compare(l=l, r=r) == Equal
-
   # ### Ordering utility functions
-
   # max<Ord $T>($T l, $T r) -> $T = if l >= r then l else r
-
   # min<Ord $T>($T l, $T r) -> $T = if l <= r then l else r
-
   # TODO: Tests and properties for compare
-
   # ## Semigroup
-
   class Semigroup
     # A semigroup is a type combined with an associative operation called [operator++].
       For example, integers with the addition operation are a semigroup.
-
-
   every Semigroup isa /Data/Algebra/Eq
-
   (_ :: $T ++ _ :: $T)[$T -> Semigroup] -> $T
-
   testSemigroupAssociative[$T -> Semigroup](a -> $T, b -> $T, c -> $T) =
     #test
     #assert(test= (a ++ b) ++ c == a ++ (b ++ c))
     0
-
   class Monoid
     # The [Monoid] builds on top of the [Semigroup].
       It adds the identity value [mempty].
       The integers with addition form a [Monoid], and 0 is the value for [mempty].
       Another example is [String] where "" is the value for [mempty]
-
-
   every Monoid isa /Data/Algebra/Semigroup
-
   mempty[$T -> Monoid] -> $T
     # mempty is the "zero" or "empty" value that can be combined with [operator++] to result in the same operation
-
   # We can test to verify that [mempty] works with both the left and right.
-
   #test
     testRightMonoidIdentity[$T -> /Data/Algebra/Monoid](t -> $T) =
       #assert(test= (t ++ mempty) == t)
       0
-
     testLeftMonoidIdentity[$T -> /Data/Algebra/Monoid](t -> $T) =
       #assert(test= mempty ++ t == t)
       0
-
-
   # mconcat<Monoid $T>(List<$T> lst) = lst.fold(operator++, mempty)
-
   # Using the [Monoid], it is possible to combine a list of monoids together.
-
   class CommutativeMonoid
     # The [CommutativeMonoid] builds on top of the [Monoid].
       It is also called an Abelian Monoid
       Here, integers with addition are a [CommutativeMonoid], but [String]s are not.
-
-
   every CommutativeMonoid isa /Data/Algebra/Monoid
-
   # We can test to ensure that all [CommutativeMonoid]s satisfy the commutativity requirement.
-
   testCommutativeMonoid[$T -> /Data/Algebra/CommutativeMonoid](a -> $T, b -> $T) =
     #test
     #assert(test= a ++ b == b ++ a)
     0
-
   class Group
     # The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
       It adds an inverse operation that finds the opposite of an element.
       For integers with addition, negation with [operator~] would be the inverse.
       Something like [String]s would not have an inverse, so it wouldn't be a [Group].
-
-
   every Group isa /Data/Algebra/Monoid
-
   inverse[$T -> Group](t -> $T) -> $T
     # We can test to ensure that all [Group]s satisfy the inverse requirements.
       An inverse times itself should result in [mempty].
-
   testGroup[$T -> Group](t -> $T) =
     #test
     #assert(test= t ++ inverse(t= t) == mempty)
     #assert(test= inverse(t= t) ++ t == mempty)
     0
-
 

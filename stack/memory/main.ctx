@@ -39,32 +39,23 @@ class Memory[$V -> Var]
 
   # ## [MemoryMap]
 
-  data MemoryMap(:Map[$K= VarInt, $V= Optional], counter -> Int) isa Memory
+  data(MemoryMap(:Map[$K= VarInt, $V= Optional], counter -> Int), isa= [Memory])
     # The [MemoryMap] is one of the simplest [Memory] that implements it using a [Map].
       While most [Memory] are built using things like hardware or external services, this helps make sure that [Memory] can be used wherever.
-
     Empty= MemoryMap(map= Empty, counter= 0)
-
-    data VarInt[$T](:Int)
-
+    data(VarInt[$T](:Int))
     var[$T]{:MemoryMap} =
       i= :MemoryMap.counter
       v= VarInt[$T](i)
       v{MemoryMap(map= :MemoryMap.map.insert(v, Nothing), counter= i + 1)}
-
     var[$T](v){:MemoryMap} =
       i= :MemoryMap.counter
       v= VarInt[$T](i)
       v{MemoryMap(map= :MemoryMap.map.insert(v, v), counter= i + 1)}
-
     free(v -> Var){:MemoryMap}= (){:MemoryMap(map= :MemoryMap.map.remove(v))}
-
     :Var[$T].(){:MemoryMap}= :MemoryMap.map.get(var)
-
     (:Var[$T] := val -> $T){:MemoryMap}= val{:MemoryMap(map= :MemoryMap.map.set(var, val))}
-
     :MemoryMap.vars= this.map.keys
-
 
   imperative{}(f{Memory} -> $R) -> $R
     # The imperative allows you to define an imperative block of code.

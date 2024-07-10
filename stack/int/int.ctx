@@ -2,7 +2,7 @@
 # # Int
 
 class Int
-  data Zero
+  data(Zero)
 
   class Peano = Succ(i= Peano) | Zero isa Int
     class One = Succ(Zero)
@@ -170,7 +170,7 @@ class Int
 
   # ## Division
 
-  data Division(dividend -> Int, divisor -> Int, quotient -> Int, remainder -> Int)
+  data(Division(dividend -> Int, divisor -> Int, quotient -> Int, remainder -> Int))
 
   (_ :: Peano // _ :: Int__gt(0)) -> Division
 
@@ -180,10 +180,9 @@ class Int
 
   # ## Skewed Int
 
-  data Skewed(m -> ConstantInt__gt(0), x -> Int, b -> ConstantInt) isa Int
+  data(Skewed(m -> ConstantInt__gt(0), x -> Int, b -> ConstantInt), isa= [Int])
     # A utility for [Int] that represents something like [`m*x+b`].
       It can be used to help avoid unnecessary computations and to fit [x] into a smaller data type.
-
 
   Skewed(m, x, b) -> Int= m * x + b
     # If desired, can be converted into a full [Int] at any point.

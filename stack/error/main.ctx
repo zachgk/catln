@@ -12,7 +12,7 @@ class Err
 
   error(#msg -> String, cause -> Optional[Err] ? Nothing) -> Err= Basic(msg= msg, cause= cause)
 
-  data Basic(msg -> String, cause -> Optional[Err])
+  data(Basic(msg -> String, cause -> Optional[Err]))
 
   # This allows for the [error.#msg] to be overridden with greater contextual understanding.
 

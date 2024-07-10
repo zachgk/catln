@@ -1,6 +1,6 @@
 # Tests data classes and matching values in functions (c=Type(...)) with type vars
 
-data Complex[$N -> Number](a -> $N, b -> $N)
+data(Complex[$N -> Number](a -> $N, b -> $N))
 
 real(c= Complex(a, b))= a
 

@@ -9,8 +9,6 @@ module(Data/NDArray)
     # The most common form is that many functions on [NDArray] can be used with stack batching.
       It is defined based on one fundamental optimization rule:
 
-
-
 :List[$T -> NDArray].map(f -> StackBatchFun)= f(this.stack).split
   # In translation, the map can be replaced by stacking all of the [NDArray] together, applying the function to the stacked equivalent, and then unstacking them.
 

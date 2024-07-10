@@ -70,6 +70,10 @@ formatIsa :: ExtendedClasses RawExpr m -> String
 formatIsa []      = ""
 formatIsa classes = " isa " ++ intercalate ", " (map formatExpr classes)
 
+formatNewIsa :: ExtendedClasses RawExpr m -> String
+formatNewIsa []      = ""
+formatNewIsa classes = printf ", isa=[%s]" (intercalate ", " (map formatExpr classes))
+
 -- | Formats either ObjArr or Bind Statement
 formatObjArrLike :: String -> RawObjArr RawExpr m -> String
 formatObjArrLike eq roa@RawObjArr{roaObj, roaArr, roaDef} = printf "%s%s%s%s%s%s" (showE True roaObj) showElse showM showEquals (showE False roaArrExpr) showDef
@@ -115,7 +119,7 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
       MultiTypeDefStatement (MultiTypeDef clss objs extends) -> printf "class %s = %s%s" (formatExpr clss) showObjs (formatIsa extends)
         where
           showObjs = intercalate " || " $ map formatExpr objs
-      TypeDefStatement typeExpr extends -> printf "%s %s%s" kw (formatExpr typeExpr) (formatIsa extends)
+      TypeDefStatement typeExpr extends -> printf "%s(%s%s)" kw (formatExpr typeExpr) (formatNewIsa extends)
         where
           kw :: String
           kw = if "#" `isPrefixOf` exprPath typeExpr then "annot" else "data"

@@ -17,7 +17,7 @@ class NDArray[$T]
 
   :NDArray[$T].flatten -> List[$T]
 
-  data ListNDArray/Invalid[$T](:Shape, flatten -> List[$T])
+  data(ListNDArray/Invalid[$T](:Shape, flatten -> List[$T]))
 
   class ListNDArray[$T] = ListNDArray/Invalid[$T] | (shape.prod == flatten.length)
     # A simple definition for the 

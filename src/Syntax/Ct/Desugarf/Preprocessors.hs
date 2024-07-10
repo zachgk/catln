@@ -120,6 +120,17 @@ modDeclPreprocessor (roa@RawObjArr{roaArr=Just (Just modNameExpr, _, _)}, subSta
   return [RawStatementTree (RawModule modName) subStatements]
 modDeclPreprocessor (roa, _) = fail $ printf "Invalid modDeclPreprocessor: %s" (show roa)
 
+dataDeclPreprocessor :: PDeclTree -> CRes [PStatementTree]
+dataDeclPreprocessor (roa@RawObjArr{roaArr=Just (Just dataExpr, _, _)}, subStatements) = do
+  res <- case exprAppliedArgs dataExpr of
+    (ObjArr{oaObj=Just tp}:restArgs) -> case restArgs of
+      [ObjArr{oaObj=Just (RawValue _ "isa"), oaArr=Just (Just (RawList _ extends), _)}] -> return $ TypeDefStatement tp extends
+      [] -> return $ TypeDefStatement tp []
+      _ -> fail $ printf "Unknown remaining arguments to data in %s" (show roa)
+    _ -> fail $ printf "Missing first argument to data in %s" (show roa)
+  return [RawStatementTree res subStatements]
+dataDeclPreprocessor (roa, _) = fail $ printf "Invalid dataDeclPreprocessor: %s" (show roa)
+
 -- | A declPreprocessor for multi-line expressions. Will search for the final result expression and move it to the top
 nestedDeclPreprocessor :: PDeclTree -> CRes [PStatementTree]
 nestedDeclPreprocessor (oa, subStatements) = aux [] subStatements
@@ -144,6 +155,8 @@ declPreprocessorList = H.fromList [
   ("match", matchDeclPreprocessor),
   ("case", caseDeclPreprocessor),
   (modStr, modDeclPreprocessor),
+  (dataStr, dataDeclPreprocessor),
+  (annotStr, dataDeclPreprocessor),
   (nestedDeclaration, nestedDeclPreprocessor)
                                ]
 

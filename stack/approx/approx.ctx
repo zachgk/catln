@@ -32,25 +32,22 @@ class Prob = Probability
     #assert(enum[$T].map(f(x)= d.get(x)).sum == 1)
     ()
 
-  data Fun[$T](p(x -> $T) -> Prob)
+  data(Fun[$T](p(x -> $T) -> Prob))
     :Fun(p).get(x)= p(x)
-
 
 
 :Approx.isPerfect -> Bool
   # Checks if an approximation is perfectly precise
 
-data LiftApprox[$T](val -> $T) isa Approx[$T]
+data(LiftApprox[$T](val -> $T), isa= [Approx[$T]])
   (val :: $T) | $T ~:: Approx -> Approx[$T]= LiftApprox(val= val)
     # Any non-approximation can be turned into an approximation by wrapping it in the LiftApprox.
       This allows mixing operations between approximations and non-approximations.
-
   :LiftApprox.isPerfect= True
-
 
 class ProbMap[$T] = ProbMap/Unnormalized[$T](vals) | (sum(vals) == 1)
 
-data ProbMap/Unnormalized[$T](vals -> Map[$T, Probability]) isa Approx[$T], Distribution[$T]
+data(ProbMap/Unnormalized[$T](vals -> Map[$T, Probability]), isa= [Approx[$T], Distribution[$T]])
 
 :ProbMap/Unnormalized(vals)
 
