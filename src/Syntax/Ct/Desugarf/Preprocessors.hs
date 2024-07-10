@@ -131,6 +131,19 @@ dataDeclPreprocessor (roa@RawObjArr{roaArr=Just (Just dataExpr, _, _)}, subState
   return [RawStatementTree res subStatements]
 dataDeclPreprocessor (roa, _) = fail $ printf "Invalid dataDeclPreprocessor: %s" (show roa)
 
+classDeclPreprocessor :: PDeclTree -> CRes [PStatementTree]
+classDeclPreprocessor (roa@RawObjArr{roaArr=Just (Just classExpr, _, _)}, subStatements) = do
+  res <- case exprAppliedArgs classExpr of
+    (ObjArr{oaObj=Just tp}:restArgs) -> case restArgs of
+      [ObjArr{oaObj=Just (RawList _ objs), oaArr=_}] -> return $ MultiTypeDefStatement $ MultiTypeDef tp objs []
+      [ObjArr{oaObj=Just (RawList _ objs), oaArr=_}, ObjArr{oaObj=Just (RawValue _ "isa"), oaArr=Just (Just (RawList _ extends), _)}] -> return $ MultiTypeDefStatement $ MultiTypeDef tp objs extends
+      [ObjArr{oaObj=Just (RawValue _ "isa"), oaArr=Just (Just (RawList _ extends), _)}] -> return $ RawClassDeclStatement tp extends
+      [] -> return $ RawClassDeclStatement tp []
+      remain -> fail $ printf "Unknown remaining arguments to class in %s as %s" (show roa) (show remain)
+    _ -> fail $ printf "Missing first argument to class in %s" (show roa)
+  return [RawStatementTree res subStatements]
+classDeclPreprocessor (roa, _) = fail $ printf "Invalid classDeclPreprocessor: %s" (show roa)
+
 -- | A declPreprocessor for multi-line expressions. Will search for the final result expression and move it to the top
 nestedDeclPreprocessor :: PDeclTree -> CRes [PStatementTree]
 nestedDeclPreprocessor (oa, subStatements) = aux [] subStatements
@@ -157,6 +170,7 @@ declPreprocessorList = H.fromList [
   (modStr, modDeclPreprocessor),
   (dataStr, dataDeclPreprocessor),
   (annotStr, dataDeclPreprocessor),
+  (classStr, classDeclPreprocessor),
   (nestedDeclaration, nestedDeclPreprocessor)
                                ]
 

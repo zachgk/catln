@@ -3,7 +3,7 @@
   This package is a compiler based on the [LLVM Compiler Infrastructure](https://llvm.org/).
 
 module(LLVM)
-  class Expr[$T]
+  class(Expr[$T])
     # Used to represent expression-equivalent data.
   data(Operand[$T](repr -> String), isa= [Expr[$T]])
     # An operand is an expression value in [LLVM].
@@ -35,7 +35,7 @@ module(LLVM)
     implicit[$T2](e -> Expr[$T1]){}= implicitBase[$T](e)
       #name("strict")
   # ## Lazyness
-  class LazyData[$T1, $T2] = LazyUncomputed[$T2](e -> $T1) | LazyComputed(v -> Expr[$T2]) isa Expr[$T2]
+  class(LazyData[$T1, $T2], [LazyUncomputed[$T2](e -> $T1), LazyComputed(v -> Expr[$T2])], isa= [Expr[$T2]])
   data(LazyExpr[$T1, $T2](val -> Var[LazyData[$T1= $T1, $T2= $T2]]))
   implicit[$T2](e){} =
     #name("lazy")

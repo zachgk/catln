@@ -14,7 +14,7 @@ module(Web)
   Try[$R -> Webpack].to[Http/Response]= match(this)
     e -> Http/Error= Response(code= e.code, headers= empty, body= Nothing)
     w -> Webpack= Response(code= 200, headers= undefined, body= undefined)
-  class WebFunction
+  class(WebFunction)
     # A [WebFunction] is used to define a website
     WebFunction{} -> Try[$R -> Webpack]
       # All WebFunctions must be able to build the website

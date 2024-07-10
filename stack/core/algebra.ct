@@ -5,7 +5,7 @@ import "core/compile.ct"
 module(Data/Algebra)
   # # Catln Core Abstract Algebra Types
     These types define some of the basic relationship between types and ways classes can relate to themselves.
-  class Eq
+  class(Eq)
     # The Eq class is used to define values which can be compared for equality.
       While naive tuple equality often works, some types have equality that behaves differently and must be defined.
       For example, a TreeSet can insert items in different order and produce different trees, but with equal sets.
@@ -22,16 +22,16 @@ module(Data/Algebra)
   # Ordering is used to define operations that have a natural ability to be ordered or sorted.
     Some examples include numbers which are sorted from smallest to largest or strings which are sorted alphabetically.
   # There are two different forms of ordering:
-  class Ord
+  class(Ord)
     # Ord is used to define types which can be strictly ordered.
       Every element, when compared must have one of the following [Ordering] relationships:
   every Number isa /Data/Algebra/Ord
-  class Ordering = LessThan || Equal || GreaterThan
+  class(Ordering, [LessThan, Equal, GreaterThan])
     # The Orderings can relate any like items of Ord. 
-  class POrd
+  class(POrd)
     # In addition to [Ord], [POrd] defines a partial ordering.
       Partially ordered items can be compared, but may result in [NoOrdering]:
-  class POrdering = Ordering || NoOrdering
+  class(POrdering, [Ordering, NoOrdering])
     # As an example, sets can be partially ordered by the subset operation.
       One set A <= B when A is a subset of B.
       An ordered example is {1} <= {1, 2}.
@@ -59,7 +59,7 @@ module(Data/Algebra)
   # min<Ord $T>($T l, $T r) -> $T = if l <= r then l else r
   # TODO: Tests and properties for compare
   # ## Semigroup
-  class Semigroup
+  class(Semigroup)
     # A semigroup is a type combined with an associative operation called [operator++].
       For example, integers with the addition operation are a semigroup.
   every Semigroup isa /Data/Algebra/Eq
@@ -68,7 +68,7 @@ module(Data/Algebra)
     #test
     #assert(test= (a ++ b) ++ c == a ++ (b ++ c))
     0
-  class Monoid
+  class(Monoid)
     # The [Monoid] builds on top of the [Semigroup].
       It adds the identity value [mempty].
       The integers with addition form a [Monoid], and 0 is the value for [mempty].
@@ -86,7 +86,7 @@ module(Data/Algebra)
       0
   # mconcat<Monoid $T>(List<$T> lst) = lst.fold(operator++, mempty)
   # Using the [Monoid], it is possible to combine a list of monoids together.
-  class CommutativeMonoid
+  class(CommutativeMonoid)
     # The [CommutativeMonoid] builds on top of the [Monoid].
       It is also called an Abelian Monoid
       Here, integers with addition are a [CommutativeMonoid], but [String]s are not.
@@ -96,7 +96,7 @@ module(Data/Algebra)
     #test
     #assert(test= a ++ b == b ++ a)
     0
-  class Group
+  class(Group)
     # The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
       It adds an inverse operation that finds the opposite of an element.
       For integers with addition, negation with [operator~] would be the inverse.

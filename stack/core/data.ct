@@ -14,20 +14,20 @@ module(Data)
   :Integer.toString -> String
   # ## Collections
     Collections are contains that hold elements of a type inside them.
-  class Functor[$T]
+  class(Functor[$T])
     # A [Functor] is a basic property of a collection.
       It has a single operation [fmap] that applies a function to each element in the collection.
     # $F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]
   # ## Collections
-  class Option[$T] = $T || None
+  class(Option[$T], [$T, None])
     # [Option] defines a type that might have a value or [None].
       It can be used to handle operations that are uncertain if they can produce a response.
   every Option[$T -> $T] isa /Data/Functor
   # None.fmap(fn) = None
   # $T.fmap(fn($T)) = fn(this)
-  class List[$T]
+  class(List[$T])
   # A [List] is a collection of zero or more ordered items.
-  class ConsList[$T] = Cons[$T -> $T](head -> $T, tail -> ConsList[$T -> $T]) || Nil
+  class(ConsList[$T], [Cons[$T -> $T](head -> $T, tail -> ConsList[$T -> $T]), Nil])
     # The simplest kind of list can be created by prepending.
       A [ConsList] defines a list either by prepending to a list or with an empty list.
   # /operator+:<$T>($T l, ConsList<$T> r) = Cons(head=l, tail=r)
@@ -39,10 +39,10 @@ module(Data)
   every ConsList[$T -> $T] isa /Data/Functor
   # Nil.fmap(fn) = Nil
   # Cons(head, tail).fmap(fn) = Cons(head=fn(head), tail=tail.fmap(fn))
-  class Set[$T]
+  class(Set[$T])
   # A [Set] is a collection of zero or more unique items.
     It is not ordered.
-  class Enum
+  class(Enum)
     # [Enum] represents a type which can be enumerated.
       It defines a single function [enum] which lists all of the values in the type.
   enum[$T -> Enum] -> Set[$T]

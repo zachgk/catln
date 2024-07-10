@@ -14,44 +14,17 @@
 
 module Syntax.Ct.Parser.Type where
 
-import           Control.Applicative     hiding (many, some)
 import           Text.Megaparsec         hiding (pos1)
 
-import           Data.Maybe
 import           Syntax.Ct.Parser.Expr
 import           Syntax.Ct.Parser.Lexer
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 
-pMultiTerm :: Parser [PExpr]
-pMultiTerm = sepBy1 item (symbol "||")
-  where
-    item = do
-      t <- term
-      maybeWhere <- optional $ do
-        _ <- symbol "| "
-        term
-      case maybeWhere of
-        Nothing -> return t
-        Just wh -> return $ RawWhere t wh
-
 pExtends :: Parser (ExtendedClasses RawExpr ParseMetaDat)
 pExtends = do
   _ <- symbol "isa"
   sepBy1 term (symbol ",")
-
-pClassStatement :: Parser PStatement
-pClassStatement = do
-  _ <- symbol "class"
-  clss <- term
-  maybeTypes <- optional $ do
-    _ <- symbol "="
-    pMultiTerm
-  extends <- optional pExtends
-  let extends' = fromMaybe [] extends
-  return $ case maybeTypes of
-    Just types -> MultiTypeDefStatement (MultiTypeDef clss types extends')
-    Nothing    -> RawClassDeclStatement clss extends'
 
 pClassDefStatement :: Parser PStatement
 pClassDefStatement = do
@@ -62,5 +35,4 @@ pClassDefStatement = do
   return $ RawClassDefStatement def
 
 pTypeStatement :: Parser PStatement
-pTypeStatement = pClassStatement
-                 <|> pClassDefStatement
+pTypeStatement = pClassDefStatement

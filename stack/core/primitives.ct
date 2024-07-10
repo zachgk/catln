@@ -6,7 +6,7 @@ module(Data/Primitive)
   # # Catln Core Primitives
     These types some of the basic types used in Catln.
   # ## Booleans
-  class Boolean = True || False
+  class(Boolean, [True, False])
   every Boolean isa /Data/Algebra/Eq
   (_ :: Boolean == _ :: Boolean) -> Boolean
   (_ :: True == _ :: True)= True
@@ -32,7 +32,7 @@ module(Data/Primitive)
   every Boolean isa /Data/Enum
   # enum<Boolean> = [False, True]
   # ## Integers
-  class Number = Integer || Float
+  class(Number, [Integer, Float])
   every Number isa /Data/Algebra/Eq
   (-(_ :: Integer)) -> Integer
   (_ :: Integer - _ :: Integer) -> Integer

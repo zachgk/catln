@@ -2,7 +2,7 @@
 # # Iterator List
 
 module(Data/List)
-  class IteratorResult[$T, $State] = IteratorNext(nextState -> $State, val -> $T) | IteratorDone
+  class(IteratorResult[$T, $State], [IteratorNext(nextState -> $State, val -> $T), IteratorDone])
   data(Iterator[$T, $State](length -> Int, initState -> $State, f(x -> $State) -> IteratorResult[$T= $T, $State= $State]))
     # A virtual [List] represented by an iterator.
       The iterator has an internal state of type [$State] and by applying [f] it produces the next value of the iterator and a next state.

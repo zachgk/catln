@@ -1,6 +1,6 @@
 # Tests a simple data structure with a sum type
 
-class Maybe[$T] = Just[$T](val -> $T) || Nothing
+class(Maybe[$T], [Just[$T](val -> $T), Nothing])
 
 defInt(x= Just(val -> Integer))= val
 

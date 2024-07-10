@@ -5,7 +5,7 @@
   Oftentimes, it is possible to replace the outer loop from a map with [NDArray] opreations instead.
 
 module(Data/NDArray)
-  class StackBatchFun
+  class(StackBatchFun)
     # The most common form is that many functions on [NDArray] can be used with stack batching.
       It is defined based on one fundamental optimization rule:
 
