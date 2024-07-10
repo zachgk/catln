@@ -7,7 +7,7 @@ import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import {useHistory} from 'react-router-dom';
 
 import {RawExpr, RawObjArr} from './Common/Syntax';
-import {useApi, Loading, KeyWord, tagJoin} from './Common/Common';
+import {useApi, Loading, KeyWord} from './Common/Common';
 
 const useStyles = makeStyles({
   indented: {
@@ -99,6 +99,7 @@ function Statement(props) {
   }
 }
 
+// eslint-disable-next-line
 function PlayButton(props) {
   const {fun} = props;
   let history = useHistory();

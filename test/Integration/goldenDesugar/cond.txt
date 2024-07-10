@@ -440,10 +440,10 @@
 ,
     (
         (
-            [ /abs ( Value x -> /Data/Primitive/Integer ) | /operator>= ( Value /l= Value x )
+            [ abs ( Value x -> /Data/Primitive/Integer ) | /operator>= ( Value /l= Value x )
                 ( Value /r= CInt 0 ) = Value x
-            , /abs ( Value x -> /Data/Primitive/Integer ) = Value x
-            , /Context ( Value /value= Value /main ) ( Value /io -> /Catln/IO ) = exit
+            , abs ( Value x -> /Data/Primitive/Integer ) = Value x
+            , /Context ( Value /value= Value main ) ( Value /io -> /Catln/IO ) = exit
                 ( Value val= abs
                     ( CInt 0 )
                 ) ( Value /this= Value io )

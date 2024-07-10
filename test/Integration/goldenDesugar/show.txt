@@ -440,12 +440,12 @@
 ,
     (
         (
-            [ Value /showInt= /operator==
+            [ Value showInt= /operator==
                 ( Value /l= toString
                     ( Value /this= CInt 1 )
                 )
                 ( Value /r= CStr "1" )
-            , /Context ( Value /value= Value /main ) ( Value /io -> /Catln/IO ) = Value io
+            , /Context ( Value /value= Value main ) ( Value /io -> /Catln/IO ) = Value io
             ]
         ,
             [ CGType

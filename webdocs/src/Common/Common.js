@@ -193,6 +193,36 @@ function PartialKey(props) {
   return <PTypeName name={pkName} />;
 }
 
+function TypePredicate(props) {
+  const {data} = props;
+  switch(data.tag) {
+  case "PredClass":
+    return <span>Class[{<PartialType data={data.contents}/>}]</span>;
+  case "PredRel":
+    return <span>Rel[{<PartialType data={data.contents}/>}]</span>;
+  case "PredExpr":
+    return <PartialType data={data.contents}/>;
+  default:
+    console.error("Unknown TypePredicate", data);
+    return "???";
+  }
+}
+
+function TypePredicates(props) {
+  const {data} = props;
+  switch(data.tag) {
+  case "PredsOne":
+    return <TypePredicate data={data.contents}/>;
+  case "PredsAnd":
+    return tagJoin(data.contents.map((ps, index) => <TypePredicates key={index} data={ps}/>), " && ");
+  case "PredsNot":
+    return <span>!<TypePredicate data={data.contents}/></span>;
+  default:
+    console.error("Unknown TypePredicates", data);
+    return "???";
+  }
+}
+
 function isTopType(t) {
   if (t.tag !== "TopType") return false;
 
@@ -212,12 +242,21 @@ function Type(props) {
   let t = props.data;
   switch(t.tag) {
   case "TopType":
-    // const [topNeg, topPreds] = t.contents;
+    const [topNeg, topPreds] = t.contents;
     if (isTopType(t)) {
       return "";
     } else {
-      console.log("Missing topType args for ", t);
-      return "Any | ???";
+      let showTopNeg;
+      if (Object.keys(topNeg).length !== 0) {
+        let n = {tag: "UnionType", contents: topNeg};
+        showTopNeg = <span> - <Type data={n}/></span>;
+      }
+
+      let showTopPreds;
+      if (topPreds.tag !== "PredsAnd" || topPreds.contents.length !== 0) {
+        showTopPreds = <span> | <TypePredicates data={topPreds}/></span>;
+      }
+      return <span>Any{showTopNeg}{showTopPreds}</span>;
     }
   case "TypeVar":
     return <TypeVar><PartialKey data={t.contents[0].contents} /></TypeVar>;
@@ -231,7 +270,7 @@ function Type(props) {
         partials.push(<PartialType key={[partialName, partialIndex]} data={ptData}/>);
       });
     });
-    return tagJoin(partials, " | ");
+    return tagJoin(partials, " || ");
   default:
     console.error("Unknown type", t);
     return "";

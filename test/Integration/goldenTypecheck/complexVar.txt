@@ -460,19 +460,19 @@
                     ) | /Catln/IO
                 ) = /Catln/exit
                 ( Value /val -> /Data/Primitive/Integer = /real
-                    ( Value /c -> /Complex
-                        ( /b=/Data/Primitive/Integer
-                        , /a=/Data/Primitive/Integer
+                    ( Value /c -> /Complex [ /N=/Data/Primitive/Integer ]
+                        ( /b=TVVar /N
+                        , /a=TVVar /N
                         ) = /Complex
                         ( Value /a -> /Data/Primitive/Integer = CInt 0 )
                         ( Value /b -> /Data/Primitive/Integer = CInt 7 )
                     )
                 ) ( Value /this -> TVArg /io = Value /io )
             , /real
-                ( Value /c -> /Complex
-                    ( /b=TopType
-                    , /a=TopType
-                    ) = /Complex ( Value /a ) ( Value /b )
+                ( Value /c -> /Complex [ /N=~Number ]
+                    ( /b=TVVar /N
+                    , /a=TVVar /N
+                    ) = /Complex ( Value /a -> ~Number ) ( Value /b -> ~Number )
                 ) -> TVArg /a = Value /a
             , /Complex [ /N : ∀/Data/Primitive/Number ] ( Value /a -> TVVar /N ) ( Value /b -> TVVar /N )
             ]

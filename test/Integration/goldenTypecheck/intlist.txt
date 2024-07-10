@@ -483,7 +483,7 @@
                 ( Value /this -> /IntCons
                     ( /tail=~IntList
                     , /head=~Integer
-                    ) = /IntCons ( Value /head -> ~Integer ) ( Value /tail -> ~IntList )
+                    ) = /IntCons ( Value /head -> /Data/Primitive/Integer ) ( Value /tail -> ~IntList )
                 ) ->
                 ( /Data/Primitive/Integer | /operator+
                     ( /l=/Data/Primitive/Integer

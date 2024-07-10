@@ -440,14 +440,14 @@
 ,
     (
         (
-            [ /T ( Value /x -> /Data/Primitive/Integer )
-            , /tst
+            [ T ( Value /x -> /Data/Primitive/Integer )
+            , tst
                 ( Value d= T ( Value x -> /Data/Primitive/Integer ) )
                 ( f ( Value y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
-            , /tst
+            , tst
                 ( Value d= T ( Value x -> /Data/Primitive/Integer ) )
                 ( f ( Value y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ) = f ( Value y= Value x )
-            , /Context ( Value /value= Value /main ) ( Value /io -> /Catln/IO ) = Value io
+            , /Context ( Value /value= Value main ) ( Value /io -> /Catln/IO ) = Value io
             ]
         ,
             [ CGType

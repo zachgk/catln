@@ -440,13 +440,13 @@
 ,
     (
         (
-            [ Value /outerVar= /operator==
+            [ Value outerVar= /operator==
                 ( Value /l= /operator-
                     ( Value /l= CInt 5 )
                     ( Value /r= CInt 3 )
                 )
                 ( Value /r= CInt 2 )
-            , /Context ( Value /value= Value /main ) ( Value /io -> /Catln/IO ) = Value io
+            , /Context ( Value /value= Value main ) ( Value /io -> /Catln/IO ) = Value io
             , /Context.innerVar ( Value /io ) = /operator==
                 ( Value /l= /operator+
                     ( Value /l= CInt 1 )

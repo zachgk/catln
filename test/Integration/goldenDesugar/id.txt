@@ -440,8 +440,8 @@
 ,
     (
         (
-            [ /id ( Value x ) = Value x
-            , /Context ( Value /value= Value /main ) ( Value /io -> /Catln/IO ) = exit
+            [ id ( Value x ) = Value x
+            , /Context ( Value /value= Value main ) ( Value /io -> /Catln/IO ) = exit
                 ( Value val= id
                     ( Value x= CInt 0 )
                 ) ( Value /this= Value io )

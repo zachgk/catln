@@ -287,10 +287,10 @@ endConstraintBlock env@FEnv{feConsDats=d1:d2:ds} oa vaenv = env{feConsDats=(map 
 endConstraintBlock FEnv{feConsDats=[]} _ _ = error $ printf "No constraint stack found in endConstraintBlock"
 
 fAddVTypeGraph :: FEnv -> TypeName -> VObjArr -> FEnv
-fAddVTypeGraph env@FEnv{feVTypeGraph} k v = env {feVTypeGraph = H.insertWith (++) k [v] feVTypeGraph}
+fAddVTypeGraph env@FEnv{feVTypeGraph} k v = env {feVTypeGraph = H.insertWith (++) (makeAbsoluteName k) [v] feVTypeGraph}
 
 fAddTTypeGraph :: FEnv -> TypeName -> TObjArr -> FEnv
-fAddTTypeGraph env@FEnv{feTTypeGraph} k v = env {feTTypeGraph = H.insertWith (++) k [v] feTTypeGraph}
+fAddTTypeGraph env@FEnv{feTTypeGraph} k v = env {feTTypeGraph = H.insertWith (++) (makeAbsoluteName k) [v] feTTypeGraph}
 
 -- This ensures schemes are correct
 -- It differs from Constrain.checkScheme because it checks for bugs in the internal compiler, not bugs in the user code

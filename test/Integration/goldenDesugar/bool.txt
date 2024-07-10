@@ -440,10 +440,10 @@
 ,
     (
         (
-            [ Value /a= /operator~ ( Value /a= Value False )
-            , Value /b= /operator&& ( Value /l= Value True ) ( Value /r= Value True )
-            , Value /c= /operator|| ( Value /l= Value True ) ( Value /r= Value False )
-            , /Context ( Value /value= Value /main ) ( Value /io -> /Catln/IO ) = Value io
+            [ Value a= /operator~ ( Value /a= Value False )
+            , Value b= /operator&& ( Value /l= Value True ) ( Value /r= Value True )
+            , Value c= /operator|| ( Value /l= Value True ) ( Value /r= Value False )
+            , /Context ( Value /value= Value main ) ( Value /io -> /Catln/IO ) = Value io
             ]
         ,
             [ CGType

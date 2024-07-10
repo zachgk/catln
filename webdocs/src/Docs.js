@@ -74,8 +74,9 @@ function Main(props) {
 
   const startingPage = encodeURIComponent(pages[pages.length - 1]);
   const basePageTree = buildPageTree(pages);
+  console.log("basePT", basePageTree);
   let pageList = []; // sorted list
-  const pageTree = sortPageTree(basePageTree, pageList, "");
+  const pageTree = sortPageTree(basePageTree, pageList);
 
   return (
     <Switch>
@@ -104,7 +105,7 @@ function Main(props) {
 function buildPageTree(pageNames) {
   const tree = {};
   pageNames.forEach(pageName => {
-    const pageDirs = pageName.split("/");
+    const pageDirs = pageName.substring(1).split("/");
     const pageFile = pageDirs.splice(-1, 1);
     let curTree = tree;
     pageDirs.forEach(pageDir => {
@@ -126,7 +127,7 @@ function sortPageTree(pageTree, pageList, filePath) {
     keys.unshift("main.ct");
   }
   keys.forEach(key => {
-    let newFilePath = [filePath, key].join("/");
+    let newFilePath = filePath ? [filePath, key].join("/") : ("/" + key);
     if(filePath === "") newFilePath = key;
     if(isNaN(pageTree[key])) {
       // directory

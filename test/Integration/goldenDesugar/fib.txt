@@ -440,7 +440,7 @@
 ,
     (
         (
-            [ /fib ( Value integer -> /Data/Primitive/Integer ) | /operator> ( Value /l= Value integer )
+            [ fib ( Value integer -> /Data/Primitive/Integer ) | /operator> ( Value /l= Value integer )
                 ( Value /r= CInt 1 ) = /operator+
                 ( Value /l= fib
                     ( Value integer= /operator- ( Value /l= Value integer )
@@ -452,8 +452,8 @@
                         ( Value /r= CInt 2 )
                     )
                 )
-            , /fib ( Value integer -> /Data/Primitive/Integer ) = CInt 1
-            , /Context ( Value /value= Value /main ) ( Value /io -> /Catln/IO ) = exit
+            , fib ( Value integer -> /Data/Primitive/Integer ) = CInt 1
+            , /Context ( Value /value= Value main ) ( Value /io -> /Catln/IO ) = exit
                 ( Value val= /operator-
                     ( Value /l= fib
                         ( CInt 3 )

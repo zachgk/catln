@@ -440,12 +440,12 @@
 ,
     (
         (
-            [ /Just [ /T : TopType ] ( Value /val -> TVVar /T )
-            , Value /Nothing
-            , /defInt
+            [ Just [ /T : TopType ] ( Value /val -> TVVar /T )
+            , Value Nothing
+            , defInt
                 ( Value x= Just ( Value val -> /Data/Primitive/Integer ) ) = Value val
-            , /defInt ( Value x= Value Nothing ) = CInt 0
-            , /Context ( Value /value= Value /main ) ( Value /io -> /Catln/IO ) = exit
+            , defInt ( Value x= Value Nothing ) = CInt 0
+            , /Context ( Value /value= Value main ) ( Value /io -> /Catln/IO ) = exit
                 ( Value val= defInt
                     ( Value x= Just
                         ( Value val= CInt 0 )

@@ -470,9 +470,9 @@
                 ) ( Value /this -> TVArg /io = Value /io )
             , /real
                 ( Value /c -> /Complex
-                    ( /b=TopType
-                    , /a=TopType
-                    ) = /Complex ( Value /a ) ( Value /b )
+                    ( /b=~Number
+                    , /a=~Number
+                    ) = /Complex ( Value /a -> ~Number ) ( Value /b -> ~Number )
                 ) -> TVArg /a = Value /a
             , /Complex ( Value /a -> ∀/Data/Primitive/Number ) ( Value /b -> ∀/Data/Primitive/Number )
             ]

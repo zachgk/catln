@@ -440,10 +440,10 @@
 ,
     (
         (
-            [ /Complex [ /N : ∀/Data/Primitive/Number ] ( Value /a -> TVVar /N ) ( Value /b -> TVVar /N )
-            , /real
+            [ Complex [ /N : ∀/Data/Primitive/Number ] ( Value /a -> TVVar /N ) ( Value /b -> TVVar /N )
+            , real
                 ( Value c= Complex ( Value a ) ( Value b ) ) = Value a
-            , /Context ( Value /value= Value /main ) ( Value /io -> /Catln/IO ) = exit
+            , /Context ( Value /value= Value main ) ( Value /io -> /Catln/IO ) = exit
                 ( Value val= real
                     ( Value c= Complex
                         ( Value a= CInt 0 )

@@ -441,9 +441,9 @@
     (
         (
             [ Value /Nothing
-            , /defInt ( Value x -> /Data/Primitive/Integer ) = Value x
-            , /defInt ( Value x= Value Nothing ) = CInt 0
-            , /Context ( Value /value= Value /main ) ( Value /io -> /Catln/IO ) = exit
+            , defInt ( Value x -> /Data/Primitive/Integer ) = Value x
+            , defInt ( Value x= Value Nothing ) = CInt 0
+            , /Context ( Value /value= Value main ) ( Value /io -> /Catln/IO ) = exit
                 ( Value val= defInt
                     ( Value x= CInt 0 )
                 ) ( Value /this= Value io )

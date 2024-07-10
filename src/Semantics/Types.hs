@@ -366,6 +366,7 @@ getPath name = case splitOn "/" name of
 
 relPathAddPrefix :: String -> NPath -> NPath
 relPathAddPrefix _ p@NPath{npathIsAbs=True}      = p
+relPathAddPrefix "" n = n
 relPathAddPrefix prefix (NPath False n) = NPath False (splitOn "/" prefix ++ n)
 
 matchesNPath :: NPath -> NPath -> Bool

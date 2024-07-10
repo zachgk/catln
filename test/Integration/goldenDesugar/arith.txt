@@ -440,25 +440,25 @@
 ,
     (
         (
-            [ Value /add= /operator==
+            [ Value add= /operator==
                 ( Value /l= /operator+
                     ( Value /l= CInt 1 )
                     ( Value /r= CInt 1 )
                 )
                 ( Value /r= CInt 2 )
-            , Value /sub= /operator==
+            , Value sub= /operator==
                 ( Value /l= /operator-
                     ( Value /l= CInt 5 )
                     ( Value /r= CInt 3 )
                 )
                 ( Value /r= CInt 2 )
-            , Value /mul= /operator==
+            , Value mul= /operator==
                 ( Value /l= /operator*
                     ( Value /l= CInt 2 )
                     ( Value /r= CInt 3 )
                 )
                 ( Value /r= CInt 6 )
-            , /Context ( Value /value= Value /main ) ( Value /io -> /Catln/IO ) = Value io
+            , /Context ( Value /value= Value main ) ( Value /io -> /Catln/IO ) = Value io
             ]
         ,
             [ CGType

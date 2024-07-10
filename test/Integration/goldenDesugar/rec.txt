@@ -440,15 +440,15 @@
 ,
     (
         (
-            [ /fact ( Value x -> /Data/Primitive/Integer ) | /operator== ( Value /l= Value x )
+            [ fact ( Value x -> /Data/Primitive/Integer ) | /operator== ( Value /l= Value x )
                 ( Value /r= CInt 1 ) = CInt 1
-            , /fact ( Value x -> /Data/Primitive/Integer ) = /operator* ( Value /l= Value x )
+            , fact ( Value x -> /Data/Primitive/Integer ) = /operator* ( Value /l= Value x )
                 ( Value /r= fact
                     ( Value x= /operator- ( Value /l= Value x )
                         ( Value /r= CInt 1 )
                     )
                 )
-            , /Context ( Value /value= Value /main ) ( Value /io -> /Catln/IO ) = exit
+            , /Context ( Value /value= Value main ) ( Value /io -> /Catln/IO ) = exit
                 ( Value val= /operator-
                     ( Value /l= fact
                         ( CInt 3 )
