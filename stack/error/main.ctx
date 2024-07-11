@@ -19,7 +19,7 @@ class(Err)
     :Result[$R, $E].default(def -> $R)= match(this)
       val -> $R= val
       _ :: $E= def
-    every Result[$R -> $T, $E] isa Functor
+    every(Result[$R -> $T, $E], isa= [Functor])
     :Result[$R, $E].map(f)= match(this)
       val -> $R= f(val)
       e -> $E= e

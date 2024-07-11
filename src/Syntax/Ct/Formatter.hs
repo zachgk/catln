@@ -68,11 +68,7 @@ formatExpr (RawTypeProp _ base (TypePropRel p v)) = printf "%s__%s(%s)" (formatE
 
 formatIsa :: ExtendedClasses RawExpr m -> String
 formatIsa []      = ""
-formatIsa classes = " isa " ++ intercalate ", " (map formatExpr classes)
-
-formatNewIsa :: ExtendedClasses RawExpr m -> String
-formatNewIsa []      = ""
-formatNewIsa classes = printf ", isa=[%s]" (intercalate ", " (map formatExpr classes))
+formatIsa classes = printf ", isa= [%s]" (intercalate ", " (map formatExpr classes))
 
 -- | Formats either ObjArr or Bind Statement
 formatObjArrLike :: String -> RawObjArr RawExpr m -> String
@@ -116,15 +112,15 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
   where
     statement' = case statement of
       RawDeclStatement objArr -> formatObjArr objArr
-      MultiTypeDefStatement (MultiTypeDef clss objs extends) -> printf "class(%s, [%s]%s)" (formatExpr clss) showObjs (formatNewIsa extends)
+      MultiTypeDefStatement (MultiTypeDef clss objs extends) -> printf "class(%s, [%s]%s)" (formatExpr clss) showObjs (formatIsa extends)
         where
           showObjs = intercalate ", " $ map formatExpr objs
-      TypeDefStatement typeExpr extends -> printf "%s(%s%s)" kw (formatExpr typeExpr) (formatNewIsa extends)
+      TypeDefStatement typeExpr extends -> printf "%s(%s%s)" kw (formatExpr typeExpr) (formatIsa extends)
         where
           kw :: String
           kw = if "#" `isPrefixOf` exprPath typeExpr then "annot" else "data"
-      RawClassDefStatement (obj, className) -> printf "every %s%s" (formatExpr obj) (formatIsa className)
-      RawClassDeclStatement clss extends -> printf "class(%s%s)" (formatExpr clss) (formatNewIsa extends)
+      RawClassDefStatement (obj, className) -> printf "every(%s%s)" (formatExpr obj) (formatIsa className)
+      RawClassDeclStatement clss extends -> printf "class(%s%s)" (formatExpr clss) (formatIsa extends)
       RawBindStatement oa -> formatObjArrLike "<-" oa
       RawAnnot annot | exprPath annot == mdAnnot -> printf "# %s" annotText'
         where

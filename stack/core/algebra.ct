@@ -25,7 +25,7 @@ module(Data/Algebra)
   class(Ord)
     # Ord is used to define types which can be strictly ordered.
       Every element, when compared must have one of the following [Ordering] relationships:
-  every Number isa /Data/Algebra/Ord
+  every(Number, isa= [/Data/Algebra/Ord])
   class(Ordering, [LessThan, Equal, GreaterThan])
     # The Orderings can relate any like items of Ord. 
   class(POrd)
@@ -37,7 +37,7 @@ module(Data/Algebra)
       An ordered example is {1} <= {1, 2}.
       But, two sets like {1} and {2} have no ordering between them.
   # There are a few nice properties about ordering.
-  every Ord isa /Data/Algebra/POrd
+  every(Ord, isa= [/Data/Algebra/POrd])
   # This means that something fully ordered can still take advantage of many of the same functions as partially ordered ones.
     It just usually has a more specific result.
   compare[$T -> Ord](l -> $T, r -> $T) -> Ordering
@@ -51,7 +51,7 @@ module(Data/Algebra)
   (_ :: $T >= _ :: $T)[$T -> Ord] -> Boolean
   (_ :: $T < _ :: $T)[$T -> Ord] -> Boolean
   (_ :: $T > _ :: $T)[$T -> Ord] -> Boolean
-  every POrd isa /Data/Algebra/Eq
+  every(POrd, isa= [/Data/Algebra/Eq])
     # If something can be compared for order, it should also be comparable for equality by the following relationship:
   # /operator==<POrd $T>($T l, $T r) = compare(l=l, r=r) == Equal
   # ### Ordering utility functions
@@ -62,7 +62,7 @@ module(Data/Algebra)
   class(Semigroup)
     # A semigroup is a type combined with an associative operation called [operator++].
       For example, integers with the addition operation are a semigroup.
-  every Semigroup isa /Data/Algebra/Eq
+  every(Semigroup, isa= [/Data/Algebra/Eq])
   (_ :: $T ++ _ :: $T)[$T -> Semigroup] -> $T
   testSemigroupAssociative[$T -> Semigroup](a -> $T, b -> $T, c -> $T) =
     #test
@@ -73,7 +73,7 @@ module(Data/Algebra)
       It adds the identity value [mempty].
       The integers with addition form a [Monoid], and 0 is the value for [mempty].
       Another example is [String] where "" is the value for [mempty]
-  every Monoid isa /Data/Algebra/Semigroup
+  every(Monoid, isa= [/Data/Algebra/Semigroup])
   mempty[$T -> Monoid] -> $T
     # mempty is the "zero" or "empty" value that can be combined with [operator++] to result in the same operation
   # We can test to verify that [mempty] works with both the left and right.
@@ -90,7 +90,7 @@ module(Data/Algebra)
     # The [CommutativeMonoid] builds on top of the [Monoid].
       It is also called an Abelian Monoid
       Here, integers with addition are a [CommutativeMonoid], but [String]s are not.
-  every CommutativeMonoid isa /Data/Algebra/Monoid
+  every(CommutativeMonoid, isa= [/Data/Algebra/Monoid])
   # We can test to ensure that all [CommutativeMonoid]s satisfy the commutativity requirement.
   testCommutativeMonoid[$T -> /Data/Algebra/CommutativeMonoid](a -> $T, b -> $T) =
     #test
@@ -101,7 +101,7 @@ module(Data/Algebra)
       It adds an inverse operation that finds the opposite of an element.
       For integers with addition, negation with [operator~] would be the inverse.
       Something like [String]s would not have an inverse, so it wouldn't be a [Group].
-  every Group isa /Data/Algebra/Monoid
+  every(Group, isa= [/Data/Algebra/Monoid])
   inverse[$T -> Group](t -> $T) -> $T
     # We can test to ensure that all [Group]s satisfy the inverse requirements.
       An inverse times itself should result in [mempty].

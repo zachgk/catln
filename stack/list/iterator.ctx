@@ -9,7 +9,7 @@ module(Data/List)
       The [Iterator] is a fundamental type as almost all [List] operations can be defined in terms of it.
       Similarly, many [List] types can be converted to/from it.
 
-every Iterator[$T] isa List[$T]
+every(Iterator[$T], isa= [List[$T]])
 
 :Iterator[$T, $State](length, initState, f).map(f= mapFun) =
   f2(x -> $State) =

@@ -15,6 +15,6 @@ class(NDArray[$T])
   class(ListNDArray[$T], [ListNDArray/Invalid[$T] | (shape.prod == flatten.length)])
     # A simple definition for the 
   :ListNDArray.size= this.flatten.size
-  every NDArray[$T -> $T] isa Functor
+  every(NDArray[$T -> $T], isa= [Functor])
   :NDArray.map(f)= ListNDArray(shape= this.shape, flatten= this.flatten.map(f))
 

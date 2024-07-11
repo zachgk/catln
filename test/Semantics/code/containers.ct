@@ -4,7 +4,7 @@ class(List[$T])
 
 class(ConsList[$T], [Cons[$T -> $T](head -> $T, tail -> ConsList[$T -> $T]), Nil])
 
-every ConsList isa /List
+every(ConsList, isa= [/List])
 
 :List.length -> Integer
 

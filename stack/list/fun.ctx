@@ -9,7 +9,7 @@ module(Data/List)
     # A virtual [List] represented by a function.
       Similarly to the [Iterator], it can act as a glue between [List] types and operations.
       However, it applies only to randomly accessible lists and to parallel operations.
-  every FunList[$T] isa List[$T]
+  every(FunList[$T], isa= [List[$T]])
 
 FunList[$T](length, f) -> Iterator[$T -> $T] =
   # Every [FunList] can be converted into an [Iterator]

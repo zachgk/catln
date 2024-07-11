@@ -82,7 +82,7 @@ data RawStatement e m
   = RawDeclStatement (RawObjArr e m)
   | MultiTypeDefStatement (MultiTypeDef m)
   | TypeDefStatement (e m) (ExtendedClasses RawExpr m)
-  | RawClassDefStatement (RawClassDef m)
+  | RawClassDefStatement (RawClassDef m) -- Every _ isa _
   | RawClassDeclStatement (e m) (ExtendedClasses RawExpr m)
   | RawBindStatement (RawObjArr e m) -- Uses <-
   | RawAnnot (CompAnnot (e m))

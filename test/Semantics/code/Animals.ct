@@ -6,9 +6,9 @@ class(Fish)
 
 class(Lizard)
 
-every Fish isa /Animal
+every(Fish, isa= [/Animal])
 
-every Lizard isa /Animal
+every(Lizard, isa= [/Animal])
 
 class(Mammal, [Cat, Dog], isa= [/Animal])
 

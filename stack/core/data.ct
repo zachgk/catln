@@ -7,7 +7,7 @@ module(Data)
   # ## String
   data(String)
     # A [String] is a list of characters.
-  every String isa /Data/Algebra/Eq
+  every(String, isa= [/Data/Algebra/Eq])
   (_ :: String == _ :: String) -> Boolean
   :String.toString -> String
   :String.toString= this
@@ -22,7 +22,7 @@ module(Data)
   class(Option[$T], [$T, None])
     # [Option] defines a type that might have a value or [None].
       It can be used to handle operations that are uncertain if they can produce a response.
-  every Option[$T -> $T] isa /Data/Functor
+  every(Option[$T -> $T], isa= [/Data/Functor])
   # None.fmap(fn) = None
   # $T.fmap(fn($T)) = fn(this)
   class(List[$T])
@@ -36,7 +36,7 @@ module(Data)
     The [length] of a [List] is the number of items inside of it.
   :Nil.length= 0
   /Data/Cons(head, tail).length= 1 + tail.length
-  every ConsList[$T -> $T] isa /Data/Functor
+  every(ConsList[$T -> $T], isa= [/Data/Functor])
   # Nil.fmap(fn) = Nil
   # Cons(head, tail).fmap(fn) = Cons(head=fn(head), tail=tail.fmap(fn))
   class(Set[$T])

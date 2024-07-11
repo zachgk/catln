@@ -28,7 +28,6 @@ import           Syntax.Ct.Parser.Decl
 import           Syntax.Ct.Parser.Expr
 import           Syntax.Ct.Parser.Lexer
 import           Syntax.Ct.Parser.Syntax
-import           Syntax.Ct.Parser.Type      (pTypeStatement)
 import           Syntax.Ct.Prgm
 import qualified Text.Megaparsec.Char.Lexer as L
 import           Text.Printf
@@ -77,8 +76,7 @@ pPrintStatement = do
 pStatementTree :: Parser PStatementTree
 pStatementTree = do
   notFollowedBy newline
-  liftPStatement pTypeStatement
-    <|> pCommentStatement
+  pCommentStatement
     <|> pPrintStatement
     <|> liftPStatement (RawAnnot <$> pCompAnnot)
     <|> liftPStatement pApply
