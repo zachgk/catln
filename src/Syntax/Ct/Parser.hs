@@ -30,7 +30,6 @@ import           Syntax.Ct.Parser.Lexer
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 import qualified Text.Megaparsec.Char.Lexer as L
-import           Text.Printf
 
 pImport :: Parser RawFileImport
 pImport = do
@@ -46,19 +45,6 @@ liftPStatement pSt = L.indentBlock scn p
     p = do
       st <- pSt
       return (L.IndentMany Nothing (pack st) pStatementTree)
-
-pApply :: Parser PStatement
-pApply = do
-  _ <- symbol "apply"
-  term1 <- RATermDeep <$> term
-  termRest <- many $ do
-    sep <- symbol ">" <|> symbol " "
-    val <- term
-    return $ case sep of
-      ">" -> RATermChild val
-      " " -> RATermDeep val
-      _   -> error $ printf "Unexpected seperator " (show sep)
-  return $ RawApplyStatement $ RawApply (term1 : termRest)
 
 pCommentStatement :: Parser PStatementTree
 pCommentStatement = do
@@ -79,7 +65,6 @@ pStatementTree = do
   pCommentStatement
     <|> pPrintStatement
     <|> liftPStatement (RawAnnot <$> pCompAnnot)
-    <|> liftPStatement pApply
     <|> liftPStatement pDeclStatement
 
 pNothingNewline :: Parser (Maybe a)

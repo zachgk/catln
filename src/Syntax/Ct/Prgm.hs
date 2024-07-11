@@ -46,12 +46,18 @@ data TypeProperty e m
   | TypePropRel TypeName (e m)
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
+data RawApplyTerm e m = RATermDeep (e m) | RATermChild (e m)
+  deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
+newtype RawApply e m = RawApply [RawApplyTerm e m]
+  deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
+
 -- Expr before desugar
 data RawExpr m
   = RawCExpr (Meta m) Constant
   | RawValue (Meta m) TypeName
   | RawHoleExpr (Meta m) Hole
   | RawMacroValue (Meta m) TypeName
+  | RawApplyExpr (Meta m) (RawApply RawExpr m)
   | RawTheExpr (RawExpr m) -- ^ Written :TypeName and read as The TypeName
   | RawSpread (RawExpr m) -- ^ Written TypeName.. and uses PtArgAny
   | RawAliasExpr (RawExpr m) (RawExpr m) -- ^ base aliasExpr
@@ -72,11 +78,6 @@ data MultiTypeDef m = MultiTypeDef (RawExpr m) [RawExpr m] (ExtendedClasses RawE
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 type RawClassDef m = (RawExpr m, ExtendedClasses RawExpr m)
-
-data RawApplyTerm e m = RATermDeep (e m) | RATermChild (e m)
-  deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
-newtype RawApply e m = RawApply [RawApplyTerm e m]
-  deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 data RawStatement e m
   = RawDeclStatement (RawObjArr e m)
@@ -126,6 +127,7 @@ instance ExprClass RawExpr where
     RawValue m _          -> m
     RawHoleExpr m _       -> m
     RawMacroValue m _     -> m
+    RawApplyExpr m _      -> m
     RawTheExpr e          -> getExprMeta e
     RawSpread e           -> getExprMeta e
     RawAliasExpr b _      -> getExprMeta b

@@ -36,9 +36,6 @@ lexeme = L.lexeme sc
 symbol :: String -> Parser String
 symbol = L.symbol sc
 
-reservedWords :: [String]
-reservedWords = ["apply"]
-
 
   -- Parse simple sequences
 
@@ -61,12 +58,9 @@ curlyBraces :: Parser a -> Parser a
 curlyBraces = between (symbol "{") (symbol "}")
 
 identifier :: Parser String
-identifier = try (p >>= check)
+identifier = try p
   where
     p       = ((:) <$> lowerChar <*> many (alphaNumChar <|> char '/')) <|> ttypeidentifier
-    check x = if x `elem` reservedWords
-                 then fail $ "keyword " ++ show x ++ " cannot be an identifier"
-                 else return x
 
 tidentifier :: Parser String
 tidentifier = lexeme $ (:) <$> upperChar <*> many (alphaNumChar <|> char '/')

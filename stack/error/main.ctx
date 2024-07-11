@@ -10,9 +10,9 @@ class(Err)
   error(#msg -> String, cause -> Optional[Err] ? Nothing) -> Err= Basic(msg= msg, cause= cause)
   data(Basic(msg -> String, cause -> Optional[Err]))
   # This allows for the [error.#msg] to be overridden with greater contextual understanding.
-  apply ${fun} > error
+  apply(a"${fun} > error")
     #msg("An error occurred when running [fun]")
-  apply ${fun} > error(cause -> Err)
+  apply(a"${fun} > error(cause -> Err)")
     #msg("An error occurred when running [fun] due to [cause]")
   class(Result[$R, $E -> Err], [$R, $E])
     # The standard handling of the [Err] is by wrapping things into a [Result].

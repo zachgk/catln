@@ -33,6 +33,15 @@ formatImport :: RawFileImport -> Builder
 formatImport RawFileImport{rawImpRaw} = do
   literal $ "import " ++ formatExpr rawImpRaw ++ "\n"
 
+
+formatRawApply :: RawApply RawExpr m -> String
+formatRawApply (RawApply terms) = unwords (formatExpr term1 : map formatTerm termsRest)
+  where
+    (RATermDeep term1:termsRest) = terms
+    formatTerm :: RawApplyTerm RawExpr m -> String
+    formatTerm (RATermDeep e)  = formatExpr e
+    formatTerm (RATermChild e) = "> " ++ formatExpr e
+
 formatExpr ::  RawExpr m -> String
 formatExpr (RawCExpr _ (CInt c)) = show c
 formatExpr (RawCExpr _ (CFloat c)) = show c
@@ -40,6 +49,7 @@ formatExpr (RawCExpr _ (CStr c)) = show c
 formatExpr (RawCExpr _ (CChar c)) = show c
 formatExpr (RawValue _ n) = n
 formatExpr (RawMacroValue _ n) = "${" ++ n ++ "}"
+formatExpr (RawApplyExpr _ n) = "a\"" ++ formatRawApply n ++ "\""
 formatExpr (RawHoleExpr _ (HoleActive Nothing)) = "_"
 formatExpr (RawHoleExpr _ (HoleActive (Just a))) = "_" ++ a
 formatExpr (RawHoleExpr _ HoleUndefined) = "undefined"
@@ -130,13 +140,7 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
                          (Just (Just (_, Just e))) -> printf "> %s" (formatExpr e)
                          e -> error $ printf "Can't format unexpected print annot %s" (show e)
       RawAnnot annot -> formatExpr annot
-      RawApplyStatement (RawApply terms) -> "apply " ++ unwords (formatExpr term1 : map formatTerm termsRest)
-        where
-          (RATermDeep term1:termsRest) = terms
-
-          formatTerm :: RawApplyTerm RawExpr m -> String
-          formatTerm (RATermDeep e)  = formatExpr e
-          formatTerm (RATermChild e) = "> " ++ formatExpr e
+      RawApplyStatement a -> "apply " ++ formatRawApply a
       RawModule modul -> printf "module(%s)" modul
 
 -- |

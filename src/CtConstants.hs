@@ -50,13 +50,14 @@ argStartAnnot, argEndAnnot :: String
 argStartAnnot = "/Catln/#argStart"
 argEndAnnot = "/Catln/#argEnd"
 
-nestedDeclaration, modStr, dataStr, annotStr, classStr, everyStr :: String
+nestedDeclaration, modStr, dataStr, annotStr, classStr, everyStr, applyStr :: String
 nestedDeclaration = "/Catln/nestedDeclaration"
 modStr = "module"
 dataStr = "data"
 annotStr = "annot"
 classStr = "class"
 everyStr = "every"
+applyStr = "apply"
 
 ctIf, ctThen, ctElse :: String
 ctIf = "if"

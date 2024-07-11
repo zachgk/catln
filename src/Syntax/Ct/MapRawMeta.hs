@@ -22,6 +22,7 @@ instance MapMeta RawExpr where
   mapMeta f loc (RawValue m n) = RawValue (f (ExprMeta loc ExprMetaVal) m) n
   mapMeta f loc (RawHoleExpr m h) = RawHoleExpr (f (ExprMeta loc ExprMetaHole) m) h
   mapMeta f loc (RawMacroValue m n) = RawMacroValue (f (ExprMeta loc ExprMetaMacroVal) m) n
+  mapMeta f loc (RawApplyExpr m n) = RawApplyExpr (f (ExprMeta loc ExprMetaMacroVal) m) (mapRawApply f n)
   mapMeta f loc (RawTheExpr e) = RawTheExpr (mapMeta f loc e)
   mapMeta f loc (RawSpread e) = RawSpread (mapMeta f loc e)
   mapMeta f loc (RawAliasExpr b a) = RawAliasExpr (mapMeta f loc b) (mapMeta f loc a)
@@ -34,6 +35,12 @@ instance MapMeta RawExpr where
   mapMeta f loc (RawList m lst) = RawList (f (ExprMeta loc ExprMetaTupleArg) m) (map (mapMeta f loc) lst)
   mapMeta f loc (RawTypeProp m b (TypePropProj p v)) = RawTypeProp (f (ExprMeta loc ExprMetaTypeProp) m) (mapMeta f loc b) (TypePropProj p (mapMeta f loc v))
   mapMeta f loc (RawTypeProp m b (TypePropRel p v)) = RawTypeProp (f (ExprMeta loc ExprMetaTypeProp) m) (mapMeta f loc b) (TypePropRel p (mapMeta f loc v))
+
+mapRawApply :: (MapMeta e) => MetaFun a b -> RawApply e a -> RawApply e b
+mapRawApply f (RawApply terms) = RawApply $ map mapTerm terms
+  where
+    mapTerm (RATermDeep e)  = RATermDeep $ mapMeta f ApplyMeta e
+    mapTerm (RATermChild e) = RATermChild $ mapMeta f ApplyMeta e
 
 mapMetaRawObjArr :: (MapMeta e) => MetaFun a b -> Maybe MetaLocation -> RawObjArr e a -> RawObjArr e b
 mapMetaRawObjArr f mloc roa@RawObjArr{roaObj, roaAnnots, roaArr, roaDef} = roa{
@@ -51,10 +58,7 @@ mapMetaRawStatement f (RawClassDefStatement (typeExpr, className)) = RawClassDef
 mapMetaRawStatement f (RawClassDeclStatement clss extends) = RawClassDeclStatement (mapMeta f InputMeta clss) (map (mapMeta f InputMeta) extends)
 mapMetaRawStatement f (RawBindStatement objArr) = RawBindStatement (mapMetaRawObjArr f Nothing objArr)
 mapMetaRawStatement f (RawAnnot e) = RawAnnot (mapMeta f AnnotMeta e)
-mapMetaRawStatement f (RawApplyStatement (RawApply terms)) = RawApplyStatement $ RawApply $ map mapTerm terms
-  where
-    mapTerm (RATermDeep e)  = RATermDeep $ mapMeta f ApplyMeta e
-    mapTerm (RATermChild e) = RATermChild $ mapMeta f ApplyMeta e
+mapMetaRawStatement f (RawApplyStatement a) = RawApplyStatement $ mapRawApply f a
 mapMetaRawStatement _ (RawModule m) = RawModule m
 
 mapMetaRawStatementTree :: (MapMeta e) => MetaFun a b -> RawStatementTree e a -> RawStatementTree e b

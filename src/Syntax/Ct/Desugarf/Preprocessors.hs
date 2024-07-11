@@ -154,6 +154,15 @@ classInstDeclPreprocessor (roa@RawObjArr{roaArr=Just (Just classExpr, _, _)}, su
   return [RawStatementTree res subStatements]
 classInstDeclPreprocessor (roa, _) = fail $ printf "Invalid classInstDeclPreprocessor: %s" (show roa)
 
+applyDeclPreprocessor :: PDeclTree -> CRes [PStatementTree]
+applyDeclPreprocessor (roa@RawObjArr{roaArr=Just (Just applyExpr, _, _)}, subStatements) = do
+  res <- case exprAppliedArgs applyExpr of
+    [ObjArr{oaObj=Just (RawApplyExpr _ a)}] -> return $ RawApplyStatement a
+    _ -> fail $ printf "Missing first argument to classInst in %s" (show roa)
+  return [RawStatementTree res subStatements]
+applyDeclPreprocessor (roa, _) = fail $ printf "Invalid applyDeclPreprocessor: %s" (show roa)
+
+
 -- | A declPreprocessor for multi-line expressions. Will search for the final result expression and move it to the top
 nestedDeclPreprocessor :: PDeclTree -> CRes [PStatementTree]
 nestedDeclPreprocessor (oa, subStatements) = aux [] subStatements
@@ -182,6 +191,7 @@ declPreprocessorList = H.fromList [
   (annotStr, dataDeclPreprocessor),
   (classStr, classDeclPreprocessor),
   (everyStr, classInstDeclPreprocessor),
+  (applyStr, applyDeclPreprocessor),
   (nestedDeclaration, nestedDeclPreprocessor)
                                ]
 

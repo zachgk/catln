@@ -268,6 +268,22 @@ pMacroValue = do
   pos2 <- getSourcePos
   return $ RawMacroValue (emptyMeta pos1 pos2) n
 
+pApply :: Parser PExpr
+pApply = do
+  pos1 <- getSourcePos
+  _ <- string "a\""
+  term1 <- RATermDeep <$> term
+  termRest <- many $ do
+    sep <- symbol ">" <|> symbol " "
+    val <- term
+    case sep of
+      ">" -> return $ RATermChild val
+      " " -> return $ RATermDeep val
+      _   -> fail $ printf "Unexpected seperator " (show sep)
+  _ <- string "\""
+  pos2 <- getSourcePos
+  return $ RawApplyExpr (emptyMeta pos1 pos2) (RawApply (term1 : termRest))
+
 applyTermSuffix :: PExpr -> TermSuffix -> PExpr
 applyTermSuffix base (ArgsSuffix m args) = RawTupleApply m (labelPosM "arg" $ getExprMeta base, base) args
 applyTermSuffix base (VarsSuffix m vars) = RawVarsApply m base vars
@@ -282,6 +298,7 @@ term = do
        <|> pInt
        <|> pList
        <|> pMacroValue
+       <|> pApply
        <|> pValue
   suffixes <- many pTermSuffix
   _ <- sc
