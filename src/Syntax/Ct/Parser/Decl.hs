@@ -23,6 +23,7 @@ import           Data.List
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
+import           Syntax.Ct.Builder
 import           Syntax.Ct.Parser.Expr
 import           Syntax.Ct.Parser.Lexer
 import           Syntax.Ct.Parser.Syntax

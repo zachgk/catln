@@ -28,8 +28,8 @@ import           RdrName
 import           Semantics.Prgm
 import           Semantics.Types
 import           SrcLoc
+import           Syntax.Ct.Builder
 import           Syntax.Ct.Desugarf.Expr (exprToType)
-import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 import           Text.Printf
 import           Utils
@@ -445,7 +445,7 @@ convertImplicitBndrs _ (HsIB _ t) = t
 convertImplicitBndrs flags p = error $ printf "Convert unsupported DerivingClause:\n%s" (showSDoc flags $ ppr p)
 
 -- https://www.stackage.org/haddock/lts-18.28/ghc-lib-parser-8.10.7.20220219/GHC-Hs-Decls.html#t:HsDerivingClause
-convertDerivingClause :: DynFlags -> HsDerivingClause GhcPs -> ExtendedClasses RawExpr ()
+convertDerivingClause :: DynFlags -> HsDerivingClause GhcPs -> [RawExpr ()]
 convertDerivingClause flags (HsDerivingClause _ _derivingStrategy c) = map (convertTypeToExpr flags Nothing . unLoc . convertImplicitBndrs flags) $ unLoc c
 convertDerivingClause flags p = error $ printf "Convert unsupported DerivingClause:\n%s" (showSDoc flags $ ppr p)
 
@@ -456,10 +456,10 @@ convertQTyVars flags _ p = error $ printf "Convert unsupported DerivingClause:\n
 -- https://www.stackage.org/haddock/lts-18.28/ghc-lib-parser-8.10.7.20220219/GHC-Hs-Decls.html#t:TyClDecl
 convertTyClDecl :: DynFlags -> TyClDecl GhcPs -> [RawStatementTree RawExpr ()]
 convertTyClDecl flags p@FamDecl{} = error $ printf "Convert unsupported TyClDecl:\n%s" (showSDoc flags $ ppr p)
-convertTyClDecl flags (SynDecl _ name vars _ rhs) = [RawStatementTree (MultiTypeDefStatement $ MultiTypeDef (convertQTyVars flags (rawVal $ convertIdP flags $ unLoc name) vars) [convertTypeToExpr flags Nothing $ unLoc rhs] []) []]
-convertTyClDecl flags (DataDecl _ name vars _fixity (HsDataDefn _ _ _ Nothing Nothing cons derivs)) = [RawStatementTree (MultiTypeDefStatement $ MultiTypeDef (convertQTyVars flags (rawVal $ convertIdP flags $ unLoc name) vars) (map (convertConDecl flags . unLoc) cons) (concatMap (convertDerivingClause flags . unLoc) $ unLoc derivs)) []]
+convertTyClDecl flags (SynDecl _ name vars _ rhs) = [RawStatementTree (classWithObjs (convertQTyVars flags (rawVal $ convertIdP flags $ unLoc name) vars) [convertTypeToExpr flags Nothing $ unLoc rhs] []) []]
+convertTyClDecl flags (DataDecl _ name vars _fixity (HsDataDefn _ _ _ Nothing Nothing cons derivs)) = [RawStatementTree (classWithObjs (convertQTyVars flags (rawVal $ convertIdP flags $ unLoc name) vars) (map (convertConDecl flags . unLoc) cons) (concatMap (convertDerivingClause flags . unLoc) $ unLoc derivs)) []]
 -- convertTyClDecl flags (ClassDecl _ _ name vars _ fds sigs defs ats atDefs docs) | trace (printf "fds: %d, sigs: %d, ats: %d, atDefs: %d, docs: %d" (length fds) (length sigs) (length ats) (length atDefs) (length docs)) False = undefined
-convertTyClDecl flags (ClassDecl _ _ name vars _ [] sigs defs [] [] []) = [RawStatementTree (RawClassDeclStatement (convertQTyVars flags (rawVal $ convertIdP flags $ unLoc name) vars) []) (sigs' ++ defs')]
+convertTyClDecl flags (ClassDecl _ _ name vars _ [] sigs defs [] [] []) = [RawStatementTree (classDeclSt (convertQTyVars flags (rawVal $ convertIdP flags $ unLoc name) vars) []) (sigs' ++ defs')]
   where
     sigs' = concatMap (convertSignature flags . unLoc) sigs
     defs' = concatMap (convertBindLR flags . unLoc) $ bagToList defs
@@ -468,7 +468,7 @@ convertTyClDecl flags p = error $ printf "Convert unsupported TyClDecl:\n%s" (sh
 
 -- https://www.stackage.org/haddock/lts-18.28/ghc-lib-parser-8.10.7.20220219/GHC-Hs-Decls.html#t:InstDecl
 convertInstDecl :: DynFlags -> InstDecl GhcPs -> [RawStatementTree RawExpr ()]
-convertInstDecl flags (ClsInstD _ (ClsInstDecl _ (HsIB _ polyTy) binds sigs [] [] _)) = [RawStatementTree (RawClassDefStatement $ mkClassDef $ convertTypeToExpr flags Nothing $ unLoc polyTy) (sigs' ++ binds')]
+convertInstDecl flags (ClsInstD _ (ClsInstDecl _ (HsIB _ polyTy) binds sigs [] [] _)) = [RawStatementTree (classInstSt $ mkClassDef $ convertTypeToExpr flags Nothing $ unLoc polyTy) (sigs' ++ binds')]
   where
     mkClassDef (RawVarsApply _ (RawValue _ b) [v]) = (fromJust $ roaObj v, [rawVal b])
     mkClassDef (RawWhere b c) = let (b', clsB) = mkClassDef b
@@ -502,5 +502,5 @@ convertDecl flags p@XHsDecl{} = error $ printf "Convert unsupported decl:\n%s" (
 
 -- https://www.stackage.org/haddock/lts-18.28/ghc-lib-parser-8.10.7.20220219/GHC-Hs.html#t:HsModule
 convertModule :: DynFlags -> HsModule GhcPs -> RawPrgm ()
-convertModule flags (HsModule (Just name) Nothing imports decls Nothing Nothing) = (map (convertImport flags . unLoc) imports, [RawStatementTree (RawModule ("/Haskell/M/" ++ moduleNameSlashes (unLoc name))) (concatMap (convertDecl flags . unLoc) decls)])
+convertModule flags (HsModule (Just name) Nothing imports decls Nothing Nothing) = (map (convertImport flags . unLoc) imports, [RawStatementTree (rawModule ("/Haskell/M/" ++ moduleNameSlashes (unLoc name))) (concatMap (convertDecl flags . unLoc) decls)])
 convertModule flags p = error $ printf "Convert unsupported Module:\n%s" (showSDoc flags $ ppr p)

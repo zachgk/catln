@@ -26,6 +26,7 @@ import           Maybes                         (rightToMaybe)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
+import           Syntax.Ct.Builder
 import           Syntax.Ct.Desugarf.Expr
 import           Syntax.Ct.Parser.Lexer
 import           Syntax.Ct.Parser.Syntax

@@ -119,10 +119,17 @@ desDecl :: StatementEnv -> PObjArr -> [PStatementTree] -> CRes DesPrgm
 desDecl statementEnv decl subStatements = do
   preprocessed <- declPreprocessors (decl, subStatements)
   case preprocessed of
-    Just newStatements -> mergePrgms <$> mapM (desStatement statementEnv) newStatements
-    Nothing -> do
+    DPPStatements newStatements -> mergePrgms <$> mapM (desStatement statementEnv) newStatements
+    DPPNothing -> do
       let objMap = map (declToObjArrow statementEnv) $ flattenNestedDeclarations (decl, subStatements)
       return (objMap, classGraphFromObjs objMap, [])
+    DPPStTree st subStatements' -> case st of
+      MultiTypeDefStatement multiTypeDef -> desMultiTypeDef statementEnv multiTypeDef subStatements'
+      TypeDefStatement typeDef extends -> desTypeDef statementEnv typeDef extends subStatements'
+      RawClassDefStatement classDef -> desClassDef statementEnv False classDef subStatements'
+      RawClassDeclStatement classDecls extends -> desClassDecl statementEnv classDecls extends subStatements'
+      RawApplyStatement{} -> error "Not yet implemented"
+      RawModule name -> fst <$> desInheritingSubstatements statementEnv (getPath name) subStatements'
 
 -- | Desugars statements that inherit a path from a main statement
 desInheritingSubstatements :: StatementEnv -> NPath -> [PStatementTree] -> CRes (DesPrgm, [DesCompAnnot])
@@ -149,7 +156,7 @@ desMultiTypeDefObj inheritPath varReplaceMap expr = desObj False inheritPath Use
     expr'' = mapMetaAppliedExpr replaceMetaVar InputMeta expr'
 
 
-desMultiTypeDef :: StatementEnv -> PMultiTypeDef -> [RawStatementTree RawExpr ParseMetaDat] -> CRes DesPrgm
+desMultiTypeDef :: StatementEnv -> MultiTypeDef ParseMetaDat -> [RawStatementTree RawExpr ParseMetaDat] -> CRes DesPrgm
 desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef clssExpr dataExprs extends) subStatements = do
 
   let clss@PartialType{ptName=className, ptVars=classVars} = exprToPartialType clssExpr
@@ -215,10 +222,6 @@ desGlobalAnnot = return . desExpr . semiDesExpr SDOutput Nothing
 desStatement :: StatementEnv -> PStatementTree -> CRes DesPrgm
 desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree statement subStatements) = case statement of
   RawDeclStatement decl -> desDecl statementEnv decl subStatements
-  MultiTypeDefStatement multiTypeDef -> desMultiTypeDef statementEnv multiTypeDef subStatements
-  TypeDefStatement typeDef extends -> desTypeDef statementEnv typeDef extends subStatements
-  RawClassDefStatement classDef -> desClassDef statementEnv False classDef subStatements
-  RawClassDeclStatement classDecls extends -> desClassDecl statementEnv classDecls extends subStatements
   RawBindStatement{} -> error $ printf "Not yet implemented"
   RawAnnot a | null subStatements -> do
                  a' <- desGlobalAnnot a
@@ -227,8 +230,6 @@ desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree state
     a' <- desGlobalAnnot a
     statements' <- mapM (desStatement (inheritModule, a':inheritAnnots)) subStatements
     return $ mergePrgms statements'
-  RawApplyStatement{} -> error "Not yet implemented"
-  RawModule name -> fst <$> desInheritingSubstatements statementEnv (getPath name) subStatements
 
 desImports :: (DesPrgm, RawFileImport, [RawFileImport]) -> CRes (DesPrgm, FileImport, [FileImport])
 desImports (prgm, name, imports) = do

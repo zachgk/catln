@@ -71,24 +71,10 @@ data RawExpr m
   | RawTypeProp (Meta m) (RawExpr m) (TypeProperty RawExpr m)
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
--- | Helper for the X isa Y where this is the Y
-type ExtendedClasses e m = [e m]
-
-data MultiTypeDef m = MultiTypeDef (RawExpr m) [RawExpr m] (ExtendedClasses RawExpr m)
-  deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
-
-type RawClassDef m = (RawExpr m, ExtendedClasses RawExpr m)
-
 data RawStatement e m
   = RawDeclStatement (RawObjArr e m)
-  | MultiTypeDefStatement (MultiTypeDef m)
-  | TypeDefStatement (e m) (ExtendedClasses RawExpr m)
-  | RawClassDefStatement (RawClassDef m) -- Every _ isa _
-  | RawClassDeclStatement (e m) (ExtendedClasses RawExpr m)
   | RawBindStatement (RawObjArr e m) -- Uses <-
   | RawAnnot (CompAnnot (e m))
-  | RawApplyStatement (RawApply e m)
-  | RawModule String
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 data RawStatementTree e m = RawStatementTree (RawStatement e m) [RawStatementTree e m]

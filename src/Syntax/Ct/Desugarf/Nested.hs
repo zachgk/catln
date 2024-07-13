@@ -21,6 +21,7 @@ import           CtConstants
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
+import           Syntax.Ct.Builder
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 

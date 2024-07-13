@@ -87,45 +87,10 @@ function Statement(props) {
         <RawObjArr roa={statement.contents} />
       </div>
     );
-  case "MultiTypeDefStatement":
-    let [mcls, classDatas, mextends] = statement.contents;
-    let showClassDatas = tagJoin(classDatas.map((d, dIndex) => <span key={dIndex}><RawExpr expr={d}/></span>), " | ");
-
-    let showMExtends;
-    if (mextends.length > 0) {
-      let items = tagJoin(mextends.map((ic, icIndex) => <span key={icIndex}><RawExpr expr={ic}/></span>), ", ");
-      showMExtends = <span> <KeyWord>isa</KeyWord> {items}</span>;
-    }
-
-    return <h3 className={classes.noPlay}><KeyWord>class</KeyWord> <RawExpr expr={mcls}/> = {showClassDatas}{showMExtends}</h3>;
-  case "TypeDefStatement":
-    return (
-      <div className={classes.noPlay}>
-        <KeyWord>data</KeyWord> <RawExpr expr={statement.contents} />
-      </div>
-    );
-  case "RawClassDefStatement":
-    let classDef = statement.contents[0];
-    let [cls, instanceClasses] = classDef;
-    let showInstanceClasses = tagJoin(instanceClasses.map((ic, icIndex) => <span key={icIndex}><RawExpr expr={ic}/></span>), ", ");
-
-    return <h3 className={classes.noPlay}><KeyWord>every</KeyWord> <RawExpr expr={cls}/> <KeyWord>isa</KeyWord> {showInstanceClasses}</h3>;
-  case "RawClassDeclStatement":
-    return (
-      <div className={classes.noPlay}>
-        <KeyWord>class</KeyWord> <RawExpr expr={statement.contents[0]} />
-      </div>
-    );
   case "RawAnnot":
     return (
       <div className={classes.noPlay}>
         <RawExpr expr={statement.contents} />
-      </div>
-    );
-  case "RawModule":
-    return (
-      <div className={classes.noPlay}>
-        <KeyWord>module</KeyWord> {statement.contents}
       </div>
     );
   default:

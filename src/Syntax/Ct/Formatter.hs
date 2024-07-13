@@ -76,10 +76,6 @@ formatExpr (RawTypeProp _ base (TypePropProj p (RawValue _ vn))) | vn == truePri
 formatExpr (RawTypeProp _ base (TypePropProj p v)) = printf "%s_%s(%s)" (formatExpr base) p (formatExpr v)
 formatExpr (RawTypeProp _ base (TypePropRel p v)) = printf "%s__%s(%s)" (formatExpr base) p (formatExpr v)
 
-formatIsa :: ExtendedClasses RawExpr m -> String
-formatIsa []      = ""
-formatIsa classes = printf ", isa= [%s]" (intercalate ", " (map formatExpr classes))
-
 -- | Formats either ObjArr or Bind Statement
 formatObjArrLike :: String -> RawObjArr RawExpr m -> String
 formatObjArrLike eq roa@RawObjArr{roaObj, roaArr, roaDef} = printf "%s%s%s%s%s%s" (showE True roaObj) showElse showM showEquals (showE False roaArrExpr) showDef
@@ -122,15 +118,6 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
   where
     statement' = case statement of
       RawDeclStatement objArr -> formatObjArr objArr
-      MultiTypeDefStatement (MultiTypeDef clss objs extends) -> printf "class(%s, [%s]%s)" (formatExpr clss) showObjs (formatIsa extends)
-        where
-          showObjs = intercalate ", " $ map formatExpr objs
-      TypeDefStatement typeExpr extends -> printf "%s(%s%s)" kw (formatExpr typeExpr) (formatIsa extends)
-        where
-          kw :: String
-          kw = if "#" `isPrefixOf` exprPath typeExpr then "annot" else "data"
-      RawClassDefStatement (obj, className) -> printf "every(%s%s)" (formatExpr obj) (formatIsa className)
-      RawClassDeclStatement clss extends -> printf "class(%s%s)" (formatExpr clss) (formatIsa extends)
       RawBindStatement oa -> formatObjArrLike "<-" oa
       RawAnnot annot | exprPath annot == mdAnnot -> printf "# %s" annotText'
         where
@@ -140,8 +127,6 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
                          (Just (Just (_, Just e))) -> printf "> %s" (formatExpr e)
                          e -> error $ printf "Can't format unexpected print annot %s" (show e)
       RawAnnot annot -> formatExpr annot
-      RawApplyStatement a -> "apply " ++ formatRawApply a
-      RawModule modul -> printf "module(%s)" modul
 
 -- |
 -- A root statement has an additional ending newline

@@ -12,15 +12,15 @@
 
 module Syntax.InferImport where
 import           Control.Monad
-import qualified Data.HashMap.Strict     as H
+import qualified Data.HashMap.Strict as H
 import           Data.List
 import           Data.List.Split
 import           Data.Maybe
 import           Semantics.Prgm
-import           Syntax.Ct.Parser.Syntax
+import           Syntax.Ct.Builder
 import           Syntax.Ct.Prgm
 import           System.Directory
-import           System.FilePath         (isAbsolute, joinPath)
+import           System.FilePath     (isAbsolute, joinPath)
 import           Text.Printf
 
 fileExtensionParsers :: H.HashMap String (String -> RawExpr ())

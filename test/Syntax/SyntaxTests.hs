@@ -1,19 +1,19 @@
 module Syntax.SyntaxTests where
 
-import           Common.TestCommon       (filesWithExtension)
+import           Common.TestCommon   (filesWithExtension)
 import           Control.Monad
-import           CRes                    (fromCRes)
-import qualified Data.HashMap.Strict     as H
+import           CRes                (fromCRes)
+import qualified Data.HashMap.Strict as H
 import           Hedgehog
 import           Semantics.Prgm
-import           Syntax.Ct.Formatter     (formatRootPrgm)
-import           Syntax.Ct.Parser        (contents, pPrgm)
-import           Syntax.Ct.Parser.Syntax (rawStr)
+import           Syntax.Ct.Builder   (rawStr)
+import           Syntax.Ct.Formatter (formatRootPrgm)
+import           Syntax.Ct.Parser    (contents, pPrgm)
 import           Syntax.Ct.Prgm
-import           Syntax.Parsers          (parseFile)
+import           Syntax.Parsers      (parseFile)
 import           Test.Tasty
-import           Test.Tasty.HUnit        (assertEqual, assertFailure, testCase)
-import           Text.Megaparsec         (runParser)
+import           Test.Tasty.HUnit    (assertEqual, assertFailure, testCase)
+import           Text.Megaparsec     (runParser)
 import           Text.Printf
 
 type Prgms = H.HashMap String (RawPrgm ())
