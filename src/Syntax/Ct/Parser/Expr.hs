@@ -87,7 +87,6 @@ pValue = do
   pos1 <- getSourcePos
   usingTheExpr <- optional $ string ":"
   name <- identifier <|> tidentifier <|> pAnnotIdentifier <|> tvar <|> pHole
-  spread <- optional $ string ".."
   pos2 <- getSourcePos
   let m = emptyMeta pos1 pos2
 
@@ -97,11 +96,9 @@ pValue = do
         ('_':_)     -> RawHoleExpr m $ HoleActive (Just name)
         "undefined" -> RawHoleExpr m HoleUndefined
         "todefine"  -> RawHoleExpr m HoleTodefine
-        _           -> case (usingTheExpr, spread) of
-          (Just{}, Nothing)  -> RawTheExpr (RawValue m name)
-          (Nothing, Just{}) -> RawSpread $ RawValue (mWithType (relTypeVal name) m) name
-          (Nothing, Nothing) -> RawValue (mWithType (relTypeVal name) m) name
-          (Just{}, Just{}) -> undefined
+        _           -> case usingTheExpr of
+          Just{}  -> RawTheExpr (RawValue m name)
+          Nothing -> RawValue (mWithType (relTypeVal name) m) name
 
 pStringLiteral :: Parser PExpr
 pStringLiteral = do
@@ -294,7 +291,7 @@ applyTermSuffix base (TypePropSuffix m p) = RawTypeProp m base p
 
 term :: Parser PExpr
 term = do
-  base <- parenExpr
+  e1 <- parenExpr
        <|> pStringLiteral
        <|> pInt
        <|> pList
@@ -303,7 +300,12 @@ term = do
        <|> pValue
   suffixes <- many pTermSuffix
   _ <- sc
-  return $ foldl applyTermSuffix base suffixes
+  let e2 = foldl applyTermSuffix e1 suffixes
+  hasSpread <- optional $ string ".."
+  let e3 = case hasSpread of
+        Just _  -> RawSpread e2
+        Nothing -> e2
+  return e3
 
 pExpr :: Parser PExpr
 pExpr = makeExprParser term ops

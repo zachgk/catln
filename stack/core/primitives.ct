@@ -5,6 +5,14 @@ import "core/data.ct"
 module(Data/Primitive)
   # # Catln Core Primitives
     These types some of the basic types used in Catln.
+  # ## Anonymous type
+  data(()..)
+    # The special type [()..] is used to represent anonymous values.
+      It parses to a take with the name "" and any args.
+      It also contains the special type [()] which is the unit type.
+      It is a type that has only a single element.
+      Therefore, no information is presented through it's use.
+      It is often used for void return values.
   # ## Booleans
   class(Boolean, [True, False])
   every(Boolean, isa= [/Data/Algebra/Eq])

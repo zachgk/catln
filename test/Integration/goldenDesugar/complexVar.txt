@@ -326,7 +326,8 @@
 ,
     (
         (
-            [ Value /Data/Primitive/True
+            [ Value /
+            , Value /Data/Primitive/True
             , Value /Data/Primitive/False
             , /operator== ( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) ( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
             , /operator== ( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing ) ( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing ) = Value True
@@ -364,6 +365,7 @@
             ]
         ,
             [ CGType
+            , CGType
             , CGType
             , CGType
             , CGType
