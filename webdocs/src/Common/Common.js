@@ -194,7 +194,10 @@ function PartialKey(props) {
 }
 
 function isTopType(t) {
-  return t.tag === "TopType" && t.contents.length === 0;
+  if (t.tag !== "TopType") return false;
+
+  const [topNeg, topPreds] = t.contents;
+  return Object.keys(topNeg).length === 0 && topPreds.tag === "PredsAnd" && topPreds.contents.length === 0;
 }
 
 function TypeWithPrefix(props) {
@@ -209,10 +212,9 @@ function Type(props) {
   let t = props.data;
   switch(t.tag) {
   case "TopType":
-    if (t.contents.length === 0) {
+    // const [topNeg, topPreds] = t.contents;
+    if (isTopType(t)) {
       return "";
-    } else if (t.contents.length === 1 && t.contents[0].tag === "PredRel") {
-      return <PartialType data={t.contents[0].contents} />;
     } else {
       console.log("Missing topType args for ", t);
       return "Any | ???";

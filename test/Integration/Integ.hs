@@ -18,7 +18,7 @@ import           System.FilePath    (takeBaseName)
 import           Text.Pretty.Simple (pShowNoColor)
 import           TypeCheck
 import           Utils
-import           WebDocs            (docApi)
+import           WebDocs            (docApi, docServe)
 
 testDir, disabledTestDir :: String
 testDir = "test/Integration/code/"
@@ -137,4 +137,12 @@ mtd k = do
   tests <- standardTests
   if fileName `elem` tests
      then docApi False True fileName
+     else error $ printf "invalid test name %s in %s" fileName (show tests)
+
+mtde :: String -> IO ()
+mtde k = do
+  let fileName = testDir ++ k ++ ".ct"
+  tests <- standardTests
+  if fileName `elem` tests
+     then docServe False True fileName
      else error $ printf "invalid test name %s in %s" fileName (show tests)

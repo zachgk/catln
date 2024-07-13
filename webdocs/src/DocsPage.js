@@ -7,7 +7,7 @@ import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import {useHistory} from 'react-router-dom';
 
 import {RawExpr, RawObjArr} from './Common/Syntax';
-import {useApi, Loading, KeyWord, PClassName, tagJoin} from './Common/Common';
+import {useApi, Loading, KeyWord, tagJoin} from './Common/Common';
 
 const useStyles = makeStyles({
   indented: {
@@ -37,7 +37,7 @@ function DocsPage(props) {
 }
 
 function Main(props) {
-  const {prgmName, data} = props;
+  const {data} = props;
   const [imports, statements] = data;
 
   return (

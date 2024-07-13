@@ -1,7 +1,7 @@
 import React  from 'react';
 
 import {tryValue} from './Value';
-import {KeyWord, PartialKey, PTypeName, isTopType, Type, tagJoin} from './Common';
+import {KeyWord, PTypeName, isTopType, Type, tagJoin} from './Common';
 
 function RawObjArr(props) {
   const {roaObj, roaArr, roaDef} = props.roa;
@@ -13,14 +13,16 @@ function RawObjArr(props) {
 
   let showArr;
   if (roaArr) {
-    const [roaArrExpr, roaArrM] = roaArr;
+    const [roaArrExpr,roaArrMExpr,roaArrM] = roaArr;
     let showArrExpr;
     if (roaArrExpr) {
       showArrExpr = <RawExpr expr={roaArrExpr}/>;
     }
 
     let showArrM;
-    if (!isTopType(roaArrM[0])) {
+    if (roaArrMExpr) {
+      showArrM = <span> -&gt; <RawExpr expr={roaArrMExpr} /></span>;
+    } else if (!isTopType(roaArrM[0])) {
       showArrM = <span> -&gt; <Type data={roaArrM[0]} /></span>;
     }
     showArr = <span>{showArrM}{showArrExpr}</span>;
@@ -106,7 +108,7 @@ function RawExpr(props) {
     return (<span><RawExpr expr={vbase}/>[{showVars}]</span>);
   case "RawContextApply":
     const [,[,cxbase], cxargs] = expr.contents;
-    const showCxargs = tagJoin(cxargs.map((arg, argIndex) => (<span key={argIndex}><PartialKey data={arg[0]}/>: <RawMeta data={arg[1]}/></span>)), ", ");
+    const showCxargs = tagJoin(cxargs.map((arg, argIndex) => <RawObjArr key={argIndex} roa={arg}/>), ", ");
     return (<span><RawExpr expr={cxbase}/>&#123;{showCxargs}&#125;</span>);
   case "RawWhere":
     let [whBase, whCond] = expr.contents;
