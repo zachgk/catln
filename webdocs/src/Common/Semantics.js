@@ -47,7 +47,7 @@ function Expr(props) {
     }
 
     let showBase = <Expr expr={base} Meta={Meta} showMetas={showMetas}/>;
-    let showArg = (<ObjArr oa={arg} Meta={Meta} showExprMetas={showMetas} />);
+    let showArg = <span>(<ObjArr oa={arg} Meta={Meta} showExprMetas={showMetas} />)</span>;
 
     if ((base.tag === "Value" || base.tag === "TValue") && base.contents[1] === "") { // Anonymous tuple
       return <span>{showArg}{showM}</span>;

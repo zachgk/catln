@@ -113,16 +113,20 @@ standardTests = findCt testDir
 integrationTests :: IO TestTree
 integrationTests = runTests True True <$> standardTests
 
-mtBase :: Bool -> String -> IO ()
-mtBase runGolden k = do
+mtFileName :: String -> IO String
+mtFileName k = do
   let fileName = testDir ++ k ++ ".ct"
   fileNameExists <- doesFileExist fileName
   let disabledFileName = disabledTestDir ++ k ++ ".ct"
   disabledFileNameExists <- doesFileExist disabledFileName
-  fileName' <- case () of
+  case () of
         _ | fileNameExists -> return fileName
         _ | disabledFileNameExists -> return disabledFileName
         _ -> fail $ printf "invalid test name %s" fileName
+
+mtBase :: Bool -> String -> IO ()
+mtBase runGolden k = do
+  fileName' <- mtFileName k
   defaultMain $ runTests runGolden True [fileName']
 
 mt :: String -> IO ()
@@ -133,16 +137,10 @@ mtg = mtBase True
 
 mtd :: String -> IO ()
 mtd k = do
-  let fileName = testDir ++ k ++ ".ct"
-  tests <- standardTests
-  if fileName `elem` tests
-     then docApi False True fileName
-     else error $ printf "invalid test name %s in %s" fileName (show tests)
+  fileName' <- mtFileName k
+  docApi False True fileName'
 
 mtde :: String -> IO ()
 mtde k = do
-  let fileName = testDir ++ k ++ ".ct"
-  tests <- standardTests
-  if fileName `elem` tests
-     then docServe False True fileName
-     else error $ printf "invalid test name %s in %s" fileName (show tests)
+  fileName' <- mtFileName k
+  docServe False True fileName'

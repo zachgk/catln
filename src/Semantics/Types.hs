@@ -184,6 +184,7 @@ instance Show PartialType where
       showArg (argName, argVal) = show argName ++ "=" ++ show argVal
       showTypeVars vars | H.null vars = ""
       showTypeVars vars = printf "[%s]" (intercalate ", " $ map showArg $ H.toList vars)
+      showArgs args | ptName == "" && H.null args = "()"
       showArgs args | H.null args = ""
       showArgs args = printf "(%s)" (intercalate ", " $ map showArg $ H.toList args)
       showPreds PredsNone    = ""
@@ -350,6 +351,7 @@ splitVarArgEnv vaenv = bimap H.fromList H.fromList $ partitionEithers $ map eith
     eitherVarArg (TVArg v, t) = Right (v, t)
 
 makeAbsoluteName :: Name -> Name
+makeAbsoluteName ""        = ""
 makeAbsoluteName n@('/':_) = n
 makeAbsoluteName n         = '/':n
 
