@@ -59,9 +59,8 @@ data RawExpr m
   | RawMacroValue (Meta m) TypeName
   | RawApplyExpr (Meta m) (RawApply RawExpr m)
   | RawTheExpr (RawExpr m) -- ^ Written :TypeName and read as The TypeName
-  | RawSpread (RawExpr m) -- ^ Written TypeName.. and uses PtArgAny
   | RawAliasExpr (RawExpr m) (RawExpr m) -- ^ base aliasExpr
-  | RawTupleApply (Meta m) (Meta m, RawExpr m) [RawObjArr RawExpr m]
+  | RawTupleApply (Meta m) (Meta m, RawExpr m) [(Bool, RawObjArr RawExpr m)] -- Boolean for isSpreadArg
   | RawVarsApply (Meta m) (RawExpr m) [RawObjArr RawExpr m]
   | RawContextApply (Meta m) (Meta m, RawExpr m) [RawObjArr RawExpr m]
   | RawWhere (RawExpr m) (RawExpr m) -- ^ base cond
@@ -115,7 +114,6 @@ instance ExprClass RawExpr where
     RawMacroValue m _     -> m
     RawApplyExpr m _      -> m
     RawTheExpr e          -> getExprMeta e
-    RawSpread e           -> getExprMeta e
     RawAliasExpr b _      -> getExprMeta b
     RawWhere b _          -> getExprMeta b
     RawTupleApply m _ _   -> m
@@ -136,7 +134,10 @@ instance ExprClass RawExpr where
   maybeExprPathM _                            = Nothing
 
   exprAppliedArgs (RawValue _ _) = []
-  exprAppliedArgs (RawTupleApply _ (_, be) args) = exprAppliedArgs be ++ concatMap desObjArr args
+  exprAppliedArgs (RawTupleApply _ (_, be) args) = exprAppliedArgs be ++ concatMap aux args
+    where
+      aux (False, a) = desObjArr a
+      aux (True, a)  = error $ printf "Not yet implemented %s" (show a)
   exprAppliedArgs (RawVarsApply _ e _) = exprAppliedArgs e
   exprAppliedArgs (RawContextApply _ (_, e) _) = exprAppliedArgs e
   exprAppliedArgs (RawParen e) = exprAppliedArgs e
@@ -158,7 +159,10 @@ instance ExprClass RawExpr where
   exprVarArgs RawValue{} = H.empty
   exprVarArgs RawTheExpr{} = H.empty
   exprVarArgs (RawAliasExpr base alias) = H.unionWith (++) (exprVarArgs base) (exprVarArgs alias)
-  exprVarArgs (RawTupleApply _ (_, be) args) = H.unionWith (++) (exprVarArgs be) (unionsWith (++) $ map oaVarArgs args)
+  exprVarArgs (RawTupleApply _ (_, be) args) = H.unionWith (++) (exprVarArgs be) (unionsWith (++) $ map aux args)
+    where
+      aux (False, a) = oaVarArgs a
+      aux (True, a)  = error $ printf "Not yet implemented %s" (show a)
   exprVarArgs (RawVarsApply _ e vars) = H.unionWith (++) (exprVarArgs e) (unionsWith (++) $ map aux vars)
     where
       aux var = H.singleton (TVVar $ inExprSingleton $ fromJust $ roaObj var) [(fromJust $ roaObj var, thr3 $ fromJust $ roaArr var)]

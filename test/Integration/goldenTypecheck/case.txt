@@ -455,8 +455,7 @@
 ,
     (
         (
-            [ /abs.$ 99 f56d- 1 ( Value /x )
-                ( Value /$ 99 f56d-arg= Hole TopType HoleActive Nothing@Value /x2 ) ->
+            [ /abs.$eecd04- 1 ( Value /x ) ( Value /$eecd04-arg= Hole TopType HoleActive Nothing@Value /x2 ) ->
                 ( /Data/Primitive/Integer | /operator*
                     ( /l=/Data/Primitive/Integer
                     , /r=/Data/Primitive/Integer
@@ -465,17 +464,15 @@
                 ( Value /r -> /Data/Primitive/Integer = /operator-
                     ( Value /a -> /Data/Primitive/Integer = CInt 1 )
                 )
-            , /abs.$ 99 f56d- 0 ( Value /x )
-                ( Value /$ 99 f56d-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>= ( Value /l -> TVArg /x = Value /x )
+            , /abs.$eecd04- 0 ( Value /x )
+                ( Value /$eecd04-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>= ( Value /l -> TVArg /x = Value /x )
                     ( Value /r -> /Data/Primitive/Integer = CInt 0 )
-                ) = /abs.$ 99 f56d- 1 ( Value /x -> TVArg /x = Value /x )
-                ( Value /$ 99 f56d-arg -> TVArg /x = Value /x )
-            , /abs.$ 99 f56d- 0 ( Value /x )
-                ( Value /$ 99 f56d-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>= ( Value /l -> TVArg /x = Value /x )
+                ) = /abs.$eecd04- 1 ( Value /x -> TVArg /x = Value /x ) ( Value /$eecd04-arg -> TVArg /x = Value /x )
+            , /abs.$eecd04- 0 ( Value /x )
+                ( Value /$eecd04-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>= ( Value /l -> TVArg /x = Value /x )
                     ( Value /r -> /Data/Primitive/Integer = CInt 0 )
                 ) -> TVArg /x2 = Value /x2
-            , /abs ( Value /x -> /Data/Primitive/Integer ) = /abs.$ 99 f56d- 0 ( Value /x -> TVArg /x = Value /x )
-                ( Value /$ 99 f56d-arg -> TVArg /x = Value /x )
+            , /abs ( Value /x -> /Data/Primitive/Integer ) = /abs.$eecd04- 0 ( Value /x -> TVArg /x = Value /x ) ( Value /$eecd04-arg -> TVArg /x = Value /x )
             , /Context ( Value /value -> /main = Value /main ) ( Value /io -> /Catln/IO ) ->
                 ( /Catln/exit
                     ( /this=/Catln/IO

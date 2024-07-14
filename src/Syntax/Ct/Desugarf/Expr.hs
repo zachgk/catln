@@ -87,28 +87,32 @@ semiDesExpr sdm@(SDInput True) obj (RawTheExpr t) = semiDesExpr sdm obj t
 semiDesExpr SDInput{} _ (RawTheExpr t) = Value (emptyMetaM "the" tM) tN
   where
     (tM, tN) = desugarTheExpr t
-semiDesExpr sdm obj (RawSpread e) = Value m' n
+-- semiDesExpr sdm obj (RawSpread e@RawValue{}) = Value m' n
+--   where
+--     Value m n = semiDesExpr sdm obj e
+--     m' = mWithType (spreadType H.empty $ getMetaType m) m
+semiDesExpr sdm obj (RawTupleApply _ (_, e@RawValue{}) [(True, _)]) = Value m' n
   where
     Value m n = semiDesExpr sdm obj e
     m' = mWithType (spreadType H.empty $ getMetaType m) m
 semiDesExpr sdm obj (RawAliasExpr base alias) = AliasExpr (semiDesExpr sdm obj base) (semiDesExpr sdm obj alias)
 semiDesExpr sdm obj (RawWhere base cond) = EWhere (semiDesExpr sdm obj base) (semiDesExpr sdm obj cond)
-semiDesExpr sdm obj (RawTupleApply _ (_, RawValue _ "/operator::") [RawObjArr{roaArr=(Just (Just e, _, _))}, RawObjArr{roaArr=(Just (Just tp, _, _))}]) = semiDesExpr sdm obj (rawExprWithType (exprToType tp) e)
+semiDesExpr sdm obj (RawTupleApply _ (_, RawValue _ "/operator::") [(False, RawObjArr{roaArr=(Just (Just e, _, _))}), (False, RawObjArr{roaArr=(Just (Just tp, _, _))})]) = semiDesExpr sdm obj (rawExprWithType (exprToType tp) e)
 semiDesExpr sdm obj (RawTupleApply _ (_, be) []) = semiDesExpr sdm obj be
 semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm'', be'') arg'') -> TupleApply m'' (bm'', be'') arg'') $ foldl aux (bm, be') (zip [0..] args)
   where
     be' = semiDesExpr sdm obj be
-    aux :: (ParseMeta, PSExpr) -> (Int, PObjArr) -> (ParseMeta, PSExpr)
-    aux (m, e) (argIndex, rarg@RawObjArr{roaArr=Just (Just (RawTupleApply _ (_, RawValue _ "/operator::") [RawObjArr{roaArr=(Just newArr)}, RawObjArr{roaArr=(Just (Just tp, _, _))}]), _, _)}) = case aux (m, e) (argIndex, rarg{roaArr=Just newArr}) of
+    aux :: (ParseMeta, PSExpr) -> (Int, (Bool, PObjArr)) -> (ParseMeta, PSExpr)
+    aux (m, e) (argIndex, (False, rarg@RawObjArr{roaArr=Just (Just (RawTupleApply _ (_, RawValue _ "/operator::") [(False, RawObjArr{roaArr=(Just newArr)}), (False, RawObjArr{roaArr=(Just (Just tp, _, _))})]), _, _)})) = case aux (m, e) (argIndex, (False, rarg{roaArr=Just newArr})) of
       (tam, TupleApply tamm tab taoa@ObjArr{oaArr=Just (tboaArrE, tboaArrM)}) -> (tam, TupleApply tamm tab taoa{oaArr=Just (tboaArrE, mWithType (exprToType tp) tboaArrM)})
       _ -> error $ printf "Unexpected result in semiDesExpr TupleApply aux"
-    aux (m, e) (argIndex, rarg@RawObjArr{roaObj=Just (RawTheExpr v), roaArr}) = aux (m, e) (argIndex, rarg{roaObj=Just (RawValue (emptyMetaM "the" vM) vN), roaArr=roaArr'})
+    aux (m, e) (argIndex, (False, rarg@RawObjArr{roaObj=Just (RawTheExpr v), roaArr})) = aux (m, e) (argIndex, (False, rarg{roaObj=Just (RawValue (emptyMetaM "the" vM) vN), roaArr=roaArr'}))
       where
         (vM, vN) = desugarTheExpr v
         roaArr' = case roaArr of
           Just (arrE, _, _) -> Just (arrE, Nothing, vM)
           Nothing           -> Just (Nothing, Nothing, vM)
-    aux (m, e) (_argIndex, rarg) = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) arg'')
+    aux (m, e) (_argIndex, (False, rarg)) = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) arg'')
       where
         [arg] = desObjArr rarg
 
@@ -130,6 +134,7 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm''
           oaAnnots=indexAnnots ++ fmap (semiDesExpr sdm obj) (oaAnnots arg'),
           oaArr=fmap (first (fmap (semiDesExpr sdm (oaObj arg')))) (oaArr arg')
           }
+    aux _ (_, (True, a)) = error $ printf "Not yet defined semiDesArg for spread %s" (show a)
 semiDesExpr sdm obj (RawVarsApply m be vs) = foldr aux be' vs
   where
     be' = semiDesExpr sdm obj be

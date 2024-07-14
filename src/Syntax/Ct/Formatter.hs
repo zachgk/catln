@@ -34,15 +34,15 @@ formatImport RawFileImport{rawImpRaw} = do
   literal $ "import " ++ formatExpr rawImpRaw ++ "\n"
 
 
-formatRawApply :: RawApply RawExpr m -> String
+formatRawApply :: (Show m) => RawApply RawExpr m -> String
 formatRawApply (RawApply terms) = unwords (formatExpr term1 : map formatTerm termsRest)
   where
     (RATermDeep term1:termsRest) = terms
-    formatTerm :: RawApplyTerm RawExpr m -> String
+    formatTerm :: (Show m) => RawApplyTerm RawExpr m -> String
     formatTerm (RATermDeep e)  = formatExpr e
     formatTerm (RATermChild e) = "> " ++ formatExpr e
 
-formatExpr ::  RawExpr m -> String
+formatExpr :: (Show m) => RawExpr m -> String
 formatExpr (RawCExpr _ (CInt c)) = show c
 formatExpr (RawCExpr _ (CFloat c)) = show c
 formatExpr (RawCExpr _ (CStr c)) = show c
@@ -56,18 +56,20 @@ formatExpr (RawHoleExpr _ (HoleActive (Just a))) = "_" ++ a
 formatExpr (RawHoleExpr _ HoleUndefined) = "undefined"
 formatExpr (RawHoleExpr _ HoleTodefine) = "todefine"
 formatExpr (RawTheExpr t) = printf ":%s" (formatExpr t)
-formatExpr (RawSpread t) = printf "%s.." (formatExpr t)
+formatExpr (RawTupleApply _ (_, v@(RawValue _ vn)) [(True, _)]) | vn /= anonStr = printf "%s.." (formatExpr v)
 formatExpr (RawAliasExpr base alias) = printf "%s@%s" (formatExpr base) (formatExpr alias)
 formatExpr (RawWhere base cond) = printf "%s | %s" (formatExpr base) (formatExpr cond)
 formatExpr (RawTupleApply _ (_, RawValue _ n) args) | operatorPrefix `isPrefixOf` n = case args of
-  [RawObjArr{ roaArr=(Just (Just a, _, _))}] -> op ++ formatExpr a
-  [RawObjArr{ roaArr=(Just (Just l, _, _))}, RawObjArr{roaArr=(Just (Just r, _, _))}] -> if n == operatorType
+  [(False, RawObjArr{ roaArr=(Just (Just a, _, _))})] -> op ++ formatExpr a
+  [(False, RawObjArr{ roaArr=(Just (Just l, _, _))}), (False, RawObjArr{roaArr=(Just (Just r, _, _))})] -> if n == operatorType
     then printf "%s%s %s" (formatExpr l) op (formatExpr r) -- Show types as "x: 5" instead of "x : 5"
     else printf "%s %s %s" (formatExpr l) op (formatExpr r)
   _ -> error "Non unary or binary operator found in formatExpr"
   where
     op = drop (length operatorPrefix) n
-formatExpr (RawTupleApply _ (_, be) args) = printf "%s(%s)" (formatExpr be) (intercalate ", " $ map formatObjArr args)
+formatExpr (RawTupleApply _ (_, be) args) = printf "%s(%s)" (formatExpr be) (intercalate ", " $ map aux args)
+  where
+    aux (spread, a) = (if spread then ".." else "") ++ formatObjArr a
 formatExpr (RawVarsApply _ be vars) = printf "%s[%s]" (formatExpr be) (intercalate ", " $ map formatObjArr vars)
 formatExpr (RawContextApply _ (_, be) ctxs) = printf "%s{%s}" (formatExpr be) (intercalate ", " $ map formatObjArr ctxs)
 formatExpr (RawParen e) = printf "(%s)" (formatExpr e)
@@ -78,7 +80,7 @@ formatExpr (RawTypeProp _ base (TypePropProj p v)) = printf "%s_%s(%s)" (formatE
 formatExpr (RawTypeProp _ base (TypePropRel p v)) = printf "%s__%s(%s)" (formatExpr base) p (formatExpr v)
 
 -- | Formats either ObjArr or Bind Statement
-formatObjArrLike :: String -> RawObjArr RawExpr m -> String
+formatObjArrLike :: (Show m) => String -> RawObjArr RawExpr m -> String
 formatObjArrLike eq roa@RawObjArr{roaObj, roaArr, roaDef} = printf "%s%s%s%s%s%s" (showE True roaObj) showElse showM showEquals (showE False roaArrExpr) showDef
   where
     roaArrExpr = fst3 =<< roaArr
@@ -111,7 +113,7 @@ formatObjArrLike eq roa@RawObjArr{roaObj, roaArr, roaDef} = printf "%s%s%s%s%s%s
       Just d  -> printf " ? %s" (formatExpr d)
       Nothing -> ""
 
-formatObjArr :: RawObjArr RawExpr m -> String
+formatObjArr :: (Show m) => RawObjArr RawExpr m -> String
 formatObjArr = formatObjArrLike "="
 
 formatStatement :: (MetaDat m, Show m) => Int -> RawStatement RawExpr m -> String

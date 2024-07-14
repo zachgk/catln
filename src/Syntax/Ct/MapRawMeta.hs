@@ -24,10 +24,11 @@ instance MapMeta RawExpr where
   mapMeta f loc (RawMacroValue m n) = RawMacroValue (f (ExprMeta loc ExprMetaMacroVal) m) n
   mapMeta f loc (RawApplyExpr m n) = RawApplyExpr (f (ExprMeta loc ExprMetaMacroVal) m) (mapRawApply f n)
   mapMeta f loc (RawTheExpr e) = RawTheExpr (mapMeta f loc e)
-  mapMeta f loc (RawSpread e) = RawSpread (mapMeta f loc e)
   mapMeta f loc (RawAliasExpr b a) = RawAliasExpr (mapMeta f loc b) (mapMeta f loc a)
   mapMeta f loc (RawWhere b a) = RawWhere (mapMeta f loc b) (mapMeta f loc a)
-  mapMeta f loc (RawTupleApply m (bm, be) args) = RawTupleApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, mapMeta f loc be) (map (mapMetaRawObjArr f (Just loc)) args)
+  mapMeta f loc (RawTupleApply m (bm, be) args) = RawTupleApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, mapMeta f loc be) (map aux args)
+    where
+      aux (b, a) = (b, mapMetaRawObjArr f (Just loc) a)
   mapMeta f loc (RawVarsApply m be vars) = RawVarsApply (f (ExprMeta loc ExprMetaApplyVar) m) (mapMeta f loc be) (map (mapMetaRawObjArr f (Just loc)) vars)
   mapMeta f loc (RawContextApply m (bm, be) args) = RawContextApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, mapMeta f loc be) (map (mapMetaRawObjArr f (Just loc)) args)
   mapMeta f loc (RawParen e) = RawParen (mapMeta f loc e)

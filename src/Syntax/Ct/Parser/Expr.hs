@@ -87,6 +87,7 @@ pValue = do
   pos1 <- getSourcePos
   usingTheExpr <- optional $ string ":"
   name <- identifier <|> tidentifier <|> pAnnotIdentifier <|> tvar <|> pHole
+  spread <- optional $ string ".."
   pos2 <- getSourcePos
   let m = emptyMeta pos1 pos2
 
@@ -96,9 +97,11 @@ pValue = do
         ('_':_)     -> RawHoleExpr m $ HoleActive (Just name)
         "undefined" -> RawHoleExpr m HoleUndefined
         "todefine"  -> RawHoleExpr m HoleTodefine
-        _           -> case usingTheExpr of
-          Just{}  -> RawTheExpr (RawValue m name)
-          Nothing -> RawValue (mWithType (relTypeVal name) m) name
+        _           -> case (usingTheExpr, spread) of
+          (Just{}, Nothing)  -> RawTheExpr (RawValue m name)
+          (Nothing, Just{}) -> RawTupleApply (emptyMetaM "sprM" m) (emptyMetaM "sprpap" m, RawValue (mWithType (relTypeVal name) m) name) [(True, rawInObjArr True (RawHoleExpr (emptyMetaM "sprHole" m) (HoleActive Nothing)))]
+          (Nothing, Nothing) -> RawValue (mWithType (relTypeVal name) m) name
+          (Just{}, Just{}) -> undefined
 
 pStringLiteral :: Parser PExpr
 pStringLiteral = do
@@ -116,7 +119,7 @@ parenExpr = do
     return (es, trailingComma)
   pos2 <- getSourcePos
   return $ case res of
-    ([RawObjArr{roaObj=Just e', roaArr=Nothing}], Nothing) -> RawParen e' -- Paren
+    ([(False, RawObjArr{roaObj=Just e', roaArr=Nothing})], Nothing) -> RawParen e' -- Paren
     (args, _) -> do -- Tuple
       let base = rawAnon
       RawTupleApply (emptyMeta pos1 pos2) (labelPosM "arg" $ getExprMeta base, base) args
@@ -169,15 +172,18 @@ pArrowFullOA basis = do
     Left _    -> fail "Found unexpected bind object arrow"
 
 data TermSuffix
-  = ArgsSuffix ParseMeta [PObjArr]
+  = ArgsSuffix ParseMeta [(Bool, PObjArr)]
   | VarsSuffix ParseMeta [PObjArr]
   | ContextSuffix ParseMeta [PObjArr]
   | AliasSuffix ParseMeta TypeName
   | TypePropSuffix ParseMeta (TypeProperty RawExpr ParseMetaDat)
   deriving (Show)
 
-pArgSuffix :: Parser PObjArr
-pArgSuffix = pArrowFullOA ArgObj
+pArgSuffix :: Parser (Bool, PObjArr)
+pArgSuffix = do
+  spread <- optional $ symbol ".."
+  arg <- pArrowFullOA ArgObj
+  return (isJust spread, arg)
 
 pArgsSuffix :: Parser TermSuffix
 pArgsSuffix = do
@@ -189,7 +195,7 @@ pArgsSuffix = do
 pVarsSuffix :: Parser TermSuffix
 pVarsSuffix = do
   pos1 <- getSourcePos
-  vars <- squareBraces $ sepBy1 pArgSuffix (symbol ",")
+  vars <- squareBraces $ sepBy1 (pArrowFullOA ArgObj) (symbol ",")
   pos2 <- getSourcePos
   return $ VarsSuffix (emptyMeta pos1 pos2) vars
 
@@ -301,11 +307,7 @@ term = do
   suffixes <- many pTermSuffix
   _ <- sc
   let e2 = foldl applyTermSuffix e1 suffixes
-  hasSpread <- optional $ string ".."
-  let e3 = case hasSpread of
-        Just _  -> RawSpread e2
-        Nothing -> e2
-  return e3
+  return e2
 
 pExpr :: Parser PExpr
 pExpr = makeExprParser term ops

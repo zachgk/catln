@@ -42,7 +42,7 @@ applyRawEArgs base args = case base of
   (RawTupleApply m base' baseArgs) -> RawTupleApply m base' (baseArgs ++ args')
   _ -> RawTupleApply (emptyMetaE "app" base) (emptyMetaE "base" base, base) args'
   where
-    args' = map mapArg args
+    args' = map ((False,) . mapArg) args
     mapArg :: (MetaDat m, Show m) => (Maybe (RawExpr m), RawExpr m) -> RawObjArr RawExpr m
     mapArg (Just argName, argVal) = RawObjArr (Just argName) ArgObj Nothing [] (Just (Just argVal, Nothing, emptyMetaE (show argName) argVal)) Nothing
     mapArg (Nothing, argVal) = RawObjArr Nothing ArgObj Nothing [] (Just (Just argVal, Nothing, emptyMetaE "noArg" argVal)) Nothing
@@ -62,7 +62,7 @@ applyRawEIArgs base args = case base of
   (RawTupleApply m base' baseArgs) -> RawTupleApply m base' (baseArgs ++ args')
   _ -> RawTupleApply (emptyMetaE "app" base) (emptyMetaE "base" base, base) args'
   where
-    args' = map mapArg args
+    args' = map ((False,) . mapArg) args
     mapArg :: (PExpr, IArg RawExpr) -> RawObjArr RawExpr ()
     mapArg (argName, IArgE argVal) = RawObjArr (Just argName) ArgObj Nothing [] (Just (Just argVal, Nothing, emptyMetaE (show argName) argVal)) Nothing
     mapArg (argName, IArgM argM) = RawObjArr (Just argName) ArgObj Nothing [] (Just (Nothing, Nothing, argM)) Nothing
@@ -116,6 +116,9 @@ applyExprVars = foldl addVar
 
 rawAnon :: PExpr
 rawAnon = rawVal anonStr
+
+rawInObjArr :: Bool -> PExpr -> PObjArr
+rawInObjArr withArr e = RawObjArr (Just e) FunctionObj Nothing [] (if withArr then Just (Nothing, Nothing, emptyMetaN) else Nothing) Nothing
 
 rawOutObjArr :: PExpr -> PObjArr
 rawOutObjArr e = RawObjArr Nothing FunctionObj Nothing [] (Just (Just e, Nothing, emptyMetaN)) Nothing

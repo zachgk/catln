@@ -464,7 +464,8 @@
                 ( Value /val -> /Data/Primitive/Integer = /abs
                     ( Value /x -> /Data/Primitive/Integer = CInt 0 )
                 ) ( Value /this -> TVArg /io = Value /io )
-            , /abs.$e48eb7 ( Value /x ) ( Value /$e48eb7-arg= Hole TopType HoleActive Nothing@Value /Catln/Else ) ->
+            , /abs.$ 866 a3c ( Value /x )
+                ( Value /$ 866 a3c-arg= Hole TopType HoleActive Nothing@Value /Catln/Else ) ->
                 ( /Data/Primitive/Integer | /operator*
                     ( /l=/Data/Primitive/Integer
                     , /r=/Data/Primitive/Integer
@@ -473,9 +474,10 @@
                 ( Value /l -> /Data/Primitive/Integer = /operator-
                     ( Value /a -> /Data/Primitive/Integer = CInt 1 )
                 ) ( Value /r -> TVArg /x = Value /x )
-            , /abs.$e48eb7 ( Value /x ) ( Value /$e48eb7-arg= Hole TopType HoleActive Nothing@Value /Catln/Then ) -> TVArg /x = Value /x
-            , /abs ( Value /x -> /Data/Primitive/Integer ) = /abs.$e48eb7 ( Value /x -> TVArg /x = Value /x )
-                ( Value /$e48eb7-arg ->
+            , /abs.$ 866 a3c ( Value /x )
+                ( Value /$ 866 a3c-arg= Hole TopType HoleActive Nothing@Value /Catln/Then ) -> TVArg /x = Value /x
+            , /abs ( Value /x -> /Data/Primitive/Integer ) = /abs.$ 866 a3c ( Value /x -> TVArg /x = Value /x )
+                ( Value /$ 866 a3c-arg ->
                     ( /Catln/ThenElse/fromBool ( /v=∀/Data/Primitive/Boolean ) | /Catln/Else | /Catln/Then ) = /Catln/ThenElse/fromBool
                     ( Value /v -> ∀/Data/Primitive/Boolean = /operator>= ( Value /l -> TVArg /x = Value /x )
                         ( Value /r -> /Data/Primitive/Integer = CInt 0 )
