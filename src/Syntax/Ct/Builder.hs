@@ -114,6 +114,9 @@ applyExprVars = foldl addVar
   where
     addVar b (varName, varVal) = VarApply (emptyMetaE "varBase" b) b varName varVal
 
+rawAnon :: PExpr
+rawAnon = rawVal anonStr
+
 rawOutObjArr :: PExpr -> PObjArr
 rawOutObjArr e = RawObjArr Nothing FunctionObj Nothing [] (Just (Just e, Nothing, emptyMetaN)) Nothing
 

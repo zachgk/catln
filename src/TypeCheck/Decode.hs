@@ -57,7 +57,7 @@ toExpr env (EWhere base cond) = do
   base' <- toExpr env base
   cond' <- toExpr env cond
   return $ EWhere base' cond'
-toExpr env (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaArr, oaAnnots}) = do
+toExpr env expr@(TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaArr, oaAnnots}) = do
   let pos = getMetaPos m
   m' <- toMeta env m "TupleApply_M"
   baseM' <- toMeta env baseM "TupleApply_baseM"
@@ -65,14 +65,16 @@ toExpr env (TupleApply m (baseM, baseExpr) arg@ObjArr{oaObj, oaArr, oaAnnots}) =
   oaObj' <- case oaObj of
     Just joaObj -> Just <$> toExpr env joaObj
     Nothing -> do
-      argName <- case (getMetaType baseM', getMetaType m') of
+      mArgName <- case (getMetaType baseM', getMetaType m') of
         (UnionType basePartialLeafs, UnionType partialLeafs) -> case (splitUnionType basePartialLeafs, splitUnionType partialLeafs) of
           ([PartialType{ptArgs=basePartialArgs}], [PartialType{ptArgs}]) -> case S.toList $ S.difference (H.keysSet ptArgs) (H.keysSet basePartialArgs) of
-            [argN] -> return argN
-            _ -> TypeCheckResE [GenTypeCheckError pos "Failed argument inference due to multiple arg options"]
-          (base, result) -> TypeCheckResE [GenTypeCheckError pos $ printf "Failed argument inference due to multiple types with base %s and result %s" (show base) (show result)]
-        (baseM'', m'') -> TypeCheckResE [GenTypeCheckError pos $ printf "Failed argument inference due to non UnionType in baseMeta %s or meta %s" (show baseM'') (show m'')]
-      return $ Just $ Value (mWithType (singletonType $ partialToType argName) $ emptyMetaM "inferArg" m') (pkName argName)
+            [argN] -> return $ Just argN
+            opts -> TypeCheckResult [GenTypeCheckError pos $ printf "Failed argument inference due to multiple arg options %s in %s" (show opts) (show expr)] Nothing
+          (base, result) -> TypeCheckResult [GenTypeCheckError pos $ printf "Failed argument inference due to multiple types with base %s and result %s in %s" (show base) (show result) (show expr)] Nothing
+        (baseM'', m'') -> TypeCheckResult [GenTypeCheckError pos $ printf "Failed argument inference due to non UnionType in baseMeta %s or meta %s in %s" (show baseM'') (show m'') (show expr)] Nothing
+      return $ case mArgName of
+        Just argName -> Just $ Value (mWithType (singletonType $ partialToType argName) $ emptyMetaM "inferArg" m') (pkName argName)
+        Nothing -> Nothing -- Failed argument inference, return nothing and error out
   oaArr' <- forM oaArr $ \(oaArrExpr, oaArrM) -> do
     oaArrExpr' <- mapM (toExpr env) oaArrExpr
     oaArrM' <- toMeta env oaArrM "TupleApply_argM"

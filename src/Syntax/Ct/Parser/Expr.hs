@@ -118,7 +118,7 @@ parenExpr = do
   return $ case res of
     ([RawObjArr{roaObj=Just e', roaArr=Nothing}], Nothing) -> RawParen e' -- Paren
     (args, _) -> do -- Tuple
-      let base = RawValue emptyMetaN ""
+      let base = rawAnon
       RawTupleApply (emptyMeta pos1 pos2) (labelPosM "arg" $ getExprMeta base, base) args
 
 pEndOfLine :: Parser ()

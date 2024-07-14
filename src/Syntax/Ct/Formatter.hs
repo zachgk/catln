@@ -47,6 +47,7 @@ formatExpr (RawCExpr _ (CInt c)) = show c
 formatExpr (RawCExpr _ (CFloat c)) = show c
 formatExpr (RawCExpr _ (CStr c)) = show c
 formatExpr (RawCExpr _ (CChar c)) = show c
+formatExpr (RawValue _ n) | n == anonStr = ""
 formatExpr (RawValue _ n) = n
 formatExpr (RawMacroValue _ n) = "${" ++ n ++ "}"
 formatExpr (RawApplyExpr _ n) = "a\"" ++ formatRawApply n ++ "\""

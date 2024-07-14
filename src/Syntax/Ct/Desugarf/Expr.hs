@@ -141,8 +141,12 @@ semiDesExpr sdm obj (RawVarsApply m be vs) = foldr aux be' vs
               Nothing -> error $ printf "No type name found in varExpr %s (type %s)" (show varExpr) (show $ exprToType varExpr)
         varVal = maybe emptyMetaN thr3 roaArr
     aux roa _ = error $ printf "Unexpected semiDesExpr var: %s" (show roa)
-semiDesExpr sdm obj@Just{} (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawArgs (RawValue emptyMetaN "/Context") ((Just $ partialKey "value", be) : map (\ctx -> (Nothing, fromJust $ roaObj ctx)) ctxs)
-semiDesExpr sdm obj@Nothing (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawIArgs (RawValue emptyMetaN "/Context") ((partialKey "value", IArgE be) : map (\ctx -> (partialToKey $ exprToPartialType $ fromJust $ roaObj ctx, IArgM $ thr3 $ fromJust $ roaArr ctx)) ctxs)
+semiDesExpr sdm obj@Just{} (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawEArgs (RawValue emptyMetaN "/Context") ((Just $ rawVal "value", be) : map mapCtx ctxs)
+  where
+    mapCtx ctx = (Just $ rawVal $ snd $ desugarTheExpr $ fromJust $ roaObj ctx, fromJust $ roaObj ctx)
+semiDesExpr sdm obj@Nothing (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawIArgs (RawValue emptyMetaN "/Context") ((partialKey "value", IArgE be) : map mapCtx ctxs)
+  where
+    mapCtx ctx = (partialToKey $ exprToPartialType $ fromJust $ roaObj ctx, IArgM $ thr3 $ fromJust $ roaArr ctx)
 semiDesExpr sdm obj (RawParen e) = semiDesExpr sdm obj e
 semiDesExpr sdm obj@Nothing (RawMethod (RawTheExpr n) method) = semiDesExpr sdm' obj (method `applyRawIArgs` [(partialKey "this", IArgM (Meta (exprToType n) (getMetaPos $ getExprMeta n) emptyMetaDat))]) -- Parse type methods like :Integer.toString, Only for input expressions
   where

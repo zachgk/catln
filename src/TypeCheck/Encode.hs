@@ -248,7 +248,7 @@ fromObjArr est env1 oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   return (oa', env5)
 
 fromObjectMap :: FEnv -> PObjArr -> TypeCheckResult (VObjArr, FEnv)
-fromObjectMap env1 oa@ObjArr{oaBasis, oaAnnots, oaObj=Just obj, oaArr} = do
+fromObjectMap env1 oa@ObjArr{oaAnnots, oaObj=Just obj, oaArr} = do
   let inEst = EncodeIn
   (obj', env2) <- fromExpr inEst (startConstrainBlock env1) obj
 
@@ -256,14 +256,13 @@ fromObjectMap env1 oa@ObjArr{oaBasis, oaAnnots, oaObj=Just obj, oaArr} = do
   (oaAnnots', env3) <- mapMWithFEnv env2 (fromExpr est) oaAnnots
   oaArrEnv' <- forM oaArr $ \(maybeArrE, arrM) -> do
     (mUserReturn', env4) <- fromMeta env3 BAct est arrM (printf "Specified result from %s" (show $ exprPath obj'))
-    (maybeArrE'@(_, arrM'), env5a) <- case maybeArrE of
+    (maybeArrE', env5a) <- case maybeArrE of
       Just arrE -> do
         (vExpr, env4a) <- fromExpr est env4 arrE
         (arrM', env4b) <- fromMeta env4a BAct est (Meta PTopType (labelPos "res" $ getMetaPos arrM) emptyMetaDat) $ printf "Arrow result from %s" (show $ exprPath obj')
         return ((Just vExpr, arrM'), addConstraints env4b [ArrowTo 32 (getExprMeta vExpr) arrM', ArrowTo 33 (getExprMeta vExpr) mUserReturn', NoReturnArg 33 arrM'])
       Nothing -> return ((Nothing, mUserReturn'), env4)
-    let env5b = addConstraints env5a [EqPoints 34 (getExprMeta obj') arrM' | oaBasis == TypeObj]
-    return (maybeArrE', env5b)
+    return (maybeArrE', env5a)
   let oaArr' = fmap fst oaArrEnv'
   let env5 = maybe env3 snd oaArrEnv'
   let oa' = oa{oaObj=Just obj', oaArr=oaArr', oaAnnots=oaAnnots'}

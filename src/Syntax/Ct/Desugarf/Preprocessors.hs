@@ -197,7 +197,7 @@ nestedDeclPreprocessor (oa, subStatements) = DPPStatements <$> aux [] subStateme
     aux accStmts [RawStatementTree (RawDeclStatement RawObjArr{roaObj=Just e, roaArr=Nothing}) []] = return [RawStatementTree (RawDeclStatement oa{roaArr=Just (Just e, Nothing, emptyMetaE "arrM" e)}) accStmts] -- expr statement
     aux accStmts (s@(RawStatementTree RawDeclStatement{} _) : restStmt) = aux (s:accStmts) restStmt
     aux accStmts (s@(RawStatementTree RawAnnot{} _) : restStmt) = aux (s:accStmts) restStmt
-    aux accStmts [] = return [RawStatementTree (RawDeclStatement oa{roaArr=Just (Just $ rawVal "", Nothing, emptyMetaN)}) accStmts]
+    aux accStmts [] = return [RawStatementTree (RawDeclStatement oa{roaArr=Just (Just rawAnon, Nothing, emptyMetaN)}) accStmts]
     aux accStmts (RawStatementTree (RawBindStatement roa@RawObjArr{roaObj=Just objExpr, roaArr=Just (Just arrExpr, _, arrM)}) []:restStmt) = return [RawStatementTree (RawDeclStatement oa{roaArr=Just (Just subExpr, Nothing, arrM)}) (accStmts ++ [subDef])]
       where
         subName = "$" ++ take 6 (printf "%08x" (hash roa))

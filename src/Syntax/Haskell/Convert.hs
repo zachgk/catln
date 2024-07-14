@@ -71,7 +71,7 @@ convertTypeToExpr flags mb (HsListTy _ t) = case mb of
   Nothing -> t'
   where
     t' = rawVal ctListType `applyRawExprVars` [(partialKey "T", emptyMetaT $ exprToType $ convertTypeToExpr flags Nothing $ unLoc t)]
-convertTypeToExpr flags _ (HsTupleTy _ _ tp) = rawVal "" `applyRawArgs` map ((Just $ partialKey "C",) . convertTypeToExpr flags Nothing . unLoc) tp
+convertTypeToExpr flags _ (HsTupleTy _ _ tp) = rawAnon `applyRawArgs` map ((Just $ partialKey "C",) . convertTypeToExpr flags Nothing . unLoc) tp
 convertTypeToExpr flags _ p@HsSumTy{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
 convertTypeToExpr flags _ p@HsOpTy{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
 convertTypeToExpr flags i (HsParTy _ t) = convertTypeToExpr flags i $ unLoc t
@@ -186,7 +186,7 @@ convertPattern flags mb (TuplePat _ pats _) = case mb of
   Just b  -> b `applyRawArgs` [(Nothing, tuple')]
   Nothing -> tuple'
   where
-    tuple' = rawVal "" `applyRawArgs` map ((Nothing,) . convertPattern flags Nothing . unLoc) pats
+    tuple' = rawAnon `applyRawArgs` map ((Nothing,) . convertPattern flags Nothing . unLoc) pats
 convertPattern flags _ p@SumPat{} = error $ printf "Convert unsupported pattern:\n%s" (showSDoc flags $ ppr p)
 convertPattern flags (Just base) (ConPatIn i det) = base `applyRawArgs` [(Just $ partialKey $ convertIdP flags $ unLoc i, convertPatDetails flags (Just base) det)]
 convertPattern flags Nothing (ConPatIn i det) = convertPatDetails flags (Just $ rawVal $ convertIdP flags $ unLoc i) det
@@ -244,7 +244,7 @@ convertExpr flags base (SectionL _ fun arg) = (Just base', fun' `applyRawArgs` [
     sectionArg = (Nothing, rawVal "sectionArg")
     base' = case base of
       Just b  -> b `applyRawArgs` [sectionArg]
-      Nothing -> rawVal "" `applyRawArgs` [sectionArg]
+      Nothing -> rawAnon `applyRawArgs` [sectionArg]
 convertExpr flags base (SectionR _ fun arg) = (Just base', fun' `applyRawArgs` [sectionArg, (Nothing, arg')], [])
   where
     fun' = convertSimpleExpr "SectionRFun" flags $ unLoc fun
@@ -252,10 +252,10 @@ convertExpr flags base (SectionR _ fun arg) = (Just base', fun' `applyRawArgs` [
     sectionArg = (Nothing, rawVal "sectionArg")
     base' = case base of
       Just b  -> b `applyRawArgs` [sectionArg]
-      Nothing -> rawVal "" `applyRawArgs` [sectionArg]
+      Nothing -> rawAnon `applyRawArgs` [sectionArg]
 convertExpr flags base (ExplicitTuple _ t _) = (fmap mapBase base, e', concat subs)
   where
-    e' = rawVal "" `applyRawArgs` map (Nothing,) outT
+    e' = rawAnon `applyRawArgs` map (Nothing,) outT
     enumT = zip [0..] (map unLoc t)
     (_, outT, subs) = unzip3 $ map (uncurry convertTupleArg) enumT
 

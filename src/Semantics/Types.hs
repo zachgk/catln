@@ -20,6 +20,7 @@
 
 module Semantics.Types where
 
+import           CtConstants
 import           Data.Aeson
 import           Data.Bifunctor      (Bifunctor (bimap, first))
 import           Data.Either
@@ -179,12 +180,13 @@ instance Show TypePredicates where
   show (PredsNot p)  = printf "!(%s)" (show p)
 
 instance Show PartialType where
-  show (PartialType ptName ptVars ptArgs ptPreds ptArgMode) = concat [ptName, showTypeVars ptVars, showArgs ptArgs, showPreds ptPreds, showPtArgMode]
+  show (PartialType ptName ptVars ptArgs ptPreds ptArgMode) = concat [showName, showTypeVars ptVars, showArgs ptArgs, showPreds ptPreds, showPtArgMode]
     where
+      showName = if ptName == anonStr then "" else ptName
       showArg (argName, argVal) = show argName ++ "=" ++ show argVal
       showTypeVars vars | H.null vars = ""
       showTypeVars vars = printf "[%s]" (intercalate ", " $ map showArg $ H.toList vars)
-      showArgs args | ptName == "" && H.null args = "()"
+      showArgs args | ptName == anonStr && H.null args = "()"
       showArgs args | H.null args = ""
       showArgs args = printf "(%s)" (intercalate ", " $ map showArg $ H.toList args)
       showPreds PredsNone    = ""

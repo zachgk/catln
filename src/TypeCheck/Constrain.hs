@@ -43,7 +43,7 @@ setScheme env@FEnv{feTypeEnv} con (oldCon, newCon) p scheme baseMsg = setDescrip
     checkScheme s = s
 
     msg :: String -> String -> String
-    msg desc problem = printf "Scheme failed check at setScheme %s(point %s): \n\t %s - %s \n\t Constraining %s to %s" baseMsg (show p) problem desc (show oldCon) (show newCon)
+    msg desc problem = printf "Scheme failed check at setScheme %s(point %s): \n\t %s - %s \n\t Constraining:%s\n\t\tto: %s\n" baseMsg (show p) problem desc (show oldCon) (show newCon)
 
 setSchemeAct :: FEnv -> VConstraint -> (RConstraint, RConstraint) -> VarMeta -> Type -> String -> FEnv
 setSchemeAct env con cons p t msg = setScheme env con cons p scheme' ("Act " ++ msg)
