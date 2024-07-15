@@ -81,6 +81,11 @@ getMetaPos (Meta _ pos _) = pos
 showCodeRange :: CodeRangeDat -> String
 showCodeRange (start, end, _) = printf "%s:%d:%d-%d:%d" (sourceName start) (unPos $ sourceLine start) (unPos $ sourceColumn start) (unPos $ sourceLine end) (unPos $ sourceColumn end)
 
+data EApp e m
+  = EAppArg (ObjArr e m)
+  | EAppSpread (e m)
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+
 -- Expr after desugar
 data Expr m
   = CExpr (Meta m) Constant
@@ -88,7 +93,7 @@ data Expr m
   | HoleExpr (Meta m) Hole
   | AliasExpr (Expr m) (Expr m) -- ^ AliasExpr baseExpr aliasExpr
   | EWhere (Expr m) (Expr m) -- ^ base cond
-  | TupleApply (Meta m) (Meta m, Expr m) (ObjArr Expr m)
+  | TupleApply (Meta m) (Meta m, Expr m) (EApp Expr m)
   | VarApply (Meta m) (Expr m) TypeVarName (Meta m)
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
@@ -126,13 +131,16 @@ instance Show m => Show (Expr m) where
   show (HoleExpr m hole) = printf "Hole %s %s" (show m) (show hole)
   show (AliasExpr base alias) = printf "%s@%s" (show base) (show alias)
   show (EWhere base cond) = printf "%s | %s" (show base) (show cond)
-  show (TupleApply _ (_, baseExpr) arg) = printf "%s(%s)" baseExpr' (show arg)
+  show (TupleApply _ (_, baseExpr) arg) = printf "%s(%s)" baseExpr' showArg
     where
       baseExpr' = case baseExpr of
         Value _ funName -> funName
         TupleApply{}    -> show baseExpr
         VarApply{}      -> show baseExpr
         _               -> printf "(%s)" (show baseExpr)
+      showArg = case arg of
+        EAppArg a    -> show a
+        EAppSpread a -> ".." ++ show a
   show (VarApply _ baseExpr varName varVal) = printf "%s[%s : %s]" baseExpr' (show varName) (show varVal)
     where
       baseExpr' = case baseExpr of
@@ -201,7 +209,8 @@ instance ExprClass Expr where
   exprAppliedArgs (Value _ _)               = []
   exprAppliedArgs CExpr{}                   = []
   exprAppliedArgs HoleExpr{}                = []
-  exprAppliedArgs (TupleApply _ (_, be) ae) = ae : exprAppliedArgs be
+  exprAppliedArgs (TupleApply _ (_, be) (EAppArg ae)) = ae : exprAppliedArgs be
+  exprAppliedArgs (TupleApply _ (_, be) (EAppSpread ae)) = exprAppliedArgs ae ++ exprAppliedArgs be
   exprAppliedArgs (VarApply _ e _ _)        = exprAppliedArgs e
   exprAppliedArgs (AliasExpr b _)           = exprAppliedArgs b
   exprAppliedArgs (EWhere b _)              = exprAppliedArgs b
@@ -218,10 +227,11 @@ instance ExprClass Expr where
   exprVarArgs HoleExpr{} = H.empty
   exprVarArgs (AliasExpr base n) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, getExprMeta base)] (exprVarArgs base)
   exprVarArgs (EWhere base _) = exprVarArgs base
-  exprVarArgs (TupleApply _ (_, be) ObjArr{oaObj=Just n, oaArr=Just (Nothing, arrM)}) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, arrM)] (exprVarArgs be)
-  exprVarArgs (TupleApply _ _ ObjArr{oaObj, oaArr=Just (Nothing, _)}) = error $ printf "Unexpected unhandled obj type in exprVarArgs: %s" (show oaObj)
-  exprVarArgs (TupleApply _ (_, be) ObjArr{oaArr=Just (Just e, _)}) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)
-  exprVarArgs (TupleApply _ _ ObjArr{oaObj, oaArr=Nothing}) = error $ printf "Not yet implemented: %s" (show oaObj)
+  exprVarArgs (TupleApply _ (_, be) (EAppArg ObjArr{oaObj=Just n, oaArr=Just (Nothing, arrM)})) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, arrM)] (exprVarArgs be)
+  exprVarArgs (TupleApply _ _ (EAppArg ObjArr{oaObj, oaArr=Just (Nothing, _)})) = error $ printf "Unexpected unhandled obj type in exprVarArgs: %s" (show oaObj)
+  exprVarArgs (TupleApply _ (_, be) (EAppArg ObjArr{oaArr=Just (Just e, _)})) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)
+  exprVarArgs (TupleApply _ _ (EAppArg ObjArr{oaObj, oaArr=Nothing})) = error $ printf "Not yet implemented: %s" (show oaObj)
+  exprVarArgs (TupleApply _ _ (EAppSpread arg)) = error $ printf "Not yet implemented: %s" (show arg)
   exprVarArgs (VarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar n) [(Value (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)])
 
 class ObjArrClass oa where

@@ -58,8 +58,9 @@ exprWhereConds Value{} = []
 exprWhereConds HoleExpr{} = []
 exprWhereConds (AliasExpr b _) = exprWhereConds b
 exprWhereConds (EWhere _ c) = [c]
-exprWhereConds (TupleApply _ (_, b) ObjArr{oaArr=Nothing}) = exprWhereConds b
-exprWhereConds (TupleApply _ (_, b) ObjArr{oaArr=Just (me, _)}) = exprWhereConds b ++ maybe [] exprWhereConds me
+exprWhereConds (TupleApply _ (_, b) (EAppArg ObjArr{oaArr=Nothing})) = exprWhereConds b
+exprWhereConds (TupleApply _ (_, b) (EAppArg ObjArr{oaArr=Just (me, _)})) = exprWhereConds b ++ maybe [] exprWhereConds me
+exprWhereConds (TupleApply _ (_, b) (EAppSpread a)) = exprWhereConds b ++ exprWhereConds a
 exprWhereConds (VarApply _ b _ _) = exprWhereConds b
 
 exprWithMetaType :: (Show m) => Type -> Expr m -> Expr m
@@ -90,12 +91,12 @@ exprVarArgsWithSrc typeEnv (AliasExpr base n) src = H.insert (TVArg $ inExprSing
 exprVarArgsWithSrc typeEnv (VarApply _ b n m) src = H.insert (TVVar n) ([(Value (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)], H.lookupDefault PTopType n (ptVars src)) $ exprVarArgsWithSrc typeEnv b src
 exprVarArgsWithSrc typeEnv (TupleApply _ (_, be) arg) src = H.union (exprVarArgsWithSrc typeEnv be src) (fromArg arg)
   where
-    fromArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)} = case typeGetArg (inExprSingleton obj) src of
+    fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)}) = case typeGetArg (inExprSingleton obj) src of
       Just (UnionType srcArg) -> mergeMaps $ map (exprVarArgsWithSrc typeEnv e) $ splitUnionType srcArg
       Just t@TopType{} -> (,t) <$> exprVarArgs e
       _ -> H.empty
-    fromArg ObjArr{oaArr=Just (Just e, _)} = exprVarArgsWithSrc typeEnv e src
-    fromArg ObjArr {oaObj=Just obj, oaArr=Just (Nothing, arrM)} = H.singleton (TVArg $ inExprSingleton obj) ([(obj, arrM)], fromMaybe (getMetaType arrM) (typeGetArg (inExprSingleton obj) src))
+    fromArg (EAppArg ObjArr{oaArr=Just (Just e, _)}) = exprVarArgsWithSrc typeEnv e src
+    fromArg (EAppArg ObjArr {oaObj=Just obj, oaArr=Just (Nothing, arrM)}) = H.singleton (TVArg $ inExprSingleton obj) ([(obj, arrM)], fromMaybe (getMetaType arrM) (typeGetArg (inExprSingleton obj) src))
     fromArg oa = error $ printf "Invalid oa %s" (show oa)
 
     mergeMaps [] = H.empty

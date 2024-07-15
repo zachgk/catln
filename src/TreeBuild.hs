@@ -196,10 +196,12 @@ toTExpr env os (EWhere b a) = do
   b' <- toTExpr env os b
   a' <- toTExpr env os a
   return $ TWhere b' a'
-toTExpr env os (TupleApply m (bm, be) oa) = do
+toTExpr env os (TupleApply m (bm, be) arg) = do
   be' <- toTExprDest env os be bm
-  oa' <- toTEObjArr env os oa
-  return $ TTupleApply m (bm, be') oa'
+  arg' <- case arg of
+    EAppArg a    -> EAppArg <$> toTEObjArr env os a
+    EAppSpread a -> EAppSpread <$> toTExpr env os a
+  return $ TTupleApply m (bm, be') arg'
 toTExpr env os (VarApply m b n v) = do
   b' <- toTExpr env os b
   return $ TVarApply m b' n v

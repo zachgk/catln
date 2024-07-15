@@ -42,7 +42,9 @@ scopeSubDeclFunNamesInExpr prefix replaceNames (EWhere b a) = EWhere (scopeSubDe
 scopeSubDeclFunNamesInExpr prefix replaceNames (TupleApply m (bm, bExpr) arg) = TupleApply m (bm, bExpr') arg'
   where
     bExpr' = scopeSubDeclFunNamesInExpr prefix replaceNames bExpr
-    arg' = mapTupleArgValue (scopeSubDeclFunNamesInExpr prefix replaceNames) arg
+    arg' = case arg of
+      EAppArg a -> EAppArg $ mapTupleArgValue (scopeSubDeclFunNamesInExpr prefix replaceNames) a
+      EAppSpread a -> error $ printf "Not yet implemented %s" (show a)
 scopeSubDeclFunNamesInExpr prefix replaceNames (VarApply m bExpr varName varVal) = VarApply m bExpr' varName varVal
   where
     bExpr' = scopeSubDeclFunNamesInExpr prefix replaceNames bExpr
@@ -103,7 +105,9 @@ currySubFunctionsUpdateExpr toUpdate parentArgs (EWhere b a) = EWhere (currySubF
 currySubFunctionsUpdateExpr toUpdate parentArgs (TupleApply tm (tbm, tbe) targ) = TupleApply tm (tbm, tbe') targ'
   where
     tbe' = currySubFunctionsUpdateExpr toUpdate parentArgs tbe
-    targ' = mapTupleArgValue (currySubFunctionsUpdateExpr toUpdate parentArgs) targ
+    targ' = case targ of
+      EAppArg a -> EAppArg $ mapTupleArgValue (currySubFunctionsUpdateExpr toUpdate parentArgs) a
+      EAppSpread a -> error $ printf "Not yet implemented: %s" (show a)
 currySubFunctionsUpdateExpr toUpdate parentArgs (VarApply tm tbe tVarName tVarVal) = VarApply tm tbe' tVarName tVarVal
   where
     tbe' = currySubFunctionsUpdateExpr toUpdate parentArgs tbe

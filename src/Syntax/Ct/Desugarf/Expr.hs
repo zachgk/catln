@@ -34,7 +34,11 @@ desExpr (Value m n) = Value m n
 desExpr (HoleExpr m h) = HoleExpr m h
 desExpr (AliasExpr b a) = AliasExpr (desExpr b) (desExpr a)
 desExpr (EWhere b a) = EWhere (desExpr b) (desExpr a)
-desExpr (TupleApply m (bm, be) arg) = TupleApply m (bm, desExpr be) (mapTupleArgValue desExpr arg)
+desExpr (TupleApply m (bm, be) arg) = TupleApply m (bm, desExpr be) arg'
+  where
+    arg' = case arg of
+      EAppArg a    -> EAppArg $ mapTupleArgValue desExpr a
+      EAppSpread a -> EAppSpread $ desExpr a
 desExpr (VarApply m be varName varVal) = VarApply m (desExpr be) varName varVal
 
 -- | Updates the types based on the format as they are fixed for inputs (due to arrows this does not work for output expressions)
@@ -54,17 +58,17 @@ desObjPropagateTypes mainExpr@(TupleApply m (bm, be) tupleApplyArgs) = do
   let be' = desObjPropagateTypes be
   let bm' = mWithType (getMetaType $ getExprMeta be') bm
   case tupleApplyArgs of
-      arg@ObjArr{oaObj=Just argObj, oaArr=Just (Just argVal, argM)} -> do
+      (EAppArg arg@ObjArr{oaObj=Just argObj, oaArr=Just (Just argVal, argM)}) -> do
         let argName = inExprSingleton argObj
         let argVal' = desObjPropagateTypes argVal
         let tp' = typeSetArg argName (getExprType argVal') (getExprType be')
         let m' = mWithType tp' m
-        TupleApply m' (bm', be') arg{oaArr=Just (Just argVal', argM)}
-      ObjArr{oaObj=Just argObj, oaArr=Just (Nothing, argM)} -> do
+        TupleApply m' (bm', be') (EAppArg arg{oaArr=Just (Just argVal', argM)})
+      (EAppArg ObjArr{oaObj=Just argObj, oaArr=Just (Nothing, argM)}) -> do
         let argName = inExprSingleton argObj
         let tp' = typeSetArg argName (getMetaType argM) (getExprType be')
         let m' = mWithType tp' m
-        TupleApply m' (bm', be') (mkIObjArr argM argName)
+        TupleApply m' (bm', be') (EAppArg $ mkIObjArr argM argName)
       _ -> error $ printf "Unexpected ObjArr in desObjPropagateTypes (probably because arrow only ObjArr): %s" (show mainExpr)
 desObjPropagateTypes (VarApply m be varName varVal) = VarApply m' be' varName varVal
   where
@@ -104,7 +108,7 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm''
     be' = semiDesExpr sdm obj be
     aux :: (ParseMeta, PSExpr) -> (Int, (Bool, PObjArr)) -> (ParseMeta, PSExpr)
     aux (m, e) (argIndex, (False, rarg@RawObjArr{roaArr=Just (Just (RawTupleApply _ (_, RawValue _ "/operator::") [(False, RawObjArr{roaArr=(Just newArr)}), (False, RawObjArr{roaArr=(Just (Just tp, _, _))})]), _, _)})) = case aux (m, e) (argIndex, (False, rarg{roaArr=Just newArr})) of
-      (tam, TupleApply tamm tab taoa@ObjArr{oaArr=Just (tboaArrE, tboaArrM)}) -> (tam, TupleApply tamm tab taoa{oaArr=Just (tboaArrE, mWithType (exprToType tp) tboaArrM)})
+      (tam, TupleApply tamm tab (EAppArg taoa@ObjArr{oaArr=Just (tboaArrE, tboaArrM)})) -> (tam, TupleApply tamm tab (EAppArg taoa{oaArr=Just (tboaArrE, mWithType (exprToType tp) tboaArrM)}))
       _ -> error $ printf "Unexpected result in semiDesExpr TupleApply aux"
     aux (m, e) (argIndex, (False, rarg@RawObjArr{roaObj=Just (RawTheExpr v), roaArr})) = aux (m, e) (argIndex, (False, rarg{roaObj=Just (RawValue (emptyMetaM "the" vM) vN), roaArr=roaArr'}))
       where
@@ -112,7 +116,7 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm''
         roaArr' = case roaArr of
           Just (arrE, _, _) -> Just (arrE, Nothing, vM)
           Nothing           -> Just (Nothing, Nothing, vM)
-    aux (m, e) (_argIndex, (False, rarg)) = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) arg'')
+    aux (m, e) (_argIndex, (False, rarg)) = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (EAppArg arg''))
       where
         [arg] = desObjArr rarg
 

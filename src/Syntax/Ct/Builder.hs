@@ -94,7 +94,7 @@ exprVal = Value m
 applyExprOArgs :: (MetaDat m, Show m) => Expr m -> [(Maybe ArgName, Expr m)] -> Expr m
 applyExprOArgs = foldl addArg
   where
-    addArg b a = TupleApply (emptyMetaE "app" b) (emptyMetaE "base" b, b) (mapArg a)
+    addArg b a = TupleApply (emptyMetaE "app" b) (emptyMetaE "base" b, b) (EAppArg $ mapArg a)
       where
         mapArg (Just argName, argVal) = ObjArr (Just (Value (emptyMetaE (show argName) b) (pkName argName))) ArgObj Nothing [] (Just (Just argVal, emptyMetaE "argRes" argVal))
         mapArg (Nothing, argVal) = ObjArr Nothing ArgObj Nothing [] (Just (Just argVal, emptyMetaE "argRes" argVal))
@@ -102,7 +102,7 @@ applyExprOArgs = foldl addArg
 applyExprIArgs :: Expr () -> [(ArgName, IArg Expr)] -> Expr ()
 applyExprIArgs = foldl addArg
   where
-    addArg b a = TupleApply (emptyMetaE "app" b) (emptyMetaE "base" b, b) (mapArg a)
+    addArg b a = TupleApply (emptyMetaE "app" b) (emptyMetaE "base" b, b) (EAppArg $ mapArg a)
       where
         mapArg :: (ArgName, IArg Expr) -> ObjArr Expr ()
         mapArg (argName, IArgE argVal) = ObjArr (Just (Value (emptyMetaE (show argName) b) (pkName argName))) ArgObj Nothing [] (Just(Just argVal, emptyMetaE "argRes" argVal))

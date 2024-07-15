@@ -27,14 +27,14 @@ ioArg :: EExpr
 ioArg = Value ioM "io"
 
 eApply :: EExpr -> String -> EExpr -> EExpr
-eApply baseExpr argName argExpr = TupleApply m (getExprMeta baseExpr, baseExpr) (mkIOObjArr (mWithType argExprType $ emptyMetaE "appArg" argExpr) (partialKey argName) argExpr)
+eApply baseExpr argName argExpr = TupleApply m (getExprMeta baseExpr, baseExpr) (EAppArg $ mkIOObjArr (mWithType argExprType $ emptyMetaE "appArg" argExpr) (partialKey argName) argExpr)
   where
     argExprType = getExprType argExpr
     m = Meta (singletonType $ baseType{ptArgs=H.insert (partialKey argName) argExprType baseArgs}) Nothing emptyMetaDat
     baseType@PartialType{ptArgs=baseArgs} = getExprPartialType baseExpr
 
 eApplyM :: EExpr -> String -> EvalMeta -> EExpr
-eApplyM baseExpr argName argM = TupleApply m (getExprMeta baseExpr, baseExpr) (mkIObjArr argM (partialKey argName))
+eApplyM baseExpr argName argM = TupleApply m (getExprMeta baseExpr, baseExpr) (EAppArg $ mkIObjArr argM (partialKey argName))
   where
     argExprType = getMetaType argM
     m = Meta (singletonType $ baseType{ptArgs=H.insert (partialKey argName) argExprType baseArgs}) Nothing emptyMetaDat

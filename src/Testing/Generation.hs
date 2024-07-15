@@ -32,7 +32,7 @@ import           Utils
 genTypeFromExpr :: Prgm Expr () -> Expr () -> Gen PartialType
 genTypeFromExpr _ (CExpr _ c) = return $ constantPartialType c
 genTypeFromExpr _ (Value _ n) = return $ partialVal n
-genTypeFromExpr prgm (TupleApply _ (_, baseExpr) oa) = do
+genTypeFromExpr prgm (TupleApply _ (_, baseExpr) (EAppArg oa)) = do
   base@PartialType{ptArgs=baseArgs} <- genTypeFromExpr prgm baseExpr
   shouldAddArg <- HG.bool
   if shouldAddArg
@@ -125,7 +125,7 @@ genInputExpr = do
     genVar base varName = do
       return $ VarApply emptyMetaN base varName emptyMetaN
     genArg base argName = do
-      return $ TupleApply emptyMetaN (emptyMetaN, base) (ObjArr (Just (Value emptyMetaN argName)) ArgObj Nothing [] (Just (Nothing, emptyMetaN)))
+      return $ TupleApply emptyMetaN (emptyMetaN, base) (EAppArg (ObjArr (Just (Value emptyMetaN argName)) ArgObj Nothing [] (Just (Nothing, emptyMetaN))))
 
 -- | Generates an output expression equivalent to an input expression
 genOutputExpr :: Expr () -> Expr () -> Gen (Expr ())

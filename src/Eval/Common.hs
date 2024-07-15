@@ -232,7 +232,7 @@ data TExpr m
   | THoleExpr (Meta m) Hole
   | TAliasExpr (TExpr m) (TExpr m) -- ^ AliasTExpr baseExpr aliasExpr
   | TWhere (TExpr m) (TExpr m) -- ^ TWhere baseExpr cond
-  | TTupleApply (Meta m) (Meta m, TExpr m) (ObjArr TExpr m)
+  | TTupleApply (Meta m) (Meta m, TExpr m) (EApp TExpr m)
   | TVarApply (Meta m) (TExpr m) TypeVarName (Meta m)
   | TCalls (Meta m) (TExpr m) TCallTree
   deriving (Eq, Generic, Hashable, ToJSON)
@@ -260,7 +260,8 @@ instance ExprClass TExpr where
   maybeExprPathM _                        = Nothing
 
   exprAppliedArgs (TValue _ _) = []
-  exprAppliedArgs (TTupleApply _ (_, be) ae) = ae : exprAppliedArgs be
+  exprAppliedArgs (TTupleApply _ (_, be) (EAppArg ae)) = ae : exprAppliedArgs be
+  exprAppliedArgs (TTupleApply _ (_, be) (EAppSpread ae)) = exprAppliedArgs ae ++ exprAppliedArgs be
   exprAppliedArgs (TVarApply _ e _ _) = exprAppliedArgs e
   exprAppliedArgs (TAliasExpr b _) = exprAppliedArgs b
   exprAppliedArgs (TCalls _ b _) = exprAppliedArgs b
@@ -278,10 +279,11 @@ instance ExprClass TExpr where
   exprVarArgs THoleExpr{} = H.empty
   exprVarArgs (TAliasExpr base n) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, getExprMeta base)] (exprVarArgs base)
   exprVarArgs (TWhere base _) = exprVarArgs base
-  exprVarArgs (TTupleApply _ (_, be) ObjArr{oaObj=Just n, oaArr=Just (Nothing, arrM)}) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, arrM)] (exprVarArgs be)
-  exprVarArgs (TTupleApply _ _ ObjArr{oaObj, oaArr=Just (Nothing, _)}) = error $ printf "Unexpected unhandled obj type in exprVarArgs: %s" (show oaObj)
-  exprVarArgs (TTupleApply _ (_, be) ObjArr{oaArr=Just (Just e, _)}) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)
-  exprVarArgs (TTupleApply _ _ ObjArr{oaObj, oaArr=Nothing}) = error $ printf "Not yet implemented: %s" (show oaObj)
+  exprVarArgs (TTupleApply _ (_, be) (EAppArg ObjArr{oaObj=Just n, oaArr=Just (Nothing, arrM)})) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, arrM)] (exprVarArgs be)
+  exprVarArgs (TTupleApply _ _ (EAppArg ObjArr{oaObj, oaArr=Just (Nothing, _)})) = error $ printf "Unexpected unhandled obj type in exprVarArgs: %s" (show oaObj)
+  exprVarArgs (TTupleApply _ (_, be) (EAppArg ObjArr{oaArr=Just (Just e, _)})) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)
+  exprVarArgs (TTupleApply _ _ (EAppArg ObjArr{oaObj, oaArr=Nothing})) = error $ printf "Not yet implemented: %s" (show oaObj)
+  exprVarArgs (TTupleApply _ _ (EAppSpread arg)) = error $ printf "Not yet implemented: %s" (show arg)
   exprVarArgs (TVarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar n) [(TValue (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)])
   exprVarArgs (TCalls _ b _) = exprVarArgs b
 
@@ -380,14 +382,15 @@ exprArgsWithVal (AliasExpr base n) val = H.insert (exprPath n) val (exprArgsWith
 exprArgsWithVal (VarApply _ b _ _) val = exprArgsWithVal b val
 exprArgsWithVal (TupleApply _ (_, be) arg) val = H.union (exprArgsWithVal be val) (fromArg arg val)
   where
-    fromArg :: (MetaDat m, Show m) => ObjArr Expr m -> Val -> Args
-    fromArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)} (TupleVal _ tupleArgs) = case H.lookup (exprPath obj) tupleArgs of
+    fromArg :: (MetaDat m, Show m) => EApp Expr m -> Val -> Args
+    fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)}) (TupleVal _ tupleArgs) = case H.lookup (exprPath obj) tupleArgs of
       Just val' -> exprArgsWithVal e val'
       Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
-    fromArg ObjArr{oaObj=Nothing, oaArr=Just (Just e, _)} _ = exprArgsWithVal e val
-    fromArg ObjArr{oaObj=Just obj, oaArr=Just (Nothing, _)} (TupleVal _ tupleArgs) = case H.lookup (exprPath obj) tupleArgs of
+    fromArg (EAppArg ObjArr{oaObj=Nothing, oaArr=Just (Just e, _)}) _ = exprArgsWithVal e val
+    fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Nothing, _)}) (TupleVal _ tupleArgs) = case H.lookup (exprPath obj) tupleArgs of
       Just val' -> H.singleton (exprPath obj) val'
       Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
+    fromArg (EAppSpread a) _ = error $ printf "Not yet implemented exprArgsWithVal fromArg of %s and %s" (show a) (show val)
     fromArg oa _ = error $ printf "Invalid exprArgsWithVal fromArg of %s and %s" (show oa) (show val)
 
 -- | Extracts the arguments from a value using a matching expression
@@ -402,14 +405,15 @@ texprArgsWithVal (TAliasExpr base n) val = H.insert (exprPath n) val (texprArgsW
 texprArgsWithVal (TVarApply _ b _ _) val = texprArgsWithVal b val
 texprArgsWithVal (TTupleApply _ (_, be) arg) val = H.union (texprArgsWithVal be val) (fromArg arg val)
   where
-    fromArg :: (MetaDat m, Show m) => ObjArr TExpr m -> Val -> Args
-    fromArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)} (TupleVal _ tupleArgs) = case H.lookup (exprPath obj) tupleArgs of
+    fromArg :: (MetaDat m, Show m) => EApp TExpr m -> Val -> Args
+    fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)}) (TupleVal _ tupleArgs) = case H.lookup (exprPath obj) tupleArgs of
       Just val' -> texprArgsWithVal e val'
       Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
-    fromArg ObjArr{oaObj=Nothing, oaArr=Just (Just e, _)} _ = texprArgsWithVal e val
-    fromArg ObjArr{oaObj=Just obj, oaArr=Just (Nothing, _)} (TupleVal _ tupleArgs) = case H.lookup (exprPath obj) tupleArgs of
+    fromArg (EAppArg ObjArr{oaObj=Nothing, oaArr=Just (Just e, _)}) _ = texprArgsWithVal e val
+    fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Nothing, _)}) (TupleVal _ tupleArgs) = case H.lookup (exprPath obj) tupleArgs of
       Just val' -> H.singleton (exprPath obj) val'
       Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
+    fromArg (EAppSpread a) _ = error $ printf "Not yet defined spread exprArgsWithVal fromArg of %s and %s" (show a) (show val)
     fromArg oa _ = error $ printf "Invalid exprArgsWithVal fromArg of %s and %s" (show oa) (show val)
 texprArgsWithVal (TCalls _ e _) val = texprArgsWithVal e val
 

@@ -81,6 +81,7 @@ mapExprAppliedArg _ _ e@Value{} = e
 mapExprAppliedArg _ _ e@HoleExpr{} = e
 mapExprAppliedArg f argName (AliasExpr base alias) = AliasExpr (mapExprAppliedArg f argName base) alias
 mapExprAppliedArg f argName (EWhere base cond) = EWhere (mapExprAppliedArg f argName base) cond
-mapExprAppliedArg f argName (TupleApply m (bm, be) oa@ObjArr{oaObj=Just an, oaArr=Just (Just aExpr, oaM)}) | argName == inExprSingleton an = TupleApply m (bm, be) oa{oaArr=Just (Just (f aExpr), oaM)}
-mapExprAppliedArg f argName (TupleApply m (bm, be) a) = TupleApply m (bm, mapExprAppliedArg f argName be) a
+mapExprAppliedArg f argName (TupleApply m (bm, be) (EAppArg oa@ObjArr{oaObj=Just an, oaArr=Just (Just aExpr, oaM)})) | argName == inExprSingleton an = TupleApply m (bm, be) (EAppArg oa{oaArr=Just (Just (f aExpr), oaM)})
+mapExprAppliedArg f argName (TupleApply m (bm, be) (EAppArg a)) = TupleApply m (bm, mapExprAppliedArg f argName be) (EAppArg a)
+mapExprAppliedArg _ _ (TupleApply _ _ (EAppSpread _)) = undefined
 mapExprAppliedArg f argName (VarApply m be an av) = VarApply m (mapExprAppliedArg f argName be) an av

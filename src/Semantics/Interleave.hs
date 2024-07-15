@@ -26,8 +26,11 @@ interleaveExpr (TupleApply m (bm, be) arg) = H.unions [
   interleaveM m,
   interleaveM bm,
   interleaveExpr be,
-  interleaveObjArr arg
+  interleaveEApp arg
                                                       ]
+  where
+    interleaveEApp (EAppArg a)    = interleaveObjArr a
+    interleaveEApp (EAppSpread a) = interleaveExpr a
 interleaveExpr (VarApply m be _ argM) = H.unions [
   interleaveM m,
   interleaveExpr be,

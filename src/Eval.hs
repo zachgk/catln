@@ -153,21 +153,24 @@ evalExpr env (TValue m _) = do
 evalExpr _ (THoleExpr m h) = CErr [MkCNote $ GenCErr (getMetaPos m) $ printf "Can't evaluate hole %s" (show h)]
 evalExpr env (TAliasExpr b _) = evalExpr env b
 evalExpr env (TWhere b _) = evalExpr env b
-evalExpr env@Env{evArgs} (TTupleApply _ (_, b) oa@ObjArr{oaObj=Just (TValue _ "/io"), oaArr=Just (Nothing, _)}) = do
+evalExpr env@Env{evArgs} (TTupleApply _ (_, b) (EAppArg oa@ObjArr{oaObj=Just (TValue _ "/io"), oaArr=Just (Nothing, _)})) = do
   (TupleVal n args, env') <- evalExpr env b
   case H.lookup "/io" evArgs of
     Just io -> return (TupleVal n (H.insert (oaObjPath oa) io args), env')
     Nothing -> error $ printf "evalExpr with no io"
-evalExpr env (TTupleApply _ (_, b) oa) = do
+evalExpr env (TTupleApply _ (_, b) arg) = do
   (TupleVal n args, env') <- evalExpr env b
-  (v, env'') <- case oaArr oa of
-    Just (Just oaExpr, _) -> case oaObj oa of
-      Just TValue{} -> evalExpr env' oaExpr
-      Just TTupleApply{} -> return (ObjArrVal oa, env')
-      _ -> error $ printf "Unsupported eval argument of %s" (show oa)
-    Just (Nothing, _) -> error $ printf "Missing arrExpr in evalExpr TupleApply with %s - %s" (show b) (show oa)
-    Nothing -> error $ printf "Missing arrExpr in evalExpr TupleApply with %s - %s" (show b) (show oa)
-  return (TupleVal n (H.insert (oaObjPath oa) v args), env'')
+  case arg of
+    EAppArg oa -> do
+      (v, env'') <- case oaArr oa of
+        Just (Just oaExpr, _) -> case oaObj oa of
+          Just TValue{} -> evalExpr env' oaExpr
+          Just TTupleApply{} -> return (ObjArrVal oa, env')
+          _ -> error $ printf "Unsupported eval argument of %s" (show oa)
+        Just (Nothing, _) -> error $ printf "Missing arrExpr in evalExpr TupleApply with %s - %s" (show b) (show oa)
+        Nothing -> error $ printf "Missing arrExpr in evalExpr TupleApply with %s - %s" (show b) (show oa)
+      return (TupleVal n (H.insert (oaObjPath oa) v args), env'')
+    EAppSpread a -> error $ printf "Not yet implemented evalExpr %s" (show a)
 evalExpr env (TVarApply _ b _ _) = evalExpr env b
 evalExpr env (TCalls _ b callTree) = do
   (b', env') <- evalExpr env b

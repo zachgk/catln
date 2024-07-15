@@ -145,42 +145,47 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg) = do
   (m', env2) <- fromMeta env1 BAct est m $ printf "Tuple Meta %s(%s)" (show baseExpr) (show arg)
   (baseM', env3) <- fromMeta env2 BAct est baseM $ printf "Tuple BaseMeta %s(%s)" (show baseExpr) (show arg)
   (baseExpr', env4) <- fromExpr est env3 baseExpr
-  (arg', env5) <- fromObjArr est env4 arg
-  let constraints = case (est, oaObj arg', oaArr arg') of
-        (EncodeOut{}, Just obj, Just (Just _argExpr', arrM')) ->
-          -- Output with (x=x)
-          [
-            ArrowTo 7 (getExprMeta baseExpr') baseM',
-                        AddArg 8 (baseM', inExprSingleton obj) m',
-                        BoundedByObjs 9 m' PTopType,
-                        PropEq 11 (m', TVArg $ inExprSingleton obj) arrM'
+  (arg'', env5) <- case arg of
+    EAppArg a -> do
+      (arg', env5a) <- fromObjArr est env4 a
+      let constraints = case (est, oaObj arg', oaArr arg') of
+            (EncodeOut{}, Just obj, Just (Just _argExpr', arrM')) ->
+              -- Output with (x=x)
+              [
+                ArrowTo 7 (getExprMeta baseExpr') baseM',
+                            AddArg 8 (baseM', inExprSingleton obj) m',
+                            BoundedByObjs 9 m' PTopType,
+                            PropEq 11 (m', TVArg $ inExprSingleton obj) arrM'
+                            ]
+            (EncodeOut{}, Nothing, Just (Just _argExpr', _arrM')) ->
+              -- Output with (x) infer
+              [
+                ArrowTo 12 (getExprMeta baseExpr') baseM',
+                            AddInferArg 13 baseM' m',
+                            BoundedByObjs 14 m' PTopType
+                            ]
+            (EncodeIn{}, Just obj, Just (Just _argExpr', arrM')) ->
+              -- Input with (x=x)
+              [
+                EqPoints 16 (getExprMeta baseExpr') baseM',
+                BoundedByObjs 17 m' PTopType,
+                        AddArg 19 (baseM', inExprSingleton obj) m',
+                        PropEq 21 (m', TVArg $ inExprSingleton obj) arrM'
                         ]
-        (EncodeOut{}, Nothing, Just (Just _argExpr', _arrM')) ->
-          -- Output with (x) infer
-          [
-            ArrowTo 12 (getExprMeta baseExpr') baseM',
-                        AddInferArg 13 baseM' m',
-                        BoundedByObjs 14 m' PTopType
+            (EncodeIn{}, Just obj, Just (Nothing, arrM')) ->
+              -- Input with (x -> T)
+              [
+                EqPoints 22 (getExprMeta baseExpr') baseM',
+                BoundedByObjs 23 m' PTopType,
+                        AddArg 24 (baseM', inExprSingleton obj) m',
+                        PropEq 25 (m', TVArg $ inExprSingleton obj) arrM'
                         ]
-        (EncodeIn{}, Just obj, Just (Just _argExpr', arrM')) ->
-          -- Input with (x=x)
-          [
-            EqPoints 16 (getExprMeta baseExpr') baseM',
-            BoundedByObjs 17 m' PTopType,
-                     AddArg 19 (baseM', inExprSingleton obj) m',
-                     PropEq 21 (m', TVArg $ inExprSingleton obj) arrM'
-                    ]
-        (EncodeIn{}, Just obj, Just (Nothing, arrM')) ->
-          -- Input with (x -> T)
-          [
-         EqPoints 22 (getExprMeta baseExpr') baseM',
-            BoundedByObjs 23 m' PTopType,
-                     AddArg 24 (baseM', inExprSingleton obj) m',
-                     PropEq 25 (m', TVArg $ inExprSingleton obj) arrM'
-                    ]
-        _ -> error $ printf "Invalid fromExpr in %s mode for %s" (show est) (show arg)
-  let env6 = addConstraints env5 constraints
-  return (TupleApply m' (baseM', baseExpr') arg', endConstraintBlock env6 (if isJust (oaObj arg') then Just arg' else Nothing) (maybe H.empty (fmap (first getExprMeta . head) . exprVarArgs) (oaObj arg')))
+            _ -> error $ printf "Invalid fromExpr in %s mode for %s" (show est) (show arg)
+      let env5b = addConstraints env5a constraints
+      let env5c = endConstraintBlock env5b (if isJust (oaObj arg') then Just arg' else Nothing) (maybe H.empty (fmap (first getExprMeta . head) . exprVarArgs) (oaObj arg'))
+      return (EAppArg arg', env5c)
+    EAppSpread a -> error $ printf "Not yet implemented %s" (show a)
+  return (TupleApply m' (baseM', baseExpr') arg'', env5)
 fromExpr est env1 (VarApply m baseExpr varName varVal) = do
   let baseName = printf "VarApply %s[%s = %s]" (show baseExpr) (show varName) (show varVal) :: String
   (m', env2) <- fromMeta env1 BAct est m $ printf "%s Meta" baseName
