@@ -83,7 +83,7 @@ toExpr env expr@(TupleApply m (baseM, baseExpr) arg) = do
         return (oaArrExpr', oaArrM')
       oaAnnots' <- mapM (toExpr env) oaAnnots
       return $ EAppArg a{oaObj=oaObj', oaArr=oaArr', oaAnnots=oaAnnots'}
-    EAppSpread a -> error $ printf "Not yet implemented spread: %s" (show a)
+    EAppSpread a -> EAppSpread <$> toExpr env a
   return $ TupleApply m' (baseM', baseExpr') arg'
 toExpr env (VarApply m baseExpr varName varVal) = do
   m' <- toMeta env m "VarApply_M"

@@ -71,7 +71,7 @@ desObjValToArg useRelativeName (TupleApply m (bm, be) arg) = TupleApply m (bm, b
     be' = desObjValToArg useRelativeName be
     arg' = case arg of
       EAppArg a -> EAppArg $ mapTupleArgValue (desObjValToArg useRelativeName) a
-      EAppSpread a -> error $ printf "Not yet defined %s" (show a)
+      EAppSpread a -> EAppSpread a
 desObjValToArg useRelativeName (VarApply m be varName varVal) = VarApply m be' varName varVal
   where
     be' = desObjValToArg useRelativeName be

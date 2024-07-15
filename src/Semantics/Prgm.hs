@@ -231,7 +231,7 @@ instance ExprClass Expr where
   exprVarArgs (TupleApply _ _ (EAppArg ObjArr{oaObj, oaArr=Just (Nothing, _)})) = error $ printf "Unexpected unhandled obj type in exprVarArgs: %s" (show oaObj)
   exprVarArgs (TupleApply _ (_, be) (EAppArg ObjArr{oaArr=Just (Just e, _)})) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)
   exprVarArgs (TupleApply _ _ (EAppArg ObjArr{oaObj, oaArr=Nothing})) = error $ printf "Not yet implemented: %s" (show oaObj)
-  exprVarArgs (TupleApply _ _ (EAppSpread arg)) = error $ printf "Not yet implemented: %s" (show arg)
+  exprVarArgs (TupleApply _ (_, be) (EAppSpread arg)) = H.unionWith (++) (exprVarArgs arg) (exprVarArgs be)
   exprVarArgs (VarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar n) [(Value (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)])
 
 class ObjArrClass oa where

@@ -283,7 +283,7 @@ instance ExprClass TExpr where
   exprVarArgs (TTupleApply _ _ (EAppArg ObjArr{oaObj, oaArr=Just (Nothing, _)})) = error $ printf "Unexpected unhandled obj type in exprVarArgs: %s" (show oaObj)
   exprVarArgs (TTupleApply _ (_, be) (EAppArg ObjArr{oaArr=Just (Just e, _)})) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)
   exprVarArgs (TTupleApply _ _ (EAppArg ObjArr{oaObj, oaArr=Nothing})) = error $ printf "Not yet implemented: %s" (show oaObj)
-  exprVarArgs (TTupleApply _ _ (EAppSpread arg)) = error $ printf "Not yet implemented: %s" (show arg)
+  exprVarArgs (TTupleApply _ (_, be) (EAppSpread arg)) = H.unionWith (++) (exprVarArgs arg) (exprVarArgs be)
   exprVarArgs (TVarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar n) [(TValue (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)])
   exprVarArgs (TCalls _ b _) = exprVarArgs b
 

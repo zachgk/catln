@@ -69,6 +69,9 @@ desObjPropagateTypes mainExpr@(TupleApply m (bm, be) tupleApplyArgs) = do
         let tp' = typeSetArg argName (getMetaType argM) (getExprType be')
         let m' = mWithType tp' m
         TupleApply m' (bm', be') (EAppArg $ mkIObjArr argM argName)
+      (EAppSpread a) -> do
+        let m' = mWithType (spreadType H.empty $ getMetaType m) m
+        TupleApply m' (bm', be') (EAppSpread $ desObjPropagateTypes a)
       _ -> error $ printf "Unexpected ObjArr in desObjPropagateTypes (probably because arrow only ObjArr): %s" (show mainExpr)
 desObjPropagateTypes (VarApply m be varName varVal) = VarApply m' be' varName varVal
   where
@@ -138,7 +141,9 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm''
           oaAnnots=indexAnnots ++ fmap (semiDesExpr sdm obj) (oaAnnots arg'),
           oaArr=fmap (first (fmap (semiDesExpr sdm (oaObj arg')))) (oaArr arg')
           }
-    aux _ (_, (True, a)) = error $ printf "Not yet defined semiDesArg for spread %s" (show a)
+    aux (m, e) (_, (True, oa)) = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (EAppSpread $ semiDesExpr sdm obj $ oaObjExpr arg))
+      where
+        [arg] = desObjArr oa
 semiDesExpr sdm obj (RawVarsApply m be vs) = foldr aux be' vs
   where
     be' = semiDesExpr sdm obj be
