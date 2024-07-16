@@ -178,7 +178,8 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg) = do
       return (EAppArg arg', env5c)
     EAppSpread a@HoleExpr{} -> do -- Shortcut for Hole since no need to track neglected args
       (a', env5a) <- fromExpr est env4 a
-      return (EAppSpread a', env5a)
+      let env5b = addConstraints env5a [SetArgMode 11 False baseM' m']
+      return (EAppSpread a', env5b)
     EAppSpread a -> error $ printf "Not yet implemented %s" (show a)
   let baseConstraints = case est of
         EncodeOut{} -> [

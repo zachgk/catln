@@ -12,6 +12,9 @@ module(Data)
   :String.toString -> String
   :String.toString= this
   :Integer.toString -> String
+  # ## Context
+  data(/Context(value, .._))
+    # The context is used to represent state.
   # ## Collections
     Collections are contains that hold elements of a type inside them.
   class(Functor[$T])

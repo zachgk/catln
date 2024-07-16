@@ -367,6 +367,7 @@
             , Value /Data/Nil
             , /Data/Cons [ /T : TopType ] ( Value /head -> TVVar /T ) ( Value /tail -> ∀/Data/ConsList )
             , Value /Data/None
+            , /Context ( Value /value ) ( ..Hole TopType HoleActive Nothing )
             , /Data/toString ( Value /this -> /Data/Primitive/Integer ) -> /Data/String
             , /Data/toString ( Value /this -> /Data/String ) -> TVArg /this = Value /this
             , /Data/toString ( Value /this -> /Data/String ) -> /Data/String
@@ -375,6 +376,7 @@
             ]
         ,
             [ CGType
+            , CGType
             , CGType
             , CGType
             , CGType
