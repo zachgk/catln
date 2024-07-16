@@ -94,7 +94,7 @@ addUnionObjToEnv env1@FEnv{feTypeEnv} vobjMap tobjMap = do
 
   let constraints = [
         UnionOf 1 unionAllObjs' (typecheckedAllObjs' : vobjMetas),
-        PowersetTo 2 unionAllObjs' unionAllObjsPs'
+        SetArgMode 2 True unionAllObjs' unionAllObjsPs'
         ]
   let env5 = (\env -> env{feUnionAllObjs=unionAllObjsPs'}) env4
   let env6 = addConstraints (startConstrainBlock env5) constraints

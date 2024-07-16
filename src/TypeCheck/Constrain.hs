@@ -137,9 +137,9 @@ stypeConstraintDat (AddArg i (p1, argName) p2) = do
 stypeConstraintDat (AddInferArg i p1 p2) = do
   p1' <- p1
   AddInferArg i p1' <$> p2
-stypeConstraintDat (PowersetTo i p1 p2) = do
+stypeConstraintDat (SetArgMode i m p1 p2) = do
   p1' <- p1
-  PowersetTo i p1' <$> p2
+  SetArgMode i m p1' <$> p2
 stypeConstraintDat (UnionOf i p1 p2s) = do
   p1' <- p1
   p2s' <- sequence p2s
@@ -201,9 +201,13 @@ computeConstraint env con@(Constraint _ vaenv (AddArg i (src, newArgName) dest))
 computeConstraint env con@(Constraint _ vaenv (AddInferArg i src dest)) = (False, con{conDat=AddInferArg i src dest'})
   where
     dest' = addInferArgToScheme env (fmap snd vaenv) src dest
-computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (PowersetTo i src@SType{stypeAct=srcAct} dest@SType{stypeAct=destAct})) = (False, con{conDat=PowersetTo i src dest{stypeAct=destAct'}})
+computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (SetArgMode i mode src@SType{stypeAct=srcAct} dest@SType{stypeAct=destAct})) = (False, con{conDat=SetArgMode i mode src dest{stypeAct=destAct'}})
   where
-    destAct' = intersectTypes feTypeEnv (powersetType feTypeEnv (fmap (stypeAct . snd) vaenv) srcAct) destAct
+    vaenv' = fmap (stypeAct . snd) vaenv
+    fromSrc = if mode
+      then powersetType feTypeEnv vaenv' srcAct
+      else setArgMode vaenv' PtArgAny srcAct
+    destAct' = intersectTypes feTypeEnv fromSrc destAct
 computeConstraint env@FEnv{feTypeEnv} con@(Constraint _ vaenv (UnionOf i parent children)) = (False, con{conVaenv=updateCOVarArgEnvAct vaenv' vaenv, conDat=UnionOf i parentST' children})
   where
     chAct = unionAllTypesWithEnv feTypeEnv H.empty $ map stypeAct children

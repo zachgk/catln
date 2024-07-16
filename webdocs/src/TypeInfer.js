@@ -171,7 +171,7 @@ function Constraint(props) {
     return (<span>(<Meta data={conDat.contents[1][0]} withPos />)(<PartialKey data={conDat.contents[1][1]}/>) arg== <Meta data={conDat.contents[2]} withPos /></span>);
   case "AddInferArg":
     return (<span>(<Meta data={conDat.contents[1]} withPos />)(?) iarg== <Meta data={conDat.contents[2]} withPos /></span>);
-  case "PowersetTo":
+  case "SetArgMode":
     return (<span>P(<Meta data={conDat.contents[1]} withPos />) ps== <Meta data={conDat.contents[2]} withPos /></span>);
   case "UnionOf":
     return (<span>UnionOf <Meta data={conDat.contents[1]} withPos /></span>);

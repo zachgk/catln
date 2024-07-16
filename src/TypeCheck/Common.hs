@@ -86,7 +86,7 @@ data ConstraintDat p
   | PropEq Int (p, TypeVarAux) p -- ^ Both Actual and Req
   | AddArg Int (p, ArgName) p -- ^ Both Actual and Req,
   | AddInferArg Int p p -- ^ Both Actual and Req, AddInferArg base arg
-  | PowersetTo Int p p -- ^ Actual (maybe should make it req too)
+  | SetArgMode Int Bool p p -- ^ Actual (maybe should make it req too). Bool is true for powerset and false for spread.
   | UnionOf Int p [p] -- ^ Both Actual and Req
   deriving (Eq, Ord, Hashable, Generic, ToJSON)
 
@@ -214,7 +214,8 @@ instance (Show p) => Show (ConstraintDat p) where
   show (PropEq i (s1, n) s2) = printf "(%s).(%s) %d== %s"  (show s1) (show n) i (show s2)
   show (AddArg i (base, arg) res) = printf "(%s)(%s) %d== %s" (show base) (show arg) i (show res)
   show (AddInferArg i base res) = printf "(%s)(?) %d== %s" (show base) i (show res)
-  show (PowersetTo i s t) = printf "𝒫(%s) %d⊇ %s" (show s) i (show t)
+  show (SetArgMode i True s t) = printf "𝒫(%s) %d⊇ %s" (show s) i (show t)
+  show (SetArgMode i False s t) = printf "%s.. %d⊇ %s" (show s) i (show t)
   show (UnionOf i s _) = printf "SUnionOf %d for %s" i (show s)
 
 instance (Show p) => Show (Constraint p) where
@@ -271,7 +272,7 @@ constraintDatMetas (ArrowTo _ p2 p3)       = [p2, p3]
 constraintDatMetas (PropEq _ (p2, _) p3)   = [p2, p3]
 constraintDatMetas (AddArg _ (p2, _) p3)   = [p2, p3]
 constraintDatMetas (AddInferArg _ p2 p3)   = [p2, p3]
-constraintDatMetas (PowersetTo _ p2 p3)    = [p2, p3]
+constraintDatMetas (SetArgMode _ _ p2 p3)  = [p2, p3]
 constraintDatMetas (UnionOf _ p2 p3s)      = p2:p3s
 
 constraintMetas :: Constraint p -> [p]
