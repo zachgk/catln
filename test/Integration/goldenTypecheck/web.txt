@@ -326,7 +326,7 @@
         , []
         ,
             [ /Catln/#md
-                ( Value /text -> ~String = CStr "# Catln Core Library
+                ( Value /text -> /Data/String = CStr "# Catln Core Library
                 This is the Catln core library.
                 It defines the fundamental units of the language, core data types, basic compilation, and standard methods.
                 All Catln files will automatically import the core library." )
@@ -467,7 +467,7 @@
         ,
             [ /Catln/#print ( Value /p -> /Catln/CatlnResult.. = Value /main )
             , /Catln/#md
-                ( Value /text -> ~String = CStr "Tests using a custom build type [www].
+                ( Value /text -> /Data/String = CStr "Tests using a custom build type [www].
                 It also prints the result of the build in an iframe." )
             ]
         )

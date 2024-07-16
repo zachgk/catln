@@ -20,7 +20,6 @@ import qualified Data.HashMap.Strict as H
 import           Data.Maybe
 import qualified Data.Zip            as Z
 
-import           Data.List           (intercalate)
 import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
@@ -255,7 +254,7 @@ executeConstraints env1 (c:cs) = (prune:res, env4)
 -- A 'TypeCheckError' will be thrown if it has not converged by the time the limit is reached.
 runConstraints :: Integer -> FEnv -> [VConstraint] -> TypeCheckResult FEnv
 runConstraints _ env [] = return env
-runConstraints 0 env@FEnv{feTrace} _ = TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit with still changing constraints: \n\t%s" (intercalate "\n\t" $ map show $ showTraceConstrainEpoch env $ head $ tail feTrace)] env
+runConstraints 0 env@FEnv{feTrace} _ = TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit with still changing constraints: \n\n%s" (show $ showTraceConstrainEpoch env $ head $ tail feTrace)] env
 runConstraints limit env cons = do
   let (constraintsToPrune, env'@FEnv{feUpdatedDuringEpoch}) = executeConstraints env cons
   let cons' = mapMaybe (\(con, shouldPrune) -> if shouldPrune then Nothing else Just con) $ zip cons constraintsToPrune

@@ -225,6 +225,21 @@ instance Show r => Show (TypeCheckResult r) where
   show (TypeCheckResult notes r) = concat ["TCRes [", show notes, "] (", show r, ")"]
   show (TypeCheckResE notes) = concat ["TCErr [", show notes, "]"]
 
+newtype SConstraintEpoch = SConstraintEpoch [(SConstraint, [(Pnt, Scheme)])]
+instance Show SConstraintEpoch where
+  show (SConstraintEpoch cons) = intercalate "\n" $ map showCon cons
+    where
+      showCon (con, pnts) = printf "Updating points %s with %s" (show $ map fst pnts) (show con)
+
+newtype SConstrainPnt = SConstrainPnt [[(SConstraint, Scheme)]]
+instance Show SConstrainPnt where
+  show (SConstrainPnt epochs) = intercalate "\n" $ zipWith (curry showEpoch) [1..] (reverse $ tail epochs)
+    where
+      showEpoch :: (Integer, [(SConstraint, Scheme)]) -> String
+      showEpoch (epoch, changes) = printf "Epoch %d: \n\t%s" epoch (intercalate "\n\t" $ map showChange changes)
+      showChange (con, scheme) = printf "To %s from %s" (show scheme) (show con)
+
+
 typeCheckToRes :: TypeCheckResult r -> CRes r
 typeCheckToRes tc = case tc of
   TypeCheckResult notes res -> CRes (map MkCNote notes) res
@@ -310,10 +325,12 @@ verifyScheme _ _ _ _ _ = Nothing
 
 
 -- Point operations
+descriptorPnt :: FEnv -> Pnt -> Scheme
+descriptorPnt FEnv{fePnts} p = fePnts IM.! p
 
 descriptor :: FEnv -> VarMeta -> Scheme
-descriptor FEnv{fePnts} m = case getPnt m of
-  Just p  -> fePnts IM.! p
+descriptor env m = case getPnt m of
+  Just p  -> descriptorPnt env p
   Nothing -> pure (SType (getMetaType m) (getMetaType m) "noPnt descriptor")
 
 equivalent :: FEnv -> VarMeta -> VarMeta -> Bool

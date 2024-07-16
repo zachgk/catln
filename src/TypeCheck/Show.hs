@@ -16,6 +16,7 @@
 module TypeCheck.Show where
 
 import           Control.Monad    (forM)
+import           Data.Bifunctor   (bimap)
 import           Data.Maybe       (fromJust)
 import           Semantics.Prgm
 import           TypeCheck.Common
@@ -89,10 +90,13 @@ showCon env (Constraint oa vaenv dat) = Constraint oa (descriptorVaenvIO env vae
 showConstraints :: FEnv -> [VConstraint] -> [SConstraint]
 showConstraints env = map (showCon env)
 
-showTraceConstrainEpoch :: FEnv -> TraceConstrainEpoch -> [(SConstraint, [(Pnt, Scheme)])]
-showTraceConstrainEpoch env = map mapConstraint . filter (not . null . snd)
+showTraceConstrainEpoch :: FEnv -> TraceConstrainEpoch -> SConstraintEpoch
+showTraceConstrainEpoch env = SConstraintEpoch . map mapConstraint . filter (not . null . snd)
   where
     mapConstraint (con, pnts) = (showCon env con, pnts)
+
+showTraceConstrainPnt :: FEnv -> Pnt -> SConstrainPnt
+showTraceConstrainPnt env@FEnv{feTrace} p = SConstrainPnt $ map (map (bimap (showCon env) (fromJust . lookup p)) . filter (elem p . map fst . snd)) feTrace
 
 matchingConstraintHelper :: FEnv -> VarMeta -> VarMeta -> VarMeta -> Bool
 matchingConstraintHelper env p p2 p3 = equivalent env p p2 || equivalent env p p3
