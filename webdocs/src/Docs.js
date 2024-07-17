@@ -74,7 +74,6 @@ function Main(props) {
 
   const startingPage = encodeURIComponent(pages[pages.length - 1]);
   const basePageTree = buildPageTree(pages);
-  console.log("basePT", basePageTree);
   let pageList = []; // sorted list
   const pageTree = sortPageTree(basePageTree, pageList);
 
@@ -109,12 +108,14 @@ function buildPageTree(pageNames) {
     const pageFile = pageDirs.splice(-1, 1);
     let curTree = tree;
     pageDirs.forEach(pageDir => {
-      if(!(pageDir in curTree)) {
+      if(!(pageDir in curTree) || curTree[pageDir] === 1) {
         curTree[pageDir] = {};
       }
       curTree = curTree[pageDir];
     });
-    curTree[pageFile] = 1;
+    if (!(pageFile in curTree)) {
+      curTree[pageFile] = 1;
+    }
   });
   return tree;
 }

@@ -47,7 +47,17 @@ function Expr(props) {
     }
 
     let showBase = <Expr expr={base} Meta={Meta} showMetas={showMetas}/>;
-    let showArg = <span>(<ObjArr oa={arg} Meta={Meta} showExprMetas={showMetas} />)</span>;
+    let showArg;
+    switch(arg.tag) {
+    case "EAppArg":
+      showArg = <span>(<ObjArr oa={arg.contents} Meta={Meta} showExprMetas={showMetas} />)</span>;
+      break;
+    case "EAppSpread":
+      showArg = <span>..<Expr expr={arg.contents} Meta={Meta} showMetas={showMetas}/></span>;
+      break;
+    default:
+      console.error("Unknown tupleApply arg", arg);
+    }
 
     if ((base.tag === "Value" || base.tag === "TValue") && base.contents[1] === "") { // Anonymous tuple
       return <span>{showArg}{showM}</span>;

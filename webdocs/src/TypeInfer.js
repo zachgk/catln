@@ -79,7 +79,7 @@ function Main(props) {
 }
 
 let VarMeta = (notesMap) => (props) => {
-  const [tp, pos, [pnt,]] = props.data;
+  const [, pos, [pnt,]] = props.data;
   var style = {};
 
   let showPos;
@@ -96,7 +96,6 @@ let VarMeta = (notesMap) => (props) => {
 
   return (
     <span style={style}>
-      <Type data={tp}/>
       (
         <Pnt pnt={pnt} />
         {showPos}
