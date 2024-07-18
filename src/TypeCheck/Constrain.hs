@@ -36,9 +36,9 @@ setScheme :: FEnv -> VConstraint -> (RConstraint, RConstraint) -> VarMeta -> Sch
 setScheme env@FEnv{feTypeEnv} con (oldCon, newCon) p scheme baseMsg = setDescriptor env con p (checkScheme scheme) (msg "" "")
   where
     -- checkScheme (TypeCheckResult _ (SType ub _ desc)) | containsBottomType ub = error $ msg desc $ printf "Actual type contains bottomType: %s" (show ub)
-    checkScheme (TypeCheckResult notes (SType ub _ desc)) | containsBottomType ub = TypeCheckResE (mkTracedTypeCheckError env p (getMetaPos p) (msg desc "Actual type contains bottomType") : notes)
-    checkScheme (TypeCheckResult notes (SType _ req desc)) | containsBottomType req = TypeCheckResE (mkTracedTypeCheckError env p (getMetaPos p) (msg desc "Required type contains bottomType") : notes)
-    checkScheme (TypeCheckResult notes (SType act req desc)) | not (isSubtypeOfWithEnv feTypeEnv (fmap stypeAct $ fromJust $ tcreToMaybe $ descriptorConVaenv env con) act req) = TypeCheckResE (mkTracedTypeCheckError env p (getMetaPos p) (msg desc "Act is not less than reqe") : notes)
+    checkScheme (TypeCheckResult notes (SType ub _ _ desc)) | containsBottomType ub = TypeCheckResE (mkTracedTypeCheckError env p (getMetaPos p) (msg desc "Actual type contains bottomType") : notes)
+    checkScheme (TypeCheckResult notes (SType _ req _ desc)) | containsBottomType req = TypeCheckResE (mkTracedTypeCheckError env p (getMetaPos p) (msg desc "Required type contains bottomType") : notes)
+    checkScheme (TypeCheckResult notes (SType act req _ desc)) | not (isSubtypeOfWithEnv feTypeEnv (fmap stypeAct $ fromJust $ tcreToMaybe $ descriptorConVaenv env con) act req) = TypeCheckResE (mkTracedTypeCheckError env p (getMetaPos p) (msg desc "Act is not less than reqe") : notes)
     checkScheme s = s
 
     msg :: String -> String -> String
@@ -48,13 +48,13 @@ setSchemeAct :: FEnv -> VConstraint -> (RConstraint, RConstraint) -> VarMeta -> 
 setSchemeAct env con cons p t msg = setScheme env con cons p scheme' ("Act " ++ msg)
   where
     scheme = descriptor env p
-    scheme' = fmap (\(SType _ lb d) -> SType t lb d) scheme
+    scheme' = fmap (\s -> s{stypeAct=t}) scheme
 
 setSchemeReq :: FEnv -> VConstraint -> (RConstraint, RConstraint) -> VarMeta -> Type -> String -> FEnv
 setSchemeReq env con cons p t msg = setScheme env con cons p scheme' ("Req " ++ msg)
   where
     scheme = descriptor env p
-    scheme' = fmap (\(SType a _ d) -> SType a t d) scheme
+    scheme' = fmap (\s -> s{stypeReq=t}) scheme
 
 setSchemeActReq :: FEnv -> VConstraint -> (RConstraint, RConstraint) -> SchemeActReq -> VarMeta -> Type -> String -> FEnv
 setSchemeActReq env con cons SchemeAct p t msg = setSchemeAct env con cons p t msg
@@ -65,16 +65,16 @@ setSchemeConVaenv env con cons actOrReq types msg = foldr (\(m, t) env' -> setSc
 
 -- | Tries to join two 'SType' as equal to each other and returns their updated values
 equalizeSTypes :: FEnv -> TypeVarArgEnv -> (SType, SType) -> (TypeVarArgEnv, SType, SType)
-equalizeSTypes FEnv{feTypeEnv} vaenv (SType act1 req1 desc1, SType act2 req2 desc2) = do
+equalizeSTypes FEnv{feTypeEnv} vaenv (stype1@SType{stypeAct=act1, stypeReq=req1}, stype2@SType{stypeAct=act2, stypeReq=req2}) = do
   let (vaenv'1, actBoth) = intersectTypesWithVarEnv feTypeEnv vaenv act1 act2
   let (vaenv'2, reqBoth) = intersectTypesWithVarEnv feTypeEnv vaenv req1 req2
   let vaenv' = H.unionWith (intersectTypes feTypeEnv) vaenv'1 vaenv'2
-  (vaenv', SType actBoth reqBoth desc1, SType actBoth reqBoth desc2)
+  (vaenv', stype1{stypeAct=actBoth, stypeReq=reqBoth}, stype2{stypeAct=actBoth, stypeReq=reqBoth})
 
 
 -- | A helper for the 'PropEq' 'Constraint' that applies to both the actual and required types
 updateSchemeProp :: FEnv -> STypeVarArgEnv -> SType -> TypeVarAux -> SType -> (SType, SType)
-updateSchemeProp FEnv{feTypeEnv} vaenv (SType superAct superReq superDesc) propName (SType subAct subReq subDesc) = (SType superAct' superReq' superDesc, SType subAct' subReq' subDesc)
+updateSchemeProp FEnv{feTypeEnv} vaenv super@SType{stypeAct=superAct, stypeReq=superReq} propName sub@SType{stypeAct=subAct, stypeReq=subReq} = (super{stypeAct=superAct', stypeReq=superReq'}, sub{stypeAct=subAct', stypeReq=subReq'})
   where
     (_actVaenv', superAct', subAct') = updateTypeProp feTypeEnv (fmap stypeAct vaenv) superAct propName subAct
     (_reqVaenv', superReq', subReq') = updateTypeProp feTypeEnv (fmap stypeReq vaenv) superReq propName subReq
@@ -91,7 +91,7 @@ addArgToType FEnv{feTypeEnv} _ (UnionType partials) newArg = Just $ unionAllType
 
 -- | A helper for the 'AddArg' 'Constraint'
 addArgToScheme :: FEnv -> STypeVarArgEnv -> SType -> ArgName -> SType -> SType
-addArgToScheme env@FEnv{feTypeEnv} vaenv (SType srcAct srcReq _) newArgName (SType destAct destReq destDesc) = SType destAct' destReq' destDesc
+addArgToScheme env@FEnv{feTypeEnv} vaenv SType{stypeAct=srcAct, stypeReq=srcReq} newArgName dest@SType{stypeAct=destAct, stypeReq=destReq} = dest{stypeAct=destAct', stypeReq=destReq'}
   where
     destAct' = case addArgToType env (fmap stypeAct vaenv) srcAct newArgName of
       Just addDestAct -> intersectTypes feTypeEnv destAct addDestAct
@@ -102,7 +102,7 @@ addArgToScheme env@FEnv{feTypeEnv} vaenv (SType srcAct srcReq _) newArgName (STy
 
 -- | A helper for the 'AddArg' 'Constraint'
 addInferArgToScheme :: FEnv -> STypeVarArgEnv -> SType -> SType -> SType
-addInferArgToScheme env@FEnv{feTypeEnv} vaenv (SType srcAct srcReq _) (SType destAct destReq destDesc) = SType destAct' destReq' destDesc
+addInferArgToScheme env@FEnv{feTypeEnv} vaenv SType{stypeAct=srcAct, stypeReq=srcReq} dest@SType{stypeAct=destAct, stypeReq=destReq} = dest{stypeAct=destAct', stypeReq=destReq'}
   where
     destAct' = case addInferArgToType env (fmap stypeAct vaenv) srcAct of
       Just addDestAct -> intersectTypes feTypeEnv destAct addDestAct
@@ -163,7 +163,7 @@ updateCOVarArgEnvAct oVaenv' ioVaenv = H.intersectionWith (\(si, so) oAct' -> (s
 computeConstraint :: FEnv -> RConstraint -> (Bool, RConstraint)
 computeConstraint env con@(Constraint _ vaenv (EqualsKnown i p tp)) = (True, con{conVaenv = updateCOVarArgEnvAct vaenv' vaenv, conDat=EqualsKnown i stype' tp})
   where
-    (vaenv', stype', _) = equalizeSTypes env (fmap (stypeAct . snd) vaenv) (p, SType tp tp "")
+    (vaenv', stype', _) = equalizeSTypes env (fmap (stypeAct . snd) vaenv) (p, SType tp tp Nothing "")
 computeConstraint _ con@(Constraint _ _ (EqPoints _ p1 p2)) | p1 == p2 = (True, con)
 computeConstraint env con@(Constraint _ vaenv (EqPoints i p1 p2)) = (False, con{conVaenv = updateCOVarArgEnvAct vaenv' vaenv, conDat=EqPoints i stype' stype'})
   where
@@ -190,7 +190,7 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (NoReturnArg i p@SType
     argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType $ joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con
     act' = differenceTypeWithEnv feTypeEnv vaenv' act argsBoundUb
 computeConstraint env con@(Constraint _ _ (ArrowTo i src dest)) = case arrowConstrainUbs env con (stypeAct src) (stypeAct dest) of
-    TypeCheckResult _ (src', dest') -> (False, con{conDat=ArrowTo i src{stypeAct=src'} dest{stypeAct=dest'}})
+    TypeCheckResult _ (src', dest', destRT') -> (False, con{conDat=ArrowTo i src{stypeAct=src'} dest{stypeAct=dest', stypeTree=destRT'}})
     TypeCheckResE _ -> (True, con)
 computeConstraint env con@(Constraint _ vaenv (PropEq i (super, name) sub)) = (False, con{conDat=PropEq i (super', name) sub'})
   where
@@ -213,7 +213,7 @@ computeConstraint env@FEnv{feTypeEnv} con@(Constraint _ vaenv (UnionOf i parent 
     chAct = unionAllTypesWithEnv feTypeEnv H.empty $ map stypeAct children
     chReq = unionAllTypesWithEnv feTypeEnv H.empty $ map stypeReq children
     actVaenv = fmap (stypeAct . snd) vaenv
-    (vaenv', parentST', _) = equalizeSTypes env actVaenv (parent, SType (compactType feTypeEnv actVaenv chAct) chReq "")
+    (vaenv', parentST', _) = equalizeSTypes env actVaenv (parent, SType (compactType feTypeEnv actVaenv chAct) chReq Nothing "")
 
 saveConstraint :: FEnv -> VConstraint -> RConstraint -> RConstraint -> FEnv
 saveConstraint env con@(Constraint _ _ (UnionOf _ parentPnt _)) oldCon newCon@(Constraint _ vaenv' (UnionOf _ parent' _)) = env''

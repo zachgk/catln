@@ -78,14 +78,14 @@ addUnionObjToEnv env1@FEnv{feTypeEnv} vobjMap tobjMap = do
   let tobjMetas = map (getMetaType . getExprMeta . oaObjExpr) tobjs'
 
   -- Builds vars to use for union and union powerset
-  let (unionAllObjs, env2) = fresh env1 $ TypeCheckResult [] $ SType PTopType PTopType "unionAllObjs"
-  let (unionAllObjsPs, env3) = fresh env2 $ TypeCheckResult [] $ SType PTopType PTopType "unionAllObjsPs"
+  let (unionAllObjs, env2) = fresh env1 $ TypeCheckResult [] $ SType PTopType PTopType Nothing "unionAllObjs"
+  let (unionAllObjsPs, env3) = fresh env2 $ TypeCheckResult [] $ SType PTopType PTopType Nothing "unionAllObjsPs"
 
   let mkVarMeta p = Meta PTopType Nothing (VarMetaDat (Just p) Nothing)
 
   -- Build a variable to store union of tobjs
   let typecheckedAllType = unionAllTypes feTypeEnv tobjMetas
-  let (typecheckedAllObjs, env4) = fresh env3 $ TypeCheckResult [] $ SType typecheckedAllType PTopType "typecheckedAll"
+  let (typecheckedAllObjs, env4) = fresh env3 $ TypeCheckResult [] $ SType typecheckedAllType PTopType Nothing "typecheckedAll"
   let typecheckedAllObjs' = mkVarMeta typecheckedAllObjs
 
   -- Builds metas to use for union and union powerset
@@ -133,7 +133,7 @@ mkReachesEnv env@FEnv{feTypeEnv, feUnionAllObjs, feVTypeGraph, feTTypeGraph} (Co
   let vaenv = fmap (bimap stypeAct stypeAct) stypeVaenv
 
   -- Env (typeGraph) from variables
-  (SType unionAll _ _) <- descriptor env feUnionAllObjs
+  SType{stypeAct=unionAll} <- descriptor env feUnionAllObjs
   feVTypeGraph' <- forM feVTypeGraph $ \objArrs -> do
     forM objArrs $ \voa -> do
       objUb <- pointUb env (getExprMeta $ oaObjExpr voa)
@@ -154,24 +154,25 @@ mkReachesEnv env@FEnv{feTypeEnv, feUnionAllObjs, feVTypeGraph, feTTypeGraph} (Co
 
   -- final ReachesEnv
   let argTypeEnv = mkTypeEnv (argObjMap, classGraphFromObjs argObjMap, [])
-  let typeGraph = unionsWith (++) [argTypeGraph, feVTypeGraph', feTTypeGraph]
+  let ttypeGraph' = H.map (map (mapMetaObjArr clearMetaDat Nothing)) feTTypeGraph
+  let typeGraph = unionsWith (++) [argTypeGraph, feVTypeGraph', ttypeGraph']
   return $ ReachesEnv (mergeTypeEnv argTypeEnv feTypeEnv) unionAll (fmap snd vaenv) typeGraph
 
-arrowConstrainUbs :: FEnv -> RConstraint -> Type -> Type -> TypeCheckResult (Type, Type)
+arrowConstrainUbs :: FEnv -> RConstraint -> Type -> Type -> TypeCheckResult (Type, Type, Maybe ReachesTree)
 arrowConstrainUbs env@FEnv{feUnionAllObjs} con PTopType dest@UnionType{} = do
   unionPnt <- descriptor env feUnionAllObjs
   case unionPnt of
-    (SType unionUb@UnionType{} _ _) -> do
-      (src', dest') <- arrowConstrainUbs env con unionUb dest
-      return (src', dest')
-    _ -> return (PTopType, dest)
-arrowConstrainUbs _ _ PTopType dest = return (PTopType, dest)
+    SType{stypeAct=unionUb@UnionType{}} -> do
+      (src', dest', destRT') <- arrowConstrainUbs env con unionUb dest
+      return (src', dest', destRT')
+    _ -> return (PTopType, dest, Nothing)
+arrowConstrainUbs _ _ PTopType dest = return (PTopType, dest, Nothing)
 arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} src@TopType{} dest = do
   arrowConstrainUbs env con (expandType feTypeEnv (fmap (stypeAct . snd) conVaenv) src) dest
 arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} src@TypeVar{} dest = do
   let src' = expandType feTypeEnv (fmap (stypeAct . snd) conVaenv) src
-  (_, cdest) <- arrowConstrainUbs env con src' dest
-  return (src, cdest)
+  (_, cdest, destRT) <- arrowConstrainUbs env con src' dest
+  return (src, cdest, destRT)
 arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} (UnionType srcPartials) dest = do
   let srcPartialList = splitUnionType srcPartials
   reachesEnv <- mkReachesEnv env con
@@ -182,4 +183,4 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} (UnionType srcPar
   let destByGraph = unionAllTypes feTypeEnv $ fmap (unionReachesTree feTypeEnv) destByPartial
   let dest' = intersectTypes feTypeEnv dest destByGraph
   let compactVaenv = fmap (stypeAct . snd) conVaenv
-  return (compactType feTypeEnv compactVaenv $ UnionType srcPartials', compactType feTypeEnv compactVaenv dest')
+  return (compactType feTypeEnv compactVaenv $ UnionType srcPartials', compactType feTypeEnv compactVaenv dest', Just $ ReachesTree $ H.fromList srcPartialList')

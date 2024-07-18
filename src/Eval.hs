@@ -64,7 +64,7 @@ evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe 
     typeEnv = mkTypeEnv prgm
     objArrowsContains ObjArr{oaArr=Nothing} = Nothing
     objArrowsContains ObjArr{oaArr=Just (Nothing, _)} = Nothing
-    objArrowsContains oa@ObjArr{oaArr=Just (_, oaM)} = case oaObjPath oa of
+    objArrowsContains oa@ObjArr{oaArr=Just (Just{}, oaM)} = case oaObjPath oa of
       "/Context" -> case H.lookup (partialKey "/value") $ exprAppliedArgsMap $ oaObjExpr oa of
         Just (Just (_, Just valObjExpr)) -> if relativeNameMatches function (exprPath valObjExpr)
           then Just $ if isBuildable oa (getMetaType oaM)
@@ -143,7 +143,7 @@ evalCallTree env1 input (TCPrim _ (EPrim _ _ f)) = do
     _                 -> error "Unexpected eval PrimArrow input"
 evalCallTree env _ TCMacro{} = evalError env $ printf "Can't evaluate a macro - it should be removed during TreeBuild"
 
-evalExpr :: Env -> TExpr () -> CRes (Val, Env)
+evalExpr :: Env -> TExpr EvalMetaDat -> CRes (Val, Env)
 -- evalExpr _ e | trace (printf "eval %s" (show e)) False = undefined
 evalExpr env (TCExpr _ v) = return (v, env)
 evalExpr env (TValue m _) = do
@@ -193,7 +193,7 @@ prgmFromGraphData :: FileImport -> EPrgmGraphData -> EPrgm
 prgmFromGraphData prgmName (prgmGraph, nodeFromVertex, vertexFromKey) = mergePrgms $ map (fst3 . nodeFromVertex) $ reachable prgmGraph $ fromJust $ vertexFromKey prgmName
 
 -- | Tries to TreeBuild all ObjArrs, returning all built successfully
-evalBuildAll :: EPrgmGraphData -> CRes (GraphData (Prgm TExpr ()) FileImport)
+evalBuildAll :: EPrgmGraphData -> CRes (GraphData (Prgm TExpr EvalMetaDat) FileImport)
 evalBuildAll prgmGraphData = do
   let prgms = graphToNodes prgmGraphData
   prgms' <- forM prgms $ \((objMap, cg, annots), prgmName, deps) -> do
@@ -204,7 +204,7 @@ evalBuildAll prgmGraphData = do
     return ((objMap', cg, annots'), prgmName, deps)
   return $ graphFromEdges prgms'
 
-evalBuildPrgm :: EExpr -> PartialType -> Type -> EPrgm -> CRes (TExpr (), Env)
+evalBuildPrgm :: EExpr -> PartialType -> Type -> EPrgm -> CRes (TExpr EvalMetaDat, Env)
 evalBuildPrgm input srcType destType prgm = do
   let env@Env{evTbEnv} = evalBaseEnv prgm
   initTree <- buildRoot evTbEnv input srcType destType

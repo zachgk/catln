@@ -23,13 +23,13 @@ import           Semantics.Types
 import           Text.Printf
 import           TypeCheck.Common
 
-toMeta :: FEnv -> VarMeta -> String -> TypeCheckResult (Meta ())
-toMeta env@FEnv{feTypeEnv} m@(Meta pt pos _) _ = case pointUb env m of
-  TypeCheckResult notes ub -> case pt of
-    TypeVar{} -> return $ Meta pt pos emptyMetaDat
-    _ -> TypeCheckResult notes $ Meta (intersectTypes feTypeEnv ub pt) pos emptyMetaDat
+toMeta :: FEnv -> VarMeta -> String -> TypeCheckResult TypedMeta
+toMeta env@FEnv{feTypeEnv} m@(Meta pt pos _) _ = case descriptor env m of
+  TypeCheckResult notes SType{stypeAct=ub, stypeTree=rt} -> case pt of
+    TypeVar{} -> return $ Meta pt pos rt
+    _ -> TypeCheckResult notes $ Meta (intersectTypes feTypeEnv ub pt) pos rt
   TypeCheckResE notes -> do
-    TypeCheckResult notes (Meta BottomType pos emptyMetaDat)
+    TypeCheckResult notes (Meta BottomType pos Nothing)
 
 member :: String -> [String ] -> Bool
 member x arr = case suffixLookup x arr of

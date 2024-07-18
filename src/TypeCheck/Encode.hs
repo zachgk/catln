@@ -77,9 +77,9 @@ fromMeta :: FEnv -> TypeBound -> EncodeState -> PreMeta -> String -> TypeCheckRe
 fromMeta env bound est m description  = do
   let tp = getMetaType m
   let (p, env') = case bound of
-        BAct    -> fresh env (TypeCheckResult [] $ SType tp PTopType description)
-        BReq    -> fresh env (TypeCheckResult [] $ SType PTopType tp description)
-        BActReq -> fresh env (TypeCheckResult [] $ SType tp tp description)
+        BAct    -> fresh env (TypeCheckResult [] $ SType tp PTopType Nothing description)
+        BReq    -> fresh env (TypeCheckResult [] $ SType PTopType tp Nothing description)
+        BActReq -> fresh env (TypeCheckResult [] $ SType tp tp Nothing description)
   return (mapMetaDat (\_ -> mkVarMetaDat est p) m, env')
 
 -- TODO: This might reverse the list to return.
@@ -137,7 +137,7 @@ fromExpr est env1 (EWhere base cond) = do
         EncodeIn -> EncodeOut Nothing
         _        -> est
   (cond', env3) <- fromExpr condEst env2 cond
-  let (bool, env4) = fresh env3 $ TypeCheckResult [] $ SType PTopType boolType "ifGuardBool"
+  let (bool, env4) = fresh env3 $ TypeCheckResult [] $ SType PTopType boolType Nothing "ifGuardBool"
   let bool' = Meta boolType (labelPos "bool" $ getMetaPos $ getExprMeta cond) (mkVarMetaDat est bool)
   let env5 = addConstraints env4 [ArrowTo 30 (getExprMeta cond') bool']
   return (EWhere base' cond', env5)

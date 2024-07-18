@@ -26,10 +26,11 @@ import           Eval.Common
 import           Semantics
 import           Semantics.Annots
 import           Semantics.Prgm
+import           Semantics.TypeGraph
 import           Semantics.Types
 
-type TBMetaDat = ()
-type TBMeta = Meta ()
+type TBMetaDat = Maybe ReachesTree
+type TBMeta = Meta TBMetaDat
 type TBExpr = Expr TBMetaDat
 type TBCompAnnot = CompAnnot TBExpr
 type TBObjArr = ObjArr Expr TBMetaDat
@@ -181,7 +182,7 @@ buildCallTree env os (UnionType srcLeafs) destType = do
   return $ buildMatch destType $ H.fromList matchVal
 buildCallTree _ _ _ _ = error "Unimplemented buildCallTree"
 
-toTExpr :: TBEnv -> [ObjSrc] -> Expr () -> CRes (TExpr ())
+toTExpr :: TBEnv -> [ObjSrc] -> Expr TBMetaDat -> CRes (TExpr TBMetaDat)
 toTExpr _ _ (CExpr m (CInt c)) = return $ TCExpr m (IntVal c)
 toTExpr _ _ (CExpr m (CFloat c)) = return $ TCExpr m (FloatVal c)
 toTExpr _ _ (CExpr m (CStr c)) = return $ TCExpr m (StrVal c)
@@ -206,7 +207,7 @@ toTExpr env os (VarApply m b n v) = do
   b' <- toTExpr env os b
   return $ TVarApply m b' n v
 
-toTEObjArr :: TBEnv -> [ObjSrc] -> EObjArr -> CRes (ObjArr TExpr ())
+toTEObjArr :: TBEnv -> [ObjSrc] -> EObjArr -> CRes (ObjArr TExpr TBMetaDat)
 toTEObjArr env os oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   oaObj' <- mapM (toTExpr env os) oaObj
   let os' = case oa of
@@ -219,7 +220,7 @@ toTEObjArr env os oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   oaAnnots' <- mapM (toTExpr env os') oaAnnots
   return oa{oaObj=oaObj', oaAnnots=oaAnnots', oaArr=oaArr'}
 
-texprDest :: TBEnv -> [ObjSrc] -> TExpr () -> EvalMeta -> CRes (TExpr ())
+texprDest :: TBEnv -> [ObjSrc] -> TExpr TBMetaDat -> EvalMeta -> CRes (TExpr TBMetaDat)
 texprDest env os e m = do
   ct <- buildCallTree env os (getMetaType $ getExprMeta e) (getMetaType m)
   case ct of
@@ -229,7 +230,7 @@ texprDest env os e m = do
       texprDest env os e' m
     _ -> return $ TCalls m e ct
 
-toTExprDest :: TBEnv -> [ObjSrc] -> Expr () -> EvalMeta -> CRes (TExpr ())
+toTExprDest :: TBEnv -> [ObjSrc] -> Expr TBMetaDat -> EvalMeta -> CRes (TExpr TBMetaDat)
 -- toTExprDest _ os e m | trace (printf "toExprDest %s to %s \n\twith %s" (show e) (show m) (show os)) False = undefined
 toTExprDest env os e m = do
   e' <- toTExpr env os e

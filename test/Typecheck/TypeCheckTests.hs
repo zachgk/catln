@@ -14,6 +14,7 @@ import           CRes
 import           Data.Graph          (graphFromEdges)
 import           Hedgehog
 import qualified Hedgehog.Gen        as HG
+import           MapMeta
 import           Semantics.Prgm      (mergePrgms)
 import           Test.Tasty
 import qualified Test.Tasty.Hedgehog as THG
@@ -35,8 +36,9 @@ propExprEncodeDecode = property $ do
   let fenv = makeBaseFEnv prgm
   (encoded, fenv') <- evalMaybe $ tcreToMaybe $ fromPrgms fenv prgms []
   decoded <- evalMaybe $ tcreToMaybe $ toPrgms fenv' encoded
+  let decodedClear = map (mapMetaPrgm clearMetaDat) decoded
   annotate $ printf "Decoded to: \n\t%s" (show decoded)
-  map fst3 prgms === map fst3 decoded
+  map fst3 prgms === map fst3 decodedClear
 
 propConstraint :: Property
 propConstraint = property $ do

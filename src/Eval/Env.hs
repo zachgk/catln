@@ -25,7 +25,7 @@ import           Semantics.Types
 import           Text.Printf
 import           TreeBuild           (buildArrow)
 
-evalStartEArrow :: Env -> PartialType -> AnyObjArr -> Args -> CRes (TExpr (), [TExpr ()], Args, Env)
+evalStartEArrow :: Env -> PartialType -> AnyObjArr -> Args -> CRes (TExpr EvalMetaDat, [TExpr EvalMetaDat], Args, Env)
 evalStartEArrow env@Env{evExEnv, evTbEnv, evArgs, evCoverage, evTreebugOpen} srcType oa newArgs = do
   let env' = env{
                 evArgs=newArgs

@@ -31,6 +31,7 @@ import           Data.Maybe          (catMaybes, fromMaybe, listToMaybe,
 import           Data.String.Builder (literal)
 import           Semantics
 import           Semantics.Prgm
+import           Semantics.TypeGraph (ReachesTree)
 import           Semantics.Types
 import           Text.Printf
 import           Utils
@@ -48,6 +49,7 @@ data TypeCheckError
 data SType = SType {
   stypeAct  :: !Type,
   stypeReq  :: !Type,
+  stypeTree :: !(Maybe ReachesTree),
   stypeDesc :: !String
                    }
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
@@ -166,12 +168,13 @@ type VObjectMap = ObjectMap Expr VarMetaDat
 type VObjectMapItem = ObjArr Expr VarMetaDat
 type VPrgm = (VObjectMap, ClassGraph, [VCompAnnot])
 
-type TypedMeta = Meta ()
-type TExpr = Expr ()
+type TypedMetaDat = Maybe ReachesTree
+type TypedMeta = Meta TypedMetaDat
+type TExpr = Expr TypedMetaDat
 type TCompAnnot = CompAnnot TExpr
-type TObjArr = ObjArr Expr ()
-type TObjectMap = ObjectMap Expr ()
-type TPrgm = Prgm Expr ()
+type TObjArr = ObjArr Expr TypedMetaDat
+type TObjectMap = ObjectMap Expr TypedMetaDat
+type TPrgm = Prgm Expr TypedMetaDat
 
 -- implicit graph
 type VTypeGraph = H.HashMap TypeName [VObjArr] -- H.HashMap (Root tuple name for filtering) [vals]
@@ -202,7 +205,7 @@ instance CNoteTC TypeCheckError where
   showRecursiveCNote _ n = literal $ show n
 
 instance Show SType where
-  show (SType act req desc) = printf "{%s :: ACT %s; REQ  %s}" desc (show act) (show req)
+  show (SType act req _ desc) = printf "{%s :: ACT %s; REQ  %s}" desc (show act) (show req)
 
 instance (Show p) => Show (ConstraintDat p) where
   show (EqualsKnown i s t) = printf "%s %d==_Known %s" (show s) i (show t)
@@ -247,7 +250,7 @@ typeCheckToRes tc = case tc of
   TypeCheckResE notes       -> CErr (map MkCNote notes)
 
 eqScheme :: FEnv -> TypeVarArgEnv -> Scheme -> Scheme -> Bool
-eqScheme FEnv{feTypeEnv} vaenv (TypeCheckResult _ (SType ub1 lb1 _)) (TypeCheckResult _ (SType ub2 lb2 _)) = isEqTypeWithEnv feTypeEnv vaenv ub1 ub2 && isEqTypeWithEnv feTypeEnv vaenv lb1 lb2
+eqScheme FEnv{feTypeEnv} vaenv (TypeCheckResult _ (SType ub1 lb1 _ _)) (TypeCheckResult _ (SType ub2 lb2 _ _)) = isEqTypeWithEnv feTypeEnv vaenv ub1 ub2 && isEqTypeWithEnv feTypeEnv vaenv lb1 lb2
 eqScheme _ _ a b = a == b
 
 getStypeActReq :: SchemeActReq -> SType -> Type
@@ -311,7 +314,7 @@ fAddTTypeGraph env@FEnv{feTTypeGraph} k v = env {feTTypeGraph = H.insertWith (++
 -- This ensures schemes are correct
 -- It differs from Constrain.checkScheme because it checks for bugs in the internal compiler, not bugs in the user code
 verifyScheme :: TypeEnv -> VMetaVarArgEnv -> VarMeta -> Scheme -> Scheme -> Maybe String
-verifyScheme typeEnv vaenv (Meta _ _ (VarMetaDat _ _)) (TypeCheckResult _ (SType oldAct oldReq _)) (TypeCheckResult _ (SType act req _)) = listToMaybe $ catMaybes [
+verifyScheme typeEnv vaenv (Meta _ _ (VarMetaDat _ _)) (TypeCheckResult _ (SType oldAct oldReq _ _)) (TypeCheckResult _ (SType act req _ _)) = listToMaybe $ catMaybes [
   if verifySchemeActLowers then Nothing else Just "verifySchemeActLowers",
   if verifySchemeReqLowers then Nothing else Just "verifySchemeReqLowers",
   if verifyCompacted then Nothing else Just "verifyCompacted"
@@ -332,7 +335,7 @@ descriptorPnt FEnv{fePnts} p = fePnts IM.! p
 descriptor :: FEnv -> VarMeta -> Scheme
 descriptor env m = case getPnt m of
   Just p  -> descriptorPnt env p
-  Nothing -> pure (SType (getMetaType m) (getMetaType m) "noPnt descriptor")
+  Nothing -> pure (SType (getMetaType m) (getMetaType m) Nothing "noPnt descriptor")
 
 equivalent :: FEnv -> VarMeta -> VarMeta -> Bool
 equivalent env m1 m2 = descriptor env m1 == descriptor env m2
@@ -350,7 +353,7 @@ setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@(
     scheme = descriptor env m
     schemeChanged :: Bool
     schemeChanged = case (scheme, scheme') of
-      (TypeCheckResult _ (SType TopType{} _ _), TypeCheckResult _ (SType TypeVar{} _ _)) -> True
+      (TypeCheckResult _ SType{stypeAct=TopType{}}, TypeCheckResult _ SType{stypeAct=TypeVar{}}) -> True
       _ ->  fromMaybe False $ tcreToMaybe $ do
         showVaenv <- fmap stypeAct <$> mapM (descriptor env) (constraintVarArgEnv con)
         return $ not (eqScheme env showVaenv scheme scheme')
@@ -364,9 +367,7 @@ setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@(
       else feTrace
 
 pointUb :: FEnv -> VarMeta -> TypeCheckResult Type
-pointUb env p = do
-  (SType ub _ _) <- descriptor env p
-  return ub
+pointUb env p = stypeAct <$> descriptor env p
 
 resolveTypeVar :: TypeVarAux -> VConstraint -> TypeCheckResult VarMeta
 resolveTypeVar v con = case H.lookup v (constraintVarArgEnv con) of

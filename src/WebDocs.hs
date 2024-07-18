@@ -31,7 +31,8 @@ import           Data.Graph
 import           Data.Maybe                    (fromJust)
 import           Eval                          (evalAnnots, evalBuild,
                                                 evalBuildAll, evalRun)
-import           Eval.Common                   (EvalResult, TExpr, Val (..))
+import           Eval.Common                   (EvalMetaDat, EvalResult, TExpr,
+                                                Val (..))
 import           MapMeta                       (interleaveMeta, zipMetaFun)
 import           Semantics.Interleave          (interleavePrgm)
 import           Semantics.Prgm
@@ -48,7 +49,7 @@ import           TypeCheck                     (typecheckPrgm,
 import           TypeCheck.Common              (TPrgm, TraceConstrain, VPrgm)
 import           Utils
 
-type TBPrgm = Prgm TExpr ()
+type TBPrgm = Prgm TExpr EvalMetaDat
 
 data ResSuccess a n = Success a [n]
   | ResFail [n]
@@ -159,7 +160,7 @@ getEvalBuild provider prgmName fun = do
     CRes _ r -> fst <$> r
     CErr _   -> return NoVal
 
-getEvalAnnots :: WDProvider -> FileImport -> IO [(Expr (), Val)]
+getEvalAnnots :: WDProvider -> FileImport -> IO [(Expr EvalMetaDat, Val)]
 getEvalAnnots provider prgmName = do
   base <- getTPrgm provider
   let pre = base >>= evalAnnots prgmName

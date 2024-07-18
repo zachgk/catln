@@ -12,14 +12,20 @@
 -- and checks if a conversion path is possible
 --------------------------------------------------------------------
 
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE NamedFieldPuns   #-}
+{-# LANGUAGE DeriveAnyClass    #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE NamedFieldPuns    #-}
 
 module Semantics.TypeGraph where
 import           CRes
+import           Data.Aeson          (ToJSON)
+import           Data.Hashable       (Hashable)
 import qualified Data.HashMap.Strict as H
 import           Data.List
 import           Data.Maybe
+import           GHC.Generics        (Generic)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
@@ -28,7 +34,7 @@ import           Text.Printf
 data ReachesTree
   = ReachesTree !(H.HashMap PartialType ReachesTree)
   | ReachesLeaf ![Type]
-  deriving (Show)
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 data ReachesEnv m = ReachesEnv {
   rTypeEnv      :: !TypeEnv,
@@ -36,6 +42,9 @@ data ReachesEnv m = ReachesEnv {
   rVaenv        :: !TypeVarArgEnv,
   rTypeGraph    :: !(H.HashMap TypeName [ObjArr Expr m])
                              }
+
+instance MetaDat (Maybe ReachesTree) where
+  emptyMetaDat = Nothing
 
 isTypeVar :: Type -> Bool
 isTypeVar TypeVar{} = True

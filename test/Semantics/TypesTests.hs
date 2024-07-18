@@ -7,6 +7,7 @@ import qualified Data.HashMap.Strict as H
 import           Data.Maybe
 import           Hedgehog
 import qualified Hedgehog.Gen        as HG
+import           MapMeta             (clearMetaDat, mapMetaPrgm)
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Desugarf  (desFiles)
@@ -30,7 +31,7 @@ findPrgms = do
     rawPrgm <- fromCRes <$> readFiles False [fileName']
     let prgm = fromCRes $ desFiles rawPrgm
     let tprgm = fromCRes $ typecheckPrgm prgm
-    return (fileName, mergePrgms $ map fst3 $ graphToNodes tprgm)
+    return (fileName, mergePrgms $ map (mapMetaPrgm clearMetaDat . fst3) (graphToNodes tprgm))
   return (H.insert "empty" emptyPrgm $ H.fromList prgms)
 
 ggPrgm :: Prgms -> GenPrgm

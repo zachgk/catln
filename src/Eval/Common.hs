@@ -33,11 +33,12 @@ import           Data.Aeson          hiding (Object)
 import           Data.Maybe
 import           Semantics
 import           Semantics.Prgm
+import           Semantics.TypeGraph
 import           Semantics.Types
 import           Text.Printf
 import           Utils
 
-type EvalMetaDat = ()
+type EvalMetaDat = Maybe ReachesTree
 type EvalMeta = Meta EvalMetaDat
 type ECompAnnot = CompAnnot (Expr EvalMetaDat)
 type EExpr = Expr EvalMetaDat
@@ -87,10 +88,10 @@ data Val
   | StrVal String
   | CharVal Char
   | TupleVal String (H.HashMap String Val)
-  | ObjArrVal (ObjArr TExpr ())
+  | ObjArrVal (ObjArr TExpr EvalMetaDat)
   | IOVal Integer (IO ())
   | LLVMVal (LLVM ())
-  | LLVMQueue [(TExpr (), EObjArr)]
+  | LLVMQueue [(TExpr EvalMetaDat, EObjArr)]
   -- | LLVMOperand Type (Codegen AST.Operand)
   | LLVMIO (Codegen ())
   | NoVal
@@ -183,11 +184,11 @@ data MacroData = MacroData {
                                mdTbEnv  :: TBEnv
                              , mdObjSrc :: [ObjSrc]
                              }
-newtype MacroFunction = MacroFunction (TExpr () -> MacroData -> CRes (TExpr ()))
+newtype MacroFunction = MacroFunction (TExpr EvalMetaDat -> MacroData -> CRes (TExpr EvalMetaDat))
 type ResBuildEnvFunction = TCallTree
 type ResBuildEnvItem = (PartialType, Maybe (Expr EvalMetaDat), Bool, ResBuildEnvFunction)
 type ResBuildEnv = H.HashMap TypeName [ResBuildEnvItem]
-type ResExEnv = H.HashMap (PartialType, ObjArr Expr EvalMetaDat) (TExpr (), [TExpr ()]) -- (result, [compAnnot trees])
+type ResExEnv = H.HashMap (PartialType, ObjArr Expr EvalMetaDat) (TExpr EvalMetaDat, [TExpr EvalMetaDat]) -- (result, [compAnnot trees])
 
 data TBEnv = TBEnv {
     tbName    :: String
@@ -219,7 +220,7 @@ data TCallTree
   = TCTId
   | TCMatch (H.HashMap PartialType TCallTree)
   | TCSeq TCallTree TCallTree
-  | TCCond Type [((TExpr (), EObjArr), TCallTree)] TCallTree -- [((if, ifObj), then)] else
+  | TCCond Type [((TExpr EvalMetaDat, EObjArr), TCallTree)] TCallTree -- [((if, ifObj), then)] else
   | TCArg Type String
   | TCObjArr EObjArr
   | TCPrim Type EPrim
@@ -237,7 +238,7 @@ data TExpr m
   | TCalls (Meta m) (TExpr m) TCallTree
   deriving (Eq, Generic, Hashable, ToJSON)
 
-type AnyObjArr = Either EObjArr (ObjArr TExpr ())
+type AnyObjArr = Either EObjArr (ObjArr TExpr EvalMetaDat)
 
 instance ExprClass TExpr where
   getExprMeta :: TExpr m -> Meta m

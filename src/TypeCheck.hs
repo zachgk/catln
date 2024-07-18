@@ -26,6 +26,7 @@ import           Data.Graph
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Data.Maybe
+import           MapMeta
 import           Semantics.Prgm
 import           TypeCheck.Common
 import           TypeCheck.Constrain (runConstraints)
@@ -42,7 +43,7 @@ runConstraintsLimit = 15
 
 typecheckPrgms :: [PPrgm] -> [TPrgm] -> TypeCheckResult [TypecheckTuplePrgm]
 typecheckPrgms pprgms typechecked = do
-  let baseFEnv = makeBaseFEnv (mergePrgms (pprgms ++ typechecked))
+  let baseFEnv = makeBaseFEnv (mergePrgms (pprgms ++ map (mapMetaPrgm clearMetaDat) typechecked))
   (vprgms, env@FEnv{feCons}) <- fromPrgms baseFEnv pprgms typechecked
   env'@FEnv{feTrace} <- runConstraints runConstraintsLimit env feCons
   -- _ <- trace (printf "Found feUnionAllObjs %s" (show $ descriptor env' $ feUnionAllObjs env')) (return ())
