@@ -11,7 +11,8 @@
 -- on a program. It can build, run, and compute the annotations
 -- for the program.
 --------------------------------------------------------------------
-{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE NamedFieldPuns   #-}
 
 module Eval where
 
@@ -28,6 +29,7 @@ import           Eval.Common
 import           Eval.Env
 import           Eval.ExprBuilder
 import           Eval.Runtime
+import           Semantics.TypeGraph (reachesHasCutSubtypeOf)
 import           Text.Printf
 import           TreeBuild
 import           Utils
@@ -62,22 +64,23 @@ evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe 
   where
     prgm@(objMap, _, _) = prgmFromGraphData prgmName prgmGraphData
     typeEnv = mkTypeEnv prgm
-    objArrowsContains ObjArr{oaArr=Nothing} = Nothing
-    objArrowsContains ObjArr{oaArr=Just (Nothing, _)} = Nothing
-    objArrowsContains oa@ObjArr{oaArr=Just (Just{}, oaM)} = case oaObjPath oa of
+    objArrowsContains oa@ObjArr{oaArr=Just (Just{}, Meta _ _ (Just rt))} = case oaObjPath oa of
       "/Context" -> case H.lookup (partialKey "/value") $ exprAppliedArgsMap $ oaObjExpr oa of
-        Just (Just (_, Just valObjExpr)) -> if relativeNameMatches function (exprPath valObjExpr)
-          then Just $ if isBuildable oa (getMetaType oaM)
-            then EvalBuildWithContext (exprPath valObjExpr)
-            else EvalRunWithContext (exprPath valObjExpr)
-
-          else Nothing
+        Just (Just (_, Just valObjExpr)) -> case () of
+          _ | not (relativeNameMatches function (exprPath valObjExpr)) -> Nothing
+          _ | isBuildable oa rt -> Just $ EvalBuildWithContext (exprPath valObjExpr)
+          _ | isRunnable oa rt -> Just $ EvalRunWithContext (exprPath valObjExpr)
+          _ -> Nothing
         _ -> Nothing
-      _ | relativeNameMatches function (oaObjPath oa) -> if isBuildable oa (getMetaType oaM)
-          then Just $ EvalBuild (oaObjPath oa)
-          else Just $ EvalRun (oaObjPath oa)
-      _ -> Nothing
-    isBuildable oa tp = not $ isBottomType $ intersectTypesEnv typeEnv (fmap ((intersectAllTypes typeEnv . fmap getMetaType) . map snd) (exprVarArgs $ oaObjExpr oa)) tp resultType
+      _ -> case () of
+          _ | not (relativeNameMatches function (oaObjPath oa)) -> Nothing
+          _ | isBuildable oa rt -> Just $ EvalBuild (oaObjPath oa)
+          _ -> Just $ EvalRun (oaObjPath oa) -- Should require isShowable for run result
+    objArrowsContains _ = Nothing
+
+    isBuildable = meetsGoalType resultType
+    isRunnable = meetsGoalType ioType
+    meetsGoalType goalType oa rt = reachesHasCutSubtypeOf typeEnv (fmap ((intersectAllTypes typeEnv . fmap getMetaType) . map snd) (exprVarArgs $ oaObjExpr oa)) rt goalType
 
 -- | evaluate annotations such as assertions that require compiler verification
 evalCompAnnot :: Env -> Val -> CRes Env

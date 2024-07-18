@@ -74,10 +74,10 @@ joinReachesTrees a b = error $ printf "joinReachesTrees for mixed tree and leaf 
 joinAllReachesTrees :: Foldable f => f ReachesTree -> ReachesTree
 joinAllReachesTrees = foldr1 joinReachesTrees
 
-reachesHasCutSubtypeOf :: (Show m, MetaDat m) => TypeEnv -> MetaVarArgEnv m -> ReachesTree -> Type -> Bool
+reachesHasCutSubtypeOf :: TypeEnv -> TypeVarArgEnv -> ReachesTree -> Type -> Bool
 reachesHasCutSubtypeOf classGraph vaenv (ReachesTree children) superType = all childIsSubtype $ H.toList children
-  where childIsSubtype (key, val) = isSubtypePartialOfWithMetaEnv classGraph vaenv key superType || reachesHasCutSubtypeOf classGraph vaenv val superType
-reachesHasCutSubtypeOf classGraph vaenv (ReachesLeaf leafs) superType = any (\t -> isSubtypeOfWithMetaEnv classGraph vaenv t superType) leafs
+  where childIsSubtype (key, val) = isSubtypeOfWithEnv classGraph vaenv (singletonType key) superType || reachesHasCutSubtypeOf classGraph vaenv val superType
+reachesHasCutSubtypeOf classGraph vaenv (ReachesLeaf leafs) superType = any (\t -> isSubtypeOfWithEnv classGraph vaenv t superType) leafs
 
 reachesPartial :: (MetaDat m, Show m) => ReachesEnv m -> PartialType -> CRes ReachesTree
 reachesPartial ReachesEnv{rVaenv} PartialType{ptName=argName} | TVArg (partialKey argName) `H.member` rVaenv = return $ ReachesLeaf [TypeVar (TVArg $ partialKey argName) TVInt]
