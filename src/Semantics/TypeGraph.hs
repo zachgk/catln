@@ -23,6 +23,7 @@ import           CRes
 import           Data.Aeson          (ToJSON)
 import           Data.Hashable       (Hashable)
 import qualified Data.HashMap.Strict as H
+import qualified Data.HashSet        as S
 import           Data.List
 import           Data.Maybe
 import           GHC.Generics        (Generic)
@@ -40,7 +41,8 @@ data ReachesEnv m = ReachesEnv {
   rTypeEnv      :: !TypeEnv,
   rUnionAllType :: !Type,
   rVaenv        :: !TypeVarArgEnv,
-  rTypeGraph    :: !(H.HashMap TypeName [ObjArr Expr m])
+  rTypeGraph    :: !(H.HashMap TypeName [ObjArr Expr m]),
+  rVisited      :: !(S.HashSet PartialType)
                              }
 
 instance MetaDat (Maybe ReachesTree) where
@@ -80,28 +82,30 @@ reachesHasCutSubtypeOf classGraph vaenv (ReachesTree children) superType = all c
 reachesHasCutSubtypeOf classGraph vaenv (ReachesLeaf leafs) superType = any (\t -> isSubtypeOfWithEnv classGraph vaenv t superType) leafs
 
 reachesPartial :: (MetaDat m, Show m) => ReachesEnv m -> PartialType -> CRes ReachesTree
+reachesPartial ReachesEnv{rVisited} p | S.member p rVisited = return $ ReachesLeaf []
 reachesPartial ReachesEnv{rVaenv} PartialType{ptName=argName} | TVArg (partialKey argName) `H.member` rVaenv = return $ ReachesLeaf [TypeVar (TVArg $ partialKey argName) TVInt]
-reachesPartial ReachesEnv{rTypeGraph, rTypeEnv} partial@PartialType{ptName=name} = do
+reachesPartial env@ReachesEnv{rTypeGraph, rTypeEnv, rVisited} partial@PartialType{ptName=name} = do
 
   let ttypeArrows = H.lookupDefault [] name rTypeGraph
   ttypes <- mapM tryTArrow ttypeArrows
 
-  return $ ReachesLeaf (catMaybes ttypes)
+  let env' = env{rVisited=S.insert partial rVisited}
+  if null (catMaybes ttypes)
+    then return $ ReachesLeaf []
+    else reaches env' (unionAllTypes rTypeEnv (catMaybes ttypes))
   where
     tryTArrow oa@ObjArr{oaArr=Just{}} = do
       -- It is possible to send part of a partial through the arrow, so must compute the valid part
       -- If none of it is valid, then there is Nothing
       let potentialSrc@(UnionType potSrcLeafs) = intersectTypes rTypeEnv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa)
       if not (isBottomType potentialSrc)
-        -- TODO: Should this line below call `reaches` to make this recursive?
-        -- otherwise, no reaches path requiring multiple steps can be found
         then return $ Just $ unionAllTypes rTypeEnv [arrowDestType rTypeEnv potentialSrcPartial oa | potentialSrcPartial <- splitUnionType potSrcLeafs]
         else return Nothing
     tryTArrow ObjArr{oaArr=Nothing} = return Nothing
 
 reaches :: (MetaDat m, Show m) => ReachesEnv m -> Type -> CRes ReachesTree
 reaches _     PTopType            = return $ ReachesLeaf [PTopType]
-reaches _     TopType{}            = undefined
+reaches _     v@TopType{}            = return $ ReachesLeaf [v]
 reaches _     (TypeVar v _)            = error $ printf "reaches with typevar %s" (show v)
 reaches env (UnionType src) = do
   let partials = splitUnionType src

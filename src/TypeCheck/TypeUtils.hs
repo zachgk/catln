@@ -136,11 +136,9 @@ mkReachesEnv env@FEnv{feTypeEnv, feUnionAllObjs, feVTypeGraph, feTTypeGraph} (Co
   SType{stypeAct=unionAll} <- descriptor env feUnionAllObjs
   feVTypeGraph' <- forM feVTypeGraph $ \objArrs -> do
     forM objArrs $ \voa -> do
-      objUb <- pointUb env (getExprMeta $ oaObjExpr voa)
       soa <- showObjArr env voa
       let soa' = mapMetaObjArr clearMetaDat Nothing soa
-      let soa'' = mapOAObjExpr (exprWithMetaType objUb) soa'
-      return soa''
+      return soa'
 
   -- Env (typeGraph) from args
   -- TODO Remove the call to head below to support nonLinear args
@@ -156,7 +154,7 @@ mkReachesEnv env@FEnv{feTypeEnv, feUnionAllObjs, feVTypeGraph, feTTypeGraph} (Co
   let argTypeEnv = mkTypeEnv (argObjMap, classGraphFromObjs argObjMap, [])
   let ttypeGraph' = H.map (map (mapMetaObjArr clearMetaDat Nothing)) feTTypeGraph
   let typeGraph = unionsWith (++) [argTypeGraph, feVTypeGraph', ttypeGraph']
-  return $ ReachesEnv (mergeTypeEnv argTypeEnv feTypeEnv) unionAll (fmap snd vaenv) typeGraph
+  return $ ReachesEnv (mergeTypeEnv argTypeEnv feTypeEnv) unionAll (fmap snd vaenv) typeGraph S.empty
 
 arrowConstrainUbs :: FEnv -> RConstraint -> Type -> Type -> TypeCheckResult (Type, Type, Maybe ReachesTree)
 arrowConstrainUbs env@FEnv{feUnionAllObjs} con PTopType dest@UnionType{} = do

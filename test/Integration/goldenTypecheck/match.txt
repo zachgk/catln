@@ -471,7 +471,15 @@
                 ( Value /$ 94 b758-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>= ( Value /l -> TVArg /x = Value /x )
                     ( Value /r -> /Data/Primitive/Integer = CInt 0 )
                 ) -> TVArg /x2 = Value /x2
-            , /abs ( Value /x -> /Data/Primitive/Integer ) = /abs.$ 94 b758 ( Value /x -> TVArg /x = Value /x )
+            , /abs ( Value /x -> /Data/Primitive/Integer ) ->
+                ( /Data/Primitive/Integer | /abs.$ 94 b758
+                    ( /x=/Data/Primitive/Integer
+                    , /$ 94 b758-arg=/Data/Primitive/Integer
+                    ) | /operator*
+                    ( /l=/Data/Primitive/Integer
+                    , /r=/Data/Primitive/Integer
+                    )
+                ) = /abs.$ 94 b758 ( Value /x -> TVArg /x = Value /x )
                 ( Value /$ 94 b758-arg -> TVArg /x = Value /x )
             , /Context ( Value /value -> /main = Value /main ) ( Value /io -> /Catln/IO ) ->
                 ( /Catln/exit

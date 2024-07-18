@@ -478,7 +478,16 @@
                 ) ( Value /r -> TVArg /x = Value /x )
             , /abs.$ 866 a3c ( Value /x )
                 ( Value /$ 866 a3c-arg= Hole TopType HoleActive Nothing@Value /Catln/Then ) -> TVArg /x = Value /x
-            , /abs ( Value /x -> /Data/Primitive/Integer ) = /abs.$ 866 a3c ( Value /x -> TVArg /x = Value /x )
+            , /abs ( Value /x -> /Data/Primitive/Integer ) ->
+                ( /abs.$ 866 a3c
+                    ( /x=/Data/Primitive/Integer
+                    , /$ 866 a3c-arg=
+                        ( /Catln/ThenElse/fromBool ( /v=∀/Data/Primitive/Boolean ) | /Catln/Else | /Catln/Then )
+                    ) | /Data/Primitive/Integer | /operator*
+                    ( /l=/Data/Primitive/Integer
+                    , /r=/Data/Primitive/Integer
+                    )
+                ) = /abs.$ 866 a3c ( Value /x -> TVArg /x = Value /x )
                 ( Value /$ 866 a3c-arg ->
                     ( /Catln/ThenElse/fromBool ( /v=∀/Data/Primitive/Boolean ) | /Catln/Else | /Catln/Then ) = /Catln/ThenElse/fromBool
                     ( Value /v -> ∀/Data/Primitive/Boolean = /operator>= ( Value /l -> TVArg /x = Value /x )

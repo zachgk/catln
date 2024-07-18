@@ -18,13 +18,18 @@ module TypeCheck.Show where
 import           Control.Monad    (forM)
 import           Data.Bifunctor   (bimap)
 import           Data.Maybe       (fromJust)
+import           Semantics
 import           Semantics.Prgm
+import           Semantics.Types
 import           TypeCheck.Common
 
 showM :: FEnv -> VarMeta -> TypeCheckResult ShowMeta
-showM env m = do
-  stype <- descriptor env m
-  return $ mapMetaDat (ShowMeta stype) m
+showM env@FEnv{feTypeEnv} m = do
+  stype@SType{stypeAct} <- descriptor env m
+  let tp' = case getMetaType m of
+        TypeVar{} -> getMetaType m
+        _         -> intersectTypes feTypeEnv (getMetaType m) stypeAct
+  return $ mapMetaDat (ShowMeta stype) (mWithType tp' m)
 
 showExpr :: FEnv -> VExpr -> TypeCheckResult SExpr
 showExpr env (CExpr m c) = do
