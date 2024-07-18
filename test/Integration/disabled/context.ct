@@ -4,7 +4,12 @@
 
 data(Counter(i -> Integer))
 
+inc{c=Counter(i)} = (){Counter(i+1)}
+
+count{c=Counter(i)} = i{Counter(i)}
+
 main{io -> IO} =
   _<- (){Counter(0)}
+  _<- inc{}
   io.exit(val= 0)
 

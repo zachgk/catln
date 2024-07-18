@@ -160,7 +160,9 @@ semiDesExpr sdm obj@Just{} (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm ob
     mapCtx ctx = (Just $ rawVal $ snd $ desugarTheExpr $ fromJust $ roaObj ctx, fromJust $ roaObj ctx)
 semiDesExpr sdm obj@Nothing (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawIArgs (RawValue emptyMetaN "/Context") ((partialKey "value", IArgE be) : map mapCtx ctxs)
   where
-    mapCtx ctx = (partialToKey $ exprToPartialType $ fromJust $ roaObj ctx, IArgM $ thr3 $ fromJust $ roaArr ctx)
+    mapCtx RawObjArr{roaObj=Just ctxObj, roaArr=Just (Just ctxArr, _, _)} = (partialToKey $ exprToPartialType ctxObj, IArgE ctxArr)
+    mapCtx RawObjArr{roaObj=Just ctxObj, roaArr=Just (_, _, ctxM)} = (partialToKey $ exprToPartialType ctxObj, IArgM ctxM)
+    mapCtx ctx = error $ printf "Invalid input context: %s" (show ctx)
 semiDesExpr sdm obj (RawParen e) = semiDesExpr sdm obj e
 semiDesExpr sdm obj@Nothing (RawMethod (RawTheExpr n) method) = semiDesExpr sdm' obj (method `applyRawIArgs` [(partialKey "this", IArgM (Meta (exprToType n) (getMetaPos $ getExprMeta n) emptyMetaDat))]) -- Parse type methods like :Integer.toString, Only for input expressions
   where
