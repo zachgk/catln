@@ -108,10 +108,8 @@ exprVarArgsWithSrcs typeEnv os = H.unions (map (uncurry (exprVarArgsWithSrc type
 exprVarArgsWithObjSrcs :: (MetaDat m, Show m) => TypeEnv -> [(PartialType, ObjArr Expr m)] -> ArgMetaMapWithSrc m
 exprVarArgsWithObjSrcs typeEnv os = exprVarArgsWithSrcs typeEnv $ map (\(src, obj) -> (oaObjExpr obj, src)) os
 
--- fullDest means to use the greatest possible type (after implicit).
--- Otherwise, it uses the minimal type that *must* be reached
-arrowDestType :: (Show m, MetaDat m) => Bool -> TypeEnv -> PartialType -> ObjArr Expr m -> Type
-arrowDestType fullDest typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, oaM)} = case oaArrExpr of
+arrowDestType :: (Show m, MetaDat m) => TypeEnv -> PartialType -> ObjArr Expr m -> Type
+arrowDestType typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, oaM)} = case oaArrExpr of
   Just n | isJust (maybeExprPath n) -> maybe joined substitute (H.lookup (TVArg $ inExprSingleton n) vaenv)
   _                              -> joined
   where
@@ -119,10 +117,8 @@ arrowDestType fullDest typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, oaM)} = case
     substitute = substituteWithVarArgEnv vaenv
     expr' = fmap (substitute . getExprType) oaArrExpr
     arr' = substitute $ getMetaType oaM
-    joined = if fullDest
-      then unionTypes typeEnv (fromMaybe BottomType expr') arr'
-      else intersectTypes typeEnv (fromMaybe PTopType expr') arr'
-arrowDestType _ _ _ oa@ObjArr{oaArr=Nothing} = error $ printf "Unexpected call to arrowDestType with type obj (which has no arrow to find the dest type of): %s" (show oa)
+    joined = fromMaybe arr' expr'
+arrowDestType _ _ oa@ObjArr{oaArr=Nothing} = error $ printf "Unexpected call to arrowDestType with type obj (which has no arrow to find the dest type of): %s" (show oa)
 
 metaTypeVar :: Meta m -> Maybe TypeVarAux
 metaTypeVar m = case getMetaType m of

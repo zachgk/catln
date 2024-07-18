@@ -364,7 +364,7 @@ instance Show m => Show (TExpr m) where
 type ObjSrc = (PartialType, EObjArr)
 
 resArrowDestType :: TypeEnv -> PartialType -> TCallTree -> Type
-resArrowDestType typeEnv src (TCObjArr oa) = arrowDestType False typeEnv src oa
+resArrowDestType typeEnv src (TCObjArr oa) = arrowDestType typeEnv src oa
 resArrowDestType _ _ (TCPrim tp _) = tp
 resArrowDestType _ _ (TCMacro tp _) = tp
 -- resArrowDestType _ _ (ConstantArrow v) = singletonType $ getValType v

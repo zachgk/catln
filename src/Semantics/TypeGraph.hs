@@ -95,7 +95,7 @@ reachesPartial ReachesEnv{rTypeGraph, rTypeEnv} partial@PartialType{ptName=name}
       if not (isBottomType potentialSrc)
         -- TODO: Should this line below call `reaches` to make this recursive?
         -- otherwise, no reaches path requiring multiple steps can be found
-        then return $ Just $ unionAllTypes rTypeEnv [arrowDestType True rTypeEnv potentialSrcPartial oa | potentialSrcPartial <- splitUnionType potSrcLeafs]
+        then return $ Just $ unionAllTypes rTypeEnv [arrowDestType rTypeEnv potentialSrcPartial oa | potentialSrcPartial <- splitUnionType potSrcLeafs]
         else return Nothing
     tryTArrow ObjArr{oaArr=Nothing} = return Nothing
 
