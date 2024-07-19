@@ -13,8 +13,10 @@ module(Catln)
       But, all of the impurity is managed in this single type.
   :IO.exit(val -> Integer) -> IO
     # [exit] will immediately terminate the process and return [val] as the status value.
+    #runtime("ioExit")
   :IO.println(msg -> String) -> IO
     # [println] will print the [msg] to the standard output along with a newline character.
+    #runtime("println")
   # ## Core Annotations
     The core annotations are all of the annotations used by the compiler and the web docs program.
   annot(#md(text -> String))
@@ -28,6 +30,8 @@ module(Catln)
       An else arrow takes effect only if no other arrows match.
       It's domain can be considered altered to have no overlap with other domains.
       It can be used to create "default" behaviors that are overridden and fallthrough logic.
+  annot(#runtime(k -> String))
+    # [#runtime] is used to mark a runtime declaration. The key [k] is used to match the declaration to the equivalent function in the evaluator runtime.
   annot(#argStart)
     # [#argStart] is used internally to annotate the first argument in a parenthesis.
   annot(#argEnd)
@@ -67,6 +71,7 @@ module(Catln)
     # [www] is used to build web results.
   llvm(c) -> CatlnResult..
     # [llvm] runs the [LLVM Compiler](https://llvm.org/) to build the runnable argument [c] into a [CatlnResult] executable.
+    #runtime("llvm")
   class(ThenElse, [Then, Else])
     fromBool(v -> Boolean) -> ThenElse
     fromBool(v= /Data/Primitive/True)= Then

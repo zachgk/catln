@@ -48,15 +48,14 @@ type EObjectMap = ObjectMap Expr EvalMetaDat
 type EPrgm = Prgm Expr EvalMetaDat
 type EPrgmGraphData = GraphData EPrgm FileImport
 
-data EPrim = EPrim PartialType EGuard (H.HashMap String Val -> Either String Val)
+data EPrim = EPrim String (H.HashMap String Val -> Either String Val)
   deriving (Generic)
 
--- TODO: Maybe should include result type?
 instance Eq EPrim where
-  (EPrim at ag _) == (EPrim bt bg _) = at == bt && ag == bg
+  (EPrim k1 _) == (EPrim k2 _) = k1 == k2
 
 instance Hashable EPrim where
-  hashWithSalt s (EPrim at ag _) = s `hashWithSalt` at `hashWithSalt` ag
+  hashWithSalt s (EPrim k _) = s `hashWithSalt` k
 
 instance ToJSON EPrim where
   toJSON EPrim{} = object ["type".=("EPrim" :: String)]
@@ -186,6 +185,7 @@ data MacroData = MacroData {
                              }
 newtype MacroFunction = MacroFunction (TExpr EvalMetaDat -> MacroData -> CRes (TExpr EvalMetaDat))
 type ResBuildEnvFunction = TCallTree
+type ResBuildPrims = H.HashMap TypeName ResBuildEnvFunction
 type ResBuildEnvItem = (PartialType, Maybe (Expr EvalMetaDat), Bool, ResBuildEnvFunction)
 type ResBuildEnv = H.HashMap TypeName [ResBuildEnvItem]
 type ResExEnv = H.HashMap (PartialType, ObjArr Expr EvalMetaDat) (TExpr EvalMetaDat, [TExpr EvalMetaDat]) -- (result, [compAnnot trees])

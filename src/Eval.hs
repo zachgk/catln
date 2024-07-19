@@ -137,7 +137,7 @@ evalCallTree env@Env{evArgs} input (TCArg _ name) = case H.lookup name evArgs of
   Just arg' -> return (arg', env)
   Nothing -> evalError env $ printf "Unknown arg %s found during evaluation \n\t\t with arg env %s" name (show evArgs)
 evalCallTree env1 input (TCObjArr oa) = evalObjArr env1 input (Left oa)
-evalCallTree env1 input (TCPrim _ (EPrim _ _ f)) = do
+evalCallTree env1 input (TCPrim _ (EPrim _ f)) = do
   case input of
     (TupleVal _ args) -> case f args of
       Right val -> return (val, env1)

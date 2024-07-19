@@ -43,15 +43,25 @@ module(Data/Primitive)
   class(Number, [Integer, Float])
   every(Number, isa= [/Data/Algebra/Eq])
   (-(_ :: Integer)) -> Integer
+    #runtime("intNeg")
   (_ :: Integer - _ :: Integer) -> Integer
+    #runtime("int-")
   (_ :: Integer + _ :: Integer) -> Integer
+    #runtime("int+")
   (_ :: Integer * _ :: Integer) -> Integer
+    #runtime("int*")
   (_ :: Integer <= _ :: Integer) -> Boolean
+    #runtime("int<=")
   (_ :: Integer >= _ :: Integer) -> Boolean
+    #runtime("int>=")
   (_ :: Integer < _ :: Integer) -> Boolean
+    #runtime("int<")
   (_ :: Integer > _ :: Integer) -> Boolean
+    #runtime("int>")
   (_ :: Integer == _ :: Integer) -> Boolean
+    #runtime("int==")
   (_ :: Integer != _ :: Integer) -> Boolean
+    #runtime("int!=")
   # ### Commutative Group
   every(Integer, isa= [/Data/Algebra/CommutativeMonoid])
   every(Integer, isa= [/Data/Algebra/Group])

@@ -59,6 +59,10 @@ ctxAnnot = "/Catln/#ctx"
 elseAnnot :: String
 elseAnnot = "/Catln/#else"
 
+runtimeAnnot, runtimeAnnotK :: String
+runtimeAnnot = "/Catln/#runtime"
+runtimeAnnotK = "/k"
+
 argStartAnnot, argEndAnnot :: String
 argStartAnnot = "/Catln/#argStart"
 argEndAnnot = "/Catln/#argEnd"

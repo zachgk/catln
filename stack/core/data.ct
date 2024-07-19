@@ -9,9 +9,11 @@ module(Data)
     # A [String] is a list of characters.
   every(String, isa= [/Data/Algebra/Eq])
   (_ :: String == _ :: String) -> Boolean
+     #runtime("strEq")
   :String.toString -> String
   :String.toString= this
   :Integer.toString -> String
+    #runtime("intToString")
   # ## Context
   data(/Context(value, .._))
     # The context is used to represent state.

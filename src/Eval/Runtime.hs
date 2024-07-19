@@ -25,7 +25,7 @@ import           Eval.Common
 import           Eval.ExprBuilder
 import           Text.Printf
 
-type Op = (TypeName, [(PartialType, Maybe EExpr, Bool, ResBuildEnvFunction)])
+type Op = (String, ResBuildEnvFunction)
 
 true, false :: Val
 true = TupleVal "/Data/Primitive/True" H.empty
@@ -36,89 +36,66 @@ bool True  = true
 bool False = false
 
 liftIntOp :: TypeName -> (Integer -> Integer -> Integer) -> Op
-liftIntOp name f = (name', [(srcType, Nothing, False, TCPrim resType prim)])
+liftIntOp name f = (name', TCPrim intType (EPrim name' prim))
   where
-    name' = "/operator" ++ name
-    srcType = PartialType name' H.empty (H.fromList [(partialKey "/l", intType), (partialKey "/r", intType)]) PredsNone PtArgExact
-    resType = intType
-    prim = EPrim srcType Nothing (\args -> case (H.lookup "/l" args, H.lookup "/r" args) of
-                           (Just (IntVal l), Just (IntVal r)) -> Right $ IntVal $ f l r
-                           _ -> Left "Invalid intOp signature"
-                           )
+    name' = "int" ++ name
+    prim args = case (H.lookup "/l" args, H.lookup "/r" args) of
+                          (Just (IntVal l), Just (IntVal r)) -> Right $ IntVal $ f l r
+                          _ -> Left "Invalid intOp signature"
 
 liftCmpOp :: TypeName -> (Integer -> Integer -> Bool) -> Op
-liftCmpOp name f = (name', [(srcType, Nothing, False, TCPrim resType prim)])
+liftCmpOp name f = (name', TCPrim boolType (EPrim name' prim))
   where
-    name' = "/operator" ++ name
-    srcType = PartialType name' H.empty (H.fromList [(partialKey "/l", intType), (partialKey "/r", intType)]) PredsNone PtArgExact
-    resType = boolType
-    prim = EPrim srcType Nothing (\args -> case (H.lookup "/l" args, H.lookup "/r" args) of
-                           (Just (IntVal l), Just (IntVal r)) -> Right $ bool $ f l r
-                           _ -> Left "Invalid compOp signature"
-                           )
+    name' = "int" ++ name
+    prim args = case (H.lookup "/l" args, H.lookup "/r" args) of
+                          (Just (IntVal l), Just (IntVal r)) -> Right $ bool $ f l r
+                          _ -> Left "Invalid compOp signature"
 
-rneg :: TypeName -> Op
-rneg name = (name', [(srcType, Nothing, False, TCPrim resType prim)])
+rneg :: Op
+rneg = (name', TCPrim intType (EPrim name' prim))
   where
-    name' = "/operator" ++ name
-    srcType = PartialType name' H.empty (H.singleton (partialKey "/a") intType) PredsNone PtArgExact
-    resType = intType
-    prim = EPrim srcType Nothing (\args -> case H.lookup "/a" args of
-                                  Just (IntVal i) -> Right $ IntVal $ -i
-                                  _ -> Left "Invalid rneg signature"
-                              )
+    name' = "intNeg"
+    prim args = case H.lookup "/a" args of
+                                 Just (IntVal i) -> Right $ IntVal $ -i
+                                 _ -> Left "Invalid rneg signature"
 
 strEq :: Op
-strEq = (name', [(srcType, Nothing, False, TCPrim resType prim)])
+strEq = (name', TCPrim boolType (EPrim name' prim))
   where
-    name' = "/operator=="
-    srcType = PartialType name' H.empty (H.fromList [(partialKey "/l", strType), (partialKey "/r", strType)]) PredsNone PtArgExact
-    resType = boolType
-    prim = EPrim srcType Nothing (\args -> case (H.lookup "/l" args, H.lookup "/r" args) of
-                                  (Just (StrVal l), Just (StrVal r)) -> Right $ bool $ l == r
-                                  _ -> Left "Invalid intToString signature"
-                              )
+    name' = "strEq"
+    prim args = case (H.lookup "/l" args, H.lookup "/r" args) of
+                                 (Just (StrVal l), Just (StrVal r)) -> Right $ bool $ l == r
+                                 _ -> Left "Invalid intToString signature"
 
 intToString :: Op
-intToString = (name', [(srcType, Nothing, False, TCPrim resType prim)])
+intToString = (name', TCPrim strType (EPrim name' prim))
   where
-    name' = "/Data/toString"
-    srcType = PartialType name' H.empty (H.singleton (partialKey "/this") intType) PredsNone PtArgExact
-    resType = strType
-    prim = EPrim srcType Nothing (\args -> case H.lookup "/this" args of
-                                  (Just (IntVal val)) -> Right $ StrVal $ show val
-                                  _ -> Left "Invalid intToString signature"
-                              )
+    name' = "intToString"
+    prim args = case H.lookup "/this" args of
+                                 (Just (IntVal val)) -> Right $ StrVal $ show val
+                                 _ -> Left "Invalid intToString signature"
 
 
 ioExit :: Op
-ioExit = (name', [(srcType, Nothing, False, TCPrim resType prim)])
+ioExit = (name', TCPrim ioType (EPrim name' prim))
   where
-    name' = "/Catln/exit"
-    srcType = PartialType name' H.empty (H.fromList [(partialKey "/this", ioType), (partialKey "/val", intType)]) PredsNone PtArgExact
-    resType = ioType
-    prim = EPrim srcType Nothing (\args -> case (H.lookup "/this" args, H.lookup "/val" args) of
-                                  (Just (IOVal _ io), Just (IntVal val)) -> Right $ IOVal val io
-                                  _ -> Left $ printf "Invalid exit signature with args: %s" (show args)
-                              )
+    name' = "ioExit"
+    prim args = case (H.lookup "/this" args, H.lookup "/val" args) of
+                                 (Just (IOVal _ io), Just (IntVal val)) -> Right $ IOVal val io
+                                 _ -> Left $ printf "Invalid exit signature with args: %s" (show args)
 
 println :: Op
-println = (name', [(srcType, Nothing, False, TCPrim resType prim)])
+println = (name', TCPrim ioType (EPrim name' prim))
   where
-    name' = "/Catln/println"
-    srcType = PartialType name' H.empty (H.fromList [(partialKey "/this", ioType), (partialKey "/msg", strType)]) PredsNone PtArgExact
-    resType = ioType
-    prim = EPrim srcType Nothing (\args -> case (H.lookup "/this" args, H.lookup "/msg" args) of
-                                  (Just (IOVal r io), Just (StrVal msg)) -> Right $ IOVal r (io >> putStrLn msg)
-                                  _ -> Left "Invalid println signature"
-                              )
+    name' = "println"
+    prim args = case (H.lookup "/this" args, H.lookup "/msg" args) of
+                                 (Just (IOVal r io), Just (StrVal msg)) -> Right $ IOVal r (io >> putStrLn msg)
+                                 _ -> Left "Invalid println signature"
 
 llvm :: Op
-llvm = (name', [(srcType, Nothing, False, TCMacro (singletonType resultLeaf) (MacroFunction macroBuild))])
+llvm = ("llvm", TCMacro (singletonType resultLeaf) (MacroFunction macroBuild))
   where
-    name' = "/Catln/llvm"
-    srcType = PartialType name' H.empty (H.fromList [(partialKey "/c", PTopType)]) PredsNone PtArgExact
-    macroBuild input MacroData{mdTbEnv} = do
+    macroBuild input MacroData{mdTbEnv} =
       case input of
         (TTupleApply _ (_, TValue _ "/Catln/llvm") (EAppArg ObjArr{oaObj=Just (TValue _ "/c"), oaArr=Just (Just (TValue _ functionToCodegen), _)})) -> buildName functionToCodegen
         _ -> error $ printf "Unknown expr to llvm macro: %s" (show input)
@@ -131,8 +108,8 @@ llvm = (name', [(srcType, Nothing, False, TCMacro (singletonType resultLeaf) (Ma
           return $ TCExpr (emptyMetaT $ singletonType $ getValType val) val
         codegenPrgm _ _ _ _ = return ()
 
-primEnv :: ResBuildEnv
-primEnv = H.fromListWith (++) [ liftIntOp "+" (+)
+primEnv :: ResBuildPrims
+primEnv = H.fromList [ liftIntOp "+" (+)
                               , liftIntOp "-" (-)
                               , liftIntOp "*" (*)
                               , liftCmpOp ">" (>)
@@ -141,7 +118,7 @@ primEnv = H.fromListWith (++) [ liftIntOp "+" (+)
                               , liftCmpOp "<=" (<=)
                               , liftCmpOp "==" (==)
                               , liftCmpOp "!=" (/=)
-                              , rneg "-"
+                              , rneg
                               , strEq
                               , intToString
                               , ioExit
