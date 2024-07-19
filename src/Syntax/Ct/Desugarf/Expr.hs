@@ -19,6 +19,7 @@ import qualified Data.HashMap.Strict     as H
 import           Data.Maybe
 import           Text.Printf
 
+import           CtConstants
 import           Data.Char               (toLower)
 import           Semantics
 import           Semantics.Prgm
@@ -155,10 +156,10 @@ semiDesExpr sdm obj (RawVarsApply m be vs) = foldr aux be' vs
               Nothing -> error $ printf "No type name found in varExpr %s (type %s)" (show varExpr) (show $ exprToType varExpr)
         varVal = maybe emptyMetaN thr3 roaArr
     aux roa _ = error $ printf "Unexpected semiDesExpr var: %s" (show roa)
-semiDesExpr sdm obj@Just{} (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawEArgs (RawValue emptyMetaN "/Context") ((Just $ rawVal "value", be) : map mapCtx ctxs)
+semiDesExpr sdm obj@Just{} (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawEArgs (RawValue emptyMetaN ContextStr) ((Just $ rawVal contextValStr, be) : map mapCtx ctxs)
   where
     mapCtx ctx = (Just $ rawVal $ snd $ desugarTheExpr $ fromJust $ roaObj ctx, fromJust $ roaObj ctx)
-semiDesExpr sdm obj@Nothing (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawIArgs (RawValue emptyMetaN "/Context") ((partialKey "value", IArgE be) : map mapCtx ctxs)
+semiDesExpr sdm obj@Nothing (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawIArgs (RawValue emptyMetaN ContextStr) ((partialKey contextValStr, IArgE be) : map mapCtx ctxs)
   where
     mapCtx RawObjArr{roaObj=Just ctxObj, roaArr=Just (Just ctxArr, _, _)} = (partialToKey $ exprToPartialType ctxObj, IArgE ctxArr)
     mapCtx RawObjArr{roaObj=Just ctxObj, roaArr=Just (_, _, ctxM)} = (partialToKey $ exprToPartialType ctxObj, IArgM ctxM)

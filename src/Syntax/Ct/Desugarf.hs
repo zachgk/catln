@@ -21,6 +21,7 @@ import           Data.Maybe
 import           Text.Printf
 
 import           CRes
+import           CtConstants
 import           Data.Bifunctor                   (first)
 import           Data.Graph                       hiding (path)
 import           MapMeta
@@ -90,7 +91,7 @@ desObj isDef inheritPath useRelativeName oa@ObjArr{oaObj=Just objE} = oa{oaObj=J
     -- Inherit the path in main object name. If main is a context, instead inherit in the context function as well
     updateExprPath = mapExprPath (\(eM, eN) -> Value eM (show $ relPathAddPrefix inheritPath (getPath eN)))
     objExpr4 = case oaObjPath oa of
-      "/Context" -> mapExprAppliedArg updateExprPath (partialKey "value") objExpr3
+      ContextStr -> mapExprAppliedArg updateExprPath (partialKey contextValStr) objExpr3
       _          -> updateExprPath objExpr3
 desObj _ _ _ oa = error $ printf "Unexpected desObj with no input exrpression: %s" (show oa)
 

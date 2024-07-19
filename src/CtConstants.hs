@@ -10,6 +10,8 @@
 -- This module defines simple constants
 --------------------------------------------------------------------
 
+{-# LANGUAGE PatternSynonyms #-}
+
 module CtConstants where
 
 operatorPrefix, operatorArgUnary, operatorArgL, operatorArgR :: String
@@ -31,6 +33,17 @@ truePrim = "/Data/Primitive/True"
 falsePrim = "/Data/Primitive/False"
 strPrim = "/Data/String"
 ioPrim = "/Catln/IO"
+
+pattern ContextStr :: String
+pattern ContextStr = "/Context"
+contextValStr, ioStr :: String
+contextValStr = "/value"
+ioStr = "/io"
+
+assertStr, assertTestStr, assertMsgStr :: String
+assertStr = "/Catln/#assert"
+assertTestStr = "/test"
+assertMsgStr = "/msg"
 
 mdAnnot, mdAnnotText :: String
 mdAnnot = "/Catln/#md"

@@ -25,6 +25,7 @@ import           Control.Monad
 import           Data.Graph
 import           Data.Maybe
 -- import           Emit                (codegenExInit)
+import           CtConstants
 import           Eval.Common
 import           Eval.Env
 import           Eval.ExprBuilder
@@ -65,7 +66,7 @@ evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe 
     prgm@(objMap, _, _) = prgmFromGraphData prgmName prgmGraphData
     typeEnv = mkTypeEnv prgm
     objArrowsContains oa@ObjArr{oaArr=Just (Just{}, Meta _ _ (Just rt))} = case oaObjPath oa of
-      "/Context" -> case H.lookup (partialKey "/value") $ exprAppliedArgsMap $ oaObjExpr oa of
+      ContextStr -> case H.lookup (partialKey contextValStr) $ exprAppliedArgsMap $ oaObjExpr oa of
         Just (Just (_, Just valObjExpr)) -> case () of
           _ | not (relativeNameMatches function (exprPath valObjExpr)) -> Nothing
           _ | isBuildable oa rt -> Just $ EvalBuildWithContext (exprPath valObjExpr)
@@ -84,7 +85,7 @@ evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe 
 
 -- | evaluate annotations such as assertions that require compiler verification
 evalCompAnnot :: Env -> Val -> CRes Env
-evalCompAnnot env (TupleVal "/Catln/#assert" args) = case (H.lookup "/test" args, H.lookup "/msg" args) of
+evalCompAnnot env (TupleVal n args) | n == assertStr = case (H.lookup assertTestStr args, H.lookup assertMsgStr args) of
   (Just b, Just (StrVal _)) | b == true -> return env
   (Just b, Just (StrVal msg)) | b == false -> CErr [MkCNote $ AssertCErr msg]
   (Just b, Nothing) | b == true -> return env
@@ -231,7 +232,7 @@ evalRun function prgmName prgmGraphData = do
         EvalRunWithContext function' ->
           -- Case for eval Context(value=main, io=IO)
 
-          return $ eApplyM (eApply (eVal "/Context") "/value" (eVal function')) "/io" ioM
+          return $ eApplyM (eApply (eVal ContextStr) contextValStr (eVal function')) "/io" ioM
         EvalRun function' ->
           -- Case for eval main
           return $ eVal function'
@@ -255,7 +256,7 @@ evalBuild function prgmName prgmGraphData = do
           return $ eApply (eVal "/Catln/llvm") "/c" (eVal function')
         EvalBuildWithContext function' ->
           -- Case for buildable Context(value=main, io=IO)
-          return $ eApplyM (eApply (eVal "/Context") "/value" (eVal function')) "/io" ioM
+          return $ eApplyM (eApply (eVal ContextStr) contextValStr (eVal function')) "/io" ioM
         EvalBuild function' ->
           -- Case for buildable main
           return $ eVal function'
