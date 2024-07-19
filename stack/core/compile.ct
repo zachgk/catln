@@ -61,6 +61,9 @@ module(Catln)
       Examples are still typechecked during compilation and should contain valid code.
       For code which is not worth including, it can be replaced with a hole.
       Holes found within examples are safe to leave in and are not treated as a warning.
+  # ## Build-in Type Macros
+  (_ ?-> _) -> Boolean
+    #runtime("arrExists")
   # ## Result Classes
   data(CatlnResult(name -> String, contents -> String))
     # The [CatlnResult] represents the result of a catln build.

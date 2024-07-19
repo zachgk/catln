@@ -15,8 +15,14 @@ module(Data)
   :Integer.toString -> String
     #runtime("intToString")
   # ## Context
-  data(/Context(value, .._))
+  data(/Context[$V](value -> $V, .._))
     # The context is used to represent state.
+  data(/ContextIn[$V](value -> $V, .._))
+    # The [ContextIn] is used to represent an input state in a function.
+  data(/ContextOut[$V](value -> $V, .._))
+    # The [ContextOut] is used to represent an output state in a function.
+  /Context[$V, $T](value -> $V, .._) | (/ContextIn[$V -> $V](value= (_ :: $V), .._) ?-> (_ :: $T)) -> $T 
+    #runtime("context")
   # ## Collections
     Collections are contains that hold elements of a type inside them.
   class(Functor[$T])

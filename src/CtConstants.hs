@@ -37,7 +37,10 @@ ioPrim = "/Catln/IO"
 
 pattern ContextStr :: String
 pattern ContextStr = "/Context"
-contextValStr, ioStr :: String
+pattern ContextInStr :: String
+pattern ContextInStr = "/ContextIn"
+contextOutStr, contextValStr, ioStr :: String
+contextOutStr = "/ContextOut"
 contextValStr = "/value"
 ioStr = "/io"
 

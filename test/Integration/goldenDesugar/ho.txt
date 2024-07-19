@@ -154,6 +154,7 @@
             , /Catln/#print ( Value /p -> /Catln/CatlnResult.. )
             , Value /Catln/#test
             , Value /Catln/#example
+            , /operator?-> ( Value /l= Hole TopType HoleActive Nothing ) ( Value /r= Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
             , /Catln/CatlnResult ( Value /name -> /Data/String ) ( Value /contents -> /Data/String )
             , /Catln/www ( Value html -> /Data/String ) = CatlnResult
                 ( Value name= CStr "index.html" ) ( Value contents= Value html )
@@ -166,6 +167,7 @@
             ]
         ,
             [ CGType
+            , CGType
             , CGType
             , CGType
             , CGType
@@ -213,7 +215,11 @@
             , /Data/toString ( Value /this -> /Data/String ) -> /Data/String
             , /Data/toString ( Value /this -> /Data/String ) = Value this
             , /Data/toString ( Value /this -> /Data/Primitive/Integer ) -> /Data/String
-            , /Context ( Value /value ) ( ..Hole TopType HoleActive Nothing )
+            , /Context [ /V : TopType ] ( Value /value -> TVVar /V ) ( ..Hole TopType HoleActive Nothing )
+            , /ContextIn [ /V : TopType ] ( Value /value -> TVVar /V ) ( ..Hole TopType HoleActive Nothing )
+            , /ContextOut [ /V : TopType ] ( Value /value -> TVVar /V ) ( ..Hole TopType HoleActive Nothing )
+            , /Context [ /T : TopType ] [ /V : TopType ] ( Value value -> TVVar /V ) ( ..Hole TopType HoleActive Nothing ) | /operator?->
+                ( Value /l= /ContextIn [ /V : TVVar /V ] ( Value value= Hole TVVar /V HoleActive Nothing ) ( ..Hole TopType HoleActive Nothing ) ) ( Value /r= Hole TVVar /T HoleActive Nothing ) -> TVVar /T
             , Value /Data/None
             , /Data/Cons [ /T : TopType ] ( Value /head -> TVVar /T ) ( Value /tail -> ∀/Data/ConsList )
             , Value /Data/Nil
@@ -226,6 +232,8 @@
             ]
         ,
             [ CGType
+            , CGType
+            , CGType
             , CGType
             , CGType
             , CGType
@@ -453,7 +461,7 @@
             , tst
                 ( Value d= T ( Value x -> /Data/Primitive/Integer ) )
                 ( f ( Value y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ) = f ( Value y= Value x )
-            , /Context ( Value /value= Value main ) ( Value /io -> /Catln/IO ) = Value io
+            , /ContextIn ( Value /value= Value main ) ( Value /io -> /Catln/IO ) = Value io
             ]
         ,
             [ CGType

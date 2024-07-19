@@ -14,6 +14,7 @@
 module Eval.ExprBuilder where
 
 import qualified Data.HashMap.Strict as H
+import           Data.Maybe
 import           Data.UUID           (nil)
 import           Eval.Common
 import           Semantics
@@ -28,11 +29,15 @@ ioArg :: EExpr
 ioArg = Value ioM "io"
 
 eApply :: EExpr -> (String, EExpr) -> EExpr
-eApply baseExpr (argName, argExpr) = TupleApply m (getExprMeta baseExpr, baseExpr) (EAppArg $ mkIOObjArr (mWithType argExprType $ emptyMetaE argExpr) (partialKey argName) argExpr)
+eApply baseExpr (argName, argExpr) = baseExpr `eApplyOAs` [mkIOObjArr (mWithType (getExprType argExpr) $ emptyMetaE argExpr) (partialKey argName) argExpr]
+
+eApplyOAs :: EExpr -> [EObjArr] -> EExpr
+eApplyOAs = foldl eApplyOA
   where
-    argExprType = getExprType argExpr
-    m = Meta (singletonType $ baseType{ptArgs=H.insert (partialKey argName) argExprType baseArgs}) Nothing nil emptyMetaDat
-    baseType@PartialType{ptArgs=baseArgs} = getExprPartialType baseExpr
+    eApplyOA base arg = TupleApply (emptyMetaT mType) (emptyMetaT $ getExprType base, base) (EAppArg arg)
+      where
+        mType = singletonType $ baseType{ptArgs=H.insert (partialKey $ oaObjPath arg) (getMetaType $ snd $ fromJust $ oaArr arg) baseArgs}
+        baseType@PartialType{ptArgs=baseArgs} = getExprPartialType base
 
 eApplyM :: EExpr -> String -> EvalMeta -> EExpr
 eApplyM baseExpr argName argM = TupleApply m (getExprMeta baseExpr, baseExpr) (EAppArg $ mkIObjArr argM (partialKey argName))

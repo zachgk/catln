@@ -149,6 +149,7 @@
             , /Catln/#print ( EAppArg Value /p -> /Catln/CatlnResult.. )
             , Value /Catln/#test
             , Value /Catln/#example
+            , /operator?-> ( EAppArg Value /l= Hole TopType HoleActive Nothing ) ( EAppArg Value /r= Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
             , /Catln/CatlnResult ( EAppArg Value /name -> /Data/String ) ( EAppArg Value /contents -> /Data/String )
             , /Catln/www ( EAppArg Value /html -> /Data/String ) -> /Catln/CatlnResult
                 ( /name=/Data/String
@@ -165,6 +166,7 @@
             ]
         ,
             [ CGType
+            , CGType
             , CGType
             , CGType
             , CGType
@@ -212,7 +214,11 @@
             , /Data/toString ( EAppArg Value /this -> /Data/String ) -> /Data/String
             , /Data/toString ( EAppArg Value /this -> /Data/String ) -> TVArg /this = ( Value /this ↦ TVArg /this )
             , /Data/toString ( EAppArg Value /this -> /Data/Primitive/Integer ) -> /Data/String
-            , /Context ( EAppArg Value /value ) ( EAppSpread Hole TopType HoleActive Nothing )
+            , /Context ( EAppVar /V TopType ) ( EAppArg Value /value -> TVVar /V ) ( EAppSpread Hole TopType HoleActive Nothing )
+            , /ContextIn ( EAppVar /V TopType ) ( EAppArg Value /value -> TVVar /V ) ( EAppSpread Hole TopType HoleActive Nothing )
+            , /ContextOut ( EAppVar /V TopType ) ( EAppArg Value /value -> TVVar /V ) ( EAppSpread Hole TopType HoleActive Nothing )
+            , /Context ( EAppVar /T TopType ) ( EAppVar /V TopType ) ( EAppArg Value /value -> TVVar /V ) ( EAppSpread Hole TopType HoleActive Nothing ) | /operator?->
+                ( EAppArg Value /l -> /ContextIn [ /V=TopType ] ( /value=TopType ) .. = /ContextIn ( EAppVar /V TVVar /V ) ( EAppArg Value /value -> TVVar /V = Hole TVVar /V HoleActive Nothing ) ( EAppSpread Hole TopType HoleActive Nothing ) ) ( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing ) -> TVVar /T
             , Value /Data/None
             , /Data/Cons ( EAppVar /T TopType ) ( EAppArg Value /head -> TVVar /T ) ( EAppArg Value /tail -> ∀/Data/ConsList )
             , Value /Data/Nil
@@ -245,6 +251,8 @@
             ]
         ,
             [ CGType
+            , CGType
+            , CGType
             , CGType
             , CGType
             , CGType
@@ -488,7 +496,7 @@
                 ( EAppArg Value /r -> /Data/Primitive/Integer =
                     ( /llength ( EAppArg Value /this -> TVArg /tail = Value /tail ) ↦ /Data/Primitive/Integer )
                 )
-            , /Context ( EAppArg Value /value -> /main = Value /main ) ( EAppArg Value /io -> /Catln/IO ) ->
+            , /ContextIn ( EAppArg Value /value -> /main = Value /main ) ( EAppArg Value /io -> /Catln/IO ) ->
                 ( /Catln/exit
                     ( /this=/Catln/IO
                     , /val=/Data/Primitive/Integer

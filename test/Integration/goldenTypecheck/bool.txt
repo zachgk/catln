@@ -154,6 +154,7 @@
             , /Catln/#print ( Value /p -> /Catln/CatlnResult.. )
             , Value /Catln/#test
             , Value /Catln/#example
+            , /operator?-> ( Value /l= Hole TopType HoleActive Nothing ) ( Value /r= Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
             , /Catln/CatlnResult ( Value /name -> /Data/String ) ( Value /contents -> /Data/String )
             , /Catln/www ( Value /html -> /Data/String ) -> /Catln/CatlnResult
                 ( /name=/Data/String
@@ -169,6 +170,7 @@
             ]
         ,
             [ CGType
+            , CGType
             , CGType
             , CGType
             , CGType
@@ -216,7 +218,11 @@
             , /Data/toString ( Value /this -> /Data/String ) -> /Data/String
             , /Data/toString ( Value /this -> /Data/String ) -> TVArg /this = Value /this
             , /Data/toString ( Value /this -> /Data/Primitive/Integer ) -> /Data/String
-            , /Context ( Value /value ) ( ..Hole TopType HoleActive Nothing )
+            , /Context [ /V : TopType ] ( Value /value -> TVVar /V ) ( ..Hole TopType HoleActive Nothing )
+            , /ContextIn [ /V : TopType ] ( Value /value -> TVVar /V ) ( ..Hole TopType HoleActive Nothing )
+            , /ContextOut [ /V : TopType ] ( Value /value -> TVVar /V ) ( ..Hole TopType HoleActive Nothing )
+            , /Context [ /T : TopType ] [ /V : TopType ] ( Value /value -> TVVar /V ) ( ..Hole TopType HoleActive Nothing ) | /operator?->
+                ( Value /l -> /ContextIn [ /V=TopType ] ( /value=TopType ) .. = /ContextIn [ /V : TVVar /V ] ( Value /value -> TVVar /V = Hole TVVar /V HoleActive Nothing ) ( ..Hole TopType HoleActive Nothing ) ) ( Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing ) -> TVVar /T
             , Value /Data/None
             , /Data/Cons [ /T : TopType ] ( Value /head -> TVVar /T ) ( Value /tail -> ∀/Data/ConsList )
             , Value /Data/Nil
@@ -245,6 +251,8 @@
             ]
         ,
             [ CGType
+            , CGType
+            , CGType
             , CGType
             , CGType
             , CGType
@@ -479,7 +487,7 @@
                     , /r=/Data/Primitive/False
                     ) | /Data/Primitive/True
                 ) = /operator|| ( Value /l -> /Data/Primitive/True = Value /Data/Primitive/True ) ( Value /r -> /Data/Primitive/False = Value /Data/Primitive/False )
-            , /Context ( Value /value -> /main = Value /main ) ( Value /io -> /Catln/IO ) -> TVArg /io = Value /io
+            , /ContextIn ( Value /value -> /main = Value /main ) ( Value /io -> /Catln/IO ) -> TVArg /io = Value /io
             ]
         ,
             [ CGType

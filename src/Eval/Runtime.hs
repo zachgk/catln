@@ -21,6 +21,8 @@ import           Semantics.Prgm
 import           Semantics.Types
 
 -- import           Emit                (codegenPrgm)
+import           CtConstants
+import           Data.Maybe          (fromMaybe)
 import           Eval.Common
 import           Eval.ExprBuilder
 import           Text.Printf
@@ -28,8 +30,12 @@ import           Text.Printf
 type Op = (String, Either EPrim MacroFunction)
 
 true, false :: Val
-true = TupleVal "/Data/Primitive/True" H.empty
-false = TupleVal "/Data/Primitive/False" H.empty
+true = TupleVal truePrim H.empty
+false = TupleVal falsePrim H.empty
+
+trueE, falseE :: Expr EvalMetaDat
+trueE = Value (emptyMetaT trueType) truePrim
+falseE = Value (emptyMetaT falseType) falsePrim
 
 bool :: Bool -> Val
 bool True  = true
@@ -85,6 +91,28 @@ println = EPrim "println" prim
       (Just (IOVal r io), Just (StrVal msg)) -> Right $ IOVal r (io >> putStrLn msg)
       _ -> Left "Invalid println signature"
 
+arrExists :: Op
+arrExists = ("arrExists", Right (MacroFunction macroBuild))
+  where
+    macroBuild input MacroData{mdTbEnv=TBEnv{tbTypeEnv}} = do
+      let args = exprAppliedArgsMap input
+      case (H.lookup (partialKey operatorArgL) args, H.lookup (partialKey operatorArgR) args) of
+        (Just (Just (l, _)), Just (Just (_r, _))) -> case typeGraphQuery tbTypeEnv H.empty (fromMaybe (error "Non singleton in arrExists") $ maybeGetSingleton $ getMetaType l) of
+          [] -> return $ Right falseE
+          _  -> return $ Right trueE
+        _ -> fail "Invalid arrExists input"
+
+contextMacro :: Op
+contextMacro = ("context", Right (MacroFunction macroBuild))
+  where
+    macroBuild input MacroData{} = do
+      let args = exprAppliedArgsMap input
+      case H.lookup (partialKey contextValStr) args of
+        Just (Just (_, Just val)) -> do
+          let contextArgs = filter ((/=) contextValStr . oaObjPath) $ exprAppliedArgs input
+          return $ Right $ eVal ContextInStr `eApply` (contextValStr, val) `eApplyOAs` contextArgs
+        _ -> fail "Invalid context macro input"
+
 llvm :: Op
 llvm = ("llvm", Right (MacroFunction macroBuild))
   where
@@ -120,4 +148,4 @@ primEnv = H.fromList (map mapPrim prims ++ macros)
             , ioExit
             , println
             ]
-    macros = [llvm]
+    macros = [arrExists, contextMacro, llvm]
