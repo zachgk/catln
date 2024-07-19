@@ -38,11 +38,10 @@ data ReachesTree
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 data ReachesEnv m = ReachesEnv {
-  rTypeEnv      :: !TypeEnv,
-  rUnionAllType :: !Type,
-  rVaenv        :: !TypeVarArgEnv,
-  rTypeGraph    :: !(H.HashMap TypeName [ObjArr Expr m]),
-  rVisited      :: !(S.HashSet PartialType)
+  rTypeEnv   :: !TypeEnv,
+  rVaenv     :: !TypeVarArgEnv,
+  rTypeGraph :: !(H.HashMap TypeName [ObjArr Expr m]),
+  rVisited   :: !(S.HashSet PartialType)
                              }
 
 instance MetaDat (Maybe ReachesTree) where

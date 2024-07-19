@@ -128,12 +128,11 @@ addInferArgToPartial FEnv{feVTypeGraph, feTTypeGraph, feTypeEnv} _ partial@Parti
     addArg arg = partial{ptArgs=H.insertWith (unionTypes feTypeEnv) arg PTopType ptArgs}
 
 mkReachesEnv :: FEnv -> RConstraint -> TypeCheckResult (ReachesEnv ())
-mkReachesEnv env@FEnv{feTypeEnv, feUnionAllObjs, feVTypeGraph, feTTypeGraph} (Constraint maybeConOa stypeVaenv _) = do
+mkReachesEnv env@FEnv{feTypeEnv, feVTypeGraph, feTTypeGraph} (Constraint maybeConOa stypeVaenv _) = do
 
   let vaenv = fmap (bimap stypeAct stypeAct) stypeVaenv
 
   -- Env (typeGraph) from variables
-  SType{stypeAct=unionAll} <- descriptor env feUnionAllObjs
   feVTypeGraph' <- forM feVTypeGraph $ \objArrs -> do
     forM objArrs $ \voa -> do
       soa <- showObjArr env voa
@@ -154,7 +153,7 @@ mkReachesEnv env@FEnv{feTypeEnv, feUnionAllObjs, feVTypeGraph, feTTypeGraph} (Co
   let argTypeEnv = mkTypeEnv (argObjMap, classGraphFromObjs argObjMap, [])
   let ttypeGraph' = H.map (map (mapMetaObjArr clearMetaDat Nothing)) feTTypeGraph
   let typeGraph = unionsWith (++) [argTypeGraph, feVTypeGraph', ttypeGraph']
-  return $ ReachesEnv (mergeTypeEnv argTypeEnv feTypeEnv) unionAll (fmap snd vaenv) typeGraph S.empty
+  return $ ReachesEnv (mergeTypeEnv argTypeEnv feTypeEnv) (fmap snd vaenv) typeGraph S.empty
 
 arrowConstrainUbs :: FEnv -> RConstraint -> Type -> Type -> TypeCheckResult (Type, Type, Maybe ReachesTree)
 arrowConstrainUbs env@FEnv{feUnionAllObjs} con PTopType dest@UnionType{} = do

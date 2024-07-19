@@ -26,11 +26,13 @@ import           Data.Graph
 import           Data.Maybe
 -- import           Emit                (codegenExInit)
 import           CtConstants
+import qualified Data.HashSet        as S
 import           Eval.Common
 import           Eval.Env
 import           Eval.ExprBuilder
 import           Eval.Runtime
-import           Semantics.TypeGraph (reachesHasCutSubtypeOf)
+import           Semantics.TypeGraph (ReachesEnv (ReachesEnv),
+                                      reachesHasCutSubtypeOf, reachesPartial)
 import           Text.Printf
 import           TreeBuild
 import           Utils
@@ -61,27 +63,23 @@ evalBuildable _                      = False
 -- It also will pass the function name back through EvalMode in order to convert 'PRelativeName' into the matching 'PTypeName'
 -- TODO The use of listToMaybe will secretly discard if multiple evalTargetModes or function names are found. Instead, an error should be thrown
 evalTargetMode :: String -> FileImport -> EPrgmGraphData -> EvalMode
-evalTargetMode function prgmName prgmGraphData = fromMaybe NoEval $ listToMaybe $ mapMaybe objArrowsContains objMap
+evalTargetMode function prgmName prgmGraphData = case (funCtxReaches, funReaches) of
+  (Just rt, _) | reachesHasCutSubtypeOf typeEnv H.empty rt resultType -> EvalBuildWithContext function'
+  (Just rt, _) | reachesHasCutSubtypeOf typeEnv H.empty rt ioType -> EvalRunWithContext function'
+  (_, Just rt) | reachesHasCutSubtypeOf typeEnv H.empty rt resultType -> EvalBuild function'
+  (_, Just rt) | reachesHasCutSubtypeOf typeEnv H.empty rt ioType -> EvalRun function' -- Should require isShowable for run result
+  _ -> NoEval
   where
     prgm@(objMap, _, _) = prgmFromGraphData prgmName prgmGraphData
     typeEnv = mkTypeEnv prgm
-    objArrowsContains oa@ObjArr{oaArr=Just (Just{}, Meta _ _ (Just rt))} = case oaObjPath oa of
-      ContextStr -> case H.lookup (partialKey contextValStr) $ exprAppliedArgsMap $ oaObjExpr oa of
-        Just (Just (_, Just valObjExpr)) -> case () of
-          _ | not (relativeNameMatches function (exprPath valObjExpr)) -> Nothing
-          _ | isBuildable oa rt -> Just $ EvalBuildWithContext (exprPath valObjExpr)
-          _ | isRunnable oa rt -> Just $ EvalRunWithContext (exprPath valObjExpr)
-          _ -> Nothing
-        _ -> Nothing
-      _ -> case () of
-          _ | not (relativeNameMatches function (oaObjPath oa)) -> Nothing
-          _ | isBuildable oa rt -> Just $ EvalBuild (oaObjPath oa)
-          _ -> Just $ EvalRun (oaObjPath oa) -- Should require isShowable for run result
-    objArrowsContains _ = Nothing
-
-    isBuildable = meetsGoalType resultType
-    isRunnable = meetsGoalType ioType
-    meetsGoalType goalType oa rt = reachesHasCutSubtypeOf typeEnv (fmap ((intersectAllTypes typeEnv . fmap getMetaType) . map snd) (exprVarArgs $ oaObjExpr oa)) rt goalType
+    function' = case maybeGetSingleton $ expandRelPartial typeEnv H.empty (partialVal function) of
+      Just f -> ptName f
+      Nothing -> error $ printf "Expected one typeName in evalTargetMode for %s. Instead found %s" (show function) (show $ expandRelPartial typeEnv H.empty (partialVal function))
+    reachEnv = ReachesEnv typeEnv H.empty (H.fromListWith (++) $ map (\oa -> (oaObjPath oa, [oa])) objMap) S.empty
+    funCtxTp = (partialVal ContextStr){ptArgs=H.fromList [(partialKey contextValStr, typeVal function')], ptArgMode=PtArgAny}
+    funTp = partialVal function'
+    funCtxReaches = cresToMaybe $ reachesPartial reachEnv funCtxTp
+    funReaches = cresToMaybe $ reachesPartial reachEnv funTp
 
 -- | evaluate annotations such as assertions that require compiler verification
 evalCompAnnot :: Env -> Val -> CRes Env
