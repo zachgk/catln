@@ -185,7 +185,7 @@ data MacroData = MacroData {
                              }
 newtype MacroFunction = MacroFunction (TExpr EvalMetaDat -> MacroData -> CRes (TExpr EvalMetaDat))
 type ResBuildEnvFunction = TCallTree
-type ResBuildPrims = H.HashMap TypeName ResBuildEnvFunction
+type ResBuildPrims = H.HashMap TypeName (Either EPrim MacroFunction)
 type ResBuildEnvItem = (PartialType, Maybe (Expr EvalMetaDat), Bool, ResBuildEnvFunction)
 type ResBuildEnv = H.HashMap TypeName [ResBuildEnvItem]
 type ResExEnv = H.HashMap (PartialType, ObjArr Expr EvalMetaDat) (TExpr EvalMetaDat, [TExpr EvalMetaDat]) -- (result, [compAnnot trees])

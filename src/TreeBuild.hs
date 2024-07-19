@@ -60,10 +60,14 @@ buildTBEnv primEnv prgm@(objMap, _, _) = baseEnv
     resFromArrow oa@ObjArr{oaObj=Just obj, oaArr, oaAnnots} = case oaArr of
       _ | getExprType (oaObjExpr oa) == PTopType -> error $ printf "buildTBEnv failed with a topType input in %s" (show oa)
       Just (Just _, _) -> Just (oaObjPath oa, [(objLeaf, listToMaybe (exprWhereConds obj), any isElseAnnot oaAnnots, TCObjArr oa) | objLeaf <- leafsFromMeta (getExprMeta $ oaObjExpr oa)])
-      Just (Nothing, _) | isJust (getRuntimeAnnot oaAnnots) -> Just (oaObjPath oa, [(objLeaf, listToMaybe (exprWhereConds obj), any isElseAnnot oaAnnots, H.lookupDefault (error "Missing runtime") (fromJust $ getRuntimeAnnot oaAnnots) primEnv) | objLeaf <- leafsFromMeta (getExprMeta $ oaObjExpr oa)])
+      Just (Nothing, _) | isJust (getRuntimeAnnot oaAnnots) -> Just (oaObjPath oa, [(objLeaf, listToMaybe (exprWhereConds obj), any isElseAnnot oaAnnots, usePrim oa $ H.lookup (fromJust $ getRuntimeAnnot oaAnnots) primEnv) | objLeaf <- leafsFromMeta (getExprMeta $ oaObjExpr oa)])
       Just (Nothing, _) -> Nothing
       Nothing -> Nothing
     resFromArrow oa = error $ printf "resFromArrow with no input expression: %s" (show oa)
+
+    usePrim oa (Just (Left prim)) = TCPrim (getMetaType $ getOaArrM oa) prim
+    usePrim oa (Just (Right macro)) = TCMacro (getMetaType $ getOaArrM oa) macro
+    usePrim oa Nothing = error $ printf "Missing runtime for %s" (show oa)
 
 envLookupTry ::  TBEnv -> [ObjSrc] -> VisitedArrows -> PartialType -> Type -> TCallTree -> CRes TCallTree
 envLookupTry TBEnv{tbTypeEnv} os _ srcType destType resArrow | isSubtypeOfWithObjSrcs tbTypeEnv os (resArrowDestType tbTypeEnv srcType resArrow) destType = return resArrow

@@ -324,6 +324,10 @@ getOaArrExpr :: (MetaDat m, ExprClass e, Show m, Show (e m)) => ObjArr e m -> e 
 getOaArrExpr ObjArr{oaArr=Just (Just e, _)} = e
 getOaArrExpr oa = error $ printf "oaArrExpr with no output expression: %s" (show oa)
 
+getOaArrM :: (MetaDat m, ExprClass e, Show m, Show (e m)) => ObjArr e m -> Meta m
+getOaArrM ObjArr{oaArr=Just (_, m)} = m
+getOaArrM oa = error $ printf "getOaArrM with no output meta: %s" (show oa)
+
 mergeDoc :: Maybe String -> Maybe String -> Maybe String
 mergeDoc (Just a) (Just b) = Just (a ++ " " ++ b)
 mergeDoc (Just a) Nothing  = Just a

@@ -25,7 +25,7 @@ import           Eval.Common
 import           Eval.ExprBuilder
 import           Text.Printf
 
-type Op = (String, ResBuildEnvFunction)
+type Op = (String, Either EPrim MacroFunction)
 
 true, false :: Val
 true = TupleVal "/Data/Primitive/True" H.empty
@@ -35,65 +35,58 @@ bool :: Bool -> Val
 bool True  = true
 bool False = false
 
-liftIntOp :: TypeName -> (Integer -> Integer -> Integer) -> Op
-liftIntOp name f = (name', TCPrim intType (EPrim name' prim))
+liftIntOp :: TypeName -> (Integer -> Integer -> Integer) -> EPrim
+liftIntOp name f = EPrim ("int" ++ name) prim
   where
-    name' = "int" ++ name
     prim args = case (H.lookup "/l" args, H.lookup "/r" args) of
-                          (Just (IntVal l), Just (IntVal r)) -> Right $ IntVal $ f l r
-                          _ -> Left "Invalid intOp signature"
+      (Just (IntVal l), Just (IntVal r)) -> Right $ IntVal $ f l r
+      _                                  -> Left "Invalid intOp signature"
 
-liftCmpOp :: TypeName -> (Integer -> Integer -> Bool) -> Op
-liftCmpOp name f = (name', TCPrim boolType (EPrim name' prim))
+liftCmpOp :: TypeName -> (Integer -> Integer -> Bool) -> EPrim
+liftCmpOp name f = EPrim ("int" ++ name) prim
   where
-    name' = "int" ++ name
     prim args = case (H.lookup "/l" args, H.lookup "/r" args) of
-                          (Just (IntVal l), Just (IntVal r)) -> Right $ bool $ f l r
-                          _ -> Left "Invalid compOp signature"
+      (Just (IntVal l), Just (IntVal r)) -> Right $ bool $ f l r
+      _                                  -> Left "Invalid compOp signature"
 
-rneg :: Op
-rneg = (name', TCPrim intType (EPrim name' prim))
+rneg :: EPrim
+rneg = EPrim "intNeg" prim
   where
-    name' = "intNeg"
     prim args = case H.lookup "/a" args of
-                                 Just (IntVal i) -> Right $ IntVal $ -i
-                                 _ -> Left "Invalid rneg signature"
+      Just (IntVal i) -> Right $ IntVal $ -i
+      _               -> Left "Invalid rneg signature"
 
-strEq :: Op
-strEq = (name', TCPrim boolType (EPrim name' prim))
+strEq :: EPrim
+strEq = EPrim "strEq" prim
   where
-    name' = "strEq"
     prim args = case (H.lookup "/l" args, H.lookup "/r" args) of
-                                 (Just (StrVal l), Just (StrVal r)) -> Right $ bool $ l == r
-                                 _ -> Left "Invalid intToString signature"
+      (Just (StrVal l), Just (StrVal r)) -> Right $ bool $ l == r
+      _                                  -> Left "Invalid intToString signature"
 
-intToString :: Op
-intToString = (name', TCPrim strType (EPrim name' prim))
+intToString :: EPrim
+intToString = EPrim "intToString" prim
   where
-    name' = "intToString"
     prim args = case H.lookup "/this" args of
-                                 (Just (IntVal val)) -> Right $ StrVal $ show val
-                                 _ -> Left "Invalid intToString signature"
+      (Just (IntVal val)) -> Right $ StrVal $ show val
+      _                   -> Left "Invalid intToString signature"
 
 
-ioExit :: Op
-ioExit = (name', TCPrim ioType (EPrim name' prim))
+ioExit :: EPrim
+ioExit = EPrim "ioExit" prim
   where
-    name' = "ioExit"
     prim args = case (H.lookup "/this" args, H.lookup "/val" args) of
-                                 (Just (IOVal _ io), Just (IntVal val)) -> Right $ IOVal val io
-                                 _ -> Left $ printf "Invalid exit signature with args: %s" (show args)
+      (Just (IOVal _ io), Just (IntVal val)) -> Right $ IOVal val io
+      _ -> Left $ printf "Invalid exit signature with args: %s" (show args)
 
-println :: Op
-println = (name', TCPrim ioType (EPrim name' prim))
+println :: EPrim
+println = EPrim "println" prim
   where
-    name' = "println"
     prim args = case (H.lookup "/this" args, H.lookup "/msg" args) of
-                                 (Just (IOVal r io), Just (StrVal msg)) -> Right $ IOVal r (io >> putStrLn msg)
-                                 _ -> Left "Invalid println signature"
+      (Just (IOVal r io), Just (StrVal msg)) -> Right $ IOVal r (io >> putStrLn msg)
+      _ -> Left "Invalid println signature"
 
 llvm :: Op
-llvm = ("llvm", TCMacro (singletonType resultLeaf) (MacroFunction macroBuild))
+llvm = ("llvm", Right (MacroFunction macroBuild))
   where
     macroBuild input MacroData{mdTbEnv} =
       case input of
@@ -109,19 +102,22 @@ llvm = ("llvm", TCMacro (singletonType resultLeaf) (MacroFunction macroBuild))
         codegenPrgm _ _ _ _ = return ()
 
 primEnv :: ResBuildPrims
-primEnv = H.fromList [ liftIntOp "+" (+)
-                              , liftIntOp "-" (-)
-                              , liftIntOp "*" (*)
-                              , liftCmpOp ">" (>)
-                              , liftCmpOp "<" (<)
-                              , liftCmpOp ">=" (>=)
-                              , liftCmpOp "<=" (<=)
-                              , liftCmpOp "==" (==)
-                              , liftCmpOp "!=" (/=)
-                              , rneg
-                              , strEq
-                              , intToString
-                              , ioExit
-                              , println
-                              , llvm
-                              ]
+primEnv = H.fromList (map mapPrim prims ++ macros)
+  where
+    mapPrim p@(EPrim n _) = (n, Left p)
+    prims = [ liftIntOp "+" (+)
+            , liftIntOp "-" (-)
+            , liftIntOp "*" (*)
+            , liftCmpOp ">" (>)
+            , liftCmpOp "<" (<)
+            , liftCmpOp ">=" (>=)
+            , liftCmpOp "<=" (<=)
+            , liftCmpOp "==" (==)
+            , liftCmpOp "!=" (/=)
+            , rneg
+            , strEq
+            , intToString
+            , ioExit
+            , println
+            ]
+    macros = [llvm]
