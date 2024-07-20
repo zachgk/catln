@@ -67,7 +67,7 @@ rawExprWithType _ e = error $ printf "rawExprWithType for unexpected type: %s" (
 
 mapExprPath :: (Show m) => ((Meta m, TypeName) -> Expr m) -> Expr m -> Expr m
 mapExprPath f (Value m n) = f (m, n)
-mapExprPath f (EWhere b c) = EWhere (mapExprPath f b) c
+mapExprPath f (EWhere m b c) = EWhere m (mapExprPath f b) c
 mapExprPath f (TupleApply m (bm, be) a) = TupleApply m (bm, mapExprPath f be) a
 mapExprPath f (VarApply m be an av) = VarApply m (mapExprPath f be) an av
 mapExprPath _ e = error $ printf "Unexpected expr to mapExprPath: %s" (show e)
@@ -80,7 +80,7 @@ mapExprAppliedArg _ _ e@CExpr{} = e
 mapExprAppliedArg _ _ e@Value{} = e
 mapExprAppliedArg _ _ e@HoleExpr{} = e
 mapExprAppliedArg f argName (AliasExpr base alias) = AliasExpr (mapExprAppliedArg f argName base) alias
-mapExprAppliedArg f argName (EWhere base cond) = EWhere (mapExprAppliedArg f argName base) cond
+mapExprAppliedArg f argName (EWhere m base cond) = EWhere m (mapExprAppliedArg f argName base) cond
 mapExprAppliedArg f argName (TupleApply m (bm, be) (EAppArg oa@ObjArr{oaObj=Just an, oaArr=Just (Just aExpr, oaM)})) | argName == inExprSingleton an = TupleApply m (bm, be) (EAppArg oa{oaArr=Just (Just (f aExpr), oaM)})
 mapExprAppliedArg f argName (TupleApply m (bm, be) a) = TupleApply m (bm, mapExprAppliedArg f argName be) a
 mapExprAppliedArg f argName (VarApply m be an av) = VarApply m (mapExprAppliedArg f argName be) an av

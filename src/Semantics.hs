@@ -59,7 +59,7 @@ exprWithMeta :: (Show m) => Meta m -> Expr m -> Expr m
 exprWithMeta m (CExpr _ c)        = CExpr m c
 exprWithMeta m (Value _ n)        = Value m n
 exprWithMeta m (HoleExpr _ h)     = HoleExpr m h
-exprWithMeta m (EWhere base cond) = EWhere (exprWithMeta m base) cond
+exprWithMeta m (EWhere _ base cond) = EWhere m base cond
 exprWithMeta m (TupleApply _ b a) = TupleApply m b a
 exprWithMeta m (VarApply _ b n v) = VarApply m b n v
 exprWithMeta _ e                  = error $ printf "exprWithMeta with unsupported expr %s" (show e)
@@ -70,7 +70,7 @@ exprWhereConds CExpr{} = []
 exprWhereConds Value{} = []
 exprWhereConds HoleExpr{} = []
 exprWhereConds (AliasExpr b _) = exprWhereConds b
-exprWhereConds (EWhere _ c) = [c]
+exprWhereConds (EWhere _ _ c) = [c]
 exprWhereConds (TupleApply _ (_, b) (EAppArg ObjArr{oaArr=Nothing})) = exprWhereConds b
 exprWhereConds (TupleApply _ (_, b) (EAppArg ObjArr{oaArr=Just (me, _)})) = exprWhereConds b ++ maybe [] exprWhereConds me
 exprWhereConds (TupleApply _ (_, b) (EAppSpread a)) = exprWhereConds b ++ exprWhereConds a
@@ -99,7 +99,7 @@ exprVarArgsWithSrc :: (MetaDat m, Show m) => TypeEnv -> Expr m -> PartialType ->
 exprVarArgsWithSrc _ CExpr{} _ = H.empty
 exprVarArgsWithSrc _ Value{} _ = H.empty
 exprVarArgsWithSrc _ HoleExpr{} _ = H.empty
-exprVarArgsWithSrc typeEnv (EWhere base _) src = exprVarArgsWithSrc typeEnv base src
+exprVarArgsWithSrc typeEnv (EWhere _ base _) src = exprVarArgsWithSrc typeEnv base src
 exprVarArgsWithSrc typeEnv (AliasExpr base n) src = H.insert (TVArg $ inExprSingleton n) ([(n, getExprMeta base)], singletonType src) (exprVarArgsWithSrc typeEnv base src)
 exprVarArgsWithSrc typeEnv (VarApply _ b n m) src = H.insert (TVVar n) ([(Value (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)], H.lookupDefault PTopType n (ptVars src)) $ exprVarArgsWithSrc typeEnv b src
 exprVarArgsWithSrc typeEnv (TupleApply _ (_, be) arg) src = H.union (exprVarArgsWithSrc typeEnv be src) (fromArg arg)

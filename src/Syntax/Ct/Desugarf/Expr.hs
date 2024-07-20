@@ -34,7 +34,7 @@ desExpr (CExpr m c) = CExpr m c
 desExpr (Value m n) = Value m n
 desExpr (HoleExpr m h) = HoleExpr m h
 desExpr (AliasExpr b a) = AliasExpr (desExpr b) (desExpr a)
-desExpr (EWhere b a) = EWhere (desExpr b) (desExpr a)
+desExpr (EWhere m b a) = EWhere m (desExpr b) (desExpr a)
 desExpr (TupleApply m (bm, be) arg) = TupleApply m (bm, desExpr be) arg'
   where
     arg' = case arg of
@@ -54,7 +54,7 @@ desObjPropagateTypes (AliasExpr base alias) = AliasExpr base' alias'
   where
     base' = desObjPropagateTypes base
     alias' = desObjPropagateTypes alias
-desObjPropagateTypes (EWhere base cond) = EWhere base cond
+desObjPropagateTypes (EWhere m base cond) = EWhere m base cond
 desObjPropagateTypes mainExpr@(TupleApply m (bm, be) tupleApplyArgs) = do
   let be' = desObjPropagateTypes be
   let bm' = mWithType (getMetaType $ getExprMeta be') bm
@@ -104,7 +104,7 @@ semiDesExpr sdm obj (RawTupleApply _ (_, e@RawValue{}) [(True, _)]) = Value m' n
     Value m n = semiDesExpr sdm obj e
     m' = mWithType (spreadType H.empty $ getMetaType m) m
 semiDesExpr sdm obj (RawAliasExpr base alias) = AliasExpr (semiDesExpr sdm obj base) (semiDesExpr sdm obj alias)
-semiDesExpr sdm obj (RawWhere base cond) = EWhere (semiDesExpr sdm obj base) (semiDesExpr sdm obj cond)
+semiDesExpr sdm obj (RawWhere base cond) = EWhere (emptyMetaE "cond" base) (semiDesExpr sdm obj base) (semiDesExpr sdm obj cond)
 semiDesExpr sdm obj (RawTupleApply _ (_, RawValue _ "/operator::") [(False, RawObjArr{roaArr=(Just (Just e, _, _))}), (False, RawObjArr{roaArr=(Just (Just tp, _, _))})]) = semiDesExpr sdm obj (rawExprWithType (exprToType tp) e)
 semiDesExpr sdm obj (RawTupleApply _ (_, be) []) = semiDesExpr sdm obj be
 semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm'', be'') arg'') -> TupleApply m'' (bm'', be'') arg'') $ foldl aux (bm, be') (zip [0..] args)

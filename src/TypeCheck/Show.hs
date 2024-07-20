@@ -45,10 +45,11 @@ showExpr env (AliasExpr base alias) = do
   base' <- showExpr env base
   alias' <- showExpr env alias
   return $ AliasExpr base' alias'
-showExpr env (EWhere base cond) = do
+showExpr env (EWhere m base cond) = do
+  m' <- showM env m
   base' <- showExpr env base
   cond' <- showExpr env cond
-  return $ EWhere base' cond'
+  return $ EWhere m' base' cond'
 showExpr env (TupleApply m (bm, base) arg) = do
   m' <- showM env m
   bm' <- showM env bm

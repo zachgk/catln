@@ -53,10 +53,11 @@ toExpr env (AliasExpr base alias) = do
   base' <- toExpr env base
   alias' <- toExpr env alias
   return $ AliasExpr base' alias'
-toExpr env (EWhere base cond) = do
+toExpr env (EWhere m base cond) = do
+  m' <- toMeta env m "Where"
   base' <- toExpr env base
   cond' <- toExpr env cond
-  return $ EWhere base' cond'
+  return $ EWhere m' base' cond'
 toExpr env expr@(TupleApply m (baseM, baseExpr) arg) = do
   let pos = getMetaPos m
   m' <- toMeta env m "TupleApply_M"

@@ -131,16 +131,17 @@ fromExpr est env1 (AliasExpr base alias) = do
   (alias', env3) <- fromExpr est env2 alias
   let env4 = addConstraints env3 [BoundedByKnown 6 (getExprMeta base') (TypeVar (TVArg $ inExprSingleton alias) TVInt)]
   return (AliasExpr base' alias', env4)
-fromExpr est env1 (EWhere base cond) = do
-  (base', env2) <- fromExpr est env1 base
+fromExpr est env1 (EWhere m base cond) = do
+  (m', env2) <- fromMeta env1 BAct est m (printf "Where %s | %s" (show base) (show cond))
+  (base', env3) <- fromExpr est env2 base
   let condEst = case est of
         EncodeIn -> EncodeOut Nothing
         _        -> est
-  (cond', env3) <- fromExpr condEst env2 cond
-  let (bool, env4) = fresh env3 $ TypeCheckResult [] $ SType PTopType boolType Nothing "ifGuardBool"
+  (cond', env4) <- fromExpr condEst env3 cond
+  let (bool, env5) = fresh env4 $ TypeCheckResult [] $ SType PTopType boolType Nothing "ifGuardBool"
   let bool' = Meta boolType (labelPos "bool" $ getMetaPos $ getExprMeta cond) (mkVarMetaDat est bool)
-  let env5 = addConstraints env4 [ArrowTo 30 (getExprMeta cond') bool']
-  return (EWhere base' cond', env5)
+  let env6 = addConstraints env5 [ArrowTo 30 (getExprMeta cond') bool', ConWhere 30 (getExprMeta base') (getExprMeta cond') m']
+  return (EWhere m' base' cond', env6)
 fromExpr est env1 (TupleApply m (baseM, baseExpr) arg) = do
   (m', env2) <- fromMeta env1 BAct est m $ printf "Tuple Meta %s(%s)" (show baseExpr) (show arg)
   (baseM', env3) <- fromMeta env2 BAct est baseM $ printf "Tuple BaseMeta %s(%s)" (show baseExpr) (show arg)

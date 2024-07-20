@@ -198,10 +198,10 @@ toTExpr env os (AliasExpr b a) = do
   b' <- toTExpr env os b
   a' <- toTExpr env os a
   return $ TAliasExpr b' a'
-toTExpr env os (EWhere b a) = do
+toTExpr env os (EWhere m b a) = do
   b' <- toTExpr env os b
   a' <- toTExpr env os a
-  return $ TWhere b' a'
+  return $ TWhere m b' a'
 toTExpr env os (TupleApply m (bm, be) arg) = do
   be' <- toTExprDest env os be bm
   arg' <- case arg of

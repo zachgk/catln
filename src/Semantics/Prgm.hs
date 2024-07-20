@@ -97,7 +97,7 @@ data Expr m
   | Value (Meta m) TypeName
   | HoleExpr (Meta m) Hole
   | AliasExpr (Expr m) (Expr m) -- ^ AliasExpr baseExpr aliasExpr
-  | EWhere (Expr m) (Expr m) -- ^ base cond
+  | EWhere (Meta m) (Expr m) (Expr m) -- ^ base cond
   | TupleApply (Meta m) (Meta m, Expr m) (EApp Expr m)
   | VarApply (Meta m) (Expr m) TypeVarName (Meta m)
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
@@ -135,7 +135,7 @@ instance Show m => Show (Expr m) where
   show (Value _ name) = printf "Value %s" name
   show (HoleExpr m hole) = printf "Hole %s %s" (show m) (show hole)
   show (AliasExpr base alias) = printf "%s@%s" (show base) (show alias)
-  show (EWhere base cond) = printf "%s | %s" (show base) (show cond)
+  show (EWhere _ base cond) = printf "%s | %s" (show base) (show cond)
   show (TupleApply _ (_, baseExpr) arg) = printf "%s(%s)" baseExpr' showArg
     where
       baseExpr' = case baseExpr of
@@ -202,13 +202,13 @@ instance ExprClass Expr where
     AliasExpr b _    -> getExprMeta b
     TupleApply m _ _ -> m
     VarApply m _ _ _ -> m
-    EWhere b _       -> getExprMeta b
+    EWhere m _ _     -> m
 
   maybeExprPathM (Value m n)             = Just (n, m)
   maybeExprPathM (TupleApply _ (_, e) _) = maybeExprPathM e
   maybeExprPathM (VarApply _ e _ _)      = maybeExprPathM e
   maybeExprPathM (AliasExpr b _)         = maybeExprPathM b
-  maybeExprPathM (EWhere b _)            = maybeExprPathM b
+  maybeExprPathM (EWhere _ b _)          = maybeExprPathM b
   maybeExprPathM _                       = Nothing
 
   exprAppliedArgs (Value _ _)               = []
@@ -218,20 +218,20 @@ instance ExprClass Expr where
   exprAppliedArgs (TupleApply _ (_, be) (EAppSpread ae)) = exprAppliedArgs ae ++ exprAppliedArgs be
   exprAppliedArgs (VarApply _ e _ _)        = exprAppliedArgs e
   exprAppliedArgs (AliasExpr b _)           = exprAppliedArgs b
-  exprAppliedArgs (EWhere b _)              = exprAppliedArgs b
+  exprAppliedArgs (EWhere _ b _)              = exprAppliedArgs b
 
   exprAppliedOrdVars (Value _ _) = []
   exprAppliedOrdVars (TupleApply _ (_, be) _) = exprAppliedOrdVars be
   exprAppliedOrdVars (VarApply _ e n m) = (n, m) : exprAppliedOrdVars e
   exprAppliedOrdVars (AliasExpr b _) = exprAppliedOrdVars b
-  exprAppliedOrdVars (EWhere b _) = exprAppliedOrdVars b
+  exprAppliedOrdVars (EWhere _ b _) = exprAppliedOrdVars b
   exprAppliedOrdVars e = error $ printf "Unsupported Expr exprAppliedOrdVars: %s" (show e)
 
   exprVarArgs CExpr{} = H.empty
   exprVarArgs Value{} = H.empty
   exprVarArgs HoleExpr{} = H.empty
   exprVarArgs (AliasExpr base n) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, getExprMeta base)] (exprVarArgs base)
-  exprVarArgs (EWhere base _) = exprVarArgs base
+  exprVarArgs (EWhere _ base _) = exprVarArgs base
   exprVarArgs (TupleApply _ (_, be) (EAppArg ObjArr{oaObj=Just n, oaArr=Just (Nothing, arrM)})) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, arrM)] (exprVarArgs be)
   exprVarArgs (TupleApply _ _ (EAppArg ObjArr{oaObj, oaArr=Just (Nothing, _)})) = error $ printf "Unexpected unhandled obj type in exprVarArgs: %s" (show oaObj)
   exprVarArgs (TupleApply _ (_, be) (EAppArg ObjArr{oaArr=Just (Just e, _)})) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)

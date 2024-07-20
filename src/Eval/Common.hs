@@ -232,7 +232,7 @@ data TExpr m
   | TValue (Meta m) TypeName
   | THoleExpr (Meta m) Hole
   | TAliasExpr (TExpr m) (TExpr m) -- ^ AliasTExpr baseExpr aliasExpr
-  | TWhere (TExpr m) (TExpr m) -- ^ TWhere baseExpr cond
+  | TWhere (Meta m) (TExpr m) (TExpr m) -- ^ TWhere res baseExpr cond
   | TTupleApply (Meta m) (Meta m, TExpr m) (EApp TExpr m)
   | TVarApply (Meta m) (TExpr m) TypeVarName (Meta m)
   | TCalls (Meta m) (TExpr m) TCallTree
@@ -247,7 +247,7 @@ instance ExprClass TExpr where
     TValue m _        -> m
     THoleExpr m _     -> m
     TAliasExpr b _    -> getExprMeta b
-    TWhere b _        -> getExprMeta b
+    TWhere m _ _      -> m
     TTupleApply m _ _ -> m
     TVarApply m _ _ _ -> m
     TCalls m _ _      -> m
@@ -256,7 +256,7 @@ instance ExprClass TExpr where
   maybeExprPathM (TTupleApply _ (_, e) _) = maybeExprPathM e
   maybeExprPathM (TVarApply _ e _ _)      = maybeExprPathM e
   maybeExprPathM (TAliasExpr b _)         = maybeExprPathM b
-  maybeExprPathM (TWhere b _)             = maybeExprPathM b
+  maybeExprPathM (TWhere _ b _)           = maybeExprPathM b
   maybeExprPathM (TCalls _ b _)           = maybeExprPathM b
   maybeExprPathM _                        = Nothing
 
@@ -279,7 +279,7 @@ instance ExprClass TExpr where
   exprVarArgs TValue{} = H.empty
   exprVarArgs THoleExpr{} = H.empty
   exprVarArgs (TAliasExpr base n) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, getExprMeta base)] (exprVarArgs base)
-  exprVarArgs (TWhere base _) = exprVarArgs base
+  exprVarArgs (TWhere _ base _) = exprVarArgs base
   exprVarArgs (TTupleApply _ (_, be) (EAppArg ObjArr{oaObj=Just n, oaArr=Just (Nothing, arrM)})) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, arrM)] (exprVarArgs be)
   exprVarArgs (TTupleApply _ _ (EAppArg ObjArr{oaObj, oaArr=Just (Nothing, _)})) = error $ printf "Unexpected unhandled obj type in exprVarArgs: %s" (show oaObj)
   exprVarArgs (TTupleApply _ (_, be) (EAppArg ObjArr{oaArr=Just (Just e, _)})) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)
@@ -343,7 +343,7 @@ instance Show m => Show (TExpr m) where
   show (TValue _ name) = printf "Value %s" name
   show (THoleExpr m hole) = printf "Hole %s %s" (show m) (show hole)
   show (TAliasExpr base alias) = printf "%s@%s" (show base) (show alias)
-  show (TWhere base cond) = printf "%s | %s" (show base) (show cond)
+  show (TWhere _ base cond) = printf "%s | %s" (show base) (show cond)
   show (TTupleApply _ (_, baseExpr) arg) = printf "%s(%s)" baseExpr' (show arg)
     where
       baseExpr' = case baseExpr of
@@ -378,7 +378,7 @@ exprArgsWithVal CExpr{} _ = H.empty
 exprArgsWithVal (Value _ n) (TupleVal tupleName _) | n /= tupleName = error $ printf "Found name mismatch in exprArgsWithVal. Expression name is %s but value name is %s" n tupleName
 exprArgsWithVal Value{} _ = H.empty
 exprArgsWithVal HoleExpr{} _ = H.empty
-exprArgsWithVal (EWhere base _) val = exprArgsWithVal base val
+exprArgsWithVal (EWhere _ base _) val = exprArgsWithVal base val
 exprArgsWithVal (AliasExpr base n) val = H.insert (exprPath n) val (exprArgsWithVal base val)
 exprArgsWithVal (VarApply _ b _ _) val = exprArgsWithVal b val
 exprArgsWithVal (TupleApply _ (_, be) arg) val = H.union (exprArgsWithVal be val) (fromArg arg val)
@@ -401,7 +401,7 @@ texprArgsWithVal TCExpr{} _ = H.empty
 texprArgsWithVal (TValue _ n) (TupleVal tupleName _) | n /= tupleName = error $ printf "Found name mismatch in exprArgsWithVal. Expression name is %s but value name is %s" n tupleName
 texprArgsWithVal TValue{} _ = H.empty
 texprArgsWithVal THoleExpr{} _ = H.empty
-texprArgsWithVal (TWhere base _) val = texprArgsWithVal base val
+texprArgsWithVal (TWhere _ base _) val = texprArgsWithVal base val
 texprArgsWithVal (TAliasExpr base n) val = H.insert (exprPath n) val (texprArgsWithVal base val)
 texprArgsWithVal (TVarApply _ b _ _) val = texprArgsWithVal b val
 texprArgsWithVal (TTupleApply _ (_, be) arg) val = H.union (texprArgsWithVal be val) (fromArg arg val)

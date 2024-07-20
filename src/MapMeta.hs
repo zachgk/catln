@@ -44,6 +44,7 @@ data ExprMetaType
   | ExprMetaTupleArg
   | ExprMetaApplyVar
   | ExprMetaApplyVarVal
+  | ExprMetaWhere
   | ExprMetaTypeProp
   deriving (Eq, Ord, Show)
 
@@ -72,7 +73,7 @@ mapMetaAppliedExpr f loc (CExpr m c) = CExpr (f (ExprMeta loc ExprMetaConstant) 
 mapMetaAppliedExpr f loc (Value m n) = Value (f (ExprMeta loc ExprMetaVal) m) n
 mapMetaAppliedExpr f loc (HoleExpr m h) = HoleExpr (f (ExprMeta loc ExprMetaHole) m) h
 mapMetaAppliedExpr f loc (AliasExpr b a) = AliasExpr (mapMetaAppliedExpr f loc b) (mapMetaAppliedExpr f loc a)
-mapMetaAppliedExpr f loc (EWhere b a) = EWhere (mapMetaAppliedExpr f loc b) (mapMetaAppliedExpr f loc a)
+mapMetaAppliedExpr f loc (EWhere m b a) = EWhere (f (ExprMeta loc ExprMetaWhere) m) (mapMetaAppliedExpr f loc b) (mapMetaAppliedExpr f loc a)
 mapMetaAppliedExpr f loc (TupleApply m (bm, be) arg) = TupleApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, mapMetaAppliedExpr f loc be) (mapArg arg)
     where
       mapArg (EAppArg a)    = EAppArg $ mapOAObjExpr (mapMeta f loc) a
@@ -84,7 +85,7 @@ instance MapMeta Expr where
   mapMeta f loc (Value m n) = Value (f (ExprMeta loc ExprMetaVal) m) n
   mapMeta f loc (HoleExpr m h) = HoleExpr (f (ExprMeta loc ExprMetaHole) m) h
   mapMeta f loc (AliasExpr b a) = AliasExpr (mapMeta f loc b) (mapMeta f loc a)
-  mapMeta f loc (EWhere b a) = EWhere (mapMeta f loc b) (mapMeta f loc a)
+  mapMeta f loc (EWhere m b a) = EWhere (f (ExprMeta loc ExprMetaWhere) m) (mapMeta f loc b) (mapMeta f loc a)
   mapMeta f loc (TupleApply m (bm, be) arg) = TupleApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, mapMeta f loc be) (mapArg arg)
     where
       mapArg (EAppArg a)    = EAppArg $ mapMetaObjArr f (Just loc) a

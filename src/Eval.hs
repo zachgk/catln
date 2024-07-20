@@ -155,7 +155,7 @@ evalExpr env (TValue m _) = do
   return (TupleVal ptName H.empty, env)
 evalExpr _ (THoleExpr m h) = CErr [MkCNote $ GenCErr (getMetaPos m) $ printf "Can't evaluate hole %s" (show h)]
 evalExpr env (TAliasExpr b _) = evalExpr env b
-evalExpr env (TWhere b _) = evalExpr env b
+evalExpr env (TWhere _ b _) = evalExpr env b
 evalExpr env@Env{evArgs} (TTupleApply _ (_, b) (EAppArg oa@ObjArr{oaObj=Just (TValue _ "/io"), oaArr=Just (Nothing, _)})) = do
   (TupleVal n args, env') <- evalExpr env b
   case H.lookup "/io" evArgs of

@@ -212,7 +212,9 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (SetArgMode i mode src
       then powersetType feTypeEnv vaenv' srcAct
       else setArgMode vaenv' PtArgAny srcAct
     destAct' = intersectTypes feTypeEnv fromSrc destAct
-computeConstraint _ con@(Constraint _ _ (ConWhere _i _base _cond _res)) = (True, con) -- TODO Implement
+computeConstraint env con@(Constraint _ vaenv (ConWhere i base cond res)) = (False, con{conDat=ConWhere i stype' cond stype'}) -- TODO Currently using temp equals relationship, switch to actual constraint
+  where
+    (_, stype', _) = equalizeSTypes env (fmap (stypeAct . snd) vaenv) (base, res)
 computeConstraint env@FEnv{feTypeEnv} con@(Constraint _ vaenv (UnionOf i parent children)) = (False, con{conVaenv=updateCOVarArgEnvAct vaenv' vaenv, conDat=UnionOf i parentST' children})
   where
     chAct = unionAllTypesWithEnv feTypeEnv H.empty $ map stypeAct children

@@ -66,7 +66,7 @@ desObjValToArg _ (CExpr m c) = CExpr m c
 desObjValToArg _ (Value m n) = Value m n
 desObjValToArg _ (HoleExpr m h) = HoleExpr m h
 desObjValToArg useRelativeName (AliasExpr b a) = AliasExpr (desObjValToArg useRelativeName b) (desObjValToArg useRelativeName a)
-desObjValToArg useRelativeName (EWhere b a) = EWhere (desObjValToArg useRelativeName b) (desObjValToArg useRelativeName a)
+desObjValToArg useRelativeName (EWhere m b a) = EWhere m (desObjValToArg useRelativeName b) (desObjValToArg useRelativeName a)
 desObjValToArg useRelativeName (TupleApply m (bm, be) arg) = TupleApply m (bm, be') arg'
   where
     be' = desObjValToArg useRelativeName be
