@@ -176,7 +176,7 @@ instance Hashable SourcePos where
 instance ToJSON SourcePos where
   toJSON (SourcePos name line col) = object ["name".=name, "line".=unPos line, "col".=unPos col]
 
-
+type VarArgMap e m = H.HashMap TypeVarAux [(e m, Meta m)]
 class ExprClass e where
   -- | Returns the metadata for the top level of an expression
   getExprMeta ::  e m -> Meta m
@@ -191,7 +191,7 @@ class ExprClass e where
   exprAppliedOrdVars :: (Show m, MetaDat m) => e m -> [(TypeVarName, Meta m)]
 
   -- | Returns all arguments located recursively in an expression
-  exprVarArgs :: (MetaDat m, Show m) => e m -> H.HashMap TypeVarAux [(e m, Meta m)]
+  exprVarArgs :: (MetaDat m, Show m) => e m -> VarArgMap e m
 
 
 instance ExprClass Expr where

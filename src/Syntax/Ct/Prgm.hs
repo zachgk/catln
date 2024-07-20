@@ -176,6 +176,7 @@ instance ObjArrClass RawObjArr where
     where
       exprArg RawObjArr{roaArr=(Just (Just argVal, _, _))} = exprVarArgs argVal
       exprArg RawObjArr{roaObj=(Just obj), roaArr= Nothing} = H.singleton (TVArg $ inExprSingleton obj) [(obj, emptyMetaE "res" obj)]
+      exprArg RawObjArr{roaObj=(Just obj), roaArr= Just (Nothing, _, _)} = H.singleton (TVArg $ inExprSingleton obj) [(obj, emptyMetaE "res" obj)]
       exprArg oa = error $ printf "exprVarArgs not defined for arg %s" (show oa)
   getOaAnnots = roaAnnots
 

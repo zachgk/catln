@@ -145,7 +145,7 @@ pArrowFull basis = do
     _ <- symbol "?"
     try pExpr
 
-  let (arrMetaExpr, arrMeta) = maybe (Nothing, emptyMetaN) (\decl -> (Just decl, exprToTypeMeta decl)) maybeDecl
+  let (arrMetaExpr, arrMeta) = maybe (Nothing, emptyMetaN) (\decl -> (Just decl, exprToTypeMeta (exprVarArgs expr1) decl)) maybeDecl
   (i', o') <- return $ case (maybeDecl, expr1, maybeExpr2) of
     -- Input, equals, and in expression
     (_, i, Just (_, Just o)) -> (Just i, Just (Just o, arrMetaExpr, arrMeta))

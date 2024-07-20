@@ -24,6 +24,7 @@ import           Utils
 type ParseMetaDat = ()
 type ParseMeta = Meta ParseMetaDat
 type PExpr = RawExpr ParseMetaDat
+type PVarArgMap = VarArgMap RawExpr ParseMetaDat
 type PObjExpr = PExpr
 type PCompAnnot = CompAnnot PExpr
 type PObjArr = RawObjArr RawExpr ParseMetaDat

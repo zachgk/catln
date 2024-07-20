@@ -15,6 +15,7 @@ import           Bag                     (bagToList)
 import           BasicTypes
 import           CtConstants
 import           Data.Bifunctor          (first)
+import qualified Data.HashMap.Strict     as H
 import           Data.Maybe              (fromJust, fromMaybe, mapMaybe,
                                           maybeToList)
 import           DynFlags
@@ -70,7 +71,7 @@ convertTypeToExpr flags mb (HsListTy _ t) = case mb of
   Just b  -> b `applyRawArgs` [(Nothing, t')]
   Nothing -> t'
   where
-    t' = rawVal ctListType `applyRawExprVars` [(partialKey "T", emptyMetaT $ exprToType $ convertTypeToExpr flags Nothing $ unLoc t)]
+    t' = rawVal ctListType `applyRawExprVars` [(partialKey "T", emptyMetaT $ exprToType H.empty $ convertTypeToExpr flags Nothing $ unLoc t)]
 convertTypeToExpr flags _ (HsTupleTy _ _ tp) = rawAnon `applyRawArgs` map ((Just $ partialKey "C",) . convertTypeToExpr flags Nothing . unLoc) tp
 convertTypeToExpr flags _ p@HsSumTy{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
 convertTypeToExpr flags _ p@HsOpTy{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
@@ -92,7 +93,7 @@ convertTypeToExpr flags _ p@XHsType{} = error $ printf "Convert unsupported type
 convertTypeToObj :: DynFlags -> String -> HsType GhcPs -> RawObjArr RawExpr ()
 convertTypeToObj flags _ p@HsForAllTy{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
 convertTypeToObj flags _ p@HsAppKindTy{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
-convertTypeToObj flags i (HsFunTy _ base app) = RawObjArr (Just (convertTypeToExpr flags (Just $ rawVal i) $ unLoc base)) FunctionObj Nothing [] (Just (Nothing, Just appExpr, emptyMetaT $ exprToType appExpr)) Nothing
+convertTypeToObj flags i (HsFunTy _ base app) = RawObjArr (Just (convertTypeToExpr flags (Just $ rawVal i) $ unLoc base)) FunctionObj Nothing [] (Just (Nothing, Just appExpr, emptyMetaT $ exprToType H.empty appExpr)) Nothing
   where
     appExpr = convertTypeToExpr flags Nothing $ unLoc app
 convertTypeToObj flags _ p@HsSumTy{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
