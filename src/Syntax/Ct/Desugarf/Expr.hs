@@ -104,7 +104,7 @@ semiDesExpr sdm obj (RawTupleApply _ (_, e@RawValue{}) [(True, _)]) = Value m' n
     Value m n = semiDesExpr sdm obj e
     m' = mWithType (spreadType H.empty $ getMetaType m) m
 semiDesExpr sdm obj (RawAliasExpr base alias) = AliasExpr (semiDesExpr sdm obj base) (semiDesExpr sdm obj alias)
-semiDesExpr sdm obj (RawWhere base cond) = EWhere (emptyMetaE "cond" base) (semiDesExpr sdm obj base) (semiDesExpr sdm obj cond)
+semiDesExpr sdm obj (RawWhere base cond) = EWhere (emptyMetaE "cond" base) (semiDesExpr sdm obj base) (semiDesExpr SDOutput obj cond)
 semiDesExpr sdm obj (RawTupleApply _ (_, RawValue _ "/operator::") [(False, RawObjArr{roaArr=(Just (Just e, _, _))}), (False, RawObjArr{roaArr=(Just (Just tp, _, _))})]) = semiDesExpr sdm obj (rawExprWithType (exprToType tp) e)
 semiDesExpr sdm obj (RawTupleApply _ (_, be) []) = semiDesExpr sdm obj be
 semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm'', be'') arg'') -> TupleApply m'' (bm'', be'') arg'') $ foldl aux (bm, be') (zip [0..] args)
