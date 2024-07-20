@@ -270,6 +270,11 @@ partialAddPreds partial@PartialType{ptPreds} newPreds = partial{ptPreds = predsA
 partialLeafsAddPreds :: PartialLeafs -> TypePredicates -> PartialLeafs
 partialLeafsAddPreds partials newPreds = joinUnionType $ map (`partialAddPreds` newPreds) $ splitUnionType partials
 
+typeAddPreds :: Type -> TypePredicates -> Type
+typeAddPreds (TopType negLeafs preds) ps = TopType negLeafs (predsAnd ps preds)
+typeAddPreds v@TypeVar{} _ = error $ printf "Unimplemented typeAddPreds: %s" (show v)
+typeAddPreds (UnionType leafs) ps = UnionType $ partialLeafsAddPreds leafs ps
+
 tryPredsToList :: TypePredicates -> Maybe [TypePredicate]
 tryPredsToList (PredsOne p)  = Just [p]
 tryPredsToList (PredsAnd ps) = concat <$> mapM tryPredsToList ps
