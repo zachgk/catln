@@ -140,6 +140,10 @@ stypeConstraintDat (AddInferArg i p1 p2) = do
 stypeConstraintDat (SetArgMode i m p1 p2) = do
   p1' <- p1
   SetArgMode i m p1' <$> p2
+stypeConstraintDat (ConWhere i p1 p2 p3) = do
+  p1' <- p1
+  p2' <- p2
+  ConWhere i p1' p2' <$> p3
 stypeConstraintDat (UnionOf i p1 p2s) = do
   p1' <- p1
   p2s' <- sequence p2s
@@ -208,6 +212,7 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (SetArgMode i mode src
       then powersetType feTypeEnv vaenv' srcAct
       else setArgMode vaenv' PtArgAny srcAct
     destAct' = intersectTypes feTypeEnv fromSrc destAct
+computeConstraint _ con@(Constraint _ _ (ConWhere _i _base _cond _res)) = (True, con) -- TODO Implement
 computeConstraint env@FEnv{feTypeEnv} con@(Constraint _ vaenv (UnionOf i parent children)) = (False, con{conVaenv=updateCOVarArgEnvAct vaenv' vaenv, conDat=UnionOf i parentST' children})
   where
     chAct = unionAllTypesWithEnv feTypeEnv H.empty $ map stypeAct children

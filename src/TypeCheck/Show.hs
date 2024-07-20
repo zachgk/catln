@@ -87,6 +87,7 @@ showConDat env (PropEq i (p1, name) p2) = showConDatHelper env (\s1 s2 -> PropEq
 showConDat env (AddArg i (p1, argName) p2) = showConDatHelper env (\s1 s2 -> AddArg i (s1, argName) s2) p1 p2
 showConDat env (AddInferArg i p1 p2) = showConDatHelper env (AddInferArg i) p1 p2
 showConDat env (SetArgMode i m p1 p2) = showConDatHelper env (SetArgMode i m) p1 p2
+showConDat env (ConWhere i p1 p2 p3) = ConWhere i (descriptor env p1) (descriptor env p2) (descriptor env p3)
 showConDat env (UnionOf i p1 p2s) = UnionOf i (descriptor env p1) (map (descriptor env) p2s)
 
 showCon :: FEnv -> VConstraint -> SConstraint
