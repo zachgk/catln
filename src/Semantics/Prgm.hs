@@ -15,6 +15,7 @@
 {-# LANGUAGE DeriveGeneric             #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE FlexibleInstances         #-}
 {-# LANGUAGE InstanceSigs              #-}
 
 module Semantics.Prgm where
@@ -29,6 +30,7 @@ import           Data.Graph
 import qualified Data.HashSet        as S
 import           Data.Maybe
 import           Data.Void           (Void)
+import           Semantics.TypeGraph (ReachesTree)
 import           Semantics.Types
 import           Text.Megaparsec
 import           Text.Printf
@@ -65,6 +67,9 @@ data Meta m = Meta Type CodeRange m
 -- | MetaDat contains supplemental metadata
 instance MetaDat () where
   emptyMetaDat = ()
+
+instance MetaDat (Maybe ReachesTree) where
+  emptyMetaDat = Nothing
 
 emptyMetaT :: (MetaDat m) => Type -> Meta m
 emptyMetaT t = Meta t Nothing emptyMetaDat

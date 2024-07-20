@@ -19,9 +19,22 @@ import qualified Data.HashMap.Strict as H
 import           Data.Graph          (graphFromEdges)
 import           Data.Maybe
 import           Semantics.Prgm
+import           Semantics.TypeGraph
 import           Semantics.Types
 import           Text.Printf
 
+newtype ObjArrTypeGraph m = ObjArrTypeGraph (H.HashMap TypeName [ObjArr Expr m])
+instance (MetaDat m, Show m) => TypeGraph (ObjArrTypeGraph m) where
+  typeGraphQuery ReachesEnv{rTypeEnv, rTypeGraph=ObjArrTypeGraph tg} partial@PartialType{ptName} = mapMaybe tryTArrow $ H.lookupDefault [] ptName tg
+    where
+      tryTArrow oa@ObjArr{oaArr=Just{}} = do
+        -- It is possible to send part of a partial through the arrow, so must compute the valid part
+        -- If none of it is valid, then there is Nothing
+        let potentialSrc@(UnionType potSrcLeafs) = intersectTypes rTypeEnv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa)
+        if not (isBottomType potentialSrc)
+          then Just $ unionAllTypes rTypeEnv [arrowDestType rTypeEnv potentialSrcPartial oa | potentialSrcPartial <- splitUnionType potSrcLeafs]
+          else Nothing
+      tryTArrow ObjArr{oaArr=Nothing} = Nothing
 
 labelPosM :: String -> Meta m -> Meta m
 labelPosM s (Meta t pos ext) = Meta t (labelPos s pos) ext

@@ -12,23 +12,18 @@
 -- and checks if a conversion path is possible
 --------------------------------------------------------------------
 
-{-# LANGUAGE DeriveAnyClass    #-}
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE FlexibleContexts  #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE NamedFieldPuns    #-}
+{-# LANGUAGE DeriveAnyClass   #-}
+{-# LANGUAGE DeriveGeneric    #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE NamedFieldPuns   #-}
 
 module Semantics.TypeGraph where
-import           CRes
 import           Data.Aeson          (ToJSON)
 import           Data.Hashable       (Hashable)
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Data.List
-import           Data.Maybe
 import           GHC.Generics        (Generic)
-import           Semantics
-import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
 
@@ -37,15 +32,15 @@ data ReachesTree
   | ReachesLeaf ![Type]
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
-data ReachesEnv m = ReachesEnv {
+class TypeGraph tg where
+  typeGraphQuery :: ReachesEnv tg -> PartialType -> [Type]
+
+data ReachesEnv tg = ReachesEnv {
   rTypeEnv   :: !TypeEnv,
   rVaenv     :: !TypeVarArgEnv,
-  rTypeGraph :: !(H.HashMap TypeName [ObjArr Expr m]),
+  rTypeGraph :: !tg,
   rVisited   :: !(S.HashSet PartialType)
                              }
-
-instance MetaDat (Maybe ReachesTree) where
-  emptyMetaDat = Nothing
 
 isTypeVar :: Type -> Bool
 isTypeVar TypeVar{} = True
@@ -80,39 +75,29 @@ reachesHasCutSubtypeOf classGraph vaenv (ReachesTree children) superType = all c
   where childIsSubtype (key, val) = isSubtypeOfWithEnv classGraph vaenv (singletonType key) superType || reachesHasCutSubtypeOf classGraph vaenv val superType
 reachesHasCutSubtypeOf classGraph vaenv (ReachesLeaf leafs) superType = any (\t -> isSubtypeOfWithEnv classGraph vaenv t superType) leafs
 
-reachesPartial :: (MetaDat m, Show m) => ReachesEnv m -> PartialType -> CRes ReachesTree
-reachesPartial ReachesEnv{rVisited} p | S.member p rVisited = return $ ReachesLeaf []
-reachesPartial ReachesEnv{rVaenv} PartialType{ptName=argName} | TVArg (partialKey argName) `H.member` rVaenv = return $ ReachesLeaf [TypeVar (TVArg $ partialKey argName) TVInt]
-reachesPartial env@ReachesEnv{rTypeGraph, rTypeEnv, rVisited} partial@PartialType{ptName=name} = do
+reachesPartial :: (TypeGraph tg) => ReachesEnv tg -> PartialType -> ReachesTree
+reachesPartial ReachesEnv{rVisited} p | S.member p rVisited = ReachesLeaf []
+reachesPartial ReachesEnv{rVaenv} PartialType{ptName=argName} | TVArg (partialKey argName) `H.member` rVaenv = ReachesLeaf [TypeVar (TVArg $ partialKey argName) TVInt]
+reachesPartial env@ReachesEnv{rTypeEnv, rVisited} partial = do
 
-  let ttypeArrows = H.lookupDefault [] name rTypeGraph
-  ttypes <- mapM tryTArrow ttypeArrows
+  let ttypes = typeGraphQuery env partial
 
   let env' = env{rVisited=S.insert partial rVisited}
-  if null (catMaybes ttypes)
-    then return $ ReachesLeaf []
-    else reaches env' (unionAllTypes rTypeEnv (catMaybes ttypes))
-  where
-    tryTArrow oa@ObjArr{oaArr=Just{}} = do
-      -- It is possible to send part of a partial through the arrow, so must compute the valid part
-      -- If none of it is valid, then there is Nothing
-      let potentialSrc@(UnionType potSrcLeafs) = intersectTypes rTypeEnv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa)
-      if not (isBottomType potentialSrc)
-        then return $ Just $ unionAllTypes rTypeEnv [arrowDestType rTypeEnv potentialSrcPartial oa | potentialSrcPartial <- splitUnionType potSrcLeafs]
-        else return Nothing
-    tryTArrow ObjArr{oaArr=Nothing} = return Nothing
+  if null ttypes
+    then ReachesLeaf []
+    else reaches env' (unionAllTypes rTypeEnv ttypes)
 
-reaches :: (MetaDat m, Show m) => ReachesEnv m -> Type -> CRes ReachesTree
-reaches _     PTopType            = return $ ReachesLeaf [PTopType]
-reaches _     v@TopType{}            = return $ ReachesLeaf [v]
+reaches :: (TypeGraph tg) => ReachesEnv tg -> Type -> ReachesTree
+reaches _     PTopType            = ReachesLeaf [PTopType]
+reaches _     v@TopType{}            = ReachesLeaf [v]
 reaches _     (TypeVar v _)            = error $ printf "reaches with typevar %s" (show v)
-reaches env (UnionType src) = do
-  let partials = splitUnionType src
-  resultsByPartials <- mapM (reachesPartial env) partials
-  return $ ReachesTree $ H.fromList $ zip partials resultsByPartials
+reaches env (UnionType src) = ReachesTree $ H.fromList $ zip partials resultsByPartials
+  where
+    partials = splitUnionType src
+    resultsByPartials = map (reachesPartial env) partials
 
-rootReachesPartial :: (MetaDat m, Show m) => ReachesEnv m -> PartialType -> CRes (PartialType, ReachesTree)
-rootReachesPartial env src = do
-  reached <- reachesPartial env src
-  let reachedWithId = ReachesTree $ H.singleton src reached
-  return (src, reachedWithId)
+rootReachesPartial :: (TypeGraph tg) => ReachesEnv tg -> PartialType -> (PartialType, ReachesTree)
+rootReachesPartial env src = (src, reachedWithId)
+  where
+    reached = reachesPartial env src
+    reachedWithId = ReachesTree $ H.singleton src reached

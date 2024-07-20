@@ -31,6 +31,7 @@ import           Eval.Common
 import           Eval.Env
 import           Eval.ExprBuilder
 import           Eval.Runtime
+import           Semantics
 import           Semantics.TypeGraph (ReachesEnv (ReachesEnv),
                                       reachesHasCutSubtypeOf, reachesPartial)
 import           Text.Printf
@@ -64,10 +65,10 @@ evalBuildable _                      = False
 -- TODO The use of listToMaybe will secretly discard if multiple evalTargetModes or function names are found. Instead, an error should be thrown
 evalTargetMode :: String -> FileImport -> EPrgmGraphData -> EvalMode
 evalTargetMode function prgmName prgmGraphData = case (funCtxReaches, funReaches) of
-  (Just rt, _) | reachesHasCutSubtypeOf typeEnv H.empty rt resultType -> EvalBuildWithContext function'
-  (Just rt, _) | reachesHasCutSubtypeOf typeEnv H.empty rt ioType -> EvalRunWithContext function'
-  (_, Just rt) | reachesHasCutSubtypeOf typeEnv H.empty rt resultType -> EvalBuild function'
-  (_, Just rt) | reachesHasCutSubtypeOf typeEnv H.empty rt ioType -> EvalRun function' -- Should require isShowable for run result
+  (rt, _) | reachesHasCutSubtypeOf typeEnv H.empty rt resultType -> EvalBuildWithContext function'
+  (rt, _) | reachesHasCutSubtypeOf typeEnv H.empty rt ioType -> EvalRunWithContext function'
+  (_, rt) | reachesHasCutSubtypeOf typeEnv H.empty rt resultType -> EvalBuild function'
+  (_, rt) | reachesHasCutSubtypeOf typeEnv H.empty rt ioType -> EvalRun function' -- Should require isShowable for run result
   _ -> NoEval
   where
     prgm@(objMap, _, _) = prgmFromGraphData prgmName prgmGraphData
@@ -75,11 +76,11 @@ evalTargetMode function prgmName prgmGraphData = case (funCtxReaches, funReaches
     function' = case maybeGetSingleton $ expandRelPartial typeEnv H.empty (partialVal function) of
       Just f -> ptName f
       Nothing -> error $ printf "Expected one typeName in evalTargetMode for %s. Instead found %s" (show function) (show $ expandRelPartial typeEnv H.empty (partialVal function))
-    reachEnv = ReachesEnv typeEnv H.empty (H.fromListWith (++) $ map (\oa -> (oaObjPath oa, [oa])) objMap) S.empty
+    reachEnv = ReachesEnv typeEnv H.empty (ObjArrTypeGraph $ H.fromListWith (++) $ map (\oa -> (oaObjPath oa, [oa])) objMap) S.empty
     funCtxTp = (partialVal ContextStr){ptArgs=H.fromList [(partialKey contextValStr, typeVal function')], ptArgMode=PtArgAny}
     funTp = partialVal function'
-    funCtxReaches = cresToMaybe $ reachesPartial reachEnv funCtxTp
-    funReaches = cresToMaybe $ reachesPartial reachEnv funTp
+    funCtxReaches = reachesPartial reachEnv funCtxTp
+    funReaches = reachesPartial reachEnv funTp
 
 -- | evaluate annotations such as assertions that require compiler verification
 evalCompAnnot :: Env -> Val -> CRes Env
