@@ -103,7 +103,7 @@ semiDesObjArr roa@RawObjArr{roaObj=Just oE} = oa{
   }
   where
     [oa@ObjArr{oaObj=Just oE', oaAnnots, oaArr}] = desObjArr (Just oE) roa
-    oE'' = semiDesExpr (SDInput False) Nothing oE'
+    oE'' = semiDesExpr (SDInput False) (Just oE) oE'
     oaArr' = fmap (first (fmap (semiDesExpr SDOutput (Just oE')))) oaArr
 semiDesObjArr oa = error $ printf "Unexpected semiDesObjArr with no input expression: %s" (show oa)
 
@@ -150,7 +150,7 @@ desInheritingSubstatements (inheritModule, inheritAnnots) path subStatements = d
 desMultiTypeDefObj :: String -> H.HashMap TypeVarName Type -> PExpr -> DesObjArr
 desMultiTypeDefObj inheritPath varReplaceMap expr = desObj False inheritPath UseRelativeName $ ObjArr (Just expr'') TypeObj Nothing [] Nothing
   where
-    expr' = semiDesExpr SDType Nothing expr
+    expr' = semiDesExpr SDType (Just expr) expr
 
     -- This replaces references from obj vars of class vars
     -- Consider JOptional<$T> = Just<$T=$T> | Nothing
@@ -200,7 +200,7 @@ desClassDecl statementEnv@(inheritPath, _) clssExpr extends subStatements = do
 desTypeDef :: StatementEnv -> PExpr -> ExtendedClasses RawExpr ParseMetaDat -> [RawStatementTree RawExpr ParseMetaDat] -> CRes DesPrgm
 desTypeDef statementEnv@(inheritPath, _) typeExpr extends subStatements = do
   (subPrgm, annots) <- desInheritingSubstatements statementEnv (getPath $ exprPath typeExpr) subStatements
-  let typeExpr' = semiDesExpr SDType Nothing typeExpr
+  let typeExpr' = semiDesExpr SDType (Just typeExpr) typeExpr
   let type' = exprToPartialType typeExpr
   let obj = desObj False inheritPath UseRelativeName $ ObjArr (Just typeExpr') TypeObj (desObjDocComment subStatements) annots Nothing
   let objMap = [obj]
@@ -210,7 +210,7 @@ desTypeDef statementEnv@(inheritPath, _) typeExpr extends subStatements = do
 
 desClassDef :: StatementEnv -> Sealed -> RawClassDef ParseMetaDat -> [RawStatementTree RawExpr ParseMetaDat] -> CRes DesPrgm
 desClassDef statementEnv@(inheritPath, _) sealed (typeExpr, extends) subStatements = do
-  let typeExpr' = desObjPropagateTypes $ semiDesExpr SDType Nothing typeExpr
+  let typeExpr' = desObjPropagateTypes $ semiDesExpr SDType (Just typeExpr) typeExpr
   let classGraph = ClassGraph $ graphFromEdges [(CGClass (sealed, partialVal $ show path', [getExprType typeExpr'], desObjDocComment subStatements), PClassName (exprPath className), [PRelativeName $ exprPath typeExpr']) | className <- extends ]
   (subPrgm, _) <- desInheritingSubstatements statementEnv path subStatements
   return $ mergePrgm ([], classGraph, []) subPrgm

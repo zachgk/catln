@@ -136,7 +136,7 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm''
           SDInput{} -> sdm
           _         -> SDInput False
         arg'' = arg'{
-          oaObj=fmap (semiDesExpr objSdm Nothing) (oaObj arg'),
+          oaObj=fmap (semiDesExpr objSdm obj) (oaObj arg'),
           oaAnnots=indexAnnots ++ fmap (semiDesExpr sdm obj) (oaAnnots arg'),
           oaArr=fmap (first (fmap (semiDesExpr sdm (oaObj arg')))) (oaArr arg')
           }
@@ -154,16 +154,16 @@ semiDesExpr sdm obj (RawVarsApply m be vs) = foldr aux be' vs
               Nothing -> error $ printf "No type name found in varExpr %s (type %s)" (show varExpr) (show $ exprToType (mobjExprVaenv obj) varExpr)
         varVal = maybe emptyMetaN (exprToTypeMeta (mobjExprVaenv obj)) (roaArr >>= snd)
     aux roa _ = error $ printf "Unexpected semiDesExpr var: %s" (show roa)
-semiDesExpr sdm obj@Just{} (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawEArgs (RawValue emptyMetaN ContextStr) ((Just $ rawVal contextValStr, be) : map mapCtx ctxs)
+semiDesExpr sdm@SDOutput{} obj (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawEArgs (RawValue emptyMetaN ContextStr) ((Just $ rawVal contextValStr, be) : map mapCtx ctxs)
   where
     mapCtx ctx = (Just $ rawVal $ snd $ desugarTheExpr $ fromJust $ roaObj ctx, fromJust $ roaObj ctx)
-semiDesExpr sdm obj@Nothing (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawIArgs (RawValue emptyMetaN ContextStr) ((partialKey contextValStr, IArgE be) : map mapCtx ctxs)
+semiDesExpr sdm@SDInput{} obj (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawIArgs (RawValue emptyMetaN ContextStr) ((partialKey contextValStr, IArgE be) : map mapCtx ctxs)
   where
     mapCtx RawObjArr{roaObj=Just ctxObj, roaArr=Just (Just ctxArr, _)} = (partialToKey $ exprToPartialType ctxObj, IArgE ctxArr)
     mapCtx RawObjArr{roaObj=Just ctxObj, roaArr=Just (_, ctxM)} = (partialToKey $ exprToPartialType ctxObj, IArgM ctxM)
     mapCtx ctx = error $ printf "Invalid input context: %s" (show ctx)
 semiDesExpr sdm obj (RawParen e) = semiDesExpr sdm obj e
-semiDesExpr sdm obj@Nothing (RawMethod (RawTheExpr n) method) = semiDesExpr sdm' obj (method `applyRawIArgs` [(partialKey "this", IArgM (Just n))]) -- Parse type methods like :Integer.toString, Only for input expressions
+semiDesExpr sdm obj (RawMethod (RawTheExpr n) method) = semiDesExpr sdm' obj (method `applyRawIArgs` [(partialKey "this", IArgM (Just n))]) -- Parse type methods like :Integer.toString, Only for input expressions
   where
     sdm' = case sdm of
       SDInput _ -> SDInput True
