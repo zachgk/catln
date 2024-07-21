@@ -120,7 +120,7 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm''
           Nothing        -> Just (Nothing, Just vM)
     aux (m, e) (_argIndex, (False, rarg)) = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (EAppArg arg''))
       where
-        [arg] = desObjArr rarg
+        [arg] = desObjArr obj rarg
 
         -- indexAnnots = [exprVal argStartAnnot | argIndex == 0] ++ [exprVal argEndAnnot | argIndex == length args - 1]
         indexAnnots = [] -- TODO: Consider whether to re-add start and end annots
@@ -142,7 +142,7 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm''
           }
     aux (m, e) (_, (True, oa)) = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (EAppSpread $ semiDesExpr sdm obj $ oaObjExpr arg))
       where
-        [arg] = desObjArr oa
+        [arg] = desObjArr obj oa
 semiDesExpr sdm obj (RawVarsApply m be vs) = foldr aux be' vs
   where
     be' = semiDesExpr sdm obj be
@@ -199,18 +199,18 @@ exprToPartialType e = case maybeGetSingleton $ getExprType des of
 exprToType :: PVarArgMap -> PExpr -> Type
 exprToType _ (RawValue _ n) | isJust (parseTVVar n) = fromJust $ parseTVVar n
 -- TODO Migrate the TypeVar check to the one below and remove the one above. This is for having type variables without the $ prefix.
--- exprToType vaenv (RawValue _ n) | H.member (TVVar $ partialKey n) vaenv  = TypeVar (TVVar $ partialKey n) TVInt
+-- exprToType vaenv (RawValue _ n) | H.member (TVVar $ partialKey $ makeAbsoluteName n) vaenv  = TypeVar (TVVar $ partialKey n) TVInt
 exprToType _ e                        = getExprType $ desObjPropagateTypes $ desExpr $ semiDesExpr SDType Nothing e
 
 exprToTypeMeta :: PVarArgMap -> PExpr -> ParseMeta
 exprToTypeMeta vaenv e = mWithType (exprToType vaenv e) (getExprMeta e)
 
-desObjArr :: PObjArr -> [ObjArr RawExpr ParseMetaDat]
-desObjArr (RawObjArr obj basis@TypeObj doc annots arr Nothing) = [ObjArr obj basis doc annots arr']
+desObjArr :: Maybe PObjExpr -> PObjArr -> [ObjArr RawExpr ParseMetaDat]
+desObjArr mainObj (RawObjArr obj basis@TypeObj doc annots arr Nothing) = [ObjArr obj basis doc annots arr']
   where
-    arr' = fmap (second (maybe emptyMetaN (exprToTypeMeta (maybe H.empty exprVarArgs obj)))) arr
-desObjArr (RawObjArr obj@(Just objExpr) basis doc annots arr Nothing) = [ObjArr obj basis doc annots (Just arr')]
+    arr' = fmap (second (maybe emptyMetaN (exprToTypeMeta (mobjExprVaenv mainObj)))) arr
+desObjArr mainObj (RawObjArr obj@(Just objExpr) basis doc annots arr Nothing) = [ObjArr obj basis doc annots (Just arr')]
   where
-    arr' = maybe (Nothing, emptyMetaE "arrM" objExpr) (second (maybe emptyMetaN (exprToTypeMeta (maybe H.empty exprVarArgs obj)))) arr
-desObjArr (RawObjArr obj basis doc annots (Just (arrE, arrM)) Nothing) = [ObjArr obj basis doc annots (Just (arrE, maybe emptyMetaN (exprToTypeMeta (maybe H.empty exprVarArgs obj)) arrM))]
-desObjArr roa = error $ printf "Not yet implemented: %s" (show roa)
+    arr' = maybe (Nothing, emptyMetaE "arrM" objExpr) (second (maybe emptyMetaN (exprToTypeMeta (mobjExprVaenv mainObj)))) arr
+desObjArr mainObj (RawObjArr obj basis doc annots (Just (arrE, arrM)) Nothing) = [ObjArr obj basis doc annots (Just (arrE, maybe emptyMetaN (exprToTypeMeta (mobjExprVaenv mainObj)) arrM))]
+desObjArr _ roa = error $ printf "Not yet implemented: %s" (show roa)

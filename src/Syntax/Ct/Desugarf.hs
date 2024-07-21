@@ -96,15 +96,15 @@ desObj isDef inheritPath useRelativeName oa@ObjArr{oaObj=Just objE} = oa{oaObj=J
 desObj _ _ _ oa = error $ printf "Unexpected desObj with no input exrpression: %s" (show oa)
 
 semiDesObjArr :: PObjArr -> PSObjArr
-semiDesObjArr roa@RawObjArr{roaObj=Just{}} = oa{
-  oaObj=Just oE',
-  oaAnnots = fmap (semiDesExpr SDOutput (Just oE)) oaAnnots,
+semiDesObjArr roa@RawObjArr{roaObj=Just oE} = oa{
+  oaObj=Just oE'',
+  oaAnnots = fmap (semiDesExpr SDOutput (Just oE')) oaAnnots,
   oaArr=oaArr'
   }
   where
-    [oa@ObjArr{oaObj=Just oE, oaAnnots, oaArr}] = desObjArr roa
-    oE' = semiDesExpr (SDInput False) Nothing oE
-    oaArr' = fmap (first (fmap (semiDesExpr SDOutput (Just oE)))) oaArr
+    [oa@ObjArr{oaObj=Just oE', oaAnnots, oaArr}] = desObjArr (Just oE) roa
+    oE'' = semiDesExpr (SDInput False) Nothing oE'
+    oaArr' = fmap (first (fmap (semiDesExpr SDOutput (Just oE')))) oaArr
 semiDesObjArr oa = error $ printf "Unexpected semiDesObjArr with no input expression: %s" (show oa)
 
 declToObjArrow :: StatementEnv -> DesObjArr -> DesObjectMapItem
