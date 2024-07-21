@@ -25,6 +25,7 @@ import           GHC.Generics        (Generic)
 import           Data.Aeson          hiding (Object)
 import           Data.Maybe          (isJust, mapMaybe)
 import           Maybes              (fromJust)
+import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
@@ -150,7 +151,7 @@ instance ExprClass RawExpr where
   exprVarArgs (RawAliasExpr base alias) = H.unionWith (++) (exprVarArgs base) (exprVarArgs alias)
   exprVarArgs (RawTupleApply _ (_, be) args) = H.unionWith (++) (exprVarArgs be) (unionsWith (++) $ map aux args)
     where
-      aux (False, a) = oaVarArgs a
+      aux (False, a) = roaVarArgs a
       aux (True, a)  = error $ printf "Not yet implemented %s" (show a)
   exprVarArgs (RawVarsApply _ e vars) = H.unionWith (++) (exprVarArgs e) (unionsWith (++) $ map aux vars)
     where
@@ -161,13 +162,7 @@ instance ExprClass RawExpr where
   exprVarArgs e = error $ printf "Unsupported RawExpr exprVarArgs for %s" (show e)
 
 instance ObjArrClass RawObjArr where
-  oaVarArgs _roa = error "Found oaVarArgs in ObjArrClass. Expected raw variations like rawExprAppliedArgs."
-  -- oaVarArgs roa = exprArg roa
-  --   where
-  --     exprArg RawObjArr{roaArr=(Just (Just argVal, _))} = exprVarArgs argVal
-  --     exprArg RawObjArr{roaObj=(Just obj), roaArr= Nothing} = H.singleton (TVArg $ rawInExprSingleton obj) [(obj, emptyMetaE "res" obj)]
-  --     exprArg RawObjArr{roaObj=(Just obj), roaArr= Just (Nothing, _)} = H.singleton (TVArg $ rawInExprSingleton obj) [(obj, emptyMetaE "res" obj)]
-  --     exprArg oa = error $ printf "exprVarArgs not defined for arg %s" (show oa)
+  oaVarArgs _roa = error "Found call to raw oaVarArgs. Should be using roaVarArgs."
   getOaAnnots = roaAnnots
 
 instance (Show m, Show (e m)) => Show (RawObjArr e m) where
@@ -218,3 +213,9 @@ rawExprAppliedArgsMap = H.fromList . mapMaybe mapArg . rawExprAppliedArgs
 rawInExprSingleton :: (MetaDat m, Show m) => RawExpr m -> ArgName
 rawInExprSingleton e = maybe
   (partialKey $ makeAbsoluteName $ exprPath e) {pkArgs = H.keysSet $ rawExprAppliedArgsMap e, pkVars = H.keysSet $ exprAppliedVars e} partialToKey (maybeGetSingleton (getExprType e))
+
+roaVarArgs :: (MetaDat m, Show m) => RawObjArr RawExpr m -> H.HashMap TypeVarAux [(RawExpr m, Meta m)]
+roaVarArgs RawObjArr{roaArr=(Just (Just argVal, _))} = exprVarArgs argVal
+roaVarArgs RawObjArr{roaObj=(Just obj), roaArr= Nothing} = H.singleton (TVArg $ rawInExprSingleton obj) [(obj, emptyMetaE "res" obj)]
+roaVarArgs RawObjArr{roaObj=(Just obj), roaArr= Just (Nothing, _)} = H.singleton (TVArg $ rawInExprSingleton obj) [(obj, emptyMetaE "res" obj)]
+roaVarArgs oa = error $ printf "exprVarArgs not defined for arg %s" (show oa)
