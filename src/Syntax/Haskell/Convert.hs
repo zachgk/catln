@@ -11,18 +11,16 @@
 --------------------------------------------------------------------
 
 module Syntax.Haskell.Convert where
-import           Bag                     (bagToList)
+import           Bag               (bagToList)
 import           BasicTypes
 import           CtConstants
-import           Data.Bifunctor          (first)
-import qualified Data.HashMap.Strict     as H
-import           Data.Maybe              (fromJust, fromMaybe, mapMaybe,
-                                          maybeToList)
+import           Data.Bifunctor    (first)
+import           Data.Maybe        (fromJust, fromMaybe, mapMaybe, maybeToList)
 import           DynFlags
-import           FastString              (unpackFS)
+import           FastString        (unpackFS)
 import           GHC.Hs
 import           Module
-import           Name                    (nameStableString)
+import           Name              (nameStableString)
 import           OccName
 import           Outputable
 import           RdrName
@@ -30,10 +28,8 @@ import           Semantics.Prgm
 import           Semantics.Types
 import           SrcLoc
 import           Syntax.Ct.Builder
-import           Syntax.Ct.Desugarf.Expr (exprToType)
 import           Syntax.Ct.Prgm
 import           Text.Printf
-import           Utils
 
 type MLHSArgs = Maybe (RawExpr ()) -- Maybe base with lhs arguments, is present when a lambda modifies the base args
 
@@ -64,14 +60,14 @@ convertTypeToExpr flags i (HsQualTy _ ctx body) = foldl aux (convertTypeToExpr f
     aux b cond = RawWhere b (convertTypeToExpr flags Nothing $ unLoc cond)
 convertTypeToExpr flags (Just i) (HsTyVar _ _ v) = i `applyRawArgs` [(Just $ partialKey "A", rawVal $ convertIdP flags $ unLoc v)]
 convertTypeToExpr flags Nothing (HsTyVar _ _ v) = rawVal $ convertIdP flags $ unLoc v
-convertTypeToExpr flags i (HsAppTy _ base v) = convertTypeToExpr flags i (unLoc base) `applyRawExprEVars` [(convertTypeToExpr flags i $ unLoc v, emptyMetaN)]
+convertTypeToExpr flags i (HsAppTy _ base v) = convertTypeToExpr flags i (unLoc base) `applyRawExprEVars` [(convertTypeToExpr flags i $ unLoc v, Nothing)]
 convertTypeToExpr flags _ p@HsAppKindTy{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
 convertTypeToExpr flags i (HsFunTy _ base app) = convertTypeToExpr flags i (unLoc base) `applyRawArgs` [(Just $ partialKey "B", convertTypeToExpr flags Nothing $ unLoc app)]
 convertTypeToExpr flags mb (HsListTy _ t) = case mb of
   Just b  -> b `applyRawArgs` [(Nothing, t')]
   Nothing -> t'
   where
-    t' = rawVal ctListType `applyRawExprVars` [(partialKey "T", emptyMetaT $ exprToType H.empty $ convertTypeToExpr flags Nothing $ unLoc t)]
+    t' = rawVal ctListType `applyRawExprVars` [(partialKey "T", Just $ convertTypeToExpr flags Nothing $ unLoc t)]
 convertTypeToExpr flags _ (HsTupleTy _ _ tp) = rawAnon `applyRawArgs` map ((Just $ partialKey "C",) . convertTypeToExpr flags Nothing . unLoc) tp
 convertTypeToExpr flags _ p@HsSumTy{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
 convertTypeToExpr flags _ p@HsOpTy{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
@@ -93,7 +89,7 @@ convertTypeToExpr flags _ p@XHsType{} = error $ printf "Convert unsupported type
 convertTypeToObj :: DynFlags -> String -> HsType GhcPs -> RawObjArr RawExpr ()
 convertTypeToObj flags _ p@HsForAllTy{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
 convertTypeToObj flags _ p@HsAppKindTy{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
-convertTypeToObj flags i (HsFunTy _ base app) = RawObjArr (Just (convertTypeToExpr flags (Just $ rawVal i) $ unLoc base)) FunctionObj Nothing [] (Just (Nothing, Just appExpr, emptyMetaT $ exprToType H.empty appExpr)) Nothing
+convertTypeToObj flags i (HsFunTy _ base app) = RawObjArr (Just (convertTypeToExpr flags (Just $ rawVal i) $ unLoc base)) FunctionObj Nothing [] (Just (Nothing, Just appExpr)) Nothing
   where
     appExpr = convertTypeToExpr flags Nothing $ unLoc app
 convertTypeToObj flags _ p@HsSumTy{} = error $ printf "Convert unsupported type:\n%s" (showSDoc flags $ ppr p)
@@ -216,7 +212,7 @@ convertExpr flags _ p@HsOverLabel{} = error $ printf "Convert unsupported expr:\
 convertExpr flags _ p@HsIPVar{} = error $ printf "Convert unsupported expr:\n%s" (showSDoc flags $ ppr p)
 convertExpr flags _ (HsOverLit _ literal) = (Nothing, convertOverLit flags literal, [])
 convertExpr flags _ (HsLit _ literal) = (Nothing, convertLiteral flags literal, [])
-convertExpr flags b (HsLam _ (MG _ matches _)) = (base' >>= const (roaObj oa'), fromJust $ fst3 $ fromJust $ roaArr oa', subs)
+convertExpr flags b (HsLam _ (MG _ matches _)) = (base' >>= const (roaObj oa'), fromJust $ fst $ fromJust $ roaArr oa', subs)
   where
     [(base', oa', subs)] = concatMap (convertMatch flags b . unLoc) $ unLoc matches
 convertExpr flags _ p@HsLamCase{} = error $ printf "Convert unsupported expr:\n%s" (showSDoc flags $ ppr p)
@@ -337,7 +333,7 @@ convertStmtLR flags _ (BindStmt _ pat body _ _) = (Nothing, [RawStatementTree (R
     -- TODO: Should use bind rather than basic objArr
     pat' = convertPattern flags Nothing $ unLoc pat
     (maybePat'', expr', subStatements) = convertExpr flags (Just pat') $ unLoc body
-    oa = RawObjArr (Just $ fromMaybe pat' maybePat'') FunctionObj Nothing [] (Just (Just expr', Nothing, emptyMetaN)) Nothing
+    oa = RawObjArr (Just $ fromMaybe pat' maybePat'') FunctionObj Nothing [] (Just (Just expr', Nothing)) Nothing
 convertStmtLR flags _ p@ApplicativeStmt{} = error $ printf "Convert unsupported stmtLR:\n%s" (showSDoc flags $ ppr p)
 convertStmtLR flags base (BodyStmt _ body _ _) = (base', [RawStatementTree (rawExprStatement expr') subStatements])
   where
@@ -393,7 +389,7 @@ convertMatch flags i (Match _ _ pats grhs) = map aux $ convertGRHSs flags grhs
         guardObjExpr = case guard of
           Just g  -> RawWhere objExpr g
           Nothing -> objExpr
-        oa = RawObjArr (Just guardObjExpr) FunctionObj Nothing [] (Just (Just arr, Nothing, emptyMetaN)) Nothing
+        oa = RawObjArr (Just guardObjExpr) FunctionObj Nothing [] (Just (Just arr, Nothing)) Nothing
 convertMatch flags _ p = error $ printf "Convert unsupported match:\n%s" (showSDoc flags $ ppr p)
 
 -- https://www.stackage.org/haddock/lts-18.28/ghc-lib-parser-8.10.7.20220219/GHC-Hs-Binds.html#t:HsBindLR
@@ -403,7 +399,7 @@ convertBindLR flags p@(FunBind _ i (MG _ lmatches _) _ _) = map wrap $ concatMap
     conv match = convertMatch flags (Just $ rawVal $ convertIdP flags $ unLoc i) match
     wrap (Nothing, oa, subStatements) = RawStatementTree (RawDeclStatement oa) subStatements
     wrap _ = error $ printf "Convert unsupported convertBindLR wrap:\n%s" (showSDoc flags $ ppr p)
-convertBindLR flags (PatBind _ lhs rhs _) = [RawStatementTree (RawDeclStatement $ RawObjArr (Just guardObj) PatternObj Nothing [] (Just (Just arrExpr, Nothing, emptyMetaN)) Nothing) subs]
+convertBindLR flags (PatBind _ lhs rhs _) = [RawStatementTree (RawDeclStatement $ RawObjArr (Just guardObj) PatternObj Nothing [] (Just (Just arrExpr, Nothing)) Nothing) subs]
   where
     obj = convertPattern flags Nothing $ unLoc lhs
     [(Nothing, arrExpr, subs, maybeGuard)] = convertGRHSs flags rhs
@@ -451,7 +447,7 @@ convertDerivingClause flags (HsDerivingClause _ _derivingStrategy c) = map (conv
 convertDerivingClause flags p = error $ printf "Convert unsupported DerivingClause:\n%s" (showSDoc flags $ ppr p)
 
 convertQTyVars :: DynFlags -> RawExpr () -> LHsQTyVars GhcPs -> RawExpr ()
-convertQTyVars flags base (HsQTvs _ vars) = base `applyRawExprVars` map ((, emptyMetaN) . convertTyVarBndr flags . unLoc) vars
+convertQTyVars flags base (HsQTvs _ vars) = base `applyRawExprVars` map ((, Nothing) . convertTyVarBndr flags . unLoc) vars
 convertQTyVars flags _ p = error $ printf "Convert unsupported DerivingClause:\n%s" (showSDoc flags $ ppr p)
 
 -- https://www.stackage.org/haddock/lts-18.28/ghc-lib-parser-8.10.7.20220219/GHC-Hs-Decls.html#t:TyClDecl

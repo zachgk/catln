@@ -54,9 +54,9 @@ canonicalImport caller imp = case maybeExprPath $ rawImpAbs imp of
       _                          -> return Nothing
     return imp{rawImpDisp=disp', rawImpCalledDir=calledDir', rawImpDir=impDir'}
   where
-    disp' = case exprAppliedArgs $ rawImpAbs imp of
-      [ObjArr{oaArr=Just (Just (RawCExpr _ (CStr s)), _)}] -> Just s
-      _                                                    -> Nothing
+    disp' = case rawExprAppliedArgs $ rawImpAbs imp of
+      [RawObjArr{roaArr=Just (Just (RawCExpr _ (CStr s)), _)}] -> Just s
+      _                                                        -> Nothing
     calledDir' = rawImpDir =<< caller
 
 mkRawCanonicalImportStr :: String -> IO RawFileImport
@@ -85,7 +85,7 @@ processParsed includeCore imp ((prgmImports, statements), extraImports) = do
   where
     name = case rawImpAbs imp of
       RawCExpr _ (CStr n) -> n
-      RawTupleApply _ _ [(False, RawObjArr{roaArr=Just (Just (RawCExpr _ (CStr n)), _, _)})] -> n
+      RawTupleApply _ _ [(False, RawObjArr{roaArr=Just (Just (RawCExpr _ (CStr n)), _)})] -> n
       _ -> ""
 
 parseFile :: Bool -> RawFileImport -> IO (CRes (GraphNodes (RawPrgm ()) RawFileImport))

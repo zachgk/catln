@@ -446,16 +446,14 @@
 ,
     (
         (
-            [ abs ( Value x -> /Data/Primitive/Integer ) = abs.$ 866 a3c ( Value /x= Value /x )
-                ( Value /$ 866 a3c-arg= /Catln/ThenElse/fromBool
+            [ abs ( Value x -> /Data/Primitive/Integer ) = abs.$d2f352 ( Value /x= Value /x )
+                ( Value /$d2f352-arg= /Catln/ThenElse/fromBool
                     ( Value /v= /operator>= ( Value /l= Value x )
                         ( Value /r= CInt 0 )
                     )
                 )
-            , abs.$ 866 a3c ( Value /x )
-                ( Value /$ 866 a3c-arg= Hole TopType HoleActive Nothing@Value Then ) = Value x
-            , abs.$ 866 a3c ( Value /x )
-                ( Value /$ 866 a3c-arg= Hole TopType HoleActive Nothing@Value Else ) = /operator*
+            , abs.$d2f352 ( Value /x ) ( Value /$d2f352-arg= Hole TopType HoleActive Nothing@Value Then ) = Value x
+            , abs.$d2f352 ( Value /x ) ( Value /$d2f352-arg= Hole TopType HoleActive Nothing@Value Else ) = /operator*
                 ( Value /l= /operator-
                     ( Value /a= CInt 1 )
                 ) ( Value /r= Value x )

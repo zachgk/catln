@@ -27,7 +27,6 @@ import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Builder
-import           Syntax.Ct.Desugarf.Expr
 import           Syntax.Ct.Parser.Lexer
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
@@ -134,7 +133,7 @@ pArrowFull :: ObjectBasis -> Parser (Either PStatement PObjArr)
 pArrowFull basis = do
   expr1 <- pExpr
   guardAnnots <- pPatternGuard
-  maybeDecl <- optional $ do
+  arrM <- optional $ do
     _ <- symbol "->" <|> symbol ":"
     term
   maybeExpr2 <- optional $ do
@@ -145,16 +144,15 @@ pArrowFull basis = do
     _ <- symbol "?"
     try pExpr
 
-  let (arrMetaExpr, arrMeta) = maybe (Nothing, emptyMetaN) (\decl -> (Just decl, exprToTypeMeta (exprVarArgs expr1) decl)) maybeDecl
-  (i', o') <- return $ case (maybeDecl, expr1, maybeExpr2) of
+  (i', o') <- return $ case (arrM, expr1, maybeExpr2) of
     -- Input, equals, and in expression
-    (_, i, Just (_, Just o)) -> (Just i, Just (Just o, arrMetaExpr, arrMeta))
+    (_, i, Just (_, Just o)) -> (Just i, Just (Just o, arrM))
 
     -- Input, equals, but no out expression
-    (_, i, Just (_, Nothing)) -> (Just i, Just (Just (rawVal nestedDeclaration), arrMetaExpr, arrMeta))
+    (_, i, Just (_, Nothing)) -> (Just i, Just (Just (rawVal nestedDeclaration), arrM))
 
     -- Input, no equals, but declaration
-    (Just _, i, Nothing) -> (Just i, Just (Nothing, arrMetaExpr, arrMeta)) -- If only one expression, always make it as an input and later desugar to proper place
+    (Just _, i, Nothing) -> (Just i, Just (Nothing, arrM)) -- If only one expression, always make it as an input and later desugar to proper place
 
     -- Input, no equals nor declaration
     (Nothing, i, Nothing) -> (Just i, Nothing) -- If only one expression, always make it as an input and later desugar to proper place

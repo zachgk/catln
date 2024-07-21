@@ -88,7 +88,7 @@ contents p = do
 
 ctParser :: ImportParser
 ctParser imp = do
-  let [ObjArr{oaArr=Just (Just (RawCExpr _ (CStr fileName)), _)}] = exprAppliedArgs imp
+  let [RawObjArr{roaArr=Just (Just (RawCExpr _ (CStr fileName)), _)}] = rawExprAppliedArgs imp
   fileContents <- readFile fileName
   case runParser (contents pPrgm) fileName fileContents of
     Left err   -> fail $ show $ errorBundlePretty err

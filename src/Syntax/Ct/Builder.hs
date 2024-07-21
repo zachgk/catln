@@ -44,16 +44,16 @@ applyRawEArgs base args = case base of
   where
     args' = map ((False,) . mapArg) args
     mapArg :: (MetaDat m, Show m) => (Maybe (RawExpr m), RawExpr m) -> RawObjArr RawExpr m
-    mapArg (Just argName, argVal) = RawObjArr (Just argName) ArgObj Nothing [] (Just (Just argVal, Nothing, emptyMetaE (show argName) argVal)) Nothing
-    mapArg (Nothing, argVal) = RawObjArr Nothing ArgObj Nothing [] (Just (Just argVal, Nothing, emptyMetaE "noArg" argVal)) Nothing
+    mapArg (Just argName, argVal) = RawObjArr (Just argName) ArgObj Nothing [] (Just (Just argVal, Nothing)) Nothing
+    mapArg (Nothing, argVal) = RawObjArr Nothing ArgObj Nothing [] (Just (Just argVal, Nothing)) Nothing
 
-data IArg e = IArgNothing | IArgE (e ()) | IArgM (Meta ())
+data IArg e = IArgNothing | IArgE (e ()) | IArgM (Maybe (e ()))
 applyRawIArgs :: PExpr -> [(ArgName, IArg RawExpr)] -> PExpr
 applyRawIArgs base args = applyRawEIArgs base (map mapArg args)
   where
     mapArg :: (ArgName, IArg RawExpr) -> (PExpr, IArg RawExpr)
     mapArg (argName, IArgE argVal) = (RawValue (emptyMetaE ("in-" ++ show argName) argVal) (pkName argName), IArgE argVal)
-    mapArg (argName, IArgM argM) = (RawValue (emptyMetaM ("in-" ++ show argName) argM) (pkName argName), IArgM argM)
+    mapArg (argName, IArgM argM) = (RawValue emptyMetaN (pkName argName), IArgM argM)
     mapArg (argName, IArgNothing) = (RawValue (emptyMetaE ("in-" ++ show argName) base) (pkName argName), IArgNothing)
 
 applyRawEIArgs :: PExpr -> [(PExpr, IArg RawExpr)] -> PExpr
@@ -64,23 +64,23 @@ applyRawEIArgs base args = case base of
   where
     args' = map ((False,) . mapArg) args
     mapArg :: (PExpr, IArg RawExpr) -> RawObjArr RawExpr ()
-    mapArg (argName, IArgE argVal) = RawObjArr (Just argName) ArgObj Nothing [] (Just (Just argVal, Nothing, emptyMetaE (show argName) argVal)) Nothing
-    mapArg (argName, IArgM argM) = RawObjArr (Just argName) ArgObj Nothing [] (Just (Nothing, Nothing, argM)) Nothing
-    mapArg (argName, IArgNothing) = RawObjArr (Just argName) ArgObj Nothing [] (Just (Nothing, Nothing, emptyMetaE ("m-" ++ show argName) base)) Nothing
+    mapArg (argName, IArgE argVal) = RawObjArr (Just argName) ArgObj Nothing [] (Just (Just argVal, Nothing)) Nothing
+    mapArg (argName, IArgM argM) = RawObjArr (Just argName) ArgObj Nothing [] (Just (Nothing, argM)) Nothing
+    mapArg (argName, IArgNothing) = RawObjArr (Just argName) ArgObj Nothing [] (Just (Nothing, Nothing)) Nothing
 
-applyRawExprVars :: (MetaDat m) => RawExpr m -> [(TypeVarName, Meta m)] -> RawExpr m
+applyRawExprVars :: (MetaDat m) => RawExpr m -> [(TypeVarName, Maybe (RawExpr m))] -> RawExpr m
 applyRawExprVars base vars = applyRawExprEVars base vars'
   where
     vars' = map (first (\n -> RawValue (emptyMetaE ("var" ++ show n) base) (pkName n))) vars
 
-applyRawExprEVars :: (MetaDat m) => RawExpr m -> [(RawExpr m, Meta m)] -> RawExpr m
+applyRawExprEVars :: (MetaDat m) => RawExpr m -> [(RawExpr m, Maybe (RawExpr m))] -> RawExpr m
 applyRawExprEVars base []   = base
 applyRawExprEVars base vars = case base of
   (RawVarsApply m base' baseArgs) -> RawVarsApply m base' (baseArgs ++ vars')
   _ -> RawVarsApply (emptyMetaE "app" base) base vars'
   where
     vars' = map aux vars
-    aux (n, m) = RawObjArr (Just n) ArgObj Nothing [] (Just (Nothing, Nothing, m)) Nothing
+    aux (n, m) = RawObjArr (Just n) ArgObj Nothing [] (Just (Nothing, m)) Nothing
 
 rawStr :: (MetaDat m) => String -> RawExpr m
 rawStr = RawCExpr emptyMetaN . CStr
@@ -106,7 +106,7 @@ applyExprIArgs = foldl addArg
       where
         mapArg :: (ArgName, IArg Expr) -> ObjArr Expr ()
         mapArg (argName, IArgE argVal) = ObjArr (Just (Value (emptyMetaE (show argName) b) (pkName argName))) ArgObj Nothing [] (Just(Just argVal, emptyMetaE "argRes" argVal))
-        mapArg (argName, IArgM argM) = ObjArr (Just (Value argM (pkName argName))) ArgObj Nothing [] (Just (Nothing, emptyMetaE ("argRes" ++ show argName) b))
+        mapArg (argName, IArgM _argM) = ObjArr (Just (Value emptyMetaN (pkName argName))) ArgObj Nothing [] (Just (Nothing, emptyMetaE ("argRes" ++ show argName) b))
         mapArg (argName, IArgNothing) = ObjArr (Just (Value (emptyMetaE (show argName) b) (pkName argName))) ArgObj Nothing [] (Just (Nothing, emptyMetaE ("argRes" ++ show argName) b))
 
 applyExprVars :: (MetaDat m) => Expr m -> [(TypeVarName, Meta m)] -> Expr m
@@ -118,13 +118,13 @@ rawAnon :: PExpr
 rawAnon = rawVal anonStr
 
 rawInObjArr :: Bool -> PExpr -> PObjArr
-rawInObjArr withArr e = RawObjArr (Just e) FunctionObj Nothing [] (if withArr then Just (Nothing, Nothing, emptyMetaN) else Nothing) Nothing
+rawInObjArr withArr e = RawObjArr (Just e) FunctionObj Nothing [] (if withArr then Just (Nothing, Nothing) else Nothing) Nothing
 
 rawOutObjArr :: PExpr -> PObjArr
-rawOutObjArr e = RawObjArr Nothing FunctionObj Nothing [] (Just (Just e, Nothing, emptyMetaN)) Nothing
+rawOutObjArr e = RawObjArr Nothing FunctionObj Nothing [] (Just (Just e, Nothing)) Nothing
 
 rawModule :: String -> PStatement
-rawModule n = RawDeclStatement $ rawOutObjArr (rawVal modStr `applyRawExprVars` [(partialKey n, emptyMetaN)])
+rawModule n = RawDeclStatement $ rawOutObjArr (rawVal modStr `applyRawExprVars` [(partialKey n, Nothing)])
 
 classInstSt :: (PExpr, [PExpr]) -> PStatement
 classInstSt (cls, extends) = RawDeclStatement $ rawOutObjArr (rawVal everyStr `applyRawEIArgs` [(cls, IArgNothing), (rawVal isaStr, IArgE $ RawList emptyMetaN extends)])

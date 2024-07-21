@@ -14,7 +14,7 @@
 module Syntax.Ct.Desugarf.Expr where
 
 
-import           Data.Bifunctor          (Bifunctor (first))
+import           Data.Bifunctor          (Bifunctor (first), second)
 import qualified Data.HashMap.Strict     as H
 import           Data.Maybe
 import           Text.Printf
@@ -27,7 +27,6 @@ import           Semantics.Types
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
-import           Utils
 
 desExpr :: PSExpr -> DesExpr
 desExpr (CExpr m c) = CExpr m c
@@ -95,34 +94,30 @@ semiDesExpr _ _ (RawValue m n) = Value m n
 semiDesExpr _ _ (RawHoleExpr m h) = HoleExpr m h
 semiDesExpr _ _ RawMacroValue{} = error "Not yet implemented"
 semiDesExpr sdm@(SDInput True) obj (RawTheExpr t) = semiDesExpr sdm obj t
-semiDesExpr SDInput{} _ (RawTheExpr t) = Value (emptyMetaM "the" tM) tN
+semiDesExpr SDInput{} _ e@(RawTheExpr t) = Value (emptyMetaE "theM" e) tN
   where
-    (tM, tN) = desugarTheExpr t
--- semiDesExpr sdm obj (RawSpread e@RawValue{}) = Value m' n
---   where
---     Value m n = semiDesExpr sdm obj e
---     m' = mWithType (spreadType H.empty $ getMetaType m) m
+    (_tM, tN) = desugarTheExpr t
 semiDesExpr sdm obj (RawTupleApply _ (_, e@RawValue{}) [(True, _)]) = Value m' n
   where
     Value m n = semiDesExpr sdm obj e
     m' = mWithType (spreadType H.empty $ getMetaType m) m
 semiDesExpr sdm obj (RawAliasExpr base alias) = AliasExpr (semiDesExpr sdm obj base) (semiDesExpr sdm obj alias)
 semiDesExpr sdm obj (RawWhere base cond) = EWhere (emptyMetaE "cond" base) (semiDesExpr sdm obj base) (semiDesExpr SDOutput obj cond)
-semiDesExpr sdm obj (RawTupleApply _ (_, RawValue _ "/operator::") [(False, RawObjArr{roaArr=(Just (Just e, _, _))}), (False, RawObjArr{roaArr=(Just (Just tp, _, _))})]) = semiDesExpr sdm obj (rawExprWithType (exprToType (mobjExprVaenv obj) tp) e)
+semiDesExpr sdm obj (RawTupleApply _ (_, RawValue _ "/operator::") [(False, RawObjArr{roaArr=(Just (Just e, _))}), (False, RawObjArr{roaArr=(Just (Just tp, _))})]) = semiDesExpr sdm obj (rawExprWithType (exprToType (mobjExprVaenv obj) tp) e)
 semiDesExpr sdm obj (RawTupleApply _ (_, be) []) = semiDesExpr sdm obj be
 semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm'', be'') arg'') -> TupleApply m'' (bm'', be'') arg'') $ foldl aux (bm, be') (zip [0..] args)
   where
     be' = semiDesExpr sdm obj be
     aux :: (ParseMeta, PSExpr) -> (Int, (Bool, PObjArr)) -> (ParseMeta, PSExpr)
-    aux (m, e) (argIndex, (False, rarg@RawObjArr{roaArr=Just (Just (RawTupleApply _ (_, RawValue _ "/operator::") [(False, RawObjArr{roaArr=(Just newArr)}), (False, RawObjArr{roaArr=(Just (Just tp, _, _))})]), _, _)})) = case aux (m, e) (argIndex, (False, rarg{roaArr=Just newArr})) of
+    aux (m, e) (argIndex, (False, rarg@RawObjArr{roaArr=Just (Just (RawTupleApply _ (_, RawValue _ "/operator::") [(False, RawObjArr{roaArr=(Just newArr)}), (False, RawObjArr{roaArr=(Just (Just tp, _))})]), _)})) = case aux (m, e) (argIndex, (False, rarg{roaArr=Just newArr})) of
       (tam, TupleApply tamm tab (EAppArg taoa@ObjArr{oaArr=Just (tboaArrE, tboaArrM)})) -> (tam, TupleApply tamm tab (EAppArg taoa{oaArr=Just (tboaArrE, mWithType (exprToType (mobjExprVaenv obj) tp) tboaArrM)}))
       _ -> error $ printf "Unexpected result in semiDesExpr TupleApply aux"
-    aux (m, e) (argIndex, (False, rarg@RawObjArr{roaObj=Just (RawTheExpr v), roaArr})) = aux (m, e) (argIndex, (False, rarg{roaObj=Just (RawValue (emptyMetaM "the" vM) vN), roaArr=roaArr'}))
+    aux (m, e) (argIndex, (False, rarg@RawObjArr{roaObj=Just (RawTheExpr v), roaArr})) = aux (m, e) (argIndex, (False, rarg{roaObj=Just (RawValue (emptyMetaE "theM" vM) vN), roaArr=roaArr'}))
       where
         (vM, vN) = desugarTheExpr v
         roaArr' = case roaArr of
-          Just (arrE, _, _) -> Just (arrE, Nothing, vM)
-          Nothing           -> Just (Nothing, Nothing, vM)
+          Just (arrE, _) -> Just (arrE, Just vM)
+          Nothing        -> Just (Nothing, Just vM)
     aux (m, e) (_argIndex, (False, rarg)) = (emptyMetaM "res" m'', TupleApply (emptyMetaM "app" m'') (m, e) (EAppArg arg''))
       where
         [arg] = desObjArr rarg
@@ -157,18 +152,18 @@ semiDesExpr sdm obj (RawVarsApply m be vs) = foldr aux be' vs
               Just ('$':n) -> partialKey n
               Just n     -> partialKey n
               Nothing -> error $ printf "No type name found in varExpr %s (type %s)" (show varExpr) (show $ exprToType (mobjExprVaenv obj) varExpr)
-        varVal = maybe emptyMetaN thr3 roaArr
+        varVal = maybe emptyMetaN (exprToTypeMeta (mobjExprVaenv obj)) (roaArr >>= snd)
     aux roa _ = error $ printf "Unexpected semiDesExpr var: %s" (show roa)
 semiDesExpr sdm obj@Just{} (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawEArgs (RawValue emptyMetaN ContextStr) ((Just $ rawVal contextValStr, be) : map mapCtx ctxs)
   where
     mapCtx ctx = (Just $ rawVal $ snd $ desugarTheExpr $ fromJust $ roaObj ctx, fromJust $ roaObj ctx)
 semiDesExpr sdm obj@Nothing (RawContextApply _ (_, be) ctxs) = semiDesExpr sdm obj $ applyRawIArgs (RawValue emptyMetaN ContextStr) ((partialKey contextValStr, IArgE be) : map mapCtx ctxs)
   where
-    mapCtx RawObjArr{roaObj=Just ctxObj, roaArr=Just (Just ctxArr, _, _)} = (partialToKey $ exprToPartialType ctxObj, IArgE ctxArr)
-    mapCtx RawObjArr{roaObj=Just ctxObj, roaArr=Just (_, _, ctxM)} = (partialToKey $ exprToPartialType ctxObj, IArgM ctxM)
+    mapCtx RawObjArr{roaObj=Just ctxObj, roaArr=Just (Just ctxArr, _)} = (partialToKey $ exprToPartialType ctxObj, IArgE ctxArr)
+    mapCtx RawObjArr{roaObj=Just ctxObj, roaArr=Just (_, ctxM)} = (partialToKey $ exprToPartialType ctxObj, IArgM ctxM)
     mapCtx ctx = error $ printf "Invalid input context: %s" (show ctx)
 semiDesExpr sdm obj (RawParen e) = semiDesExpr sdm obj e
-semiDesExpr sdm obj@Nothing (RawMethod (RawTheExpr n) method) = semiDesExpr sdm' obj (method `applyRawIArgs` [(partialKey "this", IArgM (Meta (exprToType H.empty n) (getMetaPos $ getExprMeta n) emptyMetaDat))]) -- Parse type methods like :Integer.toString, Only for input expressions
+semiDesExpr sdm obj@Nothing (RawMethod (RawTheExpr n) method) = semiDesExpr sdm' obj (method `applyRawIArgs` [(partialKey "this", IArgM (Just n))]) -- Parse type methods like :Integer.toString, Only for input expressions
   where
     sdm' = case sdm of
       SDInput _ -> SDInput True
@@ -183,8 +178,8 @@ semiDesExpr sdm obj (RawList m (l:ls)) = semiDesExpr sdm obj (RawValue m "/Data/
 semiDesExpr _ _ e = error $ printf "Not yet implemented semiDesExpr for %s" (show e)
 
 -- | Desugars a "TheExpr type" by applying the type to a default name
-desugarTheExpr :: PExpr -> (ParseMeta, Name)
-desugarTheExpr t = (mWithType t' (getExprMeta t), defaultName)
+desugarTheExpr :: PExpr -> (PExpr, Name)
+desugarTheExpr t = (t, defaultName)
   where
     t' = exprToType H.empty t
     n' = fromMaybe (error $ printf "desugarTheExpr can't get name from %s" (show t')) $ maybeGetTypeName t'
@@ -209,3 +204,13 @@ exprToType _ e                        = getExprType $ desObjPropagateTypes $ des
 
 exprToTypeMeta :: PVarArgMap -> PExpr -> ParseMeta
 exprToTypeMeta vaenv e = mWithType (exprToType vaenv e) (getExprMeta e)
+
+desObjArr :: PObjArr -> [ObjArr RawExpr ParseMetaDat]
+desObjArr (RawObjArr obj basis@TypeObj doc annots arr Nothing) = [ObjArr obj basis doc annots arr']
+  where
+    arr' = fmap (second (maybe emptyMetaN (exprToTypeMeta (maybe H.empty exprVarArgs obj)))) arr
+desObjArr (RawObjArr obj@(Just objExpr) basis doc annots arr Nothing) = [ObjArr obj basis doc annots (Just arr')]
+  where
+    arr' = maybe (Nothing, emptyMetaE "arrM" objExpr) (second (maybe emptyMetaN (exprToTypeMeta (maybe H.empty exprVarArgs obj)))) arr
+desObjArr (RawObjArr obj basis doc annots (Just (arrE, arrM)) Nothing) = [ObjArr obj basis doc annots (Just (arrE, maybe emptyMetaN (exprToTypeMeta (maybe H.empty exprVarArgs obj)) arrM))]
+desObjArr roa = error $ printf "Not yet implemented: %s" (show roa)

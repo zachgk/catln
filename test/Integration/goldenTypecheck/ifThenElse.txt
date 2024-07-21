@@ -468,8 +468,7 @@
                 ( Value /val -> /Data/Primitive/Integer = /abs
                     ( Value /x -> /Data/Primitive/Integer = CInt 0 )
                 ) ( Value /this -> TVArg /io = Value /io )
-            , /abs.$ 866 a3c ( Value /x )
-                ( Value /$ 866 a3c-arg= Hole TopType HoleActive Nothing@Value /Catln/Else ) ->
+            , /abs.$d2f352 ( Value /x ) ( Value /$d2f352-arg= Hole TopType HoleActive Nothing@Value /Catln/Else ) ->
                 ( /Data/Primitive/Integer | /operator*
                     ( /l=/Data/Primitive/Integer
                     , /r=/Data/Primitive/Integer
@@ -478,19 +477,18 @@
                 ( Value /l -> /Data/Primitive/Integer = /operator-
                     ( Value /a -> /Data/Primitive/Integer = CInt 1 )
                 ) ( Value /r -> TVArg /x = Value /x )
-            , /abs.$ 866 a3c ( Value /x )
-                ( Value /$ 866 a3c-arg= Hole TopType HoleActive Nothing@Value /Catln/Then ) -> TVArg /x = Value /x
+            , /abs.$d2f352 ( Value /x ) ( Value /$d2f352-arg= Hole TopType HoleActive Nothing@Value /Catln/Then ) -> TVArg /x = Value /x
             , /abs ( Value /x -> /Data/Primitive/Integer ) ->
-                ( /abs.$ 866 a3c
+                ( /Data/Primitive/Integer | /abs.$d2f352
                     ( /x=/Data/Primitive/Integer
-                    , /$ 866 a3c-arg=
+                    , /$d2f352-arg=
                         ( /Catln/ThenElse/fromBool ( /v=∀/Data/Primitive/Boolean ) | /Catln/Else | /Catln/Then )
-                    ) | /Data/Primitive/Integer | /operator*
+                    ) | /operator*
                     ( /l=/Data/Primitive/Integer
                     , /r=/Data/Primitive/Integer
                     )
-                ) = /abs.$ 866 a3c ( Value /x -> TVArg /x = Value /x )
-                ( Value /$ 866 a3c-arg ->
+                ) = /abs.$d2f352 ( Value /x -> TVArg /x = Value /x )
+                ( Value /$d2f352-arg ->
                     ( /Catln/ThenElse/fromBool ( /v=∀/Data/Primitive/Boolean ) | /Catln/Else | /Catln/Then ) = /Catln/ThenElse/fromBool
                     ( Value /v -> ∀/Data/Primitive/Boolean = /operator>= ( Value /l -> TVArg /x = Value /x )
                         ( Value /r -> /Data/Primitive/Integer = CInt 0 )

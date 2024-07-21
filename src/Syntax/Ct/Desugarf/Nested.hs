@@ -80,7 +80,7 @@ scopeSubDeclFunNames oa _ = error $ printf "scopeSubDeclFunNames without input e
 
 -- | Apply args to a signature or input expression
 curryApplyParentArgsSignature :: PSExpr -> ParentArgs -> PSExpr
-curryApplyParentArgsSignature e parentArgs = applyExprIArgs e (map (second IArgM) $ H.toList $ fmap (mWithType PTopType . head) parentArgs)
+curryApplyParentArgsSignature e parentArgs = applyExprIArgs e (map (second IArgM) $ H.toList $ fmap (const Nothing) parentArgs)
 
 -- | Apply args to an output expression
 curryApplyParentArgs :: PSExpr -> ParentArgs -> PSExpr
@@ -126,5 +126,5 @@ currySubFunctions oa _ = error $ printf "currySubFunctions without input express
 desObjDocComment :: [PStatementTree] -> Maybe String
 desObjDocComment ((RawStatementTree (RawAnnot annotExpr) _):rest) | maybeExprPath annotExpr == Just mdAnnot = Just (++) <*> Just annotText <*> desObjDocComment rest
   where
-    (Just (Just (_, Just (RawCExpr _ (CStr annotText))))) = H.lookup (partialKey mdAnnotText) $ exprAppliedArgsMap annotExpr
+    (Just (Just (_, Just (RawCExpr _ (CStr annotText))))) = H.lookup (partialKey mdAnnotText) $ rawExprAppliedArgsMap annotExpr
 desObjDocComment _ = Just ""

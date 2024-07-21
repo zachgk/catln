@@ -44,7 +44,7 @@ findExistingPath (p:ps) = do
 
 dirParser :: ImportParser
 dirParser imp = do
-  let [ObjArr{oaArr=Just (Just (RawCExpr _ (CStr name)), _)}] = exprAppliedArgs imp
+  let [RawObjArr{roaArr=Just (Just (RawCExpr _ (CStr name)), _)}] = rawExprAppliedArgs imp
   files <- listDirectory name
   files' <- forM files $ \file -> do
     let file' = name ++ "/" ++ file
