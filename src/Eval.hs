@@ -163,7 +163,7 @@ evalExpr env@Env{evArgs} (TTupleApply _ (_, b) (EAppArg oa@ObjArr{oaObj=Just (TV
     Just io -> return (TupleVal n (H.insert (oaObjPath oa) io args), env')
     Nothing -> error $ printf "evalExpr with no io"
 evalExpr env (TTupleApply _ (_, b) arg) = do
-  (TupleVal n args, env') <- evalExpr env b
+  (b'@(TupleVal n args), env') <- evalExpr env b
   case arg of
     EAppArg oa -> do
       (v, env'') <- case oaArr oa of
@@ -174,8 +174,8 @@ evalExpr env (TTupleApply _ (_, b) arg) = do
         Just (Nothing, _) -> error $ printf "Missing arrExpr in evalExpr TupleApply with %s - %s" (show b) (show oa)
         Nothing -> error $ printf "Missing arrExpr in evalExpr TupleApply with %s - %s" (show b) (show oa)
       return (TupleVal n (H.insert (oaObjPath oa) v args), env'')
+    EAppVar{} -> return (b', env')
     EAppSpread a -> error $ printf "Not yet implemented evalExpr %s" (show a)
-evalExpr env (TVarApply _ b _ _) = evalExpr env b
 evalExpr env (TCalls _ b callTree) = do
   (b', env') <- evalExpr env b
   evalCallTree env' b' callTree

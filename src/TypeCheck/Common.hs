@@ -30,13 +30,13 @@ import           Data.Bifunctor      (bimap)
 import           Data.Maybe          (catMaybes, fromJust, fromMaybe,
                                       listToMaybe, mapMaybe, maybeToList)
 import           Data.String.Builder (literal)
+import           MapMeta             (MetaType (ArrMeta), clearMetaDat)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.TypeGraph (ReachesTree)
 import           Semantics.Types
 import           Text.Printf
 import           Utils
-import MapMeta (clearMetaDat, MetaType (ArrMeta))
 
 data TypeCheckError
   = GenTypeCheckError (Maybe (Meta ())) String
@@ -200,10 +200,10 @@ instance Show TypeCheckError where
       args' = intercalate ", " $ map showArg $ H.toList args
 
 instance CNoteTC TypeCheckError where
-  metaCNote (GenTypeCheckError m _)        = m
+  metaCNote (GenTypeCheckError m _)      = m
   metaCNote (TracedTypeCheckError m _ _) = clearMetaDat ArrMeta m
-  metaCNote (TupleMismatch _ _ m _)          = Just m
-  metaCNote ConstraintTypeCheckError{}       = Nothing
+  metaCNote (TupleMismatch _ _ m _)      = Just m
+  metaCNote ConstraintTypeCheckError{}   = Nothing
 
   typeCNote _ = CNoteError
   showRecursiveCNote _ n = literal $ show n

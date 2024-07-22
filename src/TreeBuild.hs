@@ -204,12 +204,10 @@ toTExpr env os (EWhere m b a) = do
 toTExpr env os (TupleApply m (bm, be) arg) = do
   be' <- toTExprDest env os be bm
   arg' <- case arg of
-    EAppArg a    -> EAppArg <$> toTEObjArr env os a
-    EAppSpread a -> EAppSpread <$> toTExpr env os a
+    EAppArg a     -> EAppArg <$> toTEObjArr env os a
+    EAppVar vn vm -> return $ EAppVar vn vm
+    EAppSpread a  -> EAppSpread <$> toTExpr env os a
   return $ TTupleApply m (bm, be') arg'
-toTExpr env os (VarApply m b n v) = do
-  b' <- toTExpr env os b
-  return $ TVarApply m b' n v
 
 toTEObjArr :: TBEnv -> [ObjSrc] -> EObjArr -> CRes (ObjArr TExpr TBMetaDat)
 toTEObjArr env os oa@ObjArr{oaObj, oaAnnots, oaArr} = do

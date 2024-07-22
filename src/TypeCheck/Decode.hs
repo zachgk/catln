@@ -17,12 +17,12 @@ module TypeCheck.Decode where
 import           Control.Monad.State
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
+import           MapMeta             (MetaType (ArrMeta), clearMetaDat)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
 import           TypeCheck.Common
-import MapMeta (clearMetaDat, MetaType (ArrMeta))
 
 toMeta :: VarMeta -> StateT FEnv TypeCheckResult TypedMeta
 toMeta  m@(Meta pt pos mid _) = do
@@ -84,19 +84,9 @@ toExpr expr@(TupleApply m (baseM, baseExpr) arg) = do
         return (oaArrExpr', oaArrM')
       oaAnnots' <- mapM toExpr oaAnnots
       return $ EAppArg a{oaObj=oaObj', oaArr=oaArr', oaAnnots=oaAnnots'}
+    EAppVar vn vm -> EAppVar vn <$> toMeta vm
     EAppSpread a -> EAppSpread <$> toExpr a
   return $ TupleApply m' (baseM', baseExpr') arg'
-toExpr (VarApply m baseExpr varName varVal) = do
-  m' <- toMeta m
-  baseExpr' <- toExpr baseExpr
-  varVal' <- toMeta varVal
-  let result = VarApply m' baseExpr' varName varVal'
-  case m' of -- check for errors
-
-    -- Don't check if a bottom type is present
-    _ | getMetaType m' == BottomType -> return result
-
-    _                                -> return result
 
 toObjArr :: VObjArr -> StateT FEnv TypeCheckResult TObjArr
 toObjArr oa@ObjArr{oaObj, oaArr, oaAnnots} = do

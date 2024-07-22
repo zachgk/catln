@@ -113,7 +113,7 @@ applyExprIArgs = foldl addArg
 applyExprVars :: (MetaDat m) => Expr m -> [(TypeVarName, Meta m)] -> Expr m
 applyExprVars = foldl addVar
   where
-    addVar b (varName, varVal) = VarApply (emptyMetaE "varBase" b) b varName varVal
+    addVar b (varName, varVal) = TupleApply (emptyMetaE "app" b) (emptyMetaE "varBase" b, b) (EAppVar varName varVal)
 
 rawAnon :: PExpr
 rawAnon = rawVal anonStr

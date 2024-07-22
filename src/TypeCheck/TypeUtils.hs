@@ -191,7 +191,7 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} (UnionType srcPar
   let partialMap = H.fromList srcPartialList'
   let (srcPartialList'', destByPartial) = unzip $ H.toList partialMap
   let srcPartials' = joinUnionType srcPartialList''
-  let destByGraph = unionAllTypes feTypeEnv $ fmap (unionReachesTree feTypeEnv) destByPartial
-  let dest' = intersectTypes feTypeEnv dest destByGraph
   let compactVaenv = fmap (stypeAct . snd) conVaenv
+  let destByGraph = unionAllTypesWithEnv feTypeEnv compactVaenv $ fmap (unionReachesTree feTypeEnv) destByPartial
+  let dest' = intersectTypes feTypeEnv dest destByGraph
   return (compactType feTypeEnv compactVaenv $ UnionType srcPartials', compactType feTypeEnv compactVaenv dest', Just $ ReachesTree $ H.fromList srcPartialList')

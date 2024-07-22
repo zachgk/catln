@@ -234,7 +234,6 @@ data TExpr m
   | TAliasExpr (TExpr m) (TExpr m) -- ^ AliasTExpr baseExpr aliasExpr
   | TWhere (Meta m) (TExpr m) (TExpr m) -- ^ TWhere res baseExpr cond
   | TTupleApply (Meta m) (Meta m, TExpr m) (EApp TExpr m)
-  | TVarApply (Meta m) (TExpr m) TypeVarName (Meta m)
   | TCalls (Meta m) (TExpr m) TCallTree
   deriving (Eq, Generic, Hashable, ToJSON)
 
@@ -249,12 +248,10 @@ instance ExprClass TExpr where
     TAliasExpr b _    -> getExprMeta b
     TWhere m _ _      -> m
     TTupleApply m _ _ -> m
-    TVarApply m _ _ _ -> m
     TCalls m _ _      -> m
 
   maybeExprPathM (TValue m n)             = Just (n, m)
   maybeExprPathM (TTupleApply _ (_, e) _) = maybeExprPathM e
-  maybeExprPathM (TVarApply _ e _ _)      = maybeExprPathM e
   maybeExprPathM (TAliasExpr b _)         = maybeExprPathM b
   maybeExprPathM (TWhere _ b _)           = maybeExprPathM b
   maybeExprPathM (TCalls _ b _)           = maybeExprPathM b
@@ -262,15 +259,15 @@ instance ExprClass TExpr where
 
   exprAppliedArgs (TValue _ _) = []
   exprAppliedArgs (TTupleApply _ (_, be) (EAppArg ae)) = ae : exprAppliedArgs be
+  exprAppliedArgs (TTupleApply _ (_, be) EAppVar{}) = exprAppliedArgs be
   exprAppliedArgs (TTupleApply _ (_, be) (EAppSpread ae)) = exprAppliedArgs ae ++ exprAppliedArgs be
-  exprAppliedArgs (TVarApply _ e _ _) = exprAppliedArgs e
   exprAppliedArgs (TAliasExpr b _) = exprAppliedArgs b
   exprAppliedArgs (TCalls _ b _) = exprAppliedArgs b
   exprAppliedArgs e = error $ printf "Unsupported Expr exprAppliedArgs for %s" (show e)
 
   exprAppliedOrdVars (TValue _ _) = []
+  exprAppliedOrdVars (TTupleApply _ (_, be) (EAppVar n m)) = (n, m) : exprAppliedOrdVars be
   exprAppliedOrdVars (TTupleApply _ (_, be) _) = exprAppliedOrdVars be
-  exprAppliedOrdVars (TVarApply _ e n m) = (n, m) : exprAppliedOrdVars e
   exprAppliedOrdVars (TAliasExpr b _) = exprAppliedOrdVars b
   exprAppliedOrdVars (TCalls _ b _) = exprAppliedOrdVars b
   exprAppliedOrdVars _ = error "Unsupported Expr exprAppliedOrdVars"
@@ -284,8 +281,8 @@ instance ExprClass TExpr where
   exprVarArgs (TTupleApply _ _ (EAppArg ObjArr{oaObj, oaArr=Just (Nothing, _)})) = error $ printf "Unexpected unhandled obj type in exprVarArgs: %s" (show oaObj)
   exprVarArgs (TTupleApply _ (_, be) (EAppArg ObjArr{oaArr=Just (Just e, _)})) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)
   exprVarArgs (TTupleApply _ _ (EAppArg ObjArr{oaObj, oaArr=Nothing})) = error $ printf "Not yet implemented: %s" (show oaObj)
+  exprVarArgs (TTupleApply _ (_, be) (EAppVar n m)) = H.insertWith (++) (TVVar n) [(TValue (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)] (exprVarArgs be)
   exprVarArgs (TTupleApply _ (_, be) (EAppSpread arg)) = H.unionWith (++) (exprVarArgs arg) (exprVarArgs be)
-  exprVarArgs (TVarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar n) [(TValue (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)])
   exprVarArgs (TCalls _ b _) = exprVarArgs b
 
   exprVarArgsWithSrc = undefined
@@ -352,14 +349,6 @@ instance Show m => Show (TExpr m) where
       baseExpr' = case baseExpr of
         TValue _ funName -> funName
         TTupleApply{}    -> show baseExpr
-        TVarApply{}      -> show baseExpr
-        _                -> printf "(%s)" (show baseExpr)
-  show (TVarApply _ baseExpr varName varVal) = printf "%s[%s : %s]" baseExpr' (show varName) (show varVal)
-    where
-      baseExpr' = case baseExpr of
-        TValue _ funName -> funName
-        TTupleApply{}    -> show baseExpr
-        TVarApply{}      -> show baseExpr
         _                -> printf "(%s)" (show baseExpr)
   show (TCalls m e _) = printf "(%s ↦ %s)" (show e) (show $ getMetaType m)
 
@@ -383,7 +372,6 @@ exprArgsWithVal Value{} _ = H.empty
 exprArgsWithVal HoleExpr{} _ = H.empty
 exprArgsWithVal (EWhere _ base _) val = exprArgsWithVal base val
 exprArgsWithVal (AliasExpr base n) val = H.insert (exprPath n) val (exprArgsWithVal base val)
-exprArgsWithVal (VarApply _ b _ _) val = exprArgsWithVal b val
 exprArgsWithVal (TupleApply _ (_, be) arg) val = H.union (exprArgsWithVal be val) (fromArg arg val)
   where
     fromArg :: (MetaDat m, Show m) => EApp Expr m -> Val -> Args
@@ -394,6 +382,7 @@ exprArgsWithVal (TupleApply _ (_, be) arg) val = H.union (exprArgsWithVal be val
     fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Nothing, _)}) (TupleVal _ tupleArgs) = case H.lookup (exprPath obj) tupleArgs of
       Just val' -> H.singleton (exprPath obj) val'
       Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
+    fromArg EAppVar{} _ = H.empty
     fromArg (EAppSpread a) _ = error $ printf "Not yet implemented exprArgsWithVal fromArg of %s and %s" (show a) (show val)
     fromArg oa _ = error $ printf "Invalid exprArgsWithVal fromArg of %s and %s" (show oa) (show val)
 
@@ -406,7 +395,6 @@ texprArgsWithVal TValue{} _ = H.empty
 texprArgsWithVal THoleExpr{} _ = H.empty
 texprArgsWithVal (TWhere _ base _) val = texprArgsWithVal base val
 texprArgsWithVal (TAliasExpr base n) val = H.insert (exprPath n) val (texprArgsWithVal base val)
-texprArgsWithVal (TVarApply _ b _ _) val = texprArgsWithVal b val
 texprArgsWithVal (TTupleApply _ (_, be) arg) val = H.union (texprArgsWithVal be val) (fromArg arg val)
   where
     fromArg :: (MetaDat m, Show m) => EApp TExpr m -> Val -> Args
@@ -417,6 +405,7 @@ texprArgsWithVal (TTupleApply _ (_, be) arg) val = H.union (texprArgsWithVal be 
     fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Nothing, _)}) (TupleVal _ tupleArgs) = case H.lookup (exprPath obj) tupleArgs of
       Just val' -> H.singleton (exprPath obj) val'
       Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
+    fromArg EAppVar{} _ = H.empty
     fromArg (EAppSpread a) _ = error $ printf "Not yet defined spread exprArgsWithVal fromArg of %s and %s" (show a) (show val)
     fromArg oa _ = error $ printf "Invalid exprArgsWithVal fromArg of %s and %s" (show oa) (show val)
 texprArgsWithVal (TCalls _ e _) val = texprArgsWithVal e val

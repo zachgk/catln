@@ -69,7 +69,6 @@ exprWithMeta m (Value _ n)        = Value m n
 exprWithMeta m (HoleExpr _ h)     = HoleExpr m h
 exprWithMeta m (EWhere _ base cond) = EWhere m base cond
 exprWithMeta m (TupleApply _ b a) = TupleApply m b a
-exprWithMeta m (VarApply _ b n v) = VarApply m b n v
 exprWithMeta _ e                  = error $ printf "exprWithMeta with unsupported expr %s" (show e)
 
 -- | Returns the EWhere conditions in an expression
@@ -81,8 +80,8 @@ exprWhereConds (AliasExpr b _) = exprWhereConds b
 exprWhereConds (EWhere _ _ c) = [c]
 exprWhereConds (TupleApply _ (_, b) (EAppArg ObjArr{oaArr=Nothing})) = exprWhereConds b
 exprWhereConds (TupleApply _ (_, b) (EAppArg ObjArr{oaArr=Just (me, _)})) = exprWhereConds b ++ maybe [] exprWhereConds me
+exprWhereConds (TupleApply _ (_, b) EAppVar{}) = exprWhereConds b
 exprWhereConds (TupleApply _ (_, b) (EAppSpread a)) = exprWhereConds b ++ exprWhereConds a
-exprWhereConds (VarApply _ b _ _) = exprWhereConds b
 
 exprWithMetaType :: (Show m) => Type -> Expr m -> Expr m
 exprWithMetaType t e = exprWithMeta (mWithType t (getExprMeta e)) e

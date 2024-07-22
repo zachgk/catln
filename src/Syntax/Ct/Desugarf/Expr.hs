@@ -38,8 +38,8 @@ desExpr (TupleApply m (bm, be) arg) = TupleApply m (bm, desExpr be) arg'
   where
     arg' = case arg of
       EAppArg a    -> EAppArg $ mapTupleArgValue desExpr a
+      a@EAppVar{}  -> a
       EAppSpread a -> EAppSpread $ desExpr a
-desExpr (VarApply m be varName varVal) = VarApply m (desExpr be) varName varVal
 
 -- | Updates the types based on the format as they are fixed for inputs (due to arrows this does not work for output expressions)
 desObjPropagateTypes :: DesExpr -> DesExpr
@@ -69,16 +69,14 @@ desObjPropagateTypes mainExpr@(TupleApply m (bm, be) tupleApplyArgs) = do
         let tp' = typeSetArg argName (getMetaType argM) (getExprType be')
         let m' = mWithType tp' m
         TupleApply m' (bm', be') (EAppArg $ mkIObjArr argM argName)
+      (EAppVar vn vm) -> do
+        let tp' = typeSetVar vn (getMetaType vm) (getExprType be')
+        let m' = mWithType tp' m
+        TupleApply m' (bm', be') (EAppVar vn vm)
       (EAppSpread a) -> do
         let m' = mWithType (spreadType H.empty $ getMetaType m) m
         TupleApply m' (bm', be') (EAppSpread $ desObjPropagateTypes a)
       _ -> error $ printf "Unexpected ObjArr in desObjPropagateTypes (probably because arrow only ObjArr): %s" (show mainExpr)
-desObjPropagateTypes (VarApply m be varName varVal) = VarApply m' be' varName varVal
-  where
-    be' = desObjPropagateTypes be
-
-    tp' = typeSetVar varName (getMetaType varVal) (getExprType be')
-    m' = mWithType tp' m
 
 data SemiDesMode
   = SDInput Bool -- Used for parsing input expressions and indicates it is in a method
@@ -146,7 +144,7 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm''
 semiDesExpr sdm obj (RawVarsApply m be vs) = foldr aux be' vs
   where
     be' = semiDesExpr sdm obj be
-    aux RawObjArr{roaObj=Just varExpr, roaArr} base = VarApply (emptyMetaM (show varName) m) base varName varVal
+    aux RawObjArr{roaObj=Just varExpr, roaArr} base = TupleApply (emptyMetaM (show varName) m) (emptyMetaE "app" base, base) (EAppVar varName varVal)
       where
         varName = case maybeExprPath varExpr of
               Just ('$':n) -> partialKey n

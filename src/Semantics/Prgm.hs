@@ -92,6 +92,7 @@ showCodeRange (start, end, _) = printf "%s:%d:%d-%d:%d" (sourceName start) (unPo
 
 data EApp e m
   = EAppArg (ObjArr e m)
+  | EAppVar TypeVarName (Meta m)
   | EAppSpread (e m)
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
@@ -103,7 +104,6 @@ data Expr m
   | AliasExpr (Expr m) (Expr m) -- ^ AliasExpr baseExpr aliasExpr
   | EWhere (Meta m) (Expr m) (Expr m) -- ^ base cond
   | TupleApply (Meta m) (Meta m, Expr m) (EApp Expr m)
-  | VarApply (Meta m) (Expr m) TypeVarName (Meta m)
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 -- Compiler Annotation
@@ -140,23 +140,17 @@ instance Show m => Show (Expr m) where
   show (HoleExpr m hole) = printf "Hole %s %s" (show m) (show hole)
   show (AliasExpr base alias) = printf "%s@%s" (show base) (show alias)
   show (EWhere _ base cond) = printf "%s | %s" (show base) (show cond)
-  show (TupleApply _ (_, baseExpr) arg) = printf "%s(%s)" baseExpr' showArg
+  show (TupleApply _ (_, baseExpr) arg) = printf "%s%s" baseExpr' showArg
     where
       baseExpr' = case baseExpr of
         Value _ funName -> funName
         TupleApply{}    -> show baseExpr
-        VarApply{}      -> show baseExpr
         _               -> printf "(%s)" (show baseExpr)
+      showArg :: String
       showArg = case arg of
-        EAppArg a    -> show a
-        EAppSpread a -> ".." ++ show a
-  show (VarApply _ baseExpr varName varVal) = printf "%s[%s : %s]" baseExpr' (show varName) (show varVal)
-    where
-      baseExpr' = case baseExpr of
-        Value _ funName -> funName
-        TupleApply{}    -> show baseExpr
-        VarApply{}      -> show baseExpr
-        _               -> printf "(%s)" (show baseExpr)
+        EAppArg a    -> printf "(%s)" (show a)
+        EAppVar a v  -> printf "[%s : %s]" (show a) (show v)
+        EAppSpread a -> printf "(..%s)" (show a)
 
 instance (Show m, Show (e m)) => Show (ObjArr e m) where
   show ObjArr{oaObj, oaArr} = printf "%s%s" (showNoMaybe oaObj) showArr
@@ -212,12 +206,10 @@ instance ExprClass Expr where
     HoleExpr m _     -> m
     AliasExpr b _    -> getExprMeta b
     TupleApply m _ _ -> m
-    VarApply m _ _ _ -> m
     EWhere m _ _     -> m
 
   maybeExprPathM (Value m n)             = Just (n, m)
   maybeExprPathM (TupleApply _ (_, e) _) = maybeExprPathM e
-  maybeExprPathM (VarApply _ e _ _)      = maybeExprPathM e
   maybeExprPathM (AliasExpr b _)         = maybeExprPathM b
   maybeExprPathM (EWhere _ b _)          = maybeExprPathM b
   maybeExprPathM _                       = Nothing
@@ -226,16 +218,16 @@ instance ExprClass Expr where
   exprAppliedArgs CExpr{}                   = []
   exprAppliedArgs HoleExpr{}                = []
   exprAppliedArgs (TupleApply _ (_, be) (EAppArg ae)) = ae : exprAppliedArgs be
+  exprAppliedArgs (TupleApply _ (_, be) EAppVar{}) = exprAppliedArgs be
   exprAppliedArgs (TupleApply _ (_, be) (EAppSpread ae)) = exprAppliedArgs ae ++ exprAppliedArgs be
-  exprAppliedArgs (VarApply _ e _ _)        = exprAppliedArgs e
   exprAppliedArgs (AliasExpr b _)           = exprAppliedArgs b
   exprAppliedArgs (EWhere _ b _)              = exprAppliedArgs b
 
   exprAppliedOrdVars (Value _ _)              = []
   exprAppliedOrdVars CExpr{}                  = []
   exprAppliedOrdVars HoleExpr{}               = []
+  exprAppliedOrdVars (TupleApply _ (_, be) (EAppVar n m)) = (n, m) : exprAppliedOrdVars be
   exprAppliedOrdVars (TupleApply _ (_, be) _) = exprAppliedOrdVars be
-  exprAppliedOrdVars (VarApply _ e n m)       = (n, m) : exprAppliedOrdVars e
   exprAppliedOrdVars (AliasExpr b _)          = exprAppliedOrdVars b
   exprAppliedOrdVars (EWhere _ b _)           = exprAppliedOrdVars b
 
@@ -247,9 +239,9 @@ instance ExprClass Expr where
   exprVarArgs (TupleApply _ (_, be) (EAppArg ObjArr{oaObj=Just n, oaArr=Just (Nothing, arrM)})) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, arrM)] (exprVarArgs be)
   exprVarArgs (TupleApply _ _ (EAppArg ObjArr{oaObj, oaArr=Just (Nothing, _)})) = error $ printf "Unexpected unhandled obj type in exprVarArgs: %s" (show oaObj)
   exprVarArgs (TupleApply _ (_, be) (EAppArg ObjArr{oaArr=Just (Just e, _)})) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)
+  exprVarArgs (TupleApply _ (_, be) (EAppVar n m)) = H.insertWith (++) (TVVar n) [(Value (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)] (exprVarArgs be)
   exprVarArgs (TupleApply _ _ (EAppArg ObjArr{oaObj, oaArr=Nothing})) = error $ printf "Not yet implemented: %s" (show oaObj)
   exprVarArgs (TupleApply _ (_, be) (EAppSpread arg)) = H.unionWith (++) (exprVarArgs arg) (exprVarArgs be)
-  exprVarArgs (VarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar n) [(Value (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)])
 
   exprVarArgsWithSrc typeEnv expr src = aux expr
     where
@@ -269,7 +261,6 @@ instance ExprClass Expr where
           base' = exprVarArgsWithSrc typeEnv base src
           condArgs = exprAppliedArgsMap cond
       aux (AliasExpr base n) = H.insertWith merge (TVArg $ inExprSingleton n) ([(n, getExprMeta base)], singletonType src) (exprVarArgsWithSrc typeEnv base src)
-      aux (VarApply _ b n m) = H.insertWith merge (TVVar n) ([(Value (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)], H.lookupDefault PTopType n (ptVars src)) $ exprVarArgsWithSrc typeEnv b src
       aux (TupleApply _ (_, be) arg) = H.unionWith merge (exprVarArgsWithSrc typeEnv be src) (fromArg arg)
         where
           fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)}) = case typeGetArg (inExprSingleton obj) src of
@@ -282,6 +273,7 @@ instance ExprClass Expr where
             _ -> mainArg
             where
               mainArg = H.singleton (TVArg $ inExprSingleton obj) ([(obj, arrM)], fromMaybe (getMetaType arrM) (typeGetArg (inExprSingleton obj) src))
+          fromArg (EAppVar vn vm) = H.singleton (TVVar vn) ([(Value (emptyMetaT $ partialToTypeSingleton vn) (pkName vn), vm)], H.lookupDefault PTopType vn (ptVars src))
           fromArg (EAppSpread s) = exprVarArgsWithSrc typeEnv s src
           fromArg oa = error $ printf "Invalid oa %s" (show oa)
 

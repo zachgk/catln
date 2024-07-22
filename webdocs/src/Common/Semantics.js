@@ -52,6 +52,13 @@ function Expr(props) {
     case "EAppArg":
       showArg = <span>(<ObjArr oa={arg.contents} Meta={Meta} showExprMetas={showMetas} />)</span>;
       break;
+    case "EAppVar":
+      if (isTopType[arg.contents[1].getMetaType]) {
+        showArg = <span>[<PartialKey data={arg.contents[0]} />]</span>;
+      } else {
+        showArg = <span>[<PartialKey data={arg.contents[0]} />]: <Type data={arg.contents[1].getMetaType} /></span>;
+      }
+      break;
     case "EAppSpread":
       showArg = <span>..<Expr expr={arg.contents} Meta={Meta} showMetas={showMetas}/></span>;
       break;
@@ -64,22 +71,6 @@ function Expr(props) {
     }
 
     return <span>{showBase}{showBaseM}{showArg}{showM}</span>;
-  case "VarApply":
-  case "TVarApply":
-    const [vm, vbase, varName, varVal] = expr.contents;
-
-    let showvM;
-    if(showMetas) {
-      showvM = <i><Meta data={vm}/></i>;
-    }
-
-    let showvBase = <Expr expr={vbase} Meta={Meta} showMetas={showMetas}/>;
-
-    if (isTopType(varVal.getMetaType)) {
-      return <span>{showvBase}[<PartialKey data={varName} />]{showvM}</span>;
-    } else {
-      return <span>{showvBase}[<PartialKey data={varName} />: <Type data={varVal.getMetaType} />]{showvM}</span>;
-    }
   case "TCalls":
     const [,callE,callTree] = expr.contents;
     return <span><Expr expr={callE} Meta={Meta} showMetas={showMetas}/>↦<TCallTree tree={callTree} /></span>;

@@ -117,14 +117,12 @@ mapMetaAppliedExprM f loc (TupleApply m (bm, be) arg) = do
           Nothing -> return Nothing
         let a' = a{oaObj=obj'}
         return $ EAppArg a'
+      mapArg (EAppVar vn vm)    = do
+        vm' <- f (ExprMeta loc ExprMetaApplyVarVal) vm
+        return $ EAppVar vn vm'
       mapArg (EAppSpread a) = do
         a' <- mapMetaAppliedExprM f loc a
         return $ EAppSpread a'
-mapMetaAppliedExprM f loc (VarApply m be varName varVal) = do
-  m' <- f (ExprMeta loc ExprMetaApplyVar) m
-  be' <- mapMetaAppliedExprM f loc be
-  varVal' <- f (ExprMeta loc ExprMetaApplyVarVal) varVal
-  return $ VarApply m' be' varName varVal'
 
 instance MapMeta Expr where
   mapMetaM f loc (CExpr m c) = do
@@ -156,14 +154,12 @@ instance MapMeta Expr where
       mapArg f' (EAppArg a)    = do
         a' <- mapMetaObjArrM f' (Just loc) a
         return $ EAppArg a'
+      mapArg f' (EAppVar vn vm)    = do
+        vm' <- f' (ExprMeta loc ExprMetaApplyVarVal) vm
+        return $ EAppVar vn vm'
       mapArg f' (EAppSpread a) = do
         a' <- mapMetaM f' loc a
         return $ EAppSpread a'
-  mapMetaM f loc (VarApply m be varName varVal) = do
-    m' <- f (ExprMeta loc ExprMetaApplyVar) m
-    be' <- mapMetaM f loc be
-    varVal' <- f (ExprMeta loc ExprMetaApplyVarVal) varVal
-    return $ VarApply m' be' varName varVal'
 
 mapMetaObjArrM :: (Monad n, MapMeta e) => MetaFun n a b -> Maybe MetaLocation -> ObjArr e a -> n (ObjArr e b)
 mapMetaObjArrM f mloc oa@ObjArr{oaObj, oaAnnots, oaArr} = do

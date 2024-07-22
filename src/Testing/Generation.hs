@@ -43,7 +43,7 @@ genTypeFromExpr prgm (TupleApply _ (_, baseExpr) (EAppArg oa)) = do
            (Just (Nothing, oaM)) -> return base{ptArgs = H.insert (inExprSingleton $ oaObjExpr oa) (getMetaType oaM) baseArgs}
            Nothing -> return base
     else return base
-genTypeFromExpr prgm (VarApply _ baseExpr varName m) = do
+genTypeFromExpr prgm (TupleApply _ (_, baseExpr) (EAppVar varName m)) = do
   base@PartialType{ptVars=baseVars} <- genTypeFromExpr prgm baseExpr
   shouldAddVar <- HG.bool
   return $ if shouldAddVar
@@ -123,7 +123,7 @@ genInputExpr = do
   where
     genName = HG.string (linear 5 10) HG.lower
     genVar base varName = do
-      return $ VarApply emptyMetaN base varName emptyMetaN
+      return $ TupleApply emptyMetaN (emptyMetaN, base) (EAppVar varName emptyMetaN)
     genArg base argName = do
       return $ TupleApply emptyMetaN (emptyMetaN, base) (EAppArg (ObjArr (Just (Value emptyMetaN argName)) ArgObj Nothing [] (Just (Nothing, emptyMetaN))))
 
@@ -139,7 +139,7 @@ genOutputExpr (TupleApply _ (_, b) _) input = genOutputExpr b input
 --       return (Just e', emptyMetaN)
 --     (Nothing, _) -> return (Just (HoleExpr emptyMetaN (HoleActive Nothing)), emptyMetaN)
 --   return $ TupleApply emptyMetaN (emptyMetaN, b') arg{oaArr=oaArr'}
-genOutputExpr (VarApply _ b _ _) input = genOutputExpr b input
+-- genOutputExpr (VarApply _ b _ _) input = genOutputExpr b input
 -- genOutputExpr (VarApply _ b varName _) input = do
 --   b' <- genOutputExpr b input
 --   return $ VarApply emptyMetaN b' varName emptyMetaN

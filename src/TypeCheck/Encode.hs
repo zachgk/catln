@@ -154,6 +154,11 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
       modify $ addConstraints constraints
       modify $ endConstraintBlock (if isJust (oaObj arg') then Just arg' else Nothing) (maybe H.empty (fmap (first getExprMeta . head) . exprVarArgs) (oaObj arg'))
       return $ EAppArg arg'
+    EAppVar vn vm -> do
+      let baseName = printf "VarApply %s[%s = %s]" (show baseExpr) (show vn) (show vm) :: String
+      vm' <- fromMeta BAct est vm $ printf "%s val" baseName
+      modify $ addConstraints [AddArg 27 (baseM', TVVar vn) m', PropEq 27 (m', TVVar vn) vm']
+      return $ EAppVar vn vm'
     EAppSpread a@HoleExpr{} -> do -- Shortcut for Hole since no need to track neglected args
       a' <- fromExpr est a
       modify $ addConstraints [SetArgMode 11 False baseM' m']
@@ -170,23 +175,6 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
                       ]
   modify $ addConstraints baseConstraints
   return $ TupleApply m' (baseM', baseExpr') arg''
-fromExpr est (VarApply m baseExpr varName varVal) = do
-  let baseName = printf "VarApply %s[%s = %s]" (show baseExpr) (show varName) (show varVal) :: String
-  m' <- fromMeta BAct est m $ printf "%s Meta" baseName
-  baseExpr' <- fromExpr est baseExpr
-  varVal' <- fromMeta BAct est varVal $ printf "%s val" baseName
-  let constraints = case est of
-        EncodeOut{} -> [
-                      ArrowTo 26 (getExprMeta baseExpr') m',
-                      PropEq 27 (m', TVVar varName) varVal',
-                      BoundedByObjs 28 m' PTopType
-                       ]
-        EncodeIn{} -> [
-                      EqPoints 29 (getExprMeta baseExpr') m',
-                      PropEq 29 (m', TVVar varName) varVal'
-                      ]
-  modify $ addConstraints constraints
-  return $ VarApply m' baseExpr' varName varVal'
 
 fromObjArr :: EncodeState -> PObjArr -> StateT FEnv TypeCheckResult VObjArr
 fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do

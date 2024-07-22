@@ -44,10 +44,8 @@ scopeSubDeclFunNamesInExpr prefix replaceNames (TupleApply m (bm, bExpr) arg) = 
     bExpr' = scopeSubDeclFunNamesInExpr prefix replaceNames bExpr
     arg' = case arg of
       EAppArg a -> EAppArg $ mapTupleArgValue (scopeSubDeclFunNamesInExpr prefix replaceNames) a
+      a@EAppVar{} -> a
       EAppSpread a -> error $ printf "Not yet implemented %s" (show a)
-scopeSubDeclFunNamesInExpr prefix replaceNames (VarApply m bExpr varName varVal) = VarApply m bExpr' varName varVal
-  where
-    bExpr' = scopeSubDeclFunNamesInExpr prefix replaceNames bExpr
 
 scopeSubDeclFunNamesInMeta :: TypeName -> S.HashSet TypeName -> ParseMeta -> ParseMeta
 scopeSubDeclFunNamesInMeta prefix replaceNames (Meta (UnionType partials) pos mid md) = Meta (UnionType partials') pos mid md
@@ -107,10 +105,8 @@ currySubFunctionsUpdateExpr toUpdate parentArgs (TupleApply tm (tbm, tbe) targ) 
     tbe' = currySubFunctionsUpdateExpr toUpdate parentArgs tbe
     targ' = case targ of
       EAppArg a -> EAppArg $ mapTupleArgValue (currySubFunctionsUpdateExpr toUpdate parentArgs) a
+      a@EAppVar{} -> a
       EAppSpread a -> error $ printf "Not yet implemented: %s" (show a)
-currySubFunctionsUpdateExpr toUpdate parentArgs (VarApply tm tbe tVarName tVarVal) = VarApply tm tbe' tVarName tVarVal
-  where
-    tbe' = currySubFunctionsUpdateExpr toUpdate parentArgs tbe
 
 currySubFunctions :: PSObjArr -> DesObjectMap -> (PSObjArr, DesObjectMap)
 currySubFunctions oa@ObjArr{oaObj=Just objExpression, oaAnnots, oaArr} decls = (oa{oaAnnots=annots', oaArr=oaArr'}, decls')
