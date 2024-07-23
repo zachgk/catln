@@ -80,24 +80,29 @@ updateSchemeProp FEnv{feTypeEnv} vaenv super@SType{stypeAct=superAct, stypeReq=s
     (_reqVaenv', superReq', subReq') = updateTypeProp feTypeEnv (fmap stypeReq vaenv) superReq propName subReq
 
 -- | A helper for the 'AddArg' 'Constraint'
-addArgToType :: FEnv -> TypeVarArgEnv -> Type -> ArgName -> Maybe Type
-addArgToType _ _ TopType{} _ = Nothing
+addArgToType :: FEnv -> TypeVarArgEnv -> Type -> TypeVarAux -> Maybe Type
+addArgToType _ _ PTopType _ = Nothing
+addArgToType env@FEnv{feTypeEnv} vaenv t@TopType{} newArg = case expandType feTypeEnv vaenv t of
+  t'@UnionType{} -> addArgToType env vaenv t' newArg
+  _              -> Nothing
 addArgToType env vaenv (TypeVar v _) newArg = case H.lookup v vaenv of
   Just t  -> addArgToType env vaenv t newArg
   Nothing -> error $ printf "Unknown type in addArgToType: %s" (show v)
 addArgToType FEnv{feTypeEnv} _ (UnionType partials) newArg = Just $ unionAllTypes feTypeEnv $ mapMaybe fromPartial $ splitUnionType partials
   where
-    fromPartial partial@PartialType{ptArgs} = Just $ singletonType partial{ptArgs=H.insertWith (unionTypes feTypeEnv) newArg PTopType ptArgs}
+    fromPartial partial@PartialType{ptArgs} = case newArg of
+      TVArg newArg' -> Just $ singletonType partial{ptArgs=H.insertWith (unionTypes feTypeEnv) newArg' PTopType ptArgs}
+      TVVar newArg' -> Just $ singletonType partial{ptVars=H.insertWith (unionTypes feTypeEnv) newArg' PTopType ptArgs}
 
 -- | A helper for the 'AddArg' 'Constraint'
-addArgToScheme :: FEnv -> STypeVarArgEnv -> SType -> ArgName -> SType -> SType
+addArgToScheme :: FEnv -> STypeVarArgEnv -> SType -> TypeVarAux -> SType -> SType
 addArgToScheme env@FEnv{feTypeEnv} vaenv SType{stypeAct=srcAct, stypeReq=srcReq} newArgName dest@SType{stypeAct=destAct, stypeReq=destReq} = dest{stypeAct=destAct', stypeReq=destReq'}
   where
     destAct' = case addArgToType env (fmap stypeAct vaenv) srcAct newArgName of
-      Just addDestAct -> intersectTypes feTypeEnv destAct addDestAct
+      Just addDestAct -> intersectTypesEnv feTypeEnv (fmap stypeAct vaenv) destAct addDestAct
       Nothing         -> destAct
     destReq' = case addArgToType env (fmap stypeReq vaenv) srcReq newArgName of
-      Just addDestReq -> intersectTypes feTypeEnv destReq addDestReq
+      Just addDestReq -> intersectTypesEnv feTypeEnv (fmap stypeReq vaenv) destReq addDestReq
       Nothing         -> destReq
 
 -- | A helper for the 'AddArg' 'Constraint'
@@ -221,8 +226,8 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (ConWhere i base cond 
     res' = res{stypeAct=tp''}
 computeConstraint env@FEnv{feTypeEnv} con@(Constraint _ vaenv (UnionOf i parent children)) = (False, con{conVaenv=updateCOVarArgEnvAct vaenv' vaenv, conDat=UnionOf i parentST' children})
   where
-    chAct = unionAllTypesWithEnv feTypeEnv H.empty $ map stypeAct children
-    chReq = unionAllTypesWithEnv feTypeEnv H.empty $ map stypeReq children
+    chAct = unionAllTypesWithEnv feTypeEnv H.empty $ filter (not . isTypeVar) $ map stypeAct children
+    chReq = unionAllTypesWithEnv feTypeEnv H.empty $ filter (not . isTypeVar) $ map stypeReq children
     actVaenv = fmap (stypeAct . snd) vaenv
     (vaenv', parentST', _) = equalizeSTypes env actVaenv (parent, SType (compactType feTypeEnv actVaenv chAct) chReq Nothing "")
 
@@ -269,6 +274,8 @@ executeConstraints env1 (c:cs) = (prune:res, env4)
 -- A 'TypeCheckError' will be thrown if it has not converged by the time the limit is reached.
 runConstraints :: Integer -> FEnv -> [VConstraint] -> TypeCheckResult FEnv
 runConstraints _ env [] = return env
+-- runConstraints 0 env _ | trace (printf "Trace 908: %s" (show $ showTraceConstrainPnt env 908)) False = undefined
+runConstraints 0 env@FEnv{feUnionAllObjs} _ | (stypeAct <$> descriptor env feUnionAllObjs) == pure PTopType = TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit without determining the TopTop (unionAllObjs)"] env
 runConstraints 0 env@FEnv{feTrace} _ = TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit with still changing constraints: \n\n%s" (show $ showTraceConstrainEpoch env $ head $ tail feTrace)] env
 runConstraints limit env cons = do
   let (constraintsToPrune, env'@FEnv{feUpdatedDuringEpoch}) = executeConstraints env cons

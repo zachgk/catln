@@ -86,7 +86,7 @@ data ConstraintDat p
   | NoReturnArg Int p
   | ArrowTo Int p p -- ArrowTo src dest
   | PropEq Int (p, TypeVarAux) p -- ^ Both Actual and Req
-  | AddArg Int (p, ArgName) p -- ^ Both Actual and Req,
+  | AddArg Int (p, TypeVarAux) p -- ^ Both Actual and Req,
   | AddInferArg Int p p -- ^ Both Actual and Req, AddInferArg base arg
   | SetArgMode Int Bool p p -- ^ Actual (maybe should make it req too). Bool is true for powerset and false for spread.
   | ConWhere Int p p p -- ^ Where has a predicates

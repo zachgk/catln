@@ -330,6 +330,10 @@ isBottomType :: Type -> Bool
 -- isBottomType t = compactType t == bottomType
 isBottomType t = t == BottomType
 
+isTypeVar :: Type -> Bool
+isTypeVar TypeVar{} = True
+isTypeVar _         = False
+
 containsBottomType :: Type -> Bool
 containsBottomType t | isBottomType t = True
 containsBottomType TopType{} = False

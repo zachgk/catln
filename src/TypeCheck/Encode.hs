@@ -48,6 +48,10 @@ isEncodeOut :: EncodeState -> Bool
 isEncodeOut EncodeOut{} = True
 isEncodeOut EncodeIn{}  = False
 
+showIncodeInOut :: EncodeState -> String
+showIncodeInOut EncodeOut{} = "Out"
+showIncodeInOut EncodeIn{}  = "In"
+
 asEncodeIn :: EncodeState -> EncodeState
 asEncodeIn (EncodeOut _)  = EncodeIn
 asEncodeIn est@EncodeIn{} = est
@@ -143,8 +147,8 @@ fromExpr est env1 (EWhere m base cond) = do
   let env6 = addConstraints env5 [ArrowTo 30 (getExprMeta cond') bool', ConWhere 30 (getExprMeta base') (getExprMeta cond') m']
   return (EWhere m' base' cond', env6)
 fromExpr est env1 (TupleApply m (baseM, baseExpr) arg) = do
-  (m', env2) <- fromMeta env1 BAct est m $ printf "Tuple Meta %s(%s)" (show baseExpr) (show arg)
-  (baseM', env3) <- fromMeta env2 BAct est baseM $ printf "Tuple BaseMeta %s(%s)" (show baseExpr) (show arg)
+  (m', env2) <- fromMeta env1 BAct est m $ printf "Tuple Meta %s %s(%s)" (showIncodeInOut est) (show baseExpr) (show arg)
+  (baseM', env3) <- fromMeta env2 BAct est baseM $ printf "Tuple BaseMeta %s %s(%s)" (showIncodeInOut est) (show baseExpr) (show arg)
   (baseExpr', env4) <- fromExpr est env3 baseExpr
   (arg'', env5) <- case arg of
     EAppArg a -> do
@@ -153,7 +157,7 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg) = do
             (EncodeOut{}, Just obj, Just (Just _argExpr', arrM')) ->
               -- Output with (x=x)
               [
-                            AddArg 8 (baseM', inExprSingleton obj) m',
+                            AddArg 8 (baseM', TVArg $ inExprSingleton obj) m',
                             PropEq 11 (m', TVArg $ inExprSingleton obj) arrM'
                             ]
             (EncodeOut{}, Nothing, Just (Just _argExpr', _arrM')) ->
@@ -164,13 +168,13 @@ fromExpr est env1 (TupleApply m (baseM, baseExpr) arg) = do
             (EncodeIn{}, Just obj, Just (Just _argExpr', arrM')) ->
               -- Input with (x=x)
               [
-                        AddArg 19 (baseM', inExprSingleton obj) m',
+                        AddArg 19 (baseM', TVArg $ inExprSingleton obj) m',
                         PropEq 21 (m', TVArg $ inExprSingleton obj) arrM'
                         ]
             (EncodeIn{}, Just obj, Just (Nothing, arrM')) ->
               -- Input with (x -> T)
               [
-                        AddArg 24 (baseM', inExprSingleton obj) m',
+                        AddArg 24 (baseM', TVArg $ inExprSingleton obj) m',
                         PropEq 25 (m', TVArg $ inExprSingleton obj) arrM'
                         ]
             _ -> error $ printf "Invalid fromExpr in %s mode for %s" (show est) (show arg)
@@ -310,5 +314,5 @@ fromPrgms env1 pprgms tprgms = do
   (_, env2) <- mapMWithFEnv env1 addTypeGraphPrgm tprgms
   (vprgms, env3) <- mapMWithFEnv env2 fromPrgm pprgms
   let (tjoinObjMap, _, _) = mergePrgms tprgms
-  let env4 = addUnionObjToEnv env3 (concatMap fst3 vprgms) tjoinObjMap
+  env4 <- addUnionObjToEnv env3 (concatMap fst3 vprgms) tjoinObjMap
   return (vprgms, env4)

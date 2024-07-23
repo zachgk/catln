@@ -23,6 +23,7 @@ import qualified Data.HashSet        as S
 
 import           Control.Monad
 import           Data.Bifunctor      (Bifunctor (bimap))
+import           Data.List           (intercalate)
 import           MapMeta
 import           Semantics
 import           Semantics.Prgm
@@ -60,7 +61,7 @@ filterBestPrecedence precedenceMap = filter (\oa -> objectPrecedence oa == H.loo
 
 
 -- | This creates 'feUnionAllObjs' and adds it to the 'FEnv'
-addUnionObjToEnv :: FEnv -> VObjectMap -> TObjectMap -> FEnv
+addUnionObjToEnv :: FEnv -> VObjectMap -> TObjectMap -> TypeCheckResult FEnv
 addUnionObjToEnv env1@FEnv{feTypeEnv} vobjMap tobjMap = do
   let vobjMapRec = concatMap getRecursiveObjs vobjMap
   let tobjMapRec = concatMap getRecursiveObjs tobjMap
@@ -84,7 +85,8 @@ addUnionObjToEnv env1@FEnv{feTypeEnv} vobjMap tobjMap = do
   let mkVarMeta p = Meta PTopType Nothing (VarMetaDat (Just p) Nothing)
 
   -- Build a variable to store union of tobjs
-  let typecheckedAllType = unionAllTypes feTypeEnv tobjMetas
+  let typecheckedAllType = unionAllTypes feTypeEnv $ filter (not . isTypeVar) tobjMetas
+  when (typecheckedAllType == PTopType) $ fail $ printf "Failed to deteremine dependency TopType. Found undetermined dependent objects: \n\t%s" (intercalate "\n\t" $ map (show . snd) $ filter ((==) PTopType . fst) $ zip tobjMetas tobjs')
   let (typecheckedAllObjs, env4) = fresh env3 $ TypeCheckResult [] $ SType typecheckedAllType PTopType Nothing "typecheckedAll"
   let typecheckedAllObjs' = mkVarMeta typecheckedAllObjs
 
@@ -98,7 +100,7 @@ addUnionObjToEnv env1@FEnv{feTypeEnv} vobjMap tobjMap = do
         ]
   let env5 = (\env -> env{feUnionAllObjs=unionAllObjsPs'}) env4
   let env6 = addConstraints (startConstrainBlock env5) constraints
-  endConstraintBlock env6 Nothing H.empty
+  return $ endConstraintBlock env6 Nothing H.empty
 
 -- | A helper for the 'AddInferArg' 'Constraint'
 addInferArgToType :: FEnv -> TypeVarArgEnv -> Type -> Maybe Type

@@ -42,10 +42,6 @@ data ReachesEnv tg = ReachesEnv {
   rVisited   :: !(S.HashSet PartialType)
                              }
 
-isTypeVar :: Type -> Bool
-isTypeVar TypeVar{} = True
-isTypeVar _         = False
-
 unionReachesTree :: TypeEnv -> ReachesTree -> Type
 unionReachesTree classGraph (ReachesTree children) = do
   let (keys, vals) = unzip $ H.toList children
