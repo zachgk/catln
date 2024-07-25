@@ -18,7 +18,7 @@ import           Eval.Common          (Val (StrVal, TupleVal))
 import           Syntax.Pandoc.Syntax (documentFormats, toDocument)
 import           System.Directory
 import           Text.Printf
-import           WebDocs              (docServe)
+import           WebDocs              (docApi, docServe)
 -- import Repl (repl)
 
 xRun :: String -> String -> IO ()
@@ -67,8 +67,10 @@ xBuild prgmName function = do
       tprgm <- typecheckPrgm desPrgm
       evalBuild function prgmName'' tprgm
 
-xDoc :: String -> Bool -> IO ()
-xDoc prgmName cached = docServe cached True prgmName
+xDoc :: String -> Bool -> Bool -> IO ()
+xDoc prgmName cached apiOnly = if apiOnly
+  then docApi cached True prgmName
+  else docServe cached True prgmName
 
 xDocument :: String -> String -> String -> IO ()
 xDocument prgmName outFname format = do
@@ -105,7 +107,7 @@ xFmt prgmName = do
 exec :: Command -> IO ()
 exec (RunFile file function)          = xRun file function
 exec (BuildFile file function)        = xBuild file function
-exec (Doc fname cached)               = xDoc fname cached
+exec (Doc fname cached apiOnly)       = xDoc fname cached apiOnly
 exec (Document fname outFname format) = xDocument fname outFname format
 exec (Convert fname outFname)         = xConvert fname outFname
 exec (Fmt fname)                      = xFmt fname
@@ -113,7 +115,7 @@ exec (Fmt fname)                      = xFmt fname
 data Command
   = BuildFile String String
   | RunFile String String
-  | Doc String Bool
+  | Doc String Bool Bool
   | Document String String String
   | Convert String (Maybe String)
   | Fmt String
@@ -132,6 +134,7 @@ cDoc :: Parser Command
 cDoc = Doc
   <$> argument str (metavar "FILE" <> help "The file to run")
   <*> switch (long "cached" <> help "Cache results instead of reloading live (useful for serving rather than development)")
+  <*> switch (long "api" <> help "Serve only the API rather than the pages too")
 
 cDocument :: Parser Command
 cDocument = Document

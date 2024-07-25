@@ -30,7 +30,7 @@ function Expr(props) {
     return <span><Expr expr={expr.contents[0]} Meta={Meta} showMetas={showMetas}/>@<Expr expr={expr.contents[1]} Meta={Meta} showMetas={showMetas} /></span>;
   case "EWhere":
   case "TWhere":
-    let [whBase, whCond] = expr.contents;
+    let [,whBase, whCond] = expr.contents;
     return <span><Expr expr={whBase} Meta={Meta} showMetas={showMetas}/> | <Expr expr={whCond} Meta={Meta} showMetas={showMetas}/></span>;
   case "TupleApply":
   case "TTupleApply":

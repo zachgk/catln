@@ -223,7 +223,18 @@ docApiBase provider = do
     maybeTprgmWithTraceGraph <- liftAndCatchIO $ getTPrgmWithTrace provider
     let maybeTprgmWithTrace = maybeTprgmWithTraceGraph >>= \graphData -> do
           case graphLookup prgmName' graphData of
-            Just v -> return v
+            Just (_tprgm, vprgm, _trace) -> return vprgm
+            Nothing -> CErr [MkCNote $ GenCErr Nothing "Invalid file to constrain"]
+    maybeJson maybeTprgmWithTrace
+
+  get "/api/constrain/pnt/:pnt" $ do
+    prgmName <- param "prgmName"
+    pnt <- param "pnt"
+    prgmName' <- liftAndCatchIO $ mkDesCanonicalImportStr prgmName
+    maybeTprgmWithTraceGraph <- liftAndCatchIO $ getTPrgmWithTrace provider
+    let maybeTprgmWithTrace = maybeTprgmWithTraceGraph >>= \graphData -> do
+          case graphLookup prgmName' graphData of
+            Just (_, _, trace) -> return $ reverse $ map (reverse . filter (any ((==) pnt . fst) . snd)) trace
             Nothing -> CErr [MkCNote $ GenCErr Nothing "Invalid file to constrain"]
     maybeJson maybeTprgmWithTrace
 

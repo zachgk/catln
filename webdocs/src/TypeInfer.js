@@ -39,7 +39,7 @@ function TypeInfer() {
 }
 
 function Main(props) {
-  let {notes, data: [, prgm, trace]} = props;
+  let {notes, data: prgm} = props;
   let prgmName = useContext(PrgmNameContext);
   const classes = useStyles();
 
@@ -69,7 +69,7 @@ function Main(props) {
               <Redirect to={`/typeinfer/${prgmName}/0`} />
             </Route>
             <Route path={`/typeinfer/${prgmName}/:curMeta`}>
-              <TraceEpochs trace={trace} Meta={Meta} />
+              <TraceEpochs Meta={Meta} />
             </Route>
           </Switch>
         </Grid>
@@ -106,9 +106,22 @@ let VarMeta = (notesMap) => (props) => {
 
 function TraceEpochs(props) {
   let { curMeta } = useParams();
-  let {trace, Meta} = props;
-  const forwardTrace = [].concat(trace).reverse(); // Trace defaults to reverse order
-  let traces = forwardTrace.map((t, index) => {
+  let {Meta} = props;
+  let prgmName = useContext(PrgmNameContext);
+  let apiResult = useApi(`/api/constrain/pnt/${curMeta}?prgmName=${prgmName}`);
+  return (
+    <div>
+      <h2>Pnt {curMeta}</h2>
+      <Loading status={apiResult}>
+        <Traces traces={apiResult.data} Meta={Meta} />
+      </Loading>
+    </div>
+  );
+}
+
+function Traces(props) {
+  const {traces, Meta} = props;
+  let showTraces = traces.map((t, index) => {
     return (
       <div key={index}>
         <h3>{index}</h3>
@@ -116,28 +129,19 @@ function TraceEpochs(props) {
       </div>
     );
   });
-  return (
-    <div>
-      <h2>Pnt {curMeta}</h2>
-      {traces}
-    </div>
-  );
+  return <div>{showTraces}</div>;
 }
 
 function Trace(props) {
   let {trace, Meta} = props;
-  let { curMeta } = useParams();
-  curMeta = parseInt(curMeta);
-  const forwardTrace = [].concat(trace).reverse();
-  return forwardTrace.map((constraintPair, constraintIndex) => {
+  return trace.map((constraintPair, constraintIndex) => {
     let [constraint, updates] = constraintPair;
 
-    let filteredUpdates = updates.filter(update => update[0] === curMeta);
-    if(filteredUpdates.length === 0) {
+    if(updates.length === 0) {
       return null;
     }
 
-    let showUpdates = filteredUpdates.map((update, updateIndex) => <Scheme key={updateIndex} scheme={update[1]} />);
+    let showUpdates = updates.map((update, updateIndex) => <Scheme key={updateIndex} scheme={update[1]} />);
 
     return (
       <div key={constraintIndex}>
