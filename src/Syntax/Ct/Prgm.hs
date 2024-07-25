@@ -162,6 +162,7 @@ instance ExprClass RawExpr where
   exprVarArgs e = error $ printf "Unsupported RawExpr exprVarArgs for %s" (show e)
 
   exprVarArgsWithSrc = undefined
+  mkValue = undefined
 
 instance ObjArrClass RawObjArr where
   oaVarArgs _roa = error "Found call to raw oaVarArgs. Should be using roaVarArgs."

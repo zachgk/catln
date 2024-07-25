@@ -98,13 +98,13 @@ mapOAArrExpr :: (MetaDat m, ExprClass e, Show (e m)) => (e m -> e m) -> ObjArr e
 mapOAArrExpr f oa@ObjArr{oaArr=Just (Just e, m)} = oa{oaArr = Just (Just (f e), m)}
 mapOAArrExpr _ oa                           = oa
 
-exprVarArgsWithSrcs :: (MetaDat m, Show m) => TypeEnv tg -> [(Expr m, PartialType)] -> ArgMetaMapWithSrc m
+exprVarArgsWithSrcs :: (TypeGraph tg, MetaDat m, Show m) => TypeEnv tg -> [(Expr m, PartialType)] -> ArgMetaMapWithSrc m
 exprVarArgsWithSrcs typeEnv os = H.unions (map (uncurry (exprVarArgsWithSrc typeEnv)) os)
 
-exprVarArgsWithObjSrcs :: (MetaDat m, Show m) => TypeEnv tg -> [(PartialType, ObjArr Expr m)] -> ArgMetaMapWithSrc m
+exprVarArgsWithObjSrcs :: (TypeGraph tg, MetaDat m, Show m) => TypeEnv tg -> [(PartialType, ObjArr Expr m)] -> ArgMetaMapWithSrc m
 exprVarArgsWithObjSrcs typeEnv os = exprVarArgsWithSrcs typeEnv $ map (\(src, obj) -> (oaObjExpr obj, src)) os
 
-arrowDestType :: (ExprClass e, Show m, Show (e m), MetaDat m) => TypeEnv tg -> PartialType -> ObjArr e m -> Type
+arrowDestType :: (TypeGraph tg, ExprClass e, Show m, Show (e m), MetaDat m) => TypeEnv tg -> PartialType -> ObjArr e m -> Type
 arrowDestType typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, oaM)} = case oaArrExpr of
   Just n | isJust (maybeExprPath n) -> maybe joined substitute (H.lookup (TVArg $ inExprSingleton n) vaenv)
   _                              -> joined
@@ -123,13 +123,13 @@ metaTypeVar m = case getMetaType m of
 
 type MetaVarArgEnv m = H.HashMap TypeVarAux (Meta m)
 
-isSubtypePartialOfWithObjSrc :: (Show m, MetaDat m) => TypeEnv tg -> PartialType -> ObjArr Expr m -> PartialType -> Type -> Bool
+isSubtypePartialOfWithObjSrc :: (TypeGraph tg, Show m, MetaDat m) => TypeEnv tg -> PartialType -> ObjArr Expr m -> PartialType -> Type -> Bool
 isSubtypePartialOfWithObjSrc typeEnv os obj sub = isSubtypeOfWithObjSrc typeEnv os obj (singletonType sub)
 
-isSubtypeOfWithObjSrc :: (Show m, MetaDat m) => TypeEnv tg -> PartialType -> ObjArr Expr m -> Type -> Type -> Bool
+isSubtypeOfWithObjSrc :: (TypeGraph tg, Show m, MetaDat m) => TypeEnv tg -> PartialType -> ObjArr Expr m -> Type -> Type -> Bool
 isSubtypeOfWithObjSrc typeEnv srcType obj = isSubtypeOfWithEnv typeEnv (snd <$> exprVarArgsWithSrc typeEnv (oaObjExpr obj) srcType)
 
-isSubtypeOfWithObjSrcs :: (Show m, MetaDat m) => TypeEnv tg -> [(PartialType, ObjArr Expr m)] -> Type -> Type -> Bool
+isSubtypeOfWithObjSrcs :: (TypeGraph tg, Show m, MetaDat m) => TypeEnv tg -> [(PartialType, ObjArr Expr m)] -> Type -> Type -> Bool
 isSubtypeOfWithObjSrcs typeEnv objSrcs = isSubtypeOfWithEnv typeEnv (snd <$> exprVarArgsWithObjSrcs typeEnv objSrcs)
 
 isSubtypePartialOfWithMetaEnv :: TypeEnv tg -> MetaVarArgEnv m -> PartialType -> Type -> Bool

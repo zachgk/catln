@@ -24,6 +24,7 @@ import           Data.Hashable
 import qualified Data.HashMap.Strict as H
 import           GHC.Generics        (Generic)
 
+import           CtConstants
 import           Data.Aeson          hiding (Object)
 import           Data.Bifunctor      (first)
 import           Data.Graph
@@ -196,7 +197,9 @@ class ExprClass e where
 
   -- | The 'exprVarArgsWithSrc' is similar to the 'exprArgs' function.
   -- | It differs in that it accepts an additional partial type that is equivalent to the expression and it pull the corresponding parts of the partial matching the args in the expression
-  exprVarArgsWithSrc :: (MetaDat m, Show m) => TypeEnv tg -> e m -> PartialType -> ArgMetaMapWithSrc m
+  exprVarArgsWithSrc :: (TypeGraph tg, MetaDat m, Show m) => TypeEnv tg -> e m -> PartialType -> ArgMetaMapWithSrc m
+
+  mkValue :: (MetaDat m) => Name -> e m
 
 
 instance ExprClass Expr where
@@ -225,12 +228,13 @@ instance ExprClass Expr where
   exprAppliedArgs (AliasExpr b _)           = exprAppliedArgs b
   exprAppliedArgs (EWhere _ b _)              = exprAppliedArgs b
 
-  exprAppliedOrdVars (Value _ _) = []
+  exprAppliedOrdVars (Value _ _)              = []
+  exprAppliedOrdVars CExpr{}                  = []
+  exprAppliedOrdVars HoleExpr{}               = []
   exprAppliedOrdVars (TupleApply _ (_, be) _) = exprAppliedOrdVars be
-  exprAppliedOrdVars (VarApply _ e n m) = (n, m) : exprAppliedOrdVars e
-  exprAppliedOrdVars (AliasExpr b _) = exprAppliedOrdVars b
-  exprAppliedOrdVars (EWhere _ b _) = exprAppliedOrdVars b
-  exprAppliedOrdVars e = error $ printf "Unsupported Expr exprAppliedOrdVars: %s" (show e)
+  exprAppliedOrdVars (VarApply _ e n m)       = (n, m) : exprAppliedOrdVars e
+  exprAppliedOrdVars (AliasExpr b _)          = exprAppliedOrdVars b
+  exprAppliedOrdVars (EWhere _ b _)           = exprAppliedOrdVars b
 
   exprVarArgs CExpr{} = H.empty
   exprVarArgs Value{} = H.empty
@@ -244,24 +248,46 @@ instance ExprClass Expr where
   exprVarArgs (TupleApply _ (_, be) (EAppSpread arg)) = H.unionWith (++) (exprVarArgs arg) (exprVarArgs be)
   exprVarArgs (VarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar n) [(Value (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)])
 
-  exprVarArgsWithSrc _ CExpr{} _ = H.empty
-  exprVarArgsWithSrc _ Value{} _ = H.empty
-  exprVarArgsWithSrc _ HoleExpr{} _ = H.empty
-  exprVarArgsWithSrc typeEnv (EWhere _ base _) src = exprVarArgsWithSrc typeEnv base src
-  exprVarArgsWithSrc typeEnv (AliasExpr base n) src = H.insert (TVArg $ inExprSingleton n) ([(n, getExprMeta base)], singletonType src) (exprVarArgsWithSrc typeEnv base src)
-  exprVarArgsWithSrc typeEnv (VarApply _ b n m) src = H.insert (TVVar n) ([(Value (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)], H.lookupDefault PTopType n (ptVars src)) $ exprVarArgsWithSrc typeEnv b src
-  exprVarArgsWithSrc typeEnv (TupleApply _ (_, be) arg) src = H.union (exprVarArgsWithSrc typeEnv be src) (fromArg arg)
+  exprVarArgsWithSrc typeEnv expr src = aux expr
     where
-      fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)}) = case typeGetArg (inExprSingleton obj) src of
-        Just (UnionType srcArg) -> mergeMaps $ map (exprVarArgsWithSrc typeEnv e) $ splitUnionType srcArg
-        Just t@TopType{} -> (,t) <$> exprVarArgs e
-        _ -> H.empty
-      fromArg (EAppArg ObjArr{oaArr=Just (Just e, _)}) = exprVarArgsWithSrc typeEnv e src
-      fromArg (EAppArg ObjArr {oaObj=Just obj, oaArr=Just (Nothing, arrM)}) = H.singleton (TVArg $ inExprSingleton obj) ([(obj, arrM)], fromMaybe (getMetaType arrM) (typeGetArg (inExprSingleton obj) src))
-      fromArg oa = error $ printf "Invalid oa %s" (show oa)
+      aux CExpr{} = H.empty
+      aux Value{} = H.empty
+      aux HoleExpr{} = H.empty
+      aux (EWhere _ base cond) = case maybeExprPath cond of
+        Just n | n == operatorHasArrow -> case (H.lookup (partialKey operatorArgL) condArgs, H.lookup (partialKey operatorArgR) condArgs) of
+                  (Just (Just (_, Just l)), Just (Just (_, Just r))) -> case (getExprType l, getExprType r) of
+                    (lt@UnionType{}, TypeVar rt _) -> case typeGraphQuery typeEnv $ fromJust $ maybeGetSingleton lt of
+                      [] -> H.empty
+                      qr -> error $ printf "Not yet implemented searching arrow %s to %s. Found %s" (show lt) (show rt) (show qr)
+                    (lt, rt) -> error $ printf "Found invalid types of l=%s and r=%s in ?->" (show lt) (show rt)
+                  _ -> error $ printf "Could not find /l and /r in %s in ?->" (show condArgs)
+        _ -> base'
+        where
+          base' = exprVarArgsWithSrc typeEnv base src
+          condArgs = exprAppliedArgsMap cond
+      aux (AliasExpr base n) = H.insertWith merge (TVArg $ inExprSingleton n) ([(n, getExprMeta base)], singletonType src) (exprVarArgsWithSrc typeEnv base src)
+      aux (VarApply _ b n m) = H.insertWith merge (TVVar n) ([(Value (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)], H.lookupDefault PTopType n (ptVars src)) $ exprVarArgsWithSrc typeEnv b src
+      aux (TupleApply _ (_, be) arg) = H.unionWith merge (exprVarArgsWithSrc typeEnv be src) (fromArg arg)
+        where
+          fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)}) = case typeGetArg (inExprSingleton obj) src of
+            Just (UnionType srcArg) -> mergeMaps $ map (exprVarArgsWithSrc typeEnv e) $ splitUnionType srcArg
+            Just t@TopType{} -> (,t) <$> exprVarArgs e
+            _ -> H.empty
+          fromArg (EAppArg ObjArr{oaArr=Just (Just e, _)}) = exprVarArgsWithSrc typeEnv e src
+          fromArg (EAppArg ObjArr {oaObj=Just obj, oaArr=Just (Nothing, arrM)}) = case getMetaType arrM of
+            (TypeVar v _) -> H.insertWith merge v ([(obj, arrM)], fromMaybe PTopType $ typeGetArg (inExprSingleton obj) src) mainArg
+            _ -> mainArg
+            where
+              mainArg = H.singleton (TVArg $ inExprSingleton obj) ([(obj, arrM)], fromMaybe (getMetaType arrM) (typeGetArg (inExprSingleton obj) src))
+          fromArg (EAppSpread s) = exprVarArgsWithSrc typeEnv s src
+          fromArg oa = error $ printf "Invalid oa %s" (show oa)
 
-      mergeMaps [] = H.empty
-      mergeMaps (x:xs) = foldr (H.unionWith (\(m1s, t1) (m2s, t2) -> (m1s ++ m2s, unionTypes typeEnv t1 t2))) x xs
+      merge (m1s, t1) (m2s, t2) = (m1s ++ m2s, intersectTypes typeEnv t1 t2)
+
+      mergeMaps []     = H.empty
+      mergeMaps (x:xs) = foldr (H.unionWith merge) x xs
+
+  mkValue n = Value (emptyMetaT $ typeVal n) n
 
 class ObjArrClass oa where
   -- | See exprArgs
@@ -391,15 +417,19 @@ mergePrgm (objMap1, classGraph1, annots1) (objMap2, classGraph2, annots2) = (
 mergePrgms :: Foldable f => f (Prgm e m) -> Prgm e m
 mergePrgms = foldr mergePrgm emptyPrgm
 
+varNamesWithPrefix :: Name -> [Name]
+varNamesWithPrefix n = [n, makeAbsoluteName ('$':tail n)]
+
 -- | Gets all recursive sub expression objects from an expression's arguments. Helper for 'getRecursiveObjs'
-getRecursiveObjsExpr :: (ExprClass e, MetaDat m, Show m) => e m -> [e m]
+getRecursiveObjsExpr :: (ExprClass e, MetaDat m, Show (e m), Show m) => e m -> [e m]
 getRecursiveObjsExpr expr | isNothing (maybeExprPath expr) = []
-getRecursiveObjsExpr expr = subObjects ++ recursedSubObjects
+getRecursiveObjsExpr expr = concat [varSubObjects, argSubObjects, recursedSubObjects]
   where
-    subObjects = filter (isJust . maybeExprPath) $ concatMap exprFromTupleArg $ exprAppliedArgs expr
+    varSubObjects = map mkValue $ concatMap (varNamesWithPrefix . pkName . fst) $ exprAppliedOrdVars expr
+    argSubObjects = filter (isJust . maybeExprPath) $ concatMap exprFromTupleArg $ exprAppliedArgs expr
     exprFromTupleArg ObjArr{oaObj, oaArr=Just (maybeOaObjExpr, _)} = maybeToList oaObj ++ maybeToList maybeOaObjExpr
     exprFromTupleArg ObjArr{oaArr=Nothing} = []
-    recursedSubObjects = concatMap getRecursiveObjsExpr subObjects
+    recursedSubObjects = concatMap getRecursiveObjsExpr argSubObjects
 
 -- | Gets an object and all sub-objects (recursively) from it's arguments
 getRecursiveObjs :: (ExprClass e, Show m, Show (e m), MetaDat m) => ObjArr e m -> ObjectMap e m
@@ -415,4 +445,6 @@ getAllObjArrNames ObjArr{oaObj, oaArr=Just (oaArrExpr, _)} = maybe [] getAllExpr
 getAllObjArrNames ObjArr{oaObj, oaArr=Nothing} = maybe [] getAllExprNames oaObj
 
 getAllExprNames :: (ExprClass e, MetaDat m, Show m, Show (e m)) => e m -> [Name]
-getAllExprNames e = maybeToList (maybeExprPath e) ++ concatMap getAllObjArrNames (exprAppliedArgs e)
+getAllExprNames e = maybeToList (maybeExprPath e) ++ concatMap getAllObjArrNames (exprAppliedArgs e) ++ concatMap fromOrdVar (exprAppliedOrdVars e)
+  where
+    fromOrdVar (v, _) = varNamesWithPrefix $ pkName v

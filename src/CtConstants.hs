@@ -17,14 +17,15 @@ module CtConstants where
 operatorPrefix, operatorArgUnary, operatorArgL, operatorArgR :: String
 operatorPrefix = "/operator"
 operatorArgUnary = "a"
-operatorArgL = "l"
-operatorArgR = "r"
+operatorArgL = "/l"
+operatorArgR = "/r"
 
 operatorName :: String -> String
 operatorName n = operatorPrefix ++ n
 
-operatorType :: String
+operatorType, operatorHasArrow :: String
 operatorType = operatorName ":"
+operatorHasArrow = operatorName "?->"
 
 intPrim, floatPrim, truePrim, falsePrim, strPrim, ioPrim :: String
 intPrim = "/Data/Primitive/Integer"

@@ -289,6 +289,7 @@ instance ExprClass TExpr where
   exprVarArgs (TCalls _ b _) = exprVarArgs b
 
   exprVarArgsWithSrc = undefined
+  mkValue = undefined
 
 
 -------------------------------------------------------------------------------
@@ -365,7 +366,7 @@ instance Show m => Show (TExpr m) where
 
 type ObjSrc = (PartialType, EObjArr)
 
-resArrowDestType :: TypeEnv tg -> PartialType -> TCallTree -> Type
+resArrowDestType :: (TypeGraph tg) => TypeEnv tg -> PartialType -> TCallTree -> Type
 resArrowDestType typeEnv src (TCObjArr oa) = arrowDestType typeEnv src oa
 resArrowDestType _ _ (TCPrim tp _) = tp
 resArrowDestType _ _ (TCMacro tp _) = tp
