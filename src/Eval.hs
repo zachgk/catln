@@ -71,12 +71,12 @@ evalTargetMode function prgmName prgmGraphData = case (funCtxReaches, funReaches
   (_, rt) | reachesHasCutSubtypeOf typeEnv H.empty rt ioType -> EvalRun function' -- Should require isShowable for run result
   _ -> NoEval
   where
-    prgm@(objMap, _, _) = prgmFromGraphData prgmName prgmGraphData
+    prgm = prgmFromGraphData prgmName prgmGraphData
     typeEnv = mkTypeEnv prgm
     function' = case maybeGetSingleton $ expandRelPartial typeEnv H.empty (partialVal function) of
       Just f -> ptName f
       Nothing -> error $ printf "Expected one typeName in evalTargetMode for %s. Instead found %s" (show function) (show $ expandRelPartial typeEnv H.empty (partialVal function))
-    reachEnv = ReachesEnv typeEnv H.empty (ObjArrTypeGraph $ H.fromListWith (++) $ map (\oa -> (oaObjPath oa, [oa])) objMap) S.empty
+    reachEnv = ReachesEnv typeEnv H.empty S.empty
     funCtxTp = (partialVal ContextStr){ptArgs=H.fromList [(partialKey contextValStr, typeVal function')], ptArgMode=PtArgAny}
     funTp = partialVal function'
     funCtxReaches = reachesPartial reachEnv funCtxTp

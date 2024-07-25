@@ -67,7 +67,7 @@ data EvalTreebugClosed = EvalTreebugClosed AnyObjArr Val [EvalTreebugClosed] Str
 
 type Args = H.HashMap String Val
 data Env = Env { evObjMap        :: EObjectMap
-               , evTypeEnv       :: TypeEnv
+               , evTypeEnv       :: TypeEnv (ObjArrTypeGraph Expr EvalMetaDat)
                , evArgs          :: Args
                , evExEnv         :: ResExEnv
                , evTbEnv         :: TBEnv
@@ -194,7 +194,7 @@ data TBEnv = TBEnv {
     tbName    :: String
   , tbResEnv  :: ResBuildEnv
   , tbPrgm    :: Prgm Expr EvalMetaDat
-  , tbTypeEnv :: TypeEnv
+  , tbTypeEnv :: TypeEnv (ObjArrTypeGraph Expr EvalMetaDat)
   }
 
 instance Eq MacroFunction where
@@ -288,6 +288,8 @@ instance ExprClass TExpr where
   exprVarArgs (TVarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar n) [(TValue (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)])
   exprVarArgs (TCalls _ b _) = exprVarArgs b
 
+  exprVarArgsWithSrc = undefined
+
 
 -------------------------------------------------------------------------------
 -- Codegen State
@@ -363,7 +365,7 @@ instance Show m => Show (TExpr m) where
 
 type ObjSrc = (PartialType, EObjArr)
 
-resArrowDestType :: TypeEnv -> PartialType -> TCallTree -> Type
+resArrowDestType :: TypeEnv tg -> PartialType -> TCallTree -> Type
 resArrowDestType typeEnv src (TCObjArr oa) = arrowDestType typeEnv src oa
 resArrowDestType _ _ (TCPrim tp _) = tp
 resArrowDestType _ _ (TCMacro tp _) = tp

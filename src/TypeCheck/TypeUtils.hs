@@ -129,10 +129,9 @@ addInferArgToPartial FEnv{feVTypeGraph, feTTypeGraph, feTypeEnv} _ partial@Parti
       else BottomType
     addArg arg = partial{ptArgs=H.insertWith (unionTypes feTypeEnv) arg PTopType ptArgs}
 
-mkReachesEnv :: FEnv -> RConstraint -> TypeCheckResult (ReachesEnv (ObjArrTypeGraph ()))
-mkReachesEnv env@FEnv{feTypeEnv, feVTypeGraph, feTTypeGraph} (Constraint maybeConOa stypeVaenv _) = do
-
-  let vaenv = fmap (bimap stypeAct stypeAct) stypeVaenv
+-- TODO Look into making this run every epoch rather than per call to mkReachesEnv
+buildTypeEnv :: FEnv -> TypeCheckResult FEnvTypeEnv
+buildTypeEnv env@FEnv{feTypeEnv, feVTypeGraph, feTTypeGraph} = do
 
   -- Env (typeGraph) from variables
   feVTypeGraph' <- forM feVTypeGraph $ \objArrs -> do
@@ -141,6 +140,14 @@ mkReachesEnv env@FEnv{feTypeEnv, feVTypeGraph, feTTypeGraph} (Constraint maybeCo
       let soa' = mapMetaObjArr clearMetaDat Nothing soa
       return soa'
 
+  let ttypeGraph' = H.map (map (mapMetaObjArr clearMetaDat Nothing)) feTTypeGraph
+  return feTypeEnv{teTypeGraph=ObjArrTypeGraph $ H.unionWith (++) feVTypeGraph' ttypeGraph'}
+
+mkReachesEnv :: FEnv -> RConstraint -> TypeCheckResult (ReachesEnv (ObjArrTypeGraph Expr ()))
+mkReachesEnv env (Constraint maybeConOa stypeVaenv _) = do
+
+  let vaenv = fmap (bimap stypeAct stypeAct) stypeVaenv
+
   -- Env (typeGraph) from args
   -- TODO Remove the call to head below to support nonLinear args
   let argVaenv = H.unions $ map (fmap head . snd . splitVarArgEnv . exprVarArgs . oaObjExpr) maybeConOa
@@ -148,14 +155,12 @@ mkReachesEnv env@FEnv{feTypeEnv, feVTypeGraph, feTTypeGraph} (Constraint maybeCo
     inExpr' <- showExpr env inExpr
     outM' <- showM env outM
     return (mapMeta clearMetaDat InputMeta inExpr', outM')
-  let argTypeGraph = H.fromList $ map (\(argName, (inExpr, outM)) -> (makeAbsoluteName $ pkName argName, [ObjArr (Just inExpr) ArgObj Nothing [] (Just (Nothing, emptyMetaT (substituteWithVarArgEnv (fmap snd vaenv) (getMetaType outM))))])) $ H.toList argVaenv'
-  let argObjMap = concat $ H.elems argTypeGraph
+  let argObjMap = concatMap (\(inExpr, outM) -> [ObjArr (Just inExpr) ArgObj Nothing [] (Just (Nothing, emptyMetaT (substituteWithVarArgEnv (fmap snd vaenv) (getMetaType outM))))]) $ H.elems argVaenv'
 
   -- final ReachesEnv
   let argTypeEnv = mkTypeEnv (argObjMap, classGraphFromObjs argObjMap, [])
-  let ttypeGraph' = H.map (map (mapMetaObjArr clearMetaDat Nothing)) feTTypeGraph
-  let typeGraph = unionsWith (++) [argTypeGraph, feVTypeGraph', ttypeGraph']
-  return $ ReachesEnv (mergeTypeEnv argTypeEnv feTypeEnv) (fmap snd vaenv) (ObjArrTypeGraph typeGraph) S.empty
+  feTypeEnv' <- buildTypeEnv env
+  return $ ReachesEnv (mergeTypeEnv argTypeEnv feTypeEnv') (fmap snd vaenv) S.empty
 
 arrowConstrainUbs :: FEnv -> RConstraint -> Type -> Type -> TypeCheckResult (Type, Type, Maybe ReachesTree)
 arrowConstrainUbs env@FEnv{feUnionAllObjs} con PTopType dest@UnionType{} = do

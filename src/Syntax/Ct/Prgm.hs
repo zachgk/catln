@@ -161,6 +161,8 @@ instance ExprClass RawExpr where
   exprVarArgs (RawMethod be me) = H.unionWith (++) (exprVarArgs be) (exprVarArgs me)
   exprVarArgs e = error $ printf "Unsupported RawExpr exprVarArgs for %s" (show e)
 
+  exprVarArgsWithSrc = undefined
+
 instance ObjArrClass RawObjArr where
   oaVarArgs _roa = error "Found call to raw oaVarArgs. Should be using roaVarArgs."
   getOaAnnots = roaAnnots

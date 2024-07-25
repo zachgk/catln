@@ -8,6 +8,7 @@ import           Data.Maybe
 import           Hedgehog
 import qualified Hedgehog.Gen        as HG
 import           MapMeta             (clearMetaDat, mapMetaPrgm)
+import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Desugarf  (desFiles)

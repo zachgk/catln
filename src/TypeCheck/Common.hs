@@ -60,6 +60,7 @@ data SchemeActReq = SchemeAct | SchemeReq
 
 type Pnt = Int
 
+type FEnvTypeEnv = TypeEnv (ObjArrTypeGraph Expr ())
 data FEnv = FEnv { fePnts               :: IM.IntMap Scheme
                  , feConsDats           :: [[VConstraint]]
                  , feCons               :: [VConstraint]
@@ -67,7 +68,7 @@ data FEnv = FEnv { fePnts               :: IM.IntMap Scheme
                  , feVTypeGraph         :: VTypeGraph
                  , feTTypeGraph         :: TTypeGraph
                  , feUpdatedDuringEpoch :: Bool -- ^ If a pnt is updated during the epoch
-                 , feTypeEnv            :: TypeEnv
+                 , feTypeEnv            :: FEnvTypeEnv
                  , feTrace              :: TraceConstrain
                  } deriving (Show)
 
@@ -316,7 +317,7 @@ fAddTTypeGraph env@FEnv{feTTypeGraph} k v = env {feTTypeGraph = H.insertWith (++
 
 -- This ensures schemes are correct
 -- It differs from Constrain.checkScheme because it checks for bugs in the internal compiler, not bugs in the user code
-verifyScheme :: TypeEnv -> VMetaVarArgEnv -> VarMeta -> Scheme -> Scheme -> Maybe String
+verifyScheme :: TypeEnv tg -> VMetaVarArgEnv -> VarMeta -> Scheme -> Scheme -> Maybe String
 verifyScheme typeEnv vaenv (Meta _ _ (VarMetaDat _ _)) (TypeCheckResult _ (SType oldAct oldReq _ _)) (TypeCheckResult _ (SType act req _ _)) = listToMaybe $ catMaybes [
   if verifySchemeActLowers then Nothing else Just "verifySchemeActLowers",
   if verifySchemeReqLowers then Nothing else Just "verifySchemeReqLowers",

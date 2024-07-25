@@ -177,6 +177,7 @@ instance ToJSON SourcePos where
   toJSON (SourcePos name line col) = object ["name".=name, "line".=unPos line, "col".=unPos col]
 
 type VarArgMap e m = H.HashMap TypeVarAux [(e m, Meta m)]
+type ArgMetaMapWithSrc m = H.HashMap TypeVarAux ([(Expr m, Meta m)], Type)
 class ExprClass e where
   -- | Returns the metadata for the top level of an expression
   getExprMeta ::  e m -> Meta m
@@ -192,6 +193,10 @@ class ExprClass e where
 
   -- | Returns all arguments located recursively in an expression
   exprVarArgs :: (MetaDat m, Show m) => e m -> VarArgMap e m
+
+  -- | The 'exprVarArgsWithSrc' is similar to the 'exprArgs' function.
+  -- | It differs in that it accepts an additional partial type that is equivalent to the expression and it pull the corresponding parts of the partial matching the args in the expression
+  exprVarArgsWithSrc :: (MetaDat m, Show m) => TypeEnv tg -> e m -> PartialType -> ArgMetaMapWithSrc m
 
 
 instance ExprClass Expr where
@@ -238,6 +243,25 @@ instance ExprClass Expr where
   exprVarArgs (TupleApply _ _ (EAppArg ObjArr{oaObj, oaArr=Nothing})) = error $ printf "Not yet implemented: %s" (show oaObj)
   exprVarArgs (TupleApply _ (_, be) (EAppSpread arg)) = H.unionWith (++) (exprVarArgs arg) (exprVarArgs be)
   exprVarArgs (VarApply _ e n m) = H.unionWith (++) (exprVarArgs e) (H.singleton (TVVar n) [(Value (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)])
+
+  exprVarArgsWithSrc _ CExpr{} _ = H.empty
+  exprVarArgsWithSrc _ Value{} _ = H.empty
+  exprVarArgsWithSrc _ HoleExpr{} _ = H.empty
+  exprVarArgsWithSrc typeEnv (EWhere _ base _) src = exprVarArgsWithSrc typeEnv base src
+  exprVarArgsWithSrc typeEnv (AliasExpr base n) src = H.insert (TVArg $ inExprSingleton n) ([(n, getExprMeta base)], singletonType src) (exprVarArgsWithSrc typeEnv base src)
+  exprVarArgsWithSrc typeEnv (VarApply _ b n m) src = H.insert (TVVar n) ([(Value (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)], H.lookupDefault PTopType n (ptVars src)) $ exprVarArgsWithSrc typeEnv b src
+  exprVarArgsWithSrc typeEnv (TupleApply _ (_, be) arg) src = H.union (exprVarArgsWithSrc typeEnv be src) (fromArg arg)
+    where
+      fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)}) = case typeGetArg (inExprSingleton obj) src of
+        Just (UnionType srcArg) -> mergeMaps $ map (exprVarArgsWithSrc typeEnv e) $ splitUnionType srcArg
+        Just t@TopType{} -> (,t) <$> exprVarArgs e
+        _ -> H.empty
+      fromArg (EAppArg ObjArr{oaArr=Just (Just e, _)}) = exprVarArgsWithSrc typeEnv e src
+      fromArg (EAppArg ObjArr {oaObj=Just obj, oaArr=Just (Nothing, arrM)}) = H.singleton (TVArg $ inExprSingleton obj) ([(obj, arrM)], fromMaybe (getMetaType arrM) (typeGetArg (inExprSingleton obj) src))
+      fromArg oa = error $ printf "Invalid oa %s" (show oa)
+
+      mergeMaps [] = H.empty
+      mergeMaps (x:xs) = foldr (H.unionWith (\(m1s, t1) (m2s, t2) -> (m1s ++ m2s, unionTypes typeEnv t1 t2))) x xs
 
 class ObjArrClass oa where
   -- | See exprArgs
@@ -352,10 +376,10 @@ mergeClassGraphs (ClassGraph classGraphA) (ClassGraph classGraphB) = ClassGraph 
     mergeClasses (CGType, name, []) (CGType, _, []) = (CGType, name, [])
     mergeClasses cg1 cg2 = error $ printf "Unexpected input to mergeClassGraphs: \n\t%s \n\t%s" (show cg1) (show cg2)
 
-    mergeClassPartials clss@PartialType{ptVars=varsA} PartialType{ptVars=varsB} = clss{ptVars = H.unionWith (unionTypes (TypeEnv (ClassGraph classGraphA) S.empty)) varsA varsB}
+    mergeClassPartials clss@PartialType{ptVars=varsA} PartialType{ptVars=varsB} = clss{ptVars = H.unionWith (unionTypes (TypeEnv (ClassGraph classGraphA) EmptyTypeGraph S.empty)) varsA varsB}
 
-mergeTypeEnv :: TypeEnv -> TypeEnv -> TypeEnv
-mergeTypeEnv (TypeEnv cg1 n1) (TypeEnv cg2 n2) = TypeEnv (mergeClassGraphs cg1 cg2) (S.union n1 n2)
+mergeTypeEnv :: (TypeGraph tg) => TypeEnv tg -> TypeEnv tg -> TypeEnv tg
+mergeTypeEnv (TypeEnv cg1 tg1 n1) (TypeEnv cg2 tg2 n2) = TypeEnv (mergeClassGraphs cg1 cg2) (typeGraphMerge tg1 tg2) (S.union n1 n2)
 
 mergePrgm :: Prgm e m -> Prgm e m -> Prgm e m
 mergePrgm (objMap1, classGraph1, annots1) (objMap2, classGraph2, annots2) = (
@@ -392,8 +416,3 @@ getAllObjArrNames ObjArr{oaObj, oaArr=Nothing} = maybe [] getAllExprNames oaObj
 
 getAllExprNames :: (ExprClass e, MetaDat m, Show m, Show (e m)) => e m -> [Name]
 getAllExprNames e = maybeToList (maybeExprPath e) ++ concatMap getAllObjArrNames (exprAppliedArgs e)
-
-mkTypeEnv :: (ExprClass e, Show m, Show (e m), MetaDat m) => Prgm e m -> TypeEnv
-mkTypeEnv (objMap, classGraph, _) = TypeEnv classGraph typeNames
-  where
-    typeNames = S.fromList $ map makeAbsoluteName $ concatMap getAllObjArrNames objMap

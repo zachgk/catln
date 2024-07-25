@@ -32,17 +32,13 @@ data ReachesTree
   | ReachesLeaf ![Type]
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
-class TypeGraph tg where
-  typeGraphQuery :: ReachesEnv tg -> PartialType -> [Type]
-
 data ReachesEnv tg = ReachesEnv {
-  rTypeEnv   :: !TypeEnv,
-  rVaenv     :: !TypeVarArgEnv,
-  rTypeGraph :: !tg,
-  rVisited   :: !(S.HashSet PartialType)
+  rTypeEnv :: !(TypeEnv tg),
+  rVaenv   :: !TypeVarArgEnv,
+  rVisited :: !(S.HashSet PartialType)
                              }
 
-unionReachesTree :: TypeEnv -> ReachesTree -> Type
+unionReachesTree :: TypeEnv tg -> ReachesTree -> Type
 unionReachesTree classGraph (ReachesTree children) = do
   let (keys, vals) = unzip $ H.toList children
   let keys' = UnionType $ joinUnionType keys
@@ -66,7 +62,7 @@ joinReachesTrees a b = error $ printf "joinReachesTrees for mixed tree and leaf 
 joinAllReachesTrees :: Foldable f => f ReachesTree -> ReachesTree
 joinAllReachesTrees = foldr1 joinReachesTrees
 
-reachesHasCutSubtypeOf :: TypeEnv -> TypeVarArgEnv -> ReachesTree -> Type -> Bool
+reachesHasCutSubtypeOf :: TypeEnv tg -> TypeVarArgEnv -> ReachesTree -> Type -> Bool
 reachesHasCutSubtypeOf classGraph vaenv (ReachesTree children) superType = all childIsSubtype $ H.toList children
   where childIsSubtype (key, val) = isSubtypeOfWithEnv classGraph vaenv (singletonType key) superType || reachesHasCutSubtypeOf classGraph vaenv val superType
 reachesHasCutSubtypeOf classGraph vaenv (ReachesLeaf leafs) superType = any (\t -> isSubtypeOfWithEnv classGraph vaenv t superType) leafs
@@ -76,7 +72,7 @@ reachesPartial ReachesEnv{rVisited} p | S.member p rVisited = ReachesLeaf []
 reachesPartial ReachesEnv{rVaenv} PartialType{ptName=argName} | TVArg (partialKey argName) `H.member` rVaenv = ReachesLeaf [TypeVar (TVArg $ partialKey argName) TVInt]
 reachesPartial env@ReachesEnv{rTypeEnv, rVisited} partial = do
 
-  let ttypes = typeGraphQuery env partial
+  let ttypes = typeGraphQuery rTypeEnv partial
 
   let env' = env{rVisited=S.insert partial rVisited}
   if null ttypes
