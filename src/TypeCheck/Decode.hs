@@ -25,9 +25,7 @@ import           TypeCheck.Common
 
 toMeta :: FEnv -> VarMeta -> String -> TypeCheckResult TypedMeta
 toMeta env@FEnv{feTypeEnv} m@(Meta pt pos _) _ = case descriptor env m of
-  TypeCheckResult notes SType{stypeAct=ub, stypeTree=rt} -> case pt of
-    TypeVar{} -> return $ Meta pt pos rt
-    _ -> TypeCheckResult notes $ Meta (intersectTypes feTypeEnv ub pt) pos rt
+  TypeCheckResult notes SType{stypeAct=ub, stypeTree=rt} -> TypeCheckResult notes $ Meta (intersectTypes feTypeEnv ub pt) pos rt
   TypeCheckResE notes -> do
     TypeCheckResult notes (Meta BottomType pos Nothing)
 

@@ -26,9 +26,7 @@ import           TypeCheck.Common
 showM :: FEnv -> VarMeta -> TypeCheckResult ShowMeta
 showM env@FEnv{feTypeEnv} m = do
   stype@SType{stypeAct} <- descriptor env m
-  let tp' = case getMetaType m of
-        TypeVar{} -> getMetaType m
-        _         -> intersectTypes feTypeEnv (getMetaType m) stypeAct
+  let tp' = intersectTypes feTypeEnv (getMetaType m) stypeAct
   return $ mapMetaDat (ShowMeta stype) (mWithType tp' m)
 
 showExpr :: FEnv -> VExpr -> TypeCheckResult SExpr
