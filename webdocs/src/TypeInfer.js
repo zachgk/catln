@@ -2,6 +2,7 @@ import React, {useContext} from 'react';
 
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
+import Tooltip from '@material-ui/core/Tooltip';
 import {
   Switch,
   Route,
@@ -39,7 +40,7 @@ function TypeInfer() {
 }
 
 function Main(props) {
-  let {notes, data: prgm} = props;
+  let {notes, data: [, prgm]} = props;
   let prgmName = useContext(PrgmNameContext);
   const classes = useStyles();
 
@@ -79,19 +80,24 @@ function Main(props) {
 }
 
 let VarMeta = (notesMap) => (props) => {
+  const {withPos} = props;
   const [, pos, [pnt,]] = props.data;
   var style = {};
 
   let showPos;
   if(pos) {
 
-    if(props.withPos) {
+    if(withPos) {
       showPos = <span>&nbsp;-&nbsp;<Pos pos={pos} /></span>;
     }
 
     if(posKey(pos) in notesMap) {
       style.background = 'lightCoral';
     }
+  }
+
+  if (!withPos) {
+    style.fontSize = "xx-small";
   }
 
   return (
@@ -157,31 +163,44 @@ function Constraint(props) {
   const {conDat} = constraint;
   switch(conDat.tag) {
   case "EqualsKnown":
-    return (<span><Meta data={conDat.contents[1]} withPos /> k== <Type data={conDat.contents[2]}/></span>);
+    return (<span><Meta data={conDat.contents[1]} withPos /> <COp i={conDat.contents[0]}>k==</COp> <Type data={conDat.contents[2]}/></span>);
   case "EqPoints":
-    return (<span><Meta data={conDat.contents[1]} withPos /> p== <Meta data={conDat.contents[2]} withPos /></span>);
+    return (<span><Meta data={conDat.contents[1]} withPos /> <COp i={conDat.contents[0]}>p==</COp> <Meta data={conDat.contents[2]} withPos /></span>);
   case "BoundedByKnown":
-    return (<span><Meta data={conDat.contents[1]} withPos /> ⊆ <Type data={conDat.contents[2]}/></span>);
+    return (<span><Meta data={conDat.contents[1]} withPos /> <COp i={conDat.contents[0]}>⊆</COp> <Type data={conDat.contents[2]}/></span>);
   case "BoundedByObjs":
-    return (<span>BoundedByObjs <Meta data={conDat.contents[1]} withPos /></span>);
+    return (<span><COp i={conDat.contents[0]}>BoundedByObjs</COp> <Meta data={conDat.contents[1]} withPos /></span>);
+  case "NoReturnArg":
+    return (<span><COp i={conDat.contents[0]}>NoReturnArg</COp> <Meta data={conDat.contents[1]} withPos /></span>);
   case "ArrowTo":
-    return (<span><Meta data={conDat.contents[1]} withPos /> -&gt; <Meta data={conDat.contents[2]} withPos /></span>);
+    return (<span><Meta data={conDat.contents[1]} withPos /> <COp i={conDat.contents[0]}>-&gt;</COp> <Meta data={conDat.contents[2]} withPos /></span>);
   case "PropEq":
-    return (<span>(<Meta data={conDat.contents[1][0]} withPos />).<PartialKey data={conDat.contents[1][1].contents}/> == <Meta data={conDat.contents[2]} withPos /></span>);
-  case "VarEq":
-    return (<span>(<Meta data={conDat.contents[1][0]} withPos />).{conDat.contents[1][1]} == <Meta data={conDat.contents[2]} withPos /></span>);
+    return (<span>(<Meta data={conDat.contents[1][0]} withPos />).<PartialKey data={conDat.contents[1][1].contents}/> <COp i={conDat.contents[0]}> ==</COp> <Meta data={conDat.contents[2]} withPos /></span>);
   case "AddArg":
-    return (<span>(<Meta data={conDat.contents[1][0]} withPos />)(<PartialKey data={conDat.contents[1][1]}/>) arg== <Meta data={conDat.contents[2]} withPos /></span>);
+    return (<span>(<Meta data={conDat.contents[1][0]} withPos />)(<PartialKey data={conDat.contents[1][1].contents}/>) <COp i={conDat.contents[0]}>arg==</COp> <Meta data={conDat.contents[2]} withPos /></span>);
   case "AddInferArg":
-    return (<span>(<Meta data={conDat.contents[1]} withPos />)(?) iarg== <Meta data={conDat.contents[2]} withPos /></span>);
+    return (<span>(<Meta data={conDat.contents[1]} withPos />)(?) <COp i={conDat.contents[0]}>iarg==</COp> <Meta data={conDat.contents[2]} withPos /></span>);
   case "SetArgMode":
-    return (<span>P(<Meta data={conDat.contents[1]} withPos />) ps== <Meta data={conDat.contents[2]} withPos /></span>);
+    if (conDat.contents[1]) {
+      return (<span>P(<Meta data={conDat.contents[2]} withPos />) <COp i={conDat.contents[0]}>ps==</COp> <Meta data={conDat.contents[3]} withPos /></span>);
+    } else {
+      return (<span>(<Meta data={conDat.contents[2]} withPos />).. <COp i={conDat.contents[0]}>ps==</COp> <Meta data={conDat.contents[3]} withPos /></span>);
+    }
   case "UnionOf":
-    return (<span>UnionOf <Meta data={conDat.contents[1]} withPos /></span>);
+    return (<span><COp i={conDat.contents[0]}>UnionOf</COp> <Meta data={conDat.contents[1]} withPos /></span>);
   default:
     console.error("Unknown renderConstraint dat", conDat);
     return "";
   }
+}
+
+function COp(props) {
+  const {children, i} = props;
+  return (
+    <Tooltip title={i.toString()}>
+      <span>{children}</span>
+    </Tooltip>
+  );
 }
 
 function Scheme(props) {

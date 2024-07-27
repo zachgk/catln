@@ -43,7 +43,7 @@ function Expr(props) {
 
     let showM;
     if(showMetas) {
-      showM = <i>[<Meta data={m}/>]</i>;
+      showM = <i><Meta data={m}/></i>;
     }
 
     let showBase = <Expr expr={base} Meta={Meta} showMetas={showMetas}/>;
@@ -70,7 +70,7 @@ function Expr(props) {
 
     let showvM;
     if(showMetas) {
-      showM = <i>[<Meta data={vm}/>]</i>;
+      showvM = <i><Meta data={vm}/></i>;
     }
 
     let showvBase = <Expr expr={vbase} Meta={Meta} showMetas={showMetas}/>;
