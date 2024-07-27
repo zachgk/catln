@@ -142,12 +142,12 @@ newtype ClassGraph = ClassGraph (GraphData CGNode PartialName)
 
 class TypeGraph tg where
   typeGraphMerge :: tg -> tg -> tg
-  typeGraphQuery :: TypeEnv tg -> PartialType -> [Type]
+  typeGraphQuery :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> [Type]
 
 data EmptyTypeGraph = EmptyTypeGraph
 instance TypeGraph EmptyTypeGraph where
   typeGraphMerge _ _ = EmptyTypeGraph
-  typeGraphQuery _ _ = []
+  typeGraphQuery _ _ _ = []
 
 data TypeEnv tg = TypeEnv {
   teClassGraph :: ClassGraph,
@@ -579,12 +579,8 @@ isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subAr
 isSubtypeOfWithEnv :: TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Bool
 isSubtypeOfWithEnv _ _ _ PTopType = True
 isSubtypeOfWithEnv _ _ t1 t2 | t1 == t2 = True
-isSubtypeOfWithEnv typeEnv vaenv (TypeVar v _) t2 = case H.lookup v vaenv of
-  Just t1 -> isSubtypeOfWithEnv typeEnv vaenv t1 t2
-  Nothing -> error $ printf "isSubtypeOfWithEnv with unknown type var or arg %s" (show v)
-isSubtypeOfWithEnv typeEnv vaenv t1 (TypeVar v _) = case H.lookup v vaenv of
-  Just t2 -> isSubtypeOfWithEnv typeEnv vaenv t1 t2
-  Nothing -> error $ printf "isSubtypeOfWithEnv with unknown type var or arg %s" (show v)
+isSubtypeOfWithEnv typeEnv vaenv (TypeVar v _) t2 = isSubtypeOfWithEnv typeEnv vaenv (vaenvLookup vaenv v) t2
+isSubtypeOfWithEnv typeEnv vaenv t1 (TypeVar v _) = isSubtypeOfWithEnv typeEnv vaenv t1 (vaenvLookup vaenv v)
 isSubtypeOfWithEnv _ _ PTopType t = t == PTopType
 isSubtypeOfWithEnv typeEnv vaenv t1 t2@TopType{} = isSubtypeOfWithEnv typeEnv vaenv t1 t2'
   where
@@ -894,6 +890,12 @@ mergeVarEnvs typeEnv = H.unionWith (intersectTypes typeEnv)
 mergeAllVarEnvs :: (Foldable f, Eq k, Hashable k) => TypeEnv tg -> f (H.HashMap k Type) -> H.HashMap k Type
 mergeAllVarEnvs typeEnv = foldr (mergeVarEnvs typeEnv) H.empty
 
+vaenvLookup :: TypeVarArgEnv -> TypeVarAux -> Type
+vaenvLookup vaenv v@TVVar{} = H.lookupDefault PTopType v vaenv
+vaenvLookup vaenv v@TVArg{} = case H.lookup v vaenv of
+  Just t -> t
+  Nothing -> error $ printf "Failed vaenvLookup for %s in %s" (show v) (show vaenv)
+
 -- | Replaces the type variables 'TVVar' in a 'Type' based on the variables in a provided 'TypeVarEnv'
 substituteVarsWithVarEnv :: TypeVarEnv -> Type -> Type
 substituteVarsWithVarEnv venv (UnionType partials) = UnionType $ joinUnionType $ map (substitutePartial venv) $ splitUnionType partials
@@ -933,18 +935,17 @@ typeGetAux (TVArg v) p = typeGetArg v p
 
 -- | Gets an arg from a type while substituting the variables used in the types ptVars
 typeGetArg :: ArgName -> PartialType -> Maybe Type
-typeGetArg argName PartialType{ptArgs, ptVars, ptArgMode} = case H.lookup argName ptArgs of
+typeGetArg argName partial@PartialType{ptArgs, ptVars, ptArgMode} = case H.lookup argName ptArgs of
   Nothing -> case ptArgMode of
     PtArgAny   -> Just PTopType
     PtArgExact -> Nothing
-  Just arg -> Just $ case arg of
-    t@TopType{} -> t
-    TypeVar (TVVar v) TVInt -> H.lookupDefault PTopType v ptVars
-    TypeVar (TVVar _) TVExt -> error $ printf "Not yet implemented"
-    TypeVar (TVArg _) _ -> error $ printf "Not yet implemented"
-    UnionType partialLeafs -> UnionType $ joinUnionType $ map substitutePartial $ splitUnionType partialLeafs
+  Just arg -> case arg of
+    t@TopType{} -> Just t
+    TypeVar (TVArg a) _ | a == argName -> error $ printf "Found getArg cycle looking for %s in %s" (show argName) (show partial)
+    TypeVar v _ -> typeGetAux v partial
+    UnionType partialLeafs -> Just $ UnionType $ joinUnionType $ map substitutePartial $ splitUnionType partialLeafs
       where
-        substitutePartial partial@PartialType{ptVars=vs} = partial{ptVars = fmap (substituteVarsWithVarEnv ptVars) vs}
+        substitutePartial p@PartialType{ptVars=vs} = p{ptVars = fmap (substituteVarsWithVarEnv ptVars) vs}
 
 -- | Gets an arg from a type while substituting the variables used in the types ptVars
 typesGetArg :: TypeEnv tg -> ArgName -> Type -> Maybe Type
@@ -989,7 +990,8 @@ updateTypeProp typeEnv vaenv superType propName subType = case superType of
           let tp'' = substituteWithVarArgEnv vaenv' tp'
           let updateSuperPartial p = case typeGetAux propName p of
                 Nothing -> Nothing
-                Just PTopType -> Just $ typeSetAux propName tp' p
+                -- TODO Uncomment below to better propogate type variables during type inference
+                -- Just PTopType | propName /= v -> Just $ typeSetAux propName subType p
                 Just supTp -> Just $ typeSetAux propName (intersectTypes typeEnv supTp tp'') p
           let superType' = compactType typeEnv vaenv $ UnionType $ joinUnionType $ mapMaybe updateSuperPartial $ splitUnionType supPartials
 

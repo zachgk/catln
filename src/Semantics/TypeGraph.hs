@@ -70,9 +70,9 @@ reachesHasCutSubtypeOf classGraph vaenv (ReachesLeaf leafs) superType = any (\t 
 reachesPartial :: (TypeGraph tg) => ReachesEnv tg -> PartialType -> ReachesTree
 reachesPartial ReachesEnv{rVisited} p | S.member p rVisited = ReachesLeaf []
 reachesPartial ReachesEnv{rVaenv} PartialType{ptName=argName} | TVArg (partialKey argName) `H.member` rVaenv = ReachesLeaf [TypeVar (TVArg $ partialKey argName) TVInt]
-reachesPartial env@ReachesEnv{rTypeEnv, rVisited} partial = do
+reachesPartial env@ReachesEnv{rTypeEnv, rVisited, rVaenv} partial = do
 
-  let ttypes = typeGraphQuery rTypeEnv partial
+  let ttypes = typeGraphQuery rTypeEnv rVaenv partial
 
   let env' = env{rVisited=S.insert partial rVisited}
   if null ttypes
