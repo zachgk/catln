@@ -356,7 +356,13 @@
                     ( /tail=~ConsList [ /T=TVVar /T ]
                     , /head=TVVar /T
                     ) = /Data/Cons ( Value /head )
-                    ( Value /tail -> ~ConsList [ /T=TVVar /T ] )
+                    ( Value /tail ->
+                        ( /Data/Nil | /Data/Cons [ /T=TopType ]
+                            ( /tail=~ConsList [ /T=TVVar /T ]
+                            , /head=TVVar /T
+                            )
+                        )
+                    )
                 ) ->
                 ( /Data/Primitive/Integer | /operator+
                     ( /l=/Data/Primitive/Integer

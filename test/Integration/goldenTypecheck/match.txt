@@ -356,7 +356,13 @@
                     ( /tail=~ConsList [ /T=TVVar /T ]
                     , /head=TVVar /T
                     ) = /Data/Cons ( Value /head )
-                    ( Value /tail -> ~ConsList [ /T=TVVar /T ] )
+                    ( Value /tail ->
+                        ( /Data/Nil | /Data/Cons [ /T=TopType ]
+                            ( /tail=~ConsList [ /T=TVVar /T ]
+                            , /head=TVVar /T
+                            )
+                        )
+                    )
                 ) ->
                 ( /Data/Primitive/Integer | /operator+
                     ( /l=/Data/Primitive/Integer
@@ -460,7 +466,7 @@
     (
         (
             [ /abs.$ 5 f20a2 ( Value /x )
-                ( Value /$ 5 f20a2-arg= Hole TopType HoleActive Nothing@Value /x2 ) ->
+                ( Value /$ 5 f20a2-arg -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing@Value /x2 ) ->
                 ( /Data/Primitive/Integer | /operator*
                     ( /l=/Data/Primitive/Integer
                     , /r=/Data/Primitive/Integer
@@ -469,7 +475,7 @@
                 ( Value /r -> /Data/Primitive/Integer = /operator-
                     ( Value /a -> /Data/Primitive/Integer = CInt 1 )
                 )
-            , /abs.$ 5 f20a2 ( Value /x )
+            , /abs.$ 5 f20a2 ( Value /x -> ∀/Data/Algebra/Ord )
                 ( Value /$ 5 f20a2-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>= ( Value /l -> TVArg /x = Value /x )
                     ( Value /r -> /Data/Primitive/Integer = CInt 0 )
                 ) -> TVArg /x2 = Value /x2

@@ -565,7 +565,7 @@ isSubPartialOfWithEnv _ _ PartialType{ptArgs=subArgs, ptArgMode=subArgMode} Part
 isSubPartialOfWithEnv _ _ PartialType{ptArgs=subArgs} PartialType{ptArgs=superArgs, ptArgMode=superArgMode} | superArgMode == PtArgExact && not (H.keysSet subArgs `isSubsetOf` H.keysSet superArgs) = False
 isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subArgs, ptPreds=subPreds} super@PartialType{ptVars=superVars, ptArgs=superArgs, ptPreds=superPreds} = hasAll subArgs superArgs && hasAllPreds superPreds subPreds && hasAll subVars superVars
   where
-    vaenv' = substituteWithVarArgEnv vaenv <$> H.unionWith (intersectTypes typeEnv) (ptVarArg super) (ptVarArg sub)
+    vaenv' = H.union vaenv (substituteWithVarArgEnv vaenv <$> H.unionWith (intersectTypes typeEnv) (ptVarArg super) (ptVarArg sub))
     hasAll sb sp = and $ H.elems $ H.intersectionWith (isSubtypeOfWithEnv typeEnv vaenv') sb sp
 
     hasAllPreds :: TypePredicates -> TypePredicates -> Bool
@@ -830,14 +830,18 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
     differencePartial :: PartialType -> PartialType -> [PartialType]
     differencePartial p1 p2 | p1 == p2 = []
     differencePartial p1@PartialType{ptArgs=posArgs, ptArgMode=PtArgExact} PartialType{ptArgs=negArgs, ptArgMode=PtArgExact} | H.keysSet posArgs /= H.keysSet negArgs = [p1]
-    differencePartial p1@PartialType{ptArgs=posArgs, ptVars=posVars, ptArgMode=PtArgExact} PartialType{ptArgs=negArgs, ptVars=negVars, ptArgMode=PtArgExact} = concatMap subtractArg (H.toList negArgs) ++ concatMap subtractVar (H.toList negVars)
+    differencePartial p1@PartialType{ptArgs=posArgs, ptVars=posVars, ptArgMode=posArgMode} PartialType{ptArgs=negArgs, ptVars=negVars, ptArgMode=negArgMode} | posArgMode == negArgMode = mapMaybe subtractArg (H.toList negArgs) ++ mapMaybe subtractVar (H.toList negVars)
       where
-        subtractArg (_, PTopType) = []
+        subtractArg (_, PTopType) = Nothing
         subtractArg (argName, negArgVal) = case H.lookup argName posArgs of
-          Just posArgVal -> [p1{ptArgs=H.insert argName (differenceTypeWithEnv typeEnv vaenv posArgVal negArgVal) posArgs}]
+          Just posArgVal -> case differenceTypeWithEnv typeEnv vaenv posArgVal negArgVal of
+            BottomType -> Nothing
+            argVal'    -> Just $ p1{ptArgs=H.insert argName argVal' posArgs}
           Nothing -> error "Missing argName in differencePartials"
-        subtractVar (_, PTopType) = []
-        subtractVar (varName, negVarVal) = [p1{ptVars=H.insert varName (differenceTypeWithEnv typeEnv vaenv (H.lookupDefault PTopType varName posVars) negVarVal) posArgs}]
+        subtractVar (_, PTopType) = Nothing
+        subtractVar (varName, negVarVal) = case H.lookupDefault PTopType varName posVars of
+          BottomType -> Nothing
+          varVal' -> Just p1{ptVars=H.insert varName (differenceTypeWithEnv typeEnv vaenv varVal' negVarVal) posArgs}
     differencePartial p1 p2 = error $ printf "Unimplemented differencePartial: %s - %s" (show p1) (show p2)
 
 differenceTypeWithEnv :: TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Type
@@ -983,7 +987,11 @@ updateTypeProp typeEnv vaenv superType propName subType = case superType of
           let tp' = intersectAllTypes typeEnv $ H.lookupDefault PTopType v vaenv : mapMaybe (typeGetAux propName) supPartialList
           let vaenv' = H.insert v tp' vaenv
           let tp'' = substituteWithVarArgEnv vaenv' tp'
-          let superType' = compactType typeEnv vaenv $ UnionType $ joinUnionType $ map (\p -> typeSetAux propName (intersectTypes typeEnv (fromMaybe PTopType $ typeGetAux propName p) tp'') p) $ filter (isJust . typeGetAux propName) $ splitUnionType supPartials
+          let updateSuperPartial p = case typeGetAux propName p of
+                Nothing -> Nothing
+                Just PTopType -> Just $ typeSetAux propName tp' p
+                Just supTp -> Just $ typeSetAux propName (intersectTypes typeEnv supTp tp'') p
+          let superType' = compactType typeEnv vaenv $ UnionType $ joinUnionType $ mapMaybe updateSuperPartial $ splitUnionType supPartials
 
           (vaenv', superType', subType)
         PTopType -> do

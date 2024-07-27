@@ -356,7 +356,13 @@
                     ( /tail=~ConsList [ /T=TVVar /T ]
                     , /head=TVVar /T
                     ) = /Data/Cons ( Value /head )
-                    ( Value /tail -> ~ConsList [ /T=TVVar /T ] )
+                    ( Value /tail ->
+                        ( /Data/Nil | /Data/Cons [ /T=TopType ]
+                            ( /tail=~ConsList [ /T=TVVar /T ]
+                            , /head=TVVar /T
+                            )
+                        )
+                    )
                 ) ->
                 ( /Data/Primitive/Integer | /operator+
                     ( /l=/Data/Primitive/Integer
@@ -459,7 +465,7 @@
 ,
     (
         (
-            [ /abs.$a50cec- 1 ( Value /x ) ( Value /$a50cec-arg= Hole TopType HoleActive Nothing@Value /x2 ) ->
+            [ /abs.$a50cec- 1 ( Value /x ) ( Value /$a50cec-arg -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing@Value /x2 ) ->
                 ( /Data/Primitive/Integer | /operator*
                     ( /l=/Data/Primitive/Integer
                     , /r=/Data/Primitive/Integer
@@ -468,26 +474,26 @@
                 ( Value /r -> /Data/Primitive/Integer = /operator-
                     ( Value /a -> /Data/Primitive/Integer = CInt 1 )
                 )
-            , /abs.$a50cec- 0 ( Value /x )
+            , /abs.$a50cec- 0 ( Value /x -> /Data/Primitive/Integer )
                 ( Value /$a50cec-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>= ( Value /l -> TVArg /x = Value /x )
                     ( Value /r -> /Data/Primitive/Integer = CInt 0 )
                 ) ->
                 ( /Data/Primitive/Integer | /abs.$a50cec- 1
-                    ( /$a50cec-arg=TopType
-                    , /x=TopType
+                    ( /$a50cec-arg=/Data/Primitive/Integer
+                    , /x=/Data/Primitive/Integer
                     ) | /operator*
                     ( /l=/Data/Primitive/Integer
                     , /r=/Data/Primitive/Integer
                     )
                 ) = /abs.$a50cec- 1 ( Value /x -> TVArg /x = Value /x ) ( Value /$a50cec-arg -> TVArg /x = Value /x )
-            , /abs.$a50cec- 0 ( Value /x )
+            , /abs.$a50cec- 0 ( Value /x -> ∀/Data/Algebra/Ord )
                 ( Value /$a50cec-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>= ( Value /l -> TVArg /x = Value /x )
                     ( Value /r -> /Data/Primitive/Integer = CInt 0 )
                 ) -> TVArg /x2 = Value /x2
             , /abs ( Value /x -> /Data/Primitive/Integer ) ->
                 ( /Data/Primitive/Integer | /abs.$a50cec- 1
-                    ( /$a50cec-arg=TopType
-                    , /x=TopType
+                    ( /$a50cec-arg=/Data/Primitive/Integer
+                    , /x=/Data/Primitive/Integer
                     ) | /operator*
                     ( /l=/Data/Primitive/Integer
                     , /r=/Data/Primitive/Integer

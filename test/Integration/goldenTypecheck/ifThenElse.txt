@@ -356,7 +356,13 @@
                     ( /tail=~ConsList [ /T=TVVar /T ]
                     , /head=TVVar /T
                     ) = /Data/Cons ( Value /head )
-                    ( Value /tail -> ~ConsList [ /T=TVVar /T ] )
+                    ( Value /tail ->
+                        ( /Data/Nil | /Data/Cons [ /T=TopType ]
+                            ( /tail=~ConsList [ /T=TVVar /T ]
+                            , /head=TVVar /T
+                            )
+                        )
+                    )
                 ) ->
                 ( /Data/Primitive/Integer | /operator+
                     ( /l=/Data/Primitive/Integer
@@ -468,7 +474,7 @@
                 ( Value /val -> /Data/Primitive/Integer = /abs
                     ( Value /x -> /Data/Primitive/Integer = CInt 0 )
                 ) ( Value /this -> TVArg /io = Value /io )
-            , /abs.$d2f352 ( Value /x ) ( Value /$d2f352-arg= Hole TopType HoleActive Nothing@Value /Catln/Else ) ->
+            , /abs.$d2f352 ( Value /x -> /Data/Primitive/Integer ) ( Value /$d2f352-arg= Hole TopType HoleActive Nothing@Value /Catln/Else ) ->
                 ( /Data/Primitive/Integer | /operator*
                     ( /l=/Data/Primitive/Integer
                     , /r=/Data/Primitive/Integer

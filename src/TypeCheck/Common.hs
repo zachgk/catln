@@ -319,7 +319,7 @@ fAddTTypeGraph env@FEnv{feTTypeGraph} k v = env {feTTypeGraph = H.insertWith (++
 -- It differs from Constrain.checkScheme because it checks for bugs in the internal compiler, not bugs in the user code
 verifyScheme :: TypeEnv tg -> VMetaVarArgEnv -> VarMeta -> Scheme -> Scheme -> Maybe String
 verifyScheme typeEnv vaenv (Meta _ _ (VarMetaDat _ _)) (TypeCheckResult _ (SType oldAct oldReq _ _)) (TypeCheckResult _ (SType act req _ _)) = listToMaybe $ catMaybes [
-  if verifySchemeActLowers then Nothing else Just "verifySchemeActLowers",
+  if verifySchemeActLowers then Nothing else Just(printf "verifySchemeActLowers\n\t\tGrows by: %s\n\t\t\tUsing vaenv %s" (show $ differenceTypeWithEnv typeEnv (fmap getMetaType vaenv) act oldAct) (show $ fmap getMetaType vaenv)),
   if verifySchemeReqLowers then Nothing else Just "verifySchemeReqLowers",
   if verifyCompacted then Nothing else Just "verifyCompacted"
   ]
@@ -365,7 +365,7 @@ setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@(
     pnts' = if schemeChanged then IM.insert p scheme' fePnts else fePnts -- Only update if changed to avoid meaningless updates
     feTrace' = if schemeChanged
       then case verifyScheme feTypeEnv (constraintVarArgEnv con) m scheme scheme' of
-             Just failVerification -> error $ printf "Scheme failed verification %s during typechecking of %s:\n\t\t New Scheme: %s \n\t\t Old Scheme: %s\n\t\t Obj: %s\n\t\t Con: %s" failVerification msg (show scheme') (show scheme) (show m) (show con)
+             Just failVerification -> error $ printf "Scheme failed verification %s\n\t\tDuring typechecking of %s:\n\t\t New Scheme: %s \n\t\t Old Scheme: %s\n\t\t Obj: %s\n\t\t Con: %s" failVerification msg (show scheme') (show scheme) (show m) (show con)
              Nothing -> traceConstrainChange feTrace p scheme'
       else feTrace
 
