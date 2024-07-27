@@ -70,7 +70,7 @@ makeBaseFEnv prgm = FEnv{
   feTTypeGraph = H.empty,
   feUpdatedDuringEpoch = False,
   feTypeEnv = mkTypeEnv prgm,
-  feTrace = [[]]
+  feTrace = mkTraceConstrain
   }
 
 mkVarMetaDat :: EncodeState -> Pnt -> VarMetaDat

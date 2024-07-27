@@ -119,27 +119,38 @@ function TraceEpochs(props) {
     <div>
       <h2>Pnt {curMeta}</h2>
       <Loading status={apiResult}>
-        <Traces traces={apiResult.data} Meta={Meta} />
+        <Traces traceData={apiResult.data} Meta={Meta} />
       </Loading>
     </div>
   );
 }
 
 function Traces(props) {
-  const {traces, Meta} = props;
-  let showTraces = traces.map((t, index) => {
+  const {traceData, Meta} = props;
+  const {tcEpochs, tcCons, tcAllObjs} = traceData;
+  let showTraces = tcEpochs.map((t, index) => {
     return (
       <div key={index}>
         <h3>{index}</h3>
-        <Trace trace={t} Meta={Meta} />
+        <Trace trace={t} Meta={Meta} tcAllObjs={tcAllObjs} />
       </div>
     );
   });
-  return <div>{showTraces}</div>;
+  let showCons = tcCons.map((c, index) => {
+    return <div key={index}><Constraint constraint={c} Meta={Meta} tcAllObjs={tcAllObjs}/></div>;
+  });
+  return (
+    <div>
+      {showTraces}
+      <br/>
+      <h3>Constraints</h3>
+      {showCons}
+    </div>
+  );
 }
 
 function Trace(props) {
-  let {trace, Meta} = props;
+  let {trace, Meta, tcAllObjs} = props;
   return trace.map((constraintPair, constraintIndex) => {
     let [constraint, updates] = constraintPair;
 
@@ -151,7 +162,7 @@ function Trace(props) {
 
     return (
       <div key={constraintIndex}>
-        <b><Constraint constraint={constraint} Meta={Meta}/></b>
+        <b><Constraint constraint={constraint} Meta={Meta} tcAllObjs={tcAllObjs} /></b>
         {showUpdates}
       </div>
     );
@@ -159,7 +170,7 @@ function Trace(props) {
 }
 
 function Constraint(props) {
-  const {constraint, Meta} = props;
+  const {constraint, Meta, tcAllObjs} = props;
   const {conDat} = constraint;
   switch(conDat.tag) {
   case "EqualsKnown":
@@ -169,7 +180,7 @@ function Constraint(props) {
   case "BoundedByKnown":
     return (<span><Meta data={conDat.contents[1]} withPos /> <COp i={conDat.contents[0]}>⊆</COp> <Type data={conDat.contents[2]}/></span>);
   case "BoundedByObjs":
-    return (<span><COp i={conDat.contents[0]}>BoundedByObjs</COp> <Meta data={conDat.contents[1]} withPos /></span>);
+    return (<span><Meta data={conDat.contents[1]} withPos /> <COp i={conDat.contents[0]}>BoundedByObjs</COp> <Meta data={tcAllObjs}/></span>);
   case "NoReturnArg":
     return (<span><COp i={conDat.contents[0]}>NoReturnArg</COp> <Meta data={conDat.contents[1]} withPos /></span>);
   case "ArrowTo":

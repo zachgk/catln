@@ -46,7 +46,9 @@ import           Syntax.Parsers                (mkDesCanonicalImportStr,
                                                 readFiles)
 import           TypeCheck                     (typecheckPrgm,
                                                 typecheckPrgmWithTrace)
-import           TypeCheck.Common              (TPrgm, TraceConstrain, VPrgm)
+import           TypeCheck.Common              (TPrgm, TraceConstrain, VPrgm,
+                                                filterTraceConstrain,
+                                                flipTraceConstrain)
 import           Utils
 
 type TBPrgm = Prgm TExpr EvalMetaDat
@@ -234,7 +236,7 @@ docApiBase provider = do
     maybeTprgmWithTraceGraph <- liftAndCatchIO $ getTPrgmWithTrace provider
     let maybeTprgmWithTrace = maybeTprgmWithTraceGraph >>= \graphData -> do
           case graphLookup prgmName' graphData of
-            Just (_, _, trace) -> return $ reverse $ map (reverse . filter (any ((==) pnt . fst) . snd)) trace
+            Just (_, _, trace) -> return $ flipTraceConstrain $ filterTraceConstrain trace pnt
             Nothing -> CErr [MkCNote $ GenCErr Nothing "Invalid file to constrain"]
     maybeJson maybeTprgmWithTrace
 

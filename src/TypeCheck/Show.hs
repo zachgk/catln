@@ -103,7 +103,7 @@ showTraceConstrainEpoch env = SConstraintEpoch . map mapConstraint . filter (not
     mapConstraint (con, pnts) = (showCon env con, pnts)
 
 showTraceConstrainPnt :: FEnv -> Pnt -> SConstrainPnt
-showTraceConstrainPnt env@FEnv{feTrace} p = SConstrainPnt $ map (map (bimap (showCon env) (fromJust . lookup p)) . filter (elem p . map fst . snd)) feTrace
+showTraceConstrainPnt env@FEnv{feTrace=TraceConstrain{tcEpochs}} p = SConstrainPnt $ map (map (bimap (showCon env) (fromJust . lookup p)) . filter (elem p . map fst . snd)) tcEpochs
 
 matchingConstraintHelper :: FEnv -> VarMeta -> VarMeta -> VarMeta -> Bool
 matchingConstraintHelper env p p2 p3 = equivalent env p p2 || equivalent env p p3

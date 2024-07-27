@@ -365,9 +365,7 @@ setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@(
     feTrace' = if schemeChanged
       then case verifyScheme feTypeEnv (constraintVarArgEnv con) m scheme scheme' of
              Just failVerification -> error $ printf "Scheme failed verification %s during typechecking of %s:\n\t\t New Scheme: %s \n\t\t Old Scheme: %s\n\t\t Obj: %s\n\t\t Con: %s" failVerification msg (show scheme') (show scheme) (show m) (show con)
-             Nothing -> case feTrace of
-              ((curConstraint, curChanged):curEpoch):prevEpochs -> ((curConstraint, (p, scheme'):curChanged):curEpoch):prevEpochs
-              _ -> error "no epochs in feTrace"
+             Nothing -> traceConstrainChange feTrace p scheme'
       else feTrace
 
 pointUb :: FEnv -> VarMeta -> TypeCheckResult Type
@@ -405,17 +403,39 @@ descriptorConVaenvIO env con = descriptorSTypeVaenvIO env (constraintVarArgEnvIO
 
 -- trace constrain
 type TraceConstrainEpoch = [(VConstraint, [(Pnt, Scheme)])]
-type TraceConstrain = [TraceConstrainEpoch]
 type STraceConstrain = [(SConstraint, [(Pnt, Scheme)])]
+data TraceConstrain = TraceConstrain {
+  tcEpochs  :: [TraceConstrainEpoch],
+  tcCons    :: [VConstraint],
+  tcAllObjs :: VarMeta
+                                      }
+  deriving (Show, Generic, ToJSON)
+
+mkTraceConstrain :: TraceConstrain
+mkTraceConstrain = TraceConstrain [[]] [] emptyMetaN
 
 nextConstrainEpoch :: FEnv -> FEnv
-nextConstrainEpoch env@FEnv{feTrace} = case feTrace of
+nextConstrainEpoch env@FEnv{feTrace=tc@TraceConstrain{tcCons=[]}, feCons, feUnionAllObjs} = nextConstrainEpoch env{feTrace=tc{tcCons=feCons, tcAllObjs=feUnionAllObjs}} -- On first epoch, set constraints and all objs
+nextConstrainEpoch env@FEnv{feTrace=tc@TraceConstrain{tcEpochs}} = case tcEpochs of
   []         -> env
-  prevEpochs -> env{feTrace = []:prevEpochs, feUpdatedDuringEpoch = False}
+  prevEpochs -> env{feTrace = tc{tcEpochs=[]:prevEpochs}, feUpdatedDuringEpoch = False}
 
 startConstraint :: VConstraint -> FEnv -> FEnv
-startConstraint c env@FEnv{feTrace = curEpoch:prevEpochs} = env{feTrace = ((c, []):curEpoch):prevEpochs}
+startConstraint c env@FEnv{feTrace = tc@TraceConstrain{tcEpochs=curEpoch:prevEpochs}} = env{feTrace = tc{tcEpochs=((c, []):curEpoch):prevEpochs}}
 startConstraint _ _ = error "bad input to startConstraint"
+
+traceConstrainChange :: TraceConstrain -> Pnt -> Scheme -> TraceConstrain
+traceConstrainChange tc@TraceConstrain{tcEpochs=((curConstraint, curChanged):curEpoch):prevEpochs} p scheme' = tc{tcEpochs=((curConstraint, (p, scheme'):curChanged):curEpoch):prevEpochs}
+traceConstrainChange _ _ _ = error "no epochs in TraceConstrain"
+
+filterTraceConstrain :: TraceConstrain -> Pnt -> TraceConstrain
+filterTraceConstrain tc@TraceConstrain{tcEpochs, tcCons} p = tc{tcEpochs=map (filter (elem p . map fst . snd)) tcEpochs, tcCons=tcCons'}
+  where
+    tcCons' = filter (elem p . mapMaybe getPnt . constraintMetas) tcCons
+
+-- | Reverses the epochs order to be chronological
+flipTraceConstrain :: TraceConstrain -> TraceConstrain
+flipTraceConstrain tc@TraceConstrain{tcEpochs} = tc{tcEpochs=reverse $ map reverse tcEpochs}
 
 showTraceConstrain :: [SConstraint] -> String
 showTraceConstrain epochs = intercalate "\n" $ map showConstraintPair $ reverse epochs

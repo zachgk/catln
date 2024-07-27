@@ -276,7 +276,7 @@ runConstraints :: Integer -> FEnv -> [VConstraint] -> TypeCheckResult FEnv
 runConstraints _ env [] = return env
 -- runConstraints 0 env _ | trace (printf "Trace 908: %s" (show $ showTraceConstrainPnt env 908)) False = undefined
 runConstraints 0 env@FEnv{feUnionAllObjs} _ | (stypeAct <$> descriptor env feUnionAllObjs) == pure PTopType = TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit without determining the TopTop (unionAllObjs)"] env
-runConstraints 0 env@FEnv{feTrace} _ = TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit with still changing constraints: \n\n%s" (show $ showTraceConstrainEpoch env $ head $ tail feTrace)] env
+runConstraints 0 env@FEnv{feTrace} _ = TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit with still changing constraints: \n\n%s" (show $ showTraceConstrainEpoch env $ head $ tail $ tcEpochs feTrace)] env
 runConstraints limit env cons = do
   let (constraintsToPrune, env'@FEnv{feUpdatedDuringEpoch}) = executeConstraints env cons
   let cons' = mapMaybe (\(con, shouldPrune) -> if shouldPrune then Nothing else Just con) $ zip cons constraintsToPrune
