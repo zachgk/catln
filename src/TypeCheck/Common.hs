@@ -345,10 +345,11 @@ equivalent :: FEnv -> VarMeta -> VarMeta -> Bool
 equivalent env m1 m2 = descriptor env m1 == descriptor env m2
 
 fresh :: FEnv -> Scheme -> (Pnt, FEnv)
-fresh env@FEnv{fePnts} scheme = (pnt', env{fePnts = pnts'})
+fresh env@FEnv{fePnts, feTrace=tc@TraceConstrain{tcInitial}} scheme = (pnt', env{fePnts = pnts', feTrace=feTrace'})
   where
     pnt' = IM.size fePnts
     pnts' = IM.insert pnt' scheme fePnts
+    feTrace' = tc{tcInitial=H.insert pnt' scheme tcInitial}
 
 setDescriptor :: FEnv -> VConstraint -> VarMeta -> Scheme -> String -> FEnv
 setDescriptor env _ (Meta _ _ (VarMetaDat Nothing _)) _ _ = env
@@ -406,13 +407,14 @@ type TraceConstrainEpoch = [(VConstraint, [(Pnt, Scheme)])]
 type STraceConstrain = [(SConstraint, [(Pnt, Scheme)])]
 data TraceConstrain = TraceConstrain {
   tcEpochs  :: [TraceConstrainEpoch],
+  tcInitial :: H.HashMap Pnt Scheme,
   tcCons    :: [VConstraint],
   tcAllObjs :: VarMeta
                                       }
   deriving (Show, Generic, ToJSON)
 
 mkTraceConstrain :: TraceConstrain
-mkTraceConstrain = TraceConstrain [[]] [] emptyMetaN
+mkTraceConstrain = TraceConstrain [[]] H.empty [] emptyMetaN
 
 nextConstrainEpoch :: FEnv -> FEnv
 nextConstrainEpoch env@FEnv{feTrace=tc@TraceConstrain{tcCons=[]}, feCons, feUnionAllObjs} = nextConstrainEpoch env{feTrace=tc{tcCons=feCons, tcAllObjs=feUnionAllObjs}} -- On first epoch, set constraints and all objs
@@ -429,9 +431,11 @@ traceConstrainChange tc@TraceConstrain{tcEpochs=((curConstraint, curChanged):cur
 traceConstrainChange _ _ _ = error "no epochs in TraceConstrain"
 
 filterTraceConstrain :: TraceConstrain -> Pnt -> TraceConstrain
-filterTraceConstrain tc@TraceConstrain{tcEpochs, tcCons} p = tc{tcEpochs=map (filter (elem p . map fst . snd)) tcEpochs, tcCons=tcCons'}
+filterTraceConstrain tc@TraceConstrain{tcEpochs, tcCons, tcInitial} p = tc{tcEpochs=tcEpochs', tcCons=tcCons', tcInitial=tcInitial'}
   where
+    tcEpochs' = map (filter (elem p . map fst . snd)) tcEpochs
     tcCons' = filter (elem p . mapMaybe getPnt . constraintMetas) tcCons
+    tcInitial' = H.filterWithKey (\k _ -> k == p) tcInitial
 
 -- | Reverses the epochs order to be chronological
 flipTraceConstrain :: TraceConstrain -> TraceConstrain

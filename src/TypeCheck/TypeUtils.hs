@@ -175,8 +175,11 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} src@TopType{} des
   arrowConstrainUbs env con (expandType feTypeEnv (fmap (stypeAct . snd) conVaenv) src) dest
 arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} src@TypeVar{} dest = do
   let src' = expandType feTypeEnv (fmap (stypeAct . snd) conVaenv) src
-  (_, cdest, destRT) <- arrowConstrainUbs env con src' dest
-  return (src, cdest, destRT)
+  case (src', dest) of
+    (PTopType, PTopType) -> return (src, src, Nothing)
+    _ -> do
+      (_, cdest, destRT) <- arrowConstrainUbs env con src' dest
+      return (src, cdest, destRT)
 arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} (UnionType srcPartials) dest = do
   let srcPartialList = splitUnionType srcPartials
   reachesEnv <- mkReachesEnv env con

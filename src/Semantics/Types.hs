@@ -952,13 +952,13 @@ typeSetAux (TVVar k) v p@PartialType{ptVars} = p{ptVars=H.insert k v ptVars}
 typeSetAux (TVArg k) v p@PartialType{ptArgs} = p{ptArgs=H.insert k v ptArgs}
 
 updateTypeProp :: TypeEnv tg -> TypeVarArgEnv -> Type -> TypeVarAux -> Type -> (TypeVarArgEnv, Type, Type)
-updateTypeProp typeEnv vaenv superType propName subType = case (superType, subType) of
-    (PTopType, _) -> (vaenv, PTopType, subType)
-    (TypeVar v _, _) -> do
+updateTypeProp typeEnv vaenv superType propName subType = case superType of
+    PTopType -> (vaenv, PTopType, subType)
+    TypeVar v _ -> do
       let (vaenv', superType', subType') = updateTypeProp typeEnv vaenv (H.lookupDefault PTopType v vaenv) propName subType
       (H.insert v superType' vaenv', superType, subType')
-    (TopType{}, _) -> updateTypeProp typeEnv vaenv (expandType typeEnv vaenv superType) propName subType
-    (UnionType supPartials, _) -> do
+    TopType{} -> updateTypeProp typeEnv vaenv (expandType typeEnv vaenv superType) propName subType
+    UnionType supPartials -> do
       let supPartialList = splitUnionType supPartials
       let intersectedPartials sup@PartialType{ptVars=supVars} sub = case typeGetAux propName sup of
             Just (TypeVar (TVVar v) TVInt) -> do

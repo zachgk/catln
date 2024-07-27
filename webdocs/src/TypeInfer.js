@@ -119,15 +119,26 @@ function TraceEpochs(props) {
     <div>
       <h2>Pnt {curMeta}</h2>
       <Loading status={apiResult}>
-        <Traces traceData={apiResult.data} Meta={Meta} />
+        <Traces traceData={apiResult.data} curMeta={curMeta} Meta={Meta} />
       </Loading>
     </div>
   );
 }
 
 function Traces(props) {
-  const {traceData, Meta} = props;
-  const {tcEpochs, tcCons, tcAllObjs} = traceData;
+  const {traceData, curMeta, Meta} = props;
+  const {tcEpochs, tcCons, tcAllObjs, tcInitial} = traceData;
+  let showInitial;
+  if (curMeta in tcInitial) {
+    showInitial = (
+      <div>
+        <h3>Initial</h3>
+        <Scheme scheme={tcInitial[curMeta]} />
+      </div>
+    );
+  } else {
+    console.log("Missing tcInitial", tcInitial);
+  }
   let showTraces = tcEpochs.map((t, index) => {
     return (
       <div key={index}>
@@ -141,6 +152,7 @@ function Traces(props) {
   });
   return (
     <div>
+      {showInitial}
       {showTraces}
       <br/>
       <h3>Constraints</h3>
@@ -197,6 +209,8 @@ function Constraint(props) {
     } else {
       return (<span>(<Meta data={conDat.contents[2]} withPos />).. <COp i={conDat.contents[0]}>ps==</COp> <Meta data={conDat.contents[3]} withPos /></span>);
     }
+  case "ConWhere":
+    return (<span><Meta data={conDat.contents[1]} withPos /> | <Meta data={conDat.contents[2]}/><COp i={conDat.contents[0]}> = </COp><Meta data={conDat.contents[3]} withPos /></span>);
   case "UnionOf":
     return (<span><COp i={conDat.contents[0]}>UnionOf</COp> <Meta data={conDat.contents[1]} withPos /></span>);
   default:
