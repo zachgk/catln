@@ -942,7 +942,9 @@ typeGetArg argName partial@PartialType{ptArgs, ptVars, ptArgMode} = case H.looku
   Just arg -> case arg of
     t@TopType{} -> Just t
     TypeVar (TVArg a) _ | a == argName -> error $ printf "Found getArg cycle looking for %s in %s" (show argName) (show partial)
-    TypeVar v _ -> typeGetAux v partial
+    t'@(TypeVar v _) -> case typeGetAux v partial of
+      Just t'' -> Just t''
+      Nothing  -> Just t'
     UnionType partialLeafs -> Just $ UnionType $ joinUnionType $ map substitutePartial $ splitUnionType partialLeafs
       where
         substitutePartial p@PartialType{ptVars=vs} = p{ptVars = fmap (substituteVarsWithVarEnv ptVars) vs}
@@ -990,6 +992,7 @@ updateTypeProp typeEnv vaenv superType propName subType = case superType of
           let tp'' = substituteWithVarArgEnv vaenv' tp'
           let updateSuperPartial p = case typeGetAux propName p of
                 Nothing -> Nothing
+                Just supTp | supTp == subType -> Just $ typeSetAux propName subType p
                 -- TODO Uncomment below to better propogate type variables during type inference
                 -- Just PTopType | propName /= v -> Just $ typeSetAux propName subType p
                 Just supTp -> Just $ typeSetAux propName (intersectTypes typeEnv supTp tp'') p
