@@ -196,12 +196,12 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByObjs i p@STy
     -- A partially applied tuple would not be a raw type on the unionObj,
     -- but a subset of the arguments in that type
     (_, pAct') = intersectTypesWithVarEnv feTypeEnv vaenv' pAct boundUb
-computeConstraint _ con@(Constraint _ _ (NoReturnArg _ SType{stypeAct=PTopType})) = (False, con)
-computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (NoReturnArg i p@SType{stypeAct=act})) = (True, con{conDat=NoReturnArg i p{stypeAct=act'}})
+computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (NoReturnArg i p@SType{stypeAct=act@UnionType{}})) = (True, con{conVaenv=updateCOVarArgEnvAct vaenv'' vaenv, conDat=NoReturnArg i p{stypeAct=act'}})
   where
     vaenv' = fmap (stypeAct . snd) vaenv
     argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType $ joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con
-    act' = differenceTypeWithEnv feTypeEnv vaenv' act argsBoundUb
+    (vaenv'', act') = differenceTypeWithEnv feTypeEnv vaenv' act argsBoundUb
+computeConstraint _ con@(Constraint _ _ NoReturnArg{}) = (False, con)
 computeConstraint env con@(Constraint _ _ (ArrowTo i src dest)) = case arrowConstrainUbs env con (stypeAct src) (stypeAct dest) of
     TypeCheckResult _ (src', dest', destRT') -> (False, con{conDat=ArrowTo i src{stypeAct=src'} dest{stypeAct=dest', stypeTree=destRT'}})
     TypeCheckResE _ -> (True, con)

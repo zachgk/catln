@@ -22,7 +22,7 @@ module Semantics.Types where
 
 import           CtConstants
 import           Data.Aeson
-import           Data.Bifunctor      (Bifunctor (bimap, first))
+import           Data.Bifunctor      (Bifunctor (bimap, first, second))
 import           Data.Either
 import           Data.Graph          (graphFromEdges)
 import           Data.Hashable
@@ -518,7 +518,7 @@ expandType :: TypeEnv tg -> TypeVarArgEnv -> Type -> Type
 expandType _ _ t@UnionType{} = t
 expandType typeEnv vaenv (TypeVar v _) = expandType typeEnv vaenv $ H.lookupDefault PTopType v vaenv
 expandType _ _ PTopType = PTopType
-expandType typeEnv vaenv (TopType negPartials preds) = differenceTypeWithEnv typeEnv vaenv (expandPreds preds) (UnionType negPartials)
+expandType typeEnv vaenv (TopType negPartials preds) = snd $ differenceTypeWithEnv typeEnv vaenv (expandPreds preds) (UnionType negPartials)
   where
     expandPreds :: TypePredicates -> Type
     expandPreds (PredsOne p)  = expandPred p
@@ -538,7 +538,7 @@ expandClassPartial typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv PartialType
       Just (CGClass (_, PartialType{ptVars=classVarsDecl}, classTypes, _)) -> unionAllTypes typeEnv $ map mapClassType classTypes
         where
           classVars = H.unionWith (intersectTypesEnv typeEnv vaenv) classVarsP classVarsDecl
-          mapClassType (TopType negPartials ps) = differenceTypeWithEnv typeEnv vaenv (expandType typeEnv vaenv $ TopType H.empty ps) (UnionType negPartials)
+          mapClassType (TopType negPartials ps) = snd $ differenceTypeWithEnv typeEnv vaenv (expandType typeEnv vaenv $ TopType H.empty ps) (UnionType negPartials)
           mapClassType (TypeVar (TVVar t) _) = case H.lookup t classVars of
             Just v -> expandType typeEnv vaenv $ intersectTypesEnv typeEnv vaenv v (H.lookupDefault PTopType t classVars)
             Nothing -> error $ printf "Unknown var %s in expandPartial" (show t)
@@ -720,7 +720,7 @@ unionTypesWithEnv _ _ t BottomType = t
 unionTypesWithEnv _ _ BottomType t = t
 unionTypesWithEnv _ _ t1 t2 | t1 == t2 = t1
 unionTypesWithEnv typeEnv vaenv t1@(TopType negPartials PredsNone) t2@UnionType{} | isSubtypeOfWithEnv typeEnv vaenv t2 (UnionType negPartials) = case differenceTypeWithEnv typeEnv vaenv (UnionType negPartials) t2 of
-                                                                                   (UnionType negPartials') -> TopType negPartials' PredsNone
+                                                                                   (_, UnionType negPartials') -> TopType negPartials' PredsNone
                                                                                    _ -> unionTypesWithEnv typeEnv vaenv (expandType typeEnv vaenv t1) t2
 unionTypesWithEnv _ _ (TopType np1 p1) (TopType np2 p2) | np1 == np2 && p1 == predsNot p2 = TopType np1 PredsNone
 unionTypesWithEnv typeEnv vaenv t1@TopType{} t2 = unionTypesWithEnv typeEnv vaenv (expandType typeEnv vaenv t1) t2
@@ -796,7 +796,7 @@ intersectTypesWithVarEnv typeEnv vaenv (UnionType posPartials) (TopType negParti
 intersectTypesWithVarEnv typeEnv vaenv t1@(UnionType partials) t2@(TopType negPartials _) | H.null negPartials = case expandType typeEnv vaenv t2 of
   t2'@UnionType{} -> intersectTypesWithVarEnv typeEnv vaenv t1 t2'
   TypeVar{} -> undefined
-  TopType topNegPartials topPreds -> (vaenv, compactType typeEnv vaenv $ differenceTypeWithEnv typeEnv vaenv (UnionType $ joinUnionType $ map (`partialAddPreds` topPreds) $ splitUnionType partials) (UnionType topNegPartials))
+  TopType topNegPartials topPreds -> second (compactType typeEnv vaenv) $ differenceTypeWithEnv typeEnv vaenv (UnionType $ joinUnionType $ map (`partialAddPreds` topPreds) $ splitUnionType partials) (UnionType topNegPartials)
 intersectTypesWithVarEnv typeEnv vaenv t1@TopType{} t2@UnionType{} = intersectTypesWithVarEnv typeEnv vaenv t2 t1
 intersectTypesWithVarEnv typeEnv vaenv (UnionType aPartials) (UnionType bPartials) = (vaenv', type')
   where
@@ -830,21 +830,21 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
       where
         subtractArg (_, PTopType) = Nothing
         subtractArg (argName, negArgVal) = case H.lookup argName posArgs of
-          Just posArgVal -> case differenceTypeWithEnv typeEnv vaenv posArgVal negArgVal of
+          Just posArgVal -> case snd $ differenceTypeWithEnv typeEnv vaenv posArgVal negArgVal of
             BottomType -> Nothing
             argVal'    -> Just $ p1{ptArgs=H.insert argName argVal' posArgs}
           Nothing -> error "Missing argName in differencePartials"
         subtractVar (_, PTopType) = Nothing
         subtractVar (varName, negVarVal) = case H.lookupDefault PTopType varName posVars of
           BottomType -> Nothing
-          varVal' -> Just p1{ptVars=H.insert varName (differenceTypeWithEnv typeEnv vaenv varVal' negVarVal) posArgs}
+          varVal' -> Just p1{ptVars=H.insert varName (snd $ differenceTypeWithEnv typeEnv vaenv varVal' negVarVal) posArgs}
     differencePartial p1 p2 = error $ printf "Unimplemented differencePartial: %s - %s" (show p1) (show p2)
 
-differenceTypeWithEnv :: TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Type
-differenceTypeWithEnv typeEnv vaenv t1 t2 = intersectTypesEnv typeEnv vaenv t1 (complementTypeEnv typeEnv vaenv t2)
+differenceTypeWithEnv :: TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> (TypeVarArgEnv, Type)
+differenceTypeWithEnv typeEnv vaenv t1 t2 = intersectTypesWithVarEnv typeEnv vaenv t1 (complementTypeEnv typeEnv vaenv t2)
 
 differenceTypeEnv :: TypeEnv tg -> Type -> Type -> Type
-differenceTypeEnv typeEnv = differenceTypeWithEnv typeEnv H.empty
+differenceTypeEnv typeEnv t1 t2 = snd $ differenceTypeWithEnv typeEnv H.empty t1 t2
 
 complementTypeEnv :: TypeEnv tg -> TypeVarArgEnv -> Type -> Type
 complementTypeEnv _ _ (UnionType partials) = TopType partials PredsNone
