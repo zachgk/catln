@@ -189,7 +189,7 @@ propUnionWithComplement gPrgm = property $ do
   prgm <- forAll gPrgm
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
-  let a' = complementTypeEnv typeEnv a
+  let a' = complementTypeEnv typeEnv H.empty a
   annotate $ printf "a' = %s" (show a')
   let combined = unionTypes typeEnv a a'
   annotate $ printf "combined = %s" (show combined)
@@ -201,7 +201,7 @@ propIntersectionWithComplement gPrgm = property $ do
   prgm <- forAll gPrgm
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
-  let a' = complementTypeEnv typeEnv a
+  let a' = complementTypeEnv typeEnv H.empty a
   annotate $ printf "a' = %s" (show a')
   let combined = intersectTypes typeEnv a a'
   annotate $ printf "combined = %s" (show combined)
@@ -213,9 +213,9 @@ propComplementInverse gPrgm = property $ do
   prgm <- forAll gPrgm
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
-  let a' = complementTypeEnv typeEnv a
+  let a' = complementTypeEnv typeEnv H.empty a
   annotate $ printf "a' = %s" (show a')
-  let a'' = complementTypeEnv typeEnv a'
+  let a'' = complementTypeEnv typeEnv H.empty a'
   annotate $ printf "a'' = %s" (show a'')
   assert $ isEqType typeEnv a a''
 

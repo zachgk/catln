@@ -523,7 +523,7 @@ expandType typeEnv vaenv (TopType negPartials preds) = differenceTypeWithEnv typ
     expandPreds :: TypePredicates -> Type
     expandPreds (PredsOne p)  = expandPred p
     expandPreds (PredsAnd ps) = intersectAllTypes typeEnv $ map expandPreds ps
-    expandPreds (PredsNot p)  = complementTypeEnv typeEnv $ expandPreds p
+    expandPreds (PredsNot p)  = complementTypeEnv typeEnv vaenv $ expandPreds p
 
     expandPred :: TypePredicate -> Type
     expandPred (PredClass clss) = expandClassPartial typeEnv vaenv clss
@@ -841,20 +841,20 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
     differencePartial p1 p2 = error $ printf "Unimplemented differencePartial: %s - %s" (show p1) (show p2)
 
 differenceTypeWithEnv :: TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Type
-differenceTypeWithEnv typeEnv vaenv t1 t2 = intersectTypesEnv typeEnv vaenv t1 (complementTypeEnv typeEnv t2)
+differenceTypeWithEnv typeEnv vaenv t1 t2 = intersectTypesEnv typeEnv vaenv t1 (complementTypeEnv typeEnv vaenv t2)
 
 differenceTypeEnv :: TypeEnv tg -> Type -> Type -> Type
 differenceTypeEnv typeEnv = differenceTypeWithEnv typeEnv H.empty
 
-complementTypeEnv :: TypeEnv tg -> Type -> Type
-complementTypeEnv _ (UnionType partials) = TopType partials PredsNone
-complementTypeEnv _ PTopType = BottomType
-complementTypeEnv _ (TopType negPartials preds) = if H.null negPartials
+complementTypeEnv :: TypeEnv tg -> TypeVarArgEnv -> Type -> Type
+complementTypeEnv _ _ (UnionType partials) = TopType partials PredsNone
+complementTypeEnv _ _ PTopType = BottomType
+complementTypeEnv _ _ (TopType negPartials preds) = if H.null negPartials
   then TopType H.empty (predsNot preds)
   else UnionType $ joinUnionType $ map addNotPreds $ splitUnionType negPartials
   where
     addNotPreds p@PartialType{ptPreds} = p{ptPreds=predsAnd ptPreds (predsNot preds)}
-complementTypeEnv _ t = error $ printf "Unimplemented complement %s" (show t)
+complementTypeEnv typeEnv vaenv (TypeVar v _) = complementTypeEnv typeEnv vaenv (vaenvLookup vaenv v)
 
 -- | Takes the powerset of a 'Type' with the powerset of the arguments in the type.
 powersetType :: TypeEnv tg -> TypeVarArgEnv -> Type -> Type
