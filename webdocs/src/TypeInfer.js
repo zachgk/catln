@@ -11,7 +11,7 @@ import {
   useParams
 } from 'react-router-dom';
 
-import {useApi, posKey, Loading, Notes, Type, PartialKey} from './Common/Common';
+import {useApi, posKey, tagJoin, Loading, Notes, Type, PartialKey} from './Common/Common';
 import {ObjMap} from './ListProgram';
 
 const useStyles = makeStyles({
@@ -136,8 +136,6 @@ function Traces(props) {
         <Scheme scheme={tcInitial[curMeta]} />
       </div>
     );
-  } else {
-    console.log("Missing tcInitial", tcInitial);
   }
   let showTraces = tcEpochs.map((t, index) => {
     return (
@@ -183,7 +181,18 @@ function Trace(props) {
 
 function Constraint(props) {
   const {constraint, Meta, tcAllObjs} = props;
-  const {conDat} = constraint;
+  const {conDat, conVaenv} = constraint;
+
+  let showConVaenv;
+  if (conVaenv.length > 0) {
+    let vs = conVaenv.map((v, index) => <span key={index}><PartialKey data={v[0].contents}/> = (<Meta data={v[1][0]}/>, <Meta data={v[1][1]}/>)</span>);
+    showConVaenv = <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; env({tagJoin(vs, ", ")})</span>;
+  }
+  return <span><ConDat conDat={conDat} Meta={Meta} tcAllObjs={tcAllObjs}/>{showConVaenv}</span>;
+}
+
+function ConDat(props) {
+  const {conDat, Meta, tcAllObjs} = props;
   switch(conDat.tag) {
   case "EqualsKnown":
     return (<span><Meta data={conDat.contents[1]} withPos /> <COp i={conDat.contents[0]}>k==</COp> <Type data={conDat.contents[2]}/></span>);
