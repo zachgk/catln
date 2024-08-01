@@ -26,8 +26,8 @@ import           GHC.Generics        (Generic)
 import           CRes
 import           Data.Aeson          (ToJSON, toJSON)
 import           Data.Bifunctor      (bimap)
-import           Data.Maybe          (catMaybes, fromMaybe, listToMaybe,
-                                      mapMaybe, maybeToList)
+import           Data.Maybe          (catMaybes, fromJust, fromMaybe,
+                                      listToMaybe, mapMaybe, maybeToList)
 import           Data.String.Builder (literal)
 import           Semantics
 import           Semantics.Prgm
@@ -317,18 +317,18 @@ fAddTTypeGraph env@FEnv{feTTypeGraph} k v = env {feTTypeGraph = H.insertWith (++
 
 -- This ensures schemes are correct
 -- It differs from Constrain.checkScheme because it checks for bugs in the internal compiler, not bugs in the user code
-verifyScheme :: TypeEnv tg -> VMetaVarArgEnv -> VarMeta -> Scheme -> Scheme -> Maybe String
+verifyScheme :: TypeEnv tg -> TypeVarArgEnv -> VarMeta -> Scheme -> Scheme -> Maybe String
 verifyScheme typeEnv vaenv (Meta _ _ (VarMetaDat _ _)) (TypeCheckResult _ (SType oldAct oldReq _ _)) (TypeCheckResult _ (SType act req _ _)) = listToMaybe $ catMaybes [
-  if verifySchemeActLowers then Nothing else Just(printf "verifySchemeActLowers\n\t\tGrows by: %s\n\t\t\tUsing vaenv %s" (show $ differenceTypeWithEnv typeEnv (fmap getMetaType vaenv) act oldAct) (show $ fmap getMetaType vaenv)),
+  if verifySchemeActLowers then Nothing else Just (printf "verifySchemeActLowers\n\t\tGrows by: %s" (show $ differenceTypeWithEnv typeEnv vaenv act oldAct)),
   if verifySchemeReqLowers then Nothing else Just "verifySchemeReqLowers",
-  if verifyCompacted then Nothing else Just "verifyCompacted"
+  if verifyCompacted then Nothing else Just (printf "verifyCompacted\n\t\tCan be compacted to %s" (show $ compactType typeEnv vaenv act))
   ]
   where
     verifySchemeActLowers  = case act of
       TypeVar{} -> True
-      _         -> isSubtypeOfWithMetaEnv typeEnv vaenv act oldAct
-    verifySchemeReqLowers  = isSubtypeOfWithMetaEnv typeEnv vaenv req oldReq
-    verifyCompacted = act == compactType typeEnv (fmap getMetaType vaenv) act
+      _         -> isSubtypeOfWithEnv typeEnv vaenv act oldAct
+    verifySchemeReqLowers  = isSubtypeOfWithEnv typeEnv vaenv req oldReq
+    verifyCompacted = act == compactType typeEnv vaenv act
 verifyScheme _ _ _ _ _ = Nothing
 
 
@@ -356,17 +356,21 @@ setDescriptor env _ (Meta _ _ (VarMetaDat Nothing _)) _ _ = env
 setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@(Meta _ _ (VarMetaDat (Just p) _)) scheme' msg = env{fePnts = pnts', feTrace = feTrace', feUpdatedDuringEpoch = feUpdatedDuringEpoch || schemeChanged}
   where
     scheme = descriptor env m
+    vaenv = fmap stypeAct <$> mapM (descriptor env) (constraintVarArgEnv con)
     schemeChanged :: Bool
     schemeChanged = case (scheme, scheme') of
       (TypeCheckResult _ SType{stypeAct=TopType{}}, TypeCheckResult _ SType{stypeAct=TypeVar{}}) -> True
       _ ->  fromMaybe False $ tcreToMaybe $ do
-        showVaenv <- fmap stypeAct <$> mapM (descriptor env) (constraintVarArgEnv con)
+        showVaenv <- vaenv
         return $ not (eqScheme env showVaenv scheme scheme')
-    pnts' = if schemeChanged then IM.insert p scheme' fePnts else fePnts -- Only update if changed to avoid meaningless updates
+    scheme'' = case verifyScheme feTypeEnv (fromJust $ tcreToMaybe vaenv) m scheme scheme' of
+      _ | not schemeChanged -> scheme'
+      -- Just failVerification -> error $ printf "Scheme failed verification %s\n\t\tDuring typechecking of %s:\n\t\t New Scheme: %s \n\t\t Old Scheme: %s\n\t\t Obj: %s\n\t\t Con: %s" failVerification msg (show scheme') (show scheme) (show m) (show con)
+      Just failVerification -> TypeCheckResE [GenTypeCheckError (getMetaPos m) $ printf "Scheme failed verification %s\n\t\tDuring typechecking of %s:\n\t\t New Scheme: %s \n\t\t Old Scheme: %s\n\t\t Obj: %s\n\t\t Con: %s" failVerification msg (show scheme') (show scheme) (show m) (show con)]
+      Nothing -> scheme'
+    pnts' = if schemeChanged then IM.insert p scheme'' fePnts else fePnts -- Only update if changed to avoid meaningless updates
     feTrace' = if schemeChanged
-      then case verifyScheme feTypeEnv (constraintVarArgEnv con) m scheme scheme' of
-             Just failVerification -> error $ printf "Scheme failed verification %s\n\t\tDuring typechecking of %s:\n\t\t New Scheme: %s \n\t\t Old Scheme: %s\n\t\t Obj: %s\n\t\t Con: %s" failVerification msg (show scheme') (show scheme) (show m) (show con)
-             Nothing -> traceConstrainChange feTrace p scheme'
+      then traceConstrainChange feTrace p scheme''
       else feTrace
 
 pointUb :: FEnv -> VarMeta -> TypeCheckResult Type

@@ -100,7 +100,7 @@ addArgToScheme :: FEnv -> STypeVarArgEnv -> SType -> TypeVarAux -> SType -> STyp
 addArgToScheme env@FEnv{feTypeEnv} vaenv SType{stypeAct=srcAct, stypeReq=srcReq} newArgName dest@SType{stypeAct=destAct, stypeReq=destReq} = dest{stypeAct=destAct', stypeReq=destReq'}
   where
     destAct' = case addArgToType env (fmap stypeAct vaenv) srcAct newArgName of
-      Just addDestAct -> intersectTypesEnv feTypeEnv (fmap stypeAct vaenv) destAct addDestAct
+      Just addDestAct -> snd $ intersectTypesWithVarEnv feTypeEnv (fmap stypeAct vaenv) destAct addDestAct
       Nothing         -> destAct
     destReq' = case addArgToType env (fmap stypeReq vaenv) srcReq newArgName of
       Just addDestReq -> intersectTypesEnv feTypeEnv (fmap stypeReq vaenv) destReq addDestReq
