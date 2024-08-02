@@ -41,9 +41,8 @@ type TBPrgm = Prgm Expr TBMetaDat
 type VisitedArrows = S.HashSet TCallTree
 
 leafsFromMeta :: TBMeta -> [PartialType]
-leafsFromMeta (Meta TopType{} _ _) = error "leafFromMeta from TopType"
-leafsFromMeta (Meta TypeVar{} _ _) = error "leafFromMeta from TypeVar"
-leafsFromMeta (Meta (UnionType prodTypes) _ _) = splitUnionType prodTypes
+leafsFromMeta Meta{getMetaType=UnionType prodTypes} = splitUnionType prodTypes
+leafsFromMeta m = error $ printf "leafFromMeta with invalid type: %s" (show m)
 
 -- Helper to replace matches with a single option with their result
 buildMatch :: Type -> H.HashMap PartialType TCallTree -> TCallTree

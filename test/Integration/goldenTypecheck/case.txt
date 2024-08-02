@@ -475,34 +475,37 @@
                     ( Value /x -> /Data/Primitive/Integer = CInt 0 )
                 ) ( Value /this -> TVArg /io = Value /io )
             , /abs ( Value /x -> /Data/Primitive/Integer ) ->
-                ( /Data/Primitive/Integer | /abs.$a50cec- 1
-                    ( /$a50cec-arg=/Data/Primitive/Integer
+                ( /abs.$ 6 b656b- 0
+                    ( /$ 6 b656b-arg=/Data/Primitive/Integer
+                    , /x=/Data/Primitive/Integer
+                    ) | /Data/Primitive/Integer | /abs.$ 6 b656b- 1
+                    ( /$ 6 b656b-arg=/Data/Primitive/Integer
                     , /x=/Data/Primitive/Integer
                     ) | /operator*
                     ( /l=/Data/Primitive/Integer
                     , /r=/Data/Primitive/Integer
-                    ) | /abs.$a50cec- 0
-                    ( /$a50cec-arg=/Data/Primitive/Integer
-                    , /x=/Data/Primitive/Integer
                     )
-                ) = /abs.$a50cec- 0 ( Value /x -> TVArg /x = Value /x ) ( Value /$a50cec-arg -> TVArg /x = Value /x )
-            , /abs.$a50cec- 0 ( Value /x -> ∀/Data/Algebra/Ord )
-                ( Value /$a50cec-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>= ( Value /l -> TVArg /x = Value /x )
+                ) = /abs.$ 6 b656b- 0 ( Value /x -> TVArg /x = Value /x )
+                ( Value /$ 6 b656b-arg -> TVArg /x = Value /x )
+            , /abs.$ 6 b656b- 0 ( Value /x -> ∀/Data/Algebra/Ord )
+                ( Value /$ 6 b656b-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>= ( Value /l -> TVArg /x = Value /x )
                     ( Value /r -> /Data/Primitive/Integer = CInt 0 )
                 ) -> TVArg /x2 = Value /x2
-            , /abs.$a50cec- 0 ( Value /x -> /Data/Primitive/Integer )
-                ( Value /$a50cec-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>= ( Value /l -> TVArg /x = Value /x )
+            , /abs.$ 6 b656b- 0 ( Value /x -> /Data/Primitive/Integer )
+                ( Value /$ 6 b656b-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>= ( Value /l -> TVArg /x = Value /x )
                     ( Value /r -> /Data/Primitive/Integer = CInt 0 )
                 ) ->
-                ( /Data/Primitive/Integer | /abs.$a50cec- 1
-                    ( /$a50cec-arg=/Data/Primitive/Integer
+                ( /Data/Primitive/Integer | /abs.$ 6 b656b- 1
+                    ( /$ 6 b656b-arg=/Data/Primitive/Integer
                     , /x=/Data/Primitive/Integer
                     ) | /operator*
                     ( /l=/Data/Primitive/Integer
                     , /r=/Data/Primitive/Integer
                     )
-                ) = /abs.$a50cec- 1 ( Value /x -> TVArg /x = Value /x ) ( Value /$a50cec-arg -> TVArg /x = Value /x )
-            , /abs.$a50cec- 1 ( Value /x ) ( Value /$a50cec-arg -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing@Value /x2 ) ->
+                ) = /abs.$ 6 b656b- 1 ( Value /x -> TVArg /x = Value /x )
+                ( Value /$ 6 b656b-arg -> TVArg /x = Value /x )
+            , /abs.$ 6 b656b- 1 ( Value /x )
+                ( Value /$ 6 b656b-arg -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing@Value /x2 ) ->
                 ( /Data/Primitive/Integer | /operator*
                     ( /l=/Data/Primitive/Integer
                     , /r=/Data/Primitive/Integer

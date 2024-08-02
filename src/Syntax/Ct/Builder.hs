@@ -13,6 +13,7 @@
 module Syntax.Ct.Builder where
 import           CtConstants
 import           Data.Bifunctor          (first)
+import           Data.UUID               (nil)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
@@ -21,7 +22,7 @@ import           Syntax.Ct.Prgm
 import           Text.Megaparsec         (SourcePos)
 
 emptyMeta :: SourcePos -> SourcePos -> ParseMeta
-emptyMeta p1 p2 = Meta PTopType (Just (p1, p2, "")) emptyMetaDat
+emptyMeta p1 p2 = Meta PTopType (Just (p1, p2, "")) nil emptyMetaDat
 
 rawVal :: (MetaDat m) => String -> RawExpr m
 rawVal = RawValue m

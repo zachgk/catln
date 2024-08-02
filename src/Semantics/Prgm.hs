@@ -30,6 +30,7 @@ import           Data.Bifunctor      (first)
 import           Data.Graph
 import qualified Data.HashSet        as S
 import           Data.Maybe
+import           Data.UUID
 import           Data.Void           (Void)
 import           Semantics.TypeGraph (ReachesTree)
 import           Semantics.Types
@@ -63,7 +64,12 @@ type CodeRange = Maybe CodeRangeDat
 class (Eq m, Ord m) => MetaDat m where
   emptyMetaDat :: m
 -- | Contains the type, position, and supplemental 'MetaDat' m
-data Meta m = Meta Type CodeRange m
+data Meta m = Meta {
+  getMetaType :: Type,
+  getMetaPos  :: CodeRange,
+  getMetaID   :: UUID,
+  getMetaDat  :: m
+                   }
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 -- | MetaDat contains supplemental metadata
 instance MetaDat () where
@@ -73,16 +79,10 @@ instance MetaDat (Maybe ReachesTree) where
   emptyMetaDat = Nothing
 
 emptyMetaT :: (MetaDat m) => Type -> Meta m
-emptyMetaT t = Meta t Nothing emptyMetaDat
+emptyMetaT t = Meta t Nothing nil emptyMetaDat
 
 emptyMetaN :: (MetaDat m) => Meta m
 emptyMetaN = emptyMetaT PTopType
-
-getMetaType :: Meta m -> Type
-getMetaType (Meta t _ _) = t
-
-getMetaPos :: Meta m -> CodeRange
-getMetaPos (Meta _ pos _) = pos
 
 showCodeRange :: CodeRangeDat -> String
 showCodeRange (start, end, _) = printf "%s:%d:%d-%d:%d" (sourceName start) (unPos $ sourceLine start) (unPos $ sourceColumn start) (unPos $ sourceLine end) (unPos $ sourceColumn end)
@@ -128,7 +128,7 @@ type Prgm e m = (ObjectMap e m, ClassGraph, [CompAnnot (e m)]) -- TODO: Include 
 
 instance (Show m) => Show (Meta m) where
   show :: Meta m -> String
-  show (Meta t _ _) = show t
+  show (Meta t _ _ _) = show t
   -- show (Meta t p d) = printf "(Meta %s %s (%s))" (show t) (show p) (show d)
 
 instance Show m => Show (Expr m) where
@@ -320,7 +320,7 @@ mkOObjArr argVal = ObjArr Nothing ArgObj Nothing [] (Just (Just argVal, emptyMet
 
 
 mapMetaDat :: (m1 -> m2) -> Meta m1 -> Meta m2
-mapMetaDat f (Meta t p md) = Meta t p (f md)
+mapMetaDat f m@Meta{getMetaDat} = m{getMetaDat=f getMetaDat}
 
 -- | Maps the objArr.oaArr.expr
 mapTupleArgValue :: (e m -> e m) -> ObjArr e m -> ObjArr e m

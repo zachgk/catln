@@ -56,10 +56,10 @@ class MapMeta m where
 
 
 clearMetaDat :: (Monad n) => MetaFun n a ()
-clearMetaDat _ (Meta p l _) = return $ Meta p l ()
+clearMetaDat _ (Meta p l mid _) = return $ Meta p l mid ()
 
 interleaveMeta :: (Monad n) => H.HashMap CodeRangeDat a -> MetaFun n () (Maybe a)
-interleaveMeta dat _ (Meta t p _) = return $ Meta t p (p >>= (`H.lookup` dat))
+interleaveMeta dat _ (Meta t p mid _) = return $ Meta t p mid (p >>= (`H.lookup` dat))
 
 interleavePrgm :: Prgm Expr m -> H.HashMap CodeRangeDat (Meta m)
 interleavePrgm prgm = H.fromList $ execWriter $ mapMetaPrgmM f prgm
@@ -71,10 +71,10 @@ interleavePrgm prgm = H.fromList $ execWriter $ mapMetaPrgmM f prgm
       Nothing -> return m
 
 zipMetaFun :: (Monad n) => MetaFun n a b -> MetaFun n a c -> MetaFun n a (b, c)
-zipMetaFun f1 f2 tp m@(Meta t p _) = do
-  (Meta _ _ db) <- f1 tp m
-  (Meta _ _ dc) <- f2 tp m
-  return $ Meta t p (db, dc)
+zipMetaFun f1 f2 tp m@(Meta t p mid _) = do
+  (Meta _ _ _ db) <- f1 tp m
+  (Meta _ _ _ dc) <- f2 tp m
+  return $ Meta t p mid (db, dc)
 
 mapMetaAppliedExprM :: (Monad n, MetaDat m, Show m) => MetaFun n m m -> MetaLocation -> Expr m -> n (Expr m)
 mapMetaAppliedExprM f loc (CExpr m c) = do

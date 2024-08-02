@@ -24,11 +24,11 @@ import           Text.Printf
 import           TypeCheck.Common
 
 toMeta :: VarMeta -> StateT FEnv TypeCheckResult TypedMeta
-toMeta  m@(Meta pt pos _) = do
+toMeta  m@(Meta pt pos mid _) = do
   env@FEnv{feTypeEnv} <- get
   case descriptor env m of
-    TypeCheckResult notes SType{stypeAct=ub, stypeTree=rt} -> lift $ TypeCheckResult notes $ Meta (intersectTypes feTypeEnv ub pt) pos rt
-    TypeCheckResE notes -> lift $ TypeCheckResult notes (Meta BottomType pos Nothing)
+    TypeCheckResult notes SType{stypeAct=ub, stypeTree=rt} -> lift $ TypeCheckResult notes $ Meta (intersectTypes feTypeEnv ub pt) pos mid rt
+    TypeCheckResE notes -> lift $ TypeCheckResult notes (Meta BottomType pos mid Nothing)
 
 member :: String -> [String ] -> Bool
 member x arr = case suffixLookup x arr of

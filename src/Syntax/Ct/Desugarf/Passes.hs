@@ -56,7 +56,7 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, ClassGraph
     classNames = nub $ listClassNames fullPrgmClassGraph
     objNames = relAbsNamePrune $ nub $ map oaObjPath (concatMap getRecursiveObjs fullPrgmObjMap)
 
-    resolveMeta _ (Meta t p md) = return $ Meta (mapType False t) p md
+    resolveMeta _ (Meta t p mid md) = return $ Meta (mapType False t) p mid md
 
     -- |
     -- requireResolveRelative -> type -> updated type

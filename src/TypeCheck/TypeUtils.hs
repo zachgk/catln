@@ -25,6 +25,7 @@ import           Control.Monad
 import           Control.Monad.State
 import           Data.Bifunctor      (Bifunctor (bimap))
 import           Data.List           (intercalate)
+import           Data.UUID           (nil)
 import           MapMeta
 import           Semantics
 import           Semantics.Prgm
@@ -84,7 +85,7 @@ addUnionObjToEnv vobjMap tobjMap = do
   unionAllObjs <- fresh $ TypeCheckResult [] $ SType PTopType PTopType Nothing "unionAllObjs"
   unionAllObjsPs <- fresh $ TypeCheckResult [] $ SType PTopType PTopType Nothing "unionAllObjsPs"
 
-  let mkVarMeta p = Meta PTopType Nothing (VarMetaDat (Just p) Nothing)
+  let mkVarMeta p = Meta PTopType Nothing nil (VarMetaDat (Just p) Nothing)
 
   -- Build a variable to store union of tobjs
   let typecheckedAllType = unionAllTypes feTypeEnv $ filter (not . isTypeVar) tobjMetas

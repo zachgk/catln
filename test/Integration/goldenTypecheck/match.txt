@@ -475,21 +475,19 @@
                     ( Value /x -> /Data/Primitive/Integer = CInt 0 )
                 ) ( Value /this -> TVArg /io = Value /io )
             , /abs ( Value /x -> /Data/Primitive/Integer ) ->
-                ( /Data/Primitive/Integer | /abs.$ 5 f20a2
-                    ( /$ 5 f20a2-arg=/Data/Primitive/Integer
+                ( /Data/Primitive/Integer | /abs.$f123d3
+                    ( /$f123d3-arg=/Data/Primitive/Integer
                     , /x=/Data/Primitive/Integer
                     ) | /operator*
                     ( /l=/Data/Primitive/Integer
                     , /r=/Data/Primitive/Integer
                     )
-                ) = /abs.$ 5 f20a2 ( Value /x -> TVArg /x = Value /x )
-                ( Value /$ 5 f20a2-arg -> TVArg /x = Value /x )
-            , /abs.$ 5 f20a2 ( Value /x -> ∀/Data/Algebra/Ord )
-                ( Value /$ 5 f20a2-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>= ( Value /l -> TVArg /x = Value /x )
+                ) = /abs.$f123d3 ( Value /x -> TVArg /x = Value /x ) ( Value /$f123d3-arg -> TVArg /x = Value /x )
+            , /abs.$f123d3 ( Value /x -> ∀/Data/Algebra/Ord )
+                ( Value /$f123d3-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>= ( Value /l -> TVArg /x = Value /x )
                     ( Value /r -> /Data/Primitive/Integer = CInt 0 )
                 ) -> TVArg /x2 = Value /x2
-            , /abs.$ 5 f20a2 ( Value /x )
-                ( Value /$ 5 f20a2-arg -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing@Value /x2 ) ->
+            , /abs.$f123d3 ( Value /x ) ( Value /$f123d3-arg -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing@Value /x2 ) ->
                 ( /Data/Primitive/Integer | /operator*
                     ( /l=/Data/Primitive/Integer
                     , /r=/Data/Primitive/Integer

@@ -50,17 +50,17 @@ scopeSubDeclFunNamesInExpr prefix replaceNames (VarApply m bExpr varName varVal)
     bExpr' = scopeSubDeclFunNamesInExpr prefix replaceNames bExpr
 
 scopeSubDeclFunNamesInMeta :: TypeName -> S.HashSet TypeName -> ParseMeta -> ParseMeta
-scopeSubDeclFunNamesInMeta prefix replaceNames (Meta (UnionType partials) pos md) = Meta (UnionType partials') pos md
+scopeSubDeclFunNamesInMeta prefix replaceNames (Meta (UnionType partials) pos mid md) = Meta (UnionType partials') pos mid md
   where
     scopeS = scopeSubDeclFunNamesInS prefix replaceNames
     partials' = H.mapKeys scopeS partials
-scopeSubDeclFunNamesInMeta _ _ m@(Meta PTopType _ _) = m
-scopeSubDeclFunNamesInMeta prefix replaceNames (Meta (TopType ps preds) pos md) = Meta (TopType ps preds') pos md
+scopeSubDeclFunNamesInMeta _ _ m@Meta{getMetaType=PTopType} = m
+scopeSubDeclFunNamesInMeta prefix replaceNames (Meta (TopType ps preds) pos mid md) = Meta (TopType ps preds') pos mid md
   where
     preds' = mapTypePreds scopePred preds
     scopePred (PredRel p@PartialType{ptName}) = PredRel p{ptName=scopeSubDeclFunNamesInS prefix replaceNames ptName}
     scopePred p = p
-scopeSubDeclFunNamesInMeta _ _ m@(Meta TypeVar{} _ _) = m
+scopeSubDeclFunNamesInMeta _ _ m@Meta{getMetaType=TypeVar{}} = m
 
 -- Renames sub functions by applying the parent names as a prefix to avoid name collisions
 scopeSubDeclFunNames :: PSObjArr -> DesObjectMap -> (PSObjArr, DesObjectMap)

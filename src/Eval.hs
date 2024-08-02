@@ -27,6 +27,7 @@ import           Data.Maybe
 -- import           Emit                (codegenExInit)
 import           CtConstants
 import qualified Data.HashSet        as S
+import           Data.UUID           (nil)
 import           Eval.Common
 import           Eval.Env
 import           Eval.ExprBuilder
@@ -219,7 +220,7 @@ evalAnnots prgmName prgmGraphData = do
   let env@Env{evTbEnv} = evalBaseEnv prgm
   forM annots $ \annot -> do
     let emptyType = partialVal "EmptyObj"
-    let emptyObj = ObjArr (Just (Value (Meta (singletonType emptyType) Nothing emptyMetaDat) "EmptyObj")) FunctionObj Nothing [] Nothing
+    let emptyObj = ObjArr (Just (Value (Meta (singletonType emptyType) Nothing nil emptyMetaDat) "EmptyObj")) FunctionObj Nothing [] Nothing
     tree <- toTExpr evTbEnv [(emptyType, emptyObj)] annot
     val <- fst <$> evalExpr env tree
     return (annot, val)

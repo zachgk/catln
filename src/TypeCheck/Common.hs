@@ -293,7 +293,7 @@ constraintVarArgEnv :: Constraint p -> COVarArgEnv p
 constraintVarArgEnv = fmap snd . constraintVarArgEnvIO
 
 getPnt :: VarMeta -> Maybe Pnt
-getPnt (Meta _ _ (VarMetaDat p _)) = p
+getPnt Meta{getMetaDat=VarMetaDat p _} = p
 
 addConstraints :: [VConstraintDat] -> FEnv -> FEnv
 addConstraints newCons env@FEnv{feConsDats=curCons:parentCons} = env {feConsDats = (map (Constraint [] H.empty) newCons ++ curCons):parentCons}
@@ -319,7 +319,7 @@ fAddTTypeGraph k v env@FEnv{feTTypeGraph} = env {feTTypeGraph = H.insertWith (++
 -- This ensures schemes are correct
 -- It differs from Constrain.checkScheme because it checks for bugs in the internal compiler, not bugs in the user code
 verifyScheme :: TypeEnv tg -> TypeVarArgEnv -> VarMeta -> Scheme -> Scheme -> Maybe String
-verifyScheme typeEnv vaenv (Meta _ _ (VarMetaDat _ _)) (TypeCheckResult _ (SType oldAct oldReq _ _)) (TypeCheckResult _ (SType act req _ _)) = listToMaybe $ catMaybes [
+verifyScheme typeEnv vaenv Meta{getMetaDat=VarMetaDat _ _} (TypeCheckResult _ (SType oldAct oldReq _ _)) (TypeCheckResult _ (SType act req _ _)) = listToMaybe $ catMaybes [
   if verifySchemeActLowers then Nothing else Just (printf "verifySchemeActLowers\n\t\tGrows by: %s" (show $ differenceTypeWithEnv typeEnv vaenv act oldAct)),
   if verifySchemeReqLowers then Nothing else Just "verifySchemeReqLowers",
   if verifyCompacted then Nothing else Just (printf "verifyCompacted\n\t\tCan be compacted to %s" (show $ compactType typeEnv vaenv act))
@@ -355,8 +355,8 @@ fresh  scheme = do
   return pnt'
 
 setDescriptor :: FEnv -> VConstraint -> VarMeta -> Scheme -> String -> FEnv
-setDescriptor env _ (Meta _ _ (VarMetaDat Nothing _)) _ _ = env
-setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@(Meta _ _ (VarMetaDat (Just p) _)) scheme' msg = env{fePnts = pnts', feTrace = feTrace', feUpdatedDuringEpoch = feUpdatedDuringEpoch || schemeChanged}
+setDescriptor env _ Meta{getMetaDat=VarMetaDat Nothing _} _ _ = env
+setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@Meta{getMetaDat=VarMetaDat (Just p) _} scheme' msg = env{fePnts = pnts', feTrace = feTrace', feUpdatedDuringEpoch = feUpdatedDuringEpoch || schemeChanged}
   where
     scheme = descriptor env m
     vaenv = fmap stypeAct <$> mapM (descriptor env) (constraintVarArgEnv con)
