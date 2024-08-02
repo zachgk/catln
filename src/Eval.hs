@@ -25,6 +25,7 @@ import           Control.Monad
 import           Data.Graph
 import           Data.Maybe
 -- import           Emit                (codegenExInit)
+import           Control.Monad.State
 import           CtConstants
 import qualified Data.HashSet        as S
 import           Data.UUID           (nil)
@@ -84,15 +85,16 @@ evalTargetMode function prgmName prgmGraphData = case (funCtxReaches, funReaches
     funReaches = reachesPartial reachEnv funTp
 
 -- | evaluate annotations such as assertions that require compiler verification
-evalCompAnnot :: Env -> Val -> CRes Env
-evalCompAnnot env (TupleVal n args) | n == assertStr = case (H.lookup assertTestStr args, H.lookup assertMsgStr args) of
-  (Just b, Just (StrVal _)) | b == true -> return env
-  (Just b, Just (StrVal msg)) | b == false -> CErr [MkCNote $ AssertCErr msg]
-  (Just b, Nothing) | b == true -> return env
-  (Just b, Nothing) | b == false -> CErr [MkCNote $ AssertCErr "Failed assertion"]
-  _ -> evalError env $ printf "Invalid assertion with unexpected args %s" (show args)
-evalCompAnnot env TupleVal{} = return env
-evalCompAnnot env _ = evalError env "Eval: Invalid compiler annotation type"
+evalCompAnnot :: Val -> StateT Env CRes ()
+
+evalCompAnnot (TupleVal n args) | n == assertStr = case (H.lookup assertTestStr args, H.lookup assertMsgStr args) of
+  (Just b, Just (StrVal _)) | b == true -> return ()
+  (Just b, Just (StrVal msg)) | b == false -> lift $ CErr [MkCNote $ AssertCErr msg]
+  (Just b, Nothing) | b == true -> return ()
+  (Just b, Nothing) | b == false -> lift $ CErr [MkCNote $ AssertCErr "Failed assertion"]
+  _ -> evalError $ printf "Invalid assertion with unexpected args %s" (show args)
+evalCompAnnot TupleVal{} = return ()
+evalCompAnnot _ = evalError "Eval: Invalid compiler annotation type"
 
 evalGuards :: Env -> Val -> EObjArr -> CRes (Bool, Env)
 evalGuards = undefined
@@ -101,84 +103,88 @@ evalGuards = undefined
   --   b | b == false -> evalPopVal <$> evalCallTree (evalPush env4 $ "else for " ++ show ifObj) m (TCCond resType restIfTrees elseTree)
   --   _ -> error "Non-Bool eval resArrowCond"
 
-evalObjArr :: Env -> Val -> AnyObjArr -> CRes (Val, Env)
-evalObjArr env1 input oa = do
+evalObjArr :: Val -> AnyObjArr -> StateT Env CRes Val
+evalObjArr input oa = do
   let newArrArgs = buildArrArgs oa input
-  (resArrowTree, compAnnots, oldArgs, env2) <- evalStartEArrow env1 (getValType input) oa newArrArgs
-  env4s <- forM compAnnots $ \compAnnot -> do
-            (compAnnot', env3) <- evalPopVal <$> evalExpr (evalPush env2 $ printf "annot %s" (show compAnnot)) compAnnot
-            evalCompAnnot env3 compAnnot'
-  let env4 = case env4s of
-        [] -> env2
-        _  -> evalEnvJoinAll env4s
-  (res, env5) <- evalPopVal <$> evalExpr (evalPush env4 $ printf "ResEArrow %s" (show oa)) resArrowTree
-  return (res, evalEndEArrow env5 res oldArgs)
+  (resArrowTree, compAnnots, oldArgs) <- evalStartEArrow (getValType input) oa newArrArgs
+  forM_ compAnnots $ \compAnnot -> do
+            compAnnot' <- withEvalPush (printf "annot %s" (show compAnnot)) $ evalExpr compAnnot
+            evalCompAnnot compAnnot'
+  res <- withEvalPush (printf "ResEArrow %s" (show oa)) $ evalExpr resArrowTree
+  modify $ evalEndEArrow res oldArgs
+  return res
 
-evalCallTree :: Env -> Val -> TCallTree -> CRes (Val, Env)
+evalCallTree :: Val -> TCallTree -> StateT Env CRes Val
 -- evalCallTree _ v ct | trace (printf "evalCallTree %s using %s" (show v) (show ct)) False = undefined
-evalCallTree env v TCTId = return (v, env)
-evalCallTree env1@Env{evTypeEnv} m (TCMatch opts) = do
+evalCallTree v TCTId = return v
+evalCallTree  m (TCMatch opts) = do
+  Env{evTypeEnv} <- get
   case H.toList $ H.filterWithKey (\optType _ -> isSubtypePartialOf evTypeEnv (getValType m) (singletonType optType)) opts of
-    [(_, resArrowTree)] -> evalPopVal <$> evalCallTree (evalPush env1 $ "match with val " ++ show m) m resArrowTree
-    [] -> evalError env1 $ printf "Failed match in eval callTree: \n\tVal: %s \n\tVal type: %s\n\tOptions: %s" (show m) (show $ getValType m) (show opts)
-    (_:_:_) -> evalError env1 $ printf "Multiple matches in eval callTree: \n\tVal: %s \n\tOptions: %s " (show m) (show opts)
-evalCallTree env v (TCSeq a b) = do
-  (v', env') <- evalCallTree env v a
-  evalCallTree env' v' b
-evalCallTree env m (TCCond _ [] elseTree) = evalCallTree env m elseTree
-evalCallTree env1@Env{evArgs} m (TCCond resType (((ifCondTree, ifObj), ifThenTree):restIfTrees) elseTree) = do
-  let env2 = evalSetArgs env1 $ buildArrArgs (Left ifObj) m
-  (cond', env3) <- evalPopVal <$> evalExpr (evalPush env2 "cond") ifCondTree
-  let env4 = evalSetArgs env3 evArgs
+    [(_, resArrowTree)] -> do
+      withEvalPush ("match with val " ++ show m) $ evalCallTree m resArrowTree
+    [] -> evalError $ printf "Failed match in eval callTree: \n\tVal: %s \n\tVal type: %s\n\tOptions: %s" (show m) (show $ getValType m) (show opts)
+    (_:_:_) -> evalError $ printf "Multiple matches in eval callTree: \n\tVal: %s \n\tOptions: %s " (show m) (show opts)
+evalCallTree v (TCSeq a b) = do
+  v' <- evalCallTree v a
+  evalCallTree v' b
+evalCallTree m (TCCond _ [] elseTree) = evalCallTree m elseTree
+evalCallTree m (TCCond resType (((ifCondTree, ifObj), ifThenTree):restIfTrees) elseTree) = do
+  Env{evArgs} <- get
+  modify $ evalSetArgs $ buildArrArgs (Left ifObj) m
+  cond' <- withEvalPush "cond" $ evalExpr ifCondTree
+  modify $ evalSetArgs evArgs
   case cond' of
-    b | b == true -> evalPopVal <$> evalCallTree (evalPush env4 $ "then for " ++ show ifCondTree) m ifThenTree
-    b | b == false -> evalPopVal <$> evalCallTree (evalPush env4 $ "else for " ++ show ifCondTree) m (TCCond resType restIfTrees elseTree)
+    b | b == true -> withEvalPush ("then for " ++ show ifCondTree) $ evalCallTree m ifThenTree
+    b | b == false -> withEvalPush ("else for " ++ show ifCondTree) $ evalCallTree m (TCCond resType restIfTrees elseTree)
     _ -> error "Non-Bool eval resArrowCond"
-evalCallTree env@Env{evArgs} input (TCArg _ name) = case H.lookup name evArgs of
-  Just (ObjArrVal oa) -> evalObjArr env input (Right oa)
-  Just arg' -> return (arg', env)
-  Nothing -> evalError env $ printf "Unknown arg %s found during evaluation \n\t\t with arg env %s" name (show evArgs)
-evalCallTree env1 input (TCObjArr oa) = evalObjArr env1 input (Left oa)
-evalCallTree env1 input (TCPrim _ (EPrim _ f)) = do
+evalCallTree input (TCArg _ name) = do
+  Env{evArgs} <- get
+  case H.lookup name evArgs of
+    Just (ObjArrVal oa) -> evalObjArr input (Right oa)
+    Just arg' -> return arg'
+    Nothing -> evalError $ printf "Unknown arg %s found during evaluation \n\t\t with arg env %s" name (show evArgs)
+evalCallTree input (TCObjArr oa) = evalObjArr input (Left oa)
+evalCallTree input (TCPrim _ (EPrim _ f)) = do
   case input of
     (TupleVal _ args) -> case f args of
-      Right val -> return (val, env1)
-      Left err  -> evalError env1 err
+      Right val -> return val
+      Left err  -> evalError err
     _                 -> error "Unexpected eval PrimArrow input"
-evalCallTree env _ TCMacro{} = evalError env $ printf "Can't evaluate a macro - it should be removed during TreeBuild"
+evalCallTree _ TCMacro{} = evalError $ printf "Can't evaluate a macro - it should be removed during TreeBuild"
 
-evalExpr :: Env -> TExpr EvalMetaDat -> CRes (Val, Env)
+evalExpr :: TExpr EvalMetaDat -> StateT Env CRes Val
 -- evalExpr _ e | trace (printf "eval %s" (show e)) False = undefined
-evalExpr env (TCExpr _ v) = return (v, env)
-evalExpr env (TValue m _) = do
+evalExpr (TCExpr _ v) = return v
+evalExpr (TValue m _) = do
   let UnionType leafs = getMetaType m
   let [PartialType{ptName}] = splitUnionType leafs
-  return (TupleVal ptName H.empty, env)
-evalExpr _ (THoleExpr m h) = CErr [MkCNote $ GenCErr (getMetaPos m) $ printf "Can't evaluate hole %s" (show h)]
-evalExpr env (TAliasExpr b _) = evalExpr env b
-evalExpr env (TWhere _ b _) = evalExpr env b
-evalExpr env@Env{evArgs} (TTupleApply _ (_, b) (EAppArg oa@ObjArr{oaObj=Just (TValue _ "/io"), oaArr=Just (Nothing, _)})) = do
-  (TupleVal n args, env') <- evalExpr env b
+  return $ TupleVal ptName H.empty
+evalExpr (THoleExpr m h) = lift $ CErr [MkCNote $ GenCErr (getMetaPos m) $ printf "Can't evaluate hole %s" (show h)]
+evalExpr (TAliasExpr b _) = evalExpr b
+evalExpr (TWhere _ b _) = evalExpr b
+evalExpr (TTupleApply _ (_, b) (EAppArg oa@ObjArr{oaObj=Just (TValue _ "/io"), oaArr=Just (Nothing, _)})) = do
+  Env{evArgs} <- get
+  TupleVal n args <- evalExpr b
   case H.lookup "/io" evArgs of
-    Just io -> return (TupleVal n (H.insert (oaObjPath oa) io args), env')
+    Just io -> return $ TupleVal n (H.insert (oaObjPath oa) io args)
     Nothing -> error $ printf "evalExpr with no io"
-evalExpr env (TTupleApply _ (_, b) arg) = do
-  (b'@(TupleVal n args), env') <- evalExpr env b
+evalExpr (TTupleApply _ (_, b) arg) = do
+  b'@(TupleVal n args) <- evalExpr b
   case arg of
     EAppArg oa -> do
-      (v, env'') <- case oaArr oa of
+      v <- case oaArr oa of
         Just (Just oaExpr, _) -> case oaObj oa of
-          Just TValue{} -> evalExpr env' oaExpr
-          Just TTupleApply{} -> return (ObjArrVal oa, env')
+          Just TValue{} -> evalExpr oaExpr
+          Just TTupleApply{} -> return $ ObjArrVal oa
           _ -> error $ printf "Unsupported eval argument of %s" (show oa)
         Just (Nothing, _) -> error $ printf "Missing arrExpr in evalExpr TupleApply with %s - %s" (show b) (show oa)
         Nothing -> error $ printf "Missing arrExpr in evalExpr TupleApply with %s - %s" (show b) (show oa)
-      return (TupleVal n (H.insert (oaObjPath oa) v args), env'')
-    EAppVar{} -> return (b', env')
+      return $ TupleVal n (H.insert (oaObjPath oa) v args)
+    EAppVar{} -> return b'
     EAppSpread a -> error $ printf "Not yet implemented evalExpr %s" (show a)
-evalExpr env (TCalls _ b callTree) = do
-  (b', env') <- evalExpr env b
-  evalCallTree env' b' callTree
+evalExpr (TCalls _ b callTree) = do
+  b' <- evalExpr b
+  evalCallTree b' callTree
 
 evalBaseEnv :: EPrgm -> Env
 evalBaseEnv prgm@(objMap, _, _) = Env {
@@ -222,7 +228,7 @@ evalAnnots prgmName prgmGraphData = do
     let emptyType = partialVal "EmptyObj"
     let emptyObj = ObjArr (Just (Value (Meta (singletonType emptyType) Nothing nil emptyMetaDat) "EmptyObj")) FunctionObj Nothing [] Nothing
     tree <- toTExpr evTbEnv [(emptyType, emptyObj)] annot
-    val <- fst <$> evalExpr env tree
+    val <- evalStateT (evalExpr tree) env
     return (annot, val)
 
 evalRun :: String -> FileImport -> EPrgmGraphData -> CRes (IO (Integer, EvalResult))
@@ -240,8 +246,8 @@ evalRun function prgmName prgmGraphData = do
   let src = getExprPartialType input
   let dest = ioType
   (expr, env) <- evalBuildPrgm input src dest prgm
-  let env2 = evalSetArgs env (H.singleton "/io" (IOVal 0 $ pure ()))
-  (res, env') <- evalExpr env2 expr
+  let env2 = evalSetArgs (H.singleton "/io" (IOVal 0 $ pure ())) env
+  (res, env') <- runStateT (evalExpr expr) env2
   case res of
     (IOVal r io) -> return (io >> pure (r, evalResult env'))
     _ -> CErr [MkCNote $ GenCErr Nothing $ printf "Eval did not return an instance of IO \n\tInstead returned %s \n\t With expr %s" (show res) (show expr)]
@@ -264,7 +270,7 @@ evalBuild function prgmName prgmGraphData = do
   let src = getExprPartialType input
   let dest = resultType
   (expr, env) <- evalBuildPrgm input src dest prgm
-  (res, env') <- evalExpr env expr
+  (res, env') <- runStateT (evalExpr expr) env
   case res of
     val@(TupleVal "/Catln/CatlnResult" args) -> case (H.lookup "/name" args, H.lookup "/contents" args) of
       (Just (StrVal _), Just (StrVal _)) -> return $ return (val, evalResult env')

@@ -17,6 +17,7 @@ module Eval.Env where
 
 import qualified Data.HashMap.Strict as H
 
+import           Control.Monad.State
 import           CRes
 import           Data.Hashable
 import           Eval.Common
@@ -25,29 +26,35 @@ import           Semantics.Types
 import           Text.Printf
 import           TreeBuild           (buildArrow)
 
-evalStartEArrow :: Env -> PartialType -> AnyObjArr -> Args -> CRes (TExpr EvalMetaDat, [TExpr EvalMetaDat], Args, Env)
-evalStartEArrow env@Env{evExEnv, evTbEnv, evArgs, evCoverage, evTreebugOpen} srcType oa newArgs = do
+evalStartEArrow :: PartialType -> AnyObjArr -> Args -> StateT Env CRes (TExpr EvalMetaDat, [TExpr EvalMetaDat], Args)
+evalStartEArrow srcType oa newArgs = do
+  env@Env{evExEnv, evTbEnv, evArgs, evCoverage, evTreebugOpen} <- get
   let env' = env{
                 evArgs=newArgs
                 , evTreebugOpen = oa : evTreebugOpen
                 }
   case oa of
-    Right oa' -> return (getOaArrExpr oa', oaAnnots oa', evArgs, env')
+    Right oa' -> do
+      put env'
+      return (getOaArrExpr oa', oaAnnots oa', evArgs)
     Left oa' -> do
       let env'' = env'{evCoverage = H.insertWith (+) oa' 1 evCoverage}
       case H.lookup (srcType, oa') evExEnv of
-        Just (tree, annots') -> return (tree, annots', evArgs, env'')
+        Just (tree, annots') -> do
+          put env''
+          return (tree, annots', evArgs)
         Nothing -> do
-          maybeArrow' <- buildArrow evTbEnv srcType oa'
+          maybeArrow' <- lift $ buildArrow evTbEnv srcType oa'
           case maybeArrow' of
             Just (_, arrow'@(tree, annots')) -> do
               let env''' = env'' {evExEnv = H.insert (srcType, oa') arrow' evExEnv}
-              return (tree, annots', evArgs, env''')
-            Nothing -> evalError env $ printf "Failed to find arrow in eval resArrow: %s" (show oa')
+              put env'''
+              return (tree, annots', evArgs)
+            Nothing -> evalError $ printf "Failed to find arrow in eval resArrow: %s" (show oa')
 
-evalEndEArrow :: Env -> Val -> Args -> Env
-evalEndEArrow Env{evTreebugOpen} _ _ | null evTreebugOpen = error $ printf "Tried to evalEndEArrow with an empty treebug open"
-evalEndEArrow env@Env{evTreebugOpen, evTreebugClosed, evCallStack} val newArgs = env {
+evalEndEArrow :: Val -> Args -> Env -> Env
+evalEndEArrow _ _ Env{evTreebugOpen} | null evTreebugOpen = error $ printf "Tried to evalEndEArrow with an empty treebug open"
+evalEndEArrow val newArgs env@Env{evTreebugOpen, evTreebugClosed, evCallStack} = env {
   evTreebugOpen = tail evTreebugOpen,
   evTreebugClosed = pure $ (\oa -> EvalTreebugClosed oa val evTreebugClosed closedId) (head evTreebugOpen),
   evArgs = newArgs
@@ -55,28 +62,28 @@ evalEndEArrow env@Env{evTreebugOpen, evTreebugClosed, evCallStack} val newArgs =
   where
     closedId = take 10 (printf "%08x" (hash (evTreebugOpen, evTreebugClosed, evCallStack)))
 
-evalEnvJoin :: Env -> Env -> Env
-evalEnvJoin (Env objMap classGraph args exEnv1 tbEnv callStack cov1 treebugOpen treebugClosed1) (Env _ _ _ exEnv2 _ _ cov2 _ treebugClosed2) = Env objMap classGraph args (H.union exEnv1 exEnv2) tbEnv callStack (H.unionWith (+) cov1 cov2) treebugOpen (treebugClosed1 ++ treebugClosed2)
+evalError :: String -> StateT Env CRes v
+evalError msg = do
+  stack <- gets evCallStack
+  lift $ CErr [MkCNote $ EvalCErr stack msg]
 
-evalEnvJoinAll :: Foldable f => f Env -> Env
-evalEnvJoinAll = foldr1 evalEnvJoin
+evalSetArgs :: Args -> Env -> Env
+evalSetArgs args' env = env{evArgs=args'}
 
-evalError :: Env -> String -> CRes a
-evalError Env{evCallStack} msg = CErr [MkCNote $ EvalCErr evCallStack msg]
-
-evalSetArgs :: Env -> Args -> Env
-evalSetArgs env args' = env{evArgs=args'}
-
-evalPush :: Env -> String -> Env
-evalPush env@Env{evCallStack} c = env{evCallStack = c:evCallStack}
+evalPush :: String -> Env -> Env
+evalPush c env@Env{evCallStack} = env{evCallStack = c:evCallStack}
 
 evalPop :: Env -> Env
 evalPop env@Env{evCallStack} = case evCallStack of
   (_:stack') -> env{evCallStack=stack'}
   _          -> error "Popped empty evCallStack"
 
-evalPopVal :: (a, Env) -> (a, Env)
-evalPopVal (a, env) = (a, evalPop env)
+withEvalPush :: String -> StateT Env CRes v -> StateT Env CRes v
+withEvalPush c f = do
+  modify $ evalPush c
+  res <- f
+  modify evalPop
+  return res
 
 evalResult :: Env -> EvalResult
 evalResult Env{evCoverage, evTreebugClosed} = EvalResult evCoverage evTreebugClosed
