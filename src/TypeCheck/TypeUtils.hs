@@ -152,8 +152,8 @@ mkReachesEnv env (Constraint maybeConOa stypeVaenv _) = do
   -- TODO Remove the call to head below to support nonLinear args
   let argVaenv = H.unions $ map (fmap head . snd . splitVarArgEnv . exprVarArgs . oaObjExpr) maybeConOa
   argVaenv' <- forM argVaenv $ \(inExpr, outM) -> do
-    inExpr' <- showExpr env inExpr
-    outM' <- showM env outM
+    inExpr' <- showExpr env InputMeta inExpr
+    outM' <- showM env ArrMeta outM
     return (mapMeta clearMetaDat InputMeta inExpr', outM')
   let argObjMap = concatMap (\(inExpr, outM) -> [ObjArr (Just inExpr) ArgObj Nothing [] (Just (Nothing, emptyMetaT (substituteWithVarArgEnv (fmap snd vaenv) (getMetaType outM))))]) $ H.elems argVaenv'
 

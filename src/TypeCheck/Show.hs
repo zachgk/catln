@@ -15,62 +15,25 @@
 
 module TypeCheck.Show where
 
-import           Control.Monad    (forM)
 import           Data.Bifunctor   (bimap)
 import           Data.Maybe       (fromJust)
+import           MapMeta
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
 import           TypeCheck.Common
 
-showM :: FEnv -> VarMeta -> TypeCheckResult ShowMeta
-showM env@FEnv{feTypeEnv} m = do
+showM :: FEnv -> MetaType -> VarMeta -> TypeCheckResult ShowMeta
+showM env@FEnv{feTypeEnv} _ m = do
   stype@SType{stypeAct} <- descriptor env m
   let tp' = intersectTypes feTypeEnv (getMetaType m) stypeAct
   return $ mapMetaDat (ShowMeta stype) (mWithType tp' m)
 
-showExpr :: FEnv -> VExpr -> TypeCheckResult SExpr
-showExpr env (CExpr m c) = do
-  m' <- showM env m
-  return $ CExpr m' c
-showExpr env (Value m name) = do
-  m' <- showM env m
-  return $ Value m' name
-showExpr env (HoleExpr m hole) = do
-  m' <- showM env m
-  return $ HoleExpr m' hole
-showExpr env (AliasExpr base alias) = do
-  base' <- showExpr env base
-  alias' <- showExpr env alias
-  return $ AliasExpr base' alias'
-showExpr env (EWhere m base cond) = do
-  m' <- showM env m
-  base' <- showExpr env base
-  cond' <- showExpr env cond
-  return $ EWhere m' base' cond'
-showExpr env (TupleApply m (bm, base) arg) = do
-  m' <- showM env m
-  bm' <- showM env bm
-  base' <- showExpr env base
-  arg' <- case arg of
-    EAppArg a    -> EAppArg <$> showObjArr env a
-    EAppSpread a -> EAppSpread <$> showExpr env a
-  return $ TupleApply m' (bm', base') arg'
-showExpr env (VarApply m base varName varVal) = do
-  m' <- showM env m
-  base' <- showExpr env base
-  varVal' <- showM env varVal
-  return $ VarApply m' base' varName varVal'
+showExpr :: FEnv -> MetaLocation -> VExpr -> TypeCheckResult SExpr
+showExpr env = mapMetaM (showM env)
 
 showObjArr :: FEnv -> VObjArr -> TypeCheckResult SObjArr
-showObjArr env oa@ObjArr{oaObj, oaAnnots, oaArr} = do
-  oaObj' <- mapM (showExpr env) oaObj
-  oaAnnots' <- mapM (showExpr env) oaAnnots
-  oaArr' <- forM oaArr $ \(arrE, arrM) -> do
-    arrE' <- mapM (showExpr env) arrE
-    arrM' <- showM env arrM
-    return (arrE', arrM')
-  return oa{oaObj=oaObj', oaAnnots=oaAnnots', oaArr=oaArr'}
+showObjArr env = mapMetaObjArrM (showM env) Nothing
 
 showConDatHelper :: FEnv -> (Scheme -> Scheme -> SConstraintDat) -> VarMeta -> VarMeta -> SConstraintDat
 showConDatHelper env f p1 p2 = f (descriptor env p1) (descriptor env p2)
