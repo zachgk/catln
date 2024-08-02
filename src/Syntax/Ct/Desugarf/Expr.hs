@@ -41,43 +41,6 @@ desExpr (TupleApply m (bm, be) arg) = TupleApply m (bm, desExpr be) arg'
       a@EAppVar{}  -> a
       EAppSpread a -> EAppSpread $ desExpr a
 
--- | Updates the types based on the format as they are fixed for inputs (due to arrows this does not work for output expressions)
-desObjPropagateTypes :: DesExpr -> DesExpr
-desObjPropagateTypes (CExpr m c) = CExpr (mWithType (constantType c) m) c
-desObjPropagateTypes (Value m n) | getMetaType m == PTopType = Value (mWithType t m) n
-  where
-    t = relTypeVal n
-desObjPropagateTypes (Value m n) = Value m n
-desObjPropagateTypes (HoleExpr m h) = HoleExpr m h
-desObjPropagateTypes (AliasExpr base alias) = AliasExpr base' alias'
-  where
-    base' = desObjPropagateTypes base
-    alias' = desObjPropagateTypes alias
-desObjPropagateTypes (EWhere m base cond) = EWhere m base cond
-desObjPropagateTypes mainExpr@(TupleApply m (bm, be) tupleApplyArgs) = do
-  let be' = desObjPropagateTypes be
-  let bm' = mWithType (getMetaType $ getExprMeta be') bm
-  case tupleApplyArgs of
-      (EAppArg arg@ObjArr{oaObj=Just argObj, oaArr=Just (Just argVal, argM)}) -> do
-        let argName = inExprSingleton argObj
-        let argVal' = desObjPropagateTypes argVal
-        let tp' = typeSetArg argName (getExprType argVal') (getExprType be')
-        let m' = mWithType tp' m
-        TupleApply m' (bm', be') (EAppArg arg{oaArr=Just (Just argVal', argM)})
-      (EAppArg ObjArr{oaObj=Just argObj, oaArr=Just (Nothing, argM)}) -> do
-        let argName = inExprSingleton argObj
-        let tp' = typeSetArg argName (getMetaType argM) (getExprType be')
-        let m' = mWithType tp' m
-        TupleApply m' (bm', be') (EAppArg $ mkIObjArr argM argName)
-      (EAppVar vn vm) -> do
-        let tp' = typeSetVar vn (getMetaType vm) (getExprType be')
-        let m' = mWithType tp' m
-        TupleApply m' (bm', be') (EAppVar vn vm)
-      (EAppSpread a) -> do
-        let m' = mWithType (spreadType H.empty $ getMetaType m) m
-        TupleApply m' (bm', be') (EAppSpread $ desObjPropagateTypes a)
-      _ -> error $ printf "Unexpected ObjArr in desObjPropagateTypes (probably because arrow only ObjArr): %s" (show mainExpr)
-
 data SemiDesMode
   = SDInput Bool -- Used for parsing input expressions and indicates it is in a method
   | SDOutput -- Used for parsing input expressions
@@ -192,13 +155,13 @@ exprToPartialType e = case maybeGetSingleton $ getExprType des of
       TopType _ (PredsOne (PredRel n)) -> n
       t' -> error $ printf "Failed exprToPartialType with type %s in expr %s" (show t') (show des)
   where
-    des = desObjPropagateTypes $ desExpr $ semiDesExpr SDType Nothing e
+    des = exprPropagateTypes $ desExpr $ semiDesExpr SDType Nothing e
 
 exprToType :: PVarArgMap -> PExpr -> Type
 exprToType _ (RawValue _ n) | isJust (parseTVVar n) = fromJust $ parseTVVar n
 -- TODO Migrate the TypeVar check to the one below and remove the one above. This is for having type variables without the $ prefix.
 -- exprToType vaenv (RawValue _ n) | H.member (TVVar $ partialKey $ makeAbsoluteName n) vaenv  = TypeVar (TVVar $ partialKey n) TVInt
-exprToType _ e                        = getExprType $ desObjPropagateTypes $ desExpr $ semiDesExpr SDType Nothing e
+exprToType _ e                        = getExprType $ exprPropagateTypes $ desExpr $ semiDesExpr SDType Nothing e
 
 exprToTypeMeta :: PVarArgMap -> PExpr -> ParseMeta
 exprToTypeMeta vaenv e = mWithType (exprToType vaenv e) (getExprMeta e)

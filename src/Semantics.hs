@@ -47,9 +47,6 @@ mkTypeEnv (objMap, classGraph, _) = TypeEnv classGraph (ObjArrTypeGraph $ H.from
 labelPosM :: String -> Meta m -> Meta m
 labelPosM s m@Meta{getMetaPos} = m{getMetaPos=labelPos s getMetaPos}
 
-mWithType :: Type -> Meta m -> Meta m
-mWithType t m = m{getMetaType=t}
-
 labelPos :: String -> CodeRange -> CodeRange
 labelPos s (Just (p1, p2, sPrefix)) = Just (p1, p2, label')
   where label' = case sPrefix of

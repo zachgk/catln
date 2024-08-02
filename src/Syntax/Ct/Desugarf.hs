@@ -83,7 +83,7 @@ desObj isDef inheritPath useRelativeName oa@ObjArr{oaObj=Just objE} = oa{oaObj=J
 
     objExpr3 = if isDef
       then objExpr2
-      else desObjPropagateTypes objExpr2
+      else exprPropagateTypes objExpr2
 
     -- Inherit the path in main object name. If main is a context, instead inherit in the context function as well
     updateExprPath = mapExprPath (\(eM, eN) -> Value eM (show $ relPathAddPrefix inheritPath (getPath eN)))
@@ -163,7 +163,7 @@ desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef clssExpr dataExprs e
   let clss@PartialType{ptVars=classVars} = exprToPartialType clssExpr
   let clss' = clss{ptName=show path'}
 
-  let dataTypes = map (either id (getExprType . desObjPropagateTypes . semiDesExpr SDType Nothing) . eitherTypeVarExpr) dataExprs
+  let dataTypes = map (either id (getExprType . exprPropagateTypes . semiDesExpr SDType Nothing) . eitherTypeVarExpr) dataExprs
 
   let objs = map (desMultiTypeDefObj inheritPath classVars) $ rights $ map eitherTypeVarExpr dataExprs
   let objPaths = map (PRelativeName . oaObjPath) objs
@@ -207,7 +207,7 @@ desTypeDef statementEnv@(inheritPath, _) typeExpr extends subStatements = do
 
 desClassDef :: StatementEnv -> Sealed -> RawClassDef ParseMetaDat -> [RawStatementTree RawExpr ParseMetaDat] -> CRes DesPrgm
 desClassDef statementEnv@(inheritPath, _) sealed (typeExpr, extends) subStatements = do
-  let typeExpr' = desObjPropagateTypes $ semiDesExpr SDType (Just typeExpr) typeExpr
+  let typeExpr' = exprPropagateTypes $ semiDesExpr SDType (Just typeExpr) typeExpr
   let classGraph = ClassGraph $ graphFromEdges [(CGClass (sealed, partialVal $ show path', [getExprType typeExpr'], desObjDocComment subStatements), PClassName (exprPath className), [PRelativeName $ exprPath typeExpr']) | className <- extends ]
   (subPrgm, _) <- desInheritingSubstatements statementEnv path subStatements
   return $ mergePrgm ([], classGraph, []) subPrgm

@@ -18,7 +18,6 @@ module TypeCheck.Show where
 import           Data.Bifunctor   (bimap)
 import           Data.Maybe       (fromJust)
 import           MapMeta
-import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
 import           TypeCheck.Common

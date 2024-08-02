@@ -87,6 +87,9 @@ emptyMetaT t = Meta t Nothing nil emptyMetaDat
 emptyMetaN :: (MetaDat m) => Meta m
 emptyMetaN = emptyMetaT PTopType
 
+mWithType :: Type -> Meta m -> Meta m
+mWithType t m = m{getMetaType=t}
+
 showCodeRange :: CodeRangeDat -> String
 showCodeRange (start, end, _) = printf "%s:%d:%d-%d:%d" (sourceName start) (unPos $ sourceLine start) (unPos $ sourceColumn start) (unPos $ sourceLine end) (unPos $ sourceColumn end)
 
@@ -250,9 +253,10 @@ instance ExprClass Expr where
       aux HoleExpr{} = H.empty
       aux (EWhere _ base cond) = case maybeExprPath cond of
         Just n | n == operatorHasArrow -> case (H.lookup (partialKey operatorArgL) condArgs, H.lookup (partialKey operatorArgR) condArgs) of
-                  (Just (Just (_, Just l)), Just (Just (_, Just r))) -> case (getExprType l, getExprType r) of
-                    (lt@UnionType{}, TypeVar rt _) -> case typeGraphQuery typeEnv H.empty $ fromJust $ maybeGetSingleton lt of
+                  (Just (Just (_, Just l)), Just (Just (_, Just r))) -> case (getExprType $ exprPropagateTypes l, getExprType r) of
+                    (lt@UnionType{}, TypeVar rt _) -> case typeGraphQuery typeEnv (fmap snd base') $ fromJust $ maybeGetSingleton lt of
                       [] -> H.empty
+                      [qr] -> H.singleton rt ([], qr)
                       qr -> error $ printf "Not yet implemented searching arrow %s to %s. Found %s" (show lt) (show rt) (show qr)
                     (lt, rt) -> error $ printf "Found invalid types of l=%s and r=%s in ?->" (show lt) (show rt)
                   _ -> error $ printf "Could not find /l and /r in %s in ?->" (show condArgs)
@@ -443,3 +447,40 @@ getAllExprNames :: (ExprClass e, MetaDat m, Show m, Show (e m)) => e m -> [Name]
 getAllExprNames e = maybeToList (maybeExprPath e) ++ concatMap getAllObjArrNames (exprAppliedArgs e) ++ concatMap fromOrdVar (exprAppliedOrdVars e)
   where
     fromOrdVar (v, _) = varNamesWithPrefix $ pkName v
+
+-- | Updates the types based on the format as they are fixed for inputs (due to arrows this does not work for output expressions)
+exprPropagateTypes :: (MetaDat m, Show m) => Expr m -> Expr m
+exprPropagateTypes (CExpr m c) = CExpr (mWithType (constantType c) m) c
+exprPropagateTypes (Value m n) | getMetaType m == PTopType = Value (mWithType t m) n
+  where
+    t = relTypeVal n
+exprPropagateTypes (Value m n) = Value m n
+exprPropagateTypes (HoleExpr m h) = HoleExpr m h
+exprPropagateTypes (AliasExpr base alias) = AliasExpr base' alias'
+  where
+    base' = exprPropagateTypes base
+    alias' = exprPropagateTypes alias
+exprPropagateTypes (EWhere m base cond) = EWhere m base cond
+exprPropagateTypes mainExpr@(TupleApply m (bm, be) tupleApplyArgs) = do
+  let be' = exprPropagateTypes be
+  let bm' = mWithType (getMetaType $ getExprMeta be') bm
+  case tupleApplyArgs of
+      (EAppArg arg@ObjArr{oaObj=Just argObj, oaArr=Just (Just argVal, argM)}) -> do
+        let argName = inExprSingleton argObj
+        let argVal' = exprPropagateTypes argVal
+        let tp' = typeSetArg argName (getExprType argVal') (getExprType be')
+        let m' = mWithType tp' m
+        TupleApply m' (bm', be') (EAppArg arg{oaArr=Just (Just argVal', argM)})
+      (EAppArg ObjArr{oaObj=Just argObj, oaArr=Just (Nothing, argM)}) -> do
+        let argName = inExprSingleton argObj
+        let tp' = typeSetArg argName (getMetaType argM) (getExprType be')
+        let m' = mWithType tp' m
+        TupleApply m' (bm', be') (EAppArg $ mkIObjArr argM argName)
+      (EAppVar vn vm) -> do
+        let tp' = typeSetVar vn (getMetaType vm) (getExprType be')
+        let m' = mWithType tp' m
+        TupleApply m' (bm', be') (EAppVar vn vm)
+      (EAppSpread a) -> do
+        let m' = mWithType (spreadType H.empty $ getMetaType m) m
+        TupleApply m' (bm', be') (EAppSpread $ exprPropagateTypes a)
+      _ -> error $ printf "Unexpected ObjArr in exprPropagateTypes (probably because arrow only ObjArr): %s" (show mainExpr)
