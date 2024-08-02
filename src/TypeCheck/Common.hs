@@ -23,6 +23,7 @@ import qualified Data.IntMap.Lazy    as IM
 import           Data.List
 import           GHC.Generics        (Generic)
 
+import           Control.Monad.State
 import           CRes
 import           Data.Aeson          (ToJSON, toJSON)
 import           Data.Bifunctor      (bimap)
@@ -294,9 +295,9 @@ constraintVarArgEnv = fmap snd . constraintVarArgEnvIO
 getPnt :: VarMeta -> Maybe Pnt
 getPnt (Meta _ _ (VarMetaDat p _)) = p
 
-addConstraints :: FEnv -> [VConstraintDat] -> FEnv
-addConstraints env@FEnv{feConsDats=curCons:parentCons} newCons = env {feConsDats = (map (Constraint [] H.empty) newCons ++ curCons):parentCons}
-addConstraints FEnv{feConsDats=[]} _ = error $ printf "No constraint stack found in addConstraints"
+addConstraints :: [VConstraintDat] -> FEnv -> FEnv
+addConstraints newCons env@FEnv{feConsDats=curCons:parentCons} = env {feConsDats = (map (Constraint [] H.empty) newCons ++ curCons):parentCons}
+addConstraints _ FEnv{feConsDats=[]} = error $ printf "No constraint stack found in addConstraints"
 
 -- | Starts a block of constraints, adding it to the block stack, where each block is associated with an ObjArr and its varargs
 -- | In higher order functions, it is associated with both the main ObjArr and the higher order definition
@@ -304,16 +305,16 @@ startConstrainBlock :: FEnv -> FEnv
 startConstrainBlock env@FEnv{feConsDats} = env{feConsDats=[]:feConsDats}
 
 -- | Ends  the constraint block, popping it off the stack and adding its contents to either the block underneath or to the list of finished constraints
-endConstraintBlock :: FEnv -> Maybe VObjArr -> CVarArgEnv VarMeta -> FEnv
-endConstraintBlock env@FEnv{feConsDats=[newCons], feCons} oa vaenv = env{feConsDats=[], feCons = map (\(Constraint oas vaenvs d) -> Constraint (maybeToList oa ++ oas) (H.union vaenv vaenvs) d) newCons ++ feCons}
-endConstraintBlock env@FEnv{feConsDats=d1:d2:ds} oa vaenv = env{feConsDats=(map (\(Constraint oas vaenvs d) -> Constraint (maybeToList oa ++ oas) (H.union vaenv vaenvs) d) d1 ++ d2):ds}
-endConstraintBlock FEnv{feConsDats=[]} _ _ = error $ printf "No constraint stack found in endConstraintBlock"
+endConstraintBlock :: Maybe VObjArr -> CVarArgEnv VarMeta -> FEnv -> FEnv
+endConstraintBlock oa vaenv env@FEnv{feConsDats=[newCons], feCons} = env{feConsDats=[], feCons = map (\(Constraint oas vaenvs d) -> Constraint (maybeToList oa ++ oas) (H.union vaenv vaenvs) d) newCons ++ feCons}
+endConstraintBlock oa vaenv env@FEnv{feConsDats=d1:d2:ds} = env{feConsDats=(map (\(Constraint oas vaenvs d) -> Constraint (maybeToList oa ++ oas) (H.union vaenv vaenvs) d) d1 ++ d2):ds}
+endConstraintBlock _ _ FEnv{feConsDats=[]} = error $ printf "No constraint stack found in endConstraintBlock"
 
-fAddVTypeGraph :: FEnv -> TypeName -> VObjArr -> FEnv
-fAddVTypeGraph env@FEnv{feVTypeGraph} k v = env {feVTypeGraph = H.insertWith (++) (makeAbsoluteName k) [v] feVTypeGraph}
+fAddVTypeGraph :: TypeName -> VObjArr -> FEnv -> FEnv
+fAddVTypeGraph k v env@FEnv{feVTypeGraph} = env {feVTypeGraph = H.insertWith (++) (makeAbsoluteName k) [v] feVTypeGraph}
 
-fAddTTypeGraph :: FEnv -> TypeName -> TObjArr -> FEnv
-fAddTTypeGraph env@FEnv{feTTypeGraph} k v = env {feTTypeGraph = H.insertWith (++) (makeAbsoluteName k) [v] feTTypeGraph}
+fAddTTypeGraph :: TypeName -> TObjArr -> FEnv -> FEnv
+fAddTTypeGraph k v env@FEnv{feTTypeGraph} = env {feTTypeGraph = H.insertWith (++) (makeAbsoluteName k) [v] feTTypeGraph}
 
 -- This ensures schemes are correct
 -- It differs from Constrain.checkScheme because it checks for bugs in the internal compiler, not bugs in the user code
@@ -344,12 +345,14 @@ descriptor env m = case getPnt m of
 equivalent :: FEnv -> VarMeta -> VarMeta -> Bool
 equivalent env m1 m2 = descriptor env m1 == descriptor env m2
 
-fresh :: FEnv -> Scheme -> (Pnt, FEnv)
-fresh env@FEnv{fePnts, feTrace=tc@TraceConstrain{tcInitial}} scheme = (pnt', env{fePnts = pnts', feTrace=feTrace'})
-  where
-    pnt' = IM.size fePnts
-    pnts' = IM.insert pnt' scheme fePnts
-    feTrace' = tc{tcInitial=H.insert pnt' scheme tcInitial}
+fresh :: Scheme -> StateT FEnv TypeCheckResult Pnt
+fresh  scheme = do
+  env@FEnv{fePnts, feTrace=tc@TraceConstrain{tcInitial}} <- get
+  let pnt' = IM.size fePnts
+  let pnts' = IM.insert pnt' scheme fePnts
+  let feTrace' = tc{tcInitial=H.insert pnt' scheme tcInitial}
+  put env{fePnts = pnts', feTrace=feTrace'}
+  return pnt'
 
 setDescriptor :: FEnv -> VConstraint -> VarMeta -> Scheme -> String -> FEnv
 setDescriptor env _ (Meta _ _ (VarMetaDat Nothing _)) _ _ = env

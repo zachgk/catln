@@ -22,6 +22,7 @@ import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 
 import           Control.Monad
+import           Control.Monad.State
 import           Data.Bifunctor      (Bifunctor (bimap))
 import           Data.List           (intercalate)
 import           MapMeta
@@ -61,8 +62,9 @@ filterBestPrecedence precedenceMap = filter (\oa -> objectPrecedence oa == H.loo
 
 
 -- | This creates 'feUnionAllObjs' and adds it to the 'FEnv'
-addUnionObjToEnv :: FEnv -> VObjectMap -> TObjectMap -> TypeCheckResult FEnv
-addUnionObjToEnv env1@FEnv{feTypeEnv} vobjMap tobjMap = do
+addUnionObjToEnv :: VObjectMap -> TObjectMap -> StateT FEnv TypeCheckResult ()
+addUnionObjToEnv vobjMap tobjMap = do
+  FEnv{feTypeEnv} <- get
   let vobjMapRec = concatMap getRecursiveObjs vobjMap
   let tobjMapRec = concatMap getRecursiveObjs tobjMap
 
@@ -79,15 +81,15 @@ addUnionObjToEnv env1@FEnv{feTypeEnv} vobjMap tobjMap = do
   let tobjMetas = map (getMetaType . getExprMeta . oaObjExpr) tobjs'
 
   -- Builds vars to use for union and union powerset
-  let (unionAllObjs, env2) = fresh env1 $ TypeCheckResult [] $ SType PTopType PTopType Nothing "unionAllObjs"
-  let (unionAllObjsPs, env3) = fresh env2 $ TypeCheckResult [] $ SType PTopType PTopType Nothing "unionAllObjsPs"
+  unionAllObjs <- fresh $ TypeCheckResult [] $ SType PTopType PTopType Nothing "unionAllObjs"
+  unionAllObjsPs <- fresh $ TypeCheckResult [] $ SType PTopType PTopType Nothing "unionAllObjsPs"
 
   let mkVarMeta p = Meta PTopType Nothing (VarMetaDat (Just p) Nothing)
 
   -- Build a variable to store union of tobjs
   let typecheckedAllType = unionAllTypes feTypeEnv $ filter (not . isTypeVar) tobjMetas
   when (typecheckedAllType == PTopType) $ fail $ printf "Failed to deteremine dependency TopType. Found undetermined dependent objects: \n\t%s" (intercalate "\n\t" $ map (show . snd) $ filter ((==) PTopType . fst) $ zip tobjMetas tobjs')
-  let (typecheckedAllObjs, env4) = fresh env3 $ TypeCheckResult [] $ SType typecheckedAllType PTopType Nothing "typecheckedAll"
+  typecheckedAllObjs <- fresh $ TypeCheckResult [] $ SType typecheckedAllType PTopType Nothing "typecheckedAll"
   let typecheckedAllObjs' = mkVarMeta typecheckedAllObjs
 
   -- Builds metas to use for union and union powerset
@@ -98,9 +100,10 @@ addUnionObjToEnv env1@FEnv{feTypeEnv} vobjMap tobjMap = do
         UnionOf 1 unionAllObjs' (typecheckedAllObjs' : vobjMetas),
         SetArgMode 2 True unionAllObjs' unionAllObjsPs'
         ]
-  let env5 = (\env -> env{feUnionAllObjs=unionAllObjsPs'}) env4
-  let env6 = addConstraints (startConstrainBlock env5) constraints
-  return $ endConstraintBlock env6 Nothing H.empty
+  modify (\env -> env{feUnionAllObjs=unionAllObjsPs'})
+  modify startConstrainBlock
+  modify $ addConstraints constraints
+  modify $ endConstraintBlock Nothing H.empty
 
 -- | A helper for the 'AddInferArg' 'Constraint'
 addInferArgToType :: FEnv -> TypeVarArgEnv -> Type -> Maybe Type
