@@ -126,8 +126,8 @@ function RootObjArr(props) {
 }
 
 function Meta(props) {
-  let [tp, ] = props.data;
-  return <Type data={tp} />;
+  let {getMetaType} = props.data;
+  return <Type data={getMetaType} />;
 }
 
 export function ClassComments(props) {

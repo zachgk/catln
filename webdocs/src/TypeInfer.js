@@ -81,17 +81,17 @@ function Main(props) {
 
 let VarMeta = (notesMap) => (props) => {
   const {withPos} = props;
-  const [, pos, [pnt,]] = props.data;
+  const {getMetaPos, getMetaDat: [pnt,]} = props.data;
   var style = {};
 
   let showPos;
-  if(pos) {
+  if(getMetaPos) {
 
     if(withPos) {
-      showPos = <span>&nbsp;-&nbsp;<Pos pos={pos} /></span>;
+      showPos = <span>&nbsp;-&nbsp;<Pos pos={getMetaPos} /></span>;
     }
 
-    if(posKey(pos) in notesMap) {
+    if(posKey(getMetaPos) in notesMap) {
       style.background = 'lightCoral';
     }
   }

@@ -75,10 +75,10 @@ function Expr(props) {
 
     let showvBase = <Expr expr={vbase} Meta={Meta} showMetas={showMetas}/>;
 
-    if (isTopType(varVal[0])) {
+    if (isTopType(varVal.getMetaType)) {
       return <span>{showvBase}[<PartialKey data={varName} />]{showvM}</span>;
     } else {
-      return <span>{showvBase}[<PartialKey data={varName} />: <Type data={varVal[0]} />]{showvM}</span>;
+      return <span>{showvBase}[<PartialKey data={varName} />: <Type data={varVal.getMetaType} />]{showvM}</span>;
     }
   case "TCalls":
     const [,callE,callTree] = expr.contents;
@@ -108,8 +108,8 @@ function ObjArr(props) {
     }
 
     let showArrType;
-    if (!isTopType(oaArrM[0])) {
-      showArrType = <span> -&gt; <Type data={oaArrM[0]} /></span>;
+    if (!isTopType(oaArrM.getMetaType)) {
+      showArrType = <span> -&gt; <Type data={oaArrM.getMetaType} /></span>;
     }
     let showArrM;
     if (showExprMetas) {
@@ -162,7 +162,7 @@ function TCallTree(props) {
   case "TCArg":
     return "TCArg";
   case "TCObjArr":
-    return <span>TCObjArr <Type data={tree.contents.oaArr[1][0]}/></span>;
+    return <span>TCObjArr <Type data={tree.contents.oaArr[1].getMetaType}/></span>;
   case "TCPrim":
     return <span>TCPrim <Type data={tree.contents[0]}/></span>;
   case "TCMacro":

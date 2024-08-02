@@ -13,7 +13,7 @@ function RawObjArr(props) {
 
   let showArr;
   if (roaArr) {
-    const [roaArrExpr,roaArrMExpr,roaArrM] = roaArr;
+    const [roaArrExpr,roaArrMExpr] = roaArr;
     let showArrExpr;
     if (roaArrExpr) {
       showArrExpr = <RawExpr expr={roaArrExpr}/>;
@@ -22,8 +22,6 @@ function RawObjArr(props) {
     let showArrM;
     if (roaArrMExpr) {
       showArrM = <span> -&gt; <RawExpr expr={roaArrMExpr} /></span>;
-    } else if (!isTopType(roaArrM[0])) {
-      showArrM = <span> -&gt; <Type data={roaArrM[0]} /></span>;
     }
     showArr = <span>{showArrM}{showArrExpr}</span>;
   }
@@ -66,7 +64,7 @@ function RawExpr(props) {
   case "RawTupleApply":
     const [tupleM, [,base], args] = expr.contents;
 
-    let fromVal = tryValue(tupleM[2][1]);
+    let fromVal = tryValue(tupleM.getMetaDat[1]);
     if (fromVal) {
       return fromVal;
     }
@@ -75,14 +73,18 @@ function RawExpr(props) {
       const op = base.contents[1].substring("/operator".length);
 
       if(args.length === 1) {
-        return (<span>{op}<RawExpr expr={args[0].roaArr[0]}/></span>);
+        return (<span>{op}<RawExpr expr={args[0][1].roaArr[0]}/></span>);
       } else {
-        return (<span><RawExpr expr={args[0].roaArr[0]} /> {op} <RawExpr expr={args[1].roaArr[0]}/></span>);
+        return (<span><RawExpr expr={args[0][1].roaArr[0]} /> {op} <RawExpr expr={args[1][1].roaArr[0]}/></span>);
       }
 
     }
     let showArgs = tagJoin(args.map((arg, argIndex) => {
-      return <RawObjArr key={argIndex} roa={arg}/>;
+      if (arg[0]) {// isSpreadArg
+        return <span key={argIndex}>..<RawObjArr roa={arg[1]}/></span>;
+      } else {// is normal arg
+        return <RawObjArr key={argIndex} roa={arg[1]}/>;
+      }
     }), ", ");
 
     if (base.tag === "RawValue" && base.contents[1] === "") { // Anonymous tuple
@@ -93,17 +95,11 @@ function RawExpr(props) {
   case "RawVarsApply":
     const [vtupleM, vbase, vars] = expr.contents;
 
-    let vfromVal = tryValue(vtupleM[2][1]);
+    let vfromVal = tryValue(vtupleM.getMetaDat[1]);
     if (vfromVal) {
       return vfromVal;
     }
-    let showVars = tagJoin(vars.map((vr, argIndex) => {
-      if (isEmptyMeta(vr[1])) {
-        return <RawExpr key={argIndex} expr={vr[0]}/>;
-      } else {
-        return <span key={argIndex}><RawExpr expr={vr[0]}/>: <RawMeta data={vr[1]} /></span>;
-      }
-    }), ", ");
+    let showVars = tagJoin(vars.map((vr, argIndex) => <RawObjArr key={argIndex} roa={vr} />), ", ");
 
     return (<span><RawExpr expr={vbase}/>[{showVars}]</span>);
   case "RawContextApply":
@@ -143,13 +139,13 @@ function TypeProperty(props) {
 }
 
 function isEmptyMeta(m) {
-  let [tp,,] = m;
-  return isTopType(tp);
+  let {getMetaType} = m;
+  return isTopType(getMetaType);
 }
 
 function RawMeta(props) {
-  let [tp,,] = props.data;
-  return <Type data={tp} />;
+  let {getMetaType} = props.data;
+  return <Type data={getMetaType} />;
 }
 
 export {
