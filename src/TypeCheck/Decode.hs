@@ -23,8 +23,8 @@ import           Semantics.Types
 import           Text.Printf
 import           TypeCheck.Common
 
-toMeta :: FEnv -> VarMeta -> String -> TypeCheckResult TypedMeta
-toMeta env@FEnv{feTypeEnv} m@(Meta pt pos _) _ = case descriptor env m of
+toMeta :: FEnv -> VarMeta -> TypeCheckResult TypedMeta
+toMeta env@FEnv{feTypeEnv} m@(Meta pt pos _) = case descriptor env m of
   TypeCheckResult notes SType{stypeAct=ub, stypeTree=rt} -> TypeCheckResult notes $ Meta (intersectTypes feTypeEnv ub pt) pos rt
   TypeCheckResE notes -> do
     TypeCheckResult notes (Meta BottomType pos Nothing)
@@ -36,30 +36,30 @@ member x arr = case suffixLookup x arr of
 
 toExpr :: FEnv -> VExpr -> TypeCheckResult TExpr
 toExpr env (CExpr m c) = do
-  m' <- toMeta env m $ "Constant " ++ show c
+  m' <- toMeta env m
   return $ CExpr m' c
 toExpr env (Value m name) = do
   let name' = case maybeGetSingleton $ getMetaType m of
         Just PartialType{ptName=n} -> n
         _                          -> makeAbsoluteName name -- TODO Maybe consider this an exception
-  m' <- toMeta env m $ "Value_" ++ name'
+  m' <- toMeta env m
   return $ Value m' name'
 toExpr env (HoleExpr m hole) = do
-  m' <- toMeta env m $ "Arg_" ++ show hole
+  m' <- toMeta env m
   return $ HoleExpr m' hole
 toExpr env (AliasExpr base alias) = do
   base' <- toExpr env base
   alias' <- toExpr env alias
   return $ AliasExpr base' alias'
 toExpr env (EWhere m base cond) = do
-  m' <- toMeta env m "Where"
+  m' <- toMeta env m
   base' <- toExpr env base
   cond' <- toExpr env cond
   return $ EWhere m' base' cond'
 toExpr env expr@(TupleApply m (baseM, baseExpr) arg) = do
   let pos = getMetaPos m
-  m' <- toMeta env m "TupleApply_M"
-  baseM' <- toMeta env baseM "TupleApply_baseM"
+  m' <- toMeta env m
+  baseM' <- toMeta env baseM
   baseExpr' <- toExpr env baseExpr
   arg' <- case arg of
     EAppArg a@ObjArr{oaObj, oaArr, oaAnnots} -> do
@@ -78,16 +78,16 @@ toExpr env expr@(TupleApply m (baseM, baseExpr) arg) = do
             Nothing -> Nothing -- Failed argument inference, return nothing and error out
       oaArr' <- forM oaArr $ \(oaArrExpr, oaArrM) -> do
         oaArrExpr' <- mapM (toExpr env) oaArrExpr
-        oaArrM' <- toMeta env oaArrM "TupleApply_argM"
+        oaArrM' <- toMeta env oaArrM
         return (oaArrExpr', oaArrM')
       oaAnnots' <- mapM (toExpr env) oaAnnots
       return $ EAppArg a{oaObj=oaObj', oaArr=oaArr', oaAnnots=oaAnnots'}
     EAppSpread a -> EAppSpread <$> toExpr env a
   return $ TupleApply m' (baseM', baseExpr') arg'
 toExpr env (VarApply m baseExpr varName varVal) = do
-  m' <- toMeta env m "VarApply_M"
+  m' <- toMeta env m
   baseExpr' <- toExpr env baseExpr
-  varVal' <- toMeta env varVal "VarApply_val"
+  varVal' <- toMeta env varVal
   let result = VarApply m' baseExpr' varName varVal'
   case m' of -- check for errors
 
@@ -101,7 +101,7 @@ toObjArr env oa@ObjArr{oaObj, oaArr, oaAnnots} = do
   oaObj' <- mapM (toExpr env) oaObj
   oaArr' <- forM oaArr $ \(arrE, arrM) -> do
     arrE' <- mapM (toExpr env) arrE
-    arrM' <- toMeta env arrM "arrMeta"
+    arrM' <- toMeta env arrM
     return (arrE', arrM')
   oaAnnots' <- mapM (toExpr env) oaAnnots
   return oa{oaObj=oaObj', oaArr=oaArr', oaAnnots=oaAnnots'}
