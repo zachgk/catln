@@ -22,10 +22,11 @@ import           Testing.Generation  (genPrgms)
 import           Text.Printf
 import           TypeCheck           (typecheckPrgm)
 import           TypeCheck.Common    (feCons, tcreToMaybe)
-import           TypeCheck.Constrain (executeConstraint, executeConstraints)
+import           TypeCheck.Constrain (executeConstraint)
 import           TypeCheck.Decode    (toPrgms)
 import           TypeCheck.Encode    (fromPrgms, makeBaseFEnv)
 import           Utils
+import Control.Monad.State (execStateT)
 
 propExprEncodeDecode :: Property
 propExprEncodeDecode = property $ do
@@ -49,7 +50,7 @@ propConstraint = property $ do
   (_, fenv') <- evalMaybe $ tcreToMaybe $ fromPrgms fenv prgms []
   let cons = feCons fenv'
   con <- forAll $ HG.element cons
-  let _fenv'' = executeConstraint fenv' con
+  let _fenv'' = execStateT (executeConstraint con) fenv'
   return ()
 
 propConstraints :: Property
@@ -61,7 +62,7 @@ propConstraints = property $ do
   (_, fenv') <- evalMaybe $ tcreToMaybe $ fromPrgms fenv prgms []
   let cons = feCons fenv'
   usedCons <- forAll $ HG.subsequence (concat $ replicate 4 cons)
-  let _fenv'' = executeConstraints fenv' usedCons
+  let _fenv'' = execStateT (mapM executeConstraint usedCons) fenv'
   return ()
 
 propTypeChecks :: Property

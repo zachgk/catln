@@ -19,7 +19,6 @@
 module TypeCheck.Encode where
 
 import           Control.Monad
-import           Data.Hashable       (Hashable)
 import qualified Data.HashMap.Strict as H
 import qualified Data.IntMap.Lazy    as IM
 import           Prelude             hiding (unzip)

@@ -20,6 +20,7 @@ import qualified Data.HashMap.Strict as H
 import           Data.Maybe
 import qualified Data.Zip            as Z
 
+import           Control.Monad.State
 import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
@@ -235,13 +236,13 @@ computeConstraint env@FEnv{feTypeEnv} con@(Constraint _ vaenv (UnionOf i parent 
     actVaenv = fmap (stypeAct . snd) vaenv
     (vaenv', parentST', _) = equalizeSTypes env actVaenv (parent, SType (compactType feTypeEnv actVaenv chAct) chReq Nothing "")
 
-saveConstraint :: FEnv -> VConstraint -> RConstraint -> RConstraint -> FEnv
-saveConstraint env con@(Constraint _ _ (UnionOf _ parentPnt _)) oldCon newCon@(Constraint _ vaenv' (UnionOf _ parent' _)) = env''
+saveConstraint :: VConstraint -> RConstraint -> RConstraint -> FEnv -> FEnv
+saveConstraint con@(Constraint _ _ (UnionOf _ parentPnt _)) oldCon newCon@(Constraint _ vaenv' (UnionOf _ parent' _)) env = env''
   -- TODO Delete special case of saveConstraint for UnionOf by fixing the bug
   where
     env' = setScheme env con (oldCon, newCon) parentPnt (return parent') "UnionOf"
     env'' = setSchemeConVaenv env' con (oldCon, newCon) SchemeAct (fmap (stypeAct . snd) vaenv') "EqualsKnown env"
-saveConstraint env vals old new = saveDat $ saveVaenv env
+saveConstraint vals old new env = saveDat $ saveVaenv env
   where
     saveDat en = foldr (\(p, v) e -> setScheme e vals (old, new) p (pure v) (show v)) en (zip (constraintDatMetas $ conDat vals) (constraintDatMetas $ conDat new))
     saveVaenv en = foldr saveVaenvPair en (H.elems $ H.intersectionWith (,) (conVaenv vals) (conVaenv new))
@@ -254,36 +255,37 @@ saveConstraint env vals old new = saveDat $ saveVaenv env
 -- This takes a constraint and tries to apply it in the environment.
 -- It will return the updated environment and a boolean that is true if the constraint is done.
 -- If it is done, it can be safely removed and no longer needs to be executed.
-executeConstraint :: FEnv -> VConstraint -> (Bool, FEnv)
-executeConstraint env con = case stypeConstraint $ showCon env con of
-  TypeCheckResE _ -> (True, env)
-  TypeCheckResult _ con' -> (prune, env')
-    where
-      (prune, con'') = computeConstraint env con'
-      env' = saveConstraint env con con' con''
-
--- | Calls 'executeConstraint' for a list of constraints
-executeConstraints :: FEnv -> [VConstraint] -> ([Bool], FEnv)
-executeConstraints env [] = ([], env)
-executeConstraints env1 (c:cs) = (prune:res, env4)
-  where
-    env2 = startConstraint c env1
-    (prune, env3) = executeConstraint env2 c
-    (res, env4) = executeConstraints env3 cs
+executeConstraint :: VConstraint -> StateT FEnv TypeCheckResult Bool
+executeConstraint con = do
+  modify $ startConstraint con
+  env <- get
+  case stypeConstraint $ showCon env con of
+    TypeCheckResE _ -> return True
+    TypeCheckResult _ con' -> do
+      let (prune, con'') = computeConstraint env con'
+      modify $ saveConstraint con con' con''
+      return prune
 
 -- |
 -- Applies the constraints continuously to update the environment.
 -- It should eventually converge after which applying the constraints no longer has any effect.
 -- This function also accepts a limit 'Integer' to indicate a maximum number of times a constraint can be used.
 -- A 'TypeCheckError' will be thrown if it has not converged by the time the limit is reached.
-runConstraints :: Integer -> FEnv -> [VConstraint] -> TypeCheckResult FEnv
-runConstraints _ env [] = return env
--- runConstraints 0 env _ | trace (printf "Trace 908: %s" (show $ showTraceConstrainPnt env 908)) False = undefined
-runConstraints 0 env@FEnv{feUnionAllObjs} _ | (stypeAct <$> descriptor env feUnionAllObjs) == pure PTopType = TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit without determining the TopTop (unionAllObjs)"] env
-runConstraints 0 env@FEnv{feTrace} _ = TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit with still changing constraints: \n\n%s" (show $ showTraceConstrainEpoch env $ head $ tail $ tcEpochs feTrace)] env
-runConstraints limit env cons = do
-  let (constraintsToPrune, env'@FEnv{feUpdatedDuringEpoch}) = executeConstraints env cons
+runConstraintsSt :: Integer -> [VConstraint] -> StateT FEnv TypeCheckResult ()
+runConstraintsSt _ [] = return ()
+runConstraintsSt 0 _ = do
+  env@FEnv{feTrace, feUnionAllObjs} <- get
+  -- _ <- trace (printf "Trace 908: %s" (show $ showTraceConstrainPnt env 908)) (return ())
+  if (stypeAct <$> descriptor env feUnionAllObjs) == pure PTopType
+    then lift $ TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit without determining the TopTop (unionAllObjs)"] ()
+    else lift $ TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit with still changing constraints: \n\n%s" (show $ showTraceConstrainEpoch env $ head $ tail $ tcEpochs feTrace)] ()
+runConstraintsSt limit cons = do
+  constraintsToPrune <- mapM executeConstraint cons
+  updated <- gets feUpdatedDuringEpoch
   let cons' = mapMaybe (\(con, shouldPrune) -> if shouldPrune then Nothing else Just con) $ zip cons constraintsToPrune
-  if feUpdatedDuringEpoch
-    then runConstraints (limit - 1) (nextConstrainEpoch env') cons'
-    else return env'
+  when updated $ do
+    modify nextConstrainEpoch
+    runConstraintsSt (limit - 1) cons'
+
+runConstraints :: Integer -> FEnv -> [VConstraint] -> TypeCheckResult FEnv
+runConstraints limit env cons = execStateT (runConstraintsSt limit cons) env
