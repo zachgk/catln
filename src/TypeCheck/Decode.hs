@@ -22,6 +22,7 @@ import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
 import           TypeCheck.Common
+import MapMeta (clearMetaDat, MetaType (ArrMeta))
 
 toMeta :: VarMeta -> StateT FEnv TypeCheckResult TypedMeta
 toMeta  m@(Meta pt pos mid _) = do
@@ -58,7 +59,7 @@ toExpr (EWhere m base cond) = do
   cond' <- toExpr cond
   return $ EWhere m' base' cond'
 toExpr expr@(TupleApply m (baseM, baseExpr) arg) = do
-  let pos = getMetaPos m
+  let mclear = clearMetaDat ArrMeta m
   m' <- toMeta m
   baseM' <- toMeta baseM
   baseExpr' <- toExpr baseExpr
@@ -71,9 +72,9 @@ toExpr expr@(TupleApply m (baseM, baseExpr) arg) = do
             (UnionType basePartialLeafs, UnionType partialLeafs) -> case (splitUnionType basePartialLeafs, splitUnionType partialLeafs) of
               ([PartialType{ptArgs=basePartialArgs}], [PartialType{ptArgs}]) -> case S.toList $ S.difference (H.keysSet ptArgs) (H.keysSet basePartialArgs) of
                 [argN] -> return $ Just argN
-                opts -> lift $ TypeCheckResult [GenTypeCheckError pos $ printf "Failed argument inference due to multiple arg options %s in %s" (show opts) (show expr)] Nothing
-              (base, result) -> lift $ TypeCheckResult [GenTypeCheckError pos $ printf "Failed argument inference due to multiple types with base %s and result %s in %s" (show base) (show result) (show expr)] Nothing
-            (baseM'', m'') -> lift $ TypeCheckResult [GenTypeCheckError pos $ printf "Failed argument inference due to non UnionType in baseMeta %s or meta %s in %s" (show baseM'') (show m'') (show expr)] Nothing
+                opts -> lift $ TypeCheckResult [GenTypeCheckError mclear $ printf "Failed argument inference due to multiple arg options %s in %s" (show opts) (show expr)] Nothing
+              (base, result) -> lift $ TypeCheckResult [GenTypeCheckError mclear $ printf "Failed argument inference due to multiple types with base %s and result %s in %s" (show base) (show result) (show expr)] Nothing
+            (baseM'', m'') -> lift $ TypeCheckResult [GenTypeCheckError mclear $ printf "Failed argument inference due to non UnionType in baseMeta %s or meta %s in %s" (show baseM'') (show m'') (show expr)] Nothing
           return $ case mArgName of
             Just argName -> Just $ Value (mWithType (singletonType $ partialToType argName) $ emptyMetaM "inferArg" m') (pkName argName)
             Nothing -> Nothing -- Failed argument inference, return nothing and error out

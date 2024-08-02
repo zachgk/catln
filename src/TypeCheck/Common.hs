@@ -36,10 +36,11 @@ import           Semantics.TypeGraph (ReachesTree)
 import           Semantics.Types
 import           Text.Printf
 import           Utils
+import MapMeta (clearMetaDat, MetaType (ArrMeta))
 
 data TypeCheckError
-  = GenTypeCheckError CodeRange String
-  | TracedTypeCheckError VarMeta [SConstraint] CodeRange String
+  = GenTypeCheckError (Maybe (Meta ())) String
+  | TracedTypeCheckError VarMeta [SConstraint] String
   | ConstraintTypeCheckError VConstraint SConstraint [TypeCheckError]
   | TupleMismatch TypedMeta TExpr (Meta ()) (H.HashMap String TExpr)
   deriving (Eq, Ord, Generic, Hashable)
@@ -191,7 +192,7 @@ instance MetaDat ShowMetaDat where
 
 instance Show TypeCheckError where
   show (GenTypeCheckError _ s) = s
-  show (TracedTypeCheckError _ trc _ msg) = printf "%s\n%s" msg (showTraceConstrain trc)
+  show (TracedTypeCheckError _ trc msg) = printf "%s\n%s" msg (showTraceConstrain trc)
   show (ConstraintTypeCheckError c sc subErrs) = printf "Failed to typecheck constraint %s\n\t\tUsing Points: %s\n\t%s" (show sc) (show $ map showCodeRange $ mapMaybe getMetaPos $ constraintMetas c) (intercalate "\n\t" $ map show subErrs)
   show (TupleMismatch baseM baseExpr m args) = printf "Tuple Apply Mismatch:\n\t(%s %s)(%s) ≠ %s\n\t" (show baseM) (show baseExpr) args' (show m)
     where
@@ -199,10 +200,10 @@ instance Show TypeCheckError where
       args' = intercalate ", " $ map showArg $ H.toList args
 
 instance CNoteTC TypeCheckError where
-  posCNote (GenTypeCheckError pos _)        = pos
-  posCNote (TracedTypeCheckError _ _ pos _) = pos
-  posCNote (TupleMismatch _ _ m _)          = getMetaPos m
-  posCNote ConstraintTypeCheckError{}       = Nothing
+  metaCNote (GenTypeCheckError m _)        = m
+  metaCNote (TracedTypeCheckError m _ _) = clearMetaDat ArrMeta m
+  metaCNote (TupleMismatch _ _ m _)          = Just m
+  metaCNote ConstraintTypeCheckError{}       = Nothing
 
   typeCNote _ = CNoteError
   showRecursiveCNote _ n = literal $ show n
@@ -267,7 +268,7 @@ resToTypeCheck cres = case cres of
   CErr notes     -> TypeCheckResE (map fromCNote notes)
   where
     fromCNote :: CNote -> TypeCheckError
-    fromCNote note = GenTypeCheckError (posCNote note) (show note)
+    fromCNote note = GenTypeCheckError (metaCNote note) (show note)
 
 constraintDatMetas :: ConstraintDat p -> [p]
 constraintDatMetas (EqualsKnown _ p2 _)    = [p2]
@@ -369,7 +370,7 @@ setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@M
     scheme'' = case verifyScheme feTypeEnv (fromJust $ tcreToMaybe vaenv) m scheme scheme' of
       _ | not schemeChanged -> scheme'
       -- Just failVerification -> error $ printf "Scheme failed verification %s\n\t\tDuring typechecking of %s:\n\t\t New Scheme: %s \n\t\t Old Scheme: %s\n\t\t Obj: %s\n\t\t Con: %s" failVerification msg (show scheme') (show scheme) (show m) (show con)
-      Just failVerification -> TypeCheckResE [GenTypeCheckError (getMetaPos m) $ printf "Scheme failed verification %s\n\t\tDuring typechecking of %s:\n\t\t New Scheme: %s \n\t\t Old Scheme: %s\n\t\t Obj: %s\n\t\t Con: %s" failVerification msg (show scheme') (show scheme) (show m) (show con)]
+      Just failVerification -> TypeCheckResE [GenTypeCheckError (clearMetaDat ArrMeta m) $ printf "Scheme failed verification %s\n\t\tDuring typechecking of %s:\n\t\t New Scheme: %s \n\t\t Old Scheme: %s\n\t\t Obj: %s\n\t\t Con: %s" failVerification msg (show scheme') (show scheme) (show m) (show con)]
       Nothing -> scheme'
     pnts' = if schemeChanged then IM.insert p scheme'' fePnts else fePnts -- Only update if changed to avoid meaningless updates
     feTrace' = if schemeChanged

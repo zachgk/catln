@@ -38,7 +38,9 @@ data CNoteType
   deriving (Eq, Ord, Generic, ToJSON)
 
 class CNoteTC n where
+  metaCNote :: n -> Maybe (Meta ())
   posCNote :: n -> CodeRange
+  posCNote n = metaCNote n >>= getMetaPos
   typeCNote :: n -> CNoteType
   showRecursiveCNote :: Int -> n -> Builder
 
@@ -47,6 +49,7 @@ data CNote
   MkCNote :: (CNoteTC a, Show a) => a -> CNote
 
 instance CNoteTC CNote where
+  metaCNote (MkCNote a) = metaCNote a
   posCNote (MkCNote a) = posCNote a
   typeCNote (MkCNote a) = typeCNote a
   showRecursiveCNote i (MkCNote a) = showRecursiveCNote i a
@@ -56,7 +59,7 @@ instance Show CNote
   showsPrec p (MkCNote a) = showsPrec p a
 
 instance ToJSON CNote where
-  toJSON (MkCNote n) = object ["msg".=show n, "pos".= posCNote n, "tp" .= typeCNote n]
+  toJSON (MkCNote n) = object ["msg".=show n, "pos".= posCNote n, "tp" .= typeCNote n, "id".=(getMetaID <$> metaCNote n)]
 
 data CNoteI
   = GenCNote CodeRange String
@@ -93,6 +96,7 @@ instance Show CNoteI where
   show (WrapCN n s) = s ++ "\n\t\t" ++ intercalate "\n\t\t" (map show n)
 
 instance CNoteTC CNoteI where
+  metaCNote _ = Nothing
   posCNote (ParseCErr bundle) = Just (pos, pos, "")
     where pos = pstateSourcePos $ bundlePosState bundle
   posCNote _ = Nothing

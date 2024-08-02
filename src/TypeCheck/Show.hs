@@ -75,7 +75,7 @@ matchingConstraint env p con = any (equivalent env p) $ constraintMetas con
 showMatchingConstraints :: FEnv -> VarMeta -> [SConstraint]
 showMatchingConstraints env@FEnv{feCons} matchVar = map (showCon env) $ filter (matchingConstraint env matchVar) feCons
 
-mkTracedTypeCheckError :: FEnv -> VarMeta -> CodeRange -> String -> TypeCheckError
+mkTracedTypeCheckError :: FEnv -> VarMeta -> String -> TypeCheckError
 mkTracedTypeCheckError env m = TracedTypeCheckError m (showMatchingConstraints env m)
 
 mkConstraintTypeCheckError :: FEnv -> VConstraint -> [TypeCheckError] -> TypeCheckError
