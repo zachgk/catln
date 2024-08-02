@@ -70,10 +70,13 @@ data Meta m = Meta {
   getMetaID   :: UUID,
   getMetaDat  :: m
                    }
-  deriving (Eq, Ord, Generic, Hashable, ToJSON)
+  deriving (Eq, Ord, Generic, ToJSON)
 -- | MetaDat contains supplemental metadata
 instance MetaDat () where
   emptyMetaDat = ()
+
+instance Hashable m => Hashable (Meta m) where
+  hashWithSalt s (Meta t _ _ d)      = s `hashWithSalt` t `hashWithSalt` d
 
 instance MetaDat (Maybe ReachesTree) where
   emptyMetaDat = Nothing

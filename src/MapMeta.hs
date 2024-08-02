@@ -19,6 +19,8 @@ import           Control.Monad.Identity
 import           Control.Monad.Trans.Writer (execWriter, tell)
 import qualified Data.HashMap.Strict        as H
 import           Data.Maybe                 (fromMaybe)
+import qualified Data.UUID                  as UUID
+import qualified Data.UUID.V4               as UUID
 import           Semantics.Prgm
 
 data MetaLocation
@@ -69,6 +71,13 @@ interleavePrgm prgm = H.fromList $ execWriter $ mapMetaPrgmM f prgm
         tell [(cr, m)]
         return m
       Nothing -> return m
+
+addMetaID :: MetaFun IO m m
+addMetaID _ m = if UUID.null $ getMetaID m
+  then do
+    id' <- UUID.nextRandom
+    return m{getMetaID=id'}
+  else return m
 
 zipMetaFun :: (Monad n) => MetaFun n a b -> MetaFun n a c -> MetaFun n a (b, c)
 zipMetaFun f1 f2 tp m@(Meta t p mid _) = do

@@ -21,9 +21,11 @@ import           CRes
 import           Data.Graph
 import qualified Data.HashMap.Strict     as H
 import           Data.List
+import           MapMeta                 (addMetaID)
 import           Semantics.Prgm
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Desugarf.Expr (SemiDesMode (SDOutput), semiDesExpr)
+import           Syntax.Ct.MapRawMeta    (mapMetaRawPrgmM)
 import           Syntax.Ct.Parser        (ctParser, ctxParser)
 import           Syntax.Ct.Prgm
 import           Syntax.Haskell.Parser   (hsParser)
@@ -81,7 +83,8 @@ processParsed includeCore imp ((prgmImports, statements), extraImports) = do
   extraImports' <- mapM (canonicalImport (Just imp)) extraImports
   let totalImports = extraImports' ++ prgmImports''
   let prgm' = (prgmImports'', statements)
-  return ((prgm', imp, prgmImports''), totalImports)
+  prgm'' <- mapMetaRawPrgmM addMetaID prgm'
+  return ((prgm'', imp, prgmImports''), totalImports)
   where
     name = case rawImpAbs imp of
       RawCExpr _ (CStr n) -> n
