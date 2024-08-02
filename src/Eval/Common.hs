@@ -207,24 +207,24 @@ instance ToJSON MacroFunction where
   toJSON MacroFunction{} = object ["type".=("MacroFunction" :: String)]
 
 instance Show TCallTree where
-  show TCTId = "TCTId"
+  show TCTId          = "TCTId"
   show (TCMatch opts) = printf "TCMatch (%s)" (show opts)
-  show (TCSeq a b) = printf "TCSeq (%s) (%s)" (show a) (show b)
-  show (TCCond t ifs els) = printf "TCCond %s (%s) (%s)" (show t) (show ifs) (show els)
-  show (TCArg t _) = printf "TCArg %s" (show t)
-  show (TCObjArr oa) = printf "TCObjArr %s" (show oa)
-  show (TCPrim t _) = printf "TCPrim %s" (show t)
-  show (TCMacro t _) = printf "TCMacro %s" (show t)
+  show (TCSeq a b)    = printf "TCSeq (%s) (%s)" (show a) (show b)
+  show (TCCond t ifs) = printf "TCCond %s (%s)" (show t) (show ifs)
+  show (TCArg t _)    = printf "TCArg %s" (show t)
+  show (TCObjArr oa)  = printf "TCObjArr %s" (show oa)
+  show (TCPrim oa _)  = printf "TCPrim %s" (show oa)
+  show (TCMacro oa _) = printf "TCMacro %s" (show oa)
 
 data TCallTree
   = TCTId
   | TCMatch (H.HashMap PartialType TCallTree)
   | TCSeq TCallTree TCallTree
-  | TCCond Type [((TExpr EvalMetaDat, EObjArr), TCallTree)] TCallTree -- [((if, ifObj), then)] else
+  | TCCond Type [(Maybe (TExpr EvalMetaDat, EObjArr), TCallTree)] -- [((if, ifObj), then)]
   | TCArg Type String
   | TCObjArr EObjArr
-  | TCPrim Type EPrim
-  | TCMacro Type MacroFunction
+  | TCPrim EObjArr EPrim
+  | TCMacro EObjArr MacroFunction
   deriving (Eq, Generic, Hashable, ToJSON)
 
 data TExpr m
@@ -357,8 +357,8 @@ type ObjSrc = (PartialType, EObjArr)
 
 resArrowDestType :: (TypeGraph tg) => TypeEnv tg -> PartialType -> TCallTree -> Type
 resArrowDestType typeEnv src (TCObjArr oa) = arrowDestType typeEnv src oa
-resArrowDestType _ _ (TCPrim tp _) = tp
-resArrowDestType _ _ (TCMacro tp _) = tp
+resArrowDestType _ _ (TCPrim oa _) = getMetaType $ getOaArrM oa
+resArrowDestType typeEnv src (TCMacro oa _) = arrowDestType typeEnv src oa
 -- resArrowDestType _ _ (ConstantArrow v) = singletonType $ getValType v
 resArrowDestType _ _ (TCArg tp _) = tp
 resArrowDestType _ _ t = error $ printf "Not yet implemented resArrowDestType for %s" (show t)

@@ -64,9 +64,9 @@ buildTBEnv primEnv prgm@(objMap, _, _) = baseEnv
       Nothing -> Nothing
     resFromArrow oa = error $ printf "resFromArrow with no input expression: %s" (show oa)
 
-    usePrim oa (Just (Left prim)) = TCPrim (getMetaType $ getOaArrM oa) prim
-    usePrim oa (Just (Right macro)) = TCMacro (getMetaType $ getOaArrM oa) macro
-    usePrim oa Nothing = error $ printf "Missing runtime for %s" (show oa)
+    usePrim oa (Just (Left prim)) = TCPrim oa prim
+    usePrim oa (Just (Right macro)) = TCMacro oa macro
+    usePrim oa Nothing = error $ printf "Missing runtime %s for %s" (show $ getRuntimeAnnot $ oaAnnots oa) (show oa)
 
 envLookupTry ::  TBEnv -> [ObjSrc] -> VisitedArrows -> PartialType -> Type -> TCallTree -> CRes TCallTree
 envLookupTry TBEnv{tbTypeEnv} os _ srcType destType resArrow | isSubtypeOfWithObjSrcs tbTypeEnv os (resArrowDestType tbTypeEnv srcType resArrow) destType = return resArrow
@@ -74,7 +74,7 @@ envLookupTry _ _ visitedArrows _ _ resArrow | S.member resArrow visitedArrows = 
 envLookupTry env@TBEnv{tbTypeEnv} objSrc visitedArrows srcType destType resArrow = do
   newLeafTypes <- case resArrowDestType tbTypeEnv srcType resArrow of
     UnionType t -> return t
-    t -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Found impossible type %s in envLookupTry for destType of %s with src %s" (show t) (show resArrow) (show srcType)]
+    t -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Found impossible type %s in envLookupTry for destType of %s with src %s\n\tUsing objSrc %s" (show t) (show resArrow) (show srcType) (show objSrc)]
   afterArrows <- traverse buildAfterArrows $ splitUnionType newLeafTypes
   return $ TCSeq resArrow (buildMatch destType (H.fromList afterArrows))
   where
@@ -110,10 +110,10 @@ completeTreeSet TBEnv{tbTypeEnv} fullPartial = aux H.empty BottomType
 
 data ArrowGuardGroup
   = NoGuardGroup PartialType TCallTree
-  | CondGuardGroup [(TBExpr, TCallTree)] (PartialType, TCallTree)
+  | CondGuardGroup [(TBExpr, TCallTree)] (Maybe (PartialType, TCallTree))
   deriving Show
 buildGuardArrows :: TBEnv -> [ObjSrc] -> VisitedArrows -> PartialType -> Type -> [ArrowGuardGroup] -> CRes TCallTree
-buildGuardArrows env obj visitedArrows srcType destType guards = do
+buildGuardArrows env@TBEnv{tbTypeEnv} obj visitedArrows srcType destType guards = do
   let builtGuards = map buildGuard guards
   treeOptions <- catCRes $ map buildGuard guards
   finalTrees <- case completeTreeSet env srcType treeOptions of
@@ -125,23 +125,30 @@ buildGuardArrows env obj visitedArrows srcType destType guards = do
     buildGuard (NoGuardGroup tp tree) = do
       tree' <- ltry tree
       return (tp, tree')
-    buildGuard (CondGuardGroup [] els) = return els
-    buildGuard (CondGuardGroup ifs (elseTp, elseTree)) = do
-      ifTreePairs <- forM ifs $ \(ifCond, ifThen@(TCObjArr oa)) -> do
+    buildGuard (CondGuardGroup [] (Just els)) = return els
+    buildGuard (CondGuardGroup ifs els) = do
+      ifTreePairs <- forM ifs $ \(ifCond, ifThen) -> do
+        let oa = case ifThen of
+              TCObjArr x -> x
+              TCPrim x _ -> x
+              TCMacro x _ -> x
+              _ -> error $ printf "Could not get cond oa from %s" (show ifThen)
         ifCond' <- toTExprDest env [(srcType, oa)] ifCond (emptyMetaT boolType)
         ifThen' <- ltry ifThen
-        return ((ifCond', oa), ifThen')
-      elseTree' <- ltry elseTree
-      return (elseTp, TCCond destType ifTreePairs elseTree')
-      -- return $ TCCond destType ifTreePairs elseTree
+        return (Just (ifCond', oa), ifThen')
+      case els of
+        Nothing -> return (fromJust $ maybeGetSingleton $ unionAllTypes tbTypeEnv $ map (getExprType . fst) ifs, TCCond destType ifTreePairs)
+
+        Just (elseTp, elseTree) -> do
+          elseTree' <- ltry elseTree
+          return (elseTp, TCCond destType (ifTreePairs ++ [(Nothing, elseTree')]))
     ltry = envLookupTry env obj visitedArrows srcType destType
 
 groupArrows :: [ResBuildEnvItem] -> CRes [ArrowGuardGroup]
 groupArrows = aux ([], Nothing)
   where
     aux ([], Nothing) [] = return []
-    aux (ifs, Just els) [] = return [CondGuardGroup ifs els]
-    aux (_, Nothing) [] = CErr [MkCNote $ BuildTreeCErr Nothing "No ElseGuards found"]
+    aux (ifs, els) [] = return [CondGuardGroup ifs els]
     aux acc ((pt, Nothing, False, t):bs) = do
       bs' <- aux acc bs
       return $ NoGuardGroup pt t:bs'

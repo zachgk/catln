@@ -127,15 +127,19 @@ evalCallTree  m (TCMatch opts) = do
 evalCallTree v (TCSeq a b) = do
   v' <- evalCallTree v a
   evalCallTree v' b
-evalCallTree m (TCCond _ [] elseTree) = evalCallTree m elseTree
-evalCallTree m (TCCond resType (((ifCondTree, ifObj), ifThenTree):restIfTrees) elseTree) = do
-  Env{evArgs} <- get
-  modify $ evalSetArgs $ buildArrArgs (Left ifObj) m
-  cond' <- withEvalPush "cond" $ evalExpr ifCondTree
-  modify $ evalSetArgs evArgs
+evalCallTree _ (TCCond _ []) = evalError "Found no matching conditions in evalTree"
+evalCallTree m (TCCond resType ((cond, ifThenTree):restIfTrees)) = do
+  cond' <- case cond of
+    Nothing -> return true
+    Just (ifCondTree, ifObj) -> do
+      Env{evArgs} <- get
+      modify $ evalSetArgs $ buildArrArgs (Left ifObj) m
+      cond' <- withEvalPush "cond" $ evalExpr ifCondTree
+      modify $ evalSetArgs evArgs
+      return cond'
   case cond' of
-    b | b == true -> withEvalPush ("then for " ++ show ifCondTree) $ evalCallTree m ifThenTree
-    b | b == false -> withEvalPush ("else for " ++ show ifCondTree) $ evalCallTree m (TCCond resType restIfTrees elseTree)
+    b | b == true -> withEvalPush ("then for " ++ show cond) $ evalCallTree m ifThenTree
+    b | b == false -> withEvalPush ("else for " ++ show cond) $ evalCallTree m (TCCond resType restIfTrees)
     _ -> error "Non-Bool eval resArrowCond"
 evalCallTree input (TCArg _ name) = do
   Env{evArgs} <- get

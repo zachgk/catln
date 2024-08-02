@@ -26,11 +26,9 @@ import           Text.Printf
 import           Control.Monad         (forM_)
 import           Data.Aeson
 import           Data.String.Builder   (Builder, build, literal)
-import qualified Data.Text.Lazy        as T
 import           Semantics.Prgm
 import           Text.Megaparsec       (pstateSourcePos)
 import           Text.Megaparsec.Error
-import           Text.Pretty.Simple
 
 data CNoteType
   = CNoteError
@@ -90,7 +88,7 @@ instance Show CNoteI where
   show (GenCErr _ s) = s
   show n@GenMapCErr{} = build $ showRecursiveCNoteI 0 n
   show (ParseCErr p) = errorBundlePretty p
-  show (BuildTreeCErr _ s) = printf "Failed to Build Tree: %s" (T.unpack $ pShow s)
+  show (BuildTreeCErr _ s) = printf "Failed to Build Tree: %s" s
   show (AssertCErr s) = printf "Failed assertion: %s" s
   show (EvalCErr st err) = printf "%s\n\tStack trace:\n\t\t%s" err (intercalate "\n\t\t" st)
   show (WrapCN n s) = s ++ "\n\t\t" ++ intercalate "\n\t\t" (map show n)
