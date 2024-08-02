@@ -14,10 +14,10 @@
 
 module MapMeta where
 
-import           Data.Bifunctor      (Bifunctor (bimap))
-import qualified Data.HashMap.Strict as H
-import           Data.Maybe          (fromMaybe)
-import           Semantics
+import           Control.Monad
+import           Control.Monad.Identity
+import qualified Data.HashMap.Strict    as H
+import           Data.Maybe             (fromMaybe)
 import           Semantics.Prgm
 
 data MetaLocation
@@ -51,7 +51,7 @@ data ExprMetaType
 type MetaFun a b = MetaType -> Meta a -> Meta b
 
 class MapMeta m where
-  mapMeta :: MetaFun a b -> MetaLocation -> m a -> m b
+  mapMetaM :: Monad n => MetaFun a b -> MetaLocation -> m a -> n (m b)
 
 
 clearMetaDat :: MetaFun a ()
@@ -68,36 +68,90 @@ zipMetaFun f1 f2 tp m@(Meta t p _) = Meta t p (db, dc)
 
 --
 
-mapMetaAppliedExpr :: (MetaDat m, Show m) => MetaFun m m -> MetaLocation -> Expr m -> Expr m
-mapMetaAppliedExpr f loc (CExpr m c) = CExpr (f (ExprMeta loc ExprMetaConstant) m) c
-mapMetaAppliedExpr f loc (Value m n) = Value (f (ExprMeta loc ExprMetaVal) m) n
-mapMetaAppliedExpr f loc (HoleExpr m h) = HoleExpr (f (ExprMeta loc ExprMetaHole) m) h
-mapMetaAppliedExpr f loc (AliasExpr b a) = AliasExpr (mapMetaAppliedExpr f loc b) (mapMetaAppliedExpr f loc a)
-mapMetaAppliedExpr f loc (EWhere m b a) = EWhere (f (ExprMeta loc ExprMetaWhere) m) (mapMetaAppliedExpr f loc b) (mapMetaAppliedExpr f loc a)
-mapMetaAppliedExpr f loc (TupleApply m (bm, be) arg) = TupleApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, mapMetaAppliedExpr f loc be) (mapArg arg)
+mapMetaAppliedExprM :: (Monad n, MetaDat m, Show m) => MetaFun m m -> MetaLocation -> Expr m -> n (Expr m)
+mapMetaAppliedExprM f loc (CExpr m c) = return $ CExpr (f (ExprMeta loc ExprMetaConstant) m) c
+mapMetaAppliedExprM f loc (Value m n) = return $ Value (f (ExprMeta loc ExprMetaVal) m) n
+mapMetaAppliedExprM f loc (HoleExpr m h) = return $ HoleExpr (f (ExprMeta loc ExprMetaHole) m) h
+mapMetaAppliedExprM f loc (AliasExpr b a) = do
+  b' <- mapMetaAppliedExprM f loc b
+  a' <- mapMetaAppliedExprM f loc a
+  return $ AliasExpr b' a'
+mapMetaAppliedExprM f loc (EWhere m b a) = do
+  b' <- mapMetaAppliedExprM f loc b
+  a' <- mapMetaAppliedExprM f loc a
+  return $ EWhere (f (ExprMeta loc ExprMetaWhere) m) b' a'
+mapMetaAppliedExprM f loc (TupleApply m (bm, be) arg) = do
+  be' <- mapMetaAppliedExprM f loc be
+  arg' <- mapArg arg
+  return $ TupleApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, be') arg'
     where
-      mapArg (EAppArg a)    = EAppArg $ mapOAObjExpr (mapMeta f loc) a
-      mapArg (EAppSpread a) = EAppSpread $ mapMetaAppliedExpr f loc a
-mapMetaAppliedExpr f loc (VarApply m be varName varVal) = VarApply (f (ExprMeta loc ExprMetaApplyVar) m) (mapMetaAppliedExpr f loc be) varName (f (ExprMeta loc ExprMetaApplyVarVal) varVal)
+      mapArg (EAppArg a)    = do
+        obj' <- case oaObj a of
+          Just o -> do
+            o' <- mapMetaM f loc o
+            return $ Just o'
+          Nothing -> return Nothing
+        let a' = a{oaObj=obj'}
+        return $ EAppArg a'
+      mapArg (EAppSpread a) = do
+        a' <- mapMetaAppliedExprM f loc a
+        return $ EAppSpread a'
+mapMetaAppliedExprM f loc (VarApply m be varName varVal) = do
+  be' <- mapMetaAppliedExprM f loc be
+  return $ VarApply (f (ExprMeta loc ExprMetaApplyVar) m) be' varName (f (ExprMeta loc ExprMetaApplyVarVal) varVal)
 
 instance MapMeta Expr where
-  mapMeta f loc (CExpr m c) = CExpr (f (ExprMeta loc ExprMetaConstant) m) c
-  mapMeta f loc (Value m n) = Value (f (ExprMeta loc ExprMetaVal) m) n
-  mapMeta f loc (HoleExpr m h) = HoleExpr (f (ExprMeta loc ExprMetaHole) m) h
-  mapMeta f loc (AliasExpr b a) = AliasExpr (mapMeta f loc b) (mapMeta f loc a)
-  mapMeta f loc (EWhere m b a) = EWhere (f (ExprMeta loc ExprMetaWhere) m) (mapMeta f loc b) (mapMeta f loc a)
-  mapMeta f loc (TupleApply m (bm, be) arg) = TupleApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, mapMeta f loc be) (mapArg arg)
+  mapMetaM f loc (CExpr m c) = return $ CExpr (f (ExprMeta loc ExprMetaConstant) m) c
+  mapMetaM f loc (Value m n) = return $ Value (f (ExprMeta loc ExprMetaVal) m) n
+  mapMetaM f loc (HoleExpr m h) = return $ HoleExpr (f (ExprMeta loc ExprMetaHole) m) h
+  mapMetaM f loc (AliasExpr b a) = do
+    b' <- mapMetaM f loc b
+    a' <- mapMetaM f loc a
+    return $ AliasExpr b' a'
+  mapMetaM f loc (EWhere m b a) = do
+    b' <- mapMetaM f loc b
+    a' <- mapMetaM f loc a
+    return $ EWhere (f (ExprMeta loc ExprMetaWhere) m) b' a'
+  mapMetaM f loc (TupleApply m (bm, be) arg) = do
+    be' <- mapMetaM f loc be
+    arg' <- mapArg f arg
+    return $ TupleApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, be') arg'
     where
-      mapArg (EAppArg a)    = EAppArg $ mapMetaObjArr f (Just loc) a
-      mapArg (EAppSpread a) = EAppSpread $ mapMeta f loc a
-  mapMeta f loc (VarApply m be varName varVal) = VarApply (f (ExprMeta loc ExprMetaApplyVar) m) (mapMeta f loc be) varName (f (ExprMeta loc ExprMetaApplyVarVal) varVal)
+      mapArg :: (Monad n, MapMeta e) => MetaFun a b -> EApp e a -> n (EApp e b)
+      mapArg f' (EAppArg a)    = do
+        a' <- mapMetaObjArrM f' (Just loc) a
+        return $ EAppArg a'
+      mapArg f' (EAppSpread a) = do
+        a' <- mapMetaM f' loc a
+        return $ EAppSpread a'
+  mapMetaM f loc (VarApply m be varName varVal) = do
+    be' <- mapMetaM f loc be
+    return $ VarApply (f (ExprMeta loc ExprMetaApplyVar) m) be' varName (f (ExprMeta loc ExprMetaApplyVarVal) varVal)
+
+mapMetaObjArrM :: (Monad n, MapMeta e) => MetaFun a b -> Maybe MetaLocation -> ObjArr e a -> n (ObjArr e b)
+mapMetaObjArrM f mloc oa@ObjArr{oaObj, oaAnnots, oaArr} = do
+  oaObj' <- mapM (mapMetaM f (fromMaybe InputMeta mloc)) oaObj
+  oaAnnots' <- mapM (mapMetaM f (fromMaybe AnnotMeta mloc)) oaAnnots
+  oaArr' <- forM  oaArr $ \(arrE, arrM) -> do
+    arrE' <- mapM (mapMetaM f (fromMaybe OutputMeta mloc)) arrE
+    let arrM' = f ArrMeta arrM
+    return (arrE', arrM')
+  return oa{oaObj=oaObj', oaAnnots=oaAnnots', oaArr=oaArr'}
+
+mapMetaPrgmM :: (Monad n, MapMeta e) => MetaFun a b -> Prgm e a -> n (Prgm e b)
+mapMetaPrgmM f (objMap, classGraph, annots) = do
+  objMap' <- mapM (mapMetaObjArrM f Nothing) objMap
+  annots' <- mapM (mapMetaM f AnnotMeta) annots
+  return (objMap', classGraph, annots')
+
+mapMeta :: (MapMeta m) => MetaFun a b -> MetaLocation -> m a -> m b
+mapMeta f loc a = runIdentity $ mapMetaM f loc a
+
+mapMetaAppliedExpr :: (MetaDat m, Show m) => MetaFun m m -> MetaLocation -> Expr m -> Expr m
+mapMetaAppliedExpr f loc e = runIdentity $ mapMetaAppliedExprM f loc e
 
 mapMetaObjArr :: (MapMeta e) => MetaFun a b -> Maybe MetaLocation -> ObjArr e a -> ObjArr e b
-mapMetaObjArr f mloc oa@ObjArr{oaObj, oaAnnots, oaArr} = oa{
-  oaObj = fmap (mapMeta f (fromMaybe InputMeta mloc)) oaObj,
-  oaAnnots = map (mapMeta f (fromMaybe AnnotMeta mloc)) oaAnnots,
-  oaArr = fmap (bimap (fmap (mapMeta f (fromMaybe OutputMeta mloc))) (f ArrMeta)) oaArr
-                                                             }
+mapMetaObjArr f loc oa = runIdentity $ mapMetaObjArrM f loc oa
 
 mapMetaPrgm :: (MapMeta e) => MetaFun a b -> Prgm e a -> Prgm e b
-mapMetaPrgm f (objMap, classGraph, annots) = (map (mapMetaObjArr f Nothing) objMap, classGraph, map (mapMeta f AnnotMeta) annots)
+mapMetaPrgm f p = runIdentity $ mapMetaPrgmM f p

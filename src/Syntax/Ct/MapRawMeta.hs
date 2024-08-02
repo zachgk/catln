@@ -13,52 +13,96 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Syntax.Ct.MapRawMeta where
-import           Data.Bifunctor (bimap)
-import           Data.Maybe     (fromMaybe)
+import           Control.Monad
+import           Control.Monad.Identity (Identity (runIdentity))
+import           Data.Maybe             (fromMaybe)
 import           MapMeta
 import           Syntax.Ct.Prgm
 
 instance MapMeta RawExpr where
-  mapMeta f loc (RawCExpr m c) = RawCExpr (f (ExprMeta loc ExprMetaConstant) m) c
-  mapMeta f loc (RawValue m n) = RawValue (f (ExprMeta loc ExprMetaVal) m) n
-  mapMeta f loc (RawHoleExpr m h) = RawHoleExpr (f (ExprMeta loc ExprMetaHole) m) h
-  mapMeta f loc (RawMacroValue m n) = RawMacroValue (f (ExprMeta loc ExprMetaMacroVal) m) n
-  mapMeta f loc (RawApplyExpr m n) = RawApplyExpr (f (ExprMeta loc ExprMetaMacroVal) m) (mapRawApply f n)
-  mapMeta f loc (RawTheExpr e) = RawTheExpr (mapMeta f loc e)
-  mapMeta f loc (RawAliasExpr b a) = RawAliasExpr (mapMeta f loc b) (mapMeta f loc a)
-  mapMeta f loc (RawWhere b a) = RawWhere (mapMeta f loc b) (mapMeta f loc a)
-  mapMeta f loc (RawTupleApply m (bm, be) args) = RawTupleApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, mapMeta f loc be) (map aux args)
+  mapMetaM f loc (RawCExpr m c) = return $ RawCExpr (f (ExprMeta loc ExprMetaConstant) m) c
+  mapMetaM f loc (RawValue m n) = return $ RawValue (f (ExprMeta loc ExprMetaVal) m) n
+  mapMetaM f loc (RawHoleExpr m h) = return $ RawHoleExpr (f (ExprMeta loc ExprMetaHole) m) h
+  mapMetaM f loc (RawMacroValue m n) = return $ RawMacroValue (f (ExprMeta loc ExprMetaMacroVal) m) n
+  mapMetaM f loc (RawApplyExpr m n) = do
+    n' <- mapRawApplyM f n
+    return $ RawApplyExpr (f (ExprMeta loc ExprMetaMacroVal) m) n'
+  mapMetaM f loc (RawTheExpr e) = do
+    e' <- mapMetaM f loc e
+    return $ RawTheExpr e'
+  mapMetaM f loc (RawAliasExpr b a) = do
+    b' <- mapMetaM f loc b
+    a' <- mapMetaM f loc a
+    return $ RawAliasExpr b' a'
+  mapMetaM f loc (RawWhere b a) = do
+    b' <- mapMetaM f loc b
+    a' <- mapMetaM f loc a
+    return $ RawWhere b' a'
+  mapMetaM f loc (RawTupleApply m (bm, be) args) = do
+    be' <- mapMetaM f loc be
+    args' <- mapM aux args
+    return $ RawTupleApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, be') args'
     where
-      aux (b, a) = (b, mapMetaRawObjArr f (Just loc) a)
-  mapMeta f loc (RawVarsApply m be vars) = RawVarsApply (f (ExprMeta loc ExprMetaApplyVar) m) (mapMeta f loc be) (map (mapMetaRawObjArr f (Just loc)) vars)
-  mapMeta f loc (RawContextApply m (bm, be) args) = RawContextApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, mapMeta f loc be) (map (mapMetaRawObjArr f (Just loc)) args)
-  mapMeta f loc (RawParen e) = RawParen (mapMeta f loc e)
-  mapMeta f loc (RawMethod b m) = RawMethod (mapMeta f loc b) (mapMeta f loc m)
-  mapMeta f loc (RawList m lst) = RawList (f (ExprMeta loc ExprMetaTupleArg) m) (map (mapMeta f loc) lst)
-  mapMeta f loc (RawTypeProp m b (TypePropProj p v)) = RawTypeProp (f (ExprMeta loc ExprMetaTypeProp) m) (mapMeta f loc b) (TypePropProj p (mapMeta f loc v))
-  mapMeta f loc (RawTypeProp m b (TypePropRel p v)) = RawTypeProp (f (ExprMeta loc ExprMetaTypeProp) m) (mapMeta f loc b) (TypePropRel p (mapMeta f loc v))
+      aux (b, a) = do
+        a' <- mapMetaRawObjArrM f (Just loc) a
+        return (b, a')
+  mapMetaM f loc (RawVarsApply m be vars) = do
+    be' <- mapMetaM f loc be
+    vars' <- mapM (mapMetaRawObjArrM f (Just loc)) vars
+    return $ RawVarsApply (f (ExprMeta loc ExprMetaApplyVar) m) be' vars'
+  mapMetaM f loc (RawContextApply m (bm, be) args) = do
+    be' <- mapMetaM f loc be
+    args' <- mapM (mapMetaRawObjArrM f (Just loc)) args
+    return $ RawContextApply (f (ExprMeta loc ExprMetaApplyArg) m) (f (ExprMeta loc ExprMetaApplyArgBase) bm, be') args'
+  mapMetaM f loc (RawParen e) = RawParen <$> mapMetaM f loc e
+  mapMetaM f loc (RawMethod b m) = do
+    b' <- mapMetaM f loc b
+    m' <- mapMetaM f loc m
+    return $ RawMethod b' m'
+  mapMetaM f loc (RawList m lst) = do
+    lst' <- mapM (mapMetaM f loc) lst
+    return $ RawList (f (ExprMeta loc ExprMetaTupleArg) m) lst'
+  mapMetaM f loc (RawTypeProp m b (TypePropProj p v)) = do
+    b' <- mapMetaM f loc b
+    v' <- mapMetaM f loc v
+    return $ RawTypeProp (f (ExprMeta loc ExprMetaTypeProp) m) b' (TypePropProj p v')
+  mapMetaM f loc (RawTypeProp m b (TypePropRel p v)) = do
+    b' <- mapMetaM f loc b
+    v' <- mapMetaM f loc v
+    return $ RawTypeProp (f (ExprMeta loc ExprMetaTypeProp) m) b' (TypePropRel p v')
 
-mapRawApply :: (MapMeta e) => MetaFun a b -> RawApply e a -> RawApply e b
-mapRawApply f (RawApply terms) = RawApply $ map mapTerm terms
+mapRawApplyM :: (Monad n, MapMeta e) => MetaFun a b -> RawApply e a -> n (RawApply e b)
+mapRawApplyM f (RawApply terms) = RawApply <$> mapM mapTerm terms
   where
-    mapTerm (RATermDeep e)  = RATermDeep $ mapMeta f ApplyMeta e
-    mapTerm (RATermChild e) = RATermChild $ mapMeta f ApplyMeta e
+    mapTerm (RATermDeep e)  = RATermDeep <$> mapMetaM f ApplyMeta e
+    mapTerm (RATermChild e) = RATermChild <$> mapMetaM f ApplyMeta e
 
-mapMetaRawObjArr :: (MapMeta e) => MetaFun a b -> Maybe MetaLocation -> RawObjArr e a -> RawObjArr e b
-mapMetaRawObjArr f mloc roa@RawObjArr{roaObj, roaAnnots, roaArr, roaDef} = roa{
-  roaObj = fmap (mapMeta f (fromMaybe InputMeta mloc)) roaObj,
-  roaAnnots = map (mapMeta f (fromMaybe AnnotMeta mloc)) roaAnnots,
-  roaArr = fmap (bimap (fmap (mapMeta f (fromMaybe OutputMeta mloc))) (fmap (mapMeta f (fromMaybe OutputMeta mloc)))) roaArr,
-  roaDef = fmap (mapMeta f (fromMaybe InputMeta mloc)) roaDef
-                                                             }
+mapMetaRawObjArrM :: (Monad n, MapMeta e) => MetaFun a b -> Maybe MetaLocation -> RawObjArr e a -> n (RawObjArr e b)
+mapMetaRawObjArrM f mloc roa@RawObjArr{roaObj, roaAnnots, roaArr, roaDef} = do
+  roaObj' <- mapM (mapMetaM f (fromMaybe InputMeta mloc)) roaObj
+  roaAnnots' <- mapM (mapMetaM f (fromMaybe AnnotMeta mloc)) roaAnnots
+  roaArr' <- forM roaArr $ \(arrE, arrM) -> do
+    arrE' <- mapM (mapMetaM f (fromMaybe OutputMeta mloc)) arrE
+    arrM' <- mapM (mapMetaM f (fromMaybe OutputMeta mloc)) arrM
+    return (arrE', arrM')
+  roaDef' <- mapM (mapMetaM f (fromMaybe InputMeta mloc)) roaDef
+  return roa{roaObj=roaObj', roaAnnots=roaAnnots', roaArr=roaArr', roaDef=roaDef'}
 
-mapMetaRawStatement :: (MapMeta e) => MetaFun a b -> RawStatement e a -> RawStatement e b
-mapMetaRawStatement f (RawDeclStatement objArr) = RawDeclStatement (mapMetaRawObjArr f Nothing objArr)
-mapMetaRawStatement f (RawBindStatement objArr) = RawBindStatement (mapMetaRawObjArr f Nothing objArr)
-mapMetaRawStatement f (RawAnnot e) = RawAnnot (mapMeta f AnnotMeta e)
+mapMetaRawStatementM :: (Monad n, MapMeta e) => MetaFun a b -> RawStatement e a -> n (RawStatement e b)
+mapMetaRawStatementM f (RawDeclStatement objArr) = RawDeclStatement <$> mapMetaRawObjArrM f Nothing objArr
+mapMetaRawStatementM f (RawBindStatement objArr) = RawBindStatement  <$> mapMetaRawObjArrM f Nothing objArr
+mapMetaRawStatementM f (RawAnnot e) = RawAnnot <$> mapMetaM f AnnotMeta e
 
-mapMetaRawStatementTree :: (MapMeta e) => MetaFun a b -> RawStatementTree e a -> RawStatementTree e b
-mapMetaRawStatementTree f (RawStatementTree s tree) = RawStatementTree (mapMetaRawStatement f s) (map (mapMetaRawStatementTree f) tree)
+mapMetaRawStatementTreeM :: (Monad n, MapMeta e) => MetaFun a b -> RawStatementTree e a -> n (RawStatementTree e b)
+mapMetaRawStatementTreeM f (RawStatementTree s tree) = do
+  s' <- mapMetaRawStatementM f s
+  tree' <- mapM (mapMetaRawStatementTreeM f) tree
+  return $ RawStatementTree s' tree'
+
+mapMetaRawPrgmM :: Monad n => MetaFun a b -> RawPrgm a -> n (RawPrgm b)
+mapMetaRawPrgmM f (imports, statementTrees) = do
+  statementTrees' <- mapM (mapMetaRawStatementTreeM f) statementTrees
+  return (imports, statementTrees')
 
 mapMetaRawPrgm :: MetaFun a b -> RawPrgm a -> RawPrgm b
-mapMetaRawPrgm f (imports, statementTrees) = (imports, map (mapMetaRawStatementTree f) statementTrees)
+mapMetaRawPrgm f p = runIdentity $ mapMetaRawPrgmM f p
