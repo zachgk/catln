@@ -33,8 +33,8 @@ import           Eval                          (evalAnnots, evalBuild,
                                                 evalBuildAll, evalRun)
 import           Eval.Common                   (EvalMetaDat, EvalResult, TExpr,
                                                 Val (..))
-import           MapMeta                       (interleaveMeta, zipMetaFun)
-import           Semantics.Interleave          (interleavePrgm)
+import           MapMeta                       (interleaveMeta, interleavePrgm,
+                                                zipMetaFun)
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Desugarf            (desFiles)

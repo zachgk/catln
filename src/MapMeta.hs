@@ -16,8 +16,9 @@ module MapMeta where
 
 import           Control.Monad
 import           Control.Monad.Identity
-import qualified Data.HashMap.Strict    as H
-import           Data.Maybe             (fromMaybe)
+import           Control.Monad.Trans.Writer (execWriter, tell)
+import qualified Data.HashMap.Strict        as H
+import           Data.Maybe                 (fromMaybe)
 import           Semantics.Prgm
 
 data MetaLocation
@@ -59,6 +60,15 @@ clearMetaDat _ (Meta p l _) = return $ Meta p l ()
 
 interleaveMeta :: (Monad n) => H.HashMap CodeRangeDat a -> MetaFun n () (Maybe a)
 interleaveMeta dat _ (Meta t p _) = return $ Meta t p (p >>= (`H.lookup` dat))
+
+interleavePrgm :: Prgm Expr m -> H.HashMap CodeRangeDat (Meta m)
+interleavePrgm prgm = H.fromList $ execWriter $ mapMetaPrgmM f prgm
+  where
+    f _ m = case getMetaPos m of
+      Just cr -> do
+        tell [(cr, m)]
+        return m
+      Nothing -> return m
 
 zipMetaFun :: (Monad n) => MetaFun n a b -> MetaFun n a c -> MetaFun n a (b, c)
 zipMetaFun f1 f2 tp m@(Meta t p _) = do
