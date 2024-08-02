@@ -155,8 +155,8 @@ desMultiTypeDefObj inheritPath varReplaceMap expr = desObj False inheritPath Use
     -- This replaces references from obj vars of class vars
     -- Consider JOptional<$T> = Just<$T=$T> | Nothing
     -- For the object Just, it needs to be Just<TopType $T> as the classes $T is out of scope
-    replaceMetaVar (ExprMeta InputMeta ExprMetaApplyVarVal) (Meta t pos md) = Meta (substituteVarsWithVarEnv varReplaceMap t) pos md
-    replaceMetaVar _ m = m
+    replaceMetaVar (ExprMeta InputMeta ExprMetaApplyVarVal) (Meta t pos md) = return $ Meta (substituteVarsWithVarEnv varReplaceMap t) pos md
+    replaceMetaVar _ m = return m
     expr'' = mapMetaAppliedExpr replaceMetaVar InputMeta expr'
 
 
