@@ -60,17 +60,15 @@ class MapMeta m where
 clearMetaDat :: (Monad n) => MetaFun n a ()
 clearMetaDat _ (Meta p l mid _) = return $ Meta p l mid ()
 
-interleaveMeta :: (Monad n) => H.HashMap CodeRangeDat a -> MetaFun n () (Maybe a)
-interleaveMeta dat _ (Meta t p mid _) = return $ Meta t p mid (p >>= (`H.lookup` dat))
+interleaveMeta :: (Monad n) => H.HashMap UUID.UUID a -> MetaFun n () (Maybe a)
+interleaveMeta dat _ (Meta t p mid _) = return $ Meta t p mid (H.lookup mid dat)
 
-interleavePrgm :: Prgm Expr m -> H.HashMap CodeRangeDat (Meta m)
+interleavePrgm :: Prgm Expr m -> H.HashMap UUID.UUID (Meta m)
 interleavePrgm prgm = H.fromList $ execWriter $ mapMetaPrgmM f prgm
   where
-    f _ m = case getMetaPos m of
-      Just cr -> do
-        tell [(cr, m)]
+    f _ m = do
+        tell [(getMetaID m, m)]
         return m
-      Nothing -> return m
 
 addMetaID :: MetaFun IO m m
 addMetaID _ m = if UUID.null $ getMetaID m

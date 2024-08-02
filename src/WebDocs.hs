@@ -210,7 +210,7 @@ docApiBase provider = do
     maybeJson $ do
       rawPrgm <- maybeRawPrgms'
       let tprgm' = maybe H.empty interleavePrgm (cresToMaybe maybeTPrgms')
-      let annots' = H.fromList $ map (first (fromJust . getMetaPos . getExprMeta)) annots
+      let annots' = H.fromList $ map (first (getMetaID . getExprMeta)) annots
       let rawPrgm' = mapMetaRawPrgm (zipMetaFun (interleaveMeta tprgm') (interleaveMeta annots')) rawPrgm
       return rawPrgm'
 
