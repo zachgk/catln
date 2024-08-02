@@ -10,6 +10,7 @@
 -- This is the module for testing typechecking.
 --------------------------------------------------------------------
 module Typecheck.TypeCheckTests where
+import           Control.Monad.State (evalStateT, execStateT, runStateT)
 import           CRes
 import           Data.Graph          (graphFromEdges)
 import           Hedgehog
@@ -26,7 +27,6 @@ import           TypeCheck.Constrain (executeConstraint)
 import           TypeCheck.Decode    (toPrgms)
 import           TypeCheck.Encode    (fromPrgms, makeBaseFEnv)
 import           Utils
-import Control.Monad.State (execStateT)
 
 propExprEncodeDecode :: Property
 propExprEncodeDecode = property $ do
@@ -35,8 +35,8 @@ propExprEncodeDecode = property $ do
   annotate $ printf "Programs: \n\t%s" (show prgms)
   let prgm = mergePrgms prgms
   let fenv = makeBaseFEnv prgm
-  (encoded, fenv') <- evalMaybe $ tcreToMaybe $ fromPrgms fenv prgms []
-  decoded <- evalMaybe $ tcreToMaybe $ toPrgms fenv' encoded
+  (encoded, fenv') <- evalMaybe $ tcreToMaybe $ runStateT (fromPrgms prgms []) fenv
+  decoded <- evalMaybe $ tcreToMaybe $ evalStateT (toPrgms encoded) fenv'
   let decodedClear = map (mapMetaPrgm clearMetaDat) decoded
   annotate $ printf "Decoded to: \n\t%s" (show decoded)
   map fst3 prgms === map fst3 decodedClear
@@ -47,7 +47,7 @@ propConstraint = property $ do
   let prgms = map fst3 prgmsNodes
   let prgm = mergePrgms prgms
   let fenv = makeBaseFEnv prgm
-  (_, fenv') <- evalMaybe $ tcreToMaybe $ fromPrgms fenv prgms []
+  fenv' <- evalMaybe $ tcreToMaybe $ execStateT (fromPrgms prgms []) fenv
   let cons = feCons fenv'
   con <- forAll $ HG.element cons
   let _fenv'' = execStateT (executeConstraint con) fenv'
@@ -59,7 +59,7 @@ propConstraints = property $ do
   let prgms = map fst3 prgmsNodes
   let prgm = mergePrgms prgms
   let fenv = makeBaseFEnv prgm
-  (_, fenv') <- evalMaybe $ tcreToMaybe $ fromPrgms fenv prgms []
+  fenv' <- evalMaybe $ tcreToMaybe $ execStateT (fromPrgms prgms []) fenv
   let cons = feCons fenv'
   usedCons <- forAll $ HG.subsequence (concat $ replicate 4 cons)
   let _fenv'' = execStateT (mapM executeConstraint usedCons) fenv'

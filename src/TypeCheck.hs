@@ -17,10 +17,10 @@
 -- relationships between those variables. Then, those relationships
 -- are applied until the typing has converged (no more changes).
 --------------------------------------------------------------------
-{-# LANGUAGE NamedFieldPuns #-}
 
 module TypeCheck where
 
+import           Control.Monad.State
 import           CRes
 import           Data.Graph
 import qualified Data.HashMap.Strict as H
@@ -41,14 +41,20 @@ type TypecheckFileResult = H.HashMap FileImport (GraphNodes TypecheckTuplePrgm F
 runConstraintsLimit :: Integer
 runConstraintsLimit = 15
 
+typecheckPrgmsSt :: [PPrgm] -> [TPrgm] -> StateT FEnv TypeCheckResult ([TPrgm], [VPrgm], TraceConstrain)
+typecheckPrgmsSt pprgms typechecked = do
+  vprgms <- fromPrgms pprgms typechecked
+  cons <- gets feCons
+  runConstraints runConstraintsLimit cons
+  trace <- gets feTrace
+  tprgms <- toPrgms vprgms
+  return (tprgms, vprgms, trace)
+
 typecheckPrgms :: [PPrgm] -> [TPrgm] -> TypeCheckResult [TypecheckTuplePrgm]
 typecheckPrgms pprgms typechecked = do
   let baseFEnv = makeBaseFEnv (mergePrgms (pprgms ++ map (mapMetaPrgm clearMetaDat) typechecked))
-  (vprgms, env@FEnv{feCons}) <- fromPrgms baseFEnv pprgms typechecked
-  env'@FEnv{feTrace} <- runConstraints runConstraintsLimit env feCons
-  -- _ <- trace (printf "Found feUnionAllObjs %s" (show $ descriptor env' $ feUnionAllObjs env')) (return ())
-  tprgms <- toPrgms env' vprgms
-  return $ zip3 tprgms vprgms (repeat feTrace)
+  (tprgms, vprgms, trace) <- evalStateT (typecheckPrgmsSt pprgms typechecked) baseFEnv
+  return $ zip3 tprgms vprgms (repeat trace)
 
 typecheckConnComps :: PPrgmGraphData -> TypecheckFileResult -> [SCC (GraphNodes PPrgm FileImport)] -> TypeCheckResult TypecheckFileResult
 typecheckConnComps _ res [] = return res

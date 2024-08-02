@@ -271,21 +271,18 @@ executeConstraint con = do
 -- It should eventually converge after which applying the constraints no longer has any effect.
 -- This function also accepts a limit 'Integer' to indicate a maximum number of times a constraint can be used.
 -- A 'TypeCheckError' will be thrown if it has not converged by the time the limit is reached.
-runConstraintsSt :: Integer -> [VConstraint] -> StateT FEnv TypeCheckResult ()
-runConstraintsSt _ [] = return ()
-runConstraintsSt 0 _ = do
+runConstraints :: Integer -> [VConstraint] -> StateT FEnv TypeCheckResult ()
+runConstraints _ [] = return ()
+runConstraints 0 _ = do
   env@FEnv{feTrace, feUnionAllObjs} <- get
   -- _ <- trace (printf "Trace 908: %s" (show $ showTraceConstrainPnt env 908)) (return ())
   if (stypeAct <$> descriptor env feUnionAllObjs) == pure PTopType
     then lift $ TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit without determining the TopTop (unionAllObjs)"] ()
     else lift $ TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit with still changing constraints: \n\n%s" (show $ showTraceConstrainEpoch env $ head $ tail $ tcEpochs feTrace)] ()
-runConstraintsSt limit cons = do
+runConstraints limit cons = do
   constraintsToPrune <- mapM executeConstraint cons
   updated <- gets feUpdatedDuringEpoch
   let cons' = mapMaybe (\(con, shouldPrune) -> if shouldPrune then Nothing else Just con) $ zip cons constraintsToPrune
   when updated $ do
     modify nextConstrainEpoch
-    runConstraintsSt (limit - 1) cons'
-
-runConstraints :: Integer -> FEnv -> [VConstraint] -> TypeCheckResult FEnv
-runConstraints limit env cons = execStateT (runConstraintsSt limit cons) env
+    runConstraints (limit - 1) cons'

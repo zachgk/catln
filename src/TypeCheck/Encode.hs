@@ -275,13 +275,10 @@ addTypeGraphArrow oa = modify (fAddTTypeGraph (oaObjPath oa) oa)
 addTypeGraphPrgm :: TPrgm -> StateT FEnv TypeCheckResult ()
 addTypeGraphPrgm (objMap, _, _) = mapM_ addTypeGraphArrow objMap
 
-fromPrgmsSt :: [PPrgm] -> [TPrgm] -> StateT FEnv TypeCheckResult [VPrgm]
-fromPrgmsSt pprgms tprgms = do
+fromPrgms :: [PPrgm] -> [TPrgm] -> StateT FEnv TypeCheckResult [VPrgm]
+fromPrgms pprgms tprgms = do
   mapM_ addTypeGraphPrgm tprgms
   vprgms <- mapM fromPrgm pprgms
   let (tjoinObjMap, _, _) = mergePrgms tprgms
   addUnionObjToEnv (concatMap fst3 vprgms) tjoinObjMap
   return vprgms
-
-fromPrgms :: FEnv -> [PPrgm] -> [TPrgm] -> TypeCheckResult ([VPrgm], FEnv)
-fromPrgms env1 pprgms tprgms = runStateT (fromPrgmsSt pprgms tprgms) env1
