@@ -180,6 +180,7 @@ envLookup env obj visitedArrows srcType destType = do
 
 
 buildCallTree :: TBEnv -> [ObjSrc] -> Type -> Type -> CRes TCallTree
+-- buildCallTree _ os srcType destType | trace (printf "buildCallTree from %s to %s\n\t\twith %s" (show srcType) (show destType) (show os)) False = undefined
 buildCallTree TBEnv{tbTypeEnv} os srcType destType | isSubtypeOfWithObjSrcs tbTypeEnv os srcType destType = return TCTId
 buildCallTree _ _ _ PTopType = return TCTId
 buildCallTree _ _ PTopType _ = error $ printf "buildCallTree from top type"
@@ -194,6 +195,7 @@ buildCallTree env os (UnionType srcLeafs) destType = do
 buildCallTree _ _ _ _ = error "Unimplemented buildCallTree"
 
 toTExpr :: TBEnv -> [ObjSrc] -> Expr TBMetaDat -> CRes (TExpr TBMetaDat)
+-- toTExpr _ os e | trace (printf "toTExpr %s \n\twith %s" (show e) (show os)) False = undefined
 toTExpr _ _ (CExpr m (CInt c)) = return $ TCExpr m (IntVal c)
 toTExpr _ _ (CExpr m (CFloat c)) = return $ TCExpr m (FloatVal c)
 toTExpr _ _ (CExpr m (CStr c)) = return $ TCExpr m (StrVal c)
@@ -217,6 +219,7 @@ toTExpr env os (TupleApply m (bm, be) arg) = do
   return $ TTupleApply m (bm, be') arg'
 
 toTEObjArr :: TBEnv -> [ObjSrc] -> EObjArr -> CRes (ObjArr TExpr TBMetaDat)
+-- toTEObjArr _ os oa | trace (printf "toTEObjArr %s\n\twith %s" (show oa) (show os)) False = undefined
 toTEObjArr env os oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   oaObj' <- mapM (toTExpr env os) oaObj
   let os' = case oa of
@@ -257,6 +260,12 @@ buildArrow env objPartial oa@ObjArr{oaAnnots, oaArr=Just (Just expr, am)} = do
                                        let annotEnv = env{tbName = printf "globalAnnot %s" (show annot)}
                                        toTExpr annotEnv [objSrc] annot
   return $ Just (oa, (resArrowTree, compAnnots'))
+
+buildRootOA :: TBEnv -> EObjArr -> CRes (ObjArr TExpr TBMetaDat)
+buildRootOA env oa = do
+  let env' = env{tbName = printf "root"}
+  let objSrc = (fromJust $ maybeGetSingleton $ getExprType $ oaObjExpr oa, oa)
+  toTEObjArr env' [objSrc] oa
 
 buildRoot :: TBEnv -> TBExpr -> PartialType -> Type -> CRes (TExpr TBMetaDat)
 buildRoot env input src dest = do

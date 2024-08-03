@@ -13,7 +13,8 @@ import           Eval
 import           Syntax.Ct.Desugarf (desFiles)
 import           Syntax.Parsers     (mkDesCanonicalImportStr,
                                      mkRawCanonicalImportStr, readFiles)
-import           System.Directory   (doesFileExist, getCurrentDirectory)
+import           System.Directory   (createDirectoryIfMissing, doesFileExist,
+                                     getCurrentDirectory)
 import           System.FilePath    (takeBaseName)
 import           Text.Pretty.Simple (pShowNoColor)
 import           TypeCheck
@@ -30,9 +31,13 @@ goldenDesugarDir = "test/Integration/goldenDesugar/"
 goldenTypecheckDir :: String
 goldenTypecheckDir = "test/Integration/goldenTypecheck/"
 
+goldenTreebuildDir :: String
+goldenTreebuildDir = "test/Integration/goldenBuild/"
+
 runGoldenTest :: (Show fn, Show prgm) => String -> String -> String -> GraphData fn prgm -> (String -> IO ()) -> IO ()
 runGoldenTest goldenType goldenDir fileNameStr prgm step = do
   let goldenPath = goldenDir ++ takeBaseName fileNameStr ++ ".txt"
+  createDirectoryIfMissing True goldenDir
   goldenExists <- doesFileExist goldenPath
   let showPrgm = pShowNoColor $ graphToNodes prgm
   cwd <- getCurrentDirectory
@@ -72,6 +77,13 @@ runTest runGolden includeCore fileNameStr = testCaseSteps fileNameStr $ \step ->
 
               when runGolden $ do
                 runGoldenTest "typecheck" goldenTypecheckDir fileNameStr tprgm step
+
+              when runGolden $ do
+                step "TreeBuild..."
+                case evalBuildAll tprgm of
+                  CErr notes -> assertFailure $ "Could not buildAll:" ++ prettyCNotes notes
+                  CRes _ tbprgm -> do
+                    runGoldenTest "treebuild" goldenTreebuildDir fileNameStr tbprgm step
 
               when (evalRunnable $ evalTargetMode "main" fileName tprgm) $ do
                 step "Eval Run..."

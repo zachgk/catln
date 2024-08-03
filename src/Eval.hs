@@ -213,7 +213,7 @@ evalBuildAll prgmGraphData = do
   prgms' <- forM prgms $ \((objMap, cg, annots), prgmName, deps) -> do
     let evalPrgm = prgmFromGraphData prgmName prgmGraphData
     let Env{evTbEnv} = evalBaseEnv evalPrgm
-    objMap' <- catCRes $ fmap (toTEObjArr evTbEnv []) objMap
+    objMap' <- catCRes $ fmap (buildRootOA evTbEnv) objMap
     annots' <- catCRes $ fmap (toTExpr evTbEnv []) annots
     return ((objMap', cg, annots'), prgmName, deps)
   return $ graphFromEdges prgms'
