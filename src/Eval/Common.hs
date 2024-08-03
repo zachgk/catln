@@ -186,7 +186,7 @@ data MacroData = MacroData {
 newtype MacroFunction = MacroFunction (TExpr EvalMetaDat -> MacroData -> CRes (TExpr EvalMetaDat))
 type ResBuildEnvFunction = TCallTree
 type ResBuildPrims = H.HashMap TypeName (Either EPrim MacroFunction)
-type ResBuildEnvItem = (PartialType, Maybe (Expr EvalMetaDat), Bool, ResBuildEnvFunction)
+type ResBuildEnvItem = (PartialType, Maybe (ObjArr Expr EvalMetaDat), ResBuildEnvFunction)
 type ResBuildEnv = H.HashMap TypeName [ResBuildEnvItem]
 type ResExEnv = H.HashMap (PartialType, ObjArr Expr EvalMetaDat) (TExpr EvalMetaDat, [TExpr EvalMetaDat]) -- (result, [compAnnot trees])
 
@@ -212,15 +212,15 @@ instance Show TCallTree where
   show (TCSeq a b)    = printf "TCSeq (%s) (%s)" (show a) (show b)
   show (TCCond t ifs) = printf "TCCond %s (%s)" (show t) (show ifs)
   show (TCArg t _)    = printf "TCArg %s" (show t)
-  show (TCObjArr oa)  = printf "TCObjArr %s" (show oa)
-  show (TCPrim oa _)  = printf "TCPrim %s" (show oa)
-  show (TCMacro oa _) = printf "TCMacro %s" (show oa)
+  show (TCObjArr oa)  = printf "TCObjArr (%s)" (show oa)
+  show (TCPrim oa _)  = printf "TCPrim (%s)" (show oa)
+  show (TCMacro oa _) = printf "TCMacro (%s)" (show oa)
 
 data TCallTree
   = TCTId
   | TCMatch (H.HashMap PartialType TCallTree)
   | TCSeq TCallTree TCallTree
-  | TCCond Type [(Maybe (TExpr EvalMetaDat, EObjArr), TCallTree)] -- [((if, ifObj), then)]
+  | TCCond Type [(Maybe ([TExpr EvalMetaDat], EObjArr), TCallTree)] -- [((if, ifObj), then)]
   | TCArg Type String
   | TCObjArr EObjArr
   | TCPrim EObjArr EPrim

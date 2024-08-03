@@ -36,6 +36,12 @@ data CNoteType
   | CNoteWarn
   deriving (Eq, Ord, Generic, ToJSON)
 
+instance Semigroup CNoteType where
+  CNoteWarn <> CNoteWarn = CNoteWarn
+  _ <> _                 = CNoteError
+instance Monoid CNoteType where
+  mempty = CNoteWarn
+
 class CNoteTC n where
   metaCNote :: n -> Maybe (Meta ())
   posCNote :: n -> CodeRange
@@ -82,17 +88,21 @@ showRecursiveCNoteI indent (GenMapCErr _ s subs) = do
       (subKey, CErr n) -> do
         withIndent (indent+1) ("Failed: " ++ subKey)
         mapM_ (showRecursiveCNote (indent + 2)) n
+showRecursiveCNoteI indent (WrapCN subs s) = do
+  withIndent indent s
+  forM_ subs $ \sub -> do
+    showRecursiveCNote (indent + 2) sub
 showRecursiveCNoteI _ n = literal (show n)
 
 instance Show CNoteI where
   show (GenCNote _ s) = s
   show (GenCErr _ s) = s
   show n@GenMapCErr{} = build $ showRecursiveCNoteI 0 n
+  show n@WrapCN{} = build $ showRecursiveCNoteI 0 n
   show (ParseCErr p) = errorBundlePretty p
   show (BuildTreeCErr _ s) = printf "Failed to Build Tree: %s" s
   show (AssertCErr s) = printf "Failed assertion: %s" s
   show (EvalCErr st err) = printf "%s\n\tStack trace:\n\t\t%s" err (intercalate "\n\t\t" st)
-  show (WrapCN n s) = s ++ "\n\t\t" ++ intercalate "\n\t\t" (map show n)
 
 instance CNoteTC CNoteI where
   metaCNote _ = Nothing
@@ -100,13 +110,16 @@ instance CNoteTC CNoteI where
     where pos = pstateSourcePos $ bundlePosState bundle
   posCNote _ = Nothing
 
-  typeCNote GenCNote{} = CNoteWarn
-  typeCNote _          = CNoteError
+  typeCNote GenCNote{}       = CNoteWarn
+  typeCNote (WrapCN notes _) = mconcat $ map typeCNote notes
+  typeCNote _                = CNoteError
 
   showRecursiveCNote i n = showRecursiveCNoteI i n
 
-wrapCErr :: [CNote] -> String -> CRes r
-wrapCErr notes s = CErr [MkCNote $ WrapCN notes s]
+wrapCRes :: String -> CRes r -> CRes r
+wrapCRes _ (CRes [] r)    = CRes [] r
+wrapCRes s (CRes notes r) = CRes [MkCNote $ WrapCN notes s] r
+wrapCRes s (CErr notes)   = CErr [MkCNote $ WrapCN notes s]
 
 data CRes r
   = CRes [CNote] r

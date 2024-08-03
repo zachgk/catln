@@ -288,6 +288,10 @@ typeAddPreds (TopType negLeafs preds) ps = TopType negLeafs (predsAnd ps preds)
 typeAddPreds v@TypeVar{} _ = error $ printf "Unimplemented typeAddPreds: %s" (show v)
 typeAddPreds (UnionType leafs) ps = UnionType $ partialLeafsAddPreds leafs ps
 
+clearUnionTypePreds :: Type -> Type
+clearUnionTypePreds (UnionType partials) = UnionType $ joinUnionType $ map (\p -> p{ptPreds=PredsNone}) $ splitUnionType partials
+clearUnionTypePreds t = t
+
 tryPredsToList :: TypePredicates -> Maybe [TypePredicate]
 tryPredsToList (PredsOne p)  = Just [p]
 tryPredsToList (PredsAnd ps) = concat <$> mapM tryPredsToList ps

@@ -122,7 +122,7 @@ evalObjArr input oa = do
   return res
 
 evalCallTree :: Val -> TCallTree -> StateT Env CRes Val
--- evalCallTree _ v ct | trace (printf "evalCallTree %s using %s" (show v) (show ct)) False = undefined
+-- evalCallTree v ct | trace (printf "evalCallTree %s using %s" (show v) (show ct)) False = undefined
 evalCallTree v TCTId = return v
 evalCallTree  m (TCMatch opts) = do
   Env{evTypeEnv} <- get
@@ -136,18 +136,22 @@ evalCallTree v (TCSeq a b) = do
   evalCallTree v' b
 evalCallTree _ (TCCond _ []) = evalError "Found no matching conditions in evalTree"
 evalCallTree m (TCCond resType ((cond, ifThenTree):restIfTrees)) = do
+  Env{evTypeEnv} <- get
   cond' <- case cond of
-    Nothing -> return true
-    Just (ifCondTree, ifObj) -> do
+    -- TODO Remove the use of clearUnionTypePreds below. It is a workaround as type predicates are not supported by subtypeOf
+    Just (_, oa) | not (isSubtypePartialOf evTypeEnv (getValType m) (clearUnionTypePreds $ getExprType $ oaObjExpr oa)) -> return False
+    Nothing -> return True
+    Just ([], _) -> return True
+    Just (ifCondTrees, ifObj) -> do
       Env{evArgs} <- get
       modify $ evalSetArgs $ buildArrArgs (Left ifObj) m
-      cond' <- withEvalPush "cond" $ evalExpr ifCondTree
+      conds' <- withEvalPush "cond" $ forM ifCondTrees $ \ifCondTree ->
+        evalExpr ifCondTree
       modify $ evalSetArgs evArgs
-      return cond'
-  case cond' of
-    b | b == true -> withEvalPush ("then for " ++ show cond) $ evalCallTree m ifThenTree
-    b | b == false -> withEvalPush ("else for " ++ show cond) $ evalCallTree m (TCCond resType restIfTrees)
-    _ -> error "Non-Bool eval resArrowCond"
+      return $ all (true ==) conds'
+  if cond'
+    then withEvalPush ("then for " ++ show cond) $ evalCallTree m ifThenTree
+    else withEvalPush ("else for " ++ show cond) $ evalCallTree m (TCCond resType restIfTrees)
 evalCallTree input (TCArg _ name) = do
   Env{evArgs} <- get
   case H.lookup name evArgs of
@@ -164,7 +168,7 @@ evalCallTree input (TCPrim _ (EPrim _ f)) = do
 evalCallTree _ TCMacro{} = evalError $ printf "Can't evaluate a macro - it should be removed during TreeBuild"
 
 evalExpr :: TExpr EvalMetaDat -> StateT Env CRes Val
--- evalExpr _ e | trace (printf "eval %s" (show e)) False = undefined
+-- evalExpr e | trace (printf "eval %s" (show e)) False = undefined
 evalExpr (TCExpr _ v) = return v
 evalExpr (TValue m _) = do
   let UnionType leafs = getMetaType m
