@@ -5,21 +5,22 @@ import           Test.Tasty
 import           Test.Tasty.HUnit
 import           Text.Printf
 
-import           Common.TestCommon  (findCt)
+import           Common.TestCommon   (findCt)
+import           Control.Monad.Trans
 import           CRes
-import           Data.List          (isPrefixOf)
-import qualified Data.Text.Lazy     as T
+import           Data.List           (isPrefixOf)
+import qualified Data.Text.Lazy      as T
 import           Eval
-import           Syntax.Ct.Desugarf (desFiles)
-import           Syntax.Parsers     (mkDesCanonicalImportStr,
-                                     mkRawCanonicalImportStr, readFiles)
-import           System.Directory   (createDirectoryIfMissing, doesFileExist,
-                                     getCurrentDirectory)
-import           System.FilePath    (takeBaseName)
-import           Text.Pretty.Simple (pShowNoColor)
+import           Syntax.Ct.Desugarf  (desFiles)
+import           Syntax.Parsers      (mkDesCanonicalImportStr,
+                                      mkRawCanonicalImportStr, readFiles)
+import           System.Directory    (createDirectoryIfMissing, doesFileExist,
+                                      getCurrentDirectory)
+import           System.FilePath     (takeBaseName)
+import           Text.Pretty.Simple  (pShowNoColor)
 import           TypeCheck
 import           Utils
-import           WebDocs            (docApi, docServe)
+import           WebDocs             (docApi, docServe)
 
 testDir, disabledTestDir :: String
 testDir = "test/Integration/code/"
@@ -56,58 +57,46 @@ runTest runGolden includeCore fileNameStr = testCaseSteps fileNameStr $ \step ->
   step $ printf "Read file %s..." fileNameStr
   fileNameRaw <- mkRawCanonicalImportStr fileNameStr
   fileName <- mkDesCanonicalImportStr fileNameStr
-  maybeRawPrgm <- readFiles includeCore [fileNameRaw]
 
+  res <- runCResT $ do
+    rawPrgm <- readFiles includeCore [fileNameRaw]
+    prgm <- asCResT $ desFiles rawPrgm
 
-  case maybeRawPrgm of
-    CErr notes -> assertFailure $ "Could not parse:" ++ prettyCNotes notes
-    CRes _ rawPrgm -> do
-      case desFiles rawPrgm of
-        CErr notes -> assertFailure $ "Could not desguar:" ++ prettyCNotes notes
-        CRes _ prgm -> do
+    when runGolden $ do
+      lift $ runGoldenTest "desugar" goldenDesugarDir fileNameStr prgm step
 
-          when runGolden $ do
-            runGoldenTest "desugar" goldenDesugarDir fileNameStr prgm step
+    lift $ step "Typecheck..."
+    tprgm <- asCResT $ typecheckPrgm prgm
 
-          step "Typecheck..."
-          case typecheckPrgm prgm of
-            CErr errs -> do
-              assertFailure $ "Could not typecheck:" ++ prettyCNotes errs
-            CRes _ tprgm -> do
+    when runGolden $ do
+      lift $ runGoldenTest "typecheck" goldenTypecheckDir fileNameStr tprgm step
 
-              when runGolden $ do
-                runGoldenTest "typecheck" goldenTypecheckDir fileNameStr tprgm step
+    when runGolden $ do
+      lift $ step "TreeBuild..."
+      tbprgm <- asCResT $ evalBuildAll tprgm
+      lift $ runGoldenTest "treebuild" goldenTreebuildDir fileNameStr tbprgm step
 
-              when runGolden $ do
-                step "TreeBuild..."
-                case evalBuildAll tprgm of
-                  CErr notes -> assertFailure $ "Could not buildAll:" ++ prettyCNotes notes
-                  CRes _ tbprgm -> do
-                    runGoldenTest "treebuild" goldenTreebuildDir fileNameStr tbprgm step
+    let evalTarget = evalTargetMode "main" fileName tprgm
+    when (evalRunnable evalTarget) $ do
+      lift $ step "Eval Run..."
+      returnValue <- evalRun "main" fileName tprgm
+      case returnValue of
+        (0, _) -> return ()
+        _ -> lift $ assertFailure $ "Bad result for:\n \t " ++ show (fst returnValue)
 
-              when (evalRunnable $ evalTargetMode "main" fileName tprgm) $ do
-                step "Eval Run..."
-                case evalRun "main" fileName tprgm of
-                  CErr notes -> do
-                    assertFailure $ "Could not eval: " ++ prettyCNotes notes
-                  CRes notes io -> do
-                    returnValue <- io
-                    case (notes, returnValue) of
-                      ([], (0, _)) -> return () -- success
-                      _ -> assertFailure $ "Bad result for:\n \t " ++ show (fst returnValue) ++ "\n \tNotes:" ++ prettyCNotes notes
-              step "Eval Build..."
-              case evalBuild "main" fileName tprgm of
-                CErr notes -> do
-                  assertFailure $ "Could not eval: " ++ prettyCNotes notes
-                CRes _ ioRes -> do
-                  _ <- ioRes
-                  return () -- success
-              step "evalAnnots..."
-              case evalAnnots fileName tprgm of
-                CErr notes -> do
-                  assertFailure $ "Could not eval: " ++ prettyCNotes notes
-                CRes _ _ -> return () -- success
-              step "Done"
+    lift $ step "Eval Build..."
+    _ <- evalBuild "main" fileName tprgm
+
+    lift $ step "Eval Annots..."
+    _ <- asCResT $ evalAnnots fileName tprgm
+    return ()
+  case res of
+    CRes notes _ -> do
+      unless (null notes) $ putStrLn $ prettyCNotes notes
+      step $ printf "Test %s finished" fileNameStr
+      return ()
+    CErr notes ->
+      assertFailure $ "Failed test: \n" ++ prettyCNotes notes
 
 runTests :: Bool -> Bool -> [String] -> TestTree
 runTests runGolden includeCore testFiles = testGroup "Tests" testTrees

@@ -2,7 +2,7 @@ module Syntax.SyntaxTests where
 
 import           Common.TestCommon   (filesWithExtension)
 import           Control.Monad
-import           CRes                (fromCRes)
+import           CRes                (CResT (runCResT), fromCRes)
 import qualified Data.HashMap.Strict as H
 import           Hedgehog
 import           Semantics.Prgm
@@ -22,11 +22,11 @@ type GenPrgm = Gen (Prgm Expr ())
 findPrgms :: (String, String) -> IO Prgms
 findPrgms (extension, prgmDir) = do
   fileNames <- filesWithExtension extension prgmDir
-  prgms <- forM fileNames $ \fileName -> do
-    rawPrgm <- parseFile False $ mkRawFileImport $ rawStr fileName
-    let (prgm, _, _) = fromCRes rawPrgm
-    return (fileName, prgm)
-  return $ H.fromList prgms
+  prgms <- runCResT $ do
+    forM fileNames $ \fileName -> do
+      (prgm, _, _) <- parseFile False $ mkRawFileImport $ rawStr fileName
+      return (fileName, prgm)
+  return $ H.fromList $ fromCRes prgms
 
 testPrgm :: (String, RawPrgm ()) -> TestTree
 testPrgm (name, p1) = do

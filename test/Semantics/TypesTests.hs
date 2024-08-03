@@ -2,7 +2,8 @@ module Semantics.TypesTests where
 
 import           Common.TestCommon   (findCt)
 import           Control.Monad
-import           CRes                (fromCRes)
+import           Control.Monad.Trans
+import           CRes
 import qualified Data.HashMap.Strict as H
 import           Data.Maybe
 import           Hedgehog
@@ -27,13 +28,14 @@ findPrgms :: IO Prgms
 findPrgms = do
   let classGraphDir = "test/Semantics/code/"
   fileNames <- findCt classGraphDir
-  prgms <- forM fileNames $ \fileName -> do
-    fileName' <- mkRawCanonicalImportStr fileName
-    rawPrgm <- fromCRes <$> readFiles False [fileName']
-    let prgm = fromCRes $ desFiles rawPrgm
-    let tprgm = fromCRes $ typecheckPrgm prgm
-    return (fileName, mergePrgms $ map (mapMetaPrgm clearMetaDat . fst3) (graphToNodes tprgm))
-  return (H.insert "empty" emptyPrgm $ H.fromList prgms)
+  prgms <- runCResT $ do
+    forM fileNames $ \fileName -> do
+      fileName' <- lift $ mkRawCanonicalImportStr fileName
+      rawPrgm <- readFiles False [fileName']
+      prgm <- asCResT $ desFiles rawPrgm
+      tprgm <- asCResT $ typecheckPrgm prgm
+      return (fileName, mergePrgms $ map (mapMetaPrgm clearMetaDat . fst3) (graphToNodes tprgm))
+  return (H.insert "empty" emptyPrgm $ H.fromList $ fromCRes prgms)
 
 ggPrgm :: Prgms -> GenPrgm
 ggPrgm prgms = HG.choice [genPremade, genPrgm]

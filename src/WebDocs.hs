@@ -25,10 +25,10 @@ import qualified Data.Text.Lazy                as T
 import           GHC.Generics                  (Generic)
 import           Network.Wai.Middleware.Static
 
+import           Control.Monad.Trans           (lift)
 import           CRes
 import           Data.Bifunctor                (Bifunctor (first))
 import           Data.Graph
-import           Data.Maybe                    (fromJust)
 import           Eval                          (evalAllTargetModes, evalAnnots,
                                                 evalBuild, evalBuildAll,
                                                 evalRun)
@@ -45,6 +45,7 @@ import           Syntax.Ct.Prgm                (rawImpDisp)
 import           Syntax.Parsers                (mkDesCanonicalImportStr,
                                                 mkRawCanonicalImportStr,
                                                 readFiles)
+import           Text.Printf
 import           TypeCheck                     (typecheckPrgm,
                                                 typecheckPrgmWithTrace)
 import           TypeCheck.Common              (TPrgm, TraceConstrain, VPrgm,
@@ -84,211 +85,220 @@ data WDProvider
 mkCacheWDProvider :: Bool -> String -> IO WDProvider
 mkCacheWDProvider includeCore baseFileName = do
   let live = LiveWDProvider includeCore baseFileName
-  rawPrgm <- getRawPrgm live
-  prgm <- getPrgm live
-  withTrace <- getTPrgmWithTrace live
-  tprgm <- getTPrgm live
-  tbprgm <- getTBPrgm live
-  return $ CacheWDProvider {
-      cCore = includeCore
-    , cBaseFileName = baseFileName
-    , cRaw = rawPrgm
-    , cPrgm = prgm
-    , cTPrgmWithTrace = withTrace
-    , cTPrgm = tprgm
-    , cTBPrgm = tbprgm
-                           }
+  p <- runCResT $ do
+    rawPrgm <- getRawPrgm live
+    prgm <- getPrgm live
+    withTrace <- getTPrgmWithTrace live
+    tprgm <- getTPrgm live
+    tbprgm <- getTBPrgm live
+    return $ CacheWDProvider {
+        cCore = includeCore
+      , cBaseFileName = baseFileName
+      , cRaw = return rawPrgm
+      , cPrgm = return prgm
+      , cTPrgmWithTrace = return withTrace
+      , cTPrgm = return tprgm
+      , cTBPrgm = return tbprgm
+                            }
+  case p of
+    CRes notes r -> do
+      putStrLn $ prettyCNotes notes
+      return r
+    CErr notes -> do
+      putStrLn $ prettyCNotes notes
+      fail "Could not build webdocs"
 
-getRawPrgm :: WDProvider -> IO (CRes PPrgmGraphData)
+getRawPrgm :: WDProvider -> CResT IO PPrgmGraphData
 getRawPrgm (LiveWDProvider includeCore baseFileName) = do
-  baseFileName' <- mkRawCanonicalImportStr baseFileName
+  baseFileName' <- lift $ mkRawCanonicalImportStr baseFileName
   readFiles includeCore [baseFileName']
-getRawPrgm CacheWDProvider{cRaw} = return cRaw
+getRawPrgm CacheWDProvider{cRaw} = asCResT cRaw
 
-getPrgm :: WDProvider -> IO (CRes (GraphData DesPrgm FileImport))
+getPrgm :: WDProvider -> CResT IO (GraphData DesPrgm FileImport)
 getPrgm provider@LiveWDProvider{} = do
   base <- getRawPrgm provider
-  return (base >>= desFiles)
-getPrgm CacheWDProvider{cPrgm} = return cPrgm
+  asCResT $ desFiles base
+getPrgm CacheWDProvider{cPrgm} = asCResT cPrgm
 
-getTPrgmWithTrace :: WDProvider -> IO (CRes (GraphData (TPrgm, VPrgm, TraceConstrain) FileImport))
+getTPrgmWithTrace :: WDProvider -> CResT IO (GraphData (TPrgm, VPrgm, TraceConstrain) FileImport)
 getTPrgmWithTrace provider@LiveWDProvider{} = do
   base <- getPrgm provider
-  return (base >>= typecheckPrgmWithTrace)
-getTPrgmWithTrace CacheWDProvider{cTPrgmWithTrace} = return cTPrgmWithTrace
+  asCResT $ typecheckPrgmWithTrace base
+getTPrgmWithTrace CacheWDProvider{cTPrgmWithTrace} = asCResT cTPrgmWithTrace
 
-getTPrgm :: WDProvider -> IO (CRes (GraphData TPrgm FileImport))
+getTPrgm :: WDProvider -> CResT IO (GraphData TPrgm FileImport)
 getTPrgm provider@LiveWDProvider{} = do
   base <- getPrgm provider
-  return (base >>= typecheckPrgm)
-getTPrgm CacheWDProvider{cTPrgm} = return cTPrgm
+  asCResT $ typecheckPrgm base
+getTPrgm CacheWDProvider{cTPrgm} = asCResT cTPrgm
 
-getTPrgmJoined :: WDProvider -> IO (CRes TPrgm)
+getTPrgmJoined :: WDProvider -> CResT IO TPrgm
 getTPrgmJoined provider = do
   base <- getTPrgm provider
-  return (mergePrgms . map fst3 . graphToNodes <$> base)
+  return $ mergePrgms $ map fst3 $ graphToNodes base
 
-getTBPrgm :: WDProvider -> IO (CRes (GraphData TBPrgm FileImport))
+getTBPrgm :: WDProvider -> CResT IO (GraphData TBPrgm FileImport)
 getTBPrgm provider@LiveWDProvider{} = do
   base <- getTPrgm provider
-  return (base >>= evalBuildAll)
-getTBPrgm CacheWDProvider{cTBPrgm} = return cTBPrgm
+  asCResT $ evalBuildAll base
+getTBPrgm CacheWDProvider{cTBPrgm} = asCResT cTBPrgm
 
-getTBPrgmJoined :: WDProvider -> IO (CRes TBPrgm)
+getTBPrgmJoined :: WDProvider -> CResT IO TBPrgm
 getTBPrgmJoined provider = do
   base <- getTBPrgm provider
-  return (mergePrgms . map fst3 . graphToNodes <$> base)
+  return $ mergePrgms $ map fst3 $ graphToNodes base
 
-getTreebug :: WDProvider -> FileImport -> String -> IO EvalResult
+getTreebug :: WDProvider -> FileImport -> String -> CResT IO EvalResult
 getTreebug provider prgmName fun = do
   base <- getTPrgm provider
-  let pre = base >>= evalRun fun prgmName
-  case pre of
-    CRes _ r -> snd <$> r
-    CErr _   -> fail "No eval result found"
+  snd <$> evalRun fun prgmName base
 
-getEvaluated :: WDProvider -> FileImport -> String -> IO Integer
+getEvaluated :: WDProvider -> FileImport -> String -> CResT IO Integer
 getEvaluated provider prgmName fun = do
   base <- getTPrgm provider
-  let pre = base >>= evalRun fun prgmName
-  case pre of
-    CRes _ r -> fst <$> r
-    CErr _   -> return 999
+  fst <$> evalRun fun prgmName base
 
-getEvalBuild :: WDProvider -> FileImport -> String -> IO Val
+getEvalBuild :: WDProvider -> FileImport -> String -> CResT IO Val
 getEvalBuild provider prgmName fun = do
   base <- getTPrgm provider
-  let pre = base >>= evalBuild fun prgmName
-  case pre of
-    CRes _ r -> fst <$> r
-    CErr _   -> return NoVal
+  fst <$> evalBuild fun prgmName base
 
-getEvalAnnots :: WDProvider -> FileImport -> IO [(Expr EvalMetaDat, Val)]
+getEvalAnnots :: WDProvider -> FileImport -> CResT IO [(Expr EvalMetaDat, Val)]
 getEvalAnnots provider prgmName = do
   base <- getTPrgm provider
-  let pre = base >>= evalAnnots prgmName
-  case pre of
-    CRes _ r -> return r
-    CErr _   -> return []
+  asCResT $ evalAnnots prgmName base
 
-getWeb :: WDProvider -> FileImport -> String -> IO String
+getWeb :: WDProvider -> FileImport -> String -> CResT IO String
 getWeb provider prgmName fun = do
   base <- getTPrgm provider
-  let pre = base >>= evalBuild fun prgmName
-  case pre of
-    CRes _ r -> do
-      (TupleVal _ args, _) <- r
-      case H.lookup "contents" args of
-        Just (StrVal s) -> return s
-        _               -> return "";
-    CErr _ -> return ""
+  (TupleVal _ args, _) <- evalBuild fun prgmName base
+  case H.lookup "contents" args of
+    Just (StrVal s) -> return s
+    _               -> return "";
 
 docApiBase :: WDProvider -> ScottyM ()
 docApiBase provider = do
 
   get "/api/raw" $ do
-    maybeRawPrgms <- liftAndCatchIO $ getRawPrgm provider
-    let maybeRawPrgms' = graphToNodes <$> maybeRawPrgms
-    maybeJson maybeRawPrgms'
+    resp <- liftAndCatchIO $ runCResT $ do
+      rawPrgms <- getRawPrgm provider
+      return $ graphToNodes rawPrgms
+    maybeJson resp
 
   get "/api/toc" $ do
-    maybeRawPrgms <- liftAndCatchIO $ getRawPrgm provider
-    let maybeRawPrgms' = map snd3 . graphToNodes <$> maybeRawPrgms
-    let maybeRawPrgms'' = (\ps -> zip (map rawImpDisp ps) ps) <$> maybeRawPrgms'
-    maybeJson maybeRawPrgms''
+    resp <- liftAndCatchIO $ runCResT $ do
+      rawPrgms <- getRawPrgm provider
+      let rawPrgms' = map snd3 $ graphToNodes rawPrgms
+      return $ zip (map rawImpDisp rawPrgms') rawPrgms'
+    maybeJson resp
 
   get "/api/page" $ do
     prgmName <- param "prgmName"
-    prgmNameRaw <- liftAndCatchIO $ mkRawCanonicalImportStr prgmName
-    prgmName' <- liftAndCatchIO $ mkDesCanonicalImportStr prgmName
-    maybeRawPrgms <- liftAndCatchIO $ getRawPrgm provider
-    let maybeRawPrgms' = fromJust . graphLookup prgmNameRaw <$> maybeRawPrgms
-
-    maybeTPrgms <- liftAndCatchIO $ getTPrgm provider
-    let maybeTPrgms' = fromJust . graphLookup prgmName' <$> maybeTPrgms
-
-    annots <- liftAndCatchIO $ getEvalAnnots provider prgmName'
-    maybeJson $ do
-      rawPrgm <- maybeRawPrgms'
-      let tprgm' = maybe H.empty interleavePrgm (cresToMaybe maybeTPrgms')
-      let targetModes = maybe H.empty (evalAllTargetModes prgmName') (cresToMaybe maybeTPrgms)
-      let annots' = H.fromList $ map (first (getMetaID . getExprMeta)) annots
-      let rawPrgm' = mapMetaRawPrgm (zip3MetaFun (interleaveMeta tprgm') (interleaveMeta targetModes) (interleaveMeta annots')) rawPrgm
-      return rawPrgm'
+    resp <- liftAndCatchIO $ runCResT $ do
+      prgmNameRaw <- lift $ mkRawCanonicalImportStr prgmName
+      prgmName' <- lift $ mkDesCanonicalImportStr prgmName
+      rawPrgms <- getRawPrgm provider
+      rawPrgm' <- case graphLookup prgmNameRaw rawPrgms of
+        Just p  -> return p
+        Nothing -> fail $ printf "Could not find program %s" (show prgmName)
+      maybeTPrgm <- lift $ runCResT $ do
+        tprgms <- getTPrgm provider
+        case graphLookup prgmName' tprgms of
+          Just tprgm -> return tprgm
+          Nothing -> fail $ printf "Could not find typechecked program %s" (show prgmName)
+      maybeAnnots <- lift $ runCResT $ getEvalAnnots provider prgmName'
+      let tprgm' = maybe H.empty interleavePrgm (cresToMaybe maybeTPrgm)
+      let targetModes = maybe H.empty evalAllTargetModes (cresToMaybe maybeTPrgm)
+      let annots' = maybe H.empty (H.fromList . map (first (getMetaID . getExprMeta))) (cresToMaybe maybeAnnots)
+      return $ mapMetaRawPrgm (zip3MetaFun (interleaveMeta tprgm') (interleaveMeta targetModes) (interleaveMeta annots')) rawPrgm'
+    maybeJson resp
 
   get "/api/desugar" $ do
-    maybePrgmGraph <- liftAndCatchIO $ getPrgm provider
-    let maybePrgm = mergePrgms . map fst3 . graphToNodes <$> maybePrgmGraph
-    maybeJson maybePrgm
+    resp <- liftAndCatchIO $ runCResT $ do
+      prgmGraph <- getPrgm provider
+      return $ mergePrgms $ map fst3 $ graphToNodes prgmGraph
+    maybeJson resp
 
   get "/api/constrain" $ do
     prgmName <- param "prgmName"
-    prgmName' <- liftAndCatchIO $ mkDesCanonicalImportStr prgmName
-    maybeTprgmWithTraceGraph <- liftAndCatchIO $ getTPrgmWithTrace provider
-    let maybeTprgmWithTrace = maybeTprgmWithTraceGraph >>= \graphData -> do
-          case graphLookup prgmName' graphData of
-            Just (tprgm, vprgm, _trace) -> return (tprgm, vprgm)
-            Nothing -> CErr [MkCNote $ GenCErr Nothing "Invalid file to constrain"]
-    maybeJson maybeTprgmWithTrace
+    resp <- liftAndCatchIO $ runCResT $ do
+      prgmName' <- lift $ mkDesCanonicalImportStr prgmName
+      tprgmWithTraceGraph <- getTPrgmWithTrace provider
+      case graphLookup prgmName' tprgmWithTraceGraph of
+        Just (tprgm, vprgm, _tr) -> return (tprgm, vprgm)
+        Nothing -> fail $ printf "Could not find typechecked program %s" (show prgmName)
+    maybeJson resp
 
   get "/api/constrain/pnt/:pnt" $ do
     prgmName <- param "prgmName"
     pnt <- param "pnt"
-    prgmName' <- liftAndCatchIO $ mkDesCanonicalImportStr prgmName
-    maybeTprgmWithTraceGraph <- liftAndCatchIO $ getTPrgmWithTrace provider
-    let maybeTprgmWithTrace = maybeTprgmWithTraceGraph >>= \graphData -> do
-          case graphLookup prgmName' graphData of
-            Just (_, _, tr) -> return $ flipTraceConstrain $ filterTraceConstrain tr pnt
-            Nothing -> CErr [MkCNote $ GenCErr Nothing "Invalid file to constrain"]
-    maybeJson maybeTprgmWithTrace
+    resp <- liftAndCatchIO $ runCResT $ do
+      prgmName' <- lift $ mkDesCanonicalImportStr prgmName
+      tprgmWithTraceGraph <- getTPrgmWithTrace provider
+      case graphLookup prgmName' tprgmWithTraceGraph of
+        Just (_, _, tr) -> return $ flipTraceConstrain $ filterTraceConstrain tr pnt
+        Nothing -> fail $ printf "Could not find typechecked program %s" (show prgmName)
+    maybeJson resp
 
   get "/api/typecheck" $ do
-    maybeTprgm <- liftAndCatchIO $ getTPrgmJoined provider
-    maybeJson maybeTprgm
+    resp <- liftAndCatchIO $ runCResT $ getTPrgmJoined provider
+    maybeJson resp
 
   get "/api/treebuild" $ do
-    maybeTBprgm <- liftAndCatchIO $ getTBPrgmJoined provider
-    maybeJson maybeTBprgm
+    resp <- liftAndCatchIO $ runCResT $ getTBPrgmJoined provider
+    maybeJson resp
 
   get "/api/object/:objName" $ do
     objName <- param "objName"
-    maybeTprgm <- liftAndCatchIO $ getTPrgmJoined provider
-    let filterTprgm = filterByType objName <$> maybeTprgm
-    maybeJson filterTprgm
+    resp <- liftAndCatchIO $ runCResT $ do
+      tprgm <- getTPrgmJoined provider
+      return $ filterByType objName tprgm
+    maybeJson resp
 
   get "/api/class/:className" $ do
     className <- param "className"
-    maybeTprgm <- liftAndCatchIO $ getTPrgmJoined provider
-    let filterTprgm = filterByType className <$> maybeTprgm
-    maybeJson filterTprgm
+    resp <- liftAndCatchIO $ runCResT $ do
+      tprgm <- getTPrgmJoined provider
+      return $ filterByType className tprgm
+    maybeJson resp
 
   get "/api/treebug" $ do
     prgmName <- param "prgmName"
-    prgmName' <- liftAndCatchIO $ mkDesCanonicalImportStr prgmName
     fun <- param "function" `rescue` (\_ -> return "main")
-    treebug <- liftAndCatchIO $ getTreebug provider prgmName' fun
-    json $ Success treebug ([] :: [String])
+    resp <- liftAndCatchIO $ runCResT $ do
+      prgmName' <- lift $ mkDesCanonicalImportStr prgmName
+      getTreebug provider prgmName' fun
+    maybeJson resp
 
   get "/api/eval" $ do
     prgmName <- param "prgmName"
-    prgmName' <- liftAndCatchIO $ mkDesCanonicalImportStr prgmName
     fun <- param "function" `rescue` (\_ -> return "main")
-    evaluated <- liftAndCatchIO $ getEvaluated provider prgmName' fun
-    json $ Success evaluated ([] :: [String])
+    resp <- liftAndCatchIO $ runCResT $ do
+      prgmName' <- lift $ mkDesCanonicalImportStr prgmName
+      getEvaluated provider prgmName' fun
+    maybeJson resp
 
   get "/api/evalBuild" $ do
     prgmName <- param "prgmName"
-    prgmName' <- liftAndCatchIO $ mkDesCanonicalImportStr prgmName
     fun <- param "function" `rescue` (\_ -> return "main")
-    build <- liftAndCatchIO $ getEvalBuild provider prgmName' fun
-    json $ Success build ([] :: [String])
+    resp <- liftAndCatchIO $ runCResT $ do
+      prgmName' <- lift $ mkDesCanonicalImportStr prgmName
+      getEvalBuild provider prgmName' fun
+    maybeJson resp
 
   get "/api/web" $ do
     prgmName <- param "prgmName"
-    prgmName' <- liftAndCatchIO $ mkDesCanonicalImportStr prgmName
     fun <- param "function" `rescue` (\_ -> return "main")
-    build <- liftAndCatchIO $ getWeb provider prgmName' fun
-    html (T.pack build)
+    maybeBuild <- liftAndCatchIO $ runCResT $ do
+      prgmName' <- lift $ mkDesCanonicalImportStr prgmName
+      getWeb provider prgmName' fun
+    case maybeBuild of
+      CRes notes build -> do
+        liftAndCatchIO $putStrLn $ prettyCNotes notes
+        html (T.pack build)
+      CErr notes -> do
+        liftAndCatchIO $putStrLn $ prettyCNotes notes
+        fail $ printf "Could not build web page for %s.%s" prgmName fun
 
 
 docApi :: Bool -> Bool -> String -> IO ()

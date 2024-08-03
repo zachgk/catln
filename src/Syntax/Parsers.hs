@@ -17,6 +17,7 @@ module Syntax.Parsers where
 
 import qualified Data.HashSet            as S
 
+import           Control.Monad.Trans
 import           CRes
 import           Data.Graph
 import qualified Data.HashMap.Strict     as H
@@ -91,17 +92,18 @@ processParsed includeCore imp ((prgmImports, statements), extraImports) = do
       RawTupleApply _ _ [(False, RawObjArr{roaArr=Just (Just (RawCExpr _ (CStr n)), _)})] -> n
       _ -> ""
 
-parseFile :: Bool -> RawFileImport -> IO (CRes (GraphNodes (RawPrgm ()) RawFileImport))
+parseFile :: Bool -> RawFileImport -> CResT IO (GraphNodes (RawPrgm ()) RawFileImport)
 parseFile includeCore imp = do
-  imp' <- canonicalImport Nothing imp
-  r <- readImport imp'
-  p <- processParsed includeCore imp' r
-  return $ pure $ fst p
+  imp' <- lift $ canonicalImport Nothing imp
+  r <- lift $ readImport imp'
+  p <- lift $ processParsed includeCore imp' r
+  return $ fst p
 
-readFiles :: Bool -> [RawFileImport] -> IO (CRes (GraphData (RawPrgm ()) RawFileImport))
+readFiles :: Bool -> [RawFileImport] -> CResT IO (GraphData (RawPrgm ()) RawFileImport)
 readFiles includeCore initialImps = do
-  initialImps' <- mapM (canonicalImport Nothing) initialImps
-  pure . graphFromEdges <$> aux [] S.empty initialImps'
+  initialImps' <- lift $ mapM (canonicalImport Nothing) initialImps
+  res <- lift $ aux [] S.empty initialImps'
+  return $ graphFromEdges res
   where
     aux :: [GraphNodes (RawPrgm ()) RawFileImport] -> S.HashSet RawFileImport -> [RawFileImport] -> IO [GraphNodes (RawPrgm ()) RawFileImport]
     aux acc _ [] = return acc

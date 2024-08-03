@@ -56,15 +56,14 @@ evalBuildable _                      = False
 -- Then, those found functions can be checked for run/build based on whether the return type is a CatlnResult.
 -- It also will pass the function name back through EvalMode in order to convert 'PRelativeName' into the matching 'PTypeName'
 -- TODO The use of listToMaybe will secretly discard if multiple evalTargetModes or function names are found. Instead, an error should be thrown
-evalTargetMode :: String -> FileImport -> EPrgmGraphData -> EvalMode
-evalTargetMode function prgmName prgmGraphData = case (funCtxReaches, funReaches) of
+evalPrgmTargetMode :: String -> EPrgm -> EvalMode
+evalPrgmTargetMode function prgm = case (funCtxReaches, funReaches) of
   (rt, _) | reachesHasCutSubtypeOf typeEnv H.empty rt resultType -> EvalBuildWithContext function'
   (rt, _) | reachesHasCutSubtypeOf typeEnv H.empty rt ioType -> EvalRunWithContext function'
   (_, rt) | reachesHasCutSubtypeOf typeEnv H.empty rt resultType -> EvalBuild function'
   (_, rt) | reachesHasCutSubtypeOf typeEnv H.empty rt ioType -> EvalRun function' -- Should require isShowable for run result
   _ -> NoEval
   where
-    prgm = prgmFromGraphData prgmName prgmGraphData
     typeEnv = mkTypeEnv prgm
     function' = case maybeGetSingleton $ expandRelPartial typeEnv H.empty (partialVal function) of
       Just f -> ptName f
@@ -75,12 +74,16 @@ evalTargetMode function prgmName prgmGraphData = case (funCtxReaches, funReaches
     funCtxReaches = reachesPartial reachEnv funCtxTp
     funReaches = reachesPartial reachEnv funTp
 
--- | Gets the target modes for all objects in the file
-evalAllTargetModes :: FileImport -> EPrgmGraphData -> H.HashMap UUID EvalMode
-evalAllTargetModes prgmName prgmGraphData = H.fromList $ map targetMode $ mapMaybe (maybeExprPathM . oaObjExpr) objMap
+evalTargetMode :: String -> FileImport -> EPrgmGraphData -> EvalMode
+evalTargetMode function prgmName prgmGraphData = evalPrgmTargetMode function prgm
   where
-    (objMap, _, _) = prgmFromGraphData prgmName prgmGraphData
-    targetMode (name, m) = (getMetaID m, evalTargetMode name prgmName prgmGraphData)
+    prgm = prgmFromGraphData prgmName prgmGraphData
+
+-- | Gets the target modes for all objects in the file
+evalAllTargetModes :: EPrgm -> H.HashMap UUID EvalMode
+evalAllTargetModes prgm@(objMap, _, _) = H.fromList $ map targetMode $ mapMaybe (maybeExprPathM . oaObjExpr) objMap
+  where
+    targetMode (name, m) = (getMetaID m, evalPrgmTargetMode name prgm)
 
 -- | evaluate annotations such as assertions that require compiler verification
 evalCompAnnot :: Val -> StateT Env CRes ()
@@ -233,10 +236,10 @@ evalAnnots prgmName prgmGraphData = do
     val <- evalStateT (evalExpr tree) env
     return (annot, val)
 
-evalRun :: String -> FileImport -> EPrgmGraphData -> CRes (IO (Integer, EvalResult))
+evalRun :: String -> FileImport -> EPrgmGraphData -> CResT IO (Integer, EvalResult)
 evalRun function prgmName prgmGraphData = do
   let prgm = prgmFromGraphData prgmName prgmGraphData
-  input <-  case evalTargetMode function prgmName prgmGraphData of
+  input <- case evalTargetMode function prgmName prgmGraphData of
         EvalRunWithContext function' ->
           -- Case for eval Context(value=main, io=IO)
 
@@ -244,17 +247,17 @@ evalRun function prgmName prgmGraphData = do
         EvalRun function' ->
           -- Case for eval main
           return $ eVal function'
-        _ -> CErr [MkCNote $ GenCErr Nothing $ printf "Eval could not find a function %s to run" (show function)]
+        _ -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval could not find a function %s to run" (show function)]
   let src = getExprPartialType input
   let dest = ioType
-  (expr, env) <- evalBuildPrgm input src dest prgm
+  (expr, env) <- asCResT $ evalBuildPrgm input src dest prgm
   let env2 = evalSetArgs (H.singleton "/io" (IOVal 0 $ pure ())) env
-  (res, env') <- runStateT (evalExpr expr) env2
+  (res, env') <- asCResT $ runStateT (evalExpr expr) env2
   case res of
-    (IOVal r io) -> return (io >> pure (r, evalResult env'))
-    _ -> CErr [MkCNote $ GenCErr Nothing $ printf "Eval did not return an instance of IO \n\tInstead returned %s \n\t With expr %s" (show res) (show expr)]
+    (IOVal r io) -> lift (io >> pure (r, evalResult env'))
+    _ -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval did not return an instance of IO \n\tInstead returned %s \n\t With expr %s" (show res) (show expr)]
 
-evalBuild :: String -> FileImport -> EPrgmGraphData -> CRes (IO (Val, EvalResult))
+evalBuild :: String -> FileImport -> EPrgmGraphData -> CResT IO (Val, EvalResult)
 evalBuild function prgmName prgmGraphData = do
   let prgm = prgmFromGraphData prgmName prgmGraphData
 
@@ -268,17 +271,17 @@ evalBuild function prgmName prgmGraphData = do
         EvalBuild function' ->
           -- Case for buildable main
           return $ eVal function'
-        unexpectedEvalMode -> CErr [MkCNote $ GenCErr Nothing $ printf "Eval could not find a function %s to build with unexpected eval mode %s" (show function) (show unexpectedEvalMode)]
+        unexpectedEvalMode -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval could not find a function %s to build with unexpected eval mode %s" (show function) (show unexpectedEvalMode)]
   let src = getExprPartialType input
   let dest = resultType
-  (expr, env) <- evalBuildPrgm input src dest prgm
-  (res, env') <- runStateT (evalExpr expr) env
+  (expr, env) <- asCResT $ evalBuildPrgm input src dest prgm
+  (res, env') <- asCResT $ runStateT (evalExpr expr) env
   case res of
     val@(TupleVal "/Catln/CatlnResult" args) -> case (H.lookup "/name" args, H.lookup "/contents" args) of
-      (Just (StrVal _), Just (StrVal _)) -> return $ return (val, evalResult env')
-      _ -> CErr [MkCNote $ GenCErr Nothing $ printf "Eval %s returned a /Catln/CatlnResult with bad args" function]
-    (LLVMVal _) -> return $ do
+      (Just (StrVal _), Just (StrVal _)) -> return (val, evalResult env')
+      _ -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval %s returned a /Catln/CatlnResult with bad args" function]
+    (LLVMVal _) -> do
       -- llvmStr <- codegenExInit toCodegen
       let llvmStr = "LLVM Placeholder result"
       return (TupleVal "/Catln/CatlnResult" (H.fromList [("/name", StrVal "out.ll"), ("/contents", StrVal llvmStr)]), evalResult env')
-    val -> CErr [MkCNote $ GenCErr Nothing $ printf "Eval %s did not return a /Catln/CatlnResult. Instead it returned %s" function (show val)]
+    val -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval %s did not return a /Catln/CatlnResult. Instead it returned %s" function (show val)]

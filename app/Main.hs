@@ -11,6 +11,8 @@ import           Syntax.Parsers       (mkDesCanonicalImportStr,
                                        readFiles)
 import           TypeCheck            (typecheckPrgm)
 
+import           Control.Monad
+import           Control.Monad.Trans
 import qualified Data.ByteString.Lazy as BSL
 import qualified Data.HashMap.Strict  as H
 import           Data.Maybe
@@ -21,90 +23,67 @@ import           Text.Printf
 import           WebDocs              (docApi, docServe)
 -- import Repl (repl)
 
-xRun :: String -> String -> IO ()
+xRun :: String -> String -> CResT IO ()
 xRun prgmName function = do
-  prgmName' <- mkRawCanonicalImportStr prgmName
-  prgmName'' <- mkDesCanonicalImportStr prgmName
-  maybeRawPrgm <- readFiles True [prgmName']
-  case aux maybeRawPrgm prgmName'' of
-    CErr err   -> print $ prettyCNotes err
-    CRes _ resIO -> do
-      returnValue <- resIO
-      case returnValue of
-        (0, _) -> return ()
-        (i, _) -> print $ "error code " ++ show i
-  where
-    aux maybeRawPrgm prgmName'' = do
-      rawPrgm <- maybeRawPrgm
-      desPrgm <- desFiles rawPrgm
-      tprgm <- typecheckPrgm desPrgm
-      evalRun function prgmName'' tprgm
+  prgmName' <- lift $ mkRawCanonicalImportStr prgmName
+  prgmName'' <- lift $ mkDesCanonicalImportStr prgmName
+  rawPrgm <- readFiles True [prgmName']
+  desPrgm <- asCResT $ desFiles rawPrgm
+  tprgm <- asCResT $ typecheckPrgm desPrgm
+  returnValue <- evalRun function prgmName'' tprgm
+  case returnValue of
+    (0, _) -> return ()
+    (i, _) -> fail $ "error code " ++ show i
 
-xBuild :: String -> String -> IO ()
+xBuild :: String -> String -> CResT IO ()
 xBuild prgmName function = do
-  prgmName' <- mkRawCanonicalImportStr prgmName
-  prgmName'' <- mkDesCanonicalImportStr prgmName
-  maybeRawPrgm <- readFiles True [prgmName']
-  case aux maybeRawPrgm prgmName'' of
-    CErr err   -> print $ prettyCNotes err
-    CRes _ resIO -> do
-      returnValue <- resIO
-      case returnValue of
-        (TupleVal _ args, _) -> do
-          let buildDir = "build"
-          removePathForcibly buildDir
-          createDirectoryIfMissing True buildDir
-          case (fromJust $ H.lookup "name" args, fromJust $ H.lookup "contents" args) of
-              (StrVal outFileName, StrVal outContents) -> do
-                writeFile (buildDir ++ "/" ++ outFileName) outContents
-                printf "Successfully built %s" (show prgmName)
-              _ -> fail "Invalid name or contents found in result as build"
-        _ -> error "Failed to build"
-  where
-    aux maybeRawPrgm prgmName'' = do
-      rawPrgm <- maybeRawPrgm
-      desPrgm <- desFiles rawPrgm
-      tprgm <- typecheckPrgm desPrgm
-      evalBuild function prgmName'' tprgm
+  prgmName' <- lift $ mkRawCanonicalImportStr prgmName
+  prgmName'' <- lift $ mkDesCanonicalImportStr prgmName
+  rawPrgm <- readFiles True [prgmName']
+  desPrgm <- asCResT $ desFiles rawPrgm
+  tprgm <- asCResT $ typecheckPrgm desPrgm
+  returnValue <- evalBuild function prgmName'' tprgm
+  case returnValue of
+    (TupleVal _ args, _) -> do
+      let buildDir = "build"
+      lift $ removePathForcibly buildDir
+      lift $ createDirectoryIfMissing True buildDir
+      case (fromJust $ H.lookup "name" args, fromJust $ H.lookup "contents" args) of
+          (StrVal outFileName, StrVal outContents) -> do
+            lift $ writeFile (buildDir ++ "/" ++ outFileName) outContents
+            lift $ putStrLn $ printf "Successfully built %s" (show prgmName)
+          _ -> fail "Invalid name or contents found in result as build"
+    _ -> fail "Failed to build"
 
-xDoc :: String -> Bool -> Bool -> IO ()
+xDoc :: String -> Bool -> Bool -> CResT IO ()
 xDoc prgmName cached apiOnly = if apiOnly
-  then docApi cached True prgmName
-  else docServe cached True prgmName
+  then lift $ docApi cached True prgmName
+  else lift $ docServe cached True prgmName
 
-xDocument :: String -> String -> String -> IO ()
+xDocument :: String -> String -> String -> CResT IO ()
 xDocument prgmName outFname format = do
-  prgmName' <- mkRawCanonicalImportStr prgmName
-  maybeRawPrgm <- parseFile False prgmName'
-  case maybeRawPrgm of
-    CErr err   -> print $ prettyCNotes err
-    CRes _ (prgm, _, _) -> do
-      prgm' <- toDocument format prgm
-      BSL.writeFile outFname prgm'
+  prgmName' <- lift $ mkRawCanonicalImportStr prgmName
+  (prgm, _, _) <- parseFile False prgmName'
+  prgm' <- lift $ toDocument format prgm
+  lift $ BSL.writeFile outFname prgm'
 
-xConvert :: String -> Maybe String -> IO ()
+xConvert :: String -> Maybe String -> CResT IO ()
 xConvert prgmName _outFname = do
-  prgmName' <- mkRawCanonicalImportStr prgmName
-  maybeRawPrgm <- parseFile False prgmName'
-  case maybeRawPrgm of
-    CErr err   -> print $ prettyCNotes err
-    CRes _ (prgm, _fileName, _) -> do
-      -- TODO Print to file if outFname
-      let prgm' = formatRootPrgm prgm
-      print prgmName
-      print prgm'
+  prgmName' <- lift $ mkRawCanonicalImportStr prgmName
+  (prgm, _fileName, _) <- parseFile False prgmName'
+  -- TODO Print to file if outFname
+  let prgm' = formatRootPrgm prgm
+  lift $ print prgmName
+  lift $ print prgm'
 
-xFmt :: String -> IO ()
+xFmt :: String -> CResT IO ()
 xFmt prgmName = do
-  prgmName' <- mkRawCanonicalImportStr prgmName
-  maybeRawPrgm <- parseFile False prgmName'
-  case maybeRawPrgm of
-    CErr err   -> print $ prettyCNotes err
-    CRes _ (prgm, _, _) -> do
-      let prgm' = formatRootPrgm prgm
-      writeFile prgmName prgm'
+  prgmName' <- lift $ mkRawCanonicalImportStr prgmName
+  (prgm, _, _) <- parseFile False prgmName'
+  let prgm' = formatRootPrgm prgm
+  lift $ writeFile prgmName prgm'
 
-exec :: Command -> IO ()
+exec :: Command -> CResT IO ()
 exec (RunFile file function)          = xRun file function
 exec (BuildFile file function)        = xBuild file function
 exec (Doc fname cached apiOnly)       = xDoc fname cached apiOnly
@@ -152,7 +131,12 @@ cFmt = Fmt
   <$> argument str (metavar "FILE" <> help "The file to run")
 
 main :: IO ()
-main = exec =<< execParser opts
+main = do
+  cmd <- execParser opts
+  res <- runCResT $ exec cmd
+  case res of
+    CRes notes _ -> unless (null notes) $ putStrLn $ prettyCNotes notes
+    CErr notes   -> unless (null notes) $ putStrLn $ prettyCNotes notes
   where
     opts = info (mainCommands <**> helper)
       ( fullDesc

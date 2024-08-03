@@ -23,7 +23,8 @@ import           GHC.Generics          (Generic)
 -- import Text.Pretty.Simple
 import           Text.Printf
 
-import           Control.Monad         (forM_)
+import           Control.Monad
+import           Control.Monad.Trans   (MonadTrans (lift))
 import           Data.Aeson
 import           Data.String.Builder   (Builder, build, literal)
 import           Semantics.Prgm
@@ -141,6 +142,35 @@ instance Monad CRes where
 
 instance MonadFail CRes where
   fail s = CErr [MkCNote $ GenCErr Nothing s]
+
+newtype CResT m r = CResT { runCResT :: m (CRes r) }
+
+instance Monad m => Functor (CResT m) where
+  fmap = liftM
+
+instance Monad m => Applicative (CResT m) where
+  pure = return
+  (<*>) = ap
+
+instance Monad m => Monad (CResT m) where
+  return = CResT . return . CRes []
+  x >>= f = CResT $ do maybe_value <- runCResT x
+                       case maybe_value of
+                         CErr notes    -> return $ CErr notes
+                         CRes notes value -> do
+                           value' <- runCResT (f value)
+                           case value' of
+                             CErr notes2 -> return $ CErr (notes ++ notes2)
+                             CRes notes2 value'' -> return $ CRes (notes ++ notes2) value''
+
+instance Monad m => MonadFail (CResT m) where
+  fail = CResT . return . fail
+
+instance MonadTrans CResT where
+  lift = CResT . fmap (CRes [])
+
+asCResT :: (Monad m) => CRes r -> CResT m r
+asCResT = CResT . return
 
 prettyCNotes :: [CNote] -> String
 prettyCNotes notes = "\n\n\t\t" ++ intercalate "\n\n\t\t" (map prettyNote notes)
