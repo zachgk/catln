@@ -83,6 +83,13 @@ zipMetaFun f1 f2 tp m@(Meta t p mid _) = do
   (Meta _ _ _ dc) <- f2 tp m
   return $ Meta t p mid (db, dc)
 
+zip3MetaFun :: (Monad n) => MetaFun n a b -> MetaFun n a c -> MetaFun n a d -> MetaFun n a (b, c, d)
+zip3MetaFun f1 f2 f3 tp m@(Meta t p mid _) = do
+  (Meta _ _ _ db) <- f1 tp m
+  (Meta _ _ _ dc) <- f2 tp m
+  (Meta _ _ _ dd) <- f3 tp m
+  return $ Meta t p mid (db, dc, dd)
+
 mapMetaAppliedExprM :: (Monad n, MetaDat m, Show m) => MetaFun n m m -> MetaLocation -> Expr m -> n (Expr m)
 mapMetaAppliedExprM f loc (CExpr m c) = do
   m' <- f (ExprMeta loc ExprMetaConstant) m

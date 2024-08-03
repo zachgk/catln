@@ -29,12 +29,13 @@ import           CRes
 import           Data.Bifunctor                (Bifunctor (first))
 import           Data.Graph
 import           Data.Maybe                    (fromJust)
-import           Eval                          (evalAnnots, evalBuild,
-                                                evalBuildAll, evalRun)
+import           Eval                          (evalAllTargetModes, evalAnnots,
+                                                evalBuild, evalBuildAll,
+                                                evalRun)
 import           Eval.Common                   (EvalMetaDat, EvalResult, TExpr,
                                                 Val (..))
 import           MapMeta                       (interleaveMeta, interleavePrgm,
-                                                zipMetaFun)
+                                                zip3MetaFun)
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Desugarf            (desFiles)
@@ -210,8 +211,9 @@ docApiBase provider = do
     maybeJson $ do
       rawPrgm <- maybeRawPrgms'
       let tprgm' = maybe H.empty interleavePrgm (cresToMaybe maybeTPrgms')
+      let targetModes = maybe H.empty (evalAllTargetModes prgmName') (cresToMaybe maybeTPrgms)
       let annots' = H.fromList $ map (first (getMetaID . getExprMeta)) annots
-      let rawPrgm' = mapMetaRawPrgm (zipMetaFun (interleaveMeta tprgm') (interleaveMeta annots')) rawPrgm
+      let rawPrgm' = mapMetaRawPrgm (zip3MetaFun (interleaveMeta tprgm') (interleaveMeta targetModes) (interleaveMeta annots')) rawPrgm
       return rawPrgm'
 
   get "/api/desugar" $ do
@@ -236,7 +238,7 @@ docApiBase provider = do
     maybeTprgmWithTraceGraph <- liftAndCatchIO $ getTPrgmWithTrace provider
     let maybeTprgmWithTrace = maybeTprgmWithTraceGraph >>= \graphData -> do
           case graphLookup prgmName' graphData of
-            Just (_, _, trace) -> return $ flipTraceConstrain $ filterTraceConstrain trace pnt
+            Just (_, _, tr) -> return $ flipTraceConstrain $ filterTraceConstrain tr pnt
             Nothing -> CErr [MkCNote $ GenCErr Nothing "Invalid file to constrain"]
     maybeJson maybeTprgmWithTrace
 

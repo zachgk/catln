@@ -39,6 +39,23 @@ function RawObjArr(props) {
   return <span>{showObj}{showEq}{showArr}{showDef}</span>;
 }
 
+function rawExprMeta(expr) {
+  switch(expr.tag) {
+  case "RawTheExpr":
+    return rawExprMeta(expr.contents);
+  case "RawAliasExpr":
+    return rawExprMeta(expr.contents[0]);
+  case "RawWhere":
+    return rawExprMeta(expr.contents[0]);
+  case "RawParen":
+    return rawExprMeta(expr.contents);
+  case "RawMethod":
+    return rawExprMeta(expr.contents[0]);
+  default:
+    return expr.contents[0];
+  }
+}
+
 function RawExpr(props) {
   let {expr} = props;
 
@@ -64,7 +81,7 @@ function RawExpr(props) {
   case "RawTupleApply":
     const [tupleM, [,base], args] = expr.contents;
 
-    let fromVal = tryValue(tupleM.getMetaDat[1]);
+    let fromVal = tryValue(tupleM.getMetaDat[2]);
     if (fromVal) {
       return fromVal;
     }
@@ -95,7 +112,7 @@ function RawExpr(props) {
   case "RawVarsApply":
     const [vtupleM, vbase, vars] = expr.contents;
 
-    let vfromVal = tryValue(vtupleM.getMetaDat[1]);
+    let vfromVal = tryValue(vtupleM.getMetaDat[2]);
     if (vfromVal) {
       return vfromVal;
     }
@@ -138,17 +155,20 @@ function TypeProperty(props) {
   }
 }
 
+// eslint-disable-next-line
 function isEmptyMeta(m) {
   let {getMetaType} = m;
   return isTopType(getMetaType);
 }
 
+// eslint-disable-next-line
 function RawMeta(props) {
   let {getMetaType} = props.data;
   return <Type data={getMetaType} />;
 }
 
 export {
+  rawExprMeta,
   RawExpr,
   RawObjArr,
 }

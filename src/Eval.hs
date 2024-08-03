@@ -28,7 +28,7 @@ import           Data.Maybe
 import           Control.Monad.State
 import           CtConstants
 import qualified Data.HashSet        as S
-import           Data.UUID           (nil)
+import           Data.UUID           (UUID, nil)
 import           Eval.Common
 import           Eval.Env
 import           Eval.ExprBuilder
@@ -39,15 +39,6 @@ import           Semantics.TypeGraph (ReachesEnv (ReachesEnv),
 import           Text.Printf
 import           TreeBuild
 import           Utils
-
--- | 'EvalMode' contains how to evaluate the function and the 'PTypeName' to eval
-data EvalMode
-  = EvalRunWithContext String -- ^ Run f{IO io} -> IO
-  | EvalRun String -- ^ Run f -> Show
-  | EvalBuildWithContext String -- ^ Build f{IO io} -> CatlnResult
-  | EvalBuild String -- ^ Build f -> CatlnResult
-  | NoEval -- ^ Can't run or build
-  deriving (Eq, Show)
 
 evalRunnable :: EvalMode -> Bool
 evalRunnable EvalRunWithContext{} = True
@@ -83,6 +74,13 @@ evalTargetMode function prgmName prgmGraphData = case (funCtxReaches, funReaches
     funTp = partialVal function'
     funCtxReaches = reachesPartial reachEnv funCtxTp
     funReaches = reachesPartial reachEnv funTp
+
+-- | Gets the target modes for all objects in the file
+evalAllTargetModes :: FileImport -> EPrgmGraphData -> H.HashMap UUID EvalMode
+evalAllTargetModes prgmName prgmGraphData = H.fromList $ map targetMode $ mapMaybe (maybeExprPathM . oaObjExpr) objMap
+  where
+    (objMap, _, _) = prgmFromGraphData prgmName prgmGraphData
+    targetMode (name, m) = (getMetaID m, evalTargetMode name prgmName prgmGraphData)
 
 -- | evaluate annotations such as assertions that require compiler verification
 evalCompAnnot :: Val -> StateT Env CRes ()

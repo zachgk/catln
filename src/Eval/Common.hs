@@ -288,6 +288,15 @@ instance ExprClass TExpr where
   exprVarArgsWithSrc = undefined
   mkValue = undefined
 
+-- | 'EvalMode' contains how to evaluate the function and the 'PTypeName' to eval
+data EvalMode
+  = EvalRunWithContext String -- ^ Run f{IO io} -> IO
+  | EvalRun String -- ^ Run f -> Show
+  | EvalBuildWithContext String -- ^ Build f{IO io} -> CatlnResult
+  | EvalBuild String -- ^ Build f -> CatlnResult
+  | NoEval -- ^ Can't run or build
+  deriving (Eq, Show, Generic, ToJSON)
+
 
 -------------------------------------------------------------------------------
 -- Codegen State
