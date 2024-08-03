@@ -28,7 +28,7 @@ xRun prgmName function = do
   prgmName' <- lift $ mkRawCanonicalImportStr prgmName
   prgmName'' <- lift $ mkDesCanonicalImportStr prgmName
   rawPrgm <- readFiles True [prgmName']
-  desPrgm <- asCResT $ desFiles rawPrgm
+  desPrgm <- desFiles rawPrgm
   tprgm <- asCResT $ typecheckPrgm desPrgm
   returnValue <- evalRun function prgmName'' tprgm
   case returnValue of
@@ -40,7 +40,7 @@ xBuild prgmName function = do
   prgmName' <- lift $ mkRawCanonicalImportStr prgmName
   prgmName'' <- lift $ mkDesCanonicalImportStr prgmName
   rawPrgm <- readFiles True [prgmName']
-  desPrgm <- asCResT $ desFiles rawPrgm
+  desPrgm <- desFiles rawPrgm
   tprgm <- asCResT $ typecheckPrgm desPrgm
   returnValue <- evalBuild function prgmName'' tprgm
   case returnValue of

@@ -117,7 +117,7 @@ getRawPrgm CacheWDProvider{cRaw} = asCResT cRaw
 getPrgm :: WDProvider -> CResT IO (GraphData DesPrgm FileImport)
 getPrgm provider@LiveWDProvider{} = do
   base <- getRawPrgm provider
-  asCResT $ desFiles base
+  desFiles base
 getPrgm CacheWDProvider{cPrgm} = asCResT cPrgm
 
 getTPrgmWithTrace :: WDProvider -> CResT IO (GraphData (TPrgm, VPrgm, TraceConstrain) FileImport)

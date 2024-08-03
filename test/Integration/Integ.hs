@@ -60,7 +60,7 @@ runTest runGolden includeCore fileNameStr = testCaseSteps fileNameStr $ \step ->
 
   res <- runCResT $ do
     rawPrgm <- readFiles includeCore [fileNameRaw]
-    prgm <- asCResT $ desFiles rawPrgm
+    prgm <- desFiles rawPrgm
 
     when runGolden $ do
       lift $ runGoldenTest "desugar" goldenDesugarDir fileNameStr prgm step

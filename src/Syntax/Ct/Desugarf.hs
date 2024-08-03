@@ -20,6 +20,7 @@ import qualified Data.HashMap.Strict              as H
 import           Data.Maybe
 import           Text.Printf
 
+import           Control.Monad.Trans
 import           CRes
 import           CtConstants
 import           Data.Bifunctor                   (first)
@@ -239,20 +240,21 @@ desImports (prgm, name, imports) = do
   let imports' = fmap (semiDesExpr SDOutput Nothing . rawImpAbs) imports
   return (prgm, name', imports')
 
-finalPasses :: DesPrgmGraphData -> DesPrgmGraphNodes -> DesPrgmGraphNodes
-finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm1, prgmName, imports) = (prgm3, prgmName, imports)
-  where
-    -- Build fullPrgm with recursive imports
-    vertex = fromJust $ vertexFromKey prgmName
-    importTree = reachable desPrgmGraph vertex
-    fullPrgm1 = mergePrgms $ map (fst3 . nodeFromVertex) importTree
+finalPasses :: DesPrgmGraphData -> DesPrgmGraphNodes -> CResT IO DesPrgmGraphNodes
+finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm1, prgmName, imports) = do
+  -- Build fullPrgm with recursive imports
+  let vertex = fromJust $ vertexFromKey prgmName
+  let importTree = reachable desPrgmGraph vertex
+  let fullPrgm1 = mergePrgms $ map (fst3 . nodeFromVertex) importTree
 
-    -- Run removeClassInstanceObjects
-    prgm2 = removeClassInstanceObjects fullPrgm1 prgm1
-    fullPrgm2 = removeClassInstanceObjects fullPrgm1 fullPrgm1
+  -- Run removeClassInstanceObjects
+  let prgm2 = removeClassInstanceObjects fullPrgm1 prgm1
+  let fullPrgm2 = removeClassInstanceObjects fullPrgm1 fullPrgm1
 
-    -- Run resolveRelativeNames pass
-    prgm3 = resolveRelativeNames fullPrgm2 prgm2
+  -- Run resolveRelativeNames pass
+  let prgm3 = resolveRelativeNames fullPrgm2 prgm2
+  prgm4 <- lift $ mapMetaPrgmM addMetaID prgm3
+  return (prgm4, prgmName, imports)
 
 
 desPrgm :: PPrgm -> CRes DesPrgm
@@ -260,13 +262,13 @@ desPrgm (_, statements) = do
   statements' <- mapM (desStatement ("", [])) statements
   return $ mergePrgms statements'
 
-desFiles :: PPrgmGraphData -> CRes DesPrgmGraphData
+desFiles :: PPrgmGraphData -> CResT IO DesPrgmGraphData
 desFiles graphData = do
   -- initial desugar
-  prgms' <- mapMFst3 desPrgm (graphToNodes graphData)
-  prgms'' <- mapM desImports prgms'
+  prgms' <- asCResT $ mapMFst3 desPrgm (graphToNodes graphData)
+  prgms'' <- asCResT $ mapM desImports prgms'
   let graphData' = graphFromEdges prgms''
 
   -- final passes
-  let prgms''' = map (finalPasses graphData') prgms''
+  prgms''' <- mapM (finalPasses graphData') prgms''
   return $ graphFromEdges prgms'''
