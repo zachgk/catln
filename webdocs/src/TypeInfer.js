@@ -11,7 +11,7 @@ import {
   useParams
 } from 'react-router-dom';
 
-import {useApi, posKey, tagJoin, Loading, Notes, Type, PartialKey} from './Common/Common';
+import {useApi, tagJoin, Loading, Notes, Type, PartialKey} from './Common/Common';
 import {ObjMap} from './ListProgram';
 
 const useStyles = makeStyles({
@@ -46,8 +46,8 @@ function Main(props) {
 
   var notesMap = {};
   notes.forEach(note => {
-    if(note.pos) {
-      let k = posKey(note.pos);
+    if(note.id) {
+      let k = note.id;
       if(k in notesMap) {
         notesMap[k].push(note);
       } else {
@@ -81,7 +81,7 @@ function Main(props) {
 
 let VarMeta = (notesMap) => (props) => {
   const {withPos} = props;
-  const {getMetaPos, getMetaDat: [pnt,]} = props.data;
+  const {getMetaID, getMetaPos, getMetaDat: [pnt,]} = props.data;
   var style = {};
 
   let showPos;
@@ -91,7 +91,7 @@ let VarMeta = (notesMap) => (props) => {
       showPos = <span>&nbsp;-&nbsp;<Pos pos={getMetaPos} /></span>;
     }
 
-    if(posKey(getMetaPos) in notesMap) {
+    if(getMetaID in notesMap) {
       style.background = 'lightCoral';
     }
   }
@@ -261,8 +261,8 @@ function Pnt(props) {
 }
 
 function Pos(props) {
-  const {pos: [start, end, label]} = props;
-  return `${start.name}: ${start.line}:${start.col} - ${end.line}:${end.col} ${label}`;
+  const {pos: [start, end]} = props;
+  return `${start.name}: ${start.line}:${start.col} - ${end.line}:${end.col}`;
 }
 
 export default TypeInfer;

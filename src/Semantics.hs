@@ -44,21 +44,11 @@ mkTypeEnv (objMap, classGraph, _) = TypeEnv classGraph (ObjArrTypeGraph $ H.from
     typeNames = S.fromList $ map makeAbsoluteName $ concatMap getAllObjArrNames objMap
     typeGraphItem oa = (makeAbsoluteName $ oaObjPath oa, [oa])
 
-labelPosM :: String -> Meta m -> Meta m
-labelPosM s m@Meta{getMetaPos} = m{getMetaPos=labelPos s getMetaPos}
+emptyMetaM :: (MetaDat m) => Meta m -> Meta m
+emptyMetaM m = emptyMetaN{getMetaPos=getMetaPos m}
 
-labelPos :: String -> CodeRange -> CodeRange
-labelPos s (Just (p1, p2, sPrefix)) = Just (p1, p2, label')
-  where label' = case sPrefix of
-          [] -> s
-          _  -> printf "%s-%s" sPrefix s
-labelPos _ Nothing = Nothing
-
-emptyMetaM :: (MetaDat m) => String -> Meta m -> Meta m
-emptyMetaM s m = emptyMetaN{getMetaPos=labelPos s $ getMetaPos m}
-
-emptyMetaE :: (ExprClass e, MetaDat m) => String -> e m -> Meta m
-emptyMetaE s e = emptyMetaM s (getExprMeta e)
+emptyMetaE :: (ExprClass e, MetaDat m) => e m -> Meta m
+emptyMetaE e = emptyMetaM (getExprMeta e)
 
 exprWithMeta :: (Show m) => Meta m -> Expr m -> Expr m
 exprWithMeta m (CExpr _ c)        = CExpr m c

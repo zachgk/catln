@@ -82,7 +82,7 @@ curryApplyParentArgsSignature e parentArgs = applyExprIArgs e (map (second IArgM
 
 -- | Apply args to an output expression
 curryApplyParentArgs :: PSExpr -> ParentArgs -> PSExpr
-curryApplyParentArgs e parentArgs = applyExprIArgs e (map (\(parentArgName, parentArgM) -> (parentArgName, IArgE (Value (emptyMetaM "nest" parentArgM) (pkName parentArgName)))) $ H.toList $ fmap head parentArgs)
+curryApplyParentArgs e parentArgs = applyExprIArgs e (map (\(parentArgName, parentArgM) -> (parentArgName, IArgE (Value (emptyMetaM parentArgM) (pkName parentArgName)))) $ H.toList $ fmap head parentArgs)
 
 currySubFunctionSignature :: ParentArgs -> DesObjectMapItem -> DesObjectMapItem
 currySubFunctionSignature parentArgs oa@ObjArr{oaObj=Just obj} = oa{oaObj=Just obj'}

@@ -22,7 +22,7 @@ import           Syntax.Ct.Prgm
 import           Text.Megaparsec         (SourcePos)
 
 emptyMeta :: SourcePos -> SourcePos -> ParseMeta
-emptyMeta p1 p2 = Meta PTopType (Just (p1, p2, "")) nil emptyMetaDat
+emptyMeta p1 p2 = Meta PTopType (Just (p1, p2)) nil emptyMetaDat
 
 rawVal :: (MetaDat m) => String -> RawExpr m
 rawVal = RawValue m
@@ -34,14 +34,14 @@ applyRawArgs :: (MetaDat m, Show m) => RawExpr m -> [(Maybe ArgName, RawExpr m)]
 applyRawArgs base args = applyRawEArgs base (map mapArg args)
   where
     mapArg :: (MetaDat m) => (Maybe ArgName, RawExpr m) -> (Maybe (RawExpr m), RawExpr m)
-    mapArg (Just argName, argVal) = (Just $ RawValue (emptyMetaE ("in-" ++ show argName) argVal) (pkName argName), argVal)
+    mapArg (Just argName, argVal) = (Just $ RawValue (emptyMetaE argVal) (pkName argName), argVal)
     mapArg (Nothing, argVal) = (Nothing, argVal)
 
 applyRawEArgs :: (MetaDat m, Show m) => RawExpr m -> [(Maybe (RawExpr m), RawExpr m)] -> RawExpr m
 applyRawEArgs base [] = base
 applyRawEArgs base args = case base of
   (RawTupleApply m base' baseArgs) -> RawTupleApply m base' (baseArgs ++ args')
-  _ -> RawTupleApply (emptyMetaE "app" base) (emptyMetaE "base" base, base) args'
+  _ -> RawTupleApply (emptyMetaE base) (emptyMetaE base, base) args'
   where
     args' = map ((False,) . mapArg) args
     mapArg :: (MetaDat m, Show m) => (Maybe (RawExpr m), RawExpr m) -> RawObjArr RawExpr m
@@ -53,15 +53,15 @@ applyRawIArgs :: PExpr -> [(ArgName, IArg RawExpr)] -> PExpr
 applyRawIArgs base args = applyRawEIArgs base (map mapArg args)
   where
     mapArg :: (ArgName, IArg RawExpr) -> (PExpr, IArg RawExpr)
-    mapArg (argName, IArgE argVal) = (RawValue (emptyMetaE ("in-" ++ show argName) argVal) (pkName argName), IArgE argVal)
+    mapArg (argName, IArgE argVal) = (RawValue (emptyMetaE argVal) (pkName argName), IArgE argVal)
     mapArg (argName, IArgM argM) = (RawValue emptyMetaN (pkName argName), IArgM argM)
-    mapArg (argName, IArgNothing) = (RawValue (emptyMetaE ("in-" ++ show argName) base) (pkName argName), IArgNothing)
+    mapArg (argName, IArgNothing) = (RawValue (emptyMetaE base) (pkName argName), IArgNothing)
 
 applyRawEIArgs :: PExpr -> [(PExpr, IArg RawExpr)] -> PExpr
 applyRawEIArgs base [] = base
 applyRawEIArgs base args = case base of
   (RawTupleApply m base' baseArgs) -> RawTupleApply m base' (baseArgs ++ args')
-  _ -> RawTupleApply (emptyMetaE "app" base) (emptyMetaE "base" base, base) args'
+  _ -> RawTupleApply (emptyMetaE base) (emptyMetaE base, base) args'
   where
     args' = map ((False,) . mapArg) args
     mapArg :: (PExpr, IArg RawExpr) -> RawObjArr RawExpr ()
@@ -72,13 +72,13 @@ applyRawEIArgs base args = case base of
 applyRawExprVars :: (MetaDat m) => RawExpr m -> [(TypeVarName, Maybe (RawExpr m))] -> RawExpr m
 applyRawExprVars base vars = applyRawExprEVars base vars'
   where
-    vars' = map (first (\n -> RawValue (emptyMetaE ("var" ++ show n) base) (pkName n))) vars
+    vars' = map (first (RawValue (emptyMetaE base) . pkName)) vars
 
 applyRawExprEVars :: (MetaDat m) => RawExpr m -> [(RawExpr m, Maybe (RawExpr m))] -> RawExpr m
 applyRawExprEVars base []   = base
 applyRawExprEVars base vars = case base of
   (RawVarsApply m base' baseArgs) -> RawVarsApply m base' (baseArgs ++ vars')
-  _ -> RawVarsApply (emptyMetaE "app" base) base vars'
+  _                               -> RawVarsApply (emptyMetaE base) base vars'
   where
     vars' = map aux vars
     aux (n, m) = RawObjArr (Just n) ArgObj Nothing [] (Just (Nothing, m)) Nothing
@@ -95,25 +95,25 @@ exprVal = Value m
 applyExprOArgs :: (MetaDat m, Show m) => Expr m -> [(Maybe ArgName, Expr m)] -> Expr m
 applyExprOArgs = foldl addArg
   where
-    addArg b a = TupleApply (emptyMetaE "app" b) (emptyMetaE "base" b, b) (EAppArg $ mapArg a)
+    addArg b a = TupleApply (emptyMetaE b) (emptyMetaE b, b) (EAppArg $ mapArg a)
       where
-        mapArg (Just argName, argVal) = ObjArr (Just (Value (emptyMetaE (show argName) b) (pkName argName))) ArgObj Nothing [] (Just (Just argVal, emptyMetaE "argRes" argVal))
-        mapArg (Nothing, argVal) = ObjArr Nothing ArgObj Nothing [] (Just (Just argVal, emptyMetaE "argRes" argVal))
+        mapArg (Just argName, argVal) = ObjArr (Just (Value (emptyMetaE  b) (pkName argName))) ArgObj Nothing [] (Just (Just argVal, emptyMetaE argVal))
+        mapArg (Nothing, argVal) = ObjArr Nothing ArgObj Nothing [] (Just (Just argVal, emptyMetaE argVal))
 
 applyExprIArgs :: Expr () -> [(ArgName, IArg Expr)] -> Expr ()
 applyExprIArgs = foldl addArg
   where
-    addArg b a = TupleApply (emptyMetaE "app" b) (emptyMetaE "base" b, b) (EAppArg $ mapArg a)
+    addArg b a = TupleApply (emptyMetaE b) (emptyMetaE b, b) (EAppArg $ mapArg a)
       where
         mapArg :: (ArgName, IArg Expr) -> ObjArr Expr ()
-        mapArg (argName, IArgE argVal) = ObjArr (Just (Value (emptyMetaE (show argName) b) (pkName argName))) ArgObj Nothing [] (Just(Just argVal, emptyMetaE "argRes" argVal))
-        mapArg (argName, IArgM _argM) = ObjArr (Just (Value emptyMetaN (pkName argName))) ArgObj Nothing [] (Just (Nothing, emptyMetaE ("argRes" ++ show argName) b))
-        mapArg (argName, IArgNothing) = ObjArr (Just (Value (emptyMetaE (show argName) b) (pkName argName))) ArgObj Nothing [] (Just (Nothing, emptyMetaE ("argRes" ++ show argName) b))
+        mapArg (argName, IArgE argVal) = ObjArr (Just (Value (emptyMetaE b) (pkName argName))) ArgObj Nothing [] (Just(Just argVal, emptyMetaE argVal))
+        mapArg (argName, IArgM _argM) = ObjArr (Just (Value emptyMetaN (pkName argName))) ArgObj Nothing [] (Just (Nothing, emptyMetaE b))
+        mapArg (argName, IArgNothing) = ObjArr (Just (Value (emptyMetaE  b) (pkName argName))) ArgObj Nothing [] (Just (Nothing, emptyMetaE b))
 
 applyExprVars :: (MetaDat m) => Expr m -> [(TypeVarName, Meta m)] -> Expr m
 applyExprVars = foldl addVar
   where
-    addVar b (varName, varVal) = TupleApply (emptyMetaE "app" b) (emptyMetaE "varBase" b, b) (EAppVar varName varVal)
+    addVar b (varName, varVal) = TupleApply (emptyMetaE b) (emptyMetaE b, b) (EAppVar varName varVal)
 
 rawAnon :: PExpr
 rawAnon = rawVal anonStr

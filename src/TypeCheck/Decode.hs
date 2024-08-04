@@ -76,7 +76,7 @@ toExpr expr@(TupleApply m (baseM, baseExpr) arg) = do
               (base, result) -> lift $ TypeCheckResult [GenTypeCheckError mclear $ printf "Failed argument inference due to multiple types with base %s and result %s in %s" (show base) (show result) (show expr)] Nothing
             (baseM'', m'') -> lift $ TypeCheckResult [GenTypeCheckError mclear $ printf "Failed argument inference due to non UnionType in baseMeta %s or meta %s in %s" (show baseM'') (show m'') (show expr)] Nothing
           return $ case mArgName of
-            Just argName -> Just $ Value (mWithType (singletonType $ partialToType argName) $ emptyMetaM "inferArg" m') (pkName argName)
+            Just argName -> Just $ Value (mWithType (singletonType $ partialToType argName) $ emptyMetaM m') (pkName argName)
             Nothing -> Nothing -- Failed argument inference, return nothing and error out
       oaArr' <- forM oaArr $ \(oaArrExpr, oaArrM) -> do
         oaArrExpr' <- mapM toExpr oaArrExpr

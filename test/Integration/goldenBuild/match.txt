@@ -478,21 +478,22 @@
                 )
                 ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
             , /abs ( EAppArg Value /x -> /Data/Primitive/Integer ) ->
-                ( /abs.$b02e6f
-                    ( /$b02e6f-arg=/Data/Primitive/Integer
-                    , /x=/Data/Primitive/Integer
-                    ) | /Data/Primitive/Integer | /operator*
+                ( /Data/Primitive/Integer | /abs.$ 5 efa85
+                    ( /x=/Data/Primitive/Integer
+                    , /$ 5 efa85-arg=/Data/Primitive/Integer
+                    ) | /operator*
                     ( /l=/Data/Primitive/Integer
                     , /r=/Data/Primitive/Integer
                     )
-                ) = /abs.$b02e6f
+                ) = /abs.$ 5 efa85
                 ( EAppArg Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                ( EAppArg Value /$b02e6f-arg -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-            , /abs.$b02e6f ( EAppArg Value /x -> ∀/Data/Algebra/Ord )
-                ( EAppArg Value /$b02e6f-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>= ( EAppArg Value /l -> TVArg /x = Value /x )
+                ( EAppArg Value /$ 5 efa85-arg -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+            , /abs.$ 5 efa85 ( EAppArg Value /x -> ∀/Data/Algebra/Ord )
+                ( EAppArg Value /$ 5 efa85-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>= ( EAppArg Value /l -> TVArg /x = Value /x )
                     ( EAppArg Value /r -> /Data/Primitive/Integer = 0 )
                 ) -> TVArg /x2 = Value /x2
-            , /abs.$b02e6f ( EAppArg Value /x ) ( EAppArg Value /$b02e6f-arg -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing@Value /x2 ) ->
+            , /abs.$ 5 efa85 ( EAppArg Value /x )
+                ( EAppArg Value /$ 5 efa85-arg -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing@Value /x2 ) ->
                 ( /Data/Primitive/Integer | /operator*
                     ( /l=/Data/Primitive/Integer
                     , /r=/Data/Primitive/Integer

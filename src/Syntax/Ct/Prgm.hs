@@ -236,6 +236,6 @@ rawInExprSingleton e = maybe
 
 roaVarArgs :: (MetaDat m, Show m) => RawObjArr RawExpr m -> H.HashMap TypeVarAux [(RawExpr m, Meta m)]
 roaVarArgs RawObjArr{roaArr=(Just (Just argVal, _))} = exprVarArgs argVal
-roaVarArgs RawObjArr{roaObj=(Just obj), roaArr= Nothing} = H.singleton (TVArg $ rawInExprSingleton obj) [(obj, emptyMetaE "res" obj)]
-roaVarArgs RawObjArr{roaObj=(Just obj), roaArr= Just (Nothing, _)} = H.singleton (TVArg $ rawInExprSingleton obj) [(obj, emptyMetaE "res" obj)]
+roaVarArgs RawObjArr{roaObj=(Just obj), roaArr= Nothing} = H.singleton (TVArg $ rawInExprSingleton obj) [(obj, emptyMetaE obj)]
+roaVarArgs RawObjArr{roaObj=(Just obj), roaArr= Just (Nothing, _)} = H.singleton (TVArg $ rawInExprSingleton obj) [(obj, emptyMetaE obj)]
 roaVarArgs oa = error $ printf "exprVarArgs not defined for arg %s" (show oa)

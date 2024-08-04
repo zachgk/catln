@@ -41,7 +41,7 @@ pComment = do
   c <- L.indentBlock scn p
   pos2 <- getSourcePos
   let m = emptyMeta pos1 pos2
-  return (RawValue (emptyMetaM "val" m) mdAnnot `applyRawArgs` [(Just $ partialKey "text", RawCExpr m (CStr c))])
+  return (RawValue (emptyMetaM m) mdAnnot `applyRawArgs` [(Just $ partialKey "text", RawCExpr m (CStr c))])
   where
     takeLine = takeWhileP (Just "character") (/= '\n')
     p = do

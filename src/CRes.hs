@@ -96,7 +96,7 @@ instance Show CNoteI where
 
 instance CNoteTC CNoteI where
   metaCNote _ = Nothing
-  posCNote (ParseCErr bundle) = Just (pos, pos, "")
+  posCNote (ParseCErr bundle) = Just (pos, pos)
     where pos = pstateSourcePos $ bundlePosState bundle
   posCNote _ = Nothing
 

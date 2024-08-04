@@ -478,38 +478,38 @@
                 )
                 ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
             , /abs ( EAppArg Value /x -> /Data/Primitive/Integer ) ->
-                ( /abs.$ 568534 - 0
+                ( /abs.$ 50 a3e2- 1
                     ( /x=/Data/Primitive/Integer
-                    , /$ 568534 -arg=/Data/Primitive/Integer
-                    ) | /Data/Primitive/Integer | /abs.$ 568534 - 1
-                    ( /x=/Data/Primitive/Integer
-                    , /$ 568534 -arg=/Data/Primitive/Integer
-                    ) | /operator*
+                    , /$ 50 a3e2-arg=/Data/Primitive/Integer
+                    ) | /Data/Primitive/Integer | /operator*
                     ( /l=/Data/Primitive/Integer
                     , /r=/Data/Primitive/Integer
+                    ) | /abs.$ 50 a3e2- 0
+                    ( /x=/Data/Primitive/Integer
+                    , /$ 50 a3e2-arg=/Data/Primitive/Integer
                     )
-                ) = /abs.$ 568534 - 0
+                ) = /abs.$ 50 a3e2- 0
                 ( EAppArg Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                ( EAppArg Value /$ 568534 -arg -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-            , /abs.$ 568534 - 0 ( EAppArg Value /x -> ∀/Data/Algebra/Ord )
-                ( EAppArg Value /$ 568534 -arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>= ( EAppArg Value /l -> TVArg /x = Value /x )
+                ( EAppArg Value /$ 50 a3e2-arg -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+            , /abs.$ 50 a3e2- 0 ( EAppArg Value /x -> ∀/Data/Algebra/Ord )
+                ( EAppArg Value /$ 50 a3e2-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>= ( EAppArg Value /l -> TVArg /x = Value /x )
                     ( EAppArg Value /r -> /Data/Primitive/Integer = 0 )
                 ) -> TVArg /x2 = Value /x2
-            , /abs.$ 568534 - 0 ( EAppArg Value /x -> /Data/Primitive/Integer )
-                ( EAppArg Value /$ 568534 -arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>= ( EAppArg Value /l -> TVArg /x = Value /x )
+            , /abs.$ 50 a3e2- 0 ( EAppArg Value /x -> /Data/Primitive/Integer )
+                ( EAppArg Value /$ 50 a3e2-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>= ( EAppArg Value /l -> TVArg /x = Value /x )
                     ( EAppArg Value /r -> /Data/Primitive/Integer = 0 )
                 ) ->
-                ( /Data/Primitive/Integer | /abs.$ 568534 - 1
+                ( /abs.$ 50 a3e2- 1
                     ( /x=/Data/Primitive/Integer
-                    , /$ 568534 -arg=/Data/Primitive/Integer
-                    ) | /operator*
+                    , /$ 50 a3e2-arg=/Data/Primitive/Integer
+                    ) | /Data/Primitive/Integer | /operator*
                     ( /l=/Data/Primitive/Integer
                     , /r=/Data/Primitive/Integer
                     )
-                ) = /abs.$ 568534 - 1 ( EAppArg Value /x -> TVArg /x = Value /x )
-                ( EAppArg Value /$ 568534 -arg -> TVArg /x = Value /x )
-            , /abs.$ 568534 - 1 ( EAppArg Value /x )
-                ( EAppArg Value /$ 568534 -arg -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing@Value /x2 ) ->
+                ) = /abs.$ 50 a3e2- 1 ( EAppArg Value /x -> TVArg /x = Value /x )
+                ( EAppArg Value /$ 50 a3e2-arg -> TVArg /x = Value /x )
+            , /abs.$ 50 a3e2- 1 ( EAppArg Value /x )
+                ( EAppArg Value /$ 50 a3e2-arg -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing@Value /x2 ) ->
                 ( /Data/Primitive/Integer | /operator*
                     ( /l=/Data/Primitive/Integer
                     , /r=/Data/Primitive/Integer

@@ -116,7 +116,7 @@ fromExpr est (EWhere m base cond) = do
         _        -> est
   cond' <- fromExpr condEst cond
   bool <- fresh $ TypeCheckResult [] $ SType PTopType boolType Nothing "ifGuardBool"
-  let bool' = Meta boolType (labelPos "bool" $ getMetaPos $ getExprMeta cond) nil (mkVarMetaDat est bool)
+  let bool' = Meta boolType (getMetaPos $ getExprMeta cond) nil (mkVarMetaDat est bool)
   modify $ addConstraints [ArrowTo 30 (getExprMeta cond') bool', ConWhere 30 (getExprMeta base') (getExprMeta cond') m']
   return $ EWhere m' base' cond'
 fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
@@ -238,7 +238,7 @@ fromObjectMap oa@ObjArr{oaAnnots, oaObj=Just obj, oaArr} = do
     case maybeArrE of
       Just arrE -> do
         vExpr <- fromExpr est arrE
-        arrM' <- fromMeta BAct est (Meta PTopType (labelPos "res" $ getMetaPos arrM) nil emptyMetaDat) $ printf "Arrow result from %s" (show $ exprPath obj')
+        arrM' <- fromMeta BAct est (emptyMetaM arrM) $ printf "Arrow result from %s" (show $ exprPath obj')
         modify $ addConstraints [ArrowTo 32 (getExprMeta vExpr) arrM', ArrowTo 33 (getExprMeta vExpr) mUserReturn', NoReturnArg 33 arrM']
         return (Just vExpr, arrM')
       Nothing -> return (Nothing, mUserReturn')

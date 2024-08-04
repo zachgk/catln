@@ -59,7 +59,7 @@ data Hole
 
 -- Metadata for the Programs
 type ParseErrorRes = ParseErrorBundle String Void
-type CodeRangeDat = (SourcePos, SourcePos, String)
+type CodeRangeDat = (SourcePos, SourcePos)
 type CodeRange = Maybe CodeRangeDat
 class (Eq m, Ord m) => MetaDat m where
   emptyMetaDat :: m
@@ -91,7 +91,7 @@ mWithType :: Type -> Meta m -> Meta m
 mWithType t m = m{getMetaType=t}
 
 showCodeRange :: CodeRangeDat -> String
-showCodeRange (start, end, _) = printf "%s:%d:%d-%d:%d" (sourceName start) (unPos $ sourceLine start) (unPos $ sourceColumn start) (unPos $ sourceLine end) (unPos $ sourceColumn end)
+showCodeRange (start, end) = printf "%s:%d:%d-%d:%d" (sourceName start) (unPos $ sourceLine start) (unPos $ sourceColumn start) (unPos $ sourceLine end) (unPos $ sourceColumn end)
 
 data EApp e m
   = EAppArg (ObjArr e m)

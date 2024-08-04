@@ -466,17 +466,17 @@
     (
         (
             [ /abs ( EAppArg Value /x -> /Data/Primitive/Integer ) ->
-                ( /abs.$ 70 d790
-                    ( /$ 70 d790-arg=
-                        ( /Catln/ThenElse/fromBool ( /v=∀/Data/Primitive/Boolean ) | /Catln/Else | /Catln/Then )
-                    , /x=/Data/Primitive/Integer
-                    ) | /Data/Primitive/Integer | /operator*
+                ( /Data/Primitive/Integer | /operator*
                     ( /l=/Data/Primitive/Integer
                     , /r=/Data/Primitive/Integer
+                    ) | /abs.$e04f7b
+                    ( /x=/Data/Primitive/Integer
+                    , /$e04f7b-arg=
+                        ( /Catln/ThenElse/fromBool ( /v=∀/Data/Primitive/Boolean ) | /Catln/Else | /Catln/Then )
                     )
-                ) = /abs.$ 70 d790
+                ) = /abs.$e04f7b
                 ( EAppArg Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                ( EAppArg Value /$ 70 d790-arg ->
+                ( EAppArg Value /$e04f7b-arg ->
                     ( /Catln/ThenElse/fromBool ( /v=∀/Data/Primitive/Boolean ) | /Catln/Else | /Catln/Then ) = /Catln/ThenElse/fromBool
                     ( EAppArg Value /v -> ∀/Data/Primitive/Boolean =
                         ( /operator>=
@@ -485,10 +485,8 @@
                         )
                     )
                 )
-            , /abs.$ 70 d790 ( EAppArg Value /x )
-                ( EAppArg Value /$ 70 d790-arg= Hole TopType HoleActive Nothing@Value /Catln/Then ) -> TVArg /x = Value /x
-            , /abs.$ 70 d790 ( EAppArg Value /x -> /Data/Primitive/Integer )
-                ( EAppArg Value /$ 70 d790-arg= Hole TopType HoleActive Nothing@Value /Catln/Else ) ->
+            , /abs.$e04f7b ( EAppArg Value /x ) ( EAppArg Value /$e04f7b-arg= Hole TopType HoleActive Nothing@Value /Catln/Then ) -> TVArg /x = Value /x
+            , /abs.$e04f7b ( EAppArg Value /x -> /Data/Primitive/Integer ) ( EAppArg Value /$e04f7b-arg= Hole TopType HoleActive Nothing@Value /Catln/Else ) ->
                 ( /Data/Primitive/Integer | /operator*
                     ( /l=/Data/Primitive/Integer
                     , /r=/Data/Primitive/Integer

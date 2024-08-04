@@ -450,12 +450,14 @@
                 ( Value val= abs
                     ( CInt 0 )
                 ) ( Value /this= Value io )
-            , abs ( Value x -> /Data/Primitive/Integer ) = abs.$b02e6f ( Value /x= Value /x ) ( Value /$b02e6f-arg= Value x )
-            , abs.$b02e6f ( Value /x )
-                ( Value /$b02e6f-arg= Hole TopType HoleActive Nothing@Value x2 | /operator>= ( Value /l= Value x )
+            , abs ( Value x -> /Data/Primitive/Integer ) = abs.$ 5 efa85 ( Value /x= Value /x )
+                ( Value /$ 5 efa85-arg= Value x )
+            , abs.$ 5 efa85 ( Value /x )
+                ( Value /$ 5 efa85-arg= Hole TopType HoleActive Nothing@Value x2 | /operator>= ( Value /l= Value x )
                     ( Value /r= CInt 0 )
                 ) = Value x2
-            , abs.$b02e6f ( Value /x ) ( Value /$b02e6f-arg= Hole TopType HoleActive Nothing@Value x2 ) = /operator* ( Value /l= Value x2 )
+            , abs.$ 5 efa85 ( Value /x )
+                ( Value /$ 5 efa85-arg= Hole TopType HoleActive Nothing@Value x2 ) = /operator* ( Value /l= Value x2 )
                 ( Value /r= /operator-
                     ( Value /a= CInt 1 )
                 )

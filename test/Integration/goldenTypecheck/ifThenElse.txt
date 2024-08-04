@@ -466,25 +466,23 @@
     (
         (
             [ /abs ( Value /x -> /Data/Primitive/Integer ) ->
-                ( /abs.$ 70 d790
-                    ( /$ 70 d790-arg=
-                        ( /Catln/ThenElse/fromBool ( /v=∀/Data/Primitive/Boolean ) | /Catln/Else | /Catln/Then )
-                    , /x=/Data/Primitive/Integer
-                    ) | /Data/Primitive/Integer | /operator*
+                ( /Data/Primitive/Integer | /operator*
                     ( /l=/Data/Primitive/Integer
                     , /r=/Data/Primitive/Integer
+                    ) | /abs.$e04f7b
+                    ( /x=/Data/Primitive/Integer
+                    , /$e04f7b-arg=
+                        ( /Catln/ThenElse/fromBool ( /v=∀/Data/Primitive/Boolean ) | /Catln/Else | /Catln/Then )
                     )
-                ) = /abs.$ 70 d790 ( Value /x -> TVArg /x = Value /x )
-                ( Value /$ 70 d790-arg ->
+                ) = /abs.$e04f7b ( Value /x -> TVArg /x = Value /x )
+                ( Value /$e04f7b-arg ->
                     ( /Catln/ThenElse/fromBool ( /v=∀/Data/Primitive/Boolean ) | /Catln/Else | /Catln/Then ) = /Catln/ThenElse/fromBool
                     ( Value /v -> ∀/Data/Primitive/Boolean = /operator>= ( Value /l -> TVArg /x = Value /x )
                         ( Value /r -> /Data/Primitive/Integer = CInt 0 )
                     )
                 )
-            , /abs.$ 70 d790 ( Value /x )
-                ( Value /$ 70 d790-arg= Hole TopType HoleActive Nothing@Value /Catln/Then ) -> TVArg /x = Value /x
-            , /abs.$ 70 d790 ( Value /x -> /Data/Primitive/Integer )
-                ( Value /$ 70 d790-arg= Hole TopType HoleActive Nothing@Value /Catln/Else ) ->
+            , /abs.$e04f7b ( Value /x ) ( Value /$e04f7b-arg= Hole TopType HoleActive Nothing@Value /Catln/Then ) -> TVArg /x = Value /x
+            , /abs.$e04f7b ( Value /x -> /Data/Primitive/Integer ) ( Value /$e04f7b-arg= Hole TopType HoleActive Nothing@Value /Catln/Else ) ->
                 ( /Data/Primitive/Integer | /operator*
                     ( /l=/Data/Primitive/Integer
                     , /r=/Data/Primitive/Integer

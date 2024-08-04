@@ -98,7 +98,7 @@ pValue = do
         "todefine"  -> RawHoleExpr m HoleTodefine
         _           -> case (usingTheExpr, spread) of
           (Just{}, Nothing)  -> RawTheExpr (RawValue m name)
-          (Nothing, Just{}) -> RawTupleApply (emptyMetaM "sprM" m) (emptyMetaM "sprpap" m, RawValue (mWithType (relTypeVal name) m) name) [(True, rawInObjArr True (RawHoleExpr (emptyMetaM "sprHole" m) (HoleActive Nothing)))]
+          (Nothing, Just{}) -> RawTupleApply (emptyMetaM m) (emptyMetaM m, RawValue (mWithType (relTypeVal name) m) name) [(True, rawInObjArr True (RawHoleExpr (emptyMetaM m) (HoleActive Nothing)))]
           (Nothing, Nothing) -> RawValue (mWithType (relTypeVal name) m) name
           (Just{}, Just{}) -> undefined
 
@@ -121,7 +121,7 @@ parenExpr = do
     ([(False, RawObjArr{roaObj=Just e', roaArr=Nothing})], Nothing) -> RawParen e' -- Paren
     (args, _) -> do -- Tuple
       let base = rawAnon
-      RawTupleApply (emptyMeta pos1 pos2) (labelPosM "arg" $ getExprMeta base, base) args
+      RawTupleApply (emptyMeta pos1 pos2) (emptyMetaE base, base) args
 
 pEndOfLine :: Parser ()
 pEndOfLine = do
@@ -287,9 +287,9 @@ pApply = do
   return $ RawApplyExpr (emptyMeta pos1 pos2) (RawApply (term1 : termRest))
 
 applyTermSuffix :: PExpr -> TermSuffix -> PExpr
-applyTermSuffix base (ArgsSuffix m args) = RawTupleApply m (labelPosM "arg" $ getExprMeta base, base) args
+applyTermSuffix base (ArgsSuffix m args) = RawTupleApply m (emptyMetaE base, base) args
 applyTermSuffix base (VarsSuffix m vars) = RawVarsApply m base vars
-applyTermSuffix base (ContextSuffix m args) = RawContextApply m (labelPosM "ctx" $ getExprMeta base, base) args
+applyTermSuffix base (ContextSuffix m args) = RawContextApply m (emptyMetaE base, base) args
 applyTermSuffix base (AliasSuffix m n) = RawAliasExpr base (RawValue m n)
 applyTermSuffix base (TypePropSuffix m p) = RawTypeProp m base p
 
