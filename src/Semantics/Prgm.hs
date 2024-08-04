@@ -183,6 +183,9 @@ class ExprClass e where
   -- | Returns the metadata for the top level of an expression
   getExprMeta ::  e m -> Meta m
 
+  -- | Returns the metadata for the top level of an expression
+  setExprMeta :: e m -> Meta m -> e m
+
   -- | Returns the value at the base of an expression, if it exists
   maybeExprPathM :: e m -> Maybe (TypeName, Meta m)
 
@@ -210,6 +213,14 @@ instance ExprClass Expr where
     AliasExpr b _    -> getExprMeta b
     TupleApply m _ _ -> m
     EWhere m _ _     -> m
+
+  setExprMeta expr m' = case expr of
+    CExpr _ c         -> CExpr m' c
+    Value _ v         -> Value m' v
+    HoleExpr _ v      -> HoleExpr m' v
+    AliasExpr b a     -> AliasExpr (setExprMeta b m') a
+    TupleApply _ b as -> TupleApply m' b as
+    EWhere _ b c      -> EWhere m' b c
 
   maybeExprPathM (Value m n)             = Just (n, m)
   maybeExprPathM (TupleApply _ (_, e) _) = maybeExprPathM e

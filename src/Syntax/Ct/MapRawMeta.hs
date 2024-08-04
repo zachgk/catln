@@ -43,10 +43,11 @@ instance MapMeta RawExpr where
     b' <- mapMetaM f loc b
     a' <- mapMetaM f loc a
     return $ RawAliasExpr b' a'
-  mapMetaM f loc (RawWhere b a) = do
+  mapMetaM f loc (RawWhere m b a) = do
+    m' <- f (ExprMeta loc ExprMetaApplyArg) m
     b' <- mapMetaM f loc b
     a' <- mapMetaM f loc a
-    return $ RawWhere b' a'
+    return $ RawWhere m' b' a'
   mapMetaM f loc (RawTupleApply m (bm, be) args) = do
     m' <- f (ExprMeta loc ExprMetaApplyArg) m
     bm' <- f (ExprMeta loc ExprMetaApplyArgBase) bm
@@ -69,10 +70,11 @@ instance MapMeta RawExpr where
     args' <- mapM (mapMetaRawObjArrM f (Just loc)) args
     return $ RawContextApply m' (bm', be') args'
   mapMetaM f loc (RawParen e) = RawParen <$> mapMetaM f loc e
-  mapMetaM f loc (RawMethod b m) = do
+  mapMetaM f loc (RawMethod m b mt) = do
+    m' <- f (ExprMeta loc ExprMetaApplyArg) m
     b' <- mapMetaM f loc b
-    m' <- mapMetaM f loc m
-    return $ RawMethod b' m'
+    mt' <- mapMetaM f loc mt
+    return $ RawMethod m' b' mt'
   mapMetaM f loc (RawList m lst) = do
     m' <- f (ExprMeta loc ExprMetaTupleArg) m
     lst' <- mapM (mapMetaM f loc) lst

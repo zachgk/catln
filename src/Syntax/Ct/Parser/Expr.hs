@@ -52,7 +52,7 @@ ops = [
     [ Prefix (mkOp1 "-"  <$ symbolExcludes "-" ["->"])
     , Prefix (mkOp1 "~" <$ symbol "~")
     ],
-    [ InfixL (RawMethod <$ symbol ".")
+    [ InfixL (RawMethod emptyMetaN <$ symbol ".")
     ],
     [ InfixL (mkOp2 "::" <$ symbol "::")
     , InfixL (mkOp2 "~::" <$ symbol "~::")
@@ -78,7 +78,7 @@ ops = [
     [ InfixL (mkOp2 "?->" <$ symbol "?->")
     , InfixL (mkOp2 ":=" <$ symbol ":=")
     ],
-    [ InfixL (RawWhere <$ symbol "|") ]
+    [ InfixL (RawWhere emptyMetaN <$ symbol "|") ]
   ]
 
 pValue :: Parser PExpr

@@ -250,6 +250,8 @@ instance ExprClass TExpr where
     TTupleApply m _ _ -> m
     TCalls m _ _      -> m
 
+  setExprMeta = undefined
+
   maybeExprPathM (TValue m n)             = Just (n, m)
   maybeExprPathM (TTupleApply _ (_, e) _) = maybeExprPathM e
   maybeExprPathM (TAliasExpr b _)         = maybeExprPathM b

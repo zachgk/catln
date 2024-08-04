@@ -45,12 +45,8 @@ function rawExprMeta(expr) {
     return rawExprMeta(expr.contents);
   case "RawAliasExpr":
     return rawExprMeta(expr.contents[0]);
-  case "RawWhere":
-    return rawExprMeta(expr.contents[0]);
   case "RawParen":
     return rawExprMeta(expr.contents);
-  case "RawMethod":
-    return rawExprMeta(expr.contents[0]);
   default:
     return expr.contents[0];
   }
@@ -124,12 +120,12 @@ function RawExpr(props) {
     const showCxargs = tagJoin(cxargs.map((arg, argIndex) => <RawObjArr key={argIndex} roa={arg}/>), ", ");
     return (<span><RawExpr expr={cxbase}/>&#123;{showCxargs}&#125;</span>);
   case "RawWhere":
-    let [whBase, whCond] = expr.contents;
+    let [,whBase, whCond] = expr.contents;
     return <span><RawExpr expr={whBase}/> | <RawExpr expr={whCond}/></span>;
   case "RawParen":
     return <span>(<RawExpr expr={expr.contents}/>)</span>;
   case "RawMethod":
-    let [mBase, method] = expr.contents;
+    let [,mBase, method] = expr.contents;
     return (<span><RawExpr expr={mBase}/>.<RawExpr expr={method} /></span>);
   case "RawList":
     let showList = tagJoin(expr.contents[1].map((arg, argIndex) => (<RawExpr key={argIndex} expr={arg} />)), ", ");

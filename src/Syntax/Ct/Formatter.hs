@@ -57,7 +57,7 @@ formatExpr (RawHoleExpr _ HoleTodefine) = "todefine"
 formatExpr (RawTheExpr t) = printf ":%s" (formatExpr t)
 formatExpr (RawTupleApply _ (_, v@(RawValue _ vn)) [(True, _)]) | vn /= anonStr = printf "%s.." (formatExpr v)
 formatExpr (RawAliasExpr base alias) = printf "%s@%s" (formatExpr base) (formatExpr alias)
-formatExpr (RawWhere base cond) = printf "%s | %s" (formatExpr base) (formatExpr cond)
+formatExpr (RawWhere _ base cond) = printf "%s | %s" (formatExpr base) (formatExpr cond)
 formatExpr (RawTupleApply _ (_, RawValue _ n) args) | operatorPrefix `isPrefixOf` n = case args of
   [(False, RawObjArr{ roaArr=(Just (Just a, _))})] -> op ++ formatExpr a
   [(False, RawObjArr{ roaArr=(Just (Just l, _))}), (False, RawObjArr{roaArr=(Just (Just r, _))})] -> if n == operatorType
@@ -72,7 +72,7 @@ formatExpr (RawTupleApply _ (_, be) args) = printf "%s(%s)" (formatExpr be) (int
 formatExpr (RawVarsApply _ be vars) = printf "%s[%s]" (formatExpr be) (intercalate ", " $ map formatObjArr vars)
 formatExpr (RawContextApply _ (_, be) ctxs) = printf "%s{%s}" (formatExpr be) (intercalate ", " $ map formatObjArr ctxs)
 formatExpr (RawParen e) = printf "(%s)" (formatExpr e)
-formatExpr (RawMethod base method) = printf "%s.%s" (formatExpr base) (formatExpr method)
+formatExpr (RawMethod _ base method) = printf "%s.%s" (formatExpr base) (formatExpr method)
 formatExpr (RawList _ l) = printf "[%s]" $ intercalate ", " $ map formatExpr l
 formatExpr (RawTypeProp _ base (TypePropProj p (RawValue _ vn))) | vn == truePrim = printf "%s_%s" (formatExpr base) p
 formatExpr (RawTypeProp _ base (TypePropProj p v)) = printf "%s_%s(%s)" (formatExpr base) p (formatExpr v)

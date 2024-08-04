@@ -63,9 +63,9 @@ data RawExpr m
   | RawTupleApply (Meta m) (Meta m, RawExpr m) [(Bool, RawObjArr RawExpr m)] -- Boolean for isSpreadArg
   | RawVarsApply (Meta m) (RawExpr m) [RawObjArr RawExpr m]
   | RawContextApply (Meta m) (Meta m, RawExpr m) [RawObjArr RawExpr m]
-  | RawWhere (RawExpr m) (RawExpr m) -- ^ base cond
+  | RawWhere (Meta m) (RawExpr m) (RawExpr m) -- ^ base cond
   | RawParen (RawExpr m)
-  | RawMethod (RawExpr m) (RawExpr m) -- ^ base methodValue
+  | RawMethod (Meta m) (RawExpr m) (RawExpr m) -- ^ base methodValue
   | RawList (Meta m) [RawExpr m]
   | RawTypeProp (Meta m) (RawExpr m) (TypeProperty RawExpr m)
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
@@ -115,22 +115,39 @@ instance ExprClass RawExpr where
     RawApplyExpr m _      -> m
     RawTheExpr e          -> getExprMeta e
     RawAliasExpr b _      -> getExprMeta b
-    RawWhere b _          -> getExprMeta b
+    RawWhere m _ _        -> m
     RawTupleApply m _ _   -> m
     RawVarsApply m _ _    -> m
     RawContextApply m _ _ -> m
     RawParen e            -> getExprMeta e
-    RawMethod e _         -> getExprMeta e
+    RawMethod m _ _       -> m
     RawList m _           -> m
     RawTypeProp m _ _     -> m
+
+  setExprMeta expr m' = case expr of
+    RawCExpr _ c           -> RawCExpr m' c
+    RawValue _ v           -> RawValue m' v
+    RawHoleExpr _ v        -> RawHoleExpr m' v
+    RawMacroValue _ v      -> RawMacroValue m' v
+    RawApplyExpr _ v       -> RawApplyExpr m' v
+    RawTheExpr e           -> RawTheExpr $ setExprMeta e m'
+    RawAliasExpr b a       -> RawAliasExpr (setExprMeta b m') a
+    RawWhere _ b c         -> RawWhere m' b c
+    RawTupleApply _ b as   -> RawTupleApply m' b as
+    RawVarsApply _ b vs    -> RawVarsApply m' b vs
+    RawContextApply _ b vs -> RawContextApply m' b vs
+    RawParen e             -> RawParen $ setExprMeta e m'
+    RawMethod _ b e        -> RawMethod m' b e
+    RawList _ ls           -> RawList m' ls
+    RawTypeProp _ t v      -> RawTypeProp m' t v
 
   maybeExprPathM (RawValue m n)               = Just (n, m)
   maybeExprPathM (RawTupleApply _ (_, e) _)   = maybeExprPathM e
   maybeExprPathM (RawVarsApply _ e _)         = maybeExprPathM e
   maybeExprPathM (RawContextApply _ (_, e) _) = maybeExprPathM e
   maybeExprPathM (RawParen e)                 = maybeExprPathM e
-  maybeExprPathM (RawMethod _ e)              = maybeExprPathM e
-  maybeExprPathM (RawWhere b _)               = maybeExprPathM b
+  maybeExprPathM (RawMethod _ _ e)            = maybeExprPathM e
+  maybeExprPathM (RawWhere _ b _)             = maybeExprPathM b
   maybeExprPathM _                            = Nothing
 
   exprAppliedArgs = error "Called exprAppliedArgs on a RawExpr. Should have called rawExprAppliedArgs"
@@ -141,7 +158,7 @@ instance ExprClass RawExpr where
   exprAppliedOrdVars RawVarsApply{} = error "Not implemented"
   exprAppliedOrdVars (RawContextApply _ (_, e) _) = exprAppliedOrdVars e
   exprAppliedOrdVars (RawParen e) = exprAppliedOrdVars e
-  exprAppliedOrdVars (RawMethod _ e) = exprAppliedOrdVars e
+  exprAppliedOrdVars (RawMethod _ _ e) = exprAppliedOrdVars e
   exprAppliedOrdVars _ = error "Unsupported RawExpr exprAppliedOrdVars"
 
   exprVarArgs RawCExpr{} = H.empty
@@ -158,7 +175,7 @@ instance ExprClass RawExpr where
       aux var = H.singleton (TVVar $ rawInExprSingleton $ fromJust $ roaObj var) [(fromJust $ roaObj var, getExprMeta $ fromJust $ snd $ fromJust $ roaArr var)]
   exprVarArgs (RawContextApply _ (_, e) _) = exprVarArgs e
   exprVarArgs (RawParen e) = exprVarArgs e
-  exprVarArgs (RawMethod be me) = H.unionWith (++) (exprVarArgs be) (exprVarArgs me)
+  exprVarArgs (RawMethod _ be me) = H.unionWith (++) (exprVarArgs be) (exprVarArgs me)
   exprVarArgs e = error $ printf "Unsupported RawExpr exprVarArgs for %s" (show e)
 
   exprVarArgsWithSrc = undefined
@@ -202,7 +219,7 @@ rawExprAppliedArgs (RawTupleApply _ (_, be) args) = rawExprAppliedArgs be ++ con
 rawExprAppliedArgs (RawVarsApply _ e _) = rawExprAppliedArgs e
 rawExprAppliedArgs (RawContextApply _ (_, e) _) = rawExprAppliedArgs e
 rawExprAppliedArgs (RawParen e) = rawExprAppliedArgs e
-rawExprAppliedArgs (RawMethod _ e) = rawExprAppliedArgs e
+rawExprAppliedArgs (RawMethod _ _ e) = rawExprAppliedArgs e
 rawExprAppliedArgs _ = error "Unsupported RawExpr rawExprAppliedArgs"
 
 rawExprAppliedArgsMap :: (MetaDat m, Show m) => RawExpr m -> H.HashMap ArgName (Maybe (Meta m, Maybe (RawExpr m)))

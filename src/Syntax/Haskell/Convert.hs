@@ -57,7 +57,7 @@ convertTypeToExpr flags _ p@HsForAllTy{} = error $ printf "Convert unsupported t
 convertTypeToExpr flags i (HsQualTy _ ctx body) = foldl aux (convertTypeToExpr flags i $ unLoc body) (unLoc ctx)
   where
     aux :: RawExpr () -> Located (HsType GhcPs) -> RawExpr ()
-    aux b cond = RawWhere b (convertTypeToExpr flags Nothing $ unLoc cond)
+    aux b cond = RawWhere emptyMetaN b (convertTypeToExpr flags Nothing $ unLoc cond)
 convertTypeToExpr flags (Just i) (HsTyVar _ _ v) = i `applyRawArgs` [(Just $ partialKey "A", rawVal $ convertIdP flags $ unLoc v)]
 convertTypeToExpr flags Nothing (HsTyVar _ _ v) = rawVal $ convertIdP flags $ unLoc v
 convertTypeToExpr flags i (HsAppTy _ base v) = convertTypeToExpr flags i (unLoc base) `applyRawExprEVars` [(convertTypeToExpr flags i $ unLoc v, Nothing)]
@@ -272,7 +272,7 @@ convertExpr flags _ (HsCase _ cas (MG _ lmatches _)) = (Nothing, rawVal ctCase `
   where
     mapBC [(_a, b, c)] = (b, c)
     mapBC _            = error "Not yet implemented HsCase mapBC"
-convertExpr flags _ (HsIf _ _ i t e) = (Nothing, RawMethod i' (rawVal ctIf `applyRawArgs` [(Just $ partialKey ctThen, t'), (Just $ partialKey ctElse, e')]), concat [tSubs', iSubs', eSubs'])
+convertExpr flags _ (HsIf _ _ i t e) = (Nothing, RawMethod emptyMetaN i' (rawVal ctIf `applyRawArgs` [(Just $ partialKey ctThen, t'), (Just $ partialKey ctElse, e')]), concat [tSubs', iSubs', eSubs'])
   where
     (Nothing, t', tSubs') = convertExpr flags Nothing $ unLoc t
     (Nothing, i', iSubs') = convertExpr flags Nothing $ unLoc i
@@ -295,16 +295,16 @@ convertExpr flags base (RecordUpd _ e fields) = (base', e' `applyRawArgs` fields
     mapField :: HsRecField' (AmbiguousFieldOcc GhcPs) (Located (HsExpr GhcPs)) -> ((Maybe ArgName, RawExpr ()), [RawStatementTree RawExpr ()])
     mapField (HsRecField lbl val _) = let (Nothing, fieldE', fieldSubs') = convertExpr flags Nothing $ unLoc val
                                        in ((Just $ partialKey $ convertIdP flags $ rdrNameAmbiguousFieldOcc $ unLoc lbl, fieldE'), fieldSubs')
-convertExpr flags base (ExprWithTySig _ e (HsWC _ tySigs)) = (base', RawWhere e' (convertTypeToExpr flags Nothing $ unLoc $ convertImplicitBndrs flags tySigs), subs')
+convertExpr flags base (ExprWithTySig _ e (HsWC _ tySigs)) = (base', RawWhere emptyMetaN e' (convertTypeToExpr flags Nothing $ unLoc $ convertImplicitBndrs flags tySigs), subs')
   where
     (base', e', subs') = convertExpr flags base (unLoc e)
 convertExpr flags _ (ArithSeq _ _ info) = (Nothing, aux info, [])
   where
     aux :: ArithSeqInfo GhcPs -> RawExpr ()
-    aux (From f) = convertSimpleExpr "arithSeqFrom" flags (unLoc f) `RawMethod` rawVal "from"
-    aux (FromThen f t) = convertSimpleExpr "arithSeqFromThen-f" flags (unLoc f) `RawMethod` (rawVal "from" `applyRawArgs` [(Just $ partialKey "then", convertSimpleExpr "arithSeqFromThen-t" flags (unLoc t))])
-    aux (FromTo f t) = convertSimpleExpr "arithSeqFromTo-f" flags (unLoc f) `RawMethod` (rawVal "until" `applyRawArgs` [(Nothing, convertSimpleExpr "arithSeqFromTo-t" flags (unLoc t))])
-    aux (FromThenTo f th to) = convertSimpleExpr "arithSeqFromThenTo-f" flags (unLoc f) `RawMethod` (rawVal "until" `applyRawArgs` [(Nothing, convertSimpleExpr "arithSeqFromThenTo-th" flags (unLoc th)), (Just $ partialKey "then", convertSimpleExpr "arithSeqFromThenTo-to" flags (unLoc to))])
+    aux (From f) = RawMethod emptyMetaN (convertSimpleExpr "arithSeqFrom" flags (unLoc f)) (rawVal "from")
+    aux (FromThen f t) = RawMethod emptyMetaN (convertSimpleExpr "arithSeqFromThen-f" flags (unLoc f)) (rawVal "from" `applyRawArgs` [(Just $ partialKey "then", convertSimpleExpr "arithSeqFromThen-t" flags (unLoc t))])
+    aux (FromTo f t) = RawMethod emptyMetaN (convertSimpleExpr "arithSeqFromTo-f" flags (unLoc f)) (rawVal "until" `applyRawArgs` [(Nothing, convertSimpleExpr "arithSeqFromTo-t" flags (unLoc t))])
+    aux (FromThenTo f th to) = RawMethod emptyMetaN (convertSimpleExpr "arithSeqFromThenTo-f" flags (unLoc f)) (rawVal "until" `applyRawArgs` [(Nothing, convertSimpleExpr "arithSeqFromThenTo-th" flags (unLoc th)), (Just $ partialKey "then", convertSimpleExpr "arithSeqFromThenTo-to" flags (unLoc to))])
 convertExpr flags _ p@HsSCC{} = error $ printf "Convert unsupported expr:\n%s" (showSDoc flags $ ppr p)
 convertExpr flags _ p@HsCoreAnn{} = error $ printf "Convert unsupported expr:\n%s" (showSDoc flags $ ppr p)
 convertExpr flags _ p@HsBracket{} = error $ printf "Convert unsupported expr:\n%s" (showSDoc flags $ ppr p)
@@ -387,7 +387,7 @@ convertMatch flags i (Match _ _ pats grhs) = map aux $ convertGRHSs flags grhs
       where
         objExpr = fromJust (foldl (\p b -> Just $ convertPattern flags p b) i (map unLoc pats))
         guardObjExpr = case guard of
-          Just g  -> RawWhere objExpr g
+          Just g  -> RawWhere emptyMetaN objExpr g
           Nothing -> objExpr
         oa = RawObjArr (Just guardObjExpr) FunctionObj Nothing [] (Just (Just arr, Nothing)) Nothing
 convertMatch flags _ p = error $ printf "Convert unsupported match:\n%s" (showSDoc flags $ ppr p)
@@ -403,7 +403,7 @@ convertBindLR flags (PatBind _ lhs rhs _) = [RawStatementTree (RawDeclStatement 
   where
     obj = convertPattern flags Nothing $ unLoc lhs
     [(Nothing, arrExpr, subs, maybeGuard)] = convertGRHSs flags rhs
-    guardObj = maybe obj (RawWhere obj) maybeGuard
+    guardObj = maybe obj (RawWhere emptyMetaN obj) maybeGuard
 convertBindLR flags p@VarBind{} = error $ printf "Convert unsupported bindLR:\n%s" (showSDoc flags $ ppr p)
 convertBindLR flags p@AbsBinds{} = error $ printf "Convert unsupported bindLR:\n%s" (showSDoc flags $ ppr p)
 convertBindLR flags p@PatSynBind{} = error $ printf "Convert unsupported bindLR:\n%s" (showSDoc flags $ ppr p)
@@ -468,9 +468,9 @@ convertInstDecl :: DynFlags -> InstDecl GhcPs -> [RawStatementTree RawExpr ()]
 convertInstDecl flags (ClsInstD _ (ClsInstDecl _ (HsIB _ polyTy) binds sigs [] [] _)) = [RawStatementTree (classInstSt $ mkClassDef $ convertTypeToExpr flags Nothing $ unLoc polyTy) (sigs' ++ binds')]
   where
     mkClassDef (RawVarsApply _ (RawValue _ b) [v]) = (fromJust $ roaObj v, [rawVal b])
-    mkClassDef (RawWhere b c) = let (b', clsB) = mkClassDef b
-                                    (_, clsC) = mkClassDef c
-                                 in (b', clsB ++ clsC)
+    mkClassDef (RawWhere _ b c) = let (b', clsB) = mkClassDef b
+                                      (_, clsC) = mkClassDef c
+                                   in (b', clsB ++ clsC)
     mkClassDef e = error $ printf "Unsupported mkClassDef from %s" (show e)
     sigs' = concatMap (convertSignature flags . unLoc) sigs
     binds' = concatMap (convertBindLR flags . unLoc) $ bagToList binds
