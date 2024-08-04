@@ -52,11 +52,11 @@ evalStartEArrow srcType oa newArgs = do
               return (tree, annots', evArgs)
             Nothing -> evalError $ printf "Failed to find arrow in eval resArrow: %s" (show oa')
 
-evalEndEArrow :: Val -> Args -> Env -> Env
-evalEndEArrow _ _ Env{evTreebugOpen} | null evTreebugOpen = error $ printf "Tried to evalEndEArrow with an empty treebug open"
-evalEndEArrow val newArgs env@Env{evTreebugOpen, evTreebugClosed, evCallStack} = env {
+evalEndEArrow :: Val -> Val -> Args -> Env -> Env
+evalEndEArrow _ _ _ Env{evTreebugOpen} | null evTreebugOpen = error $ printf "Tried to evalEndEArrow with an empty treebug open"
+evalEndEArrow input val newArgs env@Env{evTreebugOpen, evTreebugClosed, evCallStack} = env {
   evTreebugOpen = tail evTreebugOpen,
-  evTreebugClosed = pure $ (\oa -> EvalTreebugClosed oa val evTreebugClosed closedId) (head evTreebugOpen),
+  evTreebugClosed = pure $ (\oa -> EvalTreebugClosed oa input val evTreebugClosed closedId) (head evTreebugOpen),
   evArgs = newArgs
                                                             }
   where

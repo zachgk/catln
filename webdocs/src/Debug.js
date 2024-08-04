@@ -7,6 +7,8 @@ import TreeItem from '@material-ui/lab/TreeItem';
 import {useParams} from 'react-router-dom';
 
 import {useApi, Loading} from './Common/Common';
+import {ObjArr} from './Common/Semantics';
+import {Value} from './Common/Value';
 
 function Debug(props) {
   const { prgmName, fun } = useParams();
@@ -33,11 +35,16 @@ function Main(props) {
 }
 
 function TreebugNode(props) {
-  let [, , , children, id] = props.data;
+  let [eitherOa, input, val, children, id] = props.data;
 
-  // let label = <span><Obj obj={obj} Meta={ObjMeta}/> => <Value data={val} /></span>;
-  console.log(props);
-  let label = "Label";
+  let oa;
+  if ("Left" in eitherOa) {
+    oa = eitherOa["Left"];
+  } else {
+    oa = eitherOa["Right"];
+  }
+
+  let label = <span><ObjArr oa={oa} /> |::| <Value data={input} /> =&gt; <Value data={val} /></span>;
   return (
     <TreeItem nodeId={id} label={label}>
       {children.map(child => <TreebugNode data={child} key={child[4]} />)}

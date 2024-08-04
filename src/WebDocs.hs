@@ -31,7 +31,7 @@ import           Data.Bifunctor                (Bifunctor (first))
 import           Data.Graph
 import           Eval                          (evalAllTargetModes, evalAnnots,
                                                 evalBuild, evalBuildAll,
-                                                evalRun)
+                                                evalRun, prgmFromGraphData)
 import           Eval.Common                   (EvalMetaDat, EvalResult, TExpr,
                                                 Val (..))
 import           MapMeta                       (interleaveMeta, interleavePrgm,
@@ -195,14 +195,16 @@ docApiBase getProvider = do
       rawPrgm' <- case graphLookup prgmNameRaw rawPrgms of
         Just p  -> return p
         Nothing -> fail $ printf "Could not find program %s" (show prgmName)
-      maybeTPrgm <- lift $ runCResT $ do
-        tprgms <- getTPrgm provider
+      tprgms <- getTPrgm provider
+      maybeTPrgmRes <- lift $ runCResT $ do
         case graphLookup prgmName' tprgms of
-          Just tprgm -> return tprgm
+          Just tprgm -> return (tprgm, prgmFromGraphData prgmName' tprgms)
           Nothing -> fail $ printf "Could not find typechecked program %s" (show prgmName)
+      let maybeTPrgm = fmap fst maybeTPrgmRes
+      let maybeTPrgmFull = fmap snd maybeTPrgmRes
       maybeAnnots <- lift $ runCResT $ getEvalAnnots provider prgmName'
       let tprgm' = maybe H.empty interleavePrgm (cresToMaybe maybeTPrgm)
-      let targetModes = maybe H.empty evalAllTargetModes (cresToMaybe maybeTPrgm)
+      let targetModes = maybe H.empty evalAllTargetModes (cresToMaybe maybeTPrgmFull)
       let annots' = maybe H.empty (H.fromList . map (first (getMetaID . getExprMeta))) (cresToMaybe maybeAnnots)
       return $ mapMetaRawPrgm (zip3MetaFun (interleaveMeta tprgm') (interleaveMeta targetModes) (interleaveMeta annots')) rawPrgm'
     maybeJson resp

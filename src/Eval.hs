@@ -81,9 +81,15 @@ evalTargetMode function prgmName prgmGraphData = evalPrgmTargetMode function prg
 
 -- | Gets the target modes for all objects in the file
 evalAllTargetModes :: EPrgm -> H.HashMap UUID EvalMode
-evalAllTargetModes prgm@(objMap, _, _) = H.fromList $ map targetMode $ mapMaybe (maybeExprPathM . oaObjExpr) objMap
+evalAllTargetModes prgm@(objMap, _, _) = H.fromList $ mapMaybe targetMode objMap
   where
-    targetMode (name, m) = (getMetaID m, evalPrgmTargetMode name prgm)
+    targetMode oa = case oaObjPath oa of
+      ContextStr -> case H.lookupDefault Nothing (partialKey contextValStr) $ exprAppliedArgsMap $ oaObjExpr oa of
+        Just (_, Just valE) -> case maybeExprPath valE of
+          Just valName -> Just (getMetaID $ getExprMeta $ oaObjExpr oa, evalPrgmTargetMode valName prgm)
+          _ -> Nothing
+        _ -> Nothing
+      _ -> Just (getMetaID $ getExprMeta $ oaObjExpr oa, evalPrgmTargetMode (oaObjPath oa) prgm)
 
 -- | evaluate annotations such as assertions that require compiler verification
 evalCompAnnot :: Val -> StateT Env CRes ()
@@ -112,7 +118,7 @@ evalObjArr input oa = do
             compAnnot' <- withEvalPush (printf "annot %s" (show compAnnot)) $ evalExpr compAnnot
             evalCompAnnot compAnnot'
   res <- withEvalPush (printf "ResEArrow %s" (show oa)) $ evalExpr resArrowTree
-  modify $ evalEndEArrow res oldArgs
+  modify $ evalEndEArrow input res oldArgs
   return res
 
 evalCallTree :: Val -> TCallTree -> StateT Env CRes Val

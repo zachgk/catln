@@ -1,4 +1,4 @@
-import React, {useState, useContext} from 'react';
+import React, {useState} from 'react';
 
 import { makeStyles } from '@material-ui/core/styles';
 import Menu from '@material-ui/core/Menu';
@@ -6,7 +6,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import {useHistory} from 'react-router-dom';
 
-import {RawExpr, RawObjArr} from './Common/Syntax';
+import {rawExprMeta, RawExpr, RawObjArr} from './Common/Syntax';
 import {useApi, Loading, KeyWord} from './Common/Common';
 
 const useStyles = makeStyles({
@@ -22,8 +22,6 @@ const useStyles = makeStyles({
   }
 });
 
-const ResMaps = React.createContext({});
-
 function DocsPage(props) {
   const {prgmName} = props;
 
@@ -37,14 +35,14 @@ function DocsPage(props) {
 }
 
 function Main(props) {
-  const {data} = props;
+  const {data, prgmName} = props;
   const [imports, statements] = data;
 
   return (
     <div>
       {imports.map((imp, ind) => <Import key={ind} imp={imp}/>)}
       <br/>
-      <Statements statements={statements} root={true} />
+      <Statements statements={statements} root={true} prgmName={prgmName} />
     </div>
   );
 }
@@ -58,35 +56,45 @@ function Import(props) {
 }
 
 function Statements(props) {
-  return props.statements.map((statement, index) => <StatementTree key={index} statementTree={statement} root={props.root} />);
+  return props.statements.map((statement, index) => <StatementTree key={index} statementTree={statement} prgmName={props.prgmName} root={props.root} />);
 }
 
 function StatementTree(props) {
-  const {statementTree} = props;
+  const {statementTree, prgmName} = props;
   const [statement, subStatements] = statementTree;
   const classes = useStyles();
 
   return (
     <div>
-      <Statement statement={statement}/>
+      <Statement statement={statement} prgmName={prgmName}/>
       <div className={classes.indented}>
-        {subStatements.map((subStatement, index) => <StatementTree key={index} statementTree={subStatement} />)}
+        {subStatements.map((subStatement, index) => <StatementTree key={index} statementTree={subStatement} prgmName={prgmName} />)}
       </div>
     </div>
   );
 }
 
 function Statement(props) {
-  const {statement} = props;
+  const {statement, prgmName} = props;
   const classes = useStyles();
 
   switch(statement.tag) {
   case "RawDeclStatement":
-    return (
-      <div className={classes.noPlay}>
-        <RawObjArr roa={statement.contents} />
-      </div>
-    );
+    let md = rawExprMeta(statement.contents.roaObj).getMetaDat;
+    if (md[1] && md[1].tag !== "NoEval") {
+      return (
+        <div>
+          <PlayButton prgmName={prgmName} fun={encodeURIComponent(md[1].contents)}/>
+          <RawObjArr roa={statement.contents} />
+        </div>
+      );
+    } else {
+      return (
+        <div className={classes.noPlay}>
+          <RawObjArr roa={statement.contents} />
+        </div>
+      );
+    }
   case "RawAnnot":
     return (
       <div className={classes.noPlay}>
@@ -99,11 +107,9 @@ function Statement(props) {
   }
 }
 
-// eslint-disable-next-line
 function PlayButton(props) {
-  const {fun} = props;
+  const {fun, prgmName} = props;
   let history = useHistory();
-  let {prgmName} = useContext(ResMaps);
   const [open, setOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const classes = useStyles();

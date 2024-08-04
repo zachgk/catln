@@ -62,7 +62,7 @@ instance ToJSON EPrim where
 
 
 type EvalTreebugOpen = AnyObjArr
-data EvalTreebugClosed = EvalTreebugClosed AnyObjArr Val [EvalTreebugClosed] String
+data EvalTreebugClosed = EvalTreebugClosed AnyObjArr Val Val [EvalTreebugClosed] String
   deriving (Eq, Generic, Hashable, ToJSON)
 
 type Args = H.HashMap String Val
