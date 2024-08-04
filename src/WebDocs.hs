@@ -46,8 +46,7 @@ import           Syntax.Parsers                (mkDesCanonicalImportStr,
                                                 mkRawCanonicalImportStr,
                                                 readFiles)
 import           Text.Printf
-import           TypeCheck                     (typecheckPrgm,
-                                                typecheckPrgmWithTrace)
+import           TypeCheck                     (typecheckPrgmWithTrace)
 import           TypeCheck.Common              (TPrgm, TraceConstrain, VPrgm,
                                                 filterTraceConstrain,
                                                 flipTraceConstrain)
@@ -71,8 +70,7 @@ filterByType name (objMap, ClassGraph classGraph, _) = (objMap', classGraph', []
     classGraph' = ClassGraph $ graphFromEdges $ filter (\(_, n, subTypes) -> relativeNameMatches name (fromPartialName n) || n `elem` subTypes) $ graphToNodes classGraph
 
 data WDProvider
-  = LiveWDProvider Bool String
-  | CacheWDProvider {
+  = WDProvider {
     cCore           :: Bool
   , cBaseFileName   :: String
   , cRaw            :: CRes PPrgmGraphData
@@ -82,8 +80,8 @@ data WDProvider
   , cTBPrgm          :: CRes (GraphData TBPrgm FileImport)
                     }
 
-mkCacheWDProvider :: Bool -> String -> IO WDProvider
-mkCacheWDProvider includeCore baseFileName = do
+mkWDProvider :: Bool -> String -> IO WDProvider
+mkWDProvider includeCore baseFileName = do
   p <- runCResT $ do
     baseFileName' <- lift $ mkRawCanonicalImportStr baseFileName
     rawPrgm <- readFiles includeCore [baseFileName']
@@ -91,7 +89,7 @@ mkCacheWDProvider includeCore baseFileName = do
     withTrace <- asCResT $ typecheckPrgmWithTrace prgm
     let tprgm = fmapGraph fst3 withTrace
     tbprgm <- asCResT $ evalBuildAll tprgm
-    return $ CacheWDProvider {
+    return $ WDProvider {
         cCore = includeCore
       , cBaseFileName = baseFileName
       , cRaw = return rawPrgm
@@ -108,29 +106,25 @@ mkCacheWDProvider includeCore baseFileName = do
       putStrLn $ prettyCNotes notes
       fail "Could not build webdocs"
 
+mkLiveWDProvider :: Bool -> String -> IO (IO WDProvider)
+mkLiveWDProvider includeCore baseFileName = return $ mkWDProvider includeCore baseFileName
+
+mkCacheWDProvider :: Bool -> String -> IO (IO WDProvider)
+mkCacheWDProvider includeCore baseFileName = do
+  p <- mkWDProvider includeCore baseFileName
+  return $ return p
+
 getRawPrgm :: WDProvider -> CResT IO PPrgmGraphData
-getRawPrgm (LiveWDProvider includeCore baseFileName) = do
-  baseFileName' <- lift $ mkRawCanonicalImportStr baseFileName
-  readFiles includeCore [baseFileName']
-getRawPrgm CacheWDProvider{cRaw} = asCResT cRaw
+getRawPrgm WDProvider{cRaw} = asCResT cRaw
 
 getPrgm :: WDProvider -> CResT IO (GraphData DesPrgm FileImport)
-getPrgm provider@LiveWDProvider{} = do
-  base <- getRawPrgm provider
-  desFiles base
-getPrgm CacheWDProvider{cPrgm} = asCResT cPrgm
+getPrgm WDProvider{cPrgm} = asCResT cPrgm
 
 getTPrgmWithTrace :: WDProvider -> CResT IO (GraphData (TPrgm, VPrgm, TraceConstrain) FileImport)
-getTPrgmWithTrace provider@LiveWDProvider{} = do
-  base <- getPrgm provider
-  asCResT $ typecheckPrgmWithTrace base
-getTPrgmWithTrace CacheWDProvider{cTPrgmWithTrace} = asCResT cTPrgmWithTrace
+getTPrgmWithTrace WDProvider{cTPrgmWithTrace} = asCResT cTPrgmWithTrace
 
 getTPrgm :: WDProvider -> CResT IO (GraphData TPrgm FileImport)
-getTPrgm provider@LiveWDProvider{} = do
-  base <- getPrgm provider
-  asCResT $ typecheckPrgm base
-getTPrgm CacheWDProvider{cTPrgm} = asCResT cTPrgm
+getTPrgm WDProvider{cTPrgm} = asCResT cTPrgm
 
 getTPrgmJoined :: WDProvider -> CResT IO TPrgm
 getTPrgmJoined provider = do
@@ -138,10 +132,7 @@ getTPrgmJoined provider = do
   return $ mergePrgms $ map fst3 $ graphToNodes base
 
 getTBPrgm :: WDProvider -> CResT IO (GraphData TBPrgm FileImport)
-getTBPrgm provider@LiveWDProvider{} = do
-  base <- getTPrgm provider
-  asCResT $ evalBuildAll base
-getTBPrgm CacheWDProvider{cTBPrgm} = asCResT cTBPrgm
+getTBPrgm WDProvider{cTBPrgm} = asCResT cTBPrgm
 
 getTBPrgmJoined :: WDProvider -> CResT IO TBPrgm
 getTBPrgmJoined provider = do
@@ -176,16 +167,18 @@ getWeb provider prgmName fun = do
     Just (StrVal s) -> return s
     _               -> return "";
 
-docApiBase :: WDProvider -> ScottyM ()
-docApiBase provider = do
+docApiBase :: IO WDProvider -> ScottyM ()
+docApiBase getProvider = do
 
   get "/api/raw" $ do
+    provider <- liftAndCatchIO getProvider
     resp <- liftAndCatchIO $ runCResT $ do
       rawPrgms <- getRawPrgm provider
       return $ graphToNodes rawPrgms
     maybeJson resp
 
   get "/api/toc" $ do
+    provider <- liftAndCatchIO getProvider
     resp <- liftAndCatchIO $ runCResT $ do
       rawPrgms <- getRawPrgm provider
       let rawPrgms' = map snd3 $ graphToNodes rawPrgms
@@ -193,6 +186,7 @@ docApiBase provider = do
     maybeJson resp
 
   get "/api/page" $ do
+    provider <- liftAndCatchIO getProvider
     prgmName <- param "prgmName"
     resp <- liftAndCatchIO $ runCResT $ do
       prgmNameRaw <- lift $ mkRawCanonicalImportStr prgmName
@@ -214,12 +208,14 @@ docApiBase provider = do
     maybeJson resp
 
   get "/api/desugar" $ do
+    provider <- liftAndCatchIO getProvider
     resp <- liftAndCatchIO $ runCResT $ do
       prgmGraph <- getPrgm provider
       return $ mergePrgms $ map fst3 $ graphToNodes prgmGraph
     maybeJson resp
 
   get "/api/constrain" $ do
+    provider <- liftAndCatchIO getProvider
     prgmName <- param "prgmName"
     resp <- liftAndCatchIO $ runCResT $ do
       prgmName' <- lift $ mkDesCanonicalImportStr prgmName
@@ -230,6 +226,7 @@ docApiBase provider = do
     maybeJson resp
 
   get "/api/constrain/pnt/:pnt" $ do
+    provider <- liftAndCatchIO getProvider
     prgmName <- param "prgmName"
     pnt <- param "pnt"
     resp <- liftAndCatchIO $ runCResT $ do
@@ -241,14 +238,17 @@ docApiBase provider = do
     maybeJson resp
 
   get "/api/typecheck" $ do
+    provider <- liftAndCatchIO getProvider
     resp <- liftAndCatchIO $ runCResT $ getTPrgmJoined provider
     maybeJson resp
 
   get "/api/treebuild" $ do
+    provider <- liftAndCatchIO getProvider
     resp <- liftAndCatchIO $ runCResT $ getTBPrgmJoined provider
     maybeJson resp
 
   get "/api/object/:objName" $ do
+    provider <- liftAndCatchIO getProvider
     objName <- param "objName"
     resp <- liftAndCatchIO $ runCResT $ do
       tprgm <- getTPrgmJoined provider
@@ -256,6 +256,7 @@ docApiBase provider = do
     maybeJson resp
 
   get "/api/class/:className" $ do
+    provider <- liftAndCatchIO getProvider
     className <- param "className"
     resp <- liftAndCatchIO $ runCResT $ do
       tprgm <- getTPrgmJoined provider
@@ -263,6 +264,7 @@ docApiBase provider = do
     maybeJson resp
 
   get "/api/treebug" $ do
+    provider <- liftAndCatchIO getProvider
     prgmName <- param "prgmName"
     fun <- param "function" `rescue` (\_ -> return "main")
     resp <- liftAndCatchIO $ runCResT $ do
@@ -271,6 +273,7 @@ docApiBase provider = do
     maybeJson resp
 
   get "/api/eval" $ do
+    provider <- liftAndCatchIO getProvider
     prgmName <- param "prgmName"
     fun <- param "function" `rescue` (\_ -> return "main")
     resp <- liftAndCatchIO $ runCResT $ do
@@ -279,6 +282,7 @@ docApiBase provider = do
     maybeJson resp
 
   get "/api/evalBuild" $ do
+    provider <- liftAndCatchIO getProvider
     prgmName <- param "prgmName"
     fun <- param "function" `rescue` (\_ -> return "main")
     resp <- liftAndCatchIO $ runCResT $ do
@@ -287,6 +291,7 @@ docApiBase provider = do
     maybeJson resp
 
   get "/api/web" $ do
+    provider <- liftAndCatchIO getProvider
     prgmName <- param "prgmName"
     fun <- param "function" `rescue` (\_ -> return "main")
     maybeBuild <- liftAndCatchIO $ runCResT $ do
@@ -306,7 +311,7 @@ docApi cached includeCore baseFileName = do
 
   provider <- if cached
     then mkCacheWDProvider includeCore baseFileName
-    else return $ LiveWDProvider includeCore baseFileName
+    else mkLiveWDProvider includeCore baseFileName
 
   scotty 31204 $ docApiBase provider
 
@@ -319,7 +324,7 @@ docServe cached includeCore baseFileName = do
 
   provider <- if cached
     then mkCacheWDProvider includeCore baseFileName
-    else return $ LiveWDProvider includeCore baseFileName
+    else mkLiveWDProvider includeCore baseFileName
 
   scotty 8080 $ do
 
