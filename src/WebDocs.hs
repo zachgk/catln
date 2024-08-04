@@ -84,13 +84,13 @@ data WDProvider
 
 mkCacheWDProvider :: Bool -> String -> IO WDProvider
 mkCacheWDProvider includeCore baseFileName = do
-  let live = LiveWDProvider includeCore baseFileName
   p <- runCResT $ do
-    rawPrgm <- getRawPrgm live
-    prgm <- getPrgm live
-    withTrace <- getTPrgmWithTrace live
-    tprgm <- getTPrgm live
-    tbprgm <- getTBPrgm live
+    baseFileName' <- lift $ mkRawCanonicalImportStr baseFileName
+    rawPrgm <- readFiles includeCore [baseFileName']
+    prgm <- desFiles rawPrgm
+    withTrace <- asCResT $ typecheckPrgmWithTrace prgm
+    let tprgm = fmapGraph fst3 withTrace
+    tbprgm <- asCResT $ evalBuildAll tprgm
     return $ CacheWDProvider {
         cCore = includeCore
       , cBaseFileName = baseFileName
