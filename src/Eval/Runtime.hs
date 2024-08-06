@@ -90,7 +90,7 @@ llvm = ("llvm", Right (MacroFunction macroBuild))
   where
     macroBuild input MacroData{mdTbEnv} =
       case input of
-        (TTupleApply _ (_, TValue _ "/Catln/llvm") (EAppArg ObjArr{oaObj=Just (TValue _ "/c"), oaArr=Just (Just (TValue _ functionToCodegen), _)})) -> buildName functionToCodegen
+        (TupleApply _ (_, Value _ "/Catln/llvm") (EAppArg ObjArr{oaObj=Just (Value _ "/c"), oaArr=Just (Just (Value _ functionToCodegen), _)})) -> buildName functionToCodegen
         _ -> error $ printf "Unknown expr to llvm macro: %s" (show input)
       where
         buildName functionToCodegen = do
@@ -98,7 +98,7 @@ llvm = ("llvm", Right (MacroFunction macroBuild))
           let codegenSrcTypeInner = singletonType $ PartialType functionToCodegen H.empty H.empty PredsNone PtArgExact
           let codegenSrcType = PartialType "/Catln/Context" H.empty (H.fromList [(partialKey "/value", codegenSrcTypeInner), (partialKey "/oaObjExprio", ioType)]) PredsNone PtArgExact
           let val = LLVMVal $ codegenPrgm (eVal functionToCodegen) codegenSrcType ioType tbPrgm
-          return $ TCExpr (emptyMetaT $ singletonType $ getValType val) val
+          return $ Left val
         codegenPrgm _ _ _ _ = return ()
 
 primEnv :: ResBuildPrims

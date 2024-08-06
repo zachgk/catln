@@ -66,12 +66,6 @@ rawExprWithType t (RawHoleExpr m h) = RawHoleExpr (mWithType t m) h
 rawExprWithType t (RawList m l) = RawList (mWithType t m) l
 rawExprWithType _ e = error $ printf "rawExprWithType for unexpected type: %s" (show e)
 
-mapExprPath :: (Show m) => ((Meta m, TypeName) -> Expr m) -> Expr m -> Expr m
-mapExprPath f (Value m n) = f (m, n)
-mapExprPath f (EWhere m b c) = EWhere m (mapExprPath f b) c
-mapExprPath f (TupleApply m (bm, be) a) = TupleApply m (bm, mapExprPath f be) a
-mapExprPath _ e = error $ printf "Unexpected expr to mapExprPath: %s" (show e)
-
 mapOAObjPath :: (Show m, MetaDat m) => ((Meta m, TypeName) -> Expr m) -> ObjArr Expr m -> ObjArr Expr m
 mapOAObjPath f = mapOAObjExpr (mapExprPath f)
 

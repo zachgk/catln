@@ -76,6 +76,12 @@ exprWithMetaType t e = exprWithMeta (mWithType t (getExprMeta e)) e
 classGraphFromObjs :: (ExprClass e, MetaDat m, Show m, Show (e m)) => ObjectMap e m -> ClassGraph
 classGraphFromObjs objMap = ClassGraph $ graphFromEdges $ map (\oa -> (CGType, PTypeName (oaObjPath oa), [])) objMap
 
+mapExprPath :: (Show m) => ((Meta m, TypeName) -> Expr m) -> Expr m -> Expr m
+mapExprPath f (Value m n) = f (m, n)
+mapExprPath f (EWhere m b c) = EWhere m (mapExprPath f b) c
+mapExprPath f (TupleApply m (bm, be) a) = TupleApply m (bm, mapExprPath f be) a
+mapExprPath _ e = error $ printf "Unexpected expr to mapExprPath: %s" (show e)
+
 mapOAObjExpr :: (MetaDat m, ExprClass e, Show (e m)) => (e m -> e m) -> ObjArr e m -> ObjArr e m
 mapOAObjExpr f oa@ObjArr{oaObj=Just e}  = oa{oaObj = Just (f e)}
 mapOAObjExpr _ oa@ObjArr{oaObj=Nothing} = oa

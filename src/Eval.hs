@@ -262,7 +262,7 @@ evalRun function prgmName prgmGraphData = do
         EvalRunWithContext function' ->
           -- Case for eval Context(value=main, io=IO)
 
-          return $ eApplyM (eApply (eVal ContextStr) contextValStr (eVal function')) "/io" ioM
+          return $ eApplyM (eVal ContextStr `eApply` (contextValStr, eVal function')) "/io" ioM
         EvalRun function' ->
           -- Case for eval main
           return $ eVal function'
@@ -283,10 +283,10 @@ evalBuild function prgmName prgmGraphData = do
   input <-  case evalTargetMode function prgmName prgmGraphData of
         EvalRunWithContext function' ->
           -- Case for eval llvm(c=Context(value=main, io=IO))
-          return $ eApply (eVal "/Catln/llvm") "/c" (eVal function')
+          return $ eVal "/Catln/llvm" `eApply` ("/c", eVal function')
         EvalBuildWithContext function' ->
           -- Case for buildable Context(value=main, io=IO)
-          return $ eApplyM (eApply (eVal ContextStr) contextValStr (eVal function')) "/io" ioM
+          return $ eApplyM (eVal ContextStr `eApply` (contextValStr, eVal function')) "/io" ioM
         EvalBuild function' ->
           -- Case for buildable main
           return $ eVal function'

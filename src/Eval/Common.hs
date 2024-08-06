@@ -183,7 +183,7 @@ data MacroData = MacroData {
                                mdTbEnv  :: TBEnv
                              , mdObjSrc :: [ObjSrc]
                              }
-newtype MacroFunction = MacroFunction (TExpr EvalMetaDat -> MacroData -> CRes (TExpr EvalMetaDat))
+newtype MacroFunction = MacroFunction (Expr EvalMetaDat -> MacroData -> CRes (Either Val (Expr EvalMetaDat)))
 type ResBuildEnvFunction = TCallTree
 type ResBuildPrims = H.HashMap TypeName (Either EPrim MacroFunction)
 type ResBuildEnvItem = (PartialType, Maybe (ObjArr Expr EvalMetaDat), ResBuildEnvFunction)

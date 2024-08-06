@@ -27,8 +27,8 @@ ioM = Meta ioType Nothing nil emptyMetaDat
 ioArg :: EExpr
 ioArg = Value ioM "io"
 
-eApply :: EExpr -> String -> EExpr -> EExpr
-eApply baseExpr argName argExpr = TupleApply m (getExprMeta baseExpr, baseExpr) (EAppArg $ mkIOObjArr (mWithType argExprType $ emptyMetaE argExpr) (partialKey argName) argExpr)
+eApply :: EExpr -> (String, EExpr) -> EExpr
+eApply baseExpr (argName, argExpr) = TupleApply m (getExprMeta baseExpr, baseExpr) (EAppArg $ mkIOObjArr (mWithType argExprType $ emptyMetaE argExpr) (partialKey argName) argExpr)
   where
     argExprType = getExprType argExpr
     m = Meta (singletonType $ baseType{ptArgs=H.insert (partialKey argName) argExprType baseArgs}) Nothing nil emptyMetaDat

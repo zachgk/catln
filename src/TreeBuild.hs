@@ -163,9 +163,9 @@ sortArrows _ = return
 
 -- | This will find a single arrow (from the objMap, primitives, macros, or args) from the src type
 findResArrows :: TBEnv -> [ObjSrc] -> PartialType -> CRes [ResBuildEnvItem]
-findResArrows TBEnv{tbName, tbResEnv, tbTypeEnv} os srcType@PartialType{ptName=srcName} = case argArrows ++ globalArrows of
+findResArrows TBEnv{tbResEnv, tbTypeEnv} os srcType@PartialType{ptName=srcName} = case argArrows ++ globalArrows of
   arrows@(_:_) -> return arrows
-  [] -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Failed to find any arrows from %s" tbName (show srcType)]
+  [] -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Failed to find any arrows from %s" (show srcType)]
   where
     globalArrows = case suffixLookupInDict srcName tbResEnv of
       Just resArrowsWithName -> filter (\(arrowType, _, _) -> not $ isBottomType $ intersectTypes tbTypeEnv (singletonType srcType) (singletonType arrowType)) resArrowsWithName
@@ -242,25 +242,22 @@ toTEObjArr env os oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   oaAnnots' <- mapM (toTExpr env os') oaAnnots
   return oa{oaObj=oaObj', oaAnnots=oaAnnots', oaArr=oaArr'}
 
-texprDest :: TBEnv -> [ObjSrc] -> TExpr TBMetaDat -> EvalMeta -> CRes (TExpr TBMetaDat)
--- texprDest _ os e m | trace (printf "texprDest %s to %s \n\twith %s" (show e) (show m) (show os)) False = undefined
-texprDest env os e m = do
-  ct <- buildCallTree env os S.empty (getMetaType $ getExprMeta e) (getMetaType m)
-  case ct of
-    TCTId                                   -> return e
-    TCMacro _ (MacroFunction f)             -> fromMacro f
-    (TCSeq (TCMacro _ (MacroFunction f)) _) -> fromMacro f
-    _                                       -> return $ TCalls m e ct
-  where
-    fromMacro f = do
-      e' <- f e (MacroData env os)
-      texprDest env os e' m
-
 toTExprDest :: TBEnv -> [ObjSrc] -> Expr TBMetaDat -> EvalMeta -> CRes (TExpr TBMetaDat)
 -- toTExprDest _ os e m | trace (printf "toExprDest %s to %s \n\twith %s" (show e) (show m) (show os)) False = undefined
 toTExprDest env os e m = do
   e' <- toTExpr env os e
-  texprDest env os e' m
+  ct <- buildCallTree env os S.empty (getMetaType $ getExprMeta e') (getMetaType m)
+  case ct of
+    TCTId                                   -> return e'
+    TCMacro _ (MacroFunction f)             -> fromMacro f
+    (TCSeq (TCMacro _ (MacroFunction f)) _) -> fromMacro f
+    _                                       -> return $ TCalls m e' ct
+  where
+    fromMacro f = do
+      macroResult <- f e (MacroData env os)
+      case macroResult of
+        Left val -> return $ TCExpr (emptyMetaT $ singletonType $ getValType val) val
+        Right e' -> toTExprDest env os e' m
 
 buildArrow :: TBEnv -> PartialType -> TBObjArr -> CRes (Maybe (TBObjArr, (TExpr TBMetaDat, [TExpr TBMetaDat])))
 -- buildArrow _ src oa | trace (printf "buildArrow %s: %s" (show src) (show oa)) False = undefined
