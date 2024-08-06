@@ -36,6 +36,7 @@ import           Semantics.TypeGraph (ReachesTree)
 import           Semantics.Types
 import           Text.Megaparsec
 import           Text.Printf
+import           Utils               (unionsWith)
 
 newtype Import = Import String
   deriving (Eq, Ord, Show)
@@ -265,10 +266,11 @@ instance ExprClass Expr where
       aux (EWhere _ base cond) = case maybeExprPath cond of
         Just n | n == operatorHasArrow -> case (H.lookup (partialKey operatorArgL) condArgs, H.lookup (partialKey operatorArgR) condArgs) of
                   (Just (Just (_, Just l)), Just (Just (_, Just r))) -> case (getExprType $ exprPropagateTypes l, getExprType r) of
-                    (lt@UnionType{}, TypeVar rt _) -> case typeGraphQuery typeEnv (fmap snd base') $ fromJust $ maybeGetSingleton lt of
+                    (lt@UnionType{}, rt) -> case typeGraphQuery typeEnv (fmap snd base') $ fromJust $ maybeGetSingleton lt of
                       [] -> H.empty
-                      [qr] -> H.singleton rt ([], qr)
-                      qr -> error $ printf "Not yet implemented searching arrow %s to %s. Found %s" (show lt) (show rt) (show qr)
+                      qr -> let fromEachArrow = fmap (\qrt -> fst $ intersectTypesWithVarEnv typeEnv (fmap snd base') qrt rt) qr
+                                fromAllArrows = ([],) <$> unionsWith (unionTypes typeEnv) fromEachArrow
+                             in H.unionWith merge base' fromAllArrows
                     (lt, rt) -> error $ printf "Found invalid types of l=%s and r=%s in ?->" (show lt) (show rt)
                   _ -> error $ printf "Could not find /l and /r in %s in ?->" (show condArgs)
         _ -> base'
