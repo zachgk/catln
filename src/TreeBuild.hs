@@ -86,13 +86,19 @@ arrowFollowup env@TBEnv{tbTypeEnv} objSrc visitedArrows srcType destType (itemPa
 -- It returns the combination of arrows necessary to accept the full src partialType
 -- TODO: This would be drastically improved with type difference
 completeTreeSet :: TBEnv -> PartialType -> [ResBuildEnvItem] -> CRes [ResBuildEnvItem]
-completeTreeSet TBEnv{tbTypeEnv} fullPartial initialOptions = aux [] BottomType initialOptions
+completeTreeSet TBEnv{tbTypeEnv} fullPartial initialOptions = aux [] BottomType False initialOptions
   where
     fullType = singletonType fullPartial
-    aux :: [ResBuildEnvItem] -> Type -> [ResBuildEnvItem] -> CRes [ResBuildEnvItem]
-    aux accArrows accType _ | isSubtypeOf tbTypeEnv fullType accType = return (reverse accArrows) -- Completed the tree set
-    aux _ accType [] = CErr [MkCNote $ GenMapCErr Nothing (printf "Failed to handle a condition. Could not find enough arrows for the src. Only found %s. Tried guards:" (show accType)) (zip (map show initialOptions) (map (return . show) initialOptions))]
-    aux accArrows accType (opt@(optType, optOa, _):opts) = do
+    aux :: [ResBuildEnvItem] -> Type -> Bool -> [ResBuildEnvItem] -> CRes [ResBuildEnvItem]
+    aux accArrows accType _ _ | isSubtypeOf tbTypeEnv fullType accType = return (reverse accArrows) -- Completed the tree set
+
+    -- This line below avoids testing the completeness of the treeset (and the accType) when the accHasConds is True
+    -- It is a workaround due to lack of support for refinement types (with predicates in them)
+    -- TODO Remove need for this line (and the accHasConds argument) by adding refinement types
+    aux accArrows _ True [] = return (reverse accArrows)
+
+    aux _ accType False [] = CErr [MkCNote $ GenMapCErr Nothing (printf "Failed to handle a condition. Could not find enough arrows for the src. Only found %s. Tried guards:" (show accType)) (zip (map show initialOptions) (map (return . show) initialOptions))]
+    aux accArrows accType accHasConds (opt@(optType, optOa, _):opts) = do
       let accType' = intersectTypes tbTypeEnv fullType $ compactType tbTypeEnv H.empty $ unionTypes tbTypeEnv accType (singletonType optType)
 
       -- next opt increases accumulation
@@ -101,14 +107,14 @@ completeTreeSet TBEnv{tbTypeEnv} fullPartial initialOptions = aux [] BottomType 
                -- For options that are guarded by conditions, don't increase the accumulation because the condition may not pass
                -- This will fix most if/else pieces, but can struggle with multiple conditions that combine to cover everything such as <0 and >=0.
                -- TODO Remove need for this additional check by using refinement types
-               (Just oa) | not $ null $ exprWhereConds $ oaObjExpr oa -> aux (opt:accArrows) accType opts
+               (Just oa) | not $ null $ exprWhereConds $ oaObjExpr oa -> aux (opt:accArrows) accType' True opts
 
                -- Increase the a
                -- Add to accumulation and add the arrow
                -- TODO: Should use ((optType - accType) ∩ fullType) for insertion, otherwise order may not be correct in matching and match not precise
-               _ -> aux (opt:accArrows) accType' opts
+               _ -> aux (opt:accArrows) accType' accHasConds opts
         -- Don't add to accumulation
-        else aux accArrows accType opts
+        else aux accArrows accType accHasConds opts
 
 -- | This function will check the available arrows, provided in sorted order.
 -- | It will return one that is sufficient, if available.
