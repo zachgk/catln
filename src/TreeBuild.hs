@@ -247,11 +247,14 @@ texprDest :: TBEnv -> [ObjSrc] -> TExpr TBMetaDat -> EvalMeta -> CRes (TExpr TBM
 texprDest env os e m = do
   ct <- buildCallTree env os S.empty (getMetaType $ getExprMeta e) (getMetaType m)
   case ct of
-    TCTId -> return e
-    TCMacro _ (MacroFunction f) -> do
+    TCTId                                   -> return e
+    TCMacro _ (MacroFunction f)             -> fromMacro f
+    (TCSeq (TCMacro _ (MacroFunction f)) _) -> fromMacro f
+    _                                       -> return $ TCalls m e ct
+  where
+    fromMacro f = do
       e' <- f e (MacroData env os)
       texprDest env os e' m
-    _ -> return $ TCalls m e ct
 
 toTExprDest :: TBEnv -> [ObjSrc] -> Expr TBMetaDat -> EvalMeta -> CRes (TExpr TBMetaDat)
 -- toTExprDest _ os e m | trace (printf "toExprDest %s to %s \n\twith %s" (show e) (show m) (show os)) False = undefined
