@@ -35,7 +35,7 @@ import           Eval.ExprBuilder
 import           Eval.Runtime
 import           Semantics
 import           Semantics.TypeGraph (ReachesEnv (ReachesEnv),
-                                      reachesHasCutSubtypeOf, reachesPartial)
+                                      reachesHasCutSubtypeOf, reachesPartials)
 import           Text.Printf
 import           TreeBuild
 import           Utils
@@ -71,8 +71,8 @@ evalPrgmTargetMode function prgm = case (funCtxReaches, funReaches) of
     reachEnv = ReachesEnv typeEnv H.empty S.empty
     funCtxTp = (partialVal ContextStr){ptArgs=H.fromList [(partialKey contextValStr, typeVal function')], ptArgMode=PtArgAny}
     funTp = partialVal function'
-    funCtxReaches = reachesPartial reachEnv funCtxTp
-    funReaches = reachesPartial reachEnv funTp
+    funCtxReaches = reachesPartials reachEnv [funCtxTp]
+    funReaches = reachesPartials reachEnv [funTp]
 
 evalTargetMode :: String -> FileImport -> EPrgmGraphData -> EvalMode
 evalTargetMode function prgmName prgmGraphData = evalPrgmTargetMode function prgm

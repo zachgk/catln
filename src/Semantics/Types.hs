@@ -142,12 +142,15 @@ newtype ClassGraph = ClassGraph (GraphData CGNode PartialName)
 
 class TypeGraph tg where
   typeGraphMerge :: tg -> tg -> tg
-  typeGraphQuery :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> [Type]
+  typeGraphQueryWithReason :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> [(String, Type)]
 
 data EmptyTypeGraph = EmptyTypeGraph
 instance TypeGraph EmptyTypeGraph where
   typeGraphMerge _ _ = EmptyTypeGraph
-  typeGraphQuery _ _ _ = []
+  typeGraphQueryWithReason _ _ _ = []
+
+typeGraphQuery :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> [Type]
+typeGraphQuery typeEnv vaenv src = map snd $ typeGraphQueryWithReason typeEnv vaenv src
 
 data TypeEnv tg = TypeEnv {
   teClassGraph :: ClassGraph,

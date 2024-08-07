@@ -16,6 +16,7 @@ import           Data.Graph
 import           Data.Hashable
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
+import           Data.String.Builder (Builder, literal)
 
 type GraphNodes node key = (node, key, [key])
 type GraphData node key = (Graph, Vertex -> (node, key, [key]), key -> Maybe Vertex)
@@ -75,3 +76,6 @@ powerset (x:xs) = map (x:) (powerset xs) ++ powerset xs
 
 uniq :: (Eq x, Hashable x) => [x] -> [x]
 uniq = S.toList . S.fromList
+
+withIndent :: Int -> String -> Builder
+withIndent indent s = literal (replicate (4*indent) ' ' ++ s ++ "\n")

@@ -30,6 +30,7 @@ import           Data.String.Builder   (Builder, build, literal)
 import           Semantics.Prgm
 import           Text.Megaparsec       (pstateSourcePos)
 import           Text.Megaparsec.Error
+import           Utils                 (withIndent)
 
 data CNoteType
   = CNoteError
@@ -75,9 +76,6 @@ data CNoteI
   | AssertCErr String
   | EvalCErr [String] String
   | WrapCN [CNote] String
-
-withIndent :: Int -> String -> Builder
-withIndent indent s = literal (replicate (4*indent) ' ' ++ s ++ "\n")
 
 showRecursiveCNoteI :: Int -> CNoteI -> Builder
 showRecursiveCNoteI indent (GenMapCErr _ s subs) = do

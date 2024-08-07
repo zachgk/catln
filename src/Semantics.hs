@@ -27,14 +27,14 @@ newtype ObjArrTypeGraph e m = ObjArrTypeGraph (H.HashMap TypeName [ObjArr e m])
   deriving (Show)
 instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGraph e m) where
   typeGraphMerge (ObjArrTypeGraph a) (ObjArrTypeGraph b) = ObjArrTypeGraph (H.unionWith (++) a b)
-  typeGraphQuery typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph tg} vaenv partial@PartialType{ptName} = mapMaybe tryTArrow $ H.lookupDefault [] ptName tg
+  typeGraphQueryWithReason typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph tg} vaenv partial@PartialType{ptName} = mapMaybe tryTArrow $ H.lookupDefault [] ptName tg
     where
       tryTArrow oa@ObjArr{oaArr=Just{}} = do
         -- It is possible to send part of a partial through the arrow, so must compute the valid part
         -- If none of it is valid, then there is Nothing
         let potentialSrc@(UnionType potSrcLeafs) = intersectTypesEnv typeEnv vaenv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa)
         if not (isBottomType potentialSrc)
-          then Just $ unionAllTypes typeEnv [arrowDestType typeEnv potentialSrcPartial oa | potentialSrcPartial <- splitUnionType potSrcLeafs]
+          then Just (printf "using %s" (show oa), unionAllTypes typeEnv [arrowDestType typeEnv potentialSrcPartial oa | potentialSrcPartial <- splitUnionType potSrcLeafs])
           else Nothing
       tryTArrow ObjArr{oaArr=Nothing} = Nothing
 
