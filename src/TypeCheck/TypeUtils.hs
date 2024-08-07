@@ -184,14 +184,11 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} src@TypeVar{} des
     _ -> do
       (_, cdest, destRT) <- arrowConstrainUbs env con src' dest
       return (src, cdest, destRT)
-arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} (UnionType srcPartials) dest = do
-  let srcPartialList = splitUnionType srcPartials
+arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} src@(UnionType srcPartials) dest = do
   reachesEnv <- mkReachesEnv env con
-  let srcPartialList' = map (rootReachesPartial reachesEnv) srcPartialList
-  let partialMap = H.fromList srcPartialList'
-  let (srcPartialList'', destByPartial) = unzip $ H.toList partialMap
-  let srcPartials' = joinUnionType srcPartialList''
-  let compactVaenv = fmap (stypeAct . snd) conVaenv
-  let destByGraph = unionAllTypesWithEnv feTypeEnv compactVaenv $ fmap (unionReachesTree feTypeEnv) destByPartial
+  let reaches' = reachesPartials reachesEnv $ splitUnionType srcPartials
+  let vaenv' = fmap (stypeAct . snd) conVaenv
+  let destByGraph = unionReachesTree feTypeEnv vaenv' reaches'
   let dest' = intersectTypes feTypeEnv dest destByGraph
-  return (compactType feTypeEnv compactVaenv $ UnionType srcPartials', compactType feTypeEnv compactVaenv dest', Just $ ReachesPartialTree $ H.fromList srcPartialList')
+  -- TODO Maybe filter srcPartials based on those reaching dest
+  return (src, compactType feTypeEnv vaenv' dest', Just reaches')

@@ -24,7 +24,6 @@ import           Data.Bifunctor      (Bifunctor (second))
 import           Data.Hashable       (Hashable)
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
-import           Data.List
 import           Data.String.Builder (build)
 import           GHC.Generics        (Generic)
 import           Semantics.Types
@@ -56,20 +55,15 @@ instance Show ReachesTree where
           aux (indent + 1) subTree
       aux _ ReachesLeaf = return ()
 
-unionReachesTree :: TypeEnv tg -> ReachesTree -> Type
-unionReachesTree typeEnv (ReachesPartialTree children) = do
-  let (keys, vals) = unzip $ H.toList children
-  let keys' = UnionType $ joinUnionType keys
-  let vals' = map (unionReachesTree typeEnv) vals
-  let both = keys':vals'
-  case partition isTypeVar both of
-    ([onlyVar], []) -> onlyVar
-    ([], sums)       -> unionAllTypes typeEnv sums
-    ([TypeVar (TVArg argName) tl], [UnionType leafs]) | all (\PartialType{ptName=n} -> makeAbsoluteName n == makeAbsoluteName (pkName argName)) (splitUnionType leafs) -> TypeVar (TVArg $ makeAbsolutePk argName) tl
-    ([TypeVar (TVVar varName) tl], [UnionType _]) -> TypeVar (TVVar $ makeAbsolutePk varName) tl
-    (vars, partials)       -> error $ printf "Not yet implemented unionReachesTree with vars %s and partials %s" (show vars) (show partials)
-unionReachesTree typeEnv (ReachesTypeTree children) = unionAllTypes typeEnv (H.keys children ++ map (unionReachesTree typeEnv . snd) (H.elems children))
-unionReachesTree _ ReachesLeaf = BottomType
+unionReachesTree :: TypeEnv tg -> TypeVarArgEnv -> ReachesTree -> Type
+unionReachesTree typeEnv vaenv (ReachesPartialTree children) = unionAllTypesWithEnv typeEnv vaenv $ map unionChild $ H.toList children
+  where
+    unionChild (key, val) = case unionReachesTree typeEnv vaenv val of
+      (TypeVar (TVArg argName) tl) | makeAbsoluteName (ptName key) == makeAbsoluteName (pkName argName) -> TypeVar (TVArg $ makeAbsolutePk argName) tl
+      (TypeVar (TVVar varName) tl) -> TypeVar (TVVar $ makeAbsolutePk varName) tl
+      val' -> unionTypesWithEnv typeEnv vaenv (singletonType key) val'
+unionReachesTree typeEnv vaenv (ReachesTypeTree children) = unionAllTypesWithEnv typeEnv vaenv (H.keys children ++ map (unionReachesTree typeEnv vaenv . snd) (H.elems children))
+unionReachesTree _ _ ReachesLeaf = BottomType
 
 joinReachesTrees :: ReachesTree -> ReachesTree -> ReachesTree
 joinReachesTrees (ReachesPartialTree a) (ReachesPartialTree b) = ReachesPartialTree $ H.unionWith joinReachesTrees a b
@@ -107,8 +101,3 @@ reaches :: (TypeGraph tg) => ReachesEnv tg -> Type -> ReachesTree
 reaches _     TopType{}     = ReachesLeaf
 reaches _     (TypeVar v _) = error $ printf "reaches with typevar %s" (show v)
 reaches env (UnionType src) = reachesPartials env $ splitUnionType src
-
-rootReachesPartial :: (TypeGraph tg) => ReachesEnv tg -> PartialType -> (PartialType, ReachesTree)
-rootReachesPartial env src = (src, reached)
-  where
-    reached = reachesPartials env [src]
