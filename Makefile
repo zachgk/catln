@@ -1,20 +1,30 @@
-build:
+HS_SOURCES = $(wildcard *.hs)
+CT_SOURCES = $(wildcard *.ct)
+CTX_SOURCES = $(wildcard *.ctx)
+
+.PHONY: build
+build: $(HS_SOURCES) $(CT_SOURCES)
 	stack build --pedantic
 
-test:
+.PHONY: test
+test: $(HS_SOURCES) $(CT_SOURCES)
 	stack test --pedantic
 
-format:
+.PHONY: install
+install: $(HS_SOURCES) $(CT_SOURCES)
+	stack install
+
+.PHONY: format
+format: $(HS_SOURCES)
 	find app -name "*.hs" | xargs stylish-haskell -i
 	find src -name "*.hs" | xargs stylish-haskell -i
 	find test -name "*.hs" | xargs stylish-haskell -i
 
-ctformat:
-	stack install
+.PHONY: ctformat
+ctformat: $(HS_SOURCES) $(CT_SOURCES) $(CTX_SOURCES) install
 	find . -name "*.ct" -exec catln fmt {} \;
 	find . -name "*.ctx" -exec catln fmt {} \;
 
-ctxformat:
-	stack install
-	catln fmt test/code
-	catln fmt stack
+.PHONY: errRepl
+errRepl:
+	stack ghci --profile catln --ghci-options "-fexternal-interpreter -prof" --test

@@ -9,7 +9,7 @@ module(Data)
     # A [String] is a list of characters.
   every(String, isa= [/Data/Algebra/Eq])
   (_ :: String == _ :: String) -> Boolean
-     #runtime("strEq")
+    #runtime("strEq")
   :String.toString -> String
   :String.toString= this
   :Integer.toString -> String
@@ -21,7 +21,7 @@ module(Data)
     # The [ContextIn] is used to represent an input state in a function.
   data(/ContextOut[$V](value -> $V, .._))
     # The [ContextOut] is used to represent an output state in a function.
-  /Context[$V, $T](value -> $V, .._) | (/ContextIn[$V -> $V](value= (_ :: $V), .._) ?-> (_ :: $T)) -> $T 
+  /Context[$V, $T](value -> $V, .._) | (/ContextIn[$V -> $V](value= (_ :: $V), .._) ?-> (_ :: $T)) -> $T
     #runtime("context")
   # ## Collections
     Collections are contains that hold elements of a type inside them.

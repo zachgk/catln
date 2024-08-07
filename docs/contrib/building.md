@@ -17,7 +17,7 @@ stack repl
 ```
 
 A repl that also keeps a stack trace for finding the source of errors can also be run.
-Use `stack ghci --profile catln --ghci-options "-fexternal-interpreter -prof" --test`.
+Use `make errRepl` or `stack ghci --profile catln --ghci-options "-fexternal-interpreter -prof" --test`.
 This can take a few hours to build the first time it is run.
 
 ### Tests
@@ -77,6 +77,12 @@ As part of the development, we use [stylish-haskell](https://github.com/haskell/
 
 ```
 make format
+```
+
+We also format the catln code using the catln formatter. This can be done with:
+
+```
+make ctformat
 ```
 
 ### Profiling
