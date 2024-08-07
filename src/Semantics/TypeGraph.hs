@@ -34,7 +34,7 @@ import           Utils               (withIndent)
 data ReachesTree
   = ReachesPartialTree !(H.HashMap PartialType ReachesTree)
   | ReachesTypeTree !(H.HashMap Type (String, ReachesTree))
-  | ReachesLeaf ![Type]
+  | ReachesLeaf
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
 data ReachesEnv tg = ReachesEnv {
@@ -54,11 +54,7 @@ instance Show ReachesTree where
         forM_ (H.toList children) $ \(key, (reason, subTree)) -> do
           withIndent indent (printf "%s by %s" (show key) reason)
           aux (indent + 1) subTree
-      aux _ (ReachesLeaf []) = return ()
-      aux indent (ReachesLeaf leafs) = do
-        withIndent indent "Leaf:"
-        forM_  leafs $ \leaf ->
-          withIndent (indent + 1) (show leaf)
+      aux _ ReachesLeaf = return ()
 
 unionReachesTree :: TypeEnv tg -> ReachesTree -> Type
 unionReachesTree typeEnv (ReachesPartialTree children) = do
@@ -73,11 +69,11 @@ unionReachesTree typeEnv (ReachesPartialTree children) = do
     ([TypeVar (TVVar varName) tl], [UnionType _]) -> TypeVar (TVVar $ makeAbsolutePk varName) tl
     (vars, partials)       -> error $ printf "Not yet implemented unionReachesTree with vars %s and partials %s" (show vars) (show partials)
 unionReachesTree typeEnv (ReachesTypeTree children) = unionAllTypes typeEnv (H.keys children ++ map (unionReachesTree typeEnv . snd) (H.elems children))
-unionReachesTree typeEnv (ReachesLeaf leafs) = unionAllTypes typeEnv leafs
+unionReachesTree _ ReachesLeaf = BottomType
 
 joinReachesTrees :: ReachesTree -> ReachesTree -> ReachesTree
 joinReachesTrees (ReachesPartialTree a) (ReachesPartialTree b) = ReachesPartialTree $ H.unionWith joinReachesTrees a b
-joinReachesTrees (ReachesLeaf a) (ReachesLeaf b) = ReachesLeaf (a ++ b)
+joinReachesTrees ReachesLeaf ReachesLeaf = ReachesLeaf
 joinReachesTrees (ReachesPartialTree t) v | H.null t = v
 joinReachesTrees v (ReachesPartialTree t) | H.null t = v
 joinReachesTrees a b = error $ printf "joinReachesTrees for mixed tree and leaf not yet defined: \n\t%s\n\t%s" (show a) (show b)
@@ -90,26 +86,25 @@ reachesHasCutSubtypeOf typeEnv vaenv (ReachesPartialTree children) superType = a
   where childIsSubtype (key, val) = isSubtypeOfWithEnv typeEnv vaenv (singletonType key) superType || reachesHasCutSubtypeOf typeEnv vaenv val superType
 reachesHasCutSubtypeOf typeEnv vaenv (ReachesTypeTree children) superType = all childIsSubtype $ H.toList children
   where childIsSubtype (key, (_, val)) = isSubtypeOfWithEnv typeEnv vaenv key superType || reachesHasCutSubtypeOf typeEnv vaenv val superType
-reachesHasCutSubtypeOf typeEnv vaenv (ReachesLeaf leafs) superType = any (\t -> isSubtypeOfWithEnv typeEnv vaenv t superType) leafs
+reachesHasCutSubtypeOf _ _ ReachesLeaf _ = False
 
 reachesPartials :: (TypeGraph tg) => ReachesEnv tg -> [PartialType] -> ReachesTree
 reachesPartials typeEnv partials = ReachesPartialTree $ H.fromList $ zip partials (map (reachesPartial typeEnv) partials)
   where
     reachesPartial :: (TypeGraph tg) => ReachesEnv tg -> PartialType -> ReachesTree
-    reachesPartial ReachesEnv{rVisited} p | S.member p rVisited = ReachesLeaf []
-    reachesPartial ReachesEnv{rVaenv} PartialType{ptName=argName} | TVArg (partialKey argName) `H.member` rVaenv = ReachesLeaf [TypeVar (TVArg $ partialKey argName) TVInt]
+    reachesPartial ReachesEnv{rVisited} p | S.member p rVisited = ReachesLeaf
+    reachesPartial ReachesEnv{rVaenv} PartialType{ptName=argName} | TVArg (partialKey argName) `H.member` rVaenv = ReachesTypeTree $ H.singleton (TypeVar (TVArg $ partialKey argName) TVInt) ("arg", ReachesLeaf)
     reachesPartial env@ReachesEnv{rTypeEnv, rVisited, rVaenv} partial = do
 
       let ttypes = typeGraphQueryWithReason rTypeEnv rVaenv partial
 
       let env' = env{rVisited=S.insert partial rVisited}
       if null ttypes
-        then ReachesLeaf []
+        then ReachesLeaf
         else ReachesTypeTree $ H.fromList $ zip (map snd ttypes) (map (second (reaches env')) ttypes)
 
 reaches :: (TypeGraph tg) => ReachesEnv tg -> Type -> ReachesTree
-reaches _     PTopType      = ReachesLeaf [PTopType]
-reaches _     v@TopType{}   = ReachesLeaf [v]
+reaches _     TopType{}     = ReachesLeaf
 reaches _     (TypeVar v _) = error $ printf "reaches with typevar %s" (show v)
 reaches env (UnionType src) = reachesPartials env $ splitUnionType src
 
