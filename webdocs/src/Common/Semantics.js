@@ -53,14 +53,14 @@ function Expr(props) {
       showArg = <span>(<ObjArr oa={arg.contents} Meta={Meta} showExprMetas={showMetas} />)</span>;
       break;
     case "EAppVar":
-      if (isTopType[arg.contents[1].getMetaType]) {
+      if (isTopType(arg.contents[1].getMetaType)) {
         showArg = <span>[<PartialKey data={arg.contents[0]} />]</span>;
       } else {
-        showArg = <span>[<PartialKey data={arg.contents[0]} />]: <Type data={arg.contents[1].getMetaType} /></span>;
+        showArg = <span>[<PartialKey data={arg.contents[0]} />: <Type data={arg.contents[1].getMetaType} />]</span>;
       }
       break;
     case "EAppSpread":
-      showArg = <span>..<Expr expr={arg.contents} Meta={Meta} showMetas={showMetas}/></span>;
+      showArg = <span>(..<Expr expr={arg.contents} Meta={Meta} showMetas={showMetas}/>)</span>;
       break;
     default:
       console.error("Unknown tupleApply arg", arg);
@@ -137,16 +137,24 @@ function TCallTree(props) {
     return (
       <table>
         <tbody>
-          { tree.contents[1].map((mt, index) =>
-            <tr key={index}>
-              <td><KeyWord>if</KeyWord> <Expr expr={mt[0][0]}/></td>
-              <td><TCallTree tree={mt[1]}/></td>
-            </tr>
+          { tree.contents[1].map((mt, index) => {
+            if (mt[0]) {
+              return (
+                <tr key={index}>
+                  <td><KeyWord>if</KeyWord> <Expr expr={mt[0][1].oaObj}/></td>
+                  <td><KeyWord>then</KeyWord> <TCallTree tree={mt[1]}/></td>
+                </tr>
+              );
+            } else {
+              return (
+                <tr key={index}>
+                  <td></td>
+                  <td><TCallTree tree={mt[1]}/></td>
+                </tr>
+              );
+            }
+          }
           )}
-          <tr>
-            <td><KeyWord>else</KeyWord></td>
-            <td><TCallTree tree={tree.contents[2]}/></td>
-          </tr>
         </tbody>
       </table>
     );
@@ -155,9 +163,9 @@ function TCallTree(props) {
   case "TCObjArr":
     return <span>TCObjArr <Type data={tree.contents.oaArr[1].getMetaType}/></span>;
   case "TCPrim":
-    return <span>TCPrim <Type data={tree.contents[0]}/></span>;
+    return <span>TCPrim <Type data={tree.contents[0].oaArr[1].getMetaType}/></span>;
   case "TCMacro":
-    return <span>TCMacro <Type data={tree.contents[0]}/></span>;
+    return <span>TCMacro <Type data={tree.contents[0].oaArr[1].getMetaType}/></span>;
   default:
     console.error("Unknown TCallTree", tree);
     return "";

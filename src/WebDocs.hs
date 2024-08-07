@@ -25,6 +25,7 @@ import qualified Data.Text.Lazy                as T
 import           GHC.Generics                  (Generic)
 import           Network.Wai.Middleware.Static
 
+import           Control.Monad
 import           Control.Monad.Trans           (lift)
 import           CRes
 import           Data.Bifunctor                (Bifunctor (first))
@@ -86,24 +87,24 @@ mkWDProvider includeCore baseFileName = do
     baseFileName' <- lift $ mkRawCanonicalImportStr baseFileName
     rawPrgm <- readFiles includeCore [baseFileName']
     prgm <- desFiles rawPrgm
-    withTrace <- asCResT $ typecheckPrgmWithTrace prgm
-    let tprgm = fmapGraph fst3 withTrace
-    tbprgm <- asCResT $ evalBuildAll tprgm
+    let withTrace = typecheckPrgmWithTrace prgm
+    let tprgm = fmap (fmapGraph fst3) withTrace
+    let tbprgm = tprgm >>= evalBuildAll
     return $ WDProvider {
         cCore = includeCore
       , cBaseFileName = baseFileName
       , cRaw = return rawPrgm
       , cPrgm = return prgm
-      , cTPrgmWithTrace = return withTrace
-      , cTPrgm = return tprgm
-      , cTBPrgm = return tbprgm
+      , cTPrgmWithTrace = withTrace
+      , cTPrgm = tprgm
+      , cTBPrgm = tbprgm
                             }
   case p of
     CRes notes r -> do
-      putStrLn $ prettyCNotes notes
+      unless (null notes) $ putStrLn $ prettyCNotes notes
       return r
     CErr notes -> do
-      putStrLn $ prettyCNotes notes
+      unless (null notes) $ putStrLn $ prettyCNotes notes
       fail "Could not build webdocs"
 
 mkLiveWDProvider :: Bool -> String -> IO (IO WDProvider)
@@ -301,10 +302,10 @@ docApiBase getProvider = do
       getWeb provider prgmName' fun
     case maybeBuild of
       CRes notes build -> do
-        liftAndCatchIO $putStrLn $ prettyCNotes notes
+        unless (null notes) $ liftAndCatchIO $ putStrLn $ prettyCNotes notes
         html (T.pack build)
       CErr notes -> do
-        liftAndCatchIO $putStrLn $ prettyCNotes notes
+        unless (null notes) $ liftAndCatchIO $ putStrLn $ prettyCNotes notes
         fail $ printf "Could not build web page for %s.%s" prgmName fun
 
 
