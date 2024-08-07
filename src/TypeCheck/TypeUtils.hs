@@ -194,4 +194,4 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} (UnionType srcPar
   let compactVaenv = fmap (stypeAct . snd) conVaenv
   let destByGraph = unionAllTypesWithEnv feTypeEnv compactVaenv $ fmap (unionReachesTree feTypeEnv) destByPartial
   let dest' = intersectTypes feTypeEnv dest destByGraph
-  return (compactType feTypeEnv compactVaenv $ UnionType srcPartials', compactType feTypeEnv compactVaenv dest', Just $ ReachesTree $ H.fromList srcPartialList')
+  return (compactType feTypeEnv compactVaenv $ UnionType srcPartials', compactType feTypeEnv compactVaenv dest', Just $ ReachesPartialTree $ H.fromList srcPartialList')

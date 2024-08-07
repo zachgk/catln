@@ -113,7 +113,7 @@ data Type
   = UnionType PartialLeafs -- ^ The main format, 'UnionType', is a union of 'PartialType's
   | TypeVar TypeVarAux TypeVarLoc -- ^ A type which refers to some variable in the surrounding context
   | TopType PartialLeafs TypePredicates -- ^ A type which refers to any possible value or the universal set of values, excluding the partial leafs and passing the predicates
-  deriving (Eq, Ord, Generic, Hashable, ToJSON)
+  deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
 -- | Indicates whether a type var or arg is located internally to the object or externally.
 -- | Internal is if it is defined in the type as an argument or variable.
