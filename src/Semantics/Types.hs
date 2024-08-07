@@ -518,6 +518,27 @@ suffixLookupInDict s dict = case suffixLookup s (H.keys dict) of
   Just k  -> H.lookup k dict
   Nothing -> Nothing
 
+-- | Returns the leafs a pred could apply to (without applying them)
+-- | TODO Finish
+expandTopPredToLeafs :: TypeEnv tg -> TypeVarArgEnv -> TypePredicate -> PartialLeafs
+expandTopPredToLeafs = undefined
+
+-- | Returns the leafs a TypePredicates could apply to
+-- | TODO Possibly modify this to apply those predicates if necessary (needed for PredExpr)
+-- | TODO Finish
+expandTopPredsToLeafs :: TypeEnv tg -> TypeVarArgEnv -> TypePredicates -> PartialLeafs
+expandTopPredsToLeafs _typeEnv _vaenv (PredsOne (PredClass _c)) = undefined
+expandTopPredsToLeafs _typeEnv _vaenv (PredsOne (PredRel _r)) = undefined
+expandTopPredsToLeafs typeEnv vaenv preds = aux preds
+  where
+    -- | aux is roughly equivalent to recursive expandTopPredsToLeafs
+    -- | It is used to optimize several key cases where preds apply to any type such as isRelative or isClass.
+    aux (PredsOne p) = expandTopPredToLeafs typeEnv vaenv p
+    aux (PredsAnd ps) = foldr (intersectPartialLeafsEnv typeEnv vaenv . aux) H.empty ps
+    aux (PredsNot p) = joinUnionType $ map negatePreds $ splitUnionType $ aux p
+      where
+        negatePreds partial@PartialType{ptPreds} = partial{ptPreds=predsNot ptPreds}
+
 expandType :: TypeEnv tg -> TypeVarArgEnv -> Type -> Type
 expandType _ _ t@UnionType{} = t
 expandType typeEnv vaenv (TypeVar v _) = expandType typeEnv vaenv $ H.lookupDefault PTopType v vaenv
@@ -781,6 +802,16 @@ intersectPartials typeEnv vaenv a b = case intersectPartialsBase typeEnv vaenv a
   Just (vaenv', partials') -> (vaenv', partials')
   Nothing                  -> (vaenv, [])
 
+intersectPartialLeafsWithVarEnv :: TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs -> (TypeVarArgEnv, PartialLeafs)
+intersectPartialLeafsWithVarEnv typeEnv vaenv aPartials bPartials = (vaenv', type')
+  where
+    intersected = H.intersectionWith (\as bs -> [intersectPartials typeEnv vaenv a b | a <- as, b <- bs]) (splitUnionTypeByName aPartials) (splitUnionTypeByName bPartials)
+    vaenv' = mergeAllVarEnvs typeEnv $ fmap fst $ concat $ H.elems intersected
+    type' = joinUnionTypeByName $ fmap (concatMap snd) intersected
+
+intersectPartialLeafsEnv :: TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs -> PartialLeafs
+intersectPartialLeafsEnv typeEnv vaenv aPartials bPartials = snd $ intersectPartialLeafsWithVarEnv typeEnv vaenv aPartials bPartials
+
 -- |
 -- Takes the intersection of two 'Type'.
 -- It uses the 'TypeVarEnv' for type variable arguments and determines any possible changes to the surrounding 'TypeVarEnv'.
@@ -802,11 +833,9 @@ intersectTypesWithVarEnv typeEnv vaenv t1@(UnionType partials) t2@(TopType negPa
   TypeVar{} -> undefined
   TopType topNegPartials topPreds -> second (compactType typeEnv vaenv) $ differenceTypeWithEnv typeEnv vaenv (UnionType $ joinUnionType $ map (`partialAddPreds` topPreds) $ splitUnionType partials) (UnionType topNegPartials)
 intersectTypesWithVarEnv typeEnv vaenv t1@TopType{} t2@UnionType{} = intersectTypesWithVarEnv typeEnv vaenv t2 t1
-intersectTypesWithVarEnv typeEnv vaenv (UnionType aPartials) (UnionType bPartials) = (vaenv', type')
+intersectTypesWithVarEnv typeEnv vaenv (UnionType aPartials) (UnionType bPartials) = (vaenv', compactType typeEnv vaenv $ UnionType partials')
   where
-    intersected = H.intersectionWith (\as bs -> [intersectPartials typeEnv vaenv a b | a <- as, b <- bs]) (splitUnionTypeByName aPartials) (splitUnionTypeByName bPartials)
-    vaenv' = mergeAllVarEnvs typeEnv $ fmap fst $ concat $ H.elems intersected
-    type' = compactType typeEnv vaenv $ UnionType $ joinUnionTypeByName $ fmap (concatMap snd) intersected
+    (vaenv', partials') = intersectPartialLeafsWithVarEnv typeEnv vaenv aPartials bPartials
 intersectTypesWithVarEnv _ _ t1 t2 = error $ printf "Not yet implemented intersect %s and %s" (show t1) (show t2)
 
 intersectTypesEnv :: TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Type
