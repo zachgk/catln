@@ -82,7 +82,7 @@ function Expr(props) {
 
 function ObjArr(props) {
   const {Meta, showExprMetas, multiLine, oa} = props;
-  const {oaObj, oaArr} = oa;
+  const {oaObj, oaArr, oaAnnots} = oa;
 
   let showObj;
   if (oaObj) {
@@ -109,7 +109,12 @@ function ObjArr(props) {
     showArr = <span>{showArrType}{showArrM}{showArrExpr}</span>;
   }
 
-  return <span>{showObj}{showArr}</span>;
+  let showAnnots;
+  if (multiLine) {
+    showAnnots = oaAnnots.map((annot, index) => <div key={index}>&nbsp;&nbsp;&nbsp;&nbsp;<Expr expr={annot} Meta={Meta} showMetas={showExprMetas}/></div>);
+  }
+
+  return <span>{showObj}{showArr}{showAnnots}</span>;
 }
 
 function TCallTree(props) {

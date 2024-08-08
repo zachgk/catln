@@ -31,8 +31,8 @@ import           Text.Printf
 import           Utils               (withIndent)
 
 data ReachesTree
-  = ReachesPartialTree !(H.HashMap PartialType ReachesTree)
-  | ReachesTypeTree !(H.HashMap Type (String, ReachesTree))
+  = ReachesPartialTree !(H.HashMap PartialType ReachesTree) -- ReachesPartialTree are required (all must be handled to handle a partial)
+  | ReachesTypeTree !(H.HashMap Type (String, ReachesTree)) -- ReachesTypeTree are optional (can choose to follow only one)
   | ReachesLeaf
   deriving (Eq, Ord, Generic, Hashable, ToJSON)
 
@@ -78,7 +78,7 @@ joinAllReachesTrees = foldr1 joinReachesTrees
 reachesHasCutSubtypeOf :: TypeEnv tg -> TypeVarArgEnv -> ReachesTree -> Type -> Bool
 reachesHasCutSubtypeOf typeEnv vaenv (ReachesPartialTree children) superType = all childIsSubtype $ H.toList children
   where childIsSubtype (key, val) = isSubtypeOfWithEnv typeEnv vaenv (singletonType key) superType || reachesHasCutSubtypeOf typeEnv vaenv val superType
-reachesHasCutSubtypeOf typeEnv vaenv (ReachesTypeTree children) superType = all childIsSubtype $ H.toList children
+reachesHasCutSubtypeOf typeEnv vaenv (ReachesTypeTree children) superType = any childIsSubtype $ H.toList children
   where childIsSubtype (key, (_, val)) = isSubtypeOfWithEnv typeEnv vaenv key superType || reachesHasCutSubtypeOf typeEnv vaenv val superType
 reachesHasCutSubtypeOf _ _ ReachesLeaf _ = False
 
