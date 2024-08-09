@@ -117,55 +117,8 @@ addInferArgToScheme env@FEnv{feTypeEnv} vaenv SType{stypeAct=srcAct, stypeReq=sr
       Just addDestReq -> intersectTypes feTypeEnv destReq addDestReq
       Nothing         -> destReq
 
-stypeConstraintDat :: SConstraintDat -> TypeCheckResult RConstraintDat
-stypeConstraintDat (EqualsKnown i p t) = do
-  p' <- p
-  return $ EqualsKnown i p' t
-stypeConstraintDat (EqPoints i p1 p2) = do
-  p1' <- p1
-  EqPoints i p1' <$> p2
-stypeConstraintDat (BoundedByKnown i p t) = do
-  p' <- p
-  return $ BoundedByKnown i p' t
-stypeConstraintDat (BoundedByObjs i p t) = do
-  p' <- p
-  return $ BoundedByObjs i p' t
-stypeConstraintDat (NoReturnArg i p) = NoReturnArg i <$> p
-stypeConstraintDat (ArrowTo i p1 p2) = do
-  p1' <- p1
-  ArrowTo i p1' <$> p2
-stypeConstraintDat (PropEq i (p1, name) p2) = do
-  p1' <- p1
-  PropEq i (p1', name) <$> p2
-stypeConstraintDat (AddArg i (p1, argName) p2) = do
-  p1' <- p1
-  AddArg i (p1', argName) <$> p2
-stypeConstraintDat (AddInferArg i p1 p2) = do
-  p1' <- p1
-  AddInferArg i p1' <$> p2
-stypeConstraintDat (SetArgMode i m p1 p2) = do
-  p1' <- p1
-  SetArgMode i m p1' <$> p2
-stypeConstraintDat (ConWhere i p1 p2 p3) = do
-  p1' <- p1
-  p2' <- p2
-  ConWhere i p1' p2' <$> p3
-stypeConstraintDat (UnionOf i p1 p2s) = do
-  p1' <- p1
-  p2s' <- sequence p2s
-  return $ UnionOf i p1' p2s'
-
 stypeConstraint :: SConstraint -> TypeCheckResult RConstraint
-stypeConstraint (Constraint oa vaenv dat) = do
-  vaenv' <- mapM both vaenv
-  dat' <- stypeConstraintDat dat
-  return $ Constraint oa vaenv' dat'
-  where
-    both (a, b) = do
-      a' <- a
-      b' <- b
-      return (a', b')
-
+stypeConstraint = mapMCon id
 
 updateCOVarArgEnv :: STypeVarArgEnv -> CVarArgEnv SType -> CVarArgEnv SType
 updateCOVarArgEnv oVaenv' ioVaenv = H.intersectionWith (\(si, _) so -> (si, so)) ioVaenv oVaenv'

@@ -26,7 +26,6 @@ import           GHC.Generics        (Generic)
 import           Control.Monad.State
 import           CRes
 import           Data.Aeson          (ToJSON, toJSON)
-import           Data.Bifunctor      (bimap)
 import           Data.Maybe          (catMaybes, fromJust, fromMaybe,
                                       listToMaybe, mapMaybe, maybeToList)
 import           Data.String.Builder (literal)
@@ -37,6 +36,7 @@ import           Semantics.TypeGraph (ReachesTree)
 import           Semantics.Types
 import           Text.Printf
 import           Utils
+import           Control.Monad.Trans.Writer (execWriter, tell)
 
 data TypeCheckError
   = GenTypeCheckError (Maybe (Meta ())) String
@@ -108,6 +108,53 @@ type SConstraint = Constraint Scheme
 type SConstraintDat = ConstraintDat Scheme
 type RConstraint = Constraint SType
 type RConstraintDat = ConstraintDat SType
+
+mapMCon :: Monad m => (p1 -> m p2) -> Constraint p1 -> m (Constraint p2)
+mapMCon f (Constraint oas vaenv dat) = do
+  vaenv' <- forM vaenv $ \(va, vb) -> do
+    va' <- f va
+    vb' <- f vb
+    return (va', vb')
+  dat' <- mapMConDat f dat
+  return $ Constraint oas vaenv' dat'
+
+mapMConDat :: Monad m => (p1 -> m p2) -> ConstraintDat p1 -> m (ConstraintDat p2)
+mapMConDat f (EqualsKnown i p t) = do
+  p' <- f p
+  return $ EqualsKnown i p' t
+mapMConDat f (EqPoints i p1 p2) = do
+  p1' <- f p1
+  EqPoints i p1' <$> f p2
+mapMConDat f (BoundedByKnown i p t) = do
+  p' <- f p
+  return $ BoundedByKnown i p' t
+mapMConDat f (BoundedByObjs i p t) = do
+  p' <- f p
+  return $ BoundedByObjs i p' t
+mapMConDat f (NoReturnArg i p) = NoReturnArg i <$> f p
+mapMConDat f (ArrowTo i p1 p2) = do
+  p1' <- f p1
+  ArrowTo i p1' <$> f p2
+mapMConDat f (PropEq i (p1, name) p2) = do
+  p1' <- f p1
+  PropEq i (p1', name) <$> f p2
+mapMConDat f (AddArg i (p1, argName) p2) = do
+  p1' <- f p1
+  AddArg i (p1', argName) <$> f p2
+mapMConDat f (AddInferArg i p1 p2) = do
+  p1' <- f p1
+  AddInferArg i p1' <$> f p2
+mapMConDat f (SetArgMode i m p1 p2) = do
+  p1' <- f p1
+  SetArgMode i m p1' <$> f p2
+mapMConDat f (ConWhere i p1 p2 p3) = do
+  p1' <- f p1
+  p2' <- f p2
+  ConWhere i p1' p2' <$> f p3
+mapMConDat f (UnionOf i p1 p2s) = do
+  p1' <- f p1
+  p2s' <- mapM f p2s
+  return $ UnionOf i p1' p2s'
 
 data TypeCheckResult r
   = TypeCheckResult [TypeCheckError] r
@@ -270,18 +317,11 @@ resToTypeCheck cres = case cres of
     fromCNote note = GenTypeCheckError (metaCNote note) (show note)
 
 constraintDatMetas :: ConstraintDat p -> [p]
-constraintDatMetas (EqualsKnown _ p2 _)    = [p2]
-constraintDatMetas (EqPoints _ p2 p3)      = [p2, p3]
-constraintDatMetas (BoundedByKnown _ p2 _) = [p2]
-constraintDatMetas (BoundedByObjs _ p2 _)  = [p2]
-constraintDatMetas (NoReturnArg _ p2)      = [p2]
-constraintDatMetas (ArrowTo _ p2 p3)       = [p2, p3]
-constraintDatMetas (PropEq _ (p2, _) p3)   = [p2, p3]
-constraintDatMetas (AddArg _ (p2, _) p3)   = [p2, p3]
-constraintDatMetas (AddInferArg _ p2 p3)   = [p2, p3]
-constraintDatMetas (SetArgMode _ _ p2 p3)  = [p2, p3]
-constraintDatMetas (ConWhere _ p2 p3 p4)   = [p2, p3, p4]
-constraintDatMetas (UnionOf _ p2 p3s)      = p2:p3s
+constraintDatMetas conDat = execWriter $ mapMConDat f conDat
+  where
+    f p = do
+        tell [p]
+        return p
 
 constraintMetas :: Constraint p -> [p]
 constraintMetas (Constraint _ _ d) = constraintDatMetas d
@@ -387,27 +427,12 @@ resolveTypeVar v con = case H.lookup v (constraintVarArgEnv con) of
 descriptorVaenv :: FEnv -> COVarArgEnv VarMeta -> COVarArgEnv Scheme
 descriptorVaenv env = fmap (descriptor env)
 
-descriptorVaenvIO :: FEnv -> CVarArgEnv VarMeta -> CVarArgEnv Scheme
-descriptorVaenvIO env = fmap (bimap (descriptor env) (descriptor env))
-
 descriptorSTypeVaenv :: FEnv -> COVarArgEnv VarMeta -> TypeCheckResult STypeVarArgEnv
 descriptorSTypeVaenv env vaenv = sequence $ descriptorVaenv env vaenv
 
-descriptorSTypeVaenvIO :: FEnv -> CVarArgEnv VarMeta -> TypeCheckResult STypeIOVarArgEnv
-descriptorSTypeVaenvIO env vaenv = mapM both (descriptorVaenvIO env vaenv)
-  where
-    both (a, b) = do
-      a' <- a
-      b' <- b
-      return (a', b')
-
 type STypeVarArgEnv = H.HashMap TypeVarAux SType
-type STypeIOVarArgEnv = H.HashMap TypeVarAux (SType, SType)
 descriptorConVaenv :: FEnv -> VConstraint -> TypeCheckResult STypeVarArgEnv
 descriptorConVaenv env con = descriptorSTypeVaenv env (constraintVarArgEnv con)
-
-descriptorConVaenvIO :: FEnv -> VConstraint -> TypeCheckResult STypeIOVarArgEnv
-descriptorConVaenvIO env con = descriptorSTypeVaenvIO env (constraintVarArgEnvIO con)
 
 -- trace constrain
 type TraceConstrainEpoch = [(VConstraint, [(Pnt, Scheme)])]
