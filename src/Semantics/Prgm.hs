@@ -473,7 +473,11 @@ exprPropagateTypes (AliasExpr base alias) = AliasExpr base' alias'
   where
     base' = exprPropagateTypes base
     alias' = exprPropagateTypes alias
-exprPropagateTypes (EWhere m base cond) = EWhere m base cond
+exprPropagateTypes (EWhere m base cond) = EWhere m' base' cond'
+  where
+    m' = mWithType (typeAddPreds (getExprType base') (PredsOne $ PredExpr $ fromJust $ maybeGetSingleton $ getExprType cond')) m
+    base' = exprPropagateTypes base
+    cond' = exprPropagateTypes cond
 exprPropagateTypes mainExpr@(TupleApply m (bm, be) tupleApplyArgs) = do
   let be' = exprPropagateTypes be
   let bm' = mWithType (getMetaType $ getExprMeta be') bm
@@ -494,6 +498,6 @@ exprPropagateTypes mainExpr@(TupleApply m (bm, be) tupleApplyArgs) = do
         let m' = mWithType tp' m
         TupleApply m' (bm', be') (EAppVar vn vm)
       (EAppSpread a) -> do
-        let m' = mWithType (spreadType H.empty $ getMetaType m) m
+        let m' = mWithType (spreadType H.empty $ getMetaType bm') m
         TupleApply m' (bm', be') (EAppSpread $ exprPropagateTypes a)
       _ -> error $ printf "Unexpected ObjArr in exprPropagateTypes (probably because arrow only ObjArr): %s" (show mainExpr)

@@ -475,6 +475,7 @@ typeVal :: TypeName -> Type
 typeVal = singletonType . partialVal
 
 -- | Helper to create a relative 'Type' for a value (no args, no vars)
+-- | TODO Make this return a 'typeVal' when it is an absolute path
 relTypeVal :: TypeName -> Type
 relTypeVal n = TopType H.empty (PredsOne (PredRel $ partialVal n))
 
