@@ -67,12 +67,11 @@ buildTBEnv primEnv prgm@(objMap, _, _) = baseEnv
 -- | However, it may also be necessary to use several arrows in sequence to go from src to dest
 -- | This will check if the single arrow is correct, or whether a sequence is required
 -- | It will then return all the ones that correctly go from src to dest (replacing them with the full sequence)
-arrowFollowup ::  TBEnv -> [ObjSrc] -> VisitedArrows -> PartialType -> Type -> ResBuildEnvItem -> CRes ResBuildEnvItem
-arrowFollowup TBEnv{tbTypeEnv} os _ srcType destType item@(_, _, resArrow) | isSubtypeOfWithObjSrcs tbTypeEnv os (resArrowDestType tbTypeEnv srcType resArrow) destType = return item
+arrowFollowup ::  TBEnv -> [ObjSrc] -> VisitedArrows -> PartialType -> Type -> (ResBuildEnvItem, Type) -> CRes ResBuildEnvItem
+arrowFollowup TBEnv{tbTypeEnv} os _ _ destType (item, newSrcType) | isSubtypeOfWithObjSrcs tbTypeEnv os newSrcType destType = return item
 -- envLookupTry _ _ _ srcType destType _ | trace (printf "envLookupTry from %s to %s" (show srcType) (show destType)) False = undefined
-arrowFollowup _ _ visitedArrows _ _ (_, _, resArrow) | S.member resArrow visitedArrows = CErr [MkCNote $ BuildTreeCErr Nothing "Found cyclical use of function"]
-arrowFollowup env@TBEnv{tbTypeEnv} objSrc visitedArrows srcType destType (itemPartial, itemOa, resArrow) = do
-  let newSrcType = resArrowDestType tbTypeEnv srcType resArrow
+arrowFollowup _ _ visitedArrows _ _ ((_, _, resArrow), _) | S.member resArrow visitedArrows = CErr [MkCNote $ BuildTreeCErr Nothing "Found cyclical use of function"]
+arrowFollowup env objSrc visitedArrows srcType destType ((itemPartial, itemOa, resArrow), newSrcType) = do
   afterArrow <- buildCallTree env objSrc' visitedArrows' newSrcType destType
   let resArrow' = TCSeq resArrow afterArrow
   return (itemPartial, itemOa, resArrow')
@@ -171,19 +170,18 @@ findResArrows TBEnv{tbResEnv, tbTypeEnv} os srcType@PartialType{ptName=srcName} 
       Just resArrowsWithName -> filter (\(arrowType, _, _) -> not $ isBottomType $ intersectTypes tbTypeEnv (singletonType srcType) (singletonType arrowType)) resArrowsWithName
       Nothing -> []
     argArrows :: [ResBuildEnvItem]
-    argArrows = case H.lookup (partialToKey srcType) $ snd $ splitVarArgEnv $ exprVarArgsWithObjSrcs tbTypeEnv os of
-      Just (_, argArrowType) -> [(srcType, Nothing, TCArg argArrowType srcName)]
-      Nothing                -> []
+    argArrows = map ((srcType, Nothing,) . (`TCArg` srcName) . snd) $ mapMaybe (H.lookup $ TVArg $ partialToKey srcType) $ exprVarArgsWithObjSrcs tbTypeEnv os
 
 -- | Builds a call tree to convert something from the partial 'srcType' to 'destType'
 buildPartialCallTree :: TBEnv -> [ObjSrc] -> VisitedArrows -> PartialType -> Type -> CRes TCallTree
 buildPartialCallTree TBEnv{tbTypeEnv} os _ srcType destType | isSubtypeOfWithObjSrcs tbTypeEnv os (singletonType srcType) destType = return TCTId
-buildPartialCallTree env os visitedArrows srcType destType = do
+buildPartialCallTree env@TBEnv{tbTypeEnv} os visitedArrows srcType destType = do
   wrapCRes (printf "Failed to build arrow tree from %s to %s" (show srcType) (show destType)) $ do
     resArrows <- findResArrows env os srcType
     resArrows' <- sortArrows env resArrows
     resArrows'' <- handleElseArrows resArrows'
-    let resArrows''' = mapMaybe (cresToMaybe . arrowFollowup env os visitedArrows srcType destType) resArrows''
+    let resArrows''WithPostTypes = concatMap (\item@(_, _, resArrow) -> map (item,) $ resArrowDestType tbTypeEnv srcType resArrow) resArrows''
+    let resArrows''' = mapMaybe (cresToMaybe . arrowFollowup env os visitedArrows srcType destType) resArrows''WithPostTypes
     joinArrowsWithCond env srcType destType resArrows'''
 
 -- | Builds a call tree to convert something from 'srcType' to 'destType'
@@ -192,9 +190,11 @@ buildCallTree TBEnv{tbTypeEnv} os _ srcType destType | isSubtypeOfWithObjSrcs tb
 -- buildCallTree _ os srcType destType | trace (printf "buildCallTree from %s to %s\n\t\twith %s" (show srcType) (show destType) (show os)) False = undefined
 buildCallTree _ _ _ _ PTopType = return TCTId
 buildCallTree _ _ _ PTopType _ = error $ printf "buildCallTree from top type"
-buildCallTree env@TBEnv{tbTypeEnv} objSrcs visitedArrows (TypeVar v _) destType = case H.lookup v (exprVarArgsWithObjSrcs tbTypeEnv objSrcs) of
-  Just (_, srcType') -> buildCallTree env objSrcs visitedArrows srcType' destType
-  Nothing -> error $ printf "Unknown TypeVar %s in buildCallTree" (show v)
+buildCallTree env@TBEnv{tbTypeEnv} objSrcs visitedArrows (TypeVar v _) destType = case exprVarArgsWithObjSrcs tbTypeEnv objSrcs of
+  [vaenv] -> case H.lookup v vaenv of
+    Just (_, srcType') -> buildCallTree env objSrcs visitedArrows srcType' destType
+    Nothing -> error $ printf "Unknown TypeVar %s in buildCallTree" (show v)
+  vaenvs -> error $ printf "Found unhandled zero or multiple vaenvs in builCallTree: %s" (show vaenvs)
 buildCallTree env os visitedArrows (UnionType srcLeafs) destType = do
   matchVal <- forM (splitUnionType srcLeafs) $ \srcPartial -> do
     t <- buildPartialCallTree env os visitedArrows srcPartial destType

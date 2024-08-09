@@ -165,7 +165,6 @@ data VarMetaDat = VarMetaDat (Maybe Pnt) (Maybe VObject)
 type VarMeta = Meta VarMetaDat
 type VExpr = Expr VarMetaDat
 type VCompAnnot = CompAnnot VExpr
-type VMetaVarArgEnv = MetaVarArgEnv VarMetaDat
 type VObjArr = ObjArr Expr VarMetaDat
 type VObject = VExpr
 type VObjectMap = ObjectMap Expr VarMetaDat

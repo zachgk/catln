@@ -36,7 +36,6 @@ import           Semantics.TypeGraph (ReachesTree)
 import           Semantics.Types
 import           Text.Megaparsec
 import           Text.Printf
-import           Utils               (unionsWith)
 
 newtype Import = Import String
   deriving (Eq, Ord, Show)
@@ -179,7 +178,14 @@ instance ToJSON SourcePos where
   toJSON (SourcePos name line col) = object ["name".=name, "line".=unPos line, "col".=unPos col]
 
 type VarArgMap e m = H.HashMap TypeVarAux [(e m, Meta m)]
+
+-- | Represents the VarArgMap by extracting information from a partial
+type ArgMetaMapWithSrcItem m = ([(Expr m, Meta m)], Type)
 type ArgMetaMapWithSrc m = H.HashMap TypeVarAux ([(Expr m, Meta m)], Type)
+
+-- | Represents multiple possible 'ArgMetaMapWithSrc' that can be achieved by different matches (can choose with match)
+type PossArgMetaMapWithSrc m = [ArgMetaMapWithSrc m]
+
 class ExprClass e where
   -- | Returns the metadata for the top level of an expression
   getExprMeta ::  e m -> Meta m
@@ -201,7 +207,7 @@ class ExprClass e where
 
   -- | The 'exprVarArgsWithSrc' is similar to the 'exprArgs' function.
   -- | It differs in that it accepts an additional partial type that is equivalent to the expression and it pull the corresponding parts of the partial matching the args in the expression
-  exprVarArgsWithSrc :: (TypeGraph tg, MetaDat m, Show m) => TypeEnv tg -> e m -> PartialType -> ArgMetaMapWithSrc m
+  exprVarArgsWithSrc :: (TypeGraph tg, MetaDat m, Show m, Show (e m)) => TypeEnv tg -> e m -> PartialType -> PossArgMetaMapWithSrc m
 
   mkValue :: (MetaDat m) => Name -> e m
 
@@ -260,44 +266,42 @@ instance ExprClass Expr where
 
   exprVarArgsWithSrc typeEnv expr src = aux expr
     where
-      aux CExpr{} = H.empty
-      aux Value{} = H.empty
-      aux HoleExpr{} = H.empty
+      aux CExpr{} = [H.empty]
+      aux Value{} = [H.empty]
+      aux HoleExpr{} = [H.empty]
       aux (EWhere _ base cond) = case maybeExprPath cond of
         Just n | n == operatorHasArrow -> case (H.lookup (partialKey operatorArgL) condArgs, H.lookup (partialKey operatorArgR) condArgs) of
-                  (Just (Just (_, Just l)), Just (Just (_, Just r))) -> case (getExprType $ exprPropagateTypes l, getExprType r) of
-                    (lt@UnionType{}, rt) -> case typeGraphQuery typeEnv (fmap snd base') $ fromJust $ maybeGetSingleton lt of
-                      [] -> H.empty
-                      qr -> let fromEachArrow = fmap (\qrt -> fst $ intersectTypesWithVarEnv typeEnv (fmap snd base') qrt rt) qr
-                                fromAllArrows = ([],) <$> unionsWith (unionTypes typeEnv) fromEachArrow
-                             in H.unionWith merge base' fromAllArrows
+                  (Just (Just (_, Just l)), Just (Just (_, Just r))) -> case (getExprType $ exprPropagateTypes l, getExprType $ exprPropagateTypes r) of
+                    (lt@UnionType{}, rt) -> concatMap findArrowMatches bases'
+                      where
+                        findArrowMatches base' = case typeGraphQuery typeEnv (fmap snd base') $ fromJust $ maybeGetSingleton lt of
+                          [] -> [H.empty]
+                          qr -> let fromEachArrow = fmap (\qrt -> fst $ intersectTypesWithVarEnv typeEnv (fmap snd base') qrt rt) qr
+                                in joinPossVarArgMetaWithSrc typeEnv (map (fmap ([],)) fromEachArrow) [base']
                     (lt, rt) -> error $ printf "Found invalid types of l=%s and r=%s in ?->" (show lt) (show rt)
                   _ -> error $ printf "Could not find /l and /r in %s in ?->" (show condArgs)
-        _ -> base'
+        _ -> bases'
         where
-          base' = exprVarArgsWithSrc typeEnv base src
+          bases' = exprVarArgsWithSrc typeEnv base src
           condArgs = exprAppliedArgsMap cond
-      aux (AliasExpr base n) = H.insertWith merge (TVArg $ inExprSingleton n) ([(n, getExprMeta base)], singletonType src) (exprVarArgsWithSrc typeEnv base src)
-      aux (TupleApply _ (_, be) arg) = H.unionWith merge (exprVarArgsWithSrc typeEnv be src) (fromArg arg)
+      aux (AliasExpr base n) = map (H.insertWith (mergeVarArgMetaWithSrcItem typeEnv) (TVArg $ inExprSingleton n) ([(n, getExprMeta base)], singletonType src)) (exprVarArgsWithSrc typeEnv base src)
+      aux (TupleApply _ (_, be) arg) = joinPossVarArgMetaWithSrc typeEnv (exprVarArgsWithSrc typeEnv be src) (fromArg arg)
         where
+          fromArg :: (MetaDat m, Show m) => EApp Expr m -> [ArgMetaMapWithSrc m]
           fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)}) = case typeGetArg (inExprSingleton obj) src of
-            Just (UnionType srcArg) -> mergeMaps $ map (exprVarArgsWithSrc typeEnv e) $ splitUnionType srcArg
-            Just t@TopType{} -> (,t) <$> exprVarArgs e
-            _ -> H.empty
+            Just (UnionType srcArg) -> joinAllPossVarArgMetaWithSrc typeEnv $ map (exprVarArgsWithSrc typeEnv e) $ splitUnionType srcArg
+            Just t@TopType{} -> [(,t) <$> exprVarArgs e]
+            _ -> [H.empty]
           fromArg (EAppArg ObjArr{oaArr=Just (Just e, _)}) = exprVarArgsWithSrc typeEnv e src
           fromArg (EAppArg ObjArr {oaObj=Just obj, oaArr=Just (Nothing, arrM)}) = case getMetaType arrM of
-            (TypeVar v _) -> H.insertWith merge v ([(obj, arrM)], fromMaybe PTopType $ typeGetArg (inExprSingleton obj) src) mainArg
-            _ -> mainArg
+            (TypeVar v _) -> [H.insertWith (mergeVarArgMetaWithSrcItem typeEnv) v ([(obj, arrM)], fromMaybe PTopType $ typeGetArg (inExprSingleton obj) src) mainArg]
+            _ -> [mainArg]
             where
               mainArg = H.singleton (TVArg $ inExprSingleton obj) ([(obj, arrM)], fromMaybe (getMetaType arrM) (typeGetArg (inExprSingleton obj) src))
-          fromArg (EAppVar vn vm) = H.singleton (TVVar vn) ([(Value (emptyMetaT $ partialToTypeSingleton vn) (pkName vn), vm)], H.lookupDefault PTopType vn (ptVars src))
+          fromArg (EAppVar vn vm) = [H.singleton (TVVar vn) ([(Value (emptyMetaT $ partialToTypeSingleton vn) (pkName vn), vm)], H.lookupDefault PTopType vn (ptVars src))]
           fromArg (EAppSpread s) = exprVarArgsWithSrc typeEnv s src
           fromArg oa = error $ printf "Invalid oa %s" (show oa)
 
-      merge (m1s, t1) (m2s, t2) = (m1s ++ m2s, intersectTypes typeEnv t1 t2)
-
-      mergeMaps []     = H.empty
-      mergeMaps (x:xs) = foldr (H.unionWith merge) x xs
 
   mkValue n = Value (emptyMetaT $ typeVal n) n
 
@@ -317,6 +321,15 @@ instance ObjArrClass ObjArr where
 
   getOaAnnots = oaAnnots
 
+mergeVarArgMetaWithSrcItem :: TypeEnv tg -> ([(Expr m, Meta m)], Type) -> ([(Expr m, Meta m)], Type) -> ([(Expr m, Meta m)], Type)
+mergeVarArgMetaWithSrcItem typeEnv (m1s, t1) (m2s, t2) = (m1s ++ m2s, intersectTypes typeEnv t1 t2)
+
+joinPossVarArgMetaWithSrc :: TypeEnv tg -> PossArgMetaMapWithSrc m -> PossArgMetaMapWithSrc m -> PossArgMetaMapWithSrc m
+joinPossVarArgMetaWithSrc typeEnv aVarArgMaps bVarArgMaps = [H.unionWith (mergeVarArgMetaWithSrcItem typeEnv) aVarArgMap bVarArgMap | aVarArgMap <- aVarArgMaps, bVarArgMap <- bVarArgMaps]
+
+joinAllPossVarArgMetaWithSrc :: TypeEnv tg -> [PossArgMetaMapWithSrc m] -> PossArgMetaMapWithSrc m
+joinAllPossVarArgMetaWithSrc _ []     = [H.empty]
+joinAllPossVarArgMetaWithSrc typeEnv (x:xs) = foldr (joinPossVarArgMetaWithSrc typeEnv) x xs
 
 emptyPrgm :: Prgm e m
 emptyPrgm = ([], emptyClassGraph, [])
