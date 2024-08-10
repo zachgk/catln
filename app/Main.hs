@@ -13,11 +13,9 @@ import           TypeCheck            (typecheckPrgm)
 
 import           Control.Monad
 import           Control.Monad.Trans
-import qualified Data.ByteString.Lazy as BSL
 import qualified Data.HashMap.Strict  as H
 import           Data.Maybe
 import           Eval.Common          (Val (StrVal, TupleVal))
-import           Syntax.Pandoc.Syntax (documentFormats, toDocument)
 import           System.Directory
 import           Text.Printf
 import           WebDocs              (docApi, docServe)
@@ -60,13 +58,6 @@ xDoc prgmName cached apiOnly = if apiOnly
   then lift $ docApi cached True prgmName
   else lift $ docServe cached True prgmName
 
-xDocument :: String -> String -> String -> CResT IO ()
-xDocument prgmName outFname format = do
-  prgmName' <- lift $ mkRawCanonicalImportStr prgmName
-  (prgm, _, _) <- parseFile False prgmName'
-  prgm' <- lift $ toDocument format prgm
-  lift $ BSL.writeFile outFname prgm'
-
 xConvert :: String -> Maybe String -> CResT IO ()
 xConvert prgmName _outFname = do
   prgmName' <- lift $ mkRawCanonicalImportStr prgmName
@@ -87,7 +78,6 @@ exec :: Command -> CResT IO ()
 exec (RunFile file function)          = xRun file function
 exec (BuildFile file function)        = xBuild file function
 exec (Doc fname cached apiOnly)       = xDoc fname cached apiOnly
-exec (Document fname outFname format) = xDocument fname outFname format
 exec (Convert fname outFname)         = xConvert fname outFname
 exec (Fmt fname)                      = xFmt fname
 
@@ -95,7 +85,6 @@ data Command
   = BuildFile String String
   | RunFile String String
   | Doc String Bool Bool
-  | Document String String String
   | Convert String (Maybe String)
   | Fmt String
 
@@ -114,12 +103,6 @@ cDoc = Doc
   <$> argument str (metavar "FILE" <> help "The file to run")
   <*> switch (long "cached" <> help "Cache results instead of reloading live (useful for serving rather than development)")
   <*> switch (long "api" <> help "Serve only the API rather than the pages too")
-
-cDocument :: Parser Command
-cDocument = Document
-  <$> argument str (metavar "FILE" <> help "The file to run")
-  <*> argument str (metavar "OUT" <> help "The output file path")
-  <*> argument str (metavar "FORMAT" <> help ("The format of document. Possible formats are " ++ show documentFormats))
 
 cConvert :: Parser Command
 cConvert = Convert
@@ -146,7 +129,6 @@ main = do
          command "run" (info cRun (progDesc "Runs a program"))
       <> command "build" (info cBuild (progDesc "Builds a program"))
       <> command "doc" (info cDoc (progDesc "Runs webdocs for a program"))
-      <> command "document" (info cDocument (progDesc "Builds a document for a program file"))
       <> command "convert" (info cConvert (progDesc "Converts code in one format to another"))
       <> command "fmt" (info cFmt (progDesc "Runs the Catln formatter for a program"))
                              )
