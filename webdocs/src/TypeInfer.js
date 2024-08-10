@@ -11,7 +11,7 @@ import {
   useParams
 } from 'react-router-dom';
 
-import {useApi, tagJoin, Loading, Notes, Type, PartialKey} from './Common/Common';
+import {useApi, tagJoin, Loading, Notes, Type, PartialKey, ReachesTree} from './Common/Common';
 import {ObjMap} from './ListProgram';
 
 const useStyles = makeStyles({
@@ -241,10 +241,16 @@ function Scheme(props) {
   let {scheme} = props;
   switch (scheme.tag) {
   case "CRes":
-    const [notes, {stypeAct, stypeReq, stypeDesc}] = scheme.contents;
+    const [notes, {stypeAct, stypeReq, stypeTree, stypeDesc}] = scheme.contents;
+
+    let showTree;
+    if (stypeTree) {
+      showTree = <div><ReachesTree tree={stypeTree}/></div>;
+    }
     return <div>
              <Notes notes={notes}/>
              &#123;{stypeDesc} :: ACT <Type data={stypeAct}/>; REQ <Type data={stypeReq}/>&#125;
+             {showTree}
            </div>;
   case "CErr":
     return <Notes notes={scheme.contents}/>;

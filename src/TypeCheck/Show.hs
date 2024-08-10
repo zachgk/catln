@@ -15,13 +15,13 @@
 
 module TypeCheck.Show where
 
-import           Data.Bifunctor   (bimap)
-import           Data.Maybe       (fromJust)
+import           Control.Monad.Identity (Identity (runIdentity))
+import           Data.Bifunctor         (bimap)
+import           Data.Maybe             (fromJust)
 import           MapMeta
 import           Semantics.Prgm
 import           Semantics.Types
 import           TypeCheck.Common
-import Control.Monad.Identity (Identity(runIdentity))
 
 showM :: FEnv -> MetaType -> VarMeta -> TypeCheckResult ShowMeta
 showM env@FEnv{feTypeEnv} _ m = do

@@ -62,7 +62,7 @@ evalPrgmTargetMode function prgm = case (funCtxReaches, funReaches) of
   (rt, _) | reachesHasCutSubtypeOf typeEnv H.empty rt ioType -> EvalRunWithContext function'
   (_, rt) | reachesHasCutSubtypeOf typeEnv H.empty rt resultType -> EvalBuild function'
   (_, rt) | reachesHasCutSubtypeOf typeEnv H.empty rt ioType -> EvalRun function' -- Should require isShowable for run result
-  _ -> NoEval
+  _ -> NoEval funCtxReaches funReaches
   where
     typeEnv = mkTypeEnv prgm
     function' = case maybeGetSingleton $ expandRelPartial typeEnv H.empty (partialVal function) of

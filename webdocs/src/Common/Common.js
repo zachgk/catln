@@ -1,5 +1,9 @@
 import React, {useState, useEffect} from 'react';
 
+import TreeView from '@material-ui/lab/TreeView';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import ChevronRightIcon from '@material-ui/icons/ChevronRight';
+import TreeItem from '@material-ui/lab/TreeItem';
 import { makeStyles } from '@material-ui/core/styles';
 import {Link} from 'react-router-dom';
 
@@ -314,6 +318,64 @@ function PartialName(props) {
   return <Link to={link} className={cls}>{name.contents}</Link>;
 }
 
+function ReachesTree(props) {
+  const {tree} = props;
+  return (
+      <TreeView
+        defaultCollapseIcon={<ExpandMoreIcon />}
+        defaultExpandIcon={<ChevronRightIcon />}
+      >
+        <ReachesTreeNode tree={tree} id={"0"} />
+      </TreeView>
+  );
+}
+
+function ReachesTreeNode(props) {
+  const {tree, id} = props;
+  switch(tree.tag) {
+  case "ReachesPartialTree":
+    return tree.contents.map((node, nodeIndex) => {
+      let lab = <PartialType data={node[0]}/>;
+      let showSubNode;
+      if (node[1].tag !== "ReachesLeaf") {
+        showSubNode = <ReachesTreeNode id={id + nodeIndex + "-"} tree={node[1]}/>;
+      }
+      return (
+        <TreeItem nodeId={id + nodeIndex} label={lab}>
+          {showSubNode}
+        </TreeItem>
+      );
+    });
+  case "ReachesTypeTree":
+    return tree.contents.map((node, nodeIndex) => {
+      let lab = <span><Type data={node[0]}/> by {node[1][0]}</span>;
+      let subNodeDat = node[1][1];
+      if (node[0].tag === "UnionType" && subNodeDat.tag === "ReachesPartialTree" && subNodeDat.contents.length === 1) {
+        subNodeDat = subNodeDat.contents[0][1];
+      }
+      let showSubNode;
+      if (subNodeDat.tag !== "ReachesLeaf") {
+        showSubNode = <ReachesTreeNode id={id + nodeIndex + "-"} tree={subNodeDat}/>;
+      }
+      return (
+        <TreeItem nodeId={id + nodeIndex} label={lab}>
+          {showSubNode}
+        </TreeItem>
+      );
+    });
+  case "ReachesLeaf":
+    return (
+      <TreeItem nodeId={id} label={"ReachesLeaf"}>
+      </TreeItem>
+    );
+  default:
+    console.error("Unknown ReachesTreeNode", tree);
+    return (
+      <TreeItem nodeId={id} label={"TREE"}>
+      </TreeItem>
+    );
+  }
+}
 
 export {
   TocContext,
@@ -329,5 +391,6 @@ export {
   TypeVar,
   PTypeName,
   PClassName,
-  PartialName
+  PartialName,
+  ReachesTree
 };

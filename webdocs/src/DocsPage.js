@@ -7,7 +7,9 @@ import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import {useHistory} from 'react-router-dom';
 
 import {rawExprMeta, RawExpr, RawObjArr} from './Common/Syntax';
-import {useApi, Loading, KeyWord} from './Common/Common';
+import {useApi, Loading, KeyWord, ReachesTree} from './Common/Common';
+
+const DEBUG_NO_EVAL = false;
 
 const useStyles = makeStyles({
   indented: {
@@ -89,9 +91,19 @@ function Statement(props) {
         </div>
       );
     } else {
+      let showNoEval;
+      if (DEBUG_NO_EVAL && md[1]) {
+        showNoEval = (
+          <div>
+            <ReachesTree tree={md[1].contents[0]}/>
+            <ReachesTree tree={md[1].contents[1]}/>
+          </div>
+        );
+      }
       return (
         <div className={classes.noPlay}>
           <RawObjArr roa={statement.contents} />
+          {showNoEval}
         </div>
       );
     }

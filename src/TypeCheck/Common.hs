@@ -18,25 +18,25 @@
 module TypeCheck.Common where
 
 import           Data.Hashable
-import qualified Data.HashMap.Strict as H
-import qualified Data.IntMap.Lazy    as IM
+import qualified Data.HashMap.Strict        as H
+import qualified Data.IntMap.Lazy           as IM
 import           Data.List
-import           GHC.Generics        (Generic)
+import           GHC.Generics               (Generic)
 
 import           Control.Monad.State
+import           Control.Monad.Trans.Writer (execWriter, tell)
 import           CRes
-import           Data.Aeson          (ToJSON, toJSON)
-import           Data.Maybe          (catMaybes, fromJust, fromMaybe,
-                                      listToMaybe, mapMaybe, maybeToList)
-import           Data.String.Builder (literal)
-import           MapMeta             (MetaType (ArrMeta), clearMetaDat)
+import           Data.Aeson                 (ToJSON, toJSON)
+import           Data.Maybe                 (catMaybes, fromJust, fromMaybe,
+                                             listToMaybe, mapMaybe, maybeToList)
+import           Data.String.Builder        (literal)
+import           MapMeta                    (MetaType (ArrMeta), clearMetaDat)
 import           Semantics
 import           Semantics.Prgm
-import           Semantics.TypeGraph (ReachesTree)
+import           Semantics.TypeGraph        (ReachesTree)
 import           Semantics.Types
 import           Text.Printf
 import           Utils
-import           Control.Monad.Trans.Writer (execWriter, tell)
 
 data TypeCheckError
   = GenTypeCheckError (Maybe (Meta ())) String

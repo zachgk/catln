@@ -296,7 +296,7 @@ data EvalMode
   | EvalRun String -- ^ Run f -> Show
   | EvalBuildWithContext String -- ^ Build f{IO io} -> CatlnResult
   | EvalBuild String -- ^ Build f -> CatlnResult
-  | NoEval -- ^ Can't run or build
+  | NoEval ReachesTree ReachesTree -- ^ Can't run or build
   deriving (Eq, Show, Generic, ToJSON)
 
 
