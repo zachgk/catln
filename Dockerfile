@@ -13,7 +13,7 @@ COPY . .
 ENV LANG=C.UTF-8
 
 # Fix for local building
-RUN git clean -Xdf
+RUN git clean -Xdf || true
 
 RUN stack install --local-bin-path=/usr/local/bin
 RUN cd webdocs && npm install && npm run build
