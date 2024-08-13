@@ -55,6 +55,12 @@ function rawExprMeta(expr) {
 function RawExpr(props) {
   let {expr} = props;
 
+  let m = rawExprMeta(expr);
+  let fromVal = tryValue(m.getMetaDat[2]);
+  if (fromVal) {
+    return fromVal;
+  }
+
   switch(expr.tag) {
   case "RawCExpr":
     return "" + expr.contents[1].contents;
@@ -76,11 +82,6 @@ function RawExpr(props) {
     return <span><RawExpr expr={expr.contents[0]}/>@<RawExpr expr={expr.contents[1]}/></span>;
   case "RawTupleApply":
     const [tupleM, [,base], args] = expr.contents;
-
-    let fromVal = tryValue(tupleM.getMetaDat[2]);
-    if (fromVal) {
-      return fromVal;
-    }
 
     if(base.tag === "RawValue" && base.contents[1].startsWith("/operator")) { // Operator
       const op = base.contents[1].substring("/operator".length);
@@ -108,10 +109,6 @@ function RawExpr(props) {
   case "RawVarsApply":
     const [vtupleM, vbase, vars] = expr.contents;
 
-    let vfromVal = tryValue(vtupleM.getMetaDat[2]);
-    if (vfromVal) {
-      return vfromVal;
-    }
     let showVars = tagJoin(vars.map((vr, argIndex) => <RawObjArr key={argIndex} roa={vr} />), ", ");
 
     return (<span><RawExpr expr={vbase}/>[{showVars}]</span>);

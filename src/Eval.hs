@@ -74,10 +74,10 @@ evalPrgmTargetMode function prgm = case (funCtxReaches, funReaches) of
     funCtxReaches = reachesPartials reachEnv [funCtxTp]
     funReaches = reachesPartials reachEnv [funTp]
 
-evalTargetMode :: String -> FileImport -> EPrgmGraphData -> EvalMode
-evalTargetMode function prgmName prgmGraphData = evalPrgmTargetMode function prgm
-  where
-    prgm = prgmFromGraphData prgmName prgmGraphData
+evalTargetMode :: String -> FileImport -> EPrgmGraphData -> CRes EvalMode
+evalTargetMode function prgmName prgmGraphData = do
+  prgm <- prgmFromGraphData prgmName prgmGraphData
+  return $ evalPrgmTargetMode function prgm
 
 -- | Gets the target modes for all objects in the file
 evalAllTargetModes :: EPrgm -> H.HashMap UUID EvalMode
@@ -214,15 +214,17 @@ evalBaseEnv prgm@(objMap, _, _) = Env {
         evTreebugClosed = []
                 }
 
-prgmFromGraphData :: FileImport -> EPrgmGraphData -> EPrgm
-prgmFromGraphData prgmName (prgmGraph, nodeFromVertex, vertexFromKey) = mergePrgms $ map (fst3 . nodeFromVertex) $ reachable prgmGraph $ fromJust $ vertexFromKey prgmName
+prgmFromGraphData :: FileImport -> EPrgmGraphData -> CRes EPrgm
+prgmFromGraphData prgmName (prgmGraph, nodeFromVertex, vertexFromKey) = case vertexFromKey prgmName of
+  Just v -> return $ mergePrgms $ map (fst3 . nodeFromVertex) $ reachable prgmGraph v
+  Nothing -> fail $ printf "Could not find prgm %s" (show prgmName)
 
 -- | Tries to TreeBuild all ObjArrs, returning all built successfully
 evalBuildAll :: EPrgmGraphData -> CRes (GraphData (Prgm TExpr EvalMetaDat) FileImport)
 evalBuildAll prgmGraphData = do
   let prgms = graphToNodes prgmGraphData
   prgms' <- forM prgms $ \((objMap, cg, annots), prgmName, deps) -> do
-    let evalPrgm = prgmFromGraphData prgmName prgmGraphData
+    evalPrgm <- prgmFromGraphData prgmName prgmGraphData
     let Env{evTbEnv} = evalBaseEnv evalPrgm
     objMap' <- catCRes $ fmap (buildRootOA evTbEnv) objMap
     annots' <- catCRes $ fmap (toTExpr evTbEnv []) annots
@@ -237,7 +239,7 @@ evalBuildPrgm input srcType destType prgm = do
 
 evalAnnots :: FileImport -> EPrgmGraphData -> CRes [(EExpr, Val)]
 evalAnnots prgmName prgmGraphData = do
-  let prgm@(objMap, _, globalAnnots) = prgmFromGraphData prgmName prgmGraphData
+  prgm@(objMap, _, globalAnnots) <- prgmFromGraphData prgmName prgmGraphData
   let env@Env{evTbEnv} = evalBaseEnv prgm
   globalAnnots' <- forM globalAnnots $ \annot -> do
     let emptyType = partialVal "EmptyObj"
@@ -257,8 +259,9 @@ evalAnnots prgmName prgmGraphData = do
 
 evalRun :: String -> FileImport -> EPrgmGraphData -> CResT IO (Integer, EvalResult)
 evalRun function prgmName prgmGraphData = do
-  let prgm = prgmFromGraphData prgmName prgmGraphData
-  input <- case evalTargetMode function prgmName prgmGraphData of
+  prgm <- asCResT $ prgmFromGraphData prgmName prgmGraphData
+  targetMode <- asCResT $ evalTargetMode function prgmName prgmGraphData
+  input <- case targetMode of
         EvalRunWithContext function' ->
           -- Case for eval Context(value=main, io=IO)
 
@@ -278,9 +281,9 @@ evalRun function prgmName prgmGraphData = do
 
 evalBuild :: String -> FileImport -> EPrgmGraphData -> CResT IO (Val, EvalResult)
 evalBuild function prgmName prgmGraphData = do
-  let prgm = prgmFromGraphData prgmName prgmGraphData
-
-  input <-  case evalTargetMode function prgmName prgmGraphData of
+  prgm <- asCResT $ prgmFromGraphData prgmName prgmGraphData
+  targetMode <- asCResT $ evalTargetMode function prgmName prgmGraphData
+  input <-  case targetMode of
         EvalRunWithContext function' ->
           -- Case for eval llvm(c=Context(value=main, io=IO))
           return $ eVal "/Catln/llvm" `eApply` ("/c", eVal function')

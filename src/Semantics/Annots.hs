@@ -18,14 +18,20 @@ import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
 
-isElseAnnot :: (ExprClass e) => CompAnnot (e m) -> Bool
-isElseAnnot e = exprPath e == elseAnnot
+isAnnot :: (ExprClass e) => String -> CompAnnot (e m) -> Bool
+isAnnot name e = exprPath e == name
 
-isCtxAnnot :: (ExprClass e) => CompAnnot (e m) -> Bool
-isCtxAnnot e = exprPath e == ctxAnnot
+hasAnnot :: (ObjArrClass oa, ExprClass e) => String -> oa e m -> Bool
+hasAnnot name oa = any (isAnnot name) $ getOaAnnots oa
+
+isElseAnnot :: (ExprClass e) => CompAnnot (e m) -> Bool
+isElseAnnot = isAnnot elseAnnot
 
 hasElseAnnot :: (ObjArrClass oa, ExprClass e) => oa e m -> Bool
-hasElseAnnot oa = any isElseAnnot $ getOaAnnots oa
+hasElseAnnot = hasAnnot elseAnnot
+
+isCtxAnnot :: (ExprClass e) => CompAnnot (e m) -> Bool
+isCtxAnnot = isAnnot ctxAnnot
 
 getRuntimeAnnot :: (MetaDat m, Show m) => CompAnnot [Expr m] -> Maybe String
 getRuntimeAnnot es = case mapMaybe aux es of

@@ -4,21 +4,21 @@ module Main where
 import           CRes
 import           Eval
 import           Options.Applicative
-import           Syntax.Ct.Desugarf   (desFiles)
-import           Syntax.Ct.Formatter  (formatRootPrgm)
-import           Syntax.Parsers       (mkDesCanonicalImportStr,
-                                       mkRawCanonicalImportStr, parseFile,
-                                       readFiles)
-import           TypeCheck            (typecheckPrgm)
+import           Syntax.Ct.Desugarf  (desFiles)
+import           Syntax.Ct.Formatter (formatRootPrgm)
+import           Syntax.Parsers      (mkDesCanonicalImportStr,
+                                      mkRawCanonicalImportStr, parseFile,
+                                      readFiles)
+import           TypeCheck           (typecheckPrgm)
 
 import           Control.Monad
 import           Control.Monad.Trans
-import qualified Data.HashMap.Strict  as H
+import qualified Data.HashMap.Strict as H
 import           Data.Maybe
-import           Eval.Common          (Val (StrVal, TupleVal))
+import           Eval.Common         (Val (StrVal, TupleVal))
 import           System.Directory
 import           Text.Printf
-import           WebDocs              (docApi, docServe)
+import           WebDocs             (docApi, docServe)
 -- import Repl (repl)
 
 xRun :: String -> String -> CResT IO ()
@@ -53,10 +53,10 @@ xBuild prgmName function = do
           _ -> fail "Invalid name or contents found in result as build"
     _ -> fail "Failed to build"
 
-xDoc :: String -> Bool -> Bool -> CResT IO ()
-xDoc prgmName cached apiOnly = if apiOnly
-  then lift $ docApi cached True prgmName
-  else lift $ docServe cached True prgmName
+xDoc :: [String] -> Bool -> Bool -> CResT IO ()
+xDoc prgmNames cached apiOnly = if apiOnly
+  then lift $ docApi cached True prgmNames
+  else lift $ docServe cached True prgmNames
 
 xConvert :: String -> Maybe String -> CResT IO ()
 xConvert prgmName _outFname = do
@@ -75,16 +75,16 @@ xFmt prgmName = do
   lift $ writeFile prgmName prgm'
 
 exec :: Command -> CResT IO ()
-exec (RunFile file function)          = xRun file function
-exec (BuildFile file function)        = xBuild file function
-exec (Doc fname cached apiOnly)       = xDoc fname cached apiOnly
-exec (Convert fname outFname)         = xConvert fname outFname
-exec (Fmt fname)                      = xFmt fname
+exec (RunFile file function)    = xRun file function
+exec (BuildFile file function)  = xBuild file function
+exec (Doc fname cached apiOnly) = xDoc fname cached apiOnly
+exec (Convert fname outFname)   = xConvert fname outFname
+exec (Fmt fname)                = xFmt fname
 
 data Command
   = BuildFile String String
   | RunFile String String
-  | Doc String Bool Bool
+  | Doc [String] Bool Bool
   | Convert String (Maybe String)
   | Fmt String
 
@@ -100,7 +100,7 @@ cBuild = BuildFile
 
 cDoc :: Parser Command
 cDoc = Doc
-  <$> argument str (metavar "FILE" <> help "The file to run")
+  <$> some (argument str (metavar "FILES" <> help "The files to run"))
   <*> switch (long "cached" <> help "Cache results instead of reloading live (useful for serving rather than development)")
   <*> switch (long "api" <> help "Serve only the API rather than the pages too")
 

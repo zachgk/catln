@@ -56,7 +56,7 @@ function Comment(props) {
   // classToType = classToType || {};
   let objNames = {};
   let classToType = {};
-  let obj = {};
+  let obj;
 
   // Replace usages of [TypeName] and [ClassName] with catn:// link reference
   const regex = /\[(\S+)\][^[(]/g;

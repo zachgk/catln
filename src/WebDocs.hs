@@ -73,7 +73,7 @@ filterByType name (objMap, ClassGraph classGraph, _) = (objMap', classGraph', []
 data WDProvider
   = WDProvider {
     cCore           :: Bool
-  , cBaseFileName   :: String
+  , cBaseFileNames   :: [String]
   , cRaw            :: CRes PPrgmGraphData
   , cPrgm           :: CRes (GraphData DesPrgm FileImport)
   , cTPrgmWithTrace :: CRes (GraphData (TPrgm, VPrgm, TraceConstrain) FileImport)
@@ -81,18 +81,18 @@ data WDProvider
   , cTBPrgm          :: CRes (GraphData TBPrgm FileImport)
                     }
 
-mkWDProvider :: Bool -> String -> IO WDProvider
-mkWDProvider includeCore baseFileName = do
+mkWDProvider :: Bool -> [String] -> IO WDProvider
+mkWDProvider includeCore baseFileNames = do
   p <- runCResT $ do
-    baseFileName' <- lift $ mkRawCanonicalImportStr baseFileName
-    rawPrgm <- readFiles includeCore [baseFileName']
+    baseFileNames' <- lift $ mapM mkRawCanonicalImportStr baseFileNames
+    rawPrgm <- readFiles includeCore baseFileNames'
     prgm <- desFiles rawPrgm
     let withTrace = typecheckPrgmWithTrace prgm
     let tprgm = fmap (fmapGraph fst3) withTrace
     let tbprgm = tprgm >>= evalBuildAll
     return $ WDProvider {
         cCore = includeCore
-      , cBaseFileName = baseFileName
+      , cBaseFileNames = baseFileNames
       , cRaw = return rawPrgm
       , cPrgm = return prgm
       , cTPrgmWithTrace = withTrace
@@ -107,12 +107,12 @@ mkWDProvider includeCore baseFileName = do
       unless (null notes) $ putStrLn $ prettyCNotes notes
       fail "Could not build webdocs"
 
-mkLiveWDProvider :: Bool -> String -> IO (IO WDProvider)
-mkLiveWDProvider includeCore baseFileName = return $ mkWDProvider includeCore baseFileName
+mkLiveWDProvider :: Bool -> [String] -> IO (IO WDProvider)
+mkLiveWDProvider includeCore baseFileNames = return $ mkWDProvider includeCore baseFileNames
 
-mkCacheWDProvider :: Bool -> String -> IO (IO WDProvider)
-mkCacheWDProvider includeCore baseFileName = do
-  p <- mkWDProvider includeCore baseFileName
+mkCacheWDProvider :: Bool -> [String] -> IO (IO WDProvider)
+mkCacheWDProvider includeCore baseFileNames = do
+  p <- mkWDProvider includeCore baseFileNames
   return $ return p
 
 getRawPrgm :: WDProvider -> CResT IO PPrgmGraphData
@@ -199,7 +199,9 @@ docApiBase getProvider = do
       tprgms <- getTPrgm provider
       maybeTPrgmRes <- lift $ runCResT $ do
         case graphLookup prgmName' tprgms of
-          Just tprgm -> return (tprgm, prgmFromGraphData prgmName' tprgms)
+          Just tprgm -> do
+            reachTprgms <- asCResT $ prgmFromGraphData prgmName' tprgms
+            return (tprgm, reachTprgms)
           Nothing -> fail $ printf "Could not find typechecked program %s" (show prgmName)
       let maybeTPrgm = fmap fst maybeTPrgmRes
       let maybeTPrgmFull = fmap snd maybeTPrgmRes
@@ -309,25 +311,25 @@ docApiBase getProvider = do
         fail $ printf "Could not build web page for %s.%s" prgmName fun
 
 
-docApi :: Bool -> Bool -> String -> IO ()
-docApi cached includeCore baseFileName = do
+docApi :: Bool -> Bool -> [String] -> IO ()
+docApi cached includeCore baseFileNames = do
 
   provider <- if cached
-    then mkCacheWDProvider includeCore baseFileName
-    else mkLiveWDProvider includeCore baseFileName
+    then mkCacheWDProvider includeCore baseFileNames
+    else mkLiveWDProvider includeCore baseFileNames
 
   scotty 31204 $ docApiBase provider
 
-docServe :: Bool -> Bool -> String -> IO ()
-docServe cached includeCore baseFileName = do
+docServe :: Bool -> Bool -> [String] -> IO ()
+docServe cached includeCore baseFileNames = do
 
   let handleIndex p = case p of
         "" -> Just "index.html"
         _  -> Just p
 
   provider <- if cached
-    then mkCacheWDProvider includeCore baseFileName
-    else mkLiveWDProvider includeCore baseFileName
+    then mkCacheWDProvider includeCore baseFileNames
+    else mkLiveWDProvider includeCore baseFileNames
 
   scotty 8080 $ do
 

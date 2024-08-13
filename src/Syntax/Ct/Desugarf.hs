@@ -27,6 +27,7 @@ import           Data.Bifunctor                   (first)
 import           Data.Graph                       hiding (path)
 import           MapMeta
 import           Semantics
+import           Semantics.Annots                 (isCtxAnnot)
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Desugarf.Expr
@@ -262,10 +263,18 @@ desPrgm (_, statements) = do
   statements' <- mapM (desStatement ("", [])) statements
   return $ mergePrgms statements'
 
+-- | Checks whether a program is valid for desugaring
+-- | This mostly means without disqualifying annotations such as 'ctxAnnot'
+validPrgm :: PPrgm -> Bool
+validPrgm (_, statements) = all validStatementTree statements
+  where
+    validStatementTree (RawStatementTree (RawAnnot a) _) = not $ isCtxAnnot a
+    validStatementTree _                                 = True
+
 desFiles :: PPrgmGraphData -> CResT IO DesPrgmGraphData
 desFiles graphData = do
   -- initial desugar
-  prgms' <- asCResT $ mapMFst3 desPrgm (graphToNodes graphData)
+  prgms' <- asCResT $ mapMFst3 desPrgm (filter (validPrgm . fst3) $ graphToNodes graphData)
   prgms'' <- asCResT $ mapM desImports prgms'
   let graphData' = graphFromEdges prgms''
 

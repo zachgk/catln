@@ -76,7 +76,7 @@ runTest runGolden includeCore fileNameStr = testCaseSteps fileNameStr $ \step ->
       tbprgm <- asCResT $ evalBuildAll tprgm
       lift $ runGoldenTest "treebuild" goldenTreebuildDir fileNameStr tbprgm step
 
-    let evalTarget = evalTargetMode "main" fileName tprgm
+    evalTarget <- asCResT $ evalTargetMode "main" fileName tprgm
     when (evalRunnable evalTarget) $ do
       lift $ step "Eval Run..."
       returnValue <- evalRun "main" fileName tprgm
@@ -106,7 +106,7 @@ test :: IO ()
 test = defaultMain $ runTests False False ["test/test.ct"]
 
 testd :: IO ()
-testd = docApi False False "test/test.ct"
+testd = docApi False False ["test/test.ct"]
 
 standardTests :: IO [String]
 standardTests = findCt testDir
@@ -139,9 +139,9 @@ mtg = mtBase True
 mtd :: String -> IO ()
 mtd k = do
   fileName' <- mtFileName k
-  docApi False True fileName'
+  docApi False True [fileName']
 
 mtde :: String -> IO ()
 mtde k = do
   fileName' <- mtFileName k
-  docServe False True fileName'
+  docServe False True [fileName']

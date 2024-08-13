@@ -18,5 +18,5 @@ RUN git clean -Xdf || true
 RUN stack install --local-bin-path=/usr/local/bin
 RUN cd webdocs && npm install && npm run build
 
-CMD ["catln", "doc", "test/Integration/code", "--cached"]
+CMD ["catln", "doc", "--cached", "stack", "test/Integration/code"]
 EXPOSE 8080
