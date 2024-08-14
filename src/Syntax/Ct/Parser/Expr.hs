@@ -85,7 +85,7 @@ pValue :: Parser PExpr
 pValue = do
   pos1 <- getSourcePos
   usingTheExpr <- optional $ string ":"
-  name <- identifier <|> tidentifier <|> pAnnotIdentifier <|> tvar <|> pHole
+  name <- identifier <|> pHole
   spread <- optional $ string ".."
   pos2 <- getSourcePos
   let m = emptyMeta pos1 pos2
@@ -218,7 +218,7 @@ pAliasSuffix :: Parser TermSuffix
 pAliasSuffix = do
   _ <- string "@"
   pos1 <- getSourcePos
-  aliasName <- identifier <|> tidentifier -- TODO Alias can be full term instead
+  aliasName <- identifier -- TODO Alias can be full term instead
   pos2 <- getSourcePos
   return $ AliasSuffix (emptyMeta pos1 pos2) aliasName
 
@@ -265,7 +265,7 @@ pMacroValue :: Parser PExpr
 pMacroValue = do
   pos1 <- getSourcePos
   _ <- string "${"
-  n <- identifier <|> tidentifier
+  n <- identifier
   _ <- string "}"
   pos2 <- getSourcePos
   return $ RawMacroValue (emptyMeta pos1 pos2) n

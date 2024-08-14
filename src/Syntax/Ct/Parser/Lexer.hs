@@ -17,6 +17,8 @@ module Syntax.Ct.Parser.Lexer where
 
 import           Control.Applicative        hiding (many, some)
 import           Control.Monad              (void)
+import           Data.Char                  (isPrint, isSpace)
+import qualified Data.HashSet               as S
 import           Data.Void
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
@@ -57,38 +59,12 @@ squareBraces = between (symbol "[") (symbol "]")
 curlyBraces :: Parser a -> Parser a
 curlyBraces = between (symbol "{") (symbol "}")
 
+-- TODO Avoid "//" in identifier. It's currently usable by separating by space
 identifier :: Parser String
-identifier = try p
+identifier = some (satisfy idChar)
   where
-    p       = ((:) <$> lowerChar <*> many (alphaNumChar <|> char '/')) <|> ttypeidentifier
-
-tidentifier :: Parser String
-tidentifier = lexeme $ (:) <$> upperChar <*> many (alphaNumChar <|> char '/')
-
-ttypeidentifier :: Parser String
-ttypeidentifier = try $ lexeme $ do
-  first <- upperChar <|> char '/'
-  rest <- case first of
-    '/' -> tidentifier
-    _   -> many (alphaNumChar <|> char '/')
-  return $ first : rest
-
-tvar :: Parser String
-tvar = try $ lexeme $ do
-  _ <- string "$"
-  ext <- optional $ string "_"
-  first <- upperChar
-  rest <- many alphaNumChar
-  return $ case ext of
-    Just{}  -> '$' : '_' : first : rest
-    Nothing -> '$' : first : rest
-
-pAnnotIdentifier :: Parser String
-pAnnotIdentifier = do
-  _ <- string "#"
-  f <- letterChar
-  rst <- many alphaNumChar
-  return ('#':f:rst)
+    idChar c = isPrint c && not (isSpace c) && not (c `S.member` invalidChars)
+    invalidChars = S.fromList "-~:*+<>()[]{}=!&|.@_,?"
 
 pHole :: Parser String
 pHole = do
