@@ -14,9 +14,9 @@ function Value(props) {
     return <span>{val.contents}</span>;
   case "TupleVal":
     switch(val.name) {
-    case "CatlnResult":
+    case "/Catln/CatlnResult":
       return <CatlnResult data={val}/>;
-    case "/Catln/#md":
+    case "/Catln/Doc/Show/MD":
       return <Comment comment={val.args["/text"].contents}/>;
     default:
       let showArgs = "";
@@ -107,8 +107,8 @@ function Comment(props) {
 
 function CatlnResult(props) {
   let data = props.data;
-  let fileName = data.args.name.contents;
-  let fileContents = data.args.contents.contents;
+  let fileName = data.args['/name'].contents;
+  let fileContents = data.args['/contents'].contents;
   if(fileName.endsWith(".ll")) {
     return (
       <SyntaxHighlighter language="llvm">

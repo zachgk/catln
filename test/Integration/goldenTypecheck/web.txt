@@ -661,10 +661,9 @@
                 ,
                     [ /Data/String
                     , /Catln/CatlnResult..
-                    , /Catln/www..
                     , /Catln/Doc/Show/MD..
                     ]
-                , Just "Represents objects which can be shown in the webdocs.    "
+                , Just "Represents objects which can be shown in the webdocs.   "
                 )
             ]
         ,
@@ -702,12 +701,10 @@
                 ( Value /text -> /Data/String = CStr "Tests using a custom build type [www].
                 It also prints the result of the build in an iframe." )
             , /Catln/#print
-                ( Value /p ->
-                    ( /Catln/CatlnResult
-                        ( /name=/Data/String
-                        , /contents=/Data/String
-                        ) .. | /Catln/www ( /html=/Data/String ) ..
-                    ) = Value /main
+                ( Value /p -> /Catln/CatlnResult
+                    ( /name=/Data/String
+                    , /contents=/Data/String
+                    ) .. = Value /main
                 )
             ]
         )

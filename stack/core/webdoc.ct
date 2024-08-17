@@ -13,7 +13,6 @@ module(Catln/Doc)
   dshow(s -> DShow) = s
   every(String, isa= [/Catln/Doc/DShow])
   every(CatlnResult.., isa= [/Catln/Doc/DShow])
-  every(www.., isa= [/Catln/Doc/DShow])
   
   data(Show/MD(text: String))
   every(Show/MD.., isa= [/Catln/Doc/DShow])
