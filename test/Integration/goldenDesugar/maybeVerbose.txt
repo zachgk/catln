@@ -126,7 +126,97 @@
                   For example, integers with the addition operation are a semigroup. "
                 )
             ]
-        , []
+        ,
+            [ /Catln/#md
+                ( Value /text= CStr "# Catln Core Abstract Algebra Types
+                These types define some of the basic relationship between types and ways classes can relate to themselves." )
+            , /Catln/#md
+                ( Value /text= CStr "The Eq class is used to define values which can be compared for equality.
+                While naive tuple equality often works, some types have equality that behaves differently and must be defined.
+                For example, a TreeSet can insert items in different order and produce different trees, but with equal sets.
+                There are only two operations for eq: [operator==] and [operator!=]." )
+            , /Catln/#md
+                ( Value /text= CStr "/operator==</Data/Algebra/Eq $T>($T l, $T r) -> Boolean" )
+            , /Catln/#md
+                ( Value /text= CStr "This checks whether two items are equal.
+                Note that it only compares like items with each other, not that you can compare apples to oranges." )
+            , /Catln/#md
+                ( Value /text= CStr "It is the opposite of [operator==] leading to the simple definition:" )
+            , /Catln/#md
+                ( Value /text= CStr "/operator!=(l, r) = ~(l == r)
+                Given this, creating an instance of Eq only requires defining equality and the != can be produced automatically." )
+            , /Catln/#md
+                ( Value /text= CStr "## Ordering" )
+            , /Catln/#md
+                ( Value /text= CStr "Ordering is used to define operations that have a natural ability to be ordered or sorted.
+                Some examples include numbers which are sorted from smallest to largest or strings which are sorted alphabetically." )
+            , /Catln/#md
+                ( Value /text= CStr "There are two different forms of ordering:" )
+            , /Catln/#md
+                ( Value /text= CStr "Ord is used to define types which can be strictly ordered.
+                Every element, when compared must have one of the following [Ordering] relationships:" )
+            , /Catln/#md
+                ( Value /text= CStr "The Orderings can relate any like items of Ord. " )
+            , /Catln/#md
+                ( Value /text= CStr "In addition to [Ord], [POrd] defines a partial ordering.
+                Partially ordered items can be compared, but may result in [NoOrdering]:" )
+            , /Catln/#md
+                ( Value /text= CStr "As an example, sets can be partially ordered by the subset operation.
+                One set A <= B when A is a subset of B.
+                An ordered example is {1} <= {1, 2}.
+                But, two sets like {1} and {2} have no ordering between them." )
+            , /Catln/#md
+                ( Value /text= CStr "There are a few nice properties about ordering." )
+            , /Catln/#md
+                ( Value /text= CStr "This means that something fully ordered can still take advantage of many of the same functions as partially ordered ones.
+                It just usually has a more specific result." )
+            , /Catln/#md
+                ( Value /text= CStr "The only major function for ordering is [compare].
+                Comparing two [Ord] will result in an [Ordering].
+                Likewise, comparing two partially orderables [POrd] results in a [POrdering]." )
+            , /Catln/#md
+                ( Value /text= CStr "### Operators for ordering
+                Besides compare, there are also some operators to make using ordering easier." )
+            , /Catln/#md
+                ( Value /text= CStr "If something can be compared for order, it should also be comparable for equality by the following relationship:" )
+            , /Catln/#md
+                ( Value /text= CStr "/operator==<POrd $T>($T l, $T r) = compare(l=l, r=r) == Equal" )
+            , /Catln/#md
+                ( Value /text= CStr "### Ordering utility functions" )
+            , /Catln/#md
+                ( Value /text= CStr "max<Ord $T>($T l, $T r) -> $T = if l >= r then l else r" )
+            , /Catln/#md
+                ( Value /text= CStr "min<Ord $T>($T l, $T r) -> $T = if l <= r then l else r" )
+            , /Catln/#md
+                ( Value /text= CStr "TODO: Tests and properties for compare" )
+            , /Catln/#md
+                ( Value /text= CStr "## Semigroup" )
+            , /Catln/#md
+                ( Value /text= CStr "A semigroup is a type combined with an associative operation called [operator++].
+                For example, integers with the addition operation are a semigroup." )
+            , /Catln/#md
+                ( Value /text= CStr "The [Monoid] builds on top of the [Semigroup].
+                It adds the identity value [mempty].
+                The integers with addition form a [Monoid], and 0 is the value for [mempty].
+                Another example is [String] where "" is the value for [mempty]" )
+            , /Catln/#md
+                ( Value /text= CStr "We can test to verify that [mempty] works with both the left and right." )
+            , /Catln/#md
+                ( Value /text= CStr "mconcat<Monoid $T>(List<$T> lst) = lst.fold(operator++, mempty)" )
+            , /Catln/#md
+                ( Value /text= CStr "Using the [Monoid], it is possible to combine a list of monoids together." )
+            , /Catln/#md
+                ( Value /text= CStr "The [CommutativeMonoid] builds on top of the [Monoid].
+                It is also called an Abelian Monoid
+                Here, integers with addition are a [CommutativeMonoid], but [String]s are not." )
+            , /Catln/#md
+                ( Value /text= CStr "We can test to ensure that all [CommutativeMonoid]s satisfy the commutativity requirement." )
+            , /Catln/#md
+                ( Value /text= CStr "The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
+                It adds an inverse operation that finds the opposite of an element.
+                For integers with addition, negation with [operator~] would be the inverse.
+                Something like [String]s would not have an inverse, so it wouldn't be a [Group]." )
+            ]
         )
     , ct
         ( CStr "/repo/dir/stack/core/algebra.ct" )
@@ -196,7 +286,19 @@
                 , Just ""
                 )
             ]
-        , []
+        ,
+            [ /Catln/#md
+                ( Value /text= CStr "# Catln Core Compiling Types and Annotations" )
+            , /Catln/#md
+                ( Value /text= CStr "## IO" )
+            , /Catln/#md
+                ( Value /text= CStr "## Core Annotations
+                The core annotations are all of the annotations used by the compiler and the web docs program." )
+            , /Catln/#md
+                ( Value /text= CStr "## Build-in Type Macros" )
+            , /Catln/#md
+                ( Value /text= CStr "## Result Classes" )
+            ]
         )
     , ct
         ( CStr "/repo/dir/stack/core/compile.ct" )
@@ -303,7 +405,53 @@
                 , Just ""
                 )
             ]
-        , []
+        ,
+            [ /Catln/#md
+                ( Value /text= CStr "# Catln Core Data Types
+                These define the basic data types used in the language." )
+            , /Catln/#md
+                ( Value /text= CStr "## String" )
+            , /Catln/#md
+                ( Value /text= CStr "## Context" )
+            , /Catln/#md
+                ( Value /text= CStr "## Collections
+                Collections are contains that hold elements of a type inside them." )
+            , /Catln/#md
+                ( Value /text= CStr "A [Functor] is a basic property of a collection.
+                It has a single operation [fmap] that applies a function to each element in the collection." )
+            , /Catln/#md
+                ( Value /text= CStr "$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]" )
+            , /Catln/#md
+                ( Value /text= CStr "## Collections" )
+            , /Catln/#md
+                ( Value /text= CStr "[Option] defines a type that might have a value or [None].
+                It can be used to handle operations that are uncertain if they can produce a response." )
+            , /Catln/#md
+                ( Value /text= CStr "None.fmap(fn) = None" )
+            , /Catln/#md
+                ( Value /text= CStr "$T.fmap(fn($T)) = fn(this)" )
+            , /Catln/#md
+                ( Value /text= CStr "A [List] is a collection of zero or more ordered items." )
+            , /Catln/#md
+                ( Value /text= CStr "The simplest kind of list can be created by prepending.
+                A [ConsList] defines a list either by prepending to a list or with an empty list." )
+            , /Catln/#md
+                ( Value /text= CStr "/operator+:<$T>($T l, ConsList<$T> r) = Cons(head=l, tail=r)
+                [operator+:] is a utility operator to prepend an element onto a [List]." )
+            , /Catln/#md
+                ( Value /text= CStr "#### [length]
+                The [length] of a [List] is the number of items inside of it." )
+            , /Catln/#md
+                ( Value /text= CStr "Nil.fmap(fn) = Nil" )
+            , /Catln/#md
+                ( Value /text= CStr "Cons(head, tail).fmap(fn) = Cons(head=fn(head), tail=tail.fmap(fn))" )
+            , /Catln/#md
+                ( Value /text= CStr "A [Set] is a collection of zero or more unique items.
+                It is not ordered." )
+            , /Catln/#md
+                ( Value /text= CStr "[Enum] represents a type which can be enumerated.
+                It defines a single function [enum] which lists all of the values in the type." )
+            ]
         )
     , ct
         ( CStr "/repo/dir/stack/core/data.ct" )
@@ -444,7 +592,27 @@
                 , Just ""
                 )
             ]
-        , []
+        ,
+            [ /Catln/#md
+                ( Value /text= CStr "# Catln Core Primitives
+                These types some of the basic types used in Catln." )
+            , /Catln/#md
+                ( Value /text= CStr "## Anonymous type" )
+            , /Catln/#md
+                ( Value /text= CStr "## Booleans" )
+            , /Catln/#md
+                ( Value /text= CStr "enum<Boolean> = [False, True]" )
+            , /Catln/#md
+                ( Value /text= CStr "## Integers" )
+            , /Catln/#md
+                ( Value /text= CStr "### Commutative Group" )
+            , /Catln/#md
+                ( Value /text= CStr "mempty<Integer $T> = 0" )
+            , /Catln/#md
+                ( Value /text= CStr "mappend<Integer $T>($T l, $T r) = l + r" )
+            , /Catln/#md
+                ( Value /text= CStr "inverse<Integer $T>($T t) = -t" )
+            ]
         )
     , ct
         ( CStr "/repo/dir/stack/core/primitives.ct" )
@@ -480,7 +648,16 @@
                 , Just "Represents objects which can be shown in the webdocs.    "
                 )
             ]
-        , []
+        ,
+            [ /Catln/#md
+                ( Value /text= CStr "# Catln WebDocs
+                This provides common components and annotations used in Webdocs.
+                These include the ones" )
+            , /Catln/#md
+                ( Value /text= CStr "Represents objects which can be shown in the webdocs." )
+            , /Catln/#md
+                ( Value /text= CStr "dshow(s) -> /Catln/Doc/DShow" )
+            ]
         )
     , ct
         ( CStr "/repo/dir/stack/core/webdoc.ct" )
