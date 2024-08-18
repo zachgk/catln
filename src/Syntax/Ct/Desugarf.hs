@@ -20,6 +20,7 @@ import qualified Data.HashMap.Strict              as H
 import           Data.Maybe
 import           Text.Printf
 
+import           Control.Monad                    (forM)
 import           Control.Monad.Trans
 import           CRes
 import           CtConstants
@@ -237,33 +238,30 @@ desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree state
     statements' <- mapM (desStatement (inheritModule, a':inheritAnnots)) subStatements
     return $ mergePrgms statements'
 
-desImports :: (DesPrgm, RawFileImport, [RawFileImport]) -> CRes (DesPrgm, FileImport, [FileImport])
-desImports (prgm, name, imports) = do
-  let name' = semiDesExpr SDOutput Nothing $ rawImpAbs name
-  let imports' = fmap (semiDesExpr SDOutput Nothing . rawImpAbs) imports
-  return (prgm, name', imports')
-
-finalPasses :: DesPrgmGraphData -> DesPrgmGraphNodes -> CResT IO DesPrgmGraphNodes
-finalPasses (desPrgmGraph, nodeFromVertex, vertexFromKey) (prgm1, prgmName, imports) = do
-  -- Build fullPrgm with recursive imports
-  let vertex = fromJust $ vertexFromKey prgmName
-  let importTree = reachable desPrgmGraph vertex
-  let fullPrgm1 = mergePrgms $ map (fst3 . nodeFromVertex) importTree
-
-  -- Run removeClassInstanceObjects
-  let prgm2 = removeClassInstanceObjects fullPrgm1 prgm1
+finalPasses :: [DesPrgm] -> [DesPrgm] -> CResT IO [DesPrgm]
+finalPasses prgms fullPrgms = do
+  let fullPrgm1 = mergePrgms (prgms ++ fullPrgms)
   let fullPrgm2 = removeClassInstanceObjects fullPrgm1 fullPrgm1
 
-  -- Run resolveRelativeNames pass
-  let prgm3 = resolveRelativeNames fullPrgm2 prgm2
-  prgm4 <- lift $ mapMetaPrgmM addMetaID prgm3
-  return (prgm4, prgmName, imports)
+  forM prgms $ \prgm1 -> do
+    -- Run removeClassInstanceObjects
+    let prgm2 = removeClassInstanceObjects fullPrgm1 prgm1
 
+    -- Run resolveRelativeNames pass
+    let prgm3 = resolveRelativeNames fullPrgm2 prgm2
+    lift $ mapMetaPrgmM addMetaID prgm3
 
-desPrgm :: PPrgm -> CRes DesPrgm
-desPrgm (_, statements) = do
+desPrgm :: (PPrgm, RawFileImport, [RawFileImport]) -> CRes (DesPrgm, FileImport, [FileImport])
+desPrgm ((_, statements), name, imports) = do
+  -- desImports
+  let name' = semiDesExpr SDOutput Nothing $ rawImpAbs name
+  let imports' = fmap (semiDesExpr SDOutput Nothing . rawImpAbs) imports
+
   statements' <- mapM (desStatement ("", [])) statements
-  return $ mergePrgms statements'
+  let prgm' = mergePrgms statements'
+
+  -- desPrgm
+  return (prgm', name', imports')
 
 -- | Checks whether a program is valid for desugaring
 -- | This mostly means without disqualifying annotations such as 'ctxAnnot'
@@ -274,12 +272,8 @@ validPrgm (_, statements) = all validStatementTree statements
     validStatementTree _                                 = True
 
 desFiles :: PPrgmGraphData -> CResT IO DesPrgmGraphData
-desFiles graphData = do
+desFiles prgms1 = do
   -- initial desugar
-  prgms' <- asCResT $ mapMFst3 desPrgm (filter (validPrgm . fst3) $ graphToNodes graphData)
-  prgms'' <- asCResT $ mapM desImports prgms'
-  let graphData' = graphFromEdges prgms''
-
-  -- final passes
-  prgms''' <- mapM (finalPasses graphData') prgms''
-  return $ graphFromEdges prgms'''
+  prgms2 <- asCResT $ mapM desPrgm (filter (validPrgm . fst3) $ graphToNodes prgms1)
+  let prgms3 = graphFromEdges prgms2
+  mapGraphWithDeps finalPasses prgms3
