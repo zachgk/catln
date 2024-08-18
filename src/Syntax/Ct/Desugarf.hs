@@ -238,8 +238,8 @@ desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree state
     statements' <- mapM (desStatement (inheritModule, a':inheritAnnots)) subStatements
     return $ mergePrgms statements'
 
-finalPasses :: [DesPrgm] -> [DesPrgm] -> CResT IO [DesPrgm]
-finalPasses prgms fullPrgms = do
+desFinalPasses :: [DesPrgm] -> [DesPrgm] -> CResT IO [DesPrgm]
+desFinalPasses prgms fullPrgms = do
   let fullPrgm1 = mergePrgms (prgms ++ fullPrgms)
   let fullPrgm2 = removeClassInstanceObjects fullPrgm1 fullPrgm1
 
@@ -276,4 +276,4 @@ desFiles prgms1 = do
   -- initial desugar
   prgms2 <- asCResT $ mapM desPrgm (filter (validPrgm . fst3) $ graphToNodes prgms1)
   let prgms3 = graphFromEdges prgms2
-  mapGraphWithDeps finalPasses prgms3
+  mapGraphWithDeps desFinalPasses prgms3

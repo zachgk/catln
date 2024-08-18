@@ -24,6 +24,7 @@ import {useApi, TocContext} from './Common/Common';
 import ListProgram from './ListProgram';
 import Build from './Build';
 import Docs from './Docs';
+import {AnnotPage} from './DocsPage';
 import TypeInfer from './TypeInfer';
 import Debug from './Debug';
 import TypePage from './Type';
@@ -146,6 +147,9 @@ function Body() {
         </Route>
         <Route path="/docs">
           <Docs />
+        </Route>
+        <Route path="/annot">
+          <AnnotPage />
         </Route>
         <Route path="/list">
           <ListProgram />

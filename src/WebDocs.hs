@@ -37,22 +37,24 @@ import           Eval                          (evalAllTargetModes, evalAnnots,
 import           Eval.Common                   (EvalMetaDat, EvalResult, TExpr,
                                                 Val (..))
 import           MapMeta                       (interleaveMeta, interleavePrgm,
-                                                zip3MetaFun)
+                                                zip3MetaFun, addMetaID)
 import           Semantics.Prgm
 import           Semantics.Types
-import           Syntax.Ct.Desugarf            (desFiles)
-import           Syntax.Ct.MapRawMeta          (mapMetaRawPrgm)
+import           Syntax.Ct.Desugarf            (desFiles, desPrgm, desFinalPasses)
+import           Syntax.Ct.MapRawMeta          (mapMetaRawPrgm, mapMetaRawPrgmM)
 import           Syntax.Ct.Parser.Syntax       (DesPrgm, PPrgmGraphData)
-import           Syntax.Ct.Prgm                (rawImpDisp)
+import           Syntax.Ct.Prgm                (rawImpDisp, RawStatementTree (RawStatementTree), RawStatement (RawAnnot), mkRawFileImport, RawExpr (RawValue))
 import           Syntax.Parsers                (mkDesCanonicalImportStr,
                                                 mkRawCanonicalImportStr,
                                                 readFiles)
 import           Text.Printf
-import           TypeCheck                     (typecheckPrgmWithTrace)
+import           TypeCheck                     (typecheckPrgmWithTrace, typecheckPrgms)
 import           TypeCheck.Common              (TPrgm, TraceConstrain, VPrgm,
                                                 filterTraceConstrain,
-                                                flipTraceConstrain)
+                                                flipTraceConstrain, typeCheckToRes)
 import           Utils
+import Syntax.Ct.Parser.Expr (pExpr)
+import Text.Megaparsec (runParser, errorBundlePretty)
 
 type TBPrgm = Prgm TExpr EvalMetaDat
 
@@ -214,6 +216,27 @@ docApiBase getProvider = do
       let targetModes = maybe H.empty evalAllTargetModes (cresToMaybe maybeTPrgmFull)
       let annots' = maybe H.empty (H.fromList . map (first (getMetaID . getExprMeta))) (cresToMaybe maybeAnnots)
       return $ mapMetaRawPrgm (zip3MetaFun (interleaveMeta tprgm') (interleaveMeta targetModes) (interleaveMeta annots')) rawPrgm'
+    maybeJson resp
+
+  get "/api/annot" $ do
+    provider <- liftAndCatchIO getProvider
+    annot <- param "annot"
+    resp <- liftAndCatchIO $ runCResT $ do
+      rawPrgm <- case runParser pExpr "<annot>" annot of
+        Left err -> fail $ show $ errorBundlePretty err
+        Right parsed -> return ([], [RawStatementTree (RawAnnot parsed) []])
+      rawPrgm' <- lift $ mapMetaRawPrgmM addMetaID rawPrgm
+      (annotDesPrgm, annotPrgmName, _) <- asCResT $ desPrgm (rawPrgm', mkRawFileImport $ RawValue emptyMetaN "<annot>", [])
+      [annotDesPrgm'] <- desFinalPasses [annotDesPrgm] []
+      tprgmsTrace <- getTPrgmWithTrace provider
+      tprgms <- getTPrgm provider
+      let annotDeps = map snd3 $ graphToNodes tprgms
+      [(annotTprgm, _, _)] <- asCResT $ typeCheckToRes $ typecheckPrgms [annotDesPrgm'] (map fst3 $ graphToNodes tprgmsTrace)
+      let joinedTprgms = graphFromEdges ((annotTprgm, annotPrgmName, annotDeps) : graphToNodes tprgms)
+      let targetModes = evalAllTargetModes annotTprgm
+      maybeAnnots <- asCResT $ evalAnnots annotPrgmName joinedTprgms
+      let annots' = H.fromList $ map (first (getMetaID . getExprMeta)) maybeAnnots
+      return $ mapMetaRawPrgm (zip3MetaFun (interleaveMeta $ interleavePrgm annotTprgm) (interleaveMeta targetModes) (interleaveMeta annots')) rawPrgm'
     maybeJson resp
 
   get "/api/desugar" $ do

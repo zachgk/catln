@@ -4,10 +4,10 @@ import { makeStyles } from '@material-ui/core/styles';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
-import {useHistory} from 'react-router-dom';
+import {useHistory, useParams} from 'react-router-dom';
 
 import {rawExprMeta, RawExpr, RawObjArr} from './Common/Syntax';
-import {useApi, Loading, KeyWord, ReachesTree} from './Common/Common';
+import {useQuery, useApi, Loading, KeyWord, ReachesTree} from './Common/Common';
 
 const DEBUG_NO_EVAL = false;
 
@@ -28,6 +28,20 @@ function DocsPage(props) {
   const {prgmName} = props;
 
   let apiResult = useApi(`/api/page?prgmName=${prgmName}`);
+
+  return (
+    <Loading status={apiResult}>
+      <Main data={apiResult.data} prgmName={prgmName}/>
+    </Loading>
+  );
+}
+
+function AnnotPage(props) {
+  const query = useQuery();
+  const annot = query.get("annot");
+  const prgmName = "";
+
+  let apiResult = useApi(`/api/annot?annot=${encodeURIComponent(annot)}`);
 
   return (
     <Loading status={apiResult}>
@@ -160,3 +174,4 @@ function PlayButton(props) {
 
 
 export default DocsPage;
+export {AnnotPage};

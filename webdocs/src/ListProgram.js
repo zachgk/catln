@@ -9,11 +9,10 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Radio from '@material-ui/core/Radio';
 import RadioGroup from '@material-ui/core/RadioGroup';import {
   useHistory,
-  useLocation,
   useRouteMatch
 } from 'react-router-dom';
 
-import {useApi, tagJoin, Loading, PTypeName, PClassName, PartialType, Type} from './Common/Common';
+import {useQuery, useApi, tagJoin, Loading, PTypeName, PClassName, PartialType, Type} from './Common/Common';
 import {ObjArr} from './Common/Semantics';
 
 const useStyles = makeStyles({
@@ -84,10 +83,6 @@ function ListProgram(props) {
       </Loading>
     </div>
   );
-}
-
-function useQuery() {
-  return new URLSearchParams(useLocation().search);
 }
 
 function ShowList(props) {

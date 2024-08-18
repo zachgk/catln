@@ -5,7 +5,7 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import TreeItem from '@material-ui/lab/TreeItem';
 import { makeStyles } from '@material-ui/core/styles';
-import {Link} from 'react-router-dom';
+import {useLocation, Link} from 'react-router-dom';
 
 
 function tagJoin(lst, joinWith) {
@@ -39,6 +39,10 @@ const useStyles = makeStyles( theme => ({
 }));
 
 const TocContext = React.createContext({});
+
+function useQuery() {
+  return new URLSearchParams(useLocation().search);
+}
 
 function useApi(path) {
   const [result, setResult] = useState({
@@ -380,6 +384,7 @@ function ReachesTreeNode(props) {
 export {
   TocContext,
   tagJoin,
+  useQuery,
   useApi,
   Loading,
   Notes,

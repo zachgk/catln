@@ -19,3 +19,8 @@ module(Catln/Doc)
   dshow(s= #md(text)) = Show/MD(text=text)
 
   dshow(s= #print(p)) = p
+
+  annot(#listProgram)
+  data(Show/ListProgram)
+  every(Show/ListProgram.., isa= [/Catln/Doc/DShow])
+  dshow(s= #listProgram) = Show/ListProgram
