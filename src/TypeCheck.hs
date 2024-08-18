@@ -22,10 +22,7 @@ module TypeCheck where
 
 import           Control.Monad.State
 import           CRes
-import           Data.Graph
 import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet        as S
-import           Data.Maybe
 import           MapMeta
 import           Semantics.Prgm
 import           TypeCheck.Common
@@ -50,29 +47,15 @@ typecheckPrgmsSt pprgms typechecked = do
   tprgms <- toPrgms vprgms
   return (tprgms, vprgms, trace)
 
-typecheckPrgms :: [PPrgm] -> [TPrgm] -> TypeCheckResult [TypecheckTuplePrgm]
-typecheckPrgms pprgms typechecked = do
-  let baseFEnv = makeBaseFEnv (mergePrgms (pprgms ++ map (mapMetaPrgm clearMetaDat) typechecked))
-  (tprgms, vprgms, trace) <- evalStateT (typecheckPrgmsSt pprgms typechecked) baseFEnv
+typecheckPrgms :: [PPrgm] -> [TypecheckTuplePrgm] -> TypeCheckResult [TypecheckTuplePrgm]
+typecheckPrgms pprgms depsTrace = do
+  let deps = map fst3 depsTrace
+  let baseFEnv = makeBaseFEnv (mergePrgms (pprgms ++ map (mapMetaPrgm clearMetaDat) deps))
+  (tprgms, vprgms, trace) <- evalStateT (typecheckPrgmsSt pprgms deps) baseFEnv
   return $ zip3 tprgms vprgms (repeat trace)
 
-typecheckConnComps :: PPrgmGraphData -> TypecheckFileResult -> [SCC (GraphNodes PPrgm FileImport)] -> TypeCheckResult TypecheckFileResult
-typecheckConnComps _ res [] = return res
-typecheckConnComps graphData@(prgmGraph, prgmFromNode, prgmFromName) results (curPrgm:nextPrgms) = do
-  let pprgms = flattenSCC curPrgm
-  let pprgmsNames = S.fromList $ map snd3 pprgms
-  let importNames = S.fromList $ map (snd3 . prgmFromNode) $ concatMap (reachable prgmGraph . fromJust . prgmFromName) pprgmsNames
-  let strictDepImportNames = S.difference importNames pprgmsNames
-  let importChecked = fromJust $ mapM (`H.lookup` results) (S.toList strictDepImportNames)
-  newResults <- typecheckPrgms (map fst3 pprgms) (map (fst3 . fst3) importChecked)
-  let results' = foldr (\((_, prgmName, prgmImports), prgm') accResults -> H.insert prgmName (prgm', prgmName, prgmImports) accResults) results (zip pprgms newResults)
-  typecheckConnComps graphData results' nextPrgms
-
 typecheckPrgmWithTrace :: PPrgmGraphData -> CRes (GraphData FinalTypecheckTuplePrgm FileImport)
-typecheckPrgmWithTrace pprgms = typeCheckToRes $ do
-  let pprgmSCC = stronglyConnCompR $ graphToNodes pprgms
-  typechecked <- typecheckConnComps pprgms H.empty pprgmSCC
-  return $ graphFromEdges $ H.elems typechecked
+typecheckPrgmWithTrace pprgms = typeCheckToRes $ mapGraphWithDeps typecheckPrgms pprgms
 
 typecheckPrgm :: PPrgmGraphData -> CRes (GraphData TPrgm FileImport)
 typecheckPrgm pprgms = do
