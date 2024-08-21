@@ -1,13 +1,10 @@
 import React from 'react';
 
-import {useParams} from 'react-router-dom';
-
 import {useApi, Loading} from '../Common';
-import {ShowList, ClassComments} from './ListProgram'; 
+import {ShowList, ClassComments} from './ListProgram';
 
-function Class() {
-  let { name } = useParams();
-  name = decodeURIComponent(name);
+function Class(props) {
+  const { name } = props;
 
   let apiResult = useApi(`/api/class/${name}`);
 

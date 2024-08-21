@@ -26,8 +26,8 @@ const useStyles = makeStyles({
 
 const PrgmNameContext = React.createContext(undefined);
 
-function TypeInfer() {
-  const { prgmName } = useParams();
+function TypeInfer(props) {
+  const { prgmName } = props;
   let apiResult = useApi(`/api/constrain?prgmName=${prgmName}`);
 
   return (

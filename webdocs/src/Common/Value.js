@@ -25,17 +25,17 @@ function Value(props) {
     case "/Catln/Doc/Show/MD":
       return <Comment comment={val.args["/text"].contents}/>;
     case "/Catln/Doc/Show/ListProgram":
-      return <ListProgram />;
+      return <ListProgram {...val.args} />;
     case "/Catln/Doc/Show/TypePage":
-      return <TypePage />;
+      return <TypePage {...val.args} />;
     case "/Catln/Doc/Show/ClassPage":
-      return <Class />;
+      return <Class {...val.args} />;
     case "/Catln/Doc/Show/TypeInfer":
-      return <TypeInfer />;
+      return <TypeInfer {...val.args} />;
     case "/Catln/Doc/Show/Debug":
-      return <Debug />;
+      return <Debug {...val.args} />;
     case "/Catln/Doc/Show/BuildPage":
-      return <Build />;
+      return <Build {...val.args} />;
     default:
       let showArgs = "";
       if(Object.keys(val.args).length > 0) {

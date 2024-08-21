@@ -17,6 +17,7 @@ import {
   Route,
   Link,
   Redirect,
+  useParams,
   useHistory
 } from 'react-router-dom';
 
@@ -133,6 +134,16 @@ function Header() {
   );
 }
 
+function ValuePage(props) {
+  const {name} = props;
+  let params = useParams();
+  let args = {};
+  for(var paramName in params) {
+    args[paramName] = decodeURIComponent(params[paramName]);
+  }
+  return <Value data={{tag: "TupleVal", name: name, args: args}}/>;
+}
+
 function Body() {
   return (
     <div>
@@ -147,22 +158,22 @@ function Body() {
           <AnnotPage />
         </Route>
         <Route path="/list">
-          <Value data={{tag: "TupleVal", name: "/Catln/Doc/Show/ListProgram"}} />
+          <ValuePage name={"/Catln/Doc/Show/ListProgram"} />
         </Route>
         <Route path="/type/:name">
-          <Value data={{tag: "TupleVal", name: "/Catln/Doc/Show/TypePage"}} />
+          <ValuePage name={"/Catln/Doc/Show/TypePage"} />
         </Route>
         <Route path="/class/:name">
-          <Value data={{tag: "TupleVal", name: "/Catln/Doc/Show/ClassPage"}} />
+          <ValuePage name={"/Catln/Doc/Show/ClassPage"} />
         </Route>
         <Route path="/typeinfer/:prgmName">
-          <Value data={{tag: "TupleVal", name: "/Catln/Doc/Show/TypeInfer"}} />
+          <ValuePage name={"/Catln/Doc/Show/TypeInfer"} />
         </Route>
         <Route path="/debug/:prgmName/:fun">
-          <Value data={{tag: "TupleVal", name: "/Catln/Doc/Show/Debug"}} />
+          <ValuePage name={"/Catln/Doc/Show/Debug"} />
         </Route>
         <Route path="/build/:prgmName/:fun">
-          <Value data={{tag: "TupleVal", name: "/Catln/Doc/Show/BuildPage"}} />
+          <ValuePage name={"/Catln/Doc/Show/BuildPage"} />
         </Route>
       </Switch>
     </div>
