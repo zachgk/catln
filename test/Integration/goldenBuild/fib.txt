@@ -651,9 +651,14 @@
                 ( EAppArg Value /s -> /Catln/#md ( /text=TopType ) = /Catln/#md ( EAppArg Value /text -> ~String ) ) -> /Catln/Doc/Show/MD ( /text=~String ) = /Catln/Doc/Show/MD ( EAppArg Value /text -> TVArg /text = Value /text )
             , /Catln/Doc/dshow
                 ( EAppArg Value /s -> /Catln/#print ( /p=TopType ) = /Catln/#print ( EAppArg Value /p ) ) -> TVArg /p = Value /p
+            , Value /Catln/Doc/#listProgram
+            , Value /Catln/Doc/Show/ListProgram
+            , /Catln/Doc/dshow ( EAppArg Value /s -> /Catln/Doc/#listProgram = Value /Catln/Doc/#listProgram ) -> /Catln/Doc/Show/ListProgram = Value /Catln/Doc/Show/ListProgram
             ]
         ,
             [ CGType
+            , CGType
+            , CGType
             , CGType
             , CGClass
                 ( False
@@ -662,8 +667,9 @@
                     [ /Data/String
                     , /Catln/CatlnResult..
                     , /Catln/Doc/Show/MD..
+                    , /Catln/Doc/Show/ListProgram..
                     ]
-                , Just "Represents objects which can be shown in the webdocs.   "
+                , Just "Represents objects which can be shown in the webdocs.    "
                 )
             ]
         ,

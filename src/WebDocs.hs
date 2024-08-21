@@ -36,25 +36,31 @@ import           Eval                          (evalAllTargetModes, evalAnnots,
                                                 evalRun, prgmFromGraphData)
 import           Eval.Common                   (EvalMetaDat, EvalResult, TExpr,
                                                 Val (..))
-import           MapMeta                       (interleaveMeta, interleavePrgm,
-                                                zip3MetaFun, addMetaID)
+import           MapMeta                       (addMetaID, interleaveMeta,
+                                                interleavePrgm, zip3MetaFun)
 import           Semantics.Prgm
 import           Semantics.Types
-import           Syntax.Ct.Desugarf            (desFiles, desPrgm, desFinalPasses)
+import           Syntax.Ct.Desugarf            (desFiles, desFinalPasses,
+                                                desPrgm)
 import           Syntax.Ct.MapRawMeta          (mapMetaRawPrgm, mapMetaRawPrgmM)
+import           Syntax.Ct.Parser.Expr         (pExpr)
 import           Syntax.Ct.Parser.Syntax       (DesPrgm, PPrgmGraphData)
-import           Syntax.Ct.Prgm                (rawImpDisp, RawStatementTree (RawStatementTree), RawStatement (RawAnnot), mkRawFileImport, RawExpr (RawValue))
+import           Syntax.Ct.Prgm                (RawExpr (RawValue),
+                                                RawStatement (RawAnnot),
+                                                RawStatementTree (RawStatementTree),
+                                                mkRawFileImport, rawImpDisp)
 import           Syntax.Parsers                (mkDesCanonicalImportStr,
                                                 mkRawCanonicalImportStr,
                                                 readFiles)
+import           Text.Megaparsec               (errorBundlePretty, runParser)
 import           Text.Printf
-import           TypeCheck                     (typecheckPrgmWithTrace, typecheckPrgms)
+import           TypeCheck                     (typecheckPrgmWithTrace,
+                                                typecheckPrgms)
 import           TypeCheck.Common              (TPrgm, TraceConstrain, VPrgm,
                                                 filterTraceConstrain,
-                                                flipTraceConstrain, typeCheckToRes)
+                                                flipTraceConstrain,
+                                                typeCheckToRes)
 import           Utils
-import Syntax.Ct.Parser.Expr (pExpr)
-import Text.Megaparsec (runParser, errorBundlePretty)
 
 type TBPrgm = Prgm TExpr EvalMetaDat
 
@@ -223,7 +229,7 @@ docApiBase getProvider = do
     annot <- param "annot"
     resp <- liftAndCatchIO $ runCResT $ do
       rawPrgm <- case runParser pExpr "<annot>" annot of
-        Left err -> fail $ show $ errorBundlePretty err
+        Left err     -> fail $ show $ errorBundlePretty err
         Right parsed -> return ([], [RawStatementTree (RawAnnot parsed) []])
       rawPrgm' <- lift $ mapMetaRawPrgmM addMetaID rawPrgm
       (annotDesPrgm, annotPrgmName, _) <- asCResT $ desPrgm (rawPrgm', mkRawFileImport $ RawValue emptyMetaN "<annot>", [])
