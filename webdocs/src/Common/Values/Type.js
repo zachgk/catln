@@ -2,11 +2,12 @@ import React from 'react';
 
 import {useParams} from 'react-router-dom';
 
-import {useApi, Loading} from './Common/Common';
+import {useApi, Loading} from '../Common';
 import {ShowList} from './ListProgram';
 
 function TypePage() {
-  const { name } = useParams();
+  let { name } = useParams();
+  name = decodeURIComponent(name);
 
   let apiResult = useApi(`/api/object/${name}`);
 

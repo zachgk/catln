@@ -11,7 +11,7 @@ import {
   useParams
 } from 'react-router-dom';
 
-import {useApi, tagJoin, Loading, Notes, Type, PartialKey, ReachesTree} from './Common/Common';
+import {useApi, tagJoin, Loading, Notes, Type, PartialKey, ReachesTree} from '../Common';
 import {ObjMap} from './ListProgram';
 
 const useStyles = makeStyles({

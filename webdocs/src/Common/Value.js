@@ -4,6 +4,12 @@ import ReactMarkdown, {uriTransformer} from 'react-markdown';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 
 import {KeyWord, PTypeName, PClassName, tagJoin} from './Common';
+import ListProgram from './Values/ListProgram';
+import TypeInfer from './Values/TypeInfer';
+import Debug from './Values/Debug';
+import TypePage from './Values/Type';
+import Class from './Values/Class';
+import Build from './Values/Build';
 
 function Value(props) {
   let val = props.data;
@@ -18,6 +24,18 @@ function Value(props) {
       return <CatlnResult data={val}/>;
     case "/Catln/Doc/Show/MD":
       return <Comment comment={val.args["/text"].contents}/>;
+    case "/Catln/Doc/Show/ListProgram":
+      return <ListProgram />;
+    case "/Catln/Doc/Show/TypePage":
+      return <TypePage />;
+    case "/Catln/Doc/Show/ClassPage":
+      return <Class />;
+    case "/Catln/Doc/Show/TypeInfer":
+      return <TypeInfer />;
+    case "/Catln/Doc/Show/Debug":
+      return <Debug />;
+    case "/Catln/Doc/Show/BuildPage":
+      return <Build />;
     default:
       let showArgs = "";
       if(Object.keys(val.args).length > 0) {

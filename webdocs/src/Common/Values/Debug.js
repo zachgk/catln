@@ -6,9 +6,9 @@ import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import TreeItem from '@material-ui/lab/TreeItem';
 import {useParams} from 'react-router-dom';
 
-import {useApi, Loading} from './Common/Common';
-import {ObjArr} from './Common/Semantics';
-import {Value} from './Common/Value';
+import {useApi, Loading} from '../Common';
+import {ObjArr} from '../Semantics';
+import {Value} from '../Value';
 
 function Debug(props) {
   const { prgmName, fun } = useParams();

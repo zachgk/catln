@@ -2,8 +2,8 @@ import React from 'react';
 
 import {useParams} from 'react-router-dom';
 
-import {Value} from './Common/Value';
-import {useApi, Loading} from './Common/Common';
+import {Value} from '../Value';
+import {useApi, Loading} from '../Common';
 
 function Build() {
   const { prgmName, fun } = useParams();

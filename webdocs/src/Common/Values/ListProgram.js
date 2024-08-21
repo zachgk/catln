@@ -12,8 +12,8 @@ import RadioGroup from '@material-ui/core/RadioGroup';import {
   useRouteMatch
 } from 'react-router-dom';
 
-import {useQuery, useApi, tagJoin, Loading, PTypeName, PClassName, PartialType, Type} from './Common/Common';
-import {ObjArr} from './Common/Semantics';
+import {useQuery, useApi, tagJoin, Loading, PTypeName, PClassName, PartialType, Type} from '../Common';
+import {ObjArr} from '../Semantics';
 
 const useStyles = makeStyles({
   objDetails: {

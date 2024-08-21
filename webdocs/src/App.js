@@ -21,14 +21,9 @@ import {
 } from 'react-router-dom';
 
 import {useApi, TocContext} from './Common/Common';
-import ListProgram from './ListProgram';
-import Build from './Build';
+import {Value} from './Common/Value';
 import Docs from './Docs';
 import {AnnotPage} from './DocsPage';
-import TypeInfer from './TypeInfer';
-import Debug from './Debug';
-import TypePage from './Type';
-import Class from './Class';
 
 const useStyles = makeStyles((theme) => ({
   search: {
@@ -152,22 +147,22 @@ function Body() {
           <AnnotPage />
         </Route>
         <Route path="/list">
-          <ListProgram />
+          <Value data={{tag: "TupleVal", name: "/Catln/Doc/Show/ListProgram"}} />
         </Route>
         <Route path="/type/:name">
-          <TypePage />
+          <Value data={{tag: "TupleVal", name: "/Catln/Doc/Show/TypePage"}} />
         </Route>
         <Route path="/class/:name">
-          <Class />
+          <Value data={{tag: "TupleVal", name: "/Catln/Doc/Show/ClassPage"}} />
         </Route>
         <Route path="/typeinfer/:prgmName">
-          <TypeInfer />
+          <Value data={{tag: "TupleVal", name: "/Catln/Doc/Show/TypeInfer"}} />
         </Route>
         <Route path="/debug/:prgmName/:fun">
-          <Debug />
+          <Value data={{tag: "TupleVal", name: "/Catln/Doc/Show/Debug"}} />
         </Route>
         <Route path="/build/:prgmName/:fun">
-          <Build />
+          <Value data={{tag: "TupleVal", name: "/Catln/Doc/Show/BuildPage"}} />
         </Route>
       </Switch>
     </div>

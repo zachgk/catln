@@ -306,15 +306,15 @@ function PartialName(props) {
   switch(name.tag) {
   case "PRelativeName":
     cls = classes.partialNameRelative;
-    link = `/relative/${name.contents}`;
+    link = `/relative/${encodeURIComponent(name.contents)}`;
     break;
   case "PTypeName":
     cls = classes.partialNameTp;
-    link = `/type/${name.contents}`;
+    link = `/type/${encodeURIComponent(name.contents)}`;
     break;
   case "PClassName":
     cls = classes.partialNameClass;
-    link = `/class/${name.contents}`;
+    link = `/class/${encodeURIComponent(name.contents)}`;
     break;
   default:
     console.error("Unknown partial name", name);
