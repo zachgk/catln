@@ -27,13 +27,13 @@ testDir = "test/Integration/code/"
 disabledTestDir = "test/Integration/disabled/"
 
 goldenDesugarDir :: String
-goldenDesugarDir = "test/Integration/goldenDesugar/"
+goldenDesugarDir = "test/Integration/golden/desugar/"
 
 goldenTypecheckDir :: String
-goldenTypecheckDir = "test/Integration/goldenTypecheck/"
+goldenTypecheckDir = "test/Integration/golden/typecheck/"
 
 goldenTreebuildDir :: String
-goldenTreebuildDir = "test/Integration/goldenBuild/"
+goldenTreebuildDir = "test/Integration/golden/tbuild/"
 
 runGoldenTest :: (Show fn, Show prgm) => String -> String -> String -> GraphData fn prgm -> (String -> IO ()) -> IO ()
 runGoldenTest goldenType goldenDir fileNameStr prgm step = do
