@@ -4,7 +4,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
-import {useHistory, useParams} from 'react-router-dom';
+import {useHistory} from 'react-router-dom';
 
 import {rawExprMeta, RawExpr, RawObjArr} from './Common/Syntax';
 import {useQuery, useApi, Loading, KeyWord, ReachesTree} from './Common/Common';

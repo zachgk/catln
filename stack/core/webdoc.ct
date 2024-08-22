@@ -24,3 +24,28 @@ module(Catln/Doc)
   data(Show/ListProgram)
   every(Show/ListProgram.., isa= [/Catln/Doc/DShow])
   dshow(s= #listProgram) = Show/ListProgram
+
+  annot(#type)
+  data(Show/TypePage)
+  every(Show/TypePage.., isa= [/Catln/Doc/DShow])
+  dshow(s= #type) = Show/TypePage
+
+  annot(#class)
+  data(Show/ClassPage)
+  every(Show/ClassPage.., isa= [/Catln/Doc/DShow])
+  dshow(s= #class) = Show/ClassPage
+
+  annot(#typeInfer)
+  data(Show/TypeInfer)
+  every(Show/TypeInfer.., isa= [/Catln/Doc/DShow])
+  dshow(s= #typeInfer) = Show/TypeInfer
+
+  annot(#debug)
+  data(Show/Debug)
+  every(Show/Debug.., isa= [/Catln/Doc/DShow])
+  dshow(s= #debug) = Show/Debug
+
+  annot(#build)
+  data(Show/BuildPage)
+  every(Show/BuildPage.., isa= [/Catln/Doc/DShow])
+  dshow(s= #build) = Show/BuildPage

@@ -81,7 +81,7 @@ function RawExpr(props) {
   case "RawAliasExpr":
     return <span><RawExpr expr={expr.contents[0]}/>@<RawExpr expr={expr.contents[1]}/></span>;
   case "RawTupleApply":
-    const [tupleM, [,base], args] = expr.contents;
+    const [, [,base], args] = expr.contents;
 
     if(base.tag === "RawValue" && base.contents[1].startsWith("/operator")) { // Operator
       const op = base.contents[1].substring("/operator".length);
@@ -107,7 +107,7 @@ function RawExpr(props) {
 
     return (<span><RawExpr expr={base}/>({showArgs})</span>);
   case "RawVarsApply":
-    const [vtupleM, vbase, vars] = expr.contents;
+    const [, vbase, vars] = expr.contents;
 
     let showVars = tagJoin(vars.map((vr, argIndex) => <RawObjArr key={argIndex} roa={vr} />), ", ");
 
