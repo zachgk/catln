@@ -14,6 +14,10 @@ test: $(HS_SOURCES) $(CT_SOURCES)
 install: $(HS_SOURCES) $(CT_SOURCES)
 	stack install
 
+.PHONY: docker
+docker:
+	docker build .
+
 .PHONY: format
 format: $(HS_SOURCES)
 	find app -name "*.hs" | xargs stylish-haskell -i
