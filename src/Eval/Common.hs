@@ -30,7 +30,6 @@ import           Control.Monad.State
 import           CRes
 import           Data.Aeson          hiding (Object)
 -- import qualified LLVM.AST            as AST
-import           Data.Maybe
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.TypeGraph
@@ -165,7 +164,7 @@ getValType StrVal{} = strLeaf
 getValType CharVal{} = charLeaf
 getValType (TupleVal name args) = (partialVal name){ptArgs=H.fromList $ map fromArg $ H.toList args}
   where fromArg (argName, argVal) = (partialKey argName, singletonType $ getValType argVal)
-getValType (ObjArrVal oa) = fromJust $ maybeGetSingleton $ getExprType $ oaObjExpr oa
+getValType (ObjArrVal oa) = getSingleton $ getExprType $ oaObjExpr oa
 getValType IOVal{} = ioLeaf
 getValType LLVMVal{} = resultLeaf
 getValType LLVMQueue{} = queueLeaf

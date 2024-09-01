@@ -160,11 +160,11 @@ instance Monad m => Functor (CResT m) where
   fmap = liftM
 
 instance Monad m => Applicative (CResT m) where
-  pure = return
+  pure = CResT . return . CRes []
   (<*>) = ap
 
 instance Monad m => Monad (CResT m) where
-  return = CResT . return . CRes []
+  return = pure
   x >>= f = CResT $ do maybe_value <- runCResT x
                        case maybe_value of
                          CErr notes    -> return $ CErr notes

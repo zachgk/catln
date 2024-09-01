@@ -22,7 +22,7 @@ import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer     as L
 
 import           CtConstants
-import           Maybes                         (rightToMaybe)
+import           GHC.Data.Maybe                 (rightToMaybe)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
@@ -101,7 +101,7 @@ pValue = do
           (Nothing, Just Left{}) -> RawTupleApply (emptyMetaM m) (emptyMetaM m, RawValue (mWithType (relTypeVal name) m) name) [(True, rawInObjArr True (RawHoleExpr (emptyMetaM m) (HoleActive Nothing)))]
           (Nothing, Just (Right s)) -> RawFmtStrExpr m name s
           (Nothing, Nothing) -> RawValue (mWithType (relTypeVal name) m) name
-          (Just{}, Just{}) -> undefined
+          _ -> undefined
 
 pStringLiteral :: Parser String
 pStringLiteral = char '\"' *> manyTill L.charLiteral (char '\"')

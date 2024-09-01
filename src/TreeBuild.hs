@@ -233,7 +233,7 @@ toTEObjArr :: TBEnv -> [ObjSrc] -> EObjArr -> CRes (ObjArr TExpr TBMetaDat)
 toTEObjArr env os oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   oaObj' <- mapM (toTExpr env os) oaObj
   let os' = case oa of
-        ObjArr{oaObj=Just{}, oaArr=Just (Just{}, _)} -> (fromJust $ maybeGetSingleton $ getExprType $ oaObjExpr oa, oa) : os
+        ObjArr{oaObj=Just{}, oaArr=Just (Just{}, _)} -> (getSingleton $ getExprType $ oaObjExpr oa, oa) : os
         _ -> os
   oaArr' <- forM oaArr $ \(arrExpr, arrM) -> do
     arrExpr' <- forM arrExpr $ \e ->
@@ -275,7 +275,7 @@ buildArrow env objPartial oa@ObjArr{oaAnnots, oaArr=Just (Just expr, am)} = do
 buildRootOA :: TBEnv -> EObjArr -> CRes (ObjArr TExpr TBMetaDat)
 buildRootOA env oa = do
   let env' = env{tbName = printf "root"}
-  let objSrc = (fromJust $ maybeGetSingleton $ getExprType $ oaObjExpr oa, oa)
+  let objSrc = (getSingleton $ getExprType $ oaObjExpr oa, oa)
   toTEObjArr env' [objSrc] oa
 
 buildRoot :: TBEnv -> TBExpr -> PartialType -> Type -> CRes (TExpr TBMetaDat)

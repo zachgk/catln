@@ -172,8 +172,7 @@ evalExpr :: TExpr EvalMetaDat -> StateT Env CRes Val
 -- evalExpr e | trace (printf "eval %s" (show e)) False = undefined
 evalExpr (TCExpr _ v) = return v
 evalExpr (TValue m _) = do
-  let UnionType leafs = getMetaType m
-  let [PartialType{ptName}] = splitUnionType leafs
+  let PartialType{ptName} = getSingleton $ getMetaType m
   return $ TupleVal ptName H.empty
 evalExpr (THoleExpr m h) = lift $ CErr [MkCNote $ GenCErr (getMetaPos m) $ printf "Can't evaluate hole %s" (show h)]
 evalExpr (TAliasExpr b _) = evalExpr b

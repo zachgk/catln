@@ -87,12 +87,13 @@ contents p = do
   return r
 
 ctParser :: ImportParser
-ctParser imp = do
-  let [RawObjArr{roaArr=Just (Just (RawCExpr _ (CStr fileName)), _)}] = rawExprAppliedArgs imp
-  fileContents <- readFile fileName
-  case runParser (contents pPrgm) fileName fileContents of
-    Left err   -> fail $ show $ errorBundlePretty err
-    Right prgm -> return (prgm, [])
+ctParser imp = case rawExprAppliedArgs imp of
+  [RawObjArr{roaArr=Just (Just (RawCExpr _ (CStr fileName)), _)}] -> do
+    fileContents <- readFile fileName
+    case runParser (contents pPrgm) fileName fileContents of
+      Left err   -> fail $ show $ errorBundlePretty err
+      Right prgm -> return (prgm, [])
+  _ -> undefined
 
 ctxParser :: ImportParser
 ctxParser fileName = do

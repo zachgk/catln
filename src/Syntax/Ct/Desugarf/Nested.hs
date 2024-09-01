@@ -68,10 +68,12 @@ scopeSubDeclFunNames oa@ObjArr{oaObj=Just objExpression, oaAnnots, oaArr} decls 
     declNames = S.fromList $ map oaObjPath decls
     addPrefix n = prefix ++ "." ++ n
     scopeM = scopeSubDeclFunNamesInMeta prefix declNames
-    decls' = map (\doa@ObjArr{oaObj=Just obj, oaArr=Just (doaArr, m)} -> doa{
-                     oaObj=Just (mapExprPath (\(pM, pN) -> Value (scopeSubDeclFunNamesInMeta prefix (S.singleton pN) pM) (addPrefix pN)) obj),
-                     oaArr = Just (fmap (scopeSubDeclFunNamesInExpr prefix declNames) doaArr, scopeM m)
-                     }) decls
+    scopeDecl doa@ObjArr{oaObj=Just obj, oaArr=Just (doaArr, m)} = doa{
+      oaObj=Just (mapExprPath (\(pM, pN) -> Value (scopeSubDeclFunNamesInMeta prefix (S.singleton pN) pM) (addPrefix pN)) obj),
+      oaArr = Just (fmap (scopeSubDeclFunNamesInExpr prefix declNames) doaArr, scopeM m)
+    }
+    scopeDecl _ = error "Unexpected scopeDecl"
+    decls' = map scopeDecl decls
     oaArr' = fmap (bimap (fmap (scopeSubDeclFunNamesInExpr prefix declNames)) scopeM) oaArr
     annots' = map (scopeSubDeclFunNamesInExpr prefix declNames) oaAnnots
 scopeSubDeclFunNames oa _ = error $ printf "scopeSubDeclFunNames without input expression: %s" (show oa)
@@ -120,7 +122,7 @@ currySubFunctions oa@ObjArr{oaObj=Just objExpression, oaAnnots, oaArr} decls = (
 currySubFunctions oa _ = error $ printf "currySubFunctions without input expression: %s" (show oa)
 
 desObjDocComment :: [PStatementTree] -> Maybe String
-desObjDocComment ((RawStatementTree (RawAnnot annotExpr) _):rest) | maybeExprPath annotExpr == Just mdAnnot = Just (++) <*> Just annotText <*> desObjDocComment rest
-  where
-    (Just (Just (_, Just (RawCExpr _ (CStr annotText))))) = H.lookup (partialKey mdAnnotText) $ rawExprAppliedArgsMap annotExpr
+desObjDocComment ((RawStatementTree (RawAnnot annotExpr) _):rest) | maybeExprPath annotExpr == Just mdAnnot = case H.lookup (partialKey mdAnnotText) $ rawExprAppliedArgsMap annotExpr of
+  (Just (Just (_, Just (RawCExpr _ (CStr annotText))))) -> Just (++) <*> Just annotText <*> desObjDocComment rest
+  _ -> error "Unexpected in desObjDocComment"
 desObjDocComment _ = Just ""

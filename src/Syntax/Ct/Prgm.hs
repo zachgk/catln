@@ -24,7 +24,6 @@ import           GHC.Generics        (Generic)
 
 import           Data.Aeson          hiding (Object)
 import           Data.Maybe          (fromJust, isJust, mapMaybe)
-import           Maybes              (fromJust)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types

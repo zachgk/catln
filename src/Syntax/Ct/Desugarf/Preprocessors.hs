@@ -112,10 +112,10 @@ caseDeclPreprocessor (roa@RawObjArr{roaArr=Just (Just expr, _)}, subStatements) 
     baseCondName = "$" ++ take 6 (printf "%08x" (hash roa))
     argName = baseCondName ++ "-arg"
     condName :: Int -> String
-    condName i = printf "%s-%d" baseCondName i
+    condName = printf "%s-%d" baseCondName
 
     -- Main Declaration
-    [RawObjArr{roaObj=Just matchingExpr}] = rawExprAppliedArgs expr
+    matchingExpr = fromJust $ roaObj $ head $ rawExprAppliedArgs expr
     expr' = applyRawArgs (rawVal (condName 0)) [(Just $ partialKey argName, matchingExpr)]
     decl' = roa{roaArr=Just (Just expr', Nothing)}
 
@@ -134,7 +134,10 @@ caseDeclPreprocessor (roa@RawObjArr{roaArr=Just (Just expr, _)}, subStatements) 
         fallthroughCase = RawStatementTree (RawDeclStatement (RawObjArr (Just declObj) FunctionObj Nothing [rawVal elseAnnot] (Just (Just fallthroughExpr, Nothing)) Nothing)) []
     buildInitCase (_, decl) = error $ printf "Missing expression in buildInitCase %s" (show decl)
 
-    (RawObjArr{roaObj=(Just lastCaseObj), roaArr=(Just (Just lastCaseExpr, _lastCaseDeclM))}, lastCaseSubStatements) = last cases
+    (lastCaseOa, lastCaseSubStatements) = last cases
+    lastCaseObj = fromJust $ roaObj lastCaseOa
+    lastCaseExpr = fromJust $ fst $ fromJust $ roaArr lastCaseOa
+
     lastCaseDeclObj = rawVal (condName $ length cases - 1) `applyRawArgs` [(Just $ partialKey argName, RawAliasExpr (RawHoleExpr emptyMetaN (HoleActive Nothing)) lastCaseObj)]
     lastCase' = RawStatementTree (RawDeclStatement (RawObjArr (Just lastCaseDeclObj) FunctionObj Nothing [] (Just (Just lastCaseExpr, Nothing)) Nothing)) lastCaseSubStatements
     cases' = concat initCase' ++ [lastCase']

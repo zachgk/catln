@@ -241,7 +241,7 @@ instance Show ClassGraph where
 asClassMap :: ClassGraph -> ClassMap
 asClassMap (ClassGraph graphData) = (typesToClass, classToTypes)
   where
-    typesToClass = fmap S.fromList $ H.fromListWith (++) $ mapMaybe typeToClassFromPartial $ concatMap getNodeTypeToClass $ graphToNodes graphData
+    typesToClass = fmap S.fromList $ H.fromListWith (++) $ concatMap (mapMaybe typeToClassFromPartial . getNodeTypeToClass) (graphToNodes graphData)
     typeToClassFromPartial (PTypeName t, cs) = Just (t, map fromPartialName cs)
     typeToClassFromPartial (PClassName{}, _) = Nothing
     typeToClassFromPartial (PRelativeName{}, _) = error "unexpected PRelativeName in asClassMap." -- Maybe should return Nothing?
@@ -482,6 +482,11 @@ relTypeVal n = TopType H.empty (PredsOne (PredRel $ partialVal n))
 classPartial :: PartialType -> Type
 classPartial p = TopType H.empty (PredsOne (PredClass p))
 
+getSingleton :: Type -> PartialType
+getSingleton t = case maybeGetSingleton t of
+  Just t' -> t'
+  Nothing -> error $ printf "Failed to get singleton for %s" (show t)
+
 maybeGetSingleton :: Type -> Maybe PartialType
 maybeGetSingleton (UnionType leafs) = case splitUnionType leafs of
   [p] -> Just p
@@ -493,7 +498,7 @@ maybeGetClassSingleton (TopType _ (PredsOne (PredClass c))) = Just c
 maybeGetClassSingleton _                                    = Nothing
 
 maybeGetTypeName :: Type -> Maybe TypeName
-maybeGetTypeName t | isJust (maybeGetSingleton t) = Just $ ptName $ fromJust $ maybeGetSingleton t
+maybeGetTypeName t | isJust (maybeGetSingleton t) = Just $ ptName $ getSingleton t
 maybeGetTypeName (TopType _ (PredsOne (PredRel p))) = Just $ ptName p
 maybeGetTypeName _ = Nothing
 
@@ -590,7 +595,8 @@ isSubPredicateOfWithEnv _ _ _ _ = undefined
 -- | A private helper for 'isSubPartialOfWithEnv' that checks while ignore class expansions
 isSubPartialOfWithEnv :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Bool
 isSubPartialOfWithEnv _ _ PartialType{ptName=subName} PartialType{ptName=superName} | subName /= superName = False
-isSubPartialOfWithEnv _ _ PartialType{ptArgs=subArgs, ptArgMode=subArgMode} PartialType{ptArgs=superArgs, ptArgMode=superArgMode} | subArgMode == PtArgExact && superArgMode == PtArgExact && H.keysSet subArgs /= H.keysSet superArgs = False
+isSubPartialOfWithEnv _ _ PartialType{ptArgs=subArgs, ptArgMode=PtArgExact} PartialType{ptArgs=superArgs, ptArgMode=PtArgExact} | H.keysSet subArgs /= H.keysSet superArgs = False
+isSubPartialOfWithEnv _ _ PartialType{ptArgs=subArgs, ptArgMode=PtArgAny} PartialType{ptArgs=superArgs, ptArgMode=PtArgAny} | not (H.keysSet superArgs `isSubsetOf` H.keysSet subArgs) = False
 isSubPartialOfWithEnv _ _ PartialType{ptArgs=subArgs} PartialType{ptArgs=superArgs, ptArgMode=superArgMode} | superArgMode == PtArgExact && not (H.keysSet subArgs `isSubsetOf` H.keysSet superArgs) = False
 isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subArgs, ptPreds=subPreds} super@PartialType{ptVars=superVars, ptArgs=superArgs, ptPreds=superPreds} = hasAll subArgs superArgs && hasAllPreds superPreds subPreds && hasAll subVars superVars
   where
@@ -858,12 +864,12 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
       res -> Just res
 
     differencePartialNegs :: PartialType -> [PartialType] -> [PartialType]
-    differencePartialNegs pos negs = foldr (\n ps -> concatMap (`differencePartial` n) ps) [pos] negs
+    differencePartialNegs pos = foldr (\n ps -> concatMap (`differencePartial` n) ps) [pos]
 
     differencePartial :: PartialType -> PartialType -> [PartialType]
     differencePartial p1 p2 | p1 == p2 = []
     differencePartial p1@PartialType{ptArgs=posArgs, ptArgMode=PtArgExact} PartialType{ptArgs=negArgs, ptArgMode=PtArgExact} | H.keysSet posArgs /= H.keysSet negArgs = [p1]
-    differencePartial p1@PartialType{ptArgs=posArgs, ptVars=posVars, ptArgMode=posArgMode} PartialType{ptArgs=negArgs, ptVars=negVars, ptArgMode=negArgMode} | posArgMode == negArgMode = mapMaybe subtractArg (H.toList negArgs) ++ mapMaybe subtractVar (H.toList negVars)
+    differencePartial p1@PartialType{ptArgs=posArgs, ptVars=posVars, ptArgMode=posArgMode} PartialType{ptArgs=negArgs, ptVars=negVars, ptArgMode=negArgMode} | posArgMode == negArgMode || negArgMode == PtArgExact = mapMaybe subtractArg (H.toList negArgs) ++ mapMaybe subtractVar (H.toList negVars)
       where
         subtractArg (_, PTopType) = Nothing
         subtractArg (argName, negArgVal) = case H.lookup argName posArgs of

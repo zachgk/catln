@@ -58,15 +58,16 @@ semiDesExpr sdm@(SDInput True) obj (RawTheExpr t) = semiDesExpr sdm obj t
 semiDesExpr SDInput{} _ e@(RawTheExpr t) = Value (emptyMetaE e) tN
   where
     (_tM, tN) = desugarTheExpr t
-semiDesExpr sdm obj (RawTupleApply _ (_, e@RawValue{}) [(True, _)]) = Value m' n
+semiDesExpr sdm obj (RawTupleApply _ (_, e@RawValue{}) [(True, _)]) = e' `setExprMeta` m'
   where
-    Value m n = semiDesExpr sdm obj e
+    e' = semiDesExpr sdm obj e
+    m = getExprMeta e'
     m' = mWithType (spreadType H.empty $ getMetaType m) m
 semiDesExpr sdm obj (RawAliasExpr base alias) = AliasExpr (semiDesExpr sdm obj base) (semiDesExpr sdm obj alias)
 semiDesExpr sdm obj (RawWhere m base cond) = EWhere m (semiDesExpr sdm obj base) (semiDesExpr SDOutput obj cond)
 semiDesExpr sdm obj (RawTupleApply _ (_, RawValue _ "/operator::") [(False, RawObjArr{roaArr=(Just (Just e, _))}), (False, RawObjArr{roaArr=(Just (Just tp, _))})]) = semiDesExpr sdm obj (rawExprWithType (exprToType (mobjExprVaenv obj) tp) e)
 semiDesExpr sdm obj (RawTupleApply _ (_, be) []) = semiDesExpr sdm obj be
-semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm'', be'') arg'') -> TupleApply m'' (bm'', be'') arg'') $ foldl aux (bm, be') (zip [0..] args)
+semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (`setExprMeta` m'') $ snd $ foldl aux (bm, be') (zip [0..] args)
   where
     be' = semiDesExpr sdm obj be
     aux :: (ParseMeta, PSExpr) -> (Int, (Bool, PObjArr)) -> (ParseMeta, PSExpr)
@@ -81,7 +82,7 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm''
           Nothing        -> Just (Nothing, Just vM)
     aux (m, e) (_argIndex, (False, rarg)) = (emptyMetaM m'', TupleApply (emptyMetaM m'') (m, e) (EAppArg arg''))
       where
-        [arg] = desObjArr obj rarg
+        arg = head $ desObjArr obj rarg
 
         -- indexAnnots = [exprVal argStartAnnot | argIndex == 0] ++ [exprVal argEndAnnot | argIndex == length args - 1]
         indexAnnots = [] -- TODO: Consider whether to re-add start and end annots
@@ -89,7 +90,7 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm''
         -- Currently uses oaObj as "first and only expr"
         -- This disambiguates it between whether the only expression is an obj or an arr
         arg' = case (sdm, arg) of
-          (SDOutput, ObjArr{oaObj, oaArr=Just (Nothing, _)}) -> arg{oaObj=Nothing, oaArr=Just ((,emptyMetaE $ fromJust oaObj) oaObj)}
+          (SDOutput, ObjArr{oaObj, oaArr=Just (Nothing, _)}) -> arg{oaObj=Nothing, oaArr=Just (oaObj, emptyMetaE $ fromJust oaObj)}
           (_, _) -> arg
 
         -- SemiDes all sub-expressions
@@ -103,7 +104,7 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (\(_, TupleApply _ (bm''
           }
     aux (m, e) (_, (True, oa)) = (emptyMetaM m'', TupleApply (emptyMetaM m'') (m, e) (EAppSpread $ semiDesExpr sdm obj $ oaObjExpr arg))
       where
-        [arg] = desObjArr obj oa
+        arg = head $ desObjArr obj oa
 semiDesExpr sdm obj (RawVarsApply m be vs) = (`setExprMeta` m) $ foldr aux be' vs
   where
     be' = semiDesExpr sdm obj be

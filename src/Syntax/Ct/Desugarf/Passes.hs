@@ -79,7 +79,7 @@ resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, ClassGraph
     resolveClassPartial :: Bool -> PartialType -> PartialType
     resolveClassPartial reqResolve p = case resolveRelPartial reqResolve p of
       (TopType np (PredsOne (PredClass p'))) | H.null np -> p'
-      t | isJust (maybeGetSingleton t) -> fromJust $ maybeGetSingleton t
+      t | isJust (maybeGetSingleton t) -> getSingleton t
       p' -> error $ printf "Unexpected resolved class partial %s" (show p')
 
     -- | Resolves possibilities for a relative partial

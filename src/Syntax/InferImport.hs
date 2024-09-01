@@ -43,28 +43,29 @@ findExistingPath (p:ps) = do
     else findExistingPath ps
 
 dirParser :: ImportParser
-dirParser imp = do
-  let [RawObjArr{roaArr=Just (Just (RawCExpr _ (CStr name)), _)}] = rawExprAppliedArgs imp
-  files <- listDirectory name
-  files' <- forM files $ \file -> do
-    let file' = name ++ "/" ++ file
-    isF <- doesFileExist file'
-    isD <- doesDirectoryExist file'
-    case (isF, isD) of
-      (True, False) -> if not ("." `isPrefixOf` file) && isSupportedFileExtension file'
-        then return (Just file')
-        else return Nothing
-      (False, True) -> return (Just file')
-      _ -> error $ printf "Found non-file or directory: %s" file'
+dirParser imp = case rawExprAppliedArgs imp of
+  [RawObjArr{roaArr=Just (Just (RawCExpr _ (CStr name)), _)}] -> do
+    files <- listDirectory name
+    files' <- forM files $ \file -> do
+      let file' = name ++ "/" ++ file
+      isF <- doesFileExist file'
+      isD <- doesDirectoryExist file'
+      case (isF, isD) of
+        (True, False) -> if not ("." `isPrefixOf` file) && isSupportedFileExtension file'
+          then return (Just file')
+          else return Nothing
+        (False, True) -> return (Just file')
+        _ -> error $ printf "Found non-file or directory: %s" file'
 
-  -- Main program
-  let mainPath = name ++ "/main.ct"
-  mainExists <- doesFileExist mainPath
-  let dirPrgm = if mainExists
-        then ([mkRawFileImport $ rawStr mainPath], [])
-        else ([], [])
+    -- Main program
+    let mainPath = name ++ "/main.ct"
+    mainExists <- doesFileExist mainPath
+    let dirPrgm = if mainExists
+          then ([mkRawFileImport $ rawStr mainPath], [])
+          else ([], [])
 
-  return (dirPrgm, map (mkRawFileImport . rawStr) $ catMaybes files')
+    return (dirPrgm, map (mkRawFileImport . rawStr) $ catMaybes files')
+  _ -> undefined
 
 inferRawImportStr :: Maybe RawFileImport -> String -> IO (RawExpr ())
 inferRawImportStr caller name = do

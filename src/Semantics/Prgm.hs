@@ -272,13 +272,13 @@ instance ExprClass Expr where
       aux (EWhere _ base cond) = case maybeExprPath cond of
         Just n | n == operatorHasArrow -> case (H.lookup (partialKey operatorArgL) condArgs, H.lookup (partialKey operatorArgR) condArgs) of
                   (Just (Just (_, Just l)), Just (Just (_, Just r))) -> case (getExprType $ exprPropagateTypes l, getExprType $ exprPropagateTypes r) of
-                    (lt@UnionType{}, rt) -> concatMap findArrowMatches bases'
+                    (lt@UnionType{}, rt) | isJust (maybeGetSingleton lt) -> concatMap findArrowMatches bases'
                       where
-                        findArrowMatches base' = case typeGraphQuery typeEnv (fmap snd base') $ fromJust $ maybeGetSingleton lt of
+                        findArrowMatches base' = case typeGraphQuery typeEnv (fmap snd base') $ getSingleton lt of
                           [] -> [H.empty]
                           qr -> let fromEachArrow = fmap (\qrt -> fst $ intersectTypesWithVarEnv typeEnv (fmap snd base') qrt rt) qr
                                 in joinPossVarArgMetaWithSrc typeEnv (map (fmap ([],)) fromEachArrow) [base']
-                    (lt, rt) -> error $ printf "Found invalid types of l=%s and r=%s in ?->" (show lt) (show rt)
+                    _ -> [H.empty]
                   _ -> error $ printf "Could not find /l and /r in %s in ?->" (show condArgs)
         _ -> bases'
         where
@@ -488,7 +488,7 @@ exprPropagateTypes (AliasExpr base alias) = AliasExpr base' alias'
     alias' = exprPropagateTypes alias
 exprPropagateTypes (EWhere m base cond) = EWhere m' base' cond'
   where
-    m' = mWithType (typeAddPreds (getExprType base') (PredsOne $ PredExpr $ fromJust $ maybeGetSingleton $ getExprType cond')) m
+    m' = mWithType (typeAddPreds (getExprType base') (PredsOne $ PredExpr $ getSingleton $ getExprType cond')) m
     base' = exprPropagateTypes base
     cond' = exprPropagateTypes cond
 exprPropagateTypes mainExpr@(TupleApply m (bm, be) tupleApplyArgs) = do

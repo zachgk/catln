@@ -102,7 +102,8 @@ semiDesObjArr roa@RawObjArr{roaObj=Just oE} = oa{
   oaArr=oaArr'
   }
   where
-    [oa@ObjArr{oaObj=Just oE', oaAnnots, oaArr}] = desObjArr (Just oE) roa
+    oa@ObjArr{oaObj=moE', oaAnnots, oaArr} = head $ desObjArr (Just oE) roa
+    oE' = fromJust moE'
     oE'' = semiDesExpr (SDInput False) (Just oE) oE'
     oaArr' = fmap (first (fmap (semiDesExpr SDOutput (Just oE')))) oaArr
 semiDesObjArr oa = error $ printf "Unexpected semiDesObjArr with no input expression: %s" (show oa)

@@ -34,12 +34,12 @@ formatImport RawFileImport{rawImpRaw} = do
 
 
 formatRawApply :: (Show m) => RawApply RawExpr m -> String
-formatRawApply (RawApply terms) = unwords (formatExpr term1 : map formatTerm termsRest)
+formatRawApply (RawApply (RATermDeep term1:termsRest)) = unwords (formatExpr term1 : map formatTerm termsRest)
   where
-    (RATermDeep term1:termsRest) = terms
     formatTerm :: (Show m) => RawApplyTerm RawExpr m -> String
     formatTerm (RATermDeep e)  = formatExpr e
     formatTerm (RATermChild e) = "> " ++ formatExpr e
+formatRawApply _ = undefined
 
 formatExpr :: (Show m) => RawExpr m -> String
 formatExpr (RawCExpr _ (CInt c)) = show c
@@ -122,10 +122,11 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
     statement' = case statement of
       RawDeclStatement objArr -> formatObjArr objArr
       RawBindStatement oa -> formatObjArrLike "<-" oa
-      RawAnnot annot | exprPath annot == mdAnnot -> printf "# %s" annotText'
-        where
-          (Just (Just (_, Just (RawCExpr _ (CStr annotText))))) = H.lookup (partialKey mdAnnotText) $ rawExprAppliedArgsMap annot
-          annotText' = concatMap (\c -> if c == '\n' then "\n" ++ formatIndent (indent + 1) else pure c) annotText
+      RawAnnot annot | exprPath annot == mdAnnot -> case H.lookup (partialKey mdAnnotText) $ rawExprAppliedArgsMap annot of
+        (Just (Just (_, Just (RawCExpr _ (CStr annotText))))) -> printf "# %s" annotText'
+          where
+            annotText' = concatMap (\c -> if c == '\n' then "\n" ++ formatIndent (indent + 1) else pure c) annotText
+        _ -> undefined
       RawAnnot annot | exprPath annot == printAnnot -> case H.lookup (partialKey printAnnotText) $ rawExprAppliedArgsMap annot of
                          (Just (Just (_, Just e))) -> printf "> %s" (formatExpr e)
                          e -> error $ printf "Can't format unexpected print annot %s" (show e)
