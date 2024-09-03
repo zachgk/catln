@@ -49,7 +49,8 @@ formatExpr (RawCExpr _ (CChar c)) = show c
 formatExpr (RawValue _ n) | n == anonStr = ""
 formatExpr (RawValue _ n) = n
 formatExpr (RawMacroValue _ n) = "${" ++ n ++ "}"
-formatExpr (RawApplyExpr _ n) = "a\"" ++ formatRawApply n ++ "\""
+formatExpr (RawFmtStrExpr _ n s) = n ++ ("\"" ++ s ++ "\"")
+formatExpr (RawApplyExpr m n) = formatExpr $ RawFmtStrExpr m "a" (formatRawApply n)
 formatExpr (RawHoleExpr _ (HoleActive Nothing)) = "_"
 formatExpr (RawHoleExpr _ (HoleActive (Just a))) = "_" ++ a
 formatExpr (RawHoleExpr _ HoleUndefined) = "undefined"

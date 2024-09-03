@@ -32,6 +32,9 @@ instance MapMeta RawExpr where
   mapMetaM f loc (RawMacroValue m n) = do
     m' <- f (ExprMeta loc ExprMetaMacroVal) m
     return $ RawMacroValue m' n
+  mapMetaM f loc (RawFmtStrExpr m n s) = do
+    m' <- f (ExprMeta loc ExprMetaMacroVal) m
+    return $ RawFmtStrExpr m' n s
   mapMetaM f loc (RawApplyExpr m n) = do
     m' <- f (ExprMeta loc ExprMetaMacroVal) m
     n' <- mapRawApplyM f n

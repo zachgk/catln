@@ -25,6 +25,7 @@ type ParseMetaDat = ()
 type ParseMeta = Meta ParseMetaDat
 type PExpr = RawExpr ParseMetaDat
 type PVarArgMap = VarArgMap RawExpr ParseMetaDat
+type PRawApply = RawApply RawExpr ParseMetaDat
 type PObjExpr = PExpr
 type PCompAnnot = CompAnnot PExpr
 type PObjArr = RawObjArr RawExpr ParseMetaDat

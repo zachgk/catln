@@ -23,7 +23,7 @@ import qualified Data.HashMap.Strict as H
 import           GHC.Generics        (Generic)
 
 import           Data.Aeson          hiding (Object)
-import           Data.Maybe          (isJust, mapMaybe)
+import           Data.Maybe          (fromJust, isJust, mapMaybe)
 import           Maybes              (fromJust)
 import           Semantics
 import           Semantics.Prgm
@@ -58,6 +58,7 @@ data RawExpr m
   | RawHoleExpr (Meta m) Hole
   | RawMacroValue (Meta m) TypeName
   | RawApplyExpr (Meta m) (RawApply RawExpr m)
+  | RawFmtStrExpr (Meta m) String String
   | RawTheExpr (RawExpr m) -- ^ Written :TypeName and read as The TypeName
   | RawAliasExpr (RawExpr m) (RawExpr m) -- ^ base aliasExpr
   | RawTupleApply (Meta m) (Meta m, RawExpr m) [(Bool, RawObjArr RawExpr m)] -- Boolean for isSpreadArg
@@ -112,6 +113,7 @@ instance ExprClass RawExpr where
     RawValue m _          -> m
     RawHoleExpr m _       -> m
     RawMacroValue m _     -> m
+    RawFmtStrExpr m _ _   -> m
     RawApplyExpr m _      -> m
     RawTheExpr e          -> getExprMeta e
     RawAliasExpr b _      -> getExprMeta b
@@ -129,6 +131,7 @@ instance ExprClass RawExpr where
     RawValue _ v           -> RawValue m' v
     RawHoleExpr _ v        -> RawHoleExpr m' v
     RawMacroValue _ v      -> RawMacroValue m' v
+    RawFmtStrExpr _ f s    -> RawFmtStrExpr m' f s
     RawApplyExpr _ v       -> RawApplyExpr m' v
     RawTheExpr e           -> RawTheExpr $ setExprMeta e m'
     RawAliasExpr b a       -> RawAliasExpr (setExprMeta b m') a

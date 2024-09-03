@@ -86,7 +86,7 @@ pValue = do
   pos1 <- getSourcePos
   usingTheExpr <- optional $ string ":"
   name <- identifier <|> pHole
-  spread <- optional $ string ".."
+  suffix <- optional ((Left <$> string "..") <|> (Right <$> pStringLiteral))
   pos2 <- getSourcePos
   let m = emptyMeta pos1 pos2
 
@@ -96,16 +96,20 @@ pValue = do
         ('_':_)     -> RawHoleExpr m $ HoleActive (Just name)
         "undefined" -> RawHoleExpr m HoleUndefined
         "todefine"  -> RawHoleExpr m HoleTodefine
-        _           -> case (usingTheExpr, spread) of
+        _           -> case (usingTheExpr, suffix) of
           (Just{}, Nothing)  -> RawTheExpr (RawValue m name)
-          (Nothing, Just{}) -> RawTupleApply (emptyMetaM m) (emptyMetaM m, RawValue (mWithType (relTypeVal name) m) name) [(True, rawInObjArr True (RawHoleExpr (emptyMetaM m) (HoleActive Nothing)))]
+          (Nothing, Just Left{}) -> RawTupleApply (emptyMetaM m) (emptyMetaM m, RawValue (mWithType (relTypeVal name) m) name) [(True, rawInObjArr True (RawHoleExpr (emptyMetaM m) (HoleActive Nothing)))]
+          (Nothing, Just (Right s)) -> RawFmtStrExpr m name s
           (Nothing, Nothing) -> RawValue (mWithType (relTypeVal name) m) name
           (Just{}, Just{}) -> undefined
 
-pStringLiteral :: Parser PExpr
-pStringLiteral = do
+pStringLiteral :: Parser String
+pStringLiteral = char '\"' *> manyTill L.charLiteral (char '\"')
+
+pStringConst :: Parser PExpr
+pStringConst = do
   pos1 <- getSourcePos
-  s <- char '\"' *> manyTill L.charLiteral (char '\"')
+  s <- pStringLiteral
   pos2 <- getSourcePos
   return $ RawCExpr (emptyMeta pos1 pos2) (CStr s)
 
@@ -270,10 +274,8 @@ pMacroValue = do
   pos2 <- getSourcePos
   return $ RawMacroValue (emptyMeta pos1 pos2) n
 
-pApply :: Parser PExpr
+pApply :: Parser PRawApply
 pApply = do
-  pos1 <- getSourcePos
-  _ <- string "a\""
   term1 <- RATermDeep <$> term
   termRest <- many $ do
     sep <- symbol ">" <|> symbol " "
@@ -282,9 +284,7 @@ pApply = do
       ">" -> return $ RATermChild val
       " " -> return $ RATermDeep val
       _   -> fail $ printf "Unexpected seperator " (show sep)
-  _ <- string "\""
-  pos2 <- getSourcePos
-  return $ RawApplyExpr (emptyMeta pos1 pos2) (RawApply (term1 : termRest))
+  return $ RawApply (term1 : termRest)
 
 applyTermSuffix :: PExpr -> TermSuffix -> PExpr
 applyTermSuffix base (ArgsSuffix m args) = RawTupleApply m (emptyMetaE base, base) args
@@ -296,11 +296,10 @@ applyTermSuffix base (TypePropSuffix m p) = RawTypeProp m base p
 term :: Parser PExpr
 term = do
   e1 <- parenExpr
-       <|> pStringLiteral
+       <|> pStringConst
        <|> pInt
        <|> pList
        <|> pMacroValue
-       <|> pApply
        <|> pValue
   suffixes <- many pTermSuffix
   _ <- sc

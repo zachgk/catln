@@ -1,51 +1,42 @@
 import "core/compile.ct"
 
+
 module(Catln/Doc)
   # # Catln WebDocs
-
     This provides common components and annotations used in Webdocs.
     These include the ones
-
   class(DShow)
     # Represents objects which can be shown in the webdocs.
-
   # dshow(s) -> /Catln/Doc/DShow
-  dshow(s -> DShow) = s
+  dshow(s -> DShow)= s
   every(String, isa= [/Catln/Doc/DShow])
   every(CatlnResult.., isa= [/Catln/Doc/DShow])
-  
-  data(Show/MD(text: String))
+  data(Show/MD(text -> String))
   every(Show/MD.., isa= [/Catln/Doc/DShow])
-  dshow(s= #md(text)) = Show/MD(text=text)
-
-  dshow(s= #print(p)) = p
-
+  dshow(s= #md(text))= Show/MD(text= text)
+  dshow(s= #print(p))= p
   annot(#listProgram)
   data(Show/ListProgram)
   every(Show/ListProgram.., isa= [/Catln/Doc/DShow])
-  dshow(s= #listProgram) = Show/ListProgram
-
+  dshow(s= #listProgram)= Show/ListProgram
   annot(#type)
   data(Show/TypePage)
   every(Show/TypePage.., isa= [/Catln/Doc/DShow])
-  dshow(s= #type) = Show/TypePage
-
+  dshow(s= #type)= Show/TypePage
   annot(#class)
   data(Show/ClassPage)
   every(Show/ClassPage.., isa= [/Catln/Doc/DShow])
-  dshow(s= #class) = Show/ClassPage
-
+  dshow(s= #class)= Show/ClassPage
   annot(#typeInfer)
   data(Show/TypeInfer)
   every(Show/TypeInfer.., isa= [/Catln/Doc/DShow])
-  dshow(s= #typeInfer) = Show/TypeInfer
-
+  dshow(s= #typeInfer)= Show/TypeInfer
   annot(#debug)
   data(Show/Debug)
   every(Show/Debug.., isa= [/Catln/Doc/DShow])
-  dshow(s= #debug) = Show/Debug
-
+  dshow(s= #debug)= Show/Debug
   annot(#build)
   data(Show/BuildPage)
   every(Show/BuildPage.., isa= [/Catln/Doc/DShow])
-  dshow(s= #build) = Show/BuildPage
+  dshow(s= #build)= Show/BuildPage
+

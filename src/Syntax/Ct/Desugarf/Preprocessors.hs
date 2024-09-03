@@ -20,13 +20,16 @@ import           Data.Either
 import           Data.Hashable
 import qualified Data.HashMap.Strict     as H
 import           Data.List               (intercalate)
+import           Data.Maybe              (fromJust)
 import           Data.String.Builder     (build)
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Formatter     (formatStatementTree)
+import           Syntax.Ct.Parser.Expr   (pApply)
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
+import           Text.Megaparsec         (errorBundlePretty, runParser)
 import           Text.Printf
 
 -- | Helper for the X isa Y where this is the Y
@@ -183,6 +186,9 @@ applyDeclPreprocessor :: DeclPreprocessor
 applyDeclPreprocessor (roa@RawObjArr{roaArr=Just (Just applyExpr, _)}, subStatements) = do
   res <- case rawExprAppliedArgs applyExpr of
     [RawObjArr{roaObj=Just (RawApplyExpr _ a)}] -> return $ RawApplyStatement a
+    [RawObjArr{roaObj=Just (RawFmtStrExpr _ "a" a)}] -> case runParser pApply "<applyFormatString>" a of
+      Right a' -> return $ RawApplyStatement a'
+      Left err -> fail $ show $ errorBundlePretty err
     _ -> fail $ printf "Missing first argument to classInst in %s" (show roa)
   return $ DPPStTree res subStatements
 applyDeclPreprocessor (roa, _) = fail $ printf "Invalid applyDeclPreprocessor: %s" (show roa)

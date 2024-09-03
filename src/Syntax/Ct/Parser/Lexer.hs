@@ -64,7 +64,7 @@ identifier :: Parser String
 identifier = some (satisfy idChar)
   where
     idChar c = isPrint c && not (isSpace c) && not (c `S.member` invalidChars)
-    invalidChars = S.fromList "-~:*+<>()[]{}=!&|.@_,?"
+    invalidChars = S.fromList "-~:*+<>()[]{}=!&|.@_,?\""
 
 pHole :: Parser String
 pHole = do
