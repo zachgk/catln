@@ -1,15 +1,8 @@
-import React, {useContext} from 'react';
+import React, {useContext, useState} from 'react';
 
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Tooltip from '@material-ui/core/Tooltip';
-import {
-  Switch,
-  Route,
-  Redirect,
-  Link,
-  useParams
-} from 'react-router-dom';
 
 import {useApi, tagJoin, Loading, Notes, Type, PartialKey, ReachesTree} from '../Common';
 import {ObjMap} from './ListProgram';
@@ -25,6 +18,7 @@ const useStyles = makeStyles({
 });
 
 const PrgmNameContext = React.createContext(undefined);
+const CurMetaContext = React.createContext(undefined);
 
 function TypeInfer(props) {
   const { prgmName } = props;
@@ -41,8 +35,8 @@ function TypeInfer(props) {
 
 function Main(props) {
   let {notes, data: [, prgm]} = props;
-  let prgmName = useContext(PrgmNameContext);
   const classes = useStyles();
+  const [curMeta, setCurMeta] = useState(0);
 
   var notesMap = {};
   notes.forEach(note => {
@@ -58,24 +52,17 @@ function Main(props) {
   let Meta = VarMeta(notesMap);
 
   return (
-    <div>
+    <CurMetaContext.Provider value={{curMeta, setCurMeta}}>
       <Notes notes={notes} noPosOnly />
       <Grid container spacing={2} justify="center" className={classes.holdSideBySide}>
         <Grid item xs className={classes.sideBySide}>
           <ObjMap objMap={prgm[0]} Meta={Meta} showExprMetas />
         </Grid>
         <Grid item xs className={classes.sideBySide}>
-          <Switch>
-            <Route exact path={`/typeinfer/${prgmName}`}>
-              <Redirect to={`/typeinfer/${prgmName}/0`} />
-            </Route>
-            <Route path={`/typeinfer/${prgmName}/:curMeta`}>
-              <TraceEpochs Meta={Meta} />
-            </Route>
-          </Switch>
+          <TraceEpochs Meta={Meta} />
         </Grid>
       </Grid>
-    </div>
+    </CurMetaContext.Provider>
   );
 }
 
@@ -111,23 +98,24 @@ let VarMeta = (notesMap) => (props) => {
 };
 
 function TraceEpochs(props) {
-  let { curMeta } = useParams();
   let {Meta} = props;
+  let { curMeta } = useContext(CurMetaContext);
   let prgmName = useContext(PrgmNameContext);
   let apiResult = useApi(`/api/constrain/pnt/${curMeta}?prgmName=${prgmName}`);
   return (
     <div>
       <h2>Pnt {curMeta}</h2>
       <Loading status={apiResult}>
-        <Traces traceData={apiResult.data} curMeta={curMeta} Meta={Meta} />
+        <Traces traceData={apiResult.data} Meta={Meta} />
       </Loading>
     </div>
   );
 }
 
 function Traces(props) {
-  const {traceData, curMeta, Meta} = props;
+  const {traceData, Meta} = props;
   const {tcEpochs, tcCons, tcAllObjs, tcInitial} = traceData;
+  let { curMeta } = useContext(CurMetaContext);
   let showInitial;
   if (curMeta in tcInitial) {
     showInitial = (
@@ -262,8 +250,12 @@ function Scheme(props) {
 
 function Pnt(props) {
   let {pnt} = props;
-  let prgmName = useContext(PrgmNameContext);
-  return <Link to={`/typeinfer/${prgmName}/${pnt}`}>{pnt}</Link>;
+  let { setCurMeta } = useContext(CurMetaContext);
+  const link = () => {
+    setCurMeta(pnt);
+  };
+  // TODO Consider replacing this with a new element such as btn without a link
+  return <a href={`#pnt${pnt}`} onClick={link} >{pnt}</a>;
 }
 
 function Pos(props) {
