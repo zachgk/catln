@@ -1,10 +1,10 @@
 import React, {useState} from 'react';
 
-import { makeStyles } from '@material-ui/core/styles';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
-import PlayArrowIcon from '@material-ui/icons/PlayArrow';
-import {useHistory} from 'react-router-dom';
+import makeStyles from '@mui/styles/makeStyles';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import {useNavigate} from 'react-router-dom';
 
 import {rawExprMeta, RawExpr, RawObjArr} from './Common/Syntax';
 import {useQuery, useApi, Loading, KeyWord, ReachesTree} from './Common/Common';
@@ -36,7 +36,7 @@ function DocsPage(props) {
   );
 }
 
-function AnnotPage(props) {
+function AnnotPage() {
   const query = useQuery();
   const annot = query.get("annot");
   const prgmName = "";
@@ -135,7 +135,7 @@ function Statement(props) {
 
 function PlayButton(props) {
   const {fun, prgmName} = props;
-  let history = useHistory();
+  let navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const classes = useStyles();
@@ -151,7 +151,7 @@ function PlayButton(props) {
 
   let linkClose = (link) => () => {
     setOpen(false);
-    history.push({pathname: link});
+    navigate(link);
   };
 
   let button = <PlayArrowIcon fontSize='small' className={classes.playIcon} aria-controls="fade-menu" aria-haspopup="true" onClick={handleClick} />;
@@ -165,8 +165,8 @@ function PlayButton(props) {
         open={open}
         onClose={handleClose}
       >
-        <MenuItem onClick={linkClose(`/build/${prgmName}/${fun}`)}>Build</MenuItem>
-        <MenuItem onClick={linkClose(`/debug/${prgmName}/${fun}`)}>Debug</MenuItem>
+        <MenuItem onClick={linkClose(`/build/${encodeURIComponent(prgmName)}/${fun}`)}>Build</MenuItem>
+        <MenuItem onClick={linkClose(`/debug/${encodeURIComponent(prgmName)}/${fun}`)}>Debug</MenuItem>
       </Menu>
     </span>
   );

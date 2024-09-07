@@ -285,20 +285,12 @@ docApiBase getProvider = do
     resp <- liftAndCatchIO $ runCResT $ getTBPrgmJoined provider
     maybeJson resp
 
-  get "/api/object/:objName" $ do
+  get "/api/type" $ do
     provider <- liftAndCatchIO getProvider
-    objName <- param "objName"
+    objName <- param "type"
     resp <- liftAndCatchIO $ runCResT $ do
       tprgm <- getTPrgmJoined provider
       return $ filterByType objName tprgm
-    maybeJson resp
-
-  get "/api/class/:className" $ do
-    provider <- liftAndCatchIO getProvider
-    className <- param "className"
-    resp <- liftAndCatchIO $ runCResT $ do
-      tprgm <- getTPrgmJoined provider
-      return $ filterByType className tprgm
     maybeJson resp
 
   get "/api/treebug" $ do

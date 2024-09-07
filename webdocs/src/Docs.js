@@ -1,23 +1,20 @@
 import React, {useState, useContext} from 'react';
 
-import { makeStyles } from '@material-ui/core/styles';
-import Button from '@material-ui/core/Button';
-import Grid from '@material-ui/core/Grid';
-import TreeView from '@material-ui/lab/TreeView';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import ChevronRightIcon from '@material-ui/icons/ChevronRight';
-import MoreVertIcon from '@material-ui/icons/MoreVert';
-import TreeItem from '@material-ui/lab/TreeItem';
+import makeStyles from '@mui/styles/makeStyles';
+import Button from '@mui/material/Button';
+import Grid from '@mui/material/Grid2';
+import {SimpleTreeView} from '@mui/x-tree-view/SimpleTreeView';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import {TreeItem} from '@mui/x-tree-view/TreeItem';
 import {
-  Switch,
-  Route,
-  Redirect,
+  Navigate,
   Link,
   useParams,
-  useHistory,
-  useRouteMatch
+  useNavigate
 } from 'react-router-dom';
 
 import {TocContext, Loading} from './Common/Common';
@@ -63,7 +60,7 @@ function Docs() {
 
 function Main(props) {
   let pageExprs = props.data;
-  let { path } = useRouteMatch();
+  let { prgmName } = useParams();
 
   let pages = [];
   pageExprs.forEach(pe => {
@@ -77,27 +74,21 @@ function Main(props) {
   let pageList = []; // sorted list
   const pageTree = sortPageTree(basePageTree, pageList);
 
+  if (!prgmName) {
+    return <Navigate to={`/docs/${startingPage}`} />;
+  }
+
   return (
-    <Switch>
-      <Route exact path={path}>
-        <Redirect to={`${path}/${startingPage}`} />
-      </Route>
-      <Route path={`${path}/:prgmName`}>
-        <Grid style={{width: '100%'}} container spacing={2} justify="center">
-          <Grid item xs={2}>
-            <TreeView
-              defaultCollapseIcon={<ExpandMoreIcon />}
-              defaultExpandIcon={<ChevronRightIcon />}
-            >
-              <TableOfContentsNodes pageTree={pageTree} path={path} />
-            </TreeView>
-          </Grid>
-          <Grid item xs={8}>
-            <ShowPage pages={pageList} path={path}/>
-          </Grid>
-        </Grid>
-      </Route>
-    </Switch>
+    <Grid style={{width: '100%'}} container spacing={2} justify="center">
+      <Grid size={{xs:2}}>
+        <SimpleTreeView slots={{collapseIcon: ExpandMoreIcon, expandIcon: ChevronRightIcon}}>
+          <TableOfContentsNodes pageTree={pageTree} path={prgmName} />
+        </SimpleTreeView>
+      </Grid>
+      <Grid size={{xs:8}}>
+        <ShowPage pages={pageList} />
+      </Grid>
+    </Grid>
   );
 }
 
@@ -161,21 +152,21 @@ function TableOfContentsNodes(props) {
 
     if(tree.type === "dir") {
       return (
-        <TreeItem key={tree.newFilePath} nodeId={tree.newFilePath} label={tree.key} >
+        <TreeItem key={tree.newFilePath} itemId={tree.newFilePath} label={tree.key} >
           <TableOfContentsNodes key={tree.newFilePath} pageTree={tree.children} path={path} />
         </TreeItem>
       );
     } else {
       let label = (
         <div className={classes.tocFileMain}>
-          <Link to={`${path}/${encodeURIComponent(tree.newFilePath)}`} className={classes.tocFileName}>
+          <Link to={`/docs/${encodeURIComponent(tree.newFilePath)}`} className={classes.tocFileName}>
             {tree.key}
           </Link>
           <FileMenu prgmName={encodeURIComponent(tree.newFilePath)}/>
         </div>
       );
       return (
-        <TreeItem key={tree.newFilePath} nodeId={tree.newFilePath} label={label} />
+        <TreeItem key={tree.newFilePath} itemId={tree.newFilePath} label={label} />
       );
     }
 
@@ -185,7 +176,7 @@ function TableOfContentsNodes(props) {
 function FileMenu(props) {
   const {prgmName} = props;
   const classes = useStyles();
-  const history = useHistory();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -200,7 +191,7 @@ function FileMenu(props) {
 
   let linkClose = (link) => () => {
     setOpen(false);
-    history.push({pathname: link});
+    navigate(link);
   };
 
   let button = <MoreVertIcon className={classes.tocFileMenu} aria-controls="fade-menu" aria-haspopup="true" onClick={handleClick} />;
@@ -221,7 +212,7 @@ function FileMenu(props) {
 }
 
 function ShowPage(props) {
-  const {pages, path} = props;
+  const {pages} = props;
   const { prgmName } = useParams();
   const classes = useStyles();
 
@@ -230,7 +221,7 @@ function ShowPage(props) {
   let showPrev;
   if(pageNum > 0) {
     showPrev = (
-      <Link to={`${path}/${encodeURIComponent(pages[pageNum - 1])}`}>
+      <Link to={`/docs/${encodeURIComponent(pages[pageNum - 1])}`}>
         <Button variant="contained" color="primary">Previous</Button>
       </Link>
     );
@@ -239,7 +230,7 @@ function ShowPage(props) {
   let showNext;
   if(pageNum < pages.length - 1) {
     showNext = (
-      <Link to={`${path}/${encodeURIComponent(pages[pageNum + 1])}`}>
+      <Link to={`/docs/${encodeURIComponent(pages[pageNum + 1])}`}>
         <Button variant="contained" color="primary">Next</Button>
       </Link>
     );

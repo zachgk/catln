@@ -23,10 +23,6 @@ module(Catln/Doc)
   data(Show/TypePage)
   every(Show/TypePage.., isa= [/Catln/Doc/DShow])
   dshow(s= #type)= Show/TypePage
-  annot(#class)
-  data(Show/ClassPage)
-  every(Show/ClassPage.., isa= [/Catln/Doc/DShow])
-  dshow(s= #class)= Show/ClassPage
   annot(#typeInfer)
   data(Show/TypeInfer)
   every(Show/TypeInfer.., isa= [/Catln/Doc/DShow])

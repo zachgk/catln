@@ -1,18 +1,15 @@
-import React from 'react';
+import React, {useState} from 'react';
 
-import { makeStyles } from '@material-ui/core/styles';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import FormGroup from '@material-ui/core/FormGroup';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Radio from '@material-ui/core/Radio';
-import RadioGroup from '@material-ui/core/RadioGroup';import {
-  useHistory,
-  useRouteMatch
-} from 'react-router-dom';
+import makeStyles from '@mui/styles/makeStyles';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import FormGroup from '@mui/material/FormGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
 
-import {useQuery, useApi, tagJoin, Loading, PTypeName, PClassName, PartialType, Type} from '../Common';
+import {useApi, tagJoin, Loading, PTypeName, PClassName, PartialType, Type} from '../Common';
 import {ObjArr} from '../Semantics';
 
 const useStyles = makeStyles({
@@ -32,11 +29,9 @@ const useStyles = makeStyles({
   }
 });
 
-function ListProgram(props) {
-  let query = useQuery();
-  let history = useHistory();
+function ListProgram() {
+  const [mode, setMode] = useState("");
 
-  let mode = query.get("mode") || "";
   let dataPath;
   switch(mode) {
   case "noTypecheck":
@@ -50,19 +45,9 @@ function ListProgram(props) {
     break;
   }
   let apiResult = useApi(dataPath);
-  let { path } = useRouteMatch();
 
   let switchTypecheck = (event) => {
-    if (event.target.value) {
-      query.set("mode", event.target.value);
-    } else {
-      query.delete("mode");
-    }
-
-    history.push({
-      pathname: path,
-      search: `?${query.toString()}`
-    });
+    setMode(event.target.value);
   };
 
   return (
@@ -125,7 +110,7 @@ function Meta(props) {
   return <Type data={getMetaType} />;
 }
 
-export function ClassComments(props) {
+export function ClassComments() {
   return "ClassComments";
   // const [,classMap] = props.data;
   // const [, classToType] = classMap;

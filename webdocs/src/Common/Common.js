@@ -1,10 +1,11 @@
 import React, {useState, useEffect} from 'react';
 
-import TreeView from '@material-ui/lab/TreeView';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import ChevronRightIcon from '@material-ui/icons/ChevronRight';
-import TreeItem from '@material-ui/lab/TreeItem';
-import { makeStyles } from '@material-ui/core/styles';
+import { styled } from '@mui/material/styles';
+import {SimpleTreeView} from '@mui/x-tree-view/SimpleTreeView';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import {TreeItem} from '@mui/x-tree-view/TreeItem';
+import makeStyles from '@mui/styles/makeStyles';
 import {useLocation, Link} from 'react-router-dom';
 
 
@@ -12,15 +13,17 @@ function tagJoin(lst, joinWith) {
   return lst.reduce((acc, x) => acc == null ? [x] : <>{acc}{joinWith}{x}</>, null);
 }
 
-const useStyles = makeStyles( theme => ({
-  notesError: {
-    whiteSpace: 'pre-wrap',
-    background: theme.palette.error.main,
-  },
-  notesWarning: {
-    whiteSpace: 'pre-wrap',
-    background: theme.palette.warning.main
-  },
+const ErrorPre = styled('pre')(({ theme }) => ({
+  whiteSpace: 'pre-wrap',
+  background: theme.palette.error.main,
+}));
+
+const WarningPre = styled('pre')(({ theme }) => ({
+  whiteSpace: 'pre-wrap',
+  background: theme.palette.warning.main,
+}));
+
+const useStyles = makeStyles({
   partialNameTp: {
     color: 'green'
   },
@@ -36,7 +39,7 @@ const useStyles = makeStyles( theme => ({
   typevar: {
     fontWeight: 'bold'
   }
-}));
+});
 
 const TocContext = React.createContext({});
 
@@ -129,23 +132,15 @@ function Notes(props) {
 
 function Note(props) {
   let note = props.note;
-  const classes = useStyles();
 
-  let noteClass;
   switch(note.tp) {
   case "CNoteError":
-    noteClass = classes.notesError;
-    break;
+    return <ErrorPre>{note.msg}</ErrorPre>;
   case "CNoteWarning":
-    noteClass = classes.notesWarning;
-    break;
+    return <WarningPre>{note.msg}</WarningPre>;
   default:
     console.error("Unknown note type", note);
   }
-
-  return (
-    <pre className={noteClass}>{note.msg}</pre>
-  );
 }
 
 function PartialType(props) {
@@ -314,7 +309,7 @@ function PartialName(props) {
     break;
   case "PClassName":
     cls = classes.partialNameClass;
-    link = `/class/${encodeURIComponent(name.contents)}`;
+    link = `/type/${encodeURIComponent(name.contents)}`;
     break;
   default:
     console.error("Unknown partial name", name);
@@ -325,12 +320,9 @@ function PartialName(props) {
 function ReachesTree(props) {
   const {tree} = props;
   return (
-      <TreeView
-        defaultCollapseIcon={<ExpandMoreIcon />}
-        defaultExpandIcon={<ChevronRightIcon />}
-      >
+      <SimpleTreeView slots={{collapseIcon: ExpandMoreIcon, expandIcon: ChevronRightIcon}}>
         <ReachesTreeNode tree={tree} id={"0"} />
-      </TreeView>
+      </SimpleTreeView>
   );
 }
 
@@ -345,7 +337,7 @@ function ReachesTreeNode(props) {
         showSubNode = <ReachesTreeNode id={id + nodeIndex + "-"} tree={node[1]}/>;
       }
       return (
-        <TreeItem nodeId={id + nodeIndex} label={lab}>
+        <TreeItem itemId={id + nodeIndex} label={lab}>
           {showSubNode}
         </TreeItem>
       );
@@ -362,20 +354,20 @@ function ReachesTreeNode(props) {
         showSubNode = <ReachesTreeNode id={id + nodeIndex + "-"} tree={subNodeDat}/>;
       }
       return (
-        <TreeItem nodeId={id + nodeIndex} label={lab}>
+        <TreeItem itemId={id + nodeIndex} label={lab}>
           {showSubNode}
         </TreeItem>
       );
     });
   case "ReachesLeaf":
     return (
-      <TreeItem nodeId={id} label={"ReachesLeaf"}>
+      <TreeItem itemId={id} label={"ReachesLeaf"}>
       </TreeItem>
     );
   default:
     console.error("Unknown ReachesTreeNode", tree);
     return (
-      <TreeItem nodeId={id} label={"TREE"}>
+      <TreeItem itemId={id} label={"TREE"}>
       </TreeItem>
     );
   }

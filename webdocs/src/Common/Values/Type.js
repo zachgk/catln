@@ -6,7 +6,7 @@ import {ShowList} from './ListProgram';
 function TypePage(props) {
   const { name } = props;
 
-  let apiResult = useApi(`/api/object/${name}`);
+  let apiResult = useApi(`/api/type?type=${name}`);
 
   return (
     <div>

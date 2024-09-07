@@ -1,8 +1,8 @@
 import React, {useContext, useState} from 'react';
 
-import { makeStyles } from '@material-ui/core/styles';
-import Grid from '@material-ui/core/Grid';
-import Tooltip from '@material-ui/core/Tooltip';
+import makeStyles from '@mui/styles/makeStyles';
+import Grid from '@mui/material/Grid2';
+import Tooltip from '@mui/material/Tooltip';
 
 import {useApi, tagJoin, Loading, Notes, Type, PartialKey, ReachesTree} from '../Common';
 import {ObjMap} from './ListProgram';
@@ -55,10 +55,10 @@ function Main(props) {
     <CurMetaContext.Provider value={{curMeta, setCurMeta}}>
       <Notes notes={notes} noPosOnly />
       <Grid container spacing={2} justify="center" className={classes.holdSideBySide}>
-        <Grid item xs className={classes.sideBySide}>
+        <Grid size={{xs:6}} className={classes.sideBySide}>
           <ObjMap objMap={prgm[0]} Meta={Meta} showExprMetas />
         </Grid>
-        <Grid item xs className={classes.sideBySide}>
+        <Grid size={{xs:6}} className={classes.sideBySide}>
           <TraceEpochs Meta={Meta} />
         </Grid>
       </Grid>

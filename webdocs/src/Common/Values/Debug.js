@@ -1,9 +1,9 @@
 import React from 'react';
 
-import TreeView from '@material-ui/lab/TreeView';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import ChevronRightIcon from '@material-ui/icons/ChevronRight';
-import TreeItem from '@material-ui/lab/TreeItem';
+import {SimpleTreeView} from '@mui/x-tree-view/SimpleTreeView';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import {TreeItem} from '@mui/x-tree-view/TreeItem';
 
 import {useApi, Loading} from '../Common';
 import {ObjArr} from '../Semantics';
@@ -23,12 +23,9 @@ function Debug(props) {
 function Main(props) {
   let data = props.data.erTreebug[0];
   return (
-      <TreeView
-        defaultCollapseIcon={<ExpandMoreIcon />}
-        defaultExpandIcon={<ChevronRightIcon />}
-      >
+      <SimpleTreeView slots={{collapseIcon: ExpandMoreIcon, expandIcon: ChevronRightIcon}}>
         <TreebugNode data={data} />
-      </TreeView>
+      </SimpleTreeView>
   );
 
 }
@@ -45,7 +42,7 @@ function TreebugNode(props) {
 
   let label = <span><ObjArr oa={oa} /> |::| <Value data={input} /> =&gt; <Value data={val} /></span>;
   return (
-    <TreeItem nodeId={id} label={label}>
+    <TreeItem itemId={id} label={label}>
       {children.map(child => <TreebugNode data={child} key={child[4]} />)}
     </TreeItem>
   );

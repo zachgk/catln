@@ -1,14 +1,13 @@
 import React from 'react';
 
-import ReactMarkdown, {uriTransformer} from 'react-markdown';
+import ReactMarkdown, {defaultUrlTransform} from 'react-markdown';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 
-import {KeyWord, PTypeName, PClassName, tagJoin} from './Common';
+import {KeyWord, PTypeName, tagJoin} from './Common';
 import ListProgram from './Values/ListProgram';
 import TypeInfer from './Values/TypeInfer';
 import Debug from './Values/Debug';
 import TypePage from './Values/Type';
-import Class from './Values/Class';
 import Build from './Values/Build';
 
 function Value(props) {
@@ -28,8 +27,6 @@ function Value(props) {
       return <ListProgram {...val.args} />;
     case "/Catln/Doc/Show/TypePage":
       return <TypePage {...val.args} />;
-    case "/Catln/Doc/Show/ClassPage":
-      return <Class {...val.args} />;
     case "/Catln/Doc/Show/TypeInfer":
       return <TypeInfer {...val.args} />;
     case "/Catln/Doc/Show/Debug":
@@ -80,7 +77,7 @@ function Comment(props) {
   const regex = /\[(\S+)\][^[(]/g;
   const comment2 = comment.replaceAll(regex, (m, name) => {
     if(classToType && name in classToType) {
-      return `[${name}](catln://class/${name})${m.slice(-1)}`;
+      return `[${name}](catln://type/${name})${m.slice(-1)}`;
     } else if(objNames && name in objNames) {
       return `[${name}](catln://type/${name})${m.slice(-1)}`;
     } else if(obj && name in obj.objArgs){
@@ -94,10 +91,7 @@ function Comment(props) {
 
   const components = {
     a: ({href, children}) => {
-      if(href.startsWith("catln://class/")) {
-        const className = href.substring("catln://class/".length);
-        return <PClassName name={className}/>;
-      } else if(href.startsWith("catln://type/")) {
+      if(href.startsWith("catln://type/")) {
         const typeName = href.substring("catln://type/".length);
         return <PTypeName name={typeName}/>;
       } else if(href.startsWith("catln://arg/")) {
@@ -116,11 +110,11 @@ function Comment(props) {
     if(href.startsWith("catln://")) {
       return href;
     } else {
-      return uriTransformer(href, children, title);
+      return defaultUrlTransform(href, children, title);
     }
   }
 
-  return <ReactMarkdown children={comment2} transformLinkUri={transformLinkUri} components={components}/>;
+  return <ReactMarkdown children={comment2} urlTransform={transformLinkUri} components={components}/>;
 }
 
 function CatlnResult(props) {
