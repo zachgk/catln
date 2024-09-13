@@ -657,9 +657,6 @@
             , Value /Catln/Doc/#type
             , Value /Catln/Doc/Show/TypePage
             , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#type = Value /Catln/Doc/#type ) -> /Catln/Doc/Show/TypePage = Value /Catln/Doc/Show/TypePage
-            , Value /Catln/Doc/#class
-            , Value /Catln/Doc/Show/ClassPage
-            , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#class = Value /Catln/Doc/#class ) -> /Catln/Doc/Show/ClassPage = Value /Catln/Doc/Show/ClassPage
             , Value /Catln/Doc/#typeInfer
             , Value /Catln/Doc/Show/TypeInfer
             , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#typeInfer = Value /Catln/Doc/#typeInfer ) -> /Catln/Doc/Show/TypeInfer = Value /Catln/Doc/Show/TypeInfer
@@ -683,8 +680,6 @@
             , CGType
             , CGType
             , CGType
-            , CGType
-            , CGType
             , CGClass
                 ( False
                 , /Catln/Doc/DShow
@@ -694,12 +689,11 @@
                     , /Catln/Doc/Show/MD..
                     , /Catln/Doc/Show/ListProgram..
                     , /Catln/Doc/Show/TypePage..
-                    , /Catln/Doc/Show/ClassPage..
                     , /Catln/Doc/Show/TypeInfer..
                     , /Catln/Doc/Show/Debug..
                     , /Catln/Doc/Show/BuildPage..
                     ]
-                , Just "Represents objects which can be shown in the webdocs.         "
+                , Just "Represents objects which can be shown in the webdocs.        "
                 )
             ]
         ,
