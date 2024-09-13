@@ -31,6 +31,7 @@ import           Syntax.Ct.Parser        (ctParser, ctxParser)
 import           Syntax.Ct.Prgm
 import           Syntax.Haskell.Parser   (hsParser)
 import           Syntax.InferImport      (dirParser, inferRawImportStr)
+import           Syntax.Md.Parser        (mdParser)
 import           System.FilePath         (isAbsolute, joinPath, takeDirectory)
 import           Text.Printf
 import           Utils
@@ -40,6 +41,7 @@ importParsers = H.fromList [
   ("dir", dirParser),
   ("ct", ctParser),
   ("ctx", ctxParser),
+  ("md", mdParser),
   ("haskell", hsParser)
                              ]
 

@@ -27,6 +27,7 @@ fileExtensionParsers :: H.HashMap String (String -> RawExpr ())
 fileExtensionParsers = H.fromList [
   ("ct", \n -> rawVal "ct" `applyRawArgs` [(Nothing, rawStr n)]),
   ("ctx", \n -> rawVal "ctx" `applyRawArgs` [(Nothing, rawStr n)]),
+  ("md", \n -> rawVal "md" `applyRawArgs` [(Nothing, rawStr n)]),
   ("hs", \n -> rawVal "haskell" `applyRawArgs` [(Nothing, rawStr n)])
                              ]
 
