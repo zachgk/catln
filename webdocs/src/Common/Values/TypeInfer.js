@@ -36,7 +36,7 @@ function TypeInfer(props) {
 function Main(props) {
   let {notes, data: [, prgm]} = props;
   const classes = useStyles();
-  const [curMeta, setCurMeta] = useState(0);
+  const [curMeta, setCurMeta] = useState(undefined);
 
   var notesMap = {};
   notes.forEach(note => {
@@ -59,7 +59,7 @@ function Main(props) {
           <ObjMap objMap={prgm[0]} Meta={Meta} showExprMetas />
         </Grid>
         <Grid size={{xs:6}} className={classes.sideBySide}>
-          <TraceEpochs Meta={Meta} />
+          <TraceEpochsArea Meta={Meta} />
         </Grid>
       </Grid>
     </CurMetaContext.Provider>
@@ -97,10 +97,21 @@ let VarMeta = (notesMap) => (props) => {
   );
 };
 
+function TraceEpochsArea(props) {
+  let { curMeta } = useContext(CurMetaContext);
+
+  if (curMeta === undefined) {
+    return "";
+  } else {
+    return <TraceEpochs {...props} />;
+  }
+}
+
 function TraceEpochs(props) {
   let {Meta} = props;
   let { curMeta } = useContext(CurMetaContext);
   let prgmName = useContext(PrgmNameContext);
+
   let apiResult = useApi(`/api/constrain/pnt/${curMeta}?prgmName=${prgmName}`);
   return (
     <div>
