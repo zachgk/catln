@@ -1,6 +1,5 @@
 import './App.css';
 
-import React from 'react';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
@@ -75,7 +74,7 @@ function ValuePage(props) {
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<Root />}>
-      <Route exact path="" element={<Navigate to={"/docs"} />} />
+      <Route path="" element={<Navigate to={"/docs"} />} />
       <Route path="docs" element={<Docs />} />
       <Route path="docs/:prgmName" element={<Docs />} />
       <Route path="annot" element={<AnnotPage />} />

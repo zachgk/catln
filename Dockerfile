@@ -48,7 +48,7 @@ FROM ubuntu:24.04
 WORKDIR /home
 COPY . .
 COPY --from=backend /usr/local/bin/catln /usr/local/bin/catln
-COPY --from=frontend /home/webdocs/build /home/webdocs/build
+COPY --from=frontend /home/webdocs/dist /home/webdocs/dist
 
 CMD ["catln", "doc", "--cached", "stack", "test/Integration/code", "docs"]
 EXPOSE 8080
