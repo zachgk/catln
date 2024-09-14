@@ -1,9 +1,11 @@
-import React from 'react';
+import React, {useContext} from 'react';
 
 import ReactMarkdown, {defaultUrlTransform} from 'react-markdown';
 import SyntaxHighlighter from 'react-syntax-highlighter';
+import {useParams} from 'react-router-dom';
+import path from 'pathe';
 
-import {KeyWord, PTypeName, tagJoin} from './Common';
+import {KeyWord, PTypeName, tagJoin, TocContext} from './Common';
 import ListProgram from './Values/ListProgram';
 import TypeInfer from './Values/TypeInfer';
 import Debug from './Values/Debug';
@@ -66,6 +68,8 @@ function tryValue(val) {
 
 function Comment(props) {
   const {comment} = props;
+  const params = useParams();
+  const tocResult = useContext(TocContext);
   // let {objNames, classToType} = useContext(ResMaps);
   // objNames = objNames || {};
   // classToType = classToType || {};
@@ -109,12 +113,24 @@ function Comment(props) {
   function transformLinkUri(href, children, title) {
     if(href.startsWith("catln://")) {
       return href;
+    } else if (!isUrl(href) && !path.isAbsolute(href) && "prgmName" in params) {
+      const p = path.join(tocResult.data[params.prgmName].rawImpDir, href);
+      return `/docs/${encodeURIComponent(p)}`;
     } else {
       return defaultUrlTransform(href, children, title);
     }
   }
 
   return <ReactMarkdown children={comment2} urlTransform={transformLinkUri} components={components}/>;
+}
+
+function isUrl(str) {
+  try {
+    new URL(str);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function CatlnResult(props) {

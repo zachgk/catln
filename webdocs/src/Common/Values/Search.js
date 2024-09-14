@@ -55,7 +55,7 @@ function AppBarSearch() {
 
   let fileOptions = [];
   if (tocResult.isLoaded && tocResult.data) {
-    fileOptions = tocResult.data.map(d => d[0]);
+    fileOptions = Object.keys(tocResult.data);
   }
 
   const searchNavigate = (e, newValue) => {

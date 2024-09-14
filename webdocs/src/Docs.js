@@ -62,12 +62,7 @@ function Main(props) {
   let pageExprs = props.data;
   let { prgmName } = useParams();
 
-  let pages = [];
-  pageExprs.forEach(pe => {
-    if (pe[0]) {
-      pages.push(pe[0]);
-    }
-  });
+  let pages = Object.keys(pageExprs);
 
   const startingPage = encodeURIComponent(pages[pages.length - 1]);
   const basePageTree = buildPageTree(pages);

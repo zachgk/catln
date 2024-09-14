@@ -28,6 +28,13 @@ import {AppBarSearch} from './Common/Values/Search';
 function Root() {
 
   let tocResult = useApi("/api/toc");
+  if (tocResult.isLoaded && Array.isArray(tocResult.data)) {
+    let tocResultDataObj = {};
+    tocResult.data.forEach(r => {
+      tocResultDataObj[r[0]] = r[1];
+    });
+    tocResult.data = tocResultDataObj;
+  }
   return (
     <TocContext.Provider value={tocResult}>
       <Header />

@@ -50,5 +50,5 @@ COPY . .
 COPY --from=backend /usr/local/bin/catln /usr/local/bin/catln
 COPY --from=frontend /home/webdocs/build /home/webdocs/build
 
-CMD ["catln", "doc", "--cached", "stack", "test/Integration/code"]
+CMD ["catln", "doc", "--cached", "stack", "test/Integration/code", "docs"]
 EXPOSE 8080
