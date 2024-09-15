@@ -91,6 +91,19 @@ data WDProvider
   , cAnnots          :: CRes (GraphData [(Expr EvalMetaDat, Val)] FileImport)
                     }
 
+emptyWDProvider :: WDProvider
+emptyWDProvider = WDProvider {
+        cCore = True
+      , cBaseFileNames = []
+      , cRaw = return $ graphFromEdges []
+      , cPrgm = return $ graphFromEdges []
+      , cTPrgmWithTrace = return $ graphFromEdges []
+      , cTPrgm = return $ graphFromEdges []
+      , cTBPrgm = return $ graphFromEdges []
+      , cAnnots = return $ graphFromEdges []
+                            }
+
+
 mkWDProvider :: Bool -> [String] -> IO WDProvider
 mkWDProvider includeCore baseFileNames = do
   p <- runCResT $ do
