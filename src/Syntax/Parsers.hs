@@ -19,6 +19,7 @@ import qualified Data.HashSet            as S
 
 import           Control.Monad.Trans
 import           CRes
+import           CtConstants             (noCoreAnnot)
 import           Data.Graph
 import qualified Data.HashMap.Strict     as H
 import           Data.List
@@ -77,8 +78,9 @@ readImport imp = case maybeExprPath (rawImpAbs imp) of
     Nothing -> fail $ printf "No parser available for oject name in %s" (show imp)
     Just parser -> parser $ rawImpAbs imp
 
-processParsed :: Bool -> RawFileImport -> (RawPrgm (), [RawFileImport]) -> IO (GraphNodes (RawPrgm ()) RawFileImport, [RawFileImport])
-processParsed includeCore imp ((prgmImports, statements), extraImports) = do
+processParsed :: RawFileImport -> (RawPrgm (), [RawFileImport]) -> IO (GraphNodes (RawPrgm ()) RawFileImport, [RawFileImport])
+processParsed imp (prgm@(prgmImports, statements), extraImports) = do
+  let includeCore = not (rawPrgmHasAnnot prgm noCoreAnnot)
   let prgmImports' = if includeCore && not ("core" `isInfixOf` name)
       then mkRawFileImport (rawStr "core") : prgmImports
       else prgmImports
@@ -94,15 +96,15 @@ processParsed includeCore imp ((prgmImports, statements), extraImports) = do
       RawTupleApply _ _ [(False, RawObjArr{roaArr=Just (Just (RawCExpr _ (CStr n)), _)})] -> n
       _ -> ""
 
-parseFile :: Bool -> RawFileImport -> CResT IO (GraphNodes (RawPrgm ()) RawFileImport)
-parseFile includeCore imp = do
+parseFile :: RawFileImport -> CResT IO (GraphNodes (RawPrgm ()) RawFileImport)
+parseFile imp = do
   imp' <- lift $ canonicalImport Nothing imp
   r <- lift $ readImport imp'
-  p <- lift $ processParsed includeCore imp' r
+  p <- lift $ processParsed imp' r
   return $ fst p
 
-readFiles :: Bool -> [RawFileImport] -> CResT IO (GraphData (RawPrgm ()) RawFileImport)
-readFiles includeCore initialImps = do
+readFiles :: [RawFileImport] -> CResT IO (GraphData (RawPrgm ()) RawFileImport)
+readFiles initialImps = do
   initialImps' <- lift $ mapM (canonicalImport Nothing) initialImps
   res <- lift $ aux [] S.empty initialImps'
   return $ graphFromEdges res
@@ -114,6 +116,6 @@ readFiles includeCore initialImps = do
         then aux acc visited restToVisit
         else do
           r <- readImport nextToVisit
-          (newPrgm, newToVisit) <- processParsed includeCore nextToVisit r
+          (newPrgm, newToVisit) <- processParsed nextToVisit r
           let restToVisit' = newToVisit ++ restToVisit
           aux (newPrgm : acc) (S.insert nextToVisit visited) restToVisit'

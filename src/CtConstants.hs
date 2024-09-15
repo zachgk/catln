@@ -60,6 +60,9 @@ printAnnotText = "p"
 ctxAnnot :: String
 ctxAnnot = "/Catln/#ctx"
 
+noCoreAnnot :: String
+noCoreAnnot = "#noCore"
+
 elseAnnot :: String
 elseAnnot = "/Catln/#else"
 

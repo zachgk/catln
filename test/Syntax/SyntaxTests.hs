@@ -24,7 +24,7 @@ findPrgms (extension, prgmDir) = do
   fileNames <- filesWithExtension extension prgmDir
   prgms <- runCResT $ do
     forM fileNames $ \fileName -> do
-      (prgm, _, _) <- parseFile False $ mkRawFileImport $ rawStr fileName
+      (prgm, _, _) <- parseFile $ mkRawFileImport $ rawStr fileName
       return (fileName, prgm)
   return $ H.fromList $ fromCRes prgms
 

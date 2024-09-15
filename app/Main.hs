@@ -26,7 +26,7 @@ xRun :: String -> String -> CResT IO ()
 xRun prgmName function = do
   prgmName' <- lift $ mkRawCanonicalImportStr prgmName
   prgmName'' <- lift $ mkDesCanonicalImportStr prgmName
-  rawPrgm <- readFiles True [prgmName']
+  rawPrgm <- readFiles [prgmName']
   desPrgm <- desFiles rawPrgm
   tprgm <- asCResT $ typecheckPrgm desPrgm
   returnValue <- evalRun function prgmName'' tprgm
@@ -38,7 +38,7 @@ xBuild :: String -> String -> CResT IO ()
 xBuild prgmName function = do
   prgmName' <- lift $ mkRawCanonicalImportStr prgmName
   prgmName'' <- lift $ mkDesCanonicalImportStr prgmName
-  rawPrgm <- readFiles True [prgmName']
+  rawPrgm <- readFiles [prgmName']
   desPrgm <- desFiles rawPrgm
   tprgm <- asCResT $ typecheckPrgm desPrgm
   returnValue <- evalBuild function prgmName'' tprgm
@@ -56,13 +56,13 @@ xBuild prgmName function = do
 
 xDoc :: [String] -> Bool -> Bool -> CResT IO ()
 xDoc prgmNames cached apiOnly = if apiOnly
-  then lift $ docApi cached True prgmNames
-  else lift $ docServe cached True prgmNames
+  then lift $ docApi cached prgmNames
+  else lift $ docServe cached prgmNames
 
 xConvert :: String -> Maybe String -> CResT IO ()
 xConvert prgmName _outFname = do
   prgmName' <- lift $ mkRawCanonicalImportStr prgmName
-  (prgm, _fileName, _) <- parseFile False prgmName'
+  (prgm, _fileName, _) <- parseFile prgmName'
   -- TODO Print to file if outFname
   let prgm' = formatRootPrgm prgm
   lift $ print prgmName
@@ -76,7 +76,7 @@ xLsp = do
 xFmt :: String -> CResT IO ()
 xFmt prgmName = do
   prgmName' <- lift $ mkRawCanonicalImportStr prgmName
-  (prgm, _, _) <- parseFile False prgmName'
+  (prgm, _, _) <- parseFile prgmName'
   let prgm' = formatRootPrgm prgm
   lift $ writeFile prgmName prgm'
 

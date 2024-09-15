@@ -81,8 +81,7 @@ filterByType name (objMap, ClassGraph classGraph, _) = (objMap', classGraph', []
 
 data WDProvider
   = WDProvider {
-    cCore           :: Bool
-  , cBaseFileNames   :: [String]
+    cBaseFileNames   :: [String]
   , cRaw            :: CRes PPrgmGraphData
   , cPrgm           :: CRes (GraphData DesPrgm FileImport)
   , cTPrgmWithTrace :: CRes (GraphData (TPrgm, VPrgm, TraceConstrain) FileImport)
@@ -93,8 +92,7 @@ data WDProvider
 
 emptyWDProvider :: WDProvider
 emptyWDProvider = WDProvider {
-        cCore = True
-      , cBaseFileNames = []
+        cBaseFileNames = []
       , cRaw = return $ graphFromEdges []
       , cPrgm = return $ graphFromEdges []
       , cTPrgmWithTrace = return $ graphFromEdges []
@@ -104,19 +102,18 @@ emptyWDProvider = WDProvider {
                             }
 
 
-mkWDProvider :: Bool -> [String] -> IO WDProvider
-mkWDProvider includeCore baseFileNames = do
+mkWDProvider :: [String] -> IO WDProvider
+mkWDProvider baseFileNames = do
   p <- runCResT $ do
     baseFileNames' <- lift $ mapM mkRawCanonicalImportStr baseFileNames
-    rawPrgm <- readFiles includeCore baseFileNames'
+    rawPrgm <- readFiles baseFileNames'
     prgm <- desFiles rawPrgm
     let withTrace = typecheckPrgmWithTrace prgm
     let tprgm = fmap (fmapGraph fst3) withTrace
     let tbprgm = tprgm >>= evalBuildAll
     let annots' = tprgm >>= (\jtprgm -> fmap graphFromEdges $ traverse (\(_, n, deps) -> (, n, deps) <$> evalAnnots n jtprgm) $  graphToNodes jtprgm)
     return $ WDProvider {
-        cCore = includeCore
-      , cBaseFileNames = baseFileNames
+        cBaseFileNames = baseFileNames
       , cRaw = return rawPrgm
       , cPrgm = return prgm
       , cTPrgmWithTrace = withTrace
@@ -132,12 +129,12 @@ mkWDProvider includeCore baseFileNames = do
       unless (null notes) $ putStrLn $ prettyCNotes notes
       fail "Could not build webdocs"
 
-mkLiveWDProvider :: Bool -> [String] -> IO (IO WDProvider)
-mkLiveWDProvider includeCore baseFileNames = return $ mkWDProvider includeCore baseFileNames
+mkLiveWDProvider :: [String] -> IO (IO WDProvider)
+mkLiveWDProvider baseFileNames = return $ mkWDProvider baseFileNames
 
-mkCacheWDProvider :: Bool -> [String] -> IO (IO WDProvider)
-mkCacheWDProvider includeCore baseFileNames = do
-  p <- mkWDProvider includeCore baseFileNames
+mkCacheWDProvider :: [String] -> IO (IO WDProvider)
+mkCacheWDProvider baseFileNames = do
+  p <- mkWDProvider baseFileNames
   return $ return p
 
 getRawPrgm :: WDProvider -> CResT IO PPrgmGraphData
@@ -349,25 +346,25 @@ docApiBase getProvider = do
         fail $ printf "Could not build web page for %s.%s" prgmName fun
 
 
-docApi :: Bool -> Bool -> [String] -> IO ()
-docApi cached includeCore baseFileNames = do
+docApi :: Bool -> [String] -> IO ()
+docApi cached baseFileNames = do
 
   provider <- if cached
-    then mkCacheWDProvider includeCore baseFileNames
-    else mkLiveWDProvider includeCore baseFileNames
+    then mkCacheWDProvider baseFileNames
+    else mkLiveWDProvider baseFileNames
 
   scotty 31204 $ docApiBase provider
 
-docServe :: Bool -> Bool -> [String] -> IO ()
-docServe cached includeCore baseFileNames = do
+docServe :: Bool -> [String] -> IO ()
+docServe cached baseFileNames = do
 
   let handleIndex p = case p of
         "" -> Just "index.html"
         _  -> Just p
 
   provider <- if cached
-    then mkCacheWDProvider includeCore baseFileNames
-    else mkLiveWDProvider includeCore baseFileNames
+    then mkCacheWDProvider baseFileNames
+    else mkLiveWDProvider baseFileNames
 
   scotty 8080 $ do
 

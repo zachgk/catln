@@ -31,6 +31,8 @@ module(Catln)
       An else arrow takes effect only if no other arrows match.
       It's domain can be considered altered to have no overlap with other domains.
       It can be used to create "default" behaviors that are overridden and fallthrough logic.
+  annot(#noCore)
+    # [#noCore] is used not include the core library as an automatic dependency of a file
   annot(#runtime(k -> String))
     # [#runtime] is used to mark a runtime declaration. The key [k] is used to match the declaration to the equivalent function in the evaluator runtime.
   annot(#argStart)

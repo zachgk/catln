@@ -28,7 +28,6 @@ import           Data.Bifunctor                   (first)
 import           Data.Graph                       hiding (path)
 import           MapMeta
 import           Semantics
-import           Semantics.Annots                 (isCtxAnnot)
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Desugarf.Expr
@@ -267,10 +266,7 @@ desPrgm ((_, statements), name, imports) = do
 -- | Checks whether a program is valid for desugaring
 -- | This mostly means without disqualifying annotations such as 'ctxAnnot'
 validPrgm :: PPrgm -> Bool
-validPrgm (_, statements) = all validStatementTree statements
-  where
-    validStatementTree (RawStatementTree (RawAnnot a) _) = not $ isCtxAnnot a
-    validStatementTree _                                 = True
+validPrgm prgm = not $ rawPrgmHasAnnot prgm ctxAnnot
 
 desFiles :: PPrgmGraphData -> CResT IO DesPrgmGraphData
 desFiles prgms1 = do

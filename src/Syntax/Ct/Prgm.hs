@@ -25,6 +25,7 @@ import           GHC.Generics        (Generic)
 import           Data.Aeson          hiding (Object)
 import           Data.Maybe          (fromJust, isJust, mapMaybe)
 import           Semantics
+import           Semantics.Annots    (isAnnot)
 import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
@@ -241,3 +242,10 @@ roaVarArgs RawObjArr{roaArr=(Just (Just argVal, _))} = exprVarArgs argVal
 roaVarArgs RawObjArr{roaObj=(Just obj), roaArr= Nothing} = H.singleton (TVArg $ rawInExprSingleton obj) [(obj, emptyMetaE obj)]
 roaVarArgs RawObjArr{roaObj=(Just obj), roaArr= Just (Nothing, _)} = H.singleton (TVArg $ rawInExprSingleton obj) [(obj, emptyMetaE obj)]
 roaVarArgs oa = error $ printf "exprVarArgs not defined for arg %s" (show oa)
+
+-- | Checks whether a program has a global annot
+rawPrgmHasAnnot :: RawPrgm m -> String -> Bool
+rawPrgmHasAnnot (_, statements) annot = any checkStatementTree statements
+  where
+    checkStatementTree (RawStatementTree (RawAnnot a) _) = isAnnot annot a
+    checkStatementTree _                                 = False

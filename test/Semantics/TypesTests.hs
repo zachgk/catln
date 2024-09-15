@@ -31,7 +31,7 @@ findPrgms = do
   prgms <- runCResT $ do
     forM fileNames $ \fileName -> do
       fileName' <- lift $ mkRawCanonicalImportStr fileName
-      rawPrgm <- readFiles False [fileName']
+      rawPrgm <- readFiles [fileName']
       prgm <- desFiles rawPrgm
       tprgm <- asCResT $ typecheckPrgm prgm
       return (fileName, mergePrgms $ map (mapMetaPrgm clearMetaDat . fst3) (graphToNodes tprgm))

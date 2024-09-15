@@ -36,9 +36,8 @@ import           Syntax.Parsers                (mkRawCanonicalImportStr)
 import           Text.Megaparsec               (SourcePos (sourceColumn),
                                                 sourceLine, unPos)
 import           Utils
-import           WebDocs                       (WDProvider,
-                                                cRaw, emptyWDProvider,
-                                                mkWDProvider)
+import           WebDocs                       (WDProvider, cRaw,
+                                                emptyWDProvider, mkWDProvider)
 
 type ServeConfig = ()
 newtype ServeState = ServeState WDProvider
@@ -56,7 +55,7 @@ recomputeServeState = do
   let getWorkspaceFolderPath (WorkspaceFolder uri _) = uriToFilePath uri
   let baseFiles = mapMaybe getWorkspaceFolderPath workspaceFolders ++ mapMaybe (uriToFilePath . fromNormalizedUri) (Map.keys vfsMap')
   -- TODO Support passing data from virtual files
-  provider <- liftIO $ mkWDProvider True baseFiles
+  provider <- liftIO $ mkWDProvider baseFiles
   put (ServeState provider)
   return ()
 

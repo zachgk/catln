@@ -236,6 +236,7 @@
             , /Catln/#md( Value /text -> /Data/String )
             , /Catln/#name( Value /name -> /Data/String )
             , Value /Catln/#else
+            , Value /Catln/#noCore
             , /Catln/#runtime( Value /k -> /Data/String )
             , Value /Catln/#argStart
             , Value /Catln/#argEnd
@@ -260,6 +261,7 @@
             ]
         ,
             [ CGType
+            , CGType
             , CGType
             , CGType
             , CGType

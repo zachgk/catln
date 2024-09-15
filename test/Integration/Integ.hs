@@ -52,14 +52,14 @@ runGoldenTest goldenType goldenDir fileNameStr prgm step = do
       step $ printf "No golden test for %s. Writing" goldenType
       writeFile goldenPath showPrgm'
 
-runTest :: Bool -> Bool -> String -> TestTree
-runTest runGolden includeCore fileNameStr = testCaseSteps fileNameStr $ \step -> do
+runTest :: Bool -> String -> TestTree
+runTest runGolden fileNameStr = testCaseSteps fileNameStr $ \step -> do
   step $ printf "Read file %s..." fileNameStr
   fileNameRaw <- mkRawCanonicalImportStr fileNameStr
   fileName <- mkDesCanonicalImportStr fileNameStr
 
   res <- runCResT $ do
-    rawPrgm <- readFiles includeCore [fileNameRaw]
+    rawPrgm <- readFiles [fileNameRaw]
     prgm <- desFiles rawPrgm
 
     when runGolden $ do
@@ -98,21 +98,21 @@ runTest runGolden includeCore fileNameStr = testCaseSteps fileNameStr $ \step ->
     CErr notes ->
       assertFailure $ "Failed test: \n" ++ prettyCNotes notes
 
-runTests :: Bool -> Bool -> [String] -> TestTree
-runTests runGolden includeCore testFiles = testGroup "Tests" testTrees
-  where testTrees = map (runTest runGolden includeCore) testFiles
+runTests :: Bool -> [String] -> TestTree
+runTests runGolden testFiles = testGroup "Tests" testTrees
+  where testTrees = map (runTest runGolden) testFiles
 
 test :: IO ()
-test = defaultMain $ runTests False False ["test/test.ct"]
+test = defaultMain $ runTests False ["test/test.ct"]
 
 testd :: IO ()
-testd = docApi False False ["test/test.ct"]
+testd = docApi False ["test/test.ct"]
 
 standardTests :: IO [String]
 standardTests = findCt testDir
 
 integrationTests :: IO TestTree
-integrationTests = runTests True True <$> standardTests
+integrationTests = runTests True <$> standardTests
 
 mtFileName :: String -> IO String
 mtFileName k = do
@@ -128,7 +128,7 @@ mtFileName k = do
 mtBase :: Bool -> String -> IO ()
 mtBase runGolden k = do
   fileName' <- mtFileName k
-  defaultMain $ runTests runGolden True [fileName']
+  defaultMain $ runTests runGolden [fileName']
 
 mt :: String -> IO ()
 mt = mtBase False
@@ -139,9 +139,9 @@ mtg = mtBase True
 mtd :: String -> IO ()
 mtd k = do
   fileName' <- mtFileName k
-  docApi False True [fileName']
+  docApi False [fileName']
 
 mtde :: String -> IO ()
 mtde k = do
   fileName' <- mtFileName k
-  docServe False True [fileName']
+  docServe False [fileName']
