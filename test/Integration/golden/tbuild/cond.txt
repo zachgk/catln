@@ -213,13 +213,31 @@
                 Something like [String]s would not have an inverse, so it wouldn't be a [Group]." )
             ]
         )
-    , ct
-        ( CStr "/repo/dir/stack/core/algebra.ct" )
+    , AFileImport
+        { impRaw = CStr "core/algebra.ct"
+        , impAbs = ct
+            ( CStr "/repo/dir/stack/core/algebra.ct" )
+        , impDisp = Just "/repo/dir/stack/core/algebra.ct"
+        , impCalledDir = Just "/repo/dir/stack/core"
+        , impDir = Just "/repo/dir/stack/core"
+        }
     ,
-        [ ct
-            ( CStr "/repo/dir/stack/core/primitives.ct" )
-        , ct
-            ( CStr "/repo/dir/stack/core/compile.ct" )
+        [ AFileImport
+            { impRaw = CStr "core/primitives.ct"
+            , impAbs = ct
+                ( CStr "/repo/dir/stack/core/primitives.ct" )
+            , impDisp = Just "/repo/dir/stack/core/primitives.ct"
+            , impCalledDir = Just "/repo/dir/stack/core"
+            , impDir = Just "/repo/dir/stack/core"
+            }
+        , AFileImport
+            { impRaw = CStr "core/compile.ct"
+            , impAbs = ct
+                ( CStr "/repo/dir/stack/core/compile.ct" )
+            , impDisp = Just "/repo/dir/stack/core/compile.ct"
+            , impCalledDir = Just "/repo/dir/stack/core"
+            , impDir = Just "/repo/dir/stack/core"
+            }
         ]
     )
 ,
@@ -301,15 +319,39 @@
                 ( EAppArg Value /text -> /Data/String = "## Result Classes" )
             ]
         )
-    , ct
-        ( CStr "/repo/dir/stack/core/compile.ct" )
+    , AFileImport
+        { impRaw = CStr "/repo/dir/stack/core/compile.ct"
+        , impAbs = ct
+            ( CStr "/repo/dir/stack/core/compile.ct" )
+        , impDisp = Just "/repo/dir/stack/core/compile.ct"
+        , impCalledDir = Just "/repo/dir/stack"
+        , impDir = Just "/repo/dir/stack/core"
+        }
     ,
-        [ ct
-            ( CStr "/repo/dir/stack/core/primitives.ct" )
-        , ct
-            ( CStr "/repo/dir/stack/core/data.ct" )
-        , ct
-            ( CStr "/repo/dir/stack/core/webdoc.ct" )
+        [ AFileImport
+            { impRaw = CStr "core/primitives.ct"
+            , impAbs = ct
+                ( CStr "/repo/dir/stack/core/primitives.ct" )
+            , impDisp = Just "/repo/dir/stack/core/primitives.ct"
+            , impCalledDir = Just "/repo/dir/stack/core"
+            , impDir = Just "/repo/dir/stack/core"
+            }
+        , AFileImport
+            { impRaw = CStr "core/data.ct"
+            , impAbs = ct
+                ( CStr "/repo/dir/stack/core/data.ct" )
+            , impDisp = Just "/repo/dir/stack/core/data.ct"
+            , impCalledDir = Just "/repo/dir/stack/core"
+            , impDir = Just "/repo/dir/stack/core"
+            }
+        , AFileImport
+            { impRaw = CStr "core/webdoc.ct"
+            , impAbs = ct
+                ( CStr "/repo/dir/stack/core/webdoc.ct" )
+            , impDisp = Just "/repo/dir/stack/core/webdoc.ct"
+            , impCalledDir = Just "/repo/dir/stack/core"
+            , impDir = Just "/repo/dir/stack/core"
+            }
         ]
     )
 ,
@@ -474,11 +516,23 @@
                 It defines a single function [enum] which lists all of the values in the type." )
             ]
         )
-    , ct
-        ( CStr "/repo/dir/stack/core/data.ct" )
+    , AFileImport
+        { impRaw = CStr "core/data.ct"
+        , impAbs = ct
+            ( CStr "/repo/dir/stack/core/data.ct" )
+        , impDisp = Just "/repo/dir/stack/core/data.ct"
+        , impCalledDir = Just "/repo/dir/stack/core"
+        , impDir = Just "/repo/dir/stack/core"
+        }
     ,
-        [ ct
-            ( CStr "/repo/dir/stack/core/primitives.ct" )
+        [ AFileImport
+            { impRaw = CStr "core/primitives.ct"
+            , impAbs = ct
+                ( CStr "/repo/dir/stack/core/primitives.ct" )
+            , impDisp = Just "/repo/dir/stack/core/primitives.ct"
+            , impCalledDir = Just "/repo/dir/stack/core"
+            , impDir = Just "/repo/dir/stack/core"
+            }
         ]
     )
 ,
@@ -493,19 +547,55 @@
                 All Catln files will automatically import the core library." )
             ]
         )
-    , ct
-        ( CStr "/repo/dir/stack/core/main.ct" )
+    , AFileImport
+        { impRaw = CStr "/repo/dir/stack/core/main.ct"
+        , impAbs = ct
+            ( CStr "/repo/dir/stack/core/main.ct" )
+        , impDisp = Just "/repo/dir/stack/core/main.ct"
+        , impCalledDir = Just "/repo/dir/stack"
+        , impDir = Just "/repo/dir/stack/core"
+        }
     ,
-        [ ct
-            ( CStr "/repo/dir/stack/core/algebra.ct" )
-        , ct
-            ( CStr "/repo/dir/stack/core/primitives.ct" )
-        , ct
-            ( CStr "/repo/dir/stack/core/data.ct" )
-        , ct
-            ( CStr "/repo/dir/stack/core/compile.ct" )
-        , ct
-            ( CStr "/repo/dir/stack/core/webdoc.ct" )
+        [ AFileImport
+            { impRaw = CStr "core/algebra.ct"
+            , impAbs = ct
+                ( CStr "/repo/dir/stack/core/algebra.ct" )
+            , impDisp = Just "/repo/dir/stack/core/algebra.ct"
+            , impCalledDir = Just "/repo/dir/stack/core"
+            , impDir = Just "/repo/dir/stack/core"
+            }
+        , AFileImport
+            { impRaw = CStr "core/primitives.ct"
+            , impAbs = ct
+                ( CStr "/repo/dir/stack/core/primitives.ct" )
+            , impDisp = Just "/repo/dir/stack/core/primitives.ct"
+            , impCalledDir = Just "/repo/dir/stack/core"
+            , impDir = Just "/repo/dir/stack/core"
+            }
+        , AFileImport
+            { impRaw = CStr "core/data.ct"
+            , impAbs = ct
+                ( CStr "/repo/dir/stack/core/data.ct" )
+            , impDisp = Just "/repo/dir/stack/core/data.ct"
+            , impCalledDir = Just "/repo/dir/stack/core"
+            , impDir = Just "/repo/dir/stack/core"
+            }
+        , AFileImport
+            { impRaw = CStr "core/compile.ct"
+            , impAbs = ct
+                ( CStr "/repo/dir/stack/core/compile.ct" )
+            , impDisp = Just "/repo/dir/stack/core/compile.ct"
+            , impCalledDir = Just "/repo/dir/stack/core"
+            , impDir = Just "/repo/dir/stack/core"
+            }
+        , AFileImport
+            { impRaw = CStr "core/webdoc.ct"
+            , impAbs = ct
+                ( CStr "/repo/dir/stack/core/webdoc.ct" )
+            , impDisp = Just "/repo/dir/stack/core/webdoc.ct"
+            , impCalledDir = Just "/repo/dir/stack/core"
+            , impDir = Just "/repo/dir/stack/core"
+            }
         ]
     )
 ,
@@ -635,13 +725,31 @@
                 ( EAppArg Value /text -> /Data/String = "inverse<Integer $T>($T t) = -t" )
             ]
         )
-    , ct
-        ( CStr "/repo/dir/stack/core/primitives.ct" )
+    , AFileImport
+        { impRaw = CStr "core/primitives.ct"
+        , impAbs = ct
+            ( CStr "/repo/dir/stack/core/primitives.ct" )
+        , impDisp = Just "/repo/dir/stack/core/primitives.ct"
+        , impCalledDir = Just "/repo/dir/stack/core"
+        , impDir = Just "/repo/dir/stack/core"
+        }
     ,
-        [ ct
-            ( CStr "/repo/dir/stack/core/algebra.ct" )
-        , ct
-            ( CStr "/repo/dir/stack/core/data.ct" )
+        [ AFileImport
+            { impRaw = CStr "core/algebra.ct"
+            , impAbs = ct
+                ( CStr "/repo/dir/stack/core/algebra.ct" )
+            , impDisp = Just "/repo/dir/stack/core/algebra.ct"
+            , impCalledDir = Just "/repo/dir/stack/core"
+            , impDir = Just "/repo/dir/stack/core"
+            }
+        , AFileImport
+            { impRaw = CStr "core/data.ct"
+            , impAbs = ct
+                ( CStr "/repo/dir/stack/core/data.ct" )
+            , impDisp = Just "/repo/dir/stack/core/data.ct"
+            , impCalledDir = Just "/repo/dir/stack/core"
+            , impDir = Just "/repo/dir/stack/core"
+            }
         ]
     )
 ,
@@ -709,11 +817,23 @@
                 ( EAppArg Value /text -> /Data/String = "dshow(s) -> /Catln/Doc/DShow" )
             ]
         )
-    , ct
-        ( CStr "/repo/dir/stack/core/webdoc.ct" )
+    , AFileImport
+        { impRaw = CStr "core/webdoc.ct"
+        , impAbs = ct
+            ( CStr "/repo/dir/stack/core/webdoc.ct" )
+        , impDisp = Just "/repo/dir/stack/core/webdoc.ct"
+        , impCalledDir = Just "/repo/dir/stack/core"
+        , impDir = Just "/repo/dir/stack/core"
+        }
     ,
-        [ ct
-            ( CStr "/repo/dir/stack/core/compile.ct" )
+        [ AFileImport
+            { impRaw = CStr "core/compile.ct"
+            , impAbs = ct
+                ( CStr "/repo/dir/stack/core/compile.ct" )
+            , impDisp = Just "/repo/dir/stack/core/compile.ct"
+            , impCalledDir = Just "/repo/dir/stack/core"
+            , impDir = Just "/repo/dir/stack/core"
+            }
         ]
     )
 ,
@@ -745,11 +865,23 @@
                 ( EAppArg Value /text -> /Data/String = "Tests using the conditions if and else guards for arrows" )
             ]
         )
-    , ct
-        ( CStr "/repo/dir/test/Integration/code/cond.ct" )
+    , AFileImport
+        { impRaw = CStr "test/Integration/code/cond.ct"
+        , impAbs = ct
+            ( CStr "/repo/dir/test/Integration/code/cond.ct" )
+        , impDisp = Just "/repo/dir/test/Integration/code/cond.ct"
+        , impCalledDir = Nothing
+        , impDir = Just "/repo/dir/test/Integration/code"
+        }
     ,
-        [ dir
-            ( CStr "/repo/dir/stack/core" )
+        [ AFileImport
+            { impRaw = CStr "core"
+            , impAbs = dir
+                ( CStr "/repo/dir/stack/core" )
+            , impDisp = Just "/repo/dir/stack/core"
+            , impCalledDir = Just "/repo/dir/test/Integration/code"
+            , impDir = Just "/repo/dir/stack"
+            }
         ]
     )
 ,
@@ -758,11 +890,23 @@
         , []
         , []
         )
-    , dir
-        ( CStr "/repo/dir/stack/core" )
+    , AFileImport
+        { impRaw = CStr "core"
+        , impAbs = dir
+            ( CStr "/repo/dir/stack/core" )
+        , impDisp = Just "/repo/dir/stack/core"
+        , impCalledDir = Just "/repo/dir/test/Integration/code"
+        , impDir = Just "/repo/dir/stack"
+        }
     ,
-        [ ct
-            ( CStr "/repo/dir/stack/core/main.ct" )
+        [ AFileImport
+            { impRaw = CStr "/repo/dir/stack/core/main.ct"
+            , impAbs = ct
+                ( CStr "/repo/dir/stack/core/main.ct" )
+            , impDisp = Just "/repo/dir/stack/core/main.ct"
+            , impCalledDir = Just "/repo/dir/stack"
+            , impDir = Just "/repo/dir/stack/core"
+            }
         ]
     )
 ]

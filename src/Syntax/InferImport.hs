@@ -72,7 +72,7 @@ inferRawImportStr :: Maybe RawFileImport -> String -> IO (RawExpr ())
 inferRawImportStr caller name = do
   let paths = if isAbsolute name
         then [name]
-        else [maybe name (\p -> joinPath [p, name]) (caller >>= rawImpDir), joinPath ["stack", name]]
+        else [maybe name (\p -> joinPath [p, name]) (caller >>= impDir), joinPath ["stack", name]]
   name' <- findExistingPath paths
   case name' of
     Nothing -> fail $ printf "Could not find file or directory %s" name

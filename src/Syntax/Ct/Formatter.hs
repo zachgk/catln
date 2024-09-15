@@ -29,8 +29,8 @@ formatIndent :: Int -> String
 formatIndent indent = concat $ replicate indent "  "
 
 formatImport :: RawFileImport -> Builder
-formatImport RawFileImport{rawImpRaw} = do
-  literal $ "import " ++ formatExpr rawImpRaw ++ "\n"
+formatImport AFileImport{impRaw} = do
+  literal $ "import " ++ formatExpr impRaw ++ "\n"
 
 
 formatRawApply :: (Show m) => RawApply RawExpr m -> String

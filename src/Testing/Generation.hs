@@ -28,6 +28,8 @@ import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
 import           Utils
+import Syntax.Ct.Desugarf.Expr (desFileImport)
+import Syntax.Ct.Prgm (mkRawFileImport, RawExpr (RawCExpr))
 
 genTypeFromExpr :: Prgm Expr () -> Expr () -> Gen PartialType
 genTypeFromExpr _ (CExpr _ c) = return $ constantPartialType c
@@ -170,4 +172,4 @@ genPrgms :: Gen [GraphNodes (Prgm Expr ()) FileImport]
 genPrgms = do
   prgm <- genPrgm
   prgmName <- HG.string (linear 5 10) HG.lower
-  return [(prgm, CExpr emptyMetaN $ CStr prgmName, [])]
+  return [(prgm, desFileImport $ mkRawFileImport $ RawCExpr emptyMetaN $ CStr prgmName, [])]

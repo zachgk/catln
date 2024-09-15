@@ -167,6 +167,12 @@ exprToType _ e                        = getExprType $ exprPropagateTypes $ desEx
 exprToTypeMeta :: PVarArgMap -> PExpr -> ParseMeta
 exprToTypeMeta vaenv e = mWithType (exprToType vaenv e) (getExprMeta e)
 
+desFileImport :: RawFileImport -> FileImport
+desFileImport rawImp = rawImp{
+    impRaw=semiDesExpr SDOutput Nothing $ impRaw rawImp,
+    impAbs=semiDesExpr SDOutput Nothing $ impAbs rawImp
+  }
+
 desObjArr :: Maybe PObjExpr -> PObjArr -> [ObjArr RawExpr ParseMetaDat]
 desObjArr mainObj (RawObjArr obj basis@TypeObj doc annots arr Nothing) = [ObjArr obj basis doc annots arr']
   where

@@ -254,8 +254,8 @@ desFinalPasses prgms fullPrgms = do
 desPrgm :: (PPrgm, RawFileImport, [RawFileImport]) -> CRes (DesPrgm, FileImport, [FileImport])
 desPrgm ((_, statements), name, imports) = do
   -- desImports
-  let name' = semiDesExpr SDOutput Nothing $ rawImpAbs name
-  let imports' = fmap (semiDesExpr SDOutput Nothing . rawImpAbs) imports
+  let name' = desFileImport name
+  let imports' = fmap desFileImport imports
 
   statements' <- mapM (desStatement ("", [])) statements
   let prgm' = mergePrgms statements'

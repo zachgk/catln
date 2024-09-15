@@ -111,7 +111,23 @@ data Expr m
 
 -- Compiler Annotation
 type CompAnnot em = em
-type FileImport = Expr ()
+data AFileImport em = AFileImport {
+  impRaw       :: em,
+  impAbs       :: em,
+  impDisp      :: Maybe String,
+  impCalledDir :: Maybe FilePath,
+  impDir       :: Maybe FilePath
+  } deriving (Show, Generic, ToJSON)
+type FileImport = AFileImport (Expr ())
+
+instance (Eq em) => Eq (AFileImport em) where
+  a == b = impAbs a == impAbs b
+
+instance (Ord em) => Ord (AFileImport em) where
+  compare a b = compare (impAbs a) (impAbs b)
+
+instance (Hashable em) => Hashable (AFileImport em) where
+  hashWithSalt s a = s `hashWithSalt` impAbs a
 
 
 type ExprCond e m = Maybe (e m)

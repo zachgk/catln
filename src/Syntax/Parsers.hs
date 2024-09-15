@@ -26,7 +26,7 @@ import           Data.List
 import           MapMeta                 (addMetaID)
 import           Semantics.Prgm
 import           Syntax.Ct.Builder
-import           Syntax.Ct.Desugarf.Expr (SemiDesMode (SDOutput), semiDesExpr)
+import           Syntax.Ct.Desugarf.Expr (desFileImport)
 import           Syntax.Ct.MapRawMeta    (mapMetaRawPrgmM)
 import           Syntax.Ct.Parser        (ctParser, ctxParser)
 import           Syntax.Ct.Prgm
@@ -48,35 +48,35 @@ importParsers = H.fromList [
 
 -- Processes an import, producing the rawImpAbs and rawImpDisp
 canonicalImport :: Maybe RawFileImport -> RawFileImport -> IO RawFileImport
-canonicalImport caller imp@RawFileImport{rawImpAbs=(RawCExpr _ (CStr name))} = do
+canonicalImport caller imp@AFileImport{impAbs=(RawCExpr _ (CStr name))} = do
   inferred <- inferRawImportStr caller name
-  canonicalImport caller imp{rawImpAbs=inferred}
-canonicalImport caller imp = case maybeExprPath $ rawImpAbs imp of
+  canonicalImport caller imp{impAbs=inferred}
+canonicalImport caller imp = case maybeExprPath $ impAbs imp of
   Nothing -> fail $ printf "Invalid import %s must be string or oject" (show imp)
   Just _ -> do
     impDir' <- case (calledDir', disp') of
       (_, Just b) | isAbsolute b -> return $ Just $ takeDirectory b
       (Just a, Just b)           -> return $ Just $ takeDirectory $ joinPath [a, b]
       _                          -> return Nothing
-    return imp{rawImpDisp=disp', rawImpCalledDir=calledDir', rawImpDir=impDir'}
+    return imp{impDisp=disp', impCalledDir=calledDir', impDir=impDir'}
   where
-    disp' = case rawExprAppliedArgs $ rawImpAbs imp of
+    disp' = case rawExprAppliedArgs $ impAbs imp of
       [RawObjArr{roaArr=Just (Just (RawCExpr _ (CStr s)), _)}] -> Just s
       _                                                        -> Nothing
-    calledDir' = rawImpDir =<< caller
+    calledDir' = impDir =<< caller
 
 mkRawCanonicalImportStr :: String -> IO RawFileImport
 mkRawCanonicalImportStr = canonicalImport Nothing . mkRawFileImport . rawStr
 
 mkDesCanonicalImportStr :: String -> IO FileImport
-mkDesCanonicalImportStr = fmap (semiDesExpr SDOutput Nothing . rawImpAbs) . mkRawCanonicalImportStr
+mkDesCanonicalImportStr s = desFileImport <$> mkRawCanonicalImportStr s
 
 readImport :: RawFileImport -> ImportParseResult
-readImport imp = case maybeExprPath (rawImpAbs imp) of
+readImport imp = case maybeExprPath (impAbs imp) of
   Nothing -> fail $ printf "Invalid import %s must be string or oject" (show imp)
   Just impPath -> case H.lookup impPath importParsers of
     Nothing -> fail $ printf "No parser available for oject name in %s" (show imp)
-    Just parser -> parser $ rawImpAbs imp
+    Just parser -> parser $ impAbs imp
 
 processParsed :: RawFileImport -> (RawPrgm (), [RawFileImport]) -> IO (GraphNodes (RawPrgm ()) RawFileImport, [RawFileImport])
 processParsed imp (prgm@(prgmImports, statements), extraImports) = do
@@ -91,7 +91,7 @@ processParsed imp (prgm@(prgmImports, statements), extraImports) = do
   prgm'' <- mapMetaRawPrgmM addMetaID prgm'
   return ((prgm'', imp, prgmImports''), totalImports)
   where
-    name = case rawImpAbs imp of
+    name = case impAbs imp of
       RawCExpr _ (CStr n) -> n
       RawTupleApply _ _ [(False, RawObjArr{roaArr=Just (Just (RawCExpr _ (CStr n)), _)})] -> n
       _ -> ""

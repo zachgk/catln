@@ -48,7 +48,7 @@ import           Syntax.Ct.Parser.Syntax       (DesPrgm, PPrgmGraphData)
 import           Syntax.Ct.Prgm                (RawExpr (RawValue),
                                                 RawStatement (RawAnnot),
                                                 RawStatementTree (RawStatementTree),
-                                                mkRawFileImport, rawImpDisp)
+                                                mkRawFileImport)
 import           Syntax.Parsers                (mkDesCanonicalImportStr,
                                                 mkRawCanonicalImportStr,
                                                 readFiles)
@@ -205,7 +205,7 @@ docApiBase getProvider = do
     resp <- liftAndCatchIO $ runCResT $ do
       rawPrgms <- getRawPrgm provider
       let rawPrgms' = map snd3 $ graphToNodes rawPrgms
-      return $ zip (map rawImpDisp rawPrgms') rawPrgms'
+      return $ zip (map impDisp rawPrgms') rawPrgms'
     maybeJson resp
 
   get "/api/page" $ do

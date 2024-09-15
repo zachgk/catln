@@ -80,13 +80,7 @@ data RawStatement e m
 data RawStatementTree e m = RawStatementTree (RawStatement e m) [RawStatementTree e m]
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
-data RawFileImport = RawFileImport {
-  rawImpRaw       :: RawExpr (),
-  rawImpAbs       :: RawExpr (),
-  rawImpDisp      :: Maybe String,
-  rawImpCalledDir :: Maybe FilePath,
-  rawImpDir       :: Maybe FilePath
-                                   } deriving (Show, Generic, ToJSON)
+type RawFileImport = AFileImport (RawExpr ())
 type RawPrgm m = ([RawFileImport], [RawStatementTree RawExpr m]) -- TODO: Include [Export]
 
 data ReplRes m
@@ -97,15 +91,6 @@ data ReplRes m
 
 type ImportParseResult = IO (RawPrgm (), [RawFileImport])
 type ImportParser = RawExpr () -> ImportParseResult
-
-instance Eq RawFileImport where
-  a == b = rawImpAbs a == rawImpAbs b
-
-instance Ord RawFileImport where
-  compare a b = compare (rawImpAbs a) (rawImpAbs b)
-
-instance Hashable RawFileImport where
-  hashWithSalt s a = s `hashWithSalt` rawImpAbs a
 
 instance ExprClass RawExpr where
   getExprMeta expr = case expr of
@@ -211,7 +196,7 @@ instance (Show m, Show (e m)) => Show (RawObjArr e m) where
         Nothing  -> ""
 
 mkRawFileImport :: RawExpr () -> RawFileImport
-mkRawFileImport e = RawFileImport e e Nothing Nothing Nothing
+mkRawFileImport e = AFileImport e e Nothing Nothing Nothing
 
 rawExprAppliedArgs :: (Show m, MetaDat m) => RawExpr m -> [RawObjArr RawExpr m]
 rawExprAppliedArgs (RawValue _ _) = []
