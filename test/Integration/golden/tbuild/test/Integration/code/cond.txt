@@ -1,0 +1,27 @@
+(
+    [ /abs( EAppArg Value /x -> /Data/Primitive/Integer ) | /operator>=
+        ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+        ( EAppArg Value /r -> /Data/Primitive/Integer = 0 ) -> TVArg /x = ( Value /x ↦ TVArg /x )
+    , /abs( EAppArg Value /x -> /Data/Primitive/Integer ) -> TVArg /x = ( Value /x ↦ TVArg /x )
+    , /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+        ( /Catln/exit
+            ( /val=/Data/Primitive/Integer
+            , /this=/Catln/IO
+            ) | /Catln/IO
+        ) = /Catln/exit
+        ( EAppArg Value /val -> /Data/Primitive/Integer =
+            ( /abs
+                ( EAppArg Value /x -> /Data/Primitive/Integer = 0 ) ↦ /Data/Primitive/Integer
+            )
+        )
+        ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+    ]
+,
+    [ CGType
+    , CGType
+    ]
+,
+    [ /Catln/#md
+        ( EAppArg Value /text -> /Data/String = "Tests using the conditions if and else guards for arrows" )
+    ]
+)

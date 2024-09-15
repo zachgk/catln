@@ -1,0 +1,76 @@
+(
+    [ Value /Catln/IO
+    , /Catln/exit( Value /val -> /Data/Primitive/Integer )( Value /this -> /Catln/IO ) -> /Catln/IO
+    , /Catln/println( Value /msg -> /Data/String )( Value /this -> /Catln/IO ) -> /Catln/IO
+    , /Catln/#md( Value /text -> /Data/String )
+    , /Catln/#name( Value /name -> /Data/String )
+    , Value /Catln/#else
+    , Value /Catln/#noCore
+    , /Catln/#runtime( Value /k -> /Data/String )
+    , Value /Catln/#argStart
+    , Value /Catln/#argEnd
+    , /Catln/#assert( Value /test -> ∀/Data/Primitive/Boolean )
+    , /Catln/#assert( Value /test -> ∀/Data/Primitive/Boolean )( Value /msg -> /Data/String )
+    , /Catln/#print( Value /p -> ∀/Catln/Doc/DShow )
+    , Value /Catln/#test
+    , Value /Catln/#example
+    , /operator?->( Value /l= Hole TopType HoleActive Nothing )( Value /r= Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+    , /Catln/CatlnResult( Value /name -> /Data/String )( Value /contents -> /Data/String )
+    , /Catln/www( Value /html -> /Data/String ) -> /Catln/CatlnResult
+        ( /contents=/Data/String
+        , /name=/Data/String
+        ) = /Catln/CatlnResult
+        ( Value /name -> /Data/String = CStr "index.html" )( Value /contents -> TVArg /html = Value /html )
+    , /Catln/llvm( Value /c ) -> /Catln/CatlnResult..
+    , Value /Catln/Then
+    , Value /Catln/Else
+    , /Catln/ThenElse/fromBool( Value /v -> ∀/Data/Primitive/Boolean ) -> ∀/Catln/ThenElse
+    , /Catln/ThenElse/fromBool( Value /v -> /Data/Primitive/True = Value /Data/Primitive/True ) -> /Catln/Then = Value /Catln/Then
+    , /Catln/ThenElse/fromBool( Value /v -> /Data/Primitive/False = Value /Data/Primitive/False ) -> /Catln/Else = Value /Catln/Else
+    ]
+,
+    [ CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGClass
+        ( True
+        , /Catln/ThenElse
+        ,
+            [ /Catln/Then
+            , /Catln/Else
+            ]
+        , Just ""
+        )
+    ]
+,
+    [ /Catln/#md
+        ( Value /text -> /Data/String = CStr "# Catln Core Compiling Types and Annotations" )
+    , /Catln/#md
+        ( Value /text -> /Data/String = CStr "## IO" )
+    , /Catln/#md
+        ( Value /text -> /Data/String = CStr "## Core Annotations
+        The core annotations are all of the annotations used by the compiler and the web docs program." )
+    , /Catln/#md
+        ( Value /text -> /Data/String = CStr "## Build-in Type Macros" )
+    , /Catln/#md
+        ( Value /text -> /Data/String = CStr "## Result Classes" )
+    ]
+)

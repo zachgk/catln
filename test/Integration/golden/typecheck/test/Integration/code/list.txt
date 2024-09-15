@@ -1,0 +1,60 @@
+(
+    [ /llength( Value /this -> /Data/Nil = Value /Data/Nil ) -> /Data/Primitive/Integer = CInt 0
+    , /llength
+        ( Value /this -> /Data/Cons
+            ( /head=TopType
+            , /tail=TopType
+            ) = /Data/Cons( Value /head )
+            ( Value /tail ->
+                ( /Data/Nil | /Data/Cons
+                    ( /head=TopType
+                    , /tail=TopType
+                    )
+                )
+            )
+        ) ->
+        ( /operator+
+            ( /r=/Data/Primitive/Integer
+            , /l=/Data/Primitive/Integer
+            ) | /Data/Primitive/Integer
+        ) = /operator+
+        ( Value /l -> /Data/Primitive/Integer = CInt 1 )
+        ( Value /r -> /Data/Primitive/Integer = /llength( Value /this -> TVArg /tail = Value /tail ) )
+    , /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
+        ( /Catln/exit
+            ( /val=/Data/Primitive/Integer
+            , /this=/Catln/IO
+            ) | /Catln/IO
+        ) = /Catln/exit
+        ( Value /val -> /Data/Primitive/Integer = /operator-
+            ( Value /l -> /Data/Primitive/Integer = /llength
+                ( Value /this -> /Data/Cons
+                    ( /head=/Data/Primitive/Integer
+                    , /tail=/Data/Cons
+                        ( /head=/Data/Primitive/Integer
+                        , /tail=/Data/Nil
+                        )
+                    ) = /Data/Cons
+                    ( Value /head -> /Data/Primitive/Integer = CInt 5 )
+                    ( Value /tail -> /Data/Cons
+                        ( /head=/Data/Primitive/Integer
+                        , /tail=/Data/Nil
+                        ) = /Data/Cons
+                        ( Value /head -> /Data/Primitive/Integer = CInt 3 )( Value /tail -> /Data/Nil = Value /Data/Nil )
+                    )
+                )
+            )
+            ( Value /r -> /Data/Primitive/Integer = CInt 2 )
+        )( Value /this -> TVArg /io = Value /io )
+    ]
+,
+    [ CGType
+    , CGType
+    ]
+,
+    [ /Catln/#md
+        ( Value /text -> /Data/String = CStr "The list tests recursive data structures without type variables" )
+    , /Catln/#md
+        ( Value /text -> /Data/String = CStr "TODO: Use core length rather than llength" )
+    ]
+)

@@ -1,0 +1,25 @@
+(
+    [ Value outerVar= /operator==
+        ( Value /l= /operator-
+            ( Value /l= CInt 5 )
+            ( Value /r= CInt 3 )
+        )
+        ( Value /r= CInt 2 )
+    , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io
+    , /ContextIn.innerVar( Value /io )= /operator==
+        ( Value /l= /operator+
+            ( Value /l= CInt 1 )
+            ( Value /r= CInt 1 )
+        )
+        ( Value /r= CInt 2 )
+    ]
+,
+    [ CGType
+    , CGType
+    , CGType
+    ]
+,
+    [ /Catln/#md
+        ( Value /text= CStr "Tests currying values with context" )
+    ]
+)

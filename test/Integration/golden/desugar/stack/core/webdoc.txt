@@ -1,0 +1,63 @@
+(
+    [ /Catln/Doc/dshow( Value s -> ∀/Catln/Doc/DShow )= Value s
+    , /Catln/Doc/Show/MD( Value /text -> /Data/String )
+    , /Catln/Doc/dshow
+        ( Value s= #md( Value text ) )= Show/MD( Value text= Value text )
+    , /Catln/Doc/dshow
+        ( Value s= #print( Value p ) )= Value p
+    , Value /Catln/Doc/#listProgram
+    , Value /Catln/Doc/Show/ListProgram
+    , /Catln/Doc/dshow( Value s= Value #listProgram )= Value Show/ListProgram
+    , Value /Catln/Doc/#type
+    , Value /Catln/Doc/Show/TypePage
+    , /Catln/Doc/dshow( Value s= Value #type )= Value Show/TypePage
+    , Value /Catln/Doc/#typeInfer
+    , Value /Catln/Doc/Show/TypeInfer
+    , /Catln/Doc/dshow( Value s= Value #typeInfer )= Value Show/TypeInfer
+    , Value /Catln/Doc/#debug
+    , Value /Catln/Doc/Show/Debug
+    , /Catln/Doc/dshow( Value s= Value #debug )= Value Show/Debug
+    , Value /Catln/Doc/#build
+    , Value /Catln/Doc/Show/BuildPage
+    , /Catln/Doc/dshow( Value s= Value #build )= Value Show/BuildPage
+    ]
+,
+    [ CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGClass
+        ( False
+        , /Catln/Doc/DShow
+        ,
+            [ /Data/String
+            , /Catln/CatlnResult..
+            , /Catln/Doc/Show/MD..
+            , /Catln/Doc/Show/ListProgram..
+            , /Catln/Doc/Show/TypePage..
+            , /Catln/Doc/Show/TypeInfer..
+            , /Catln/Doc/Show/Debug..
+            , /Catln/Doc/Show/BuildPage..
+            ]
+        , Just "Represents objects which can be shown in the webdocs.        "
+        )
+    ]
+,
+    [ /Catln/#md
+        ( Value /text= CStr "# Catln WebDocs
+        This provides common components and annotations used in Webdocs.
+        These include the ones" )
+    , /Catln/#md
+        ( Value /text= CStr "Represents objects which can be shown in the webdocs." )
+    , /Catln/#md
+        ( Value /text= CStr "dshow(s) -> /Catln/Doc/DShow" )
+    ]
+)

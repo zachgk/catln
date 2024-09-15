@@ -1,0 +1,18 @@
+(
+    [ id( Value x )= Value x
+    , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+        ( Value val= id
+            ( Value x= CInt 0 )
+        )( Value /this= Value io )
+    ]
+,
+    [ CGType
+    , CGType
+    ]
+,
+    [ /Catln/#md
+        ( Value /text= CStr "Tests an identity function.
+        It requires using the type of the input argument as the output type of id as well.
+        So, it must be read as `id($T) -> $T`, not (id(Any) -> Any)." )
+    ]
+)

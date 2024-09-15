@@ -1,0 +1,41 @@
+(
+    [ /fib( Value /integer -> /Data/Primitive/Integer ) | /operator>( Value /l -> TVArg /integer = Value /integer )
+        ( Value /r -> /Data/Primitive/Integer = CInt 1 ) ->
+        ( /operator+
+            ( /r=/Data/Primitive/Integer
+            , /l=/Data/Primitive/Integer
+            ) | /Data/Primitive/Integer
+        ) = /operator+
+        ( Value /l -> /Data/Primitive/Integer = /fib
+            ( Value /integer -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /integer = Value /integer )
+                ( Value /r -> /Data/Primitive/Integer = CInt 1 )
+            )
+        )
+        ( Value /r -> /Data/Primitive/Integer = /fib
+            ( Value /integer -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /integer = Value /integer )
+                ( Value /r -> /Data/Primitive/Integer = CInt 2 )
+            )
+        )
+    , /fib( Value /integer -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = CInt 1
+    , /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
+        ( /Catln/exit
+            ( /val=/Data/Primitive/Integer
+            , /this=/Catln/IO
+            ) | /Catln/IO
+        ) = /Catln/exit
+        ( Value /val -> /Data/Primitive/Integer = /operator-
+            ( Value /l -> /Data/Primitive/Integer = /fib
+                ( Value /integer -> /Data/Primitive/Integer = CInt 3 )
+            )
+            ( Value /r -> /Data/Primitive/Integer = CInt 3 )
+        )( Value /this -> TVArg /io = Value /io )
+    ]
+,
+    [ CGType
+    , CGType
+    ]
+,
+    [ /Catln/#md
+        ( Value /text -> /Data/String = CStr "Tests recursion with fibonaccci" )
+    ]
+)

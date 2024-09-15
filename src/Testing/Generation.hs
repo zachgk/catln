@@ -14,22 +14,22 @@
 module Testing.Generation where
 
 import           Control.Monad
-import           Data.Bifunctor      (bimap)
-import           Data.Either         (partitionEithers)
-import qualified Data.HashMap.Strict as H
-import           Data.List           (partition)
+import           Data.Bifunctor          (bimap)
+import           Data.Either             (partitionEithers)
+import qualified Data.HashMap.Strict     as H
+import           Data.List               (partition)
 import           Data.Maybe
-import qualified Data.Set            as S
+import qualified Data.Set                as S
 import           Hedgehog
-import qualified Hedgehog.Gen        as HG
-import           Hedgehog.Range      (linear, singleton)
-import           Semantics           (classGraphFromObjs)
+import qualified Hedgehog.Gen            as HG
+import           Hedgehog.Range          (linear, singleton)
+import           Semantics               (classGraphFromObjs)
 import           Semantics.Prgm
 import           Semantics.Types
+import           Syntax.Ct.Desugarf.Expr (desFileImport)
+import           Syntax.Ct.Prgm          (RawExpr (RawCExpr), mkRawFileImport)
 import           Text.Printf
 import           Utils
-import Syntax.Ct.Desugarf.Expr (desFileImport)
-import Syntax.Ct.Prgm (mkRawFileImport, RawExpr (RawCExpr))
 
 genTypeFromExpr :: Prgm Expr () -> Expr () -> Gen PartialType
 genTypeFromExpr _ (CExpr _ c) = return $ constantPartialType c

@@ -1,0 +1,33 @@
+(
+    [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+        ( Value val= abs
+            ( CInt 0 )
+        )( Value /this= Value io )
+    , abs( Value x -> /Data/Primitive/Integer )= abs.$2a7c30-0( Value /x= Value /x )
+        ( Value /$2a7c30-arg= Value x )
+    , abs.$2a7c30-0( Value /x )
+        ( Value /$2a7c30-arg= Hole TopType HoleActive Nothing@Value x2 | /operator>=( Value /l= Value x )
+            ( Value /r= CInt 0 )
+        )= Value x2
+    , abs.$2a7c30-0( Value /x )
+        ( Value /$2a7c30-arg= Hole TopType HoleActive Nothing@Value x2 | /operator>=( Value /l= Value x )
+            ( Value /r= CInt 0 )
+        )= abs.$2a7c30-1( Value /x= Value /x )
+        ( Value /$2a7c30-arg= Value x )
+    , abs.$2a7c30-1( Value /x )
+        ( Value /$2a7c30-arg= Hole TopType HoleActive Nothing@Value x2 )= /operator*( Value /l= Value x2 )
+        ( Value /r= /operator-
+            ( Value /a= CInt 1 )
+        )
+    ]
+,
+    [ CGType
+    , CGType
+    , CGType
+    , CGType
+    ]
+,
+    [ /Catln/#md
+        ( Value /text= CStr "Tests the case statement" )
+    ]
+)

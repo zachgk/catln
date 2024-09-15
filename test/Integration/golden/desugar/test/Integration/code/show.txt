@@ -1,0 +1,17 @@
+(
+    [ Value showInt= /operator==
+        ( Value /l= toString
+            ( Value /this= CInt 1 )
+        )
+        ( Value /r= CStr "1" )
+    , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io
+    ]
+,
+    [ CGType
+    , CGType
+    ]
+,
+    [ /Catln/#md
+        ( Value /text= CStr "Tests the toString method, later will be the Show class" )
+    ]
+)

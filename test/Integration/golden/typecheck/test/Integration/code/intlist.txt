@@ -1,0 +1,72 @@
+(
+    [ /IntCons( Value /head -> /Data/Primitive/Integer )( Value /tail -> ∀/IntList )
+    , Value /IntNil
+    , /len( Value /this -> ∀/IntList ) -> /Data/Primitive/Integer
+    , /len( Value /this -> /IntNil ) -> /Data/Primitive/Integer = CInt 0
+    , /len
+        ( Value /this -> /IntCons
+            ( /head=~Integer
+            , /tail=~IntList
+            ) = /IntCons( Value /head -> /Data/Primitive/Integer )( Value /tail -> ∀/IntList )
+        ) ->
+        ( /operator+
+            ( /r=/Data/Primitive/Integer
+            , /l=/Data/Primitive/Integer
+            ) | /Data/Primitive/Integer
+        ) = /operator+
+        ( Value /l -> /Data/Primitive/Integer = CInt 1 )
+        ( Value /r -> /Data/Primitive/Integer = /len( Value /this -> TVArg /tail = Value /tail ) )
+    , /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
+        ( /Catln/exit
+            ( /val=/Data/Primitive/Integer
+            , /this=/Catln/IO
+            ) | /Catln/IO
+        ) = /Catln/exit
+        ( Value /val -> /Data/Primitive/Integer = /operator-
+            ( Value /l -> /Data/Primitive/Integer = /len
+                ( Value /this -> /IntCons
+                    ( /head=/Data/Primitive/Integer
+                    , /tail=/IntCons
+                        ( /head=~Integer
+                        , /tail=/IntNil
+                        )
+                    ) = /IntCons
+                    ( Value /head -> /Data/Primitive/Integer = CInt 5 )
+                    ( Value /tail -> /IntCons
+                        ( /head=~Integer
+                        , /tail=/IntNil
+                        ) = /IntCons
+                        ( Value /head -> /Data/Primitive/Integer = CInt 3 )( Value /tail -> /IntNil = Value /IntNil )
+                    )
+                )
+            )
+            ( Value /r -> /Data/Primitive/Integer = CInt 2 )
+        )( Value /this -> TVArg /io = Value /io )
+    ]
+,
+    [ CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGClass
+        ( True
+        , /IntList
+        ,
+            [ /IntCons
+                ( /head=~Integer
+                , /tail=~IntList
+                )
+            , /IntNil
+            ]
+        , Just ""
+        )
+    ]
+,
+    [ /Catln/#md
+        ( Value /text -> /Data/String = CStr "The intlist tests recursive data structures without type variables" )
+    , /Catln/#md
+        ( Value /text -> /Data/String = CStr "operator+:(Integer l, ConsList r) = Cons(head=l, tail=r)" )
+    , /Catln/#md
+        ( Value /text -> /Data/String = CStr "TODO: Fix example below which should work without explicit return value" )
+    ]
+)

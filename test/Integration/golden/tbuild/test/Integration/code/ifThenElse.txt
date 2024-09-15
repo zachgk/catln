@@ -1,0 +1,58 @@
+(
+    [ /abs( EAppArg Value /x -> /Data/Primitive/Integer ) ->
+        ( /abs.$6119dc
+            ( /x=/Data/Primitive/Integer
+            , /$6119dc-arg=
+                ( /Catln/Else | /Catln/ThenElse/fromBool( /v=∀/Data/Primitive/Boolean ) | /Catln/Then )
+            ) | /operator*
+            ( /r=/Data/Primitive/Integer
+            , /l=/Data/Primitive/Integer
+            ) | /Data/Primitive/Integer
+        ) = /abs.$6119dc
+        ( EAppArg Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+        ( EAppArg Value /$6119dc-arg ->
+            ( /Catln/Else | /Catln/ThenElse/fromBool( /v=∀/Data/Primitive/Boolean ) | /Catln/Then ) = /Catln/ThenElse/fromBool
+            ( EAppArg Value /v -> ∀/Data/Primitive/Boolean =
+                ( /operator>=
+                    ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                    ( EAppArg Value /r -> /Data/Primitive/Integer = 0 ) ↦ ∀/Data/Primitive/Boolean
+                )
+            )
+        )
+    , /abs.$6119dc( EAppArg Value /x )
+        ( EAppArg Value /$6119dc-arg= Hole TopType HoleActive Nothing@Value /Catln/Then ) -> TVArg /x = Value /x
+    , /abs.$6119dc( EAppArg Value /x -> /Data/Primitive/Integer )
+        ( EAppArg Value /$6119dc-arg= Hole TopType HoleActive Nothing@Value /Catln/Else ) ->
+        ( /operator*
+            ( /r=/Data/Primitive/Integer
+            , /l=/Data/Primitive/Integer
+            ) | /Data/Primitive/Integer
+        ) = /operator*
+        ( EAppArg Value /l -> /Data/Primitive/Integer =
+            ( /operator-
+                ( EAppArg Value /a -> /Data/Primitive/Integer = 1 ) ↦ /Data/Primitive/Integer
+            )
+        )( EAppArg Value /r -> TVArg /x = Value /x )
+    , /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+        ( /Catln/exit
+            ( /val=/Data/Primitive/Integer
+            , /this=/Catln/IO
+            ) | /Catln/IO
+        ) = /Catln/exit
+        ( EAppArg Value /val -> /Data/Primitive/Integer =
+            ( /abs
+                ( EAppArg Value /x -> /Data/Primitive/Integer = 0 ) ↦ /Data/Primitive/Integer
+            )
+        )
+        ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+    ]
+,
+    [ CGType
+    , CGType
+    , CGType
+    ]
+,
+    [ /Catln/#md
+        ( EAppArg Value /text -> /Data/String = "Tests the "if-then-else" syntax with an absolute value" )
+    ]
+)

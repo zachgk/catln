@@ -1,0 +1,49 @@
+(
+    [ /abs( Value /x -> /Data/Primitive/Integer ) ->
+        ( /abs.$6119dc
+            ( /x=/Data/Primitive/Integer
+            , /$6119dc-arg=
+                ( /Catln/Else | /Catln/ThenElse/fromBool( /v=∀/Data/Primitive/Boolean ) | /Catln/Then )
+            ) | /operator*
+            ( /r=/Data/Primitive/Integer
+            , /l=/Data/Primitive/Integer
+            ) | /Data/Primitive/Integer
+        ) = /abs.$6119dc( Value /x -> TVArg /x = Value /x )
+        ( Value /$6119dc-arg ->
+            ( /Catln/Else | /Catln/ThenElse/fromBool( /v=∀/Data/Primitive/Boolean ) | /Catln/Then ) = /Catln/ThenElse/fromBool
+            ( Value /v -> ∀/Data/Primitive/Boolean = /operator>=( Value /l -> TVArg /x = Value /x )
+                ( Value /r -> /Data/Primitive/Integer = CInt 0 )
+            )
+        )
+    , /abs.$6119dc( Value /x )
+        ( Value /$6119dc-arg= Hole TopType HoleActive Nothing@Value /Catln/Then ) -> TVArg /x = Value /x
+    , /abs.$6119dc( Value /x -> /Data/Primitive/Integer )
+        ( Value /$6119dc-arg= Hole TopType HoleActive Nothing@Value /Catln/Else ) ->
+        ( /operator*
+            ( /r=/Data/Primitive/Integer
+            , /l=/Data/Primitive/Integer
+            ) | /Data/Primitive/Integer
+        ) = /operator*
+        ( Value /l -> /Data/Primitive/Integer = /operator-
+            ( Value /a -> /Data/Primitive/Integer = CInt 1 )
+        )( Value /r -> TVArg /x = Value /x )
+    , /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
+        ( /Catln/exit
+            ( /val=/Data/Primitive/Integer
+            , /this=/Catln/IO
+            ) | /Catln/IO
+        ) = /Catln/exit
+        ( Value /val -> /Data/Primitive/Integer = /abs
+            ( Value /x -> /Data/Primitive/Integer = CInt 0 )
+        )( Value /this -> TVArg /io = Value /io )
+    ]
+,
+    [ CGType
+    , CGType
+    , CGType
+    ]
+,
+    [ /Catln/#md
+        ( Value /text -> /Data/String = CStr "Tests the "if-then-else" syntax with an absolute value" )
+    ]
+)

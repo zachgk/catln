@@ -1,0 +1,43 @@
+(
+    [ Value /outerVar ->
+        ( /operator==
+            ( /r=/Data/Primitive/Integer
+            , /l=/Data/Primitive/Integer
+            ) | /Data/Primitive/True | /Data/Primitive/False
+        ) = /operator==
+        ( EAppArg Value /l -> /Data/Primitive/Integer =
+            ( /operator-
+                ( EAppArg Value /l -> /Data/Primitive/Integer = 5 )
+                ( EAppArg Value /r -> /Data/Primitive/Integer = 3 ) ↦ /Data/Primitive/Integer
+            )
+        )
+        ( EAppArg Value /r -> /Data/Primitive/Integer = 2 )
+    , /f( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io )
+    , /f.innerVar( EAppArg Value /io ) ->
+        ( /operator==
+            ( /r=/Data/Primitive/Integer
+            , /l=/Data/Primitive/Integer
+            ) | /Data/Primitive/True | /Data/Primitive/False
+        ) = /operator==
+        ( EAppArg Value /l -> /Data/Primitive/Integer =
+            ( /operator+
+                ( EAppArg Value /l -> /Data/Primitive/Integer = 1 )
+                ( EAppArg Value /r -> /Data/Primitive/Integer = 1 ) ↦ /Data/Primitive/Integer
+            )
+        )
+        ( EAppArg Value /r -> /Data/Primitive/Integer = 2 )
+    , /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+        ( /f( /io=/Catln/IO ) | /Catln/IO ) = /f
+        ( EAppArg Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+    ]
+,
+    [ CGType
+    , CGType
+    , CGType
+    , CGType
+    ]
+,
+    [ /Catln/#md
+        ( EAppArg Value /text -> /Data/String = "Tests currying inner values" )
+    ]
+)

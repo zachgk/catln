@@ -8,15 +8,17 @@ import           Text.Printf
 import           Common.TestCommon   (findCt)
 import           Control.Monad.Trans
 import           CRes
-import           Data.List           (isPrefixOf)
+import           Data.List           (isPrefixOf, isSuffixOf)
+import           Data.Maybe
 import qualified Data.Text.Lazy      as T
 import           Eval
+import           Semantics.Prgm
 import           Syntax.Ct.Desugarf  (desFiles)
 import           Syntax.Parsers      (mkDesCanonicalImportStr,
                                       mkRawCanonicalImportStr, readFiles)
 import           System.Directory    (createDirectoryIfMissing, doesFileExist,
                                       getCurrentDirectory)
-import           System.FilePath     (takeBaseName)
+import           System.FilePath     (takeDirectory)
 import           Text.Pretty.Simple  (pShowNoColor)
 import           TypeCheck
 import           Utils
@@ -27,30 +29,35 @@ testDir = "test/Integration/code/"
 disabledTestDir = "test/Integration/disabled/"
 
 goldenDesugarDir :: String
-goldenDesugarDir = "test/Integration/golden/desugar/"
+goldenDesugarDir = "test/Integration/golden/desugar"
 
 goldenTypecheckDir :: String
-goldenTypecheckDir = "test/Integration/golden/typecheck/"
+goldenTypecheckDir = "test/Integration/golden/typecheck"
 
 goldenTreebuildDir :: String
-goldenTreebuildDir = "test/Integration/golden/tbuild/"
+goldenTreebuildDir = "test/Integration/golden/tbuild"
 
-runGoldenTest :: (Show fn, Show prgm) => String -> String -> String -> GraphData fn prgm -> (String -> IO ()) -> IO ()
-runGoldenTest goldenType goldenDir fileNameStr prgm step = do
-  let goldenPath = goldenDir ++ takeBaseName fileNameStr ++ ".txt"
-  createDirectoryIfMissing True goldenDir
-  goldenExists <- doesFileExist goldenPath
-  let showPrgm = pShowNoColor $ graphToNodes prgm
+runGoldenTest :: (Show em, Show prgm) => String -> String -> String -> GraphData prgm (AFileImport em) -> (String -> IO ()) -> IO ()
+runGoldenTest goldenType goldenDir _fileNameStr prgms step = do
+  step $ printf "Golden test %s..." goldenType
   cwd <- getCurrentDirectory
-  let showPrgm' = T.unpack $ T.replace (T.pack cwd) "/repo/dir" showPrgm
-  if testDir `isPrefixOf` fileNameStr && goldenExists
-    then do
-      step $ printf "Golden test %s..." goldenType
-      golden <- readFile goldenPath
-      when (golden /= showPrgm') (assertFailure $ printf "%s doesn't match golden test" goldenType)
-    else do
-      step $ printf "No golden test for %s. Writing" goldenType
-      writeFile goldenPath showPrgm'
+  forM_ (graphToNodes prgms) $ \(prgm, AFileImport{impDisp=maybePath}, _) -> do
+    let path = fromJust maybePath
+    let relPath = drop (length cwd) path
+    let goldenPath1 = goldenDir ++ T.unpack (T.replace (T.pack ".ct") ".txt" (T.pack relPath))
+    let goldenPath = if ".txt" `isSuffixOf` goldenPath1
+          then goldenPath1
+          else goldenPath1 ++ ".txt"
+    let showPrgm = pShowNoColor prgm
+    let showPrgm' = T.unpack $ T.replace (T.pack cwd) "/repo/dir" showPrgm
+    goldenExists <- doesFileExist goldenPath
+    if testDir `isPrefixOf` relPath && goldenExists
+      then do
+        golden <- readFile goldenPath
+        when (golden /= showPrgm') (assertFailure $ printf "%s doesn't match golden test" goldenType)
+      else do
+        createDirectoryIfMissing True (takeDirectory goldenPath)
+        writeFile goldenPath showPrgm'
 
 runTest :: Bool -> String -> TestTree
 runTest runGolden fileNameStr = testCaseSteps fileNameStr $ \step -> do

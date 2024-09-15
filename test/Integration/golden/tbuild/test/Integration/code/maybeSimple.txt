@@ -1,0 +1,36 @@
+(
+    [ Value /Nothing
+    , /defInt( EAppArg Value /x -> /Data/Primitive/Integer ) -> TVArg /x = ( Value /x ↦ TVArg /x )
+    , /defInt( EAppArg Value /x -> /Nothing = Value /Nothing ) -> /Data/Primitive/Integer = 0
+    , /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+        ( /Catln/exit
+            ( /val=/Data/Primitive/Integer
+            , /this=/Catln/IO
+            ) | /Catln/IO
+        ) = /Catln/exit
+        ( EAppArg Value /val -> /Data/Primitive/Integer =
+            ( /defInt
+                ( EAppArg Value /x -> /Data/Primitive/Integer = 0 ) ↦ /Data/Primitive/Integer
+            )
+        )
+        ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+    ]
+,
+    [ CGType
+    , CGType
+    , CGType
+    , CGClass
+        ( True
+        , /Maybe
+        ,
+            [ TVVar /T
+            , /Nothing
+            ]
+        , Just ""
+        )
+    ]
+,
+    [ /Catln/#md
+        ( EAppArg Value /text -> /Data/String = "Tests a simple data structure with a true union" )
+    ]
+)

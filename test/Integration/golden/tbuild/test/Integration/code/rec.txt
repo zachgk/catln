@@ -1,0 +1,48 @@
+(
+    [ /fact( EAppArg Value /x -> /Data/Primitive/Integer ) | /operator==
+        ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+        ( EAppArg Value /r -> /Data/Primitive/Integer = 1 ) -> /Data/Primitive/Integer = 1
+    , /fact( EAppArg Value /x -> /Data/Primitive/Integer ) ->
+        ( /operator*
+            ( /r=/Data/Primitive/Integer
+            , /l=/Data/Primitive/Integer
+            ) | /Data/Primitive/Integer
+        ) = /operator*
+        ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+        ( EAppArg Value /r -> /Data/Primitive/Integer =
+            ( /fact
+                ( EAppArg Value /x -> /Data/Primitive/Integer =
+                    ( /operator-
+                        ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                        ( EAppArg Value /r -> /Data/Primitive/Integer = 1 ) ↦ /Data/Primitive/Integer
+                    )
+                ) ↦ /Data/Primitive/Integer
+            )
+        )
+    , /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+        ( /Catln/exit
+            ( /val=/Data/Primitive/Integer
+            , /this=/Catln/IO
+            ) | /Catln/IO
+        ) = /Catln/exit
+        ( EAppArg Value /val -> /Data/Primitive/Integer =
+            ( /operator-
+                ( EAppArg Value /l -> /Data/Primitive/Integer =
+                    ( /fact
+                        ( EAppArg Value /x -> /Data/Primitive/Integer = 3 ) ↦ /Data/Primitive/Integer
+                    )
+                )
+                ( EAppArg Value /r -> /Data/Primitive/Integer = 6 ) ↦ /Data/Primitive/Integer
+            )
+        )
+        ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+    ]
+,
+    [ CGType
+    , CGType
+    ]
+,
+    [ /Catln/#md
+        ( EAppArg Value /text -> /Data/String = "Tests recursion" )
+    ]
+)

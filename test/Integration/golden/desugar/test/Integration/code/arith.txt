@@ -1,0 +1,32 @@
+(
+    [ Value add= /operator==
+        ( Value /l= /operator+
+            ( Value /l= CInt 1 )
+            ( Value /r= CInt 1 )
+        )
+        ( Value /r= CInt 2 )
+    , Value sub= /operator==
+        ( Value /l= /operator-
+            ( Value /l= CInt 5 )
+            ( Value /r= CInt 3 )
+        )
+        ( Value /r= CInt 2 )
+    , Value mul= /operator==
+        ( Value /l= /operator*
+            ( Value /l= CInt 2 )
+            ( Value /r= CInt 3 )
+        )
+        ( Value /r= CInt 6 )
+    , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io
+    ]
+,
+    [ CGType
+    , CGType
+    , CGType
+    , CGType
+    ]
+,
+    [ /Catln/#md
+        ( Value /text= CStr "Tests the various integer arithmetic operations" )
+    ]
+)

@@ -1,0 +1,69 @@
+(
+    [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+        ( /Catln/exit
+            ( /val=/Data/Primitive/Integer
+            , /this=/Catln/IO
+            ) | /Catln/IO
+        ) = /Catln/exit
+        ( EAppArg Value /val -> /Data/Primitive/Integer =
+            ( /abs
+                ( EAppArg Value /x -> /Data/Primitive/Integer = 0 ) ↦ /Data/Primitive/Integer
+            )
+        )
+        ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+    , /abs( EAppArg Value /x -> /Data/Primitive/Integer ) ->
+        ( /abs.$2a7c30-1
+            ( /x=/Data/Primitive/Integer
+            , /$2a7c30-arg=/Data/Primitive/Integer
+            ) | /abs.$2a7c30-0
+            ( /x=/Data/Primitive/Integer
+            , /$2a7c30-arg=/Data/Primitive/Integer
+            ) | /operator*
+            ( /r=/Data/Primitive/Integer
+            , /l=/Data/Primitive/Integer
+            ) | /Data/Primitive/Integer
+        ) = /abs.$2a7c30-0
+        ( EAppArg Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+        ( EAppArg Value /$2a7c30-arg -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+    , /abs.$2a7c30-0( EAppArg Value /x -> ∀/Data/Algebra/Ord )
+        ( EAppArg Value /$2a7c30-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=( EAppArg Value /l -> TVArg /x = Value /x )
+            ( EAppArg Value /r -> /Data/Primitive/Integer = 0 )
+        ) -> TVArg /x2 = Value /x2
+    , /abs.$2a7c30-0( EAppArg Value /x -> /Data/Primitive/Integer )
+        ( EAppArg Value /$2a7c30-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=( EAppArg Value /l -> TVArg /x = Value /x )
+            ( EAppArg Value /r -> /Data/Primitive/Integer = 0 )
+        ) ->
+        ( /abs.$2a7c30-1
+            ( /x=/Data/Primitive/Integer
+            , /$2a7c30-arg=/Data/Primitive/Integer
+            ) | /operator*
+            ( /r=/Data/Primitive/Integer
+            , /l=/Data/Primitive/Integer
+            ) | /Data/Primitive/Integer
+        ) = /abs.$2a7c30-1( EAppArg Value /x -> TVArg /x = Value /x )
+        ( EAppArg Value /$2a7c30-arg -> TVArg /x = Value /x )
+    , /abs.$2a7c30-1( EAppArg Value /x )
+        ( EAppArg Value /$2a7c30-arg -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing@Value /x2 ) ->
+        ( /operator*
+            ( /r=/Data/Primitive/Integer
+            , /l=/Data/Primitive/Integer
+            ) | /Data/Primitive/Integer
+        ) = /operator*
+        ( EAppArg Value /l -> TVArg /x2 = ( Value /x2 ↦ TVArg /x2 ) )
+        ( EAppArg Value /r -> /Data/Primitive/Integer =
+            ( /operator-
+                ( EAppArg Value /a -> /Data/Primitive/Integer = 1 ) ↦ /Data/Primitive/Integer
+            )
+        )
+    ]
+,
+    [ CGType
+    , CGType
+    , CGType
+    , CGType
+    ]
+,
+    [ /Catln/#md
+        ( EAppArg Value /text -> /Data/String = "Tests the case statement" )
+    ]
+)

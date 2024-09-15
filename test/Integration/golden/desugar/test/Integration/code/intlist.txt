@@ -1,0 +1,49 @@
+(
+    [ IntCons( Value /head -> /Data/Primitive/Integer )( Value /tail -> ∀/IntList )
+    , Value IntNil
+    , len( Value /this -> ∀/IntList ) -> /Data/Primitive/Integer
+    , len( Value /this -> /IntNil )= CInt 0
+    , len
+        ( Value /this= /IntCons( Value head )( Value tail ) ) -> /Data/Primitive/Integer = /operator+
+        ( Value /l= CInt 1 )
+        ( Value /r= len( Value /this= Value tail ) )
+    , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+        ( Value val= /operator-
+            ( Value /l= len
+                ( Value /this= IntCons
+                    ( Value head= CInt 5 )
+                    ( Value tail= IntCons
+                        ( Value head= CInt 3 )( Value tail= Value IntNil )
+                    )
+                )
+            )
+            ( Value /r= CInt 2 )
+        )( Value /this= Value io )
+    ]
+,
+    [ CGType
+    , CGType
+    , CGType
+    , CGType
+    , CGClass
+        ( True
+        , /IntList
+        ,
+            [ /IntCons
+                ( /head=~Integer
+                , /tail=~IntList
+                )
+            , /IntNil
+            ]
+        , Just ""
+        )
+    ]
+,
+    [ /Catln/#md
+        ( Value /text= CStr "The intlist tests recursive data structures without type variables" )
+    , /Catln/#md
+        ( Value /text= CStr "operator+:(Integer l, ConsList r) = Cons(head=l, tail=r)" )
+    , /Catln/#md
+        ( Value /text= CStr "TODO: Fix example below which should work without explicit return value" )
+    ]
+)

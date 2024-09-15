@@ -1,0 +1,22 @@
+(
+    [ /id[ /T : TopType ]( Value /x -> TVVar /T ) -> TVArg /x = Value /x
+    , /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
+        ( /Catln/exit
+            ( /val=/Data/Primitive/Integer
+            , /this=/Catln/IO
+            ) | /Catln/IO
+        ) = /Catln/exit
+        ( Value /val -> /Data/Primitive/Integer = /id
+            ( Value /x -> /Data/Primitive/Integer = CInt 0 )
+        )( Value /this -> TVArg /io = Value /io )
+    ]
+,
+    [ CGType
+    , CGType
+    ]
+,
+    [ /Catln/#md
+        ( Value /text -> /Data/String = CStr "Tests id with type variables.
+        This is one of the simplest tests with type variables." )
+    ]
+)

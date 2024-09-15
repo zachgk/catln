@@ -1,0 +1,45 @@
+(
+    [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
+        ( /Catln/exit
+            ( /val=/Data/Primitive/Integer
+            , /this=/Catln/IO
+            ) | /Catln/IO
+        ) = /Catln/exit
+        ( Value /val -> /Data/Primitive/Integer = /abs
+            ( Value /x -> /Data/Primitive/Integer = CInt 0 )
+        )( Value /this -> TVArg /io = Value /io )
+    , /abs( Value /x -> /Data/Primitive/Integer ) ->
+        ( /abs.$9c855f
+            ( /x=/Data/Primitive/Integer
+            , /$9c855f-arg=/Data/Primitive/Integer
+            ) | /operator*
+            ( /r=/Data/Primitive/Integer
+            , /l=/Data/Primitive/Integer
+            ) | /Data/Primitive/Integer
+        ) = /abs.$9c855f( Value /x -> TVArg /x = Value /x )
+        ( Value /$9c855f-arg -> TVArg /x = Value /x )
+    , /abs.$9c855f( Value /x -> ∀/Data/Algebra/Ord )
+        ( Value /$9c855f-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=( Value /l -> TVArg /x = Value /x )
+            ( Value /r -> /Data/Primitive/Integer = CInt 0 )
+        ) -> TVArg /x2 = Value /x2
+    , /abs.$9c855f( Value /x )
+        ( Value /$9c855f-arg -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing@Value /x2 ) ->
+        ( /operator*
+            ( /r=/Data/Primitive/Integer
+            , /l=/Data/Primitive/Integer
+            ) | /Data/Primitive/Integer
+        ) = /operator*( Value /l -> TVArg /x2 = Value /x2 )
+        ( Value /r -> /Data/Primitive/Integer = /operator-
+            ( Value /a -> /Data/Primitive/Integer = CInt 1 )
+        )
+    ]
+,
+    [ CGType
+    , CGType
+    , CGType
+    ]
+,
+    [ /Catln/#md
+        ( Value /text -> /Data/String = CStr "Tests the match syntax" )
+    ]
+)

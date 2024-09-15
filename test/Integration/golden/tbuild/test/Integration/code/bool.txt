@@ -1,0 +1,28 @@
+(
+    [ Value /a ->
+        ( /Data/Primitive/True | /operator~( /a=/Data/Primitive/False ) | /Data/Primitive/False ) = /operator~( EAppArg Value /a -> /Data/Primitive/False = Value /Data/Primitive/False )
+    , Value /b ->
+        ( /Data/Primitive/True | /operator&&
+            ( /r=/Data/Primitive/True
+            , /l=/Data/Primitive/True
+            ) | /Data/Primitive/False
+        ) = /operator&&( EAppArg Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /r -> /Data/Primitive/True = Value /Data/Primitive/True )
+    , Value /c ->
+        ( /Data/Primitive/True | /operator||
+            ( /r=/Data/Primitive/False
+            , /l=/Data/Primitive/True
+            ) | /Data/Primitive/False
+        ) = /operator||( EAppArg Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /r -> /Data/Primitive/False = Value /Data/Primitive/False )
+    , /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io )
+    ]
+,
+    [ CGType
+    , CGType
+    , CGType
+    , CGType
+    ]
+,
+    [ /Catln/#md
+        ( EAppArg Value /text -> /Data/String = "Tests boolean logic operations" )
+    ]
+)
