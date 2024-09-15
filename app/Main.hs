@@ -16,6 +16,7 @@ import           Control.Monad.Trans
 import qualified Data.HashMap.Strict as H
 import           Data.Maybe
 import           Eval.Common         (Val (StrVal, TupleVal))
+import           LSP                 (lspRun)
 import           System.Directory
 import           Text.Printf
 import           WebDocs             (docApi, docServe)
@@ -67,6 +68,11 @@ xConvert prgmName _outFname = do
   lift $ print prgmName
   lift $ print prgm'
 
+xLsp :: CResT IO ()
+xLsp = do
+  _ <- lift $ lspRun
+  return ()
+
 xFmt :: String -> CResT IO ()
 xFmt prgmName = do
   prgmName' <- lift $ mkRawCanonicalImportStr prgmName
@@ -79,6 +85,7 @@ exec (RunFile file function)    = xRun file function
 exec (BuildFile file function)  = xBuild file function
 exec (Doc fname cached apiOnly) = xDoc fname cached apiOnly
 exec (Convert fname outFname)   = xConvert fname outFname
+exec CLsp                       = xLsp
 exec (Fmt fname)                = xFmt fname
 
 data Command
@@ -86,6 +93,7 @@ data Command
   | RunFile String String
   | Doc [String] Bool Bool
   | Convert String (Maybe String)
+  | CLsp
   | Fmt String
 
 cRun :: Parser Command
@@ -109,6 +117,9 @@ cConvert = Convert
   <$> argument str (metavar "FILE" <> help "The file to run")
   <*> option auto (metavar "OUT" <> value Nothing <> help "The output file path")
 
+cLsp :: Parser Command
+cLsp = pure CLsp
+
 cFmt :: Parser Command
 cFmt = Fmt
   <$> argument str (metavar "FILE" <> help "The file to run")
@@ -130,5 +141,6 @@ main = do
       <> command "build" (info cBuild (progDesc "Builds a program"))
       <> command "doc" (info cDoc (progDesc "Runs webdocs for a program"))
       <> command "convert" (info cConvert (progDesc "Converts code in one format to another"))
+      <> command "lsp" (info cLsp (progDesc "Runs the language server"))
       <> command "fmt" (info cFmt (progDesc "Runs the Catln formatter for a program"))
                              )
