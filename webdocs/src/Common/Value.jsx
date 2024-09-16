@@ -114,7 +114,7 @@ function Comment(props) {
     if(href.startsWith("catln://")) {
       return href;
     } else if (!isUrl(href) && !path.isAbsolute(href) && "prgmName" in params) {
-      const p = path.join(tocResult.data[params.prgmName].rawImpDir, href);
+      const p = path.join(tocResult.data[params.prgmName].impDir, href);
       return `/docs/${encodeURIComponent(p)}`;
     } else {
       return defaultUrlTransform(href, children, title);

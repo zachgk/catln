@@ -91,8 +91,8 @@ runParser flags filename str parser = unP parser parseState
     parseState = initParserState (initParserOpts flags) buffer location
 
 hsParser :: ImportParser
-hsParser imp = case rawExprAppliedArgs imp of
-  (RawObjArr{roaArr=Just (Just (RawCExpr _ (CStr filename)), _)}:_impArgs) -> do
+hsParser imp = case exprAppliedArgs imp of
+  (ObjArr{oaArr=Just (Just (CExpr _ (CStr filename)), _)}:_impArgs) -> do
     isFile <- doesFileExist filename
     if isFile
       then do

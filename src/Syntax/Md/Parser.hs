@@ -20,8 +20,8 @@ import           Syntax.Ct.Prgm
 import           System.Directory
 
 mdParser :: ImportParser
-mdParser imp = case rawExprAppliedArgs imp of
-  (RawObjArr{roaArr=Just (Just (RawCExpr _ (CStr filename)), _)}:_impArgs) -> do
+mdParser imp = case exprAppliedArgs imp of
+  (ObjArr{oaArr=Just (Just (CExpr _ (CStr filename)), _)}:_impArgs) -> do
     isFile <- doesFileExist filename
     if isFile
       then do

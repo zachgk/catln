@@ -6,9 +6,8 @@ import           Eval
 import           Options.Applicative
 import           Syntax.Ct.Desugarf  (desFiles)
 import           Syntax.Ct.Formatter (formatRootPrgm)
-import           Syntax.Parsers      (mkDesCanonicalImportStr,
-                                      mkRawCanonicalImportStr, parseFile,
-                                      readFiles)
+import           Syntax.Parsers      (canonicalImport, mkRawImportStr,
+                                      parseFile, readFiles)
 import           TypeCheck           (typecheckPrgm)
 
 import           Control.Monad
@@ -24,8 +23,8 @@ import           WebDocs             (docApi, docServe)
 
 xRun :: String -> String -> CResT IO ()
 xRun prgmName function = do
-  prgmName' <- lift $ mkRawCanonicalImportStr prgmName
-  prgmName'' <- lift $ mkDesCanonicalImportStr prgmName
+  let prgmName' = mkRawImportStr prgmName
+  prgmName'' <- lift $ canonicalImport Nothing prgmName'
   rawPrgm <- readFiles [prgmName']
   desPrgm <- desFiles rawPrgm
   tprgm <- asCResT $ typecheckPrgm desPrgm
@@ -36,8 +35,8 @@ xRun prgmName function = do
 
 xBuild :: String -> String -> CResT IO ()
 xBuild prgmName function = do
-  prgmName' <- lift $ mkRawCanonicalImportStr prgmName
-  prgmName'' <- lift $ mkDesCanonicalImportStr prgmName
+  let prgmName' = mkRawImportStr prgmName
+  prgmName'' <- lift $ canonicalImport Nothing prgmName'
   rawPrgm <- readFiles [prgmName']
   desPrgm <- desFiles rawPrgm
   tprgm <- asCResT $ typecheckPrgm desPrgm
@@ -61,8 +60,7 @@ xDoc prgmNames cached apiOnly = if apiOnly
 
 xConvert :: String -> Maybe String -> CResT IO ()
 xConvert prgmName _outFname = do
-  prgmName' <- lift $ mkRawCanonicalImportStr prgmName
-  (prgm, _fileName, _) <- parseFile prgmName'
+  (prgm, _fileName, _) <- parseFile $ mkRawImportStr prgmName
   -- TODO Print to file if outFname
   let prgm' = formatRootPrgm prgm
   lift $ print prgmName
@@ -75,8 +73,7 @@ xLsp = do
 
 xFmt :: String -> CResT IO ()
 xFmt prgmName = do
-  prgmName' <- lift $ mkRawCanonicalImportStr prgmName
-  (prgm, _, _) <- parseFile prgmName'
+  (prgm, _, _) <- parseFile $ mkRawImportStr prgmName
   let prgm' = formatRootPrgm prgm
   lift $ writeFile prgmName prgm'
 

@@ -42,6 +42,7 @@ import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Desugarf            (desFiles, desFinalPasses,
                                                 desPrgm)
+import           Syntax.Ct.Desugarf.Expr       (desFileImport)
 import           Syntax.Ct.MapRawMeta          (mapMetaRawPrgm, mapMetaRawPrgmM)
 import           Syntax.Ct.Parser.Expr         (pExpr)
 import           Syntax.Ct.Parser.Syntax       (DesPrgm, PPrgmGraphData)
@@ -50,8 +51,7 @@ import           Syntax.Ct.Prgm                (RawExpr (RawValue),
                                                 RawStatementTree (RawStatementTree),
                                                 mkRawFileImport)
 import           Syntax.Parsers                (mkDesCanonicalImportStr,
-                                                mkRawCanonicalImportStr,
-                                                readFiles)
+                                                mkRawImportStr, readFiles)
 import           Text.Megaparsec               (errorBundlePretty, runParser)
 import           Text.Printf
 import           TypeCheck                     (typecheckPrgmWithTrace,
@@ -105,8 +105,7 @@ emptyWDProvider = WDProvider {
 mkWDProvider :: [String] -> IO WDProvider
 mkWDProvider baseFileNames = do
   p <- runCResT $ do
-    baseFileNames' <- lift $ mapM mkRawCanonicalImportStr baseFileNames
-    rawPrgm <- readFiles baseFileNames'
+    rawPrgm <- readFiles (map mkRawImportStr baseFileNames)
     prgm <- desFiles rawPrgm
     let withTrace = typecheckPrgmWithTrace prgm
     let tprgm = fmap (fmapGraph fst3) withTrace
@@ -212,10 +211,9 @@ docApiBase getProvider = do
     provider <- liftAndCatchIO getProvider
     prgmName <- param "prgmName"
     resp <- liftAndCatchIO $ runCResT $ do
-      prgmNameRaw <- lift $ mkRawCanonicalImportStr prgmName
       prgmName' <- lift $ mkDesCanonicalImportStr prgmName
       rawPrgms <- getRawPrgm provider
-      rawPrgm' <- case graphLookup prgmNameRaw rawPrgms of
+      rawPrgm' <- case graphLookup prgmName' rawPrgms of
         Just p  -> return p
         Nothing -> fail $ printf "Could not find program %s" (show prgmName)
       tprgms <- getTPrgm provider
@@ -242,7 +240,7 @@ docApiBase getProvider = do
         Left err     -> fail $ show $ errorBundlePretty err
         Right parsed -> return ([], [RawStatementTree (RawAnnot parsed) []])
       rawPrgm' <- lift $ mapMetaRawPrgmM addMetaID rawPrgm
-      (annotDesPrgm, annotPrgmName, _) <- asCResT $ desPrgm (rawPrgm', mkRawFileImport $ RawValue emptyMetaN "<annot>", [])
+      (annotDesPrgm, annotPrgmName, _) <- asCResT $ desPrgm (rawPrgm', desFileImport $ mkRawFileImport $ RawValue emptyMetaN "<annot>", [])
       [annotDesPrgm'] <- desFinalPasses [annotDesPrgm] []
       tprgmsTrace <- getTPrgmWithTrace provider
       tprgms <- getTPrgm provider

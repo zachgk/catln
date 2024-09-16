@@ -251,17 +251,14 @@ desFinalPasses prgms fullPrgms = do
     let prgm3 = resolveRelativeNames fullPrgm2 prgm2
     lift $ mapMetaPrgmM addMetaID prgm3
 
-desPrgm :: (PPrgm, RawFileImport, [RawFileImport]) -> CRes (DesPrgm, FileImport, [FileImport])
+desPrgm :: (PPrgm, FileImport, [FileImport]) -> CRes (DesPrgm, FileImport, [FileImport])
 desPrgm ((_, statements), name, imports) = do
   -- desImports
-  let name' = desFileImport name
-  let imports' = fmap desFileImport imports
-
   statements' <- mapM (desStatement ("", [])) statements
   let prgm' = mergePrgms statements'
 
   -- desPrgm
-  return (prgm', name', imports')
+  return (prgm', name, imports)
 
 -- | Checks whether a program is valid for desugaring
 -- | This mostly means without disqualifying annotations such as 'ctxAnnot'

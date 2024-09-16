@@ -44,8 +44,8 @@ findExistingPath (p:ps) = do
     else findExistingPath ps
 
 dirParser :: ImportParser
-dirParser imp = case rawExprAppliedArgs imp of
-  [RawObjArr{roaArr=Just (Just (RawCExpr _ (CStr name)), _)}] -> do
+dirParser imp = case exprAppliedArgs imp of
+  [ObjArr{oaArr=Just (Just (CExpr _ (CStr name)), _)}] -> do
     files <- listDirectory name
     files' <- forM files $ \file -> do
       let file' = name ++ "/" ++ file
@@ -68,7 +68,7 @@ dirParser imp = case rawExprAppliedArgs imp of
     return (dirPrgm, map (mkRawFileImport . rawStr) $ catMaybes files')
   _ -> undefined
 
-inferRawImportStr :: Maybe RawFileImport -> String -> IO (RawExpr ())
+inferRawImportStr :: Maybe FileImport -> String -> IO (RawExpr ())
 inferRawImportStr caller name = do
   let paths = if isAbsolute name
         then [name]

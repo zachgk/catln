@@ -90,7 +90,7 @@ data ReplRes m
   deriving (Eq, Show)
 
 type ImportParseResult = IO (RawPrgm (), [RawFileImport])
-type ImportParser = RawExpr () -> ImportParseResult
+type ImportParser = Expr () -> ImportParseResult
 
 instance ExprClass RawExpr where
   getExprMeta expr = case expr of

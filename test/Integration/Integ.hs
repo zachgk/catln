@@ -14,8 +14,8 @@ import qualified Data.Text.Lazy      as T
 import           Eval
 import           Semantics.Prgm
 import           Syntax.Ct.Desugarf  (desFiles)
-import           Syntax.Parsers      (mkDesCanonicalImportStr,
-                                      mkRawCanonicalImportStr, readFiles)
+import           Syntax.Parsers      (mkDesCanonicalImportStr, mkRawImportStr,
+                                      readFiles)
 import           System.Directory    (createDirectoryIfMissing, doesFileExist,
                                       getCurrentDirectory)
 import           System.FilePath     (takeDirectory)
@@ -62,11 +62,10 @@ runGoldenTest goldenType goldenDir _fileNameStr prgms step = do
 runTest :: Bool -> String -> TestTree
 runTest runGolden fileNameStr = testCaseSteps fileNameStr $ \step -> do
   step $ printf "Read file %s..." fileNameStr
-  fileNameRaw <- mkRawCanonicalImportStr fileNameStr
   fileName <- mkDesCanonicalImportStr fileNameStr
 
   res <- runCResT $ do
-    rawPrgm <- readFiles [fileNameRaw]
+    rawPrgm <- readFiles [mkRawImportStr fileNameStr]
     prgm <- desFiles rawPrgm
 
     when runGolden $ do

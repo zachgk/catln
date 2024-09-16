@@ -32,7 +32,7 @@ import           MapMeta                       (ExprMetaType (ExprMetaVal),
 import           Semantics.Prgm                (getMetaPos)
 import           Syntax.Ct.MapRawMeta          (mapMetaRawPrgmM)
 import           Syntax.Ct.Parser.Syntax       (PPrgm)
-import           Syntax.Parsers                (mkRawCanonicalImportStr)
+import           Syntax.Parsers                (mkDesCanonicalImportStr)
 import           Text.Megaparsec               (SourcePos (sourceColumn),
                                                 sourceLine, unPos)
 import           Utils
@@ -100,7 +100,7 @@ handlers = mconcat
       let TRequestMessage _ _ _ (SemanticTokensParams _ _ (TextDocumentIdentifier uri)) = req
           prgmName = uriToFilePath uri
       ServeState provider <- get
-      prgmNameRaw <- liftIO $ mkRawCanonicalImportStr (fromJust prgmName)
+      prgmNameRaw <- liftIO $ mkDesCanonicalImportStr (fromJust prgmName)
       tokens <- case cresToMaybe (cRaw provider) >>= graphLookup prgmNameRaw of
         Nothing   -> return []
         Just prgm -> return $ prgmSemanticTokens prgm

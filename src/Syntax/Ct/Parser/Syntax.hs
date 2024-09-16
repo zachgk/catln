@@ -33,7 +33,7 @@ type PStatement = RawStatement RawExpr ParseMetaDat
 type PStatementTree = RawStatementTree RawExpr ParseMetaDat
 type PArgMetaMap = H.HashMap ArgName [ParseMeta]
 type PPrgm = RawPrgm ParseMetaDat
-type PPrgmGraphData = GraphData PPrgm RawFileImport
+type PPrgmGraphData = GraphData PPrgm FileImport
 type PReplRes = ReplRes ParseMetaDat
 
 type PDeclTree = (PObjArr, [PStatementTree])
