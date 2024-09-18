@@ -24,7 +24,7 @@ import           CtConstants
 import           Data.Aeson
 import           Data.Bifunctor      (Bifunctor (bimap, first, second))
 import           Data.Either
-import           Data.Graph          (graphFromEdges)
+import           Data.Graph          (graphFromEdges, vertices)
 import           Data.Hashable
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
@@ -141,12 +141,12 @@ type Sealed = Bool
 newtype ClassGraph = ClassGraph (GraphData CGNode PartialName)
 
 class TypeGraph tg where
-  typeGraphMerge :: tg -> tg -> tg
   typeGraphQueryWithReason :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> [(String, Type)]
 
 data EmptyTypeGraph = EmptyTypeGraph
+instance Semigroup EmptyTypeGraph where
+  _ <> _ = EmptyTypeGraph
 instance TypeGraph EmptyTypeGraph where
-  typeGraphMerge _ _ = EmptyTypeGraph
   typeGraphQueryWithReason _ _ _ = []
 
 typeGraphQuery :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> [Type]
@@ -236,6 +236,33 @@ instance Show Type where
 
 instance Show ClassGraph where
   show (ClassGraph graphData) = show $ map fst3 $ graphToNodes graphData
+
+instance Semigroup ClassGraph where
+  (ClassGraph classGraphA) <> (ClassGraph classGraphB) = ClassGraph $ mapToGraph $ H.unionWith mergeClasses (graphToMap classGraphA) (graphToMap classGraphB)
+    where
+      graphToMap (g, nodeFromVertex, _) = H.fromList $ map ((\classData@(_, className, _) -> (className, classData)) . nodeFromVertex) $ vertices g
+      mapToGraph = graphFromEdges . H.elems
+      mergeClasses (CGClass (sealedA, classA, setA, docA), className, subClassNamesA) (CGClass (sealedB, classB, setB, docB), _, subClassNamesB) = if sealedA == sealedB
+            then (CGClass (sealedA, mergeClassPartials classA classB, setA ++ setB, mergeDoc docA docB), className, subClassNamesA ++ subClassNamesB)
+            else error "Added to sealed class definition"
+      mergeClasses node@(CGClass{}, _, _) (CGType{}, _, _) = node
+      mergeClasses (CGType{}, _, _) node@(CGClass{}, _, _) = node
+      mergeClasses (CGType, name, []) (CGType, _, []) = (CGType, name, [])
+      mergeClasses cg1 cg2 = error $ printf "Unexpected input to mergeClassGraphs: \n\t%s \n\t%s" (show cg1) (show cg2)
+
+      mergeClassPartials clss@PartialType{ptVars=varsA} PartialType{ptVars=varsB} = clss{ptVars = H.unionWith (unionTypes (TypeEnv (ClassGraph classGraphA) EmptyTypeGraph S.empty)) varsA varsB}
+instance Monoid ClassGraph where
+  mempty = ClassGraph $ graphFromEdges []
+
+instance (Semigroup tg) => Semigroup (TypeEnv tg) where
+  (TypeEnv cg1 tg1 n1) <> (TypeEnv cg2 tg2 n2) = TypeEnv (cg1 <> cg2) (tg1 <> tg2) (S.union n1 n2)
+
+
+mergeDoc :: Maybe String -> Maybe String -> Maybe String
+mergeDoc (Just a) (Just b) = Just (a ++ " " ++ b)
+mergeDoc (Just a) Nothing  = Just a
+mergeDoc Nothing (Just b)  = Just b
+mergeDoc _ _               = Nothing
 
 -- | Converts the 'ClassGraph' into the equivalent 'ClassMap'
 asClassMap :: ClassGraph -> ClassMap
@@ -362,9 +389,6 @@ containsBottomType (UnionType leafs) = any containsBottomPartialType $ splitUnio
 
 containsBottomPartialType :: PartialType -> Bool
 containsBottomPartialType PartialType{ptArgs, ptVars} = any containsBottomType ptArgs || any containsBottomType ptVars
-
-emptyClassGraph :: ClassGraph
-emptyClassGraph = ClassGraph $ graphFromEdges []
 
 ptVarArg :: PartialType -> TypeVarArgEnv
 ptVarArg PartialType{ptArgs, ptVars} = joinVarArgEnv ptVars ptArgs

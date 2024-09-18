@@ -149,7 +149,7 @@ docApiBase getProvider = do
     provider <- liftAndCatchIO getProvider
     resp <- liftAndCatchIO $ runCResT $ do
       prgmGraph <- getPrgm provider
-      return $ mergePrgms $ map fst3 $ graphToNodes prgmGraph
+      return $ mconcat $ map fst3 $ graphToNodes prgmGraph
     maybeJson resp
 
   get "/api/constrain" $ do

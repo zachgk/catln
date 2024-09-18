@@ -117,7 +117,7 @@ getTPrgm CTSS{ctssData} = asCResT $ mapMGraph (requireComputed . ssfTPrgm) ctssD
 getTPrgmJoined :: CTSS -> CResT IO TPrgm
 getTPrgmJoined provider = do
   base <- getTPrgm provider
-  return $ mergePrgms $ map fst3 $ graphToNodes base
+  return $ mconcat $ map fst3 $ graphToNodes base
 
 getTBPrgm :: CTSS -> CResT IO (GraphData TBPrgm FileImport)
 getTBPrgm CTSS{ctssData} = asCResT $ mapMGraph (requireComputed . ssfTBPrgm) ctssData
@@ -125,7 +125,7 @@ getTBPrgm CTSS{ctssData} = asCResT $ mapMGraph (requireComputed . ssfTBPrgm) cts
 getTBPrgmJoined :: CTSS -> CResT IO TBPrgm
 getTBPrgmJoined provider = do
   base <- getTBPrgm provider
-  return $ mergePrgms $ map fst3 $ graphToNodes base
+  return $ mconcat $ map fst3 $ graphToNodes base
 
 getTreebug :: CTSS -> FileImport -> String -> CResT IO EvalResult
 getTreebug provider prgmName fun = do

@@ -25,8 +25,9 @@ import           Text.Printf
 
 newtype ObjArrTypeGraph e m = ObjArrTypeGraph (H.HashMap TypeName [ObjArr e m])
   deriving (Show)
+instance Semigroup (ObjArrTypeGraph e m) where
+  (ObjArrTypeGraph a) <> (ObjArrTypeGraph b) = ObjArrTypeGraph (H.unionWith (++) a b)
 instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGraph e m) where
-  typeGraphMerge (ObjArrTypeGraph a) (ObjArrTypeGraph b) = ObjArrTypeGraph (H.unionWith (++) a b)
   typeGraphQueryWithReason typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph tg} vaenv partial@PartialType{ptName} = concatMap tryTArrow $ H.lookupDefault [] ptName tg
     where
       tryTArrow :: (ExprClass e, MetaDat m, Show m, Show (e m)) => ObjArr e m -> [(String, Type)]

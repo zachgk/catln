@@ -27,8 +27,6 @@ import           GHC.Generics        (Generic)
 import           CtConstants
 import           Data.Aeson          hiding (Object)
 import           Data.Bifunctor      (first)
-import           Data.Graph
-import qualified Data.HashSet        as S
 import           Data.Maybe
 import           Data.UUID
 import           Data.Void           (Void)
@@ -201,6 +199,16 @@ instance ToJSON SourcePos where
 
 type VarArgMap e m = H.HashMap TypeVarAux [(e m, Meta m)]
 
+instance Semigroup (Prgm e m) where
+  (<>) :: Prgm e m -> Prgm e m -> Prgm e m
+  (Prgm objMap1 classGraph1 annots1) <> (Prgm objMap2 classGraph2 annots2) = Prgm
+    (objMap1 ++ objMap2)
+    (classGraph1 <> classGraph2)
+    (annots1 ++ annots2)
+
+instance Monoid (Prgm e m) where
+  mempty = Prgm [] mempty []
+
 -- | Represents the VarArgMap by extracting information from a partial
 type ArgMetaMapWithSrcItem m = ([(Expr m, Meta m)], Type)
 type ArgMetaMapWithSrc m = H.HashMap TypeVarAux ([(Expr m, Meta m)], Type)
@@ -353,9 +361,6 @@ joinAllPossVarArgMetaWithSrc :: TypeEnv tg -> [PossArgMetaMapWithSrc m] -> PossA
 joinAllPossVarArgMetaWithSrc _ []     = [H.empty]
 joinAllPossVarArgMetaWithSrc typeEnv (x:xs) = foldr (joinPossVarArgMetaWithSrc typeEnv) x xs
 
-emptyPrgm :: Prgm e m
-emptyPrgm = Prgm [] emptyClassGraph []
-
 mkIOObjArr :: (MetaDat m, Show m) => Meta m -> ArgName -> Expr m -> ObjArr Expr m
 mkIOObjArr m argName argVal = ObjArr (Just (Value (emptyMetaT $ partialToTypeSingleton argName) (pkName argName))) ArgObj Nothing [] (Just (Just argVal, m))
 
@@ -430,38 +435,6 @@ getOaArrM :: (MetaDat m, ExprClass e, Show m, Show (e m)) => ObjArr e m -> Meta 
 getOaArrM ObjArr{oaArr=Just (_, m)} = m
 getOaArrM oa = error $ printf "getOaArrM with no output meta: %s" (show oa)
 
-mergeDoc :: Maybe String -> Maybe String -> Maybe String
-mergeDoc (Just a) (Just b) = Just (a ++ " " ++ b)
-mergeDoc (Just a) Nothing  = Just a
-mergeDoc Nothing (Just b)  = Just b
-mergeDoc _ _               = Nothing
-
-mergeClassGraphs :: ClassGraph -> ClassGraph -> ClassGraph
-mergeClassGraphs (ClassGraph classGraphA) (ClassGraph classGraphB) = ClassGraph $ mapToGraph $ H.unionWith mergeClasses (graphToMap classGraphA) (graphToMap classGraphB)
-  where
-    graphToMap (g, nodeFromVertex, _) = H.fromList $ map ((\classData@(_, className, _) -> (className, classData)) . nodeFromVertex) $ vertices g
-    mapToGraph = graphFromEdges . H.elems
-    mergeClasses (CGClass (sealedA, classA, setA, docA), className, subClassNamesA) (CGClass (sealedB, classB, setB, docB), _, subClassNamesB) = if sealedA == sealedB
-          then (CGClass (sealedA, mergeClassPartials classA classB, setA ++ setB, mergeDoc docA docB), className, subClassNamesA ++ subClassNamesB)
-          else error "Added to sealed class definition"
-    mergeClasses node@(CGClass{}, _, _) (CGType{}, _, _) = node
-    mergeClasses (CGType{}, _, _) node@(CGClass{}, _, _) = node
-    mergeClasses (CGType, name, []) (CGType, _, []) = (CGType, name, [])
-    mergeClasses cg1 cg2 = error $ printf "Unexpected input to mergeClassGraphs: \n\t%s \n\t%s" (show cg1) (show cg2)
-
-    mergeClassPartials clss@PartialType{ptVars=varsA} PartialType{ptVars=varsB} = clss{ptVars = H.unionWith (unionTypes (TypeEnv (ClassGraph classGraphA) EmptyTypeGraph S.empty)) varsA varsB}
-
-mergeTypeEnv :: (TypeGraph tg) => TypeEnv tg -> TypeEnv tg -> TypeEnv tg
-mergeTypeEnv (TypeEnv cg1 tg1 n1) (TypeEnv cg2 tg2 n2) = TypeEnv (mergeClassGraphs cg1 cg2) (typeGraphMerge tg1 tg2) (S.union n1 n2)
-
-mergePrgm :: Prgm e m -> Prgm e m -> Prgm e m
-mergePrgm (Prgm objMap1 classGraph1 annots1) (Prgm objMap2 classGraph2 annots2) = Prgm
-  (objMap1 ++ objMap2)
-  (mergeClassGraphs classGraph1 classGraph2)
-  (annots1 ++ annots2)
-
-mergePrgms :: Foldable f => f (Prgm e m) -> Prgm e m
-mergePrgms = foldr mergePrgm emptyPrgm
 
 varNamesWithPrefix :: Name -> [Name]
 varNamesWithPrefix n = [n, makeAbsoluteName ('$':tail n)]

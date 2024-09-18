@@ -216,7 +216,7 @@ evalBaseEnv prgm@Prgm{prgmObjMap} = Env {
 
 prgmFromGraphData :: FileImport -> EPrgmGraphData -> CRes EPrgm
 prgmFromGraphData prgmName (prgmGraph, nodeFromVertex, vertexFromKey) = case vertexFromKey prgmName of
-  Just v -> return $ mergePrgms $ map (fst3 . nodeFromVertex) $ reachable prgmGraph v
+  Just v -> return $ mconcat $ map (fst3 . nodeFromVertex) $ reachable prgmGraph v
   Nothing -> fail $ printf "Could not find prgm %s" (show prgmName)
 
 -- | Tries to TreeBuild all ObjArrs, returning all built successfully

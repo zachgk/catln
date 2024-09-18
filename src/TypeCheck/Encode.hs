@@ -268,6 +268,6 @@ fromPrgms :: [PPrgm] -> [TPrgm] -> StateT FEnv TypeCheckResult [VPrgm]
 fromPrgms pprgms tprgms = do
   mapM_ addTypeGraphPrgm tprgms
   vprgms <- mapM fromPrgm pprgms
-  let (Prgm{prgmObjMap=tjoinObjMap}) = mergePrgms tprgms
+  let (Prgm{prgmObjMap=tjoinObjMap}) = mconcat tprgms
   addUnionObjToEnv (concatMap fst3 vprgms) tjoinObjMap
   return vprgms

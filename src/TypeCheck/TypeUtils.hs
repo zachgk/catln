@@ -164,7 +164,7 @@ mkReachesEnv env (Constraint maybeConOa stypeVaenv _) = do
   -- final ReachesEnv
   let argTypeEnv = mkTypeEnv $ Prgm argObjMap (classGraphFromObjs argObjMap) []
   feTypeEnv' <- buildTypeEnv env
-  return $ ReachesEnv (mergeTypeEnv argTypeEnv feTypeEnv') (fmap snd vaenv) S.empty
+  return $ ReachesEnv (argTypeEnv <> feTypeEnv') (fmap snd vaenv) S.empty
 
 arrowConstrainUbs :: FEnv -> RConstraint -> Type -> Type -> TypeCheckResult (Type, Type, Maybe ReachesTree)
 arrowConstrainUbs env@FEnv{feUnionAllObjs} con PTopType dest@UnionType{} = do

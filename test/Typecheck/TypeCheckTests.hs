@@ -33,7 +33,7 @@ propExprEncodeDecode = property $ do
   prgmsNodes <- forAll genPrgms
   let prgms = map fst3 prgmsNodes
   annotate $ printf "Programs: \n\t%s" (show prgms)
-  let prgm = mergePrgms prgms
+  let prgm = mconcat prgms
   let fenv = makeBaseFEnv prgm
   (encoded, fenv') <- evalMaybe $ tcreToMaybe $ runStateT (fromPrgms prgms []) fenv
   decoded <- evalMaybe $ tcreToMaybe $ evalStateT (toPrgms encoded) fenv'
@@ -45,7 +45,7 @@ propConstraint :: Property
 propConstraint = property $ do
   prgmsNodes <- forAll genPrgms
   let prgms = map fst3 prgmsNodes
-  let prgm = mergePrgms prgms
+  let prgm = mconcat prgms
   let fenv = makeBaseFEnv prgm
   fenv' <- evalMaybe $ tcreToMaybe $ execStateT (fromPrgms prgms []) fenv
   let cons = feCons fenv'
@@ -57,7 +57,7 @@ propConstraints :: Property
 propConstraints = property $ do
   prgmsNodes <- forAll genPrgms
   let prgms = map fst3 prgmsNodes
-  let prgm = mergePrgms prgms
+  let prgm = mconcat prgms
   let fenv = makeBaseFEnv prgm
   fenv' <- evalMaybe $ tcreToMaybe $ execStateT (fromPrgms prgms []) fenv
   let cons = feCons fenv'

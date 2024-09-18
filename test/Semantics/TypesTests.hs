@@ -31,8 +31,8 @@ findPrgms = do
       ctssBase <- lift $ ctssRead $ ctssBaseFiles [fileName]
       ctss <- lift $ ctssBuildAll ctssBase
       tprgm <- getTPrgm ctss
-      return (fileName, mergePrgms $ map (mapMetaPrgm clearMetaDat . fst3) (graphToNodes tprgm))
-  return (H.insert "empty" emptyPrgm $ H.fromList $ fromCRes prgms)
+      return (fileName, mconcat $ map (mapMetaPrgm clearMetaDat . fst3) (graphToNodes tprgm))
+  return (H.insert "empty" mempty $ H.fromList $ fromCRes prgms)
 
 ggPrgm :: Prgms -> GenPrgm
 ggPrgm prgms = HG.choice [genPremade, genPrgm]
