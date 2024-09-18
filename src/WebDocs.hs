@@ -94,9 +94,8 @@ docApiBase getProvider = do
   get "/api/toc" $ do
     provider <- liftAndCatchIO getProvider
     resp <- liftAndCatchIO $ runCResT $ do
-      rawPrgms <- getRawPrgm provider
-      let rawPrgms' = map snd3 $ graphToNodes rawPrgms
-      return $ zip (map impDisp rawPrgms') rawPrgms'
+      let pages = ctssKeys provider
+      return $ zip (map impDisp pages) pages
     maybeJson resp
 
   get "/api/page" $ do
@@ -104,10 +103,7 @@ docApiBase getProvider = do
     prgmName <- param "prgmName"
     resp <- liftAndCatchIO $ runCResT $ do
       prgmName' <- lift $ mkDesCanonicalImportStr prgmName
-      rawPrgms <- getRawPrgm provider
-      rawPrgm' <- case graphLookup prgmName' rawPrgms of
-        Just p  -> return p
-        Nothing -> fail $ printf "Could not find program %s" (show prgmName)
+      rawPrgm' <- ctssLookupReq (Just . ssfRaw) prgmName' provider
       tprgms <- getTPrgm provider
       maybeTPrgmRes <- lift $ runCResT $ do
         case graphLookup prgmName' tprgms of
@@ -148,8 +144,7 @@ docApiBase getProvider = do
   get "/api/desugar" $ do
     provider <- liftAndCatchIO getProvider
     resp <- liftAndCatchIO $ runCResT $ do
-      prgmGraph <- getPrgm provider
-      return $ mconcat $ map fst3 $ graphToNodes prgmGraph
+      ctssGetJoined ssfDes provider
     maybeJson resp
 
   get "/api/constrain" $ do
@@ -157,10 +152,8 @@ docApiBase getProvider = do
     prgmName <- param "prgmName"
     resp <- liftAndCatchIO $ runCResT $ do
       prgmName' <- lift $ mkDesCanonicalImportStr prgmName
-      tprgmWithTraceGraph <- getTPrgmWithTrace provider
-      case graphLookup prgmName' tprgmWithTraceGraph of
-        Just (tprgm, vprgm, _tr) -> return (tprgm, vprgm)
-        Nothing -> fail $ printf "Could not find typechecked program %s" (show prgmName)
+      (tprgm, vprgm, _tr) <- ctssLookupReq ssfTPrgmWithTrace prgmName' provider
+      return (tprgm, vprgm)
     maybeJson resp
 
   get "/api/constrain/pnt/:pnt" $ do
@@ -169,10 +162,8 @@ docApiBase getProvider = do
     pnt <- param "pnt"
     resp <- liftAndCatchIO $ runCResT $ do
       prgmName' <- lift $ mkDesCanonicalImportStr prgmName
-      tprgmWithTraceGraph <- getTPrgmWithTrace provider
-      case graphLookup prgmName' tprgmWithTraceGraph of
-        Just (_, _, tr) -> return $ flipTraceConstrain $ filterTraceConstrain tr pnt
-        Nothing -> fail $ printf "Could not find typechecked program %s" (show prgmName)
+      (_, _, tr) <- ctssLookupReq ssfTPrgmWithTrace prgmName' provider
+      return $ flipTraceConstrain $ filterTraceConstrain tr pnt
     maybeJson resp
 
   get "/api/typecheck" $ do

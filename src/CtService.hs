@@ -26,6 +26,7 @@ import           Syntax.Ct.Desugarf      (desFiles)
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 import           Syntax.Parsers
+import           Text.Printf
 import           TypeCheck               (typecheckPrgmWithTrace)
 import           TypeCheck.Common        (TPrgm, TraceConstrain, VPrgm)
 import           Utils
@@ -102,30 +103,36 @@ ctssBuildAll ctss@CTSS{ctssData} = do
       unless (null notes) $ putStrLn $ prettyCNotes notes
       fail "Could not build catln service"
 
+ctssKeys :: CTSS -> [FileImport]
+ctssKeys CTSS{ctssData} = map snd3 $ graphToNodes ctssData
+
+ctssGet :: (SSF -> Maybe (CRes a)) -> CTSS -> CResT IO (GraphData a FileImport)
+ctssGet f CTSS{ctssData} = asCResT $ mapMGraph (requireComputed . f) ctssData
+  where
+  -- TODO Remove usage and enable live build of components
+  requireComputed :: Maybe (CRes r) -> CRes r
+  requireComputed = fromMaybe (CErr [MkCNote $ GenCErr Nothing "Value not computed in catln service"])
+
+ctssGetJoined :: (Monoid a) => (SSF -> Maybe (CRes a)) -> CTSS -> CResT IO a
+ctssGetJoined f ctss = do
+  graph <- ctssGet f ctss
+  return $ mconcat $ map fst3 $ graphToNodes graph
+
+ctssLookup :: (SSF -> Maybe (CRes a)) -> FileImport -> CTSS -> CResT IO (Maybe a)
+ctssLookup f k ctss = do
+  graph <- ctssGet f ctss
+  return $ graphLookup k graph
+
+ctssLookupReq :: (SSF -> Maybe (CRes a)) -> FileImport -> CTSS -> CResT IO a
+ctssLookupReq f k ctss = do
+  mv <- ctssLookup f k ctss
+  case mv of
+    Just v  -> return v
+    Nothing -> fail $ printf "Could not find %s" (show $ impRaw k)
+
+-- This does not use ctssGet because it doesn't require building
 getRawPrgm :: CTSS -> CResT IO PPrgmGraphData
 getRawPrgm CTSS{ctssData} = asCResT $ mapMGraph ssfRaw ctssData
-
-getPrgm :: CTSS -> CResT IO (GraphData DesPrgm FileImport)
-getPrgm CTSS{ctssData} = asCResT $ mapMGraph (requireComputed . ssfDes) ctssData
-
-getTPrgmWithTrace :: CTSS -> CResT IO (GraphData (TPrgm, VPrgm, TraceConstrain) FileImport)
-getTPrgmWithTrace CTSS{ctssData} = asCResT $ mapMGraph (requireComputed . ssfTPrgmWithTrace) ctssData
-
-getTPrgm :: CTSS -> CResT IO (GraphData TPrgm FileImport)
-getTPrgm CTSS{ctssData} = asCResT $ mapMGraph (requireComputed . ssfTPrgm) ctssData
-
-getTPrgmJoined :: CTSS -> CResT IO TPrgm
-getTPrgmJoined provider = do
-  base <- getTPrgm provider
-  return $ mconcat $ map fst3 $ graphToNodes base
-
-getTBPrgm :: CTSS -> CResT IO (GraphData TBPrgm FileImport)
-getTBPrgm CTSS{ctssData} = asCResT $ mapMGraph (requireComputed . ssfTBPrgm) ctssData
-
-getTBPrgmJoined :: CTSS -> CResT IO TBPrgm
-getTBPrgmJoined provider = do
-  base <- getTBPrgm provider
-  return $ mconcat $ map fst3 $ graphToNodes base
 
 getTreebug :: CTSS -> FileImport -> String -> CResT IO EvalResult
 getTreebug provider prgmName fun = do
@@ -143,8 +150,8 @@ getEvalBuild provider prgmName fun = do
   fst <$> evalBuild fun prgmName base
 
 getEvalAnnots :: CTSS -> FileImport -> CResT IO [(Expr EvalMetaDat, Val)]
-getEvalAnnots CTSS{ctssData} prgmName = do
-  annotsGraph <- asCResT $ mapMGraph (requireComputed . ssfAnnots) ctssData
+getEvalAnnots ctss prgmName = do
+  annotsGraph <- ctssGet ssfAnnots ctss
   return $ fromMaybe [] $ graphLookup prgmName annotsGraph
 
 getWeb :: CTSS -> FileImport -> String -> CResT IO String
@@ -155,6 +162,22 @@ getWeb provider prgmName fun = do
     Just (StrVal s) -> return s
     _               -> return "";
 
--- TODO Remove all usages and enable live build of components
-requireComputed :: Maybe (CRes r) -> CRes r
-requireComputed = fromMaybe (CErr [MkCNote $ GenCErr Nothing "Value not computed in catln service"])
+-- Helpers
+
+getPrgm :: CTSS -> CResT IO (GraphData DesPrgm FileImport)
+getPrgm = ctssGet ssfDes
+
+getTPrgmWithTrace :: CTSS -> CResT IO (GraphData (TPrgm, VPrgm, TraceConstrain) FileImport)
+getTPrgmWithTrace = ctssGet ssfTPrgmWithTrace
+
+getTPrgm :: CTSS -> CResT IO (GraphData TPrgm FileImport)
+getTPrgm = ctssGet ssfTPrgm
+
+getTPrgmJoined :: CTSS -> CResT IO TPrgm
+getTPrgmJoined = ctssGetJoined ssfTPrgm
+
+getTBPrgm :: CTSS -> CResT IO (GraphData TBPrgm FileImport)
+getTBPrgm = ctssGet ssfTBPrgm
+
+getTBPrgmJoined :: CTSS -> CResT IO TBPrgm
+getTBPrgmJoined = ctssGetJoined ssfTBPrgm
