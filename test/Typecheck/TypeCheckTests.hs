@@ -16,7 +16,7 @@ import           Data.Graph          (graphFromEdges)
 import           Hedgehog
 import qualified Hedgehog.Gen        as HG
 import           MapMeta
-import           Semantics.Prgm      (mergePrgms)
+import           Semantics.Prgm
 import           Test.Tasty
 import qualified Test.Tasty.Hedgehog as THG
 import           Testing.Generation  (genPrgms)
@@ -39,7 +39,7 @@ propExprEncodeDecode = property $ do
   decoded <- evalMaybe $ tcreToMaybe $ evalStateT (toPrgms encoded) fenv'
   let decodedClear = map (mapMetaPrgm clearMetaDat) decoded
   annotate $ printf "Decoded to: \n\t%s" (show decoded)
-  map fst3 prgms === map fst3 decodedClear
+  map prgmObjMap prgms === map prgmObjMap decodedClear
 
 propConstraint :: Property
 propConstraint = property $ do

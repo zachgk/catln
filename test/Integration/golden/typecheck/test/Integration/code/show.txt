@@ -1,22 +1,23 @@
-(
-    [ Value /showInt ->
-        ( /operator==
-            ( /r=/Data/String
-            , /l=/Data/String
-            ) | /Data/Primitive/True | /Data/Primitive/False
-        ) = /operator==
-        ( Value /l -> /Data/String = /Data/toString
-            ( Value /this -> /Data/Primitive/Integer = CInt 1 )
-        )
-        ( Value /r -> /Data/String = CStr "1" )
-    , /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io
-    ]
-,
-    [ CGType
-    , CGType
-    ]
-,
-    [ /Catln/#md
-        ( Value /text -> /Data/String = CStr "Tests the toString method, later will be the Show class" )
-    ]
-)
+Prgm
+    { prgmObjMap =
+        [ Value /showInt ->
+            ( /operator==
+                ( /r=/Data/String
+                , /l=/Data/String
+                ) | /Data/Primitive/True | /Data/Primitive/False
+            ) = /operator==
+            ( Value /l -> /Data/String = /Data/toString
+                ( Value /this -> /Data/Primitive/Integer = CInt 1 )
+            )
+            ( Value /r -> /Data/String = CStr "1" )
+        , /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io
+        ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr "Tests the toString method, later will be the Show class" )
+        ]
+    }

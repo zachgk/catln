@@ -1,57 +1,58 @@
-(
-    [ /fib( EAppArg Value /integer -> /Data/Primitive/Integer ) | /operator>
-        ( EAppArg Value /l -> TVArg /integer = ( Value /integer ↦ TVArg /integer ) )
-        ( EAppArg Value /r -> /Data/Primitive/Integer = 1 ) ->
-        ( /operator+
-            ( /r=/Data/Primitive/Integer
-            , /l=/Data/Primitive/Integer
-            ) | /Data/Primitive/Integer
-        ) = /operator+
-        ( EAppArg Value /l -> /Data/Primitive/Integer =
-            ( /fib
-                ( EAppArg Value /integer -> /Data/Primitive/Integer =
-                    ( /operator-
-                        ( EAppArg Value /l -> TVArg /integer = ( Value /integer ↦ TVArg /integer ) )
-                        ( EAppArg Value /r -> /Data/Primitive/Integer = 1 ) ↦ /Data/Primitive/Integer
-                    )
-                ) ↦ /Data/Primitive/Integer
-            )
-        )
-        ( EAppArg Value /r -> /Data/Primitive/Integer =
-            ( /fib
-                ( EAppArg Value /integer -> /Data/Primitive/Integer =
-                    ( /operator-
-                        ( EAppArg Value /l -> TVArg /integer = ( Value /integer ↦ TVArg /integer ) )
-                        ( EAppArg Value /r -> /Data/Primitive/Integer = 2 ) ↦ /Data/Primitive/Integer
-                    )
-                ) ↦ /Data/Primitive/Integer
-            )
-        )
-    , /fib( EAppArg Value /integer -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = 1
-    , /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
-        ( /Catln/exit
-            ( /val=/Data/Primitive/Integer
-            , /this=/Catln/IO
-            ) | /Catln/IO
-        ) = /Catln/exit
-        ( EAppArg Value /val -> /Data/Primitive/Integer =
-            ( /operator-
-                ( EAppArg Value /l -> /Data/Primitive/Integer =
-                    ( /fib
-                        ( EAppArg Value /integer -> /Data/Primitive/Integer = 3 ) ↦ /Data/Primitive/Integer
-                    )
+Prgm
+    { prgmObjMap =
+        [ /fib( EAppArg Value /integer -> /Data/Primitive/Integer ) | /operator>
+            ( EAppArg Value /l -> TVArg /integer = ( Value /integer ↦ TVArg /integer ) )
+            ( EAppArg Value /r -> /Data/Primitive/Integer = 1 ) ->
+            ( /operator+
+                ( /r=/Data/Primitive/Integer
+                , /l=/Data/Primitive/Integer
+                ) | /Data/Primitive/Integer
+            ) = /operator+
+            ( EAppArg Value /l -> /Data/Primitive/Integer =
+                ( /fib
+                    ( EAppArg Value /integer -> /Data/Primitive/Integer =
+                        ( /operator-
+                            ( EAppArg Value /l -> TVArg /integer = ( Value /integer ↦ TVArg /integer ) )
+                            ( EAppArg Value /r -> /Data/Primitive/Integer = 1 ) ↦ /Data/Primitive/Integer
+                        )
+                    ) ↦ /Data/Primitive/Integer
                 )
-                ( EAppArg Value /r -> /Data/Primitive/Integer = 3 ) ↦ /Data/Primitive/Integer
             )
-        )
-        ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
-    ]
-,
-    [ CGType
-    , CGType
-    ]
-,
-    [ /Catln/#md
-        ( EAppArg Value /text -> /Data/String = "Tests recursion with fibonaccci" )
-    ]
-)
+            ( EAppArg Value /r -> /Data/Primitive/Integer =
+                ( /fib
+                    ( EAppArg Value /integer -> /Data/Primitive/Integer =
+                        ( /operator-
+                            ( EAppArg Value /l -> TVArg /integer = ( Value /integer ↦ TVArg /integer ) )
+                            ( EAppArg Value /r -> /Data/Primitive/Integer = 2 ) ↦ /Data/Primitive/Integer
+                        )
+                    ) ↦ /Data/Primitive/Integer
+                )
+            )
+        , /fib( EAppArg Value /integer -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = 1
+        , /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+            ( /Catln/exit
+                ( /val=/Data/Primitive/Integer
+                , /this=/Catln/IO
+                ) | /Catln/IO
+            ) = /Catln/exit
+            ( EAppArg Value /val -> /Data/Primitive/Integer =
+                ( /operator-
+                    ( EAppArg Value /l -> /Data/Primitive/Integer =
+                        ( /fib
+                            ( EAppArg Value /integer -> /Data/Primitive/Integer = 3 ) ↦ /Data/Primitive/Integer
+                        )
+                    )
+                    ( EAppArg Value /r -> /Data/Primitive/Integer = 3 ) ↦ /Data/Primitive/Integer
+                )
+            )
+            ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+        ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Tests recursion with fibonaccci" )
+        ]
+    }

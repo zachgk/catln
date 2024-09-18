@@ -1,37 +1,38 @@
-(
-    [ /Complex( EAppVar /N ∀/Data/Primitive/Number )( EAppArg Value /a -> TVVar /N )( EAppArg Value /b -> TVVar /N )
-    , /real
-        ( EAppArg Value /c -> /Complex[ /N=~Number ]
-            ( /a=TVVar /N
-            , /b=TVVar /N
-            ) = /Complex( EAppArg Value /a -> ~Number )( EAppArg Value /b -> ~Number )
-        ) -> TVArg /a = ( Value /a ↦ TVArg /a )
-    , /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
-        ( /Catln/exit
-            ( /val=/Data/Primitive/Integer
-            , /this=/Catln/IO
-            ) | /Catln/IO
-        ) = /Catln/exit
-        ( EAppArg Value /val -> /Data/Primitive/Integer =
-            ( /real
-                ( EAppArg Value /c -> /Complex[ /N=/Data/Primitive/Integer ]
-                    ( /a=TVVar /N
-                    , /b=TVVar /N
-                    ) = /Complex
-                    ( EAppArg Value /a -> /Data/Primitive/Integer = 0 )
-                    ( EAppArg Value /b -> /Data/Primitive/Integer = 7 )
-                ) ↦ /Data/Primitive/Integer
+Prgm
+    { prgmObjMap =
+        [ /Complex( EAppVar /N ∀/Data/Primitive/Number )( EAppArg Value /a -> TVVar /N )( EAppArg Value /b -> TVVar /N )
+        , /real
+            ( EAppArg Value /c -> /Complex[ /N=~Number ]
+                ( /a=TVVar /N
+                , /b=TVVar /N
+                ) = /Complex( EAppArg Value /a -> ~Number )( EAppArg Value /b -> ~Number )
+            ) -> TVArg /a = ( Value /a ↦ TVArg /a )
+        , /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+            ( /Catln/exit
+                ( /val=/Data/Primitive/Integer
+                , /this=/Catln/IO
+                ) | /Catln/IO
+            ) = /Catln/exit
+            ( EAppArg Value /val -> /Data/Primitive/Integer =
+                ( /real
+                    ( EAppArg Value /c -> /Complex[ /N=/Data/Primitive/Integer ]
+                        ( /a=TVVar /N
+                        , /b=TVVar /N
+                        ) = /Complex
+                        ( EAppArg Value /a -> /Data/Primitive/Integer = 0 )
+                        ( EAppArg Value /b -> /Data/Primitive/Integer = 7 )
+                    ) ↦ /Data/Primitive/Integer
+                )
             )
-        )
-        ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
-    ]
-,
-    [ CGType
-    , CGType
-    , CGType
-    ]
-,
-    [ /Catln/#md
-        ( EAppArg Value /text -> /Data/String = "Tests data classes and matching values in functions (c=Type(...)) with type vars" )
-    ]
-)
+            ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+        ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Tests data classes and matching values in functions (c=Type(...)) with type vars" )
+        ]
+    }

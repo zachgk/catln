@@ -1,27 +1,28 @@
-(
-    [ Value /main ->
-        ( /Catln/www( /html=/Data/String ) | /Catln/CatlnResult
-            ( /contents=/Data/String
-            , /name=/Data/String
-            )
-        ) = /Catln/www
-        ( EAppArg Value /html -> /Data/String = "<html><body>web test</body></html>" )
-    ]
-, [ CGType ]
-,
-    [ /Catln/#md
-        ( EAppArg Value /text -> /Data/String = "Tests using a custom build type [www].
-        It also prints the result of the build in an iframe." )
-    , /Catln/#print
-        ( EAppArg Value /p -> /Catln/CatlnResult
-            ( /contents=/Data/String
-            , /name=/Data/String
-            ).. =
-            ( Value /main ↦ /Catln/CatlnResult
+Prgm
+    { prgmObjMap =
+        [ Value /main ->
+            ( /Catln/www( /html=/Data/String ) | /Catln/CatlnResult
                 ( /contents=/Data/String
                 , /name=/Data/String
-                )..
+                )
+            ) = /Catln/www
+            ( EAppArg Value /html -> /Data/String = "<html><body>web test</body></html>" )
+        ]
+    , prgmCG = [ CGType ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Tests using a custom build type [www].
+            It also prints the result of the build in an iframe." )
+        , /Catln/#print
+            ( EAppArg Value /p -> /Catln/CatlnResult
+                ( /contents=/Data/String
+                , /name=/Data/String
+                ).. =
+                ( Value /main ↦ /Catln/CatlnResult
+                    ( /contents=/Data/String
+                    , /name=/Data/String
+                    )..
+                )
             )
-        )
-    ]
-)
+        ]
+    }

@@ -1,35 +1,36 @@
-(
-    [ Value /outerVar ->
-        ( /operator==
-            ( /r=/Data/Primitive/Integer
-            , /l=/Data/Primitive/Integer
-            ) | /Data/Primitive/True | /Data/Primitive/False
-        ) = /operator==
-        ( Value /l -> /Data/Primitive/Integer = /operator-
-            ( Value /l -> /Data/Primitive/Integer = CInt 5 )
-            ( Value /r -> /Data/Primitive/Integer = CInt 3 )
-        )
-        ( Value /r -> /Data/Primitive/Integer = CInt 2 )
-    , /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io
-    , /ContextIn.innerVar( Value /io ) ->
-        ( /operator==
-            ( /r=/Data/Primitive/Integer
-            , /l=/Data/Primitive/Integer
-            ) | /Data/Primitive/True | /Data/Primitive/False
-        ) = /operator==
-        ( Value /l -> /Data/Primitive/Integer = /operator+
-            ( Value /l -> /Data/Primitive/Integer = CInt 1 )
-            ( Value /r -> /Data/Primitive/Integer = CInt 1 )
-        )
-        ( Value /r -> /Data/Primitive/Integer = CInt 2 )
-    ]
-,
-    [ CGType
-    , CGType
-    , CGType
-    ]
-,
-    [ /Catln/#md
-        ( Value /text -> /Data/String = CStr "Tests currying values with context" )
-    ]
-)
+Prgm
+    { prgmObjMap =
+        [ Value /outerVar ->
+            ( /operator==
+                ( /r=/Data/Primitive/Integer
+                , /l=/Data/Primitive/Integer
+                ) | /Data/Primitive/True | /Data/Primitive/False
+            ) = /operator==
+            ( Value /l -> /Data/Primitive/Integer = /operator-
+                ( Value /l -> /Data/Primitive/Integer = CInt 5 )
+                ( Value /r -> /Data/Primitive/Integer = CInt 3 )
+            )
+            ( Value /r -> /Data/Primitive/Integer = CInt 2 )
+        , /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io
+        , /ContextIn.innerVar( Value /io ) ->
+            ( /operator==
+                ( /r=/Data/Primitive/Integer
+                , /l=/Data/Primitive/Integer
+                ) | /Data/Primitive/True | /Data/Primitive/False
+            ) = /operator==
+            ( Value /l -> /Data/Primitive/Integer = /operator+
+                ( Value /l -> /Data/Primitive/Integer = CInt 1 )
+                ( Value /r -> /Data/Primitive/Integer = CInt 1 )
+            )
+            ( Value /r -> /Data/Primitive/Integer = CInt 2 )
+        ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr "Tests currying values with context" )
+        ]
+    }

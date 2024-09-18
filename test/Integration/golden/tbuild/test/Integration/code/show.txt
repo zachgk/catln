@@ -1,24 +1,25 @@
-(
-    [ Value /showInt ->
-        ( /operator==
-            ( /r=/Data/String
-            , /l=/Data/String
-            ) | /Data/Primitive/True | /Data/Primitive/False
-        ) = /operator==
-        ( EAppArg Value /l -> /Data/String =
-            ( /Data/toString
-                ( EAppArg Value /this -> /Data/Primitive/Integer = 1 ) ↦ /Data/String
+Prgm
+    { prgmObjMap =
+        [ Value /showInt ->
+            ( /operator==
+                ( /r=/Data/String
+                , /l=/Data/String
+                ) | /Data/Primitive/True | /Data/Primitive/False
+            ) = /operator==
+            ( EAppArg Value /l -> /Data/String =
+                ( /Data/toString
+                    ( EAppArg Value /this -> /Data/Primitive/Integer = 1 ) ↦ /Data/String
+                )
             )
-        )
-        ( EAppArg Value /r -> /Data/String = "1" )
-    , /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io )
-    ]
-,
-    [ CGType
-    , CGType
-    ]
-,
-    [ /Catln/#md
-        ( EAppArg Value /text -> /Data/String = "Tests the toString method, later will be the Show class" )
-    ]
-)
+            ( EAppArg Value /r -> /Data/String = "1" )
+        , /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io )
+        ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Tests the toString method, later will be the Show class" )
+        ]
+    }

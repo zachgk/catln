@@ -82,7 +82,7 @@ evalTargetMode function prgmName prgmGraphData = do
 
 -- | Gets the target modes for all objects in the file
 evalAllTargetModes :: EPrgm -> H.HashMap UUID EvalMode
-evalAllTargetModes prgm@(objMap, _, _) = H.fromList $ mapMaybe targetMode objMap
+evalAllTargetModes prgm@Prgm{prgmObjMap} = H.fromList $ mapMaybe targetMode prgmObjMap
   where
     targetMode oa = case oaObjPath oa of
       ContextStr -> case H.lookupDefault Nothing (partialKey contextValStr) $ exprAppliedArgsMap $ oaObjExpr oa of
@@ -202,8 +202,8 @@ evalExpr (TCalls _ b callTree) = do
   evalCallTree b' callTree
 
 evalBaseEnv :: EPrgm -> Env
-evalBaseEnv prgm@(objMap, _, _) = Env {
-        evObjMap = objMap,
+evalBaseEnv prgm@Prgm{prgmObjMap} = Env {
+        evObjMap = prgmObjMap,
         evTypeEnv = mkTypeEnv prgm,
         evArgs = H.empty,
         evExEnv = H.empty,
@@ -223,12 +223,12 @@ prgmFromGraphData prgmName (prgmGraph, nodeFromVertex, vertexFromKey) = case ver
 evalBuildAll :: EPrgmGraphData -> CRes (GraphData (Prgm TExpr EvalMetaDat) FileImport)
 evalBuildAll prgmGraphData = do
   let prgms = graphToNodes prgmGraphData
-  prgms' <- forM prgms $ \((objMap, cg, annots), prgmName, deps) -> do
+  prgms' <- forM prgms $ \(Prgm objMap cg annots, prgmName, deps) -> do
     evalPrgm <- prgmFromGraphData prgmName prgmGraphData
     let Env{evTbEnv} = evalBaseEnv evalPrgm
     objMap' <- catCRes $ fmap (buildRootOA evTbEnv) objMap
     annots' <- catCRes $ fmap (toTExpr evTbEnv []) annots
-    return ((objMap', cg, annots'), prgmName, deps)
+    return (Prgm objMap' cg annots', prgmName, deps)
   return $ graphFromEdges prgms'
 
 evalBuildPrgm :: EExpr -> PartialType -> Type -> EPrgm -> CRes (TExpr EvalMetaDat, Env)
@@ -239,7 +239,7 @@ evalBuildPrgm input srcType destType prgm = do
 
 evalAnnots :: FileImport -> EPrgmGraphData -> CRes [(EExpr, Val)]
 evalAnnots prgmName prgmGraphData = do
-  prgm@(objMap, _, globalAnnots) <- prgmFromGraphData prgmName prgmGraphData
+  prgm@(Prgm objMap _ globalAnnots) <- prgmFromGraphData prgmName prgmGraphData
   let env = evalBaseEnv prgm
   globalAnnots' <- buildAnnots env [] globalAnnots
   objMapAnnots' <- forM objMap $ \oa -> do

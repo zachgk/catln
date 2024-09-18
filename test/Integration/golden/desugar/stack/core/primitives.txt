@@ -1,125 +1,126 @@
-(
-    [ Value /
-    , Value /Data/Primitive/True
-    , Value /Data/Primitive/False
-    , /operator==( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-    , /operator==( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing )= Value True
-    , /operator==( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing )= Value False
-    , /operator==( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing )= Value False
-    , /operator==( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing )= Value True
-    , /operator~( Value /a= Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-    , /operator~( Value /a= Hole /Data/Primitive/True HoleActive Nothing )= Value False
-    , /operator~( Value /a= Hole /Data/Primitive/False HoleActive Nothing )= Value True
-    , /operator&&( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-    , /operator&&( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing )= Value True
-    , /operator&&( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing )= Value False
-    , /operator&&( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )= Value False
-    , /operator||( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-    , /operator||( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )= Value True
-    , /operator||( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing )= Value True
-    , /operator||( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing )= Value False
-    , /operator^( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-    , /operator^( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing )= Value False
-    , /operator^( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing )= Value True
-    , /operator^( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing )= Value True
-    , /operator^( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing )= Value False
-    , Value /Data/Primitive/Integer
-    , Value /Data/Primitive/Float
-    , /operator-( Value /a= Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
-    , /operator-( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Integer
-    , /operator+( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Integer
-    , /operator*( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Integer
-    , /operator<=( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-    , /operator>=( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-    , /operator<( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-    , /operator>( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-    , /operator==( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-    , /operator!=( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-    ]
-,
-    [ CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGClass
-        ( False
-        , /Data/Primitive/Integer
-        , [ /Data/Primitive/Integer ]
-        , Just ""
-        )
-    , CGClass
-        ( False
-        , /Data/Primitive/Boolean
-        ,
-            [ ∀/Data/Primitive/Boolean
-            , ∀/Data/Primitive/Number
-            ]
-        , Just " "
-        )
-    , CGClass
-        ( False
-        , /Data/Primitive/Integer
-        , [ /Data/Primitive/Integer ]
-        , Just ""
-        )
-    , CGClass
-        ( False
-        , /Data/Primitive/Boolean
-        , [ ∀/Data/Primitive/Boolean ]
-        , Just ""
-        )
-    , CGClass
-        ( True
-        , /Data/Primitive/Boolean
-        ,
-            [ /Data/Primitive/True
-            , /Data/Primitive/False
-            ]
-        , Just ""
-        )
-    , CGClass
-        ( True
-        , /Data/Primitive/Number
-        ,
-            [ /Data/Primitive/Integer
-            , /Data/Primitive/Float
-            ]
-        , Just ""
-        )
-    ]
-,
-    [ /Catln/#md
-        ( Value /text= CStr "# Catln Core Primitives
-        These types some of the basic types used in Catln." )
-    , /Catln/#md
-        ( Value /text= CStr "## Anonymous type" )
-    , /Catln/#md
-        ( Value /text= CStr "## Booleans" )
-    , /Catln/#md
-        ( Value /text= CStr "enum<Boolean> = [False, True]" )
-    , /Catln/#md
-        ( Value /text= CStr "## Integers" )
-    , /Catln/#md
-        ( Value /text= CStr "### Commutative Group" )
-    , /Catln/#md
-        ( Value /text= CStr "mempty<Integer $T> = 0" )
-    , /Catln/#md
-        ( Value /text= CStr "mappend<Integer $T>($T l, $T r) = l + r" )
-    , /Catln/#md
-        ( Value /text= CStr "inverse<Integer $T>($T t) = -t" )
-    ]
-)
+Prgm
+    { prgmObjMap =
+        [ Value /
+        , Value /Data/Primitive/True
+        , Value /Data/Primitive/False
+        , /operator==( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+        , /operator==( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing )= Value True
+        , /operator==( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing )= Value False
+        , /operator==( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing )= Value False
+        , /operator==( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing )= Value True
+        , /operator~( Value /a= Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+        , /operator~( Value /a= Hole /Data/Primitive/True HoleActive Nothing )= Value False
+        , /operator~( Value /a= Hole /Data/Primitive/False HoleActive Nothing )= Value True
+        , /operator&&( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+        , /operator&&( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing )= Value True
+        , /operator&&( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing )= Value False
+        , /operator&&( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )= Value False
+        , /operator||( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+        , /operator||( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )= Value True
+        , /operator||( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing )= Value True
+        , /operator||( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing )= Value False
+        , /operator^( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+        , /operator^( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing )= Value False
+        , /operator^( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing )= Value True
+        , /operator^( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing )= Value True
+        , /operator^( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing )= Value False
+        , Value /Data/Primitive/Integer
+        , Value /Data/Primitive/Float
+        , /operator-( Value /a= Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
+        , /operator-( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Integer
+        , /operator+( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Integer
+        , /operator*( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Integer
+        , /operator<=( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+        , /operator>=( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+        , /operator<( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+        , /operator>( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+        , /operator==( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+        , /operator!=( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+        ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Data/Primitive/Integer
+            , [ /Data/Primitive/Integer ]
+            , Just ""
+            )
+        , CGClass
+            ( False
+            , /Data/Primitive/Boolean
+            ,
+                [ ∀/Data/Primitive/Boolean
+                , ∀/Data/Primitive/Number
+                ]
+            , Just " "
+            )
+        , CGClass
+            ( False
+            , /Data/Primitive/Integer
+            , [ /Data/Primitive/Integer ]
+            , Just ""
+            )
+        , CGClass
+            ( False
+            , /Data/Primitive/Boolean
+            , [ ∀/Data/Primitive/Boolean ]
+            , Just ""
+            )
+        , CGClass
+            ( True
+            , /Data/Primitive/Boolean
+            ,
+                [ /Data/Primitive/True
+                , /Data/Primitive/False
+                ]
+            , Just ""
+            )
+        , CGClass
+            ( True
+            , /Data/Primitive/Number
+            ,
+                [ /Data/Primitive/Integer
+                , /Data/Primitive/Float
+                ]
+            , Just ""
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "# Catln Core Primitives
+            These types some of the basic types used in Catln." )
+        , /Catln/#md
+            ( Value /text= CStr "## Anonymous type" )
+        , /Catln/#md
+            ( Value /text= CStr "## Booleans" )
+        , /Catln/#md
+            ( Value /text= CStr "enum<Boolean> = [False, True]" )
+        , /Catln/#md
+            ( Value /text= CStr "## Integers" )
+        , /Catln/#md
+            ( Value /text= CStr "### Commutative Group" )
+        , /Catln/#md
+            ( Value /text= CStr "mempty<Integer $T> = 0" )
+        , /Catln/#md
+            ( Value /text= CStr "mappend<Integer $T>($T l, $T r) = l + r" )
+        , /Catln/#md
+            ( Value /text= CStr "inverse<Integer $T>($T t) = -t" )
+        ]
+    }

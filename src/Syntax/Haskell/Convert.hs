@@ -498,5 +498,5 @@ convertDecl flags p@RoleAnnotD{} = error $ printf "Convert unsupported decl:\n%s
 
 -- https://hackage.haskell.org/package/ghc-lib-parser-9.4.8.20231111/docs/GHC-Hs.html
 convertModule :: DynFlags -> HsModule -> RawPrgm ()
-convertModule flags (HsModule _ _ (Just name) Nothing imports decls Nothing Nothing) = (map (convertImport flags . unLoc) imports, [RawStatementTree (rawModule ("/Haskell/M/" ++ moduleNameSlashes (unLoc name))) (concatMap (convertDecl flags . unLoc) decls)])
+convertModule flags (HsModule _ _ (Just name) Nothing imports decls Nothing Nothing) = RawPrgm (map (convertImport flags . unLoc) imports) [RawStatementTree (rawModule ("/Haskell/M/" ++ moduleNameSlashes (unLoc name))) (concatMap (convertDecl flags . unLoc) decls)]
 convertModule flags p = error $ printf "Convert unsupported Module:\n%s" (showSDoc flags $ ppr p)

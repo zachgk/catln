@@ -157,7 +157,7 @@ formatStatementTree rootStatement indent (RawStatementTree statement subTree) = 
   when rootStatement ""
 
 formatPrgm :: (MetaDat m, Show m) => Int -> RawPrgm m -> Builder
-formatPrgm indent (imports, statements) = do
+formatPrgm indent (RawPrgm imports statements) = do
   forM_ imports $ \imp -> do
     formatImport imp
   unless (null imports) "\n"

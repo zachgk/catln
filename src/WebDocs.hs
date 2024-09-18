@@ -39,6 +39,7 @@ import           Syntax.Ct.Desugarf.Expr       (desFileImport)
 import           Syntax.Ct.MapRawMeta          (mapMetaRawPrgm, mapMetaRawPrgmM)
 import           Syntax.Ct.Parser.Expr         (pExpr)
 import           Syntax.Ct.Prgm                (RawExpr (RawValue),
+                                                RawPrgm (RawPrgm),
                                                 RawStatement (RawAnnot),
                                                 RawStatementTree (RawStatementTree),
                                                 mkRawFileImport)
@@ -61,7 +62,7 @@ maybeJson (CErr notes)   = json (ResFail notes :: ResSuccess () CNote)
 
 -- | Filters a program's object map and class map to only highlight a particular type or class name
 filterByType :: String -> TPrgm -> TPrgm
-filterByType name (objMap, ClassGraph classGraph, _) = (objMap', classGraph', [])
+filterByType name (Prgm objMap (ClassGraph classGraph) _) = Prgm objMap' classGraph' []
   where
     objMap' = filter (relativeNameMatches name . oaObjPath) objMap
     classGraph' = ClassGraph $ graphFromEdges $ filter (\(_, n, subTypes) -> relativeNameMatches name (fromPartialName n) || n `elem` subTypes) $ graphToNodes classGraph
@@ -129,7 +130,7 @@ docApiBase getProvider = do
     resp <- liftAndCatchIO $ runCResT $ do
       rawPrgm <- case runParser pExpr "<annot>" annot of
         Left err     -> fail $ show $ errorBundlePretty err
-        Right parsed -> return ([], [RawStatementTree (RawAnnot parsed) []])
+        Right parsed -> return (RawPrgm [] [RawStatementTree (RawAnnot parsed) []])
       rawPrgm' <- lift $ mapMetaRawPrgmM addMetaID rawPrgm
       (annotDesPrgm, annotPrgmName, _) <- asCResT $ desPrgm (rawPrgm', desFileImport $ mkRawFileImport $ RawValue emptyMetaN "<annot>", [])
       [annotDesPrgm'] <- desFinalPasses [annotDesPrgm] []

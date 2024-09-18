@@ -1,22 +1,23 @@
-(
-    [ Complex( Value /a -> ∀/Data/Primitive/Number )( Value /b -> ∀/Data/Primitive/Number )
-    , real
-        ( Value c= Complex( Value a )( Value b ) )= Value a
-    , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-        ( Value val= real
-            ( Value c= Complex
-                ( Value a= CInt 0 )
-                ( Value b= CInt 7 )
-            )
-        )( Value /this= Value io )
-    ]
-,
-    [ CGType
-    , CGType
-    , CGType
-    ]
-,
-    [ /Catln/#md
-        ( Value /text= CStr "Tests data classes and matching values in functions (c=Type(...)) without type vars" )
-    ]
-)
+Prgm
+    { prgmObjMap =
+        [ Complex( Value /a -> ∀/Data/Primitive/Number )( Value /b -> ∀/Data/Primitive/Number )
+        , real
+            ( Value c= Complex( Value a )( Value b ) )= Value a
+        , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+            ( Value val= real
+                ( Value c= Complex
+                    ( Value a= CInt 0 )
+                    ( Value b= CInt 7 )
+                )
+            )( Value /this= Value io )
+        ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "Tests data classes and matching values in functions (c=Type(...)) without type vars" )
+        ]
+    }

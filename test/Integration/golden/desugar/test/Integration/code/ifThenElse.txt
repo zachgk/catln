@@ -1,29 +1,30 @@
-(
-    [ abs( Value x -> /Data/Primitive/Integer )= abs.$6119dc( Value /x= Value /x )
-        ( Value /$6119dc-arg= /Catln/ThenElse/fromBool
-            ( Value /v= /operator>=( Value /l= Value x )
-                ( Value /r= CInt 0 )
+Prgm
+    { prgmObjMap =
+        [ abs( Value x -> /Data/Primitive/Integer )= abs.$6119dc( Value /x= Value /x )
+            ( Value /$6119dc-arg= /Catln/ThenElse/fromBool
+                ( Value /v= /operator>=( Value /l= Value x )
+                    ( Value /r= CInt 0 )
+                )
             )
-        )
-    , abs.$6119dc( Value /x )
-        ( Value /$6119dc-arg= Hole TopType HoleActive Nothing@Value Then )= Value x
-    , abs.$6119dc( Value /x )
-        ( Value /$6119dc-arg= Hole TopType HoleActive Nothing@Value Else )= /operator*
-        ( Value /l= /operator-
-            ( Value /a= CInt 1 )
-        )( Value /r= Value x )
-    , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-        ( Value val= abs
-            ( CInt 0 )
-        )( Value /this= Value io )
-    ]
-,
-    [ CGType
-    , CGType
-    , CGType
-    ]
-,
-    [ /Catln/#md
-        ( Value /text= CStr "Tests the "if-then-else" syntax with an absolute value" )
-    ]
-)
+        , abs.$6119dc( Value /x )
+            ( Value /$6119dc-arg= Hole TopType HoleActive Nothing@Value Then )= Value x
+        , abs.$6119dc( Value /x )
+            ( Value /$6119dc-arg= Hole TopType HoleActive Nothing@Value Else )= /operator*
+            ( Value /l= /operator-
+                ( Value /a= CInt 1 )
+            )( Value /r= Value x )
+        , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+            ( Value val= abs
+                ( CInt 0 )
+            )( Value /this= Value io )
+        ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "Tests the "if-then-else" syntax with an absolute value" )
+        ]
+    }

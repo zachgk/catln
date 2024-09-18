@@ -1,33 +1,34 @@
-(
-    [ Just[ /T : TopType ]( Value /val -> TVVar /T )
-    , Value Nothing
-    , defInt
-        ( Value x= Just( Value val -> /Data/Primitive/Integer ) )= Value val
-    , defInt( Value x= Value Nothing )= CInt 0
-    , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-        ( Value val= defInt
-            ( Value x= Just
-                ( Value val= CInt 0 )
+Prgm
+    { prgmObjMap =
+        [ Just[ /T : TopType ]( Value /val -> TVVar /T )
+        , Value Nothing
+        , defInt
+            ( Value x= Just( Value val -> /Data/Primitive/Integer ) )= Value val
+        , defInt( Value x= Value Nothing )= CInt 0
+        , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+            ( Value val= defInt
+                ( Value x= Just
+                    ( Value val= CInt 0 )
+                )
+            )( Value /this= Value io )
+        ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( True
+            , /Maybe
+            ,
+                [ /Just[ /T=TopType ]( /val=TVVar /T )
+                , /Nothing
+                ]
+            , Just ""
             )
-        )( Value /this= Value io )
-    ]
-,
-    [ CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGClass
-        ( True
-        , /Maybe
-        ,
-            [ /Just[ /T=TopType ]( /val=TVVar /T )
-            , /Nothing
-            ]
-        , Just ""
-        )
-    ]
-,
-    [ /Catln/#md
-        ( Value /text= CStr "Tests a simple data structure with a sum type" )
-    ]
-)
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "Tests a simple data structure with a sum type" )
+        ]
+    }

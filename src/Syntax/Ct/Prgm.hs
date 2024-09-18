@@ -81,7 +81,8 @@ data RawStatementTree e m = RawStatementTree (RawStatement e m) [RawStatementTre
   deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 type RawFileImport = AFileImport (RawExpr ())
-type RawPrgm m = ([RawFileImport], [RawStatementTree RawExpr m]) -- TODO: Include [Export]
+data RawPrgm m = RawPrgm [RawFileImport] [RawStatementTree RawExpr m] -- TODO: Include [Export]
+  deriving (Eq, Ord, Show, Hashable, Generic, ToJSON)
 
 data ReplRes m
   = ReplStatement (RawStatementTree RawExpr m)
@@ -230,7 +231,7 @@ roaVarArgs oa = error $ printf "exprVarArgs not defined for arg %s" (show oa)
 
 -- | Checks whether a program has a global annot
 rawPrgmHasAnnot :: RawPrgm m -> String -> Bool
-rawPrgmHasAnnot (_, statements) annot = any checkStatementTree statements
+rawPrgmHasAnnot (RawPrgm _ statements) annot = any checkStatementTree statements
   where
     checkStatementTree (RawStatementTree (RawAnnot a) _) = isAnnot annot a
     checkStatementTree _                                 = False

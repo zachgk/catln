@@ -1,41 +1,42 @@
-(
-    [ /Just( EAppVar /T TopType )( EAppArg Value /val -> TVVar /T )
-    , Value /Nothing
-    , /defInt
-        ( EAppArg Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just( EAppArg Value /val -> /Data/Primitive/Integer ) ) -> TVArg /val = ( Value /val ↦ TVArg /val )
-    , /defInt( EAppArg Value /x -> /Nothing = Value /Nothing ) -> /Data/Primitive/Integer = 0
-    , /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
-        ( /Catln/exit
-            ( /val=/Data/Primitive/Integer
-            , /this=/Catln/IO
-            ) | /Catln/IO
-        ) = /Catln/exit
-        ( EAppArg Value /val -> /Data/Primitive/Integer =
-            ( /defInt
-                ( EAppArg Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just
-                    ( EAppArg Value /val -> /Data/Primitive/Integer = 0 )
-                ) ↦ /Data/Primitive/Integer
+Prgm
+    { prgmObjMap =
+        [ /Just( EAppVar /T TopType )( EAppArg Value /val -> TVVar /T )
+        , Value /Nothing
+        , /defInt
+            ( EAppArg Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just( EAppArg Value /val -> /Data/Primitive/Integer ) ) -> TVArg /val = ( Value /val ↦ TVArg /val )
+        , /defInt( EAppArg Value /x -> /Nothing = Value /Nothing ) -> /Data/Primitive/Integer = 0
+        , /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+            ( /Catln/exit
+                ( /val=/Data/Primitive/Integer
+                , /this=/Catln/IO
+                ) | /Catln/IO
+            ) = /Catln/exit
+            ( EAppArg Value /val -> /Data/Primitive/Integer =
+                ( /defInt
+                    ( EAppArg Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just
+                        ( EAppArg Value /val -> /Data/Primitive/Integer = 0 )
+                    ) ↦ /Data/Primitive/Integer
+                )
             )
-        )
-        ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
-    ]
-,
-    [ CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGClass
-        ( True
-        , /Maybe
-        ,
-            [ /Just[ /T=TopType ]( /val=TVVar /T )
-            , /Nothing
-            ]
-        , Just ""
-        )
-    ]
-,
-    [ /Catln/#md
-        ( EAppArg Value /text -> /Data/String = "Tests a simple data structure with a sum type" )
-    ]
-)
+            ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+        ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( True
+            , /Maybe
+            ,
+                [ /Just[ /T=TopType ]( /val=TVVar /T )
+                , /Nothing
+                ]
+            , Just ""
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Tests a simple data structure with a sum type" )
+        ]
+    }

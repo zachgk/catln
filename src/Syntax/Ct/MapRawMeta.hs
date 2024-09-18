@@ -122,9 +122,9 @@ mapMetaRawStatementTreeM f (RawStatementTree s tree) = do
   return $ RawStatementTree s' tree'
 
 mapMetaRawPrgmM :: Monad n => MetaFun n a b -> RawPrgm a -> n (RawPrgm b)
-mapMetaRawPrgmM f (imports, statementTrees) = do
+mapMetaRawPrgmM f (RawPrgm imports statementTrees) = do
   statementTrees' <- mapM (mapMetaRawStatementTreeM f) statementTrees
-  return (imports, statementTrees')
+  return (RawPrgm imports statementTrees')
 
 mapMetaRawPrgm :: MetaFun Identity a b -> RawPrgm a -> RawPrgm b
 mapMetaRawPrgm f p = runIdentity $ mapMetaRawPrgmM f p

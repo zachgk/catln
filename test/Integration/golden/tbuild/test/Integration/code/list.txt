@@ -1,67 +1,68 @@
-(
-    [ /llength( EAppArg Value /this -> /Data/Nil = Value /Data/Nil ) -> /Data/Primitive/Integer = 0
-    , /llength
-        ( EAppArg Value /this -> /Data/Cons
-            ( /head=TopType
-            , /tail=TopType
-            ) = /Data/Cons( EAppArg Value /head )
-            ( EAppArg Value /tail ->
-                ( /Data/Nil | /Data/Cons
-                    ( /head=TopType
-                    , /tail=TopType
+Prgm
+    { prgmObjMap =
+        [ /llength( EAppArg Value /this -> /Data/Nil = Value /Data/Nil ) -> /Data/Primitive/Integer = 0
+        , /llength
+            ( EAppArg Value /this -> /Data/Cons
+                ( /head=TopType
+                , /tail=TopType
+                ) = /Data/Cons( EAppArg Value /head )
+                ( EAppArg Value /tail ->
+                    ( /Data/Nil | /Data/Cons
+                        ( /head=TopType
+                        , /tail=TopType
+                        )
                     )
                 )
+            ) ->
+            ( /operator+
+                ( /r=/Data/Primitive/Integer
+                , /l=/Data/Primitive/Integer
+                ) | /Data/Primitive/Integer
+            ) = /operator+
+            ( EAppArg Value /l -> /Data/Primitive/Integer = 1 )
+            ( EAppArg Value /r -> /Data/Primitive/Integer =
+                ( /llength( EAppArg Value /this -> TVArg /tail = Value /tail ) ↦ /Data/Primitive/Integer )
             )
-        ) ->
-        ( /operator+
-            ( /r=/Data/Primitive/Integer
-            , /l=/Data/Primitive/Integer
-            ) | /Data/Primitive/Integer
-        ) = /operator+
-        ( EAppArg Value /l -> /Data/Primitive/Integer = 1 )
-        ( EAppArg Value /r -> /Data/Primitive/Integer =
-            ( /llength( EAppArg Value /this -> TVArg /tail = Value /tail ) ↦ /Data/Primitive/Integer )
-        )
-    , /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
-        ( /Catln/exit
-            ( /val=/Data/Primitive/Integer
-            , /this=/Catln/IO
-            ) | /Catln/IO
-        ) = /Catln/exit
-        ( EAppArg Value /val -> /Data/Primitive/Integer =
-            ( /operator-
-                ( EAppArg Value /l -> /Data/Primitive/Integer =
-                    ( /llength
-                        ( EAppArg Value /this -> /Data/Cons
-                            ( /head=/Data/Primitive/Integer
-                            , /tail=/Data/Cons
+        , /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+            ( /Catln/exit
+                ( /val=/Data/Primitive/Integer
+                , /this=/Catln/IO
+                ) | /Catln/IO
+            ) = /Catln/exit
+            ( EAppArg Value /val -> /Data/Primitive/Integer =
+                ( /operator-
+                    ( EAppArg Value /l -> /Data/Primitive/Integer =
+                        ( /llength
+                            ( EAppArg Value /this -> /Data/Cons
                                 ( /head=/Data/Primitive/Integer
-                                , /tail=/Data/Nil
-                                )
-                            ) = /Data/Cons
-                            ( EAppArg Value /head -> /Data/Primitive/Integer = 5 )
-                            ( EAppArg Value /tail -> /Data/Cons
-                                ( /head=/Data/Primitive/Integer
-                                , /tail=/Data/Nil
+                                , /tail=/Data/Cons
+                                    ( /head=/Data/Primitive/Integer
+                                    , /tail=/Data/Nil
+                                    )
                                 ) = /Data/Cons
-                                ( EAppArg Value /head -> /Data/Primitive/Integer = 3 )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
-                            )
-                        ) ↦ /Data/Primitive/Integer
+                                ( EAppArg Value /head -> /Data/Primitive/Integer = 5 )
+                                ( EAppArg Value /tail -> /Data/Cons
+                                    ( /head=/Data/Primitive/Integer
+                                    , /tail=/Data/Nil
+                                    ) = /Data/Cons
+                                    ( EAppArg Value /head -> /Data/Primitive/Integer = 3 )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
+                                )
+                            ) ↦ /Data/Primitive/Integer
+                        )
                     )
+                    ( EAppArg Value /r -> /Data/Primitive/Integer = 2 ) ↦ /Data/Primitive/Integer
                 )
-                ( EAppArg Value /r -> /Data/Primitive/Integer = 2 ) ↦ /Data/Primitive/Integer
             )
-        )
-        ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
-    ]
-,
-    [ CGType
-    , CGType
-    ]
-,
-    [ /Catln/#md
-        ( EAppArg Value /text -> /Data/String = "The list tests recursive data structures without type variables" )
-    , /Catln/#md
-        ( EAppArg Value /text -> /Data/String = "TODO: Use core length rather than llength" )
-    ]
-)
+            ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+        ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "The list tests recursive data structures without type variables" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "TODO: Use core length rather than llength" )
+        ]
+    }

@@ -80,7 +80,7 @@ readImport imp = case maybeExprPath (impAbs imp) of
     Just parser -> parser $ impAbs imp
 
 processParsed :: FileImport -> (RawPrgm (), [RawFileImport]) -> IO (GraphNodes (RawPrgm ()) FileImport, [FileImport])
-processParsed imp (prgm@(prgmImports, statements), extraImports) = do
+processParsed imp (prgm@(RawPrgm prgmImports statements), extraImports) = do
   let includeCore = not (rawPrgmHasAnnot prgm noCoreAnnot)
   let prgmImports' = if includeCore && not ("core" `isInfixOf` name)
       then mkRawFileImport (rawStr "core") : prgmImports
@@ -88,7 +88,7 @@ processParsed imp (prgm@(prgmImports, statements), extraImports) = do
   prgmImports'' <- mapM (canonicalImport (Just imp)) prgmImports'
   extraImports' <- mapM (canonicalImport (Just imp)) extraImports
   let totalImports = extraImports' ++ prgmImports''
-  let prgm' = (prgmImports', statements)
+  let prgm' = RawPrgm prgmImports' statements
   prgm'' <- mapMetaRawPrgmM addMetaID prgm'
   return ((prgm'', imp, prgmImports''), totalImports)
   where

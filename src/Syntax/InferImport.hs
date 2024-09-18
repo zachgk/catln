@@ -62,8 +62,8 @@ dirParser imp = case exprAppliedArgs imp of
     let mainPath = name ++ "/main.ct"
     mainExists <- doesFileExist mainPath
     let dirPrgm = if mainExists
-          then ([mkRawFileImport $ rawStr mainPath], [])
-          else ([], [])
+          then RawPrgm [mkRawFileImport $ rawStr mainPath] []
+          else RawPrgm [] []
 
     return (dirPrgm, map (mkRawFileImport . rawStr) $ catMaybes files')
   _ -> undefined

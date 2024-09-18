@@ -1,30 +1,31 @@
-(
-    [ llength( Value /this= Value Nil )= CInt 0
-    , llength
-        ( Value /this= Cons( Value head )( Value tail ) )= /operator+
-        ( Value /l= CInt 1 )
-        ( Value /r= llength( Value /this= Value tail ) )
-    , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-        ( Value val= /operator-
-            ( Value /l= llength
-                ( Value /this= /Data/Cons
-                    ( Value /head= CInt 5 )
-                    ( Value /tail= /Data/Cons
-                        ( Value /head= CInt 3 )( Value /tail= Value /Data/Nil )
+Prgm
+    { prgmObjMap =
+        [ llength( Value /this= Value Nil )= CInt 0
+        , llength
+            ( Value /this= Cons( Value head )( Value tail ) )= /operator+
+            ( Value /l= CInt 1 )
+            ( Value /r= llength( Value /this= Value tail ) )
+        , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+            ( Value val= /operator-
+                ( Value /l= llength
+                    ( Value /this= /Data/Cons
+                        ( Value /head= CInt 5 )
+                        ( Value /tail= /Data/Cons
+                            ( Value /head= CInt 3 )( Value /tail= Value /Data/Nil )
+                        )
                     )
                 )
-            )
-            ( Value /r= CInt 2 )
-        )( Value /this= Value io )
-    ]
-,
-    [ CGType
-    , CGType
-    ]
-,
-    [ /Catln/#md
-        ( Value /text= CStr "The list tests recursive data structures without type variables" )
-    , /Catln/#md
-        ( Value /text= CStr "TODO: Use core length rather than llength" )
-    ]
-)
+                ( Value /r= CInt 2 )
+            )( Value /this= Value io )
+        ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "The list tests recursive data structures without type variables" )
+        , /Catln/#md
+            ( Value /text= CStr "TODO: Use core length rather than llength" )
+        ]
+    }

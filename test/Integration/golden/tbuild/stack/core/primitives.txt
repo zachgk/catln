@@ -1,125 +1,126 @@
-(
-    [ Value /
-    , Value /Data/Primitive/True
-    , Value /Data/Primitive/False
-    , /operator==( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-    , /operator==( EAppArg Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
-    , /operator==( EAppArg Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
-    , /operator==( EAppArg Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
-    , /operator==( EAppArg Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
-    , /operator~( EAppArg Value /a -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-    , /operator~( EAppArg Value /a -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
-    , /operator~( EAppArg Value /a -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
-    , /operator&&( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-    , /operator&&( EAppArg Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
-    , /operator&&( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
-    , /operator&&( EAppArg Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
-    , /operator||( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-    , /operator||( EAppArg Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
-    , /operator||( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
-    , /operator||( EAppArg Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
-    , /operator^( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-    , /operator^( EAppArg Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
-    , /operator^( EAppArg Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
-    , /operator^( EAppArg Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
-    , /operator^( EAppArg Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
-    , Value /Data/Primitive/Integer
-    , Value /Data/Primitive/Float
-    , /operator-( EAppArg Value /a -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
-    , /operator-( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
-    , /operator+( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
-    , /operator*( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
-    , /operator<=( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-    , /operator>=( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-    , /operator<( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-    , /operator>( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-    , /operator==( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-    , /operator!=( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-    ]
-,
-    [ CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGClass
-        ( False
-        , /Data/Primitive/Integer
-        , [ /Data/Primitive/Integer ]
-        , Just ""
-        )
-    , CGClass
-        ( False
-        , /Data/Primitive/Boolean
-        ,
-            [ ∀/Data/Primitive/Boolean
-            , ∀/Data/Primitive/Number
-            ]
-        , Just " "
-        )
-    , CGClass
-        ( False
-        , /Data/Primitive/Integer
-        , [ /Data/Primitive/Integer ]
-        , Just ""
-        )
-    , CGClass
-        ( False
-        , /Data/Primitive/Boolean
-        , [ ∀/Data/Primitive/Boolean ]
-        , Just ""
-        )
-    , CGClass
-        ( True
-        , /Data/Primitive/Boolean
-        ,
-            [ /Data/Primitive/True
-            , /Data/Primitive/False
-            ]
-        , Just ""
-        )
-    , CGClass
-        ( True
-        , /Data/Primitive/Number
-        ,
-            [ /Data/Primitive/Integer
-            , /Data/Primitive/Float
-            ]
-        , Just ""
-        )
-    ]
-,
-    [ /Catln/#md
-        ( EAppArg Value /text -> /Data/String = "# Catln Core Primitives
-        These types some of the basic types used in Catln." )
-    , /Catln/#md
-        ( EAppArg Value /text -> /Data/String = "## Anonymous type" )
-    , /Catln/#md
-        ( EAppArg Value /text -> /Data/String = "## Booleans" )
-    , /Catln/#md
-        ( EAppArg Value /text -> /Data/String = "enum<Boolean> = [False, True]" )
-    , /Catln/#md
-        ( EAppArg Value /text -> /Data/String = "## Integers" )
-    , /Catln/#md
-        ( EAppArg Value /text -> /Data/String = "### Commutative Group" )
-    , /Catln/#md
-        ( EAppArg Value /text -> /Data/String = "mempty<Integer $T> = 0" )
-    , /Catln/#md
-        ( EAppArg Value /text -> /Data/String = "mappend<Integer $T>($T l, $T r) = l + r" )
-    , /Catln/#md
-        ( EAppArg Value /text -> /Data/String = "inverse<Integer $T>($T t) = -t" )
-    ]
-)
+Prgm
+    { prgmObjMap =
+        [ Value /
+        , Value /Data/Primitive/True
+        , Value /Data/Primitive/False
+        , /operator==( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+        , /operator==( EAppArg Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
+        , /operator==( EAppArg Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+        , /operator==( EAppArg Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+        , /operator==( EAppArg Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
+        , /operator~( EAppArg Value /a -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+        , /operator~( EAppArg Value /a -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+        , /operator~( EAppArg Value /a -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
+        , /operator&&( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+        , /operator&&( EAppArg Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
+        , /operator&&( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+        , /operator&&( EAppArg Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+        , /operator||( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+        , /operator||( EAppArg Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
+        , /operator||( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
+        , /operator||( EAppArg Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+        , /operator^( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+        , /operator^( EAppArg Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+        , /operator^( EAppArg Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
+        , /operator^( EAppArg Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
+        , /operator^( EAppArg Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+        , Value /Data/Primitive/Integer
+        , Value /Data/Primitive/Float
+        , /operator-( EAppArg Value /a -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
+        , /operator-( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
+        , /operator+( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
+        , /operator*( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
+        , /operator<=( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+        , /operator>=( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+        , /operator<( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+        , /operator>( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+        , /operator==( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+        , /operator!=( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+        ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Data/Primitive/Integer
+            , [ /Data/Primitive/Integer ]
+            , Just ""
+            )
+        , CGClass
+            ( False
+            , /Data/Primitive/Boolean
+            ,
+                [ ∀/Data/Primitive/Boolean
+                , ∀/Data/Primitive/Number
+                ]
+            , Just " "
+            )
+        , CGClass
+            ( False
+            , /Data/Primitive/Integer
+            , [ /Data/Primitive/Integer ]
+            , Just ""
+            )
+        , CGClass
+            ( False
+            , /Data/Primitive/Boolean
+            , [ ∀/Data/Primitive/Boolean ]
+            , Just ""
+            )
+        , CGClass
+            ( True
+            , /Data/Primitive/Boolean
+            ,
+                [ /Data/Primitive/True
+                , /Data/Primitive/False
+                ]
+            , Just ""
+            )
+        , CGClass
+            ( True
+            , /Data/Primitive/Number
+            ,
+                [ /Data/Primitive/Integer
+                , /Data/Primitive/Float
+                ]
+            , Just ""
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "# Catln Core Primitives
+            These types some of the basic types used in Catln." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "## Anonymous type" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "## Booleans" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "enum<Boolean> = [False, True]" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "## Integers" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "### Commutative Group" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "mempty<Integer $T> = 0" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "mappend<Integer $T>($T l, $T r) = l + r" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "inverse<Integer $T>($T t) = -t" )
+        ]
+    }

@@ -102,7 +102,7 @@ toPrgm :: VPrgm -> StateT FEnv TypeCheckResult TPrgm
 toPrgm (objMap, classGraph, annots) = do
   objMap' <- mapM toObjArr objMap
   annots' <- mapM toExpr annots
-  return (objMap', classGraph, annots')
+  return $ Prgm objMap' classGraph annots'
 
 toPrgms :: [VPrgm] -> StateT FEnv TypeCheckResult [TPrgm]
 toPrgms = mapM toPrgm

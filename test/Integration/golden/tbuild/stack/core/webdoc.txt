@@ -1,63 +1,64 @@
-(
-    [ /Catln/Doc/dshow( EAppArg Value /s -> ∀/Catln/Doc/DShow ) -> TVArg /s = ( Value /s ↦ TVArg /s )
-    , /Catln/Doc/Show/MD( EAppArg Value /text -> /Data/String )
-    , /Catln/Doc/dshow
-        ( EAppArg Value /s -> /Catln/#md( /text=TopType ) = /Catln/#md( EAppArg Value /text -> ~String ) ) -> /Catln/Doc/Show/MD( /text=~String ) = /Catln/Doc/Show/MD( EAppArg Value /text -> TVArg /text = Value /text )
-    , /Catln/Doc/dshow
-        ( EAppArg Value /s -> /Catln/#print( /p=TopType ) = /Catln/#print( EAppArg Value /p ) ) -> TVArg /p = Value /p
-    , Value /Catln/Doc/#listProgram
-    , Value /Catln/Doc/Show/ListProgram
-    , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#listProgram = Value /Catln/Doc/#listProgram ) -> /Catln/Doc/Show/ListProgram = Value /Catln/Doc/Show/ListProgram
-    , Value /Catln/Doc/#type
-    , Value /Catln/Doc/Show/TypePage
-    , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#type = Value /Catln/Doc/#type ) -> /Catln/Doc/Show/TypePage = Value /Catln/Doc/Show/TypePage
-    , Value /Catln/Doc/#typeInfer
-    , Value /Catln/Doc/Show/TypeInfer
-    , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#typeInfer = Value /Catln/Doc/#typeInfer ) -> /Catln/Doc/Show/TypeInfer = Value /Catln/Doc/Show/TypeInfer
-    , Value /Catln/Doc/#debug
-    , Value /Catln/Doc/Show/Debug
-    , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#debug = Value /Catln/Doc/#debug ) -> /Catln/Doc/Show/Debug = Value /Catln/Doc/Show/Debug
-    , Value /Catln/Doc/#build
-    , Value /Catln/Doc/Show/BuildPage
-    , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#build = Value /Catln/Doc/#build ) -> /Catln/Doc/Show/BuildPage = Value /Catln/Doc/Show/BuildPage
-    ]
-,
-    [ CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGClass
-        ( False
-        , /Catln/Doc/DShow
-        ,
-            [ /Data/String
-            , /Catln/CatlnResult..
-            , /Catln/Doc/Show/MD..
-            , /Catln/Doc/Show/ListProgram..
-            , /Catln/Doc/Show/TypePage..
-            , /Catln/Doc/Show/TypeInfer..
-            , /Catln/Doc/Show/Debug..
-            , /Catln/Doc/Show/BuildPage..
-            ]
-        , Just "Represents objects which can be shown in the webdocs.        "
-        )
-    ]
-,
-    [ /Catln/#md
-        ( EAppArg Value /text -> /Data/String = "# Catln WebDocs
-        This provides common components and annotations used in Webdocs.
-        These include the ones" )
-    , /Catln/#md
-        ( EAppArg Value /text -> /Data/String = "Represents objects which can be shown in the webdocs." )
-    , /Catln/#md
-        ( EAppArg Value /text -> /Data/String = "dshow(s) -> /Catln/Doc/DShow" )
-    ]
-)
+Prgm
+    { prgmObjMap =
+        [ /Catln/Doc/dshow( EAppArg Value /s -> ∀/Catln/Doc/DShow ) -> TVArg /s = ( Value /s ↦ TVArg /s )
+        , /Catln/Doc/Show/MD( EAppArg Value /text -> /Data/String )
+        , /Catln/Doc/dshow
+            ( EAppArg Value /s -> /Catln/#md( /text=TopType ) = /Catln/#md( EAppArg Value /text -> ~String ) ) -> /Catln/Doc/Show/MD( /text=~String ) = /Catln/Doc/Show/MD( EAppArg Value /text -> TVArg /text = Value /text )
+        , /Catln/Doc/dshow
+            ( EAppArg Value /s -> /Catln/#print( /p=TopType ) = /Catln/#print( EAppArg Value /p ) ) -> TVArg /p = Value /p
+        , Value /Catln/Doc/#listProgram
+        , Value /Catln/Doc/Show/ListProgram
+        , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#listProgram = Value /Catln/Doc/#listProgram ) -> /Catln/Doc/Show/ListProgram = Value /Catln/Doc/Show/ListProgram
+        , Value /Catln/Doc/#type
+        , Value /Catln/Doc/Show/TypePage
+        , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#type = Value /Catln/Doc/#type ) -> /Catln/Doc/Show/TypePage = Value /Catln/Doc/Show/TypePage
+        , Value /Catln/Doc/#typeInfer
+        , Value /Catln/Doc/Show/TypeInfer
+        , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#typeInfer = Value /Catln/Doc/#typeInfer ) -> /Catln/Doc/Show/TypeInfer = Value /Catln/Doc/Show/TypeInfer
+        , Value /Catln/Doc/#debug
+        , Value /Catln/Doc/Show/Debug
+        , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#debug = Value /Catln/Doc/#debug ) -> /Catln/Doc/Show/Debug = Value /Catln/Doc/Show/Debug
+        , Value /Catln/Doc/#build
+        , Value /Catln/Doc/Show/BuildPage
+        , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#build = Value /Catln/Doc/#build ) -> /Catln/Doc/Show/BuildPage = Value /Catln/Doc/Show/BuildPage
+        ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Catln/Doc/DShow
+            ,
+                [ /Data/String
+                , /Catln/CatlnResult..
+                , /Catln/Doc/Show/MD..
+                , /Catln/Doc/Show/ListProgram..
+                , /Catln/Doc/Show/TypePage..
+                , /Catln/Doc/Show/TypeInfer..
+                , /Catln/Doc/Show/Debug..
+                , /Catln/Doc/Show/BuildPage..
+                ]
+            , Just "Represents objects which can be shown in the webdocs.        "
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "# Catln WebDocs
+            This provides common components and annotations used in Webdocs.
+            These include the ones" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Represents objects which can be shown in the webdocs." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "dshow(s) -> /Catln/Doc/DShow" )
+        ]
+    }

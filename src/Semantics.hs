@@ -45,7 +45,7 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
       joinPartialDestTypes (pdt1:restPdt) = [unionTypes typeEnv pdt1Poss restPdt' | pdt1Poss <- pdt1, restPdt' <- joinPartialDestTypes restPdt]
 
 mkTypeEnv :: (ExprClass e, Show m, Show (e m), MetaDat m) => Prgm e m -> TypeEnv (ObjArrTypeGraph e m)
-mkTypeEnv (objMap, classGraph, _) = TypeEnv classGraph (ObjArrTypeGraph $ H.fromListWith (++) $ map typeGraphItem objMap) typeNames
+mkTypeEnv (Prgm objMap classGraph _) = TypeEnv classGraph (ObjArrTypeGraph $ H.fromListWith (++) $ map typeGraphItem objMap) typeNames
   where
     typeNames = S.fromList $ map makeAbsoluteName $ concatMap getAllObjArrNames objMap
     typeGraphItem oa = (makeAbsoluteName $ oaObjPath oa, [oa])

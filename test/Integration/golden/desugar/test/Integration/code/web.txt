@@ -1,12 +1,13 @@
-(
-    [ Value main= www
-        ( CStr "<html><body>web test</body></html>" )
-    ]
-, [ CGType ]
-,
-    [ /Catln/#md
-        ( Value /text= CStr "Tests using a custom build type [www].
-        It also prints the result of the build in an iframe." )
-    , #print( Value p= Value main )
-    ]
-)
+Prgm
+    { prgmObjMap =
+        [ Value main= www
+            ( CStr "<html><body>web test</body></html>" )
+        ]
+    , prgmCG = [ CGType ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "Tests using a custom build type [www].
+            It also prints the result of the build in an iframe." )
+        , #print( Value p= Value main )
+        ]
+    }

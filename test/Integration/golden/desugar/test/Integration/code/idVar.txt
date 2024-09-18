@@ -1,17 +1,18 @@
-(
-    [ id[ /T : TopType ]( Value x -> TVVar /T ) -> TVVar /T = Value x
-    , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-        ( Value val= id
-            ( Value x= CInt 0 )
-        )( Value /this= Value io )
-    ]
-,
-    [ CGType
-    , CGType
-    ]
-,
-    [ /Catln/#md
-        ( Value /text= CStr "Tests id with type variables.
-        This is one of the simplest tests with type variables." )
-    ]
-)
+Prgm
+    { prgmObjMap =
+        [ id[ /T : TopType ]( Value x -> TVVar /T ) -> TVVar /T = Value x
+        , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+            ( Value val= id
+                ( Value x= CInt 0 )
+            )( Value /this= Value io )
+        ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "Tests id with type variables.
+            This is one of the simplest tests with type variables." )
+        ]
+    }

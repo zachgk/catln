@@ -1,33 +1,34 @@
-(
-    [ Value /Nothing
-    , /defInt( Value /x -> /Data/Primitive/Integer ) -> TVArg /x = Value /x
-    , /defInt( Value /x -> /Nothing = Value /Nothing ) -> /Data/Primitive/Integer = CInt 0
-    , /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
-        ( /Catln/exit
-            ( /val=/Data/Primitive/Integer
-            , /this=/Catln/IO
-            ) | /Catln/IO
-        ) = /Catln/exit
-        ( Value /val -> /Data/Primitive/Integer = /defInt
-            ( Value /x -> /Data/Primitive/Integer = CInt 0 )
-        )( Value /this -> TVArg /io = Value /io )
-    ]
-,
-    [ CGType
-    , CGType
-    , CGType
-    , CGClass
-        ( True
-        , /Maybe
-        ,
-            [ TVVar /T
-            , /Nothing
-            ]
-        , Just ""
-        )
-    ]
-,
-    [ /Catln/#md
-        ( Value /text -> /Data/String = CStr "Tests a simple data structure with a true union" )
-    ]
-)
+Prgm
+    { prgmObjMap =
+        [ Value /Nothing
+        , /defInt( Value /x -> /Data/Primitive/Integer ) -> TVArg /x = Value /x
+        , /defInt( Value /x -> /Nothing = Value /Nothing ) -> /Data/Primitive/Integer = CInt 0
+        , /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
+            ( /Catln/exit
+                ( /val=/Data/Primitive/Integer
+                , /this=/Catln/IO
+                ) | /Catln/IO
+            ) = /Catln/exit
+            ( Value /val -> /Data/Primitive/Integer = /defInt
+                ( Value /x -> /Data/Primitive/Integer = CInt 0 )
+            )( Value /this -> TVArg /io = Value /io )
+        ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( True
+            , /Maybe
+            ,
+                [ TVVar /T
+                , /Nothing
+                ]
+            , Just ""
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr "Tests a simple data structure with a true union" )
+        ]
+    }

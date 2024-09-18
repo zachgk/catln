@@ -1,17 +1,18 @@
-(
-    [ Value a= /operator~( Value /a= Value False )
-    , Value b= /operator&&( Value /l= Value True )( Value /r= Value True )
-    , Value c= /operator||( Value /l= Value True )( Value /r= Value False )
-    , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io
-    ]
-,
-    [ CGType
-    , CGType
-    , CGType
-    , CGType
-    ]
-,
-    [ /Catln/#md
-        ( Value /text= CStr "Tests boolean logic operations" )
-    ]
-)
+Prgm
+    { prgmObjMap =
+        [ Value a= /operator~( Value /a= Value False )
+        , Value b= /operator&&( Value /l= Value True )( Value /r= Value True )
+        , Value c= /operator||( Value /l= Value True )( Value /r= Value False )
+        , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io
+        ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "Tests boolean logic operations" )
+        ]
+    }

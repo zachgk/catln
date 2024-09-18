@@ -1,81 +1,82 @@
-(
-    [ /IntCons( EAppArg Value /head -> /Data/Primitive/Integer )( EAppArg Value /tail -> ∀/IntList )
-    , Value /IntNil
-    , /len( EAppArg Value /this -> ∀/IntList ) -> /Data/Primitive/Integer
-    , /len( EAppArg Value /this -> /IntNil ) -> /Data/Primitive/Integer = 0
-    , /len
-        ( EAppArg Value /this -> /IntCons
-            ( /head=~Integer
-            , /tail=~IntList
-            ) = /IntCons( EAppArg Value /head -> /Data/Primitive/Integer )( EAppArg Value /tail -> ∀/IntList )
-        ) ->
-        ( /operator+
-            ( /r=/Data/Primitive/Integer
-            , /l=/Data/Primitive/Integer
-            ) | /Data/Primitive/Integer
-        ) = /operator+
-        ( EAppArg Value /l -> /Data/Primitive/Integer = 1 )
-        ( EAppArg Value /r -> /Data/Primitive/Integer =
-            ( /len
-                ( EAppArg Value /this -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) ) ↦ /Data/Primitive/Integer
-            )
-        )
-    , /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
-        ( /Catln/exit
-            ( /val=/Data/Primitive/Integer
-            , /this=/Catln/IO
-            ) | /Catln/IO
-        ) = /Catln/exit
-        ( EAppArg Value /val -> /Data/Primitive/Integer =
-            ( /operator-
-                ( EAppArg Value /l -> /Data/Primitive/Integer =
-                    ( /len
-                        ( EAppArg Value /this -> /IntCons
-                            ( /head=/Data/Primitive/Integer
-                            , /tail=/IntCons
-                                ( /head=~Integer
-                                , /tail=/IntNil
-                                )
-                            ) = /IntCons
-                            ( EAppArg Value /head -> /Data/Primitive/Integer = 5 )
-                            ( EAppArg Value /tail -> /IntCons
-                                ( /head=~Integer
-                                , /tail=/IntNil
-                                ) = /IntCons
-                                ( EAppArg Value /head -> /Data/Primitive/Integer = 3 )( EAppArg Value /tail -> /IntNil = Value /IntNil )
-                            )
-                        ) ↦ /Data/Primitive/Integer
-                    )
-                )
-                ( EAppArg Value /r -> /Data/Primitive/Integer = 2 ) ↦ /Data/Primitive/Integer
-            )
-        )
-        ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
-    ]
-,
-    [ CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGClass
-        ( True
-        , /IntList
-        ,
-            [ /IntCons
+Prgm
+    { prgmObjMap =
+        [ /IntCons( EAppArg Value /head -> /Data/Primitive/Integer )( EAppArg Value /tail -> ∀/IntList )
+        , Value /IntNil
+        , /len( EAppArg Value /this -> ∀/IntList ) -> /Data/Primitive/Integer
+        , /len( EAppArg Value /this -> /IntNil ) -> /Data/Primitive/Integer = 0
+        , /len
+            ( EAppArg Value /this -> /IntCons
                 ( /head=~Integer
                 , /tail=~IntList
+                ) = /IntCons( EAppArg Value /head -> /Data/Primitive/Integer )( EAppArg Value /tail -> ∀/IntList )
+            ) ->
+            ( /operator+
+                ( /r=/Data/Primitive/Integer
+                , /l=/Data/Primitive/Integer
+                ) | /Data/Primitive/Integer
+            ) = /operator+
+            ( EAppArg Value /l -> /Data/Primitive/Integer = 1 )
+            ( EAppArg Value /r -> /Data/Primitive/Integer =
+                ( /len
+                    ( EAppArg Value /this -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) ) ↦ /Data/Primitive/Integer
                 )
-            , /IntNil
-            ]
-        , Just ""
-        )
-    ]
-,
-    [ /Catln/#md
-        ( EAppArg Value /text -> /Data/String = "The intlist tests recursive data structures without type variables" )
-    , /Catln/#md
-        ( EAppArg Value /text -> /Data/String = "operator+:(Integer l, ConsList r) = Cons(head=l, tail=r)" )
-    , /Catln/#md
-        ( EAppArg Value /text -> /Data/String = "TODO: Fix example below which should work without explicit return value" )
-    ]
-)
+            )
+        , /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+            ( /Catln/exit
+                ( /val=/Data/Primitive/Integer
+                , /this=/Catln/IO
+                ) | /Catln/IO
+            ) = /Catln/exit
+            ( EAppArg Value /val -> /Data/Primitive/Integer =
+                ( /operator-
+                    ( EAppArg Value /l -> /Data/Primitive/Integer =
+                        ( /len
+                            ( EAppArg Value /this -> /IntCons
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=/IntCons
+                                    ( /head=~Integer
+                                    , /tail=/IntNil
+                                    )
+                                ) = /IntCons
+                                ( EAppArg Value /head -> /Data/Primitive/Integer = 5 )
+                                ( EAppArg Value /tail -> /IntCons
+                                    ( /head=~Integer
+                                    , /tail=/IntNil
+                                    ) = /IntCons
+                                    ( EAppArg Value /head -> /Data/Primitive/Integer = 3 )( EAppArg Value /tail -> /IntNil = Value /IntNil )
+                                )
+                            ) ↦ /Data/Primitive/Integer
+                        )
+                    )
+                    ( EAppArg Value /r -> /Data/Primitive/Integer = 2 ) ↦ /Data/Primitive/Integer
+                )
+            )
+            ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+        ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( True
+            , /IntList
+            ,
+                [ /IntCons
+                    ( /head=~Integer
+                    , /tail=~IntList
+                    )
+                , /IntNil
+                ]
+            , Just ""
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "The intlist tests recursive data structures without type variables" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "operator+:(Integer l, ConsList r) = Cons(head=l, tail=r)" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "TODO: Fix example below which should work without explicit return value" )
+        ]
+    }

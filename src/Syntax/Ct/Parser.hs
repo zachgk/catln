@@ -78,7 +78,7 @@ pPrgm = do
   _ <- many newline
   imports <- many pImport
   statements <- many (Just <$> pStatementTree <|> pNothingNewline)
-  return (imports, catMaybes statements)
+  return $ RawPrgm imports (catMaybes statements)
 
 contents :: Parser a -> Parser a
 contents p = do
@@ -100,7 +100,7 @@ ctxParser fileName = do
   cp <- ctParser fileName
   return $ first annotate cp
   where
-    annotate (imports, statements) = (imports, RawStatementTree (RawAnnot (RawValue emptyMetaN ctxAnnot)) [] :statements)
+    annotate (RawPrgm imports statements) = RawPrgm imports (RawStatementTree (RawAnnot (RawValue emptyMetaN ctxAnnot)) [] :statements)
 
 parseRepl :: String -> PReplRes
 parseRepl s = case runParser (contents p) "<repl>" s of

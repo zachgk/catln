@@ -46,10 +46,10 @@ leafsFromMeta Meta{getMetaType=UnionType prodTypes} = splitUnionType prodTypes
 leafsFromMeta m = error $ printf "leafFromMeta with invalid type: %s" (show m)
 
 buildTBEnv :: ResBuildPrims -> TBPrgm -> TBEnv
-buildTBEnv primEnv prgm@(objMap, _, _) = baseEnv
+buildTBEnv primEnv prgm@Prgm{prgmObjMap} = baseEnv
   where
     baseEnv = TBEnv "" resEnv prgm (mkTypeEnv prgm)
-    resEnv = H.fromListWith (++) $ mapMaybe resFromArrow objMap
+    resEnv = H.fromListWith (++) $ mapMaybe resFromArrow prgmObjMap
 
     resFromArrow oa@ObjArr{oaObj=Just{}, oaArr, oaAnnots} = case oaArr of
       _ | getExprType (oaObjExpr oa) == PTopType -> error $ printf "buildTBEnv failed with a topType input in %s" (show oa)

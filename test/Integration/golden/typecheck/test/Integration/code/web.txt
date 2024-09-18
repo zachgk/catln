@@ -1,22 +1,23 @@
-(
-    [ Value /main ->
-        ( /Catln/www( /html=/Data/String ) | /Catln/CatlnResult
-            ( /contents=/Data/String
-            , /name=/Data/String
+Prgm
+    { prgmObjMap =
+        [ Value /main ->
+            ( /Catln/www( /html=/Data/String ) | /Catln/CatlnResult
+                ( /contents=/Data/String
+                , /name=/Data/String
+                )
+            ) = /Catln/www
+            ( Value /html -> /Data/String = CStr "<html><body>web test</body></html>" )
+        ]
+    , prgmCG = [ CGType ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr "Tests using a custom build type [www].
+            It also prints the result of the build in an iframe." )
+        , /Catln/#print
+            ( Value /p -> /Catln/CatlnResult
+                ( /contents=/Data/String
+                , /name=/Data/String
+                ).. = Value /main
             )
-        ) = /Catln/www
-        ( Value /html -> /Data/String = CStr "<html><body>web test</body></html>" )
-    ]
-, [ CGType ]
-,
-    [ /Catln/#md
-        ( Value /text -> /Data/String = CStr "Tests using a custom build type [www].
-        It also prints the result of the build in an iframe." )
-    , /Catln/#print
-        ( Value /p -> /Catln/CatlnResult
-            ( /contents=/Data/String
-            , /name=/Data/String
-            ).. = Value /main
-        )
-    ]
-)
+        ]
+    }

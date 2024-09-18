@@ -1,36 +1,37 @@
-(
-    [ /fact( Value /x -> /Data/Primitive/Integer ) | /operator==( Value /l -> TVArg /x = Value /x )
-        ( Value /r -> /Data/Primitive/Integer = CInt 1 ) -> /Data/Primitive/Integer = CInt 1
-    , /fact( Value /x -> /Data/Primitive/Integer ) ->
-        ( /operator*
-            ( /r=/Data/Primitive/Integer
-            , /l=/Data/Primitive/Integer
-            ) | /Data/Primitive/Integer
-        ) = /operator*( Value /l -> TVArg /x = Value /x )
-        ( Value /r -> /Data/Primitive/Integer = /fact
-            ( Value /x -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /x = Value /x )
-                ( Value /r -> /Data/Primitive/Integer = CInt 1 )
+Prgm
+    { prgmObjMap =
+        [ /fact( Value /x -> /Data/Primitive/Integer ) | /operator==( Value /l -> TVArg /x = Value /x )
+            ( Value /r -> /Data/Primitive/Integer = CInt 1 ) -> /Data/Primitive/Integer = CInt 1
+        , /fact( Value /x -> /Data/Primitive/Integer ) ->
+            ( /operator*
+                ( /r=/Data/Primitive/Integer
+                , /l=/Data/Primitive/Integer
+                ) | /Data/Primitive/Integer
+            ) = /operator*( Value /l -> TVArg /x = Value /x )
+            ( Value /r -> /Data/Primitive/Integer = /fact
+                ( Value /x -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /x = Value /x )
+                    ( Value /r -> /Data/Primitive/Integer = CInt 1 )
+                )
             )
-        )
-    , /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
-        ( /Catln/exit
-            ( /val=/Data/Primitive/Integer
-            , /this=/Catln/IO
-            ) | /Catln/IO
-        ) = /Catln/exit
-        ( Value /val -> /Data/Primitive/Integer = /operator-
-            ( Value /l -> /Data/Primitive/Integer = /fact
-                ( Value /x -> /Data/Primitive/Integer = CInt 3 )
-            )
-            ( Value /r -> /Data/Primitive/Integer = CInt 6 )
-        )( Value /this -> TVArg /io = Value /io )
-    ]
-,
-    [ CGType
-    , CGType
-    ]
-,
-    [ /Catln/#md
-        ( Value /text -> /Data/String = CStr "Tests recursion" )
-    ]
-)
+        , /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
+            ( /Catln/exit
+                ( /val=/Data/Primitive/Integer
+                , /this=/Catln/IO
+                ) | /Catln/IO
+            ) = /Catln/exit
+            ( Value /val -> /Data/Primitive/Integer = /operator-
+                ( Value /l -> /Data/Primitive/Integer = /fact
+                    ( Value /x -> /Data/Primitive/Integer = CInt 3 )
+                )
+                ( Value /r -> /Data/Primitive/Integer = CInt 6 )
+            )( Value /this -> TVArg /io = Value /io )
+        ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr "Tests recursion" )
+        ]
+    }

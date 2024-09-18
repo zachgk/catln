@@ -145,7 +145,13 @@ data ObjArr e m = ObjArr {
 
 
 type ObjectMap e m = [ObjArr e m]
-type Prgm e m = (ObjectMap e m, ClassGraph, [CompAnnot (e m)]) -- TODO: Include [Export]
+data Prgm e m = Prgm {
+  prgmObjMap :: ObjectMap e m,
+  prgmCG     :: ClassGraph,
+  prgmAnnots :: [CompAnnot (e m)]
+  -- TODO: Include [Export]
+                     }
+  deriving (Show, Generic, ToJSON, ToJSONKey)
 
 
 instance (Show m) => Show (Meta m) where
@@ -348,7 +354,7 @@ joinAllPossVarArgMetaWithSrc _ []     = [H.empty]
 joinAllPossVarArgMetaWithSrc typeEnv (x:xs) = foldr (joinPossVarArgMetaWithSrc typeEnv) x xs
 
 emptyPrgm :: Prgm e m
-emptyPrgm = ([], emptyClassGraph, [])
+emptyPrgm = Prgm [] emptyClassGraph []
 
 mkIOObjArr :: (MetaDat m, Show m) => Meta m -> ArgName -> Expr m -> ObjArr Expr m
 mkIOObjArr m argName argVal = ObjArr (Just (Value (emptyMetaT $ partialToTypeSingleton argName) (pkName argName))) ArgObj Nothing [] (Just (Just argVal, m))
@@ -449,11 +455,10 @@ mergeTypeEnv :: (TypeGraph tg) => TypeEnv tg -> TypeEnv tg -> TypeEnv tg
 mergeTypeEnv (TypeEnv cg1 tg1 n1) (TypeEnv cg2 tg2 n2) = TypeEnv (mergeClassGraphs cg1 cg2) (typeGraphMerge tg1 tg2) (S.union n1 n2)
 
 mergePrgm :: Prgm e m -> Prgm e m -> Prgm e m
-mergePrgm (objMap1, classGraph1, annots1) (objMap2, classGraph2, annots2) = (
-  objMap1 ++ objMap2,
-  mergeClassGraphs classGraph1 classGraph2,
-  annots1 ++ annots2
-                                                                           )
+mergePrgm (Prgm objMap1 classGraph1 annots1) (Prgm objMap2 classGraph2 annots2) = Prgm
+  (objMap1 ++ objMap2)
+  (mergeClassGraphs classGraph1 classGraph2)
+  (annots1 ++ annots2)
 
 mergePrgms :: Foldable f => f (Prgm e m) -> Prgm e m
 mergePrgms = foldr mergePrgm emptyPrgm
@@ -467,7 +472,7 @@ getRecursiveObjsExpr expr | isNothing (maybeExprPath expr) = []
 getRecursiveObjsExpr expr = concat [varSubObjects, argSubObjects, recursedSubObjects]
   where
     varSubObjects = map mkValue $ concatMap (varNamesWithPrefix . pkName . fst) $ exprAppliedOrdVars expr
-    argSubObjects = filter (isJust . maybeExprPath) $ concatMap exprFromTupleArg $ exprAppliedArgs expr
+    argSubObjects = concatMap (filter (isJust . maybeExprPath) . exprFromTupleArg) (exprAppliedArgs expr)
     exprFromTupleArg ObjArr{oaObj, oaArr=Just (maybeOaObjExpr, _)} = maybeToList oaObj ++ maybeToList maybeOaObjExpr
     exprFromTupleArg ObjArr{oaArr=Nothing} = []
     recursedSubObjects = concatMap getRecursiveObjsExpr argSubObjects

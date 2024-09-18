@@ -9,7 +9,7 @@ import           Common.TestCommon   (findCt)
 import           Control.Monad.Trans
 import           CRes
 import           CtService
-import           Data.List           (isPrefixOf, isSuffixOf)
+import           Data.List           (isSuffixOf)
 import           Data.Maybe
 import qualified Data.Text.Lazy      as T
 import           Eval
@@ -49,7 +49,7 @@ runGoldenTest goldenType goldenDir _fileNameStr prgms step = do
     let showPrgm = pShowNoColor prgm
     let showPrgm' = T.unpack $ T.replace (T.pack cwd) "/repo/dir" showPrgm
     goldenExists <- doesFileExist goldenPath
-    if testDir `isPrefixOf` relPath && goldenExists
+    if goldenExists
       then do
         golden <- readFile goldenPath
         when (golden /= showPrgm') (assertFailure $ printf "%s doesn't match golden test" goldenType)

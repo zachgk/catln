@@ -30,7 +30,7 @@ import           Utils                   (graphToNodes)
 -- When a class is used in the RHS of a multiTypeDef, it will create an object temporarily
 -- This removes that temporary object and the CGType classGraph entry for it
 removeClassInstanceObjects :: DesPrgm -> DesPrgm -> DesPrgm
-removeClassInstanceObjects (_, fullPrgmClassGraph, _) (objMap, ClassGraph cg, annots) = (objMap', classGraph', annots)
+removeClassInstanceObjects (Prgm _ fullPrgmClassGraph _) (Prgm objMap (ClassGraph cg) annots) = Prgm objMap' classGraph' annots
   where
     classNames = listClassNames fullPrgmClassGraph
     notMatchesClassName n = null $ relativeNameFilter n classNames
@@ -47,7 +47,7 @@ removeClassInstanceObjects (_, fullPrgmClassGraph, _) (objMap, ClassGraph cg, an
 -- uses the mapMeta for objMap and annots, but must map the classGraph manually
 -- the fullPrgmClassToTypes includes the imports and is used for when the def is inside an import
 resolveRelativeNames :: DesPrgm -> DesPrgm -> DesPrgm
-resolveRelativeNames (fullPrgmObjMap, fullPrgmClassGraph, _) (objMap, ClassGraph cg, annots) = mapMetaPrgm resolveMeta (objMap, classGraph', annots)
+resolveRelativeNames (Prgm fullPrgmObjMap fullPrgmClassGraph _) (Prgm objMap (ClassGraph cg) annots) = mapMetaPrgm resolveMeta (Prgm objMap classGraph' annots)
   where
     classGraph' = ClassGraph $ graphFromEdges $ map mapClassEntry $ graphToNodes cg
     mapClassEntry (node, tp, subTypes) = (mapCGNode node, resolveName True tp, map (resolveName True) subTypes)

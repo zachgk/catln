@@ -1,25 +1,26 @@
-(
-    [ /id( EAppVar /T TopType )( EAppArg Value /x -> TVVar /T ) -> TVArg /x = Value /x
-    , /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
-        ( /Catln/exit
-            ( /val=/Data/Primitive/Integer
-            , /this=/Catln/IO
-            ) | /Catln/IO
-        ) = /Catln/exit
-        ( EAppArg Value /val -> /Data/Primitive/Integer =
-            ( /id
-                ( EAppArg Value /x -> /Data/Primitive/Integer = 0 ) ↦ /Data/Primitive/Integer
+Prgm
+    { prgmObjMap =
+        [ /id( EAppVar /T TopType )( EAppArg Value /x -> TVVar /T ) -> TVArg /x = Value /x
+        , /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+            ( /Catln/exit
+                ( /val=/Data/Primitive/Integer
+                , /this=/Catln/IO
+                ) | /Catln/IO
+            ) = /Catln/exit
+            ( EAppArg Value /val -> /Data/Primitive/Integer =
+                ( /id
+                    ( EAppArg Value /x -> /Data/Primitive/Integer = 0 ) ↦ /Data/Primitive/Integer
+                )
             )
-        )
-        ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
-    ]
-,
-    [ CGType
-    , CGType
-    ]
-,
-    [ /Catln/#md
-        ( EAppArg Value /text -> /Data/String = "Tests id with type variables.
-        This is one of the simplest tests with type variables." )
-    ]
-)
+            ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+        ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Tests id with type variables.
+            This is one of the simplest tests with type variables." )
+        ]
+    }

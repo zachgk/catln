@@ -249,7 +249,7 @@ fromObjectMap oa@ObjArr{oaAnnots, oaObj=Just obj, oaArr} = do
 fromObjectMap oa = error $ printf "Invalid oa in fromObjectMap %s" (show oa)
 
 fromPrgm :: PPrgm -> StateT FEnv TypeCheckResult VPrgm
-fromPrgm (objMap, classGraph, annots) = do
+fromPrgm (Prgm objMap classGraph annots) = do
   objMap' <- mapM fromObjectMap objMap
 
   modify startConstrainBlock
@@ -262,12 +262,12 @@ addTypeGraphArrow :: TObjArr -> StateT FEnv TypeCheckResult ()
 addTypeGraphArrow oa = modify (fAddTTypeGraph (oaObjPath oa) oa)
 
 addTypeGraphPrgm :: TPrgm -> StateT FEnv TypeCheckResult ()
-addTypeGraphPrgm (objMap, _, _) = mapM_ addTypeGraphArrow objMap
+addTypeGraphPrgm Prgm{prgmObjMap} = mapM_ addTypeGraphArrow prgmObjMap
 
 fromPrgms :: [PPrgm] -> [TPrgm] -> StateT FEnv TypeCheckResult [VPrgm]
 fromPrgms pprgms tprgms = do
   mapM_ addTypeGraphPrgm tprgms
   vprgms <- mapM fromPrgm pprgms
-  let (tjoinObjMap, _, _) = mergePrgms tprgms
+  let (Prgm{prgmObjMap=tjoinObjMap}) = mergePrgms tprgms
   addUnionObjToEnv (concatMap fst3 vprgms) tjoinObjMap
   return vprgms

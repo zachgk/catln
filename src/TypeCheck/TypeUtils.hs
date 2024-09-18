@@ -162,7 +162,7 @@ mkReachesEnv env (Constraint maybeConOa stypeVaenv _) = do
   let argObjMap = concatMap (\(inExpr, outM) -> [ObjArr (Just inExpr) ArgObj Nothing [] (Just (Nothing, emptyMetaT (substituteWithVarArgEnv (fmap snd vaenv) (getMetaType outM))))]) $ H.elems argVaenv'
 
   -- final ReachesEnv
-  let argTypeEnv = mkTypeEnv (argObjMap, classGraphFromObjs argObjMap, [])
+  let argTypeEnv = mkTypeEnv $ Prgm argObjMap (classGraphFromObjs argObjMap) []
   feTypeEnv' <- buildTypeEnv env
   return $ ReachesEnv (mergeTypeEnv argTypeEnv feTypeEnv') (fmap snd vaenv) S.empty
 

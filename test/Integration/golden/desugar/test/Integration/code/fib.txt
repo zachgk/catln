@@ -1,31 +1,32 @@
-(
-    [ fib( Value integer -> /Data/Primitive/Integer ) | /operator>( Value /l= Value integer )
-        ( Value /r= CInt 1 )= /operator+
-        ( Value /l= fib
-            ( Value integer= /operator-( Value /l= Value integer )
-                ( Value /r= CInt 1 )
-            )
-        )
-        ( Value /r= fib
-            ( Value integer= /operator-( Value /l= Value integer )
-                ( Value /r= CInt 2 )
-            )
-        )
-    , fib( Value integer -> /Data/Primitive/Integer )= CInt 1
-    , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-        ( Value val= /operator-
+Prgm
+    { prgmObjMap =
+        [ fib( Value integer -> /Data/Primitive/Integer ) | /operator>( Value /l= Value integer )
+            ( Value /r= CInt 1 )= /operator+
             ( Value /l= fib
-                ( CInt 3 )
+                ( Value integer= /operator-( Value /l= Value integer )
+                    ( Value /r= CInt 1 )
+                )
             )
-            ( Value /r= CInt 3 )
-        )( Value /this= Value io )
-    ]
-,
-    [ CGType
-    , CGType
-    ]
-,
-    [ /Catln/#md
-        ( Value /text= CStr "Tests recursion with fibonaccci" )
-    ]
-)
+            ( Value /r= fib
+                ( Value integer= /operator-( Value /l= Value integer )
+                    ( Value /r= CInt 2 )
+                )
+            )
+        , fib( Value integer -> /Data/Primitive/Integer )= CInt 1
+        , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+            ( Value val= /operator-
+                ( Value /l= fib
+                    ( CInt 3 )
+                )
+                ( Value /r= CInt 3 )
+            )( Value /this= Value io )
+        ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "Tests recursion with fibonaccci" )
+        ]
+    }

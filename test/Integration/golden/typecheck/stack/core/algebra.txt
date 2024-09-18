@@ -1,218 +1,219 @@
-(
-    [ /operator!=( Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )[ /T : ∀/Data/Algebra/Eq ] -> ∀/Data/Primitive/Boolean
-    , Value /Data/Algebra/LessThan
-    , Value /Data/Algebra/Equal
-    , Value /Data/Algebra/GreaterThan
-    , Value /Data/Algebra/NoOrdering
-    , /Data/Algebra/compare[ /T : ∀/Data/Algebra/Ord ]( Value /l -> TVVar /T )( Value /r -> TVVar /T ) -> ∀/Data/Algebra/Ordering
-    , /Data/Algebra/compare[ /T : ∀/Data/Algebra/POrd ]( Value /l -> TVVar /T )( Value /r -> TVVar /T ) -> ∀/Data/Algebra/POrdering
-    , /operator<=( Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean
-    , /operator>=( Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean
-    , /operator<( Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean
-    , /operator>( Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean
-    , /operator++( Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )[ /T : ∀/Data/Algebra/Semigroup ] -> TVVar /T
-    , /Data/Algebra/testSemigroupAssociative[ /T : ∀/Data/Algebra/Semigroup ]( Value /a -> TVVar /T )( Value /b -> TVVar /T )( Value /c -> TVVar /T ) -> /Data/Primitive/Integer = CInt 0
-    , /Data/Algebra/mempty[ /T : ∀/Data/Algebra/Monoid ] -> TVVar /T
-    , /Data/Algebra/testRightMonoidIdentity[ /T : ∀/Data/Algebra/Monoid ]( Value /t -> TVVar /T ) -> /Data/Primitive/Integer = CInt 0
-    , /Data/Algebra/testLeftMonoidIdentity[ /T : ∀/Data/Algebra/Monoid ]( Value /t -> TVVar /T ) -> /Data/Primitive/Integer = CInt 0
-    , /Data/Algebra/testCommutativeMonoid[ /T : ∀/Data/Algebra/CommutativeMonoid ]( Value /a -> TVVar /T )( Value /b -> TVVar /T ) -> /Data/Primitive/Integer = CInt 0
-    , /Data/Algebra/inverse[ /T : ∀/Data/Algebra/Group ]( Value /t -> TVVar /T ) -> TVVar /T
-    , /Data/Algebra/testGroup[ /T : ∀/Data/Algebra/Group ]( Value /t -> TVVar /T ) -> /Data/Primitive/Integer = CInt 0
-    ]
-,
-    [ CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGClass
-        ( False
-        , /Data/Algebra/CommutativeMonoid
-        , []
-        , Just "The [CommutativeMonoid] builds on top of the [Monoid].
-          It is also called an Abelian Monoid
-          Here, integers with addition are a [CommutativeMonoid], but [String]s are not."
-        )
-    , CGClass
-        ( False
-        , /Data/Algebra/Eq
-        ,
-            [ ∀/Data/Algebra/POrd
-            , ∀/Data/Algebra/Semigroup
-            ]
-        , Just "The Eq class is used to define values which can be compared for equality.
-          While naive tuple equality often works, some types have equality that behaves differently and must be defined.
-          For example, a TreeSet can insert items in different order and produce different trees, but with equal sets.
-          There are only two operations for eq: [operator==] and [operator!=]./operator==</Data/Algebra/Eq $T>($T l, $T r) -> BooleanThis checks whether two items are equal.
-          Note that it only compares like items with each other, not that you can compare apples to oranges. If something can be compared for order, it should also be comparable for equality by the following relationship: "
-        )
-    , CGClass
-        ( False
-        , /Data/Algebra/Group
-        , []
-        , Just "The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-          It adds an inverse operation that finds the opposite of an element.
-          For integers with addition, negation with [operator~] would be the inverse.
-          Something like [String]s would not have an inverse, so it wouldn't be a [Group]."
-        )
-    , CGClass
-        ( False
-        , /Data/Algebra/Monoid
-        ,
-            [ ∀/Data/Algebra/CommutativeMonoid
-            , ∀/Data/Algebra/Group
-            ]
-        , Just "The [Monoid] builds on top of the [Semigroup].
-          It adds the identity value [mempty].
-          The integers with addition form a [Monoid], and 0 is the value for [mempty].
-          Another example is [String] where "" is the value for [mempty]  "
-        )
-    , CGClass
-        ( False
-        , /Data/Algebra/Ord
-        , [ ∀/Data/Primitive/Number ]
-        , Just "Ord is used to define types which can be strictly ordered.
-          Every element, when compared must have one of the following [Ordering] relationships: "
-        )
-    , CGClass
-        ( True
-        , /Data/Algebra/Ordering
-        ,
-            [ /Data/Algebra/LessThan
-            , /Data/Algebra/Equal
-            , /Data/Algebra/GreaterThan
-            ]
-        , Just "The Orderings can relate any like items of Ord. "
-        )
-    , CGClass
-        ( False
-        , /Data/Algebra/POrd
-        , [ ∀/Data/Algebra/Ord ]
-        , Just "In addition to [Ord], [POrd] defines a partial ordering.
-          Partially ordered items can be compared, but may result in [NoOrdering]: "
-        )
-    , CGClass
-        ( True
-        , /Data/Algebra/POrdering
-        ,
-            [ ∀/Data/Algebra/Ordering
-            , /Data/Algebra/NoOrdering
-            ]
-        , Just "As an example, sets can be partially ordered by the subset operation.
-          One set A <= B when A is a subset of B.
-          An ordered example is {1} <= {1, 2}.
-          But, two sets like {1} and {2} have no ordering between them."
-        )
-    , CGClass
-        ( False
-        , /Data/Algebra/Semigroup
-        , [ ∀/Data/Algebra/Monoid ]
-        , Just "A semigroup is a type combined with an associative operation called [operator++].
-          For example, integers with the addition operation are a semigroup. "
-        )
-    ]
-,
-    [ /Catln/#md
-        ( Value /text -> /Data/String = CStr "# Catln Core Abstract Algebra Types
-        These types define some of the basic relationship between types and ways classes can relate to themselves." )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "The Eq class is used to define values which can be compared for equality.
-        While naive tuple equality often works, some types have equality that behaves differently and must be defined.
-        For example, a TreeSet can insert items in different order and produce different trees, but with equal sets.
-        There are only two operations for eq: [operator==] and [operator!=]." )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "/operator==</Data/Algebra/Eq $T>($T l, $T r) -> Boolean" )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "This checks whether two items are equal.
-        Note that it only compares like items with each other, not that you can compare apples to oranges." )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "It is the opposite of [operator==] leading to the simple definition:" )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "/operator!=(l, r) = ~(l == r)
-        Given this, creating an instance of Eq only requires defining equality and the != can be produced automatically." )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "## Ordering" )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "Ordering is used to define operations that have a natural ability to be ordered or sorted.
-        Some examples include numbers which are sorted from smallest to largest or strings which are sorted alphabetically." )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "There are two different forms of ordering:" )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "Ord is used to define types which can be strictly ordered.
-        Every element, when compared must have one of the following [Ordering] relationships:" )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "The Orderings can relate any like items of Ord. " )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "In addition to [Ord], [POrd] defines a partial ordering.
-        Partially ordered items can be compared, but may result in [NoOrdering]:" )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "As an example, sets can be partially ordered by the subset operation.
-        One set A <= B when A is a subset of B.
-        An ordered example is {1} <= {1, 2}.
-        But, two sets like {1} and {2} have no ordering between them." )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "There are a few nice properties about ordering." )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "This means that something fully ordered can still take advantage of many of the same functions as partially ordered ones.
-        It just usually has a more specific result." )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "The only major function for ordering is [compare].
-        Comparing two [Ord] will result in an [Ordering].
-        Likewise, comparing two partially orderables [POrd] results in a [POrdering]." )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "### Operators for ordering
-        Besides compare, there are also some operators to make using ordering easier." )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "If something can be compared for order, it should also be comparable for equality by the following relationship:" )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "/operator==<POrd $T>($T l, $T r) = compare(l=l, r=r) == Equal" )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "### Ordering utility functions" )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "max<Ord $T>($T l, $T r) -> $T = if l >= r then l else r" )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "min<Ord $T>($T l, $T r) -> $T = if l <= r then l else r" )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "TODO: Tests and properties for compare" )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "## Semigroup" )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "A semigroup is a type combined with an associative operation called [operator++].
-        For example, integers with the addition operation are a semigroup." )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "The [Monoid] builds on top of the [Semigroup].
-        It adds the identity value [mempty].
-        The integers with addition form a [Monoid], and 0 is the value for [mempty].
-        Another example is [String] where "" is the value for [mempty]" )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "We can test to verify that [mempty] works with both the left and right." )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "mconcat<Monoid $T>(List<$T> lst) = lst.fold(operator++, mempty)" )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "Using the [Monoid], it is possible to combine a list of monoids together." )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "The [CommutativeMonoid] builds on top of the [Monoid].
-        It is also called an Abelian Monoid
-        Here, integers with addition are a [CommutativeMonoid], but [String]s are not." )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "We can test to ensure that all [CommutativeMonoid]s satisfy the commutativity requirement." )
-    , /Catln/#md
-        ( Value /text -> /Data/String = CStr "The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
-        It adds an inverse operation that finds the opposite of an element.
-        For integers with addition, negation with [operator~] would be the inverse.
-        Something like [String]s would not have an inverse, so it wouldn't be a [Group]." )
-    ]
-)
+Prgm
+    { prgmObjMap =
+        [ /operator!=( Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )[ /T : ∀/Data/Algebra/Eq ] -> ∀/Data/Primitive/Boolean
+        , Value /Data/Algebra/LessThan
+        , Value /Data/Algebra/Equal
+        , Value /Data/Algebra/GreaterThan
+        , Value /Data/Algebra/NoOrdering
+        , /Data/Algebra/compare[ /T : ∀/Data/Algebra/Ord ]( Value /l -> TVVar /T )( Value /r -> TVVar /T ) -> ∀/Data/Algebra/Ordering
+        , /Data/Algebra/compare[ /T : ∀/Data/Algebra/POrd ]( Value /l -> TVVar /T )( Value /r -> TVVar /T ) -> ∀/Data/Algebra/POrdering
+        , /operator<=( Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean
+        , /operator>=( Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean
+        , /operator<( Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean
+        , /operator>( Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean
+        , /operator++( Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )[ /T : ∀/Data/Algebra/Semigroup ] -> TVVar /T
+        , /Data/Algebra/testSemigroupAssociative[ /T : ∀/Data/Algebra/Semigroup ]( Value /a -> TVVar /T )( Value /b -> TVVar /T )( Value /c -> TVVar /T ) -> /Data/Primitive/Integer = CInt 0
+        , /Data/Algebra/mempty[ /T : ∀/Data/Algebra/Monoid ] -> TVVar /T
+        , /Data/Algebra/testRightMonoidIdentity[ /T : ∀/Data/Algebra/Monoid ]( Value /t -> TVVar /T ) -> /Data/Primitive/Integer = CInt 0
+        , /Data/Algebra/testLeftMonoidIdentity[ /T : ∀/Data/Algebra/Monoid ]( Value /t -> TVVar /T ) -> /Data/Primitive/Integer = CInt 0
+        , /Data/Algebra/testCommutativeMonoid[ /T : ∀/Data/Algebra/CommutativeMonoid ]( Value /a -> TVVar /T )( Value /b -> TVVar /T ) -> /Data/Primitive/Integer = CInt 0
+        , /Data/Algebra/inverse[ /T : ∀/Data/Algebra/Group ]( Value /t -> TVVar /T ) -> TVVar /T
+        , /Data/Algebra/testGroup[ /T : ∀/Data/Algebra/Group ]( Value /t -> TVVar /T ) -> /Data/Primitive/Integer = CInt 0
+        ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Data/Algebra/CommutativeMonoid
+            , []
+            , Just "The [CommutativeMonoid] builds on top of the [Monoid].
+              It is also called an Abelian Monoid
+              Here, integers with addition are a [CommutativeMonoid], but [String]s are not."
+            )
+        , CGClass
+            ( False
+            , /Data/Algebra/Eq
+            ,
+                [ ∀/Data/Algebra/POrd
+                , ∀/Data/Algebra/Semigroup
+                ]
+            , Just "The Eq class is used to define values which can be compared for equality.
+              While naive tuple equality often works, some types have equality that behaves differently and must be defined.
+              For example, a TreeSet can insert items in different order and produce different trees, but with equal sets.
+              There are only two operations for eq: [operator==] and [operator!=]./operator==</Data/Algebra/Eq $T>($T l, $T r) -> BooleanThis checks whether two items are equal.
+              Note that it only compares like items with each other, not that you can compare apples to oranges. If something can be compared for order, it should also be comparable for equality by the following relationship: "
+            )
+        , CGClass
+            ( False
+            , /Data/Algebra/Group
+            , []
+            , Just "The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
+              It adds an inverse operation that finds the opposite of an element.
+              For integers with addition, negation with [operator~] would be the inverse.
+              Something like [String]s would not have an inverse, so it wouldn't be a [Group]."
+            )
+        , CGClass
+            ( False
+            , /Data/Algebra/Monoid
+            ,
+                [ ∀/Data/Algebra/CommutativeMonoid
+                , ∀/Data/Algebra/Group
+                ]
+            , Just "The [Monoid] builds on top of the [Semigroup].
+              It adds the identity value [mempty].
+              The integers with addition form a [Monoid], and 0 is the value for [mempty].
+              Another example is [String] where "" is the value for [mempty]  "
+            )
+        , CGClass
+            ( False
+            , /Data/Algebra/Ord
+            , [ ∀/Data/Primitive/Number ]
+            , Just "Ord is used to define types which can be strictly ordered.
+              Every element, when compared must have one of the following [Ordering] relationships: "
+            )
+        , CGClass
+            ( True
+            , /Data/Algebra/Ordering
+            ,
+                [ /Data/Algebra/LessThan
+                , /Data/Algebra/Equal
+                , /Data/Algebra/GreaterThan
+                ]
+            , Just "The Orderings can relate any like items of Ord. "
+            )
+        , CGClass
+            ( False
+            , /Data/Algebra/POrd
+            , [ ∀/Data/Algebra/Ord ]
+            , Just "In addition to [Ord], [POrd] defines a partial ordering.
+              Partially ordered items can be compared, but may result in [NoOrdering]: "
+            )
+        , CGClass
+            ( True
+            , /Data/Algebra/POrdering
+            ,
+                [ ∀/Data/Algebra/Ordering
+                , /Data/Algebra/NoOrdering
+                ]
+            , Just "As an example, sets can be partially ordered by the subset operation.
+              One set A <= B when A is a subset of B.
+              An ordered example is {1} <= {1, 2}.
+              But, two sets like {1} and {2} have no ordering between them."
+            )
+        , CGClass
+            ( False
+            , /Data/Algebra/Semigroup
+            , [ ∀/Data/Algebra/Monoid ]
+            , Just "A semigroup is a type combined with an associative operation called [operator++].
+              For example, integers with the addition operation are a semigroup. "
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr "# Catln Core Abstract Algebra Types
+            These types define some of the basic relationship between types and ways classes can relate to themselves." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "The Eq class is used to define values which can be compared for equality.
+            While naive tuple equality often works, some types have equality that behaves differently and must be defined.
+            For example, a TreeSet can insert items in different order and produce different trees, but with equal sets.
+            There are only two operations for eq: [operator==] and [operator!=]." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "/operator==</Data/Algebra/Eq $T>($T l, $T r) -> Boolean" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "This checks whether two items are equal.
+            Note that it only compares like items with each other, not that you can compare apples to oranges." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "It is the opposite of [operator==] leading to the simple definition:" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "/operator!=(l, r) = ~(l == r)
+            Given this, creating an instance of Eq only requires defining equality and the != can be produced automatically." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "## Ordering" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "Ordering is used to define operations that have a natural ability to be ordered or sorted.
+            Some examples include numbers which are sorted from smallest to largest or strings which are sorted alphabetically." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "There are two different forms of ordering:" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "Ord is used to define types which can be strictly ordered.
+            Every element, when compared must have one of the following [Ordering] relationships:" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "The Orderings can relate any like items of Ord. " )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "In addition to [Ord], [POrd] defines a partial ordering.
+            Partially ordered items can be compared, but may result in [NoOrdering]:" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "As an example, sets can be partially ordered by the subset operation.
+            One set A <= B when A is a subset of B.
+            An ordered example is {1} <= {1, 2}.
+            But, two sets like {1} and {2} have no ordering between them." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "There are a few nice properties about ordering." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "This means that something fully ordered can still take advantage of many of the same functions as partially ordered ones.
+            It just usually has a more specific result." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "The only major function for ordering is [compare].
+            Comparing two [Ord] will result in an [Ordering].
+            Likewise, comparing two partially orderables [POrd] results in a [POrdering]." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "### Operators for ordering
+            Besides compare, there are also some operators to make using ordering easier." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "If something can be compared for order, it should also be comparable for equality by the following relationship:" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "/operator==<POrd $T>($T l, $T r) = compare(l=l, r=r) == Equal" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "### Ordering utility functions" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "max<Ord $T>($T l, $T r) -> $T = if l >= r then l else r" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "min<Ord $T>($T l, $T r) -> $T = if l <= r then l else r" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "TODO: Tests and properties for compare" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "## Semigroup" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "A semigroup is a type combined with an associative operation called [operator++].
+            For example, integers with the addition operation are a semigroup." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "The [Monoid] builds on top of the [Semigroup].
+            It adds the identity value [mempty].
+            The integers with addition form a [Monoid], and 0 is the value for [mempty].
+            Another example is [String] where "" is the value for [mempty]" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "We can test to verify that [mempty] works with both the left and right." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "mconcat<Monoid $T>(List<$T> lst) = lst.fold(operator++, mempty)" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "Using the [Monoid], it is possible to combine a list of monoids together." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "The [CommutativeMonoid] builds on top of the [Monoid].
+            It is also called an Abelian Monoid
+            Here, integers with addition are a [CommutativeMonoid], but [String]s are not." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "We can test to ensure that all [CommutativeMonoid]s satisfy the commutativity requirement." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "The [Group] builds on top of the [Monoid] (not necessarily the [CommutativeMonoid]).
+            It adds an inverse operation that finds the opposite of an element.
+            For integers with addition, negation with [operator~] would be the inverse.
+            Something like [String]s would not have an inverse, so it wouldn't be a [Group]." )
+        ]
+    }

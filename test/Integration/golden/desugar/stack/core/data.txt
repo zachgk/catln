@@ -1,140 +1,141 @@
-(
-    [ Value /Data/String
-    , /operator==( Value /l -> /Data/String = Hole TopType HoleActive Nothing )( Value /r -> /Data/String = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-    , /Data/toString( Value /this -> /Data/String ) -> /Data/String
-    , /Data/toString( Value /this -> /Data/String )= Value this
-    , /Data/toString( Value /this -> /Data/Primitive/Integer ) -> /Data/String
-    , /Context[ /V : TopType ]( Value /value -> TVVar /V )( ..Hole TopType HoleActive Nothing )
-    , /ContextIn[ /V : TopType ]( Value /value -> TVVar /V )( ..Hole TopType HoleActive Nothing )
-    , /ContextOut[ /V : TopType ]( Value /value -> TVVar /V )( ..Hole TopType HoleActive Nothing )
-    , /Context[ /T : TopType ][ /V : TopType ]( Value value -> TVVar /V )( ..Hole TopType HoleActive Nothing ) | /operator?->
-        ( Value /l= /ContextIn[ /V : TVVar /V ]( Value value= Hole TVVar /V HoleActive Nothing )( ..Hole TopType HoleActive Nothing ) )( Value /r= Hole TVVar /T HoleActive Nothing ) -> TVVar /T
-    , Value /Data/None
-    , /Data/Cons[ /T : TopType ]( Value /head -> TVVar /T )( Value /tail -> ∀/Data/ConsList )
-    , Value /Data/Nil
-    , /Data/length( Value /this -> /Data/Nil )= CInt 0
-    , /Data/length
-        ( Value /this= /Data/Cons( Value head )( Value tail ) )= /operator+
-        ( Value /l= CInt 1 )
-        ( Value /r= length( Value /this= Value tail ) )
-    , /Data/enum[ /T : ∀/Data/Enum ] -> ∀/Data/Set
-    ]
-,
-    [ CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGType
-    , CGClass
-        ( False
-        , /Data/String
-        , [ /Data/String ]
-        , Just ""
-        )
-    , CGClass
-        ( True
-        , /Data/ConsList
-        ,
-            [ /Data/Cons[ /T=TVVar /T ]
-                ( /head=TVVar /T
-                , /tail=~ConsList[ /T=TVVar /T ]
-                )
-            , /Data/Nil
-            ]
-        , Just "The simplest kind of list can be created by prepending.
-          A [ConsList] defines a list either by prepending to a list or with an empty list."
-        )
-    , CGClass
-        ( False
-        , /Data/Enum
-        , []
-        , Just "[Enum] represents a type which can be enumerated.
-          It defines a single function [enum] which lists all of the values in the type."
-        )
-    , CGClass
-        ( False
-        , /Data/Functor
-        ,
-            [ ∀/Data/Option
-            , ∀/Data/ConsList
-            ]
-        , Just "A [Functor] is a basic property of a collection.
-          It has a single operation [fmap] that applies a function to each element in the collection.$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]  "
-        )
-    , CGClass
-        ( False
-        , /Data/List
-        , []
-        , Just ""
-        )
-    , CGClass
-        ( True
-        , /Data/Option
-        ,
-            [ TVVar /T
-            , /Data/None
-            ]
-        , Just "[Option] defines a type that might have a value or [None].
-          It can be used to handle operations that are uncertain if they can produce a response."
-        )
-    , CGClass
-        ( False
-        , /Data/Set
-        , []
-        , Just ""
-        )
-    ]
-,
-    [ /Catln/#md
-        ( Value /text= CStr "# Catln Core Data Types
-        These define the basic data types used in the language." )
-    , /Catln/#md
-        ( Value /text= CStr "## String" )
-    , /Catln/#md
-        ( Value /text= CStr "## Context" )
-    , /Catln/#md
-        ( Value /text= CStr "## Collections
-        Collections are contains that hold elements of a type inside them." )
-    , /Catln/#md
-        ( Value /text= CStr "A [Functor] is a basic property of a collection.
-        It has a single operation [fmap] that applies a function to each element in the collection." )
-    , /Catln/#md
-        ( Value /text= CStr "$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]" )
-    , /Catln/#md
-        ( Value /text= CStr "## Collections" )
-    , /Catln/#md
-        ( Value /text= CStr "[Option] defines a type that might have a value or [None].
-        It can be used to handle operations that are uncertain if they can produce a response." )
-    , /Catln/#md
-        ( Value /text= CStr "None.fmap(fn) = None" )
-    , /Catln/#md
-        ( Value /text= CStr "$T.fmap(fn($T)) = fn(this)" )
-    , /Catln/#md
-        ( Value /text= CStr "A [List] is a collection of zero or more ordered items." )
-    , /Catln/#md
-        ( Value /text= CStr "The simplest kind of list can be created by prepending.
-        A [ConsList] defines a list either by prepending to a list or with an empty list." )
-    , /Catln/#md
-        ( Value /text= CStr "/operator+:<$T>($T l, ConsList<$T> r) = Cons(head=l, tail=r)
-        [operator+:] is a utility operator to prepend an element onto a [List]." )
-    , /Catln/#md
-        ( Value /text= CStr "#### [length]
-        The [length] of a [List] is the number of items inside of it." )
-    , /Catln/#md
-        ( Value /text= CStr "Nil.fmap(fn) = Nil" )
-    , /Catln/#md
-        ( Value /text= CStr "Cons(head, tail).fmap(fn) = Cons(head=fn(head), tail=tail.fmap(fn))" )
-    , /Catln/#md
-        ( Value /text= CStr "A [Set] is a collection of zero or more unique items.
-        It is not ordered." )
-    , /Catln/#md
-        ( Value /text= CStr "[Enum] represents a type which can be enumerated.
-        It defines a single function [enum] which lists all of the values in the type." )
-    ]
-)
+Prgm
+    { prgmObjMap =
+        [ Value /Data/String
+        , /operator==( Value /l -> /Data/String = Hole TopType HoleActive Nothing )( Value /r -> /Data/String = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+        , /Data/toString( Value /this -> /Data/String ) -> /Data/String
+        , /Data/toString( Value /this -> /Data/String )= Value this
+        , /Data/toString( Value /this -> /Data/Primitive/Integer ) -> /Data/String
+        , /Context[ /V : TopType ]( Value /value -> TVVar /V )( ..Hole TopType HoleActive Nothing )
+        , /ContextIn[ /V : TopType ]( Value /value -> TVVar /V )( ..Hole TopType HoleActive Nothing )
+        , /ContextOut[ /V : TopType ]( Value /value -> TVVar /V )( ..Hole TopType HoleActive Nothing )
+        , /Context[ /T : TopType ][ /V : TopType ]( Value value -> TVVar /V )( ..Hole TopType HoleActive Nothing ) | /operator?->
+            ( Value /l= /ContextIn[ /V : TVVar /V ]( Value value= Hole TVVar /V HoleActive Nothing )( ..Hole TopType HoleActive Nothing ) )( Value /r= Hole TVVar /T HoleActive Nothing ) -> TVVar /T
+        , Value /Data/None
+        , /Data/Cons[ /T : TopType ]( Value /head -> TVVar /T )( Value /tail -> ∀/Data/ConsList )
+        , Value /Data/Nil
+        , /Data/length( Value /this -> /Data/Nil )= CInt 0
+        , /Data/length
+            ( Value /this= /Data/Cons( Value head )( Value tail ) )= /operator+
+            ( Value /l= CInt 1 )
+            ( Value /r= length( Value /this= Value tail ) )
+        , /Data/enum[ /T : ∀/Data/Enum ] -> ∀/Data/Set
+        ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Data/String
+            , [ /Data/String ]
+            , Just ""
+            )
+        , CGClass
+            ( True
+            , /Data/ConsList
+            ,
+                [ /Data/Cons[ /T=TVVar /T ]
+                    ( /head=TVVar /T
+                    , /tail=~ConsList[ /T=TVVar /T ]
+                    )
+                , /Data/Nil
+                ]
+            , Just "The simplest kind of list can be created by prepending.
+              A [ConsList] defines a list either by prepending to a list or with an empty list."
+            )
+        , CGClass
+            ( False
+            , /Data/Enum
+            , []
+            , Just "[Enum] represents a type which can be enumerated.
+              It defines a single function [enum] which lists all of the values in the type."
+            )
+        , CGClass
+            ( False
+            , /Data/Functor
+            ,
+                [ ∀/Data/Option
+                , ∀/Data/ConsList
+                ]
+            , Just "A [Functor] is a basic property of a collection.
+              It has a single operation [fmap] that applies a function to each element in the collection.$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]  "
+            )
+        , CGClass
+            ( False
+            , /Data/List
+            , []
+            , Just ""
+            )
+        , CGClass
+            ( True
+            , /Data/Option
+            ,
+                [ TVVar /T
+                , /Data/None
+                ]
+            , Just "[Option] defines a type that might have a value or [None].
+              It can be used to handle operations that are uncertain if they can produce a response."
+            )
+        , CGClass
+            ( False
+            , /Data/Set
+            , []
+            , Just ""
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "# Catln Core Data Types
+            These define the basic data types used in the language." )
+        , /Catln/#md
+            ( Value /text= CStr "## String" )
+        , /Catln/#md
+            ( Value /text= CStr "## Context" )
+        , /Catln/#md
+            ( Value /text= CStr "## Collections
+            Collections are contains that hold elements of a type inside them." )
+        , /Catln/#md
+            ( Value /text= CStr "A [Functor] is a basic property of a collection.
+            It has a single operation [fmap] that applies a function to each element in the collection." )
+        , /Catln/#md
+            ( Value /text= CStr "$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]" )
+        , /Catln/#md
+            ( Value /text= CStr "## Collections" )
+        , /Catln/#md
+            ( Value /text= CStr "[Option] defines a type that might have a value or [None].
+            It can be used to handle operations that are uncertain if they can produce a response." )
+        , /Catln/#md
+            ( Value /text= CStr "None.fmap(fn) = None" )
+        , /Catln/#md
+            ( Value /text= CStr "$T.fmap(fn($T)) = fn(this)" )
+        , /Catln/#md
+            ( Value /text= CStr "A [List] is a collection of zero or more ordered items." )
+        , /Catln/#md
+            ( Value /text= CStr "The simplest kind of list can be created by prepending.
+            A [ConsList] defines a list either by prepending to a list or with an empty list." )
+        , /Catln/#md
+            ( Value /text= CStr "/operator+:<$T>($T l, ConsList<$T> r) = Cons(head=l, tail=r)
+            [operator+:] is a utility operator to prepend an element onto a [List]." )
+        , /Catln/#md
+            ( Value /text= CStr "#### [length]
+            The [length] of a [List] is the number of items inside of it." )
+        , /Catln/#md
+            ( Value /text= CStr "Nil.fmap(fn) = Nil" )
+        , /Catln/#md
+            ( Value /text= CStr "Cons(head, tail).fmap(fn) = Cons(head=fn(head), tail=tail.fmap(fn))" )
+        , /Catln/#md
+            ( Value /text= CStr "A [Set] is a collection of zero or more unique items.
+            It is not ordered." )
+        , /Catln/#md
+            ( Value /text= CStr "[Enum] represents a type which can be enumerated.
+            It defines a single function [enum] which lists all of the values in the type." )
+        ]
+    }

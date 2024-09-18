@@ -179,10 +179,10 @@ mapMetaObjArrM f mloc oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   return oa{oaObj=oaObj', oaAnnots=oaAnnots', oaArr=oaArr'}
 
 mapMetaPrgmM :: (Monad n, MapMeta e) => MetaFun n a b -> Prgm e a -> n (Prgm e b)
-mapMetaPrgmM f (objMap, classGraph, annots) = do
+mapMetaPrgmM f (Prgm objMap classGraph annots) = do
   objMap' <- mapM (mapMetaObjArrM f Nothing) objMap
   annots' <- mapM (mapMetaM f AnnotMeta) annots
-  return (objMap', classGraph, annots')
+  return $ Prgm objMap' classGraph annots'
 
 mapMeta :: (MapMeta m) => MetaFun Identity a b -> MetaLocation -> m a -> m b
 mapMeta f loc a = runIdentity $ mapMetaM f loc a

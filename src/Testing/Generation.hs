@@ -54,7 +54,7 @@ genTypeFromExpr prgm (TupleApply _ (_, baseExpr) (EAppVar varName m)) = do
 genTypeFromExpr _ e = error $ printf "Unimplemented genTypeFromExpr for %s" (show e)
 
 genType :: Prgm Expr () -> Gen Type
-genType prgm@(objMap, ClassGraph cg, _) = HG.choice gens
+genType prgm@(Prgm objMap (ClassGraph cg) _) = HG.choice gens
   where
 
     gens = if graphEmpty cg
@@ -94,7 +94,7 @@ genType prgm@(objMap, ClassGraph cg, _) = HG.choice gens
       singletonType <$> genTypeFromExpr prgm objExpr
 
 genPartialType :: Prgm Expr () -> Gen PartialType
-genPartialType prgm@(objMap, ClassGraph cg, _) = do
+genPartialType prgm@(Prgm objMap (ClassGraph cg) _) = do
   gen <- if graphEmpty cg
     then if null objMap
       then HG.discard
@@ -166,7 +166,7 @@ genPrgm = do
 
   let objMap = dataObjs ++ funObjs
 
-  return (objMap, classGraphFromObjs objMap, [])
+  return $ Prgm objMap (classGraphFromObjs objMap) []
 
 genPrgms :: Gen [GraphNodes (Prgm Expr ()) FileImport]
 genPrgms = do

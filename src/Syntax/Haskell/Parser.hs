@@ -115,7 +115,7 @@ hsParser imp = case exprAppliedArgs imp of
                     colEnd = srcLocCol $ SrcLoc.realSrcSpanEnd realSpan
                     _srcPos = Just (SourcePos filename (mkPos lnStart) (mkPos colStart), SourcePos filename (mkPos lnEnd) (mkPos colEnd), filename)
                 in fail errMsg
-      else return (([], []), [])
+      else return (RawPrgm [] [], [])
   _ -> undefined
 
   where

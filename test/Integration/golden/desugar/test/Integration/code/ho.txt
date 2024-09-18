@@ -1,20 +1,21 @@
-(
-    [ T( Value /x -> /Data/Primitive/Integer )
-    , tst
-        ( Value d= T( Value x -> /Data/Primitive/Integer ) )
-        ( f( Value y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
-    , tst
-        ( Value d= T( Value x -> /Data/Primitive/Integer ) )
-        ( f( Value y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean )= f( Value y= Value x )
-    , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io
-    ]
-,
-    [ CGType
-    , CGType
-    , CGType
-    ]
-,
-    [ /Catln/#md
-        ( Value /text= CStr "Tests higher order functions" )
-    ]
-)
+Prgm
+    { prgmObjMap =
+        [ T( Value /x -> /Data/Primitive/Integer )
+        , tst
+            ( Value d= T( Value x -> /Data/Primitive/Integer ) )
+            ( f( Value y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
+        , tst
+            ( Value d= T( Value x -> /Data/Primitive/Integer ) )
+            ( f( Value y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean )= f( Value y= Value x )
+        , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io
+        ]
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "Tests higher order functions" )
+        ]
+    }
