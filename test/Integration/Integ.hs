@@ -8,19 +8,17 @@ import           Text.Printf
 import           Common.TestCommon   (findCt)
 import           Control.Monad.Trans
 import           CRes
+import           CtService
 import           Data.List           (isPrefixOf, isSuffixOf)
 import           Data.Maybe
 import qualified Data.Text.Lazy      as T
 import           Eval
 import           Semantics.Prgm
-import           Syntax.Ct.Desugarf  (desFiles)
-import           Syntax.Parsers      (mkDesCanonicalImportStr, mkRawImportStr,
-                                      readFiles)
+import           Syntax.Parsers      (mkDesCanonicalImportStr)
 import           System.Directory    (createDirectoryIfMissing, doesFileExist,
                                       getCurrentDirectory)
 import           System.FilePath     (takeDirectory)
 import           Text.Pretty.Simple  (pShowNoColor)
-import           TypeCheck
 import           Utils
 import           WebDocs             (docApi, docServe)
 
@@ -64,37 +62,40 @@ runTest runGolden fileNameStr = testCaseSteps fileNameStr $ \step -> do
   step $ printf "Read file %s..." fileNameStr
   fileName <- mkDesCanonicalImportStr fileNameStr
 
+  ctssBase <- ctssRead $ ctssBaseFiles [fileNameStr]
+  ctss <- ctssBuildAll ctssBase
+
   res <- runCResT $ do
-    rawPrgm <- readFiles [mkRawImportStr fileNameStr]
-    prgm <- desFiles rawPrgm
+    _rawPrgm <- getRawPrgm ctss
+    prgm <- getPrgm ctss
 
     when runGolden $ do
       lift $ runGoldenTest "desugar" goldenDesugarDir fileNameStr prgm step
 
     lift $ step "Typecheck..."
-    tprgm <- asCResT $ typecheckPrgm prgm
+    tprgm <- getTPrgm ctss
 
     when runGolden $ do
       lift $ runGoldenTest "typecheck" goldenTypecheckDir fileNameStr tprgm step
 
     when runGolden $ do
       lift $ step "TreeBuild..."
-      tbprgm <- asCResT $ evalBuildAll tprgm
+      tbprgm <- getTBPrgm ctss
       lift $ runGoldenTest "treebuild" goldenTreebuildDir fileNameStr tbprgm step
 
     evalTarget <- asCResT $ evalTargetMode "main" fileName tprgm
     when (evalRunnable evalTarget) $ do
       lift $ step "Eval Run..."
-      returnValue <- evalRun "main" fileName tprgm
+      returnValue <- getEvaluated ctss fileName "main"
       case returnValue of
-        (0, _) -> return ()
-        _ -> lift $ assertFailure $ "Bad result for:\n \t " ++ show (fst returnValue)
+        0 -> return ()
+        v -> lift $ assertFailure $ "Bad result for:\n \t " ++ show v
 
     lift $ step "Eval Build..."
-    _ <- evalBuild "main" fileName tprgm
+    _ <- getEvalBuild ctss fileName "main"
 
     lift $ step "Eval Annots..."
-    _ <- asCResT $ evalAnnots fileName tprgm
+    _ <- getEvalAnnots ctss fileName
     return ()
   case res of
     CRes notes _ -> do

@@ -2,7 +2,9 @@ module Semantics.TypesTests where
 
 import           Common.TestCommon   (findCt)
 import           Control.Monad
+import           Control.Monad.Trans (lift)
 import           CRes
+import           CtService
 import qualified Data.HashMap.Strict as H
 import           Data.Maybe
 import           Hedgehog
@@ -11,13 +13,10 @@ import           MapMeta             (clearMetaDat, mapMetaPrgm)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
-import           Syntax.Ct.Desugarf  (desFiles)
-import           Syntax.Parsers      (mkRawImportStr, readFiles)
 import           Test.Tasty
 import           Test.Tasty.Hedgehog as HG
 import           Testing.Generation
 import           Text.Printf
-import           TypeCheck           (typecheckPrgm)
 import           Utils
 
 type Prgms = H.HashMap String (Prgm Expr ())
@@ -29,9 +28,9 @@ findPrgms = do
   fileNames <- findCt classGraphDir
   prgms <- runCResT $ do
     forM fileNames $ \fileName -> do
-      rawPrgm <- readFiles [mkRawImportStr fileName]
-      prgm <- desFiles rawPrgm
-      tprgm <- asCResT $ typecheckPrgm prgm
+      ctssBase <- lift $ ctssRead $ ctssBaseFiles [fileName]
+      ctss <- lift $ ctssBuildAll ctssBase
+      tprgm <- getTPrgm ctss
       return (fileName, mergePrgms $ map (mapMetaPrgm clearMetaDat . fst3) (graphToNodes tprgm))
   return (H.insert "empty" emptyPrgm $ H.fromList $ fromCRes prgms)
 

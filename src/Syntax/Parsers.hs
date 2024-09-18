@@ -76,6 +76,7 @@ readImport imp = case maybeExprPath (impAbs imp) of
   Nothing -> fail $ printf "Invalid import %s must be string or oject" (show imp)
   Just impPath -> case H.lookup impPath importParsers of
     Nothing -> fail $ printf "No parser available for oject name in %s" (show imp)
+    -- TODO Modify the ImportParseResult to CResT to report back parse errors
     Just parser -> parser $ impAbs imp
 
 processParsed :: FileImport -> (RawPrgm (), [RawFileImport]) -> IO (GraphNodes (RawPrgm ()) FileImport, [FileImport])
@@ -103,10 +104,11 @@ parseFile imp = do
   p <- lift $ processParsed imp' r
   return $ fst p
 
-readFiles :: [RawFileImport] -> CResT IO (GraphData (RawPrgm ()) FileImport)
+-- TODO Change readImport, then make this return GraphData of CRes
+readFiles :: [RawFileImport] -> IO (GraphData (RawPrgm ()) FileImport)
 readFiles initialImps = do
-  initialImps' <- lift $ mapM (canonicalImport Nothing) initialImps
-  res <- lift $ aux [] S.empty initialImps'
+  initialImps' <- mapM (canonicalImport Nothing) initialImps
+  res <- aux [] S.empty initialImps'
   return $ graphFromEdges res
   where
     aux :: [GraphNodes (RawPrgm ()) FileImport] -> S.HashSet FileImport -> [FileImport] -> IO [GraphNodes (RawPrgm ()) FileImport]

@@ -2,16 +2,14 @@
 module Main where
 
 import           CRes
-import           Eval
 import           Options.Applicative
-import           Syntax.Ct.Desugarf  (desFiles)
 import           Syntax.Ct.Formatter (formatRootPrgm)
-import           Syntax.Parsers      (canonicalImport, mkRawImportStr,
-                                      parseFile, readFiles)
-import           TypeCheck           (typecheckPrgm)
+import           Syntax.Parsers      (mkDesCanonicalImportStr, mkRawImportStr,
+                                      parseFile)
 
 import           Control.Monad
 import           Control.Monad.Trans
+import           CtService
 import qualified Data.HashMap.Strict as H
 import           Data.Maybe
 import           Eval.Common         (Val (StrVal, TupleVal))
@@ -23,26 +21,22 @@ import           WebDocs             (docApi, docServe)
 
 xRun :: String -> String -> CResT IO ()
 xRun prgmName function = do
-  let prgmName' = mkRawImportStr prgmName
-  prgmName'' <- lift $ canonicalImport Nothing prgmName'
-  rawPrgm <- readFiles [prgmName']
-  desPrgm <- desFiles rawPrgm
-  tprgm <- asCResT $ typecheckPrgm desPrgm
-  returnValue <- evalRun function prgmName'' tprgm
+  prgmName' <- lift $ mkDesCanonicalImportStr prgmName
+  ctssBase <- lift $ ctssRead $ ctssBaseFiles [prgmName]
+  ctss <- lift $ ctssBuildAll ctssBase
+  returnValue <- getEvaluated ctss prgmName' function
   case returnValue of
-    (0, _) -> return ()
-    (i, _) -> fail $ "error code " ++ show i
+    0 -> return ()
+    i -> fail $ "error code " ++ show i
 
 xBuild :: String -> String -> CResT IO ()
 xBuild prgmName function = do
-  let prgmName' = mkRawImportStr prgmName
-  prgmName'' <- lift $ canonicalImport Nothing prgmName'
-  rawPrgm <- readFiles [prgmName']
-  desPrgm <- desFiles rawPrgm
-  tprgm <- asCResT $ typecheckPrgm desPrgm
-  returnValue <- evalBuild function prgmName'' tprgm
+  prgmName' <- lift $ mkDesCanonicalImportStr prgmName
+  ctssBase <- lift $ ctssRead $ ctssBaseFiles [prgmName]
+  ctss <- lift $ ctssBuildAll ctssBase
+  returnValue <- getEvalBuild ctss prgmName' function
   case returnValue of
-    (TupleVal _ args, _) -> do
+    TupleVal _ args -> do
       let buildDir = "build"
       lift $ removePathForcibly buildDir
       lift $ createDirectoryIfMissing True buildDir

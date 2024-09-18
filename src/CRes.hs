@@ -112,7 +112,7 @@ instance CNoteTC CNoteI where
   typeCNote (WrapCN notes _) = mconcat $ map typeCNote notes
   typeCNote _                = CNoteError
 
-  showRecursiveCNote i n = showRecursiveCNoteI i n
+  showRecursiveCNote = showRecursiveCNoteI
 
 wrapCRes :: String -> CRes r -> CRes r
 wrapCRes _ (CRes [] r)    = CRes [] r
@@ -153,6 +153,14 @@ instance Monad CRes where
 
 instance MonadFail CRes where
   fail s = CErr [MkCNote $ GenCErr Nothing s]
+
+instance Foldable CRes where
+  foldr _ b CErr{}     = b
+  foldr f b (CRes _ a) = f a b
+
+instance Traversable CRes where
+  traverse _ (CErr notes)   = pure (CErr notes)
+  traverse f (CRes notes x) = CRes notes <$> f x
 
 newtype CResT m r = CResT { runCResT :: m (CRes r) }
 

@@ -7,10 +7,7 @@
 -- Stability :  experimental
 -- Portability: non-portable
 --
--- This file defines the server for the Catln webdocs. It has two
--- modes defined by the 'WDProvider': cached and live. The frontend
--- for the webdocs is located inside the /webdocs directory of the
--- repo.
+-- This file defines the server for the Catln webdocs.
 --------------------------------------------------------------------
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric  #-}
@@ -28,41 +25,31 @@ import           Network.Wai.Middleware.Static
 import           Control.Monad
 import           Control.Monad.Trans           (lift)
 import           CRes
+import           CtService
 import           Data.Bifunctor                (Bifunctor (first))
 import           Data.Graph
-import           Data.Maybe
 import           Eval                          (evalAllTargetModes, evalAnnots,
-                                                evalBuild, evalBuildAll,
-                                                evalRun, prgmFromGraphData)
-import           Eval.Common                   (EvalMetaDat, EvalResult, TExpr,
-                                                Val (..))
+                                                prgmFromGraphData)
 import           MapMeta                       (addMetaID, interleaveMeta,
                                                 interleavePrgm, zip3MetaFun)
 import           Semantics.Prgm
 import           Semantics.Types
-import           Syntax.Ct.Desugarf            (desFiles, desFinalPasses,
-                                                desPrgm)
+import           Syntax.Ct.Desugarf            (desFinalPasses, desPrgm)
 import           Syntax.Ct.Desugarf.Expr       (desFileImport)
 import           Syntax.Ct.MapRawMeta          (mapMetaRawPrgm, mapMetaRawPrgmM)
 import           Syntax.Ct.Parser.Expr         (pExpr)
-import           Syntax.Ct.Parser.Syntax       (DesPrgm, PPrgmGraphData)
 import           Syntax.Ct.Prgm                (RawExpr (RawValue),
                                                 RawStatement (RawAnnot),
                                                 RawStatementTree (RawStatementTree),
                                                 mkRawFileImport)
-import           Syntax.Parsers                (mkDesCanonicalImportStr,
-                                                mkRawImportStr, readFiles)
+import           Syntax.Parsers                (mkDesCanonicalImportStr)
 import           Text.Megaparsec               (errorBundlePretty, runParser)
 import           Text.Printf
-import           TypeCheck                     (typecheckPrgmWithTrace,
-                                                typecheckPrgms)
-import           TypeCheck.Common              (TPrgm, TraceConstrain, VPrgm,
-                                                filterTraceConstrain,
+import           TypeCheck                     (typecheckPrgms)
+import           TypeCheck.Common              (TPrgm, filterTraceConstrain,
                                                 flipTraceConstrain,
                                                 typeCheckToRes)
 import           Utils
-
-type TBPrgm = Prgm TExpr EvalMetaDat
 
 data ResSuccess a n = Success a [n]
   | ResFail [n]
@@ -79,117 +66,21 @@ filterByType name (objMap, ClassGraph classGraph, _) = (objMap', classGraph', []
     objMap' = filter (relativeNameMatches name . oaObjPath) objMap
     classGraph' = ClassGraph $ graphFromEdges $ filter (\(_, n, subTypes) -> relativeNameMatches name (fromPartialName n) || n `elem` subTypes) $ graphToNodes classGraph
 
-data WDProvider
-  = WDProvider {
-    cBaseFileNames   :: [String]
-  , cRaw            :: CRes PPrgmGraphData
-  , cPrgm           :: CRes (GraphData DesPrgm FileImport)
-  , cTPrgmWithTrace :: CRes (GraphData (TPrgm, VPrgm, TraceConstrain) FileImport)
-  , cTPrgm          :: CRes (GraphData TPrgm FileImport)
-  , cTBPrgm          :: CRes (GraphData TBPrgm FileImport)
-  , cAnnots          :: CRes (GraphData [(Expr EvalMetaDat, Val)] FileImport)
-                    }
+mkLiveWDProvider :: [String] -> IO (IO CTSS)
+mkLiveWDProvider baseFileNames = do
+  ss1 <- ctssRead $ ctssBaseFiles baseFileNames
+  ss2 <- ctssBuildAll ss1
+  return $ do
+    ss3 <- ctssRead ss2
+    ctssBuildAll ss3 -- TODO Remove buildAll with incremental support in CTSS
 
-emptyWDProvider :: WDProvider
-emptyWDProvider = WDProvider {
-        cBaseFileNames = []
-      , cRaw = return $ graphFromEdges []
-      , cPrgm = return $ graphFromEdges []
-      , cTPrgmWithTrace = return $ graphFromEdges []
-      , cTPrgm = return $ graphFromEdges []
-      , cTBPrgm = return $ graphFromEdges []
-      , cAnnots = return $ graphFromEdges []
-                            }
-
-
-mkWDProvider :: [String] -> IO WDProvider
-mkWDProvider baseFileNames = do
-  p <- runCResT $ do
-    rawPrgm <- readFiles (map mkRawImportStr baseFileNames)
-    prgm <- desFiles rawPrgm
-    let withTrace = typecheckPrgmWithTrace prgm
-    let tprgm = fmap (fmapGraph fst3) withTrace
-    let tbprgm = tprgm >>= evalBuildAll
-    let annots' = tprgm >>= (\jtprgm -> fmap graphFromEdges $ traverse (\(_, n, deps) -> (, n, deps) <$> evalAnnots n jtprgm) $  graphToNodes jtprgm)
-    return $ WDProvider {
-        cBaseFileNames = baseFileNames
-      , cRaw = return rawPrgm
-      , cPrgm = return prgm
-      , cTPrgmWithTrace = withTrace
-      , cTPrgm = tprgm
-      , cTBPrgm = tbprgm
-      , cAnnots = annots'
-                            }
-  case p of
-    CRes notes r -> do
-      unless (null notes) $ putStrLn $ prettyCNotes notes
-      return r
-    CErr notes -> do
-      unless (null notes) $ putStrLn $ prettyCNotes notes
-      fail "Could not build webdocs"
-
-mkLiveWDProvider :: [String] -> IO (IO WDProvider)
-mkLiveWDProvider baseFileNames = return $ mkWDProvider baseFileNames
-
-mkCacheWDProvider :: [String] -> IO (IO WDProvider)
+mkCacheWDProvider :: [String] -> IO (IO CTSS)
 mkCacheWDProvider baseFileNames = do
-  p <- mkWDProvider baseFileNames
-  return $ return p
+  ss1 <- ctssRead $ ctssBaseFiles baseFileNames
+  ss2 <- ctssBuildAll ss1
+  return $ return ss2
 
-getRawPrgm :: WDProvider -> CResT IO PPrgmGraphData
-getRawPrgm WDProvider{cRaw} = asCResT cRaw
-
-getPrgm :: WDProvider -> CResT IO (GraphData DesPrgm FileImport)
-getPrgm WDProvider{cPrgm} = asCResT cPrgm
-
-getTPrgmWithTrace :: WDProvider -> CResT IO (GraphData (TPrgm, VPrgm, TraceConstrain) FileImport)
-getTPrgmWithTrace WDProvider{cTPrgmWithTrace} = asCResT cTPrgmWithTrace
-
-getTPrgm :: WDProvider -> CResT IO (GraphData TPrgm FileImport)
-getTPrgm WDProvider{cTPrgm} = asCResT cTPrgm
-
-getTPrgmJoined :: WDProvider -> CResT IO TPrgm
-getTPrgmJoined provider = do
-  base <- getTPrgm provider
-  return $ mergePrgms $ map fst3 $ graphToNodes base
-
-getTBPrgm :: WDProvider -> CResT IO (GraphData TBPrgm FileImport)
-getTBPrgm WDProvider{cTBPrgm} = asCResT cTBPrgm
-
-getTBPrgmJoined :: WDProvider -> CResT IO TBPrgm
-getTBPrgmJoined provider = do
-  base <- getTBPrgm provider
-  return $ mergePrgms $ map fst3 $ graphToNodes base
-
-getTreebug :: WDProvider -> FileImport -> String -> CResT IO EvalResult
-getTreebug provider prgmName fun = do
-  base <- getTPrgm provider
-  snd <$> evalRun fun prgmName base
-
-getEvaluated :: WDProvider -> FileImport -> String -> CResT IO Integer
-getEvaluated provider prgmName fun = do
-  base <- getTPrgm provider
-  fst <$> evalRun fun prgmName base
-
-getEvalBuild :: WDProvider -> FileImport -> String -> CResT IO Val
-getEvalBuild provider prgmName fun = do
-  base <- getTPrgm provider
-  fst <$> evalBuild fun prgmName base
-
-getEvalAnnots :: WDProvider -> FileImport -> CResT IO [(Expr EvalMetaDat, Val)]
-getEvalAnnots provider prgmName = do
-  annotsGraph <- asCResT $ cAnnots provider
-  return $ fromMaybe [] $ graphLookup prgmName annotsGraph
-
-getWeb :: WDProvider -> FileImport -> String -> CResT IO String
-getWeb provider prgmName fun = do
-  base <- getTPrgm provider
-  (TupleVal _ args, _) <- evalBuild fun prgmName base
-  case H.lookup "contents" args of
-    Just (StrVal s) -> return s
-    _               -> return "";
-
-docApiBase :: IO WDProvider -> ScottyM ()
+docApiBase :: IO CTSS -> ScottyM ()
 docApiBase getProvider = do
 
   get "/api/raw" $ do

@@ -56,6 +56,16 @@ graphToNodes (g, nodeFromVertex, _) = map nodeFromVertex $ vertices g
 fmapGraph :: (Ord key) => (node1 -> node2) -> GraphData node1 key -> GraphData node2 key
 fmapGraph f = graphFromEdges . mapFst3 f . graphToNodes
 
+fmapGraphWithKey :: (Ord key) => (key -> node1 -> node2) -> GraphData node1 key -> GraphData node2 key
+fmapGraphWithKey f = graphFromEdges . mapWithKey . graphToNodes
+  where
+    mapWithKey = fmap (\(a, b, c) -> (f b a, b, c))
+
+mapMGraph :: (Ord key, Monad m) => (node1 -> m node2) -> GraphData node1 key -> m (GraphData node2 key)
+mapMGraph f nodes = do
+  nodes' <- mapMFst3 f $ graphToNodes nodes
+  return $ graphFromEdges nodes'
+
 graphLookup :: (Ord key) => key -> GraphData node key -> Maybe node
 graphLookup k (_, nodeFromVertex, vertexFromKey) = fst3 . nodeFromVertex <$> vertexFromKey k
 

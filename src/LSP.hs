@@ -21,6 +21,7 @@ import           Control.Monad.Reader          (ReaderT (runReaderT), ask)
 import           Control.Monad.State
 import           Control.Monad.Trans.Writer    (execWriter, tell)
 import           CRes                          (cresToMaybe)
+import           CtService
 import qualified Data.Map.Strict               as Map
 import           Data.Maybe
 import           Language.LSP.Protocol.Message
@@ -36,14 +37,12 @@ import           Syntax.Parsers                (mkDesCanonicalImportStr)
 import           Text.Megaparsec               (SourcePos (sourceColumn),
                                                 sourceLine, unPos)
 import           Utils
-import           WebDocs                       (WDProvider, cRaw,
-                                                emptyWDProvider, mkWDProvider)
 
 type ServeConfig = ()
-newtype ServeState = ServeState WDProvider
+newtype ServeState = ServeState CTSS
 
 newServeState :: ServeState
-newServeState = ServeState emptyWDProvider
+newServeState = ServeState emptyCTSS
 
 newServeStateVar :: IO (MVar ServeState)
 newServeStateVar = newMVar newServeState
@@ -55,8 +54,12 @@ recomputeServeState = do
   let getWorkspaceFolderPath (WorkspaceFolder uri _) = uriToFilePath uri
   let baseFiles = mapMaybe getWorkspaceFolderPath workspaceFolders ++ mapMaybe (uriToFilePath . fromNormalizedUri) (Map.keys vfsMap')
   -- TODO Support passing data from virtual files
-  provider <- liftIO $ mkWDProvider baseFiles
-  put (ServeState provider)
+
+  -- Update CTSS
+  ServeState ss1 <- get
+  ss2 <- liftIO $ ctssRead ss1{ctssBaseFileNames=baseFiles}
+  ss3 <- liftIO $ ctssBuildAll ss2
+  put (ServeState ss3)
   return ()
 
 type LSM = LspT ServeConfig (ReaderT (MVar ServeState) IO)
@@ -101,7 +104,7 @@ handlers = mconcat
           prgmName = uriToFilePath uri
       ServeState provider <- get
       prgmNameRaw <- liftIO $ mkDesCanonicalImportStr (fromJust prgmName)
-      tokens <- case cresToMaybe (cRaw provider) >>= graphLookup prgmNameRaw of
+      tokens <- case graphLookup prgmNameRaw (ctssData provider) >>= cresToMaybe . ssfRaw of
         Nothing   -> return []
         Just prgm -> return $ prgmSemanticTokens prgm
       case makeSemanticTokens defaultSemanticTokensLegend tokens of
