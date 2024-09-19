@@ -62,8 +62,7 @@ runTest runGolden fileNameStr = testCaseSteps fileNameStr $ \step -> do
   step $ printf "Read file %s..." fileNameStr
   fileName <- mkDesCanonicalImportStr fileNameStr
 
-  ctssBase <- ctssRead $ ctssBaseFiles [fileNameStr]
-  ctss <- ctssBuildAll ctssBase
+  ctss <- ctssBaseFiles [fileNameStr]
 
   res <- runCResT $ do
     _rawPrgm <- getRawPrgm ctss

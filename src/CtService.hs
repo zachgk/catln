@@ -12,7 +12,10 @@
 --------------------------------------------------------------------
 
 module CtService where
+import           Control.Concurrent      (MVar, modifyMVar_, newMVar, readMVar,
+                                          swapMVar)
 import           Control.Monad           (unless)
+import           Control.Monad.Trans     (lift)
 import           CRes
 import           Data.Graph
 import qualified Data.HashMap.Strict     as H
@@ -33,8 +36,10 @@ import           Utils
 
 type TBPrgm = Prgm TExpr EvalMetaDat
 
+newtype CTSS = CTSS (MVar CTSSDat)
+
 -- Main data type for CtService Status
-data CTSS = CTSS {
+data CTSSDat = CTSSDat {
   ctssBaseFileNames :: [String],
   ctssData          :: GraphData SSF FileImport
                                        }
@@ -49,38 +54,51 @@ data SSF = SSF {
   ssfAnnots         :: Maybe (CRes [(Expr EvalMetaDat, Val)])
                }
 
-emptyCTSS :: CTSS
-emptyCTSS = CTSS [] (graphFromEdges [])
+emptyCTSS :: IO CTSS
+emptyCTSS = do
+  v <- newMVar $ CTSSDat [] (graphFromEdges [])
+  return $ CTSS v
 
 newSSF :: CRes (RawPrgm ParseMetaDat) -> SSF
 newSSF rawPrgm = SSF rawPrgm False Nothing Nothing Nothing Nothing Nothing
 
-ctssBaseFiles :: [String] -> CTSS
-ctssBaseFiles baseFileNames = CTSS baseFileNames (graphFromEdges [])
+ctssSetFiles :: CTSS -> [String] -> IO ()
+ctssSetFiles (CTSS ssmv) baseFileNames = do
+  modifyMVar_ ssmv $ \ctss -> return ctss{ctssBaseFileNames=baseFileNames}
+  ctssRead (CTSS ssmv)
 
-ctssRead :: CTSS -> IO CTSS
-ctssRead ss@CTSS{ctssBaseFileNames, ctssData} = do
+ctssBaseFiles :: [String] -> IO CTSS
+ctssBaseFiles baseFileNames = do
+  v <- newMVar $ CTSSDat baseFileNames (graphFromEdges [])
+  let ctss = CTSS v
+  ctssRead ctss
+  return ctss
+
+ctssRead :: CTSS -> IO ()
+ctssRead (CTSS ssmv) = do
+  ss@CTSSDat{ctssBaseFileNames, ctssData} <- readMVar ssmv
   rawPrgms <- readFiles (map mkRawImportStr ctssBaseFileNames)
-  let (data', invalidations) = unzip $ map buildSSF $ graphToNodes rawPrgms
+  let (data', invalidations) = unzip $ map (buildSSF ctssData) $ graphToNodes rawPrgms
   let ss' = ss{ctssData=graphFromEdges data'}
-  return $ ctssClearInvalidations (catMaybes invalidations) ss'
+  _ <- swapMVar ssmv $ ctssClearInvalidations (catMaybes invalidations) ss'
+  return ()
   where
-    buildSSF (rawPrgm, prgmName, imports) = case graphLookup prgmName ctssData of
+    buildSSF ctssData (rawPrgm, prgmName, imports) = case graphLookup prgmName ctssData of
       Just old@SSF{ssfRaw=CRes _ oldRaw} | oldRaw == rawPrgm -> ((old, prgmName, imports), Nothing)
       Just{} -> ((newSSF $ pure rawPrgm, prgmName, imports), Just prgmName)
       Nothing -> ((newSSF $ pure rawPrgm, prgmName, imports), Nothing)
 
-ctssClearInvalidations :: [FileImport] -> CTSS -> CTSS
-ctssClearInvalidations invalidations ss@CTSS{ctssData=(g, nodeFromVertex, vertexFromKey)} = ss{ctssData=fmapGraphWithKey maybeClear $ ctssData ss}
+ctssClearInvalidations :: [FileImport] -> CTSSDat -> CTSSDat
+ctssClearInvalidations invalidations ss@CTSSDat{ctssData=(g, nodeFromVertex, vertexFromKey)} = ss{ctssData=fmapGraphWithKey maybeClear $ ctssData ss}
   where
     propagated = map (snd3 . nodeFromVertex) $ foldMap (foldMap (:[])) $ dfs (transposeG g) (mapMaybe vertexFromKey invalidations)
     maybeClear prgmName ssf = if prgmName `elem` propagated
       then newSSF (ssfRaw ssf)
       else ssf
 
-ctssBuildPagesExact :: CTSS -> GraphData SSF FileImport -> IO CTSS
+ctssBuildPagesExact :: CTSSDat -> GraphData SSF FileImport -> IO CTSSDat
 ctssBuildPagesExact ctss pages | all (ssfBuilt . fst3) (graphToNodes pages) = return ctss
-ctssBuildPagesExact ctss@CTSS{ctssData} pages = do
+ctssBuildPagesExact ctss@CTSSDat{ctssData} pages = do
   -- TODO Re-implement using mapGraphWithDeps
   p <- runCResT $ do
     rawPrgm <- asCResT $ mapMGraph ssfRaw pages
@@ -106,17 +124,24 @@ ctssBuildPagesExact ctss@CTSS{ctssData} pages = do
       unless (null notes) $ putStrLn $ prettyCNotes notes
       fail "Could not build catln service"
 
-ctssBuildFrom :: CTSS -> FileImport -> IO CTSS
-ctssBuildFrom ctss@CTSS{ctssData} src = ctssBuildPagesExact ctss (graphFilterReaches src ctssData)
+ctssBuildFrom :: CTSS -> FileImport -> IO ()
+ctssBuildFrom (CTSS ssmv) src = modifyMVar_ ssmv $ \ctss@CTSSDat{ctssData} -> do
+  ctssBuildPagesExact ctss (graphFilterReaches src ctssData)
 
-ctssBuildAll :: CTSS -> IO CTSS
-ctssBuildAll ctss@CTSS{ctssData} = ctssBuildPagesExact ctss ctssData
+ctssBuildAll :: CTSS -> IO ()
+ctssBuildAll (CTSS ssmv) = modifyMVar_ ssmv $ \ctss@CTSSDat{ctssData} -> do
+  ctssBuildPagesExact ctss ctssData
 
-ctssKeys :: CTSS -> [FileImport]
-ctssKeys CTSS{ctssData} = map snd3 $ graphToNodes ctssData
+ctssKeys :: CTSS -> IO [FileImport]
+ctssKeys (CTSS ssmv) = do
+  CTSSDat{ctssData} <- readMVar ssmv
+  return $ map snd3 $ graphToNodes ctssData
 
 ctssGet :: (SSF -> Maybe (CRes a)) -> CTSS -> CResT IO (GraphData a FileImport)
-ctssGet f CTSS{ctssData} = asCResT $ mapMGraph (requireComputed . f) ctssData
+ctssGet f (CTSS ssmv) = do
+  lift $ ctssBuildAll (CTSS ssmv)
+  CTSSDat{ctssData} <- lift $ readMVar ssmv
+  asCResT $ mapMGraph (requireComputed . f) ctssData
   where
   -- TODO Remove usage and enable live build of components
   requireComputed :: Maybe (CRes r) -> CRes r
@@ -141,7 +166,9 @@ ctssLookupReq f k ctss = do
 
 -- This does not use ctssGet because it doesn't require building
 getRawPrgm :: CTSS -> CResT IO PPrgmGraphData
-getRawPrgm CTSS{ctssData} = asCResT $ mapMGraph ssfRaw ctssData
+getRawPrgm (CTSS ssmv) = do
+  CTSSDat{ctssData} <- lift $ readMVar ssmv
+  asCResT $ mapMGraph ssfRaw ctssData
 
 getTreebug :: CTSS -> FileImport -> String -> CResT IO EvalResult
 getTreebug provider prgmName fun = do

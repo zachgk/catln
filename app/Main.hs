@@ -22,8 +22,7 @@ import           WebDocs             (docApi, docServe)
 xRun :: String -> String -> CResT IO ()
 xRun prgmName function = do
   prgmName' <- lift $ mkDesCanonicalImportStr prgmName
-  ctssBase <- lift $ ctssRead $ ctssBaseFiles [prgmName]
-  ctss <- lift $ ctssBuildAll ctssBase
+  ctss <- lift $ ctssBaseFiles [prgmName]
   returnValue <- getEvaluated ctss prgmName' function
   case returnValue of
     0 -> return ()
@@ -32,8 +31,7 @@ xRun prgmName function = do
 xBuild :: String -> String -> CResT IO ()
 xBuild prgmName function = do
   prgmName' <- lift $ mkDesCanonicalImportStr prgmName
-  ctssBase <- lift $ ctssRead $ ctssBaseFiles [prgmName]
-  ctss <- lift $ ctssBuildAll ctssBase
+  ctss <- lift $ ctssBaseFiles [prgmName]
   returnValue <- getEvalBuild ctss prgmName' function
   case returnValue of
     TupleVal _ args -> do

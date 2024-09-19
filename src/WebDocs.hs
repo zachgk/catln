@@ -69,17 +69,17 @@ filterByType name (Prgm objMap (ClassGraph classGraph) _) = Prgm objMap' classGr
 
 mkLiveWDProvider :: [String] -> IO (IO CTSS)
 mkLiveWDProvider baseFileNames = do
-  ss1 <- ctssRead $ ctssBaseFiles baseFileNames
-  ss2 <- ctssBuildAll ss1
+  ss <- ctssBaseFiles baseFileNames
+  ctssBuildAll ss
   return $ do
-    ss3 <- ctssRead ss2
-    ctssBuildAll ss3 -- TODO Remove buildAll with incremental support in CTSS
+    ctssRead ss
+    return ss
 
 mkCacheWDProvider :: [String] -> IO (IO CTSS)
 mkCacheWDProvider baseFileNames = do
-  ss1 <- ctssRead $ ctssBaseFiles baseFileNames
-  ss2 <- ctssBuildAll ss1
-  return $ return ss2
+  ss <- ctssBaseFiles baseFileNames
+  ctssBuildAll ss
+  return $ return ss
 
 docApiBase :: IO CTSS -> ScottyM ()
 docApiBase getProvider = do
@@ -93,9 +93,8 @@ docApiBase getProvider = do
 
   get "/api/toc" $ do
     provider <- liftAndCatchIO getProvider
-    resp <- liftAndCatchIO $ runCResT $ do
-      let pages = ctssKeys provider
-      return $ zip (map impDisp pages) pages
+    pages <- liftAndCatchIO $ ctssKeys provider
+    let resp = return $ zip (map impDisp pages) pages
     maybeJson resp
 
   get "/api/page" $ do

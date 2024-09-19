@@ -15,12 +15,11 @@
 
 module LSP where
 
-import           Control.Concurrent
 import           Control.Monad.IO.Class
 import           Control.Monad.Reader          (ReaderT (runReaderT), ask)
 import           Control.Monad.State
 import           Control.Monad.Trans.Writer    (execWriter, tell)
-import           CRes                          (cresToMaybe)
+import           CRes                          (CResT (runCResT), cresToMaybe)
 import           CtService
 import qualified Data.Map.Strict               as Map
 import           Data.Maybe
@@ -41,11 +40,8 @@ import           Utils
 type ServeConfig = ()
 newtype ServeState = ServeState CTSS
 
-newServeState :: ServeState
-newServeState = ServeState emptyCTSS
-
-newServeStateVar :: IO (MVar ServeState)
-newServeStateVar = newMVar newServeState
+newServeState :: IO ServeState
+newServeState = ServeState <$> emptyCTSS
 
 recomputeServeState :: LSM ()
 recomputeServeState = do
@@ -56,29 +52,13 @@ recomputeServeState = do
   -- TODO Support passing data from virtual files
 
   -- Update CTSS
-  ServeState ss1 <- get
-  ss2 <- liftIO $ ctssRead ss1{ctssBaseFileNames=baseFiles}
-  ss3 <- liftIO $ ctssBuildAll ss2
-  put (ServeState ss3)
+  ServeState ss <- lift ask
+  liftIO $ ctssSetFiles ss baseFiles
   return ()
 
-type LSM = LspT ServeConfig (ReaderT (MVar ServeState) IO)
+type LSM = LspT ServeConfig (ReaderT ServeState IO)
 
-instance MonadState ServeState LSM where
-  -- get = do
-  --   stVar <- lift ask
-  --   liftIO $ readMVar stVar
-  -- put s = do
-  --   stVar <- lift ask
-  --   _ <- liftIO $ swapMVar stVar s
-  --   return ()
-  state f = do
-    stVar <- lift ask
-    liftIO $ modifyMVar stVar $ \st -> do
-      let (a, st') = f st
-      return (st', a)
-
-runLSM :: LSM a -> MVar ServeState -> LanguageContextEnv ServeConfig -> IO a
+runLSM :: LSM a -> ServeState -> LanguageContextEnv ServeConfig -> IO a
 runLSM lsm stVar cfg = runReaderT (runLspT cfg lsm) stVar
 
 handlers :: Handlers LSM
@@ -103,11 +83,10 @@ handlers = mconcat
   , requestHandler SMethod_TextDocumentSemanticTokensFull $ \req responder -> do
       let TRequestMessage _ _ _ (SemanticTokensParams _ _ (TextDocumentIdentifier uri)) = req
           prgmName = uriToFilePath uri
-      ServeState provider <- get
+      ServeState ctss <- lift ask
       prgmNameRaw <- liftIO $ mkDesCanonicalImportStr (fromJust prgmName)
-      tokens <- case graphLookup prgmNameRaw (ctssData provider) >>= cresToMaybe . ssfRaw of
-        Nothing   -> return []
-        Just prgm -> return $ prgmSemanticTokens prgm
+      rawPrgms <- liftIO $ fmap cresToMaybe $ runCResT $ getRawPrgm ctss
+      let tokens = maybe [] prgmSemanticTokens (rawPrgms >>= graphLookup prgmNameRaw)
       case makeSemanticTokens defaultSemanticTokensLegend tokens of
         Right encoded -> do
           responder (Right $ InL encoded)
@@ -127,7 +106,7 @@ prgmSemanticTokens prgm = execWriter $ mapMetaRawPrgmM f prgm
 
 lspRun :: IO Int
 lspRun = do
-  st <- newServeStateVar
+  st <- newServeState
   runServer $ ServerDefinition
     { onConfigurationChange = const $ const $ Right ()
     , defaultConfig = ()

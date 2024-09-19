@@ -28,8 +28,7 @@ findPrgms = do
   fileNames <- findCt classGraphDir
   prgms <- runCResT $ do
     forM fileNames $ \fileName -> do
-      ctssBase <- lift $ ctssRead $ ctssBaseFiles [fileName]
-      ctss <- lift $ ctssBuildAll ctssBase
+      ctss <- lift $ ctssBaseFiles [fileName]
       tprgm <- getTPrgm ctss
       return (fileName, mconcat $ map (mapMetaPrgm clearMetaDat . fst3) (graphToNodes tprgm))
   return (H.insert "empty" mempty $ H.fromList $ fromCRes prgms)
