@@ -61,7 +61,6 @@ runTest :: Bool -> String -> TestTree
 runTest runGolden fileNameStr = testCaseSteps fileNameStr $ \step -> do
   step $ printf "Read file %s..." fileNameStr
   fileName <- mkDesCanonicalImportStr fileNameStr
-
   ctss <- ctssBaseFiles [fileNameStr]
 
   res <- runCResT $ do

@@ -142,10 +142,15 @@ ctssGet f (CTSS ssmv) = do
   lift $ ctssBuildAll (CTSS ssmv)
   CTSSDat{ctssData} <- lift $ readMVar ssmv
   asCResT $ mapMGraph (requireComputed . f) ctssData
-  where
-  -- TODO Remove usage and enable live build of components
-  requireComputed :: Maybe (CRes r) -> CRes r
-  requireComputed = fromMaybe (CErr [MkCNote $ GenCErr Nothing "Value not computed in catln service"])
+
+ctssGetFrom :: (SSF -> Maybe (CRes a)) -> FileImport -> CTSS -> CResT IO (GraphData a FileImport)
+ctssGetFrom f prgmName (CTSS ssmv) = do
+  lift $ ctssBuildFrom (CTSS ssmv) prgmName
+  CTSSDat{ctssData} <- lift $ readMVar ssmv
+  asCResT $ mapMGraph (requireComputed . f) (graphFilterReaches prgmName ctssData)
+
+requireComputed :: Maybe (CRes r) -> CRes r
+requireComputed = fromMaybe (CErr [MkCNote $ GenCErr Nothing "Value not computed in catln service"])
 
 ctssGetJoined :: (Monoid a) => (SSF -> Maybe (CRes a)) -> CTSS -> CResT IO a
 ctssGetJoined f ctss = do
@@ -154,7 +159,7 @@ ctssGetJoined f ctss = do
 
 ctssLookup :: (SSF -> Maybe (CRes a)) -> FileImport -> CTSS -> CResT IO (Maybe a)
 ctssLookup f k ctss = do
-  graph <- ctssGet f ctss
+  graph <- ctssGetFrom f k ctss
   return $ graphLookup k graph
 
 ctssLookupReq :: (SSF -> Maybe (CRes a)) -> FileImport -> CTSS -> CResT IO a
@@ -171,28 +176,28 @@ getRawPrgm (CTSS ssmv) = do
   asCResT $ mapMGraph ssfRaw ctssData
 
 getTreebug :: CTSS -> FileImport -> String -> CResT IO EvalResult
-getTreebug provider prgmName fun = do
-  base <- getTPrgm provider
+getTreebug ctss prgmName fun = do
+  base <- ctssGetFrom ssfTPrgm prgmName ctss
   snd <$> evalRun fun prgmName base
 
 getEvaluated :: CTSS -> FileImport -> String -> CResT IO Integer
-getEvaluated provider prgmName fun = do
-  base <- getTPrgm provider
+getEvaluated ctss prgmName fun = do
+  base <- ctssGetFrom ssfTPrgm prgmName ctss
   fst <$> evalRun fun prgmName base
 
 getEvalBuild :: CTSS -> FileImport -> String -> CResT IO Val
-getEvalBuild provider prgmName fun = do
-  base <- getTPrgm provider
+getEvalBuild ctss prgmName fun = do
+  base <- ctssGetFrom ssfTPrgm prgmName ctss
   fst <$> evalBuild fun prgmName base
 
 getEvalAnnots :: CTSS -> FileImport -> CResT IO [(Expr EvalMetaDat, Val)]
 getEvalAnnots ctss prgmName = do
-  annotsGraph <- ctssGet ssfAnnots ctss
+  annotsGraph <- ctssGetFrom ssfAnnots prgmName ctss
   return $ fromMaybe [] $ graphLookup prgmName annotsGraph
 
 getWeb :: CTSS -> FileImport -> String -> CResT IO String
-getWeb provider prgmName fun = do
-  base <- getTPrgm provider
+getWeb ctss prgmName fun = do
+  base <- ctssGetFrom ssfTPrgm prgmName ctss
   (TupleVal _ args, _) <- evalBuild fun prgmName base
   case H.lookup "contents" args of
     Just (StrVal s) -> return s
