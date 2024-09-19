@@ -41,6 +41,7 @@ data CTSS = CTSS {
 
 data SSF = SSF {
   ssfRaw            :: CRes (RawPrgm ParseMetaDat),
+  ssfBuilt          :: Bool,
   ssfDes            :: Maybe (CRes (Prgm Expr ParseMetaDat)),
   ssfTPrgmWithTrace :: Maybe (CRes (TPrgm, VPrgm, TraceConstrain)),
   ssfTPrgm          :: Maybe (CRes TPrgm),
@@ -52,7 +53,7 @@ emptyCTSS :: CTSS
 emptyCTSS = CTSS [] (graphFromEdges [])
 
 newSSF :: CRes (RawPrgm ParseMetaDat) -> SSF
-newSSF rawPrgm = SSF rawPrgm Nothing Nothing Nothing Nothing Nothing
+newSSF rawPrgm = SSF rawPrgm False Nothing Nothing Nothing Nothing Nothing
 
 ctssBaseFiles :: [String] -> CTSS
 ctssBaseFiles baseFileNames = CTSS baseFileNames (graphFromEdges [])
@@ -77,17 +78,19 @@ ctssClearInvalidations invalidations ss@CTSS{ctssData=(g, nodeFromVertex, vertex
       then newSSF (ssfRaw ssf)
       else ssf
 
-ctssBuildAll :: CTSS -> IO CTSS
-ctssBuildAll ctss@CTSS{ctssData} = do
+ctssBuildPagesExact :: CTSS -> GraphData SSF FileImport -> IO CTSS
+ctssBuildPagesExact ctss pages | all (ssfBuilt . fst3) (graphToNodes pages) = return ctss
+ctssBuildPagesExact ctss@CTSS{ctssData} pages = do
   -- TODO Re-implement using mapGraphWithDeps
   p <- runCResT $ do
-    rawPrgm <- asCResT $ mapMGraph ssfRaw ctssData
+    rawPrgm <- asCResT $ mapMGraph ssfRaw pages
     prgm <- desFiles rawPrgm
     let withTrace = typecheckPrgmWithTrace prgm
     let tprgm = fmap (fmapGraph fst3) withTrace
     let tbprgm = tprgm >>= evalBuildAll
     let annots' = tprgm >>= (\jtprgm -> fmap graphFromEdges $ traverse (\(_, n, deps) -> (, n, deps) <$> evalAnnots n jtprgm) $  graphToNodes jtprgm)
     let ctssData' = fmapGraphWithKey (\prgmName ssf -> ssf{
+          ssfBuilt=True,
           ssfDes=pure <$> graphLookup prgmName prgm,
           ssfTPrgmWithTrace=mapM (graphLookup prgmName) withTrace,
           ssfTPrgm=mapM (graphLookup prgmName) tprgm,
@@ -102,6 +105,12 @@ ctssBuildAll ctss@CTSS{ctssData} = do
     CErr notes -> do
       unless (null notes) $ putStrLn $ prettyCNotes notes
       fail "Could not build catln service"
+
+ctssBuildFrom :: CTSS -> FileImport -> IO CTSS
+ctssBuildFrom ctss@CTSS{ctssData} src = ctssBuildPagesExact ctss (graphFilterReaches src ctssData)
+
+ctssBuildAll :: CTSS -> IO CTSS
+ctssBuildAll ctss@CTSS{ctssData} = ctssBuildPagesExact ctss ctssData
 
 ctssKeys :: CTSS -> [FileImport]
 ctssKeys CTSS{ctssData} = map snd3 $ graphToNodes ctssData

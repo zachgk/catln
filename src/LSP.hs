@@ -70,7 +70,8 @@ instance MonadState ServeState LSM where
   --   liftIO $ readMVar stVar
   -- put s = do
   --   stVar <- lift ask
-  --   liftIO $ putMVar stVar s
+  --   _ <- liftIO $ swapMVar stVar s
+  --   return ()
   state f = do
     stVar <- lift ask
     liftIO $ modifyMVar stVar $ \st -> do

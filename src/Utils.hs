@@ -69,6 +69,12 @@ mapMGraph f nodes = do
 graphLookup :: (Ord key) => key -> GraphData node key -> Maybe node
 graphLookup k (_, nodeFromVertex, vertexFromKey) = fst3 . nodeFromVertex <$> vertexFromKey k
 
+graphFilterReaches :: (Ord key) => key -> GraphData node key -> GraphData node key
+graphFilterReaches k gd@(g, _, vertexFromKey) = case vertexFromKey k of
+  Just kv -> let keep = S.fromList $ reachable g kv
+              in graphFromEdges $ filter ((`S.member` keep) . fromJust . vertexFromKey . snd3) $ graphToNodes gd
+  Nothing -> graphFromEdges []
+
 -- TODO Change function to ([(n1, [n2])] -> [n2]) to recognize each input node has it's own direct imports
 mapGraphWithDeps :: (Monad m, Hashable k, Ord k) => ([n1] -> [n2] -> m [n2]) -> GraphData n1 k -> m (GraphData n2 k)
 mapGraphWithDeps f g@(graph, fromNode, fromName) = do
