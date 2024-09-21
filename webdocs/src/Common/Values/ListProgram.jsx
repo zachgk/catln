@@ -71,13 +71,13 @@ function ListProgram() {
 }
 
 function ShowList(props) {
-  let [objMap, classMap] = props.data;
+  let {prgmObjMap, prgmCG} = props.data;
 
   return (
     <div>
-      <ObjMap objMap={objMap} Meta={Meta}/>
+      <ObjMap objMap={prgmObjMap} Meta={Meta}/>
       <br /> <br /> <br />
-      <ClassMap classMap={classMap} />
+      <ClassMap classMap={prgmCG} />
     </div>
   );
 }

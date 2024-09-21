@@ -37,7 +37,7 @@ showObjArr env = mapMetaObjArrM (showM env) Nothing
 
 showCon :: FEnv -> VConstraint -> SConstraint
 showCon env@FEnv{feUnionAllObjs} con = case runIdentity $ mapMCon (return . descriptor env) con of
-  con'@Constraint{conDat=BoundedByObjs i p _} -> con'{conDat=BoundedByObjs i p (stypeAct $ fromJust $ tcreToMaybe $ descriptor env feUnionAllObjs)}
+  con'@Constraint{conDat=BoundedByObjs i p _} -> con'{conDat=BoundedByObjs i p (maybe BottomType stypeAct $ tcreToMaybe $ descriptor env feUnionAllObjs)}
   con' -> con'
 
 showConstraints :: FEnv -> [VConstraint] -> [SConstraint]

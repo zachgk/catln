@@ -78,6 +78,7 @@ executables:
       # - -with-rtsopts=-N
     - -Wall
     - -Werror
+    - -threaded
     dependencies:
     - catln
 
@@ -93,5 +94,6 @@ tests:
       # - -with-rtsopts=-N
       - -Wall
       - -Werror
+      - -threaded
     # dependencies:
       # - catln

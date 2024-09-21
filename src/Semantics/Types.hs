@@ -680,6 +680,7 @@ compactOverlapping typeEnv = joinUnionTypeByName . fmap ((aux . reverse) . aux) 
       else partial : aux rest
 
     -- checks if a partial is covered by the candidate from rest
+    partialAlreadyCovered PartialType{ptArgMode=PtArgAny} PartialType{ptArgMode=PtArgAny} = False -- Don't count any coverings because it loses type information
     partialAlreadyCovered partial restPartial = isSubtypePartialOf typeEnv partial (singletonType restPartial)
 
 -- |
@@ -815,6 +816,8 @@ intersectAllTypes typeEnv types = foldr1 (intersectTypes typeEnv) types
 intersectPartialsBase :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Maybe (TypeVarArgEnv, [PartialType])
 intersectPartialsBase _ _ PartialType{ptName=aName} PartialType{ptName=bName} | aName /= bName = Nothing
 intersectPartialsBase _ _ PartialType{ptArgs=aArgs, ptArgMode=aArgMode} PartialType{ptArgs=bArgs, ptArgMode=bArgMode} | aArgMode == PtArgExact && bArgMode == PtArgExact && H.keysSet aArgs /= H.keysSet bArgs = Nothing
+intersectPartialsBase _ _ PartialType{ptArgs=aArgs, ptArgMode=PtArgExact} PartialType{ptArgs=bArgs, ptArgMode=PtArgAny} | not (H.keysSet bArgs `S.isSubsetOf` H.keysSet aArgs) = Nothing
+intersectPartialsBase _ _ PartialType{ptArgs=aArgs, ptArgMode=PtArgAny} PartialType{ptArgs=bArgs, ptArgMode=PtArgExact} | not (H.keysSet aArgs `S.isSubsetOf` H.keysSet bArgs) = Nothing
 intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds aArgMode) (PartialType _ bVars bArgs bPreds bArgMode) = do
   (varsVaenvs, vars') <- unzip <$> intersectMap H.empty aVars bVars
   (argsVaenvs, args') <- unzip <$> intersectMap vaenv aArgs bArgs
