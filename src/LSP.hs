@@ -29,6 +29,7 @@ import           Language.LSP.Server
 import           Language.LSP.VFS
 import           MapMeta                       (ExprMetaType (ExprMetaVal),
                                                 MetaType (ExprMeta))
+import           Semantics                     (buildCtssConfig)
 import           Semantics.Prgm                (getMetaPos)
 import           Syntax.Ct.MapRawMeta          (mapMetaRawPrgmM)
 import           Syntax.Ct.Parser.Syntax       (PPrgm)
@@ -41,7 +42,7 @@ type ServeConfig = ()
 newtype ServeState = ServeState CTSS
 
 newServeState :: IO ServeState
-newServeState = ServeState <$> emptyCTSS
+newServeState = ServeState <$> emptyCTSS buildCtssConfig
 
 recomputeServeState :: LSM ()
 recomputeServeState = do
@@ -84,7 +85,7 @@ handlers = mconcat
       let TRequestMessage _ _ _ (SemanticTokensParams _ _ (TextDocumentIdentifier uri)) = req
           prgmName = uriToFilePath uri
       ServeState ctss <- lift ask
-      prgmNameRaw <- liftIO $ mkDesCanonicalImportStr (fromJust prgmName)
+      prgmNameRaw <- liftIO $ mkDesCanonicalImportStr buildCtssConfig (fromJust prgmName)
       rawPrgms <- liftIO $ fmap cresToMaybe $ runCResT $ getRawPrgm ctss
       let tokens = maybe [] prgmSemanticTokens (rawPrgms >>= graphLookup prgmNameRaw)
       case makeSemanticTokens defaultSemanticTokensLegend tokens of

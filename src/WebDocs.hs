@@ -32,6 +32,7 @@ import           Eval                          (evalAllTargetModes, evalAnnots,
                                                 prgmFromGraphData)
 import           MapMeta                       (addMetaID, interleaveMeta,
                                                 interleavePrgm, zip3MetaFun)
+import           Semantics                     (buildCtssConfig)
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Desugarf            (desFinalPasses, desPrgm)
@@ -69,15 +70,16 @@ filterByType name (Prgm objMap (ClassGraph classGraph) _) = Prgm objMap' classGr
 
 mkLiveWDProvider :: [String] -> IO (IO CTSS)
 mkLiveWDProvider baseFileNames = do
-  ss <- ctssBaseFiles baseFileNames
+  ss <- ctssBaseFiles buildCtssConfig baseFileNames
   ctssBuildAll ss
   return $ do
     ctssRead ss
+    ctssBuildAll ss -- TODO Remove when fixing incremental build
     return ss
 
 mkCacheWDProvider :: [String] -> IO (IO CTSS)
 mkCacheWDProvider baseFileNames = do
-  ss <- ctssBaseFiles baseFileNames
+  ss <- ctssBaseFiles buildCtssConfig baseFileNames
   ctssBuildAll ss
   return $ return ss
 
@@ -101,7 +103,7 @@ docApiBase getProvider = do
     provider <- liftAndCatchIO getProvider
     prgmName <- param "prgmName"
     resp <- liftAndCatchIO $ runCResT $ do
-      prgmName' <- lift $ mkDesCanonicalImportStr prgmName
+      prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
       rawPrgm' <- ctssLookupReq (Just . ssfRaw) prgmName' provider
       tprgms <- getTPrgm provider
       maybeTPrgmRes <- lift $ runCResT $ do
@@ -150,7 +152,7 @@ docApiBase getProvider = do
     provider <- liftAndCatchIO getProvider
     prgmName <- param "prgmName"
     resp <- liftAndCatchIO $ runCResT $ do
-      prgmName' <- lift $ mkDesCanonicalImportStr prgmName
+      prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
       (tprgm, vprgm, _tr) <- ctssLookupReq ssfTPrgmWithTrace prgmName' provider
       return (tprgm, vprgm)
     maybeJson resp
@@ -160,7 +162,7 @@ docApiBase getProvider = do
     prgmName <- param "prgmName"
     pnt <- param "pnt"
     resp <- liftAndCatchIO $ runCResT $ do
-      prgmName' <- lift $ mkDesCanonicalImportStr prgmName
+      prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
       (_, _, tr) <- ctssLookupReq ssfTPrgmWithTrace prgmName' provider
       return $ flipTraceConstrain $ filterTraceConstrain tr pnt
     maybeJson resp
@@ -188,7 +190,7 @@ docApiBase getProvider = do
     prgmName <- param "prgmName"
     fun <- param "function" `rescue` (\_ -> return "main")
     resp <- liftAndCatchIO $ runCResT $ do
-      prgmName' <- lift $ mkDesCanonicalImportStr prgmName
+      prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
       getTreebug provider prgmName' fun
     maybeJson resp
 
@@ -197,7 +199,7 @@ docApiBase getProvider = do
     prgmName <- param "prgmName"
     fun <- param "function" `rescue` (\_ -> return "main")
     resp <- liftAndCatchIO $ runCResT $ do
-      prgmName' <- lift $ mkDesCanonicalImportStr prgmName
+      prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
       getEvaluated provider prgmName' fun
     maybeJson resp
 
@@ -206,7 +208,7 @@ docApiBase getProvider = do
     prgmName <- param "prgmName"
     fun <- param "function" `rescue` (\_ -> return "main")
     resp <- liftAndCatchIO $ runCResT $ do
-      prgmName' <- lift $ mkDesCanonicalImportStr prgmName
+      prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
       getEvalBuild provider prgmName' fun
     maybeJson resp
 
@@ -215,7 +217,7 @@ docApiBase getProvider = do
     prgmName <- param "prgmName"
     fun <- param "function" `rescue` (\_ -> return "main")
     maybeBuild <- liftAndCatchIO $ runCResT $ do
-      prgmName' <- lift $ mkDesCanonicalImportStr prgmName
+      prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
       getWeb provider prgmName' fun
     case maybeBuild of
       CRes notes build -> do

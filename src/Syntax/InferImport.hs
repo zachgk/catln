@@ -16,6 +16,7 @@ import qualified Data.HashMap.Strict as H
 import           Data.List
 import           Data.List.Split
 import           Data.Maybe
+import           Semantics
 import           Semantics.Prgm
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Prgm
@@ -68,14 +69,18 @@ dirParser imp = case exprAppliedArgs imp of
     return (dirPrgm, map (mkRawFileImport . rawStr) $ catMaybes files')
   _ -> undefined
 
-inferRawImportStr :: Maybe FileImport -> String -> IO (RawExpr ())
-inferRawImportStr caller name = do
+inferRawImportStr :: CTSSConfig -> Maybe FileImport -> String -> IO (RawExpr ())
+inferRawImportStr config caller name = do
+  homeDir <- getHomeDirectory
+  stackPath <- case joinPath [ctssStackPath config, name] of
+    '~':'/':p -> return $ joinPath [homeDir, p]
+    p         -> return p
   let paths = if isAbsolute name
         then [name]
-        else [maybe name (\p -> joinPath [p, name]) (caller >>= impDir), joinPath ["stack", name]]
+        else [maybe name (\p -> joinPath [p, name]) (caller >>= impDir), stackPath]
   name' <- findExistingPath paths
   case name' of
-    Nothing -> fail $ printf "Could not find file or directory %s" name
+    Nothing -> fail $ printf "Could not find file or directory %s. Tried paths %s" name (show paths)
     Just name'' -> do
       isFile <- doesFileExist name''
       if isFile

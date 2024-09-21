@@ -24,6 +24,7 @@ import           Data.Graph
 import qualified Data.HashMap.Strict     as H
 import           Data.List
 import           MapMeta                 (addMetaID)
+import           Semantics
 import           Semantics.Prgm
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Desugarf.Expr (desFileImport)
@@ -47,11 +48,11 @@ importParsers = H.fromList [
                              ]
 
 -- Processes an import, producing the rawImpAbs and rawImpDisp
-canonicalImport :: Maybe FileImport -> RawFileImport -> IO FileImport
-canonicalImport caller imp@AFileImport{impAbs=(RawCExpr _ (CStr name))} = do
-  inferred <- inferRawImportStr caller name
-  canonicalImport caller imp{impAbs=inferred}
-canonicalImport caller imp = case maybeExprPath $ impAbs imp of
+canonicalImport :: CTSSConfig -> Maybe FileImport -> RawFileImport -> IO FileImport
+canonicalImport config caller imp@AFileImport{impAbs=(RawCExpr _ (CStr name))} = do
+  inferred <- inferRawImportStr config caller name
+  canonicalImport config caller imp{impAbs=inferred}
+canonicalImport _ caller imp = case maybeExprPath $ impAbs imp of
   Nothing -> fail $ printf "Invalid import %s must be string or oject" (show imp)
   Just _ -> do
     impDir' <- case (calledDir', disp') of
@@ -68,8 +69,8 @@ canonicalImport caller imp = case maybeExprPath $ impAbs imp of
 mkRawImportStr :: String -> RawFileImport
 mkRawImportStr = mkRawFileImport . rawStr
 
-mkDesCanonicalImportStr :: String -> IO FileImport
-mkDesCanonicalImportStr = canonicalImport Nothing . mkRawImportStr
+mkDesCanonicalImportStr :: CTSSConfig -> String -> IO FileImport
+mkDesCanonicalImportStr config = canonicalImport config Nothing . mkRawImportStr
 
 readImport :: FileImport -> ImportParseResult
 readImport imp = case maybeExprPath (impAbs imp) of
@@ -79,14 +80,14 @@ readImport imp = case maybeExprPath (impAbs imp) of
     -- TODO Modify the ImportParseResult to CResT to report back parse errors
     Just parser -> parser $ impAbs imp
 
-processParsed :: FileImport -> (RawPrgm (), [RawFileImport]) -> IO (GraphNodes (RawPrgm ()) FileImport, [FileImport])
-processParsed imp (prgm@(RawPrgm prgmImports statements), extraImports) = do
+processParsed :: CTSSConfig -> FileImport -> (RawPrgm (), [RawFileImport]) -> IO (GraphNodes (RawPrgm ()) FileImport, [FileImport])
+processParsed config imp (prgm@(RawPrgm prgmImports statements), extraImports) = do
   let includeCore = not (rawPrgmHasAnnot prgm noCoreAnnot)
   let prgmImports' = if includeCore && not ("core" `isInfixOf` name)
       then mkRawFileImport (rawStr "core") : prgmImports
       else prgmImports
-  prgmImports'' <- mapM (canonicalImport (Just imp)) prgmImports'
-  extraImports' <- mapM (canonicalImport (Just imp)) extraImports
+  prgmImports'' <- mapM (canonicalImport config (Just imp)) prgmImports'
+  extraImports' <- mapM (canonicalImport config (Just imp)) extraImports
   let totalImports = extraImports' ++ prgmImports''
   let prgm' = RawPrgm prgmImports' statements
   prgm'' <- mapMetaRawPrgmM addMetaID prgm'
@@ -97,17 +98,17 @@ processParsed imp (prgm@(RawPrgm prgmImports statements), extraImports) = do
       TupleApply _ _ (EAppArg ObjArr{oaArr=Just (Just (CExpr _ (CStr n)), _)}) -> n
       _ -> ""
 
-parseFile :: RawFileImport -> CResT IO (GraphNodes (RawPrgm ()) FileImport)
-parseFile imp = do
-  imp' <- lift $ canonicalImport Nothing imp
+parseFile :: CTSSConfig -> RawFileImport -> CResT IO (GraphNodes (RawPrgm ()) FileImport)
+parseFile config imp = do
+  imp' <- lift $ canonicalImport config Nothing imp
   r <- lift $ readImport imp'
-  p <- lift $ processParsed imp' r
+  p <- lift $ processParsed config imp' r
   return $ fst p
 
 -- TODO Change readImport, then make this return GraphData of CRes
-readFiles :: [RawFileImport] -> IO (GraphData (RawPrgm ()) FileImport)
-readFiles initialImps = do
-  initialImps' <- mapM (canonicalImport Nothing) initialImps
+readFiles :: CTSSConfig -> [RawFileImport] -> IO (GraphData (RawPrgm ()) FileImport)
+readFiles config initialImps = do
+  initialImps' <- mapM (canonicalImport config Nothing) initialImps
   res <- aux [] S.empty initialImps'
   return $ graphFromEdges res
   where
@@ -118,6 +119,6 @@ readFiles initialImps = do
         then aux acc visited restToVisit
         else do
           r <- readImport nextToVisit
-          (newPrgm, newToVisit) <- processParsed nextToVisit r
+          (newPrgm, newToVisit) <- processParsed config nextToVisit r
           let restToVisit' = newToVisit ++ restToVisit
           aux (newPrgm : acc) (S.insert nextToVisit visited) restToVisit'

@@ -24,6 +24,7 @@ import           Eval                    (evalAnnots, evalBuild, evalBuildAll,
                                           evalRun)
 import           Eval.Common             (EvalMetaDat, EvalResult, TExpr,
                                           Val (StrVal, TupleVal))
+import           Semantics               (CTSSConfig)
 import           Semantics.Prgm
 import           Syntax.Ct.Desugarf      (desFiles)
 import           Syntax.Ct.Parser.Syntax
@@ -40,6 +41,7 @@ newtype CTSS = CTSS (MVar CTSSDat)
 
 -- Main data type for CtService Status
 data CTSSDat = CTSSDat {
+  ctssConfig        :: CTSSConfig,
   ctssBaseFileNames :: [String],
   ctssData          :: GraphData SSF FileImport
                                        }
@@ -54,9 +56,9 @@ data SSF = SSF {
   ssfAnnots         :: Maybe (CRes [(Expr EvalMetaDat, Val)])
                }
 
-emptyCTSS :: IO CTSS
-emptyCTSS = do
-  v <- newMVar $ CTSSDat [] (graphFromEdges [])
+emptyCTSS :: CTSSConfig -> IO CTSS
+emptyCTSS config = do
+  v <- newMVar $ CTSSDat config [] (graphFromEdges [])
   return $ CTSS v
 
 newSSF :: CRes (RawPrgm ParseMetaDat) -> SSF
@@ -67,17 +69,17 @@ ctssSetFiles (CTSS ssmv) baseFileNames = do
   modifyMVar_ ssmv $ \ctss -> return ctss{ctssBaseFileNames=baseFileNames}
   ctssRead (CTSS ssmv)
 
-ctssBaseFiles :: [String] -> IO CTSS
-ctssBaseFiles baseFileNames = do
-  v <- newMVar $ CTSSDat baseFileNames (graphFromEdges [])
+ctssBaseFiles :: CTSSConfig -> [String] -> IO CTSS
+ctssBaseFiles config baseFileNames = do
+  v <- newMVar $ CTSSDat config baseFileNames (graphFromEdges [])
   let ctss = CTSS v
   ctssRead ctss
   return ctss
 
 ctssRead :: CTSS -> IO ()
 ctssRead (CTSS ssmv) = do
-  ss@CTSSDat{ctssBaseFileNames, ctssData} <- readMVar ssmv
-  rawPrgms <- readFiles (map mkRawImportStr ctssBaseFileNames)
+  ss@CTSSDat{ctssConfig, ctssBaseFileNames, ctssData} <- readMVar ssmv
+  rawPrgms <- readFiles ctssConfig (map mkRawImportStr ctssBaseFileNames)
   let (data', invalidations) = unzip $ map (buildSSF ctssData) $ graphToNodes rawPrgms
   let ss' = ss{ctssData=graphFromEdges data'}
   _ <- swapMVar ssmv $ ctssClearInvalidations (catMaybes invalidations) ss'

@@ -13,6 +13,7 @@ import           Data.List           (isSuffixOf)
 import           Data.Maybe
 import qualified Data.Text.Lazy      as T
 import           Eval
+import           Semantics
 import           Semantics.Prgm
 import           Syntax.Parsers      (mkDesCanonicalImportStr)
 import           System.Directory    (createDirectoryIfMissing, doesFileExist,
@@ -60,8 +61,8 @@ runGoldenTest goldenType goldenDir _fileNameStr prgms step = do
 runTest :: Bool -> String -> TestTree
 runTest runGolden fileNameStr = testCaseSteps fileNameStr $ \step -> do
   step $ printf "Read file %s..." fileNameStr
-  fileName <- mkDesCanonicalImportStr fileNameStr
-  ctss <- ctssBaseFiles [fileNameStr]
+  fileName <- mkDesCanonicalImportStr testCtssConfig fileNameStr
+  ctss <- ctssBaseFiles testCtssConfig [fileNameStr]
 
   res <- runCResT $ do
     _rawPrgm <- getRawPrgm ctss

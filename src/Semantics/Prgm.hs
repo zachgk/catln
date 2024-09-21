@@ -115,7 +115,7 @@ data AFileImport em = AFileImport {
   impDisp      :: Maybe String,
   impCalledDir :: Maybe FilePath,
   impDir       :: Maybe FilePath
-  } deriving (Show, Generic, ToJSON)
+  } deriving (Generic, ToJSON)
 type FileImport = AFileImport (Expr ())
 
 instance (Eq em) => Eq (AFileImport em) where
@@ -127,6 +127,8 @@ instance (Ord em) => Ord (AFileImport em) where
 instance (Hashable em) => Hashable (AFileImport em) where
   hashWithSalt s a = s `hashWithSalt` impAbs a
 
+instance (Show em) => Show (AFileImport em) where
+  show imp = show $ impAbs imp
 
 type ExprCond e m = Maybe (e m)
 

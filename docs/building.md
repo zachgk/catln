@@ -15,9 +15,13 @@ To install the Catln compiler, begin by checking out the Catln repository. I wil
 ```bash
 cd $CATLN_HOME
 stack install
+mkdir -p ~/.catln
+ln -s $CATLN_HOME/stack ~/.catln/stack
 ```
 
-This installs Catln to `~/.local/bin/catln`. You may have to add `~/.local/bin` to your path in order to run catln. Due to current limitations, the catln compiler must be run when your current directory is `$CATLN_HOME` in order to find the catln stack and core library.
+This installs Catln to `~/.local/bin/catln`. You may have to add `~/.local/bin` to your path in order to run catln.
+
+It also sets up your home directory to reference the installed catln stack, to find core libraries and packages.
 
 You can determine the available options for catln by running `catln --help`.
 

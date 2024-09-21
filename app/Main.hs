@@ -3,6 +3,7 @@ module Main where
 
 import           CRes
 import           Options.Applicative
+import           Semantics           (buildCtssConfig)
 import           Syntax.Ct.Formatter (formatRootPrgm)
 import           Syntax.Parsers      (mkDesCanonicalImportStr, mkRawImportStr,
                                       parseFile)
@@ -21,8 +22,8 @@ import           WebDocs             (docApi, docServe)
 
 xRun :: String -> String -> CResT IO ()
 xRun prgmName function = do
-  prgmName' <- lift $ mkDesCanonicalImportStr prgmName
-  ctss <- lift $ ctssBaseFiles [prgmName]
+  prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
+  ctss <- lift $ ctssBaseFiles buildCtssConfig [prgmName]
   returnValue <- getEvaluated ctss prgmName' function
   case returnValue of
     0 -> return ()
@@ -30,8 +31,8 @@ xRun prgmName function = do
 
 xBuild :: String -> String -> CResT IO ()
 xBuild prgmName function = do
-  prgmName' <- lift $ mkDesCanonicalImportStr prgmName
-  ctss <- lift $ ctssBaseFiles [prgmName]
+  prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
+  ctss <- lift $ ctssBaseFiles buildCtssConfig [prgmName]
   returnValue <- getEvalBuild ctss prgmName' function
   case returnValue of
     TupleVal _ args -> do
@@ -52,7 +53,7 @@ xDoc prgmNames cached apiOnly = if apiOnly
 
 xConvert :: String -> Maybe String -> CResT IO ()
 xConvert prgmName _outFname = do
-  (prgm, _fileName, _) <- parseFile $ mkRawImportStr prgmName
+  (prgm, _fileName, _) <- parseFile buildCtssConfig $ mkRawImportStr prgmName
   -- TODO Print to file if outFname
   let prgm' = formatRootPrgm prgm
   lift $ print prgmName
@@ -65,7 +66,7 @@ xLsp = do
 
 xFmt :: String -> CResT IO ()
 xFmt prgmName = do
-  (prgm, _, _) <- parseFile $ mkRawImportStr prgmName
+  (prgm, _, _) <- parseFile buildCtssConfig $ mkRawImportStr prgmName
   let prgm' = formatRootPrgm prgm
   lift $ writeFile prgmName prgm'
 

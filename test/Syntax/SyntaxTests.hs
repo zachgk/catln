@@ -5,6 +5,7 @@ import           Control.Monad
 import           CRes                (CResT (runCResT), fromCRes)
 import qualified Data.HashMap.Strict as H
 import           Hedgehog
+import           Semantics
 import           Semantics.Prgm
 import           Syntax.Ct.Builder   (rawStr)
 import           Syntax.Ct.Formatter (formatRootPrgm)
@@ -24,7 +25,7 @@ findPrgms (extension, prgmDir) = do
   fileNames <- filesWithExtension extension prgmDir
   prgms <- runCResT $ do
     forM fileNames $ \fileName -> do
-      (prgm, _, _) <- parseFile $ mkRawFileImport $ rawStr fileName
+      (prgm, _, _) <- parseFile testCtssConfig $ mkRawFileImport $ rawStr fileName
       return (fileName, prgm)
   return $ H.fromList $ fromCRes prgms
 
