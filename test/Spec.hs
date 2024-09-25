@@ -9,7 +9,6 @@ import           Typecheck.TypeCheckTests (typecheckTests)
 main :: IO ()
 main = do
   integrationTests' <- integrationTests
-  typeTests' <- typeTests
   syntaxTests' <- syntaxTests
-  let catlnTests = testGroup "CatlnTests" [integrationTests', typeTests', typecheckTests, syntaxTests']
+  let catlnTests = testGroup "CatlnTests" [integrationTests', typeTests, typecheckTests, syntaxTests']
   defaultMain catlnTests

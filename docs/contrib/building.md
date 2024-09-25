@@ -45,6 +45,14 @@ stack repl
 *...> test
 ```
 
+To rerun a property test, use:
+
+```
+stack test --ta '--hedgehog-replay "1:a2 Seed 10220680066336263475 12463056215188250787" -p "propCompactIdempotent"'
+```
+
+You can also use a retest similar to that defined in TypesTests from the REPL.
+
 ### Webdocs
 
 Webdocs can be built using the standard way described in the [main building document](../building.md). In addition, another strategy for building webdocs can be done during development. It benefits from being somewhat faster to run, being runnable from the REPL without building code, and featuring live-reload for making changes to the webdocs.

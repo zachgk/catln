@@ -1,20 +1,22 @@
 module Semantics.TypesTests where
 
-import           Common.TestCommon   (findCt)
+import           Common.TestCommon         (findCt)
 import           Control.Monad
-import           Control.Monad.Trans (lift)
+import           Control.Monad.Trans       (lift)
 import           CRes
 import           CtService
-import qualified Data.HashMap.Strict as H
+import qualified Data.HashMap.Strict       as H
 import           Data.Maybe
 import           Hedgehog
-import qualified Hedgehog.Gen        as HG
-import           MapMeta             (clearMetaDat, mapMetaPrgm)
+import qualified Hedgehog.Gen              as HG
+import           MapMeta                   (clearMetaDat, mapMetaPrgm)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
 import           Test.Tasty
-import           Test.Tasty.Hedgehog as HG
+import           Test.Tasty.Hedgehog       as HG
+import qualified Test.Tasty.Patterns.Types as TT
+import qualified Test.Tasty.Runners        as TP
 import           Testing.Generation
 import           Text.Printf
 import           Utils
@@ -40,18 +42,20 @@ ggPrgm prgms = HG.choice [genPremade, genPrgm]
       prgmName <- HG.element $ H.keys prgms
       return $ fromJust $ H.lookup prgmName prgms
 
-propCompactNoChanges :: GenPrgm -> Property
+propCompactNoChanges :: IO GenPrgm -> Property
 propCompactNoChanges gPrgm = property $ do
-  prgm <- forAll gPrgm
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   let compacted = compactType typeEnv H.empty a
   annotate $ printf "compacted = %s" (show compacted)
   assert $ isEqType typeEnv a compacted
 
-propCompactIdempotent :: GenPrgm -> Property
+propCompactIdempotent :: IO GenPrgm -> Property
 propCompactIdempotent gPrgm = property $ do
-  prgm <- forAll gPrgm
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   let compact1 = compactType typeEnv H.empty a
@@ -61,9 +65,10 @@ propCompactIdempotent gPrgm = property $ do
   compact1 === compact2
 
 
-propExpandEq :: GenPrgm -> Property
+propExpandEq :: IO GenPrgm -> Property
 propExpandEq gPrgm = property $ do
-  prgm <- forAll gPrgm
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   let expanded = expandType typeEnv H.empty a
@@ -71,9 +76,10 @@ propExpandEq gPrgm = property $ do
   assert $ isEqType typeEnv a expanded
 
 
-propSubtypeByUnion :: GenPrgm -> Property
+propSubtypeByUnion :: IO GenPrgm -> Property
 propSubtypeByUnion gPrgm = property $ do
-  prgm <- forAll gPrgm
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
@@ -84,9 +90,10 @@ propSubtypeByUnion gPrgm = property $ do
   annotate $ printf "byUnion = %s" (show byUnion)
   subtype === byUnion
 
-propSubtypeByIntersection :: GenPrgm -> Property
+propSubtypeByIntersection :: IO GenPrgm -> Property
 propSubtypeByIntersection gPrgm = property $ do
-  prgm <- forAll gPrgm
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
@@ -97,34 +104,38 @@ propSubtypeByIntersection gPrgm = property $ do
   annotate $ printf "byIntersection = %s" (show byIntersection)
   subtype === byIntersection
 
-propUnionReflexive :: GenPrgm -> Property
+propUnionReflexive :: IO GenPrgm -> Property
 propUnionReflexive gPrgm = property $ do
-  prgm <- forAll gPrgm
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   assert $ isEqType typeEnv (unionTypes typeEnv a b) (unionTypes typeEnv b a)
 
-propUnionCommutative :: GenPrgm -> Property
+propUnionCommutative :: IO GenPrgm -> Property
 propUnionCommutative gPrgm = property $ do
-  prgm <- forAll gPrgm
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   c <- forAll $ genType prgm
   assert $ isEqType typeEnv (unionAllTypes typeEnv [a, b, c]) (unionAllTypes typeEnv [c, b, a])
 
-propIntersectionReflexive :: GenPrgm -> Property
+propIntersectionReflexive :: IO GenPrgm -> Property
 propIntersectionReflexive gPrgm = property $ do
-  prgm <- forAll gPrgm
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
   assert $ isEqType typeEnv (intersectTypes typeEnv a b) (intersectTypes typeEnv b a)
 
-propIntersectionCommutative :: GenPrgm -> Property
+propIntersectionCommutative :: IO GenPrgm -> Property
 propIntersectionCommutative gPrgm = property $ do
-  prgm <- forAll gPrgm
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
@@ -141,9 +152,10 @@ propIntersectionCommutative gPrgm = property $ do
 
   assert $ isEqType typeEnv abc cba
 
-propIntersectionDistributesUnion :: GenPrgm -> Property
+propIntersectionDistributesUnion :: IO GenPrgm -> Property
 propIntersectionDistributesUnion gPrgm = property $ do
-  prgm <- forAll gPrgm
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
@@ -156,9 +168,10 @@ propIntersectionDistributesUnion gPrgm = property $ do
   annotate $ printf "d = %s" (show d)
   assert $ isEqType typeEnv f d
 
-propUnionDistributesIntersection :: GenPrgm  -> Property
+propUnionDistributesIntersection :: IO GenPrgm  -> Property
 propUnionDistributesIntersection gPrgm = property $ do
-  prgm <- forAll gPrgm
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
@@ -171,9 +184,10 @@ propUnionDistributesIntersection gPrgm = property $ do
   annotate $ printf "d = %s" (show d)
   assert $ isEqType typeEnv f d
 
-propDifferenceShrinks :: GenPrgm -> Property
+propDifferenceShrinks :: IO GenPrgm -> Property
 propDifferenceShrinks gPrgm = property $ do
-  prgm <- forAll gPrgm
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
@@ -182,9 +196,10 @@ propDifferenceShrinks gPrgm = property $ do
   assert $ isSubtypeOf typeEnv diff' a
 
 -- A∪A=U
-propUnionWithComplement :: GenPrgm -> Property
+propUnionWithComplement :: IO GenPrgm -> Property
 propUnionWithComplement gPrgm = property $ do
-  prgm <- forAll gPrgm
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   let a' = complementTypeEnv typeEnv H.empty a
@@ -194,9 +209,10 @@ propUnionWithComplement gPrgm = property $ do
   assert $ isEqType typeEnv combined PTopType
 
 -- A∩A=∅
-propIntersectionWithComplement :: GenPrgm -> Property
+propIntersectionWithComplement :: IO GenPrgm -> Property
 propIntersectionWithComplement gPrgm = property $ do
-  prgm <- forAll gPrgm
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   let a' = complementTypeEnv typeEnv H.empty a
@@ -206,9 +222,10 @@ propIntersectionWithComplement gPrgm = property $ do
   assert $ isEqType typeEnv combined BottomType
 
 -- A^c^c=A
-propComplementInverse :: GenPrgm -> Property
+propComplementInverse :: IO GenPrgm -> Property
 propComplementInverse gPrgm = property $ do
-  prgm <- forAll gPrgm
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   let a' = complementTypeEnv typeEnv H.empty a
@@ -218,9 +235,10 @@ propComplementInverse gPrgm = property $ do
   assert $ isEqType typeEnv a a''
 
 -- A∩B=A-(A-B)
-propIntersectByDifference :: GenPrgm -> Property
+propIntersectByDifference :: IO GenPrgm -> Property
 propIntersectByDifference gPrgm = property $ do
-  prgm <- forAll gPrgm
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
@@ -233,9 +251,10 @@ propIntersectByDifference gPrgm = property $ do
   assert $ isEqType typeEnv intersect' diff'
 
 -- A-B=A-(A∩B)
-propDifferenceByIntersection :: GenPrgm -> Property
+propDifferenceByIntersection :: IO GenPrgm -> Property
 propDifferenceByIntersection gPrgm = property $ do
-  prgm <- forAll gPrgm
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
@@ -247,35 +266,33 @@ propDifferenceByIntersection gPrgm = property $ do
   annotate $ printf "withInter' = a-(a∩b) = %s" (show withInter')
   assert $ isEqType typeEnv diff' withInter'
 
-
-typeTests :: IO TestTree
-typeTests = do
-  prgms <- findPrgms
-  let gPrgm = ggPrgm prgms
-  return $ testGroup "TypeTests" [
-    HG.testProperty "(propCompactNoChanges gPrgm)" (p $ propCompactNoChanges gPrgm)
-    , HG.testProperty "(propCompactIdempotent gPrgm)" (p $ propCompactIdempotent gPrgm)
-    , HG.testProperty "(propExpandEq gPrgm)" (p $ propExpandEq gPrgm)
-    , HG.testProperty "(propSubtypeByUnion gPrgm)" (p $ propSubtypeByUnion gPrgm)
-    , HG.testProperty "(propSubtypeByIntersection gPrgm)" (p $ propSubtypeByIntersection gPrgm)
-    , HG.testProperty "(propUnionReflexive gPrgm)" (p $ propUnionReflexive gPrgm)
-    , HG.testProperty "(propUnionCommutative gPrgm)" (p $ propUnionCommutative gPrgm)
-    , HG.testProperty "(propIntersectionReflexive gPrgm)" (p $ propIntersectionReflexive gPrgm)
-    , HG.testProperty "(propIntersectionCommutative gPrgm)" (p $ propIntersectionCommutative gPrgm)
-    , HG.testProperty "(propIntersectionDistributesUnion gPrgm)" (p $ propIntersectionDistributesUnion gPrgm)
-    , HG.testProperty "(propUnionDistributesIntersection gPrgm)" (p $ propUnionDistributesIntersection gPrgm)
-    , HG.testProperty "(propDifferenceShrinks gPrgm)" (p $ propDifferenceShrinks gPrgm)
-    , HG.testProperty "(propUnionWithComplement gPrgm)" (p $ propUnionWithComplement gPrgm)
-    ,   HG.testProperty "(propIntersectionWithComplement gPrgm)" (p $ propIntersectionWithComplement gPrgm)
-    , HG.testProperty "(propComplementInverse gPrgm)" (p $ propComplementInverse gPrgm)
-    -- , HG.testProperty "(propIntersectByDifference gPrgm)" (p $ propIntersectByDifference gPrgm)
-    -- , HG.testProperty "(propDifferenceByIntersection gPrgm)" (p $ propDifferenceByIntersection gPrgm)
-                                  ]
+typeTests :: TestTree
+typeTests = withResource (ggPrgm <$> findPrgms) (const $ pure ()) tests
   where
+    tests gPrgm = testGroup "TypeTests" [
+      HG.testProperty "propCompactNoChanges" (p $ propCompactNoChanges gPrgm)
+      , HG.testProperty "propCompactIdempotent" (p $ propCompactIdempotent gPrgm)
+      , HG.testProperty "propExpandEq" (p $ propExpandEq gPrgm)
+      , HG.testProperty "propSubtypeByUnion" (p $ propSubtypeByUnion gPrgm)
+      , HG.testProperty "propSubtypeByIntersection" (p $ propSubtypeByIntersection gPrgm)
+      , HG.testProperty "propUnionReflexive" (p $ propUnionReflexive gPrgm)
+      , HG.testProperty "propUnionCommutative" (p $ propUnionCommutative gPrgm)
+      , HG.testProperty "propIntersectionReflexive" (p $ propIntersectionReflexive gPrgm)
+      , HG.testProperty "propIntersectionCommutative" (p $ propIntersectionCommutative gPrgm)
+      , HG.testProperty "propIntersectionDistributesUnion" (p $ propIntersectionDistributesUnion gPrgm)
+      , HG.testProperty "propUnionDistributesIntersection" (p $ propUnionDistributesIntersection gPrgm)
+      , HG.testProperty "propDifferenceShrinks" (p $ propDifferenceShrinks gPrgm)
+      , HG.testProperty "propUnionWithComplement" (p $ propUnionWithComplement gPrgm)
+      ,   HG.testProperty "propIntersectionWithComplement" (p $ propIntersectionWithComplement gPrgm)
+      , HG.testProperty "propComplementInverse" (p $ propComplementInverse gPrgm)
+      -- , HG.testProperty "(propIntersectByDifference)" (p $ propIntersectByDifference gPrgm)
+      -- , HG.testProperty "(propDifferenceByIntersection)" (p $ propDifferenceByIntersection gPrgm)
+                                        ]
     p prop = prop
     -- p prop = withTests 100000 prop
 
+retest :: IO ()
+retest = defaultMain $ localOption (TP.TestPattern $ Just $ TT.ERE "propCompactIdempotent") $ localOption (HedgehogReplay $ Just ("1:a2", Seed 10220680066336263475 12463056215188250787)) typeTests
+
 main :: IO ()
-main = do
-  ts <- typeTests
-  defaultMain ts
+main = defaultMain typeTests
