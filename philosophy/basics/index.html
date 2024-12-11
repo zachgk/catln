@@ -1,0 +1,1515 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../typeTheory/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.48">
+    
+    
+      
+        <title>Basics - Catln</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.6f8fc17f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+<!-- Add custom analytics integration here -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-PMHTDK53PT"></script>
+<script>
+ window.dataLayer = window.dataLayer || [];
+ function gtag(){dataLayer.push(arguments);}
+ gtag('js', new Date());
+
+ gtag('config', 'G-PMHTDK53PT');
+</script>
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#basics" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Catln" class="md-header__button md-logo" aria-label="Catln" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Catln
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Basics
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/zachgk/catln/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zachgk/catln
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Catln" class="md-nav__button md-logo" aria-label="Catln" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Catln
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/zachgk/catln/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zachgk/catln
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Catln
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Design
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Design
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Design
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Basics
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Basics
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#objects" class="md-nav__link">
+    <span class="md-ellipsis">
+      Objects
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#type-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Type Classes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#generics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Generics
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#type-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Type Properties
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#arrows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Arrows
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#true-statements" class="md-nav__link">
+    <span class="md-ellipsis">
+      True Statements
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#annotation-applications" class="md-nav__link">
+    <span class="md-ellipsis">
+      Annotation Applications
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#other-type-system-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Other Type System Features
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Other Type System Features">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#multiple-return-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multiple Return Values
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiple-level-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multiple level functions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#partial-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      Partial Application
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../typeTheory/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Type Theory
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../choice/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Choice
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Metaprogramming
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            Metaprogramming
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metaprogramming/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Metaprogramming
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../macros/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Macros
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../languageCompilation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Language based Compilation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../compilerErrorStatement/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Compiler Error Statement
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Testing
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Testing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../arrowTesting/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Arrow Testing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../assertions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Assertions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../context/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Context
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../optimization/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Optimization
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../syntacticSugar/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Syntactic Sugar
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_10" id="__nav_2_10_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Documentation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_10">
+            <span class="md-nav__icon md-icon"></span>
+            Documentation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Documentation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../naming/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Naming
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Modules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../debugging/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Debugging
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../syntax/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Syntax
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../building/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Coming from
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Coming from
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comingFrom/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Coming From
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comingFrom/java/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Coming From Java
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comingFrom/haskell/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Coming From Haskell
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Contributor
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Contributor
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contrib/building/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Building
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contrib/organization/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Organization
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#objects" class="md-nav__link">
+    <span class="md-ellipsis">
+      Objects
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#type-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Type Classes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#generics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Generics
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#type-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Type Properties
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#arrows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Arrows
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#true-statements" class="md-nav__link">
+    <span class="md-ellipsis">
+      True Statements
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#annotation-applications" class="md-nav__link">
+    <span class="md-ellipsis">
+      Annotation Applications
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#other-type-system-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Other Type System Features
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Other Type System Features">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#multiple-return-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multiple Return Values
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiple-level-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multiple level functions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#partial-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      Partial Application
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="basics">Basics<a class="headerlink" href="#basics" title="Permanent link">&para;</a></h1>
+<p>The fundamental data structure in catln is a named tuple of the format <code>tupleType(argTypeA argNameA = argValA, argTypeB argNameB = argValB, ...)</code>. As the arguments can themselves be tuples, this forms a typed tree structure.</p>
+<p>This format can be used to represent both code and data. For example, <code>addInts(Int left, Int right)</code> would be a tuple for the addition function. Something like <code>Point(Int x, Int y)</code> could represent a simple data type.</p>
+<p>In addition to the data tuples, there are also arrows which convert one tuple format to another. For example, there could be an arrow <code>addInts(Int left, Int right) -&gt; Int</code> that applies the integer addition operation. These arrows can match complicated patterns involving the data themselves, and even patterns involving the composition of multiple functions. Arrows can even take the same input tuple to multiple output tuples.</p>
+<h2 id="objects">Objects<a class="headerlink" href="#objects" title="Permanent link">&para;</a></h2>
+<p>In Catln, objects are used to define the allowed types of tuples. Each object behaves similar to a product type or a cross product. To give some examples, let me explain the two ways objects can be created: function and data types.</p>
+<p>A function declaration looks like:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">addInts</span><span class="p">(</span><span class="n">Int</span><span class="w"> </span><span class="kr">left</span><span class="p">,</span><span class="w"> </span><span class="n">Int</span><span class="w"> </span><span class="kr">right</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Int</span>
+</code></pre></div>
+
+<p>This is an object that consists of a single product with two arguments. For now, ignore the return value.</p>
+<p>If you overload a function, it creates two objects that share the same name, but with different arguments.</p>
+<div class="codehilite"><pre><span></span><code><span class="n">add</span><span class="p">(</span><span class="n">Int</span><span class="w"> </span><span class="kr">left</span><span class="p">,</span><span class="w"> </span><span class="n">Int</span><span class="w"> </span><span class="kr">right</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Int</span>
+<span class="n">add</span><span class="p">(</span><span class="n">Float</span><span class="w"> </span><span class="kr">left</span><span class="p">,</span><span class="w"> </span><span class="n">Float</span><span class="w"> </span><span class="kr">right</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Float</span>
+</code></pre></div>
+
+<p>It is also possible to create a data type as an object. Each data declaration also creates a single object.</p>
+<div class="codehilite"><pre><span></span><code>data ComplexInt(Int real, Int irrational)
+</code></pre></div>
+
+<h2 id="type-classes">Type Classes<a class="headerlink" href="#type-classes" title="Permanent link">&para;</a></h2>
+<p>Along with objects, Catln also has type classes. Each type class corresponds to the combination of one or more objects. If each object is a product, the type class is a union of products. The type class can also be thought of as a boolean property where a tuple has a set of type classes that it matches.</p>
+<p>Type classes can be used to represent common properties and behaviors across multiple objects. It is analogous to enums, interfaces, and parent classes in object oriented classes. It also corresponds to both sum types and type classes in Haskell.</p>
+<p>There are two different kinds of type classes: sealed and unsealed. A sealed type class is one where the allowed objects are fixed at creation. One example is this optional int type:</p>
+<div class="codehilite"><pre><span></span><code>data OptionalInt = Some(Int val) | Nothing
+</code></pre></div>
+
+<p>Because they are fixed, sealed type classes can be used for pattern matching and enums.</p>
+<p>Unsealed type classes are used to represent unions that can be extended later. This corresponds to the interface or type class.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">class</span> <span class="n">Show</span>
+<span class="n">show</span>(<span class="n">Show</span> <span class="nb">s</span>) -&gt; <span class="n">String</span>
+
+<span class="n">every</span> <span class="n">String</span> <span class="nb">isa</span> <span class="n">Show</span>
+<span class="n">show</span>(<span class="n">String</span> <span class="nb">s</span>) = <span class="nb">s</span>
+
+<span class="n">every</span> <span class="n">Boolean</span> <span class="nb">isa</span> <span class="n">Show</span>
+<span class="n">show</span>(<span class="nb">True</span>) = <span class="s">&quot;True&quot;</span>
+<span class="n">show</span>(<span class="nb">False</span>) = <span class="s">&quot;False&quot;</span>
+</code></pre></div>
+
+<p>Here, a new class called show is declared.</p>
+<p>Then, the function <code>show</code> is declared which should show all items of type show. Note that this syntax is a generic function declaration. The compiler will verify that all appropriate definitions exist to fulfill a claim made within the declaration. So, this syntax can also be used outside of type classes.</p>
+<p>Next, two instances of the <code>Show</code> class are added: String and Boolean. Each must also fulfill the <code>show</code> definition as they have been added to the domain of the function. They are described using an <code>every _ isa _</code> statement.</p>
+<p>It is also possible to have a class extend another class. For example, all classes which are comparable also have the equality class. No special syntax is required to handle function as it merely requires that all appropriate declarations are fulfilled.</p>
+<p>Just like Haskell, types are added to classes separately from their construction. For your own types, this is not important. However, this feature becomes useful when working with dependencies that are more difficult to change. You can add additional type classes to types within those dependencies, including types within the standard library.</p>
+<p>Another idea worth mentioning is that type classes, sealed or unsealed, represent general union types. The only effect that sealing a type class has is to throw a compiler error if you try to extend one. The implementation, otherwise, is completely identical.</p>
+<h2 id="generics">Generics<a class="headerlink" href="#generics" title="Permanent link">&para;</a></h2>
+<p>It is also possible to have function, data, and classes that depend on other types. For example:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">add</span><span class="p">[</span><span class="n">Numeric</span><span class="w"> </span><span class="err">$</span><span class="n">T</span><span class="p">](</span><span class="err">$</span><span class="n">T</span><span class="w"> </span><span class="kr">left</span><span class="p">,</span><span class="w"> </span><span class="err">$</span><span class="n">T</span><span class="w"> </span><span class="kr">right</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="err">$</span><span class="n">T</span>
+
+<span class="kt">data</span><span class="w"> </span><span class="n">Complex</span><span class="p">[</span><span class="n">Numeric</span><span class="w"> </span><span class="err">$</span><span class="n">T</span><span class="p">](</span><span class="err">$</span><span class="n">T</span><span class="w"> </span><span class="n">real</span><span class="p">,</span><span class="w"> </span><span class="err">$</span><span class="n">T</span><span class="w"> </span><span class="n">irrational</span><span class="p">)</span>
+
+<span class="n">class</span><span class="w"> </span><span class="n">Optional</span><span class="p">[</span><span class="err">$</span><span class="n">T</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Some</span><span class="p">(</span><span class="err">$</span><span class="n">T</span><span class="w"> </span><span class="n">val</span><span class="p">)</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">Nothing</span>
+</code></pre></div>
+
+<p>The type variables are written within angle braces, begin with a dollar sign and a capital letter. Here, several of them require that the type variable be instances of the Numeric type class.</p>
+<p>They behave fairly straightforwardly in that they simply increase what the object or type is capable of matching. The type variable directly match only objects, but matching all objects within a type class is equivalent to matching the type class itself. They also can help infer outputs when the output is the result of the type variable. See <a href="../macros/">macros</a> for more information.</p>
+<h2 id="type-properties">Type Properties<a class="headerlink" href="#type-properties" title="Permanent link">&para;</a></h2>
+<p>The other key design feature of the type system is type properties. Type properties are attached to types or typeclasses and add additional metadata about them. The goal of the type checker is to infer the type properties when possible and use them to better inform the choice of objects and arrows.</p>
+<p>For example, the <code>List</code> type might have a property <code>List_length[Int]</code>. This can be used to change the return value of the <code>head</code> function depending on the inferred length of the list:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">List</span><span class="p">[</span><span class="err">$</span><span class="n">T</span><span class="p">].</span><span class="n">head</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Optional</span><span class="p">[</span><span class="err">$</span><span class="n">T</span><span class="p">]</span>
+<span class="n">List_length</span><span class="p">[</span><span class="n">Int_gt</span><span class="p">(</span><span class="mi">0</span><span class="p">)][</span><span class="err">$</span><span class="n">T</span><span class="p">].</span><span class="n">head</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="err">$</span><span class="n">T</span>
+</code></pre></div>
+
+<p>Now, calling the head function on a list can give you either an optional or direct value. Therefore, you can directly use the value when it is known to be safe without writing unnecessary code to handle an impossible <code>Nothing</code> condition. When the length can't be inferred, then you do have to handle the very real <code>Nothing</code> condition. If it can be inferred, you can still treat it as an <code>Optional</code>, but it will throw a compiler warning because the <code>Nothing</code> handling code is unreachable.</p>
+<p>For all lists, you can also assume that the length is at least 0. This leads to the relationship:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">List</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">List_length</span><span class="p">[</span><span class="n">Int_gt</span><span class="p">(</span><span class="mi">0</span><span class="p">)]</span>
+</code></pre></div>
+
+<p>In addition, it is important to describe how various functions and arrows affect the type properties. For example:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">List_length</span><span class="p">[</span><span class="n">Int_gt</span><span class="p">(</span><span class="n">a</span><span class="p">)].</span><span class="n">concat</span><span class="p">(</span><span class="n">List_length</span><span class="p">[</span><span class="n">Int_gt</span><span class="p">(</span><span class="n">b</span><span class="p">)])</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">List_length</span><span class="p">[</span><span class="n">Int_gt</span><span class="p">(</span><span class="n">a</span><span class="o">+</span><span class="n">b</span><span class="p">)]</span>
+</code></pre></div>
+
+<p>Rules defined like this can enable the compiler to infer type properties even when they are not explicitly declared. Higher level functions can use these rules to automatically compute the type properties of return values.</p>
+<p>To clarify, type properties can accept an input either as a type or an expression. Types, like usual, are provided using <code>[]</code> while expressions use <code>()</code>. When they are compared, it checks using the type of the expression and the direct types.</p>
+<p>I recommend thinking about type properties in terms of sets of values. Each object and type class represent a set of possible values. Then, the type properties further restrict the set of possible values of the type into a subset of the original. This allows more information of what is known about various data types to be propagated through the program and used for both static analysis and optimization.</p>
+<p>Type properties exist in a somewhat similar space to <a href="https://en.wikipedia.org/wiki/Refinement_type">refinement types</a>. The key difference is that they are defined entirely within Catln itself while most refinement type systems use an external tool such as <a href="https://en.wikipedia.org/wiki/Z3_Theorem_Prover">Z3</a>. That means that the external tool would be limited to operating on preset domains of knowledge while type properties can grow as more things are implemented in the language.</p>
+<p>Another difference is that it is also possible to use type properties for more abstract or computed values. You could add a <code>String_hasPassword[Boolean]</code> property to help check whether it is possible that a password is contained in a String. This could be used for security to check the values before saving in a database or sending to a browser. Another possible property would be something like <code>HTML_classList[List[$T=String]]</code>. This property can be used to compute the possible classes an HTML element could have, useful for pruning unused parts of the CSS file.</p>
+<h2 id="arrows">Arrows<a class="headerlink" href="#arrows" title="Permanent link">&para;</a></h2>
+<p>An arrow represents a conversion from one data tuple to an expression (this is the same as one data tuple to another data tuple). Each arrow consists of the Object it applies to, the resulting expression (declarations are written as arrows without an expression), a conditional guard, and possible compiler annotations. See <a href="../typeTheory/">more</a>.</p>
+<p>The objects can be thought of like a pattern that is matched against tuples. Each object then corresponds to zero or more arrows that are applied if the pattern matches (zero for pure data type). So, there is also no problem of having multiple objects match the same tuple since it just means all the arrows from all matching objects apply.</p>
+<p>Arrows are created by providing either a declaration or definition. A declaration features the object (or pattern) on the left side and the resulting type on the right side. It states that there should exist a definition for this type, but doesn't explicitly state what it is.</p>
+<div class="codehilite"><pre><span></span><code><span class="n">show</span><span class="p">(</span><span class="n">Show</span><span class="w"> </span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="kt">String</span>
+</code></pre></div>
+
+<p>A definition, unlike a declaration, does return a value. The expression on the right side of the <code>=</code> is the tuple that is returned as a result of the arrow. It can involve sub-definitions and sub-declarations as well as arguments from the pattern matching on the left hand side of the <code>=</code>.</p>
+<div class="codehilite"><pre><span></span><code>not(val=True) = False
+not(val=False) = True
+</code></pre></div>
+
+<p>Both a declaration and definition create two components: an object and an arrow.</p>
+<h2 id="true-statements">True Statements<a class="headerlink" href="#true-statements" title="Permanent link">&para;</a></h2>
+<p>The other major syntactic structure for effective type properties is an implication. The purpose of the implication is to support true statements. For example, consider this simple absolute value function:</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">abs</span><span class="ss">(</span><span class="nv">Int</span><span class="w"> </span><span class="nv">i</span><span class="ss">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="nv">i</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">0</span>
+<span class="w">               </span><span class="k">then</span><span class="w"> </span><span class="nv">i</span>
+<span class="w">               </span><span class="k">else</span><span class="w"> </span><span class="o">-</span><span class="nv">i</span>
+</code></pre></div>
+
+<p>This definition has a conditional "if" statement that branches the code based on the definition of <code>i</code>. However branching the code is also the process of learning about <code>i</code>. While <code>i</code> can be any integer in the function at large, we know it is limited to <code>Int_gte(0)</code> within the then branch. The reason we know this is because within the branch, we can further assume the statement <code>i &gt;= 0</code> is true. Likewise, we know within the else branch that <code>i</code> is of type <code>Int_lt(0)</code> because <code>not(i &gt;= 0)</code> is true.</p>
+<p>To convert between expressions and the type properties that they imply are implication statements. Here are some examples:</p>
+<div class="codehilite"><pre><span></span><code><span class="err">#</span><span class="w"> </span><span class="nx">the</span><span class="w"> </span><span class="nx">left</span><span class="w"> </span><span class="nx">part</span><span class="w"> </span><span class="nx">of</span><span class="w"> </span><span class="nx">a</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="nx">boolean</span><span class="w"> </span><span class="nx">expression</span><span class="w"> </span><span class="k">is</span><span class="w"> </span><span class="nx">also</span><span class="w"> </span><span class="nx">a</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="nx">statement</span>
+<span class="nx">operator</span><span class="o">&amp;</span><span class="p">(</span><span class="nx">Boolean</span><span class="w"> </span><span class="nx">l</span><span class="p">)</span><span class="w"> </span><span class="p">.:</span><span class="w"> </span><span class="nx">l</span>
+
+<span class="err">#</span><span class="w"> </span><span class="nx">the</span><span class="w"> </span><span class="nx">right</span><span class="w"> </span><span class="nx">part</span><span class="w"> </span><span class="nx">of</span><span class="w"> </span><span class="nx">a</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="nx">boolean</span><span class="w"> </span><span class="nx">expression</span><span class="w"> </span><span class="k">is</span><span class="w"> </span><span class="nx">also</span><span class="w"> </span><span class="nx">a</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="nx">statement</span>
+<span class="nx">operator</span><span class="o">&amp;</span><span class="p">(</span><span class="nx">Boolean</span><span class="w"> </span><span class="nx">r</span><span class="p">)</span><span class="w"> </span><span class="p">.:</span><span class="w"> </span><span class="nx">r</span>
+
+<span class="err">#</span><span class="w"> </span><span class="nx">the</span><span class="w"> </span><span class="nx">left</span><span class="w"> </span><span class="nx">side</span><span class="w"> </span><span class="nx">of</span><span class="w"> </span><span class="nx">a</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="nx">has</span><span class="w"> </span><span class="k">type</span><span class="w"> </span><span class="nx">Int_gte</span><span class="p">(</span><span class="nx">r</span><span class="p">)</span>
+<span class="nx">operator</span><span class="o">&gt;=</span><span class="p">(</span><span class="nx">Int</span><span class="w"> </span><span class="nx">l</span><span class="p">,</span><span class="w"> </span><span class="nx">Int</span><span class="w"> </span><span class="nx">r</span><span class="p">)</span><span class="w"> </span><span class="p">.:</span><span class="w"> </span><span class="nx">l</span><span class="w"> </span><span class="o">::</span><span class="w"> </span><span class="nx">Int_gte</span><span class="p">(</span><span class="nx">r</span><span class="p">)</span>
+
+<span class="err">#</span><span class="w"> </span><span class="nx">the</span><span class="w"> </span><span class="nx">right</span><span class="w"> </span><span class="nx">side</span><span class="w"> </span><span class="nx">of</span><span class="w"> </span><span class="nx">a</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="nx">has</span><span class="w"> </span><span class="k">type</span><span class="w"> </span><span class="nx">Int_lt</span><span class="p">(</span><span class="nx">l</span><span class="p">)</span>
+<span class="nx">operator</span><span class="o">&gt;=</span><span class="p">(</span><span class="nx">Int</span><span class="w"> </span><span class="nx">l</span><span class="p">,</span><span class="w"> </span><span class="nx">Int</span><span class="w"> </span><span class="nx">r</span><span class="p">)</span><span class="w"> </span><span class="p">.:</span><span class="w"> </span><span class="nx">r</span><span class="w"> </span><span class="o">::</span><span class="w"> </span><span class="nx">Int_lt</span><span class="p">(</span><span class="nx">l</span><span class="p">)</span>
+</code></pre></div>
+
+<p>These implications are used to adjust the uses of a type. The support for conjunction of true statements works like defined in the example above. A disjunction can still be represented by combining the information into the object containing several types. For a function definition, this is typically the calling function would contain the disjunction information about it's arguments.</p>
+<h2 id="annotation-applications">Annotation Applications<a class="headerlink" href="#annotation-applications" title="Permanent link">&para;</a></h2>
+<p>The final major structure is an annotation application. These applications are used to provide additional annotations after a function is written.</p>
+<p>It can also be used to apply to only certain kinds of calls to the function. It is designed similarly to CSS selectors and many of the same capabilities are available. Instead of using a DOM tree, it matches against the function call tree. Here is an example:</p>
+<div class="codehilite"><pre><span></span><code>apply sort#name(&quot;quickSort&quot;) &gt; sort#name(&quot;selectionSort&quot;) sort
+  #name(&quot;selectionSort&quot;)
+</code></pre></div>
+
+<p>The main use of the applications is to provide more information towards <a href="../choice/">choice</a>. It can also be moved into a separate file to work like a configuration. Note that while annotations can give instructions to tools such as the compiler, testing, or webdocs, it doesn't change the fundamental knowledge environment.</p>
+<h2 id="other-type-system-features">Other Type System Features<a class="headerlink" href="#other-type-system-features" title="Permanent link">&para;</a></h2>
+<p>Following the above definitions, there are several interesting possibilities worth bringing attention to. These are not additional language features, but cases within the above features that are worthy of attention.</p>
+<h3 id="multiple-return-values">Multiple Return Values<a class="headerlink" href="#multiple-return-values" title="Permanent link">&para;</a></h3>
+<p>When defining a function, you can use either function overloading and/or default arguments like other languages. Unlike them, a function can accept the same arguments and return different return values.</p>
+<p>For example, a <code>sqrt</code> function might return <code>Optional[Number]</code> where it can only be computed if the input is at least 0. It could also return a <code>Complex[Number]</code> including the irrational component. Either of these are reasonable return values for the function.</p>
+<p>In Catln, these two definitions can share the same name and the desired return value will be detected during type inference. While this seems like it could have unintended effects, <a href="../arrowTesting/">arrow testing</a> guarantees that it should be safe.</p>
+<p>Furthermore, implicit conversions mean that multiple return values would be the norm rather than the exception. For example, a complex number with no irrational component can be implicitly converted to an int. The int can then be implicitly wrapped in an optional to form the same <code>Optional[Number]</code> anyway.</p>
+<h3 id="multiple-level-functions">Multiple level functions<a class="headerlink" href="#multiple-level-functions" title="Permanent link">&para;</a></h3>
+<p>Another useful type system feature is the use of multi-level function definitions. For example:</p>
+<div class="codehilite"><pre><span></span><code>String concat(concat(String a, String b), String c) = concat([a, b, c])
+</code></pre></div>
+
+<p>Since functions are tuple trees, multi level functions can be handled naturally by simply matching against multiple levels of the tree at once.</p>
+<p>This can be used to resolve potential performance problems like the one above. It is faster to concatenate the multiple strings all at once rather than doing them individually. Most languages have no ability to express this idea and require manual effort by the programmer. In Catln, this ensures that any way that you write your code would be optimized by the optimization rule and get the same performance.</p>
+<p>This feature is also very useful as the backbone of <a href="../metaprogramming/">metaprogramming</a>.</p>
+<h3 id="partial-application">Partial Application<a class="headerlink" href="#partial-application" title="Permanent link">&para;</a></h3>
+<p>The idea of partial application is that function arguments don't have to be set at once. Just like tuples can be updated, the named tuples can be updated as well (including function calls). A partially applied tuple is one where only some of the keys have been given definitions and others are still missing them. For example:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">baseFunctionCall</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">callName</span><span class="p">(</span><span class="n">arg1</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">arg2</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">finalCall</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">match</span><span class="w"> </span><span class="n">val</span>
+<span class="w">    </span><span class="kr">True</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">baseFunctionCall</span><span class="p">(</span><span class="n">arg3</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+<span class="w">    </span><span class="kr">False</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">baseFunctionCall</span><span class="p">(</span><span class="n">arg3</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Once the value is used as the result type (determined through type inference), then the function will actually be called and the result returned. The partial application feature can be used to handle currying and function manipulation.</p>
+<p>One other potential usage of partial applications is to be able to call the function even when it is only partially defined as long as the missing arguments are not used. This is more common in the case of data types. For example, a circle data type given only the radius but not the center location is still sufficient to determine the circle's circumference.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.83f73b43.min.js"></script>
+      
+    
+  </body>
+</html>

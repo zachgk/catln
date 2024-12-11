@@ -1,0 +1,1431 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../compilerErrorStatement/">
+      
+      
+        <link rel="next" href="../arrowTesting/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.48">
+    
+    
+      
+        <title>Testing - Catln</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.6f8fc17f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+<!-- Add custom analytics integration here -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-PMHTDK53PT"></script>
+<script>
+ window.dataLayer = window.dataLayer || [];
+ function gtag(){dataLayer.push(arguments);}
+ gtag('js', new Date());
+
+ gtag('config', 'G-PMHTDK53PT');
+</script>
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#testing" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Catln" class="md-header__button md-logo" aria-label="Catln" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Catln
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Testing
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/zachgk/catln/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zachgk/catln
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Catln" class="md-nav__button md-logo" aria-label="Catln" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Catln
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/zachgk/catln/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zachgk/catln
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Catln
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Design
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Design
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Design
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../basics/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Basics
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../typeTheory/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Type Theory
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../choice/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Choice
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Metaprogramming
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            Metaprogramming
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metaprogramming/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Metaprogramming
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../macros/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Macros
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../languageCompilation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Language based Compilation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../compilerErrorStatement/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Compiler Error Statement
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Testing
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Testing
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Testing
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#testing-fundamentals" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing Fundamentals
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing Implementation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#testing-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing Engine
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-proofs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Proofs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-caching" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Caching
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing-difference-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing Difference Engine
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Coverage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#guide-to-writing-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Guide to Writing Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Guide to Writing Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unit-testing-integration-testing-and-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unit Testing, Integration Testing, and Examples
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#arrow-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Arrow Testing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#property-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Property Testing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../arrowTesting/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Arrow Testing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../assertions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Assertions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../context/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Context
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../optimization/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Optimization
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../syntacticSugar/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Syntactic Sugar
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_10" id="__nav_2_10_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Documentation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_10">
+            <span class="md-nav__icon md-icon"></span>
+            Documentation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Documentation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../naming/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Naming
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Modules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../debugging/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Debugging
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../syntax/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Syntax
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../building/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Coming from
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Coming from
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comingFrom/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Coming From
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comingFrom/java/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Coming From Java
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comingFrom/haskell/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Coming From Haskell
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Contributor
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Contributor
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contrib/building/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Building
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contrib/organization/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Organization
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#testing-fundamentals" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing Fundamentals
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing Implementation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#testing-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing Engine
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-proofs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Proofs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-caching" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Caching
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing-difference-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing Difference Engine
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Coverage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#guide-to-writing-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Guide to Writing Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Guide to Writing Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unit-testing-integration-testing-and-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unit Testing, Integration Testing, and Examples
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#arrow-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Arrow Testing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#property-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Property Testing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h1>
+<p>For writing secure, reliable, and maintainable software, testing is a necessity. It can be used to check your code does not have bugs and to prevent bugs from appearing when updating and refactoring the code. However, testing is also the subject of numerous blog posts, debates, and discussions. They argue the relative merits of unit tests and integration. The importance of test coverage, mocking, and test driven development. I will describe my current thoughts on testing and how I plan to implement it with Catln here.</p>
+<h2 id="testing-fundamentals">Testing Fundamentals<a class="headerlink" href="#testing-fundamentals" title="Permanent link">&para;</a></h2>
+<p>Think of each function as having a domain, co-domain, and a map from each element of the domain to an element of the co-domain. The code function is then an algorithm that produces this relationship. Tests provide a redundant mapping from domain to co-domain to be used to check if they match.</p>
+<p>A unit test and an integration test represent specific elements in the domain and manually verify they produce the correct items in the co-domain. So, it will test only a few inputs to the function. Ideally those inputs are chosen with purpose. In unit tests, the purpose is variety. In integration tests, the purpose is that it matches real use cases.</p>
+<p>However, it is unreliable for humans to decide the appropriate elements from the function domain to test. There are other alternatives. The most common alternative is known as property testing. In property testing, you describe a property of the function that should be true for all inputs. For example, a property of appending to a list is that the length of the list increases by one. This property is true, and could be verified, for all types of lists, lengths of lists, contents of the lists, and elements that are being appended. Then, the testing Engine can accept the responsibility of choosing items from the domain to test as well as ensuring code coverage.</p>
+<p>The one potential issue with property testing is that the choice of properties may not fully verify correctness. In the example of appending while only checking the length, numerous incorrect (if contrived) problems are possible such as inserting the wrong element, messing up the rest of the list, and changing the types. None of these would cause the property test to fail. Formally, the property testing restricts the co-domain and then verifies that the values produced are in the smaller co-domain. A co-domain of 1 would perfectly test the values, but larger co-domains will not. In the appending example, we could perfectly property test it by ensuring that the last element is the one appended and the preceding elements are the original list. Regardless, property tests greatest strength is how little work is required to create them.</p>
+<p>Another potential avenue for testing is by creating multiple definitions of a function. Those definitions should then match for all inputs in a domain. Duplicate functions are the best form of testing as they can fully verify across the domain and fully verify each element in the domain. This idea is a part of <a href="../arrowTesting/">arrow testing</a>.</p>
+<h2 id="testing-implementation">Testing Implementation<a class="headerlink" href="#testing-implementation" title="Permanent link">&para;</a></h2>
+<p>Writing tests requires only a few simple operations: the test/example annotation, the assertion, and a testing engine. The testing behaves most similarly to property testing so any function that has <a href="../assertions/">assertions</a> inside it will be subject to testing.</p>
+<p>You can put the assertions directly into the implementation of functions for property tests. If you want to test specific cases (unit or integration tests), you should create a global value for the test, give it a <code>#test</code> (or <code>#example</code>) annotation, and include the necessary assertion inside it. For having tests that are randomized, just use a global function instead with the same annotation and the randomized inputs as arguments.</p>
+<div class="codehilite"><pre><span></span><code>testAddDouble(Int x) = 
+  #test
+  assert(test=x + x == 2 * x)
+</code></pre></div>
+
+<p>You can also create a simple unit/integration test case by simply creating an overlapping function definition. For example, you could write:</p>
+<div class="codehilite"><pre><span></span><code>#test
+  operator+(1, 1) = 2
+</code></pre></div>
+
+<p>If you have duplicate functions, no additional work is necessary. They will be run automatically as <a href="../arrowTesting/">arrow tests</a>.</p>
+<h3 id="testing-engine">Testing Engine<a class="headerlink" href="#testing-engine" title="Permanent link">&para;</a></h3>
+<p>In the actual testing process, all tests really align into two ideas. Any function which has an assertion should be verified by property testing. This is used to execute all of the complicated unit/integration tests too.</p>
+<p>Then, any test with overlapping definitions is executed using <a href="../arrowTesting/">arrow testing</a>. The simple tests written as sample function inputs and outputs just use arrow testing (with the domain of one item) to match against the other definitions.</p>
+<p>One requirement of this system is the ability to create sample function inputs. If you come from an imperative background, this may seem somewhat unreliable. Generally, that means that you are not making a strong enough use of the type system to encode the fundamental ideas behind your data types. You should write it so that any invalid combination of data would not be allowed in the object and match the type definition. The reverse of this is then any type creation would be a valid input. Furthermore, all of the edge cases should be much easier to create as there are either boundaries in numbers, or cases in the sum types.</p>
+<h3 id="test-proofs">Test Proofs<a class="headerlink" href="#test-proofs" title="Permanent link">&para;</a></h3>
+<p>In lieu of using the testing engine to produce sample inputs to a function, it may be possible to prove using the type properties that an assertion is guaranteed to be true. This would actually be proven during type inference, so in those instances no tests need to actually be run. You can also specify that an assertion must be proven for a stronger verification.</p>
+<h3 id="test-caching">Test Caching<a class="headerlink" href="#test-caching" title="Permanent link">&para;</a></h3>
+<p>In order to have a good development experience, it is important for the tools to be as fast as possible. That makes it easier and more convenient to run them more often. This is also an important piece in testing. With the heavy use of arrow testing and property testing, the tests might be generally slower than most testing systems.</p>
+<p>In order to improve the performance of the testing, the tests can be cached. If no input functions to a test have changed, the tests do not have to be rerun and the result can be pulled from the cache. Given this, it is far faster to run an entire test suite without worrying about wasting time.</p>
+<h3 id="testing-difference-engine">Testing Difference Engine<a class="headerlink" href="#testing-difference-engine" title="Permanent link">&para;</a></h3>
+<p>With testing, one goal is to avoid accidentally changing the behavior of a function. To suit this goal, it requires an extensive test suite with high coverage. This test suite requires significant manual work to create and upkeep. Instead, a tool can do it almost effortlessly.</p>
+<p>This powerful addition to the testing system is the use of a testing difference engine. The difference engine expects you have a copy of the code in two different files (or directories). It tests the two implementations against each other using arrow testing to ensure that matching functions should be equal for all possible inputs. When it isn't, the engine should (as always) attempt to find the simple examples that demonstrate how it changes.</p>
+<p>The most useful application of this difference engine is for testing over time. If you have a pull request, you can view the difference before and after the changes. This will help the reviewer identify what functions have changed and how. Without this, it often requires that those changes are not systematically detected due to no tests or that the PR author manually updates all of the relevant tests to the new definition. Instead, the use of the difference engine merely requires enabling a tool.</p>
+<h3 id="coverage">Coverage<a class="headerlink" href="#coverage" title="Permanent link">&para;</a></h3>
+<p>When the tests are run, it will automatically record the code coverage as well. The coverage will be recorded using only a single metric of blocks (essentially conditionals covered) instead of by line. For each block, it will also be recorded whether the test was complete (arrow testing or perfect property testing) or incomplete (unit testing or imperfect property testing). It will also record which tests cover each line of the code as well.</p>
+<h2 id="guide-to-writing-tests">Guide to Writing Tests<a class="headerlink" href="#guide-to-writing-tests" title="Permanent link">&para;</a></h2>
+<h3 id="unit-testing-integration-testing-and-examples">Unit Testing, Integration Testing, and Examples<a class="headerlink" href="#unit-testing-integration-testing-and-examples" title="Permanent link">&para;</a></h3>
+<p>One of the first, and largest, areas of testing is unit testing. Some plan for many unit tests while others consider them too tedious. Overall, I believe that there are often better tools to accomplish the goals that unit testing often handles.</p>
+<p>First, unit testing is sometimes used to ensure correct behavior on edge cases. For this purpose, an effective type system should be better. With a bounded sum type, it is impossible to forget to handle one of the cases without a type error. Likewise, by making properties that are optional clear in the type system, they also can't be missed. Instead of relying on manual tests, automatic types require no work and will do a more thorough and faster job of ensuring that most corner cases are handled.</p>
+<p>Another goal is to get good coverage. With the testing difference engine, the coverage is not as essential of a metric. Furthermore, using property tests is a much more effective way of increasing the test coverage</p>
+<p>In the <a href="../documentation/">documentation page</a>, I describe the way of organizing code as if you are writing a book to explain the details of your library/service. In that respect, you should write manual tests for cases that you believe have explanatory value to your readers. They should illustrate useful cases to understand how the function works and usually be co-located with either the function or it's declaration. As such, there is not a lot of difference between unit tests, integration tests, and examples which is why I have combined them together.</p>
+<p>The only major difference would be the use of mocking. As a pure language (outside of IO), you should not need to use mocking besides a MockIO implementation. The MockIO should be reserved for only the functions that interact with the user directly while most of the logic should be located elsewhere.</p>
+<h3 id="arrow-testing">Arrow Testing<a class="headerlink" href="#arrow-testing" title="Permanent link">&para;</a></h3>
+<p>Arrow testing should be the most convenient form of testing as it requires little additional thought. Most of it would be automatic based on definitions.</p>
+<p>The only time to consider arrow testing is when you are designing algorithms with thought of their runtime. While you obviously want to create the faster versions, also consider writing the simpler native version to better explain the function. This then doubles as an arrow test which will verify the more complicated implementation as well.</p>
+<h3 id="property-testing">Property Testing<a class="headerlink" href="#property-testing" title="Permanent link">&para;</a></h3>
+<p>The bulk of your testing should be done in property testing. However, the bulk would only be in terms of value instead of cost. When you write functions, try to include assertions as well. These can be in terms of the final value or intermediate values as well. The assertions can also provide a useful avenue to help provide additional explanation to those reading your function as well.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.83f73b43.min.js"></script>
+      
+    
+  </body>
+</html>

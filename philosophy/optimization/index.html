@@ -1,0 +1,1435 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../context/">
+      
+      
+        <link rel="next" href="../syntacticSugar/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.48">
+    
+    
+      
+        <title>Optimization - Catln</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.6f8fc17f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+<!-- Add custom analytics integration here -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-PMHTDK53PT"></script>
+<script>
+ window.dataLayer = window.dataLayer || [];
+ function gtag(){dataLayer.push(arguments);}
+ gtag('js', new Date());
+
+ gtag('config', 'G-PMHTDK53PT');
+</script>
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#optimization" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Catln" class="md-header__button md-logo" aria-label="Catln" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Catln
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Optimization
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/zachgk/catln/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zachgk/catln
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Catln" class="md-nav__button md-logo" aria-label="Catln" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Catln
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/zachgk/catln/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zachgk/catln
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Catln
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Design
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Design
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Design
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../basics/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Basics
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../typeTheory/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Type Theory
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../choice/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Choice
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Metaprogramming
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            Metaprogramming
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metaprogramming/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Metaprogramming
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../macros/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Macros
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../languageCompilation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Language based Compilation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../compilerErrorStatement/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Compiler Error Statement
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Testing
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Testing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../arrowTesting/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Arrow Testing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../assertions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Assertions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../context/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Context
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Optimization
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Optimization
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#inlining" class="md-nav__link">
+    <span class="md-ellipsis">
+      Inlining
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#strict-vs-lazy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Strict vs Lazy
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#caching" class="md-nav__link">
+    <span class="md-ellipsis">
+      Caching
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unused-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unused Values
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#remove-levels-of-abstraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Remove levels of Abstraction
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#type-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Type Selection
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#method-specialization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Method specialization
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#memory-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Memory Management
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parallelization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parallelization
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#only-subset-of-function-needed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Only subset of Function needed
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#promises-and-futures" class="md-nav__link">
+    <span class="md-ellipsis">
+      Promises and Futures
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#static-and-dynamic-dispatch" class="md-nav__link">
+    <span class="md-ellipsis">
+      Static and Dynamic Dispatch
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pre-computing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pre-computing
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../syntacticSugar/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Syntactic Sugar
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_10" id="__nav_2_10_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Documentation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_10">
+            <span class="md-nav__icon md-icon"></span>
+            Documentation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Documentation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../naming/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Naming
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Modules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../debugging/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Debugging
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../syntax/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Syntax
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../building/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Coming from
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Coming from
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comingFrom/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Coming From
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comingFrom/java/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Coming From Java
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comingFrom/haskell/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Coming From Haskell
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Contributor
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Contributor
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contrib/building/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Building
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contrib/organization/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Organization
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#inlining" class="md-nav__link">
+    <span class="md-ellipsis">
+      Inlining
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#strict-vs-lazy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Strict vs Lazy
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#caching" class="md-nav__link">
+    <span class="md-ellipsis">
+      Caching
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unused-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unused Values
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#remove-levels-of-abstraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Remove levels of Abstraction
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#type-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Type Selection
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#method-specialization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Method specialization
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#memory-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Memory Management
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parallelization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parallelization
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#only-subset-of-function-needed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Only subset of Function needed
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#promises-and-futures" class="md-nav__link">
+    <span class="md-ellipsis">
+      Promises and Futures
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#static-and-dynamic-dispatch" class="md-nav__link">
+    <span class="md-ellipsis">
+      Static and Dynamic Dispatch
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pre-computing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pre-computing
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="optimization">Optimization<a class="headerlink" href="#optimization" title="Permanent link">&para;</a></h1>
+<p>It is typical for languages and their respective compilers to be able to perform various optimizations. These optimizations allow users to write code that is more focused on readability than performance, while still gaining the equivalent performance. It can also greatly simplify code by reducing the amount of work necessary to implement various optimizations.</p>
+<p>One key focus of this language which differs from others is that optimizations should not be predictable. For example, consider strict (data is always computed immediately) vs lazy (data is computed only when it is needed). Most languages are predictable whether they will implement something lazily or strictly. Often, this is done by only supporting one of the two (C is always strict) or by requiring a special indication to deviate from the standard (Haskell is lazy unless told otherwise). The result of these simplistic decisions is that very often users must accept the burden themselves. C users have to manually implement laziness any time in which it could improve work. But, it is more likely that they simply would accept the easier and worse performing option of not bothering to implement it. In Haskell where users can specify a choice, it usually results in duplicate implementations where one is strict and the other is lazy. Users must therefore choose between the two implementations and the doubled maintenance costs.</p>
+<p>The solution to this problem is that some heuristic should be implemented to decide between the options in this use case. Any simple heuristic is likely to be bad so the only result is to use a complicated heuristic that users would not be able to easily predict the result of. Given this, users would have to check the result in order to determine what the heuristics resolved. This process could be eased with a dedicated compiler query that would return the results of this heuristic. Users trying to optimize performance could then look at the results and then change the values that they don't agree with compiler annotations. The heuristics could also be configurable to determine how much to prioritize competing goals such as performance and binary size. These could be used to tune the output results to better suit the specific application needs.</p>
+<p>One requirement to improve these heuristics is that users must be able to express large amounts of information about their computations. For this reason, the ability to express metadata about computations should be a focus of the syntax and the implementation. These include both rigid bounds (this number must be less than 128) and flexible bounds (the list usually has a small number of elements).</p>
+<p>Below, I will discuss a number of these kinds of optimizations that should be implemented in order to avoid passing on the implementation cost to the users writing in the language. Note that the focus of this is high level optimizations. It is assumed that the language will be converted into a lower-level IR and be passed through another optimization system (currently LLVM) that applies unmentioned lower-level optimizations as well.</p>
+<h2 id="inlining">Inlining<a class="headerlink" href="#inlining" title="Permanent link">&para;</a></h2>
+<p>One of the most basic examples of this case is inlining. If you inline a function, it will increase the performance by removing the calling overhead. When the function is only used in one place, it also will reduce the binary size a bit. If the function is inlined into multiple places, it would increase the binary size by replicating the function in multiple places. It is most beneficial when the function is small and the calling overhead consists of a large amount of the total cost of the function. When it is large, the calling overhead makes little difference. Another potential criteria is that it can make optimization more difficult for the downstream compiler because larger functions require more work to optimize.</p>
+<h2 id="strict-vs-lazy">Strict vs Lazy<a class="headerlink" href="#strict-vs-lazy" title="Permanent link">&para;</a></h2>
+<p>Results of computation can either be strict or lazy. If they are lazy, they are computed only when needed which can save the overhead of computing values that are not needed. When those values require significant computing time, this could be a large savings. It can also be used in two additional ways. It can actually change the algorithmic complexity of a computation such as the famous example of quicksort with laziness (O(N^2)) being equivalent to quickselect (O(N)). Lastly, it can be used in the case of infinite computations such as infinitely sized lists. These can then be used to simplify other computations and have spread outside of just the functional world such as python generators.</p>
+<p>Strictness also has a number of benefits. It has no overhead in terms of performance cost or memory usage while laziness does. This can be an especially large problems in cases such as inserting elements into a map where there are large numbers of small functions that could all be deferred. Using strictness will reduce the overall performance of the application by a significant margin. For this reason, strictness should be considered the default behavior and laziness only used when the benefits outweigh the costs.</p>
+<p>Laziness should be used whenever something has infinite size. In the case of a conditional where some values are only used by one branch of the condition, those values should be made lazy if they require a non-trivial amount of work to compute (greater than laziness overhead). Note that this also applies to the properties of an object where some properties could be lazy while the whole is not. As another potential improvement, values can be lazy in tandem where multiple will all be accessed or none will be accessed. Combining those could further decrease the performance overhead.</p>
+<h2 id="caching">Caching<a class="headerlink" href="#caching" title="Permanent link">&para;</a></h2>
+<p>Another important optimization is the use of caching to prevent values from being recomputed. However, caching also has an overhead in terms of performance (checking if a value was cached) and memory usage (storing a potential value). It also greatly increases the memory usage by preventing the cached values from being freed.</p>
+<p>One potential use of caching is associated to objects. For example, the length of a linked list could be associated with it. If the length is commonly queried, then it makes more sense to cache it. This would also mean computing it recursively as the linked list is created. Storing the cache as part of an object can help for determining memory usage because the cached values share the same scope with their associated object.</p>
+<p>Another important area of caching is general memoization. Consider an incremental compiler as an example. Using memoization, it would be trivial to avoid recomputing operations that are isolated such as removing syntactic sugar from a function or typechecking it. With memoization, this performance improvement comes for free as long as the compiler runs as a daemon or server where the memory can be preserved. Otherwise, it requires specific intention to use.</p>
+<p>Another more specific use case is dynamic programming. This involves a recursive function (or mutually recursive functions) that combine to compute a single value. It can be improved using standard memoization, but specific handling can result in better memory usage. It is also worth noting that some of these dynamic programming problems are also universal (such as fibonacci) and could be reused, so it shouldn't be local only.</p>
+<h2 id="unused-values">Unused Values<a class="headerlink" href="#unused-values" title="Permanent link">&para;</a></h2>
+<p>For an object, it is possible that the values on it can be unused. For example, a linkedlist can contain a head pointer, tail pointer, forward pointers, and backward pointers. Depending on how it is used, it is quite possible for some of these pointers to not ever be needed. In that cases, those pieces of data can be pruned from the object to remove the memory usage and computation cost.</p>
+<p>Another potential avenue for this is values that can be determined at compile time. For example, the length of hashsum can be known based on the type of sum and neither needs to be stored nor computed.</p>
+<h2 id="remove-levels-of-abstraction">Remove levels of Abstraction<a class="headerlink" href="#remove-levels-of-abstraction" title="Permanent link">&para;</a></h2>
+<p>It is often useful to have wrapper types such as Optional which help enable sum types. In this case, it should not have a cost to use these types over not having them to avoid discouraging good usage of abstraction. For example, if the optional is guaranteed to return a value, it should be equivalent to not having an optional at all.</p>
+<h2 id="type-selection">Type Selection<a class="headerlink" href="#type-selection" title="Permanent link">&para;</a></h2>
+<p>Another potential area for optimization is the selection of types. For example, users must pick between the different list variations including linked lists, array lists, skip lists, deque, trees, and hashmaps. Languages then have to choose between which implementations are worth supporting and how many can be supported before it merely confuses users. Some languages simply provide one option with the idea that it is sufficient.</p>
+<p>For this reason, it should be important to allow the compiler to choose between a number of implementations of an interface. This would also require some way for the implementer to provide guidance such as avoid this implementation if it calls this function. It can also take advantage of profiling through the unit and integration tests to determine how the interface is typically used. Users could also specify an actual value. But, even a poor heuristic from the compiler is likely to be better than users choosing without any particular thought. See <a href="../choice/">more</a>.</p>
+<h2 id="method-specialization">Method specialization<a class="headerlink" href="#method-specialization" title="Permanent link">&para;</a></h2>
+<p>When there are multiple possible implementations of a function, there may not always be a best option. For example, sorting with quicksort is better for large arrays while sorting with selection sort can be faster with small ones. This can be used to improve the overall performance. This is also handled as a <a href="../choice/">choice abstraction</a>.</p>
+<h2 id="memory-management">Memory Management<a class="headerlink" href="#memory-management" title="Permanent link">&para;</a></h2>
+<p>Memory management is one of the most important optimizations in a language. Systems generally fall into manually managed memory (C++, Rust), Garbage Collection (Java), and Reference Counting (Swift, Python). While having memory managed by systems like this can greatly reduce bugs and simplify development, that is only if it works well enough. A bad management system does not leave you any better off.</p>
+<p>For memory management, the primary system should be passed on lifetime. Consider your functional program as a tree. Values are created and can then be propagated up the tree. However, there should exist a level on the tree where the value is guaranteed to be removed and propagated up no farther. By doing this analysis, the values can be freed without requiring any runtime analysis and they can be allocated and freed efficiently in a combined group as well. This technique can be supplemented by reference counting as well.</p>
+<p>Another component for analysis is the use of stack vs heap. Using the stack can help improve the memory usage as well when it is possible.</p>
+<h2 id="parallelization">Parallelization<a class="headerlink" href="#parallelization" title="Permanent link">&para;</a></h2>
+<p>One of the key benefits of functional programming is that it can greatly simplify parallelization. By having pure code, it guarantees that sections must be independent and therefore can be computed independently in different threads. However, diving the work up into the threads requires a little bit of work. Functions should be divided up into chunks which can each be run in parallel. Then, they can be added into a global queue and multiple lightweight threads can each pull elements off the queue and then execute them. If chunks depend on other chunks, they will check if all chunks have finished after working and then add the successive chunk code to the queue at the end.</p>
+<p>Chunks should be large enough to avoid contention for the queue and not spend too much time outside of chunks. Then can include one or several subtrees that will be arguments to a larger tree. For large parallel operations (like a map), they should be divided into chunks with a fixed size that is determined based on the code in the map and then the remainder can be combined with the last chunk.</p>
+<p>While this works for thread parallelization, there is also GPU style parallelization. For this, it can be focused on specific data types that typically work well with GPUS. It may also require a special context to enable GPU support as well.</p>
+<h2 id="only-subset-of-function-needed">Only subset of Function needed<a class="headerlink" href="#only-subset-of-function-needed" title="Permanent link">&para;</a></h2>
+<p>Sometimes, the application may not need all of the functionality provided by a library. For example, if it only calls the function with one argument set to true, it would be more optimal to remove that argument from the function and substitute the value into it. This requires additional compilation but has only benefits during runtime.</p>
+<h2 id="promises-and-futures">Promises and Futures<a class="headerlink" href="#promises-and-futures" title="Permanent link">&para;</a></h2>
+<p>One area to consider is how to manage asynchronous code including promises and futures. For most of the code which should be pure, this shouldn't be a problem because the general parallelization should be able to handle it. Some structure may be needed for IO and the monads that are order dependent.</p>
+<h2 id="static-and-dynamic-dispatch">Static and Dynamic Dispatch<a class="headerlink" href="#static-and-dynamic-dispatch" title="Permanent link">&para;</a></h2>
+<p>One avenue worth considering is static vs dynamic dispatch. Static dispatch can be faster although it requires duplicating the code for each of the possible input types (binary size). Dynamic dispatch requires another layer of indirection before making calls but does not duplicate methods. The best option might be a combination of the two depending on the requirements and the goals. For example, only use static dispatch for the hot loops where it would greatly increase performance.</p>
+<h2 id="pre-computing">Pre-computing<a class="headerlink" href="#pre-computing" title="Permanent link">&para;</a></h2>
+<p>There are often expressions or functions in a program which can be computed during compile time instead of run time. Essentially, anything that doesn't use IO could be computed. However, it is hard to determine which ones are reasonable to compute and which ones might require too much work. But, pre-computing the right tasks such as with constant strings in a <code>printf</code> could drastically speed up the program.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.83f73b43.min.js"></script>
+      
+    
+  </body>
+</html>

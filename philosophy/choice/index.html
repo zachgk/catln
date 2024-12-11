@@ -1,0 +1,1508 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../typeTheory/">
+      
+      
+        <link rel="next" href="../metaprogramming/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.48">
+    
+    
+      
+        <title>Choice - Catln</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.6f8fc17f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+<!-- Add custom analytics integration here -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-PMHTDK53PT"></script>
+<script>
+ window.dataLayer = window.dataLayer || [];
+ function gtag(){dataLayer.push(arguments);}
+ gtag('js', new Date());
+
+ gtag('config', 'G-PMHTDK53PT');
+</script>
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#choice" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Catln" class="md-header__button md-logo" aria-label="Catln" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Catln
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Choice
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/zachgk/catln/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zachgk/catln
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Catln" class="md-nav__button md-logo" aria-label="Catln" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Catln
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/zachgk/catln/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zachgk/catln
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Catln
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Design
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Design
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Design
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../basics/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Basics
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../typeTheory/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Type Theory
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Choice
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Choice
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Examples
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#css" class="md-nav__link">
+    <span class="md-ellipsis">
+      CSS
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#low-level-programming" class="md-nav__link">
+    <span class="md-ellipsis">
+      Low-Level Programming
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#choice-of-function" class="md-nav__link">
+    <span class="md-ellipsis">
+      Choice of Function
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#choice-of-arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      Choice of Arguments
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quantifying-choice-outputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quantifying Choice Outputs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#visualizing-choice" class="md-nav__link">
+    <span class="md-ellipsis">
+      Visualizing Choice
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design" class="md-nav__link">
+    <span class="md-ellipsis">
+      Design
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#automatic-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      Automatic Design
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#future-development" class="md-nav__link">
+    <span class="md-ellipsis">
+      Future Development
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Metaprogramming
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            Metaprogramming
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metaprogramming/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Metaprogramming
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../macros/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Macros
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../languageCompilation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Language based Compilation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../compilerErrorStatement/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Compiler Error Statement
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Testing
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Testing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../arrowTesting/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Arrow Testing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../assertions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Assertions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../context/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Context
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../optimization/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Optimization
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../syntacticSugar/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Syntactic Sugar
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_10" id="__nav_2_10_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Documentation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_10">
+            <span class="md-nav__icon md-icon"></span>
+            Documentation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Documentation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../naming/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Naming
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Modules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../debugging/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Debugging
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../syntax/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Syntax
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../building/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Coming from
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Coming from
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comingFrom/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Coming From
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comingFrom/java/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Coming From Java
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comingFrom/haskell/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Coming From Haskell
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Contributor
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Contributor
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contrib/building/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Building
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contrib/organization/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Organization
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Examples
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#css" class="md-nav__link">
+    <span class="md-ellipsis">
+      CSS
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#low-level-programming" class="md-nav__link">
+    <span class="md-ellipsis">
+      Low-Level Programming
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#choice-of-function" class="md-nav__link">
+    <span class="md-ellipsis">
+      Choice of Function
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#choice-of-arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      Choice of Arguments
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quantifying-choice-outputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quantifying Choice Outputs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#visualizing-choice" class="md-nav__link">
+    <span class="md-ellipsis">
+      Visualizing Choice
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design" class="md-nav__link">
+    <span class="md-ellipsis">
+      Design
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#automatic-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      Automatic Design
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#future-development" class="md-nav__link">
+    <span class="md-ellipsis">
+      Future Development
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="choice">Choice<a class="headerlink" href="#choice" title="Permanent link">&para;</a></h1>
+<p>Choice is a fundamental problem throughout programming. However, most languages don't really acknowledge it or deal with it in any way. The general premise is simple. Every action has three parts:</p>
+<ol>
+<li><strong>What</strong> - What do you want to do? As an example, let's say we want to sort a list</li>
+<li><strong>Options</strong> - What are the options you can take? Here, it would be sorting algorithms like quicksort, mergesort, selection sort, bubble sort, etc.</li>
+<li><strong>Choice</strong> - Which choice should you make and when should you make it?</li>
+</ol>
+<p><strong>Choice</strong> is tricky. Maybe in general you could just choose quicksort. But, if you know a list is small then it might be better to choose selection sort. Or, if you know a list is almost sorted then it can be faster to use insertion sort.</p>
+<p>There are many other examples of these kinds of choices. If you have a value, you can choose to compute it strictly or lazily. If you have a button on a website, you can choose what background color it should get. If you have a database, you can choose whether it should be SQL or NoSQL. If you have a scatter plot, you can choose what title to put above it.</p>
+<p>Now, let's go into the scatter plot's title example a bit more. Imagine that your code A calls a library B which calls plot. From the perspective of the one writing the plot function, they won't have any idea what a good title is so they can only leave it blank. From the library writer's perspective, they can probably come up with a decent title but it may be formulaic or overly vague. Only from your code A will you know enough to definitely come up with a good title.</p>
+<p>This leads to what I call the <strong>Fundamental Rule of Choice</strong>: the ability to make better choices depends on how well you understand the context in which the choice is made. That doesn't mean choices made with little context are necessarily bad. The library might have a formulaic title, but for many use cases it will be just fine. It is really just an acknowledgment that only with full context will you know if it is fine or not.</p>
+<p>What separates choice from standard programming is that it crosses layers of abstraction. Normally code is supposed to obey "Separation of Concerns" or the "Single Layer of Abstraction" principle. But, obeying this would be definitively bad because it means little context and therefore poor choices. Instead, the main <strong>What</strong> code can follow separation of concerns while the <strong>Choice</strong> can combine them.</p>
+<h2 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h2>
+<p>While it can be hard to understand choice from just a general description, let's go through a few examples.</p>
+<h3 id="css">CSS<a class="headerlink" href="#css" title="Permanent link">&para;</a></h3>
+<p>Probably the closest implementation to full choice is HTML and CSS. Imagine you have a function <code>render(Html html)</code>. In general, the HTML defines the <strong>what</strong> and the CSS defines the <strong>choice</strong> in how it is rendered. </p>
+<p>The <strong>options</strong> are fixed by the render function. They turn into CSS properties like <code>display</code>, <code>color</code>, and <code>padding</code>. As the rendering is part of the browser, only the browser creators are able to add or modify the CSS options.</p>
+<p>Once again, the CSS is the <strong>choice</strong>. It is composed of two parts: the selectors and the properties. Each of the selectors describes a situation, when the choices will take effect. Then, the properties are the actual choices.</p>
+<p>The selectors allow you a lot of control in how general or how fine the choice will take effect. It can be something general like <code>div</code> or specific like <code>div.class1 span#id2:hover &gt; textarea</code>. When multiple selectors apply, the most specific one takes effect. This is similar to the rule of choice that the choice with the most knowledge (most specific) is likely to be the best.</p>
+<h3 id="low-level-programming">Low-Level Programming<a class="headerlink" href="#low-level-programming" title="Permanent link">&para;</a></h3>
+<p>Another important example of choice is low-level programming. Low-level programming revolves around the management of various aspects necessary to run a program on an actual CPU including memory management, caching computations, data structures, data types, hardware, etc.</p>
+<p>When writing high-level code, these aspects become involved during compilation. Specifically, the compiler performs metaprogramming that transforms the high-level code into equivalent low-level code that can be directly executed. And, there are choices for how that transformation takes place. The compiler can choose to be strict or lazy, choose to use reference counting or garbage collection, can choose to use array lists or hash lists, can choose to use CPU or GPU, etc.</p>
+<p>This behaves like the fundamental rule of choice. The general low-level metaprogramming strategy should provide a good default, but it is ultimately limited. This is the source of the performance gap between low-level and high-level programming.</p>
+<p>However, low-level languages resolve the gap by making programming worse. Rather than focusing on the main ideas you want to express, you also have to mix in ideas related to the low-level nature of the code in violation of separation of concern. Choice enables you to leave the main code readable and not have to specify low-level details on non-critical parts of the code. When you desire, you can still override any choices to better optimize the program.</p>
+<p>It also works well for the adage "make it, work make it right, make it fast". The "make it work" would be creating basic definitions while neglecting all choices. Then, "make it right" would be adding tests after those definitions. Finally, "make it fast" would be adding choices through apply statements to those definitions. Best of all, each of these steps can be done with completely separate code and there is no risk that "making it fast" could harm the readability or introduce new bugs.</p>
+<h2 id="implementation">Implementation<a class="headerlink" href="#implementation" title="Permanent link">&para;</a></h2>
+<p>With a few examples, now we can look into how choice actually looks like. There are two main ways that choice manifests: choice of function and choice of arguments.</p>
+<h3 id="choice-of-function">Choice of Function<a class="headerlink" href="#choice-of-function" title="Permanent link">&para;</a></h3>
+<p>Choice of function results from the use of overlapping function definitions in Catln. This means that functions can have the same input types and function signature but different definitions. Every use of an overlapping function creates a choice of which function to use. Here is an example of creating several overlapping sort functions:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">List</span><span class="p">.</span><span class="nf">sort</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">List</span>
+<span class="w">  </span><span class="err">#</span><span class="w"> </span><span class="n">This</span><span class="w"> </span><span class="n">creates</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="n">declaration</span><span class="w"> </span><span class="kr">of</span><span class="w"> </span><span class="nf">sort</span><span class="w"> </span><span class="nf">which</span><span class="w"> </span><span class="kr">all</span><span class="w"> </span><span class="n">definitions</span><span class="w"> </span><span class="n">should</span><span class="w"> </span><span class="n">follow</span><span class="p">.</span>
+<span class="w">    </span><span class="n">While</span><span class="w"> </span><span class="kr">not</span><span class="w"> </span><span class="n">strictly</span><span class="w"> </span><span class="n">required</span><span class="p">,</span><span class="w"> </span><span class="n">it</span><span class="w"> </span><span class="n">is</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="n">good</span><span class="w"> </span><span class="n">practice</span><span class="p">.</span>
+
+<span class="cp"># Next, we will provide a definition of sorting which we will call &quot;quick&quot; for quicksort.</span>
+
+<span class="n">List</span><span class="p">.</span><span class="nf">sort</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">List</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="err">#</span><span class="n">name</span><span class="p">(</span><span class="s">&quot;quick&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="p">...</span>
+
+
+<span class="cp"># We gave quicksort a name annotation to differentiate them.</span>
+<span class="w">  </span><span class="kr">All</span><span class="w"> </span><span class="nf">sort</span><span class="w"> </span><span class="n">functions</span><span class="w"> </span><span class="n">share</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">same</span><span class="w"> </span><span class="kr">function</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="n">because</span><span class="w"> </span><span class="n">they</span><span class="w"> </span><span class="n">represent</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">same</span><span class="w"> </span><span class="s">&quot;what&quot;</span><span class="p">.</span>
+<span class="w">  </span><span class="n">So</span><span class="p">,</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="n">secondary</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="n">is</span><span class="w"> </span><span class="n">required</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="n">refer</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="n">one</span><span class="w"> </span><span class="n">particular</span><span class="w"> </span><span class="n">algorithm</span><span class="w"> </span><span class="n">vs</span><span class="w"> </span><span class="n">another</span><span class="p">.</span>
+
+<span class="cp"># As this practice is quite common, the next two use a syntactic sugar for the name annotation</span>
+
+<span class="n">List</span><span class="p">.</span><span class="nf">sort</span><span class="s">&quot;merge&quot;</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">List</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="p">...</span>
+
+<span class="n">List</span><span class="p">.</span><span class="nf">sort</span><span class="s">&quot;selection&quot;</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">List</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="p">...</span>
+</code></pre></div>
+
+<p>So, when you call a function by <code>lst.sort</code>, it is really a generic or abstract call. It could refer to any of the sort definitions and which particular one is left to choice.</p>
+<p>A particular variation can be called using <code>lst.sort#name("quick")</code> or <code>lst.sort"quick"</code>.</p>
+<p>Finally, you can use an apply statement like:</p>
+<div class="codehilite"><pre><span></span><code>apply sort&quot;quick&quot; sort&quot;selection&quot; sort
+  #name(&quot;selection&quot;)
+</code></pre></div>
+
+<p>The apply statement allows you to modify the sort of an existing function. This is the preferred way to write it because it keeps the main function cleaner. And, this way can work no matter how far down sort is in the call stack from you.</p>
+<p>Another useful option is dispatch or heuristic implementations. These implementations can provide a basic heuristic to make decisions among the function choices. As an example, here is a heuristic that might be made for choosing a sorting algorithm based on the length of the list:</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">List</span>.<span class="nv">sort</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="nv">this</span>.<span class="nv">length</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">256</span><span class="w"> </span><span class="k">then</span><span class="w"> </span><span class="nv">this</span>.<span class="nv">sort</span><span class="s2">&quot;quick&quot;</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="nv">this</span>.<span class="nv">sort</span><span class="s2">&quot;selection&quot;</span>
+</code></pre></div>
+
+<p>They are useful for providing low-context choices or default behaviors that attempt to leverage the type system to gain a bit of extra understanding about the context. Here, the length filter could be resolved automatically depending on the possible list lengths the type system determines. Another factor that could be added to the heuristic is whether the data type in the list is small and should be sorted directly (like ints) or large and should be sorted with pointers to the data (like strings).</p>
+<h3 id="choice-of-arguments">Choice of Arguments<a class="headerlink" href="#choice-of-arguments" title="Permanent link">&para;</a></h3>
+<p>Along with the choice of functions is the choice of arguments. These work similarly to optional arguments in other programming languages. The main difference is that optional arguments are passed in only by the calling function, but choice arguments can be passed in from any part of the code regardless of how many function calls are between them.</p>
+<p>As an example, let's say we have the scatter plot function with a title as a choice argument. It would look like:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">plot</span><span class="p">(</span><span class="n">List</span><span class="o">[</span><span class="n">Num</span><span class="o">]</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">List</span><span class="o">[</span><span class="n">Num</span><span class="o">]</span><span class="w"> </span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">Optional</span><span class="o">[</span><span class="n">String</span><span class="o">]</span><span class="w"> </span><span class="n">#title</span><span class="w"> </span><span class="n">Nothing</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nc">Image</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">...</span>
+</code></pre></div>
+
+<p>In this example. we have the <code>plot</code> function with two normal arguments <code>x</code> and <code>y</code> and a single choice argument <code>#title</code>. Title is a choice argument because it's name begins with <code>#</code> and it has the default value <code>Nothing</code>.</p>
+<p>Plot can be called by adding the title annotation to the call of plot such as <code>plot#title("Title")(x, y)</code> or <code>plot(x=x, y=y, #title="Title")</code>.</p>
+<p>It can also use an apply statement like:</p>
+<div class="codehilite"><pre><span></span><code>apply foo plot
+  #title(&quot;Foo plot&quot;)
+</code></pre></div>
+
+<h2 id="quantifying-choice-outputs">Quantifying Choice Outputs<a class="headerlink" href="#quantifying-choice-outputs" title="Permanent link">&para;</a></h2>
+<p>One thing to be aware of with choice is that arrows in Catln are not equivalent to functions, either in math or other programming languages. Functions map each input to a single output, but arrows can map an input to many different outputs. One example is the plotting we saw earlier. Specifically, the arrows are equivalent to a mathematical statement and can be read as "∀ input arguments, ∃ output". </p>
+<p>However, there is a special class of arrows that are uniquely quantified. They are equivalent to the stronger statement that "∀ input arguments, ∃! output". And, these are equivalent to functions. Here is how a uniquely quantified arrow can be indicated with one example, sorting:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">List</span><span class="p">.</span><span class="nf">sort</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">List</span>
+<span class="w">  </span><span class="err">#</span><span class="n">unique</span>
+</code></pre></div>
+
+<p>With sorting, we do know that regardless of the sorting algorithm used, the sorted list will always be the same. The major benefit of uniquely quantified arrows is that it is possible to use <a href="../arrowTesting/">arrow testing</a> with them so it is best to indicate them when possible.</p>
+<p>When working with non-unique arrows, it is important to be aware of different possible outputs. The general assumption is that the arrow represents a possibly vague intent and anything that successfully fulfills that intent would be valid.</p>
+<p>One good way to think about this is like a journey. The arrow has a starting point and one or more ending points. Choice allows you to control everything between the start and the end.</p>
+<p>To control what output is returned, there are two ways. The first is to use choice directly such as the earlier example of a title when plotting.</p>
+<p>The second way is to use types to filter the endpoint. As an example, take computing with approximate numbers. Because working with perfectly precise numbers is difficult and often expensive, most of the time you should work with approximate numbers like floating point numbers instead.</p>
+<p>If you had an approximate number <code>n</code> and used it in <code>printf("%.2f", n)</code>, it prints <code>n</code> with up to 2 decimal places. This means that you only need <code>n</code> to be accurate to 2 decimal places. In this case, it is possible to compute <code>n</code> faster using faster data structures (float instead of double), less accurate approximations, and more numerical instability. On the other side, requiring more decimal places would mean slower but more accurate computations.</p>
+<p>The way this works is that it reduces the possible output types of the arrow producing <code>n</code>. Now, the choices have to be made in order to produce the desired output type, not just any possible choices. The same thing can be used for various other restrictions on the arrow up to the capabilities of the type system. Even if you don't use something that automatically adds restrictions like <code>printf</code>, a type can be manually given to <code>n</code> to help determine what the requirements for it are.</p>
+<h2 id="visualizing-choice">Visualizing Choice<a class="headerlink" href="#visualizing-choice" title="Permanent link">&para;</a></h2>
+<p>Another important task is how to visualize choice. When trying to understand what choices are made and why, having an appropriate visualization tool would make the process much easier. For low-level programming and optimizing performance choices, it would be critical.</p>
+<p>Currently, I image a tool similar to the <a href="https://developer.chrome.com/docs/devtools/css/reference/">chrome inspector</a>.</p>
+<p>The inspector lets you visualize the equivalent of the function execution for a particular function call (with inputs). You can expand different levels of the tree to see what sub-calls were made in each function.</p>
+<p>On the right, you can see two panes. The left of the two panes shows all of the "choice selectors" that are being applied in order of precedence. This lets you see the specificity, how they are overriding the choice, and which choices are being made.</p>
+<p>Finally, the rightmost pane shows all of the final choices which are made for the particular call you are looking at. The one modification is that this section would likely to be heavier on documentation and links to documentation. Unlike with CSS where the options are fixed, the options would vary heavily and figuring out what choices are available will likely be an important task.</p>
+<h2 id="design">Design<a class="headerlink" href="#design" title="Permanent link">&para;</a></h2>
+<p>So far, I have mostly focused on a micro view of choice that is focused on individual choices made. It is also useful to think about choice from a macro view of how all of the choices form a whole which is larger than the sum of it's parts.</p>
+<p>Choice, like many fundamental problems, are recognized by many people. They will separately try to solve it or part of it and often give it different names and terminologies. When I think about the macro view of choice, I tend to use one of those synonyms: design. As a synonym, it also contains the same three components:</p>
+<ol>
+<li><strong>What = Design Requirements</strong> - What does it take to be a successful design?</li>
+<li><strong>Options = Design Choices</strong> - What are the design choices that can be made? Given the design choices, it is possible to expand them out to form the full set of possible designs which is called the <strong>Design Space</strong></li>
+<li><strong>Choice = Design</strong> - The actual design work of making design choices.</li>
+</ol>
+<p>When looking at the whole of design, we first need to establish the purpose of design. Really, let's start with the purpose of not-design: the <strong>What</strong>, <strong>Design Requirements</strong>, or modeling component. The goal of the model is only to establish the truth of the problem domain. It should be organized matching the natural organization of the problem, include nuances of the domain, and attempt to promote pure understanding.</p>
+<p>Then, the purpose of design is to best accomplish various goals for the code. As an example, let's say we are designing a web service. One of the goals is that the service should have low latency. What makes design especially tricky is that there are often multiple goals and those goals are often contradictory. In our web service, another goal might be to have the service be low cost. But, low cost makes it difficult to still maintain low latencies so a tradeoff will have to be made between these goals.</p>
+<p>In fact, it is often worse. Another goal might be to have the service be robust and highly available and that is contradictory with both latency and cost. But, even something like latency is not that simple as there could be many pages and actions in the web service that each have their own latencies and choices like the database can have wide-reaching ramifications on all of them.</p>
+<p>Another example of design is the appearance of a website. There are a number of design goals to this such as looking nice, following conventions from other websites, not being too similar to other websites so it doesn't feel like copying, working well for disabilities and color-blindness, have information density for power users, have sparser information so it feels cleaner and doesn't confuse newer or elderly users, and all of the performance design goals. With these design goals, many of them are even subjective.</p>
+<p>As a final example, consider performance optimization. The three largest contradictory design goals are fast runtime, low memory usage, and low binary size. But, it often depends on the particular input given to a program as different inputs would have different performance characteristics. It is not possible to have something be optimal for all inputs. Even if you make many variations of the code and functions in it to work on different sets of inputs, it will still result in a large binary size.</p>
+<p>So, every design has goals and often contradictory ones. This is why humans are still important to these processes to look at the design choices, the tradeoffs that are made, and determine whether it is worth it.</p>
+<h2 id="automatic-design">Automatic Design<a class="headerlink" href="#automatic-design" title="Permanent link">&para;</a></h2>
+<p>Given this, a legitimate question is whether it is possible to automate some or all of the design process. It is and I think this is a valuable addition to the software development field. There are two requirements to do this successfully:</p>
+<p>First, there must be a way to automatically evaluate designs. While it may be theoretically possible if designs can be compared, it is best if a numeric score could be given to designs and the goal was to find a design to minimize/maximize that score. This means that weights would have to be given to the various tradeoffs to combine them into a single score.</p>
+<p>Second, you must establish which choices to automate. If you are trying to improve the performance of a website, you wouldn't want the appearance of the site to be changed as well. So, you need to establish which choices are subject to optimization and which ones will be fixed.</p>
+<p>Now, let's go through a few examples of automatic design. One of the more useful is probably a compiler strategy known as Profile-guided Optimization (PGO). One reason compiling is difficult is that it must compile without knowledge of typical inputs. PGO gives the compiler some number of sample inputs, profiles them, and uses the profile to improve the performance on those inputs.</p>
+<p>This can be treated as an automatic design problem. The evaluation would be the performance (runtime and memory usage). The choices to optimize would be the low-level and compiler choices. As these would be the same for most usages of PGO, it could be integrated into the compiler for easier usage.</p>
+<p>A more creative example would be to use automatic design to make a nice looking website. This case is interesting as evaluating a website is subjective so it can't be simply measured. Instead, it could evaluate the designs using machine learning. Then, the choices would be based on appearance such as colors, sizes, spacing, shadows, etc.</p>
+<p>A final example would be that machine learning itself can be treated as an automatic design problem. The training would be the automatic design and production would be using the design. In this case, both the model structure and the model parameters would be treated as choices while the loss would be the automatic design goal.</p>
+<p>When doing automatic design, efficiency is a large problem. Even when viewing just the restricted design spaces you are trying to optimize, it is usually too large to test each element in the space. So, it must test a random subset of designs to find the best one. Different strategies can be used and tested to determine this subset such as evolutionary methods, Bayesian optimization, or gradient descent.</p>
+<p>Finally, once a design is chosen it must be serialized into some format. The simplest format is to serialize into apply rules similarly to users will write and then it can be read as standard Catln code. Other imported files could also be used for large choices such as deep learning model parameters. And, the serialization would also be useful for design choices that require persistence such as website appearance or database used that shouldn't change by accident.</p>
+<h2 id="future-development">Future Development<a class="headerlink" href="#future-development" title="Permanent link">&para;</a></h2>
+<p>Right now, the algorithm I have described above for choice should be reasonably sufficient. It should work well in the general cases and can be improved over time with more rules given. Even in specific cases it can be manually controlled.</p>
+<p>Other languages that lack choice essentially force there to be one option. Then, the choice is always trivial. While this solution for choice isn't perfect, it is no doubt better.</p>
+<p>The main problem with this choice strategy is that it is essentially greedy. It assumes that all choices are independent, but they are often not. In that case, multiple choices should be made simultaneously. It can use some strategies such as adding choice costs instead of absolute choices, polyhedral optimization, or <a href="https://egraphs-good.github.io/">e-graphs</a>. The only difficulty is that it also makes manual control more complicated.</p>
+<p>These are all areas for future development of the language. But, it requires the same semantics of choice as a background so using the simpler greedy algorithm should be a good start towards those future developments as well. Hopefully, they can even be added on to later versions of the language.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.83f73b43.min.js"></script>
+      
+    
+  </body>
+</html>
