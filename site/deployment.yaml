@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catln-stack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: catln-stack
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: catln-stack
+    spec:
+      containers:
+        - name: catln-stack
+          image: catln:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              protocol: TCP

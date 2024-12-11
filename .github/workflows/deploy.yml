@@ -16,10 +16,15 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-kubectl@v4
+      - name: Installations
+        run: |
+          curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
       - name: Configure AWS Credentials region audience
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-region: us-east-2
+          aws-region: us-west-2
           role-to-assume: arn:aws:iam::482343878428:role/github-catln-stack-site-deploy
       - name: Login to Amazon ECR
         id: login-ecr
@@ -39,17 +44,11 @@ jobs:
         with:
           push: true
           tags: ${{ steps.image.outputs.image }}
-      - name: Fill in the new image ID in the Amazon ECS task definition
-        id: task-def
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition-arn:  arn:aws:ecs:us-east-2:482343878428:task-definition/catln_stack
-          container-name: stack_catln
-          image: ${{ steps.image.outputs.image }}
-      - name: Deploy Amazon ECS task definition
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
-        with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: CatlnStackSite
-          cluster: CatlnStack2
-          wait-for-service-stability: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Deploy update to EKS
+        working-directory: site
+        run: |
+          aws eks update-kubeconfig --name catln-stack
+          kustomize edit set image catln=${{ steps.image.outputs.image }}
+          kustomize build . | kubectl apply -f -
