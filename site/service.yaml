@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: catln-stack
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-name: catln-stack-elb
+    service.beta.kubernetes.io/aws-load-balancer-type: external
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+    service.beta.kubernetes.io/aws-load-balancer-subnets: subnet-05920da96a5cb9461, subnet-08f4112c7eeaef1d6, subnet-0c4ec882351aa86f4, subnet-00611f086cbac5bcd
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: arn:aws:acm:us-west-2:482343878428:certificate/fd3fc66d-75b7-4efa-935d-282b91fee626
+    # Run TLS only on the port named "https" below.
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "https"
+spec:
+  type: LoadBalancer
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+    - name: https
+      port: 443
+      targetPort: 8080
+      protocol: TCP
+  selector:
+      app: catln-stack
