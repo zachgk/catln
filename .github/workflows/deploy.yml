@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     steps:
+      - uses: actions/checkout@v4
       - uses: azure/setup-kubectl@v4
       - name: Configure AWS Credentials region audience
         uses: aws-actions/configure-aws-credentials@v4
