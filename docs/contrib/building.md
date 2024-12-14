@@ -61,7 +61,7 @@ In one command line, start the webdocs server using:
 
 ```
 cd webdocs
-npm start
+npm run dev
 ```
 
 Then, in another command line, run the webdocs API serving:

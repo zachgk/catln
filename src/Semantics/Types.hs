@@ -586,7 +586,7 @@ expandType typeEnv vaenv (TopType negPartials preds) = snd $ differenceTypeWithE
     expandPred :: TypePredicate -> Type
     expandPred (PredClass clss) = expandClassPartial typeEnv vaenv clss
     expandPred (PredRel rel)    = expandRelPartial typeEnv vaenv rel
-    expandPred (PredExpr _)     = undefined
+    expandPred (PredExpr e)     = error $ printf "Not yet defined %s" (show e)
 
 expandClassPartial :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> Type
 expandClassPartial typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv PartialType{ptName, ptVars=classVarsP} = expanded

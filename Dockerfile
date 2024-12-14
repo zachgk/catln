@@ -51,5 +51,5 @@ COPY --from=backend /usr/local/bin/catln /usr/local/bin/catln
 COPY --from=frontend /home/webdocs/dist /home/webdocs/dist
 COPY stack /root/.catln/stack
 
-CMD ["catln", "doc", "--cached", "stack", "test/Integration/code", "docs"]
+CMD ["catln", "doc", "--cached", "/root/.catln/stack", "test/Integration/code", "docs"]
 EXPOSE 8080
