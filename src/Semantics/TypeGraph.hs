@@ -55,7 +55,7 @@ instance Show ReachesTree where
           aux (indent + 1) subTree
       aux _ ReachesLeaf = return ()
 
-unionReachesTree :: TypeEnv tg -> TypeVarArgEnv -> ReachesTree -> Type
+unionReachesTree :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> ReachesTree -> Type
 unionReachesTree typeEnv vaenv (ReachesPartialTree children) = unionAllTypesWithEnv typeEnv vaenv $ map unionChild $ H.toList children
   where
     unionChild (key, val) = case unionReachesTree typeEnv vaenv val of
@@ -75,7 +75,7 @@ joinReachesTrees a b = error $ printf "joinReachesTrees for mixed tree and leaf 
 joinAllReachesTrees :: Foldable f => f ReachesTree -> ReachesTree
 joinAllReachesTrees = foldr1 joinReachesTrees
 
-reachesHasCutSubtypeOf :: TypeEnv tg -> TypeVarArgEnv -> ReachesTree -> Type -> Bool
+reachesHasCutSubtypeOf :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> ReachesTree -> Type -> Bool
 reachesHasCutSubtypeOf typeEnv vaenv (ReachesPartialTree children) superType = all childIsSubtype $ H.toList children
   where childIsSubtype (key, val) = isSubtypeOfWithEnv typeEnv vaenv (singletonType key) superType || reachesHasCutSubtypeOf typeEnv vaenv val superType
 reachesHasCutSubtypeOf typeEnv vaenv (ReachesTypeTree children) superType = any childIsSubtype $ H.toList children

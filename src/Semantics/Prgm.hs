@@ -353,13 +353,13 @@ instance ObjArrClass ObjArr where
 
   getOaAnnots = oaAnnots
 
-mergeVarArgMetaWithSrcItem :: TypeEnv tg -> ([(Expr m, Meta m)], Type) -> ([(Expr m, Meta m)], Type) -> ([(Expr m, Meta m)], Type)
+mergeVarArgMetaWithSrcItem :: (TypeGraph tg) => TypeEnv tg -> ([(Expr m, Meta m)], Type) -> ([(Expr m, Meta m)], Type) -> ([(Expr m, Meta m)], Type)
 mergeVarArgMetaWithSrcItem typeEnv (m1s, t1) (m2s, t2) = (m1s ++ m2s, intersectTypes typeEnv t1 t2)
 
-joinPossVarArgMetaWithSrc :: TypeEnv tg -> PossArgMetaMapWithSrc m -> PossArgMetaMapWithSrc m -> PossArgMetaMapWithSrc m
+joinPossVarArgMetaWithSrc :: (TypeGraph tg) => TypeEnv tg -> PossArgMetaMapWithSrc m -> PossArgMetaMapWithSrc m -> PossArgMetaMapWithSrc m
 joinPossVarArgMetaWithSrc typeEnv aVarArgMaps bVarArgMaps = [H.unionWith (mergeVarArgMetaWithSrcItem typeEnv) aVarArgMap bVarArgMap | aVarArgMap <- aVarArgMaps, bVarArgMap <- bVarArgMaps]
 
-joinAllPossVarArgMetaWithSrc :: TypeEnv tg -> [PossArgMetaMapWithSrc m] -> PossArgMetaMapWithSrc m
+joinAllPossVarArgMetaWithSrc :: (TypeGraph tg) => TypeEnv tg -> [PossArgMetaMapWithSrc m] -> PossArgMetaMapWithSrc m
 joinAllPossVarArgMetaWithSrc _ []     = [H.empty]
 joinAllPossVarArgMetaWithSrc typeEnv (x:xs) = foldr (joinPossVarArgMetaWithSrc typeEnv) x xs
 

@@ -20,6 +20,7 @@ import qualified Data.HashMap.Strict     as H
 import           Data.List               (nub)
 import           Data.Maybe
 import           MapMeta
+import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Parser.Syntax
@@ -30,9 +31,9 @@ import           Utils                   (graphToNodes)
 -- When a class is used in the RHS of a multiTypeDef, it will create an object temporarily
 -- This removes that temporary object and the CGType classGraph entry for it
 removeClassInstanceObjects :: DesPrgm -> DesPrgm -> DesPrgm
-removeClassInstanceObjects (Prgm _ fullPrgmClassGraph _) (Prgm objMap (ClassGraph cg) annots) = Prgm objMap' classGraph' annots
+removeClassInstanceObjects fullPrgm (Prgm objMap (ClassGraph cg) annots) = Prgm objMap' classGraph' annots
   where
-    classNames = listClassNames fullPrgmClassGraph
+    classNames = listClassNames $ mkTypeEnv fullPrgm
     notMatchesClassName n = null $ relativeNameFilter n classNames
 
     classGraph' = ClassGraph $ graphFromEdges $ filter classEntryMatches $ graphToNodes cg
@@ -47,13 +48,13 @@ removeClassInstanceObjects (Prgm _ fullPrgmClassGraph _) (Prgm objMap (ClassGrap
 -- uses the mapMeta for objMap and annots, but must map the classGraph manually
 -- the fullPrgmClassToTypes includes the imports and is used for when the def is inside an import
 resolveRelativeNames :: DesPrgm -> DesPrgm -> DesPrgm
-resolveRelativeNames (Prgm fullPrgmObjMap fullPrgmClassGraph _) (Prgm objMap (ClassGraph cg) annots) = mapMetaPrgm resolveMeta (Prgm objMap classGraph' annots)
+resolveRelativeNames fullPrgm@(Prgm fullPrgmObjMap _ _) (Prgm objMap (ClassGraph cg) annots) = mapMetaPrgm resolveMeta (Prgm objMap classGraph' annots)
   where
     classGraph' = ClassGraph $ graphFromEdges $ map mapClassEntry $ graphToNodes cg
     mapClassEntry (node, tp, subTypes) = (mapCGNode node, resolveName True tp, map (resolveName True) subTypes)
     mapCGNode (CGClass (s, clss, ts, doc)) = CGClass (s, resolveClassPartial True clss, fmap (mapType True) ts, doc)
     mapCGNode CGType = CGType
-    classNames = nub $ listClassNames fullPrgmClassGraph
+    classNames = nub $ listClassNames $ mkTypeEnv fullPrgm
     objNames = relAbsNamePrune $ nub $ map oaObjPath (concatMap getRecursiveObjs fullPrgmObjMap)
 
     resolveMeta _ (Meta t p mid md) = return $ Meta (mapType False t) p mid md

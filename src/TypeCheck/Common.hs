@@ -358,7 +358,7 @@ fAddTTypeGraph k v env@FEnv{feTTypeGraph} = env {feTTypeGraph = H.insertWith (++
 
 -- This ensures schemes are correct
 -- It differs from Constrain.checkScheme because it checks for bugs in the internal compiler, not bugs in the user code
-verifyScheme :: TypeEnv tg -> TypeVarArgEnv -> VarMeta -> Scheme -> Scheme -> Maybe String
+verifyScheme :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> VarMeta -> Scheme -> Scheme -> Maybe String
 verifyScheme typeEnv vaenv Meta{getMetaDat=VarMetaDat _ _} (TypeCheckResult _ (SType oldAct oldReq _ _)) (TypeCheckResult _ (SType act req _ _)) = listToMaybe $ catMaybes [
   if verifySchemeActLowers then Nothing else Just (printf "verifySchemeActLowers\n\t\tGrows by: %s" (show $ differenceTypeWithEnv typeEnv vaenv act oldAct)),
   if verifySchemeReqLowers then Nothing else Just "verifySchemeReqLowers",
@@ -474,6 +474,4 @@ flipTraceConstrain :: TraceConstrain -> TraceConstrain
 flipTraceConstrain tc@TraceConstrain{tcEpochs} = tc{tcEpochs=reverse $ map reverse tcEpochs}
 
 showTraceConstrain :: [SConstraint] -> String
-showTraceConstrain epochs = intercalate "\n" $ map showConstraintPair $ reverse epochs
-  where
-    showConstraintPair pair = show pair
+showTraceConstrain epochs = intercalate "\n" $ map show $ reverse epochs

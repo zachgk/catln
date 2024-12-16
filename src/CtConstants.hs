@@ -77,12 +77,23 @@ argEndAnnot = "/Catln/#argEnd"
 anonStr :: String
 anonStr = "/"
 
-nestedDeclaration, modStr, dataStr, annotStr, classStr, everyStr, isaStr, applyStr :: String
+inKey :: String
+inKey = "/$in"
+
+classStr, classObj, classK :: String
+classStr = "class"
+classObj = "/Class"
+classK = "/k"
+
+isaObj, isaClassK :: String
+isaObj = "/Isa"
+isaClassK = "/class"
+
+nestedDeclaration, modStr, dataStr, annotStr, everyStr, isaStr, applyStr :: String
 nestedDeclaration = "/Catln/nestedDeclaration"
 modStr = "module"
 dataStr = "data"
 annotStr = "annot"
-classStr = "class"
 everyStr = "every"
 isaStr = "isa"
 applyStr = "apply"
@@ -95,6 +106,9 @@ ctElse = "else"
 ctMatch, ctCase :: String
 ctMatch = "match"
 ctCase = "case"
+
+thisKey :: String
+thisKey = "/this"
 
 ctListType, ctListCons, ctListConsHead, ctListConsTail :: String
 ctListType = "List"
