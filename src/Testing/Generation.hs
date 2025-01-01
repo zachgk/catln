@@ -23,7 +23,7 @@ import qualified Data.Set                as S
 import           Hedgehog
 import qualified Hedgehog.Gen            as HG
 import           Hedgehog.Range          (linear, singleton)
-import           Semantics               (classGraphFromObjs)
+import           Semantics               (classGraphFromObjs, mkTypeEnv)
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Desugarf.Expr (desFileImport)
@@ -54,8 +54,9 @@ genTypeFromExpr prgm (TupleApply _ (_, baseExpr) (EAppVar varName m)) = do
 genTypeFromExpr _ e = error $ printf "Unimplemented genTypeFromExpr for %s" (show e)
 
 genType :: Prgm Expr () -> Gen Type
-genType prgm@(Prgm objMap (ClassGraph cg) _) = HG.choice gens
+genType prgm@(Prgm objMap _ _) = HG.choice gens
   where
+    TypeEnv{teClassGraph=ClassGraph cg} = mkTypeEnv prgm
 
     gens = if graphEmpty cg
       then [genBasic]
@@ -94,7 +95,7 @@ genType prgm@(Prgm objMap (ClassGraph cg) _) = HG.choice gens
       singletonType <$> genTypeFromExpr prgm objExpr
 
 genPartialType :: Prgm Expr () -> Gen PartialType
-genPartialType prgm@(Prgm objMap (ClassGraph cg) _) = do
+genPartialType prgm@(Prgm objMap _ _) = do
   gen <- if graphEmpty cg
     then if null objMap
       then HG.discard
@@ -102,6 +103,7 @@ genPartialType prgm@(Prgm objMap (ClassGraph cg) _) = do
     else return [genCG, genObj]
   HG.choice gen
   where
+    TypeEnv{teClassGraph=ClassGraph cg} = mkTypeEnv prgm
     genCG :: Gen PartialType
     genCG = do
       classNode <- HG.element $ graphToNodes cg
