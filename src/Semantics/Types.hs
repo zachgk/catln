@@ -159,6 +159,9 @@ data TypeEnv tg = TypeEnv {
                           }
   deriving (Show)
 
+emptyTypeEnv' :: TypeEnv EmptyTypeGraph
+emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty
+
 -- | A class or type node within the 'ClassGraph'
 data CGNode
   = CGClass (Sealed, PartialType, [Type], Maybe DocComment)
@@ -327,12 +330,6 @@ tryPredsToList (PredsOne p)  = Just [p]
 tryPredsToList (PredsAnd ps) = concat <$> mapM tryPredsToList ps
 tryPredsToList (PredsNot _)  = Nothing
 
-typeEnvNamesMatching :: (TypeGraph tg) => TypeEnv tg -> PartialType -> [Type]
-typeEnvNamesMatching typeEnv@TypeEnv{teNames} relPartial = tpNames ++ clsNames
-  where
-    relName = ptName relPartial
-    tpNames = map (\n -> singletonType relPartial{ptName=n}) $ relativeNameFilter relName $ S.toList teNames
-    clsNames = map (setArgMode H.empty (ptArgMode relPartial) . classPartial . partialVal) $ relativeNameFilter relName $ listClassNames typeEnv
 
 listClassNames :: (TypeGraph tg) => TypeEnv tg -> [ClassName]
 listClassNames TypeEnv{teClassGraph=ClassGraph graphData} = map (fromPartialName . snd3) $ filter isClass $ graphToNodes graphData
@@ -538,7 +535,8 @@ typeSetVar varName varVal (UnionType leafs) = UnionType $ joinUnionType $ map au
   where
     aux p@PartialType{ptVars} = p{ptVars=H.insert varName varVal ptVars}
 typeSetVar varName varVal (TopType negPartials (PredsOne (PredRel p@PartialType{ptVars}))) = TopType negPartials (PredsOne $ PredRel p{ptVars=H.insert varName varVal ptVars})
-typeSetVar _ _ tp = error $ printf "Unimplemented typeSetVar for %s" (show tp)
+typeSetVar varName varVal (TopType negPartials (PredsOne (PredClass p@PartialType{ptVars}))) = TopType negPartials (PredsOne $ PredClass p{ptVars=H.insert varName varVal ptVars})
+typeSetVar varName varVal tp = error $ printf "Unimplemented typeSetVar for %s.%s = %s" (show tp) (show varName) (show varVal)
 
 suffixLookup :: String -> [String] -> Maybe String
 suffixLookup s (x:xs)
@@ -608,11 +606,16 @@ expandClassPartial typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv PartialType
       r -> error $ printf "Unknown class %s in expandPartial. Found %s" (show className) (show r)
 
 expandRelPartial :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> Type
-expandRelPartial typeEnv vaenv relPartial = unionAllTypesWithEnv typeEnv vaenv (UnionType (joinUnionType fromArgs) : fromTypeEnv)
+expandRelPartial typeEnv@TypeEnv{teNames} vaenv relPartial = unionAllTypesWithEnv typeEnv vaenv (UnionType (joinUnionType fromArgs) : fromTypeEnv)
   where
     name = ptName relPartial
-    fromTypeEnv = typeEnvNamesMatching typeEnv relPartial
+    fromTypeEnv = typeEnvNamesMatching
     fromArgs = map (\n -> relPartial{ptName=n}) $ relativeNameFilter name $ map pkName $ H.keys $ snd $ splitVarArgEnv vaenv
+
+    typeEnvNamesMatching = tpNames ++ clsNames
+    relName = ptName relPartial
+    tpNames = map (\n -> singletonType relPartial{ptName=n}) $ relativeNameFilter relName $ S.toList teNames
+    clsNames = map (setArgMode H.empty (ptArgMode relPartial) . classPartial . partialVal) $ relativeNameFilter relName $ listClassNames typeEnv
 
 isSubPredicateOfWithEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicate -> TypePredicate -> Bool
 isSubPredicateOfWithEnv typeEnv vaenv (PredExpr sub) (PredExpr super) = isSubPartialOfWithEnv typeEnv vaenv sub super
