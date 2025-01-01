@@ -124,19 +124,23 @@ desDecl :: StatementEnv -> PObjArr -> [PStatementTree] -> CRes DesPrgm
 desDecl statementEnv decl subStatements = do
   preprocessed <- declPreprocessors (decl, subStatements)
   case preprocessed of
-    DPPStatements newStatements -> mconcat <$> mapM (desStatement statementEnv) newStatements
-    DPPNothing -> do
+    [] -> do
       (decl', subObjMap) <- flattenNestedDeclarations statementEnv (decl, subStatements)
       let decl'' = declToObjArrow statementEnv decl'
       let objMap = decl'' : subObjMap
       return $ Prgm objMap (classGraphFromObjs objMap) []
-    DPPStTree st subStatements' -> case st of
-      MultiTypeDefStatement multiTypeDef -> desMultiTypeDef statementEnv multiTypeDef subStatements'
-      TypeDefStatement typeDef extends -> desTypeDef statementEnv typeDef extends subStatements'
-      RawClassDefStatement classDef -> desClassDef statementEnv False classDef subStatements'
-      RawClassDeclStatement classDecls extends -> desClassDecl statementEnv classDecls extends subStatements'
-      RawApplyStatement{} -> error "Not yet implemented"
-      RawModule name -> desInheritingSubstatements statementEnv (getPath $ makeAbsoluteName name) subStatements'
+    _ -> do
+      preprocessed' <- mapM fromSt preprocessed
+      return $ mconcat preprocessed'
+    where
+      fromSt (DPPStatements newStatements) = mconcat <$> mapM (desStatement statementEnv) newStatements
+      fromSt (DPPStTree st subStatements') = case st of
+        MultiTypeDefStatement multiTypeDef -> desMultiTypeDef statementEnv multiTypeDef subStatements'
+        TypeDefStatement typeDef extends -> desTypeDef statementEnv typeDef extends subStatements'
+        RawClassDefStatement classDef -> desClassDef statementEnv False classDef subStatements'
+        RawClassDeclStatement classDecls extends -> desClassDecl statementEnv classDecls extends subStatements'
+        RawApplyStatement{} -> error "Not yet implemented"
+        RawModule name -> desInheritingSubstatements statementEnv (getPath $ makeAbsoluteName name) subStatements'
 
 -- | Desugars statements that inherit a path from a main statement
 desInheritingSubstatements :: StatementEnv -> NPath -> [PStatementTree] -> CRes DesPrgm

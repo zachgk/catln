@@ -43,25 +43,24 @@ type RawClassDef m = (RawExpr m, ExtendedClasses RawExpr m)
 data DPPStatement
   = RawModule String
   | RawApplyStatement (RawApply RawExpr ())
-  | MultiTypeDefStatement (MultiTypeDef ())
   | TypeDefStatement (RawExpr ()) (ExtendedClasses RawExpr ())
+  | MultiTypeDefStatement (MultiTypeDef ())
   | RawClassDefStatement (RawClassDef ()) -- Every _ isa _
   | RawClassDeclStatement (RawExpr ()) (ExtendedClasses RawExpr ())
   deriving (Eq)
 
 data DPPRes
   = DPPStatements [PStatementTree]
-  | DPPNothing
   | DPPStTree DPPStatement [PStatementTree]
   deriving (Eq)
 
-type DeclPreprocessor = PDeclTree -> CRes DPPRes
+type DeclPreprocessor = PDeclTree -> CRes [DPPRes]
 
 showDeclTrees :: [PDeclTree] -> String
 showDeclTrees trees = intercalate "" $ map (\(d, ss) -> build $ formatStatementTree True 0 $ RawStatementTree (RawDeclStatement d) ss) trees
 
 ifDeclPreprocessor :: DeclPreprocessor
-ifDeclPreprocessor (roa@RawObjArr{roaObj=Just declObj, roaArr=Just (Just expr, _)}, subStatements) = return $ DPPStatements [RawStatementTree (RawDeclStatement decl') (matchDecls ++ subStatements')]
+ifDeclPreprocessor (roa@RawObjArr{roaObj=Just declObj, roaArr=Just (Just expr, _)}, subStatements) = return [DPPStatements [RawStatementTree (RawDeclStatement decl') (matchDecls ++ subStatements')]]
   where
     condName = "$" ++ take 6 (printf "%08x" (hash roa))
     argName = condName ++ "-arg"
@@ -84,7 +83,7 @@ ifDeclPreprocessor (roa@RawObjArr{roaObj=Just declObj, roaArr=Just (Just expr, _
 ifDeclPreprocessor _ = fail "Invalid ifDeclPreprocessor"
 
 matchDeclPreprocessor :: DeclPreprocessor
-matchDeclPreprocessor (roa@RawObjArr{roaObj=Just declObj, roaArr=Just (Just expr, _)}, subStatements) = return $ DPPStatements [RawStatementTree (RawDeclStatement decl') (matchDecls ++ subStatements')]
+matchDeclPreprocessor (roa@RawObjArr{roaObj=Just declObj, roaArr=Just (Just expr, _)}, subStatements) = return [DPPStatements [RawStatementTree (RawDeclStatement decl') (matchDecls ++ subStatements')]]
   where
     condName = "$" ++ take 6 (printf "%08x" (hash roa))
     argName = condName ++ "-arg"
@@ -107,7 +106,7 @@ matchDeclPreprocessor (roa@RawObjArr{roaObj=Just declObj, roaArr=Just (Just expr
 matchDeclPreprocessor _ = fail "Invalid matchDeclPreprocessor"
 
 caseDeclPreprocessor :: DeclPreprocessor
-caseDeclPreprocessor (roa@RawObjArr{roaArr=Just (Just expr, _)}, subStatements) = return $ DPPStatements [RawStatementTree (RawDeclStatement decl') (cases' ++ subStatements')]
+caseDeclPreprocessor (roa@RawObjArr{roaArr=Just (Just expr, _)}, subStatements) = return [DPPStatements [RawStatementTree (RawDeclStatement decl') (cases' ++ subStatements')]]
   where
     baseCondName = "$" ++ take 6 (printf "%08x" (hash roa))
     argName = baseCondName ++ "-arg"
@@ -148,7 +147,7 @@ modDeclPreprocessor (roa@RawObjArr{roaArr=Just (Just modNameExpr, _)}, subStatem
   modName <- case rawExprAppliedArgs modNameExpr of
     [RawObjArr{roaObj=Just (RawValue _ modName)}] -> return modName
     args -> fail $ printf "Invalid arguments to module from %s.\n\tParsed args to %s" (show roa) (show args)
-  return $ DPPStTree (RawModule modName) subStatements
+  return [DPPStTree (RawModule modName) subStatements]
 modDeclPreprocessor (roa, _) = fail $ printf "Invalid modDeclPreprocessor: %s" (show roa)
 
 dataDeclPreprocessor :: DeclPreprocessor
@@ -159,7 +158,7 @@ dataDeclPreprocessor (roa@RawObjArr{roaArr=Just (Just dataExpr, _)}, subStatemen
       [] -> return $ TypeDefStatement tp []
       _ -> fail $ printf "Unknown remaining arguments to data in %s" (show roa)
     _ -> fail $ printf "Missing first argument to data in %s" (show roa)
-  return $ DPPStTree res subStatements
+  return [DPPStTree res subStatements]
 dataDeclPreprocessor (roa, _) = fail $ printf "Invalid dataDeclPreprocessor: %s" (show roa)
 
 classDeclPreprocessor :: DeclPreprocessor
@@ -172,7 +171,7 @@ classDeclPreprocessor (roa@RawObjArr{roaArr=Just (Just classExpr, _)}, subStatem
       [] -> return $ RawClassDeclStatement tp []
       remain -> fail $ printf "Unknown remaining arguments to class in %s as %s" (show roa) (show remain)
     _ -> fail $ printf "Missing first argument to class in %s" (show roa)
-  return $ DPPStTree res subStatements
+  return [DPPStTree res subStatements]
 classDeclPreprocessor (roa, _) = fail $ printf "Invalid classDeclPreprocessor: %s" (show roa)
 
 classInstDeclPreprocessor :: DeclPreprocessor
@@ -182,7 +181,7 @@ classInstDeclPreprocessor (roa@RawObjArr{roaArr=Just (Just classExpr, _)}, subSt
       [RawObjArr{roaObj=Just (RawValue _ "isa"), roaArr=Just (Just (RawList _ extends), _)}] -> return $ RawClassDefStatement (tp, extends)
       _ -> fail $ printf "Unknown remaining arguments to classInst in %s" (show roa)
     _ -> fail $ printf "Missing first argument to classInst in %s" (show roa)
-  return $ DPPStTree res subStatements
+  return [DPPStTree res subStatements]
 classInstDeclPreprocessor (roa, _) = fail $ printf "Invalid classInstDeclPreprocessor: %s" (show roa)
 
 applyDeclPreprocessor :: DeclPreprocessor
@@ -193,13 +192,13 @@ applyDeclPreprocessor (roa@RawObjArr{roaArr=Just (Just applyExpr, _)}, subStatem
       Right a' -> return $ RawApplyStatement a'
       Left err -> fail $ show $ errorBundlePretty err
     _ -> fail $ printf "Missing first argument to classInst in %s" (show roa)
-  return $ DPPStTree res subStatements
+  return [DPPStTree res subStatements]
 applyDeclPreprocessor (roa, _) = fail $ printf "Invalid applyDeclPreprocessor: %s" (show roa)
 
 
 -- | A declPreprocessor for multi-line expressions. Will search for the final result expression and move it to the top
 nestedDeclPreprocessor :: DeclPreprocessor
-nestedDeclPreprocessor (oa, subStatements) = DPPStatements <$> aux [] subStatements
+nestedDeclPreprocessor (oa, subStatements) = pure . DPPStatements <$> aux [] subStatements
   where
     aux :: [PStatementTree] -> [PStatementTree] -> CRes [PStatementTree]
     aux accStmts [RawStatementTree (RawDeclStatement RawObjArr{roaObj=Just e, roaArr=Nothing}) []] = return [RawStatementTree (RawDeclStatement oa{roaArr=Just (Just e, Nothing)}) accStmts] -- expr statement
@@ -233,11 +232,11 @@ declPreprocessors :: DeclPreprocessor
 declPreprocessors (roa@RawObjArr{roaObj=Just expr, roaArr=Nothing}, declSubStatements) = case maybeExprPath expr of
   Just p -> case H.lookup p declPreprocessorList of
     Just preprocessor -> preprocessor (roa{roaObj=Nothing, roaArr=Just (Just expr, Nothing)}, declSubStatements)
-    Nothing           -> return DPPNothing
-  Nothing -> return DPPNothing
+    Nothing           -> return []
+  Nothing -> return []
 declPreprocessors declTree@(RawObjArr{roaArr=Just (Just expr, _)}, _) = case maybeExprPath expr of
   Just p -> case H.lookup p declPreprocessorList of
     Just preprocessor -> preprocessor declTree
-    Nothing           -> return DPPNothing
-  Nothing -> return DPPNothing
-declPreprocessors _ = return DPPNothing
+    Nothing           -> return []
+  Nothing -> return []
+declPreprocessors _ = return []
