@@ -1,31 +1,52 @@
 Prgm
-    { prgmObjMap =
-        [ Value /outerVar ->
-            ( /operator==
-                ( /r=/Data/Primitive/Integer
-                , /l=/Data/Primitive/Integer
-                ) | /Data/Primitive/True | /Data/Primitive/False
-            ) = /operator==
-            ( Value /l -> /Data/Primitive/Integer = /operator-
-                ( Value /l -> /Data/Primitive/Integer = CInt 5 )
-                ( Value /r -> /Data/Primitive/Integer = CInt 3 )
-            )
-            ( Value /r -> /Data/Primitive/Integer = CInt 2 )
-        , /f( Value /io -> /Catln/IO ) -> TVArg /io = Value /io
-        , /f.innerVar( Value /io ) ->
-            ( /operator==
-                ( /r=/Data/Primitive/Integer
-                , /l=/Data/Primitive/Integer
-                ) | /Data/Primitive/True | /Data/Primitive/False
-            ) = /operator==
-            ( Value /l -> /Data/Primitive/Integer = /operator+
-                ( Value /l -> /Data/Primitive/Integer = CInt 1 )
-                ( Value /r -> /Data/Primitive/Integer = CInt 1 )
-            )
-            ( Value /r -> /Data/Primitive/Integer = CInt 2 )
-        , /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
-            ( /f( /io=/Catln/IO ) | /Catln/IO ) = /f( Value /io -> TVArg /io = Value /io )
-        ]
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                ,
+                    [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
+                        ( /f( /io=/Catln/IO ) | /Catln/IO ) = /f( Value /io -> TVArg /io = Value /io )
+                    ]
+                )
+            ,
+                ( "/outerVar"
+                ,
+                    [ Value /outerVar ->
+                        ( /operator==
+                            ( /r=/Data/Primitive/Integer
+                            , /l=/Data/Primitive/Integer
+                            ) | /Data/Primitive/True | /Data/Primitive/False
+                        ) = /operator==
+                        ( Value /l -> /Data/Primitive/Integer = /operator-
+                            ( Value /l -> /Data/Primitive/Integer = CInt 5 )
+                            ( Value /r -> /Data/Primitive/Integer = CInt 3 )
+                        )
+                        ( Value /r -> /Data/Primitive/Integer = CInt 2 )
+                    ]
+                )
+            ,
+                ( "/f.innerVar"
+                ,
+                    [ /f.innerVar( Value /io ) ->
+                        ( /operator==
+                            ( /r=/Data/Primitive/Integer
+                            , /l=/Data/Primitive/Integer
+                            ) | /Data/Primitive/True | /Data/Primitive/False
+                        ) = /operator==
+                        ( Value /l -> /Data/Primitive/Integer = /operator+
+                            ( Value /l -> /Data/Primitive/Integer = CInt 1 )
+                            ( Value /r -> /Data/Primitive/Integer = CInt 1 )
+                        )
+                        ( Value /r -> /Data/Primitive/Integer = CInt 2 )
+                    ]
+                )
+            ,
+                ( "/f"
+                ,
+                    [ /f( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
+                )
+            ]
+        )
     , prgmCG =
         [ CGType
         , CGType

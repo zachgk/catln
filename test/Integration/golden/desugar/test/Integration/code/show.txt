@@ -1,12 +1,23 @@
 Prgm
-    { prgmObjMap =
-        [ Value showInt= /operator==
-            ( Value /l= toString
-                ( Value /this= CInt 1 )
-            )
-            ( Value /r= CStr "1" )
-        , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io
-        ]
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                ,
+                    [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                )
+            ,
+                ( "/showInt"
+                ,
+                    [ Value showInt= /operator==
+                        ( Value /l= toString
+                            ( Value /this= CInt 1 )
+                        )
+                        ( Value /r= CStr "1" )
+                    ]
+                )
+            ]
+        )
     , prgmCG =
         [ CGType
         , CGType

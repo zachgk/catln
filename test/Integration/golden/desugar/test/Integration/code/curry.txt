@@ -1,20 +1,40 @@
 Prgm
-    { prgmObjMap =
-        [ Value outerVar= /operator==
-            ( Value /l= /operator-
-                ( Value /l= CInt 5 )
-                ( Value /r= CInt 3 )
-            )
-            ( Value /r= CInt 2 )
-        , f( Value io -> /Catln/IO )= Value io
-        , f.innerVar( Value /io )= /operator==
-            ( Value /l= /operator+
-                ( Value /l= CInt 1 )
-                ( Value /r= CInt 1 )
-            )
-            ( Value /r= CInt 2 )
-        , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= f( Value io )
-        ]
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                ,
+                    [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= f( Value io ) ]
+                )
+            ,
+                ( "/outerVar"
+                ,
+                    [ Value outerVar= /operator==
+                        ( Value /l= /operator-
+                            ( Value /l= CInt 5 )
+                            ( Value /r= CInt 3 )
+                        )
+                        ( Value /r= CInt 2 )
+                    ]
+                )
+            ,
+                ( "/f.innerVar"
+                ,
+                    [ f.innerVar( Value /io )= /operator==
+                        ( Value /l= /operator+
+                            ( Value /l= CInt 1 )
+                            ( Value /r= CInt 1 )
+                        )
+                        ( Value /r= CInt 2 )
+                    ]
+                )
+            ,
+                ( "/f"
+                ,
+                    [ f( Value io -> /Catln/IO )= Value io ]
+                )
+            ]
+        )
     , prgmCG =
         [ CGType
         , CGType

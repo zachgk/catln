@@ -1,17 +1,32 @@
 Prgm
-    { prgmObjMap =
-        [ /T( EAppArg Value /x -> /Data/Primitive/Integer )
-        , /tst
-            ( EAppArg Value /d -> /T( /x=/Data/Primitive/Integer ) = /T( EAppArg Value /x -> /Data/Primitive/Integer ) )
-            ( EAppArg /f( EAppArg Value /y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
-        , /tst
-            ( EAppArg Value /d -> /T( /x=/Data/Primitive/Integer ) = /T( EAppArg Value /x -> /Data/Primitive/Integer ) )
-            ( EAppArg /f( EAppArg Value /y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ) -> ( /Data/Primitive/True | /Data/Primitive/False ) =
-            ( /f
-                ( EAppArg Value /y -> TVArg /x = ( Value /x ↦ TVArg /x ) ) ↦ ( /Data/Primitive/True | /Data/Primitive/False )
-            )
-        , /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io )
-        ]
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                ,
+                    [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                )
+            ,
+                ( "/T"
+                ,
+                    [ /T( EAppArg Value /x -> /Data/Primitive/Integer ) ]
+                )
+            ,
+                ( "/tst"
+                ,
+                    [ /tst
+                        ( EAppArg Value /d -> /T( /x=/Data/Primitive/Integer ) = /T( EAppArg Value /x -> /Data/Primitive/Integer ) )
+                        ( EAppArg /f( EAppArg Value /y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
+                    , /tst
+                        ( EAppArg Value /d -> /T( /x=/Data/Primitive/Integer ) = /T( EAppArg Value /x -> /Data/Primitive/Integer ) )
+                        ( EAppArg /f( EAppArg Value /y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ) -> ( /Data/Primitive/True | /Data/Primitive/False ) =
+                        ( /f
+                            ( EAppArg Value /y -> TVArg /x = ( Value /x ↦ TVArg /x ) ) ↦ ( /Data/Primitive/True | /Data/Primitive/False )
+                        )
+                    ]
+                )
+            ]
+        )
     , prgmCG =
         [ CGType
         , CGType

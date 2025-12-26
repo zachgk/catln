@@ -1,11 +1,22 @@
 Prgm
-    { prgmObjMap =
-        [ id( Value x )= Value x
-        , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-            ( Value val= id
-                ( Value x= CInt 0 )
-            )( Value /this= Value io )
-        ]
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                ,
+                    [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                        ( Value val= id
+                            ( Value x= CInt 0 )
+                        )( Value /this= Value io )
+                    ]
+                )
+            ,
+                ( "/id"
+                ,
+                    [ id( Value x )= Value x ]
+                )
+            ]
+        )
     , prgmCG =
         [ CGType
         , CGType

@@ -1,25 +1,96 @@
 Prgm
-    { prgmObjMap =
-        [ /operator!=( Value /l -> TVVar /T = Hole TopType HoleActive Nothing )( Value /r -> TVVar /T = Hole TopType HoleActive Nothing )[ /T : ∀/Data/Algebra/Eq ] -> ∀/Data/Primitive/Boolean
-        , Value /Data/Algebra/LessThan
-        , Value /Data/Algebra/Equal
-        , Value /Data/Algebra/GreaterThan
-        , Value /Data/Algebra/NoOrdering
-        , /Data/Algebra/compare[ /T : ∀/Data/Algebra/Ord ]( Value l -> TVVar /T )( Value r -> TVVar /T ) -> ∀/Data/Algebra/Ordering
-        , /Data/Algebra/compare[ /T : ∀/Data/Algebra/POrd ]( Value l -> TVVar /T )( Value r -> TVVar /T ) -> ∀/Data/Algebra/POrdering
-        , /operator<=( Value /l -> TVVar /T = Hole TopType HoleActive Nothing )( Value /r -> TVVar /T = Hole TopType HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean
-        , /operator>=( Value /l -> TVVar /T = Hole TopType HoleActive Nothing )( Value /r -> TVVar /T = Hole TopType HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean
-        , /operator<( Value /l -> TVVar /T = Hole TopType HoleActive Nothing )( Value /r -> TVVar /T = Hole TopType HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean
-        , /operator>( Value /l -> TVVar /T = Hole TopType HoleActive Nothing )( Value /r -> TVVar /T = Hole TopType HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean
-        , /operator++( Value /l -> TVVar /T = Hole TopType HoleActive Nothing )( Value /r -> TVVar /T = Hole TopType HoleActive Nothing )[ /T : ∀/Data/Algebra/Semigroup ] -> TVVar /T
-        , /Data/Algebra/testSemigroupAssociative[ /T : ∀/Data/Algebra/Semigroup ]( Value a -> TVVar /T )( Value b -> TVVar /T )( Value c -> TVVar /T )= CInt 0
-        , /Data/Algebra/mempty[ /T : ∀/Data/Algebra/Monoid ] -> TVVar /T
-        , /Data/Algebra/testRightMonoidIdentity[ /T : ∀/Data/Algebra/Monoid ]( Value t -> TVVar /T )= CInt 0
-        , /Data/Algebra/testLeftMonoidIdentity[ /T : ∀/Data/Algebra/Monoid ]( Value t -> TVVar /T )= CInt 0
-        , /Data/Algebra/testCommutativeMonoid[ /T : ∀/Data/Algebra/CommutativeMonoid ]( Value a -> TVVar /T )( Value b -> TVVar /T )= CInt 0
-        , /Data/Algebra/inverse[ /T : ∀/Data/Algebra/Group ]( Value t -> TVVar /T ) -> TVVar /T
-        , /Data/Algebra/testGroup[ /T : ∀/Data/Algebra/Group ]( Value t -> TVVar /T )= CInt 0
-        ]
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/operator<="
+                ,
+                    [ /operator<=( Value /l -> TVVar /T = Hole TopType HoleActive Nothing )( Value /r -> TVVar /T = Hole TopType HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean ]
+                )
+            ,
+                ( "/Data/Algebra/inverse"
+                ,
+                    [ /Data/Algebra/inverse[ /T : ∀/Data/Algebra/Group ]( Value t -> TVVar /T ) -> TVVar /T ]
+                )
+            ,
+                ( "/operator++"
+                ,
+                    [ /operator++( Value /l -> TVVar /T = Hole TopType HoleActive Nothing )( Value /r -> TVVar /T = Hole TopType HoleActive Nothing )[ /T : ∀/Data/Algebra/Semigroup ] -> TVVar /T ]
+                )
+            ,
+                ( "/operator>="
+                ,
+                    [ /operator>=( Value /l -> TVVar /T = Hole TopType HoleActive Nothing )( Value /r -> TVVar /T = Hole TopType HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean ]
+                )
+            ,
+                ( "/Data/Algebra/LessThan"
+                , [ Value /Data/Algebra/LessThan ]
+                )
+            ,
+                ( "/Data/Algebra/mempty"
+                ,
+                    [ /Data/Algebra/mempty[ /T : ∀/Data/Algebra/Monoid ] -> TVVar /T ]
+                )
+            ,
+                ( "/Data/Algebra/testGroup"
+                ,
+                    [ /Data/Algebra/testGroup[ /T : ∀/Data/Algebra/Group ]( Value t -> TVVar /T )= CInt 0 ]
+                )
+            ,
+                ( "/operator<"
+                ,
+                    [ /operator<( Value /l -> TVVar /T = Hole TopType HoleActive Nothing )( Value /r -> TVVar /T = Hole TopType HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean ]
+                )
+            ,
+                ( "/Data/Algebra/testCommutativeMonoid"
+                ,
+                    [ /Data/Algebra/testCommutativeMonoid[ /T : ∀/Data/Algebra/CommutativeMonoid ]( Value a -> TVVar /T )( Value b -> TVVar /T )= CInt 0 ]
+                )
+            ,
+                ( "/operator>"
+                ,
+                    [ /operator>( Value /l -> TVVar /T = Hole TopType HoleActive Nothing )( Value /r -> TVVar /T = Hole TopType HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean ]
+                )
+            ,
+                ( "/Data/Algebra/testRightMonoidIdentity"
+                ,
+                    [ /Data/Algebra/testRightMonoidIdentity[ /T : ∀/Data/Algebra/Monoid ]( Value t -> TVVar /T )= CInt 0 ]
+                )
+            ,
+                ( "/Data/Algebra/testSemigroupAssociative"
+                ,
+                    [ /Data/Algebra/testSemigroupAssociative[ /T : ∀/Data/Algebra/Semigroup ]( Value a -> TVVar /T )( Value b -> TVVar /T )( Value c -> TVVar /T )= CInt 0 ]
+                )
+            ,
+                ( "/Data/Algebra/NoOrdering"
+                , [ Value /Data/Algebra/NoOrdering ]
+                )
+            ,
+                ( "/Data/Algebra/testLeftMonoidIdentity"
+                ,
+                    [ /Data/Algebra/testLeftMonoidIdentity[ /T : ∀/Data/Algebra/Monoid ]( Value t -> TVVar /T )= CInt 0 ]
+                )
+            ,
+                ( "/Data/Algebra/compare"
+                ,
+                    [ /Data/Algebra/compare[ /T : ∀/Data/Algebra/POrd ]( Value l -> TVVar /T )( Value r -> TVVar /T ) -> ∀/Data/Algebra/POrdering
+                    , /Data/Algebra/compare[ /T : ∀/Data/Algebra/Ord ]( Value l -> TVVar /T )( Value r -> TVVar /T ) -> ∀/Data/Algebra/Ordering
+                    ]
+                )
+            ,
+                ( "/Data/Algebra/Equal"
+                , [ Value /Data/Algebra/Equal ]
+                )
+            ,
+                ( "/Data/Algebra/GreaterThan"
+                , [ Value /Data/Algebra/GreaterThan ]
+                )
+            ,
+                ( "/operator!="
+                ,
+                    [ /operator!=( Value /l -> TVVar /T = Hole TopType HoleActive Nothing )( Value /r -> TVVar /T = Hole TopType HoleActive Nothing )[ /T : ∀/Data/Algebra/Eq ] -> ∀/Data/Primitive/Boolean ]
+                )
+            ]
+        )
     , prgmCG =
         [ CGType
         , CGType

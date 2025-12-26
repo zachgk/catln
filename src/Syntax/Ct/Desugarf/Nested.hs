@@ -62,10 +62,10 @@ scopeSubDeclFunNamesInMeta _ _ m@Meta{getMetaType=TypeVar{}} = m
 
 -- Renames sub functions by applying the parent names as a prefix to avoid name collisions
 scopeSubDeclFunNames :: PSObjArr -> DesObjectMap -> (PSObjArr, DesObjectMap)
-scopeSubDeclFunNames oa@ObjArr{oaObj=Just objExpression, oaAnnots, oaArr} decls = (oa{oaAnnots=annots', oaArr=oaArr'}, decls')
+scopeSubDeclFunNames oa@ObjArr{oaObj=Just objExpression, oaAnnots, oaArr} decls = (oa{oaAnnots=annots', oaArr=oaArr'}, objectMapFromList decls')
   where
     prefix = exprPath objExpression
-    declNames = S.fromList $ map oaObjPath decls
+    declNames = S.fromList $ map oaObjPath $ flatObjectMap decls
     addPrefix n = prefix ++ "." ++ n
     scopeM = scopeSubDeclFunNamesInMeta prefix declNames
     scopeDecl doa@ObjArr{oaObj=Just obj, oaArr=Just (doaArr, m)} = doa{
@@ -73,7 +73,7 @@ scopeSubDeclFunNames oa@ObjArr{oaObj=Just objExpression, oaAnnots, oaArr} decls 
       oaArr = Just (fmap (scopeSubDeclFunNamesInExpr prefix declNames) doaArr, scopeM m)
     }
     scopeDecl _ = error "Unexpected scopeDecl"
-    decls' = map scopeDecl decls
+    decls' = map scopeDecl $ flatObjectMap decls
     oaArr' = fmap (bimap (fmap (scopeSubDeclFunNamesInExpr prefix declNames)) scopeM) oaArr
     annots' = map (scopeSubDeclFunNamesInExpr prefix declNames) oaAnnots
 scopeSubDeclFunNames oa _ = error $ printf "scopeSubDeclFunNames without input expression: %s" (show oa)
@@ -111,11 +111,11 @@ currySubFunctionsUpdateExpr toUpdate parentArgs (TupleApply tm (tbm, tbe) targ) 
       EAppSpread a -> error $ printf "Not yet implemented: %s" (show a)
 
 currySubFunctions :: PSObjArr -> DesObjectMap -> (PSObjArr, DesObjectMap)
-currySubFunctions oa@ObjArr{oaObj=Just objExpression, oaAnnots, oaArr} decls = (oa{oaAnnots=annots', oaArr=oaArr'}, decls')
+currySubFunctions oa@ObjArr{oaObj=Just objExpression, oaAnnots, oaArr} decls = (oa{oaAnnots=annots', oaArr=oaArr'}, objectMapFromList decls')
   where
     parentArgs = map snd <$> exprArgs objExpression
-    toUpdate = S.fromList $ map oaObjPath decls
-    decls2 = map (currySubFunctionSignature parentArgs) decls
+    toUpdate = S.fromList $ map oaObjPath $ flatObjectMap decls
+    decls2 = map (currySubFunctionSignature parentArgs) $ flatObjectMap decls
     oaArr' = fmap (first (fmap (currySubFunctionsUpdateExpr toUpdate parentArgs))) oaArr
     decls' = map (\doa@ObjArr{oaArr=doaArr} -> doa{oaArr=fmap (first (fmap (currySubFunctionsUpdateExpr toUpdate parentArgs))) doaArr}) decls2
     annots' = map (currySubFunctionsUpdateExpr toUpdate parentArgs) oaAnnots

@@ -1,19 +1,30 @@
 Prgm
-    { prgmObjMap =
-        [ Value /showInt ->
-            ( /operator==
-                ( /r=/Data/String
-                , /l=/Data/String
-                ) | /Data/Primitive/True | /Data/Primitive/False
-            ) = /operator==
-            ( EAppArg Value /l -> /Data/String =
-                ( /Data/toString
-                    ( EAppArg Value /this -> /Data/Primitive/Integer = 1 ) ↦ /Data/String
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                ,
+                    [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
                 )
-            )
-            ( EAppArg Value /r -> /Data/String = "1" )
-        , /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io )
-        ]
+            ,
+                ( "/showInt"
+                ,
+                    [ Value /showInt ->
+                        ( /operator==
+                            ( /r=/Data/String
+                            , /l=/Data/String
+                            ) | /Data/Primitive/True | /Data/Primitive/False
+                        ) = /operator==
+                        ( EAppArg Value /l -> /Data/String =
+                            ( /Data/toString
+                                ( EAppArg Value /this -> /Data/Primitive/Integer = 1 ) ↦ /Data/String
+                            )
+                        )
+                        ( EAppArg Value /r -> /Data/String = "1" )
+                    ]
+                )
+            ]
+        )
     , prgmCG =
         [ CGType
         , CGType

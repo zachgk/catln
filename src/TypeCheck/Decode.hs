@@ -100,7 +100,7 @@ toObjArr oa@ObjArr{oaObj, oaArr, oaAnnots} = do
 
 toPrgm :: VPrgm -> StateT FEnv TypeCheckResult TPrgm
 toPrgm (objMap, classGraph, annots) = do
-  objMap' <- mapM toObjArr objMap
+  objMap' <- mapMObjectMap toObjArr objMap
   annots' <- mapM toExpr annots
   return $ Prgm objMap' classGraph annots'
 

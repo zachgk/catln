@@ -1,10 +1,28 @@
 Prgm
-    { prgmObjMap =
-        [ Value a= /operator~( Value /a= Value False )
-        , Value b= /operator&&( Value /l= Value True )( Value /r= Value True )
-        , Value c= /operator||( Value /l= Value True )( Value /r= Value False )
-        , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io
-        ]
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                ,
+                    [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                )
+            ,
+                ( "/a"
+                ,
+                    [ Value a= /operator~( Value /a= Value False ) ]
+                )
+            ,
+                ( "/c"
+                ,
+                    [ Value c= /operator||( Value /l= Value True )( Value /r= Value False ) ]
+                )
+            ,
+                ( "/b"
+                ,
+                    [ Value b= /operator&&( Value /l= Value True )( Value /r= Value True ) ]
+                )
+            ]
+        )
     , prgmCG =
         [ CGType
         , CGType

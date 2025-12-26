@@ -55,10 +55,9 @@ testCtssConfig = CTSSConfig "stack"
 buildCtssConfig = CTSSConfig "~/.catln/stack"
 
 mkTypeEnv :: (ExprClass e, Show m, Show (e m), MetaDat m) => Prgm e m -> TypeEnv (ObjArrTypeGraph e m)
-mkTypeEnv (Prgm objMap classGraph _) = TypeEnv classGraph (ObjArrTypeGraph $ H.fromListWith (++) $ map typeGraphItem objMap) typeNames
+mkTypeEnv (Prgm objMap@(ObjectMap om) classGraph _) = TypeEnv classGraph (ObjArrTypeGraph om) typeNames
   where
-    typeNames = S.fromList $ map makeAbsoluteName $ concatMap getAllObjArrNames objMap
-    typeGraphItem oa = (makeAbsoluteName $ oaObjPath oa, [oa])
+    typeNames = S.fromList $ map makeAbsoluteName $ concatMap getAllObjArrNames $ flatObjectMap objMap
 
 emptyMetaM :: (MetaDat m) => Meta m -> Meta m
 emptyMetaM m = emptyMetaN{getMetaPos=getMetaPos m}
@@ -90,7 +89,7 @@ exprWithMetaType :: (Show m) => Type -> Expr m -> Expr m
 exprWithMetaType t e = exprWithMeta (mWithType t (getExprMeta e)) e
 
 classGraphFromObjs :: (ExprClass e, MetaDat m, Show m, Show (e m)) => ObjectMap e m -> ClassGraph
-classGraphFromObjs objMap = ClassGraph $ graphFromEdges $ map (\oa -> (CGType, PTypeName (oaObjPath oa), [])) objMap
+classGraphFromObjs objMap = ClassGraph $ graphFromEdges $ map (\oa -> (CGType, PTypeName (oaObjPath oa), [])) $ flatObjectMap objMap
 
 mapExprPath :: (Show m) => ((Meta m, TypeName) -> Expr m) -> Expr m -> Expr m
 mapExprPath f (Value m n) = f (m, n)

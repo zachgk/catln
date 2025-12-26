@@ -53,21 +53,21 @@ objectPrecedence ObjArr{oaBasis=ArgObj}                               =   [5]
 
 -- | Finds the 'objectPrecedence' for all types
 buildPrecedenceMap :: (Show m, MetaDat m) => ObjectMap Expr m -> H.HashMap TypeName [Int]
-buildPrecedenceMap = fmap (minimum . map objectPrecedence) . H.fromListWith (++) . map (\oa -> (oaObjPath oa, [oa]))
+buildPrecedenceMap (ObjectMap objMap) = fmap (minimum . map objectPrecedence) objMap
 
 -- |
 -- Prunes an objectMap by precendence. If two objects share the same precendence, only the bigger one(s) will be kept.
 -- This is used to ensure that the type of an object can't be changed by other usages, such as a data object by functions using that data
 filterBestPrecedence :: (Show m, MetaDat m) => H.HashMap TypeName [Int] -> ObjectMap Expr m -> ObjectMap Expr m
-filterBestPrecedence precedenceMap = filter (\oa -> objectPrecedence oa == H.lookupDefault (error "Could not find obj in union") (oaObjPath oa) precedenceMap)
+filterBestPrecedence precedenceMap = filterObjectMap (\oa -> objectPrecedence oa == H.lookupDefault (error $ printf "Could not find obj in union.\n\tObj: %s\n\tKeys: %s" (show oa) (show $ H.keys precedenceMap)) (makeAbsoluteName $ oaObjPath oa) precedenceMap)
 
 
 -- | This creates 'feUnionAllObjs' and adds it to the 'FEnv'
 addUnionObjToEnv :: VObjectMap -> TObjectMap -> StateT FEnv TypeCheckResult ()
 addUnionObjToEnv vobjMap tobjMap = do
   FEnv{feTypeEnv} <- get
-  let vobjMapRec = concatMap getRecursiveObjs vobjMap
-  let tobjMapRec = concatMap getRecursiveObjs tobjMap
+  let vobjMapRec = mconcat $ map getRecursiveObjs $ flatObjectMap vobjMap
+  let tobjMapRec = mconcat $ map getRecursiveObjs $ flatObjectMap tobjMap
 
   -- Finds the best precedence for all each object name
   let vePrecedenceMap = buildPrecedenceMap vobjMapRec
@@ -78,8 +78,8 @@ addUnionObjToEnv vobjMap tobjMap = do
   let vobjs' = filterBestPrecedence precedenceMap vobjMapRec
   let tobjs' = filterBestPrecedence precedenceMap tobjMapRec
 
-  let vobjMetas = map (getExprMeta . oaObjExpr) vobjs'
-  let tobjMetas = map (getMetaType . getExprMeta . oaObjExpr) tobjs'
+  let vobjMetas = map (getExprMeta . oaObjExpr) $ flatObjectMap vobjs'
+  let tobjMetas = map (getMetaType . getExprMeta . oaObjExpr) $ flatObjectMap tobjs'
 
   -- Builds vars to use for union and union powerset
   unionAllObjs <- fresh $ TypeCheckResult [] $ SType PTopType PTopType Nothing "unionAllObjs"
@@ -89,7 +89,7 @@ addUnionObjToEnv vobjMap tobjMap = do
 
   -- Build a variable to store union of tobjs
   let typecheckedAllType = unionAllTypes feTypeEnv $ filter (not . isTypeVar) tobjMetas
-  when (typecheckedAllType == PTopType) $ fail $ printf "Failed to deteremine dependency TopType. Found undetermined dependent objects: \n\t%s" (intercalate "\n\t" $ map (show . snd) $ filter ((==) PTopType . fst) $ zip tobjMetas tobjs')
+  when (typecheckedAllType == PTopType) $ fail $ printf "Failed to deteremine dependency TopType. Found undetermined dependent objects: \n\t%s" (intercalate "\n\t" $ map (show . snd) $ filter ((==) PTopType . fst) $ zip tobjMetas $ flatObjectMap tobjs')
   typecheckedAllObjs <- fresh $ TypeCheckResult [] $ SType typecheckedAllType PTopType Nothing "typecheckedAll"
   let typecheckedAllObjs' = mkVarMeta typecheckedAllObjs
 
@@ -159,7 +159,7 @@ mkReachesEnv env (Constraint maybeConOa stypeVaenv _) = do
     inExpr' <- showExpr env InputMeta inExpr
     outM' <- showM env ArrMeta outM
     return (mapMeta clearMetaDat InputMeta inExpr', outM')
-  let argObjMap = concatMap (\(inExpr, outM) -> [ObjArr (Just inExpr) ArgObj Nothing [] (Just (Nothing, emptyMetaT (substituteWithVarArgEnv (fmap snd vaenv) (getMetaType outM))))]) $ H.elems argVaenv'
+  let argObjMap = objectMapFromList $ concatMap (\(inExpr, outM) -> [ObjArr (Just inExpr) ArgObj Nothing [] (Just (Nothing, emptyMetaT (substituteWithVarArgEnv (fmap snd vaenv) (getMetaType outM))))]) $ H.elems argVaenv'
 
   -- final ReachesEnv
   let argTypeEnv = mkTypeEnv $ Prgm argObjMap (classGraphFromObjs argObjMap) []

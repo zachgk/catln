@@ -1,40 +1,61 @@
 Prgm
-    { prgmObjMap =
-        [ Value /add ->
-            ( /operator==
-                ( /r=/Data/Primitive/Integer
-                , /l=/Data/Primitive/Integer
-                ) | /Data/Primitive/True | /Data/Primitive/False
-            ) = /operator==
-            ( Value /l -> /Data/Primitive/Integer = /operator+
-                ( Value /l -> /Data/Primitive/Integer = CInt 1 )
-                ( Value /r -> /Data/Primitive/Integer = CInt 1 )
-            )
-            ( Value /r -> /Data/Primitive/Integer = CInt 2 )
-        , Value /sub ->
-            ( /operator==
-                ( /r=/Data/Primitive/Integer
-                , /l=/Data/Primitive/Integer
-                ) | /Data/Primitive/True | /Data/Primitive/False
-            ) = /operator==
-            ( Value /l -> /Data/Primitive/Integer = /operator-
-                ( Value /l -> /Data/Primitive/Integer = CInt 5 )
-                ( Value /r -> /Data/Primitive/Integer = CInt 3 )
-            )
-            ( Value /r -> /Data/Primitive/Integer = CInt 2 )
-        , Value /mul ->
-            ( /operator==
-                ( /r=/Data/Primitive/Integer
-                , /l=/Data/Primitive/Integer
-                ) | /Data/Primitive/True | /Data/Primitive/False
-            ) = /operator==
-            ( Value /l -> /Data/Primitive/Integer = /operator*
-                ( Value /l -> /Data/Primitive/Integer = CInt 2 )
-                ( Value /r -> /Data/Primitive/Integer = CInt 3 )
-            )
-            ( Value /r -> /Data/Primitive/Integer = CInt 6 )
-        , /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io
-        ]
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                ,
+                    [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
+                )
+            ,
+                ( "/sub"
+                ,
+                    [ Value /sub ->
+                        ( /operator==
+                            ( /r=/Data/Primitive/Integer
+                            , /l=/Data/Primitive/Integer
+                            ) | /Data/Primitive/True | /Data/Primitive/False
+                        ) = /operator==
+                        ( Value /l -> /Data/Primitive/Integer = /operator-
+                            ( Value /l -> /Data/Primitive/Integer = CInt 5 )
+                            ( Value /r -> /Data/Primitive/Integer = CInt 3 )
+                        )
+                        ( Value /r -> /Data/Primitive/Integer = CInt 2 )
+                    ]
+                )
+            ,
+                ( "/add"
+                ,
+                    [ Value /add ->
+                        ( /operator==
+                            ( /r=/Data/Primitive/Integer
+                            , /l=/Data/Primitive/Integer
+                            ) | /Data/Primitive/True | /Data/Primitive/False
+                        ) = /operator==
+                        ( Value /l -> /Data/Primitive/Integer = /operator+
+                            ( Value /l -> /Data/Primitive/Integer = CInt 1 )
+                            ( Value /r -> /Data/Primitive/Integer = CInt 1 )
+                        )
+                        ( Value /r -> /Data/Primitive/Integer = CInt 2 )
+                    ]
+                )
+            ,
+                ( "/mul"
+                ,
+                    [ Value /mul ->
+                        ( /operator==
+                            ( /r=/Data/Primitive/Integer
+                            , /l=/Data/Primitive/Integer
+                            ) | /Data/Primitive/True | /Data/Primitive/False
+                        ) = /operator==
+                        ( Value /l -> /Data/Primitive/Integer = /operator*
+                            ( Value /l -> /Data/Primitive/Integer = CInt 2 )
+                            ( Value /r -> /Data/Primitive/Integer = CInt 3 )
+                        )
+                        ( Value /r -> /Data/Primitive/Integer = CInt 6 )
+                    ]
+                )
+            ]
+        )
     , prgmCG =
         [ CGType
         , CGType

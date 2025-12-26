@@ -1,25 +1,44 @@
 Prgm
-    { prgmObjMap =
-        [ /Just( EAppVar /T TopType )( EAppArg Value /val -> TVVar /T )
-        , Value /Nothing
-        , /defInt
-            ( EAppArg Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just( EAppArg Value /val -> /Data/Primitive/Integer ) ) -> TVArg /val = ( Value /val ↦ TVArg /val )
-        , /defInt( EAppArg Value /x -> /Nothing = Value /Nothing ) -> /Data/Primitive/Integer = 0
-        , /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
-            ( /Catln/exit
-                ( /val=/Data/Primitive/Integer
-                , /this=/Catln/IO
-                ) | /Catln/IO
-            ) = /Catln/exit
-            ( EAppArg Value /val -> /Data/Primitive/Integer =
-                ( /defInt
-                    ( EAppArg Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just
-                        ( EAppArg Value /val -> /Data/Primitive/Integer = 0 )
-                    ) ↦ /Data/Primitive/Integer
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                ,
+                    [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+                        ( /Catln/exit
+                            ( /val=/Data/Primitive/Integer
+                            , /this=/Catln/IO
+                            ) | /Catln/IO
+                        ) = /Catln/exit
+                        ( EAppArg Value /val -> /Data/Primitive/Integer =
+                            ( /defInt
+                                ( EAppArg Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just
+                                    ( EAppArg Value /val -> /Data/Primitive/Integer = 0 )
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        )
+                        ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+                    ]
                 )
-            )
-            ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
-        ]
+            ,
+                ( "/defInt"
+                ,
+                    [ /defInt
+                        ( EAppArg Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just( EAppArg Value /val -> /Data/Primitive/Integer ) ) -> TVArg /val = ( Value /val ↦ TVArg /val )
+                    , /defInt( EAppArg Value /x -> /Nothing = Value /Nothing ) -> /Data/Primitive/Integer = 0
+                    ]
+                )
+            ,
+                ( "/Nothing"
+                , [ Value /Nothing ]
+                )
+            ,
+                ( "/Just"
+                ,
+                    [ /Just( EAppVar /T TopType )( EAppArg Value /val -> TVVar /T ) ]
+                )
+            ]
+        )
     , prgmCG =
         [ CGType
         , CGType

@@ -1,28 +1,44 @@
 Prgm
-    { prgmObjMap =
-        [ /Complex[ /N : ∀/Data/Primitive/Number ]( Value /a -> TVVar /N )( Value /b -> TVVar /N )
-        , /real
-            ( Value /c -> /Complex[ /N=~Number ]
-                ( /a=TVVar /N
-                , /b=TVVar /N
-                ) = /Complex( Value /a -> ~Number )( Value /b -> ~Number )
-            ) -> TVArg /a = Value /a
-        , /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
-            ( /Catln/exit
-                ( /val=/Data/Primitive/Integer
-                , /this=/Catln/IO
-                ) | /Catln/IO
-            ) = /Catln/exit
-            ( Value /val -> /Data/Primitive/Integer = /real
-                ( Value /c -> /Complex[ /N=/Data/Primitive/Integer ]
-                    ( /a=TVVar /N
-                    , /b=TVVar /N
-                    ) = /Complex
-                    ( Value /a -> /Data/Primitive/Integer = CInt 0 )
-                    ( Value /b -> /Data/Primitive/Integer = CInt 7 )
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                ,
+                    [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
+                        ( /Catln/exit
+                            ( /val=/Data/Primitive/Integer
+                            , /this=/Catln/IO
+                            ) | /Catln/IO
+                        ) = /Catln/exit
+                        ( Value /val -> /Data/Primitive/Integer = /real
+                            ( Value /c -> /Complex[ /N=/Data/Primitive/Integer ]
+                                ( /a=TVVar /N
+                                , /b=TVVar /N
+                                ) = /Complex
+                                ( Value /a -> /Data/Primitive/Integer = CInt 0 )
+                                ( Value /b -> /Data/Primitive/Integer = CInt 7 )
+                            )
+                        )( Value /this -> TVArg /io = Value /io )
+                    ]
                 )
-            )( Value /this -> TVArg /io = Value /io )
-        ]
+            ,
+                ( "/Complex"
+                ,
+                    [ /Complex[ /N : ∀/Data/Primitive/Number ]( Value /a -> TVVar /N )( Value /b -> TVVar /N ) ]
+                )
+            ,
+                ( "/real"
+                ,
+                    [ /real
+                        ( Value /c -> /Complex[ /N=~Number ]
+                            ( /a=TVVar /N
+                            , /b=TVVar /N
+                            ) = /Complex( Value /a -> ~Number )( Value /b -> ~Number )
+                        ) -> TVArg /a = Value /a
+                    ]
+                )
+            ]
+        )
     , prgmCG =
         [ CGType
         , CGType

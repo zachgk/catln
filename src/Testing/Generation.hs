@@ -84,20 +84,20 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens
 
     genObjM :: Gen Type
     genObjM = do
-      oa <- HG.element objMap
+      oa <- HG.element $ flatObjectMap objMap
       let objExpr = fromJust $ oaObj oa
       return $ getExprType objExpr
 
     genObj :: Gen Type
     genObj = do
-      oa <- HG.element objMap
+      oa <- HG.element $ flatObjectMap objMap
       let objExpr = fromJust $ oaObj oa
       singletonType <$> genTypeFromExpr prgm objExpr
 
 genPartialType :: Prgm Expr () -> Gen PartialType
 genPartialType prgm@(Prgm objMap _ _) = do
   gen <- if graphEmpty cg
-    then if null objMap
+    then if nullObjectMap objMap
       then HG.discard
       else return [genObj]
     else return [genCG, genObj]
@@ -111,7 +111,7 @@ genPartialType prgm@(Prgm objMap _ _) = do
 
     genObj :: Gen PartialType
     genObj = do
-      oa <- HG.element objMap
+      oa <- HG.element $ flatObjectMap objMap
       let objExpr = fromJust $ oaObj oa
       genTypeFromExpr prgm objExpr
 
@@ -166,7 +166,7 @@ genPrgm = do
                                     arr <- genOutputExpr arrGoal obj
                                     return $ ObjArr (Just obj) FunctionObj Nothing [] (Just (Just arr, emptyMetaN))
 
-  let objMap = dataObjs ++ funObjs
+  let objMap = objectMapFromList (dataObjs ++ funObjs)
 
   return $ Prgm objMap (classGraphFromObjs objMap) []
 

@@ -1,17 +1,36 @@
 Prgm
-    { prgmObjMap =
-        [ Just[ /T : TopType ]( Value /val -> TVVar /T )
-        , Value Nothing
-        , defInt
-            ( Value x= Just( Value val -> /Data/Primitive/Integer ) )= Value val
-        , defInt( Value x= Value Nothing )= CInt 0
-        , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-            ( Value val= defInt
-                ( Value x= Just
-                    ( Value val= CInt 0 )
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                ,
+                    [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                        ( Value val= defInt
+                            ( Value x= Just
+                                ( Value val= CInt 0 )
+                            )
+                        )( Value /this= Value io )
+                    ]
                 )
-            )( Value /this= Value io )
-        ]
+            ,
+                ( "/defInt"
+                ,
+                    [ defInt( Value x= Value Nothing )= CInt 0
+                    , defInt
+                        ( Value x= Just( Value val -> /Data/Primitive/Integer ) )= Value val
+                    ]
+                )
+            ,
+                ( "/Nothing"
+                , [ Value Nothing ]
+                )
+            ,
+                ( "/Just"
+                ,
+                    [ Just[ /T : TopType ]( Value /val -> TVVar /T ) ]
+                )
+            ]
+        )
     , prgmCG =
         [ CGType
         , CGType

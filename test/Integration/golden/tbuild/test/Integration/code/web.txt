@@ -1,13 +1,20 @@
 Prgm
-    { prgmObjMap =
-        [ Value /main ->
-            ( /Catln/www( /html=/Data/String ) | /Catln/CatlnResult
-                ( /contents=/Data/String
-                , /name=/Data/String
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/main"
+                ,
+                    [ Value /main ->
+                        ( /Catln/www( /html=/Data/String ) | /Catln/CatlnResult
+                            ( /contents=/Data/String
+                            , /name=/Data/String
+                            )
+                        ) = /Catln/www
+                        ( EAppArg Value /html -> /Data/String = "<html><body>web test</body></html>" )
+                    ]
                 )
-            ) = /Catln/www
-            ( EAppArg Value /html -> /Data/String = "<html><body>web test</body></html>" )
-        ]
+            ]
+        )
     , prgmCG = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md

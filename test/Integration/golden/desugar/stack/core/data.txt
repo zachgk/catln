@@ -1,25 +1,71 @@
 Prgm
-    { prgmObjMap =
-        [ Value /Data/String
-        , /operator==( Value /l -> /Data/String = Hole TopType HoleActive Nothing )( Value /r -> /Data/String = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-        , /Data/toString( Value /this -> /Data/String ) -> /Data/String
-        , /Data/toString( Value /this -> /Data/String )= Value this
-        , /Data/toString( Value /this -> /Data/Primitive/Integer ) -> /Data/String
-        , /Context[ /V : TopType ]( Value /value -> TVVar /V )( ..Hole TopType HoleActive Nothing )
-        , /ContextIn[ /V : TopType ]( Value /value -> TVVar /V )( ..Hole TopType HoleActive Nothing )
-        , /ContextOut[ /V : TopType ]( Value /value -> TVVar /V )( ..Hole TopType HoleActive Nothing )
-        , /Context[ /T : TopType ][ /V : TopType ]( Value value -> TVVar /V )( ..Hole TopType HoleActive Nothing ) | /operator?->
-            ( Value /l= /ContextIn[ /V : TVVar /V ]( Value value= Hole TVVar /V HoleActive Nothing )( ..Hole TopType HoleActive Nothing ) )( Value /r= Hole TVVar /T HoleActive Nothing ) -> TVVar /T
-        , Value /Data/None
-        , /Data/Cons[ /T : TopType ]( Value /head -> TVVar /T )( Value /tail -> ∀/Data/ConsList )
-        , Value /Data/Nil
-        , /Data/length( Value /this -> /Data/Nil )= CInt 0
-        , /Data/length
-            ( Value /this= /Data/Cons( Value head )( Value tail ) )= /operator+
-            ( Value /l= CInt 1 )
-            ( Value /r= length( Value /this= Value tail ) )
-        , /Data/enum[ /T : ∀/Data/Enum ] -> ∀/Data/Set
-        ]
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextOut"
+                ,
+                    [ /ContextOut[ /V : TopType ]( Value /value -> TVVar /V )( ..Hole TopType HoleActive Nothing ) ]
+                )
+            ,
+                ( "/operator=="
+                ,
+                    [ /operator==( Value /l -> /Data/String = Hole TopType HoleActive Nothing )( Value /r -> /Data/String = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                )
+            ,
+                ( "/Data/length"
+                ,
+                    [ /Data/length
+                        ( Value /this= /Data/Cons( Value head )( Value tail ) )= /operator+
+                        ( Value /l= CInt 1 )
+                        ( Value /r= length( Value /this= Value tail ) )
+                    , /Data/length( Value /this -> /Data/Nil )= CInt 0
+                    ]
+                )
+            ,
+                ( "/Data/toString"
+                ,
+                    [ /Data/toString( Value /this -> /Data/Primitive/Integer ) -> /Data/String
+                    , /Data/toString( Value /this -> /Data/String )= Value this
+                    , /Data/toString( Value /this -> /Data/String ) -> /Data/String
+                    ]
+                )
+            ,
+                ( "/Data/Nil"
+                , [ Value /Data/Nil ]
+                )
+            ,
+                ( "/ContextIn"
+                ,
+                    [ /ContextIn[ /V : TopType ]( Value /value -> TVVar /V )( ..Hole TopType HoleActive Nothing ) ]
+                )
+            ,
+                ( "/Data/String"
+                , [ Value /Data/String ]
+                )
+            ,
+                ( "/Context"
+                ,
+                    [ /Context[ /T : TopType ][ /V : TopType ]( Value value -> TVVar /V )( ..Hole TopType HoleActive Nothing ) | /operator?->
+                        ( Value /l= /ContextIn[ /V : TVVar /V ]( Value value= Hole TVVar /V HoleActive Nothing )( ..Hole TopType HoleActive Nothing ) )( Value /r= Hole TVVar /T HoleActive Nothing ) -> TVVar /T
+                    , /Context[ /V : TopType ]( Value /value -> TVVar /V )( ..Hole TopType HoleActive Nothing )
+                    ]
+                )
+            ,
+                ( "/Data/Cons"
+                ,
+                    [ /Data/Cons[ /T : TopType ]( Value /head -> TVVar /T )( Value /tail -> ∀/Data/ConsList ) ]
+                )
+            ,
+                ( "/Data/None"
+                , [ Value /Data/None ]
+                )
+            ,
+                ( "/Data/enum"
+                ,
+                    [ /Data/enum[ /T : ∀/Data/Enum ] -> ∀/Data/Set ]
+                )
+            ]
+        )
     , prgmCG =
         [ CGType
         , CGType

@@ -1,22 +1,41 @@
 Prgm
-    { prgmObjMap =
-        [ /Just[ /T : TopType ]( Value /val -> TVVar /T )
-        , Value /Nothing
-        , /defInt
-            ( Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just( Value /val -> /Data/Primitive/Integer ) ) -> TVArg /val = Value /val
-        , /defInt( Value /x -> /Nothing = Value /Nothing ) -> /Data/Primitive/Integer = CInt 0
-        , /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
-            ( /Catln/exit
-                ( /val=/Data/Primitive/Integer
-                , /this=/Catln/IO
-                ) | /Catln/IO
-            ) = /Catln/exit
-            ( Value /val -> /Data/Primitive/Integer = /defInt
-                ( Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just
-                    ( Value /val -> /Data/Primitive/Integer = CInt 0 )
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                ,
+                    [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
+                        ( /Catln/exit
+                            ( /val=/Data/Primitive/Integer
+                            , /this=/Catln/IO
+                            ) | /Catln/IO
+                        ) = /Catln/exit
+                        ( Value /val -> /Data/Primitive/Integer = /defInt
+                            ( Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just
+                                ( Value /val -> /Data/Primitive/Integer = CInt 0 )
+                            )
+                        )( Value /this -> TVArg /io = Value /io )
+                    ]
                 )
-            )( Value /this -> TVArg /io = Value /io )
-        ]
+            ,
+                ( "/defInt"
+                ,
+                    [ /defInt( Value /x -> /Nothing = Value /Nothing ) -> /Data/Primitive/Integer = CInt 0
+                    , /defInt
+                        ( Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just( Value /val -> /Data/Primitive/Integer ) ) -> TVArg /val = Value /val
+                    ]
+                )
+            ,
+                ( "/Nothing"
+                , [ Value /Nothing ]
+                )
+            ,
+                ( "/Just"
+                ,
+                    [ /Just[ /T : TopType ]( Value /val -> TVVar /T ) ]
+                )
+            ]
+        )
     , prgmCG =
         [ CGType
         , CGType

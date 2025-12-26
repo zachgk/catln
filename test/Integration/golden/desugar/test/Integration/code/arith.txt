@@ -1,25 +1,46 @@
 Prgm
-    { prgmObjMap =
-        [ Value add= /operator==
-            ( Value /l= /operator+
-                ( Value /l= CInt 1 )
-                ( Value /r= CInt 1 )
-            )
-            ( Value /r= CInt 2 )
-        , Value sub= /operator==
-            ( Value /l= /operator-
-                ( Value /l= CInt 5 )
-                ( Value /r= CInt 3 )
-            )
-            ( Value /r= CInt 2 )
-        , Value mul= /operator==
-            ( Value /l= /operator*
-                ( Value /l= CInt 2 )
-                ( Value /r= CInt 3 )
-            )
-            ( Value /r= CInt 6 )
-        , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io
-        ]
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                ,
+                    [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                )
+            ,
+                ( "/sub"
+                ,
+                    [ Value sub= /operator==
+                        ( Value /l= /operator-
+                            ( Value /l= CInt 5 )
+                            ( Value /r= CInt 3 )
+                        )
+                        ( Value /r= CInt 2 )
+                    ]
+                )
+            ,
+                ( "/add"
+                ,
+                    [ Value add= /operator==
+                        ( Value /l= /operator+
+                            ( Value /l= CInt 1 )
+                            ( Value /r= CInt 1 )
+                        )
+                        ( Value /r= CInt 2 )
+                    ]
+                )
+            ,
+                ( "/mul"
+                ,
+                    [ Value mul= /operator==
+                        ( Value /l= /operator*
+                            ( Value /l= CInt 2 )
+                            ( Value /r= CInt 3 )
+                        )
+                        ( Value /r= CInt 6 )
+                    ]
+                )
+            ]
+        )
     , prgmCG =
         [ CGType
         , CGType

@@ -1,34 +1,114 @@
 Prgm
-    { prgmObjMap =
-        [ Value /Catln/IO
-        , /Catln/exit( Value /val -> /Data/Primitive/Integer )( Value /this -> /Catln/IO ) -> /Catln/IO
-        , /Catln/println( Value /msg -> /Data/String )( Value /this -> /Catln/IO ) -> /Catln/IO
-        , /Catln/#md( Value /text -> /Data/String )
-        , /Catln/#name( Value /name -> /Data/String )
-        , Value /Catln/#else
-        , Value /Catln/#noCore
-        , /Catln/#runtime( Value /k -> /Data/String )
-        , Value /Catln/#argStart
-        , Value /Catln/#argEnd
-        , /Catln/#assert( Value /test -> ∀/Data/Primitive/Boolean )
-        , /Catln/#assert( Value /test -> ∀/Data/Primitive/Boolean )( Value /msg -> /Data/String )
-        , /Catln/#print( Value /p -> ∀/Catln/Doc/DShow )
-        , Value /Catln/#test
-        , Value /Catln/#example
-        , /operator?->( Value /l= Hole TopType HoleActive Nothing )( Value /r= Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-        , /Catln/CatlnResult( Value /name -> /Data/String )( Value /contents -> /Data/String )
-        , /Catln/www( Value /html -> /Data/String ) -> /Catln/CatlnResult
-            ( /contents=/Data/String
-            , /name=/Data/String
-            ) = /Catln/CatlnResult
-            ( Value /name -> /Data/String = CStr "index.html" )( Value /contents -> TVArg /html = Value /html )
-        , /Catln/llvm( Value /c ) -> /Catln/CatlnResult..
-        , Value /Catln/Then
-        , Value /Catln/Else
-        , /Catln/ThenElse/fromBool( Value /v -> ∀/Data/Primitive/Boolean ) -> ∀/Catln/ThenElse
-        , /Catln/ThenElse/fromBool( Value /v -> /Data/Primitive/True = Value /Data/Primitive/True ) -> /Catln/Then = Value /Catln/Then
-        , /Catln/ThenElse/fromBool( Value /v -> /Data/Primitive/False = Value /Data/Primitive/False ) -> /Catln/Else = Value /Catln/Else
-        ]
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/Catln/llvm"
+                ,
+                    [ /Catln/llvm( Value /c ) -> /Catln/CatlnResult.. ]
+                )
+            ,
+                ( "/Catln/#else"
+                , [ Value /Catln/#else ]
+                )
+            ,
+                ( "/Catln/#md"
+                ,
+                    [ /Catln/#md( Value /text -> /Data/String ) ]
+                )
+            ,
+                ( "/Catln/Else"
+                , [ Value /Catln/Else ]
+                )
+            ,
+                ( "/Catln/#noCore"
+                , [ Value /Catln/#noCore ]
+                )
+            ,
+                ( "/Catln/#argStart"
+                , [ Value /Catln/#argStart ]
+                )
+            ,
+                ( "/Catln/#argEnd"
+                , [ Value /Catln/#argEnd ]
+                )
+            ,
+                ( "/Catln/#test"
+                , [ Value /Catln/#test ]
+                )
+            ,
+                ( "/Catln/#name"
+                ,
+                    [ /Catln/#name( Value /name -> /Data/String ) ]
+                )
+            ,
+                ( "/Catln/exit"
+                ,
+                    [ /Catln/exit( Value /val -> /Data/Primitive/Integer )( Value /this -> /Catln/IO ) -> /Catln/IO ]
+                )
+            ,
+                ( "/operator?->"
+                ,
+                    [ /operator?->( Value /l= Hole TopType HoleActive Nothing )( Value /r= Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                )
+            ,
+                ( "/Catln/www"
+                ,
+                    [ /Catln/www( Value /html -> /Data/String ) -> /Catln/CatlnResult
+                        ( /contents=/Data/String
+                        , /name=/Data/String
+                        ) = /Catln/CatlnResult
+                        ( Value /name -> /Data/String = CStr "index.html" )( Value /contents -> TVArg /html = Value /html )
+                    ]
+                )
+            ,
+                ( "/Catln/#assert"
+                ,
+                    [ /Catln/#assert( Value /test -> ∀/Data/Primitive/Boolean )( Value /msg -> /Data/String )
+                    , /Catln/#assert( Value /test -> ∀/Data/Primitive/Boolean )
+                    ]
+                )
+            ,
+                ( "/Catln/#print"
+                ,
+                    [ /Catln/#print( Value /p -> ∀/Catln/Doc/DShow ) ]
+                )
+            ,
+                ( "/Catln/CatlnResult"
+                ,
+                    [ /Catln/CatlnResult( Value /name -> /Data/String )( Value /contents -> /Data/String ) ]
+                )
+            ,
+                ( "/Catln/#runtime"
+                ,
+                    [ /Catln/#runtime( Value /k -> /Data/String ) ]
+                )
+            ,
+                ( "/Catln/#example"
+                , [ Value /Catln/#example ]
+                )
+            ,
+                ( "/Catln/ThenElse/fromBool"
+                ,
+                    [ /Catln/ThenElse/fromBool( Value /v -> /Data/Primitive/False = Value /Data/Primitive/False ) -> /Catln/Else = Value /Catln/Else
+                    , /Catln/ThenElse/fromBool( Value /v -> /Data/Primitive/True = Value /Data/Primitive/True ) -> /Catln/Then = Value /Catln/Then
+                    , /Catln/ThenElse/fromBool( Value /v -> ∀/Data/Primitive/Boolean ) -> ∀/Catln/ThenElse
+                    ]
+                )
+            ,
+                ( "/Catln/println"
+                ,
+                    [ /Catln/println( Value /msg -> /Data/String )( Value /this -> /Catln/IO ) -> /Catln/IO ]
+                )
+            ,
+                ( "/Catln/Then"
+                , [ Value /Catln/Then ]
+                )
+            ,
+                ( "/Catln/IO"
+                , [ Value /Catln/IO ]
+                )
+            ]
+        )
     , prgmCG =
         [ CGType
         , CGType

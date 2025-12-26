@@ -1,20 +1,71 @@
 Prgm
-    { prgmObjMap =
-        [ /operator!=( EAppArg Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean
-        , Value /Data/Algebra/LessThan
-        , Value /Data/Algebra/Equal
-        , Value /Data/Algebra/GreaterThan
-        , Value /Data/Algebra/NoOrdering
-        , /Data/Algebra/compare( EAppVar /T ∀/Data/Algebra/Ord )( EAppArg Value /l -> TVVar /T )( EAppArg Value /r -> TVVar /T ) -> ∀/Data/Algebra/Ordering
-        , /Data/Algebra/compare( EAppVar /T ∀/Data/Algebra/POrd )( EAppArg Value /l -> TVVar /T )( EAppArg Value /r -> TVVar /T ) -> ∀/Data/Algebra/POrdering
-        , /operator<=( EAppArg Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Ord ) -> ∀/Data/Primitive/Boolean
-        , /operator>=( EAppArg Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Ord ) -> ∀/Data/Primitive/Boolean
-        , /operator<( EAppArg Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Ord ) -> ∀/Data/Primitive/Boolean
-        , /operator>( EAppArg Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Ord ) -> ∀/Data/Primitive/Boolean
-        , /operator++( EAppArg Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Semigroup ) -> TVVar /T
-        , /Data/Algebra/mempty( EAppVar /T ∀/Data/Algebra/Monoid ) -> TVVar /T
-        , /Data/Algebra/inverse( EAppVar /T ∀/Data/Algebra/Group )( EAppArg Value /t -> TVVar /T ) -> TVVar /T
-        ]
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/operator<="
+                ,
+                    [ /operator<=( EAppArg Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Ord ) -> ∀/Data/Primitive/Boolean ]
+                )
+            ,
+                ( "/Data/Algebra/inverse"
+                ,
+                    [ /Data/Algebra/inverse( EAppVar /T ∀/Data/Algebra/Group )( EAppArg Value /t -> TVVar /T ) -> TVVar /T ]
+                )
+            ,
+                ( "/operator++"
+                ,
+                    [ /operator++( EAppArg Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Semigroup ) -> TVVar /T ]
+                )
+            ,
+                ( "/operator>="
+                ,
+                    [ /operator>=( EAppArg Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Ord ) -> ∀/Data/Primitive/Boolean ]
+                )
+            ,
+                ( "/Data/Algebra/LessThan"
+                , [ Value /Data/Algebra/LessThan ]
+                )
+            ,
+                ( "/Data/Algebra/mempty"
+                ,
+                    [ /Data/Algebra/mempty( EAppVar /T ∀/Data/Algebra/Monoid ) -> TVVar /T ]
+                )
+            ,
+                ( "/operator<"
+                ,
+                    [ /operator<( EAppArg Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Ord ) -> ∀/Data/Primitive/Boolean ]
+                )
+            ,
+                ( "/operator>"
+                ,
+                    [ /operator>( EAppArg Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Ord ) -> ∀/Data/Primitive/Boolean ]
+                )
+            ,
+                ( "/Data/Algebra/NoOrdering"
+                , [ Value /Data/Algebra/NoOrdering ]
+                )
+            ,
+                ( "/Data/Algebra/compare"
+                ,
+                    [ /Data/Algebra/compare( EAppVar /T ∀/Data/Algebra/Ord )( EAppArg Value /l -> TVVar /T )( EAppArg Value /r -> TVVar /T ) -> ∀/Data/Algebra/Ordering
+                    , /Data/Algebra/compare( EAppVar /T ∀/Data/Algebra/POrd )( EAppArg Value /l -> TVVar /T )( EAppArg Value /r -> TVVar /T ) -> ∀/Data/Algebra/POrdering
+                    ]
+                )
+            ,
+                ( "/Data/Algebra/Equal"
+                , [ Value /Data/Algebra/Equal ]
+                )
+            ,
+                ( "/Data/Algebra/GreaterThan"
+                , [ Value /Data/Algebra/GreaterThan ]
+                )
+            ,
+                ( "/operator!="
+                ,
+                    [ /operator!=( EAppArg Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean ]
+                )
+            ]
+        )
     , prgmCG =
         [ CGType
         , CGType

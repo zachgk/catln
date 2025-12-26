@@ -1,13 +1,28 @@
 Prgm
-    { prgmObjMap =
-        [ Value /Nothing
-        , defInt( Value x -> /Data/Primitive/Integer )= Value x
-        , defInt( Value x= Value Nothing )= CInt 0
-        , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-            ( Value val= defInt
-                ( Value x= CInt 0 )
-            )( Value /this= Value io )
-        ]
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                ,
+                    [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                        ( Value val= defInt
+                            ( Value x= CInt 0 )
+                        )( Value /this= Value io )
+                    ]
+                )
+            ,
+                ( "/defInt"
+                ,
+                    [ defInt( Value x= Value Nothing )= CInt 0
+                    , defInt( Value x -> /Data/Primitive/Integer )= Value x
+                    ]
+                )
+            ,
+                ( "/Nothing"
+                , [ Value /Nothing ]
+                )
+            ]
+        )
     , prgmCG =
         [ CGType
         , CGType

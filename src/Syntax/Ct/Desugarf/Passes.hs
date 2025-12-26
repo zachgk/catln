@@ -37,7 +37,7 @@ removeClassInstanceObjects fullPrgm (Prgm objMap (ClassGraph cg) annots) = Prgm 
     notMatchesClassName n = null $ relativeNameFilter n classNames
 
     classGraph' = ClassGraph $ graphFromEdges $ filter classEntryMatches $ graphToNodes cg
-    objMap' = filter (notMatchesClassName . oaObjPath) objMap
+    objMap' = objectMapFromList $ filter (notMatchesClassName . oaObjPath) $ flatObjectMap objMap
 
     classEntryMatches (CGType, PRelativeName n, _) = notMatchesClassName n
     classEntryMatches _                            = True
@@ -55,7 +55,7 @@ resolveRelativeNames fullPrgm@(Prgm fullPrgmObjMap _ _) (Prgm objMap (ClassGraph
     mapCGNode (CGClass (s, clss, ts, doc)) = CGClass (s, resolveClassPartial True clss, fmap (mapType True) ts, doc)
     mapCGNode CGType = CGType
     classNames = nub $ listClassNames $ mkTypeEnv fullPrgm
-    objNames = relAbsNamePrune $ nub $ map oaObjPath (concatMap getRecursiveObjs fullPrgmObjMap)
+    objNames = relAbsNamePrune $ nub $ map oaObjPath (concatMap (flatObjectMap . getRecursiveObjs) $ flatObjectMap fullPrgmObjMap)
 
     resolveMeta _ (Meta t p mid md) = return $ Meta (mapType False t) p mid md
 

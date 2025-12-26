@@ -144,7 +144,8 @@ data ObjArr e m = ObjArr {
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
 
-type ObjectMap e m = [ObjArr e m]
+newtype ObjectMap e m = ObjectMap (H.HashMap TypeName [ObjArr e m])
+  deriving (Eq, Show, Generic, ToJSON, ToJSONKey)
 data Prgm e m = Prgm {
   prgmObjMap :: ObjectMap e m,
   prgmCG     :: ClassGraph,
@@ -201,15 +202,21 @@ instance ToJSON SourcePos where
 
 type VarArgMap e m = H.HashMap TypeVarAux [(e m, Meta m)]
 
+instance Semigroup (ObjectMap e m) where
+  (ObjectMap map1) <> (ObjectMap map2) = ObjectMap $ H.unionWith (++) map1 map2
+
+instance Monoid (ObjectMap e m) where
+  mempty = ObjectMap H.empty
+
 instance Semigroup (Prgm e m) where
   (<>) :: Prgm e m -> Prgm e m -> Prgm e m
   (Prgm objMap1 classGraph1 annots1) <> (Prgm objMap2 classGraph2 annots2) = Prgm
-    (objMap1 ++ objMap2)
+    (objMap1 <> objMap2)
     (classGraph1 <> classGraph2)
-    (annots1 ++ annots2)
+    (annots1 <> annots2)
 
 instance Monoid (Prgm e m) where
-  mempty = Prgm [] mempty []
+  mempty = Prgm mempty mempty []
 
 -- | Represents the VarArgMap by extracting information from a partial
 type ArgMetaMapWithSrcItem m = ([(Expr m, Meta m)], Type)
@@ -441,6 +448,31 @@ getOaArrM oa = error $ printf "getOaArrM with no output meta: %s" (show oa)
 varNamesWithPrefix :: Name -> [Name]
 varNamesWithPrefix n = [n, makeAbsoluteName ('$':tail n)]
 
+nullObjectMap :: ObjectMap e m -> Bool
+nullObjectMap (ObjectMap objMap) = H.null objMap
+
+flatObjectMap :: ObjectMap e m -> [ObjArr e m]
+flatObjectMap (ObjectMap objMap) = concat $ H.elems objMap
+
+singletonObjectMap :: (ExprClass e, MetaDat m, Show (e m), Show m) => ObjArr e m -> ObjectMap e m
+singletonObjectMap oa = ObjectMap $ H.singleton (makeAbsoluteName $ oaObjPath oa) [oa]
+
+objectMapFromList :: (ExprClass e, MetaDat m, Show (e m), Show m) => [ObjArr e m] -> ObjectMap e m
+objectMapFromList objMap = ObjectMap $ H.fromListWith (++) $ map (\oa -> (makeAbsoluteName $ oaObjPath oa, [oa])) objMap
+
+mapMObjectMap :: Monad m => (ObjArr e meta1 -> m (ObjArr e meta2)) -> ObjectMap e meta1 -> m (ObjectMap e meta2)
+mapMObjectMap f (ObjectMap objMap) = ObjectMap <$> mapM (mapM f) objMap
+
+filterObjectMap :: (ObjArr e m -> Bool) -> ObjectMap e m -> ObjectMap e m
+filterObjectMap f (ObjectMap objMap) = ObjectMap $ H.mapMaybe f' objMap
+  where
+    f' x = case filter f x of
+      [] -> Nothing
+      xs -> Just xs
+
+traverseObjectMap :: (Monad m) => (ObjArr e1 m1 -> m (ObjArr e2 m2)) -> ObjectMap e1 m1 -> m (ObjectMap e2 m2)
+traverseObjectMap f (ObjectMap objMap) = ObjectMap <$> H.traverseWithKey (\_ oas -> mapM f oas) objMap
+
 -- | Gets all recursive sub expression objects from an expression's arguments. Helper for 'getRecursiveObjs'
 getRecursiveObjsExpr :: (ExprClass e, MetaDat m, Show (e m), Show m) => e m -> [e m]
 getRecursiveObjsExpr expr | isNothing (maybeExprPath expr) = []
@@ -454,8 +486,8 @@ getRecursiveObjsExpr expr = concat [varSubObjects, argSubObjects, recursedSubObj
 
 -- | Gets an object and all sub-objects (recursively) from it's arguments
 getRecursiveObjs :: (ExprClass e, Show m, Show (e m), MetaDat m) => ObjArr e m -> ObjectMap e m
-getRecursiveObjs ObjArr{oaBasis} | oaBasis == MatchObj = []
-getRecursiveObjs oa@ObjArr{oaBasis, oaObj=Just objE} = oa : recursedSubObjects
+getRecursiveObjs ObjArr{oaBasis} | oaBasis == MatchObj = mempty
+getRecursiveObjs oa@ObjArr{oaBasis, oaObj=Just objE} = objectMapFromList (oa : recursedSubObjects)
   where
     recursedSubObjects = map toObjMapItem $ getRecursiveObjsExpr objE
     toObjMapItem e = ObjArr (Just e) oaBasis Nothing [] Nothing

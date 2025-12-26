@@ -82,7 +82,7 @@ evalTargetMode function prgmName prgmGraphData = do
 
 -- | Gets the target modes for all objects in the file
 evalAllTargetModes :: EPrgm -> H.HashMap UUID EvalMode
-evalAllTargetModes prgm@Prgm{prgmObjMap} = H.fromList $ mapMaybe targetMode prgmObjMap
+evalAllTargetModes prgm@Prgm{prgmObjMap} = H.fromList $ mapMaybe targetMode $ flatObjectMap prgmObjMap
   where
     targetMode oa = case oaObjPath oa of
       ContextStr -> case H.lookupDefault Nothing (partialKey contextValStr) $ exprAppliedArgsMap $ oaObjExpr oa of
@@ -226,9 +226,10 @@ evalBuildAll prgmGraphData = do
   prgms' <- forM prgms $ \(Prgm objMap cg annots, prgmName, deps) -> do
     evalPrgm <- prgmFromGraphData prgmName prgmGraphData
     let Env{evTbEnv} = evalBaseEnv evalPrgm
-    objMap' <- catCRes $ fmap (buildRootOA evTbEnv) objMap
+    objMap' <- catCRes (buildRootOA evTbEnv <$> flatObjectMap objMap)
     annots' <- catCRes $ fmap (toTExpr evTbEnv []) annots
-    return (Prgm objMap' cg annots', prgmName, deps)
+    let objMap'' = objectMapFromList objMap'
+    return (Prgm objMap'' cg annots', prgmName, deps)
   return $ graphFromEdges prgms'
 
 evalBuildPrgm :: EExpr -> PartialType -> Type -> EPrgm -> CRes (TExpr EvalMetaDat, Env)
@@ -242,7 +243,7 @@ evalAnnots prgmName prgmGraphData = do
   prgm@(Prgm objMap _ globalAnnots) <- prgmFromGraphData prgmName prgmGraphData
   let env = evalBaseEnv prgm
   globalAnnots' <- buildAnnots env [] globalAnnots
-  objMapAnnots' <- forM objMap $ \oa -> do
+  objMapAnnots' <- forM (flatObjectMap objMap) $ \oa -> do
     -- TODO Make this build annots within arguments
     buildAnnots env [(getExprPartialType $ oaObjExpr oa, oa)] (oaAnnots oa)
   return $ concat (globalAnnots' : objMapAnnots')

@@ -49,7 +49,7 @@ buildTBEnv :: ResBuildPrims -> TBPrgm -> TBEnv
 buildTBEnv primEnv prgm@Prgm{prgmObjMap} = baseEnv
   where
     baseEnv = TBEnv "" resEnv prgm (mkTypeEnv prgm)
-    resEnv = H.fromListWith (++) $ mapMaybe resFromArrow prgmObjMap
+    resEnv = H.fromListWith (++) $ mapMaybe resFromArrow $ flatObjectMap prgmObjMap
 
     resFromArrow oa@ObjArr{oaObj=Just{}, oaArr, oaAnnots} = case oaArr of
       _ | getExprType (oaObjExpr oa) == PTopType -> error $ printf "buildTBEnv failed with a topType input in %s" (show oa)

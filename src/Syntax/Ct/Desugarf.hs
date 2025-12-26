@@ -127,7 +127,7 @@ desDecl statementEnv decl subStatements = do
     [] -> do
       (decl', subObjMap) <- flattenNestedDeclarations statementEnv (decl, subStatements)
       let decl'' = declToObjArrow statementEnv decl'
-      let objMap = decl'' : subObjMap
+      let objMap = singletonObjectMap decl'' <> subObjMap
       return $ Prgm objMap (classGraphFromObjs objMap) []
     _ -> do
       preprocessed' <- mapM fromSt preprocessed
@@ -174,8 +174,8 @@ desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef clssExpr dataExprs e
 
   let dataTypes = map (either id (getExprType . exprPropagateTypes . semiDesExpr SDType Nothing) . eitherTypeVarExpr) dataExprs
 
-  let objs = map (desMultiTypeDefObj inheritPath classVars) $ rights $ map eitherTypeVarExpr dataExprs
-  let objPaths = map (PRelativeName . oaObjPath) objs
+  let objs = objectMapFromList $ map (desMultiTypeDefObj inheritPath classVars) $ rights $ map eitherTypeVarExpr dataExprs
+  let objPaths = map (PRelativeName . oaObjPath) $ flatObjectMap objs
 
   let typeCGNodes = map (CGType, , []) objPaths
   let classCGNode = (CGClass (True, clss', dataTypes, desObjDocComment subStatements), PClassName (makeAbsoluteName $ show path'), objPaths)
@@ -201,7 +201,7 @@ desClassDecl statementEnv@(inheritPath, _) clssExpr extends subStatements = do
   let extendNodes = [(CGClass (False, exprToPartialType extendClass, [singletonType clss], Nothing), PClassName (exprPath extendClass), [PClassName $ makeAbsoluteName path']) | extendClass <- extends]
   let classGraph' = ClassGraph $ graphFromEdges ((CGClass (False, clss, [], desObjDocComment subStatements), PClassName (makeAbsoluteName path'), []):extendNodes)
   subPrgm <- desInheritingSubstatements statementEnv path subStatements
-  return (Prgm [] classGraph' [] <> subPrgm)
+  return (Prgm mempty classGraph' [] <> subPrgm)
 
 desTypeDef :: StatementEnv -> PExpr -> ExtendedClasses RawExpr ParseMetaDat -> [RawStatementTree RawExpr ParseMetaDat] -> CRes DesPrgm
 desTypeDef statementEnv@(inheritPath, _) typeExpr extends subStatements = do
@@ -209,7 +209,7 @@ desTypeDef statementEnv@(inheritPath, _) typeExpr extends subStatements = do
   let typeExpr' = semiDesExpr SDType (Just typeExpr) typeExpr
   let type' = exprToPartialType typeExpr
   let obj = desObj False inheritPath UseRelativeName $ ObjArr (Just typeExpr') TypeObj (desObjDocComment subStatements) annots Nothing
-  let objMap = [obj]
+  let objMap = objectMapFromList [obj]
   let extendNodes = [(CGClass (False, exprToPartialType extendClass, [singletonType type'], Nothing), PClassName (exprPath extendClass), [PTypeName $ ptName type']) | extendClass <- extends]
   let classGraph = classGraphFromObjs objMap <> ClassGraph (graphFromEdges extendNodes)
   return (Prgm objMap classGraph [] <> subPrgm)
@@ -219,13 +219,10 @@ desClassDef statementEnv@(inheritPath, _) sealed (typeExpr, extends) subStatemen
   let typeExpr' = exprPropagateTypes $ semiDesExpr SDType (Just typeExpr) typeExpr
   let classGraph = ClassGraph $ graphFromEdges [(CGClass (sealed, partialVal $ show path', [getExprType typeExpr'], desObjDocComment subStatements), PClassName (exprPath className), [PRelativeName $ exprPath typeExpr']) | className <- extends ]
   subPrgm <- desInheritingSubstatements statementEnv path subStatements
-  return (Prgm [] classGraph [] <> subPrgm)
+  return (Prgm mempty classGraph [] <> subPrgm)
   where
     path = getPath $ fromJust $ maybeExprPath typeExpr
     path' = relPathAddPrefix inheritPath path
-
-mergeObjMaps :: DesObjectMap -> DesObjectMap -> DesObjectMap
-mergeObjMaps = (++)
 
 desGlobalAnnot :: PCompAnnot -> CRes DesCompAnnot
 desGlobalAnnot = return . desExpr . semiDesExpr SDOutput Nothing
@@ -236,7 +233,7 @@ desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree state
   RawBindStatement{} -> error $ printf "Not yet implemented"
   RawAnnot a | null subStatements -> do
                  a' <- desGlobalAnnot a
-                 return (Prgm [] mempty [a'])
+                 return (Prgm mempty mempty [a'])
   RawAnnot a -> do
     a' <- desGlobalAnnot a
     statements' <- mapM (desStatement (inheritModule, a':inheritAnnots)) subStatements

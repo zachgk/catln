@@ -1,8 +1,15 @@
 Prgm
-    { prgmObjMap =
-        [ Value main= www
-            ( CStr "<html><body>web test</body></html>" )
-        ]
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/main"
+                ,
+                    [ Value main= www
+                        ( CStr "<html><body>web test</body></html>" )
+                    ]
+                )
+            ]
+        )
     , prgmCG = [ CGType ]
     , prgmAnnots =
         [ /Catln/#md

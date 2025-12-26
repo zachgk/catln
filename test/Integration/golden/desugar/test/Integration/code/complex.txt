@@ -1,16 +1,32 @@
 Prgm
-    { prgmObjMap =
-        [ Complex( Value /a -> ∀/Data/Primitive/Number )( Value /b -> ∀/Data/Primitive/Number )
-        , real
-            ( Value c= Complex( Value a )( Value b ) )= Value a
-        , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-            ( Value val= real
-                ( Value c= Complex
-                    ( Value a= CInt 0 )
-                    ( Value b= CInt 7 )
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                ,
+                    [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                        ( Value val= real
+                            ( Value c= Complex
+                                ( Value a= CInt 0 )
+                                ( Value b= CInt 7 )
+                            )
+                        )( Value /this= Value io )
+                    ]
                 )
-            )( Value /this= Value io )
-        ]
+            ,
+                ( "/Complex"
+                ,
+                    [ Complex( Value /a -> ∀/Data/Primitive/Number )( Value /b -> ∀/Data/Primitive/Number ) ]
+                )
+            ,
+                ( "/real"
+                ,
+                    [ real
+                        ( Value c= Complex( Value a )( Value b ) )= Value a
+                    ]
+                )
+            ]
+        )
     , prgmCG =
         [ CGType
         , CGType
