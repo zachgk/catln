@@ -3,30 +3,36 @@ Prgm
         ( fromList
             [
                 ( "/llength"
-                ,
-                    [ llength
-                        ( Value /this= Cons( Value head )( Value tail ) )= /operator+
-                        ( Value /l= CInt 1 )
-                        ( Value /r= llength( Value /this= Value tail ) )
-                    , llength( Value /this= Value Nil )= CInt 0
-                    ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ llength( Value /this= Value Nil )= CInt 0
+                        , llength
+                            ( Value /this= Cons( Value head )( Value tail ) )= /operator+
+                            ( Value /l= CInt 1 )
+                            ( Value /r= llength( Value /this= Value tail ) )
+                        ]
+                    }
                 )
             ,
                 ( "/ContextIn"
-                ,
-                    [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                        ( Value val= /operator-
-                            ( Value /l= llength
-                                ( Value /this= /Data/Cons
-                                    ( Value /head= CInt 5 )
-                                    ( Value /tail= /Data/Cons
-                                        ( Value /head= CInt 3 )( Value /tail= Value /Data/Nil )
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= /operator-
+                                ( Value /l= llength
+                                    ( Value /this= /Data/Cons
+                                        ( Value /head= CInt 5 )
+                                        ( Value /tail= /Data/Cons
+                                            ( Value /head= CInt 3 )( Value /tail= Value /Data/Nil )
+                                        )
                                     )
                                 )
-                            )
-                            ( Value /r= CInt 2 )
-                        )( Value /this= Value io )
-                    ]
+                                ( Value /r= CInt 2 )
+                            )( Value /this= Value io )
+                        ]
+                    }
                 )
             ]
         )

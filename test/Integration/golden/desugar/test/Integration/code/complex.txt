@@ -3,27 +3,36 @@ Prgm
         ( fromList
             [
                 ( "/ContextIn"
-                ,
-                    [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                        ( Value val= real
-                            ( Value c= Complex
-                                ( Value a= CInt 0 )
-                                ( Value b= CInt 7 )
-                            )
-                        )( Value /this= Value io )
-                    ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= real
+                                ( Value c= Complex
+                                    ( Value a= CInt 0 )
+                                    ( Value b= CInt 7 )
+                                )
+                            )( Value /this= Value io )
+                        ]
+                    }
                 )
             ,
                 ( "/Complex"
-                ,
-                    [ Complex( Value /a -> ∀/Data/Primitive/Number )( Value /b -> ∀/Data/Primitive/Number ) ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Complex( Value /a -> ∀/Data/Primitive/Number )( Value /b -> ∀/Data/Primitive/Number ) ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/real"
-                ,
-                    [ real
-                        ( Value c= Complex( Value a )( Value b ) )= Value a
-                    ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ real
+                            ( Value c= Complex( Value a )( Value b ) )= Value a
+                        ]
+                    }
                 )
             ]
         )

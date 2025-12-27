@@ -3,110 +3,173 @@ Prgm
         ( fromList
             [
                 ( "/Catln/llvm"
-                ,
-                    [ /Catln/llvm( EAppArg Value /c ) -> /Catln/CatlnResult.. ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/llvm( EAppArg Value /c ) -> /Catln/CatlnResult.. ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/#else"
-                , [ Value /Catln/#else ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/#else ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/#md"
-                ,
-                    [ /Catln/#md( EAppArg Value /text -> /Data/String ) ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/#md( EAppArg Value /text -> /Data/String ) ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/Else"
-                , [ Value /Catln/Else ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/Else ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/#noCore"
-                , [ Value /Catln/#noCore ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/#noCore ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/#argStart"
-                , [ Value /Catln/#argStart ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/#argStart ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/#argEnd"
-                , [ Value /Catln/#argEnd ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/#argEnd ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/#test"
-                , [ Value /Catln/#test ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/#test ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/#name"
-                ,
-                    [ /Catln/#name( EAppArg Value /name -> /Data/String ) ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/#name( EAppArg Value /name -> /Data/String ) ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/exit"
-                ,
-                    [ /Catln/exit( EAppArg Value /val -> /Data/Primitive/Integer )( EAppArg Value /this -> /Catln/IO ) -> /Catln/IO ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/exit( EAppArg Value /val -> /Data/Primitive/Integer )( EAppArg Value /this -> /Catln/IO ) -> /Catln/IO ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/operator?->"
-                ,
-                    [ /operator?->( EAppArg Value /l= Hole TopType HoleActive Nothing )( EAppArg Value /r= Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator?->( EAppArg Value /l= Hole TopType HoleActive Nothing )( EAppArg Value /r= Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/www"
-                ,
-                    [ /Catln/www( EAppArg Value /html -> /Data/String ) -> /Catln/CatlnResult
-                        ( /contents=/Data/String
-                        , /name=/Data/String
-                        ) = /Catln/CatlnResult
-                        ( EAppArg Value /name -> /Data/String = "index.html" )
-                        ( EAppArg Value /contents -> TVArg /html = ( Value /html ↦ TVArg /html ) )
-                    ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ /Catln/www( EAppArg Value /html -> /Data/String ) -> /Catln/CatlnResult
+                            ( /contents=/Data/String
+                            , /name=/Data/String
+                            ) = /Catln/CatlnResult
+                            ( EAppArg Value /name -> /Data/String = "index.html" )
+                            ( EAppArg Value /contents -> TVArg /html = ( Value /html ↦ TVArg /html ) )
+                        ]
+                    }
                 )
             ,
                 ( "/Catln/#assert"
-                ,
-                    [ /Catln/#assert( EAppArg Value /test -> ∀/Data/Primitive/Boolean )
-                    , /Catln/#assert( EAppArg Value /test -> ∀/Data/Primitive/Boolean )( EAppArg Value /msg -> /Data/String )
-                    ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/#assert( EAppArg Value /test -> ∀/Data/Primitive/Boolean )
+                        , /Catln/#assert( EAppArg Value /test -> ∀/Data/Primitive/Boolean )( EAppArg Value /msg -> /Data/String )
+                        ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/#print"
-                ,
-                    [ /Catln/#print( EAppArg Value /p -> ∀/Catln/Doc/DShow ) ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/#print( EAppArg Value /p -> ∀/Catln/Doc/DShow ) ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/CatlnResult"
-                ,
-                    [ /Catln/CatlnResult( EAppArg Value /name -> /Data/String )( EAppArg Value /contents -> /Data/String ) ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/CatlnResult( EAppArg Value /name -> /Data/String )( EAppArg Value /contents -> /Data/String ) ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/#runtime"
-                ,
-                    [ /Catln/#runtime( EAppArg Value /k -> /Data/String ) ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/#runtime( EAppArg Value /k -> /Data/String ) ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/#example"
-                , [ Value /Catln/#example ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/#example ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/ThenElse/fromBool"
-                ,
-                    [ /Catln/ThenElse/fromBool( EAppArg Value /v -> ∀/Data/Primitive/Boolean ) -> ∀/Catln/ThenElse
-                    , /Catln/ThenElse/fromBool( EAppArg Value /v -> /Data/Primitive/True = Value /Data/Primitive/True ) -> /Catln/Then = Value /Catln/Then
-                    , /Catln/ThenElse/fromBool( EAppArg Value /v -> /Data/Primitive/False = Value /Data/Primitive/False ) -> /Catln/Else = Value /Catln/Else
-                    ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/ThenElse/fromBool( EAppArg Value /v -> ∀/Data/Primitive/Boolean ) -> ∀/Catln/ThenElse ]
+                    , omiDefs =
+                        [ /Catln/ThenElse/fromBool( EAppArg Value /v -> /Data/Primitive/True = Value /Data/Primitive/True ) -> /Catln/Then = Value /Catln/Then
+                        , /Catln/ThenElse/fromBool( EAppArg Value /v -> /Data/Primitive/False = Value /Data/Primitive/False ) -> /Catln/Else = Value /Catln/Else
+                        ]
+                    }
                 )
             ,
                 ( "/Catln/println"
-                ,
-                    [ /Catln/println( EAppArg Value /msg -> /Data/String )( EAppArg Value /this -> /Catln/IO ) -> /Catln/IO ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/println( EAppArg Value /msg -> /Data/String )( EAppArg Value /this -> /Catln/IO ) -> /Catln/IO ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/Then"
-                , [ Value /Catln/Then ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/Then ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/IO"
-                , [ Value /Catln/IO ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/IO ]
+                    , omiDefs = []
+                    }
                 )
             ]
         )

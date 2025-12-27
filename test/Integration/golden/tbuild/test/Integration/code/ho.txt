@@ -3,27 +3,37 @@ Prgm
         ( fromList
             [
                 ( "/ContextIn"
-                ,
-                    [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                    }
                 )
             ,
                 ( "/T"
-                ,
-                    [ /T( EAppArg Value /x -> /Data/Primitive/Integer ) ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /T( EAppArg Value /x -> /Data/Primitive/Integer ) ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/tst"
-                ,
-                    [ /tst
-                        ( EAppArg Value /d -> /T( /x=/Data/Primitive/Integer ) = /T( EAppArg Value /x -> /Data/Primitive/Integer ) )
-                        ( EAppArg /f( EAppArg Value /y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
-                    , /tst
-                        ( EAppArg Value /d -> /T( /x=/Data/Primitive/Integer ) = /T( EAppArg Value /x -> /Data/Primitive/Integer ) )
-                        ( EAppArg /f( EAppArg Value /y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ) -> ( /Data/Primitive/True | /Data/Primitive/False ) =
-                        ( /f
-                            ( EAppArg Value /y -> TVArg /x = ( Value /x ↦ TVArg /x ) ) ↦ ( /Data/Primitive/True | /Data/Primitive/False )
-                        )
-                    ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /tst
+                            ( EAppArg Value /d -> /T( /x=/Data/Primitive/Integer ) = /T( EAppArg Value /x -> /Data/Primitive/Integer ) )
+                            ( EAppArg /f( EAppArg Value /y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiDefs =
+                        [ /tst
+                            ( EAppArg Value /d -> /T( /x=/Data/Primitive/Integer ) = /T( EAppArg Value /x -> /Data/Primitive/Integer ) )
+                            ( EAppArg /f( EAppArg Value /y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ) -> ( /Data/Primitive/True | /Data/Primitive/False ) =
+                            ( /f
+                                ( EAppArg Value /y -> TVArg /x = ( Value /x ↦ TVArg /x ) ) ↦ ( /Data/Primitive/True | /Data/Primitive/False )
+                            )
+                        ]
+                    }
                 )
             ]
         )

@@ -3,31 +3,43 @@ Prgm
         ( fromList
             [
                 ( "/ContextIn"
-                ,
-                    [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                        ( Value val= defInt
-                            ( Value x= Just
-                                ( Value val= CInt 0 )
-                            )
-                        )( Value /this= Value io )
-                    ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= defInt
+                                ( Value x= Just
+                                    ( Value val= CInt 0 )
+                                )
+                            )( Value /this= Value io )
+                        ]
+                    }
                 )
             ,
                 ( "/defInt"
-                ,
-                    [ defInt( Value x= Value Nothing )= CInt 0
-                    , defInt
-                        ( Value x= Just( Value val -> /Data/Primitive/Integer ) )= Value val
-                    ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ defInt
+                            ( Value x= Just( Value val -> /Data/Primitive/Integer ) )= Value val
+                        , defInt( Value x= Value Nothing )= CInt 0
+                        ]
+                    }
                 )
             ,
                 ( "/Nothing"
-                , [ Value Nothing ]
+                , ObjectMapItem
+                    { omiDecls = [ Value Nothing ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Just"
-                ,
-                    [ Just[ /T : TopType ]( Value /val -> TVVar /T ) ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Just[ /T : TopType ]( Value /val -> TVVar /T ) ]
+                    , omiDefs = []
+                    }
                 )
             ]
         )

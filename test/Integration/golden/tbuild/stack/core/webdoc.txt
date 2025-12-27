@@ -3,63 +3,99 @@ Prgm
         ( fromList
             [
                 ( "/Catln/Doc/Show/MD"
-                ,
-                    [ /Catln/Doc/Show/MD( EAppArg Value /text -> /Data/String ) ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/Doc/Show/MD( EAppArg Value /text -> /Data/String ) ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/Doc/dshow"
-                ,
-                    [ /Catln/Doc/dshow( EAppArg Value /s -> ∀/Catln/Doc/DShow ) -> TVArg /s = ( Value /s ↦ TVArg /s )
-                    , /Catln/Doc/dshow
-                        ( EAppArg Value /s -> /Catln/#md( /text=TopType ) = /Catln/#md( EAppArg Value /text -> ~String ) ) -> /Catln/Doc/Show/MD( /text=~String ) = /Catln/Doc/Show/MD( EAppArg Value /text -> TVArg /text = Value /text )
-                    , /Catln/Doc/dshow
-                        ( EAppArg Value /s -> /Catln/#print( /p=TopType ) = /Catln/#print( EAppArg Value /p ) ) -> TVArg /p = Value /p
-                    , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#listProgram = Value /Catln/Doc/#listProgram ) -> /Catln/Doc/Show/ListProgram = Value /Catln/Doc/Show/ListProgram
-                    , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#type = Value /Catln/Doc/#type ) -> /Catln/Doc/Show/TypePage = Value /Catln/Doc/Show/TypePage
-                    , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#typeInfer = Value /Catln/Doc/#typeInfer ) -> /Catln/Doc/Show/TypeInfer = Value /Catln/Doc/Show/TypeInfer
-                    , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#debug = Value /Catln/Doc/#debug ) -> /Catln/Doc/Show/Debug = Value /Catln/Doc/Show/Debug
-                    , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#build = Value /Catln/Doc/#build ) -> /Catln/Doc/Show/BuildPage = Value /Catln/Doc/Show/BuildPage
-                    ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ /Catln/Doc/dshow( EAppArg Value /s -> ∀/Catln/Doc/DShow ) -> TVArg /s = ( Value /s ↦ TVArg /s )
+                        , /Catln/Doc/dshow
+                            ( EAppArg Value /s -> /Catln/#md( /text=TopType ) = /Catln/#md( EAppArg Value /text -> ~String ) ) -> /Catln/Doc/Show/MD( /text=~String ) = /Catln/Doc/Show/MD( EAppArg Value /text -> TVArg /text = Value /text )
+                        , /Catln/Doc/dshow
+                            ( EAppArg Value /s -> /Catln/#print( /p=TopType ) = /Catln/#print( EAppArg Value /p ) ) -> TVArg /p = Value /p
+                        , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#listProgram = Value /Catln/Doc/#listProgram ) -> /Catln/Doc/Show/ListProgram = Value /Catln/Doc/Show/ListProgram
+                        , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#type = Value /Catln/Doc/#type ) -> /Catln/Doc/Show/TypePage = Value /Catln/Doc/Show/TypePage
+                        , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#typeInfer = Value /Catln/Doc/#typeInfer ) -> /Catln/Doc/Show/TypeInfer = Value /Catln/Doc/Show/TypeInfer
+                        , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#debug = Value /Catln/Doc/#debug ) -> /Catln/Doc/Show/Debug = Value /Catln/Doc/Show/Debug
+                        , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#build = Value /Catln/Doc/#build ) -> /Catln/Doc/Show/BuildPage = Value /Catln/Doc/Show/BuildPage
+                        ]
+                    }
                 )
             ,
                 ( "/Catln/Doc/Show/ListProgram"
-                , [ Value /Catln/Doc/Show/ListProgram ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/Doc/Show/ListProgram ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/Doc/Show/TypePage"
-                , [ Value /Catln/Doc/Show/TypePage ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/Doc/Show/TypePage ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/Doc/Show/Debug"
-                , [ Value /Catln/Doc/Show/Debug ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/Doc/Show/Debug ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/Doc/#typeInfer"
-                , [ Value /Catln/Doc/#typeInfer ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/Doc/#typeInfer ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/Doc/#build"
-                , [ Value /Catln/Doc/#build ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/Doc/#build ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/Doc/#listProgram"
-                , [ Value /Catln/Doc/#listProgram ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/Doc/#listProgram ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/Doc/#debug"
-                , [ Value /Catln/Doc/#debug ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/Doc/#debug ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/Doc/Show/BuildPage"
-                , [ Value /Catln/Doc/Show/BuildPage ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/Doc/Show/BuildPage ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/Doc/Show/TypeInfer"
-                , [ Value /Catln/Doc/Show/TypeInfer ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/Doc/Show/TypeInfer ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/Doc/#type"
-                , [ Value /Catln/Doc/#type ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/Doc/#type ]
+                    , omiDefs = []
+                    }
                 )
             ]
         )

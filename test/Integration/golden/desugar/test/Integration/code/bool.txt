@@ -3,23 +3,35 @@ Prgm
         ( fromList
             [
                 ( "/ContextIn"
-                ,
-                    [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                    }
                 )
             ,
                 ( "/a"
-                ,
-                    [ Value a= /operator~( Value /a= Value False ) ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ Value a= /operator~( Value /a= Value False ) ]
+                    }
                 )
             ,
                 ( "/c"
-                ,
-                    [ Value c= /operator||( Value /l= Value True )( Value /r= Value False ) ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ Value c= /operator||( Value /l= Value True )( Value /r= Value False ) ]
+                    }
                 )
             ,
                 ( "/b"
-                ,
-                    [ Value b= /operator&&( Value /l= Value True )( Value /r= Value True ) ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ Value b= /operator&&( Value /l= Value True )( Value /r= Value True ) ]
+                    }
                 )
             ]
         )

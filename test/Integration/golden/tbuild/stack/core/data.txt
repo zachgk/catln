@@ -3,86 +3,119 @@ Prgm
         ( fromList
             [
                 ( "/ContextOut"
-                ,
-                    [ /ContextOut( EAppVar /V TopType )( EAppArg Value /value -> TVVar /V )( EAppSpread Hole TopType HoleActive Nothing ) ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /ContextOut( EAppVar /V TopType )( EAppArg Value /value -> TVVar /V )( EAppSpread Hole TopType HoleActive Nothing ) ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/operator=="
-                ,
-                    [ /operator==( EAppArg Value /l -> /Data/String = Hole /Data/String HoleActive Nothing )( EAppArg Value /r -> /Data/String = Hole /Data/String HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator==( EAppArg Value /l -> /Data/String = Hole /Data/String HoleActive Nothing )( EAppArg Value /r -> /Data/String = Hole /Data/String HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Data/length"
-                ,
-                    [ /Data/length( EAppArg Value /this -> /Data/Nil ) -> /Data/Primitive/Integer = 0
-                    , /Data/length
-                        ( EAppArg Value /this -> /Data/Cons[ /T=TopType ]
-                            ( /head=TVVar /T
-                            , /tail=~ConsList[ /T=TVVar /T ]
-                            ) = /Data/Cons( EAppArg Value /head )
-                            ( EAppArg Value /tail ->
-                                ( /Data/Nil | /Data/Cons[ /T=TopType ]
-                                    ( /head=TVVar /T
-                                    , /tail=~ConsList[ /T=TVVar /T ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ /Data/length( EAppArg Value /this -> /Data/Nil ) -> /Data/Primitive/Integer = 0
+                        , /Data/length
+                            ( EAppArg Value /this -> /Data/Cons[ /T=TopType ]
+                                ( /head=TVVar /T
+                                , /tail=~ConsList[ /T=TVVar /T ]
+                                ) = /Data/Cons( EAppArg Value /head )
+                                ( EAppArg Value /tail ->
+                                    ( /Data/Nil | /Data/Cons[ /T=TopType ]
+                                        ( /head=TVVar /T
+                                        , /tail=~ConsList[ /T=TVVar /T ]
+                                        )
                                     )
                                 )
+                            ) ->
+                            ( /operator+
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) | /Data/Primitive/Integer
+                            ) = /operator+
+                            ( EAppArg Value /l -> /Data/Primitive/Integer = 1 )
+                            ( EAppArg Value /r -> /Data/Primitive/Integer =
+                                ( /Data/length
+                                    ( EAppArg Value /this -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) ) ↦ /Data/Primitive/Integer
+                                )
                             )
-                        ) ->
-                        ( /operator+
-                            ( /r=/Data/Primitive/Integer
-                            , /l=/Data/Primitive/Integer
-                            ) | /Data/Primitive/Integer
-                        ) = /operator+
-                        ( EAppArg Value /l -> /Data/Primitive/Integer = 1 )
-                        ( EAppArg Value /r -> /Data/Primitive/Integer =
-                            ( /Data/length
-                                ( EAppArg Value /this -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) ) ↦ /Data/Primitive/Integer
-                            )
-                        )
-                    ]
+                        ]
+                    }
                 )
             ,
                 ( "/Data/toString"
-                ,
-                    [ /Data/toString( EAppArg Value /this -> /Data/String ) -> /Data/String
-                    , /Data/toString( EAppArg Value /this -> /Data/String ) -> TVArg /this = ( Value /this ↦ TVArg /this )
-                    , /Data/toString( EAppArg Value /this -> /Data/Primitive/Integer ) -> /Data/String
-                    ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/toString( EAppArg Value /this -> /Data/String ) -> /Data/String
+                        , /Data/toString( EAppArg Value /this -> /Data/Primitive/Integer ) -> /Data/String
+                        ]
+                    , omiDefs =
+                        [ /Data/toString( EAppArg Value /this -> /Data/String ) -> TVArg /this = ( Value /this ↦ TVArg /this ) ]
+                    }
                 )
             ,
                 ( "/Data/Nil"
-                , [ Value /Data/Nil ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Nil ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/ContextIn"
-                ,
-                    [ /ContextIn( EAppVar /V TopType )( EAppArg Value /value -> TVVar /V )( EAppSpread Hole TopType HoleActive Nothing ) ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /ContextIn( EAppVar /V TopType )( EAppArg Value /value -> TVVar /V )( EAppSpread Hole TopType HoleActive Nothing ) ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Data/String"
-                , [ Value /Data/String ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/String ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Context"
-                ,
-                    [ /Context( EAppVar /V TopType )( EAppArg Value /value -> TVVar /V )( EAppSpread Hole TopType HoleActive Nothing )
-                    , /Context( EAppVar /T TopType )( EAppVar /V TopType )( EAppArg Value /value -> TVVar /V )( EAppSpread Hole TopType HoleActive Nothing ) | /operator?->
-                        ( EAppArg Value /l -> /ContextIn[ /V=TopType ]( /value=TopType ).. = /ContextIn( EAppVar /V TVVar /V )( EAppArg Value /value -> TVVar /V = Hole TVVar /V HoleActive Nothing )( EAppSpread Hole TopType HoleActive Nothing ) )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing ) -> TVVar /T
-                    ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Context( EAppVar /V TopType )( EAppArg Value /value -> TVVar /V )( EAppSpread Hole TopType HoleActive Nothing )
+                        , /Context( EAppVar /T TopType )( EAppVar /V TopType )( EAppArg Value /value -> TVVar /V )( EAppSpread Hole TopType HoleActive Nothing ) | /operator?->
+                            ( EAppArg Value /l -> /ContextIn[ /V=TopType ]( /value=TopType ).. = /ContextIn( EAppVar /V TVVar /V )( EAppArg Value /value -> TVVar /V = Hole TVVar /V HoleActive Nothing )( EAppSpread Hole TopType HoleActive Nothing ) )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing ) -> TVVar /T
+                        ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Data/Cons"
-                ,
-                    [ /Data/Cons( EAppVar /T TopType )( EAppArg Value /head -> TVVar /T )( EAppArg Value /tail -> ∀/Data/ConsList ) ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Cons( EAppVar /T TopType )( EAppArg Value /head -> TVVar /T )( EAppArg Value /tail -> ∀/Data/ConsList ) ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Data/None"
-                , [ Value /Data/None ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/None ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Data/enum"
-                ,
-                    [ /Data/enum( EAppVar /T ∀/Data/Enum ) -> ∀/Data/Set ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/enum( EAppVar /T ∀/Data/Enum ) -> ∀/Data/Set ]
+                    , omiDefs = []
+                    }
                 )
             ]
         )

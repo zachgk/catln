@@ -3,10 +3,13 @@ Prgm
         ( fromList
             [
                 ( "/main"
-                ,
-                    [ Value main= www
-                        ( CStr "<html><body>web test</body></html>" )
-                    ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ Value main= www
+                            ( CStr "<html><body>web test</body></html>" )
+                        ]
+                    }
                 )
             ]
         )

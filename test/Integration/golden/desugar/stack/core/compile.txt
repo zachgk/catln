@@ -3,106 +3,169 @@ Prgm
         ( fromList
             [
                 ( "/Catln/llvm"
-                ,
-                    [ /Catln/llvm( Value c ) -> /Catln/CatlnResult.. ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/llvm( Value c ) -> /Catln/CatlnResult.. ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/#else"
-                , [ Value /Catln/#else ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/#else ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/#md"
-                ,
-                    [ /Catln/#md( Value /text -> /Data/String ) ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/#md( Value /text -> /Data/String ) ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/Else"
-                , [ Value /Catln/Else ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/Else ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/#noCore"
-                , [ Value /Catln/#noCore ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/#noCore ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/#argStart"
-                , [ Value /Catln/#argStart ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/#argStart ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/#argEnd"
-                , [ Value /Catln/#argEnd ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/#argEnd ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/#test"
-                , [ Value /Catln/#test ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/#test ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/#name"
-                ,
-                    [ /Catln/#name( Value /name -> /Data/String ) ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/#name( Value /name -> /Data/String ) ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/exit"
-                ,
-                    [ /Catln/exit( Value val -> /Data/Primitive/Integer )( Value /this -> /Catln/IO ) -> /Catln/IO ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/exit( Value val -> /Data/Primitive/Integer )( Value /this -> /Catln/IO ) -> /Catln/IO ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/operator?->"
-                ,
-                    [ /operator?->( Value /l= Hole TopType HoleActive Nothing )( Value /r= Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator?->( Value /l= Hole TopType HoleActive Nothing )( Value /r= Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/www"
-                ,
-                    [ /Catln/www( Value html -> /Data/String )= CatlnResult
-                        ( Value name= CStr "index.html" )( Value contents= Value html )
-                    ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ /Catln/www( Value html -> /Data/String )= CatlnResult
+                            ( Value name= CStr "index.html" )( Value contents= Value html )
+                        ]
+                    }
                 )
             ,
                 ( "/Catln/#assert"
-                ,
-                    [ /Catln/#assert( Value /test -> ∀/Data/Primitive/Boolean )( Value /msg -> /Data/String )
-                    , /Catln/#assert( Value /test -> ∀/Data/Primitive/Boolean )
-                    ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/#assert( Value /test -> ∀/Data/Primitive/Boolean )
+                        , /Catln/#assert( Value /test -> ∀/Data/Primitive/Boolean )( Value /msg -> /Data/String )
+                        ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/#print"
-                ,
-                    [ /Catln/#print( Value /p -> ∀/Catln/Doc/DShow ) ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/#print( Value /p -> ∀/Catln/Doc/DShow ) ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/CatlnResult"
-                ,
-                    [ /Catln/CatlnResult( Value /name -> /Data/String )( Value /contents -> /Data/String ) ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/CatlnResult( Value /name -> /Data/String )( Value /contents -> /Data/String ) ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/#runtime"
-                ,
-                    [ /Catln/#runtime( Value /k -> /Data/String ) ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/#runtime( Value /k -> /Data/String ) ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/#example"
-                , [ Value /Catln/#example ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/#example ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/ThenElse/fromBool"
-                ,
-                    [ /Catln/ThenElse/fromBool( Value v= Value /Data/Primitive/False )= Value Else
-                    , /Catln/ThenElse/fromBool( Value v= Value /Data/Primitive/True )= Value Then
-                    , /Catln/ThenElse/fromBool( Value v -> ∀/Data/Primitive/Boolean ) -> ∀/Catln/ThenElse
-                    ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/ThenElse/fromBool( Value v -> ∀/Data/Primitive/Boolean ) -> ∀/Catln/ThenElse ]
+                    , omiDefs =
+                        [ /Catln/ThenElse/fromBool( Value v= Value /Data/Primitive/True )= Value Then
+                        , /Catln/ThenElse/fromBool( Value v= Value /Data/Primitive/False )= Value Else
+                        ]
+                    }
                 )
             ,
                 ( "/Catln/println"
-                ,
-                    [ /Catln/println( Value msg -> /Data/String )( Value /this -> /Catln/IO ) -> /Catln/IO ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/println( Value msg -> /Data/String )( Value /this -> /Catln/IO ) -> /Catln/IO ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/Then"
-                , [ Value /Catln/Then ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/Then ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Catln/IO"
-                , [ Value /Catln/IO ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/IO ]
+                    , omiDefs = []
+                    }
                 )
             ]
         )

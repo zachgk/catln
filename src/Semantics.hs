@@ -28,7 +28,7 @@ newtype ObjArrTypeGraph e m = ObjArrTypeGraph (ObjectMap e m)
 instance Semigroup (ObjArrTypeGraph e m) where
   (ObjArrTypeGraph a) <> (ObjArrTypeGraph b) = ObjArrTypeGraph (a <> b)
 instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGraph e m) where
-  typeGraphQueryWithReason typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName} = concatMap tryTArrow $ H.lookupDefault [] ptName tg
+  typeGraphQueryWithReason typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName} = concatMap tryTArrow $ flatObjectMapItem $ H.lookupDefault mempty ptName tg
     where
       tryTArrow :: (ExprClass e, MetaDat m, Show m, Show (e m)) => ObjArr e m -> [(String, Type)]
       tryTArrow oa@ObjArr{oaArr=Just{}} = do

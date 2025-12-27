@@ -144,7 +144,12 @@ data ObjArr e m = ObjArr {
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
 
-newtype ObjectMap e m = ObjectMap (H.HashMap TypeName [ObjArr e m])
+data ObjectMapItem e m = ObjectMapItem {
+  omiDecls :: [ObjArr e m],
+  omiDefs  :: [ObjArr e m]
+                            }
+  deriving (Eq, Ord, Show, Generic, ToJSON, ToJSONKey)
+newtype ObjectMap e m = ObjectMap (H.HashMap TypeName (ObjectMapItem e m))
   deriving (Eq, Show, Generic, ToJSON, ToJSONKey)
 data Prgm e m = Prgm {
   prgmObjMap :: ObjectMap e m,
@@ -202,8 +207,16 @@ instance ToJSON SourcePos where
 
 type VarArgMap e m = H.HashMap TypeVarAux [(e m, Meta m)]
 
+instance Semigroup (ObjectMapItem e m) where
+  (ObjectMapItem decls1 defs1) <> (ObjectMapItem decls2 defs2) = ObjectMapItem (decls1 ++ decls2) (defs1 ++ defs2)
+
+instance Monoid (ObjectMapItem e m) where
+  mempty = ObjectMapItem [] []
+
 instance Semigroup (ObjectMap e m) where
-  (ObjectMap map1) <> (ObjectMap map2) = ObjectMap $ H.unionWith (++) map1 map2
+  (ObjectMap map1) <> (ObjectMap map2) = ObjectMap $ H.unionWith merge map1 map2
+    where
+      merge (ObjectMapItem decl1 def1) (ObjectMapItem decl2 def2) = ObjectMapItem (decl1 ++ decl2) (def1 ++ def2)
 
 instance Monoid (ObjectMap e m) where
   mempty = ObjectMap H.empty
@@ -451,27 +464,48 @@ varNamesWithPrefix n = [n, makeAbsoluteName ('$':tail n)]
 nullObjectMap :: ObjectMap e m -> Bool
 nullObjectMap (ObjectMap objMap) = H.null objMap
 
+flatObjectMapItem :: ObjectMapItem e m -> [ObjArr e m]
+flatObjectMapItem (ObjectMapItem decls defs) = decls ++ defs
+
 flatObjectMap :: ObjectMap e m -> [ObjArr e m]
-flatObjectMap (ObjectMap objMap) = concat $ H.elems objMap
+flatObjectMap (ObjectMap objMap) = concatMap flatObjectMapItem (H.elems objMap)
 
 singletonObjectMap :: (ExprClass e, MetaDat m, Show (e m), Show m) => ObjArr e m -> ObjectMap e m
-singletonObjectMap oa = ObjectMap $ H.singleton (makeAbsoluteName $ oaObjPath oa) [oa]
+singletonObjectMap oa = ObjectMap $ H.singleton (makeAbsoluteName $ oaObjPath oa) omi
+  where
+    omi = case oa of
+      ObjArr{oaArr=Nothing}           -> ObjectMapItem [oa] [] -- type object
+      ObjArr{oaArr=Just (Nothing, _)} -> ObjectMapItem [oa] [] -- declaration
+      _                               -> ObjectMapItem [] [oa] -- definition
 
 objectMapFromList :: (ExprClass e, MetaDat m, Show (e m), Show m) => [ObjArr e m] -> ObjectMap e m
-objectMapFromList objMap = ObjectMap $ H.fromListWith (++) $ map (\oa -> (makeAbsoluteName $ oaObjPath oa, [oa])) objMap
+objectMapFromList objMap = mconcat $ map singletonObjectMap objMap
 
 mapMObjectMap :: Monad m => (ObjArr e meta1 -> m (ObjArr e meta2)) -> ObjectMap e meta1 -> m (ObjectMap e meta2)
-mapMObjectMap f (ObjectMap objMap) = ObjectMap <$> mapM (mapM f) objMap
+mapMObjectMap f (ObjectMap objMap) = ObjectMap <$> mapM (mapMOMI f) objMap
+  where
+    mapMOMI :: Monad m => (ObjArr e meta1 -> m (ObjArr e meta2)) -> ObjectMapItem e meta1 -> m (ObjectMapItem e meta2)
+    mapMOMI f2 (ObjectMapItem decls defs) = do
+      decls' <- mapM f2 decls
+      defs'  <- mapM f2 defs
+      return $ ObjectMapItem decls' defs'
+
 
 filterObjectMap :: (ObjArr e m -> Bool) -> ObjectMap e m -> ObjectMap e m
 filterObjectMap f (ObjectMap objMap) = ObjectMap $ H.mapMaybe f' objMap
   where
-    f' x = case filter f x of
-      [] -> Nothing
-      xs -> Just xs
+    f' (ObjectMapItem decls defs) = case (filter f decls, filter f defs) of
+      ([], [])        -> Nothing
+      (decls', defs') -> Just $ ObjectMapItem decls' defs'
 
 traverseObjectMap :: (Monad m) => (ObjArr e1 m1 -> m (ObjArr e2 m2)) -> ObjectMap e1 m1 -> m (ObjectMap e2 m2)
-traverseObjectMap f (ObjectMap objMap) = ObjectMap <$> H.traverseWithKey (\_ oas -> mapM f oas) objMap
+traverseObjectMap f (ObjectMap objMap) = ObjectMap <$> H.traverseWithKey (\_ oas -> traverseObjectMapItem f oas) objMap
+  where
+    traverseObjectMapItem :: (Monad m) => (ObjArr e1 m1 -> m (ObjArr e2 m2)) -> ObjectMapItem e1 m1 -> m (ObjectMapItem e2 m2)
+    traverseObjectMapItem f2 (ObjectMapItem decls defs) = do
+      decls' <- mapM f2 decls
+      defs'  <- mapM f2 defs
+      return $ ObjectMapItem decls' defs'
 
 -- | Gets all recursive sub expression objects from an expression's arguments. Helper for 'getRecursiveObjs'
 getRecursiveObjsExpr :: (ExprClass e, MetaDat m, Show (e m), Show m) => e m -> [e m]

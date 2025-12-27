@@ -3,17 +3,23 @@ Prgm
         ( fromList
             [
                 ( "/ContextIn"
-                ,
-                    [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                        ( Value val= id
-                            ( Value x= CInt 0 )
-                        )( Value /this= Value io )
-                    ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= id
+                                ( Value x= CInt 0 )
+                            )( Value /this= Value io )
+                        ]
+                    }
                 )
             ,
                 ( "/id"
-                ,
-                    [ id( Value x )= Value x ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ id( Value x )= Value x ]
+                    }
                 )
             ]
         )

@@ -3,15 +3,18 @@ Prgm
         ( fromList
             [
                 ( "/main"
-                ,
-                    [ Value /main ->
-                        ( /Catln/www( /html=/Data/String ) | /Catln/CatlnResult
-                            ( /contents=/Data/String
-                            , /name=/Data/String
-                            )
-                        ) = /Catln/www
-                        ( Value /html -> /Data/String = CStr "<html><body>web test</body></html>" )
-                    ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ Value /main ->
+                            ( /Catln/www( /html=/Data/String ) | /Catln/CatlnResult
+                                ( /contents=/Data/String
+                                , /name=/Data/String
+                                )
+                            ) = /Catln/www
+                            ( Value /html -> /Data/String = CStr "<html><body>web test</body></html>" )
+                        ]
+                    }
                 )
             ]
         )

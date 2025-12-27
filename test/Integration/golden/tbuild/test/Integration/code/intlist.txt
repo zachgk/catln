@@ -3,72 +3,84 @@ Prgm
         ( fromList
             [
                 ( "/IntCons"
-                ,
-                    [ /IntCons( EAppArg Value /head -> /Data/Primitive/Integer )( EAppArg Value /tail -> ∀/IntList ) ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /IntCons( EAppArg Value /head -> /Data/Primitive/Integer )( EAppArg Value /tail -> ∀/IntList ) ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/IntNil"
-                , [ Value /IntNil ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /IntNil ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/ContextIn"
-                ,
-                    [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
-                        ( /Catln/exit
-                            ( /val=/Data/Primitive/Integer
-                            , /this=/Catln/IO
-                            ) | /Catln/IO
-                        ) = /Catln/exit
-                        ( EAppArg Value /val -> /Data/Primitive/Integer =
-                            ( /operator-
-                                ( EAppArg Value /l -> /Data/Primitive/Integer =
-                                    ( /len
-                                        ( EAppArg Value /this -> /IntCons
-                                            ( /head=~Integer
-                                            , /tail=/IntCons
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+                            ( /Catln/exit
+                                ( /val=/Data/Primitive/Integer
+                                , /this=/Catln/IO
+                                ) | /Catln/IO
+                            ) = /Catln/exit
+                            ( EAppArg Value /val -> /Data/Primitive/Integer =
+                                ( /operator-
+                                    ( EAppArg Value /l -> /Data/Primitive/Integer =
+                                        ( /len
+                                            ( EAppArg Value /this -> /IntCons
                                                 ( /head=~Integer
-                                                , /tail=/IntNil
-                                                )
-                                            ) = /IntCons
-                                            ( EAppArg Value /head -> ~Integer = 5 )
-                                            ( EAppArg Value /tail -> /IntCons
-                                                ( /head=~Integer
-                                                , /tail=/IntNil
+                                                , /tail=/IntCons
+                                                    ( /head=~Integer
+                                                    , /tail=/IntNil
+                                                    )
                                                 ) = /IntCons
-                                                ( EAppArg Value /head -> ~Integer = 3 )( EAppArg Value /tail -> /IntNil = Value /IntNil )
-                                            )
-                                        ) ↦ /Data/Primitive/Integer
+                                                ( EAppArg Value /head -> ~Integer = 5 )
+                                                ( EAppArg Value /tail -> /IntCons
+                                                    ( /head=~Integer
+                                                    , /tail=/IntNil
+                                                    ) = /IntCons
+                                                    ( EAppArg Value /head -> ~Integer = 3 )( EAppArg Value /tail -> /IntNil = Value /IntNil )
+                                                )
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
                                     )
+                                    ( EAppArg Value /r -> /Data/Primitive/Integer = 2 ) ↦ /Data/Primitive/Integer
                                 )
-                                ( EAppArg Value /r -> /Data/Primitive/Integer = 2 ) ↦ /Data/Primitive/Integer
                             )
-                        )
-                        ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
-                    ]
+                            ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+                        ]
+                    }
                 )
             ,
                 ( "/len"
-                ,
-                    [ /len( EAppArg Value /this -> ∀/IntList ) -> /Data/Primitive/Integer
-                    , /len( EAppArg Value /this -> /IntNil ) -> /Data/Primitive/Integer = 0
-                    , /len
-                        ( EAppArg Value /this -> /IntCons
-                            ( /head=~Integer
-                            , /tail=~IntList
-                            ) = /IntCons( EAppArg Value /head -> ~Integer )( EAppArg Value /tail -> ~IntList )
-                        ) ->
-                        ( /operator+
-                            ( /r=/Data/Primitive/Integer
-                            , /l=/Data/Primitive/Integer
-                            ) | /Data/Primitive/Integer
-                        ) = /operator+
-                        ( EAppArg Value /l -> /Data/Primitive/Integer = 1 )
-                        ( EAppArg Value /r -> /Data/Primitive/Integer =
-                            ( /len
-                                ( EAppArg Value /this -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) ) ↦ /Data/Primitive/Integer
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /len( EAppArg Value /this -> ∀/IntList ) -> /Data/Primitive/Integer ]
+                    , omiDefs =
+                        [ /len( EAppArg Value /this -> /IntNil ) -> /Data/Primitive/Integer = 0
+                        , /len
+                            ( EAppArg Value /this -> /IntCons
+                                ( /head=~Integer
+                                , /tail=~IntList
+                                ) = /IntCons( EAppArg Value /head -> ~Integer )( EAppArg Value /tail -> ~IntList )
+                            ) ->
+                            ( /operator+
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) | /Data/Primitive/Integer
+                            ) = /operator+
+                            ( EAppArg Value /l -> /Data/Primitive/Integer = 1 )
+                            ( EAppArg Value /r -> /Data/Primitive/Integer =
+                                ( /len
+                                    ( EAppArg Value /this -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) ) ↦ /Data/Primitive/Integer
+                                )
                             )
-                        )
-                    ]
+                        ]
+                    }
                 )
             ]
         )

@@ -3,25 +3,31 @@ Prgm
         ( fromList
             [
                 ( "/ContextIn"
-                ,
-                    [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                    }
                 )
             ,
                 ( "/showInt"
-                ,
-                    [ Value /showInt ->
-                        ( /operator==
-                            ( /r=/Data/String
-                            , /l=/Data/String
-                            ) | /Data/Primitive/True | /Data/Primitive/False
-                        ) = /operator==
-                        ( EAppArg Value /l -> /Data/String =
-                            ( /Data/toString
-                                ( EAppArg Value /this -> /Data/Primitive/Integer = 1 ) ↦ /Data/String
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ Value /showInt ->
+                            ( /operator==
+                                ( /r=/Data/String
+                                , /l=/Data/String
+                                ) | /Data/Primitive/True | /Data/Primitive/False
+                            ) = /operator==
+                            ( EAppArg Value /l -> /Data/String =
+                                ( /Data/toString
+                                    ( EAppArg Value /this -> /Data/Primitive/Integer = 1 ) ↦ /Data/String
+                                )
                             )
-                        )
-                        ( EAppArg Value /r -> /Data/String = "1" )
-                    ]
+                            ( EAppArg Value /r -> /Data/String = "1" )
+                        ]
+                    }
                 )
             ]
         )

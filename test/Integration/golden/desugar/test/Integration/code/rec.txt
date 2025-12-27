@@ -3,28 +3,34 @@ Prgm
         ( fromList
             [
                 ( "/ContextIn"
-                ,
-                    [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                        ( Value val= /operator-
-                            ( Value /l= fact
-                                ( CInt 3 )
-                            )
-                            ( Value /r= CInt 6 )
-                        )( Value /this= Value io )
-                    ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= /operator-
+                                ( Value /l= fact
+                                    ( CInt 3 )
+                                )
+                                ( Value /r= CInt 6 )
+                            )( Value /this= Value io )
+                        ]
+                    }
                 )
             ,
                 ( "/fact"
-                ,
-                    [ fact( Value x -> /Data/Primitive/Integer )= /operator*( Value /l= Value x )
-                        ( Value /r= fact
-                            ( Value x= /operator-( Value /l= Value x )
-                                ( Value /r= CInt 1 )
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ fact( Value x -> /Data/Primitive/Integer ) | /operator==( Value /l= Value x )
+                            ( Value /r= CInt 1 )= CInt 1
+                        , fact( Value x -> /Data/Primitive/Integer )= /operator*( Value /l= Value x )
+                            ( Value /r= fact
+                                ( Value x= /operator-( Value /l= Value x )
+                                    ( Value /r= CInt 1 )
+                                )
                             )
-                        )
-                    , fact( Value x -> /Data/Primitive/Integer ) | /operator==( Value /l= Value x )
-                        ( Value /r= CInt 1 )= CInt 1
-                    ]
+                        ]
+                    }
                 )
             ]
         )

@@ -3,37 +3,49 @@ Prgm
         ( fromList
             [
                 ( "/ContextIn"
-                ,
-                    [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                    }
                 )
             ,
                 ( "/a"
-                ,
-                    [ Value /a ->
-                        ( /Data/Primitive/True | /operator~( /a=/Data/Primitive/False ) | /Data/Primitive/False ) = /operator~( EAppArg Value /a -> /Data/Primitive/False = Value /Data/Primitive/False )
-                    ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ Value /a ->
+                            ( /Data/Primitive/True | /operator~( /a=/Data/Primitive/False ) | /Data/Primitive/False ) = /operator~( EAppArg Value /a -> /Data/Primitive/False = Value /Data/Primitive/False )
+                        ]
+                    }
                 )
             ,
                 ( "/c"
-                ,
-                    [ Value /c ->
-                        ( /Data/Primitive/True | /operator||
-                            ( /r=/Data/Primitive/False
-                            , /l=/Data/Primitive/True
-                            ) | /Data/Primitive/False
-                        ) = /operator||( EAppArg Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /r -> /Data/Primitive/False = Value /Data/Primitive/False )
-                    ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ Value /c ->
+                            ( /Data/Primitive/True | /operator||
+                                ( /r=/Data/Primitive/False
+                                , /l=/Data/Primitive/True
+                                ) | /Data/Primitive/False
+                            ) = /operator||( EAppArg Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /r -> /Data/Primitive/False = Value /Data/Primitive/False )
+                        ]
+                    }
                 )
             ,
                 ( "/b"
-                ,
-                    [ Value /b ->
-                        ( /Data/Primitive/True | /operator&&
-                            ( /r=/Data/Primitive/True
-                            , /l=/Data/Primitive/True
-                            ) | /Data/Primitive/False
-                        ) = /operator&&( EAppArg Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /r -> /Data/Primitive/True = Value /Data/Primitive/True )
-                    ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ Value /b ->
+                            ( /Data/Primitive/True | /operator&&
+                                ( /r=/Data/Primitive/True
+                                , /l=/Data/Primitive/True
+                                ) | /Data/Primitive/False
+                            ) = /operator&&( EAppArg Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /r -> /Data/Primitive/True = Value /Data/Primitive/True )
+                        ]
+                    }
                 )
             ]
         )

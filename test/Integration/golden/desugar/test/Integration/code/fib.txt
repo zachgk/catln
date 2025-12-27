@@ -3,33 +3,39 @@ Prgm
         ( fromList
             [
                 ( "/ContextIn"
-                ,
-                    [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                        ( Value val= /operator-
-                            ( Value /l= fib
-                                ( CInt 3 )
-                            )
-                            ( Value /r= CInt 3 )
-                        )( Value /this= Value io )
-                    ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= /operator-
+                                ( Value /l= fib
+                                    ( CInt 3 )
+                                )
+                                ( Value /r= CInt 3 )
+                            )( Value /this= Value io )
+                        ]
+                    }
                 )
             ,
                 ( "/fib"
-                ,
-                    [ fib( Value integer -> /Data/Primitive/Integer )= CInt 1
-                    , fib( Value integer -> /Data/Primitive/Integer ) | /operator>( Value /l= Value integer )
-                        ( Value /r= CInt 1 )= /operator+
-                        ( Value /l= fib
-                            ( Value integer= /operator-( Value /l= Value integer )
-                                ( Value /r= CInt 1 )
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ fib( Value integer -> /Data/Primitive/Integer ) | /operator>( Value /l= Value integer )
+                            ( Value /r= CInt 1 )= /operator+
+                            ( Value /l= fib
+                                ( Value integer= /operator-( Value /l= Value integer )
+                                    ( Value /r= CInt 1 )
+                                )
                             )
-                        )
-                        ( Value /r= fib
-                            ( Value integer= /operator-( Value /l= Value integer )
-                                ( Value /r= CInt 2 )
+                            ( Value /r= fib
+                                ( Value integer= /operator-( Value /l= Value integer )
+                                    ( Value /r= CInt 2 )
+                                )
                             )
-                        )
-                    ]
+                        , fib( Value integer -> /Data/Primitive/Integer )= CInt 1
+                        ]
+                    }
                 )
             ]
         )

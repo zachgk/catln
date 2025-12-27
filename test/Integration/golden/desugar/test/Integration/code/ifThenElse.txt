@@ -3,35 +3,44 @@ Prgm
         ( fromList
             [
                 ( "/ContextIn"
-                ,
-                    [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
-                        ( Value val= abs
-                            ( CInt 0 )
-                        )( Value /this= Value io )
-                    ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= abs
+                                ( CInt 0 )
+                            )( Value /this= Value io )
+                        ]
+                    }
                 )
             ,
                 ( "/abs"
-                ,
-                    [ abs( Value x -> /Data/Primitive/Integer )= abs.$6119dc( Value /x= Value /x )
-                        ( Value /$6119dc-arg= /Catln/ThenElse/fromBool
-                            ( Value /v= /operator>=( Value /l= Value x )
-                                ( Value /r= CInt 0 )
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ abs( Value x -> /Data/Primitive/Integer )= abs.$6119dc( Value /x= Value /x )
+                            ( Value /$6119dc-arg= /Catln/ThenElse/fromBool
+                                ( Value /v= /operator>=( Value /l= Value x )
+                                    ( Value /r= CInt 0 )
+                                )
                             )
-                        )
-                    ]
+                        ]
+                    }
                 )
             ,
                 ( "/abs.$6119dc"
-                ,
-                    [ abs.$6119dc( Value /x )
-                        ( Value /$6119dc-arg= Hole TopType HoleActive Nothing@Value Else )= /operator*
-                        ( Value /l= /operator-
-                            ( Value /a= CInt 1 )
-                        )( Value /r= Value x )
-                    , abs.$6119dc( Value /x )
-                        ( Value /$6119dc-arg= Hole TopType HoleActive Nothing@Value Then )= Value x
-                    ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ abs.$6119dc( Value /x )
+                            ( Value /$6119dc-arg= Hole TopType HoleActive Nothing@Value Then )= Value x
+                        , abs.$6119dc( Value /x )
+                            ( Value /$6119dc-arg= Hole TopType HoleActive Nothing@Value Else )= /operator*
+                            ( Value /l= /operator-
+                                ( Value /a= CInt 1 )
+                            )( Value /r= Value x )
+                        ]
+                    }
                 )
             ]
         )

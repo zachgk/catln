@@ -53,7 +53,7 @@ objectPrecedence ObjArr{oaBasis=ArgObj}                               =   [5]
 
 -- | Finds the 'objectPrecedence' for all types
 buildPrecedenceMap :: (Show m, MetaDat m) => ObjectMap Expr m -> H.HashMap TypeName [Int]
-buildPrecedenceMap (ObjectMap objMap) = fmap (minimum . map objectPrecedence) objMap
+buildPrecedenceMap (ObjectMap objMap) = fmap (minimum . map objectPrecedence . flatObjectMapItem) objMap
 
 -- |
 -- Prunes an objectMap by precendence. If two objects share the same precendence, only the bigger one(s) will be kept.
@@ -119,14 +119,17 @@ addInferArgToType env@FEnv{feTypeEnv} vaenv (UnionType partials) = Just $ unionA
 
 addInferArgToPartial :: FEnv -> TypeVarArgEnv -> PartialType -> Type
 addInferArgToPartial FEnv{feVTypeGraph=ObjectMap vtypeGraph, feTTypeGraph=ObjectMap ttypeGraph, feTypeEnv} _ partial@PartialType{ptName=name, ptArgs} = do
-  let vtypeArrows = H.lookupDefault [] name vtypeGraph
-  let vTypes = unionAllTypes feTypeEnv $ map tryArrow vtypeArrows
+  let vtypeArrows = H.lookupDefault mempty name vtypeGraph
+  let vTypes = tryOMI vtypeArrows
 
-  let ttypeArrows = H.lookupDefault [] name ttypeGraph
-  let tTypes = unionAllTypes feTypeEnv $ map tryArrow ttypeArrows
+  let ttypeArrows = H.lookupDefault mempty name ttypeGraph
+  let tTypes = tryOMI ttypeArrows
 
   unionTypes feTypeEnv vTypes tTypes
   where
+    tryOMI :: (MetaDat m, Show m) => ObjectMapItem Expr m -> Type
+    tryOMI omi = unionAllTypes feTypeEnv $ map tryArrow $ flatObjectMapItem omi
+
     tryArrow :: (MetaDat m, Show m) => ObjArr Expr m -> Type
     tryArrow oa = if H.keysSet ptArgs `isSubsetOf` H.keysSet (exprAppliedArgsMap $ oaObjExpr oa)
       then UnionType $ joinUnionType $ map addArg $ S.toList $ S.difference (H.keysSet $ exprAppliedArgsMap $ oaObjExpr oa) (H.keysSet ptArgs)

@@ -3,66 +3,105 @@ Prgm
         ( fromList
             [
                 ( "/operator<="
-                ,
-                    [ /operator<=( EAppArg Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Ord ) -> ∀/Data/Primitive/Boolean ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator<=( EAppArg Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Ord ) -> ∀/Data/Primitive/Boolean ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Data/Algebra/inverse"
-                ,
-                    [ /Data/Algebra/inverse( EAppVar /T ∀/Data/Algebra/Group )( EAppArg Value /t -> TVVar /T ) -> TVVar /T ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Algebra/inverse( EAppVar /T ∀/Data/Algebra/Group )( EAppArg Value /t -> TVVar /T ) -> TVVar /T ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/operator++"
-                ,
-                    [ /operator++( EAppArg Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Semigroup ) -> TVVar /T ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator++( EAppArg Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Semigroup ) -> TVVar /T ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/operator>="
-                ,
-                    [ /operator>=( EAppArg Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Ord ) -> ∀/Data/Primitive/Boolean ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator>=( EAppArg Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Ord ) -> ∀/Data/Primitive/Boolean ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Data/Algebra/LessThan"
-                , [ Value /Data/Algebra/LessThan ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Algebra/LessThan ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Data/Algebra/mempty"
-                ,
-                    [ /Data/Algebra/mempty( EAppVar /T ∀/Data/Algebra/Monoid ) -> TVVar /T ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Algebra/mempty( EAppVar /T ∀/Data/Algebra/Monoid ) -> TVVar /T ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/operator<"
-                ,
-                    [ /operator<( EAppArg Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Ord ) -> ∀/Data/Primitive/Boolean ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator<( EAppArg Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Ord ) -> ∀/Data/Primitive/Boolean ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/operator>"
-                ,
-                    [ /operator>( EAppArg Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Ord ) -> ∀/Data/Primitive/Boolean ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator>( EAppArg Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Ord ) -> ∀/Data/Primitive/Boolean ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Data/Algebra/NoOrdering"
-                , [ Value /Data/Algebra/NoOrdering ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Algebra/NoOrdering ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Data/Algebra/compare"
-                ,
-                    [ /Data/Algebra/compare( EAppVar /T ∀/Data/Algebra/Ord )( EAppArg Value /l -> TVVar /T )( EAppArg Value /r -> TVVar /T ) -> ∀/Data/Algebra/Ordering
-                    , /Data/Algebra/compare( EAppVar /T ∀/Data/Algebra/POrd )( EAppArg Value /l -> TVVar /T )( EAppArg Value /r -> TVVar /T ) -> ∀/Data/Algebra/POrdering
-                    ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Algebra/compare( EAppVar /T ∀/Data/Algebra/Ord )( EAppArg Value /l -> TVVar /T )( EAppArg Value /r -> TVVar /T ) -> ∀/Data/Algebra/Ordering
+                        , /Data/Algebra/compare( EAppVar /T ∀/Data/Algebra/POrd )( EAppArg Value /l -> TVVar /T )( EAppArg Value /r -> TVVar /T ) -> ∀/Data/Algebra/POrdering
+                        ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Data/Algebra/Equal"
-                , [ Value /Data/Algebra/Equal ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Algebra/Equal ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/Data/Algebra/GreaterThan"
-                , [ Value /Data/Algebra/GreaterThan ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Algebra/GreaterThan ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/operator!="
-                ,
-                    [ /operator!=( EAppArg Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator!=( EAppArg Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean ]
+                    , omiDefs = []
+                    }
                 )
             ]
         )

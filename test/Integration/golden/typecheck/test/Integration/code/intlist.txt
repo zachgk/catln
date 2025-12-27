@@ -3,63 +3,75 @@ Prgm
         ( fromList
             [
                 ( "/IntCons"
-                ,
-                    [ /IntCons( Value /head -> /Data/Primitive/Integer )( Value /tail -> ∀/IntList ) ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /IntCons( Value /head -> /Data/Primitive/Integer )( Value /tail -> ∀/IntList ) ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/IntNil"
-                , [ Value /IntNil ]
+                , ObjectMapItem
+                    { omiDecls = [ Value /IntNil ]
+                    , omiDefs = []
+                    }
                 )
             ,
                 ( "/ContextIn"
-                ,
-                    [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
-                        ( /Catln/exit
-                            ( /val=/Data/Primitive/Integer
-                            , /this=/Catln/IO
-                            ) | /Catln/IO
-                        ) = /Catln/exit
-                        ( Value /val -> /Data/Primitive/Integer = /operator-
-                            ( Value /l -> /Data/Primitive/Integer = /len
-                                ( Value /this -> /IntCons
-                                    ( /head=~Integer
-                                    , /tail=/IntCons
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
+                            ( /Catln/exit
+                                ( /val=/Data/Primitive/Integer
+                                , /this=/Catln/IO
+                                ) | /Catln/IO
+                            ) = /Catln/exit
+                            ( Value /val -> /Data/Primitive/Integer = /operator-
+                                ( Value /l -> /Data/Primitive/Integer = /len
+                                    ( Value /this -> /IntCons
                                         ( /head=~Integer
-                                        , /tail=/IntNil
-                                        )
-                                    ) = /IntCons
-                                    ( Value /head -> ~Integer = CInt 5 )
-                                    ( Value /tail -> /IntCons
-                                        ( /head=~Integer
-                                        , /tail=/IntNil
+                                        , /tail=/IntCons
+                                            ( /head=~Integer
+                                            , /tail=/IntNil
+                                            )
                                         ) = /IntCons
-                                        ( Value /head -> ~Integer = CInt 3 )( Value /tail -> /IntNil = Value /IntNil )
+                                        ( Value /head -> ~Integer = CInt 5 )
+                                        ( Value /tail -> /IntCons
+                                            ( /head=~Integer
+                                            , /tail=/IntNil
+                                            ) = /IntCons
+                                            ( Value /head -> ~Integer = CInt 3 )( Value /tail -> /IntNil = Value /IntNil )
+                                        )
                                     )
                                 )
-                            )
-                            ( Value /r -> /Data/Primitive/Integer = CInt 2 )
-                        )( Value /this -> TVArg /io = Value /io )
-                    ]
+                                ( Value /r -> /Data/Primitive/Integer = CInt 2 )
+                            )( Value /this -> TVArg /io = Value /io )
+                        ]
+                    }
                 )
             ,
                 ( "/len"
-                ,
-                    [ /len
-                        ( Value /this -> /IntCons
-                            ( /head=~Integer
-                            , /tail=~IntList
-                            ) = /IntCons( Value /head -> ~Integer )( Value /tail -> ~IntList )
-                        ) ->
-                        ( /operator+
-                            ( /r=/Data/Primitive/Integer
-                            , /l=/Data/Primitive/Integer
-                            ) | /Data/Primitive/Integer
-                        ) = /operator+
-                        ( Value /l -> /Data/Primitive/Integer = CInt 1 )
-                        ( Value /r -> /Data/Primitive/Integer = /len( Value /this -> TVArg /tail = Value /tail ) )
-                    , /len( Value /this -> /IntNil ) -> /Data/Primitive/Integer = CInt 0
-                    , /len( Value /this -> ∀/IntList ) -> /Data/Primitive/Integer
-                    ]
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /len( Value /this -> ∀/IntList ) -> /Data/Primitive/Integer ]
+                    , omiDefs =
+                        [ /len( Value /this -> /IntNil ) -> /Data/Primitive/Integer = CInt 0
+                        , /len
+                            ( Value /this -> /IntCons
+                                ( /head=~Integer
+                                , /tail=~IntList
+                                ) = /IntCons( Value /head -> ~Integer )( Value /tail -> ~IntList )
+                            ) ->
+                            ( /operator+
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) | /Data/Primitive/Integer
+                            ) = /operator+
+                            ( Value /l -> /Data/Primitive/Integer = CInt 1 )
+                            ( Value /r -> /Data/Primitive/Integer = /len( Value /this -> TVArg /tail = Value /tail ) )
+                        ]
+                    }
                 )
             ]
         )

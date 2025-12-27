@@ -3,35 +3,47 @@ Prgm
         ( fromList
             [
                 ( "/ContextIn"
-                ,
-                    [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= f( Value io ) ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= f( Value io ) ]
+                    }
                 )
             ,
                 ( "/outerVar"
-                ,
-                    [ Value outerVar= /operator==
-                        ( Value /l= /operator-
-                            ( Value /l= CInt 5 )
-                            ( Value /r= CInt 3 )
-                        )
-                        ( Value /r= CInt 2 )
-                    ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ Value outerVar= /operator==
+                            ( Value /l= /operator-
+                                ( Value /l= CInt 5 )
+                                ( Value /r= CInt 3 )
+                            )
+                            ( Value /r= CInt 2 )
+                        ]
+                    }
                 )
             ,
                 ( "/f.innerVar"
-                ,
-                    [ f.innerVar( Value /io )= /operator==
-                        ( Value /l= /operator+
-                            ( Value /l= CInt 1 )
-                            ( Value /r= CInt 1 )
-                        )
-                        ( Value /r= CInt 2 )
-                    ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ f.innerVar( Value /io )= /operator==
+                            ( Value /l= /operator+
+                                ( Value /l= CInt 1 )
+                                ( Value /r= CInt 1 )
+                            )
+                            ( Value /r= CInt 2 )
+                        ]
+                    }
                 )
             ,
                 ( "/f"
-                ,
-                    [ f( Value io -> /Catln/IO )= Value io ]
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ f( Value io -> /Catln/IO )= Value io ]
+                    }
                 )
             ]
         )
