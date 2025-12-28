@@ -179,7 +179,7 @@ mapMetaObjArrM f mloc oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   return oa{oaObj=oaObj', oaAnnots=oaAnnots', oaArr=oaArr'}
 
 mapMetaObjectMapM :: (Monad n, MapMeta e) => MetaFun n a b -> ObjectMap e a -> n (ObjectMap e b)
-mapMetaObjectMapM f = traverseObjectMap (mapMetaObjArrM f Nothing)
+mapMetaObjectMapM f = mapMObjectMap (mapMetaObjArrM f Nothing)
 
 mapMetaPrgmM :: (Monad n, MapMeta e) => MetaFun n a b -> Prgm e a -> n (Prgm e b)
 mapMetaPrgmM f (Prgm objMap classGraph annots) = do

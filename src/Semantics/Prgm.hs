@@ -498,15 +498,6 @@ filterObjectMap f (ObjectMap objMap) = ObjectMap $ H.mapMaybe f' objMap
       ([], [])        -> Nothing
       (decls', defs') -> Just $ ObjectMapItem decls' defs'
 
-traverseObjectMap :: (Monad m) => (ObjArr e1 m1 -> m (ObjArr e2 m2)) -> ObjectMap e1 m1 -> m (ObjectMap e2 m2)
-traverseObjectMap f (ObjectMap objMap) = ObjectMap <$> H.traverseWithKey (\_ oas -> traverseObjectMapItem f oas) objMap
-  where
-    traverseObjectMapItem :: (Monad m) => (ObjArr e1 m1 -> m (ObjArr e2 m2)) -> ObjectMapItem e1 m1 -> m (ObjectMapItem e2 m2)
-    traverseObjectMapItem f2 (ObjectMapItem decls defs) = do
-      decls' <- mapM f2 decls
-      defs'  <- mapM f2 defs
-      return $ ObjectMapItem decls' defs'
-
 -- | Gets all recursive sub expression objects from an expression's arguments. Helper for 'getRecursiveObjs'
 getRecursiveObjsExpr :: (ExprClass e, MetaDat m, Show (e m), Show m) => e m -> [e m]
 getRecursiveObjsExpr expr | isNothing (maybeExprPath expr) = []
