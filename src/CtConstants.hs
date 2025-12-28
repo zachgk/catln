@@ -23,9 +23,10 @@ operatorArgR = "/r"
 operatorName :: String -> String
 operatorName n = operatorPrefix ++ n
 
-operatorType, operatorHasArrow :: String
+operatorType, operatorHasArrow, operatorEq :: String
 operatorType = operatorName ":"
 operatorHasArrow = operatorName "?->"
+operatorEq = operatorName "=="
 
 intPrim, floatPrim, truePrim, falsePrim, strPrim, ioPrim :: String
 intPrim = "/Data/Primitive/Integer"
@@ -107,8 +108,9 @@ ctMatch, ctCase :: String
 ctMatch = "match"
 ctCase = "case"
 
-thisKey :: String
+thisKey, macroThisKey :: String
 thisKey = "/this"
+macroThisKey = "/$this"
 
 ctListType, ctListCons, ctListConsHead, ctListConsTail :: String
 ctListType = "List"

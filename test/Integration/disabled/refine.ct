@@ -1,0 +1,15 @@
+# Tests refinement types with type properties
+  
+  TODO: Convert evenAdd to return (Integer | even($out)), switch to type props, switch to using refinement definition of addition rather than separate evenadd function
+  
+  - Convert evenAdd to return (Integer | even($out))
+  - switch to type props
+  - switch to using refinement definition of addition rather than separate evenadd function
+
+even(x: Integer) -> Bool = x % 2 == 0
+
+# evenAdd(a: Integer_even, b: Integer_even) -> Integer_even = a + b
+
+evenAdd(a: Integer, b: Integer) | even(a) && even(b) -> Integer = a + b
+
+main{io -> IO}= io.exit(val= evenAdd(a= 2, b= 4) - 6)
