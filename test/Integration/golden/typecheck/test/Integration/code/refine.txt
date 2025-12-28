@@ -1,0 +1,75 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/even"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ /even( Value /x -> /Data/Primitive/Integer ) ->
+                            ( /operator==
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) | /Data/Primitive/True | /Data/Primitive/False
+                            ) = /operator==
+                            ( Value /l -> /Data/Primitive/Integer = /operator%( Value /l -> TVArg /x = Value /x )
+                                ( Value /r -> /Data/Primitive/Integer = CInt 2 )
+                            )
+                            ( Value /r -> /Data/Primitive/Integer = CInt 0 )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
+                            ( /Catln/exit
+                                ( /val=/Data/Primitive/Integer
+                                , /this=/Catln/IO
+                                ) | /Catln/IO
+                            ) = /Catln/exit
+                            ( Value /val -> /Data/Primitive/Integer = /operator-
+                                ( Value /l -> /Data/Primitive/Integer = /evenAdd
+                                    ( Value /a -> /Data/Primitive/Integer = CInt 2 )
+                                    ( Value /b -> /Data/Primitive/Integer = CInt 4 )
+                                )
+                                ( Value /r -> /Data/Primitive/Integer = CInt 6 )
+                            )( Value /this -> TVArg /io = Value /io )
+                        ]
+                    }
+                )
+            ,
+                ( "/evenAdd"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ /evenAdd( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer ) | /even( Value /x -> TVArg /a = Value /a ) ->
+                            ( /operator+
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) | /Data/Primitive/Integer
+                            ) = /operator+( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr "Tests refinement types with type properties
+            TODO: Convert evenAdd to return (Integer | even($out)), switch to type props, switch to using refinement definition of addition rather than separate evenadd function
+            - Convert evenAdd to check | even(a) && even(b)
+            - Convert evenAdd to return (Integer | even($out))
+            - switch to type props
+            - switch to using refinement definition of addition rather than separate evenadd function" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "evenAdd(a: Integer_even, b: Integer_even) -> Integer_even = a + b" )
+        ]
+    }

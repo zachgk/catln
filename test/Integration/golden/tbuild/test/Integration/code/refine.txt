@@ -1,0 +1,86 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/even"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ /even( EAppArg Value /x -> /Data/Primitive/Integer ) ->
+                            ( /operator==
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) | /Data/Primitive/True | /Data/Primitive/False
+                            ) = /operator==
+                            ( EAppArg Value /l -> /Data/Primitive/Integer =
+                                ( /operator%
+                                    ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                                    ( EAppArg Value /r -> /Data/Primitive/Integer = 2 ) ↦ /Data/Primitive/Integer
+                                )
+                            )
+                            ( EAppArg Value /r -> /Data/Primitive/Integer = 0 )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+                            ( /Catln/exit
+                                ( /val=/Data/Primitive/Integer
+                                , /this=/Catln/IO
+                                ) | /Catln/IO
+                            ) = /Catln/exit
+                            ( EAppArg Value /val -> /Data/Primitive/Integer =
+                                ( /operator-
+                                    ( EAppArg Value /l -> /Data/Primitive/Integer =
+                                        ( /evenAdd
+                                            ( EAppArg Value /a -> /Data/Primitive/Integer = 2 )
+                                            ( EAppArg Value /b -> /Data/Primitive/Integer = 4 ) ↦ /Data/Primitive/Integer
+                                        )
+                                    )
+                                    ( EAppArg Value /r -> /Data/Primitive/Integer = 6 ) ↦ /Data/Primitive/Integer
+                                )
+                            )
+                            ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/evenAdd"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ /evenAdd( EAppArg Value /a -> /Data/Primitive/Integer )( EAppArg Value /b -> /Data/Primitive/Integer ) | /even
+                            ( EAppArg Value /x -> TVArg /a = ( Value /a ↦ TVArg /a ) ) ->
+                            ( /operator+
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) | /Data/Primitive/Integer
+                            ) = /operator+
+                            ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
+                            ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Tests refinement types with type properties
+            TODO: Convert evenAdd to return (Integer | even($out)), switch to type props, switch to using refinement definition of addition rather than separate evenadd function
+            - Convert evenAdd to check | even(a) && even(b)
+            - Convert evenAdd to return (Integer | even($out))
+            - switch to type props
+            - switch to using refinement definition of addition rather than separate evenadd function" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "evenAdd(a: Integer_even, b: Integer_even) -> Integer_even = a + b" )
+        ]
+    }

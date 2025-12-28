@@ -1,0 +1,59 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/even"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ even( Value x -> /Data/Primitive/Integer ) -> ~Bool = /operator==
+                            ( Value /l= /operator%( Value /l= Value x )
+                                ( Value /r= CInt 2 )
+                            )
+                            ( Value /r= CInt 0 )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= /operator-
+                                ( Value /l= evenAdd
+                                    ( Value a= CInt 2 )
+                                    ( Value b= CInt 4 )
+                                )
+                                ( Value /r= CInt 6 )
+                            )( Value /this= Value io )
+                        ]
+                    }
+                )
+            ,
+                ( "/evenAdd"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ evenAdd( Value a -> /Data/Primitive/Integer )( Value b -> /Data/Primitive/Integer ) | even( Value a ) -> /Data/Primitive/Integer = /operator+( Value /l= Value a )( Value /r= Value b ) ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "Tests refinement types with type properties
+            TODO: Convert evenAdd to return (Integer | even($out)), switch to type props, switch to using refinement definition of addition rather than separate evenadd function
+            - Convert evenAdd to check | even(a) && even(b)
+            - Convert evenAdd to return (Integer | even($out))
+            - switch to type props
+            - switch to using refinement definition of addition rather than separate evenadd function" )
+        , /Catln/#md
+            ( Value /text= CStr "evenAdd(a: Integer_even, b: Integer_even) -> Integer_even = a + b" )
+        ]
+    }
