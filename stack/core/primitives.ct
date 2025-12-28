@@ -50,6 +50,8 @@ module(Data/Primitive)
     #runtime("int+")
   (_ :: Integer * _ :: Integer) -> Integer
     #runtime("int*")
+  (_ :: Integer % _ :: Integer) -> Integer
+    #runtime("int%")
   (_ :: Integer <= _ :: Integer) -> Boolean
     #runtime("int<=")
   (_ :: Integer >= _ :: Integer) -> Boolean
@@ -68,4 +70,3 @@ module(Data/Primitive)
   # mempty<Integer $T> = 0
   # mappend<Integer $T>($T l, $T r) = l + r
   # inverse<Integer $T>($T t) = -t
-

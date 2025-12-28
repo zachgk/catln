@@ -51,10 +51,25 @@ Prgm
                         ]
                     }
                 )
+            ,
+                ( "/modulo"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ Value modulo= /operator==
+                            ( Value /l= /operator%
+                                ( Value /l= CInt 7 )
+                                ( Value /r= CInt 3 )
+                            )
+                            ( Value /r= CInt 1 )
+                        ]
+                    }
+                )
             ]
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

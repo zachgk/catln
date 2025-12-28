@@ -136,6 +136,7 @@ primEnv = H.fromList (map mapPrim prims ++ macros)
     prims = [ liftIntOp "+" (+)
             , liftIntOp "-" (-)
             , liftIntOp "*" (*)
+            , liftIntOp "%" mod
             , liftCmpOp ">" (>)
             , liftCmpOp "<" (<)
             , liftCmpOp ">=" (>=)
