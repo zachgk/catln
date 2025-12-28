@@ -178,9 +178,12 @@ mapMetaObjArrM f mloc oa@ObjArr{oaObj, oaAnnots, oaArr} = do
     return (arrE', arrM')
   return oa{oaObj=oaObj', oaAnnots=oaAnnots', oaArr=oaArr'}
 
+mapMetaObjectMapM :: (Monad n, MapMeta e) => MetaFun n a b -> ObjectMap e a -> n (ObjectMap e b)
+mapMetaObjectMapM f = traverseObjectMap (mapMetaObjArrM f Nothing)
+
 mapMetaPrgmM :: (Monad n, MapMeta e) => MetaFun n a b -> Prgm e a -> n (Prgm e b)
 mapMetaPrgmM f (Prgm objMap classGraph annots) = do
-  objMap' <- traverseObjectMap (mapMetaObjArrM f Nothing) objMap
+  objMap' <- mapMetaObjectMapM f objMap
   annots' <- mapM (mapMetaM f AnnotMeta) annots
   return $ Prgm objMap' classGraph annots'
 
@@ -192,6 +195,9 @@ mapMetaAppliedExpr f loc e = runIdentity $ mapMetaAppliedExprM f loc e
 
 mapMetaObjArr :: (MapMeta e) => MetaFun Identity a b -> Maybe MetaLocation -> ObjArr e a -> ObjArr e b
 mapMetaObjArr f loc oa = runIdentity $ mapMetaObjArrM f loc oa
+
+mapMetaObjectMap :: (MapMeta e) => MetaFun Identity a b -> ObjectMap e a -> ObjectMap e b
+mapMetaObjectMap f om = runIdentity $ mapMetaObjectMapM f om
 
 mapMetaPrgm :: (MapMeta e) => MetaFun Identity a b -> Prgm e a -> Prgm e b
 mapMetaPrgm f p = runIdentity $ mapMetaPrgmM f p

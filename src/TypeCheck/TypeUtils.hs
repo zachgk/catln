@@ -118,11 +118,11 @@ addInferArgToType env@FEnv{feTypeEnv} vaenv (UnionType partials) = Just $ unionA
     partials' = map (addInferArgToPartial env vaenv) $ splitUnionType partials
 
 addInferArgToPartial :: FEnv -> TypeVarArgEnv -> PartialType -> Type
-addInferArgToPartial FEnv{feVTypeGraph, feTTypeGraph, feTypeEnv} _ partial@PartialType{ptName=name, ptArgs} = do
-  let vtypeArrows = H.lookupDefault [] name feVTypeGraph
+addInferArgToPartial FEnv{feVTypeGraph=ObjectMap vtypeGraph, feTTypeGraph=ObjectMap ttypeGraph, feTypeEnv} _ partial@PartialType{ptName=name, ptArgs} = do
+  let vtypeArrows = H.lookupDefault [] name vtypeGraph
   let vTypes = unionAllTypes feTypeEnv $ map tryArrow vtypeArrows
 
-  let ttypeArrows = H.lookupDefault [] name feTTypeGraph
+  let ttypeArrows = H.lookupDefault [] name ttypeGraph
   let tTypes = unionAllTypes feTypeEnv $ map tryArrow ttypeArrows
 
   unionTypes feTypeEnv vTypes tTypes
@@ -136,16 +136,17 @@ addInferArgToPartial FEnv{feVTypeGraph, feTTypeGraph, feTypeEnv} _ partial@Parti
 -- TODO Look into making this run every epoch rather than per call to mkReachesEnv
 buildTypeEnv :: FEnv -> TypeCheckResult FEnvTypeEnv
 buildTypeEnv env@FEnv{feTypeEnv, feVTypeGraph, feTTypeGraph} = do
+  feVTypeGraph' <- mapMObjectMap buildVObjArr feVTypeGraph
+  let ttypeGraph' = mapMetaObjectMap clearMetaDat feTTypeGraph
+  return feTypeEnv{teTypeGraph=ObjArrTypeGraph (feVTypeGraph' <> ttypeGraph')}
 
-  -- Env (typeGraph) from variables
-  feVTypeGraph' <- forM feVTypeGraph $ \objArrs -> do
-    forM objArrs $ \voa -> do
+  where
+    -- Env (typeGraph) from variables
+    buildVObjArr :: ObjArr Expr VarMetaDat -> TypeCheckResult (ObjArr Expr ())
+    buildVObjArr voa = do
       soa <- showObjArr env voa
       let soa' = mapMetaObjArr clearMetaDat Nothing soa
       return soa'
-
-  let ttypeGraph' = H.map (map (mapMetaObjArr clearMetaDat Nothing)) feTTypeGraph
-  return feTypeEnv{teTypeGraph=ObjArrTypeGraph $ H.unionWith (++) feVTypeGraph' ttypeGraph'}
 
 mkReachesEnv :: FEnv -> RConstraint -> TypeCheckResult (ReachesEnv (ObjArrTypeGraph Expr ()))
 mkReachesEnv env (Constraint maybeConOa stypeVaenv _) = do

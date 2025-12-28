@@ -67,8 +67,8 @@ makeBaseFEnv prgm = FEnv{
   feConsDats = [],
   feCons = [],
   feUnionAllObjs = Meta PTopType Nothing nil (VarMetaDat (Just 0) Nothing),
-  feVTypeGraph = H.empty,
-  feTTypeGraph = H.empty,
+  feVTypeGraph = mempty,
+  feTTypeGraph = mempty,
   feUpdatedDuringEpoch = False,
   feTypeEnv = mkTypeEnv prgm,
   feTrace = mkTraceConstrain
@@ -243,7 +243,7 @@ fromObjectMap oa@ObjArr{oaAnnots, oaObj=Just obj, oaArr} = do
         return (Just vExpr, arrM')
       Nothing -> return (Nothing, mUserReturn')
   let oa' = oa{oaObj=Just obj', oaArr=oaArr', oaAnnots=oaAnnots'}
-  modify $ fAddVTypeGraph (oaObjPath oa) oa'
+  modify $ fAddVTypeGraph oa'
   modify $ endConstraintBlock (Just oa') (first getExprMeta . head <$> exprVarArgs obj')
   return oa'
 fromObjectMap oa = error $ printf "Invalid oa in fromObjectMap %s" (show oa)
@@ -259,7 +259,7 @@ fromPrgm (Prgm objMap classGraph annots) = do
   return (objMap', classGraph, annots')
 
 addTypeGraphArrow :: TObjArr -> StateT FEnv TypeCheckResult ()
-addTypeGraphArrow oa = modify (fAddTTypeGraph (oaObjPath oa) oa)
+addTypeGraphArrow oa = modify (fAddTTypeGraph oa)
 
 addTypeGraphPrgm :: TPrgm -> StateT FEnv TypeCheckResult ()
 addTypeGraphPrgm Prgm{prgmObjMap} = mapM_ addTypeGraphArrow $ flatObjectMap prgmObjMap

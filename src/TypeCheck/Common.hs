@@ -227,8 +227,8 @@ type TObjectMap = ObjectMap Expr TypedMetaDat
 type TPrgm = Prgm Expr TypedMetaDat
 
 -- implicit graph
-type VTypeGraph = H.HashMap TypeName [VObjArr] -- H.HashMap (Root tuple name for filtering) [vals]
-type TTypeGraph = H.HashMap TypeName [TObjArr] -- H.HashMap (Root tuple name for filtering) [vals]
+type VTypeGraph = VObjectMap -- H.HashMap (Root tuple name for filtering) [vals]
+type TTypeGraph = TObjectMap -- H.HashMap (Root tuple name for filtering) [vals]
 
 instance MetaDat VarMetaDat where
   emptyMetaDat = VarMetaDat Nothing Nothing
@@ -350,11 +350,11 @@ endConstraintBlock oa vaenv env@FEnv{feConsDats=[newCons], feCons} = env{feConsD
 endConstraintBlock oa vaenv env@FEnv{feConsDats=d1:d2:ds} = env{feConsDats=(map (\(Constraint oas vaenvs d) -> Constraint (maybeToList oa ++ oas) (H.union vaenv vaenvs) d) d1 ++ d2):ds}
 endConstraintBlock _ _ FEnv{feConsDats=[]} = error $ printf "No constraint stack found in endConstraintBlock"
 
-fAddVTypeGraph :: TypeName -> VObjArr -> FEnv -> FEnv
-fAddVTypeGraph k v env@FEnv{feVTypeGraph} = env {feVTypeGraph = H.insertWith (++) (makeAbsoluteName k) [v] feVTypeGraph}
+fAddVTypeGraph :: VObjArr -> FEnv -> FEnv
+fAddVTypeGraph oa env@FEnv{feVTypeGraph} = env {feVTypeGraph = singletonObjectMap oa <> feVTypeGraph}
 
-fAddTTypeGraph :: TypeName -> TObjArr -> FEnv -> FEnv
-fAddTTypeGraph k v env@FEnv{feTTypeGraph} = env {feTTypeGraph = H.insertWith (++) (makeAbsoluteName k) [v] feTTypeGraph}
+fAddTTypeGraph :: TObjArr -> FEnv -> FEnv
+fAddTTypeGraph oa env@FEnv{feTTypeGraph} = env {feTTypeGraph = singletonObjectMap oa <> feTTypeGraph}
 
 -- This ensures schemes are correct
 -- It differs from Constrain.checkScheme because it checks for bugs in the internal compiler, not bugs in the user code

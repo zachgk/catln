@@ -23,12 +23,12 @@ import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
 
-newtype ObjArrTypeGraph e m = ObjArrTypeGraph (H.HashMap TypeName [ObjArr e m])
+newtype ObjArrTypeGraph e m = ObjArrTypeGraph (ObjectMap e m)
   deriving (Show)
 instance Semigroup (ObjArrTypeGraph e m) where
-  (ObjArrTypeGraph a) <> (ObjArrTypeGraph b) = ObjArrTypeGraph (H.unionWith (++) a b)
+  (ObjArrTypeGraph a) <> (ObjArrTypeGraph b) = ObjArrTypeGraph (a <> b)
 instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGraph e m) where
-  typeGraphQueryWithReason typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph tg} vaenv partial@PartialType{ptName} = concatMap tryTArrow $ H.lookupDefault [] ptName tg
+  typeGraphQueryWithReason typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName} = concatMap tryTArrow $ H.lookupDefault [] ptName tg
     where
       tryTArrow :: (ExprClass e, MetaDat m, Show m, Show (e m)) => ObjArr e m -> [(String, Type)]
       tryTArrow oa@ObjArr{oaArr=Just{}} = do
@@ -55,7 +55,7 @@ testCtssConfig = CTSSConfig "stack"
 buildCtssConfig = CTSSConfig "~/.catln/stack"
 
 mkTypeEnv :: (ExprClass e, Show m, Show (e m), MetaDat m) => Prgm e m -> TypeEnv (ObjArrTypeGraph e m)
-mkTypeEnv (Prgm objMap@(ObjectMap om) classGraph _) = TypeEnv classGraph (ObjArrTypeGraph om) typeNames
+mkTypeEnv (Prgm objMap classGraph _) = TypeEnv classGraph (ObjArrTypeGraph objMap) typeNames
   where
     typeNames = S.fromList $ map makeAbsoluteName $ concatMap getAllObjArrNames $ flatObjectMap objMap
 
