@@ -14,6 +14,7 @@
 module Testing.Generation where
 
 import           Control.Monad
+import           CtConstants
 import           Data.Bifunctor          (bimap)
 import           Data.Either             (partitionEithers)
 import qualified Data.HashMap.Strict     as H
@@ -51,6 +52,10 @@ genTypeFromExpr prgm (TupleApply _ (_, baseExpr) (EAppVar varName m)) = do
   return $ if shouldAddVar
     then base{ptVars = H.insert varName (getMetaType m) baseVars}
     else base
+genTypeFromExpr prgm (EWhere _ base cond) = do
+  baseType <- genTypeFromExpr prgm base
+  condType <- genTypeFromExpr prgm cond
+  return $ partialAddPreds baseType (PredsOne $ PredExpr condType)
 genTypeFromExpr _ e = error $ printf "Unimplemented genTypeFromExpr for %s" (show e)
 
 genType :: Prgm Expr () -> Gen Type
@@ -61,6 +66,17 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens
     gens = if graphEmpty cg
       then [genBasic]
       else [genBasic, genCGOld, genCG, genCGRel, genObjM, genObj]
+
+    -- Find all functions with single argument having thisKey
+    typePropFunctions = mapMaybe checkFunction $ flatObjectMap objMap
+      where
+        checkFunction ObjArr{oaBasis=FunctionObj, oaObj=Just objExpr} =
+          case exprAppliedArgs objExpr of
+            [arg] -> case oaObj arg of
+              Just (Value _ n) | n == thisKey -> Just objExpr
+              _                               -> Nothing
+            _ -> Nothing
+        checkFunction _ = Nothing
 
     genBasic :: Gen Type
     genBasic = HG.element [PTopType, BottomType]
@@ -92,7 +108,26 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens
     genObj = do
       oa <- HG.element $ flatObjectMap objMap
       let objExpr = fromJust $ oaObj oa
-      singletonType <$> genTypeFromExpr prgm objExpr
+      basePartial <- genTypeFromExpr prgm objExpr
+
+      -- Optionally add type properties as refinement predicates
+      if null typePropFunctions
+        then return $ singletonType basePartial
+        else do
+          shouldAddProps <- HG.bool
+          if shouldAddProps
+            then do
+              -- Select a random subset of type properties
+              numProps <- HG.int (linear 0 (min 3 $ length typePropFunctions))
+              selectedProps <- take numProps <$> HG.shuffle typePropFunctions
+              -- Add each as a predicate
+              finalPartial <- foldM addPred basePartial selectedProps
+              return $ singletonType finalPartial
+            else return $ singletonType basePartial
+      where
+        addPred partial prop = do
+          propType <- genTypeFromExpr prgm prop
+          return $ partialAddPreds partial (PredsOne $ PredExpr propType)
 
 genPartialType :: Prgm Expr () -> Gen PartialType
 genPartialType prgm@(Prgm objMap _ _) = do
