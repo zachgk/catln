@@ -266,6 +266,45 @@ propDifferenceByIntersection gPrgm = property $ do
   annotate $ printf "withInter' = a-(a∩b) = %s" (show withInter')
   assert $ isEqType typeEnv diff' withInter'
 
+propClassGraphMatchesPredClass :: IO GenPrgm -> Property
+propClassGraphMatchesPredClass gPrgm = property $ do
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
+
+  -- Skip programs with no objects (like empty or error programs)
+  let Prgm{prgmObjMap} = prgm
+  when (nullObjectMap prgmObjMap) discard
+
+  let typeEnv@(TypeEnv (ClassGraph cgData) _ _) = mkTypeEnv prgm
+  let classNodes = filter isClassNode $ graphToNodes cgData
+
+  -- Discard if no classes
+  when (null classNodes) discard
+
+  -- Pick a random class
+  (cgNode, className, _) <- forAll $ HG.element classNodes
+  case cgNode of
+    CGClass (_sealed, classPartialType, constituentTypes, _doc) -> do
+      annotate $ printf "Testing class: %s" (fromPartialName className)
+      annotate $ printf "Class definition: %s" (show classPartialType)
+
+      -- Expand the class using expandClassPartial
+      let cls = classPartial classPartialType
+
+      annotate $ printf "Constituent types: %s" (show constituentTypes)
+      annotate $ printf "Expanded PredClass: %s" (show cls)
+
+      -- Compare: the expanded PredClass should equal the union of constituent types
+      let unionConstituents = unionAllTypes typeEnv constituentTypes
+      annotate $ printf "Union of constituents: %s" (show unionConstituents)
+
+      assert $ isEqType typeEnv cls unionConstituents
+
+    CGType -> discard
+  where
+    isClassNode (CGClass{}, _, _) = True
+    isClassNode _                 = False
+
 typeTests :: TestTree
 typeTests = withResource (ggPrgm <$> findPrgms) (const $ pure ()) tests
   where
@@ -283,10 +322,11 @@ typeTests = withResource (ggPrgm <$> findPrgms) (const $ pure ()) tests
       , HG.testProperty "propUnionDistributesIntersection" (p $ propUnionDistributesIntersection gPrgm)
       , HG.testProperty "propDifferenceShrinks" (p $ propDifferenceShrinks gPrgm)
       , HG.testProperty "propUnionWithComplement" (p $ propUnionWithComplement gPrgm)
-      ,   HG.testProperty "propIntersectionWithComplement" (p $ propIntersectionWithComplement gPrgm)
+      , HG.testProperty "propIntersectionWithComplement" (p $ propIntersectionWithComplement gPrgm)
       , HG.testProperty "propComplementInverse" (p $ propComplementInverse gPrgm)
       -- , HG.testProperty "(propIntersectByDifference)" (p $ propIntersectByDifference gPrgm)
       -- , HG.testProperty "(propDifferenceByIntersection)" (p $ propDifferenceByIntersection gPrgm)
+      , HG.testProperty "propClassGraphMatchesPredClass" (withDiscards 1000 $ p $ propClassGraphMatchesPredClass gPrgm)
                                         ]
     p prop = prop
     -- p prop = withTests 100000 prop
