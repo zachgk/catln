@@ -21,6 +21,7 @@ import           Data.Hashable
 import qualified Data.HashMap.Strict        as H
 import qualified Data.IntMap.Lazy           as IM
 import           Data.List
+import           Data.UUID                  (nil)
 import           GHC.Generics               (Generic)
 
 import           Control.Monad.State
@@ -43,6 +44,8 @@ data TypeCheckError
   | TracedTypeCheckError VarMeta [SConstraint] String
   | ConstraintTypeCheckError VConstraint SConstraint [TypeCheckError]
   | TupleMismatch TypedMeta TExpr (Meta ()) (H.HashMap String TExpr)
+  | DefinitionOutsideDeclaration TypeName Type Type Type CodeRange
+  | UnfulfilledDeclaration TypeName Type Type Type CodeRange
   deriving (Eq, Ord, Generic, Hashable)
 
 -- | SType actual required (description in type)
@@ -244,12 +247,20 @@ instance Show TypeCheckError where
     where
       showArg (argName, argVal) = printf "%s = %s" argName (show argVal)
       args' = intercalate ", " $ map showArg $ H.toList args
+  show (DefinitionOutsideDeclaration name defType declType diff loc) = printf "Definition Outside Declaration for %s:\n\tDefinition input type: %s\n\tDeclaration input type: %s\n\tUndeclared part: %s\n\tLocation: %s" name (show defType) (show declType) (show diff) (maybe "Unknown" showCodeRange loc)
+  show (UnfulfilledDeclaration name declType defType diff loc) = printf "Unfulfilled Declaration for %s:\n\tDeclaration input type: %s\n\tDefinition input type: %s\n\tUndefined part: %s\n\tLocation: %s" name (show declType) (show defType) (show diff) (maybe "Unknown" showCodeRange loc)
 
 instance CNoteTC TypeCheckError where
   metaCNote (GenTypeCheckError m _)      = m
   metaCNote (TracedTypeCheckError m _ _) = clearMetaDat ArrMeta m
   metaCNote (TupleMismatch _ _ m _)      = Just m
   metaCNote ConstraintTypeCheckError{}   = Nothing
+  metaCNote (DefinitionOutsideDeclaration _ _ _ _ loc) = case loc of
+    Just pos -> Just $ Meta PTopType (Just pos) nil ()
+    Nothing  -> Nothing
+  metaCNote (UnfulfilledDeclaration _ _ _ _ loc) = case loc of
+    Just pos -> Just $ Meta PTopType (Just pos) nil ()
+    Nothing  -> Nothing
 
   typeCNote _ = CNoteError
   showRecursiveCNote _ n = literal $ show n

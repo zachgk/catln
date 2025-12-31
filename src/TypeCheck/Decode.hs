@@ -15,10 +15,13 @@
 module TypeCheck.Decode where
 
 import           Control.Monad.State
+import           CtConstants
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
+import           Data.Maybe          (mapMaybe)
 import           MapMeta             (MetaType (ArrMeta), clearMetaDat)
 import           Semantics
+import           Semantics.Annots
 import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
@@ -102,7 +105,37 @@ toPrgm :: VPrgm -> StateT FEnv TypeCheckResult TPrgm
 toPrgm (objMap, classGraph, annots) = do
   objMap' <- mapMObjectMap toObjArr objMap
   annots' <- mapM toExpr annots
+
+  -- Verify declaration/definition input types match after decoding
+  let (ObjectMap objMapHash') = objMap'
+  _ <- H.traverseWithKey verifyObjMapItem objMapHash'
+
   return $ Prgm objMap' classGraph annots'
+
+verifyObjMapItem :: TypeName -> ObjectMapItem Expr TypedMetaDat -> StateT FEnv TypeCheckResult ()
+verifyObjMapItem name (ObjectMapItem decls defs) = do
+  FEnv{feTypeEnv} <- get
+  case (map (getMetaType . getExprMeta . oaObjExpr) decls, map (getMetaType . getExprMeta . oaObjExpr) defs) of
+    ([], _) -> pure ()
+    (_, []) -> pure ()
+    (declInputTypes, defInputTypes) -> do
+      let declUnion = unionAllTypes feTypeEnv declInputTypes
+      let defUnion = unionAllTypes feTypeEnv defInputTypes
+
+      -- Check each definition against declUnion
+      let defsWithLocs = zip defInputTypes (map (getMetaPos . getExprMeta) (mapMaybe oaObj defs))
+      forM_ defsWithLocs $ \(defType, defLoc) ->
+        unless (isSubtypeOf feTypeEnv defType declUnion) $ do
+          let undeclared = snd $ differenceTypeWithEnv feTypeEnv H.empty defType declUnion
+          lift $ TypeCheckResE [DefinitionOutsideDeclaration name defType declUnion undeclared defLoc]
+
+      -- Check each declaration against defUnion, but skip #runtime declarations (they don't need definitions)
+      let nonRuntimeDecls = filter (not . hasAnnot runtimeAnnot) decls
+      let declsWithLocs = zip (map (getMetaType . getExprMeta . oaObjExpr) nonRuntimeDecls) (map (getMetaPos . getExprMeta) (mapMaybe oaObj nonRuntimeDecls))
+      forM_ declsWithLocs $ \(declType, declLoc) ->
+        unless (isSubtypeOf feTypeEnv declType defUnion) $ do
+          let notDefined = snd $ differenceTypeWithEnv feTypeEnv H.empty declType defUnion
+          lift $ TypeCheckResE [UnfulfilledDeclaration name declType defUnion notDefined declLoc]
 
 toPrgms :: [VPrgm] -> StateT FEnv TypeCheckResult [TPrgm]
 toPrgms = mapM toPrgm

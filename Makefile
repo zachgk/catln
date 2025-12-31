@@ -8,7 +8,7 @@ build: $(HS_SOURCES) $(CT_SOURCES)
 
 .PHONY: test
 test: $(HS_SOURCES) $(CT_SOURCES)
-	stack test --pedantic
+	stack test --fast --pedantic
 
 .PHONY: install
 install: $(HS_SOURCES) $(CT_SOURCES)

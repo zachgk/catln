@@ -17,7 +17,7 @@
 
 module CRes where
 
-import           Data.List             (intercalate)
+import           Data.List             (intercalate, nub)
 import           GHC.Generics          (Generic)
 -- import qualified Data.Text.Lazy as T
 -- import Text.Pretty.Simple
@@ -63,6 +63,9 @@ instance CNoteTC CNote where
 instance Show CNote
   where
   showsPrec p (MkCNote a) = showsPrec p a
+
+instance Eq CNote where
+  a == b = show a == show b
 
 instance ToJSON CNote where
   toJSON (MkCNote n) = object ["msg".=show n, "pos".= posCNote n, "tp" .= typeCNote n, "id".=(getMetaID <$> metaCNote n)]
@@ -192,7 +195,7 @@ asCResT :: (Monad m) => CRes r -> CResT m r
 asCResT = CResT . return
 
 prettyCNotes :: [CNote] -> String
-prettyCNotes notes = "\n\n\t\t" ++ intercalate "\n\n\t\t" (map prettyNote notes)
+prettyCNotes notes = "\n\n\t\t" ++ intercalate "\n\n\t\t" (map prettyNote $ nub notes)
   where
     prettyNote note = printf "%s%s:\n\t\t%s" (showMsg $ typeCNote note) (showPos $ posCNote note) (show note)
 
