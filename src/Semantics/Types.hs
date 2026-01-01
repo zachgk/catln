@@ -924,11 +924,10 @@ differenceTypeEnv typeEnv t1 t2 = snd $ differenceTypeWithEnv typeEnv H.empty t1
 complementTypeEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
 complementTypeEnv _ _ (UnionType partials) = TopType partials PredsNone
 complementTypeEnv _ _ PTopType = BottomType
-complementTypeEnv _ _ (TopType negPartials preds) = if H.null negPartials
-  then TopType H.empty (predsNot preds)
-  else UnionType $ joinUnionType $ map addNotPreds $ splitUnionType negPartials
-  where
-    addNotPreds p@PartialType{ptPreds} = p{ptPreds=predsAnd ptPreds (predsNot preds)}
+complementTypeEnv typeEnv vaenv (TopType negPartials preds) = case (H.null negPartials, preds) of
+  (True, _)          -> TopType H.empty (predsNot preds)
+  (False, PredsNone) -> UnionType negPartials
+  (False, _)         -> unionTypesWithEnv typeEnv vaenv (UnionType negPartials) (TopType H.empty (predsNot preds))
 complementTypeEnv typeEnv vaenv (TypeVar v _) = complementTypeEnv typeEnv vaenv (vaenvLookup vaenv v)
 
 -- | Takes the powerset of a 'Type' with the powerset of the arguments in the type.

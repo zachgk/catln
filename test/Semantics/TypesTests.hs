@@ -324,8 +324,8 @@ typeTests = withResource (ggPrgm <$> findPrgms) (const $ pure ()) tests
       , HG.testProperty "propUnionWithComplement" (p $ propUnionWithComplement gPrgm)
       , HG.testProperty "propIntersectionWithComplement" (p $ propIntersectionWithComplement gPrgm)
       , HG.testProperty "propComplementInverse" (p $ propComplementInverse gPrgm)
-      -- , HG.testProperty "(propIntersectByDifference)" (p $ propIntersectByDifference gPrgm)
-      -- , HG.testProperty "(propDifferenceByIntersection)" (p $ propDifferenceByIntersection gPrgm)
+      -- , HG.testProperty "propIntersectByDifference" (p $ propIntersectByDifference gPrgm)
+      -- , HG.testProperty "propDifferenceByIntersection" (p $ propDifferenceByIntersection gPrgm)
       , HG.testProperty "propClassGraphMatchesPredClass" (withDiscards 1000 $ p $ propClassGraphMatchesPredClass gPrgm)
                                         ]
     p prop = prop
