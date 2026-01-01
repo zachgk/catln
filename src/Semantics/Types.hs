@@ -235,7 +235,7 @@ instance Show Type where
     where
       join []  = "∅"
       join [p] = p
-      join ps  = "(" ++ intercalate " | " ps ++ ")"
+      join ps  = "(" ++ intercalate " + " ps ++ ")"
 
 instance Show ClassGraph where
   show (ClassGraph graphData) = show $ map fst3 $ graphToNodes graphData
@@ -745,16 +745,20 @@ compactPartialsWithClassPred typeEnv vaenv partials = unionPartialLeafs $ map tr
           where
             (exprs', classes', rels') = splitPreds ps
 
+-- | Checks if a partial has predicates tha turn the partial into a 'bottomType' (e.g. a partial with contradictory preds such as isClass A and not isClass A)
+hasContradictoryPreds :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> Bool
+hasContradictoryPreds typeEnv vaenv partial@PartialType{ptPreds} = isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType partial{ptPreds = PredsNone}) (TopType H.empty ptPreds)
+
 -- | Removes partials which contain a type variable that is the 'bottomType', because then the whole partial is a 'bottomType'.
-compactBottomType :: PartialLeafs -> PartialLeafs
-compactBottomType partials = joinUnionType $ mapMaybe aux $ splitUnionType partials
+compactBottomType :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs
+compactBottomType typeEnv vaenv partials = joinUnionType $ mapMaybe aux $ splitUnionType partials
   where
-    aux partial = if containsBottomPartialType partial
+    aux partial = if containsBottomPartialType partial || hasContradictoryPreds typeEnv vaenv partial
       then Nothing
       else Just partial
 
 compactPartialLeafs :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs
-compactPartialLeafs typeEnv vaenv = compactOverlapping typeEnv . compactJoinPartials typeEnv . compactPartialsWithClassPred typeEnv vaenv . compactBottomType
+compactPartialLeafs typeEnv vaenv = compactOverlapping typeEnv . compactJoinPartials typeEnv . compactPartialsWithClassPred typeEnv vaenv . compactBottomType typeEnv vaenv
 
 -- |
 -- Used to simplify and reduce the size of a 'Type'.
