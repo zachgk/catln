@@ -234,6 +234,38 @@ propComplementInverse gPrgm = property $ do
   annotate $ printf "a'' = %s" (show a'')
   assert $ isEqType typeEnv a a''
 
+-- A-A=∅
+propDifferenceIdentity :: IO GenPrgm -> Property
+propDifferenceIdentity gPrgm = property $ do
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
+  let typeEnv = mkTypeEnv prgm
+  a <- forAll $ genType prgm
+  let a' = complementTypeEnv typeEnv H.empty a
+  annotate $ printf "a' = %s" (show a')
+  let a'' = differenceTypeEnv typeEnv a a
+  annotate $ printf "a-a = %s" (show a'')
+  assert $ isEqType typeEnv a'' BottomType
+
+-- A+B-A ⊆ B
+propDifferenceSubset :: IO GenPrgm -> Property
+propDifferenceSubset gPrgm = property $ do
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
+  let typeEnv = mkTypeEnv prgm
+  a <- forAll $ genType prgm
+  b <- forAll $ genType prgm
+  let overlapping = intersectTypes typeEnv a b /= BottomType
+  annotate $ printf "does a overlaps b? %s" (show overlapping)
+  let union = unionTypes typeEnv a b
+  annotate $ printf "a + b = %s" (show union)
+  let sub = differenceTypeEnv typeEnv union a
+  annotate $ printf "a+b-a = %s" (show sub)
+  if overlapping
+    then assert $ isSubtypeOf typeEnv sub b
+    else assert $ isEqType typeEnv sub b
+
+
 -- A∩B=A-(A-B)
 propIntersectByDifference :: IO GenPrgm -> Property
 propIntersectByDifference gPrgm = property $ do
@@ -324,6 +356,8 @@ typeTests = withResource (ggPrgm <$> findPrgms) (const $ pure ()) tests
       , HG.testProperty "propUnionWithComplement" (p $ propUnionWithComplement gPrgm)
       , HG.testProperty "propIntersectionWithComplement" (p $ propIntersectionWithComplement gPrgm)
       , HG.testProperty "propComplementInverse" (p $ propComplementInverse gPrgm)
+      , HG.testProperty "propDifferenceIdentity" (p $ propDifferenceIdentity gPrgm)
+      , HG.testProperty "propDifferenceSubset" (p $ propDifferenceSubset gPrgm)
       -- , HG.testProperty "propIntersectByDifference" (p $ propIntersectByDifference gPrgm)
       -- , HG.testProperty "propDifferenceByIntersection" (p $ propDifferenceByIntersection gPrgm)
       , HG.testProperty "propClassGraphMatchesPredClass" (withDiscards 1000 $ p $ propClassGraphMatchesPredClass gPrgm)
