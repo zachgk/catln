@@ -33,6 +33,7 @@ import qualified Data.List           as L
 import           Data.List.Split     (splitOn)
 import           Data.Maybe
 import           Data.Zip
+import           Debug.Trace         (trace)
 import           GHC.Generics        (Generic)
 import           Prelude             hiding (unzip)
 import           Text.Printf
@@ -155,12 +156,13 @@ typeGraphQuery typeEnv vaenv src = map snd $ typeGraphQueryWithReason typeEnv va
 data TypeEnv tg = TypeEnv {
   teClassGraph :: ClassGraph,
   teTypeGraph  :: tg,
-  teNames      :: S.HashSet Name
+  teNames      :: S.HashSet Name,
+  teDebug      :: Bool
                           }
   deriving (Show)
 
 emptyTypeEnv' :: TypeEnv EmptyTypeGraph
-emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty
+emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty False
 
 -- | A class or type node within the 'ClassGraph'
 data CGNode
@@ -253,12 +255,12 @@ instance Semigroup ClassGraph where
       mergeClasses (CGType, name, []) (CGType, _, []) = (CGType, name, [])
       mergeClasses cg1 cg2 = error $ printf "Unexpected input to mergeClassGraphs: \n\t%s \n\t%s" (show cg1) (show cg2)
 
-      mergeClassPartials clss@PartialType{ptVars=varsA} PartialType{ptVars=varsB} = clss{ptVars = H.unionWith (unionTypes (TypeEnv (ClassGraph classGraphA) EmptyTypeGraph S.empty)) varsA varsB}
+      mergeClassPartials clss@PartialType{ptVars=varsA} PartialType{ptVars=varsB} = clss{ptVars = H.unionWith (unionTypes (TypeEnv (ClassGraph classGraphA) EmptyTypeGraph S.empty False)) varsA varsB}
 instance Monoid ClassGraph where
   mempty = ClassGraph $ graphFromEdges []
 
 instance (Semigroup tg) => Semigroup (TypeEnv tg) where
-  (TypeEnv cg1 tg1 n1) <> (TypeEnv cg2 tg2 n2) = TypeEnv (cg1 <> cg2) (tg1 <> tg2) (S.union n1 n2)
+  (TypeEnv cg1 tg1 n1 d1) <> (TypeEnv cg2 tg2 n2 d2) = TypeEnv (cg1 <> cg2) (tg1 <> tg2) (S.union n1 n2) (d1 || d2)
 
 
 mergeDoc :: Maybe String -> Maybe String -> Maybe String
@@ -330,6 +332,11 @@ tryPredsToList (PredsOne p)  = Just [p]
 tryPredsToList (PredsAnd ps) = concat <$> mapM tryPredsToList ps
 tryPredsToList (PredsNot _)  = Nothing
 
+
+-- | Helper function for conditional trace debugging
+debugTrace :: (TypeGraph tg) => TypeEnv tg -> String -> a -> a
+debugTrace TypeEnv{teDebug=True} msg x = trace msg x
+debugTrace _ _ x                       = x
 
 listClassNames :: (TypeGraph tg) => TypeEnv tg -> [ClassName]
 listClassNames TypeEnv{teClassGraph=ClassGraph graphData} = map (fromPartialName . snd3) $ filter isClass $ graphToNodes graphData
@@ -623,14 +630,17 @@ isSubPredicateOfWithEnv _ _ _ _ = undefined
 
 -- | A private helper for 'isSubPartialOfWithEnv' that checks while ignore class expansions
 isSubPartialOfWithEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Bool
+isSubPartialOfWithEnv TypeEnv{teDebug=True} _ l r | trace (printf "[SUBPARTIAL] %s ⊆ %s" (show l) (show r)) False = undefined
 isSubPartialOfWithEnv _ _ PartialType{ptName=subName} PartialType{ptName=superName} | subName /= superName = False
 isSubPartialOfWithEnv _ _ PartialType{ptArgs=subArgs, ptArgMode=PtArgExact} PartialType{ptArgs=superArgs, ptArgMode=PtArgExact} | H.keysSet subArgs /= H.keysSet superArgs = False
 isSubPartialOfWithEnv _ _ PartialType{ptArgs=subArgs, ptArgMode=PtArgAny} PartialType{ptArgs=superArgs, ptArgMode=PtArgAny} | not (H.keysSet superArgs `isSubsetOf` H.keysSet subArgs) = False
 isSubPartialOfWithEnv _ _ PartialType{ptArgs=subArgs} PartialType{ptArgs=superArgs, ptArgMode=superArgMode} | superArgMode == PtArgExact && not (H.keysSet subArgs `isSubsetOf` H.keysSet superArgs) = False
-isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subArgs, ptPreds=subPreds} super@PartialType{ptVars=superVars, ptArgs=superArgs, ptPreds=superPreds} = hasAll subArgs superArgs && hasAllPreds superPreds subPreds && hasAll subVars superVars
+isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subArgs, ptPreds=subPreds} super@PartialType{ptVars=superVars, ptArgs=superArgs, ptPreds=superPreds} = debugTrace typeEnv msg result
   where
     vaenv' = H.union vaenv (substituteWithVarArgEnv vaenv <$> H.unionWith (intersectTypes typeEnv) (ptVarArg super) (ptVarArg sub))
     hasAll sb sp = and $ H.elems $ H.intersectionWith (isSubtypeOfWithEnv typeEnv vaenv') sb sp
+    result = hasAll subArgs superArgs && hasAllPreds superPreds subPreds && hasAll subVars superVars
+    msg = printf "[SUBPARTIAL] %s ⊆ %s = %s" (show sub) (show super) (show result)
 
     hasAllPreds :: TypePredicates -> TypePredicates -> Bool
     hasAllPreds (PredsAnd subPs) supPs = all (`hasAllPreds` supPs) subPs
@@ -641,6 +651,7 @@ isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subAr
 
 -- | Checks if one type contains another type. In set terminology, it is equivalent to subset or equal to ⊆.
 isSubtypeOfWithEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Bool
+isSubtypeOfWithEnv TypeEnv{teDebug=True} _ l r | trace (printf "[SUBTYPE] %s ⊆ %s" (show l) (show r)) False= undefined
 isSubtypeOfWithEnv _ _ _ PTopType = True
 isSubtypeOfWithEnv _ _ t1 t2 | t1 == t2 = True
 isSubtypeOfWithEnv typeEnv vaenv (TypeVar v _) t2 = isSubtypeOfWithEnv typeEnv vaenv (vaenvLookup vaenv v) t2
@@ -652,9 +663,11 @@ isSubtypeOfWithEnv typeEnv vaenv t1 t2@TopType{} = isSubtypeOfWithEnv typeEnv va
 isSubtypeOfWithEnv typeEnv vaenv t1@TopType{} t2 = isSubtypeOfWithEnv typeEnv vaenv t1' t2
   where
     t1' = expandType typeEnv vaenv t1
-isSubtypeOfWithEnv typeEnv vaenv (UnionType subPartials) (UnionType superPartials) = all isSubPartial $ splitUnionType subPartials
+isSubtypeOfWithEnv typeEnv vaenv (UnionType subPartials) (UnionType superPartials) = debugTrace typeEnv msg result
   where
+    result = all isSubPartial $ splitUnionType subPartials
     isSubPartial sub = any (isSubPartialOfWithEnv typeEnv vaenv sub) $ splitUnionType superPartials
+    msg = printf "[SUBTYPE] %s ⊆ %s = %s" (show $ UnionType subPartials) (show $ UnionType superPartials) (show result)
 
 -- | Checks if one type contains another type. In set terminology, it is equivalent to subset or equal to ⊆.
 isSubtypeOf :: TypeGraph tg => TypeEnv tg -> Type -> Type -> Bool
@@ -665,6 +678,7 @@ isSubtypePartialOf :: TypeGraph tg => TypeEnv tg -> PartialType -> Type -> Bool
 isSubtypePartialOf typeEnv subPartial = isSubtypeOf typeEnv (singletonType subPartial)
 
 isEqType :: TypeGraph tg => TypeEnv tg -> Type -> Type -> Bool
+isEqType TypeEnv{teDebug=True} a b | trace (printf "[EQ] %s = %s" (show a) (show b)) False = undefined
 isEqType _ a b | a == b = True
 isEqType typeEnv a b = isSubtypeOf typeEnv a b && isSubtypeOf typeEnv b a
 
@@ -783,6 +797,7 @@ unionPartialLeafs = unionsWith S.union
 
 -- | Takes the union of two types (∪)
 unionTypesWithEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Type
+unionTypesWithEnv TypeEnv{teDebug=True} _ l r | trace (printf "[UNION] %s ∪ %s" (show l) (show r)) False = PTopType
 unionTypesWithEnv _ _ PTopType _ = PTopType
 unionTypesWithEnv _ _ _ PTopType = PTopType
 unionTypesWithEnv _ _ t BottomType = t
@@ -798,7 +813,10 @@ unionTypesWithEnv typeEnv vaenv (TypeVar v _) t = case H.lookup v vaenv of
   Just v' -> unionTypesWithEnv typeEnv vaenv v' t
   Nothing -> error $ printf "Can't union unknown type vars %s with %s with env %s" (show t) (show v) (show $ H.keys vaenv)
 unionTypesWithEnv typeEnv vaenv t v@TypeVar{} = unionTypesWithEnv typeEnv vaenv v t
-unionTypesWithEnv _ _ (UnionType aPartials) (UnionType bPartials) = UnionType $ unionPartialLeafs [aPartials, bPartials]
+unionTypesWithEnv typeEnv _ (UnionType aPartials) (UnionType bPartials) = debugTrace typeEnv msg result
+  where
+    result = UnionType $ unionPartialLeafs [aPartials, bPartials]
+    msg = printf "[UNION] %s ∪ %s = %s" (show $ UnionType aPartials) (show $ UnionType bPartials) (show result)
 
 unionTypes :: TypeGraph tg => TypeEnv tg -> Type -> Type -> Type
 unionTypes typeEnv = unionTypesWithEnv typeEnv H.empty
@@ -856,12 +874,16 @@ intersectPartialLeafsWithVarEnv typeEnv vaenv aPartials bPartials = (vaenv', typ
     type' = joinUnionTypeByName $ fmap (concatMap snd) intersected
 
 intersectPartialLeafsEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs -> PartialLeafs
-intersectPartialLeafsEnv typeEnv vaenv aPartials bPartials = snd $ intersectPartialLeafsWithVarEnv typeEnv vaenv aPartials bPartials
+intersectPartialLeafsEnv typeEnv vaenv aPartials bPartials = debugTrace typeEnv msg result
+  where
+    result = snd $ intersectPartialLeafsWithVarEnv typeEnv vaenv aPartials bPartials
+    msg = printf "[INTERSECT_LEAFS] %s ∩ %s = %s" (show $ UnionType aPartials) (show $ UnionType bPartials) (show $ UnionType result)
 
 -- |
 -- Takes the intersection of two 'Type'.
 -- It uses the 'TypeVarEnv' for type variable arguments and determines any possible changes to the surrounding 'TypeVarEnv'.
 intersectTypesWithVarEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> (TypeVarArgEnv, Type)
+intersectTypesWithVarEnv TypeEnv{teDebug=True} _ l r | trace (printf "[INTERSECT] %s ∩ %s" (show l) (show r)) False = undefined
 intersectTypesWithVarEnv _ vaenv PTopType t = (vaenv, t)
 intersectTypesWithVarEnv _ vaenv t PTopType = (vaenv, t)
 intersectTypesWithVarEnv typeEnv vaenv (TopType np1 ps1) (TopType np2 ps2) = (vaenv, compactType typeEnv vaenv $ TopType (unionPartialLeafs [np1, np2]) (predsAnd ps1 ps2))
@@ -879,9 +901,10 @@ intersectTypesWithVarEnv typeEnv vaenv t1@(UnionType partials) t2@(TopType negPa
   TypeVar{} -> undefined
   TopType topNegPartials topPreds -> second (compactType typeEnv vaenv) $ differenceTypeWithEnv typeEnv vaenv (UnionType $ joinUnionType $ map (`partialAddPreds` topPreds) $ splitUnionType partials) (UnionType topNegPartials)
 intersectTypesWithVarEnv typeEnv vaenv t1@TopType{} t2@UnionType{} = intersectTypesWithVarEnv typeEnv vaenv t2 t1
-intersectTypesWithVarEnv typeEnv vaenv (UnionType aPartials) (UnionType bPartials) = (vaenv', compactType typeEnv vaenv $ UnionType partials')
+intersectTypesWithVarEnv typeEnv vaenv (UnionType aPartials) (UnionType bPartials) = debugTrace typeEnv msg (vaenv', compactType typeEnv vaenv $ UnionType partials')
   where
     (vaenv', partials') = intersectPartialLeafsWithVarEnv typeEnv vaenv aPartials bPartials
+    msg = printf "[INTERSECT] %s ∩ %s = %s" (show $ UnionType aPartials) (show $ UnionType bPartials) (show $ UnionType partials')
 intersectTypesWithVarEnv _ _ t1 t2 = error $ printf "Not yet implemented intersect %s and %s" (show t1) (show t2)
 
 intersectTypesEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Type
@@ -920,6 +943,7 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
     differencePartial p1 p2 = error $ printf "Unimplemented differencePartial: %s - %s" (show p1) (show p2)
 
 differenceTypeWithEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> (TypeVarArgEnv, Type)
+differenceTypeWithEnv TypeEnv{teDebug=True} _ t1 t2 | trace (printf "[DIFF] %s - %s" (show t1) (show t2)) False = undefined
 differenceTypeWithEnv typeEnv vaenv t1 t2 = intersectTypesWithVarEnv typeEnv vaenv t1 (complementTypeEnv typeEnv vaenv t2)
 
 differenceTypeEnv :: (TypeGraph tg) => TypeEnv tg -> Type -> Type -> Type

@@ -263,7 +263,7 @@ propDifferenceSubset gPrgm = property $ do
   annotate $ printf "a+b-a = %s" (show sub)
   if overlapping
     then assert $ isSubtypeOf typeEnv sub b
-    else assert $ isEqType typeEnv sub b
+    else assert $ isEqType typeEnv{teDebug=True} sub b
 
 
 -- A∩B=A-(A-B)
@@ -307,7 +307,7 @@ propClassGraphMatchesPredClass gPrgm = property $ do
   let Prgm{prgmObjMap} = prgm
   when (nullObjectMap prgmObjMap) discard
 
-  let typeEnv@(TypeEnv (ClassGraph cgData) _ _) = mkTypeEnv prgm
+  let typeEnv@(TypeEnv (ClassGraph cgData) _ _ _) = mkTypeEnv prgm
   let classNodes = filter isClassNode $ graphToNodes cgData
 
   -- Discard if no classes
