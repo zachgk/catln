@@ -759,20 +759,32 @@ compactPartialsWithClassPred typeEnv vaenv partials = unionPartialLeafs $ map tr
           where
             (exprs', classes', rels') = splitPreds ps
 
--- | Checks if a partial has predicates tha turn the partial into a 'bottomType' (e.g. a partial with contradictory preds such as isClass A and not isClass A)
-hasContradictoryPreds :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> Bool
-hasContradictoryPreds typeEnv vaenv partial@PartialType{ptPreds} = isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType partial{ptPreds = PredsNone}) (TopType H.empty ptPreds)
+-- | Checks if a partial has predicates that turn the partial into a 'bottomType' (e.g. a partial with contradictory preds such as isClass A and not isClass A)
+compactDisconnectedPreds :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs
+compactDisconnectedPreds typeEnv vaenv partials = joinUnionType $ mapMaybe aux $ splitUnionType partials
+  where
+    aux partial@PartialType{ptPreds} = case intersectTypesEnv typeEnv vaenv (singletonType partialWithoutPreds) (TopType H.empty ptPreds) of
+
+                                        -- | If the intersection of the partial with its preds has no overlap then it is a bottom type
+                                        intersection | isBottomType intersection -> Nothing
+
+                                        -- | If the intersection of the partial with its preds fully overlaps, then the preds are redundant
+                                        intersection | isEqType typeEnv intersection (singletonType partialWithoutPreds) -> Just partialWithoutPreds
+
+                                        _ -> Just partial
+      where
+        partialWithoutPreds = partial{ptPreds = PredsNone}
 
 -- | Removes partials which contain a type variable that is the 'bottomType', because then the whole partial is a 'bottomType'.
 compactBottomType :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs
 compactBottomType typeEnv vaenv partials = joinUnionType $ mapMaybe aux $ splitUnionType partials
   where
-    aux partial = if containsBottomPartialType partial || hasContradictoryPreds typeEnv vaenv partial
+    aux partial = if containsBottomPartialType partial
       then Nothing
       else Just partial
 
 compactPartialLeafs :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs
-compactPartialLeafs typeEnv vaenv = compactOverlapping typeEnv . compactJoinPartials typeEnv . compactPartialsWithClassPred typeEnv vaenv . compactBottomType typeEnv vaenv
+compactPartialLeafs typeEnv vaenv = compactOverlapping typeEnv . compactJoinPartials typeEnv . compactPartialsWithClassPred typeEnv vaenv . compactDisconnectedPreds typeEnv vaenv . compactBottomType typeEnv vaenv
 
 -- |
 -- Used to simplify and reduce the size of a 'Type'.

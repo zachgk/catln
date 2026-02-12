@@ -263,7 +263,7 @@ propDifferenceSubset gPrgm = property $ do
   annotate $ printf "a+b-a = %s" (show sub)
   if overlapping
     then assert $ isSubtypeOf typeEnv sub b
-    else assert $ isEqType typeEnv{teDebug=True} sub b
+    else assert $ isEqType typeEnv sub b
 
 
 -- A∩B=A-(A-B)
