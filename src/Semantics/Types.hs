@@ -142,13 +142,18 @@ type Sealed = Bool
 newtype ClassGraph = ClassGraph (GraphData CGNode PartialName)
 
 class TypeGraph tg where
+  -- | Queries the type graph for possible conversions from a partial type to a type, returning the reason for each conversion as well.
   typeGraphQueryWithReason :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> [(String, Type)]
+
+  -- | Queries the type graph for possible conversions from a TopTypes PredExpr to the possible partialTypes that can contain the PredExpr
+  typeGraphExpandPredExpr :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> [PartialType]
 
 data EmptyTypeGraph = EmptyTypeGraph
 instance Semigroup EmptyTypeGraph where
   _ <> _ = EmptyTypeGraph
 instance TypeGraph EmptyTypeGraph where
   typeGraphQueryWithReason _ _ _ = []
+  typeGraphExpandPredExpr _ _ _ = []
 
 typeGraphQuery :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> [Type]
 typeGraphQuery typeEnv vaenv src = map snd $ typeGraphQueryWithReason typeEnv vaenv src
@@ -556,34 +561,15 @@ suffixLookupInDict s dict = case suffixLookup s (H.keys dict) of
   Just k  -> H.lookup k dict
   Nothing -> Nothing
 
--- | Returns the leafs a pred could apply to (without applying them)
--- | TODO Finish
-expandTopPredToLeafs :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicate -> PartialLeafs
-expandTopPredToLeafs typeEnv vaenv (PredClass clss) = expandTopPredToLeafs typeEnv vaenv (PredExpr (partialVal isaObj){ptArgs=H.singleton (partialKey thisKey) (TypeVar (TVArg $ partialKey inKey) TVInt), ptVars=H.singleton (partialKey isaClassK) (singletonType clss)})
-expandTopPredToLeafs _typeEnv _vaenv (PredRel _rel)    = undefined
-expandTopPredToLeafs _typeEnv _vaenv (PredExpr _e)     = undefined
-
--- | Returns the leafs a TypePredicates could apply to
--- | TODO Possibly modify this to apply those predicates if necessary (needed for PredExpr)
--- | TODO Finish
-expandTopPredsToLeafs :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicates -> PartialLeafs
-expandTopPredsToLeafs _typeEnv _vaenv (PredsOne (PredClass _c)) = undefined
-expandTopPredsToLeafs _typeEnv _vaenv (PredsOne (PredRel _r)) = undefined
-expandTopPredsToLeafs typeEnv vaenv preds = aux preds
-  where
-    -- | aux is roughly equivalent to recursive expandTopPredsToLeafs
-    -- | It is used to optimize several key cases where preds apply to any type such as isRelative or isClass.
-    aux (PredsOne p) = expandTopPredToLeafs typeEnv vaenv p
-    aux (PredsAnd ps) = foldr (intersectPartialLeafsEnv typeEnv vaenv . aux) H.empty ps
-    aux (PredsNot p) = joinUnionType $ map negatePreds $ splitUnionType $ aux p
-      where
-        negatePreds partial@PartialType{ptPreds} = partial{ptPreds=predsNot ptPreds}
+topTypeAsPartials :: TypeEnv tg ->[PartialType]
+topTypeAsPartials TypeEnv{teNames} = map ((\p -> p{ptArgMode=PtArgAny}) . partialVal) $ S.toList teNames
 
 expandType :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
+expandType TypeEnv{teDebug=True} _ t@UnionType{} | trace (printf "[EXPANDTYPE] %s" (show t)) False = undefined
 expandType _ _ t@UnionType{} = t
 expandType typeEnv vaenv (TypeVar v _) = expandType typeEnv vaenv $ H.lookupDefault PTopType v vaenv
 expandType _ _ PTopType = PTopType
-expandType typeEnv vaenv tp@(TopType negPartials preds) = snd $ differenceTypeWithEnv typeEnv vaenv (expandPreds preds) (UnionType negPartials)
+expandType typeEnv vaenv (TopType negPartials preds) = snd $ differenceTypeWithEnv typeEnv vaenv (expandPreds preds) (UnionType negPartials)
   where
     expandPreds :: TypePredicates -> Type
     expandPreds (PredsOne p)  = expandPred p
@@ -593,7 +579,7 @@ expandType typeEnv vaenv tp@(TopType negPartials preds) = snd $ differenceTypeWi
     expandPred :: TypePredicate -> Type
     expandPred (PredClass clss) = expandClassPartial typeEnv vaenv clss
     expandPred (PredRel rel)    = expandRelPartial typeEnv vaenv rel
-    expandPred (PredExpr e)     = error $ printf "Not yet defined 'expandPred %s' in the usage of 'expandType %s'" (show e) (show tp)
+    expandPred (PredExpr e)     = UnionType $ joinUnionType $ typeGraphExpandPredExpr typeEnv vaenv e
 
 expandClassPartial :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> Type
 expandClassPartial typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv PartialType{ptName, ptVars=classVarsP} = expanded
@@ -763,6 +749,7 @@ compactPartialsWithClassPred typeEnv vaenv partials = unionPartialLeafs $ map tr
 compactDisconnectedPreds :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs
 compactDisconnectedPreds typeEnv vaenv partials = joinUnionType $ mapMaybe aux $ splitUnionType partials
   where
+    aux partial@PartialType{ptPreds=PredsNone} = Just partial
     aux partial@PartialType{ptPreds} = case intersectTypesEnv typeEnv vaenv (singletonType partialWithoutPreds) (TopType H.empty ptPreds) of
 
                                         -- | If the intersection of the partial with its preds has no overlap then it is a bottom type
