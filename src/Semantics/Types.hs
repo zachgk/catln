@@ -583,7 +583,7 @@ expandType :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
 expandType _ _ t@UnionType{} = t
 expandType typeEnv vaenv (TypeVar v _) = expandType typeEnv vaenv $ H.lookupDefault PTopType v vaenv
 expandType _ _ PTopType = PTopType
-expandType typeEnv vaenv (TopType negPartials preds) = snd $ differenceTypeWithEnv typeEnv vaenv (expandPreds preds) (UnionType negPartials)
+expandType typeEnv vaenv tp@(TopType negPartials preds) = snd $ differenceTypeWithEnv typeEnv vaenv (expandPreds preds) (UnionType negPartials)
   where
     expandPreds :: TypePredicates -> Type
     expandPreds (PredsOne p)  = expandPred p
@@ -593,7 +593,7 @@ expandType typeEnv vaenv (TopType negPartials preds) = snd $ differenceTypeWithE
     expandPred :: TypePredicate -> Type
     expandPred (PredClass clss) = expandClassPartial typeEnv vaenv clss
     expandPred (PredRel rel)    = expandRelPartial typeEnv vaenv rel
-    expandPred (PredExpr e)     = error $ printf "Not yet defined %s" (show e)
+    expandPred (PredExpr e)     = error $ printf "Not yet defined 'expandPred %s' in the usage of 'expandType %s'" (show e) (show tp)
 
 expandClassPartial :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> Type
 expandClassPartial typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv PartialType{ptName, ptVars=classVarsP} = expanded
@@ -776,15 +776,15 @@ compactDisconnectedPreds typeEnv vaenv partials = joinUnionType $ mapMaybe aux $
         partialWithoutPreds = partial{ptPreds = PredsNone}
 
 -- | Removes partials which contain a type variable that is the 'bottomType', because then the whole partial is a 'bottomType'.
-compactBottomType :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs
-compactBottomType typeEnv vaenv partials = joinUnionType $ mapMaybe aux $ splitUnionType partials
+compactBottomType :: PartialLeafs -> PartialLeafs
+compactBottomType partials = joinUnionType $ mapMaybe aux $ splitUnionType partials
   where
     aux partial = if containsBottomPartialType partial
       then Nothing
       else Just partial
 
 compactPartialLeafs :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs
-compactPartialLeafs typeEnv vaenv = compactOverlapping typeEnv . compactJoinPartials typeEnv . compactPartialsWithClassPred typeEnv vaenv . compactDisconnectedPreds typeEnv vaenv . compactBottomType typeEnv vaenv
+compactPartialLeafs typeEnv vaenv = compactOverlapping typeEnv . compactJoinPartials typeEnv . compactPartialsWithClassPred typeEnv vaenv . compactDisconnectedPreds typeEnv vaenv . compactBottomType
 
 -- |
 -- Used to simplify and reduce the size of a 'Type'.

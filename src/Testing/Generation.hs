@@ -114,7 +114,9 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens
       if null typePropFunctions
         then return $ singletonType basePartial
         else do
-          shouldAddProps <- HG.bool
+          -- TODO: Fix support for shouldAddProps
+          -- The current implementation of it doesn't actually make sense or produce valid PredExpr
+          let shouldAddProps = False -- HG.bool
           if shouldAddProps
             then do
               -- Select a random subset of type properties
