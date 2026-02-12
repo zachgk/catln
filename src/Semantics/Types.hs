@@ -159,15 +159,16 @@ typeGraphQuery :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -
 typeGraphQuery typeEnv vaenv src = map snd $ typeGraphQueryWithReason typeEnv vaenv src
 
 data TypeEnv tg = TypeEnv {
-  teClassGraph :: ClassGraph,
-  teTypeGraph  :: tg,
-  teNames      :: S.HashSet Name,
-  teDebug      :: Bool
+  teClassGraph     :: ClassGraph,
+  teTypeGraph      :: tg,
+  teNames          :: S.HashSet Name,
+  teDisableCompact :: Bool,
+  teDebug          :: Bool
                           }
   deriving (Show)
 
 emptyTypeEnv' :: TypeEnv EmptyTypeGraph
-emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty False
+emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty False False
 
 -- | A class or type node within the 'ClassGraph'
 data CGNode
@@ -260,12 +261,12 @@ instance Semigroup ClassGraph where
       mergeClasses (CGType, name, []) (CGType, _, []) = (CGType, name, [])
       mergeClasses cg1 cg2 = error $ printf "Unexpected input to mergeClassGraphs: \n\t%s \n\t%s" (show cg1) (show cg2)
 
-      mergeClassPartials clss@PartialType{ptVars=varsA} PartialType{ptVars=varsB} = clss{ptVars = H.unionWith (unionTypes (TypeEnv (ClassGraph classGraphA) EmptyTypeGraph S.empty False)) varsA varsB}
+      mergeClassPartials clss@PartialType{ptVars=varsA} PartialType{ptVars=varsB} = clss{ptVars = H.unionWith (unionTypes emptyTypeEnv'{teClassGraph=ClassGraph classGraphA}) varsA varsB}
 instance Monoid ClassGraph where
   mempty = ClassGraph $ graphFromEdges []
 
 instance (Semigroup tg) => Semigroup (TypeEnv tg) where
-  (TypeEnv cg1 tg1 n1 d1) <> (TypeEnv cg2 tg2 n2 d2) = TypeEnv (cg1 <> cg2) (tg1 <> tg2) (S.union n1 n2) (d1 || d2)
+  (TypeEnv cg1 tg1 n1 d1 dc1) <> (TypeEnv cg2 tg2 n2 d2 dc2) = TypeEnv (cg1 <> cg2) (tg1 <> tg2) (S.union n1 n2) (d1 || d2) (dc1 || dc2)
 
 
 mergeDoc :: Maybe String -> Maybe String -> Maybe String
@@ -750,7 +751,7 @@ compactDisconnectedPreds :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Par
 compactDisconnectedPreds typeEnv vaenv partials = joinUnionType $ mapMaybe aux $ splitUnionType partials
   where
     aux partial@PartialType{ptPreds=PredsNone} = Just partial
-    aux partial@PartialType{ptPreds} = case intersectTypesEnv typeEnv vaenv (singletonType partialWithoutPreds) (TopType H.empty ptPreds) of
+    aux partial@PartialType{ptPreds} = case intersectTypesEnv typeEnv{teDisableCompact=True} vaenv (singletonType partialWithoutPreds) (TopType H.empty ptPreds) of
 
                                         -- | If the intersection of the partial with its preds has no overlap then it is a bottom type
                                         intersection | isBottomType intersection -> Nothing
@@ -778,6 +779,7 @@ compactPartialLeafs typeEnv vaenv = compactOverlapping typeEnv . compactJoinPart
 -- It has several internal passes that apply various optimizations to a type.
 -- TODO: This should merge type partials into class partials
 compactType :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
+compactType TypeEnv{teDisableCompact=True} _ t = t
 compactType typeEnv vaenv t@(TopType np preds) | H.null np && preds /= PredsNone = case preds of
                                                    (PredsNot (PredsOne (PredRel rp))) -> case expandRelPartial typeEnv vaenv rp of
                                                                     (UnionType rp') -> TopType rp' PredsNone

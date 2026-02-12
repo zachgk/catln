@@ -307,7 +307,7 @@ propClassGraphMatchesPredClass gPrgm = property $ do
   let Prgm{prgmObjMap} = prgm
   when (nullObjectMap prgmObjMap) discard
 
-  let typeEnv@(TypeEnv (ClassGraph cgData) _ _ _) = mkTypeEnv prgm
+  let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData} = mkTypeEnv prgm
   let classNodes = filter isClassNode $ graphToNodes cgData
 
   -- Discard if no classes
