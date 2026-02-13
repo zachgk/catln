@@ -167,8 +167,11 @@ data TypeEnv tg = TypeEnv {
                           }
   deriving (Show)
 
+defaultTypeEnvDebug :: Bool
+defaultTypeEnvDebug = True
+
 emptyTypeEnv' :: TypeEnv EmptyTypeGraph
-emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty False False
+emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty False defaultTypeEnvDebug
 
 -- | A class or type node within the 'ClassGraph'
 data CGNode
