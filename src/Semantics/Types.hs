@@ -168,7 +168,7 @@ data TypeEnv tg = TypeEnv {
   deriving (Show)
 
 defaultTypeEnvDebug :: Bool
-defaultTypeEnvDebug = True
+defaultTypeEnvDebug = False
 
 emptyTypeEnv' :: TypeEnv EmptyTypeGraph
 emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty False defaultTypeEnvDebug
@@ -519,6 +519,11 @@ relTypeVal n = TopType H.empty (PredsOne (PredRel $ partialVal n))
 classPartial :: PartialType -> Type
 classPartial p = TopType H.empty (PredsOne (PredClass p))
 
+-- | Creates a classPlaceholder[$T] partial type for a given class name.
+-- Used when expanding a class that has no constituent types to avoid returning the empty set.
+classPlaceholderLeaf :: TypeName -> PartialType
+classPlaceholderLeaf className = (partialVal classPlaceholderStr){ptVars = H.singleton (partialKey "$T") (singletonType $ partialVal className)}
+
 getSingleton :: Type -> PartialType
 getSingleton t = case maybeGetSingleton t of
   Just t' -> t'
@@ -590,7 +595,9 @@ expandClassPartial typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv PartialType
   where
     className = PClassName ptName
     expanded = case graphLookup className cg of
-      Just (CGClass (_, PartialType{ptVars=classVarsDecl}, classTypes, _)) -> unionAllTypes typeEnv $ map mapClassType classTypes
+      Just (CGClass (_, PartialType{ptVars=classVarsDecl}, classTypes, _)) -> case classTypes of
+        [] -> singletonType $ classPlaceholderLeaf ptName
+        _  -> unionAllTypes typeEnv $ map mapClassType classTypes
         where
           classVars = H.unionWith (intersectTypesEnv typeEnv vaenv) classVarsP classVarsDecl
           mapClassType (TopType negPartials ps) = snd $ differenceTypeWithEnv typeEnv vaenv (expandType typeEnv vaenv $ TopType H.empty ps) (UnionType negPartials)

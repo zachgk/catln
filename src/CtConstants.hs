@@ -112,6 +112,9 @@ thisKey, macroThisKey :: String
 thisKey = "/this"
 macroThisKey = "/$this"
 
+classPlaceholderStr :: String
+classPlaceholderStr = "/Catln/classPlaceholder"
+
 ctListType, ctListCons, ctListConsHead, ctListConsTail :: String
 ctListType = "List"
 ctListCons = "/Data/Cons"

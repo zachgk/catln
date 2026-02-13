@@ -193,7 +193,7 @@ propDifferenceShrinks gPrgm = property $ do
   b <- forAll $ genType prgm
   let diff' = differenceTypeEnv typeEnv a b
   annotate $ printf "diff' = %s" (show diff')
-  assert $ isSubtypeOf typeEnv diff' a
+  assert $ isSubtypeOf typeEnv{teDebug=True} diff' a
 
 -- A∪A=U
 propUnionWithComplement :: IO GenPrgm -> Property
@@ -326,11 +326,18 @@ propClassGraphMatchesPredClass gPrgm = property $ do
       annotate $ printf "Constituent types: %s" (show constituentTypes)
       annotate $ printf "Expanded PredClass: %s" (show cls)
 
-      -- Compare: the expanded PredClass should equal the union of constituent types
-      let unionConstituents = unionAllTypes typeEnv constituentTypes
-      annotate $ printf "Union of constituents: %s" (show unionConstituents)
-
-      assert $ isEqType typeEnv cls unionConstituents
+      -- Compare: the expanded PredClass should match expectations
+      case constituentTypes of
+        [] -> do
+          -- Empty class should expand to classPlaceholder[$T = className]
+          let expectedPlaceholder = singletonType $ classPlaceholderLeaf (fromPartialName className)
+          annotate $ printf "Expected placeholder: %s" (show expectedPlaceholder)
+          assert $ isEqType typeEnv cls expectedPlaceholder
+        _ -> do
+          -- Non-empty class should equal the union of constituent types
+          let unionConstituents = unionAllTypes typeEnv constituentTypes
+          annotate $ printf "Union of constituents: %s" (show unionConstituents)
+          assert $ isEqType typeEnv cls unionConstituents
 
     CGType -> discard
   where

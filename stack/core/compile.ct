@@ -78,8 +78,10 @@ module(Catln)
   llvm(c) -> CatlnResult..
     # [llvm] runs the [LLVM Compiler](https://llvm.org/) to build the runnable argument [c] into a [CatlnResult] executable.
     #runtime("llvm")
+  data(/Catln/classPlaceholder[$T])
+    # [classPlaceholder] is used internally to represent a class with no elements.
+      It ensures that expanding an empty class does not produce the empty set.
   class(ThenElse, [Then, Else])
     fromBool(v -> Boolean) -> ThenElse
     fromBool(v= /Data/Primitive/True)= Then
     fromBool(v= /Data/Primitive/False)= Else
-
