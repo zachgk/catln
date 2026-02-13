@@ -488,6 +488,21 @@ joinUnionTypeByName leafs = H.map (S.fromList . map typeToArgOption) $ H.filter 
 singletonType :: PartialType -> Type
 singletonType partial = UnionType $ joinUnionType [partial]
 
+-- | Splits a partial type by expanding any union-typed vars into separate partials.
+-- For example, P[$T=(A + B)] splits into [P[$T=A], P[$T=B]].
+-- A partial with no union-typed vars returns [itself] unchanged.
+splitPartialByUnionVars :: PartialType -> [PartialType]
+splitPartialByUnionVars p@PartialType{ptVars} = case findUnionVar (H.toList ptVars) of
+  Nothing -> [p]
+  Just (varName, components) -> concatMap splitPartialByUnionVars
+    [p{ptVars = H.insert varName (singletonType component) ptVars} | component <- components]
+  where
+    findUnionVar [] = Nothing
+    findUnionVar ((name, UnionType leafs):rest) = case splitUnionType leafs of
+      (_:_:_) -> Just (name, splitUnionType leafs) -- Two or more components
+      _       -> findUnionVar rest
+    findUnionVar (_:rest) = findUnionVar rest
+
 -- | Helper to create a 'PartialKey' for a value (no args, no vars)
 partialKey :: Name -> PartialKey
 partialKey n = PartialKey (makeAbsoluteName n) S.empty S.empty
@@ -662,8 +677,16 @@ isSubtypeOfWithEnv typeEnv vaenv t1@TopType{} t2 = isSubtypeOfWithEnv typeEnv va
     t1' = expandType typeEnv vaenv t1
 isSubtypeOfWithEnv typeEnv vaenv (UnionType subPartials) (UnionType superPartials) = debugTrace typeEnv msg result
   where
+    supers = splitUnionType superPartials
     result = all isSubPartial $ splitUnionType subPartials
-    isSubPartial sub = any (isSubPartialOfWithEnv typeEnv vaenv sub) $ splitUnionType superPartials
+    isSubPartial sub = directCheck || splitCheck
+      where
+        directCheck = any (isSubPartialOfWithEnv typeEnv vaenv sub) supers
+        -- When direct check fails, try splitting union-typed vars.
+        -- P[$T=(A + B)] is equivalent to P[$T=A] + P[$T=B], so check each piece individually.
+        splitSubs = splitPartialByUnionVars sub
+        splitCheck = length splitSubs > 1
+                     && all (\s -> any (isSubPartialOfWithEnv typeEnv vaenv s) supers) splitSubs
     msg = printf "[SUBTYPE] %s ⊆ %s = %s" (show $ UnionType subPartials) (show $ UnionType superPartials) (show result)
 
 -- | Checks if one type contains another type. In set terminology, it is equivalent to subset or equal to ⊆.

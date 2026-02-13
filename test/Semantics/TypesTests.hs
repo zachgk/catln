@@ -193,7 +193,7 @@ propDifferenceShrinks gPrgm = property $ do
   b <- forAll $ genType prgm
   let diff' = differenceTypeEnv typeEnv a b
   annotate $ printf "diff' = %s" (show diff')
-  assert $ isSubtypeOf typeEnv{teDebug=True} diff' a
+  assert $ isSubtypeOf typeEnv diff' a
 
 -- A∪A=U
 propUnionWithComplement :: IO GenPrgm -> Property
@@ -298,6 +298,36 @@ propDifferenceByIntersection gPrgm = property $ do
   annotate $ printf "withInter' = a-(a∩b) = %s" (show withInter')
   assert $ isEqType typeEnv diff' withInter'
 
+-- P[$T=(A+B)] should be recognized as equal to P[$T=A] + P[$T=B]
+propSubtypeUnionVarSplit :: IO GenPrgm -> Property
+propSubtypeUnionVarSplit gPrgm = property $ do
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
+
+  let typeEnv = mkTypeEnv prgm
+
+  -- Generate two distinct partial types to use as var values
+  a <- forAll $ genPartialType prgm
+  b <- forAll $ genPartialType prgm
+
+  -- Create P[$T=(A+B)] - a partial with a union-typed var
+  let varName = partialKey "$T"
+  let baseName = "/TestType"
+  let unionVar = UnionType $ joinUnionType [a, b]
+  let joinedPartial = (partialVal baseName){ptVars = H.singleton varName unionVar}
+  let joinedType = singletonType joinedPartial
+
+  -- Create P[$T=A] + P[$T=B] - the split version
+  let splitPartialA = (partialVal baseName){ptVars = H.singleton varName (singletonType a)}
+  let splitPartialB = (partialVal baseName){ptVars = H.singleton varName (singletonType b)}
+  let splitType = UnionType $ joinUnionType [splitPartialA, splitPartialB]
+
+  annotate $ printf "joined = %s" (show joinedType)
+  annotate $ printf "split = %s" (show splitType)
+
+  -- P[$T=(A+B)] should be equivalent to P[$T=A] + P[$T=B]
+  assert $ isEqType typeEnv joinedType splitType
+
 propClassGraphMatchesPredClass :: IO GenPrgm -> Property
 propClassGraphMatchesPredClass gPrgm = property $ do
   gPrgm' <- lift gPrgm
@@ -367,6 +397,7 @@ typeTests = withResource (ggPrgm <$> findPrgms) (const $ pure ()) tests
       , HG.testProperty "propDifferenceSubset" (p $ propDifferenceSubset gPrgm)
       -- , HG.testProperty "propIntersectByDifference" (p $ propIntersectByDifference gPrgm)
       -- , HG.testProperty "propDifferenceByIntersection" (p $ propDifferenceByIntersection gPrgm)
+      , HG.testProperty "propSubtypeUnionVarSplit" (withDiscards 1000 $ p $ propSubtypeUnionVarSplit gPrgm)
       , HG.testProperty "propClassGraphMatchesPredClass" (withDiscards 1000 $ p $ propClassGraphMatchesPredClass gPrgm)
                                         ]
     p prop = prop
