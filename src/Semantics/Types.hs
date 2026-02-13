@@ -344,6 +344,7 @@ tryPredsToList (PredsNot _)  = Nothing
 
 -- | Helper function for conditional trace debugging
 debugTrace :: (TypeGraph tg) => TypeEnv tg -> String -> a -> a
+debugTrace _ "" x = x
 debugTrace TypeEnv{teDebug=True} msg x = trace msg x
 debugTrace _ _ x                       = x
 
@@ -677,16 +678,23 @@ isSubtypeOfWithEnv typeEnv vaenv t1@TopType{} t2 = isSubtypeOfWithEnv typeEnv va
     t1' = expandType typeEnv vaenv t1
 isSubtypeOfWithEnv typeEnv vaenv (UnionType subPartials) (UnionType superPartials) = debugTrace typeEnv msg result
   where
-    supers = splitUnionType superPartials
-    result = all isSubPartial $ splitUnionType subPartials
-    isSubPartial sub = directCheck || splitCheck
+    supersByName = splitUnionTypeByName superPartials
+    subsByName = splitUnionTypeByName subPartials
+    result = H.keysSet subsByName `S.isSubsetOf` H.keysSet supersByName
+          && and (H.intersectionWith areSubPartials subsByName supersByName)
+
+    areSubPartials :: [PartialType] -> [PartialType] -> Bool
+    areSubPartials subList superList = all (isSubPartial superList) subList
+
+    isSubPartial :: [PartialType] -> PartialType -> Bool
+    isSubPartial sup sub = directCheck || splitCheck
       where
-        directCheck = any (isSubPartialOfWithEnv typeEnv vaenv sub) supers
+        directCheck = any (isSubPartialOfWithEnv typeEnv vaenv sub) sup
         -- When direct check fails, try splitting union-typed vars.
         -- P[$T=(A + B)] is equivalent to P[$T=A] + P[$T=B], so check each piece individually.
         splitSubs = splitPartialByUnionVars sub
         splitCheck = length splitSubs > 1
-                     && all (\s -> any (isSubPartialOfWithEnv typeEnv vaenv s) supers) splitSubs
+                     && all (\s -> any (isSubPartialOfWithEnv typeEnv vaenv s) sup) splitSubs
     msg = printf "[SUBTYPE] %s ⊆ %s = %s" (show $ UnionType subPartials) (show $ UnionType superPartials) (show result)
 
 -- | Checks if one type contains another type. In set terminology, it is equivalent to subset or equal to ⊆.
