@@ -53,6 +53,8 @@ stack test --ta '--hedgehog-replay "1:a2 Seed 10220680066336263475 1246305621518
 
 You can also use a retest similar to that defined in TypesTests from the REPL.
 
+To update the golden tests, run `GOLDEN_TEST_WRITE=1 stack test`. Alternatively, specific tests can be changed by deleting the files associated with those changes and allowing them to be regenerated.
+
 ### Webdocs
 
 Webdocs can be built using the standard way described in the [main building document](../building.md). In addition, another strategy for building webdocs can be done during development. It benefits from being somewhat faster to run, being runnable from the REPL without building code, and featuring live-reload for making changes to the webdocs.

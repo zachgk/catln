@@ -344,7 +344,7 @@ tryPredsToList (PredsNot _)  = Nothing
 
 -- | Helper function for conditional trace debugging
 debugTrace :: (TypeGraph tg) => TypeEnv tg -> String -> a -> a
-debugTrace _ "" x = x
+debugTrace _ "" x                      = x
 debugTrace TypeEnv{teDebug=True} msg x = trace msg x
 debugTrace _ _ x                       = x
 

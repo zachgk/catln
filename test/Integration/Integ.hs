@@ -18,6 +18,7 @@ import           Semantics.Prgm
 import           Syntax.Parsers      (mkDesCanonicalImportStr)
 import           System.Directory    (createDirectoryIfMissing, doesFileExist,
                                       getCurrentDirectory)
+import           System.Environment  (lookupEnv)
 import           System.FilePath     (takeDirectory)
 import           Text.Pretty.Simple  (pShowNoColor)
 import           Utils
@@ -36,9 +37,13 @@ goldenTypecheckDir = "test/Integration/golden/typecheck"
 goldenTreebuildDir :: String
 goldenTreebuildDir = "test/Integration/golden/tbuild"
 
+goldenWriteEnv :: String
+goldenWriteEnv = "GOLDEN_TEST_WRITE"
+
 runGoldenTest :: (Show em, Show prgm) => String -> String -> String -> GraphData prgm (AFileImport em) -> (String -> IO ()) -> IO ()
 runGoldenTest goldenType goldenDir _fileNameStr prgms step = do
   step $ printf "Golden test %s..." goldenType
+  goldenWrite <- lookupEnv goldenWriteEnv
   cwd <- getCurrentDirectory
   forM_ (graphToNodes prgms) $ \(prgm, AFileImport{impDisp=maybePath}, _) -> do
     let path = fromJust maybePath
@@ -50,7 +55,7 @@ runGoldenTest goldenType goldenDir _fileNameStr prgms step = do
     let showPrgm = pShowNoColor prgm
     let showPrgm' = T.unpack $ T.replace (T.pack cwd) "/repo/dir" showPrgm
     goldenExists <- doesFileExist goldenPath
-    if goldenExists
+    if goldenExists && goldenWrite /= Just "1"
       then do
         golden <- readFile goldenPath
         when (golden /= showPrgm') (assertFailure $ printf "%s doesn't match golden test" goldenType)
