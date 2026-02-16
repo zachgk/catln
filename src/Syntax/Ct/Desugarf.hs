@@ -170,7 +170,7 @@ desMultiTypeDef :: StatementEnv -> MultiTypeDef ParseMetaDat -> [RawStatementTre
 desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef clssExpr dataExprs extends) subStatements = do
 
   let clss@PartialType{ptVars=classVars} = exprToPartialType clssExpr
-  let clss' = clss{ptName=show path'}
+  let clss' = clss{ptName=makeAbsoluteName $ show path'}
 
   let dataTypes = map (either id (getExprType . exprPropagateTypes . semiDesExpr SDType Nothing) . eitherTypeVarExpr) dataExprs
 
@@ -179,7 +179,7 @@ desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef clssExpr dataExprs e
 
   let typeCGNodes = map (CGType, , []) objPaths
   let classCGNode = (CGClass (True, clss', dataTypes, desObjDocComment subStatements), PClassName (makeAbsoluteName $ show path'), objPaths)
-  let extendNodes = [(CGClass (False, exprToPartialType extendClass, [singletonType clss'], Nothing), PClassName (exprPath extendClass), [PClassName $ makeAbsoluteName $ show path']) | extendClass <- extends]
+  let extendNodes = [(CGClass (False, exprToPartialType extendClass, [classPartial clss'], Nothing), PClassName (exprPath extendClass), [PClassName $ makeAbsoluteName $ show path']) | extendClass <- extends]
   let classGraph' = ClassGraph $ graphFromEdges (classCGNode:extendNodes ++ typeCGNodes)
 
   (subPrgm, annots) <- splitPrgmAnnots <$> desInheritingSubstatements statementEnv path subStatements
@@ -198,7 +198,7 @@ desClassDecl statementEnv@(inheritPath, _) clssExpr extends subStatements = do
   let path = getPath $ exprPath clssExpr
   let path' = show $ relPathAddPrefix inheritPath path
   let clss = exprToPartialType clssExpr
-  let extendNodes = [(CGClass (False, exprToPartialType extendClass, [singletonType clss], Nothing), PClassName (exprPath extendClass), [PClassName $ makeAbsoluteName path']) | extendClass <- extends]
+  let extendNodes = [(CGClass (False, exprToPartialType extendClass, [classPartial clss], Nothing), PClassName (exprPath extendClass), [PClassName $ makeAbsoluteName path']) | extendClass <- extends]
   let classGraph' = ClassGraph $ graphFromEdges ((CGClass (False, clss, [], desObjDocComment subStatements), PClassName (makeAbsoluteName path'), []):extendNodes)
   subPrgm <- desInheritingSubstatements statementEnv path subStatements
   return (Prgm mempty classGraph' [] <> subPrgm)
