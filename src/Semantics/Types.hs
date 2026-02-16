@@ -489,20 +489,25 @@ joinUnionTypeByName leafs = H.map (S.fromList . map typeToArgOption) $ H.filter 
 singletonType :: PartialType -> Type
 singletonType partial = UnionType $ joinUnionType [partial]
 
--- | Splits a partial type by expanding any union-typed vars into separate partials.
+-- | Splits a partial type by expanding any union-typed vars or args into separate partials.
 -- For example, P[$T=(A + B)] splits into [P[$T=A], P[$T=B]].
--- A partial with no union-typed vars returns [itself] unchanged.
-splitPartialByUnionVars :: PartialType -> [PartialType]
-splitPartialByUnionVars p@PartialType{ptVars} = case findUnionVar (H.toList ptVars) of
-  Nothing -> [p]
-  Just (varName, components) -> concatMap splitPartialByUnionVars
-    [p{ptVars = H.insert varName (singletonType component) ptVars} | component <- components]
+-- Similarly, P(x=(A + B)) splits into [P(x=A), P(x=B)].
+-- A partial with no union-typed vars or args returns [itself] unchanged.
+splitPartialByUnionVarArgs :: PartialType -> [PartialType]
+splitPartialByUnionVarArgs p@PartialType{ptVars, ptArgs} =
+    case findUnion allVarArgs of
+      Nothing -> [p]
+      Just (keyName, components) -> concatMap splitPartialByUnionVarArgs
+        [typeSetAux keyName (singletonType component) p | component <- components]
   where
-    findUnionVar [] = Nothing
-    findUnionVar ((name, UnionType leafs):rest) = case splitUnionType leafs of
-      (_:_:_) -> Just (name, splitUnionType leafs) -- Two or more components
-      _       -> findUnionVar rest
-    findUnionVar (_:rest) = findUnionVar rest
+    allVarArgs = map (first TVVar) (H.toList ptVars) ++ map (first TVArg) (H.toList ptArgs)
+
+    findUnion :: [(TypeVarAux, Type)] -> Maybe (TypeVarAux, [PartialType])
+    findUnion [] = Nothing
+    findUnion ((keyName, UnionType leafs):rest) = case splitUnionType leafs of
+      (_:_:_) -> Just (keyName, splitUnionType leafs)
+      _       -> findUnion rest
+    findUnion (_:rest) = findUnion rest
 
 -- | Helper to create a 'PartialKey' for a value (no args, no vars)
 partialKey :: Name -> PartialKey
@@ -687,14 +692,21 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType subPartials) (UnionType superPartial
     areSubPartials subList superList = all (isSubPartial superList) subList
 
     isSubPartial :: [PartialType] -> PartialType -> Bool
-    isSubPartial sup sub = directCheck || splitCheck
+    isSubPartial sup sub = directCheck || splitCheck || expandSplitCheck
       where
         directCheck = any (isSubPartialOfWithEnv typeEnv vaenv sub) sup
-        -- When direct check fails, try splitting union-typed vars.
+        -- When direct check fails, try splitting union-typed vars/args.
         -- P[$T=(A + B)] is equivalent to P[$T=A] + P[$T=B], so check each piece individually.
-        splitSubs = splitPartialByUnionVars sub
+        splitSubs = splitPartialByUnionVarArgs sub
         splitCheck = length splitSubs > 1
                      && all (\s -> any (isSubPartialOfWithEnv typeEnv vaenv s) sup) splitSubs
+        -- When both checks fail, expand TopType args/vars and try splitting again
+        expandedSub = sub{ptArgs = fmap expandArg (ptArgs sub), ptVars = fmap expandArg (ptVars sub)}
+          where expandArg t@TopType{} = expandType typeEnv vaenv t
+                expandArg t           = t
+        expandedSplitSubs = splitPartialByUnionVarArgs expandedSub
+        expandSplitCheck = length expandedSplitSubs > 1
+                           && all (\s -> any (isSubPartialOfWithEnv typeEnv vaenv s) sup) expandedSplitSubs
     msg = printf "[SUBTYPE] %s ⊆ %s = %s" (show $ UnionType subPartials) (show $ UnionType superPartials) (show result)
 
 -- | Checks if one type contains another type. In set terminology, it is equivalent to subset or equal to ⊆.
@@ -928,6 +940,11 @@ intersectTypesWithVarEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Typ
 intersectTypesWithVarEnv TypeEnv{teDebug=True} _ l r | trace (printf "[INTERSECT] %s ∩ %s" (show l) (show r)) False = undefined
 intersectTypesWithVarEnv _ vaenv PTopType t = (vaenv, t)
 intersectTypesWithVarEnv _ vaenv t PTopType = (vaenv, t)
+
+-- When one TopType has predicates and the other has negPartials, expand the predicated one first. Otherwise, we might miss contradictions between preds and negPartials that would lead to a bottom type.
+intersectTypesWithVarEnv typeEnv vaenv t1@(TopType _ ps1) t2@(TopType np2 _) | ps1 /= PredsNone && not (H.null np2) = intersectTypesWithVarEnv typeEnv vaenv (expandType typeEnv vaenv t1) t2
+intersectTypesWithVarEnv typeEnv vaenv t1@(TopType np1 _) t2@(TopType _ ps2) | ps2 /= PredsNone && not (H.null np1) = intersectTypesWithVarEnv typeEnv vaenv t1 (expandType typeEnv vaenv t2)
+
 intersectTypesWithVarEnv typeEnv vaenv (TopType np1 ps1) (TopType np2 ps2) = (vaenv, compactType typeEnv vaenv $ TopType (unionPartialLeafs [np1, np2]) (predsAnd ps1 ps2))
 intersectTypesWithVarEnv _ vaenv t1 t2 | t1 == t2 = (vaenv, t1)
 intersectTypesWithVarEnv typeEnv vaenv tv@(TypeVar v _) t = case (v, H.lookup v vaenv) of
