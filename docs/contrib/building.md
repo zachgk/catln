@@ -101,5 +101,5 @@ To profile, it can be done by running `stack test --profile`.
 This produces the file `catln-test.prof`.
 
 To make it easier to understand, there are tools to provide visualizations of the results.
-One can be done by running `profiteur catln-tet.prof`.
+One can be done by running `profiteur catln-test.prof`.
 This produces a file `catln-test.prof.html` which can be viewed.
