@@ -10,7 +10,7 @@ Prgm
                             ( /Catln/exit
                                 ( /val=/Data/Primitive/Integer
                                 , /this=/Catln/IO
-                                ) | /Catln/IO
+                                ) + /Catln/IO
                             ) = /Catln/exit
                             ( EAppArg Value /val -> /Data/Primitive/Integer =
                                 ( /abs
@@ -35,7 +35,7 @@ Prgm
                             ( /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
-                                ) | /Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
                             ) = /operator*
                             ( EAppArg Value /l -> TVArg /x2 = ( Value /x2 ↦ TVArg /x2 ) )
                             ( EAppArg Value /r -> /Data/Primitive/Integer =
@@ -55,10 +55,10 @@ Prgm
                             ( /abs.$9c855f
                                 ( /x=/Data/Primitive/Integer
                                 , /$9c855f-arg=/Data/Primitive/Integer
-                                ) | /operator*
+                                ) + /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
-                                ) | /Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
                             ) = /abs.$9c855f
                             ( EAppArg Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) )
                             ( EAppArg Value /$9c855f-arg -> TVArg /x = ( Value /x ↦ TVArg /x ) )

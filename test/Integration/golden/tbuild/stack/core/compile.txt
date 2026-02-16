@@ -150,6 +150,14 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/classPlaceholder"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/classPlaceholder( EAppVar /T TopType ) ]
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/println"
                 , ObjectMapItem
                     { omiDecls =
@@ -175,6 +183,7 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

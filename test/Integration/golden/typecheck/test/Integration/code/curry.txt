@@ -7,7 +7,7 @@ Prgm
                     { omiDecls = []
                     , omiDefs =
                         [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
-                            ( /f( /io=/Catln/IO ) | /Catln/IO ) = /f( Value /io -> TVArg /io = Value /io )
+                            ( /f( /io=/Catln/IO ) + /Catln/IO ) = /f( Value /io -> TVArg /io = Value /io )
                         ]
                     }
                 )
@@ -20,7 +20,7 @@ Prgm
                             ( /operator==
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
-                                ) | /Data/Primitive/True | /Data/Primitive/False
+                                ) + /Data/Primitive/True + /Data/Primitive/False
                             ) = /operator==
                             ( Value /l -> /Data/Primitive/Integer = /operator-
                                 ( Value /l -> /Data/Primitive/Integer = CInt 5 )
@@ -39,7 +39,7 @@ Prgm
                             ( /operator==
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
-                                ) | /Data/Primitive/True | /Data/Primitive/False
+                                ) + /Data/Primitive/True + /Data/Primitive/False
                             ) = /operator==
                             ( Value /l -> /Data/Primitive/Integer = /operator+
                                 ( Value /l -> /Data/Primitive/Integer = CInt 1 )

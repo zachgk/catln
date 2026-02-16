@@ -10,7 +10,7 @@ Prgm
                             ( /Catln/exit
                                 ( /val=/Data/Primitive/Integer
                                 , /this=/Catln/IO
-                                ) | /Catln/IO
+                                ) + /Catln/IO
                             ) = /Catln/exit
                             ( Value /val -> /Data/Primitive/Integer = /abs
                                 ( Value /x -> /Data/Primitive/Integer = CInt 0 )
@@ -27,14 +27,14 @@ Prgm
                             ( /abs.$6119dc
                                 ( /x=/Data/Primitive/Integer
                                 , /$6119dc-arg=
-                                    ( /Catln/Else | /Catln/ThenElse/fromBool( /v=∀/Data/Primitive/Boolean ) | /Catln/Then )
-                                ) | /operator*
+                                    ( /Catln/Else + /Catln/ThenElse/fromBool( /v=∀/Data/Primitive/Boolean ) + /Catln/Then )
+                                ) + /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
-                                ) | /Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
                             ) = /abs.$6119dc( Value /x -> TVArg /x = Value /x )
                             ( Value /$6119dc-arg ->
-                                ( /Catln/Else | /Catln/ThenElse/fromBool( /v=∀/Data/Primitive/Boolean ) | /Catln/Then ) = /Catln/ThenElse/fromBool
+                                ( /Catln/Else + /Catln/ThenElse/fromBool( /v=∀/Data/Primitive/Boolean ) + /Catln/Then ) = /Catln/ThenElse/fromBool
                                 ( Value /v -> ∀/Data/Primitive/Boolean = /operator>=( Value /l -> TVArg /x = Value /x )
                                     ( Value /r -> /Data/Primitive/Integer = CInt 0 )
                                 )
@@ -54,7 +54,7 @@ Prgm
                             ( /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
-                                ) | /Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
                             ) = /operator*
                             ( Value /l -> /Data/Primitive/Integer = /operator-
                                 ( Value /a -> /Data/Primitive/Integer = CInt 1 )

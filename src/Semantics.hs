@@ -46,8 +46,9 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
       joinPartialDestTypes [] = [BottomType]
       joinPartialDestTypes (pdt1:restPdt) = [unionTypes typeEnv pdt1Poss restPdt' | pdt1Poss <- pdt1, restPdt' <- joinPartialDestTypes restPdt]
 
-  typeGraphExpandPredExpr typeEnv _vaenv partial | ptName partial == operatorHasArrow = map (\p -> p{ptPreds=PredsOne (PredExpr partial)}) $ topTypeAsPartials typeEnv
-  typeGraphExpandPredExpr _typeEnv _vaenv partial = error $ printf "Not yet defined typeGraphExpandPredExpr %s" (show partial)
+ -- TODO: Implement this to expand other PredExprs as well, and begin using the Nothing to represent having no meaningful way to break
+  typeGraphExpandPredExpr typeEnv _vaenv partial | ptName partial == operatorHasArrow = Just $ map (\p -> p{ptPreds=PredsOne (PredExpr partial)}) $ topTypeAsPartials typeEnv
+  typeGraphExpandPredExpr typeEnv _vaenv partial = Just $ map (\p -> p{ptPreds=PredsOne (PredExpr partial)}) $ topTypeAsPartials typeEnv
 
 newtype CTSSConfig = CTSSConfig {
   -- TODO Replace stack path with (CTSSStackConfig = CTSSStackTest | CTSSStackBuild DirString BranchString) when adding support for auto-downloading core

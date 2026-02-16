@@ -29,7 +29,7 @@ Prgm
                                 , /tail=~ConsList[ /T=TVVar /T ]
                                 ) = /Data/Cons( EAppArg Value /head )
                                 ( EAppArg Value /tail ->
-                                    ( /Data/Nil | /Data/Cons[ /T=TopType ]
+                                    ( /Data/Nil + /Data/Cons[ /T=TopType ]
                                         ( /head=TVVar /T
                                         , /tail=~ConsList[ /T=TVVar /T ]
                                         )
@@ -39,7 +39,7 @@ Prgm
                             ( /operator+
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
-                                ) | /Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
                             ) = /operator+
                             ( EAppArg Value /l -> /Data/Primitive/Integer = 1 )
                             ( EAppArg Value /r -> /Data/Primitive/Integer =

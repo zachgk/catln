@@ -7,7 +7,7 @@ Prgm
                     { omiDecls = []
                     , omiDefs =
                         [ Value /main ->
-                            ( /Catln/www( /html=/Data/String ) | /Catln/CatlnResult
+                            ( /Catln/www( /html=/Data/String ) + /Catln/CatlnResult
                                 ( /contents=/Data/String
                                 , /name=/Data/String
                                 )
@@ -27,11 +27,11 @@ Prgm
             ( EAppArg Value /p -> /Catln/CatlnResult
                 ( /contents=/Data/String
                 , /name=/Data/String
-                ).. =
+                ) =
                 ( Value /main ↦ /Catln/CatlnResult
                     ( /contents=/Data/String
                     , /name=/Data/String
-                    )..
+                    )
                 )
             )
         ]

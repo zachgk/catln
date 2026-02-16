@@ -146,14 +146,14 @@ class TypeGraph tg where
   typeGraphQueryWithReason :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> [(String, Type)]
 
   -- | Queries the type graph for possible conversions from a TopTypes PredExpr to the possible partialTypes that can contain the PredExpr
-  typeGraphExpandPredExpr :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> [PartialType]
+  typeGraphExpandPredExpr :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> Maybe [PartialType]
 
 data EmptyTypeGraph = EmptyTypeGraph
 instance Semigroup EmptyTypeGraph where
   _ <> _ = EmptyTypeGraph
 instance TypeGraph EmptyTypeGraph where
   typeGraphQueryWithReason _ _ _ = []
-  typeGraphExpandPredExpr _ _ _ = []
+  typeGraphExpandPredExpr _ _ _ = Nothing
 
 typeGraphQuery :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> [Type]
 typeGraphQuery typeEnv vaenv src = map snd $ typeGraphQueryWithReason typeEnv vaenv src
@@ -604,7 +604,7 @@ expandType typeEnv vaenv (TopType negPartials preds) = snd $ differenceTypeWithE
     expandPred :: TypePredicate -> Type
     expandPred (PredClass clss) = expandClassPartial typeEnv vaenv clss
     expandPred (PredRel rel)    = expandRelPartial typeEnv vaenv rel
-    expandPred (PredExpr e)     = UnionType $ joinUnionType $ typeGraphExpandPredExpr typeEnv vaenv e
+    expandPred (PredExpr e)     = maybe (TopType H.empty (PredsOne $ PredExpr e)) (UnionType . joinUnionType) (typeGraphExpandPredExpr typeEnv vaenv e)
 
 expandClassPartial :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> Type
 expandClassPartial typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv PartialType{ptName, ptVars=classVarsP} = expanded

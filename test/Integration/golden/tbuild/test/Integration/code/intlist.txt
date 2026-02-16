@@ -25,7 +25,7 @@ Prgm
                             ( /Catln/exit
                                 ( /val=/Data/Primitive/Integer
                                 , /this=/Catln/IO
-                                ) | /Catln/IO
+                                ) + /Catln/IO
                             ) = /Catln/exit
                             ( EAppArg Value /val -> /Data/Primitive/Integer =
                                 ( /operator-
@@ -71,7 +71,7 @@ Prgm
                             ( /operator+
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
-                                ) | /Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
                             ) = /operator+
                             ( EAppArg Value /l -> /Data/Primitive/Integer = 1 )
                             ( EAppArg Value /r -> /Data/Primitive/Integer =

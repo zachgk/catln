@@ -13,7 +13,7 @@ Prgm
                                 , /tail=TopType
                                 ) = /Data/Cons( Value /head )
                                 ( Value /tail ->
-                                    ( /Data/Nil | /Data/Cons
+                                    ( /Data/Nil + /Data/Cons
                                         ( /head=TopType
                                         , /tail=TopType
                                         )
@@ -23,7 +23,7 @@ Prgm
                             ( /operator+
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
-                                ) | /Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
                             ) = /operator+
                             ( Value /l -> /Data/Primitive/Integer = CInt 1 )
                             ( Value /r -> /Data/Primitive/Integer = /llength( Value /this -> TVArg /tail = Value /tail ) )
@@ -39,7 +39,7 @@ Prgm
                             ( /Catln/exit
                                 ( /val=/Data/Primitive/Integer
                                 , /this=/Catln/IO
-                                ) | /Catln/IO
+                                ) + /Catln/IO
                             ) = /Catln/exit
                             ( Value /val -> /Data/Primitive/Integer = /operator-
                                 ( Value /l -> /Data/Primitive/Integer = /llength

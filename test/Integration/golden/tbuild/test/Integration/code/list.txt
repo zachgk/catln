@@ -13,7 +13,7 @@ Prgm
                                 , /tail=TopType
                                 ) = /Data/Cons( EAppArg Value /head )
                                 ( EAppArg Value /tail ->
-                                    ( /Data/Nil | /Data/Cons
+                                    ( /Data/Nil + /Data/Cons
                                         ( /head=TopType
                                         , /tail=TopType
                                         )
@@ -23,7 +23,7 @@ Prgm
                             ( /operator+
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
-                                ) | /Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
                             ) = /operator+
                             ( EAppArg Value /l -> /Data/Primitive/Integer = 1 )
                             ( EAppArg Value /r -> /Data/Primitive/Integer =
@@ -41,7 +41,7 @@ Prgm
                             ( /Catln/exit
                                 ( /val=/Data/Primitive/Integer
                                 , /this=/Catln/IO
-                                ) | /Catln/IO
+                                ) + /Catln/IO
                             ) = /Catln/exit
                             ( EAppArg Value /val -> /Data/Primitive/Integer =
                                 ( /operator-

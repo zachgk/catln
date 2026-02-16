@@ -10,7 +10,7 @@ Prgm
                             ( /Catln/exit
                                 ( /val=/Data/Primitive/Integer
                                 , /this=/Catln/IO
-                                ) | /Catln/IO
+                                ) + /Catln/IO
                             ) = /Catln/exit
                             ( Value /val -> /Data/Primitive/Integer = /operator-
                                 ( Value /l -> /Data/Primitive/Integer = /fib
@@ -31,7 +31,7 @@ Prgm
                             ( /operator+
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
-                                ) | /Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
                             ) = /operator+
                             ( Value /l -> /Data/Primitive/Integer = /fib
                                 ( Value /integer -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /integer = Value /integer )
