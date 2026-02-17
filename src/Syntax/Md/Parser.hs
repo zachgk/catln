@@ -14,7 +14,7 @@ module Syntax.Md.Parser where
 
 import           CtConstants
 import           Semantics.Prgm
-import           Semantics.Types   (partialKey)
+import           Semantics.Types   (Constant (CStr), partialKey)
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Prgm
 import           System.Directory

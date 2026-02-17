@@ -23,7 +23,7 @@ import           CtConstants
 import           Data.Bifunctor             (Bifunctor (first))
 import           Data.Maybe
 import           Semantics.Prgm
-import           Semantics.Types            (partialKey)
+import           Semantics.Types            (Constant (CStr), partialKey)
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Parser.Decl
 import           Syntax.Ct.Parser.Expr

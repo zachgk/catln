@@ -18,6 +18,7 @@ import           Data.List.Split
 import           Data.Maybe
 import           Semantics
 import           Semantics.Prgm
+import           Semantics.Types
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Prgm
 import           System.Directory

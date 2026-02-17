@@ -33,6 +33,7 @@ import qualified GHC.Types.SrcLoc         as SrcLoc
 import           GHC.Utils.Outputable
 import           GHC.Utils.Panic
 import           Semantics.Prgm
+import           Semantics.Types
 import           Syntax.Ct.Prgm
 import           Syntax.Haskell.Convert   (convertModule)
 import           System.Directory         (doesFileExist)

@@ -41,13 +41,6 @@ newtype Import = Import String
 newtype Export = Export String
   deriving (Eq, Ord, Show)
 
-data Constant
-  = CInt Integer
-  | CFloat Double
-  | CStr String
-  | CChar Char
-  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
-
 -- | The type of hole (a gap where an expression should be). Used in inputs to ignore the expression and outputs.
 data Hole
   = HoleActive (Maybe Name) -- ^ A hole such as _ or _name, where the name is optional and treated as an error
@@ -399,15 +392,6 @@ mapMetaDat f m@Meta{getMetaDat} = m{getMetaDat=f getMetaDat}
 -- | Maps the objArr.oaArr.expr
 mapTupleArgValue :: (e m -> e m) -> ObjArr e m -> ObjArr e m
 mapTupleArgValue f oa@ObjArr{oaArr} = oa{oaArr=fmap (first (fmap f)) oaArr}
-
-constantPartialType :: Constant -> PartialType
-constantPartialType CInt{}   = intLeaf
-constantPartialType CFloat{} = floatLeaf
-constantPartialType CStr{}   = strLeaf
-constantPartialType CChar{}  = charLeaf
-
-constantType :: Constant -> Type
-constantType = singletonType . constantPartialType
 
 exprAppliedVars :: (ExprClass e, Show m, MetaDat m) => e m -> H.HashMap TypeVarName (Meta m)
 exprAppliedVars = H.fromList . exprAppliedOrdVars

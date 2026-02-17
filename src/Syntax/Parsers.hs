@@ -26,6 +26,7 @@ import           Data.List
 import           MapMeta                 (addMetaID)
 import           Semantics
 import           Semantics.Prgm
+import           Semantics.Types
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Desugarf.Expr (desFileImport)
 import           Syntax.Ct.MapRawMeta    (mapMetaRawPrgmM)

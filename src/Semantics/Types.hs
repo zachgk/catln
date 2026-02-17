@@ -103,6 +103,13 @@ data PartialType = PartialType {
   ptArgMode :: PtArgMode
   } deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
+data Constant
+  = CInt Integer
+  | CFloat Double
+  | CStr String
+  | CChar Char
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+
 -- | The non-name properties of a 'PartialType'
 type PartialArgsOption = (H.HashMap TypeVarName Type, H.HashMap ArgName Type, TypePredicates, PtArgMode)
 
@@ -114,6 +121,10 @@ data Type
   = UnionType PartialLeafs -- ^ The main format, 'UnionType', is a union of 'PartialType's
   | TypeVar TypeVarAux TypeVarLoc -- ^ A type which refers to some variable in the surrounding context
   | TopType PartialLeafs TypePredicates -- ^ A type which refers to any possible value or the universal set of values, excluding the partial leafs and passing the predicates
+
+  -- TODO: Implement TypeConst operations to efficiently support refinement types with various constant values
+  -- TypeConst Constant -- ^ A type which is a constant value, such as a number or string literal
+
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
 -- | Indicates whether a type var or arg is located internally to the object or externally.
@@ -373,6 +384,16 @@ falseType = singletonType falseLeaf
 boolType = UnionType $ joinUnionType [trueLeaf, falseLeaf]
 strType = singletonType strLeaf
 ioType = singletonType ioLeaf
+
+constantPartialType :: Constant -> PartialType
+constantPartialType CInt{}   = intLeaf
+constantPartialType CFloat{} = floatLeaf
+constantPartialType CStr{}   = strLeaf
+constantPartialType CChar{}  = charLeaf
+
+constantType :: Constant -> Type
+constantType = singletonType . constantPartialType
+
 
 -- | The 'Type' containing all possible values, equivalent to the universal.
 pattern PTopType :: Type
