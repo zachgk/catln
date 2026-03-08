@@ -4,19 +4,23 @@ module Main where
 import           CRes
 import           Options.Applicative
 import           Semantics           (buildCtssConfig)
+import           Semantics.Prgm      (FileImport, impDisp)
 import           Syntax.Ct.Formatter (formatRootPrgm)
 import           Syntax.Parsers      (mkDesCanonicalImportStr, mkRawImportStr,
-                                      parseFile)
+                                      parseFile, readFiles)
 
 import           Control.Monad
 import           Control.Monad.Trans
 import           CtService
 import qualified Data.HashMap.Strict as H
+import qualified Data.HashSet        as S
+import           Data.List           (isInfixOf)
 import           Data.Maybe
 import           Eval.Common         (Val (StrVal, TupleVal))
 import           LSP                 (lspRun)
 import           System.Directory
 import           Text.Printf
+import           Utils               (graphToNodes)
 import           WebDocs             (docApi, docServe)
 -- import Repl (repl)
 
@@ -70,13 +74,58 @@ xFmt prgmName = do
   let prgm' = formatRootPrgm prgm
   lift $ writeFile prgmName prgm'
 
+xDepTree :: String -> Bool -> CResT IO ()
+xDepTree prgmName showCore = do
+  -- Parse the root file and get canonical import
+  rootImp <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
+
+  -- Build the full import graph
+  graphData <- lift $ readFiles buildCtssConfig [mkRawImportStr prgmName]
+  let nodes = graphToNodes graphData
+
+  -- Build a lookup map from FileImport to its dependencies
+  let depsMap = H.fromList [(imp, deps) | (_, imp, deps) <- nodes]
+
+  -- Pretty-print the tree starting from root
+  lift $ putStrLn $ displayName rootImp
+  lift $ printTree depsMap S.empty "" rootImp
+  where
+    -- Display name for a FileImport (use impDisp if available, otherwise show)
+    displayName :: FileImport -> String
+    displayName imp = fromMaybe (show imp) (impDisp imp)
+    
+    -- Check if a dependency is a core dependency
+    isCoreDep :: FileImport -> Bool
+    isCoreDep imp = "core" `isInfixOf` displayName imp
+
+    -- Print the dependency tree with proper tree characters
+    printTree :: H.HashMap FileImport [FileImport] -> S.HashSet FileImport -> String -> FileImport -> IO ()
+    printTree depsMap visited prefix imp = do
+      let deps = H.lookupDefault [] imp depsMap
+      -- Filter out core dependencies if showCore is False
+      let filteredDeps = if showCore then deps else filter (not . isCoreDep) deps
+      let visited' = S.insert imp visited
+      let depCount = length filteredDeps
+      mapM_ (printDep depsMap visited' prefix depCount) (zip [1..] filteredDeps)
+      where
+        printDep :: H.HashMap FileImport [FileImport] -> S.HashSet FileImport -> String -> Int -> (Int, FileImport) -> IO ()
+        printDep dm vis pre totalDeps (idx, dep) = do
+          let isLast = idx == totalDeps
+          let connector = if isLast then "└── " else "├── "
+          let extension = if isLast then "    " else "│   "
+          let isCycle = S.member dep vis
+          let depName = displayName dep ++ if isCycle then " (cycle)" else ""
+          putStrLn $ pre ++ connector ++ depName
+          unless isCycle $ printTree dm vis (pre ++ extension) dep
+
 exec :: Command -> CResT IO ()
-exec (RunFile file function)    = xRun file function
-exec (BuildFile file function)  = xBuild file function
-exec (Doc fname cached apiOnly) = xDoc fname cached apiOnly
-exec (Convert fname outFname)   = xConvert fname outFname
-exec CLsp                       = xLsp
-exec (Fmt fname)                = xFmt fname
+exec (RunFile file function)      = xRun file function
+exec (BuildFile file function)    = xBuild file function
+exec (Doc fname cached apiOnly)   = xDoc fname cached apiOnly
+exec (Convert fname outFname)     = xConvert fname outFname
+exec CLsp                         = xLsp
+exec (Fmt fname)                  = xFmt fname
+exec (DepTree fname showCore)     = xDepTree fname showCore
 
 data Command
   = BuildFile String String
@@ -85,6 +134,7 @@ data Command
   | Convert String (Maybe String)
   | CLsp
   | Fmt String
+  | DepTree String Bool
 
 cRun :: Parser Command
 cRun = RunFile
@@ -114,6 +164,11 @@ cFmt :: Parser Command
 cFmt = Fmt
   <$> argument str (metavar "FILE" <> help "The file to run")
 
+cDepTree :: Parser Command
+cDepTree = DepTree
+  <$> argument str (metavar "FILE" <> help "The file to show dependency tree for")
+  <*> switch (long "show-core" <> help "Show core library dependencies in the tree")
+
 main :: IO ()
 main = do
   cmd <- execParser opts
@@ -133,4 +188,5 @@ main = do
       <> command "convert" (info cConvert (progDesc "Converts code in one format to another"))
       <> command "lsp" (info cLsp (progDesc "Runs the language server"))
       <> command "fmt" (info cFmt (progDesc "Runs the Catln formatter for a program"))
+      <> command "deptree" (info cDepTree (progDesc "Shows the dependency tree for a program"))
                              )
