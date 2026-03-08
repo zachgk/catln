@@ -131,6 +131,14 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/#eximport"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/#eximport( Value /name -> /Data/String ) ]
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/#example"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/#example ]
@@ -182,6 +190,7 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

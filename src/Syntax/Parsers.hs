@@ -62,9 +62,14 @@ canonicalImport _ caller imp = case maybeExprPath $ impAbs imp of
       _                          -> return Nothing
     return $ desFileImport $ imp{impDisp=disp', impCalledDir=calledDir', impDir=impDir'}
   where
+    -- Extract the first positional argument as the display name
     disp' = case rawExprAppliedArgs $ impAbs imp of
+      -- Single argument case (legacy)
       [RawObjArr{roaArr=Just (Just (RawCExpr _ (CStr s)), _)}] -> Just s
-      _                                                        -> Nothing
+      -- Multi-argument case: extract first positional (Nothing key) argument
+      args -> case [s | RawObjArr{roaObj=Nothing, roaArr=Just (Just (RawCExpr _ (CStr s)), _)} <- args] of
+        (firstArg:_) -> Just firstArg
+        []           -> Nothing
     calledDir' = impDir =<< caller
 
 mkRawImportStr :: String -> RawFileImport

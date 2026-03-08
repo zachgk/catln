@@ -12,6 +12,7 @@ import           Syntax.Parsers      (mkDesCanonicalImportStr, mkRawImportStr,
 import           Control.Monad
 import           Control.Monad.Trans
 import           CtService
+import           Data.Foldable       (foldlM)
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Data.List           (isInfixOf)
@@ -88,44 +89,44 @@ xDepTree prgmName showCore = do
 
   -- Pretty-print the tree starting from root
   lift $ putStrLn $ displayName rootImp
-  lift $ printTree depsMap S.empty "" rootImp
+  _ <- lift $ printTree depsMap (S.singleton rootImp) "" rootImp
+  return ()
   where
     -- Display name for a FileImport (use impDisp if available, otherwise show)
     displayName :: FileImport -> String
     displayName imp = fromMaybe (show imp) (impDisp imp)
-    
+
     -- Check if a dependency is a core dependency
     isCoreDep :: FileImport -> Bool
     isCoreDep imp = "core" `isInfixOf` displayName imp
 
-    -- Print the dependency tree with proper tree characters
-    printTree :: H.HashMap FileImport [FileImport] -> S.HashSet FileImport -> String -> FileImport -> IO ()
-    printTree depsMap visited prefix imp = do
-      let deps = H.lookupDefault [] imp depsMap
-      -- Filter out core dependencies if showCore is False
-      let filteredDeps = if showCore then deps else filter (not . isCoreDep) deps
-      let visited' = S.insert imp visited
+    -- Print the dependency tree, returning the updated visited set.
+    -- The visited set is threaded through siblings so each node appears at most once.
+    printTree :: H.HashMap FileImport [FileImport] -> S.HashSet FileImport -> String -> FileImport -> IO (S.HashSet FileImport)
+    printTree dm visited prefix imp = do
+      let deps = H.lookupDefault [] imp dm
+      -- Filter out core dependencies if showCore is False, and already-visited nodes
+      let filteredDeps = filter (not . (`S.member` visited))
+                       $ if showCore then deps else filter (not . isCoreDep) deps
       let depCount = length filteredDeps
-      mapM_ (printDep depsMap visited' prefix depCount) (zip [1..] filteredDeps)
+      foldlM (printDep dm prefix depCount) visited (zip [1..] filteredDeps)
       where
-        printDep :: H.HashMap FileImport [FileImport] -> S.HashSet FileImport -> String -> Int -> (Int, FileImport) -> IO ()
-        printDep dm vis pre totalDeps (idx, dep) = do
+        printDep :: H.HashMap FileImport [FileImport] -> String -> Int -> S.HashSet FileImport -> (Int, FileImport) -> IO (S.HashSet FileImport)
+        printDep dm' pre totalDeps vis (idx, dep) = do
           let isLast = idx == totalDeps
           let connector = if isLast then "└── " else "├── "
           let extension = if isLast then "    " else "│   "
-          let isCycle = S.member dep vis
-          let depName = displayName dep ++ if isCycle then " (cycle)" else ""
-          putStrLn $ pre ++ connector ++ depName
-          unless isCycle $ printTree dm vis (pre ++ extension) dep
+          putStrLn $ pre ++ connector ++ displayName dep
+          printTree dm' (S.insert dep vis) (pre ++ extension) dep
 
 exec :: Command -> CResT IO ()
-exec (RunFile file function)      = xRun file function
-exec (BuildFile file function)    = xBuild file function
-exec (Doc fname cached apiOnly)   = xDoc fname cached apiOnly
-exec (Convert fname outFname)     = xConvert fname outFname
-exec CLsp                         = xLsp
-exec (Fmt fname)                  = xFmt fname
-exec (DepTree fname showCore)     = xDepTree fname showCore
+exec (RunFile file function)    = xRun file function
+exec (BuildFile file function)  = xBuild file function
+exec (Doc fname cached apiOnly) = xDoc fname cached apiOnly
+exec (Convert fname outFname)   = xConvert fname outFname
+exec CLsp                       = xLsp
+exec (Fmt fname)                = xFmt fname
+exec (DepTree fname showCore)   = xDepTree fname showCore
 
 data Command
   = BuildFile String String

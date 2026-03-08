@@ -64,6 +64,9 @@ module(Catln)
       Examples are still typechecked during compilation and should contain valid code.
       For code which is not worth including, it can be replaced with a hole.
       Holes found within examples are safe to leave in and are not treated as a warning.
+  annot(#eximport(name -> String))
+    # [#eximport] is used to mark exported items from Haskell modules.
+      When a Haskell module has an explicit export list, this annotation indicates which items are re-exported.
   # ## Build-in Type Macros
   (_ ?-> _) -> Boolean
     #runtime("arrExists")

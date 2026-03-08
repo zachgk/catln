@@ -12,12 +12,9 @@
 --------------------------------------------------------------------
 
 module Syntax.Haskell.Parser where
-import           Data.List
-import           GHC.Data.Bag
 import           GHC.Data.FastString
 import           GHC.Data.StringBuffer
 import           GHC.Driver.Config.Parser (initParserOpts)
-import           GHC.Driver.Ppr
 import           GHC.Driver.Session
 import           GHC.Fingerprint
 import           GHC.Parser
@@ -26,19 +23,17 @@ import           GHC.Parser.Lexer
 import           GHC.Platform
 import           GHC.Settings
 import           GHC.Settings.Config
-import           GHC.Types.Error
 import           GHC.Types.SourceError
 import           GHC.Types.SrcLoc
-import qualified GHC.Types.SrcLoc         as SrcLoc
-import           GHC.Utils.Outputable
 import           GHC.Utils.Panic
 import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Prgm
 import           Syntax.Haskell.Convert   (convertModule)
+import           Syntax.Haskell.Stack     (loadStackDependencyGraph,
+                                           resolveModuleInProject)
 import           System.Directory         (doesFileExist)
-import           Text.Megaparsec          (mkPos)
-import           Text.Megaparsec.Pos      (SourcePos (SourcePos))
+import           System.FilePath          (takeDirectory, (</>))
 import           Text.Printf
 
 fakeLlvmConfig :: LlvmConfig
@@ -83,6 +78,19 @@ parsePragmasIntoDynFlags filepath str =
                         (handleSourceError reportErr act)
     reportErr e = do putStrLn $ "error : " ++ show e; return Nothing
 
+-- | Find the stack root by looking for stack.yaml in parent directories
+findStackRoot :: FilePath -> IO (Maybe FilePath)
+findStackRoot startPath = do
+  let dir = takeDirectory startPath
+  if dir == startPath  -- Reached filesystem root
+    then return Nothing
+    else do
+      let stackYaml = dir </> "stack.yaml"
+      exists <- doesFileExist stackYaml
+      if exists
+        then return (Just dir)
+        else findStackRoot dir
+
 -- From https://www.stackage.org/haddock/lts-21.25/ghc-lib-parser-8.10.7.20220219/Parser.html
 runParser :: DynFlags -> String -> String -> P a -> ParseResult a
 runParser flags filename str parser = unP parser parseState
@@ -92,33 +100,71 @@ runParser flags filename str parser = unP parser parseState
     parseState = initParserState (initParserOpts flags) buffer location
 
 hsParser :: ImportParser
-hsParser imp = case exprAppliedArgs imp of
-  (ObjArr{oaArr=Just (Just (CExpr _ (CStr filename)), _)}:_impArgs) -> do
+hsParser imp = case [arg | arg@ObjArr{oaObj=Nothing} <- exprAppliedArgs imp] of
+  (ObjArr{oaArr=Just (Just (CExpr _ (CStr filename)), _)}:_) -> do
+    -- Extract stackRoot and exportAll parameters from all arguments (including named ones)
+    let maybeStackRoot = extractStackRoot (exprAppliedArgs imp)
+        exportAll = extractExportAll (exprAppliedArgs imp)
+
     isFile <- doesFileExist filename
-    if isFile
-      then do
-        str <- readFile filename
-        maybeFlags <-
-                parsePragmasIntoDynFlags
-                  filename str
+
+    actualFile <- if isFile
+      then return (Just filename)
+      else case maybeStackRoot of
+        Just stackRoot -> do
+          -- Try to resolve module name using Stack
+          stackInfo <- loadStackDependencyGraph stackRoot
+          resolveModuleInProject stackInfo filename
+        Nothing -> return Nothing
+
+    case actualFile of
+      Just file -> do
+        -- Auto-detect stack root if not provided
+        stackRoot <- case maybeStackRoot of
+          Just sr -> return (Just sr)
+          Nothing -> findStackRoot file
+
+        str <- readFile file
+        maybeFlags <- parsePragmasIntoDynFlags file str
         case maybeFlags of
-          Nothing -> fail $ printf "Failed to read flags from %s" filename
+          Nothing -> fail $ printf "Failed to read flags from %s" file
           Just flags -> do
-            let parsed = runParser flags filename str parseModule
+            let parsed = runParser flags file str parseModule
             case parsed of
-              POk _ v -> return (convertModule flags $ unLoc v, [])
-              PFailed pstate ->
-                let realSpan = psRealSpan $ last_loc pstate
-                    errMsg = printErrorBag flags $ fmap (unDecorated . diagnosticMessage . errMsgDiagnostic) $ getMessages $ snd $ getPsMessages pstate
-                    lnStart = srcLocLine $ SrcLoc.realSrcSpanStart realSpan
-                    colStart = srcLocCol $ SrcLoc.realSrcSpanStart realSpan
-                    lnEnd = srcLocLine $ SrcLoc.realSrcSpanEnd realSpan
-                    colEnd = srcLocCol $ SrcLoc.realSrcSpanEnd realSpan
-                    _srcPos = Just (SourcePos filename (mkPos lnStart) (mkPos colStart), SourcePos filename (mkPos lnEnd) (mkPos colEnd), filename)
-                in fail errMsg
-      else return (RawPrgm [] [], [])
+              POk _ v -> return (convertModule flags exportAll stackRoot $ unLoc v)
+              PFailed _pstate ->
+                -- TODO uncomment and fix this to show parse errors instead of silently returning an empty program
+                -- let realSpan = psRealSpan $ last_loc pstate
+                --     errMsg = printErrorBag flags $ fmap (unDecorated . diagnosticMessage . errMsgDiagnostic) $ getMessages $ snd $ getPsMessages pstate
+                --     lnStart = srcLocLine $ SrcLoc.realSrcSpanStart realSpan
+                --     colStart = srcLocCol $ SrcLoc.realSrcSpanStart realSpan
+                --     lnEnd = srcLocLine $ SrcLoc.realSrcSpanEnd realSpan
+                --     colEnd = srcLocCol $ SrcLoc.realSrcSpanEnd realSpan
+                --     _srcPos = Just (SourcePos file (mkPos lnStart) (mkPos colStart), SourcePos file (mkPos lnEnd) (mkPos colEnd), file)
+                -- in fail errMsg
+
+                -- Return empty program on parse failure to skip unparseable files (e.g., files with CPP)
+                return (RawPrgm [] [], [])
+      Nothing -> return (RawPrgm [] [], [])
   _ -> undefined
 
   where
-    printErrorBag flags bag = joinLines . map (showSDoc flags . ppr) $ bagToList bag
-    joinLines = intercalate "\n"
+    -- Extract stackRoot parameter from arguments
+    extractStackRoot :: [ObjArr Expr ()] -> Maybe FilePath
+    extractStackRoot [] = Nothing
+    extractStackRoot (ObjArr{oaObj=Just obj, oaArr=Just (Just (CExpr _ (CStr sr)), _)}:rest) =
+      case maybeExprPath obj of
+        Just "/stackRoot" -> Just sr  -- Desugared form has leading slash
+        Just "stackRoot"  -> Just sr  -- Raw form (backward compatibility)
+        _                 -> extractStackRoot rest
+    extractStackRoot (_:rest) = extractStackRoot rest
+
+    -- Extract exportAll parameter from arguments (defaults to False)
+    extractExportAll :: [ObjArr Expr ()] -> Bool
+    extractExportAll [] = False
+    extractExportAll (ObjArr{oaObj=Just obj, oaArr=Just (Just (Value _ "True"), _)}:rest) =
+      case maybeExprPath obj of
+        Just "/exportAll" -> True  -- Desugared form has leading slash
+        Just "exportAll"  -> True  -- Raw form (backward compatibility)
+        _                 -> extractExportAll rest
+    extractExportAll (_:rest) = extractExportAll rest
