@@ -243,3 +243,4 @@ function ShowPage(props) {
 }
 
 export default Docs;
+export { buildPageTree, sortPageTree };
