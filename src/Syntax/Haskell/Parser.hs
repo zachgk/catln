@@ -131,7 +131,9 @@ hsParser imp = case [arg | arg@ObjArr{oaObj=Nothing} <- exprAppliedArgs imp] of
           Just flags -> do
             let parsed = runParser flags file str parseModule
             case parsed of
-              POk _ v -> return (convertModule flags exportAll stackRoot $ unLoc v)
+              POk _ v -> do
+                let (prgm, imps) = convertModule flags exportAll stackRoot $ unLoc v
+                return (prgm, imps, Nothing)
               PFailed _pstate ->
                 -- TODO uncomment and fix this to show parse errors instead of silently returning an empty program
                 -- let realSpan = psRealSpan $ last_loc pstate
@@ -144,8 +146,8 @@ hsParser imp = case [arg | arg@ObjArr{oaObj=Nothing} <- exprAppliedArgs imp] of
                 -- in fail errMsg
 
                 -- Return empty program on parse failure to skip unparseable files (e.g., files with CPP)
-                return (RawPrgm [] [], [])
-      Nothing -> return (RawPrgm [] [], [])
+                return (RawPrgm [] [], [], Nothing)
+      Nothing -> return (RawPrgm [] [], [], Nothing)
   _ -> undefined
 
   where

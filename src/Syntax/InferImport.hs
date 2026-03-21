@@ -67,7 +67,7 @@ dirParser imp = case exprAppliedArgs imp of
           then RawPrgm [mkRawFileImport $ rawStr mainPath] []
           else RawPrgm [] []
 
-    return (dirPrgm, map (mkRawFileImport . rawStr) $ catMaybes files')
+    return (dirPrgm, map (mkRawFileImport . rawStr) $ catMaybes files', Nothing)
   _ -> undefined
 
 inferRawImportStr :: CTSSConfig -> Maybe FileImport -> String -> IO (RawExpr ())

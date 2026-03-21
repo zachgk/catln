@@ -26,8 +26,8 @@ mdParser imp = case exprAppliedArgs imp of
     if isFile
       then do
         str <- readFile filename
-        return (RawPrgm [] [RawStatementTree (RawAnnot (rawVal mdAnnot `applyRawArgs` [(Just $ partialKey mdAnnotText, RawCExpr emptyMetaN (CStr str))])) []], [])
-      else return (RawPrgm [] [], [])
+        return (RawPrgm [] [RawStatementTree (RawAnnot (rawVal mdAnnot `applyRawArgs` [(Just $ partialKey mdAnnotText, RawCExpr emptyMetaN (CStr str))])) []], [], Just str)
+      else return (RawPrgm [] [], [], Nothing)
   _ -> undefined
 
 

@@ -10,6 +10,9 @@ RUN apt-get update && \
 # Fix for pandoc build https://stackoverflow.com/questions/63746826/what-might-cause-commitandreleasebuffer-invalid-argument-invalid-character
 ENV LANG=C.UTF-8
 
+# Disable edit mode
+ENV CATLN_WD_NOEDIT="true"
+
 WORKDIR /home
 
 # Setup haskell depdencies first for docker build cache

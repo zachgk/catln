@@ -14,10 +14,17 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# Kill any existing process on the API port
+if lsof -ti ":${API_PORT}" > /dev/null 2>&1; then
+  echo "Killing existing process on port ${API_PORT}..."
+  kill $(lsof -ti ":${API_PORT}") 2>/dev/null || true
+  sleep 1
+fi
+
 # Start the Catln backend API server
 echo "Starting Catln backend on port ${API_PORT}..."
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
-stack run catln -- doc test/integration/id.ct --api &
+stack run catln -- doc test/Integration/code/id.ct --api &
 BACKEND_PID=$!
 
 # Wait for the backend to be ready

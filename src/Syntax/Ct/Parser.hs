@@ -20,7 +20,7 @@ import           Text.Megaparsec
 import           Text.Megaparsec.Char
 
 import           CtConstants
-import           Data.Bifunctor             (Bifunctor (first))
+
 import           Data.Maybe
 import           Semantics.Prgm
 import           Semantics.Types            (Constant (CStr), partialKey)
@@ -92,13 +92,13 @@ ctParser imp = case exprAppliedArgs imp of
     fileContents <- readFile fileName
     case runParser (contents pPrgm) fileName fileContents of
       Left err   -> fail $ show $ errorBundlePretty err
-      Right prgm -> return (prgm, [])
+      Right prgm -> return (prgm, [], Just fileContents)
   _ -> undefined
 
 ctxParser :: ImportParser
 ctxParser fileName = do
-  cp <- ctParser fileName
-  return $ first annotate cp
+  (prgm, extra, src) <- ctParser fileName
+  return (annotate prgm, extra, src)
   where
     annotate (RawPrgm imports statements) = RawPrgm imports (RawStatementTree (RawAnnot (RawValue emptyMetaN ctxAnnot)) [] :statements)
 

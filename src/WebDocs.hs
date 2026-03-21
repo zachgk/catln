@@ -118,7 +118,9 @@ docApiBase getProvider = do
       let tprgm' = maybe H.empty interleavePrgm (cresToMaybe maybeTPrgm)
       let targetModes = maybe H.empty evalAllTargetModes (cresToMaybe maybeTPrgmFull)
       let annots' = maybe H.empty (H.fromList . map (first (getMetaID . getExprMeta))) (cresToMaybe maybeAnnots)
-      return $ mapMetaRawPrgm (zip3MetaFun (interleaveMeta tprgm') (interleaveMeta targetModes) (interleaveMeta annots')) rawPrgm'
+      let prgm' = mapMetaRawPrgm (zip3MetaFun (interleaveMeta tprgm') (interleaveMeta targetModes) (interleaveMeta annots')) rawPrgm'
+      maybeSource <- lift $ runCResT $ getSource provider prgmName'
+      return (prgm', cresToMaybe maybeSource)
     maybeJson resp
 
   get "/api/annot" $ do

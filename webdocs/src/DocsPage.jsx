@@ -1,9 +1,13 @@
 import React, {useState} from 'react';
 
 import makeStyles from '@mui/styles/makeStyles';
+import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
+import EditIcon from '@mui/icons-material/Edit';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import Editor from '@monaco-editor/react';
 import {useNavigate} from 'react-router-dom';
 
 import {rawExprMeta, RawExpr, RawObjArr} from './Common/Syntax';
@@ -24,15 +28,50 @@ const useStyles = makeStyles({
   }
 });
 
+const noEdit = import.meta.env.CATLN_WD_NOEDIT === 'true' || import.meta.env.CATLN_WD_NOEDIT === '1';
+
 function DocsPage(props) {
   const {prgmName} = props;
 
   let apiResult = useApi(`/api/page?prgmName=${prgmName}`);
+  const [mode, setMode] = useState('view');
+  const [editedSource, setEditedSource] = useState(null);
+
+  const toggleMode = () => setMode(m => m === 'view' ? 'edit' : 'view');
+
+  // apiResult.data is [prgmData, maybeSource] from the combined endpoint
+  const prgmData = apiResult.data?.[0] ?? null;
+  const sourceText = apiResult.data?.[1] ?? null;
+  const currentSource = editedSource !== null ? editedSource : sourceText;
 
   return (
-    <Loading status={apiResult}>
-      <Main data={apiResult.data} prgmName={prgmName}/>
-    </Loading>
+    <div>
+      {!noEdit && (
+        <div style={{textAlign: 'right'}}>
+          <IconButton onClick={toggleMode} size="small" aria-label={mode === 'view' ? 'Edit' : 'View'}>
+            {mode === 'view' ? <EditIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+          </IconButton>
+        </div>
+      )}
+      {mode === 'view' ? (
+        <Loading status={apiResult}>
+          <Main data={prgmData} prgmName={prgmName}/>
+        </Loading>
+      ) : (
+        <Loading status={apiResult}>
+          {currentSource !== null && (
+            <Editor
+              height="80vh"
+              language="plaintext"
+              theme="vs"
+              value={currentSource}
+              onChange={value => setEditedSource(value)}
+              options={{ minimap: { enabled: false }, wordWrap: 'on', fontSize: 14 }}
+            />
+          )}
+        </Loading>
+      )}
+    </div>
   );
 }
 

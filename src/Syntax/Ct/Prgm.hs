@@ -90,7 +90,7 @@ data ReplRes m
   | ReplErr ParseErrorRes
   deriving (Eq, Show)
 
-type ImportParseResult = IO (RawPrgm (), [RawFileImport])
+type ImportParseResult = IO (RawPrgm (), [RawFileImport], Maybe String)
 type ImportParser = Expr () -> ImportParseResult
 
 instance ExprClass RawExpr where

@@ -86,8 +86,8 @@ readImport imp = case maybeExprPath (impAbs imp) of
     -- TODO Modify the ImportParseResult to CResT to report back parse errors
     Just parser -> parser $ impAbs imp
 
-processParsed :: CTSSConfig -> FileImport -> (RawPrgm (), [RawFileImport]) -> IO (GraphNodes (RawPrgm ()) FileImport, [FileImport])
-processParsed config imp (prgm@(RawPrgm prgmImports statements), extraImports) = do
+processParsed :: CTSSConfig -> FileImport -> (RawPrgm (), [RawFileImport], Maybe String) -> IO (GraphNodes (RawPrgm (), Maybe String) FileImport, [FileImport])
+processParsed config imp (prgm@(RawPrgm prgmImports statements), extraImports, src) = do
   let includeCore = not (rawPrgmHasAnnot prgm noCoreAnnot)
   let prgmImports' = if includeCore && not ("core" `isInfixOf` name)
       then mkRawFileImport (rawStr "core") : prgmImports
@@ -97,7 +97,7 @@ processParsed config imp (prgm@(RawPrgm prgmImports statements), extraImports) =
   let totalImports = extraImports' ++ prgmImports''
   let prgm' = RawPrgm prgmImports' statements
   prgm'' <- mapMetaRawPrgmM addMetaID prgm'
-  return ((prgm'', imp, prgmImports''), totalImports)
+  return (((prgm'', src), imp, prgmImports''), totalImports)
   where
     name = case impAbs imp of
       CExpr _ (CStr n) -> n
@@ -108,17 +108,17 @@ parseFile :: CTSSConfig -> RawFileImport -> CResT IO (GraphNodes (RawPrgm ()) Fi
 parseFile config imp = do
   imp' <- lift $ canonicalImport config Nothing imp
   r <- lift $ readImport imp'
-  p <- lift $ processParsed config imp' r
-  return $ fst p
+  ((rawPrgm, _src), fi, deps) <- lift $ fst <$> processParsed config imp' r
+  return (rawPrgm, fi, deps)
 
 -- TODO Change readImport, then make this return GraphData of CRes
-readFiles :: CTSSConfig -> [RawFileImport] -> IO (GraphData (RawPrgm ()) FileImport)
+readFiles :: CTSSConfig -> [RawFileImport] -> IO (GraphData (RawPrgm (), Maybe String) FileImport)
 readFiles config initialImps = do
   initialImps' <- mapM (canonicalImport config Nothing) initialImps
   res <- aux [] S.empty initialImps'
   return $ graphFromEdges res
   where
-    aux :: [GraphNodes (RawPrgm ()) FileImport] -> S.HashSet FileImport -> [FileImport] -> IO [GraphNodes (RawPrgm ()) FileImport]
+    aux :: [GraphNodes (RawPrgm (), Maybe String) FileImport] -> S.HashSet FileImport -> [FileImport] -> IO [GraphNodes (RawPrgm (), Maybe String) FileImport]
     aux acc _ [] = return acc
     aux acc visited (nextToVisit:restToVisit) = do
       if S.member nextToVisit visited

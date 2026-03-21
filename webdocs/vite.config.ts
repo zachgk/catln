@@ -8,5 +8,6 @@ export default defineConfig({
       '/api': "http://localhost:31204"
     }
   },
+  envPrefix: ['VITE_', 'CATLN_'],
   plugins: [react()],
 })

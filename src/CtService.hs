@@ -47,6 +47,7 @@ data CTSSDat = CTSSDat {
                                        }
 
 data SSF = SSF {
+  ssfSource         :: Maybe String,
   ssfRaw            :: CRes (RawPrgm ParseMetaDat),
   ssfBuilt          :: Bool,
   ssfDes            :: Maybe (CRes (Prgm Expr ParseMetaDat)),
@@ -61,8 +62,8 @@ emptyCTSS config = do
   v <- newMVar $ CTSSDat config [] (graphFromEdges [])
   return $ CTSS v
 
-newSSF :: CRes (RawPrgm ParseMetaDat) -> SSF
-newSSF rawPrgm = SSF rawPrgm False Nothing Nothing Nothing Nothing Nothing
+newSSF :: Maybe String -> CRes (RawPrgm ParseMetaDat) -> SSF
+newSSF src rawPrgm = SSF src rawPrgm False Nothing Nothing Nothing Nothing Nothing
 
 ctssSetFiles :: CTSS -> [String] -> IO ()
 ctssSetFiles (CTSS ssmv) baseFileNames = do
@@ -85,17 +86,17 @@ ctssRead (CTSS ssmv) = do
   _ <- swapMVar ssmv $ ctssClearInvalidations (catMaybes invalidations) ss'
   return ()
   where
-    buildSSF ctssData (rawPrgm, prgmName, imports) = case graphLookup prgmName ctssData of
+    buildSSF ctssData ((rawPrgm, src), prgmName, imports) = case graphLookup prgmName ctssData of
       Just old@SSF{ssfRaw=CRes _ oldRaw} | oldRaw == rawPrgm -> ((old, prgmName, imports), Nothing)
-      Just{} -> ((newSSF $ pure rawPrgm, prgmName, imports), Just prgmName)
-      Nothing -> ((newSSF $ pure rawPrgm, prgmName, imports), Nothing)
+      Just{} -> ((newSSF src $ pure rawPrgm, prgmName, imports), Just prgmName)
+      Nothing -> ((newSSF src $ pure rawPrgm, prgmName, imports), Nothing)
 
 ctssClearInvalidations :: [FileImport] -> CTSSDat -> CTSSDat
 ctssClearInvalidations invalidations ss@CTSSDat{ctssData=(g, nodeFromVertex, vertexFromKey)} = ss{ctssData=fmapGraphWithKey maybeClear $ ctssData ss}
   where
     propagated = map (snd3 . nodeFromVertex) $ foldMap (foldMap (:[])) $ dfs (transposeG g) (mapMaybe vertexFromKey invalidations)
     maybeClear prgmName ssf = if prgmName `elem` propagated
-      then newSSF (ssfRaw ssf)
+      then newSSF (ssfSource ssf) (ssfRaw ssf)
       else ssf
 
 ctssBuildPagesExact :: CTSSDat -> GraphData SSF FileImport -> IO CTSSDat
@@ -170,6 +171,15 @@ ctssLookupReq f k ctss = do
   case mv of
     Just v  -> return v
     Nothing -> fail $ printf "Could not find %s" (show $ impRaw k)
+
+-- This does not use ctssGet because it doesn't require building
+getSource :: CTSS -> FileImport -> CResT IO String
+getSource (CTSS ssmv) prgmName = do
+  CTSSDat{ctssData} <- lift $ readMVar ssmv
+  case graphLookup prgmName ctssData of
+    Just SSF{ssfSource=Just src} -> return src
+    Just SSF{ssfSource=Nothing}  -> fail $ printf "No source text available for %s" (show prgmName)
+    Nothing                      -> fail $ printf "Could not find %s" (show $ impRaw prgmName)
 
 -- This does not use ctssGet because it doesn't require building
 getRawPrgm :: CTSS -> CResT IO PPrgmGraphData

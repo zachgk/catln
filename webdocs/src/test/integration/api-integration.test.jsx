@@ -3,7 +3,7 @@
  *
  * Prerequisites:
  *   Start the backend API server before running these tests:
- *     stack exec catln doc test/integration/id.ct -- --api
+ *     stack exec catln doc test/Integration/code/id.ct -- --api
  *   Or from stack repl:
  *     :l test/Spec
  *     testd
@@ -56,9 +56,8 @@ describe('Backend API contract', () => {
     expect(prgm).toHaveProperty('prgmCG')
   })
 
-  it('/api/page returns Success for a known page', async () => {
+  it('/api/page returns Success with prgm data and source text', async () => {
     // First get the TOC to find a valid page name
-    // TOC is an array of [pagePath, importData] tuples
     const tocData = await fetchApi('/api/toc')
     const toc = tocData.contents[0]
     expect(Array.isArray(toc)).toBe(true)
@@ -70,9 +69,17 @@ describe('Backend API contract', () => {
     expect(data.contents).toHaveLength(2)
 
     const [pageContent] = data.contents
-    // Page content is [imports, statements]
+    // pageContent is [prgmData, maybeSource]
     expect(Array.isArray(pageContent)).toBe(true)
     expect(pageContent).toHaveLength(2)
+
+    // prgmData is [imports, statements]
+    const [prgmData, maybeSource] = pageContent
+    expect(Array.isArray(prgmData)).toBe(true)
+    expect(prgmData).toHaveLength(2)
+
+    // maybeSource is a string or null
+    expect(maybeSource === null || typeof maybeSource === 'string').toBe(true)
   })
 
   it('/api/treebuild returns Success', async () => {
