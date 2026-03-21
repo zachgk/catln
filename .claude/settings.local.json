@@ -2,8 +2,16 @@
   "permissions": {
     "allow": [
       "Bash(stack run:*)",
-      "Bash(grep -v \"^$\")",
       "Bash(stack build:*)",
+      "Bash(stack test:*)",
+      "Bash(stack exec:*)",
+      "Bash(stack repl:*)",
+      "Bash(make build)",
+      "Bash(make test)",
+      "Bash(make format)",
+      "Bash(make ctformat)",
+      "Bash(make install)",
+      "Bash(grep -v \"^$\")",
       "Bash(echo \"EXIT: $?\")"
     ]
   }
