@@ -74,3 +74,26 @@ module(Data/Primitive)
   # mempty<Integer $T> = 0
   # mappend<Integer $T>($T l, $T r) = l + r
   # inverse<Integer $T>($T t) = -t
+  # ## Floats
+  (-(_ :: Float)) -> Float
+    #runtime("floatNeg")
+  (_ :: Float - _ :: Float) -> Float
+    #runtime("float-")
+  (_ :: Float + _ :: Float) -> Float
+    #runtime("float+")
+  (_ :: Float * _ :: Float) -> Float
+    #runtime("float*")
+  (_ :: Float // _ :: Float) -> Float
+    #runtime("float//")
+  (_ :: Float <= _ :: Float) -> Boolean
+    #runtime("float<=")
+  (_ :: Float >= _ :: Float) -> Boolean
+    #runtime("float>=")
+  (_ :: Float < _ :: Float) -> Boolean
+    #runtime("float<")
+  (_ :: Float > _ :: Float) -> Boolean
+    #runtime("float>")
+  (_ :: Float == _ :: Float) -> Boolean
+    #runtime("float==")
+  (_ :: Float != _ :: Float) -> Boolean
+    #runtime("float!=")

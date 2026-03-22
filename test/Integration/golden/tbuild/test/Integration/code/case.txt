@@ -8,7 +8,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs.$2a7c30-1( EAppArg Value /x )
-                            ( EAppArg Value /$2a7c30-arg -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing@Value /x2 ) ->
+                            ( EAppArg Value /$2a7c30-arg -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = Hole ( /Data/Primitive/Integer + /Data/Primitive/Float ) HoleActive Nothing@Value /x2 ) ->
                             ( /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
@@ -52,8 +52,8 @@ Prgm
                     , omiDefs =
                         [ /abs( EAppArg Value /x -> /Data/Primitive/Integer ) ->
                             ( /abs.$2a7c30-1
-                                ( /x=/Data/Primitive/Integer
-                                , /$2a7c30-arg=/Data/Primitive/Integer
+                                ( /x=∀/Data/Algebra/Ord
+                                , /$2a7c30-arg=∀/Data/Algebra/Ord
                                 ) + /abs.$2a7c30-0
                                 ( /x=/Data/Primitive/Integer
                                 , /$2a7c30-arg=/Data/Primitive/Integer
@@ -77,13 +77,13 @@ Prgm
                             ( EAppArg Value /$2a7c30-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=( EAppArg Value /l -> TVArg /x = Value /x )
                                 ( EAppArg Value /r -> /Data/Primitive/Integer = 0 )
                             ) -> TVArg /x2 = Value /x2
-                        , /abs.$2a7c30-0( EAppArg Value /x -> /Data/Primitive/Integer )
+                        , /abs.$2a7c30-0( EAppArg Value /x -> ∀/Data/Algebra/Ord )
                             ( EAppArg Value /$2a7c30-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=( EAppArg Value /l -> TVArg /x = Value /x )
                                 ( EAppArg Value /r -> /Data/Primitive/Integer = 0 )
                             ) ->
                             ( /abs.$2a7c30-1
-                                ( /x=/Data/Primitive/Integer
-                                , /$2a7c30-arg=/Data/Primitive/Integer
+                                ( /x=∀/Data/Algebra/Ord
+                                , /$2a7c30-arg=∀/Data/Algebra/Ord
                                 ) + /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer

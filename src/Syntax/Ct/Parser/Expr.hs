@@ -250,6 +250,13 @@ pTypePropProjSuffix = do
 pTermSuffix :: Parser TermSuffix
 pTermSuffix = pArgsSuffix <|> pVarsSuffix <|> pContextSuffix <|> pAliasSuffix <|> pTypePropRelSuffix <|> pTypePropProjSuffix
 
+pFloat :: Parser PExpr
+pFloat = do
+  pos1 <- getSourcePos
+  f <- float
+  pos2 <- getSourcePos
+  return $ RawCExpr (emptyMeta pos1 pos2) (CFloat f)
+
 pInt :: Parser PExpr
 pInt = do
   pos1 <- getSourcePos
@@ -298,6 +305,7 @@ term :: Parser PExpr
 term = do
   e1 <- parenExpr
        <|> pStringConst
+       <|> try pFloat
        <|> pInt
        <|> pList
        <|> pMacroValue

@@ -8,9 +8,21 @@ mul= 2 * 3 == 6
 
 modulo= 7 % 3 == 1
 
+fAdd= 1.0 + 2.0 == 3.0
+
+fSub= 5.0 - 3.0 == 2.0
+
+fMul= 2.0 * 3.0 == 6.0
+
+fDiv= 6.0 // 2.0 == 3.0
+
 main{io -> IO} =
   #assert(test= add)
   #assert(test= sub)
   #assert(test= mul)
   #assert(test= modulo)
+  #assert(test= fAdd)
+  #assert(test= fSub)
+  #assert(test= fMul)
+  #assert(test= fDiv)
   io

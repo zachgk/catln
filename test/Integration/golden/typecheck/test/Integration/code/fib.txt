@@ -14,7 +14,7 @@ Prgm
                                 ) + /Catln/IO
                             ) = /Catln/exit
                             ( Value /val -> /Data/Primitive/Integer = /operator-
-                                ( Value /l -> /Data/Primitive/Integer = /fib
+                                ( Value /l -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /fib
                                     ( Value /integer -> /Data/Primitive/Integer = CInt 3 )
                                 )
                                 ( Value /r -> /Data/Primitive/Integer = CInt 3 )
@@ -33,14 +33,17 @@ Prgm
                             ( /operator+
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
+                                ) + /operator+
+                                ( /r=/Data/Primitive/Float
+                                , /l=/Data/Primitive/Float
+                                ) + /Data/Primitive/Integer + /Data/Primitive/Float
                             ) = /operator+
-                            ( Value /l -> /Data/Primitive/Integer = /fib
+                            ( Value /l -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /fib
                                 ( Value /integer -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /integer = Value /integer )
                                     ( Value /r -> /Data/Primitive/Integer = CInt 1 )
                                 )
                             )
-                            ( Value /r -> /Data/Primitive/Integer = /fib
+                            ( Value /r -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /fib
                                 ( Value /integer -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /integer = Value /integer )
                                     ( Value /r -> /Data/Primitive/Integer = CInt 2 )
                                 )

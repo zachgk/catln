@@ -62,6 +62,27 @@ rneg = EPrim "intNeg" prim
       Just (IntVal i) -> Right $ IntVal $ -i
       _               -> Left "Invalid rneg signature"
 
+liftFloatOp :: TypeName -> (Double -> Double -> Double) -> EPrim
+liftFloatOp name f = EPrim ("float" ++ name) prim
+  where
+    prim args = case (H.lookup "/l" args, H.lookup "/r" args) of
+      (Just (FloatVal l), Just (FloatVal r)) -> Right $ FloatVal $ f l r
+      _                                      -> Left "Invalid floatOp signature"
+
+liftFloatCmpOp :: TypeName -> (Double -> Double -> Bool) -> EPrim
+liftFloatCmpOp name f = EPrim ("float" ++ name) prim
+  where
+    prim args = case (H.lookup "/l" args, H.lookup "/r" args) of
+      (Just (FloatVal l), Just (FloatVal r)) -> Right $ bool $ f l r
+      _                                      -> Left "Invalid floatCmpOp signature"
+
+rfneg :: EPrim
+rfneg = EPrim "floatNeg" prim
+  where
+    prim args = case H.lookup "/a" args of
+      Just (FloatVal f) -> Right $ FloatVal $ -f
+      _                 -> Left "Invalid rfneg signature"
+
 strEq :: EPrim
 strEq = EPrim "strEq" prim
   where
@@ -144,6 +165,17 @@ primEnv = H.fromList (map mapPrim prims ++ macros)
             , liftCmpOp "==" (==)
             , liftCmpOp "!=" (/=)
             , rneg
+            , liftFloatOp "+" (+)
+            , liftFloatOp "-" (-)
+            , liftFloatOp "*" (*)
+            , liftFloatOp "//" (/)
+            , liftFloatCmpOp ">" (>)
+            , liftFloatCmpOp "<" (<)
+            , liftFloatCmpOp ">=" (>=)
+            , liftFloatCmpOp "<=" (<=)
+            , liftFloatCmpOp "==" (==)
+            , liftFloatCmpOp "!=" (/=)
+            , rfneg
             , strEq
             , intToString
             , ioExit

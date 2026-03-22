@@ -2,6 +2,36 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/fDiv"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value fDiv= /operator==
+                            ( Value /l= /operator//
+                                ( Value /l= CFloat 6.0 )
+                                ( Value /r= CFloat 2.0 )
+                            )
+                            ( Value /r= CFloat 3.0 )
+                        ]
+                    }
+                )
+            ,
+                ( "/fAdd"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value fAdd= /operator==
+                            ( Value /l= /operator+
+                                ( Value /l= CFloat 1.0 )
+                                ( Value /r= CFloat 2.0 )
+                            )
+                            ( Value /r= CFloat 3.0 )
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -22,6 +52,21 @@ Prgm
                                 ( Value /r= CInt 3 )
                             )
                             ( Value /r= CInt 2 )
+                        ]
+                    }
+                )
+            ,
+                ( "/fSub"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value fSub= /operator==
+                            ( Value /l= /operator-
+                                ( Value /l= CFloat 5.0 )
+                                ( Value /r= CFloat 3.0 )
+                            )
+                            ( Value /r= CFloat 2.0 )
                         ]
                     }
                 )
@@ -56,6 +101,21 @@ Prgm
                     }
                 )
             ,
+                ( "/fMul"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value fMul= /operator==
+                            ( Value /l= /operator*
+                                ( Value /l= CFloat 2.0 )
+                                ( Value /r= CFloat 3.0 )
+                            )
+                            ( Value /r= CFloat 6.0 )
+                        ]
+                    }
+                )
+            ,
                 ( "/modulo"
                 , ObjectMapItem
                     { omiDecls = []
@@ -74,6 +134,10 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
