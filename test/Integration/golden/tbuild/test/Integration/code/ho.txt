@@ -5,6 +5,7 @@ Prgm
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
                     }
@@ -14,6 +15,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /T( EAppArg Value /x -> /Data/Primitive/Integer ) ]
+                    , omiRefineDecls = []
                     , omiDefs = []
                     }
                 )
@@ -25,6 +27,7 @@ Prgm
                             ( EAppArg Value /d -> /T( /x=/Data/Primitive/Integer ) = /T( EAppArg Value /x -> /Data/Primitive/Integer ) )
                             ( EAppArg /f( EAppArg Value /y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
                         ]
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ /tst
                             ( EAppArg Value /d -> /T( /x=/Data/Primitive/Integer ) = /T( EAppArg Value /x -> /Data/Primitive/Integer ) )

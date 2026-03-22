@@ -5,6 +5,7 @@ Prgm
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
                             ( Value val= real
@@ -21,6 +22,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ Complex( Value /a -> ∀/Data/Primitive/Number )( Value /b -> ∀/Data/Primitive/Number ) ]
+                    , omiRefineDecls = []
                     , omiDefs = []
                     }
                 )
@@ -28,6 +30,7 @@ Prgm
                 ( "/real"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ real
                             ( Value c= Complex( Value a )( Value b ) )= Value a

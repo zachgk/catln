@@ -5,6 +5,7 @@ Prgm
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
                             ( /Catln/exit
@@ -25,6 +26,7 @@ Prgm
                 ( "/fib"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ /fib( Value /integer -> /Data/Primitive/Integer ) | /operator>( Value /l -> TVArg /integer = Value /integer )
                             ( Value /r -> /Data/Primitive/Integer = CInt 1 ) ->

@@ -6,6 +6,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /IntCons( Value /head -> /Data/Primitive/Integer )( Value /tail -> ∀/IntList ) ]
+                    , omiRefineDecls = []
                     , omiDefs = []
                     }
                 )
@@ -13,6 +14,7 @@ Prgm
                 ( "/IntNil"
                 , ObjectMapItem
                     { omiDecls = [ Value /IntNil ]
+                    , omiRefineDecls = []
                     , omiDefs = []
                     }
                 )
@@ -20,6 +22,7 @@ Prgm
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
                             ( /Catln/exit
@@ -55,6 +58,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /len( Value /this -> ∀/IntList ) -> /Data/Primitive/Integer ]
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ /len( Value /this -> /IntNil ) -> /Data/Primitive/Integer = CInt 0
                         , /len

@@ -6,6 +6,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /ContextOut[ /V : TopType ]( Value /value -> TVVar /V )( ..Hole TopType HoleActive Nothing ) ]
+                    , omiRefineDecls = []
                     , omiDefs = []
                     }
                 )
@@ -14,6 +15,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /operator==( Value /l -> /Data/String = Hole /Data/String HoleActive Nothing )( Value /r -> /Data/String = Hole /Data/String HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRefineDecls = []
                     , omiDefs = []
                     }
                 )
@@ -21,6 +23,7 @@ Prgm
                 ( "/Data/length"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/length( Value /this -> /Data/Nil ) -> /Data/Primitive/Integer = CInt 0
                         , /Data/length
@@ -53,6 +56,7 @@ Prgm
                         [ /Data/toString( Value /this -> /Data/String ) -> /Data/String
                         , /Data/toString( Value /this -> /Data/Primitive/Integer ) -> /Data/String
                         ]
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/toString( Value /this -> /Data/String ) -> TVArg /this = Value /this ]
                     }
@@ -61,6 +65,7 @@ Prgm
                 ( "/Data/Nil"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Nil ]
+                    , omiRefineDecls = []
                     , omiDefs = []
                     }
                 )
@@ -69,6 +74,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /ContextIn[ /V : TopType ]( Value /value -> TVVar /V )( ..Hole TopType HoleActive Nothing ) ]
+                    , omiRefineDecls = []
                     , omiDefs = []
                     }
                 )
@@ -76,6 +82,7 @@ Prgm
                 ( "/Data/String"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/String ]
+                    , omiRefineDecls = []
                     , omiDefs = []
                     }
                 )
@@ -87,6 +94,7 @@ Prgm
                         , /Context[ /T : TopType ][ /V : TopType ]( Value /value -> TVVar /V )( ..Hole TopType HoleActive Nothing ) | /operator?->
                             ( Value /l -> /ContextIn[ /V=TopType ]( /value=TopType ).. = /ContextIn[ /V : TVVar /V ]( Value /value -> TVVar /V = Hole TVVar /V HoleActive Nothing )( ..Hole TopType HoleActive Nothing ) )( Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing ) -> TVVar /T
                         ]
+                    , omiRefineDecls = []
                     , omiDefs = []
                     }
                 )
@@ -95,6 +103,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Cons[ /T : TopType ]( Value /head -> TVVar /T )( Value /tail -> ∀/Data/ConsList ) ]
+                    , omiRefineDecls = []
                     , omiDefs = []
                     }
                 )
@@ -102,6 +111,7 @@ Prgm
                 ( "/Data/None"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/None ]
+                    , omiRefineDecls = []
                     , omiDefs = []
                     }
                 )
@@ -110,6 +120,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/enum[ /T : ∀/Data/Enum ] -> ∀/Data/Set ]
+                    , omiRefineDecls = []
                     , omiDefs = []
                     }
                 )

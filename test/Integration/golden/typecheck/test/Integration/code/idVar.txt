@@ -5,6 +5,7 @@ Prgm
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
                             ( /Catln/exit
@@ -22,6 +23,7 @@ Prgm
                 ( "/id"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ /id[ /T : TopType ]( Value /x -> TVVar /T ) -> TVArg /x = Value /x ]
                     }

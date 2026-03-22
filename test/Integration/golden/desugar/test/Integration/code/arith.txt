@@ -5,6 +5,7 @@ Prgm
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
                     }
@@ -13,6 +14,7 @@ Prgm
                 ( "/sub"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ Value sub= /operator==
                             ( Value /l= /operator-
@@ -27,6 +29,7 @@ Prgm
                 ( "/add"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ Value add= /operator==
                             ( Value /l= /operator+
@@ -41,6 +44,7 @@ Prgm
                 ( "/mul"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ Value mul= /operator==
                             ( Value /l= /operator*
@@ -55,6 +59,7 @@ Prgm
                 ( "/modulo"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ Value modulo= /operator==
                             ( Value /l= /operator%

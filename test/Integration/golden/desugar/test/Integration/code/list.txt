@@ -5,6 +5,7 @@ Prgm
                 ( "/llength"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ llength( Value /this= Value Nil )= CInt 0
                         , llength
@@ -18,6 +19,7 @@ Prgm
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
                             ( Value val= /operator-

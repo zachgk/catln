@@ -113,7 +113,7 @@ toPrgm (objMap, classGraph, annots) = do
   return $ Prgm objMap' classGraph annots'
 
 verifyObjMapItem :: TypeName -> ObjectMapItem Expr TypedMetaDat -> StateT FEnv TypeCheckResult ()
-verifyObjMapItem name (ObjectMapItem decls defs) = do
+verifyObjMapItem name (ObjectMapItem decls _refineDecls defs) = do
   FEnv{feTypeEnv} <- get
   case (map (getMetaType . getExprMeta . oaObjExpr) decls, map (getMetaType . getExprMeta . oaObjExpr) defs) of
     ([], _) -> pure ()

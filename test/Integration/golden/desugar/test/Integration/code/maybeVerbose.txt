@@ -5,6 +5,7 @@ Prgm
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
                             ( Value val= defInt
@@ -19,6 +20,7 @@ Prgm
                 ( "/defInt"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ defInt
                             ( Value x= Just( Value val -> /Data/Primitive/Integer ) )= Value val
@@ -30,6 +32,7 @@ Prgm
                 ( "/Nothing"
                 , ObjectMapItem
                     { omiDecls = [ Value Nothing ]
+                    , omiRefineDecls = []
                     , omiDefs = []
                     }
                 )
@@ -38,6 +41,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ Just[ /T : TopType ]( Value /val -> TVVar /T ) ]
+                    , omiRefineDecls = []
                     , omiDefs = []
                     }
                 )

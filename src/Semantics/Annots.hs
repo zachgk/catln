@@ -30,6 +30,12 @@ isElseAnnot = isAnnot elseAnnot
 hasElseAnnot :: (ObjArrClass oa, ExprClass e) => oa e m -> Bool
 hasElseAnnot = hasAnnot elseAnnot
 
+isRefineAnnot :: (ExprClass e) => CompAnnot (e m) -> Bool
+isRefineAnnot = isAnnot refineAnnot
+
+hasRefineAnnot :: (ObjArrClass oa, ExprClass e) => oa e m -> Bool
+hasRefineAnnot = hasAnnot refineAnnot
+
 isCtxAnnot :: (ExprClass e) => CompAnnot (e m) -> Bool
 isCtxAnnot = isAnnot ctxAnnot
 

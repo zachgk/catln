@@ -73,6 +73,9 @@ noCoreAnnot = "#noCore"
 elseAnnot :: String
 elseAnnot = "/Catln/#else"
 
+refineAnnot :: String
+refineAnnot = "/Catln/#refine"
+
 runtimeAnnot, runtimeAnnotK :: String
 runtimeAnnot = "/Catln/#runtime"
 runtimeAnnotK = "/k"

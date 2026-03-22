@@ -5,6 +5,7 @@ Prgm
                 ( "/abs.$2a7c30-1"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ /abs.$2a7c30-1( EAppArg Value /x )
                             ( EAppArg Value /$2a7c30-arg -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing@Value /x2 ) ->
@@ -26,6 +27,7 @@ Prgm
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
                             ( /Catln/exit
@@ -46,6 +48,7 @@ Prgm
                 ( "/abs"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ /abs( EAppArg Value /x -> /Data/Primitive/Integer ) ->
                             ( /abs.$2a7c30-1
@@ -68,6 +71,7 @@ Prgm
                 ( "/abs.$2a7c30-0"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ /abs.$2a7c30-0( EAppArg Value /x -> ∀/Data/Algebra/Ord )
                             ( EAppArg Value /$2a7c30-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=( EAppArg Value /l -> TVArg /x = Value /x )

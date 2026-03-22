@@ -5,6 +5,7 @@ Prgm
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
                             ( /f( /io=/Catln/IO ) + /Catln/IO ) = /f
@@ -16,6 +17,7 @@ Prgm
                 ( "/outerVar"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ Value /outerVar ->
                             ( /operator==
@@ -37,6 +39,7 @@ Prgm
                 ( "/f.innerVar"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ /f.innerVar( EAppArg Value /io ) ->
                             ( /operator==
@@ -58,6 +61,7 @@ Prgm
                 ( "/f"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ /f( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
                     }

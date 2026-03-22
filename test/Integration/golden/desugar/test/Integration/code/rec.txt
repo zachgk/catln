@@ -5,6 +5,7 @@ Prgm
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
                             ( Value val= /operator-
@@ -20,6 +21,7 @@ Prgm
                 ( "/fact"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ fact( Value x -> /Data/Primitive/Integer ) | /operator==( Value /l= Value x )
                             ( Value /r= CInt 1 )= CInt 1

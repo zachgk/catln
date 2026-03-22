@@ -5,6 +5,7 @@ Prgm
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
                             ( Value val= abs
@@ -17,6 +18,7 @@ Prgm
                 ( "/abs"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ abs( Value x -> /Data/Primitive/Integer )= abs.$6119dc( Value /x= Value /x )
                             ( Value /$6119dc-arg= /Catln/ThenElse/fromBool
@@ -31,6 +33,7 @@ Prgm
                 ( "/abs.$6119dc"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRefineDecls = []
                     , omiDefs =
                         [ abs.$6119dc( Value /x )
                             ( Value /$6119dc-arg= Hole TopType HoleActive Nothing@Value Then )= Value x

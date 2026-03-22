@@ -1,4 +1,3 @@
-
 # # Int
 
 class(Int)
@@ -112,4 +111,11 @@ class(Int)
   (s@Skewed(m, x, b) * i :: ConstantInt)= s(m= m * i)
   # Division
   (s@Skewed(m, x, b) // i :: ConstantInt__factorOf(m))= s(m= m // i)
+  # ## Even
+  even(n -> Int) -> Boolean
+  even(Zero)= True
+  even(Succ(n))= ~even(n)
+  even(Pred(n))= ~even(n)
+  even(l + r | even(l) && even(r)) -> True
+    #refine
 
