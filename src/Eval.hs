@@ -34,6 +34,7 @@ import           Eval.Env
 import           Eval.ExprBuilder
 import           Eval.Runtime
 import           Semantics
+import           Semantics.Annots    (hasAnnot)
 import           Semantics.TypeGraph (ReachesEnv (ReachesEnv),
                                       reachesHasCutSubtypeOf, reachesPartials,
                                       reachesTo)
@@ -309,3 +310,20 @@ evalBuild function prgmName prgmGraphData = do
       let llvmStr = "LLVM Placeholder result"
       return (TupleVal "/Catln/CatlnResult" (H.fromList [("/name", StrVal "out.ll"), ("/contents", StrVal llvmStr)]), evalResult env')
     val -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval %s did not return a /Catln/CatlnResult. Instead it returned %s" function (show val)]
+
+evalTest :: EPrgmGraphData -> CRes [(String, CRes Val)]
+evalTest prgmGraphData = do
+  let prgm@(Prgm objMap _ _) = mconcat $ map fst3 $ graphToNodes prgmGraphData
+  let testOAs = filter (\oa -> hasAnnot testAnnot oa || hasAnnot exampleAnnot oa) $ flatObjectMap objMap
+  let noArgTestOAs = filter isNoArgTest testOAs
+  return $ map (runTest prgm) noArgTestOAs
+  where
+    isNoArgTest oa = null (exprAppliedArgs (oaObjExpr oa)) && null (exprAppliedOrdVars (oaObjExpr oa))
+    runTest p oa =
+      let testName = oaObjPath oa
+          result = do
+            let input = eVal testName
+            let src = getExprPartialType input
+            (expr, env) <- evalBuildPrgm input src intType p
+            fst <$> runStateT (evalExpr expr) env
+      in (testName, result)

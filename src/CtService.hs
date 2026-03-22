@@ -21,7 +21,7 @@ import           Data.Graph
 import qualified Data.HashMap.Strict     as H
 import           Data.Maybe
 import           Eval                    (evalAnnots, evalBuild, evalBuildAll,
-                                          evalRun)
+                                          evalRun, evalTest)
 import           Eval.Common             (EvalMetaDat, EvalResult, TExpr,
                                           Val (StrVal, TupleVal))
 import           Semantics               (CTSSConfig)
@@ -144,7 +144,8 @@ ctssGet :: (SSF -> Maybe (CRes a)) -> CTSS -> CResT IO (GraphData a FileImport)
 ctssGet f (CTSS ssmv) = do
   lift $ ctssBuildAll (CTSS ssmv)
   CTSSDat{ctssData} <- lift $ readMVar ssmv
-  asCResT $ mapMGraph (requireComputed . f) ctssData
+  let computed = graphFromEdges $ filter (isJust . f . fst3) $ graphToNodes ctssData
+  asCResT $ mapMGraph (requireComputed . f) computed
 
 ctssGetFrom :: (SSF -> Maybe (CRes a)) -> FileImport -> CTSS -> CResT IO (GraphData a FileImport)
 ctssGetFrom f prgmName (CTSS ssmv) = do
@@ -201,6 +202,11 @@ getEvalBuild :: CTSS -> FileImport -> String -> CResT IO Val
 getEvalBuild ctss prgmName fun = do
   base <- ctssGetFrom ssfTPrgm prgmName ctss
   fst <$> evalBuild fun prgmName base
+
+getTestResults :: CTSS -> CResT IO [(String, CRes Val)]
+getTestResults ctss = do
+  base <- ctssGet ssfTPrgm ctss
+  asCResT $ evalTest base
 
 getEvalAnnots :: CTSS -> FileImport -> CResT IO [(Expr EvalMetaDat, Val)]
 getEvalAnnots ctss prgmName = do

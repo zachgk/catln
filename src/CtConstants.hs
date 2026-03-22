@@ -50,6 +50,12 @@ assertStr = "/Catln/#assert"
 assertTestStr = "/test"
 assertMsgStr = "/msg"
 
+testAnnot :: String
+testAnnot = "/Catln/#test"
+
+exampleAnnot :: String
+exampleAnnot = "/Catln/#example"
+
 mdAnnot, mdAnnotText :: String
 mdAnnot = "/Catln/#md"
 mdAnnotText = "text"

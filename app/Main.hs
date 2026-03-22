@@ -75,6 +75,19 @@ xFmt prgmName = do
   let prgm' = formatRootPrgm prgm
   lift $ writeFile prgmName prgm'
 
+xTest :: String -> CResT IO ()
+xTest prgmName = do
+  ctss <- lift $ ctssBaseFiles buildCtssConfig [prgmName]
+  results <- getTestResults ctss
+  let failures = [(name, notes) | (name, CErr notes) <- results]
+  let total = length results
+  let passed = total - length failures
+  lift $ putStrLn $ printf "Tests: %d/%d passed" passed total
+  forM_ failures $ \(name, notes) -> do
+    lift $ putStrLn $ printf "  FAIL: %s" name
+    lift $ putStrLn $ prettyCNotes notes
+  unless (null failures) $ fail $ printf "%d test(s) failed" (length failures)
+
 xDepTree :: String -> Bool -> CResT IO ()
 xDepTree prgmName showCore = do
   -- Parse the root file and get canonical import
@@ -127,6 +140,7 @@ exec (Convert fname outFname)   = xConvert fname outFname
 exec CLsp                       = xLsp
 exec (Fmt fname)                = xFmt fname
 exec (DepTree fname showCore)   = xDepTree fname showCore
+exec (TestFile fname)           = xTest fname
 
 data Command
   = BuildFile String String
@@ -136,6 +150,7 @@ data Command
   | CLsp
   | Fmt String
   | DepTree String Bool
+  | TestFile String
 
 cRun :: Parser Command
 cRun = RunFile
@@ -170,6 +185,10 @@ cDepTree = DepTree
   <$> argument str (metavar "FILE" <> help "The file to show dependency tree for")
   <*> switch (long "show-core" <> help "Show core library dependencies in the tree")
 
+cTest :: Parser Command
+cTest = TestFile
+  <$> argument str (metavar "FILE" <> help "The file to test")
+
 main :: IO ()
 main = do
   cmd <- execParser opts
@@ -190,4 +209,5 @@ main = do
       <> command "lsp" (info cLsp (progDesc "Runs the language server"))
       <> command "fmt" (info cFmt (progDesc "Runs the Catln formatter for a program"))
       <> command "deptree" (info cDepTree (progDesc "Shows the dependency tree for a program"))
+      <> command "test" (info cTest (progDesc "Runs all tests in a program"))
                              )

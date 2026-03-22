@@ -67,6 +67,10 @@ module(Data/Primitive)
   # ### Commutative Group
   every(Integer, isa= [/Data/Algebra/CommutativeMonoid])
   every(Integer, isa= [/Data/Algebra/Group])
+  exampleZeroPlusZero =
+    #example
+    #assert(test= 0 + 0 == 0)
+    0
   # mempty<Integer $T> = 0
   # mappend<Integer $T>($T l, $T r) = l + r
   # inverse<Integer $T>($T t) = -t

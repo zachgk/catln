@@ -137,6 +137,14 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Primitive/exampleZeroPlusZero"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiDefs =
+                        [ Value /Data/Primitive/exampleZeroPlusZero -> /Data/Primitive/Integer = CInt 0 ]
+                    }
+                )
+            ,
                 ( "/operator*"
                 , ObjectMapItem
                     { omiDecls =
@@ -177,6 +185,7 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType
