@@ -310,7 +310,7 @@ getEvalBuild ctss prgmName fun = do
   base <- ctssGetFrom ssfTPrgm prgmName ctss
   fst <$> evalBuild fun prgmName base
 
-getTestResults :: CTSS -> CResT IO [(String, CRes Val)]
+getTestResults :: CTSS -> CResT IO [(String, CResT IO Val)]
 getTestResults ctss = do
   base <- ctssGet ssfTPrgm ctss
   asCResT $ evalTest base

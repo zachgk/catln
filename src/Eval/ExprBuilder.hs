@@ -57,3 +57,12 @@ getExprPartialType expr = case getExprType expr of
     [partial] -> partial
     _ -> error $ printf "Found non-singleton in getExprPartialType %s" (show expr)
   _ -> error $ printf "Found on-union in getExprPartialType %s" (show expr)
+
+-- | Convert a runtime 'Val' back into an 'EExpr' constant expression.
+valToEExpr :: Val -> EExpr
+valToEExpr (IntVal i)   = CExpr (emptyMetaT intType) (CInt i)
+valToEExpr (FloatVal d) = CExpr (emptyMetaT floatType) (CFloat d)
+valToEExpr (StrVal s)   = CExpr (emptyMetaT strType) (CStr s)
+valToEExpr (CharVal c)  = CExpr (emptyMetaT (singletonType charLeaf)) (CChar c)
+valToEExpr (TupleVal name args) = foldl (\base (argName, argVal) -> eApply base (argName, valToEExpr argVal)) (eVal name) (H.toList args)
+valToEExpr v = error $ printf "valToEExpr: unsupported Val %s" (show v)

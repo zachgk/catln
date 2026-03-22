@@ -23,6 +23,7 @@ import           Semantics.Types
 
 import           Control.Monad
 import           Data.Graph
+import           Data.List               (nubBy)
 import           Data.Maybe
 -- import           Emit                (codegenExInit)
 import           Control.Monad.State
@@ -33,11 +34,14 @@ import           Eval.Common
 import           Eval.Env
 import           Eval.ExprBuilder
 import           Eval.Runtime
+import qualified Hedgehog
+import qualified Hedgehog.Gen        as HG
 import           Semantics
 import           Semantics.Annots    (hasAnnot)
 import           Semantics.TypeGraph (ReachesEnv (ReachesEnv),
                                       reachesHasCutSubtypeOf, reachesPartials,
                                       reachesTo)
+import           Testing.Generation  (genVal)
 import           Text.Printf
 import           TreeBuild
 import           Utils
@@ -313,19 +317,80 @@ evalBuild function prgmName prgmGraphData = do
       return (TupleVal "/Catln/CatlnResult" (H.fromList [("/name", StrVal "out.ll"), ("/contents", StrVal llvmStr)]), evalResult env')
     val -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval %s did not return a /Catln/CatlnResult. Instead it returned %s" function (show val)]
 
-evalTest :: EPrgmGraphData -> CRes [(String, CRes Val)]
+evalTest :: EPrgmGraphData -> CRes [(String, CResT IO Val)]
 evalTest prgmGraphData = do
   let prgm@(Prgm objMap _ _) = mconcat $ map fst3 $ graphToNodes prgmGraphData
-  let testOAs = filter (\oa -> hasAnnot testAnnot oa || hasAnnot exampleAnnot oa) $ flatObjectMap objMap
-  let noArgTestOAs = filter isNoArgTest testOAs
-  return $ map (runTest prgm) noArgTestOAs
+  let testOAs = nubBy (\a b -> oaObjPath a == oaObjPath b) $ filter (\oa -> hasAnnot testAnnot oa || hasAnnot exampleAnnot oa) $ flatObjectMap objMap
+  let (noArgTests, propTests) = foldr partitionTest ([], []) testOAs
+  return $ map (runSimpleTest prgm) noArgTests ++ map (runPropertyTest prgm) propTests
   where
     isNoArgTest oa = null (exprAppliedArgs (oaObjExpr oa)) && null (exprAppliedOrdVars (oaObjExpr oa))
-    runTest p oa =
+    partitionTest oa (simple, props)
+      | isNoArgTest oa = (oa : simple, props)
+      | otherwise      = (simple, oa : props)
+
+    runSimpleTest p oa =
       let testName = oaObjPath oa
-          result = do
+          action = asCResT $ do
             let input = eVal testName
             let src = getExprPartialType input
             (expr, env) <- evalBuildPrgm input src intType p
             fst <$> runStateT (evalExpr expr) env
-      in (testName, result)
+      in (testName, action)
+
+    runPropertyTest p oa =
+      let testName = oaObjPath oa
+          typeEnv  = mkTypeEnv p
+          typeVars = exprAppliedOrdVars (oaObjExpr oa)
+          args     = exprAppliedArgs (oaObjExpr oa)
+
+          -- Resolve a type variable's constraint to a list of concrete PartialTypes
+          resolveVar (_varName, varMeta) =
+            let TypeEnv{teNames} = typeEnv
+            in splitUnionType $ expandTypeWithNames typeEnv H.empty (getMetaType varMeta) teNames
+
+          concreteTypesPerVar = map resolveVar typeVars
+
+          prop = Hedgehog.property $ do
+            -- For each type variable, choose a concrete PartialType
+            chosenTypes <- mapM (\concretes ->
+              if null concretes
+                then Hedgehog.discard
+                else Hedgehog.forAll (HG.element concretes)
+              ) concreteTypesPerVar
+
+            -- Build a map from type var name to chosen concrete type
+            let varTypeMap = H.fromList $ zip (map fst typeVars) chosenTypes
+
+            -- For each value argument, determine its concrete type and generate a value
+            argVals <- mapM (\argOA ->
+              let argType = case oaArr argOA of
+                    Just (_, arrMeta) -> case getMetaType arrMeta of
+                      TypeVar (TVVar vn) _ -> H.lookupDefault intLeaf vn varTypeMap
+                      UnionType Nothing partials [] -> case splitUnionType partials of
+                        [pt] -> pt
+                        _    -> intLeaf
+                      _                   -> intLeaf
+                    Nothing -> intLeaf
+              in Hedgehog.forAll (genVal argType)
+              ) args
+
+            -- Build the expression: testName(arg0=val0, arg1=val1, ...)
+            let argNames = map oaObjPath args
+            let input = foldl (\base (n, v) -> eApply base (n, valToEExpr v))
+                               (eVal testName)
+                               (zip argNames argVals)
+            let src = getExprPartialType input
+
+            case evalBuildPrgm input src intType p of
+              CErr notes -> Hedgehog.footnote (prettyCNotes notes) >> Hedgehog.failure
+              CRes _ (expr, env) -> case runStateT (evalExpr expr) env of
+                CErr notes -> Hedgehog.footnote (prettyCNotes notes) >> Hedgehog.failure
+                CRes _ _   -> Hedgehog.success
+
+          action = CResT $ do
+            ok <- Hedgehog.check prop
+            return $ if ok
+              then CRes [] (TupleVal "()" H.empty)
+              else CErr [MkCNote $ GenCErr Nothing $ printf "Property test failed: %s" testName]
+      in (testName, action)

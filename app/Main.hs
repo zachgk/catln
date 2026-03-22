@@ -78,7 +78,10 @@ xFmt prgmName = do
 xTest :: String -> CResT IO ()
 xTest prgmName = do
   ctss <- lift $ ctssBaseFiles buildCtssConfig [prgmName]
-  results <- getTestResults ctss
+  testDescs <- getTestResults ctss
+  results <- forM testDescs $ \(name, testAction) -> do
+    result <- lift $ runCResT testAction
+    return (name, result)
   let failures = [(name, notes) | (name, CErr notes) <- results]
   let total = length results
   let passed = total - length failures
