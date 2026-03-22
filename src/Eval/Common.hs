@@ -377,7 +377,6 @@ resArrowDestType _ _ t = error $ printf "Not yet implemented resArrowDestType fo
 -- | As there are no vars stored in the value, it only gets arguments
 exprArgsWithVal :: (MetaDat m, Show m) => Expr m -> Val -> Args
 exprArgsWithVal CExpr{} _ = H.empty
-exprArgsWithVal (Value _ n) (TupleVal tupleName _) | n /= tupleName = error $ printf "Found name mismatch in exprArgsWithVal. Expression name is %s but value name is %s" n tupleName
 exprArgsWithVal Value{} _ = H.empty
 exprArgsWithVal HoleExpr{} _ = H.empty
 exprArgsWithVal (EWhere _ base _) val = exprArgsWithVal base val
@@ -400,7 +399,6 @@ exprArgsWithVal (TupleApply _ (_, be) arg) val = H.union (exprArgsWithVal be val
 -- | As there are no vars stored in the value, it only gets arguments
 texprArgsWithVal :: (MetaDat m, Show m) => TExpr m -> Val -> Args
 texprArgsWithVal TCExpr{} _ = H.empty
-texprArgsWithVal (TValue _ n) (TupleVal tupleName _) | n /= tupleName = error $ printf "Found name mismatch in exprArgsWithVal. Expression name is %s but value name is %s" n tupleName
 texprArgsWithVal TValue{} _ = H.empty
 texprArgsWithVal THoleExpr{} _ = H.empty
 texprArgsWithVal (TWhere _ base _) val = texprArgsWithVal base val

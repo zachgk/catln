@@ -46,6 +46,15 @@ eApplyM baseExpr argName argM = TupleApply m (getExprMeta baseExpr, baseExpr) (E
     m = Meta (singletonType $ baseType{ptArgs=H.insert (partialKey argName) argExprType baseArgs}) Nothing nil emptyMetaDat
     baseType@PartialType{ptArgs=baseArgs} = getExprPartialType baseExpr
 
+-- | Apply a concrete type to a type variable in an expression.
+-- Builds the @expr[$varName = concreteType]@ form.
+eAppVar :: EExpr -> TypeVarName -> PartialType -> EExpr
+eAppVar baseExpr varName chosenType =
+  let concreteType = singletonType chosenType
+      vm = emptyMetaT concreteType
+      m  = emptyMetaT (typeSetVar varName concreteType (getExprType baseExpr))
+  in TupleApply m (emptyMetaT (getExprType baseExpr), baseExpr) (EAppVar varName vm)
+
 
 eVal :: String -> EExpr
 eVal name = Value m name
@@ -57,3 +66,12 @@ getExprPartialType expr = case getExprType expr of
     [partial] -> partial
     _ -> error $ printf "Found non-singleton in getExprPartialType %s" (show expr)
   _ -> error $ printf "Found on-union in getExprPartialType %s" (show expr)
+
+-- | Convert a runtime 'Val' back into an 'EExpr' constant expression.
+valToEExpr :: Val -> EExpr
+valToEExpr (IntVal i)   = CExpr (emptyMetaT intType) (CInt i)
+valToEExpr (FloatVal d) = CExpr (emptyMetaT floatType) (CFloat d)
+valToEExpr (StrVal s)   = CExpr (emptyMetaT strType) (CStr s)
+valToEExpr (CharVal c)  = CExpr (emptyMetaT (singletonType charLeaf)) (CChar c)
+valToEExpr (TupleVal name args) = foldl (\base (argName, argVal) -> eApply base (argName, valToEExpr argVal)) (eVal name) (H.toList args)
+valToEExpr v = error $ printf "valToEExpr: unsupported Val %s" (show v)

@@ -41,6 +41,15 @@ Prgm
                     }
                 )
             ,
+                ( "/operator++"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator++( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Integer ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/operator>="
                 , ObjectMapItem
                     { omiDecls =
@@ -88,6 +97,15 @@ Prgm
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/inverse"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Primitive/inverse( Value t -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator-( Value /a= Value t ) ]
                     }
                 )
             ,
@@ -181,6 +199,15 @@ Prgm
                     { omiDecls = [ Value /Data/Primitive/False ]
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/mempty"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/Primitive/mempty -> /Data/Primitive/Integer = CInt 0 ]
                     }
                 )
             ,
@@ -283,6 +310,9 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGClass
             ( False
             , /Data/Primitive/Integer
@@ -343,12 +373,6 @@ Prgm
             ( Value /text= CStr "## Integers" )
         , /Catln/#md
             ( Value /text= CStr "### Commutative Group" )
-        , /Catln/#md
-            ( Value /text= CStr "mempty<Integer $T> = 0" )
-        , /Catln/#md
-            ( Value /text= CStr "mappend<Integer $T>($T l, $T r) = l + r" )
-        , /Catln/#md
-            ( Value /text= CStr "inverse<Integer $T>($T t) = -t" )
         , /Catln/#md
             ( Value /text= CStr "## Floats" )
         ]

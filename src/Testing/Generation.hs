@@ -21,6 +21,7 @@ import qualified Data.HashMap.Strict     as H
 import           Data.List               (partition)
 import           Data.Maybe
 import qualified Data.Set                as S
+import           Eval.Common             (Val (..))
 import           Hedgehog
 import qualified Hedgehog.Gen            as HG
 import           Hedgehog.Range          (linear, linearFrac, singleton)
@@ -220,3 +221,24 @@ genPrgms = do
   prgm <- genPrgm
   prgmName <- HG.string (linear 5 10) HG.lower
   return [(prgm, desFileImport $ mkRawFileImport $ RawCExpr emptyMetaN $ CStr prgmName, [])]
+
+-- | Generate a random 'Val' for a concrete 'PartialType'.
+-- Returns 'HG.discard' for unknown types.
+genVal :: PartialType -> Gen Val
+genVal pt
+  | pt == intLeaf   = IntVal <$> HG.integral (linear (-1000) 1000)
+  | pt == floatLeaf = FloatVal <$> HG.double (linearFrac (-1000) 1000)
+  | pt == strLeaf   = StrVal <$> HG.string (linear 0 20) HG.unicode
+  | pt == charLeaf  = CharVal <$> HG.unicode
+  | ptName pt == truePrim  = pure $ TupleVal truePrim H.empty
+  | ptName pt == falsePrim = pure $ TupleVal falsePrim H.empty
+  | otherwise = HG.discard
+
+-- | Generate a random 'Val' for a 'Type'.
+-- For union types, picks a random variant and delegates to 'genVal'.
+genValForType :: Type -> Gen Val
+genValForType (UnionType Nothing leafs []) = case splitUnionType leafs of
+  []  -> HG.discard
+  [p] -> genVal p
+  ps  -> HG.element ps >>= genVal
+genValForType _ = HG.discard
