@@ -1,0 +1,104 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
+                    }
+                )
+            ,
+                ( "/square"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /square( Value /x -> /Data/Primitive/Float ) ->
+                            ( /operator*
+                                ( /r=/Data/Primitive/Float
+                                , /l=/Data/Primitive/Float
+                                ) + /Data/Primitive/Float
+                            ) = /operator*( Value /l -> TVArg /x = Value /x )( Value /r -> TVArg /x = Value /x )
+                        ]
+                    }
+                )
+            ,
+                ( "/add"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /add( Value /x -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer ) ->
+                            ( /operator+
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) + /operator+
+                                ( /r=/Data/Primitive/Float
+                                , /l=/Data/Primitive/Float
+                                ) + /add.result
+                                ( /x=/Data/Primitive/Integer
+                                , /y=/Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer + /Data/Primitive/Float
+                            ) = /add.result( Value /x -> TVArg /x = Value /x )( Value /y -> TVArg /y = Value /y )
+                        ]
+                    }
+                )
+            ,
+                ( "/PI"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /PI -> /Data/String = CStr "3.14159" ]
+                    }
+                )
+            ,
+                ( "/add.result"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /add.result
+                            ( Value /x -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) )
+                            ( Value /y -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) ) ->
+                            ( /operator+
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) + /operator+
+                                ( /r=/Data/Primitive/Float
+                                , /l=/Data/Primitive/Float
+                                ) + /Data/Primitive/Integer + /Data/Primitive/Float
+                            ) = /operator+( Value /l -> TVArg /x = Value /x )( Value /r -> TVArg /y = Value /y )
+                        ]
+                    }
+                )
+            ,
+                ( "/MAX_SIZE"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /MAX_SIZE -> /Data/String = CStr "100" ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Point
+            , []
+            , Just ""
+            )
+        ]
+    , prgmAnnots = []
+    }

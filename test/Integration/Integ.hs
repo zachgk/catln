@@ -5,7 +5,7 @@ import           Test.Tasty
 import           Test.Tasty.HUnit
 import           Text.Printf
 
-import           Common.TestCommon   (findCt)
+import           Common.TestCommon   (findCt, findPy)
 import           Control.Monad.Trans
 import           CRes
 import           CtService
@@ -119,11 +119,19 @@ test = defaultMain $ runTests False ["test/test.ct"]
 testd :: IO ()
 testd = docApi False ["test/test.ct"]
 
+runPyTest :: Bool -> String -> TestTree
+runPyTest = runTest
+
 standardTests :: IO [String]
 standardTests = findCt testDir
 
 integrationTests :: IO TestTree
-integrationTests = runTests True <$> standardTests
+integrationTests = do
+  ctFiles <- standardTests
+  pyFiles <- findPy testDir
+  let ctGroup = runTests True ctFiles
+  let pyGroup = testGroup "Python" $ map (runPyTest True) pyFiles
+  return $ testGroup "Integration" [ctGroup, pyGroup]
 
 mtFileName :: String -> IO String
 mtFileName k = do

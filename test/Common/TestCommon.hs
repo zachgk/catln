@@ -10,3 +10,6 @@ filesWithExtension ext testDir = do
 
 findCt :: String -> IO [String]
 findCt = filesWithExtension ".ct"
+
+findPy :: String -> IO [String]
+findPy = filesWithExtension ".py"

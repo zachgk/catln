@@ -1,0 +1,75 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                    }
+                )
+            ,
+                ( "/square"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ square( Value x -> /Data/Primitive/Float ) -> /Data/Primitive/Float = /operator*( Value /l= Value x )( Value /r= Value x ) ]
+                    }
+                )
+            ,
+                ( "/add"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ add( Value x -> /Data/Primitive/Integer )( Value y -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = add.result( Value /x= Value /x )( Value /y= Value /y ) ]
+                    }
+                )
+            ,
+                ( "/PI"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value PI -> /Data/Primitive/Float = CStr "3.14159" ]
+                    }
+                )
+            ,
+                ( "/add.result"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ add.result( Value /x )( Value /y ) -> /Data/Primitive/Integer = /operator+( Value /l= Value x )( Value /r= Value y ) ]
+                    }
+                )
+            ,
+                ( "/MAX_SIZE"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value MAX_SIZE -> /Data/Primitive/Integer = CStr "100" ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Point
+            , []
+            , Just ""
+            )
+        ]
+    , prgmAnnots = []
+    }

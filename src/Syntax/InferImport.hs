@@ -30,7 +30,8 @@ fileExtensionParsers = H.fromList [
   ("ct", \n -> rawVal "ct" `applyRawArgs` [(Nothing, rawStr n)]),
   ("ctx", \n -> rawVal "ctx" `applyRawArgs` [(Nothing, rawStr n)]),
   ("md", \n -> rawVal "md" `applyRawArgs` [(Nothing, rawStr n)]),
-  ("hs", \n -> rawVal "haskell" `applyRawArgs` [(Nothing, rawStr n)])
+  ("hs", \n -> rawVal "haskell" `applyRawArgs` [(Nothing, rawStr n)]),
+  ("py", \n -> rawVal "python" `applyRawArgs` [(Nothing, rawStr n)])
                              ]
 
 isSupportedFileExtension :: String -> Bool

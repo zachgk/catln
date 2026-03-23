@@ -1,0 +1,45 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                    }
+                )
+            ,
+                ( "/add"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ add( Value x -> /Data/Primitive/Integer )( Value y -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l= Value x )( Value /r= Value y ) ]
+                    }
+                )
+            ,
+                ( "/PI"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value PI -> /Data/Primitive/Float = CStr "3.14" ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Point
+            , []
+            , Just ""
+            )
+        ]
+    , prgmAnnots = []
+    }
