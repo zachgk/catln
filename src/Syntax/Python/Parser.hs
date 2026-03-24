@@ -20,6 +20,7 @@ import qualified Data.ByteString          as BS
 import qualified Data.HashMap.Strict      as H
 import           Data.List                (intercalate, partition)
 import           Data.Maybe               (isNothing, listToMaybe, mapMaybe)
+import           Text.Read                (readMaybe)
 import           Foreign                  (Ptr)
 import           Semantics.Prgm
 import           Semantics.Types
@@ -96,8 +97,16 @@ parsePyExpr fileContents nodeP = do
     en <- easyNode node
     case eType en of
       "identifier"          -> PyVar <$> nodeContents fileContents node
-      "integer"             -> PyLit <$> nodeContents fileContents node
-      "float"               -> PyLit <$> nodeContents fileContents node
+      "integer"             -> do
+        s <- nodeContents fileContents node
+        return $ case readMaybe s :: Maybe Integer of
+          Just i -> PyInt i
+          Nothing -> PyLit s  -- fallback for hex (0xFF), binary (0b101), etc.
+      "float"               -> do
+        s <- nodeContents fileContents node
+        return $ case readMaybe s :: Maybe Double of
+          Just f -> PyFloat f
+          Nothing -> PyLit s  -- fallback for unusual float syntax
       "string"              -> PyLit <$> nodeContents fileContents node
       "concatenated_string" -> PyLit <$> nodeContents fileContents node
       "true"                -> return (PyBool True)
@@ -497,6 +506,10 @@ mapPyBuiltinType "float" = "Float"
 mapPyBuiltinType "str"   = "String"
 mapPyBuiltinType "bool"  = "Boolean"
 mapPyBuiltinType "None"  = "IO"
+mapPyBuiltinType "list"  = "List"
+mapPyBuiltinType "dict"  = "Dict"
+mapPyBuiltinType "set"   = "Set"
+mapPyBuiltinType "tuple" = "Tuple"
 mapPyBuiltinType name    = name
 
 -- | Convert a Python expression that appears in type-annotation position.
@@ -508,6 +521,8 @@ convertPyTypeExpr e            = convertPyExpr e
 
 convertPyExpr :: PyExpr -> RawExpr ()
 convertPyExpr (PyVar name)        = rawVal name
+convertPyExpr (PyInt i)           = RawCExpr emptyMetaN (CInt i)
+convertPyExpr (PyFloat f)         = RawCExpr emptyMetaN (CFloat f)
 convertPyExpr (PyLit s)           = rawStr s
 convertPyExpr (PyBool True)       = rawVal "True"
 convertPyExpr (PyBool False)      = rawVal "False"
@@ -519,6 +534,8 @@ convertPyExpr (PyAttr obj attr)   =
   RawMethod emptyMetaN (convertPyExpr obj) (rawVal attr)
 convertPyExpr (PySubscript b idx) =
   convertPyExpr b `applyRawArgs` [(Nothing, convertPyExpr idx)]
+convertPyExpr (PyCall (PyVar name) args)
+  | Just converted <- convertPyBuiltinCall name args = converted
 convertPyExpr (PyCall func args)  =
   convertPyExpr func `applyRawArgs` map convertPyCallArg args
 convertPyExpr (PyBinOp op l r)    =
@@ -529,6 +546,58 @@ convertPyExpr (PyBinOp op l r)    =
 convertPyExpr (PyUnOp op e)       =
   rawVal (operatorName op)
     `applyRawArgs` [(Just $ partialKey operatorArgUnary, convertPyExpr e)]
+
+-- | Translate calls to Python built-in functions to Catln equivalents.
+-- Returns Nothing for unknown names so the caller falls through to generic
+-- function-call conversion.
+convertPyBuiltinCall :: String -> [PyCallArg] -> Maybe (RawExpr ())
+-- abs(x) -> x.abs
+convertPyBuiltinCall "abs" [PyPosArg x] =
+  Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "abs")
+-- pow(base, exp) -> pow(base=base, exp=exp)
+convertPyBuiltinCall "pow" [PyPosArg base, PyPosArg expE] =
+  Just $ rawVal "pow"
+    `applyRawArgs` [ (Just $ partialKey "base", convertPyExpr base)
+                   , (Just $ partialKey "exp",  convertPyExpr expE)
+                   ]
+-- round(x) -> x.round, floor(x) -> x.floor, ceil(x) -> x.ceil
+convertPyBuiltinCall "round" [PyPosArg x] =
+  Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "round")
+convertPyBuiltinCall "floor" [PyPosArg x] =
+  Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "floor")
+convertPyBuiltinCall "ceil" [PyPosArg x] =
+  Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "ceil")
+-- len(x) -> x.length
+convertPyBuiltinCall "len" [PyPosArg x] =
+  Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "length")
+-- Type conversions: int(x)->x.toInt, float(x)->x.toFloat, str(x)->x.toString, bool(x)->x.toBool
+convertPyBuiltinCall "int"   [PyPosArg x] =
+  Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "toInt")
+convertPyBuiltinCall "float" [PyPosArg x] =
+  Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "toFloat")
+convertPyBuiltinCall "str"   [PyPosArg x] =
+  Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "toString")
+convertPyBuiltinCall "bool"  [PyPosArg x] =
+  Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "toBool")
+-- chr(n) -> chr(n=n),  ord(c) -> c.ord
+convertPyBuiltinCall "chr"   [PyPosArg x] =
+  Just $ rawVal "chr"
+    `applyRawArgs` [(Just $ partialKey "n", convertPyExpr x)]
+convertPyBuiltinCall "ord"   [PyPosArg x] =
+  Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "ord")
+-- hex(n) -> n.hex, oct(n) -> n.oct, bin(n) -> n.bin
+convertPyBuiltinCall "hex"   [PyPosArg x] =
+  Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "hex")
+convertPyBuiltinCall "oct"   [PyPosArg x] =
+  Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "oct")
+convertPyBuiltinCall "bin"   [PyPosArg x] =
+  Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "bin")
+-- print(*args) -> io.println(msg=arg.toString) for single-arg case
+convertPyBuiltinCall "print" [PyPosArg x] =
+  Just $ RawMethod emptyMetaN (rawVal "io") (rawVal "println")
+    `applyRawArgs` [(Just $ partialKey "msg",
+                     RawMethod emptyMetaN (convertPyExpr x) (rawVal "toString"))]
+convertPyBuiltinCall _ _ = Nothing
 
 convertPyCallArg :: PyCallArg -> (Maybe ArgName, RawExpr ())
 convertPyCallArg (PyPosArg e)     = (Nothing, convertPyExpr e)

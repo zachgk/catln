@@ -17,7 +17,9 @@ type PyName = String
 
 -- | A Python expression
 data PyExpr
-  = PyLit    String               -- ^ A literal stored as raw source text
+  = PyLit    String               -- ^ A string literal (raw source text)
+  | PyInt    Integer              -- ^ An integer literal
+  | PyFloat  Double               -- ^ A floating-point literal
   | PyVar    PyName               -- ^ An identifier / variable reference
   | PyCall   PyExpr [PyCallArg]   -- ^ A function call
   | PyBinOp  String PyExpr PyExpr -- ^ A binary operator

@@ -2,6 +2,15 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/BIG"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value BIG -> /Data/Primitive/Integer = /operator+( Value /l= Value MAX_SIZE )( Value /r= Value MAX_SIZE ) ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -34,7 +43,27 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value PI -> /Data/Primitive/Float = CStr "3.14159" ]
+                        [ Value PI -> /Data/Primitive/Float = CFloat 3.14159 ]
+                    }
+                )
+            ,
+                ( "/DOUBLE_PI"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value DOUBLE_PI -> /Data/Primitive/Float = /operator*( Value /l= Value PI )
+                            ( Value /r= CFloat 2.0 )
+                        ]
+                    }
+                )
+            ,
+                ( "/scale"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ scale( Value values -> ∀/Data/List )( Value factor -> /Data/Primitive/Integer ) -> ∀/Data/List ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
                     }
                 )
             ,
@@ -52,13 +81,16 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value MAX_SIZE -> /Data/Primitive/Integer = CStr "100" ]
+                        [ Value MAX_SIZE -> /Data/Primitive/Integer = CInt 100 ]
                     }
                 )
             ]
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType

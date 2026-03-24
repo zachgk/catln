@@ -2,6 +2,23 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/BIG"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /BIG ->
+                            ( /operator+
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
+                            ) = /operator+
+                            ( EAppArg Value /l -> /Data/Primitive/Integer = ( Value /MAX_SIZE ↦ /Data/Primitive/Integer ) )
+                            ( EAppArg Value /r -> /Data/Primitive/Integer = ( Value /MAX_SIZE ↦ /Data/Primitive/Integer ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -56,7 +73,33 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /PI -> /Data/String = "3.14159" ]
+                        [ Value /PI -> /Data/Primitive/Float = 3.14159 ]
+                    }
+                )
+            ,
+                ( "/DOUBLE_PI"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /DOUBLE_PI ->
+                            ( /operator*
+                                ( /r=/Data/Primitive/Float
+                                , /l=/Data/Primitive/Float
+                                ) + /Data/Primitive/Float
+                            ) = /operator*
+                            ( EAppArg Value /l -> /Data/Primitive/Float = ( Value /PI ↦ /Data/Primitive/Float ) )
+                            ( EAppArg Value /r -> /Data/Primitive/Float = 2.0 )
+                        ]
+                    }
+                )
+            ,
+                ( "/scale"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /scale( EAppArg Value /values -> ∀/Data/List )( EAppArg Value /factor -> /Data/Primitive/Integer ) -> ∀/Data/List ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
                     }
                 )
             ,
@@ -86,13 +129,16 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /MAX_SIZE -> /Data/String = "100" ]
+                        [ Value /MAX_SIZE -> /Data/Primitive/Integer = 100 ]
                     }
                 )
             ]
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
