@@ -18,5 +18,5 @@ PI: float = 3.14159
 MAX_SIZE: int = 100
 
 
-def main(io: IO) -> IO:
-    return io
+def main() -> None:
+    pass

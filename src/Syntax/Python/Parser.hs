@@ -19,7 +19,7 @@ import           CtConstants
 import qualified Data.ByteString          as BS
 import qualified Data.HashMap.Strict      as H
 import           Data.List                (intercalate, partition)
-import           Data.Maybe               (listToMaybe, mapMaybe)
+import           Data.Maybe               (isNothing, listToMaybe, mapMaybe)
 import           Foreign                  (Ptr)
 import           Semantics.Prgm
 import           Semantics.Types
@@ -503,6 +503,7 @@ mapPyBuiltinType name    = name
 -- Applies 'mapPyBuiltinType' so that e.g. @int@ becomes @Integer@.
 convertPyTypeExpr :: PyExpr -> RawExpr ()
 convertPyTypeExpr (PyVar name) = rawVal (mapPyBuiltinType name)
+convertPyTypeExpr PyNone       = rawVal "IO"   -- None in annotation position maps to IO
 convertPyTypeExpr e            = convertPyExpr e
 
 convertPyExpr :: PyExpr -> RawExpr ()
@@ -591,12 +592,24 @@ convertPyStatementToTree :: PyStatement -> Maybe (RawStatementTree RawExpr ())
 convertPyStatementToTree stmt = case stmt of
 
   PyFuncDef name params retType body ->
-    let (ctxParams, regParams) = partition isContextParam params
+    let (ctxParams0, regParams) = partition isContextParam params
+        -- If the return type maps to IO but there are no explicit IO context
+        -- params, synthesise one: `def f() -> None: pass` becomes
+        -- `f{io -> IO} = io`.  This allows authentic Python signatures like
+        -- `def main() -> None: pass` to round-trip through the full pipeline.
+        retTypeIsIO = case retType of
+          Just (PyVar t) -> mapPyBuiltinType t == "IO"
+          Just PyNone    -> True
+          _              -> False
+        (bodyExpr0, bodyDecls) = convertPyBody body
+        (ctxParams, bodyExpr)
+          | null ctxParams0 && retTypeIsIO && isNothing bodyExpr0 =
+              ([PySimpleParam "io" (Just (PyVar "IO"))], Just (rawVal "io"))
+          | otherwise = (ctxParams0, bodyExpr0)
         baseHead   = applyTypedParams (rawVal name) (map convertPyParam regParams)
         funcHead   = case ctxParams of
           []  -> baseHead
           cps -> RawContextApply emptyMetaN (emptyMetaN, baseHead) (map convertPyParam cps)
-        (bodyExpr, bodyDecls) = convertPyBody body
         -- Context-parameterized functions (ContextIn) must not carry an
         -- explicit return-type annotation — the type is inferred from the
         -- context.  Plain functions keep the Python return-type annotation.

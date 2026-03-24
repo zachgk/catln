@@ -9,5 +9,5 @@ class Point:
 PI: float = 3.14
 
 
-def main(io: IO) -> IO:
-    return io
+def main() -> None:
+    pass
