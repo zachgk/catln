@@ -84,5 +84,34 @@ def to_bool_from_float(x: float) -> bool:
     return bool(x)
 
 
+# Phase 4: string operations
+def char_from_code(n: int) -> str:
+    return chr(n)
+
+
+def code_from_char(c: str) -> int:
+    return ord(c)
+
+
+def to_hex(n: int) -> str:
+    return hex(n)
+
+
+def to_oct(n: int) -> str:
+    return oct(n)
+
+
+def to_bin(n: int) -> str:
+    return bin(n)
+
+
+def concat_strings(a: str, b: str) -> str:
+    return a + b
+
+
+def string_length(s: str) -> int:
+    return len(s)
+
+
 def main() -> None:
     pass

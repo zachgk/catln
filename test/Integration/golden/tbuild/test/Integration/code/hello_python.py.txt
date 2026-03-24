@@ -2,6 +2,18 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/to_oct"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /to_oct( EAppArg Value /n -> /Data/Primitive/Integer ) ->
+                            ( /Data/String + /Python/Builtins/oct( /this=/Data/Primitive/Integer ) ) = /oct
+                            ( EAppArg Value /this -> TVArg /n = ( Value /n ↦ TVArg /n ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/rounded"
                 , ObjectMapItem
                     { omiDecls = []
@@ -10,6 +22,18 @@ Prgm
                         [ /rounded( EAppArg Value /x -> /Data/Primitive/Float ) ->
                             ( /Data/Primitive/round( /this=/Data/Primitive/Float ) + /Data/Primitive/Integer ) = /round
                             ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/string_length"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /string_length( EAppArg Value /s -> /Data/String ) ->
+                            ( /Python/Builtins/length( /this=/Data/String ) + /Data/Primitive/Integer ) = /length
+                            ( EAppArg Value /this -> TVArg /s = ( Value /s ↦ TVArg /s ) )
                         ]
                     }
                 )
@@ -86,6 +110,18 @@ Prgm
                     }
                 )
             ,
+                ( "/to_bin"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /to_bin( EAppArg Value /n -> /Data/Primitive/Integer ) ->
+                            ( /Data/String + /Python/Builtins/bin( /this=/Data/Primitive/Integer ) ) = /bin
+                            ( EAppArg Value /this -> TVArg /n = ( Value /n ↦ TVArg /n ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/add"
                 , ObjectMapItem
                     { omiDecls = []
@@ -96,9 +132,12 @@ Prgm
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /operator+
+                                ( /r=/Data/String
+                                , /l=/Data/String
+                                ) + /operator+
                                 ( /r=/Data/Primitive/Float
                                 , /l=/Data/Primitive/Float
-                                ) + /add.result
+                                ) + /Data/String + /add.result
                                 ( /x=/Data/Primitive/Integer
                                 , /y=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer + /Data/Primitive/Float
@@ -214,23 +253,67 @@ Prgm
                     }
                 )
             ,
+                ( "/char_from_code"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /char_from_code( EAppArg Value /n -> /Data/Primitive/Integer ) ->
+                            ( /Data/String + /Python/Builtins/chr( /n=/Data/Primitive/Integer ) ) = /chr
+                            ( EAppArg Value /n -> TVArg /n = ( Value /n ↦ TVArg /n ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/code_from_char"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /code_from_char( EAppArg Value /c -> /Data/String ) ->
+                            ( /Python/Builtins/ord( /this=/Data/String ) + /Data/Primitive/Integer ) = /ord
+                            ( EAppArg Value /this -> TVArg /c = ( Value /c ↦ TVArg /c ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/add.result"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /add.result
-                            ( EAppArg Value /x -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) )
-                            ( EAppArg Value /y -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) ) ->
+                            ( EAppArg Value /x -> ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float ) )
+                            ( EAppArg Value /y -> ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float ) ) ->
                             ( /operator+
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /operator+
+                                ( /r=/Data/String
+                                , /l=/Data/String
+                                ) + /operator+
                                 ( /r=/Data/Primitive/Float
                                 , /l=/Data/Primitive/Float
-                                ) + /Data/Primitive/Integer + /Data/Primitive/Float
+                                ) + /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float
                             ) = /operator+( EAppArg Value /l -> TVArg /x = Value /x )
                             ( EAppArg Value /r -> TVArg /y = ( Value /y ↦ TVArg /y ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/concat_strings"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /concat_strings( EAppArg Value /a -> /Data/String )( EAppArg Value /b -> /Data/String ) ->
+                            ( /operator+
+                                ( /r=/Data/String
+                                , /l=/Data/String
+                                ) + /Data/String
+                            ) = /operator+
+                            ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
+                            ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) )
                         ]
                     }
                 )
@@ -255,6 +338,18 @@ Prgm
                         [ /floored( EAppArg Value /x -> /Data/Primitive/Float ) ->
                             ( /Data/Primitive/floor( /this=/Data/Primitive/Float ) + /Data/Primitive/Integer ) = /floor
                             ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/to_hex"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /to_hex( EAppArg Value /n -> /Data/Primitive/Integer ) ->
+                            ( /Data/String + /Python/Builtins/hex( /this=/Data/Primitive/Integer ) ) = /hex
+                            ( EAppArg Value /this -> TVArg /n = ( Value /n ↦ TVArg /n ) )
                         ]
                     }
                 )
@@ -319,6 +414,13 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType

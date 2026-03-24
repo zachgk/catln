@@ -2,6 +2,17 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/to_oct"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /to_oct( Value /n -> /Data/Primitive/Integer ) ->
+                            ( /Data/String + /Python/Builtins/oct( /this=/Data/Primitive/Integer ) ) = /oct( Value /this -> TVArg /n = Value /n )
+                        ]
+                    }
+                )
+            ,
                 ( "/rounded"
                 , ObjectMapItem
                     { omiDecls = []
@@ -9,6 +20,17 @@ Prgm
                     , omiDefs =
                         [ /rounded( Value /x -> /Data/Primitive/Float ) ->
                             ( /Data/Primitive/round( /this=/Data/Primitive/Float ) + /Data/Primitive/Integer ) = /round( Value /this -> TVArg /x = Value /x )
+                        ]
+                    }
+                )
+            ,
+                ( "/string_length"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /string_length( Value /s -> /Data/String ) ->
+                            ( /Python/Builtins/length( /this=/Data/String ) + /Data/Primitive/Integer ) = /length( Value /this -> TVArg /s = Value /s )
                         ]
                     }
                 )
@@ -78,6 +100,17 @@ Prgm
                     }
                 )
             ,
+                ( "/to_bin"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /to_bin( Value /n -> /Data/Primitive/Integer ) ->
+                            ( /Data/String + /Python/Builtins/bin( /this=/Data/Primitive/Integer ) ) = /bin( Value /this -> TVArg /n = Value /n )
+                        ]
+                    }
+                )
+            ,
                 ( "/add"
                 , ObjectMapItem
                     { omiDecls = []
@@ -88,9 +121,12 @@ Prgm
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /operator+
+                                ( /r=/Data/String
+                                , /l=/Data/String
+                                ) + /operator+
                                 ( /r=/Data/Primitive/Float
                                 , /l=/Data/Primitive/Float
-                                ) + /add.result
+                                ) + /Data/String + /add.result
                                 ( /x=/Data/Primitive/Integer
                                 , /y=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer + /Data/Primitive/Float
@@ -196,22 +232,62 @@ Prgm
                     }
                 )
             ,
+                ( "/char_from_code"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /char_from_code( Value /n -> /Data/Primitive/Integer ) ->
+                            ( /Data/String + /Python/Builtins/chr( /n=/Data/Primitive/Integer ) ) = /chr( Value /n -> TVArg /n = Value /n )
+                        ]
+                    }
+                )
+            ,
+                ( "/code_from_char"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /code_from_char( Value /c -> /Data/String ) ->
+                            ( /Python/Builtins/ord( /this=/Data/String ) + /Data/Primitive/Integer ) = /ord( Value /this -> TVArg /c = Value /c )
+                        ]
+                    }
+                )
+            ,
                 ( "/add.result"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /add.result
-                            ( Value /x -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) )
-                            ( Value /y -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) ) ->
+                            ( Value /x -> ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float ) )
+                            ( Value /y -> ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float ) ) ->
                             ( /operator+
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /operator+
+                                ( /r=/Data/String
+                                , /l=/Data/String
+                                ) + /operator+
                                 ( /r=/Data/Primitive/Float
                                 , /l=/Data/Primitive/Float
-                                ) + /Data/Primitive/Integer + /Data/Primitive/Float
+                                ) + /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float
                             ) = /operator+( Value /l -> TVArg /x = Value /x )( Value /r -> TVArg /y = Value /y )
+                        ]
+                    }
+                )
+            ,
+                ( "/concat_strings"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /concat_strings( Value /a -> /Data/String )( Value /b -> /Data/String ) ->
+                            ( /operator+
+                                ( /r=/Data/String
+                                , /l=/Data/String
+                                ) + /Data/String
+                            ) = /operator+( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
                         ]
                     }
                 )
@@ -234,6 +310,17 @@ Prgm
                     , omiDefs =
                         [ /floored( Value /x -> /Data/Primitive/Float ) ->
                             ( /Data/Primitive/floor( /this=/Data/Primitive/Float ) + /Data/Primitive/Integer ) = /floor( Value /this -> TVArg /x = Value /x )
+                        ]
+                    }
+                )
+            ,
+                ( "/to_hex"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /to_hex( Value /n -> /Data/Primitive/Integer ) ->
+                            ( /Data/String + /Python/Builtins/hex( /this=/Data/Primitive/Integer ) ) = /hex( Value /this -> TVArg /n = Value /n )
                         ]
                     }
                 )
@@ -294,6 +381,13 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType

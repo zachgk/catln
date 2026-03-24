@@ -22,9 +22,11 @@ import           Semantics.Types
 
 -- import           Emit                (codegenPrgm)
 import           CtConstants
+import           Data.Char           (chr, ord)
 import           Data.Maybe          (fromMaybe)
 import           Eval.Common
 import           Eval.ExprBuilder
+import           Numeric             (showHex, showOct)
 import           Text.Printf
 
 type Op = (String, Either EPrim MacroFunction)
@@ -163,6 +165,65 @@ floatToBool = EPrim "floatToBool" prim
       Just (FloatVal _)   -> Right true
       _                   -> Left "Invalid floatToBool signature"
 
+intToChar :: EPrim
+intToChar = EPrim "intToChar" prim
+  where
+    prim args = case H.lookup "/n" args of
+      Just (IntVal n) -> Right $ StrVal [chr (fromIntegral n)]
+      _               -> Left "Invalid intToChar signature"
+
+strToOrd :: EPrim
+strToOrd = EPrim "strToOrd" prim
+  where
+    prim args = case H.lookup "/this" args of
+      Just (StrVal (c:_)) -> Right $ IntVal $ fromIntegral (ord c)
+      _                   -> Left "Invalid strToOrd signature"
+
+intToHex :: EPrim
+intToHex = EPrim "intToHex" prim
+  where
+    prim args = case H.lookup "/this" args of
+      Just (IntVal n)
+        | n < 0     -> Right $ StrVal $ "-0x" ++ showHex (-n) ""
+        | otherwise -> Right $ StrVal $ "0x" ++ showHex n ""
+      _ -> Left "Invalid intToHex signature"
+
+intToOct :: EPrim
+intToOct = EPrim "intToOct" prim
+  where
+    prim args = case H.lookup "/this" args of
+      Just (IntVal n)
+        | n < 0     -> Right $ StrVal $ "-0o" ++ showOct (-n) ""
+        | otherwise -> Right $ StrVal $ "0o" ++ showOct n ""
+      _ -> Left "Invalid intToOct signature"
+
+intToBin :: EPrim
+intToBin = EPrim "intToBin" prim
+  where
+    prim args = case H.lookup "/this" args of
+      Just (IntVal n)
+        | n < 0     -> Right $ StrVal $ "-0b" ++ toBin (-n)
+        | otherwise -> Right $ StrVal $ "0b" ++ toBin n
+      _ -> Left "Invalid intToBin signature"
+    toBin 0 = "0"
+    toBin n = reverse $ go n
+    go 0 = ""
+    go n = (if n `mod` 2 == 0 then '0' else '1') : go (n `div` 2)
+
+strConcat :: EPrim
+strConcat = EPrim "strConcat" prim
+  where
+    prim args = case (H.lookup "/l" args, H.lookup "/r" args) of
+      (Just (StrVal l), Just (StrVal r)) -> Right $ StrVal $ l ++ r
+      _                                  -> Left "Invalid strConcat signature"
+
+strLength :: EPrim
+strLength = EPrim "strLength" prim
+  where
+    prim args = case H.lookup "/this" args of
+      Just (StrVal s) -> Right $ IntVal $ fromIntegral (length s)
+      _               -> Left "Invalid strLength signature"
+
 floatRound :: EPrim
 floatRound = EPrim "floatRound" prim
   where
@@ -278,6 +339,13 @@ primEnv = H.fromList (map mapPrim prims ++ macros)
             , floatToString
             , intToBool
             , floatToBool
+            , intToChar
+            , strToOrd
+            , intToHex
+            , intToOct
+            , intToBin
+            , strConcat
+            , strLength
             , floatRound
             , floatFloor
             , floatCeil

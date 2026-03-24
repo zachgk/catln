@@ -22,6 +22,15 @@ Prgm
                     }
                 )
             ,
+                ( "/Python/Builtins/length"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Python/Builtins/length( Value /this -> /Data/String ) -> /Data/Primitive/Integer ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Python/Builtins/abs"
                 , ObjectMapItem
                     { omiDecls =
@@ -37,6 +46,24 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Python/Builtins/toString( Value /this -> /Data/Primitive/Float ) -> /Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/operator+"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator+( Value /l -> /Data/String = Hole /Data/String HoleActive Nothing )( Value /r -> /Data/String = Hole /Data/String HoleActive Nothing ) -> /Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Python/Builtins/hex"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Python/Builtins/hex( Value /this -> /Data/Primitive/Integer ) -> /Data/String ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -61,10 +88,53 @@ Prgm
                     , omiDefs = []
                     }
                 )
+            ,
+                ( "/Python/Builtins/oct"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Python/Builtins/oct( Value /this -> /Data/Primitive/Integer ) -> /Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Python/Builtins/chr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Python/Builtins/chr( Value /n -> /Data/Primitive/Integer ) -> /Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Python/Builtins/ord"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Python/Builtins/ord( Value /this -> /Data/String ) -> /Data/Primitive/Integer ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Python/Builtins/bin"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Python/Builtins/bin( Value /this -> /Data/Primitive/Integer ) -> /Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
             ]
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -76,5 +146,7 @@ Prgm
             ( Value /text -> /Data/String = CStr "## Python built-in abs and pow mapped to methods" )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "## Type conversions" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "## String operations" )
         ]
     }

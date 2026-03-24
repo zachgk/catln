@@ -21,3 +21,18 @@ module(Python/Builtins)
     #runtime("intToBool")
   :Float.toBool -> Boolean
     #runtime("floatToBool")
+  # ## String operations
+  chr(n -> Integer) -> String
+    #runtime("intToChar")
+  :String.ord -> Integer
+    #runtime("strToOrd")
+  :Integer.hex -> String
+    #runtime("intToHex")
+  :Integer.oct -> String
+    #runtime("intToOct")
+  :Integer.bin -> String
+    #runtime("intToBin")
+  (_ :: String + _ :: String) -> String
+    #runtime("strConcat")
+  :String.length -> Integer
+    #runtime("strLength")

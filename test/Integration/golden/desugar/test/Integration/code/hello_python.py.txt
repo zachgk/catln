@@ -2,12 +2,30 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/to_oct"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ to_oct( Value n -> /Data/Primitive/Integer ) -> /Data/String = oct( Value /this= Value n ) ]
+                    }
+                )
+            ,
                 ( "/rounded"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ rounded( Value x -> /Data/Primitive/Float ) -> /Data/Primitive/Integer = round( Value /this= Value x ) ]
+                    }
+                )
+            ,
+                ( "/string_length"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ string_length( Value s -> /Data/String ) -> /Data/Primitive/Integer = length( Value /this= Value s ) ]
                     }
                 )
             ,
@@ -53,6 +71,15 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ square( Value x -> /Data/Primitive/Float ) -> /Data/Primitive/Float = /operator*( Value /l= Value x )( Value /r= Value x ) ]
+                    }
+                )
+            ,
+                ( "/to_bin"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ to_bin( Value n -> /Data/Primitive/Integer ) -> /Data/String = bin( Value /this= Value n ) ]
                     }
                 )
             ,
@@ -139,12 +166,39 @@ Prgm
                     }
                 )
             ,
+                ( "/char_from_code"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ char_from_code( Value n -> /Data/Primitive/Integer ) -> /Data/String = chr( Value /n= Value n ) ]
+                    }
+                )
+            ,
+                ( "/code_from_char"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ code_from_char( Value c -> /Data/String ) -> /Data/Primitive/Integer = ord( Value /this= Value c ) ]
+                    }
+                )
+            ,
                 ( "/add.result"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ add.result( Value /x )( Value /y ) -> /Data/Primitive/Integer = /operator+( Value /l= Value x )( Value /r= Value y ) ]
+                    }
+                )
+            ,
+                ( "/concat_strings"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ concat_strings( Value a -> /Data/String )( Value b -> /Data/String ) -> /Data/String = /operator+( Value /l= Value a )( Value /r= Value b ) ]
                     }
                 )
             ,
@@ -163,6 +217,15 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ floored( Value x -> /Data/Primitive/Float ) -> /Data/Primitive/Integer = floor( Value /this= Value x ) ]
+                    }
+                )
+            ,
+                ( "/to_hex"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ to_hex( Value n -> /Data/Primitive/Integer ) -> /Data/String = hex( Value /this= Value n ) ]
                     }
                 )
             ,
@@ -214,6 +277,13 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
