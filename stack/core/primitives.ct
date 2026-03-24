@@ -74,6 +74,8 @@ module(Data/Primitive)
   # mempty<Integer $T> = 0
   # mappend<Integer $T>($T l, $T r) = l + r
   # inverse<Integer $T>($T t) = -t
+  (_ :: Integer // _ :: Integer) -> Integer
+    #runtime("intDiv")
   # ## Floats
   (-(_ :: Float)) -> Float
     #runtime("floatNeg")
@@ -97,3 +99,10 @@ module(Data/Primitive)
     #runtime("float==")
   (_ :: Float != _ :: Float) -> Boolean
     #runtime("float!=")
+  :Float.round -> Integer
+    #runtime("floatRound")
+  :Float.floor -> Integer
+    #runtime("floatFloor")
+  :Float.ceil -> Integer
+    #runtime("floatCeil")
+

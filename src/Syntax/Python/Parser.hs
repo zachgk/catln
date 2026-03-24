@@ -20,7 +20,6 @@ import qualified Data.ByteString          as BS
 import qualified Data.HashMap.Strict      as H
 import           Data.List                (intercalate, partition)
 import           Data.Maybe               (isNothing, listToMaybe, mapMaybe)
-import           Text.Read                (readMaybe)
 import           Foreign                  (Ptr)
 import           Semantics.Prgm
 import           Semantics.Types
@@ -28,6 +27,7 @@ import           Syntax.Common.TreeSitter
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Prgm
 import           Syntax.Python.Prgm
+import           Text.Read                (readMaybe)
 import           TreeSitter.Node
 import           TreeSitter.Parser
 import           TreeSitter.Python        (tree_sitter_python)
@@ -100,12 +100,12 @@ parsePyExpr fileContents nodeP = do
       "integer"             -> do
         s <- nodeContents fileContents node
         return $ case readMaybe s :: Maybe Integer of
-          Just i -> PyInt i
+          Just i  -> PyInt i
           Nothing -> PyLit s  -- fallback for hex (0xFF), binary (0b101), etc.
       "float"               -> do
         s <- nodeContents fileContents node
         return $ case readMaybe s :: Maybe Double of
-          Just f -> PyFloat f
+          Just f  -> PyFloat f
           Nothing -> PyLit s  -- fallback for unusual float syntax
       "string"              -> PyLit <$> nodeContents fileContents node
       "concatenated_string" -> PyLit <$> nodeContents fileContents node
@@ -551,15 +551,13 @@ convertPyExpr (PyUnOp op e)       =
 -- Returns Nothing for unknown names so the caller falls through to generic
 -- function-call conversion.
 convertPyBuiltinCall :: String -> [PyCallArg] -> Maybe (RawExpr ())
--- abs(x) -> x.abs
+-- abs(x) -> x.abs   [dispatches to :Integer.abs or :Float.abs]
 convertPyBuiltinCall "abs" [PyPosArg x] =
   Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "abs")
--- pow(base, exp) -> pow(base=base, exp=exp)
+-- pow(base, exp) -> base.pow(exp=exp)   [dispatches to :Integer.pow or :Float.pow]
 convertPyBuiltinCall "pow" [PyPosArg base, PyPosArg expE] =
-  Just $ rawVal "pow"
-    `applyRawArgs` [ (Just $ partialKey "base", convertPyExpr base)
-                   , (Just $ partialKey "exp",  convertPyExpr expE)
-                   ]
+  Just $ RawMethod emptyMetaN (convertPyExpr base) (rawVal "pow")
+    `applyRawArgs` [(Just $ partialKey "exp", convertPyExpr expE)]
 -- round(x) -> x.round, floor(x) -> x.floor, ceil(x) -> x.ceil
 convertPyBuiltinCall "round" [PyPosArg x] =
   Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "round")
@@ -739,7 +737,7 @@ convertPyStatementToTree stmt = case stmt of
 -- module-system constructs and do not correspond to Catln file imports.
 convertPyModule :: PyModule -> RawPrgm ()
 convertPyModule (PyModule stmts) =
-  RawPrgm [] statements
+  RawPrgm [mkRawFileImport (rawStr "python/builtins.ct")] statements
   where
     statements = mapMaybe convertPyStatementToTree (filter (not . isImport) stmts)
 

@@ -59,22 +59,24 @@ evalBuildable _                      = False
 -- It also will pass the function name back through EvalMode in order to convert 'PRelativeName' into the matching 'PTypeName'
 -- TODO The use of listToMaybe will secretly discard if multiple evalTargetModes or function names are found. Instead, an error should be thrown
 evalPrgmTargetMode :: String -> EPrgm -> EvalMode
-evalPrgmTargetMode function prgm = case (funCtxReaches, funReaches) of
-  (rt, _) | reachesHasCutSubtypeOf typeEnv H.empty rt resultType -> EvalBuildWithContext function'
-  (rt, _) | reachesHasCutSubtypeOf typeEnv H.empty rt ioType -> EvalRunWithContext function'
-  (_, rt) | reachesHasCutSubtypeOf typeEnv H.empty rt resultType -> EvalBuild function'
-  (_, rt) | reachesHasCutSubtypeOf typeEnv H.empty rt ioType -> EvalRun function' -- Should require isShowable for run result
-  _ -> NoEval funCtxReaches funReaches
+evalPrgmTargetMode function prgm =
+  case maybeGetSingleton $ expandRelPartial typeEnv H.empty (partialVal function) of
+    Nothing -> NoEval (reachesPartials reachEnv [partialVal function]) (reachesPartials reachEnv [partialVal function])
+    Just f ->
+      let function' = ptName f
+          funCtxTp = (partialVal ContextStr){ptArgs=H.fromList [(partialKey contextValStr, typeVal function')], ptArgMode=PtArgAny}
+          funTp = partialVal function'
+          funCtxReaches = reachesPartials reachEnv [funCtxTp]
+          funReaches = reachesPartials reachEnv [funTp]
+      in case (funCtxReaches, funReaches) of
+           (rt, _) | reachesHasCutSubtypeOf typeEnv H.empty rt resultType -> EvalBuildWithContext function'
+           (rt, _) | reachesHasCutSubtypeOf typeEnv H.empty rt ioType -> EvalRunWithContext function'
+           (_, rt) | reachesHasCutSubtypeOf typeEnv H.empty rt resultType -> EvalBuild function'
+           (_, rt) | reachesHasCutSubtypeOf typeEnv H.empty rt ioType -> EvalRun function' -- Should require isShowable for run result
+           _ -> NoEval funCtxReaches funReaches
   where
     typeEnv = mkTypeEnv prgm
-    function' = case maybeGetSingleton $ expandRelPartial typeEnv H.empty (partialVal function) of
-      Just f -> ptName f
-      Nothing -> error $ printf "Expected one typeName in evalTargetMode for %s. Instead found %s" (show function) (show $ expandRelPartial typeEnv H.empty (partialVal function))
     reachEnv = ReachesEnv typeEnv H.empty S.empty
-    funCtxTp = (partialVal ContextStr){ptArgs=H.fromList [(partialKey contextValStr, typeVal function')], ptArgMode=PtArgAny}
-    funTp = partialVal function'
-    funCtxReaches = reachesPartials reachEnv [funCtxTp]
-    funReaches = reachesPartials reachEnv [funTp]
 
 evalTargetMode :: String -> FileImport -> EPrgmGraphData -> CRes EvalMode
 evalTargetMode function prgmName prgmGraphData = do

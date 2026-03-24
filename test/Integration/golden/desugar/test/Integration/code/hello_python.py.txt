@@ -2,12 +2,30 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/rounded"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ rounded( Value x -> /Data/Primitive/Float ) -> /Data/Primitive/Integer = round( Value /this= Value x ) ]
+                    }
+                )
+            ,
                 ( "/BIG"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ Value BIG -> /Data/Primitive/Integer = /operator+( Value /l= Value MAX_SIZE )( Value /r= Value MAX_SIZE ) ]
+                    }
+                )
+            ,
+                ( "/power_f"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ power_f( Value base -> /Data/Primitive/Float )( Value exp -> /Data/Primitive/Float ) -> /Data/Primitive/Float = pow( Value /this= Value base )( Value /exp= Value exp ) ]
                     }
                 )
             ,
@@ -38,6 +56,15 @@ Prgm
                     }
                 )
             ,
+                ( "/ceiled"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ ceiled( Value x -> /Data/Primitive/Float ) -> /Data/Primitive/Integer = ceil( Value /this= Value x ) ]
+                    }
+                )
+            ,
                 ( "/PI"
                 , ObjectMapItem
                     { omiDecls = []
@@ -58,12 +85,30 @@ Prgm
                     }
                 )
             ,
+                ( "/power"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ power( Value base -> /Data/Primitive/Integer )( Value exp -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = pow( Value /this= Value base )( Value /exp= Value exp ) ]
+                    }
+                )
+            ,
                 ( "/scale"
                 , ObjectMapItem
                     { omiDecls =
                         [ scale( Value values -> ∀/Data/List )( Value factor -> /Data/Primitive/Integer ) -> ∀/Data/List ]
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/int_div"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ int_div( Value a -> /Data/Primitive/Integer )( Value b -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator//( Value /l= Value a )( Value /r= Value b ) ]
                     }
                 )
             ,
@@ -76,6 +121,15 @@ Prgm
                     }
                 )
             ,
+                ( "/floored"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ floored( Value x -> /Data/Primitive/Float ) -> /Data/Primitive/Integer = floor( Value /this= Value x ) ]
+                    }
+                )
+            ,
                 ( "/MAX_SIZE"
                 , ObjectMapItem
                     { omiDecls = []
@@ -84,10 +138,36 @@ Prgm
                         [ Value MAX_SIZE -> /Data/Primitive/Integer = CInt 100 ]
                     }
                 )
+            ,
+                ( "/abs_int"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ abs_int( Value x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = abs( Value /this= Value x ) ]
+                    }
+                )
+            ,
+                ( "/abs_float"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ abs_float( Value x -> /Data/Primitive/Float ) -> /Data/Primitive/Float = abs( Value /this= Value x ) ]
+                    }
+                )
             ]
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType

@@ -16,7 +16,9 @@ Prgm
                 ( "/operator//"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator//( Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> /Data/Primitive/Float ]
+                        [ /operator//( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
+                        , /operator//( Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> /Data/Primitive/Float
+                        ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -84,6 +86,15 @@ Prgm
                         [ /operator<( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
                         , /operator<( Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
                         ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/round"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Primitive/round( Value /this -> /Data/Primitive/Float ) -> /Data/Primitive/Integer ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -173,6 +184,15 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Primitive/floor"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Primitive/floor( Value /this -> /Data/Primitive/Float ) -> /Data/Primitive/Integer ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/Primitive/exampleZeroPlusZero"
                 , ObjectMapItem
                     { omiDecls = []
@@ -209,6 +229,15 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Primitive/ceil"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Primitive/ceil( Value /this -> /Data/Primitive/Float ) -> /Data/Primitive/Integer ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/operator!="
                 , ObjectMapItem
                     { omiDecls =
@@ -231,6 +260,9 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType

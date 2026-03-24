@@ -2,6 +2,18 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/rounded"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /rounded( EAppArg Value /x -> /Data/Primitive/Float ) ->
+                            ( /Data/Primitive/round( /this=/Data/Primitive/Float ) + /Data/Primitive/Integer ) = /round
+                            ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/BIG"
                 , ObjectMapItem
                     { omiDecls = []
@@ -15,6 +27,23 @@ Prgm
                             ) = /operator+
                             ( EAppArg Value /l -> /Data/Primitive/Integer = ( Value /MAX_SIZE ↦ /Data/Primitive/Integer ) )
                             ( EAppArg Value /r -> /Data/Primitive/Integer = ( Value /MAX_SIZE ↦ /Data/Primitive/Integer ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/power_f"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /power_f( EAppArg Value /base -> /Data/Primitive/Float )( EAppArg Value /exp -> /Data/Primitive/Float ) ->
+                            ( /Python/Builtins/pow
+                                ( /exp=/Data/Primitive/Float
+                                , /this=/Data/Primitive/Float
+                                ) + /Data/Primitive/Float
+                            ) = /pow
+                            ( EAppArg Value /this -> TVArg /base = ( Value /base ↦ TVArg /base ) )
+                            ( EAppArg Value /exp -> TVArg /exp = ( Value /exp ↦ TVArg /exp ) )
                         ]
                     }
                 )
@@ -68,6 +97,18 @@ Prgm
                     }
                 )
             ,
+                ( "/ceiled"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ceiled( EAppArg Value /x -> /Data/Primitive/Float ) ->
+                            ( /Data/Primitive/Integer + /Data/Primitive/ceil( /this=/Data/Primitive/Float ) ) = /ceil
+                            ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/PI"
                 , ObjectMapItem
                     { omiDecls = []
@@ -94,12 +135,46 @@ Prgm
                     }
                 )
             ,
+                ( "/power"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /power( EAppArg Value /base -> /Data/Primitive/Integer )( EAppArg Value /exp -> /Data/Primitive/Integer ) ->
+                            ( /Python/Builtins/pow
+                                ( /exp=/Data/Primitive/Integer
+                                , /this=/Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
+                            ) = /pow
+                            ( EAppArg Value /this -> TVArg /base = ( Value /base ↦ TVArg /base ) )
+                            ( EAppArg Value /exp -> TVArg /exp = ( Value /exp ↦ TVArg /exp ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/scale"
                 , ObjectMapItem
                     { omiDecls =
                         [ /scale( EAppArg Value /values -> ∀/Data/List )( EAppArg Value /factor -> /Data/Primitive/Integer ) -> ∀/Data/List ]
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/int_div"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /int_div( EAppArg Value /a -> /Data/Primitive/Integer )( EAppArg Value /b -> /Data/Primitive/Integer ) ->
+                            ( /operator//
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
+                            ) = /operator//
+                            ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
+                            ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) )
+                        ]
                     }
                 )
             ,
@@ -124,6 +199,18 @@ Prgm
                     }
                 )
             ,
+                ( "/floored"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /floored( EAppArg Value /x -> /Data/Primitive/Float ) ->
+                            ( /Data/Primitive/floor( /this=/Data/Primitive/Float ) + /Data/Primitive/Integer ) = /floor
+                            ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/MAX_SIZE"
                 , ObjectMapItem
                     { omiDecls = []
@@ -132,10 +219,42 @@ Prgm
                         [ Value /MAX_SIZE -> /Data/Primitive/Integer = 100 ]
                     }
                 )
+            ,
+                ( "/abs_int"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /abs_int( EAppArg Value /x -> /Data/Primitive/Integer ) ->
+                            ( /Python/Builtins/abs( /this=/Data/Primitive/Integer ) + /Data/Primitive/Integer ) = /abs
+                            ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/abs_float"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /abs_float( EAppArg Value /x -> /Data/Primitive/Float ) ->
+                            ( /Python/Builtins/abs( /this=/Data/Primitive/Float ) + /Data/Primitive/Float ) = /abs
+                            ( EAppArg Value /this -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                        ]
+                    }
+                )
             ]
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType

@@ -98,6 +98,58 @@ intToString = EPrim "intToString" prim
       _                   -> Left "Invalid intToString signature"
 
 
+intAbs :: EPrim
+intAbs = EPrim "intAbs" prim
+  where
+    prim args = case H.lookup "/this" args of
+      Just (IntVal i) -> Right $ IntVal $ abs i
+      _               -> Left "Invalid intAbs signature"
+
+floatAbs :: EPrim
+floatAbs = EPrim "floatAbs" prim
+  where
+    prim args = case H.lookup "/this" args of
+      Just (FloatVal f) -> Right $ FloatVal $ abs f
+      _                 -> Left "Invalid floatAbs signature"
+
+intPow :: EPrim
+intPow = EPrim "intPow" prim
+  where
+    prim args = case (H.lookup "/this" args, H.lookup "/exp" args) of
+      (Just (IntVal b), Just (IntVal e)) -> Right $ IntVal $ b ^ e
+      _                                  -> Left "Invalid intPow signature"
+
+floatPow :: EPrim
+floatPow = EPrim "floatPow" prim
+  where
+    prim args = case (H.lookup "/this" args, H.lookup "/exp" args) of
+      (Just (FloatVal b), Just (FloatVal e)) -> Right $ FloatVal $ b ** e
+      _ -> Left "Invalid floatPow signature"
+
+floatRound :: EPrim
+floatRound = EPrim "floatRound" prim
+  where
+    prim args = case H.lookup "/this" args of
+      Just (FloatVal f) -> Right $ IntVal $ round f
+      _                 -> Left "Invalid floatRound signature"
+
+floatFloor :: EPrim
+floatFloor = EPrim "floatFloor" prim
+  where
+    prim args = case H.lookup "/this" args of
+      Just (FloatVal f) -> Right $ IntVal $ floor f
+      _                 -> Left "Invalid floatFloor signature"
+
+floatCeil :: EPrim
+floatCeil = EPrim "floatCeil" prim
+  where
+    prim args = case H.lookup "/this" args of
+      Just (FloatVal f) -> Right $ IntVal $ ceiling f
+      _                 -> Left "Invalid floatCeil signature"
+
+intDiv :: EPrim
+intDiv = liftIntOp "//" div
+
 ioExit :: EPrim
 ioExit = EPrim "ioExit" prim
   where
@@ -180,5 +232,13 @@ primEnv = H.fromList (map mapPrim prims ++ macros)
             , intToString
             , ioExit
             , println
+            , intAbs
+            , floatAbs
+            , intPow
+            , floatPow
+            , floatRound
+            , floatFloor
+            , floatCeil
+            , intDiv
             ]
     macros = [arrExists, contextMacro, llvm]

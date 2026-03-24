@@ -1,0 +1,36 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/Python/Builtins/pow"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Python/Builtins/pow( EAppArg Value /exp -> /Data/Primitive/Integer )( EAppArg Value /this -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer
+                        , /Python/Builtins/pow( EAppArg Value /exp -> /Data/Primitive/Float )( EAppArg Value /this -> /Data/Primitive/Float ) -> /Data/Primitive/Float
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Python/Builtins/abs"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Python/Builtins/abs( EAppArg Value /this -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer
+                        , /Python/Builtins/abs( EAppArg Value /this -> /Data/Primitive/Float ) -> /Data/Primitive/Float
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "## Python built-in abs and pow mapped to methods" )
+        ]
+    }
