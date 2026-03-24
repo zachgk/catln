@@ -595,6 +595,17 @@ convertPyBuiltinCall "print" [PyPosArg x] =
   Just $ RawMethod emptyMetaN (rawVal "io") (rawVal "println")
     `applyRawArgs` [(Just $ partialKey "msg",
                      RawMethod emptyMetaN (convertPyExpr x) (rawVal "toString"))]
+-- max(a, b) -> max(l=a, r=b), min(a, b) -> min(l=a, r=b)
+convertPyBuiltinCall "max" [PyPosArg a, PyPosArg b] =
+  Just $ rawVal "max"
+    `applyRawArgs` [ (Just $ partialKey operatorArgL, convertPyExpr a)
+                   , (Just $ partialKey operatorArgR, convertPyExpr b)
+                   ]
+convertPyBuiltinCall "min" [PyPosArg a, PyPosArg b] =
+  Just $ rawVal "min"
+    `applyRawArgs` [ (Just $ partialKey operatorArgL, convertPyExpr a)
+                   , (Just $ partialKey operatorArgR, convertPyExpr b)
+                   ]
 convertPyBuiltinCall _ _ = Nothing
 
 convertPyCallArg :: PyCallArg -> (Maybe ArgName, RawExpr ())

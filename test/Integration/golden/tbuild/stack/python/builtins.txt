@@ -22,6 +22,17 @@ Prgm
                     }
                 )
             ,
+                ( "/Python/Builtins/min"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Python/Builtins/min( EAppArg Value /l -> /Data/Primitive/Integer )( EAppArg Value /r -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer
+                        , /Python/Builtins/min( EAppArg Value /l -> /Data/Primitive/Float )( EAppArg Value /r -> /Data/Primitive/Float ) -> /Data/Primitive/Float
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Python/Builtins/length"
                 , ObjectMapItem
                     { omiDecls =
@@ -116,6 +127,17 @@ Prgm
                     }
                 )
             ,
+                ( "/Python/Builtins/max"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Python/Builtins/max( EAppArg Value /l -> /Data/Primitive/Integer )( EAppArg Value /r -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer
+                        , /Python/Builtins/max( EAppArg Value /l -> /Data/Primitive/Float )( EAppArg Value /r -> /Data/Primitive/Float ) -> /Data/Primitive/Float
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Python/Builtins/bin"
                 , ObjectMapItem
                     { omiDecls =
@@ -140,6 +162,8 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
@@ -148,5 +172,7 @@ Prgm
             ( EAppArg Value /text -> /Data/String = "## Type conversions" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "## String operations" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "## Numeric min/max" )
         ]
     }

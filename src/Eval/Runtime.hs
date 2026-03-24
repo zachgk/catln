@@ -224,6 +224,18 @@ strLength = EPrim "strLength" prim
       Just (StrVal s) -> Right $ IntVal $ fromIntegral (length s)
       _               -> Left "Invalid strLength signature"
 
+intMax :: EPrim
+intMax = liftIntOp "Max" max
+
+floatMax :: EPrim
+floatMax = liftFloatOp "Max" max
+
+intMin :: EPrim
+intMin = liftIntOp "Min" min
+
+floatMin :: EPrim
+floatMin = liftFloatOp "Min" min
+
 floatRound :: EPrim
 floatRound = EPrim "floatRound" prim
   where
@@ -346,6 +358,10 @@ primEnv = H.fromList (map mapPrim prims ++ macros)
             , intToBin
             , strConcat
             , strLength
+            , intMax
+            , floatMax
+            , intMin
+            , floatMin
             , floatRound
             , floatFloor
             , floatCeil

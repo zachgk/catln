@@ -36,3 +36,12 @@ module(Python/Builtins)
     #runtime("strConcat")
   :String.length -> Integer
     #runtime("strLength")
+  # ## Numeric min/max
+  max(l -> Integer, r -> Integer) -> Integer
+    #runtime("intMax")
+  max(l -> Float, r -> Float) -> Float
+    #runtime("floatMax")
+  min(l -> Integer, r -> Integer) -> Integer
+    #runtime("intMin")
+  min(l -> Float, r -> Float) -> Float
+    #runtime("floatMin")

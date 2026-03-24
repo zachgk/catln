@@ -65,6 +65,24 @@ Prgm
                     }
                 )
             ,
+                ( "/int_max"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ int_max( Value a -> /Data/Primitive/Integer )( Value b -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = max( Value /l= Value a )( Value /r= Value b ) ]
+                    }
+                )
+            ,
+                ( "/float_max"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ float_max( Value a -> /Data/Primitive/Float )( Value b -> /Data/Primitive/Float ) -> /Data/Primitive/Float = max( Value /l= Value a )( Value /r= Value b ) ]
+                    }
+                )
+            ,
                 ( "/square"
                 , ObjectMapItem
                     { omiDecls = []
@@ -130,6 +148,15 @@ Prgm
                     }
                 )
             ,
+                ( "/int_min"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ int_min( Value a -> /Data/Primitive/Integer )( Value b -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = min( Value /l= Value a )( Value /r= Value b ) ]
+                    }
+                )
+            ,
                 ( "/to_bool_from_int"
                 , ObjectMapItem
                     { omiDecls = []
@@ -154,6 +181,15 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ int_div( Value a -> /Data/Primitive/Integer )( Value b -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator//( Value /l= Value a )( Value /r= Value b ) ]
+                    }
+                )
+            ,
+                ( "/float_min"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ float_min( Value a -> /Data/Primitive/Float )( Value b -> /Data/Primitive/Float ) -> /Data/Primitive/Float = min( Value /l= Value a )( Value /r= Value b ) ]
                     }
                 )
             ,
@@ -277,6 +313,10 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType

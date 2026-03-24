@@ -113,5 +113,22 @@ def string_length(s: str) -> int:
     return len(s)
 
 
+# Phase 5: numeric min/max
+def int_max(a: int, b: int) -> int:
+    return max(a, b)
+
+
+def float_max(a: float, b: float) -> float:
+    return max(a, b)
+
+
+def int_min(a: int, b: int) -> int:
+    return min(a, b)
+
+
+def float_min(a: float, b: float) -> float:
+    return min(a, b)
+
+
 def main() -> None:
     pass

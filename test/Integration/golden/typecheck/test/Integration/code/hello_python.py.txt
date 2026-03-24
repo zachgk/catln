@@ -85,6 +85,36 @@ Prgm
                     }
                 )
             ,
+                ( "/int_max"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /int_max( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer ) ->
+                            ( /Data/Primitive/Integer + /Python/Builtins/max
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                )
+                            ) = /max( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
+                        ]
+                    }
+                )
+            ,
+                ( "/float_max"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /float_max( Value /a -> /Data/Primitive/Float )( Value /b -> /Data/Primitive/Float ) ->
+                            ( /Python/Builtins/max
+                                ( /r=/Data/Primitive/Float
+                                , /l=/Data/Primitive/Float
+                                ) + /Data/Primitive/Float
+                            ) = /max( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
+                        ]
+                    }
+                )
+            ,
                 ( "/square"
                 , ObjectMapItem
                     { omiDecls = []
@@ -186,6 +216,21 @@ Prgm
                     }
                 )
             ,
+                ( "/int_min"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /int_min( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer ) ->
+                            ( /Python/Builtins/min
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
+                            ) = /min( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
+                        ]
+                    }
+                )
+            ,
                 ( "/to_bool_from_int"
                 , ObjectMapItem
                     { omiDecls = []
@@ -217,6 +262,21 @@ Prgm
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer
                             ) = /operator//( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
+                        ]
+                    }
+                )
+            ,
+                ( "/float_min"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /float_min( Value /a -> /Data/Primitive/Float )( Value /b -> /Data/Primitive/Float ) ->
+                            ( /Python/Builtins/min
+                                ( /r=/Data/Primitive/Float
+                                , /l=/Data/Primitive/Float
+                                ) + /Data/Primitive/Float
+                            ) = /min( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
                         ]
                     }
                 )
@@ -381,6 +441,10 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
