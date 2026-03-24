@@ -13,6 +13,15 @@ Prgm
                     }
                 )
             ,
+                ( "/Python/Builtins/toInt"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Python/Builtins/toInt( EAppArg Value /this -> /Data/Primitive/Float ) -> /Data/Primitive/Integer ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Python/Builtins/abs"
                 , ObjectMapItem
                     { omiDecls =
@@ -23,14 +32,49 @@ Prgm
                     , omiDefs = []
                     }
                 )
+            ,
+                ( "/Python/Builtins/toString"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Python/Builtins/toString( EAppArg Value /this -> /Data/Primitive/Float ) -> /Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Python/Builtins/toBool"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Python/Builtins/toBool( EAppArg Value /this -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean
+                        , /Python/Builtins/toBool( EAppArg Value /this -> /Data/Primitive/Float ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Python/Builtins/toFloat"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Python/Builtins/toFloat( EAppArg Value /this -> /Data/Primitive/Integer ) -> /Data/Primitive/Float ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
             ]
         )
     , prgmCG =
         [ CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg Value /text -> /Data/String = "## Python built-in abs and pow mapped to methods" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "## Type conversions" )
         ]
     }

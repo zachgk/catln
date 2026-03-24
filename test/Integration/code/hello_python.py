@@ -59,5 +59,30 @@ def int_div(a: int, b: int) -> int:
     return a // b
 
 
+# Phase 3: type conversions
+def to_int_from_float(x: float) -> int:
+    return int(x)
+
+
+def to_float_from_int(x: int) -> float:
+    return float(x)
+
+
+def to_str_from_int(x: int) -> str:
+    return str(x)
+
+
+def to_str_from_float(x: float) -> str:
+    return str(x)
+
+
+def to_bool_from_int(x: int) -> bool:
+    return bool(x)
+
+
+def to_bool_from_float(x: float) -> bool:
+    return bool(x)
+
+
 def main() -> None:
     pass

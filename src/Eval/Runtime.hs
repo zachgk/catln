@@ -126,6 +126,43 @@ floatPow = EPrim "floatPow" prim
       (Just (FloatVal b), Just (FloatVal e)) -> Right $ FloatVal $ b ** e
       _ -> Left "Invalid floatPow signature"
 
+floatToInt :: EPrim
+floatToInt = EPrim "floatToInt" prim
+  where
+    prim args = case H.lookup "/this" args of
+      Just (FloatVal f) -> Right $ IntVal $ truncate f
+      _                 -> Left "Invalid floatToInt signature"
+
+intToFloat :: EPrim
+intToFloat = EPrim "intToFloat" prim
+  where
+    prim args = case H.lookup "/this" args of
+      Just (IntVal i) -> Right $ FloatVal $ fromIntegral i
+      _               -> Left "Invalid intToFloat signature"
+
+floatToString :: EPrim
+floatToString = EPrim "floatToString" prim
+  where
+    prim args = case H.lookup "/this" args of
+      Just (FloatVal f) -> Right $ StrVal $ show f
+      _                 -> Left "Invalid floatToString signature"
+
+intToBool :: EPrim
+intToBool = EPrim "intToBool" prim
+  where
+    prim args = case H.lookup "/this" args of
+      Just (IntVal 0) -> Right false
+      Just (IntVal _) -> Right true
+      _               -> Left "Invalid intToBool signature"
+
+floatToBool :: EPrim
+floatToBool = EPrim "floatToBool" prim
+  where
+    prim args = case H.lookup "/this" args of
+      Just (FloatVal 0.0) -> Right false
+      Just (FloatVal _)   -> Right true
+      _                   -> Left "Invalid floatToBool signature"
+
 floatRound :: EPrim
 floatRound = EPrim "floatRound" prim
   where
@@ -236,6 +273,11 @@ primEnv = H.fromList (map mapPrim prims ++ macros)
             , floatAbs
             , intPow
             , floatPow
+            , floatToInt
+            , intToFloat
+            , floatToString
+            , intToBool
+            , floatToBool
             , floatRound
             , floatFloor
             , floatCeil

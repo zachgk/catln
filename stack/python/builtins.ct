@@ -1,4 +1,4 @@
-import "core/primitives.ct"
+import "core/data.ct"
 
 module(Python/Builtins)
   # ## Python built-in abs and pow mapped to methods
@@ -10,3 +10,14 @@ module(Python/Builtins)
     #runtime("intPow")
   :Float.pow(exp -> Float) -> Float
     #runtime("floatPow")
+  # ## Type conversions
+  :Float.toInt -> Integer
+    #runtime("floatToInt")
+  :Integer.toFloat -> Float
+    #runtime("intToFloat")
+  :Float.toString -> String
+    #runtime("floatToString")
+  :Integer.toBool -> Boolean
+    #runtime("intToBool")
+  :Float.toBool -> Boolean
+    #runtime("floatToBool")

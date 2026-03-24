@@ -38,6 +38,15 @@ Prgm
                     }
                 )
             ,
+                ( "/to_float_from_int"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ to_float_from_int( Value x -> /Data/Primitive/Integer ) -> /Data/Primitive/Float = toFloat( Value /this= Value x ) ]
+                    }
+                )
+            ,
                 ( "/square"
                 , ObjectMapItem
                     { omiDecls = []
@@ -94,6 +103,15 @@ Prgm
                     }
                 )
             ,
+                ( "/to_bool_from_int"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ to_bool_from_int( Value x -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean = toBool( Value /this= Value x ) ]
+                    }
+                )
+            ,
                 ( "/scale"
                 , ObjectMapItem
                     { omiDecls =
@@ -112,12 +130,30 @@ Prgm
                     }
                 )
             ,
+                ( "/to_bool_from_float"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ to_bool_from_float( Value x -> /Data/Primitive/Float ) -> ∀/Data/Primitive/Boolean = toBool( Value /this= Value x ) ]
+                    }
+                )
+            ,
                 ( "/add.result"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ add.result( Value /x )( Value /y ) -> /Data/Primitive/Integer = /operator+( Value /l= Value x )( Value /r= Value y ) ]
+                    }
+                )
+            ,
+                ( "/to_int_from_float"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ to_int_from_float( Value x -> /Data/Primitive/Float ) -> /Data/Primitive/Integer = toInt( Value /this= Value x ) ]
                     }
                 )
             ,
@@ -139,6 +175,15 @@ Prgm
                     }
                 )
             ,
+                ( "/to_str_from_int"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ to_str_from_int( Value x -> /Data/Primitive/Integer ) -> /Data/String = toString( Value /this= Value x ) ]
+                    }
+                )
+            ,
                 ( "/abs_int"
                 , ObjectMapItem
                     { omiDecls = []
@@ -156,10 +201,25 @@ Prgm
                         [ abs_float( Value x -> /Data/Primitive/Float ) -> /Data/Primitive/Float = abs( Value /this= Value x ) ]
                     }
                 )
+            ,
+                ( "/to_str_from_float"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ to_str_from_float( Value x -> /Data/Primitive/Float ) -> /Data/String = toString( Value /this= Value x ) ]
+                    }
+                )
             ]
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
