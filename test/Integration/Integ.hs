@@ -5,24 +5,27 @@ import           Test.Tasty
 import           Test.Tasty.HUnit
 import           Text.Printf
 
-import           Common.TestCommon   (findCt, findPy)
+import           Common.TestCommon       (findCt, findPy)
 import           Control.Monad.Trans
 import           CRes
 import           CtService
-import           Data.List           (isSuffixOf)
+import           Data.Graph              (graphFromEdges)
+import           Data.List               (isSuffixOf)
 import           Data.Maybe
-import qualified Data.Text.Lazy      as T
+import qualified Data.Text.Lazy          as T
 import           Eval
 import           Semantics
 import           Semantics.Prgm
-import           Syntax.Parsers      (mkDesCanonicalImportStr)
-import           System.Directory    (createDirectoryIfMissing, doesFileExist,
-                                      getCurrentDirectory)
-import           System.Environment  (lookupEnv)
-import           System.FilePath     (takeDirectory)
-import           Text.Pretty.Simple  (pShowNoColor)
+import           Syntax.Ct.Formatter     (formatRootPrgm)
+import           Syntax.Ct.Parser.Syntax (PPrgmGraphData)
+import           Syntax.Parsers          (mkDesCanonicalImportStr)
+import           System.Directory        (createDirectoryIfMissing,
+                                          doesFileExist, getCurrentDirectory)
+import           System.Environment      (lookupEnv)
+import           System.FilePath         (takeDirectory)
+import           Text.Pretty.Simple      (pShowNoColor)
 import           Utils
-import           WebDocs             (docApi, docServe)
+import           WebDocs                 (docApi, docServe)
 
 testDir, disabledTestDir :: String
 testDir = "test/Integration/code/"
@@ -37,31 +40,53 @@ goldenTypecheckDir = "test/Integration/golden/typecheck"
 goldenTreebuildDir :: String
 goldenTreebuildDir = "test/Integration/golden/tbuild"
 
+goldenConvertDir :: String
+goldenConvertDir = "test/Integration/golden/convert"
+
 goldenWriteEnv :: String
 goldenWriteEnv = "GOLDEN_TEST_WRITE"
 
-runGoldenTest :: (Show em, Show prgm) => String -> String -> String -> GraphData prgm (AFileImport em) -> (String -> IO ()) -> IO ()
-runGoldenTest goldenType goldenDir _fileNameStr prgms step = do
+-- | General golden test runner parameterized on serializer and path builder.
+-- @serialize cwd prgm@ produces the file content; @buildPath relPath@ maps
+-- a cwd-relative path to the golden file path.
+runGoldenTestGen :: String -> (String -> prgm -> String) -> (String -> String) -> GraphData prgm (AFileImport em) -> (String -> IO ()) -> IO ()
+runGoldenTestGen goldenType serialize buildPath prgms step = do
   step $ printf "Golden test %s..." goldenType
   goldenWrite <- lookupEnv goldenWriteEnv
   cwd <- getCurrentDirectory
   forM_ (graphToNodes prgms) $ \(prgm, AFileImport{impDisp=maybePath}, _) -> do
-    let path = fromJust maybePath
-    let relPath = drop (length cwd) path
-    let goldenPath1 = goldenDir ++ T.unpack (T.replace (T.pack ".ct") ".txt" (T.pack relPath))
-    let goldenPath = if ".txt" `isSuffixOf` goldenPath1
-          then goldenPath1
-          else goldenPath1 ++ ".txt"
-    let showPrgm = pShowNoColor prgm
-    let showPrgm' = T.unpack $ T.replace (T.pack cwd) "/repo/dir" showPrgm
+    let relPath = drop (length cwd) (fromJust maybePath)
+    let goldenPath = buildPath relPath
+    let content = serialize cwd prgm
     goldenExists <- doesFileExist goldenPath
     if goldenExists && goldenWrite /= Just "1"
       then do
         golden <- readFile goldenPath
-        when (golden /= showPrgm') (assertFailure $ printf "%s doesn't match golden test" goldenType)
+        when (golden /= content) (assertFailure $ printf "%s doesn't match golden test" goldenType)
       else do
         createDirectoryIfMissing True (takeDirectory goldenPath)
-        writeFile goldenPath showPrgm'
+        writeFile goldenPath content
+
+runGoldenTest :: (Show em, Show prgm) => String -> String -> String -> GraphData prgm (AFileImport em) -> (String -> IO ()) -> IO ()
+runGoldenTest goldenType goldenDir _fileNameStr =
+  runGoldenTestGen goldenType
+    (\cwd prgm -> T.unpack $ T.replace (T.pack cwd) "/repo/dir" $ pShowNoColor prgm)
+    (\relPath ->
+      let p = goldenDir ++ T.unpack (T.replace (T.pack ".ct") ".txt" (T.pack relPath))
+      in if ".txt" `isSuffixOf` p then p else p ++ ".txt")
+
+-- | Golden test for non-Catln files: formats the converted RawPrgm as Catln
+-- source and compares/writes it to test/Integration/golden/convert.
+runConvertGoldenTest :: FileImport -> PPrgmGraphData -> (String -> IO ()) -> IO ()
+runConvertGoldenTest fileName rawPrgms step =
+  case graphLookup fileName rawPrgms of
+    Nothing -> assertFailure $ printf "File not in raw prgm graph: %s" (show $ impRaw fileName)
+    Just prgm ->
+      runGoldenTestGen "convert"
+        (\_cwd p -> formatRootPrgm p)
+        (\relPath -> goldenConvertDir ++ relPath ++ ".ct")
+        (graphFromEdges [(prgm, fileName, [])])
+        step
 
 runTest :: Bool -> String -> TestTree
 runTest runGolden fileNameStr = testCaseSteps fileNameStr $ \step -> do
@@ -70,7 +95,11 @@ runTest runGolden fileNameStr = testCaseSteps fileNameStr $ \step -> do
   ctss <- ctssBaseFiles testCtssConfig [fileNameStr]
 
   res <- runCResT $ do
-    _rawPrgm <- getRawPrgm ctss
+    rawPrgm <- getRawPrgm ctss
+
+    when (runGolden && ".py" `isSuffixOf` fileNameStr) $ do
+      lift $ runConvertGoldenTest fileName rawPrgm step
+
     prgm <- getPrgm ctss
 
     when runGolden $ do

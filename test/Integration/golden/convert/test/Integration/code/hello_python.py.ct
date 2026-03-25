@@ -1,0 +1,91 @@
+import "core"
+import "python/builtins.ct"
+
+
+add(x -> Integer, y -> Integer) -> Integer= result
+  result -> Integer= x + y
+
+square(x -> Float) -> Float= x * x
+
+class(Point)
+
+PI -> Float= 3.14159
+
+MAX_SIZE -> Integer= 100
+
+DOUBLE_PI -> Float= PI * 2.0
+
+BIG -> Integer= MAX_SIZE + MAX_SIZE
+
+scale(values -> List, factor -> Integer) -> List
+
+abs_int(x -> Integer) -> Integer= x.abs
+
+abs_float(x -> Float) -> Float= x.abs
+
+power(base -> Integer, exp -> Integer) -> Integer= base.pow(/exp= exp)
+
+power_f(base -> Float, exp -> Float) -> Float= base.pow(/exp= exp)
+
+rounded(x -> Float) -> Integer= x.round
+
+floored(x -> Float) -> Integer= x.floor
+
+ceiled(x -> Float) -> Integer= x.ceil
+
+int_div(a -> Integer, b -> Integer) -> Integer= a // b
+
+to_int_from_float(x -> Float) -> Integer= x.toInt
+
+to_float_from_int(x -> Integer) -> Float= x.toFloat
+
+to_str_from_int(x -> Integer) -> String= x.toString
+
+to_str_from_float(x -> Float) -> String= x.toString
+
+to_bool_from_int(x -> Integer) -> Boolean= x.toBool
+
+to_bool_from_float(x -> Float) -> Boolean= x.toBool
+
+char_from_code(n -> Integer) -> String= chr(/n= n)
+
+code_from_char(c -> String) -> Integer= c.ord
+
+to_hex(n -> Integer) -> String= n.hex
+
+to_oct(n -> Integer) -> String= n.oct
+
+to_bin(n -> Integer) -> String= n.bin
+
+concat_strings(a -> String, b -> String) -> String= a + b
+
+string_length(s -> String) -> Integer= s.length
+
+int_max(a -> Integer, b -> Integer) -> Integer= max(/l= a, /r= b)
+
+float_max(a -> Float, b -> Float) -> Float= max(/l= a, /r= b)
+
+int_min(a -> Integer, b -> Integer) -> Integer= min(/l= a, /r= b)
+
+float_min(a -> Float, b -> Float) -> Float= min(/l= a, /r= b)
+
+sum_list(nums -> List) -> Integer= sum(/lst= nums)
+
+all_true(flags -> List) -> Boolean= all(/lst= flags)
+
+any_true(flags -> List) -> Boolean= any(/lst= flags)
+
+make_range(n -> Integer) -> List= range(/stop= n)
+
+reverse_list(lst -> List) -> List= reversed(/lst= lst)
+
+sort_list(lst -> List) -> List= sorted(/lst= lst)
+
+say_hello(msg -> String){io -> IO}= io.println(/msg= msg.toString)
+
+print_twice(msg -> String){io -> IO}= io.println(/msg= msg.toString).println(/msg= msg.toString)
+
+echo{io -> IO}= io.println(/msg= io.input.toString)
+
+main{io -> IO}= io
+
