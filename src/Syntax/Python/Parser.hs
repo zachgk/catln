@@ -565,7 +565,7 @@ convertPyBuiltinCall "floor" [PyPosArg x] =
   Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "floor")
 convertPyBuiltinCall "ceil" [PyPosArg x] =
   Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "ceil")
--- len(x) -> x.length
+-- len(x) -> x.length  (works for String; ConsList via :Nil.length / :Cons.length)
 convertPyBuiltinCall "len" [PyPosArg x] =
   Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "length")
 -- Type conversions: int(x)->x.toInt, float(x)->x.toFloat, str(x)->x.toString, bool(x)->x.toBool
@@ -595,6 +595,28 @@ convertPyBuiltinCall "print" [PyPosArg x] =
   Just $ RawMethod emptyMetaN (rawVal "io") (rawVal "println")
     `applyRawArgs` [(Just $ partialKey "msg",
                      RawMethod emptyMetaN (convertPyExpr x) (rawVal "toString"))]
+-- sum(lst) -> sum(lst=lst)
+convertPyBuiltinCall "sum" [PyPosArg x] =
+  Just $ rawVal "sum"
+    `applyRawArgs` [(Just $ partialKey "lst", convertPyExpr x)]
+-- all(lst) -> all(lst=lst), any(lst) -> any(lst=lst)
+convertPyBuiltinCall "all" [PyPosArg x] =
+  Just $ rawVal "all"
+    `applyRawArgs` [(Just $ partialKey "lst", convertPyExpr x)]
+convertPyBuiltinCall "any" [PyPosArg x] =
+  Just $ rawVal "any"
+    `applyRawArgs` [(Just $ partialKey "lst", convertPyExpr x)]
+-- range(n) -> range(stop=n)
+convertPyBuiltinCall "range" [PyPosArg n] =
+  Just $ rawVal "range"
+    `applyRawArgs` [(Just $ partialKey "stop", convertPyExpr n)]
+-- reversed(lst) -> reversed(lst=lst), sorted(lst) -> sorted(lst=lst)
+convertPyBuiltinCall "reversed" [PyPosArg x] =
+  Just $ rawVal "reversed"
+    `applyRawArgs` [(Just $ partialKey "lst", convertPyExpr x)]
+convertPyBuiltinCall "sorted" [PyPosArg x] =
+  Just $ rawVal "sorted"
+    `applyRawArgs` [(Just $ partialKey "lst", convertPyExpr x)]
 -- max(a, b) -> max(l=a, r=b), min(a, b) -> min(l=a, r=b)
 convertPyBuiltinCall "max" [PyPosArg a, PyPosArg b] =
   Just $ rawVal "max"

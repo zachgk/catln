@@ -20,6 +20,15 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/range"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/range( Value /stop -> /Data/Primitive/Integer ) -> ∀/Data/ConsList ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/length"
                 , ObjectMapItem
                     { omiDecls = []
@@ -59,6 +68,15 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/toString( Value /this -> /Data/String ) -> TVArg /this = Value /this ]
+                    }
+                )
+            ,
+                ( "/Data/sum"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/sum( Value /lst -> ∀/Data/ConsList ) -> /Data/Primitive/Integer ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
                     }
                 )
             ,
@@ -108,9 +126,36 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/reversed"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/reversed( Value /lst -> ∀/Data/ConsList ) -> ∀/Data/ConsList ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/sorted"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/sorted( Value /lst -> ∀/Data/ConsList ) -> ∀/Data/ConsList ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/None"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/None ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/any"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/any( Value /lst -> ∀/Data/ConsList ) -> ∀/Data/Primitive/Boolean ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -124,10 +169,25 @@ Prgm
                     , omiDefs = []
                     }
                 )
+            ,
+                ( "/Data/all"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/all( Value /lst -> ∀/Data/ConsList ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
             ]
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -233,6 +293,8 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "#### [length]
             The [length] of a [List] is the number of items inside of it." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "## ConsList runtime operations" )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "Nil.fmap(fn) = Nil" )
         , /Catln/#md

@@ -47,6 +47,19 @@ module(Data)
     The [length] of a [List] is the number of items inside of it.
   :Nil.length= 0
   /Data/Cons(head, tail).length= 1 + tail.length
+  # ## ConsList runtime operations
+  sum(lst -> ConsList) -> Integer
+    #runtime("listSum")
+  all(lst -> ConsList) -> Boolean
+    #runtime("listAll")
+  any(lst -> ConsList) -> Boolean
+    #runtime("listAny")
+  reversed(lst -> ConsList) -> ConsList
+    #runtime("listReversed")
+  sorted(lst -> ConsList) -> ConsList
+    #runtime("listSorted")
+  range(stop -> Integer) -> ConsList
+    #runtime("listRange")
   every(ConsList[$T -> $T], isa= [/Data/Functor])
   # Nil.fmap(fn) = Nil
   # Cons(head, tail).fmap(fn) = Cons(head=fn(head), tail=tail.fmap(fn))

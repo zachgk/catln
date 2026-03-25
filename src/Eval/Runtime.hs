@@ -23,6 +23,7 @@ import           Semantics.Types
 -- import           Emit                (codegenPrgm)
 import           CtConstants
 import           Data.Char           (chr, ord)
+import           Data.List           (sort)
 import           Data.Maybe          (fromMaybe)
 import           Eval.Common
 import           Eval.ExprBuilder
@@ -260,6 +261,101 @@ floatCeil = EPrim "floatCeil" prim
 intDiv :: EPrim
 intDiv = liftIntOp "//" div
 
+--------------------------------------------------------------------
+-- ConsList runtime support
+--------------------------------------------------------------------
+
+nilPrim, consPrim :: String
+nilPrim  = "/Data/Nil"
+consPrim = "/Data/Cons"
+
+-- | Traverse a TupleVal-encoded ConsList to a Haskell list.
+fromConsList :: Val -> Either String [Val]
+fromConsList (TupleVal n _)       | n == nilPrim  = Right []
+fromConsList (TupleVal n fields)  | n == consPrim =
+  case (H.lookup "/head" fields, H.lookup "/tail" fields) of
+    (Just h, Just t) -> (h :) <$> fromConsList t
+    _                -> Left "Invalid Cons: missing head or tail"
+fromConsList v = Left $ printf "Expected ConsList, got: %s" (show v)
+
+-- | Build a TupleVal-encoded ConsList from a Haskell list.
+toConsList :: [Val] -> Val
+toConsList []     = TupleVal nilPrim H.empty
+toConsList (x:xs) = TupleVal consPrim $ H.fromList [("/head", x), ("/tail", toConsList xs)]
+
+listSum :: EPrim
+listSum = EPrim "listSum" prim
+  where
+    prim args = case H.lookup "/lst" args of
+      Just lst -> case fromConsList lst of
+        Left err  -> Left err
+        Right []  -> Right (IntVal 0)
+        Right vs  -> case head vs of
+          IntVal _   -> Right $ IntVal   $ sum [i | IntVal   i <- vs]
+          FloatVal _ -> Right $ FloatVal $ sum [f | FloatVal f <- vs]
+          _          -> Left "listSum: expected numeric elements"
+      _ -> Left "Invalid listSum signature"
+
+listAll :: EPrim
+listAll = EPrim "listAll" prim
+  where
+    prim args = case H.lookup "/lst" args of
+      Just lst -> case fromConsList lst of
+        Right vs -> Right $ bool $ all isTruthy vs
+        Left err -> Left err
+      _ -> Left "Invalid listAll signature"
+    isTruthy (TupleVal n _) = n == truePrim
+    isTruthy _              = False
+
+listAny :: EPrim
+listAny = EPrim "listAny" prim
+  where
+    prim args = case H.lookup "/lst" args of
+      Just lst -> case fromConsList lst of
+        Right vs -> Right $ bool $ any isTruthy vs
+        Left err -> Left err
+      _ -> Left "Invalid listAny signature"
+    isTruthy (TupleVal n _) = n == truePrim
+    isTruthy _              = False
+
+listReversed :: EPrim
+listReversed = EPrim "listReversed" prim
+  where
+    prim args = case H.lookup "/lst" args of
+      Just lst -> case fromConsList lst of
+        Right vs -> Right $ toConsList (reverse vs)
+        Left err -> Left err
+      _ -> Left "Invalid listReversed signature"
+
+listSorted :: EPrim
+listSorted = EPrim "listSorted" prim
+  where
+    prim args = case H.lookup "/lst" args of
+      Just lst -> case fromConsList lst of
+        Left err -> Left err
+        Right [] -> Right (toConsList [])
+        Right vs -> case head vs of
+          IntVal _   -> Right $ toConsList $ map IntVal   $ sort [i | IntVal   i <- vs]
+          FloatVal _ -> Right $ toConsList $ map FloatVal $ sort [f | FloatVal f <- vs]
+          _          -> Left "listSorted: expected numeric elements"
+      _ -> Left "Invalid listSorted signature"
+
+listRange :: EPrim
+listRange = EPrim "listRange" prim
+  where
+    prim args = case H.lookup "/stop" args of
+      Just (IntVal n) -> Right $ toConsList [IntVal i | i <- [0 .. n - 1]]
+      _               -> Left "Invalid listRange signature"
+
+listLength :: EPrim
+listLength = EPrim "listLength" prim
+  where
+    prim args = case H.lookup "/lst" args of
+      Just lst -> case fromConsList lst of
+        Right vs -> Right $ IntVal $ fromIntegral (length vs)
+        Left err -> Left err
+      _ -> Left "Invalid listLength signature"
+
 ioExit :: EPrim
 ioExit = EPrim "ioExit" prim
   where
@@ -366,5 +462,12 @@ primEnv = H.fromList (map mapPrim prims ++ macros)
             , floatFloor
             , floatCeil
             , intDiv
+            , listSum
+            , listAll
+            , listAny
+            , listReversed
+            , listSorted
+            , listRange
+            , listLength
             ]
     macros = [arrExists, contextMacro, llvm]

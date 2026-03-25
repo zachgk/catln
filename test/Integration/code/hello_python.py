@@ -130,5 +130,30 @@ def float_min(a: float, b: float) -> float:
     return min(a, b)
 
 
+# Collection operations
+def sum_list(nums: list) -> int:
+    return sum(nums)
+
+
+def all_true(flags: list) -> bool:
+    return all(flags)
+
+
+def any_true(flags: list) -> bool:
+    return any(flags)
+
+
+def make_range(n: int) -> list:
+    return range(n)
+
+
+def reverse_list(lst: list) -> list:
+    return reversed(lst)
+
+
+def sort_list(lst: list) -> list:
+    return sorted(lst)
+
+
 def main() -> None:
     pass

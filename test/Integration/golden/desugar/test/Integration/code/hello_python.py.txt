@@ -38,12 +38,30 @@ Prgm
                     }
                 )
             ,
+                ( "/make_range"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ make_range( Value n -> /Data/Primitive/Integer ) -> ∀/Data/List = range( Value /stop= Value n ) ]
+                    }
+                )
+            ,
                 ( "/power_f"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ power_f( Value base -> /Data/Primitive/Float )( Value exp -> /Data/Primitive/Float ) -> /Data/Primitive/Float = pow( Value /this= Value base )( Value /exp= Value exp ) ]
+                    }
+                )
+            ,
+                ( "/sort_list"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ sort_list( Value lst -> ∀/Data/List ) -> ∀/Data/List = sorted( Value /lst= Value lst ) ]
                     }
                 )
             ,
@@ -80,6 +98,15 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ float_max( Value a -> /Data/Primitive/Float )( Value b -> /Data/Primitive/Float ) -> /Data/Primitive/Float = max( Value /l= Value a )( Value /r= Value b ) ]
+                    }
+                )
+            ,
+                ( "/any_true"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ any_true( Value flags -> ∀/Data/List ) -> ∀/Data/Primitive/Boolean = any( Value /lst= Value flags ) ]
                     }
                 )
             ,
@@ -184,6 +211,15 @@ Prgm
                     }
                 )
             ,
+                ( "/sum_list"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ sum_list( Value nums -> ∀/Data/List ) -> /Data/Primitive/Integer = sum( Value /lst= Value nums ) ]
+                    }
+                )
+            ,
                 ( "/float_min"
                 , ObjectMapItem
                     { omiDecls = []
@@ -244,6 +280,24 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ to_int_from_float( Value x -> /Data/Primitive/Float ) -> /Data/Primitive/Integer = toInt( Value /this= Value x ) ]
+                    }
+                )
+            ,
+                ( "/reverse_list"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ reverse_list( Value lst -> ∀/Data/List ) -> ∀/Data/List = reversed( Value /lst= Value lst ) ]
+                    }
+                )
+            ,
+                ( "/all_true"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ all_true( Value flags -> ∀/Data/List ) -> ∀/Data/Primitive/Boolean = all( Value /lst= Value flags ) ]
                     }
                 )
             ,
@@ -313,6 +367,12 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
