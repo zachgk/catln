@@ -1,6 +1,9 @@
 import "core/data.ct"
 
 module(Python/Builtins)
+  # ## IO built-ins
+  :IO.input -> String
+    #runtime("ioInput")
   # ## Python built-in abs and pow mapped to methods
   :Integer.abs -> Integer
     #runtime("intAbs")

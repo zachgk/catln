@@ -590,6 +590,9 @@ convertPyBuiltinCall "oct"   [PyPosArg x] =
   Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "oct")
 convertPyBuiltinCall "bin"   [PyPosArg x] =
   Just $ RawMethod emptyMetaN (convertPyExpr x) (rawVal "bin")
+-- input() -> io.input  (reads a line from stdin via the IO context)
+convertPyBuiltinCall "input" [] =
+  Just $ RawMethod emptyMetaN (rawVal "io") (rawVal "input")
 -- print(*args) -> io.println(msg=arg.toString) for single-arg case
 convertPyBuiltinCall "print" [PyPosArg x] =
   Just $ RawMethod emptyMetaN (rawVal "io") (rawVal "println")
@@ -702,9 +705,19 @@ convertPyStatementToTree stmt = case stmt of
           Just PyNone    -> True
           _              -> False
         (bodyExpr0, bodyDecls) = convertPyBody body
+        -- Collect bare expression statements (e.g. print calls) for IO chaining
+        ioEffects = [e | PyExprStmt e <- body]
+        -- Chain a single IO-effect expression onto an accumulated IO value.
+        -- Currently handles print(x) -> acc.println(msg=x.toString).
+        chainIOEffect acc (PyCall (PyVar "print") [PyPosArg x]) =
+          RawMethod emptyMetaN acc (rawVal "println")
+            `applyRawArgs` [(Just $ partialKey "msg",
+                             RawMethod emptyMetaN (convertPyExpr x) (rawVal "toString"))]
+        chainIOEffect acc _ = acc
         (ctxParams, bodyExpr)
           | null ctxParams0 && retTypeIsIO && isNothing bodyExpr0 =
-              ([PySimpleParam "io" (Just (PyVar "IO"))], Just (rawVal "io"))
+              let ioExpr = foldl chainIOEffect (rawVal "io") ioEffects
+              in ([PySimpleParam "io" (Just (PyVar "IO"))], Just ioExpr)
           | otherwise = (ctxParams0, bodyExpr0)
         baseHead   = applyTypedParams (rawVal name) (map convertPyParam regParams)
         funcHead   = case ctxParams of

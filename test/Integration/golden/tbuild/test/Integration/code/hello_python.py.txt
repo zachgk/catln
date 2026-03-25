@@ -104,7 +104,38 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                        [ /ContextIn
+                            ( EAppArg Value /value -> /say_hello( /msg=/Data/String ) = /say_hello( EAppArg Value /msg -> /Data/String ) )( EAppArg Value /io -> /Catln/IO )= /println
+                            ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+                            ( EAppArg Value /msg -> /Data/String =
+                                ( /toString( EAppArg Value /this -> TVArg /msg = Value /msg ) ↦ /Data/String )
+                            )
+                        , /ContextIn
+                            ( EAppArg Value /value -> /print_twice( /msg=/Data/String ) = /print_twice( EAppArg Value /msg -> /Data/String ) )( EAppArg Value /io -> /Catln/IO )= /println
+                            ( EAppArg Value /this -> /Catln/IO =
+                                ( /println
+                                    ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+                                    ( EAppArg Value /msg -> /Data/String =
+                                        ( /toString( EAppArg Value /this -> TVArg /msg = Value /msg ) ↦ /Data/String )
+                                    ) ↦ /Catln/IO
+                                )
+                            )
+                            ( EAppArg Value /msg -> /Data/String =
+                                ( /toString( EAppArg Value /this -> TVArg /msg = Value /msg ) ↦ /Data/String )
+                            )
+                        , /ContextIn( EAppArg Value /value -> /echo = Value /echo )( EAppArg Value /io -> /Catln/IO )= /println
+                            ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+                            ( EAppArg Value /msg -> /Data/String =
+                                ( /toString
+                                    ( EAppArg Value /this -> /Data/String =
+                                        ( /input
+                                            ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) ) ↦ /Data/String
+                                        )
+                                    ) ↦ /Data/String
+                                )
+                            )
+                        , /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io )
+                        ]
                     }
                 )
             ,

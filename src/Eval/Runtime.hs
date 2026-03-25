@@ -28,6 +28,8 @@ import           Data.Maybe          (fromMaybe)
 import           Eval.Common
 import           Eval.ExprBuilder
 import           Numeric             (showHex, showOct)
+import           System.IO           (hFlush, stdout)
+import           System.IO.Unsafe    (unsafePerformIO)
 import           Text.Printf
 
 type Op = (String, Either EPrim MacroFunction)
@@ -370,6 +372,16 @@ println = EPrim "println" prim
       (Just (IOVal r io), Just (StrVal msg)) -> Right $ IOVal r (io >> putStrLn msg)
       _ -> Left "Invalid println signature"
 
+-- | Read a line from stdin, flushing any accumulated IO output first.
+-- Uses unsafePerformIO because EPrim is pure, but the sequencing is correct:
+-- the accumulated IO actions (e.g. prior printlns) run before getLine.
+ioInput :: EPrim
+ioInput = EPrim "ioInput" prim
+  where
+    prim args = case H.lookup "/this" args of
+      Just (IOVal _ io) -> Right $ StrVal $ unsafePerformIO (io >> hFlush stdout >> getLine)
+      _ -> Left "Invalid ioInput signature"
+
 arrExists :: Op
 arrExists = ("arrExists", Right (MacroFunction macroBuild))
   where
@@ -438,6 +450,7 @@ primEnv = H.fromList (map mapPrim prims ++ macros)
             , intToString
             , ioExit
             , println
+            , ioInput
             , intAbs
             , floatAbs
             , intPow

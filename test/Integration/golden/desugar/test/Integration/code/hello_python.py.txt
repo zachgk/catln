@@ -70,7 +70,21 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                        [ /ContextIn
+                            ( Value /value= say_hello( Value msg -> /Data/String ) )( Value /io -> /Catln/IO )= println( Value /this= Value io )
+                            ( Value /msg= toString( Value /this= Value msg ) )
+                        , /ContextIn
+                            ( Value /value= print_twice( Value msg -> /Data/String ) )( Value /io -> /Catln/IO )= println
+                            ( Value /this= println( Value /this= Value io )
+                                ( Value /msg= toString( Value /this= Value msg ) )
+                            )
+                            ( Value /msg= toString( Value /this= Value msg ) )
+                        , /ContextIn( Value /value= Value echo )( Value /io -> /Catln/IO )= println( Value /this= Value io )
+                            ( Value /msg= toString
+                                ( Value /this= input( Value /this= Value io ) )
+                            )
+                        , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io
+                        ]
                     }
                 )
             ,

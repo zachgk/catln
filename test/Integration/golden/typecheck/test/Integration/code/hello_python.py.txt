@@ -93,7 +93,21 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
+                        [ /ContextIn
+                            ( Value /value -> /say_hello( /msg=/Data/String ) = /say_hello( Value /msg -> /Data/String ) )( Value /io -> /Catln/IO )= /println( Value /this -> TVArg /io = Value /io )
+                            ( Value /msg -> /Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
+                        , /ContextIn
+                            ( Value /value -> /print_twice( /msg=/Data/String ) = /print_twice( Value /msg -> /Data/String ) )( Value /io -> /Catln/IO )= /println
+                            ( Value /this -> /Catln/IO = /println( Value /this -> TVArg /io = Value /io )
+                                ( Value /msg -> /Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
+                            )
+                            ( Value /msg -> /Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
+                        , /ContextIn( Value /value -> /echo = Value /echo )( Value /io -> /Catln/IO )= /println( Value /this -> TVArg /io = Value /io )
+                            ( Value /msg -> /Data/String = /toString
+                                ( Value /this -> /Data/String = /input( Value /this -> TVArg /io = Value /io ) )
+                            )
+                        , /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io
+                        ]
                     }
                 )
             ,

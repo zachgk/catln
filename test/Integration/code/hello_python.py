@@ -155,5 +155,19 @@ def sort_list(lst: list) -> list:
     return sorted(lst)
 
 
+# Phase 6: IO / print and input
+def say_hello(msg: str) -> None:
+    print(msg)
+
+
+def print_twice(msg: str) -> None:
+    print(msg)
+    print(msg)
+
+
+def echo() -> None:
+    print(input())
+
+
 def main() -> None:
     pass

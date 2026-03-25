@@ -138,6 +138,15 @@ Prgm
                     }
                 )
             ,
+                ( "/Python/Builtins/input"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Python/Builtins/input( Value /this -> /Catln/IO ) -> /Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Python/Builtins/bin"
                 , ObjectMapItem
                     { omiDecls =
@@ -164,9 +173,12 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         ]
     , prgmAnnots =
         [ /Catln/#md
+            ( Value /text -> /Data/String = CStr "## IO built-ins" )
+        , /Catln/#md
             ( Value /text -> /Data/String = CStr "## Python built-in abs and pow mapped to methods" )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "## Type conversions" )
