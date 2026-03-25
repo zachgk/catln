@@ -38,6 +38,15 @@ Prgm
                     }
                 )
             ,
+                ( "/ContextIn.$f41028"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn.$f41028( Value /io )( Value /$f41028-arg= Value io )= Value io ]
+                    }
+                )
+            ,
                 ( "/make_range"
                 , ObjectMapItem
                     { omiDecls = []
@@ -71,17 +80,20 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn
-                            ( Value /value= say_hello( Value msg -> /Data/String ) )( Value /io -> /Catln/IO )= println( Value /this= Value io )
-                            ( Value /msg= toString( Value /this= Value msg ) )
-                        , /ContextIn
-                            ( Value /value= print_twice( Value msg -> /Data/String ) )( Value /io -> /Catln/IO )= println
-                            ( Value /this= println( Value /this= Value io )
+                            ( Value /value= say_hello( Value msg -> /Data/String ) )( Value /io -> /Catln/IO )= /ContextIn.$980246( Value /msg= Value /msg )( Value /io= Value /io )
+                            ( Value /$980246-arg= println( Value /this= Value io )
                                 ( Value /msg= toString( Value /this= Value msg ) )
                             )
-                            ( Value /msg= toString( Value /this= Value msg ) )
-                        , /ContextIn( Value /value= Value echo )( Value /io -> /Catln/IO )= println( Value /this= Value io )
-                            ( Value /msg= toString
-                                ( Value /this= input( Value /this= Value io ) )
+                        , /ContextIn
+                            ( Value /value= print_twice( Value msg -> /Data/String ) )( Value /io -> /Catln/IO )= /ContextIn.$980246( Value /msg= Value /msg )( Value /io= Value /io )
+                            ( Value /$980246-arg= println( Value /this= Value io )
+                                ( Value /msg= toString( Value /this= Value msg ) )
+                            )
+                        , /ContextIn( Value /value= Value echo )( Value /io -> /Catln/IO )= /ContextIn.$f41028( Value /io= Value /io )
+                            ( Value /$f41028-arg= println( Value /this= Value io )
+                                ( Value /msg= toString
+                                    ( Value /this= input( Value /this= Value io ) )
+                                )
                             )
                         , /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io
                         ]
@@ -147,7 +159,7 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ add( Value x -> /Data/Primitive/Integer )( Value y -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = add.result( Value /x= Value /x )( Value /y= Value /y ) ]
+                        [ add( Value x -> /Data/Primitive/Integer )( Value y -> /Data/Primitive/Integer )= add.result( Value /x= Value /x )( Value /y= Value /y ) ]
                     }
                 )
             ,
@@ -279,6 +291,17 @@ Prgm
                     }
                 )
             ,
+                ( "/ContextIn.$980246.$980246"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn.$980246.$980246( Value /msg )( Value /io )
+                            ( Value /$980246-arg= Value io )= Value io
+                        ]
+                    }
+                )
+            ,
                 ( "/concat_strings"
                 , ObjectMapItem
                     { omiDecls = []
@@ -312,6 +335,22 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ all_true( Value flags -> ∀/Data/List ) -> ∀/Data/Primitive/Boolean = all( Value /lst= Value flags ) ]
+                    }
+                )
+            ,
+                ( "/ContextIn.$980246"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn.$980246( Value /msg )( Value /io )
+                            ( Value /$980246-arg= Value io )= Value io
+                        , /ContextIn.$980246( Value /msg )( Value /io )
+                            ( Value /$980246-arg= Value io )= /ContextIn.$980246.$980246( Value /msg= Value /msg )( Value /io= Value /io )
+                            ( Value /$980246-arg= println( Value /this= Value io )
+                                ( Value /msg= toString( Value /this= Value msg ) )
+                            )
+                        ]
                     }
                 )
             ,
@@ -381,6 +420,9 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType

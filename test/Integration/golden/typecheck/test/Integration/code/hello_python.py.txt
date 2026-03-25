@@ -8,7 +8,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /to_oct( Value /n -> /Data/Primitive/Integer ) ->
-                            ( /Data/String + /Python/Builtins/oct( /this=TopType ) + /oct( /this=TopType ) ) = /oct( Value /this -> TVArg /n = Value /n )
+                            ( /Data/String + /Python/Builtins/oct( /this=/Data/Primitive/Integer ) + /oct( /this=/Data/Primitive/Integer ) ) = /oct( Value /this -> TVArg /n = Value /n )
                         ]
                     }
                 )
@@ -19,7 +19,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /rounded( Value /x -> /Data/Primitive/Float ) ->
-                            ( /Data/Primitive/round( /this=TopType ) + /round( /this=TopType ) + /Data/Primitive/Integer ) = /round( Value /this -> TVArg /x = Value /x )
+                            ( /Data/Primitive/round( /this=/Data/Primitive/Float ) + /round( /this=/Data/Primitive/Float ) + /Data/Primitive/Integer ) = /round( Value /this -> TVArg /x = Value /x )
                         ]
                     }
                 )
@@ -30,11 +30,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /string_length( Value /s -> /Data/String ) ->
-                            ( /length( /this=TopType ) + /Data/length( /this=TopType ) + /Python/Builtins/length( /this=TopType ) + /operator+
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
-                            ) = /length( Value /this -> TVArg /s = Value /s )
+                            ( /length( /this=/Data/String ) + /Data/length( /this=/Data/String ) + /Python/Builtins/length( /this=/Data/String ) + /Data/Primitive/Integer ) = /length( Value /this -> TVArg /s = Value /s )
                         ]
                     }
                 )
@@ -44,7 +40,22 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /BIG= /operator+( Value /l -> /Data/Primitive/Integer = Value /MAX_SIZE )( Value /r -> /Data/Primitive/Integer = Value /MAX_SIZE ) ]
+                        [ Value /BIG ->
+                            ( /operator+
+                                ( /r=( /Data/Primitive/Integer + /MAX_SIZE )
+                                , /l=TopType
+                                ) + /Data/Primitive/Integer
+                            ) = /operator+( Value /l -> /Data/Primitive/Integer = Value /MAX_SIZE )( Value /r -> /Data/Primitive/Integer = Value /MAX_SIZE )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn.$f41028"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn.$f41028( Value /io )( Value /$f41028-arg -> /io = Value /io ) -> TVArg /io = Value /io ]
                     }
                 )
             ,
@@ -54,10 +65,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /make_range( Value /n -> /Data/Primitive/Integer ) ->
-                            ( /Data/range( /stop=TopType ) + /Data/Nil + /Data/Cons[ /T=TopType ]
+                            ( /Data/range( /stop=/Data/Primitive/Integer ) + /Data/Nil + /Data/Cons[ /T=TopType ]
                                 ( /head=TVVar /T
                                 , /tail=~ConsList[ /T=TVVar /T ]
-                                ) + /range( /stop=TopType )
+                                ) + /range( /stop=/Data/Primitive/Integer )
                             ) = /range( Value /stop -> TVArg /n = Value /n )
                         ]
                     }
@@ -68,7 +79,16 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /power_f( Value /base -> /Data/Primitive/Float )( Value /exp -> /Data/Primitive/Float )= /pow( Value /this -> TVArg /base = Value /base )( Value /exp -> TVArg /exp = Value /exp ) ]
+                        [ /power_f( Value /base -> /Data/Primitive/Float )( Value /exp -> /Data/Primitive/Float ) ->
+                            ( /Python/Builtins/pow
+                                ( /exp=/Data/Primitive/Float
+                                , /this=TopType
+                                ) + /pow
+                                ( /exp=/Data/Primitive/Float
+                                , /this=TopType
+                                ) + /Data/Primitive/Float
+                            ) = /pow( Value /this -> TVArg /base = Value /base )( Value /exp -> TVArg /exp = Value /exp )
+                        ]
                     }
                 )
             ,
@@ -82,7 +102,7 @@ Prgm
                             ( /Data/Nil + /Data/Cons[ /T=TopType ]
                                 ( /head=TVVar /T
                                 , /tail=~ConsList[ /T=TVVar /T ]
-                                ) + /Data/sorted( /lst=TopType ) + /sorted( /lst=TopType )
+                                ) + /Data/sorted( /lst=∀/Data/List ) + /sorted( /lst=∀/Data/List )
                             ) = /sorted( Value /lst -> ∅ = Value /lst )
                         ]
                     }
@@ -94,17 +114,35 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn
-                            ( Value /value -> /say_hello( /msg=/Data/String ) = /say_hello( Value /msg -> /Data/String ) )( Value /io -> /Catln/IO )= /println( Value /this -> TVArg /io = Value /io )
-                            ( Value /msg -> /Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
-                        , /ContextIn
-                            ( Value /value -> /print_twice( /msg=/Data/String ) = /print_twice( Value /msg -> /Data/String ) )( Value /io -> /Catln/IO )= /println
-                            ( Value /this -> /Catln/IO = /println( Value /this -> TVArg /io = Value /io )
+                            ( Value /value -> /say_hello( /msg=/Data/String ) = /say_hello( Value /msg -> /Data/String ) )( Value /io -> /Catln/IO )= /ContextIn.$980246( Value /msg -> TVArg /msg = Value /msg )( Value /io -> TVArg /io = Value /io )
+                            ( Value /$980246-arg ->
+                                ( /Catln/println
+                                    ( /msg=/Data/String
+                                    , /this=/Catln/IO
+                                    ) + /Catln/IO
+                                ) = /println( Value /this -> TVArg /io = Value /io )
                                 ( Value /msg -> /Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
                             )
-                            ( Value /msg -> /Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
-                        , /ContextIn( Value /value -> /echo = Value /echo )( Value /io -> /Catln/IO )= /println( Value /this -> TVArg /io = Value /io )
-                            ( Value /msg -> /Data/String = /toString
-                                ( Value /this -> /Data/String = /input( Value /this -> TVArg /io = Value /io ) )
+                        , /ContextIn
+                            ( Value /value -> /print_twice( /msg=/Data/String ) = /print_twice( Value /msg -> /Data/String ) )( Value /io -> /Catln/IO )= /ContextIn.$980246( Value /msg -> TVArg /msg = Value /msg )( Value /io -> TVArg /io = Value /io )
+                            ( Value /$980246-arg ->
+                                ( /Catln/println
+                                    ( /msg=/Data/String
+                                    , /this=/Catln/IO
+                                    ) + /Catln/IO
+                                ) = /println( Value /this -> TVArg /io = Value /io )
+                                ( Value /msg -> /Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
+                            )
+                        , /ContextIn( Value /value -> /echo = Value /echo )( Value /io -> /Catln/IO )= /ContextIn.$f41028( Value /io -> TVArg /io = Value /io )
+                            ( Value /$f41028-arg ->
+                                ( /Catln/println
+                                    ( /msg=/Data/String
+                                    , /this=/Catln/IO
+                                    ) + /Catln/IO
+                                ) = /println( Value /this -> TVArg /io = Value /io )
+                                ( Value /msg -> /Data/String = /toString
+                                    ( Value /this -> /Data/String = /input( Value /this -> TVArg /io = Value /io ) )
+                                )
                             )
                         , /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io
                         ]
@@ -117,7 +155,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /to_float_from_int( Value /x -> /Data/Primitive/Integer ) ->
-                            ( /toFloat( /this=TopType ) + /Python/Builtins/toFloat( /this=TopType ) + /Data/Primitive/Float ) = /toFloat( Value /this -> TVArg /x = Value /x )
+                            ( /toFloat( /this=/Data/Primitive/Integer ) + /Python/Builtins/toFloat( /this=/Data/Primitive/Integer ) + /Data/Primitive/Float ) = /toFloat( Value /this -> TVArg /x = Value /x )
                         ]
                     }
                 )
@@ -127,7 +165,16 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /int_max( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer )= /max( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) ]
+                        [ /int_max( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer ) ->
+                            ( /Data/Primitive/Integer + /max
+                                ( /r=/Data/Primitive/Integer
+                                , /l=TopType
+                                ) + /Python/Builtins/max
+                                ( /r=/Data/Primitive/Integer
+                                , /l=TopType
+                                )
+                            ) = /max( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
+                        ]
                     }
                 )
             ,
@@ -136,7 +183,16 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /float_max( Value /a -> /Data/Primitive/Float )( Value /b -> /Data/Primitive/Float )= /max( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) ]
+                        [ /float_max( Value /a -> /Data/Primitive/Float )( Value /b -> /Data/Primitive/Float ) ->
+                            ( /max
+                                ( /r=/Data/Primitive/Float
+                                , /l=TopType
+                                ) + /Python/Builtins/max
+                                ( /r=/Data/Primitive/Float
+                                , /l=TopType
+                                ) + /Data/Primitive/Float
+                            ) = /max( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
+                        ]
                     }
                 )
             ,
@@ -147,7 +203,7 @@ Prgm
                     , omiDefs =
                         [ /any_true
                             ( Value /flags -> ( TopType | PredClass /Data/List && PredClass /Data/ConsList ) ) ->
-                            ( /any( /lst=TopType ) + /Data/Primitive/True + /Data/Primitive/False + /Data/any( /lst=TopType ) ) = /any( Value /lst -> ∅ = Value /flags )
+                            ( /any( /lst=∀/Data/List ) + /Data/Primitive/True + /Data/Primitive/False + /Data/any( /lst=∀/Data/List ) ) = /any( Value /lst -> ∅ = Value /flags )
                         ]
                     }
                 )
@@ -157,7 +213,13 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /square( Value /x -> /Data/Primitive/Float )= /operator*( Value /l -> TVArg /x = Value /x )( Value /r -> TVArg /x = Value /x ) ]
+                        [ /square( Value /x -> /Data/Primitive/Float ) ->
+                            ( /operator*
+                                ( /r=/Data/Primitive/Float
+                                , /l=TopType
+                                ) + /Data/Primitive/Float
+                            ) = /operator*( Value /l -> TVArg /x = Value /x )( Value /r -> TVArg /x = Value /x )
+                        ]
                     }
                 )
             ,
@@ -167,7 +229,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /to_bin( Value /n -> /Data/Primitive/Integer ) ->
-                            ( /Data/String + /bin( /this=TopType ) + /Python/Builtins/bin( /this=TopType ) ) = /bin( Value /this -> TVArg /n = Value /n )
+                            ( /Data/String + /bin( /this=/Data/Primitive/Integer ) + /Python/Builtins/bin( /this=/Data/Primitive/Integer ) ) = /bin( Value /this -> TVArg /n = Value /n )
                         ]
                     }
                 )
@@ -187,7 +249,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ceiled( Value /x -> /Data/Primitive/Float ) ->
-                            ( /ceil( /this=TopType ) + /Data/Primitive/Integer + /Data/Primitive/ceil( /this=TopType ) ) = /ceil( Value /this -> TVArg /x = Value /x )
+                            ( /ceil( /this=/Data/Primitive/Float ) + /Data/Primitive/Integer + /Data/Primitive/ceil( /this=/Data/Primitive/Float ) ) = /ceil( Value /this -> TVArg /x = Value /x )
                         ]
                     }
                 )
@@ -206,7 +268,12 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /DOUBLE_PI= /operator*( Value /l -> /Data/Primitive/Float = Value /PI )
+                        [ Value /DOUBLE_PI ->
+                            ( /operator*
+                                ( /r=/Data/Primitive/Float
+                                , /l=TopType
+                                ) + /Data/Primitive/Float
+                            ) = /operator*( Value /l -> /Data/Primitive/Float = Value /PI )
                             ( Value /r -> /Data/Primitive/Float = CFloat 2.0 )
                         ]
                     }
@@ -217,7 +284,16 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /power( Value /base -> /Data/Primitive/Integer )( Value /exp -> /Data/Primitive/Integer )= /pow( Value /this -> TVArg /base = Value /base )( Value /exp -> TVArg /exp = Value /exp ) ]
+                        [ /power( Value /base -> /Data/Primitive/Integer )( Value /exp -> /Data/Primitive/Integer ) ->
+                            ( /Python/Builtins/pow
+                                ( /exp=/Data/Primitive/Integer
+                                , /this=TopType
+                                ) + /pow
+                                ( /exp=/Data/Primitive/Integer
+                                , /this=TopType
+                                ) + /Data/Primitive/Integer
+                            ) = /pow( Value /this -> TVArg /base = Value /base )( Value /exp -> TVArg /exp = Value /exp )
+                        ]
                     }
                 )
             ,
@@ -226,7 +302,16 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /int_min( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer )= /min( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) ]
+                        [ /int_min( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer ) ->
+                            ( /Python/Builtins/min
+                                ( /r=/Data/Primitive/Integer
+                                , /l=TopType
+                                ) + /min
+                                ( /r=/Data/Primitive/Integer
+                                , /l=TopType
+                                ) + /Data/Primitive/Integer
+                            ) = /min( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
+                        ]
                     }
                 )
             ,
@@ -236,7 +321,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /to_bool_from_int( Value /x -> /Data/Primitive/Integer ) ->
-                            ( /toBool( /this=TopType ) + /Data/Primitive/True + /Python/Builtins/toBool( /this=TopType ) + /Data/Primitive/False ) = /toBool( Value /this -> TVArg /x = Value /x )
+                            ( /toBool( /this=/Data/Primitive/Integer ) + /Data/Primitive/True + /Python/Builtins/toBool( /this=/Data/Primitive/Integer ) + /Data/Primitive/False ) = /toBool( Value /this -> TVArg /x = Value /x )
                         ]
                     }
                 )
@@ -255,7 +340,13 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /int_div( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer )= /operator//( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) ]
+                        [ /int_div( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer ) ->
+                            ( /operator//
+                                ( /r=/Data/Primitive/Integer
+                                , /l=TopType
+                                ) + /Data/Primitive/Integer
+                            ) = /operator//( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
+                        ]
                     }
                 )
             ,
@@ -266,7 +357,7 @@ Prgm
                     , omiDefs =
                         [ /sum_list
                             ( Value /nums -> ( TopType | PredClass /Data/List && PredClass /Data/ConsList ) ) ->
-                            ( /Data/sum( /lst=TopType ) + /sum( /lst=TopType ) + /Data/Primitive/Integer ) = /sum( Value /lst -> ∅ = Value /nums )
+                            ( /Data/sum( /lst=∀/Data/List ) + /sum( /lst=∀/Data/List ) + /Data/Primitive/Integer ) = /sum( Value /lst -> ∅ = Value /nums )
                         ]
                     }
                 )
@@ -276,7 +367,16 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /float_min( Value /a -> /Data/Primitive/Float )( Value /b -> /Data/Primitive/Float )= /min( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) ]
+                        [ /float_min( Value /a -> /Data/Primitive/Float )( Value /b -> /Data/Primitive/Float ) ->
+                            ( /Python/Builtins/min
+                                ( /r=/Data/Primitive/Float
+                                , /l=TopType
+                                ) + /min
+                                ( /r=/Data/Primitive/Float
+                                , /l=TopType
+                                ) + /Data/Primitive/Float
+                            ) = /min( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
+                        ]
                     }
                 )
             ,
@@ -286,7 +386,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /to_bool_from_float( Value /x -> /Data/Primitive/Float ) ->
-                            ( /toBool( /this=TopType ) + /Data/Primitive/True + /Python/Builtins/toBool( /this=TopType ) + /Data/Primitive/False ) = /toBool( Value /this -> TVArg /x = Value /x )
+                            ( /toBool( /this=/Data/Primitive/Float ) + /Data/Primitive/True + /Python/Builtins/toBool( /this=/Data/Primitive/Float ) + /Data/Primitive/False ) = /toBool( Value /this -> TVArg /x = Value /x )
                         ]
                     }
                 )
@@ -297,7 +397,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /char_from_code( Value /n -> /Data/Primitive/Integer ) ->
-                            ( /Data/String + /Python/Builtins/chr( /n=TopType ) + /chr( /n=TopType ) ) = /chr( Value /n -> TVArg /n = Value /n )
+                            ( /Data/String + /Python/Builtins/chr( /n=/Data/Primitive/Integer ) + /chr( /n=/Data/Primitive/Integer ) ) = /chr( Value /n -> TVArg /n = Value /n )
                         ]
                     }
                 )
@@ -308,7 +408,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /code_from_char( Value /c -> /Data/String ) ->
-                            ( /Python/Builtins/ord( /this=TopType ) + /ord( /this=TopType ) + /Data/Primitive/Integer ) = /ord( Value /this -> TVArg /c = Value /c )
+                            ( /Python/Builtins/ord( /this=/Data/String ) + /ord( /this=/Data/String ) + /Data/Primitive/Integer ) = /ord( Value /this -> TVArg /c = Value /c )
                         ]
                     }
                 )
@@ -320,7 +420,23 @@ Prgm
                     , omiDefs =
                         [ /add.result
                             ( Value /x -> ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float ) )
-                            ( Value /y -> ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float ) )= /operator+( Value /l -> TVArg /x = Value /x )( Value /r -> TVArg /y = Value /y )
+                            ( Value /y -> ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float ) ) ->
+                            ( /operator+
+                                ( /r=TopType
+                                , /l=TopType
+                                ) + /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float
+                            ) = /operator+( Value /l -> TVArg /x = Value /x )( Value /r -> TVArg /y = Value /y )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn.$980246.$980246"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn.$980246.$980246( Value /msg )( Value /io )
+                            ( Value /$980246-arg -> /io = Value /io ) -> TVArg /io = Value /io
                         ]
                     }
                 )
@@ -330,7 +446,13 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /concat_strings( Value /a -> /Data/String )( Value /b -> /Data/String )= /operator+( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) ]
+                        [ /concat_strings( Value /a -> /Data/String )( Value /b -> /Data/String ) ->
+                            ( /operator+
+                                ( /r=/Data/String
+                                , /l=TopType
+                                ) + /Data/String
+                            ) = /operator+( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
+                        ]
                     }
                 )
             ,
@@ -340,7 +462,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /to_int_from_float( Value /x -> /Data/Primitive/Float ) ->
-                            ( /Python/Builtins/toInt( /this=TopType ) + /toInt( /this=TopType ) + /Data/Primitive/Integer ) = /toInt( Value /this -> TVArg /x = Value /x )
+                            ( /Python/Builtins/toInt( /this=/Data/Primitive/Float ) + /toInt( /this=/Data/Primitive/Float ) + /Data/Primitive/Integer ) = /toInt( Value /this -> TVArg /x = Value /x )
                         ]
                     }
                 )
@@ -352,10 +474,10 @@ Prgm
                     , omiDefs =
                         [ /reverse_list
                             ( Value /lst -> ( TopType | PredClass /Data/List && PredClass /Data/ConsList ) ) ->
-                            ( /reversed( /lst=TopType ) + /Data/Nil + /Data/Cons[ /T=TopType ]
+                            ( /reversed( /lst=∀/Data/List ) + /Data/Nil + /Data/Cons[ /T=TopType ]
                                 ( /head=TVVar /T
                                 , /tail=~ConsList[ /T=TVVar /T ]
-                                ) + /Data/reversed( /lst=TopType )
+                                ) + /Data/reversed( /lst=∀/Data/List )
                             ) = /reversed( Value /lst -> ∅ = Value /lst )
                         ]
                     }
@@ -369,6 +491,28 @@ Prgm
                         [ /all_true
                             ( Value /flags -> ( TopType | PredClass /Data/List && PredClass /Data/ConsList ) ) ->
                             ( /Data/Primitive/True + /all( /lst=∀/Data/List ) + /Data/Primitive/False + /Data/all( /lst=∀/Data/List ) ) = /all( Value /lst -> ∅ = Value /flags )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn.$980246"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn.$980246( Value /msg )( Value /io )
+                            ( Value /$980246-arg -> /io = Value /io ) -> TVArg /io = Value /io
+                        , /ContextIn.$980246
+                            ( Value /msg -> ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float ) )( Value /io -> /Catln/IO )
+                            ( Value /$980246-arg -> /io = Value /io )= /ContextIn.$980246.$980246( Value /msg -> TVArg /msg = Value /msg )( Value /io -> TVArg /io = Value /io )
+                            ( Value /$980246-arg ->
+                                ( /Catln/println
+                                    ( /msg=/Data/String
+                                    , /this=/Catln/IO
+                                    ) + /Catln/IO
+                                ) = /println( Value /this -> TVArg /io = Value /io )
+                                ( Value /msg -> /Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
+                            )
                         ]
                     }
                 )
@@ -451,6 +595,9 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType

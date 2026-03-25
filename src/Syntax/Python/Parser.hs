@@ -19,7 +19,7 @@ import           CtConstants
 import qualified Data.ByteString          as BS
 import qualified Data.HashMap.Strict      as H
 import           Data.List                (intercalate, partition)
-import           Data.Maybe               (isNothing, listToMaybe, mapMaybe)
+import           Data.Maybe               (listToMaybe, mapMaybe)
 import           Foreign                  (Ptr)
 import           Semantics.Prgm
 import           Semantics.Types
@@ -676,16 +676,51 @@ isContextParam (PySimpleParam    _ (Just (PyVar t)))    = mapPyBuiltinType t == 
 isContextParam (PyDefaultParam   _ (Just (PyVar t)) _)  = mapPyBuiltinType t == "IO"
 isContextParam _                                         = False
 
--- | Separate the return expression and local declarations from a function body.
--- The last return statement becomes the function's result expression; all other
--- statements become nested declarations in the RawStatementTree.
-convertPyBody :: [PyStatement] -> (Maybe (RawExpr ()), [RawStatementTree RawExpr ()])
-convertPyBody stmts = (returnExpr, localDecls)
+-- | Build sub-statements for a function body using the nestedDeclaration approach.
+-- IO effect statements (print calls) become RawBindStatements threading 'io'.
+-- Local variable assignments become RawDeclStatements.
+-- The return expression (or final 'io' for IO functions) becomes a bare expression sub-statement.
+buildFuncSubStmts :: Bool -> [PyStatement] -> [RawStatementTree RawExpr ()]
+buildFuncSubStmts isIO stmts = localDecls ++ ioBinds ++ [finalStmt]
   where
-    returnExpr = listToMaybe [convertPyExpr e | PyReturn (Just e) <- stmts]
-    localDecls = mapMaybe convertPyStatementToTree (filter (not . isReturn) stmts)
-    isReturn (PyReturn _) = True
-    isReturn _            = False
+    -- Local variable declarations (PyAssign with type annotation)
+    localDecls = mapMaybe toLocalDecl stmts
+    toLocalDecl s = case s of
+      PyAssign _ (Just _) _ -> convertPyStatementToTree s
+      PyAssign _ Nothing  _ -> convertPyStatementToTree s
+      _                     -> Nothing
+    -- IO-effect bind statements: print(x) -> io <- io.println(/msg= x.toString)
+    ioBinds
+      | isIO = mapMaybe toIOBind stmts
+      | otherwise = []
+    toIOBind (PyExprStmt (PyCall (PyVar "print") [PyPosArg x])) =
+      let printExpr = RawMethod emptyMetaN (rawVal "io") (rawVal "println")
+                        `applyRawArgs` [(Just $ partialKey "msg",
+                                         RawMethod emptyMetaN (convertPyExpr x) (rawVal "toString"))]
+          bindDecl = RawObjArr
+            { roaObj    = Just (rawVal "io")
+            , roaBasis  = FunctionObj
+            , roaDoc    = Nothing
+            , roaAnnots = []
+            , roaArr    = Just (Just printExpr, Nothing)
+            , roaDef    = Nothing
+            }
+      in Just $ RawStatementTree (RawBindStatement bindDecl) []
+    toIOBind _ = Nothing
+    -- Final sub-statement: return expression, or 'io' for IO functions, or anonymous
+    returnExprs = [convertPyExpr e | PyReturn (Just e) <- stmts]
+    finalExpr = case returnExprs of
+      (e:_) -> e
+      []    -> if isIO then rawVal "io" else rawAnon
+    finalStmt = RawStatementTree
+      (RawDeclStatement RawObjArr
+        { roaObj    = Just finalExpr
+        , roaBasis  = FunctionObj
+        , roaDoc    = Nothing
+        , roaAnnots = []
+        , roaArr    = Nothing
+        , roaDef    = Nothing
+        }) []
 
 -- | Convert a Python import to a RawFileImport for a "python" parser.
 -- | Convert a Python statement to a RawStatementTree.
@@ -698,27 +733,34 @@ convertPyStatementToTree stmt = case stmt of
     let (ctxParams0, regParams) = partition isContextParam params
         -- If the return type maps to IO but there are no explicit IO context
         -- params, synthesise one: `def f() -> None: pass` becomes
-        -- `f{io -> IO} = io`.  This allows authentic Python signatures like
-        -- `def main() -> None: pass` to round-trip through the full pipeline.
+        -- `f{io -> IO} = nestedDeclaration / io`.  This allows authentic
+        -- Python signatures like `def main() -> None: pass` to round-trip
+        -- through the full pipeline.
         retTypeIsIO = case retType of
           Just (PyVar t) -> mapPyBuiltinType t == "IO"
           Just PyNone    -> True
           _              -> False
-        (bodyExpr0, bodyDecls) = convertPyBody body
-        -- Collect bare expression statements (e.g. print calls) for IO chaining
-        ioEffects = [e | PyExprStmt e <- body]
-        -- Chain a single IO-effect expression onto an accumulated IO value.
-        -- Currently handles print(x) -> acc.println(msg=x.toString).
-        chainIOEffect acc (PyCall (PyVar "print") [PyPosArg x]) =
-          RawMethod emptyMetaN acc (rawVal "println")
-            `applyRawArgs` [(Just $ partialKey "msg",
-                             RawMethod emptyMetaN (convertPyExpr x) (rawVal "toString"))]
-        chainIOEffect acc _ = acc
-        (ctxParams, bodyExpr)
-          | null ctxParams0 && retTypeIsIO && isNothing bodyExpr0 =
-              let ioExpr = foldl chainIOEffect (rawVal "io") ioEffects
-              in ([PySimpleParam "io" (Just (PyVar "IO"))], Just ioExpr)
-          | otherwise = (ctxParams0, bodyExpr0)
+        ctxParams
+          | null ctxParams0 && retTypeIsIO = [PySimpleParam "io" (Just (PyVar "IO"))]
+          | otherwise                      = ctxParams0
+        isIO = not (null ctxParams)
+        -- Build sub-statements for the body using nestedDeclaration
+        subStmts = buildFuncSubStmts isIO body
+        -- Use nestedDeclaration when the body has multiple statements, or when
+        -- there is exactly one statement that is not a simple return (e.g. IO
+        -- functions with only a final 'io').  For a single return with no local
+        -- declarations, emit the expression directly to keep output readable.
+        hasLocalOrIO = any isLocalOrIO body
+        isLocalOrIO (PyAssign {})  = True
+        isLocalOrIO (PyExprStmt _) = True
+        isLocalOrIO _              = False
+        hasReturn = any (\s -> case s of PyReturn (Just _) -> True; _ -> False) body
+        (bodyExpr, bodySubStmts)
+          | hasLocalOrIO || (isIO && not hasReturn) =
+              (Just (rawVal nestedDeclaration), subStmts)
+          | hasReturn =
+              (fmap convertPyExpr (listToMaybe [e | PyReturn (Just e) <- body]), [])
+          | otherwise = (Nothing, [])
         baseHead   = applyTypedParams (rawVal name) (map convertPyParam regParams)
         funcHead   = case ctxParams of
           []  -> baseHead
@@ -735,7 +777,7 @@ convertPyStatementToTree stmt = case stmt of
           , roaArr    = Just (bodyExpr, retTypeExpr)
           , roaDef    = Nothing
           }
-    in Just $ RawStatementTree (RawDeclStatement decl) bodyDecls
+    in Just $ RawStatementTree (RawDeclStatement decl) bodySubStmts
 
   PyClassDef name bases body ->
     let baseExprs   = map convertPyExpr bases

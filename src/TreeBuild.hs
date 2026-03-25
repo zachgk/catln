@@ -71,6 +71,7 @@ arrowFollowup ::  TBEnv -> [ObjSrc] -> VisitedArrows -> PartialType -> Type -> (
 arrowFollowup TBEnv{tbTypeEnv} os _ _ destType (item, newSrcType) | isSubtypeOfWithObjSrcs tbTypeEnv os newSrcType destType = return item
 -- envLookupTry _ _ _ srcType destType _ | trace (printf "envLookupTry from %s to %s" (show srcType) (show destType)) False = undefined
 arrowFollowup _ _ visitedArrows _ _ ((_, _, resArrow), _) | S.member resArrow visitedArrows = CErr [MkCNote $ BuildTreeCErr Nothing "Found cyclical use of function"]
+arrowFollowup _ _ _ _ _ (_, PTopType) = CErr [MkCNote $ BuildTreeCErr Nothing "Arrow has indeterminate return type"]
 arrowFollowup env objSrc visitedArrows srcType destType ((itemPartial, itemOa, resArrow), newSrcType) = do
   afterArrow <- buildCallTree env objSrc' visitedArrows' newSrcType destType
   let resArrow' = TCSeq resArrow afterArrow
@@ -187,7 +188,7 @@ buildPartialCallTree env@TBEnv{tbTypeEnv} os visitedArrows srcType destType = do
 -- | Builds a call tree to convert something from 'srcType' to 'destType'
 buildCallTree :: TBEnv -> [ObjSrc] -> VisitedArrows -> Type -> Type -> CRes TCallTree
 buildCallTree TBEnv{tbTypeEnv} os _ srcType destType | isSubtypeOfWithObjSrcs tbTypeEnv os srcType destType = return TCTId
--- buildCallTree _ os srcType destType | trace (printf "buildCallTree from %s to %s\n\t\twith %s" (show srcType) (show destType) (show os)) False = undefined
+-- buildCallTree _ os _ srcType destType | trace (printf "buildCallTree from %s to %s\n\t\twith %s" (show srcType) (show destType) (show os)) False = undefined
 buildCallTree _ _ _ _ PTopType = return TCTId
 buildCallTree _ _ _ PTopType _ = error $ printf "buildCallTree from top type"
 buildCallTree env@TBEnv{tbTypeEnv} objSrcs visitedArrows (TypeVar v _) destType = case exprVarArgsWithObjSrcs tbTypeEnv objSrcs of
@@ -246,7 +247,8 @@ toTExprDest :: TBEnv -> [ObjSrc] -> Expr TBMetaDat -> EvalMeta -> CRes (TExpr TB
 -- toTExprDest _ os e m | trace (printf "toExprDest %s to %s \n\twith %s" (show e) (show m) (show os)) False = undefined
 toTExprDest env os e m = do
   e' <- toTExpr env os e
-  ct <- buildCallTree env os S.empty (getMetaType $ getExprMeta e') (getMetaType m)
+  let srcT = getMetaType $ getExprMeta e'
+  ct <- buildCallTree env os S.empty srcT (getMetaType m)
   case ct of
     TCTId                                   -> return e'
     TCMacro _ (MacroFunction f)             -> fromMacro f

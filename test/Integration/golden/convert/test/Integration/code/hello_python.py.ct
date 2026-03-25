@@ -2,8 +2,9 @@ import "core"
 import "python/builtins.ct"
 
 
-add(x -> Integer, y -> Integer) -> Integer= result
+add(x -> Integer, y -> Integer) -> Integer =
   result -> Integer= x + y
+  result
 
 square(x -> Float) -> Float= x * x
 
@@ -81,11 +82,19 @@ reverse_list(lst -> List) -> List= reversed(/lst= lst)
 
 sort_list(lst -> List) -> List= sorted(/lst= lst)
 
-say_hello(msg -> String){io -> IO}= io.println(/msg= msg.toString)
+say_hello(msg -> String){io -> IO} =
+  io<- io.println(/msg= msg.toString)
+  io
 
-print_twice(msg -> String){io -> IO}= io.println(/msg= msg.toString).println(/msg= msg.toString)
+print_twice(msg -> String){io -> IO} =
+  io<- io.println(/msg= msg.toString)
+  io<- io.println(/msg= msg.toString)
+  io
 
-echo{io -> IO}= io.println(/msg= io.input.toString)
+echo{io -> IO} =
+  io<- io.println(/msg= io.input.toString)
+  io
 
-main{io -> IO}= io
+main{io -> IO} =
+  io
 
