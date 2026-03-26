@@ -39,8 +39,13 @@ pComment :: Parser PCompAnnot
 pComment = do
   pos1 <- getSourcePos
   c <- L.indentBlock scn p
-  pos2 <- getSourcePos
-  let m = emptyMeta pos1 pos2
+  -- Compute pos2 from pos1 and content rather than using getSourcePos, because
+  -- getSourcePos after L.indentBlock scn includes trailing whitespace consumed by scn.
+  let ls = lines c
+      endLineNum = unPos (sourceLine pos1) + length ls - 1
+      endColNum  = if null ls then unPos (sourceColumn pos1) else 1 + length (last ls)
+      pos2 = SourcePos (sourceName pos1) (mkPos endLineNum) (mkPos endColNum)
+      m = emptyMeta pos1 pos2
   return (RawValue (emptyMetaM m) (mkName mdAnnot) `applyRawArgs` [(Just $ partialKey (mkName mdAnnotText), RawCExpr m (CStr c))])
   where
     takeLine = takeWhileP (Just "character") (/= '\n')

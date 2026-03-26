@@ -1,4 +1,5 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
+import {createRoot} from 'react-dom/client';
 
 import makeStyles from '@mui/styles/makeStyles';
 import IconButton from '@mui/material/IconButton';
@@ -12,6 +13,7 @@ import {useNavigate} from 'react-router-dom';
 
 import {rawExprMeta, RawExpr, RawObjArr} from './Common/Syntax';
 import {useQuery, useApi, Loading, KeyWord, ReachesTree} from './Common/Common';
+import {Value} from './Common/Value';
 
 const DEBUG_NO_EVAL = false;
 
@@ -30,12 +32,47 @@ const useStyles = makeStyles({
 
 const noEdit = import.meta.env.CATLN_WD_NOEDIT === 'true' || import.meta.env.CATLN_WD_NOEDIT === '1';
 
+// Walk statement trees and collect [{line, startLine, value}] for all expressions
+// that have a pre-computed annotation value in getMetaDat[2].
+// line: the afterLineNumber for the ViewZone (last content line)
+// startLine: the first line of the annotation (for cursor-based hiding)
+function extractLineValues(statementTrees) {
+  const values = [];
+
+  function walkStatementTree(statementTree) {
+    const [statement, subStatements] = statementTree;
+
+    if (statement.tag === "RawDeclStatement") {
+      const objMeta = rawExprMeta(statement.contents.roaObj);
+      const pos = objMeta.getMetaPos;
+      if (pos && objMeta.getMetaDat[2]) {
+        values.push({line: pos[1].line, startLine: pos[0].line, value: objMeta.getMetaDat[2]});
+      }
+    } else if (statement.tag === "RawAnnot") {
+      const m = rawExprMeta(statement.contents);
+      if (m.getMetaPos && m.getMetaDat[2]) {
+        values.push({line: m.getMetaPos[1].line, startLine: m.getMetaPos[0].line, value: m.getMetaDat[2]});
+      }
+    }
+
+    subStatements.forEach(walkStatementTree);
+  }
+
+  statementTrees.forEach(walkStatementTree);
+  return values;
+}
+
 function DocsPage(props) {
   const {prgmName} = props;
 
   let apiResult = useApi(`/api/page?prgmName=${prgmName}`);
   const [mode, setMode] = useState('view');
   const [editedSource, setEditedSource] = useState(null);
+  const [editorInstance, setEditorInstance] = useState(null);
+
+  // Map from zone id -> {root, observer, zone, line, naturalHeight, hidden}
+  const viewZonesRef = useRef(new Map());
+  const cursorListenerRef = useRef(null);
 
   const toggleMode = () => setMode(m => m === 'view' ? 'edit' : 'view');
 
@@ -43,6 +80,102 @@ function DocsPage(props) {
   const prgmData = apiResult.data?.[0] ?? null;
   const sourceText = apiResult.data?.[1] ?? null;
   const currentSource = editedSource !== null ? editedSource : sourceText;
+
+  // Reset edited source whenever the page changes
+  useEffect(() => {
+    setEditedSource(null);
+  }, [prgmName]);
+
+  const handleEditorMount = (editor) => {
+    setEditorInstance(editor);
+    editor.onDidDispose(() => {
+      setEditorInstance(null);
+      viewZonesRef.current.forEach(({root, observer}) => {
+        try { root.unmount(); } catch(e) {}
+        try { observer.disconnect(); } catch(e) {}
+      });
+      viewZonesRef.current.clear();
+      if (cursorListenerRef.current) {
+        cursorListenerRef.current.dispose();
+        cursorListenerRef.current = null;
+      }
+    });
+  };
+
+  // Add/remove ViewZones whenever the editor, mode, or data changes
+  useEffect(() => {
+    const editor = editorInstance;
+
+    // Clean up existing zones and cursor listener
+    if (cursorListenerRef.current) {
+      cursorListenerRef.current.dispose();
+      cursorListenerRef.current = null;
+    }
+    if (editor && viewZonesRef.current.size > 0) {
+      try {
+        editor.changeViewZones(acc => {
+          viewZonesRef.current.forEach((_, id) => acc.removeZone(id));
+        });
+      } catch(e) {}
+    }
+    viewZonesRef.current.forEach(({root, observer}) => {
+      try { root.unmount(); } catch(e) {}
+      try { observer.disconnect(); } catch(e) {}
+    });
+    viewZonesRef.current.clear();
+
+    if (!editor || mode !== 'edit' || !prgmData) return;
+
+    const [, statements] = prgmData;
+    const allValues = extractLineValues(statements);
+
+    if (allValues.length === 0) return;
+
+    editor.changeViewZones(accessor => {
+      allValues.forEach(({line, startLine, value}) => {
+        const domNode = document.createElement('div');
+        Object.assign(domNode.style, {
+          paddingLeft: '60px',
+          fontFamily: 'monospace',
+          fontSize: '13px',
+          color: '#2a7a2a',
+        });
+
+        const root = createRoot(domNode);
+        root.render(<Value data={value} />);
+
+        const zone = {afterLineNumber: line, heightInPx: 19, domNode};
+        const id = accessor.addZone(zone);
+        const zd = {root, observer: null, zone, line, startLine, naturalHeight: 19, hidden: false};
+        viewZonesRef.current.set(id, zd);
+
+        const observer = new ResizeObserver(() => {
+          if (zd.hidden) return;
+          const h = domNode.scrollHeight;
+          if (h > 0 && h !== zd.naturalHeight) {
+            zd.naturalHeight = h;
+            zone.heightInPx = h;
+            try { editor.changeViewZones(acc => acc.layoutZone(id)); } catch(e) {}
+          }
+        });
+        observer.observe(domNode);
+        zd.observer = observer;
+      });
+    });
+
+    // Hide a zone when the cursor enters its line; restore when it leaves
+    cursorListenerRef.current = editor.onDidChangeCursorPosition(e => {
+      const cursorLine = e.position.lineNumber;
+      viewZonesRef.current.forEach((zd, id) => {
+        const shouldHide = cursorLine >= zd.startLine && cursorLine <= zd.line;
+        if (shouldHide === zd.hidden) return;
+        zd.hidden = shouldHide;
+        zd.zone.heightInPx = shouldHide ? 0 : zd.naturalHeight;
+        zd.zone.domNode.style.display = shouldHide ? 'none' : '';
+        try { editor.changeViewZones(acc => acc.layoutZone(id)); } catch(e) {}
+      });
+    });
+  }, [editorInstance, mode, prgmData]);
 
   return (
     <div>
@@ -67,6 +200,7 @@ function DocsPage(props) {
               value={currentSource}
               onChange={value => setEditedSource(value)}
               options={{ minimap: { enabled: false }, wordWrap: 'on', fontSize: 14 }}
+              onMount={handleEditorMount}
             />
           )}
         </Loading>

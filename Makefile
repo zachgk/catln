@@ -40,6 +40,11 @@ webdocs-test:
 webdocs-test-integ:
 	cd webdocs && npm run test:integration:full
 
+.PHONY: webdocs-serve
+webdocs-serve:
+	cd webdocs && npm run build
+	stack run catln -- doc stack test/Integration/code docs
+
 .PHONY: errRepl
 errRepl:
 	stack ghci --profile catln --ghci-options "-fexternal-interpreter -prof" --test
