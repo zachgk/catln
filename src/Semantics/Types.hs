@@ -127,6 +127,24 @@ data Type
 
   deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
 
+-- | Indicates whether the partials in a 'NewUnionType' are positive (included) or negative (excluded).
+data PosNegPartials
+  = PosPartials -- ^ The leafs are part of the type (union semantics)
+  | NegPartials -- ^ The leafs are excluded from the universal set (complement semantics)
+  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+
+-- |
+-- A unified replacement for 'Type'.
+-- 'NewUnionType mPreds posNeg leafs consts' semantics:
+--   * Nothing  + PosPartials + leafs + []     = current UnionType leafs
+--   * Just p   + NegPartials + negLeafs + []  = current TopType negLeafs p
+--   * Just p   + PosPartials + posLeafs + []  = TopType(p) ∪ posLeafs  (new, not representable in old Type)
+--   * Any + _  + _           + consts         = union includes constants (new)
+data NewType
+  = NewUnionType (Maybe TypePredicates) PosNegPartials PartialLeafs [Constant]
+  | NewTypeVar TypeVarAux TypeVarLoc
+  deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
+
 -- | Indicates whether a type var or arg is located internally to the object or externally.
 -- | Internal is if it is defined in the type as an argument or variable.
 -- | External is if it is from a parent object or outer context.
@@ -258,6 +276,12 @@ instance Show Type where
       join []  = "∅"
       join [p] = p
       join ps  = "(" ++ intercalate " + " ps ++ ")"
+
+instance Show NewType where
+  show (NewUnionType Nothing PosPartials leafs []) = show (UnionType leafs)
+  show (NewUnionType (Just preds) NegPartials negLeafs []) = show (TopType negLeafs preds)
+  show (NewUnionType mPreds posNeg leafs consts) = printf "NewUnionType(%s, %s, %s, %s)" (show mPreds) (show posNeg) (show $ UnionType leafs) (show consts)
+  show (NewTypeVar v loc) = show (TypeVar v loc)
 
 instance Show ClassGraph where
   show (ClassGraph graphData) = show $ map fst3 $ graphToNodes graphData
@@ -405,6 +429,31 @@ pattern PTopType <- TopType (H.null -> True) PredsNone
 pattern BottomType :: Type
 pattern BottomType <- UnionType (H.null -> True)
   where BottomType = UnionType H.empty
+
+-- | The 'NewType' equivalent of 'PTopType': the universal type.
+pattern NewPTopType :: NewType
+pattern NewPTopType <- NewUnionType (Just PredsNone) NegPartials (H.null -> True) []
+  where NewPTopType = NewUnionType (Just PredsNone) NegPartials H.empty []
+
+-- | The 'NewType' equivalent of 'BottomType': the empty type ∅.
+pattern NewBottomType :: NewType
+pattern NewBottomType <- NewUnionType Nothing PosPartials (H.null -> True) []
+  where NewBottomType = NewUnionType Nothing PosPartials H.empty []
+
+-- | Converts an old 'Type' to the unified 'NewType'.
+typeToNewType :: Type -> NewType
+typeToNewType (UnionType leafs)       = NewUnionType Nothing PosPartials leafs []
+typeToNewType (TypeVar v loc)         = NewTypeVar v loc
+typeToNewType (TopType negLeafs preds) = NewUnionType (Just preds) NegPartials negLeafs []
+
+-- | Converts a 'NewType' back to the old 'Type'.
+-- Partial: @undefined@ for states that are not representable in the old 'Type'
+-- (e.g. positive partials combined with predicates, or any non-empty constants).
+newTypeToType :: NewType -> Type
+newTypeToType (NewUnionType Nothing PosPartials leafs [])         = UnionType leafs
+newTypeToType (NewUnionType (Just preds) NegPartials negLeafs []) = TopType negLeafs preds
+newTypeToType (NewTypeVar v loc)                                  = TypeVar v loc
+newTypeToType nt = error $ printf "newTypeToType: not representable in old Type: %s" (show nt)
 
 -- | Used to check if a type is equivalent to 'bottomType'.
 -- It can be necessary because it is possible for non-compacted types (see 'compactType') to be bottom types but not equal to 'bottomType'.
