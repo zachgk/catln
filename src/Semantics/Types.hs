@@ -1340,28 +1340,77 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
           Just posArgVal -> case snd $ differenceTypeWithEnv typeEnv vaenv posArgVal negArgVal of
             BottomType -> Nothing
             argVal'    -> Just $ p1{ptArgs=H.insert argName argVal' posArgs}
-          Nothing -> error "Missing argName in differencePartials"
+          Nothing -> Nothing  -- neg specifies an arg pos doesn't constrain (PtArgAny); skip
         subtractVar (_, PTopType) = Nothing
         subtractVar (varName, negVarVal) = case H.lookupDefault PTopType varName posVars of
           BottomType -> Nothing
           varVal' -> Just p1{ptVars=H.insert varName (snd $ differenceTypeWithEnv typeEnv vaenv varVal' negVarVal) posArgs}
     differencePartial p1 p2 = error $ printf "Unimplemented differencePartial: %s - %s" (show p1) (show p2)
 
+-- | Internal implementation of 'differenceTypeWithEnv'.
+differenceTypeWithEnvImpl :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> (TypeVarArgEnv, Type)
+differenceTypeWithEnvImpl TypeEnv{teDebug=True} _ t1 t2 | trace (printf "[DIFF] %s - %s" (show t1) (show t2)) False = undefined
+differenceTypeWithEnvImpl typeEnv vaenv t1 t2 = intersectTypesWithVarEnv typeEnv vaenv t1 (complementTypeEnv typeEnv vaenv t2)
+
+-- | 'NewType' implementation of difference, mirroring 'differenceTypeWithEnvImpl'.
+newDifferenceTypeWithEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> NewType -> NewType -> (TypeVarArgEnv, NewType)
+newDifferenceTypeWithEnv typeEnv vaenv t1 t2 =
+  newIntersectTypesWithVarEnv typeEnv vaenv t1 (newComplementTypeEnv typeEnv vaenv t2)
+
+-- | Difference of two types (t1 − t2 = t1 ∩ ¬t2).
+-- Calls both old and new implementations and asserts they agree.
 differenceTypeWithEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> (TypeVarArgEnv, Type)
-differenceTypeWithEnv TypeEnv{teDebug=True} _ t1 t2 | trace (printf "[DIFF] %s - %s" (show t1) (show t2)) False = undefined
-differenceTypeWithEnv typeEnv vaenv t1 t2 = intersectTypesWithVarEnv typeEnv vaenv t1 (complementTypeEnv typeEnv vaenv t2)
+differenceTypeWithEnv typeEnv vaenv t1 t2 =
+  let (oldVaenv, oldResult) = differenceTypeWithEnvImpl typeEnv vaenv t1 t2
+      (newVaenv, newResultNT) = newDifferenceTypeWithEnv typeEnv vaenv (typeToNewType t1) (typeToNewType t2)
+      newResult = newTypeToType newResultNT
+  in if oldResult == newResult && oldVaenv == newVaenv
+     then (oldVaenv, oldResult)
+     else error $ printf "differenceTypeWithEnv mismatch:\n  old = (%s, %s)\n  new = (%s, %s)\n  for %s - %s"
+            (show oldVaenv) (show oldResult) (show newVaenv) (show newResult) (show t1) (show t2)
 
 differenceTypeEnv :: (TypeGraph tg) => TypeEnv tg -> Type -> Type -> Type
 differenceTypeEnv typeEnv t1 t2 = snd $ differenceTypeWithEnv typeEnv H.empty t1 t2
 
-complementTypeEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
-complementTypeEnv _ _ (UnionType partials) = TopType partials PredsNone
-complementTypeEnv _ _ PTopType = BottomType
-complementTypeEnv typeEnv vaenv (TopType negPartials preds) = case (H.null negPartials, preds) of
+-- | Internal implementation of 'complementTypeEnv'.
+complementTypeEnvImpl :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
+complementTypeEnvImpl _ _ (UnionType partials) = TopType partials PredsNone
+complementTypeEnvImpl _ _ PTopType = BottomType
+complementTypeEnvImpl typeEnv vaenv (TopType negPartials preds) = case (H.null negPartials, preds) of
   (True, _)          -> TopType H.empty (predsNot preds)
   (False, PredsNone) -> UnionType negPartials
   (False, _)         -> unionTypesWithEnv typeEnv vaenv (UnionType negPartials) (TopType H.empty (predsNot preds))
-complementTypeEnv typeEnv vaenv (TypeVar v _) = complementTypeEnv typeEnv vaenv (vaenvLookup vaenv v)
+complementTypeEnvImpl typeEnv vaenv (TypeVar v _) = complementTypeEnv typeEnv vaenv (vaenvLookup vaenv v)
+
+-- | 'NewType' implementation of complement (¬t), mirroring 'complementTypeEnvImpl'.
+newComplementTypeEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> NewType -> NewType
+-- ¬(PosPartials leafs) = NegPartials(leafs, PredsNone) = "universe minus leafs"
+newComplementTypeEnv _ _ (NewUnionType Nothing PosPartials leafs []) = NewUnionType (Just PredsNone) NegPartials leafs []
+-- ¬PTopType = BottomType
+newComplementTypeEnv _ _ NewPTopType = NewBottomType
+-- ¬(NegPartials(neg, preds)):
+--   empty neg  → NegPartials(H.empty, ¬preds)
+--   non-empty + PredsNone → PosPartials(neg)   [complement of "universe minus neg" is just "neg"]
+--   non-empty + preds     → PosPartials(neg) ∪ NegPartials(H.empty, ¬preds)
+newComplementTypeEnv typeEnv vaenv (NewUnionType (Just preds) NegPartials negPartials []) =
+  case (H.null negPartials, preds) of
+    (True, _)          -> NewUnionType (Just (predsNot preds)) NegPartials H.empty []
+    (False, PredsNone) -> NewUnionType Nothing PosPartials negPartials []
+    (False, _)         -> newUnionTypesWithEnv typeEnv vaenv
+                            (NewUnionType Nothing PosPartials negPartials [])
+                            (NewUnionType (Just (predsNot preds)) NegPartials H.empty [])
+newComplementTypeEnv typeEnv vaenv (NewTypeVar v _) = newComplementTypeEnv typeEnv vaenv (typeToNewType $ vaenvLookup vaenv v)
+newComplementTypeEnv _ _ t = error $ printf "newComplementTypeEnv: unhandled case %s" (show t)
+
+-- | Complement of a type.
+-- Calls both old and new implementations and asserts they agree.
+complementTypeEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
+complementTypeEnv typeEnv vaenv t =
+  let old = complementTypeEnvImpl typeEnv vaenv t
+      new = newTypeToType $ newComplementTypeEnv typeEnv vaenv (typeToNewType t)
+  in if old == new then old
+     else error $ printf "complementTypeEnv mismatch:\n  old = %s\n  new = %s\n  for %s"
+            (show old) (show new) (show t)
 
 -- | Takes the powerset of a 'Type' with the powerset of the arguments in the type.
 powersetType :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
