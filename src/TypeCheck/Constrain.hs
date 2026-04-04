@@ -83,17 +83,18 @@ updateSchemeProp FEnv{feTypeEnv} vaenv super@SType{stypeAct=superAct, stypeReq=s
 -- | A helper for the 'AddArg' 'Constraint'
 addArgToType :: FEnv -> TypeVarArgEnv -> Type -> TypeVarAux -> Maybe Type
 addArgToType _ _ PTopType _ = Nothing
-addArgToType env@FEnv{feTypeEnv} vaenv t@TopType{} newArg = case expandType feTypeEnv vaenv t of
-  t'@UnionType{} -> addArgToType env vaenv t' newArg
-  _              -> Nothing
+addArgToType env@FEnv{feTypeEnv} vaenv t@(UnionType (Just _) NegPartials _ _) newArg = case expandType feTypeEnv vaenv t of
+  t'@(UnionType Nothing PosPartials _ _) -> addArgToType env vaenv t' newArg
+  _                                      -> Nothing
 addArgToType env vaenv (TypeVar v _) newArg = case H.lookup v vaenv of
   Just t  -> addArgToType env vaenv t newArg
   Nothing -> error $ printf "Unknown type in addArgToType: %s" (show v)
-addArgToType FEnv{feTypeEnv} _ (UnionType partials) newArg = Just $ unionAllTypes feTypeEnv $ mapMaybe fromPartial $ splitUnionType partials
+addArgToType FEnv{feTypeEnv} _ (UnionType Nothing PosPartials partials []) newArg = Just $ unionAllTypes feTypeEnv $ mapMaybe fromPartial $ splitUnionType partials
   where
     fromPartial partial@PartialType{ptArgs} = case newArg of
       TVArg newArg' -> Just $ singletonType partial{ptArgs=H.insertWith (unionTypes feTypeEnv) newArg' PTopType ptArgs}
       TVVar newArg' -> Just $ singletonType partial{ptVars=H.insertWith (unionTypes feTypeEnv) newArg' PTopType ptArgs}
+addArgToType _ _ _ _ = Nothing
 
 -- | A helper for the 'AddArg' 'Constraint'
 addArgToScheme :: FEnv -> STypeVarArgEnv -> SType -> TypeVarAux -> SType -> SType
@@ -143,16 +144,16 @@ computeConstraint _ con@(Constraint _ _ (BoundedByObjs _ SType{stypeAct=PTopType
 computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByObjs i p@SType{stypeAct=pAct} objMapBoundUb)) = (False, con{conDat=BoundedByObjs i (p{stypeAct=pAct'}) objMapBoundUb})
   where
     vaenv' = fmap (stypeAct . snd) vaenv
-    argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType $ joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con
+    argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType Nothing PosPartials (joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con) []
     boundUb = unionTypes feTypeEnv objMapBoundUb argsBoundUb
 
     -- A partially applied tuple would not be a raw type on the unionObj,
     -- but a subset of the arguments in that type
     (_, pAct') = intersectTypesWithVarEnv feTypeEnv vaenv' pAct boundUb
-computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (NoReturnArg i p@SType{stypeAct=act@UnionType{}})) = (True, con{conVaenv=updateCOVarArgEnvAct vaenv'' vaenv, conDat=NoReturnArg i p{stypeAct=act'}})
+computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (NoReturnArg i p@SType{stypeAct=act@(UnionType Nothing PosPartials _ _)})) = (True, con{conVaenv=updateCOVarArgEnvAct vaenv'' vaenv, conDat=NoReturnArg i p{stypeAct=act'}})
   where
     vaenv' = fmap (stypeAct . snd) vaenv
-    argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType $ joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con
+    argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType Nothing PosPartials (joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con) []
     (vaenv'', act') = differenceTypeWithEnv feTypeEnv vaenv' act argsBoundUb
 computeConstraint _ con@(Constraint _ _ NoReturnArg{}) = (False, con)
 computeConstraint env con@(Constraint _ _ (ArrowTo i src dest)) = case arrowConstrainUbs env con (stypeAct src) (stypeAct dest) of

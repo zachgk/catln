@@ -36,7 +36,7 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
         -- It is possible to send part of a partial through the arrow, so must compute the valid part
         -- If none of it is valid, then there is Nothing
         case intersectTypesEnv typeEnv vaenv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa) of
-          potentialSrc@(UnionType potSrcLeafs) -> if not (isBottomType potentialSrc)
+          potentialSrc@(UnionType Nothing PosPartials potSrcLeafs []) -> if not (isBottomType potentialSrc)
             then map (printf "using %s" (show oa),) $ joinPartialDestTypes [arrowDestType typeEnv potentialSrcPartial oa | potentialSrcPartial <- splitUnionType potSrcLeafs]
             else []
           _ -> error "Unexpected non-union in TryTArrow"

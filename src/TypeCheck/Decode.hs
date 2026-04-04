@@ -72,7 +72,7 @@ toExpr expr@(TupleApply m (baseM, baseExpr) arg) = do
         Just joaObj -> Just <$> toExpr joaObj
         Nothing -> do
           mArgName <- case (getMetaType baseM', getMetaType m') of
-            (UnionType basePartialLeafs, UnionType partialLeafs) -> case (splitUnionType basePartialLeafs, splitUnionType partialLeafs) of
+            (UnionType Nothing PosPartials basePartialLeafs [], UnionType Nothing PosPartials partialLeafs []) -> case (splitUnionType basePartialLeafs, splitUnionType partialLeafs) of
               ([PartialType{ptArgs=basePartialArgs}], [PartialType{ptArgs}]) -> case S.toList $ S.difference (H.keysSet ptArgs) (H.keysSet basePartialArgs) of
                 [argN] -> return $ Just argN
                 opts -> lift $ TypeCheckResult [GenTypeCheckError mclear $ printf "Failed argument inference due to multiple arg options %s in %s" (show opts) (show expr)] Nothing

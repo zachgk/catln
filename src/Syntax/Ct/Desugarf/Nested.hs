@@ -48,7 +48,7 @@ scopeSubDeclFunNamesInExpr prefix replaceNames (TupleApply m (bm, bExpr) arg) = 
       EAppSpread a -> error $ printf "Not yet implemented %s" (show a)
 
 scopeSubDeclFunNamesInMeta :: TypeName -> S.HashSet TypeName -> ParseMeta -> ParseMeta
-scopeSubDeclFunNamesInMeta prefix replaceNames (Meta (UnionType partials) pos mid md) = Meta (UnionType partials') pos mid md
+scopeSubDeclFunNamesInMeta prefix replaceNames (Meta (UnionType Nothing PosPartials partials []) pos mid md) = Meta (UnionType Nothing PosPartials partials' []) pos mid md
   where
     scopeS = scopeSubDeclFunNamesInS prefix replaceNames
     partials' = H.mapKeys scopeS partials
@@ -59,6 +59,7 @@ scopeSubDeclFunNamesInMeta prefix replaceNames (Meta (TopType ps preds) pos mid 
     scopePred (PredRel p@PartialType{ptName}) = PredRel p{ptName=scopeSubDeclFunNamesInS prefix replaceNames ptName}
     scopePred p = p
 scopeSubDeclFunNamesInMeta _ _ m@Meta{getMetaType=TypeVar{}} = m
+scopeSubDeclFunNamesInMeta _ _ m = m
 
 -- Renames sub functions by applying the parent names as a prefix to avoid name collisions
 scopeSubDeclFunNames :: PSObjArr -> DesObjectMap -> (PSObjArr, DesObjectMap)

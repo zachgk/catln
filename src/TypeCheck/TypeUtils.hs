@@ -109,13 +109,14 @@ addUnionObjToEnv vobjMap tobjMap = do
 -- | A helper for the 'AddInferArg' 'Constraint'
 addInferArgToType :: FEnv -> TypeVarArgEnv -> Type -> Maybe Type
 addInferArgToType _ _ PTopType = Nothing
-addInferArgToType env@FEnv{feTypeEnv} vaenv t@TopType{} = addInferArgToType env vaenv (expandType feTypeEnv vaenv t)
+addInferArgToType env@FEnv{feTypeEnv} vaenv t@(UnionType (Just _) NegPartials _ _) = addInferArgToType env vaenv (expandType feTypeEnv vaenv t)
 addInferArgToType env vaenv (TypeVar t _) = case H.lookup t vaenv of
   Just t' -> addInferArgToType env vaenv t'
   Nothing -> error $ printf "Failed to find %s in addInferArgToType" (show t)
-addInferArgToType env@FEnv{feTypeEnv} vaenv (UnionType partials) = Just $ unionAllTypes feTypeEnv partials'
+addInferArgToType env@FEnv{feTypeEnv} vaenv (UnionType Nothing PosPartials partials []) = Just $ unionAllTypes feTypeEnv partials'
   where
     partials' = map (addInferArgToPartial env vaenv) $ splitUnionType partials
+addInferArgToType _ _ _ = Nothing
 
 addInferArgToPartial :: FEnv -> TypeVarArgEnv -> PartialType -> Type
 addInferArgToPartial FEnv{feVTypeGraph=ObjectMap vtypeGraph, feTTypeGraph=ObjectMap ttypeGraph, feTypeEnv} _ partial@PartialType{ptName=name, ptArgs} = do
@@ -132,7 +133,7 @@ addInferArgToPartial FEnv{feVTypeGraph=ObjectMap vtypeGraph, feTTypeGraph=Object
 
     tryArrow :: (MetaDat m, Show m) => ObjArr Expr m -> Type
     tryArrow oa = if H.keysSet ptArgs `isSubsetOf` H.keysSet (exprAppliedArgsMap $ oaObjExpr oa)
-      then UnionType $ joinUnionType $ map addArg $ S.toList $ S.difference (H.keysSet $ exprAppliedArgsMap $ oaObjExpr oa) (H.keysSet ptArgs)
+      then UnionType Nothing PosPartials (joinUnionType $ map addArg $ S.toList $ S.difference (H.keysSet $ exprAppliedArgsMap $ oaObjExpr oa) (H.keysSet ptArgs)) []
       else BottomType
     addArg arg = partial{ptArgs=H.insertWith (unionTypes feTypeEnv) arg PTopType ptArgs}
 
@@ -171,15 +172,15 @@ mkReachesEnv env (Constraint maybeConOa stypeVaenv _) = do
   return $ ReachesEnv (argTypeEnv <> feTypeEnv') (fmap snd vaenv) S.empty
 
 arrowConstrainUbs :: FEnv -> RConstraint -> Type -> Type -> TypeCheckResult (Type, Type, Maybe ReachesTree)
-arrowConstrainUbs env@FEnv{feUnionAllObjs} con PTopType dest@UnionType{} = do
+arrowConstrainUbs env@FEnv{feUnionAllObjs} con PTopType dest@(UnionType Nothing PosPartials _ _) = do
   unionPnt <- descriptor env feUnionAllObjs
   case unionPnt of
-    SType{stypeAct=unionUb@UnionType{}} -> do
+    SType{stypeAct=unionUb@(UnionType Nothing PosPartials _ _)} -> do
       (src', dest', destRT') <- arrowConstrainUbs env con unionUb dest
       return (src', dest', destRT')
     _ -> return (PTopType, dest, Nothing)
 arrowConstrainUbs _ _ PTopType dest = return (PTopType, dest, Nothing)
-arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} src@TopType{} dest = do
+arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} src@(UnionType (Just _) NegPartials _ _) dest = do
   arrowConstrainUbs env con (expandType feTypeEnv (fmap (stypeAct . snd) conVaenv) src) dest
 arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} src@TypeVar{} dest = do
   let src' = expandType feTypeEnv (fmap (stypeAct . snd) conVaenv) src
@@ -188,7 +189,7 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} src@TypeVar{} des
     _ -> do
       (_, cdest, destRT) <- arrowConstrainUbs env con src' dest
       return (src, cdest, destRT)
-arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} src@(UnionType srcPartials) dest = do
+arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} src@(UnionType Nothing PosPartials srcPartials []) dest = do
   reachesEnv <- mkReachesEnv env con
   let reaches' = reachesPartials reachesEnv $ splitUnionType srcPartials
   let vaenv' = fmap (stypeAct . snd) conVaenv
@@ -196,3 +197,4 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} src@(UnionType sr
   let dest' = intersectTypes feTypeEnv dest destByGraph
   -- TODO Maybe filter srcPartials based on those reaching dest
   return (src, compactType feTypeEnv vaenv' dest', Just reaches')
+arrowConstrainUbs _ _ src dest = return (src, dest, Nothing)
