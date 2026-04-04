@@ -23,17 +23,37 @@ Prgm
                     }
                 )
             ,
-                ( "/abs.$9c855f"
+                ( "/abs"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs.$9c855f( EAppArg Value /x -> ∀/Data/Algebra/Ord )
-                            ( EAppArg Value /$9c855f-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=( EAppArg Value /l -> TVArg /x = Value /x )
+                        [ /abs( EAppArg Value /x -> /Data/Primitive/Integer ) ->
+                            ( /abs.$8cdfdc
+                                ( /x=/Data/Primitive/Integer
+                                , /$8cdfdc-arg=/Data/Primitive/Integer
+                                ) + /operator*
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
+                            ) = /abs.$8cdfdc
+                            ( EAppArg Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                            ( EAppArg Value /$8cdfdc-arg -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/abs.$8cdfdc"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /abs.$8cdfdc( EAppArg Value /x -> ∀/Data/Algebra/Ord )
+                            ( EAppArg Value /$8cdfdc-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=( EAppArg Value /l -> TVArg /x = Value /x )
                                 ( EAppArg Value /r -> /Data/Primitive/Integer = 0 )
                             ) -> TVArg /x2 = Value /x2
-                        , /abs.$9c855f( EAppArg Value /x )
-                            ( EAppArg Value /$9c855f-arg -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = Hole ( /Data/Primitive/Integer + /Data/Primitive/Float ) HoleActive Nothing@Value /x2 ) ->
+                        , /abs.$8cdfdc( EAppArg Value /x )
+                            ( EAppArg Value /$8cdfdc-arg -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = Hole ( /Data/Primitive/Integer + /Data/Primitive/Float ) HoleActive Nothing@Value /x2 ) ->
                             ( /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
@@ -45,26 +65,6 @@ Prgm
                                     ( EAppArg Value /a -> /Data/Primitive/Integer = 1 ) ↦ /Data/Primitive/Integer
                                 )
                             )
-                        ]
-                    }
-                )
-            ,
-                ( "/abs"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /abs( EAppArg Value /x -> /Data/Primitive/Integer ) ->
-                            ( /abs.$9c855f
-                                ( /x=/Data/Primitive/Integer
-                                , /$9c855f-arg=/Data/Primitive/Integer
-                                ) + /operator*
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
-                            ) = /abs.$9c855f
-                            ( EAppArg Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                            ( EAppArg Value /$9c855f-arg -> TVArg /x = ( Value /x ↦ TVArg /x ) )
                         ]
                     }
                 )
