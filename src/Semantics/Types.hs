@@ -664,12 +664,13 @@ suffixLookupInDict s dict = case suffixLookup s (H.keys dict) of
 topTypeAsPartials :: TypeEnv tg ->[PartialType]
 topTypeAsPartials TypeEnv{teNames} = map ((\p -> p{ptArgMode=PtArgAny}) . partialVal) $ S.toList teNames
 
-expandType :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
-expandType TypeEnv{teDebug=True} _ t@UnionType{} | trace (printf "[EXPANDTYPE] %s" (show t)) False = undefined
-expandType _ _ t@UnionType{} = t
-expandType typeEnv vaenv (TypeVar v _) = expandType typeEnv vaenv $ H.lookupDefault PTopType v vaenv
-expandType _ _ PTopType = PTopType
-expandType typeEnv vaenv (TopType negPartials preds) = snd $ differenceTypeWithEnv typeEnv vaenv (expandPreds preds) (UnionType negPartials)
+-- | Internal implementation of 'expandType'.
+expandTypeImpl :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
+expandTypeImpl TypeEnv{teDebug=True} _ t@UnionType{} | trace (printf "[EXPANDTYPE] %s" (show t)) False = undefined
+expandTypeImpl _ _ t@UnionType{} = t
+expandTypeImpl typeEnv vaenv (TypeVar v _) = expandType typeEnv vaenv $ H.lookupDefault PTopType v vaenv
+expandTypeImpl _ _ PTopType = PTopType
+expandTypeImpl typeEnv vaenv (TopType negPartials preds) = snd $ differenceTypeWithEnv typeEnv vaenv (expandPreds preds) (UnionType negPartials)
   where
     expandPreds :: TypePredicates -> Type
     expandPreds (PredsOne p)  = expandPred p
@@ -681,6 +682,37 @@ expandType typeEnv vaenv (TopType negPartials preds) = snd $ differenceTypeWithE
     expandPred (PredRel rel)    = expandRelPartial typeEnv vaenv rel
     expandPred (PredExpr e)     = maybe (TopType H.empty (PredsOne $ PredExpr e)) (UnionType . joinUnionType) (typeGraphExpandPredExpr typeEnv vaenv e)
 
+-- | 'NewType' implementation of expand, mirroring 'expandTypeImpl'.
+newExpandType :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> NewType -> NewType
+-- PosPartials: already fully expanded
+newExpandType TypeEnv{teDebug=True} _ t@(NewUnionType Nothing PosPartials _ _) | trace (printf "[NEWEXPANDTYPE] %s" (show t)) False = undefined
+newExpandType _ _ t@(NewUnionType Nothing PosPartials _ _) = t
+-- TypeVar: look up and recurse
+newExpandType typeEnv vaenv (NewTypeVar v _) = newExpandType typeEnv vaenv $ typeToNewType $ H.lookupDefault PTopType v vaenv
+-- NewPTopType: already expanded
+newExpandType _ _ NewPTopType = NewPTopType
+-- NegPartials: diff(expandPreds(preds), PosPartials(negLeafs))
+newExpandType typeEnv vaenv (NewUnionType (Just preds) NegPartials negLeafs []) =
+  snd $ newDifferenceTypeWithEnv typeEnv vaenv (typeToNewType $ expandPreds preds) (NewUnionType Nothing PosPartials negLeafs [])
+  where
+    expandPreds (PredsOne p)  = expandPred p
+    expandPreds (PredsAnd ps) = intersectAllTypes typeEnv $ map expandPreds ps
+    expandPreds (PredsNot p)  = complementTypeEnv typeEnv vaenv $ expandPreds p
+    expandPred (PredClass clss) = expandClassPartial typeEnv vaenv clss
+    expandPred (PredRel rel)    = expandRelPartial typeEnv vaenv rel
+    expandPred (PredExpr e)     = maybe (TopType H.empty (PredsOne $ PredExpr e)) (UnionType . joinUnionType) (typeGraphExpandPredExpr typeEnv vaenv e)
+newExpandType _ _ t = error $ printf "newExpandType: unhandled case %s" (show t)
+
+-- | Expands a 'Type' by resolving class and relation predicates.
+-- Calls both 'expandTypeImpl' (old) and 'newExpandType' (new) and asserts they agree.
+expandType :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
+expandType typeEnv vaenv t =
+  let old = expandTypeImpl typeEnv vaenv t
+      new = newTypeToType $ newExpandType typeEnv vaenv (typeToNewType t)
+  in if old == new then old
+     else error $ printf "expandType mismatch:\n  old = %s\n  new = %s\n  for %s"
+            (show old) (show new) (show t)
+
 -- | Like 'expandType', but returns only the 'PartialLeafs' whose names are in 'allowedNames'.
 -- Does not call 'expandType'.
 expandTypeWithNames :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> S.HashSet TypeName -> PartialLeafs
@@ -690,19 +722,28 @@ expandTypeWithNames typeEnv vaenv t allowedNames = fst $ expandTypesWithNamesFul
 -- is approximate or has components outside 'allowedNames'. 'True' means callers should fall
 -- back to 'expandType' for precise results. 'False' means the expansion is exact and all
 -- components are within 'allowedNames'.
+-- Calls impl directly and verifies that the type conversion round-trip preserves the result.
 expandTypesWithNamesFull :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> S.HashSet TypeName -> (PartialLeafs, Bool)
-expandTypesWithNamesFull _ _ (UnionType partials) allowedNames =
+expandTypesWithNamesFull typeEnv vaenv t allowedNames =
+  let old = expandTypesWithNamesFullImpl typeEnv vaenv t allowedNames
+      new = expandTypesWithNamesFullImpl typeEnv vaenv (newTypeToType $ typeToNewType t) allowedNames
+  in if old == new then old
+     else error $ printf "expandTypesWithNamesFull mismatch for %s with names %s"
+            (show t) (show $ S.toList allowedNames)
+
+expandTypesWithNamesFullImpl :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> S.HashSet TypeName -> (PartialLeafs, Bool)
+expandTypesWithNamesFullImpl _ _ (UnionType partials) allowedNames =
   (filtered, hasOutside)
   where
     filtered = H.filterWithKey (\k _ -> S.member k allowedNames) partials
     hasOutside = any (\k -> not $ S.member k allowedNames) (H.keys partials)
-expandTypesWithNamesFull typeEnv vaenv (TypeVar v _) allowedNames =
+expandTypesWithNamesFullImpl typeEnv vaenv (TypeVar v _) allowedNames =
   expandTypesWithNamesFull typeEnv vaenv (H.lookupDefault PTopType v vaenv) allowedNames
-expandTypesWithNamesFull TypeEnv{teNames} _ PTopType allowedNames =
+expandTypesWithNamesFullImpl TypeEnv{teNames} _ PTopType allowedNames =
   (topFilteredLeafs, not $ S.isSubsetOf teNames allowedNames)
   where
     topFilteredLeafs = joinUnionType $ map ((\p -> p{ptArgMode=PtArgAny}) . partialVal) $ S.toList allowedNames
-expandTypesWithNamesFull typeEnv@TypeEnv{teNames} vaenv (TopType negPartials preds) allowedNames =
+expandTypesWithNamesFullImpl typeEnv@TypeEnv{teNames} vaenv (TopType negPartials preds) allowedNames =
   let (leafs, hasOutside) = expandPredsWithNamesFull preds
   in (subtractNeg leafs, hasOutside)
   where
@@ -1053,24 +1094,62 @@ compactBottomType partials = joinUnionType $ mapMaybe aux $ splitUnionType parti
 compactPartialLeafs :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs
 compactPartialLeafs typeEnv vaenv = compactOverlapping typeEnv . compactJoinPartials typeEnv . compactPartialsWithClassPred typeEnv vaenv . compactDisconnectedPreds typeEnv vaenv . compactBottomType
 
--- |
--- Used to simplify and reduce the size of a 'Type'.
--- It has several internal passes that apply various optimizations to a type.
--- TODO: This should merge type partials into class partials
-compactType :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
-compactType TypeEnv{teDisableCompact=True} _ t = t
-compactType typeEnv vaenv t@(TopType np preds) | H.null np && preds /= PredsNone = case preds of
+-- | Internal implementation of 'compactType'.
+compactTypeImpl :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
+compactTypeImpl TypeEnv{teDisableCompact=True} _ t = t
+compactTypeImpl typeEnv vaenv t@(TopType np preds) | H.null np && preds /= PredsNone = case preds of
                                                    (PredsNot (PredsOne (PredRel rp))) -> case expandRelPartial typeEnv vaenv rp of
                                                                     (UnionType rp') -> TopType rp' PredsNone
                                                                     _ -> t
                                                    _ -> t
-compactType typeEnv vaenv (TopType np (PredsNot notPreds)) | not (H.null np) = TopType (compactPartialLeafs typeEnv vaenv $ partialLeafsAddPreds np notPreds) PredsNone
-compactType typeEnv vaenv t@(TopType np preds) | not (H.null np) && preds /= PredsNone = if isSubtypeOfWithEnv typeEnv vaenv (UnionType np) (TopType H.empty (predsNot preds))
+compactTypeImpl typeEnv vaenv (TopType np (PredsNot notPreds)) | not (H.null np) = TopType (compactPartialLeafs typeEnv vaenv $ partialLeafsAddPreds np notPreds) PredsNone
+compactTypeImpl typeEnv vaenv t@(TopType np preds) | not (H.null np) && preds /= PredsNone = if isSubtypeOfWithEnv typeEnv vaenv (UnionType np) (TopType H.empty (predsNot preds))
                                                      then TopType H.empty preds
                                                      else t
-compactType _ _ (TopType np ps) = TopType np ps
-compactType _ _ t@TypeVar{} = t
-compactType typeEnv vaenv (UnionType partials) = UnionType $ compactPartialLeafs typeEnv vaenv partials
+compactTypeImpl _ _ (TopType np ps) = TopType np ps
+compactTypeImpl _ _ t@TypeVar{} = t
+compactTypeImpl typeEnv vaenv (UnionType partials) = UnionType $ compactPartialLeafs typeEnv vaenv partials
+
+-- | 'NewType' implementation of compact, mirroring 'compactTypeImpl'.
+newCompactType :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> NewType -> NewType
+newCompactType TypeEnv{teDisableCompact=True} _ t = t
+-- NegPartials with empty neg and non-trivial preds
+newCompactType typeEnv vaenv t@(NewUnionType (Just preds) NegPartials negPartials [])
+  | H.null negPartials && preds /= PredsNone = case preds of
+      (PredsNot (PredsOne (PredRel rp))) -> case expandRelPartial typeEnv vaenv rp of
+        (UnionType rp') -> NewUnionType (Just PredsNone) NegPartials rp' []
+        _               -> t
+      _ -> t
+-- NegPartials with non-empty neg and PredsNot preds
+newCompactType typeEnv vaenv (NewUnionType (Just (PredsNot notPreds)) NegPartials negPartials [])
+  | not (H.null negPartials) =
+      NewUnionType (Just PredsNone) NegPartials (compactPartialLeafs typeEnv vaenv $ partialLeafsAddPreds negPartials notPreds) []
+-- NegPartials with non-empty neg and other non-trivial preds
+newCompactType typeEnv vaenv t@(NewUnionType (Just preds) NegPartials negPartials [])
+  | not (H.null negPartials) && preds /= PredsNone =
+      if isSubtypeOfWithEnv typeEnv vaenv (UnionType negPartials) (TopType H.empty (predsNot preds))
+        then NewUnionType (Just preds) NegPartials H.empty []
+        else t
+-- NegPartials catch-all (includes NewPTopType and TopType np PredsNone)
+newCompactType _ _ t@(NewUnionType (Just _) NegPartials _ []) = t
+-- TypeVar: unchanged
+newCompactType _ _ t@NewTypeVar{} = t
+-- PosPartials: compact the leafs
+newCompactType typeEnv vaenv (NewUnionType Nothing PosPartials partials []) =
+  NewUnionType Nothing PosPartials (compactPartialLeafs typeEnv vaenv partials) []
+newCompactType _ _ t = error $ printf "newCompactType: unhandled case %s" (show t)
+
+-- |
+-- Used to simplify and reduce the size of a 'Type'.
+-- Calls both 'compactTypeImpl' (old) and 'newCompactType' (new) and asserts they agree.
+-- TODO: This should merge type partials into class partials
+compactType :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
+compactType typeEnv vaenv t =
+  let old = compactTypeImpl typeEnv vaenv t
+      new = newTypeToType $ newCompactType typeEnv vaenv (typeToNewType t)
+  in if old == new then old
+     else error $ printf "compactType mismatch:\n  old = %s\n  new = %s\n  for %s"
+            (show old) (show new) (show t)
 
 unionPartialLeafs :: Foldable f => f PartialLeafs -> PartialLeafs
 unionPartialLeafs = unionsWith S.union
