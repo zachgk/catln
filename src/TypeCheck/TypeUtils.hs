@@ -189,9 +189,10 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} src@TypeVar{} des
     _ -> do
       (_, cdest, destRT) <- arrowConstrainUbs env con src' dest
       return (src, cdest, destRT)
-arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} src@(UnionType Nothing PosPartials srcPartials []) dest = do
+arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} src@(UnionType Nothing PosPartials srcPartials consts) dest = do
   reachesEnv <- mkReachesEnv env con
-  let reaches' = reachesPartials reachesEnv $ splitUnionType srcPartials
+  let allPartials = splitUnionType srcPartials ++ map constantPartialType consts
+  let reaches' = reachesPartials reachesEnv allPartials
   let vaenv' = fmap (stypeAct . snd) conVaenv
   let destByGraph = unionReachesTree feTypeEnv vaenv' reaches'
   let dest' = intersectTypes feTypeEnv dest destByGraph

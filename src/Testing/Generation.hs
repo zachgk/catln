@@ -23,7 +23,7 @@ import           Data.Maybe
 import qualified Data.Set                as S
 import           Hedgehog
 import qualified Hedgehog.Gen            as HG
-import           Hedgehog.Range          (linear, singleton)
+import           Hedgehog.Range          (linear, linearFrac, singleton)
 import           Semantics               (classGraphFromObjs, mkTypeEnv)
 import           Semantics.Prgm
 import           Semantics.Types
@@ -64,8 +64,8 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens
     TypeEnv{teClassGraph=ClassGraph cg} = mkTypeEnv prgm
 
     gens = if graphEmpty cg
-      then [genBasic]
-      else [genBasic, genCGOld, genCG, genCGRel, genObjM, genObj]
+      then [genBasic, genConst]
+      else [genBasic, genCGOld, genCG, genCGRel, genObjM, genObj, genConst]
 
     -- Find all functions with single argument having thisKey
     typePropFunctions = mapMaybe checkFunction $ flatObjectMap objMap
@@ -80,6 +80,14 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens
 
     genBasic :: Gen Type
     genBasic = HG.element [PTopType, BottomType]
+
+    genConst :: Gen Type
+    genConst = do
+      c <- HG.choice [ CInt <$> HG.integral (linear (-100) 100)
+                     , CFloat <$> HG.double (linearFrac (-100) 100)
+                     , CStr <$> HG.string (linear 0 5) HG.alpha
+                     , CChar <$> HG.unicode ]
+      return $ UnionType Nothing PosPartials H.empty [c]
 
     genCGOld :: Gen Type
     genCGOld = do

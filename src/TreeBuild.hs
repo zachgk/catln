@@ -18,6 +18,7 @@ module TreeBuild where
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Data.Maybe
+
 import           Text.Printf
 
 import           Control.Monad
@@ -42,7 +43,7 @@ type TBPrgm = Prgm Expr TBMetaDat
 type VisitedArrows = S.HashSet TCallTree
 
 leafsFromMeta :: TBMeta -> [PartialType]
-leafsFromMeta Meta{getMetaType=UnionType Nothing PosPartials prodTypes []} = splitUnionType prodTypes
+leafsFromMeta Meta{getMetaType=UnionType Nothing PosPartials prodTypes consts} = splitUnionType prodTypes ++ map constantPartialType consts
 leafsFromMeta m = error $ printf "leafFromMeta with invalid type: %s" (show m)
 
 buildTBEnv :: ResBuildPrims -> TBPrgm -> TBEnv
@@ -188,7 +189,7 @@ buildPartialCallTree env@TBEnv{tbTypeEnv} os visitedArrows srcType destType = do
 -- | Builds a call tree to convert something from 'srcType' to 'destType'
 buildCallTree :: TBEnv -> [ObjSrc] -> VisitedArrows -> Type -> Type -> CRes TCallTree
 buildCallTree TBEnv{tbTypeEnv} os _ srcType destType | isSubtypeOfWithObjSrcs tbTypeEnv os srcType destType = return TCTId
--- buildCallTree _ os _ srcType destType | trace (printf "buildCallTree from %s to %s\n\t\twith %s" (show srcType) (show destType) (show os)) False = undefined
+-- buildCallTree _ os _ srcType destType | trace (printf "buildCallTree from %s to %s\n\t\twith %s" (show srcType) (show destType) (show $ map fst os)) False = undefined
 buildCallTree _ _ _ _ PTopType = return TCTId
 buildCallTree _ _ _ PTopType _ = error $ printf "buildCallTree from top type"
 buildCallTree env@TBEnv{tbTypeEnv} objSrcs visitedArrows (TypeVar v _) destType = case exprVarArgsWithObjSrcs tbTypeEnv objSrcs of
@@ -196,8 +197,9 @@ buildCallTree env@TBEnv{tbTypeEnv} objSrcs visitedArrows (TypeVar v _) destType 
     Just (_, srcType') -> buildCallTree env objSrcs visitedArrows srcType' destType
     Nothing -> error $ printf "Unknown TypeVar %s in buildCallTree" (show v)
   vaenvs -> error $ printf "Found unhandled zero or multiple vaenvs in builCallTree: %s" (show vaenvs)
-buildCallTree env os visitedArrows (UnionType Nothing PosPartials srcLeafs []) destType = do
-  matchVal <- forM (splitUnionType srcLeafs) $ \srcPartial -> do
+buildCallTree env os visitedArrows (UnionType Nothing PosPartials srcLeafs consts) destType = do
+  let allPartials = splitUnionType srcLeafs ++ map constantPartialType consts
+  matchVal <- forM allPartials $ \srcPartial -> do
     t <- buildPartialCallTree env os visitedArrows srcPartial destType
     return (srcPartial, t)
   return $ case matchVal of
@@ -244,7 +246,7 @@ toTEObjArr env os oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   return oa{oaObj=oaObj', oaAnnots=oaAnnots', oaArr=oaArr'}
 
 toTExprDest :: TBEnv -> [ObjSrc] -> Expr TBMetaDat -> EvalMeta -> CRes (TExpr TBMetaDat)
--- toTExprDest _ os e m | trace (printf "toExprDest %s to %s \n\twith %s" (show e) (show m) (show os)) False = undefined
+-- toTExprDest _ os e m | trace (printf "toExprDest %s to %s \n\twith %s" (show e) (show (getMetaType m)) (show $ map fst os)) False = undefined
 toTExprDest env os e m = do
   e' <- toTExpr env os e
   let srcT = getMetaType $ getExprMeta e'
