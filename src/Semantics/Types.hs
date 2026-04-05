@@ -684,8 +684,9 @@ expandTypesWithNamesFull TypeEnv{teNames} _ PTopType allowedNames =
   (topFilteredLeafs, not $ S.isSubsetOf teNames allowedNames)
   where
     topFilteredLeafs = joinUnionType $ map ((\p -> p{ptArgMode=PtArgAny}) . partialVal) $ S.toList allowedNames
-expandTypesWithNamesFull typeEnv vaenv t@(UnionType _ _ _ (_:_)) allowedNames =
-  expandTypesWithNamesFull typeEnv vaenv (expandType typeEnv vaenv t) allowedNames
+-- Constants carry no partial-name information; drop them before filtering
+expandTypesWithNamesFull typeEnv vaenv (UnionType mp posNeg leafs (_:_)) allowedNames =
+  expandTypesWithNamesFull typeEnv vaenv (UnionType mp posNeg leafs []) allowedNames
 expandTypesWithNamesFull typeEnv@TypeEnv{teNames} vaenv (TopType negPartials preds) allowedNames =
   let (leafs, hasOutside) = expandPredsWithNamesFull preds
   in (subtractNeg leafs, hasOutside)
@@ -830,13 +831,11 @@ constantInType :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Constant -> T
 constantInType _ _ _ PTopType = True
 constantInType _ _ c (UnionType Nothing PosPartials leafs cs) =
   c `elem` cs || isSubtypeOfWithEnv emptyTypeEnv' H.empty (singletonType $ constantPartialType c) (UnionType Nothing PosPartials leafs [])
--- NegPartials with PredsNone: c is in the complement iff it is not excluded by consts and not covered by negLeafs
-constantInType _ _ c (UnionType (Just PredsNone) NegPartials negLeafs negConsts) =
+-- NegPartials: c is in the type iff not excluded by negConsts, not covered by negLeafs, and its parent is in the predicated set
+constantInType typeEnv vaenv c (UnionType (Just preds) NegPartials negLeafs negConsts) =
   c `notElem` negConsts
   && not (isSubtypeOfWithEnv emptyTypeEnv' H.empty (singletonType $ constantPartialType c) (UnionType Nothing PosPartials negLeafs []))
--- Other NegPartials: fall back to expansion (dropping constant exclusion info)
-constantInType typeEnv vaenv c t@(UnionType (Just _) NegPartials _ _) =
-  constantInType typeEnv vaenv c (expandType typeEnv vaenv t)
+  && isSubtypeOfWithEnv typeEnv vaenv (singletonType $ constantPartialType c) (UnionType (Just preds) NegPartials H.empty [])
 constantInType _ _ _ _ = False
 
 -- | Checks if one type contains another type. In set terminology, it is equivalent to subset or equal to ⊆.
@@ -847,11 +846,12 @@ isSubtypeOfWithEnv _ _ t1 t2 | t1 == t2 = True
 isSubtypeOfWithEnv typeEnv vaenv (TypeVar v _) t2 = isSubtypeOfWithEnv typeEnv vaenv (vaenvLookup vaenv v) t2
 isSubtypeOfWithEnv typeEnv vaenv t1 (TypeVar v _) = isSubtypeOfWithEnv typeEnv vaenv t1 (vaenvLookup vaenv v)
 isSubtypeOfWithEnv _ _ PTopType t = t == PTopType
--- PosPartials ⊆ NegPartials: filter by name then expand if needed
+-- PosPartials ⊆ NegPartials: filter by name.
+-- filteredLeafs is always exact for names in allowedNames; hasOutside only means the type
+-- has additional elements outside those names, which cannot affect subtype checking here.
 isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing PosPartials subPartials []) t2@(UnionType (Just _) NegPartials _ _) =
-  case expandTypesWithNamesFull typeEnv vaenv t2 (H.keysSet subPartials) of
-    (filteredLeafs, False) -> isSubtypeOfWithEnv typeEnv vaenv t1 (UnionType Nothing PosPartials filteredLeafs [])
-    (_, True)              -> isSubtypeOfWithEnv typeEnv vaenv t1 (expandType typeEnv vaenv t2)
+  let (filteredLeafs, _) = expandTypesWithNamesFull typeEnv vaenv t2 (H.keysSet subPartials)
+  in isSubtypeOfWithEnv typeEnv vaenv t1 (UnionType Nothing PosPartials filteredLeafs [])
 -- anything else ⊆ NegPartials: expand t2
 isSubtypeOfWithEnv typeEnv vaenv t1 t2@(UnionType (Just _) NegPartials _ _) =
   isSubtypeOfWithEnv typeEnv vaenv t1 (expandType typeEnv vaenv t2)
