@@ -83,9 +83,8 @@ updateSchemeProp FEnv{feTypeEnv} vaenv super@SType{stypeAct=superAct, stypeReq=s
 -- | A helper for the 'AddArg' 'Constraint'
 addArgToType :: FEnv -> TypeVarArgEnv -> Type -> TypeVarAux -> Maybe Type
 addArgToType _ _ PTopType _ = Nothing
-addArgToType env@FEnv{feTypeEnv} vaenv t@(UnionType (Just _) NegPartials _ _) newArg = case expandType feTypeEnv vaenv t of
-  t'@(UnionType Nothing PosPartials _ _) -> addArgToType env vaenv t' newArg
-  _                                      -> Nothing
+addArgToType env@FEnv{feTypeEnv} vaenv (UnionType (Just preds) NegPartials negLeafs _) newArg =
+  addArgToType env vaenv (snd $ differenceTypeWithEnv feTypeEnv vaenv (expandPredicates feTypeEnv vaenv preds) (UnionType Nothing PosPartials negLeafs [])) newArg
 addArgToType env vaenv (TypeVar v _) newArg = case H.lookup v vaenv of
   Just t  -> addArgToType env vaenv t newArg
   Nothing -> error $ printf "Unknown type in addArgToType: %s" (show v)
@@ -137,8 +136,13 @@ computeConstraint env con@(Constraint _ vaenv (EqPoints i p1 p2)) = (False, con{
     (vaenv', stype', _) = equalizeSTypes env (fmap (stypeAct . snd) vaenv) (p1, p2)
 computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByKnown i p@SType{stypeAct=act, stypeReq=req} boundTp)) = (True, con{conDat=BoundedByKnown i (p{stypeAct=act', stypeReq=req'}) boundTp})
   where
-    boundTp' = expandType feTypeEnv (fmap (stypeAct . snd) vaenv) boundTp
-    act' = intersectTypesEnv feTypeEnv (fmap (stypeAct . snd) vaenv) act boundTp'
+    vaenv' = fmap (stypeAct . snd) vaenv
+    boundTp' = case boundTp of
+      TypeVar v _                                   -> H.lookupDefault PTopType v vaenv'
+      UnionType (Just preds) NegPartials negLeafs _ ->
+        snd $ differenceTypeWithEnv feTypeEnv vaenv' (expandPredicates feTypeEnv vaenv' preds) (UnionType Nothing PosPartials negLeafs [])
+      t                                             -> t
+    act' = intersectTypesEnv feTypeEnv vaenv' act boundTp'
     req' = intersectTypesEnv feTypeEnv (fmap (stypeReq . snd) vaenv) req boundTp'
 computeConstraint _ con@(Constraint _ _ (BoundedByObjs _ SType{stypeAct=PTopType} _)) = (False, con)
 computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByObjs i p@SType{stypeAct=pAct} objMapBoundUb)) = (False, con{conDat=BoundedByObjs i (p{stypeAct=pAct'}) objMapBoundUb})

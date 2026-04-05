@@ -109,7 +109,8 @@ addUnionObjToEnv vobjMap tobjMap = do
 -- | A helper for the 'AddInferArg' 'Constraint'
 addInferArgToType :: FEnv -> TypeVarArgEnv -> Type -> Maybe Type
 addInferArgToType _ _ PTopType = Nothing
-addInferArgToType env@FEnv{feTypeEnv} vaenv t@(UnionType (Just _) NegPartials _ _) = addInferArgToType env vaenv (expandType feTypeEnv vaenv t)
+addInferArgToType env@FEnv{feTypeEnv} vaenv (UnionType (Just preds) NegPartials negLeafs _) =
+  addInferArgToType env vaenv (snd $ differenceTypeWithEnv feTypeEnv vaenv (expandPredicates feTypeEnv vaenv preds) (UnionType Nothing PosPartials negLeafs []))
 addInferArgToType env vaenv (TypeVar t _) = case H.lookup t vaenv of
   Just t' -> addInferArgToType env vaenv t'
   Nothing -> error $ printf "Failed to find %s in addInferArgToType" (show t)
@@ -180,10 +181,11 @@ arrowConstrainUbs env@FEnv{feUnionAllObjs} con PTopType dest@(UnionType Nothing 
       return (src', dest', destRT')
     _ -> return (PTopType, dest, Nothing)
 arrowConstrainUbs _ _ PTopType dest = return (PTopType, dest, Nothing)
-arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} src@(UnionType (Just _) NegPartials _ _) dest = do
-  arrowConstrainUbs env con (expandType feTypeEnv (fmap (stypeAct . snd) conVaenv) src) dest
-arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} src@TypeVar{} dest = do
-  let src' = expandType feTypeEnv (fmap (stypeAct . snd) conVaenv) src
+arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} (UnionType (Just preds) NegPartials negLeafs _) dest = do
+  let vaenv' = fmap (stypeAct . snd) conVaenv
+  arrowConstrainUbs env con (snd $ differenceTypeWithEnv feTypeEnv vaenv' (expandPredicates feTypeEnv vaenv' preds) (UnionType Nothing PosPartials negLeafs [])) dest
+arrowConstrainUbs env con@Constraint{conVaenv} src@(TypeVar v _) dest = do
+  let src' = H.lookupDefault PTopType v (fmap (stypeAct . snd) conVaenv)
   case (src', dest) of
     (PTopType, PTopType) -> return (src, src, Nothing)
     _ -> do

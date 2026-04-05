@@ -65,16 +65,6 @@ propCompactIdempotent gPrgm = property $ do
   compact1 === compact2
 
 
-propExpandEq :: IO GenPrgm -> Property
-propExpandEq gPrgm = property $ do
-  gPrgm' <- lift gPrgm
-  prgm <- forAll gPrgm'
-  let typeEnv = mkTypeEnv prgm
-  a <- forAll $ genType prgm
-  let expanded = expandType typeEnv H.empty a
-  annotate $ printf "expanded = %s" (show expanded)
-  assert $ isEqType typeEnv a expanded
-
 
 propSubtypeByUnion :: IO GenPrgm -> Property
 propSubtypeByUnion gPrgm = property $ do
@@ -380,7 +370,6 @@ typeTests = withResource (ggPrgm <$> findPrgms) (const $ pure ()) tests
     tests gPrgm = testGroup "TypeTests" [
       HG.testProperty "propCompactNoChanges" (p $ propCompactNoChanges gPrgm)
       , HG.testProperty "propCompactIdempotent" (p $ propCompactIdempotent gPrgm)
-      , HG.testProperty "propExpandEq" (p $ propExpandEq gPrgm)
       , HG.testProperty "propSubtypeByUnion" (p $ propSubtypeByUnion gPrgm)
       , HG.testProperty "propSubtypeByIntersection" (p $ propSubtypeByIntersection gPrgm)
       , HG.testProperty "propUnionReflexive" (p $ propUnionReflexive gPrgm)
