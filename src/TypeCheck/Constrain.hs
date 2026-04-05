@@ -83,8 +83,7 @@ updateSchemeProp FEnv{feTypeEnv} vaenv super@SType{stypeAct=superAct, stypeReq=s
 -- | A helper for the 'AddArg' 'Constraint'
 addArgToType :: FEnv -> TypeVarArgEnv -> Type -> TypeVarAux -> Maybe Type
 addArgToType _ _ PTopType _ = Nothing
-addArgToType env@FEnv{feTypeEnv} vaenv (UnionType (Just preds) NegPartials negLeafs _) newArg =
-  addArgToType env vaenv (snd $ differenceTypeWithEnv feTypeEnv vaenv (expandPredicates feTypeEnv vaenv preds) (UnionType Nothing PosPartials negLeafs [])) newArg
+addArgToType _ _ (UnionType (Just _) NegPartials _ _) _ = Nothing
 addArgToType env vaenv (TypeVar v _) newArg = case H.lookup v vaenv of
   Just t  -> addArgToType env vaenv t newArg
   Nothing -> error $ printf "Unknown type in addArgToType: %s" (show v)

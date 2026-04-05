@@ -70,7 +70,7 @@ Prgm
                             ( EAppArg Value /this -> /IntCons
                                 ( /head=~Integer
                                 , /tail=~IntList
-                                ) = /IntCons( EAppArg Value /head -> ~Integer )( EAppArg Value /tail -> ~IntList )
+                                ) = /IntCons( EAppArg Value /head -> ~Integer )( EAppArg Value /tail -> ∀/IntList )
                             ) ->
                             ( /operator+
                                 ( /r=/Data/Primitive/Integer

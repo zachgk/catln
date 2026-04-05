@@ -65,7 +65,7 @@ Prgm
                             ( Value /this -> /IntCons
                                 ( /head=~Integer
                                 , /tail=~IntList
-                                ) = /IntCons( Value /head -> ~Integer )( Value /tail -> ~IntList )
+                                ) = /IntCons( Value /head -> ~Integer )( Value /tail -> ∀/IntList )
                             ) ->
                             ( /operator+
                                 ( /r=/Data/Primitive/Integer
