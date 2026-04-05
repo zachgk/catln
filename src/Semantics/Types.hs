@@ -359,6 +359,12 @@ predsNot (PredsNot p) = p
 predsNot PredsNone    = PredsNone
 predsNot p            = PredsNot p
 
+-- | Returns True if the predicates are syntactically contradictory, i.e. contain both p and ¬p.
+-- Used to detect empty types like NegPartials(A ∧ ¬A, {}) without expanding.
+isPredsContradictory :: TypePredicates -> Bool
+isPredsContradictory (PredsAnd ps) = any (\p -> PredsNot p `elem` ps) ps
+isPredsContradictory _             = False
+
 partialAddPreds :: PartialType -> TypePredicates -> PartialType
 partialAddPreds partial@PartialType{ptPreds} newPreds = partial{ptPreds = predsAnd newPreds ptPreds}
 
@@ -857,11 +863,16 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing PosPartials leafs cs@(_:_)) 
 -- NegPartials ⊆ NegPartials: (expand(p)-n1) ⊆ (expand(p)-n2) iff n2 ⊆ n1 (for same predicates);
 -- fall back to expansion for differing predicates
 isSubtypeOfWithEnv typeEnv vaenv (UnionType (Just p1) NegPartials n1 _) t2@(UnionType (Just p2) NegPartials n2 _)
-  | p1 == p2  = isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing PosPartials n2 []) (UnionType Nothing PosPartials n1 [])
-  | otherwise = isSubtypeOfWithEnv typeEnv vaenv (snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv p1) (UnionType Nothing PosPartials n1 [])) t2
--- NegPartials ⊆ PosPartials: filter/expand t1
+  | p1 == p2             = isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing PosPartials n2 []) (UnionType Nothing PosPartials n1 [])
+  | isPredsContradictory p1 = True  -- t1 = ∅ ⊆ anything
+  | otherwise            = isSubtypeOfWithEnv typeEnv vaenv (snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv p1) (UnionType Nothing PosPartials n1 [])) t2
+-- NegPartials ⊆ PosPartials: filter t1 by superPartials names.
+-- hasOutside=True: t1 has elements outside superPartials names.
+--   Short-circuit if preds are syntactically contradictory (t1 = ∅).
+--   Otherwise fall back to expansion (handles semantic emptiness like PredClass C ∧ PredRel R = ∅).
 isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just preds) NegPartials negLeafs _) t2@(UnionType Nothing PosPartials superPartials _) =
   case expandTypesWithNamesFull typeEnv vaenv t1 (H.keysSet superPartials) of
+    (_, True)      | isPredsContradictory preds -> True
     (_, True)      -> isSubtypeOfWithEnv typeEnv vaenv (snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv preds) (UnionType Nothing PosPartials negLeafs [])) t2
     (leafs, False) -> isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing PosPartials leafs []) t2
 -- PosPartials ⊆ PosPartials: check partials structurally
@@ -1069,15 +1080,23 @@ unionTypesWithEnv _ _
   | np1 == np2 && p1 == predsNot p2 =
       UnionType (Just PredsNone) NegPartials np1 []
 -- NegPartials(p, n1, cs1) ∪ NegPartials(p, n2, cs2) = NegPartials(p, n1∩n2, cs1∩cs2) [same preds]
--- Generalization of De Morgan ¬n1 ∪ ¬n2 = ¬(n1 ∩ n2) to predicates other than PredsNone
 unionTypesWithEnv typeEnv vaenv (UnionType (Just p1) NegPartials np1 cs1) (UnionType (Just p2) NegPartials np2 cs2)
   | p1 == p2 =
       let negPartials' = snd $ intersectPartialLeafsWithVarEnv typeEnv vaenv np1 np2
-          negConsts' = filter (`elem` cs2) cs1
+          negConsts'   = filter (`elem` cs2) cs1
       in compactType typeEnv vaenv $ UnionType (Just p1) NegPartials negPartials' negConsts'
 -- NegPartials(preds) ∪ PosPartials(pp): if pp ⊆ NegPartials(preds) already, result is unchanged
 unionTypesWithEnv typeEnv vaenv t1@(UnionType (Just _) NegPartials _ _) t2@(UnionType Nothing PosPartials _ _)
   | isSubtypeOfWithEnv typeEnv vaenv t2 t1 = t1
+-- NegPartials(preds, n, []) ∪ PosPartials(pp): if NegPartials is fully within pp's names, convert to PosPartials and union
+-- Only valid when no excluded constants (cs=[]), since expandTypesWithNamesFull ignores constants.
+-- Uses expandTypesWithNamesFull (no expandPredicates) for the hasOutside=False case.
+unionTypesWithEnv typeEnv vaenv t1@(UnionType (Just _) NegPartials _ []) t2@(UnionType Nothing PosPartials ppLeafs _) =
+  case expandTypesWithNamesFull typeEnv vaenv t1 (H.keysSet ppLeafs) of
+    (filteredLeafs, False) ->
+      unionTypesWithEnv typeEnv vaenv (UnionType Nothing PosPartials filteredLeafs []) t2
+    _ -> unionTypesWithEnv typeEnv vaenv (snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv preds') (UnionType Nothing PosPartials negLeafs' [])) t2
+      where (UnionType (Just preds') NegPartials negLeafs' _) = t1
 -- TopType ∪ t → expand TopType and retry
 unionTypesWithEnv typeEnv vaenv (UnionType (Just preds) NegPartials negLeafs _) t2 =
   unionTypesWithEnv typeEnv vaenv (snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv preds) (UnionType Nothing PosPartials negLeafs [])) t2
@@ -1204,10 +1223,18 @@ intersectTypesWithVarEnv typeEnv vaenv t1@(UnionType Nothing PosPartials partial
         (filteredLeafs, False) -> intersectTypesWithVarEnv typeEnv vaenv t1 (UnionType Nothing PosPartials filteredLeafs [])
         -- Symbolic: add preds to each partial when compactPartialsWithClassPred can resolve them
         -- (requires no PredsNot, which tryPredsToList signals by returning Nothing).
-        -- Otherwise fall back to expansion.
+        -- Otherwise expand preds symbolically within pp's names (no expandPredicates needed).
         (_, True) -> case tryPredsToList preds of
           Just _  -> (vaenv, compactType typeEnv vaenv $ UnionType Nothing PosPartials (joinUnionType $ map (`partialAddPreds` preds) $ splitUnionType partials) [])
-          Nothing -> intersectTypesWithVarEnv typeEnv vaenv t1 (snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv preds) (UnionType Nothing PosPartials negPartials []))
+          Nothing -> case preds of
+            -- pp ∩ NegPartials(¬inner, ∅) = pp - expand(inner within pp)
+            PredsNot inner ->
+              let innerLeafs = expandTypeWithNames typeEnv vaenv (UnionType (Just inner) NegPartials H.empty []) (H.keysSet partials)
+              in (vaenv, compactType typeEnv vaenv $ differencePartialLeafs typeEnv vaenv partials innerLeafs)
+            -- General: pp ∩ NegPartials(preds, ∅) = pp ∩ expand(preds within pp)
+            _ ->
+              let predsLeafs = expandTypeWithNames typeEnv vaenv (UnionType (Just preds) NegPartials H.empty []) (H.keysSet partials)
+              in intersectTypesWithVarEnv typeEnv vaenv t1 (UnionType Nothing PosPartials predsLeafs [])
 -- NegPartials ∩ PosPartials → flip
 intersectTypesWithVarEnv typeEnv vaenv t1@(UnionType (Just _) NegPartials _ _) t2@(UnionType Nothing PosPartials _ _) =
   intersectTypesWithVarEnv typeEnv vaenv t2 t1
