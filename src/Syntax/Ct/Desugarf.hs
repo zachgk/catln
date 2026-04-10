@@ -239,12 +239,12 @@ desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree state
     statements' <- mapM (desStatement (inheritModule, a':inheritAnnots)) subStatements
     return $ mconcat statements'
 
-desFinalPasses :: [DesPrgm] -> [DesPrgm] -> CResT IO [DesPrgm]
-desFinalPasses prgms fullPrgms = do
-  let fullPrgm1 = mconcat (prgms ++ fullPrgms)
-  let fullPrgm2 = removeClassInstanceObjects fullPrgm1 fullPrgm1
+desFinalPasses :: [(DesPrgm, [DesPrgm], [DesPrgm])] -> CResT IO [DesPrgm]
+desFinalPasses nodesWithDeps = do
+  forM nodesWithDeps $ \(prgm1, sccPeerDeps, myExtDeps) -> do
+    let fullPrgm1 = mconcat ([prgm1] ++ sccPeerDeps ++ myExtDeps)
+    let fullPrgm2 = removeClassInstanceObjects fullPrgm1 fullPrgm1
 
-  forM prgms $ \prgm1 -> do
     -- Run removeClassInstanceObjects
     let prgm2 = removeClassInstanceObjects fullPrgm1 prgm1
 

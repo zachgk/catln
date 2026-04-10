@@ -132,11 +132,11 @@ docApiBase getProvider = do
         Right parsed -> return (RawPrgm [] [RawStatementTree (RawAnnot parsed) []])
       rawPrgm' <- lift $ mapMetaRawPrgmM addMetaID rawPrgm
       (annotDesPrgm, annotPrgmName, _) <- asCResT $ desPrgm (rawPrgm', desFileImport $ mkRawFileImport $ RawValue emptyMetaN "<annot>", [])
-      [annotDesPrgm'] <- desFinalPasses [annotDesPrgm] []
+      [annotDesPrgm'] <- desFinalPasses [(annotDesPrgm, [], [])]
       tprgmsTrace <- getTPrgmWithTrace provider
       tprgms <- getTPrgm provider
       let annotDeps = map snd3 $ graphToNodes tprgms
-      [(annotTprgm, _, _)] <- asCResT $ typeCheckToRes $ typecheckPrgms [annotDesPrgm'] (map fst3 $ graphToNodes tprgmsTrace)
+      [(annotTprgm, _, _)] <- asCResT $ typeCheckToRes $ typecheckPrgms [(annotDesPrgm', [], map fst3 $ graphToNodes tprgmsTrace)]
       let joinedTprgms = graphFromEdges ((annotTprgm, annotPrgmName, annotDeps) : graphToNodes tprgms)
       let targetModes = evalAllTargetModes annotTprgm
       maybeAnnots <- asCResT $ evalAnnots annotPrgmName joinedTprgms

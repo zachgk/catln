@@ -75,8 +75,7 @@ graphFilterReaches k gd@(g, _, vertexFromKey) = case vertexFromKey k of
               in graphFromEdges $ filter ((`S.member` keep) . fromJust . vertexFromKey . snd3) $ graphToNodes gd
   Nothing -> graphFromEdges []
 
--- TODO Change function to ([(n1, [n2])] -> [n2]) to recognize each input node has it's own direct imports
-mapGraphWithDeps :: (Monad m, Hashable k, Ord k) => ([n1] -> [n2] -> m [n2]) -> GraphData n1 k -> m (GraphData n2 k)
+mapGraphWithDeps :: (Monad m, Hashable k, Ord k) => ([(n1, [n1], [n2])] -> m [n2]) -> GraphData n1 k -> m (GraphData n2 k)
 mapGraphWithDeps f g@(graph, fromNode, fromName) = do
   let connComps = stronglyConnCompR $ graphToNodes g
   computed <- foldM addSCC H.empty connComps
@@ -86,12 +85,14 @@ mapGraphWithDeps f g@(graph, fromNode, fromName) = do
     addSCC finished new = do
       let newList = flattenSCC new
       let newNames = S.fromList $ map snd3 newList
-      let transitiveDepNames = S.fromList $ map (snd3 . fromNode) $ concatMap (reachable graph . fromJust . fromName) newNames
-      -- let directDepNames = S.fromList $ concatMap thr3 newList
-      -- TODO Improve import/export system (specifically core re-exporting it's files) to support using directDependencies
-      let finishedDepNames = S.difference transitiveDepNames newNames
-      let finished' = map (\dn -> H.lookupDefault (error "Failed to find dep in mapGraphWithDeps") dn finished) (S.toList finishedDepNames)
-      new' <- f (map fst3 newList) (map fst3 finished')
+      let perNodeData = map (\(n, k, _) ->
+            let sccPeerDeps = [n' | (n', k', _) <- newList, k' /= k]
+                transDepNames = S.fromList $ map (snd3 . fromNode) $ reachable graph $ fromJust $ fromName k
+                finishedDepNames = S.difference transDepNames newNames
+                extDeps = map (\dn -> fst3 $ H.lookupDefault (error "Failed to find dep in mapGraphWithDeps") dn finished) (S.toList finishedDepNames)
+            in (n, sccPeerDeps, extDeps)
+            ) newList
+      new' <- f perNodeData
       let newMap' = H.fromList $ zipWith (\(_, k, ds) n' -> (k, (n', k, ds))) newList new'
       return $ H.unionWith (error "overlap in mapGraphWithDeps") newMap' finished
 

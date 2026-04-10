@@ -47,9 +47,11 @@ typecheckPrgmsSt pprgms typechecked = do
   tprgms <- toPrgms vprgms
   return (tprgms, vprgms, trace)
 
-typecheckPrgms :: [PPrgm] -> [TypecheckTuplePrgm] -> TypeCheckResult [TypecheckTuplePrgm]
-typecheckPrgms pprgms depsTrace = do
-  let deps = map fst3 depsTrace
+typecheckPrgms :: [(PPrgm, [PPrgm], [TypecheckTuplePrgm])] -> TypeCheckResult [TypecheckTuplePrgm]
+typecheckPrgms nodesWithDeps = do
+  let pprgms = map (\(p, _, _) -> p) nodesWithDeps
+  let allDepsTrace = concatMap (\(_, _, d) -> d) nodesWithDeps
+  let deps = map fst3 allDepsTrace
   let baseFEnv = makeBaseFEnv (mconcat (pprgms ++ map (mapMetaPrgm clearMetaDat) deps))
   (tprgms, vprgms, trace) <- evalStateT (typecheckPrgmsSt pprgms deps) baseFEnv
   return $ zip3 tprgms vprgms (repeat trace)
