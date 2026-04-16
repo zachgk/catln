@@ -14,7 +14,7 @@
 module CtService where
 import           Control.Concurrent      (MVar, modifyMVar_, newMVar, readMVar,
                                           swapMVar)
-import           Control.Monad           (forM, unless)
+import           Control.Monad           (forM, forM_, unless)
 import           Control.Monad.Trans     (lift)
 import           CRes
 import           Data.Graph
@@ -110,8 +110,8 @@ ctssBuildPagesExact _ pages | all (ssfBuilt . fst3) (graphToNodes pages) = retur
 ctssBuildPagesExact (CTSS ssmv) pages = do
   -- stronglyConnCompR returns SCCs in reverse topological order (dependencies first)
   let sccs = stronglyConnCompR $ graphToNodes pages
-  forM_ sccs $ \scc -> do
-    let sccNodes = flattenSCC scc
+  forM_ sccs $ \comp -> do
+    let sccNodes = flattenSCC comp
     unless (all (ssfBuilt . fst3) sccNodes) $
       ctssBuildSCC ssmv sccNodes pages
 
@@ -169,7 +169,7 @@ buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
 
       -- Step 2: Collect data from already-built transitive dependencies
       -- All non-SCC nodes in `pages` are potential external deps
-      let extDepNames = filter (`S.notMember` sccNamesSet) $
+      let extDepNames = filter (not . (`S.member` sccNamesSet)) $
             map snd3 $ graphToNodes pages
       let extDepDes = mapMaybe (\name ->
             graphLookup name ctssData >>= ssfDes >>= cresJust
@@ -206,11 +206,9 @@ buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
       -- Step 7: Eval build all (processes SCC + deps, we extract SCC results)
       tbprgmGraph <- asCResT $ evalBuildAll tprgmGraph
 
-      -- Step 8: Eval annotations per SCC file
-      annotsResults <- forM namesAndDeps $ \(name, _) -> do
-        a <- asCResT $ evalAnnots name tprgmGraph
-        return (name, a)
-      let annotsMap = H.fromList annotsResults
+      -- Step 8: Eval annotations per SCC file (kept lazy to match original behavior,
+      -- since evalAnnots may reference classes not in the class graph for #noCore files)
+      let annotsMap = H.fromList [(name, evalAnnots name tprgmGraph) | (name, _) <- namesAndDeps]
 
       -- Step 9: Assemble updated SSFs
       let validUpdates = [(name, ssf{
@@ -219,7 +217,7 @@ buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
               ssfTPrgmWithTrace = Just $ pure tc,
               ssfTPrgm = Just $ pure (fst3 tc),
               ssfTBPrgm = fmap pure $ graphLookup name tbprgmGraph,
-              ssfAnnots = fmap pure $ H.lookup name annotsMap
+              ssfAnnots = H.lookup name annotsMap
             })
             | ((_, ssf, name, _), des, tc) <-
                 zip3 validRaws finalDes tcResults]
