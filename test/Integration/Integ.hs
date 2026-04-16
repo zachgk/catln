@@ -88,32 +88,32 @@ runConvertGoldenTest fileName rawPrgms step =
         (graphFromEdges [(prgm, fileName, [])])
         step
 
-runTest :: Bool -> String -> TestTree
-runTest runGolden fileNameStr = testCaseSteps fileNameStr $ \step -> do
+runTest :: Bool -> IO CTSS -> String -> TestTree
+runTest runGolden getCtss fileNameStr = testCaseSteps fileNameStr $ \step -> do
   step $ printf "Read file %s..." fileNameStr
   fileName <- mkDesCanonicalImportStr testCtssConfig fileNameStr
-  ctss <- ctssBaseFiles testCtssConfig [fileNameStr]
+  ctss <- getCtss
 
   res <- runCResT $ do
-    rawPrgm <- getRawPrgm ctss
+    rawPrgm <- getRawPrgmFrom fileName ctss
 
     when (runGolden && ".py" `isSuffixOf` fileNameStr) $ do
       lift $ runConvertGoldenTest fileName rawPrgm step
 
-    prgm <- getPrgm ctss
+    prgm <- ctssGetFrom ssfDes fileName ctss
 
     when runGolden $ do
       lift $ runGoldenTest "desugar" goldenDesugarDir fileNameStr prgm step
 
     lift $ step "Typecheck..."
-    tprgm <- getTPrgm ctss
+    tprgm <- ctssGetFrom ssfTPrgm fileName ctss
 
     when runGolden $ do
       lift $ runGoldenTest "typecheck" goldenTypecheckDir fileNameStr tprgm step
 
     when runGolden $ do
       lift $ step "TreeBuild..."
-      tbprgm <- getTBPrgm ctss
+      tbprgm <- ctssGetFrom ssfTBPrgm fileName ctss
       lift $ runGoldenTest "treebuild" goldenTreebuildDir fileNameStr tbprgm step
 
     evalTarget <- asCResT $ evalTargetMode "main" fileName tprgm
@@ -139,8 +139,9 @@ runTest runGolden fileNameStr = testCaseSteps fileNameStr $ \step -> do
       assertFailure $ "Failed test: \n" ++ prettyCNotes notes
 
 runTests :: Bool -> [String] -> TestTree
-runTests runGolden testFiles = testGroup "Tests" testTrees
-  where testTrees = map (runTest runGolden) testFiles
+runTests runGolden testFiles =
+  withResource (ctssBaseFiles testCtssConfig testFiles) (const $ return ()) $ \getCtss ->
+    testGroup "Tests" $ map (runTest runGolden getCtss) testFiles
 
 test :: IO ()
 test = defaultMain $ runTests False ["test/test.ct"]
@@ -148,7 +149,7 @@ test = defaultMain $ runTests False ["test/test.ct"]
 testd :: IO ()
 testd = docApi False ["test/test.ct"]
 
-runPyTest :: Bool -> String -> TestTree
+runPyTest :: Bool -> IO CTSS -> String -> TestTree
 runPyTest = runTest
 
 standardTests :: IO [String]
@@ -158,9 +159,12 @@ integrationTests :: IO TestTree
 integrationTests = do
   ctFiles <- standardTests
   pyFiles <- findPy testDir
-  let ctGroup = runTests True ctFiles
-  let pyGroup = testGroup "Python" $ map (runPyTest True) pyFiles
-  return $ testGroup "Integration" [ctGroup, pyGroup]
+  let allFiles = ctFiles ++ pyFiles
+  return $ withResource (ctssBaseFiles testCtssConfig allFiles) (const $ return ()) $ \getCtss ->
+    testGroup "Integration" [
+      testGroup "Tests" $ map (runTest True getCtss) ctFiles,
+      testGroup "Python" $ map (runPyTest True getCtss) pyFiles
+    ]
 
 mtFileName :: String -> IO String
 mtFileName k = do

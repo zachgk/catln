@@ -14,11 +14,13 @@
 module CtService where
 import           Control.Concurrent      (MVar, modifyMVar_, newMVar, readMVar,
                                           swapMVar)
-import           Control.Monad           (unless)
+import           Control.Monad           (forM, unless)
 import           Control.Monad.Trans     (lift)
 import           CRes
 import           Data.Graph
 import qualified Data.HashMap.Strict     as H
+import qualified Data.HashSet            as S
+import           Data.List               (partition)
 import           Data.Maybe
 import           Eval                    (evalAnnots, evalBuild, evalBuildAll,
                                           evalRun, evalTest)
@@ -26,13 +28,14 @@ import           Eval.Common             (EvalMetaDat, EvalResult, TExpr,
                                           Val (StrVal, TupleVal))
 import           Semantics               (CTSSConfig)
 import           Semantics.Prgm
-import           Syntax.Ct.Desugarf      (desFiles)
+import           Syntax.Ct.Desugarf      (desFinalPasses, desPrgm, validPrgm)
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 import           Syntax.Parsers
 import           Text.Printf
-import           TypeCheck               (typecheckPrgmWithTrace)
-import           TypeCheck.Common        (TPrgm, TraceConstrain, VPrgm)
+import           TypeCheck               (typecheckPrgms)
+import           TypeCheck.Common        (TPrgm, TraceConstrain, VPrgm,
+                                          typeCheckToRes)
 import           Utils
 
 type TBPrgm = Prgm TExpr EvalMetaDat
@@ -99,40 +102,143 @@ ctssClearInvalidations invalidations ss@CTSSDat{ctssData=(g, nodeFromVertex, ver
       then newSSF (ssfSource ssf) (ssfRaw ssf)
       else ssf
 
-ctssBuildPagesExact :: CTSSDat -> GraphData SSF FileImport -> IO CTSSDat
-ctssBuildPagesExact ctss pages | all (ssfBuilt . fst3) (graphToNodes pages) = return ctss
-ctssBuildPagesExact ctss@CTSSDat{ctssData} pages = do
-  -- TODO Re-implement using mapGraphWithDeps
-  p <- runCResT $ do
-    rawPrgm <- asCResT $ mapMGraph ssfRaw pages
-    prgm <- desFiles rawPrgm
-    let withTrace = typecheckPrgmWithTrace prgm
-    let tprgm = fmap (fmapGraph fst3) withTrace
-    let tbprgm = tprgm >>= evalBuildAll
-    let annots' = tprgm >>= (\jtprgm -> fmap graphFromEdges $ traverse (\(_, n, deps) -> (, n, deps) <$> evalAnnots n jtprgm) $  graphToNodes jtprgm)
-    let ctssData' = fmapGraphWithKey (\prgmName ssf -> ssf{
-          ssfBuilt=True,
-          ssfDes=pure <$> graphLookup prgmName prgm,
-          ssfTPrgmWithTrace=mapM (graphLookup prgmName) withTrace,
-          ssfTPrgm=mapM (graphLookup prgmName) tprgm,
-          ssfTBPrgm=mapM (graphLookup prgmName) tbprgm,
-          ssfAnnots=mapM (graphLookup prgmName) annots'
-        }) ctssData
-    return ctss{ctssData=ctssData'}
-  case p of
-    CRes notes r -> do
-      unless (null notes) $ putStrLn $ prettyCNotes notes
-      return r
-    CErr notes -> do
-      unless (null notes) $ putStrLn $ prettyCNotes notes
-      fail "Could not build catln service"
+-- | Build pages incrementally, one SCC at a time.
+-- Each successfully built SCC is committed to the MVar independently,
+-- so earlier SCCs (e.g. core library) remain cached even if a later SCC fails.
+ctssBuildPagesExact :: CTSS -> GraphData SSF FileImport -> IO ()
+ctssBuildPagesExact _ pages | all (ssfBuilt . fst3) (graphToNodes pages) = return ()
+ctssBuildPagesExact (CTSS ssmv) pages = do
+  -- stronglyConnCompR returns SCCs in reverse topological order (dependencies first)
+  let sccs = stronglyConnCompR $ graphToNodes pages
+  forM_ sccs $ \scc -> do
+    let sccNodes = flattenSCC scc
+    unless (all (ssfBuilt . fst3) sccNodes) $
+      ctssBuildSCC ssmv sccNodes pages
+
+-- | Build a single SCC and commit the result to the MVar atomically.
+ctssBuildSCC :: MVar CTSSDat -> [(SSF, FileImport, [FileImport])] -> GraphData SSF FileImport -> IO ()
+ctssBuildSCC ssmv sccNodes pages = do
+  let sccFileNames = map snd3 sccNodes
+  let sccNamesSet = S.fromList sccFileNames
+  -- Get dep lists from the pages graph structure (stable across MVar updates)
+  let pageDeps = H.fromList [(name, deps) | (_, name, deps) <- graphToNodes pages]
+  modifyMVar_ ssmv $ \ctssdat@CTSSDat{ctssData} -> do
+    -- Re-check with current state (another thread may have built this SCC)
+    let currentSSFs = mapMaybe (`graphLookup` ctssData) sccFileNames
+    if all ssfBuilt currentSSFs
+      then return ctssdat
+      else do
+        -- Look up current SSFs and deps for SCC members
+        let currentSCCNodes = mapMaybe (\name -> do
+              ssf <- graphLookup name ctssData
+              let deps = fromMaybe [] $ H.lookup name pageDeps
+              return (ssf, name, deps)) sccFileNames
+        p <- runCResT $ buildSCCPipeline ctssData sccNamesSet currentSCCNodes pages
+        case p of
+          CRes notes updates -> do
+            unless (null notes) $ putStrLn $ prettyCNotes notes
+            let updatedData = fmapGraphWithKey (\k ssf -> fromMaybe ssf (H.lookup k updates)) ctssData
+            return ctssdat{ctssData = updatedData}
+          CErr notes -> do
+            unless (null notes) $ putStrLn $ prettyCNotes notes
+            fail "Could not build catln service"
+
+-- | Run the full pipeline (desugar → typecheck → build → annotate) for a single SCC.
+-- Returns a map of updated SSFs for the SCC members.
+buildSCCPipeline :: GraphData SSF FileImport -> S.HashSet FileImport
+                 -> [(SSF, FileImport, [FileImport])] -> GraphData SSF FileImport
+                 -> CResT IO (H.HashMap FileImport SSF)
+buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
+  -- Get raw programs for all SCC members
+  rawPrgms <- forM sccNodes $ \(ssf, name, deps) -> do
+    raw <- asCResT $ ssfRaw ssf
+    return (raw, ssf, name, deps)
+
+  -- Separate valid programs from ctx-annotated ones (which skip the pipeline)
+  let (validRaws, invalidRaws) = partition (\(raw, _, _, _) -> validPrgm raw) rawPrgms
+  let invalidUpdates = [(name, ssf{ssfBuilt=True}) | (_, ssf, name, _) <- invalidRaws]
+
+  if null validRaws
+    then return $ H.fromList invalidUpdates
+    else do
+      let namesAndDeps = [(name, deps) | (_, _, name, deps) <- validRaws]
+
+      -- Step 1: Desugar each raw program individually
+      desResults <- forM validRaws $ \(raw, _, name, deps) ->
+        asCResT $ desPrgm (raw, name, deps)
+
+      -- Step 2: Collect data from already-built transitive dependencies
+      -- All non-SCC nodes in `pages` are potential external deps
+      let extDepNames = filter (`S.notMember` sccNamesSet) $
+            map snd3 $ graphToNodes pages
+      let extDepDes = mapMaybe (\name ->
+            graphLookup name ctssData >>= ssfDes >>= cresJust
+            ) extDepNames
+
+      -- Step 3: Run final desugar passes with SCC peers and external deps
+      let desNodesForFinal = [(des, peerDes, extDepDes)
+            | (des, name, _) <- desResults
+            , let peerDes = [d | (d, n, _) <- desResults, n /= name]]
+      finalDes <- desFinalPasses desNodesForFinal
+
+      -- Step 4: Collect typechecked data from already-built dependencies
+      let extDepTC = mapMaybe (\name ->
+            graphLookup name ctssData >>= ssfTPrgmWithTrace >>= cresJust
+            ) extDepNames
+
+      -- Step 5: Typecheck with SCC peers and external deps
+      let tcNodesForTC = [(des, peerDes, extDepTC)
+            | (des, (name, _)) <- zip finalDes namesAndDeps
+            , let peerDes = [d | (d, (n, _)) <- zip finalDes namesAndDeps, n /= name]]
+      tcResults <- asCResT $ typeCheckToRes $ typecheckPrgms tcNodesForTC
+
+      -- Step 6: Construct TPrgm graph for eval (SCC results + built dep TPrgms)
+      let sccTPrgmNodes = [( fst3 tc, name, deps)
+            | (tc, (name, deps)) <- zip tcResults namesAndDeps]
+      let depTPrgmNodes = mapMaybe (\(_, name, deps) ->
+            if name `S.member` sccNamesSet then Nothing
+            else do
+              ssf <- graphLookup name ctssData
+              ssfTPrgm ssf >>= cresJust >>= \t -> Just (t, name, deps)
+            ) (graphToNodes pages)
+      let tprgmGraph = graphFromEdges (sccTPrgmNodes ++ depTPrgmNodes)
+
+      -- Step 7: Eval build all (processes SCC + deps, we extract SCC results)
+      tbprgmGraph <- asCResT $ evalBuildAll tprgmGraph
+
+      -- Step 8: Eval annotations per SCC file
+      annotsResults <- forM namesAndDeps $ \(name, _) -> do
+        a <- asCResT $ evalAnnots name tprgmGraph
+        return (name, a)
+      let annotsMap = H.fromList annotsResults
+
+      -- Step 9: Assemble updated SSFs
+      let validUpdates = [(name, ssf{
+              ssfBuilt = True,
+              ssfDes = Just $ pure des,
+              ssfTPrgmWithTrace = Just $ pure tc,
+              ssfTPrgm = Just $ pure (fst3 tc),
+              ssfTBPrgm = fmap pure $ graphLookup name tbprgmGraph,
+              ssfAnnots = fmap pure $ H.lookup name annotsMap
+            })
+            | ((_, ssf, name, _), des, tc) <-
+                zip3 validRaws finalDes tcResults]
+
+      return $ H.fromList (validUpdates ++ invalidUpdates)
+
+-- | Extract a successful result from CRes, returning Nothing on error.
+cresJust :: CRes a -> Maybe a
+cresJust (CRes _ a) = Just a
+cresJust (CErr _)   = Nothing
 
 ctssBuildFrom :: CTSS -> FileImport -> IO ()
-ctssBuildFrom (CTSS ssmv) src = modifyMVar_ ssmv $ \ctss@CTSSDat{ctssData} -> do
+ctssBuildFrom ctss@(CTSS ssmv) src = do
+  CTSSDat{ctssData} <- readMVar ssmv
   ctssBuildPagesExact ctss (graphFilterReaches src ctssData)
 
 ctssBuildAll :: CTSS -> IO ()
-ctssBuildAll (CTSS ssmv) = modifyMVar_ ssmv $ \ctss@CTSSDat{ctssData} -> do
+ctssBuildAll ctss@(CTSS ssmv) = do
+  CTSSDat{ctssData} <- readMVar ssmv
   ctssBuildPagesExact ctss ctssData
 
 ctssKeys :: CTSS -> IO [FileImport]
@@ -187,6 +293,12 @@ getRawPrgm :: CTSS -> CResT IO PPrgmGraphData
 getRawPrgm (CTSS ssmv) = do
   CTSSDat{ctssData} <- lift $ readMVar ssmv
   asCResT $ mapMGraph ssfRaw ctssData
+
+-- | Like getRawPrgm but only returns the subgraph reachable from a given file.
+getRawPrgmFrom :: FileImport -> CTSS -> CResT IO PPrgmGraphData
+getRawPrgmFrom prgmName (CTSS ssmv) = do
+  CTSSDat{ctssData} <- lift $ readMVar ssmv
+  asCResT $ mapMGraph ssfRaw (graphFilterReaches prgmName ctssData)
 
 getTreebug :: CTSS -> FileImport -> String -> CResT IO EvalResult
 getTreebug ctss prgmName fun = do
