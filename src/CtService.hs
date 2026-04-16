@@ -172,7 +172,7 @@ buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
       let extDepNames = filter (not . (`S.member` sccNamesSet)) $
             map snd3 $ graphToNodes pages
       let extDepDes = mapMaybe (\name ->
-            graphLookup name ctssData >>= ssfDes >>= cresJust
+            graphLookup name ctssData >>= ssfDes >>= cresToMaybe
             ) extDepNames
 
       -- Step 3: Run final desugar passes with SCC peers and external deps
@@ -183,7 +183,7 @@ buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
 
       -- Step 4: Collect typechecked data from already-built dependencies
       let extDepTC = mapMaybe (\name ->
-            graphLookup name ctssData >>= ssfTPrgmWithTrace >>= cresJust
+            graphLookup name ctssData >>= ssfTPrgmWithTrace >>= cresToMaybe
             ) extDepNames
 
       -- Step 5: Typecheck with SCC peers and external deps
@@ -199,7 +199,7 @@ buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
             if name `S.member` sccNamesSet then Nothing
             else do
               ssf <- graphLookup name ctssData
-              ssfTPrgm ssf >>= cresJust >>= \t -> Just (t, name, deps)
+              ssfTPrgm ssf >>= cresToMaybe >>= \t -> Just (t, name, deps)
             ) (graphToNodes pages)
       let tprgmGraph = graphFromEdges (sccTPrgmNodes ++ depTPrgmNodes)
 
@@ -223,11 +223,6 @@ buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
                 zip3 validRaws finalDes tcResults]
 
       return $ H.fromList (validUpdates ++ invalidUpdates)
-
--- | Extract a successful result from CRes, returning Nothing on error.
-cresJust :: CRes a -> Maybe a
-cresJust (CRes _ a) = Just a
-cresJust (CErr _)   = Nothing
 
 ctssBuildFrom :: CTSS -> FileImport -> IO ()
 ctssBuildFrom ctss@(CTSS ssmv) src = do
