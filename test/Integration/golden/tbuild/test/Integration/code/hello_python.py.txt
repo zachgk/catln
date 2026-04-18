@@ -97,14 +97,7 @@ Prgm
                             ( /Data/Nil + /Data/Cons[ /T=TopType ]
                                 ( /head=TVVar /T
                                 , /tail=~ConsList[ /T=TVVar /T ]
-                                ) + /Data/sorted
-                                ( /lst=
-                                    ( /Data/Nil + /Data/Cons[ /T=TopType ]
-                                        ( /head=TVVar /T
-                                        , /tail=~ConsList[ /T=TVVar /T ]
-                                        )
-                                    )
-                                )
+                                ) + /Data/sorted( /lst=∀/Data/List )
                             ) = /sorted
                             ( EAppArg Value /lst -> TVArg /lst = ( Value /lst ↦ TVArg /lst ) )
                         ]
@@ -214,15 +207,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /any_true( EAppArg Value /flags -> ∀/Data/List ) ->
-                            ( /Data/Primitive/True + /Data/Primitive/False + /Data/any
-                                ( /lst=
-                                    ( /Data/Nil + /Data/Cons[ /T=TopType ]
-                                        ( /head=TVVar /T
-                                        , /tail=~ConsList[ /T=TVVar /T ]
-                                        )
-                                    )
-                                )
-                            ) = /any
+                            ( /Data/Primitive/True + /Data/Primitive/False + /Data/any( /lst=∀/Data/List ) ) = /any
                             ( EAppArg Value /lst -> TVArg /flags = ( Value /flags ↦ TVArg /flags ) )
                         ]
                     }
@@ -399,15 +384,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /sum_list( EAppArg Value /nums -> ∀/Data/List ) ->
-                            ( /Data/sum
-                                ( /lst=
-                                    ( /Data/Nil + /Data/Cons[ /T=TopType ]
-                                        ( /head=TVVar /T
-                                        , /tail=~ConsList[ /T=TVVar /T ]
-                                        )
-                                    )
-                                ) + /Data/Primitive/Integer
-                            ) = /sum
+                            ( /Data/sum( /lst=∀/Data/List ) + /Data/Primitive/Integer ) = /sum
                             ( EAppArg Value /lst -> TVArg /nums = ( Value /nums ↦ TVArg /nums ) )
                         ]
                     }
@@ -528,14 +505,7 @@ Prgm
                             ( /Data/Nil + /Data/Cons[ /T=TopType ]
                                 ( /head=TVVar /T
                                 , /tail=~ConsList[ /T=TVVar /T ]
-                                ) + /Data/reversed
-                                ( /lst=
-                                    ( /Data/Nil + /Data/Cons[ /T=TopType ]
-                                        ( /head=TVVar /T
-                                        , /tail=~ConsList[ /T=TVVar /T ]
-                                        )
-                                    )
-                                )
+                                ) + /Data/reversed( /lst=∀/Data/List )
                             ) = /reversed
                             ( EAppArg Value /lst -> TVArg /lst = ( Value /lst ↦ TVArg /lst ) )
                         ]
@@ -548,15 +518,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /all_true( EAppArg Value /flags -> ∀/Data/List ) ->
-                            ( /Data/Primitive/True + /Data/Primitive/False + /Data/all
-                                ( /lst=
-                                    ( /Data/Nil + /Data/Cons[ /T=TopType ]
-                                        ( /head=TVVar /T
-                                        , /tail=~ConsList[ /T=TVVar /T ]
-                                        )
-                                    )
-                                )
-                            ) = /all
+                            ( /Data/Primitive/True + /Data/Primitive/False + /Data/all( /lst=∀/Data/List ) ) = /all
                             ( EAppArg Value /lst -> TVArg /flags = ( Value /flags ↦ TVArg /flags ) )
                         ]
                     }

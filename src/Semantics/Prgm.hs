@@ -318,7 +318,7 @@ instance ExprClass Expr where
       aux (EWhere _ base cond) = case maybeExprPath cond of
         Just n | n == operatorHasArrow -> case (H.lookup (partialKey operatorArgL) condArgs, H.lookup (partialKey operatorArgR) condArgs) of
                   (Just (Just (_, Just l)), Just (Just (_, Just r))) -> case (getExprType $ exprPropagateTypes l, getExprType $ exprPropagateTypes r) of
-                    (lt@(UnionType Nothing PosPartials _ _), rt) | isJust (maybeGetSingleton lt) -> concatMap findArrowMatches bases'
+                    (lt@(UnionType Nothing _ _), rt) | isJust (maybeGetSingleton lt) -> concatMap findArrowMatches bases'
                       where
                         findArrowMatches base' = case typeGraphQuery typeEnv (fmap snd base') $ getSingleton lt of
                           [] -> [H.empty]
@@ -335,8 +335,8 @@ instance ExprClass Expr where
         where
           fromArg :: (MetaDat m, Show m) => EApp Expr m -> [ArgMetaMapWithSrc m]
           fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)}) = case typeGetArg (inExprSingleton obj) src of
-            Just (UnionType Nothing PosPartials srcArg []) -> joinAllPossVarArgMetaWithSrc typeEnv $ map (exprVarArgsWithSrc typeEnv e) $ splitUnionType srcArg
-            Just t@(UnionType (Just _) NegPartials _ _) -> [(,t) <$> exprVarArgs e]
+            Just (UnionType Nothing srcArg []) -> joinAllPossVarArgMetaWithSrc typeEnv $ map (exprVarArgsWithSrc typeEnv e) $ splitUnionType srcArg
+            Just t@(UnionType (Just _) _ _) -> [(,t) <$> exprVarArgs e]
             _ -> [H.empty]
           fromArg (EAppArg ObjArr{oaArr=Just (Just e, _)}) = exprVarArgsWithSrc typeEnv e src
           fromArg (EAppArg ObjArr {oaObj=Just obj, oaArr=Just (Nothing, arrM)}) = case getMetaType arrM of

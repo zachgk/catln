@@ -98,11 +98,10 @@ reachesPartials typeEnv partials = ReachesPartialTree $ H.fromList $ zip partial
         else ReachesTypeTree $ H.fromList $ zip (map snd ttypes) (map (second (reaches env')) ttypes)
 
 reaches :: (TypeGraph tg) => ReachesEnv tg -> Type -> ReachesTree
-reaches _     (UnionType (Just _) NegPartials _ _) = ReachesLeaf
+reaches _     (UnionType (Just _) _ _) = ReachesLeaf
 reaches _     (TypeVar v _) = error $ printf "reaches with typevar %s" (show v)
-reaches env (UnionType Nothing PosPartials src consts) =
+reaches env (UnionType Nothing src consts) =
   reachesPartials env $ splitUnionType src ++ map constantPartialType consts
-reaches _ t = error $ printf "reaches with unhandled type %s" (show t)
 
 reachesTo :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Bool
 reachesTo typeEnv vaenv srcType = reachesHasCutSubtypeOf typeEnv vaenv reached

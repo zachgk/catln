@@ -83,11 +83,11 @@ updateSchemeProp FEnv{feTypeEnv} vaenv super@SType{stypeAct=superAct, stypeReq=s
 -- | A helper for the 'AddArg' 'Constraint'
 addArgToType :: FEnv -> TypeVarArgEnv -> Type -> TypeVarAux -> Maybe Type
 addArgToType _ _ PTopType _ = Nothing
-addArgToType _ _ (UnionType (Just _) NegPartials _ _) _ = Nothing
+addArgToType _ _ (UnionType (Just _) _ _) _ = Nothing
 addArgToType env vaenv (TypeVar v _) newArg = case H.lookup v vaenv of
   Just t  -> addArgToType env vaenv t newArg
   Nothing -> error $ printf "Unknown type in addArgToType: %s" (show v)
-addArgToType FEnv{feTypeEnv} _ (UnionType Nothing PosPartials partials []) newArg = Just $ unionAllTypes feTypeEnv $ mapMaybe fromPartial $ splitUnionType partials
+addArgToType FEnv{feTypeEnv} _ (UnionType Nothing partials []) newArg = Just $ unionAllTypes feTypeEnv $ mapMaybe fromPartial $ splitUnionType partials
   where
     fromPartial partial@PartialType{ptArgs} = case newArg of
       TVArg newArg' -> Just $ singletonType partial{ptArgs=H.insertWith (unionTypes feTypeEnv) newArg' PTopType ptArgs}
@@ -138,8 +138,8 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByKnown i p@ST
     vaenv' = fmap (stypeAct . snd) vaenv
     boundTp' = case boundTp of
       TypeVar v _                                   -> H.lookupDefault PTopType v vaenv'
-      UnionType (Just preds) NegPartials negLeafs _ ->
-        snd $ differenceTypeWithEnv feTypeEnv vaenv' (expandPredicates feTypeEnv vaenv' preds) (UnionType Nothing PosPartials negLeafs [])
+      UnionType (Just (preds, negLeafs)) _ _ ->
+        snd $ differenceTypeWithEnv feTypeEnv vaenv' (expandPredicates feTypeEnv vaenv' preds) (UnionType Nothing negLeafs [])
       t                                             -> t
     act' = intersectTypesEnv feTypeEnv vaenv' act boundTp'
     req' = intersectTypesEnv feTypeEnv (fmap (stypeReq . snd) vaenv) req boundTp'
@@ -147,16 +147,16 @@ computeConstraint _ con@(Constraint _ _ (BoundedByObjs _ SType{stypeAct=PTopType
 computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByObjs i p@SType{stypeAct=pAct} objMapBoundUb)) = (False, con{conDat=BoundedByObjs i (p{stypeAct=pAct'}) objMapBoundUb})
   where
     vaenv' = fmap (stypeAct . snd) vaenv
-    argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType Nothing PosPartials (joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con) []
+    argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType Nothing (joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con) []
     boundUb = unionTypes feTypeEnv objMapBoundUb argsBoundUb
 
     -- A partially applied tuple would not be a raw type on the unionObj,
     -- but a subset of the arguments in that type
     (_, pAct') = intersectTypesWithVarEnv feTypeEnv vaenv' pAct boundUb
-computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (NoReturnArg i p@SType{stypeAct=act@(UnionType Nothing PosPartials _ _)})) = (True, con{conVaenv=updateCOVarArgEnvAct vaenv'' vaenv, conDat=NoReturnArg i p{stypeAct=act'}})
+computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (NoReturnArg i p@SType{stypeAct=act@(UnionType Nothing _ _)})) = (True, con{conVaenv=updateCOVarArgEnvAct vaenv'' vaenv, conDat=NoReturnArg i p{stypeAct=act'}})
   where
     vaenv' = fmap (stypeAct . snd) vaenv
-    argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType Nothing PosPartials (joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con) []
+    argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType Nothing (joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con) []
     (vaenv'', act') = differenceTypeWithEnv feTypeEnv vaenv' act argsBoundUb
 computeConstraint _ con@(Constraint _ _ NoReturnArg{}) = (False, con)
 computeConstraint env con@(Constraint _ _ (ArrowTo i src dest)) = case arrowConstrainUbs env con (stypeAct src) (stypeAct dest) of

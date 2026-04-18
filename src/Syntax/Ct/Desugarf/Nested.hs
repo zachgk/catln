@@ -48,7 +48,7 @@ scopeSubDeclFunNamesInExpr prefix replaceNames (TupleApply m (bm, bExpr) arg) = 
       EAppSpread a -> error $ printf "Not yet implemented %s" (show a)
 
 scopeSubDeclFunNamesInMeta :: TypeName -> S.HashSet TypeName -> ParseMeta -> ParseMeta
-scopeSubDeclFunNamesInMeta prefix replaceNames (Meta (UnionType Nothing PosPartials partials []) pos mid md) = Meta (UnionType Nothing PosPartials partials' []) pos mid md
+scopeSubDeclFunNamesInMeta prefix replaceNames (Meta (UnionType Nothing partials []) pos mid md) = Meta (UnionType Nothing partials' []) pos mid md
   where
     scopeS = scopeSubDeclFunNamesInS prefix replaceNames
     partials' = H.mapKeys scopeS partials

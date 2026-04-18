@@ -87,7 +87,7 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens
                      , CFloat <$> HG.double (linearFrac (-100) 100)
                      , CStr <$> HG.string (linear 0 5) HG.alpha
                      , CChar <$> HG.unicode ]
-      return $ UnionType Nothing PosPartials H.empty [c]
+      return $ UnionType Nothing H.empty [c]
 
     genCGOld :: Gen Type
     genCGOld = do

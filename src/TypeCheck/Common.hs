@@ -418,7 +418,7 @@ setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@M
     vaenv = fmap stypeAct <$> mapM (descriptor env) (constraintVarArgEnv con)
     schemeChanged :: Bool
     schemeChanged = case (scheme, scheme') of
-      (TypeCheckResult _ SType{stypeAct=UnionType (Just _) NegPartials _ _}, TypeCheckResult _ SType{stypeAct=TypeVar{}}) -> True
+      (TypeCheckResult _ SType{stypeAct=UnionType (Just _) _ _}, TypeCheckResult _ SType{stypeAct=TypeVar{}}) -> True
       _ ->  fromMaybe False $ tcreToMaybe $ do
         showVaenv <- vaenv
         return $ not (eqScheme env showVaenv scheme scheme')

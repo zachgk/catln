@@ -67,7 +67,7 @@ resolveRelativeNames fullPrgm@(Prgm fullPrgmObjMap _ _) (Prgm objMap (ClassGraph
     mapType _ (TopType np ps) = TopType np ps
     mapType _ tp@(TypeVar TVVar{} _) = tp
     mapType _ (TypeVar TVArg{} _) = error "Invalid arg type"
-    mapType reqResolve (UnionType Nothing PosPartials partials []) = UnionType Nothing PosPartials (joinUnionType $ map (mapPartial reqResolve) $ splitUnionType partials) []
+    mapType reqResolve (UnionType Nothing partials []) = UnionType Nothing (joinUnionType $ map (mapPartial reqResolve) $ splitUnionType partials) []
     mapType _ t = t
 
     mapPartial :: Bool -> PartialType -> PartialType

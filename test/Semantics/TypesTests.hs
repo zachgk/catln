@@ -303,14 +303,14 @@ propSubtypeUnionVarSplit gPrgm = property $ do
   -- Create P[$T=(A+B)] - a partial with a union-typed var
   let varName = partialKey "$T"
   let baseName = "/TestType"
-  let unionVar = UnionType Nothing PosPartials (joinUnionType [a, b]) []
+  let unionVar = UnionType Nothing (joinUnionType [a, b]) []
   let joinedPartial = (partialVal baseName){ptVars = H.singleton varName unionVar}
   let joinedType = singletonType joinedPartial
 
   -- Create P[$T=A] + P[$T=B] - the split version
   let splitPartialA = (partialVal baseName){ptVars = H.singleton varName (singletonType a)}
   let splitPartialB = (partialVal baseName){ptVars = H.singleton varName (singletonType b)}
-  let splitType = UnionType Nothing PosPartials (joinUnionType [splitPartialA, splitPartialB]) []
+  let splitType = UnionType Nothing (joinUnionType [splitPartialA, splitPartialB]) []
 
   annotate $ printf "joined = %s" (show joinedType)
   annotate $ printf "split = %s" (show splitType)

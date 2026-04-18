@@ -43,7 +43,7 @@ type TBPrgm = Prgm Expr TBMetaDat
 type VisitedArrows = S.HashSet TCallTree
 
 leafsFromMeta :: TBMeta -> [PartialType]
-leafsFromMeta Meta{getMetaType=UnionType Nothing PosPartials prodTypes consts} = splitUnionType prodTypes ++ map constantPartialType consts
+leafsFromMeta Meta{getMetaType=UnionType Nothing prodTypes consts} = splitUnionType prodTypes ++ map constantPartialType consts
 leafsFromMeta m = error $ printf "leafFromMeta with invalid type: %s" (show m)
 
 buildTBEnv :: ResBuildPrims -> TBPrgm -> TBEnv
@@ -197,7 +197,7 @@ buildCallTree env@TBEnv{tbTypeEnv} objSrcs visitedArrows (TypeVar v _) destType 
     Just (_, srcType') -> buildCallTree env objSrcs visitedArrows srcType' destType
     Nothing -> error $ printf "Unknown TypeVar %s in buildCallTree" (show v)
   vaenvs -> error $ printf "Found unhandled zero or multiple vaenvs in builCallTree: %s" (show vaenvs)
-buildCallTree env os visitedArrows (UnionType Nothing PosPartials srcLeafs consts) destType = do
+buildCallTree env os visitedArrows (UnionType Nothing srcLeafs consts) destType = do
   let allPartials = splitUnionType srcLeafs ++ map constantPartialType consts
   matchVal <- forM allPartials $ \srcPartial -> do
     t <- buildPartialCallTree env os visitedArrows srcPartial destType

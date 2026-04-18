@@ -29,17 +29,17 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs( EAppArg Value /x -> /Data/Primitive/Integer ) ->
-                            ( /abs.$9fc512
+                            ( /abs.$9661c5
                                 ( /x=/Data/Primitive/Integer
-                                , /$9fc512-arg=
+                                , /$9661c5-arg=
                                     ( /Catln/Else + /Catln/ThenElse/fromBool( /v=∀/Data/Primitive/Boolean ) + /Catln/Then )
                                 ) + /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer
-                            ) = /abs.$9fc512
+                            ) = /abs.$9661c5
                             ( EAppArg Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                            ( EAppArg Value /$9fc512-arg ->
+                            ( EAppArg Value /$9661c5-arg ->
                                 ( /Catln/Else + /Catln/ThenElse/fromBool( /v=∀/Data/Primitive/Boolean ) + /Catln/Then ) = /Catln/ThenElse/fromBool
                                 ( EAppArg Value /v -> ∀/Data/Primitive/Boolean =
                                     ( /operator>=
@@ -52,15 +52,15 @@ Prgm
                     }
                 )
             ,
-                ( "/abs.$9fc512"
+                ( "/abs.$9661c5"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs.$9fc512( EAppArg Value /x )
-                            ( EAppArg Value /$9fc512-arg= Hole TopType HoleActive Nothing@Value /Catln/Then ) -> TVArg /x = Value /x
-                        , /abs.$9fc512( EAppArg Value /x -> /Data/Primitive/Integer )
-                            ( EAppArg Value /$9fc512-arg= Hole TopType HoleActive Nothing@Value /Catln/Else ) ->
+                        [ /abs.$9661c5( EAppArg Value /x )
+                            ( EAppArg Value /$9661c5-arg= Hole TopType HoleActive Nothing@Value /Catln/Then ) -> TVArg /x = Value /x
+                        , /abs.$9661c5( EAppArg Value /x -> /Data/Primitive/Integer )
+                            ( EAppArg Value /$9661c5-arg= Hole TopType HoleActive Nothing@Value /Catln/Else ) ->
                             ( /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
