@@ -130,7 +130,7 @@ runTest runGolden getCtss fileNameStr = testCaseSteps fileNameStr $ \step -> do
     lift $ step "Eval Annots..."
     _ <- getEvalAnnots ctss fileName
     return ()
-  case res of
+  case failOnErrorNotes res of
     CRes notes _ -> do
       unless (null notes) $ putStrLn $ prettyCNotes notes
       step $ printf "Test %s finished" fileNameStr

@@ -190,7 +190,9 @@ buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
       let tcNodesForTC = [(des, peerDes, extDepTC)
             | (des, (name, _)) <- zip finalDes namesAndDeps
             , let peerDes = [d | (d, (n, _)) <- zip finalDes namesAndDeps, n /= name]]
-      tcResults <- asCResT $ typeCheckToRes $ typecheckPrgms tcNodesForTC
+      let tcCRes = typeCheckToRes $ typecheckPrgms tcNodesForTC
+      let tcNotes = getCNotes tcCRes
+      tcResults <- asCResT tcCRes
 
       -- Step 6: Construct TPrgm graph for eval (SCC results + built dep TPrgms)
       let sccTPrgmNodes = [( fst3 tc, name, deps)
@@ -215,7 +217,7 @@ buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
               ssfBuilt = True,
               ssfDes = Just $ pure des,
               ssfTPrgmWithTrace = Just $ pure tc,
-              ssfTPrgm = Just $ pure (fst3 tc),
+              ssfTPrgm = Just $ CRes tcNotes (fst3 tc),
               ssfTBPrgm = fmap pure $ graphLookup name tbprgmGraph,
               ssfAnnots = H.lookup name annotsMap
             })
