@@ -7,11 +7,16 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /even( EAppArg Value /x -> /Data/Primitive/Integer ) ->
-                            ( /operator==
+                        [ /even( EAppArg Value /x -> /Data/Primitive/Integer ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            , /operator==
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/True + /Data/Primitive/False
+                                )
+                            , []
                             ) = /operator==
                             ( EAppArg Value /l -> /Data/Primitive/Integer =
                                 ( /operator%

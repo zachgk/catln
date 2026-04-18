@@ -55,11 +55,13 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /make_range( Value /n -> /Data/Primitive/Integer ) ->
-                            ( /Data/range( /stop=/Data/Primitive/Integer ) + /Data/Nil + /Data/Cons[ /T=TopType ]
-                                ( /head=TVVar /T
-                                , /tail=~ConsList[ /T=TVVar /T ]
+                        [ /make_range( Value /n -> /Data/Primitive/Integer ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/ConsList
+                                , fromList []
                                 )
+                            , /Data/range( /stop=/Data/Primitive/Integer )
+                            , []
                             ) = /range( Value /stop -> TVArg /n = Value /n )
                         ]
                     }
@@ -85,11 +87,19 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /sort_list( Value /lst -> ∀/Data/List ) ->
-                            ( /Data/Nil + /Data/Cons[ /T=TopType ]
-                                ( /head=TVVar /T
-                                , /tail=~ConsList[ /T=TVVar /T ]
-                                ) + /Data/sorted( /lst=∀/Data/List )
+                        [ /sort_list( Value /lst -> ∀/Data/List ) -> UnionType
+                            ( Just
+                                ( !
+                                    ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) )
+                                , fromList []
+                                )
+                            , /Data/sorted
+                                ( /lst=
+                                    ( TopType | !
+                                        ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) ) && PredClass /Data/List
+                                    )
+                                )
+                            , []
                             ) = /sorted( Value /lst -> TVArg /lst = Value /lst )
                         ]
                     }
@@ -179,8 +189,19 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /any_true( Value /flags -> ∀/Data/List ) ->
-                            ( /Data/Primitive/True + /Data/Primitive/False + /Data/any( /lst=∀/Data/List ) ) = /any( Value /lst -> TVArg /flags = Value /flags )
+                        [ /any_true( Value /flags -> ∀/Data/List ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            , /Data/any
+                                ( /lst=
+                                    ( TopType | !
+                                        ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) ) && PredClass /Data/List
+                                    )
+                                )
+                            , []
+                            ) = /any( Value /lst -> TVArg /flags = Value /flags )
                         ]
                     }
                 )
@@ -306,8 +327,14 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /to_bool_from_int( Value /x -> /Data/Primitive/Integer ) ->
-                            ( /Data/Primitive/True + /Python/Builtins/toBool( /this=/Data/Primitive/Integer ) + /Data/Primitive/False ) = /toBool( Value /this -> TVArg /x = Value /x )
+                        [ /to_bool_from_int( Value /x -> /Data/Primitive/Integer ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            , /Python/Builtins/toBool( /this=/Data/Primitive/Integer )
+                            , []
+                            ) = /toBool( Value /this -> TVArg /x = Value /x )
                         ]
                     }
                 )
@@ -342,7 +369,13 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /sum_list( Value /nums -> ∀/Data/List ) ->
-                            ( /Data/sum( /lst=∀/Data/List ) + /Data/Primitive/Integer ) = /sum( Value /lst -> TVArg /nums = Value /nums )
+                            ( /Data/sum
+                                ( /lst=
+                                    ( TopType | !
+                                        ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) ) && PredClass /Data/List
+                                    )
+                                ) + /Data/Primitive/Integer
+                            ) = /sum( Value /lst -> TVArg /nums = Value /nums )
                         ]
                     }
                 )
@@ -367,8 +400,14 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /to_bool_from_float( Value /x -> /Data/Primitive/Float ) ->
-                            ( /Data/Primitive/True + /Python/Builtins/toBool( /this=/Data/Primitive/Float ) + /Data/Primitive/False ) = /toBool( Value /this -> TVArg /x = Value /x )
+                        [ /to_bool_from_float( Value /x -> /Data/Primitive/Float ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            , /Python/Builtins/toBool( /this=/Data/Primitive/Float )
+                            , []
+                            ) = /toBool( Value /this -> TVArg /x = Value /x )
                         ]
                     }
                 )
@@ -449,11 +488,19 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /reverse_list( Value /lst -> ∀/Data/List ) ->
-                            ( /Data/Nil + /Data/Cons[ /T=TopType ]
-                                ( /head=TVVar /T
-                                , /tail=~ConsList[ /T=TVVar /T ]
-                                ) + /Data/reversed( /lst=∀/Data/List )
+                        [ /reverse_list( Value /lst -> ∀/Data/List ) -> UnionType
+                            ( Just
+                                ( !
+                                    ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) )
+                                , fromList []
+                                )
+                            , /Data/reversed
+                                ( /lst=
+                                    ( TopType | !
+                                        ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) ) && PredClass /Data/List
+                                    )
+                                )
+                            , []
                             ) = /reversed( Value /lst -> TVArg /lst = Value /lst )
                         ]
                     }
@@ -464,8 +511,19 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /all_true( Value /flags -> ∀/Data/List ) ->
-                            ( /Data/Primitive/True + /Data/Primitive/False + /Data/all( /lst=∀/Data/List ) ) = /all( Value /lst -> TVArg /flags = Value /flags )
+                        [ /all_true( Value /flags -> ∀/Data/List ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            , /Data/all
+                                ( /lst=
+                                    ( TopType | !
+                                        ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) ) && PredClass /Data/List
+                                    )
+                                )
+                            , []
+                            ) = /all( Value /lst -> TVArg /flags = Value /flags )
                         ]
                     }
                 )

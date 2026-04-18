@@ -16,11 +16,16 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /showInt ->
-                            ( /operator==
+                        [ Value /showInt -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            , /operator==
                                 ( /r=/Data/String
                                 , /l=/Data/String
-                                ) + /Data/Primitive/True + /Data/Primitive/False
+                                )
+                            , []
                             ) = /operator==
                             ( Value /l -> /Data/String = /Data/toString
                                 ( Value /this -> /Data/Primitive/Integer = CInt 1 )

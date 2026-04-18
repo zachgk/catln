@@ -19,11 +19,16 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /outerVar ->
-                            ( /operator==
+                        [ Value /outerVar -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            , /operator==
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/True + /Data/Primitive/False
+                                )
+                            , []
                             ) = /operator==
                             ( EAppArg Value /l -> /Data/Primitive/Integer =
                                 ( /operator-
@@ -41,11 +46,16 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /f.innerVar( EAppArg Value /io ) ->
-                            ( /operator==
+                        [ /f.innerVar( EAppArg Value /io ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            , /operator==
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/True + /Data/Primitive/False
+                                )
+                            , []
                             ) = /operator==
                             ( EAppArg Value /l -> /Data/Primitive/Integer =
                                 ( /operator+

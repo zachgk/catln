@@ -16,8 +16,15 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /a ->
-                            ( /Data/Primitive/True + /operator~( /a=/Data/Primitive/False ) + /Data/Primitive/False ) = /operator~( EAppArg Value /a -> /Data/Primitive/False = Value /Data/Primitive/False )
+                        [ Value /a -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Primitive/True + /operator~( /a=/Data/Primitive/False ) )
+                            , []
+                            ) = /operator~( EAppArg Value /a -> /Data/Primitive/False = Value /Data/Primitive/False )
                         ]
                     }
                 )
@@ -27,11 +34,18 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /c ->
-                            ( /Data/Primitive/True + /operator||
-                                ( /r=/Data/Primitive/False
-                                , /l=/Data/Primitive/True
-                                ) + /Data/Primitive/False
+                        [ Value /c -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Primitive/True + /operator||
+                                    ( /r=/Data/Primitive/False
+                                    , /l=/Data/Primitive/True
+                                    )
+                                )
+                            , []
                             ) = /operator||( EAppArg Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /r -> /Data/Primitive/False = Value /Data/Primitive/False )
                         ]
                     }
@@ -42,11 +56,18 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /b ->
-                            ( /Data/Primitive/True + /operator&&
-                                ( /r=/Data/Primitive/True
-                                , /l=/Data/Primitive/True
-                                ) + /Data/Primitive/False
+                        [ Value /b -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Primitive/True + /operator&&
+                                    ( /r=/Data/Primitive/True
+                                    , /l=/Data/Primitive/True
+                                    )
+                                )
+                            , []
                             ) = /operator&&( EAppArg Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /r -> /Data/Primitive/True = Value /Data/Primitive/True )
                         ]
                     }

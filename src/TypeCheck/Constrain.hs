@@ -158,6 +158,16 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (NoReturnArg i p@SType
     vaenv' = fmap (stypeAct . snd) vaenv
     argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType Nothing (joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con) []
     (vaenv'', act') = differenceTypeWithEnv feTypeEnv vaenv' act argsBoundUb
+computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (NoReturnArg i p@SType{stypeAct=UnionType (Just topData) posLeafs consts}))
+  | not (H.null posLeafs) = (True, con{conVaenv=updateCOVarArgEnvAct vaenv'' vaenv, conDat=NoReturnArg i p{stypeAct=act'}})
+  where
+    vaenv' = fmap (stypeAct . snd) vaenv
+    argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType Nothing (joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con) []
+    (vaenv'', posResult) = differenceTypeWithEnv feTypeEnv vaenv' (UnionType Nothing posLeafs []) argsBoundUb
+    posLeafs' = case posResult of
+      UnionType Nothing pos' _ -> pos'
+      _                        -> posLeafs
+    act' = UnionType (Just topData) posLeafs' consts
 computeConstraint _ con@(Constraint _ _ NoReturnArg{}) = (False, con)
 computeConstraint env con@(Constraint _ _ (ArrowTo i src dest)) = case arrowConstrainUbs env con (stypeAct src) (stypeAct dest) of
     TypeCheckResult _ (src', dest', destRT') -> (False, con{conDat=ArrowTo i src{stypeAct=src'} dest{stypeAct=dest', stypeTree=destRT'}})
