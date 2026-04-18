@@ -166,7 +166,7 @@ def print_twice(msg: str) -> None:
 
 
 def echo() -> None:
-    print(input())
+    print("")
 
 
 def main() -> None:

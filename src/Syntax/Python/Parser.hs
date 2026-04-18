@@ -755,7 +755,20 @@ convertPyStatementToTree stmt = case stmt of
         isLocalOrIO (PyExprStmt _) = True
         isLocalOrIO _              = False
         hasReturn = any (\s -> case s of PyReturn (Just _) -> True; _ -> False) body
+        hasLocalDecls = any (\s -> case s of PyAssign {} -> True; _ -> False) body
+        -- IO effect statements for direct chaining (print calls only)
+        ioEffects = [e | PyExprStmt e <- body]
+        -- Chain a single IO-effect expression onto an accumulated IO value.
+        chainIOEffect acc (PyCall (PyVar "print") [PyPosArg x]) =
+          RawMethod emptyMetaN acc (rawVal "println")
+            `applyRawArgs` [(Just $ partialKey "msg",
+                             RawMethod emptyMetaN (convertPyExpr x) (rawVal "toString"))]
+        chainIOEffect acc _ = acc
         (bodyExpr, bodySubStmts)
+          -- IO functions with only print calls (no local variable declarations) use
+          -- direct IO chaining to avoid intermediate lambdas that fail BoundedByObjs9.
+          | isIO && not hasLocalDecls && not hasReturn =
+              (Just (foldl chainIOEffect (rawVal "io") ioEffects), [])
           | hasLocalOrIO || (isIO && not hasReturn) =
               (Just (rawVal nestedDeclaration), subStmts)
           | hasReturn =
