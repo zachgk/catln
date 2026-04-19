@@ -49,7 +49,7 @@ leafsFromMeta m = error $ printf "leafFromMeta with invalid type: %s" (show m)
 buildTBEnv :: ResBuildPrims -> TBPrgm -> TBEnv
 buildTBEnv primEnv prgm@Prgm{prgmObjMap} = baseEnv
   where
-    baseEnv = TBEnv "" resEnv prgm (mkTypeEnv prgm)
+    baseEnv = TBEnv "" resEnv prgm (mkTypeEnv prgm){tePrgmEnv=True}
     resEnv = H.fromListWith (++) $ mapMaybe resFromArrow $ flatObjectMap prgmObjMap
 
     resFromArrow oa@ObjArr{oaObj=Just{}, oaArr, oaAnnots} = case oaArr of

@@ -180,7 +180,11 @@ data TypeEnv tg = TypeEnv {
   teTypeGraph      :: tg,
   teNames          :: S.HashSet Name,
   teDisableCompact :: Bool,
-  teDebug          :: Bool
+  teDebug          :: Bool,
+  -- | When 'True', type operations are performed under the closed-world assumption:
+  -- no types exist outside those currently defined, so all classes are effectively
+  -- sealed and predicates can be safely expanded.  Used for declaration-coverage checks.
+  tePrgmEnv        :: Bool
                           }
   deriving (Show)
 
@@ -188,7 +192,7 @@ defaultTypeEnvDebug :: Bool
 defaultTypeEnvDebug = False
 
 emptyTypeEnv' :: TypeEnv EmptyTypeGraph
-emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty False defaultTypeEnvDebug
+emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty False defaultTypeEnvDebug False
 
 -- | A class or type node within the 'ClassGraph'
 data CGNode
@@ -293,7 +297,7 @@ instance Monoid ClassGraph where
   mempty = ClassGraph $ graphFromEdges []
 
 instance (Semigroup tg) => Semigroup (TypeEnv tg) where
-  (TypeEnv cg1 tg1 n1 d1 dc1) <> (TypeEnv cg2 tg2 n2 d2 dc2) = TypeEnv (cg1 <> cg2) (tg1 <> tg2) (S.union n1 n2) (d1 || d2) (dc1 || dc2)
+  (TypeEnv cg1 tg1 n1 d1 dc1 pe1) <> (TypeEnv cg2 tg2 n2 d2 dc2 pe2) = TypeEnv (cg1 <> cg2) (tg1 <> tg2) (S.union n1 n2) (d1 || d2) (dc1 || dc2) (pe1 || pe2)
 
 
 mergeDoc :: Maybe String -> Maybe String -> Maybe String
@@ -656,6 +660,85 @@ expandPredicate typeEnv vaenv (PredClass clss) = expandClassPartial typeEnv vaen
 expandPredicate typeEnv vaenv (PredRel rel)    = expandRelPartial typeEnv vaenv rel
 expandPredicate typeEnv vaenv (PredExpr e)     = maybe (TopType H.empty (PredsOne $ PredExpr e)) (\ps -> UnionType Nothing (joinUnionType ps) []) (typeGraphExpandPredExpr typeEnv vaenv e)
 
+-- | Returns 'True' if every type satisfying @p1@ also satisfies @p2@, i.e. U_p1 ⊆ U_p2.
+-- Sound but potentially incomplete: 'False' does not guarantee the predicates are incomparable.
+predImplies :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicates -> TypePredicates -> Bool
+-- Structural base cases
+predImplies _       _     _  PredsNone = True   -- anything ⊆ top
+predImplies _       _     p1 p2 | p1 == p2 = True  -- reflexivity
+predImplies _       _     PredsNone _ = False   -- top ⊄ anything specific
+-- Logical connectives
+predImplies typeEnv vaenv (PredsAnd ps) p2      = any (\p -> predImplies typeEnv vaenv p p2) ps || cancellationCheck
+  -- if any conjunct alone implies p2, the intersection does too
+  -- also: (X₁ ∨ X₂ ∨ ... ∨ q) ∧ ¬X₁ ∧ ¬X₂ ∧ ... ⊆ q  (disjunction cancellation)
+  where
+    cancellationCheck = or
+      [ all (\x -> PredsNot x `elem` ps) xs
+      | PredsNot (PredsAnd nots) <- ps
+      , Just inners <- [mapM extractNot nots]
+      , (q_inner, xs) <- choices inners
+      , predImplies typeEnv vaenv q_inner p2
+      ]
+    extractNot (PredsNot x) = Just x
+    extractNot _             = Nothing
+    choices []     = []
+    choices (y:ys) = (y, ys) : map (\(z, zs) -> (z, y:zs)) (choices ys)
+predImplies typeEnv vaenv p1 (PredsAnd ps)      = all (predImplies typeEnv vaenv p1) ps
+  -- p1 must imply every conjunct
+predImplies typeEnv vaenv (PredsNot inner) (PredsNot outer) = predImplies typeEnv vaenv outer inner
+  -- contravariance: ¬A ⊆ ¬B ↔ B ⊆ A
+predImplies _       _     p1 (PredsNot p2)      = isPredsContradictory (predsAnd p1 p2)
+  -- U_p1 ⊆ ¬U_p2 ↔ U_p1 ∩ U_p2 = ∅
+-- !(¬a₁ ∧ ¬a₂ ∧ ...) = a₁ ∨ a₂ ∨ ...: a disjunction implies q iff every disjunct implies q
+predImplies typeEnv vaenv (PredsNot (PredsAnd nots)) q2
+  = case mapM extractNot nots of
+      Just inners -> all (\inner -> predImplies typeEnv vaenv inner q2) inners
+      Nothing     -> False
+  where
+    extractNot (PredsNot x) = Just x
+    extractNot _             = Nothing
+predImplies _       _     (PredsNot _) _        = False  -- conservative
+-- Atom cases
+predImplies typeEnv vaenv (PredsOne a1) (PredsOne a2) = predImpliesAtom typeEnv vaenv a1 a2
+
+predImpliesAtom :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicate -> TypePredicate -> Bool
+-- PredClass: c1 implies c2 only when c1 is sealed (all members known) and each member is in U_c2
+predImpliesAtom typeEnv@TypeEnv{teClassGraph=ClassGraph cg, tePrgmEnv} vaenv (PredClass c1) (PredClass c2) =
+  case graphLookup (PClassName (ptName c1)) cg of
+    Just (CGClass (sealed, _, classTypes, _)) | sealed || tePrgmEnv ->
+      let c2Type = expandClassPartial typeEnv vaenv c2
+      in all (\t -> isSubtypeOfWithEnv typeEnv vaenv t c2Type) classTypes
+    _ -> False  -- unsealed or unknown class: can't enumerate all members
+-- PredRel: r1 implies r2 when r2's name path is a suffix of r1's (r2 is more general)
+-- and r1's args are subtypes of r2's args.
+predImpliesAtom typeEnv vaenv (PredRel r1) (PredRel r2) =
+  splitOn "/" (ptName r2) `L.isSuffixOf` splitOn "/" (ptName r1)
+  && all checkArg (H.keys (ptArgs r2))
+  where checkArg k = isSubtypeOfWithEnv typeEnv vaenv
+                       (H.lookupDefault PTopType k (ptArgs r1))
+                       (ptArgs r2 H.! k)
+-- PredExpr: use structural partial comparison (equality-based simplifying assumption)
+predImpliesAtom typeEnv vaenv (PredExpr e1) (PredExpr e2) = isSubPartialOfWithEnv typeEnv vaenv e1 e2
+-- Cross-kind: conservative False
+predImpliesAtom _ _ _ _ = False
+
+-- | Returns 'True' if every type satisfying @preds@ is a member of @partials@, i.e. U_preds ⊆ partials.
+-- Expands @preds@ restricted to the names present in @partials@; if the expansion is exact
+-- (no elements outside those names) and the result is a subset of @partials@, returns 'True'.
+-- When the restricted expansion is inexact ('hasOutside = True'), re-expands with all known names:
+-- if that full expansion is empty the predicate is contradictory (U_preds = ∅ ⊆ partials).
+predImpliesPartials :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicates -> PartialLeafs -> Bool
+predImpliesPartials typeEnv@TypeEnv{teNames} vaenv preds partials =
+  case expandTypesWithNamesFull typeEnv vaenv (TopType H.empty preds) (H.keysSet partials) of
+    (expanded, False) -> isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing expanded []) (UnionType Nothing partials [])
+    (_,        True)  ->
+      -- Conservative: types fell outside allowedNames.
+      -- Last-resort: re-expand with all known names. If the result is empty (contradictory
+      -- predicates), U_preds = ∅ ⊆ partials holds.
+      let allNames = teNames `S.union` H.keysSet partials
+          (fullLeafs, fullHasOutside) = expandTypesWithNamesFull typeEnv vaenv (TopType H.empty preds) allNames
+      in not fullHasOutside && H.null fullLeafs
+
 -- | Returns only the 'PartialLeafs' of a type whose names are in 'allowedNames'.
 expandTypeWithNames :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> S.HashSet TypeName -> PartialLeafs
 expandTypeWithNames typeEnv vaenv t allowedNames = fst $ expandTypesWithNamesFull typeEnv vaenv t allowedNames
@@ -802,8 +885,7 @@ expandRelPartial typeEnv@TypeEnv{teNames} vaenv relPartial = unionAllTypesWithEn
     clsNames = map (setArgMode H.empty (ptArgMode relPartial) . classPartial . partialVal) $ relativeNameFilter relName $ listClassNames typeEnv
 
 isSubPredicateOfWithEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicate -> TypePredicate -> Bool
-isSubPredicateOfWithEnv typeEnv vaenv (PredExpr sub) (PredExpr super) = isSubPartialOfWithEnv typeEnv vaenv sub super
-isSubPredicateOfWithEnv _ _ _ _ = undefined
+isSubPredicateOfWithEnv typeEnv vaenv p1 p2 = predImpliesAtom typeEnv vaenv p1 p2
 
 -- | A private helper for 'isSubPartialOfWithEnv' that checks while ignore class expansions
 isSubPartialOfWithEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Bool
@@ -867,24 +949,31 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing subPartials []) t2@(Union
 isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing leafs cs@(_:_)) t2 =
   isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing leafs []) t2
   && all (\c -> constantInType typeEnv vaenv c t2) cs
--- NegPartials ⊆ NegPartials: (expand(p)-n1) ⊆ (expand(p)-n2) iff n2 ⊆ n1 (for same predicates);
--- When the syntactic n2 ⊆ n1 check fails, fall back to expansion (handles spurious exclusions
--- where elements of n2 are outside U_p so subtracting them has no effect).
--- fall back to expansion for differing predicates
+-- NegPartials ⊆ NegPartials: (U_p1-n1) ⊆ (U_p2-n2).
+-- Same predicates: sufficient iff n2 ⊆ n1 (or, conservatively, when the expansion agrees).
+-- Differing predicates: sufficient iff predImplies p1 p2 and n2 ⊆ n1; otherwise False.
 isSubtypeOfWithEnv typeEnv vaenv (UnionType (Just (p1, n1)) _ _) t2@(UnionType (Just (p2, n2)) _ _)
   | p1 == p2             = isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing n2 []) (UnionType Nothing n1 [])
                            || isSubtypeOfWithEnv typeEnv vaenv (snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv p1) (UnionType Nothing n1 [])) t2
   | isPredsContradictory p1 = True  -- t1 = ∅ ⊆ anything
   | isPredsContradictory (predsAnd p1 (predsNot p2)) = True  -- p1 ≤ p2 syntactically (p1 ∧ ¬p2 = ∅)
-  | otherwise            = isSubtypeOfWithEnv typeEnv vaenv (snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv p1) (UnionType Nothing n1 [])) t2
+  | predImplies typeEnv vaenv p1 p2
+    && isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing n2 []) (UnionType Nothing n1 []) = True
+    -- U_p1 ⊆ U_p2 and n2 ⊆ n1, so (U_p1 - n1) ⊆ (U_p2 - n2)
+  | tePrgmEnv typeEnv = isSubtypeOfWithEnv typeEnv vaenv (snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv p1) (UnionType Nothing n1 [])) t2
+  | otherwise         = False
 -- NegPartials ⊆ PosPartials: filter t1 by superPartials names.
 -- hasOutside=True: t1 has elements outside superPartials names.
---   Short-circuit if preds are syntactically contradictory (t1 = ∅).
---   Otherwise fall back to expansion (handles semantic emptiness like PredClass C ∧ PredRel R = ∅).
+--   True if preds are syntactically contradictory (t1 = ∅).
+--   True if predImpliesPartials establishes U_preds ⊆ superPartials (negLeafs removal can only shrink).
+--   Otherwise False (conservative: can't prove subtype without knowing predicate members).
 isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (preds, negLeafs)) _ _) t2@(UnionType Nothing superPartials _) =
   case expandTypesWithNamesFull typeEnv vaenv t1 (H.keysSet superPartials) of
     (_, True)      | isPredsContradictory preds -> True
-    (_, True)      -> isSubtypeOfWithEnv typeEnv vaenv (snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv preds) (UnionType Nothing negLeafs [])) t2
+    (_, True)      | predImpliesPartials typeEnv vaenv preds superPartials -> True
+                   -- U_preds ⊆ superPartials implies (U_preds - negLeafs) ⊆ superPartials
+    (_, True)      | tePrgmEnv typeEnv -> isSubtypeOfWithEnv typeEnv vaenv (snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv preds) (UnionType Nothing negLeafs [])) t2
+    (_, True)      -> False
     (leafs, False) -> isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing leafs []) t2
 -- PosPartials ⊆ PosPartials: check partials structurally
 isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing subPartials []) (UnionType Nothing superPartials []) =

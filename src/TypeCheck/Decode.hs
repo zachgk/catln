@@ -115,6 +115,7 @@ toPrgm (objMap, classGraph, annots) = do
 verifyObjMapItem :: TypeName -> ObjectMapItem Expr TypedMetaDat -> StateT FEnv TypeCheckResult ()
 verifyObjMapItem name (ObjectMapItem decls refineDecls defs) = do
   FEnv{feTypeEnv} <- get
+  let prgmTypeEnv = feTypeEnv{tePrgmEnv = True}
   case (map (getMetaType . getExprMeta . oaObjExpr) decls, map (getMetaType . getExprMeta . oaObjExpr) defs) of
     ([], _) -> pure ()
     (_, []) -> pure ()
@@ -125,16 +126,16 @@ verifyObjMapItem name (ObjectMapItem decls refineDecls defs) = do
       -- Check each definition against declUnion
       let defsWithLocs = zip defInputTypes (map (getMetaPos . getExprMeta) (mapMaybe oaObj defs))
       forM_ defsWithLocs $ \(defType, defLoc) ->
-        unless (isSubtypeOf feTypeEnv defType declUnion) $ do
-          let undeclared = snd $ differenceTypeWithEnv feTypeEnv H.empty defType declUnion
+        unless (isSubtypeOf prgmTypeEnv defType declUnion) $ do
+          let undeclared = snd $ differenceTypeWithEnv prgmTypeEnv H.empty defType declUnion
           lift $ TypeCheckResE [DefinitionOutsideDeclaration name defType declUnion undeclared defLoc]
 
       -- Check each declaration against defUnion, but skip #runtime declarations (they don't need definitions)
       let nonRuntimeDecls = filter (not . hasAnnot runtimeAnnot) decls
       let declsWithLocs = zip (map (getMetaType . getExprMeta . oaObjExpr) nonRuntimeDecls) (map (getMetaPos . getExprMeta) (mapMaybe oaObj nonRuntimeDecls))
       forM_ declsWithLocs $ \(declType, declLoc) ->
-        unless (isSubtypeOf feTypeEnv declType defUnion) $ do
-          let notDefined = snd $ differenceTypeWithEnv feTypeEnv H.empty declType defUnion
+        unless (isSubtypeOf prgmTypeEnv declType defUnion) $ do
+          let notDefined = snd $ differenceTypeWithEnv prgmTypeEnv H.empty declType defUnion
           lift $ TypeCheckResE [UnfulfilledDeclaration name declType defUnion notDefined declLoc]
 
       -- Check each refinement declaration against declUnion
@@ -142,8 +143,8 @@ verifyObjMapItem name (ObjectMapItem decls refineDecls defs) = do
             (map (getMetaType . getExprMeta . oaObjExpr) refineDecls)
             (map (getMetaPos . getExprMeta) (mapMaybe oaObj refineDecls))
       forM_ refineWithLocs $ \(refineType, refineLoc) ->
-        unless (isSubtypeOf feTypeEnv refineType declUnion) $ do
-          let undeclared = snd $ differenceTypeWithEnv feTypeEnv H.empty refineType declUnion
+        unless (isSubtypeOf prgmTypeEnv refineType declUnion) $ do
+          let undeclared = snd $ differenceTypeWithEnv prgmTypeEnv H.empty refineType declUnion
           lift $ TypeCheckResE [RefineOutsideDeclaration name refineType declUnion undeclared refineLoc]
 
 toPrgms :: [VPrgm] -> StateT FEnv TypeCheckResult [TPrgm]

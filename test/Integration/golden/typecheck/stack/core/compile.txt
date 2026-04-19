@@ -112,8 +112,10 @@ Prgm
                 ( "/Catln/#assert"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/#assert( Value /test -> ∀/Data/Primitive/Boolean )
-                        , /Catln/#assert( Value /test -> ∀/Data/Primitive/Boolean )( Value /msg -> /Data/String )
+                        [ /Catln/#assert
+                            ( Value /test -> ( TopType | PredClass /Data/Primitive/Boolean && PredRel Boolean ) )
+                        , /Catln/#assert
+                            ( Value /test -> ( TopType | PredClass /Data/Primitive/Boolean && PredRel Boolean ) )( Value /msg -> /Data/String )
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -123,7 +125,9 @@ Prgm
                 ( "/Catln/#print"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/#print( Value /p -> ∀/Catln/Doc/DShow ) ]
+                        [ /Catln/#print
+                            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredRel DShow ) )
+                        ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }

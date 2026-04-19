@@ -38,12 +38,14 @@ Prgm
                         , /Data/length
                             ( Value /this -> /Data/Cons[ /T=TopType ]
                                 ( /head=TVVar /T
-                                , /tail=~ConsList[ /T=TVVar /T ]
+                                , /tail=
+                                    ( TopType | PredRel ConsList[ /T=TVVar /T ] && PredClass /Data/ConsList )
                                 ) = /Data/Cons( Value /head )
                                 ( Value /tail ->
                                     ( /Data/Nil + /Data/Cons[ /T=TopType ]
                                         ( /head=TVVar /T
-                                        , /tail=~ConsList[ /T=TVVar /T ]
+                                        , /tail=
+                                            ( TopType | PredRel ConsList[ /T=TVVar /T ] && PredClass /Data/ConsList )
                                         )
                                     )
                                 )
@@ -122,7 +124,11 @@ Prgm
                 ( "/Data/Cons"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Cons[ /T : TopType ]( Value /head -> TVVar /T )( Value /tail -> ∀/Data/ConsList ) ]
+                        [ /Data/Cons[ /T : TopType ]( Value /head -> TVVar /T )
+                            ( Value /tail ->
+                                ( TopType | PredRel ConsList[ /T=TVVar /T ] && PredClass /Data/ConsList )
+                            )
+                        ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }

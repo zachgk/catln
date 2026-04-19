@@ -29,7 +29,9 @@ Prgm
                 ( "/Complex"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Complex[ /N : ∀/Data/Primitive/Number ]( Value /a -> TVVar /N )( Value /b -> TVVar /N ) ]
+                        [ /Complex
+                            [ /N : ( TopType | PredRel Number && PredClass /Data/Primitive/Number ) ]( Value /a -> TVVar /N )( Value /b -> TVVar /N )
+                        ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -41,10 +43,13 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /real
-                            ( Value /c -> /Complex[ /N=~Number ]
+                            ( Value /c -> /Complex
+                                [ /N=( TopType | PredRel Number && PredClass /Data/Primitive/Number ) ]
                                 ( /a=TVVar /N
                                 , /b=TVVar /N
-                                ) = /Complex( Value /a -> ~Number )( Value /b -> ~Number )
+                                ) = /Complex
+                                ( Value /a -> ( TopType | PredRel Number && PredClass /Data/Primitive/Number ) )
+                                ( Value /b -> ( TopType | PredRel Number && PredClass /Data/Primitive/Number ) )
                             ) -> TVArg /a = Value /a
                         ]
                     }
