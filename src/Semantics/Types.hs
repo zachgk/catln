@@ -971,11 +971,10 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing leafs cs@(_:_)) t2 =
   isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing leafs []) t2
   && all (\c -> constantInType typeEnv vaenv c t2) cs
 -- NegPartials ⊆ NegPartials: (U_p1-n1) ⊆ (U_p2-n2).
--- Same predicates: sufficient iff n2 ⊆ n1 (or, conservatively, when the expansion agrees).
+-- Same predicates: sufficient iff n2 ⊆ n1.
 -- Differing predicates: sufficient iff predImplies p1 p2 and n2 ⊆ n1; otherwise False.
 isSubtypeOfWithEnv typeEnv vaenv (UnionType (Just (p1, n1)) _ _) t2@(UnionType (Just (p2, n2)) _ _)
   | p1 == p2             = isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing n2 []) (UnionType Nothing n1 [])
-                           || isSubtypeOfWithEnv typeEnv vaenv (snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv p1) (UnionType Nothing n1 [])) t2
   | isPredsContradictory p1 = True  -- t1 = ∅ ⊆ anything
   | isPredsContradictory (predsAnd p1 (predsNot p2)) = True  -- p1 ≤ p2 syntactically (p1 ∧ ¬p2 = ∅)
   | predImplies typeEnv vaenv p1 p2
