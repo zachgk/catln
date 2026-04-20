@@ -32,10 +32,7 @@ Prgm
                 ( "/Complex"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Complex
-                            ( EAppArg Value /a -> ( TopType | PredRel Number && PredClass /Data/Primitive/Number ) )
-                            ( EAppArg Value /b -> ( TopType | PredRel Number && PredClass /Data/Primitive/Number ) )
-                        ]
+                        [ /Complex( EAppArg Value /a -> ∀/Data/Primitive/Number )( EAppArg Value /b -> ∀/Data/Primitive/Number ) ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -48,7 +45,7 @@ Prgm
                     , omiDefs =
                         [ /real
                             ( EAppArg Value /c -> /Complex
-                                ( /a=( TopType | PredRel Number && PredClass /Data/Primitive/Number )
+                                ( /a=~Number
                                 , /b=( TopType | PredRel Number && PredClass /Data/Primitive/Number )
                                 ) = /Complex
                                 ( EAppArg Value /a -> ( TopType | PredRel Number && PredClass /Data/Primitive/Number ) )

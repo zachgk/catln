@@ -357,9 +357,26 @@ predsNot PredsNone    = PredsNone
 predsNot p            = PredsNot p
 
 -- | Returns True if the predicates are syntactically contradictory, i.e. contain both p and ¬p.
--- Used to detect empty types like NegPartials(A ∧ ¬A, {}) without expanding.
+-- Uses iterative unit propagation: ¬(A∧B) with A known → derives ¬B, allowing multi-step
+-- contradiction detection. Limited to 3 rounds to bound complexity.
 isPredsContradictory :: TypePredicates -> Bool
-isPredsContradictory (PredsAnd ps) = any (\p -> PredsNot p `elem` ps) ps
+isPredsContradictory (PredsAnd ps) = go (3 :: Int) ps
+  where
+    go 0 _  = False
+    go n ps'
+      | any (\p -> PredsNot p `elem` ps') ps' = True
+      | otherwise =
+          let derived = L.nub $ concatMap (unitPropDerive ps') ps'
+              ps'' = L.nub $ ps' ++ derived
+          in if length ps'' > length ps'
+             then go (n - 1) ps''
+             else False
+    -- From ¬(A∧B∧...) with all-but-one known, derive the negation of the remaining.
+    -- Use predsNot (not PredsNot) so that ¬(¬A) normalizes to A, enabling contradiction detection.
+    unitPropDerive :: [TypePredicates] -> TypePredicates -> [TypePredicates]
+    unitPropDerive known (PredsNot (PredsAnd binds)) =
+      [predsNot b | b <- binds, let others = filter (/= b) binds, all (`elem` known) others]
+    unitPropDerive _ _ = []
 isPredsContradictory _             = False
 
 partialAddPreds :: PartialType -> TypePredicates -> PartialType
@@ -680,7 +697,7 @@ predImplies typeEnv vaenv (PredsAnd ps) p2      = any (\p -> predImplies typeEnv
       , predImplies typeEnv vaenv q_inner p2
       ]
     extractNot (PredsNot x) = Just x
-    extractNot _             = Nothing
+    extractNot _            = Nothing
     choices []     = []
     choices (y:ys) = (y, ys) : map (\(z, zs) -> (z, y:zs)) (choices ys)
 predImplies typeEnv vaenv p1 (PredsAnd ps)      = all (predImplies typeEnv vaenv p1) ps
@@ -696,7 +713,7 @@ predImplies typeEnv vaenv (PredsNot (PredsAnd nots)) q2
       Nothing     -> False
   where
     extractNot (PredsNot x) = Just x
-    extractNot _             = Nothing
+    extractNot _            = Nothing
 predImplies _       _     (PredsNot _) _        = False  -- conservative
 -- Atom cases
 predImplies typeEnv vaenv (PredsOne a1) (PredsOne a2) = predImpliesAtom typeEnv vaenv a1 a2
@@ -719,6 +736,10 @@ predImpliesAtom typeEnv vaenv (PredRel r1) (PredRel r2) =
                        (ptArgs r2 H.! k)
 -- PredExpr: use structural partial comparison (equality-based simplifying assumption)
 predImpliesAtom typeEnv vaenv (PredExpr e1) (PredExpr e2) = isSubPartialOfWithEnv typeEnv vaenv e1 e2
+-- PredClass c implies PredRel r when r's name is a suffix of c's name.
+-- This holds because expandRelPartial r includes classPartial c, so U_PredClass c ⊆ U_PredRel r.
+predImpliesAtom _ _ (PredClass c) (PredRel r) =
+  splitOn "/" (ptName r) `L.isSuffixOf` splitOn "/" (ptName c)
 -- Cross-kind: conservative False
 predImpliesAtom _ _ _ _ = False
 
@@ -1155,6 +1176,22 @@ compactType typeEnv vaenv (UnionType (Just (preds, negLeafs)) posLeafs cs)
   , not (H.null common) =
       let subtractCommon leafs = H.filter (not . S.null) $ H.differenceWith (\a b -> Just (S.difference a b)) leafs common
       in compactType typeEnv vaenv $ UnionType (Just (preds, subtractCommon negLeafs)) (subtractCommon posLeafs) cs
+-- PredsAnd: remove PredRel atoms dominated by a PredClass atom in the same conjunction.
+-- e.g. PredsAnd[PredClass /Boolean, PredRel Boolean] → PredsOne (PredClass /Boolean)
+-- Soundness: expandRelPartial r includes classPartial c in its expansion, so U_PredClass c ⊆ U_PredRel r
+-- when r's name path is a suffix of c's name path.
+compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials)) posLeafs cs)
+  | not (null predClassAtoms)
+  , let simplified = filter (not . isDominatedByPredClass) ps
+  , length simplified < length ps =
+      -- Recurse: might simplify further (e.g. single-element PredsAnd → PredsOne)
+      compactType typeEnv vaenv $ UnionType (Just (mkAnd simplified, negPartials)) posLeafs cs
+  where
+    predClassAtoms = [c | PredsOne (PredClass c) <- ps]
+    -- A PredRel r is dominated if some PredClass c in the conjunction has r's path as a suffix
+    isDominatedByPredClass (PredsOne (PredRel r)) =
+      any (\c -> splitOn "/" (ptName r) `L.isSuffixOf` splitOn "/" (ptName c)) predClassAtoms
+    isDominatedByPredClass _                      = False
 -- Top component catch-all (includes PTopType and TopType np PredsNone); preserve constants
 compactType _ _ t@(UnionType (Just _) _ _) = t
 -- TypeVar: unchanged

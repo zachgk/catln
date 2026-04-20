@@ -5,9 +5,7 @@ Prgm
                 ( "/IntCons"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /IntCons( EAppArg Value /head -> /Data/Primitive/Integer )
-                            ( EAppArg Value /tail -> ( TopType | PredRel IntList && PredClass /IntList ) )
-                        ]
+                        [ /IntCons( EAppArg Value /head -> /Data/Primitive/Integer )( EAppArg Value /tail -> ∀/IntList ) ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }

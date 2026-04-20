@@ -124,11 +124,7 @@ Prgm
                 ( "/Data/Cons"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Cons[ /T : TopType ]( Value /head -> TVVar /T )
-                            ( Value /tail ->
-                                ( TopType | PredRel ConsList[ /T=TVVar /T ] && PredClass /Data/ConsList )
-                            )
-                        ]
+                        [ /Data/Cons[ /T : TopType ]( Value /head -> TVVar /T )( Value /tail -> ∀/Data/ConsList ) ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }

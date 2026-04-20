@@ -32,9 +32,7 @@ Prgm
                 ( "/Complex"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Complex
-                            ( EAppVar /N ( TopType | PredRel Number && PredClass /Data/Primitive/Number ) )( EAppArg Value /a -> TVVar /N )( EAppArg Value /b -> TVVar /N )
-                        ]
+                        [ /Complex( EAppVar /N ∀/Data/Primitive/Number )( EAppArg Value /a -> TVVar /N )( EAppArg Value /b -> TVVar /N ) ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
