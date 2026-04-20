@@ -375,10 +375,14 @@ evalTest prgmGraphData = do
               in Hedgehog.forAll (genVal argType)
               ) args
 
-            -- Build the expression: testName(arg0=val0, arg1=val1, ...)
+            -- Build the expression: testName[$T=ConcreteType, ...](arg0=val0, ...)
+            -- First apply type variables so the body can resolve class-based calls
+            let typeVarInput = foldl (\base (varName, chosenType) -> eAppVar base varName chosenType)
+                                     (eVal testName)
+                                     (zip (map fst typeVars) chosenTypes)
             let argNames = map oaObjPath args
             let input = foldl (\base (n, v) -> eApply base (n, valToEExpr v))
-                               (eVal testName)
+                               typeVarInput
                                (zip argNames argVals)
             let src = getExprPartialType input
 

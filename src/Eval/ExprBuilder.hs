@@ -46,6 +46,15 @@ eApplyM baseExpr argName argM = TupleApply m (getExprMeta baseExpr, baseExpr) (E
     m = Meta (singletonType $ baseType{ptArgs=H.insert (partialKey argName) argExprType baseArgs}) Nothing nil emptyMetaDat
     baseType@PartialType{ptArgs=baseArgs} = getExprPartialType baseExpr
 
+-- | Apply a concrete type to a type variable in an expression.
+-- Builds the @expr[$varName = concreteType]@ form.
+eAppVar :: EExpr -> TypeVarName -> PartialType -> EExpr
+eAppVar baseExpr varName chosenType =
+  let concreteType = singletonType chosenType
+      vm = emptyMetaT concreteType
+      m  = emptyMetaT (typeSetVar varName concreteType (getExprType baseExpr))
+  in TupleApply m (emptyMetaT (getExprType baseExpr), baseExpr) (EAppVar varName vm)
+
 
 eVal :: String -> EExpr
 eVal name = Value m name

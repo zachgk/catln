@@ -64,12 +64,30 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Algebra/testCommutativeMonoid"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/testCommutativeMonoid( EAppVar /T ∀/Data/Algebra/CommutativeMonoid )( EAppArg Value /a -> TVVar /T )( EAppArg Value /b -> TVVar /T ) -> /Data/Primitive/Integer = 0 ]
+                    }
+                )
+            ,
                 ( "/operator>"
                 , ObjectMapItem
                     { omiDecls =
                         [ /operator>( EAppArg Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Ord ) -> ∀/Data/Primitive/Boolean ]
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/testSemigroupAssociative"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/testSemigroupAssociative( EAppVar /T ∀/Data/Algebra/Semigroup )( EAppArg Value /a -> TVVar /T )( EAppArg Value /b -> TVVar /T )( EAppArg Value /c -> TVVar /T ) -> /Data/Primitive/Integer = 0 ]
                     }
                 )
             ,

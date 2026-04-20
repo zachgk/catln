@@ -19,6 +19,7 @@ import           CtConstants
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Data.Maybe          (mapMaybe)
+import           Debug.Trace
 import           MapMeta             (MetaType (ArrMeta), clearMetaDat)
 import           Semantics
 import           Semantics.Annots
@@ -77,7 +78,7 @@ toExpr expr@(TupleApply m (baseM, baseExpr) arg) = do
                 [argN] -> return $ Just argN
                 opts -> lift $ TypeCheckResult [GenTypeCheckError mclear $ printf "Failed argument inference due to multiple arg options %s in %s" (show opts) (show expr)] Nothing
               (base, result) -> lift $ TypeCheckResult [GenTypeCheckError mclear $ printf "Failed argument inference due to multiple types with base %s and result %s in %s" (show base) (show result) (show expr)] Nothing
-            (baseM'', m'') -> lift $ TypeCheckResult [GenTypeCheckError mclear $ printf "Failed argument inference due to non UnionType in baseMeta %s or meta %s in %s" (show baseM'') (show m'') (show expr)] Nothing
+            (baseM'', m'') -> trace (printf "DEBUG inference fail: baseM=%s m=%s expr=%s" (show baseM'') (show m'') (show expr)) $ lift $ TypeCheckResult [GenTypeCheckError mclear $ printf "Failed argument inference due to non UnionType in baseMeta %s or meta %s in %s" (show baseM'') (show m'') (show expr)] Nothing
           return $ case mArgName of
             Just argName -> Just $ Value (mWithType (singletonType $ partialToType argName) $ emptyMetaM m') (pkName argName)
             Nothing -> Nothing -- Failed argument inference, return nothing and error out

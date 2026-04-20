@@ -41,6 +41,15 @@ Prgm
                     }
                 )
             ,
+                ( "/operator++"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator++( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/operator>="
                 , ObjectMapItem
                     { omiDecls =
@@ -88,6 +97,18 @@ Prgm
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/inverse"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Primitive/inverse( EAppArg Value /t -> /Data/Primitive/Integer ) ->
+                            ( /operator-( /a=/Data/Primitive/Integer ) + /Data/Primitive/Integer ) = /operator-
+                            ( EAppArg Value /a -> TVArg /t = ( Value /t ↦ TVArg /t ) )
+                        ]
                     }
                 )
             ,
@@ -181,6 +202,15 @@ Prgm
                     { omiDecls = [ Value /Data/Primitive/False ]
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/mempty"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/Primitive/mempty -> /Data/Primitive/Integer = 0 ]
                     }
                 )
             ,
@@ -283,6 +313,9 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGClass
             ( False
             , /Data/Primitive/Integer
@@ -343,12 +376,6 @@ Prgm
             ( EAppArg Value /text -> /Data/String = "## Integers" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "### Commutative Group" )
-        , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "mempty<Integer $T> = 0" )
-        , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "mappend<Integer $T>($T l, $T r) = l + r" )
-        , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "inverse<Integer $T>($T t) = -t" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "## Floats" )
         ]

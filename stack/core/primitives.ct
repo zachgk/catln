@@ -71,9 +71,10 @@ module(Data/Primitive)
     #example
     #assert(test= 0 + 0 == 0)
     0
-  # mempty<Integer $T> = 0
-  # mappend<Integer $T>($T l, $T r) = l + r
-  # inverse<Integer $T>($T t) = -t
+  mempty -> Integer = 0
+  (_ :: Integer ++ _ :: Integer) -> Integer
+    #runtime("int+")
+  inverse(t -> Integer) -> Integer = -t
   (_ :: Integer // _ :: Integer) -> Integer
     #runtime("intDiv")
   # ## Floats
