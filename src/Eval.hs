@@ -190,20 +190,18 @@ evalExpr (TTupleApply _ (_, b) (EAppArg oa@ObjArr{oaObj=Just (TValue _ "/io"), o
   case H.lookup "/io" evArgs of
     Just io -> return $ TupleVal n (H.insert (oaObjPath oa) io args)
     Nothing -> error $ printf "evalExpr with no io"
-evalExpr (TTupleApply _ (_, b) arg) = do
-  b'@(TupleVal n args) <- evalExpr b
-  case arg of
-    EAppArg oa -> do
-      v <- case oaArr oa of
-        Just (Just oaExpr, _) -> case oaObj oa of
-          Just TValue{} -> evalExpr oaExpr
-          Just TTupleApply{} -> return $ ObjArrVal oa
-          _ -> error $ printf "Unsupported eval argument of %s" (show oa)
-        Just (Nothing, _) -> error $ printf "Missing arrExpr in evalExpr TupleApply with %s - %s" (show b) (show oa)
-        Nothing -> error $ printf "Missing arrExpr in evalExpr TupleApply with %s - %s" (show b) (show oa)
-      return $ TupleVal n (H.insert (oaObjPath oa) v args)
-    EAppVar{} -> return b'
-    EAppSpread a -> error $ printf "Not yet implemented evalExpr %s" (show a)
+evalExpr (TTupleApply _ (_, b) (EAppVar{})) = evalExpr b
+evalExpr (TTupleApply _ (_, b) (EAppArg oa)) = do
+  (TupleVal n args) <- evalExpr b
+  v <- case oaArr oa of
+    Just (Just oaExpr, _) -> case oaObj oa of
+      Just TValue{} -> evalExpr oaExpr
+      Just TTupleApply{} -> return $ ObjArrVal oa
+      _ -> error $ printf "Unsupported eval argument of %s" (show oa)
+    Just (Nothing, _) -> error $ printf "Missing arrExpr in evalExpr TupleApply with %s - %s" (show b) (show oa)
+    Nothing -> error $ printf "Missing arrExpr in evalExpr TupleApply with %s - %s" (show b) (show oa)
+  return $ TupleVal n (H.insert (oaObjPath oa) v args)
+evalExpr (TTupleApply _ (_, _) (EAppSpread a)) = error $ printf "Not yet implemented evalExpr %s" (show a)
 evalExpr (TCalls _ b callTree) = do
   b' <- evalExpr b
   evalCallTree b' callTree

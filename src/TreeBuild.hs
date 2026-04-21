@@ -170,7 +170,11 @@ findResArrows TBEnv{tbResEnv, tbTypeEnv} os srcType@PartialType{ptName=srcName} 
   where
     globalArrows = case suffixLookupInDict srcName tbResEnv of
       Just resArrowsWithName -> filter (\(arrowType, _, _) -> not $ isBottomType $ intersectTypes tbTypeEnv (singletonType srcType) (singletonType arrowType)) resArrowsWithName
-      Nothing -> []
+      Nothing ->
+        let srcBase = reverse $ takeWhile (/= '/') $ reverse srcName
+            matchingEntries = concatMap snd $ filter (\(k, _) -> reverse (takeWhile (/= '/') (reverse k)) == srcBase) $ H.toList tbResEnv
+        -- Replace arrowType with srcType so completeTreeSet can compute a non-empty intersection
+        in map (\(_, moa, tree) -> (srcType, moa, tree)) matchingEntries
     argArrows :: [ResBuildEnvItem]
     argArrows = map ((srcType, Nothing,) . (`TCArg` srcName) . snd) $ mapMaybe (H.lookup $ TVArg $ partialToKey srcType) $ exprVarArgsWithObjSrcs tbTypeEnv os
 
@@ -224,7 +228,9 @@ toTExpr env os (EWhere m b a) = do
   a' <- toTExpr env os a
   return $ TWhere m b' a'
 toTExpr env os (TupleApply m (bm, be) arg) = do
-  be' <- toTExprDest env os be bm
+  be' <- case arg of
+    EAppVar _ _ -> toTExprDest env os be m
+    _           -> toTExprDest env os be bm
   arg' <- case arg of
     EAppArg a     -> EAppArg <$> toTEObjArr env os a
     EAppVar vn vm -> return $ EAppVar vn vm
