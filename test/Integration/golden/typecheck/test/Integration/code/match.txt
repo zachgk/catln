@@ -2,17 +2,17 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
-                ( "/abs.$8f0f44"
+                ( "/abs.$f9f16a"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs.$8f0f44( Value /x -> ∀/Data/Algebra/Ord )
-                            ( Value /$8f0f44-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=( Value /l -> TVArg /x = Value /x )
+                        [ /abs.$f9f16a( Value /x -> ∀/Data/Algebra/Ord )
+                            ( Value /$f9f16a-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=( Value /l -> TVArg /x = Value /x )
                                 ( Value /r -> /Data/Primitive/Integer = CInt 0 )
                             ) -> TVArg /x2 = Value /x2
-                        , /abs.$8f0f44( Value /x )
-                            ( Value /$8f0f44-arg -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = Hole ( /Data/Primitive/Integer + /Data/Primitive/Float ) HoleActive Nothing@Value /x2 ) ->
+                        , /abs.$f9f16a( Value /x )
+                            ( Value /$f9f16a-arg -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = Hole ( /Data/Primitive/Integer + /Data/Primitive/Float ) HoleActive Nothing@Value /x2 ) ->
                             ( /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
@@ -49,15 +49,14 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs( Value /x -> /Data/Primitive/Integer ) ->
-                            ( /abs.$8f0f44
+                            ( /abs.$f9f16a
                                 ( /x=/Data/Primitive/Integer
-                                , /$8f0f44-arg=/Data/Primitive/Integer
+                                , /$f9f16a-arg=/Data/Primitive/Integer
                                 ) + /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer
-                            ) = /abs.$8f0f44( Value /x -> TVArg /x = Value /x )
-                            ( Value /$8f0f44-arg -> TVArg /x = Value /x )
+                            ) = /abs.$f9f16a( Value /x -> TVArg /x = Value /x )( Value /$f9f16a-arg -> TVArg /x = Value /x )
                         ]
                     }
                 )

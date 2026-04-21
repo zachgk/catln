@@ -77,19 +77,45 @@ data TypePredicate
   = PredExpr PartialType
   | PredClass PartialType -- A hasClass predicate
   | PredRel PartialType -- a isa predicate. Represented by val : classOrModuleOrType
-  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+  deriving (Eq, Ord, Show, Generic, ToJSON)
 
 data TypePredicates
   = PredsOne TypePredicate
   | PredsAnd [TypePredicates]
   | PredsNot TypePredicates
-  deriving (Eq, Ord, Generic, Hashable, ToJSON)
+  deriving (Eq, Ord, Generic, ToJSON)
 
 data PartialKey = PartialKey {
   pkName :: Name,
   pkVars :: S.HashSet PartialKey,
   pkArgs :: S.HashSet PartialKey
-  } deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
+  } deriving (Eq, Ord, Generic, ToJSON, ToJSONKey)
+
+-- | Fast hash: only name and set sizes.  Equality is still checked via 'Eq'.
+instance Hashable PartialKey where
+  hashWithSalt s (PartialKey name vars args) =
+    s `hashWithSalt` name
+      `hashWithSalt` S.size vars
+      `hashWithSalt` S.size args
+
+-- | Shallow predicate tag used inside 'PartialType' hash to avoid the
+-- TypePredicates → TypePredicate → PartialType → TypePredicates cycle.
+predsTag :: TypePredicates -> Int
+predsTag (PredsOne _)  = 0
+predsTag (PredsAnd ps) = 1 + length ps
+predsTag (PredsNot _)  = -1
+
+-- | Hash predicate: constructor + recursive children.
+-- PartialType breaks the cycle by hashing only 'predsTag', not the full predicates.
+instance Hashable TypePredicates where
+  hashWithSalt s (PredsOne p)  = s `hashWithSalt` (0 :: Int) `hashWithSalt` p
+  hashWithSalt s (PredsAnd ps) = foldl hashWithSalt (s `hashWithSalt` (1 :: Int)) ps
+  hashWithSalt s (PredsNot p)  = s `hashWithSalt` (2 :: Int) `hashWithSalt` p
+
+instance Hashable TypePredicate where
+  hashWithSalt s (PredExpr  p) = s `hashWithSalt` (0 :: Int) `hashWithSalt` p
+  hashWithSalt s (PredClass p) = s `hashWithSalt` (1 :: Int) `hashWithSalt` p
+  hashWithSalt s (PredRel   p) = s `hashWithSalt` (2 :: Int) `hashWithSalt` p
 
 -- |
 -- A particle type describes a simple set of types.
@@ -101,7 +127,18 @@ data PartialType = PartialType {
   ptArgs    :: H.HashMap ArgName Type,
   ptPreds   :: TypePredicates,
   ptArgMode :: PtArgMode
-  } deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
+  } deriving (Eq, Ord, Generic, ToJSON, ToJSONKey)
+
+-- | Hash PartialType without recursing into map *values* (which are Types containing
+-- more PartialLeafs).  Key names and sizes discriminate the common cases cheaply.
+-- predsTag breaks the TypePredicates→TypePredicate→PartialType cycle.
+instance Hashable PartialType where
+  hashWithSalt s PartialType{ptName, ptVars, ptArgs, ptPreds, ptArgMode} =
+    s `hashWithSalt` ptName
+      `hashWithSalt` H.size ptVars
+      `hashWithSalt` H.size ptArgs
+      `hashWithSalt` predsTag ptPreds
+      `hashWithSalt` ptArgMode
 
 data Constant
   = CInt Integer
@@ -125,7 +162,24 @@ type PartialLeafs = H.HashMap TypeName (S.HashSet PartialArgsOption)
 data Type
   = UnionType (Maybe (TypePredicates, PartialLeafs)) PartialLeafs [Constant]
   | TypeVar TypeVarAux TypeVarLoc
-  deriving (Eq, Ord, Generic, Hashable, ToJSON, ToJSONKey)
+  deriving (Eq, Ord, Generic, ToJSON, ToJSONKey)
+
+-- | Hash Type using only structural shape and key names, not the nested Type
+-- values inside PartialLeafs.  This avoids the expensive recursive descent
+-- through PartialLeafs → HashSet PartialArgsOption → HashMap ArgName Type → Type.
+instance Hashable Type where
+  hashWithSalt s (TypeVar aux loc) =
+    s `hashWithSalt` (0 :: Int) `hashWithSalt` aux `hashWithSalt` loc
+  hashWithSalt s (UnionType mt leafs cs) =
+    let h = s `hashWithSalt` (1 :: Int)
+              `hashWithSalt` length cs
+              `hashWithSalt` H.size leafs
+        h' = case mt of
+               Nothing           -> h `hashWithSalt` (0 :: Int)
+               Just (preds, neg) -> h `hashWithSalt` (1 :: Int)
+                                      `hashWithSalt` predsTag preds
+                                      `hashWithSalt` H.size neg
+    in H.foldlWithKey' (\acc k _ -> acc `hashWithSalt` k) h' leafs
 
 -- | Backward-compat pattern: matches a complement/top type (predicates, negative partials).
 -- Corresponds to the old @TopType PartialLeafs TypePredicates@ constructor.

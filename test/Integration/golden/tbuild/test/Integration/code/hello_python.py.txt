@@ -270,14 +270,14 @@ Prgm
                     , omiDefs =
                         [ /add( EAppArg Value /x -> /Data/Primitive/Integer )( EAppArg Value /y -> /Data/Primitive/Integer ) ->
                             ( /operator+
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                ) + /operator+
                                 ( /r=/Data/String
                                 , /l=/Data/String
                                 ) + /operator+
                                 ( /r=/Data/Primitive/Float
                                 , /l=/Data/Primitive/Float
+                                ) + /operator+
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
                                 ) + /Data/String + /add.result
                                 ( /x=/Data/Primitive/Integer
                                 , /y=/Data/Primitive/Integer
@@ -491,14 +491,14 @@ Prgm
                             ( EAppArg Value /x -> ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float ) )
                             ( EAppArg Value /y -> ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float ) ) ->
                             ( /operator+
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                ) + /operator+
                                 ( /r=/Data/String
                                 , /l=/Data/String
                                 ) + /operator+
                                 ( /r=/Data/Primitive/Float
                                 , /l=/Data/Primitive/Float
+                                ) + /operator+
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
                                 ) + /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float
                             ) = /operator+( EAppArg Value /l -> TVArg /x = Value /x )
                             ( EAppArg Value /r -> TVArg /y = ( Value /y ↦ TVArg /y ) )
