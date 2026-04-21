@@ -31,11 +31,11 @@ Prgm
                         [ /fib( Value /integer -> /Data/Primitive/Integer ) | /operator>( Value /l -> TVArg /integer = Value /integer )
                             ( Value /r -> /Data/Primitive/Integer = CInt 1 ) ->
                             ( /operator+
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                ) + /operator+
                                 ( /r=/Data/Primitive/Float
                                 , /l=/Data/Primitive/Float
+                                ) + /operator+
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer + /Data/Primitive/Float
                             ) = /operator+
                             ( Value /l -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /fib

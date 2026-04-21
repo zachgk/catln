@@ -39,13 +39,13 @@ Prgm
                             ( EAppArg Value /this -> /Data/Cons[ /T=TopType ]
                                 ( /head=TVVar /T
                                 , /tail=
-                                    ( TopType | PredRel ConsList[ /T=TVVar /T ] && PredClass /Data/ConsList )
+                                    ( TopType | PredClass /Data/ConsList && PredRel ConsList[ /T=TVVar /T ] )
                                 ) = /Data/Cons( EAppArg Value /head )
                                 ( EAppArg Value /tail ->
                                     ( /Data/Nil + /Data/Cons[ /T=TopType ]
                                         ( /head=TVVar /T
                                         , /tail=
-                                            ( TopType | PredRel ConsList[ /T=TVVar /T ] && PredClass /Data/ConsList )
+                                            ( TopType | PredClass /Data/ConsList && PredRel ConsList[ /T=TVVar /T ] )
                                         )
                                     )
                                 )

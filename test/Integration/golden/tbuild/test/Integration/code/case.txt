@@ -2,13 +2,13 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
-                ( "/abs.$795784-1"
+                ( "/abs.$c4b325-1"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs.$795784-1( EAppArg Value /x )
-                            ( EAppArg Value /$795784-arg -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = Hole ( /Data/Primitive/Integer + /Data/Primitive/Float ) HoleActive Nothing@Value /x2 ) ->
+                        [ /abs.$c4b325-1( EAppArg Value /x )
+                            ( EAppArg Value /$c4b325-arg -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = Hole ( /Data/Primitive/Integer + /Data/Primitive/Float ) HoleActive Nothing@Value /x2 ) ->
                             ( /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
@@ -51,45 +51,44 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs( EAppArg Value /x -> /Data/Primitive/Integer ) ->
-                            ( /abs.$795784-1
+                            ( /abs.$c4b325-1
                                 ( /x=∀/Data/Algebra/Ord
-                                , /$795784-arg=∀/Data/Algebra/Ord
-                                ) + /abs.$795784-0
+                                , /$c4b325-arg=∀/Data/Algebra/Ord
+                                ) + /abs.$c4b325-0
                                 ( /x=/Data/Primitive/Integer
-                                , /$795784-arg=/Data/Primitive/Integer
+                                , /$c4b325-arg=/Data/Primitive/Integer
                                 ) + /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer
-                            ) = /abs.$795784-0
+                            ) = /abs.$c4b325-0
                             ( EAppArg Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                            ( EAppArg Value /$795784-arg -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                            ( EAppArg Value /$c4b325-arg -> TVArg /x = ( Value /x ↦ TVArg /x ) )
                         ]
                     }
                 )
             ,
-                ( "/abs.$795784-0"
+                ( "/abs.$c4b325-0"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs.$795784-0( EAppArg Value /x -> ∀/Data/Algebra/Ord )
-                            ( EAppArg Value /$795784-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=( EAppArg Value /l -> TVArg /x = Value /x )
+                        [ /abs.$c4b325-0( EAppArg Value /x -> ∀/Data/Algebra/Ord )
+                            ( EAppArg Value /$c4b325-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=( EAppArg Value /l -> TVArg /x = Value /x )
                                 ( EAppArg Value /r -> /Data/Primitive/Integer = 0 )
                             ) -> TVArg /x2 = Value /x2
-                        , /abs.$795784-0( EAppArg Value /x -> ∀/Data/Algebra/Ord )
-                            ( EAppArg Value /$795784-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=( EAppArg Value /l -> TVArg /x = Value /x )
+                        , /abs.$c4b325-0( EAppArg Value /x -> ∀/Data/Algebra/Ord )
+                            ( EAppArg Value /$c4b325-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=( EAppArg Value /l -> TVArg /x = Value /x )
                                 ( EAppArg Value /r -> /Data/Primitive/Integer = 0 )
                             ) ->
-                            ( /abs.$795784-1
+                            ( /abs.$c4b325-1
                                 ( /x=∀/Data/Algebra/Ord
-                                , /$795784-arg=∀/Data/Algebra/Ord
+                                , /$c4b325-arg=∀/Data/Algebra/Ord
                                 ) + /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer
-                            ) = /abs.$795784-1( EAppArg Value /x -> TVArg /x = Value /x )
-                            ( EAppArg Value /$795784-arg -> TVArg /x = Value /x )
+                            ) = /abs.$c4b325-1( EAppArg Value /x -> TVArg /x = Value /x )( EAppArg Value /$c4b325-arg -> TVArg /x = Value /x )
                         ]
                     }
                 )

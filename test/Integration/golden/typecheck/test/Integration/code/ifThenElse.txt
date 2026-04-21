@@ -26,9 +26,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs( Value /x -> /Data/Primitive/Integer ) ->
-                            ( /abs.$9661c5
+                            ( /abs.$727590
                                 ( /x=/Data/Primitive/Integer
-                                , /$9661c5-arg=UnionType
+                                , /$727590-arg=UnionType
                                     ( Just
                                         ( PredClass /Catln/ThenElse
                                         , fromList []
@@ -41,8 +41,8 @@ Prgm
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer
-                            ) = /abs.$9661c5( Value /x -> TVArg /x = Value /x )
-                            ( Value /$9661c5-arg ->
+                            ) = /abs.$727590( Value /x -> TVArg /x = Value /x )
+                            ( Value /$727590-arg ->
                                 ( /Catln/Else + /Catln/ThenElse/fromBool( /v=∀/Data/Primitive/Boolean ) + /Catln/Then ) = /Catln/ThenElse/fromBool
                                 ( Value /v -> ∀/Data/Primitive/Boolean = /operator>=( Value /l -> TVArg /x = Value /x )
                                     ( Value /r -> /Data/Primitive/Integer = CInt 0 )
@@ -52,15 +52,15 @@ Prgm
                     }
                 )
             ,
-                ( "/abs.$9661c5"
+                ( "/abs.$727590"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs.$9661c5( Value /x )
-                            ( Value /$9661c5-arg= Hole TopType HoleActive Nothing@Value /Catln/Then ) -> TVArg /x = Value /x
-                        , /abs.$9661c5( Value /x -> /Data/Primitive/Integer )
-                            ( Value /$9661c5-arg= Hole TopType HoleActive Nothing@Value /Catln/Else ) ->
+                        [ /abs.$727590( Value /x )
+                            ( Value /$727590-arg= Hole TopType HoleActive Nothing@Value /Catln/Then ) -> TVArg /x = Value /x
+                        , /abs.$727590( Value /x -> /Data/Primitive/Integer )
+                            ( Value /$727590-arg= Hole TopType HoleActive Nothing@Value /Catln/Else ) ->
                             ( /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
