@@ -685,10 +685,14 @@ predImplies _       _     _  PredsNone = True   -- anything ⊆ top
 predImplies _       _     p1 p2 | p1 == p2 = True  -- reflexivity
 predImplies _       _     PredsNone _ = False   -- top ⊄ anything specific
 -- Logical connectives
-predImplies typeEnv vaenv (PredsAnd ps) p2      = any (\p -> predImplies typeEnv vaenv p p2) ps || cancellationCheck
+predImplies typeEnv vaenv p1@(PredsAnd ps) p2      = any (\p -> predImplies typeEnv vaenv p p2) ps || allCheck || cancellationCheck
   -- if any conjunct alone implies p2, the intersection does too
+  -- if p2 is a conjunction, p1 implies p2 iff p1 implies each conjunct of p2
   -- also: (X₁ ∨ X₂ ∨ ... ∨ q) ∧ ¬X₁ ∧ ¬X₂ ∧ ... ⊆ q  (disjunction cancellation)
   where
+    allCheck = case p2 of
+      PredsAnd qs -> all (predImplies typeEnv vaenv p1) qs
+      _           -> False
     cancellationCheck = or
       [ all (\x -> PredsNot x `elem` ps) xs
       | PredsNot (PredsAnd nots) <- ps
@@ -893,8 +897,9 @@ expandClassPartial typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv PartialType
       r -> error $ printf "Unknown class %s in expandPartial. Found %s" (show className) (show r)
 
 expandRelPartial :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> Type
-expandRelPartial typeEnv@TypeEnv{teNames} vaenv relPartial = unionAllTypesWithEnv typeEnv vaenv (UnionType Nothing (joinUnionType fromArgs) [] : fromTypeEnv)
+expandRelPartial typeEnv@TypeEnv{teNames} vaenv relPartial = result
   where
+    result = unionAllTypesWithEnv typeEnv vaenv (UnionType Nothing (joinUnionType fromArgs) [] : fromTypeEnv)
     name = ptName relPartial
     fromTypeEnv = typeEnvNamesMatching
     fromArgs = map (\n -> relPartial{ptName=n}) $ relativeNameFilter name $ map pkName $ H.keys $ snd $ splitVarArgEnv vaenv
@@ -1156,9 +1161,12 @@ compactType typeEnv vaenv t@(UnionType (Just (preds, negPartials)) posLeafs [])
       (PredsNot p) | isPredsContradictory p -> PTopType
       _ -> t
 -- Top component with non-empty neg and non-trivial preds
+-- If the negated partials don't intersect with the predicated domain, the exclusion is vacuous.
+-- Use intersection check (A ∩ B = ∅) rather than subtype check (A ⊆ ¬B) since the latter
+-- can fail to prove disjointness when the ¬B expansion is approximate (hasOutside=True).
 compactType typeEnv vaenv t@(UnionType (Just (preds, negPartials)) posLeafs [])
   | not (H.null negPartials) && H.null posLeafs && preds /= PredsNone =
-      if isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing negPartials []) (TopType H.empty (predsNot preds))
+      if isBottomType $ intersectTypesEnv typeEnv vaenv (UnionType Nothing negPartials []) (TopType H.empty preds)
         then UnionType (Just (preds, H.empty)) H.empty []
         else t
 -- ¬(contradictory) = everything: top component is U, simplify to PTopType
@@ -1432,6 +1440,11 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
     differencePartial :: PartialType -> PartialType -> [PartialType]
     differencePartial p1 p2 | p1 == p2 = []
     differencePartial p1@PartialType{ptArgs=posArgs, ptArgMode=PtArgExact} PartialType{ptArgs=negArgs, ptArgMode=PtArgExact} | H.keysSet posArgs /= H.keysSet negArgs = [p1]
+    -- PtArgAny pos minus PtArgExact neg where neg requires args pos doesn't have:
+    -- The neg constrains to a specific arg set that pos (as PtArgAny) doesn't require,
+    -- so there are pos values (e.g. with fewer args) that the neg doesn't cover.
+    differencePartial p1@PartialType{ptArgs=posArgs, ptArgMode=PtArgAny} PartialType{ptArgs=negArgs, ptArgMode=PtArgExact}
+      | not (H.keysSet negArgs `S.isSubsetOf` H.keysSet posArgs) = [p1]
     differencePartial p1@PartialType{ptArgs=posArgs, ptVars=posVars, ptArgMode=posArgMode} PartialType{ptArgs=negArgs, ptVars=negVars, ptArgMode=negArgMode} | posArgMode == negArgMode || negArgMode == PtArgExact = mapMaybe subtractArg (H.toList negArgs) ++ mapMaybe subtractVar (H.toList negVars)
       where
         subtractArg (_, PTopType) = Nothing

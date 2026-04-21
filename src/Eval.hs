@@ -23,7 +23,7 @@ import           Semantics.Types
 
 import           Control.Monad
 import           Data.Graph
-import           Data.List               (nubBy)
+import           Data.List           (nubBy)
 import           Data.Maybe
 -- import           Emit                (codegenExInit)
 import           Control.Monad.State

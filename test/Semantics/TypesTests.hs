@@ -245,7 +245,8 @@ propDifferenceSubset gPrgm = property $ do
   let typeEnv = mkTypeEnv prgm
   a <- forAll $ genType prgm
   b <- forAll $ genType prgm
-  let overlapping = intersectTypes typeEnv a b /= BottomType
+  let intersected = intersectTypes typeEnv a b
+  let overlapping = intersected /= BottomType
   annotate $ printf "does a overlaps b? %s" (show overlapping)
   let union = unionTypes typeEnv a b
   annotate $ printf "a + b = %s" (show union)
