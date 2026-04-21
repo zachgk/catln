@@ -517,8 +517,7 @@ matchesNPath (NPath False rn) (NPath _ n)   = rn `L.isSuffixOf` n
 matchesNPath (NPath True _) (NPath False _) = False
 
 relativeNameMatches :: RelativeName -> Name -> Bool
-relativeNameMatches rn n = split rn `L.isSuffixOf` split n
-  where split = splitOn "/"
+relativeNameMatches rn n = rn == n || ('/' : rn) `L.isSuffixOf` ('/' : n)
 
 relativeNameFilter :: RelativeName -> [Name] -> [Name]
 relativeNameFilter rn = filter (relativeNameMatches rn)
@@ -733,7 +732,7 @@ predImpliesAtom typeEnv@TypeEnv{teClassGraph=ClassGraph cg, tePrgmEnv} vaenv (Pr
 -- PredRel: r1 implies r2 when r2's name path is a suffix of r1's (r2 is more general)
 -- and r1's args are subtypes of r2's args.
 predImpliesAtom typeEnv vaenv (PredRel r1) (PredRel r2) =
-  splitOn "/" (ptName r2) `L.isSuffixOf` splitOn "/" (ptName r1)
+  relativeNameMatches (ptName r2) (ptName r1)
   && all checkArg (H.keys (ptArgs r2))
   where checkArg k = isSubtypeOfWithEnv typeEnv vaenv
                        (H.lookupDefault PTopType k (ptArgs r1))
@@ -743,7 +742,7 @@ predImpliesAtom typeEnv vaenv (PredExpr e1) (PredExpr e2) = isSubPartialOfWithEn
 -- PredClass c implies PredRel r when r's name is a suffix of c's name.
 -- This holds because expandRelPartial r includes classPartial c, so U_PredClass c ⊆ U_PredRel r.
 predImpliesAtom _ _ (PredClass c) (PredRel r) =
-  splitOn "/" (ptName r) `L.isSuffixOf` splitOn "/" (ptName c)
+  relativeNameMatches (ptName r) (ptName c)
 -- Cross-kind: conservative False
 predImpliesAtom _ _ _ _ = False
 
@@ -1197,7 +1196,7 @@ compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials)) posLeafs 
     predClassAtoms = [c | PredsOne (PredClass c) <- ps]
     -- A PredRel r is dominated if some PredClass c in the conjunction has r's path as a suffix
     isDominatedByPredClass (PredsOne (PredRel r)) =
-      any (\c -> splitOn "/" (ptName r) `L.isSuffixOf` splitOn "/" (ptName c)) predClassAtoms
+      any (\c -> relativeNameMatches (ptName r) (ptName c)) predClassAtoms
     isDominatedByPredClass _                      = False
 -- Top component catch-all (includes PTopType and TopType np PredsNone); preserve constants
 compactType _ _ t@(UnionType (Just _) _ _) = t
