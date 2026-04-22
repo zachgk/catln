@@ -1,0 +1,30 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+                            ( /Catln/exit
+                                ( /val=/Data/Primitive/Integer
+                                , /this=/Catln/IO
+                                ) + /Catln/IO
+                            ) = /Catln/exit
+                            ( EAppArg Value /val -> /Data/Primitive/Integer = 0 )
+                            ( EAppArg Value /this -> /Catln/IO =
+                                ( /Catln/println
+                                    ( EAppArg Value /msg -> /Data/String = "hello world" )
+                                    ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) ) ↦ /Catln/IO
+                                )
+                            )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG = [ CGType ]
+    , prgmAnnots = []
+    }

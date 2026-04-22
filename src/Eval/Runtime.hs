@@ -28,6 +28,7 @@ import           Data.Maybe          (fromMaybe)
 import           Eval.Common
 import           Eval.ExprBuilder
 import           Numeric             (showHex, showOct)
+import           Data.IORef          (modifyIORef)
 import           System.IO           (hFlush, stdout)
 import           System.IO.Unsafe    (unsafePerformIO)
 import           Text.Printf
@@ -362,14 +363,16 @@ ioExit :: EPrim
 ioExit = EPrim "ioExit" prim
   where
     prim args = case (H.lookup "/this" args, H.lookup "/val" args) of
-      (Just (IOVal _ io), Just (IntVal val)) -> Right $ IOVal val io
+      (Just (IOVal _ io),         Just (IntVal val)) -> Right $ IOVal val io
+      (Just (MockIOVal _ io ref), Just (IntVal val)) -> Right $ MockIOVal val io ref
       _ -> Left $ printf "Invalid exit signature with args: %s" (show args)
 
 println :: EPrim
 println = EPrim "println" prim
   where
     prim args = case (H.lookup "/this" args, H.lookup "/msg" args) of
-      (Just (IOVal r io), Just (StrVal msg)) -> Right $ IOVal r (io >> putStrLn msg)
+      (Just (IOVal r io),         Just (StrVal msg)) -> Right $ IOVal r (io >> putStrLn msg)
+      (Just (MockIOVal r io ref), Just (StrVal msg)) -> Right $ MockIOVal r (io >> modifyIORef ref (msg:)) ref
       _ -> Left "Invalid println signature"
 
 -- | Read a line from stdin, flushing any accumulated IO output first.
@@ -379,7 +382,8 @@ ioInput :: EPrim
 ioInput = EPrim "ioInput" prim
   where
     prim args = case H.lookup "/this" args of
-      Just (IOVal _ io) -> Right $ StrVal $ unsafePerformIO (io >> hFlush stdout >> getLine)
+      Just (IOVal _ io)       -> Right $ StrVal $ unsafePerformIO (io >> hFlush stdout >> getLine)
+      Just (MockIOVal _ io _) -> Right $ StrVal $ unsafePerformIO (io >> hFlush stdout >> getLine)
       _ -> Left "Invalid ioInput signature"
 
 arrExists :: Op

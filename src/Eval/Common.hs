@@ -29,6 +29,7 @@ import           GHC.Generics        (Generic)
 import           Control.Monad.State
 import           CRes
 import           Data.Aeson          hiding (Object)
+import           Data.IORef
 -- import qualified LLVM.AST            as AST
 import           Semantics
 import           Semantics.Prgm
@@ -88,6 +89,7 @@ data Val
   | TupleVal String (H.HashMap String Val)
   | ObjArrVal (ObjArr TExpr EvalMetaDat)
   | IOVal Integer (IO ())
+  | MockIOVal Integer (IO ()) (IORef [String])
   | LLVMVal (LLVM ())
   | LLVMQueue [(TExpr EvalMetaDat, EObjArr)]
   -- | LLVMOperand Type (Codegen AST.Operand)
@@ -101,6 +103,8 @@ instance Eq Val where
   (TupleVal an aa) == (TupleVal bn ba) = an == bn && aa == ba
   IOVal{} == _ = error "Can't determine equality with IOVal"
   _ == IOVal{} = error "Can't determine equality with IOVal"
+  MockIOVal{} == _ = error "Can't determine equality with MockIOVal"
+  _ == MockIOVal{} = error "Can't determine equality with MockIOVal"
   NoVal == NoVal = True
   _ == _ = False
 
@@ -115,7 +119,8 @@ instance Show Val where
       showArgs as = printf "(%s)" (intercalate ", " $ map showArg $ H.toList as)
       showArg (argName, val) = argName ++ " = " ++ show val
   show (ObjArrVal oa)   = printf "(ObjArrVal %s)" (show oa)
-  show IOVal{}   = "IOVal"
+  show IOVal{}      = "IOVal"
+  show MockIOVal{}  = "MockIOVal"
   show LLVMVal{}   = "LLVMVal"
   show LLVMQueue{}   = "LLVMQueue"
   -- show (LLVMOperand tp _)   = printf "LLVMOperand<$T=%s>" (show tp)
@@ -129,7 +134,8 @@ instance Hashable Val where
   hashWithSalt s (CharVal i)     = s `hashWithSalt` i
   hashWithSalt s (TupleVal n as) = s `hashWithSalt` n `hashWithSalt` as
   hashWithSalt s (ObjArrVal oa)  = s `hashWithSalt` oa
-  hashWithSalt s (IOVal i _)     = s `hashWithSalt` i
+  hashWithSalt s (IOVal i _)        = s `hashWithSalt` i
+  hashWithSalt s (MockIOVal i _ _)  = s `hashWithSalt` i
   hashWithSalt s (LLVMVal _)     = s
   hashWithSalt s (LLVMQueue _)   = s
   -- hashWithSalt s (LLVMOperand tp _) = s `hashWithSalt` tp
@@ -143,7 +149,8 @@ instance ToJSON Val where
   toJSON (CharVal v) = object ["tag".=("CharVal" :: String), "contents".=toJSON v]
   toJSON (TupleVal name args) = object ["tag".=("TupleVal" :: String), "name".=name, "args".=toJSON args]
   toJSON (ObjArrVal _) = object ["tag".=("ObjArrVal" :: String)]
-  toJSON IOVal{} = object ["tag".=("IOVal" :: String)]
+  toJSON IOVal{}     = object ["tag".=("IOVal" :: String)]
+  toJSON MockIOVal{} = object ["tag".=("MockIOVal" :: String)]
   toJSON LLVMVal{} = object ["tag".=("LLVMVal" :: String)]
   toJSON LLVMQueue{} = object ["tag".=("LLVMQueue" :: String)]
   -- toJSON LLVMOperand{} = object ["tag".=("LLVMOperand" :: String)]
@@ -165,7 +172,8 @@ getValType CharVal{} = charLeaf
 getValType (TupleVal name args) = (partialVal name){ptArgs=H.fromList $ map fromArg $ H.toList args}
   where fromArg (argName, argVal) = (partialKey argName, singletonType $ getValType argVal)
 getValType (ObjArrVal oa) = getSingleton $ getExprType $ oaObjExpr oa
-getValType IOVal{} = ioLeaf
+getValType IOVal{}     = ioLeaf
+getValType MockIOVal{} = ioLeaf
 getValType LLVMVal{} = resultLeaf
 getValType LLVMQueue{} = queueLeaf
 -- getValType (LLVMOperand t _) = case t of

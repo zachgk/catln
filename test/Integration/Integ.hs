@@ -22,7 +22,7 @@ import           Syntax.Parsers          (mkDesCanonicalImportStr)
 import           System.Directory        (createDirectoryIfMissing,
                                           doesFileExist, getCurrentDirectory)
 import           System.Environment      (lookupEnv)
-import           System.FilePath         (takeDirectory)
+import           System.FilePath         (replaceExtension, takeDirectory)
 import           Text.Pretty.Simple      (pShowNoColor)
 import           Utils
 import           WebDocs                 (docApi, docServe)
@@ -119,10 +119,18 @@ runTest runGolden getCtss fileNameStr = testCaseSteps fileNameStr $ \step -> do
     evalTarget <- asCResT $ evalTargetMode "main" fileName tprgm
     when (evalRunnable evalTarget) $ do
       lift $ step "Eval Run..."
-      returnValue <- getEvaluated ctss fileName "main"
+      mockIO <- lift newMockIO
+      returnValue <- getEvaluatedMock ctss mockIO fileName "main"
       case returnValue of
         0 -> return ()
         v -> lift $ assertFailure $ "Bad result for:\n \t " ++ show v
+      let stdoutPath = replaceExtension fileNameStr ".stdout.txt"
+      stdoutExists <- lift $ doesFileExist stdoutPath
+      when stdoutExists $ do
+        expected <- lift $ readFile stdoutPath
+        actual   <- lift $ getMockIOOutput mockIO
+        when (actual /= expected) $
+          lift $ assertFailure $ printf "stdout doesn't match %s\n  expected: %s\n  actual:   %s" stdoutPath (show expected) (show actual)
 
     lift $ step "Eval Build..."
     _ <- getEvalBuild ctss fileName "main"

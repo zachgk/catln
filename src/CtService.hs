@@ -22,8 +22,9 @@ import qualified Data.HashMap.Strict     as H
 import qualified Data.HashSet            as S
 import           Data.List               (partition)
 import           Data.Maybe
-import           Eval                    (evalAnnots, evalBuild, evalBuildAll,
-                                          evalRun, evalTest)
+import           Eval                    (MockIO, evalAnnots, evalBuild,
+                                          evalBuildAll, evalRun, evalRunMock,
+                                          evalTest)
 import           Eval.Common             (EvalMetaDat, EvalResult, TExpr,
                                           Val (StrVal, TupleVal))
 import           Semantics               (CTSSConfig)
@@ -304,6 +305,11 @@ getEvaluated :: CTSS -> FileImport -> String -> CResT IO Integer
 getEvaluated ctss prgmName fun = do
   base <- ctssGetFrom ssfTPrgm prgmName ctss
   fst <$> evalRun fun prgmName base
+
+getEvaluatedMock :: CTSS -> MockIO -> FileImport -> String -> CResT IO Integer
+getEvaluatedMock ctss mockIO prgmName fun = do
+  base <- ctssGetFrom ssfTPrgm prgmName ctss
+  fst <$> evalRunMock mockIO fun prgmName base
 
 getEvalBuild :: CTSS -> FileImport -> String -> CResT IO Val
 getEvalBuild ctss prgmName fun = do

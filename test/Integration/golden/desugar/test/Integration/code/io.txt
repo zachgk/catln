@@ -1,0 +1,22 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
+                            ( Value val= CInt 0 )
+                            ( Value /this= println
+                                ( Value msg= CStr "hello world" )( Value /this= Value io )
+                            )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG = [ CGType ]
+    , prgmAnnots = []
+    }
