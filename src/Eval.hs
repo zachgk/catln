@@ -23,6 +23,7 @@ import           Semantics.Types
 
 import           Control.Monad
 import           Data.Graph
+import           Data.IORef
 import           Data.List           (nubBy)
 import           Data.Maybe
 -- import           Emit                (codegenExInit)
@@ -264,6 +265,19 @@ evalAnnots prgmName prgmGraphData = do
         val <- evalStateT (evalExpr tree) env
         return (annot, val)
 
+-- | A mock IO handle that captures printed lines in an internal buffer
+-- instead of writing to real stdout.  Create with 'newMockIO', pass to
+-- 'evalRunMock', then read captured output with 'getMockIOOutput'.
+newtype MockIO = MockIO (IORef [String])
+
+newMockIO :: IO MockIO
+newMockIO = MockIO <$> newIORef []
+
+-- | Returns all lines printed to the MockIO, joined with newlines
+-- (equivalent to what would have appeared on stdout).
+getMockIOOutput :: MockIO -> IO String
+getMockIOOutput (MockIO ref) = unlines . reverse <$> readIORef ref
+
 evalRun :: String -> FileImport -> EPrgmGraphData -> CResT IO (Integer, EvalResult)
 evalRun function prgmName prgmGraphData = do
   prgm <- asCResT $ prgmFromGraphData prgmName prgmGraphData
@@ -285,6 +299,27 @@ evalRun function prgmName prgmGraphData = do
   case res of
     (IOVal r io) -> lift (io >> pure (r, evalResult env'))
     _ -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval did not return an instance of IO \n\tInstead returned %s \n\t With expr %s" (show res) (show expr)]
+
+-- | Like 'evalRun' but captures IO output into the given 'MockIO' buffer
+-- instead of writing to real stdout.
+evalRunMock :: MockIO -> String -> FileImport -> EPrgmGraphData -> CResT IO (Integer, EvalResult)
+evalRunMock (MockIO ref) function prgmName prgmGraphData = do
+  prgm <- asCResT $ prgmFromGraphData prgmName prgmGraphData
+  targetMode <- asCResT $ evalTargetMode function prgmName prgmGraphData
+  input <- case targetMode of
+        EvalRunWithContext function' ->
+          return $ eApplyM (eVal ContextStr `eApply` (contextValStr, eVal function')) "/io" ioM
+        EvalRun function' ->
+          return $ eVal function'
+        _ -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval could not find a function %s to run" (show function)]
+  let src = getExprPartialType input
+  let dest = ioType
+  (expr, env) <- asCResT $ evalBuildPrgm input src dest prgm
+  let env2 = evalSetArgs (H.singleton "/io" (MockIOVal 0 (pure ()) ref)) env
+  (res, env') <- asCResT $ runStateT (evalExpr expr) env2
+  case res of
+    (MockIOVal r io _) -> lift (io >> pure (r, evalResult env'))
+    _ -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "evalRunMock did not return a MockIOVal \n\tInstead returned %s \n\t With expr %s" (show res) (show expr)]
 
 evalBuild :: String -> FileImport -> EPrgmGraphData -> CResT IO (Val, EvalResult)
 evalBuild function prgmName prgmGraphData = do
