@@ -17,6 +17,8 @@
 module TypeCheck.Constrain where
 
 import qualified Data.HashMap.Strict as H
+import qualified Data.IntSet         as IS
+import           Data.List           (partition)
 import           Data.Maybe
 import qualified Data.Zip            as Z
 
@@ -248,7 +250,38 @@ runConstraints 0 _ = do
 runConstraints limit cons = do
   constraintsToPrune <- mapM executeConstraint cons
   updated <- gets feUpdatedDuringEpoch
+  updatedPnts <- gets feUpdatedPnts
   let cons' = mapMaybe (\(con, shouldPrune) -> if shouldPrune then Nothing else Just con) $ zip cons constraintsToPrune
   when updated $ do
     modify nextConstrainEpoch
-    runConstraints (limit - 1) cons'
+    -- Give dirty epochs their own budget (5× the full-sweep limit) since each dirty
+    -- epoch only propagates changes one step at a time and needs more iterations.
+    runConstraintsDirty (limit * 5) cons' updatedPnts
+
+-- |
+-- Like 'runConstraints', but only re-evaluates constraints that touch at least one point
+-- that was updated in the previous epoch. Clean constraints are carried along unchanged.
+-- When the feUnionAllObjs point itself changed, we fall back to running all constraints
+-- because ArrowTo constraints implicitly read feUnionAllObjs but don't list it in their metas.
+runConstraintsDirty :: Integer -> [VConstraint] -> IS.IntSet -> StateT FEnv TypeCheckResult ()
+runConstraintsDirty _ [] _ = return ()
+runConstraintsDirty 0 _ _ = do
+  env@FEnv{feTrace, feUnionAllObjs} <- get
+  if (stypeAct <$> descriptor env feUnionAllObjs) == pure PTopType
+    then lift $ TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit without determining the TopTop (unionAllObjs)"] ()
+    else lift $ TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit with still changing constraints: \n\n%s" (show $ showTraceConstrainEpoch env $ head $ tail $ tcEpochs feTrace)] ()
+runConstraintsDirty limit cons dirtyPnts = do
+  FEnv{feUnionAllObjs} <- get
+  -- ArrowTo constraints implicitly read feUnionAllObjs; if it changed, run all constraints
+  let unionAllObjsPnt = IS.fromList $ maybeToList $ getPnt feUnionAllObjs
+  let (toRun, toDefer) = if not $ IS.null $ IS.intersection unionAllObjsPnt dirtyPnts
+        then (cons, [])  -- feUnionAllObjs changed: run everything
+        else partition (\c -> not $ IS.null $ IS.intersection dirtyPnts (constraintAllPnts c)) cons
+  constraintsToPrune <- mapM executeConstraint toRun
+  updated <- gets feUpdatedDuringEpoch
+  updatedPnts <- gets feUpdatedPnts
+  let toRun' = mapMaybe (\(con, shouldPrune) -> if shouldPrune then Nothing else Just con) $ zip toRun constraintsToPrune
+  let cons' = toRun' ++ toDefer
+  when updated $ do
+    modify nextConstrainEpoch
+    runConstraintsDirty (limit - 1) cons' updatedPnts

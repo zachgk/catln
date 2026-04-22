@@ -21,6 +21,7 @@ module TypeCheck.Encode where
 import           Control.Monad
 import qualified Data.HashMap.Strict as H
 import qualified Data.IntMap.Lazy    as IM
+import qualified Data.IntSet         as IS
 import           Prelude             hiding (unzip)
 
 import           Control.Monad.State
@@ -70,6 +71,7 @@ makeBaseFEnv prgm = FEnv{
   feVTypeGraph = mempty,
   feTTypeGraph = mempty,
   feUpdatedDuringEpoch = False,
+  feUpdatedPnts = IS.empty,
   feTypeEnv = mkTypeEnv prgm,
   feTrace = mkTraceConstrain
   }
