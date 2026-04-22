@@ -39,12 +39,12 @@ Prgm
                                             , /tail=/IntNil
                                             )
                                         ) = /IntCons
-                                        ( Value /head -> ~Integer = CInt 5 )
+                                        ( Value /head -> /Data/Primitive/Integer = CInt 5 )
                                         ( Value /tail -> /IntCons
                                             ( /head=~Integer
                                             , /tail=/IntNil
                                             ) = /IntCons
-                                            ( Value /head -> ~Integer = CInt 3 )( Value /tail -> /IntNil = Value /IntNil )
+                                            ( Value /head -> /Data/Primitive/Integer = CInt 3 )( Value /tail -> /IntNil = Value /IntNil )
                                         )
                                     )
                                 )
@@ -65,8 +65,7 @@ Prgm
                             ( Value /this -> /IntCons
                                 ( /head=~Integer
                                 , /tail=( TopType | PredRel IntList && PredClass /IntList )
-                                ) = /IntCons( Value /head -> ~Integer )
-                                ( Value /tail -> ( TopType | PredRel IntList && PredClass /IntList ) )
+                                ) = /IntCons( Value /head -> ~Integer )( Value /tail -> ∀/IntList )
                             ) ->
                             ( /operator+
                                 ( /r=/Data/Primitive/Integer

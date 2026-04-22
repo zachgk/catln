@@ -20,6 +20,7 @@ module TypeCheck.Common where
 import           Data.Hashable
 import qualified Data.HashMap.Strict        as H
 import qualified Data.IntMap.Lazy           as IM
+import qualified Data.IntSet                as IS
 import           Data.List
 import           Data.UUID                  (nil)
 import           GHC.Generics               (Generic)
@@ -74,6 +75,7 @@ data FEnv = FEnv { fePnts               :: IM.IntMap Scheme
                  , feVTypeGraph         :: VTypeGraph
                  , feTTypeGraph         :: TTypeGraph
                  , feUpdatedDuringEpoch :: Bool -- ^ If a pnt is updated during the epoch
+                 , feUpdatedPnts        :: IS.IntSet -- ^ Set of points updated during the epoch
                  , feTypeEnv            :: FEnvTypeEnv
                  , feTrace              :: TraceConstrain
                  } deriving (Show)
@@ -342,6 +344,13 @@ constraintDatMetas conDat = execWriter $ mapMConDat f conDat
 constraintMetas :: Constraint p -> [p]
 constraintMetas (Constraint _ _ d) = constraintDatMetas d
 
+-- | Get all Pnts referenced by a VConstraint (for dirty-set filtering)
+-- Includes both the dat metas and the vaenv points (both input and output halves).
+constraintAllPnts :: VConstraint -> IS.IntSet
+constraintAllPnts con@(Constraint _ vaenv _) =
+  IS.fromList $ mapMaybe getPnt $
+    constraintMetas con ++ concatMap (\(a, b) -> [a, b]) (H.elems vaenv)
+
 constraintVarArgEnvIO :: Constraint p -> CVarArgEnv p
 constraintVarArgEnvIO (Constraint _ vaenv _) = vaenv
 
@@ -412,7 +421,7 @@ fresh  scheme = do
 
 setDescriptor :: FEnv -> VConstraint -> VarMeta -> Scheme -> String -> FEnv
 setDescriptor env _ Meta{getMetaDat=VarMetaDat Nothing _} _ _ = env
-setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@Meta{getMetaDat=VarMetaDat (Just p) _} scheme' msg = env{fePnts = pnts', feTrace = feTrace', feUpdatedDuringEpoch = feUpdatedDuringEpoch || schemeChanged}
+setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch, feUpdatedPnts} con m@Meta{getMetaDat=VarMetaDat (Just p) _} scheme' msg = env{fePnts = pnts', feTrace = feTrace', feUpdatedDuringEpoch = feUpdatedDuringEpoch || schemeChanged, feUpdatedPnts = if schemeChanged then IS.insert p feUpdatedPnts else feUpdatedPnts}
   where
     scheme = descriptor env m
     vaenv = fmap stypeAct <$> mapM (descriptor env) (constraintVarArgEnv con)
@@ -468,7 +477,7 @@ nextConstrainEpoch :: FEnv -> FEnv
 nextConstrainEpoch env@FEnv{feTrace=tc@TraceConstrain{tcCons=[]}, feCons, feUnionAllObjs} = nextConstrainEpoch env{feTrace=tc{tcCons=feCons, tcAllObjs=feUnionAllObjs}} -- On first epoch, set constraints and all objs
 nextConstrainEpoch env@FEnv{feTrace=tc@TraceConstrain{tcEpochs}} = case tcEpochs of
   []         -> env
-  prevEpochs -> env{feTrace = tc{tcEpochs=[]:prevEpochs}, feUpdatedDuringEpoch = False}
+  prevEpochs -> env{feTrace = tc{tcEpochs=[]:prevEpochs}, feUpdatedDuringEpoch = False, feUpdatedPnts = IS.empty}
 
 startConstraint :: VConstraint -> FEnv -> FEnv
 startConstraint c env@FEnv{feTrace = tc@TraceConstrain{tcEpochs=curEpoch:prevEpochs}} = env{feTrace = tc{tcEpochs=((c, []):curEpoch):prevEpochs}}

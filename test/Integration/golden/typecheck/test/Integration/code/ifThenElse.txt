@@ -34,7 +34,20 @@ Prgm
                                         , fromList []
                                         )
                                     ,
-                                        ( /Catln/Else + /Catln/ThenElse/fromBool( /v=TopType ) + /Catln/Then )
+                                        ( /Catln/Else + /Catln/ThenElse/fromBool
+                                            ( /v=UnionType
+                                                ( Just
+                                                    ( PredClass /Data/Primitive/Boolean
+                                                    , fromList []
+                                                    )
+                                                , /operator>=
+                                                    ( /r=/Data/Primitive/Integer
+                                                    , /l=/Data/Primitive/Integer
+                                                    )
+                                                , []
+                                                )
+                                            ) + /Catln/Then
+                                        )
                                     , []
                                     )
                                 ) + /operator*
@@ -42,9 +55,39 @@ Prgm
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer
                             ) = /abs.$727590( Value /x -> TVArg /x = Value /x )
-                            ( Value /$727590-arg ->
-                                ( /Catln/Else + /Catln/ThenElse/fromBool( /v=∀/Data/Primitive/Boolean ) + /Catln/Then ) = /Catln/ThenElse/fromBool
-                                ( Value /v -> ∀/Data/Primitive/Boolean = /operator>=( Value /l -> TVArg /x = Value /x )
+                            ( Value /$727590-arg -> UnionType
+                                ( Just
+                                    ( PredClass /Catln/ThenElse
+                                    , fromList []
+                                    )
+                                ,
+                                    ( /Catln/Else + /Catln/ThenElse/fromBool
+                                        ( /v=UnionType
+                                            ( Just
+                                                ( PredClass /Data/Primitive/Boolean
+                                                , fromList []
+                                                )
+                                            , /operator>=
+                                                ( /r=/Data/Primitive/Integer
+                                                , /l=/Data/Primitive/Integer
+                                                )
+                                            , []
+                                            )
+                                        ) + /Catln/Then
+                                    )
+                                , []
+                                ) = /Catln/ThenElse/fromBool
+                                ( Value /v -> UnionType
+                                    ( Just
+                                        ( PredClass /Data/Primitive/Boolean
+                                        , fromList []
+                                        )
+                                    , /operator>=
+                                        ( /r=/Data/Primitive/Integer
+                                        , /l=/Data/Primitive/Integer
+                                        )
+                                    , []
+                                    ) = /operator>=( Value /l -> TVArg /x = Value /x )
                                     ( Value /r -> /Data/Primitive/Integer = CInt 0 )
                                 )
                             )

@@ -36,18 +36,12 @@ Prgm
                     , omiDefs =
                         [ /Data/length( EAppArg Value /this -> /Data/Nil ) -> /Data/Primitive/Integer = 0
                         , /Data/length
-                            ( EAppArg Value /this -> /Data/Cons[ /T=TopType ]
-                                ( /head=TVVar /T
-                                , /tail=
-                                    ( TopType | PredClass /Data/ConsList && PredRel ConsList[ /T=TVVar /T ] )
+                            ( EAppArg Value /this -> /Data/Cons
+                                ( /head=TopType
+                                , /tail=TopType
                                 ) = /Data/Cons( EAppArg Value /head )
                                 ( EAppArg Value /tail ->
-                                    ( /Data/Nil + /Data/Cons[ /T=TopType ]
-                                        ( /head=TVVar /T
-                                        , /tail=
-                                            ( TopType | PredClass /Data/ConsList && PredRel ConsList[ /T=TVVar /T ] )
-                                        )
-                                    )
+                                    ( TopType | PredClass /Data/ConsList && PredRel ConsList[ /T=TVVar /T ] )
                                 )
                             ) ->
                             ( /operator+
@@ -57,9 +51,7 @@ Prgm
                             ) = /operator+
                             ( EAppArg Value /l -> /Data/Primitive/Integer = 1 )
                             ( EAppArg Value /r -> /Data/Primitive/Integer =
-                                ( /Data/length
-                                    ( EAppArg Value /this -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) ) ↦ /Data/Primitive/Integer
-                                )
+                                ( /Data/length( EAppArg Value /this -> TVArg /tail = Value /tail ) ↦ /Data/Primitive/Integer )
                             )
                         ]
                     }

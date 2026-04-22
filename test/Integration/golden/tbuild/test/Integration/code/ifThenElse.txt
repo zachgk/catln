@@ -37,7 +37,20 @@ Prgm
                                         , fromList []
                                         )
                                     ,
-                                        ( /Catln/Else + /Catln/ThenElse/fromBool( /v=TopType ) + /Catln/Then )
+                                        ( /Catln/Else + /Catln/ThenElse/fromBool
+                                            ( /v=UnionType
+                                                ( Just
+                                                    ( PredClass /Data/Primitive/Boolean
+                                                    , fromList []
+                                                    )
+                                                , /operator>=
+                                                    ( /r=/Data/Primitive/Integer
+                                                    , /l=/Data/Primitive/Integer
+                                                    )
+                                                , []
+                                                )
+                                            ) + /Catln/Then
+                                        )
                                     , []
                                     )
                                 ) + /operator*
@@ -46,13 +59,41 @@ Prgm
                                 ) + /Data/Primitive/Integer
                             ) = /abs.$727590
                             ( EAppArg Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                            ( EAppArg Value /$727590-arg ->
-                                ( /Catln/Else + /Catln/ThenElse/fromBool( /v=∀/Data/Primitive/Boolean ) + /Catln/Then ) = /Catln/ThenElse/fromBool
-                                ( EAppArg Value /v -> ∀/Data/Primitive/Boolean =
-                                    ( /operator>=
-                                        ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                                        ( EAppArg Value /r -> /Data/Primitive/Integer = 0 ) ↦ ∀/Data/Primitive/Boolean
+                            ( EAppArg Value /$727590-arg -> UnionType
+                                ( Just
+                                    ( PredClass /Catln/ThenElse
+                                    , fromList []
                                     )
+                                ,
+                                    ( /Catln/Else + /Catln/ThenElse/fromBool
+                                        ( /v=UnionType
+                                            ( Just
+                                                ( PredClass /Data/Primitive/Boolean
+                                                , fromList []
+                                                )
+                                            , /operator>=
+                                                ( /r=/Data/Primitive/Integer
+                                                , /l=/Data/Primitive/Integer
+                                                )
+                                            , []
+                                            )
+                                        ) + /Catln/Then
+                                    )
+                                , []
+                                ) = /Catln/ThenElse/fromBool
+                                ( EAppArg Value /v -> UnionType
+                                    ( Just
+                                        ( PredClass /Data/Primitive/Boolean
+                                        , fromList []
+                                        )
+                                    , /operator>=
+                                        ( /r=/Data/Primitive/Integer
+                                        , /l=/Data/Primitive/Integer
+                                        )
+                                    , []
+                                    ) = /operator>=
+                                    ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                                    ( EAppArg Value /r -> /Data/Primitive/Integer = 0 )
                                 )
                             )
                         ]
