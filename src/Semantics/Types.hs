@@ -148,7 +148,24 @@ data Constant
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 -- | The non-name properties of a 'PartialType'
-type PartialArgsOption = (H.HashMap TypeVarName Type, H.HashMap ArgName Type, TypePredicates, PtArgMode)
+newtype PartialArgsOption = PartialArgsOption
+  (H.HashMap TypeVarName Type, H.HashMap ArgName Type, TypePredicates, PtArgMode)
+  deriving (Eq, Ord)
+
+instance Show PartialArgsOption where
+  show (PartialArgsOption t) = show t
+
+instance ToJSON PartialArgsOption where
+  toJSON (PartialArgsOption t) = toJSON t
+
+-- | Shallow hash: map sizes + predsTag + argMode, avoiding recursive descent into Type values.
+-- Mirrors the pattern used for 'PartialType' and 'Type'.
+instance Hashable PartialArgsOption where
+  hashWithSalt s (PartialArgsOption (vars, args, preds, mode)) =
+    s `hashWithSalt` H.size vars
+      `hashWithSalt` H.size args
+      `hashWithSalt` predsTag preds
+      `hashWithSalt` mode
 
 -- | An alternative format for many 'PartialType's which combine those that share the same name
 type PartialLeafs = H.HashMap TypeName (S.HashSet PartialArgsOption)
@@ -593,21 +610,21 @@ fromPartialName (PRelativeName n) = n
 -- | Used to convert a 'UnionType' into its components
 splitUnionType :: PartialLeafs -> [PartialType]
 splitUnionType partials = concatMap (\(k, vs) -> map (aux k) vs) $ H.toList $ fmap S.toList partials
-  where aux name (vars, args, preds, argMode) = PartialType name vars args preds argMode
+  where aux name (PartialArgsOption (vars, args, preds, argMode)) = PartialType name vars args preds argMode
 
 -- | Used to combine the component 'PartialType' to form a 'UnionType'
 joinUnionType :: [PartialType] -> PartialLeafs
-joinUnionType = foldr (\(PartialType pName pVars pArgs pPreds pArgMode) partials -> H.insertWith S.union pName (S.singleton (pVars, pArgs, pPreds, pArgMode)) partials) H.empty
+joinUnionType = foldr (\(PartialType pName pVars pArgs pPreds pArgMode) partials -> H.insertWith S.union pName (S.singleton (PartialArgsOption (pVars, pArgs, pPreds, pArgMode))) partials) H.empty
 
 -- | Used to convert a 'UnionType' into its components while keeping types with the same name together
 splitUnionTypeByName :: PartialLeafs -> H.HashMap TypeName [PartialType]
 splitUnionTypeByName = H.mapWithKey (\k vs -> map (aux k) (S.toList vs))
-  where aux name (vars, args, preds, argMode) = PartialType name vars args preds argMode
+  where aux name (PartialArgsOption (vars, args, preds, argMode)) = PartialType name vars args preds argMode
 
 -- | Used to combine the component 'PartialType' to form a 'UnionType' while keeping types with the same name together
 joinUnionTypeByName :: H.HashMap TypeName [PartialType] -> PartialLeafs
 joinUnionTypeByName leafs = H.map (S.fromList . map typeToArgOption) $ H.filter (not . null) leafs
-  where typeToArgOption (PartialType _ pVars pArgs pPreds pArgMode) = (pVars, pArgs, pPreds, pArgMode)
+  where typeToArgOption (PartialType _ pVars pArgs pPreds pArgMode) = PartialArgsOption (pVars, pArgs, pPreds, pArgMode)
 
 -- | Helper to create a 'UnionType' consisting of a single 'PartialType'
 singletonType :: PartialType -> Type
