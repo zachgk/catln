@@ -239,14 +239,14 @@ Prgm
                     , omiDefs =
                         [ /add( Value /x -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer ) ->
                             ( /operator+
-                                ( /r=/Data/String
-                                , /l=/Data/String
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
                                 ) + /operator+
                                 ( /r=/Data/Primitive/Float
                                 , /l=/Data/Primitive/Float
                                 ) + /operator+
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
+                                ( /r=/Data/String
+                                , /l=/Data/String
                                 ) + /Data/String + /add.result
                                 ( /x=/Data/Primitive/Integer
                                 , /y=/Data/Primitive/Integer
@@ -443,11 +443,11 @@ Prgm
                             ( Value /x -> ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float ) )
                             ( Value /y -> ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float ) ) ->
                             ( /operator+
-                                ( /r=/Data/String
-                                , /l=/Data/String
-                                ) + /operator+
                                 ( /r=/Data/Primitive/Float
                                 , /l=/Data/Primitive/Float
+                                ) + /operator+
+                                ( /r=/Data/String
+                                , /l=/Data/String
                                 ) + /operator+
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer

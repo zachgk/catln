@@ -37,11 +37,11 @@ Prgm
                             ( EAppArg Value /l -> TVArg /integer = ( Value /integer ↦ TVArg /integer ) )
                             ( EAppArg Value /r -> /Data/Primitive/Integer = 1 ) ->
                             ( /operator+
-                                ( /r=/Data/Primitive/Float
-                                , /l=/Data/Primitive/Float
-                                ) + /operator+
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
+                                ) + /operator+
+                                ( /r=/Data/Primitive/Float
+                                , /l=/Data/Primitive/Float
                                 ) + /Data/Primitive/Integer + /Data/Primitive/Float
                             ) = /operator+
                             ( EAppArg Value /l -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) =
