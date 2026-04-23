@@ -168,9 +168,11 @@ propUnionDistributesIntersection gPrgm = property $ do
   c <- forAll $ genType prgm
   let f = unionTypes typeEnv a (intersectTypes typeEnv b c)
   annotate $ printf "f = %s" (show f)
-  let d = intersectTypes typeEnv (unionTypes typeEnv a b) (unionTypes typeEnv a c)
-  annotate $ printf "a∪b = %s" (show $ unionTypes typeEnv a b)
-  annotate $ printf "a∪c = %s" (show $ unionTypes typeEnv a c)
+  let ab = unionTypes typeEnv a b
+  let ac = unionTypes typeEnv a c
+  annotate $ printf "a∪b = %s" (show ab)
+  annotate $ printf "a∪c = %s" (show ac)
+  let d = intersectTypes typeEnv ab ac
   annotate $ printf "d = %s" (show d)
   assert $ isEqType typeEnv f d
 
