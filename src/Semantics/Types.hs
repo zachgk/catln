@@ -755,10 +755,11 @@ predImplies _       _     _  PredsNone = True   -- anything ⊆ top
 predImplies _       _     p1 p2 | p1 == p2 = True  -- reflexivity
 predImplies _       _     PredsNone _ = False   -- top ⊄ anything specific
 -- Logical connectives
-predImplies typeEnv vaenv p1@(PredsAnd ps) p2      = any (\p -> predImplies typeEnv vaenv p p2) ps || allCheck || cancellationCheck
+predImplies typeEnv vaenv p1@(PredsAnd ps) p2      = any (\p -> predImplies typeEnv vaenv p p2) ps || allCheck || cancellationCheck || directContradictCheck
   -- if any conjunct alone implies p2, the intersection does too
   -- if p2 is a conjunction, p1 implies p2 iff p1 implies each conjunct of p2
   -- also: (X₁ ∨ X₂ ∨ ... ∨ q) ∧ ¬X₁ ∧ ¬X₂ ∧ ... ⊆ q  (disjunction cancellation)
+  -- direct contradiction: p1 → ¬q iff p1 ∧ q = ∅
   where
     allCheck = case p2 of
       PredsAnd qs -> all (predImplies typeEnv vaenv p1) qs
@@ -770,6 +771,9 @@ predImplies typeEnv vaenv p1@(PredsAnd ps) p2      = any (\p -> predImplies type
       , (q_inner, xs) <- choices inners
       , predImplies typeEnv vaenv q_inner p2
       ]
+    directContradictCheck = case p2 of
+      PredsNot inner -> isPredsContradictory (predsAnd p1 inner)
+      _              -> False
     extractNot (PredsNot x) = Just x
     extractNot _            = Nothing
     choices []     = []
@@ -870,6 +874,14 @@ expandTypesWithNamesFull typeEnv@TypeEnv{teNames} vaenv (TopType negPartials pre
       let mapped = map expandPredsWithNamesFull ps
           leafs = foldl1 (intersectPartialLeafsEnv typeEnv vaenv) (map fst mapped)
       in (leafs, all snd mapped)
+    -- De Morgan: ¬(p1 ∧ ... ∧ pn) = ¬p1 ∨ ... ∨ ¬pn.
+    -- Compute union of complements directly instead of topFiltered - intersect(expand(pi)),
+    -- which avoids approximation errors from PtArgAny/PtArgExact subtraction.
+    expandPredsWithNamesFull (PredsNot (PredsAnd ps)) =
+      let negPs = map predsNot ps
+          mapped = map expandPredsWithNamesFull negPs
+          leafs = foldl (H.unionWith S.union) H.empty (map fst mapped)
+      in (leafs, any snd mapped)
     expandPredsWithNamesFull (PredsNot inner) =
       let (innerLeafs, _) = expandPredsWithNamesFull inner
       in case differencePartialLeafs typeEnv vaenv topFilteredLeafs innerLeafs of
@@ -974,7 +986,6 @@ expandRelPartial typeEnv@TypeEnv{teNames} vaenv relPartial = result
     fromTypeEnv = typeEnvNamesMatching
     fromArgs = map (\n -> relPartial{ptName=n}) $ relativeNameFilter name $ map pkName $ H.keys $ snd $ splitVarArgEnv vaenv
 
-
     typeEnvNamesMatching = tpNames ++ clsNames
     relName = ptName relPartial
     tpNames = map (\n -> singletonType relPartial{ptName=n}) $ relativeNameFilter relName $ S.toList teNames
@@ -990,6 +1001,9 @@ isSubPartialOfWithEnv _ _ PartialType{ptName=subName} PartialType{ptName=superNa
 isSubPartialOfWithEnv _ _ PartialType{ptArgs=subArgs, ptArgMode=PtArgExact} PartialType{ptArgs=superArgs, ptArgMode=PtArgExact} | H.keysSet subArgs /= H.keysSet superArgs = False
 isSubPartialOfWithEnv _ _ PartialType{ptArgs=subArgs, ptArgMode=PtArgAny} PartialType{ptArgs=superArgs, ptArgMode=PtArgAny} | not (H.keysSet superArgs `isSubsetOf` H.keysSet subArgs) = False
 isSubPartialOfWithEnv _ _ PartialType{ptArgs=subArgs} PartialType{ptArgs=superArgs, ptArgMode=superArgMode} | superArgMode == PtArgExact && not (H.keysSet subArgs `isSubsetOf` H.keysSet superArgs) = False
+-- PtArgExact with no args cannot be a subtype of PtArgAny with required args:
+-- PtArgExact{} means "exactly 0 args specified", but PtArgAny{args} requires those args to be present.
+isSubPartialOfWithEnv _ _ PartialType{ptArgs=subArgs, ptArgMode=PtArgExact} PartialType{ptArgs=superArgs, ptArgMode=PtArgAny} | H.null subArgs && not (H.null superArgs) = False
 isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subArgs, ptPreds=subPreds} super@PartialType{ptVars=superVars, ptArgs=superArgs, ptPreds=superPreds} = debugTrace typeEnv msg result
   where
     vaenv' = H.union vaenv (substituteWithVarArgEnv vaenv <$> H.unionWith (intersectTypes typeEnv) (ptVarArg super) (ptVarArg sub))
@@ -1269,7 +1283,14 @@ compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials)) posLeafs 
     isDominatedByPredClass (PredsOne (PredRel r)) =
       any (\c -> relativeNameMatches (ptName r) (ptName c)) predClassAtoms
     isDominatedByPredClass _                      = False
--- Top component catch-all (includes PTopType and TopType np PredsNone); preserve constants
+-- Top component catch-all (includes PTopType and TopType np PredsNone); preserve constants.
+-- Also compact the pos component for structural canonicalization (ensures union commutativity
+-- holds structurally: different union orderings that mix Just and Nothing forms produce
+-- equivalent pos components after compaction).
+compactType typeEnv vaenv (UnionType (Just topData) pos cs)
+  | not (H.null pos) =
+      let pos' = compactPartialLeafs typeEnv vaenv pos
+      in UnionType (Just topData) pos' cs
 compactType _ _ t@(UnionType (Just _) _ _) = t
 -- TypeVar: unchanged
 compactType _ _ t@TypeVar{} = t
@@ -1457,7 +1478,13 @@ intersectTypesWithVarEnv typeEnv vaenv (UnionType Nothing posPartials []) (Union
 intersectTypesWithVarEnv typeEnv vaenv t1@(UnionType Nothing partials []) t2@(UnionType (Just (preds, negPartials)) (H.null -> True) _)
   | H.null negPartials =
       case expandTypesWithNamesFull typeEnv vaenv t2 (H.keysSet partials) of
+        -- When filteredLeafs is non-empty, use it directly regardless of hasOutside.
+        -- Elements of t2 outside pos's names cannot affect the intersection result,
+        -- so filteredLeafs (elements of t2 within pos's names) is sufficient.
+        (filteredLeafs, _) | not (H.null filteredLeafs) ->
+          intersectTypesWithVarEnv typeEnv vaenv t1 (UnionType Nothing filteredLeafs [])
         (filteredLeafs, False) -> intersectTypesWithVarEnv typeEnv vaenv t1 (UnionType Nothing filteredLeafs [])
+        -- filteredLeafs is empty but hasOutside=True: t2 might still constrain t1 symbolically.
         -- Symbolic: add preds to each partial when compactPartialsWithClassPred can resolve them
         -- (requires no PredsNot, which tryPredsToList signals by returning Nothing).
         -- Otherwise expand preds symbolically within pp's names (no expandPredicates needed).
@@ -1510,11 +1537,16 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
     differencePartial :: PartialType -> PartialType -> [PartialType]
     differencePartial p1 p2 | p1 == p2 = []
     differencePartial p1@PartialType{ptArgs=posArgs, ptArgMode=PtArgExact} PartialType{ptArgs=negArgs, ptArgMode=PtArgExact} | H.keysSet posArgs /= H.keysSet negArgs = [p1]
-    -- PtArgAny pos minus PtArgExact neg where neg requires args pos doesn't have:
-    -- The neg constrains to a specific arg set that pos (as PtArgAny) doesn't require,
-    -- so there are pos values (e.g. with fewer args) that the neg doesn't cover.
+    -- PtArgAny pos minus PtArgExact neg:
+    -- (a) pos has specific args and neg has args pos doesn't: neg constrains an arg set that
+    --     pos doesn't require, so there are pos values that neg doesn't cover → return [p1].
+    -- (b) neg has NO args but pos DOES: PtArgExact{} can only cover instances with exactly
+    --     no args, but pos requires specific args → those instances aren't covered → return [p1].
+    -- (c) pos has NO args (PtArgAny{}): fall through to subtractArg, which returns [] when neg
+    --     has args pos doesn't specify (PtArgExact{negArgs} fully covers the open PtArgAny{}).
     differencePartial p1@PartialType{ptArgs=posArgs, ptArgMode=PtArgAny} PartialType{ptArgs=negArgs, ptArgMode=PtArgExact}
-      | not (H.keysSet negArgs `S.isSubsetOf` H.keysSet posArgs) = [p1]
+      | not (H.null posArgs) && not (H.keysSet negArgs `S.isSubsetOf` H.keysSet posArgs) = [p1]
+      | H.null negArgs && not (H.null posArgs) = [p1]
     differencePartial p1@PartialType{ptArgs=posArgs, ptVars=posVars, ptArgMode=posArgMode} PartialType{ptArgs=negArgs, ptVars=negVars, ptArgMode=negArgMode} | posArgMode == negArgMode || negArgMode == PtArgExact = mapMaybe subtractArg (H.toList negArgs) ++ mapMaybe subtractVar (H.toList negVars)
       where
         subtractArg (_, PTopType) = Nothing
