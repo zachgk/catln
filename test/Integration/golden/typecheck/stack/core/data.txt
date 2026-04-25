@@ -41,7 +41,11 @@ Prgm
                                 , /tail=TopType
                                 ) = /Data/Cons( Value /head )
                                 ( Value /tail ->
-                                    ( TopType | PredClass /Data/ConsList && PredRel ConsList[ /T=TVVar /T ] )
+                                    ( /Data/Nil + /Data/Cons
+                                        ( /head=TopType
+                                        , /tail=TopType
+                                        )
+                                    )
                                 )
                             ) ->
                             ( /operator+
@@ -146,6 +150,30 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/fmap"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/fmap( Value /fn )( Value /this -> /Data/None ) -> /Data/None = Value /Data/None
+                        , /Data/fmap( Value /fn )
+                            ( Value /this -> TVVar /T = /( Value /this -> TVVar /T ) )= /fn( Value /v -> TVArg /this = Value /this )
+                        , /Data/fmap( Value /fn )( Value /this -> /Data/Nil ) -> /Data/Nil = Value /Data/Nil
+                        , /Data/fmap( Value /fn )
+                            ( Value /this -> /Data/Cons
+                                ( /head=TopType
+                                , /tail=TopType
+                                ) = /Data/Cons( Value /head )( Value /tail )
+                            ) -> /Data/Cons
+                            ( /head=TopType
+                            , /tail=TopType
+                            ) = /Data/Cons
+                            ( Value /head= /fn( Value /v -> TVArg /head = Value /head ) )
+                            ( Value /tail= /Data/fmap( Value /fn -> TVArg /fn = Value /fn )( Value /this -> TVArg /tail = Value /tail ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/None"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/None ]
@@ -188,6 +216,7 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -285,10 +314,6 @@ Prgm
             ( Value /text -> /Data/String = CStr "[Option] defines a type that might have a value or [None].
             It can be used to handle operations that are uncertain if they can produce a response." )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "None.fmap(fn) = None" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "$T.fmap(fn($T)) = fn(this)" )
-        , /Catln/#md
             ( Value /text -> /Data/String = CStr "A [List] is a collection of zero or more ordered items." )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "The simplest kind of list can be created by prepending.
@@ -303,10 +328,6 @@ Prgm
             ( Value /text -> /Data/String = CStr "## List operations" )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "## ConsList runtime operations" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "Nil.fmap(fn) = Nil" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "Cons(head, tail).fmap(fn) = Cons(head=fn(head), tail=tail.fmap(fn))" )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "A [Set] is a collection of zero or more unique items.
             It is not ordered." )

@@ -41,7 +41,11 @@ Prgm
                                 , /tail=TopType
                                 ) = /Data/Cons( EAppArg Value /head )
                                 ( EAppArg Value /tail ->
-                                    ( TopType | PredClass /Data/ConsList && PredRel ConsList[ /T=TVVar /T ] )
+                                    ( /Data/Nil + /Data/Cons
+                                        ( /head=TopType
+                                        , /tail=TopType
+                                        )
+                                    )
                                 )
                             ) ->
                             ( /operator+
@@ -148,6 +152,30 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/fmap"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/fmap( EAppArg Value /fn )( EAppArg Value /this -> /Data/None ) -> /Data/None = Value /Data/None
+                        , /Data/fmap( EAppArg Value /fn )
+                            ( EAppArg Value /this -> TVVar /T = /( EAppArg Value /this -> TVVar /T ) )= /fn( EAppArg Value /v -> TVArg /this = Value /this )
+                        , /Data/fmap( EAppArg Value /fn )( EAppArg Value /this -> /Data/Nil ) -> /Data/Nil = Value /Data/Nil
+                        , /Data/fmap( EAppArg Value /fn )
+                            ( EAppArg Value /this -> /Data/Cons
+                                ( /head=TopType
+                                , /tail=TopType
+                                ) = /Data/Cons( EAppArg Value /head )( EAppArg Value /tail )
+                            ) -> /Data/Cons
+                            ( /head=TopType
+                            , /tail=TopType
+                            ) = /Data/Cons
+                            ( EAppArg Value /head= /fn( EAppArg Value /v -> TVArg /head = Value /head ) )
+                            ( EAppArg Value /tail= /Data/fmap( EAppArg Value /fn -> TVArg /fn = Value /fn )( EAppArg Value /this -> TVArg /tail = Value /tail ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/None"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/None ]
@@ -190,6 +218,7 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -287,10 +316,6 @@ Prgm
             ( EAppArg Value /text -> /Data/String = "[Option] defines a type that might have a value or [None].
             It can be used to handle operations that are uncertain if they can produce a response." )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "None.fmap(fn) = None" )
-        , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "$T.fmap(fn($T)) = fn(this)" )
-        , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "A [List] is a collection of zero or more ordered items." )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "The simplest kind of list can be created by prepending.
@@ -305,10 +330,6 @@ Prgm
             ( EAppArg Value /text -> /Data/String = "## List operations" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "## ConsList runtime operations" )
-        , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Nil.fmap(fn) = Nil" )
-        , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Cons(head, tail).fmap(fn) = Cons(head=fn(head), tail=tail.fmap(fn))" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "A [Set] is a collection of zero or more unique items.
             It is not ordered." )
