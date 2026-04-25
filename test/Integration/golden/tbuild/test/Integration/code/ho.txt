@@ -14,7 +14,7 @@ Prgm
                 ( "/T"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /T( EAppArg Value /x -> /Data/Primitive/Integer ) ]
+                        [ /T( EAppArg Value /x ) ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -23,18 +23,16 @@ Prgm
                 ( "/tst"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /tst
-                            ( EAppArg Value /d -> /T( /x=/Data/Primitive/Integer ) = /T( EAppArg Value /x -> /Data/Primitive/Integer ) )
-                            ( EAppArg /f( EAppArg Value /y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
+                        [ /tst( EAppVar /T TopType )
+                            ( EAppArg Value /d -> /T( /x=TopType ) = /T( EAppArg Value /x -> TVVar /T ) )
+                            ( EAppArg /f( EAppArg Value /y -> TVVar /T ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /tst
-                            ( EAppArg Value /d -> /T( /x=/Data/Primitive/Integer ) = /T( EAppArg Value /x -> /Data/Primitive/Integer ) )
-                            ( EAppArg /f( EAppArg Value /y -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean =
-                            ( /f
-                                ( EAppArg Value /y -> TVArg /x = ( Value /x ↦ TVArg /x ) ) ↦ ∀/Data/Primitive/Boolean
-                            )
+                            ( EAppArg Value /d -> /T( /x=TopType ) = /T( EAppArg Value /x ) )
+                            ( EAppArg /f( EAppArg Value /y ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean =
+                            ( /f( EAppArg Value /y -> TVArg /x = Value /x ) ↦ ∀/Data/Primitive/Boolean )
                         ]
                     }
                 )
