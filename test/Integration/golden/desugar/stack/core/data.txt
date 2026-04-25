@@ -134,6 +134,23 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/fmap"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/fmap( Value fn )( Value /this -> /Data/None )= Value None
+                        , /Data/fmap( Value fn )
+                            ( Value /this= /( Value this -> TVVar /T ) )= fn( Value v= Value this )
+                        , /Data/fmap( Value fn )( Value /this -> /Data/Nil )= Value Nil
+                        , /Data/fmap( Value fn )
+                            ( Value /this= Cons( Value head )( Value tail ) )= Cons
+                            ( Value head= fn( Value v= Value head ) )
+                            ( Value tail= fmap( Value fn= Value fn )( Value /this= Value tail ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/None"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/None ]
@@ -176,6 +193,7 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -273,10 +291,6 @@ Prgm
             ( Value /text= CStr "[Option] defines a type that might have a value or [None].
             It can be used to handle operations that are uncertain if they can produce a response." )
         , /Catln/#md
-            ( Value /text= CStr "None.fmap(fn) = None" )
-        , /Catln/#md
-            ( Value /text= CStr "$T.fmap(fn($T)) = fn(this)" )
-        , /Catln/#md
             ( Value /text= CStr "A [List] is a collection of zero or more ordered items." )
         , /Catln/#md
             ( Value /text= CStr "The simplest kind of list can be created by prepending.
@@ -291,10 +305,6 @@ Prgm
             ( Value /text= CStr "## List operations" )
         , /Catln/#md
             ( Value /text= CStr "## ConsList runtime operations" )
-        , /Catln/#md
-            ( Value /text= CStr "Nil.fmap(fn) = Nil" )
-        , /Catln/#md
-            ( Value /text= CStr "Cons(head, tail).fmap(fn) = Cons(head=fn(head), tail=tail.fmap(fn))" )
         , /Catln/#md
             ( Value /text= CStr "A [Set] is a collection of zero or more unique items.
             It is not ordered." )

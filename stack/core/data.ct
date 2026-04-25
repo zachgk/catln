@@ -42,9 +42,8 @@ module(Data)
       It can be used to handle operations that are uncertain if they can produce a response.
 
   every(Option[$T -> $T], isa= [/Data/Functor])
-
-  # None.fmap(fn) = None
-  # $T.fmap(fn($T)) = fn(this)
+  :None.fmap(fn)= None
+  (this -> $T).fmap(fn)= fn(v= this)
   class(List[$T])
 
   # A [List] is a collection of zero or more ordered items.
@@ -93,8 +92,8 @@ module(Data)
 
   every(ConsList[$T -> $T], isa= [/Data/Functor])
 
-  # Nil.fmap(fn) = Nil
-  # Cons(head, tail).fmap(fn) = Cons(head=fn(head), tail=tail.fmap(fn))
+  :Nil.fmap(fn)= Nil
+  Cons(head, tail).fmap(fn)= Cons(head= fn(v= head), tail= tail.fmap(fn= fn))
   class(Set[$T])
 
   # A [Set] is a collection of zero or more unique items.
