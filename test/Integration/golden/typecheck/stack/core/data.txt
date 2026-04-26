@@ -152,7 +152,11 @@ Prgm
             ,
                 ( "/Data/fmap"
                 , ObjectMapItem
-                    { omiDecls = []
+                    { omiDecls =
+                        [ /Data/fmap
+                            ( /fn( Value /v -> TVVar /T ) -> TVVar /T )
+                            ( Value /this -> TVVar /T = /( Value /this -> TVVar /T ) ) -> TVVar /T
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/fmap( Value /fn )( Value /this -> /Data/None ) -> /Data/None = Value /Data/None
@@ -212,10 +216,20 @@ Prgm
                     , omiDefs = []
                     }
                 )
+            ,
+                ( "/Data/testOptionFunctorIdentity"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/testOptionFunctorIdentity -> /Data/Primitive/Integer = CInt 0 ]
+                    }
+                )
             ]
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -328,16 +342,6 @@ Prgm
             ( Value /text -> /Data/String = CStr "## List operations" )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "## ConsList runtime operations" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "## Functor Laws (tests commented out pending compiler fixes for Bug 1 and Bug 2)" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "testOptionFunctorIdentity =" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  #test" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  #assert(test= (3).fmap(fn(v)= v) == 3)" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  0" )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "A [Set] is a collection of zero or more unique items.
             It is not ordered." )

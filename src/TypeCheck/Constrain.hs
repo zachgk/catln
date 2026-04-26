@@ -92,8 +92,8 @@ addArgToType env vaenv (TypeVar v _) newArg = case H.lookup v vaenv of
 addArgToType FEnv{feTypeEnv} _ (UnionType Nothing partials []) newArg = Just $ unionAllTypes feTypeEnv $ mapMaybe fromPartial $ splitUnionType partials
   where
     fromPartial partial@PartialType{ptArgs} = case newArg of
-      TVArg newArg' -> Just $ singletonType partial{ptArgs=H.insertWith (unionTypes feTypeEnv) newArg' PTopType ptArgs}
-      TVVar newArg' -> Just $ singletonType partial{ptVars=H.insertWith (unionTypes feTypeEnv) newArg' PTopType ptArgs}
+      TVArg newArg' -> Just $ singletonType partial{ptArgs=H.insertWith (flip const) newArg' PTopType ptArgs}
+      TVVar newArg' -> Just $ singletonType partial{ptVars=H.insertWith (flip const) newArg' PTopType ptArgs}
 addArgToType _ _ _ _ = Nothing
 
 -- | A helper for the 'AddArg' 'Constraint'

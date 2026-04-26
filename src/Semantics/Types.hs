@@ -233,6 +233,10 @@ class TypeGraph tg where
   -- | Queries the type graph for possible conversions from a partial type to a type, returning the reason for each conversion as well.
   typeGraphQueryWithReason :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> [(String, Type)]
 
+  -- | Queries the type graph for callable types matching a partial (returns the full input type including all args, not just the return type).
+  typeGraphQueryCallableWithReason :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> [(String, Type)]
+  typeGraphQueryCallableWithReason _ _ _ = []
+
   -- | Queries the type graph for possible conversions from a TopTypes PredExpr to the possible partialTypes that can contain the PredExpr
   typeGraphExpandPredExpr :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> Maybe [PartialType]
 
@@ -1722,7 +1726,9 @@ typeGetArg argName partial@PartialType{ptArgs, ptVars, ptArgMode} = case H.looku
       Nothing  -> Just t'
     UnionType Nothing partialLeafs [] -> Just $ UnionType Nothing (joinUnionType $ map substitutePartial $ splitUnionType partialLeafs) []
       where
-        substitutePartial p@PartialType{ptVars=vs} = p{ptVars = fmap (substituteVarsWithVarEnv ptVars) vs}
+        substitutePartial p@PartialType{ptVars=vs, ptArgs=innerPtArgs} =
+          let vs' = fmap (substituteVarsWithVarEnv ptVars) vs
+          in p{ptVars = vs', ptArgs = fmap (substituteVarsWithVarEnv (H.union vs' ptVars)) innerPtArgs}
     t -> Just t
 
 -- | Gets an arg from a type while substituting the variables used in the types ptVars
@@ -1744,19 +1750,33 @@ updateTypeProp typeEnv vaenv superType propName subType = case superType of
       (vaenv, t, subType)
     UnionType Nothing supPartials [] -> do
       let supPartialList = splitUnionType supPartials
-      let intersectedPartials sup@PartialType{ptVars=supVars} sub = case typeGetAux propName sup of
-            Just (TypeVar (TVVar v) TVInt) -> do
-              let supVar = H.lookupDefault PTopType v supVars
-              let newProp = intersectTypesEnv typeEnv vaenv supVar sub
-              Just (sup{ptVars=H.insert v newProp supVars}, newProp)
-            Just (TypeVar (TVVar _) TVExt) -> error $ printf "Not yet implemented"
-            Just (TypeVar TVArg{} _) -> error $ printf "Not yet implemented"
-            Just supProp -> do
-              let newProp = intersectTypesEnv typeEnv vaenv supProp sub
-              if isBottomType newProp
-                then Nothing
-                else Just (typeSetAux propName newProp sup, newProp)
-            Nothing -> Nothing
+      let intersectedPartials sup@PartialType{ptVars=supVars, ptArgs=supPtArgs} sub =
+            -- When ptArgs[v] is TypeVar(TVVar w), update ptVars[w] to preserve $T=sub binding
+            let rawTVVar = case propName of
+                  TVArg v -> case H.lookup v supPtArgs of
+                    Just (TypeVar (TVVar w) TVInt) -> Just w
+                    _                             -> Nothing
+                  _       -> Nothing
+            in case rawTVVar of
+              Just w -> do
+                let supVar = H.lookupDefault PTopType w supVars
+                    newProp = intersectTypesEnv typeEnv vaenv supVar sub
+                if isBottomType newProp
+                  then Nothing
+                  else Just (sup{ptVars=H.insert w newProp supVars}, newProp)
+              Nothing -> case typeGetAux propName sup of
+                Just (TypeVar (TVVar v) TVInt) -> do
+                  let supVar = H.lookupDefault PTopType v supVars
+                  let newProp = intersectTypesEnv typeEnv vaenv supVar sub
+                  Just (sup{ptVars=H.insert v newProp supVars}, newProp)
+                Just (TypeVar (TVVar _) TVExt) -> error $ printf "Not yet implemented"
+                Just (TypeVar TVArg{} _) -> error $ printf "Not yet implemented"
+                Just supProp -> do
+                  let newProp = intersectTypesEnv typeEnv vaenv supProp sub
+                  if isBottomType newProp
+                    then Nothing
+                    else Just (typeSetAux propName newProp sup, newProp)
+                Nothing -> Nothing
       case subType of
         UnionType Nothing subPartials [] -> do
           let subPartialList = splitUnionType subPartials
