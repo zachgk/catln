@@ -1,8 +1,12 @@
+import "core"
+
 
 module(Web/Http)
   data(Request)
   data(Response(code -> Int, headers -> Bag[$T -> Response/Header], body -> Optional[$T -> String]))
-  server(f(request -> Request) -> Response)
-  class(Error)
-  Error.code -> Int
 
+  server(f(request -> Request) -> Response)
+
+  class(Error)
+
+  Error.code -> Int

@@ -1,12 +1,11 @@
+import "core"
+
+
 # Tests two functions that are recursive by mutually calling each other.
-
 even(x -> Integer) | x == 0= 0
-
 even(x -> Integer) else = odd(x= x - 1)
 
 odd(x -> Integer) | x == 0= 1
-
 odd(x -> Integer) else = even(x= x - 1)
 
 main{io -> IO}= io.exit(val= odd(x= 4))
-
