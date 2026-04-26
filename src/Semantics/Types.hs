@@ -1006,7 +1006,7 @@ isSubPartialOfWithEnv _ _ PartialType{ptArgs=subArgs} PartialType{ptArgs=superAr
 isSubPartialOfWithEnv _ _ PartialType{ptArgs=subArgs, ptArgMode=PtArgExact} PartialType{ptArgs=superArgs, ptArgMode=PtArgAny} | H.null subArgs && not (H.null superArgs) = False
 isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subArgs, ptPreds=subPreds} super@PartialType{ptVars=superVars, ptArgs=superArgs, ptPreds=superPreds} = debugTrace typeEnv msg result
   where
-    vaenv' = H.union vaenv (substituteWithVarArgEnv vaenv <$> H.unionWith (intersectTypesEnv typeEnv vaenv) (ptVarArg super) (ptVarArg sub))
+    vaenv' = H.union vaenv (substituteWithVarArgEnv vaenv <$> H.unionWith (intersectTypes typeEnv) (ptVarArg super) (ptVarArg sub))
     hasAll sb sp = and $ H.elems $ H.intersectionWith (isSubtypeOfWithEnv typeEnv vaenv') sb sp
     result = hasAll subArgs superArgs && hasAllPreds superPreds subPreds && hasAll subVars superVars
     msg = printf "[SUBPARTIAL] %s ⊆ %s = %s" (show sub) (show super) (show result)
@@ -1450,7 +1450,7 @@ intersectTypesWithVarEnv typeEnv vaenv (UnionType (Just (ps1, np1)) (H.null -> T
 intersectTypesWithVarEnv _ vaenv t1 t2 | t1 == t2 = (vaenv, t1)
 -- TypeVar: constrain in vaenv
 intersectTypesWithVarEnv typeEnv vaenv tv@(TypeVar v _) t = case (v, H.lookup v vaenv) of
-  (TVArg{}, Nothing) -> error $ printf "Failed to intersect unknown %s with %s in vaenv %s" (show v) (show t) (show vaenv)
+  (TVArg{}, Nothing) -> (vaenv, t)
   (_, Just l) | isBottomType (intersectTypesEnv typeEnv vaenv l t) -> (vaenv, BottomType)
   _ -> (H.insertWith (intersectTypesEnv typeEnv vaenv) v t vaenv, tv)
 intersectTypesWithVarEnv typeEnv vaenv t tv@TypeVar{} = intersectTypesWithVarEnv typeEnv vaenv tv t

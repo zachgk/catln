@@ -132,8 +132,8 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
             (EncodeOut{}, Just obj, Just (Just _argExpr', arrM')) ->
               -- Output with (x=x)
               [
-                            AddArg 8 (baseM', TVArg $ inExprSingleton obj) m',
-                            PropEq 11 (m', TVArg $ inExprSingleton obj) arrM'
+                            AddArg 8 (baseM', TVArg $ inExprSingletonBase obj) m',
+                            PropEq 11 (m', TVArg $ inExprSingletonBase obj) arrM'
                             ]
             (EncodeOut{}, Nothing, Just (Just _argExpr', _arrM')) ->
               -- Output with (x) infer
@@ -143,14 +143,14 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
             (EncodeIn{}, Just obj, Just (Just _argExpr', arrM')) ->
               -- Input with (x=x)
               [
-                        AddArg 19 (baseM', TVArg $ inExprSingleton obj) m',
-                        PropEq 21 (m', TVArg $ inExprSingleton obj) arrM'
+                        AddArg 19 (baseM', TVArg $ inExprSingletonBase obj) m',
+                        PropEq 21 (m', TVArg $ inExprSingletonBase obj) arrM'
                         ]
             (EncodeIn{}, Just obj, Just (Nothing, arrM')) ->
               -- Input with (x -> T)
               [
-                        AddArg 24 (baseM', TVArg $ inExprSingleton obj) m',
-                        PropEq 25 (m', TVArg $ inExprSingleton obj) arrM'
+                        AddArg 24 (baseM', TVArg $ inExprSingletonBase obj) m',
+                        PropEq 25 (m', TVArg $ inExprSingletonBase obj) arrM'
                         ]
             _ -> error $ printf "Invalid fromExpr in %s mode for %s" (show est) (show arg)
       modify $ addConstraints constraints

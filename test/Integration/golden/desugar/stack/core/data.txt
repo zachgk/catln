@@ -306,6 +306,16 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "## ConsList runtime operations" )
         , /Catln/#md
+            ( Value /text= CStr "## Functor Laws (tests commented out pending compiler fixes for Bug 1 and Bug 2)" )
+        , /Catln/#md
+            ( Value /text= CStr "testOptionFunctorIdentity =" )
+        , /Catln/#md
+            ( Value /text= CStr "  #test" )
+        , /Catln/#md
+            ( Value /text= CStr "  #assert(test= (3).fmap(fn(v)= v) == 3)" )
+        , /Catln/#md
+            ( Value /text= CStr "  0" )
+        , /Catln/#md
             ( Value /text= CStr "A [Set] is a collection of zero or more unique items.
             It is not ordered." )
         , /Catln/#md

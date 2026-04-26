@@ -404,6 +404,13 @@ inExprSingleton :: (ExprClass e, MetaDat m, Show m, Show (e m)) => e m -> ArgNam
 inExprSingleton e = maybe
   (partialKey $ makeAbsoluteName $ exprPath e) {pkArgs = H.keysSet $ exprAppliedArgsMap e, pkVars = H.keysSet $ exprAppliedVars e} partialToKey (maybeGetSingleton (getExprType e))
 
+-- | Like inExprSingleton but strips applied arg/var names from the key.
+-- Used at call sites so that a lambda argument like fn(v)=v produces the
+-- same slot key {fn} as the definition's bare parameter fn, reconnecting
+-- the constraint chain regardless of how the caller wrote the argument.
+inExprSingletonBase :: (ExprClass e, MetaDat m, Show m, Show (e m)) => e m -> ArgName
+inExprSingletonBase e = (inExprSingleton e){pkArgs = mempty, pkVars = mempty}
+
 maybeExprPath :: (ExprClass e) => e m -> Maybe TypeName
 maybeExprPath = fmap fst . maybeExprPathM
 
