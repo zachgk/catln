@@ -145,24 +145,52 @@ isHiddenStatement (RawAnnot annot) | isElseAnnot annot = True
 isHiddenStatement (RawAnnot annot) | isCtxAnnot annot = True
 isHiddenStatement _ = False
 
+isHiddenStatementTree :: RawStatementTree RawExpr m -> Bool
+isHiddenStatementTree (RawStatementTree stmt _) = isHiddenStatement stmt
+
+isAnnotStatementTree :: RawStatementTree RawExpr m -> Bool
+isAnnotStatementTree (RawStatementTree (RawAnnot _) _) = True
+isAnnotStatementTree _                                 = False
+
+-- | Get the object path of a statement's LHS declaration, if present
+stmtObjPath :: RawStatementTree RawExpr m -> Maybe TypeName
+stmtObjPath (RawStatementTree (RawDeclStatement RawObjArr{roaObj = Just obj}) _) = maybeExprPath obj
+stmtObjPath (RawStatementTree (RawBindStatement RawObjArr{roaObj = Just obj}) _) = maybeExprPath obj
+stmtObjPath _                                                                    = Nothing
+
+-- | Returns True if a blank line should be inserted between two consecutive statements.
+-- Annotations are kept together with adjacent statements (no blank line before/after).
+-- Blank lines separate groups of definitions with different object paths.
+needsBlankLine :: RawStatementTree RawExpr m -> RawStatementTree RawExpr m -> Bool
+needsBlankLine prev curr
+  | isHiddenStatementTree prev = False
+  | isHiddenStatementTree curr = False
+  | isAnnotStatementTree prev  = False
+  | isAnnotStatementTree curr  = True
+  | otherwise = case (stmtObjPath prev, stmtObjPath curr) of
+      (Just p1, Just p2) -> p1 /= p2
+      _                  -> False
+
+-- | Format a list of statements, inserting blank lines between groups
+formatStatementTrees :: (MetaDat m, Show m) => Bool -> Int -> [RawStatementTree RawExpr m] -> Builder
+formatStatementTrees rootStatement indent stmts =
+  forM_ (zip (Nothing : map Just stmts) stmts) $ \(mprev, s) -> do
+    case mprev of
+      Nothing   -> return ()
+      Just prev -> when (needsBlankLine prev s) (literal "\n")
+    formatStatementTree rootStatement indent s
+
 formatStatementTree :: (MetaDat m, Show m) => Bool -> Int -> RawStatementTree RawExpr m -> Builder
 formatStatementTree rootStatement indent (RawStatementTree statement subTree) = do
   unless (isHiddenStatement statement) (literal $ formatStatement indent statement)
-
-  -- Check if the subTree should also be a rootStatement with an additional ending newline
   let subTreeRootStatement = rootStatement && keepRootStatement statement
-
-  forM_ subTree $ \s -> do
-    formatStatementTree subTreeRootStatement (indent + 1) s
-  when rootStatement ""
+  formatStatementTrees subTreeRootStatement (indent + 1) subTree
 
 formatPrgm :: (MetaDat m, Show m) => Int -> RawPrgm m -> Builder
 formatPrgm indent (RawPrgm imports statements) = do
-  forM_ imports $ \imp -> do
-    formatImport imp
+  forM_ imports formatImport
   unless (null imports) "\n"
-  forM_ statements $ \s -> do
-    formatStatementTree True indent s
+  formatStatementTrees True indent statements
 
 formatRootPrgm :: (MetaDat m, Show m) => RawPrgm m -> String
 formatRootPrgm = build . formatPrgm 0

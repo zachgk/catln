@@ -1,7 +1,9 @@
+import "core"
+
+
 # Tests using the context
   It requires using the type of the input argument as the output type of id as well.
   So, it must be read as `id($T) -> $T`, not (id(Any) -> Any).
-
 data(Counter(i -> Integer))
 
 inc{c= Counter(i)}= (){Counter(i + 1)}
@@ -12,4 +14,3 @@ main{io -> IO} =
   _<- (){Counter(0)}
   _<- inc{}
   io.exit(val= 0)
-

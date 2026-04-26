@@ -1,12 +1,12 @@
-# Tests higher order functions
+import "core"
 
+
+# Tests higher order functions
 data(T(x))
 
 tst[$T](d= T(x -> $T), f(y -> $T) -> Boolean) -> Boolean
-
 tst(d= T(x), f(y))= f(y= x)
 
 main{io -> IO} =
   #assert(test= tst(d= T(0), f(y)= y == 0))
   io
-

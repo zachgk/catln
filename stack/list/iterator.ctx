@@ -1,8 +1,10 @@
+import "core"
+
 
 # # Iterator List
-
 module(Data/List)
   class(IteratorResult[$T, $State], [IteratorNext(nextState -> $State, val -> $T), IteratorDone])
+
   data(Iterator[$T, $State](length -> Int, initState -> $State, f(x -> $State) -> IteratorResult[$T= $T, $State= $State]))
     # A virtual [List] represented by an iterator.
       The iterator has an internal state of type [$State] and by applying [f] it produces the next value of the iterator and a next state.
@@ -15,7 +17,9 @@ every(Iterator[$T], isa= [List[$T]])
   f2(x -> $State) =
     match(f(x))
       IteratorNext(nextState, val)= (nextState, mapFun(val))
+
       IteratorDone= IteratorDone
+
   Iterator[$T= $T2, $State= $State](length= length, initState= initState, f= f2)
 
 :Iterator[$T, $State](length, initState, f).flatMap(f= mapFun) =
@@ -23,11 +27,15 @@ every(Iterator[$T], isa= [List[$T]])
     _<- imperative
     _<- returns
     state<- var(x)
+
     while(state.().vals.length < 0)
       _<- match(f(state.().s))
         IteratorNext(nextState, val)= state := (vals= mapFun(val), s= nextState)
-        IteratorDone= return(IteratorDone)
-    (vals= v + :vs, s)= state.()
-    return(IteratorNext(nextState= (vals= vs, s= s)), val= v)
-  Iterator[$T -> $T2, $State= (vals= List[$T -> $T2], s= $State)](length= length, initState= initState, f= f2)
 
+        IteratorDone= return(IteratorDone)
+
+    (vals= v + :vs, s)= state.()
+
+    return(IteratorNext(nextState= (vals= vs, s= s)), val= v)
+
+  Iterator[$T -> $T2, $State= (vals= List[$T -> $T2], s= $State)](length= length, initState= initState, f= f2)
