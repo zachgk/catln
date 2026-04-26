@@ -1,18 +1,16 @@
 annot(#noCore)
-#noCore
 
+#noCore
 module(Data/Primitive)
   data(Number)
+
   class(Boolean, [True, False])
 
 class(Animal)
-
 class(Fish)
-
 class(Lizard)
 
 every(Fish, isa= [/Animal])
-
 every(Lizard, isa= [/Animal])
 
 class(Mammal, [Cat, Dog], isa= [/Animal])
@@ -20,7 +18,7 @@ class(Mammal, [Cat, Dog], isa= [/Animal])
 :Animal.weight -> Number
 
 :Animal.fluffy -> Boolean
-:Fish.fluffy = False
-:Lizard.fluffy = False
-:Cat.fluffy = True
-:Dog.fluffy = True
+:Fish.fluffy= False
+:Lizard.fluffy= False
+:Cat.fluffy= True
+:Dog.fluffy= True

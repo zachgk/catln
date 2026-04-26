@@ -1,7 +1,8 @@
+import "core"
+
+
 # Tests id with type variables.
   This is one of the simplest tests with type variables.
-
 id[$T](x -> $T) -> $T= x
 
 main{io -> IO}= io.exit(val= id(x= 0))
-

@@ -12,12 +12,15 @@ module(Catln)
       The [IO] type is also special because it is the only truly impure type in the language.
       Files and external values can change unexpectedly.
       But, all of the impurity is managed in this single type.
+
   :IO.exit(val -> Integer) -> IO
     # [exit] will immediately terminate the process and return [val] as the status value.
     #runtime("ioExit")
+
   :IO.println(msg -> String) -> IO
     # [println] will print the [msg] to the standard output along with a newline character.
     #runtime("println")
+
   # ## Core Annotations
     The core annotations are all of the annotations used by the compiler and the web docs program.
   annot(#md(text -> String))
@@ -67,23 +70,29 @@ module(Catln)
   annot(#eximport(name -> String))
     # [#eximport] is used to mark exported items from Haskell modules.
       When a Haskell module has an explicit export list, this annotation indicates which items are re-exported.
+
   # ## Build-in Type Macros
   (_ ?-> _) -> Boolean
     #runtime("arrExists")
+
   # ## Result Classes
   data(CatlnResult(name -> String, contents -> String))
     # The [CatlnResult] represents the result of a catln build.
       The most typical results are compiled executables.
       But, they could also be other kinds of results such as websites or cloud configurations.
       Any global value which has type [CatlnResult] can be called through `catln build [FILE] [VALUE]`.
+
   www(html -> String)= CatlnResult(name= "index.html", contents= html)
     # [www] is used to build web results.
+
   llvm(c) -> CatlnResult..
     # [llvm] runs the [LLVM Compiler](https://llvm.org/) to build the runnable argument [c] into a [CatlnResult] executable.
     #runtime("llvm")
+
   data(/Catln/classPlaceholder[$T])
     # [classPlaceholder] is used internally to represent a class with no elements.
       It ensures that expanding an empty class does not produce the empty set.
+
   class(ThenElse, [Then, Else])
     fromBool(v -> Boolean) -> ThenElse
     fromBool(v= /Data/Primitive/True)= Then

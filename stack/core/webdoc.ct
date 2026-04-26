@@ -7,32 +7,56 @@ module(Catln/Doc)
     These include the ones
   class(DShow)
     # Represents objects which can be shown in the webdocs.
+
   # dshow(s) -> /Catln/Doc/DShow
   dshow(s -> DShow)= s
+
   every(String, isa= [/Catln/Doc/DShow])
   every(CatlnResult.., isa= [/Catln/Doc/DShow])
+
   data(Show/MD(text -> String))
+
   every(Show/MD.., isa= [/Catln/Doc/DShow])
+
   dshow(s= #md(text))= Show/MD(text= text)
   dshow(s= #print(p))= p
-  annot(#listProgram)
-  data(Show/ListProgram)
-  every(Show/ListProgram.., isa= [/Catln/Doc/DShow])
-  dshow(s= #listProgram)= Show/ListProgram
-  annot(#type)
-  data(Show/TypePage)
-  every(Show/TypePage.., isa= [/Catln/Doc/DShow])
-  dshow(s= #type)= Show/TypePage
-  annot(#typeInfer)
-  data(Show/TypeInfer)
-  every(Show/TypeInfer.., isa= [/Catln/Doc/DShow])
-  dshow(s= #typeInfer)= Show/TypeInfer
-  annot(#debug)
-  data(Show/Debug)
-  every(Show/Debug.., isa= [/Catln/Doc/DShow])
-  dshow(s= #debug)= Show/Debug
-  annot(#build)
-  data(Show/BuildPage)
-  every(Show/BuildPage.., isa= [/Catln/Doc/DShow])
-  dshow(s= #build)= Show/BuildPage
 
+  annot(#listProgram)
+
+  data(Show/ListProgram)
+
+  every(Show/ListProgram.., isa= [/Catln/Doc/DShow])
+
+  dshow(s= #listProgram)= Show/ListProgram
+
+  annot(#type)
+
+  data(Show/TypePage)
+
+  every(Show/TypePage.., isa= [/Catln/Doc/DShow])
+
+  dshow(s= #type)= Show/TypePage
+
+  annot(#typeInfer)
+
+  data(Show/TypeInfer)
+
+  every(Show/TypeInfer.., isa= [/Catln/Doc/DShow])
+
+  dshow(s= #typeInfer)= Show/TypeInfer
+
+  annot(#debug)
+
+  data(Show/Debug)
+
+  every(Show/Debug.., isa= [/Catln/Doc/DShow])
+
+  dshow(s= #debug)= Show/Debug
+
+  annot(#build)
+
+  data(Show/BuildPage)
+
+  every(Show/BuildPage.., isa= [/Catln/Doc/DShow])
+
+  dshow(s= #build)= Show/BuildPage
