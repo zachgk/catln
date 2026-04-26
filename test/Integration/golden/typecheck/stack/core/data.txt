@@ -14,9 +14,12 @@ Prgm
                 ( "/operator=="
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator==( Value /l -> /Data/String = Hole /Data/String HoleActive Nothing )( Value /r -> /Data/String = Hole /Data/String HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                        [ /operator==( Value /l -> /Data/String = Hole /Data/String HoleActive Nothing )( Value /r -> /Data/String = Hole /Data/String HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        , /operator==( Value /l -> /Data/None = Hole /Data/None HoleActive Nothing )( Value /r -> /Data/None = Hole /Data/None HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /operator==( Value /l -> /Data/None = Hole /Data/None HoleActive Nothing )( Value /r -> /Data/None = Hole /Data/None HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True ]
                     }
                 )
             ,
@@ -99,6 +102,15 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/testOptionFunctorNoneIdentity"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/testOptionFunctorNoneIdentity -> /Data/Primitive/Integer = CInt 0 ]
+                    }
+                )
+            ,
                 ( "/Data/String"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/String ]
@@ -116,6 +128,15 @@ Prgm
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/testOptionFunctorComposition"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/testOptionFunctorComposition -> /Data/Primitive/Integer = CInt 0 ]
                     }
                 )
             ,
@@ -247,11 +268,16 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
         , CGClass
             ( False
             , /Data/String
-            , [ /Data/String ]
-            , Just ""
+            ,
+                [ /Data/String
+                , /Data/None
+                ]
+            , Just " "
             )
         , CGClass
             ( True

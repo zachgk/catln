@@ -47,14 +47,29 @@ leafsFromMeta Meta{getMetaType=UnionType Nothing prodTypes consts} = splitUnionT
 leafsFromMeta m = error $ printf "leafFromMeta with invalid type: %s" (show m)
 
 buildTBEnv :: ResBuildPrims -> TBPrgm -> TBEnv
-buildTBEnv primEnv prgm@Prgm{prgmObjMap} = baseEnv
+buildTBEnv primEnv prgm@Prgm{prgmObjMap=prgmObjMap@(ObjectMap objMapHM)} = baseEnv
   where
     baseEnv = TBEnv "" resEnv prgm (mkTypeEnv prgm){tePrgmEnv=True}
     resEnv = H.fromListWith (++) $ mapMaybe resFromArrow $ flatObjectMap prgmObjMap
 
+    -- When a definition has PTopType return type (TypeCheck couldn't infer it),
+    -- inherit the return type from the matching declaration if one exists.
+    -- This is needed for e.g. fmap def "(this->$T).fmap(fn)= fn(v=this)" where
+    -- fn's return type is unknown but the declaration says fmap returns $T.
+    fixReturnType oa@ObjArr{oaArr=Just (Just body, oaM)} | getMetaType oaM == PTopType =
+      case H.lookup (makeAbsoluteName $ oaObjPath oa) objMapHM of
+        Just ObjectMapItem{omiDecls} ->
+          case [m | ObjArr{oaArr=Just (Nothing, m)} <- omiDecls, getMetaType m /= PTopType] of
+            (m:_) -> oa{oaArr=Just (Just body, mWithType (getMetaType m) oaM)}
+            _     -> oa
+        Nothing -> oa
+    fixReturnType oa = oa
+
     resFromArrow oa@ObjArr{oaObj=Just{}, oaArr, oaAnnots} = case oaArr of
       _ | getExprType (oaObjExpr oa) == PTopType -> error $ printf "buildTBEnv failed with a topType input in %s" (show oa)
-      Just (Just _, _) -> Just (oaObjPath oa, [(objLeaf, Just oa, TCObjArr oa) | objLeaf <- leafsFromMeta (getExprMeta $ oaObjExpr oa)])
+      Just (Just _, _) ->
+        let oa' = fixReturnType oa
+        in Just (oaObjPath oa', [(objLeaf, Just oa', TCObjArr oa') | objLeaf <- leafsFromMeta (getExprMeta $ oaObjExpr oa')])
       Just (Nothing, _) | isJust (getRuntimeAnnot oaAnnots) -> Just (oaObjPath oa, [(objLeaf, Just oa, usePrim oa $ H.lookup (fromJust $ getRuntimeAnnot oaAnnots) primEnv) | objLeaf <- leafsFromMeta (getExprMeta $ oaObjExpr oa)])
       Just (Nothing, _) -> Nothing
       Nothing -> Nothing

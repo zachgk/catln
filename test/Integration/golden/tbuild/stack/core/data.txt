@@ -14,9 +14,12 @@ Prgm
                 ( "/operator=="
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator==( EAppArg Value /l -> /Data/String = Hole /Data/String HoleActive Nothing )( EAppArg Value /r -> /Data/String = Hole /Data/String HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                        [ /operator==( EAppArg Value /l -> /Data/String = Hole /Data/String HoleActive Nothing )( EAppArg Value /r -> /Data/String = Hole /Data/String HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        , /operator==( EAppArg Value /l -> /Data/None = Hole /Data/None HoleActive Nothing )( EAppArg Value /r -> /Data/None = Hole /Data/None HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /operator==( EAppArg Value /l -> /Data/None = Hole /Data/None HoleActive Nothing )( EAppArg Value /r -> /Data/None = Hole /Data/None HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True ]
                     }
                 )
             ,
@@ -98,6 +101,15 @@ Prgm
                         [ /ContextIn( EAppVar /V TopType )( EAppArg Value /value -> TVVar /V )( EAppSpread Hole TopType HoleActive Nothing ) ]
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/testOptionFunctorNoneIdentity"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/testOptionFunctorNoneIdentity -> /Data/Primitive/Integer = 0 ]
                     }
                 )
             ,
@@ -240,11 +252,16 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
         , CGClass
             ( False
             , /Data/String
-            , [ /Data/String ]
-            , Just ""
+            ,
+                [ /Data/String
+                , /Data/None
+                ]
+            , Just " "
             )
         , CGClass
             ( True

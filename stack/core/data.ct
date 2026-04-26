@@ -45,6 +45,9 @@ module(Data)
   (this -> $T).fmap(fn(v -> $T) -> $T) -> $T
   :None.fmap(fn)= None
   (this -> $T).fmap(fn)= fn(v= this)
+  every(None, isa= [/Data/Algebra/Eq])
+  (_ :: None == _ :: None) -> Boolean
+  (_ :: None == _ :: None)= True
   class(List[$T])
 
   # A [List] is a collection of zero or more ordered items.
@@ -98,6 +101,14 @@ module(Data)
   testOptionFunctorIdentity =
     #test
     #assert(test= (3).fmap(fn(v)= v) == 3)
+    0
+  testOptionFunctorComposition =
+    #test
+    #assert(test= (3).fmap(fn(v)= v + 1).fmap(fn(v)= v * 2) == (3).fmap(fn(v)= (v + 1) * 2))
+    0
+  testOptionFunctorNoneIdentity =
+    #test
+    #assert(test= None.fmap(fn(v)= v) == None)
     0
   class(Set[$T])
 

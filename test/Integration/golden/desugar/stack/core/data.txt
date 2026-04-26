@@ -14,9 +14,12 @@ Prgm
                 ( "/operator=="
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator==( Value /l -> /Data/String = Hole TopType HoleActive Nothing )( Value /r -> /Data/String = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                        [ /operator==( Value /l -> /Data/String = Hole TopType HoleActive Nothing )( Value /r -> /Data/String = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        , /operator==( Value /l -> /Data/None = Hole TopType HoleActive Nothing )( Value /r -> /Data/None = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /operator==( Value /l -> /Data/None = Hole TopType HoleActive Nothing )( Value /r -> /Data/None = Hole TopType HoleActive Nothing )= Value True ]
                     }
                 )
             ,
@@ -83,6 +86,15 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/testOptionFunctorNoneIdentity"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/testOptionFunctorNoneIdentity= CInt 0 ]
+                    }
+                )
+            ,
                 ( "/Data/String"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/String ]
@@ -100,6 +112,15 @@ Prgm
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/testOptionFunctorComposition"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/testOptionFunctorComposition= CInt 0 ]
                     }
                 )
             ,
@@ -224,11 +245,16 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
         , CGClass
             ( False
             , /Data/String
-            , [ /Data/String ]
-            , Just ""
+            ,
+                [ /Data/String
+                , /Data/None
+                ]
+            , Just " "
             )
         , CGClass
             ( True
