@@ -7,9 +7,7 @@ add(x -> Integer, y -> Integer) -> Integer =
   result
 
 square(x -> Float) -> Float= x * x
-
 class(Point)
-
 PI -> Float= 3.14159
 
 MAX_SIZE -> Integer= 100
@@ -89,4 +87,3 @@ print_twice(msg -> String){io -> IO}= io.println(/msg= msg.toString).println(/ms
 echo{io -> IO}= io.println(/msg= "\"\"".toString)
 
 main{io -> IO}= io
-

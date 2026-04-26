@@ -180,7 +180,12 @@ evalExpr :: TExpr EvalMetaDat -> StateT Env CRes Val
 -- evalExpr e | trace (printf "eval %s" (show e)) False = undefined
 evalExpr (TCExpr _ v) = return v
 evalExpr (TValue m _) = do
-  let PartialType{ptName} = getSingleton $ getMetaType m
+  let tp = getMetaType m
+  let PartialType{ptName} = case maybeGetSingleton tp of
+        Just p -> p
+        Nothing -> case tp of
+          UnionType Nothing leafs [] -> head $ splitUnionType leafs
+          _ -> error $ printf "TValue with unexpected type %s" (show tp)
   return $ TupleVal ptName H.empty
 evalExpr (THoleExpr m h) = lift $ CErr [MkCNote $ GenCErr (getMetaPos m) $ printf "Can't evaluate hole %s" (show h)]
 evalExpr (TAliasExpr b _) = evalExpr b
