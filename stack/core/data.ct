@@ -42,6 +42,7 @@ module(Data)
       It can be used to handle operations that are uncertain if they can produce a response.
 
   every(Option[$T -> $T], isa= [/Data/Functor])
+  (this -> $T).fmap(fn(v -> $T) -> $T) -> $T
   :None.fmap(fn)= None
   (this -> $T).fmap(fn)= fn(v= this)
   class(List[$T])
@@ -94,11 +95,10 @@ module(Data)
 
   :Nil.fmap(fn)= Nil
   Cons(head, tail).fmap(fn)= Cons(head= fn(v= head), tail= tail.fmap(fn= fn))
-  # ## Functor Laws (tests commented out pending compiler fixes for Bug 1 and Bug 2)
-  # testOptionFunctorIdentity =
-  #   #test
-  #   #assert(test= (3).fmap(fn(v)= v) == 3)
-  #   0
+  testOptionFunctorIdentity =
+    #test
+    #assert(test= (3).fmap(fn(v)= v) == 3)
+    0
   class(Set[$T])
 
   # A [Set] is a collection of zero or more unique items.

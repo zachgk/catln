@@ -180,6 +180,15 @@ arrowConstrainUbs env@FEnv{feUnionAllObjs} con PTopType dest@(UnionType Nothing 
       return (src', dest', destRT')
     _ -> return (PTopType, dest, Nothing)
 arrowConstrainUbs _ _ PTopType dest = return (PTopType, dest, Nothing)
+arrowConstrainUbs FEnv{feTypeEnv} Constraint{conVaenv} src@(UnionType (Just (PredsOne (PredRel relPartial), _)) _ _) dest = do
+  let vaenv' = fmap (stypeAct . snd) conVaenv
+  let callableTypes = map snd $ typeGraphQueryCallableWithReason feTypeEnv vaenv' relPartial
+  case callableTypes of
+    [] -> return (src, dest, Nothing)
+    _  -> do
+      let destByGraph = unionAllTypesWithEnv feTypeEnv vaenv' callableTypes
+      let dest' = intersectTypes feTypeEnv dest destByGraph
+      return (src, compactType feTypeEnv vaenv' dest', Nothing)
 arrowConstrainUbs _ _ src@(UnionType (Just _) _ _) dest = return (src, dest, Nothing)
 arrowConstrainUbs env con@Constraint{conVaenv} src@(TypeVar v _) dest = do
   let src' = H.lookupDefault PTopType v (fmap (stypeAct . snd) conVaenv)

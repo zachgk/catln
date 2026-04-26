@@ -46,6 +46,16 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
       joinPartialDestTypes [] = [BottomType]
       joinPartialDestTypes (pdt1:restPdt) = [unionTypes typeEnv pdt1Poss restPdt' | pdt1Poss <- pdt1, restPdt' <- joinPartialDestTypes restPdt]
 
+  typeGraphQueryCallableWithReason typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName} = concatMap tryTArrow $ flatObjectMapItem $ H.lookupDefault mempty ptName tg
+    where
+      tryTArrow :: (ExprClass e, MetaDat m, Show m, Show (e m)) => ObjArr e m -> [(String, Type)]
+      tryTArrow oa@ObjArr{oaArr=Just{}} =
+        case intersectTypesEnv typeEnv vaenv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa) of
+          potentialSrc@(UnionType Nothing potSrcLeafs []) | not (isBottomType potentialSrc) ->
+            map (printf "callable using %s" (show oa),) [singletonType pt | pt <- splitUnionType potSrcLeafs]
+          _ -> []
+      tryTArrow ObjArr{oaArr=Nothing} = []
+
  -- TODO: Implement this to expand other PredExprs as well, and begin using the Nothing to represent having no meaningful way to break
   typeGraphExpandPredExpr typeEnv _vaenv partial | ptName partial == operatorHasArrow = Just $ map (\p -> p{ptPreds=PredsOne (PredExpr partial)}) $ topTypeAsPartials typeEnv
   typeGraphExpandPredExpr typeEnv _vaenv partial = Just $ map (\p -> p{ptPreds=PredsOne (PredExpr partial)}) $ topTypeAsPartials typeEnv
