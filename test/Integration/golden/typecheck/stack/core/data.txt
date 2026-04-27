@@ -131,15 +131,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/testOptionFunctorComposition"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/testOptionFunctorComposition -> /Data/Primitive/Integer = CInt 0 ]
-                    }
-                )
-            ,
                 ( "/Data/Cons"
                 , ObjectMapItem
                     { omiDecls =
@@ -237,21 +228,10 @@ Prgm
                     , omiDefs = []
                     }
                 )
-            ,
-                ( "/Data/testOptionFunctorIdentity"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/testOptionFunctorIdentity -> /Data/Primitive/Integer = CInt 0 ]
-                    }
-                )
             ]
         )
     , prgmCG =
         [ CGType
-        , CGType
-        , CGType
         , CGType
         , CGType
         , CGType
@@ -368,6 +348,24 @@ Prgm
             ( Value /text -> /Data/String = CStr "## List operations" )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "## ConsList runtime operations" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "## Functor Laws
+            The Identity and Composition tests below exercise the generic fmap arrow
+            `(this -> $T).fmap(fn) = fn(v= this)` over a primitive (Integer) value.
+            They are commented out pending compiler support for inferring the body's
+            return type through generic arrows -- the typechecker currently leaves the
+            body of `fn(v= this)` typed as TopType which prevents the tree-builder
+            from selecting the generic arrow at call sites." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "testOptionFunctorIdentity =
+            #test
+            #assert(test= (3).fmap(fn(v)= v) == 3)
+            0" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "testOptionFunctorComposition =
+            #test
+            #assert(test= (3).fmap(fn(v)= v + 1).fmap(fn(v)= v * 2) == (3).fmap(fn(v)= (v + 1) * 2))
+            0" )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "A [Set] is a collection of zero or more unique items.
             It is not ordered." )

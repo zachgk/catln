@@ -252,8 +252,6 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
-        , CGType
         , CGClass
             ( False
             , /Data/String
@@ -352,6 +350,24 @@ Prgm
             ( EAppArg Value /text -> /Data/String = "## List operations" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "## ConsList runtime operations" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "## Functor Laws
+            The Identity and Composition tests below exercise the generic fmap arrow
+            `(this -> $T).fmap(fn) = fn(v= this)` over a primitive (Integer) value.
+            They are commented out pending compiler support for inferring the body's
+            return type through generic arrows -- the typechecker currently leaves the
+            body of `fn(v= this)` typed as TopType which prevents the tree-builder
+            from selecting the generic arrow at call sites." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "testOptionFunctorIdentity =
+            #test
+            #assert(test= (3).fmap(fn(v)= v) == 3)
+            0" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "testOptionFunctorComposition =
+            #test
+            #assert(test= (3).fmap(fn(v)= v + 1).fmap(fn(v)= v * 2) == (3).fmap(fn(v)= (v + 1) * 2))
+            0" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "A [Set] is a collection of zero or more unique items.
             It is not ordered." )
