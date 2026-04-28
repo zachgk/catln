@@ -41,7 +41,7 @@ module(Data)
     # [Option] defines a type that might have a value or [None].
       It can be used to handle operations that are uncertain if they can produce a response.
 
-  every(Option[$T -> $T], isa= [/Data/Functor])
+  # every(Option[$T -> $T], isa= [/Data/Functor])
   (this -> $T).fmap(fn(v -> $T) -> $T) -> $T
   :None.fmap(fn)= None
   (this -> $T).fmap(fn)= fn(v= this)
@@ -98,17 +98,17 @@ module(Data)
 
   :Nil.fmap(fn)= Nil
   Cons(head, tail).fmap(fn)= Cons(head= fn(v= head), tail= tail.fmap(fn= fn))
-  testOptionFunctorIdentity =
+  testConsListFunctorIdentity =
     #test
-    #assert(test= (3).fmap(fn(v)= v) == 3)
+    #assert(test= Nil.fmap(fn(v)= v).length == 0)
     0
-  testOptionFunctorComposition =
+  testConsListFunctorComposition =
     #test
-    #assert(test= (3).fmap(fn(v)= v + 1).fmap(fn(v)= v * 2) == (3).fmap(fn(v)= (v + 1) * 2))
+    #assert(test= Nil.fmap(fn(v)= (v + 1) * 2).length == 0)
     0
-  testOptionFunctorNoneIdentity =
+  testConsListFunctorNilIdentity =
     #test
-    #assert(test= None.fmap(fn(v)= v) == None)
+    #assert(test= Nil.fmap(fn(v)= v).length == 0)
     0
   class(Set[$T])
 

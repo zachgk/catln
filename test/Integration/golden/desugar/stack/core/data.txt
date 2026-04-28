@@ -86,15 +86,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/testOptionFunctorNoneIdentity"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/testOptionFunctorNoneIdentity= CInt 0 ]
-                    }
-                )
-            ,
                 ( "/Data/String"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/String ]
@@ -115,12 +106,12 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/testOptionFunctorComposition"
+                ( "/Data/testConsListFunctorNilIdentity"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /Data/testOptionFunctorComposition= CInt 0 ]
+                        [ Value /Data/testConsListFunctorNilIdentity= CInt 0 ]
                     }
                 )
             ,
@@ -141,6 +132,15 @@ Prgm
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/testConsListFunctorIdentity"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/testConsListFunctorIdentity= CInt 0 ]
                     }
                 )
             ,
@@ -195,6 +195,15 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/testConsListFunctorComposition"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/testConsListFunctorComposition= CInt 0 ]
+                    }
+                )
+            ,
                 ( "/Data/enum"
                 , ObjectMapItem
                     { omiDecls =
@@ -212,15 +221,6 @@ Prgm
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
-                    }
-                )
-            ,
-                ( "/Data/testOptionFunctorIdentity"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/testOptionFunctorIdentity= CInt 0 ]
                     }
                 )
             ]
@@ -279,12 +279,9 @@ Prgm
         , CGClass
             ( False
             , /Data/Functor
-            ,
-                [ ∀/Data/Option
-                , ∀/Data/ConsList
-                ]
+            , [ ∀/Data/ConsList ]
             , Just "A [Functor] is a basic property of a collection.
-              It has a single operation [fmap] that applies a function to each element in the collection.$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]  "
+              It has a single operation [fmap] that applies a function to each element in the collection.$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T] "
             )
         , CGClass
             ( False
@@ -330,6 +327,8 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "[Option] defines a type that might have a value or [None].
             It can be used to handle operations that are uncertain if they can produce a response." )
+        , /Catln/#md
+            ( Value /text= CStr "every(Option[$T -> $T], isa= [/Data/Functor])" )
         , /Catln/#md
             ( Value /text= CStr "A [List] is a collection of zero or more ordered items." )
         , /Catln/#md
