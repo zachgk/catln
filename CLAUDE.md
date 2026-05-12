@@ -4,6 +4,10 @@ Catln is a term-rewriting programming language. The compiler is written in Haske
 
 **Compiler pipeline:** Parser (`String → RawPrgm PreTyped`) → Desugar (`RawPrgm PreTyped → Prgm PreTyped`) → TypeCheck (`Prgm PreTyped → Prgm Typed`) → TreeBuild (`Prgm Typed → ResArrowTree`) → Eval (`ResArrowTree → Val`)
 
+## Editing Guidance
+
+When making changes to core compiler functionality, do so carefully. Avoid making short-term fixes without express permission and instead focus on a long term approach intended to always work for all possible compiler inputs.
+
 ## Build & Run
 
 ```sh
