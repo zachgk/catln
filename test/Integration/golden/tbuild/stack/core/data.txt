@@ -5,7 +5,7 @@ Prgm
                 ( "/ContextOut"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /ContextOut( EAppVar /V TopType )( EAppArg Value /value -> TVVar /V )( EAppSpread Hole TopType HoleActive Nothing ) ]
+                        [ /ContextOut( EAppVar /V TopType )( EAppArg Value /value -> $/V )( EAppSpread Hole TopType HoleActive Nothing ) ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -37,15 +37,15 @@ Prgm
                         [ /Data/length( EAppArg Value /this -> /Data/Nil ) -> /Data/Primitive/Integer = 0
                         , /Data/length
                             ( EAppArg Value /this -> /Data/Cons[ /T=TopType ]
-                                ( /head=TVVar /T
+                                ( /head=$/T
                                 , /tail=
-                                    ( TopType | PredClass /Data/ConsList && PredRel ConsList[ /T=TVVar /T ] )
+                                    ( TopType | PredClass /Data/ConsList && PredRel ConsList[ /T=$/T ] )
                                 ) = /Data/Cons( EAppArg Value /head )
                                 ( EAppArg Value /tail ->
                                     ( /Data/Nil + /Data/Cons[ /T=TopType ]
-                                        ( /head=TVVar /T
+                                        ( /head=$/T
                                         , /tail=
-                                            ( TopType | PredClass /Data/ConsList && PredRel ConsList[ /T=TVVar /T ] )
+                                            ( TopType | PredClass /Data/ConsList && PredRel ConsList[ /T=$/T ] )
                                         )
                                     )
                                 )
@@ -99,7 +99,7 @@ Prgm
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /ContextIn( EAppVar /V TopType )( EAppArg Value /value -> TVVar /V )( EAppSpread Hole TopType HoleActive Nothing ) ]
+                        [ /ContextIn( EAppVar /V TopType )( EAppArg Value /value -> $/V )( EAppSpread Hole TopType HoleActive Nothing ) ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -116,9 +116,9 @@ Prgm
                 ( "/Context"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Context( EAppVar /V TopType )( EAppArg Value /value -> TVVar /V )( EAppSpread Hole TopType HoleActive Nothing )
-                        , /Context( EAppVar /T TopType )( EAppVar /V TopType )( EAppArg Value /value -> TVVar /V )( EAppSpread Hole TopType HoleActive Nothing ) | /operator?->
-                            ( EAppArg Value /l -> /ContextIn[ /V=TopType ]( /value=TopType ).. = /ContextIn( EAppVar /V TVVar /V )( EAppArg Value /value -> TVVar /V = Hole TVVar /V HoleActive Nothing )( EAppSpread Hole TopType HoleActive Nothing ) )( EAppArg Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing ) -> TVVar /T
+                        [ /Context( EAppVar /V TopType )( EAppArg Value /value -> $/V )( EAppSpread Hole TopType HoleActive Nothing )
+                        , /Context( EAppVar /T TopType )( EAppVar /V TopType )( EAppArg Value /value -> $/V )( EAppSpread Hole TopType HoleActive Nothing ) | /operator?->
+                            ( EAppArg Value /l -> /ContextIn[ /V=TopType ]( /value=TopType ).. = /ContextIn( EAppVar /V $/V )( EAppArg Value /value -> $/V = Hole $/V HoleActive Nothing )( EAppSpread Hole TopType HoleActive Nothing ) )( EAppArg Value /r -> $/T = Hole $/T HoleActive Nothing ) -> $/T
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -128,7 +128,7 @@ Prgm
                 ( "/Data/Cons"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Cons( EAppVar /T TopType )( EAppArg Value /head -> TVVar /T )( EAppArg Value /tail -> ∀/Data/ConsList ) ]
+                        [ /Data/Cons( EAppVar /T TopType )( EAppArg Value /head -> $/T )( EAppArg Value /tail -> ∀/Data/ConsList ) ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -224,9 +224,9 @@ Prgm
             ( True
             , /Data/ConsList
             ,
-                [ /Data/Cons[ /T=TVVar /T ]
-                    ( /head=TVVar /T
-                    , /tail=~ConsList[ /T=TVVar /T ]
+                [ /Data/Cons[ /T=$/T ]
+                    ( /head=$/T
+                    , /tail=~ConsList[ /T=$/T ]
                     )
                 , /Data/Nil
                 ]
@@ -260,7 +260,7 @@ Prgm
             ( True
             , /Data/Option
             ,
-                [ TVVar /T
+                [ $/T
                 , /Data/None
                 ]
             , Just "[Option] defines a type that might have a value or [None].

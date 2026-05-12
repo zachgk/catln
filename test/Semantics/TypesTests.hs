@@ -304,7 +304,7 @@ propSubtypeUnionVarSplit gPrgm = property $ do
   b <- forAll $ genPartialType prgm
 
   -- Create P[$T=(A+B)] - a partial with a union-typed var
-  let varName = partialKey "$T"
+  let varName = partialKey "T"
   let baseName = "/TestType"
   let unionVar = UnionType Nothing (joinUnionType [a, b]) []
   let joinedPartial = (partialVal baseName){ptVars = H.singleton varName unionVar}

@@ -5,7 +5,7 @@ Prgm
                 ( "/operator<="
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator<=( Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean ]
+                        [ /operator<=( Value /l -> $/T = Hole $/T HoleActive Nothing )( Value /r -> $/T = Hole $/T HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -14,7 +14,7 @@ Prgm
                 ( "/Data/Algebra/inverse"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Algebra/inverse[ /T : ∀/Data/Algebra/Group ]( Value /t -> TVVar /T ) -> TVVar /T ]
+                        [ /Data/Algebra/inverse[ /T : ∀/Data/Algebra/Group ]( Value /t -> $/T ) -> $/T ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -23,7 +23,7 @@ Prgm
                 ( "/operator++"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator++( Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )[ /T : ∀/Data/Algebra/Semigroup ] -> TVVar /T ]
+                        [ /operator++( Value /l -> $/T = Hole $/T HoleActive Nothing )( Value /r -> $/T = Hole $/T HoleActive Nothing )[ /T : ∀/Data/Algebra/Semigroup ] -> $/T ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -32,7 +32,7 @@ Prgm
                 ( "/operator>="
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator>=( Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean ]
+                        [ /operator>=( Value /l -> $/T = Hole $/T HoleActive Nothing )( Value /r -> $/T = Hole $/T HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -49,7 +49,7 @@ Prgm
                 ( "/Data/Algebra/mempty"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Algebra/mempty[ /T : ∀/Data/Algebra/Monoid ] -> TVVar /T ]
+                        [ /Data/Algebra/mempty[ /T : ∀/Data/Algebra/Monoid ] -> $/T ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -60,14 +60,14 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/testGroup[ /T : ∀/Data/Algebra/Group ]( Value /t -> TVVar /T ) -> /Data/Primitive/Integer = CInt 0 ]
+                        [ /Data/Algebra/testGroup[ /T : ∀/Data/Algebra/Group ]( Value /t -> $/T ) -> /Data/Primitive/Integer = CInt 0 ]
                     }
                 )
             ,
                 ( "/operator<"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator<( Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean ]
+                        [ /operator<( Value /l -> $/T = Hole $/T HoleActive Nothing )( Value /r -> $/T = Hole $/T HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -78,14 +78,14 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/testCommutativeMonoid[ /T : ∀/Data/Algebra/CommutativeMonoid ]( Value /a -> TVVar /T )( Value /b -> TVVar /T ) -> /Data/Primitive/Integer = CInt 0 ]
+                        [ /Data/Algebra/testCommutativeMonoid[ /T : ∀/Data/Algebra/CommutativeMonoid ]( Value /a -> $/T )( Value /b -> $/T ) -> /Data/Primitive/Integer = CInt 0 ]
                     }
                 )
             ,
                 ( "/operator>"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator>( Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean ]
+                        [ /operator>( Value /l -> $/T = Hole $/T HoleActive Nothing )( Value /r -> $/T = Hole $/T HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -96,7 +96,7 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/testRightMonoidIdentity[ /T : ∀/Data/Algebra/Monoid ]( Value /t -> TVVar /T ) -> /Data/Primitive/Integer = CInt 0 ]
+                        [ /Data/Algebra/testRightMonoidIdentity[ /T : ∀/Data/Algebra/Monoid ]( Value /t -> $/T ) -> /Data/Primitive/Integer = CInt 0 ]
                     }
                 )
             ,
@@ -105,7 +105,7 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/testSemigroupAssociative[ /T : ∀/Data/Algebra/Semigroup ]( Value /a -> TVVar /T )( Value /b -> TVVar /T )( Value /c -> TVVar /T ) -> /Data/Primitive/Integer = CInt 0 ]
+                        [ /Data/Algebra/testSemigroupAssociative[ /T : ∀/Data/Algebra/Semigroup ]( Value /a -> $/T )( Value /b -> $/T )( Value /c -> $/T ) -> /Data/Primitive/Integer = CInt 0 ]
                     }
                 )
             ,
@@ -122,15 +122,15 @@ Prgm
                     { omiDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/testLeftMonoidIdentity[ /T : ∀/Data/Algebra/Monoid ]( Value /t -> TVVar /T ) -> /Data/Primitive/Integer = CInt 0 ]
+                        [ /Data/Algebra/testLeftMonoidIdentity[ /T : ∀/Data/Algebra/Monoid ]( Value /t -> $/T ) -> /Data/Primitive/Integer = CInt 0 ]
                     }
                 )
             ,
                 ( "/Data/Algebra/compare"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Algebra/compare[ /T : ∀/Data/Algebra/Ord ]( Value /l -> TVVar /T )( Value /r -> TVVar /T ) -> ∀/Data/Algebra/Ordering
-                        , /Data/Algebra/compare[ /T : ∀/Data/Algebra/POrd ]( Value /l -> TVVar /T )( Value /r -> TVVar /T ) -> ∀/Data/Algebra/POrdering
+                        [ /Data/Algebra/compare[ /T : ∀/Data/Algebra/Ord ]( Value /l -> $/T )( Value /r -> $/T ) -> ∀/Data/Algebra/Ordering
+                        , /Data/Algebra/compare[ /T : ∀/Data/Algebra/POrd ]( Value /l -> $/T )( Value /r -> $/T ) -> ∀/Data/Algebra/POrdering
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -156,7 +156,7 @@ Prgm
                 ( "/operator!="
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator!=( Value /l -> TVVar /T = Hole TVVar /T HoleActive Nothing )( Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing )[ /T : ∀/Data/Algebra/Eq ] -> ∀/Data/Primitive/Boolean ]
+                        [ /operator!=( Value /l -> $/T = Hole $/T HoleActive Nothing )( Value /r -> $/T = Hole $/T HoleActive Nothing )[ /T : ∀/Data/Algebra/Eq ] -> ∀/Data/Primitive/Boolean ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }

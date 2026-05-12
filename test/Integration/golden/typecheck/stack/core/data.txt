@@ -5,7 +5,7 @@ Prgm
                 ( "/ContextOut"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /ContextOut[ /V : TopType ]( Value /value -> TVVar /V )( ..Hole TopType HoleActive Nothing ) ]
+                        [ /ContextOut[ /V : TopType ]( Value /value -> $/V )( ..Hole TopType HoleActive Nothing ) ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -37,15 +37,15 @@ Prgm
                         [ /Data/length( Value /this -> /Data/Nil ) -> /Data/Primitive/Integer = CInt 0
                         , /Data/length
                             ( Value /this -> /Data/Cons[ /T=TopType ]
-                                ( /head=TVVar /T
+                                ( /head=$/T
                                 , /tail=
-                                    ( TopType | PredClass /Data/ConsList && PredRel ConsList[ /T=TVVar /T ] )
+                                    ( TopType | PredClass /Data/ConsList && PredRel ConsList[ /T=$/T ] )
                                 ) = /Data/Cons( Value /head )
                                 ( Value /tail ->
                                     ( /Data/Nil + /Data/Cons[ /T=TopType ]
-                                        ( /head=TVVar /T
+                                        ( /head=$/T
                                         , /tail=
-                                            ( TopType | PredClass /Data/ConsList && PredRel ConsList[ /T=TVVar /T ] )
+                                            ( TopType | PredClass /Data/ConsList && PredRel ConsList[ /T=$/T ] )
                                         )
                                     )
                                 )
@@ -95,7 +95,7 @@ Prgm
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /ContextIn[ /V : TopType ]( Value /value -> TVVar /V )( ..Hole TopType HoleActive Nothing ) ]
+                        [ /ContextIn[ /V : TopType ]( Value /value -> $/V )( ..Hole TopType HoleActive Nothing ) ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -112,9 +112,9 @@ Prgm
                 ( "/Context"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Context[ /V : TopType ]( Value /value -> TVVar /V )( ..Hole TopType HoleActive Nothing )
-                        , /Context[ /T : TopType ][ /V : TopType ]( Value /value -> TVVar /V )( ..Hole TopType HoleActive Nothing ) | /operator?->
-                            ( Value /l -> /ContextIn[ /V=TopType ]( /value=TopType ).. = /ContextIn[ /V : TVVar /V ]( Value /value -> TVVar /V = Hole TVVar /V HoleActive Nothing )( ..Hole TopType HoleActive Nothing ) )( Value /r -> TVVar /T = Hole TVVar /T HoleActive Nothing ) -> TVVar /T
+                        [ /Context[ /V : TopType ]( Value /value -> $/V )( ..Hole TopType HoleActive Nothing )
+                        , /Context[ /T : TopType ][ /V : TopType ]( Value /value -> $/V )( ..Hole TopType HoleActive Nothing ) | /operator?->
+                            ( Value /l -> /ContextIn[ /V=TopType ]( /value=TopType ).. = /ContextIn[ /V : $/V ]( Value /value -> $/V = Hole $/V HoleActive Nothing )( ..Hole TopType HoleActive Nothing ) )( Value /r -> $/T = Hole $/T HoleActive Nothing ) -> $/T
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -124,7 +124,7 @@ Prgm
                 ( "/Data/Cons"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Cons[ /T : TopType ]( Value /head -> TVVar /T )( Value /tail -> ∀/Data/ConsList ) ]
+                        [ /Data/Cons[ /T : TopType ]( Value /head -> $/T )( Value /tail -> ∀/Data/ConsList ) ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -220,9 +220,9 @@ Prgm
             ( True
             , /Data/ConsList
             ,
-                [ /Data/Cons[ /T=TVVar /T ]
-                    ( /head=TVVar /T
-                    , /tail=~ConsList[ /T=TVVar /T ]
+                [ /Data/Cons[ /T=$/T ]
+                    ( /head=$/T
+                    , /tail=~ConsList[ /T=$/T ]
                     )
                 , /Data/Nil
                 ]
@@ -256,7 +256,7 @@ Prgm
             ( True
             , /Data/Option
             ,
-                [ TVVar /T
+                [ $/T
                 , /Data/None
                 ]
             , Just "[Option] defines a type that might have a value or [None].

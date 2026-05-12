@@ -24,8 +24,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /tst( EAppVar /T TopType )
-                            ( EAppArg Value /d -> /T( /x=TopType ) = /T( EAppArg Value /x -> TVVar /T ) )
-                            ( EAppArg /f( EAppArg Value /y -> TVVar /T ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
+                            ( EAppArg Value /d -> /T( /x=TopType ) = /T( EAppArg Value /x -> $/T ) )
+                            ( EAppArg /f( EAppArg Value /y -> $/T ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRefineDecls = []
                     , omiDefs =

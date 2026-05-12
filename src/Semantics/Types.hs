@@ -205,11 +205,12 @@ pattern TopType negLeafs preds <- UnionType (Just (preds, negLeafs)) (H.null -> 
   where TopType negLeafs preds = UnionType (Just (preds, negLeafs)) H.empty []
 
 -- | Indicates whether a type var or arg is located internally to the object or externally.
--- | Internal is if it is defined in the type as an argument or variable.
--- | External is if it is from a parent object or outer context.
+-- | 'TVInt' references a variable defined on the *same* 'PartialType' (resolved against its 'ptVars'/'ptArgs').
+-- | 'TVExt' references a variable from a parent object or outer context (resolved against 'TypeVarArgEnv').
+-- | In source syntax, 'TVInt' is written as @$T@ and 'TVExt' as @$_T@.
 data TypeVarLoc
   = TVInt
-  | TVExt -- ^ TODO: Begin using TVExt. Right now, only TVInt is used.
+  | TVExt
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
 
 -- | A type because two kinds of type variables are supported
@@ -345,7 +346,10 @@ instance Show Type where
       joinParts []  = "∅"
       joinParts [p] = p
       joinParts ps  = "(" ++ intercalate " + " ps ++ ")"
-  show (TypeVar v _) = show v
+  show (TypeVar (TVVar n) TVInt) = "$" ++ show n
+  show (TypeVar (TVVar n) TVExt) = "$_" ++ show n
+  show (TypeVar (TVArg n) TVInt) = "TVArg " ++ show n
+  show (TypeVar (TVArg n) TVExt) = "TVArg(ext) " ++ show n
 
 instance Show ClassGraph where
   show (ClassGraph graphData) = show $ map fst3 $ graphToNodes graphData
@@ -684,7 +688,7 @@ classPartial p = TopType H.empty (PredsOne (PredClass p))
 -- | Creates a classPlaceholder[$T] partial type for a given class name.
 -- Used when expanding a class that has no constituent types to avoid returning the empty set.
 classPlaceholderLeaf :: TypeName -> PartialType
-classPlaceholderLeaf className = (partialVal classPlaceholderStr){ptVars = H.singleton (partialKey "$T") (singletonType $ partialVal className)}
+classPlaceholderLeaf className = (partialVal classPlaceholderStr){ptVars = H.singleton (partialKey "T") (singletonType $ partialVal className)}
 
 getSingleton :: Type -> PartialType
 getSingleton t = case maybeGetSingleton t of
@@ -1678,7 +1682,7 @@ substituteVarsWithVarEnv venv (UnionType Nothing partials []) =
         ptPreds = mapTypePreds (mapTypePred (substitutePartial ptVars')) ptPreds
                                                                       }
         where ptVars' = fmap (substituteVarsWithVarEnv venv) ptVars
-substituteVarsWithVarEnv venv (TypeVar (TVVar v) TVInt) = fromMaybe PTopType (H.lookup v venv)
+substituteVarsWithVarEnv venv (TypeVar (TVVar v) _) = fromMaybe PTopType (H.lookup v venv)
 substituteVarsWithVarEnv _ t = t
 
 -- | Replaces the type variables 'TVVar' in a 'Type'
@@ -1694,7 +1698,7 @@ substituteArgsWithArgEnv aenv (UnionType Nothing partials []) =
         ptArgs = fmap (substituteArgsWithArgEnv aenv') ptArgs
                                                                  }
         where aenv' = H.union aenv ptArgs
-substituteArgsWithArgEnv aenv (TypeVar (TVArg v) TVInt) = case H.lookup v aenv of
+substituteArgsWithArgEnv aenv (TypeVar (TVArg v) _) = case H.lookup v aenv of
   Just v' -> v'
   Nothing -> error $ printf "Could not substitute unknown type arg %s. Only found args %s" (show v) (show aenv)
 substituteArgsWithArgEnv _ t = t
@@ -1749,8 +1753,9 @@ updateTypeProp typeEnv vaenv superType propName subType = case superType of
               let supVar = H.lookupDefault PTopType v supVars
               let newProp = intersectTypesEnv typeEnv vaenv supVar sub
               Just (sup{ptVars=H.insert v newProp supVars}, newProp)
-            Just (TypeVar (TVVar _) TVExt) -> error $ printf "Not yet implemented"
-            Just (TypeVar TVArg{} _) -> error $ printf "Not yet implemented"
+            -- TVExt references the outer vaenv; fall through to the generic
+            -- supProp handling, which calls 'intersectTypesEnv' (it knows how
+            -- to resolve TypeVar via vaenv).  Same for TVArg.
             Just supProp -> do
               let newProp = intersectTypesEnv typeEnv vaenv supProp sub
               if isBottomType newProp

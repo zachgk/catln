@@ -145,8 +145,8 @@ genPartialType prgm@(Prgm objMap _ _) = do
   gen <- if graphEmpty cg
     then if nullObjectMap objMap
       then HG.discard
-      else return [genObj]
-    else return [genCG, genObj]
+      else return [genObj, genWithTVExt genObj]
+    else return [genCG, genObj, genWithTVExt genCG, genWithTVExt genObj]
   HG.choice gen
   where
     TypeEnv{teClassGraph=ClassGraph cg} = mkTypeEnv prgm
@@ -160,6 +160,17 @@ genPartialType prgm@(Prgm objMap _ _) = do
       oa <- HG.element $ flatObjectMap objMap
       let objExpr = fromJust $ oaObj oa
       genTypeFromExpr prgm objExpr
+
+    -- | Wraps a base partial generator and randomly adds a 'TVExt'-tagged
+    -- type variable to one of its 'ptVars'.  This exercises the external
+    -- variable resolution path in substitution/intersection.
+    genWithTVExt :: Gen PartialType -> Gen PartialType
+    genWithTVExt baseGen = do
+      base <- baseGen
+      varName <- HG.string (linear 1 5) HG.lower
+      extName <- HG.string (linear 1 5) HG.lower
+      let extVar = TypeVar (TVVar (partialKey extName)) TVExt
+      return base{ptVars = H.insert (partialKey varName) extVar (ptVars base)}
 
 genInputExpr :: Gen (Expr ())
 genInputExpr = do
