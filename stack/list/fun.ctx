@@ -11,7 +11,7 @@ module(Data/List)
 
   every(FunList[$T], isa= [List[$T]])
 
-FunList[$T](length, f) -> Iterator[$T -> $T] =
+FunList[$T](length, f) -> Iterator[$T -> $_T] =
   # Every [FunList] can be converted into an [Iterator]
   f2(x -> Int_from(0)_to(length)) -> IteratorResult
   f2(x= length)= IteratorDone

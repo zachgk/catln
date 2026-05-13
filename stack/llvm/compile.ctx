@@ -43,7 +43,7 @@ module(LLVM)
   # ## Lazyness
   class(LazyData[$T1, $T2], [LazyUncomputed[$T2](e -> $T1), LazyComputed(v -> Expr[$T2])], isa= [Expr[$T2]])
 
-  data(LazyExpr[$T1, $T2](val -> Var[LazyData[$T1= $T1, $T2= $T2]]))
+  data(LazyExpr[$T1, $T2](val -> Var[LazyData[$T1= $_T1, $T2= $_T2]]))
 
   implicit[$T2](e){} =
     #name("lazy")
@@ -64,7 +64,7 @@ module(LLVM)
         res
 
   # ## implicitBase Calls
-  implicitBase[$T2](e -> Expr[$T1 -> $T2]){} -> Expr[$T2]
+  implicitBase[$T2](e -> Expr[$T1 -> $_T2]){} -> Expr[$T2]
     # This looks up the claimed implicit(s).
       There can be multiple if they are partial or have conditions.
       Then, it will match as necessary and call the base functions.

@@ -5,7 +5,7 @@ import "core"
 module(Data/List)
   class(IteratorResult[$T, $State], [IteratorNext(nextState -> $State, val -> $T), IteratorDone])
 
-  data(Iterator[$T, $State](length -> Int, initState -> $State, f(x -> $State) -> IteratorResult[$T= $T, $State= $State]))
+  data(Iterator[$T, $State](length -> Int, initState -> $State, f(x -> $State) -> IteratorResult[$T= $_T, $State= $_State]))
     # A virtual [List] represented by an iterator.
       The iterator has an internal state of type [$State] and by applying [f] it produces the next value of the iterator and a next state.
       The [Iterator] is a fundamental type as almost all [List] operations can be defined in terms of it.
@@ -20,7 +20,7 @@ every(Iterator[$T], isa= [List[$T]])
 
       IteratorDone= IteratorDone
 
-  Iterator[$T= $T2, $State= $State](length= length, initState= initState, f= f2)
+  Iterator[$T= $_T2, $State= $_State](length= length, initState= initState, f= f2)
 
 :Iterator[$T, $State](length, initState, f).flatMap(f= mapFun) =
   f2(x) =
@@ -38,4 +38,4 @@ every(Iterator[$T], isa= [List[$T]])
 
     return(IteratorNext(nextState= (vals= vs, s= s)), val= v)
 
-  Iterator[$T -> $T2, $State= (vals= List[$T -> $T2], s= $State)](length= length, initState= initState, f= f2)
+  Iterator[$T -> $_T2, $State= (vals= List[$T -> $_T2], s= $State)](length= length, initState= initState, f= f2)

@@ -18,7 +18,7 @@ import "core"
     # If the list is passed a predicate which is always [False], then it returns nothing.
   :List_size(size).filter(f) -> List_size(Int_lte(size))
     # As [filter] only removes elements from the list, we know that the resulting list has at most the same size
-  :List[$T].filter(f(x -> $T) -> Bool) -> (List[$T2 -> $T] | f(x :: $T2) ?-> True)
+  :List[$T].filter(f(x -> $T) -> Bool) -> (List[$T2 -> $_T] | f(x :: $T2) ?-> True)
     # The type of the filtered list is not exactly the same as the input list.
       Only the type of elements that pass the predicate can be found in the filtered list.
       In the example earlier, we filter based on even numbers.
