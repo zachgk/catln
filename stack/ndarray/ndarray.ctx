@@ -23,6 +23,6 @@ class(NDArray[$T])
 
   :ListNDArray.size= this.flatten.size
 
-  every(NDArray[$T -> $T], isa= [Functor])
+  every(NDArray[$T -> $_T], isa= [Functor])
 
   :NDArray.map(f)= ListNDArray(shape= this.shape, flatten= this.flatten.map(f))

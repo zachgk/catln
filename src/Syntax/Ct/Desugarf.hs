@@ -172,7 +172,7 @@ desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef clssExpr dataExprs e
   let clss@PartialType{ptVars=classVars} = exprToPartialType clssExpr
   let clss' = clss{ptName=makeAbsoluteName $ show path'}
 
-  let dataTypes = map (either id (getExprType . exprPropagateTypes . semiDesExpr SDType Nothing) . eitherTypeVarExpr) dataExprs
+  let dataTypes = map (either id (substituteVarsWithVarEnv classVars . getExprType . exprPropagateTypes . semiDesExpr SDType Nothing) . eitherTypeVarExpr) dataExprs
 
   let objs = objectMapFromList $ map (desMultiTypeDefObj inheritPath classVars) $ rights $ map eitherTypeVarExpr dataExprs
   let objPaths = map (PRelativeName . oaObjPath) $ flatObjectMap objs

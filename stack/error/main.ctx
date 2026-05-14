@@ -26,7 +26,7 @@ class(Err)
 
       _ :: $E= def
 
-    every(Result[$R -> $T, $E], isa= [Functor])
+    every(Result[$R -> $_T, $E], isa= [Functor])
 
     :Result[$R, $E].map(f)= match(this)
       val -> $R= f(val)
