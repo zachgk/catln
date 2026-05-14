@@ -4,7 +4,7 @@ import "core"
 # Tests higher order functions
 data(T(x))
 
-tst[$T](d= T(x -> $T), f(y -> $T) -> Boolean) -> Boolean
+tst[$T](d= T(x -> $_T), f(y -> $_T) -> Boolean) -> Boolean
 tst(d= T(x), f(y))= f(y= x)
 
 main{io -> IO} =

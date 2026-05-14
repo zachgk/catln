@@ -19,21 +19,21 @@ class(Err)
   apply(a"${fun} > error(cause -> Err)")
     #msg("An error occurred when running [fun] due to [cause]")
 
-  class(Result[$R, $E -> Err], [$R, $E])
+  class(Result[$R, $E -> Err], [$_R, $_E])
     # The standard handling of the [Err] is by wrapping things into a [Result].
-    :Result[$R, $E].default(def -> $R)= match(this)
-      val -> $R= val
+    :Result[$R, $E].default(def -> $_R)= match(this)
+      val -> $_R= val
 
-      _ :: $E= def
+      _ :: $_E= def
 
     every(Result[$R -> $_T, $E], isa= [Functor])
 
     :Result[$R, $E].map(f)= match(this)
-      val -> $R= f(val)
+      val -> $_R= f(val)
 
-      e -> $E= e
+      e -> $_E= e
 
     :Result[$R].to[Optional]= match(this)
-      val -> $R= val
+      val -> $_R= val
 
-      _ :: $E= Nothing
+      _ :: $_E= Nothing

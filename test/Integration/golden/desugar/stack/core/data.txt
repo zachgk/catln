@@ -96,7 +96,7 @@ Prgm
                     { omiDecls =
                         [ /Context[ /V : TopType ]( Value /value -> $/V )( ..Hole TopType HoleActive Nothing )
                         , /Context[ /T : TopType ][ /V : TopType ]( Value value -> $/V )( ..Hole TopType HoleActive Nothing ) | /operator?->
-                            ( Value /l= /ContextIn[ /V : $/V ]( Value value= Hole $/V HoleActive Nothing )( ..Hole TopType HoleActive Nothing ) )( Value /r= Hole $/T HoleActive Nothing ) -> $/T
+                            ( Value /l= /ContextIn[ /V : $_/V ]( Value value= Hole $/V HoleActive Nothing )( ..Hole TopType HoleActive Nothing ) )( Value /r= Hole $/T HoleActive Nothing ) -> $/T
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -202,9 +202,9 @@ Prgm
             ( True
             , /Data/ConsList
             ,
-                [ /Data/Cons[ /T=$/T ]
+                [ /Data/Cons[ /T=$_/T ]
                     ( /head=$/T
-                    , /tail=~ConsList[ /T=$/T ]
+                    , /tail=~ConsList[ /T=$_/T ]
                     )
                 , /Data/Nil
                 ]
@@ -238,7 +238,7 @@ Prgm
             ( True
             , /Data/Option
             ,
-                [ $/T
+                [ $_/T
                 , /Data/None
                 ]
             , Just "[Option] defines a type that might have a value or [None].

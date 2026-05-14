@@ -2,7 +2,7 @@ import "core"
 
 
 # Tests a simple data structure with a sum type
-class(Maybe[$T], [Just[$T](val -> $T), Nothing])
+class(Maybe[$T], [Just[$T](val -> $_T), Nothing])
 
 defInt(x= Just(val -> Integer))= val
 defInt(x= Nothing)= 0

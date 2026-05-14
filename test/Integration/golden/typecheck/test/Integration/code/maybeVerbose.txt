@@ -45,7 +45,7 @@ Prgm
                 ( "/Just"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Just[ /T : TopType ]( Value /val -> $/T ) ]
+                        [ /Just[ /T : TopType ]( Value /val -> $_/T ) ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -61,7 +61,7 @@ Prgm
             ( True
             , /Maybe
             ,
-                [ /Just[ /T=TopType ]( /val=$/T )
+                [ /Just[ /T=TopType ]( /val=$_/T )
                 , /Nothing
                 ]
             , Just ""

@@ -14,11 +14,11 @@ class(NDArray[$T])
   :NDArray.size= this.shape.prod
     # The number of elements in the [NDArray]
 
-  :NDArray[$T].flatten -> List[$T]
+  :NDArray[$T].flatten -> List[$T -> $_T]
 
-  data(ListNDArray/Invalid[$T](:Shape, flatten -> List[$T]))
+  data(ListNDArray/Invalid[$T](:Shape, flatten -> List[$T -> $_T]))
 
-  class(ListNDArray[$T], [ListNDArray/Invalid[$T] | (shape.prod == flatten.length)])
+  class(ListNDArray[$T], [ListNDArray/Invalid[$T -> $_T] | (shape.prod == flatten.length)])
     # A simple definition for the 
 
   :ListNDArray.size= this.flatten.size

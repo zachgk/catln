@@ -2,7 +2,7 @@ import "core"
 
 
 # Tests a simple data structure with a true union
-class(Maybe[$T], [$T, /Nothing])
+class(Maybe[$T], [$_T, /Nothing])
 
 defInt(x -> Integer)= x
 defInt(x= Nothing)= 0

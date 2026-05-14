@@ -61,10 +61,20 @@ curlyBraces = between (symbol "{") (symbol "}")
 
 -- TODO Avoid "//" in identifier. It's currently usable by separating by space
 identifier :: Parser String
-identifier = some (satisfy idChar)
+identifier = try tvExtIdentifier <|> some (satisfy idChar)
   where
     idChar c = isPrint c && not (isSpace c) && not (c `S.member` invalidChars)
     invalidChars = S.fromList "-~:*%+<>()[]{}=!&|.@_,?\""
+
+    -- Allow '$_T' (TVExt type variable references) to parse as a single
+    -- identifier even though '_' is normally excluded from identifiers.
+    -- Without this, '$_T' would parse as '$' followed by an '_T' suffix
+    -- (TypePropProj), losing the TVExt distinction.
+    tvExtIdentifier = do
+      _ <- char '$'
+      _ <- char '_'
+      rest <- some (satisfy idChar)
+      return ('$':'_':rest)
 
 pHole :: Parser String
 pHole = do

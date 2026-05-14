@@ -26,7 +26,7 @@ module(Data)
   data(/ContextOut[$V](value -> $V, .._))
     # The [ContextOut] is used to represent an output state in a function.
 
-  /Context[$V, $T](value -> $V, .._) | (/ContextIn[$V -> $V](value= (_ :: $V), .._) ?-> (_ :: $T)) -> $T
+  /Context[$V, $T](value -> $V, .._) | (/ContextIn[$V -> $_V](value= (_ :: $V), .._) ?-> (_ :: $T)) -> $T
     #runtime("context")
 
   # ## Collections
@@ -37,7 +37,7 @@ module(Data)
     # $F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]
 
   # ## Collections
-  class(Option[$T], [$T, None])
+  class(Option[$T], [$_T, None])
     # [Option] defines a type that might have a value or [None].
       It can be used to handle operations that are uncertain if they can produce a response.
 
@@ -48,7 +48,7 @@ module(Data)
   class(List[$T])
 
   # A [List] is a collection of zero or more ordered items.
-  class(ConsList[$T], [Cons[$T -> $T](head -> $T, tail -> ConsList[$T -> $T]), Nil])
+  class(ConsList[$T], [Cons[$T -> $_T](head -> $T, tail -> ConsList[$T -> $_T]), Nil])
     # The simplest kind of list can be created by prepending.
       A [ConsList] defines a list either by prepending to a list or with an empty list.
 
