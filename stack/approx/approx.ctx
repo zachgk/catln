@@ -44,6 +44,6 @@ data(LiftApprox[$T](val -> $T), isa= [Approx[$T -> $_T]])
 
 class(ProbMap[$T], [ProbMap/Unnormalized[$T -> $_T](vals) | (sum(vals) == 1)])
 
-data(ProbMap/Unnormalized[$T](vals -> Map[$T, Probability]), isa= [Approx[$T -> $_T], Distribution[$T -> $_T]])
+data(ProbMap/Unnormalized[$T](vals -> Map[$_T, Probability]), isa= [Approx[$T -> $_T], Distribution[$T -> $_T]])
 :ProbMap/Unnormalized(vals)
 :ProbMap.get(x)= vals.get(x, default= 0)

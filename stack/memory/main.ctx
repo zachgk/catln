@@ -18,9 +18,9 @@ class(Memory[$V -> Var])
     # The class representing a variable within the [Memory].
       If you think of the [Memory] as a map, then the [Var] is a key.
 
-  var[$T]{:Memory} -> Var[$T]{Memory}
+  var[$T]{:Memory} -> Var[$T -> $_T]{Memory}
     # Creates a new undefined variable
-  var[$T](v -> $T){:Memory} -> Var[$T]{Memory}
+  var[$T](v -> $T){:Memory} -> Var[$T -> $_T]{Memory}
     # Creates a new variable with the initial value of [v].
 
   free(v -> Var){:Memory} -> (){Memory}

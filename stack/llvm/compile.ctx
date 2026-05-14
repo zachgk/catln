@@ -7,7 +7,7 @@ module(LLVM)
   class(Expr[$T])
     # Used to represent expression-equivalent data.
 
-  data(Operand[$T](repr -> String), isa= [Expr[$T]])
+  data(Operand[$T](repr -> String), isa= [Expr[$T -> $_T]])
     # An operand is an expression value in [LLVM].
       The most common is a register storing values and typically represented like `%1`.
       It can also be used for constants.
@@ -41,7 +41,7 @@ module(LLVM)
       #name("strict")
 
   # ## Lazyness
-  class(LazyData[$T1, $T2], [LazyUncomputed[$T2](e -> $_T1), LazyComputed(v -> Expr[$T2])], isa= [Expr[$T2]])
+  class(LazyData[$T1, $T2], [LazyUncomputed[$T2](e -> $_T1), LazyComputed(v -> Expr[$T2 -> $_T2])], isa= [Expr[$T2 -> $_T2]])
 
   data(LazyExpr[$T1, $T2](val -> Var[LazyData[$T1= $_T1, $T2= $_T2]]))
 
