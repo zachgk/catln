@@ -23,6 +23,7 @@ import qualified Data.IntMap.Lazy           as IM
 import           Data.List
 import           Data.UUID                  (nil)
 import           GHC.Generics               (Generic)
+import           System.IO.Unsafe           (unsafePerformIO)
 
 import           Control.Monad.State
 import           Control.Monad.Trans.Writer (execWriter, tell)
@@ -36,8 +37,21 @@ import           Semantics
 import           Semantics.Prgm
 import           Semantics.TypeGraph        (ReachesTree)
 import           Semantics.Types
+import           System.Environment         (lookupEnv)
 import           Text.Printf
 import           Utils
+
+-- | When CATLN_STRICT_MONOTONIC is set, verifyScheme failures in
+-- setDescriptor become hard errors instead of being silently converted to
+-- TypeCheckResE. Defaults to off so existing builds continue to converge,
+-- but lets developers and CI surface non-monotone pnt writes (#98).
+strictMonotonic :: Bool
+strictMonotonic = unsafePerformIO $ do
+  v <- lookupEnv "CATLN_STRICT_MONOTONIC"
+  return $ case v of
+    Just s | s `notElem` ["", "0", "false", "False"] -> True
+    _                                                 -> False
+{-# NOINLINE strictMonotonic #-}
 
 data TypeCheckError
   = GenTypeCheckError (Maybe (Meta ())) String
@@ -424,9 +438,15 @@ setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@M
         return $ not (eqScheme env showVaenv scheme scheme')
     scheme'' = case verifyScheme feTypeEnv (fromJust $ tcreToMaybe vaenv) m scheme scheme' of
       _ | not schemeChanged -> scheme'
-      -- Just failVerification -> error $ printf "Scheme failed verification %s\n\t\tDuring typechecking of %s:\n\t\t New Scheme: %s \n\t\t Old Scheme: %s\n\t\t Obj: %s\n\t\t Con: %s" failVerification msg (show scheme') (show scheme) (show m) (show con)
-      Just failVerification -> TypeCheckResE [GenTypeCheckError (clearMetaDat ArrMeta m) $ printf "Scheme failed verification %s\n\t\tDuring typechecking of %s:\n\t\t New Scheme: %s \n\t\t Old Scheme: %s\n\t\t Obj: %s\n\t\t Con: %s" failVerification msg (show scheme') (show scheme) (show m) (show con)]
+      -- Tagged "MONOTONICITY VIOLATION" so non-monotone pnt writes (#98)
+      -- are easy to grep for in CI logs. With CATLN_STRICT_MONOTONIC=1 the
+      -- violation is fatal, which lets developers and tests catch
+      -- regressions where a future constraint widens a pnt.
+      Just failVerification
+        | strictMonotonic -> error $ violationMsg failVerification
+        | otherwise       -> TypeCheckResE [GenTypeCheckError (clearMetaDat ArrMeta m) $ violationMsg failVerification]
       Nothing -> scheme'
+    violationMsg failVerification = printf "MONOTONICITY VIOLATION: %s\n\t\tDuring typechecking of %s:\n\t\t New Scheme: %s \n\t\t Old Scheme: %s\n\t\t Obj: %s\n\t\t Con: %s" failVerification msg (show scheme') (show scheme) (show m) (show con)
     pnts' = if schemeChanged then IM.insert p scheme'' fePnts else fePnts -- Only update if changed to avoid meaningless updates
     feTrace' = if schemeChanged
       then traceConstrainChange feTrace p scheme''
