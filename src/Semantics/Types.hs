@@ -553,6 +553,14 @@ containsBottomPartialType PartialType{ptArgs, ptVars} = any containsBottomType p
 ptVarArg :: PartialType -> TypeVarArgEnv
 ptVarArg PartialType{ptArgs, ptVars} = joinVarArgEnv ptVars ptArgs
 
+-- | Pushes a partial's own bindings ('ptVars' + 'ptArgs') onto an outer 'TypeVarArgEnv',
+-- making them the resolution scope for TVExt references that appear inside the partial's
+-- components.  The partial's binding values are first substituted using the outer env so
+-- that any TVExt refs they contain are resolved before being installed as the new scope.
+-- Bindings from the partial take precedence over outer bindings (inner scope shadows outer).
+enterPartial :: TypeVarArgEnv -> PartialType -> TypeVarArgEnv
+enterPartial vaenv partial = H.union (substituteTVExt vaenv <$> ptVarArg partial) vaenv
+
 joinVarArgEnv :: H.HashMap TypeVarName v -> H.HashMap ArgName v -> H.HashMap TypeVarAux v
 joinVarArgEnv venv aenv = H.fromList (venv' ++ aenv')
   where
@@ -710,20 +718,27 @@ maybeGetTypeName t | isJust (maybeGetSingleton t) = Just $ ptName $ getSingleton
 maybeGetTypeName (TopType _ (PredsOne (PredRel p))) = Just $ ptName p
 maybeGetTypeName _ = Nothing
 
-typeSetArg :: ArgName -> Type -> Type -> Type
-typeSetArg argName argVal (UnionType Nothing leafs []) = UnionType Nothing (joinUnionType $ map aux $ splitUnionType leafs) []
-  where
-    aux p@PartialType{ptArgs} = p{ptArgs=H.insert argName argVal ptArgs}
-typeSetArg argName argVal (TopType negPartials (PredsOne (PredRel p@PartialType{ptArgs}))) = TopType negPartials (PredsOne $ PredRel p{ptArgs=H.insert argName argVal ptArgs})
-typeSetArg _ _ tp = error $ printf "Unimplemented typeSetArg for %s" (show tp)
+-- | Sets a 'TypeVarAux'-keyed binding inside every partial of a 'Type'.
+-- Handles 'UnionType Nothing' (set in each leaf partial) and 'TopType' wrapping
+-- a 'PredRel'/'PredClass' (set in the singleton predicate partial).  Var/arg are
+-- handled uniformly via 'typeSetAux' (defined later) — the binding location is
+-- decided purely by the 'TypeVarAux' tag.
+typeSetAuxType :: TypeVarAux -> Type -> Type -> Type
+typeSetAuxType aux val (UnionType Nothing leafs []) =
+  UnionType Nothing (joinUnionType $ map (typeSetAux aux val) $ splitUnionType leafs) []
+typeSetAuxType aux val (TopType negPartials (PredsOne (PredRel p))) =
+  TopType negPartials (PredsOne $ PredRel (typeSetAux aux val p))
+typeSetAuxType (TVVar k) val (TopType negPartials (PredsOne (PredClass p@PartialType{ptVars}))) =
+  TopType negPartials (PredsOne $ PredClass p{ptVars=H.insert k val ptVars})
+typeSetAuxType aux val tp = error $ printf "Unimplemented typeSetAuxType for %s.%s = %s" (show tp) (show aux) (show val)
 
+-- | Sets an arg-typed binding inside every partial of a 'Type'.
+typeSetArg :: ArgName -> Type -> Type -> Type
+typeSetArg argName = typeSetAuxType (TVArg argName)
+
+-- | Sets a var-typed binding inside every partial of a 'Type'.
 typeSetVar :: TypeVarName -> Type -> Type -> Type
-typeSetVar varName varVal (UnionType Nothing leafs []) = UnionType Nothing (joinUnionType $ map aux $ splitUnionType leafs) []
-  where
-    aux p@PartialType{ptVars} = p{ptVars=H.insert varName varVal ptVars}
-typeSetVar varName varVal (TopType negPartials (PredsOne (PredRel p@PartialType{ptVars}))) = TopType negPartials (PredsOne $ PredRel p{ptVars=H.insert varName varVal ptVars})
-typeSetVar varName varVal (TopType negPartials (PredsOne (PredClass p@PartialType{ptVars}))) = TopType negPartials (PredsOne $ PredClass p{ptVars=H.insert varName varVal ptVars})
-typeSetVar varName varVal tp = error $ printf "Unimplemented typeSetVar for %s.%s = %s" (show tp) (show varName) (show varVal)
+typeSetVar varName = typeSetAuxType (TVVar varName)
 
 suffixLookup :: String -> [String] -> Maybe String
 suffixLookup s (x:xs)
@@ -1452,10 +1467,12 @@ intersectTypesWithVarEnv typeEnv vaenv t1 t2@(UnionType (Just _) pos _)
 intersectTypesWithVarEnv typeEnv vaenv (UnionType (Just (ps1, np1)) (H.null -> True) cs1) (UnionType (Just (ps2, np2)) (H.null -> True) cs2) =
   (vaenv, compactType typeEnv vaenv $ UnionType (Just (predsAnd ps1 ps2, unionPartialLeafs [np1, np2])) H.empty (L.nub $ cs1 ++ cs2))
 intersectTypesWithVarEnv _ vaenv t1 t2 | t1 == t2 = (vaenv, t1)
--- TypeVar: constrain in vaenv
-intersectTypesWithVarEnv typeEnv vaenv tv@(TypeVar v _) t = case (v, H.lookup v vaenv) of
-  (TVArg{}, Nothing) -> error $ printf "Failed to intersect unknown %s with %s in vaenv %s" (show v) (show t) (show vaenv)
-  (_, Just l) | isBottomType (intersectTypesEnv typeEnv vaenv l t) -> (vaenv, BottomType)
+-- TypeVar: constrain in vaenv.  Treats 'TVVar' and 'TVArg' uniformly: both look up in vaenv,
+-- and an unknown key is recorded as a fresh constraint.  TVInt/TVExt is informational here:
+-- a TVInt that reaches this top level was introduced as a fresh sentinel by an upstream
+-- caller (e.g. a constituent's prop ref); the old code's behavior is preserved.
+intersectTypesWithVarEnv typeEnv vaenv tv@(TypeVar v _) t = case H.lookup v vaenv of
+  Just l | isBottomType (intersectTypesEnv typeEnv vaenv l t) -> (vaenv, BottomType)
   _ -> (H.insertWith (intersectTypesEnv typeEnv vaenv) v t vaenv, tv)
 intersectTypesWithVarEnv typeEnv vaenv t tv@TypeVar{} = intersectTypesWithVarEnv typeEnv vaenv tv t
 intersectTypesWithVarEnv _ vaenv _ BottomType = (vaenv, BottomType)
@@ -1665,54 +1682,71 @@ mergeVarEnvs typeEnv = H.unionWith (intersectTypes typeEnv)
 mergeAllVarEnvs :: (TypeGraph tg, Foldable f, Eq k, Hashable k, Show (f (H.HashMap k Type))) => TypeEnv tg -> f (H.HashMap k Type) -> H.HashMap k Type
 mergeAllVarEnvs typeEnv = foldr (mergeVarEnvs typeEnv) H.empty
 
+-- | Looks up a 'TypeVarAux' in the 'TypeVarArgEnv', returning 'PTopType' on miss.
+-- Treats 'TVVar' and 'TVArg' uniformly: both kinds default to 'PTopType' when absent,
+-- matching the TVInt/TVExt semantics where an unconstrained TVExt is unknown (i.e. PTopType).
 vaenvLookup :: TypeVarArgEnv -> TypeVarAux -> Type
-vaenvLookup vaenv v@TVVar{} = H.lookupDefault PTopType v vaenv
-vaenvLookup vaenv v@TVArg{} = case H.lookup v vaenv of
-  Just t -> t
-  Nothing -> error $ printf "Failed vaenvLookup for %s in %s" (show v) (show vaenv)
+vaenvLookup vaenv v = H.lookupDefault PTopType v vaenv
 
--- | Replaces the type variables 'TVVar' in a 'Type' based on the variables in a provided 'TypeVarEnv'
+-- | Replaces type variables in a 'Type' using the provided 'TypeVarArgEnv'.
+-- 'TVVar' and 'TVArg' are handled uniformly via 'vaenvLookup'.  The 'TVInt'/'TVExt' axis
+-- is reflected in the descent logic, not the leaf rule: descending into a partial pushes
+-- the partial's own bindings onto the env, so a 'TVInt' inside the partial's components
+-- resolves to a sibling's bound value, and a 'TVExt' resolves to whatever the caller
+-- supplied (and that the partial's bindings did not shadow).
+substituteTVExt :: TypeVarArgEnv -> Type -> Type
+substituteTVExt vaenv (UnionType Nothing partials []) =
+  UnionType Nothing (joinUnionType $ map (substitutePartial vaenv) $ splitUnionType partials) []
+  where
+    substitutePartial pVaenv partial@PartialType{ptVars, ptArgs, ptPreds} = partial{
+        ptVars  = fmap (substituteTVExt pVaenv) ptVars,
+        ptArgs  = fmap (substituteTVExt innerVaenv) ptArgs,
+        ptPreds = mapTypePreds (mapTypePred (substitutePartial innerVaenv)) ptPreds
+        }
+      where
+        ptVars' = fmap (substituteTVExt vaenv) ptVars
+        innerVaenv = joinVarArgEnv ptVars' H.empty
+substituteTVExt vaenv (TypeVar v _) = vaenvLookup vaenv v
+substituteTVExt _     t             = t
+
+-- | Replaces 'TVExt' 'TVVar' references in a 'Type' using the provided 'TypeVarEnv'.
+-- Thin wrapper over 'substituteTVExt'.
 substituteVarsWithVarEnv :: TypeVarEnv -> Type -> Type
-substituteVarsWithVarEnv venv (UnionType Nothing partials []) =
-  UnionType Nothing (joinUnionType $ map (substitutePartial venv) $ splitUnionType partials) []
-  where
-    substitutePartial pVenv partial@PartialType{ptVars, ptArgs, ptPreds} = partial{
-        ptVars = fmap (substituteVarsWithVarEnv pVenv) ptVars,
-        ptArgs = fmap (substituteVarsWithVarEnv ptVars') ptArgs,
-        ptPreds = mapTypePreds (mapTypePred (substitutePartial ptVars')) ptPreds
-                                                                      }
-        where ptVars' = fmap (substituteVarsWithVarEnv venv) ptVars
-substituteVarsWithVarEnv venv (TypeVar (TVVar v) _) = fromMaybe PTopType (H.lookup v venv)
-substituteVarsWithVarEnv _ t = t
+substituteVarsWithVarEnv venv = substituteTVExt (joinVarArgEnv venv H.empty)
 
--- | Replaces the type variables 'TVVar' in a 'Type'
+-- | Replaces 'TVExt' 'TVVar' references in a 'Type' with an empty env.
 substituteVars :: Type -> Type
-substituteVars = substituteVarsWithVarEnv H.empty
+substituteVars = substituteTVExt H.empty
 
--- | Replaces the argument type variables 'TVArg' in a 'Type' based on the variables in a provided 'TypeArgEnv'
+-- | Replaces 'TVExt' 'TVArg' references in a 'Type' using the provided 'TypeArgEnv'.
+-- Thin wrapper over 'substituteTVExt'.
 substituteArgsWithArgEnv :: TypeArgEnv -> Type -> Type
-substituteArgsWithArgEnv aenv (UnionType Nothing partials []) =
-  UnionType Nothing (joinUnionType $ map substitutePartial $ splitUnionType partials) []
-  where
-    substitutePartial partial@PartialType{ptArgs} = partial{
-        ptArgs = fmap (substituteArgsWithArgEnv aenv') ptArgs
-                                                                 }
-        where aenv' = H.union aenv ptArgs
-substituteArgsWithArgEnv aenv (TypeVar (TVArg v) _) = case H.lookup v aenv of
-  Just v' -> v'
-  Nothing -> error $ printf "Could not substitute unknown type arg %s. Only found args %s" (show v) (show aenv)
-substituteArgsWithArgEnv _ t = t
+substituteArgsWithArgEnv aenv = substituteTVExt (joinVarArgEnv H.empty aenv)
 
 substituteWithVarArgEnv :: TypeVarArgEnv -> Type -> Type
-substituteWithVarArgEnv vaenv = substituteArgsWithArgEnv aenv . substituteVarsWithVarEnv venv
-  where
-    (venv, aenv) = splitVarArgEnv vaenv
+substituteWithVarArgEnv = substituteTVExt
 
 typeGetAux :: TypeVarAux -> PartialType -> Maybe Type
 typeGetAux (TVVar v) p = Just $ H.lookupDefault PTopType v $ ptVars p
 typeGetAux (TVArg v) p = typeGetArg v p
 
--- | Gets an arg from a type while substituting the variables used in the types ptVars
+-- | Resolves TVInt references in @t@ against @partial@'s own bindings, "lifting"
+-- @t@ out of the partial's scope.  TVExt references are also substituted via
+-- @partial@'s bindings (since the partial is their referenced outer scope from
+-- @t@'s point of view); the result lives at @partial@'s outer scope and contains
+-- no TVInt refs to @partial@.
+typeResolveInner :: PartialType -> Type -> Type
+typeResolveInner partial = substituteTVExt vaenv . promote
+  where
+    vaenv = ptVarArg partial
+    -- Only the outermost layer of @t@ is in @partial@'s scope; nested partials have
+    -- their own scopes, so their TVInt refs are not promoted.
+    promote (TypeVar v TVInt) = TypeVar v TVExt
+    promote other             = other
+
+-- | Gets an arg from a partial type, fully resolved against the partial's own bindings.
+-- When the arg name is absent, falls back to 'PTopType' for 'PtArgAny' partials and
+-- 'Nothing' for 'PtArgExact'.
 typeGetArg :: ArgName -> PartialType -> Maybe Type
 typeGetArg argName partial@PartialType{ptArgs, ptVars, ptArgMode} = case H.lookup argName ptArgs of
   Nothing -> case ptArgMode of
@@ -1729,7 +1763,7 @@ typeGetArg argName partial@PartialType{ptArgs, ptVars, ptArgMode} = case H.looku
         substitutePartial p@PartialType{ptVars=vs} = p{ptVars = fmap (substituteVarsWithVarEnv ptVars) vs}
     t -> Just t
 
--- | Gets an arg from a type while substituting the variables used in the types ptVars
+-- | Gets an arg from a type while resolving the variables used in the types ptVars
 typesGetArg :: TypeGraph tg => TypeEnv tg -> ArgName -> Type -> Maybe Type
 typesGetArg typeEnv argName (UnionType Nothing partialLeafs []) = fmap (unionAllTypes typeEnv) $ mapM (typeGetArg argName) $ splitUnionType partialLeafs
 typesGetArg _ _ _ = Nothing
@@ -1753,9 +1787,6 @@ updateTypeProp typeEnv vaenv superType propName subType = case superType of
               let supVar = H.lookupDefault PTopType v supVars
               let newProp = intersectTypesEnv typeEnv vaenv supVar sub
               Just (sup{ptVars=H.insert v newProp supVars}, newProp)
-            -- TVExt references the outer vaenv; fall through to the generic
-            -- supProp handling, which calls 'intersectTypesEnv' (it knows how
-            -- to resolve TypeVar via vaenv).  Same for TVArg.
             Just supProp -> do
               let newProp = intersectTypesEnv typeEnv vaenv supProp sub
               if isBottomType newProp
@@ -1768,15 +1799,12 @@ updateTypeProp typeEnv vaenv superType propName subType = case superType of
           let (supPartialList', subPartialList') = unzip $ catMaybes $ [intersectedPartials sup (singletonType sub) | sup <- supPartialList, sub <- subPartialList]
           (vaenv, compactType typeEnv vaenv $ UnionType Nothing (joinUnionType supPartialList') [], unionAllTypes typeEnv subPartialList')
         TypeVar v _ -> do
-          -- Update vaenv.v with supPartials
           let tp' = intersectTypesEnv typeEnv vaenv (H.lookupDefault PTopType v vaenv) (unionAllTypesWithEnv typeEnv vaenv $ mapMaybe (typeGetAux propName) supPartialList)
           let vaenv' = H.insert v tp' vaenv
           let tp'' = substituteWithVarArgEnv vaenv' tp'
           let updateSuperPartial p = case typeGetAux propName p of
                 Nothing -> Nothing
                 Just supTp | supTp == subType -> Just $ typeSetAux propName subType p
-                -- TODO Uncomment below to better propogate type variables during type inference
-                -- Just PTopType | propName /= v -> Just $ typeSetAux propName subType p
                 Just supTp -> Just $ typeSetAux propName (intersectTypes typeEnv supTp tp'') p
           let superType' = compactType typeEnv vaenv $ UnionType Nothing (joinUnionType $ mapMaybe updateSuperPartial $ splitUnionType supPartials) []
 
