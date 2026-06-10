@@ -130,6 +130,16 @@ evalObjArr input oa = do
   modify $ evalEndEArrow input res oldArgs
   return res
 
+-- | Reduce each partial's argument keys to their base name, dropping the function-parameter
+-- signature carried in a higher-order argument's key (e.g. @/fn(/v=..)@ ↦ @/fn@). A runtime
+-- value keys a function argument by its bare name (@/fn@) while the typed arrow keys it by
+-- the function signature (@/fn(/v=..)@); without this they never match during dispatch even
+-- though the function argument is non-discriminating (it is identical across the arrows).
+simplifyArgKeys :: Type -> Type
+simplifyArgKeys (UnionType m pos cs) = UnionType m (joinUnionType $ map reKey $ splitUnionType pos) cs
+  where reKey p = p{ptArgs = H.mapKeys (partialKey . pkName) (ptArgs p)}
+simplifyArgKeys t = t
+
 evalCallTree :: Val -> TCallTree -> StateT Env CRes Val
 -- evalCallTree v ct | trace (printf "evalCallTree %s using %s" (show v) (show ct)) False = undefined
 evalCallTree v TCTId = return v
@@ -148,7 +158,7 @@ evalCallTree m (TCCond resType ((cond, ifThenTree):restIfTrees)) = do
   Env{evTypeEnv} <- get
   cond' <- case cond of
     -- TODO Remove the use of clearUnionTypePreds below. It is a workaround as type predicates are not supported by subtypeOf
-    Just (_, oa) | not (isSubtypePartialOf evTypeEnv (getValType m) (clearUnionTypePreds $ getExprType $ oaObjExpr oa)) -> return False
+    Just (_, oa) | not (isSubtypeOf evTypeEnv (simplifyArgKeys $ singletonType $ getValType m) (simplifyArgKeys $ clearUnionTypePreds $ getExprType $ oaObjExpr oa)) -> return False
     Nothing -> return True
     Just ([], _) -> return True
     Just (ifCondTrees, ifObj) -> do
