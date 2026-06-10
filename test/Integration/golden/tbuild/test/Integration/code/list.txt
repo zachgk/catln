@@ -9,14 +9,19 @@ Prgm
                     , omiDefs =
                         [ /llength( EAppArg Value /this -> /Data/Nil = Value /Data/Nil ) -> /Data/Primitive/Integer = 0
                         , /llength
-                            ( EAppArg Value /this -> /Data/Cons
-                                ( /head=TopType
-                                , /tail=TopType
+                            ( EAppArg Value /this -> /Data/Cons[ /T=TopType ]
+                                ( /head=$/T
+                                , /tail=
+                                    ( /Data/Nil + /Data/Cons[ /T=TopType ]
+                                        ( /head=$/T
+                                        , /tail=~ConsList[ /T=$_/T ]
+                                        )
+                                    )
                                 ) = /Data/Cons( EAppArg Value /head )
                                 ( EAppArg Value /tail ->
-                                    ( /Data/Nil + /Data/Cons
-                                        ( /head=TopType
-                                        , /tail=TopType
+                                    ( /Data/Nil + /Data/Cons[ /T=TopType ]
+                                        ( /head=$/T
+                                        , /tail=~ConsList[ /T=$_/T ]
                                         )
                                     )
                                 )
@@ -28,7 +33,9 @@ Prgm
                             ) = /operator+
                             ( EAppArg Value /l -> /Data/Primitive/Integer = 1 )
                             ( EAppArg Value /r -> /Data/Primitive/Integer =
-                                ( /llength( EAppArg Value /this -> TVArg /tail = Value /tail ) ↦ /Data/Primitive/Integer )
+                                ( /llength
+                                    ( EAppArg Value /this -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) ) ↦ /Data/Primitive/Integer
+                                )
                             )
                         ]
                     }

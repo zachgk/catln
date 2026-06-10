@@ -9,14 +9,19 @@ Prgm
                     , omiDefs =
                         [ /llength( Value /this -> /Data/Nil = Value /Data/Nil ) -> /Data/Primitive/Integer = CInt 0
                         , /llength
-                            ( Value /this -> /Data/Cons
-                                ( /head=TopType
-                                , /tail=TopType
+                            ( Value /this -> /Data/Cons[ /T=TopType ]
+                                ( /head=$/T
+                                , /tail=
+                                    ( /Data/Nil + /Data/Cons[ /T=TopType ]
+                                        ( /head=$/T
+                                        , /tail=~ConsList[ /T=$_/T ]
+                                        )
+                                    )
                                 ) = /Data/Cons( Value /head )
                                 ( Value /tail ->
-                                    ( /Data/Nil + /Data/Cons
-                                        ( /head=TopType
-                                        , /tail=TopType
+                                    ( /Data/Nil + /Data/Cons[ /T=TopType ]
+                                        ( /head=$/T
+                                        , /tail=~ConsList[ /T=$_/T ]
                                         )
                                     )
                                 )

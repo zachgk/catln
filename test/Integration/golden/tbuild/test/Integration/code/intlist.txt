@@ -69,9 +69,8 @@ Prgm
                         , /len
                             ( EAppArg Value /this -> /IntCons
                                 ( /head=~Integer
-                                , /tail=( TopType | PredRel IntList && PredClass /IntList )
-                                ) = /IntCons( EAppArg Value /head -> ~Integer )
-                                ( EAppArg Value /tail -> ( TopType | PredRel IntList && PredClass /IntList ) )
+                                , /tail=~IntList
+                                ) = /IntCons( EAppArg Value /head -> ~Integer )( EAppArg Value /tail -> ∀/IntList )
                             ) ->
                             ( /operator+
                                 ( /r=/Data/Primitive/Integer

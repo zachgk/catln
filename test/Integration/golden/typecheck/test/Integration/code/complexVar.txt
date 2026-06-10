@@ -41,13 +41,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /real
-                            ( Value /c -> /Complex
-                                [ /N=( TopType | PredRel Number && PredClass /Data/Primitive/Number ) ]
+                            ( Value /c -> /Complex[ /N=~Number ]
                                 ( /a=$/N
                                 , /b=$/N
-                                ) = /Complex
-                                ( Value /a -> ( TopType | PredRel Number && PredClass /Data/Primitive/Number ) )
-                                ( Value /b -> ( TopType | PredRel Number && PredClass /Data/Primitive/Number ) )
+                                ) = /Complex( Value /a -> ~Number )( Value /b -> ~Number )
                             ) -> TVArg /a = Value /a
                         ]
                     }

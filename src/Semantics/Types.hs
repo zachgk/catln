@@ -815,6 +815,25 @@ predImplies _       _     (PredsNot _) _        = False  -- conservative
 -- Atom cases
 predImplies typeEnv vaenv (PredsOne a1) (PredsOne a2) = predImpliesAtom typeEnv vaenv a1 a2
 
+-- | True when every class referenced by the predicates is sealed, so the predicates may be
+-- soundly expanded to their declared constituents irrespective of the open/closed-world
+-- ('tePrgmEnv') setting. For a sealed class @C@, @U_C@ is exactly the union of @C@'s declared
+-- members, so @~C@ and its expansion are equal regardless of any types defined elsewhere.
+predsSealed :: (TypeGraph tg) => TypeEnv tg -> TypePredicates -> Bool
+predsSealed typeEnv@TypeEnv{teClassGraph=ClassGraph cg} = go
+  where
+    go (PredsOne p)  = atomSealed p
+    go (PredsAnd ps) = not (null ps) && all go ps -- PredsNone = PredsAnd [] ↦ False
+    go (PredsNot p)  = go p
+    atomSealed (PredClass c) = classSealed (ptName c)
+    atomSealed (PredRel c)   = classSealed (ptName c)
+    atomSealed (PredExpr _)  = False
+    classSealed name = case graphLookup (PClassName name) cg of
+      Just (CGClass (sealed, _, _, _)) -> sealed
+      _ -> case [ s | (CGClass (s, _, _, _), cKey, _) <- graphToNodes cg, relativeNameMatches name (fromPartialName cKey) ] of
+             (s:_) -> s
+             []    -> False
+
 predImpliesAtom :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicate -> TypePredicate -> Bool
 -- PredClass: c1 implies c2 only when c1 is sealed (all members known) and each member is in U_c2
 predImpliesAtom typeEnv@TypeEnv{teClassGraph=ClassGraph cg, tePrgmEnv} vaenv (PredClass c1) (PredClass c2) =
@@ -1088,7 +1107,7 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType (Just (p1, n1)) _ _) t2@(UnionType (
   | predImplies typeEnv vaenv p1 p2
     && isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing n2 []) (UnionType Nothing n1 []) = True
     -- U_p1 ⊆ U_p2 and n2 ⊆ n1, so (U_p1 - n1) ⊆ (U_p2 - n2)
-  | tePrgmEnv typeEnv = isSubtypeOfWithEnv typeEnv vaenv (snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv p1) (UnionType Nothing n1 [])) t2
+  | tePrgmEnv typeEnv || predsSealed typeEnv p1 = isSubtypeOfWithEnv typeEnv vaenv (snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv p1) (UnionType Nothing n1 [])) t2
   | otherwise         = False
 -- NegPartials ⊆ PosPartials: filter t1 by superPartials names.
 -- hasOutside=True: t1 has elements outside superPartials names.
@@ -1100,7 +1119,7 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (preds, negLeafs)) _ _) t2@
     (_, True)      | isPredsContradictory preds -> True
     (_, True)      | predImpliesPartials typeEnv vaenv preds superPartials -> True
                    -- U_preds ⊆ superPartials implies (U_preds - negLeafs) ⊆ superPartials
-    (_, True)      | tePrgmEnv typeEnv -> isSubtypeOfWithEnv typeEnv vaenv (snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv preds) (UnionType Nothing negLeafs [])) t2
+    (_, True)      | tePrgmEnv typeEnv || predsSealed typeEnv preds -> isSubtypeOfWithEnv typeEnv vaenv (snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv preds) (UnionType Nothing negLeafs [])) t2
     (_, True)      -> False
     (leafs, False) -> isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing leafs []) t2
 -- PosPartials ⊆ PosPartials: check partials structurally
@@ -1339,18 +1358,38 @@ compactPartialArgs typeEnv vaenv p = p
 -- distinct but semantically equal representations that never reach a fixpoint. Folding
 -- restores the finite @PredRel@ form so the solver converges.
 foldRecursiveType :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
-foldRecursiveType typeEnv vaenv t@(UnionType Nothing leafs [])
+foldRecursiveType typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv t@(UnionType Nothing leafs [])
   | length leafList > 1 -- only fold a genuine union; a single partial is already minimal
   , hasExplicitRecursion leafList -- only fold an over-unrolled form, never the canonical depth-1 expansion
-  , (relP:_) <- [ rp | rp <- candidateRelPartials
-                     , isEqType typeEnv t (expandRelPartial typeEnv vaenv rp) ]
+  , (relP:_) <- foldCandidates
   = TopType H.empty (PredsOne (PredRel relP))
   where
     leafList = splitUnionType leafs
-    -- Candidate recursive classes: any class referenced by a 'PredRel' nested within the
-    -- union (e.g. the @~ConsList@ at the bottom of an unrolled @Cons@ chain).
-    candidateRelPartials = L.nub $ concatMap relPartialsIn leafList
+    tNames = leafNameSet t
+    -- @t@ is an (over-)unrolling of a sealed class @C@ when its top-level constructor names
+    -- are exactly @C@'s declared constituents (from @class(C,[..])@ in the class graph).
+    -- Sealed ⇒ @U_C@ is exactly that union, so folding is sound and independent of the
+    -- open/closed-world setting. A structural name match sidesteps a deep 'isEqType', which
+    -- cannot prove @Nil+Cons(tail=Nil+Cons(..)) ≡ Nil+Cons(tail=~C)@.
+    matchingClassNames = [ fromPartialName cKey
+                         | (CGClass (sealed, _, classTypes, _), cKey, _) <- graphToNodes cg
+                         , sealed
+                         , S.unions (map leafNameSet classTypes) == tNames ]
+    -- Prefer a 'PredRel' partial nested within @t@ (it carries the right type-var bindings,
+    -- e.g. @ConsList[T=$_T]@); otherwise fall back to the bare class partial. This also
+    -- catches recursions that bottom out in 'TopType' rather than an explicit @~C@.
+    nestedRels = L.nub $ concatMap relPartialsIn leafList
+    foldCandidates = [ rp
+                     | cName <- matchingClassNames
+                     , rp <- case filter (\r -> relativeNameMatches (ptName r) cName) nestedRels of
+                               (r:_) -> [r]
+                               []    -> [partialVal cName] ]
 foldRecursiveType _ _ t = t
+
+-- | The set of top-level partial names in a union type (empty for non-unions).
+leafNameSet :: Type -> S.HashSet TypeName
+leafNameSet (UnionType _ pos _) = S.fromList $ map ptName $ splitUnionType pos
+leafNameSet _                   = S.empty
 
 -- | True when the union is unrolled at least one extra level: some partial has, within its
 -- arguments, an /explicit/ (non-predicate) occurrence of a partial whose name is one of the

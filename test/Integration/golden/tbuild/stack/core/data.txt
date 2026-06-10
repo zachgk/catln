@@ -38,14 +38,12 @@ Prgm
                         , /Data/length
                             ( EAppArg Value /this -> /Data/Cons[ /T=TopType ]
                                 ( /head=$/T
-                                , /tail=
-                                    ( TopType | PredClass /Data/ConsList && PredRel ConsList[ /T=$_/T ] )
+                                , /tail=~ConsList[ /T=$_/T ]
                                 ) = /Data/Cons( EAppArg Value /head )
                                 ( EAppArg Value /tail ->
                                     ( /Data/Nil + /Data/Cons[ /T=TopType ]
                                         ( /head=$/T
-                                        , /tail=
-                                            ( TopType | PredClass /Data/ConsList && PredRel ConsList[ /T=$_/T ] )
+                                        , /tail=~ConsList[ /T=$_/T ]
                                         )
                                     )
                                 )

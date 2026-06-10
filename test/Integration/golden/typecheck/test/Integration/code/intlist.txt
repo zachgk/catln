@@ -64,9 +64,8 @@ Prgm
                         , /len
                             ( Value /this -> /IntCons
                                 ( /head=~Integer
-                                , /tail=( TopType | PredRel IntList && PredClass /IntList )
-                                ) = /IntCons( Value /head -> ~Integer )
-                                ( Value /tail -> ( TopType | PredRel IntList && PredClass /IntList ) )
+                                , /tail=~IntList
+                                ) = /IntCons( Value /head -> ~Integer )( Value /tail -> ∀/IntList )
                             ) ->
                             ( /operator+
                                 ( /r=/Data/Primitive/Integer
