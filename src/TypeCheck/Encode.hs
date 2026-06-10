@@ -140,14 +140,18 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
                             ]
             (EncodeIn{}, Just obj, Just (Just _argExpr', arrM')) ->
               -- Input with (x=x)
+              -- Fix B (Bug 1): use the base expression's own meta (not the separate
+              -- baseM' slot) as the AddArg source. baseM' is kept equal to the base expr
+              -- via EqPoints 16, but reading the base expr directly keeps the added
+              -- argument's base in sync with the pattern even before that link settles.
               [
-                        AddArg 19 (baseM', TVArg $ inExprSingleton obj) m',
+                        AddArg 19 (getExprMeta baseExpr', TVArg $ inExprSingleton obj) m',
                         PropEq 21 (m', TVArg $ inExprSingleton obj) arrM'
                         ]
             (EncodeIn{}, Just obj, Just (Nothing, arrM')) ->
               -- Input with (x -> T)
               [
-                        AddArg 24 (baseM', TVArg $ inExprSingleton obj) m',
+                        AddArg 24 (getExprMeta baseExpr', TVArg $ inExprSingleton obj) m',
                         PropEq 25 (m', TVArg $ inExprSingleton obj) arrM'
                         ]
             _ -> error $ printf "Invalid fromExpr in %s mode for %s" (show est) (show arg)

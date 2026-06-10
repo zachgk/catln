@@ -74,11 +74,13 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs.$c4b325-0( EAppArg Value /x -> ∀/Data/Algebra/Ord )
-                            ( EAppArg Value /$c4b325-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=( EAppArg Value /l -> TVArg /x = Value /x )
+                            ( EAppArg Value /$c4b325-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=
+                                ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
                                 ( EAppArg Value /r -> /Data/Primitive/Integer = 0 )
                             ) -> TVArg /x2 = Value /x2
                         , /abs.$c4b325-0( EAppArg Value /x -> ∀/Data/Algebra/Ord )
-                            ( EAppArg Value /$c4b325-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=( EAppArg Value /l -> TVArg /x = Value /x )
+                            ( EAppArg Value /$c4b325-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=
+                                ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
                                 ( EAppArg Value /r -> /Data/Primitive/Integer = 0 )
                             ) ->
                             ( /abs.$c4b325-1
@@ -88,7 +90,9 @@ Prgm
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer
-                            ) = /abs.$c4b325-1( EAppArg Value /x -> TVArg /x = Value /x )( EAppArg Value /$c4b325-arg -> TVArg /x = Value /x )
+                            ) = /abs.$c4b325-1
+                            ( EAppArg Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                            ( EAppArg Value /$c4b325-arg -> TVArg /x = ( Value /x ↦ TVArg /x ) )
                         ]
                     }
                 )

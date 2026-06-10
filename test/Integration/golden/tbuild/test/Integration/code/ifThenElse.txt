@@ -77,7 +77,8 @@ Prgm
                                 ( /operator-
                                     ( EAppArg Value /a -> /Data/Primitive/Integer = 1 ) ↦ /Data/Primitive/Integer
                                 )
-                            )( EAppArg Value /r -> TVArg /x = Value /x )
+                            )
+                            ( EAppArg Value /r -> TVArg /x = ( Value /x ↦ TVArg /x ) )
                         ]
                     }
                 )
