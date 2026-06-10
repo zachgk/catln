@@ -1315,10 +1315,72 @@ compactType _ _ t@(UnionType (Just _) _ _) = t
 compactType _ _ t@TypeVar{} = t
 -- PosPartials with constants: compact leafs, remove constants covered by leafs
 compactType typeEnv vaenv (UnionType Nothing partials consts) =
-  let compactedLeafs = compactPartialLeafs typeEnv vaenv partials
+  let -- Compact the nested argument/variable types (bottom-up) so a recursive arg already
+      -- in canonical predicate form is recognised one level up.
+      argCompacted = joinUnionType $ map (compactPartialArgs typeEnv vaenv) $ splitUnionType partials
+      compactedLeafs = compactPartialLeafs typeEnv vaenv argCompacted
       -- Remove constants whose parent partial type is already in the compacted leafs
       filteredConsts = filter (\c -> not $ isSubtypeOfWithEnv emptyTypeEnv' H.empty (singletonType $ constantPartialType c) (UnionType Nothing compactedLeafs [])) consts
-  in UnionType Nothing compactedLeafs filteredConsts
+  in foldRecursiveType typeEnv vaenv $ UnionType Nothing compactedLeafs filteredConsts
+
+-- | Recurse 'compactType' into a partial's argument and variable types. Compaction
+-- otherwise only operates on the top level of a union, so without this a recursive type
+-- nested inside an argument (e.g. the @tail@ of a @Cons@) is never canonicalised.
+compactPartialArgs :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType
+compactPartialArgs typeEnv vaenv p = p
+  { ptArgs = fmap (compactType typeEnv vaenv) (ptArgs p)
+  , ptVars = fmap (compactType typeEnv vaenv) (ptVars p)
+  }
+
+-- | Fold an explicit union of partials back into a recursive class predicate when the
+-- union is semantically equal to that class's expansion (the inverse of
+-- 'expandRelPartial'). Recursive types are otherwise unrolled one level deeper each
+-- constraint epoch (@ConsList ≡ Nil + Cons(tail=ConsList)@), producing syntactically
+-- distinct but semantically equal representations that never reach a fixpoint. Folding
+-- restores the finite @PredRel@ form so the solver converges.
+foldRecursiveType :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
+foldRecursiveType typeEnv vaenv t@(UnionType Nothing leafs [])
+  | length leafList > 1 -- only fold a genuine union; a single partial is already minimal
+  , hasExplicitRecursion leafList -- only fold an over-unrolled form, never the canonical depth-1 expansion
+  , (relP:_) <- [ rp | rp <- candidateRelPartials
+                     , isEqType typeEnv t (expandRelPartial typeEnv vaenv rp) ]
+  = TopType H.empty (PredsOne (PredRel relP))
+  where
+    leafList = splitUnionType leafs
+    -- Candidate recursive classes: any class referenced by a 'PredRel' nested within the
+    -- union (e.g. the @~ConsList@ at the bottom of an unrolled @Cons@ chain).
+    candidateRelPartials = L.nub $ concatMap relPartialsIn leafList
+foldRecursiveType _ _ t = t
+
+-- | True when the union is unrolled at least one extra level: some partial has, within its
+-- arguments, an /explicit/ (non-predicate) occurrence of a partial whose name is one of the
+-- union's own names. The canonical depth-1 expansion (e.g. @Nil + Cons(tail=~ConsList)@,
+-- whose recursive tail is the @PredRel@ form) does NOT qualify, so it is preserved for
+-- dispatch; only genuinely over-unrolled chains are folded back to the predicate.
+hasExplicitRecursion :: [PartialType] -> Bool
+hasExplicitRecursion leafList = any partialRecurses leafList
+  where
+    names = S.fromList (map ptName leafList)
+    partialRecurses PartialType{ptArgs, ptVars} = any argHasName (H.elems ptArgs ++ H.elems ptVars)
+    argHasName (UnionType Nothing pos _) = any (\p -> S.member (ptName p) names || partialRecurses p) (splitUnionType pos)
+    argHasName _ = False -- predicate/top forms are the canonical recursive reference, not an unrolling
+
+-- | Collect the 'PredRel' partials nested anywhere within a partial's args/vars.
+relPartialsIn :: PartialType -> [PartialType]
+relPartialsIn PartialType{ptArgs, ptVars} = concatMap relPartialsInType (H.elems ptArgs ++ H.elems ptVars)
+
+relPartialsInType :: Type -> [PartialType]
+relPartialsInType (UnionType mtop pos _) = topRels ++ concatMap relPartialsIn (splitUnionType pos)
+  where topRels = case mtop of
+          Just (preds, _) -> predRelPartials preds
+          Nothing         -> []
+relPartialsInType _ = []
+
+predRelPartials :: TypePredicates -> [PartialType]
+predRelPartials (PredsOne (PredRel p)) = [p]
+predRelPartials (PredsAnd ps)          = concatMap predRelPartials ps
+predRelPartials (PredsNot p)           = predRelPartials p
+predRelPartials _                      = []
 
 unionPartialLeafs :: Foldable f => f PartialLeafs -> PartialLeafs
 unionPartialLeafs = unionsWith S.union
