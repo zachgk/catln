@@ -107,6 +107,15 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/testListFunctorPreservesLength"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/testListFunctorPreservesLength -> /Data/Primitive/Integer = CInt 0 ]
+                    }
+                )
+            ,
                 ( "/Context"
                 , ObjectMapItem
                     { omiDecls =
@@ -147,6 +156,35 @@ Prgm
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/fmap"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/fmap[ /B : TopType ][ /A : TopType ]( Value /lst -> ∀/Data/ConsList )
+                            ( /fn( Value /v -> $_/A ) -> $_/B ) -> ∀/Data/ConsList
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/fmap( Value /lst -> /Data/Nil = Value /Data/Nil )
+                            ( /fn( Value /v ) ) -> /Data/Nil = Value /Data/Nil
+                        , /Data/fmap
+                            ( Value /lst -> /Data/Cons[ /T=TopType ]
+                                ( /head=$/T
+                                , /tail=~ConsList[ /T=$_/T ]
+                                ) = /Data/Cons( Value /head )
+                                ( Value /tail -> ~ConsList[ /T=$_/T ] )
+                            )
+                            ( /fn( Value /v ) ) -> /Data/Cons[ /T=TopType ]
+                            ( /head=$/T
+                            , /tail=~ConsList[ /T=$_/T ]
+                            ) = /Data/Cons
+                            ( Value /head= /fn( Value /v -> TVArg /head = Value /head ) )
+                            ( Value /tail -> ~ConsList[ /T=$_/T ] = /Data/fmap( Value /lst -> TVArg /tail = Value /tail )
+                                ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
+                            )
+                        ]
                     }
                 )
             ,
@@ -192,6 +230,8 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -308,9 +348,21 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "## ConsList runtime operations" )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "Nil.fmap(fn) = Nil" )
+            ( Value /text -> /Data/String = CStr "[fmap] applies a function to every element of a [ConsList], producing a new list." )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "Cons(head, tail).fmap(fn) = Cons(head=fn(head), tail=tail.fmap(fn))" )
+            ( Value /text -> /Data/String = CStr "[fmap] over a [ConsList] preserves the list's structure (its [length]), for both the" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "empty and non-empty cases. The full functor laws (identity `fmap(l, v -> v) == l` and" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "composition `fmap(fmap(l, g), f) == fmap(l, v -> f(g(v)))`) additionally require comparing" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "element *values*; that is currently blocked because [fmap]'s result element type is" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "inferred as the top type, so neither [sum] nor equality can observe the mapped elements" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "(a type-variable binding limitation — see docs). [length] is element-agnostic and is the" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "one reduction that works on an [fmap] result, so it is what these tests use." )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "A [Set] is a collection of zero or more unique items.
             It is not ordered." )

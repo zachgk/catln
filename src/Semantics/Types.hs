@@ -820,7 +820,7 @@ predImplies typeEnv vaenv (PredsOne a1) (PredsOne a2) = predImpliesAtom typeEnv 
 -- ('tePrgmEnv') setting. For a sealed class @C@, @U_C@ is exactly the union of @C@'s declared
 -- members, so @~C@ and its expansion are equal regardless of any types defined elsewhere.
 predsSealed :: (TypeGraph tg) => TypeEnv tg -> TypePredicates -> Bool
-predsSealed typeEnv@TypeEnv{teClassGraph=ClassGraph cg} = go
+predsSealed TypeEnv{teClassGraph=ClassGraph cg} = go
   where
     go (PredsOne p)  = atomSealed p
     go (PredsAnd ps) = not (null ps) && all go ps -- PredsNone = PredsAnd [] ↦ False
@@ -1358,7 +1358,7 @@ compactPartialArgs typeEnv vaenv p = p
 -- distinct but semantically equal representations that never reach a fixpoint. Folding
 -- restores the finite @PredRel@ form so the solver converges.
 foldRecursiveType :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
-foldRecursiveType typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv t@(UnionType Nothing leafs [])
+foldRecursiveType TypeEnv{teClassGraph=ClassGraph cg} _vaenv t@(UnionType Nothing leafs [])
   | length leafList > 1 -- only fold a genuine union; a single partial is already minimal
   , hasExplicitRecursion leafList -- only fold an over-unrolled form, never the canonical depth-1 expansion
   , (relP:_) <- foldCandidates
