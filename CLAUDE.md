@@ -6,7 +6,11 @@ Catln is a term-rewriting programming language. The compiler is written in Haske
 
 ## Editing Guidance
 
-When making changes to core compiler functionality, do so carefully. Avoid making short-term fixes without express permission and instead focus on a long term approach intended to always work for all possible compiler inputs.
+Remember that the compiler is still in development and there may be compiler errors during other tasks. Finding compiler errors is part of the purpose of tasks and should be highlighted.
+
+Making changes to an early language must be done carefully and can have broad effects. Avoid making short-term fixes without express permission and instead focus on a long term approach intended to always work for all possible compiler inputs. Make changes one at a time and run tests between each one. If other fixes need to be made, ask whether to stash progress on the main task and make the other fix first.
+
+Ask questions rather than making assumptions and investigate thoroughly. If you run into a problem and don't know how to figure it out, raise the issue with me. Provide direct evidence for all of the explanations with the artifacts from the code or outputs that led to the understanding         
 
 ## Build & Run
 
@@ -18,6 +22,11 @@ make format                     # format Haskell code (stylish-haskell)
 make ctformat                   # format Catln .ct/.ctx files
 GOLDEN_TEST_WRITE=1 stack test  # update golden tests
 ```
+
+Lessons that repeatedly cost time:
+- **`--fast` does NOT enforce `-Werror`.** `stack test --fast` / `stack build --fast` compile `-Wall` findings as warnings, so unused bindings, incomplete patterns, etc. slip through and silently land in commits — then break `--pedantic` / `make hs-test` later. Always finish a Haskell change with `stack build --pedantic` (or `make hs-test`), not just `--fast`.
+- **`make format` and `make ctformat` reformat the ENTIRE repo, not just your files.** They produce a large diff that may have unrelated `.ct`/`.ctx`/`.hs` files if an earlier commit failed to run the formatter. In this case mention it to me and leave the other formatting changes
+- **Changes including anything in `stack/core/` can churn many golden test artifacts.** That churn is expected and helps ensure the changes are working as intended — regenerate with `GOLDEN_TEST_WRITE=1 stack test` and confirm real pass/fail by checking that individual tests' assertions still pass (a test can "fail" purely on a golden diff while its logic is correct).
 
 ## Code Organization
 
@@ -46,6 +55,11 @@ GOLDEN_TEST_WRITE=1 stack test  # update golden tests
 - Run `make ctformat` before committing `.ct`/`.ctx` changes
 - `.ct` files use 2-space indentation
 
+## Writing `.ct` code (authoring gotchas)
+
+- **Higher-order arguments must include the nested parameter.** Write `fn(v)` (its parameter), not bare `fn`, in a definition that takes a function-typed argument — see `test/Integration/code/ho.ct`. Bare `fn` fails with "Actual type contains bottomType".
+- **Test `.ct` features in the same module where practical** (`stack exec catln -- <run|test> <file>`). A `stack/core/` function can type-check and evaluate correctly in-module yet fail when imported into another file.
+
 ## Testing
 
 - **Framework:** Tasty + HUnit + Hedgehog (property-based)
@@ -53,3 +67,5 @@ GOLDEN_TEST_WRITE=1 stack test  # update golden tests
 - **Integration test files:** `test/Integration/code/*.ct`
 - **REPL testing:** `stack repl` → `:l test/Spec` → `mt "testname"` or `main` for full suite
 - **Update golden tests:** delete specific golden files and rerun, or `GOLDEN_TEST_WRITE=1 stack test`
+
+When fixing tests, fix type tests before looking at integration tests

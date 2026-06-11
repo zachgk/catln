@@ -1,0 +1,127 @@
+---
+name: debug-typechecker
+description: >
+  Use when debugging the Catln Haskell type checker — a .ct program type-checks to the
+  wrong type, resolves to TopType, fails with "ACT ∅" / "Actual type contains bottomType" /
+  "buildCallTree from top type" / "Failed to get singleton for TopType" / a scheme
+  verification error, or the constraint solver does not converge (15-epoch limit / "Grows
+  by" monotonicity). Covers writing minimal repros, the failure-signature catalog, how to
+  trace points and constraints, and the constraint-solving code map.
+---
+
+# Debugging the Catln type checker
+
+The type checker turns a desugared program into constraints over integer **points**, then
+solves them in epochs. Most "wrong type" bugs are a point that ends up `TopType` or `∅`
+(bottom) when it should be concrete. This skill is the loop for finding *which* point and
+*which* constraint did it.
+
+Pipeline: Parser → Desugar → **TypeCheck** → TreeBuild → Eval. A type that is wrong after
+TypeCheck typically surfaces as a confusing error in TreeBuild or Eval.
+
+## 1. Reproduce minimally
+
+- Write the smallest standalone `.ct` that fails, importing core, with a `#test`/`#assert`:
+  ```catln
+  import "core"
+
+  testX =
+    #test
+    #assert(test= <smallest failing expression>)
+    0
+  ```
+  Run it: `stack exec catln -- test /tmp/x.ct` (use `run` instead if it has a `main`).
+  `test` also runs Hedgehog property tests over the file's functions, so `✓ passed 100
+  tests` lines are normal noise.
+- **Replace user types with throwaways** to isolate: `data(Box[$T](v -> $T))` for a generic
+  container, `data(Foo)` for a concrete one. Compare a parameterized type vs a concrete one —
+  if concrete works and parameterized doesn't, suspect type-variable binding (see §6).
+- **In-module vs imported matters.** A `stack/core/` function can type-check and evaluate
+  correctly when its test lives in the *same* module (add the `#test` to the core file and run
+  `stack exec catln -- test stack/core/data.ct`) yet fail when imported into another file.
+  Always check both — the difference is itself a clue (cross-module re-resolution loses info).
+
+## 2. Read the failure signature
+
+| Signature | Usual meaning |
+|---|---|
+| `... :: ACT TopType` (where you expected a concrete type) | Inference never narrowed the point — a variable or argument failed to propagate/bind. |
+| `Scheme failed check at setScheme ... ACT ∅` / `Actual type contains bottomType` | The point collapsed to empty: an intersection/bound had nothing in common. Often a *consequence* of a var staying `TopType` (so `concrete ∩ <something built from Top> = ∅`), or a genuine type error. |
+| `buildCallTree from top type` (`TreeBuild.hs`) | Type-checked to `TopType`, then TreeBuild can't pick an arrow for `Top`. Root cause is upstream in TypeCheck — fix the `TopType`, not TreeBuild. |
+| `Failed to get singleton for TopType` (`Types.hs`) | Code needed one concrete partial but got `Top`. Same root as above. |
+| `Reached runConstraints limit` (≈15 epochs) | Non-convergence/oscillation. Classic case: a recursive type unrolls one level deeper each epoch (`Nil + Cons(tail = Nil + Cons(tail = …))`). Non-fatal warning but real. |
+| `verifySchemeActLowers` / "Grows by `<diff>`" | Monotonicity violation: a point's ACT *widened* between epochs (it must only narrow). Often two passes fighting (one narrows, one re-widens). |
+| `Multiple matches` / `Failed match in eval callTree` (`Eval.hs`) | Runtime dispatch (`TCMatch`/`TCCond`) found 0 or >1 arrows for a value — a value-vs-arrow keying mismatch, not necessarily a type error. |
+
+The error block usually prints the offending point plus
+`Constraining: <constraint> {… ACT <before> …}  to:  {… ACT <after> …}` — that line names the
+exact constraint that emptied or Top'd the point. Start there.
+
+## 3. Trace points and constraints
+
+The solver is over integer points; each `Constraint` updates a point's `Scheme`, printed as
+`ACT <inferred/upper type>; REQ <required bound>`.
+
+- **Broad value trace:** enable `teDebug` to get `[SUBTYPE]` and `[INTERSECT]` traces. It is
+  set via `defaultTypeEnvDebug` in `mkTypeEnv` (`src/Semantics.hs`); flip it to `True`
+  (or construct the `TypeEnv` with `teDebug=True`). Very verbose — scope to a tiny repro.
+- **Targeted trace (preferred):** add a `Debug.Trace.trace` at the specific spot and **filter
+  by name** to cut noise, e.g. inside `computeConstraint` (`src/TypeCheck/Constrain.hs`), or at
+  `arrowDestType` / `exprVarArgsWithSrc` / `intersectTypesWithVarEnv`, printing the inputs and
+  result:
+  ```haskell
+  | "fmap" `Data.List.isInfixOf` show x && Debug.Trace.trace (printf "...%s" (show v)) False = undefined
+  ```
+  (Add `import qualified Debug.Trace` / `import qualified Data.List`; remove before finishing.)
+- **`feTrace` (`TraceConstrain`)** records per-point scheme changes per epoch — useful for the
+  oscillation/monotonicity cases (`src/TypeCheck/Common.hs`, `traceConstrainChange`).
+
+Goal: find the point whose ACT becomes `∅`/`TopType`, then read which constraint did it and
+why (what was intersected with what).
+
+## 4. Code map (where to look)
+
+- **`src/TypeCheck/Encode.hs`** — `fromExpr` / `fromObjArr` / `fromObjectMap` build constraints.
+  `fromExpr (TupleApply …)` (≈line 122) is the hot spot: a multi-arg call `f(a)(b)` is a nested
+  `TupleApply` where the **final** arg is the applied `EAppArg` and **earlier** args live in the
+  *base*. The base is linked with `EqPoints` in `EncodeIn` (patterns/declarations) but `ArrowTo`
+  in `EncodeOut` (expressions/call sites) — an asymmetry behind several non-final-arg bugs.
+  `AddArg`/`PropEq` attach an argument's value and type.
+- **`src/TypeCheck/Constrain.hs`** — `runConstraints` epoch loop (`Constrain.hs:239`), driven by
+  `runConstraintsLimit = 15` in `src/TypeCheck.hs`. `computeConstraint` handles each constraint kind:
+  `EqPoints`, `AddArg`, `PropEq`, `BoundedByObjs`, `ArrowTo`, `BoundedByKnown`. `setScheme` /
+  `verifyScheme` apply and check (monotonicity).
+- **`src/TypeCheck/TypeUtils.hs`** — `arrowConstrainUbs`: how `ArrowTo` recomputes a partial
+  application through the type graph (via `reachesPartials`). This *recompute* is why a
+  non-final argument's call-site content can be dropped.
+- **`src/Semantics/TypeGraph.hs`** — `reaches` / `reachesPartials`: what a partial resolves to
+  through the type graph.
+- **`src/Semantics.hs`** — `typeGraphQueryWithReason` (intersect a source partial with each
+  arrow's object, then `arrowDestType`); `arrowDestType` (substitute the var env into the
+  arrow's result).
+- **`src/Semantics/Prgm.hs`** — `exprVarArgsWithSrc`: builds the variable bindings by matching an
+  arrow's object pattern against a source partial. This is **where type variables bind — or
+  fail to.** Note: it special-cases a *bare* `TypeVar` argument type but matches structured arg
+  types only structurally.
+- **`src/Semantics/Types.hs`** — `intersectTypesWithVarEnv` (structural intersection returning
+  `(TypeVarArgEnv, Type)` — records var bindings), `isSubtypeOfWithEnv`, `compactType`,
+  `expandPredicates`. **Type shape:** `UnionType (Maybe (preds, negLeafs)) posLeafs consts`; a
+  partial carries `ptArgs` (data fields) and `ptVars` (type parameters) **separately**, matched
+  independently — a value's field is *not* related to a type parameter via the data definition.
+- **`src/TreeBuild.hs`** — arrow selection / `buildCallTree` (where `TopType` blows up).
+- **`src/Eval.hs`** — `evalCallTree` (`TCMatch` / `TCCond` runtime dispatch via
+  `isSubtypePartialOf`); keying mismatches between runtime values and typed arrows surface here.
+
+## 5. Process discipline (this matters — the type checker is regression-prone)
+
+1. **Confirm the mechanism with a trace before editing.** A plausible "symmetric" fix often
+   breaks the working path (e.g. making `EncodeOut` mirror `EncodeIn` regressed the final
+   argument). Know exactly which point/constraint is wrong first.
+2. Make **one** change → re-run the minimal repro → run the full suite (`stack test --fast`).
+3. Core edits churn many goldens (every file's `unionAllObjs` shifts). Regenerate with
+   `GOLDEN_TEST_WRITE=1 stack test`; verify it's churn (not breakage) by confirming individual
+   tests' assertions still pass.
+4. Finish with `stack build --pedantic` — `--fast` alone does **not** enforce `-Werror`, so
+   warnings (unused matches, incomplete patterns) slip through and break the pedantic build later.
+5. If the fix needs deep/cascading changes or regresses unrelated tests, **stop and raise it**
+   rather than patching.
