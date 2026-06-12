@@ -3,26 +3,28 @@ module Main where
 
 import           CRes
 import           Options.Applicative
-import           Semantics           (buildCtssConfig)
-import           Semantics.Prgm      (FileImport, impDisp)
-import           Syntax.Ct.Formatter (formatRootPrgm)
-import           Syntax.Parsers      (mkDesCanonicalImportStr, mkRawImportStr,
-                                      parseFile, readFiles)
+import           Semantics            (buildCtssConfig)
+import           Semantics.Prgm       (FileImport, impDisp)
+import           Syntax.Ct.Formatter  (formatRootPrgm)
+import           Syntax.Parsers       (mkDesCanonicalImportStr, mkRawImportStr,
+                                       parseFile, readFiles)
 
 import           Control.Monad
 import           Control.Monad.Trans
 import           CtService
-import           Data.Foldable       (foldlM)
-import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet        as S
-import           Data.List           (isInfixOf)
+import           Data.Foldable        (foldlM)
+import qualified Data.HashMap.Strict  as H
+import qualified Data.HashSet         as S
+import           Data.List            (isInfixOf)
 import           Data.Maybe
-import           Eval.Common         (Val (StrVal, TupleVal))
-import           LSP                 (lspRun)
+import           Eval.Common          (Val (StrVal, TupleVal))
+import           LSP                  (lspRun)
 import           System.Directory
 import           Text.Printf
-import           Utils               (graphToNodes)
-import           WebDocs             (docApi, docServe)
+import           TypeCheck.Common     (flipTraceConstrain)
+import           TypeCheck.TraceWrite (renderTypeTrace)
+import           Utils                (graphToNodes)
+import           WebDocs              (docApi, docServe)
 -- import Repl (repl)
 
 xRun :: String -> String -> CResT IO ()
@@ -50,6 +52,19 @@ xBuild prgmName function = do
             lift $ putStrLn $ printf "Successfully built %s" (show prgmName)
           _ -> fail "Invalid name or contents found in result as build"
     _ -> fail "Failed to build"
+
+xTypeTrace :: String -> CResT IO ()
+xTypeTrace prgmName = do
+  prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
+  ctss <- lift $ ctssBaseFiles buildCtssConfig [prgmName]
+  (_, vprgm, tr) <- ctssLookupReq ssfTPrgmWithTrace prgmName' ctss
+  let traceDir = "build/typetrace"
+  lift $ removePathForcibly traceDir
+  lift $ createDirectoryIfMissing True (traceDir ++ "/pnt")
+  let files = renderTypeTrace vprgm (flipTraceConstrain tr)
+  forM_ files $ \(relPath, contents) ->
+    lift $ writeFile (traceDir ++ "/" ++ relPath) contents
+  lift $ putStrLn $ printf "Wrote %d typetrace files to %s" (length files) traceDir
 
 xDoc :: [String] -> Bool -> Bool -> CResT IO ()
 xDoc prgmNames cached apiOnly = if apiOnly
@@ -144,6 +159,7 @@ exec CLsp                       = xLsp
 exec (Fmt fname)                = xFmt fname
 exec (DepTree fname showCore)   = xDepTree fname showCore
 exec (TestFile fname)           = xTest fname
+exec (TypeTrace fname)          = xTypeTrace fname
 
 data Command
   = BuildFile String String
@@ -154,6 +170,7 @@ data Command
   | Fmt String
   | DepTree String Bool
   | TestFile String
+  | TypeTrace String
 
 cRun :: Parser Command
 cRun = RunFile
@@ -192,6 +209,10 @@ cTest :: Parser Command
 cTest = TestFile
   <$> argument str (metavar "FILE" <> help "The file to test")
 
+cTypeTrace :: Parser Command
+cTypeTrace = TypeTrace
+  <$> argument str (metavar "FILE" <> help "The file to trace type inference for")
+
 main :: IO ()
 main = do
   cmd <- execParser opts
@@ -213,4 +234,5 @@ main = do
       <> command "fmt" (info cFmt (progDesc "Runs the Catln formatter for a program"))
       <> command "deptree" (info cDepTree (progDesc "Shows the dependency tree for a program"))
       <> command "test" (info cTest (progDesc "Runs all tests in a program"))
+      <> command "typetrace" (info cTypeTrace (progDesc "Writes the type inference trace to the build directory"))
                              )

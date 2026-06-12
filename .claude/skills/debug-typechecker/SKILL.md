@@ -62,6 +62,25 @@ exact constraint that emptied or Top'd the point. Start there.
 The solver is over integer points; each `Constraint` updates a point's `Scheme`, printed as
 `ACT <inferred/upper type>; REQ <required bound>`.
 
+- **`catln typetrace` (start here).** Run `stack exec catln -- typetrace /tmp/x.ct`. It writes
+  the full inference trace (the text equivalent of the webdocs `TypeInfer` view) to
+  `build/typetrace/`:
+  - `program.txt` — every definition with the point id, type, and source position of each of
+    its sub-expressions. **Use this to map the wrong expression to its point number N.** (Grep
+    for the source line/column of the bad expression, or for the value name.)
+  - `points-index.txt` — `pN @ <pos> :: <final scheme>` for every point; skim for the `TopType`
+    / `∅` ones.
+  - `pnt/<N>.txt` — for point N: its `Initial:` scheme, then per `Epoch i:` the exact constraint
+    that updated it and the resulting `{… ACT …; REQ …}`, then every constraint touching it, then
+    its `Neighbors:` (the other points sharing a constraint) with their final schemes. This is
+    the whole "which constraint emptied/Top'd this point, and what were its inputs" loop in one
+    file — read it instead of adding trace prints. Constraints are shown by point (`p20 ⊆_Known
+    ~d`, `(p2)(TVArg /io) == p0`) with the constraint's operator id, so you can follow the same
+    point across files and back to `program.txt`.
+
+  Reach for the manual `Debug.Trace` options below only when you need value-level detail that the
+  trace doesn't capture (e.g. *why* an intersection produced a given type — the `[SUBTYPE]` /
+  `[INTERSECT]` steps inside a single constraint).
 - **Broad value trace:** enable `teDebug` to get `[SUBTYPE]` and `[INTERSECT]` traces. It is
   set via `defaultTypeEnvDebug` in `mkTypeEnv` (`src/Semantics.hs`); flip it to `True`
   (or construct the `TypeEnv` with `teDebug=True`). Very verbose — scope to a tiny repro.

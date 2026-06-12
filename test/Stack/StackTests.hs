@@ -2,7 +2,7 @@ module Stack.StackTests where
 
 import           CRes
 import           CtService
-import           Semantics  (testCtssConfig)
+import           Semantics        (testCtssConfig)
 import           Test.Tasty
 import           Test.Tasty.HUnit
 
