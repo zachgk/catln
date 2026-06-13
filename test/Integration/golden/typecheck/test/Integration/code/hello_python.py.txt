@@ -95,8 +95,8 @@ Prgm
                                 )
                             , /Data/sorted
                                 ( /lst=
-                                    ( TopType | !
-                                        ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) ) && PredClass /Data/List
+                                    ( TopType | PredClass /Data/List && !
+                                        ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) )
                                     )
                                 )
                             , []
@@ -196,8 +196,8 @@ Prgm
                                 )
                             , /Data/any
                                 ( /lst=
-                                    ( TopType | !
-                                        ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) ) && PredClass /Data/List
+                                    ( TopType | PredClass /Data/List && !
+                                        ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) )
                                     )
                                 )
                             , []
@@ -371,8 +371,8 @@ Prgm
                         [ /sum_list( Value /nums -> ∀/Data/List ) ->
                             ( /Data/sum
                                 ( /lst=
-                                    ( TopType | !
-                                        ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) ) && PredClass /Data/List
+                                    ( TopType | PredClass /Data/List && !
+                                        ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) )
                                     )
                                 ) + /Data/Primitive/Integer
                             ) = /sum( Value /lst -> TVArg /nums = Value /nums )
@@ -496,8 +496,8 @@ Prgm
                                 )
                             , /Data/reversed
                                 ( /lst=
-                                    ( TopType | !
-                                        ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) ) && PredClass /Data/List
+                                    ( TopType | PredClass /Data/List && !
+                                        ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) )
                                     )
                                 )
                             , []
@@ -518,8 +518,8 @@ Prgm
                                 )
                             , /Data/all
                                 ( /lst=
-                                    ( TopType | !
-                                        ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) ) && PredClass /Data/List
+                                    ( TopType | PredClass /Data/List && !
+                                        ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) )
                                     )
                                 )
                             , []

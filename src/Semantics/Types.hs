@@ -67,10 +67,28 @@ data PartialName
   | PRelativeName RelativeName
   deriving (Eq, Ord, Show, Generic, Hashable, ToJSON, ToJSONKey)
 
-data PtArgMode
-  = PtArgExact -- ^ matches only the exact args
-  | PtArgAny -- ^ matches with any additional args
-  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+-- |
+-- Describes how the listed args of a 'PartialType' bound the args of a matching
+-- instance, as two independent booleans (a bounded lower\/upper end of the
+-- arg-name set, treated as an interval in the subset lattice):
+--
+--   * 'ptArgLb' (lower bounded): every listed arg is required (instance args ⊇ listed).
+--   * 'ptArgUb' (upper bounded): no unlisted args are allowed (instance args ⊆ listed).
+--
+-- The four combinations: (T,T) exactly the listed args; (T,F) listed required,
+-- extras allowed; (F,T) any subset of listed, no extras; (F,F) unconstrained.
+data PtArgMode = PtArgMode {
+  ptArgLb :: Bool,
+  ptArgUb :: Bool
+  } deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+
+-- | Matches only the exact args (lower and upper bounded).
+pattern PtArgExact :: PtArgMode
+pattern PtArgExact = PtArgMode True True
+
+-- | Matches with any additional args (lower bounded, upper unbounded).
+pattern PtArgAny :: PtArgMode
+pattern PtArgAny = PtArgMode True False
 
 -- | A predicate applied to a type
 data TypePredicate
@@ -316,8 +334,10 @@ instance Show PartialType where
       showPreds (PredsOne p) = printf "| %s" (show p)
       showPreds preds        = printf "| (%s)" (show preds)
       showPtArgMode = case ptArgMode of
-        PtArgExact -> ""
-        PtArgAny   -> ".."
+        PtArgMode True True   -> ""
+        PtArgMode True False  -> ".."
+        PtArgMode False True  -> "??"
+        PtArgMode False False -> "..??"
 
 instance Show PartialKey where
   show pk = show $ partialToType pk
@@ -843,19 +863,30 @@ predImpliesAtom typeEnv@TypeEnv{teClassGraph=ClassGraph cg, tePrgmEnv} vaenv (Pr
       in all (\t -> isSubtypeOfWithEnv typeEnv vaenv t c2Type) classTypes
     _ -> False  -- unsealed or unknown class: can't enumerate all members
 -- PredRel: r1 implies r2 when r2's name path is a suffix of r1's (r2 is more general)
--- and r1's args are subtypes of r2's args.
-predImpliesAtom typeEnv vaenv (PredRel r1) (PredRel r2) =
-  relativeNameMatches (ptName r2) (ptName r1)
-  && all checkArg (H.keys (ptArgs r2))
+-- and r1's args are subtypes of r2's args. Otherwise fall back to expansion, which also
+-- captures class-graph relationships between the names (e.g. ConsList isa List).
+predImpliesAtom typeEnv vaenv (PredRel r1) (PredRel r2)
+  | relativeNameMatches (ptName r2) (ptName r1) && all checkArg (H.keys (ptArgs r2)) = True
+  | otherwise = isSubtypeOfWithEnv typeEnv vaenv (expandRelPartial typeEnv vaenv r1) (expandRelPartial typeEnv vaenv r2)
   where checkArg k = isSubtypeOfWithEnv typeEnv vaenv
                        (H.lookupDefault PTopType k (ptArgs r1))
                        (ptArgs r2 H.! k)
 -- PredExpr: use structural partial comparison (equality-based simplifying assumption)
 predImpliesAtom typeEnv vaenv (PredExpr e1) (PredExpr e2) = isSubPartialOfWithEnv typeEnv vaenv e1 e2
--- PredClass c implies PredRel r when r's name is a suffix of c's name.
--- This holds because expandRelPartial r includes classPartial c, so U_PredClass c ⊆ U_PredRel r.
-predImpliesAtom _ _ (PredClass c) (PredRel r) =
-  relativeNameMatches (ptName r) (ptName c)
+-- PredClass c implies PredRel r when r's name is a suffix of c's name (then
+-- expandRelPartial r includes classPartial c, so U_PredClass c ⊆ U_PredRel r), or - like
+-- the PredClass\/PredClass case - when c is sealed and each of its members is in U_PredRel r
+-- (e.g. c is a subclass of the class that r names).
+predImpliesAtom typeEnv@TypeEnv{teClassGraph=ClassGraph cg, tePrgmEnv} vaenv (PredClass c) (PredRel r)
+  | relativeNameMatches (ptName r) (ptName c) = True
+  | otherwise = case graphLookup (PClassName (ptName c)) cg of
+      Just (CGClass (sealed, _, classTypes, _)) | sealed || tePrgmEnv ->
+        let rType = expandRelPartial typeEnv vaenv r
+        in all (\t -> isSubtypeOfWithEnv typeEnv vaenv t rType) classTypes
+      _ -> False
+-- PredRel r implies PredClass c when every type matching r is a member of c, checked by expansion.
+predImpliesAtom typeEnv vaenv (PredRel r) (PredClass c) =
+  isSubtypeOfWithEnv typeEnv vaenv (expandRelPartial typeEnv vaenv r) (expandClassPartial typeEnv vaenv c)
 -- Cross-kind: conservative False
 predImpliesAtom _ _ _ _ = False
 
@@ -1042,6 +1073,16 @@ isSubPartialOfWithEnv _ _ PartialType{ptArgs=subArgs} PartialType{ptArgs=superAr
 -- PtArgExact with no args cannot be a subtype of PtArgAny with required args:
 -- PtArgExact{} means "exactly 0 args specified", but PtArgAny{args} requires those args to be present.
 isSubPartialOfWithEnv _ _ PartialType{ptArgs=subArgs, ptArgMode=PtArgExact} PartialType{ptArgs=superArgs, ptArgMode=PtArgAny} | H.null subArgs && not (H.null superArgs) = False
+-- New lower-unbounded modes: sub ⊆ super requires super's lower\/upper bound to hold for
+-- every arg-set allowed by sub (the legacy modes are handled exactly by the guards above).
+isSubPartialOfWithEnv _ _ PartialType{ptArgs=subArgs, ptArgMode=PtArgMode subLb subUb} PartialType{ptArgs=superArgs, ptArgMode=PtArgMode superLb superUb}
+  | not subLb || not superLb -- a lower-unbounded mode is involved
+  , not lowerOk || not upperOk = False
+  where
+    subKeys = H.keysSet subArgs
+    superKeys = H.keysSet superArgs
+    lowerOk = not superLb || (if subLb then superKeys `isSubsetOf` subKeys else S.null superKeys)
+    upperOk = not superUb || (subUb && subKeys `isSubsetOf` superKeys)
 isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subArgs, ptPreds=subPreds} super@PartialType{ptVars=superVars, ptArgs=superArgs, ptPreds=superPreds} = debugTrace typeEnv msg result
   where
     vaenv' = H.union vaenv (substituteWithVarArgEnv vaenv <$> H.unionWith (intersectTypesEnv typeEnv vaenv) (ptVarArg super) (ptVarArg sub))
@@ -1179,7 +1220,7 @@ compactOverlapping typeEnv = joinUnionTypeByName . fmap ((aux . reverse) . aux) 
       else partial : aux rest
 
     -- checks if a partial is covered by the candidate from rest
-    partialAlreadyCovered PartialType{ptArgMode=PtArgAny} PartialType{ptArgMode=PtArgAny} = False -- Don't count any coverings because it loses type information
+    partialAlreadyCovered PartialType{ptArgMode=PtArgMode _ False} PartialType{ptArgMode=PtArgMode _ False} = False -- Don't count coverings between upper-unbounded partials because it loses type information
     partialAlreadyCovered partial restPartial = isSubtypePartialOf typeEnv partial (singletonType restPartial)
 
 -- |
@@ -1432,10 +1473,9 @@ unionTypesWithEnv _ _ _ PTopType = PTopType
 unionTypesWithEnv _ _ t BottomType = t
 unionTypesWithEnv _ _ BottomType t = t
 unionTypesWithEnv _ _ t1 t2 | t1 == t2 = t1
--- TypeVar ∪ t → look up in vaenv
-unionTypesWithEnv typeEnv vaenv (TypeVar v _) t = case H.lookup v vaenv of
-  Just v' -> unionTypesWithEnv typeEnv vaenv v' t
-  Nothing -> error $ printf "unionTypesWithEnv: unknown type var %s with %s in env %s" (show t) (show v) (show $ H.keys vaenv)
+-- TypeVar ∪ t → resolve the var in vaenv. An unconstrained var is unknown, i.e. 'PTopType'
+-- (matching 'vaenvLookup' and the TypeVar handling in 'isSubtypeOfWithEnv'/'complementTypeEnv').
+unionTypesWithEnv typeEnv vaenv (TypeVar v _) t = unionTypesWithEnv typeEnv vaenv (vaenvLookup vaenv v) t
 unionTypesWithEnv typeEnv vaenv t v@TypeVar{} = unionTypesWithEnv typeEnv vaenv v t
 -- Structured union: separate handling for positive and top components.
 -- Positive constants from Nothing side are checked against the top; if covered, dropped (already included).
@@ -1511,19 +1551,53 @@ intersectAllTypes typeEnv types = foldr1 (intersectTypes typeEnv) types
 -- | A private helper for 'intersectPartialsBase' that intersects while ignore class expansions
 intersectPartialsBase :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Maybe (TypeVarArgEnv, [PartialType])
 intersectPartialsBase _ _ PartialType{ptName=aName} PartialType{ptName=bName} | aName /= bName = Nothing
-intersectPartialsBase _ _ PartialType{ptArgs=aArgs, ptArgMode=aArgMode} PartialType{ptArgs=bArgs, ptArgMode=bArgMode} | aArgMode == PtArgExact && bArgMode == PtArgExact && H.keysSet aArgs /= H.keysSet bArgs = Nothing
-intersectPartialsBase _ _ PartialType{ptArgs=aArgs, ptArgMode=PtArgExact} PartialType{ptArgs=bArgs, ptArgMode=PtArgAny} | not (H.keysSet bArgs `S.isSubsetOf` H.keysSet aArgs) = Nothing
-intersectPartialsBase _ _ PartialType{ptArgs=aArgs, ptArgMode=PtArgAny} PartialType{ptArgs=bArgs, ptArgMode=PtArgExact} | not (H.keysSet aArgs `S.isSubsetOf` H.keysSet bArgs) = Nothing
-intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds aArgMode) (PartialType _ bVars bArgs bPreds bArgMode) = do
+intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArgMode aLb aUb)) (PartialType _ bVars bArgs bPreds (PtArgMode bLb bUb)) = do
   (varsVaenvs, vars') <- unzip <$> intersectMap H.empty aVars bVars
   (argsVaenvs, args') <- unzip <$> intersectMap vaenv aArgs bArgs
   let venvs' = mergeAllVarEnvs typeEnv [fst $ splitVarArgEnv $ mergeAllVarEnvs typeEnv argsVaenvs, vars']
-  let argMode' = case (aArgMode, bArgMode) of
-        (PtArgAny, _)            -> PtArgAny
-        (_, PtArgAny)            -> PtArgAny
-        (PtArgExact, PtArgExact) -> PtArgExact
   let preds' = predsAnd aPreds bPreds
-  return (mergeAllVarEnvs typeEnv varsVaenvs, [PartialType name' venvs' args' preds' argMode'])
+  -- The two arg-sets each constrain the instance args to an interval over the
+  -- arg-name subset lattice (see 'PtArgMode'). Their intersection is the interval
+  -- [reqKeys, capKeys]: the required (lower) keys are the union of each side's
+  -- required keys; the cap (upper) keys are the intersection of each side's cap.
+  let allKeys = H.keysSet args'
+  let reqKeys = (if aLb then H.keysSet aArgs else S.empty) `S.union` (if bLb then H.keysSet bArgs else S.empty)
+  let ub' = aUb || bUb
+  let capKeys = (if aUb then H.keysSet aArgs else allKeys) `S.intersection` (if bUb then H.keysSet bArgs else allKeys)
+  let restrict ks = H.filterWithKey (\k _ -> k `S.member` ks) args'
+  let mkPartial lb' ub'' ks = PartialType name' venvs' (restrict ks) preds' (PtArgMode lb' ub'')
+  let partials'
+        -- Legacy fast path: when both sides are lower-bounded (the original two modes),
+        -- preserve the original intersection behavior exactly so it stays consistent with
+        -- the (deliberately loose) legacy subset behavior that the rest of the compiler -
+        -- notably TreeBuild - depends on. Result keeps the union of args and is 'PtArgExact'
+        -- only when both inputs are exact, else 'PtArgAny'.
+        | aLb && bLb =
+            let feasible = case (aUb, bUb) of
+                  (True, True)   -> H.keysSet aArgs == H.keysSet bArgs
+                  (True, False)  -> H.keysSet bArgs `S.isSubsetOf` H.keysSet aArgs
+                  (False, True)  -> H.keysSet aArgs `S.isSubsetOf` H.keysSet bArgs
+                  (False, False) -> True
+            in [PartialType name' venvs' args' preds' (PtArgMode True (aUb && bUb)) | feasible]
+        | ub' = if reqKeys `S.isSubsetOf` capKeys -- bounded interval [reqKeys, capKeys]
+            then if reqKeys == capKeys
+              then [mkPartial True True capKeys]         -- single arg-set: exact
+              else if S.null reqKeys
+                then [mkPartial False True capKeys]      -- [∅, capKeys]: powerset
+                -- strict bounded interval: enumerate each arg-set as an exact partial
+                else [mkPartial True True (reqKeys `S.union` S.fromList extra) | extra <- powerset $ S.toList (capKeys `S.difference` reqKeys)]
+            else []                                       -- infeasible: required exceeds cap
+        -- upper-unbounded. Optional keys (listed but not required) that are Top-typed
+        -- add no constraint and can be dropped, usually leaving an exact single partial
+        -- (required keys with a lower bound, extras allowed). A non-Top optional key
+        -- cannot be expressed alongside required keys with a single lower bit, so fall
+        -- back to a conservative single partial in that residual case.
+        | otherwise =
+            let nonTopOptional = S.filter (\k -> H.lookupDefault PTopType k args' /= PTopType) (allKeys `S.difference` reqKeys)
+            in if S.null nonTopOptional
+                 then [mkPartial (not $ S.null reqKeys) False reqKeys]
+                 else [mkPartial (reqKeys == allKeys) False allKeys]
+  if null partials' then Nothing else Just (mergeAllVarEnvs typeEnv varsVaenvs, partials')
   where
     -- intersectMap unions so that all typeVars from either a or b are kept
     intersectMap vev a b = traverse subValidate $ H.unionWith subUnion (fmap (vev,) a) (fmap (vev,) b)
@@ -1669,7 +1743,9 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
     differencePartial p1@PartialType{ptArgs=posArgs, ptArgMode=PtArgAny} PartialType{ptArgs=negArgs, ptArgMode=PtArgExact}
       | not (H.null posArgs) && not (H.keysSet negArgs `S.isSubsetOf` H.keysSet posArgs) = [p1]
       | H.null negArgs && not (H.null posArgs) = [p1]
-    differencePartial p1@PartialType{ptArgs=posArgs, ptVars=posVars, ptArgMode=posArgMode} PartialType{ptArgs=negArgs, ptVars=negVars, ptArgMode=negArgMode} | posArgMode == negArgMode || negArgMode == PtArgExact = mapMaybe subtractArg (H.toList negArgs) ++ mapMaybe subtractVar (H.toList negVars)
+    -- The legacy clauses below are only valid when both sides are lower-bounded (the old
+    -- modes); any lower-unbounded mode falls through to the general handler at the end.
+    differencePartial p1@PartialType{ptArgs=posArgs, ptVars=posVars, ptArgMode=posArgMode} PartialType{ptArgs=negArgs, ptVars=negVars, ptArgMode=negArgMode} | ptArgLb posArgMode && ptArgLb negArgMode && (posArgMode == negArgMode || negArgMode == PtArgExact) = mapMaybe subtractArg (H.toList negArgs) ++ mapMaybe subtractVar (H.toList negVars)
       where
         subtractArg (_, PTopType) = Nothing
         subtractArg (argName, negArgVal) = case H.lookup argName posArgs of
@@ -1683,9 +1759,9 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
           varVal' -> Just p1{ptVars=H.insert varName (snd $ differenceTypeWithEnv typeEnv vaenv varVal' negVarVal) posArgs}
     -- PtArgExact - PtArgAny: neg requires at least negArgs; pos (exact) is in neg iff neg's required
     -- keys are all present in pos with matching values. Subtract matching args just like the main case.
-    differencePartial p1@PartialType{ptArgs=posArgs, ptVars=posVars} PartialType{ptArgs=negArgs, ptVars=negVars, ptArgMode=PtArgAny}
-      | not (H.keysSet negArgs `S.isSubsetOf` H.keysSet posArgs) = [p1]
-      | otherwise = mapMaybe subtractArg (H.toList negArgs) ++ mapMaybe subtractVar (H.toList negVars)
+    differencePartial p1@PartialType{ptArgs=posArgs, ptVars=posVars, ptArgMode=posArgMode} PartialType{ptArgs=negArgs, ptVars=negVars, ptArgMode=PtArgAny}
+      | ptArgLb posArgMode && not (H.keysSet negArgs `S.isSubsetOf` H.keysSet posArgs) = [p1]
+      | ptArgLb posArgMode = mapMaybe subtractArg (H.toList negArgs) ++ mapMaybe subtractVar (H.toList negVars)
       where
         subtractArg (_, PTopType) = Nothing
         subtractArg (argName, negArgVal) = case H.lookup argName posArgs of
@@ -1697,7 +1773,32 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
         subtractVar (varName, negVarVal) = case H.lookupDefault PTopType varName posVars of
           BottomType -> Nothing
           varVal' -> Just p1{ptVars=H.insert varName (snd $ differenceTypeWithEnv typeEnv vaenv varVal' negVarVal) posVars}
-    differencePartial p1 p2 = error $ printf "Unimplemented differencePartial: %s - %s" (show p1) (show p2)
+    -- General handler for arg-mode combinations involving the lower-unbounded modes
+    -- (the cases above cover the legacy modes verbatim). Reasoning on the arg-set
+    -- intervals (see 'PtArgMode'): when neg's interval covers every arg-set allowed by
+    -- pos (negL ⊆ posL and posU ⊆ negU), the only pos instances escaping neg are those
+    -- failing neg on some per-arg\/var type; subtract those. Otherwise pos has arg-sets
+    -- entirely outside neg, so conservatively keep pos.
+    differencePartial p1@(PartialType _ posVars posArgs _ (PtArgMode posLb posUb)) (PartialType _ negVars negArgs _ (PtArgMode negLb negUb))
+      | negCoversAllPos = mapMaybe subtractArg (H.toList negArgs) ++ mapMaybe subtractVar (H.toList negVars)
+      | otherwise = [p1]
+      where
+        posKeys = H.keysSet posArgs
+        negKeys = H.keysSet negArgs
+        negLsubPosL = not negLb || (if posLb then negKeys `S.isSubsetOf` posKeys else S.null negKeys)
+        posUsubNegU = not negUb || (posUb && posKeys `S.isSubsetOf` negKeys)
+        negCoversAllPos = negLsubPosL && posUsubNegU
+
+        subtractArg (_, PTopType) = Nothing
+        subtractArg (argName, negArgVal) = case H.lookup argName posArgs of
+          Just posArgVal -> case snd $ differenceTypeWithEnv typeEnv vaenv posArgVal negArgVal of
+            BottomType -> Nothing
+            argVal'    -> Just $ p1{ptArgs=H.insert argName argVal' posArgs}
+          Nothing -> Nothing
+        subtractVar (_, PTopType) = Nothing
+        subtractVar (varName, negVarVal) = case H.lookupDefault PTopType varName posVars of
+          BottomType -> Nothing
+          varVal' -> Just p1{ptVars=H.insert varName (snd $ differenceTypeWithEnv typeEnv vaenv varVal' negVarVal) posVars}
 
 -- | Difference of two types (t1 − t2 = t1 ∩ ¬t2).
 differenceTypeWithEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> (TypeVarArgEnv, Type)
@@ -1846,13 +1947,11 @@ typeResolveInner partial = substituteTVExt vaenv . promote
     promote other             = other
 
 -- | Gets an arg from a partial type, fully resolved against the partial's own bindings.
--- When the arg name is absent, falls back to 'PTopType' for 'PtArgAny' partials and
--- 'Nothing' for 'PtArgExact'.
+-- When the arg name is absent, falls back to 'PTopType' for upper-unbounded partials
+-- (where the arg may still be present) and 'Nothing' for upper-bounded ones.
 typeGetArg :: ArgName -> PartialType -> Maybe Type
 typeGetArg argName partial@PartialType{ptArgs, ptVars, ptArgMode} = case H.lookup argName ptArgs of
-  Nothing -> case ptArgMode of
-    PtArgAny   -> Just PTopType
-    PtArgExact -> Nothing
+  Nothing -> if ptArgUb ptArgMode then Nothing else Just PTopType
   Just arg -> case arg of
     t@(UnionType (Just _) _ _) -> Just t
     TypeVar (TVArg a) _ | a == argName -> error $ printf "Found getArg cycle looking for %s in %s" (show argName) (show partial)
