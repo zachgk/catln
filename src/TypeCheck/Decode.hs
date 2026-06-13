@@ -128,7 +128,7 @@ verifyObjMapItem name (ObjectMapItem decls refineDecls defs) = do
       forM_ defsWithLocs $ \(defType, defLoc) ->
         unless (isSubtypeOf prgmTypeEnv defType declUnion) $ do
           let undeclared = snd $ differenceTypeWithEnv prgmTypeEnv H.empty defType declUnion
-          lift $ TypeCheckResE [DefinitionOutsideDeclaration name defType declUnion undeclared defLoc]
+          lift $ TypeCheckResult [DefinitionOutsideDeclaration name defType declUnion undeclared defLoc] ()
 
       -- Check each declaration against defUnion, but skip #runtime declarations (they don't need definitions)
       let nonRuntimeDecls = filter (not . hasAnnot runtimeAnnot) decls
@@ -136,7 +136,7 @@ verifyObjMapItem name (ObjectMapItem decls refineDecls defs) = do
       forM_ declsWithLocs $ \(declType, declLoc) ->
         unless (isSubtypeOf prgmTypeEnv declType defUnion) $ do
           let notDefined = snd $ differenceTypeWithEnv prgmTypeEnv H.empty declType defUnion
-          lift $ TypeCheckResE [UnfulfilledDeclaration name declType defUnion notDefined declLoc]
+          lift $ TypeCheckResult [UnfulfilledDeclaration name declType defUnion notDefined declLoc] ()
 
       -- Check each refinement declaration against declUnion
       let refineWithLocs = zip
@@ -145,7 +145,7 @@ verifyObjMapItem name (ObjectMapItem decls refineDecls defs) = do
       forM_ refineWithLocs $ \(refineType, refineLoc) ->
         unless (isSubtypeOf prgmTypeEnv refineType declUnion) $ do
           let undeclared = snd $ differenceTypeWithEnv prgmTypeEnv H.empty refineType declUnion
-          lift $ TypeCheckResE [RefineOutsideDeclaration name refineType declUnion undeclared refineLoc]
+          lift $ TypeCheckResult [RefineOutsideDeclaration name refineType declUnion undeclared refineLoc] ()
 
 toPrgms :: [VPrgm] -> StateT FEnv TypeCheckResult [TPrgm]
 toPrgms = mapM toPrgm

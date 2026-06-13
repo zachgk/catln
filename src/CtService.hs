@@ -206,8 +206,11 @@ buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
             ) (graphToNodes pages)
       let tprgmGraph = graphFromEdges (sccTPrgmNodes ++ depTPrgmNodes)
 
-      -- Step 7: Eval build all (processes SCC + deps, we extract SCC results)
-      tbprgmGraph <- asCResT $ evalBuildAll tprgmGraph
+      -- Step 7: Eval build all (processes SCC + deps, we extract SCC results).
+      -- Tolerate failure: a type-erroneous program cannot build a tree, but we
+      -- still want to cache the desugar/typecheck artifacts (including the trace)
+      -- for tooling. Any eval-build error is deferred into ssfTBPrgm below.
+      let tbprgmGraphRes = evalBuildAll tprgmGraph
 
       -- Step 8: Eval annotations per SCC file (kept lazy to match original behavior,
       -- since evalAnnots may reference classes not in the class graph for #noCore files)
@@ -218,8 +221,12 @@ buildSCCPipeline ctssData sccNamesSet sccNodes pages = do
               ssfBuilt = True,
               ssfDes = Just $ pure des,
               ssfTPrgmWithTrace = Just $ pure tc,
-              ssfTPrgm = Just $ CRes tcNotes (fst3 tc),
-              ssfTBPrgm = fmap pure $ graphLookup name tbprgmGraph,
+              -- failOnErrorNotes so eval consumers (run/test/build) cleanly reject
+              -- a type-erroneous program, while ssfTPrgmWithTrace still carries the trace.
+              ssfTPrgm = Just $ failOnErrorNotes $ CRes tcNotes (fst3 tc),
+              ssfTBPrgm = case tbprgmGraphRes of
+                CRes _ g  -> fmap pure $ graphLookup name g
+                CErr errs -> Just $ CErr errs,
               ssfAnnots = H.lookup name annotsMap
             })
             | ((_, ssf, name, _), des, tc) <-

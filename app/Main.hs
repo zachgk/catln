@@ -55,12 +55,14 @@ xBuild prgmName function = do
 
 xTypeTrace :: String -> CResT IO ()
 xTypeTrace prgmName = do
+  let traceDir = "build/typetrace"
+  -- Clear any previously generated trace first, so a failed run never leaves
+  -- stale output from a prior file behind.
+  lift $ removePathForcibly traceDir
+  lift $ createDirectoryIfMissing True (traceDir ++ "/pnt")
   prgmName' <- lift $ mkDesCanonicalImportStr buildCtssConfig prgmName
   ctss <- lift $ ctssBaseFiles buildCtssConfig [prgmName]
   (_, vprgm, tr) <- ctssLookupReq ssfTPrgmWithTrace prgmName' ctss
-  let traceDir = "build/typetrace"
-  lift $ removePathForcibly traceDir
-  lift $ createDirectoryIfMissing True (traceDir ++ "/pnt")
   let files = renderTypeTrace vprgm (flipTraceConstrain tr)
   forM_ files $ \(relPath, contents) ->
     lift $ writeFile (traceDir ++ "/" ++ relPath) contents
