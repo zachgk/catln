@@ -68,4 +68,4 @@ Lessons that repeatedly cost time:
 - **REPL testing:** `stack repl` → `:l test/Spec` → `mt "testname"` or `main` for full suite
 - **Update golden tests:** delete specific golden files and rerun, or `GOLDEN_TEST_WRITE=1 stack test`
 
-When fixing tests, fix type tests before looking at integration tests
+When fixing tests, fix type tests before looking at integration tests. The type tests are implemented through property tests. They should not be flaky because any failure indicates a hidden problem in the compiler. If one is encountered, keep and use the hedgehog replay seed to reproduce it. To ensure flaky tests are resolved, test with higher test count. Do not run the test suite multiple times to avoid the startup overhead. Instead, update the iteration count in TypesTests.hs and run the suite once with the larger count
