@@ -60,9 +60,31 @@ genTypeFromExpr prgm (EWhere _ base cond) = do
 genTypeFromExpr _ e = error $ printf "Unimplemented genTypeFromExpr for %s" (show e)
 
 genType :: Prgm Expr () -> Gen Type
-genType prgm@(Prgm objMap _ _) = HG.choice gens
+genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
   where
     TypeEnv{teClassGraph=ClassGraph cg} = mkTypeEnv prgm
+
+    -- Randomly assign a 'PtArgMode' to the generated partials, exercising the new
+    -- lower\/upper-bound modes through the (precise) set operations. Only plain
+    -- positive-partial unions are re-moded.
+    --
+    -- The fully-unbounded mode (lb=False, ub=False) is excluded for partials with args:
+    -- its intersection with a lower-bounded partial of the same name is "required x,
+    -- optional typed y, extras allowed", which provably cannot be expressed as positive
+    -- partials (it needs a negative partial). The other three modes are exact under all
+    -- the set operations.
+    withRandomArgModes :: Type -> Gen Type
+    withRandomArgModes (UnionType Nothing leafs []) | not (H.null leafs) = do
+      leafs' <- mapM remode $ splitUnionType leafs
+      return $ UnionType Nothing (joinUnionType leafs') []
+      where
+        remode p = do
+          mode <- HG.element [PtArgMode True True, PtArgMode True False, PtArgMode False True]
+          -- the lower bound is vacuous with no args, so keep it set then (avoids
+          -- producing a representation set-equivalent to a different one)
+          let mode' = if H.null (ptArgs p) then mode{ptArgLb=True} else mode
+          return p{ptArgMode = mode'}
+    withRandomArgModes t = return t
 
     gens = if graphEmpty cg
       then [genBasic, genConst]

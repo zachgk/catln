@@ -685,16 +685,25 @@ splitPartialByUnionVarArgs p@PartialType{ptVars, ptArgs} =
     case findUnion allVarArgs of
       Nothing -> [p]
       Just (keyName, components) -> concatMap splitPartialByUnionVarArgs
-        [typeSetAux keyName (singletonType component) p | component <- components]
+        [typeSetAux keyName component p | component <- components]
   where
     allVarArgs = map (first TVVar) (H.toList ptVars) ++ map (first TVArg) (H.toList ptArgs)
 
-    findUnion :: [(TypeVarAux, Type)] -> Maybe (TypeVarAux, [PartialType])
+    findUnion :: [(TypeVarAux, Type)] -> Maybe (TypeVarAux, [Type])
     findUnion [] = Nothing
-    findUnion ((keyName, UnionType Nothing leafs []):rest) = case splitUnionType leafs of
-      (_:_:_) -> Just (keyName, splitUnionType leafs)
-      _       -> findUnion rest
-    findUnion (_:rest) = findUnion rest
+    findUnion ((keyName, t):rest) = case unionComponents t of
+      Just comps@(_:_:_) -> Just (keyName, comps)
+      _                  -> findUnion rest
+
+    -- Splits a union-valued arg\/var into its members as separate single-member types, so an arg
+    -- whose value is a union (e.g. from joining two same-key partials during a union) can be matched
+    -- component-by-component against the supertypes. Handles the plain positive form and the mixed
+    -- 'Just'-pred form (a predicated top plus positive leafs).
+    unionComponents :: Type -> Maybe [Type]
+    unionComponents (UnionType Nothing leafs []) = Just $ map singletonType $ splitUnionType leafs
+    unionComponents (UnionType (Just topData) posLeafs cs)
+      | not (H.null posLeafs) = Just $ UnionType (Just topData) H.empty cs : map singletonType (splitUnionType posLeafs)
+    unionComponents _ = Nothing
 
 -- | Helper to create a 'PartialKey' for a value (no args, no vars)
 partialKey :: Name -> PartialKey
@@ -1084,17 +1093,12 @@ isSubPredicateOfWithEnv typeEnv vaenv p1 p2 = predImpliesAtom typeEnv vaenv p1 p
 isSubPartialOfWithEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Bool
 isSubPartialOfWithEnv TypeEnv{teDebug=True} _ l r | trace (printf "[SUBPARTIAL] %s ⊆ %s" (show l) (show r)) False = undefined
 isSubPartialOfWithEnv _ _ PartialType{ptName=subName} PartialType{ptName=superName} | subName /= superName = False
-isSubPartialOfWithEnv _ _ PartialType{ptArgs=subArgs, ptArgMode=PtArgExact} PartialType{ptArgs=superArgs, ptArgMode=PtArgExact} | H.keysSet subArgs /= H.keysSet superArgs = False
-isSubPartialOfWithEnv _ _ PartialType{ptArgs=subArgs, ptArgMode=PtArgAny} PartialType{ptArgs=superArgs, ptArgMode=PtArgAny} | not (H.keysSet superArgs `isSubsetOf` H.keysSet subArgs) = False
-isSubPartialOfWithEnv _ _ PartialType{ptArgs=subArgs} PartialType{ptArgs=superArgs, ptArgMode=superArgMode} | superArgMode == PtArgExact && not (H.keysSet subArgs `isSubsetOf` H.keysSet superArgs) = False
--- PtArgExact with no args cannot be a subtype of PtArgAny with required args:
--- PtArgExact{} means "exactly 0 args specified", but PtArgAny{args} requires those args to be present.
-isSubPartialOfWithEnv _ _ PartialType{ptArgs=subArgs, ptArgMode=PtArgExact} PartialType{ptArgs=superArgs, ptArgMode=PtArgAny} | H.null subArgs && not (H.null superArgs) = False
--- New lower-unbounded modes: sub ⊆ super requires super's lower\/upper bound to hold for
--- every arg-set allowed by sub (the legacy modes are handled exactly by the guards above).
+-- Keyset feasibility on the arg-set interval (see 'PtArgMode'): sub ⊆ super requires
+-- super's lower\/upper bound to hold for every arg-set allowed by sub. The minimal
+-- arg-set of sub is its required keys (or ∅ when sub is lower-unbounded); the maximal
+-- is its keys (or unbounded when sub is upper-unbounded).
 isSubPartialOfWithEnv _ _ PartialType{ptArgs=subArgs, ptArgMode=PtArgMode subLb subUb} PartialType{ptArgs=superArgs, ptArgMode=PtArgMode superLb superUb}
-  | not subLb || not superLb -- a lower-unbounded mode is involved
-  , not lowerOk || not upperOk = False
+  | not lowerOk || not upperOk = False
   where
     subKeys = H.keysSet subArgs
     superKeys = H.keysSet superArgs
@@ -1588,32 +1592,31 @@ intersectPartialsBase :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Partia
 intersectPartialsBase _ _ PartialType{ptName=aName} PartialType{ptName=bName} | aName /= bName = Nothing
 intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArgMode aLb aUb)) (PartialType _ bVars bArgs bPreds (PtArgMode bLb bUb)) = do
   (varsVaenvs, vars') <- unzip <$> intersectMap H.empty aVars bVars
-  (argsVaenvs, args') <- unzip <$> intersectMap vaenv aArgs bArgs
+  -- Args (unlike vars) are intersected without killing the partial when a value intersects to
+  -- bottom: such an arg simply cannot be present. For a *required* arg (a lower-bounded side
+  -- lists it) that makes the partial uninhabited; for an *optional* arg (a lower-unbounded mode)
+  -- it just drops the arg, leaving the smaller arg-sets of the interval valid.
+  let argsMap = H.unionWith subUnion (fmap (vaenv,) aArgs) (fmap (vaenv,) bArgs)
+  let args' = fmap snd argsMap
+  let bottomKeys = H.keysSet $ H.filter (isBottomType . snd) argsMap
+  let argsVaenvs = map fst $ H.elems $ H.filter (not . isBottomType . snd) argsMap
   let venvs' = mergeAllVarEnvs typeEnv [fst $ splitVarArgEnv $ mergeAllVarEnvs typeEnv argsVaenvs, vars']
   let preds' = predsAnd aPreds bPreds
   -- The two arg-sets each constrain the instance args to an interval over the
   -- arg-name subset lattice (see 'PtArgMode'). Their intersection is the interval
   -- [reqKeys, capKeys]: the required (lower) keys are the union of each side's
   -- required keys; the cap (upper) keys are the intersection of each side's cap.
-  let allKeys = H.keysSet args'
+  -- Bottom-valued keys can never be present, so they are removed from the cap (and make the
+  -- partial uninhabited if required - see the 'partials'' guard below).
+  let okKeys = H.keysSet args' `S.difference` bottomKeys
+  let allKeys = okKeys
   let reqKeys = (if aLb then H.keysSet aArgs else S.empty) `S.union` (if bLb then H.keysSet bArgs else S.empty)
   let ub' = aUb || bUb
-  let capKeys = (if aUb then H.keysSet aArgs else allKeys) `S.intersection` (if bUb then H.keysSet bArgs else allKeys)
+  let capKeys = ((if aUb then H.keysSet aArgs else okKeys) `S.intersection` (if bUb then H.keysSet bArgs else okKeys)) `S.difference` bottomKeys
   let restrict ks = H.filterWithKey (\k _ -> k `S.member` ks) args'
   let mkPartial lb' ub'' ks = PartialType name' venvs' (restrict ks) preds' (PtArgMode lb' ub'')
   let partials'
-        -- Legacy fast path: when both sides are lower-bounded (the original two modes),
-        -- preserve the original intersection behavior exactly so it stays consistent with
-        -- the (deliberately loose) legacy subset behavior that the rest of the compiler -
-        -- notably TreeBuild - depends on. Result keeps the union of args and is 'PtArgExact'
-        -- only when both inputs are exact, else 'PtArgAny'.
-        | aLb && bLb =
-            let feasible = case (aUb, bUb) of
-                  (True, True)   -> H.keysSet aArgs == H.keysSet bArgs
-                  (True, False)  -> H.keysSet bArgs `S.isSubsetOf` H.keysSet aArgs
-                  (False, True)  -> H.keysSet aArgs `S.isSubsetOf` H.keysSet bArgs
-                  (False, False) -> True
-            in [PartialType name' venvs' args' preds' (PtArgMode True (aUb && bUb)) | feasible]
+        | not (S.null (reqKeys `S.intersection` bottomKeys)) = [] -- a required arg is uninhabited
         | ub' = if reqKeys `S.isSubsetOf` capKeys -- bounded interval [reqKeys, capKeys]
             then if reqKeys == capKeys
               then [mkPartial True True capKeys]         -- single arg-set: exact
@@ -1777,16 +1780,14 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
     differencePartial :: PartialType -> PartialType -> [PartialType]
     differencePartial p1 p2 | p1 == p2 = []
     differencePartial p1@PartialType{ptArgs=posArgs, ptArgMode=PtArgExact} PartialType{ptArgs=negArgs, ptArgMode=PtArgExact} | H.keysSet posArgs /= H.keysSet negArgs = [p1]
-    -- PtArgAny pos minus PtArgExact neg:
-    -- (a) pos has specific args and neg has args pos doesn't: neg constrains an arg set that
-    --     pos doesn't require, so there are pos values that neg doesn't cover → return [p1].
-    -- (b) neg has NO args but pos DOES: PtArgExact{} can only cover instances with exactly
-    --     no args, but pos requires specific args → those instances aren't covered → return [p1].
-    -- (c) pos has NO args (PtArgAny{}): fall through to subtractArg, which returns [] when neg
-    --     has args pos doesn't specify (PtArgExact{negArgs} fully covers the open PtArgAny{}).
+    -- PtArgAny pos minus PtArgExact neg: pos = {S ⊇ posArgs}, neg = {S = negArgs}. The only
+    -- arg-set of pos that neg can cover is exactly negArgs, which requires posArgs ⊆ negArgs.
+    -- When posArgs ⊄ negArgs the two are disjoint (every pos instance has a required arg that the
+    -- exact neg arg-set omits), so pos survives unchanged → [p1]. (This subsumes the old "neg has
+    -- no args but pos does" case.) When posArgs ⊆ negArgs they overlap on the negArgs arg-set;
+    -- fall through to the legacy subtractArg handler below.
     differencePartial p1@PartialType{ptArgs=posArgs, ptArgMode=PtArgAny} PartialType{ptArgs=negArgs, ptArgMode=PtArgExact}
-      | not (H.null posArgs) && not (H.keysSet negArgs `S.isSubsetOf` H.keysSet posArgs) = [p1]
-      | H.null negArgs && not (H.null posArgs) = [p1]
+      | not (H.keysSet posArgs `S.isSubsetOf` H.keysSet negArgs) = [p1]
     -- The legacy clauses below are only valid when both sides are lower-bounded (the old
     -- modes); any lower-unbounded mode falls through to the general handler at the end.
     differencePartial p1@PartialType{ptArgs=posArgs, ptVars=posVars, ptArgMode=posArgMode} PartialType{ptArgs=negArgs, ptVars=negVars, ptArgMode=negArgMode} | ptArgLb posArgMode && ptArgLb negArgMode && (posArgMode == negArgMode || negArgMode == PtArgExact) = mapMaybe subtractArg (H.toList negArgs) ++ mapMaybe subtractVar (H.toList negVars)
