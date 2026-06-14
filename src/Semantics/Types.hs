@@ -474,6 +474,20 @@ isPredsContradictory (PredsAnd ps) = go (3 :: Int) ps
     unitPropDerive _ _ = []
 isPredsContradictory _             = False
 
+-- | Class-graph-aware unsatisfiability: 'True' when no type satisfies @preds@, decided by expanding
+-- against the class graph and checking for emptiness. Complements the purely syntactic
+-- 'isPredsContradictory' (which only sees structural A∧¬A contradictions) with class-graph
+-- disjointness - e.g. two distinct classes whose members\/placeholders do not overlap, so
+-- @PredClass C ∧ PredClass D@ is empty. Sound by construction: it only reports 'True' when the
+-- expansion is definitively bottom; predicates that do not fully expand (e.g. a 'PredRel' or
+-- 'PredExpr') leave a symbolic, non-bottom expansion and so return 'False' (conservative).
+predsEmpty :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicates -> Bool
+-- Only conjunctions of >=2 atoms can be empty by class-graph disjointness (a single atom or a
+-- negation is satisfiable on its own). Restricting the (relatively expensive) expansion to that
+-- case keeps the common single-predicate subtype checks free.
+predsEmpty typeEnv vaenv preds@(PredsAnd ps) | length ps >= 2 = isBottomType (expandPredicates typeEnv vaenv preds)
+predsEmpty _       _     _                                    = False
+
 partialAddPreds :: PartialType -> TypePredicates -> PartialType
 partialAddPreds partial@PartialType{ptPreds} newPreds = partial{ptPreds = predsAnd newPreds ptPreds}
 
@@ -803,15 +817,18 @@ predImplies typeEnv vaenv p1@(PredsAnd ps) p2      = any (\p -> predImplies type
     allCheck = case p2 of
       PredsAnd qs -> all (predImplies typeEnv vaenv p1) qs
       _           -> False
+    -- A leftover disjunct @x@ is cancellable when @¬x@ is literally present, or when the
+    -- conjunction is incompatible with @x@ by the class graph (@p1 ∧ x = ∅@, so @x@ can never
+    -- co-occur) - e.g. @Boolean ∧ (Animal ∨ ~r)@ implies @~r@ because @Boolean ∧ Animal = ∅@.
     cancellationCheck = or
-      [ all (\x -> PredsNot x `elem` ps) xs
+      [ all (\x -> PredsNot x `elem` ps || predsEmpty typeEnv vaenv (predsAnd p1 x)) xs
       | PredsNot (PredsAnd nots) <- ps
       , Just inners <- [mapM extractNot nots]
       , (q_inner, xs) <- choices inners
       , predImplies typeEnv vaenv q_inner p2
       ]
     directContradictCheck = case p2 of
-      PredsNot inner -> isPredsContradictory (predsAnd p1 inner)
+      PredsNot inner -> isPredsContradictory (predsAnd p1 inner) || predsEmpty typeEnv vaenv (predsAnd p1 inner)
       _              -> False
     extractNot (PredsNot x) = Just x
     extractNot _            = Nothing
@@ -821,7 +838,7 @@ predImplies typeEnv vaenv p1 (PredsAnd ps)      = all (predImplies typeEnv vaenv
   -- p1 must imply every conjunct
 predImplies typeEnv vaenv (PredsNot inner) (PredsNot outer) = predImplies typeEnv vaenv outer inner
   -- contravariance: ¬A ⊆ ¬B ↔ B ⊆ A
-predImplies _       _     p1 (PredsNot p2)      = isPredsContradictory (predsAnd p1 p2)
+predImplies typeEnv vaenv p1 (PredsNot p2)      = isPredsContradictory (predsAnd p1 p2) || predsEmpty typeEnv vaenv (predsAnd p1 p2)
   -- U_p1 ⊆ ¬U_p2 ↔ U_p1 ∩ U_p2 = ∅
 -- !(¬a₁ ∧ ¬a₂ ∧ ...) = a₁ ∨ a₂ ∨ ...: a disjunction implies q iff every disjunct implies q
 predImplies typeEnv vaenv (PredsNot (PredsAnd nots)) q2
@@ -1148,6 +1165,7 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType (Just (p1, n1)) _ _) t2@(UnionType (
   | predImplies typeEnv vaenv p1 p2
     && isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing n2 []) (UnionType Nothing n1 []) = True
     -- U_p1 ⊆ U_p2 and n2 ⊆ n1, so (U_p1 - n1) ⊆ (U_p2 - n2)
+  | predsEmpty typeEnv vaenv p1 = True  -- t1 = ∅ by class-graph disjointness ⊆ anything (fallback: expansion is costly)
   | tePrgmEnv typeEnv || predsSealed typeEnv p1 = isSubtypeOfWithEnv typeEnv vaenv (snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv p1) (UnionType Nothing n1 [])) t2
   | otherwise         = False
 -- NegPartials ⊆ PosPartials: filter t1 by superPartials names.
@@ -1160,6 +1178,7 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (preds, negLeafs)) _ _) t2@
     (_, True)      | isPredsContradictory preds -> True
     (_, True)      | predImpliesPartials typeEnv vaenv preds superPartials -> True
                    -- U_preds ⊆ superPartials implies (U_preds - negLeafs) ⊆ superPartials
+    (_, True)      | predsEmpty typeEnv vaenv preds -> True  -- U_preds = ∅ by class-graph disjointness (fallback: costly)
     (_, True)      | tePrgmEnv typeEnv || predsSealed typeEnv preds -> isSubtypeOfWithEnv typeEnv vaenv (snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv preds) (UnionType Nothing negLeafs [])) t2
     (_, True)      -> False
     (leafs, False) -> isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing leafs []) t2
@@ -1314,6 +1333,22 @@ compactPartialLeafs typeEnv vaenv = compactOverlapping typeEnv . compactJoinPart
 -- TODO: This should merge type partials into class partials
 compactType :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
 compactType TypeEnv{teDisableCompact=True} _ t = t
+-- Class-graph-contradictory top: a conjunction of >=2 PredClass atoms can be empty by class-graph
+-- disjointness (e.g. two distinct unsealed empty classes expand to distinct placeholders, or two
+-- classes with disjoint members) which the syntactic 'isPredsContradictory' below cannot see.
+-- Consult 'expandPredicates' - the same oracle the placeholder/expansion paths use - and treat a
+-- bottom expansion as contradictory so the symbolic conjunction agrees with its expansion (without
+-- this, 'isSubtypeOf X BottomType' is false for an empty class conjunction, breaking distributivity).
+-- Must precede the empty-neg/empty-pos clause below, which would otherwise return such a top
+-- unchanged. Gated to pure positive PredClass conjunctions to keep the expansion finite, cheap, and
+-- non-recursive (the expansion yields positive leafs, which never re-enter this clause).
+compactType typeEnv vaenv (UnionType (Just (preds, _)) pos _)
+  | predClassConjunctionEmpty preds = compactType typeEnv vaenv (UnionType Nothing pos [])
+  where
+    predClassConjunctionEmpty (PredsAnd ps) = length ps >= 2 && all isPredClassAtom ps && isBottomType (expandPredicates typeEnv vaenv (PredsAnd ps))
+    predClassConjunctionEmpty _              = False
+    isPredClassAtom (PredsOne (PredClass _)) = True
+    isPredClassAtom _                        = False
 -- Top component with empty neg and non-trivial preds
 compactType typeEnv vaenv t@(UnionType (Just (preds, negPartials)) posLeafs [])
   | H.null negPartials && H.null posLeafs && preds /= PredsNone = case preds of
@@ -1695,6 +1730,15 @@ intersectTypesWithVarEnv typeEnv vaenv t1@(UnionType Nothing partials []) t2@(Un
             _ ->
               let predsLeafs = expandTypeWithNames typeEnv vaenv (UnionType (Just (preds, H.empty)) H.empty []) (H.keysSet partials)
               in intersectTypesWithVarEnv typeEnv vaenv t1 (UnionType Nothing predsLeafs [])
+-- PosPartials ∩ Top(preds, negLeafs) with both preds non-trivial and negLeafs non-empty.
+-- Split the top as Top(preds, ∅) ∩ Top(PredsNone, negLeafs) and intersect in sequence:
+-- (pos ∩ U_preds) - negLeafs. The first step routes to the negLeafs-empty clause above and the
+-- second to the PredsNone-subtract clause, both of which yield positive-partial forms, so this
+-- terminates. (Without this clause the pair falls through to the unhandled-case error below.)
+intersectTypesWithVarEnv typeEnv vaenv t1@(UnionType Nothing _ []) (UnionType (Just (preds, negPartials)) (H.null -> True) cs)
+  | not (H.null negPartials) && preds /= PredsNone =
+      let (vaenv', inner) = intersectTypesWithVarEnv typeEnv vaenv t1 (UnionType (Just (preds, H.empty)) H.empty cs)
+      in intersectTypesWithVarEnv typeEnv vaenv' inner (UnionType (Just (PredsNone, negPartials)) H.empty [])
 -- Top ∩ PosPartials → flip
 intersectTypesWithVarEnv typeEnv vaenv t1@(UnionType (Just _) (H.null -> True) _) t2@(UnionType Nothing _ _) =
   intersectTypesWithVarEnv typeEnv vaenv t2 t1
