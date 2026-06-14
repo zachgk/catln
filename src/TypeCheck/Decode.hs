@@ -119,7 +119,12 @@ verifyObjMapItem name (ObjectMapItem decls refineDecls defs) = do
   case (map (getMetaType . getExprMeta . oaObjExpr) decls, map (getMetaType . getExprMeta . oaObjExpr) defs) of
     ([], _) -> pure ()
     (_, []) -> pure ()
-    (declInputTypes, defInputTypes) -> do
+    (declInputTypes0, defInputTypes0) -> do
+      -- A declaration may write a parameterized type in /param form/ (e.g. @Box[T]@) while a
+      -- destructuring definition produces it in /field form/ (e.g. @Box(v=...)@, completed to
+      -- @Box[T](v=$T)@). Normalize both to the completed form so coverage compares like with like.
+      let declInputTypes = map (completeDataPartials feTypeEnv) declInputTypes0
+      let defInputTypes = map (completeDataPartials feTypeEnv) defInputTypes0
       let declUnion = unionAllTypes feTypeEnv declInputTypes
       let defUnion = unionAllTypes feTypeEnv defInputTypes
 
@@ -132,7 +137,7 @@ verifyObjMapItem name (ObjectMapItem decls refineDecls defs) = do
 
       -- Check each declaration against defUnion, but skip #runtime declarations (they don't need definitions)
       let nonRuntimeDecls = filter (not . hasAnnot runtimeAnnot) decls
-      let declsWithLocs = zip (map (getMetaType . getExprMeta . oaObjExpr) nonRuntimeDecls) (map (getMetaPos . getExprMeta) (mapMaybe oaObj nonRuntimeDecls))
+      let declsWithLocs = zip (map (completeDataPartials feTypeEnv . getMetaType . getExprMeta . oaObjExpr) nonRuntimeDecls) (map (getMetaPos . getExprMeta) (mapMaybe oaObj nonRuntimeDecls))
       forM_ declsWithLocs $ \(declType, declLoc) ->
         unless (isSubtypeOf prgmTypeEnv declType defUnion) $ do
           let notDefined = snd $ differenceTypeWithEnv prgmTypeEnv H.empty declType defUnion

@@ -1,0 +1,48 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                    }
+                )
+            ,
+                ( "/Box"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Box( EAppVar /T TopType )( EAppArg Value /v -> $/T ) ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/unwrap"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /unwrap
+                            ( EAppArg Value /b -> /Box[ /T=$_/T ] ) -> $_/T
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /unwrap
+                            ( EAppArg Value /b -> /Box[ /T=TopType ]( /v=$/T ) = /Box( EAppArg Value /v ) ) -> TVArg /v = Value /v
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Repro: a return-position element var must bind from a parameterized argument.
+            unwrap(b= Box(v= 5)) should type-check to Integer (the element type), not TopType." )
+        ]
+    }

@@ -147,7 +147,13 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByObjs i p@STy
   where
     vaenv' = fmap (stypeAct . snd) vaenv
     argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType Nothing (joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con) []
-    boundUb = unionTypes feTypeEnv objMapBoundUb argsBoundUb
+    -- Also offer the /completed/ form of each bound object: a nested param-form annotation
+    -- (e.g. @Box[T]@ inside @unwrap(b=Box[T])@ for @data Box[T](v -> T)@) gets its declared fields
+    -- restored to @Box[T](v=$T)@ (see 'completeDataPartials'), so a field-form value @Box(v=...)@
+    -- being bounded can reconcile with it. The original (uncompleted) forms are kept in the union
+    -- too, so a param-form value still matches without widening.
+    objMapBoundUb' = unionTypes feTypeEnv objMapBoundUb (completeDataPartials feTypeEnv objMapBoundUb)
+    boundUb = unionTypes feTypeEnv objMapBoundUb' argsBoundUb
 
     -- A partially applied tuple would not be a raw type on the unionObj,
     -- but a subset of the arguments in that type

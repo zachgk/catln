@@ -255,12 +255,19 @@ class TypeGraph tg where
   -- | Queries the type graph for possible conversions from a TopTypes PredExpr to the possible partialTypes that can contain the PredExpr
   typeGraphExpandPredExpr :: TypeEnv tg -> TypeVarArgEnv -> PartialType -> Maybe [PartialType]
 
+  -- | Returns the data-definition object partials for a type name, carrying the declared
+  -- relationship between its 'ptVars' (type parameters) and 'ptArgs' (fields). Empty if the
+  -- name has no data definition. Used to complete a param-form annotation (e.g. @Box[T]@)
+  -- back to its full field form (@Box[T](v=$T)@).
+  typeGraphData :: TypeEnv tg -> TypeName -> [PartialType]
+
 data EmptyTypeGraph = EmptyTypeGraph
 instance Semigroup EmptyTypeGraph where
   _ <> _ = EmptyTypeGraph
 instance TypeGraph EmptyTypeGraph where
   typeGraphQueryWithReason _ _ _ = []
   typeGraphExpandPredExpr _ _ _ = Nothing
+  typeGraphData _ _ = []
 
 typeGraphQuery :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> [Type]
 typeGraphQuery typeEnv vaenv src = map snd $ typeGraphQueryWithReason typeEnv vaenv src
@@ -682,6 +689,39 @@ joinUnionTypeByName leafs = H.map (S.fromList . map typeToArgOption) $ H.filter 
 -- | Helper to create a 'UnionType' consisting of a single 'PartialType'
 singletonType :: PartialType -> Type
 singletonType partial = UnionType Nothing (joinUnionType [partial]) []
+
+-- | Recursively completes /nested/ parameterized-type partials against their data definition.
+--
+-- A nested partial in /param form/ — non-empty 'ptVars' but no 'ptArgs', e.g. the annotation
+-- @Box[T]@ inside @unwrap(b=Box[T])@ for @data Box[T](v -> T)@ — has its declared fields added
+-- (linked to its vars via the def), becoming @Box[T](v=$T)@. This lets it reconcile with the
+-- /field form/ @Box(v=...)@ during intersection.
+--
+-- The /outermost/ partials are intentionally left alone: those may be deliberate
+-- partial-application subsets produced by the arg-powerset (e.g. the no-arg subset @Box[T]@ of
+-- @Box[T](v=$T)@), which must keep their reduced arg-set. Likewise the bare constructor (@Box@,
+-- no vars) and any partial already carrying args are untouched. So partial application is
+-- unaffected.
+completeDataPartials :: (TypeGraph tg) => TypeEnv tg -> Type -> Type
+completeDataPartials typeEnv = onArgs
+  where
+    -- Top level: recurse into args/vars only; do not complete the outermost partials.
+    onArgs (TypeVar v l) = TypeVar v l
+    onArgs (UnionType mPreds leafs consts) = UnionType (fmap (bimap id onArgsLeafs) mPreds) (onArgsLeafs leafs) consts
+    onArgsLeafs = joinUnionType . map recurseArgs . splitUnionType
+    recurseArgs p@PartialType{ptVars, ptArgs} = p{ptVars = fmap go ptVars, ptArgs = fmap go ptArgs}
+
+    -- Nested: complete each partial against its def, then recurse into its args/vars.
+    go (TypeVar v l) = TypeVar v l
+    go (UnionType mPreds leafs consts) = UnionType (fmap (bimap id goLeafs) mPreds) (goLeafs leafs) consts
+    goLeafs = joinUnionType . map completePartial . splitUnionType
+    completePartial p@PartialType{ptName, ptVars, ptArgs}
+      | not (H.null ptVars) && H.null ptArgs =
+          case [(dArgs, dMode) | PartialType{ptArgs=dArgs, ptArgMode=dMode} <- typeGraphData typeEnv ptName, not (H.null dArgs)] of
+            ((dArgs, dMode):_) -> p1{ptArgs = fmap go dArgs, ptArgMode = dMode}
+            []                 -> p1
+      | otherwise = p1
+      where p1 = p{ptVars = fmap go ptVars, ptArgs = fmap go ptArgs}
 
 -- | Splits a partial type by expanding any union-typed vars or args into separate partials.
 -- For example, P[$T=(A + B)] splits into [P[$T=A], P[$T=B]].

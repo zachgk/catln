@@ -50,6 +50,15 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
   typeGraphExpandPredExpr typeEnv _vaenv partial | ptName partial == operatorHasArrow = Just $ map (\p -> p{ptPreds=PredsOne (PredExpr partial)}) $ topTypeAsPartials typeEnv
   typeGraphExpandPredExpr typeEnv _vaenv partial = Just $ map (\p -> p{ptPreds=PredsOne (PredExpr partial)}) $ topTypeAsPartials typeEnv
 
+  typeGraphData TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name = concatMap dataPartials $ flatObjectMapItem $ H.lookupDefault mempty name tg
+    where
+      -- Data definitions have no arrow (oaArr=Nothing); their object expression carries the
+      -- declared type with linked ptVars/ptArgs.
+      dataPartials oa@ObjArr{oaArr=Nothing} = case getMetaType $ getExprMeta $ oaObjExpr oa of
+        UnionType Nothing leafs _ -> splitUnionType leafs
+        _                         -> []
+      dataPartials ObjArr{oaArr=Just{}} = []
+
 newtype CTSSConfig = CTSSConfig {
   -- TODO Replace stack path with (CTSSStackConfig = CTSSStackTest | CTSSStackBuild DirString BranchString) when adding support for auto-downloading core
   ctssStackPath :: String
