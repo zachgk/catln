@@ -225,7 +225,7 @@ evalExpr (TCalls _ b callTree) = do
 evalBaseEnv :: EPrgm -> Env
 evalBaseEnv prgm@Prgm{prgmObjMap} = Env {
         evObjMap = prgmObjMap,
-        evTypeEnv = mkTypeEnv prgm,
+        evTypeEnv = (mkTypeEnv prgm){teArgModeProjection=True},
         evArgs = H.empty,
         evExEnv = H.empty,
         evTbEnv = buildTBEnv primEnv prgm,

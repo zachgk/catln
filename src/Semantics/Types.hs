@@ -266,15 +266,22 @@ typeGraphQuery :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -
 typeGraphQuery typeEnv vaenv src = map snd $ typeGraphQueryWithReason typeEnv vaenv src
 
 data TypeEnv tg = TypeEnv {
-  teClassGraph     :: ClassGraph,
-  teTypeGraph      :: tg,
-  teNames          :: S.HashSet Name,
-  teDisableCompact :: Bool,
-  teDebug          :: Bool,
+  teClassGraph        :: ClassGraph,
+  teTypeGraph         :: tg,
+  teNames             :: S.HashSet Name,
+  teDisableCompact    :: Bool,
+  teDebug             :: Bool,
   -- | When 'True', type operations are performed under the closed-world assumption:
   -- no types exist outside those currently defined, so all classes are effectively
   -- sealed and predicates can be safely expanded.  Used for declaration-coverage checks.
-  tePrgmEnv        :: Bool
+  tePrgmEnv           :: Bool,
+  -- | When 'True', the arg-keyset feasibility test in 'isSubPartialOfWithEnv' uses the
+  -- loose /projection/ relation (an 'Any'\/upper-unbounded source may project onto an
+  -- 'Exact' requirement by ignoring extra args) instead of the precise interval relation.
+  -- Enabled by the matching\/dispatch consumers (TreeBuild, Eval, scheme verification)
+  -- where this looseness is semantically intended; left 'False' for the set-algebra so the
+  -- property tests stay sound. See 'looseArgModeRejects'.
+  teArgModeProjection :: Bool
                           }
   deriving (Show)
 
@@ -282,7 +289,7 @@ defaultTypeEnvDebug :: Bool
 defaultTypeEnvDebug = False
 
 emptyTypeEnv' :: TypeEnv EmptyTypeGraph
-emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty False defaultTypeEnvDebug False
+emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty False defaultTypeEnvDebug False False
 
 -- | A class or type node within the 'ClassGraph'
 data CGNode
@@ -392,7 +399,7 @@ instance Monoid ClassGraph where
   mempty = ClassGraph $ graphFromEdges []
 
 instance (Semigroup tg) => Semigroup (TypeEnv tg) where
-  (TypeEnv cg1 tg1 n1 d1 dc1 pe1) <> (TypeEnv cg2 tg2 n2 d2 dc2 pe2) = TypeEnv (cg1 <> cg2) (tg1 <> tg2) (S.union n1 n2) (d1 || d2) (dc1 || dc2) (pe1 || pe2)
+  (TypeEnv cg1 tg1 n1 d1 dc1 pe1 ap1) <> (TypeEnv cg2 tg2 n2 d2 dc2 pe2 ap2) = TypeEnv (cg1 <> cg2) (tg1 <> tg2) (S.union n1 n2) (d1 || d2) (dc1 || dc2) (pe1 || pe2) (ap1 || ap2)
 
 
 mergeDoc :: Maybe String -> Maybe String -> Maybe String
@@ -1089,16 +1096,44 @@ expandRelPartial typeEnv@TypeEnv{teNames} vaenv relPartial = result
 isSubPredicateOfWithEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicate -> TypePredicate -> Bool
 isSubPredicateOfWithEnv typeEnv vaenv p1 p2 = predImpliesAtom typeEnv vaenv p1 p2
 
+-- | The loose /projection/ arg-keyset relation used by matching\/dispatch consumers (see
+-- 'teArgModeProjection'). Returns 'True' when @sub@ definitely cannot project onto @super@
+-- on the arg-set dimension. This reproduces the historical (pre-precise) behavior verbatim:
+-- the legacy 'PtArgExact'\/'PtArgAny' combinations are handled by the first four cases, and
+-- any combination involving a lower-unbounded mode falls back to the interval formula.
+-- Crucially, an 'Any'\/upper-unbounded source projecting onto an 'Exact' requirement is
+-- feasible iff its listed args ⊆ the requirement's args (extra args are ignored).
+looseArgModeRejects :: PtArgMode -> S.HashSet ArgName -> PtArgMode -> S.HashSet ArgName -> Bool
+looseArgModeRejects subMode subKeys superMode superKeys =
+     (subMode == PtArgExact && superMode == PtArgExact && subKeys /= superKeys)
+  || (subMode == PtArgAny && superMode == PtArgAny && not (superKeys `isSubsetOf` subKeys))
+  || (superMode == PtArgExact && not (subKeys `isSubsetOf` superKeys))
+  || (subMode == PtArgExact && superMode == PtArgAny && S.null subKeys && not (S.null superKeys))
+  || (involvesLowerUnbounded && not (lowerOk && upperOk))
+  where
+    involvesLowerUnbounded = not (ptArgLb subMode) || not (ptArgLb superMode)
+    lowerOk = not (ptArgLb superMode) || (if ptArgLb subMode then superKeys `isSubsetOf` subKeys else S.null superKeys)
+    upperOk = not (ptArgUb superMode) || (ptArgUb subMode && subKeys `isSubsetOf` superKeys)
+
 -- | A private helper for 'isSubPartialOfWithEnv' that checks while ignore class expansions
 isSubPartialOfWithEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Bool
 isSubPartialOfWithEnv TypeEnv{teDebug=True} _ l r | trace (printf "[SUBPARTIAL] %s ⊆ %s" (show l) (show r)) False = undefined
 isSubPartialOfWithEnv _ _ PartialType{ptName=subName} PartialType{ptName=superName} | subName /= superName = False
+-- Projection (loose) keyset feasibility, used by matching\/dispatch consumers via
+-- 'teArgModeProjection' (TreeBuild, Eval, scheme verification). Reproduces the historical
+-- relation in which an 'Any'\/upper-unbounded source may project onto an 'Exact' requirement
+-- by ignoring extra args. This looseness is genuine projection (not an interval relation)
+-- and is intentionally NOT applied to the precise set algebra below.
+isSubPartialOfWithEnv typeEnv _ PartialType{ptArgs=subArgs, ptArgMode=subMode} PartialType{ptArgs=superArgs, ptArgMode=superMode}
+  | teArgModeProjection typeEnv
+  , looseArgModeRejects subMode (H.keysSet subArgs) superMode (H.keysSet superArgs) = False
 -- Keyset feasibility on the arg-set interval (see 'PtArgMode'): sub ⊆ super requires
 -- super's lower\/upper bound to hold for every arg-set allowed by sub. The minimal
 -- arg-set of sub is its required keys (or ∅ when sub is lower-unbounded); the maximal
 -- is its keys (or unbounded when sub is upper-unbounded).
-isSubPartialOfWithEnv _ _ PartialType{ptArgs=subArgs, ptArgMode=PtArgMode subLb subUb} PartialType{ptArgs=superArgs, ptArgMode=PtArgMode superLb superUb}
-  | not lowerOk || not upperOk = False
+isSubPartialOfWithEnv typeEnv _ PartialType{ptArgs=subArgs, ptArgMode=PtArgMode subLb subUb} PartialType{ptArgs=superArgs, ptArgMode=PtArgMode superLb superUb}
+  | not (teArgModeProjection typeEnv)
+  , not lowerOk || not upperOk = False
   where
     subKeys = H.keysSet subArgs
     superKeys = H.keysSet superArgs
