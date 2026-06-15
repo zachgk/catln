@@ -15,13 +15,11 @@
 module TypeCheck.Decode where
 
 import           Control.Monad.State
-import           CtConstants
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Data.Maybe          (mapMaybe)
 import           MapMeta             (MetaType (ArrMeta), clearMetaDat)
 import           Semantics
-import           Semantics.Annots
 import           Semantics.Prgm
 import           Semantics.Types
 import           Text.Printf
@@ -134,10 +132,14 @@ toPrgm (objMap, classGraph, annots) = do
   return $ Prgm objMap' classGraph annots'
 
 verifyObjMapItem :: TypeName -> ObjectMapItem Expr TypedMetaDat -> StateT FEnv TypeCheckResult ()
-verifyObjMapItem name (ObjectMapItem decls refineDecls defs) = do
+verifyObjMapItem name (ObjectMapItem decls runtimeDecls refineDecls defs) = do
   FEnv{feTypeEnv} <- get
   let prgmTypeEnv = feTypeEnv{tePrgmEnv = True}
-  case (map (getMetaType . getExprMeta . oaObjExpr) decls, map (getMetaType . getExprMeta . oaObjExpr) defs) of
+  -- A runtime declaration has no body, but it behaves like a definition for coverage: it is
+  -- bounded by the declarations (checked against declUnion) and contributes to the definition
+  -- coverage that fulfills them (part of defUnion).
+  let defLikeOAs = defs ++ runtimeDecls
+  case (map (getMetaType . getExprMeta . oaObjExpr) decls, map (getMetaType . getExprMeta . oaObjExpr) defLikeOAs) of
     ([], _) -> pure ()
     (_, []) -> pure ()
     (declInputTypes0, defInputTypes0) -> do
@@ -149,16 +151,15 @@ verifyObjMapItem name (ObjectMapItem decls refineDecls defs) = do
       let declUnion = unionAllTypes feTypeEnv declInputTypes
       let defUnion = unionAllTypes feTypeEnv defInputTypes
 
-      -- Check each definition against declUnion
-      let defsWithLocs = zip defInputTypes (map (getMetaPos . getExprMeta) (mapMaybe oaObj defs))
+      -- Check each definition (including runtime declarations) against declUnion
+      let defsWithLocs = zip defInputTypes (map (getMetaPos . getExprMeta) (mapMaybe oaObj defLikeOAs))
       forM_ defsWithLocs $ \(defType, defLoc) ->
         unless (isSubtypeOf prgmTypeEnv defType declUnion) $ do
           let undeclared = snd $ differenceTypeWithEnv prgmTypeEnv H.empty defType declUnion
           lift $ TypeCheckResult [DefinitionOutsideDeclaration name defType declUnion undeclared defLoc] ()
 
-      -- Check each declaration against defUnion, but skip #runtime declarations (they don't need definitions)
-      let nonRuntimeDecls = filter (not . hasAnnot runtimeAnnot) decls
-      let declsWithLocs = zip (map (completeDataPartials feTypeEnv . getMetaType . getExprMeta . oaObjExpr) nonRuntimeDecls) (map (getMetaPos . getExprMeta) (mapMaybe oaObj nonRuntimeDecls))
+      -- Check each declaration against defUnion (which includes runtime declarations)
+      let declsWithLocs = zip (map (completeDataPartials feTypeEnv . getMetaType . getExprMeta . oaObjExpr) decls) (map (getMetaPos . getExprMeta) (mapMaybe oaObj decls))
       forM_ declsWithLocs $ \(declType, declLoc) ->
         unless (isSubtypeOf prgmTypeEnv declType defUnion) $ do
           let notDefined = snd $ differenceTypeWithEnv prgmTypeEnv H.empty declType defUnion

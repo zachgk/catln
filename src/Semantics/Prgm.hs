@@ -138,9 +138,10 @@ data ObjArr e m = ObjArr {
 
 
 data ObjectMapItem e m = ObjectMapItem {
-  omiDecls       :: [ObjArr e m],
-  omiRefineDecls :: [ObjArr e m],
-  omiDefs        :: [ObjArr e m]
+  omiDecls        :: [ObjArr e m],
+  omiRuntimeDecls :: [ObjArr e m],
+  omiRefineDecls  :: [ObjArr e m],
+  omiDefs         :: [ObjArr e m]
                             }
   deriving (Eq, Ord, Show, Generic, ToJSON, ToJSONKey)
 newtype ObjectMap e m = ObjectMap (H.HashMap TypeName (ObjectMapItem e m))
@@ -202,15 +203,15 @@ instance ToJSON SourcePos where
 type VarArgMap e m = H.HashMap TypeVarAux [(e m, Meta m)]
 
 instance Semigroup (ObjectMapItem e m) where
-  (ObjectMapItem decls1 refineDecls1 defs1) <> (ObjectMapItem decls2 refineDecls2 defs2) = ObjectMapItem (decls1 ++ decls2) (refineDecls1 ++ refineDecls2) (defs1 ++ defs2)
+  (ObjectMapItem decls1 runtimeDecls1 refineDecls1 defs1) <> (ObjectMapItem decls2 runtimeDecls2 refineDecls2 defs2) = ObjectMapItem (decls1 ++ decls2) (runtimeDecls1 ++ runtimeDecls2) (refineDecls1 ++ refineDecls2) (defs1 ++ defs2)
 
 instance Monoid (ObjectMapItem e m) where
-  mempty = ObjectMapItem [] [] []
+  mempty = ObjectMapItem [] [] [] []
 
 instance Semigroup (ObjectMap e m) where
   (ObjectMap map1) <> (ObjectMap map2) = ObjectMap $ H.unionWith merge map1 map2
     where
-      merge (ObjectMapItem decl1 refineDecl1 def1) (ObjectMapItem decl2 refineDecl2 def2) = ObjectMapItem (decl1 ++ decl2) (refineDecl1 ++ refineDecl2) (def1 ++ def2)
+      merge (ObjectMapItem decl1 runtimeDecl1 refineDecl1 def1) (ObjectMapItem decl2 runtimeDecl2 refineDecl2 def2) = ObjectMapItem (decl1 ++ decl2) (runtimeDecl1 ++ runtimeDecl2) (refineDecl1 ++ refineDecl2) (def1 ++ def2)
 
 instance Monoid (ObjectMap e m) where
   mempty = ObjectMap H.empty
@@ -470,7 +471,7 @@ nullObjectMap :: ObjectMap e m -> Bool
 nullObjectMap (ObjectMap objMap) = H.null objMap
 
 flatObjectMapItem :: ObjectMapItem e m -> [ObjArr e m]
-flatObjectMapItem (ObjectMapItem decls refineDecls defs) = decls ++ refineDecls ++ defs
+flatObjectMapItem (ObjectMapItem decls runtimeDecls refineDecls defs) = decls ++ runtimeDecls ++ refineDecls ++ defs
 
 flatObjectMap :: ObjectMap e m -> [ObjArr e m]
 flatObjectMap (ObjectMap objMap) = concatMap flatObjectMapItem (H.elems objMap)
@@ -479,12 +480,16 @@ singletonObjectMap :: (ExprClass e, MetaDat m, Show (e m), Show m) => ObjArr e m
 singletonObjectMap oa = ObjectMap $ H.singleton (makeAbsoluteName $ oaObjPath oa) omi
   where
     isRefine = any (\a -> exprPath a == refineAnnot) (oaAnnots oa)
+    -- The annotation path may still be relative (@#runtime@) at this stage or already resolved to
+    -- the absolute @/Catln/#runtime@, so match either form.
+    isRuntime = any (\a -> relativeNameMatches (exprPath a) runtimeAnnot) (oaAnnots oa)
     omi = case oa of
-      ObjArr{oaArr=Nothing}           | isRefine -> ObjectMapItem [] [oa] [] -- refine type object
-      ObjArr{oaArr=Nothing}                      -> ObjectMapItem [oa] [] [] -- type object
-      ObjArr{oaArr=Just (Nothing, _)} | isRefine -> ObjectMapItem [] [oa] [] -- refine declaration
-      ObjArr{oaArr=Just (Nothing, _)}            -> ObjectMapItem [oa] [] [] -- declaration
-      _                                          -> ObjectMapItem [] [] [oa] -- definition
+      ObjArr{oaArr=Nothing}            | isRefine  -> ObjectMapItem [] [] [oa] [] -- refine type object
+      ObjArr{oaArr=Nothing}                        -> ObjectMapItem [oa] [] [] [] -- type object
+      ObjArr{oaArr=Just (Nothing, _)}  | isRefine  -> ObjectMapItem [] [] [oa] [] -- refine declaration
+      ObjArr{oaArr=Just (Nothing, _)}  | isRuntime -> ObjectMapItem [] [oa] [] [] -- runtime declaration
+      ObjArr{oaArr=Just (Nothing, _)}              -> ObjectMapItem [oa] [] [] [] -- declaration
+      _                                            -> ObjectMapItem [] [] [] [oa] -- definition
 
 objectMapFromList :: (ExprClass e, MetaDat m, Show (e m), Show m) => [ObjArr e m] -> ObjectMap e m
 objectMapFromList objMap = mconcat $ map singletonObjectMap objMap
@@ -493,19 +498,20 @@ mapMObjectMap :: Monad m => (ObjArr e meta1 -> m (ObjArr e meta2)) -> ObjectMap 
 mapMObjectMap f (ObjectMap objMap) = ObjectMap <$> mapM (mapMOMI f) objMap
   where
     mapMOMI :: Monad m => (ObjArr e meta1 -> m (ObjArr e meta2)) -> ObjectMapItem e meta1 -> m (ObjectMapItem e meta2)
-    mapMOMI f2 (ObjectMapItem decls refineDecls defs) = do
+    mapMOMI f2 (ObjectMapItem decls runtimeDecls refineDecls defs) = do
       decls' <- mapM f2 decls
+      runtimeDecls' <- mapM f2 runtimeDecls
       refineDecls' <- mapM f2 refineDecls
       defs'  <- mapM f2 defs
-      return $ ObjectMapItem decls' refineDecls' defs'
+      return $ ObjectMapItem decls' runtimeDecls' refineDecls' defs'
 
 
 filterObjectMap :: (ObjArr e m -> Bool) -> ObjectMap e m -> ObjectMap e m
 filterObjectMap f (ObjectMap objMap) = ObjectMap $ H.mapMaybe f' objMap
   where
-    f' (ObjectMapItem decls refineDecls defs) = case (filter f decls, filter f refineDecls, filter f defs) of
-      ([], [], [])                    -> Nothing
-      (decls', refineDecls', defs') -> Just $ ObjectMapItem decls' refineDecls' defs'
+    f' (ObjectMapItem decls runtimeDecls refineDecls defs) = case (filter f decls, filter f runtimeDecls, filter f refineDecls, filter f defs) of
+      ([], [], [], [])                                -> Nothing
+      (decls', runtimeDecls', refineDecls', defs') -> Just $ ObjectMapItem decls' runtimeDecls' refineDecls' defs'
 
 -- | Gets all recursive sub expression objects from an expression's arguments. Helper for 'getRecursiveObjs'
 getRecursiveObjsExpr :: (ExprClass e, MetaDat m, Show (e m), Show m) => e m -> [e m]
