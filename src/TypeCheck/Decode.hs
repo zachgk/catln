@@ -124,11 +124,6 @@ toPrgm :: VPrgm -> StateT FEnv TypeCheckResult TPrgm
 toPrgm (objMap, classGraph, annots) = do
   objMap' <- mapMObjectMap toObjArr objMap
   annots' <- mapM toExpr annots
-
-  -- Verify declaration/definition input types match after decoding
-  let (ObjectMap objMapHash') = objMap'
-  _ <- H.traverseWithKey verifyObjMapItem objMapHash'
-
   return $ Prgm objMap' classGraph annots'
 
 verifyObjMapItem :: TypeName -> ObjectMapItem Expr TypedMetaDat -> StateT FEnv TypeCheckResult ()
@@ -175,4 +170,14 @@ verifyObjMapItem name (ObjectMapItem decls runtimeDecls refineDecls defs) = do
           lift $ TypeCheckResult [RefineOutsideDeclaration name refineType declUnion undeclared refineLoc] ()
 
 toPrgms :: [VPrgm] -> StateT FEnv TypeCheckResult [TPrgm]
-toPrgms = mapM toPrgm
+toPrgms vprgms = do
+  tprgms <- mapM toPrgm vprgms
+
+  -- Verify declaration/definition input types against the merged program (all modules' object
+  -- maps unioned per name). This lets a declaration in one module bound runtime definitions of
+  -- the same name in another module (e.g. the generic Eq @operator==@ declaration in algebra.ct
+  -- bounds the @#runtime@ Integer/Float implementations in primitives.ct).
+  let ObjectMap mergedObjMap = mconcat (map prgmObjMap tprgms)
+  _ <- H.traverseWithKey verifyObjMapItem mergedObjMap
+
+  return tprgms
