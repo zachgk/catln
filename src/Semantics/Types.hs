@@ -716,7 +716,7 @@ completeDataPartials typeEnv = onArgs
     go (UnionType mPreds leafs consts) = UnionType (fmap (bimap id goLeafs) mPreds) (goLeafs leafs) consts
     goLeafs = joinUnionType . map completePartial . splitUnionType
     completePartial p@PartialType{ptName, ptVars, ptArgs}
-      | not (H.null ptVars) && H.null ptArgs =
+      | H.null ptArgs =
           case [(dArgs, dMode) | PartialType{ptArgs=dArgs, ptArgMode=dMode} <- typeGraphData typeEnv ptName, not (H.null dArgs)] of
             ((dArgs, dMode):_) -> p1{ptArgs = fmap go dArgs, ptArgMode = dMode}
             []                 -> p1
