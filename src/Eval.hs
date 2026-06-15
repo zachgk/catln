@@ -145,7 +145,11 @@ evalCallTree :: Val -> TCallTree -> StateT Env CRes Val
 evalCallTree v TCTId = return v
 evalCallTree  m (TCMatch opts) = do
   Env{evTypeEnv} <- get
-  case H.toList $ H.filterWithKey (\optType _ -> isSubtypePartialOf evTypeEnv (getValType m) (singletonType optType)) opts of
+  -- Normalize higher-order argument keys (bare @/fn@ on the runtime value vs the
+  -- function-signature key @/fn(/v=..)@ on the typed arrow) before matching, mirroring
+  -- the 'simplifyArgKeys' handling in the 'TCCond' branch below.
+  let reKeyP p = p{ptArgs = H.mapKeys (partialKey . pkName) (ptArgs p)}
+  case H.toList $ H.filterWithKey (\optType _ -> isSubtypePartialOf evTypeEnv (reKeyP $ getValType m) (singletonType $ reKeyP optType)) opts of
     [(_, resArrowTree)] -> do
       withEvalPush ("match with val " ++ show m) $ evalCallTree m resArrowTree
     [] -> evalError $ printf "Failed match in eval callTree: \n\tVal: %s \n\tVal type: %s\n\tOptions: %s" (show m) (show $ getValType m) (show opts)

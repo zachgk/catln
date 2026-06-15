@@ -91,15 +91,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/testListFunctorPreservesLength"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/testListFunctorPreservesLength= CInt 0 ]
-                    }
-                )
-            ,
                 ( "/Context"
                 , ObjectMapItem
                     { omiDecls =
@@ -148,22 +139,11 @@ Prgm
                 ( "/Data/fmap"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/fmap[ /B : TopType ][ /A : TopType ]
-                            ( Value lst -> ∀/Data/ConsList[ /A=$_/A ] )
-                            ( fn( Value v -> $_/A ) -> $_/B ) -> ∀/Data/ConsList[ /B=$_/B ]
+                        [ /Data/fmap[ /B : TopType ][ /A : TopType ][ /F : ∀/Data/Functor ]( Value lst -> $/F )
+                            ( fn( Value v -> $_/A ) -> $_/B ) -> $/F
                         ]
                     , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/fmap( Value lst= Value Nil )
-                            ( fn( Value v ) )= Value Nil
-                        , /Data/fmap
-                            ( Value lst= /Data/Cons( Value head )( Value tail ) )
-                            ( fn( Value v ) )= /Data/Cons
-                            ( Value head= fn( Value v= Value head ) )
-                            ( Value tail= fmap( Value lst= Value tail )
-                                ( fn( Value v )= fn( Value v= Value v ) )
-                            )
-                        ]
+                    , omiDefs = []
                     }
                 )
             ,
@@ -226,7 +206,6 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
         , CGClass
             ( False
             , /Data/String
@@ -257,11 +236,9 @@ Prgm
             ( False
             , /Data/Functor[ /T=TopType ]
             ,
-                [ ∀/Data/Option[ /T=$_/T ]
-                , ∀/Data/ConsList[ /T=$_/T ]
-                ]
+                [ ∀/Data/ConsList[ /T=$_/T ] ]
             , Just "A [Functor] is a basic property of a collection.
-              It has a single operation [fmap] that applies a function to each element in the collection.$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]  "
+              It has a single operation [fmap] that applies a function to each element in the collection.$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T] "
             )
         , CGClass
             ( False
@@ -309,9 +286,11 @@ Prgm
             ( Value /text= CStr "[Option] defines a type that might have a value or [None].
             It can be used to handle operations that are uncertain if they can produce a response." )
         , /Catln/#md
-            ( Value /text= CStr "None.fmap(fn) = None" )
+            ( Value /text= CStr "[Option] is not currently a [Functor]: it has no [fmap] instance yet, and its bare" )
         , /Catln/#md
-            ( Value /text= CStr "$T.fmap(fn($T)) = fn(this)" )
+            ( Value /text= CStr "type-variable member interacts poorly with expanding the open [Functor] class during" )
+        , /Catln/#md
+            ( Value /text= CStr "inference. (Sketch of a future instance: None.fmap(fn) = None; $T.fmap(fn($T)) = fn(this).)" )
         , /Catln/#md
             ( Value /text= CStr "A [List] is a collection of zero or more ordered items." )
         , /Catln/#md
@@ -328,21 +307,13 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "## ConsList runtime operations" )
         , /Catln/#md
-            ( Value /text= CStr "[fmap] applies a function to every element of a [ConsList], producing a new list." )
+            ( Value /text= CStr "[fmap] applies a function to every element of a [Functor], producing a new one of the" )
         , /Catln/#md
-            ( Value /text= CStr "[fmap] over a [ConsList] preserves the list's structure (its [length]), for both the" )
+            ( Value /text= CStr "same kind. This is the generic interface declared over the [Functor] class; each" )
         , /Catln/#md
-            ( Value /text= CStr "empty and non-empty cases. The full functor laws (identity `fmap(l, v -> v) == l` and" )
+            ( Value /text= CStr "instance supplies its own definition in a separate module (so the open [Functor] class" )
         , /Catln/#md
-            ( Value /text= CStr "composition `fmap(fmap(l, g), f) == fmap(l, v -> f(g(v)))`) additionally require comparing" )
-        , /Catln/#md
-            ( Value /text= CStr "element *values*; that is currently blocked because [fmap]'s result element type is" )
-        , /Catln/#md
-            ( Value /text= CStr "inferred as the top type, so neither [sum] nor equality can observe the mapped elements" )
-        , /Catln/#md
-            ( Value /text= CStr "(a type-variable binding limitation — see docs). [length] is element-agnostic and is the" )
-        , /Catln/#md
-            ( Value /text= CStr "one reduction that works on an [fmap] result, so it is what these tests use." )
+            ( Value /text= CStr "is not required to be totally covered here). See the [ConsList] instance in [Data/List]." )
         , /Catln/#md
             ( Value /text= CStr "A [Set] is a collection of zero or more unique items.
             It is not ordered." )

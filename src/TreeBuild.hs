@@ -17,6 +17,7 @@ module TreeBuild where
 
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
+import           Data.List           (nub)
 import           Data.Maybe
 
 import           Text.Printf
@@ -206,9 +207,14 @@ buildCallTree env os visitedArrows (UnionType Nothing srcLeafs consts) destType 
   matchVal <- forM allPartials $ \srcPartial -> do
     t <- buildPartialCallTree env os visitedArrows srcPartial destType
     return (srcPartial, t)
-  return $ case matchVal of
-    [(_, t)] -> t
-    _        -> TCMatch $ H.fromList matchVal
+  -- If every source partial resolves to the same call tree, there is nothing to
+  -- discriminate at runtime, so use that tree directly instead of a 'TCMatch'. This
+  -- collapses the case where a relative call resolves to both a declaration-only
+  -- interface arrow and the concrete instance that implements it (they build the same
+  -- tree), avoiding a spurious match that a runtime value's argument keys cannot satisfy.
+  return $ case nub (map snd matchVal) of
+    [t] -> t
+    _   -> TCMatch $ H.fromList matchVal
 buildCallTree _ _ _ _ _ = error "Unimplemented buildCallTree"
 
 toTExpr :: TBEnv -> [ObjSrc] -> Expr TBMetaDat -> CRes (TExpr TBMetaDat)

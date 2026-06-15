@@ -1,0 +1,63 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/Data/List/fmap"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/List/fmap( Value lst= Value Nil )
+                            ( fn( Value v ) )= Value Nil
+                        , /Data/List/fmap
+                            ( Value lst= /Data/Cons( Value head )( Value tail ) )
+                            ( fn( Value v ) )= /Data/Cons
+                            ( Value head= fn( Value v= Value head ) )
+                            ( Value tail= fmap( Value lst= Value tail )
+                                ( fn( Value v )= fn( Value v= Value v ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/List/testListFunctorPreservesLength"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/List/testListFunctorPreservesLength= CInt 0 ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "# ConsList Functor instance" )
+        , /Catln/#md
+            ( Value /text= CStr "[fmap] over a [ConsList] applies a function to every element, producing a new list." )
+        , /Catln/#md
+            ( Value /text= CStr "This is the [ConsList] instance of the generic [fmap] declared over [Functor] in" )
+        , /Catln/#md
+            ( Value /text= CStr "[Data]. It lives in its own module so the open [Functor] interface is not required to" )
+        , /Catln/#md
+            ( Value /text= CStr "be totally covered, while still resolving for calls of [fmap] on a [ConsList]." )
+        , /Catln/#md
+            ( Value /text= CStr "[fmap] over a [ConsList] preserves the list's structure (its [length]), for both the" )
+        , /Catln/#md
+            ( Value /text= CStr "empty and non-empty cases. The full functor laws (identity `fmap(l, v -> v) == l` and" )
+        , /Catln/#md
+            ( Value /text= CStr "composition `fmap(fmap(l, g), f) == fmap(l, v -> f(g(v)))`) additionally require comparing" )
+        , /Catln/#md
+            ( Value /text= CStr "element *values*; that is currently blocked because [fmap]'s result element type is" )
+        , /Catln/#md
+            ( Value /text= CStr "inferred as the top type, so neither [sum] nor equality can observe the mapped elements" )
+        , /Catln/#md
+            ( Value /text= CStr "(a type-variable binding limitation — see docs). [length] is element-agnostic and is the" )
+        , /Catln/#md
+            ( Value /text= CStr "one reduction that works on an [fmap] result, so it is what these tests use." )
+        ]
+    }

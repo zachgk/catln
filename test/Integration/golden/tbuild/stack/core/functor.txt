@@ -1,0 +1,74 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/Data/List/fmap"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/List/fmap( EAppArg Value /lst -> /Data/Nil = Value /Data/Nil )
+                            ( EAppArg /fn( EAppArg Value /v ) ) -> /Data/Nil = Value /Data/Nil
+                        , /Data/List/fmap
+                            ( EAppArg Value /lst -> /Data/Cons[ /T=TopType ]
+                                ( /head=$/T
+                                , /tail=~ConsList[ /T=$_/T ]
+                                ) = /Data/Cons( EAppArg Value /head )
+                                ( EAppArg Value /tail -> ~ConsList[ /T=$_/T ] )
+                            )
+                            ( EAppArg /fn( EAppArg Value /v ) ) -> /Data/Cons[ /T=TopType ]
+                            ( /head=$/T
+                            , /tail=~ConsList[ /T=$_/T ]
+                            ) = /Data/Cons
+                            ( EAppArg Value /head= /fn( EAppArg Value /v -> TVArg /head = Value /head ) )
+                            ( EAppArg Value /tail -> ~ConsList[ /T=$_/T ] =
+                                ( /fmap
+                                    ( EAppArg Value /lst -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) )
+                                    ( EAppArg /fn( EAppArg Value /v )= /fn( EAppArg Value /v -> TVArg /v = Value /v ) ) ↦ ~ConsList[ /T=$_/T ]
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/List/testListFunctorPreservesLength"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/List/testListFunctorPreservesLength -> /Data/Primitive/Integer = 0 ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "# ConsList Functor instance" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "[fmap] over a [ConsList] applies a function to every element, producing a new list." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "This is the [ConsList] instance of the generic [fmap] declared over [Functor] in" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "[Data]. It lives in its own module so the open [Functor] interface is not required to" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "be totally covered, while still resolving for calls of [fmap] on a [ConsList]." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "[fmap] over a [ConsList] preserves the list's structure (its [length]), for both the" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "empty and non-empty cases. The full functor laws (identity `fmap(l, v -> v) == l` and" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "composition `fmap(fmap(l, g), f) == fmap(l, v -> f(g(v)))`) additionally require comparing" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "element *values*; that is currently blocked because [fmap]'s result element type is" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "inferred as the top type, so neither [sum] nor equality can observe the mapped elements" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "(a type-variable binding limitation — see docs). [length] is element-agnostic and is the" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "one reduction that works on an [fmap] result, so it is what these tests use." )
+        ]
+    }
