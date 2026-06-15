@@ -712,10 +712,11 @@ completeDataPartials typeEnv = onArgs
     recurseArgs p@PartialType{ptVars, ptArgs} = p{ptVars = fmap (completeDataPartialsTop typeEnv) ptVars, ptArgs = fmap (completeDataPartialsTop typeEnv) ptArgs}
 
 -- | Like 'completeDataPartials' but also completes the /outermost/ partials, restoring their
--- declared data fields. Used when a partial is a supertype to match against rather than a value
--- — notably a class member expanded from a predicate (e.g. @Box[$T]@ as a member of @∀Eq@),
--- which must carry its fields (@Box[$T](v=$T)@) for a field-form value @Box(v=..)@ to be
--- recognized as an instance. (Args and type parameters are otherwise tracked independently.)
+-- declared data fields. Used when a partial is a supertype to match against rather than a value:
+-- a partial may carry only its type parameters and omit the declared fields, in which case a
+-- field-form value (one written with explicit args) would not reconcile with it. Restoring the
+-- fields as 'PTopType' lets such a value match on its keys. (Fields and type parameters are
+-- otherwise tracked independently and are not auto-related.)
 completeDataPartialsTop :: (TypeGraph tg) => TypeEnv tg -> Type -> Type
 completeDataPartialsTop typeEnv = go
   where
@@ -726,7 +727,12 @@ completeDataPartialsTop typeEnv = go
     completePartial p@PartialType{ptName, ptVars, ptArgs}
       | H.null ptArgs =
           case [(dArgs, dMode) | PartialType{ptArgs=dArgs, ptArgMode=dMode} <- typeGraphData typeEnv ptName, not (H.null dArgs)] of
-            ((dArgs, dMode):_) -> p1{ptArgs = fmap go dArgs, ptArgMode = dMode}
+            -- Restore the declared fields as 'PTopType' (their presence only, with the def's arg
+            -- mode) rather than the def's field types. Matching only needs the field keys to line
+            -- up; the field types are supplied by the value being matched. Reusing the def's field
+            -- type here would reintroduce the def's type parameter into the partial, which can
+            -- collide with a like-named parameter in an enclosing scope.
+            ((dArgs, dMode):_) -> p1{ptArgs = fmap (const PTopType) dArgs, ptArgMode = dMode}
             []                 -> p1
       | otherwise = p1
       where p1 = p{ptVars = fmap go ptVars, ptArgs = fmap go ptArgs}
@@ -1086,8 +1092,8 @@ expandClassPartialWithNamesFull typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaen
       _  ->
         let mapped = map mapClassTypeWithNamesFull classTypes
             leafs = foldl (H.unionWith S.union) H.empty (map fst mapped)
-            -- Restore each member's declared data fields (e.g. @Box[$T]@ ⇒ @Box[$T](v=$T)@) so a
-            -- field-form value @Box(v=..)@ is recognized as a member of this class.
+            -- Restore each member's declared data fields so a field-form value (written with
+            -- explicit args) is recognized as a member of this class.
             leafs' = case completeDataPartialsTop typeEnv (UnionType Nothing leafs []) of
               UnionType Nothing l [] -> l
               _                      -> leafs
@@ -1117,8 +1123,8 @@ expandClassPartial typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv PartialType
     expanded = case graphLookup className cg of
       Just (CGClass (_, PartialType{ptVars=classVarsDecl}, classTypes, _)) -> case classTypes of
         [] -> singletonType $ classPlaceholderLeaf ptName
-        -- Complete each member's declared data fields (e.g. @Box[$T]@ ⇒ @Box[$T](v=$T)@) so a
-        -- field-form value @Box(v=..)@ is recognized as a member of this class.
+        -- Restore each member's declared data fields so a field-form value (written with
+        -- explicit args) is recognized as a member of this class.
         _  -> completeDataPartialsTop typeEnv $ unionAllTypes typeEnv $ map mapClassType classTypes
         where
           classVars = H.unionWith (intersectTypesEnv typeEnv vaenv) classVarsP classVarsDecl
