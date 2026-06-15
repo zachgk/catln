@@ -1,0 +1,75 @@
+import "core/functor.ct"
+
+
+module(Data)
+  # # Lists
+    A [List] is a collection of zero or more ordered items.
+  class(List[$T])
+
+  # A [List] is a collection of zero or more ordered items.
+  class(ConsList[$T], [Cons[$T -> $_T](head -> $T, tail -> ConsList[$T -> $_T]), Nil])
+    # The simplest kind of list can be created by prepending.
+      A [ConsList] defines a list either by prepending to a list or with an empty list.
+
+  every(ConsList[$T -> $_T], isa= [/Data/List[$T -> $_T]])
+
+  # /operator+:<$T>($T l, ConsList<$T> r) = Cons(head=l, tail=r)
+    [operator+:] is a utility operator to prepend an element onto a [List].
+  # #### [length]
+    The [length] of a [List] is the number of items inside of it.
+  :Nil.length= 0
+  /Data/Cons(head, tail).length= 1 + tail.length
+
+  # ## List operations
+  sum(lst -> /Data/List) -> Integer
+
+  all(lst -> /Data/List) -> Boolean
+
+  any(lst -> /Data/List) -> Boolean
+
+  reversed(lst -> /Data/List) -> /Data/List
+
+  sorted(lst -> /Data/List) -> /Data/List
+
+  # ## ConsList runtime operations
+  sum(lst -> ConsList) -> Integer
+    #runtime("listSum")
+
+  all(lst -> ConsList) -> Boolean
+    #runtime("listAll")
+
+  any(lst -> ConsList) -> Boolean
+    #runtime("listAny")
+
+  reversed(lst -> ConsList) -> ConsList
+    #runtime("listReversed")
+
+  sorted(lst -> ConsList) -> ConsList
+    #runtime("listSorted")
+
+  range(stop -> Integer) -> ConsList
+    #runtime("listRange")
+
+  every(ConsList[$T -> $_T], isa= [/Data/Functor])
+
+# # ConsList Functor instance
+module(Data/List)
+  # [fmap] over a [ConsList] applies a function to every element, producing a new list.
+  # This is the [ConsList] instance of the generic [fmap] declared over [Functor] in
+  # [Data]. It lives in its own module so the open [Functor] interface is not required to
+  # be totally covered, while still resolving for calls of [fmap] on a [ConsList].
+  fmap(lst= Nil, fn(v))= Nil
+  fmap(lst= /Data/Cons(head, tail), fn(v))= /Data/Cons(head= fn(v= head), tail= fmap(lst= tail, fn(v)= fn(v= v)))
+
+  # [fmap] over a [ConsList] preserves the list's structure (its [length]), for both the
+  # empty and non-empty cases. The full functor laws (identity `fmap(l, v -> v) == l` and
+  # composition `fmap(fmap(l, g), f) == fmap(l, v -> f(g(v)))`) additionally require comparing
+  # element *values*; that is currently blocked because [fmap]'s result element type is
+  # inferred as the top type, so neither [sum] nor equality can observe the mapped elements
+  # (a type-variable binding limitation — see docs). [length] is element-agnostic and is the
+  # one reduction that works on an [fmap] result, so it is what these tests use.
+  testListFunctorPreservesLength =
+    #test
+    #assert(test= fmap(lst= /Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Cons(head= 3, tail= Nil))), fn(v)= v + 10).length == 3)
+    #assert(test= fmap(lst= Nil, fn(v)= v + 10).length == 0)
+    0

@@ -2,70 +2,48 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
-                ( "/Data/List/fmap"
+                ( "/Data/fmap"
                 , ObjectMapItem
-                    { omiDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/List/fmap( Value /lst -> /Data/Nil = Value /Data/Nil )
-                            ( /fn( Value /v ) ) -> /Data/Nil = Value /Data/Nil
-                        , /Data/List/fmap
-                            ( Value /lst -> /Data/Cons[ /T=TopType ]
-                                ( /head=$/T
-                                , /tail=~ConsList[ /T=$_/T ]
-                                ) = /Data/Cons( Value /head )
-                                ( Value /tail -> ~ConsList[ /T=$_/T ] )
-                            )
-                            ( /fn( Value /v ) ) -> /Data/Cons[ /T=TopType ]
-                            ( /head=$/T
-                            , /tail=~ConsList[ /T=$_/T ]
-                            ) = /Data/Cons
-                            ( Value /head= /fn( Value /v -> TVArg /head = Value /head ) )
-                            ( Value /tail -> ~ConsList[ /T=$_/T ] = /fmap( Value /lst -> TVArg /tail = Value /tail )
-                                ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
-                            )
+                    { omiDecls =
+                        [ /Data/fmap[ /B : TopType ][ /A : TopType ][ /F : ∀/Data/Functor ]( Value /lst -> $/F )
+                            ( /fn( Value /v -> $_/A ) -> $_/B ) -> $/F
                         ]
-                    }
-                )
-            ,
-                ( "/Data/List/testListFunctorPreservesLength"
-                , ObjectMapItem
-                    { omiDecls = []
                     , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/List/testListFunctorPreservesLength -> /Data/Primitive/Integer = CInt 0 ]
+                    , omiDefs = []
                     }
                 )
             ]
         )
     , prgmCG =
         [ CGType
-        , CGType
+        , CGClass
+            ( False
+            , /Data/Functor[ /T=TopType ]
+            , []
+            , Just "A [Functor] is a basic property of a collection.
+              It has a single operation [fmap] that applies a function to each element in the collection.$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]"
+            )
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( Value /text -> /Data/String = CStr "# ConsList Functor instance" )
+            ( Value /text -> /Data/String = CStr "# Functors
+            A [Functor] is a basic property of a collection: a container that can have a function
+            applied to each of the elements it holds." )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "[fmap] over a [ConsList] applies a function to every element, producing a new list." )
+            ( Value /text -> /Data/String = CStr "## Collections
+            Collections are containers that hold elements of a type inside them." )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "This is the [ConsList] instance of the generic [fmap] declared over [Functor] in" )
+            ( Value /text -> /Data/String = CStr "A [Functor] is a basic property of a collection.
+            It has a single operation [fmap] that applies a function to each element in the collection." )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "[Data]. It lives in its own module so the open [Functor] interface is not required to" )
+            ( Value /text -> /Data/String = CStr "$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]" )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "be totally covered, while still resolving for calls of [fmap] on a [ConsList]." )
+            ( Value /text -> /Data/String = CStr "[fmap] applies a function to every element of a [Functor], producing a new one of the" )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "[fmap] over a [ConsList] preserves the list's structure (its [length]), for both the" )
+            ( Value /text -> /Data/String = CStr "same kind. This is the generic interface declared over the [Functor] class; each" )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "empty and non-empty cases. The full functor laws (identity `fmap(l, v -> v) == l` and" )
+            ( Value /text -> /Data/String = CStr "instance supplies its own definition in a separate module (so the open [Functor] class" )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "composition `fmap(fmap(l, g), f) == fmap(l, v -> f(g(v)))`) additionally require comparing" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "element *values*; that is currently blocked because [fmap]'s result element type is" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "inferred as the top type, so neither [sum] nor equality can observe the mapped elements" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "(a type-variable binding limitation — see docs). [length] is element-agnostic and is the" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "one reduction that works on an [fmap] result, so it is what these tests use." )
+            ( Value /text -> /Data/String = CStr "is not required to be totally covered here). See the [ConsList] instance in [Data/List]." )
         ]
     }

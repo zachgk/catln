@@ -1,24 +1,19 @@
-import "core/data.ct"
+import "core/primitives.ct"
 
 
-# # ConsList Functor instance
-module(Data/List)
-  # [fmap] over a [ConsList] applies a function to every element, producing a new list.
-  # This is the [ConsList] instance of the generic [fmap] declared over [Functor] in
-  # [Data]. It lives in its own module so the open [Functor] interface is not required to
-  # be totally covered, while still resolving for calls of [fmap] on a [ConsList].
-  fmap(lst= Nil, fn(v))= Nil
-  fmap(lst= /Data/Cons(head, tail), fn(v))= /Data/Cons(head= fn(v= head), tail= fmap(lst= tail, fn(v)= fn(v= v)))
+module(Data)
+  # # Functors
+    A [Functor] is a basic property of a collection: a container that can have a function
+    applied to each of the elements it holds.
+  # ## Collections
+    Collections are containers that hold elements of a type inside them.
+  class(Functor[$T])
+    # A [Functor] is a basic property of a collection.
+      It has a single operation [fmap] that applies a function to each element in the collection.
+    # $F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]
 
-  # [fmap] over a [ConsList] preserves the list's structure (its [length]), for both the
-  # empty and non-empty cases. The full functor laws (identity `fmap(l, v -> v) == l` and
-  # composition `fmap(fmap(l, g), f) == fmap(l, v -> f(g(v)))`) additionally require comparing
-  # element *values*; that is currently blocked because [fmap]'s result element type is
-  # inferred as the top type, so neither [sum] nor equality can observe the mapped elements
-  # (a type-variable binding limitation — see docs). [length] is element-agnostic and is the
-  # one reduction that works on an [fmap] result, so it is what these tests use.
-  testListFunctorPreservesLength =
-    #test
-    #assert(test= fmap(lst= /Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Cons(head= 3, tail= Nil))), fn(v)= v + 10).length == 3)
-    #assert(test= fmap(lst= Nil, fn(v)= v + 10).length == 0)
-    0
+  # [fmap] applies a function to every element of a [Functor], producing a new one of the
+  # same kind. This is the generic interface declared over the [Functor] class; each
+  # instance supplies its own definition in a separate module (so the open [Functor] class
+  # is not required to be totally covered here). See the [ConsList] instance in [Data/List].
+  fmap[$F -> /Data/Functor, $A, $B](lst -> $F, fn(v -> $_A) -> $_B) -> $F

@@ -1,0 +1,239 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/Data/range"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/range( EAppArg Value /stop -> /Data/Primitive/Integer ) -> ∀/Data/ConsList ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/length"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/length( EAppArg Value /this -> /Data/Nil ) -> /Data/Primitive/Integer = 0
+                        , /Data/length
+                            ( EAppArg Value /this -> /Data/Cons[ /T=TopType ]
+                                ( /head=$/T
+                                , /tail=~ConsList[ /T=$_/T ]
+                                ) = /Data/Cons( EAppArg Value /head )
+                                ( EAppArg Value /tail -> ~ConsList[ /T=$_/T ] )
+                            ) ->
+                            ( /operator+
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
+                            ) = /operator+
+                            ( EAppArg Value /l -> /Data/Primitive/Integer = 1 )
+                            ( EAppArg Value /r -> /Data/Primitive/Integer =
+                                ( /Data/length
+                                    ( EAppArg Value /this -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) ) ↦ /Data/Primitive/Integer
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/sum"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/sum( EAppArg Value /lst -> ∀/Data/List ) -> /Data/Primitive/Integer
+                        , /Data/sum( EAppArg Value /lst -> ∀/Data/ConsList ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Nil"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Nil ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/List/fmap"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/List/fmap( EAppArg Value /lst -> /Data/Nil = Value /Data/Nil )
+                            ( EAppArg /fn( EAppArg Value /v ) ) -> /Data/Nil = Value /Data/Nil
+                        , /Data/List/fmap
+                            ( EAppArg Value /lst -> /Data/Cons[ /T=TopType ]
+                                ( /head=$/T
+                                , /tail=~ConsList[ /T=$_/T ]
+                                ) = /Data/Cons( EAppArg Value /head )
+                                ( EAppArg Value /tail -> ~ConsList[ /T=$_/T ] )
+                            )
+                            ( EAppArg /fn( EAppArg Value /v ) ) -> /Data/Cons[ /T=TopType ]
+                            ( /head=$/T
+                            , /tail=~ConsList[ /T=$_/T ]
+                            ) = /Data/Cons
+                            ( EAppArg Value /head= /fn( EAppArg Value /v -> TVArg /head = Value /head ) )
+                            ( EAppArg Value /tail -> ~ConsList[ /T=$_/T ] =
+                                ( /fmap
+                                    ( EAppArg Value /lst -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) )
+                                    ( EAppArg /fn( EAppArg Value /v )= /fn( EAppArg Value /v -> TVArg /v = Value /v ) ) ↦ ~ConsList[ /T=$_/T ]
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Cons"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Cons( EAppVar /T TopType )( EAppArg Value /head -> $/T )
+                            ( EAppArg Value /tail -> ∀/Data/ConsList[ /T=$_/T ] )
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/reversed"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/reversed( EAppArg Value /lst -> ∀/Data/List ) -> ∀/Data/List
+                        , /Data/reversed( EAppArg Value /lst -> ∀/Data/ConsList ) -> ∀/Data/ConsList
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/sorted"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/sorted( EAppArg Value /lst -> ∀/Data/List ) -> ∀/Data/List
+                        , /Data/sorted( EAppArg Value /lst -> ∀/Data/ConsList ) -> ∀/Data/ConsList
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/any"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/any( EAppArg Value /lst -> ∀/Data/List ) -> ∀/Data/Primitive/Boolean
+                        , /Data/any( EAppArg Value /lst -> ∀/Data/ConsList ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/List/testListFunctorPreservesLength"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/List/testListFunctorPreservesLength -> /Data/Primitive/Integer = 0 ]
+                    }
+                )
+            ,
+                ( "/Data/all"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/all( EAppArg Value /lst -> ∀/Data/List ) -> ∀/Data/Primitive/Boolean
+                        , /Data/all( EAppArg Value /lst -> ∀/Data/ConsList ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( True
+            , /Data/ConsList[ /T=TopType ]
+            ,
+                [ /Data/Cons[ /T=$_/T ]
+                    ( /head=$/T
+                    , /tail=~ConsList[ /T=$_/T ]
+                    )
+                , /Data/Nil
+                ]
+            , Just "The simplest kind of list can be created by prepending.
+              A [ConsList] defines a list either by prepending to a list or with an empty list."
+            )
+        , CGClass
+            ( False
+            , /Data/ConsList
+            ,
+                [ ∀/Data/ConsList[ /T=$_/T ] ]
+            , Just ""
+            )
+        , CGClass
+            ( False
+            , /Data/List[ /T=TopType ]
+            ,
+                [ ∀/Data/ConsList[ /T=$_/T ] ]
+            , Just " "
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "# Lists
+            A [List] is a collection of zero or more ordered items." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "A [List] is a collection of zero or more ordered items." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "The simplest kind of list can be created by prepending.
+            A [ConsList] defines a list either by prepending to a list or with an empty list." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "/operator+:<$T>($T l, ConsList<$T> r) = Cons(head=l, tail=r)
+            [operator+:] is a utility operator to prepend an element onto a [List]." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "#### [length]
+            The [length] of a [List] is the number of items inside of it." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "## List operations" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "## ConsList runtime operations" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "# ConsList Functor instance" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "[fmap] over a [ConsList] applies a function to every element, producing a new list." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "This is the [ConsList] instance of the generic [fmap] declared over [Functor] in" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "[Data]. It lives in its own module so the open [Functor] interface is not required to" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "be totally covered, while still resolving for calls of [fmap] on a [ConsList]." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "[fmap] over a [ConsList] preserves the list's structure (its [length]), for both the" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "empty and non-empty cases. The full functor laws (identity `fmap(l, v -> v) == l` and" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "composition `fmap(fmap(l, g), f) == fmap(l, v -> f(g(v)))`) additionally require comparing" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "element *values*; that is currently blocked because [fmap]'s result element type is" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "inferred as the top type, so neither [sum] nor equality can observe the mapped elements" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "(a type-variable binding limitation — see docs). [length] is element-agnostic and is the" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "one reduction that works on an [fmap] result, so it is what these tests use." )
+        ]
+    }

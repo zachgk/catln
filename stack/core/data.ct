@@ -30,13 +30,6 @@ module(Data)
     #runtime("context")
 
   # ## Collections
-    Collections are contains that hold elements of a type inside them.
-  class(Functor[$T])
-    # A [Functor] is a basic property of a collection.
-      It has a single operation [fmap] that applies a function to each element in the collection.
-    # $F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]
-
-  # ## Collections
   class(Option[$T], [$_T, None])
     # [Option] defines a type that might have a value or [None].
       It can be used to handle operations that are uncertain if they can produce a response.
@@ -44,59 +37,8 @@ module(Data)
   # [Option] is not currently a [Functor]: it has no [fmap] instance yet, and its bare
   # type-variable member interacts poorly with expanding the open [Functor] class during
   # inference. (Sketch of a future instance: None.fmap(fn) = None; $T.fmap(fn($T)) = fn(this).)
-  class(List[$T])
-
-  # A [List] is a collection of zero or more ordered items.
-  class(ConsList[$T], [Cons[$T -> $_T](head -> $T, tail -> ConsList[$T -> $_T]), Nil])
-    # The simplest kind of list can be created by prepending.
-      A [ConsList] defines a list either by prepending to a list or with an empty list.
-
-  every(ConsList[$T -> $_T], isa= [/Data/List[$T -> $_T]])
-
-  # /operator+:<$T>($T l, ConsList<$T> r) = Cons(head=l, tail=r)
-    [operator+:] is a utility operator to prepend an element onto a [List].
-  # #### [length]
-    The [length] of a [List] is the number of items inside of it.
-  :Nil.length= 0
-  /Data/Cons(head, tail).length= 1 + tail.length
-
-  # ## List operations
-  sum(lst -> /Data/List) -> Integer
-
-  all(lst -> /Data/List) -> Boolean
-
-  any(lst -> /Data/List) -> Boolean
-
-  reversed(lst -> /Data/List) -> /Data/List
-
-  sorted(lst -> /Data/List) -> /Data/List
-
-  # ## ConsList runtime operations
-  sum(lst -> ConsList) -> Integer
-    #runtime("listSum")
-
-  all(lst -> ConsList) -> Boolean
-    #runtime("listAll")
-
-  any(lst -> ConsList) -> Boolean
-    #runtime("listAny")
-
-  reversed(lst -> ConsList) -> ConsList
-    #runtime("listReversed")
-
-  sorted(lst -> ConsList) -> ConsList
-    #runtime("listSorted")
-
-  range(stop -> Integer) -> ConsList
-    #runtime("listRange")
-
-  every(ConsList[$T -> $_T], isa= [/Data/Functor])
-
-  # [fmap] applies a function to every element of a [Functor], producing a new one of the
-  # same kind. This is the generic interface declared over the [Functor] class; each
-  # instance supplies its own definition in a separate module (so the open [Functor] class
-  # is not required to be totally covered here). See the [ConsList] instance in [Data/List].
-  fmap[$F -> /Data/Functor, $A, $B](lst -> $F, fn(v -> $_A) -> $_B) -> $F
+  # The [Functor] class and the generic [fmap] live in [Data/functor.ct]; the [List]
+  # collection and its [ConsList] implementation live in [Data/list.ct].
 
   class(Set[$T])
 

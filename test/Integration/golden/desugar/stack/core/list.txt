@@ -1,0 +1,214 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/Data/range"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/range( Value stop -> /Data/Primitive/Integer ) -> ∀/Data/ConsList ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/length"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/length( Value /this -> /Data/Nil )= CInt 0
+                        , /Data/length
+                            ( Value /this= /Data/Cons( Value head )( Value tail ) )= /operator+
+                            ( Value /l= CInt 1 )
+                            ( Value /r= length( Value /this= Value tail ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/sum"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/sum( Value lst -> ∀/Data/List ) -> /Data/Primitive/Integer
+                        , /Data/sum( Value lst -> ∀/Data/ConsList ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Nil"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Nil ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/List/fmap"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/List/fmap( Value lst= Value Nil )
+                            ( fn( Value v ) )= Value Nil
+                        , /Data/List/fmap
+                            ( Value lst= /Data/Cons( Value head )( Value tail ) )
+                            ( fn( Value v ) )= /Data/Cons
+                            ( Value head= fn( Value v= Value head ) )
+                            ( Value tail= fmap( Value lst= Value tail )
+                                ( fn( Value v )= fn( Value v= Value v ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Cons"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Cons[ /T : TopType ]( Value /head -> $/T )
+                            ( Value /tail -> ∀/Data/ConsList[ /T=$_/T ] )
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/reversed"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/reversed( Value lst -> ∀/Data/List ) -> ∀/Data/List
+                        , /Data/reversed( Value lst -> ∀/Data/ConsList ) -> ∀/Data/ConsList
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/sorted"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/sorted( Value lst -> ∀/Data/List ) -> ∀/Data/List
+                        , /Data/sorted( Value lst -> ∀/Data/ConsList ) -> ∀/Data/ConsList
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/any"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/any( Value lst -> ∀/Data/List ) -> ∀/Data/Primitive/Boolean
+                        , /Data/any( Value lst -> ∀/Data/ConsList ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/List/testListFunctorPreservesLength"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/List/testListFunctorPreservesLength= CInt 0 ]
+                    }
+                )
+            ,
+                ( "/Data/all"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/all( Value lst -> ∀/Data/List ) -> ∀/Data/Primitive/Boolean
+                        , /Data/all( Value lst -> ∀/Data/ConsList ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( True
+            , /Data/ConsList[ /T=TopType ]
+            ,
+                [ /Data/Cons[ /T=$_/T ]
+                    ( /head=$/T
+                    , /tail=~ConsList[ /T=$_/T ]
+                    )
+                , /Data/Nil
+                ]
+            , Just "The simplest kind of list can be created by prepending.
+              A [ConsList] defines a list either by prepending to a list or with an empty list."
+            )
+        , CGClass
+            ( False
+            , /Data/ConsList
+            ,
+                [ ∀/Data/ConsList[ /T=$_/T ] ]
+            , Just ""
+            )
+        , CGClass
+            ( False
+            , /Data/List[ /T=TopType ]
+            ,
+                [ ∀/Data/ConsList[ /T=$_/T ] ]
+            , Just " "
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "# Lists
+            A [List] is a collection of zero or more ordered items." )
+        , /Catln/#md
+            ( Value /text= CStr "A [List] is a collection of zero or more ordered items." )
+        , /Catln/#md
+            ( Value /text= CStr "The simplest kind of list can be created by prepending.
+            A [ConsList] defines a list either by prepending to a list or with an empty list." )
+        , /Catln/#md
+            ( Value /text= CStr "/operator+:<$T>($T l, ConsList<$T> r) = Cons(head=l, tail=r)
+            [operator+:] is a utility operator to prepend an element onto a [List]." )
+        , /Catln/#md
+            ( Value /text= CStr "#### [length]
+            The [length] of a [List] is the number of items inside of it." )
+        , /Catln/#md
+            ( Value /text= CStr "## List operations" )
+        , /Catln/#md
+            ( Value /text= CStr "## ConsList runtime operations" )
+        , /Catln/#md
+            ( Value /text= CStr "# ConsList Functor instance" )
+        , /Catln/#md
+            ( Value /text= CStr "[fmap] over a [ConsList] applies a function to every element, producing a new list." )
+        , /Catln/#md
+            ( Value /text= CStr "This is the [ConsList] instance of the generic [fmap] declared over [Functor] in" )
+        , /Catln/#md
+            ( Value /text= CStr "[Data]. It lives in its own module so the open [Functor] interface is not required to" )
+        , /Catln/#md
+            ( Value /text= CStr "be totally covered, while still resolving for calls of [fmap] on a [ConsList]." )
+        , /Catln/#md
+            ( Value /text= CStr "[fmap] over a [ConsList] preserves the list's structure (its [length]), for both the" )
+        , /Catln/#md
+            ( Value /text= CStr "empty and non-empty cases. The full functor laws (identity `fmap(l, v -> v) == l` and" )
+        , /Catln/#md
+            ( Value /text= CStr "composition `fmap(fmap(l, g), f) == fmap(l, v -> f(g(v)))`) additionally require comparing" )
+        , /Catln/#md
+            ( Value /text= CStr "element *values*; that is currently blocked because [fmap]'s result element type is" )
+        , /Catln/#md
+            ( Value /text= CStr "inferred as the top type, so neither [sum] nor equality can observe the mapped elements" )
+        , /Catln/#md
+            ( Value /text= CStr "(a type-variable binding limitation — see docs). [length] is element-agnostic and is the" )
+        , /Catln/#md
+            ( Value /text= CStr "one reduction that works on an [fmap] result, so it is what these tests use." )
+        ]
+    }

@@ -2,73 +2,48 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
-                ( "/Data/List/fmap"
+                ( "/Data/fmap"
                 , ObjectMapItem
-                    { omiDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/List/fmap( EAppArg Value /lst -> /Data/Nil = Value /Data/Nil )
-                            ( EAppArg /fn( EAppArg Value /v ) ) -> /Data/Nil = Value /Data/Nil
-                        , /Data/List/fmap
-                            ( EAppArg Value /lst -> /Data/Cons[ /T=TopType ]
-                                ( /head=$/T
-                                , /tail=~ConsList[ /T=$_/T ]
-                                ) = /Data/Cons( EAppArg Value /head )
-                                ( EAppArg Value /tail -> ~ConsList[ /T=$_/T ] )
-                            )
-                            ( EAppArg /fn( EAppArg Value /v ) ) -> /Data/Cons[ /T=TopType ]
-                            ( /head=$/T
-                            , /tail=~ConsList[ /T=$_/T ]
-                            ) = /Data/Cons
-                            ( EAppArg Value /head= /fn( EAppArg Value /v -> TVArg /head = Value /head ) )
-                            ( EAppArg Value /tail -> ~ConsList[ /T=$_/T ] =
-                                ( /fmap
-                                    ( EAppArg Value /lst -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) )
-                                    ( EAppArg /fn( EAppArg Value /v )= /fn( EAppArg Value /v -> TVArg /v = Value /v ) ) ↦ ~ConsList[ /T=$_/T ]
-                                )
-                            )
+                    { omiDecls =
+                        [ /Data/fmap( EAppVar /B TopType )( EAppVar /A TopType )( EAppVar /F ∀/Data/Functor )( EAppArg Value /lst -> $/F )
+                            ( EAppArg /fn( EAppArg Value /v -> $_/A ) -> $_/B ) -> $/F
                         ]
-                    }
-                )
-            ,
-                ( "/Data/List/testListFunctorPreservesLength"
-                , ObjectMapItem
-                    { omiDecls = []
                     , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/List/testListFunctorPreservesLength -> /Data/Primitive/Integer = 0 ]
+                    , omiDefs = []
                     }
                 )
             ]
         )
     , prgmCG =
         [ CGType
-        , CGType
+        , CGClass
+            ( False
+            , /Data/Functor[ /T=TopType ]
+            , []
+            , Just "A [Functor] is a basic property of a collection.
+              It has a single operation [fmap] that applies a function to each element in the collection.$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]"
+            )
         ]
     , prgmAnnots =
         [ /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "# ConsList Functor instance" )
+            ( EAppArg Value /text -> /Data/String = "# Functors
+            A [Functor] is a basic property of a collection: a container that can have a function
+            applied to each of the elements it holds." )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "[fmap] over a [ConsList] applies a function to every element, producing a new list." )
+            ( EAppArg Value /text -> /Data/String = "## Collections
+            Collections are containers that hold elements of a type inside them." )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "This is the [ConsList] instance of the generic [fmap] declared over [Functor] in" )
+            ( EAppArg Value /text -> /Data/String = "A [Functor] is a basic property of a collection.
+            It has a single operation [fmap] that applies a function to each element in the collection." )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "[Data]. It lives in its own module so the open [Functor] interface is not required to" )
+            ( EAppArg Value /text -> /Data/String = "$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]" )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "be totally covered, while still resolving for calls of [fmap] on a [ConsList]." )
+            ( EAppArg Value /text -> /Data/String = "[fmap] applies a function to every element of a [Functor], producing a new one of the" )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "[fmap] over a [ConsList] preserves the list's structure (its [length]), for both the" )
+            ( EAppArg Value /text -> /Data/String = "same kind. This is the generic interface declared over the [Functor] class; each" )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "empty and non-empty cases. The full functor laws (identity `fmap(l, v -> v) == l` and" )
+            ( EAppArg Value /text -> /Data/String = "instance supplies its own definition in a separate module (so the open [Functor] class" )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "composition `fmap(fmap(l, g), f) == fmap(l, v -> f(g(v)))`) additionally require comparing" )
-        , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "element *values*; that is currently blocked because [fmap]'s result element type is" )
-        , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "inferred as the top type, so neither [sum] nor equality can observe the mapped elements" )
-        , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "(a type-variable binding limitation — see docs). [length] is element-agnostic and is the" )
-        , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "one reduction that works on an [fmap] result, so it is what these tests use." )
+            ( EAppArg Value /text -> /Data/String = "is not required to be totally covered here). See the [ConsList] instance in [Data/List]." )
         ]
     }
