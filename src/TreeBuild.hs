@@ -122,10 +122,19 @@ completeTreeSet TBEnv{tbTypeEnv} fullPartial initialOptions = aux [] BottomType 
 -- | It will return one that is sufficient, if available.
 -- | Otherwise, it will combine them with a 'TCCond' to form a sequence of arrows to check
 joinArrowsWithCond :: TBEnv -> PartialType -> Type -> [ResBuildEnvItem] -> CRes TCallTree
-joinArrowsWithCond env srcType destType guards = do
-  guards' <- completeTreeSet env srcType guards
-  buildGuards guards'
+joinArrowsWithCond env srcType destType guards = case completeTreeSet env srcType guards of
+  -- Static coverage failed even though arrows were found and none of them are guarded by a
+  -- where-condition. This is the typeclass/virtual-dispatch case: the source has an abstract
+  -- class-bounded region (e.g. a generic @(_ :: $T == _ :: $T)[$T -> Eq]@ applied to an
+  -- abstract @∀Eq@ argument, or a recursive arm @lh == rh@ over an abstract element type), so
+  -- the concrete instance cannot be chosen at compile time. Emit a runtime 'TCMatch' that
+  -- dispatches on the actual value's type to the matching concrete arrow.
+  CErr _ | not (null guards) && all conditionFree guards ->
+    return $ TCMatch $ H.fromList [(t, tree) | (t, _, tree) <- guards]
+  res -> res >>= buildGuards
   where
+    conditionFree (_, Nothing, _)  = True
+    conditionFree (_, Just oa, _)  = null $ exprWhereConds $ oaObjExpr oa
     buildGuards :: [ResBuildEnvItem] -> CRes TCallTree
     buildGuards arrows = do
       ifTreePairs <- forM arrows $ \(_, moa, arrTree) -> do

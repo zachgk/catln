@@ -20,6 +20,15 @@ Prgm
                     }
                 )
             ,
+                ( "/operator=="
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator==( Value /l -> $/T = Hole TopType HoleActive Nothing )( Value /r -> $/T = Hole TopType HoleActive Nothing )[ /T : ∀/Data/Algebra/Eq ] -> ∀/Data/Primitive/Boolean ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/operator++"
                 , ObjectMapItem
                     { omiDecls =
@@ -165,6 +174,7 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

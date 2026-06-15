@@ -709,8 +709,16 @@ completeDataPartials typeEnv = onArgs
     onArgs (TypeVar v l) = TypeVar v l
     onArgs (UnionType mPreds leafs consts) = UnionType (fmap (bimap id onArgsLeafs) mPreds) (onArgsLeafs leafs) consts
     onArgsLeafs = joinUnionType . map recurseArgs . splitUnionType
-    recurseArgs p@PartialType{ptVars, ptArgs} = p{ptVars = fmap go ptVars, ptArgs = fmap go ptArgs}
+    recurseArgs p@PartialType{ptVars, ptArgs} = p{ptVars = fmap (completeDataPartialsTop typeEnv) ptVars, ptArgs = fmap (completeDataPartialsTop typeEnv) ptArgs}
 
+-- | Like 'completeDataPartials' but also completes the /outermost/ partials, restoring their
+-- declared data fields. Used when a partial is a supertype to match against rather than a value
+-- — notably a class member expanded from a predicate (e.g. @Box[$T]@ as a member of @∀Eq@),
+-- which must carry its fields (@Box[$T](v=$T)@) for a field-form value @Box(v=..)@ to be
+-- recognized as an instance. (Args and type parameters are otherwise tracked independently.)
+completeDataPartialsTop :: (TypeGraph tg) => TypeEnv tg -> Type -> Type
+completeDataPartialsTop typeEnv = go
+  where
     -- Nested: complete each partial against its def, then recurse into its args/vars.
     go (TypeVar v l) = TypeVar v l
     go (UnionType mPreds leafs consts) = UnionType (fmap (bimap id goLeafs) mPreds) (goLeafs leafs) consts
@@ -1078,7 +1086,12 @@ expandClassPartialWithNamesFull typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaen
       _  ->
         let mapped = map mapClassTypeWithNamesFull classTypes
             leafs = foldl (H.unionWith S.union) H.empty (map fst mapped)
-        in (leafs, any snd mapped)
+            -- Restore each member's declared data fields (e.g. @Box[$T]@ ⇒ @Box[$T](v=$T)@) so a
+            -- field-form value @Box(v=..)@ is recognized as a member of this class.
+            leafs' = case completeDataPartialsTop typeEnv (UnionType Nothing leafs []) of
+              UnionType Nothing l [] -> l
+              _                      -> leafs
+        in (leafs', any snd mapped)
       where
         classVars = H.unionWith (intersectTypesEnv typeEnv vaenv) classVarsP classVarsDecl
         mapClassTypeWithNamesFull (TopType negPartials ps) =
@@ -1104,7 +1117,9 @@ expandClassPartial typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv PartialType
     expanded = case graphLookup className cg of
       Just (CGClass (_, PartialType{ptVars=classVarsDecl}, classTypes, _)) -> case classTypes of
         [] -> singletonType $ classPlaceholderLeaf ptName
-        _  -> unionAllTypes typeEnv $ map mapClassType classTypes
+        -- Complete each member's declared data fields (e.g. @Box[$T]@ ⇒ @Box[$T](v=$T)@) so a
+        -- field-form value @Box(v=..)@ is recognized as a member of this class.
+        _  -> completeDataPartialsTop typeEnv $ unionAllTypes typeEnv $ map mapClassType classTypes
         where
           classVars = H.unionWith (intersectTypesEnv typeEnv vaenv) classVarsP classVarsDecl
           mapClassType (TypeVar (TVVar t) _) = case H.lookup t classVars of
