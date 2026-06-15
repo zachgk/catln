@@ -68,23 +68,44 @@ toExpr expr@(TupleApply m (baseM, baseExpr) arg) = do
   baseExpr' <- toExpr baseExpr
   arg' <- case arg of
     EAppArg a@ObjArr{oaObj, oaArr, oaAnnots} -> do
-      oaObj' <- case oaObj of
-        Just joaObj -> Just <$> toExpr joaObj
-        Nothing -> do
-          mArgName <- case (getMetaType baseM', getMetaType m') of
+      -- The argument name learned during type inference: the single argument present in the
+      -- tuple-application result meta but not in its base meta.
+      let learnedArgName = case (getMetaType baseM', getMetaType m') of
             (UnionType Nothing basePartialLeafs [], UnionType Nothing partialLeafs []) -> case (splitUnionType basePartialLeafs, splitUnionType partialLeafs) of
               ([PartialType{ptArgs=basePartialArgs}], [PartialType{ptArgs}]) -> case S.toList $ S.difference (H.keysSet ptArgs) (H.keysSet basePartialArgs) of
-                [argN] -> return $ Just argN
-                opts -> lift $ TypeCheckResult [GenTypeCheckError mclear $ printf "Failed argument inference due to multiple arg options %s in %s" (show opts) (show expr)] Nothing
-              (base, result) -> lift $ TypeCheckResult [GenTypeCheckError mclear $ printf "Failed argument inference due to multiple types with base %s and result %s in %s" (show base) (show result) (show expr)] Nothing
-            (baseM'', m'') -> lift $ TypeCheckResult [GenTypeCheckError mclear $ printf "Failed argument inference due to non UnionType in baseMeta %s or meta %s in %s" (show baseM'') (show m'') (show expr)] Nothing
-          return $ case mArgName of
-            Just argName -> Just $ Value (mWithType (singletonType $ partialToType argName) $ emptyMetaM m') (pkName argName)
-            Nothing -> Nothing -- Failed argument inference, return nothing and error out
-      oaArr' <- forM oaArr $ \(oaArrExpr, oaArrM) -> do
-        oaArrExpr' <- mapM toExpr oaArrExpr
-        oaArrM' <- toMeta oaArrM
-        return (oaArrExpr', oaArrM')
+                [argN] -> Right argN
+                opts -> Left (printf "Failed argument inference due to multiple arg options %s in %s" (show opts) (show expr) :: String)
+              (base, result) -> Left (printf "Failed argument inference due to multiple types with base %s and result %s in %s" (show base) (show result) (show expr) :: String)
+            (baseM'', m'') -> Left (printf "Failed argument inference due to non UnionType in baseMeta %s or meta %s in %s" (show baseM'') (show m'') (show expr) :: String)
+      let mkArgValue argName = Value (mWithType (singletonType $ partialToType argName) $ emptyMetaM m') (pkName argName)
+      let decodeArr = mapM (\(oaArrExpr, oaArrM) -> do
+            oaArrExpr' <- mapM toExpr oaArrExpr
+            oaArrM' <- toMeta oaArrM
+            return (oaArrExpr', oaArrM'))
+      (oaObj', oaArr') <- case (oaObj, oaArr) of
+        -- An anonymous applied argument (e.g. the call site @f(x)@): finalize the learned
+        -- keyword as the object.
+        (Nothing, _) -> do
+          argName <- case learnedArgName of
+            Right n  -> return n
+            Left err -> lift $ TypeCheckResE [GenTypeCheckError mclear err]
+          arr' <- decodeArr oaArr
+          return (Just $ mkArgValue argName, arr')
+        -- A destructuring pattern (e.g. @Box(v)@) whose head does not name the argument it
+        -- fills: rewrite to the learned keyword form (@b= Box(v)@) so that downstream
+        -- TreeBuild and Eval bind by the argument name rather than the pattern's type head.
+        (Just joaObj@TupleApply{}, Just (Nothing, _arrM))
+          | Right argName <- learnedArgName
+          , makeAbsoluteName (pkName argName) /= makeAbsoluteName (exprPath joaObj) -> do
+              joaObj' <- toExpr joaObj
+              -- The argument slot takes the pattern's own (resolved) type, mirroring the named
+              -- form @b= Box(v)@ where the arr slot is unified with the arr value's type.
+              return (Just $ mkArgValue argName, Just (Just joaObj', getExprMeta joaObj'))
+        -- An explicit object (named argument, or a pattern whose head already names the arg).
+        (Just joaObj, _) -> do
+          joaObj' <- toExpr joaObj
+          arr' <- decodeArr oaArr
+          return (Just joaObj', arr')
       oaAnnots' <- mapM toExpr oaAnnots
       return $ EAppArg a{oaObj=oaObj', oaArr=oaArr', oaAnnots=oaAnnots'}
     EAppVar vn vm -> EAppVar vn <$> toMeta vm

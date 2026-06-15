@@ -29,7 +29,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /unwrap
-                            ( EAppArg Value /b -> /Box[ /T=TopType ]( /v=$/T ) = /Box( EAppArg Value /v ) ) -> TVArg /v = Value /v
+                            ( EAppArg Value /b -> /Box( /v=TopType ) = /Box( EAppArg Value /v ) ) -> TVArg /v = Value /v
                         ]
                     }
                 )

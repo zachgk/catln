@@ -148,6 +148,17 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
                         AddArg 19 (getExprMeta baseExpr', TVArg $ inExprSingleton obj) m',
                         PropEq 21 (m', TVArg $ inExprSingleton obj) arrM'
                         ]
+            (EncodeIn{}, Just obj@TupleApply{}, Just (Nothing, arrM')) ->
+              -- Input with a destructuring pattern (e.g. @Box(v)@): the pattern's own
+              -- structure does not name the declared argument it fills, so infer which
+              -- argument it fills by type. The 'PropEq' is kept so that when the pattern's
+              -- structural key /does/ name the argument (e.g. a higher-order @f(y)@ where
+              -- @f@ is the declared arg) the argument's annotated type is still linked in;
+              -- when it does not (the @Box(v)@ case) the 'PropEq' is a harmless no-op.
+              [
+                        AddInferArg 24 (getExprMeta baseExpr') m',
+                        PropEq 25 (m', TVArg $ inExprSingleton obj) arrM'
+                        ]
             (EncodeIn{}, Just obj, Just (Nothing, arrM')) ->
               -- Input with (x -> T)
               [

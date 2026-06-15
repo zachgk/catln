@@ -29,7 +29,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /unwrap
-                            ( Value /b -> /Box[ /T=TopType ]( /v=$/T ) = /Box( Value /v ) ) -> TVArg /v = Value /v
+                            ( Value /b -> /Box( /v=TopType ) = /Box( Value /v ) ) -> TVArg /v = Value /v
                         ]
                     }
                 )

@@ -303,7 +303,7 @@ instance ExprClass Expr where
   exprVarArgs HoleExpr{} = H.empty
   exprVarArgs (AliasExpr base n) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, getExprMeta base)] (exprVarArgs base)
   exprVarArgs (EWhere _ base _) = exprVarArgs base
-  exprVarArgs (TupleApply _ (_, be) (EAppArg ObjArr{oaObj=Just n, oaArr=Just (Nothing, arrM)})) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, arrM)] (exprVarArgs be)
+  exprVarArgs (TupleApply _ (_, be) (EAppArg ObjArr{oaObj=Just n, oaArr=Just (Nothing, arrM)})) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, arrM)] (H.unionWith (++) (exprVarArgs be) (exprVarArgs n))
   exprVarArgs (TupleApply _ _ (EAppArg ObjArr{oaObj, oaArr=Just (Nothing, _)})) = error $ printf "Unexpected unhandled obj type in exprVarArgs: %s" (show oaObj)
   exprVarArgs (TupleApply _ (_, be) (EAppArg ObjArr{oaArr=Just (Just e, _)})) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)
   exprVarArgs (TupleApply _ (_, be) (EAppVar n m)) = H.insertWith (++) (TVVar n) [(Value (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)] (exprVarArgs be)
@@ -339,11 +339,31 @@ instance ExprClass Expr where
             Just t@(UnionType (Just _) _ _) -> [(,t) <$> exprVarArgs e]
             _ -> [H.empty]
           fromArg (EAppArg ObjArr{oaArr=Just (Just e, _)}) = exprVarArgsWithSrc typeEnv e src
-          fromArg (EAppArg ObjArr {oaObj=Just obj, oaArr=Just (Nothing, arrM)}) = case getMetaType arrM of
-            (TypeVar v _) -> [H.insertWith (mergeVarArgMetaWithSrcItem typeEnv) v ([(obj, arrM)], fromMaybe PTopType $ typeGetArg (inExprSingleton obj) src) mainArg]
-            _ -> [mainArg]
+          fromArg (EAppArg ObjArr {oaObj=Just obj, oaArr=Just (Nothing, arrM)})
+            -- A destructuring pattern (e.g. @Box(v)@) whose head does not name an argument of
+            -- the source (so it is a data type, not a higher-order arg like @f(y)@): reconcile
+            -- it to the source argument it fills by type (the only one whose declared type the
+            -- pattern's head names), then match the pattern against that argument's type to bind
+            -- its inner variables (e.g. @v@). The head is compared syntactically ('exprPath')
+            -- because 'inExprSingleton' resolves via the expression's type in later phases.
+            | headName `notElem` srcArgNames && not (H.null (exprAppliedArgsMap obj))
+            , Just argKey <- reconciledKey
+            , Just (UnionType Nothing srcArg []) <- typeGetArg argKey src
+            = joinAllPossVarArgMetaWithSrc typeEnv $ map (exprVarArgsWithSrc typeEnv obj) $ splitUnionType srcArg
+            | otherwise = case getMetaType arrM of
+                (TypeVar v _) -> [H.insertWith (mergeVarArgMetaWithSrcItem typeEnv) v ([(obj, arrM)], fromMaybe PTopType $ typeGetArg structKey src) mainArg]
+                _ -> [mainArg]
             where
-              mainArg = H.singleton (TVArg $ inExprSingleton obj) ([(obj, arrM)], fromMaybe (getMetaType arrM) (typeGetArg (inExprSingleton obj) src))
+              structKey = inExprSingleton obj
+              headName = makeAbsoluteName (exprPath obj)
+              srcArgNames = map (makeAbsoluteName . pkName) (H.keys (ptArgs src))
+              reconciledKey = case filter (patternHeadNamesArg . snd) (H.toList (ptArgs src)) of
+                [(argName, _)] -> Just argName
+                _              -> Nothing
+              patternHeadNamesArg argType = case maybeGetSingleton argType of
+                Just p  -> headName == makeAbsoluteName (ptName p)
+                Nothing -> False
+              mainArg = H.singleton (TVArg structKey) ([(obj, arrM)], fromMaybe (getMetaType arrM) (typeGetArg structKey src))
           fromArg (EAppVar vn vm) = [H.singleton (TVVar vn) ([(Value (emptyMetaT $ partialToTypeSingleton vn) (pkName vn), vm)], H.lookupDefault PTopType vn (ptVars src))]
           fromArg (EAppSpread s) = exprVarArgsWithSrc typeEnv s src
           fromArg oa = error $ printf "Invalid oa %s" (show oa)
