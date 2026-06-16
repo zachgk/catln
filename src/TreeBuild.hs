@@ -133,8 +133,8 @@ joinArrowsWithCond env srcType destType guards = case completeTreeSet env srcTyp
     return $ TCMatch $ H.fromList [(t, tree) | (t, _, tree) <- guards]
   res -> res >>= buildGuards
   where
-    conditionFree (_, Nothing, _)  = True
-    conditionFree (_, Just oa, _)  = null $ exprWhereConds $ oaObjExpr oa
+    conditionFree (_, Nothing, _) = True
+    conditionFree (_, Just oa, _) = null $ exprWhereConds $ oaObjExpr oa
     buildGuards :: [ResBuildEnvItem] -> CRes TCallTree
     buildGuards arrows = do
       ifTreePairs <- forM arrows $ \(_, moa, arrTree) -> do
