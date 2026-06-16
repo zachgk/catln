@@ -153,8 +153,11 @@ verifyObjMapItem name (ObjectMapItem decls runtimeDecls refineDecls defs) = do
           let undeclared = snd $ differenceTypeWithEnv prgmTypeEnv H.empty defType declUnion
           lift $ TypeCheckResult [DefinitionOutsideDeclaration name defType declUnion undeclared defLoc] ()
 
-      -- Check each declaration against defUnion (which includes runtime declarations)
-      let declsWithLocs = zip (map (completeDataPartials feTypeEnv . getMetaType . getExprMeta . oaObjExpr) decls) (map (getMetaPos . getExprMeta) (mapMaybe oaObj decls))
+      -- Check each declaration against defUnion (which includes runtime declarations). Data-type
+      -- (TypeObj) declarations are self-defining and need no separate definition, so they are
+      -- exempt from the fulfillment check (they still bound definitions via declUnion above).
+      let fulfillableDecls = filter ((/= TypeObj) . oaBasis) decls
+      let declsWithLocs = zip (map (completeDataPartials feTypeEnv . getMetaType . getExprMeta . oaObjExpr) fulfillableDecls) (map (getMetaPos . getExprMeta) (mapMaybe oaObj fulfillableDecls))
       forM_ declsWithLocs $ \(declType, declLoc) ->
         unless (isSubtypeOf prgmTypeEnv declType defUnion) $ do
           let notDefined = snd $ differenceTypeWithEnv prgmTypeEnv H.empty declType defUnion
