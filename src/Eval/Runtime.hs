@@ -96,6 +96,13 @@ strEq = EPrim "strEq" prim
       (Just (StrVal l), Just (StrVal r)) -> Right $ bool $ l == r
       _                                  -> Left "Invalid intToString signature"
 
+strNeq :: EPrim
+strNeq = EPrim "strNeq" prim
+  where
+    prim args = case (H.lookup "/l" args, H.lookup "/r" args) of
+      (Just (StrVal l), Just (StrVal r)) -> Right $ bool $ l /= r
+      _                                  -> Left "Invalid strNeq signature"
+
 intToString :: EPrim
 intToString = EPrim "intToString" prim
   where
@@ -451,6 +458,7 @@ primEnv = H.fromList (map mapPrim prims ++ macros)
             , liftFloatCmpOp "!=" (/=)
             , rfneg
             , strEq
+            , strNeq
             , intToString
             , ioExit
             , println

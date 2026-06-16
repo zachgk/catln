@@ -5,6 +5,7 @@ Prgm
                 ( "/abs.$f9f16a"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ abs.$f9f16a( Value /x )
@@ -22,6 +23,7 @@ Prgm
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
@@ -35,6 +37,7 @@ Prgm
                 ( "/abs"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ abs( Value x -> /Data/Primitive/Integer )= abs.$f9f16a( Value /x= Value /x )( Value /$f9f16a-arg= Value x ) ]

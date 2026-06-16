@@ -5,6 +5,7 @@ Prgm
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
@@ -16,6 +17,7 @@ Prgm
                 ( "/outerVar"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ Value /outerVar -> UnionType
@@ -45,6 +47,7 @@ Prgm
                 ( "/f.innerVar"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /f.innerVar( Value /io ) -> UnionType
@@ -74,6 +77,7 @@ Prgm
                 ( "/f"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /f( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]

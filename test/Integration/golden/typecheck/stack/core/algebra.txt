@@ -6,6 +6,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /operator<=( Value /l -> $/T = Hole $/T HoleActive Nothing )( Value /r -> $/T = Hole $/T HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -15,6 +16,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Algebra/inverse[ /T : ∀/Data/Algebra/Group ]( Value /t -> $/T ) -> $/T ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -24,6 +26,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /operator==( Value /l -> $/T = Hole $/T HoleActive Nothing )( Value /r -> $/T = Hole $/T HoleActive Nothing )[ /T : ∀/Data/Algebra/Eq ] -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -33,6 +36,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /operator++( Value /l -> $/T = Hole $/T HoleActive Nothing )( Value /r -> $/T = Hole $/T HoleActive Nothing )[ /T : ∀/Data/Algebra/Semigroup ] -> $/T ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -42,6 +46,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /operator>=( Value /l -> $/T = Hole $/T HoleActive Nothing )( Value /r -> $/T = Hole $/T HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -50,6 +55,7 @@ Prgm
                 ( "/Data/Algebra/LessThan"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Algebra/LessThan ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -59,6 +65,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/Algebra/mempty[ /T : ∀/Data/Algebra/Monoid ] -> $/T ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -67,6 +74,7 @@ Prgm
                 ( "/Data/Algebra/testGroup"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/testGroup[ /T : ∀/Data/Algebra/Group ]( Value /t -> $/T ) -> /Data/Primitive/Integer = CInt 0 ]
@@ -77,6 +85,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /operator<( Value /l -> $/T = Hole $/T HoleActive Nothing )( Value /r -> $/T = Hole $/T HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -85,6 +94,7 @@ Prgm
                 ( "/Data/Algebra/testCommutativeMonoid"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/testCommutativeMonoid[ /T : ∀/Data/Algebra/CommutativeMonoid ]( Value /a -> $/T )( Value /b -> $/T ) -> /Data/Primitive/Integer = CInt 0 ]
@@ -95,6 +105,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /operator>( Value /l -> $/T = Hole $/T HoleActive Nothing )( Value /r -> $/T = Hole $/T HoleActive Nothing )[ /T : ∀/Data/Algebra/Ord ] -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -103,6 +114,7 @@ Prgm
                 ( "/Data/Algebra/testRightMonoidIdentity"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/testRightMonoidIdentity[ /T : ∀/Data/Algebra/Monoid ]( Value /t -> $/T ) -> /Data/Primitive/Integer = CInt 0 ]
@@ -112,6 +124,7 @@ Prgm
                 ( "/Data/Algebra/testSemigroupAssociative"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/testSemigroupAssociative[ /T : ∀/Data/Algebra/Semigroup ]( Value /a -> $/T )( Value /b -> $/T )( Value /c -> $/T ) -> /Data/Primitive/Integer = CInt 0 ]
@@ -121,6 +134,7 @@ Prgm
                 ( "/Data/Algebra/NoOrdering"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Algebra/NoOrdering ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -129,6 +143,7 @@ Prgm
                 ( "/Data/Algebra/testLeftMonoidIdentity"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/testLeftMonoidIdentity[ /T : ∀/Data/Algebra/Monoid ]( Value /t -> $/T ) -> /Data/Primitive/Integer = CInt 0 ]
@@ -141,6 +156,7 @@ Prgm
                         [ /Data/Algebra/compare[ /T : ∀/Data/Algebra/Ord ]( Value /l -> $/T )( Value /r -> $/T ) -> ∀/Data/Algebra/Ordering
                         , /Data/Algebra/compare[ /T : ∀/Data/Algebra/POrd ]( Value /l -> $/T )( Value /r -> $/T ) -> ∀/Data/Algebra/POrdering
                         ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -149,6 +165,7 @@ Prgm
                 ( "/Data/Algebra/Equal"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Algebra/Equal ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -157,6 +174,7 @@ Prgm
                 ( "/Data/Algebra/GreaterThan"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Algebra/GreaterThan ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -166,6 +184,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /operator!=( Value /l -> $/T = Hole $/T HoleActive Nothing )( Value /r -> $/T = Hole $/T HoleActive Nothing )[ /T : ∀/Data/Algebra/Eq ] -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }

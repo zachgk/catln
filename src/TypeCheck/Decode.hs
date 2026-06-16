@@ -126,6 +126,41 @@ toPrgm (objMap, classGraph, annots) = do
   annots' <- mapM toExpr annots
   return $ Prgm objMap' classGraph annots'
 
+-- | Detects a /diagonal/ declaration: one whose every argument is typed by a single shared type
+-- variable (e.g. @operator==($T l, $T r)@). Returns the variable's bound and the argument names
+-- it binds. The arg→variable link is read from the declaration expression's applied args (their
+-- arrow metas carry the variable, even though the decoded partial stores each arg as the bound).
+diagonalVar :: ObjArr Expr TypedMetaDat -> PartialType -> Maybe (Type, [ArgName])
+diagonalVar oa p = case sharedVars of
+  [v] | not (H.null (ptArgs p)) && all (`elem` argsForVar v) (H.keys (ptArgs p)) ->
+    Just (H.lookupDefault PTopType v (ptVars p), argsForVar v)
+  _ -> Nothing
+  where
+    argVar = mapMaybe argToVar (exprAppliedArgs (oaObjExpr oa))
+    argToVar a = case (oaObj a, oaArr a) of
+      (Just objE, Just (_, arrM)) -> case getMetaType arrM of
+        TypeVar (TVVar v) _ -> Just (inExprSingleton objE, v)
+        _                   -> Nothing
+      _ -> Nothing
+    sharedVars = [v | (v, n) <- H.toList (H.fromListWith (+) [(v, 1 :: Int) | (_, v) <- argVar]), n >= 2]
+    argsForVar v = [a | (a, v') <- argVar, v' == v]
+
+-- | The /diagonal projection/ of a definition for the given (shared) argument positions: the
+-- intersection of the definition's values at those positions. A diagonal declaration @($T,…,$T)@
+-- is fulfilled at a concrete type @t@ iff some definition covers @t@ at /every/ shared position,
+-- so the variable's bound must be covered by the union of these projections across definitions.
+diagonalProjection :: (TypeGraph tg) => TypeEnv tg -> [ArgName] -> Type -> Type
+diagonalProjection typeEnv argNames (UnionType Nothing leafs []) =
+  unionAllTypes typeEnv [intersectAllTypes typeEnv (mapMaybe (`typeGetArg` p) argNames) | p <- splitUnionType leafs]
+diagonalProjection _ _ _ = BottomType
+
+-- | The single partial of a type, when it has exactly one.
+singleLeaf :: Type -> Maybe PartialType
+singleLeaf (UnionType Nothing leafs []) = case splitUnionType leafs of
+  [p] -> Just p
+  _   -> Nothing
+singleLeaf _ = Nothing
+
 verifyObjMapItem :: TypeName -> ObjectMapItem Expr TypedMetaDat -> StateT FEnv TypeCheckResult ()
 verifyObjMapItem name (ObjectMapItem decls runtimeDecls refineDecls defs) = do
   FEnv{feTypeEnv} <- get
@@ -157,11 +192,19 @@ verifyObjMapItem name (ObjectMapItem decls runtimeDecls refineDecls defs) = do
       -- (TypeObj) declarations are self-defining and need no separate definition, so they are
       -- exempt from the fulfillment check (they still bound definitions via declUnion above).
       let fulfillableDecls = filter ((/= TypeObj) . oaBasis) decls
-      let declsWithLocs = zip (map (completeDataPartials feTypeEnv . getMetaType . getExprMeta . oaObjExpr) fulfillableDecls) (map (getMetaPos . getExprMeta) (mapMaybe oaObj fulfillableDecls))
-      forM_ declsWithLocs $ \(declType, declLoc) ->
-        unless (isSubtypeOf prgmTypeEnv declType defUnion) $ do
-          let notDefined = snd $ differenceTypeWithEnv prgmTypeEnv H.empty declType defUnion
-          lift $ TypeCheckResult [UnfulfilledDeclaration name declType defUnion notDefined declLoc] ()
+      forM_ fulfillableDecls $ \oa -> do
+        let declType = completeDataPartials feTypeEnv $ getMetaType $ getExprMeta $ oaObjExpr oa
+        let declLoc = getMetaPos $ getExprMeta $ oaObjExpr oa
+        -- A diagonal declaration (every argument typed by one shared variable, e.g.
+        -- @operator==($T l, $T r)@) is fulfilled iff the variable's bound is covered by the
+        -- diagonal projection of the definitions, not by the full product. Checking the product
+        -- would spuriously demand off-diagonal pairs like @(Integer, Float)@.
+        let (checkType, target) = case diagonalVar oa =<< singleLeaf declType of
+              Just (varBound, varArgs) -> (varBound, unionAllTypes prgmTypeEnv (map (diagonalProjection prgmTypeEnv varArgs) defInputTypes))
+              Nothing                  -> (declType, defUnion)
+        unless (isSubtypeOf prgmTypeEnv checkType target) $ do
+          let notDefined = snd $ differenceTypeWithEnv prgmTypeEnv H.empty checkType target
+          lift $ TypeCheckResult [UnfulfilledDeclaration name declType target notDefined declLoc] ()
 
       -- Check each refinement declaration against declUnion
       let refineWithLocs = zip

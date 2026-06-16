@@ -5,6 +5,7 @@ Prgm
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
@@ -25,6 +26,7 @@ Prgm
                 ( "/defInt"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /defInt
@@ -37,6 +39,7 @@ Prgm
                 ( "/Nothing"
                 , ObjectMapItem
                     { omiDecls = [ Value /Nothing ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -46,6 +49,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Just[ /T : TopType ]( Value /val -> $_/T ) ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }

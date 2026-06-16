@@ -13,8 +13,12 @@ module(Data)
   (_ :: String == _ :: String) -> Boolean
     #runtime("strEq")
 
+  (_ :: String != _ :: String) -> Boolean
+    #runtime("strNeq")
+
   :String.toString -> String
   :String.toString= this
+
   # Declaration bounding the #runtime toString definition below.
   :Integer.toString -> String
   :Integer.toString -> String
@@ -41,7 +45,6 @@ module(Data)
   # inference. (Sketch of a future instance: None.fmap(fn) = None; $T.fmap(fn($T)) = fn(this).)
   # The [Functor] class and the generic [fmap] live in [Data/functor.ct]; the [List]
   # collection and its [ConsList] implementation live in [Data/list.ct].
-
   class(Set[$T])
 
   # A [Set] is a collection of zero or more unique items.

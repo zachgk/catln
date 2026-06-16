@@ -5,6 +5,7 @@ Prgm
                 ( "/even"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /even( Value /x -> /Data/Primitive/Integer ) -> UnionType
@@ -33,6 +34,7 @@ Prgm
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) ->
@@ -55,6 +57,7 @@ Prgm
                 ( "/evenAdd"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /evenAdd( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer ) | /even( Value /x -> TVArg /a = Value /a ) ->

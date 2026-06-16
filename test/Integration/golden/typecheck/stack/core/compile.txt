@@ -4,7 +4,8 @@ Prgm
             [
                 ( "/Catln/llvm"
                 , ObjectMapItem
-                    { omiDecls =
+                    { omiDecls = []
+                    , omiRuntimeDecls =
                         [ /Catln/llvm( Value /c ) -> /Catln/CatlnResult.. ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -14,6 +15,7 @@ Prgm
                 ( "/Catln/#else"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/#else ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -23,6 +25,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/#md( Value /text -> /Data/String ) ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -31,6 +34,7 @@ Prgm
                 ( "/Catln/Else"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Else ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -39,6 +43,7 @@ Prgm
                 ( "/Catln/#noCore"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/#noCore ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -47,6 +52,7 @@ Prgm
                 ( "/Catln/#argStart"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/#argStart ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -55,6 +61,7 @@ Prgm
                 ( "/Catln/#argEnd"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/#argEnd ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -63,6 +70,7 @@ Prgm
                 ( "/Catln/#test"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/#test ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -72,6 +80,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/#name( Value /name -> /Data/String ) ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -79,7 +88,8 @@ Prgm
             ,
                 ( "/Catln/exit"
                 , ObjectMapItem
-                    { omiDecls =
+                    { omiDecls = []
+                    , omiRuntimeDecls =
                         [ /Catln/exit( Value /val -> /Data/Primitive/Integer )( Value /this -> /Catln/IO ) -> /Catln/IO ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -88,7 +98,8 @@ Prgm
             ,
                 ( "/operator?->"
                 , ObjectMapItem
-                    { omiDecls =
+                    { omiDecls = []
+                    , omiRuntimeDecls =
                         [ /operator?->( Value /l= Hole TopType HoleActive Nothing )( Value /r= Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -98,6 +109,7 @@ Prgm
                 ( "/Catln/www"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Catln/www( Value /html -> /Data/String ) -> /Catln/CatlnResult
@@ -115,6 +127,7 @@ Prgm
                         [ /Catln/#assert( Value /test -> ∀/Data/Primitive/Boolean )
                         , /Catln/#assert( Value /test -> ∀/Data/Primitive/Boolean )( Value /msg -> /Data/String )
                         ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -124,6 +137,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/#print( Value /p -> ∀/Catln/Doc/DShow ) ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -133,6 +147,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/CatlnResult( Value /name -> /Data/String )( Value /contents -> /Data/String ) ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -142,6 +157,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/#runtime( Value /k -> /Data/String ) ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -151,6 +167,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/#eximport( Value /name -> /Data/String ) ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -159,6 +176,7 @@ Prgm
                 ( "/Catln/#example"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/#example ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -168,6 +186,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/ThenElse/fromBool( Value /v -> ∀/Data/Primitive/Boolean ) -> ∀/Catln/ThenElse ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Catln/ThenElse/fromBool( Value /v -> /Data/Primitive/True = Value /Data/Primitive/True ) -> /Catln/Then = Value /Catln/Then
@@ -180,6 +199,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Catln/classPlaceholder[ /T : TopType ] ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -187,7 +207,8 @@ Prgm
             ,
                 ( "/Catln/println"
                 , ObjectMapItem
-                    { omiDecls =
+                    { omiDecls = []
+                    , omiRuntimeDecls =
                         [ /Catln/println( Value /msg -> /Data/String )( Value /this -> /Catln/IO ) -> /Catln/IO ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -197,6 +218,7 @@ Prgm
                 ( "/Catln/Then"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Then ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -205,6 +227,7 @@ Prgm
                 ( "/Catln/IO"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/IO ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }

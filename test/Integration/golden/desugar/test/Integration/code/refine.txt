@@ -5,6 +5,7 @@ Prgm
                 ( "/even"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ even( Value x -> /Data/Primitive/Integer ) -> ~Bool = /operator==
@@ -19,6 +20,7 @@ Prgm
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= exit
@@ -36,6 +38,7 @@ Prgm
                 ( "/evenAdd"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ evenAdd( Value a -> /Data/Primitive/Integer )( Value b -> /Data/Primitive/Integer ) | even( Value a ) -> /Data/Primitive/Integer = /operator+( Value /l= Value a )( Value /r= Value b ) ]

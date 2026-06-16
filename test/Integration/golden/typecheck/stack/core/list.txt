@@ -4,7 +4,8 @@ Prgm
             [
                 ( "/Data/range"
                 , ObjectMapItem
-                    { omiDecls =
+                    { omiDecls = []
+                    , omiRuntimeDecls =
                         [ /Data/range( Value /stop -> /Data/Primitive/Integer ) -> ∀/Data/ConsList ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -14,6 +15,7 @@ Prgm
                 ( "/Data/length"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/length( Value /this -> /Data/Nil ) -> /Data/Primitive/Integer = CInt 0
@@ -38,9 +40,9 @@ Prgm
                 ( "/Data/sum"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/sum( Value /lst -> ∀/Data/List ) -> /Data/Primitive/Integer
-                        , /Data/sum( Value /lst -> ∀/Data/ConsList ) -> /Data/Primitive/Integer
-                        ]
+                        [ /Data/sum( Value /lst -> ∀/Data/List ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls =
+                        [ /Data/sum( Value /lst -> ∀/Data/ConsList ) -> /Data/Primitive/Integer ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -49,6 +51,7 @@ Prgm
                 ( "/Data/Nil"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Nil ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -57,6 +60,7 @@ Prgm
                 ( "/Data/List/fmap"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/List/fmap( Value /lst -> /Data/Nil = Value /Data/Nil )
@@ -86,6 +90,7 @@ Prgm
                         [ /Data/Cons[ /T : TopType ]( Value /head -> $/T )
                             ( Value /tail -> ∀/Data/ConsList[ /T=$_/T ] )
                         ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -94,9 +99,9 @@ Prgm
                 ( "/Data/reversed"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/reversed( Value /lst -> ∀/Data/List ) -> ∀/Data/List
-                        , /Data/reversed( Value /lst -> ∀/Data/ConsList ) -> ∀/Data/ConsList
-                        ]
+                        [ /Data/reversed( Value /lst -> ∀/Data/List ) -> ∀/Data/List ]
+                    , omiRuntimeDecls =
+                        [ /Data/reversed( Value /lst -> ∀/Data/ConsList ) -> ∀/Data/ConsList ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -105,9 +110,9 @@ Prgm
                 ( "/Data/sorted"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/sorted( Value /lst -> ∀/Data/List ) -> ∀/Data/List
-                        , /Data/sorted( Value /lst -> ∀/Data/ConsList ) -> ∀/Data/ConsList
-                        ]
+                        [ /Data/sorted( Value /lst -> ∀/Data/List ) -> ∀/Data/List ]
+                    , omiRuntimeDecls =
+                        [ /Data/sorted( Value /lst -> ∀/Data/ConsList ) -> ∀/Data/ConsList ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -116,9 +121,9 @@ Prgm
                 ( "/Data/any"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/any( Value /lst -> ∀/Data/List ) -> ∀/Data/Primitive/Boolean
-                        , /Data/any( Value /lst -> ∀/Data/ConsList ) -> ∀/Data/Primitive/Boolean
-                        ]
+                        [ /Data/any( Value /lst -> ∀/Data/List ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls =
+                        [ /Data/any( Value /lst -> ∀/Data/ConsList ) -> ∀/Data/Primitive/Boolean ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -127,6 +132,7 @@ Prgm
                 ( "/Data/List/testListFunctorPreservesLength"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ Value /Data/List/testListFunctorPreservesLength -> /Data/Primitive/Integer = CInt 0 ]
@@ -136,9 +142,9 @@ Prgm
                 ( "/Data/all"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/all( Value /lst -> ∀/Data/List ) -> ∀/Data/Primitive/Boolean
-                        , /Data/all( Value /lst -> ∀/Data/ConsList ) -> ∀/Data/Primitive/Boolean
-                        ]
+                        [ /Data/all( Value /lst -> ∀/Data/List ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls =
+                        [ /Data/all( Value /lst -> ∀/Data/ConsList ) -> ∀/Data/Primitive/Boolean ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }

@@ -4,7 +4,8 @@ Prgm
             [
                 ( "/operator<="
                 , ObjectMapItem
-                    { omiDecls =
+                    { omiDecls = []
+                    , omiRuntimeDecls =
                         [ /operator<=( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
                         , /operator<=( Value /l -> /Data/Primitive/Float = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
                         ]
@@ -15,7 +16,8 @@ Prgm
             ,
                 ( "/operator//"
                 , ObjectMapItem
-                    { omiDecls =
+                    { omiDecls = []
+                    , omiRuntimeDecls =
                         [ /operator//( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Integer
                         , /operator//( Value /l -> /Data/Primitive/Float = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Float
                         ]
@@ -27,8 +29,9 @@ Prgm
                 ( "/operator=="
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator==( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-                        , /operator==( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        [ /operator==( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls =
+                        [ /operator==( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
                         , /operator==( Value /l -> /Data/Primitive/Float = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRefineDecls = []
@@ -43,7 +46,8 @@ Prgm
             ,
                 ( "/operator++"
                 , ObjectMapItem
-                    { omiDecls =
+                    { omiDecls = []
+                    , omiRuntimeDecls =
                         [ /operator++( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Integer ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -52,7 +56,8 @@ Prgm
             ,
                 ( "/operator>="
                 , ObjectMapItem
-                    { omiDecls =
+                    { omiDecls = []
+                    , omiRuntimeDecls =
                         [ /operator>=( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
                         , /operator>=( Value /l -> /Data/Primitive/Float = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
                         ]
@@ -63,7 +68,8 @@ Prgm
             ,
                 ( "/operator%"
                 , ObjectMapItem
-                    { omiDecls =
+                    { omiDecls = []
+                    , omiRuntimeDecls =
                         [ /operator%( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Integer ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -73,6 +79,7 @@ Prgm
                 ( "/Data/Primitive/True"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Primitive/True ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -80,7 +87,8 @@ Prgm
             ,
                 ( "/operator+"
                 , ObjectMapItem
-                    { omiDecls =
+                    { omiDecls = []
+                    , omiRuntimeDecls =
                         [ /operator+( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Integer
                         , /operator+( Value /l -> /Data/Primitive/Float = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Float
                         ]
@@ -91,7 +99,8 @@ Prgm
             ,
                 ( "/operator<"
                 , ObjectMapItem
-                    { omiDecls =
+                    { omiDecls = []
+                    , omiRuntimeDecls =
                         [ /operator<( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
                         , /operator<( Value /l -> /Data/Primitive/Float = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
                         ]
@@ -103,6 +112,7 @@ Prgm
                 ( "/Data/Primitive/inverse"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Primitive/inverse( Value t -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator-( Value /a= Value t ) ]
@@ -111,7 +121,8 @@ Prgm
             ,
                 ( "/Data/Primitive/round"
                 , ObjectMapItem
-                    { omiDecls =
+                    { omiDecls = []
+                    , omiRuntimeDecls =
                         [ /Data/Primitive/round( Value /this -> /Data/Primitive/Float ) -> /Data/Primitive/Integer ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -120,7 +131,8 @@ Prgm
             ,
                 ( "/operator-"
                 , ObjectMapItem
-                    { omiDecls =
+                    { omiDecls = []
+                    , omiRuntimeDecls =
                         [ /operator-( Value /a= Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
                         , /operator-( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Integer
                         , /operator-( Value /a= Hole /Data/Primitive/Float HoleActive Nothing ) -> /Data/Primitive/Float
@@ -135,6 +147,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /operator^( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /operator^( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing )= Value False
@@ -149,6 +162,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /operator~( Value /a= Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /operator~( Value /a= Hole /Data/Primitive/True HoleActive Nothing )= Value False
@@ -159,7 +173,8 @@ Prgm
             ,
                 ( "/operator>"
                 , ObjectMapItem
-                    { omiDecls =
+                    { omiDecls = []
+                    , omiRuntimeDecls =
                         [ /operator>( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
                         , /operator>( Value /l -> /Data/Primitive/Float = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
                         ]
@@ -172,6 +187,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /operator&&( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /operator&&( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing )= Value True
@@ -185,6 +201,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /operator||( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /operator||( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )= Value True
@@ -197,6 +214,7 @@ Prgm
                 ( "/Data/Primitive/False"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Primitive/False ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -205,6 +223,7 @@ Prgm
                 ( "/Data/Primitive/mempty"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ Value /Data/Primitive/mempty -> /Data/Primitive/Integer = CInt 0 ]
@@ -213,7 +232,8 @@ Prgm
             ,
                 ( "/Data/Primitive/floor"
                 , ObjectMapItem
-                    { omiDecls =
+                    { omiDecls = []
+                    , omiRuntimeDecls =
                         [ /Data/Primitive/floor( Value /this -> /Data/Primitive/Float ) -> /Data/Primitive/Integer ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -223,6 +243,7 @@ Prgm
                 ( "/Data/Primitive/exampleZeroPlusZero"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ Value /Data/Primitive/exampleZeroPlusZero= CInt 0 ]
@@ -231,7 +252,8 @@ Prgm
             ,
                 ( "/operator*"
                 , ObjectMapItem
-                    { omiDecls =
+                    { omiDecls = []
+                    , omiRuntimeDecls =
                         [ /operator*( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Integer
                         , /operator*( Value /l -> /Data/Primitive/Float = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Float
                         ]
@@ -243,6 +265,7 @@ Prgm
                 ( "/Data/Primitive/Integer"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -251,6 +274,7 @@ Prgm
                 ( "/"
                 , ObjectMapItem
                     { omiDecls = [ Value / ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -258,7 +282,8 @@ Prgm
             ,
                 ( "/Data/Primitive/ceil"
                 , ObjectMapItem
-                    { omiDecls =
+                    { omiDecls = []
+                    , omiRuntimeDecls =
                         [ /Data/Primitive/ceil( Value /this -> /Data/Primitive/Float ) -> /Data/Primitive/Integer ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -267,18 +292,25 @@ Prgm
             ,
                 ( "/operator!="
                 , ObjectMapItem
-                    { omiDecls =
+                    { omiDecls = []
+                    , omiRuntimeDecls =
                         [ /operator!=( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
                         , /operator!=( Value /l -> /Data/Primitive/Float = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /operator!=( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing )= Value False
+                        , /operator!=( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing )= Value True
+                        , /operator!=( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing )= Value True
+                        , /operator!=( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing )= Value False
+                        ]
                     }
                 )
             ,
                 ( "/Data/Primitive/Float"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Primitive/Float ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }

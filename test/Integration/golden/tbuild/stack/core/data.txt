@@ -6,6 +6,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /ContextOut( EAppVar /V TopType )( EAppArg Value /value -> $/V )( EAppSpread Hole TopType HoleActive Nothing ) ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -13,7 +14,8 @@ Prgm
             ,
                 ( "/operator=="
                 , ObjectMapItem
-                    { omiDecls =
+                    { omiDecls = []
+                    , omiRuntimeDecls =
                         [ /operator==( EAppArg Value /l -> /Data/String = Hole /Data/String HoleActive Nothing )( EAppArg Value /r -> /Data/String = Hole /Data/String HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -26,6 +28,8 @@ Prgm
                         [ /Data/toString( EAppArg Value /this -> /Data/String ) -> /Data/String
                         , /Data/toString( EAppArg Value /this -> /Data/Primitive/Integer ) -> /Data/String
                         ]
+                    , omiRuntimeDecls =
+                        [ /Data/toString( EAppArg Value /this -> /Data/Primitive/Integer ) -> /Data/String ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/toString( EAppArg Value /this -> /Data/String ) -> TVArg /this = ( Value /this ↦ TVArg /this ) ]
@@ -36,6 +40,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /ContextIn( EAppVar /V TopType )( EAppArg Value /value -> $/V )( EAppSpread Hole TopType HoleActive Nothing ) ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -44,6 +49,7 @@ Prgm
                 ( "/Data/String"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/String ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -52,8 +58,9 @@ Prgm
                 ( "/Context"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Context( EAppVar /V TopType )( EAppArg Value /value -> $/V )( EAppSpread Hole TopType HoleActive Nothing )
-                        , /Context( EAppVar /T TopType )( EAppVar /V TopType )( EAppArg Value /value -> $/V )( EAppSpread Hole TopType HoleActive Nothing ) | /operator?->
+                        [ /Context( EAppVar /V TopType )( EAppArg Value /value -> $/V )( EAppSpread Hole TopType HoleActive Nothing ) ]
+                    , omiRuntimeDecls =
+                        [ /Context( EAppVar /T TopType )( EAppVar /V TopType )( EAppArg Value /value -> $/V )( EAppSpread Hole TopType HoleActive Nothing ) | /operator?->
                             ( EAppArg Value /l -> /ContextIn[ /V=TopType ]( /value=TopType ).. = /ContextIn( EAppVar /V $_/V )( EAppArg Value /value -> $/V = Hole $/V HoleActive Nothing )( EAppSpread Hole TopType HoleActive Nothing ) )( EAppArg Value /r -> $/T = Hole $/T HoleActive Nothing ) -> $/T
                         ]
                     , omiRefineDecls = []
@@ -64,6 +71,7 @@ Prgm
                 ( "/Data/None"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/None ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -73,6 +81,17 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/enum( EAppVar /T ∀/Data/Enum ) -> ∀/Data/Set[ /T=TopType ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/operator!="
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /operator!=( EAppArg Value /l -> /Data/String = Hole /Data/String HoleActive Nothing )( EAppArg Value /r -> /Data/String = Hole /Data/String HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -81,6 +100,7 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -124,6 +144,8 @@ Prgm
             These define the basic data types used in the language." )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "## String" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Declaration bounding the #runtime toString definition below." )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "## Context" )
         , /Catln/#md

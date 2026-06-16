@@ -5,6 +5,7 @@ Prgm
                 ( "/to_oct"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /to_oct( EAppArg Value /n -> /Data/Primitive/Integer ) ->
@@ -17,6 +18,7 @@ Prgm
                 ( "/rounded"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /rounded( EAppArg Value /x -> /Data/Primitive/Float ) ->
@@ -29,6 +31,7 @@ Prgm
                 ( "/string_length"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /string_length( EAppArg Value /s -> /Data/String ) ->
@@ -41,6 +44,7 @@ Prgm
                 ( "/BIG"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ Value /BIG ->
@@ -58,6 +62,7 @@ Prgm
                 ( "/make_range"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /make_range( EAppArg Value /n -> /Data/Primitive/Integer ) -> UnionType
@@ -76,6 +81,7 @@ Prgm
                 ( "/power_f"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /power_f( EAppArg Value /base -> /Data/Primitive/Float )( EAppArg Value /exp -> /Data/Primitive/Float ) ->
@@ -93,6 +99,7 @@ Prgm
                 ( "/sort_list"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /sort_list( EAppArg Value /lst -> ∀/Data/List ) -> UnionType
@@ -101,12 +108,7 @@ Prgm
                                     ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) )
                                 , fromList []
                                 )
-                            , /Data/sorted
-                                ( /lst=
-                                    ( TopType | PredClass /Data/List && !
-                                        ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) )
-                                    )
-                                )
+                            , /Data/sorted( /lst=∀/Data/List )
                             , []
                             ) = /sorted
                             ( EAppArg Value /lst -> TVArg /lst = ( Value /lst ↦ TVArg /lst ) )
@@ -117,6 +119,7 @@ Prgm
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn
@@ -174,6 +177,7 @@ Prgm
                 ( "/to_float_from_int"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /to_float_from_int( EAppArg Value /x -> /Data/Primitive/Integer ) ->
@@ -186,6 +190,7 @@ Prgm
                 ( "/int_max"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /int_max( EAppArg Value /a -> /Data/Primitive/Integer )( EAppArg Value /b -> /Data/Primitive/Integer ) ->
@@ -203,6 +208,7 @@ Prgm
                 ( "/float_max"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /float_max( EAppArg Value /a -> /Data/Primitive/Float )( EAppArg Value /b -> /Data/Primitive/Float ) ->
@@ -220,6 +226,7 @@ Prgm
                 ( "/any_true"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /any_true( EAppArg Value /flags -> ∀/Data/List ) -> UnionType
@@ -227,12 +234,7 @@ Prgm
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
                                 )
-                            , /Data/any
-                                ( /lst=
-                                    ( TopType | PredClass /Data/List && !
-                                        ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) )
-                                    )
-                                )
+                            , /Data/any( /lst=∀/Data/List )
                             , []
                             ) = /any
                             ( EAppArg Value /lst -> TVArg /flags = ( Value /flags ↦ TVArg /flags ) )
@@ -243,6 +245,7 @@ Prgm
                 ( "/square"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /square( EAppArg Value /x -> /Data/Primitive/Float ) ->
@@ -260,6 +263,7 @@ Prgm
                 ( "/to_bin"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /to_bin( EAppArg Value /n -> /Data/Primitive/Integer ) ->
@@ -272,18 +276,19 @@ Prgm
                 ( "/add"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /add( EAppArg Value /x -> /Data/Primitive/Integer )( EAppArg Value /y -> /Data/Primitive/Integer ) ->
                             ( /operator+
-                                ( /r=/Data/Primitive/Float
-                                , /l=/Data/Primitive/Float
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
                                 ) + /operator+
                                 ( /r=/Data/String
                                 , /l=/Data/String
                                 ) + /operator+
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
+                                ( /r=/Data/Primitive/Float
+                                , /l=/Data/Primitive/Float
                                 ) + /Data/String + /add.result
                                 ( /x=/Data/Primitive/Integer
                                 , /y=/Data/Primitive/Integer
@@ -298,6 +303,7 @@ Prgm
                 ( "/ceiled"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ceiled( EAppArg Value /x -> /Data/Primitive/Float ) ->
@@ -310,6 +316,7 @@ Prgm
                 ( "/PI"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ Value /PI -> /Data/Primitive/Float = 3.14159 ]
@@ -319,6 +326,7 @@ Prgm
                 ( "/DOUBLE_PI"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ Value /DOUBLE_PI ->
@@ -336,6 +344,7 @@ Prgm
                 ( "/power"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /power( EAppArg Value /base -> /Data/Primitive/Integer )( EAppArg Value /exp -> /Data/Primitive/Integer ) ->
@@ -353,6 +362,7 @@ Prgm
                 ( "/int_min"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /int_min( EAppArg Value /a -> /Data/Primitive/Integer )( EAppArg Value /b -> /Data/Primitive/Integer ) ->
@@ -370,6 +380,7 @@ Prgm
                 ( "/to_bool_from_int"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /to_bool_from_int( EAppArg Value /x -> /Data/Primitive/Integer ) -> UnionType
@@ -389,6 +400,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /scale( EAppArg Value /values -> ∀/Data/List )( EAppArg Value /factor -> /Data/Primitive/Integer ) -> ∀/Data/List ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -397,6 +409,7 @@ Prgm
                 ( "/int_div"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /int_div( EAppArg Value /a -> /Data/Primitive/Integer )( EAppArg Value /b -> /Data/Primitive/Integer ) ->
@@ -414,16 +427,11 @@ Prgm
                 ( "/sum_list"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /sum_list( EAppArg Value /nums -> ∀/Data/List ) ->
-                            ( /Data/sum
-                                ( /lst=
-                                    ( TopType | PredClass /Data/List && !
-                                        ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) )
-                                    )
-                                ) + /Data/Primitive/Integer
-                            ) = /sum
+                            ( /Data/sum( /lst=∀/Data/List ) + /Data/Primitive/Integer ) = /sum
                             ( EAppArg Value /lst -> TVArg /nums = ( Value /nums ↦ TVArg /nums ) )
                         ]
                     }
@@ -432,6 +440,7 @@ Prgm
                 ( "/float_min"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /float_min( EAppArg Value /a -> /Data/Primitive/Float )( EAppArg Value /b -> /Data/Primitive/Float ) ->
@@ -449,6 +458,7 @@ Prgm
                 ( "/to_bool_from_float"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /to_bool_from_float( EAppArg Value /x -> /Data/Primitive/Float ) -> UnionType
@@ -467,6 +477,7 @@ Prgm
                 ( "/char_from_code"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /char_from_code( EAppArg Value /n -> /Data/Primitive/Integer ) ->
@@ -479,6 +490,7 @@ Prgm
                 ( "/code_from_char"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /code_from_char( EAppArg Value /c -> /Data/String ) ->
@@ -491,20 +503,21 @@ Prgm
                 ( "/add.result"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /add.result
                             ( EAppArg Value /x -> ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float ) )
                             ( EAppArg Value /y -> ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float ) ) ->
                             ( /operator+
-                                ( /r=/Data/Primitive/Float
-                                , /l=/Data/Primitive/Float
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
                                 ) + /operator+
                                 ( /r=/Data/String
                                 , /l=/Data/String
                                 ) + /operator+
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
+                                ( /r=/Data/Primitive/Float
+                                , /l=/Data/Primitive/Float
                                 ) + /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float
                             ) = /operator+
                             ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
@@ -516,6 +529,7 @@ Prgm
                 ( "/concat_strings"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /concat_strings( EAppArg Value /a -> /Data/String )( EAppArg Value /b -> /Data/String ) ->
@@ -533,6 +547,7 @@ Prgm
                 ( "/to_int_from_float"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /to_int_from_float( EAppArg Value /x -> /Data/Primitive/Float ) ->
@@ -545,6 +560,7 @@ Prgm
                 ( "/reverse_list"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /reverse_list( EAppArg Value /lst -> ∀/Data/List ) -> UnionType
@@ -553,12 +569,7 @@ Prgm
                                     ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) )
                                 , fromList []
                                 )
-                            , /Data/reversed
-                                ( /lst=
-                                    ( TopType | PredClass /Data/List && !
-                                        ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) )
-                                    )
-                                )
+                            , /Data/reversed( /lst=∀/Data/List )
                             , []
                             ) = /reversed
                             ( EAppArg Value /lst -> TVArg /lst = ( Value /lst ↦ TVArg /lst ) )
@@ -569,6 +580,7 @@ Prgm
                 ( "/all_true"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /all_true( EAppArg Value /flags -> ∀/Data/List ) -> UnionType
@@ -576,12 +588,7 @@ Prgm
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
                                 )
-                            , /Data/all
-                                ( /lst=
-                                    ( TopType | PredClass /Data/List && !
-                                        ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) )
-                                    )
-                                )
+                            , /Data/all( /lst=∀/Data/List )
                             , []
                             ) = /all
                             ( EAppArg Value /lst -> TVArg /flags = ( Value /flags ↦ TVArg /flags ) )
@@ -592,6 +599,7 @@ Prgm
                 ( "/floored"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /floored( EAppArg Value /x -> /Data/Primitive/Float ) ->
@@ -604,6 +612,7 @@ Prgm
                 ( "/to_hex"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /to_hex( EAppArg Value /n -> /Data/Primitive/Integer ) ->
@@ -616,6 +625,7 @@ Prgm
                 ( "/MAX_SIZE"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ Value /MAX_SIZE -> /Data/Primitive/Integer = 100 ]
@@ -625,6 +635,7 @@ Prgm
                 ( "/to_str_from_int"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /to_str_from_int( EAppArg Value /x -> /Data/Primitive/Integer ) ->
@@ -637,6 +648,7 @@ Prgm
                 ( "/abs_int"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs_int( EAppArg Value /x -> /Data/Primitive/Integer ) ->
@@ -649,6 +661,7 @@ Prgm
                 ( "/abs_float"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs_float( EAppArg Value /x -> /Data/Primitive/Float ) ->
@@ -661,6 +674,7 @@ Prgm
                 ( "/to_str_from_float"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /to_str_from_float( EAppArg Value /x -> /Data/Primitive/Float ) ->

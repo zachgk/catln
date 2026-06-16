@@ -5,6 +5,7 @@ Prgm
                 ( "/to_oct"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ to_oct( Value n -> /Data/Primitive/Integer ) -> /Data/String = oct( Value /this= Value n ) ]
@@ -14,6 +15,7 @@ Prgm
                 ( "/rounded"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ rounded( Value x -> /Data/Primitive/Float ) -> /Data/Primitive/Integer = round( Value /this= Value x ) ]
@@ -23,6 +25,7 @@ Prgm
                 ( "/string_length"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ string_length( Value s -> /Data/String ) -> /Data/Primitive/Integer = length( Value /this= Value s ) ]
@@ -32,6 +35,7 @@ Prgm
                 ( "/BIG"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ Value BIG -> /Data/Primitive/Integer = /operator+( Value /l= Value MAX_SIZE )( Value /r= Value MAX_SIZE ) ]
@@ -41,6 +45,7 @@ Prgm
                 ( "/make_range"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ make_range( Value n -> /Data/Primitive/Integer ) -> ∀/Data/List = range( Value /stop= Value n ) ]
@@ -50,6 +55,7 @@ Prgm
                 ( "/power_f"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ power_f( Value base -> /Data/Primitive/Float )( Value exp -> /Data/Primitive/Float ) -> /Data/Primitive/Float = pow( Value /this= Value base )( Value /exp= Value exp ) ]
@@ -59,6 +65,7 @@ Prgm
                 ( "/sort_list"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ sort_list( Value lst -> ∀/Data/List ) -> ∀/Data/List = sorted( Value /lst= Value lst ) ]
@@ -68,6 +75,7 @@ Prgm
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn
@@ -91,6 +99,7 @@ Prgm
                 ( "/to_float_from_int"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ to_float_from_int( Value x -> /Data/Primitive/Integer ) -> /Data/Primitive/Float = toFloat( Value /this= Value x ) ]
@@ -100,6 +109,7 @@ Prgm
                 ( "/int_max"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ int_max( Value a -> /Data/Primitive/Integer )( Value b -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = max( Value /l= Value a )( Value /r= Value b ) ]
@@ -109,6 +119,7 @@ Prgm
                 ( "/float_max"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ float_max( Value a -> /Data/Primitive/Float )( Value b -> /Data/Primitive/Float ) -> /Data/Primitive/Float = max( Value /l= Value a )( Value /r= Value b ) ]
@@ -118,6 +129,7 @@ Prgm
                 ( "/any_true"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ any_true( Value flags -> ∀/Data/List ) -> ∀/Data/Primitive/Boolean = any( Value /lst= Value flags ) ]
@@ -127,6 +139,7 @@ Prgm
                 ( "/square"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ square( Value x -> /Data/Primitive/Float ) -> /Data/Primitive/Float = /operator*( Value /l= Value x )( Value /r= Value x ) ]
@@ -136,6 +149,7 @@ Prgm
                 ( "/to_bin"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ to_bin( Value n -> /Data/Primitive/Integer ) -> /Data/String = bin( Value /this= Value n ) ]
@@ -145,6 +159,7 @@ Prgm
                 ( "/add"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ add( Value x -> /Data/Primitive/Integer )( Value y -> /Data/Primitive/Integer )= add.result( Value /x= Value /x )( Value /y= Value /y ) ]
@@ -154,6 +169,7 @@ Prgm
                 ( "/ceiled"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ ceiled( Value x -> /Data/Primitive/Float ) -> /Data/Primitive/Integer = ceil( Value /this= Value x ) ]
@@ -163,6 +179,7 @@ Prgm
                 ( "/PI"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ Value PI -> /Data/Primitive/Float = CFloat 3.14159 ]
@@ -172,6 +189,7 @@ Prgm
                 ( "/DOUBLE_PI"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ Value DOUBLE_PI -> /Data/Primitive/Float = /operator*( Value /l= Value PI )
@@ -183,6 +201,7 @@ Prgm
                 ( "/power"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ power( Value base -> /Data/Primitive/Integer )( Value exp -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = pow( Value /this= Value base )( Value /exp= Value exp ) ]
@@ -192,6 +211,7 @@ Prgm
                 ( "/int_min"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ int_min( Value a -> /Data/Primitive/Integer )( Value b -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = min( Value /l= Value a )( Value /r= Value b ) ]
@@ -201,6 +221,7 @@ Prgm
                 ( "/to_bool_from_int"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ to_bool_from_int( Value x -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean = toBool( Value /this= Value x ) ]
@@ -211,6 +232,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ scale( Value values -> ∀/Data/List )( Value factor -> /Data/Primitive/Integer ) -> ∀/Data/List ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -219,6 +241,7 @@ Prgm
                 ( "/int_div"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ int_div( Value a -> /Data/Primitive/Integer )( Value b -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator//( Value /l= Value a )( Value /r= Value b ) ]
@@ -228,6 +251,7 @@ Prgm
                 ( "/sum_list"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ sum_list( Value nums -> ∀/Data/List ) -> /Data/Primitive/Integer = sum( Value /lst= Value nums ) ]
@@ -237,6 +261,7 @@ Prgm
                 ( "/float_min"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ float_min( Value a -> /Data/Primitive/Float )( Value b -> /Data/Primitive/Float ) -> /Data/Primitive/Float = min( Value /l= Value a )( Value /r= Value b ) ]
@@ -246,6 +271,7 @@ Prgm
                 ( "/to_bool_from_float"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ to_bool_from_float( Value x -> /Data/Primitive/Float ) -> ∀/Data/Primitive/Boolean = toBool( Value /this= Value x ) ]
@@ -255,6 +281,7 @@ Prgm
                 ( "/char_from_code"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ char_from_code( Value n -> /Data/Primitive/Integer ) -> /Data/String = chr( Value /n= Value n ) ]
@@ -264,6 +291,7 @@ Prgm
                 ( "/code_from_char"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ code_from_char( Value c -> /Data/String ) -> /Data/Primitive/Integer = ord( Value /this= Value c ) ]
@@ -273,6 +301,7 @@ Prgm
                 ( "/add.result"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ add.result( Value /x )( Value /y ) -> /Data/Primitive/Integer = /operator+( Value /l= Value x )( Value /r= Value y ) ]
@@ -282,6 +311,7 @@ Prgm
                 ( "/concat_strings"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ concat_strings( Value a -> /Data/String )( Value b -> /Data/String ) -> /Data/String = /operator+( Value /l= Value a )( Value /r= Value b ) ]
@@ -291,6 +321,7 @@ Prgm
                 ( "/to_int_from_float"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ to_int_from_float( Value x -> /Data/Primitive/Float ) -> /Data/Primitive/Integer = toInt( Value /this= Value x ) ]
@@ -300,6 +331,7 @@ Prgm
                 ( "/reverse_list"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ reverse_list( Value lst -> ∀/Data/List ) -> ∀/Data/List = reversed( Value /lst= Value lst ) ]
@@ -309,6 +341,7 @@ Prgm
                 ( "/all_true"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ all_true( Value flags -> ∀/Data/List ) -> ∀/Data/Primitive/Boolean = all( Value /lst= Value flags ) ]
@@ -318,6 +351,7 @@ Prgm
                 ( "/floored"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ floored( Value x -> /Data/Primitive/Float ) -> /Data/Primitive/Integer = floor( Value /this= Value x ) ]
@@ -327,6 +361,7 @@ Prgm
                 ( "/to_hex"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ to_hex( Value n -> /Data/Primitive/Integer ) -> /Data/String = hex( Value /this= Value n ) ]
@@ -336,6 +371,7 @@ Prgm
                 ( "/MAX_SIZE"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ Value MAX_SIZE -> /Data/Primitive/Integer = CInt 100 ]
@@ -345,6 +381,7 @@ Prgm
                 ( "/to_str_from_int"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ to_str_from_int( Value x -> /Data/Primitive/Integer ) -> /Data/String = toString( Value /this= Value x ) ]
@@ -354,6 +391,7 @@ Prgm
                 ( "/abs_int"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ abs_int( Value x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = abs( Value /this= Value x ) ]
@@ -363,6 +401,7 @@ Prgm
                 ( "/abs_float"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ abs_float( Value x -> /Data/Primitive/Float ) -> /Data/Primitive/Float = abs( Value /this= Value x ) ]
@@ -372,6 +411,7 @@ Prgm
                 ( "/to_str_from_float"
                 , ObjectMapItem
                     { omiDecls = []
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ to_str_from_float( Value x -> /Data/Primitive/Float ) -> /Data/String = toString( Value /this= Value x ) ]

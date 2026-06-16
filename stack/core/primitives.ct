@@ -25,6 +25,11 @@ module(Data/Primitive)
   (_ :: False == _ :: True)= False
   (_ :: False == _ :: False)= True
 
+  (_ :: True != _ :: True)= False
+  (_ :: True != _ :: False)= True
+  (_ :: False != _ :: True)= True
+  (_ :: False != _ :: False)= False
+
   (~(_ :: Boolean)) -> Boolean
   (~(_ :: True))= False
   (~(_ :: False))= True
