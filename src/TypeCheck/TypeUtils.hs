@@ -23,11 +23,13 @@ import qualified Data.HashSet        as S
 
 import           Control.Monad
 import           Control.Monad.State
+import           CtConstants         (runtimeAnnot)
 import           Data.Bifunctor      (Bifunctor (bimap))
 import           Data.List           (intercalate)
 import           Data.UUID           (nil)
 import           MapMeta
 import           Semantics
+import           Semantics.Annots    (hasAnnot)
 import           Semantics.Prgm
 import           Semantics.TypeGraph
 import           Semantics.Types
@@ -42,10 +44,12 @@ import           Utils
 -- Especially, not specifying bounds should not turn them into TopType.
 -- Similarly, matches or patterns are less effective then functions.
 -- TODO May need to differentiate top level of functions from inner levels
-objectPrecedence :: (Show m, Show (e m)) => ObjArr e m -> [Int]
+objectPrecedence :: (ExprClass e, Show m, Show (e m)) => ObjArr e m -> [Int]
 objectPrecedence ObjArr{oaBasis=TypeObj}=                             [1]
 objectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=Nothing}           = [2, 1] -- Type objects have priority
-objectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=Just (Nothing, _)} = [2, 2] -- Declaration objects have priority [2,2], better than definitions
+objectPrecedence oa@ObjArr{oaBasis=FunctionObj, oaArr=Just (Nothing, _)}
+  | hasAnnot runtimeAnnot oa                                          = [2, 3] -- Runtime declarations operate at definition precedence
+  | otherwise                                                         = [2, 2] -- Declaration objects have priority [2,2], better than definitions
 objectPrecedence ObjArr{oaBasis=FunctionObj, oaArr=Just (Just{}, _)}  = [2, 3] -- Definition objects have priority [2,3]
 objectPrecedence ObjArr{oaBasis=PatternObj}                           = [3]
 objectPrecedence ObjArr{oaBasis=MatchObj}                             =   [4]

@@ -927,7 +927,7 @@ predImplies typeEnv vaenv (PredsOne a1) (PredsOne a2) = predImpliesAtom typeEnv 
 -- ('tePrgmEnv') setting. For a sealed class @C@, @U_C@ is exactly the union of @C@'s declared
 -- members, so @~C@ and its expansion are equal regardless of any types defined elsewhere.
 predsSealed :: (TypeGraph tg) => TypeEnv tg -> TypePredicates -> Bool
-predsSealed TypeEnv{teClassGraph=ClassGraph cg} = go
+predsSealed typeEnv@TypeEnv{teClassGraph=ClassGraph cg} = go
   where
     go (PredsOne p)  = atomSealed p
     go (PredsAnd ps) = not (null ps) && all go ps -- PredsNone = PredsAnd [] ↦ False
@@ -935,6 +935,9 @@ predsSealed TypeEnv{teClassGraph=ClassGraph cg} = go
     atomSealed (PredClass c) = classSealed (ptName c)
     atomSealed (PredRel c)   = classSealed (ptName c)
     atomSealed (PredExpr _)  = False
+    -- In the program-as-written ('tePrgmEnv') environment every class is closed to its declared
+    -- members, so any class predicate may be soundly expanded to its declared constituents.
+    classSealed _ | tePrgmEnv typeEnv = True
     classSealed name = case graphLookup (PClassName name) cg of
       Just (CGClass (sealed, _, _, _)) -> sealed
       _ -> case [ s | (CGClass (s, _, _, _), cKey, _) <- graphToNodes cg, relativeNameMatches name (fromPartialName cKey) ] of

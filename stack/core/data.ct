@@ -15,6 +15,8 @@ module(Data)
 
   :String.toString -> String
   :String.toString= this
+  # Declaration bounding the #runtime toString definition below.
+  :Integer.toString -> String
   :Integer.toString -> String
     #runtime("intToString")
 
