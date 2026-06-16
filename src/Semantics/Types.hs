@@ -737,6 +737,50 @@ completeDataPartialsTop typeEnv = go
       | otherwise = p1
       where p1 = p{ptVars = fmap go ptVars, ptArgs = fmap go ptArgs}
 
+-- | Relax each data partial's self-referential field — a field whose type recurses back to a
+-- type the partial itself participates in (the same type, or a class the partial is a constituent
+-- of) — to 'PTopType'. Used on a bound that constrains a destructured value: such a field would
+-- otherwise require the value's corresponding field to already be recognized as a member of the
+-- recursive type, but a freshly destructured field variable carries no such constraint yet, so
+-- the match would spuriously fail (a rigid pattern-variable field cannot satisfy the recursive
+-- predicate and collapses to bottom). The recursive structure is still enforced wherever the
+-- field is genuinely used; a concrete field value still meets the relaxed bound unchanged, so no
+-- type information is lost. Only the exact self-reference is relaxed (a bare @~C@ predicate-rel or
+-- a lone @C@ partial), leaving every other field untouched.
+relaxRecursiveSelfArgs :: (TypeGraph tg) => TypeEnv tg -> Type -> Type
+relaxRecursiveSelfArgs typeEnv = onUnion
+  where
+    onUnion (UnionType mPreds leafs consts) = UnionType (fmap (bimap id onLeafs) mPreds) (onLeafs leafs) consts
+    onUnion t = t
+    onLeafs = joinUnionType . map onPartial . splitUnionType
+    onPartial p@PartialType{ptName, ptArgs} = p{ptArgs = fmap (relaxArg ptName) ptArgs}
+    relaxArg container t | referencesRecursively container t = PTopType
+                         | otherwise                         = t
+
+    -- The field's type names a type @c@ for which @container@ is recursive: either @c@ is the
+    -- container itself, or @container@ is one of @c@'s declared class constituents.
+    referencesRecursively container t = any recursiveWith (fieldRefNames t)
+      where recursiveWith c = sameName container c || S.member (makeAbsoluteName container) (classConstituentNames typeEnv c)
+
+    -- Top-level type names referenced by a field that is a bare self-reference: a @~C@
+    -- predicate-rel, or a lone positive @C@ partial. Anything more complex is left untouched.
+    fieldRefNames (UnionType (Just (preds, negLeafs)) ls _)
+      | H.null ls && H.null negLeafs = case tryPredsToList preds of
+          Just ps -> [ptName r | PredRel r <- ps]
+          Nothing -> []
+    fieldRefNames (UnionType Nothing ls []) = case splitUnionType ls of
+      [PartialType{ptName=n}] -> [n]
+      _                       -> []
+    fieldRefNames _ = []
+
+    sameName a b = makeAbsoluteName a == makeAbsoluteName b
+
+-- | The absolute names of a sealed class's declared constituents (empty for a non-class name).
+classConstituentNames :: (TypeGraph tg) => TypeEnv tg -> TypeName -> S.HashSet TypeName
+classConstituentNames TypeEnv{teClassGraph=ClassGraph cg} cName = case graphLookup (PClassName cName) cg of
+  Just (CGClass (_, _, classTypes, _)) -> S.map makeAbsoluteName $ S.unions $ map leafNameSet classTypes
+  _                                    -> S.empty
+
 -- | Splits a partial type by expanding any union-typed vars or args into separate partials.
 -- For example, P[$T=(A + B)] splits into [P[$T=A], P[$T=B]].
 -- Similarly, P(x=(A + B)) splits into [P(x=A), P(x=B)].

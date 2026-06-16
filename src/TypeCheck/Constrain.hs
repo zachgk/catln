@@ -153,7 +153,10 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByObjs i p@STy
     -- being bounded can reconcile with it. The original (uncompleted) forms are kept in the union
     -- too, so a param-form value still matches without widening.
     objMapBoundUb' = unionTypes feTypeEnv objMapBoundUb (completeDataPartials feTypeEnv objMapBoundUb)
-    boundUb = unionTypes feTypeEnv objMapBoundUb' argsBoundUb
+    -- Relax each bound object's self-referential field (one that recurses back to a type the
+    -- object participates in) so a destructured value whose corresponding field is still an
+    -- unconstrained pattern variable can reconcile with it (see 'relaxRecursiveSelfArgs').
+    boundUb = relaxRecursiveSelfArgs feTypeEnv $ unionTypes feTypeEnv objMapBoundUb' argsBoundUb
 
     -- A partially applied tuple would not be a raw type on the unionObj,
     -- but a subset of the arguments in that type
