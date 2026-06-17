@@ -154,6 +154,28 @@ diagonalProjection typeEnv argNames (UnionType Nothing leafs []) =
   unionAllTypes typeEnv [intersectAllTypes typeEnv (mapMaybe (`typeGetArg` p) argNames) | p <- splitUnionType leafs]
 diagonalProjection _ _ _ = BottomType
 
+-- | Universalize /destructuring binding variables/ that appear as argument values in a
+-- definition's input type. A pattern like @MyJust(v= lv)@ matches /any/ @MyJust@ regardless
+-- of the element, so for declaration-coverage its value at @v@ is the whole field domain,
+-- not the singleton of the fresh binding name @lv@ (which would make the definition appear
+-- to cover only that one instantiation). A binding variable is an argument whose value is a
+-- bare nominal naming nothing defined in the program; concrete pattern values (e.g. @v= 5@,
+-- whose value is @Integer@) are defined and so are left precise.
+universalizeBindingArgs :: S.HashSet Name -> Type -> Type
+universalizeBindingArgs defined = go
+  where
+    go (UnionType Nothing leafs []) = UnionType Nothing (joinUnionType $ map goPartial $ splitUnionType leafs) []
+    go t = t
+    goPartial p@PartialType{ptArgs} = p{ptArgs = H.map goArg ptArgs}
+    goArg v
+      | isBinding v = PTopType
+      | otherwise   = go v
+    isBinding v = case v of
+      UnionType Nothing leafs [] -> case splitUnionType leafs of
+        [PartialType{ptName, ptArgs, ptVars}] -> H.null ptArgs && H.null ptVars && not (S.member (makeAbsoluteName ptName) defined)
+        _                                     -> False
+      _ -> False
+
 -- | The single partial of a type, when it has exactly one.
 singleLeaf :: Type -> Maybe PartialType
 singleLeaf (UnionType Nothing leafs []) = case splitUnionType leafs of
@@ -163,7 +185,7 @@ singleLeaf _ = Nothing
 
 verifyObjMapItem :: TypeName -> ObjectMapItem Expr TypedMetaDat -> StateT FEnv TypeCheckResult ()
 verifyObjMapItem name (ObjectMapItem decls runtimeDecls refineDecls defs) = do
-  FEnv{feTypeEnv} <- get
+  FEnv{feTypeEnv, feLocalDefNames} <- get
   let prgmTypeEnv = feTypeEnv{tePrgmEnv = True}
   -- A runtime declaration has no body, but it behaves like a definition for coverage: it is
   -- bounded by the declarations (checked against declUnion) and contributes to the definition
@@ -180,6 +202,15 @@ verifyObjMapItem name (ObjectMapItem decls runtimeDecls refineDecls defs) = do
       let defInputTypes = map (completeDataPartials feTypeEnv) defInputTypes0
       let declUnion = unionAllTypes feTypeEnv declInputTypes
       let defUnion = unionAllTypes feTypeEnv defInputTypes
+
+      -- For /coverage/ (does the union of definitions fulfill a declaration?) a destructuring
+      -- binding matches any value at its field, so universalize those fields; see
+      -- 'universalizeBindingArgs'. This is used only for the fulfillment target below, never for
+      -- the definition-within-declaration check, which needs the precise (non-widened) type.
+      let ObjArrTypeGraph (ObjectMap objTg) = teTypeGraph feTypeEnv
+      let definedNames = (S.map makeAbsoluteName $ H.keysSet objTg) <> feLocalDefNames
+      let defInputTypesU = map (universalizeBindingArgs definedNames) defInputTypes
+      let defUnionU = unionAllTypes feTypeEnv defInputTypesU
 
       -- Check each definition (including runtime declarations) against declUnion
       let defsWithLocs = zip defInputTypes (map (getMetaPos . getExprMeta) (mapMaybe oaObj defLikeOAs))
@@ -200,8 +231,8 @@ verifyObjMapItem name (ObjectMapItem decls runtimeDecls refineDecls defs) = do
         -- diagonal projection of the definitions, not by the full product. Checking the product
         -- would spuriously demand off-diagonal pairs like @(Integer, Float)@.
         let (checkType, target) = case diagonalVar oa =<< singleLeaf declType of
-              Just (varBound, varArgs) -> (varBound, unionAllTypes prgmTypeEnv (map (diagonalProjection prgmTypeEnv varArgs) defInputTypes))
-              Nothing                  -> (declType, defUnion)
+              Just (varBound, varArgs) -> (varBound, unionAllTypes prgmTypeEnv (map (diagonalProjection prgmTypeEnv varArgs) defInputTypesU))
+              Nothing                  -> (declType, defUnionU)
         unless (isSubtypeOf prgmTypeEnv checkType target) $ do
           let notDefined = snd $ differenceTypeWithEnv prgmTypeEnv H.empty checkType target
           lift $ TypeCheckResult [UnfulfilledDeclaration name declType target notDefined declLoc] ()
