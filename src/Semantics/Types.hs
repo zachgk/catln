@@ -330,23 +330,37 @@ type TypeVarArgEnv = H.HashMap TypeVarAux Type
 type TypeIOVarArgEnv = H.HashMap TypeVarAux (Type, Type)
 
 instance Show TypePredicates where
-  show (PredsOne p)  = show p
-  show (PredsAnd ps) = intercalate " && " $ map show ps
-  show (PredsNot p)  = printf "!(%s)" (show p)
+  show = showPredsD maxShowDepth
+
+showPredsD :: Int -> TypePredicates -> String
+showPredsD d (PredsOne p)  = showPartialPredD d p
+showPredsD d (PredsAnd ps) = intercalate " && " $ map (showPredsD d) ps
+showPredsD d (PredsNot p)  = "!(" ++ showPredsD d p ++ ")"
+
+-- | Render a single 'TypePredicate', preserving the derived-style output but
+-- routing the nested 'PartialType' through the depth-bounded renderer.
+showPartialPredD :: Int -> TypePredicate -> String
+showPartialPredD d (PredExpr p)  = "PredExpr "  ++ showPartialD (d - 1) p
+showPartialPredD d (PredClass p) = "PredClass " ++ showPartialD (d - 1) p
+showPartialPredD d (PredRel p)   = "PredRel "   ++ showPartialD (d - 1) p
 
 instance Show PartialType where
-  show (PartialType ptName ptVars ptArgs ptPreds ptArgMode) = concat [showName, showTypeVars ptVars, showArgs ptArgs, showPreds ptPreds, showPtArgMode]
+  show = boundedTypeStr . showPartialD maxShowDepth
+
+showPartialD :: Int -> PartialType -> String
+showPartialD d _ | d <= 0 = showTruncated
+showPartialD d (PartialType ptName ptVars ptArgs ptPreds ptArgMode) = concat [showName, showTypeVars ptVars, showArgs ptArgs, showPreds ptPreds, showPtArgMode]
     where
       showName = if ptName == anonStr then "" else ptName
-      showArg (argName, argVal) = show argName ++ "=" ++ show argVal
+      showArg (argName, argVal) = show argName ++ "=" ++ showTypeD (d - 1) argVal
       showTypeVars vars | H.null vars = ""
-      showTypeVars vars = printf "[%s]" (intercalate ", " $ map showArg $ H.toList vars)
+      showTypeVars vars = "[" ++ intercalate ", " (map showArg $ H.toList vars) ++ "]"
       showArgs args | ptName == anonStr && H.null args = "()"
       showArgs args | H.null args = ""
-      showArgs args = printf "(%s)" (intercalate ", " $ map showArg $ H.toList args)
+      showArgs args = "(" ++ intercalate ", " (map showArg $ H.toList args) ++ ")"
       showPreds PredsNone    = ""
-      showPreds (PredsOne p) = printf "| %s" (show p)
-      showPreds preds        = printf "| (%s)" (show preds)
+      showPreds (PredsOne p) = "| " ++ showPartialPredD d p
+      showPreds preds        = "| (" ++ showPredsD d preds ++ ")"
       showPtArgMode = case ptArgMode of
         PtArgMode True True   -> ""
         PtArgMode True False  -> ".."
@@ -356,34 +370,60 @@ instance Show PartialType where
 instance Show PartialKey where
   show pk = show $ partialToType pk
 
+-- | A type's rendered form can be very large or effectively unbounded — the
+-- constraint solver can build deeply-nested or even cyclic types whose full
+-- rendering does not terminate in practical time. Two independent bounds keep any
+-- consumer (error reporting, 'Eq' via 'show', JSON) prompt: a recursion-depth
+-- limit ('maxShowDepth') that halts descent through nested types/partials, and a
+-- length cap ('typeShowCap') on the rendered string. Both are far beyond any
+-- well-formed type (the largest in practice nests only a few levels and is a few
+-- hundred characters), so normal output is unaffected.
+maxShowDepth :: Int
+maxShowDepth = 100
+
+typeShowCap :: Int
+typeShowCap = 2000
+
+showTruncated :: String
+showTruncated = "…(truncated)"
+
+boundedTypeStr :: String -> String
+boundedTypeStr s
+  | null (drop typeShowCap s) = s
+  | otherwise                 = take typeShowCap s ++ showTruncated
+
 instance Show Type where
-  show (UnionType Nothing leafs []) = joinParts $ map show $ splitUnionType leafs
+  show = boundedTypeStr . showTypeD maxShowDepth
+
+showTypeD :: Int -> Type -> String
+showTypeD d _ | d <= 0 = showTruncated
+showTypeD d (UnionType Nothing leafs []) = joinParts $ map (showPartialD (d - 1)) $ splitUnionType leafs
     where
       joinParts []  = "∅"
       joinParts [p] = p
       joinParts ps  = "(" ++ intercalate " + " ps ++ ")"
-  show (UnionType (Just (p, negPartials)) (H.null -> True) []) = p' ++ negPartials'
+showTypeD d (UnionType (Just (p, negPartials)) (H.null -> True) []) = p' ++ negPartials'
     where
       p' = case tryPredsToList p of
-                Just [PredClass c] -> "∀" ++ show c
-                Just [PredRel c]   -> "~" ++ show c
+                Just [PredClass c] -> "∀" ++ showPartialD (d - 1) c
+                Just [PredRel c]   -> "~" ++ showPartialD (d - 1) c
                 Just []            -> "TopType"
-                _                  -> printf "(TopType | %s)" (show p)
+                _                  -> "(TopType | " ++ showPredsD (d - 1) p ++ ")"
       negPartials' = if H.null negPartials
         then ""
-        else " - " ++ (joinParts $ map show $ splitUnionType negPartials)
+        else " - " ++ (joinParts $ map (showPartialD (d - 1)) $ splitUnionType negPartials)
       joinParts []  = "∅"
       joinParts [s] = s
       joinParts ss  = "(" ++ intercalate " + " ss ++ ")"
-  show (UnionType mTop leafs consts) = printf "UnionType(%s, %s, %s)" (show mTop) (joinParts $ map show $ splitUnionType leafs) (show consts)
+showTypeD d (UnionType mTop leafs consts) = "UnionType(" ++ show mTop ++ ", " ++ joinParts (map (showPartialD (d - 1)) $ splitUnionType leafs) ++ ", " ++ show consts ++ ")"
     where
       joinParts []  = "∅"
       joinParts [p] = p
       joinParts ps  = "(" ++ intercalate " + " ps ++ ")"
-  show (TypeVar (TVVar n) TVInt) = "$" ++ show n
-  show (TypeVar (TVVar n) TVExt) = "$_" ++ show n
-  show (TypeVar (TVArg n) TVInt) = "TVArg " ++ show n
-  show (TypeVar (TVArg n) TVExt) = "TVArg(ext) " ++ show n
+showTypeD _ (TypeVar (TVVar n) TVInt) = "$" ++ show n
+showTypeD _ (TypeVar (TVVar n) TVExt) = "$_" ++ show n
+showTypeD _ (TypeVar (TVArg n) TVInt) = "TVArg " ++ show n
+showTypeD _ (TypeVar (TVArg n) TVExt) = "TVArg(ext) " ++ show n
 
 instance Show ClassGraph where
   show (ClassGraph graphData) = show $ map fst3 $ graphToNodes graphData
