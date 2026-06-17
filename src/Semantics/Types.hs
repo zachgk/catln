@@ -2042,9 +2042,13 @@ powersetType _ _ t@(TypeVar _ _) = t
 powersetType typeEnv vaenv (UnionType Nothing partials []) =
   compactType typeEnv vaenv $ UnionType Nothing partials' []
   where
-    partials' = joinUnionType $ concatMap fromPartialType $ splitUnionType partials
-    fromArgs args = powerset $ H.toList args
-    fromPartialType (PartialType name vars args _ argMode) = [PartialType name vars (H.fromList a) PredsNone argMode | a <- fromArgs args]
+    -- Every subset of the args may be present: that is exactly the arg-mode interval
+    -- [∅, args] — lower-unbounded (no arg required), with the source's upper bound kept
+    -- (an upper-unbounded source still permits extra args; an upper-bounded one caps at
+    -- @args@). Representing the powerset as this single interval partial avoids enumerating
+    -- the 2^|args| subsets, which otherwise bloats the union and every compaction over it.
+    partials' = joinUnionType $ map asInterval $ splitUnionType partials
+    asInterval (PartialType name vars args _ (PtArgMode _ ub)) = PartialType name vars args PredsNone (PtArgMode False ub)
 powersetType _ _ t = error $ printf "powersetType: unexpected case %s" (show t)
 
 -- | Spreads a type by making it use PtArgAny mode
