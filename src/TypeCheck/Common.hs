@@ -19,6 +19,7 @@ module TypeCheck.Common where
 
 import           Data.Hashable
 import qualified Data.HashMap.Strict        as H
+import qualified Data.HashSet               as S
 import qualified Data.IntMap.Lazy           as IM
 import           Data.List
 import           Data.UUID                  (nil)
@@ -75,6 +76,7 @@ data FEnv = FEnv { fePnts               :: IM.IntMap Scheme
                  , feTTypeGraph         :: TTypeGraph
                  , feUpdatedDuringEpoch :: Bool -- ^ If a pnt is updated during the epoch
                  , feTypeEnv            :: FEnvTypeEnv
+                 , feLocalDefNames      :: S.HashSet Name -- ^ Absolute names defined by the programs currently being encoded (not yet in 'feTypeEnv'\'s object map). Used to tell a destructuring binding variable from a reference to a same-batch definition.
                  , feTrace              :: TraceConstrain
                  } deriving (Show)
 

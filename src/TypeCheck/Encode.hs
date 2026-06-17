@@ -20,6 +20,7 @@ module TypeCheck.Encode where
 
 import           Control.Monad
 import qualified Data.HashMap.Strict as H
+import qualified Data.HashSet         as S
 import qualified Data.IntMap.Lazy    as IM
 import           Prelude             hiding (unzip)
 
@@ -27,6 +28,7 @@ import           Control.Monad.State
 import           Data.Bifunctor      (Bifunctor (first))
 import           Data.Maybe
 import           Data.UUID           (nil)
+import           CtConstants         (contextValStr)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
@@ -71,6 +73,7 @@ makeBaseFEnv prgm = FEnv{
   feTTypeGraph = mempty,
   feUpdatedDuringEpoch = False,
   feTypeEnv = mkTypeEnv prgm,
+  feLocalDefNames = S.empty,
   feTrace = mkTraceConstrain
   }
 
@@ -193,6 +196,18 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
 
 fromObjArr :: EncodeState -> PObjArr -> StateT FEnv TypeCheckResult VObjArr
 fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
+  ObjArrTypeGraph (ObjectMap objTg) <- gets (teTypeGraph . feTypeEnv)
+  localDefNames <- gets feLocalDefNames
+  let definedNames = (S.map makeAbsoluteName $ H.keysSet objTg) <> localDefNames
+  -- A value in a @field= value@ destructuring position is a /binding variable/ (it names a
+  -- fresh local, e.g. @field= x@) rather than a /reference/ to an existing definition — a
+  -- declared type\/value to pattern-match against (e.g. @field= True@) or another binding
+  -- referenced by name. The two share a 'Value' AST but must be encoded differently: a
+  -- binding is open and receives the field's declared type (see below), whereas a reference
+  -- keeps its own resolved type. A name is a binding exactly when nothing defines it.
+  let isBindingVar t = case maybeGetSingleton t of
+        Just p  -> not $ S.member (makeAbsoluteName $ ptName p) definedNames
+        Nothing -> False
   oaObj' <- case oaObj of
     Just inExpr -> do
       inExpr' <- fromExpr (asEncodeIn est) inExpr
@@ -203,12 +218,32 @@ fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   oaArr' <- case oaArr of
     Nothing -> return Nothing
     Just (arrExpr, arrM) -> do
-      arrM' <- fromMeta BAct est arrM $ printf "oa arrM %s" (show oa)
       case arrExpr of
+        -- A destructuring binding variable (the @x@ in @field= x@): both the binding
+        -- value and the field's arrow slot are seeded open rather than as the nominal
+        -- singleton of the binding's own name. The field's declared type flows into the
+        -- slot (and thence the binding) via the links below; a competing name singleton
+        -- would instead intersect with the field's declared type to bottom, since a fresh
+        -- binding name is not a member of that type. A non-binding pattern value (e.g.
+        -- @field= True@) keeps the normal encoding so it still matches against the field.
+        -- The desugared context wrappers (@/ContextIn(value= /main)@) fill the reserved
+        -- @value@ field with the wrapped definition, not a fresh binding, so they are
+        -- excluded by field name.
+        Just (Value m name)
+          | EncodeIn <- est
+          , maybe True ((/= contextValStr) . makeAbsoluteName . exprPath) oaObj
+          , getMetaType arrM == PTopType
+          , isBindingVar (getMetaType m) -> do
+          arrM' <- fromMeta BReq est (mWithType PTopType arrM) $ printf "oa arrM %s" (show oa)
+          m' <- fromMeta BReq est (mWithType PTopType m) ("In Bind " ++ name)
+          return $ Just (Just (Value m' name), arrM')
         Just argExpr -> do
+          arrM' <- fromMeta BAct est arrM $ printf "oa arrM %s" (show oa)
           argExpr' <- fromExpr est argExpr
           return $ Just (Just argExpr', arrM')
-        Nothing -> return $ Just (Nothing, arrM')
+        Nothing -> do
+          arrM' <- fromMeta BAct est arrM $ printf "oa arrM %s" (show oa)
+          return $ Just (Nothing, arrM')
   let constraints = case (est, oaObj', oaArr') of
         (EncodeOut{}, Just _obj, Just (Just argExpr', arrM')) ->
           -- Output with (x=x)
@@ -282,6 +317,8 @@ addTypeGraphPrgm Prgm{prgmObjMap} = mapM_ addTypeGraphArrow $ flatObjectMap prgm
 fromPrgms :: [PPrgm] -> [TPrgm] -> StateT FEnv TypeCheckResult [VPrgm]
 fromPrgms pprgms tprgms = do
   mapM_ addTypeGraphPrgm tprgms
+  let localNames = S.fromList $ map (makeAbsoluteName . exprPath . oaObjExpr) $ concatMap (flatObjectMap . prgmObjMap) pprgms
+  modify $ \e -> e{feLocalDefNames = localNames}
   vprgms <- mapM fromPrgm pprgms
   let (Prgm{prgmObjMap=tjoinObjMap}) = mconcat tprgms
   addUnionObjToEnv (mconcat $ map fst3 vprgms) tjoinObjMap
