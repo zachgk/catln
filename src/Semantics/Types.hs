@@ -1345,7 +1345,7 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing leafs cs@(_:_)) t2 =
 -- NegPartials ⊆ NegPartials: (U_p1-n1) ⊆ (U_p2-n2).
 -- Same predicates: sufficient iff n2 ⊆ n1.
 -- Differing predicates: sufficient iff predImplies p1 p2 and n2 ⊆ n1; otherwise False.
-isSubtypeOfWithEnv typeEnv vaenv (UnionType (Just (p1, n1)) _ _) t2@(UnionType (Just (p2, n2)) _ _)
+isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (p1, n1)) _ _) t2@(UnionType (Just (p2, n2)) _ _)
   | p1 == p2             = isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing n2 []) (UnionType Nothing n1 [])
   | isPredsContradictory p1 = True  -- t1 = ∅ ⊆ anything
   | isPredsContradictory (predsAnd p1 (predsNot p2)) = True  -- p1 ≤ p2 syntactically (p1 ∧ ¬p2 = ∅)
@@ -1353,7 +1353,12 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType (Just (p1, n1)) _ _) t2@(UnionType (
     && isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing n2 []) (UnionType Nothing n1 []) = True
     -- U_p1 ⊆ U_p2 and n2 ⊆ n1, so (U_p1 - n1) ⊆ (U_p2 - n2)
   | predsEmpty typeEnv vaenv p1 = True  -- t1 = ∅ by class-graph disjointness ⊆ anything (fallback: expansion is costly)
-  | tePrgmEnv typeEnv || predsSealed typeEnv p1 = isSubtypeOfWithEnv typeEnv vaenv (snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv p1) (UnionType Nothing n1 [])) t2
+  -- Re-express U_p1 - n1 as a positive type and recurse. Guarded on progress: when the predicate
+  -- expands to the universe (e.g. p1 = PredsNone) the difference reproduces the same complement,
+  -- which would recurse forever, so require the rewrite to differ from t1 (else conservative False).
+  | tePrgmEnv typeEnv || predsSealed typeEnv p1
+  , let t1' = snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv p1) (UnionType Nothing n1 [])
+  , t1' /= t1 = isSubtypeOfWithEnv typeEnv vaenv t1' t2
   | otherwise         = False
 -- NegPartials ⊆ PosPartials: filter t1 by superPartials names.
 -- hasOutside=True: t1 has elements outside superPartials names.
@@ -1366,7 +1371,12 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (preds, negLeafs)) _ _) t2@
     (_, True)      | predImpliesPartials typeEnv vaenv preds superPartials -> True
                    -- U_preds ⊆ superPartials implies (U_preds - negLeafs) ⊆ superPartials
     (_, True)      | predsEmpty typeEnv vaenv preds -> True  -- U_preds = ∅ by class-graph disjointness (fallback: costly)
-    (_, True)      | tePrgmEnv typeEnv || predsSealed typeEnv preds -> isSubtypeOfWithEnv typeEnv vaenv (snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv preds) (UnionType Nothing negLeafs [])) t2
+    -- Re-express U_preds - negLeafs as a positive type and recurse. Guarded on progress: when the
+    -- predicate expands to the universe (e.g. preds = PredsNone) the difference reproduces the same
+    -- complement, which would recurse forever, so require the rewrite to differ from t1 (else False).
+    (_, True)      | tePrgmEnv typeEnv || predsSealed typeEnv preds
+                   , let t1' = snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv preds) (UnionType Nothing negLeafs [])
+                   , t1' /= t1 -> isSubtypeOfWithEnv typeEnv vaenv t1' t2
     (_, True)      -> False
     (leafs, False) -> isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing leafs []) t2
 -- PosPartials ⊆ PosPartials: check partials structurally
