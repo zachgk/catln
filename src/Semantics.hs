@@ -69,7 +69,7 @@ testCtssConfig = CTSSConfig "stack"
 buildCtssConfig = CTSSConfig "~/.catln/stack"
 
 mkTypeEnv :: (ExprClass e, Show m, Show (e m), MetaDat m) => Prgm e m -> TypeEnv (ObjArrTypeGraph e m)
-mkTypeEnv (Prgm objMap classGraph _) = TypeEnv classGraph (ObjArrTypeGraph objMap) typeNames False defaultTypeEnvDebug False False
+mkTypeEnv (Prgm objMap classGraph _) = TypeEnv classGraph (ObjArrTypeGraph objMap) typeNames False defaultTypeEnvDebug False False S.empty S.empty
   where
     typeNames = S.fromList $ map makeAbsoluteName $ concatMap getAllObjArrNames $ flatObjectMap objMap
 
