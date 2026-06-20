@@ -1219,7 +1219,19 @@ expandClassPartialWithNamesFull typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaen
               hasOut = any (\PartialType{ptName=n} -> not $ S.member n allowedNames) fullList
           in (joinUnionType $ map mapClassPartial filteredList, hasOut)
         mapClassTypeWithNamesFull t = expandTypesWithNamesFull typeEnv vaenv t allowedNames
-        mapClassPartial tp@PartialType{ptVars} = tp{ptVars=fmap (substituteVarsWithVarEnv classVars) ptVars}
+        -- In the closed-world program-coverage view ('tePrgmEnv'), relax each member's
+        -- explicitly-written fields to 'PTopType' (keys only). A class member is a match /target/
+        -- whose field types are supplied by the value being matched; preserving the written field
+        -- here reintroduces the member's type parameter (e.g. @head -> $T@ resolving to the class's
+        -- instantiated element bound) and spuriously holds a destructured definition's binding
+        -- field (which merely binds and ignores the value) outside its declaration. During
+        -- inference ('tePrgmEnv' off) the precise field tie is kept, so recursive-type scheme
+        -- verification ('verifySchemeActLowers') is unaffected. The true field types always remain
+        -- in the data graph.
+        mapClassPartial tp@PartialType{ptVars, ptArgs}
+          | tePrgmEnv typeEnv = base{ptArgs=fmap (const PTopType) ptArgs}
+          | otherwise         = base
+          where base = tp{ptVars=fmap (substituteVarsWithVarEnv classVars) ptVars}
     r -> error $ printf "Unknown class %s in expandPartial. Found %s" (show (PClassName ptName)) (show r)
 
 
