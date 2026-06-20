@@ -201,7 +201,6 @@ verifyObjMapItem name (ObjectMapItem decls runtimeDecls refineDecls defs) = do
       let declInputTypes = map (completeDataPartials feTypeEnv) declInputTypes0
       let defInputTypes = map (completeDataPartials feTypeEnv) defInputTypes0
       let declUnion = unionAllTypes feTypeEnv declInputTypes
-      let defUnion = unionAllTypes feTypeEnv defInputTypes
 
       -- For /coverage/ (does the union of definitions fulfill a declaration?) a destructuring
       -- binding matches any value at its field, so universalize those fields; see

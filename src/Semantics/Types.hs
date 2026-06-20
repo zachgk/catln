@@ -1323,8 +1323,16 @@ isSubtypeOfWithEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> T
 isSubtypeOfWithEnv TypeEnv{teDebug=True} _ l r | trace (printf "[SUBTYPE] %s ⊆ %s" (show l) (show r)) False = undefined
 isSubtypeOfWithEnv _ _ _ PTopType = True
 isSubtypeOfWithEnv _ _ t1 t2 | t1 == t2 = True
-isSubtypeOfWithEnv typeEnv vaenv (TypeVar v _) t2 = isSubtypeOfWithEnv typeEnv vaenv (vaenvLookup vaenv v) t2
-isSubtypeOfWithEnv typeEnv vaenv t1 (TypeVar v _) = isSubtypeOfWithEnv typeEnv vaenv t1 (vaenvLookup vaenv v)
+-- A type var resolves to its 'vaenv' binding. A var bound to itself (a self-referential
+-- entry, which an unconstrained var may acquire during intersection) carries no information,
+-- so treat it as 'PTopType' - exactly as an unbound var already resolves via 'vaenvLookup'.
+-- Following it verbatim would re-enter this clause with identical arguments forever.
+isSubtypeOfWithEnv typeEnv vaenv (TypeVar v _) t2 = case vaenvLookup vaenv v of
+  TypeVar v' _ | v' == v -> isSubtypeOfWithEnv typeEnv vaenv PTopType t2
+  looked                 -> isSubtypeOfWithEnv typeEnv vaenv looked t2
+isSubtypeOfWithEnv typeEnv vaenv t1 (TypeVar v _) = case vaenvLookup vaenv v of
+  TypeVar v' _ | v' == v -> isSubtypeOfWithEnv typeEnv vaenv t1 PTopType
+  looked                 -> isSubtypeOfWithEnv typeEnv vaenv t1 looked
 isSubtypeOfWithEnv _ _ PTopType t = t == PTopType
 -- Mixed type on left (top + non-empty positive leafs): (top ∪ posLeafs) ⊆ t2 iff top ⊆ t2 ∧ posLeafs ⊆ t2
 isSubtypeOfWithEnv typeEnv vaenv (UnionType (Just topData) pos cs) t2
@@ -1877,9 +1885,16 @@ intersectTypesWithVarEnv _ vaenv t1 t2 | t1 == t2 = (vaenv, t1)
 -- and an unknown key is recorded as a fresh constraint.  TVInt/TVExt is informational here:
 -- a TVInt that reaches this top level was introduced as a fresh sentinel by an upstream
 -- caller (e.g. a constituent's prop ref); the old code's behavior is preserved.
-intersectTypesWithVarEnv typeEnv vaenv tv@(TypeVar v _) t = case H.lookup v vaenv of
-  Just l | isBottomType (intersectTypesEnv typeEnv vaenv l t) -> (vaenv, BottomType)
-  _ -> (H.insertWith (intersectTypesEnv typeEnv vaenv) v t vaenv, tv)
+-- A binding equal to the var itself (a self-referential entry an unconstrained var may
+-- acquire) carries no constraint: treat it as absent and bind to @t@, rather than
+-- intersecting the binding with @t@ - which would re-enter this clause unchanged forever.
+intersectTypesWithVarEnv typeEnv vaenv tv@(TypeVar v _) t
+  | Just l <- H.lookup v vaenv, not (isSelfVar v l) =
+      let i = intersectTypesEnv typeEnv vaenv l t
+      in if isBottomType i then (vaenv, BottomType) else (H.insert v i vaenv, tv)
+  | otherwise = (H.insert v t vaenv, tv)
+  where isSelfVar var (TypeVar var' _) = var' == var
+        isSelfVar _   _                = False
 intersectTypesWithVarEnv typeEnv vaenv t tv@TypeVar{} = intersectTypesWithVarEnv typeEnv vaenv tv t
 intersectTypesWithVarEnv _ vaenv _ BottomType = (vaenv, BottomType)
 intersectTypesWithVarEnv _ vaenv BottomType _ = (vaenv, BottomType)
