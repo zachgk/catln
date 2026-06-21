@@ -14,7 +14,8 @@ Prgm
             ,
                 ( "/operator=="
                 , ObjectMapItem
-                    { omiDecls = []
+                    { omiDecls =
+                        [ /operator==( Value /l -> /Data/String = Hole TopType HoleActive Nothing )( Value /r -> /Data/String = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
                     , omiRuntimeDecls =
                         [ /operator==( Value /l -> /Data/String = Hole TopType HoleActive Nothing )( Value /r -> /Data/String = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
                     , omiRefineDecls = []
@@ -89,7 +90,8 @@ Prgm
             ,
                 ( "/operator!="
                 , ObjectMapItem
-                    { omiDecls = []
+                    { omiDecls =
+                        [ /operator!=( Value /l -> /Data/String = Hole TopType HoleActive Nothing )( Value /r -> /Data/String = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
                     , omiRuntimeDecls =
                         [ /operator!=( Value /l -> /Data/String = Hole TopType HoleActive Nothing )( Value /r -> /Data/String = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
                     , omiRefineDecls = []

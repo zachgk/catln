@@ -29,7 +29,10 @@ Prgm
                 ( "/operator=="
                 , ObjectMapItem
                     { omiDecls =
-                        [ /operator==( Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                        [ /operator==( Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        , /operator==( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        , /operator==( Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRuntimeDecls =
                         [ /operator==( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
                         , /operator==( Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
@@ -294,7 +297,11 @@ Prgm
             ,
                 ( "/operator!="
                 , ObjectMapItem
-                    { omiDecls = []
+                    { omiDecls =
+                        [ /operator!=( Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        , /operator!=( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        , /operator!=( Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRuntimeDecls =
                         [ /operator!=( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
                         , /operator!=( Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> ∀/Data/Primitive/Boolean

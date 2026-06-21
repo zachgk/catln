@@ -25,6 +25,7 @@ module(Data/Primitive)
   (_ :: False == _ :: True)= False
   (_ :: False == _ :: False)= True
 
+  (_ :: Boolean != _ :: Boolean) -> Boolean
   (_ :: True != _ :: True)= False
   (_ :: True != _ :: False)= True
   (_ :: False != _ :: True)= True
@@ -85,8 +86,10 @@ module(Data/Primitive)
     #runtime("int>")
 
   (_ :: Integer == _ :: Integer) -> Boolean
+  (_ :: Integer == _ :: Integer) -> Boolean
     #runtime("int==")
 
+  (_ :: Integer != _ :: Integer) -> Boolean
   (_ :: Integer != _ :: Integer) -> Boolean
     #runtime("int!=")
 
@@ -137,8 +140,10 @@ module(Data/Primitive)
     #runtime("float>")
 
   (_ :: Float == _ :: Float) -> Boolean
+  (_ :: Float == _ :: Float) -> Boolean
     #runtime("float==")
 
+  (_ :: Float != _ :: Float) -> Boolean
   (_ :: Float != _ :: Float) -> Boolean
     #runtime("float!=")
 

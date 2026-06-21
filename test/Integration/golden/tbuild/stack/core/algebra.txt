@@ -22,16 +22,6 @@ Prgm
                     }
                 )
             ,
-                ( "/operator=="
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /operator==( EAppArg Value /l -> $/T = Hole $/T HoleActive Nothing )( EAppArg Value /r -> $/T = Hole $/T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/operator++"
                 , ObjectMapItem
                     { omiDecls =
@@ -179,22 +169,10 @@ Prgm
                     , omiDefs = []
                     }
                 )
-            ,
-                ( "/operator!="
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /operator!=( EAppArg Value /l -> $/T = Hole $/T HoleActive Nothing )( EAppArg Value /r -> $/T = Hole $/T HoleActive Nothing )( EAppVar /T ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
             ]
         )
     , prgmCG =
         [ CGType
-        , CGType
-        , CGType
         , CGType
         , CGType
         , CGType
@@ -229,8 +207,10 @@ Prgm
             , Just "The Eq class is used to define values which can be compared for equality.
               While naive tuple equality often works, some types have equality that behaves differently and must be defined.
               For example, a TreeSet can insert items in different order and produce different trees, but with equal sets.
-              There are only two operations for eq: [operator==] and [operator!=]./operator==</Data/Algebra/Eq $T>($T l, $T r) -> BooleanThis checks whether two items are equal.
-              Note that it only compares like items with each other, not that you can compare apples to oranges. If something can be compared for order, it should also be comparable for equality by the following relationship: "
+              There are only two operations for eq: [operator==] and [operator!=].This checks whether two items are equal.
+              Note that it only compares like items with each other, not that you can compare apples to oranges.
+              Equality is not defined as a class member here. Instead, each comparable type provides its
+              own standalone [operator==] declaration (for example [Integer == Integer] or [ConsList == ConsList]). If something can be compared for order, it should also be comparable for equality by the following relationship: "
             )
         , CGClass
             ( False
@@ -307,10 +287,10 @@ Prgm
             For example, a TreeSet can insert items in different order and produce different trees, but with equal sets.
             There are only two operations for eq: [operator==] and [operator!=]." )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "/operator==</Data/Algebra/Eq $T>($T l, $T r) -> Boolean" )
-        , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "This checks whether two items are equal.
-            Note that it only compares like items with each other, not that you can compare apples to oranges." )
+            Note that it only compares like items with each other, not that you can compare apples to oranges.
+            Equality is not defined as a class member here. Instead, each comparable type provides its
+            own standalone [operator==] declaration (for example [Integer == Integer] or [ConsList == ConsList])." )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "It is the opposite of [operator==] leading to the simple definition:" )
         , /Catln/#md

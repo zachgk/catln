@@ -11,8 +11,10 @@ module(Data)
   every(String, isa= [/Data/Algebra/Eq])
 
   (_ :: String == _ :: String) -> Boolean
+  (_ :: String == _ :: String) -> Boolean
     #runtime("strEq")
 
+  (_ :: String != _ :: String) -> Boolean
   (_ :: String != _ :: String) -> Boolean
     #runtime("strNeq")
 
