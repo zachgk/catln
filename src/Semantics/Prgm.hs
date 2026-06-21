@@ -160,23 +160,55 @@ instance (Show m) => Show (Meta m) where
   show (Meta t _ _ _) = show t
   -- show (Meta t p d) = printf "(Meta %s %s (%s))" (show t) (show p) (show d)
 
+-- | Configuration controlling how program elements are shown. It allows a
+-- caller (such as the type-inference trace) to override how each metadata
+-- annotation is rendered and to inject an inline annotation (e.g. a point id
+-- and its final type) at every metadata site. 'defaultShowConfig' reproduces
+-- the plain 'Show' output exactly.
+data ShowConfig m = ShowConfig
+  { scShowMeta :: Meta m -> String -- ^ renders a meta where a type is already displayed
+  , scAnnot    :: Meta m -> String -- ^ inline suffix appended at every meta site
+  }
+
+defaultShowConfig :: Show m => ShowConfig m
+defaultShowConfig = ShowConfig show (const "")
+
+showExprWithConfig :: Show m => ShowConfig m -> Expr m -> String
+showExprWithConfig cfg = go
+  where
+    go (CExpr m c) = printf "%s%s" (show c) (scAnnot cfg m)
+    go (Value m name) = printf "Value %s%s" name (scAnnot cfg m)
+    go (HoleExpr m hole) = printf "Hole %s %s%s" (scShowMeta cfg m) (show hole) (scAnnot cfg m)
+    go (AliasExpr base alias) = printf "%s@%s" (go base) (go alias)
+    go (EWhere m base cond) = printf "%s | %s%s" (go base) (go cond) (scAnnot cfg m)
+    go (TupleApply m (_, baseExpr) arg) = printf "%s%s%s" baseExpr' (showEAppWithConfig cfg arg) (scAnnot cfg m)
+      where
+        baseExpr' = case baseExpr of
+          Value vm funName -> printf "%s%s" funName (scAnnot cfg vm)
+          TupleApply{}     -> go baseExpr
+          _                -> printf "(%s)" (go baseExpr)
+
+showEAppWithConfig :: Show m => ShowConfig m -> EApp Expr m -> String
+showEAppWithConfig cfg arg = case arg of
+  EAppArg a    -> printf "(%s)" (showObjArrWithConfig cfg a)
+  EAppVar a v  -> printf "[%s : %s]" (show a) (scShowMeta cfg v)
+  EAppSpread a -> printf "(..%s)" (showExprWithConfig cfg a)
+
+showObjArrWithConfig :: Show m => ShowConfig m -> ObjArr Expr m -> String
+showObjArrWithConfig cfg ObjArr{oaObj, oaArr} = printf "%s%s" objStr showArr
+  where
+    objStr = maybe "" (showExprWithConfig cfg) oaObj
+    showArr :: String
+    showArr = case oaArr of
+      Just (Just e, m) | getMetaType m /= PTopType -> printf " -> %s = %s" (scShowMeta cfg m) (showExprWithConfig cfg e)
+      Just (Just e, _) | isJust oaObj -> printf "= %s" (showExprWithConfig cfg e)
+      Just (Just e, _) -> showExprWithConfig cfg e
+      Just (Nothing, m) | getMetaType m /= PTopType -> printf " -> %s" (scShowMeta cfg m)
+      Just (Nothing, _) -> ""
+      Nothing -> ""
+
 instance Show m => Show (Expr m) where
-  show (CExpr _ c) = show c
-  show (Value _ name) = printf "Value %s" name
-  show (HoleExpr m hole) = printf "Hole %s %s" (show m) (show hole)
-  show (AliasExpr base alias) = printf "%s@%s" (show base) (show alias)
-  show (EWhere _ base cond) = printf "%s | %s" (show base) (show cond)
-  show (TupleApply _ (_, baseExpr) arg) = printf "%s%s" baseExpr' showArg
-    where
-      baseExpr' = case baseExpr of
-        Value _ funName -> funName
-        TupleApply{}    -> show baseExpr
-        _               -> printf "(%s)" (show baseExpr)
-      showArg :: String
-      showArg = case arg of
-        EAppArg a    -> printf "(%s)" (show a)
-        EAppVar a v  -> printf "[%s : %s]" (show a) (show v)
-        EAppSpread a -> printf "(..%s)" (show a)
+  show = showExprWithConfig defaultShowConfig
 
 instance (Show m, Show (e m)) => Show (ObjArr e m) where
   show ObjArr{oaObj, oaArr} = printf "%s%s" (showNoMaybe oaObj) showArr

@@ -90,12 +90,35 @@ renderTypeTrace (objMap, _, _) tc =
 
     finalStr p = maybe "(no value)" show (finalScheme tc p)
 
-    -- program.txt: each definition followed by the points within it
+    -- program.txt: each definition printed structurally, with every point and
+    -- its final converged type shown inline, then a compact point->position footer.
     programOverview = intercalate "\n\n" $ map renderObjArr objArrs
     renderObjArr oa = intercalate "\n" $
-      printf "=== %s ===" (show oa)
-      : [printf "  p%d :: %s @ %s" p (show t) (showPos pos) | (p, pos, t) <- sortMetas (collectMetas [oa])]
+      showObjArrWithConfig traceCfg oa
+      : [printf "    p%d @ %s" p (showPos pos) | (p, pos, _) <- sortMetas (collectMetas [oa])]
     sortMetas = nub . sort
+
+    -- The final converged ACT type of a meta's point, if it has one.
+    finalActType :: VarMeta -> Maybe Type
+    finalActType m = do
+      p <- getPnt m
+      s <- finalScheme tc p
+      tcreToMaybe (fmap stypeAct s)
+
+    -- Render a meta as "pN:<final type>", falling back to the static type when
+    -- the point never converged (and to just the type when there is no point).
+    showFinalMeta :: VarMeta -> String
+    showFinalMeta m = case getPnt m of
+      Nothing -> show m
+      Just p  -> printf "p%d:%s" p (maybe (show m) show (finalActType m))
+
+    traceCfg :: ShowConfig VarMetaDat
+    traceCfg = ShowConfig
+      { scShowMeta = showFinalMeta
+      , scAnnot    = \m -> case getPnt m of
+          Nothing -> ""
+          Just _  -> printf "‹%s›" (showFinalMeta m)
+      }
 
     -- points-index.txt: global point -> position / final type table
     pointsIndex = intercalate "\n"
