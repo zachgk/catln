@@ -121,9 +121,14 @@ data Pair(Int a, Int b)
 # Create a pair
 myPair = Pair(a=1, b=2)
 
-# Pattern match against a data object in a declaration
+# Pattern match against a data object in a declaration.
+# A bare field name (`a`, `b`) binds that field under its own name.
 fst(val=Pair(a, b)) = a
 snd(val=Pair(a, b)) = b
+
+# To bind a matched field to a *different* name, use the alias operator `field@newName`
+# (no space after `@`). Here the `a` field is matched and bound to the name `x`.
+fstRenamed(val=Pair(a@x, b@y)) = x
 
 # A pair with a type parameter
 data Pair2[$N]($N a, $N b)

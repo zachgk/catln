@@ -40,6 +40,15 @@ TypeCheck typically surfaces as a confusing error in TreeBuild or Eval.
   correctly when its test lives in the *same* module (add the `#test` to the core file and run
   `stack exec catln -- test stack/core/data.ct`) yet fail when imported into another file.
   Always check both — the difference is itself a clue (cross-module re-resolution loses info).
+- **If *every* file fails identically — even a trivial one like `arith.ct` — suspect the
+  environment, not your program.** The CLI loads the standard library from the working
+  directory's `stack/` during development (only an installed compiler falls back to
+  `~/.catln/stack`), so a type error's file path tells you *which* core is in play. Sanity-check
+  by running an unrelated passing file before trusting a failure on your repro.
+- **`test` vs `typetrace` on failure.** A `CRes` type error (e.g. `Scheme failed check … ∅`,
+  `Definition Outside Declaration`) still lets `typetrace` write its files — use it. But a *hard*
+  exception (`catln: user error (…)`, `Could not build catln service`) aborts before the trace is
+  written; in that case run `stack exec catln -- test <file>` to see the underlying `CRes` error.
 
 ## 2. Read the failure signature
 
@@ -52,6 +61,7 @@ TypeCheck typically surfaces as a confusing error in TreeBuild or Eval.
 | `Reached runConstraints limit` (≈15 epochs) | Non-convergence/oscillation. Classic case: a recursive type unrolls one level deeper each epoch (`Nil + Cons(tail = Nil + Cons(tail = …))`). Non-fatal warning but real. |
 | `verifySchemeActLowers` / "Grows by `<diff>`" | Monotonicity violation: a point's ACT *widened* between epochs (it must only narrow). Often two passes fighting (one narrows, one re-widens). |
 | `Multiple matches` / `Failed match in eval callTree` (`Eval.hs`) | Runtime dispatch (`TCMatch`/`TCCond`) found 0 or >1 arrows for a value — a value-vs-arrow keying mismatch, not necessarily a type error. |
+| `unionAllObjs (the TopTop) remained TopType` | Some object in the file failed to resolve to a concrete type, so the union-of-all-objects (used as the `BoundedByObjs` bound) collapsed to `Top`. A Top `TopTop` silently disables `BoundedByObjs` for the whole file, so this is checked and reported at convergence. Find the unresolved object (commonly an untyped binding leaking into the universe). |
 
 The error block usually prints the offending point plus
 `Constraining: <constraint> {… ACT <before> …}  to:  {… ACT <after> …}` — that line names the
@@ -144,3 +154,27 @@ why (what was intersected with what).
    warnings (unused matches, incomplete patterns) slip through and break the pedantic build later.
 5. If the fix needs deep/cascading changes or regresses unrelated tests, **stop and raise it**
    rather than patching.
+
+## 6. Parameterized types & destructure bindings
+
+Two recurring, generalizable traps when a destructured or parameterized value's *element*
+type goes wrong (an element staying `TopType`/`/name`, a destructuring definition that never
+reduces, or a spurious coverage error):
+
+- **val vs arg (matching-criterion vs matched-value).** In `f(field= value)` /
+  `Type(field@name)`, the `field` (and the function/constructor head) is a *val* — a matching
+  criterion / object — while the matched `value`/binding is an *arg*. The
+  `exprVarArgs`/`exprVarArgsWithSrc` builders (`Prgm.hs`) and `desObjValToArg` (`Desugarf.hs`)
+  classify these. A binding keyed under the wrong name — the field instead of its alias, or
+  vice-versa — is a common cause of an unresolved binding or a value that never reduces. An
+  aliased field (`x@v`) must be keyed by the alias (`v`) in *every* such builder (the constraint
+  var-env, the with-src var-env, and the eval `texprArgsWithVal`), or a *use* of the alias won't
+  resolve even when a *return* of it does.
+- **A type variable's slot should hold its declared bound, not a binding.** If a parameter shows
+  up like `A=(PredRel <name> && <Bound>)` — a `PredRel <bindingName>` (a value binding)
+  intersected with a real class/type bound — a binding has leaked into a bound slot. A slot is
+  one or the other: the matched binding (key side) or the declared bound (value side), never
+  both. That signals mis-routed field↔param plumbing (`updateTypeProp` /
+  `intersectTypesWithVarEnv`, `Types.hs`). Relatedly, a declared field is completed with its type
+  parameter's *bound* (`completeDataPartials`, `Types.hs`); a value/definition is compared
+  against that in the decl/def coverage check (`verifyObjMapItem`, `Decode.hs`).

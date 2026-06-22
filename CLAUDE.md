@@ -58,6 +58,7 @@ Lessons that repeatedly cost time:
 ## Writing `.ct` code (authoring gotchas)
 
 - **Higher-order arguments must include the nested parameter.** Write `fn(v)` (its parameter), not bare `fn`, in a definition that takes a function-typed argument — see `test/Integration/code/ho.ct`. Bare `fn` fails with "Actual type contains bottomType".
+- **To rename a destructured field, use the alias operator `field@newName` — not `field=newName`.** `Pair(first@f, second@s)` matches the `first`/`second` fields and binds them to the new names `f`/`s`. Writing `Pair(first= f, …)` instead tries to *destructure the `first` field's value against the pattern `f`* (wrong, and corrupts inference). The `@` takes **no space** (`first@f`, not `first@ f` — the parser expects the alias name immediately after `@`). A bare positional `Pair(first, second)` binds the fields under their own names.
 - **Test `.ct` features in the same module where practical** (`stack exec catln -- <run|test> <file>`). A `stack/core/` function can type-check and evaluate correctly in-module yet fail when imported into another file.
 
 ## Testing
