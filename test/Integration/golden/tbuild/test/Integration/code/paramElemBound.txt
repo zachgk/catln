@@ -1,0 +1,75 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/unbox"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /unbox( EAppArg Value /b -> ∀/Boxed ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /unbox( EAppArg Value /b -> /Data/Primitive/Integer ) -> TVArg /b = ( Value /b ↦ TVArg /b ) ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                    }
+                )
+            ,
+                ( "/Box"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Box( EAppVar /A TopType )( EAppArg Value /x -> $/A ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/useBox"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /useBox
+                            ( EAppArg Value /p -> /Box[ /A=~/Boxed ] ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /useBox
+                            ( EAppArg Value /p -> /Box[ /A=~/Boxed ]( /x=~/Boxed ) = /Box( EAppArg Value /x -> ∀/Boxed ) ) ->
+                            ( /unbox( /b=∀/Boxed ) + /Data/Primitive/Integer ) = /unbox
+                            ( EAppArg Value /b -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Boxed
+            , [ /Data/Primitive/Integer ]
+            , Just " "
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Prerequisite for multiFieldRouting: a destructured field must inherit the bound declared on
+            its type parameter. `Box`'s field `x` has type `$A`, and `useBox` is declared over
+            Box[$A -> Boxed], so the destructured `x` is bounded by `Boxed`: `unbox(b= x)` must type-check
+            and the definition must be recognized as covering the declaration. Uses a local `Boxed` class
+            with a member so the bound gates a real operation (not the stdlib Eq class). Single field, no
+            alias rename — isolates the element-bound propagation from the multi-field/alias concerns." )
+        ]
+    }

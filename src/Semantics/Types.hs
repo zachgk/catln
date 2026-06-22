@@ -777,15 +777,21 @@ completeDataPartialsTop typeEnv = go
     completePartial p@PartialType{ptName, ptVars, ptArgs}
       | H.null ptArgs =
           case [(dArgs, dMode) | PartialType{ptArgs=dArgs, ptArgMode=dMode} <- typeGraphData typeEnv ptName, not (H.null dArgs)] of
-            -- Restore the declared fields as 'PTopType' (their presence only, with the def's arg
-            -- mode) rather than the def's field types. Matching only needs the field keys to line
-            -- up; the field types are supplied by the value being matched. Reusing the def's field
-            -- type here would reintroduce the def's type parameter into the partial, which can
-            -- collide with a like-named parameter in an enclosing scope.
-            ((dArgs, dMode):_) -> p1{ptArgs = fmap (const PTopType) dArgs, ptArgMode = dMode}
+            -- Restore the declared fields, carrying the /bound/ of the type parameter each field
+            -- is declared with (e.g. field @x : $A@ in @Box[$A -> Boxed]@ is restored as @Boxed@):
+            -- so a value/definition that narrows the field to that bound still reconciles with this
+            -- partial. Only a concrete parameter bound is carried; a field whose parameter is itself
+            -- a variable (or whose declared type is not a bare parameter) is restored as 'PTopType'
+            -- — its type is supplied by the value being matched, and carrying a variable here would
+            -- reintroduce a free parameter that can collide with a like-named one in an enclosing scope.
+            ((dArgs, dMode):_) -> p1{ptArgs = fmap restoreField dArgs, ptArgMode = dMode}
             []                 -> p1
       | otherwise = p1
-      where p1 = p{ptVars = fmap go ptVars, ptArgs = fmap go ptArgs}
+      where
+        p1 = p{ptVars = fmap go ptVars, ptArgs = fmap go ptArgs}
+        restoreField fieldDefType = case fieldDefType of
+          TypeVar (TVVar v) _ | Just b <- H.lookup v ptVars, not (isTypeVar b) -> b
+          _                                                                    -> PTopType
 
 -- | Relax each data partial's self-referential field — a field whose type recurses back to a
 -- type the partial itself participates in (the same type, or a class the partial is a constituent
