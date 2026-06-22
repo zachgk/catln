@@ -25,6 +25,7 @@ import           CRes
 import qualified Data.HashMap.Strict as H
 import           MapMeta
 import           Semantics.Prgm
+import           Semantics.Types
 import           TypeCheck.Common
 import           TypeCheck.Constrain (runConstraints)
 import           TypeCheck.Decode
@@ -43,6 +44,14 @@ typecheckPrgmsSt pprgms typechecked = do
   vprgms <- fromPrgms pprgms typechecked
   cons <- gets feCons
   runConstraints runConstraintsLimit cons
+  -- Invariant: after convergence the union of all objects (the "TopTop") must be
+  -- determined. If it remained 'TopType', some object failed to resolve (e.g. an
+  -- untyped destructured pattern binding poisoned the union), which would otherwise
+  -- silently disable 'BoundedByObjs' and surface only as a broken build/eval later.
+  env <- get
+  case stypeAct <$> descriptor env (feUnionAllObjs env) of
+    TypeCheckResult _ PTopType -> lift $ TypeCheckResult [GenTypeCheckError Nothing "Type checking converged but unionAllObjs (the TopTop) remained TopType; an object failed to resolve"] ()
+    _                          -> return ()
   trace <- gets feTrace
   tprgms <- toPrgms vprgms
   return (tprgms, vprgms, trace)
