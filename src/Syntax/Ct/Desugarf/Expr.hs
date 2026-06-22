@@ -73,6 +73,14 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (`setExprMeta` m'') $ sn
     be' = semiDesExpr sdm obj be
     aux :: (ParseMeta, PSExpr) -> (Int, (Bool, PObjArr)) -> (ParseMeta, PSExpr)
     aux (m, e) (argIndex, (False, rarg@RawObjArr{roaArr=Just (Just (RawTupleApply _ (_, RawValue _ "/operator::") [(False, RawObjArr{roaArr=(Just newArr)}), (False, RawObjArr{roaArr=(Just (Just tp, _))})]), _)})) = case aux (m, e) (argIndex, (False, rarg{roaArr=Just newArr})) of
+      -- A /named/ typed operand @l :: $T@ desugars like a function argument @l -> $T@: move the
+      -- operand value into the object position with a type-only arrow slot, rather than leaving it
+      -- as a binding expression in the arrow. This registers the operand as a variable argument
+      -- ('exprVarArgs') so a definition body can reference it (e.g. @(l :: $T == r :: $T)= …l…@)
+      -- without the operand resolving to its own name singleton. Anonymous operands (@_ :: $T@,
+      -- used by operators that do not name their operands) keep the existing form.
+      (tam, TupleApply tamm tab (EAppArg taoa@ObjArr{oaArr=Just (Just bindExpr@(Value _ _), tboaArrM)})) ->
+        (tam, TupleApply tamm tab (EAppArg taoa{oaObj=Just bindExpr, oaArr=Just (Nothing, mWithType (exprToType (mobjExprVaenv obj) tp) tboaArrM)}))
       (tam, TupleApply tamm tab (EAppArg taoa@ObjArr{oaArr=Just (tboaArrE, tboaArrM)})) -> (tam, TupleApply tamm tab (EAppArg taoa{oaArr=Just (tboaArrE, mWithType (exprToType (mobjExprVaenv obj) tp) tboaArrM)}))
       _ -> error $ printf "Unexpected result in semiDesExpr TupleApply aux"
     aux (m, e) (argIndex, (False, rarg@RawObjArr{roaObj=Just (RawTheExpr v), roaArr})) = aux (m, e) (argIndex, (False, rarg{roaObj=Just (RawValue (emptyMetaE vM) vN), roaArr=roaArr'}))
