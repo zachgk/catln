@@ -552,8 +552,19 @@ getRecursiveObjsExpr expr = concat [varSubObjects, argSubObjects, recursedSubObj
   where
     varSubObjects = map mkValue $ concatMap (varNamesWithPrefix . pkName . fst) $ exprAppliedOrdVars expr
     argSubObjects = concatMap (filter (isJust . maybeExprPath) . exprFromTupleArg) (exprAppliedArgs expr)
-    exprFromTupleArg ObjArr{oaObj, oaArr=Just (maybeOaObjExpr, _)} = maybeToList oaObj ++ maybeToList maybeOaObjExpr
+    -- An argument's @oaObj@ is its matching-criteria /val/ (an object); its @oaArr@ expr is
+    -- the matched /arg/ value. A structural arg value (e.g. @Pair(first=f)@) is a nested
+    -- pattern with its own vals, so keep it (it is recursed into). A bare arg value is either
+    -- a function reference that must enter the object union (the @value= main@ of an IO
+    -- context) or a fresh pattern-binding variable (e.g. the @f@ in @first= f@). The binding is
+    -- a bound local, not an object — including it injects an untyped @TopType@ leaf that
+    -- collapses the object union — so drop it while keeping the context-value reference.
+    exprFromTupleArg ObjArr{oaObj, oaArr=Just (maybeOaObjExpr, _)} = maybeToList oaObj ++ filter (keepMatchedVal oaObj) (maybeToList maybeOaObjExpr)
     exprFromTupleArg ObjArr{oaArr=Nothing} = []
+    keepMatchedVal mObj v = exprIsStructural v || (maybeExprPath =<< mObj) == Just contextValStr
+    exprIsStructural e = case (exprAppliedArgs e, exprAppliedOrdVars e) of
+      ([], []) -> False
+      _        -> True
     recursedSubObjects = concatMap getRecursiveObjsExpr argSubObjects
 
 -- | Gets an object and all sub-objects (recursively) from it's arguments
