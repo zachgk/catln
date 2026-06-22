@@ -38,18 +38,18 @@ Prgm
                                     ( EAppArg Value /l -> /Data/Primitive/Integer =
                                         ( /len
                                             ( EAppArg Value /this -> /IntCons
-                                                ( /head=~Integer
+                                                ( /head=~/Data/Primitive/Integer
                                                 , /tail=/IntCons
-                                                    ( /head=~Integer
+                                                    ( /head=~/Data/Primitive/Integer
                                                     , /tail=/IntNil
                                                     )
                                                 ) = /IntCons
-                                                ( EAppArg Value /head -> ~Integer = 5 )
+                                                ( EAppArg Value /head -> ~/Data/Primitive/Integer = 5 )
                                                 ( EAppArg Value /tail -> /IntCons
-                                                    ( /head=~Integer
+                                                    ( /head=~/Data/Primitive/Integer
                                                     , /tail=/IntNil
                                                     ) = /IntCons
-                                                    ( EAppArg Value /head -> ~Integer = 3 )( EAppArg Value /tail -> /IntNil = Value /IntNil )
+                                                    ( EAppArg Value /head -> ~/Data/Primitive/Integer = 3 )( EAppArg Value /tail -> /IntNil = Value /IntNil )
                                                 )
                                             ) ↦ /Data/Primitive/Integer
                                         )
@@ -72,9 +72,9 @@ Prgm
                         [ /len( EAppArg Value /this -> /IntNil ) -> /Data/Primitive/Integer = 0
                         , /len
                             ( EAppArg Value /this -> /IntCons
-                                ( /head=~Integer
+                                ( /head=~/Data/Primitive/Integer
                                 , /tail=~IntList
-                                ) = /IntCons( EAppArg Value /head -> ~Integer )( EAppArg Value /tail -> ∀/IntList )
+                                ) = /IntCons( EAppArg Value /head -> ~/Data/Primitive/Integer )( EAppArg Value /tail -> ∀/IntList )
                             ) ->
                             ( /operator+
                                 ( /r=/Data/Primitive/Integer
@@ -102,7 +102,7 @@ Prgm
             , /IntList
             ,
                 [ /IntCons
-                    ( /head=~Integer
+                    ( /head=~/Data/Primitive/Integer
                     , /tail=~IntList
                     )
                 , /IntNil
@@ -113,6 +113,14 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg Value /text -> /Data/String = "The intlist tests recursive data structures without type variables" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "[Integer] is written fully qualified as [/Data/Primitive/Integer]: the recursive [len] coverage" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "compares the class member's field against the definition's, and an unqualified [Integer] there" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "leaves a short [/Integer] name that does not yet reconcile with the qualified one." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "TODO: Once that relative-name resolution is fixed, revert these to the bare [Integer]." )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "operator+:(Integer l, ConsList r) = Cons(head=l, tail=r)" )
         , /Catln/#md
