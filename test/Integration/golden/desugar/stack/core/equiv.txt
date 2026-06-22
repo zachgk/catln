@@ -21,6 +21,16 @@ Prgm
                     }
                 )
             ,
+                ( "/operator=="
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator==( Value /l -> $/T = Hole TopType HoleActive Nothing )( Value /r -> $/T = Hole TopType HoleActive Nothing )[ /T : ∀/Data/Algebra/Eq ] -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/Algebra/testEqvTransitive"
                 , ObjectMapItem
                     { omiDecls = []
@@ -70,10 +80,44 @@ Prgm
                         [ Value /Data/Algebra/testEqvSymmetric= CInt 0 ]
                     }
                 )
+            ,
+                ( "/Data/Algebra/eq"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Algebra/eq[ /T : ∀/Data/Algebra/Eq ]( Value /this -> $/T ) -> /Data/Algebra/Eqv[ /T=TopType ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/equal"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Algebra/equal[ /T : ∀/Data/Algebra/Eq ]( Value other -> $/T )( Value /this -> $/T ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/operator!="
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator!=( Value /l -> $/T = Hole TopType HoleActive Nothing )( Value /r -> $/T = Hole TopType HoleActive Nothing )[ /T : ∀/Data/Algebra/Eq ] -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
             ]
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -88,9 +132,25 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "[check] applies the stored equivalence function to two values of [$T]." )
         , /Catln/#md
+            ( Value /text= CStr "[eq] is the standard equivalence relation for an [Eq] type; [equal] is the single method" )
+        , /Catln/#md
+            ( Value /text= CStr "  through which [operator==] dispatches. Instances and the operators live in [Data/Algebra/equality]." )
+        , /Catln/#md
             ( Value /text= CStr "## Example
             The simplest [Eqv] over [Integer] compares its values with the built-in [operator==]." )
         , /Catln/#md
             ( Value /text= CStr "## Laws of equivalence" )
+        , /Catln/#md
+            ( Value /text= CStr "Symmetry: for an [Eqv] whose relation is symmetric, equivalent values check the same in" )
+        , /Catln/#md
+            ( Value /text= CStr "  either direction. Each direction is asserted directly rather than comparing the two" )
+        , /Catln/#md
+            ( Value /text= CStr "  results with [operator==] (comparing them needs parameterized-type binding to flow" )
+        , /Catln/#md
+            ( Value /text= CStr "  [Integer] into an inline [Eqv]'s [rel], which is not yet supported)." )
+        , /Catln/#md
+            ( Value /text= CStr "Transitivity: for an [Eqv] whose relation is transitive, a~b and b~c imply a~c. Each link" )
+        , /Catln/#md
+            ( Value /text= CStr "  is asserted directly (see the note on [testEqvSymmetric])." )
         ]
     }

@@ -211,7 +211,16 @@ buildCallTree env@TBEnv{tbTypeEnv} objSrcs visitedArrows (TypeVar v _) destType 
     Just (_, srcType') -> buildCallTree env objSrcs visitedArrows srcType' destType
     Nothing -> error $ printf "Unknown TypeVar %s in buildCallTree" (show v)
   vaenvs -> error $ printf "Found unhandled zero or multiple vaenvs in builCallTree: %s" (show vaenvs)
-buildCallTree env os visitedArrows (UnionType Nothing srcLeafs consts) destType = do
+-- A source with no concrete leaves but a predicate top (a rel/class form such as @~Boolean@
+-- represented as @UnionType (Just (PredRel Boolean, _)) [] []@) carries its members only in the
+-- predicate, so expand it to the member union and build from that. Without this it would yield an
+-- empty 'TCMatch' that no runtime value can satisfy.
+buildCallTree env@TBEnv{tbTypeEnv} os visitedArrows src@(UnionType (Just (preds, _)) srcLeafs consts) destType
+  | null (splitUnionType srcLeafs) && null consts
+  , let expanded = expandPredicates tbTypeEnv H.empty preds
+  , expanded /= src =
+      buildCallTree env os visitedArrows expanded destType
+buildCallTree env os visitedArrows (UnionType _ srcLeafs consts) destType = do
   let allPartials = splitUnionType srcLeafs ++ map constantPartialType consts
   matchVal <- forM allPartials $ \srcPartial -> do
     t <- buildPartialCallTree env os visitedArrows srcPartial destType
@@ -224,7 +233,6 @@ buildCallTree env os visitedArrows (UnionType Nothing srcLeafs consts) destType 
   return $ case nub (map snd matchVal) of
     [t] -> t
     _   -> TCMatch $ H.fromList matchVal
-buildCallTree _ _ _ _ _ = error "Unimplemented buildCallTree"
 
 toTExpr :: TBEnv -> [ObjSrc] -> Expr TBMetaDat -> CRes (TExpr TBMetaDat)
 -- toTExpr _ os e | trace (printf "toTExpr %s \n\twith %s" (show e) (show os)) False = undefined

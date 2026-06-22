@@ -12,12 +12,11 @@ Prgm
                     }
                 )
             ,
-                ( "/operator=="
+                ( "/Data/strEqual"
                 , ObjectMapItem
-                    { omiDecls =
-                        [ /operator==( Value /l -> /Data/String = Hole TopType HoleActive Nothing )( Value /r -> /Data/String = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                    { omiDecls = []
                     , omiRuntimeDecls =
-                        [ /operator==( Value /l -> /Data/String = Hole TopType HoleActive Nothing )( Value /r -> /Data/String = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                        [ /Data/strEqual( Value l -> /Data/String )( Value r -> /Data/String ) -> ∀/Data/Primitive/Boolean ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -87,22 +86,10 @@ Prgm
                     , omiDefs = []
                     }
                 )
-            ,
-                ( "/operator!="
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /operator!=( Value /l -> /Data/String = Hole TopType HoleActive Nothing )( Value /r -> /Data/String = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
-                    , omiRuntimeDecls =
-                        [ /operator!=( Value /l -> /Data/String = Hole TopType HoleActive Nothing )( Value /r -> /Data/String = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
             ]
         )
     , prgmCG =
         [ CGType
-        , CGType
         , CGType
         , CGType
         , CGType

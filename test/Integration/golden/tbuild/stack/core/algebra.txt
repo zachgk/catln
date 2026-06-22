@@ -61,16 +61,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Algebra/testGroup"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Algebra/testGroup( EAppVar /T ∀/Data/Algebra/Group )( EAppArg Value /t -> $/T ) -> /Data/Primitive/Integer = 0 ]
-                    }
-                )
-            ,
                 ( "/operator<"
                 , ObjectMapItem
                     { omiDecls =
@@ -78,16 +68,6 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
-                    }
-                )
-            ,
-                ( "/Data/Algebra/testCommutativeMonoid"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Algebra/testCommutativeMonoid( EAppVar /T ∀/Data/Algebra/CommutativeMonoid )( EAppArg Value /a -> $/T )( EAppArg Value /b -> $/T ) -> /Data/Primitive/Integer = 0 ]
                     }
                 )
             ,
@@ -101,42 +81,12 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Algebra/testRightMonoidIdentity"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Algebra/testRightMonoidIdentity( EAppVar /T ∀/Data/Algebra/Monoid )( EAppArg Value /t -> $/T ) -> /Data/Primitive/Integer = 0 ]
-                    }
-                )
-            ,
-                ( "/Data/Algebra/testSemigroupAssociative"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Algebra/testSemigroupAssociative( EAppVar /T ∀/Data/Algebra/Semigroup )( EAppArg Value /a -> $/T )( EAppArg Value /b -> $/T )( EAppArg Value /c -> $/T ) -> /Data/Primitive/Integer = 0 ]
-                    }
-                )
-            ,
                 ( "/Data/Algebra/NoOrdering"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Algebra/NoOrdering ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
-                    }
-                )
-            ,
-                ( "/Data/Algebra/testLeftMonoidIdentity"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Algebra/testLeftMonoidIdentity( EAppVar /T ∀/Data/Algebra/Monoid )( EAppArg Value /t -> $/T ) -> /Data/Primitive/Integer = 0 ]
                     }
                 )
             ,

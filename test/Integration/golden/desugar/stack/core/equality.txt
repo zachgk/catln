@@ -1,0 +1,88 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/operator=="
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator==( Value l -> $/T )( Value r -> $/T )[ /T : ∀/Data/Algebra/Eq ]= equal( Value other= Value r )( Value /this= Value l ) ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/eq"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/eq( Value /this -> /Data/Primitive/Integer )= /Data/Algebra/Eqv[ /Integer : TopType ]
+                            ( rel( Value a )( Value b )= /Data/Primitive/intEq( Value l= Value a )( Value r= Value b ) )
+                        , /Data/Algebra/eq( Value /this -> /Data/Primitive/Float )= /Data/Algebra/Eqv[ /Float : TopType ]
+                            ( rel( Value a )( Value b )= /Data/Primitive/floatEq( Value l= Value a )( Value r= Value b ) )
+                        , /Data/Algebra/eq( Value /this -> ∀/Data/Primitive/Boolean )= /Data/Algebra/Eqv[ /Boolean : TopType ]
+                            ( rel( Value a )( Value b )= /Data/Primitive/boolEq( Value l= Value a )( Value r= Value b ) )
+                        , /Data/Algebra/eq( Value /this -> /Data/String )= /Data/Algebra/Eqv[ /String : TopType ]
+                            ( rel( Value a )( Value b )= /Data/strEqual( Value l= Value a )( Value r= Value b ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/equal"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/equal( Value other )( Value /this -> /Data/Primitive/Integer )= check( Value x= Value this )( Value y= Value other )
+                            ( Value /this= eq( Value /this= Value this ) )
+                        , /Data/Algebra/equal( Value other )( Value /this -> /Data/Primitive/Float )= check( Value x= Value this )( Value y= Value other )
+                            ( Value /this= eq( Value /this= Value this ) )
+                        , /Data/Algebra/equal( Value other )( Value /this -> ∀/Data/Primitive/Boolean )= check( Value x= Value this )( Value y= Value other )
+                            ( Value /this= eq( Value /this= Value this ) )
+                        , /Data/Algebra/equal( Value other )( Value /this -> /Data/String )= check( Value x= Value this )( Value y= Value other )
+                            ( Value /this= eq( Value /this= Value this ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/operator!="
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator!=( Value l -> $/T )( Value r -> $/T )[ /T : ∀/Data/Algebra/Eq ]= /operator~
+                            ( Value /a= /operator==( Value /l= Value l )( Value /r= Value r ) )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "# Equality definitions
+            The standard [eq] relation for each primitive type, and the generic [operator==] and
+            [operator!=] defined in terms of it. These live downstream of the primitives and all in the
+            [Data/Algebra] module. Defining them here keeps [eq] a single method [/Data/Algebra/eq]
+            (per-type instances in their own type's module would fragment it across [Data/Primitive],
+            [Data]) and keeps the named-operand operator definitions out of the primitives' inference
+            group, where they would perturb the shared operand fields of operators like [operator<=]." )
+        , /Catln/#md
+            ( Value /text= CStr "The per-type [eq] instances wrap each type's primitive equality in an [Eqv]." )
+        , /Catln/#md
+            ( Value /text= CStr "[equal] for each type runs that type's [eq] relation. [this] is concrete here, so [this.eq]" )
+        , /Catln/#md
+            ( Value /text= CStr "  is an ordinary (non-abstract) method dispatch. [operator==] then dispatches on the single" )
+        , /Catln/#md
+            ( Value /text= CStr "  [equal] method (like [toString]), avoiding an abstract two-step [eq]/[check] dispatch." )
+        ]
+    }

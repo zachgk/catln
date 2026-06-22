@@ -1,4 +1,5 @@
 import "core/primitives.ct"
+import "core/equiv.ct"
 
 
 module(Data)
@@ -10,13 +11,8 @@ module(Data)
 
   every(String, isa= [/Data/Algebra/Eq])
 
-  (_ :: String == _ :: String) -> Boolean
-  (_ :: String == _ :: String) -> Boolean
+  strEqual(l -> String, r -> String) -> Boolean
     #runtime("strEq")
-
-  (_ :: String != _ :: String) -> Boolean
-  (_ :: String != _ :: String) -> Boolean
-    #runtime("strNeq")
 
   :String.toString -> String
   :String.toString= this

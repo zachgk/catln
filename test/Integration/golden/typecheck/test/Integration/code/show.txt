@@ -23,9 +23,66 @@ Prgm
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
                                 )
-                            , /operator==
-                                ( /r=/Data/String
-                                , /l=/Data/String
+                            ,
+                                ( /Data/Algebra/check
+                                    ( /x=/Data/String
+                                    , /this=/Data/Algebra/Eqv
+                                        [ /String=TopType
+                                        , /T=TopType
+                                        ]
+                                        ( /rel
+                                            ( /a=TopType
+                                            , /b=TopType
+                                            )=( /Data/Primitive/True + /Data/Primitive/False )
+                                        )
+                                    , /y=∀/Data/Algebra/Eq
+                                    ) + /Data/Algebra/check
+                                    ( /x=/Data/Primitive/Integer
+                                    , /this=/Data/Algebra/Eqv
+                                        [ /T=TopType
+                                        , /Integer=TopType
+                                        ]
+                                        ( /rel
+                                            ( /a=TopType
+                                            , /b=TopType
+                                            )=( /Data/Primitive/True + /Data/Primitive/False )
+                                        )
+                                    , /y=∀/Data/Algebra/Eq
+                                    ) + /Data/Algebra/check
+                                    ( /x=∀/Data/Primitive/Boolean
+                                    , /this=/Data/Algebra/Eqv
+                                        [ /T=TopType
+                                        , /Boolean=TopType
+                                        ]
+                                        ( /rel
+                                            ( /a=TopType
+                                            , /b=TopType
+                                            )=( /Data/Primitive/True + /Data/Primitive/False )
+                                        )
+                                    , /y=∀/Data/Algebra/Eq
+                                    ) + /Data/Algebra/check
+                                    ( /x=/Data/Primitive/Float
+                                    , /this=/Data/Algebra/Eqv
+                                        [ /T=TopType
+                                        , /Float=TopType
+                                        ]
+                                        ( /rel
+                                            ( /a=TopType
+                                            , /b=TopType
+                                            )=( /Data/Primitive/True + /Data/Primitive/False )
+                                        )
+                                    , /y=∀/Data/Algebra/Eq
+                                    ) + /operator==
+                                    [ /r=∀/Data/Algebra/Eq
+                                    , /T=∀/Data/Algebra/Eq
+                                    , /l=∀/Data/Algebra/Eq
+                                    ]
+                                    ( /r=/Data/String
+                                    , /l=/Data/String
+                                    ) + /Data/Primitive/True + /Data/Primitive/False + /Data/Algebra/equal
+                                    ( /other=∀/Data/Algebra/Eq
+                                    , /this=∀/Data/Algebra/Eq
+                                    )
                                 )
                             , []
                             ) = /operator==
