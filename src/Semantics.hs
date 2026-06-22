@@ -22,6 +22,8 @@ import qualified Data.HashSet        as S
 import           Data.Maybe
 import           Semantics.Prgm
 import           Semantics.Types
+import           System.Directory    (doesDirectoryExist)
+import           System.IO.Unsafe    (unsafePerformIO)
 import           Text.Printf
 
 newtype ObjArrTypeGraph e m = ObjArrTypeGraph (ObjectMap e m)
@@ -66,7 +68,18 @@ newtype CTSSConfig = CTSSConfig {
 
 testCtssConfig, buildCtssConfig :: CTSSConfig
 testCtssConfig = CTSSConfig "stack"
-buildCtssConfig = CTSSConfig "~/.catln/stack"
+-- | The standard-library location used by the CLI/LSP/WebDocs. During development
+-- the compiler is run from a worktree (e.g. via @stack exec@) whose working directory
+-- contains a local @stack/@ standard library; prefer it so multiple worktrees can be
+-- developed and run in parallel without colliding on the single shared installed copy.
+-- Only an installed compiler — run where no local @stack/core@ exists — falls back to
+-- the @~/.catln/stack@ copy populated at install time. Resolved once (NOINLINE) from the
+-- process's working directory, which is fixed for the run.
+buildCtssConfig = unsafePerformIO $ do
+  let localPath = ctssStackPath testCtssConfig
+  localExists <- doesDirectoryExist (localPath ++ "/core")
+  return $ if localExists then CTSSConfig localPath else CTSSConfig "~/.catln/stack"
+{-# NOINLINE buildCtssConfig #-}
 
 mkTypeEnv :: (ExprClass e, Show m, Show (e m), MetaDat m) => Prgm e m -> TypeEnv (ObjArrTypeGraph e m)
 mkTypeEnv (Prgm objMap classGraph _) = TypeEnv classGraph (ObjArrTypeGraph objMap) typeNames False defaultTypeEnvDebug False False S.empty S.empty
