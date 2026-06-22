@@ -1,0 +1,96 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/Data/Algebra/check"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Algebra/check( Value x -> $/T )( Value y -> $/T )
+                            ( Value /this= /Data/Algebra/Eqv[ /T : TopType ]
+                                ( rel( Value a )( Value b ) )
+                            ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/check( Value x )( Value y )
+                            ( Value /this= /Data/Algebra/Eqv[ /T : TopType ]
+                                ( rel( Value a )( Value b ) )
+                            )= rel( Value a= Value x )( Value b= Value y )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/testEqvTransitive"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/Algebra/testEqvTransitive= CInt 0 ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/testEqvReflexive"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/Algebra/testEqvReflexive= CInt 0 ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/exampleIntEqv"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/Algebra/exampleIntEqv= CInt 0 ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/Eqv"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Algebra/Eqv[ /T : TopType ]( Value /rel -> ∀/Data/Primitive/Boolean ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/testEqvSymmetric"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/Algebra/testEqvSymmetric= CInt 0 ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "# Equivalence Relations
+            An [Eqv] captures an equivalence relation over a type [$T]: a function that decides
+            whether two values of [$T] are to be considered equivalent." )
+        , /Catln/#md
+            ( Value /text= CStr "[check] applies the stored equivalence function to two values of [$T]." )
+        , /Catln/#md
+            ( Value /text= CStr "## Example
+            The simplest [Eqv] over [Integer] compares its values with the built-in [operator==]." )
+        , /Catln/#md
+            ( Value /text= CStr "## Laws of equivalence" )
+        ]
+    }

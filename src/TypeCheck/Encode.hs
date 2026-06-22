@@ -20,15 +20,15 @@ module TypeCheck.Encode where
 
 import           Control.Monad
 import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet         as S
+import qualified Data.HashSet        as S
 import qualified Data.IntMap.Lazy    as IM
 import           Prelude             hiding (unzip)
 
 import           Control.Monad.State
+import           CtConstants         (contextValStr)
 import           Data.Bifunctor      (Bifunctor (first))
 import           Data.Maybe
 import           Data.UUID           (nil)
-import           CtConstants         (contextValStr)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types

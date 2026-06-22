@@ -1,0 +1,37 @@
+import "core/primitives.ct"
+import "core/algebra.ct"
+
+
+module(Data/Algebra)
+  # # Equivalence Relations
+    An [Eqv] captures an equivalence relation over a type [$T]: a function that decides
+    whether two values of [$T] are to be considered equivalent.
+  data(Eqv[$T](rel(a -> $T, b -> $T) -> Boolean))
+    # An [Eqv] holds the equivalence function [rel] for the type [$T].
+
+  # [check] applies the stored equivalence function to two values of [$T].
+  :/Data/Algebra/Eqv[$T](rel(a, b)).check(x -> $T, y -> $T) -> Boolean
+  :/Data/Algebra/Eqv[$T](rel(a, b)).check(x, y)= rel(a= x, b= y)
+
+  # ## Example
+    The simplest [Eqv] over [Integer] compares its values with the built-in [operator==].
+  exampleIntEqv =
+    #example
+    #assert(test= /Data/Algebra/Eqv[Integer](rel(a, b)= a == b).check(x= 2, y= 2))
+    0
+
+  # ## Laws of equivalence
+  testEqvReflexive =
+    #test
+    #assert(test= /Data/Algebra/Eqv[Integer](rel(a, b)= a == b).check(x= 3, y= 3))
+    0
+
+  testEqvSymmetric =
+    #test
+    #assert(test= /Data/Algebra/Eqv[Integer](rel(a, b)= a == b).check(x= 3, y= 5) == /Data/Algebra/Eqv[Integer](rel(a, b)= a == b).check(x= 5, y= 3))
+    0
+
+  testEqvTransitive =
+    #test
+    #assert(test= ~(/Data/Algebra/Eqv[Integer](rel(a, b)= a == b).check(x= 3, y= 5) && /Data/Algebra/Eqv[Integer](rel(a, b)= a == b).check(x= 5, y= 7)) || /Data/Algebra/Eqv[Integer](rel(a, b)= a == b).check(x= 3, y= 7))
+    0

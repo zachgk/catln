@@ -894,6 +894,33 @@ typeVal = singletonType . partialVal
 relTypeVal :: TypeName -> Type
 relTypeVal n = TopType H.empty (PredsOne (PredRel $ partialVal n))
 
+-- | Relax an upper bound so an argument-less partial constrains only its name, but only
+-- where the bounded value already carries that name /with arguments/.
+--
+-- A bound built from a bare value name (see 'relTypeVal') lists the name with no arguments
+-- under 'PtArgExact', which means "exactly zero arguments". Intersecting that against an
+-- argumented value — e.g. the head of a function-typed data field @rel(a, b)@, which
+-- accretes its parameters onto its own point — yields bottom, since the exact arg-keysets
+-- @{}@ and @{a, b}@ are disjoint. A name-only bound is not meant to constrain arguments, so
+-- such a partial is widened to 'PtArgAny' (name required, any arguments allowed), leaving
+-- the value's arguments intact.
+--
+-- The widening is gated on the actual type @act@: a name is relaxed only when @act@ already
+-- lists it with arguments. This keeps the bound exact for an argument-less value (e.g. an
+-- operator's value head, which stays 0-arg with its operands on the apply node), so the
+-- bound does not turn a 'TopType' actual into a 'PtArgAny' one.
+relaxNameBoundArgs :: Type -> Type -> Type
+relaxNameBoundArgs act (UnionType mPreds leafs consts) = UnionType mPreds (relaxLeafs leafs) consts
+  where
+    actArgedNames = case act of
+      UnionType _ actLeafs _ -> S.fromList [ptName p | p <- splitUnionType actLeafs, not (H.null (ptArgs p))]
+      _                      -> S.empty
+    relaxLeafs = joinUnionType . map relaxPartial . splitUnionType
+    relaxPartial p@PartialType{ptName, ptArgs}
+      | H.null ptArgs && ptName `S.member` actArgedNames = p{ptArgMode = PtArgAny}
+      | otherwise                                        = p
+relaxNameBoundArgs _ t = t
+
 classPartial :: PartialType -> Type
 classPartial p = TopType H.empty (PredsOne (PredClass p))
 

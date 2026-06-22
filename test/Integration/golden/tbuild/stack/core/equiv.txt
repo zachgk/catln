@@ -1,0 +1,107 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/Data/Algebra/check"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Algebra/check( EAppArg Value /x -> $/T )( EAppArg Value /y -> $/T )
+                            ( EAppArg Value /this -> /Data/Algebra/Eqv[ /T=TopType ]
+                                ( /rel
+                                    ( /a=TopType
+                                    , /b=TopType
+                                    )=~Boolean
+                                ) = /Data/Algebra/Eqv( EAppVar /T TopType )
+                                ( EAppArg /rel( EAppArg Value /a )( EAppArg Value /b ) -> ~Boolean )
+                            ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/check( EAppArg Value /x )( EAppArg Value /y )
+                            ( EAppArg Value /this -> /Data/Algebra/Eqv[ /T=TopType ]
+                                ( /rel
+                                    ( /a=TopType
+                                    , /b=TopType
+                                    )=~Boolean
+                                ) = /Data/Algebra/Eqv( EAppVar /T TopType )
+                                ( EAppArg /rel( EAppArg Value /a )( EAppArg Value /b ) -> ~Boolean )
+                            ) -> ~Boolean =
+                            ( /rel( EAppArg Value /a -> TVArg /x = Value /x )( EAppArg Value /b -> TVArg /y = Value /y ) ↦ ~Boolean )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/testEqvTransitive"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/Algebra/testEqvTransitive -> /Data/Primitive/Integer = 0 ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/testEqvReflexive"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/Algebra/testEqvReflexive -> /Data/Primitive/Integer = 0 ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/exampleIntEqv"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/Algebra/exampleIntEqv -> /Data/Primitive/Integer = 0 ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/Eqv"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Algebra/Eqv( EAppVar /T TopType )( EAppArg Value /rel -> ∀/Data/Primitive/Boolean ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/testEqvSymmetric"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/Algebra/testEqvSymmetric -> /Data/Primitive/Integer = 0 ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "# Equivalence Relations
+            An [Eqv] captures an equivalence relation over a type [$T]: a function that decides
+            whether two values of [$T] are to be considered equivalent." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "[check] applies the stored equivalence function to two values of [$T]." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "## Example
+            The simplest [Eqv] over [Integer] compares its values with the built-in [operator==]." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "## Laws of equivalence" )
+        ]
+    }

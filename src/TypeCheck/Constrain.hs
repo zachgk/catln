@@ -135,7 +135,7 @@ computeConstraint env con@(Constraint _ vaenv (EqPoints i p1 p2)) = (False, con{
 computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByKnown i p@SType{stypeAct=act, stypeReq=req} boundTp)) = (True, con{conDat=BoundedByKnown i (p{stypeAct=act', stypeReq=req'}) boundTp})
   where
     vaenv' = fmap (stypeAct . snd) vaenv
-    boundTp' = case boundTp of
+    boundTp' = relaxNameBoundArgs act $ case boundTp of
       TypeVar v _                                   -> H.lookupDefault PTopType v vaenv'
       UnionType (Just (preds, negLeafs)) _ _ ->
         snd $ differenceTypeWithEnv feTypeEnv vaenv' (expandPredicates feTypeEnv vaenv' preds) (UnionType Nothing negLeafs [])
