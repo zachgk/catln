@@ -1,0 +1,80 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/unbox"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /unbox( EAppArg Value /b -> ∀/Boxed ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /unbox( EAppArg Value /b -> /Data/Primitive/Integer ) -> TVArg /b = ( Value /b ↦ TVArg /b ) ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                    }
+                )
+            ,
+                ( "/Box"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Box( EAppVar /A TopType )( EAppArg Value /x -> $/A ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/useBox"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /useBox
+                            ( EAppArg Value /p -> /Box[ /A=~/Boxed ] ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /useBox
+                            ( EAppArg Value /p -> /Box[ /A=~/Boxed ]( /x=~/Boxed ) = /Box( EAppArg Value /x@Value /v -> ∀/Boxed ) ) ->
+                            ( /unbox( /b=∀/Boxed ) + /Data/Primitive/Integer ) = /unbox
+                            ( EAppArg Value /b -> TVArg /v = ( Value /v ↦ TVArg /v ) )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Boxed
+            , [ /Data/Primitive/Integer ]
+            , Just " "
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Prerequisite for multiFieldRouting (after paramElemBound): the alias-rename variant. Same as" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "paramElemBound but the destructured field is renamed via the alias form `x@v` and the body uses" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "the alias `v`. The bare form (paramElemBound) works; isolating the alias rename here. Currently" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "the definition's argument `p` fails to resolve the `Box(x@v)` pattern (stays TopType) when the" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "body uses `v` in a bounded-member call (`unbox(b= v)`), even though the bare and the" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "simple-body (`= v`) alias forms both resolve." )
+        ]
+    }

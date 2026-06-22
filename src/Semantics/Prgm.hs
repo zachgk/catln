@@ -336,7 +336,13 @@ instance ExprClass Expr where
   exprVarArgs HoleExpr{} = H.empty
   exprVarArgs (AliasExpr base n) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, getExprMeta base)] (exprVarArgs base)
   exprVarArgs (EWhere _ base _) = exprVarArgs base
-  exprVarArgs (TupleApply _ (_, be) (EAppArg ObjArr{oaObj=Just n, oaArr=Just (Nothing, arrM)})) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, arrM)] (H.unionWith (++) (exprVarArgs be) (exprVarArgs n))
+  -- For an alias destructure (@field@name@) the arg's value is matched by the field but bound
+  -- under the alias name (the name the body references), so key the field's arr-meta by the alias
+  -- and recurse into the base — mirroring 'exprVarArgsWithSrc'. A bare binding uses the obj itself.
+  exprVarArgs (TupleApply _ (_, be) (EAppArg ObjArr{oaObj=Just n, oaArr=Just (Nothing, arrM)})) = H.insertWith (++) (TVArg $ inExprSingleton bindName) [(n, arrM)] (H.unionWith (++) (exprVarArgs be) (exprVarArgs baseN))
+    where (bindName, baseN) = case n of
+            AliasExpr b a -> (a, b)
+            _             -> (n, n)
   exprVarArgs (TupleApply _ _ (EAppArg ObjArr{oaObj, oaArr=Just (Nothing, _)})) = error $ printf "Unexpected unhandled obj type in exprVarArgs: %s" (show oaObj)
   exprVarArgs (TupleApply _ (_, be) (EAppArg ObjArr{oaArr=Just (Just e, _)})) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)
   exprVarArgs (TupleApply _ (_, be) (EAppVar n m)) = H.insertWith (++) (TVVar n) [(Value (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)] (exprVarArgs be)

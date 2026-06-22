@@ -1,0 +1,87 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/unbox"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /unbox( Value /b -> ∀/Boxed ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /unbox( Value /b -> /Data/Primitive/Integer ) -> TVArg /b = Value /b ]
+                    }
+                )
+            ,
+                ( "/Pair"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Pair[ /B : TopType ][ /A : TopType ]( Value /first -> $/A )( Value /second -> $/B ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
+                    }
+                )
+            ,
+                ( "/bothUnbox"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /bothUnbox
+                            ( Value /p -> /Pair
+                                [ /A=~/Boxed
+                                , /B=~/Boxed
+                                ]
+                            ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /bothUnbox
+                            ( Value /p -> /Pair
+                                [ /A=~/Boxed
+                                , /B=~/Boxed
+                                ]
+                                ( /first=~/Boxed
+                                , /second=~/Boxed
+                                ) = /Pair( Value /first@Value /f -> ∀/Boxed )( Value /second@Value /s -> ~/Boxed )
+                            ) ->
+                            ( /unbox( /b=∀/Boxed ) + /Data/Primitive/Integer ) = /unbox( Value /b -> TVArg /f = Value /f )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Boxed
+            , [ /Data/Primitive/Integer ]
+            , Just " "
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr "Repro: a destructured element binding in a definition pattern must inherit the element
+            bound declared on the function's argument. This uses a local `Boxed` class with a member
+            `unbox` instead of the stdlib `Eq` class (which is no longer an effective class — equality
+            is now provided by standalone per-type `operator==` declarations, so a `$A -> Eq` bound does
+            not actually gate any operation). `bothUnbox` is declared over Pair[$A -> Boxed, $B -> Boxed],
+            so the destructured `first` binding `f` should inherit the `Boxed` bound and `unbox(f)` should
+            type-check and dispatch. Concrete construction/extraction already works; this isolates the
+            parametric case where the element's only bound comes from the declaration." )
+        ]
+    }
