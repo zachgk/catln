@@ -397,7 +397,9 @@ exprArgsWithVal (TupleApply _ (_, be) arg) val = H.union (exprArgsWithVal be val
       Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
     fromArg (EAppArg ObjArr{oaObj=Nothing, oaArr=Just (Just e, _)}) _ = exprArgsWithVal e val
     fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Nothing, _)}) (TupleVal _ tupleArgs) = case H.lookup (exprPath obj) tupleArgs of
-      Just val' -> H.singleton (exprPath obj) val'
+      -- An alias destructure (@field@name@) is matched by the field (@exprPath obj@ follows the
+      -- base) but bound under the alias name, which is what the body references.
+      Just val' -> H.singleton (case obj of AliasExpr _ aliasE -> exprPath aliasE; _ -> exprPath obj) val'
       Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
     fromArg EAppVar{} _ = H.empty
     fromArg (EAppSpread a) _ = error $ printf "Not yet implemented exprArgsWithVal fromArg of %s and %s" (show a) (show val)
@@ -419,7 +421,9 @@ texprArgsWithVal (TTupleApply _ (_, be) arg) val = H.union (texprArgsWithVal be 
       Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
     fromArg (EAppArg ObjArr{oaObj=Nothing, oaArr=Just (Just e, _)}) _ = texprArgsWithVal e val
     fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Nothing, _)}) (TupleVal _ tupleArgs) = case H.lookup (exprPath obj) tupleArgs of
-      Just val' -> H.singleton (exprPath obj) val'
+      -- An alias destructure (@field@name@) is matched by the field (@exprPath obj@ follows the
+      -- base) but bound under the alias name, which is what the body references.
+      Just val' -> H.singleton (case obj of TAliasExpr _ aliasE -> exprPath aliasE; _ -> exprPath obj) val'
       Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
     fromArg EAppVar{} _ = H.empty
     fromArg (EAppSpread a) _ = error $ printf "Not yet defined spread exprArgsWithVal fromArg of %s and %s" (show a) (show val)

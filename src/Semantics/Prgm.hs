@@ -388,6 +388,13 @@ instance ExprClass Expr where
                 _ -> [mainArg]
             where
               structKey = inExprSingleton obj
+              -- For an alias destructure (@field@name@, e.g. @first@f@) the matched field is
+              -- named by the base (@first@, so 'structKey' looks up its value in 'src') but is
+              -- /bound/ under the alias (@f@) — that is the name the body references. Bind under
+              -- the alias key so the body resolves; a bare binding (no alias) uses 'structKey'.
+              bindKey = case obj of
+                AliasExpr _ aliasE -> inExprSingleton aliasE
+                _                  -> structKey
               headName = makeAbsoluteName (exprPath obj)
               srcArgNames = map (makeAbsoluteName . pkName) (H.keys (ptArgs src))
               reconciledKey = case filter (patternHeadNamesArg . snd) (H.toList (ptArgs src)) of
@@ -396,7 +403,7 @@ instance ExprClass Expr where
               patternHeadNamesArg argType = case maybeGetSingleton argType of
                 Just p  -> headName == makeAbsoluteName (ptName p)
                 Nothing -> False
-              mainArg = H.singleton (TVArg structKey) ([(obj, arrM)], fromMaybe (getMetaType arrM) (typeGetArg structKey src))
+              mainArg = H.singleton (TVArg bindKey) ([(obj, arrM)], fromMaybe (getMetaType arrM) (typeGetArg structKey src))
           fromArg (EAppVar vn vm) = [H.singleton (TVVar vn) ([(Value (emptyMetaT $ partialToTypeSingleton vn) (pkName vn), vm)], H.lookupDefault PTopType vn (ptVars src))]
           fromArg (EAppSpread s) = exprVarArgsWithSrc typeEnv s src
           fromArg oa = error $ printf "Invalid oa %s" (show oa)
