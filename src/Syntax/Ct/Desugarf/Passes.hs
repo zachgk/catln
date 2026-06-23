@@ -138,8 +138,8 @@ linkClassMethodReceivers (Prgm _ (ClassGraph fullCg) _) (Prgm (ObjectMap objMap)
   where
     -- Map each ObjArr in place, preserving the decl/def categorization of the object map.
     objMap' = H.map enrichItem objMap
-    enrichItem (ObjectMapItem ds rs rfs dfs) =
-      ObjectMapItem (map enrichObjArr ds) (map enrichObjArr rs) (map enrichObjArr rfs) (map enrichObjArr dfs)
+    enrichItem (ObjectMapItem ds rs rfs defs) =
+      ObjectMapItem (map enrichObjArr ds) (map enrichObjArr rs) (map enrichObjArr rfs) (map enrichObjArr defs)
 
     enrichObjArr oa@ObjArr{oaObj=Just objExpr} = oa{oaObj=Just (enrichThis objExpr)}
     enrichObjArr oa                            = oa
