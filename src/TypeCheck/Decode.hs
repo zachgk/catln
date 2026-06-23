@@ -15,6 +15,7 @@
 module TypeCheck.Decode where
 
 import           Control.Monad.State
+import           CtConstants         (thisKey)
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Data.Maybe          (mapMaybe)
@@ -154,6 +155,30 @@ diagonalProjection typeEnv argNames (UnionType Nothing leafs []) =
   unionAllTypes typeEnv [intersectAllTypes typeEnv (mapMaybe (`typeGetArg` p) argNames) | p <- splitUnionType leafs]
 diagonalProjection _ _ _ = BottomType
 
+-- | Detects a /class-parameter method/ declaration: one whose @this@ receiver is a parameterized
+-- class predicate (e.g. @this -> TEqv[T=$T]@ for a method over @class(TEqv[$T])@) and at least
+-- one other argument is typed by one of that class's parameter variables (e.g.
+-- @:TEqv.rel(a -> $T, b -> $T)@). Such a declaration is fulfilled by covering its /receiver/
+-- dimension — every class member must have a definition — because the parameter-typed arguments
+-- are supplied per-member (each definition at its own member's parameter) and are validated by
+-- the definition-within-declaration check, not by the full argument product (which would
+-- spuriously demand the arguments at the parameter's whole bound, e.g. 'TopType').
+isClassParamMethodDecl :: ObjArr Expr TypedMetaDat -> Bool
+isClassParamMethodDecl oa = not (null receiverVars) && any isParamArg args
+  where
+    args = exprAppliedArgs (oaObjExpr oa)
+    argType a = getMetaType . snd <$> oaArr a
+    isThis a = maybe False ((`elem` [thisKey, "this"]) . exprPath) (oaObj a)
+    receiverVars =
+      [ v
+      | a <- args, isThis a
+      , Just (TopType _ (PredsOne (PredClass PartialType{ptVars}))) <- [argType a]
+      , v <- H.keys ptVars
+      ]
+    isParamArg a = not (isThis a) && case argType a of
+      Just (TypeVar (TVVar v) _) -> v `elem` receiverVars
+      _                          -> False
+
 -- | Universalize /destructuring binding variables/ that appear as argument values in a
 -- definition's input type. A pattern like @MyJust(v= lv)@ matches /any/ @MyJust@ regardless
 -- of the element, so for declaration-coverage its value at @v@ is the whole field domain,
@@ -232,7 +257,17 @@ verifyObjMapItem name (ObjectMapItem decls runtimeDecls refineDecls defs) = do
         let (checkType, target) = case diagonalVar oa =<< singleLeaf declType of
               Just (varBound, varArgs) -> (varBound, unionAllTypes prgmTypeEnv (map (diagonalProjection prgmTypeEnv varArgs) defInputTypesU))
               Nothing                  -> (declType, defUnionU)
-        unless (isSubtypeOf prgmTypeEnv checkType target) $ do
+        -- A class-parameter method is fulfilled by covering its receiver dimension alone (every
+        -- class member must have a definition); its parameter-typed arguments are per-member and
+        -- are validated by the definition-within-declaration check above. This is an additional
+        -- acceptance path: it never suppresses a failure the product check would otherwise pass.
+        let receiverFulfilled = isClassParamMethodDecl oa &&
+              case typeGetArg (partialKey "this") =<< singleLeaf declType of
+                Just recvDecl ->
+                  let recvDefs = mapMaybe (\t -> typeGetArg (partialKey "this") =<< singleLeaf t) defInputTypesU
+                  in not (null recvDefs) && isSubtypeOf prgmTypeEnv recvDecl (unionAllTypes prgmTypeEnv recvDefs)
+                Nothing -> False
+        unless (receiverFulfilled || isSubtypeOf prgmTypeEnv checkType target) $ do
           let notDefined = snd $ differenceTypeWithEnv prgmTypeEnv H.empty checkType target
           lift $ TypeCheckResult [UnfulfilledDeclaration name declType target notDefined declLoc] ()
 

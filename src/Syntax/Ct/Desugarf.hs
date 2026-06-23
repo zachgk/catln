@@ -210,7 +210,13 @@ desTypeDef statementEnv@(inheritPath, _) typeExpr extends subStatements = do
   let type' = exprToPartialType typeExpr
   let obj = desObj False inheritPath UseRelativeName $ ObjArr (Just typeExpr') TypeObj (desObjDocComment subStatements) annots Nothing
   let objMap = objectMapFromList [obj]
-  let extendNodes = [(CGClass (False, exprToPartialType extendClass, [singletonType type'], Nothing), PClassName (exprPath extendClass), [PTypeName $ ptName type']) | extendClass <- extends]
+  -- Register the class membership under the member's /resolved absolute/ name (e.g.
+  -- @/Scratch/MyEqv@). 'exprToPartialType' yields the relative source name (@MyEqv@), which the
+  -- class-graph resolution pass does not absolutize for concrete member partials, so a membership
+  -- lookup against the absolute type name would miss (unlike the @every@ form, which already
+  -- stores the resolved name). 'oaObjPath' is the data object's absolute path.
+  let memberName = oaObjPath obj
+  let extendNodes = [(CGClass (False, exprToPartialType extendClass, [singletonType type'{ptName=memberName}], Nothing), PClassName (exprPath extendClass), [PTypeName memberName]) | extendClass <- extends]
   let classGraph = classGraphFromObjs objMap <> ClassGraph (graphFromEdges extendNodes)
   return (Prgm objMap classGraph [] <> subPrgm)
 
@@ -250,7 +256,12 @@ desFinalPasses nodesWithDeps = do
 
     -- Run resolveRelativeNames pass
     let prgm3 = resolveRelativeNames fullPrgm2 prgm2
-    lift $ mapMetaPrgmM addMetaID prgm3
+
+    -- Expose each class's type parameters on the receivers of its methods, using the fully
+    -- resolved class graph (so a method's @$T@ ties to the class parameter it is declared over).
+    let fullPrgm3 = resolveRelativeNames fullPrgm2 fullPrgm2
+    let prgm4 = linkClassMethodReceivers fullPrgm3 prgm3
+    lift $ mapMetaPrgmM addMetaID prgm4
 
 desPrgm :: (PPrgm, FileImport, [FileImport]) -> CRes (DesPrgm, FileImport, [FileImport])
 desPrgm (RawPrgm _ statements, name, imports) = do

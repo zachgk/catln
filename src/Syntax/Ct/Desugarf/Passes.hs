@@ -15,6 +15,7 @@
 
 module Syntax.Ct.Desugarf.Passes where
 
+import           CtConstants             (thisKey)
 import           Data.Graph
 import qualified Data.HashMap.Strict     as H
 import           Data.List               (nub)
@@ -25,7 +26,7 @@ import           Semantics.Prgm
 import           Semantics.Types
 import           Syntax.Ct.Parser.Syntax
 import           Text.Printf
-import           Utils                   (graphToNodes)
+import           Utils                   (graphLookup, graphToNodes)
 
 -- Removes objects that match classes
 -- When a class is used in the RHS of a multiTypeDef, it will create an object temporarily
@@ -116,3 +117,43 @@ resolveRelativeNames fullPrgm@(Prgm fullPrgmObjMap _ _) (Prgm objMap (ClassGraph
                   (False, _, _) -> PRelativeName name
                   (True, foundTypeNames, foundClassNames) -> error $ printf "Could not resolve required name: %s \n\t Found possible typeNames: %s \n\t Found possible classNames: %s" name (show foundTypeNames) (show foundClassNames)
     resolveName _ name = name
+
+
+-- |
+-- Exposes a class's declared type parameters on the receivers of its methods.
+--
+-- A method declared with a bare class receiver, e.g. @:TEqv.rel(a -> $T, b -> $T)@ over
+-- @class(TEqv[$T])@, desugars to a receiver typed as the bare class @∀TEqv@ (a class
+-- predicate with no type parameters). The method's @$T@ is then disconnected from the class
+-- parameter and floats to 'TopType'. This pass restores the link: for each method whose
+-- @this@ receiver is a parameterized class, it fills the receiver's 'ptVars' with an identity
+-- binding for every declared class parameter (@∀TEqv@ becomes @TEqv[T=$T]@). A method argument
+-- that names @$T@ then shares the receiver's parameter variable, so an instance that binds it
+-- concretely (@MyEqv isa TEqv[$T= Integer]@) flows that binding into the method's arguments.
+--
+-- Parameters already present on the receiver (e.g. the explicit @:Result[$R, $E].default@ form)
+-- are left untouched, and receivers that are not parameterized classes are unchanged.
+linkClassMethodReceivers :: DesPrgm -> DesPrgm -> DesPrgm
+linkClassMethodReceivers (Prgm _ (ClassGraph fullCg) _) (Prgm (ObjectMap objMap) classGraph annots) = Prgm (ObjectMap objMap') classGraph annots
+  where
+    -- Map each ObjArr in place, preserving the decl/def categorization of the object map.
+    objMap' = H.map enrichItem objMap
+    enrichItem (ObjectMapItem ds rs rfs dfs) =
+      ObjectMapItem (map enrichObjArr ds) (map enrichObjArr rs) (map enrichObjArr rfs) (map enrichObjArr dfs)
+
+    enrichObjArr oa@ObjArr{oaObj=Just objExpr} = oa{oaObj=Just (enrichThis objExpr)}
+    enrichObjArr oa                            = oa
+
+    -- The @this@ receiver is applied last, so it is the outermost 'EAppArg'.
+    enrichThis (TupleApply m (bm, be) (EAppArg oa@ObjArr{oaObj=Just oe, oaArr=Just (ae, arrM)}))
+      | isThisArg oe = TupleApply m (bm, enrichThis be) (EAppArg oa{oaArr=Just (ae, mWithType (enrichReceiverType (getMetaType arrM)) arrM)})
+    enrichThis (TupleApply m (bm, be) app) = TupleApply m (bm, enrichThis be) app
+    enrichThis e = e
+
+    isThisArg oe = let p = exprPath oe in p == thisKey || p == "this"
+
+    enrichReceiverType (TopType negPartials (PredsOne (PredClass p@PartialType{ptName, ptVars})))
+      | Just (CGClass (_, PartialType{ptVars=classVarsDecl}, _, _)) <- graphLookup (PClassName ptName) fullCg
+      , not (H.null classVarsDecl)
+      = TopType negPartials (PredsOne (PredClass p{ptVars=H.union ptVars (H.mapWithKey (\k _ -> TypeVar (TVVar k) TVInt) classVarsDecl)}))
+    enrichReceiverType t = t

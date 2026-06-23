@@ -1,0 +1,20 @@
+import "core"
+
+
+module(Scratch)
+  # Class-method type-parameter binding.
+  # The abstract [rel] is declared over the parameterized class [TEqv] with its arguments typed
+  # by the class parameter. The object [MyEqv] is a member of [TEqv] with the parameter bound to
+  # [Integer], so the definition of [rel] sees its arguments as [Integer] and the declaration is
+  # fulfilled by covering the receiver (every member of the class has a definition).
+  class(TEqv[$T])
+
+  :TEqv.rel(a -> $T, b -> $T) -> Boolean
+
+  data(MyEqv, isa= [/Scratch/TEqv[$T= Integer]])
+
+  :MyEqv.rel(a, b)= /Data/Primitive/intEq(l= a, r= b)
+
+  main{io -> IO} =
+    #assert(test= MyEqv.rel(a= 2, b= 2))
+    io
