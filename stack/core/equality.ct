@@ -5,26 +5,39 @@ import "core/data.ct"
 
 module(Data/Algebra)
   # # Equality definitions
-    The standard [eq] relation for each primitive type, and the generic [operator==] and
-    [operator!=] defined in terms of it. These live downstream of the primitives and all in the
-    [Data/Algebra] module. Defining them here keeps [eq] a single method [/Data/Algebra/eq]
-    (per-type instances in their own type's module would fragment it across [Data/Primitive],
-    [Data]) and keeps the named-operand operator definitions out of the primitives' inference
-    group, where they would perturb the shared operand fields of operators like [operator<=].
+    The standard [Eqv] object for each primitive type, the [eq] that returns it, and the generic
+    [operator==] and [operator!=] defined in terms of it. These live downstream of the primitives
+    and all in the [Data/Algebra] module. Defining them here keeps [eq] a single method
+    [/Data/Algebra/eq] (per-type instances in their own type's module would fragment it across
+    [Data/Primitive], [Data]) and keeps the named-operand operator definitions out of the
+    primitives' inference group, where they would perturb the shared operand fields of operators
+    like [operator<=].
 
-  # The per-type [eq] instances wrap each type's primitive equality in an [Eqv].
-  :Integer.eq= /Data/Algebra/Eqv[Integer](rel(a, b)= /Data/Primitive/intEq(l= a, r= b))
-  :Float.eq= /Data/Algebra/Eqv[Float](rel(a, b)= /Data/Primitive/floatEq(l= a, r= b))
-  :Boolean.eq= /Data/Algebra/Eqv[Boolean](rel(a, b)= /Data/Primitive/boolEq(l= a, r= b))
-  :String.eq= /Data/Algebra/Eqv[String](rel(a, b)= /Data/strEqual(l= a, r= b))
+  # Each primitive type's [Eqv] is an object of the [Eqv] class whose [rel] wraps that type's
+  #   primitive equality. [eq] returns it.
+  data(IntEqv, isa= [/Data/Algebra/Eqv[$T= Integer]])
+  :IntEqv.rel(a, b)= /Data/Primitive/intEq(l= a, r= b)
+  :Integer.eq= IntEqv
+
+  data(FloatEqv, isa= [/Data/Algebra/Eqv[$T= Float]])
+  :FloatEqv.rel(a, b)= /Data/Primitive/floatEq(l= a, r= b)
+  :Float.eq= FloatEqv
+
+  data(BoolEqv, isa= [/Data/Algebra/Eqv[$T= Boolean]])
+  :BoolEqv.rel(a, b)= /Data/Primitive/boolEq(l= a, r= b)
+  :Boolean.eq= BoolEqv
+
+  data(StrEqv, isa= [/Data/Algebra/Eqv[$T= String]])
+  :StrEqv.rel(a, b)= /Data/strEqual(l= a, r= b)
+  :String.eq= StrEqv
 
   # [equal] for each type runs that type's [eq] relation. [this] is concrete here, so [this.eq]
   #   is an ordinary (non-abstract) method dispatch. [operator==] then dispatches on the single
-  #   [equal] method (like [toString]), avoiding an abstract two-step [eq]/[check] dispatch.
-  :Integer.equal(other)= this.eq.check(x= this, y= other)
-  :Float.equal(other)= this.eq.check(x= this, y= other)
-  :Boolean.equal(other)= this.eq.check(x= this, y= other)
-  :String.equal(other)= this.eq.check(x= this, y= other)
+  #   [equal] method (like [toString]).
+  :Integer.equal(other)= this.eq.rel(a= this, b= other)
+  :Float.equal(other)= this.eq.rel(a= this, b= other)
+  :Boolean.equal(other)= this.eq.rel(a= this, b= other)
+  :String.equal(other)= this.eq.rel(a= this, b= other)
 
   (l :: $T == r :: $T)[$T -> /Data/Algebra/Eq]= l.equal(other= r)
 

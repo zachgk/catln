@@ -2,6 +2,15 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/Data/Algebra/FloatEqv"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Algebra/FloatEqv ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/operator=="
                 , ObjectMapItem
                     { omiDecls = []
@@ -12,21 +21,49 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Algebra/rel"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/rel( Value a )( Value b )( Value /this -> /Data/Algebra/IntEqv )= /Data/Primitive/intEq( Value l= Value a )( Value r= Value b )
+                        , /Data/Algebra/rel( Value a )( Value b )( Value /this -> /Data/Algebra/FloatEqv )= /Data/Primitive/floatEq( Value l= Value a )( Value r= Value b )
+                        , /Data/Algebra/rel( Value a )( Value b )( Value /this -> /Data/Algebra/BoolEqv )= /Data/Primitive/boolEq( Value l= Value a )( Value r= Value b )
+                        , /Data/Algebra/rel( Value a )( Value b )( Value /this -> /Data/Algebra/StrEqv )= /Data/strEqual( Value l= Value a )( Value r= Value b )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Algebra/eq"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/eq( Value /this -> /Data/Primitive/Integer )= /Data/Algebra/Eqv[ /Integer : TopType ]
-                            ( rel( Value a )( Value b )= /Data/Primitive/intEq( Value l= Value a )( Value r= Value b ) )
-                        , /Data/Algebra/eq( Value /this -> /Data/Primitive/Float )= /Data/Algebra/Eqv[ /Float : TopType ]
-                            ( rel( Value a )( Value b )= /Data/Primitive/floatEq( Value l= Value a )( Value r= Value b ) )
-                        , /Data/Algebra/eq( Value /this -> ∀/Data/Primitive/Boolean )= /Data/Algebra/Eqv[ /Boolean : TopType ]
-                            ( rel( Value a )( Value b )= /Data/Primitive/boolEq( Value l= Value a )( Value r= Value b ) )
-                        , /Data/Algebra/eq( Value /this -> /Data/String )= /Data/Algebra/Eqv[ /String : TopType ]
-                            ( rel( Value a )( Value b )= /Data/strEqual( Value l= Value a )( Value r= Value b ) )
+                        [ /Data/Algebra/eq( Value /this -> /Data/Primitive/Integer )= Value IntEqv
+                        , /Data/Algebra/eq( Value /this -> /Data/Primitive/Float )= Value FloatEqv
+                        , /Data/Algebra/eq( Value /this -> ∀/Data/Primitive/Boolean )= Value BoolEqv
+                        , /Data/Algebra/eq( Value /this -> /Data/String )= Value StrEqv
                         ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/IntEqv"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Algebra/IntEqv ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/StrEqv"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Algebra/StrEqv ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
                     }
                 )
             ,
@@ -36,13 +73,13 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/equal( Value other )( Value /this -> /Data/Primitive/Integer )= check( Value x= Value this )( Value y= Value other )
+                        [ /Data/Algebra/equal( Value other )( Value /this -> /Data/Primitive/Integer )= rel( Value a= Value this )( Value b= Value other )
                             ( Value /this= eq( Value /this= Value this ) )
-                        , /Data/Algebra/equal( Value other )( Value /this -> /Data/Primitive/Float )= check( Value x= Value this )( Value y= Value other )
+                        , /Data/Algebra/equal( Value other )( Value /this -> /Data/Primitive/Float )= rel( Value a= Value this )( Value b= Value other )
                             ( Value /this= eq( Value /this= Value this ) )
-                        , /Data/Algebra/equal( Value other )( Value /this -> ∀/Data/Primitive/Boolean )= check( Value x= Value this )( Value y= Value other )
+                        , /Data/Algebra/equal( Value other )( Value /this -> ∀/Data/Primitive/Boolean )= rel( Value a= Value this )( Value b= Value other )
                             ( Value /this= eq( Value /this= Value this ) )
-                        , /Data/Algebra/equal( Value other )( Value /this -> /Data/String )= check( Value x= Value this )( Value y= Value other )
+                        , /Data/Algebra/equal( Value other )( Value /this -> /Data/String )= rel( Value a= Value this )( Value b= Value other )
                             ( Value /this= eq( Value /this= Value this ) )
                         ]
                     }
@@ -59,6 +96,15 @@ Prgm
                         ]
                     }
                 )
+            ,
+                ( "/Data/Algebra/BoolEqv"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Algebra/BoolEqv ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
             ]
         )
     , prgmCG =
@@ -66,23 +112,42 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Data/Algebra/Eqv[ /T=TopType ]
+            ,
+                [ /Data/Algebra/IntEqv
+                , /Data/Algebra/FloatEqv
+                , /Data/Algebra/BoolEqv
+                , /Data/Algebra/StrEqv
+                ]
+            , Nothing
+            )
         ]
     , prgmAnnots =
         [ /Catln/#md
             ( Value /text= CStr "# Equality definitions
-            The standard [eq] relation for each primitive type, and the generic [operator==] and
-            [operator!=] defined in terms of it. These live downstream of the primitives and all in the
-            [Data/Algebra] module. Defining them here keeps [eq] a single method [/Data/Algebra/eq]
-            (per-type instances in their own type's module would fragment it across [Data/Primitive],
-            [Data]) and keeps the named-operand operator definitions out of the primitives' inference
-            group, where they would perturb the shared operand fields of operators like [operator<=]." )
+            The standard [Eqv] object for each primitive type, the [eq] that returns it, and the generic
+            [operator==] and [operator!=] defined in terms of it. These live downstream of the primitives
+            and all in the [Data/Algebra] module. Defining them here keeps [eq] a single method
+            [/Data/Algebra/eq] (per-type instances in their own type's module would fragment it across
+            [Data/Primitive], [Data]) and keeps the named-operand operator definitions out of the
+            primitives' inference group, where they would perturb the shared operand fields of operators
+            like [operator<=]." )
         , /Catln/#md
-            ( Value /text= CStr "The per-type [eq] instances wrap each type's primitive equality in an [Eqv]." )
+            ( Value /text= CStr "Each primitive type's [Eqv] is an object of the [Eqv] class whose [rel] wraps that type's" )
+        , /Catln/#md
+            ( Value /text= CStr "  primitive equality. [eq] returns it." )
         , /Catln/#md
             ( Value /text= CStr "[equal] for each type runs that type's [eq] relation. [this] is concrete here, so [this.eq]" )
         , /Catln/#md
             ( Value /text= CStr "  is an ordinary (non-abstract) method dispatch. [operator==] then dispatches on the single" )
         , /Catln/#md
-            ( Value /text= CStr "  [equal] method (like [toString]), avoiding an abstract two-step [eq]/[check] dispatch." )
+            ( Value /text= CStr "  [equal] method (like [toString])." )
         ]
     }

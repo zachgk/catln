@@ -2,25 +2,6 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
-                ( "/Data/Algebra/check"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/Algebra/check( Value x -> $/T )( Value y -> $/T )
-                            ( Value /this= /Data/Algebra/Eqv[ /T : TopType ]
-                                ( rel( Value a )( Value b ) )
-                            ) -> ∀/Data/Primitive/Boolean
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Algebra/check( Value x )( Value y )
-                            ( Value /this= /Data/Algebra/Eqv[ /T : TopType ]
-                                ( rel( Value a )( Value b ) )
-                            )= rel( Value a= Value x )( Value b= Value y )
-                        ]
-                    }
-                )
-            ,
                 ( "/operator=="
                 , ObjectMapItem
                     { omiDecls =
@@ -38,6 +19,15 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ Value /Data/Algebra/testEqvTransitive= CInt 0 ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/AllEqv"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Algebra/AllEqv ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
                     }
                 )
             ,
@@ -61,16 +51,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Algebra/Eqv"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/Algebra/Eqv[ /T : TopType ]( Value /rel -> ∀/Data/Primitive/Boolean ) ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/Data/Algebra/testEqvSymmetric"
                 , ObjectMapItem
                     { omiDecls = []
@@ -81,10 +61,34 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Algebra/rel"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Algebra/rel( Value a -> $/T )( Value b -> $/T )
+                            ( Value /this -> ∀/Data/Algebra/Eqv[ /T=$/T ] ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/rel( Value a )( Value b )( Value /this -> /Data/Algebra/IntEqExample )= /Data/Primitive/intEq( Value l= Value a )( Value r= Value b )
+                        , /Data/Algebra/rel( Value a )( Value b )( Value /this -> /Data/Algebra/AllEqv )= Value True
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Algebra/eq"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/Algebra/eq[ /T : ∀/Data/Algebra/Eq ]( Value /this -> $/T ) -> /Data/Algebra/Eqv[ /T=TopType ] ]
+                        [ /Data/Algebra/eq[ /T : ∀/Data/Algebra/Eq ]( Value /this -> $/T ) -> ∀/Data/Algebra/Eqv[ /T=TopType ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/IntEqExample"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Algebra/IntEqExample ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -123,34 +127,49 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Data/Algebra/Eqv[ /T=TopType ]
+            ,
+                [ /Data/Algebra/IntEqExample
+                , /Data/Algebra/AllEqv
+                ]
+            , Just ""
+            )
         ]
     , prgmAnnots =
         [ /Catln/#md
             ( Value /text= CStr "# Equivalence Relations
-            An [Eqv] captures an equivalence relation over a type [$T]: a function that decides
-            whether two values of [$T] are to be considered equivalent." )
+            An [Eqv] is the class of equivalence relations over a type [$T]. Each object in the class is
+            a single equivalence relation, and supplies the [rel] that decides whether two values of [$T]
+            are to be considered equivalent." )
         , /Catln/#md
-            ( Value /text= CStr "[check] applies the stored equivalence function to two values of [$T]." )
+            ( Value /text= CStr "[rel] is the equivalence function of an [Eqv]. It is a class declaration: every object in the" )
+        , /Catln/#md
+            ( Value /text= CStr "class defines it for its own type. See the per-type instances (such as [IntEqv]) in" )
+        , /Catln/#md
+            ( Value /text= CStr "[Data/Algebra/equality]." )
         , /Catln/#md
             ( Value /text= CStr "[eq] is the standard equivalence relation for an [Eq] type; [equal] is the single method" )
         , /Catln/#md
             ( Value /text= CStr "  through which [operator==] dispatches. Instances and the operators live in [Data/Algebra/equality]." )
         , /Catln/#md
+            ( Value /text= CStr "## Example and law objects
+            The example and law tests reference named [Eqv] objects, since the class is defined by its
+            members rather than constructed inline. [IntEqExample] is ordinary integer equality, and
+            [AllEqv] relates every pair (handy for demonstrating the symmetry and transitivity laws on
+            distinct values)." )
+        , /Catln/#md
             ( Value /text= CStr "## Example
-            The simplest [Eqv] over [Integer] compares its values with the built-in [operator==]." )
+            The simplest [Eqv] over [Integer] compares its values with the built-in integer equality." )
         , /Catln/#md
             ( Value /text= CStr "## Laws of equivalence" )
         , /Catln/#md
-            ( Value /text= CStr "Symmetry: for an [Eqv] whose relation is symmetric, equivalent values check the same in" )
+            ( Value /text= CStr "Symmetry: for an [Eqv] whose relation is symmetric, equivalent values relate the same in" )
         , /Catln/#md
-            ( Value /text= CStr "  either direction. Each direction is asserted directly rather than comparing the two" )
+            ( Value /text= CStr "  either direction." )
         , /Catln/#md
-            ( Value /text= CStr "  results with [operator==] (comparing them needs parameterized-type binding to flow" )
-        , /Catln/#md
-            ( Value /text= CStr "  [Integer] into an inline [Eqv]'s [rel], which is not yet supported)." )
-        , /Catln/#md
-            ( Value /text= CStr "Transitivity: for an [Eqv] whose relation is transitive, a~b and b~c imply a~c. Each link" )
-        , /Catln/#md
-            ( Value /text= CStr "  is asserted directly (see the note on [testEqvSymmetric])." )
+            ( Value /text= CStr "Transitivity: for an [Eqv] whose relation is transitive, a~b and b~c imply a~c." )
         ]
     }

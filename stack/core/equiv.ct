@@ -4,14 +4,15 @@ import "core/algebra.ct"
 
 module(Data/Algebra)
   # # Equivalence Relations
-    An [Eqv] captures an equivalence relation over a type [$T]: a function that decides
-    whether two values of [$T] are to be considered equivalent.
-  data(Eqv[$T](rel(a -> $T, b -> $T) -> Boolean))
-    # An [Eqv] holds the equivalence function [rel] for the type [$T].
+    An [Eqv] is the class of equivalence relations over a type [$T]. Each object in the class is
+    a single equivalence relation, and supplies the [rel] that decides whether two values of [$T]
+    are to be considered equivalent.
+  class(Eqv[$T])
 
-  # [check] applies the stored equivalence function to two values of [$T].
-  :/Data/Algebra/Eqv[$T](rel(a, b)).check(x -> $T, y -> $T) -> Boolean
-  :/Data/Algebra/Eqv[$T](rel(a, b)).check(x, y)= rel(a= x, b= y)
+  # [rel] is the equivalence function of an [Eqv]. It is a class declaration: every object in the
+  # class defines it for its own type. See the per-type instances (such as [IntEqv]) in
+  # [Data/Algebra/equality].
+  :Eqv.rel(a -> $T, b -> $T) -> Boolean
 
   # [eq] is the standard equivalence relation for an [Eq] type; [equal] is the single method
   #   through which [operator==] dispatches. Instances and the operators live in [Data/Algebra/equality].
@@ -23,34 +24,42 @@ module(Data/Algebra)
 
   (_ :: $T != _ :: $T)[$T -> /Data/Algebra/Eq] -> Boolean
 
+  # ## Example and law objects
+    The example and law tests reference named [Eqv] objects, since the class is defined by its
+    members rather than constructed inline. [IntEqExample] is ordinary integer equality, and
+    [AllEqv] relates every pair (handy for demonstrating the symmetry and transitivity laws on
+    distinct values).
+  data(IntEqExample, isa= [/Data/Algebra/Eqv[$T= Integer]])
+  :IntEqExample.rel(a, b)= /Data/Primitive/intEq(l= a, r= b)
+
+  data(AllEqv, isa= [/Data/Algebra/Eqv[$T= Integer]])
+  :AllEqv.rel(a, b)= True
+
   # ## Example
-    The simplest [Eqv] over [Integer] compares its values with the built-in [operator==].
+    The simplest [Eqv] over [Integer] compares its values with the built-in integer equality.
   exampleIntEqv =
     #example
-    #assert(test= /Data/Algebra/Eqv[Integer](rel(a, b)= a == b).check(x= 2, y= 2))
+    #assert(test= IntEqExample.rel(a= 2, b= 2))
     0
 
   # ## Laws of equivalence
   testEqvReflexive =
     #test
-    #assert(test= /Data/Algebra/Eqv[Integer](rel(a, b)= a == b).check(x= 3, y= 3))
+    #assert(test= IntEqExample.rel(a= 3, b= 3))
     0
 
-  # Symmetry: for an [Eqv] whose relation is symmetric, equivalent values check the same in
-  #   either direction. Each direction is asserted directly rather than comparing the two
-  #   results with [operator==] (comparing them needs parameterized-type binding to flow
-  #   [Integer] into an inline [Eqv]'s [rel], which is not yet supported).
+  # Symmetry: for an [Eqv] whose relation is symmetric, equivalent values relate the same in
+  #   either direction.
   testEqvSymmetric =
     #test
-    #assert(test= /Data/Algebra/Eqv[Integer](rel(a, b)= True).check(x= 3, y= 5))
-    #assert(test= /Data/Algebra/Eqv[Integer](rel(a, b)= True).check(x= 5, y= 3))
+    #assert(test= AllEqv.rel(a= 3, b= 5))
+    #assert(test= AllEqv.rel(a= 5, b= 3))
     0
 
-  # Transitivity: for an [Eqv] whose relation is transitive, a~b and b~c imply a~c. Each link
-  #   is asserted directly (see the note on [testEqvSymmetric]).
+  # Transitivity: for an [Eqv] whose relation is transitive, a~b and b~c imply a~c.
   testEqvTransitive =
     #test
-    #assert(test= /Data/Algebra/Eqv[Integer](rel(a, b)= True).check(x= 3, y= 5))
-    #assert(test= /Data/Algebra/Eqv[Integer](rel(a, b)= True).check(x= 5, y= 7))
-    #assert(test= /Data/Algebra/Eqv[Integer](rel(a, b)= True).check(x= 3, y= 7))
+    #assert(test= AllEqv.rel(a= 3, b= 5))
+    #assert(test= AllEqv.rel(a= 5, b= 7))
+    #assert(test= AllEqv.rel(a= 3, b= 7))
     0
