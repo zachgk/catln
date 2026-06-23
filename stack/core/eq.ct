@@ -1,0 +1,111 @@
+import "core/primitives.ct"
+import "core/data.ct"
+
+
+module(Data/Algebra)
+  # # Equivalence and Equality
+    This file defines equivalence relations ([Eqv]), the [Eq] class of types that have a canonical
+    equality, and the [operator==] / [operator!=] built on top of them. It is the foundation that
+    ordering ([Ord], in [Data/Algebra/ord]) builds upon.
+
+  # ## Equivalence Relations
+    An [Eqv] is the class of equivalence relations over a type [$T]. Each object in the class is
+    a single equivalence relation, and supplies the [rel] that decides whether two values of [$T]
+    are to be considered equivalent.
+  class(Eqv[$T])
+
+  # [rel] is the equivalence function of an [Eqv]. It is a class declaration: every object in the
+  # class defines it for its own type. See the per-type instances (such as [IntEqv]) below.
+  :Eqv.rel(a -> $T, b -> $T) -> Boolean
+
+  # ## The Eq class
+    The [Eq] class is used to define values which can be compared for equality. While naive tuple
+    equality often works, some types have equality that behaves differently and must be defined.
+    For example, a TreeSet can insert items in different order and produce different trees, but with
+    equal sets. An [Eq] type names its canonical equivalence with [eq], from which [equal],
+    [operator==] and [operator!=] follow.
+  class(Eq)
+
+  # [eq] is the standard equivalence relation for an [Eq] type; [equal] is the single method
+  #   through which [operator==] dispatches.
+  :$T.eq[$T -> /Data/Algebra/Eq] -> /Data/Algebra/Eqv[$T]
+
+  :$T.equal[$T -> /Data/Algebra/Eq](other -> $T) -> Boolean
+
+  # [operator==] is the equality operator; [operator!=] is its negation. Creating an instance of
+  #   [Eq] only requires defining [eq]; [equal], [operator==] and [operator!=] then follow.
+  (_ :: $T == _ :: $T)[$T -> /Data/Algebra/Eq] -> Boolean
+
+  (_ :: $T != _ :: $T)[$T -> /Data/Algebra/Eq] -> Boolean
+
+  # ## Example and law objects
+    The example and law tests reference named [Eqv] objects, since the class is defined by its
+    members rather than constructed inline. [IntEqExample] is ordinary integer equality, and
+    [AllEqv] relates every pair (handy for demonstrating the symmetry and transitivity laws on
+    distinct values).
+  data(IntEqExample, isa= [/Data/Algebra/Eqv[$T= Integer]])
+  :IntEqExample.rel(a, b)= /Data/Primitive/intEq(l= a, r= b)
+
+  data(AllEqv, isa= [/Data/Algebra/Eqv[$T= Integer]])
+  :AllEqv.rel(a, b)= True
+
+  # ## Example
+    The simplest [Eqv] over [Integer] compares its values with the built-in integer equality.
+  exampleIntEqv =
+    #example
+    #assert(test= IntEqExample.rel(a= 2, b= 2))
+    0
+
+  # ## Laws of equivalence
+  testEqvReflexive =
+    #test
+    #assert(test= IntEqExample.rel(a= 3, b= 3))
+    0
+
+  # Symmetry: for an [Eqv] whose relation is symmetric, equivalent values relate the same in
+  #   either direction.
+  testEqvSymmetric =
+    #test
+    #assert(test= AllEqv.rel(a= 3, b= 5))
+    #assert(test= AllEqv.rel(a= 5, b= 3))
+    0
+
+  # Transitivity: for an [Eqv] whose relation is transitive, a~b and b~c imply a~c.
+  testEqvTransitive =
+    #test
+    #assert(test= AllEqv.rel(a= 3, b= 5))
+    #assert(test= AllEqv.rel(a= 5, b= 7))
+    #assert(test= AllEqv.rel(a= 3, b= 7))
+    0
+
+  # ## Equality definitions for the primitive types
+    Each primitive type's [Eqv] is an object of the [Eqv] class whose [rel] wraps that type's
+    primitive equality. [eq] returns it. These live downstream of the primitives, so defining them
+    here keeps [eq] a single method [/Data/Algebra/eq] rather than fragmenting it across modules.
+  data(IntEqv, isa= [/Data/Algebra/Eqv[$T= Integer]])
+  :IntEqv.rel(a, b)= /Data/Primitive/intEq(l= a, r= b)
+  :Integer.eq= IntEqv
+
+  data(FloatEqv, isa= [/Data/Algebra/Eqv[$T= Float]])
+  :FloatEqv.rel(a, b)= /Data/Primitive/floatEq(l= a, r= b)
+  :Float.eq= FloatEqv
+
+  data(BoolEqv, isa= [/Data/Algebra/Eqv[$T= Boolean]])
+  :BoolEqv.rel(a, b)= /Data/Primitive/boolEq(l= a, r= b)
+  :Boolean.eq= BoolEqv
+
+  data(StrEqv, isa= [/Data/Algebra/Eqv[$T= String]])
+  :StrEqv.rel(a, b)= /Data/strEqual(l= a, r= b)
+  :String.eq= StrEqv
+
+  # [equal] for each type runs that type's [eq] relation. [this] is concrete here, so [this.eq]
+  #   is an ordinary (non-abstract) method dispatch. [operator==] then dispatches on the single
+  #   [equal] method (like [toString]).
+  :Integer.equal(other)= this.eq.rel(a= this, b= other)
+  :Float.equal(other)= this.eq.rel(a= this, b= other)
+  :Boolean.equal(other)= this.eq.rel(a= this, b= other)
+  :String.equal(other)= this.eq.rel(a= this, b= other)
+
+  (l :: $T == r :: $T)[$T -> /Data/Algebra/Eq]= l.equal(other= r)
+
+  (l :: $T != r :: $T)[$T -> /Data/Algebra/Eq]= ~(l == r)

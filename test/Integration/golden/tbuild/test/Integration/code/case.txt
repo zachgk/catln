@@ -55,8 +55,8 @@ Prgm
                     , omiDefs =
                         [ /abs( EAppArg Value /x -> /Data/Primitive/Integer ) ->
                             ( /abs.$c4b325-1
-                                ( /x=∀/Data/Algebra/Ord
-                                , /$c4b325-arg=∀/Data/Algebra/Ord
+                                ( /x=( /Data/Primitive/Integer + /Data/Primitive/Float )
+                                , /$c4b325-arg=( /Data/Primitive/Integer + /Data/Primitive/Float )
                                 ) + /abs.$c4b325-0
                                 ( /x=/Data/Primitive/Integer
                                 , /$c4b325-arg=/Data/Primitive/Integer
@@ -77,19 +77,21 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs.$c4b325-0( EAppArg Value /x -> ∀/Data/Algebra/Ord )
+                        [ /abs.$c4b325-0
+                            ( EAppArg Value /x -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) )
                             ( EAppArg Value /$c4b325-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=
                                 ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
                                 ( EAppArg Value /r -> /Data/Primitive/Integer = 0 )
                             ) -> TVArg /x2 = Value /x2
-                        , /abs.$c4b325-0( EAppArg Value /x -> ∀/Data/Algebra/Ord )
+                        , /abs.$c4b325-0
+                            ( EAppArg Value /x -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) )
                             ( EAppArg Value /$c4b325-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=
                                 ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
                                 ( EAppArg Value /r -> /Data/Primitive/Integer = 0 )
                             ) ->
                             ( /abs.$c4b325-1
-                                ( /x=∀/Data/Algebra/Ord
-                                , /$c4b325-arg=∀/Data/Algebra/Ord
+                                ( /x=( /Data/Primitive/Integer + /Data/Primitive/Float )
+                                , /$c4b325-arg=( /Data/Primitive/Integer + /Data/Primitive/Float )
                                 ) + /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer

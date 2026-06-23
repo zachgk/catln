@@ -8,7 +8,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs.$f9f16a( EAppArg Value /x -> ∀/Data/Algebra/Ord )
+                        [ /abs.$f9f16a
+                            ( EAppArg Value /x -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) )
                             ( EAppArg Value /$f9f16a-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=
                                 ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
                                 ( EAppArg Value /r -> /Data/Primitive/Integer = 0 )

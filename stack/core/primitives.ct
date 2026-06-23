@@ -1,6 +1,6 @@
 import "core/algebra.ct"
 import "core/data.ct"
-import "core/equiv.ct"
+import "core/eq.ct"
 
 
 module(Data/Primitive)
@@ -80,6 +80,11 @@ module(Data/Primitive)
   (_ :: Integer > _ :: Integer) -> Boolean
     #runtime("int>")
 
+  # The primitive integer "less than" is also exposed as a named function so [Data/Algebra/ord]'s
+  #   [Ordering] instances can build a [Comparison] from it.
+  intLt(l -> Integer, r -> Integer) -> Boolean
+    #runtime("int<")
+
   intEq(l -> Integer, r -> Integer) -> Boolean
     #runtime("int==")
 
@@ -128,6 +133,10 @@ module(Data/Primitive)
 
   (_ :: Float > _ :: Float) -> Boolean
     #runtime("float>")
+
+  # Named-function form of the primitive float "less than", used by [Data/Algebra/ord].
+  floatLt(l -> Float, r -> Float) -> Boolean
+    #runtime("float<")
 
   floatEq(l -> Float, r -> Float) -> Boolean
     #runtime("float==")

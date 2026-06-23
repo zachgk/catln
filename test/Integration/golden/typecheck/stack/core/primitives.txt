@@ -48,11 +48,31 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Primitive/floatLt"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/Primitive/floatLt( Value /l -> /Data/Primitive/Float )( Value /r -> /Data/Primitive/Float ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/operator%"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls =
                         [ /operator%( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/intLt"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/Primitive/intLt( Value /l -> /Data/Primitive/Integer )( Value /r -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ]
                     , omiRefineDecls = []
                     , omiDefs = []
                     }
@@ -348,6 +368,8 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
         , CGClass
             ( False
             , /Data/Primitive/Integer
@@ -407,8 +429,14 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "## Integers" )
         , /Catln/#md
+            ( Value /text -> /Data/String = CStr "The primitive integer "less than" is also exposed as a named function so [Data/Algebra/ord]'s" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "  [Ordering] instances can build a [Comparison] from it." )
+        , /Catln/#md
             ( Value /text -> /Data/String = CStr "### Commutative Group" )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "## Floats" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "Named-function form of the primitive float "less than", used by [Data/Algebra/ord]." )
         ]
     }

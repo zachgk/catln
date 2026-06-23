@@ -1,0 +1,149 @@
+import "core/primitives.ct"
+import "core/eq.ct"
+
+
+module(Data/Algebra)
+  # # Ordering
+    Ordering describes types whose values can be compared and sorted — numbers from smallest to
+    largest, strings alphabetically, and so on. It builds on equality from [Data/Algebra/eq]: just
+    as an [Eq] type names a canonical equivalence and derives [operator==], an [Ord] type can be
+    compared with [compare], and because comparing also decides equality every [Ord] is an [Eq].
+
+    Comparing values is implemented with [compare] (rather than a per-object [Ordering] class
+    paralleling [Eqv]); the abstract-class-method form that would mirror [Eqv] exactly is not yet
+    supported by the evaluator for a multi-valued result. The primitive [operator<] / [operator<=]
+    / [operator>] / [operator>=] remain defined directly in [Data/Primitive].
+
+  # ## The comparison result
+    Comparing two values yields a [Comparison]: the left is [LessThan], [Equal] to, or
+    [GreaterThan] the right.
+  class(Comparison, [LessThan, Equal, GreaterThan])
+
+  # These predicates read a [Comparison] as a [Boolean].
+  :Comparison.isEq -> Boolean
+  :LessThan.isEq= False
+  :Equal.isEq= True
+  :GreaterThan.isEq= False
+
+  :Comparison.isLess -> Boolean
+  :LessThan.isLess= True
+  :Equal.isLess= False
+  :GreaterThan.isLess= False
+
+  :Comparison.isGreater -> Boolean
+  :LessThan.isGreater= False
+  :Equal.isGreater= False
+  :GreaterThan.isGreater= True
+
+  :Comparison.isLessEq -> Boolean
+  :LessThan.isLessEq= True
+  :Equal.isLessEq= True
+  :GreaterThan.isLessEq= False
+
+  :Comparison.isGreaterEq -> Boolean
+  :LessThan.isGreaterEq= False
+  :Equal.isGreaterEq= True
+  :GreaterThan.isGreaterEq= True
+
+  # [mkComparison] builds a [Comparison] from the two primitive answers "is less than" and "is
+  #   equal to". The per-type [compare] arms build their result with it.
+  mkComparison(lt -> Boolean, eq -> Boolean) -> Comparison
+  mkComparison(lt= True, eq= _)= LessThan
+  mkComparison(lt= False, eq= True)= Equal
+  mkComparison(lt= False, eq= False)= GreaterThan
+
+  # ## The Ord class
+    An [Ord] type can be ordered. Every [Ord] is an [Eq], and the standard numeric types are [Ord].
+  class(Ord)
+
+  every(Ord, isa= [/Data/Algebra/Eq])
+
+  every(Number, isa= [/Data/Algebra/Ord])
+
+  # [compare] ranks two values of an [Ord] type. Each orderable type contributes an arm built from
+  #   its primitive comparisons; new [Ord] types extend [compare] with their own arm.
+  compare(a -> Integer, b -> Integer) -> Comparison
+  compare(a, b)= mkComparison(lt= /Data/Primitive/intLt(l= a, r= b), eq= /Data/Primitive/intEq(l= a, r= b))
+
+  compare(a -> Float, b -> Float) -> Comparison
+  compare(a, b)= mkComparison(lt= /Data/Primitive/floatLt(l= a, r= b), eq= /Data/Primitive/floatEq(l= a, r= b))
+
+  # ## Partial ordering
+    Some types can be compared but need not be totally ordered: two values may have no order
+    between them. [pcompare] yields a [PComparison], which is either an ordinary [Comparison] or
+    [NoOrdering]. (A [Comparison] is itself a [PComparison], so a total ordering is automatically a
+    partial one.)
+  class(PComparison, [Comparison, NoOrdering])
+
+  class(POrd)
+
+  # [isNoOrdering] / [isComparable] read a [PComparison] across all of its members, including
+  #   [NoOrdering], where the [Comparison]-only predicates above do not apply.
+  :PComparison.isNoOrdering -> Boolean
+  :LessThan.isNoOrdering= False
+  :Equal.isNoOrdering= False
+  :GreaterThan.isNoOrdering= False
+  :NoOrdering.isNoOrdering= True
+
+  :PComparison.isComparable -> Boolean
+  :LessThan.isComparable= True
+  :Equal.isComparable= True
+  :GreaterThan.isComparable= True
+  :NoOrdering.isComparable= False
+
+  # ## Partial ordering example: divisibility
+    The integers are partially ordered by divisibility: [a] precedes [b] when [a] divides [b].
+    Some pairs — like 2 and 3 — divide neither way and are incomparable, which an ordinary total
+    [Comparison] could not express. [mkDivComparison] turns the two divisibility tests into the
+    partial result, and [pcompare] is the partial comparison.
+  mkDivComparison(aDivB -> Boolean, bDivA -> Boolean) -> PComparison
+  mkDivComparison(aDivB= True, bDivA= True)= Equal
+  mkDivComparison(aDivB= True, bDivA= False)= LessThan
+  mkDivComparison(aDivB= False, bDivA= True)= GreaterThan
+  mkDivComparison(aDivB= False, bDivA= False)= NoOrdering
+
+  pcompare(a -> Integer, b -> Integer) -> PComparison
+  pcompare(a, b)= mkDivComparison(aDivB= /Data/Primitive/intEq(l= b % a, r= 0), bDivA= /Data/Primitive/intEq(l= a % b, r= 0))
+
+  # ## Examples
+    [compare] ranks integers by size, and a type's equality agrees with its ordering: values
+    compare [Equal] exactly when they are equal.
+  exampleIntOrd =
+    #example
+    #assert(test= compare(a= 2, b= 3).isLess)
+    #assert(test= compare(a= 3, b= 3).isEq)
+    #assert(test= compare(a= 4, b= 3).isGreater)
+    0
+
+  exampleOrdEq =
+    #example
+    #assert(test= compare(a= 3, b= 3).isEq)
+    #assert(test= compare(a= 2, b= 3).isLessEq)
+    0
+
+  # The divisibility ordering distinguishes ordered pairs from incomparable ones.
+  examplePartialOrder =
+    #example
+    #assert(test= pcompare(a= 2, b= 6).isComparable)
+    #assert(test= pcompare(a= 2, b= 3).isNoOrdering)
+    0
+
+  # ## Laws of ordering
+  testOrdReflexive =
+    #test
+    #assert(test= compare(a= 5, b= 5).isLessEq)
+    #assert(test= compare(a= 5, b= 5).isGreaterEq)
+    0
+
+  testOrdAntisymmetric =
+    #test
+    #assert(test= compare(a= 2, b= 5).isLess)
+    #assert(test= compare(a= 5, b= 2).isGreater)
+    0
+
+  testOrdTransitive =
+    #test
+    #assert(test= compare(a= 1, b= 3).isLess)
+    #assert(test= compare(a= 3, b= 9).isLess)
+    #assert(test= compare(a= 1, b= 9).isLess)
+    0

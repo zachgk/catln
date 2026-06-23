@@ -1,74 +1,13 @@
 import "core/primitives.ct"
 import "core/compile.ct"
-import "core/equiv.ct"
+import "core/eq.ct"
 
 
 module(Data/Algebra)
   # # Catln Core Abstract Algebra Types
     These types define some of the basic relationship between types and ways classes can relate to themselves.
-  class(Eq)
-    # The Eq class is used to define values which can be compared for equality.
-      While naive tuple equality often works, some types have equality that behaves differently and must be defined.
-      For example, a TreeSet can insert items in different order and produce different trees, but with equal sets.
-      There are only two operations for eq: [operator==] and [operator!=].
-    # This checks whether two items are equal.
-      Note that it only compares like items with each other, not that you can compare apples to oranges.
-      Equality is not defined as a class member here. Instead, each comparable type provides its
-      own standalone [operator==] declaration (for example [Integer == Integer] or [ConsList == ConsList]).
-
-  # It is the opposite of [operator==] leading to the simple definition:
-  # /operator!=(l, r) = ~(l == r)
-    Given this, creating an instance of Eq only requires defining equality and the != can be produced automatically.
-  # ## Ordering
-  # Ordering is used to define operations that have a natural ability to be ordered or sorted.
-    Some examples include numbers which are sorted from smallest to largest or strings which are sorted alphabetically.
-  # There are two different forms of ordering:
-  class(Ord)
-    # Ord is used to define types which can be strictly ordered.
-      Every element, when compared must have one of the following [Ordering] relationships:
-
-  every(Number, isa= [/Data/Algebra/Ord])
-
-  class(Ordering, [LessThan, Equal, GreaterThan])
-    # The Orderings can relate any like items of Ord. 
-  class(POrd)
-    # In addition to [Ord], [POrd] defines a partial ordering.
-      Partially ordered items can be compared, but may result in [NoOrdering]:
-  class(POrdering, [Ordering, NoOrdering])
-    # As an example, sets can be partially ordered by the subset operation.
-      One set A <= B when A is a subset of B.
-      An ordered example is {1} <= {1, 2}.
-      But, two sets like {1} and {2} have no ordering between them.
-
-  # There are a few nice properties about ordering.
-  every(Ord, isa= [/Data/Algebra/POrd])
-
-  # This means that something fully ordered can still take advantage of many of the same functions as partially ordered ones.
-    It just usually has a more specific result.
-  compare[$T -> Ord](l -> $T, r -> $T) -> Ordering
-  compare[$T -> POrd](l -> $T, r -> $T) -> POrdering
-
-  # The only major function for ordering is [compare].
-    Comparing two [Ord] will result in an [Ordering].
-    Likewise, comparing two partially orderables [POrd] results in a [POrdering].
-  # ### Operators for ordering
-    Besides compare, there are also some operators to make using ordering easier.
-  (_ :: $T <= _ :: $T)[$T -> Ord] -> Boolean
-
-  (_ :: $T >= _ :: $T)[$T -> Ord] -> Boolean
-
-  (_ :: $T < _ :: $T)[$T -> Ord] -> Boolean
-
-  (_ :: $T > _ :: $T)[$T -> Ord] -> Boolean
-
-  every(POrd, isa= [/Data/Algebra/Eq])
-    # If something can be compared for order, it should also be comparable for equality by the following relationship:
-
-  # /operator==<POrd $T>($T l, $T r) = compare(l=l, r=r) == Equal
-  # ### Ordering utility functions
-  # max<Ord $T>($T l, $T r) -> $T = if l >= r then l else r
-  # min<Ord $T>($T l, $T r) -> $T = if l <= r then l else r
-  # TODO: Tests and properties for compare
+    The [Eq] class of equality lives in [Data/Algebra/eq] and ordering ([Ord]) in [Data/Algebra/ord];
+    this file covers the remaining algebraic structures ([Semigroup], [Monoid], [Group]).
   # ## Semigroup
   class(Semigroup)
     # A semigroup is a type combined with an associative operation called [operator++].
