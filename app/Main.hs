@@ -6,8 +6,9 @@ import           Options.Applicative
 import           Semantics            (buildCtssConfig)
 import           Semantics.Prgm       (FileImport, impDisp)
 import           Syntax.Ct.Formatter  (formatRootPrgm)
-import           Syntax.Parsers       (mkDesCanonicalImportStr, mkRawImportStr,
-                                       parseFile, readFiles)
+import           Syntax.Parsers       (canonicalImport, mkDesCanonicalImportStr,
+                                       mkRawImportStr, parseFile, readFiles,
+                                       readImport)
 
 import           Control.Monad
 import           Control.Monad.Trans
@@ -88,8 +89,12 @@ xLsp = do
 
 xFmt :: String -> CResT IO ()
 xFmt prgmName = do
-  (prgm, _, _) <- parseFile buildCtssConfig $ mkRawImportStr prgmName
-  let prgm' = formatRootPrgm prgm
+  -- Format the RAW parsed program (the source as written), NOT the result of the full parse
+  -- pipeline: 'processParsed' injects an implicit @import "core"@ for compilation, and formatting
+  -- that would write a duplicate @import "core"@ back into any file that already imports it.
+  imp <- lift $ canonicalImport buildCtssConfig Nothing $ mkRawImportStr prgmName
+  (rawPrgm, _, _) <- lift $ readImport imp
+  let prgm' = formatRootPrgm rawPrgm
   lift $ writeFile prgmName prgm'
 
 xTest :: String -> CResT IO ()
