@@ -2,6 +2,23 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/operator=="
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator==
+                            ( Value /l -> ∀/Data/ConsList[ /T=~/Data/Algebra/Eq ] = Hole TopType HoleActive Nothing )
+                            ( Value /r -> ∀/Data/ConsList[ /T=~/Data/Algebra/Eq ] = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator==
+                            ( Value l -> ∀/Data/ConsList[ /T=~/Data/Algebra/Eq ] )
+                            ( Value r -> ∀/Data/ConsList[ /T=~/Data/Algebra/Eq ] )= /Data/consEqual( Value a= Value l )( Value b= Value r )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/range"
                 , ObjectMapItem
                     { omiDecls = []
@@ -44,6 +61,30 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/consEqual"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/consEqual
+                            ( Value a -> ∀/Data/ConsList[ /T=~/Data/Algebra/Eq ] )
+                            ( Value b -> ∀/Data/ConsList[ /T=~/Data/Algebra/Eq ] ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/consEqual( Value a= Value Nil )( Value b= Value Nil )= Value True
+                        , /Data/consEqual( Value a= Value Nil )
+                            ( Value b= /Data/Cons( Value head )( Value tail ) )= Value False
+                        , /Data/consEqual
+                            ( Value a= /Data/Cons( Value head )( Value tail ) )( Value b= Value Nil )= Value False
+                        , /Data/consEqual
+                            ( Value a= /Data/Cons( Value head@Value ah )( Value tail@Value at ) )
+                            ( Value b= /Data/Cons( Value head@Value bh )( Value tail@Value bt ) )= /operator&&
+                            ( Value /l= /operator==( Value /l= Value ah )( Value /r= Value bh ) )
+                            ( Value /r= consEqual( Value a= Value at )( Value b= Value bt ) )
+                        ]
                     }
                 )
             ,
@@ -111,13 +152,13 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/List/testListFunctorPreservesLength"
+                ( "/Data/List/testConsListEquality"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /Data/List/testListFunctorPreservesLength= CInt 0 ]
+                        [ Value /Data/List/testConsListEquality= CInt 0 ]
                     }
                 )
             ,
@@ -135,6 +176,8 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -189,6 +232,18 @@ Prgm
             ( Value /text= CStr "#### [length]
             The [length] of a [List] is the number of items inside of it." )
         , /Catln/#md
+            ( Value /text= CStr "#### Structural equality
+            Two [ConsList]s of [Eq] elements are equal when they have the same length and equal elements
+            pairwise. [consEqual] is the recursive structural comparison; it recurses through the
+            standalone function (not [tail.equal]) so the recursion stays a plain arrow call rather than
+            an abstract method dispatch. The list [operator==] (defined at the end of this file) delegates
+            to it.
+            NOTE on the design: [ConsList] is deliberately NOT made a member of [Eq]. Routing list
+            equality through the generic `==[Eq]` -> [equal] method (i.e. an `every(ConsList[$T -> Eq],
+            isa= [Eq])` plus per-constructor [equal] instances) builds an abstract dispatch over the
+            recursive type that triggers a [compactType] set-algebra blow-up. The standalone [operator==]
+            below avoids that by dispatching straight into this concrete [consEqual]." )
+        , /Catln/#md
             ( Value /text= CStr "## List operations" )
         , /Catln/#md
             ( Value /text= CStr "## ConsList runtime operations" )
@@ -203,18 +258,15 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "be totally covered, while still resolving for calls of [fmap] on a [ConsList]." )
         , /Catln/#md
-            ( Value /text= CStr "[fmap] over a [ConsList] preserves the list's structure (its [length]), for both the" )
+            ( Value /text= CStr "[ConsList] now supports [operator==] (see the standalone equality operator below), so a list" )
         , /Catln/#md
-            ( Value /text= CStr "empty and non-empty cases. The full functor laws (identity `fmap(l, v -> v) == l` and" )
+            ( Value /text= CStr "result is checked by comparing whole lists structurally rather than only their [length]." )
         , /Catln/#md
-            ( Value /text= CStr "composition `fmap(fmap(l, g), f) == fmap(l, v -> f(g(v)))`) additionally require comparing" )
-        , /Catln/#md
-            ( Value /text= CStr "element *values*; that is currently blocked because [fmap]'s result element type is" )
-        , /Catln/#md
-            ( Value /text= CStr "inferred as the top type, so neither [sum] nor equality can observe the mapped elements" )
-        , /Catln/#md
-            ( Value /text= CStr "(a type-variable binding limitation — see docs). [length] is element-agnostic and is the" )
-        , /Catln/#md
-            ( Value /text= CStr "one reduction that works on an [fmap] result, so it is what these tests use." )
+            ( Value /text= CStr "# ConsList equality operator
+            A standalone [operator==] for [ConsList], delegating directly to [consEqual]. This deliberately
+            does NOT make [ConsList] a member of [Eq]: routing through the generic `==[Eq]` -> [equal] method
+            triggers an abstract-dispatch [compactType] blow-up over the recursive type. A standalone
+            declaration/definition keeps the dispatch a concrete arrow into [consEqual] (which builds fine),
+            so it is the path toward a usable list [operator==] without that cost." )
         ]
     }
