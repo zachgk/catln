@@ -1468,8 +1468,16 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing subPartials []) (UnionType N
         splitCheck = length splitSubs > 1
                      && all (\s -> any (isSubPartialOfWithEnv typeEnv vaenv s) sup) splitSubs
         expandedSub = sub{ptArgs = fmap expandArg (ptArgs sub), ptVars = fmap expandArg (ptVars sub)}
-          where expandArg (UnionType (Just (preds, negLeafs)) _ _) =
-                  snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv preds) (UnionType Nothing negLeafs [])
+          -- The global (predicate) component and the positive partials of a 'UnionType' are
+          -- joined by union; the predicate does not constrain the partials. So expanding a
+          -- @Just(preds)@ arg to /just/ @expand(preds) - negLeafs@ would silently drop the
+          -- union-joined positive leaves (and constants), under-approximating the arg and
+          -- producing a false-positive subtype (e.g. @m(⊤)@, a leaf outside @preds@, would
+          -- vanish). Union the partial component back in so the expansion is faithful.
+          where expandArg (UnionType (Just (preds, negLeafs)) pos cs) =
+                  unionTypesWithEnv typeEnv vaenv
+                    (snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv preds) (UnionType Nothing negLeafs []))
+                    (UnionType Nothing pos cs)
                 expandArg t = t
         expandedSplitSubs = splitPartialByUnionVarArgs expandedSub
         expandSplitCheck = length expandedSplitSubs > 1

@@ -33,15 +33,8 @@ Prgm
                         [ /abs( EAppArg Value /x -> /Data/Primitive/Integer ) ->
                             ( /abs.$727590
                                 ( /x=/Data/Primitive/Integer
-                                , /$727590-arg=UnionType
-                                    ( Just
-                                        ( PredClass /Catln/ThenElse
-                                        , fromList []
-                                        )
-                                    ,
-                                        ( /Catln/Else + /Catln/ThenElse/fromBool( /v=TopType ) + /Catln/Then )
-                                    , []
-                                    )
+                                , /$727590-arg=
+                                    ( /Catln/Else + /Catln/ThenElse/fromBool( /v=∀/Data/Primitive/Boolean ) + /Catln/Then )
                                 ) + /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
