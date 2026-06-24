@@ -22,15 +22,10 @@ module(Data)
 
   # #### Structural equality
     Two [ConsList]s of [Eq] elements are equal when they have the same length and equal elements
-    pairwise. [consEqual] is the recursive structural comparison; it recurses through the
-    standalone function (not [tail.equal]) so the recursion stays a plain arrow call rather than
-    an abstract method dispatch. The list [operator==] (defined at the end of this file) delegates
-    to it.
-    NOTE on the design: [ConsList] is deliberately NOT made a member of [Eq]. Routing list
-    equality through the generic `==[Eq]` -> [equal] method (i.e. an `every(ConsList[$T -> Eq],
-    isa= [Eq])` plus per-constructor [equal] instances) builds an abstract dispatch over the
-    recursive type that triggers a [compactType] set-algebra blow-up. The standalone [operator==]
-    below avoids that by dispatching straight into this concrete [consEqual].
+    pairwise. [consEqual] is the recursive structural comparison — a plain standalone function (it
+    recurses through itself, not through [tail.equal], so the recursion stays a concrete arrow
+    rather than an abstract method dispatch). The [Eq] membership and [equal] method at the end of
+    this file delegate [operator==] into it.
   consEqual(a -> ConsList[$T -> /Data/Algebra/Eq], b -> ConsList[$T -> /Data/Algebra/Eq]) -> Boolean
   consEqual(a= Nil, b= Nil)= True
   consEqual(a= Nil, b= /Data/Cons(head, tail))= False
@@ -78,8 +73,8 @@ module(Data/List)
   fmap(lst= Nil, fn(v))= Nil
   fmap(lst= /Data/Cons(head, tail), fn(v))= /Data/Cons(head= fn(v= head), tail= fmap(lst= tail, fn(v)= fn(v= v)))
 
-  # [ConsList] now supports [operator==] (see the standalone equality operator below), so a list
-  # result is checked by comparing whole lists structurally rather than only their [length].
+  # A [ConsList] of [Integer] is an [Eq] member (see the end of this file), so [operator==] checks
+  # whole lists structurally — comparing them directly rather than only their [length].
   testConsListEquality =
     #test
     #assert(test= /Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Nil)) == /Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Nil)))
@@ -87,12 +82,17 @@ module(Data/List)
     #assert(test= ~(/Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Nil)) == /Data/Cons(head= 1, tail= /Data/Nil)))
     0
 
-# # ConsList equality operator
-  A standalone [operator==] for [ConsList], delegating directly to [consEqual]. This deliberately
-  does NOT make [ConsList] a member of [Eq]: routing through the generic `==[Eq]` -> [equal] method
-  triggers an abstract-dispatch [compactType] blow-up over the recursive type. A standalone
-  declaration/definition keeps the dispatch a concrete arrow into [consEqual] (which builds fine),
-  so it is the path toward a usable list [operator==] without that cost.
+# # ConsList Eq membership (Integer elements only — TODO: generalize to any Eq element)
+  Makes a [ConsList] of [Integer] a proper member of [Eq], so the generic [operator==] dispatches
+  through the [equal] method into [consEqual]. This is the idiomatic path (vs. a standalone
+  operator overload). It is currently restricted to a CONCRETE [Integer] element: the abstract
+  `$T -> Eq` form triggers a [compactType] set-algebra blow-up (it is specifically the abstract
+  Eq-class predicate that explodes), whereas a concrete element does not. The [equal] receiver's
+  element is bound to [Integer] so the constructor's type parameter is concrete rather than
+  [TopType] (otherwise the dispatch build cannot coerce it). Generalizing to `ConsList[$T -> Eq]`
+  is blocked only by that [compactType] performance wall.
+module(Data)
+  every(ConsList[$T -> /Data/Primitive/Integer], isa= [/Data/Algebra/Eq])
 module(Data/Algebra)
-  (_ :: /Data/ConsList[$T -> /Data/Algebra/Eq] == _ :: /Data/ConsList[$T -> /Data/Algebra/Eq]) -> Boolean
-  (l :: /Data/ConsList[$T -> /Data/Algebra/Eq] == r :: /Data/ConsList[$T -> /Data/Algebra/Eq])= /Data/consEqual(a= l, b= r)
+  :/Data/Nil.equal(other -> /Data/ConsList[$E -> /Data/Primitive/Integer])= /Data/consEqual(a= /Data/Nil, b= other)
+  :/Data/Cons[$T -> /Data/Primitive/Integer](head, tail).equal(other -> /Data/ConsList[$E -> /Data/Primitive/Integer])= /Data/consEqual(a= /Data/Cons(head= head, tail= tail), b= other)

@@ -2,40 +2,6 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
-                ( "/operator=="
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /operator==
-                            ( EAppArg Value /l -> ∀/Data/ConsList[ /T=~/Data/Algebra/Eq ] = Hole ∀/Data/ConsList[ /T=~/Data/Algebra/Eq ] HoleActive Nothing )
-                            ( EAppArg Value /r -> ∀/Data/ConsList[ /T=~/Data/Algebra/Eq ] = Hole ∀/Data/ConsList[ /T=~/Data/Algebra/Eq ] HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /operator==
-                            ( EAppArg Value /l -> ∀/Data/ConsList[ /T=~/Data/Algebra/Eq ] )
-                            ( EAppArg Value /r -> ∀/Data/ConsList[ /T=~/Data/Algebra/Eq ] ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Primitive/Boolean
-                                , fromList []
-                                )
-                            ,
-                                ( /Data/consEqual
-                                    ( /a=∀/Data/ConsList[ /T=~/Data/Algebra/Eq ]
-                                    , /b=∀/Data/ConsList[ /T=~/Data/Algebra/Eq ]
-                                    ) + /Data/Primitive/True + /operator&&
-                                    ( /r=∀/Data/Primitive/Boolean
-                                    , /l=∀/Data/Primitive/Boolean
-                                    ) + /Data/Primitive/False
-                                )
-                            , []
-                            ) = /Data/consEqual
-                            ( EAppArg Value /a -> TVArg /l = ( Value /l ↦ TVArg /l ) )
-                            ( EAppArg Value /b -> TVArg /r = ( Value /r ↦ TVArg /r ) )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/range"
                 , ObjectMapItem
                     { omiDecls = []
@@ -199,13 +165,66 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/List/testConsListEquality"
+                ( "/Data/Algebra/equal"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /Data/List/testConsListEquality -> /Data/Primitive/Integer = 0 ]
+                        [ /Data/Algebra/equal
+                            ( EAppArg Value /other ->
+                                ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/ConsList[ /E=~/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] )
+                            )( EAppArg Value /this -> /Data/Nil ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/consEqual
+                                    ( /a=/Data/Nil
+                                    , /b=
+                                        ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/ConsList[ /E=~/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] )
+                                    ) + /Data/Primitive/True + /Data/Primitive/False
+                                )
+                            , []
+                            ) = /Data/consEqual( EAppArg Value /a -> /Data/Nil = Value /Data/Nil )
+                            ( EAppArg Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) )
+                        , /Data/Algebra/equal
+                            ( EAppArg Value /other -> ∀/Data/ConsList[ /E=~/Data/Primitive/Integer ] )
+                            ( EAppArg Value /this -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                                ( /head=$/T
+                                , /tail=~ConsList[ /T=$_/T ]
+                                ) = /Data/Cons( EAppVar /T /Data/Primitive/Integer )( EAppArg Value /head -> /Data/Primitive/Integer )
+                                ( EAppArg Value /tail -> ~ConsList[ /T=$_/T ] )
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/consEqual[ /T=/Data/Primitive/Integer ]
+                                    ( /a=/Data/Cons[ /T=/Data/Primitive/Integer ]
+                                        ( /head=$/T
+                                        , /tail=~ConsList[ /T=$_/T ]
+                                        )
+                                    , /b=
+                                        ( TopType | PredClass /Data/ConsList[ /E=~/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] )
+                                    ) + /Data/Primitive/True + /operator&&
+                                    ( /r=∀/Data/Primitive/Boolean
+                                    , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Primitive/False
+                                )
+                            , []
+                            ) = /Data/consEqual
+                            ( EAppArg Value /a -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                                ( /head=$/T
+                                , /tail=~ConsList[ /T=$_/T ]
+                                ) = /Data/Cons
+                                ( EAppArg Value /head -> TVArg /head = ( Value /head ↦ TVArg /head ) )
+                                ( EAppArg Value /tail -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) )
+                            )
+                            ( EAppArg Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) )
+                        ]
                     }
                 )
             ,
@@ -235,6 +254,13 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGClass
+            ( False
+            , /Data/ConsList
+            ,
+                [ ∀/Data/ConsList[ /T=~/Data/Primitive/Integer ] ]
+            , Just ""
+            )
         , CGClass
             ( True
             , /Data/ConsList[ /T=TopType ]
@@ -281,15 +307,10 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "#### Structural equality
             Two [ConsList]s of [Eq] elements are equal when they have the same length and equal elements
-            pairwise. [consEqual] is the recursive structural comparison; it recurses through the
-            standalone function (not [tail.equal]) so the recursion stays a plain arrow call rather than
-            an abstract method dispatch. The list [operator==] (defined at the end of this file) delegates
-            to it.
-            NOTE on the design: [ConsList] is deliberately NOT made a member of [Eq]. Routing list
-            equality through the generic `==[Eq]` -> [equal] method (i.e. an `every(ConsList[$T -> Eq],
-            isa= [Eq])` plus per-constructor [equal] instances) builds an abstract dispatch over the
-            recursive type that triggers a [compactType] set-algebra blow-up. The standalone [operator==]
-            below avoids that by dispatching straight into this concrete [consEqual]." )
+            pairwise. [consEqual] is the recursive structural comparison — a plain standalone function (it
+            recurses through itself, not through [tail.equal], so the recursion stays a concrete arrow
+            rather than an abstract method dispatch). The [Eq] membership and [equal] method at the end of
+            this file delegate [operator==] into it." )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "## List operations" )
         , /Catln/#md
@@ -305,15 +326,18 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "be totally covered, while still resolving for calls of [fmap] on a [ConsList]." )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "[ConsList] now supports [operator==] (see the standalone equality operator below), so a list" )
+            ( EAppArg Value /text -> /Data/String = "A [ConsList] of [Integer] is an [Eq] member (see the end of this file), so [operator==] checks" )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "result is checked by comparing whole lists structurally rather than only their [length]." )
+            ( EAppArg Value /text -> /Data/String = "whole lists structurally — comparing them directly rather than only their [length]." )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "# ConsList equality operator
-            A standalone [operator==] for [ConsList], delegating directly to [consEqual]. This deliberately
-            does NOT make [ConsList] a member of [Eq]: routing through the generic `==[Eq]` -> [equal] method
-            triggers an abstract-dispatch [compactType] blow-up over the recursive type. A standalone
-            declaration/definition keeps the dispatch a concrete arrow into [consEqual] (which builds fine),
-            so it is the path toward a usable list [operator==] without that cost." )
+            ( EAppArg Value /text -> /Data/String = "# ConsList Eq membership (Integer elements only — TODO: generalize to any Eq element)
+            Makes a [ConsList] of [Integer] a proper member of [Eq], so the generic [operator==] dispatches
+            through the [equal] method into [consEqual]. This is the idiomatic path (vs. a standalone
+            operator overload). It is currently restricted to a CONCRETE [Integer] element: the abstract
+            `$T -> Eq` form triggers a [compactType] set-algebra blow-up (it is specifically the abstract
+            Eq-class predicate that explodes), whereas a concrete element does not. The [equal] receiver's
+            element is bound to [Integer] so the constructor's type parameter is concrete rather than
+            [TopType] (otherwise the dispatch build cannot coerce it). Generalizing to `ConsList[$T -> Eq]`
+            is blocked only by that [compactType] performance wall." )
         ]
     }

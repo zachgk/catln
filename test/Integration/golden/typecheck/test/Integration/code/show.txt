@@ -24,35 +24,76 @@ Prgm
                                 , fromList []
                                 )
                             ,
-                                ( /operator==
+                                ( /Data/Algebra/check
+                                    ( /x=/Data/String
+                                    , /this=/Data/Algebra/Eqv
+                                        [ /String=TopType
+                                        , /T=TopType
+                                        ]
+                                        ( /rel
+                                            ( /a=TopType
+                                            , /b=TopType
+                                            )=( /Data/Primitive/True + /Data/Primitive/False )
+                                        )
+                                    , /y=∀/Data/Algebra/Eq
+                                    ) + /Data/Algebra/check
+                                    ( /x=/Data/Primitive/Integer
+                                    , /this=/Data/Algebra/Eqv
+                                        [ /T=TopType
+                                        , /Integer=TopType
+                                        ]
+                                        ( /rel
+                                            ( /a=TopType
+                                            , /b=TopType
+                                            )=( /Data/Primitive/True + /Data/Primitive/False )
+                                        )
+                                    , /y=∀/Data/Algebra/Eq
+                                    ) + /Data/Algebra/check
+                                    ( /x=∀/Data/Primitive/Boolean
+                                    , /this=/Data/Algebra/Eqv
+                                        [ /T=TopType
+                                        , /Boolean=TopType
+                                        ]
+                                        ( /rel
+                                            ( /a=TopType
+                                            , /b=TopType
+                                            )=( /Data/Primitive/True + /Data/Primitive/False )
+                                        )
+                                    , /y=∀/Data/Algebra/Eq
+                                    ) + /Data/Algebra/check
+                                    ( /x=/Data/Primitive/Float
+                                    , /this=/Data/Algebra/Eqv
+                                        [ /T=TopType
+                                        , /Float=TopType
+                                        ]
+                                        ( /rel
+                                            ( /a=TopType
+                                            , /b=TopType
+                                            )=( /Data/Primitive/True + /Data/Primitive/False )
+                                        )
+                                    , /y=∀/Data/Algebra/Eq
+                                    ) + /operator==
                                     [ /r=∀/Data/Algebra/Eq
                                     , /T=∀/Data/Algebra/Eq
                                     , /l=∀/Data/Algebra/Eq
                                     ]
                                     ( /r=/Data/String
                                     , /l=/Data/String
-                                    ) + /Data/strEqual
-                                    ( /r=/Data/String
-                                    , /l=/Data/String
-                                    ) + /Data/Primitive/True + /Data/Algebra/rel
-                                    ( /a=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Primitive/Boolean
-                                            , fromList []
-                                            )
-                                        , ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float )
-                                        , []
+                                    ) + /Data/consEqual
+                                    ( /a=/Data/Nil
+                                    , /b=
+                                        ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/ConsList[ /E=~/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] )
+                                    ) + /Data/consEqual[ /T=/Data/Primitive/Integer ]
+                                    ( /a=/Data/Cons[ /T=/Data/Primitive/Integer ]
+                                        ( /head=/Data/Primitive/Integer
+                                        , /tail=~ConsList[ /T=$_/T ]
                                         )
-                                    , /this=
-                                        ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] )
-                                    , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Primitive/False + /Data/Primitive/boolEq
+                                    , /b=
+                                        ( TopType | PredClass /Data/ConsList[ /E=~/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] )
+                                    ) + /Data/Primitive/True + /operator&&
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
-                                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
-                                    ( /r=/Data/Primitive/Integer
-                                    , /l=/Data/Primitive/Integer
-                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
+                                    ) + /Data/Primitive/False + /Data/Algebra/equal
                                     ( /other=∀/Data/Algebra/Eq
                                     , /this=∀/Data/Algebra/Eq
                                     )
