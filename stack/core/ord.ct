@@ -63,6 +63,15 @@ module(Data/Algebra)
 
   :Ordering.compare(a -> $T, b -> $T) -> Comparison
 
+  # ## Ordering is an equivalence
+    Comparing also decides equality, so every [Ordering] is an [Eqv]: two values are equivalent
+    exactly when they compare [Equal]. This behavioral edge supplies the abstract [rel] of [Eqv]
+    for every [Ordering] from its own [compare], so an [Ordering] instance needs only define
+    [compare] to also be a usable [Eqv].
+  every(Ordering[$T -> $_T], isa= [/Data/Algebra/Eqv[$T -> $_T]])
+
+  :Ordering.rel(a, b)= this.compare(a= a, b= b).isEq
+
   # ## The Ord class
     An [Ord] type can be ordered. Every [Ord] is an [Eq], and the standard numeric types are [Ord].
     An [Ord] type names its canonical ordering with [ord], from which [compareTo] follows — the

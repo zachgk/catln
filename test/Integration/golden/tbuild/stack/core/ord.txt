@@ -128,6 +128,31 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Algebra/rel"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/rel( EAppArg Value /a )( EAppArg Value /b )
+                            ( EAppArg Value /this -> ∀/Data/Algebra/Ordering[ /T=$/T ] ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Primitive/True + /Data/Primitive/False + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) )
+                            , []
+                            ) = /Data/Algebra/isEq
+                            ( EAppArg Value /this -> ∀/Data/Algebra/Comparison =
+                                ( /Data/Algebra/compare( EAppArg Value /a -> TVArg /a = Value /a )( EAppArg Value /b -> TVArg /b = Value /b )
+                                    ( EAppArg Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) ) ↦ ∀/Data/Algebra/Comparison
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Algebra/testOrdReflexive"
                 , ObjectMapItem
                     { omiDecls = []
@@ -495,6 +520,7 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         , CGClass
             ( True
             , /Data/Algebra/Comparison
@@ -509,6 +535,13 @@ Prgm
             ( False
             , /Data/Algebra/Ord
             , [ ∀/Data/Algebra/Ord ]
+            , Just ""
+            )
+        , CGClass
+            ( False
+            , /Data/Algebra/Ordering
+            ,
+                [ ∀/Data/Algebra/Ordering[ /T=$_/T ] ]
             , Just ""
             )
         , CGClass
@@ -571,6 +604,12 @@ Prgm
             the class is a single ordering and supplies [compare], which ranks two values of [$T] as
             [LessThan], [Equal], or [GreaterThan]. It is a class declaration: every object in the class
             defines it for its own type (see the per-type instances such as [IntOrdering] below)." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "## Ordering is an equivalence
+            Comparing also decides equality, so every [Ordering] is an [Eqv]: two values are equivalent
+            exactly when they compare [Equal]. This behavioral edge supplies the abstract [rel] of [Eqv]
+            for every [Ordering] from its own [compare], so an [Ordering] instance needs only define
+            [compare] to also be a usable [Eqv]." )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "## The Ord class
             An [Ord] type can be ordered. Every [Ord] is an [Eq], and the standard numeric types are [Ord].
