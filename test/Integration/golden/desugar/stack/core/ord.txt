@@ -103,7 +103,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /Data/Algebra/testOrdReflexive= CInt 0 ]
+                        [ /Data/Algebra/testOrdReflexive
+                            [ /O : ∀/Data/Algebra/Ordering[ /T=TopType ] ]( Value o -> $/O )( Value t -> $/T )= CInt 0
+                        ]
                     }
                 )
             ,
@@ -200,7 +202,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /Data/Algebra/testOrdAntisymmetric= CInt 0 ]
+                        [ /Data/Algebra/testOrdAntisymmetric
+                            [ /O : ∀/Data/Algebra/Ordering[ /T=TopType ] ]( Value o -> $/O )( Value x -> $/T )( Value y -> $/T )= CInt 0
+                        ]
                     }
                 )
             ,
@@ -210,7 +214,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /Data/Algebra/testOrdTransitive= CInt 0 ]
+                        [ /Data/Algebra/testOrdTransitive
+                            [ /O : ∀/Data/Algebra/Ordering[ /T=TopType ] ]( Value o -> $/O )( Value x -> $/T )( Value y -> $/T )( Value z -> $/T )= CInt 0
+                        ]
                     }
                 )
             ,
@@ -442,6 +448,14 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "The divisibility ordering distinguishes ordered pairs from incomparable ones." )
         , /Catln/#md
-            ( Value /text= CStr "## Laws of ordering" )
+            ( Value /text= CStr "## Laws of ordering
+            Each law is a property of the [Ordering] class itself, checked against every instance ([$O]) at
+            arbitrary members of that instance's type ([$T])." )
+        , /Catln/#md
+            ( Value /text= CStr "Reflexivity: every value compares [Equal] to itself." )
+        , /Catln/#md
+            ( Value /text= CStr "Antisymmetry: comparing dual values reverses the ordering — a < b exactly when b > a." )
+        , /Catln/#md
+            ( Value /text= CStr "Transitivity: a < b and b < c imply a < c, expressed as a material implication." )
         ]
     }

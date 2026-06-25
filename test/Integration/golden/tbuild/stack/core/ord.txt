@@ -141,7 +141,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /Data/Algebra/testOrdReflexive -> /Data/Primitive/Integer = 0 ]
+                        [ /Data/Algebra/testOrdReflexive
+                            ( EAppVar /O ∀/Data/Algebra/Ordering[ /T=TopType ] )( EAppArg Value /o -> $/O )( EAppArg Value /t -> $/T ) -> /Data/Primitive/Integer = 0
+                        ]
                     }
                 )
             ,
@@ -238,7 +240,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /Data/Algebra/testOrdAntisymmetric -> /Data/Primitive/Integer = 0 ]
+                        [ /Data/Algebra/testOrdAntisymmetric
+                            ( EAppVar /O ∀/Data/Algebra/Ordering[ /T=TopType ] )( EAppArg Value /o -> $/O )( EAppArg Value /x -> $/T )( EAppArg Value /y -> $/T ) -> /Data/Primitive/Integer = 0
+                        ]
                     }
                 )
             ,
@@ -248,7 +252,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /Data/Algebra/testOrdTransitive -> /Data/Primitive/Integer = 0 ]
+                        [ /Data/Algebra/testOrdTransitive
+                            ( EAppVar /O ∀/Data/Algebra/Ordering[ /T=TopType ] )( EAppArg Value /o -> $/O )( EAppArg Value /x -> $/T )( EAppArg Value /y -> $/T )( EAppArg Value /z -> $/T ) -> /Data/Primitive/Integer = 0
+                        ]
                     }
                 )
             ,
@@ -480,6 +486,14 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "The divisibility ordering distinguishes ordered pairs from incomparable ones." )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "## Laws of ordering" )
+            ( EAppArg Value /text -> /Data/String = "## Laws of ordering
+            Each law is a property of the [Ordering] class itself, checked against every instance ([$O]) at
+            arbitrary members of that instance's type ([$T])." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Reflexivity: every value compares [Equal] to itself." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Antisymmetry: comparing dual values reverses the ordering — a < b exactly when b > a." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Transitivity: a < b and b < c imply a < c, expressed as a material implication." )
         ]
     }

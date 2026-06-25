@@ -53,7 +53,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /Data/Algebra/testEqvTransitive -> /Data/Primitive/Integer = CInt 0 ]
+                        [ /Data/Algebra/testEqvTransitive
+                            [ /E : ∀/Data/Algebra/Eqv[ /T=TopType ] ]( Value /e -> $/E )( Value /x -> $/T )( Value /y -> $/T )( Value /z -> $/T ) -> /Data/Primitive/Integer = CInt 0
+                        ]
                     }
                 )
             ,
@@ -94,7 +96,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /Data/Algebra/testEqvSymmetric -> /Data/Primitive/Integer = CInt 0 ]
+                        [ /Data/Algebra/testEqvSymmetric
+                            [ /E : ∀/Data/Algebra/Eqv[ /T=TopType ] ]( Value /e -> $/E )( Value /x -> $/T )( Value /y -> $/T ) -> /Data/Primitive/Integer = CInt 0
+                        ]
                     }
                 )
             ,
@@ -247,11 +251,13 @@ Prgm
             each value to itself. Expressed as a property test, it is checked against every [Eqv]
             instance (here [$E]) at arbitrary members of that instance's type (here [$T])." )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "Symmetry: for an [Eqv] whose relation is symmetric, equivalent values relate the same in" )
+            ( Value /text -> /Data/String = CStr "Symmetry: equivalent values relate the same in either direction. Checked against every [Eqv]" )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  either direction." )
+            ( Value /text -> /Data/String = CStr "  instance ([$E]) at arbitrary members ([$T]); the biconditional makes it non-vacuous." )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "Transitivity: for an [Eqv] whose relation is transitive, a~b and b~c imply a~c." )
+            ( Value /text -> /Data/String = CStr "Transitivity: a~b and b~c imply a~c. Expressed as a material implication, so ordinary equalities" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "  satisfy it vacuously and a relation like [AllEqv] exercises the premise." )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "The per-type [Eqv] instances ([BoolEqv], [IntOrdering], [StrEqv], …) and each type's [eq] /" )
         , /Catln/#md

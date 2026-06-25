@@ -148,21 +148,22 @@ module(Data/Algebra)
     0
 
   # ## Laws of ordering
-  testOrdReflexive =
+    Each law is a property of the [Ordering] class itself, checked against every instance ([$O]) at
+    arbitrary members of that instance's type ([$T]).
+  # Reflexivity: every value compares [Equal] to itself.
+  testOrdReflexive[$O -> Ordering[$T]](o -> $O, t -> $T) =
     #test
-    #assert(test= 5.compareTo(other= 5).isLessEq)
-    #assert(test= 5.compareTo(other= 5).isGreaterEq)
+    #assert(test= o.compare(a= t, b= t).isEq)
     0
 
-  testOrdAntisymmetric =
+  # Antisymmetry: comparing dual values reverses the ordering — a < b exactly when b > a.
+  testOrdAntisymmetric[$O -> Ordering[$T]](o -> $O, x -> $T, y -> $T) =
     #test
-    #assert(test= 2.compareTo(other= 5).isLess)
-    #assert(test= 5.compareTo(other= 2).isGreater)
+    #assert(test= o.compare(a= x, b= y).isLess == o.compare(a= y, b= x).isGreater)
     0
 
-  testOrdTransitive =
+  # Transitivity: a < b and b < c imply a < c, expressed as a material implication.
+  testOrdTransitive[$O -> Ordering[$T]](o -> $O, x -> $T, y -> $T, z -> $T) =
     #test
-    #assert(test= 1.compareTo(other= 3).isLess)
-    #assert(test= 3.compareTo(other= 9).isLess)
-    #assert(test= 1.compareTo(other= 9).isLess)
+    #assert(test= ~(o.compare(a= x, b= y).isLess && o.compare(a= y, b= z).isLess) || o.compare(a= x, b= z).isLess)
     0

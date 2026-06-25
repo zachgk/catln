@@ -55,7 +55,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /Data/Algebra/testEqvTransitive -> /Data/Primitive/Integer = 0 ]
+                        [ /Data/Algebra/testEqvTransitive
+                            ( EAppVar /E ∀/Data/Algebra/Eqv[ /T=TopType ] )( EAppArg Value /e -> $/E )( EAppArg Value /x -> $/T )( EAppArg Value /y -> $/T )( EAppArg Value /z -> $/T ) -> /Data/Primitive/Integer = 0
+                        ]
                     }
                 )
             ,
@@ -96,7 +98,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /Data/Algebra/testEqvSymmetric -> /Data/Primitive/Integer = 0 ]
+                        [ /Data/Algebra/testEqvSymmetric
+                            ( EAppVar /E ∀/Data/Algebra/Eqv[ /T=TopType ] )( EAppArg Value /e -> $/E )( EAppArg Value /x -> $/T )( EAppArg Value /y -> $/T ) -> /Data/Primitive/Integer = 0
+                        ]
                     }
                 )
             ,
@@ -256,11 +260,13 @@ Prgm
             each value to itself. Expressed as a property test, it is checked against every [Eqv]
             instance (here [$E]) at arbitrary members of that instance's type (here [$T])." )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Symmetry: for an [Eqv] whose relation is symmetric, equivalent values relate the same in" )
+            ( EAppArg Value /text -> /Data/String = "Symmetry: equivalent values relate the same in either direction. Checked against every [Eqv]" )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "  either direction." )
+            ( EAppArg Value /text -> /Data/String = "  instance ([$E]) at arbitrary members ([$T]); the biconditional makes it non-vacuous." )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Transitivity: for an [Eqv] whose relation is transitive, a~b and b~c imply a~c." )
+            ( EAppArg Value /text -> /Data/String = "Transitivity: a~b and b~c imply a~c. Expressed as a material implication, so ordinary equalities" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "  satisfy it vacuously and a relation like [AllEqv] exercises the premise." )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "The per-type [Eqv] instances ([BoolEqv], [IntOrdering], [StrEqv], …) and each type's [eq] /" )
         , /Catln/#md

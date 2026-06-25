@@ -66,20 +66,18 @@ module(Data/Algebra)
     #assert(test= e.rel(a= t, b= t))
     0
 
-  # Symmetry: for an [Eqv] whose relation is symmetric, equivalent values relate the same in
-  #   either direction.
-  testEqvSymmetric =
+  # Symmetry: equivalent values relate the same in either direction. Checked against every [Eqv]
+  #   instance ([$E]) at arbitrary members ([$T]); the biconditional makes it non-vacuous.
+  testEqvSymmetric[$E -> Eqv[$T]](e -> $E, x -> $T, y -> $T) =
     #test
-    #assert(test= AllEqv.rel(a= 3, b= 5))
-    #assert(test= AllEqv.rel(a= 5, b= 3))
+    #assert(test= e.rel(a= x, b= y) == e.rel(a= y, b= x))
     0
 
-  # Transitivity: for an [Eqv] whose relation is transitive, a~b and b~c imply a~c.
-  testEqvTransitive =
+  # Transitivity: a~b and b~c imply a~c. Expressed as a material implication, so ordinary equalities
+  #   satisfy it vacuously and a relation like [AllEqv] exercises the premise.
+  testEqvTransitive[$E -> Eqv[$T]](e -> $E, x -> $T, y -> $T, z -> $T) =
     #test
-    #assert(test= AllEqv.rel(a= 3, b= 5))
-    #assert(test= AllEqv.rel(a= 5, b= 7))
-    #assert(test= AllEqv.rel(a= 3, b= 7))
+    #assert(test= ~(e.rel(a= x, b= y) && e.rel(a= y, b= z)) || e.rel(a= x, b= z))
     0
 
   # The per-type [Eqv] instances ([BoolEqv], [IntOrdering], [StrEqv], …) and each type's [eq] /
