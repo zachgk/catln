@@ -2,24 +2,6 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
-                ( "/Data/Algebra/IntOrdering"
-                , ObjectMapItem
-                    { omiDecls = [ Value /Data/Algebra/IntOrdering ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
-                ( "/Data/Algebra/FloatOrdering"
-                , ObjectMapItem
-                    { omiDecls = [ Value /Data/Algebra/FloatOrdering ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/Data/Algebra/isGreaterEq"
                 , ObjectMapItem
                     { omiDecls =
@@ -194,14 +176,7 @@ Prgm
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Algebra/compare( Value a )( Value b )( Value /this -> /Data/Algebra/IntOrdering )= mkComparison
-                            ( Value lt= /Data/Primitive/intLt( Value l= Value a )( Value r= Value b ) )
-                            ( Value eq= /Data/Primitive/intEq( Value l= Value a )( Value r= Value b ) )
-                        , /Data/Algebra/compare( Value a )( Value b )( Value /this -> /Data/Algebra/FloatOrdering )= mkComparison
-                            ( Value lt= /Data/Primitive/floatLt( Value l= Value a )( Value r= Value b ) )
-                            ( Value eq= /Data/Primitive/floatEq( Value l= Value a )( Value r= Value b ) )
-                        ]
+                    , omiDefs = []
                     }
                 )
             ,
@@ -269,10 +244,7 @@ Prgm
                         [ /Data/Algebra/ord[ /T : ∀/Data/Algebra/Ord ]( Value /this -> $/T ) -> ∀/Data/Algebra/Ordering[ /T=TopType ] ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Algebra/ord( Value /this -> /Data/Primitive/Integer )= Value IntOrdering
-                        , /Data/Algebra/ord( Value /this -> /Data/Primitive/Float )= Value FloatOrdering
-                        ]
+                    , omiDefs = []
                     }
                 )
             ,
@@ -316,20 +288,13 @@ Prgm
                         [ /Data/Algebra/compareTo[ /T : ∀/Data/Algebra/Ord ]( Value other -> $/T )( Value /this -> $/T ) -> ∀/Data/Algebra/Comparison ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Algebra/compareTo( Value other )( Value /this -> /Data/Primitive/Integer )= compare( Value a= Value this )( Value b= Value other )
-                            ( Value /this= ord( Value /this= Value this ) )
-                        , /Data/Algebra/compareTo( Value other )( Value /this -> /Data/Primitive/Float )= compare( Value a= Value this )( Value b= Value other )
-                            ( Value /this= ord( Value /this= Value this ) )
-                        ]
+                    , omiDefs = []
                     }
                 )
             ]
         )
     , prgmCG =
         [ CGType
-        , CGType
-        , CGType
         , CGType
         , CGType
         , CGType
@@ -385,10 +350,7 @@ Prgm
         , CGClass
             ( False
             , /Data/Algebra/Ordering[ /T=TopType ]
-            ,
-                [ /Data/Algebra/IntOrdering
-                , /Data/Algebra/FloatOrdering
-                ]
+            , []
             , Just ""
             )
         , CGClass
@@ -452,13 +414,11 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "  values are compared." )
         , /Catln/#md
-            ( Value /text= CStr "## Ordering definitions for the primitive types
-            Each numeric type's [Ordering] is an object of the [Ordering] class whose [compare] builds a
-            [Comparison] from that type's primitive "less than" and "equal" tests. [ord] returns it." )
+            ( Value /text= CStr "The per-type [Ordering] instances ([IntOrdering] etc.) and the [ord] / [compareTo] / [eq] each" )
         , /Catln/#md
-            ( Value /text= CStr "[compareTo] for each type runs that type's [ord] ordering. [this] is concrete here, so" )
+            ( Value /text= CStr "  numeric type derives from its ordering live alongside their types in [Data/Primitive]; the" )
         , /Catln/#md
-            ( Value /text= CStr "  [this.ord] is an ordinary (non-abstract) method dispatch." )
+            ( Value /text= CStr "  class here defines only the abstract concept." )
         , /Catln/#md
             ( Value /text= CStr "## Partial ordering
             Some types can be compared but need not be totally ordered: two values may have no order

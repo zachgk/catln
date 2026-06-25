@@ -82,14 +82,6 @@ module(Data/Algebra)
     Each primitive type's [Eqv] is an object of the [Eqv] class whose [rel] wraps that type's
     primitive equality. [eq] returns it. These live downstream of the primitives, so defining them
     here keeps [eq] a single method [/Data/Algebra/eq] rather than fragmenting it across modules.
-  data(IntEqv, isa= [/Data/Algebra/Eqv[$T= Integer]])
-  :IntEqv.rel(a, b)= /Data/Primitive/intEq(l= a, r= b)
-  :Integer.eq= IntEqv
-
-  data(FloatEqv, isa= [/Data/Algebra/Eqv[$T= Float]])
-  :FloatEqv.rel(a, b)= /Data/Primitive/floatEq(l= a, r= b)
-  :Float.eq= FloatEqv
-
   data(BoolEqv, isa= [/Data/Algebra/Eqv[$T= Boolean]])
   :BoolEqv.rel(a, b)= /Data/Primitive/boolEq(l= a, r= b)
   :Boolean.eq= BoolEqv

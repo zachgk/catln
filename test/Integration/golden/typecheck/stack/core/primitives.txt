@@ -78,6 +78,15 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Primitive/FloatOrdering"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Primitive/FloatOrdering ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/Primitive/True"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Primitive/True ]
@@ -147,6 +156,15 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Primitive/IntOrdering"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Primitive/IntOrdering ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/operator^"
                 , ObjectMapItem
                     { omiDecls =
@@ -184,6 +202,18 @@ Prgm
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/eq"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/eq( Value /this -> /Data/Primitive/Integer ) -> /Data/Primitive/IntOrdering = Value /Data/Primitive/IntOrdering
+                        , /Data/Algebra/eq( Value /this -> /Data/Primitive/Float ) -> /Data/Primitive/FloatOrdering = Value /Data/Primitive/FloatOrdering
+                        ]
                     }
                 )
             ,
@@ -241,6 +271,46 @@ Prgm
                         [ /Data/Primitive/floor( Value /this -> /Data/Primitive/Float ) -> /Data/Primitive/Integer ]
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/compare"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/compare( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer )( Value /this -> /Data/Primitive/IntOrdering ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Algebra/Comparison
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Algebra/LessThan + /Data/Algebra/mkComparison
+                                    ( /lt=∀/Data/Primitive/Boolean
+                                    , /eq=∀/Data/Primitive/Boolean
+                                    ) + /Data/Algebra/Equal + /Data/Algebra/GreaterThan
+                                )
+                            , []
+                            ) = /Data/Algebra/mkComparison
+                            ( Value /lt -> ∀/Data/Primitive/Boolean = /Data/Primitive/intLt( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) )
+                            ( Value /eq -> ∀/Data/Primitive/Boolean = /Data/Primitive/intEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) )
+                        , /Data/Algebra/compare( Value /a -> /Data/Primitive/Float )( Value /b -> /Data/Primitive/Float )( Value /this -> /Data/Primitive/FloatOrdering ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Algebra/Comparison
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Algebra/LessThan + /Data/Algebra/mkComparison
+                                    ( /lt=∀/Data/Primitive/Boolean
+                                    , /eq=∀/Data/Primitive/Boolean
+                                    ) + /Data/Algebra/Equal + /Data/Algebra/GreaterThan
+                                )
+                            , []
+                            ) = /Data/Algebra/mkComparison
+                            ( Value /lt -> ∀/Data/Primitive/Boolean = /Data/Primitive/floatLt( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) )
+                            ( Value /eq -> ∀/Data/Primitive/Boolean = /Data/Primitive/floatEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) )
+                        ]
                     }
                 )
             ,
@@ -319,6 +389,18 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Algebra/ord"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/ord( Value /this -> /Data/Primitive/Integer ) -> /Data/Primitive/IntOrdering = Value /Data/Primitive/IntOrdering
+                        , /Data/Algebra/ord( Value /this -> /Data/Primitive/Float ) -> /Data/Primitive/FloatOrdering = Value /Data/Primitive/FloatOrdering
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Primitive/ceil"
                 , ObjectMapItem
                     { omiDecls = []
@@ -337,10 +419,62 @@ Prgm
                     , omiDefs = []
                     }
                 )
+            ,
+                ( "/Data/Algebra/compareTo"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/compareTo( Value /other -> ∀/Data/Algebra/Ord )( Value /this -> /Data/Primitive/Integer ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Algebra/Comparison
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Algebra/LessThan + /Data/Algebra/mkComparison
+                                    ( /lt=∀/Data/Primitive/Boolean
+                                    , /eq=∀/Data/Primitive/Boolean
+                                    ) + /Data/Algebra/compare
+                                    ( /a=/Data/Primitive/Integer
+                                    , /this=( /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering )
+                                    , /b=∀/Data/Algebra/Ord
+                                    ) + /Data/Algebra/Equal + /Data/Algebra/GreaterThan
+                                )
+                            , []
+                            ) = /compare( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
+                            ( Value /this -> ( /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering ) = /ord( Value /this -> TVArg /this = Value /this ) )
+                        , /Data/Algebra/compareTo( Value /other -> ∀/Data/Algebra/Ord )( Value /this -> /Data/Primitive/Float ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Algebra/Comparison
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Algebra/LessThan + /Data/Algebra/mkComparison
+                                    ( /lt=∀/Data/Primitive/Boolean
+                                    , /eq=∀/Data/Primitive/Boolean
+                                    ) + /Data/Algebra/compare
+                                    ( /a=/Data/Primitive/Float
+                                    , /this=( /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering )
+                                    , /b=∀/Data/Algebra/Ord
+                                    ) + /Data/Algebra/Equal + /Data/Algebra/GreaterThan
+                                )
+                            , []
+                            ) = /compare( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
+                            ( Value /this -> ( /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering ) = /ord( Value /this -> TVArg /this = Value /this ) )
+                        ]
+                    }
+                )
             ]
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -393,6 +527,15 @@ Prgm
             )
         , CGClass
             ( False
+            , /Data/Algebra/Ordering[ /T=TopType ]
+            ,
+                [ /Data/Primitive/IntOrdering
+                , /Data/Primitive/FloatOrdering
+                ]
+            , Nothing
+            )
+        , CGClass
+            ( False
             , /Data/Primitive/Boolean
             , [ ∀/Data/Primitive/Boolean ]
             , Just ""
@@ -433,10 +576,18 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "  [Ordering] instances can build a [Comparison] from it." )
         , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[Integer]'s instances of the algebra ordering/equality classes live with the type. [IntOrdering]" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "  is its [/Data/Algebra/Ordering]; [ord] and [compareTo] follow from it, and [eq] derives from the" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "  same ordering (an [Ordering] is an [Eqv], so it doubles as the canonical equivalence)." )
+        , /Catln/#md
             ( Value /text -> /Data/String = CStr "### Commutative Group" )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "## Floats" )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "Named-function form of the primitive float "less than", used by [Data/Algebra/ord]." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[Float]'s instances of the algebra ordering/equality classes, mirroring [Integer] above." )
         ]
     }

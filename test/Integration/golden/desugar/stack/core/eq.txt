@@ -2,15 +2,6 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
-                ( "/Data/Algebra/FloatEqv"
-                , ObjectMapItem
-                    { omiDecls = [ Value /Data/Algebra/FloatEqv ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/operator=="
                 , ObjectMapItem
                     { omiDecls =
@@ -82,8 +73,6 @@ Prgm
                     , omiDefs =
                         [ /Data/Algebra/rel( Value a )( Value b )( Value /this -> /Data/Algebra/IntEqExample )= /Data/Primitive/intEq( Value l= Value a )( Value r= Value b )
                         , /Data/Algebra/rel( Value a )( Value b )( Value /this -> /Data/Algebra/AllEqv )= Value True
-                        , /Data/Algebra/rel( Value a )( Value b )( Value /this -> /Data/Algebra/IntEqv )= /Data/Primitive/intEq( Value l= Value a )( Value r= Value b )
-                        , /Data/Algebra/rel( Value a )( Value b )( Value /this -> /Data/Algebra/FloatEqv )= /Data/Primitive/floatEq( Value l= Value a )( Value r= Value b )
                         , /Data/Algebra/rel( Value a )( Value b )( Value /this -> /Data/Algebra/BoolEqv )= /Data/Primitive/boolEq( Value l= Value a )( Value r= Value b )
                         , /Data/Algebra/rel( Value a )( Value b )( Value /this -> /Data/Algebra/StrEqv )= /Data/strEqual( Value l= Value a )( Value r= Value b )
                         ]
@@ -97,9 +86,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/eq( Value /this -> /Data/Primitive/Integer )= Value IntEqv
-                        , /Data/Algebra/eq( Value /this -> /Data/Primitive/Float )= Value FloatEqv
-                        , /Data/Algebra/eq( Value /this -> ∀/Data/Primitive/Boolean )= Value BoolEqv
+                        [ /Data/Algebra/eq( Value /this -> ∀/Data/Primitive/Boolean )= Value BoolEqv
                         , /Data/Algebra/eq( Value /this -> /Data/String )= Value StrEqv
                         ]
                     }
@@ -108,15 +95,6 @@ Prgm
                 ( "/Data/Algebra/IntEqExample"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Algebra/IntEqExample ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
-                ( "/Data/Algebra/IntEqv"
-                , ObjectMapItem
-                    { omiDecls = [ Value /Data/Algebra/IntEqv ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -188,8 +166,6 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
-        , CGType
         , CGClass
             ( False
             , /Data/Algebra/Eq
@@ -202,8 +178,6 @@ Prgm
             ,
                 [ /Data/Algebra/IntEqExample
                 , /Data/Algebra/AllEqv
-                , /Data/Algebra/IntEqv
-                , /Data/Algebra/FloatEqv
                 , /Data/Algebra/BoolEqv
                 , /Data/Algebra/StrEqv
                 ]

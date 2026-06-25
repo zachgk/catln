@@ -88,21 +88,9 @@ module(Data/Algebra)
 
   :$T.compareTo[$T -> /Data/Algebra/Ord](other -> $T) -> Comparison
 
-  # ## Ordering definitions for the primitive types
-    Each numeric type's [Ordering] is an object of the [Ordering] class whose [compare] builds a
-    [Comparison] from that type's primitive "less than" and "equal" tests. [ord] returns it.
-  data(IntOrdering, isa= [/Data/Algebra/Ordering[$T= Integer]])
-  :IntOrdering.compare(a, b)= mkComparison(lt= /Data/Primitive/intLt(l= a, r= b), eq= /Data/Primitive/intEq(l= a, r= b))
-  :Integer.ord= IntOrdering
-
-  data(FloatOrdering, isa= [/Data/Algebra/Ordering[$T= Float]])
-  :FloatOrdering.compare(a, b)= mkComparison(lt= /Data/Primitive/floatLt(l= a, r= b), eq= /Data/Primitive/floatEq(l= a, r= b))
-  :Float.ord= FloatOrdering
-
-  # [compareTo] for each type runs that type's [ord] ordering. [this] is concrete here, so
-  #   [this.ord] is an ordinary (non-abstract) method dispatch.
-  :Integer.compareTo(other)= this.ord.compare(a= this, b= other)
-  :Float.compareTo(other)= this.ord.compare(a= this, b= other)
+  # The per-type [Ordering] instances ([IntOrdering] etc.) and the [ord] / [compareTo] / [eq] each
+  #   numeric type derives from its ordering live alongside their types in [Data/Primitive]; the
+  #   class here defines only the abstract concept.
 
   # ## Partial ordering
     Some types can be compared but need not be totally ordered: two values may have no order
