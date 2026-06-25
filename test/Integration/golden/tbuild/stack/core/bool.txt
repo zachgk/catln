@@ -1,0 +1,224 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/Data/Primitive/True"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Primitive/True ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/operator^"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator^( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator^( EAppArg Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /operator^( EAppArg Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /operator^( EAppArg Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /operator^( EAppArg Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/rel"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/rel( EAppArg Value /a -> ∀/Data/Primitive/Boolean )( EAppArg Value /b -> ∀/Data/Primitive/Boolean )( EAppArg Value /this -> /Data/Primitive/BoolEqv ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Primitive/True + /Data/Primitive/False + /Data/Primitive/boolEq
+                                    ( /r=∀/Data/Primitive/Boolean
+                                    , /l=∀/Data/Primitive/Boolean
+                                    )
+                                )
+                            , []
+                            ) = /Data/Primitive/boolEq
+                            ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
+                            ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/operator~"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator~( EAppArg Value /a -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator~( EAppArg Value /a -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /operator~( EAppArg Value /a -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Primitive/BoolEqv"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Primitive/BoolEqv ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/eq"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/eq( EAppArg Value /this -> ∀/Data/Primitive/Boolean ) -> /Data/Primitive/BoolEqv = Value /Data/Primitive/BoolEqv ]
+                    }
+                )
+            ,
+                ( "/operator&&"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator&&( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator&&( EAppArg Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /operator&&( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /operator&&( EAppArg Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        ]
+                    }
+                )
+            ,
+                ( "/operator||"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator||( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator||( EAppArg Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( EAppArg Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /operator||( EAppArg Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /operator||( EAppArg Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Primitive/False"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Primitive/False ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/boolEq"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Primitive/boolEq( EAppArg Value /l -> ∀/Data/Primitive/Boolean )( EAppArg Value /r -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Primitive/boolEq( EAppArg Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /r -> /Data/Primitive/True = Value /Data/Primitive/True ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /Data/Primitive/boolEq( EAppArg Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /r -> /Data/Primitive/False = Value /Data/Primitive/False ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/Primitive/boolEq( EAppArg Value /l -> /Data/Primitive/False = Value /Data/Primitive/False )( EAppArg Value /r -> /Data/Primitive/True = Value /Data/Primitive/True ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/Primitive/boolEq( EAppArg Value /l -> /Data/Primitive/False = Value /Data/Primitive/False )( EAppArg Value /r -> /Data/Primitive/False = Value /Data/Primitive/False ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/equal"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/equal( EAppArg Value /other -> ∀/Data/Algebra/Eq )( EAppArg Value /this -> ∀/Data/Primitive/Boolean ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Primitive/True + /Data/Algebra/rel
+                                    ( /a=∀/Data/Primitive/Boolean
+                                    , /this=( /Data/Algebra/AllEqv + /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering + /Data/Primitive/BoolEqv + /Data/Algebra/IntEqExample + /Data/StrEqv )
+                                    , /b=∀/Data/Algebra/Eq
+                                    ) + /Data/Primitive/False + /Data/Primitive/boolEq
+                                    ( /r=∀/Data/Primitive/Boolean
+                                    , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison )
+                                )
+                            , []
+                            ) = /rel
+                            ( EAppArg Value /a -> TVArg /this = ( Value /this ↦ TVArg /this ) )
+                            ( EAppArg Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) )
+                            ( EAppArg Value /this -> ( /Data/Algebra/AllEqv + /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering + /Data/Primitive/BoolEqv + /Data/Algebra/IntEqExample + /Data/StrEqv ) =
+                                ( /eq
+                                    ( EAppArg Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) ) ↦ ( /Data/Algebra/AllEqv + /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering + /Data/Primitive/BoolEqv + /Data/Algebra/IntEqExample + /Data/StrEqv )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Data/Primitive/Boolean
+            , [ ∀/Data/Primitive/Boolean ]
+            , Just ""
+            )
+        , CGClass
+            ( False
+            , /Data/Algebra/Eqv[ /T=TopType ]
+            , [ /Data/Primitive/BoolEqv ]
+            , Nothing
+            )
+        , CGClass
+            ( False
+            , /Data/Primitive/Boolean
+            , [ ∀/Data/Primitive/Boolean ]
+            , Just ""
+            )
+        , CGClass
+            ( True
+            , /Data/Primitive/Boolean
+            ,
+                [ /Data/Primitive/True
+                , /Data/Primitive/False
+                ]
+            , Just ""
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "# Booleans
+            [Boolean] is the type of truth values — [True] and [False] — with the standard logical
+            operators. Its equality is defined here alongside the type." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "enum<Boolean> = [False, True]" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "## Equality
+            [Boolean] is an [Eq] type: [BoolEqv] wraps the primitive [boolEq], and [eq]/[equal] follow." )
+        ]
+    }

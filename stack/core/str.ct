@@ -1,0 +1,20 @@
+import "core/bool.ct"
+import "core/eq.ct"
+
+
+module(Data)
+  # # Strings
+    A [String] is a list of characters. Its equality is defined here alongside the type.
+  data(String)
+
+  strEqual(l -> String, r -> String) -> Boolean
+    #runtime("strEq")
+
+  # ## Equality
+    [String] is an [Eq] type: [StrEqv] wraps the primitive [strEqual], and [eq]/[equal] follow.
+  every(String, isa= [/Data/Algebra/Eq])
+
+  data(StrEqv, isa= [/Data/Algebra/Eqv[$T= String]])
+  :StrEqv.rel(a, b)= /Data/strEqual(l= a, r= b)
+  :String.eq= StrEqv
+  :String.equal(other)= this.eq.rel(a= this, b= other)

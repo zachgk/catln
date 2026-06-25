@@ -1,0 +1,554 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/operator<="
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /operator<=( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        , /operator<=( EAppArg Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/operator//"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /operator//( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
+                        , /operator//( EAppArg Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> /Data/Primitive/Float
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/operator++"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /operator++( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/operator>="
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /operator>=( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        , /operator>=( EAppArg Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/floatLt"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/Primitive/floatLt( EAppArg Value /l -> /Data/Primitive/Float )( EAppArg Value /r -> /Data/Primitive/Float ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/operator%"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /operator%( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/intLt"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/Primitive/intLt( EAppArg Value /l -> /Data/Primitive/Integer )( EAppArg Value /r -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/FloatOrdering"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Primitive/FloatOrdering ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/operator+"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /operator+( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
+                        , /operator+( EAppArg Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> /Data/Primitive/Float
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/operator<"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /operator<( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        , /operator<( EAppArg Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/inverse"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Primitive/inverse( EAppArg Value /t -> /Data/Primitive/Integer ) ->
+                            ( /operator-( /a=/Data/Primitive/Integer ) + /Data/Primitive/Integer ) = /operator-
+                            ( EAppArg Value /a -> TVArg /t = ( Value /t ↦ TVArg /t ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Primitive/round"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/Primitive/round( EAppArg Value /this -> /Data/Primitive/Float ) -> /Data/Primitive/Integer ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/operator-"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /operator-( EAppArg Value /a -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
+                        , /operator-( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
+                        , /operator-( EAppArg Value /a -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> /Data/Primitive/Float
+                        , /operator-( EAppArg Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> /Data/Primitive/Float
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/IntOrdering"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Primitive/IntOrdering ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/operator>"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /operator>( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        , /operator>( EAppArg Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/eq"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/eq( EAppArg Value /this -> /Data/Primitive/Integer ) -> /Data/Primitive/IntOrdering = Value /Data/Primitive/IntOrdering
+                        , /Data/Algebra/eq( EAppArg Value /this -> /Data/Primitive/Float ) -> /Data/Primitive/FloatOrdering = Value /Data/Primitive/FloatOrdering
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Primitive/mempty"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/Primitive/mempty -> /Data/Primitive/Integer = 0 ]
+                    }
+                )
+            ,
+                ( "/Data/Primitive/floor"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/Primitive/floor( EAppArg Value /this -> /Data/Primitive/Float ) -> /Data/Primitive/Integer ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/compare"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/compare( EAppArg Value /a -> /Data/Primitive/Integer )( EAppArg Value /b -> /Data/Primitive/Integer )( EAppArg Value /this -> /Data/Primitive/IntOrdering ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Algebra/Comparison
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Algebra/LessThan + /Data/Algebra/mkComparison
+                                    ( /lt=∀/Data/Primitive/Boolean
+                                    , /eq=∀/Data/Primitive/Boolean
+                                    ) + /Data/Algebra/Equal + /Data/Algebra/GreaterThan
+                                )
+                            , []
+                            ) = /Data/Algebra/mkComparison
+                            ( EAppArg Value /lt -> ∀/Data/Primitive/Boolean =
+                                ( /Data/Primitive/intLt
+                                    ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
+                                    ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) ) ↦ ∀/Data/Primitive/Boolean
+                                )
+                            )
+                            ( EAppArg Value /eq -> ∀/Data/Primitive/Boolean =
+                                ( /Data/Primitive/intEq
+                                    ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
+                                    ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) ) ↦ ∀/Data/Primitive/Boolean
+                                )
+                            )
+                        , /Data/Algebra/compare( EAppArg Value /a -> /Data/Primitive/Float )( EAppArg Value /b -> /Data/Primitive/Float )( EAppArg Value /this -> /Data/Primitive/FloatOrdering ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Algebra/Comparison
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Algebra/LessThan + /Data/Algebra/mkComparison
+                                    ( /lt=∀/Data/Primitive/Boolean
+                                    , /eq=∀/Data/Primitive/Boolean
+                                    ) + /Data/Algebra/Equal + /Data/Algebra/GreaterThan
+                                )
+                            , []
+                            ) = /Data/Algebra/mkComparison
+                            ( EAppArg Value /lt -> ∀/Data/Primitive/Boolean =
+                                ( /Data/Primitive/floatLt
+                                    ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
+                                    ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) ) ↦ ∀/Data/Primitive/Boolean
+                                )
+                            )
+                            ( EAppArg Value /eq -> ∀/Data/Primitive/Boolean =
+                                ( /Data/Primitive/floatEq
+                                    ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
+                                    ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) ) ↦ ∀/Data/Primitive/Boolean
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Primitive/floatEq"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/Primitive/floatEq( EAppArg Value /l -> /Data/Primitive/Float )( EAppArg Value /r -> /Data/Primitive/Float ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/intEq"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/Primitive/intEq( EAppArg Value /l -> /Data/Primitive/Integer )( EAppArg Value /r -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/exampleZeroPlusZero"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/Primitive/exampleZeroPlusZero -> /Data/Primitive/Integer = 0 ]
+                    }
+                )
+            ,
+                ( "/operator*"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /operator*( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
+                        , /operator*( EAppArg Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> /Data/Primitive/Float
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/Integer"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/equal"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/equal( EAppArg Value /other -> ∀/Data/Algebra/Eq )( EAppArg Value /this -> /Data/Primitive/Integer ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Primitive/True + /Data/Algebra/rel
+                                    ( /a=/Data/Primitive/Integer
+                                    , /this=( /Data/Algebra/AllEqv + /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering + /Data/Primitive/BoolEqv + /Data/Algebra/IntEqExample + /Data/StrEqv )
+                                    , /b=∀/Data/Algebra/Eq
+                                    ) + /Data/Primitive/False + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    )
+                                )
+                            , []
+                            ) = /rel
+                            ( EAppArg Value /a -> TVArg /this = ( Value /this ↦ TVArg /this ) )
+                            ( EAppArg Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) )
+                            ( EAppArg Value /this -> ( /Data/Algebra/AllEqv + /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering + /Data/Primitive/BoolEqv + /Data/Algebra/IntEqExample + /Data/StrEqv ) =
+                                ( /eq
+                                    ( EAppArg Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) ) ↦ ( /Data/Algebra/AllEqv + /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering + /Data/Primitive/BoolEqv + /Data/Algebra/IntEqExample + /Data/StrEqv )
+                                )
+                            )
+                        , /Data/Algebra/equal( EAppArg Value /other -> ∀/Data/Algebra/Eq )( EAppArg Value /this -> /Data/Primitive/Float ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Primitive/True + /Data/Algebra/rel
+                                    ( /a=/Data/Primitive/Float
+                                    , /this=( /Data/Algebra/AllEqv + /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering + /Data/Primitive/BoolEqv + /Data/Algebra/IntEqExample + /Data/StrEqv )
+                                    , /b=∀/Data/Algebra/Eq
+                                    ) + /Data/Primitive/False + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison )
+                                )
+                            , []
+                            ) = /rel
+                            ( EAppArg Value /a -> TVArg /this = ( Value /this ↦ TVArg /this ) )
+                            ( EAppArg Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) )
+                            ( EAppArg Value /this -> ( /Data/Algebra/AllEqv + /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering + /Data/Primitive/BoolEqv + /Data/Algebra/IntEqExample + /Data/StrEqv ) =
+                                ( /eq
+                                    ( EAppArg Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) ) ↦ ( /Data/Algebra/AllEqv + /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering + /Data/Primitive/BoolEqv + /Data/Algebra/IntEqExample + /Data/StrEqv )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/ord"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/ord( EAppArg Value /this -> /Data/Primitive/Integer ) -> /Data/Primitive/IntOrdering = Value /Data/Primitive/IntOrdering
+                        , /Data/Algebra/ord( EAppArg Value /this -> /Data/Primitive/Float ) -> /Data/Primitive/FloatOrdering = Value /Data/Primitive/FloatOrdering
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Primitive/ceil"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/Primitive/ceil( EAppArg Value /this -> /Data/Primitive/Float ) -> /Data/Primitive/Integer ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/Float"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Primitive/Float ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/compareTo"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/compareTo( EAppArg Value /other -> ∀/Data/Algebra/Ord )( EAppArg Value /this -> /Data/Primitive/Integer ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Algebra/Comparison
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Algebra/LessThan + /Data/Algebra/mkComparison
+                                    ( /lt=∀/Data/Primitive/Boolean
+                                    , /eq=∀/Data/Primitive/Boolean
+                                    ) + /Data/Algebra/compare
+                                    ( /a=/Data/Primitive/Integer
+                                    , /this=( /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering )
+                                    , /b=∀/Data/Algebra/Ord
+                                    ) + /Data/Algebra/Equal + /Data/Algebra/GreaterThan
+                                )
+                            , []
+                            ) = /compare
+                            ( EAppArg Value /a -> TVArg /this = ( Value /this ↦ TVArg /this ) )
+                            ( EAppArg Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) )
+                            ( EAppArg Value /this -> ( /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering ) =
+                                ( /ord
+                                    ( EAppArg Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) ) ↦ ( /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering )
+                                )
+                            )
+                        , /Data/Algebra/compareTo( EAppArg Value /other -> ∀/Data/Algebra/Ord )( EAppArg Value /this -> /Data/Primitive/Float ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Algebra/Comparison
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Algebra/LessThan + /Data/Algebra/mkComparison
+                                    ( /lt=∀/Data/Primitive/Boolean
+                                    , /eq=∀/Data/Primitive/Boolean
+                                    ) + /Data/Algebra/compare
+                                    ( /a=/Data/Primitive/Float
+                                    , /this=( /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering )
+                                    , /b=∀/Data/Algebra/Ord
+                                    ) + /Data/Algebra/Equal + /Data/Algebra/GreaterThan
+                                )
+                            , []
+                            ) = /compare
+                            ( EAppArg Value /a -> TVArg /this = ( Value /this ↦ TVArg /this ) )
+                            ( EAppArg Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) )
+                            ( EAppArg Value /this -> ( /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering ) =
+                                ( /ord
+                                    ( EAppArg Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) ) ↦ ( /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Data/Primitive/Integer
+            , [ /Data/Primitive/Integer ]
+            , Just ""
+            )
+        , CGClass
+            ( False
+            , /Data/Primitive/Number
+            , [ ∀/Data/Primitive/Number ]
+            , Just ""
+            )
+        , CGClass
+            ( False
+            , /Data/Primitive/Integer
+            , [ /Data/Primitive/Integer ]
+            , Just ""
+            )
+        , CGClass
+            ( False
+            , /Data/Algebra/Ordering[ /T=TopType ]
+            ,
+                [ /Data/Primitive/IntOrdering
+                , /Data/Primitive/FloatOrdering
+                ]
+            , Nothing
+            )
+        , CGClass
+            ( True
+            , /Data/Primitive/Number
+            ,
+                [ /Data/Primitive/Integer
+                , /Data/Primitive/Float
+                ]
+            , Just ""
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "# Numbers
+            The numeric primitives [Integer] and [Float] make up the [Number] class. Their arithmetic and
+            comparison operators are primitive runtime operations, and their [Eq]/[Ord] instances —
+            defined here alongside the types — build on those primitives." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "## Integers" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "The primitive integer "less than" is also exposed as a named function so [Data/Algebra/ord]'s" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "  [Ordering] instances can build a [Comparison] from it." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "[Integer]'s instances of the algebra ordering/equality classes. [IntOrdering] is its" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "  [/Data/Algebra/Ordering]; [ord] and [compareTo] follow from it, and [eq] derives from the" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "  same ordering (an [Ordering] is an [Eqv], so it doubles as the canonical equivalence)." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "### Commutative Group" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "## Floats" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Named-function form of the primitive float "less than", used by [Data/Algebra/ord]." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "[Float]'s instances of the algebra ordering/equality classes, mirroring [Integer] above." )
+        ]
+    }

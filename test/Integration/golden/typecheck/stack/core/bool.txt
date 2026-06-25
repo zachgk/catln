@@ -1,0 +1,216 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/Data/Primitive/True"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Primitive/True ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/operator^"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator^( Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator^( Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /operator^( Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /operator^( Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /operator^( Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/rel"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/rel( Value /a -> ∀/Data/Primitive/Boolean )( Value /b -> ∀/Data/Primitive/Boolean )( Value /this -> /Data/Primitive/BoolEqv ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Primitive/True + /Data/Primitive/False + /Data/Primitive/boolEq
+                                    ( /r=∀/Data/Primitive/Boolean
+                                    , /l=∀/Data/Primitive/Boolean
+                                    )
+                                )
+                            , []
+                            ) = /Data/Primitive/boolEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
+                        ]
+                    }
+                )
+            ,
+                ( "/operator~"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator~( Value /a -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator~( Value /a -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /operator~( Value /a -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Primitive/BoolEqv"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Primitive/BoolEqv ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/eq"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/eq( Value /this -> ∀/Data/Primitive/Boolean ) -> /Data/Primitive/BoolEqv = Value /Data/Primitive/BoolEqv ]
+                    }
+                )
+            ,
+                ( "/operator&&"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator&&( Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator&&( Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /operator&&( Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /operator&&( Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        ]
+                    }
+                )
+            ,
+                ( "/operator||"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /operator||( Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /operator||( Value /l -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /operator||( Value /l -> ∀/Data/Primitive/Boolean = Hole ∀/Data/Primitive/Boolean HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole /Data/Primitive/True HoleActive Nothing ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /operator||( Value /l -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole /Data/Primitive/False HoleActive Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Primitive/False"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Primitive/False ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/boolEq"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Primitive/boolEq( Value /l -> ∀/Data/Primitive/Boolean )( Value /r -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Primitive/boolEq( Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /r -> /Data/Primitive/True = Value /Data/Primitive/True ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /Data/Primitive/boolEq( Value /l -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /r -> /Data/Primitive/False = Value /Data/Primitive/False ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/Primitive/boolEq( Value /l -> /Data/Primitive/False = Value /Data/Primitive/False )( Value /r -> /Data/Primitive/True = Value /Data/Primitive/True ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/Primitive/boolEq( Value /l -> /Data/Primitive/False = Value /Data/Primitive/False )( Value /r -> /Data/Primitive/False = Value /Data/Primitive/False ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/equal"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/equal( Value /other -> ∀/Data/Algebra/Eq )( Value /this -> ∀/Data/Primitive/Boolean ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Primitive/True + /Data/Algebra/rel
+                                    ( /a=∀/Data/Primitive/Boolean
+                                    , /this=( /Data/Algebra/AllEqv + /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering + /Data/Primitive/BoolEqv + /Data/Algebra/IntEqExample + /Data/StrEqv )
+                                    , /b=∀/Data/Algebra/Eq
+                                    ) + /Data/Primitive/False + /Data/Primitive/boolEq
+                                    ( /r=∀/Data/Primitive/Boolean
+                                    , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison )
+                                )
+                            , []
+                            ) = /rel( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
+                            ( Value /this -> ( /Data/Algebra/AllEqv + /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering + /Data/Primitive/BoolEqv + /Data/Algebra/IntEqExample + /Data/StrEqv ) = /eq( Value /this -> TVArg /this = Value /this ) )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Data/Primitive/Boolean
+            , [ ∀/Data/Primitive/Boolean ]
+            , Just ""
+            )
+        , CGClass
+            ( False
+            , /Data/Algebra/Eqv[ /T=TopType ]
+            , [ /Data/Primitive/BoolEqv ]
+            , Nothing
+            )
+        , CGClass
+            ( False
+            , /Data/Primitive/Boolean
+            , [ ∀/Data/Primitive/Boolean ]
+            , Just ""
+            )
+        , CGClass
+            ( True
+            , /Data/Primitive/Boolean
+            ,
+                [ /Data/Primitive/True
+                , /Data/Primitive/False
+                ]
+            , Just ""
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr "# Booleans
+            [Boolean] is the type of truth values — [True] and [False] — with the standard logical
+            operators. Its equality is defined here alongside the type." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "enum<Boolean> = [False, True]" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "## Equality
+            [Boolean] is an [Eq] type: [BoolEqv] wraps the primitive [boolEq], and [eq]/[equal] follow." )
+        ]
+    }

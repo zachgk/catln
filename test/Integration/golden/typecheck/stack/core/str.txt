@@ -1,0 +1,121 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/Data/strEqual"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/strEqual( Value /l -> /Data/String )( Value /r -> /Data/String ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/String"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/rel"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/rel( Value /a -> /Data/String )( Value /b -> /Data/String )( Value /this -> /Data/StrEqv ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            , /Data/strEqual
+                                ( /r=/Data/String
+                                , /l=/Data/String
+                                )
+                            , []
+                            ) = /Data/strEqual( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/eq"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/eq( Value /this -> /Data/String ) -> /Data/StrEqv = Value /Data/StrEqv ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/equal"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/equal( Value /other -> ∀/Data/Algebra/Eq )( Value /this -> /Data/String ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/strEqual
+                                    ( /r=/Data/String
+                                    , /l=/Data/String
+                                    ) + /Data/Primitive/True + /Data/Algebra/rel
+                                    ( /a=/Data/String
+                                    , /this=( /Data/Algebra/AllEqv + /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering + /Data/Primitive/BoolEqv + /Data/Algebra/IntEqExample + /Data/StrEqv )
+                                    , /b=∀/Data/Algebra/Eq
+                                    ) + /Data/Primitive/False + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison )
+                                )
+                            , []
+                            ) = /rel( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
+                            ( Value /this -> ( /Data/Algebra/AllEqv + /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering + /Data/Primitive/BoolEqv + /Data/Algebra/IntEqExample + /Data/StrEqv ) = /eq( Value /this -> TVArg /this = Value /this ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/StrEqv"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/StrEqv ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Data/String
+            , [ /Data/String ]
+            , Just ""
+            )
+        , CGClass
+            ( False
+            , /Data/Algebra/Eqv[ /T=TopType ]
+            , [ /Data/StrEqv ]
+            , Nothing
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr "# Strings
+            A [String] is a list of characters. Its equality is defined here alongside the type." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "## Equality
+            [String] is an [Eq] type: [StrEqv] wraps the primitive [strEqual], and [eq]/[equal] follow." )
+        ]
+    }

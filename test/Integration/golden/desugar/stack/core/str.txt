@@ -1,0 +1,94 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/Data/strEqual"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/strEqual( Value l -> /Data/String )( Value r -> /Data/String ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/String"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/rel"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/rel( Value a )( Value b )( Value /this -> /Data/StrEqv )= /Data/strEqual( Value l= Value a )( Value r= Value b ) ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/eq"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/eq( Value /this -> /Data/String )= Value StrEqv ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/equal"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/equal( Value other )( Value /this -> /Data/String )= rel( Value a= Value this )( Value b= Value other )
+                            ( Value /this= eq( Value /this= Value this ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/StrEqv"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/StrEqv ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Data/String
+            , [ /Data/String ]
+            , Just ""
+            )
+        , CGClass
+            ( False
+            , /Data/Algebra/Eqv[ /T=TopType ]
+            , [ /Data/StrEqv ]
+            , Nothing
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "# Strings
+            A [String] is a list of characters. Its equality is defined here alongside the type." )
+        , /Catln/#md
+            ( Value /text= CStr "## Equality
+            [String] is an [Eq] type: [StrEqv] wraps the primitive [strEqual], and [eq]/[equal] follow." )
+        ]
+    }

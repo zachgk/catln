@@ -12,16 +12,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/strEqual"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Data/strEqual( EAppArg Value /l -> /Data/String )( EAppArg Value /r -> /Data/String ) -> ∀/Data/Primitive/Boolean ]
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/Data/toString"
                 , ObjectMapItem
                     { omiDecls =
@@ -40,15 +30,6 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /ContextIn( EAppVar /V TopType )( EAppArg Value /value -> $/V )( EAppSpread Hole TopType HoleActive Nothing ) ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
-                ( "/Data/String"
-                , ObjectMapItem
-                    { omiDecls = [ Value /Data/String ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -95,14 +76,6 @@ Prgm
         , CGType
         , CGType
         , CGType
-        , CGType
-        , CGType
-        , CGClass
-            ( False
-            , /Data/String
-            , [ /Data/String ]
-            , Just ""
-            )
         , CGClass
             ( False
             , /Data/Enum
@@ -130,9 +103,10 @@ Prgm
     , prgmAnnots =
         [ /Catln/#md
             ( EAppArg Value /text -> /Data/String = "# Catln Core Data Types
-            These define the basic data types used in the language." )
+            These define the basic data types used in the language. [String] and its equality live in
+            [Data/str]; the conversions and collection types below build on it." )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "## String" )
+            ( EAppArg Value /text -> /Data/String = "## String conversions" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "Declaration bounding the #runtime toString definition below." )
         , /Catln/#md

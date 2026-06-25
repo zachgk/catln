@@ -78,26 +78,9 @@ module(Data/Algebra)
     #assert(test= AllEqv.rel(a= 3, b= 7))
     0
 
-  # ## Equality definitions for the primitive types
-    Each primitive type's [Eqv] is an object of the [Eqv] class whose [rel] wraps that type's
-    primitive equality. [eq] returns it. These live downstream of the primitives, so defining them
-    here keeps [eq] a single method [/Data/Algebra/eq] rather than fragmenting it across modules.
-  data(BoolEqv, isa= [/Data/Algebra/Eqv[$T= Boolean]])
-  :BoolEqv.rel(a, b)= /Data/Primitive/boolEq(l= a, r= b)
-  :Boolean.eq= BoolEqv
-
-  data(StrEqv, isa= [/Data/Algebra/Eqv[$T= String]])
-  :StrEqv.rel(a, b)= /Data/strEqual(l= a, r= b)
-  :String.eq= StrEqv
-
-  # [equal] for each type runs that type's [eq] relation. [this] is concrete here, so [this.eq]
-  #   is an ordinary (non-abstract) method dispatch. [operator==] then dispatches on the single
-  #   [equal] method (like [toString]).
-  :Integer.equal(other)= this.eq.rel(a= this, b= other)
-  :Float.equal(other)= this.eq.rel(a= this, b= other)
-  :Boolean.equal(other)= this.eq.rel(a= this, b= other)
-  :String.equal(other)= this.eq.rel(a= this, b= other)
-
+  # The per-type [Eqv] instances ([BoolEqv], [IntOrdering], [StrEqv], …) and each type's [eq] /
+  #   [equal] live alongside their types in [Data/bool], [Data/num] and [Data/str]; this file
+  #   defines only the abstract [Eqv]/[Eq] classes and the [operator==] / [operator!=] built on them.
   (l :: $T == r :: $T)[$T -> /Data/Algebra/Eq]= l.equal(other= r)
 
   (l :: $T != r :: $T)[$T -> /Data/Algebra/Eq]= ~(l == r)

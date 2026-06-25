@@ -1,0 +1,422 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/operator<="
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /operator<=( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        , /operator<=( Value /l -> /Data/Primitive/Float = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/operator//"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /operator//( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Integer
+                        , /operator//( Value /l -> /Data/Primitive/Float = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Float
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/operator++"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /operator++( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Integer ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/operator>="
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /operator>=( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        , /operator>=( Value /l -> /Data/Primitive/Float = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/floatLt"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/Primitive/floatLt( Value l -> /Data/Primitive/Float )( Value r -> /Data/Primitive/Float ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/operator%"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /operator%( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Integer ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/intLt"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/Primitive/intLt( Value l -> /Data/Primitive/Integer )( Value r -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/FloatOrdering"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Primitive/FloatOrdering ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/operator+"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /operator+( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Integer
+                        , /operator+( Value /l -> /Data/Primitive/Float = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Float
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/operator<"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /operator<( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        , /operator<( Value /l -> /Data/Primitive/Float = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/inverse"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Primitive/inverse( Value t -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator-( Value /a= Value t ) ]
+                    }
+                )
+            ,
+                ( "/Data/Primitive/round"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/Primitive/round( Value /this -> /Data/Primitive/Float ) -> /Data/Primitive/Integer ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/operator-"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /operator-( Value /a= Hole /Data/Primitive/Integer HoleActive Nothing ) -> /Data/Primitive/Integer
+                        , /operator-( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Integer
+                        , /operator-( Value /a= Hole /Data/Primitive/Float HoleActive Nothing ) -> /Data/Primitive/Float
+                        , /operator-( Value /l -> /Data/Primitive/Float = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Float
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/IntOrdering"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Primitive/IntOrdering ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/operator>"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /operator>( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        , /operator>( Value /l -> /Data/Primitive/Float = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/eq"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/eq( Value /this -> /Data/Primitive/Integer )= Value IntOrdering
+                        , /Data/Algebra/eq( Value /this -> /Data/Primitive/Float )= Value FloatOrdering
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Primitive/mempty"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/Primitive/mempty -> /Data/Primitive/Integer = CInt 0 ]
+                    }
+                )
+            ,
+                ( "/Data/Primitive/floor"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/Primitive/floor( Value /this -> /Data/Primitive/Float ) -> /Data/Primitive/Integer ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/compare"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/compare( Value a )( Value b )( Value /this -> /Data/Primitive/IntOrdering )= /Data/Algebra/mkComparison
+                            ( Value lt= /Data/Primitive/intLt( Value l= Value a )( Value r= Value b ) )
+                            ( Value eq= /Data/Primitive/intEq( Value l= Value a )( Value r= Value b ) )
+                        , /Data/Algebra/compare( Value a )( Value b )( Value /this -> /Data/Primitive/FloatOrdering )= /Data/Algebra/mkComparison
+                            ( Value lt= /Data/Primitive/floatLt( Value l= Value a )( Value r= Value b ) )
+                            ( Value eq= /Data/Primitive/floatEq( Value l= Value a )( Value r= Value b ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Primitive/floatEq"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/Primitive/floatEq( Value l -> /Data/Primitive/Float )( Value r -> /Data/Primitive/Float ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/intEq"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/Primitive/intEq( Value l -> /Data/Primitive/Integer )( Value r -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/exampleZeroPlusZero"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/Primitive/exampleZeroPlusZero= CInt 0 ]
+                    }
+                )
+            ,
+                ( "/operator*"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /operator*( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Integer
+                        , /operator*( Value /l -> /Data/Primitive/Float = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Float
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/Integer"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/equal"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/equal( Value other )( Value /this -> /Data/Primitive/Integer )= rel( Value a= Value this )( Value b= Value other )
+                            ( Value /this= eq( Value /this= Value this ) )
+                        , /Data/Algebra/equal( Value other )( Value /this -> /Data/Primitive/Float )= rel( Value a= Value this )( Value b= Value other )
+                            ( Value /this= eq( Value /this= Value this ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/ord"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/ord( Value /this -> /Data/Primitive/Integer )= Value IntOrdering
+                        , /Data/Algebra/ord( Value /this -> /Data/Primitive/Float )= Value FloatOrdering
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Primitive/ceil"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/Primitive/ceil( Value /this -> /Data/Primitive/Float ) -> /Data/Primitive/Integer ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/Float"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Primitive/Float ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/compareTo"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/compareTo( Value other )( Value /this -> /Data/Primitive/Integer )= compare( Value a= Value this )( Value b= Value other )
+                            ( Value /this= ord( Value /this= Value this ) )
+                        , /Data/Algebra/compareTo( Value other )( Value /this -> /Data/Primitive/Float )= compare( Value a= Value this )( Value b= Value other )
+                            ( Value /this= ord( Value /this= Value this ) )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Data/Primitive/Integer
+            , [ /Data/Primitive/Integer ]
+            , Just ""
+            )
+        , CGClass
+            ( False
+            , /Data/Primitive/Number
+            , [ ∀/Data/Primitive/Number ]
+            , Just ""
+            )
+        , CGClass
+            ( False
+            , /Data/Primitive/Integer
+            , [ /Data/Primitive/Integer ]
+            , Just ""
+            )
+        , CGClass
+            ( False
+            , /Data/Algebra/Ordering[ /T=TopType ]
+            ,
+                [ /Data/Primitive/IntOrdering
+                , /Data/Primitive/FloatOrdering
+                ]
+            , Nothing
+            )
+        , CGClass
+            ( True
+            , /Data/Primitive/Number
+            ,
+                [ /Data/Primitive/Integer
+                , /Data/Primitive/Float
+                ]
+            , Just ""
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "# Numbers
+            The numeric primitives [Integer] and [Float] make up the [Number] class. Their arithmetic and
+            comparison operators are primitive runtime operations, and their [Eq]/[Ord] instances —
+            defined here alongside the types — build on those primitives." )
+        , /Catln/#md
+            ( Value /text= CStr "## Integers" )
+        , /Catln/#md
+            ( Value /text= CStr "The primitive integer "less than" is also exposed as a named function so [Data/Algebra/ord]'s" )
+        , /Catln/#md
+            ( Value /text= CStr "  [Ordering] instances can build a [Comparison] from it." )
+        , /Catln/#md
+            ( Value /text= CStr "[Integer]'s instances of the algebra ordering/equality classes. [IntOrdering] is its" )
+        , /Catln/#md
+            ( Value /text= CStr "  [/Data/Algebra/Ordering]; [ord] and [compareTo] follow from it, and [eq] derives from the" )
+        , /Catln/#md
+            ( Value /text= CStr "  same ordering (an [Ordering] is an [Eqv], so it doubles as the canonical equivalence)." )
+        , /Catln/#md
+            ( Value /text= CStr "### Commutative Group" )
+        , /Catln/#md
+            ( Value /text= CStr "## Floats" )
+        , /Catln/#md
+            ( Value /text= CStr "Named-function form of the primitive float "less than", used by [Data/Algebra/ord]." )
+        , /Catln/#md
+            ( Value /text= CStr "[Float]'s instances of the algebra ordering/equality classes, mirroring [Integer] above." )
+        ]
+    }

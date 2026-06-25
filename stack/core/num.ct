@@ -1,0 +1,129 @@
+import "core/algebra.ct"
+import "core/bool.ct"
+import "core/eq.ct"
+import "core/ord.ct"
+
+
+module(Data/Primitive)
+  # # Numbers
+    The numeric primitives [Integer] and [Float] make up the [Number] class. Their arithmetic and
+    comparison operators are primitive runtime operations, and their [Eq]/[Ord] instances —
+    defined here alongside the types — build on those primitives.
+  class(Number, [Integer, Float])
+
+  every(Number, isa= [/Data/Algebra/Eq])
+
+  # ## Integers
+  (-(_ :: Integer)) -> Integer
+    #runtime("intNeg")
+  (_ :: Integer - _ :: Integer) -> Integer
+    #runtime("int-")
+
+  (_ :: Integer + _ :: Integer) -> Integer
+    #runtime("int+")
+
+  (_ :: Integer * _ :: Integer) -> Integer
+    #runtime("int*")
+
+  (_ :: Integer % _ :: Integer) -> Integer
+    #runtime("int%")
+
+  (_ :: Integer <= _ :: Integer) -> Boolean
+    #runtime("int<=")
+
+  (_ :: Integer >= _ :: Integer) -> Boolean
+    #runtime("int>=")
+
+  (_ :: Integer < _ :: Integer) -> Boolean
+    #runtime("int<")
+
+  (_ :: Integer > _ :: Integer) -> Boolean
+    #runtime("int>")
+
+  # The primitive integer "less than" is also exposed as a named function so [Data/Algebra/ord]'s
+  #   [Ordering] instances can build a [Comparison] from it.
+  intLt(l -> Integer, r -> Integer) -> Boolean
+    #runtime("int<")
+
+  intEq(l -> Integer, r -> Integer) -> Boolean
+    #runtime("int==")
+
+  # [Integer]'s instances of the algebra ordering/equality classes. [IntOrdering] is its
+  #   [/Data/Algebra/Ordering]; [ord] and [compareTo] follow from it, and [eq] derives from the
+  #   same ordering (an [Ordering] is an [Eqv], so it doubles as the canonical equivalence).
+  data(IntOrdering, isa= [/Data/Algebra/Ordering[$T= Integer]])
+  :IntOrdering.compare(a, b)= /Data/Algebra/mkComparison(lt= /Data/Primitive/intLt(l= a, r= b), eq= /Data/Primitive/intEq(l= a, r= b))
+  :Integer.ord= IntOrdering
+  :Integer.compareTo(other)= this.ord.compare(a= this, b= other)
+  :Integer.eq= IntOrdering
+  :Integer.equal(other)= this.eq.rel(a= this, b= other)
+
+  # ### Commutative Group
+  every(Integer, isa= [/Data/Algebra/CommutativeMonoid])
+  every(Integer, isa= [/Data/Algebra/Group])
+
+  exampleZeroPlusZero =
+    #example
+    #assert(test= 0 + 0 == 0)
+    0
+
+  mempty -> Integer= 0
+
+  (_ :: Integer ++ _ :: Integer) -> Integer
+    #runtime("int+")
+
+  inverse(t -> Integer) -> Integer= -t
+
+  (_ :: Integer // _ :: Integer) -> Integer
+    #runtime("intDiv")
+
+  # ## Floats
+  (-(_ :: Float)) -> Float
+    #runtime("floatNeg")
+  (_ :: Float - _ :: Float) -> Float
+    #runtime("float-")
+
+  (_ :: Float + _ :: Float) -> Float
+    #runtime("float+")
+
+  (_ :: Float * _ :: Float) -> Float
+    #runtime("float*")
+
+  (_ :: Float // _ :: Float) -> Float
+    #runtime("float//")
+
+  (_ :: Float <= _ :: Float) -> Boolean
+    #runtime("float<=")
+
+  (_ :: Float >= _ :: Float) -> Boolean
+    #runtime("float>=")
+
+  (_ :: Float < _ :: Float) -> Boolean
+    #runtime("float<")
+
+  (_ :: Float > _ :: Float) -> Boolean
+    #runtime("float>")
+
+  # Named-function form of the primitive float "less than", used by [Data/Algebra/ord].
+  floatLt(l -> Float, r -> Float) -> Boolean
+    #runtime("float<")
+
+  floatEq(l -> Float, r -> Float) -> Boolean
+    #runtime("float==")
+
+  # [Float]'s instances of the algebra ordering/equality classes, mirroring [Integer] above.
+  data(FloatOrdering, isa= [/Data/Algebra/Ordering[$T= Float]])
+  :FloatOrdering.compare(a, b)= /Data/Algebra/mkComparison(lt= /Data/Primitive/floatLt(l= a, r= b), eq= /Data/Primitive/floatEq(l= a, r= b))
+  :Float.ord= FloatOrdering
+  :Float.compareTo(other)= this.ord.compare(a= this, b= other)
+  :Float.eq= FloatOrdering
+  :Float.equal(other)= this.eq.rel(a= this, b= other)
+
+  :Float.round -> Integer
+    #runtime("floatRound")
+
+  :Float.floor -> Integer
+    #runtime("floatFloor")
+
+  :Float.ceil -> Integer
+    #runtime("floatCeil")
