@@ -260,7 +260,12 @@ desFinalPasses nodesWithDeps = do
     -- Expose each class's type parameters on the receivers of its methods, using the fully
     -- resolved class graph (so a method's @$T@ ties to the class parameter it is declared over).
     let fullPrgm3 = resolveRelativeNames fullPrgm2 fullPrgm2
-    let prgm4 = linkClassMethodReceivers fullPrgm3 prgm3
+
+    -- Redirect a receiver-method instance defined in a module other than the one declaring the
+    -- method (e.g. @:Integer.eq@ in @Data/Primitive@) onto the imported declaration it implements.
+    let prgm3b = reassignImportedMethodDefs fullPrgm3 prgm3
+
+    let prgm4 = linkClassMethodReceivers fullPrgm3 prgm3b
     lift $ mapMetaPrgmM addMetaID prgm4
 
 desPrgm :: (PPrgm, FileImport, [FileImport]) -> CRes (DesPrgm, FileImport, [FileImport])

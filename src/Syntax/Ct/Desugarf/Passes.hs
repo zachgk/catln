@@ -18,6 +18,7 @@ module Syntax.Ct.Desugarf.Passes where
 import           CtConstants             (thisKey)
 import           Data.Graph
 import qualified Data.HashMap.Strict     as H
+import qualified Data.HashSet            as S
 import           Data.List               (nub)
 import           Data.Maybe
 import           MapMeta
@@ -157,3 +158,46 @@ linkClassMethodReceivers (Prgm _ (ClassGraph fullCg) _) (Prgm (ObjectMap objMap)
       , not (H.null classVarsDecl)
       = TopType negPartials (PredsOne (PredClass p{ptVars=H.union ptVars (H.mapWithKey (\k _ -> TypeVar (TVVar k) TVInt) classVarsDecl)}))
     enrichReceiverType t = t
+
+-- |
+-- Redirects a receiver-method definition written in a module other than the one that declares the
+-- method, onto the declaration it implements.
+--
+-- An instance like @:Integer.eq= ...@ placed in @Data/Primitive@ (where @eq@ is declared in the
+-- imported @Data/Algebra@) has its selector prefixed with the /defining/ module during desugar,
+-- producing the orphan name @/Data/Primitive/eq@ — a definition with no declaration anywhere. It
+-- therefore fails to fulfil the real @/Data/Algebra/eq@ accessor. For each such orphan whose simple
+-- name matches a unique declared method elsewhere in the (import-merged) program, this rewrites the
+-- selector to that declaration, so the instance lands on the accessor it implements.
+--
+-- Only receiver methods (objects carrying a @this@ argument) are redirected. Bare functions and
+-- operators defined in a foreign module (e.g. @mempty -> Integer@, @_ ++ _@) keep their existing
+-- names, since they do not require per-receiver coverage and are dispatched by other means.
+reassignImportedMethodDefs :: DesPrgm -> DesPrgm -> DesPrgm
+reassignImportedMethodDefs (Prgm (ObjectMap fullObjMap) _ _) (Prgm (ObjectMap objMap) classGraph annots) =
+    Prgm (ObjectMap objMap') classGraph annots
+  where
+    -- Names that carry a declaration (or runtime declaration) somewhere in the full program.
+    declaredNames = [k | (k, ObjectMapItem ds rs _ _) <- H.toList fullObjMap, not (null ds) || not (null rs)]
+    declaredSet = S.fromList declaredNames
+    simpleName = reverse . takeWhile (/= '/') . reverse
+    -- The unique declared method of the same simple name, when there is exactly one.
+    redirectTarget orphan = case filter ((== simpleName orphan) . simpleName) declaredNames of
+      [t] -> Just t
+      _   -> Nothing
+    hasThisArg oa = any (maybe False ((`elem` [thisKey, "this"]) . exprPath) . oaObj) (exprAppliedArgs (oaObjExpr oa))
+
+    objMap' = H.fromListWith (<>)
+      [ (key', renameItem key key' item)
+      | (key, item@(ObjectMapItem ds rs rfs defs)) <- H.toList objMap
+      , let key' | S.member key declaredSet                 = key
+                 | any hasThisArg (ds ++ rs ++ rfs ++ defs)
+                 , Just target <- redirectTarget key        = target
+                 | otherwise                                = key
+      ]
+
+    renameItem from to item@(ObjectMapItem ds rs rfs defs)
+      | from == to = item
+      | otherwise  = ObjectMapItem (rn ds) (rn rs) (rn rfs) (rn defs)
+      where rn = map (renameOA from to)
+    renameOA from to oa = oa{oaObj = fmap (mapExprPath (\(eM, eN) -> Value eM (if eN == from then to else eN))) (oaObj oa)}
