@@ -178,14 +178,14 @@ showExprWithConfig :: Show m => ShowConfig m -> Expr m -> String
 showExprWithConfig cfg = go
   where
     go (CExpr m c) = printf "%s%s" (show c) (scAnnot cfg m)
-    go (Value m name) = printf "Value %s%s" name (scAnnot cfg m)
+    go (Value m name) = printf "Value %s%s" (nameStr name) (scAnnot cfg m)
     go (HoleExpr m hole) = printf "Hole %s %s%s" (scShowMeta cfg m) (show hole) (scAnnot cfg m)
     go (AliasExpr base alias) = printf "%s@%s" (go base) (go alias)
     go (EWhere m base cond) = printf "%s | %s%s" (go base) (go cond) (scAnnot cfg m)
     go (TupleApply m (_, baseExpr) arg) = printf "%s%s%s" baseExpr' (showEAppWithConfig cfg arg) (scAnnot cfg m)
       where
         baseExpr' = case baseExpr of
-          Value vm funName -> printf "%s%s" funName (scAnnot cfg vm)
+          Value vm funName -> printf "%s%s" (nameStr funName) (scAnnot cfg vm)
           TupleApply{}     -> go baseExpr
           _                -> printf "(%s)" (go baseExpr)
 
@@ -356,7 +356,7 @@ instance ExprClass Expr where
       aux Value{} = [H.empty]
       aux HoleExpr{} = [H.empty]
       aux (EWhere _ base cond) = case maybeExprPath cond of
-        Just n | n == operatorHasArrow -> case (H.lookup (partialKey operatorArgL) condArgs, H.lookup (partialKey operatorArgR) condArgs) of
+        Just n | nameStr n == operatorHasArrow -> case (H.lookup (partialKey (mkName operatorArgL)) condArgs, H.lookup (partialKey (mkName operatorArgR)) condArgs) of
                   (Just (Just (_, Just l)), Just (Just (_, Just r))) -> case (getExprType $ exprPropagateTypes l, getExprType $ exprPropagateTypes r) of
                     (lt@(UnionType Nothing _ _), rt) | isJust (maybeGetSingleton lt) -> concatMap findArrowMatches bases'
                       where
@@ -543,7 +543,7 @@ getOaArrM oa = error $ printf "getOaArrM with no output meta: %s" (show oa)
 
 
 varNamesWithPrefix :: Name -> [Name]
-varNamesWithPrefix n = [n, makeAbsoluteName ('$':tail n)]
+varNamesWithPrefix n = [n, makeAbsoluteName (mkName ('$' : tail (nameStr n)))]
 
 nullObjectMap :: ObjectMap e m -> Bool
 nullObjectMap (ObjectMap objMap) = H.null objMap
@@ -557,10 +557,10 @@ flatObjectMap (ObjectMap objMap) = concatMap flatObjectMapItem (H.elems objMap)
 singletonObjectMap :: (ExprClass e, MetaDat m, Show (e m), Show m) => ObjArr e m -> ObjectMap e m
 singletonObjectMap oa = ObjectMap $ H.singleton (makeAbsoluteName $ oaObjPath oa) omi
   where
-    isRefine = any (\a -> exprPath a == refineAnnot) (oaAnnots oa)
+    isRefine = any (\a -> nameStr (exprPath a) == refineAnnot) (oaAnnots oa)
     -- The annotation path may still be relative (@#runtime@) at this stage or already resolved to
     -- the absolute @/Catln/#runtime@, so match either form.
-    isRuntime = any (\a -> relativeNameMatches (exprPath a) runtimeAnnot) (oaAnnots oa)
+    isRuntime = any (\a -> relativeNameMatches (exprPath a) (mkName runtimeAnnot)) (oaAnnots oa)
     omi = case oa of
       ObjArr{oaArr=Nothing}            | isRefine  -> ObjectMapItem [] [] [oa] [] -- refine type object
       ObjArr{oaArr=Nothing}                        -> ObjectMapItem [oa] [] [] [] -- type object

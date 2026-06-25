@@ -40,22 +40,22 @@ true = TupleVal truePrim H.empty
 false = TupleVal falsePrim H.empty
 
 trueE, falseE :: Expr EvalMetaDat
-trueE = Value (emptyMetaT trueType) truePrim
-falseE = Value (emptyMetaT falseType) falsePrim
+trueE = Value (emptyMetaT trueType) (mkName truePrim)
+falseE = Value (emptyMetaT falseType) (mkName falsePrim)
 
 bool :: Bool -> Val
 bool True  = true
 bool False = false
 
 liftIntOp :: TypeName -> (Integer -> Integer -> Integer) -> EPrim
-liftIntOp name f = EPrim ("int" ++ name) prim
+liftIntOp name f = EPrim ("int" ++ nameStr name) prim
   where
     prim args = case (H.lookup "/l" args, H.lookup "/r" args) of
       (Just (IntVal l), Just (IntVal r)) -> Right $ IntVal $ f l r
       _                                  -> Left "Invalid intOp signature"
 
 liftCmpOp :: TypeName -> (Integer -> Integer -> Bool) -> EPrim
-liftCmpOp name f = EPrim ("int" ++ name) prim
+liftCmpOp name f = EPrim ("int" ++ nameStr name) prim
   where
     prim args = case (H.lookup "/l" args, H.lookup "/r" args) of
       (Just (IntVal l), Just (IntVal r)) -> Right $ bool $ f l r
@@ -69,14 +69,14 @@ rneg = EPrim "intNeg" prim
       _               -> Left "Invalid rneg signature"
 
 liftFloatOp :: TypeName -> (Double -> Double -> Double) -> EPrim
-liftFloatOp name f = EPrim ("float" ++ name) prim
+liftFloatOp name f = EPrim ("float" ++ nameStr name) prim
   where
     prim args = case (H.lookup "/l" args, H.lookup "/r" args) of
       (Just (FloatVal l), Just (FloatVal r)) -> Right $ FloatVal $ f l r
       _                                      -> Left "Invalid floatOp signature"
 
 liftFloatCmpOp :: TypeName -> (Double -> Double -> Bool) -> EPrim
-liftFloatCmpOp name f = EPrim ("float" ++ name) prim
+liftFloatCmpOp name f = EPrim ("float" ++ nameStr name) prim
   where
     prim args = case (H.lookup "/l" args, H.lookup "/r" args) of
       (Just (FloatVal l), Just (FloatVal r)) -> Right $ bool $ f l r
@@ -398,7 +398,7 @@ arrExists = ("arrExists", Right (MacroFunction macroBuild))
   where
     macroBuild input MacroData{mdTbEnv=TBEnv{tbTypeEnv}} = do
       let args = exprAppliedArgsMap input
-      case (H.lookup (partialKey operatorArgL) args, H.lookup (partialKey operatorArgR) args) of
+      case (H.lookup (partialKey (mkName operatorArgL)) args, H.lookup (partialKey (mkName operatorArgR)) args) of
         (Just (Just (l, _)), Just (Just (_r, _))) -> case typeGraphQuery tbTypeEnv H.empty (fromMaybe (error "Non singleton in arrExists") $ maybeGetSingleton $ getMetaType l) of
           [] -> return $ Right falseE
           _  -> return $ Right trueE
@@ -409,9 +409,9 @@ contextMacro = ("context", Right (MacroFunction macroBuild))
   where
     macroBuild input MacroData{} = do
       let args = exprAppliedArgsMap input
-      case H.lookup (partialKey contextValStr) args of
+      case H.lookup (partialKey (mkName contextValStr)) args of
         Just (Just (_, Just val)) -> do
-          let contextArgs = filter ((/=) contextValStr . oaObjPath) $ exprAppliedArgs input
+          let contextArgs = filter ((/=) contextValStr . nameStr . oaObjPath) $ exprAppliedArgs input
           return $ Right $ eVal ContextInStr `eApply` (contextValStr, val) `eApplyOAs` contextArgs
         _ -> fail "Invalid context macro input"
 
@@ -427,12 +427,12 @@ llvm = ("llvm", Right (MacroFunction macroBuild))
           let TBEnv{tbPrgm} = mdTbEnv
           let codegenSrcTypeInner = singletonType $ PartialType functionToCodegen H.empty H.empty PredsNone PtArgExact
           let codegenSrcType = PartialType "/Catln/Context" H.empty (H.fromList [(partialKey "/value", codegenSrcTypeInner), (partialKey "/oaObjExprio", ioType)]) PredsNone PtArgExact
-          let val = LLVMVal $ codegenPrgm (eVal functionToCodegen) codegenSrcType ioType tbPrgm
+          let val = LLVMVal $ codegenPrgm (eVal (nameStr functionToCodegen)) codegenSrcType ioType tbPrgm
           return $ Left val
         codegenPrgm _ _ _ _ = return ()
 
 primEnv :: ResBuildPrims
-primEnv = H.fromList (map mapPrim prims ++ macros)
+primEnv = H.fromList [(mkName k, v) | (k, v) <- map mapPrim prims ++ macros]
   where
     mapPrim p@(EPrim n _) = (n, Left p)
     prims = [ liftIntOp "+" (+)

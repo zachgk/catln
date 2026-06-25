@@ -56,7 +56,7 @@ buildTBEnv primEnv prgm@Prgm{prgmObjMap} = baseEnv
     resFromArrow oa@ObjArr{oaObj=Just{}, oaArr, oaAnnots} = case oaArr of
       _ | getExprType (oaObjExpr oa) == PTopType -> error $ printf "buildTBEnv failed with a topType input in %s" (show oa)
       Just (Just _, _) -> Just (oaObjPath oa, [(objLeaf, Just oa, TCObjArr oa) | objLeaf <- leafsFromMeta (getExprMeta $ oaObjExpr oa)])
-      Just (Nothing, _) | isJust (getRuntimeAnnot oaAnnots) -> Just (oaObjPath oa, [(objLeaf, Just oa, usePrim oa $ H.lookup (fromJust $ getRuntimeAnnot oaAnnots) primEnv) | objLeaf <- leafsFromMeta (getExprMeta $ oaObjExpr oa)])
+      Just (Nothing, _) | isJust (getRuntimeAnnot oaAnnots) -> Just (oaObjPath oa, [(objLeaf, Just oa, usePrim oa $ H.lookup (mkName $ fromJust $ getRuntimeAnnot oaAnnots) primEnv) | objLeaf <- leafsFromMeta (getExprMeta $ oaObjExpr oa)])
       Just (Nothing, _) -> Nothing
       Nothing -> Nothing
     resFromArrow oa = error $ printf "resFromArrow with no input expression: %s" (show oa)
@@ -199,12 +199,12 @@ findResArrows TBEnv{tbResEnv, tbTypeEnv} os srcType@PartialType{ptName=srcName} 
     globalArrows = case suffixLookupInDict srcName tbResEnv of
       Just resArrowsWithName -> filter (\(arrowType, _, _) -> not $ isBottomType $ intersectTypes tbTypeEnv (singletonType srcType) (singletonType arrowType)) resArrowsWithName
       Nothing ->
-        let srcBase = reverse $ takeWhile (/= '/') $ reverse srcName
-            matchingEntries = concatMap snd $ filter (\(k, _) -> reverse (takeWhile (/= '/') (reverse k)) == srcBase) $ H.toList tbResEnv
+        let srcBase = reverse $ takeWhile (/= '/') $ reverse (nameStr srcName)
+            matchingEntries = concatMap snd $ filter (\(k, _) -> reverse (takeWhile (/= '/') (reverse (nameStr k))) == srcBase) $ H.toList tbResEnv
         -- Replace arrowType with srcType so completeTreeSet can compute a non-empty intersection
         in map (\(_, moa, tree) -> (srcType, moa, tree)) matchingEntries
     argArrows :: [ResBuildEnvItem]
-    argArrows = map ((srcType, Nothing,) . (`TCArg` srcName) . snd) $ mapMaybe (H.lookup $ TVArg $ partialToKey srcType) $ exprVarArgsWithObjSrcs tbTypeEnv os
+    argArrows = map ((srcType, Nothing,) . (`TCArg` nameStr srcName) . snd) $ mapMaybe (H.lookup $ TVArg $ partialToKey srcType) $ exprVarArgsWithObjSrcs tbTypeEnv os
 
 -- | Builds a call tree to convert something from the partial 'srcType' to 'destType'
 buildPartialCallTree :: TBEnv -> [ObjSrc] -> VisitedArrows -> PartialType -> Type -> CRes TCallTree

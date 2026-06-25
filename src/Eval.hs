@@ -59,19 +59,19 @@ evalBuildable _                      = False
 -- TODO The use of listToMaybe will secretly discard if multiple evalTargetModes or function names are found. Instead, an error should be thrown
 evalPrgmTargetMode :: String -> EPrgm -> EvalMode
 evalPrgmTargetMode function prgm =
-  case maybeGetSingleton $ expandRelPartial typeEnv H.empty (partialVal function) of
-    Nothing -> NoEval (reachesPartials reachEnv [partialVal function]) (reachesPartials reachEnv [partialVal function])
+  case maybeGetSingleton $ expandRelPartial typeEnv H.empty (partialVal (mkName function)) of
+    Nothing -> NoEval (reachesPartials reachEnv [partialVal (mkName function)]) (reachesPartials reachEnv [partialVal (mkName function)])
     Just f ->
       let function' = ptName f
-          funCtxTp = (partialVal ContextStr){ptArgs=H.fromList [(partialKey contextValStr, typeVal function')], ptArgMode=PtArgAny}
+          funCtxTp = (partialVal (mkName ContextStr)){ptArgs=H.fromList [(partialKey (mkName contextValStr), typeVal function')], ptArgMode=PtArgAny}
           funTp = partialVal function'
           funCtxReaches = reachesPartials reachEnv [funCtxTp]
           funReaches = reachesPartials reachEnv [funTp]
       in case (funCtxReaches, funReaches) of
-           (rt, _) | reachesHasCutSubtypeOf typeEnv H.empty rt resultType -> EvalBuildWithContext function'
-           (rt, _) | reachesHasCutSubtypeOf typeEnv H.empty rt ioType -> EvalRunWithContext function'
-           (_, rt) | reachesHasCutSubtypeOf typeEnv H.empty rt resultType -> EvalBuild function'
-           (_, rt) | reachesHasCutSubtypeOf typeEnv H.empty rt ioType -> EvalRun function' -- Should require isShowable for run result
+           (rt, _) | reachesHasCutSubtypeOf typeEnv H.empty rt resultType -> EvalBuildWithContext (nameStr function')
+           (rt, _) | reachesHasCutSubtypeOf typeEnv H.empty rt ioType -> EvalRunWithContext (nameStr function')
+           (_, rt) | reachesHasCutSubtypeOf typeEnv H.empty rt resultType -> EvalBuild (nameStr function')
+           (_, rt) | reachesHasCutSubtypeOf typeEnv H.empty rt ioType -> EvalRun (nameStr function') -- Should require isShowable for run result
            _ -> NoEval funCtxReaches funReaches
   where
     typeEnv = mkTypeEnv prgm
@@ -86,13 +86,13 @@ evalTargetMode function prgmName prgmGraphData = do
 evalAllTargetModes :: EPrgm -> H.HashMap UUID EvalMode
 evalAllTargetModes prgm@Prgm{prgmObjMap} = H.fromList $ mapMaybe targetMode $ flatObjectMap prgmObjMap
   where
-    targetMode oa = case oaObjPath oa of
-      ContextStr -> case H.lookupDefault Nothing (partialKey contextValStr) $ exprAppliedArgsMap $ oaObjExpr oa of
+    targetMode oa = case nameStr (oaObjPath oa) of
+      ContextStr -> case H.lookupDefault Nothing (partialKey (mkName contextValStr)) $ exprAppliedArgsMap $ oaObjExpr oa of
         Just (_, Just valE) -> case maybeExprPath valE of
-          Just valName -> Just (getMetaID $ getExprMeta $ oaObjExpr oa, evalPrgmTargetMode valName prgm)
+          Just valName -> Just (getMetaID $ getExprMeta $ oaObjExpr oa, evalPrgmTargetMode (nameStr valName) prgm)
           _ -> Nothing
         _ -> Nothing
-      _ -> Just (getMetaID $ getExprMeta $ oaObjExpr oa, evalPrgmTargetMode (oaObjPath oa) prgm)
+      _ -> Just (getMetaID $ getExprMeta $ oaObjExpr oa, evalPrgmTargetMode (nameStr (oaObjPath oa)) prgm)
 
 -- | evaluate annotations such as assertions that require compiler verification
 evalCompAnnot :: Val -> StateT Env CRes ()
@@ -198,8 +198,8 @@ evalNonLinearEq (TupleVal _ tupleArgs) ifObj = allM
   [ evalValEq va vb
   | grp <- exprNonLinearArgGroups (oaObjExpr ifObj)
   , ((ea, _), (eb, _)) <- zip grp (tail grp)
-  , Just va <- [H.lookup (exprPath ea) tupleArgs]
-  , Just vb <- [H.lookup (exprPath eb) tupleArgs]
+  , Just va <- [H.lookup (nameStr (exprPath ea)) tupleArgs]
+  , Just vb <- [H.lookup (nameStr (exprPath eb)) tupleArgs]
   ]
   where
     allM = foldr (\mb acc -> mb >>= \b -> if b then acc else return False) (return True)
@@ -224,7 +224,7 @@ evalExpr (TValue m _) = do
         Nothing -> case tp of
           UnionType Nothing leafs [] -> head $ splitUnionType leafs
           _ -> error $ printf "TValue with unexpected type %s" (show tp)
-  return $ TupleVal ptName H.empty
+  return $ TupleVal (nameStr ptName) H.empty
 evalExpr (THoleExpr m h) = lift $ CErr [MkCNote $ GenCErr (getMetaPos m) $ printf "Can't evaluate hole %s" (show h)]
 evalExpr (TAliasExpr b _) = evalExpr b
 evalExpr (TWhere _ b _) = evalExpr b
@@ -232,7 +232,7 @@ evalExpr (TTupleApply _ (_, b) (EAppArg oa@ObjArr{oaObj=Just (TValue _ "/io"), o
   Env{evArgs} <- get
   TupleVal n args <- evalExpr b
   case H.lookup "/io" evArgs of
-    Just io -> return $ TupleVal n (H.insert (oaObjPath oa) io args)
+    Just io -> return $ TupleVal n (H.insert (nameStr (oaObjPath oa)) io args)
     Nothing -> error $ printf "evalExpr with no io"
 evalExpr (TTupleApply _ (_, b) (EAppVar{})) = evalExpr b
 evalExpr (TTupleApply _ (_, b) (EAppArg oa)) = do
@@ -244,7 +244,7 @@ evalExpr (TTupleApply _ (_, b) (EAppArg oa)) = do
       _ -> error $ printf "Unsupported eval argument of %s" (show oa)
     Just (Nothing, _) -> error $ printf "Missing arrExpr in evalExpr TupleApply with %s - %s" (show b) (show oa)
     Nothing -> error $ printf "Missing arrExpr in evalExpr TupleApply with %s - %s" (show b) (show oa)
-  return $ TupleVal n (H.insert (oaObjPath oa) v args)
+  return $ TupleVal n (H.insert (nameStr (oaObjPath oa)) v args)
 evalExpr (TTupleApply _ (_, _) (EAppSpread a)) = error $ printf "Not yet implemented evalExpr %s" (show a)
 evalExpr (TCalls _ b callTree) = do
   b' <- evalExpr b

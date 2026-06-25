@@ -2,20 +2,41 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
-                ( "/abs.$f9f16a"
+                ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs.$f9f16a
-                            ( EAppArg Value /x -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) )
-                            ( EAppArg Value /$f9f16a-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=
+                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
+                            ( /Catln/exit
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
+                                ) + /Catln/IO
+                            ) = /Catln/exit
+                            ( EAppArg Value /val -> /Data/Primitive/Integer =
+                                ( /abs
+                                    ( EAppArg Value /x -> /Data/Primitive/Integer = 0 ) ↦ /Data/Primitive/Integer
+                                )
+                            )
+                            ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/abs.$fb881e"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /abs.$fb881e( EAppArg Value /x -> ∀/Data/Algebra/Ord )
+                            ( EAppArg Value /$fb881e-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=
                                 ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
                                 ( EAppArg Value /r -> /Data/Primitive/Integer = 0 )
                             ) -> TVArg /x2 = Value /x2
-                        , /abs.$f9f16a( EAppArg Value /x )
-                            ( EAppArg Value /$f9f16a-arg -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = Hole ( /Data/Primitive/Integer + /Data/Primitive/Float ) HoleActive Nothing@Value /x2 ) ->
+                        , /abs.$fb881e( EAppArg Value /x )
+                            ( EAppArg Value /$fb881e-arg -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = Hole ( /Data/Primitive/Integer + /Data/Primitive/Float ) HoleActive Nothing@Value /x2 ) ->
                             ( /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
@@ -31,28 +52,6 @@ Prgm
                     }
                 )
             ,
-                ( "/ContextIn"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
-                            ( /Catln/exit
-                                ( /val=/Data/Primitive/Integer
-                                , /this=/Catln/IO
-                                ) + /Catln/IO
-                            ) = /Catln/exit
-                            ( EAppArg Value /val -> /Data/Primitive/Integer =
-                                ( /abs
-                                    ( EAppArg Value /x -> /Data/Primitive/Integer = 0 ) ↦ /Data/Primitive/Integer
-                                )
-                            )
-                            ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
-                        ]
-                    }
-                )
-            ,
                 ( "/abs"
                 , ObjectMapItem
                     { omiDecls = []
@@ -60,16 +59,16 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs( EAppArg Value /x -> /Data/Primitive/Integer ) ->
-                            ( /abs.$f9f16a
+                            ( /abs.$fb881e
                                 ( /x=/Data/Primitive/Integer
-                                , /$f9f16a-arg=/Data/Primitive/Integer
+                                , /$fb881e-arg=/Data/Primitive/Integer
                                 ) + /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer
-                            ) = /abs.$f9f16a
+                            ) = /abs.$fb881e
                             ( EAppArg Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                            ( EAppArg Value /$f9f16a-arg -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                            ( EAppArg Value /$fb881e-arg -> TVArg /x = ( Value /x ↦ TVArg /x ) )
                         ]
                     }
                 )

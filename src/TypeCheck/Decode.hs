@@ -33,7 +33,7 @@ toMeta  m@(Meta pt pos mid _) = do
     TypeCheckResult notes SType{stypeAct=ub, stypeTree=rt} -> lift $ TypeCheckResult notes $ Meta (intersectTypes feTypeEnv ub pt) pos mid rt
     TypeCheckResE notes -> lift $ TypeCheckResult notes (Meta BottomType pos mid Nothing)
 
-member :: String -> [String ] -> Bool
+member :: Name -> [Name] -> Bool
 member x arr = case suffixLookup x arr of
   Just _  -> True
   Nothing -> False
@@ -168,7 +168,7 @@ isClassParamMethodDecl oa = not (null receiverVars) && any isParamArg args
   where
     args = exprAppliedArgs (oaObjExpr oa)
     argType a = getMetaType . snd <$> oaArr a
-    isThis a = maybe False ((`elem` [thisKey, "this"]) . exprPath) (oaObj a)
+    isThis a = maybe False ((`elem` [thisKey, "this"]) . nameStr . exprPath) (oaObj a)
     receiverVars =
       [ v
       | a <- args, isThis a

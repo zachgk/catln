@@ -56,8 +56,8 @@ type DesPrgmGraphNodes = GraphNodes DesPrgm FileImport
 type DesPrgmGraphData = GraphData DesPrgm FileImport
 
 parseTVVar :: String -> Maybe Type
-parseTVVar ('$':'_':n) = Just $ TypeVar (TVVar $ partialKey n) TVExt
-parseTVVar ('$':n)     = Just $ TypeVar (TVVar $ partialKey n) TVInt
+parseTVVar ('$':'_':n) = Just $ TypeVar (TVVar $ partialKey (mkName n)) TVExt
+parseTVVar ('$':n)     = Just $ TypeVar (TVVar $ partialKey (mkName n)) TVInt
 parseTVVar _           = Nothing
 
 rawExprWithType :: Type -> RawExpr ParseMetaDat -> RawExpr ParseMetaDat

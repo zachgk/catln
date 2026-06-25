@@ -10,8 +10,8 @@ Prgm
                     , omiDefs =
                         [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
                             ( /Catln/exit
-                                ( /val=/Data/Primitive/Integer
-                                , /this=/Catln/IO
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
                                 ) + /Catln/IO
                             ) = /Catln/exit
                             ( EAppArg Value /val -> /Data/Primitive/Integer =
@@ -24,46 +24,16 @@ Prgm
                     }
                 )
             ,
-                ( "/abs"
+                ( "/abs.$2b7362"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs( EAppArg Value /x -> /Data/Primitive/Integer ) ->
-                            ( /abs.$727590
-                                ( /x=/Data/Primitive/Integer
-                                , /$727590-arg=
-                                    ( /Catln/Else + /Catln/ThenElse/fromBool( /v=∀/Data/Primitive/Boolean ) + /Catln/Then )
-                                ) + /operator*
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                ) + /Data/Primitive/Integer
-                            ) = /abs.$727590
-                            ( EAppArg Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                            ( EAppArg Value /$727590-arg ->
-                                ( /Catln/Else + /Catln/ThenElse/fromBool( /v=∀/Data/Primitive/Boolean ) + /Catln/Then ) = /Catln/ThenElse/fromBool
-                                ( EAppArg Value /v -> ∀/Data/Primitive/Boolean =
-                                    ( /operator>=
-                                        ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
-                                        ( EAppArg Value /r -> /Data/Primitive/Integer = 0 ) ↦ ∀/Data/Primitive/Boolean
-                                    )
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/abs.$727590"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /abs.$727590( EAppArg Value /x )
-                            ( EAppArg Value /$727590-arg= Hole TopType HoleActive Nothing@Value /Catln/Then ) -> TVArg /x = Value /x
-                        , /abs.$727590( EAppArg Value /x -> /Data/Primitive/Integer )
-                            ( EAppArg Value /$727590-arg= Hole TopType HoleActive Nothing@Value /Catln/Else ) ->
+                        [ /abs.$2b7362( EAppArg Value /x )
+                            ( EAppArg Value /$2b7362-arg= Hole TopType HoleActive Nothing@Value /Catln/Then ) -> TVArg /x = Value /x
+                        , /abs.$2b7362( EAppArg Value /x -> /Data/Primitive/Integer )
+                            ( EAppArg Value /$2b7362-arg= Hole TopType HoleActive Nothing@Value /Catln/Else ) ->
                             ( /operator*
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
@@ -75,6 +45,36 @@ Prgm
                                 )
                             )
                             ( EAppArg Value /r -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/abs"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /abs( EAppArg Value /x -> /Data/Primitive/Integer ) ->
+                            ( /abs.$2b7362
+                                ( /x=/Data/Primitive/Integer
+                                , /$2b7362-arg=
+                                    ( /Catln/Else + /Catln/ThenElse/fromBool( /v=∀/Data/Primitive/Boolean ) + /Catln/Then )
+                                ) + /operator*
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
+                            ) = /abs.$2b7362
+                            ( EAppArg Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                            ( EAppArg Value /$2b7362-arg ->
+                                ( /Catln/Else + /Catln/ThenElse/fromBool( /v=∀/Data/Primitive/Boolean ) + /Catln/Then ) = /Catln/ThenElse/fromBool
+                                ( EAppArg Value /v -> ∀/Data/Primitive/Boolean =
+                                    ( /operator>=
+                                        ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
+                                        ( EAppArg Value /r -> /Data/Primitive/Integer = 0 ) ↦ ∀/Data/Primitive/Boolean
+                                    )
+                                )
+                            )
                         ]
                     }
                 )

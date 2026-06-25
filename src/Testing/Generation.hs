@@ -96,8 +96,8 @@ genType prgm@(Prgm objMap _ _) = HG.choice gens >>= withRandomArgModes
         checkFunction ObjArr{oaBasis=FunctionObj, oaObj=Just objExpr} =
           case exprAppliedArgs objExpr of
             [arg] -> case oaObj arg of
-              Just (Value _ n) | n == thisKey -> Just objExpr
-              _                               -> Nothing
+              Just (Value _ n) | nameStr n == thisKey -> Just objExpr
+              _                                       -> Nothing
             _ -> Nothing
         checkFunction _ = Nothing
 
@@ -191,18 +191,18 @@ genPartialType prgm@(Prgm objMap _ _) = do
       base <- baseGen
       varName <- HG.string (linear 1 5) HG.lower
       extName <- HG.string (linear 1 5) HG.lower
-      let extVar = TypeVar (TVVar (partialKey extName)) TVExt
-      return base{ptVars = H.insert (partialKey varName) extVar (ptVars base)}
+      let extVar = TypeVar (TVVar (partialKey (mkName extName))) TVExt
+      return base{ptVars = H.insert (partialKey (mkName varName)) extVar (ptVars base)}
 
 genInputExpr :: Gen (Expr ())
 genInputExpr = do
-  n <- makeAbsoluteName <$> genName
+  n <- makeAbsoluteName . mkName <$> genName
   varArgNames <- HG.set (linear 0 5) genName
   varOrArg <- HG.list (singleton $ S.size varArgNames) HG.bool
   let (varNames, argNames) = bimap (map fst) (map fst) $ partition snd $ zip (S.toList varArgNames) varOrArg
   let val = Value (emptyMetaT $ typeVal n) n
-  withVars <- foldM genVar val (map partialKey varNames)
-  foldM genArg withVars argNames
+  withVars <- foldM genVar val (map (partialKey . mkName) varNames)
+  foldM genArg withVars (map mkName argNames)
   where
     genName = HG.string (linear 5 10) HG.lower
     genVar base varName = do
@@ -263,11 +263,11 @@ genVal pt
   | pt == floatLeaf = FloatVal <$> HG.double (linearFrac (-1000) 1000)
   | pt == strLeaf   = StrVal <$> HG.string (linear 0 20) HG.unicode
   | pt == charLeaf  = CharVal <$> HG.unicode
-  | ptName pt == truePrim  = pure $ TupleVal truePrim H.empty
-  | ptName pt == falsePrim = pure $ TupleVal falsePrim H.empty
+  | nameStr (ptName pt) == truePrim  = pure $ TupleVal truePrim H.empty
+  | nameStr (ptName pt) == falsePrim = pure $ TupleVal falsePrim H.empty
   -- A nullary data type (no fields) has a single inhabitant: itself. This covers data-valued
   -- args such as a chosen typeclass instance (e.g. an 'Eqv' instance for a property test).
-  | H.null (ptArgs pt)     = pure $ TupleVal (ptName pt) H.empty
+  | H.null (ptArgs pt)     = pure $ TupleVal (nameStr (ptName pt)) H.empty
   | otherwise = HG.discard
 
 -- | Generate a random 'Val' for a 'Type'.

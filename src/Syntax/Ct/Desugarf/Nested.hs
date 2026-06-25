@@ -30,7 +30,7 @@ type ParentArgs = H.HashMap ArgName [ParseMeta]
 scopeSubDeclFunNamesInS :: TypeName -> S.HashSet TypeName -> TypeName -> TypeName
 scopeSubDeclFunNamesInS prefix replaceNames name = name'
   where
-    addPrefix n = prefix ++ "." ++ n
+    addPrefix n = mkName (nameStr prefix ++ "." ++ nameStr n)
     name' = if S.member name replaceNames then addPrefix name else name
 
 scopeSubDeclFunNamesInExpr :: TypeName -> S.HashSet TypeName -> PSExpr -> PSExpr
@@ -67,7 +67,7 @@ scopeSubDeclFunNames oa@ObjArr{oaObj=Just objExpression, oaAnnots, oaArr} decls 
   where
     prefix = exprPath objExpression
     declNames = S.fromList $ map oaObjPath $ flatObjectMap decls
-    addPrefix n = prefix ++ "." ++ n
+    addPrefix n = mkName (nameStr prefix ++ "." ++ nameStr n)
     scopeM = scopeSubDeclFunNamesInMeta prefix declNames
     scopeDecl doa@ObjArr{oaObj=Just obj, oaArr=Just (doaArr, m)} = doa{
       oaObj=Just (mapExprPath (\(pM, pN) -> Value (scopeSubDeclFunNamesInMeta prefix (S.singleton pN) pM) (addPrefix pN)) obj),
@@ -123,7 +123,7 @@ currySubFunctions oa@ObjArr{oaObj=Just objExpression, oaAnnots, oaArr} decls = (
 currySubFunctions oa _ = error $ printf "currySubFunctions without input expression: %s" (show oa)
 
 desObjDocComment :: [PStatementTree] -> Maybe String
-desObjDocComment ((RawStatementTree (RawAnnot annotExpr) _):rest) | maybeExprPath annotExpr == Just mdAnnot = case H.lookup (partialKey mdAnnotText) $ rawExprAppliedArgsMap annotExpr of
+desObjDocComment ((RawStatementTree (RawAnnot annotExpr) _):rest) | maybeExprPath annotExpr == Just (mkName mdAnnot) = case H.lookup (partialKey (mkName mdAnnotText)) $ rawExprAppliedArgsMap annotExpr of
   (Just (Just (_, Just (RawCExpr _ (CStr annotText))))) -> Just (++) <*> Just annotText <*> desObjDocComment rest
   _ -> error "Unexpected in desObjDocComment"
 desObjDocComment _ = Just ""

@@ -80,8 +80,8 @@ Prgm
                     , omiDefs =
                         [ /power_f( Value /base -> /Data/Primitive/Float )( Value /exp -> /Data/Primitive/Float ) ->
                             ( /Python/Builtins/pow
-                                ( /exp=/Data/Primitive/Float
-                                , /this=/Data/Primitive/Float
+                                ( /this=/Data/Primitive/Float
+                                , /exp=/Data/Primitive/Float
                                 ) + /Data/Primitive/Float
                             ) = /pow( Value /this -> TVArg /base = Value /base )( Value /exp -> TVArg /exp = Value /exp )
                         ]
@@ -97,7 +97,7 @@ Prgm
                         [ /sort_list( Value /lst -> ∀/Data/List ) -> UnionType
                             ( Just
                                 ( !
-                                    ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) )
+                                    ( !( PredClass /Data/List ) && !( PredClass /Data/ConsList ) )
                                 , fromList []
                                 )
                             , /Data/sorted( /lst=∀/Data/List )
@@ -116,16 +116,16 @@ Prgm
                         [ /ContextIn
                             ( Value /value -> /say_hello( /msg=/Data/String ) = /say_hello( Value /msg -> /Data/String ) )( Value /io -> /Catln/IO ) ->
                             ( /Catln/println
-                                ( /msg=/Data/String
-                                , /this=/Catln/IO
+                                ( /this=/Catln/IO
+                                , /msg=/Data/String
                                 ) + /Catln/IO
                             ) = /println( Value /this -> TVArg /io = Value /io )
                             ( Value /msg -> /Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
                         , /ContextIn
                             ( Value /value -> /print_twice( /msg=/Data/String ) = /print_twice( Value /msg -> /Data/String ) )( Value /io -> /Catln/IO ) ->
                             ( /Catln/println
-                                ( /msg=/Data/String
-                                , /this=/Catln/IO
+                                ( /this=/Catln/IO
+                                , /msg=/Data/String
                                 ) + /Catln/IO
                             ) = /println
                             ( Value /this -> /Catln/IO = /println( Value /this -> TVArg /io = Value /io )
@@ -134,8 +134,8 @@ Prgm
                             ( Value /msg -> /Data/String = /toString( Value /this -> TVArg /msg = Value /msg ) )
                         , /ContextIn( Value /value -> /echo = Value /echo )( Value /io -> /Catln/IO ) ->
                             ( /Catln/println
-                                ( /msg=/Data/String
-                                , /this=/Catln/IO
+                                ( /this=/Catln/IO
+                                , /msg=/Data/String
                                 ) + /Catln/IO
                             ) = /println( Value /this -> TVArg /io = Value /io )
                             ( Value /msg -> /Data/String = /toString
@@ -244,11 +244,11 @@ Prgm
                     , omiDefs =
                         [ /add( Value /x -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer ) ->
                             ( /operator+
-                                ( /r=/Data/String
-                                , /l=/Data/String
-                                ) + /operator+
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
+                                ) + /operator+
+                                ( /r=/Data/String
+                                , /l=/Data/String
                                 ) + /operator+
                                 ( /r=/Data/Primitive/Float
                                 , /l=/Data/Primitive/Float
@@ -308,8 +308,8 @@ Prgm
                     , omiDefs =
                         [ /power( Value /base -> /Data/Primitive/Integer )( Value /exp -> /Data/Primitive/Integer ) ->
                             ( /Python/Builtins/pow
-                                ( /exp=/Data/Primitive/Integer
-                                , /this=/Data/Primitive/Integer
+                                ( /this=/Data/Primitive/Integer
+                                , /exp=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer
                             ) = /pow( Value /this -> TVArg /base = Value /base )( Value /exp -> TVArg /exp = Value /exp )
                         ]
@@ -456,11 +456,11 @@ Prgm
                             ( Value /x -> ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float ) )
                             ( Value /y -> ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float ) ) ->
                             ( /operator+
-                                ( /r=/Data/String
-                                , /l=/Data/String
-                                ) + /operator+
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
+                                ) + /operator+
+                                ( /r=/Data/String
+                                , /l=/Data/String
                                 ) + /operator+
                                 ( /r=/Data/Primitive/Float
                                 , /l=/Data/Primitive/Float
@@ -507,7 +507,7 @@ Prgm
                         [ /reverse_list( Value /lst -> ∀/Data/List ) -> UnionType
                             ( Just
                                 ( !
-                                    ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) )
+                                    ( !( PredClass /Data/List ) && !( PredClass /Data/ConsList ) )
                                 , fromList []
                                 )
                             , /Data/reversed( /lst=∀/Data/List )

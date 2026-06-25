@@ -49,7 +49,7 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
       joinPartialDestTypes (pdt1:restPdt) = [unionTypes typeEnv pdt1Poss restPdt' | pdt1Poss <- pdt1, restPdt' <- joinPartialDestTypes restPdt]
 
  -- TODO: Implement this to expand other PredExprs as well, and begin using the Nothing to represent having no meaningful way to break
-  typeGraphExpandPredExpr typeEnv _vaenv partial | ptName partial == operatorHasArrow = Just $ map (\p -> p{ptPreds=PredsOne (PredExpr partial)}) $ topTypeAsPartials typeEnv
+  typeGraphExpandPredExpr typeEnv _vaenv partial | nameStr (ptName partial) == operatorHasArrow = Just $ map (\p -> p{ptPreds=PredsOne (PredExpr partial)}) $ topTypeAsPartials typeEnv
   typeGraphExpandPredExpr typeEnv _vaenv partial = Just $ map (\p -> p{ptPreds=PredsOne (PredExpr partial)}) $ topTypeAsPartials typeEnv
 
   typeGraphData TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name = concatMap dataPartials $ flatObjectMapItem $ H.lookupDefault mempty name tg

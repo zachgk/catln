@@ -33,11 +33,11 @@ import           Syntax.Ct.Prgm
 import           Text.Printf
 
 mkOp1 :: String -> PExpr -> PExpr
-mkOp1 opChars x = applyRawArgs (RawValue emptyMetaN op) [(Just $ partialKey operatorArgUnary, x)]
+mkOp1 opChars x = applyRawArgs (RawValue emptyMetaN (mkName op)) [(Just $ partialKey (mkName operatorArgUnary), x)]
   where op = operatorName opChars
 
 mkOp2 :: String -> PExpr -> PExpr -> PExpr
-mkOp2 opChars x y = applyRawArgs (RawValue emptyMetaN op) [(Just $ partialKey operatorArgL, x), (Just $ partialKey operatorArgR, y)]
+mkOp2 opChars x y = applyRawArgs (RawValue emptyMetaN (mkName op)) [(Just $ partialKey (mkName operatorArgL), x), (Just $ partialKey (mkName operatorArgR), y)]
   where op = operatorName opChars
 
 symbolExcludes :: String -> [String] -> Parser String
@@ -94,14 +94,14 @@ pValue = do
   -- check if name is a hole
   return $ case name of
         "_"         -> RawHoleExpr m $ HoleActive Nothing
-        ('_':_)     -> RawHoleExpr m $ HoleActive (Just name)
+        ('_':_)     -> RawHoleExpr m $ HoleActive (Just (mkName name))
         "undefined" -> RawHoleExpr m HoleUndefined
         "todefine"  -> RawHoleExpr m HoleTodefine
         _           -> case (usingTheExpr, suffix) of
-          (Just{}, Nothing)  -> RawTheExpr (RawValue m name)
-          (Nothing, Just Left{}) -> RawTupleApply (emptyMetaM m) (emptyMetaM m, RawValue (mWithType (relTypeVal name) m) name) [(True, rawInObjArr True (RawHoleExpr (emptyMetaM m) (HoleActive Nothing)))]
+          (Just{}, Nothing)  -> RawTheExpr (RawValue m (mkName name))
+          (Nothing, Just Left{}) -> RawTupleApply (emptyMetaM m) (emptyMetaM m, RawValue (mWithType (relTypeVal (mkName name)) m) (mkName name)) [(True, rawInObjArr True (RawHoleExpr (emptyMetaM m) (HoleActive Nothing)))]
           (Nothing, Just (Right s)) -> RawFmtStrExpr m name s
-          (Nothing, Nothing) -> RawValue (mWithType (relTypeVal name) m) name
+          (Nothing, Nothing) -> RawValue (mWithType (relTypeVal (mkName name)) m) (mkName name)
           _ -> undefined
 
 pStringLiteral :: Parser String
@@ -225,7 +225,7 @@ pAliasSuffix = do
   pos1 <- getSourcePos
   aliasName <- identifier -- TODO Alias can be full term instead
   pos2 <- getSourcePos
-  return $ AliasSuffix (emptyMeta pos1 pos2) aliasName
+  return $ AliasSuffix (emptyMeta pos1 pos2) (mkName aliasName)
 
 pTypePropRelSuffix :: Parser TermSuffix
 pTypePropRelSuffix = do
@@ -234,7 +234,7 @@ pTypePropRelSuffix = do
   p <- identifier
   v <- parens pExpr
   pos2 <- getSourcePos
-  return $ TypePropSuffix (emptyMeta pos1 pos2) $ TypePropRel p v
+  return $ TypePropSuffix (emptyMeta pos1 pos2) $ TypePropRel (mkName p) v
 
 pTypePropProjSuffix :: Parser TermSuffix
 pTypePropProjSuffix = do
@@ -243,8 +243,8 @@ pTypePropProjSuffix = do
   p <- identifier
   v <- optional $ parens pExpr
   pos2 <- getSourcePos
-  let v' = fromMaybe (RawValue (mWithType trueType (emptyMeta pos1 pos2)) truePrim) v
-  return $ TypePropSuffix (emptyMeta pos1 pos2) $ TypePropProj p v'
+  let v' = fromMaybe (RawValue (mWithType trueType (emptyMeta pos1 pos2)) (mkName truePrim)) v
+  return $ TypePropSuffix (emptyMeta pos1 pos2) $ TypePropProj (mkName p) v'
 
 
 pTermSuffix :: Parser TermSuffix
@@ -280,7 +280,7 @@ pMacroValue = do
   n <- identifier
   _ <- string "}"
   pos2 <- getSourcePos
-  return $ RawMacroValue (emptyMeta pos1 pos2) n
+  return $ RawMacroValue (emptyMeta pos1 pos2) (mkName n)
 
 pApply :: Parser PRawApply
 pApply = do

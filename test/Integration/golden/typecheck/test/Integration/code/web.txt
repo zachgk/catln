@@ -10,8 +10,8 @@ Prgm
                     , omiDefs =
                         [ Value /main ->
                             ( /Catln/www( /html=/Data/String ) + /Catln/CatlnResult
-                                ( /contents=/Data/String
-                                , /name=/Data/String
+                                ( /name=/Data/String
+                                , /contents=/Data/String
                                 )
                             ) = /Catln/www
                             ( Value /html -> /Data/String = CStr "<html><body>web test</body></html>" )
@@ -27,8 +27,8 @@ Prgm
             It also prints the result of the build in an iframe." )
         , /Catln/#print
             ( Value /p -> /Catln/CatlnResult
-                ( /contents=/Data/String
-                , /name=/Data/String
+                ( /name=/Data/String
+                , /contents=/Data/String
                 ) = Value /main
             )
         ]

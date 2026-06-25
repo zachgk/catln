@@ -30,8 +30,8 @@ Prgm
                                 ( /Data/Algebra/check
                                     ( /x=/Data/String
                                     , /this=/Data/Algebra/Eqv
-                                        [ /String=TopType
-                                        , /T=TopType
+                                        [ /T=TopType
+                                        , /String=TopType
                                         ]
                                         ( /rel
                                             ( /a=TopType
@@ -76,8 +76,8 @@ Prgm
                                         )
                                     , /y=∀/Data/Algebra/Eq
                                     ) + /operator==
-                                    [ /r=∀/Data/Algebra/Eq
-                                    , /T=∀/Data/Algebra/Eq
+                                    [ /T=∀/Data/Algebra/Eq
+                                    , /r=∀/Data/Algebra/Eq
                                     , /l=∀/Data/Algebra/Eq
                                     ]
                                     ( /r=/Data/Primitive/Integer
@@ -85,7 +85,7 @@ Prgm
                                     ) + /Data/consEqual
                                     ( /a=/Data/Nil
                                     , /b=
-                                        ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/ConsList[ /E=~/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] )
+                                        ( TopType | PredClass /Data/ConsList[ /E=~/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq )
                                     ) + /Data/consEqual[ /T=/Data/Primitive/Integer ]
                                     ( /a=/Data/Cons[ /T=/Data/Primitive/Integer ]
                                         ( /head=/Data/Primitive/Integer
@@ -97,8 +97,8 @@ Prgm
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
                                     ) + /Data/Primitive/False + /Data/Algebra/equal
-                                    ( /other=∀/Data/Algebra/Eq
-                                    , /this=∀/Data/Algebra/Eq
+                                    ( /this=∀/Data/Algebra/Eq
+                                    , /other=∀/Data/Algebra/Eq
                                     )
                                 )
                             , []
@@ -129,8 +129,8 @@ Prgm
                                 ( /Data/Algebra/check
                                     ( /x=/Data/String
                                     , /this=/Data/Algebra/Eqv
-                                        [ /String=TopType
-                                        , /T=TopType
+                                        [ /T=TopType
+                                        , /String=TopType
                                         ]
                                         ( /rel
                                             ( /a=TopType
@@ -175,8 +175,8 @@ Prgm
                                         )
                                     , /y=∀/Data/Algebra/Eq
                                     ) + /operator==
-                                    [ /r=∀/Data/Algebra/Eq
-                                    , /T=∀/Data/Algebra/Eq
+                                    [ /T=∀/Data/Algebra/Eq
+                                    , /r=∀/Data/Algebra/Eq
                                     , /l=∀/Data/Algebra/Eq
                                     ]
                                     ( /r=/Data/Primitive/Integer
@@ -184,7 +184,7 @@ Prgm
                                     ) + /Data/consEqual
                                     ( /a=/Data/Nil
                                     , /b=
-                                        ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/ConsList[ /E=~/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] )
+                                        ( TopType | PredClass /Data/ConsList[ /E=~/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq )
                                     ) + /Data/consEqual[ /T=/Data/Primitive/Integer ]
                                     ( /a=/Data/Cons[ /T=/Data/Primitive/Integer ]
                                         ( /head=/Data/Primitive/Integer
@@ -196,8 +196,8 @@ Prgm
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
                                     ) + /Data/Primitive/False + /Data/Algebra/equal
-                                    ( /other=∀/Data/Algebra/Eq
-                                    , /this=∀/Data/Algebra/Eq
+                                    ( /this=∀/Data/Algebra/Eq
+                                    , /other=∀/Data/Algebra/Eq
                                     )
                                 )
                             , []

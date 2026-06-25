@@ -83,7 +83,7 @@ mkDesCanonicalImportStr config = canonicalImport config Nothing . mkRawImportStr
 readImport :: FileImport -> ImportParseResult
 readImport imp = case maybeExprPath (impAbs imp) of
   Nothing -> fail $ printf "Invalid import %s must be string or oject" (show imp)
-  Just impPath -> case H.lookup impPath importParsers of
+  Just impPath -> case H.lookup (nameStr impPath) importParsers of
     Nothing -> fail $ printf "No parser available for oject name in %s" (show imp)
     -- TODO Modify the ImportParseResult to CResT to report back parse errors
     Just parser -> parser $ impAbs imp

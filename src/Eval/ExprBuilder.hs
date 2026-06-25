@@ -29,7 +29,7 @@ ioArg :: EExpr
 ioArg = Value ioM "io"
 
 eApply :: EExpr -> (String, EExpr) -> EExpr
-eApply baseExpr (argName, argExpr) = baseExpr `eApplyOAs` [mkIOObjArr (mWithType (getExprType argExpr) $ emptyMetaE argExpr) (partialKey argName) argExpr]
+eApply baseExpr (argName, argExpr) = baseExpr `eApplyOAs` [mkIOObjArr (mWithType (getExprType argExpr) $ emptyMetaE argExpr) (partialKey (mkName argName)) argExpr]
 
 eApplyOAs :: EExpr -> [EObjArr] -> EExpr
 eApplyOAs = foldl eApplyOA
@@ -40,10 +40,10 @@ eApplyOAs = foldl eApplyOA
         baseType@PartialType{ptArgs=baseArgs} = getExprPartialType base
 
 eApplyM :: EExpr -> String -> EvalMeta -> EExpr
-eApplyM baseExpr argName argM = TupleApply m (getExprMeta baseExpr, baseExpr) (EAppArg $ mkIObjArr argM (partialKey argName))
+eApplyM baseExpr argName argM = TupleApply m (getExprMeta baseExpr, baseExpr) (EAppArg $ mkIObjArr argM (partialKey (mkName argName)))
   where
     argExprType = getMetaType argM
-    m = Meta (singletonType $ baseType{ptArgs=H.insert (partialKey argName) argExprType baseArgs}) Nothing nil emptyMetaDat
+    m = Meta (singletonType $ baseType{ptArgs=H.insert (partialKey (mkName argName)) argExprType baseArgs}) Nothing nil emptyMetaDat
     baseType@PartialType{ptArgs=baseArgs} = getExprPartialType baseExpr
 
 -- | Apply a concrete type to a type variable in an expression.
@@ -57,8 +57,8 @@ eAppVar baseExpr varName chosenType =
 
 
 eVal :: String -> EExpr
-eVal name = Value m name
-  where m = Meta (typeVal name) Nothing nil emptyMetaDat
+eVal name = Value m (mkName name)
+  where m = Meta (typeVal (mkName name)) Nothing nil emptyMetaDat
 
 getExprPartialType :: EExpr -> PartialType
 getExprPartialType expr = case getExprType expr of

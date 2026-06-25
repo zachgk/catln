@@ -65,8 +65,8 @@ maybeJson (CErr notes)   = json (ResFail notes :: ResSuccess () CNote)
 filterByType :: String -> TPrgm -> TPrgm
 filterByType name (Prgm objMap (ClassGraph classGraph) _) = Prgm objMap' classGraph' []
   where
-    objMap' = filterObjectMap (relativeNameMatches name . oaObjPath) objMap
-    classGraph' = ClassGraph $ graphFromEdges $ filter (\(_, n, subTypes) -> relativeNameMatches name (fromPartialName n) || n `elem` subTypes) $ graphToNodes classGraph
+    objMap' = filterObjectMap (relativeNameMatches (mkName name) . oaObjPath) objMap
+    classGraph' = ClassGraph $ graphFromEdges $ filter (\(_, n, subTypes) -> relativeNameMatches (mkName name) (fromPartialName n) || n `elem` subTypes) $ graphToNodes classGraph
 
 mkLiveWDProvider :: [String] -> IO (IO CTSS)
 mkLiveWDProvider baseFileNames = do

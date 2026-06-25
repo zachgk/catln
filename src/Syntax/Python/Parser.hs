@@ -540,12 +540,12 @@ convertPyExpr (PyCall func args)  =
   convertPyExpr func `applyRawArgs` map convertPyCallArg args
 convertPyExpr (PyBinOp op l r)    =
   rawVal (operatorName op)
-    `applyRawArgs` [ (Just $ partialKey operatorArgL, convertPyExpr l)
-                   , (Just $ partialKey operatorArgR, convertPyExpr r)
+    `applyRawArgs` [ (Just $ partialKey (mkName operatorArgL), convertPyExpr l)
+                   , (Just $ partialKey (mkName operatorArgR), convertPyExpr r)
                    ]
 convertPyExpr (PyUnOp op e)       =
   rawVal (operatorName op)
-    `applyRawArgs` [(Just $ partialKey operatorArgUnary, convertPyExpr e)]
+    `applyRawArgs` [(Just $ partialKey (mkName operatorArgUnary), convertPyExpr e)]
 
 -- | Translate calls to Python built-in functions to Catln equivalents.
 -- Returns Nothing for unknown names so the caller falls through to generic
@@ -623,19 +623,19 @@ convertPyBuiltinCall "sorted" [PyPosArg x] =
 -- max(a, b) -> max(l=a, r=b), min(a, b) -> min(l=a, r=b)
 convertPyBuiltinCall "max" [PyPosArg a, PyPosArg b] =
   Just $ rawVal "max"
-    `applyRawArgs` [ (Just $ partialKey operatorArgL, convertPyExpr a)
-                   , (Just $ partialKey operatorArgR, convertPyExpr b)
+    `applyRawArgs` [ (Just $ partialKey (mkName operatorArgL), convertPyExpr a)
+                   , (Just $ partialKey (mkName operatorArgR), convertPyExpr b)
                    ]
 convertPyBuiltinCall "min" [PyPosArg a, PyPosArg b] =
   Just $ rawVal "min"
-    `applyRawArgs` [ (Just $ partialKey operatorArgL, convertPyExpr a)
-                   , (Just $ partialKey operatorArgR, convertPyExpr b)
+    `applyRawArgs` [ (Just $ partialKey (mkName operatorArgL), convertPyExpr a)
+                   , (Just $ partialKey (mkName operatorArgR), convertPyExpr b)
                    ]
 convertPyBuiltinCall _ _ = Nothing
 
 convertPyCallArg :: PyCallArg -> (Maybe ArgName, RawExpr ())
 convertPyCallArg (PyPosArg e)     = (Nothing, convertPyExpr e)
-convertPyCallArg (PyKwArg name e) = (Just $ partialKey name, convertPyExpr e)
+convertPyCallArg (PyKwArg name e) = (Just $ partialKey (mkName name), convertPyExpr e)
 
 -- | Convert a Python parameter to a 'RawObjArr' for use in a function
 -- declaration head.  Typed parameters produce a type-annotation ObjArr

@@ -164,20 +164,20 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
         retDest = clearUnionTypePreds $ case [getMetaType m | d <- omiDecls omi ++ omiRuntimeDecls omi, Just (_, m) <- [oaArr d]] of
           (t:_) -> t
           []    -> intType
-        testName = printf "%s :: overlap-agreement" (oaObjPath oaA)
+        testName = printf "%s :: overlap-agreement" (nameStr (oaObjPath oaA))
         partial = getSingleton dom
-        groups = map (map (exprPath . fst)) (exprNonLinearArgGroups (oaObjExpr oaA) ++ exprNonLinearArgGroups (oaObjExpr oaB))
+        groups = map (map (nameStr . exprPath . fst)) (exprNonLinearArgGroups (oaObjExpr oaA) ++ exprNonLinearArgGroups (oaObjExpr oaB))
         repOf n = case filter (n `elem`) groups of
           (g:_) -> minimum g
           []    -> n
-        argTypeMap = H.fromList [(pkName k, t) | (k, t) <- H.toList (ptArgs partial)]
+        argTypeMap = H.fromList [(nameStr (pkName k), t) | (k, t) <- H.toList (ptArgs partial)]
         genArg t = genValForType (UnionType Nothing (expandTypeWithNames typeEnv H.empty t teNames) [])
         genInput = do
           let argNames = H.keys argTypeMap
           let reps = nub (map repOf argNames)
           repVals <- mapM (\r -> (,) r <$> genArg (H.lookupDefault PTopType r argTypeMap)) reps
           let repMap = H.fromList repVals
-          return $ TupleVal (ptName partial) (H.fromList [(n, H.lookupDefault NoVal (repOf n) repMap) | n <- argNames])
+          return $ TupleVal (nameStr (ptName partial)) (H.fromList [(n, H.lookupDefault NoVal (repOf n) repMap) | n <- argNames])
         -- To evaluate one clause of the overlapping pair in isolation, remove the OTHER clause from
         -- its function so a normal call dispatches to the one we want (bypassing the overlap), then
         -- build and evaluate that call. Building the full call (rather than the body alone) resolves
@@ -221,7 +221,7 @@ evalTest prgmGraphData = do
       | otherwise      = (simple, oa : props)
 
     runSimpleTest p oa =
-      let testName = oaObjPath oa
+      let testName = nameStr (oaObjPath oa)
           action = asCResT $ do
             let input = eVal testName
             let src = getExprPartialType input
@@ -230,7 +230,7 @@ evalTest prgmGraphData = do
       in (testName, action)
 
     runPropertyTest p oa =
-      let testName = oaObjPath oa
+      let testName = nameStr (oaObjPath oa)
           typeEnv  = mkTypeEnv p
           typeVars = exprAppliedOrdVars (oaObjExpr oa)
           args     = exprAppliedArgs (oaObjExpr oa)
@@ -291,7 +291,7 @@ evalTest prgmGraphData = do
             let typeVarInput = foldl (\base (varName, chosenType) -> eAppVar base varName chosenType)
                                      (eVal testName)
                                      (zip (map fst typeVars) chosenTypes)
-            let argNames = map oaObjPath args
+            let argNames = map (nameStr . oaObjPath) args
             let input = foldl (\base (n, v) -> eApply base (n, valToEExpr v))
                                typeVarInput
                                (zip argNames argVals)

@@ -113,7 +113,7 @@ convertExprRecordFields :: DynFlags -> RawExpr () -> HsRecFields GhcPs (LHsExpr 
 convertExprRecordFields flags base (HsRecFields fields _) = foldl convertRecordField base (map unLoc fields)
   where
     convertRecordField :: RawExpr () -> HsRecField GhcPs (LHsExpr GhcPs) -> RawExpr ()
-    convertRecordField b (HsFieldBind _ lbl arg _) = b `applyRawArgs` [(Just $ partialKey $ convertIdP flags $ unLoc $ foLabel $ unLoc lbl, argExpr)]
+    convertRecordField b (HsFieldBind _ lbl arg _) = b `applyRawArgs` [(Just $ partialKey $ mkName $ convertIdP flags $ unLoc $ foLabel $ unLoc lbl, argExpr)]
       where (_, argExpr, _) = convertExpr flags Nothing $ unLoc arg
 
 -- https://hackage.haskell.org/package/ghc-lib-parser-9.4.8.20231111/docs/GHC-Hs-Pat.html#t:HsRecFields
@@ -121,7 +121,7 @@ convertPatRecordFields :: DynFlags -> RawExpr () -> HsRecFields GhcPs (LPat GhcP
 convertPatRecordFields flags base (HsRecFields fields _) = foldl convertRecordField base (map unLoc fields)
   where
     convertRecordField :: RawExpr () -> HsRecField GhcPs (LPat GhcPs) -> RawExpr ()
-    convertRecordField b (HsFieldBind _ lbl arg _) = b `applyRawArgs` [(Just $ partialKey $ convertIdP flags $ unLoc $ foLabel $ unLoc lbl, convertPattern flags Nothing $ unLoc arg)]
+    convertRecordField b (HsFieldBind _ lbl arg _) = b `applyRawArgs` [(Just $ partialKey $ mkName $ convertIdP flags $ unLoc $ foLabel $ unLoc lbl, convertPattern flags Nothing $ unLoc arg)]
 
 -- https://hackage.haskell.org/package/ghc-lib-parser-9.4.8.20231111/docs/Language-Haskell-Syntax-Binds.html#t:Sig
 convertSignature :: DynFlags -> Sig GhcPs -> [RawStatementTree RawExpr ()]
@@ -172,7 +172,7 @@ convertPatDetails :: DynFlags -> Maybe (RawExpr ()) -> HsConPatDetails GhcPs -> 
 convertPatDetails _ Nothing (PrefixCon [] []) = RawHoleExpr emptyMetaN (HoleActive Nothing)
 convertPatDetails flags base (PrefixCon [] args) = fromJust $ foldl (\b p -> Just $ convertPattern flags b p) base $ map unLoc args
 convertPatDetails flags (Just base) (RecCon r) = convertPatRecordFields flags base r
-convertPatDetails flags _ (InfixCon hd tl) = rawVal ctListCons`applyRawArgs` [(Just $ partialKey ctListConsHead, convertPattern flags Nothing $ unLoc hd), (Just $ partialKey ctListConsTail, convertPattern flags Nothing $ unLoc tl)]
+convertPatDetails flags _ (InfixCon hd tl) = rawVal ctListCons`applyRawArgs` [(Just $ partialKey (mkName ctListConsHead), convertPattern flags Nothing $ unLoc hd), (Just $ partialKey (mkName ctListConsTail), convertPattern flags Nothing $ unLoc tl)]
 convertPatDetails flags _ p = error $ printf "Convert unsupported conPatDetails:\n%s" (showSDoc flags $ ppr p)
 
 -- https://hackage.haskell.org/package/ghc-lib-parser-9.4.8.20231111/docs/GHC-Hs-Pat.html#t:Pat
@@ -196,7 +196,7 @@ convertPattern flags mb (TuplePat _ pats _) = case mb of
     tuple' = rawAnon `applyRawArgs` map ((Nothing,) . convertPattern flags Nothing . unLoc) pats
 convertPattern flags mb (SumPat _ pat _ _) = case mb of { Just b -> b `applyRawArgs` [(Nothing, inner)]; Nothing -> inner }
   where inner = convertPattern flags Nothing $ unLoc pat
-convertPattern flags (Just base) (ConPat _ i det) = base `applyRawArgs` [(Just $ partialKey $ convertIdP flags $ unLoc i, convertPatDetails flags (Just base) det)]
+convertPattern flags (Just base) (ConPat _ i det) = base `applyRawArgs` [(Just $ partialKey $ mkName $ convertIdP flags $ unLoc i, convertPatDetails flags (Just base) det)]
 convertPattern flags Nothing (ConPat _ i det) = convertPatDetails flags (Just $ rawVal $ convertIdP flags $ unLoc i) det
 convertPattern flags base (ViewPat _ expr pat) = RawWhere emptyMetaN pat' viewExpr
   where
@@ -211,7 +211,7 @@ convertPattern flags base (NPlusKPat _ n k _ _ _) = RawWhere emptyMetaN nPat gua
     nPat = case base of
       Nothing -> rawVal nName
       Just b  -> b `applyRawArgs` [(Nothing, rawVal nName)]
-    guard' = rawVal "/operator>=" `applyRawArgs` [(Just $ partialKey operatorArgL, rawVal nName), (Just $ partialKey operatorArgR, convertOverLit flags $ unLoc k)]
+    guard' = rawVal "/operator>=" `applyRawArgs` [(Just $ partialKey (mkName operatorArgL), rawVal nName), (Just $ partialKey (mkName operatorArgR), convertOverLit flags $ unLoc k)]
 convertPattern flags base (SigPat _ p sigTy) = RawWhere emptyMetaN pat' typeExpr
   where
     pat' = convertPattern flags base $ unLoc p
@@ -250,7 +250,7 @@ convertExpr flags eb (OpApp _ l op r) = case op' of
     rKey = rawVal operatorArgR
     (lKey', le, lSubs) = convertExpr flags (Just lKey) (unLoc l)
     (rKey', re, rSubs) = convertExpr flags (Just rKey) (unLoc r)
-convertExpr flags base (NegApp _ e _) = (base', rawVal (operatorName "-") `applyRawArgs` [(Just $ partialKey operatorArgUnary, e')], subs')
+convertExpr flags base (NegApp _ e _) = (base', rawVal (operatorName "-") `applyRawArgs` [(Just $ partialKey (mkName operatorArgUnary), e')], subs')
   where
     (base', e', subs') = convertExpr flags base (unLoc e)
 convertExpr flags base (HsPar _ _ p _) = convertExpr flags base $ unLoc p
@@ -280,7 +280,7 @@ convertExpr flags base (ExplicitTuple _ t _) = (fmap mapBase base, e', concat su
 
     convertTupleArgPat :: Int -> HsTupArg GhcPs -> Maybe PartialKey
     convertTupleArgPat _ Present{} = Nothing
-    convertTupleArgPat i Missing{} = Just $ partialKey ("tupleArg" ++ show i)
+    convertTupleArgPat i Missing{} = Just $ partialKey (mkName ("tupleArg" ++ show i))
 
     convertTupleArg :: Int -> HsTupArg GhcPs -> (MLHSArgs, RawExpr (), [RawStatementTree RawExpr ()])
     convertTupleArg _ (Present _ a) = convertExpr flags Nothing $ unLoc a
@@ -290,7 +290,7 @@ convertExpr flags _ (HsCase _ cas (MG _ lmatches _)) = (casBase, rawVal ctCase `
   where
     (casBase, casExpr, casSubs) = convertExpr flags Nothing $ unLoc cas
     matchSubs = concatMap (map (\(_, oa, subs) -> RawStatementTree (RawDeclStatement oa) subs) . convertMatch flags Nothing . unLoc) $ unLoc lmatches
-convertExpr flags _ (HsIf _ i t e) = (Nothing, RawMethod emptyMetaN i' (rawVal ctIf `applyRawArgs` [(Just $ partialKey ctThen, t'), (Just $ partialKey ctElse, e')]), concat [tSubs', iSubs', eSubs'])
+convertExpr flags _ (HsIf _ i t e) = (Nothing, RawMethod emptyMetaN i' (rawVal ctIf `applyRawArgs` [(Just $ partialKey (mkName ctThen), t'), (Just $ partialKey (mkName ctElse), e')]), concat [tSubs', iSubs', eSubs'])
   where
     (_, t', tSubs') = convertExpr flags Nothing $ unLoc t
     (_, i', iSubs') = convertExpr flags Nothing $ unLoc i
@@ -308,7 +308,7 @@ convertExpr flags _ (HsMultiIf _ grhss) = (Nothing, rawVal ctCase `applyRawArgs`
     extractGuardExpr (BodyStmt _ body _ _) = let (_, e, _) = convertExpr flags Nothing $ unLoc body in e
     extractGuardExpr (BindStmt _ _ body)   = let (_, e, _) = convertExpr flags Nothing $ unLoc body in e
     extractGuardExpr _                      = rawVal "True"
-    joinAnd l r = rawVal "/operator&&" `applyRawArgs` [(Just $ partialKey operatorArgL, l), (Just $ partialKey operatorArgR, r)]
+    joinAnd l r = rawVal "/operator&&" `applyRawArgs` [(Just $ partialKey (mkName operatorArgL), l), (Just $ partialKey (mkName operatorArgR), r)]
 convertExpr flags base (HsLet _ _ binds _ e) = (base', e', convertLocalBindsLR flags binds ++ subs')
   where
     (base', e', subs') = convertExpr flags base (unLoc e)
@@ -331,12 +331,12 @@ convertExpr flags base (RecordUpd _ e fields) = (base', e' `applyRawEArgs` field
     -- https://hackage.haskell.org/package/ghc-lib-parser-9.4.8.20231111/docs/Language-Haskell-Syntax-Pat.html#t:HsFieldBind
     mapUpd :: HsRecUpdField GhcPs -> ((Maybe (RawExpr ()), RawExpr ()), [RawStatementTree RawExpr ()])
     mapUpd (HsFieldBind _ lbl val _) = case convertExpr flags Nothing $ unLoc val of
-      (Nothing, fieldE', fieldSubs') -> ((Just $ RawValue emptyMetaN $ convertIdP flags $ rdrNameAmbiguousFieldOcc $ unLoc lbl, fieldE'), fieldSubs')
+      (Nothing, fieldE', fieldSubs') -> ((Just $ RawValue emptyMetaN $ mkName $ convertIdP flags $ rdrNameAmbiguousFieldOcc $ unLoc lbl, fieldE'), fieldSubs')
       _ -> undefined
 
     mapProj :: RecUpdProj GhcPs -> ((Maybe (RawExpr ()), RawExpr ()), [RawStatementTree RawExpr ()])
     mapProj (HsFieldBind _ lbl val _) = case convertExpr flags Nothing $ unLoc val of
-      (Nothing, fieldE', fieldSubs') -> ((Just $ foldl1 (RawMethod emptyMetaN) $ map (RawValue emptyMetaN . unpackFS . unLoc . dfoLabel . unLoc) $ fromFieldLabelStrings $ unLoc lbl, fieldE'), fieldSubs')
+      (Nothing, fieldE', fieldSubs') -> ((Just $ foldl1 (RawMethod emptyMetaN) $ map (RawValue emptyMetaN . mkName . unpackFS . unLoc . dfoLabel . unLoc) $ fromFieldLabelStrings $ unLoc lbl, fieldE'), fieldSubs')
       _ -> undefined
     fromFieldLabelStrings (FieldLabelStrings s) = s
 
@@ -417,7 +417,7 @@ convertGRHS flags (GRHS _ g e) = (base', e', subStatements, g')
     convertGuardStmt p = error $ printf "Convert unsupported guardStmt:\n%s" (showSDoc flags $ ppr p)
 
     joinAnd :: RawExpr () -> RawExpr () -> RawExpr ()
-    joinAnd l r = rawVal "/operator&&" `applyRawArgs` [(Just $ partialKey operatorArgL, l), (Just $ partialKey operatorArgR, r)]
+    joinAnd l r = rawVal "/operator&&" `applyRawArgs` [(Just $ partialKey (mkName operatorArgL), l), (Just $ partialKey (mkName operatorArgR), r)]
 
 convertLocalBindsLR :: DynFlags -> HsLocalBindsLR GhcPs GhcPs -> [RawStatementTree RawExpr ()]
 convertLocalBindsLR flags (HsValBinds _ (ValBinds _ binds sigs)) = concatMap (convertSignature flags . unLoc) sigs ++ concatMap (convertBindLR flags . unLoc) (bagToList binds)
@@ -477,21 +477,21 @@ convertBindLR flags (PatSynBind _ (PSB _ name args def _dir)) = [RawStatementTre
     objExpr = case args of
       PrefixCon _ argNames -> foldl (\b a -> b `applyRawArgs` [(Nothing, rawVal $ convertIdP flags $ unLoc a)]) nameExpr argNames
       InfixCon l r -> nameExpr `applyRawArgs` [(Nothing, rawVal $ convertIdP flags $ unLoc l), (Nothing, rawVal $ convertIdP flags $ unLoc r)]
-      RecCon fields -> foldl (\b f -> b `applyRawArgs` [(Just $ partialKey $ convertIdP flags $ unLoc $ foLabel $ recordPatSynField f, rawVal $ convertIdP flags $ unLoc $ recordPatSynPatVar f)]) nameExpr fields
+      RecCon fields -> foldl (\b f -> b `applyRawArgs` [(Just $ partialKey $ mkName $ convertIdP flags $ unLoc $ foLabel $ recordPatSynField f, rawVal $ convertIdP flags $ unLoc $ recordPatSynPatVar f)]) nameExpr fields
     defExpr = convertPattern flags Nothing $ unLoc def
     oa = RawObjArr (Just objExpr) PatternObj Nothing [] (Just (Just defExpr, Nothing)) Nothing
 
 -- https://hackage.haskell.org/package/ghc-lib-parser-9.4.8.20231111/docs/Language-Haskell-Syntax-Type.html#t:HsTyVarBndr
 convertTyVarBndr :: DynFlags -> HsTyVarBndr () GhcPs -> TypeVarName
-convertTyVarBndr flags (UserTyVar _ _ v) = partialKey $ convertIdP flags $ unLoc v
-convertTyVarBndr flags (KindedTyVar _ _ v _) = partialKey $ convertIdP flags $ unLoc v
+convertTyVarBndr flags (UserTyVar _ _ v) = partialKey $ mkName $ convertIdP flags $ unLoc v
+convertTyVarBndr flags (KindedTyVar _ _ v _) = partialKey $ mkName $ convertIdP flags $ unLoc v
 
 -- https://hackage.haskell.org/package/ghc-lib-parser-9.4.8.20231111/docs/Language-Haskell-Syntax-Type.html#t:ConDeclField
 convertConDeclField :: DynFlags -> RawExpr () -> ConDeclField GhcPs -> RawExpr ()
 convertConDeclField flags base (ConDeclField _ names tp _doc) = base `applyRawEIArgs` map ((,IArgNothing) . withType . rawVal . convertIdP flags . unLoc . foLabel . unLoc) names
   where
     withType :: RawExpr () -> RawExpr ()
-    withType e = rawVal operatorType `applyRawArgs` [(Just $ partialKey operatorArgL, e), (Just $ partialKey operatorArgR, convertTypeToExpr flags Nothing $ unLoc tp)]
+    withType e = rawVal operatorType `applyRawArgs` [(Just $ partialKey (mkName operatorArgL), e), (Just $ partialKey (mkName operatorArgR), convertTypeToExpr flags Nothing $ unLoc tp)]
 
 
 -- https://hackage.haskell.org/package/ghc-lib-parser-9.4.8.20231111/docs/GHC-Hs-Decls.html#t:ConDecl

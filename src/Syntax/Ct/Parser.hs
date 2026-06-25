@@ -23,7 +23,8 @@ import           CtConstants
 
 import           Data.Maybe
 import           Semantics.Prgm
-import           Semantics.Types            (Constant (CStr), partialKey)
+import           Semantics.Types            (Constant (CStr), mkName,
+                                             partialKey)
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Parser.Decl
 import           Syntax.Ct.Parser.Expr
@@ -56,7 +57,7 @@ pPrintStatement :: Parser PStatementTree
 pPrintStatement = do
   _ <- string "> "
   e <- pExpr
-  let annot = rawVal printAnnot `applyRawArgs` [(Just $ partialKey printAnnotText, e)]
+  let annot = rawVal printAnnot `applyRawArgs` [(Just $ partialKey (mkName printAnnotText), e)]
   return $ RawStatementTree (RawAnnot annot) []
 
 
@@ -100,7 +101,7 @@ ctxParser fileName = do
   (prgm, extra, src) <- ctParser fileName
   return (annotate prgm, extra, src)
   where
-    annotate (RawPrgm imports statements) = RawPrgm imports (RawStatementTree (RawAnnot (RawValue emptyMetaN ctxAnnot)) [] :statements)
+    annotate (RawPrgm imports statements) = RawPrgm imports (RawStatementTree (RawAnnot (RawValue emptyMetaN (mkName ctxAnnot))) [] :statements)
 
 parseRepl :: String -> PReplRes
 parseRepl s = case runParser (contents p) "<repl>" s of

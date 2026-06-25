@@ -46,27 +46,27 @@ formatExpr (RawCExpr _ (CInt c)) = show c
 formatExpr (RawCExpr _ (CFloat c)) = show c
 formatExpr (RawCExpr _ (CStr c)) = show c
 formatExpr (RawCExpr _ (CChar c)) = show c
-formatExpr (RawValue _ n) | n == anonStr = ""
-formatExpr (RawValue _ n) = n
-formatExpr (RawMacroValue _ n) = "${" ++ n ++ "}"
+formatExpr (RawValue _ n) | nameStr n == anonStr = ""
+formatExpr (RawValue _ n) = nameStr n
+formatExpr (RawMacroValue _ n) = "${" ++ nameStr n ++ "}"
 formatExpr (RawFmtStrExpr _ n s) = n ++ ("\"" ++ s ++ "\"")
 formatExpr (RawApplyExpr m n) = formatExpr $ RawFmtStrExpr m "a" (formatRawApply n)
 formatExpr (RawHoleExpr _ (HoleActive Nothing)) = "_"
-formatExpr (RawHoleExpr _ (HoleActive (Just a))) = "_" ++ a
+formatExpr (RawHoleExpr _ (HoleActive (Just a))) = "_" ++ nameStr a
 formatExpr (RawHoleExpr _ HoleUndefined) = "undefined"
 formatExpr (RawHoleExpr _ HoleTodefine) = "todefine"
 formatExpr (RawTheExpr t) = printf ":%s" (formatExpr t)
-formatExpr (RawTupleApply _ (_, v@(RawValue _ vn)) [(True, _)]) | vn /= anonStr = printf "%s.." (formatExpr v)
+formatExpr (RawTupleApply _ (_, v@(RawValue _ vn)) [(True, _)]) | nameStr vn /= anonStr = printf "%s.." (formatExpr v)
 formatExpr (RawAliasExpr base alias) = printf "%s@%s" (formatExpr base) (formatExpr alias)
 formatExpr (RawWhere _ base cond) = printf "%s | %s" (formatExpr base) (formatExpr cond)
-formatExpr (RawTupleApply _ (_, RawValue _ n) args) | operatorPrefix `isPrefixOf` n = case args of
+formatExpr (RawTupleApply _ (_, RawValue _ n) args) | operatorPrefix `isPrefixOf` nameStr n = case args of
   [(False, RawObjArr{ roaArr=(Just (Just a, _))})] -> op ++ formatExpr a
-  [(False, RawObjArr{ roaArr=(Just (Just l, _))}), (False, RawObjArr{roaArr=(Just (Just r, _))})] -> if n == operatorType
+  [(False, RawObjArr{ roaArr=(Just (Just l, _))}), (False, RawObjArr{roaArr=(Just (Just r, _))})] -> if nameStr n == operatorType
     then printf "%s%s %s" (formatExpr l) op (formatExpr r) -- Show types as "x: 5" instead of "x : 5"
     else printf "%s %s %s" (formatExpr l) op (formatExpr r)
   _ -> error "Non unary or binary operator found in formatExpr"
   where
-    op = drop (length operatorPrefix) n
+    op = drop (length operatorPrefix) (nameStr n)
 formatExpr (RawTupleApply _ (_, be) args) = printf "%s(%s)" (formatExpr be) (intercalate ", " $ map aux args)
   where
     aux (spread, a) = (if spread then ".." else "") ++ formatObjArr a
@@ -75,9 +75,9 @@ formatExpr (RawContextApply _ (_, be) ctxs) = printf "%s{%s}" (formatExpr be) (i
 formatExpr (RawParen e) = printf "(%s)" (formatExpr e)
 formatExpr (RawMethod _ base method) = printf "%s.%s" (formatExpr base) (formatExpr method)
 formatExpr (RawList _ l) = printf "[%s]" $ intercalate ", " $ map formatExpr l
-formatExpr (RawTypeProp _ base (TypePropProj p (RawValue _ vn))) | vn == truePrim = printf "%s_%s" (formatExpr base) p
-formatExpr (RawTypeProp _ base (TypePropProj p v)) = printf "%s_%s(%s)" (formatExpr base) p (formatExpr v)
-formatExpr (RawTypeProp _ base (TypePropRel p v)) = printf "%s__%s(%s)" (formatExpr base) p (formatExpr v)
+formatExpr (RawTypeProp _ base (TypePropProj p (RawValue _ vn))) | nameStr vn == truePrim = printf "%s_%s" (formatExpr base) (nameStr p)
+formatExpr (RawTypeProp _ base (TypePropProj p v)) = printf "%s_%s(%s)" (formatExpr base) (nameStr p) (formatExpr v)
+formatExpr (RawTypeProp _ base (TypePropRel p v)) = printf "%s__%s(%s)" (formatExpr base) (nameStr p) (formatExpr v)
 
 -- | Formats either ObjArr or Bind Statement
 formatObjArrLike :: (Show m) => String -> RawObjArr RawExpr m -> String
@@ -86,8 +86,8 @@ formatObjArrLike eq roa@RawObjArr{roaObj, roaArr, roaDef} = printf "%s%s%s%s%s%s
     roaArrExpr = fst =<< roaArr
 
     isNestedDeclaration = case roaArr of
-      (Just (Just (RawValue _ n), _)) | n == nestedDeclaration -> True
-      _                                                        -> False
+      (Just (Just (RawValue _ n), _)) | nameStr n == nestedDeclaration -> True
+      _                                                                -> False
 
     showE False _ | isNestedDeclaration = ""
     showE _ (Just e) = formatExpr e
@@ -122,12 +122,12 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
     statement' = case statement of
       RawDeclStatement objArr -> formatObjArr objArr
       RawBindStatement oa -> formatObjArrLike "<-" oa
-      RawAnnot annot | exprPath annot == mdAnnot -> case H.lookup (partialKey mdAnnotText) $ rawExprAppliedArgsMap annot of
+      RawAnnot annot | nameStr (exprPath annot) == mdAnnot -> case H.lookup (partialKey (mkName mdAnnotText)) $ rawExprAppliedArgsMap annot of
         (Just (Just (_, Just (RawCExpr _ (CStr annotText))))) -> printf "# %s" annotText'
           where
             annotText' = concatMap (\c -> if c == '\n' then "\n" ++ formatIndent (indent + 1) else pure c) annotText
         _ -> undefined
-      RawAnnot annot | exprPath annot == printAnnot -> case H.lookup (partialKey printAnnotText) $ rawExprAppliedArgsMap annot of
+      RawAnnot annot | nameStr (exprPath annot) == printAnnot -> case H.lookup (partialKey (mkName printAnnotText)) $ rawExprAppliedArgsMap annot of
                          (Just (Just (_, Just e))) -> printf "> %s" (formatExpr e)
                          e -> error $ printf "Can't format unexpected print annot %s" (show e)
       RawAnnot annot -> formatExpr annot

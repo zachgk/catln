@@ -343,7 +343,7 @@ propClassGraphMatchesPredClass gPrgm = property $ do
       -- For unsealed classes, the class type is not provably equal to its current members
       -- (future implementations could be added). Skip them.
       when (not sealed) discard
-      annotate $ printf "Testing class: %s" (fromPartialName className)
+      annotate $ printf "Testing class: %s" (nameStr (fromPartialName className))
       annotate $ printf "Class definition: %s" (show classPartialType)
 
       -- Expand the class using expandClassPartial

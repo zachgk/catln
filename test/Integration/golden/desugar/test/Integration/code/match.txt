@@ -2,24 +2,6 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
-                ( "/abs.$f9f16a"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ abs.$f9f16a( Value /x )
-                            ( Value /$f9f16a-arg= Hole TopType HoleActive Nothing@Value x2 | /operator>=( Value /l= Value x )
-                                ( Value /r= CInt 0 )
-                            )= Value x2
-                        , abs.$f9f16a( Value /x )( Value /$f9f16a-arg= Hole TopType HoleActive Nothing@Value x2 )= /operator*( Value /l= Value x2 )
-                            ( Value /r= /operator-
-                                ( Value /a= CInt 1 )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -34,13 +16,31 @@ Prgm
                     }
                 )
             ,
+                ( "/abs.$fb881e"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ abs.$fb881e( Value /x )
+                            ( Value /$fb881e-arg= Hole TopType HoleActive Nothing@Value x2 | /operator>=( Value /l= Value x )
+                                ( Value /r= CInt 0 )
+                            )= Value x2
+                        , abs.$fb881e( Value /x )( Value /$fb881e-arg= Hole TopType HoleActive Nothing@Value x2 )= /operator*( Value /l= Value x2 )
+                            ( Value /r= /operator-
+                                ( Value /a= CInt 1 )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/abs"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ abs( Value x -> /Data/Primitive/Integer )= abs.$f9f16a( Value /x= Value /x )( Value /$f9f16a-arg= Value x ) ]
+                        [ abs( Value x -> /Data/Primitive/Integer )= abs.$fb881e( Value /x= Value /x )( Value /$fb881e-arg= Value x ) ]
                     }
                 )
             ]

@@ -22,6 +22,7 @@ module Semantics.Types where
 
 import           CtConstants
 import           Data.Aeson
+import           Data.Aeson.Types    (contramapToJSONKeyFunction)
 import           Data.Bifunctor      (Bifunctor (bimap, first))
 import           Data.Either
 import           Data.Graph          (graphFromEdges, vertices)
@@ -32,6 +33,7 @@ import           Data.List           (intercalate, partition)
 import qualified Data.List           as L
 import           Data.List.Split     (splitOn)
 import           Data.Maybe
+import           Data.String         (IsString (..))
 import           Data.Zip
 import           Debug.Trace         (trace)
 import           GHC.Generics        (Generic)
@@ -39,8 +41,40 @@ import           Prelude             hiding (unzip)
 import           Text.Printf
 import           Utils
 
--- |The name is the basic type used for various kinds of names
-type Name = String
+-- |The name is the basic type used for various kinds of names.
+-- It carries a precomputed hash so 'Hashable' is O(1).  Names are used as keys in the
+-- 'PartialLeafs' maps that the type set-algebra rebuilds billions of times; hashing them
+-- char-by-char (when @Name = String@) dominated compile time.  'nameHash' is exactly
+-- @hash nameStr@, so the value 'Data.HashMap' uses to place a key is bit-identical to the
+-- old @String@ key — preserving HashMap iteration order (hence golden output) for name keys.
+data Name = Name { nameHash :: !Int, nameStr :: String }
+
+-- | The canonical way to build a 'Name': computes and caches the hash once.
+mkName :: String -> Name
+mkName s = Name (hash s) s
+
+instance IsString Name where
+  fromString = mkName
+
+instance Hashable Name where
+  hash = nameHash
+  hashWithSalt s n = hashWithSalt s (nameHash n)
+
+instance Eq Name where
+  a == b = nameHash a == nameHash b && nameStr a == nameStr b
+
+instance Ord Name where
+  compare a b = compare (nameStr a) (nameStr b)
+
+instance Show Name where
+  show = show . nameStr
+
+instance ToJSON Name where
+  toJSON = toJSON . nameStr
+  toEncoding = toEncoding . nameStr
+
+instance ToJSONKey Name where
+  toJSONKey = contramapToJSONKeyFunction nameStr toJSONKey
 
 -- | A NPath (name path) is used for names with namespaces, either absolutely referenced to with only part of it
 data NPath = NPath {
@@ -361,11 +395,11 @@ showPartialD :: Int -> PartialType -> String
 showPartialD d _ | d <= 0 = showTruncated
 showPartialD d (PartialType ptName ptVars ptArgs ptPreds ptArgMode) = concat [showName, showTypeVars ptVars, showArgs ptArgs, showPreds ptPreds, showPtArgMode]
     where
-      showName = if ptName == anonStr then "" else ptName
+      showName = if nameStr ptName == anonStr then "" else nameStr ptName
       showArg (argName, argVal) = show argName ++ "=" ++ showTypeD (d - 1) argVal
       showTypeVars vars | H.null vars = ""
       showTypeVars vars = "[" ++ intercalate ", " (map showArg $ H.toList vars) ++ "]"
-      showArgs args | ptName == anonStr && H.null args = "()"
+      showArgs args | nameStr ptName == anonStr && H.null args = "()"
       showArgs args | H.null args = ""
       showArgs args = "(" ++ intercalate ", " (map showArg $ H.toList args) ++ ")"
       showPreds PredsNone    = ""
@@ -672,9 +706,10 @@ splitVarArgEnv vaenv = bimap H.fromList H.fromList $ partitionEithers $ map eith
     eitherVarArg (TVArg v, t) = Right (v, t)
 
 makeAbsoluteName :: Name -> Name
-makeAbsoluteName ""        = ""
-makeAbsoluteName n@('/':_) = n
-makeAbsoluteName n         = '/':n
+makeAbsoluteName n = case nameStr n of
+  ""      -> n
+  ('/':_) -> n
+  s       -> mkName ('/' : s)
 
 makeAbsolutePk :: PartialKey -> PartialKey
 makeAbsolutePk (PartialKey name vars args)= PartialKey (makeAbsoluteName name) (S.map makeAbsolutePk vars) (S.map makeAbsolutePk args)
@@ -698,16 +733,16 @@ matchesNPath (NPath False rn) (NPath _ n)   = rn `L.isSuffixOf` n
 matchesNPath (NPath True _) (NPath False _) = False
 
 relativeNameMatches :: RelativeName -> Name -> Bool
-relativeNameMatches rn n = rn == n || ('/' : rn) `L.isSuffixOf` ('/' : n)
+relativeNameMatches rn n = rn == n || ('/' : nameStr rn) `L.isSuffixOf` ('/' : nameStr n)
 
 relativeNameFilter :: RelativeName -> [Name] -> [Name]
 relativeNameFilter rn = filter (relativeNameMatches rn)
 
 -- | Takes a list of relative and abs names, and prunes the relative names describing an absolute one
 relAbsNamePrune :: [TypeName] -> [TypeName]
-relAbsNamePrune names = map show (absNames ++ filter matchesNoAbsName relNames)
+relAbsNamePrune names = map (mkName . show) (absNames ++ filter matchesNoAbsName relNames)
   where
-    names' = map getPath names
+    names' = map (getPath . nameStr) names
     (absNames, relNames) = partition npathIsAbs names'
     matchesNoAbsName n = not $ any (matchesNPath n) absNames
 
@@ -927,7 +962,7 @@ classPartial p = TopType H.empty (PredsOne (PredClass p))
 -- | Creates a classPlaceholder[$T] partial type for a given class name.
 -- Used when expanding a class that has no constituent types to avoid returning the empty set.
 classPlaceholderLeaf :: TypeName -> PartialType
-classPlaceholderLeaf className = (partialVal classPlaceholderStr){ptVars = H.singleton (partialKey "T") (singletonType $ partialVal className)}
+classPlaceholderLeaf className = (partialVal (mkName classPlaceholderStr)){ptVars = H.singleton (partialKey "T") (singletonType $ partialVal className)}
 
 getSingleton :: Type -> PartialType
 getSingleton t = case maybeGetSingleton t of
@@ -971,13 +1006,13 @@ typeSetArg argName = typeSetAuxType (TVArg argName)
 typeSetVar :: TypeVarName -> Type -> Type -> Type
 typeSetVar varName = typeSetAuxType (TVVar varName)
 
-suffixLookup :: String -> [String] -> Maybe String
+suffixLookup :: Name -> [Name] -> Maybe Name
 suffixLookup s (x:xs)
   | s == x = Just s
   | otherwise = if relativeNameMatches s x then Just x else suffixLookup s xs
 suffixLookup _ [] = Nothing
 
-suffixLookupInDict :: String -> H.HashMap String b -> Maybe b
+suffixLookupInDict :: Name -> H.HashMap Name b -> Maybe b
 suffixLookupInDict s dict = case suffixLookup s (H.keys dict) of
   Just k  -> H.lookup k dict
   Nothing -> Nothing

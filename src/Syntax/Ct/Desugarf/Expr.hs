@@ -65,7 +65,7 @@ semiDesExpr sdm obj (RawTupleApply _ (_, e@RawValue{}) [(True, _)]) = e' `setExp
     m' = mWithType (spreadType H.empty $ getMetaType m) m
 semiDesExpr sdm obj (RawAliasExpr base alias) = AliasExpr (semiDesExpr sdm obj base) (semiDesExpr sdm obj alias)
 semiDesExpr sdm obj (RawWhere m base cond) = EWhere m (semiDesExpr sdm obj base) (semiDesExpr SDOutput obj cond)
-semiDesExpr sdm obj (RawTypeProp m base (TypePropProj t v)) = semiDesExpr sdm obj (RawWhere m base (rawVal operatorEq `applyRawArgs` [(Just $ partialKey operatorArgL, RawMethod (emptyMetaE v) (rawVal macroThisKey) (rawVal t)), (Just $ partialKey operatorArgR, v)])) -- $this.even == v
+semiDesExpr sdm obj (RawTypeProp m base (TypePropProj t v)) = semiDesExpr sdm obj (RawWhere m base (rawVal operatorEq `applyRawArgs` [(Just $ partialKey (mkName operatorArgL), RawMethod (emptyMetaE v) (rawVal macroThisKey) (rawVal (nameStr t))), (Just $ partialKey (mkName operatorArgR), v)])) -- $this.even == v
 semiDesExpr sdm obj (RawTupleApply _ (_, RawValue _ "/operator::") [(False, RawObjArr{roaArr=(Just (Just e, _))}), (False, RawObjArr{roaArr=(Just (Just tp, _))})]) = semiDesExpr sdm obj (rawExprWithType (exprToType (mobjExprVaenv obj) tp) e)
 semiDesExpr sdm obj (RawTupleApply _ (_, be) []) = semiDesExpr sdm obj be
 semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (`setExprMeta` m'') $ snd $ foldl aux (bm, be') (zip [0..] args)
@@ -119,16 +119,16 @@ semiDesExpr sdm obj (RawVarsApply m be vs) = (`setExprMeta` m) $ foldr aux be' v
     be' = semiDesExpr sdm obj be
     aux RawObjArr{roaObj=Just varExpr, roaArr} base = TupleApply (emptyMetaM m) (emptyMetaE base, base) (EAppVar varName varVal)
       where
-        varName = case maybeExprPath varExpr of
-              Just ('$':n) -> partialKey n
-              Just n     -> partialKey n
+        varName = case fmap nameStr (maybeExprPath varExpr) of
+              Just ('$':n) -> partialKey (mkName n)
+              Just n     -> partialKey (mkName n)
               Nothing -> error $ printf "No type name found in varExpr %s (type %s)" (show varExpr) (show $ exprToType (mobjExprVaenv obj) varExpr)
         varVal = maybe emptyMetaN (exprToTypeMeta (mobjExprVaenv obj)) (roaArr >>= snd)
     aux roa _ = error $ printf "Unexpected semiDesExpr var: %s" (show roa)
-semiDesExpr sdm@SDOutput{} obj (RawContextApply m (_, be) ctxs) = (`setExprMeta` m) $ semiDesExpr sdm obj $ applyRawEArgs (RawValue emptyMetaN contextOutStr) ((Just $ rawVal contextValStr, be) : map mapCtx ctxs)
+semiDesExpr sdm@SDOutput{} obj (RawContextApply m (_, be) ctxs) = (`setExprMeta` m) $ semiDesExpr sdm obj $ applyRawEArgs (RawValue emptyMetaN (mkName contextOutStr)) ((Just $ rawVal contextValStr, be) : map mapCtx ctxs)
   where
-    mapCtx ctx = (Just $ rawVal $ snd $ desugarTheExpr $ fromJust $ roaObj ctx, fromJust $ roaObj ctx)
-semiDesExpr sdm@SDInput{} obj (RawContextApply m (_, be) ctxs) = (`setExprMeta` m) $ semiDesExpr sdm obj $ applyRawIArgs (RawValue emptyMetaN ContextInStr) ((partialKey contextValStr, IArgE be) : map mapCtx ctxs)
+    mapCtx ctx = (Just $ rawVal $ nameStr $ snd $ desugarTheExpr $ fromJust $ roaObj ctx, fromJust $ roaObj ctx)
+semiDesExpr sdm@SDInput{} obj (RawContextApply m (_, be) ctxs) = (`setExprMeta` m) $ semiDesExpr sdm obj $ applyRawIArgs (RawValue emptyMetaN (mkName ContextInStr)) ((partialKey (mkName contextValStr), IArgE be) : map mapCtx ctxs)
   where
     mapCtx RawObjArr{roaObj=Just ctxObj, roaArr=Just (Just ctxArr, _)} = (partialToKey $ exprToPartialType ctxObj, IArgE ctxArr)
     mapCtx RawObjArr{roaObj=Just ctxObj, roaArr=Just (_, ctxM)} = (partialToKey $ exprToPartialType ctxObj, IArgM ctxM)
@@ -150,11 +150,11 @@ semiDesExpr _ _ e = error $ printf "Not yet implemented semiDesExpr for %s" (sho
 
 -- | Desugars a "TheExpr type" by applying the type to a default name
 desugarTheExpr :: PExpr -> (PExpr, Name)
-desugarTheExpr t = (t, defaultName)
+desugarTheExpr t = (t, mkName defaultName)
   where
     t' = exprToType H.empty t
     n' = fromMaybe (error $ printf "desugarTheExpr can't get name from %s" (show t')) $ maybeGetTypeName t'
-    defaultName = lowerCaseFirstLetter n'
+    defaultName = lowerCaseFirstLetter (nameStr n')
     lowerCaseFirstLetter (n:ns) = toLower n : ns
     lowerCaseFirstLetter ns     = ns
 
@@ -168,7 +168,7 @@ exprToPartialType e = case maybeGetSingleton $ getExprType des of
     des = exprPropagateTypes $ desExpr $ semiDesExpr SDType Nothing e
 
 exprToType :: PVarArgMap -> PExpr -> Type
-exprToType _ (RawValue _ n) | isJust (parseTVVar n) = fromJust $ parseTVVar n
+exprToType _ (RawValue _ n) | isJust (parseTVVar (nameStr n)) = fromJust $ parseTVVar (nameStr n)
 -- TODO Migrate the TypeVar check to the one below and remove the one above. This is for having type variables without the $ prefix.
 -- exprToType vaenv (RawValue _ n) | H.member (TVVar $ partialKey $ makeAbsoluteName n) vaenv  = TypeVar (TVVar $ partialKey n) TVInt
 exprToType _ e                        = getExprType $ exprPropagateTypes $ desExpr $ semiDesExpr SDType Nothing e

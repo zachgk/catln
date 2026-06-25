@@ -116,7 +116,7 @@ resolveRelativeNames fullPrgm@(Prgm fullPrgmObjMap _ _) (Prgm objMap (ClassGraph
                   -- (_, [], []) -> error $ printf "There is no possible types or classes that correspond to name %s\n\tAvailable types: %s" name (show objNames)
 
                   (False, _, _) -> PRelativeName name
-                  (True, foundTypeNames, foundClassNames) -> error $ printf "Could not resolve required name: %s \n\t Found possible typeNames: %s \n\t Found possible classNames: %s" name (show foundTypeNames) (show foundClassNames)
+                  (True, foundTypeNames, foundClassNames) -> error $ printf "Could not resolve required name: %s \n\t Found possible typeNames: %s \n\t Found possible classNames: %s" (nameStr name) (show foundTypeNames) (show foundClassNames)
     resolveName _ name = name
 
 
@@ -151,7 +151,7 @@ linkClassMethodReceivers (Prgm _ (ClassGraph fullCg) _) (Prgm (ObjectMap objMap)
     enrichThis (TupleApply m (bm, be) app) = TupleApply m (bm, enrichThis be) app
     enrichThis e = e
 
-    isThisArg oe = let p = exprPath oe in p == thisKey || p == "this"
+    isThisArg oe = let p = nameStr (exprPath oe) in p == thisKey || p == "this"
 
     enrichReceiverType (TopType negPartials (PredsOne (PredClass p@PartialType{ptName, ptVars})))
       | Just (CGClass (_, PartialType{ptVars=classVarsDecl}, _, _)) <- graphLookup (PClassName ptName) fullCg
@@ -182,10 +182,10 @@ reassignImportedMethodDefs (Prgm (ObjectMap fullObjMap) _ _) (Prgm (ObjectMap ob
     declaredSet = S.fromList declaredNames
     simpleName = reverse . takeWhile (/= '/') . reverse
     -- The unique declared method of the same simple name, when there is exactly one.
-    redirectTarget orphan = case filter ((== simpleName orphan) . simpleName) declaredNames of
+    redirectTarget orphan = case filter ((== simpleName (nameStr orphan)) . simpleName . nameStr) declaredNames of
       [t] -> Just t
       _   -> Nothing
-    hasThisArg oa = any (maybe False ((`elem` [thisKey, "this"]) . exprPath) . oaObj) (exprAppliedArgs (oaObjExpr oa))
+    hasThisArg oa = any (maybe False ((`elem` [thisKey, "this"]) . nameStr . exprPath) . oaObj) (exprAppliedArgs (oaObjExpr oa))
 
     objMap' = H.fromListWith (<>)
       [ (key', renameItem key key' item)

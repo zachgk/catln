@@ -169,8 +169,8 @@ getValType IntVal{} = intLeaf
 getValType FloatVal{} = floatLeaf
 getValType StrVal{} = strLeaf
 getValType CharVal{} = charLeaf
-getValType (TupleVal name args) = (partialVal name){ptArgs=H.fromList $ map fromArg $ H.toList args}
-  where fromArg (argName, argVal) = (partialKey argName, singletonType $ getValType argVal)
+getValType (TupleVal name args) = (partialVal (mkName name)){ptArgs=H.fromList $ map fromArg $ H.toList args}
+  where fromArg (argName, argVal) = (partialKey (mkName argName), singletonType $ getValType argVal)
 getValType (ObjArrVal oa) = getSingleton $ getExprType $ oaObjExpr oa
 getValType IOVal{}     = ioLeaf
 getValType MockIOVal{} = ioLeaf
@@ -358,14 +358,14 @@ instance Show (Codegen a) where
 
 instance Show m => Show (TExpr m) where
   show (TCExpr _ c) = show c
-  show (TValue _ name) = printf "Value %s" name
+  show (TValue _ name) = printf "Value %s" (nameStr name)
   show (THoleExpr m hole) = printf "Hole %s %s" (show m) (show hole)
   show (TAliasExpr base alias) = printf "%s@%s" (show base) (show alias)
   show (TWhere _ base cond) = printf "%s | %s" (show base) (show cond)
   show (TTupleApply _ (_, baseExpr) arg) = printf "%s(%s)" baseExpr' (show arg)
     where
       baseExpr' = case baseExpr of
-        TValue _ funName -> funName
+        TValue _ funName -> nameStr funName
         TTupleApply{}    -> show baseExpr
         _                -> printf "(%s)" (show baseExpr)
   show (TCalls m e _) = printf "(%s ↦ %s)" (show e) (show $ getMetaType m)
@@ -388,22 +388,22 @@ exprArgsWithVal CExpr{} _ = H.empty
 exprArgsWithVal Value{} _ = H.empty
 exprArgsWithVal HoleExpr{} _ = H.empty
 exprArgsWithVal (EWhere _ base _) val = exprArgsWithVal base val
-exprArgsWithVal (AliasExpr base n) val = H.insert (exprPath n) val (exprArgsWithVal base val)
+exprArgsWithVal (AliasExpr base n) val = H.insert (nameStr (exprPath n)) val (exprArgsWithVal base val)
 exprArgsWithVal (TupleApply _ (_, be) arg) val = H.union (exprArgsWithVal be val) (fromArg arg val)
   where
     fromArg :: (MetaDat m, Show m) => EApp Expr m -> Val -> Args
-    fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)}) (TupleVal _ tupleArgs) = case H.lookup (exprPath obj) tupleArgs of
+    fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)}) (TupleVal _ tupleArgs) = case H.lookup (nameStr (exprPath obj)) tupleArgs of
       Just val' -> exprArgsWithVal e val'
       Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
     fromArg (EAppArg ObjArr{oaObj=Nothing, oaArr=Just (Just e, _)}) _ = exprArgsWithVal e val
-    fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Nothing, _)}) (TupleVal _ tupleArgs) = case H.lookup (exprPath obj) tupleArgs of
+    fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Nothing, _)}) (TupleVal _ tupleArgs) = case H.lookup (nameStr (exprPath obj)) tupleArgs of
       -- An alias destructure (@field@name@) is matched by the field (@exprPath obj@ follows the
       -- base) and bound under the alias name (what the body references). It is ALSO bound under
       -- the field name so a non-linear pattern's equality guard (@f(a@x, b@x)@) can still read
       -- both original positions @a@ and @b@, which the shared alias @x@ alone would collapse.
       Just val' -> case obj of
-        AliasExpr _ aliasE -> H.fromList [(exprPath obj, val'), (exprPath aliasE, val')]
-        _                  -> H.singleton (exprPath obj) val'
+        AliasExpr _ aliasE -> H.fromList [(nameStr (exprPath obj), val'), (nameStr (exprPath aliasE), val')]
+        _                  -> H.singleton (nameStr (exprPath obj)) val'
       Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
     fromArg EAppVar{} _ = H.empty
     fromArg (EAppSpread a) _ = error $ printf "Not yet implemented exprArgsWithVal fromArg of %s and %s" (show a) (show val)
@@ -416,22 +416,22 @@ texprArgsWithVal TCExpr{} _ = H.empty
 texprArgsWithVal TValue{} _ = H.empty
 texprArgsWithVal THoleExpr{} _ = H.empty
 texprArgsWithVal (TWhere _ base _) val = texprArgsWithVal base val
-texprArgsWithVal (TAliasExpr base n) val = H.insert (exprPath n) val (texprArgsWithVal base val)
+texprArgsWithVal (TAliasExpr base n) val = H.insert (nameStr (exprPath n)) val (texprArgsWithVal base val)
 texprArgsWithVal (TTupleApply _ (_, be) arg) val = H.union (texprArgsWithVal be val) (fromArg arg val)
   where
     fromArg :: (MetaDat m, Show m) => EApp TExpr m -> Val -> Args
-    fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)}) (TupleVal _ tupleArgs) = case H.lookup (exprPath obj) tupleArgs of
+    fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)}) (TupleVal _ tupleArgs) = case H.lookup (nameStr (exprPath obj)) tupleArgs of
       Just val' -> texprArgsWithVal e val'
       Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
     fromArg (EAppArg ObjArr{oaObj=Nothing, oaArr=Just (Just e, _)}) _ = texprArgsWithVal e val
-    fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Nothing, _)}) (TupleVal _ tupleArgs) = case H.lookup (exprPath obj) tupleArgs of
+    fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Nothing, _)}) (TupleVal _ tupleArgs) = case H.lookup (nameStr (exprPath obj)) tupleArgs of
       -- An alias destructure (@field@name@) is matched by the field (@exprPath obj@ follows the
       -- base) and bound under the alias name (what the body references). It is ALSO bound under
       -- the field name so a non-linear pattern's equality guard (@f(a@x, b@x)@) can still read
       -- both original positions @a@ and @b@, which the shared alias @x@ alone would collapse.
       Just val' -> case obj of
-        TAliasExpr _ aliasE -> H.fromList [(exprPath obj, val'), (exprPath aliasE, val')]
-        _                   -> H.singleton (exprPath obj) val'
+        TAliasExpr _ aliasE -> H.fromList [(nameStr (exprPath obj), val'), (nameStr (exprPath aliasE), val')]
+        _                   -> H.singleton (nameStr (exprPath obj)) val'
       Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
     fromArg EAppVar{} _ = H.empty
     fromArg (EAppSpread a) _ = error $ printf "Not yet defined spread exprArgsWithVal fromArg of %s and %s" (show a) (show val)

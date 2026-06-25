@@ -50,8 +50,8 @@ Prgm
                     , omiDefs =
                         [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) ->
                             ( /Catln/exit
-                                ( /val=/Data/Primitive/Integer
-                                , /this=/Catln/IO
+                                ( /this=/Catln/IO
+                                , /val=/Data/Primitive/Integer
                                 ) + /Catln/IO
                             ) = /Catln/exit
                             ( EAppArg Value /val -> /Data/Primitive/Integer =

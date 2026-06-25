@@ -96,11 +96,11 @@ fromExpr est (CExpr m c) = do
   modify $ addConstraints [EqualsKnown 3 m' (constantType c)]
   return $ CExpr m' c
 fromExpr est@EncodeOut{} (Value m name) = do
-  m' <- fromMeta BAct est m ("Out Val " ++ name)
+  m' <- fromMeta BAct est m ("Out Val " ++ nameStr name)
   modify $ addConstraints [BoundedByKnown 4 m' (relTypeVal name), BoundedByObjs 4 m' PTopType]
   return $ Value m' name
 fromExpr est@EncodeIn{} (Value m name) = do
-  m' <- fromMeta BAct est m ("In Val " ++ name)
+  m' <- fromMeta BAct est m ("In Val " ++ nameStr name)
   modify $ addConstraints [BoundedByKnown 5 m' (relTypeVal name)]
   return $ Value m' name
 fromExpr est (HoleExpr m hole) = do
@@ -243,11 +243,11 @@ fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
         -- excluded by field name.
         Just (Value m name)
           | EncodeIn <- est
-          , maybe True ((/= contextValStr) . makeAbsoluteName . exprPath) oaObj
+          , maybe True ((/= contextValStr) . nameStr . makeAbsoluteName . exprPath) oaObj
           , getMetaType arrM == PTopType
           , isBindingVar (getMetaType m) -> do
           arrM' <- fromMeta BReq est (mWithType PTopType arrM) $ printf "oa arrM %s" (show oa)
-          m' <- fromMeta BReq est (mWithType PTopType m) ("In Bind " ++ name)
+          m' <- fromMeta BReq est (mWithType PTopType m) ("In Bind " ++ nameStr name)
           return $ Just (Just (Value m' name), arrM')
         Just argExpr -> do
           arrM' <- fromMeta BAct est arrM $ printf "oa arrM %s" (show oa)

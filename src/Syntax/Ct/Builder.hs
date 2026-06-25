@@ -25,7 +25,7 @@ emptyMeta :: SourcePos -> SourcePos -> ParseMeta
 emptyMeta p1 p2 = Meta PTopType (Just (p1, p2)) nil emptyMetaDat
 
 rawVal :: (MetaDat m) => String -> RawExpr m
-rawVal = RawValue m
+rawVal s = RawValue m (mkName s)
   where
     m = emptyMetaN
     -- m = Meta (typeVal (PTypeName name)) Nothing emptyMetaDat
@@ -87,10 +87,10 @@ rawStr :: (MetaDat m) => String -> RawExpr m
 rawStr = RawCExpr emptyMetaN . CStr
 
 rawComment :: (MetaDat m, Show m) => String -> RawExpr m
-rawComment s = rawVal mdAnnot `applyRawArgs` [(Just $ partialKey mdAnnotText, rawStr s)]
+rawComment s = rawVal mdAnnot `applyRawArgs` [(Just $ partialKey (mkName mdAnnotText), rawStr s)]
 
 exprVal :: (MetaDat m) => String -> Expr m
-exprVal = Value m
+exprVal s = Value m (mkName s)
   where
     m = emptyMetaN
     -- m = Meta (typeVal (PTypeName name)) Nothing emptyMetaDat
@@ -128,13 +128,13 @@ rawOutObjArr :: PExpr -> PObjArr
 rawOutObjArr e = RawObjArr Nothing FunctionObj Nothing [] (Just (Just e, Nothing)) Nothing
 
 rawModule :: String -> PStatement
-rawModule n = RawDeclStatement $ rawOutObjArr (rawVal modStr `applyRawExprVars` [(partialKey n, Nothing)])
+rawModule n = RawDeclStatement $ rawOutObjArr (rawVal modStr `applyRawExprVars` [(partialKey (mkName n), Nothing)])
 
 classInstSt :: (PExpr, [PExpr]) -> PStatement
 classInstSt (cls, extends) = RawDeclStatement $ rawOutObjArr (rawVal everyStr `applyRawEIArgs` [(cls, IArgNothing), (rawVal isaStr, IArgE $ RawList emptyMetaN extends)])
 
 classDeclSt :: PExpr -> [PExpr] -> PStatement
-classDeclSt cls extends = RawDeclStatement $ rawOutObjArr (rawVal classStr `applyRawEIArgs` [(cls, IArgNothing)] `applyRawArgs` [(Just $ partialKey isaStr, RawList emptyMetaN extends) | not (null extends)])
+classDeclSt cls extends = RawDeclStatement $ rawOutObjArr (rawVal classStr `applyRawEIArgs` [(cls, IArgNothing)] `applyRawArgs` [(Just $ partialKey (mkName isaStr), RawList emptyMetaN extends) | not (null extends)])
 
 classWithObjs :: PExpr -> [PExpr] -> [PExpr] -> PStatement
-classWithObjs cls objs extends = RawDeclStatement $ rawOutObjArr (rawVal classStr `applyRawEIArgs` [(cls, IArgNothing), (RawList emptyMetaN objs, IArgNothing)] `applyRawArgs` [(Just $ partialKey isaStr, RawList emptyMetaN extends) | not (null extends)])
+classWithObjs cls objs extends = RawDeclStatement $ rawOutObjArr (rawVal classStr `applyRawEIArgs` [(cls, IArgNothing), (RawList emptyMetaN objs, IArgNothing)] `applyRawArgs` [(Just $ partialKey (mkName isaStr), RawList emptyMetaN extends) | not (null extends)])

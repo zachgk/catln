@@ -207,7 +207,7 @@ Prgm
                     , omiDefs =
                         [ /Data/Algebra/equal
                             ( Value /other ->
-                                ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/ConsList[ /E=~/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] )
+                                ( TopType | PredClass /Data/ConsList[ /E=~/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq )
                             )( Value /this -> /Data/Nil ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
@@ -217,7 +217,7 @@ Prgm
                                 ( /Data/consEqual
                                     ( /a=/Data/Nil
                                     , /b=
-                                        ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/ConsList[ /E=~/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] )
+                                        ( TopType | PredClass /Data/ConsList[ /E=~/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq )
                                     ) + /Data/Primitive/True + /Data/Primitive/False
                                 )
                             , []

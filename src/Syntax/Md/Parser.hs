@@ -14,7 +14,7 @@ module Syntax.Md.Parser where
 
 import           CtConstants
 import           Semantics.Prgm
-import           Semantics.Types   (Constant (CStr), partialKey)
+import           Semantics.Types   (Constant (CStr), mkName, partialKey)
 import           Syntax.Ct.Builder
 import           Syntax.Ct.Prgm
 import           System.Directory
@@ -26,7 +26,7 @@ mdParser imp = case exprAppliedArgs imp of
     if isFile
       then do
         str <- readFile filename
-        return (RawPrgm [] [RawStatementTree (RawAnnot (rawVal mdAnnot `applyRawArgs` [(Just $ partialKey mdAnnotText, RawCExpr emptyMetaN (CStr str))])) []], [], Just str)
+        return (RawPrgm [] [RawStatementTree (RawAnnot (rawVal mdAnnot `applyRawArgs` [(Just $ partialKey (mkName mdAnnotText), RawCExpr emptyMetaN (CStr str))])) []], [], Just str)
       else return (RawPrgm [] [], [], Nothing)
   _ -> undefined
 

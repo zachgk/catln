@@ -19,7 +19,7 @@ import           Semantics.Types
 import           Text.Printf
 
 isAnnot :: (ExprClass e) => String -> CompAnnot (e m) -> Bool
-isAnnot name e = exprPath e == name
+isAnnot name e = nameStr (exprPath e) == name
 
 hasAnnot :: (ObjArrClass oa, ExprClass e) => String -> oa e m -> Bool
 hasAnnot name oa = any (isAnnot name) $ getOaAnnots oa
@@ -44,7 +44,7 @@ getRuntimeAnnot es = case mapMaybe aux es of
   [e] -> Just e
   _   -> Nothing
   where
-    aux e | exprPath e /= runtimeAnnot = Nothing
-    aux e = case H.lookup (partialKey runtimeAnnotK) (exprAppliedArgsMap e) of
+    aux e | nameStr (exprPath e) /= runtimeAnnot = Nothing
+    aux e = case H.lookup (partialKey (mkName runtimeAnnotK)) (exprAppliedArgsMap e) of
       Just (Just (_, Just (CExpr _ (CStr s)))) -> Just s
       _ -> error $ printf "Unknown or missing key in #runtime annot: %s" (show e)

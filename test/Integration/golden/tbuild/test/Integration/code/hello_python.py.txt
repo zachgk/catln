@@ -86,8 +86,8 @@ Prgm
                     , omiDefs =
                         [ /power_f( EAppArg Value /base -> /Data/Primitive/Float )( EAppArg Value /exp -> /Data/Primitive/Float ) ->
                             ( /Python/Builtins/pow
-                                ( /exp=/Data/Primitive/Float
-                                , /this=/Data/Primitive/Float
+                                ( /this=/Data/Primitive/Float
+                                , /exp=/Data/Primitive/Float
                                 ) + /Data/Primitive/Float
                             ) = /pow
                             ( EAppArg Value /this -> TVArg /base = ( Value /base ↦ TVArg /base ) )
@@ -105,7 +105,7 @@ Prgm
                         [ /sort_list( EAppArg Value /lst -> ∀/Data/List ) -> UnionType
                             ( Just
                                 ( !
-                                    ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) )
+                                    ( !( PredClass /Data/List ) && !( PredClass /Data/ConsList ) )
                                 , fromList []
                                 )
                             , /Data/sorted( /lst=∀/Data/List )
@@ -125,8 +125,8 @@ Prgm
                         [ /ContextIn
                             ( EAppArg Value /value -> /say_hello( /msg=/Data/String ) = /say_hello( EAppArg Value /msg -> /Data/String ) )( EAppArg Value /io -> /Catln/IO ) ->
                             ( /Catln/println
-                                ( /msg=/Data/String
-                                , /this=/Catln/IO
+                                ( /this=/Catln/IO
+                                , /msg=/Data/String
                                 ) + /Catln/IO
                             ) = /println
                             ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
@@ -138,8 +138,8 @@ Prgm
                         , /ContextIn
                             ( EAppArg Value /value -> /print_twice( /msg=/Data/String ) = /print_twice( EAppArg Value /msg -> /Data/String ) )( EAppArg Value /io -> /Catln/IO ) ->
                             ( /Catln/println
-                                ( /msg=/Data/String
-                                , /this=/Catln/IO
+                                ( /this=/Catln/IO
+                                , /msg=/Data/String
                                 ) + /Catln/IO
                             ) = /println
                             ( EAppArg Value /this -> /Catln/IO =
@@ -159,8 +159,8 @@ Prgm
                             )
                         , /ContextIn( EAppArg Value /value -> /echo = Value /echo )( EAppArg Value /io -> /Catln/IO ) ->
                             ( /Catln/println
-                                ( /msg=/Data/String
-                                , /this=/Catln/IO
+                                ( /this=/Catln/IO
+                                , /msg=/Data/String
                                 ) + /Catln/IO
                             ) = /println
                             ( EAppArg Value /this -> TVArg /io = ( Value /io ↦ TVArg /io ) )
@@ -281,11 +281,11 @@ Prgm
                     , omiDefs =
                         [ /add( EAppArg Value /x -> /Data/Primitive/Integer )( EAppArg Value /y -> /Data/Primitive/Integer ) ->
                             ( /operator+
-                                ( /r=/Data/String
-                                , /l=/Data/String
-                                ) + /operator+
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
+                                ) + /operator+
+                                ( /r=/Data/String
+                                , /l=/Data/String
                                 ) + /operator+
                                 ( /r=/Data/Primitive/Float
                                 , /l=/Data/Primitive/Float
@@ -349,8 +349,8 @@ Prgm
                     , omiDefs =
                         [ /power( EAppArg Value /base -> /Data/Primitive/Integer )( EAppArg Value /exp -> /Data/Primitive/Integer ) ->
                             ( /Python/Builtins/pow
-                                ( /exp=/Data/Primitive/Integer
-                                , /this=/Data/Primitive/Integer
+                                ( /this=/Data/Primitive/Integer
+                                , /exp=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer
                             ) = /pow
                             ( EAppArg Value /this -> TVArg /base = ( Value /base ↦ TVArg /base ) )
@@ -510,11 +510,11 @@ Prgm
                             ( EAppArg Value /x -> ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float ) )
                             ( EAppArg Value /y -> ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float ) ) ->
                             ( /operator+
-                                ( /r=/Data/String
-                                , /l=/Data/String
-                                ) + /operator+
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
+                                ) + /operator+
+                                ( /r=/Data/String
+                                , /l=/Data/String
                                 ) + /operator+
                                 ( /r=/Data/Primitive/Float
                                 , /l=/Data/Primitive/Float
@@ -566,7 +566,7 @@ Prgm
                         [ /reverse_list( EAppArg Value /lst -> ∀/Data/List ) -> UnionType
                             ( Just
                                 ( !
-                                    ( !( PredClass /Data/ConsList ) && !( PredClass /Data/List ) )
+                                    ( !( PredClass /Data/List ) && !( PredClass /Data/ConsList ) )
                                 , fromList []
                                 )
                             , /Data/reversed( /lst=∀/Data/List )
