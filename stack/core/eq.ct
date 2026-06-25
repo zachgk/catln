@@ -7,7 +7,6 @@ module(Data/Algebra)
     This file defines equivalence relations ([Eqv]), the [Eq] class of types that have a canonical
     equality, and the [operator==] / [operator!=] built on top of them. It is the foundation that
     ordering ([Ord], in [Data/Algebra/ord]) builds upon.
-
   # ## Equivalence Relations
     An [Eqv] is the class of equivalence relations over a type [$T]. Each object in the class is
     a single equivalence relation, and supplies the [rel] that decides whether two values of [$T]
@@ -43,10 +42,12 @@ module(Data/Algebra)
     members rather than constructed inline. [IntEqExample] is ordinary integer equality, and
     [AllEqv] relates every pair (handy for demonstrating the symmetry and transitivity laws on
     distinct values).
-  data(IntEqExample, isa= [/Data/Algebra/Eqv[$T= Integer]])
+  data(IntEqExample, isa= [/Data/Algebra/Eqv[$T -> Integer]])
+
   :IntEqExample.rel(a, b)= /Data/Primitive/intEq(l= a, r= b)
 
-  data(AllEqv, isa= [/Data/Algebra/Eqv[$T= Integer]])
+  data(AllEqv, isa= [/Data/Algebra/Eqv[$T -> Integer]])
+
   :AllEqv.rel(a, b)= True
 
   # ## Example
@@ -57,9 +58,12 @@ module(Data/Algebra)
     0
 
   # ## Laws of equivalence
-  testEqvReflexive =
+    Reflexivity is a property of the [Eqv] class itself: every equivalence relation must relate
+    each value to itself. Expressed as a property test, it is checked against every [Eqv]
+    instance (here [$E]) at arbitrary members of that instance's type (here [$T]).
+  testEqvReflexive[$E -> Eqv[$T]](e -> $E, t -> $T) =
     #test
-    #assert(test= IntEqExample.rel(a= 3, b= 3))
+    #assert(test= e.rel(a= t, b= t))
     0
 
   # Symmetry: for an [Eqv] whose relation is symmetric, equivalent values relate the same in

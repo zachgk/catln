@@ -1,4 +1,6 @@
 import "core"
+import "core"
+
 
 # Repro: a destructured element binding in a definition pattern must inherit the element
   bound declared on the function's argument. This uses a local `Boxed` class with a member
@@ -9,11 +11,15 @@ import "core"
   type-check and dispatch. Concrete construction/extraction already works; this isolates the
   parametric case where the element's only bound comes from the declaration.
 class(Boxed)
+
 unbox(b -> /Boxed) -> /Data/Primitive/Integer
+
 every(/Data/Primitive/Integer, isa= [/Boxed])
+
 unbox(b -> /Data/Primitive/Integer)= b
 
 data(Pair[$A, $B](first -> $A, second -> $B))
+
 bothUnbox(p -> Pair[$A -> /Boxed, $B -> /Boxed]) -> /Data/Primitive/Integer
 bothUnbox(p= Pair(first@f, second@s))= unbox(b= f)
 

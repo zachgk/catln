@@ -27,7 +27,8 @@ Prgm
                                         , ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float )
                                         , []
                                         )
-                                    , /this=( /Data/Algebra/AllEqv + /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering + /Data/Primitive/BoolEqv + /Data/Algebra/IntEqExample + /Data/StrEqv )
+                                    , /this=
+                                        ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] )
                                     , /b=∀/Data/Algebra/Eq
                                     ) + /Data/Primitive/False + /Data/Primitive/boolEq
                                     ( /r=∀/Data/Primitive/Boolean
@@ -73,7 +74,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /Data/Algebra/testEqvReflexive -> /Data/Primitive/Integer = 0 ]
+                        [ /Data/Algebra/testEqvReflexive
+                            ( EAppVar /E ∀/Data/Algebra/Eqv[ /T=TopType ] )( EAppArg Value /e -> $/E )( EAppArg Value /t -> $/T ) -> /Data/Primitive/Integer = 0
+                        ]
                     }
                 )
             ,
@@ -202,8 +205,8 @@ Prgm
             ( False
             , /Data/Algebra/Eqv[ /T=TopType ]
             ,
-                [ /Data/Algebra/IntEqExample
-                , /Data/Algebra/AllEqv
+                [ /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ]
+                , /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ]
                 ]
             , Just ""
             )
@@ -248,7 +251,10 @@ Prgm
             ( EAppArg Value /text -> /Data/String = "## Example
             The simplest [Eqv] over [Integer] compares its values with the built-in integer equality." )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "## Laws of equivalence" )
+            ( EAppArg Value /text -> /Data/String = "## Laws of equivalence
+            Reflexivity is a property of the [Eqv] class itself: every equivalence relation must relate
+            each value to itself. Expressed as a property test, it is checked against every [Eqv]
+            instance (here [$E]) at arbitrary members of that instance's type (here [$T])." )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "Symmetry: for an [Eqv] whose relation is symmetric, equivalent values relate the same in" )
         , /Catln/#md

@@ -38,7 +38,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /Data/Algebra/testEqvReflexive= CInt 0 ]
+                        [ /Data/Algebra/testEqvReflexive
+                            [ /E : ∀/Data/Algebra/Eqv[ /T=TopType ] ]( Value e -> $/E )( Value t -> $/T )= CInt 0
+                        ]
                     }
                 )
             ,
@@ -142,8 +144,8 @@ Prgm
             ( False
             , /Data/Algebra/Eqv[ /T=TopType ]
             ,
-                [ /Data/Algebra/IntEqExample
-                , /Data/Algebra/AllEqv
+                [ /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ]
+                , /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ]
                 ]
             , Just ""
             )
@@ -188,7 +190,10 @@ Prgm
             ( Value /text= CStr "## Example
             The simplest [Eqv] over [Integer] compares its values with the built-in integer equality." )
         , /Catln/#md
-            ( Value /text= CStr "## Laws of equivalence" )
+            ( Value /text= CStr "## Laws of equivalence
+            Reflexivity is a property of the [Eqv] class itself: every equivalence relation must relate
+            each value to itself. Expressed as a property test, it is checked against every [Eqv]
+            instance (here [$E]) at arbitrary members of that instance's type (here [$T])." )
         , /Catln/#md
             ( Value /text= CStr "Symmetry: for an [Eqv] whose relation is symmetric, equivalent values relate the same in" )
         , /Catln/#md

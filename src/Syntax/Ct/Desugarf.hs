@@ -216,7 +216,11 @@ desTypeDef statementEnv@(inheritPath, _) typeExpr extends subStatements = do
   -- lookup against the absolute type name would miss (unlike the @every@ form, which already
   -- stores the resolved name). 'oaObjPath' is the data object's absolute path.
   let memberName = oaObjPath obj
-  let extendNodes = [(CGClass (False, exprToPartialType extendClass, [singletonType type'{ptName=memberName}], Nothing), PClassName (exprPath extendClass), [PTypeName memberName]) | extendClass <- extends]
+  -- Record the class's type-parameter binding for /this member/ on the member entry itself (e.g.
+  -- @data IntOrdering isa Ordering[$T -> Integer]@ stores the member as @IntOrdering[$T=Integer]@).
+  -- The shared class node keeps only one parent partial, so per-member element bindings must live on
+  -- each member or they are lost when memberships merge.
+  let extendNodes = [(CGClass (False, ec, [singletonType type'{ptName=memberName, ptVars=ptVars ec}], Nothing), PClassName (exprPath extendClass), [PTypeName memberName]) | extendClass <- extends, let ec = exprToPartialType extendClass]
   let classGraph = classGraphFromObjs objMap <> ClassGraph (graphFromEdges extendNodes)
   return (Prgm objMap classGraph [] <> subPrgm)
 

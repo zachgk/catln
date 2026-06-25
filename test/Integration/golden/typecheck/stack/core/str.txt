@@ -69,13 +69,16 @@ Prgm
                                     , /l=/Data/String
                                     ) + /Data/Primitive/True + /Data/Algebra/rel
                                     ( /a=/Data/String
-                                    , /this=( /Data/Algebra/AllEqv + /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering + /Data/Primitive/BoolEqv + /Data/Algebra/IntEqExample + /Data/StrEqv )
+                                    , /this=
+                                        ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] )
                                     , /b=∀/Data/Algebra/Eq
                                     ) + /Data/Primitive/False + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison )
                                 )
                             , []
                             ) = /rel( Value /a -> TVArg /this = Value /this )( Value /b -> TVArg /other = Value /other )
-                            ( Value /this -> ( /Data/Algebra/AllEqv + /Data/Primitive/FloatOrdering + /Data/Primitive/IntOrdering + /Data/Primitive/BoolEqv + /Data/Algebra/IntEqExample + /Data/StrEqv ) = /eq( Value /this -> TVArg /this = Value /this ) )
+                            ( Value /this ->
+                                ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] ) = /eq( Value /this -> TVArg /this = Value /this )
+                            )
                         ]
                     }
                 )
@@ -105,8 +108,9 @@ Prgm
             )
         , CGClass
             ( False
-            , /Data/Algebra/Eqv[ /T=TopType ]
-            , [ /Data/StrEqv ]
+            , /Data/Algebra/Eqv[ /T=~String ]
+            ,
+                [ /Data/StrEqv[ /T=/Data/String ] ]
             , Nothing
             )
         ]

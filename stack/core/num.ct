@@ -51,11 +51,16 @@ module(Data/Primitive)
   # [Integer]'s instances of the algebra ordering/equality classes. [IntOrdering] is its
   #   [/Data/Algebra/Ordering]; [ord] and [compareTo] follow from it, and [eq] derives from the
   #   same ordering (an [Ordering] is an [Eqv], so it doubles as the canonical equivalence).
-  data(IntOrdering, isa= [/Data/Algebra/Ordering[$T= Integer]])
+  data(IntOrdering, isa= [/Data/Algebra/Ordering[$T -> Integer]])
+
   :IntOrdering.compare(a, b)= /Data/Algebra/mkComparison(lt= /Data/Primitive/intLt(l= a, r= b), eq= /Data/Primitive/intEq(l= a, r= b))
+
   :Integer.ord= IntOrdering
+
   :Integer.compareTo(other)= this.ord.compare(a= this, b= other)
+
   :Integer.eq= IntOrdering
+
   :Integer.equal(other)= this.eq.rel(a= this, b= other)
 
   # ### Commutative Group
@@ -112,11 +117,16 @@ module(Data/Primitive)
     #runtime("float==")
 
   # [Float]'s instances of the algebra ordering/equality classes, mirroring [Integer] above.
-  data(FloatOrdering, isa= [/Data/Algebra/Ordering[$T= Float]])
+  data(FloatOrdering, isa= [/Data/Algebra/Ordering[$T -> Float]])
+
   :FloatOrdering.compare(a, b)= /Data/Algebra/mkComparison(lt= /Data/Primitive/floatLt(l= a, r= b), eq= /Data/Primitive/floatEq(l= a, r= b))
+
   :Float.ord= FloatOrdering
+
   :Float.compareTo(other)= this.ord.compare(a= this, b= other)
+
   :Float.eq= FloatOrdering
+
   :Float.equal(other)= this.eq.rel(a= this, b= other)
 
   :Float.round -> Integer

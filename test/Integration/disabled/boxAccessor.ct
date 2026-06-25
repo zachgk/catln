@@ -1,4 +1,6 @@
 import "core"
+import "core"
+
 
 # Repro: type parameter must bind from a field accessor on a parameterized type.
   Box(v= 1).v should type-check to Integer, not TopType.

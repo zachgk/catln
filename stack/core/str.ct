@@ -14,7 +14,10 @@ module(Data)
     [String] is an [Eq] type: [StrEqv] wraps the primitive [strEqual], and [eq]/[equal] follow.
   every(String, isa= [/Data/Algebra/Eq])
 
-  data(StrEqv, isa= [/Data/Algebra/Eqv[$T= String]])
+  data(StrEqv, isa= [/Data/Algebra/Eqv[$T -> String]])
+
   :StrEqv.rel(a, b)= /Data/strEqual(l= a, r= b)
+
   :String.eq= StrEqv
+
   :String.equal(other)= this.eq.rel(a= this, b= other)

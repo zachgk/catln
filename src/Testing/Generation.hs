@@ -265,6 +265,9 @@ genVal pt
   | pt == charLeaf  = CharVal <$> HG.unicode
   | ptName pt == truePrim  = pure $ TupleVal truePrim H.empty
   | ptName pt == falsePrim = pure $ TupleVal falsePrim H.empty
+  -- A nullary data type (no fields) has a single inhabitant: itself. This covers data-valued
+  -- args such as a chosen typeclass instance (e.g. an 'Eqv' instance for a property test).
+  | H.null (ptArgs pt)     = pure $ TupleVal (ptName pt) H.empty
   | otherwise = HG.discard
 
 -- | Generate a random 'Val' for a 'Type'.

@@ -375,10 +375,15 @@ Prgm
             )
         , CGClass
             ( False
-            , /Data/Algebra/Ordering[ /T=TopType ]
+            , /Data/Algebra/Ordering
+                [ /T=
+                    ( TopType | !
+                        ( !( PredRel Float ) && !( PredRel Integer ) )
+                    )
+                ]
             ,
-                [ /Data/Primitive/IntOrdering
-                , /Data/Primitive/FloatOrdering
+                [ /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ]
+                , /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ]
                 ]
             , Nothing
             )

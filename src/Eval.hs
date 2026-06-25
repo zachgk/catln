@@ -42,7 +42,7 @@ import           Semantics.Annots    (hasAnnot)
 import           Semantics.TypeGraph (ReachesEnv (ReachesEnv),
                                       reachesHasCutSubtypeOf, reachesPartials,
                                       reachesTo)
-import           Testing.Generation  (genVal)
+import           Testing.Generation  (genValForType)
 import           Text.Printf
 import           TreeBuild
 import           Utils
@@ -396,12 +396,25 @@ evalTest prgmGraphData = do
           typeVars = exprAppliedOrdVars (oaObjExpr oa)
           args     = exprAppliedArgs (oaObjExpr oa)
 
+          TypeEnv{teNames} = typeEnv
+
           -- Resolve a type variable's constraint to a list of concrete PartialTypes
           resolveVar (_varName, varMeta) =
-            let TypeEnv{teNames} = typeEnv
-            in splitUnionType $ expandTypeWithNames typeEnv H.empty (getMetaType varMeta) teNames
+            splitUnionType $ expandTypeWithNames typeEnv H.empty (getMetaType varMeta) teNames
 
           concreteTypesPerVar = map resolveVar typeVars
+
+          -- The type-parameter bindings a class records for a chosen member instance. A class node
+          -- stores each member with the parameters that member fixes (e.g. @FloatOrdering@ under
+          -- @Ordering@ carries @$T -> Float@), so this recovers a chosen instance's element type —
+          -- which the flattened class expansion drops.
+          classNodes = let ClassGraph cg = teClassGraph typeEnv in graphToNodes cg
+          instanceVarBindings instName = H.unions
+            [ ptVars mp
+            | (CGClass (_, _, ts, _), _, _) <- classNodes
+            , mt <- ts
+            , mp <- case mt of UnionType Nothing ls [] -> splitUnionType ls; _ -> []
+            , ptName mp == instName ]
 
           prop = Hedgehog.property $ do
             -- For each type variable, choose a concrete PartialType
@@ -413,18 +426,25 @@ evalTest prgmGraphData = do
 
             -- Build a map from type var name to chosen concrete type
             let varTypeMap = H.fromList $ zip (map fst typeVars) chosenTypes
+            -- A chosen instance fixes further type variables through its class parameters (e.g.
+            -- choosing $E -> Eqv[$T] determines the underlying $T). Expose those nested bindings so
+            -- a value arg typed by them (such as @t -> $T@) generates the right concrete value.
+            let nestedTypeMap = H.unions (map (instanceVarBindings . ptName) chosenTypes)
 
-            -- For each value argument, determine its concrete type and generate a value
+            -- For each value argument, determine its concrete type and generate a value. The
+            -- resolved type may be a class (e.g. an instance's element type is @Boolean@), so expand
+            -- it to its concrete leaves before generating.
             argVals <- mapM (\argOA ->
               let argType = case oaArr argOA of
                     Just (_, arrMeta) -> case getMetaType arrMeta of
-                      TypeVar (TVVar vn) _ -> H.lookupDefault intLeaf vn varTypeMap
-                      UnionType Nothing partials [] -> case splitUnionType partials of
-                        [pt] -> pt
-                        _    -> intLeaf
-                      _                   -> intLeaf
-                    Nothing -> intLeaf
-              in Hedgehog.forAll (genVal argType)
+                      TypeVar (TVVar vn) _ -> case H.lookup vn nestedTypeMap of
+                        Just t  -> t
+                        Nothing -> singletonType $ H.lookupDefault intLeaf vn varTypeMap
+                      t@(UnionType Nothing _ []) -> t
+                      _                          -> intType
+                    Nothing -> intType
+                  concreteArg = UnionType Nothing (expandTypeWithNames typeEnv H.empty argType teNames) []
+              in Hedgehog.forAll (genValForType concreteArg)
               ) args
 
             -- Build the expression: testName[$T=ConcreteType, ...](arg0=val0, ...)
