@@ -27,11 +27,13 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs.$433864-0( Value /x -> ∀/Data/Algebra/Ord )
+                        [ /abs.$433864-0
+                            ( Value /x -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) )
                             ( Value /$433864-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=( Value /l -> TVArg /x = Value /x )
                                 ( Value /r -> /Data/Primitive/Integer = CInt 0 )
                             ) -> TVArg /x2 = Value /x2
-                        , /abs.$433864-0( Value /x -> ∀/Data/Algebra/Ord )
+                        , /abs.$433864-0
+                            ( Value /x -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) )
                             ( Value /$433864-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=( Value /l -> TVArg /x = Value /x )
                                 ( Value /r -> /Data/Primitive/Integer = CInt 0 )
                             ) ->
@@ -39,8 +41,8 @@ Prgm
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer + /abs.$433864-1
-                                ( /x=∀/Data/Algebra/Ord
-                                , /$433864-arg=∀/Data/Algebra/Ord
+                                ( /x=( /Data/Primitive/Integer + /Data/Primitive/Float )
+                                , /$433864-arg=( /Data/Primitive/Integer + /Data/Primitive/Float )
                                 )
                             ) = /abs.$433864-1( Value /x -> TVArg /x = Value /x )
                             ( Value /$433864-arg -> TVArg /x = Value /x )
@@ -62,8 +64,8 @@ Prgm
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer + /abs.$433864-1
-                                ( /x=∀/Data/Algebra/Ord
-                                , /$433864-arg=∀/Data/Algebra/Ord
+                                ( /x=( /Data/Primitive/Integer + /Data/Primitive/Float )
+                                , /$433864-arg=( /Data/Primitive/Integer + /Data/Primitive/Float )
                                 )
                             ) = /abs.$433864-0( Value /x -> TVArg /x = Value /x )
                             ( Value /$433864-arg -> TVArg /x = Value /x )

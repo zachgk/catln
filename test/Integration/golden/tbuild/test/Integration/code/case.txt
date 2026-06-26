@@ -30,12 +30,14 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs.$433864-0( EAppArg Value /x -> ∀/Data/Algebra/Ord )
+                        [ /abs.$433864-0
+                            ( EAppArg Value /x -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) )
                             ( EAppArg Value /$433864-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=
                                 ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
                                 ( EAppArg Value /r -> /Data/Primitive/Integer = 0 )
                             ) -> TVArg /x2 = Value /x2
-                        , /abs.$433864-0( EAppArg Value /x -> ∀/Data/Algebra/Ord )
+                        , /abs.$433864-0
+                            ( EAppArg Value /x -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) )
                             ( EAppArg Value /$433864-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=
                                 ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
                                 ( EAppArg Value /r -> /Data/Primitive/Integer = 0 )
@@ -44,8 +46,8 @@ Prgm
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer + /abs.$433864-1
-                                ( /x=∀/Data/Algebra/Ord
-                                , /$433864-arg=∀/Data/Algebra/Ord
+                                ( /x=( /Data/Primitive/Integer + /Data/Primitive/Float )
+                                , /$433864-arg=( /Data/Primitive/Integer + /Data/Primitive/Float )
                                 )
                             ) = /abs.$433864-1
                             ( EAppArg Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) )
@@ -68,8 +70,8 @@ Prgm
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer + /abs.$433864-1
-                                ( /x=∀/Data/Algebra/Ord
-                                , /$433864-arg=∀/Data/Algebra/Ord
+                                ( /x=( /Data/Primitive/Integer + /Data/Primitive/Float )
+                                , /$433864-arg=( /Data/Primitive/Integer + /Data/Primitive/Float )
                                 )
                             ) = /abs.$433864-0
                             ( EAppArg Value /x -> TVArg /x = ( Value /x ↦ TVArg /x ) )

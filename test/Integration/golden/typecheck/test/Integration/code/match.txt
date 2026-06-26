@@ -27,7 +27,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /abs.$fb881e( Value /x -> ∀/Data/Algebra/Ord )
+                        [ /abs.$fb881e
+                            ( Value /x -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) )
                             ( Value /$fb881e-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=( Value /l -> TVArg /x = Value /x )
                                 ( Value /r -> /Data/Primitive/Integer = CInt 0 )
                             ) -> TVArg /x2 = Value /x2

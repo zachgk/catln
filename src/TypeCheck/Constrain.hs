@@ -254,6 +254,13 @@ runConstraints 0 _ = do
     then lift $ TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit without determining the TopTop (unionAllObjs)"] ()
     else lift $ TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit with still changing constraints: \n\n%s" (show $ showTraceConstrainEpoch env $ head $ tail $ tcEpochs feTrace)] ()
 runConstraints limit cons = do
+  -- Compute the constraint-independent reaches type graph once for this epoch and cache it, so
+  -- the (many) 'arrowConstrainUbs'/'mkReachesEnv' calls in this epoch reuse it instead of each
+  -- rebuilding the whole type graph. See the TODO on 'buildTypeEnv'.
+  do
+    env <- get
+    reachesTypeEnv <- lift $ buildTypeEnv env
+    modify $ \e -> e{feReachesTypeEnv = reachesTypeEnv}
   constraintsToPrune <- mapM executeConstraint cons
   updated <- gets feUpdatedDuringEpoch
   let cons' = mapMaybe (\(con, shouldPrune) -> if shouldPrune then Nothing else Just con) $ zip cons constraintsToPrune

@@ -76,6 +76,7 @@ data FEnv = FEnv { fePnts               :: IM.IntMap Scheme
                  , feTTypeGraph         :: TTypeGraph
                  , feUpdatedDuringEpoch :: Bool -- ^ If a pnt is updated during the epoch
                  , feTypeEnv            :: FEnvTypeEnv
+                 , feReachesTypeEnv     :: FEnvTypeEnv -- ^ Per-epoch cache of 'buildTypeEnv' (the constraint-independent reaches type graph), recomputed once at the top of each 'runConstraints' epoch and reused across all 'mkReachesEnv' calls. Initialized to the base 'feTypeEnv' but never read until the first epoch populates it.
                  , feLocalDefNames      :: S.HashSet Name -- ^ Absolute names defined by the programs currently being encoded (not yet in 'feTypeEnv'\'s object map). Used to tell a destructuring binding variable from a reference to a same-batch definition.
                  , feTrace              :: TraceConstrain
                  } deriving (Show)

@@ -170,9 +170,10 @@ mkReachesEnv env (Constraint maybeConOa stypeVaenv _) = do
     return (mapMeta clearMetaDat InputMeta inExpr', outM')
   let argObjMap = objectMapFromList $ concatMap (\(inExpr, outM) -> [ObjArr (Just inExpr) ArgObj Nothing [] (Just (Nothing, emptyMetaT (substituteWithVarArgEnv (fmap snd vaenv) (getMetaType outM))))]) $ H.elems argVaenv'
 
-  -- final ReachesEnv
+  -- final ReachesEnv. Reuse the per-epoch cached reaches type graph ('feReachesTypeEnv');
+  -- it is constraint-independent, so rebuilding it per call would be redundant.
   let argTypeEnv = mkTypeEnv $ Prgm argObjMap (classGraphFromObjs argObjMap) []
-  feTypeEnv' <- buildTypeEnv env
+  let feTypeEnv' = feReachesTypeEnv env
   return $ ReachesEnv (argTypeEnv <> feTypeEnv') (fmap snd vaenv) S.empty
 
 arrowConstrainUbs :: FEnv -> RConstraint -> Type -> Type -> TypeCheckResult (Type, Type, Maybe ReachesTree)

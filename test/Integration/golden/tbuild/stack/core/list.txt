@@ -86,6 +86,47 @@ Prgm
                                 ) = /Data/Cons( EAppArg Value /head )
                                 ( EAppArg Value /tail -> ~ConsList[ /T=$_/T ] )
                             )( EAppArg Value /b -> /Data/Nil = Value /Data/Nil ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/consEqual
+                            ( EAppArg Value /a -> /Data/Cons
+                                [ /T=( TopType | PredClass /Data/Algebra/Eq && PredRel /Data/Algebra/Eq ) ]
+                                ( /head=$/T
+                                , /tail=~ConsList[ /T=$_/T ]
+                                ) = /Data/Cons( EAppArg Value /head@Value /ah -> ∀/Data/Algebra/Eq )
+                                ( EAppArg Value /tail@Value /at -> ∀/Data/ConsList[ /T=~/Data/Algebra/Eq ] )
+                            )
+                            ( EAppArg Value /b -> /Data/Cons
+                                [ /T=( TopType | PredClass /Data/Algebra/Eq && PredRel /Data/Algebra/Eq ) ]
+                                ( /head=$/T
+                                , /tail=~ConsList[ /T=$_/T ]
+                                ) = /Data/Cons( EAppArg Value /head@Value /bh -> ∀/Data/Algebra/Eq )
+                                ( EAppArg Value /tail@Value /bt ->
+                                    ( TopType | PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] && PredRel ConsList[ /T=$_/T ] )
+                                )
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Primitive/True + /operator&&
+                                    ( /r=∀/Data/Primitive/Boolean
+                                    , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Primitive/False
+                                )
+                            , []
+                            ) = /operator&&
+                            ( EAppArg Value /l -> ∀/Data/Primitive/Boolean =
+                                ( /operator==
+                                    ( EAppArg Value /l -> TVArg /ah = ( Value /ah ↦ TVArg /ah ) )
+                                    ( EAppArg Value /r -> TVArg /bh = ( Value /bh ↦ TVArg /bh ) ) ↦ ∀/Data/Primitive/Boolean
+                                )
+                            )
+                            ( EAppArg Value /r -> ∀/Data/Primitive/Boolean =
+                                ( /Data/consEqual
+                                    ( EAppArg Value /a -> TVArg /at = ( Value /at ↦ TVArg /at ) )
+                                    ( EAppArg Value /b -> TVArg /bt = ( Value /bt ↦ TVArg /bt ) ) ↦ ∀/Data/Primitive/Boolean
+                                )
+                            )
                         ]
                     }
                 )
@@ -162,6 +203,16 @@ Prgm
                         [ /Data/any( EAppArg Value /lst -> ∀/Data/ConsList ) -> ∀/Data/Primitive/Boolean ]
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/List/testConsListEquality"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/List/testConsListEquality -> /Data/Primitive/Integer = 0 ]
                     }
                 )
             ,

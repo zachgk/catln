@@ -215,8 +215,8 @@ Prgm
                                 )
                             ,
                                 ( /Data/Algebra/LessThan + /Data/Algebra/mkComparison
-                                    ( /lt=∀/Data/Primitive/Boolean
-                                    , /eq=∀/Data/Primitive/Boolean
+                                    ( /eq=∀/Data/Primitive/Boolean
+                                    , /lt=∀/Data/Primitive/Boolean
                                     ) + /Data/Algebra/Equal + /Data/Algebra/GreaterThan
                                 )
                             , []
@@ -240,8 +240,8 @@ Prgm
                                 )
                             ,
                                 ( /Data/Algebra/LessThan + /Data/Algebra/mkComparison
-                                    ( /lt=∀/Data/Primitive/Boolean
-                                    , /eq=∀/Data/Primitive/Boolean
+                                    ( /eq=∀/Data/Primitive/Boolean
+                                    , /lt=∀/Data/Primitive/Boolean
                                     ) + /Data/Algebra/Equal + /Data/Algebra/GreaterThan
                                 )
                             , []
@@ -326,9 +326,9 @@ Prgm
                                 )
                             ,
                                 ( /Data/Primitive/True + /Data/Algebra/rel
-                                    ( /a=/Data/Primitive/Integer
-                                    , /this=
+                                    ( /this=
                                         ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] )
+                                    , /a=/Data/Primitive/Integer
                                     , /b=∀/Data/Algebra/Eq
                                     ) + /Data/Primitive/False + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
                                     ( /r=/Data/Primitive/Integer
@@ -353,9 +353,9 @@ Prgm
                                 )
                             ,
                                 ( /Data/Primitive/True + /Data/Algebra/rel
-                                    ( /a=/Data/Primitive/Float
-                                    , /this=
+                                    ( /this=
                                         ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] )
+                                    , /a=/Data/Primitive/Float
                                     , /b=∀/Data/Algebra/Eq
                                     ) + /Data/Primitive/False + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison )
                                 )
@@ -418,12 +418,12 @@ Prgm
                                 )
                             ,
                                 ( /Data/Algebra/LessThan + /Data/Algebra/mkComparison
-                                    ( /lt=∀/Data/Primitive/Boolean
-                                    , /eq=∀/Data/Primitive/Boolean
+                                    ( /eq=∀/Data/Primitive/Boolean
+                                    , /lt=∀/Data/Primitive/Boolean
                                     ) + /Data/Algebra/compare
-                                    ( /a=/Data/Primitive/Integer
-                                    , /this=
+                                    ( /this=
                                         ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
+                                    , /a=/Data/Primitive/Integer
                                     , /b=∀/Data/Algebra/Ord
                                     ) + /Data/Algebra/Equal + /Data/Algebra/GreaterThan
                                 )
@@ -445,12 +445,12 @@ Prgm
                                 )
                             ,
                                 ( /Data/Algebra/LessThan + /Data/Algebra/mkComparison
-                                    ( /lt=∀/Data/Primitive/Boolean
-                                    , /eq=∀/Data/Primitive/Boolean
+                                    ( /eq=∀/Data/Primitive/Boolean
+                                    , /lt=∀/Data/Primitive/Boolean
                                     ) + /Data/Algebra/compare
-                                    ( /a=/Data/Primitive/Float
-                                    , /this=
+                                    ( /this=
                                         ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
+                                    , /a=/Data/Primitive/Float
                                     , /b=∀/Data/Algebra/Ord
                                     ) + /Data/Algebra/Equal + /Data/Algebra/GreaterThan
                                 )

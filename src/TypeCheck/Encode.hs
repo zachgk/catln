@@ -73,6 +73,7 @@ makeBaseFEnv prgm = FEnv{
   feTTypeGraph = mempty,
   feUpdatedDuringEpoch = False,
   feTypeEnv = mkTypeEnv prgm,
+  feReachesTypeEnv = mkTypeEnv prgm,
   feLocalDefNames = S.empty,
   feTrace = mkTraceConstrain
   }
