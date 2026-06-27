@@ -559,11 +559,15 @@ isPredsContradictory (PredsAnd ps) = go (3 :: Int) ps
     go n ps'
       | any (\p -> PredsNot p `elem` ps') ps' = True
       | otherwise =
-          let derived = L.nub $ concatMap (unitPropDerive ps') ps'
+          let derived = L.nub $ classImplied ps' ++ concatMap (unitPropDerive ps') ps'
               ps'' = L.nub $ ps' ++ derived
           in if length ps'' > length ps'
              then go (n - 1) ps''
              else False
+    -- @hasClass c ⟹ isa c@ (same name): a known @PredClass c@ also makes @PredRel c@ known. Lets
+    -- contradiction detection see e.g. @PredClass Eq ∧ ¬(PredClass Eq ∧ PredRel Eq)@ as empty - the
+    -- shape an element bound takes when a constructor is a member of two related classes (Eq, Ord).
+    classImplied known = [PredsOne (PredRel c) | PredsOne (PredClass c) <- known]
     -- From ¬(A∧B∧...) with all-but-one known, derive the negation of the remaining.
     -- Use predsNot (not PredsNot) so that ¬(¬A) normalizes to A, enabling contradiction detection.
     unitPropDerive :: [TypePredicates] -> TypePredicates -> [TypePredicates]
@@ -1110,7 +1114,31 @@ predsSealed typeEnv@TypeEnv{teClassGraph=ClassGraph cg} = go
              (s:_) -> s
              []    -> False
 
+-- | True when class @c1@ is a transitively-declared subclass of @c2@, established by the
+-- @every(c1 isa c2)@ edges that record @c1@ as a class-predicate member of @c2@'s class node.
+-- This is the "upward" is-a direction. It follows only /class/ members (those whose member type is
+-- a bare 'PredClass'), never data members, so it cannot unroll a recursive parameterized member
+-- such as @Maybe[$T -> Ord] ∈ Ord@ - which the "downward" member enumeration in 'predImpliesAtom'
+-- does, making @Ord ⊆ Eq@ recurse back through @Maybe[Ord] ⊆ Maybe[Eq] ⊆ Eq@ into @Ord ⊆ Eq@.
+-- Sound by definition: @every(c1 isa c2)@ asserts @U_c1 ⊆ U_c2@. Restricted to var-free class
+-- members so a parameterized edge (@Ordering[$T] isa Eqv[$T]@) is left to the precise path.
+classDeclaredSubclassOf :: (TypeGraph tg) => TypeEnv tg -> TypeName -> TypeName -> Bool
+classDeclaredSubclassOf TypeEnv{teClassGraph=ClassGraph cg} c1 c2 = go S.empty c2
+  where
+    go visited cName
+      | S.member cName visited = False
+      | otherwise = case graphLookup (PClassName cName) cg of
+          Just (CGClass (_, _, classTypes, _)) ->
+            let subs = [ ptName sc | t <- classTypes, Just sc <- [maybeGetClassSingleton t], H.null (ptVars sc) ]
+            in any (\s -> relativeNameMatches c1 s || go (S.insert cName visited) s) subs
+          _ -> False
+
 predImpliesAtom :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicate -> TypePredicate -> Bool
+-- A declared subclass edge @every(c1 isa c2)@ proves @c1 ⊆ c2@ directly, without enumerating
+-- @c1@'s members (which can recurse through a recursive parameterized member - see
+-- 'classDeclaredSubclassOf').
+predImpliesAtom typeEnv _ (PredClass c1) (PredClass c2)
+  | classDeclaredSubclassOf typeEnv (ptName c1) (ptName c2) = True
 -- PredClass: c1 implies c2 only when c1 is sealed (all members known) and each member is in U_c2
 predImpliesAtom typeEnv@TypeEnv{teClassGraph=ClassGraph cg, tePrgmEnv} vaenv (PredClass c1) (PredClass c2) =
   case graphLookup (PClassName (ptName c1)) cg of
@@ -1123,10 +1151,16 @@ predImpliesAtom typeEnv@TypeEnv{teClassGraph=ClassGraph cg, tePrgmEnv} vaenv (Pr
 -- captures class-graph relationships between the names (e.g. ConsList isa List).
 predImpliesAtom typeEnv vaenv (PredRel r1) (PredRel r2)
   | relativeNameMatches (ptName r2) (ptName r1) && all checkArg (H.keys (ptArgs r2)) = True
+  -- A declared subclass edge @every(r1 isa r2)@ proves @isa r1 ⟹ isa r2@ directly, avoiding the
+  -- 'expandRelPartial' below (which unrolls r1's members and recurses through a recursive
+  -- parameterized member). Restricted to plain (arg/var-free) relations, matching the nullary
+  -- class edges (@Ord isa Eq@) it targets - see 'classDeclaredSubclassOf'.
+  | plainPartial r1 && plainPartial r2 && classDeclaredSubclassOf typeEnv (ptName r1) (ptName r2) = True
   | otherwise = isSubtypeOfWithEnv typeEnv vaenv (expandRelPartial typeEnv vaenv r1) (expandRelPartial typeEnv vaenv r2)
   where checkArg k = isSubtypeOfWithEnv typeEnv vaenv
                        (H.lookupDefault PTopType k (ptArgs r1))
                        (ptArgs r2 H.! k)
+        plainPartial p = H.null (ptArgs p) && H.null (ptVars p)
 -- PredExpr: use structural partial comparison (equality-based simplifying assumption)
 predImpliesAtom typeEnv vaenv (PredExpr e1) (PredExpr e2) = isSubPartialOfWithEnv typeEnv vaenv e1 e2
 -- PredClass c implies PredRel r when r's name is a suffix of c's name (then
@@ -1735,6 +1769,31 @@ compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials)) posLeafs 
     isDominatedByPredClass (PredsOne (PredRel r)) =
       any (\c -> relativeNameMatches (ptName r) (ptName c)) predClassAtoms
     isDominatedByPredClass _                      = False
+-- PredsAnd: drop a conjunct implied by a sibling (@p ∧ q = p@ when @p ⟹ q@), so a disjunction
+-- conjunct absorbed by a stronger sibling collapses - e.g. with @Ord isa Eq@,
+-- @PredClass Eq ∧ (PredRel Eq ∨ PredRel Ord) → PredClass Eq@ (the element bound a parameterized
+-- type accumulates when its constructor is a member of two related classes). Gated to conjunctions
+-- containing a 'PredsNot' (the disjunction/complement form) so the common atom-only conjunctions
+-- never pay the pairwise 'predImplies'.
+compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials)) posLeafs cs)
+  | any isPredsNotConjunct ps
+  , let simplified = dropImpliedConjuncts ps
+  , length simplified < length ps =
+      compactType typeEnv vaenv $ UnionType (Just (mkAnd simplified, negPartials)) posLeafs cs
+  where
+    isPredsNotConjunct (PredsNot _) = True
+    isPredsNotConjunct _            = False
+    -- Drop @q@ when a distinct sibling @p@ implies it; keep one of any mutually-implying pair. Uses
+    -- only the cheap /syntactic/ implication (@p ∧ ¬q@ contradictory) - never the expansion-based
+    -- 'predsEmpty' - so this hot-path clause stays cheap. The enhanced 'isPredsContradictory'
+    -- (which knows @hasClass c ⟹ isa c@) is enough for the disjunction-absorption this targets.
+    cheapImplies p q = isPredsContradictory (predsAnd p (predsNot q))
+    dropImpliedConjuncts = go []
+      where
+        go kept [] = reverse kept
+        go kept (q:rest)
+          | any (\p -> p /= q && cheapImplies p q) (kept ++ rest) = go kept rest
+          | otherwise = go (q:kept) rest
 -- Top component catch-all (includes PTopType and TopType np PredsNone); preserve constants.
 -- Also compact the pos component for structural canonicalization (ensures union commutativity
 -- holds structurally: different union orderings that mix Just and Nothing forms produce
