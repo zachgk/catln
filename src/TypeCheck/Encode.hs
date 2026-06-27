@@ -74,6 +74,8 @@ makeBaseFEnv prgm = FEnv{
   feUpdatedDuringEpoch = False,
   feTypeEnv = mkTypeEnv prgm,
   feReachesTypeEnv = mkTypeEnv prgm,
+  feCompletedAllObjsKey = BottomType,
+  feCompletedAllObjs = PTopType,
   feLocalDefNames = S.empty,
   feTrace = mkTraceConstrain
   }

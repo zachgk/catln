@@ -143,7 +143,7 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByKnown i p@ST
     act' = intersectTypesEnv feTypeEnv vaenv' act boundTp'
     req' = intersectTypesEnv feTypeEnv (fmap (stypeReq . snd) vaenv) req boundTp'
 computeConstraint _ con@(Constraint _ _ (BoundedByObjs _ SType{stypeAct=PTopType} _)) = (False, con)
-computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByObjs i p@SType{stypeAct=pAct} objMapBoundUb)) = (False, con{conDat=BoundedByObjs i (p{stypeAct=pAct'}) objMapBoundUb})
+computeConstraint FEnv{feTypeEnv, feCompletedAllObjsKey, feCompletedAllObjs} con@(Constraint _ vaenv (BoundedByObjs i p@SType{stypeAct=pAct} objMapBoundUb)) = (False, con{conDat=BoundedByObjs i (p{stypeAct=pAct'}) objMapBoundUb})
   where
     vaenv' = fmap (stypeAct . snd) vaenv
     argsBoundUb = setArgMode vaenv' PtArgExact $ powersetType feTypeEnv vaenv' $ UnionType Nothing (joinUnionType $ map partialToType $ H.keys $ snd $ splitVarArgEnv $ constraintVarArgEnv con) []
@@ -152,7 +152,13 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (BoundedByObjs i p@STy
     -- restored to @Box[T](v=$T)@ (see 'completeDataPartials'), so a field-form value @Box(v=...)@
     -- being bounded can reconcile with it. The original (uncompleted) forms are kept in the union
     -- too, so a param-form value still matches without widening.
-    objMapBoundUb' = unionTypes feTypeEnv objMapBoundUb (completeDataPartials feTypeEnv objMapBoundUb)
+    -- 'objMapBoundUb' is the 'feUnionAllObjs' descriptor (substituted uniformly by 'showCon'), so its
+    -- completion is identical across all 'BoundedByObjs' constraints whose bound equals the epoch's
+    -- cached universe 'feCompletedAllObjsKey'. Reuse the per-epoch cache EXACTLY in that case (the
+    -- common one — a converged universe), and recompute only if the bound differs (e.g. the universe
+    -- shifted mid-epoch), so the result is byte-identical to the uncached computation.
+    objMapBoundUb' | objMapBoundUb == feCompletedAllObjsKey = feCompletedAllObjs
+                   | otherwise = unionTypes feTypeEnv objMapBoundUb (completeDataPartials feTypeEnv objMapBoundUb)
     -- Relax each bound object's self-referential field (one that recurses back to a type the
     -- object participates in) so a destructured value whose corresponding field is still an
     -- unconstrained pattern variable can reconcile with it (see 'relaxRecursiveSelfArgs').
@@ -260,7 +266,13 @@ runConstraints limit cons = do
   do
     env <- get
     reachesTypeEnv <- lift $ buildTypeEnv env
-    modify $ \e -> e{feReachesTypeEnv = reachesTypeEnv}
+    -- Every 'BoundedByObjs' constraint is bounded by the same 'feUnionAllObjs' descriptor
+    -- (substituted uniformly by 'showCon'), so the completion @unionTypes u (completeDataPartials u)@
+    -- in 'computeConstraint' is identical across all of them. Compute it once per epoch, keyed by the
+    -- universe value @u@ so 'computeConstraint' can reuse it EXACTLY (only when its bound equals @u@).
+    let u = maybe BottomType stypeAct $ tcreToMaybe $ descriptor env $ feUnionAllObjs env
+    let completedAllObjs = unionTypes (feTypeEnv env) u (completeDataPartials (feTypeEnv env) u)
+    modify $ \e -> e{feReachesTypeEnv = reachesTypeEnv, feCompletedAllObjsKey = u, feCompletedAllObjs = completedAllObjs}
   constraintsToPrune <- mapM executeConstraint cons
   updated <- gets feUpdatedDuringEpoch
   let cons' = mapMaybe (\(con, shouldPrune) -> if shouldPrune then Nothing else Just con) $ zip cons constraintsToPrune
