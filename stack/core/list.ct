@@ -73,26 +73,26 @@ module(Data/List)
   fmap(lst= Nil, fn(v))= Nil
   fmap(lst= /Data/Cons(head, tail), fn(v))= /Data/Cons(head= fn(v= head), tail= fmap(lst= tail, fn(v)= fn(v= v)))
 
-  # A [ConsList] of [Integer] is an [Eq] member (see the end of this file), so [operator==] checks
-  # whole lists structurally — comparing them directly rather than only their [length].
+  # A [ConsList] of any [Eq] element is itself an [Eq] member (see the end of this file), so
+  # [operator==] checks whole lists structurally — comparing them directly rather than only their
+  # [length]. The element [Eq] dispatch is generic, so lists of [Integer], [Boolean], etc. all work.
   testConsListEquality =
     #test
     #assert(test= /Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Nil)) == /Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Nil)))
     #assert(test= ~(/Data/Cons(head= 1, tail= /Data/Nil) == /Data/Cons(head= 2, tail= /Data/Nil)))
     #assert(test= ~(/Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Nil)) == /Data/Cons(head= 1, tail= /Data/Nil)))
+    #assert(test= /Data/Cons(head= /Data/Primitive/True, tail= /Data/Nil) == /Data/Cons(head= /Data/Primitive/True, tail= /Data/Nil))
+    #assert(test= ~(/Data/Cons(head= /Data/Primitive/True, tail= /Data/Nil) == /Data/Cons(head= /Data/Primitive/False, tail= /Data/Nil)))
     0
 
-# # ConsList Eq membership (Integer elements only — TODO: generalize to any Eq element)
-  Makes a [ConsList] of [Integer] a proper member of [Eq], so the generic [operator==] dispatches
-  through the [equal] method into [consEqual]. This is the idiomatic path (vs. a standalone
-  operator overload). It is currently restricted to a CONCRETE [Integer] element: the abstract
-  `$T -> Eq` form triggers a [compactType] set-algebra blow-up (it is specifically the abstract
-  Eq-class predicate that explodes), whereas a concrete element does not. The [equal] receiver's
-  element is bound to [Integer] so the constructor's type parameter is concrete rather than
-  [TopType] (otherwise the dispatch build cannot coerce it). Generalizing to `ConsList[$T -> Eq]`
-  is blocked only by that [compactType] performance wall.
+# # ConsList Eq membership
+  Makes a [ConsList] of any [Eq] element a proper member of [Eq], so the generic [operator==]
+  dispatches through the [equal] method into [consEqual]. This is the idiomatic path (vs. a
+  standalone operator overload), and mirrors Haskell's `instance Eq a => Eq [a]`. The element bound
+  `$T -> Eq` makes the membership conditional on the element being [Eq], so the recursive
+  [consEqual] call on the elements typechecks.
 module(Data)
-  every(ConsList[$T -> /Data/Primitive/Integer], isa= [/Data/Algebra/Eq])
+  every(ConsList[$T -> /Data/Algebra/Eq], isa= [/Data/Algebra/Eq])
 module(Data/Algebra)
-  :/Data/Nil.equal(other -> /Data/ConsList[$E -> /Data/Primitive/Integer])= /Data/consEqual(a= /Data/Nil, b= other)
-  :/Data/Cons[$T -> /Data/Primitive/Integer](head, tail).equal(other -> /Data/ConsList[$E -> /Data/Primitive/Integer])= /Data/consEqual(a= /Data/Cons(head= head, tail= tail), b= other)
+  :/Data/Nil.equal(other -> /Data/ConsList[$E -> /Data/Algebra/Eq])= /Data/consEqual(a= /Data/Nil, b= other)
+  :/Data/Cons[$T -> /Data/Algebra/Eq](head, tail).equal(other -> /Data/ConsList[$E -> /Data/Algebra/Eq])= /Data/consEqual(a= /Data/Cons(head= head, tail= tail), b= other)

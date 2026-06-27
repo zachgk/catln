@@ -152,10 +152,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/equal
-                            ( Value other -> ∀/Data/ConsList[ /E=~/Data/Primitive/Integer ] )( Value /this -> /Data/Nil )= /Data/consEqual( Value a= Value /Data/Nil )( Value b= Value other )
+                            ( Value other -> ∀/Data/ConsList[ /E=~/Data/Algebra/Eq ] )( Value /this -> /Data/Nil )= /Data/consEqual( Value a= Value /Data/Nil )( Value b= Value other )
                         , /Data/Algebra/equal
-                            ( Value other -> ∀/Data/ConsList[ /E=~/Data/Primitive/Integer ] )
-                            ( Value /this= /Data/Cons[ /T : /Data/Primitive/Integer ]( Value head )( Value tail ) )= /Data/consEqual
+                            ( Value other -> ∀/Data/ConsList[ /E=~/Data/Algebra/Eq ] )
+                            ( Value /this= /Data/Cons[ /T : ∀/Data/Algebra/Eq ]( Value head )( Value tail ) )= /Data/consEqual
                             ( Value a= /Data/Cons( Value head= Value head )( Value tail= Value tail ) )( Value b= Value other )
                         ]
                     }
@@ -191,7 +191,7 @@ Prgm
             ( False
             , /Data/ConsList
             ,
-                [ ∀/Data/ConsList[ /T=~/Data/Primitive/Integer ] ]
+                [ ∀/Data/ConsList[ /T=~/Data/Algebra/Eq ] ]
             , Just ""
             )
         , CGClass
@@ -259,18 +259,17 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "be totally covered, while still resolving for calls of [fmap] on a [ConsList]." )
         , /Catln/#md
-            ( Value /text= CStr "A [ConsList] of [Integer] is an [Eq] member (see the end of this file), so [operator==] checks" )
+            ( Value /text= CStr "A [ConsList] of any [Eq] element is itself an [Eq] member (see the end of this file), so" )
         , /Catln/#md
-            ( Value /text= CStr "whole lists structurally — comparing them directly rather than only their [length]." )
+            ( Value /text= CStr "[operator==] checks whole lists structurally — comparing them directly rather than only their" )
         , /Catln/#md
-            ( Value /text= CStr "# ConsList Eq membership (Integer elements only — TODO: generalize to any Eq element)
-            Makes a [ConsList] of [Integer] a proper member of [Eq], so the generic [operator==] dispatches
-            through the [equal] method into [consEqual]. This is the idiomatic path (vs. a standalone
-            operator overload). It is currently restricted to a CONCRETE [Integer] element: the abstract
-            `$T -> Eq` form triggers a [compactType] set-algebra blow-up (it is specifically the abstract
-            Eq-class predicate that explodes), whereas a concrete element does not. The [equal] receiver's
-            element is bound to [Integer] so the constructor's type parameter is concrete rather than
-            [TopType] (otherwise the dispatch build cannot coerce it). Generalizing to `ConsList[$T -> Eq]`
-            is blocked only by that [compactType] performance wall." )
+            ( Value /text= CStr "[length]. The element [Eq] dispatch is generic, so lists of [Integer], [Boolean], etc. all work." )
+        , /Catln/#md
+            ( Value /text= CStr "# ConsList Eq membership
+            Makes a [ConsList] of any [Eq] element a proper member of [Eq], so the generic [operator==]
+            dispatches through the [equal] method into [consEqual]. This is the idiomatic path (vs. a
+            standalone operator overload), and mirrors Haskell's `instance Eq a => Eq [a]`. The element bound
+            `$T -> Eq` makes the membership conditional on the element being [Eq], so the recursive
+            [consEqual] call on the elements typechecks." )
         ]
     }

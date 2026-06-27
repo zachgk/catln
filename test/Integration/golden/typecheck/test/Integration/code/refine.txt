@@ -34,14 +34,15 @@ Prgm
                                     ) + /Data/consEqual
                                     ( /a=/Data/Nil
                                     , /b=
-                                        ( TopType | PredClass /Data/ConsList[ /E=~/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] && PredClass /Data/Algebra/Eq )
-                                    ) + /Data/consEqual[ /T=/Data/Primitive/Integer ]
-                                    ( /a=/Data/Cons[ /T=/Data/Primitive/Integer ]
-                                        ( /head=/Data/Primitive/Integer
+                                        ( TopType | PredClass /Data/ConsList[ /E=~/Data/Algebra/Eq ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] )
+                                    ) + /Data/consEqual[ /T=∀/Data/Algebra/Eq ]
+                                    ( /a=/Data/Cons
+                                        [ /T=( TopType | PredClass /Data/Algebra/Eq && PredRel /Data/Algebra/Eq ) ]
+                                        ( /head=( TopType | PredClass /Data/Algebra/Eq && PredRel /Data/Algebra/Eq )
                                         , /tail=~ConsList[ /T=$_/T ]
                                         )
                                     , /b=
-                                        ( TopType | PredClass /Data/ConsList[ /E=~/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] )
+                                        ( TopType | PredClass /Data/ConsList[ /E=~/Data/Algebra/Eq ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] )
                                     ) + /Data/Primitive/True + /Data/maybeEqual
                                     ( /a=/Data/Nothing
                                     , /b=
@@ -71,13 +72,11 @@ Prgm
                                     ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
                                     ( /r=/Data/Primitive/Integer
                                     , /l=/Data/Primitive/Integer
-                                    ) + /Data/Algebra/equal
-                                    [ /T=∀/Data/Algebra/Eq…( truncated ) = /operator==
-                                        ( Value /l -> /Data/Primitive/Integer = /operator%( Value /l -> TVArg /x = Value /x )
-                                            ( Value /r -> /Data/Primitive/Integer = CInt 2 )
-                                        )
-                                        ( Value /r -> /Data/Primitive/Integer = CInt 0 )
-                                    ]
+                                    ) + /Dat…( truncated ) = /operator==
+                                    ( Value /l -> /Data/Primitive/Integer = /operator%( Value /l -> TVArg /x = Value /x )
+                                        ( Value /r -> /Data/Primitive/Integer = CInt 2 )
+                                    )
+                                    ( Value /r -> /Data/Primitive/Integer = CInt 0 )
                                 )
                             )
                         ]
