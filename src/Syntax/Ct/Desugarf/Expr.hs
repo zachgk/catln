@@ -66,6 +66,12 @@ semiDesExpr sdm obj (RawTupleApply _ (_, e@RawValue{}) [(True, _)]) = e' `setExp
 semiDesExpr sdm obj (RawAliasExpr base alias) = AliasExpr (semiDesExpr sdm obj base) (semiDesExpr sdm obj alias)
 semiDesExpr sdm obj (RawWhere m base cond) = EWhere m (semiDesExpr sdm obj base) (semiDesExpr SDOutput obj cond)
 semiDesExpr sdm obj (RawTypeProp m base (TypePropProj t v)) = semiDesExpr sdm obj (RawWhere m base (rawVal operatorEq `applyRawArgs` [(Just $ partialKey (mkName operatorArgL), RawMethod (emptyMetaE v) (rawVal macroThisKey) (rawVal (nameStr t))), (Just $ partialKey (mkName operatorArgR), v)])) -- $this.even == v
+-- A relation type property @base__rel(v)@ refines @base@ to the values for which the boolean
+-- relation @rel@ holds against @v@ — e.g. @Int__gte(0)@ is @Int where $this.gte(r= 0)@. Mirrors the
+-- projection case above, but the property is a relation applied to @v@ rather than a value compared
+-- to it. The relation's operand is named with the right-operand key (@r@), the convention shared by
+-- the binary comparison relations (@gte@/@lte@/@gt@/@lt@).
+semiDesExpr sdm obj (RawTypeProp m base (TypePropRel t v)) = semiDesExpr sdm obj (RawWhere m base (RawMethod (emptyMetaE v) (rawVal macroThisKey) (rawVal (nameStr t) `applyRawArgs` [(Just $ partialKey (mkName operatorArgR), v)]))) -- $this.gte(r= v)
 semiDesExpr sdm obj (RawTupleApply _ (_, RawValue _ "/operator::") [(False, RawObjArr{roaArr=(Just (Just e, _))}), (False, RawObjArr{roaArr=(Just (Just tp, _))})]) = semiDesExpr sdm obj (rawExprWithType (exprToType (mobjExprVaenv obj) tp) e)
 semiDesExpr sdm obj (RawTupleApply _ (_, be) []) = semiDesExpr sdm obj be
 semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (`setExprMeta` m'') $ snd $ foldl aux (bm, be') (zip [0..] args)
