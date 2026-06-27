@@ -1,0 +1,23 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
+                    }
+                )
+            ]
+        )
+    , prgmCG = [ CGType ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr "Exercises the core [Maybe] type's [Eq] and [Ord] instances from an importing module" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "(the in-module #tests in stack/core/maybe.ct cover it in-module; this covers the imported path)." )
+        ]
+    }

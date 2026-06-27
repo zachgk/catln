@@ -56,6 +56,16 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Maybe/testOrdMaybe"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/Maybe/testOrdMaybe= CInt 0 ]
+                    }
+                )
+            ,
                 ( "/Data/Maybe/testEqSomeSomeEq"
                 , ObjectMapItem
                     { omiDecls = []
@@ -100,6 +110,22 @@ Prgm
                         [ Value /Data/Maybe/testEqSomeSomeNeq= CInt 0 ]
                     }
                 )
+            ,
+                ( "/Data/Algebra/compareTo"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/compareTo
+                            ( Value other -> ∀/Data/Maybe[ /E=~/Data/Primitive/Integer ] )( Value /this -> /Data/Nothing )= /Data/maybeCompare( Value a= Value /Data/Nothing )( Value b= Value other )
+                        , /Data/Algebra/compareTo
+                            ( Value other -> ∀/Data/Maybe[ /E=~/Data/Primitive/Integer ] )
+                            ( Value /this= /Data/Some[ /T : /Data/Primitive/Integer ]( Value value ) )= /Data/maybeCompare
+                            ( Value a= /Data/Some( Value value= Value value ) )( Value b= Value other )
+                        ]
+                    }
+                )
             ]
         )
     , prgmCG =
@@ -110,6 +136,15 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Data/Maybe
+            ,
+                [ ∀/Data/Maybe[ /T=~/Data/Primitive/Integer ] ]
+            , Just ""
+            )
         , CGClass
             ( False
             , /Data/Maybe
@@ -152,10 +187,19 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "both arms structurally." )
         , /Catln/#md
+            ( Value /text= CStr "A [Maybe] of [Integer] is an [Ord] member (see the end of this file), so [compareTo] orders" )
+        , /Catln/#md
+            ( Value /text= CStr "both arms structurally, with [Nothing] before any [Some]." )
+        , /Catln/#md
             ( Value /text= CStr "# Maybe Eq membership (Integer elements only — TODO: generalize to any Eq element)
             Makes a [Maybe] of [Integer] a proper member of [Eq], so the generic [operator==] dispatches
             through the [equal] method into [maybeEqual]. Mirrors the [ConsList] membership in [Data/list]:
             it is currently restricted to a CONCRETE [Integer] element, and the [equal] receiver's element is
             bound to [Integer] so the constructor's type parameter is concrete rather than [TopType]." )
+        , /Catln/#md
+            ( Value /text= CStr "# Maybe Ord membership (Integer elements only — TODO: generalize to any Ord element)
+            Makes a [Maybe] of [Integer] a proper member of [Ord], so [compareTo] dispatches per constructor
+            into [maybeCompare]. Mirrors the [Eq] membership above (and every [Ord] is an [Eq], which the
+            [Eq] membership already supplies). Restricted to a CONCRETE [Integer] element for the same reason." )
         ]
     }
