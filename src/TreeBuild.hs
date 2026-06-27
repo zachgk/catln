@@ -137,7 +137,7 @@ joinArrowsWithCond env srcType destType guards = case completeTreeSet env srcTyp
   -- the concrete instance cannot be chosen at compile time. Emit a runtime 'TCMatch' that
   -- dispatches on the actual value's type to the matching concrete arrow.
   CErr _ | not (null guards) && all conditionFree guards ->
-    return $ TCMatch $ H.fromList [(t, tree) | (t, _, tree) <- guards]
+    return $ TCMatch destType $ H.fromList [(t, tree) | (t, _, tree) <- guards]
   res -> res >>= buildGuards
   where
     conditionFree (_, Nothing, _) = True
@@ -250,7 +250,7 @@ buildCallTree env os visitedArrows (UnionType _ srcLeafs consts) destType = do
   -- tree), avoiding a spurious match that a runtime value's argument keys cannot satisfy.
   return $ case nub (map snd matchVal) of
     [t] -> t
-    _   -> TCMatch $ H.fromList matchVal
+    _   -> TCMatch destType $ H.fromList matchVal
 
 toTExpr :: TBEnv -> [ObjSrc] -> Expr TBMetaDat -> CRes (TExpr TBMetaDat)
 -- toTExpr _ os e | trace (printf "toTExpr %s \n\twith %s" (show e) (show os)) False = undefined

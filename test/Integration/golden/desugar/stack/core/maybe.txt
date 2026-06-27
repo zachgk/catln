@@ -1,0 +1,161 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/Data/maybeCompare"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/maybeCompare
+                            ( Value a -> ∀/Data/Maybe[ /T=~/Data/Algebra/Ord ] )
+                            ( Value b -> ∀/Data/Maybe[ /T=~/Data/Algebra/Ord ] ) -> ∀/Data/Algebra/Comparison
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/maybeCompare( Value a= Value Nothing )( Value b= Value Nothing )= Value /Data/Algebra/Equal
+                        , /Data/maybeCompare( Value a= Value Nothing )
+                            ( Value b= /Data/Some( Value value ) )= Value /Data/Algebra/LessThan
+                        , /Data/maybeCompare
+                            ( Value a= /Data/Some( Value value ) )( Value b= Value Nothing )= Value /Data/Algebra/GreaterThan
+                        , /Data/maybeCompare
+                            ( Value a= /Data/Some( Value value@Value av ) )
+                            ( Value b= /Data/Some( Value value@Value bv ) )= compareTo( Value other= Value bv )( Value /this= Value av )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Some"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Some[ /T : TopType ]( Value /value -> $/T ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/maybeEqual"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/maybeEqual
+                            ( Value a -> ∀/Data/Maybe[ /T=~/Data/Algebra/Eq ] )
+                            ( Value b -> ∀/Data/Maybe[ /T=~/Data/Algebra/Eq ] ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/maybeEqual( Value a= Value Nothing )( Value b= Value Nothing )= Value True
+                        , /Data/maybeEqual( Value a= Value Nothing )
+                            ( Value b= /Data/Some( Value value ) )= Value False
+                        , /Data/maybeEqual
+                            ( Value a= /Data/Some( Value value ) )( Value b= Value Nothing )= Value False
+                        , /Data/maybeEqual
+                            ( Value a= /Data/Some( Value value@Value av ) )
+                            ( Value b= /Data/Some( Value value@Value bv ) )= /operator==( Value /l= Value av )( Value /r= Value bv )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Maybe/testEqSomeSomeEq"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/Maybe/testEqSomeSomeEq= CInt 0 ]
+                    }
+                )
+            ,
+                ( "/Data/Nothing"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Nothing ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Algebra/equal"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/equal
+                            ( Value other -> ∀/Data/Maybe[ /E=~/Data/Primitive/Integer ] )( Value /this -> /Data/Nothing )= /Data/maybeEqual( Value a= Value /Data/Nothing )( Value b= Value other )
+                        , /Data/Algebra/equal
+                            ( Value other -> ∀/Data/Maybe[ /E=~/Data/Primitive/Integer ] )
+                            ( Value /this= /Data/Some[ /T : /Data/Primitive/Integer ]( Value value ) )= /Data/maybeEqual
+                            ( Value a= /Data/Some( Value value= Value value ) )( Value b= Value other )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Maybe/testEqSomeSomeNeq"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/Maybe/testEqSomeSomeNeq= CInt 0 ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Data/Maybe
+            ,
+                [ ∀/Data/Maybe[ /T=~/Data/Primitive/Integer ] ]
+            , Just ""
+            )
+        , CGClass
+            ( True
+            , /Data/Maybe[ /T=TopType ]
+            ,
+                [ /Data/Some[ /T=$_/T ]( /value=$/T )
+                , /Data/Nothing
+                ]
+            , Just "A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]."
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "# Maybe
+            A [Maybe] holds either a single value ([Some]) or nothing ([Nothing]). Unlike a [ConsList] it is
+            not recursive, so it is the simplest parameterized type on which to define structural equality
+            and ordering." )
+        , /Catln/#md
+            ( Value /text= CStr "A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]." )
+        , /Catln/#md
+            ( Value /text= CStr "#### Structural equality
+            Two [Maybe]s of [Eq] elements are equal when both are [Nothing], or both are [Some] of equal
+            values. [maybeEqual] is the structural comparison — a plain standalone function, mirroring
+            [consEqual] but with no self-recursion (a [Maybe] never nests). The [Eq] membership and [equal]
+            method at the end of this file delegate [operator==] into it." )
+        , /Catln/#md
+            ( Value /text= CStr "#### Structural comparison
+            A [Maybe] of [Ord] elements is ordered with [Nothing] before any [Some], and two [Some]s ordered
+            by their wrapped values. [maybeCompare] is the structural comparison, mirroring [maybeEqual]." )
+        , /Catln/#md
+            ( Value /text= CStr "# Maybe equality tests" )
+        , /Catln/#md
+            ( Value /text= CStr "A [Maybe] of [Integer] is an [Eq] member (see the end of this file), so [operator==] checks" )
+        , /Catln/#md
+            ( Value /text= CStr "both arms structurally." )
+        , /Catln/#md
+            ( Value /text= CStr "# Maybe Eq membership (Integer elements only — TODO: generalize to any Eq element)
+            Makes a [Maybe] of [Integer] a proper member of [Eq], so the generic [operator==] dispatches
+            through the [equal] method into [maybeEqual]. Mirrors the [ConsList] membership in [Data/list]:
+            it is currently restricted to a CONCRETE [Integer] element, and the [equal] receiver's element is
+            bound to [Integer] so the constructor's type parameter is concrete rather than [TopType]." )
+        ]
+    }

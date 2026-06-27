@@ -29,8 +29,15 @@ Prgm
                                     , /r=∀/Data/Algebra/Eq
                                     , /l=∀/Data/Algebra/Eq
                                     ]
-                                    ( /r=/Data/String
-                                    , /l=/Data/String
+                                    ( /r=UnionType
+                                        ( Just
+                                            ( PredClass /Data/Algebra/Eq
+                                            , fromList []
+                                            )
+                                        , /Data/String
+                                        , []
+                                        )
+                                    , /l=∀/Data/Algebra/Eq
                                     ) + /Data/strEqual
                                     ( /r=/Data/String
                                     , /l=/Data/String
@@ -45,7 +52,15 @@ Prgm
                                         )
                                     , /b=
                                         ( TopType | PredClass /Data/ConsList[ /E=~/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] )
-                                    ) + /Data/Primitive/True + /Data/Algebra/rel
+                                    ) + /Data/Primitive/True + /Data/maybeEqual
+                                    ( /a=/Data/Nothing
+                                    , /b=
+                                        ( TopType | PredClass /Data/Maybe[ /E=~/Data/Primitive/Integer ] && PredClass /Data/Algebra/Eq )
+                                    ) + /Data/maybeEqual[ /T=/Data/Primitive/Integer ]
+                                    ( /a=/Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                    , /b=
+                                        ( TopType | PredClass /Data/Maybe[ /E=~/Data/Primitive/Integer ] && PredClass /Data/Maybe[ /T=~/Data/Algebra/Eq ] )
+                                    ) + /Data/Algebra/rel
                                     ( /this=
                                         ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] )
                                     , /a=UnionType
@@ -67,18 +82,16 @@ Prgm
                                     ( /r=/Data/Primitive/Integer
                                     , /l=/Data/Primitive/Integer
                                     ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                                    ( /this=∀/Data/Algebra/Eq
-                                    , /other=∀/Data/Algebra/Eq
+                                    ( /this=∀/D…( truncated ) = /operator==
+                                        ( EAppArg Value /l -> /Data/String =
+                                            ( /Data/toString
+                                                ( EAppArg Value /this -> /Data/Primitive/Integer = 1 ) ↦ /Data/String
+                                            )
+                                        )
+                                        ( EAppArg Value /r -> /Data/String = "1" )
                                     )
                                 )
-                            , []
-                            ) = /operator==
-                            ( EAppArg Value /l -> /Data/String =
-                                ( /Data/toString
-                                    ( EAppArg Value /this -> /Data/Primitive/Integer = 1 ) ↦ /Data/String
-                                )
                             )
-                            ( EAppArg Value /r -> /Data/String = "1" )
                         ]
                     }
                 )

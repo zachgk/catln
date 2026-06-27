@@ -1,0 +1,55 @@
+import "core/ord.ct"
+
+
+module(Data)
+  # # Maybe
+    A [Maybe] holds either a single value ([Some]) or nothing ([Nothing]). Unlike a [ConsList] it is
+    not recursive, so it is the simplest parameterized type on which to define structural equality
+    and ordering.
+  class(Maybe[$T], [Some[$T -> $_T](value -> $T), Nothing])
+    # A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing].
+
+  # #### Structural equality
+    Two [Maybe]s of [Eq] elements are equal when both are [Nothing], or both are [Some] of equal
+    values. [maybeEqual] is the structural comparison — a plain standalone function, mirroring
+    [consEqual] but with no self-recursion (a [Maybe] never nests). The [Eq] membership and [equal]
+    method at the end of this file delegate [operator==] into it.
+  maybeEqual(a -> Maybe[$T -> /Data/Algebra/Eq], b -> Maybe[$T -> /Data/Algebra/Eq]) -> Boolean
+  maybeEqual(a= Nothing, b= Nothing)= True
+  maybeEqual(a= Nothing, b= /Data/Some(value))= False
+  maybeEqual(a= /Data/Some(value), b= Nothing)= False
+  maybeEqual(a= /Data/Some(value@av), b= /Data/Some(value@bv))= av == bv
+
+  # #### Structural comparison
+    A [Maybe] of [Ord] elements is ordered with [Nothing] before any [Some], and two [Some]s ordered
+    by their wrapped values. [maybeCompare] is the structural comparison, mirroring [maybeEqual].
+  maybeCompare(a -> Maybe[$T -> /Data/Algebra/Ord], b -> Maybe[$T -> /Data/Algebra/Ord]) -> /Data/Algebra/Comparison
+  maybeCompare(a= Nothing, b= Nothing)= /Data/Algebra/Equal
+  maybeCompare(a= Nothing, b= /Data/Some(value))= /Data/Algebra/LessThan
+  maybeCompare(a= /Data/Some(value), b= Nothing)= /Data/Algebra/GreaterThan
+  maybeCompare(a= /Data/Some(value@av), b= /Data/Some(value@bv))= av.compareTo(other= bv)
+
+# # Maybe equality tests
+module(Data/Maybe)
+  # A [Maybe] of [Integer] is an [Eq] member (see the end of this file), so [operator==] checks
+  # both arms structurally.
+  testEqSomeSomeEq =
+    #test
+    #assert(test= /Data/Some(value= 1) == /Data/Some(value= 1))
+    0
+
+  testEqSomeSomeNeq =
+    #test
+    #assert(test= ~(/Data/Some(value= 1) == /Data/Some(value= 2)))
+    0
+
+# # Maybe Eq membership (Integer elements only — TODO: generalize to any Eq element)
+  Makes a [Maybe] of [Integer] a proper member of [Eq], so the generic [operator==] dispatches
+  through the [equal] method into [maybeEqual]. Mirrors the [ConsList] membership in [Data/list]:
+  it is currently restricted to a CONCRETE [Integer] element, and the [equal] receiver's element is
+  bound to [Integer] so the constructor's type parameter is concrete rather than [TopType].
+module(Data)
+  every(Maybe[$T -> /Data/Primitive/Integer], isa= [/Data/Algebra/Eq])
+module(Data/Algebra)
+  :/Data/Nothing.equal(other -> /Data/Maybe[$E -> /Data/Primitive/Integer])= /Data/maybeEqual(a= /Data/Nothing, b= other)
+  :/Data/Some[$T -> /Data/Primitive/Integer](value).equal(other -> /Data/Maybe[$E -> /Data/Primitive/Integer])= /Data/maybeEqual(a= /Data/Some(value= value), b= other)

@@ -34,14 +34,14 @@ Prgm
                     , omiDefs =
                         [ /defInt
                             ( EAppArg Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just( EAppArg Value /val -> /Data/Primitive/Integer ) ) -> TVArg /val = ( Value /val ↦ TVArg /val )
-                        , /defInt( EAppArg Value /x -> /Nothing = Value /Nothing ) -> /Data/Primitive/Integer = 0
+                        , /defInt( EAppArg Value /x -> /Data/Nothing = Value /Data/Nothing ) -> /Data/Primitive/Integer = 0
                         ]
                     }
                 )
             ,
-                ( "/Nothing"
+                ( "/Data/Nothing"
                 , ObjectMapItem
-                    { omiDecls = [ Value /Nothing ]
+                    { omiDecls = [ Value /Data/Nothing ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
@@ -69,7 +69,7 @@ Prgm
             , /Maybe[ /T=TopType ]
             ,
                 [ /Just[ /T=TopType ]( /val=$_/T )
-                , /Nothing
+                , /Data/Nothing
                 ]
             , Just ""
             )

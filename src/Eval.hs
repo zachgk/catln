@@ -137,7 +137,7 @@ simplifyArgKeys t = t
 evalCallTree :: Val -> TCallTree -> StateT Env CRes Val
 -- evalCallTree v ct | trace (printf "evalCallTree %s using %s" (show v) (show ct)) False = undefined
 evalCallTree v TCTId = return v
-evalCallTree  m (TCMatch opts) = do
+evalCallTree  m (TCMatch destType opts) = do
   Env{evTypeEnv} <- get
   -- Normalize higher-order argument keys (bare @/fn@ on the runtime value vs the
   -- function-signature key @/fn(/v=..)@ on the typed arrow) before matching, mirroring
@@ -146,7 +146,17 @@ evalCallTree  m (TCMatch opts) = do
   case H.toList $ H.filterWithKey (\optType _ -> isSubtypePartialOf evTypeEnv (reKeyP $ getValType m) (singletonType $ reKeyP optType)) opts of
     [(_, resArrowTree)] -> do
       withEvalPush ("match with val " ++ show m) $ evalCallTree m resArrowTree
-    [] -> evalError $ printf "Failed match in eval callTree: \n\tVal: %s \n\tVal type: %s\n\tOptions: %s" (show m) (show $ getValType m) (show opts)
+    -- No statically-built arm matches the concrete runtime value. An arm can be dropped at build
+    -- time by a COMPILE-TIME-ONLY cyclic dispatch (e.g. an 'Eq' instance whose @==@ arm dispatches
+    -- back through the same function — 'maybeEqual' reached via 'Some.equal'). The runtime value is
+    -- concrete, so rebuilding the dispatch from its type cannot cycle. Rebuild from the value and
+    -- retry once; if the rebuild is not strictly more resolved, fall back to the original error.
+    [] -> do
+      Env{evTbEnv} <- get
+      case buildPartialCallTree evTbEnv [] S.empty (getValType m) destType of
+        CRes _ rebuilt | rebuilt /= TCMatch destType opts ->
+          withEvalPush ("rebuild match with val " ++ show m) $ evalCallTree m rebuilt
+        _ -> evalError $ printf "Failed match in eval callTree: \n\tVal: %s \n\tVal type: %s\n\tOptions: %s" (show m) (show $ getValType m) (show opts)
     (_:_:_) -> evalError $ printf "Multiple matches in eval callTree: \n\tVal: %s \n\tOptions: %s " (show m) (show opts)
 evalCallTree v (TCSeq a b) = do
   v' <- evalCallTree v a
