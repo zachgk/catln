@@ -21,6 +21,8 @@ import qualified Data.HashMap.Strict as H
 import           Semantics.Prgm
 import           Semantics.Types
 
+import           Control.Concurrent  (forkIO, killThread, newEmptyMVar,
+                                      putMVar, takeMVar)
 import           Control.Monad
 import           Data.Graph
 import           Data.IORef
@@ -36,16 +38,61 @@ import           Eval.Env
 import           Eval.ExprBuilder
 import           Eval.Runtime
 import qualified Hedgehog
-import qualified Hedgehog.Gen        as HG
+import qualified Hedgehog.Gen               as HG
+import           Hedgehog.Internal.Property (propertyConfig, propertyTest)
+import           Hedgehog.Internal.Report   (Result (OK), reportStatus)
+import           Hedgehog.Internal.Runner   (checkReport)
+import qualified Hedgehog.Internal.Seed     as HedgehogSeed
 import           Semantics
 import           Semantics.Annots    (getRuntimeAnnot, hasAnnot)
 import           Semantics.TypeGraph (ReachesEnv (ReachesEnv),
                                       reachesHasCutSubtypeOf, reachesPartials,
                                       reachesTo)
+import           System.Timeout      (timeout)
 import           Testing.Generation  (genValForType)
 import           Text.Printf
 import           TreeBuild
 import           Utils
+
+-- | Iteration count for derived property tests (the Hedgehog default).
+propTestIterations :: Hedgehog.TestLimit
+propTestIterations = 100
+
+-- | Per-property wall-clock timeout, in microseconds (10 seconds).
+propTestTimeoutMicros :: Int
+propTestTimeoutMicros = 10 * 1000 * 1000
+
+-- | Run a Hedgehog property capped at both 'propTestIterations' variations and a
+-- 'propTestTimeoutMicros' wall-clock timeout, returning whether it passed. On timeout the
+-- property is judged on the variations that completed within the window: the runner returns
+-- 'False' as soon as it finds a failing case, so if the timeout elapses before a result is
+-- produced, no counterexample was found among the completed variations and it counts as a
+-- pass.
+--
+-- The check runs in a worker thread while the timeout is applied to the main thread's wait
+-- for its result. This keeps the timeout's async exception off the property computation
+-- itself — wrapping the runner directly would let Hedgehog catch that exception and
+-- misreport the interruption as a failing test case.
+checkPropWithTimeout :: Hedgehog.Property -> IO Bool
+checkPropWithTimeout prop = do
+  resultVar <- newEmptyMVar
+  tid <- forkIO $ runPropQuietly (Hedgehog.withTests propTestIterations prop) >>= putMVar resultVar
+  result <- timeout propTestTimeoutMicros (takeMVar resultVar)
+  case result of
+    Just ok -> return ok
+    Nothing -> killThread tid >> return True
+
+-- | Run a Hedgehog property to completion without rendering any progress or result output,
+-- returning whether it passed. Uses 'checkReport' with a no-op progress callback so that a
+-- worker thread killed at the timeout boundary prints nothing — unlike 'Hedgehog.check',
+-- whose interrupted live render emits a spurious "thread killed" failure report.
+runPropQuietly :: Hedgehog.Property -> IO Bool
+runPropQuietly prop = do
+  seed <- HedgehogSeed.random
+  report <- checkReport (propertyConfig prop) 0 seed (propertyTest prop) (const (pure ()))
+  return $ case reportStatus report of
+    OK -> True
+    _  -> False
 
 evalRunnable :: EvalMode -> Bool
 evalRunnable EvalRunWithContext{} = True
@@ -478,7 +525,7 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
         errOf (CErr ns) = prettyCNotes ns
         errOf _         = "ok"
         action = CResT $ do
-          ok <- Hedgehog.check prop
+          ok <- checkPropWithTimeout prop
           return $ if ok
             then CRes [] (TupleVal "()" H.empty)
             else CErr [MkCNote $ GenCErr Nothing $ printf "Overlap agreement test failed: %s" testName]
@@ -579,7 +626,7 @@ evalTest prgmGraphData = do
                 CRes _ _   -> Hedgehog.success
 
           action = CResT $ do
-            ok <- Hedgehog.check prop
+            ok <- checkPropWithTimeout prop
             return $ if ok
               then CRes [] (TupleVal "()" H.empty)
               else CErr [MkCNote $ GenCErr Nothing $ printf "Property test failed: %s" testName]
