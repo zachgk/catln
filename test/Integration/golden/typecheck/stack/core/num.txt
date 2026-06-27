@@ -157,6 +157,28 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Primitive/nonNeg"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Primitive/nonNeg( Value /n -> /Data/Primitive/Integer ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            , /operator>=
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                )
+                            , []
+                            ) = /operator>=( Value /l -> TVArg /n = Value /n )
+                            ( Value /r -> /Data/Primitive/Integer = CInt 0 )
+                        ]
+                    }
+                )
+            ,
                 ( "/operator>"
                 , ObjectMapItem
                     { omiDecls = []
@@ -455,6 +477,7 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         , CGClass
             ( False
             , /Data/Primitive/Integer
@@ -517,6 +540,8 @@ Prgm
             ( Value /text -> /Data/String = CStr "The primitive integer "less than" is also exposed as a named function so [Data/Algebra/ord]'s" )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "  [Ordering] instances can build a [Comparison] from it." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "The non-negativity predicate, the generic claim that an [Integer] is at least zero." )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "[Integer]'s instances of the algebra ordering/equality classes. [IntOrdering] is its" )
         , /Catln/#md

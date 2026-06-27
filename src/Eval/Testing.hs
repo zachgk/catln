@@ -208,12 +208,77 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
             then CRes [] (TupleVal "()" H.empty)
             else CErr [MkCNote $ GenCErr Nothing $ printf "Overlap agreement test failed: %s" testName]
 
+-- | Derive a property test for every refinement declaration paired with an overlapping definition
+-- of the same object. A refinement declaration (a @#refine@ arrow) claims a narrowed return type;
+-- where its domain overlaps a definition's, that definition's result on inputs in the overlap must
+-- satisfy the claim. We generate an input in the overlap, evaluate it through the DEFINITION to a
+-- concrete value, and assert that value's singleton typeset (see 'getValType', which carries the
+-- concrete constant so a predicate like @>= 0@ is decidable) is a subtype of the refinement's
+-- claimed return type. For @:List.length -> Int__gte(0) #refine@ paired with @Nil.length= 0@ this
+-- checks that the length of a @Nil@ is a non-negative integer.
+deriveRefinementTests :: EPrgm -> [(String, CResT IO Val)]
+deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) =
+  [ mkRefinementTest defOa dom refRet
+  | omi <- H.elems om
+  , refOa <- omiRefineDecls omi
+  , Just (_, refM) <- [oaArr refOa]
+  , let refRet = getMetaType refM
+  , defOa <- filter evaluable (omiDefs omi)
+  , let dom = intersectTypes typeEnv (clauseDom refOa) (clauseDom defOa)
+  , not (isBottomType dom)
+  , isJust (maybeGetSingleton dom)
+  ]
+  where
+    TypeEnv{teNames} = typeEnv
+    typeEnv = mkTypeEnv prgm
+    evaluable oa = case oaArr oa of
+      Just (Just _, _)  -> True
+      Just (Nothing, _) -> isJust (getRuntimeAnnot (oaAnnots oa))
+      _                 -> False
+    clauseDom oa = getExprType (oaObjExpr oa)
+
+    mkRefinementTest defOa dom refRet = (testName, action)
+      where
+        testName = printf "%s :: refinement-agreement" (nameStr (oaObjPath defOa))
+        -- Build the definition's call against its own declared return (predicates cleared) so the
+        -- body is forced to a concrete value, exactly as the overlap tests do (see 'retDest' there).
+        retDest = clearUnionTypePreds $ case oaArr defOa of
+          Just (_, m) -> getMetaType m
+          Nothing     -> intType
+        partial = getSingleton dom
+        argTypeMap = H.fromList [(nameStr (pkName k), t) | (k, t) <- H.toList (ptArgs partial)]
+        genArg t = genValForType (UnionType Nothing (expandTypeWithNames typeEnv H.empty t teNames) [])
+        genInput = do
+          let argNames = H.keys argTypeMap
+          vals <- mapM (\n -> (,) n <$> genArg (H.lookupDefault PTopType n argTypeMap)) argNames
+          return $ TupleVal (nameStr (ptName partial)) (H.fromList vals)
+        -- The full program env (all definitions) so a recursive definition (e.g. @Cons.length@
+        -- calling @tail.length@) can still reach its siblings; dispatch picks the right clause for
+        -- the generated input.
+        env = evalBaseEnv prgm
+        runDef input = do
+          let inputE = valToEExpr input
+          tree <- buildRoot (evTbEnv env) inputE (getExprPartialType inputE) retDest
+          fst <$> runStateT (evalExpr tree) env
+        prop = Hedgehog.property $ do
+          input <- Hedgehog.forAll genInput
+          case runDef input of
+            CRes _ outV
+              | isSubtypeOf typeEnv (getValType outV) refRet -> Hedgehog.success
+              | otherwise -> Hedgehog.footnote (printf "Refinement violated: %s on %s produced %s, not a subtype of the claimed return %s" testName (show input) (show outV) (show refRet)) >> Hedgehog.failure
+            CErr ns -> Hedgehog.footnote (printf "eval failed: %s" (prettyCNotes ns)) >> Hedgehog.failure
+        action = CResT $ do
+          ok <- checkPropWithTimeout prop
+          return $ if ok
+            then CRes [] (TupleVal "()" H.empty)
+            else CErr [MkCNote $ GenCErr Nothing $ printf "Refinement agreement test failed: %s" testName]
+
 evalTest :: EPrgmGraphData -> CRes [(String, CResT IO Val)]
 evalTest prgmGraphData = do
   let prgm@(Prgm objMap _ _) = mconcat $ map fst3 $ graphToNodes prgmGraphData
   let testOAs = nubBy (\a b -> oaObjPath a == oaObjPath b) $ filter (\oa -> hasAnnot testAnnot oa || hasAnnot exampleAnnot oa) $ flatObjectMap objMap
   let (noArgTests, propTests) = foldr partitionTest ([], []) testOAs
-  return $ map (runSimpleTest prgm) noArgTests ++ map (runPropertyTest prgm) propTests ++ deriveOverlapTests prgm
+  return $ map (runSimpleTest prgm) noArgTests ++ map (runPropertyTest prgm) propTests ++ deriveOverlapTests prgm ++ deriveRefinementTests prgm
   where
     isNoArgTest oa = null (exprAppliedArgs (oaObjExpr oa)) && null (exprAppliedOrdVars (oaObjExpr oa))
     partitionTest oa (simple, props)

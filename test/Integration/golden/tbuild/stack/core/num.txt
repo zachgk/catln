@@ -158,6 +158,29 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Primitive/nonNeg"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Primitive/nonNeg( EAppArg Value /n -> /Data/Primitive/Integer ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            , /operator>=
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                )
+                            , []
+                            ) = /operator>=
+                            ( EAppArg Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) )
+                            ( EAppArg Value /r -> /Data/Primitive/Integer = 0 )
+                        ]
+                    }
+                )
+            ,
                 ( "/operator>"
                 , ObjectMapItem
                     { omiDecls = []
@@ -500,6 +523,7 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         , CGClass
             ( False
             , /Data/Primitive/Integer
@@ -562,6 +586,8 @@ Prgm
             ( EAppArg Value /text -> /Data/String = "The primitive integer "less than" is also exposed as a named function so [Data/Algebra/ord]'s" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "  [Ordering] instances can build a [Comparison] from it." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "The non-negativity predicate, the generic claim that an [Integer] is at least zero." )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "[Integer]'s instances of the algebra ordering/equality classes. [IntOrdering] is its" )
         , /Catln/#md
