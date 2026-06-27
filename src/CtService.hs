@@ -22,9 +22,9 @@ import qualified Data.HashMap.Strict     as H
 import qualified Data.HashSet            as S
 import           Data.List               (partition)
 import           Data.Maybe
-import           Eval                    (MockIO, evalAnnots, evalBuild,
-                                          evalBuildAll, evalRun, evalRunMock,
-                                          evalTest)
+import           Eval                    (evalAnnots, evalBuild, evalBuildAll,
+                                          evalRun)
+import           Eval.Testing            (MockIO, evalRunMock, evalTest)
 import           Eval.Common             (EvalMetaDat, EvalResult, TExpr,
                                           Val (StrVal, TupleVal))
 import           Semantics               (CTSSConfig)

@@ -14,6 +14,7 @@ import           Data.List               (isSuffixOf)
 import           Data.Maybe
 import qualified Data.Text.Lazy          as T
 import           Eval
+import           Eval.Testing            (getMockIOOutput, newMockIO)
 import           Semantics
 import           Semantics.Prgm
 import           Syntax.Ct.Formatter     (formatRootPrgm)
