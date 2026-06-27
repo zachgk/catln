@@ -1,0 +1,21 @@
+import "core"
+
+
+# Exercises non-linear value patterns: a clause that binds the same variable to two argument
+# positions applies only when those arguments are equal (compared via the argument type's Eq).
+# The diagonal clause below is a fast-path that overlaps — and must agree with — the general
+# definition, so the auto-derived overlap-agreement test passes.
+
+diag(a -> Integer, b -> Integer) -> Boolean
+diag(a@x, b@x)= True
+diag(a, b)= a == b
+
+main{io -> IO} =
+  #assert(test= diag(a= 2, b= 2))
+  #assert(test= ~diag(a= 2, b= 3))
+  # Core's subtraction has a non-linear diagonal `(_@x - _@x)= 0`, so x - x short-circuits to 0
+  #   while other subtractions use the primitive. The auto-derived overlap-agreement test (over
+  #   core) checks the diagonal agrees with the primitive — i.e. it verifies `x - x == 0`.
+  #assert(test= (7 - 7) == 0)
+  #assert(test= (7 - 4) == 3)
+  io

@@ -143,7 +143,8 @@ Prgm
                         , /operator-( Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> /Data/Primitive/Float
                         ]
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /operator-( Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing@Value /x )( Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing@Value /x ) -> /Data/Primitive/Integer = CInt 0 ]
                     }
                 )
             ,
@@ -504,6 +505,14 @@ Prgm
             defined here alongside the types — build on those primitives." )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "## Integers" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "The diagonal of subtraction: a value minus itself is zero. Both operands are aliased to the same" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "  [x] (a non-linear pattern), so this only matches equal operands and short-circuits to [0]. It" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "  overlaps the primitive subtraction, so the auto-derived overlap-agreement test checks they" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "  agree on the diagonal — i.e. it derives and verifies [x - x == 0]." )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "The primitive integer "less than" is also exposed as a named function so [Data/Algebra/ord]'s" )
         , /Catln/#md

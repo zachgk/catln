@@ -27,6 +27,7 @@ import           GHC.Generics        (Generic)
 import           CtConstants
 import           Data.Aeson          hiding (Object)
 import           Data.Bifunctor      (first)
+import           Data.List           (nub)
 import           Data.Maybe
 import           Data.UUID
 import           Data.Void           (Void)
@@ -442,6 +443,38 @@ joinPossVarArgMetaWithSrc typeEnv aVarArgMaps bVarArgMaps = [H.unionWith (mergeV
 joinAllPossVarArgMetaWithSrc :: (TypeGraph tg) => TypeEnv tg -> [PossArgMetaMapWithSrc m] -> PossArgMetaMapWithSrc m
 joinAllPossVarArgMetaWithSrc _ []     = [H.empty]
 joinAllPossVarArgMetaWithSrc typeEnv (x:xs) = foldr (joinPossVarArgMetaWithSrc typeEnv) x xs
+
+-- | The /non-linear/ argument groups of an input pattern: each group is the set of argument
+-- field references that a definition binds to a single shared variable in two or more positions
+-- (e.g. @f(a@x, b@x)@ binds both @a@ and @b@ to @x@, yielding @[[a, b]]@). The positions of a
+-- group must hold /equal/ values for the clause to apply — the runtime equality check is built
+-- from this (see 'TreeBuild'). Each entry pairs the field reference with its arrow meta (the
+-- declared type of that position). Linear patterns (every variable used once) yield @[]@.
+-- | The /non-linear/ argument groups of an input pattern: each group is the set of argument
+-- positions a definition binds to a single shared variable in two or more places (e.g.
+-- @f(a@x, b@x)@). The positions of a group must hold /equal/ values for the clause to apply — the
+-- runtime equality check is built from this (see 'TreeBuild'/'Eval'). Each entry pairs the
+-- argument's /key reference/ (whose 'exprPath' names the input field to read — @a@/@b@ for a named
+-- function, @/l@/@/r@ for an operator) with that position's arrow meta.
+--
+-- A position counts only when it is an /alias/ binding (@\@x@): @a@x@ (the alias is on the argument
+-- itself, @oaObj@) or @/l= _@x@ from @(_@x op _@x)@ (the alias is nested in the argument's value).
+-- A bare value pattern such as @boolEq(l= False, r= False)@ is a constant /match/, not a binding,
+-- so it is never grouped — treating @False@ as a shared variable would put a spurious equality
+-- guard on such clauses. Linear patterns yield @[]@.
+exprNonLinearArgGroups :: (MetaDat m, Show m) => Expr m -> [[(Expr m, Meta m)]]
+exprNonLinearArgGroups e =
+  [ [ entry | (v', entry) <- argInfos, v' == v ]
+  | v <- nub [v | (v, _) <- argInfos]
+  , length [() | (v', _) <- argInfos, v' == v] >= 2
+  ]
+  where
+    argInfos = mapMaybe argInfo (exprAppliedArgs e)
+    -- (boundVarName, (argKeyRef, argMeta)) for an /aliased/ argument; 'Nothing' otherwise.
+    argInfo oa = case (oaObj oa, oaArr oa) of
+      (Just (AliasExpr base alias), Just (Nothing, m)) -> (, (base, m)) <$> maybeExprPath alias
+      (Just o, Just (Just (AliasExpr _ alias), m))     -> (, (o, m))    <$> maybeExprPath alias
+      _                                                -> Nothing
 
 mkIOObjArr :: (MetaDat m, Show m) => Meta m -> ArgName -> Expr m -> ObjArr Expr m
 mkIOObjArr m argName argVal = ObjArr (Just (Value (emptyMetaT $ partialToTypeSingleton argName) (pkName argName))) ArgObj Nothing [] (Just (Just argVal, m))

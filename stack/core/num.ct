@@ -19,6 +19,12 @@ module(Data/Primitive)
   (_ :: Integer - _ :: Integer) -> Integer
     #runtime("int-")
 
+  # The diagonal of subtraction: a value minus itself is zero. Both operands are aliased to the same
+  #   [x] (a non-linear pattern), so this only matches equal operands and short-circuits to [0]. It
+  #   overlaps the primitive subtraction, so the auto-derived overlap-agreement test checks they
+  #   agree on the diagonal — i.e. it derives and verifies [x - x == 0].
+  (_@x :: Integer - _@x :: Integer)= 0
+
   (_ :: Integer + _ :: Integer) -> Integer
     #runtime("int+")
 

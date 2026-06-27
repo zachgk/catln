@@ -194,6 +194,17 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
   modify $ addConstraints baseConstraints
   return $ TupleApply m' (baseM', baseExpr') arg''
 
+-- | Non-linear matching: when a pattern binds one variable to several argument positions
+-- (e.g. @f(a@x, b@x)@), those positions must share a type. Encode that by equating their type
+-- points. The implicit requirement that the type be an 'Eq' (needed to compare the positions at
+-- runtime) is intentionally left for 'TreeBuild'/'Eval' to enforce.
+nonLinearEqConstraints :: VExpr -> [VConstraintDat]
+nonLinearEqConstraints obj =
+  [ EqPoints 40 m1 m2
+  | grp <- exprNonLinearArgGroups obj
+  , ((_, m1), (_, m2)) <- zip grp (tail grp)
+  ]
+
 fromObjArr :: EncodeState -> PObjArr -> StateT FEnv TypeCheckResult VObjArr
 fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   ObjArrTypeGraph (ObjectMap objTg) <- gets (teTypeGraph . feTypeEnv)
@@ -213,6 +224,7 @@ fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
       inExpr' <- fromExpr (asEncodeIn est) inExpr
       return $ Just inExpr'
     Nothing -> return Nothing
+  modify $ addConstraints $ maybe [] nonLinearEqConstraints oaObj'
   modify startConstrainBlock
   oaAnnots' <- mapM (fromExpr est) oaAnnots
   oaArr' <- case oaArr of
@@ -280,6 +292,7 @@ fromObjectMap oa@ObjArr{oaAnnots, oaObj=Just obj, oaArr} = do
   let inEst = EncodeIn
   modify startConstrainBlock
   obj' <- fromExpr inEst obj
+  modify $ addConstraints $ nonLinearEqConstraints obj'
 
   let est = EncodeOut (Just obj')
   oaAnnots' <- mapM (fromExpr est) oaAnnots

@@ -24,7 +24,7 @@ import           Semantics.Types
 import           Control.Monad
 import           Data.Graph
 import           Data.IORef
-import           Data.List           (nubBy)
+import           Data.List           (nub, nubBy, tails)
 import           Data.Maybe
 -- import           Emit                (codegenExInit)
 import           Control.Monad.State
@@ -38,7 +38,7 @@ import           Eval.Runtime
 import qualified Hedgehog
 import qualified Hedgehog.Gen        as HG
 import           Semantics
-import           Semantics.Annots    (hasAnnot)
+import           Semantics.Annots    (getRuntimeAnnot, hasAnnot)
 import           Semantics.TypeGraph (ReachesEnv (ReachesEnv),
                                       reachesHasCutSubtypeOf, reachesPartials,
                                       reachesTo)
@@ -164,14 +164,17 @@ evalCallTree m (TCCond resType ((cond, ifThenTree):restIfTrees)) = do
     -- TODO Remove the use of clearUnionTypePreds below. It is a workaround as type predicates are not supported by subtypeOf
     Just (_, oa) | not (isSubtypeOf evTypeEnv (simplifyArgKeys $ singletonType $ getValType m) (simplifyArgKeys $ clearUnionTypePreds $ getExprType $ oaObjExpr oa)) -> return False
     Nothing -> return True
-    Just ([], _) -> return True
     Just (ifCondTrees, ifObj) -> do
       Env{evArgs} <- get
       modify $ evalSetArgs $ buildArrArgs (Left ifObj) m
       conds' <- withEvalPush "cond" $ forM ifCondTrees $ \ifCondTree ->
         evalExpr ifCondTree
       modify $ evalSetArgs evArgs
-      return $ all (true ==) conds'
+      -- A non-linear pattern (@f(a@x, b@x)@) only applies when its shared positions are equal. That
+      -- constraint is not a where-condition; it is checked here from the @ifObj@, comparing the
+      -- relevant input fields through the argument type's 'Eq' (see 'evalNonLinearEq').
+      nlOk <- withEvalPush "nonLinear" $ evalNonLinearEq m ifObj
+      return $ all (true ==) conds' && nlOk
   if cond'
     then withEvalPush ("then for " ++ show cond) $ evalCallTree m ifThenTree
     else withEvalPush ("else for " ++ show cond) $ evalCallTree m (TCCond resType restIfTrees)
@@ -189,6 +192,33 @@ evalCallTree input (TCPrim _ (EPrim _ f)) = do
       Left err  -> evalError err
     _                 -> error "Unexpected eval PrimArrow input"
 evalCallTree _ TCMacro{} = evalError $ printf "Can't evaluate a macro - it should be removed during TreeBuild"
+
+-- | Checks the implicit equality of a non-linear pattern's shared argument positions. For an
+-- @ifObj@ such as @f(a@x, b@x)@, each non-linear group names input fields (here @a@ and @b@) that
+-- must be equal for the clause to apply; this compares the corresponding values of the input tuple
+-- @m@ pairwise. Equality goes through the argument type's 'Eq' (the @==@ operator over the two
+-- values as constants), not Haskell structural equality, so a type with a custom equality behaves
+-- as the user expects. If a value's type has no 'Eq', that surfaces as a build error here.
+evalNonLinearEq :: Val -> EObjArr -> StateT Env CRes Bool
+evalNonLinearEq (TupleVal _ tupleArgs) ifObj = allM
+  [ evalValEq va vb
+  | grp <- exprNonLinearArgGroups (oaObjExpr ifObj)
+  , ((ea, _), (eb, _)) <- zip grp (tail grp)
+  , Just va <- [H.lookup (exprPath ea) tupleArgs]
+  , Just vb <- [H.lookup (exprPath eb) tupleArgs]
+  ]
+  where
+    allM = foldr (\mb acc -> mb >>= \b -> if b then acc else return False) (return True)
+evalNonLinearEq _ _ = return True
+
+-- | Whether two runtime values are equal under their type's 'Eq', by building and evaluating
+-- @l == r@ over the values as constants.
+evalValEq :: Val -> Val -> StateT Env CRes Bool
+evalValEq v1 v2 = do
+  Env{evTbEnv} <- get
+  let eqExpr = eVal operatorEq `eApply` (operatorArgL, valToEExpr v1) `eApply` (operatorArgR, valToEExpr v2)
+  tree <- lift $ buildRoot evTbEnv eqExpr (getExprPartialType eqExpr) boolType
+  (== true) <$> evalExpr tree
 
 evalExpr :: TExpr EvalMetaDat -> StateT Env CRes Val
 -- evalExpr e | trace (printf "eval %s" (show e)) False = undefined
@@ -369,12 +399,96 @@ evalBuild function prgmName prgmGraphData = do
       return (TupleVal "/Catln/CatlnResult" (H.fromList [("/name", StrVal "out.ll"), ("/contents", StrVal llvmStr)]), evalResult env')
     val -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval %s did not return a /Catln/CatlnResult. Instead it returned %s" function (show val)]
 
+-- | Derive a property test for every pair of evaluable same-name definitions whose domains
+-- overlap (their argument types intersect): on the overlap the two definitions must AGREE. A
+-- non-linear "diagonal" definition (e.g. @rel(a@x, b@x)= True@) overlaps every full definition it
+-- shadows, so this turns the diagonal into a check that each full definition matches it where they
+-- meet — for @Eqv.rel@ that overlap is exactly reflexivity. Each definition is evaluated in
+-- isolation (bypassing dispatch, which would only ever run one of them) and the results compared
+-- through their 'Eq'. Inputs are generated in the overlap, with positions that a non-linear
+-- pattern ties together generated equal so the diagonal is actually exercised.
+deriveOverlapTests :: EPrgm -> [(String, CResT IO Val)]
+deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
+  [ mkOverlapTest omi oaA oaB dom
+  | omi <- H.elems om
+  , let parts = filter evaluable (omiDefs omi ++ omiRuntimeDecls omi)
+  , (oaA, oaB) <- pairs parts
+  , let dom = intersectTypes typeEnv (clauseDom oaA) (clauseDom oaB)
+  , not (isBottomType dom)
+  , isJust (maybeGetSingleton dom)
+  ]
+  where
+    TypeEnv{teNames} = typeEnv
+    typeEnv = mkTypeEnv prgm
+    -- A clause we can evaluate: a definition with a body, or a runtime primitive (evaluated through
+    -- its @#runtime@ implementation). Pairing a non-linear diagonal against a primitive sibling is
+    -- how @(_@x - _@x)= 0@ becomes a derived test of the built-in subtraction (@x - x == 0@).
+    evaluable oa = case oaArr oa of
+      Just (Just _, _)  -> True
+      Just (Nothing, _) -> isJust (getRuntimeAnnot (oaAnnots oa))
+      _                 -> False
+    clauseDom oa = getExprType (oaObjExpr oa)
+    pairs xs = [(a, b) | (a:rest) <- tails xs, b <- rest]
+
+    mkOverlapTest omi oaA oaB dom = (testName, action)
+      where
+        -- The function's declared return type (predicates cleared) is the destination to build each
+        -- call against. It is narrower than a clause's inferred result, so the call's own type is not
+        -- already a subtype of it — which forces the tree builder to actually build and evaluate the
+        -- body to a concrete value rather than leaving it as an unevaluated application.
+        retDest = clearUnionTypePreds $ case [getMetaType m | d <- omiDecls omi ++ omiRuntimeDecls omi, Just (_, m) <- [oaArr d]] of
+          (t:_) -> t
+          []    -> intType
+        testName = printf "%s :: overlap-agreement" (oaObjPath oaA)
+        partial = getSingleton dom
+        groups = map (map (exprPath . fst)) (exprNonLinearArgGroups (oaObjExpr oaA) ++ exprNonLinearArgGroups (oaObjExpr oaB))
+        repOf n = case filter (n `elem`) groups of
+          (g:_) -> minimum g
+          []    -> n
+        argTypeMap = H.fromList [(pkName k, t) | (k, t) <- H.toList (ptArgs partial)]
+        genArg t = genValForType (UnionType Nothing (expandTypeWithNames typeEnv H.empty t teNames) [])
+        genInput = do
+          let argNames = H.keys argTypeMap
+          let reps = nub (map repOf argNames)
+          repVals <- mapM (\r -> (,) r <$> genArg (H.lookupDefault PTopType r argTypeMap)) reps
+          let repMap = H.fromList repVals
+          return $ TupleVal (ptName partial) (H.fromList [(n, H.lookupDefault NoVal (repOf n) repMap) | n <- argNames])
+        -- To evaluate one clause of the overlapping pair in isolation, remove the OTHER clause from
+        -- its function so a normal call dispatches to the one we want (bypassing the overlap), then
+        -- build and evaluate that call. Building the full call (rather than the body alone) resolves
+        -- the body's nested operators/primitives against a concrete result type. Removing (rather
+        -- than keeping only one) preserves a runtime-primitive sibling, which has no body to keep.
+        withoutClause dropOa o = o{ omiDefs = filter (/= dropOa) (omiDefs o)
+                                  , omiRuntimeDecls = filter (/= dropOa) (omiRuntimeDecls o) }
+        soloEnv dropOa = evalBaseEnv prgm{prgmObjMap = ObjectMap (H.adjust (withoutClause dropOa) (oaObjPath oaA) om)}
+        envA = soloEnv oaB
+        envB = soloEnv oaA
+        runClause env input = do
+          let inputE = valToEExpr input
+          tree <- buildRoot (evTbEnv env) inputE (getExprPartialType inputE) retDest
+          fst <$> runStateT (evalExpr tree) env
+        prop = Hedgehog.property $ do
+          input <- Hedgehog.forAll genInput
+          case (runClause envA input, runClause envB input) of
+            (CRes _ va, CRes _ vb) -> case runStateT (evalValEq va vb) envA of
+              CRes _ (True, _)  -> Hedgehog.success
+              CRes _ (False, _) -> Hedgehog.footnote (printf "Overlapping definitions disagree on %s:\n  %s\n  %s" (show input) (show va) (show vb)) >> Hedgehog.failure
+              CErr ns           -> Hedgehog.footnote (printf "Eq compare of results failed (%s vs %s): %s" (show va) (show vb) (prettyCNotes ns)) >> Hedgehog.failure
+            (ra, rb) -> Hedgehog.footnote (printf "eval failed:\n  %s\n  %s" (errOf ra) (errOf rb)) >> Hedgehog.failure
+        errOf (CErr ns) = prettyCNotes ns
+        errOf _         = "ok"
+        action = CResT $ do
+          ok <- Hedgehog.check prop
+          return $ if ok
+            then CRes [] (TupleVal "()" H.empty)
+            else CErr [MkCNote $ GenCErr Nothing $ printf "Overlap agreement test failed: %s" testName]
+
 evalTest :: EPrgmGraphData -> CRes [(String, CResT IO Val)]
 evalTest prgmGraphData = do
   let prgm@(Prgm objMap _ _) = mconcat $ map fst3 $ graphToNodes prgmGraphData
   let testOAs = nubBy (\a b -> oaObjPath a == oaObjPath b) $ filter (\oa -> hasAnnot testAnnot oa || hasAnnot exampleAnnot oa) $ flatObjectMap objMap
   let (noArgTests, propTests) = foldr partitionTest ([], []) testOAs
-  return $ map (runSimpleTest prgm) noArgTests ++ map (runPropertyTest prgm) propTests
+  return $ map (runSimpleTest prgm) noArgTests ++ map (runPropertyTest prgm) propTests ++ deriveOverlapTests prgm
   where
     isNoArgTest oa = null (exprAppliedArgs (oaObjExpr oa)) && null (exprAppliedOrdVars (oaObjExpr oa))
     partitionTest oa (simple, props)

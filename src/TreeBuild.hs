@@ -17,7 +17,7 @@ module TreeBuild where
 
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
-import           Data.List           (nub)
+import           Data.List           (nub, partition)
 import           Data.Maybe
 
 import           Text.Printf
@@ -106,10 +106,17 @@ completeTreeSet TBEnv{tbTypeEnv} fullPartial initialOptions = aux [] BottomType 
       -- next opt increases accumulation
       if not (isSubtypeOf tbTypeEnv accType' accType)
         then case optOa of
+               -- A non-linear pattern (e.g. @f(a@x, b@x)@) is guarded by the implicit equality of
+               -- its shared positions, but — unlike a where-guard — that constraint is not carried
+               -- as a predicate in its type. So keep the accumulation UNCHANGED (do not let it count
+               -- toward full coverage), which preserves the unconditional fallback that the equality
+               -- guard falls through to. The arrow itself is still added.
+               (Just oa) | not (null (exprNonLinearArgGroups (oaObjExpr oa))) -> aux (opt:accArrows) accType True opts
+
                -- For options that are guarded by conditions, don't increase the accumulation because the condition may not pass
                -- This will fix most if/else pieces, but can struggle with multiple conditions that combine to cover everything such as <0 and >=0.
                -- TODO Remove need for this additional check by using refinement types
-               (Just oa) | not $ null $ exprWhereConds $ oaObjExpr oa -> aux (opt:accArrows) accType' True opts
+               (Just oa) | not (null (exprWhereConds (oaObjExpr oa))) -> aux (opt:accArrows) accType' True opts
 
                -- Increase the a
                -- Add to accumulation and add the arrow
@@ -134,15 +141,19 @@ joinArrowsWithCond env srcType destType guards = case completeTreeSet env srcTyp
   res -> res >>= buildGuards
   where
     conditionFree (_, Nothing, _) = True
-    conditionFree (_, Just oa, _) = null $ exprWhereConds $ oaObjExpr oa
+    conditionFree (_, Just oa, _) = null (exprWhereConds (oaObjExpr oa)) && null (exprNonLinearArgGroups (oaObjExpr oa))
     buildGuards :: [ResBuildEnvItem] -> CRes TCallTree
     buildGuards arrows = do
       ifTreePairs <- forM arrows $ \(_, moa, arrTree) -> do
         case moa of
           Nothing -> return (Nothing, arrTree)
           Just oa -> do
+            -- A non-linear pattern (@f(a@x, b@x)@) carries no where-condition but is still guarded
+            -- by the implicit equality of its shared positions, which 'Eval' checks from the @ifObj@
+            -- recorded here (see 'evalCallTree' for 'TCCond'). So such an arrow is kept as a guarded
+            -- branch rather than an unconditional one.
             let ifConds = exprWhereConds (oaObjExpr oa)
-            if null ifConds
+            if null ifConds && null (exprNonLinearArgGroups (oaObjExpr oa))
               then return (Just ([], oa), arrTree)
               else do
                 ifConds' <- forM ifConds $ \ifCond ->
@@ -169,8 +180,15 @@ handleElseArrows items = case partitionEithers $ map splitElse items of
 
 -- | This should sort arrows in priority order before trying
 -- TODO Actually implement the sortArrows behavior
+-- Non-linear arrows (e.g. @f(a@x, b@x)@) are moved to the front so their implicit-equality guard
+-- is tried before any unconditional catch-all definition it overlaps (which would otherwise be
+-- selected first and shadow them). Every other arrow keeps its relative order, so programs without
+-- non-linear patterns are unaffected.
 sortArrows :: TBEnv -> [ResBuildEnvItem] -> CRes [ResBuildEnvItem]
-sortArrows _ = return
+sortArrows _ = return . uncurry (++) . partition isNonLinear
+  where
+    isNonLinear (_, Just oa, _) = not $ null $ exprNonLinearArgGroups $ oaObjExpr oa
+    isNonLinear _               = False
 
 -- | This will find a single arrow (from the objMap, primitives, macros, or args) from the src type
 findResArrows :: TBEnv -> [ObjSrc] -> PartialType -> CRes [ResBuildEnvItem]

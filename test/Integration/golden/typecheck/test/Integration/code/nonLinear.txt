@@ -1,0 +1,83 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
+                    }
+                )
+            ,
+                ( "/diag"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /diag( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /diag( Value /a@Value /x -> /Data/Primitive/Integer )( Value /b@Value /x -> /Data/Primitive/Integer ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /diag( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            ,
+                                ( /operator==
+                                    [ /r=∀/Data/Algebra/Eq
+                                    , /T=∀/Data/Algebra/Eq
+                                    , /l=∀/Data/Algebra/Eq
+                                    ]
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    ) + /Data/strEqual
+                                    ( /r=/Data/String
+                                    , /l=/Data/String
+                                    ) + /Data/Primitive/True + /Data/Algebra/rel
+                                    ( /a=UnionType
+                                        ( Just
+                                            ( PredClass /Data/Primitive/Boolean
+                                            , fromList []
+                                            )
+                                        , ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float )
+                                        , []
+                                        )
+                                    , /this=
+                                        ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] )
+                                    , /b=∀/Data/Algebra/Eq
+                                    ) + /Data/Primitive/False + /Data/Primitive/boolEq
+                                    ( /r=∀/Data/Primitive/Boolean
+                                    , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
+                                    ( /other=∀/Data/Algebra/Eq
+                                    , /this=∀/Data/Algebra/Eq
+                                    )
+                                )
+                            , []
+                            ) = /operator==( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr "Exercises non-linear value patterns: a clause that binds the same variable to two argument" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "positions applies only when those arguments are equal (compared via the argument type's Eq)." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "The diagonal clause below is a fast-path that overlaps — and must agree with — the general" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "definition, so the auto-derived overlap-agreement test passes." )
+        ]
+    }

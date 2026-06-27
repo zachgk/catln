@@ -141,7 +141,8 @@ Prgm
                         , /operator-( Value /l -> /Data/Primitive/Float = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/Float = Hole TopType HoleActive Nothing ) -> /Data/Primitive/Float
                         ]
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /operator-( Value /l -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing@Value x )( Value /r -> /Data/Primitive/Integer = Hole TopType HoleActive Nothing@Value x )= CInt 0 ]
                     }
                 )
             ,
@@ -405,6 +406,14 @@ Prgm
             defined here alongside the types — build on those primitives." )
         , /Catln/#md
             ( Value /text= CStr "## Integers" )
+        , /Catln/#md
+            ( Value /text= CStr "The diagonal of subtraction: a value minus itself is zero. Both operands are aliased to the same" )
+        , /Catln/#md
+            ( Value /text= CStr "  [x] (a non-linear pattern), so this only matches equal operands and short-circuits to [0]. It" )
+        , /Catln/#md
+            ( Value /text= CStr "  overlaps the primitive subtraction, so the auto-derived overlap-agreement test checks they" )
+        , /Catln/#md
+            ( Value /text= CStr "  agree on the diagonal — i.e. it derives and verifies [x - x == 0]." )
         , /Catln/#md
             ( Value /text= CStr "The primitive integer "less than" is also exposed as a named function so [Data/Algebra/ord]'s" )
         , /Catln/#md

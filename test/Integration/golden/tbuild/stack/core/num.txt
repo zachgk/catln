@@ -144,7 +144,8 @@ Prgm
                         , /operator-( EAppArg Value /l -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing )( EAppArg Value /r -> /Data/Primitive/Float = Hole /Data/Primitive/Float HoleActive Nothing ) -> /Data/Primitive/Float
                         ]
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /operator-( EAppArg Value /l -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing@Value /x )( EAppArg Value /r -> /Data/Primitive/Integer = Hole /Data/Primitive/Integer HoleActive Nothing@Value /x ) -> /Data/Primitive/Integer = 0 ]
                     }
                 )
             ,
@@ -549,6 +550,14 @@ Prgm
             defined here alongside the types — build on those primitives." )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "## Integers" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "The diagonal of subtraction: a value minus itself is zero. Both operands are aliased to the same" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "  [x] (a non-linear pattern), so this only matches equal operands and short-circuits to [0]. It" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "  overlaps the primitive subtraction, so the auto-derived overlap-agreement test checks they" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "  agree on the diagonal — i.e. it derives and verifies [x - x == 0]." )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "The primitive integer "less than" is also exposed as a named function so [Data/Algebra/ord]'s" )
         , /Catln/#md
