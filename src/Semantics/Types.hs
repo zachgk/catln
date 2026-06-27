@@ -1581,9 +1581,12 @@ compactJoinPartials typeEnv partials = joinUnionType $ concat $ H.elems $ fmap j
     numDifferences m1 m2 = sum $ fromEnum <$> H.intersectionWith (/=) m1 m2
     joinMap = H.unionWith (unionTypes typeEnv)
 
--- | Processes partials that have a 'PredClass' predicate
-compactPartialsWithClassPred :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs
-compactPartialsWithClassPred typeEnv vaenv partials = unionPartialLeafs $ map tryAux $ splitUnionType partials
+-- | Processes partials that have a 'PredClass' predicate. Takes an already-split list of
+-- partials (the fused 'compactPartialLeafs' pipeline splits once up front) and produces the
+-- merged 'PartialLeafs'. 'unionPartialLeafs' is an order-independent merge, so the result is
+-- the same set regardless of the input list's order.
+compactPartialsWithClassPred :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> [PartialType] -> PartialLeafs
+compactPartialsWithClassPred typeEnv vaenv partials = unionPartialLeafs $ map tryAux partials
   where
     tryAux :: PartialType -> PartialLeafs
     tryAux partial = case tryPredsToList (ptPreds partial) of
@@ -1613,9 +1616,10 @@ compactPartialsWithClassPred typeEnv vaenv partials = unionPartialLeafs $ map tr
           where
             (exprs', classes', rels') = splitPreds ps
 
--- | Checks if a partial has predicates that turn the partial into a 'bottomType' (e.g. a partial with contradictory preds such as isClass A and not isClass A)
-compactDisconnectedPreds :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs
-compactDisconnectedPreds typeEnv vaenv partials = joinUnionType $ mapMaybe aux $ splitUnionType partials
+-- | Checks if a partial has predicates that turn the partial into a 'bottomType' (e.g. a partial with contradictory preds such as isClass A and not isClass A).
+-- Operates on a list of partials in the fused pipeline (no intermediate join); each partial is mapped/dropped independently.
+compactDisconnectedPreds :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> [PartialType] -> [PartialType]
+compactDisconnectedPreds typeEnv vaenv = mapMaybe aux
   where
     aux partial@PartialType{ptPreds=PredsNone} = Just partial
     aux partial@PartialType{ptPreds} = case intersectTypesEnv typeEnv{teDisableCompact=True} vaenv (singletonType partialWithoutPreds) (TopType H.empty ptPreds) of
@@ -1631,15 +1635,25 @@ compactDisconnectedPreds typeEnv vaenv partials = joinUnionType $ mapMaybe aux $
         partialWithoutPreds = partial{ptPreds = PredsNone}
 
 -- | Removes partials which contain a type variable that is the 'bottomType', because then the whole partial is a 'bottomType'.
-compactBottomType :: PartialLeafs -> PartialLeafs
-compactBottomType partials = joinUnionType $ mapMaybe aux $ splitUnionType partials
-  where
-    aux partial = if containsBottomPartialType partial
-      then Nothing
-      else Just partial
+-- Operates on a list of partials in the fused pipeline (a pure filter; no join).
+compactBottomType :: [PartialType] -> [PartialType]
+compactBottomType = filter (not . containsBottomPartialType)
 
+-- The first three stages ('compactBottomType', 'compactDisconnectedPreds',
+-- 'compactPartialsWithClassPred') are fused over a single 'splitUnionType': stages 1-2 are pure
+-- per-element list filters/maps and stage 3 ends in the order-independent 'unionPartialLeafs'
+-- merge, so the 'PartialLeafs' produced after stage 3 is identical regardless of intermediate
+-- list order. Fusing them removes two intermediate join+split round-trips (each of which
+-- re-hashes every partial) while keeping the order-sensitive 'compactJoinPartials' /
+-- 'compactOverlapping' stages operating on exactly the same 'PartialLeafs' as before.
 compactPartialLeafs :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs
-compactPartialLeafs typeEnv vaenv = compactOverlapping typeEnv . compactJoinPartials typeEnv . compactPartialsWithClassPred typeEnv vaenv . compactDisconnectedPreds typeEnv vaenv . compactBottomType
+compactPartialLeafs typeEnv vaenv =
+  compactOverlapping typeEnv
+  . compactJoinPartials typeEnv
+  . compactPartialsWithClassPred typeEnv vaenv
+  . compactDisconnectedPreds typeEnv vaenv
+  . compactBottomType
+  . splitUnionType
 
 -- |
 -- Used to simplify and reduce the size of a 'Type'.
