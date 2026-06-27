@@ -333,7 +333,7 @@ toTExprDest env os e m = do
     fromMacro f = do
       macroResult <- f e (MacroData env os)
       case macroResult of
-        Left val -> return $ TCExpr (emptyMetaT $ singletonType $ getValType val) val
+        Left val -> return $ TCExpr (emptyMetaT $ singletonType $ getValPartialType val) val
         Right e' -> toTExprDest env os e' m
 
 buildArrow :: TBEnv -> PartialType -> TBObjArr -> CRes (Maybe (TBObjArr, (TExpr TBMetaDat, [TExpr TBMetaDat])))

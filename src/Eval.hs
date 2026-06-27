@@ -116,7 +116,7 @@ evalGuards = undefined
 evalObjArr :: Val -> AnyObjArr -> StateT Env CRes Val
 evalObjArr input oa = do
   let newArrArgs = buildArrArgs oa input
-  (resArrowTree, compAnnots, oldArgs) <- evalStartEArrow (getValType input) oa newArrArgs
+  (resArrowTree, compAnnots, oldArgs) <- evalStartEArrow (getValPartialType input) oa newArrArgs
   forM_ compAnnots $ \compAnnot -> do
             compAnnot' <- withEvalPush (printf "annot %s" (show compAnnot)) $ evalExpr compAnnot
             evalCompAnnot compAnnot'
@@ -143,7 +143,7 @@ evalCallTree  m (TCMatch destType opts) = do
   -- function-signature key @/fn(/v=..)@ on the typed arrow) before matching, mirroring
   -- the 'simplifyArgKeys' handling in the 'TCCond' branch below.
   let reKeyP p = p{ptArgs = H.mapKeys (partialKey . pkName) (ptArgs p)}
-  case H.toList $ H.filterWithKey (\optType _ -> isSubtypePartialOf evTypeEnv (reKeyP $ getValType m) (singletonType $ reKeyP optType)) opts of
+  case H.toList $ H.filterWithKey (\optType _ -> isSubtypePartialOf evTypeEnv (reKeyP $ getValPartialType m) (singletonType $ reKeyP optType)) opts of
     [(_, resArrowTree)] -> do
       withEvalPush ("match with val " ++ show m) $ evalCallTree m resArrowTree
     -- No statically-built arm matches the concrete runtime value. An arm can be dropped at build
@@ -153,10 +153,10 @@ evalCallTree  m (TCMatch destType opts) = do
     -- retry once; if the rebuild is not strictly more resolved, fall back to the original error.
     [] -> do
       Env{evTbEnv} <- get
-      case buildPartialCallTree evTbEnv [] S.empty (getValType m) destType of
+      case buildPartialCallTree evTbEnv [] S.empty (getValPartialType m) destType of
         CRes _ rebuilt | rebuilt /= TCMatch destType opts ->
           withEvalPush ("rebuild match with val " ++ show m) $ evalCallTree m rebuilt
-        _ -> evalError $ printf "Failed match in eval callTree: \n\tVal: %s \n\tVal type: %s\n\tOptions: %s" (show m) (show $ getValType m) (show opts)
+        _ -> evalError $ printf "Failed match in eval callTree: \n\tVal: %s \n\tVal type: %s\n\tOptions: %s" (show m) (show $ getValPartialType m) (show opts)
     (_:_:_) -> evalError $ printf "Multiple matches in eval callTree: \n\tVal: %s \n\tOptions: %s " (show m) (show opts)
 evalCallTree v (TCSeq a b) = do
   v' <- evalCallTree v a
@@ -166,7 +166,7 @@ evalCallTree m (TCCond resType ((cond, ifThenTree):restIfTrees)) = do
   Env{evTypeEnv} <- get
   cond' <- case cond of
     -- TODO Remove the use of clearUnionTypePreds below. It is a workaround as type predicates are not supported by subtypeOf
-    Just (_, oa) | not (isSubtypeOf evTypeEnv (simplifyArgKeys $ singletonType $ getValType m) (simplifyArgKeys $ clearUnionTypePreds $ getExprType $ oaObjExpr oa)) -> return False
+    Just (_, oa) | not (isSubtypeOf evTypeEnv (simplifyArgKeys $ singletonType $ getValPartialType m) (simplifyArgKeys $ clearUnionTypePreds $ getExprType $ oaObjExpr oa)) -> return False
     Nothing -> return True
     Just (ifCondTrees, ifObj) -> do
       Env{evArgs} <- get

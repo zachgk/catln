@@ -164,25 +164,48 @@ queueLeaf = partialVal "llvmQueue"
 resultType :: Type
 resultType = singletonType resultLeaf
 
-getValType :: Val -> PartialType
-getValType IntVal{} = intLeaf
-getValType FloatVal{} = floatLeaf
-getValType StrVal{} = strLeaf
-getValType CharVal{} = charLeaf
-getValType (TupleVal name args) = (partialVal (mkName name)){ptArgs=H.fromList $ map fromArg $ H.toList args}
-  where fromArg (argName, argVal) = (partialKey (mkName argName), singletonType $ getValType argVal)
-getValType (ObjArrVal oa) = getSingleton $ getExprType $ oaObjExpr oa
-getValType IOVal{}     = ioLeaf
-getValType MockIOVal{} = ioLeaf
-getValType LLVMVal{} = resultLeaf
-getValType LLVMQueue{} = queueLeaf
--- getValType (LLVMOperand t _) = case t of
+-- | The singleton typeset of a value: a 'Type' that carries a primitive's concrete value as a
+-- 'Constant' (e.g. @IntVal 5@ becomes the type @{5}@, a subtype of @Integer@). This is what a
+-- refinement membership check needs — @isSubtypeOf (getValType v) refinedType@ — which a bare
+-- 'PartialType' cannot express, as it has nowhere to hold the constant. For arrow building and
+-- dispatch matching, where the concrete constant is irrelevant, use 'getValPartialType'.
+getValType :: Val -> Type
+getValType (IntVal n)   = constantType (CInt n)
+getValType (FloatVal f) = constantType (CFloat f)
+getValType (StrVal s)   = constantType (CStr s)
+getValType (CharVal c)  = constantType (CChar c)
+getValType (TupleVal name args) = singletonType (partialVal (mkName name)){ptArgs=H.fromList $ map fromArg $ H.toList args}
+  where fromArg (argName, argVal) = (partialKey (mkName argName), getValType argVal)
+getValType (ObjArrVal oa) = getExprType $ oaObjExpr oa
+getValType IOVal{}     = singletonType ioLeaf
+getValType MockIOVal{} = singletonType ioLeaf
+getValType LLVMVal{}   = singletonType resultLeaf
+getValType LLVMQueue{} = singletonType queueLeaf
+getValType LLVMIO{}    = singletonType ioLeaf
+getValType NoVal = error "getValType of NoVal"
+
+-- | The structural 'PartialType' of a value — its shape, ignoring any concrete constant. Used for
+-- arrow building and dispatch matching (which key on a 'PartialType'); the runtime value's exact
+-- constant does not discriminate between arrows there.
+getValPartialType :: Val -> PartialType
+getValPartialType IntVal{} = intLeaf
+getValPartialType FloatVal{} = floatLeaf
+getValPartialType StrVal{} = strLeaf
+getValPartialType CharVal{} = charLeaf
+getValPartialType (TupleVal name args) = (partialVal (mkName name)){ptArgs=H.fromList $ map fromArg $ H.toList args}
+  where fromArg (argName, argVal) = (partialKey (mkName argName), singletonType $ getValPartialType argVal)
+getValPartialType (ObjArrVal oa) = getSingleton $ getExprType $ oaObjExpr oa
+getValPartialType IOVal{}     = ioLeaf
+getValPartialType MockIOVal{} = ioLeaf
+getValPartialType LLVMVal{} = resultLeaf
+getValPartialType LLVMQueue{} = queueLeaf
+-- getValPartialType (LLVMOperand t _) = case t of
   -- UnionType leafs -> case splitUnionType leafs of
     -- [partial] -> partial
-    -- _         -> error "could not getValType without a single partial"
-  -- _ -> error $ printf "could not get non sum getValType %s" (show t)
-getValType LLVMIO{} = ioLeaf
-getValType NoVal = error "getValType of NoVal"
+    -- _         -> error "could not getValPartialType without a single partial"
+  -- _ -> error $ printf "could not get non sum getValPartialType %s" (show t)
+getValPartialType LLVMIO{} = ioLeaf
+getValPartialType NoVal = error "getValPartialType of NoVal"
 
 
 --- ResArrowTree
