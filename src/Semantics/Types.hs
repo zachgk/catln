@@ -1660,6 +1660,17 @@ compactPartialLeafs typeEnv vaenv =
 -- TODO: This should merge type partials into class partials
 compactType :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
 compactType TypeEnv{teDisableCompact=True} _ t = t
+-- Idempotence fast paths for already-canonical trivial types. 'compactType' is provably the
+-- identity on each of these, yet the set algebra re-compacts them constantly (~94% of calls are
+-- on <=1-leaf types, ~63% on the empty 'BottomType'). Short-circuiting here avoids rebuilding the
+-- same structure through the whole pipeline.
+--   * 'BottomType' (empty Nothing-top): 'compactPartialLeafs' on empty is empty, 'foldRecursiveType' leaves it.
+--   * a single predicate-free partial with no args/vars: nothing to filter, join, overlap, or recurse into.
+compactType _ _ t@BottomType = t
+compactType _ _ t@(UnionType Nothing pos [])
+  | [PartialArgsOption (vars, args, PredsNone, _)] <- concatMap S.toList (H.elems pos)
+  , H.null vars
+  , H.null args = t
 -- Class-graph-contradictory top: a conjunction of >=2 PredClass atoms can be empty by class-graph
 -- disjointness (e.g. two distinct unsealed empty classes expand to distinct placeholders, or two
 -- classes with disjoint members) which the syntactic 'isPredsContradictory' below cannot see.
