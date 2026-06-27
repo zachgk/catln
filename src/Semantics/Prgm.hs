@@ -557,9 +557,9 @@ flatObjectMap (ObjectMap objMap) = concatMap flatObjectMapItem (H.elems objMap)
 singletonObjectMap :: (ExprClass e, MetaDat m, Show (e m), Show m) => ObjArr e m -> ObjectMap e m
 singletonObjectMap oa = ObjectMap $ H.singleton (makeAbsoluteName $ oaObjPath oa) omi
   where
-    isRefine = any (\a -> nameStr (exprPath a) == refineAnnot) (oaAnnots oa)
-    -- The annotation path may still be relative (@#runtime@) at this stage or already resolved to
-    -- the absolute @/Catln/#runtime@, so match either form.
+    -- The annotation path may still be relative (@#refine@/@#runtime@) at this stage or already
+    -- resolved to the absolute @/Catln/#refine@, so match either form.
+    isRefine = any (\a -> relativeNameMatches (exprPath a) (mkName refineAnnot)) (oaAnnots oa)
     isRuntime = any (\a -> relativeNameMatches (exprPath a) (mkName runtimeAnnot)) (oaAnnots oa)
     omi = case oa of
       ObjArr{oaArr=Nothing}            | isRefine  -> ObjectMapItem [] [] [oa] [] -- refine type object
