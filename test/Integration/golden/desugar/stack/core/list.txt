@@ -62,8 +62,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/consEqual
-                            ( Value a -> ∀/Data/ConsList[ /T=~/Data/Algebra/Eq ] )
-                            ( Value b -> ∀/Data/ConsList[ /T=~/Data/Algebra/Eq ] ) -> ∀/Data/Primitive/Boolean
+                            ( Value a -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ] )
+                            ( Value b -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ] ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -163,9 +163,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/equal
-                            ( Value other -> ∀/Data/ConsList[ /E=~/Data/Algebra/Eq ] )( Value /this -> /Data/Nil )= /Data/consEqual( Value a= Value /Data/Nil )( Value b= Value other )
+                            ( Value other -> ∀/Data/ConsList[ /E=∀/Data/Algebra/Eq ] )( Value /this -> /Data/Nil )= /Data/consEqual( Value a= Value /Data/Nil )( Value b= Value other )
                         , /Data/Algebra/equal
-                            ( Value other -> ∀/Data/ConsList[ /E=~/Data/Algebra/Eq ] )
+                            ( Value other -> ∀/Data/ConsList[ /E=∀/Data/Algebra/Eq ] )
                             ( Value /this= /Data/Cons[ /T : ∀/Data/Algebra/Eq ]( Value head )( Value tail ) )= /Data/consEqual
                             ( Value a= /Data/Cons( Value head= Value head )( Value tail= Value tail ) )( Value b= Value other )
                         ]
@@ -202,7 +202,7 @@ Prgm
             ( False
             , /Data/ConsList
             ,
-                [ ∀/Data/ConsList[ /T=~/Data/Algebra/Eq ] ]
+                [ ∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ] ]
             , Just ""
             )
         , CGClass
@@ -211,7 +211,7 @@ Prgm
             ,
                 [ /Data/Cons[ /T=$_/T ]
                     ( /head=$/T
-                    , /tail=~ConsList[ /T=$_/T ]
+                    , /tail=∀/Data/ConsList[ /T=$_/T ]
                     )
                 , /Data/Nil
                 ]

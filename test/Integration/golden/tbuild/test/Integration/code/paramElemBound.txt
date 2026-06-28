@@ -37,13 +37,13 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /useBox
-                            ( EAppArg Value /p -> /Box[ /A=~/Boxed ] ) -> /Data/Primitive/Integer
+                            ( EAppArg Value /p -> /Box[ /A=∀/Boxed ] ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /useBox
-                            ( EAppArg Value /p -> /Box[ /A=~/Boxed ]( /x=~/Boxed ) = /Box( EAppArg Value /x -> ∀/Boxed ) ) ->
+                            ( EAppArg Value /p -> /Box[ /A=∀/Boxed ]( /x=∀/Boxed ) = /Box( EAppArg Value /x -> ∀/Boxed ) ) ->
                             ( /unbox( /b=∀/Boxed ) + /Data/Primitive/Integer ) = /unbox
                             ( EAppArg Value /b -> TVArg /x = ( Value /x ↦ TVArg /x ) )
                         ]

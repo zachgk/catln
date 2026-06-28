@@ -38,8 +38,8 @@ Prgm
                     { omiDecls =
                         [ /bothUnbox
                             ( Value /p -> /Pair
-                                [ /B=~/Boxed
-                                , /A=~/Boxed
+                                [ /B=∀/Boxed
+                                , /A=∀/Boxed
                                 ]
                             ) -> /Data/Primitive/Integer
                         ]
@@ -48,12 +48,12 @@ Prgm
                     , omiDefs =
                         [ /bothUnbox
                             ( Value /p -> /Pair
-                                [ /B=~/Boxed
-                                , /A=~/Boxed
+                                [ /B=∀/Boxed
+                                , /A=∀/Boxed
                                 ]
-                                ( /first=~/Boxed
-                                , /second=~/Boxed
-                                ) = /Pair( Value /first@Value /f -> ∀/Boxed )( Value /second@Value /s -> ~/Boxed )
+                                ( /first=∀/Boxed
+                                , /second=∀/Boxed
+                                ) = /Pair( Value /first@Value /f -> ∀/Boxed )( Value /second@Value /s -> ∀/Boxed )
                             ) ->
                             ( /unbox( /b=∀/Boxed ) + /Data/Primitive/Integer ) = /unbox( Value /b -> TVArg /f = Value /f )
                         ]

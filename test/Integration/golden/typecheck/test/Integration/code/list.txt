@@ -13,16 +13,16 @@ Prgm
                             ( Value /this -> /Data/Cons[ /T=TopType ]
                                 ( /head=$/T
                                 , /tail=
-                                    ( /Data/Nil + /Data/Cons[ /T=TopType ]
+                                    ( /Data/Nil + /Data/Cons[ /T=$_/T ]
                                         ( /head=$/T
-                                        , /tail=~ConsList[ /T=$_/T ]
+                                        , /tail=∀/Data/ConsList[ /T=$_/T ]
                                         )
                                     )
                                 ) = /Data/Cons( Value /head )
                                 ( Value /tail ->
                                     ( /Data/Nil + /Data/Cons[ /T=TopType ]
                                         ( /head=$/T
-                                        , /tail=~ConsList[ /T=$_/T ]
+                                        , /tail=∀/Data/ConsList[ /T=$_/T ]
                                         )
                                     )
                                 )

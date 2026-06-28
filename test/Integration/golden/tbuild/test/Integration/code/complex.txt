@@ -48,9 +48,9 @@ Prgm
                     , omiDefs =
                         [ /real
                             ( EAppArg Value /c -> /Complex
-                                ( /a=~Number
-                                , /b=~Number
-                                ) = /Complex( EAppArg Value /a -> ~Number )( EAppArg Value /b -> ~Number )
+                                ( /a=∀/Data/Primitive/Number
+                                , /b=∀/Data/Primitive/Number
+                                ) = /Complex( EAppArg Value /a -> ∀/Data/Primitive/Number )( EAppArg Value /b -> ∀/Data/Primitive/Number )
                             ) -> TVArg /a = ( Value /a ↦ TVArg /a )
                         ]
                     }

@@ -33,7 +33,7 @@ Prgm
                         , /Data/length
                             ( Value /this -> /Data/Cons[ /T=$/T ]
                                 ( /head=$/T
-                                , /tail=~ConsList[ /T=$_/T ]
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
                                 ) = /Data/Cons( Value /head )
                                 ( Value /tail -> ∀/Data/ConsList[ /T=$/T ] )
                             ) ->
@@ -72,39 +72,39 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/consEqual
-                            ( Value /a -> ∀/Data/ConsList[ /T=~/Data/Algebra/Eq ] )
-                            ( Value /b -> ∀/Data/ConsList[ /T=~/Data/Algebra/Eq ] ) -> ∀/Data/Primitive/Boolean
+                            ( Value /a -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ] )
+                            ( Value /b -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ] ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/consEqual( Value /a -> /Data/Nil = Value /Data/Nil )( Value /b -> /Data/Nil = Value /Data/Nil ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         , /Data/consEqual( Value /a -> /Data/Nil = Value /Data/Nil )
-                            ( Value /b -> /Data/Cons[ /T=~/Data/Algebra/Eq ]
+                            ( Value /b -> /Data/Cons[ /T=∀/Data/Algebra/Eq ]
                                 ( /head=$/T
-                                , /tail=~ConsList[ /T=$_/T ]
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
                                 ) = /Data/Cons( Value /head )
-                                ( Value /tail -> ~ConsList[ /T=$_/T ] )
+                                ( Value /tail -> ∀/Data/ConsList[ /T=$_/T ] )
                             ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/consEqual
-                            ( Value /a -> /Data/Cons[ /T=~/Data/Algebra/Eq ]
+                            ( Value /a -> /Data/Cons[ /T=∀/Data/Algebra/Eq ]
                                 ( /head=$/T
-                                , /tail=~ConsList[ /T=$_/T ]
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
                                 ) = /Data/Cons( Value /head )
-                                ( Value /tail -> ~ConsList[ /T=$_/T ] )
+                                ( Value /tail -> ∀/Data/ConsList[ /T=$_/T ] )
                             )( Value /b -> /Data/Nil = Value /Data/Nil ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/consEqual
-                            ( Value /a -> /Data/Cons[ /T=~/Data/Algebra/Eq ]
+                            ( Value /a -> /Data/Cons[ /T=∀/Data/Algebra/Eq ]
                                 ( /head=$/T
-                                , /tail=~ConsList[ /T=$_/T ]
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
                                 ) = /Data/Cons( Value /head@Value /ah -> ∀/Data/Algebra/Eq )
-                                ( Value /tail@Value /at -> ∀/Data/ConsList[ /T=~/Data/Algebra/Eq ] )
+                                ( Value /tail@Value /at -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ] )
                             )
-                            ( Value /b -> /Data/Cons[ /T=~/Data/Algebra/Eq ]
+                            ( Value /b -> /Data/Cons[ /T=∀/Data/Algebra/Eq ]
                                 ( /head=$/T
-                                , /tail=~ConsList[ /T=$_/T ]
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
                                 ) = /Data/Cons( Value /head@Value /bh -> ∀/Data/Algebra/Eq )
-                                ( Value /tail@Value /bt -> ~ConsList[ /T=$_/T ] )
+                                ( Value /tail@Value /bt -> ∀/Data/ConsList[ /T=$_/T ] )
                             ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
@@ -135,16 +135,16 @@ Prgm
                         , /Data/List/fmap
                             ( Value /lst -> /Data/Cons[ /T=TopType ]
                                 ( /head=$/T
-                                , /tail=~ConsList[ /T=$_/T ]
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
                                 ) = /Data/Cons( Value /head )
-                                ( Value /tail -> ~ConsList[ /T=$_/T ] )
+                                ( Value /tail -> ∀/Data/ConsList[ /T=$_/T ] )
                             )
                             ( /fn( Value /v ) ) -> /Data/Cons[ /T=TopType ]
                             ( /head=$/T
-                            , /tail=~ConsList[ /T=$_/T ]
+                            , /tail=∀/Data/ConsList[ /T=$_/T ]
                             ) = /Data/Cons
                             ( Value /head= /fn( Value /v -> TVArg /head = Value /head ) )
-                            ( Value /tail -> ~ConsList[ /T=$_/T ] = /fmap( Value /lst -> TVArg /tail = Value /tail )
+                            ( Value /tail -> ∀/Data/ConsList[ /T=$_/T ] = /fmap( Value /lst -> TVArg /tail = Value /tail )
                                 ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
                             )
                         ]
@@ -213,7 +213,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/equal
-                            ( Value /other -> ∀/Data/ConsList[ /E=~/Data/Algebra/Eq ] )( Value /this -> /Data/Nil ) -> UnionType
+                            ( Value /other -> ∀/Data/ConsList[ /E=∀/Data/Algebra/Eq ] )( Value /this -> /Data/Nil ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
@@ -221,19 +221,18 @@ Prgm
                             ,
                                 ( /Data/consEqual
                                     ( /a=/Data/Nil
-                                    , /b=∀/Data/ConsList[ /E=~/Data/Algebra/Eq ]
+                                    , /b=∀/Data/ConsList[ /E=∀/Data/Algebra/Eq ]
                                     ) + /Data/Primitive/True + /Data/Primitive/False
                                 )
                             , []
                             ) = /Data/consEqual( Value /a -> /Data/Nil = Value /Data/Nil )( Value /b -> TVArg /other = Value /other )
                         , /Data/Algebra/equal
-                            ( Value /other -> ∀/Data/ConsList[ /E=~/Data/Algebra/Eq ] )
-                            ( Value /this -> /Data/Cons
-                                [ /T=( TopType | PredClass /Data/Algebra/Eq && PredRel /Data/Algebra/Eq ) ]
+                            ( Value /other -> ∀/Data/ConsList[ /E=∀/Data/Algebra/Eq ] )
+                            ( Value /this -> /Data/Cons[ /T=∀/Data/Algebra/Eq ]
                                 ( /head=$/T
-                                , /tail=~ConsList[ /T=$_/T ]
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
                                 ) = /Data/Cons[ /T : ∀/Data/Algebra/Eq ]( Value /head -> ∀/Data/Algebra/Eq )
-                                ( Value /tail -> ~ConsList[ /T=$_/T ] )
+                                ( Value /tail -> ∀/Data/ConsList[ /T=$_/T ] )
                             ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
@@ -241,13 +240,12 @@ Prgm
                                 )
                             ,
                                 ( /Data/consEqual[ /T=∀/Data/Algebra/Eq ]
-                                    ( /a=/Data/Cons
-                                        [ /T=( TopType | PredClass /Data/Algebra/Eq && PredRel /Data/Algebra/Eq ) ]
+                                    ( /a=/Data/Cons[ /T=∀/Data/Algebra/Eq ]
                                         ( /head=$/T
-                                        , /tail=~ConsList[ /T=$_/T ]
+                                        , /tail=∀/Data/ConsList[ /T=$_/T ]
                                         )
                                     , /b=
-                                        ( TopType | PredClass /Data/ConsList[ /E=~/Data/Algebra/Eq ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] )
+                                        ( TopType | PredClass /Data/ConsList[ /E=∀/Data/Algebra/Eq ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Eq ] )
                                     ) + /Data/Primitive/True + /operator&&
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
@@ -255,10 +253,9 @@ Prgm
                                 )
                             , []
                             ) = /Data/consEqual
-                            ( Value /a -> /Data/Cons
-                                [ /T=( TopType | PredClass /Data/Algebra/Eq && PredRel /Data/Algebra/Eq ) ]
+                            ( Value /a -> /Data/Cons[ /T=∀/Data/Algebra/Eq ]
                                 ( /head=$/T
-                                , /tail=~ConsList[ /T=$_/T ]
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
                                 ) = /Data/Cons( Value /head -> TVArg /head = Value /head )( Value /tail -> TVArg /tail = Value /tail )
                             )( Value /b -> TVArg /other = Value /other )
                         ]
@@ -295,7 +292,7 @@ Prgm
             ( False
             , /Data/ConsList
             ,
-                [ ∀/Data/ConsList[ /T=~/Data/Algebra/Eq ] ]
+                [ ∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ] ]
             , Just ""
             )
         , CGClass
@@ -304,7 +301,7 @@ Prgm
             ,
                 [ /Data/Cons[ /T=$_/T ]
                     ( /head=$/T
-                    , /tail=~ConsList[ /T=$_/T ]
+                    , /tail=∀/Data/ConsList[ /T=$_/T ]
                     )
                 , /Data/Nil
                 ]

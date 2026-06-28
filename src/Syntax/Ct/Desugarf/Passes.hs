@@ -88,13 +88,14 @@ resolveRelativeNames fullPrgm@(Prgm fullPrgmObjMap _ _) (Prgm objMap (ClassGraph
 
     -- | Resolves possibilities for a relative partial
     resolveRelPartial :: Bool -> PartialType -> Type
-    resolveRelPartial reqResolve p = case resolveName reqResolve (PRelativeName $ ptName p) of
+    resolveRelPartial reqResolve p0 = case resolveName reqResolve (PRelativeName $ ptName p) of
       PTypeName n'    -> singletonType p{ptName=n'}
       -- Carry the member's type parameters (e.g. the element binding @Functor[$T->$_T]@) onto the
       -- resolved class partial. Only 'ptVars' is restored — args/preds/argMode stay as a clean
       -- 'partialVal' so a var-less class member is byte-identical to before.
       PClassName n'   -> classPartial (partialVal n'){ptVars=ptVars p}
       PRelativeName{} -> TopType H.empty (PredsOne $ PredRel p)
+      where p = mapPartial reqResolve p0
 
 
     -- |

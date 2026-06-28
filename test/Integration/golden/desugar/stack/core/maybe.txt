@@ -6,8 +6,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/maybeCompare
-                            ( Value a -> ∀/Data/Maybe[ /T=~/Data/Algebra/Ord ] )
-                            ( Value b -> ∀/Data/Maybe[ /T=~/Data/Algebra/Ord ] ) -> ∀/Data/Algebra/Comparison
+                            ( Value a -> ∀/Data/Maybe[ /T=∀/Data/Algebra/Ord ] )
+                            ( Value b -> ∀/Data/Maybe[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/Algebra/Comparison
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -38,8 +38,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/maybeEqual
-                            ( Value a -> ∀/Data/Maybe[ /T=~/Data/Algebra/Eq ] )
-                            ( Value b -> ∀/Data/Maybe[ /T=~/Data/Algebra/Eq ] ) -> ∀/Data/Primitive/Boolean
+                            ( Value a -> ∀/Data/Maybe[ /T=∀/Data/Algebra/Eq ] )
+                            ( Value b -> ∀/Data/Maybe[ /T=∀/Data/Algebra/Eq ] ) -> ∀/Data/Primitive/Boolean
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -92,9 +92,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/equal
-                            ( Value other -> ∀/Data/Maybe[ /E=~/Data/Algebra/Eq ] )( Value /this -> /Data/Nothing )= /Data/maybeEqual( Value a= Value /Data/Nothing )( Value b= Value other )
+                            ( Value other -> ∀/Data/Maybe[ /E=∀/Data/Algebra/Eq ] )( Value /this -> /Data/Nothing )= /Data/maybeEqual( Value a= Value /Data/Nothing )( Value b= Value other )
                         , /Data/Algebra/equal
-                            ( Value other -> ∀/Data/Maybe[ /E=~/Data/Algebra/Eq ] )
+                            ( Value other -> ∀/Data/Maybe[ /E=∀/Data/Algebra/Eq ] )
                             ( Value /this= /Data/Some[ /T : ∀/Data/Algebra/Eq ]( Value value ) )= /Data/maybeEqual
                             ( Value a= /Data/Some( Value value= Value value ) )( Value b= Value other )
                         ]
@@ -118,9 +118,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/compareTo
-                            ( Value other -> ∀/Data/Maybe[ /E=~/Data/Algebra/Ord ] )( Value /this -> /Data/Nothing )= /Data/maybeCompare( Value a= Value /Data/Nothing )( Value b= Value other )
+                            ( Value other -> ∀/Data/Maybe[ /E=∀/Data/Algebra/Ord ] )( Value /this -> /Data/Nothing )= /Data/maybeCompare( Value a= Value /Data/Nothing )( Value b= Value other )
                         , /Data/Algebra/compareTo
-                            ( Value other -> ∀/Data/Maybe[ /E=~/Data/Algebra/Ord ] )
+                            ( Value other -> ∀/Data/Maybe[ /E=∀/Data/Algebra/Ord ] )
                             ( Value /this= /Data/Some[ /T : ∀/Data/Algebra/Ord ]( Value value ) )= /Data/maybeCompare
                             ( Value a= /Data/Some( Value value= Value value ) )( Value b= Value other )
                         ]
@@ -142,14 +142,14 @@ Prgm
             ( False
             , /Data/Maybe
             ,
-                [ ∀/Data/Maybe[ /T=~/Data/Algebra/Eq ] ]
+                [ ∀/Data/Maybe[ /T=∀/Data/Algebra/Eq ] ]
             , Just ""
             )
         , CGClass
             ( False
             , /Data/Maybe
             ,
-                [ ∀/Data/Maybe[ /T=~/Data/Algebra/Ord ] ]
+                [ ∀/Data/Maybe[ /T=∀/Data/Algebra/Ord ] ]
             , Just ""
             )
         , CGClass

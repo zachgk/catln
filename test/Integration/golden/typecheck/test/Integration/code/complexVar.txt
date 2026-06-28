@@ -44,10 +44,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /real
-                            ( Value /c -> /Complex[ /N=~Number ]
+                            ( Value /c -> /Complex[ /N=∀/Data/Primitive/Number ]
                                 ( /a=$/N
                                 , /b=$/N
-                                ) = /Complex( Value /a -> ~Number )( Value /b -> ~Number )
+                                ) = /Complex( Value /a -> ∀/Data/Primitive/Number )( Value /b -> ∀/Data/Primitive/Number )
                             ) -> TVArg /a = Value /a
                         ]
                     }

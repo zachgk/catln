@@ -36,18 +36,18 @@ Prgm
                             ( Value /val -> /Data/Primitive/Integer = /operator-
                                 ( Value /l -> /Data/Primitive/Integer = /len
                                     ( Value /this -> /IntCons
-                                        ( /head=~/Data/Primitive/Integer
+                                        ( /head=/Data/Primitive/Integer
                                         , /tail=/IntCons
-                                            ( /head=~/Data/Primitive/Integer
+                                            ( /head=/Data/Primitive/Integer
                                             , /tail=/IntNil
                                             )
                                         ) = /IntCons
-                                        ( Value /head -> ~/Data/Primitive/Integer = CInt 5 )
+                                        ( Value /head -> /Data/Primitive/Integer = CInt 5 )
                                         ( Value /tail -> /IntCons
-                                            ( /head=~/Data/Primitive/Integer
+                                            ( /head=/Data/Primitive/Integer
                                             , /tail=/IntNil
                                             ) = /IntCons
-                                            ( Value /head -> ~/Data/Primitive/Integer = CInt 3 )( Value /tail -> /IntNil = Value /IntNil )
+                                            ( Value /head -> /Data/Primitive/Integer = CInt 3 )( Value /tail -> /IntNil = Value /IntNil )
                                         )
                                     )
                                 )
@@ -67,9 +67,9 @@ Prgm
                         [ /len( Value /this -> /IntNil ) -> /Data/Primitive/Integer = CInt 0
                         , /len
                             ( Value /this -> /IntCons
-                                ( /head=~/Data/Primitive/Integer
-                                , /tail=~IntList
-                                ) = /IntCons( Value /head -> ~/Data/Primitive/Integer )( Value /tail -> ∀/IntList )
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=∀/IntList
+                                ) = /IntCons( Value /head -> /Data/Primitive/Integer )( Value /tail -> ∀/IntList )
                             ) ->
                             ( /operator+
                                 ( /r=/Data/Primitive/Integer
@@ -93,8 +93,8 @@ Prgm
             , /IntList
             ,
                 [ /IntCons
-                    ( /head=~/Data/Primitive/Integer
-                    , /tail=~IntList
+                    ( /head=/Data/Primitive/Integer
+                    , /tail=∀/IntList
                     )
                 , /IntNil
                 ]
