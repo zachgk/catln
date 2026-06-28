@@ -54,8 +54,9 @@ module(Data/Primitive)
   intEq(l -> Integer, r -> Integer) -> Boolean
     #runtime("int==")
 
-  # The non-negativity predicate, the generic claim that an [Integer] is at least zero.
-  nonNeg(n -> Integer) -> Boolean= n >= 0
+  # The non-negativity predicate: an [Integer] is at least zero. Defined as a method so it can be
+  #   used as a projection refinement (e.g. [Integer_nonNeg], desugaring to [$this.nonNeg == True]).
+  :Integer.nonNeg -> Boolean= this >= 0
 
   # [Integer]'s instances of the algebra ordering/equality classes. [IntOrdering] is its
   #   [/Data/Algebra/Ordering]; [ord] and [compareTo] follow from it, and [eq] derives from the

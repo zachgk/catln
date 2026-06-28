@@ -14,9 +14,20 @@ Prgm
             ,
                 ( "/Data/length"
                 , ObjectMapItem
-                    { omiDecls = []
+                    { omiDecls =
+                        [ /Data/length
+                            ( Value /this -> ∀/Data/ConsList[ /T=$/T ] ) -> /Data/Primitive/Integer
+                        ]
                     , omiRuntimeDecls = []
-                    , omiRefineDecls = []
+                    , omiRefineDecls =
+                        [ /Data/length
+                            ( Value /this -> ∀/Data/ConsList[ /T=$/T ] ) ->
+                            ( TopType | PredExpr /operator==
+                                ( /r=/Data/Primitive/True
+                                , /l=~nonNeg( /this=~/$this )
+                                ) && PredRel Integer
+                            )
+                        ]
                     , omiDefs =
                         [ /Data/length( Value /this -> /Data/Nil )= CInt 0
                         , /Data/length
@@ -237,6 +248,8 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "#### [length]
             The [length] of a [List] is the number of items inside of it." )
+        , /Catln/#md
+            ( Value /text= CStr "The [length] of a [List] is always non-negative." )
         , /Catln/#md
             ( Value /text= CStr "#### Structural equality
             Two [ConsList]s of [Eq] elements are equal when they have the same length and equal elements

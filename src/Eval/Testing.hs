@@ -39,7 +39,7 @@ import           Eval.ExprBuilder
 import qualified Hedgehog
 import qualified Hedgehog.Gen               as HG
 import           Hedgehog.Internal.Property (propertyConfig, propertyTest)
-import           Hedgehog.Internal.Report   (Result (OK), reportStatus)
+import           Hedgehog.Internal.Report   (Result (..), reportStatus)
 import           Hedgehog.Internal.Runner   (checkReport)
 import qualified Hedgehog.Internal.Seed     as HedgehogSeed
 import           Semantics
@@ -103,10 +103,15 @@ propTestTimeoutMicros = 10 * 1000 * 1000
 -- for its result. This keeps the timeout's async exception off the property computation
 -- itself — wrapping the runner directly would let Hedgehog catch that exception and
 -- misreport the interruption as a failing test case.
-checkPropWithTimeout :: Hedgehog.Property -> IO Bool
-checkPropWithTimeout prop = do
+--
+-- 'gaveUpOk' controls how an all-discards run (Hedgehog 'GaveUp') is judged: 'False' treats it as a
+-- failure (the default for tests whose inputs should always generate), 'True' as a pass. The derived
+-- refinement tests pass 'True' because a pairing whose overlap cannot yet be generated (e.g. a
+-- @Cons@ value, which the generator discards) has simply found no counterexample.
+checkPropWithTimeout :: Bool -> Hedgehog.Property -> IO Bool
+checkPropWithTimeout gaveUpOk prop = do
   resultVar <- newEmptyMVar
-  tid <- forkIO $ runPropQuietly (Hedgehog.withTests propTestIterations prop) >>= putMVar resultVar
+  tid <- forkIO $ runPropQuietly gaveUpOk (Hedgehog.withTests propTestIterations prop) >>= putMVar resultVar
   result <- timeout propTestTimeoutMicros (takeMVar resultVar)
   case result of
     Just ok -> return ok
@@ -116,13 +121,14 @@ checkPropWithTimeout prop = do
 -- returning whether it passed. Uses 'checkReport' with a no-op progress callback so that a
 -- worker thread killed at the timeout boundary prints nothing — unlike 'Hedgehog.check',
 -- whose interrupted live render emits a spurious "thread killed" failure report.
-runPropQuietly :: Hedgehog.Property -> IO Bool
-runPropQuietly prop = do
+runPropQuietly :: Bool -> Hedgehog.Property -> IO Bool
+runPropQuietly gaveUpOk prop = do
   seed <- HedgehogSeed.random
   report <- checkReport (propertyConfig prop) 0 seed (propertyTest prop) (const (pure ()))
   return $ case reportStatus report of
-    OK -> True
-    _  -> False
+    OK     -> True
+    GaveUp -> gaveUpOk
+    _      -> False
 
 -- | Derive a property test for every pair of evaluable same-name definitions whose domains
 -- overlap (their argument types intersect): on the overlap the two definitions must AGREE. A
@@ -203,7 +209,7 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
         errOf (CErr ns) = prettyCNotes ns
         errOf _         = "ok"
         action = CResT $ do
-          ok <- checkPropWithTimeout prop
+          ok <- checkPropWithTimeout False prop
           return $ if ok
             then CRes [] (TupleVal "()" H.empty)
             else CErr [MkCNote $ GenCErr Nothing $ printf "Overlap agreement test failed: %s" testName]
@@ -211,11 +217,10 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
 -- | Derive a property test for every refinement declaration paired with an overlapping definition
 -- of the same object. A refinement declaration (a @#refine@ arrow) claims a narrowed return type;
 -- where its domain overlaps a definition's, that definition's result on inputs in the overlap must
--- satisfy the claim. We generate an input in the overlap, evaluate it through the DEFINITION to a
--- concrete value, and assert that value's singleton typeset (see 'getValType', which carries the
--- concrete constant so a predicate like @>= 0@ is decidable) is a subtype of the refinement's
--- claimed return type. For @:List.length -> Int__gte(0) #refine@ paired with @Nil.length= 0@ this
--- checks that the length of a @Nil@ is a non-negative integer.
+-- match the claim. We generate an input in the overlap, evaluate it through the DEFINITION to a
+-- concrete value, and assert that value matches the refinement's claimed return type (see
+-- 'valMatchesType'). For @:ConsList.length -> Integer_nonNeg #refine@ paired with @Nil.length= 0@
+-- this checks that the length of a @Nil@ is a non-negative integer.
 deriveRefinementTests :: EPrgm -> [(String, CResT IO Val)]
 deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) =
   [ mkRefinementTest defOa dom refRet
@@ -231,11 +236,103 @@ deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) =
   where
     TypeEnv{teNames} = typeEnv
     typeEnv = mkTypeEnv prgm
+    env = evalBaseEnv prgm
     evaluable oa = case oaArr oa of
       Just (Just _, _)  -> True
       Just (Nothing, _) -> isJust (getRuntimeAnnot (oaAnnots oa))
       _                 -> False
     clauseDom oa = getExprType (oaObjExpr oa)
+
+    -- A refinement claim is stored as a type predicate on the declared return — a @PredExpr@ holding
+    -- a symbolic application tree such as @operator==(r=True, l=nonNeg(this=$this))@ (the desugaring
+    -- of @Integer_nonNeg@'s @$this.nonNeg == True@), with @$this@ standing for the value refined.
+    -- Rather than teach the type layer to decide such predicates, we decide them in the EVALUATOR:
+    -- bind @$this@ to the candidate value and reduce the tree to a concrete value, dispatching each
+    -- application through the normal tree builder + evaluator. This keeps the type system simple and
+    -- reuses the same machinery that matches values during dispatch (see 'valMatchesType').
+    constToVal (CInt n)   = IntVal n
+    constToVal (CFloat f) = FloatVal f
+    constToVal (CStr s)   = StrVal s
+    constToVal (CChar ch) = CharVal ch
+    -- A symbolic predicate may carry a relative function name (e.g. @nonNeg@ rather than
+    -- @/Data/Primitive/nonNeg@); the object map is keyed by absolute names, so resolve against it.
+    resolveName n = case filter (relativeNameMatches n) (H.keys om) of
+      (k:_) -> k
+      []    -> n
+    -- The build destination for dispatching one application of the predicate. It must be the
+    -- function's NOMINAL return type expanded to its data leaves (e.g. @Boolean@ → @{True, False}@),
+    -- NOT the type stored on a body-carrying definition: that stored type includes the body's own
+    -- unevaluated application as a positive leaf (e.g. @nonNeg@'s type is @operator>=(Int,Int) |
+    -- isa Boolean@), so building the body against it would find it already a subtype and skip
+    -- evaluating it. Expanding the @isa@/class predicate to its members gives a nominal target that
+    -- the unevaluated application is NOT a subtype of, so the call is actually built and run.
+    funcRetDest nm = cleanDest $ case H.lookup nm om of
+      Just o -> case [getMetaType m | d <- omiDecls o ++ omiRuntimeDecls o ++ omiDefs o, Just (_, m) <- [oaArr d]] of
+        (t:_) -> t
+        []    -> boolType
+      Nothing -> boolType
+    -- Drop the body's positive leaf but keep the @isa@/class predicate top, then expand that to its
+    -- member data leaves. Expansion only fires through the predicate path, so the class must stay a
+    -- predicate (not be reduced to a bare leaf) for @Boolean@ → @{True, False}@ to happen.
+    cleanDest t = case t of
+      UnionType (Just (preds, neg)) _ cs ->
+        UnionType Nothing (expandTypeWithNames typeEnv H.empty (UnionType (Just (preds, neg)) H.empty cs) teNames) []
+      _ -> clearUnionTypePreds t
+    -- Reduce a predicate operand TYPE to a value. The operands of a symbolic predicate are either
+    -- constants (@UnionType Nothing _ [c]@), the @$this@ placeholder, or a nested relation/expr
+    -- application carried as a @PredRel@\/@PredExpr@ singleton top — all routed to 'evalPredPartial'.
+    evalPredType thisVal t = case t of
+      UnionType Nothing _ (cst:_)                     -> return (constToVal cst)
+      UnionType (Just (PredsOne (PredRel p), _)) _ _  -> evalPredPartial thisVal p
+      UnionType (Just (PredsOne (PredExpr p), _)) _ _ -> evalPredPartial thisVal p
+      _ -> case maybeGetSingleton t of
+        Just p  -> evalPredPartial thisVal p
+        Nothing -> CErr [MkCNote $ GenCErr Nothing $ printf "Unsupported refinement predicate operand %s" (show t)]
+    -- Reduce a symbolic predicate partial to a concrete value. @$this@ becomes the candidate value;
+    -- a nullary partial (a value such as @True@) becomes that value; an application has its argument
+    -- types reduced to values first (bottom-up, so the argument types are concrete), then it is
+    -- dispatched through 'buildRoot' + 'evalExpr' to its declared return — running the @#runtime@
+    -- primitives a refinement bottoms out at.
+    evalPredPartial thisVal p
+      | nameStr (ptName p) == macroThisKey = return thisVal
+      | H.null (ptArgs p)        = return $ TupleVal (nameStr (resolveName (ptName p))) H.empty
+      | otherwise = do
+          argVals <- mapM (\(k, at) -> (nameStr (pkName k),) <$> evalPredType thisVal at) (H.toList (ptArgs p))
+          let nm = resolveName (ptName p)
+          let input = TupleVal (nameStr nm) (H.fromList argVals)
+          let inputE = valToEExpr input
+          tree <- buildRoot (evTbEnv env) inputE (getExprPartialType inputE) (funcRetDest nm)
+          fst <$> runStateT (evalExpr tree) env
+
+    typePreds (UnionType (Just (preds, _)) _ _) = preds
+    typePreds _                                 = PredsNone
+    predAtoms (PredsOne a)  = [a]
+    predAtoms (PredsAnd ps) = concatMap predAtoms ps
+    predAtoms (PredsNot p)  = predAtoms p
+    collectPredExprs preds = [p | PredExpr p <- predAtoms preds]
+
+    -- The structural ("base type") claim of a refinement type, as a positive leaf type to check the
+    -- value against. The base is carried as an @isa@/class predicate (e.g. @Integer@), so turn those
+    -- predicate partials into leaves directly — @Integer@ is a primitive that does not expand to
+    -- members, so it must be used as the leaf @{Integer}@ rather than expanded; the predicate also
+    -- carries a relative name, so resolve it to absolute to match the value's type. Falls back to the
+    -- type's own positive leaves for a refinement stated on a concrete type.
+    structuralTarget t = case [c{ptName = resolveName (ptName c)} | a <- predAtoms (typePreds t), c <- relClassOf a] of
+      cs@(_:_) -> UnionType Nothing (joinUnionType cs) []
+      []       -> clearUnionTypePreds t
+      where
+        relClassOf (PredRel c)   = [c]
+        relClassOf (PredClass c) = [c]
+        relClassOf (PredExpr _)  = []
+
+    -- Whether a value matches a (possibly predicated) type: structurally a subtype of the base-type
+    -- claim AND every value @PredExpr@ predicate evaluates to @True@ against it.
+    valMatchesType val t = do
+      results <- mapM (evalPredPartial val) (collectPredExprs (typePreds t))
+      let structuralOk = isSubtypeOf typeEnv (singletonType (getValPartialType val)) (structuralTarget t)
+      return $ structuralOk && all isTrue results
+    isTrue (TupleVal n _) = n == truePrim
+    isTrue _              = False
 
     mkRefinementTest defOa dom refRet = (testName, action)
       where
@@ -252,10 +349,9 @@ deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) =
           let argNames = H.keys argTypeMap
           vals <- mapM (\n -> (,) n <$> genArg (H.lookupDefault PTopType n argTypeMap)) argNames
           return $ TupleVal (nameStr (ptName partial)) (H.fromList vals)
-        -- The full program env (all definitions) so a recursive definition (e.g. @Cons.length@
-        -- calling @tail.length@) can still reach its siblings; dispatch picks the right clause for
-        -- the generated input.
-        env = evalBaseEnv prgm
+        -- 'env' (the full program env, all definitions) lets a recursive definition (e.g.
+        -- @Cons.length@ calling @tail.length@) reach its siblings; dispatch picks the right clause
+        -- for the generated input.
         runDef input = do
           let inputE = valToEExpr input
           tree <- buildRoot (evTbEnv env) inputE (getExprPartialType inputE) retDest
@@ -263,12 +359,13 @@ deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) =
         prop = Hedgehog.property $ do
           input <- Hedgehog.forAll genInput
           case runDef input of
-            CRes _ outV
-              | isSubtypeOf typeEnv (getValType outV) refRet -> Hedgehog.success
-              | otherwise -> Hedgehog.footnote (printf "Refinement violated: %s on %s produced %s, not a subtype of the claimed return %s" testName (show input) (show outV) (show refRet)) >> Hedgehog.failure
+            CRes _ outV -> case valMatchesType outV refRet of
+              CRes _ True  -> Hedgehog.success
+              CRes _ False -> Hedgehog.footnote (printf "Refinement violated: %s on %s produced %s, not matching the claimed return %s" testName (show input) (show outV) (show refRet)) >> Hedgehog.failure
+              CErr ns      -> Hedgehog.footnote (printf "Refinement predicate eval failed on %s = %s: %s" (show input) (show outV) (prettyCNotes ns)) >> Hedgehog.failure
             CErr ns -> Hedgehog.footnote (printf "eval failed: %s" (prettyCNotes ns)) >> Hedgehog.failure
         action = CResT $ do
-          ok <- checkPropWithTimeout prop
+          ok <- checkPropWithTimeout True prop
           return $ if ok
             then CRes [] (TupleVal "()" H.empty)
             else CErr [MkCNote $ GenCErr Nothing $ printf "Refinement agreement test failed: %s" testName]
@@ -369,7 +466,7 @@ evalTest prgmGraphData = do
                 CRes _ _   -> Hedgehog.success
 
           action = CResT $ do
-            ok <- checkPropWithTimeout prop
+            ok <- checkPropWithTimeout False prop
             return $ if ok
               then CRes [] (TupleVal "()" H.empty)
               else CErr [MkCNote $ GenCErr Nothing $ printf "Property test failed: %s" testName]

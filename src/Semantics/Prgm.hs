@@ -634,9 +634,23 @@ exprPropagateTypes (AliasExpr base alias) = AliasExpr base' alias'
     alias' = exprPropagateTypes alias
 exprPropagateTypes (EWhere m base cond) = EWhere m' base' cond'
   where
-    m' = mWithType (typeAddPreds (getExprType base') (PredsOne $ PredExpr $ getSingleton $ getExprType cond')) m
     base' = exprPropagateTypes base
     cond' = exprPropagateTypes cond
+    -- A 'PredExpr' stores the condition as a single 'PartialType'. A boolean condition usually types
+    -- as a singleton; a relational condition (e.g. @$this.gte(r= 0)@ from @Int__gte(0)@) types as a
+    -- 'TopType' carrying the relation/expr partial, which we reuse. Anything else degrades to the
+    -- base type with no predicate — sound (over-approximate) and load-safe, mirroring the
+    -- typechecker's own tolerance for a non-singleton @where@ condition (see 'Constrain' ConWhere).
+    m' = mWithType withPred m
+    withPred = case condPredPartial of
+      Just p  -> typeAddPreds (getExprType base') (PredsOne $ PredExpr p)
+      Nothing -> getExprType base'
+    condPredPartial = case maybeGetSingleton (getExprType cond') of
+      Just p  -> Just p
+      Nothing -> case getExprType cond' of
+        TopType _ (PredsOne (PredRel p))  -> Just p
+        TopType _ (PredsOne (PredExpr p)) -> Just p
+        _                                 -> Nothing
 exprPropagateTypes mainExpr@(TupleApply m (bm, be) tupleApplyArgs) = do
   let be' = exprPropagateTypes be
   let bm' = mWithType (getMetaType $ getExprMeta be') bm

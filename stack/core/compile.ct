@@ -70,6 +70,9 @@ module(Catln)
   annot(#eximport(name -> String))
     # [#eximport] is used to mark exported items from Haskell modules.
       When a Haskell module has an explicit export list, this annotation indicates which items are re-exported.
+  annot(#refine)
+    # [#refine] marks a declaration as a refinement: a narrower return-type claim for a function
+      that overlaps an existing definition, checked by the derived refinement-agreement tests.
 
   # ## Build-in Type Macros
   (_ ?-> _) -> Boolean

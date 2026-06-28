@@ -163,7 +163,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Primitive/nonNeg( Value /n -> /Data/Primitive/Integer ) -> UnionType
+                        [ /Data/Primitive/nonNeg( Value /this -> /Data/Primitive/Integer ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
@@ -173,7 +173,7 @@ Prgm
                                 , /l=/Data/Primitive/Integer
                                 )
                             , []
-                            ) = /operator>=( Value /l -> TVArg /n = Value /n )
+                            ) = /operator>=( Value /l -> TVArg /this = Value /this )
                             ( Value /r -> /Data/Primitive/Integer = CInt 0 )
                         ]
                     }
@@ -541,7 +541,9 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "  [Ordering] instances can build a [Comparison] from it." )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "The non-negativity predicate, the generic claim that an [Integer] is at least zero." )
+            ( Value /text -> /Data/String = CStr "The non-negativity predicate: an [Integer] is at least zero. Defined as a method so it can be" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "  used as a projection refinement (e.g. [Integer_nonNeg], desugaring to [$this.nonNeg == True])." )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "[Integer]'s instances of the algebra ordering/equality classes. [IntOrdering] is its" )
         , /Catln/#md

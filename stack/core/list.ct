@@ -19,6 +19,11 @@ module(Data)
     The [length] of a [List] is the number of items inside of it.
   :Nil.length= 0
   /Data/Cons(head, tail).length= 1 + tail.length
+  :ConsList.length -> Integer
+
+  # The [length] of a [List] is always non-negative.
+  :ConsList.length -> Integer_nonNeg
+    #refine
 
   # #### Structural equality
     Two [ConsList]s of [Eq] elements are equal when they have the same length and equal elements

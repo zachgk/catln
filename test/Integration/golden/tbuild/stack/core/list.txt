@@ -14,17 +14,28 @@ Prgm
             ,
                 ( "/Data/length"
                 , ObjectMapItem
-                    { omiDecls = []
+                    { omiDecls =
+                        [ /Data/length
+                            ( EAppArg Value /this -> ∀/Data/ConsList[ /T=$/T ] ) -> /Data/Primitive/Integer
+                        ]
                     , omiRuntimeDecls = []
-                    , omiRefineDecls = []
+                    , omiRefineDecls =
+                        [ /Data/length
+                            ( EAppArg Value /this -> ∀/Data/ConsList[ /T=$/T ] ) ->
+                            ( TopType | PredExpr /operator==
+                                ( /r=/Data/Primitive/True
+                                , /l=~nonNeg( /this=~/$this )
+                                ) && PredRel Integer
+                            )
+                        ]
                     , omiDefs =
                         [ /Data/length( EAppArg Value /this -> /Data/Nil ) -> /Data/Primitive/Integer = 0
                         , /Data/length
-                            ( EAppArg Value /this -> /Data/Cons[ /T=TopType ]
+                            ( EAppArg Value /this -> /Data/Cons[ /T=$/T ]
                                 ( /head=$/T
                                 , /tail=~ConsList[ /T=$_/T ]
                                 ) = /Data/Cons( EAppArg Value /head )
-                                ( EAppArg Value /tail -> ~ConsList[ /T=$_/T ] )
+                                ( EAppArg Value /tail -> ∀/Data/ConsList[ /T=$/T ] )
                             ) ->
                             ( /operator+
                                 ( /r=/Data/Primitive/Integer
@@ -351,6 +362,8 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "#### [length]
             The [length] of a [List] is the number of items inside of it." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "The [length] of a [List] is always non-negative." )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "#### Structural equality
             Two [ConsList]s of [Eq] elements are equal when they have the same length and equal elements

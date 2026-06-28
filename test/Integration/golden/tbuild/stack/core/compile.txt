@@ -154,6 +154,15 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/#refine"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/#refine ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/#runtime"
                 , ObjectMapItem
                     { omiDecls =
@@ -237,6 +246,7 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType
