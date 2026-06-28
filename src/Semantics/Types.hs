@@ -1518,12 +1518,28 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (p1, n1)) _ _) t2@(UnionTyp
 --   True if preds are syntactically contradictory (t1 = ∅).
 --   True if predImpliesPartials establishes U_preds ⊆ superPartials (negLeafs removal can only shrink).
 --   Otherwise False (conservative: can't prove subtype without knowing predicate members).
-isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (preds, negLeafs)) _ _) t2@(UnionType Nothing superPartials _) =
-  case expandTypesWithNamesFull typeEnv vaenv t1 (H.keysSet superPartials) of
+isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (preds, negLeafs)) _ t1Consts) t2@(UnionType Nothing superPartials _) =
+  -- The predicate region (U_preds - negLeafs) and any constants carried alongside it must both be
+  -- covered by t2. (Positive leaves of t1 are split off by the "mixed type on left" branch above,
+  -- so only the constants remain to add here; previously they were dropped.)
+  predsCovered && all (\c -> constantInType typeEnv vaenv c t2) t1Consts
+  where
+   predsCovered = case expandTypesWithNamesFull typeEnv vaenv t1 (H.keysSet superPartials) of
     (_, True)      | isPredsContradictory preds -> True
     (_, True)      | predImpliesPartials typeEnv vaenv preds superPartials -> True
                    -- U_preds ⊆ superPartials implies (U_preds - negLeafs) ⊆ superPartials
     (_, True)      | predsEmpty typeEnv vaenv preds -> True  -- U_preds = ∅ by class-graph disjointness (fallback: costly)
+    -- Member decomposition: (U_preds - negLeafs) ⊆ t2  ⟺  every member of U_preds is ⊆ (t2 ∪ negLeafs).
+    -- Checking each member against t2 directly (a conjunction of per-member subtype checks) avoids
+    -- materializing the whole member union and running 'differenceTypeWithEnv' over it. Only applies
+    -- when the predicate expands to a plain positive union of members; otherwise fall through to the
+    -- difference re-expression below.
+    (_, True)      | tePrgmEnv typeEnv || predsSealed typeEnv preds
+                   , UnionType Nothing memberLeafs [] <- expandPredicates typeEnv vaenv preds
+                   , not (H.null memberLeafs)
+                   -> let t2WithNeg = unionTypesWithEnv typeEnv vaenv t2 (UnionType Nothing negLeafs [])
+                          env'      = withExpanding typeEnv preds
+                      in all (\m -> isSubtypeOfWithEnv env' vaenv (singletonType m) t2WithNeg) (splitUnionType memberLeafs)
     -- Re-express U_preds - negLeafs as a positive type and recurse. Guarded on progress: when the
     -- predicate expands to the universe (e.g. preds = PredsNone) the difference reproduces the same
     -- complement, which would recurse forever, so require the rewrite to differ from t1 (else False).
