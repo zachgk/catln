@@ -1032,6 +1032,11 @@ expandPredicates typeEnv vaenv (PredsAnd ps) = intersectAllTypes typeEnv $ map (
 expandPredicates typeEnv vaenv (PredsNot p)  = complementTypeEnv typeEnv vaenv $ expandPredicates typeEnv vaenv p
 
 expandPredicate :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicate -> Type
+-- A class already being expanded in this descent (e.g. the element @∀Eq@ of @ConsList[$T -> Eq]@
+-- while expanding @∀Eq@): leave it as the bare class reference so the difference/subtype/compaction
+-- algebra does not re-expand its members forever. Mirrors the 'PredRel' guard below; see 'teExpanding'.
+expandPredicate typeEnv _ (PredClass clss)
+  | tePrgmEnv typeEnv, S.member (makeAbsoluteName (ptName clss)) (teExpanding typeEnv) = TopType H.empty (PredsOne (PredClass clss))
 expandPredicate typeEnv vaenv (PredClass clss) = expandClassPartial typeEnv vaenv clss
 -- A recursive rel already being expanded in this descent: leave it unexpanded (the bare
 -- reference) so the difference/complement algebra does not unroll it forever. See 'teExpanding'.
@@ -1257,6 +1262,10 @@ expandTypesWithNamesFull typeEnv@TypeEnv{teNames} vaenv (TopType negPartials pre
       in case differencePartialLeafs typeEnv vaenv topFilteredLeafs innerLeafs of
            UnionType Nothing result [] -> (result, hasUniverseOutside)
            _                           -> (topFilteredLeafs, hasUniverseOutside)
+    -- A class already being expanded in this descent: yield the allowed names as bare top partials
+    -- (sound over-approximation) rather than re-expanding its members. Mirrors the 'PredRel' guard below.
+    expandPredsWithNamesFull (PredsOne (PredClass clss))
+      | tePrgmEnv typeEnv, S.member (makeAbsoluteName (ptName clss)) (teExpanding typeEnv) = (topFilteredLeafs, hasUniverseOutside)
     expandPredsWithNamesFull (PredsOne (PredClass clss)) =
       expandClassPartialWithNamesFull typeEnv vaenv clss allowedNames
     -- A recursive rel already being expanded in this descent (e.g. the self-referential @tail@
@@ -1652,7 +1661,11 @@ compactPartialsWithClassPred typeEnv vaenv partials = unionPartialLeafs $ map tr
     aux :: (PartialType, [TypePredicate]) -> PartialLeafs
     aux (partial, preds) = if null classPreds && null relPreds
       then joinUnionType [partial]
-      else asLeafs $ intersectAllTypes typeEnv (singletonType partial' : map (expandRelPartial typeEnv vaenv) relPreds ++ map (expandClassPartial typeEnv vaenv) classPreds)
+      -- Expand the partial's own class/rel preds and intersect them back in. Intersect under
+      -- 'withExpanding' of those same preds so that a member whose element re-references the class
+      -- being expanded (e.g. @∀Eq@ inside @ConsList[Eq]@/@Maybe[Eq]@) is left bare rather than
+      -- re-expanded — otherwise compaction of a recursive parameterized class universe diverges.
+      else asLeafs $ intersectAllTypes (withExpanding typeEnv (ptPreds partial)) (singletonType partial' : map (expandRelPartial typeEnv vaenv) relPreds ++ map (expandClassPartial typeEnv vaenv) classPreds)
       where
         -- Take class preds out of partial
         (exprPreds, classPreds, relPreds) = splitPreds preds
@@ -1915,12 +1928,23 @@ predRelPartials (PredsAnd ps)          = concatMap predRelPartials ps
 predRelPartials (PredsNot p)           = predRelPartials p
 predRelPartials _                      = []
 
--- | Record the relation names of @preds@ in 'teExpanding' so that, while intersecting or
--- subtyping the expansion of those relations, a self-referential field that refers back to one
--- of them (e.g. the @tail@ of @ConsList@) is not expanded again. This terminates the otherwise
--- unbounded re-expansion of a recursive type; see 'expandPredsWithNamesFull'.
+predClassPartials :: TypePredicates -> [PartialType]
+predClassPartials (PredsOne (PredClass p)) = [p]
+predClassPartials (PredsAnd ps)            = concatMap predClassPartials ps
+predClassPartials (PredsNot p)             = predClassPartials p
+predClassPartials _                        = []
+
+-- | Record the relation AND class names of @preds@ in 'teExpanding' so that, while intersecting or
+-- subtyping the expansion of those predicates, a reference back to one of them is not expanded
+-- again. For a relation this is a self-referential field (e.g. the @tail@ of @ConsList@); for a
+-- class it is a member whose type parameter re-references the class being expanded (e.g. expanding
+-- @∀Eq@ reaches @ConsList[$T -> Eq]@/@Maybe[$T -> Eq]@, whose element is again @∀Eq@). Without the
+-- class guard, a universe with two such parameterized members re-expands the element into the full
+-- member set at every level, alternating between them and never terminating. Leaving the in-progress
+-- class bare is the sound over-approximation (the reference accepts any value of that class). See
+-- 'expandPredicate'/'expandPredsWithNamesFull'.
 withExpanding :: TypeEnv tg -> TypePredicates -> TypeEnv tg
-withExpanding typeEnv preds = typeEnv{teExpanding = teExpanding typeEnv <> S.fromList (map (makeAbsoluteName . ptName) (predRelPartials preds))}
+withExpanding typeEnv preds = typeEnv{teExpanding = teExpanding typeEnv <> S.fromList (map (makeAbsoluteName . ptName) (predRelPartials preds ++ predClassPartials preds))}
 
 unionPartialLeafs :: Foldable f => f PartialLeafs -> PartialLeafs
 unionPartialLeafs = unionsWith S.union
