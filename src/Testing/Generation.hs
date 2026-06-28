@@ -257,8 +257,14 @@ genPrgms = do
 
 -- | Generate a random 'Val' for a concrete 'PartialType'.
 -- Returns 'HG.discard' for unknown types.
-genVal :: PartialType -> Gen Val
-genVal pt
+--
+-- A partial with fields (e.g. @Cons(head, tail)@) is generated recursively: each field's type is
+-- expanded to its concrete leaves and a value generated for it via 'genValForType'. A field whose
+-- type is a bare type variable (e.g. @Cons@'s polymorphic @head -> $T@) is defaulted to 'Integer',
+-- since the structural derivations that consume these values (such as @length@) are
+-- element-agnostic. Recursion is bounded by 'genValForType' (see there).
+genVal :: (TypeGraph tg) => TypeEnv tg -> PartialType -> Gen Val
+genVal typeEnv pt
   | pt == intLeaf   = IntVal <$> HG.integral (linear (-1000) 1000)
   | pt == floatLeaf = FloatVal <$> HG.double (linearFrac (-1000) 1000)
   | pt == strLeaf   = StrVal <$> HG.string (linear 0 20) HG.unicode
@@ -268,13 +274,31 @@ genVal pt
   -- A nullary data type (no fields) has a single inhabitant: itself. This covers data-valued
   -- args such as a chosen typeclass instance (e.g. an 'Eqv' instance for a property test).
   | H.null (ptArgs pt)     = pure $ TupleVal (nameStr (ptName pt)) H.empty
-  | otherwise = HG.discard
+  | otherwise = do
+      argVals <- mapM genArg (H.toList (ptArgs pt))
+      pure $ TupleVal (nameStr (ptName pt)) (H.fromList argVals)
+  where
+    TypeEnv{teNames} = typeEnv
+    genArg (k, at) = (nameStr (pkName k),) <$> genValForType typeEnv (fieldType at)
+    -- A field carrying a class/relation (e.g. @tail -> ConsList@) expands to its member data leaves;
+    -- a bare type variable has no members to expand to, so default it to 'Integer'.
+    fieldType TypeVar{} = intType
+    fieldType at        = UnionType Nothing (expandTypeWithNames typeEnv H.empty at teNames) []
 
 -- | Generate a random 'Val' for a 'Type'.
 -- For union types, picks a random variant and delegates to 'genVal'.
-genValForType :: Type -> Gen Val
-genValForType (UnionType Nothing leafs []) = case splitUnionType leafs of
-  []  -> HG.discard
-  [p] -> genVal p
-  ps  -> HG.element ps >>= genVal
-genValForType _ = HG.discard
+--
+-- Recursion through self-referential types (e.g. a @ConsList@ whose @tail@ is again a @ConsList@) is
+-- bounded with 'HG.recursive': the nullary variants (e.g. @Nil@) are the non-recursive base cases
+-- and the field-bearing variants (e.g. @Cons@) the recursive ones, so Hedgehog shrinks the size on
+-- each recursive step and always terminates at a base case. When a union has no nullary variant
+-- (e.g. an overlap domain narrowed to @Cons@ alone) every choice recurses, but each recursive field
+-- still bottoms out through its own bounded 'genValForType'.
+genValForType :: (TypeGraph tg) => TypeEnv tg -> Type -> Gen Val
+genValForType typeEnv (UnionType Nothing leafs []) = case splitUnionType leafs of
+  [] -> HG.discard
+  ps -> case partition (H.null . ptArgs) ps of
+    ([], recs)        -> HG.choice (map (genVal typeEnv) recs)
+    (terminals, [])   -> HG.choice (map (genVal typeEnv) terminals)
+    (terminals, recs) -> HG.recursive HG.choice (map (genVal typeEnv) terminals) (map (genVal typeEnv) recs)
+genValForType _ _ = HG.discard

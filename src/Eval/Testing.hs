@@ -177,7 +177,7 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
           (g:_) -> minimum g
           []    -> n
         argTypeMap = H.fromList [(nameStr (pkName k), t) | (k, t) <- H.toList (ptArgs partial)]
-        genArg t = genValForType (UnionType Nothing (expandTypeWithNames typeEnv H.empty t teNames) [])
+        genArg t = genValForType typeEnv (UnionType Nothing (expandTypeWithNames typeEnv H.empty t teNames) [])
         genInput = do
           let argNames = H.keys argTypeMap
           let reps = nub (map repOf argNames)
@@ -223,7 +223,7 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
 -- this checks that the length of a @Nil@ is a non-negative integer.
 deriveRefinementTests :: EPrgm -> [(String, CResT IO Val)]
 deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) =
-  [ mkRefinementTest defOa dom refRet
+  [ mkRefinementTest omi defOa dom refRet
   | omi <- H.elems om
   , refOa <- omiRefineDecls omi
   , Just (_, refM) <- [oaArr refOa]
@@ -334,17 +334,22 @@ deriveRefinementTests prgm@(Prgm (ObjectMap om) _ _) =
     isTrue (TupleVal n _) = n == truePrim
     isTrue _              = False
 
-    mkRefinementTest defOa dom refRet = (testName, action)
+    mkRefinementTest omi defOa dom refRet = (testName, action)
       where
         testName = printf "%s :: refinement-agreement" (nameStr (oaObjPath defOa))
-        -- Build the definition's call against its own declared return (predicates cleared) so the
-        -- body is forced to a concrete value, exactly as the overlap tests do (see 'retDest' there).
-        retDest = clearUnionTypePreds $ case oaArr defOa of
-          Just (_, m) -> getMetaType m
-          Nothing     -> intType
+        -- Build the definition's call against the function's NOMINAL declared return (predicates
+        -- cleared), exactly as the overlap tests do (see 'retDest' there) — NOT the definition's own
+        -- inferred arrow type. A recursive definition such as @Cons.length= 1 + tail.length@ has an
+        -- inferred return that still carries its body's unevaluated @operator+@ application as a
+        -- positive leaf; building against that finds the body already a subtype and leaves it
+        -- unreduced (a @TupleVal /operator+@ rather than an @Integer@). The narrower nominal @Integer@
+        -- is not already satisfied, so the tree builder evaluates the body to a concrete value.
+        retDest = clearUnionTypePreds $ case [getMetaType m | d <- omiDecls omi ++ omiRuntimeDecls omi, Just (_, m) <- [oaArr d]] of
+          (t:_) -> t
+          []    -> intType
         partial = getSingleton dom
         argTypeMap = H.fromList [(nameStr (pkName k), t) | (k, t) <- H.toList (ptArgs partial)]
-        genArg t = genValForType (UnionType Nothing (expandTypeWithNames typeEnv H.empty t teNames) [])
+        genArg t = genValForType typeEnv (UnionType Nothing (expandTypeWithNames typeEnv H.empty t teNames) [])
         genInput = do
           let argNames = H.keys argTypeMap
           vals <- mapM (\n -> (,) n <$> genArg (H.lookupDefault PTopType n argTypeMap)) argNames
@@ -445,7 +450,7 @@ evalTest prgmGraphData = do
                       _                          -> intType
                     Nothing -> intType
                   concreteArg = UnionType Nothing (expandTypeWithNames typeEnv H.empty argType teNames) []
-              in Hedgehog.forAll (genValForType concreteArg)
+              in Hedgehog.forAll (genValForType typeEnv concreteArg)
               ) args
 
             -- Build the expression: testName[$T=ConcreteType, ...](arg0=val0, ...)
