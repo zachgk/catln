@@ -3,17 +3,13 @@ import "core"
 
 
 # The intlist tests recursive data structures without type variables
-# [Integer] is written fully qualified as [/Data/Primitive/Integer]: the recursive [len] coverage
-# compares the class member's field against the definition's, and an unqualified [Integer] there
-# leaves a short [/Integer] name that does not yet reconcile with the qualified one.
-# TODO: Once that relative-name resolution is fixed, revert these to the bare [Integer].
-class(IntList, [IntCons(head -> /Data/Primitive/Integer, tail -> IntList), IntNil])
+class(IntList, [IntCons(head -> Integer, tail -> IntList), IntNil])
 
 # operator+:(Integer l, ConsList r) = Cons(head=l, tail=r)
-:IntList.len -> /Data/Primitive/Integer
+:IntList.len -> Integer
 :IntNil.len= 0
 
 # TODO: Fix example below which should work without explicit return value
-:/IntCons(head, tail).len -> /Data/Primitive/Integer= 1 + tail.len
+:/IntCons(head, tail).len -> Integer= 1 + tail.len
 
 main{io -> IO}= io.exit(val= IntCons(head= 5, tail= IntCons(head= 3, tail= IntNil)).len - 2)
