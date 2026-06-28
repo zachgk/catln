@@ -18,14 +18,8 @@ Prgm
                         , /Data/maybeCompare
                             ( Value /a -> /Data/Some[ /T=~/Data/Algebra/Ord ]( /value=$/T ) = /Data/Some( Value /value -> ~/Data/Algebra/Ord ) )( Value /b -> /Data/Nothing = Value /Data/Nothing ) -> /Data/Algebra/GreaterThan = Value /Data/Algebra/GreaterThan
                         , /Data/maybeCompare
-                            ( Value /a -> /Data/Some
-                                [ /T=( TopType | PredRel /Data/Algebra/Ord && PredClass /Data/Algebra/Ord ) ]( /value=$/T ) = /Data/Some
-                                ( Value /value@Value /av -> ( TopType | PredRel /Data/Algebra/Ord && PredClass /Data/Algebra/Ord ) )
-                            )
-                            ( Value /b -> /Data/Some
-                                [ /T=( TopType | PredRel /Data/Algebra/Ord && PredClass /Data/Algebra/Ord ) ]( /value=$/T ) = /Data/Some
-                                ( Value /value@Value /bv -> ( TopType | PredRel /Data/Algebra/Ord && PredClass /Data/Algebra/Ord ) )
-                            ) -> UnionType
+                            ( Value /a -> /Data/Some[ /T=~/Data/Algebra/Ord ]( /value=$/T ) = /Data/Some( Value /value@Value /av -> ~/Data/Algebra/Ord ) )
+                            ( Value /b -> /Data/Some[ /T=~/Data/Algebra/Ord ]( /value=$/T ) = /Data/Some( Value /value@Value /bv -> ~/Data/Algebra/Ord ) ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Algebra/Comparison
                                 , fromList []
@@ -84,13 +78,8 @@ Prgm
                         , /Data/maybeEqual
                             ( Value /a -> /Data/Some[ /T=~/Data/Algebra/Eq ]( /value=$/T ) = /Data/Some( Value /value -> ~/Data/Algebra/Eq ) )( Value /b -> /Data/Nothing = Value /Data/Nothing ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/maybeEqual
-                            ( Value /a -> /Data/Some
-                                [ /T=( TopType | PredClass /Data/Algebra/Eq && PredRel /Data/Algebra/Eq ) ]( /value=$/T ) = /Data/Some( Value /value@Value /av -> ∀/Data/Algebra/Eq )
-                            )
-                            ( Value /b -> /Data/Some
-                                [ /T=( TopType | PredClass /Data/Algebra/Eq && PredRel /Data/Algebra/Eq ) ]( /value=$/T ) = /Data/Some
-                                ( Value /value@Value /bv -> ( TopType | PredClass /Data/Algebra/Eq && PredRel /Data/Algebra/Eq ) )
-                            ) -> UnionType
+                            ( Value /a -> /Data/Some[ /T=~/Data/Algebra/Eq ]( /value=$/T ) = /Data/Some( Value /value@Value /av -> ∀/Data/Algebra/Eq ) )
+                            ( Value /b -> /Data/Some[ /T=~/Data/Algebra/Eq ]( /value=$/T ) = /Data/Some( Value /value@Value /bv -> ~/Data/Algebra/Eq ) ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []

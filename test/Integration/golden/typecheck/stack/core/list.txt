@@ -83,15 +83,13 @@ Prgm
                                 ( Value /tail -> ~ConsList[ /T=$_/T ] )
                             )( Value /b -> /Data/Nil = Value /Data/Nil ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/consEqual
-                            ( Value /a -> /Data/Cons
-                                [ /T=( TopType | PredClass /Data/Algebra/Eq && PredRel /Data/Algebra/Eq ) ]
+                            ( Value /a -> /Data/Cons[ /T=~/Data/Algebra/Eq ]
                                 ( /head=$/T
                                 , /tail=~ConsList[ /T=$_/T ]
                                 ) = /Data/Cons( Value /head@Value /ah -> ∀/Data/Algebra/Eq )
                                 ( Value /tail@Value /at -> ∀/Data/ConsList[ /T=~/Data/Algebra/Eq ] )
                             )
-                            ( Value /b -> /Data/Cons
-                                [ /T=( TopType | PredClass /Data/Algebra/Eq && PredRel /Data/Algebra/Eq ) ]
+                            ( Value /b -> /Data/Cons[ /T=~/Data/Algebra/Eq ]
                                 ( /head=$/T
                                 , /tail=~ConsList[ /T=$_/T ]
                                 ) = /Data/Cons( Value /head@Value /bh -> ∀/Data/Algebra/Eq )

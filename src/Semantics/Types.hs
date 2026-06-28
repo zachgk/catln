@@ -1174,9 +1174,20 @@ predImpliesAtom typeEnv@TypeEnv{teClassGraph=ClassGraph cg, tePrgmEnv} vaenv (Pr
         let rType = expandRelPartial typeEnv vaenv r
         in all (\t -> isSubtypeOfWithEnv typeEnv vaenv t rType) classTypes
       _ -> False
--- PredRel r implies PredClass c when every type matching r is a member of c, checked by expansion.
-predImpliesAtom typeEnv vaenv (PredRel r) (PredClass c) =
-  isSubtypeOfWithEnv typeEnv vaenv (expandRelPartial typeEnv vaenv r) (expandClassPartial typeEnv vaenv c)
+-- PredRel r implies PredClass c when every type matching r is a member of c.
+-- Fast path (mirrors the @PredClass c ⟹ PredRel r@ same-name case above): for the SAME plain class
+-- name, @isa c ⟹ hasClass c@ holds directly — a value whose type is a member of class @c@ has class
+-- @c@. This avoids expanding BOTH sides via 'expandRelPartial'/'expandClassPartial', which for a
+-- recursive parameterized class (e.g. @Eq@ with @ConsList[Eq]@/@Maybe[Eq]@ members) re-expands the
+-- element class unboundedly. Restricted to arg/var-free partials naming a real class.
+predImpliesAtom typeEnv vaenv (PredRel r) (PredClass c)
+  | plainPartial r, plainPartial c
+  , sameClass || classDeclaredSubclassOf typeEnv (ptName r) (ptName c) = True
+  | otherwise = isSubtypeOfWithEnv typeEnv vaenv (expandRelPartial typeEnv vaenv r) (expandClassPartial typeEnv vaenv c)
+  where
+    plainPartial p = H.null (ptArgs p) && H.null (ptVars p)
+    -- Same named entity (either absoluteness direction): @isa c ⟹ hasClass c@.
+    sameClass = relativeNameMatches (ptName r) (ptName c) || relativeNameMatches (ptName c) (ptName r)
 -- Cross-kind: conservative False
 predImpliesAtom _ _ _ _ = False
 

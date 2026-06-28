@@ -87,15 +87,13 @@ Prgm
                                 ( EAppArg Value /tail -> ~ConsList[ /T=$_/T ] )
                             )( EAppArg Value /b -> /Data/Nil = Value /Data/Nil ) -> /Data/Primitive/False = Value /Data/Primitive/False
                         , /Data/consEqual
-                            ( EAppArg Value /a -> /Data/Cons
-                                [ /T=( TopType | PredClass /Data/Algebra/Eq && PredRel /Data/Algebra/Eq ) ]
+                            ( EAppArg Value /a -> /Data/Cons[ /T=~/Data/Algebra/Eq ]
                                 ( /head=$/T
                                 , /tail=~ConsList[ /T=$_/T ]
                                 ) = /Data/Cons( EAppArg Value /head@Value /ah -> ∀/Data/Algebra/Eq )
                                 ( EAppArg Value /tail@Value /at -> ∀/Data/ConsList[ /T=~/Data/Algebra/Eq ] )
                             )
-                            ( EAppArg Value /b -> /Data/Cons
-                                [ /T=( TopType | PredClass /Data/Algebra/Eq && PredRel /Data/Algebra/Eq ) ]
+                            ( EAppArg Value /b -> /Data/Cons[ /T=~/Data/Algebra/Eq ]
                                 ( /head=$/T
                                 , /tail=~ConsList[ /T=$_/T ]
                                 ) = /Data/Cons( EAppArg Value /head@Value /bh -> ∀/Data/Algebra/Eq )
