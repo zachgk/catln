@@ -1529,23 +1529,17 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (preds, negLeafs)) _ t1Cons
     (_, True)      | predImpliesPartials typeEnv vaenv preds superPartials -> True
                    -- U_preds ⊆ superPartials implies (U_preds - negLeafs) ⊆ superPartials
     (_, True)      | predsEmpty typeEnv vaenv preds -> True  -- U_preds = ∅ by class-graph disjointness (fallback: costly)
-    -- Member decomposition: (U_preds - negLeafs) ⊆ t2  ⟺  every member of U_preds is ⊆ (t2 ∪ negLeafs).
-    -- Checking each member against t2 directly (a conjunction of per-member subtype checks) avoids
-    -- materializing the whole member union and running 'differenceTypeWithEnv' over it. Only applies
-    -- when the predicate expands to a plain positive union of members; otherwise fall through to the
-    -- difference re-expression below.
+    -- (U_preds - negLeafs) ⊆ t2  ⟺  U_preds ⊆ (t2 ∪ negLeafs)  [set identity]. Recursing isSubtypeOf
+    -- on the expanded member union re-expresses the predicate as a positive type WITHOUT
+    -- 'differenceTypeWithEnv', and decomposes it per-member through the positive/mixed branches: a
+    -- member whose recursive element matches t2's reflexively short-circuits rather than re-expanding.
+    -- Guarded on progress: when the expansion reproduces t1 (a recursive rel left bare by 'teExpanding',
+    -- or preds = PredsNone giving 'PTopType') recursing would not progress, so give a conservative False.
     (_, True)      | tePrgmEnv typeEnv || predsSealed typeEnv preds
-                   , UnionType Nothing memberLeafs [] <- expandPredicates typeEnv vaenv preds
-                   , not (H.null memberLeafs)
-                   -> let t2WithNeg = unionTypesWithEnv typeEnv vaenv t2 (UnionType Nothing negLeafs [])
-                          env'      = withExpanding typeEnv preds
-                      in all (\m -> isSubtypeOfWithEnv env' vaenv (singletonType m) t2WithNeg) (splitUnionType memberLeafs)
-    -- Re-express U_preds - negLeafs as a positive type and recurse. Guarded on progress: when the
-    -- predicate expands to the universe (e.g. preds = PredsNone) the difference reproduces the same
-    -- complement, which would recurse forever, so require the rewrite to differ from t1 (else False).
-    (_, True)      | tePrgmEnv typeEnv || predsSealed typeEnv preds
-                   , let t1' = snd $ differenceTypeWithEnv typeEnv vaenv (expandPredicates typeEnv vaenv preds) (UnionType Nothing negLeafs [])
-                   , t1' /= t1 -> isSubtypeOfWithEnv (withExpanding typeEnv preds) vaenv t1' t2
+                   , let expanded = expandPredicates typeEnv vaenv preds
+                   , expanded /= t1
+                   -> isSubtypeOfWithEnv (withExpanding typeEnv preds) vaenv expanded
+                        (unionTypesWithEnv typeEnv vaenv t2 (UnionType Nothing negLeafs []))
     (_, True)      -> False
     (leafs, False) -> isSubtypeOfWithEnv (withExpanding typeEnv preds) vaenv (UnionType Nothing leafs []) t2
 -- PosPartials ⊆ PosPartials: check partials structurally
