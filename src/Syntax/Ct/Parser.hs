@@ -21,6 +21,7 @@ import           Text.Megaparsec.Char
 
 import           CtConstants
 
+import           Data.List                  (intercalate)
 import           Data.Maybe
 import           Semantics.Prgm
 import           Semantics.Types            (Constant (CStr), mkName,
@@ -55,10 +56,21 @@ pCommentStatement = do
 
 pPrintStatement :: Parser PStatementTree
 pPrintStatement = do
-  _ <- string "> "
-  e <- pExpr
-  let annot = rawVal printAnnot `applyRawArgs` [(Just $ partialKey (mkName printAnnotText), e)]
+  (e, resultLines) <- L.indentBlock scn p
+  let baseArg = (Just $ partialKey (mkName printAnnotText), e)
+      resultArg = [(Just $ partialKey (mkName resultAnnotText), rawStr (intercalate "\n" resultLines)) | not (null resultLines)]
+      annot = rawVal printAnnot `applyRawArgs` (baseArg : resultArg)
   return $ RawStatementTree (RawAnnot annot) []
+  where
+    takeLine = takeWhileP (Just "character") (/= '\n')
+    pResultLine = do
+      _ <- string ">>>"
+      _ <- optional (char ' ')
+      takeLine
+    p = do
+      _ <- string "> "
+      e <- pExpr
+      return (L.IndentMany Nothing (\rls -> return (e, rls)) pResultLine)
 
 
 pStatementTree :: Parser PStatementTree

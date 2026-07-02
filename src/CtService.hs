@@ -26,7 +26,8 @@ import           Eval                    (evalAnnots, evalBuild, evalBuildAll,
                                           evalRun)
 import           Eval.Common             (EvalMetaDat, EvalResult, TExpr,
                                           Val (StrVal, TupleVal))
-import           Eval.Testing            (MockIO, evalRunMock, evalTest)
+import           Eval.Testing            (MockIO, evalPrints, evalRunMock,
+                                          evalTest)
 import           Semantics               (CTSSConfig)
 import           Semantics.Prgm
 import           Syntax.Ct.Desugarf      (desFinalPasses, desPrgm, validPrgm)
@@ -327,6 +328,13 @@ getTestResults :: CTSS -> CResT IO [(String, CResT IO Val)]
 getTestResults ctss = do
   base <- ctssGet ssfTPrgm ctss
   asCResT $ evalTest base
+
+-- | The freshly-evaluated golden values for every string-serializable @#print@ reachable from the
+-- loaded program, each keyed by the source range of its @p@ argument. Used by @catln test --update@.
+getPrintGoldens :: CTSS -> CResT IO [(CodeRangeDat, String)]
+getPrintGoldens ctss = do
+  base <- ctssGet ssfTPrgm ctss
+  asCResT $ evalPrints $ mconcat $ map fst3 $ graphToNodes base
 
 getEvalAnnots :: CTSS -> FileImport -> CResT IO [(Expr EvalMetaDat, Val)]
 getEvalAnnots ctss prgmName = do

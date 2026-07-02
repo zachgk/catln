@@ -297,6 +297,29 @@ evalBuildPrgm input srcType destType prgm = do
   initTree <- buildRoot evTbEnv input srcType destType
   return (initTree, env)
 
+-- | Build and evaluate a single annotation expression to the value it renders to through the
+-- @DShow@ class (the same path used to display @#print@ values in webdocs). Returns @Nothing@
+-- when the annotation cannot reach @DShow@ and so is not renderable.
+evalDShowAnnot :: Env -> [(PartialType, EObjArr)] -> EExpr -> CRes (Maybe Val)
+evalDShowAnnot env@Env{evTbEnv, evTypeEnv} os annot0
+  | reachesTo evTypeEnv H.empty (getExprType $ showAnnot annot) destType = do
+      tree <- toTExprDest evTbEnv os (showAnnot annot) destM
+      val <- evalStateT (evalExpr tree) env
+      return (Just val)
+  | otherwise = return Nothing
+  where
+    -- A #print's rendered value is its `p` argument, so render that directly. This is robust to
+    -- the print also carrying a `result` golden (the 2-arg #print), which the bare
+    -- @dshow(s= #print(p))= p@ rule would not match.
+    annot
+      | nameStr (exprPath annot0) == printAnnot
+      , Just (Just (_, Just p)) <- H.lookup (partialKey (mkName printAnnotText)) (exprAppliedArgsMap annot0)
+      = p
+      | otherwise = annot0
+    showAnnot a = eVal "/Catln/Doc/dshow" `eApply ` ("/s", a)
+    destType = classPartial $ partialVal "/Catln/Doc/DShow"
+    destM = emptyMetaT destType
+
 evalAnnots :: FileImport -> EPrgmGraphData -> CRes [(EExpr, Val)]
 evalAnnots prgmName prgmGraphData = do
   prgm@(Prgm objMap _ globalAnnots) <- prgmFromGraphData prgmName prgmGraphData
@@ -307,16 +330,9 @@ evalAnnots prgmName prgmGraphData = do
     buildAnnots env [(getExprPartialType $ oaObjExpr oa, oa)] (oaAnnots oa)
   return $ concat (globalAnnots' : objMapAnnots')
   where
-    showAnnot a = eVal "/Catln/Doc/dshow" `eApply ` ("/s", a)
-    destType = classPartial $ partialVal "/Catln/Doc/DShow"
-    destM = emptyMetaT destType
-    canBuild typeEnv annot = reachesTo typeEnv H.empty (getExprType $ showAnnot annot) destType
-    buildAnnots env@Env{evTbEnv, evTypeEnv} os annots = do
-      let annots' = filter (canBuild evTypeEnv) annots
-      forM annots' $ \annot -> do
-        tree <- toTExprDest evTbEnv os (showAnnot annot) destM
-        val <- evalStateT (evalExpr tree) env
-        return (annot, val)
+    buildAnnots env os annots = do
+      results <- forM annots $ \annot -> fmap (annot,) <$> evalDShowAnnot env os annot
+      return $ catMaybes results
 
 evalRun :: String -> FileImport -> EPrgmGraphData -> CResT IO (Integer, EvalResult)
 evalRun function prgmName prgmGraphData = do

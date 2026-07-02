@@ -1,0 +1,26 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                    }
+                )
+            ]
+        )
+    , prgmCG = [ CGType ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "A string-serializable #print carries its expected value as a #result golden, checked by" )
+        , /Catln/#md
+            ( Value /text= CStr "`catln test` and (re)written by `catln test --update`." )
+        , /Catln/#print
+            ( Value /p= CStr "hello world" )
+            ( Value /result= CStr "hello world" )
+        ]
+    }

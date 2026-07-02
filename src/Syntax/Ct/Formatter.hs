@@ -127,9 +127,13 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
           where
             annotText' = concatMap (\c -> if c == '\n' then "\n" ++ formatIndent (indent + 1) else pure c) annotText
         _ -> undefined
-      RawAnnot annot | nameStr (exprPath annot) == printAnnot -> case H.lookup (partialKey (mkName printAnnotText)) $ rawExprAppliedArgsMap annot of
-                         (Just (Just (_, Just e))) -> printf "> %s" (formatExpr e)
-                         e -> error $ printf "Can't format unexpected print annot %s" (show e)
+      RawAnnot annot | nameStr (exprPath annot) == printAnnot ->
+        let resultStr = case H.lookup (partialKey (mkName resultAnnotText)) $ rawExprAppliedArgsMap annot of
+              (Just (Just (_, Just (RawCExpr _ (CStr s))))) -> concatMap (\l -> "\n" ++ formatIndent (indent + 1) ++ ">>> " ++ l) (lines s)
+              _ -> ""
+        in case H.lookup (partialKey (mkName printAnnotText)) $ rawExprAppliedArgsMap annot of
+             (Just (Just (_, Just e))) -> printf "> %s%s" (formatExpr e) resultStr
+             e -> error $ printf "Can't format unexpected print annot %s" (show e)
       RawAnnot annot -> formatExpr annot
 
 -- |

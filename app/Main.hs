@@ -2,10 +2,19 @@
 module Main where
 
 import           CRes
+import           CtConstants          (printAnnot, printAnnotText,
+                                       resultAnnotText)
 import           Options.Applicative
 import           Semantics            (buildCtssConfig)
-import           Semantics.Prgm       (FileImport, impDisp)
+import           Semantics.Prgm       (CodeRangeDat, FileImport, MetaDat,
+                                       exprPath, getExprMeta, getMetaPos,
+                                       impDisp)
+import           Semantics.Types      (mkName, nameStr, partialKey)
+import           Syntax.Ct.Builder    (applyRawArgs, rawStr, rawVal)
 import           Syntax.Ct.Formatter  (formatRootPrgm)
+import           Syntax.Ct.Prgm       (RawPrgm (..), RawStatement (..),
+                                       RawStatementTree (..),
+                                       rawExprAppliedArgsMap)
 import           Syntax.Parsers       (canonicalImport, mkDesCanonicalImportStr,
                                        mkRawImportStr, parseFile, readFiles,
                                        readImport)
@@ -16,11 +25,12 @@ import           CtService
 import           Data.Foldable        (foldlM)
 import qualified Data.HashMap.Strict  as H
 import qualified Data.HashSet         as S
-import           Data.List            (isInfixOf)
+import           Data.List            (isInfixOf, nub)
 import           Data.Maybe
 import           Eval.Common          (Val (StrVal, TupleVal))
 import           LSP                  (lspRun)
 import           System.Directory
+import           Text.Megaparsec      (sourceName)
 import           Text.Printf
 import           TypeCheck.Common     (flipTraceConstrain)
 import           TypeCheck.TraceWrite (renderTypeTrace)
@@ -97,11 +107,16 @@ xFmt prgmName = do
   let prgm' = formatRootPrgm rawPrgm
   lift $ writeFile prgmName prgm'
 
-xTest :: String -> CResT IO ()
-xTest prgmName = do
+xTest :: String -> Bool -> CResT IO ()
+xTest prgmName update = do
   ctss <- lift $ ctssBaseFiles buildCtssConfig [prgmName]
   testDescs <- getTestResults ctss
-  results <- forM testDescs $ \(name, testAction) -> do
+  -- In update mode the print-golden checks are skipped (we are about to write the goldens, so
+  -- they would otherwise fail as "missing"); every other test family still runs and is checked.
+  let testDescs' = if update
+        then filter (not . (printGoldenMarker `isInfixOf`) . fst) testDescs
+        else testDescs
+  results <- forM testDescs' $ \(name, testAction) -> do
     result <- lift $ runCResT testAction
     return (name, result)
   let failures = [(name, notes) | (name, CErr notes) <- results]
@@ -111,7 +126,40 @@ xTest prgmName = do
   forM_ failures $ \(name, notes) -> do
     lift $ putStrLn $ printf "  FAIL: %s" name
     lift $ putStrLn $ prettyCNotes notes
+  when update $ xTestWriteGoldens ctss
   unless (null failures) $ fail $ printf "%d test(s) failed" (length failures)
+  where
+    printGoldenMarker = ":: print-golden"
+
+-- | Evaluate every string-serializable @#print@ and write its value back into the @#result@ of the
+-- source file that contains it, reformatting each touched file (like @catln fmt@).
+xTestWriteGoldens :: CTSS -> CResT IO ()
+xTestWriteGoldens ctss = do
+  goldens <- getPrintGoldens ctss
+  let files = nub $ map (sourceName . fst . fst) goldens
+  forM_ files $ \file -> do
+    let fileGoldens = [(cr, g) | (cr, g) <- goldens, sourceName (fst cr) == file]
+    (prgm, _, _) <- parseFile buildCtssConfig $ mkRawImportStr file
+    lift $ writeFile file $ formatRootPrgm $ setPrintResults fileGoldens prgm
+  lift $ putStrLn $ printf "Updated %d golden(s) across %d file(s)" (length goldens) (length files)
+
+-- | Inject each evaluated golden into the @#result@ arg of its matching @#print@ statement,
+-- located by the source range of the print's @p@ argument.
+setPrintResults :: (MetaDat m, Show m) => [(CodeRangeDat, String)] -> RawPrgm m -> RawPrgm m
+setPrintResults goldens (RawPrgm imports stmts) = RawPrgm imports (map fixTree stmts)
+  where
+    fixTree (RawStatementTree st subs) = RawStatementTree (fixStmt st) (map fixTree subs)
+    fixStmt (RawAnnot annot)
+      | nameStr (exprPath annot) == printAnnot
+      , Just pExpr <- pArg annot
+      , Just crange <- getMetaPos (getExprMeta pExpr)
+      , Just golden <- lookup crange goldens
+      = RawAnnot $ rawVal printAnnot `applyRawArgs`
+          [(Just $ partialKey (mkName printAnnotText), pExpr), (Just $ partialKey (mkName resultAnnotText), rawStr golden)]
+    fixStmt st = st
+    pArg annot = case H.lookup (partialKey (mkName printAnnotText)) (rawExprAppliedArgsMap annot) of
+      Just (Just (_, Just e)) -> Just e
+      _                       -> Nothing
 
 xDepTree :: String -> Bool -> CResT IO ()
 xDepTree prgmName showCore = do
@@ -165,7 +213,7 @@ exec (Convert fname outFname)   = xConvert fname outFname
 exec CLsp                       = xLsp
 exec (Fmt fname)                = xFmt fname
 exec (DepTree fname showCore)   = xDepTree fname showCore
-exec (TestFile fname)           = xTest fname
+exec (TestFile fname update)    = xTest fname update
 exec (TypeTrace fname)          = xTypeTrace fname
 
 data Command
@@ -176,7 +224,7 @@ data Command
   | CLsp
   | Fmt String
   | DepTree String Bool
-  | TestFile String
+  | TestFile String Bool
   | TypeTrace String
 
 cRun :: Parser Command
@@ -215,6 +263,7 @@ cDepTree = DepTree
 cTest :: Parser Command
 cTest = TestFile
   <$> argument str (metavar "FILE" <> help "The file to test")
+  <*> switch (long "update" <> short 'u' <> help "Write #result goldens for #print statements instead of checking them")
 
 cTypeTrace :: Parser Command
 cTypeTrace = TypeTrace

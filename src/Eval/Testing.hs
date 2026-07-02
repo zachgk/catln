@@ -25,14 +25,16 @@ import           Semantics.Types
 
 import           Control.Concurrent         (forkIO, killThread, newEmptyMVar,
                                              putMVar, takeMVar)
+import           Control.Monad              (forM)
 import           Control.Monad.State        (lift, runStateT)
 import           CtConstants
 import           Data.IORef
 import           Data.List                  (nub, nubBy, tails)
 import           Data.Maybe
 import           Eval                       (evalBaseEnv, evalBuildPrgm,
-                                             evalExpr, evalTargetMode,
-                                             evalValEq, prgmFromGraphData)
+                                             evalDShowAnnot, evalExpr,
+                                             evalTargetMode, evalValEq,
+                                             prgmFromGraphData)
 import           Eval.Common
 import           Eval.Env
 import           Eval.ExprBuilder
@@ -43,7 +45,7 @@ import           Hedgehog.Internal.Report   (Result (..), reportStatus)
 import           Hedgehog.Internal.Runner   (checkReport)
 import qualified Hedgehog.Internal.Seed     as HedgehogSeed
 import           Semantics
-import           Semantics.Annots           (getRuntimeAnnot, hasAnnot)
+import           Semantics.Annots           (getRuntimeAnnot, hasAnnot, isAnnot)
 import           System.Timeout             (timeout)
 import           Testing.Generation         (genValForType)
 import           Text.Printf
@@ -380,7 +382,7 @@ evalTest prgmGraphData = do
   let prgm@(Prgm objMap _ _) = mconcat $ map fst3 $ graphToNodes prgmGraphData
   let testOAs = nubBy (\a b -> oaObjPath a == oaObjPath b) $ filter (\oa -> hasAnnot testAnnot oa || hasAnnot exampleAnnot oa) $ flatObjectMap objMap
   let (noArgTests, propTests) = foldr partitionTest ([], []) testOAs
-  return $ map (runSimpleTest prgm) noArgTests ++ map (runPropertyTest prgm) propTests ++ deriveOverlapTests prgm ++ deriveRefinementTests prgm
+  return $ map (runSimpleTest prgm) noArgTests ++ map (runPropertyTest prgm) propTests ++ deriveOverlapTests prgm ++ deriveRefinementTests prgm ++ derivePrintTests prgm
   where
     isNoArgTest oa = null (exprAppliedArgs (oaObjExpr oa)) && null (exprAppliedOrdVars (oaObjExpr oa))
     partitionTest oa (simple, props)
@@ -476,3 +478,66 @@ evalTest prgmGraphData = do
               then CRes [] (TupleVal "()" H.empty)
               else CErr [MkCNote $ GenCErr Nothing $ printf "Property test failed: %s" testName]
       in (testName, action)
+
+-- | All @#print@ annotations reachable in the program, each paired with the type-context (@os@)
+-- under which it must be built (mirrors the per-oa handling in 'Eval.evalAnnots').
+collectPrintAnnots :: EPrgm -> [([(PartialType, EObjArr)], EExpr)]
+collectPrintAnnots (Prgm objMap _ globalAnnots) =
+  [ ([], a) | a <- globalAnnots, isAnnot printAnnot a ]
+  ++ [ ([(getExprPartialType $ oaObjExpr oa, oa)], a)
+     | oa <- flatObjectMap objMap, a <- oaAnnots oa, isAnnot printAnnot a ]
+
+-- | The expression of a @#print@'s @p@ argument, if present.
+printPArg :: EExpr -> Maybe EExpr
+printPArg annot = case H.lookup (partialKey (mkName printAnnotText)) (exprAppliedArgsMap annot) of
+  Just (Just (_, Just e)) -> Just e
+  _                       -> Nothing
+
+-- | The stored golden string of a @#print@'s @result@ argument, if present.
+printResultArg :: EExpr -> Maybe String
+printResultArg annot = case H.lookup (partialKey (mkName resultAnnotText)) (exprAppliedArgsMap annot) of
+  Just (Just (_, Just (CExpr _ (CStr s)))) -> Just s
+  _                                        -> Nothing
+
+-- | The source range of a @#print@ (taken from its @p@ argument, the only positioned part).
+printRange :: EExpr -> CodeRange
+printRange annot = maybe Nothing (getMetaPos . getExprMeta) (printPArg annot)
+
+-- | Only @#print@ values that render (through @DShow@) to a 'StrVal' can have a string-serialized
+-- golden. Returns the raw string for those, and 'Nothing' for any other DShow value (e.g. a
+-- visualization), which is not golden-checkable.
+printGolden :: Val -> Maybe String
+printGolden (StrVal s) = Just s
+printGolden _          = Nothing
+
+-- | Build and evaluate every @#print@ reachable in the program to its rendered value, keeping
+-- only the string-serializable ones, paired with the source range of the print's @p@ argument
+-- (used by @catln test --update@ to locate and write goldens back).
+evalPrints :: EPrgm -> CRes [(CodeRangeDat, String)]
+evalPrints prgm = do
+  let env = evalBaseEnv prgm
+  results <- forM (collectPrintAnnots prgm) $ \(os, annot) -> do
+    mval <- evalDShowAnnot env os annot
+    return $ (,) <$> printRange annot <*> (mval >>= printGolden)
+  return $ catMaybes results
+
+-- | Derive a golden test for every string-serializable @#print@ reachable in the program. A
+-- @#print@ whose value renders to a string is checked against its stored @#result@ golden; one
+-- without a golden fails with a hint to run @catln test --update@. A @#print@ that renders to a
+-- non-string DShow value is skipped entirely (produces no test).
+derivePrintTests :: EPrgm -> [(String, CResT IO Val)]
+derivePrintTests prgm = mapMaybe mkTest (collectPrintAnnots prgm)
+  where
+    env = evalBaseEnv prgm
+    mkTest (os, annot) = case evalDShowAnnot env os annot of
+      CRes _ (Just (StrVal actual)) -> Just (testName, checkAction actual)
+      CRes _ _                      -> Nothing
+      CErr notes                    -> Just (testName, CResT $ return $ CErr notes)
+      where
+        crange = printRange annot
+        testName = printf "%s :: print-golden" (maybe "<print>" showCodeRange crange)
+        checkAction actual = asCResT $ case printResultArg annot of
+          Nothing -> CErr [MkCNote $ GenCErr crange "Missing #result golden for print; run `catln test --update` to populate it"]
+          Just golden
+            | golden == actual -> CRes [] (TupleVal "()" H.empty)
+            | otherwise        -> CErr [MkCNote $ GenCErr crange $ printf "Print golden mismatch:\n  expected: %s\n  actual:   %s" golden actual]

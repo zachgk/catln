@@ -137,7 +137,9 @@ Prgm
                 ( "/Catln/#print"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Catln/#print( EAppArg Value /p -> ∀/Catln/Doc/DShow ) ]
+                        [ /Catln/#print( EAppArg Value /p -> ∀/Catln/Doc/DShow )
+                        , /Catln/#print( EAppArg Value /p -> ∀/Catln/Doc/DShow )( EAppArg Value /result -> /Data/String )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
