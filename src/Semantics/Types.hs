@@ -1818,6 +1818,108 @@ predAtomImpliesSymbolic typeEnv@TypeEnv{teClassGraph=ClassGraph cg} vaenv gatePo
     satAtomOf (PredRel r)   = Just (SatRel r)
     satAtomOf (PredExpr _)  = Nothing
 
+-- | Whether a partial is within the fragment of the dispatch-coverage queries below
+-- ('satLeafEscapesAll' and its wrappers): no 'PredExpr' predicates and no constant
+-- components anywhere in its var\/arg elements. An out-of-fragment dispatch falls back to
+-- the materialized accumulation in 'completeTreeSet'.
+dispatchInFragment :: PartialType -> Bool
+dispatchInFragment PartialType{ptVars, ptArgs, ptPreds} =
+  predsInFrag ptPreds && all elemInFrag (H.elems ptVars) && all elemInFrag (H.elems ptArgs)
+  where
+    predsInFrag = isJust . predsSatDNF True
+    elemInFrag PTopType = True
+    elemInFrag TypeVar{} = True
+    elemInFrag (UnionType _ _ (_:_)) = False -- constants: out of fragment
+    elemInFrag (UnionType mtop leafs []) =
+      maybe True (predsInFrag . fst) mtop
+      && all dispatchInFragment (splitUnionType leafs)
+
+-- | SAT(m ∧ ¬n₁ ∧ … ∧ ¬nₖ): can a single value of shape @m@ escape ALL of @negs@ jointly?
+-- The joint-cover decision needed by dispatch coverage ('completeTreeSet' in "TreeBuild"):
+-- options that each match only part of a class-\/union-typed position can still jointly
+-- cover it (e.g. @Nil@ and @Cons@ arms covering a @~ConsList@ argument). 'satEscapes'
+-- checks each negative independently and cannot see such joint covers; this instead
+-- refines @m@ by enumerating one discriminating top-level var\/arg position at a time
+-- (union components, class members, relation candidates) and requiring every case to be
+-- covered. Recursion through the class graph terminates via the goal stack exactly as in
+-- 'satGoal': a repeated goal has no finite witness, so it cannot escape. Conservative
+-- towards 'True' (escape unproven ⇒ possibly escapes), the safe polarity for coverage
+-- (unproven cover ⇒ not covered).
+satLeafEscapesAll :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> [SatGoal] -> PartialType -> [PartialType] -> Bool
+satLeafEscapesAll typeEnv vaenv hyps m negs0
+  | goal `elem` hyps = False -- recursive goal: no finite witness along this path
+  | any (\n -> partialCoversSat typeEnv vaenv False hyps' n m) negs = False
+  | null negs = satGoal typeEnv vaenv False hyps (SatGoal [SatLeafs [m]] []) -- inhabited ⇒ escapes
+  | otherwise = case refinements of
+      []        -> True -- no discriminating position is refinable: conservative escape
+      (cases:_) -> any (\m' -> satLeafEscapesAll typeEnv vaenv hyps' m' negs) cases
+  where
+    negs = filter (partialsOverlapSat typeEnv vaenv False hyps m) negs0
+    goal = satGoalNorm (SatGoal [SatLeafs [m]] [SatLeafs [n] | n <- negs])
+    hyps' = goal : hyps
+
+    -- Refinement at the first discriminating position: a var\/arg of m that some negative
+    -- genuinely constrains (m's element there can escape the negative's), enumerated into
+    -- exhaustive cases. An empty case list means the position (hence m) is uninhabited.
+    refinements = mapMaybe refineAt (map (first TVVar) (H.toList (ptVars m)) ++ map (first TVArg) (H.toList (ptArgs m)))
+    refineAt (k, tk)
+      | any constrains negs = do
+          cases <- enumTypeCases tk
+          Just [typeSetAux k c m | c <- cases]
+      | otherwise = Nothing
+      where
+        constrains n = case elemAt k n of
+          Just nk -> typesSatDiff typeEnv vaenv False hyps' tk nk
+          Nothing -> False
+    elemAt (TVVar k) PartialType{ptVars} = H.lookup k ptVars
+    elemAt (TVArg k) PartialType{ptArgs} = H.lookup k ptArgs
+
+    -- Exhaustive top-level cases of a position's type: union components, class members
+    -- (via 'classSatCandidates', gated closed-world like the outer coverage decisions), or
+    -- relation candidates. 'Nothing' when not enumerable (then another position may be).
+    -- Subtracted 'negLeafs' and non-generator conjuncts are dropped, which only ENLARGES
+    -- the enumerated set - sound for cover proofs, conservative for escapes.
+    enumTypeCases (UnionType Nothing leafs []) = case splitUnionType leafs of
+      ls@(_:_:_) -> Just (map singletonType ls)
+      _          -> Nothing -- single leaf: no top-level refinement available
+    enumTypeCases (UnionType (Just (preds, _)) pos []) = do
+      dnf <- predsSatDNF True preds
+      satPos <- case dnf of
+        [SatGoal ps _] -> Just ps
+        _              -> Nothing
+      topCases <- enumAtomCases satPos
+      Just (topCases ++ map singletonType (splitUnionType pos))
+    enumTypeCases _ = Nothing
+
+    -- Enumerate the first enumerable atom of a positive conjunction, preferring a class
+    -- (the most precise generator); remaining conjuncts are dropped (enlarging).
+    enumAtomCases atoms = listToMaybe (mapMaybe enumAtom (L.sortOn atomPref atoms))
+    atomPref SatClass{} = 0 :: Int
+    atomPref SatRel{}   = 1
+    atomPref SatLeafs{} = 2
+    enumAtom (SatClass c) = classSatCandidates typeEnv vaenv True c >>= mapM candCase
+    enumAtom (SatRel r)   = mapM candCase (relSatCandidates typeEnv vaenv r)
+    enumAtom (SatLeafs _) = Nothing -- cannot appear in a preds DNF
+    candCase (CandLeaf tp) = Just (singletonType tp)
+    candCase (CandGoal (SatGoal [a] [])) = case a of
+      SatClass c  -> Just (classPartial c)
+      SatRel r    -> Just (TopType H.empty (PredsOne (PredRel r)))
+      SatLeafs ls -> Just (UnionType Nothing (joinUnionType ls) [])
+    candCase CandGoal{} = Nothing -- a compound member goal: not expressible as a case type
+
+-- | Engine-backed completion check of 'completeTreeSet': every value of @full@ is matched
+-- by some accumulated option. covered ⟺ UNSAT(full ∧ ¬opt₁ ∧ … ∧ ¬optₖ).
+dispatchCoveredSymbolic :: TypeGraph tg => TypeEnv tg -> PartialType -> [PartialType] -> Bool
+dispatchCoveredSymbolic typeEnv full opts = not (satLeafEscapesAll typeEnv H.empty [] full opts)
+
+-- | Engine-backed accumulation check of 'completeTreeSet': @opt@ matches some value of
+-- @full@ that no accumulated option matches yet. SAT(full ∧ opt ∧ ¬acc₁ ∧ … ∧ ¬accₖ).
+dispatchAddsSymbolic :: TypeGraph tg => TypeEnv tg -> PartialType -> PartialType -> [PartialType] -> Bool
+dispatchAddsSymbolic typeEnv full opt accOpts =
+  case intersectTypes typeEnv (singletonType full) (singletonType opt) of
+    UnionType Nothing leafs [] -> any (\l -> satLeafEscapesAll typeEnv H.empty [] l accOpts) (splitUnionType leafs)
+    _ -> True -- out-of-fragment intersection: conservatively adds
+
 isSubPredicateOfWithEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicate -> TypePredicate -> Bool
 isSubPredicateOfWithEnv typeEnv vaenv p1 p2 = predImpliesAtom typeEnv vaenv p1 p2
 

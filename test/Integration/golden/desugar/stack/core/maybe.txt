@@ -92,10 +92,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/equal
-                            ( Value other -> ∀/Data/Maybe[ /E=~/Data/Primitive/Integer ] )( Value /this -> /Data/Nothing )= /Data/maybeEqual( Value a= Value /Data/Nothing )( Value b= Value other )
+                            ( Value other -> ∀/Data/Maybe[ /E=~/Data/Algebra/Eq ] )( Value /this -> /Data/Nothing )= /Data/maybeEqual( Value a= Value /Data/Nothing )( Value b= Value other )
                         , /Data/Algebra/equal
-                            ( Value other -> ∀/Data/Maybe[ /E=~/Data/Primitive/Integer ] )
-                            ( Value /this= /Data/Some[ /T : /Data/Primitive/Integer ]( Value value ) )= /Data/maybeEqual
+                            ( Value other -> ∀/Data/Maybe[ /E=~/Data/Algebra/Eq ] )
+                            ( Value /this= /Data/Some[ /T : ∀/Data/Algebra/Eq ]( Value value ) )= /Data/maybeEqual
                             ( Value a= /Data/Some( Value value= Value value ) )( Value b= Value other )
                         ]
                     }
@@ -118,10 +118,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/compareTo
-                            ( Value other -> ∀/Data/Maybe[ /E=~/Data/Primitive/Integer ] )( Value /this -> /Data/Nothing )= /Data/maybeCompare( Value a= Value /Data/Nothing )( Value b= Value other )
+                            ( Value other -> ∀/Data/Maybe[ /E=~/Data/Algebra/Ord ] )( Value /this -> /Data/Nothing )= /Data/maybeCompare( Value a= Value /Data/Nothing )( Value b= Value other )
                         , /Data/Algebra/compareTo
-                            ( Value other -> ∀/Data/Maybe[ /E=~/Data/Primitive/Integer ] )
-                            ( Value /this= /Data/Some[ /T : /Data/Primitive/Integer ]( Value value ) )= /Data/maybeCompare
+                            ( Value other -> ∀/Data/Maybe[ /E=~/Data/Algebra/Ord ] )
+                            ( Value /this= /Data/Some[ /T : ∀/Data/Algebra/Ord ]( Value value ) )= /Data/maybeCompare
                             ( Value a= /Data/Some( Value value= Value value ) )( Value b= Value other )
                         ]
                     }
@@ -142,14 +142,14 @@ Prgm
             ( False
             , /Data/Maybe
             ,
-                [ ∀/Data/Maybe[ /T=~/Data/Primitive/Integer ] ]
+                [ ∀/Data/Maybe[ /T=~/Data/Algebra/Eq ] ]
             , Just ""
             )
         , CGClass
             ( False
             , /Data/Maybe
             ,
-                [ ∀/Data/Maybe[ /T=~/Data/Primitive/Integer ] ]
+                [ ∀/Data/Maybe[ /T=~/Data/Algebra/Ord ] ]
             , Just ""
             )
         , CGClass
@@ -183,23 +183,22 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "# Maybe equality tests" )
         , /Catln/#md
-            ( Value /text= CStr "A [Maybe] of [Integer] is an [Eq] member (see the end of this file), so [operator==] checks" )
+            ( Value /text= CStr "A [Maybe] of any [Eq] element is an [Eq] member (see the end of this file), so [operator==]" )
         , /Catln/#md
-            ( Value /text= CStr "both arms structurally." )
+            ( Value /text= CStr "checks both arms structurally." )
         , /Catln/#md
-            ( Value /text= CStr "A [Maybe] of [Integer] is an [Ord] member (see the end of this file), so [compareTo] orders" )
+            ( Value /text= CStr "A [Maybe] of any [Ord] element is an [Ord] member (see the end of this file), so [compareTo]" )
         , /Catln/#md
-            ( Value /text= CStr "both arms structurally, with [Nothing] before any [Some]." )
+            ( Value /text= CStr "orders both arms structurally, with [Nothing] before any [Some]." )
         , /Catln/#md
-            ( Value /text= CStr "# Maybe Eq membership (Integer elements only — TODO: generalize to any Eq element)
-            Makes a [Maybe] of [Integer] a proper member of [Eq], so the generic [operator==] dispatches
-            through the [equal] method into [maybeEqual]. Mirrors the [ConsList] membership in [Data/list]:
-            it is currently restricted to a CONCRETE [Integer] element, and the [equal] receiver's element is
-            bound to [Integer] so the constructor's type parameter is concrete rather than [TopType]." )
+            ( Value /text= CStr "# Maybe Eq membership
+            Makes a [Maybe] of any [Eq] element a proper member of [Eq], so the generic [operator==]
+            dispatches through the [equal] method into [maybeEqual]. Mirrors the [ConsList] membership
+            in [Data/list]." )
         , /Catln/#md
-            ( Value /text= CStr "# Maybe Ord membership (Integer elements only — TODO: generalize to any Ord element)
-            Makes a [Maybe] of [Integer] a proper member of [Ord], so [compareTo] dispatches per constructor
-            into [maybeCompare]. Mirrors the [Eq] membership above (and every [Ord] is an [Eq], which the
-            [Eq] membership already supplies). Restricted to a CONCRETE [Integer] element for the same reason." )
+            ( Value /text= CStr "# Maybe Ord membership
+            Makes a [Maybe] of any [Ord] element a proper member of [Ord], so [compareTo] dispatches per
+            constructor into [maybeCompare]. Mirrors the [Eq] membership above (and every [Ord] is an
+            [Eq], which the [Eq] membership already supplies)." )
         ]
     }

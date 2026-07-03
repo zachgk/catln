@@ -31,8 +31,8 @@ module(Data)
 
 # # Maybe equality tests
 module(Data/Maybe)
-  # A [Maybe] of [Integer] is an [Eq] member (see the end of this file), so [operator==] checks
-  # both arms structurally.
+  # A [Maybe] of any [Eq] element is an [Eq] member (see the end of this file), so [operator==]
+  # checks both arms structurally.
   testEqSomeSomeEq =
     #test
     #assert(test= /Data/Some(value= 1) == /Data/Some(value= 1))
@@ -43,8 +43,8 @@ module(Data/Maybe)
     #assert(test= ~(/Data/Some(value= 1) == /Data/Some(value= 2)))
     0
 
-  # A [Maybe] of [Integer] is an [Ord] member (see the end of this file), so [compareTo] orders
-  # both arms structurally, with [Nothing] before any [Some].
+  # A [Maybe] of any [Ord] element is an [Ord] member (see the end of this file), so [compareTo]
+  # orders both arms structurally, with [Nothing] before any [Some].
   testOrdMaybe =
     #test
     #assert(test= /Data/Some(value= 1).compareTo(other= /Data/Some(value= 2)).isLess)
@@ -52,23 +52,22 @@ module(Data/Maybe)
     #assert(test= /Data/Some(value= 1).compareTo(other= /Data/Nothing).isGreater)
     0
 
-# # Maybe Eq membership (Integer elements only — TODO: generalize to any Eq element)
-  Makes a [Maybe] of [Integer] a proper member of [Eq], so the generic [operator==] dispatches
-  through the [equal] method into [maybeEqual]. Mirrors the [ConsList] membership in [Data/list]:
-  it is currently restricted to a CONCRETE [Integer] element, and the [equal] receiver's element is
-  bound to [Integer] so the constructor's type parameter is concrete rather than [TopType].
+# # Maybe Eq membership
+  Makes a [Maybe] of any [Eq] element a proper member of [Eq], so the generic [operator==]
+  dispatches through the [equal] method into [maybeEqual]. Mirrors the [ConsList] membership
+  in [Data/list].
 module(Data)
-  every(Maybe[$T -> /Data/Primitive/Integer], isa= [/Data/Algebra/Eq])
+  every(Maybe[$T -> /Data/Algebra/Eq], isa= [/Data/Algebra/Eq])
 module(Data/Algebra)
-  :/Data/Nothing.equal(other -> /Data/Maybe[$E -> /Data/Primitive/Integer])= /Data/maybeEqual(a= /Data/Nothing, b= other)
-  :/Data/Some[$T -> /Data/Primitive/Integer](value).equal(other -> /Data/Maybe[$E -> /Data/Primitive/Integer])= /Data/maybeEqual(a= /Data/Some(value= value), b= other)
+  :/Data/Nothing.equal(other -> /Data/Maybe[$E -> /Data/Algebra/Eq])= /Data/maybeEqual(a= /Data/Nothing, b= other)
+  :/Data/Some[$T -> /Data/Algebra/Eq](value).equal(other -> /Data/Maybe[$E -> /Data/Algebra/Eq])= /Data/maybeEqual(a= /Data/Some(value= value), b= other)
 
-# # Maybe Ord membership (Integer elements only — TODO: generalize to any Ord element)
-  Makes a [Maybe] of [Integer] a proper member of [Ord], so [compareTo] dispatches per constructor
-  into [maybeCompare]. Mirrors the [Eq] membership above (and every [Ord] is an [Eq], which the
-  [Eq] membership already supplies). Restricted to a CONCRETE [Integer] element for the same reason.
+# # Maybe Ord membership
+  Makes a [Maybe] of any [Ord] element a proper member of [Ord], so [compareTo] dispatches per
+  constructor into [maybeCompare]. Mirrors the [Eq] membership above (and every [Ord] is an
+  [Eq], which the [Eq] membership already supplies).
 module(Data)
-  every(Maybe[$T -> /Data/Primitive/Integer], isa= [/Data/Algebra/Ord])
+  every(Maybe[$T -> /Data/Algebra/Ord], isa= [/Data/Algebra/Ord])
 module(Data/Algebra)
-  :/Data/Nothing.compareTo(other -> /Data/Maybe[$E -> /Data/Primitive/Integer])= /Data/maybeCompare(a= /Data/Nothing, b= other)
-  :/Data/Some[$T -> /Data/Primitive/Integer](value).compareTo(other -> /Data/Maybe[$E -> /Data/Primitive/Integer])= /Data/maybeCompare(a= /Data/Some(value= value), b= other)
+  :/Data/Nothing.compareTo(other -> /Data/Maybe[$E -> /Data/Algebra/Ord])= /Data/maybeCompare(a= /Data/Nothing, b= other)
+  :/Data/Some[$T -> /Data/Algebra/Ord](value).compareTo(other -> /Data/Maybe[$E -> /Data/Algebra/Ord])= /Data/maybeCompare(a= /Data/Some(value= value), b= other)

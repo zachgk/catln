@@ -19,6 +19,7 @@ import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Data.List           (nub, partition)
 import           Data.Maybe
+import           Debug.Trace         (trace)
 
 import           Text.Printf
 
@@ -84,12 +85,54 @@ arrowFollowup env objSrc visitedArrows srcType destType ((itemPartial, itemOa, r
           (TCObjArr oa) -> [(srcType, oa)]
           _             -> objSrc
 
+-- | TEMP (development only): when enabled, 'completeTreeSet' computes BOTH the engine-based
+-- and the materialized result, returns the materialized one (baseline behavior), and traces
+-- any disagreement - the empirical parity harness (cf. 'satCrossCheckEnabled').
+ctsCrossCheckEnabled :: Bool
+ctsCrossCheckEnabled = False
+
 -- This function takes a desired src partialType and arrows accepting that partial type in sorted order of preference
 -- It returns the combination of arrows necessary to accept the full src partialType
--- TODO: This would be drastically improved with type difference
 completeTreeSet :: TBEnv -> PartialType -> [ResBuildEnvItem] -> CRes [ResBuildEnvItem]
-completeTreeSet TBEnv{tbTypeEnv} fullPartial initialOptions = aux [] BottomType False initialOptions
+completeTreeSet TBEnv{tbTypeEnv} fullPartial initialOptions
+  | not inFragment = oldRes
+  | ctsCrossCheckEnabled = crossChecked
+  | otherwise = engineRes
   where
+    -- The engine queries decide coverage/accumulation symbolically against the class graph
+    -- (no 'PredExpr'/constants); out-of-fragment dispatch keeps the materialized accumulation.
+    inFragment = dispatchInFragment fullPartial && all (\(t, _, _) -> dispatchInFragment t) initialOptions
+
+    crossChecked = case (engineRes, oldRes) of
+      (CRes _ engineItems, CRes _ oldItems)
+        | map fstOf3 engineItems == map fstOf3 oldItems -> oldRes
+      (CErr _, CErr _) -> oldRes
+      _ -> trace (printf "[CTSX] full=%s\n  engine=%s\n  old=%s" (show fullPartial) (showVerdict engineRes) (showVerdict oldRes)) oldRes
+    fstOf3 (t, _, _) = t
+    showVerdict (CErr _)       = "CErr"
+    showVerdict (CRes _ items) = show (map fstOf3 items)
+
+    -- Engine loop: the accumulation is the plain list of contributing option partials;
+    -- coverage and does-this-add are 'satGoal' queries over the original small types.
+    engineRes = engineAux [] [] False initialOptions
+    engineAux :: [ResBuildEnvItem] -> [PartialType] -> Bool -> [ResBuildEnvItem] -> CRes [ResBuildEnvItem]
+    engineAux accArrows accOpts _ _ | dispatchCoveredSymbolic tbTypeEnv fullPartial accOpts = return (reverse accArrows)
+    engineAux accArrows _ True [] = return (reverse accArrows) -- see the accHasConds workaround below
+    engineAux _ accOpts False [] = CErr [MkCNote $ GenMapCErr Nothing (printf "Failed to handle a condition. Could not find enough arrows for the src. Only found %s. Tried guards:" (show accOpts)) (zip (map show initialOptions) (map (return . show) initialOptions))]
+    engineAux accArrows accOpts accHasConds (opt@(optType, optOa, _):opts) =
+      if dispatchAddsSymbolic tbTypeEnv fullPartial optType accOpts
+        then case optOa of
+               -- Non-linear pattern: guarded by the implicit equality of its shared positions,
+               -- so it must not count toward coverage (see the materialized loop below).
+               (Just oa) | not (null (exprNonLinearArgGroups (oaObjExpr oa))) -> engineAux (opt:accArrows) accOpts True opts
+               -- Where-condition guard: counts toward coverage (the accHasConds workaround).
+               (Just oa) | not (null (exprWhereConds (oaObjExpr oa))) -> engineAux (opt:accArrows) (optType:accOpts) True opts
+               _ -> engineAux (opt:accArrows) (optType:accOpts) accHasConds opts
+        else engineAux accArrows accOpts accHasConds opts
+
+    -- Materialized accumulation (out-of-fragment fallback):
+    -- TODO: This would be drastically improved with type difference
+    oldRes = aux [] BottomType False initialOptions
     fullType = singletonType fullPartial
     aux :: [ResBuildEnvItem] -> Type -> Bool -> [ResBuildEnvItem] -> CRes [ResBuildEnvItem]
     aux accArrows accType _ _ | isSubtypeOf tbTypeEnv fullType accType = return (reverse accArrows) -- Completed the tree set

@@ -54,11 +54,13 @@ Prgm
                                         ( TopType | PredClass /Data/ConsList[ /E=~/Data/Algebra/Eq ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] )
                                     ) + /Data/Primitive/True + /Data/maybeEqual
                                     ( /a=/Data/Nothing
-                                    , /b=∀/Data/Maybe[ /E=~/Data/Primitive/Integer ]
-                                    ) + /Data/maybeEqual[ /T=/Data/Primitive/Integer ]
-                                    ( /a=/Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                    , /b=∀/Data/Maybe[ /E=~/Data/Algebra/Eq ]
+                                    ) + /Data/maybeEqual[ /T=∀/Data/Algebra/Eq ]
+                                    ( /a=/Data/Some
+                                        [ /T=( TopType | PredClass /Data/Algebra/Eq && PredRel /Data/Algebra/Eq ) ]
+                                        ( /value=( TopType | PredClass /Data/Algebra/Eq && PredRel /Data/Algebra/Eq ) )
                                     , /b=
-                                        ( TopType | PredClass /Data/Maybe[ /E=~/Data/Primitive/Integer ] && PredClass /Data/Maybe[ /T=~/Data/Algebra/Eq ] )
+                                        ( TopType | PredClass /Data/Maybe[ /E=~/Data/Algebra/Eq ] && PredClass /Data/Maybe[ /T=~/Data/Algebra/Eq ] )
                                     ) + /Data/Algebra/rel
                                     ( /this=
                                         ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] )
@@ -81,17 +83,15 @@ Prgm
                                     ( /r=/Data/Primitive/Integer
                                     , /l=/Data/Primitive/Integer
                                     ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                                    ( /this=∀/Data/Algebra/Eq
-                                    , /other=∀/Data/Algebra/Eq
+                                    ( /this=∀/Data/Algeb…( truncated ) = /operator==
+                                        ( Value /l -> /Data/Primitive/Integer = /operator-
+                                            ( Value /l -> /Data/Primitive/Integer = CInt 5 )
+                                            ( Value /r -> /Data/Primitive/Integer = CInt 3 )
+                                        )
+                                        ( Value /r -> /Data/Primitive/Integer = CInt 2 )
                                     )
                                 )
-                            , []
-                            ) = /operator==
-                            ( Value /l -> /Data/Primitive/Integer = /operator-
-                                ( Value /l -> /Data/Primitive/Integer = CInt 5 )
-                                ( Value /r -> /Data/Primitive/Integer = CInt 3 )
                             )
-                            ( Value /r -> /Data/Primitive/Integer = CInt 2 )
                         ]
                     }
                 )
@@ -138,11 +138,13 @@ Prgm
                                         ( TopType | PredClass /Data/ConsList[ /E=~/Data/Algebra/Eq ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] )
                                     ) + /Data/Primitive/True + /Data/maybeEqual
                                     ( /a=/Data/Nothing
-                                    , /b=∀/Data/Maybe[ /E=~/Data/Primitive/Integer ]
-                                    ) + /Data/maybeEqual[ /T=/Data/Primitive/Integer ]
-                                    ( /a=/Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                    , /b=∀/Data/Maybe[ /E=~/Data/Algebra/Eq ]
+                                    ) + /Data/maybeEqual[ /T=∀/Data/Algebra/Eq ]
+                                    ( /a=/Data/Some
+                                        [ /T=( TopType | PredClass /Data/Algebra/Eq && PredRel /Data/Algebra/Eq ) ]
+                                        ( /value=( TopType | PredClass /Data/Algebra/Eq && PredRel /Data/Algebra/Eq ) )
                                     , /b=
-                                        ( TopType | PredClass /Data/Maybe[ /E=~/Data/Primitive/Integer ] && PredClass /Data/Maybe[ /T=~/Data/Algebra/Eq ] )
+                                        ( TopType | PredClass /Data/Maybe[ /E=~/Data/Algebra/Eq ] && PredClass /Data/Maybe[ /T=~/Data/Algebra/Eq ] )
                                     ) + /Data/Algebra/rel
                                     ( /this=
                                         ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] )
@@ -165,17 +167,15 @@ Prgm
                                     ( /r=/Data/Primitive/Integer
                                     , /l=/Data/Primitive/Integer
                                     ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                                    ( /this=∀/Data/Algebra/Eq
-                                    , /other=∀/Data/Algebra/Eq
+                                    ( /this=∀/Data/Algeb…( truncated ) = /operator==
+                                        ( Value /l -> /Data/Primitive/Integer = /operator+
+                                            ( Value /l -> /Data/Primitive/Integer = CInt 1 )
+                                            ( Value /r -> /Data/Primitive/Integer = CInt 1 )
+                                        )
+                                        ( Value /r -> /Data/Primitive/Integer = CInt 2 )
                                     )
                                 )
-                            , []
-                            ) = /operator==
-                            ( Value /l -> /Data/Primitive/Integer = /operator+
-                                ( Value /l -> /Data/Primitive/Integer = CInt 1 )
-                                ( Value /r -> /Data/Primitive/Integer = CInt 1 )
                             )
-                            ( Value /r -> /Data/Primitive/Integer = CInt 2 )
                         ]
                     }
                 )
