@@ -68,19 +68,19 @@ data SchemeActReq = SchemeAct | SchemeReq
 type Pnt = Int
 
 type FEnvTypeEnv = TypeEnv (ObjArrTypeGraph Expr ())
-data FEnv = FEnv { fePnts               :: IM.IntMap Scheme
-                 , feConsDats           :: [[VConstraint]]
-                 , feCons               :: [VConstraint]
-                 , feUnionAllObjs       :: VarMeta -- union of all TypeObj for argument inference
-                 , feVTypeGraph         :: VTypeGraph
-                 , feTTypeGraph         :: TTypeGraph
-                 , feUpdatedDuringEpoch :: Bool -- ^ If a pnt is updated during the epoch
-                 , feTypeEnv            :: FEnvTypeEnv
-                 , feReachesTypeEnv     :: FEnvTypeEnv -- ^ Per-epoch cache of 'buildTypeEnv' (the constraint-independent reaches type graph), recomputed once at the top of each 'runConstraints' epoch and reused across all 'mkReachesEnv' calls. Initialized to the base 'feTypeEnv' but never read until the first epoch populates it.
+data FEnv = FEnv { fePnts                :: IM.IntMap Scheme
+                 , feConsDats            :: [[VConstraint]]
+                 , feCons                :: [VConstraint]
+                 , feUnionAllObjs        :: VarMeta -- union of all TypeObj for argument inference
+                 , feVTypeGraph          :: VTypeGraph
+                 , feTTypeGraph          :: TTypeGraph
+                 , feUpdatedDuringEpoch  :: Bool -- ^ If a pnt is updated during the epoch
+                 , feTypeEnv             :: FEnvTypeEnv
+                 , feReachesTypeEnv      :: FEnvTypeEnv -- ^ Per-epoch cache of 'buildTypeEnv' (the constraint-independent reaches type graph), recomputed once at the top of each 'runConstraints' epoch and reused across all 'mkReachesEnv' calls. Initialized to the base 'feTypeEnv' but never read until the first epoch populates it.
                  , feCompletedAllObjsKey :: Type -- ^ The 'feUnionAllObjs' descriptor value from which 'feCompletedAllObjs' was built (recomputed each epoch). 'computeConstraint' uses the cache only when a 'BoundedByObjs' constraint's (showCon-substituted) bound equals this key, so the cache is an EXACT memo of the union+completion — no staleness. Initialized to 'BottomType'.
-                 , feCompletedAllObjs   :: Type -- ^ Per-epoch cache of the completed @feUnionAllObjs@ bound (@unionTypes key (completeDataPartials key)@ for @key = feCompletedAllObjsKey@). Every 'BoundedByObjs' constraint is bounded by the same 'feUnionAllObjs' descriptor (substituted uniformly by 'showCon'), so this otherwise-identical union+completion is computed once per epoch and reused by every constraint whose bound matches the key. Initialized to 'PTopType' but never read until the first epoch populates it.
-                 , feLocalDefNames      :: S.HashSet Name -- ^ Absolute names defined by the programs currently being encoded (not yet in 'feTypeEnv'\'s object map). Used to tell a destructuring binding variable from a reference to a same-batch definition.
-                 , feTrace              :: TraceConstrain
+                 , feCompletedAllObjs    :: Type -- ^ Per-epoch cache of the completed @feUnionAllObjs@ bound (@unionTypes key (completeDataPartials key)@ for @key = feCompletedAllObjsKey@). Every 'BoundedByObjs' constraint is bounded by the same 'feUnionAllObjs' descriptor (substituted uniformly by 'showCon'), so this otherwise-identical union+completion is computed once per epoch and reused by every constraint whose bound matches the key. Initialized to 'PTopType' but never read until the first epoch populates it.
+                 , feLocalDefNames       :: S.HashSet Name -- ^ Absolute names defined by the programs currently being encoded (not yet in 'feTypeEnv'\'s object map). Used to tell a destructuring binding variable from a reference to a same-batch definition.
+                 , feTrace               :: TraceConstrain
                  } deriving (Show)
 
 type UnionObj = (Pnt, Pnt) -- a union of all TypeObj for argument inference, union of all Object types for function limiting

@@ -24,9 +24,9 @@ import           Data.List               (partition)
 import           Data.Maybe
 import           Eval                    (evalAnnots, evalBuild, evalBuildAll,
                                           evalRun)
-import           Eval.Testing            (MockIO, evalRunMock, evalTest)
 import           Eval.Common             (EvalMetaDat, EvalResult, TExpr,
                                           Val (StrVal, TupleVal))
+import           Eval.Testing            (MockIO, evalRunMock, evalTest)
 import           Semantics               (CTSSConfig)
 import           Semantics.Prgm
 import           Syntax.Ct.Desugarf      (desFinalPasses, desPrgm, validPrgm)

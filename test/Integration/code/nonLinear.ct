@@ -5,7 +5,6 @@ import "core"
 # positions applies only when those arguments are equal (compared via the argument type's Eq).
 # The diagonal clause below is a fast-path that overlaps — and must agree with — the general
 # definition, so the auto-derived overlap-agreement test passes.
-
 diag(a -> Integer, b -> Integer) -> Boolean
 diag(a@x, b@x)= True
 diag(a, b)= a == b
