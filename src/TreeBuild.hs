@@ -19,7 +19,6 @@ import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
 import           Data.List           (nub, partition)
 import           Data.Maybe
-import           Debug.Trace         (trace)
 
 import           Text.Printf
 
@@ -85,32 +84,16 @@ arrowFollowup env objSrc visitedArrows srcType destType ((itemPartial, itemOa, r
           (TCObjArr oa) -> [(srcType, oa)]
           _             -> objSrc
 
--- | TEMP (development only): when enabled, 'completeTreeSet' computes BOTH the engine-based
--- and the materialized result, returns the materialized one (baseline behavior), and traces
--- any disagreement - the empirical parity harness (cf. 'satCrossCheckEnabled').
-ctsCrossCheckEnabled :: Bool
-ctsCrossCheckEnabled = False
-
 -- This function takes a desired src partialType and arrows accepting that partial type in sorted order of preference
 -- It returns the combination of arrows necessary to accept the full src partialType
 completeTreeSet :: TBEnv -> PartialType -> [ResBuildEnvItem] -> CRes [ResBuildEnvItem]
 completeTreeSet TBEnv{tbTypeEnv} fullPartial initialOptions
-  | not inFragment = oldRes
-  | ctsCrossCheckEnabled = crossChecked
-  | otherwise = engineRes
+  | inFragment = engineRes
+  | otherwise = oldRes
   where
     -- The engine queries decide coverage/accumulation symbolically against the class graph
     -- (no 'PredExpr'/constants); out-of-fragment dispatch keeps the materialized accumulation.
     inFragment = dispatchInFragment fullPartial && all (\(t, _, _) -> dispatchInFragment t) initialOptions
-
-    crossChecked = case (engineRes, oldRes) of
-      (CRes _ engineItems, CRes _ oldItems)
-        | map fstOf3 engineItems == map fstOf3 oldItems -> oldRes
-      (CErr _, CErr _) -> oldRes
-      _ -> trace (printf "[CTSX] full=%s\n  engine=%s\n  old=%s" (show fullPartial) (showVerdict engineRes) (showVerdict oldRes)) oldRes
-    fstOf3 (t, _, _) = t
-    showVerdict (CErr _)       = "CErr"
-    showVerdict (CRes _ items) = show (map fstOf3 items)
 
     -- Engine loop: the accumulation is the plain list of contributing option partials;
     -- coverage and does-this-add are 'satGoal' queries over the original small types.
