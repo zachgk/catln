@@ -377,11 +377,36 @@ fAddVTypeGraph oa env@FEnv{feVTypeGraph} = env {feVTypeGraph = singletonObjectMa
 fAddTTypeGraph :: TObjArr -> FEnv -> FEnv
 fAddTTypeGraph oa env@FEnv{feTTypeGraph} = env {feTTypeGraph = singletonObjectMap oa <> feTTypeGraph}
 
+-- | Structurally detects whether an EXTERNAL 'TypeVar' ('TVExt') present in @old@ has been widened
+-- back to Top in @new@. Such a variable is a reference to a variable of an enclosing scope (e.g. a
+-- higher-order argument's parameter, @/fn(/v=$_A)@, tied to a container element); replacing it with
+-- Top drops that cross-scope link. Resolving a variable to a concrete (narrower) type is not a loss,
+-- and an INTERNAL 'TypeVar' ('TVInt') is deliberately ignored: it resolves through its own partial's
+-- @ptVars@, so a @/value=$V@ that shows as Top merely because the partial's @V@ parameter is Top is
+-- equivalent, not a loss. This complements 'verifySchemeActLowers', which cannot see either case: in
+-- a subtype test a free 'TypeVar' behaves like Top, so the widening looks like a legal narrowing.
+-- Only partials matched unambiguously by name (a single partial of that name on each side) are
+-- compared, and only argument/variable keys present on both sides, so it never false-positives on a
+-- union whose set of options legitimately changed.
+typeVarLost :: Type -> Type -> Bool
+typeVarLost (TypeVar _ TVExt) PTopType = True
+typeVarLost (TypeVar _ _)     _        = False
+typeVarLost (UnionType _ oldLeafs _) (UnionType _ newLeafs _) =
+  or [ partialVarLost op np
+     | (name, [op]) <- H.toList (splitUnionTypeByName oldLeafs)
+     , Just [np] <- [H.lookup name (splitUnionTypeByName newLeafs)] ]
+  where
+    partialVarLost op np =
+      or [ typeVarLost ov nv | (k, ov) <- H.toList (ptArgs op), Just nv <- [H.lookup k (ptArgs np)] ]
+      || or [ typeVarLost ov nv | (k, ov) <- H.toList (ptVars op), Just nv <- [H.lookup k (ptVars np)] ]
+typeVarLost _ _ = False
+
 -- This ensures schemes are correct
 -- It differs from Constrain.checkScheme because it checks for bugs in the internal compiler, not bugs in the user code
 verifyScheme :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> VarMeta -> Scheme -> Scheme -> Maybe String
 verifyScheme typeEnv vaenv Meta{getMetaDat=VarMetaDat _ _} (TypeCheckResult _ (SType oldAct oldReq _ _)) (TypeCheckResult _ (SType act req _ _)) = listToMaybe $ catMaybes [
   if verifySchemeActLowers then Nothing else Just (printf "verifySchemeActLowers\n\t\tGrows by: %s" (show $ differenceTypeWithEnv typeEnv vaenv act oldAct)),
+  if verifyNoTypeVarLost then Nothing else Just (printf "verifyNoTypeVarLost\n\t\tLost a TypeVar going from %s to %s" (show oldAct) (show act)),
   if verifySchemeReqLowers then Nothing else Just "verifySchemeReqLowers",
   if verifyCompacted then Nothing else Just (printf "verifyCompacted\n\t\tCan be compacted to %s" (show $ compactType typeEnv vaenv act))
   ]
@@ -389,6 +414,7 @@ verifyScheme typeEnv vaenv Meta{getMetaDat=VarMetaDat _ _} (TypeCheckResult _ (S
     verifySchemeActLowers  = case act of
       TypeVar{} -> True
       _         -> isSubtypeOfWithEnv typeEnv vaenv act oldAct
+    verifyNoTypeVarLost = not (typeVarLost oldAct act)
     verifySchemeReqLowers  = isSubtypeOfWithEnv typeEnv vaenv req oldReq
     verifyCompacted = act == compactType typeEnv vaenv act
 verifyScheme _ _ _ _ _ = Nothing
@@ -424,6 +450,14 @@ setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@M
     schemeChanged :: Bool
     schemeChanged = case (scheme, scheme') of
       (TypeCheckResult _ SType{stypeAct=UnionType (Just _) _ _}, TypeCheckResult _ SType{stypeAct=TypeVar{}}) -> True
+      -- GAINING a nested external 'TypeVar' (@old@ has Top where @new@ has @$_A@) is a real change
+      -- even though 'eqScheme' considers the two schemes equal (in a subtype/equality test a free
+      -- 'TypeVar' behaves like Top, so @/fn(/v=Top)@ and @/fn(/v=$_A)@ look equal). Without this a
+      -- constraint that first SETS the variable is treated as a no-op and dropped, so the explicit
+      -- link never lands. Only a gain is flagged, not a loss: a loss stays a no-op (skipped by the
+      -- 'eqScheme' path below), so once set the variable is not widened back to Top — which both
+      -- keeps the information and avoids a set/lose oscillation that would never converge.
+      (TypeCheckResult _ (SType a1 _ _ _), TypeCheckResult _ (SType a2 _ _ _)) | typeVarLost a2 a1 -> True
       _ ->  fromMaybe False $ tcreToMaybe $ do
         showVaenv <- vaenv
         return $ not (eqScheme env showVaenv scheme scheme')

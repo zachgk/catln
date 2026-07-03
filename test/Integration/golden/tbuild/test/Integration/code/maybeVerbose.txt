@@ -16,7 +16,7 @@ Prgm
                             ) = /Catln/exit
                             ( EAppArg Value /val -> /Data/Primitive/Integer =
                                 ( /defInt
-                                    ( EAppArg Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just
+                                    ( EAppArg Value /x -> /Just[ /T=/Data/Primitive/Integer ]( /val=$_/T ) = /Just
                                         ( EAppArg Value /val -> /Data/Primitive/Integer = 0 )
                                     ) ↦ /Data/Primitive/Integer
                                 )

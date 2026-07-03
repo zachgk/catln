@@ -3013,8 +3013,33 @@ typeSetAux :: TypeVarAux -> Type -> PartialType -> PartialType
 typeSetAux (TVVar k) v p@PartialType{ptVars} = p{ptVars=H.insert k v ptVars}
 typeSetAux (TVArg k) v p@PartialType{ptArgs} = p{ptArgs=H.insert k v ptArgs}
 
+-- | Undo a widening of an EXTERNAL type variable ('TVExt') back to Top. Wherever @old@ carried such
+-- a variable at a nested argument or type-parameter position and @new@ replaced it with Top, keep
+-- @old@'s variable. A resolution to a concrete (narrower) type in @new@ is left untouched — only a
+-- loss to Top is reverted. This lets 'updateTypeProp' preserve the cross-scope link an explicit
+-- external variable carries (e.g. a higher-order argument's @fn(/v=$_A)@ tied to a container element)
+-- rather than dropping it to Top during intersection. Internal variables ('TVInt') are ignored:
+-- they resolve through their own partial's @ptVars@, so showing as Top is equivalent, not a loss.
+restoreLostTVExtVars :: Type -> Type -> Type
+restoreLostTVExtVars old new = case (old, new) of
+  (TypeVar _ TVExt, PTopType) -> old
+  (UnionType _ oldLeafs _, UnionType ntop newLeafs ncs) ->
+    let oldByName = splitUnionTypeByName oldLeafs
+        restoreKey oldMap k nv = maybe nv (`restoreLostTVExtVars` nv) (H.lookup k oldMap)
+        fixPartial np = case H.lookup (ptName np) oldByName of
+          Just [op] -> np { ptArgs = H.mapWithKey (restoreKey (ptArgs op)) (ptArgs np)
+                          , ptVars = H.mapWithKey (restoreKey (ptVars op)) (ptVars np) }
+          _         -> np
+    in UnionType ntop (joinUnionType (map fixPartial (splitUnionType newLeafs))) ncs
+  _ -> new
+
 updateTypeProp :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> TypeVarAux -> Type -> (TypeVarArgEnv, Type, Type)
-updateTypeProp typeEnv vaenv superType propName subType = case superType of
+updateTypeProp typeEnv vaenv superType propName subType =
+  let (vaenv', superType', subType') = updateTypePropInner typeEnv vaenv superType propName subType
+  in (vaenv', restoreLostTVExtVars superType superType', subType')
+
+updateTypePropInner :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> TypeVarAux -> Type -> (TypeVarArgEnv, Type, Type)
+updateTypePropInner typeEnv vaenv superType propName subType = case superType of
     PTopType -> (vaenv, PTopType, subType)
     TypeVar v _ -> do
       let (vaenv', superType', subType') = updateTypeProp typeEnv vaenv (H.lookupDefault PTopType v vaenv) propName subType
