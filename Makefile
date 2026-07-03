@@ -29,8 +29,8 @@ format: $(HS_SOURCES)
 
 .PHONY: ctformat
 ctformat: $(HS_SOURCES) $(CT_SOURCES) $(CTX_SOURCES) install
-	find . -name "*.ct" -exec catln fmt {} \;
-	find . -name "*.ctx" -exec catln fmt {} \;
+	find . -path ./test/Integration/golden/convert -prune -o -name "*.ct" -exec catln fmt {} \;
+	find . -path ./test/Integration/golden/convert -prune -o -name "*.ctx" -exec catln fmt {} \;
 
 .PHONY: webdocs-test
 webdocs-test:
