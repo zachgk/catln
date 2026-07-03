@@ -27,8 +27,7 @@ Prgm
                             ,
                                 ( /Data/maybeCompare
                                     ( /a=/Data/Nothing
-                                    , /b=
-                                        ( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/Maybe[ /E=~/Data/Primitive/Integer ] )
+                                    , /b=∀/Data/Maybe[ /E=~/Data/Primitive/Integer ]
                                     ) + /Data/maybeCompare[ /T=/Data/Primitive/Integer ]
                                     ( /a=/Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
                                     , /b=
@@ -99,8 +98,7 @@ Prgm
                                     , /l=/Data/String
                                     ) + /Data/consEqual
                                     ( /a=/Data/Nil
-                                    , /b=
-                                        ( TopType | PredClass /Data/ConsList[ /E=~/Data/Algebra/Eq ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] )
+                                    , /b=∀/Data/ConsList[ /E=~/Data/Algebra/Eq ]
                                     ) + /Data/consEqual[ /T=∀/Data/Algebra/Eq ]
                                     ( /a=/Data/Cons
                                         [ /T=( TopType | PredClass /Data/Algebra/Eq && PredRel /Data/Algebra/Eq ) ]
@@ -111,8 +109,7 @@ Prgm
                                         ( TopType | PredClass /Data/ConsList[ /E=~/Data/Algebra/Eq ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] )
                                     ) + /Data/Primitive/True + /Data/maybeEqual
                                     ( /a=/Data/Nothing
-                                    , /b=
-                                        ( TopType | PredClass /Data/Maybe[ /E=~/Data/Primitive/Integer ] && PredClass /Data/Algebra/Eq )
+                                    , /b=∀/Data/Maybe[ /E=~/Data/Primitive/Integer ]
                                     ) + /Data/maybeEqual[ /T=/Data/Primitive/Integer ]
                                     ( /a=/Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
                                     , /b=
@@ -140,12 +137,13 @@ Prgm
                                     , /l=/Data/Primitive/Integer
                                     ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
                                     ( /this=∀/Data/Algebra/Eq
-                                    , /othe…( truncated ) = /operator==
-                                        ( EAppArg Value /l -> TVArg /av = ( Value /av ↦ TVArg /av ) )
-                                        ( EAppArg Value /r -> TVArg /bv = ( Value /bv ↦ TVArg /bv ) )
+                                    , /other=∀/Data/Algebra/Eq
                                     )
                                 )
-                            )
+                            , []
+                            ) = /operator==
+                            ( EAppArg Value /l -> TVArg /av = ( Value /av ↦ TVArg /av ) )
+                            ( EAppArg Value /r -> TVArg /bv = ( Value /bv ↦ TVArg /bv ) )
                         ]
                     }
                 )
@@ -186,9 +184,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/equal
-                            ( EAppArg Value /other ->
-                                ( TopType | PredClass /Data/Maybe[ /E=~/Data/Primitive/Integer ] && PredClass /Data/Algebra/Eq )
-                            )( EAppArg Value /this -> /Data/Nothing ) -> UnionType
+                            ( EAppArg Value /other -> ∀/Data/Maybe[ /E=~/Data/Primitive/Integer ] )( EAppArg Value /this -> /Data/Nothing ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
@@ -196,8 +192,7 @@ Prgm
                             ,
                                 ( /Data/Primitive/True + /Data/maybeEqual
                                     ( /a=/Data/Nothing
-                                    , /b=
-                                        ( TopType | PredClass /Data/Maybe[ /E=~/Data/Primitive/Integer ] && PredClass /Data/Algebra/Eq )
+                                    , /b=∀/Data/Maybe[ /E=~/Data/Primitive/Integer ]
                                     ) + /Data/Primitive/False
                                 )
                             , []
@@ -223,8 +218,7 @@ Prgm
                                     , /l=/Data/String
                                     ) + /Data/consEqual
                                     ( /a=/Data/Nil
-                                    , /b=
-                                        ( TopType | PredClass /Data/ConsList[ /E=~/Data/Algebra/Eq ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] )
+                                    , /b=∀/Data/ConsList[ /E=~/Data/Algebra/Eq ]
                                     ) + /Data/consEqual[ /T=∀/Data/Algebra/Eq ]
                                     ( /a=/Data/Cons
                                         [ /T=( TopType | PredClass /Data/Algebra/Eq && PredRel /Data/Algebra/Eq ) ]
@@ -234,12 +228,9 @@ Prgm
                                     , /b=
                                         ( TopType | PredClass /Data/ConsList[ /E=~/Data/Algebra/Eq ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] )
                                     ) + /Data/Primitive/True + /Data/maybeEqual
-                                    ( /a=/Data/Some( /value=TopType )
+                                    ( /a=
+                                        ( /Data/Some( /value=TopType ) + /Data/Nothing )
                                     , /b=∀/Data/Maybe[ /E=~/Data/Primitive/Integer ]
-                                    ) + /Data/maybeEqual
-                                    ( /a=/Data/Nothing
-                                    , /b=
-                                        ( TopType | PredClass /Data/Maybe[ /E=~/Data/Primitive/Integer ] && PredClass /Data/Algebra/Eq )
                                     ) + /Data/Algebra/rel
                                     ( /this=
                                         ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] )
@@ -293,9 +284,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/compareTo
-                            ( EAppArg Value /other ->
-                                ( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/Maybe[ /E=~/Data/Primitive/Integer ] )
-                            )( EAppArg Value /this -> /Data/Nothing ) -> UnionType
+                            ( EAppArg Value /other -> ∀/Data/Maybe[ /E=~/Data/Primitive/Integer ] )( EAppArg Value /this -> /Data/Nothing ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Algebra/Comparison
                                 , fromList []
@@ -303,8 +292,7 @@ Prgm
                             ,
                                 ( /Data/maybeCompare
                                     ( /a=/Data/Nothing
-                                    , /b=
-                                        ( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/Maybe[ /E=~/Data/Primitive/Integer ] )
+                                    , /b=∀/Data/Maybe[ /E=~/Data/Primitive/Integer ]
                                     ) + /Data/Algebra/LessThan + /Data/Algebra/Equal
                                 )
                             , []
@@ -320,8 +308,7 @@ Prgm
                             ,
                                 ( /Data/maybeCompare
                                     ( /a=/Data/Nothing
-                                    , /b=
-                                        ( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/Maybe[ /E=~/Data/Primitive/Integer ] )
+                                    , /b=∀/Data/Maybe[ /E=~/Data/Primitive/Integer ]
                                     ) + /Data/maybeCompare[ /T=/Data/Primitive/Integer ]
                                     ( /a=/Data/Some[ /T=/Data/Primitive/Integer ]( /value=TopType )
                                     , /b=

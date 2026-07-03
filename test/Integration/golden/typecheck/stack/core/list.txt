@@ -93,9 +93,7 @@ Prgm
                                 ( /head=$/T
                                 , /tail=~ConsList[ /T=$_/T ]
                                 ) = /Data/Cons( Value /head@Value /bh -> ∀/Data/Algebra/Eq )
-                                ( Value /tail@Value /bt ->
-                                    ( TopType | PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] && PredRel ConsList[ /T=$_/T ] )
-                                )
+                                ( Value /tail@Value /bt -> ~ConsList[ /T=$_/T ] )
                             ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
@@ -204,9 +202,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/equal
-                            ( Value /other ->
-                                ( TopType | PredClass /Data/ConsList[ /E=~/Data/Algebra/Eq ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] )
-                            )( Value /this -> /Data/Nil ) -> UnionType
+                            ( Value /other -> ∀/Data/ConsList[ /E=~/Data/Algebra/Eq ] )( Value /this -> /Data/Nil ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
@@ -214,8 +210,7 @@ Prgm
                             ,
                                 ( /Data/consEqual
                                     ( /a=/Data/Nil
-                                    , /b=
-                                        ( TopType | PredClass /Data/ConsList[ /E=~/Data/Algebra/Eq ] && PredClass /Data/ConsList[ /T=~/Data/Algebra/Eq ] )
+                                    , /b=∀/Data/ConsList[ /E=~/Data/Algebra/Eq ]
                                     ) + /Data/Primitive/True + /Data/Primitive/False
                                 )
                             , []
