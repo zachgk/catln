@@ -323,16 +323,6 @@ data TypeEnv tg = TypeEnv {
   -- where this looseness is semantically intended; left 'False' for the set-algebra so the
   -- property tests stay sound. See 'looseArgModeRejects'.
   teArgModeProjection :: Bool,
-  -- | The set of relation/class names currently being expanded, used to break the otherwise
-  -- unbounded re-expansion of a self-referential recursive type (e.g. @ConsList@, whose
-  -- expansion contains a @tail@ field that is again @~ConsList@). When a name here is
-  -- re-encountered, the bare recursive reference is emitted instead of expanding again.
-  teExpanding         :: S.HashSet TypeName,
-  -- | The set of partial names currently being intersected through their arguments. When a name
-  -- here is re-encountered while a self-referential field still holds an over-unrolled value
-  -- (e.g. @Cons@'s @tail@, again a @Cons@), the per-argument recursion is stopped instead of
-  -- descending forever through that over-unrolled recursive type. See 'intersectPartialsBase'.
-  teIntersecting      :: S.HashSet TypeName,
   -- | Global views of 'teClassGraph' and 'teNames' for the symbolic satisfiability engine
   -- (see the section "Symbolic class-predicate satisfiability"), built strictly at
   -- construction via 'mkSatCache'. Any construction or update that changes 'teClassGraph'
@@ -346,7 +336,7 @@ defaultTypeEnvDebug = False
 
 
 emptyTypeEnv' :: TypeEnv EmptyTypeGraph
-emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty False defaultTypeEnvDebug False False S.empty S.empty (mkSatCache mempty S.empty)
+emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty False defaultTypeEnvDebug False False (mkSatCache mempty S.empty)
 
 -- | A class or type node within the 'ClassGraph'
 data CGNode
@@ -496,7 +486,7 @@ instance Monoid ClassGraph where
   mempty = ClassGraph $ graphFromEdges []
 
 instance (Semigroup tg) => Semigroup (TypeEnv tg) where
-  (TypeEnv cg1 tg1 n1 d1 dc1 pe1 ap1 ex1 ix1 _) <> (TypeEnv cg2 tg2 n2 d2 dc2 pe2 ap2 ex2 ix2 _) = TypeEnv cg' (tg1 <> tg2) n' (d1 || d2) (dc1 || dc2) (pe1 || pe2) (ap1 || ap2) (S.union ex1 ex2) (S.union ix1 ix2) (mkSatCache cg' n')
+  (TypeEnv cg1 tg1 n1 d1 dc1 pe1 ap1 _) <> (TypeEnv cg2 tg2 n2 d2 dc2 pe2 ap2 _) = TypeEnv cg' (tg1 <> tg2) n' (d1 || d2) (dc1 || dc2) (pe1 || pe2) (ap1 || ap2) (mkSatCache cg' n')
     where
       cg' = cg1 <> cg2
       n' = S.union n1 n2
@@ -1042,16 +1032,7 @@ expandPredicates typeEnv vaenv (PredsAnd ps) = intersectAllTypes typeEnv $ map (
 expandPredicates typeEnv vaenv (PredsNot p)  = complementTypeEnv typeEnv vaenv $ expandPredicates typeEnv vaenv p
 
 expandPredicate :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicate -> Type
--- A class already being expanded in this descent (e.g. the element @∀Eq@ of @ConsList[$T -> Eq]@
--- while expanding @∀Eq@): leave it as the bare class reference so the difference/subtype/compaction
--- algebra does not re-expand its members forever. Mirrors the 'PredRel' guard below; see 'teExpanding'.
-expandPredicate typeEnv _ (PredClass clss)
-  | tePrgmEnv typeEnv, S.member (makeAbsoluteName (ptName clss)) (teExpanding typeEnv) = TopType H.empty (PredsOne (PredClass clss))
 expandPredicate typeEnv vaenv (PredClass clss) = expandClassPartial typeEnv vaenv clss
--- A recursive rel already being expanded in this descent: leave it unexpanded (the bare
--- reference) so the difference/complement algebra does not unroll it forever. See 'teExpanding'.
-expandPredicate typeEnv _ (PredRel rel)
-  | S.member (makeAbsoluteName (ptName rel)) (teExpanding typeEnv) = TopType H.empty (PredsOne (PredRel rel))
 expandPredicate typeEnv vaenv (PredRel rel)    = expandRelPartial typeEnv vaenv rel
 expandPredicate typeEnv vaenv (PredExpr e)     = maybe (TopType H.empty (PredsOne $ PredExpr e)) (\ps -> UnionType Nothing (joinUnionType ps) []) (typeGraphExpandPredExpr typeEnv vaenv e)
 
@@ -1288,18 +1269,8 @@ expandTypesWithNamesFull typeEnv@TypeEnv{teNames} vaenv (TopType negPartials pre
       in case differencePartialLeafs typeEnv vaenv topFilteredLeafs innerLeafs of
            UnionType Nothing result [] -> (result, hasUniverseOutside)
            _                           -> (topFilteredLeafs, hasUniverseOutside)
-    -- A class already being expanded in this descent: yield the allowed names as bare top partials
-    -- (sound over-approximation) rather than re-expanding its members. Mirrors the 'PredRel' guard below.
-    expandPredsWithNamesFull (PredsOne (PredClass clss))
-      | tePrgmEnv typeEnv, S.member (makeAbsoluteName (ptName clss)) (teExpanding typeEnv) = (topFilteredLeafs, hasUniverseOutside)
     expandPredsWithNamesFull (PredsOne (PredClass clss)) =
       expandClassPartialWithNamesFull typeEnv vaenv clss allowedNames
-    -- A recursive rel already being expanded in this descent (e.g. the self-referential @tail@
-    -- of @ConsList@): do not expand again. Yield the allowed names as bare top partials, which
-    -- is the sound over-approximation (the recursive reference accepts any value of those names)
-    -- and terminates the otherwise-unbounded re-expansion. See 'teExpanding'.
-    expandPredsWithNamesFull (PredsOne (PredRel rel))
-      | S.member (makeAbsoluteName (ptName rel)) (teExpanding typeEnv) = (topFilteredLeafs, hasUniverseOutside)
     expandPredsWithNamesFull (PredsOne (PredRel rel)) =
       case expandRelPartial typeEnv vaenv rel of
         UnionType Nothing leafs [] ->
@@ -2066,13 +2037,13 @@ isSubtypeOfWithEnv typeEnv vaenv (UnionType (Just topData) pos cs) t2
 -- PosPartials ⊆ NegPartials: filter by name.
 -- filteredLeafs is always exact for names in allowedNames; hasOutside only means the type
 -- has additional elements outside those names, which cannot affect subtype checking here.
-isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing subPartials []) t2@(UnionType (Just (preds2, _)) _ _) =
+isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType Nothing subPartials []) t2@(UnionType (Just _) _ _) =
   -- Symbolic decision (emptiness of @t1 ∧ ¬t2@ against the class graph) avoids materializing
   -- the predicate expansion; fall back to expansion outside the fragment.
   satDecide (printf "posSubPreds %s <= %s" (show t1) (show t2))
     (typeCoveredSymbolic typeEnv vaenv False t1 t2)
     (let (filteredLeafs, _) = expandTypesWithNamesFull typeEnv vaenv t2 (H.keysSet subPartials)
-     in isSubtypeOfWithEnv (withExpanding typeEnv preds2) vaenv t1 (UnionType Nothing filteredLeafs []))
+     in isSubtypeOfWithEnv typeEnv vaenv t1 (UnionType Nothing filteredLeafs []))
 -- PosPartials-with-constants ⊆ t2: partials check + each constant must be in t2
 -- (Only for PosPartials: in NegPartials, cs are excluded constants, not members)
 isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing leafs cs@(_:_)) t2 =
@@ -2129,15 +2100,15 @@ isSubtypeOfWithEnv typeEnv vaenv t1@(UnionType (Just (preds, negLeafs)) _ t1Cons
     -- on the expanded member union re-expresses the predicate as a positive type WITHOUT
     -- 'differenceTypeWithEnv', and decomposes it per-member through the positive/mixed branches: a
     -- member whose recursive element matches t2's reflexively short-circuits rather than re-expanding.
-    -- Guarded on progress: when the expansion reproduces t1 (a recursive rel left bare by 'teExpanding',
-    -- or preds = PredsNone giving 'PTopType') recursing would not progress, so give a conservative False.
+    -- Guarded on progress: when the expansion reproduces t1 (e.g. preds = PredsNone giving
+    -- 'PTopType') recursing would not progress, so give a conservative False.
     (_, True)      | tePrgmEnv typeEnv || predsSealed typeEnv preds
                    , let expanded = expandPredicates typeEnv vaenv preds
                    , expanded /= t1
-                   -> isSubtypeOfWithEnv (withExpanding typeEnv preds) vaenv expanded
+                   -> isSubtypeOfWithEnv typeEnv vaenv expanded
                         (unionTypesWithEnv typeEnv vaenv t2 (UnionType Nothing negLeafs []))
     (_, True)      -> False
-    (leafs, False) -> isSubtypeOfWithEnv (withExpanding typeEnv preds) vaenv (UnionType Nothing leafs []) t2
+    (leafs, False) -> isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing leafs []) t2
 -- PosPartials ⊆ PosPartials: check partials structurally
 isSubtypeOfWithEnv typeEnv vaenv (UnionType Nothing subPartials []) (UnionType Nothing superPartials []) =
   debugTrace typeEnv msg result
@@ -2248,11 +2219,8 @@ compactPartialsWithClassPred typeEnv vaenv partials = unionPartialLeafs $ map tr
     aux :: (PartialType, [TypePredicate]) -> PartialLeafs
     aux (partial, preds) = if null classPreds && null relPreds
       then joinUnionType [partial]
-      -- Expand the partial's own class/rel preds and intersect them back in. Intersect under
-      -- 'withExpanding' of those same preds so that a member whose element re-references the class
-      -- being expanded (e.g. @∀Eq@ inside @ConsList[Eq]@/@Maybe[Eq]@) is left bare rather than
-      -- re-expanded — otherwise compaction of a recursive parameterized class universe diverges.
-      else asLeafs $ intersectAllTypes (withExpanding typeEnv (ptPreds partial)) (singletonType partial' : map (expandRelPartial typeEnv vaenv) relPreds ++ map (expandClassPartial typeEnv vaenv) classPreds)
+      -- Expand the partial's own class/rel preds and intersect them back in.
+      else asLeafs $ intersectAllTypes typeEnv (singletonType partial' : map (expandRelPartial typeEnv vaenv) relPreds ++ map (expandClassPartial typeEnv vaenv) classPreds)
       where
         -- Take class preds out of partial
         (exprPreds, classPreds, relPreds) = splitPreds preds
@@ -2518,24 +2486,6 @@ predRelPartials (PredsAnd ps)          = concatMap predRelPartials ps
 predRelPartials (PredsNot p)           = predRelPartials p
 predRelPartials _                      = []
 
-predClassPartials :: TypePredicates -> [PartialType]
-predClassPartials (PredsOne (PredClass p)) = [p]
-predClassPartials (PredsAnd ps)            = concatMap predClassPartials ps
-predClassPartials (PredsNot p)             = predClassPartials p
-predClassPartials _                        = []
-
--- | Record the relation AND class names of @preds@ in 'teExpanding' so that, while intersecting or
--- subtyping the expansion of those predicates, a reference back to one of them is not expanded
--- again. For a relation this is a self-referential field (e.g. the @tail@ of @ConsList@); for a
--- class it is a member whose type parameter re-references the class being expanded (e.g. expanding
--- @∀Eq@ reaches @ConsList[$T -> Eq]@/@Maybe[$T -> Eq]@, whose element is again @∀Eq@). Without the
--- class guard, a universe with two such parameterized members re-expands the element into the full
--- member set at every level, alternating between them and never terminating. Leaving the in-progress
--- class bare is the sound over-approximation (the reference accepts any value of that class). See
--- 'expandPredicate'/'expandPredsWithNamesFull'.
-withExpanding :: TypeEnv tg -> TypePredicates -> TypeEnv tg
-withExpanding typeEnv preds = typeEnv{teExpanding = teExpanding typeEnv <> S.fromList (map (makeAbsoluteName . ptName) (predRelPartials preds ++ predClassPartials preds))}
-
 unionPartialLeafs :: Foldable f => f PartialLeafs -> PartialLeafs
 unionPartialLeafs = unionsWith S.union
 
@@ -2622,56 +2572,9 @@ intersectAllTypes :: (TypeGraph tg, Foldable f) => TypeEnv tg -> f Type -> Type
 intersectAllTypes _ types | null types = BottomType
 intersectAllTypes typeEnv types = foldr1 (intersectTypes typeEnv) types
 
--- | Restore a partial's self-referential argument fields - those whose /declared/ type is a
--- bare recursive reference @~C@ (e.g. @Cons@'s @tail@, declared as the @ConsList@ class) - to
--- that declared canonical form. Used at the equirecursive intersection cutoff so the recursive
--- field becomes the precise @~C@ instead of whatever (possibly widened) value an over-unrolled
--- operand happened to carry there.
-foldSelfArgs :: (TypeGraph tg) => TypeEnv tg -> PartialType -> PartialType
-foldSelfArgs typeEnv p@PartialType{ptName, ptArgs} = case typeGraphData typeEnv ptName of
-  (PartialType{ptArgs=declArgs}:_) -> p{ptArgs = H.mapWithKey foldArg ptArgs}
-    where
-      foldArg k v = case H.lookup k declArgs of
-        Just declV | isRelDecl declV -> declV
-        _                            -> v
-  [] -> p
-
-isRelDecl :: Type -> Bool
-isRelDecl (TopType _ preds) = not (null (predRelPartials preds))
-isRelDecl _                 = False
-
--- | True when a partial has a self-referential field (one whose /declared/ type is a recursive
--- reference @~C@) currently holding an /over-unrolled/ value: a /mixed/ 'UnionType' that has
--- both a top component AND non-empty positive leafs (e.g. @~C@'s class predicate together with
--- explicitly unrolled @Nil + Cons(..)@ members, as produced by the unbounded reaches expansion
--- under @every(C isa Functor)@). The canonical recursive reference @~C@ - a top component with
--- /empty/ positive leafs - is NOT over-unrolled, and neither is a concrete finite value (a list
--- literal, a plain positive @UnionType Nothing@); both are intersected to full depth uncut.
-hasOverUnrolledSelfArg :: (TypeGraph tg) => TypeEnv tg -> PartialType -> Bool
-hasOverUnrolledSelfArg typeEnv PartialType{ptName, ptArgs} = case typeGraphData typeEnv ptName of
-  (PartialType{ptArgs=declArgs}:_) -> any overUnrolled (H.toList ptArgs)
-    where
-      overUnrolled (k, UnionType (Just _) posLeafs _) = not (H.null posLeafs) && maybe False isRelDecl (H.lookup k declArgs)
-      overUnrolled _                                  = False
-  [] -> False
-
 -- | A private helper for 'intersectPartialsBase' that intersects while ignore class expansions
 intersectPartialsBase :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Maybe (TypeVarArgEnv, [PartialType])
 intersectPartialsBase _ _ PartialType{ptName=aName} PartialType{ptName=bName} | aName /= bName = Nothing
--- Equirecursive cutoff: intersecting a partial of a name already on the intersection stack
--- means a self-referential field is intersecting its own type (e.g. @Cons@'s @tail@, which is
--- again a @Cons@). When that field holds an over-unrolled value (see 'hasOverUnrolledSelfArg'),
--- descending would unroll the recursion without making progress, so stop. At the recursion
--- point the two sides are the same recursive type, so the fixpoint is one side with its
--- self-referential fields restored to their declared canonical form (e.g. @tail = ~ConsList@) -
--- 'foldSelfArgs'. Returning a raw side would instead carry whatever (possibly widened) value
--- its recursive field happened to hold, violating the 'verifySchemeActLowers' monotonicity
--- check. Requiring an over-unrolled field (not mere presence) lets a finite recursion - a
--- concrete list literal - intersect to its full depth, since only the unbounded reaches
--- expansion produces the over-unrolled form.
-intersectPartialsBase typeEnv vaenv a@(PartialType aName _ _ _ _) _
-  | S.member (makeAbsoluteName aName) (teIntersecting typeEnv)
-  , hasOverUnrolledSelfArg typeEnv a = Just (vaenv, [foldSelfArgs typeEnv a])
 intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArgMode aLb aUb)) (PartialType _ bVars bArgs bPreds (PtArgMode bLb bUb)) = do
   (varsVaenvs, vars') <- unzip <$> intersectMap H.empty aVars bVars
   -- Args (unlike vars) are intersected without killing the partial when a value intersects to
@@ -2721,10 +2624,7 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
   where
     -- intersectMap unions so that all typeVars from either a or b are kept
     intersectMap vev a b = traverse subValidate $ H.unionWith subUnion (fmap (vev,) a) (fmap (vev,) b)
-    -- Recurse into args/vars with this partial's name marked, so a self-referential field
-    -- intersecting its own (over-unrolled) type hits the equirecursive cutoff above.
-    typeEnv' = typeEnv{teIntersecting = S.insert (makeAbsoluteName name') (teIntersecting typeEnv)}
-    subUnion (aVaenv, a) (bVaenv, b) = intersectTypesWithVarEnv typeEnv' (mergeAllVarEnvs typeEnv [aVaenv, bVaenv]) a b
+    subUnion (aVaenv, a) (bVaenv, b) = intersectTypesWithVarEnv typeEnv (mergeAllVarEnvs typeEnv [aVaenv, bVaenv]) a b
     subValidate (vev, subTp) = if isBottomType subTp then Nothing else Just (vev, subTp)
 
 intersectPartials :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> (TypeVarArgEnv, [PartialType])
@@ -2807,12 +2707,9 @@ intersectTypesWithVarEnv typeEnv vaenv t1@(UnionType Nothing partials []) t2@(Un
         -- When filteredLeafs is non-empty, use it directly regardless of hasOutside.
         -- Elements of t2 outside pos's names cannot affect the intersection result,
         -- so filteredLeafs (elements of t2 within pos's names) is sufficient.
-        -- The expanded relation names are marked in 'teExpanding' for the recursive
-        -- intersection so a self-referential field (e.g. @ConsList@'s @tail@) is not expanded
-        -- again, terminating the otherwise-unbounded recursion. See 'expandPredsWithNamesFull'.
         (filteredLeafs, _) | not (H.null filteredLeafs) ->
-          intersectTypesWithVarEnv (withExpanding typeEnv preds) vaenv t1 (UnionType Nothing filteredLeafs [])
-        (filteredLeafs, False) -> intersectTypesWithVarEnv (withExpanding typeEnv preds) vaenv t1 (UnionType Nothing filteredLeafs [])
+          intersectTypesWithVarEnv typeEnv vaenv t1 (UnionType Nothing filteredLeafs [])
+        (filteredLeafs, False) -> intersectTypesWithVarEnv typeEnv vaenv t1 (UnionType Nothing filteredLeafs [])
         -- filteredLeafs is empty but hasOutside=True: t2 might still constrain t1 symbolically.
         -- Symbolic: add preds to each partial when compactPartialsWithClassPred can resolve them
         -- (requires no PredsNot, which tryPredsToList signals by returning Nothing).
