@@ -187,7 +187,7 @@ arrowConstrainUbs env@FEnv{feUnionAllObjs} con PTopType dest@(UnionType Nothing 
 arrowConstrainUbs _ _ PTopType dest = return (PTopType, dest, Nothing)
 arrowConstrainUbs _ _ src@(UnionType (Just _) _ _) dest = return (src, dest, Nothing)
 arrowConstrainUbs env con@Constraint{conVaenv} src@(TypeVar v _) dest = do
-  let src' = H.lookupDefault PTopType v (fmap (stypeAct . snd) conVaenv)
+  let src' = maybe PTopType (stypeAct . snd) (H.lookup v conVaenv)
   case (src', dest) of
     (PTopType, PTopType) -> return (src, src, Nothing)
     _ -> do
