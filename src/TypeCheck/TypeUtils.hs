@@ -192,9 +192,46 @@ fnArgInputBound env callAct fnKey inKey = case callAct of
                   , Just aObj <- [oaObj argOa]
                   , Just (_, aM) <- [oaArr argOa]
                   , Just srcV <- [typeGetArgLoose (inExprSingleton aObj) partial] ]
-      let inTy = substituteWithVarArgEnv (mergeAllVarEnvs typeEnv venvs) (getMetaType inM)
+      let venv0 = mergeAllVarEnvs typeEnv venvs
+      -- An argument typed by a declaration variable (@lst -> $F@) binds only that variable;
+      -- the variable's declared bound (@$F -> Functor[$T -> $_A]@, held in the declaration
+      -- object's own var slot) is what relates the bound value to further variables.
+      -- Intersect each bound against its binding to recover them (@$_A=Integer@ from
+      -- @lst= Cons[/T=Integer]@).
+      let declVars = maybe H.empty ptVars (maybeGetSingleton (getMetaType (getExprMeta (oaObjExpr oa))))
+      -- An argument typed by a declaration variable (@lst -> $F@) binds only that variable;
+      -- the variable's declared bound (@$F -> Functor[$T -> $_A]@, held in the declaration
+      -- object's own var slot) is what relates the bound value to further variables.
+      -- Intersecting the bound against the binding materializes the class parameter on the
+      -- result's data leaves (@Cons[/T=Integer]@ via the data def's field tie), while the
+      -- bound's class partial records which external var that parameter points at
+      -- (@/T=$_A@); aligning the two by parameter name recovers the binding (@$_A=Integer@).
+      let boundVenvs = [ H.singleton (TVVar extV) elemT
+                       | (TVVar vn, binding) <- H.toList venv0
+                       , Just bound <- [H.lookup vn declVars]
+                       , bound /= PTopType
+                       , UnionType Nothing rLeafs [] <- [intersectTypes typeEnv bound binding]
+                       , (cvn, extV) <- boundClassVarPtrs bound
+                       , let elemT = unionAllTypes typeEnv (mapMaybe (H.lookup cvn . ptVars) (splitUnionType rLeafs))
+                       , not (isBottomType elemT) ]
+      let inTy = substituteWithVarArgEnv (mergeAllVarEnvs typeEnv (venv0 : boundVenvs)) (getMetaType inM)
       guard (typeFullyConcrete inTy)
       return inTy
+    -- The (class parameter name, external var name) pointers of a bound's class partials:
+    -- @Functor[$T -> $_A]@ ⇒ [(T, A)], whether the bound is a predicate top or a positive
+    -- class-named leaf.
+    boundClassVarPtrs bound = concatMap fromPartial (case bound of
+      UnionType (Just (preds, _)) posLeafs _ -> predPartials preds ++ splitUnionType posLeafs
+      UnionType Nothing posLeafs _           -> splitUnionType posLeafs
+      _                                      -> [])
+      where
+        fromPartial p = [ (vn, an) | (vn, TypeVar (TVVar an) TVExt) <- H.toList (ptVars p) ]
+        predPartials preds = case tryPredsToList preds of
+          Just ps -> [ p | pr <- ps, p <- predPartial pr ]
+          Nothing -> []
+        predPartial (PredClass c) = [c]
+        predPartial (PredRel r)   = [r]
+        predPartial PredExpr{}    = []
 
 mkReachesEnv :: FEnv -> RConstraint -> TypeCheckResult (ReachesEnv (ObjArrTypeGraph Expr ()))
 mkReachesEnv env (Constraint maybeConOa stypeVaenv _) = do
