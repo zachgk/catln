@@ -190,20 +190,7 @@ Prgm
                             ) = /Data/maybeEqual( Value /a -> /Data/Nothing = Value /Data/Nothing )( Value /b -> TVArg /other = Value /other )
                         , /Data/Algebra/equal
                             ( Value /other -> ∀/Data/Maybe[ /E=∀/Data/Algebra/Eq ] )
-                            ( Value /this -> /Data/Some
-                                [ /T=
-                                    ( TopType | !
-                                        ( !
-                                            ( !
-                                                ( !( PredClass /Data/Algebra/Ord && PredClass /Data/Algebra/Eq ) && !( PredClass /Data/Algebra/Eq ) ) && PredClass /Data/Algebra/Eq
-                                            ) && !
-                                            ( !
-                                                ( !( PredClass /Data/Algebra/Ord && PredClass /Data/Algebra/Eq ) && !( PredClass /Data/Algebra/Eq ) ) && PredClass /Data/Algebra/Ord && PredClass /Data/Algebra/Eq
-                                            )
-                                        )
-                                    )
-                                ]( /value=$/T ) = /Data/Some[ /T : ∀/Data/Algebra/Eq ]( Value /value -> ∀/Data/Algebra/Eq )
-                            ) -> UnionType
+                            ( Value /this -> /Data/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Some[ /T : ∀/Data/Algebra/Eq ]( Value /value -> ∀/Data/Algebra/Eq ) ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []

@@ -104,8 +104,7 @@ Prgm
                     , omiDefs =
                         [ /sort_list( EAppArg Value /lst -> ∀/Data/List ) -> UnionType
                             ( Just
-                                ( !
-                                    ( !( PredClass /Data/List ) && !( PredClass /Data/ConsList ) )
+                                ( PredClass /Data/List
                                 , fromList []
                                 )
                             , /Data/sorted( /lst=∀/Data/List )
@@ -565,8 +564,7 @@ Prgm
                     , omiDefs =
                         [ /reverse_list( EAppArg Value /lst -> ∀/Data/List ) -> UnionType
                             ( Just
-                                ( !
-                                    ( !( PredClass /Data/List ) && !( PredClass /Data/ConsList ) )
+                                ( PredClass /Data/List
                                 , fromList []
                                 )
                             , /Data/reversed( /lst=∀/Data/List )

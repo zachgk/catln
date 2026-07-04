@@ -1785,7 +1785,13 @@ satGoal typeEnv vaenv gatePos hyps goal0
 
     genCandidates (SatLeafs ls) = Just (map CandLeaf ls)
     genCandidates (SatClass c)  = classSatCandidates typeEnv vaenv gatePos c
-    genCandidates (SatRel r)    = Just (relSatCandidates typeEnv vaenv r)
+    -- A relation's type-route candidates come from the name universe ('scTypeNames'); an env
+    -- without one (e.g. the reduced env of the class-graph 'Semigroup' merge) makes the
+    -- enumeration silently incomplete - a goal with no candidates would read as refuted when
+    -- the engine merely knows nothing. Treat it as unenumerable (conservatively satisfiable).
+    genCandidates (SatRel r)
+      | null (scTypeNames (teSatCache typeEnv)) = Nothing
+      | otherwise = Just (relSatCandidates typeEnv vaenv r)
 
     rest = SatGoal restPos (sgNeg goal)
 
@@ -2593,6 +2599,17 @@ unionTypesWithEnv typeEnv vaenv (UnionType mTop1 pos1 cs1) (UnionType mTop2 pos2
             -- One side is universal top (PredsNone): U ∪ X = U minus the parts excluded from both
             compactType typeEnv vaenv $
               UnionType (Just (PredsNone, snd $ intersectPartialLeafsWithVarEnv typeEnv vaenv n1 n2)) pos' (L.nub (cs1 ++ cs2))
+        -- Absorption: when one predicate region implies the other, p1∨p2 is just the wider side
+        -- (same intersected-negs treatment as the equal-preds case). Semantically equal to the
+        -- De Morgan fallback below, but keeps a re-derived equivalent predicate syntactically
+        -- stable across solver epochs instead of nesting another !(!p1 && !p2) layer per union -
+        -- growth 'verifySchemeActLowers' cannot order.
+        | predImplies typeEnv vaenv p1 p2 ->
+            compactType typeEnv vaenv $
+              UnionType (Just (p2, snd $ intersectPartialLeafsWithVarEnv typeEnv vaenv n1 n2)) pos' (L.nub (cs1 ++ cs2))
+        | predImplies typeEnv vaenv p2 p1 ->
+            compactType typeEnv vaenv $
+              UnionType (Just (p1, snd $ intersectPartialLeafsWithVarEnv typeEnv vaenv n1 n2)) pos' (L.nub (cs1 ++ cs2))
         | otherwise ->
             -- De Morgan with predsNot/predsAnd normalization: (U_p1) ∪ (U_p2) = U_{p1∨p2}
             -- where p1∨p2 = ¬(¬p1 ∧ ¬p2). Using predsNot/predsAnd keeps structure flat (depth 1).

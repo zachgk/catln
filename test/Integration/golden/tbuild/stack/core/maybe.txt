@@ -195,20 +195,7 @@ Prgm
                             ( EAppArg Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) )
                         , /Data/Algebra/equal
                             ( EAppArg Value /other -> ∀/Data/Maybe[ /E=∀/Data/Algebra/Eq ] )
-                            ( EAppArg Value /this -> /Data/Some
-                                [ /T=
-                                    ( TopType | !
-                                        ( !
-                                            ( !
-                                                ( !( PredClass /Data/Algebra/Ord && PredClass /Data/Algebra/Eq ) && !( PredClass /Data/Algebra/Eq ) ) && PredClass /Data/Algebra/Eq
-                                            ) && !
-                                            ( !
-                                                ( !( PredClass /Data/Algebra/Ord && PredClass /Data/Algebra/Eq ) && !( PredClass /Data/Algebra/Eq ) ) && PredClass /Data/Algebra/Ord && PredClass /Data/Algebra/Eq
-                                            )
-                                        )
-                                    )
-                                ]( /value=$/T ) = /Data/Some( EAppVar /T ∀/Data/Algebra/Eq )( EAppArg Value /value -> ∀/Data/Algebra/Eq )
-                            ) -> UnionType
+                            ( EAppArg Value /this -> /Data/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Some( EAppVar /T ∀/Data/Algebra/Eq )( EAppArg Value /value -> ∀/Data/Algebra/Eq ) ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
