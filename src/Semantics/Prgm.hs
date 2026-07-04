@@ -374,7 +374,7 @@ instance ExprClass Expr where
       aux (TupleApply _ (_, be) arg) = joinPossVarArgMetaWithSrc typeEnv (exprVarArgsWithSrc typeEnv be src) (fromArg arg)
         where
           fromArg :: (MetaDat m, Show m) => EApp Expr m -> [ArgMetaMapWithSrc m]
-          fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)}) = case typeGetArg (inExprSingleton obj) src of
+          fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)}) = case typeGetArgLoose (inExprSingleton obj) src of
             Just (UnionType Nothing srcArg []) -> joinAllPossVarArgMetaWithSrc typeEnv $ map (exprVarArgsWithSrc typeEnv e) $ splitUnionType srcArg
             Just t@(UnionType (Just _) _ _) -> [(,t) <$> exprVarArgs e]
             _ -> [H.empty]
@@ -391,7 +391,7 @@ instance ExprClass Expr where
             , Just (UnionType Nothing srcArg []) <- typeGetArg argKey src
             = joinAllPossVarArgMetaWithSrc typeEnv $ map (exprVarArgsWithSrc typeEnv obj) $ splitUnionType srcArg
             | otherwise = case getMetaType arrM of
-                (TypeVar v _) -> [H.insertWith (mergeVarArgMetaWithSrcItem typeEnv) v ([(obj, arrM)], fromMaybe PTopType $ typeGetArg structKey src) mainArg]
+                (TypeVar v _) -> [H.insertWith (mergeVarArgMetaWithSrcItem typeEnv) v ([(obj, arrM)], fromMaybe PTopType $ typeGetArgLoose structKey src) mainArg]
                 _ -> [mainArg]
             where
               structKey = inExprSingleton obj
@@ -410,7 +410,7 @@ instance ExprClass Expr where
               patternHeadNamesArg argType = case maybeGetSingleton argType of
                 Just p  -> headName == makeAbsoluteName (ptName p)
                 Nothing -> False
-              mainArg = H.singleton (TVArg bindKey) ([(obj, arrM)], fromMaybe (getMetaType arrM) (typeGetArg structKey src))
+              mainArg = H.singleton (TVArg bindKey) ([(obj, arrM)], fromMaybe (getMetaType arrM) (typeGetArgLoose structKey src))
           fromArg (EAppVar vn vm) = [H.singleton (TVVar vn) ([(Value (emptyMetaT $ partialToTypeSingleton vn) (pkName vn), vm)], H.lookupDefault PTopType vn (ptVars src))]
           fromArg (EAppSpread s) = exprVarArgsWithSrc typeEnv s src
           fromArg oa = error $ printf "Invalid oa %s" (show oa)

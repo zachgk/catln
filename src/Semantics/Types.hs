@@ -3089,6 +3089,20 @@ typeGetArg argName partial@PartialType{ptArgs, ptVars, ptArgMode} = case H.looku
         substitutePartial p@PartialType{ptVars=vs} = p{ptVars = fmap (substituteVarsWithVarEnv ptVars) vs}
     t -> Just t
 
+-- | 'typeGetArg' tolerating 'PartialKey' phase drift. An argument key computed from a resolved
+-- type ('partialToKey', e.g. via 'inExprSingleton') carries the type's accreted variable names in
+-- 'pkVars', while the same logical argument may be stored under an encode-time structural key
+-- without them (a call site's higher-order argument @/fn(/v)@ vs the declaration's
+-- @/fn[/F,..](/v)@). When the exact key is absent, fall back to the unique stored argument that
+-- matches by name and applied-argument names, ignoring 'pkVars'.
+typeGetArgLoose :: ArgName -> PartialType -> Maybe Type
+typeGetArgLoose argName partial@PartialType{ptArgs}
+  | H.member argName ptArgs = typeGetArg argName partial
+  | otherwise = case filter matches (H.keys ptArgs) of
+      [k] -> typeGetArg k partial
+      _   -> typeGetArg argName partial
+  where matches k = pkName k == pkName argName && pkArgs k == pkArgs argName
+
 -- | Gets an arg from a type while resolving the variables used in the types ptVars
 typesGetArg :: TypeGraph tg => TypeEnv tg -> ArgName -> Type -> Maybe Type
 typesGetArg typeEnv argName (UnionType Nothing partialLeafs []) = fmap (unionAllTypes typeEnv) $ mapM (typeGetArg argName) $ splitUnionType partialLeafs
