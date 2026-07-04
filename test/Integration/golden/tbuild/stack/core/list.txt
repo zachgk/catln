@@ -157,11 +157,15 @@ Prgm
                             ( /head=$/T
                             , /tail=∀/Data/ConsList[ /T=$_/T ]
                             ) = /Data/Cons
-                            ( EAppArg Value /head= /fn( EAppArg Value /v -> TVArg /head = Value /head ) )
+                            ( EAppArg Value /head=
+                                ( /fn( EAppArg Value /v -> TVArg /head = Value /head ) ↦ TopType )
+                            )
                             ( EAppArg Value /tail -> ∀/Data/ConsList[ /T=$_/T ] =
                                 ( /fmap
                                     ( EAppArg Value /lst -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) )
-                                    ( EAppArg /fn( EAppArg Value /v )= /fn( EAppArg Value /v -> TVArg /v = Value /v ) ) ↦ ∀/Data/ConsList[ /T=$_/T ]
+                                    ( EAppArg /fn( EAppArg Value /v )=
+                                        ( /fn( EAppArg Value /v -> TVArg /v = Value /v ) ↦ TopType )
+                                    ) ↦ ∀/Data/ConsList[ /T=$_/T ]
                                 )
                             )
                         ]

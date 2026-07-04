@@ -320,11 +320,23 @@ toTEObjArr env os oa@ObjArr{oaObj, oaAnnots, oaArr} = do
 
 toTExprDest :: TBEnv -> [ObjSrc] -> Expr TBMetaDat -> EvalMeta -> CRes (TExpr TBMetaDat)
 -- toTExprDest _ os e m | trace (printf "toExprDest %s to %s \n\twith %s" (show e) (show (getMetaType m)) (show $ map fst os)) False = undefined
-toTExprDest env os e m = do
+toTExprDest env@TBEnv{tbTypeEnv} os e m = do
   e' <- toTExpr env os e
   let srcT = getMetaType $ getExprMeta e'
   ct <- buildCallTree env os S.empty srcT (getMetaType m)
+  -- An application of a function-typed argument (@fn(v= x)@ where @fn@ is a parameter of the
+  -- enclosing definition) is an unreduced call. When the declared result is generic (@-> $_B@)
+  -- the destination type is Top, so 'buildCallTree' short-circuits to 'TCTId' — but the closure
+  -- must still be applied at runtime or the raw applied tuple leaks out as the result value.
+  -- Force the argument arrow (the tree 'findResArrows' builds when the destination is typed).
+  let argFnTree = case maybeGetSingleton srcT of
+        Just sp | not (H.null (ptArgs sp)) ->
+          case mapMaybe (H.lookup (TVArg (partialToKey sp))) (exprVarArgsWithObjSrcs tbTypeEnv os) of
+            ((_, argT):_) -> Just $ TCArg argT (nameStr (ptName sp))
+            []            -> Nothing
+        _ -> Nothing
   case ct of
+    TCTId | Just at <- argFnTree            -> return $ TCalls m e' at
     TCTId                                   -> return e'
     TCMacro _ (MacroFunction f)             -> fromMacro f
     (TCSeq (TCMacro _ (MacroFunction f)) _) -> fromMacro f
