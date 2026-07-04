@@ -2918,7 +2918,15 @@ setArgMode _ _ t = error $ printf "Unimplemented setArgMode for %s" (show t)
 -- Combines two 'TypeVarEnv' to form the one applying the knowledge from both
 -- It takes the union of all variables from either, and shared variables combine knowledge by intersection
 mergeVarEnvs :: (TypeGraph tg, Eq k, Hashable k) => TypeEnv tg -> H.HashMap k Type -> H.HashMap k Type -> H.HashMap k Type
-mergeVarEnvs typeEnv = H.unionWith (intersectTypes typeEnv)
+mergeVarEnvs typeEnv = H.unionWith mergeVarEnvVal
+  where
+    -- Intersecting @a ∩ b@ where one side is a concrete type and the other an unbound
+    -- external var returns the var (recording the binding in the returned env), so plain
+    -- 'intersectTypes' - which discards that env - would keep the wider var-form and lose the
+    -- concrete. Apply the intersection's own bindings back to the meet so the resolved
+    -- (narrower) type is what the merged env stores.
+    mergeVarEnvVal a b = let (venv, t) = intersectTypesWithVarEnv typeEnv H.empty a b
+                         in substituteWithVarArgEnv venv t
 
 
 -- | Applies 'mergeVarEnvs' to many 'TypeVarEnv'
