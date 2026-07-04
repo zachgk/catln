@@ -33,7 +33,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /defInt
-                            ( EAppArg Value /x -> /Just( /val=/Data/Primitive/Integer ) = /Just( EAppArg Value /val -> /Data/Primitive/Integer ) ) -> TVArg /val = ( Value /val ↦ TVArg /val )
+                            ( EAppArg Value /x -> /Just[ /T=/Data/Primitive/Integer ]( /val=$_/T ) = /Just( EAppArg Value /val -> /Data/Primitive/Integer ) ) -> TVArg /val = ( Value /val ↦ TVArg /val )
                         , /defInt( EAppArg Value /x -> /Data/Nothing = Value /Data/Nothing ) -> /Data/Primitive/Integer = 0
                         ]
                     }

@@ -401,6 +401,30 @@ typeVarLost (UnionType _ oldLeafs _) (UnionType _ newLeafs _) =
       || or [ typeVarLost ov nv | (k, ov) <- H.toList (ptVars op), Just nv <- [H.lookup k (ptVars np)] ]
 typeVarLost _ _ = False
 
+-- | Structurally detects whether @new@ carries a type-variable /binding/ — a non-trivial 'ptVars'
+-- entry — at a position where @old@ has no entry for that variable at all. Intersecting a partial
+-- against a more-resolved form folds the discovered binding into the enclosing partial's 'ptVars'
+-- (e.g. @cmap(lst=Cons[T=$_A])@ ∩ @cmap(lst=Cons[T=Integer])@ = @cmap[A=Integer](lst=Cons[T=$_A])@,
+-- see 'intersectPartialsBase'), but 'eqScheme' cannot see the gained entry: subtype comparison
+-- checks only keys present on BOTH sides, so the write looks like a no-op and is dropped. A
+-- Top-valued or self-referential entry carries no information, so only a real binding counts.
+-- Mirrors the matching discipline of 'typeVarLost' (single same-name partial on each side; nested
+-- positions compared only on shared keys).
+typeVarBindingGained :: Type -> Type -> Bool
+typeVarBindingGained (UnionType _ oldLeafs _) (UnionType _ newLeafs _) =
+  or [ partialBindingGained op np
+     | (name, [op]) <- H.toList (splitUnionTypeByName oldLeafs)
+     , Just [np] <- [H.lookup name (splitUnionTypeByName newLeafs)] ]
+  where
+    partialBindingGained op np =
+      or [ informative k nv | (k, nv) <- H.toList (ptVars np), not (k `H.member` ptVars op) ]
+      || or [ typeVarBindingGained ov nv | (k, ov) <- H.toList (ptArgs op), Just nv <- [H.lookup k (ptArgs np)] ]
+      || or [ typeVarBindingGained ov nv | (k, ov) <- H.toList (ptVars op), Just nv <- [H.lookup k (ptVars np)] ]
+    informative _ PTopType               = False
+    informative k (TypeVar (TVVar k') _) = k' /= k
+    informative _ _                      = True
+typeVarBindingGained _ _ = False
+
 -- This ensures schemes are correct
 -- It differs from Constrain.checkScheme because it checks for bugs in the internal compiler, not bugs in the user code
 verifyScheme :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> VarMeta -> Scheme -> Scheme -> Maybe String
@@ -458,6 +482,12 @@ setDescriptor env@FEnv{feTypeEnv, fePnts, feTrace, feUpdatedDuringEpoch} con m@M
       -- 'eqScheme' path below), so once set the variable is not widened back to Top — which both
       -- keeps the information and avoids a set/lose oscillation that would never converge.
       (TypeCheckResult _ (SType a1 _ _ _), TypeCheckResult _ (SType a2 _ _ _)) | typeVarLost a2 a1 -> True
+      -- GAINING a 'ptVars' binding (@new@ resolves an enclosing partial's variable that @old@
+      -- does not mention, e.g. @cmap(…)@ → @cmap[A=Integer](…)@) is likewise invisible to
+      -- 'eqScheme' (only shared keys are compared) yet is a real narrowing that must commit.
+      -- Gain-only for the same convergence reason as above: dropping the binding later stays a
+      -- no-op, so the resolved value is kept once found.
+      (TypeCheckResult _ (SType a1 _ _ _), TypeCheckResult _ (SType a2 _ _ _)) | typeVarBindingGained a1 a2 -> True
       _ ->  fromMaybe False $ tcreToMaybe $ do
         showVaenv <- vaenv
         return $ not (eqScheme env showVaenv scheme scheme')

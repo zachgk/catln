@@ -1663,10 +1663,18 @@ partialCoversSat :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Bool -> SatHy
 partialCoversSat typeEnv vaenv gatePos hyps sup sub =
   ptName sup == ptName sub
   && argModeCovers sup sub
-  && all elemCovered (H.elems (H.intersectionWith (,) (ptVars sub) (ptVars sup)))
+  && all varCovered (H.elems (H.intersectionWith (,) (ptVars sub) (ptVars sup)))
   && all elemCovered (H.elems (H.intersectionWith (,) (ptArgs sub) (ptArgs sup)))
   && supPredsCover
   where
+    -- Under projection (matching/dispatch consumers, 'teArgModeProjection'), a Top-valued type
+    -- parameter on the value side carries no information — it is equivalent to the parameter
+    -- being absent, which the shared-keys discipline already skips. A definition whose element
+    -- parameter could not be narrowed (e.g. a mapped element fed by a higher-order argument)
+    -- completes to an explicit @[T=Top]@, and must dispatch exactly like the key-free form.
+    -- The precise set algebra (projection off) keeps Top ⊄ concrete.
+    varCovered (PTopType, _) | teArgModeProjection typeEnv = True
+    varCovered p             = elemCovered p
     elemCovered (tSub, tSup)
       | isFlexibleVar tSub = True
       | otherwise = not (typesSatDiff typeEnv vaenv gatePos hyps tSub tSup)
@@ -1986,7 +1994,12 @@ isSubPartialOfWithEnv typeEnv vaenv sub@PartialType{ptVars=subVars, ptArgs=subAr
   where
     vaenv' = H.union vaenv (substituteWithVarArgEnv vaenv <$> H.unionWith (intersectTypesEnv typeEnv vaenv) (ptVarArg super) (ptVarArg sub))
     hasAll sb sp = and $ H.elems $ H.intersectionWith (isSubtypeOfWithEnv typeEnv vaenv') sb sp
-    result = hasAll subArgs superArgs && hasAllPreds superPreds subPreds && hasAll subVars superVars
+    -- Type parameters: mirrors 'partialCoversSat' — under projection a Top-valued parameter on
+    -- the sub side is no constraint (≡ absent, which the shared-keys intersection skips).
+    hasAllVars sb sp = and $ H.elems $ H.intersectionWith varOk sb sp
+    varOk PTopType _ | teArgModeProjection typeEnv = True
+    varOk a b        = isSubtypeOfWithEnv typeEnv vaenv' a b
+    result = hasAll subArgs superArgs && hasAllPreds superPreds subPreds && hasAllVars subVars superVars
     msg = printf "[SUBPARTIAL] %s ⊆ %s = %s" (show sub) (show super) (show result)
 
     hasAllPreds :: TypePredicates -> TypePredicates -> Bool
@@ -2265,6 +2278,29 @@ compactDisconnectedPreds typeEnv vaenv = mapMaybe aux
 compactBottomType :: [PartialType] -> [PartialType]
 compactBottomType = filter (not . containsBottomPartialType)
 
+-- | 'True' when a type is fully concrete: positive leafs only, with no type variables at any
+-- nesting depth and no predicates. Such a type cannot act as a live link to any other position.
+typeFullyConcrete :: Type -> Bool
+typeFullyConcrete (UnionType Nothing leafs _) = all partialOk (splitUnionType leafs)
+  where partialOk PartialType{ptVars, ptArgs, ptPreds} = ptPreds == PredsNone && all typeFullyConcrete ptVars && all typeFullyConcrete ptArgs
+typeFullyConcrete _ = False
+
+-- | Materializes a partial-local variable reference in an argument (@/v=$T@, 'TVInt') when the
+-- partial's own 'ptVars' resolves that variable to a fully concrete type: @Box[T=Integer](v=$T)@
+-- → @Box[T=Integer](v=Integer)@. Two orders of resolving the same value otherwise produce
+-- incomparable syntactic forms — field-resolved @Box[T=$_T](v=Integer)@ vs param-resolved
+-- @Box[T=Integer](v=$T)@ — which 'verifySchemeActLowers' cannot order, so an equivalent re-write
+-- is rejected as a grow. Only a fully concrete binding is materialized: a variable-form binding
+-- is a live link that must stay symbolic (e.g. recursive element linkage), and a Top or
+-- predicate-form binding is a bound, not a resolution.
+compactOwnVarRefs :: PartialType -> PartialType
+compactOwnVarRefs p@PartialType{ptVars, ptArgs} = p{ptArgs = fmap subst ptArgs}
+  where
+    subst t@(TypeVar (TVVar v) TVInt) = case H.lookup v ptVars of
+      Just b | typeFullyConcrete b -> b
+      _                            -> t
+    subst t = t
+
 -- The first three stages ('compactBottomType', 'compactDisconnectedPreds',
 -- 'compactPartialsWithClassPred') are fused over a single 'splitUnionType': stages 1-2 are pure
 -- per-element list filters/maps and stage 3 ends in the order-independent 'unionPartialLeafs'
@@ -2278,6 +2314,7 @@ compactPartialLeafs typeEnv vaenv =
   . compactJoinPartials typeEnv
   . compactPartialsWithClassPred typeEnv vaenv
   . compactDisconnectedPreds typeEnv vaenv
+  . map compactOwnVarRefs
   . compactBottomType
   . splitUnionType
 

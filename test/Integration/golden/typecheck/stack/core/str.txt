@@ -27,7 +27,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/rel( Value /a -> /Data/String )( Value /b -> /Data/String )( Value /this -> /Data/StrEqv ) -> UnionType
+                        [ /Data/Algebra/rel( Value /a -> /Data/String )( Value /b -> /Data/String )
+                            ( Value /this -> /Data/StrEqv[ /T=/Data/String ] ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []

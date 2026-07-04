@@ -229,7 +229,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/compare( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer )( Value /this -> /Data/Primitive/IntOrdering ) -> UnionType
+                        [ /Data/Algebra/compare( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer )
+                            ( Value /this -> /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Algebra/Comparison
                                 , fromList []
@@ -244,7 +245,8 @@ Prgm
                             ) = /Data/Algebra/mkComparison
                             ( Value /lt -> ∀/Data/Primitive/Boolean = /Data/Primitive/intLt( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) )
                             ( Value /eq -> ∀/Data/Primitive/Boolean = /Data/Primitive/intEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) )
-                        , /Data/Algebra/compare( Value /a -> /Data/Primitive/Float )( Value /b -> /Data/Primitive/Float )( Value /this -> /Data/Primitive/FloatOrdering ) -> UnionType
+                        , /Data/Algebra/compare( Value /a -> /Data/Primitive/Float )( Value /b -> /Data/Primitive/Float )
+                            ( Value /this -> /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Algebra/Comparison
                                 , fromList []

@@ -17,8 +17,8 @@ Prgm
                             ( EAppArg Value /val -> /Data/Primitive/Integer =
                                 ( /real
                                     ( EAppArg Value /c -> /Complex[ /N=/Data/Primitive/Integer ]
-                                        ( /a=$/N
-                                        , /b=$/N
+                                        ( /a=/Data/Primitive/Integer
+                                        , /b=/Data/Primitive/Integer
                                         ) = /Complex
                                         ( EAppArg Value /a -> /Data/Primitive/Integer = 0 )
                                         ( EAppArg Value /b -> /Data/Primitive/Integer = 7 )

@@ -113,7 +113,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/rel( EAppArg Value /a -> /Data/Primitive/Integer )( EAppArg Value /b -> /Data/Primitive/Integer )( EAppArg Value /this -> /Data/Algebra/IntEqExample ) -> UnionType
+                        [ /Data/Algebra/rel( EAppArg Value /a -> /Data/Primitive/Integer )( EAppArg Value /b -> /Data/Primitive/Integer )
+                            ( EAppArg Value /this -> /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
@@ -126,7 +127,8 @@ Prgm
                             ) = /Data/Primitive/intEq
                             ( EAppArg Value /l -> TVArg /a = ( Value /a ↦ TVArg /a ) )
                             ( EAppArg Value /r -> TVArg /b = ( Value /b ↦ TVArg /b ) )
-                        , /Data/Algebra/rel( EAppArg Value /a )( EAppArg Value /b )( EAppArg Value /this -> /Data/Algebra/AllEqv ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /Data/Algebra/rel( EAppArg Value /a )( EAppArg Value /b )
+                            ( EAppArg Value /this -> /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         ]
                     }
                 )

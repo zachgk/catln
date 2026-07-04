@@ -52,15 +52,15 @@ Prgm
                             ) = /Catln/exit
                             ( Value /val -> /Data/Primitive/Integer = /operator-
                                 ( Value /l -> /Data/Primitive/Integer = /llength
-                                    ( Value /this -> /Data/Cons
+                                    ( Value /this -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                                         ( /head=/Data/Primitive/Integer
-                                        , /tail=/Data/Cons
+                                        , /tail=/Data/Cons[ /T=/Data/Primitive/Integer ]
                                             ( /head=/Data/Primitive/Integer
                                             , /tail=/Data/Nil
                                             )
                                         ) = /Data/Cons
                                         ( Value /head -> /Data/Primitive/Integer = CInt 5 )
-                                        ( Value /tail -> /Data/Cons
+                                        ( Value /tail -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                                             ( /head=/Data/Primitive/Integer
                                             , /tail=/Data/Nil
                                             ) = /Data/Cons

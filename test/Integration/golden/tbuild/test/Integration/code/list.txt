@@ -58,15 +58,15 @@ Prgm
                                 ( /operator-
                                     ( EAppArg Value /l -> /Data/Primitive/Integer =
                                         ( /llength
-                                            ( EAppArg Value /this -> /Data/Cons
+                                            ( EAppArg Value /this -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                                                 ( /head=/Data/Primitive/Integer
-                                                , /tail=/Data/Cons
+                                                , /tail=/Data/Cons[ /T=/Data/Primitive/Integer ]
                                                     ( /head=/Data/Primitive/Integer
                                                     , /tail=/Data/Nil
                                                     )
                                                 ) = /Data/Cons
                                                 ( EAppArg Value /head -> /Data/Primitive/Integer = 5 )
-                                                ( EAppArg Value /tail -> /Data/Cons
+                                                ( EAppArg Value /tail -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                                                     ( /head=/Data/Primitive/Integer
                                                     , /tail=/Data/Nil
                                                     ) = /Data/Cons
