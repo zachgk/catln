@@ -1254,8 +1254,20 @@ expandTypesWithNamesFull typeEnv@TypeEnv{teNames} vaenv (TopType negPartials pre
     expandPredsWithNamesFull (PredsAnd []) = (topFilteredLeafs, hasUniverseOutside)
     expandPredsWithNamesFull (PredsAnd ps) =
       let mapped = map expandPredsWithNamesFull ps
-          leafs = foldl1 (intersectPartialLeafsEnv typeEnv vaenv) (map fst mapped)
-      in (leafs, all snd mapped)
+          (venv, leafs) = foldl1 combine (map ((vaenv,) . fst) mapped)
+          combine (ve, aLeafs) (_, bLeafs) = intersectPartialLeafsWithVarEnv typeEnv ve aLeafs bLeafs
+          -- Intersecting one predicate's members against another's meets an external var on one
+          -- side (e.g. @Some[/T=$_B]@ from a @PredClass Maybe[/T=$_B]@) with the other side's
+          -- bound by recording the meet in the returned env while the leaf keeps the var pointer.
+          -- That env goes no further than this expansion, so resolve the newly recorded meets
+          -- back into the leaves - otherwise the pointer later resolves to Top and the expansion
+          -- is wider than the predicate it came from. Still-unresolved vars stay symbolic
+          -- ('substituteKeep'); the same resolve-the-meet-back rule as 'mergeVarEnvVal'.
+          newBindings = H.difference venv vaenv
+          leafs' = case substituteKeep newBindings (UnionType Nothing leafs []) of
+            UnionType Nothing l [] -> l
+            _                      -> leafs
+      in (leafs', all snd mapped)
     -- De Morgan: ¬(p1 ∧ ... ∧ pn) = ¬p1 ∨ ... ∨ ¬pn.
     -- Compute union of complements directly instead of topFiltered - intersect(expand(pi)),
     -- which avoids approximation errors from PtArgAny/PtArgExact subtraction.
@@ -2695,7 +2707,17 @@ intersectTypesWithVarEnv typeEnv vaenv (UnionType (Just topData) pos cs) t2
   | not (H.null pos) || not (null cs) =
       let (vaenv1, topResult) = intersectTypesWithVarEnv typeEnv vaenv (UnionType (Just topData) H.empty []) t2
           (vaenv2, posResult) = intersectTypesWithVarEnv typeEnv vaenv (UnionType Nothing pos cs) t2
-      in (mergeAllVarEnvs typeEnv [vaenv1, vaenv2], unionTypesWithEnv typeEnv vaenv topResult posResult)
+          vaenv' = mergeAllVarEnvs typeEnv [vaenv1, vaenv2]
+          -- A component intersection can meet an external var with the other component's bound,
+          -- recording the meet in its returned env while its leaf keeps the var pointer (e.g.
+          -- @Some[/T=$_B]@ with @/B ↦ (Top|Eq)@ recorded). The recombining union resolves var
+          -- pointers through the env it is GIVEN, which does not hold those fresh meets - the
+          -- pointer would widen to Top. Resolve the newly recorded meets back into the components
+          -- first; still-unresolved vars stay symbolic ('substituteKeep', as 'mergeVarEnvVal').
+          newBindings = H.difference vaenv' vaenv
+          resolveNew | H.null newBindings = id
+                     | otherwise = substituteKeep newBindings
+      in (vaenv', unionTypesWithEnv typeEnv vaenv (resolveNew topResult) (resolveNew posResult))
 intersectTypesWithVarEnv typeEnv vaenv t1 t2@(UnionType (Just _) pos _)
   | not (H.null pos) = intersectTypesWithVarEnv typeEnv vaenv t2 t1
 -- Top ∩ Top → union excluded sets, predicates, and constants
