@@ -177,13 +177,10 @@ mkReachesEnv env (Constraint maybeConOa stypeVaenv _) = do
   return $ ReachesEnv (argTypeEnv <> feTypeEnv') (fmap snd vaenv) S.empty
 
 arrowConstrainUbs :: FEnv -> RConstraint -> Type -> Type -> TypeCheckResult (Type, Type, Maybe ReachesTree)
-arrowConstrainUbs env@FEnv{feUnionAllObjs} con PTopType dest@(UnionType Nothing _ _) = do
-  unionPnt <- descriptor env feUnionAllObjs
-  case unionPnt of
-    SType{stypeAct=unionUb@(UnionType Nothing _ _)} -> do
-      (src', dest', destRT') <- arrowConstrainUbs env con unionUb dest
-      return (src', dest', destRT')
-    _ -> return (PTopType, dest, Nothing)
+-- When the src is fully unresolved (Top) we cannot yet pick an arrow, so skip
+-- deriving the destination from the whole-universe reach. This avoids re-running
+-- the (expensive) universe 'reachesPartials' every epoch while the src stays Top;
+-- once the src resolves, the concrete-src derivation below supersedes it.
 arrowConstrainUbs _ _ PTopType dest = return (PTopType, dest, Nothing)
 arrowConstrainUbs _ _ src@(UnionType (Just _) _ _) dest = return (src, dest, Nothing)
 arrowConstrainUbs env con@Constraint{conVaenv} src@(TypeVar v _) dest = do
