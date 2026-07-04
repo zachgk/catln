@@ -2994,8 +2994,48 @@ substituteTVExt vaenv (UnionType Nothing partials []) =
       where
         ptVars' = fmap (substituteTVExt vaenv) ptVars
         innerVaenv = joinVarArgEnv ptVars' H.empty
+-- Also substitute inside the predicate ('Just') component: a class/rel predicate such as
+-- @PredClass ConsList[/T=$_B]@ carries external vars that must resolve the same way as those in
+-- the positive leaves (e.g. an arrow whose result type is an abstract-class type like
+-- @ConsList[$T -> $_B]@ needs @$_B@ bound from the matched argument). Leaving them unsubstituted
+-- kept the result abstract, so downstream completion widened the parameter to Top. Only vars that
+-- are actually bound in @vaenv@ are replaced; an external var absent from the env is *kept* (not
+-- dropped to Top), so a recursive predicate like @PredClass ConsList[/T=$_T]@ stays linked.
+substituteTVExt vaenv (UnionType (Just (preds, negLeafs)) posLeafs consts) =
+  UnionType (Just (mapTypePreds (mapTypePred (substitutePartialKeep vaenv)) preds, negLeafs)) posLeafs consts
 substituteTVExt vaenv (TypeVar v _) = vaenvLookup vaenv v
 substituteTVExt _     t             = t
+
+-- | Substitute vars within a predicate partial, but *only* when the env resolves an external
+-- ('TVExt') var to a concrete (non-Top) type. An external var absent from the env — or bound only
+-- to Top — is kept, so a recursive predicate like @PredClass ConsList[/T=$_T]@ stays linked rather
+-- than widening to Top. Internal ('TVInt') vars are always kept: they name the partial's own
+-- parameters and resolve through its @ptVars@, not the outer scope.
+substitutePartialKeep :: TypeVarArgEnv -> PartialType -> PartialType
+substitutePartialKeep vaenv partial@PartialType{ptVars, ptArgs, ptPreds} = partial{
+    ptVars  = fmap (substituteKeep vaenv) ptVars,
+    ptArgs  = fmap (substituteKeep innerVaenv) ptArgs,
+    ptPreds = mapTypePreds (mapTypePred (substitutePartialKeep innerVaenv)) ptPreds
+    }
+  where
+    ptVars' = fmap (substituteKeep vaenv) ptVars
+    innerVaenv = joinVarArgEnv ptVars' H.empty
+
+-- | See 'substitutePartialKeep': substitutes only concrete external bindings, keeping every other
+-- var unchanged.
+substituteKeep :: TypeVarArgEnv -> Type -> Type
+substituteKeep vaenv t@(TypeVar v TVExt) = case H.lookup v vaenv of
+  Just b | not (isTop b) -> b
+  _                      -> t
+  where
+    isTop PTopType = True
+    isTop _        = False
+substituteKeep _     t@(TypeVar _ TVInt) = t
+substituteKeep vaenv (UnionType Nothing partials []) =
+  UnionType Nothing (joinUnionType $ map (substitutePartialKeep vaenv) $ splitUnionType partials) []
+substituteKeep vaenv (UnionType (Just (preds, negLeafs)) posLeafs consts) =
+  UnionType (Just (mapTypePreds (mapTypePred (substitutePartialKeep vaenv)) preds, negLeafs)) posLeafs consts
+substituteKeep _     t                   = t
 
 -- | Replaces 'TVExt' 'TVVar' references in a 'Type' using the provided 'TypeVarEnv'.
 -- Thin wrapper over 'substituteTVExt'.
