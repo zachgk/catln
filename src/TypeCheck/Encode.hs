@@ -139,6 +139,12 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
                             AddArg 8 (baseM', TVArg $ inExprSingleton obj) m',
                             PropEq 11 (m', TVArg $ inExprSingleton obj) arrM'
                             ]
+              -- A lambda argument (@fn(v)= v@): each of its parameters is typed by the callee's
+              -- declared input type for that position (@fn(v -> $_A)@), resolved per call site
+              -- during solving (see 'fnArgInputBound'). Without this nothing constrains the
+              -- lambda's parameter, so its body — and hence the function's output — stays Top.
+              ++ [ FnInputBound 45 (m', inExprSingleton obj, inExprSingleton nObj) nArrM
+                 | ObjArr{oaObj=Just nObj, oaArr=Just (_, nArrM)} <- exprAppliedArgs obj ]
             (EncodeOut{}, Nothing, Just (Just _argExpr', _arrM')) ->
               -- Output with (x) infer
               [

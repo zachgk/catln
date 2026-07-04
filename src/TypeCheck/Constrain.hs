@@ -189,6 +189,11 @@ computeConstraint env con@(Constraint _ _ (ArrowTo i src dest)) = case arrowCons
 computeConstraint env con@(Constraint _ vaenv (PropEq i (super, name) sub)) = (False, con{conVaenv=updateCOVarArgEnv vaenv' vaenv, conDat=PropEq i (super', name) sub'})
   where
     (vaenv', super', sub') = updateSchemeProp env (fmap snd vaenv) super name sub
+computeConstraint env@FEnv{feTypeEnv} con@(Constraint _ _ (FnInputBound i (callP, fnKey, inKey) inp@SType{stypeAct=inpAct})) = (False, con{conDat=FnInputBound i (callP, fnKey, inKey) inp{stypeAct=inpAct'}})
+  where
+    inpAct' = case fnArgInputBound env (stypeAct callP) fnKey inKey of
+      Just b  -> intersectTypes feTypeEnv inpAct b
+      Nothing -> inpAct
 computeConstraint env con@(Constraint _ vaenv (AddArg i (src, newArgName) dest)) = (False, con{conDat=AddArg i (src, newArgName) dest'})
   where
     dest' = addArgToScheme env (fmap snd vaenv) src newArgName dest

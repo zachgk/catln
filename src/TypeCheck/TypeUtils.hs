@@ -25,7 +25,8 @@ import           Control.Monad
 import           Control.Monad.State
 import           CtConstants         (runtimeAnnot)
 import           Data.Bifunctor      (Bifunctor (bimap))
-import           Data.List           (intercalate)
+import           Data.List           (find, intercalate)
+import           Data.Maybe          (mapMaybe)
 import           Data.UUID           (nil)
 import           MapMeta
 import           Semantics
@@ -155,6 +156,45 @@ buildTypeEnv env@FEnv{feTypeEnv, feVTypeGraph, feTTypeGraph} = do
       soa <- showObjArr env voa
       let soa' = mapMetaObjArr clearMetaDat Nothing soa
       return soa'
+
+-- | The declared input type of a higher-order argument's parameter, resolved for a call site.
+-- For @apply(x= 1, fn(v)= v)@ whose matched declaration is @apply(x -> $_A, fn(v -> $_A) -> $_B)@,
+-- the lambda's parameter @v@ is typed by the declaration's @$_A@, substituted with the bindings
+-- the call's arguments determine (@x=Integer ⇒ $_A=Integer@). Only a fully concrete result is
+-- returned: the lambda's input point is narrowed by resolved knowledge only, never by symbolic
+-- variables (writing a symbolic external var into a resolving point oscillates against later
+-- epochs). Declarations only ('omiDecls') — an unannotated definition carries no input contract.
+fnArgInputBound :: FEnv -> Type -> ArgName -> ArgName -> Maybe Type
+fnArgInputBound env callAct fnKey inKey = case callAct of
+  UnionType Nothing leafs [] -> case mapMaybe partialBound (splitUnionType leafs) of
+    [] -> Nothing
+    bs -> Just $ unionAllTypes typeEnv bs
+  _ -> Nothing
+  where
+    typeEnv = feReachesTypeEnv env
+    TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} = typeEnv
+    -- keys drift between phases in pkVars (see 'typeGetArgLoose'); match name and applied args
+    looseKeyMatch a b = a == b || (pkName a == pkName b && pkArgs a == pkArgs b)
+    findArg k = find (maybe False (\ob -> looseKeyMatch (inExprSingleton ob) k) . oaObj)
+    partialBound partial@PartialType{ptName} =
+      case mapMaybe (oaBound partial) (maybe [] omiDecls (H.lookup ptName tg)) of
+        [] -> Nothing
+        bs -> Just $ unionAllTypes typeEnv bs
+    oaBound partial oa = do
+      let objArgs = exprAppliedArgs (oaObjExpr oa)
+      fnOa <- findArg fnKey objArgs
+      fnObj <- oaObj fnOa
+      inOa <- findArg inKey (exprAppliedArgs fnObj)
+      (_, inM) <- oaArr inOa
+      -- the bindings the call's arguments give the declaration's variables
+      let venvs = [ fst $ intersectTypesWithVarEnv typeEnv H.empty (getMetaType aM) srcV
+                  | argOa <- objArgs
+                  , Just aObj <- [oaObj argOa]
+                  , Just (_, aM) <- [oaArr argOa]
+                  , Just srcV <- [typeGetArgLoose (inExprSingleton aObj) partial] ]
+      let inTy = substituteWithVarArgEnv (mergeAllVarEnvs typeEnv venvs) (getMetaType inM)
+      guard (typeFullyConcrete inTy)
+      return inTy
 
 mkReachesEnv :: FEnv -> RConstraint -> TypeCheckResult (ReachesEnv (ObjArrTypeGraph Expr ()))
 mkReachesEnv env (Constraint maybeConOa stypeVaenv _) = do
