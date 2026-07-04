@@ -146,14 +146,59 @@ arrowDestType typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, oaM)} = map (arrowDes
       Nothing -> error $ printf "Non-singleton in arrowDestType"
     arrowDestTypeForVaenv vaenv = case oaArrExpr of
       -- _ | trace (printf "arrowDestType from %s with %s to %s.\n\t\tVanev: %s" (show src) (show oa) (show joined) (show vaenv)) False -> undefined
-      Just n | isJust (maybeExprPath n) -> maybe joined substitute (H.lookup (TVArg $ inExprSingleton n) vaenv)
-      _                              -> joined
+      Just n | isJust (maybeExprPath n) -> maybe joinedResolved substitute (H.lookup (TVArg $ inExprSingleton n) vaenv)
+      _                              -> joinedResolved
       where
         substitute = substituteWithVarArgEnv vaenv
         expr' = fmap (substitute . getExprType) oaArrExpr
         arr' = substitute $ getMetaType oaM
         joined = fromMaybe arr' expr'
+        -- Only rewrite a body that directly CONSTRUCTS a data value (@Cons(head=x)@): its applied
+        -- arguments are the constructor's fields. A function/operator body (@a && b@, @f(a=..)@) has
+        -- applied arguments that are the callee's parameters, not the result's fields, so leave it.
+        isDataConstruction = case maybeExprPath =<< oaArrExpr of
+          Just n  -> not (null (typeGraphData typeEnv n))
+          Nothing -> False
+        joinedResolved | isDataConstruction = applyResolvedFields typeEnv resolvedFields joined
+                       | otherwise          = joined
+        -- A definition body that constructs a value — @Cons(head=x)@ — stores its fields with the
+        -- body's (abstract) argument types: @head@ becomes Top because @x@ is abstract in the body.
+        -- At dispatch the vaenv binds the argument (@x=Integer@), so resolve each field whose value
+        -- is an argument reference through the vaenv, recovering @head=Integer@ (and hence the data
+        -- parameter it defines — see 'applyResolvedFields'). This is the per-field analogue of the
+        -- bare-path body case above (@= v@).
+        resolvedFields = H.fromList
+          [ (inExprSingleton (oaObjExpr a), fv)
+          | Just b <- [oaArrExpr]
+          , a <- exprAppliedArgs b
+          , Just (Just valExpr, _) <- [oaArr a]
+          -- Only a bare argument reference (@head=x@); an application (@head=fn(v=x)@) names a
+          -- function whose result — not the function itself — is the field, so leave it.
+          , isJust (maybeExprPath valExpr)
+          , null (exprAppliedArgs valExpr)
+          , Just fv <- [H.lookup (TVArg (inExprSingleton valExpr)) vaenv] ]
 arrowDestType _ _ oa@ObjArr{oaArr=Nothing} = error $ printf "Unexpected call to arrowDestType with type obj (which has no arrow to find the dest type of): %s" (show oa)
+
+-- | Set resolved field values on a constructed type and bind the data parameters those fields
+-- define. For @Cons(head=x)@ resolved to @head=Integer@, the Cons declaration links @head -> $T@,
+-- so this both sets @/head=Integer@ and binds the element parameter @/T=Integer@. A field whose
+-- declared type is not a bare parameter is set without binding.
+applyResolvedFields :: (TypeGraph tg) => TypeEnv tg -> H.HashMap ArgName Type -> Type -> Type
+applyResolvedFields _       fields t | H.null fields = t
+applyResolvedFields typeEnv fields (UnionType Nothing leafs consts) =
+  UnionType Nothing (joinUnionType (map applyLeaf (splitUnionType leafs))) consts
+  where
+    applyLeaf p = foldr applyField p (H.toList fields)
+    applyField (fieldName, fieldType) p@PartialType{ptName, ptVars} =
+      let declFieldType = case mapMaybe (H.lookup fieldName . ptArgs) (typeGraphData typeEnv ptName) of
+            (t:_) -> Just t
+            []    -> Nothing
+      in case declFieldType of
+           Just (TypeVar (TVVar v) TVInt) ->
+             p{ ptVars = H.insertWith (intersectTypes typeEnv) v fieldType ptVars
+              , ptArgs = H.insert fieldName fieldType (ptArgs p) }
+           _ -> p{ptArgs = H.insert fieldName fieldType (ptArgs p)}
+applyResolvedFields _ _ t = t
 
 metaTypeVar :: Meta m -> Maybe TypeVarAux
 metaTypeVar m = case getMetaType m of
