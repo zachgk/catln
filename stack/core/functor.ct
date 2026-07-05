@@ -37,7 +37,7 @@ module(Data)
 
   every(Identity[$T -> /Data/Algebra/Eq], isa= [/Data/Algebra/Eq])
 module(Data/Algebra)
-  :/Data/Id[$T -> /Data/Algebra/Eq](value).equal(other -> /Data/Identity[$E -> /Data/Algebra/Eq])= /Data/identityEqual(a= /Data/Id(value= value), b= other)
+  :/Data/Id[$T -> /Data/Algebra/Eq](value).equal(other -> /Data/Identity[$T -> /Data/Algebra/Eq])= /Data/identityEqual(a= /Data/Id(value= value), b= other)
 module(Data)
   # ## Functor laws
     Identity law: mapping the identity function over a functor returns it unchanged. Expressed

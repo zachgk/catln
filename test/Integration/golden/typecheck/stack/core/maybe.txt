@@ -26,12 +26,9 @@ Prgm
                                 )
                             ,
                                 ( /Data/maybeCompare
-                                    ( /a=/Data/Some[ /T=∀/Data/Algebra/Ord ]( /value=∀/Data/Algebra/Ord )
-                                    , /b=
-                                        ( TopType | PredClass /Data/Maybe[ /E=∀/Data/Algebra/Ord ] && PredClass /Data/Maybe[ /T=∀/Data/Algebra/Ord ] )
-                                    ) + /Data/maybeCompare
-                                    ( /a=/Data/Nothing
-                                    , /b=∀/Data/Maybe[ /E=∀/Data/Algebra/Ord ]
+                                    ( /a=
+                                        ( /Data/Some[ /T=∀/Data/Algebra/Ord ]( /value=∀/Data/Algebra/Ord ) + /Data/Nothing )
+                                    , /b=∀/Data/Maybe[ /T=∀/Data/Algebra/Ord ]
                                     ) + /Data/Algebra/LessThan + /Data/Algebra/mkComparison
                                     ( /eq=∀/Data/Primitive/Boolean
                                     , /lt=∀/Data/Primitive/Boolean
@@ -101,26 +98,20 @@ Prgm
                                     ( /r=/Data/String
                                     , /l=/Data/String
                                     ) + /Data/consEqual
-                                    ( /a=/Data/Cons[ /T=∀/Data/Algebra/Eq ]
-                                        ( /head=∀/Data/Algebra/Eq
-                                        , /tail=∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ]
+                                    ( /a=
+                                        ( /Data/Nil + /Data/Cons[ /T=∀/Data/Algebra/Eq ]
+                                            ( /head=∀/Data/Algebra/Eq
+                                            , /tail=∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ]
+                                            )
                                         )
-                                    , /b=
-                                        ( TopType | PredClass /Data/ConsList[ /E=∀/Data/Algebra/Eq ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Eq ] )
-                                    ) + /Data/consEqual
-                                    ( /a=/Data/Nil
-                                    , /b=∀/Data/ConsList[ /E=∀/Data/Algebra/Eq ]
+                                    , /b=∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ]
                                     ) + /Data/Primitive/True + /Data/maybeEqual
-                                    ( /a=/Data/Some[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq )
-                                    , /b=
-                                        ( TopType | PredClass /Data/Maybe[ /E=∀/Data/Algebra/Eq ] && PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] )
-                                    ) + /Data/maybeEqual
-                                    ( /a=/Data/Nothing
-                                    , /b=∀/Data/Maybe[ /E=∀/Data/Algebra/Eq ]
+                                    ( /a=
+                                        ( /Data/Some[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) + /Data/Nothing )
+                                    , /b=∀/Data/Maybe[ /T=∀/Data/Algebra/Eq ]
                                     ) + /Data/identityEqual
                                     ( /a=/Data/Id[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq )
-                                    , /b=
-                                        ( TopType | PredClass /Data/Identity[ /E=∀/Data/Algebra/Eq ] && PredClass /Data/Identity[ /T=∀/Data/Algebra/Eq ] )
+                                    , /b=∀/Data/Identity[ /T=∀/Data/Algebra/Eq ]
                                     ) + /Data/Algebra/rel
                                     ( /this=
                                         ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] )
@@ -264,7 +255,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/equal
-                            ( Value /other -> ∀/Data/Maybe[ /E=∀/Data/Algebra/Eq ] )( Value /this -> /Data/Nothing ) -> UnionType
+                            ( Value /other -> ∀/Data/Maybe[ /T=∀/Data/Algebra/Eq ] )( Value /this -> /Data/Nothing ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
@@ -272,13 +263,13 @@ Prgm
                             ,
                                 ( /Data/Primitive/True + /Data/maybeEqual
                                     ( /a=/Data/Nothing
-                                    , /b=∀/Data/Maybe[ /E=∀/Data/Algebra/Eq ]
+                                    , /b=∀/Data/Maybe[ /T=∀/Data/Algebra/Eq ]
                                     ) + /Data/Primitive/False
                                 )
                             , []
                             ) = /Data/maybeEqual( Value /a -> /Data/Nothing = Value /Data/Nothing )( Value /b -> TVArg /other = Value /other )
                         , /Data/Algebra/equal
-                            ( Value /other -> ∀/Data/Maybe[ /E=∀/Data/Algebra/Eq ] )
+                            ( Value /other -> ∀/Data/Maybe[ /T=∀/Data/Algebra/Eq ] )
                             ( Value /this -> /Data/Some[ /T=∀/Data/Algebra/Eq ]( /value=$/T ) = /Data/Some[ /T : ∀/Data/Algebra/Eq ]( Value /value -> ∀/Data/Algebra/Eq ) ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
@@ -292,23 +283,20 @@ Prgm
                                     ( /r=/Data/String
                                     , /l=/Data/String
                                     ) + /Data/consEqual
-                                    ( /a=/Data/Cons[ /T=∀/Data/Algebra/Eq ]
-                                        ( /head=∀/Data/Algebra/Eq
-                                        , /tail=∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ]
+                                    ( /a=
+                                        ( /Data/Nil + /Data/Cons[ /T=∀/Data/Algebra/Eq ]
+                                            ( /head=∀/Data/Algebra/Eq
+                                            , /tail=∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ]
+                                            )
                                         )
-                                    , /b=
-                                        ( TopType | PredClass /Data/ConsList[ /E=∀/Data/Algebra/Eq ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Eq ] )
-                                    ) + /Data/consEqual
-                                    ( /a=/Data/Nil
-                                    , /b=∀/Data/ConsList[ /E=∀/Data/Algebra/Eq ]
+                                    , /b=∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ]
                                     ) + /Data/Primitive/True + /Data/maybeEqual
                                     ( /a=
-                                        ( /Data/Some( /value=TopType ) + /Data/Nothing )
-                                    , /b=∀/Data/Maybe[ /E=∀/Data/Algebra/Eq ]
+                                        ( /Data/Some[ /T=∀/Data/Algebra/Eq ]( /value=TopType ) + /Data/Nothing )
+                                    , /b=∀/Data/Maybe[ /T=∀/Data/Algebra/Eq ]
                                     ) + /Data/identityEqual
                                     ( /a=/Data/Id[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq )
-                                    , /b=
-                                        ( TopType | PredClass /Data/Identity[ /E=∀/Data/Algebra/Eq ] && PredClass /Data/Identity[ /T=∀/Data/Algebra/Eq ] )
+                                    , /b=∀/Data/Identity[ /T=∀/Data/Algebra/Eq ]
                                     ) + /Data/Algebra/rel
                                     ( /this=
                                         ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] )
@@ -374,7 +362,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/compareTo
-                            ( Value /other -> ∀/Data/Maybe[ /E=∀/Data/Algebra/Ord ] )( Value /this -> /Data/Nothing ) -> UnionType
+                            ( Value /other -> ∀/Data/Maybe[ /T=∀/Data/Algebra/Ord ] )( Value /this -> /Data/Nothing ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Algebra/Comparison
                                 , fromList []
@@ -382,13 +370,13 @@ Prgm
                             ,
                                 ( /Data/maybeCompare
                                     ( /a=/Data/Nothing
-                                    , /b=∀/Data/Maybe[ /E=∀/Data/Algebra/Ord ]
+                                    , /b=∀/Data/Maybe[ /T=∀/Data/Algebra/Ord ]
                                     ) + /Data/Algebra/LessThan + /Data/Algebra/Equal
                                 )
                             , []
                             ) = /Data/maybeCompare( Value /a -> /Data/Nothing = Value /Data/Nothing )( Value /b -> TVArg /other = Value /other )
                         , /Data/Algebra/compareTo
-                            ( Value /other -> ∀/Data/Maybe[ /E=∀/Data/Algebra/Ord ] )
+                            ( Value /other -> ∀/Data/Maybe[ /T=∀/Data/Algebra/Ord ] )
                             ( Value /this -> /Data/Some[ /T=∀/Data/Algebra/Ord ]( /value=$/T ) = /Data/Some[ /T : ∀/Data/Algebra/Ord ]( Value /value -> ∀/Data/Algebra/Ord ) ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Algebra/Comparison
@@ -396,12 +384,9 @@ Prgm
                                 )
                             ,
                                 ( /Data/maybeCompare
-                                    ( /a=/Data/Nothing
-                                    , /b=∀/Data/Maybe[ /E=∀/Data/Algebra/Ord ]
-                                    ) + /Data/maybeCompare
-                                    ( /a=/Data/Some[ /T=∀/Data/Algebra/Ord ]( /value=TopType )
-                                    , /b=
-                                        ( TopType | PredClass /Data/Maybe[ /E=∀/Data/Algebra/Ord ] && PredClass /Data/Maybe[ /T=∀/Data/Algebra/Ord ] )
+                                    ( /a=
+                                        ( /Data/Some[ /T=∀/Data/Algebra/Ord ]( /value=TopType ) + /Data/Nothing )
+                                    , /b=∀/Data/Maybe[ /T=∀/Data/Algebra/Ord ]
                                     ) + /Data/Algebra/LessThan + /Data/Algebra/mkComparison
                                     ( /eq=∀/Data/Primitive/Boolean
                                     , /lt=∀/Data/Primitive/Boolean

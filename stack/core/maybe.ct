@@ -61,8 +61,8 @@ module(Data/Maybe)
 module(Data)
   every(Maybe[$T -> /Data/Algebra/Eq], isa= [/Data/Algebra/Eq])
 module(Data/Algebra)
-  :/Data/Nothing.equal(other -> /Data/Maybe[$E -> /Data/Algebra/Eq])= /Data/maybeEqual(a= /Data/Nothing, b= other)
-  :/Data/Some[$T -> /Data/Algebra/Eq](value).equal(other -> /Data/Maybe[$E -> /Data/Algebra/Eq])= /Data/maybeEqual(a= /Data/Some(value= value), b= other)
+  :/Data/Nothing.equal(other -> /Data/Maybe[$T -> /Data/Algebra/Eq])= /Data/maybeEqual(a= /Data/Nothing, b= other)
+  :/Data/Some[$T -> /Data/Algebra/Eq](value).equal(other -> /Data/Maybe[$T -> /Data/Algebra/Eq])= /Data/maybeEqual(a= /Data/Some(value= value), b= other)
 
 # # Maybe Ord membership
   Makes a [Maybe] of any [Ord] element a proper member of [Ord], so [compareTo] dispatches per
@@ -71,8 +71,8 @@ module(Data/Algebra)
 module(Data)
   every(Maybe[$T -> /Data/Algebra/Ord], isa= [/Data/Algebra/Ord])
 module(Data/Algebra)
-  :/Data/Nothing.compareTo(other -> /Data/Maybe[$E -> /Data/Algebra/Ord])= /Data/maybeCompare(a= /Data/Nothing, b= other)
-  :/Data/Some[$T -> /Data/Algebra/Ord](value).compareTo(other -> /Data/Maybe[$E -> /Data/Algebra/Ord])= /Data/maybeCompare(a= /Data/Some(value= value), b= other)
+  :/Data/Nothing.compareTo(other -> /Data/Maybe[$T -> /Data/Algebra/Ord])= /Data/maybeCompare(a= /Data/Nothing, b= other)
+  :/Data/Some[$T -> /Data/Algebra/Ord](value).compareTo(other -> /Data/Maybe[$T -> /Data/Algebra/Ord])= /Data/maybeCompare(a= /Data/Some(value= value), b= other)
 
 # # Maybe Functor instance
   Makes a [Maybe] a [Functor]: [fmap] applies a function to the wrapped value of a [Some] and

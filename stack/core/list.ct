@@ -100,8 +100,8 @@ module(Data/List)
 module(Data)
   every(ConsList[$T -> /Data/Algebra/Eq], isa= [/Data/Algebra/Eq])
 module(Data/Algebra)
-  :/Data/Nil.equal(other -> /Data/ConsList[$E -> /Data/Algebra/Eq])= /Data/consEqual(a= /Data/Nil, b= other)
-  :/Data/Cons[$T -> /Data/Algebra/Eq](head, tail).equal(other -> /Data/ConsList[$E -> /Data/Algebra/Eq])= /Data/consEqual(a= /Data/Cons(head= head, tail= tail), b= other)
+  :/Data/Nil.equal(other -> /Data/ConsList[$T -> /Data/Algebra/Eq])= /Data/consEqual(a= /Data/Nil, b= other)
+  :/Data/Cons[$T -> /Data/Algebra/Eq](head, tail).equal(other -> /Data/ConsList[$T -> /Data/Algebra/Eq])= /Data/consEqual(a= /Data/Cons(head= head, tail= tail), b= other)
 
 # # ConsList Monad instance
   [mmap] over a [ConsList] is concatMap: the function returns a whole list for each element, and

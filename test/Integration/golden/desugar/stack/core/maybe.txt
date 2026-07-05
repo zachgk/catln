@@ -12,25 +12,15 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/maybeCompare( Value a= Value Nothing )( Value b= Value Nothing ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/Equal
+                        [ /Data/maybeCompare( Value a= Value Nothing )( Value b= Value Nothing )= Value /Data/Algebra/Equal
                         , /Data/maybeCompare( Value a= Value Nothing )
-                            ( Value b= /Data/Some( Value value ) ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/LessThan
+                            ( Value b= /Data/Some( Value value ) )= Value /Data/Algebra/LessThan
                         , /Data/maybeCompare
-                            ( Value a= /Data/Some( Value value ) )( Value b= Value Nothing ) -> ∀/Data/Algebra/Comparison = Value /Data/Algebra/GreaterThan
+                            ( Value a= /Data/Some( Value value ) )( Value b= Value Nothing )= Value /Data/Algebra/GreaterThan
                         , /Data/maybeCompare
                             ( Value a= /Data/Some( Value value@Value av ) )
-                            ( Value b= /Data/Some( Value value@Value bv ) ) -> ∀/Data/Algebra/Comparison = compareTo( Value other= Value bv )( Value /this= Value av )
+                            ( Value b= /Data/Some( Value value@Value bv ) )= compareTo( Value other= Value bv )( Value /this= Value av )
                         ]
-                    }
-                )
-            ,
-                ( "/Data/Maybe/testPureMaybe"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/Maybe/testPureMaybe= CInt 0 ]
                     }
                 )
             ,
@@ -54,36 +44,14 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/maybeEqual( Value a= Value Nothing )( Value b= Value Nothing ) -> ∀/Data/Primitive/Boolean = Value True
+                        [ /Data/maybeEqual( Value a= Value Nothing )( Value b= Value Nothing )= Value True
                         , /Data/maybeEqual( Value a= Value Nothing )
-                            ( Value b= /Data/Some( Value value ) ) -> ∀/Data/Primitive/Boolean = Value False
+                            ( Value b= /Data/Some( Value value ) )= Value False
                         , /Data/maybeEqual
-                            ( Value a= /Data/Some( Value value ) )( Value b= Value Nothing ) -> ∀/Data/Primitive/Boolean = Value False
+                            ( Value a= /Data/Some( Value value ) )( Value b= Value Nothing )= Value False
                         , /Data/maybeEqual
                             ( Value a= /Data/Some( Value value@Value av ) )
-                            ( Value b= /Data/Some( Value value@Value bv ) ) -> ∀/Data/Primitive/Boolean = /operator==( Value /l= Value av )( Value /r= Value bv )
-                        ]
-                    }
-                )
-            ,
-                ( "/Data/Maybe/testMmapSomeToNothing"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/Maybe/testMmapSomeToNothing= CInt 0 ]
-                    }
-                )
-            ,
-                ( "/Data/pure"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/pure
-                            [ /M : ∀/Data/Maybe[ /T=$_/T ] ]( Value v )= /Data/Some( Value value= Value v )
+                            ( Value b= /Data/Some( Value value@Value bv ) )= /operator==( Value /l= Value av )( Value /r= Value bv )
                         ]
                     }
                 )
@@ -133,37 +101,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/Maybe/testMmapSomeBind"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/Maybe/testMmapSomeBind= CInt 0 ]
-                    }
-                )
-            ,
-                ( "/Data/Maybe/testMmapNothing"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ Value /Data/Maybe/testMmapNothing= CInt 0 ]
-                    }
-                )
-            ,
-                ( "/Data/Maybe/pureSomeInt"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/Maybe/pureSomeInt( Value v -> /Data/Primitive/Integer ) -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/Maybe/pureSomeInt( Value v ) -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/pure( Value v= Value v ) ]
-                    }
-                )
-            ,
                 ( "/Data/Algebra/equal"
                 , ObjectMapItem
                     { omiDecls = []
@@ -171,10 +108,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/equal
-                            ( Value other -> ∀/Data/Maybe[ /E=∀/Data/Algebra/Eq ] )( Value /this -> /Data/Nothing ) -> ∀/Data/Primitive/Boolean = /Data/maybeEqual( Value a= Value /Data/Nothing )( Value b= Value other )
+                            ( Value other -> ∀/Data/Maybe[ /T=∀/Data/Algebra/Eq ] )( Value /this -> /Data/Nothing )= /Data/maybeEqual( Value a= Value /Data/Nothing )( Value b= Value other )
                         , /Data/Algebra/equal
-                            ( Value other -> ∀/Data/Maybe[ /E=∀/Data/Algebra/Eq ] )
-                            ( Value /this= /Data/Some[ /T : ∀/Data/Algebra/Eq ]( Value value ) ) -> ∀/Data/Primitive/Boolean = /Data/maybeEqual
+                            ( Value other -> ∀/Data/Maybe[ /T=∀/Data/Algebra/Eq ] )
+                            ( Value /this= /Data/Some[ /T : ∀/Data/Algebra/Eq ]( Value value ) )= /Data/maybeEqual
                             ( Value a= /Data/Some( Value value= Value value ) )( Value b= Value other )
                         ]
                     }
@@ -190,21 +127,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/mmap"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/mmap( Value m= Value Nothing )
-                            ( fn( Value v ) )= Value Nothing
-                        , /Data/mmap
-                            ( Value m= /Data/Some( Value value ) )
-                            ( fn( Value v ) )= fn( Value v= Value value )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/Algebra/compareTo"
                 , ObjectMapItem
                     { omiDecls = []
@@ -212,10 +134,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/compareTo
-                            ( Value other -> ∀/Data/Maybe[ /E=∀/Data/Algebra/Ord ] )( Value /this -> /Data/Nothing ) -> ∀/Data/Algebra/Comparison = /Data/maybeCompare( Value a= Value /Data/Nothing )( Value b= Value other )
+                            ( Value other -> ∀/Data/Maybe[ /T=∀/Data/Algebra/Ord ] )( Value /this -> /Data/Nothing )= /Data/maybeCompare( Value a= Value /Data/Nothing )( Value b= Value other )
                         , /Data/Algebra/compareTo
-                            ( Value other -> ∀/Data/Maybe[ /E=∀/Data/Algebra/Ord ] )
-                            ( Value /this= /Data/Some[ /T : ∀/Data/Algebra/Ord ]( Value value ) ) -> ∀/Data/Algebra/Comparison = /Data/maybeCompare
+                            ( Value other -> ∀/Data/Maybe[ /T=∀/Data/Algebra/Ord ] )
+                            ( Value /this= /Data/Some[ /T : ∀/Data/Algebra/Ord ]( Value value ) )= /Data/maybeCompare
                             ( Value a= /Data/Some( Value value= Value value ) )( Value b= Value other )
                         ]
                     }
@@ -224,13 +146,6 @@ Prgm
         )
     , prgmCG =
         [ CGType
-        , CGType
-        , CGType
-        , CGType
-        , CGType
-        , CGType
-        , CGType
-        , CGType
         , CGType
         , CGType
         , CGType
@@ -269,13 +184,6 @@ Prgm
                 , /Data/Nothing
                 ]
             , Just "A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]."
-            )
-        , CGClass
-            ( False
-            , /Data/Maybe
-            ,
-                [ ∀/Data/Maybe[ /T=$_/T ] ]
-            , Just ""
             )
         ]
     , prgmAnnots =
@@ -321,26 +229,5 @@ Prgm
             Makes a [Maybe] a [Functor]: [fmap] applies a function to the wrapped value of a [Some] and
             leaves a [Nothing] unchanged. The instances are defined under the declaration's absolute name
             (see the [ConsList] instance in [Data/list] for the naming rationale)." )
-        , /Catln/#md
-            ( Value /text= CStr "# Maybe Monad instance
-            Makes a [Maybe] a [Monad]: [mmap] applies a value-to-[Maybe] function to the wrapped value of a
-            [Some] (returning whatever [Maybe] the function produces, which flattens the two layers into one),
-            and short-circuits a [Nothing] unchanged. Mirrors the [Functor] instance above; the definitions
-            are written under the declaration's absolute name (see the [ConsList] instance in [Data/list] for
-            the naming rationale)." )
-        , /Catln/#md
-            ( Value /text= CStr "[mmap] binds through the [Some] arm (its result is whatever [Maybe] the function returns) and" )
-        , /Catln/#md
-            ( Value /text= CStr "short-circuits the [Nothing] arm. [Maybe] is already an [Eq] member (see above), so the" )
-        , /Catln/#md
-            ( Value /text= CStr "flattened result compares with [operator==]. (A function whose body computes the wrapped value," )
-        , /Catln/#md
-            ( Value /text= CStr "e.g. [Some(value= v + 1)], is not yet comparable — a pre-existing gap unrelated to [Monad]; see" )
-        , /Catln/#md
-            ( Value /text= CStr "the note in [Data/monad].)" )
-        , /Catln/#md
-            ( Value /text= CStr "[pure] for [Maybe] wraps the value in a [Some]; the call site's expected [Maybe] type selects" )
-        , /Catln/#md
-            ( Value /text= CStr "this instance (return-type-directed dispatch — see [pure] in [Data/monad])." )
         ]
     }

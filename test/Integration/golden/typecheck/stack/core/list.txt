@@ -337,7 +337,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/equal
-                            ( Value /other -> ∀/Data/ConsList[ /E=∀/Data/Algebra/Eq ] )( Value /this -> /Data/Nil ) -> UnionType
+                            ( Value /other -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ] )( Value /this -> /Data/Nil ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
@@ -345,13 +345,13 @@ Prgm
                             ,
                                 ( /Data/consEqual
                                     ( /a=/Data/Nil
-                                    , /b=∀/Data/ConsList[ /E=∀/Data/Algebra/Eq ]
+                                    , /b=∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ]
                                     ) + /Data/Primitive/True + /Data/Primitive/False
                                 )
                             , []
                             ) = /Data/consEqual( Value /a -> /Data/Nil = Value /Data/Nil )( Value /b -> TVArg /other = Value /other )
                         , /Data/Algebra/equal
-                            ( Value /other -> ∀/Data/ConsList[ /E=∀/Data/Algebra/Eq ] )
+                            ( Value /other -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ] )
                             ( Value /this -> /Data/Cons[ /T=∀/Data/Algebra/Eq ]
                                 ( /head=$/T
                                 , /tail=∀/Data/ConsList[ /T=$_/T ]
@@ -368,8 +368,7 @@ Prgm
                                         ( /head=$/T
                                         , /tail=∀/Data/ConsList[ /T=$_/T ]
                                         )
-                                    , /b=
-                                        ( TopType | PredClass /Data/ConsList[ /E=∀/Data/Algebra/Eq ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Eq ] )
+                                    , /b=∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ]
                                     ) + /Data/Primitive/True + /operator&&
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
