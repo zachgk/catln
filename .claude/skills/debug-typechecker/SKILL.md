@@ -45,10 +45,12 @@ TypeCheck typically surfaces as a confusing error in TreeBuild or Eval.
   directory's `stack/` during development (only an installed compiler falls back to
   `~/.catln/stack`), so a type error's file path tells you *which* core is in play. Sanity-check
   by running an unrelated passing file before trusting a failure on your repro.
-- **`test` vs `typetrace` on failure.** A `CRes` type error (e.g. `Scheme failed check … ∅`,
-  `Definition Outside Declaration`) still lets `typetrace` write its files — use it. But a *hard*
-  exception (`catln: user error (…)`, `Could not build catln service`) aborts before the trace is
-  written; in that case run `stack exec catln -- test <file>` to see the underlying `CRes` error.
+- **`test` vs `typetrace` on failure.** Type errors — including `Scheme failed check`,
+  `Scheme failed verification` (Grows-by), and `Definition Outside Declaration` — let
+  `typetrace` write its files; use it (a scheme failure poisons its point but no longer aborts
+  the service). A *hard* exception (`catln: user error (…)`, `Could not build catln service`)
+  still occurs for parse/desugar errors and decode argument-inference failures, where there is
+  no trace to write; run `stack exec catln -- test <file>` to see the underlying `CRes` error.
 
 ## 2. Read the failure signature
 

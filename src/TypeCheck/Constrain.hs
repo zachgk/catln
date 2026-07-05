@@ -265,22 +265,31 @@ runConstraints 0 _ = do
     then lift $ TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit without determining the TopTop (unionAllObjs)"] ()
     else lift $ TypeCheckResult [GenTypeCheckError Nothing $ printf "Reached runConstraints limit with still changing constraints: \n\n%s" (show $ showTraceConstrainEpoch env $ head $ tail $ tcEpochs feTrace)] ()
 runConstraints limit cons = do
+  env <- get
   -- Compute the constraint-independent reaches type graph once for this epoch and cache it, so
   -- the (many) 'arrowConstrainUbs'/'mkReachesEnv' calls in this epoch reuse it instead of each
   -- rebuilding the whole type graph. See the TODO on 'buildTypeEnv'.
-  do
-    env <- get
-    reachesTypeEnv <- lift $ buildTypeEnv env
-    -- Every 'BoundedByObjs' constraint is bounded by the same 'feUnionAllObjs' descriptor
-    -- (substituted uniformly by 'showCon'), so the completion @unionTypes u (completeDataPartials u)@
-    -- in 'computeConstraint' is identical across all of them. Compute it once per epoch, keyed by the
-    -- universe value @u@ so 'computeConstraint' can reuse it EXACTLY (only when its bound equals @u@).
-    let u = maybe BottomType stypeAct $ tcreToMaybe $ descriptor env $ feUnionAllObjs env
-    let completedAllObjs = unionTypes (feTypeEnv env) u (completeDataPartials (feTypeEnv env) u)
-    modify $ \e -> e{feReachesTypeEnv = reachesTypeEnv, feCompletedAllObjsKey = u, feCompletedAllObjs = completedAllObjs}
-  constraintsToPrune <- mapM executeConstraint cons
-  updated <- gets feUpdatedDuringEpoch
-  let cons' = mapMaybe (\(con, shouldPrune) -> if shouldPrune then Nothing else Just con) $ zip cons constraintsToPrune
-  when updated $ do
-    modify nextConstrainEpoch
-    runConstraints (limit - 1) cons'
+  --
+  -- A failed 'setScheme' check or verification stores a 'TypeCheckResE' in the failing point,
+  -- and 'buildTypeEnv' reads every object's points, so lifting its result directly would abort
+  -- the whole 'StateT' computation here on the following epoch - discarding 'feTrace' (leaving
+  -- 'catln typetrace' with nothing to write) along with all other typecheck artifacts. Instead,
+  -- demote the failure to recoverable error notes and stop constraining: decoding still surfaces
+  -- the poisoned points' errors, and consumers reject the program via 'failOnErrorNotes'.
+  case buildTypeEnv env of
+    TypeCheckResE errNotes -> lift $ TypeCheckResult errNotes ()
+    TypeCheckResult notes reachesTypeEnv -> do
+      lift $ TypeCheckResult notes ()
+      -- Every 'BoundedByObjs' constraint is bounded by the same 'feUnionAllObjs' descriptor
+      -- (substituted uniformly by 'showCon'), so the completion @unionTypes u (completeDataPartials u)@
+      -- in 'computeConstraint' is identical across all of them. Compute it once per epoch, keyed by the
+      -- universe value @u@ so 'computeConstraint' can reuse it EXACTLY (only when its bound equals @u@).
+      let u = maybe BottomType stypeAct $ tcreToMaybe $ descriptor env $ feUnionAllObjs env
+      let completedAllObjs = unionTypes (feTypeEnv env) u (completeDataPartials (feTypeEnv env) u)
+      modify $ \e -> e{feReachesTypeEnv = reachesTypeEnv, feCompletedAllObjsKey = u, feCompletedAllObjs = completedAllObjs}
+      constraintsToPrune <- mapM executeConstraint cons
+      updated <- gets feUpdatedDuringEpoch
+      let cons' = mapMaybe (\(con, shouldPrune) -> if shouldPrune then Nothing else Just con) $ zip cons constraintsToPrune
+      when updated $ do
+        modify nextConstrainEpoch
+        runConstraints (limit - 1) cons'
