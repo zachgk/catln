@@ -1761,6 +1761,12 @@ satGoal :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Bool -> SatHyps -> Sat
 satGoal typeEnv vaenv gatePos hyps goal0
   | satDebugTrace && trace (printf "[SATG %d gate=%s] %s" (S.size hyps) (show gatePos) (show (satGoalNorm goal0))) False = undefined
   | goal `S.member` hyps = (satDebugTrace && trace (printf "[SATG %d] CYCLE -> False" (S.size hyps)) False) || False -- recursive goal: no finite witness along this path
+  -- @X ∧ ¬X@: an atom required positively and negatively at once is contradictory, whatever
+  -- the atom means. The enumeration below cannot be trusted to detect this (a candidate on
+  -- which BOTH the admit and the escape check are conservative reads as a witness - e.g.
+  -- @Ord ∧ Eq ∧ ¬Eq@ found "satisfiable" through a parameterized class member), so decide it
+  -- syntactically first.
+  | any (`elem` sgNeg goal) (sgPos goal) = False
   | otherwise = case sgPos goal of
       [] -> True -- no positive constraint: the open universe escapes any finite negatives
       _  -> case genCandidates generator of
