@@ -1,0 +1,88 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/Data/testMonadIdentityMmap"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/testMonadIdentityMmap -> /Data/Primitive/Integer = CInt 0 ]
+                    }
+                )
+            ,
+                ( "/Data/mmap"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/mmap[ /B : TopType ][ /A : TopType ]
+                            [ /M : ∀/Data/Monad[ /T=$_/A ] ]( Value /m -> $/M )
+                            ( /fn( Value /v -> $_/A ) -> $/M ) -> $/M
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/mmap
+                            ( Value /m -> /Data/Id[ /T=TopType ]( /value=$/T ) = /Data/Id( Value /value ) )
+                            ( /fn( Value /v ) -> ∀/Data/Monad[ /T=$_/A ] ) -> ∀/Data/Monad[ /T=$_/A ] = /fn( Value /v -> TVArg /value = Value /value )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Data/Monad[ /T=TopType ]
+            ,
+                [ ∀/Data/Identity[ /T=$_/T ] ]
+            , Just "A [Monad] extends the container idea of a [Functor] with sequencing.
+              Its single operation [mmap] chains a value-to-monad function across the elements it holds. "
+            )
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr "# Monads
+            A [Monad] is a [Functor] with a way to sequence computations: [mmap] (the monadic bind,
+            written [>>=] in some languages) applies a function that itself produces a new monadic value
+            to the value(s) held inside one, and flattens the result back into a single monad." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "A [Monad] extends the container idea of a [Functor] with sequencing.
+            Its single operation [mmap] chains a value-to-monad function across the elements it holds." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[mmap] is the generic monadic bind declared over the [Monad] class; each instance supplies" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "its own definition in a separate module (so the open [Monad] class is not required to be" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "totally covered here). It mirrors [fmap]'s shape, but where [fmap]'s function returns a bare" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "element ([$_B]), [mmap]'s function returns a whole monad of the same kind ([$M]) which [mmap]" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "then flattens. See the [ConsList] instance in [Data/List] and the [Maybe] one in [Data/Maybe]." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "## Identity
+            The [Identity] monad (declared as a [Functor] in [Data/functor]) holds exactly one value, so
+            [mmap] simply applies the function to it. Reusing [Identity] here gives the open [Monad] class
+            an in-scope instance, so the smoke test below can typecheck and instantiate in this file." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "Concrete smoke test. Unlike the [Functor] laws, this passes a function whose body constructs a" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "new container ([Id(value= v)]) — the monadic-bind shape — proving a caller-supplied" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "container-returning function binds and flattens. [Identity] is already an [Eq] member (see" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[Data/functor]), so the mapped result can be compared with [operator==]." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "NOTE: a *computed* mapped field (e.g. [Id(value= v + 1)]) currently cannot be compared with" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[operator==] — not a [Monad] limitation but a pre-existing gap: a container built with a" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "computed field keeps the unreduced [/operator+(Integer, Integer)] applied type in its element" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "slot ([reduceAppliedType] settles only top-level leaves, not nested data-construction fields)," )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "so [Some(value= 5 + 1) == Some(value= 6)] fails on its own, independent of [mmap]." )
+        ]
+    }

@@ -143,6 +143,16 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Maybe/testMmapSomeToNothing"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/Maybe/testMmapSomeToNothing -> /Data/Primitive/Integer = CInt 0 ]
+                    }
+                )
+            ,
                 ( "/Data/Maybe/testOrdMaybe"
                 , ObjectMapItem
                     { omiDecls = []
@@ -185,6 +195,26 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Maybe/testMmapSomeBind"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/Maybe/testMmapSomeBind -> /Data/Primitive/Integer = CInt 0 ]
+                    }
+                )
+            ,
+                ( "/Data/Maybe/testMmapNothing"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/Maybe/testMmapNothing -> /Data/Primitive/Integer = CInt 0 ]
                     }
                 )
             ,
@@ -283,6 +313,21 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/mmap"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/mmap( Value /m -> /Data/Nothing = Value /Data/Nothing )
+                            ( /fn( Value /v ) -> ∀/Data/Monad[ /T=$_/A ] ) -> /Data/Nothing = Value /Data/Nothing
+                        , /Data/mmap
+                            ( Value /m -> /Data/Some[ /T=$_/T ]( /value=$/T ) = /Data/Some( Value /value -> $_/T ) )
+                            ( /fn( Value /v ) -> ∀/Data/Monad[ /T=$_/A ] ) -> ∀/Data/Monad[ /T=$_/A ] = /fn( Value /v -> TVArg /value = Value /value )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Algebra/compareTo"
                 , ObjectMapItem
                     { omiDecls = []
@@ -350,6 +395,10 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGClass
             ( False
             , /Data/Maybe
@@ -379,6 +428,13 @@ Prgm
                 , /Data/Nothing
                 ]
             , Just "A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing]."
+            )
+        , CGClass
+            ( False
+            , /Data/Maybe
+            ,
+                [ ∀/Data/Maybe[ /T=$_/T ] ]
+            , Just ""
             )
         ]
     , prgmAnnots =
@@ -424,5 +480,22 @@ Prgm
             Makes a [Maybe] a [Functor]: [fmap] applies a function to the wrapped value of a [Some] and
             leaves a [Nothing] unchanged. The instances are defined under the declaration's absolute name
             (see the [ConsList] instance in [Data/list] for the naming rationale)." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "# Maybe Monad instance
+            Makes a [Maybe] a [Monad]: [mmap] applies a value-to-[Maybe] function to the wrapped value of a
+            [Some] (returning whatever [Maybe] the function produces, which flattens the two layers into one),
+            and short-circuits a [Nothing] unchanged. Mirrors the [Functor] instance above; the definitions
+            are written under the declaration's absolute name (see the [ConsList] instance in [Data/list] for
+            the naming rationale)." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[mmap] binds through the [Some] arm (its result is whatever [Maybe] the function returns) and" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "short-circuits the [Nothing] arm. [Maybe] is already an [Eq] member (see above), so the" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "flattened result compares with [operator==]. (A function whose body computes the wrapped value," )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "e.g. [Some(value= v + 1)], is not yet comparable — a pre-existing gap unrelated to [Monad]; see" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "the note in [Data/monad].)" )
         ]
     }

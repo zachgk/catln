@@ -1,0 +1,25 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( EAppArg Value /value -> /main = Value /main )( EAppArg Value /io -> /Catln/IO ) -> TVArg /io = ( Value /io ↦ TVArg /io ) ]
+                    }
+                )
+            ]
+        )
+    , prgmCG = [ CGType ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Cross-module check that the [Maybe] [Monad] instance (defined in stack/core/maybe.ct) resolves" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "when [mmap] is called from another module. A stack/core function can type-check in its own module" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "yet fail once imported, so this exercises the imported path end to end." )
+        ]
+    }

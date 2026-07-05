@@ -1,0 +1,40 @@
+import "core/functor.ct"
+
+
+module(Data)
+  # # Monads
+    A [Monad] is a [Functor] with a way to sequence computations: [mmap] (the monadic bind,
+    written [>>=] in some languages) applies a function that itself produces a new monadic value
+    to the value(s) held inside one, and flattens the result back into a single monad.
+  class(Monad[$T])
+    # A [Monad] extends the container idea of a [Functor] with sequencing.
+      Its single operation [mmap] chains a value-to-monad function across the elements it holds.
+
+  # [mmap] is the generic monadic bind declared over the [Monad] class; each instance supplies
+  # its own definition in a separate module (so the open [Monad] class is not required to be
+  # totally covered here). It mirrors [fmap]'s shape, but where [fmap]'s function returns a bare
+  # element ([$_B]), [mmap]'s function returns a whole monad of the same kind ([$M]) which [mmap]
+  # then flattens. See the [ConsList] instance in [Data/List] and the [Maybe] one in [Data/Maybe].
+  mmap[$M -> /Data/Monad[$T -> $_A], $A, $B](m -> $M, fn(v -> $_A) -> $M) -> $M
+
+  # ## Identity
+    The [Identity] monad (declared as a [Functor] in [Data/functor]) holds exactly one value, so
+    [mmap] simply applies the function to it. Reusing [Identity] here gives the open [Monad] class
+    an in-scope instance, so the smoke test below can typecheck and instantiate in this file.
+  every(Identity[$T -> $_T], isa= [/Data/Monad])
+
+  /Data/mmap(m= Id(value), fn(v))= fn(v= value)
+
+  # Concrete smoke test. Unlike the [Functor] laws, this passes a function whose body constructs a
+  # new container ([Id(value= v)]) — the monadic-bind shape — proving a caller-supplied
+  # container-returning function binds and flattens. [Identity] is already an [Eq] member (see
+  # [Data/functor]), so the mapped result can be compared with [operator==].
+  # NOTE: a *computed* mapped field (e.g. [Id(value= v + 1)]) currently cannot be compared with
+  # [operator==] — not a [Monad] limitation but a pre-existing gap: a container built with a
+  # computed field keeps the unreduced [/operator+(Integer, Integer)] applied type in its element
+  # slot ([reduceAppliedType] settles only top-level leaves, not nested data-construction fields),
+  # so [Some(value= 5 + 1) == Some(value= 6)] fails on its own, independent of [mmap].
+  testMonadIdentityMmap =
+    #test
+    #assert(test= mmap(m= Id(value= 5), fn(v)= Id(value= v)) == Id(value= 5))
+    0
