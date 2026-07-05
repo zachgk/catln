@@ -2,6 +2,18 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/Data/testFunctorComposition"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/testFunctorComposition
+                            ( EAppVar /F ∀/Data/Functor[ /T=/Data/Primitive/Integer ] )( EAppArg Value /x -> $/F ) -> /Data/Primitive/Integer = 0
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/identityEqual"
                 , ObjectMapItem
                     { omiDecls =
@@ -169,6 +181,7 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         , CGClass
             ( False
             , /Data/Identity
@@ -230,5 +243,12 @@ Prgm
             elements are [Eq] — so the mapped result can be compared with the original — at arbitrary
             members of that instance. Like the [Eqv] laws in [Data/Algebra/eq], it instantiates per
             file over the import graph, so each file defining an instance checks the law for it." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "Composition law: mapping two functions in sequence equals mapping their composition.
+            Stated with concrete increment functions and the composition written out in the lambda
+            body ([(v + 1) + 1]) rather than over function-valued parameters, which the checker
+            cannot yet relate. Checked against every [Functor] instance whose elements are
+            [Integer] - so the increments apply - at arbitrary members of that instance,
+            instantiating per file like the identity law above." )
         ]
     }

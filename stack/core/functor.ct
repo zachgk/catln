@@ -49,3 +49,14 @@ module(Data)
     #test
     #assert(test= fmap(lst= x, fn(v)= v) == x)
     0
+
+  # Composition law: mapping two functions in sequence equals mapping their composition.
+    Stated with concrete increment functions and the composition written out in the lambda
+    body ([(v + 1) + 1]) rather than over function-valued parameters, which the checker
+    cannot yet relate. Checked against every [Functor] instance whose elements are
+    [Integer] - so the increments apply - at arbitrary members of that instance,
+    instantiating per file like the identity law above.
+  testFunctorComposition[$F -> Functor[$T -> /Data/Primitive/Integer]](x -> $F) =
+    #test
+    #assert(test= fmap(lst= fmap(lst= x, fn(v)= v + 1), fn(v)= v + 1) == fmap(lst= x, fn(v)= (v + 1) + 1))
+    0
