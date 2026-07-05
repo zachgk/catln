@@ -299,21 +299,35 @@ toTExpr env os (TupleApply m (bm, be) arg) = do
     EAppVar _ _ -> toTExprDest env os be m
     _           -> toTExprDest env os be bm
   arg' <- case arg of
-    EAppArg a     -> EAppArg <$> toTEObjArr env os a
+    EAppArg a     -> EAppArg <$> toTEObjArr env os True a
     EAppVar vn vm -> return $ EAppVar vn vm
     EAppSpread a  -> EAppSpread <$> toTExpr env os a
   return $ TTupleApply m (bm, be') arg'
 
-toTEObjArr :: TBEnv -> [ObjSrc] -> EObjArr -> CRes (ObjArr TExpr TBMetaDat)
--- toTEObjArr _ os oa | trace (printf "toTEObjArr %s\n\twith %s" (show oa) (show os)) False = undefined
-toTEObjArr env os oa@ObjArr{oaObj, oaAnnots, oaArr} = do
+-- | The Bool marks an ObjArr applied inside an expression ('EAppArg') as opposed to a root
+-- definition ('buildRootOA').
+toTEObjArr :: TBEnv -> [ObjSrc] -> Bool -> EObjArr -> CRes (ObjArr TExpr TBMetaDat)
+-- toTEObjArr _ os _ oa | trace (printf "toTEObjArr %s\n\twith %s" (show oa) (show os)) False = undefined
+toTEObjArr env@TBEnv{tbTypeEnv} os inExpr oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   oaObj' <- mapM (toTExpr env os) oaObj
   let os' = case oa of
         ObjArr{oaObj=Just{}, oaArr=Just (Just{}, _)} -> (getSingleton $ getExprType $ oaObjExpr oa, oa) : os
         _ -> os
+  -- A call-site lambda's result meta has no consumer bound to drop the raw call partial
+  -- 'arrowConstrainUbs' keeps alongside the arrows' results (@fn(v)= v + 1@ infers
+  -- @(/operator+(..) + Integer)@), so building the body toward it would short-circuit to
+  -- 'TCTId' on the raw leaf and the unreduced tuple would leak out as the lambda's runtime
+  -- result. Build the body toward what it settles to instead ('reduceAppliedType'). Only for
+  -- an applied argument that is itself function-shaped (it declares parameters) — a plain
+  -- value argument (@this= compare(a, b)@) keeps its inferred meta, and a root definition
+  -- is not an applied argument at all.
+  let isLambda = inExpr && maybe False (not . null . exprAppliedArgs) oaObj
   oaArr' <- forM oaArr $ \(arrExpr, arrM) -> do
+    let arrBuildM = if isLambda
+          then mWithType (reduceAppliedType tbTypeEnv H.empty (getMetaType arrM)) arrM
+          else arrM
     arrExpr' <- forM arrExpr $ \e ->
-      toTExprDest env os' e arrM
+      toTExprDest env os' e arrBuildM
     return (arrExpr', arrM)
   oaAnnots' <- mapM (toTExpr env os') oaAnnots
   return oa{oaObj=oaObj', oaAnnots=oaAnnots', oaArr=oaArr'}
@@ -375,7 +389,7 @@ buildRootOA :: TBEnv -> EObjArr -> CRes (ObjArr TExpr TBMetaDat)
 buildRootOA env oa = do
   let env' = env{tbName = printf "root"}
   let objSrc = (getSingleton $ getExprType $ oaObjExpr oa, oa)
-  toTEObjArr env' [objSrc] oa
+  toTEObjArr env' [objSrc] False oa
 
 buildRoot :: TBEnv -> TBExpr -> PartialType -> Type -> CRes (TExpr TBMetaDat)
 buildRoot env input src dest = do

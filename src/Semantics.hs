@@ -195,7 +195,7 @@ arrowDestTypeBase resolveAppFields typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, 
           -- arg's slot — a declaration pointer slot (@/fn(..)=$B@, see 'updateTypeProp')
           -- resolves through the partial's own bindings (@/B=Integer@ from the call
           -- intersection). Unresolved (Top) slots and var reads contribute nothing.
-          [ (inExprSingleton (oaObjExpr a), out)
+          [ (inExprSingleton (oaObjExpr a), reduceApplied out)
           | resolveAppFields
           , Just b <- [oaArrExpr]
           , a <- exprAppliedArgs b
@@ -205,7 +205,29 @@ arrowDestTypeBase resolveAppFields typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, 
           , Just out <- [typeGetArgLoose (inExprSingleton valExpr) srcPartial]
           , out /= PTopType
           , not (isTypeVar out) ]
+        -- The applied argument's slot holds what the argument RETURNS, which for a lambda whose
+        -- body is itself a call is the raw call partial (@/operator+(l=Integer, r=Integer)@) —
+        -- at the type level a term may always stay unrewritten, so 'arrowConstrainUbs' keeps the
+        -- raw form alongside the arrows' dests, and a slot bounded only by a free declaration
+        -- var (@fn(..) -> $_B@) has no consumer bound to drop it. The built arm body's tree,
+        -- however, always applies the argument, so at dispatch the field settles to what the
+        -- callee's arrows produce.
+        reduceApplied = reduceAppliedType typeEnv vaenv
 arrowDestTypeBase _ _ _ oa@ObjArr{oaArr=Nothing} = error $ printf "Unexpected call to arrowDestType with type obj (which has no arrow to find the dest type of): %s" (show oa)
+
+-- | What a term settles to once applied: each leaf the type graph rewrites is replaced by what
+-- its arrows produce; a leaf no arrow accepts (a data construction, a curried partial
+-- application) is already a settled value and stays itself. Constant-carrying unions and
+-- predicate tops are returned unchanged.
+reduceAppliedType :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
+reduceAppliedType typeEnv vaenv t@(UnionType Nothing leafs []) = case splitUnionType leafs of
+  [] -> t
+  ls -> unionAllTypesWithEnv typeEnv vaenv (map reduceLeaf ls)
+  where
+    reduceLeaf l = case typeGraphQueryWithReason typeEnv vaenv l of
+      []    -> singletonType l
+      dests -> unionAllTypesWithEnv typeEnv vaenv (map snd dests)
+reduceAppliedType _ _ t = t
 
 -- | Set resolved field values on a constructed type and bind the data parameters those fields
 -- define. For @Cons(head=x)@ resolved to @head=Integer@, the Cons declaration links @head -> $T@,
