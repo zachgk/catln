@@ -3186,17 +3186,28 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
       (vaenv, t, subType)
     UnionType Nothing supPartials [] -> do
       let supPartialList = splitUnionType supPartials
-      let intersectedPartials sup@PartialType{ptVars=supVars} sub = case typeGetAux propName sup of
-            Just (TypeVar (TVVar v) TVInt) -> do
+      -- The slot AS STORED, without pointer resolution: a slot holding a partial-internal var
+      -- pointer (@/fn(..)=$B@, like a data definition's @/head=$T@) must be recognized as one
+      -- and updated through the partial's OWN var; the resolving read ('typeGetAux' ->
+      -- 'typeGetArg') follows the pointer to the var's current (often Top) binding, and
+      -- writing an update against that would clobber the pointer.
+      let rawSlot (TVVar k) p = H.lookup k (ptVars p)
+          rawSlot (TVArg k) p = H.lookup k (ptArgs p)
+      let intersectedPartials sup@PartialType{ptVars=supVars} sub = case (rawSlot propName sup, typeGetAux propName sup) of
+            (Just (TypeVar (TVVar v) TVInt), _) -> do
               let supVar = H.lookupDefault PTopType v supVars
               let newProp = intersectTypesEnv typeEnv vaenv supVar sub
               Just (sup{ptVars=H.insert v newProp supVars}, newProp)
-            Just supProp -> do
+            (_, Just (TypeVar (TVVar v) TVInt)) -> do
+              let supVar = H.lookupDefault PTopType v supVars
+              let newProp = intersectTypesEnv typeEnv vaenv supVar sub
+              Just (sup{ptVars=H.insert v newProp supVars}, newProp)
+            (_, Just supProp) -> do
               let newProp = intersectTypesEnv typeEnv vaenv supProp sub
               if isBottomType newProp
                 then Nothing
                 else Just (typeSetAux propName newProp sup, newProp)
-            Nothing -> Nothing
+            (_, Nothing) -> Nothing
       case subType of
         UnionType Nothing subPartials [] -> do
           let subPartialList = splitUnionType subPartials
@@ -3206,12 +3217,26 @@ updateTypePropInner typeEnv vaenv superType propName subType = case superType of
           let tp' = intersectTypesEnv typeEnv vaenv (H.lookupDefault PTopType v vaenv) (unionAllTypesWithEnv typeEnv vaenv $ mapMaybe (typeGetAux propName) supPartialList)
           let vaenv' = H.insert v tp' vaenv
           let tp'' = substituteWithVarArgEnv vaenv' tp'
-          let updateSuperPartial p = case typeGetAux propName p of
-                Nothing -> Nothing
-                Just supTp | supTp == subType -> Just $ typeSetAux propName subType p
-                Just supTp -> Just $ typeSetAux propName (intersectTypes typeEnv supTp tp'') p
+          let updateSuperPartial p@PartialType{ptVars=pVars} = case (rawSlot propName p, typeGetAux propName p) of
+                -- Slot is an internal pointer: maintain the partial's own var, keep the pointer.
+                (Just (TypeVar (TVVar vn) TVInt), _) ->
+                  Just p{ptVars=H.insert vn (intersectTypes typeEnv (H.lookupDefault PTopType vn pVars) tp'') pVars}
+                (_, Nothing) -> Nothing
+                (_, Just supTp) | supTp == subType -> Just $ typeSetAux propName subType p
+                -- An unconstrained ARG slot whose sub is an EXTERNAL var naming one of this
+                -- partial's OWN vars (a declaration's @fn(v -> $_A) -> $_B@ arg under an
+                -- object declaring @$B@): initialize the slot as the partial-internal
+                -- pointer - 'typeResolveInner's scope promotion in reverse - so the declared
+                -- relationship lives in the partial itself (as a data definition's
+                -- @/head=$T@ does) and reaches the objects universe for 'BoundedByObjs' to
+                -- deliver. Resolving the generic (unbound) var through the constraint env
+                -- would store Top and sever the link. Arg slots ONLY: a VAR slot named like
+                -- the external var (builtin @ContextIn[$V]@) would become a self-pointer
+                -- (@ptVars[V]=$V@) that diverges on resolution.
+                (_, Just PTopType) | TVArg _ <- propName, TypeVar (TVVar vn) TVExt <- subType, vn `H.member` pVars ->
+                  Just $ typeSetAux propName (TypeVar (TVVar vn) TVInt) p
+                (_, Just supTp) -> Just $ typeSetAux propName (intersectTypes typeEnv supTp tp'') p
           let superType' = compactType typeEnv vaenv $ UnionType Nothing (joinUnionType $ mapMaybe updateSuperPartial $ splitUnionType supPartials) []
-
           (vaenv', superType', subType)
         PTopType -> do
           let sub' = case mapMaybe (typeGetAux propName) supPartialList of

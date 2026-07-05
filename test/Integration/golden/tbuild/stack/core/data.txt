@@ -42,7 +42,11 @@ Prgm
                         [ /Context( EAppVar /V TopType )( EAppArg Value /value -> $/V )( EAppSpread Hole TopType HoleActive Nothing ) ]
                     , omiRuntimeDecls =
                         [ /Context( EAppVar /T TopType )( EAppVar /V TopType )( EAppArg Value /value -> $/V )( EAppSpread Hole TopType HoleActive Nothing ) | /operator?->
-                            ( EAppArg Value /l -> /ContextIn[ /V=TopType ]( /value=TopType ).. = /ContextIn( EAppVar /V $_/V )( EAppArg Value /value -> $/V = Hole $/V HoleActive Nothing )( EAppSpread Hole TopType HoleActive Nothing ) )( EAppArg Value /r -> $/T = Hole $/T HoleActive Nothing ) -> $/T
+                            ( EAppArg Value /l -> /ContextIn
+                                [ /T=TopType
+                                , /V=TopType
+                                ]( /value=$/V ).. = /ContextIn( EAppVar /V $_/V )( EAppArg Value /value -> $/V = Hole $/V HoleActive Nothing )( EAppSpread Hole TopType HoleActive Nothing )
+                            )( EAppArg Value /r -> $/T = Hole $/T HoleActive Nothing ) -> $/T
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []

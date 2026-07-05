@@ -423,8 +423,14 @@ typeVarBindingGained (UnionType _ oldLeafs _) (UnionType _ newLeafs _) =
   where
     partialBindingGained op np =
       or [ informative k nv | (k, nv) <- H.toList (ptVars np), not (k `H.member` ptVars op) ]
-      || or [ typeVarBindingGained ov nv | (k, ov) <- H.toList (ptArgs op), Just nv <- [H.lookup k (ptArgs np)] ]
-      || or [ typeVarBindingGained ov nv | (k, ov) <- H.toList (ptVars op), Just nv <- [H.lookup k (ptVars np)] ]
+      || or [ slotGained ov nv | (k, ov) <- H.toList (ptArgs op), Just nv <- [H.lookup k (ptArgs np)] ]
+      || or [ slotGained ov nv | (k, ov) <- H.toList (ptVars op), Just nv <- [H.lookup k (ptVars np)] ]
+    -- A slot gaining a var pointer where @old@ had Top (a declaration's @/fn(..)=Top@ becoming
+    -- the internal pointer @/fn(..)=$B@, see 'updateTypeProp') is likewise a real change
+    -- 'eqScheme' cannot see (a free var behaves like Top in the comparison). Slot-level only:
+    -- a whole-type Top-to-TypeVar transition stays under 'eqScheme'. Gain-only, like the rest.
+    slotGained PTopType TypeVar{} = True
+    slotGained ov nv              = typeVarBindingGained ov nv
     informative _ PTopType               = False
     informative k (TypeVar (TVVar k') _) = k' /= k
     informative _ _                      = True
