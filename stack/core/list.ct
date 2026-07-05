@@ -1,3 +1,4 @@
+import "core/ord.ct"
 import "core/functor.ct"
 import "core/monad.ct"
 
@@ -37,6 +38,23 @@ module(Data)
   consEqual(a= Nil, b= /Data/Cons(head, tail))= False
   consEqual(a= /Data/Cons(head, tail), b= Nil)= False
   consEqual(a= /Data/Cons(head@ah, tail@at), b= /Data/Cons(head@bh, tail@bt))= (ah == bh) && consEqual(a= at, b= bt)
+
+  # #### Structural comparison
+    Two [ConsList]s of [Ord] elements are ordered lexicographically: the first differing pair of
+    elements decides the order, and a shorter list that is a prefix of a longer one comes first
+    ([Nil] before any [Cons]). [consCompare] is the recursive structural comparison, mirroring
+    [consEqual]; [consThen] sequences a head comparison with the tail's, falling through to the
+    tail's comparison only when the heads compare [Equal].
+  consThen(first -> /Data/Algebra/Comparison, second -> /Data/Algebra/Comparison) -> /Data/Algebra/Comparison
+  consThen(first= /Data/Algebra/Equal, second)= second
+  consThen(first= /Data/Algebra/LessThan, second)= /Data/Algebra/LessThan
+  consThen(first= /Data/Algebra/GreaterThan, second)= /Data/Algebra/GreaterThan
+
+  consCompare(a -> ConsList[$T -> /Data/Algebra/Ord], b -> ConsList[$T -> /Data/Algebra/Ord]) -> /Data/Algebra/Comparison
+  consCompare(a= Nil, b= Nil)= /Data/Algebra/Equal
+  consCompare(a= Nil, b= /Data/Cons(head, tail))= /Data/Algebra/LessThan
+  consCompare(a= /Data/Cons(head, tail), b= Nil)= /Data/Algebra/GreaterThan
+  consCompare(a= /Data/Cons(head@ah, tail@at), b= /Data/Cons(head@bh, tail@bt))= consThen(first= ah.compareTo(other= bh), second= consCompare(a= at, b= bt))
 
   # ## List operations
   sum(lst -> /Data/List) -> Integer
@@ -91,6 +109,16 @@ module(Data/List)
     #assert(test= ~(/Data/Cons(head= /Data/Primitive/True, tail= /Data/Nil) == /Data/Cons(head= /Data/Primitive/False, tail= /Data/Nil)))
     0
 
+  # A [ConsList] of any [Ord] element is an [Ord] member (see the end of this file), so [compareTo]
+  # orders lists lexicographically, with a prefix ordered before its extension.
+  testOrdConsList =
+    #test
+    #assert(test= /Data/Cons(head= 1, tail= /Data/Nil).compareTo(other= /Data/Cons(head= 2, tail= /Data/Nil)).isLess)
+    #assert(test= /Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Nil)).compareTo(other= /Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Nil))).isEq)
+    #assert(test= /Data/Cons(head= 1, tail= /Data/Nil).compareTo(other= /Data/Nil).isGreater)
+    #assert(test= /Data/Cons(head= 1, tail= /Data/Nil).compareTo(other= /Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Nil))).isLess)
+    0
+
 # # ConsList Eq membership
   Makes a [ConsList] of any [Eq] element a proper member of [Eq], so the generic [operator==]
   dispatches through the [equal] method into [consEqual]. This is the idiomatic path (vs. a
@@ -102,6 +130,16 @@ module(Data)
 module(Data/Algebra)
   :/Data/Nil.equal(other -> /Data/ConsList[$T -> /Data/Algebra/Eq])= /Data/consEqual(a= /Data/Nil, b= other)
   :/Data/Cons[$T -> /Data/Algebra/Eq](head, tail).equal(other -> /Data/ConsList[$T -> /Data/Algebra/Eq])= /Data/consEqual(a= /Data/Cons(head= head, tail= tail), b= other)
+
+# # ConsList Ord membership
+  Makes a [ConsList] of any [Ord] element a proper member of [Ord], so [compareTo] dispatches per
+  constructor into [consCompare]. Mirrors the [Eq] membership above (and every [Ord] is an [Eq],
+  which the [Eq] membership already supplies).
+module(Data)
+  every(ConsList[$T -> /Data/Algebra/Ord], isa= [/Data/Algebra/Ord])
+module(Data/Algebra)
+  :/Data/Nil.compareTo(other -> /Data/ConsList[$T -> /Data/Algebra/Ord])= /Data/consCompare(a= /Data/Nil, b= other)
+  :/Data/Cons[$T -> /Data/Algebra/Ord](head, tail).compareTo(other -> /Data/ConsList[$T -> /Data/Algebra/Ord])= /Data/consCompare(a= /Data/Cons(head= head, tail= tail), b= other)
 
 # # ConsList Monad instance
   [mmap] over a [ConsList] is concatMap: the function returns a whole list for each element, and

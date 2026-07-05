@@ -32,12 +32,23 @@ Prgm
                                     ) + /Data/Algebra/LessThan + /Data/Algebra/mkComparison
                                     ( /eq=∀/Data/Primitive/Boolean
                                     , /lt=∀/Data/Primitive/Boolean
+                                    ) + /Data/consCompare
+                                    ( /a=
+                                        ( /Data/Nil + /Data/Cons[ /T=∀/Data/Algebra/Ord ]
+                                            ( /head=∀/Data/Algebra/Ord
+                                            , /tail=∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                            )
+                                        )
+                                    , /b=∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ]
                                     ) + /Data/Algebra/compare
                                     ( /this=
                                         ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
                                     , /a=( /Data/Primitive/Integer + /Data/Primitive/Float )
                                     , /b=∀/Data/Algebra/Ord
-                                    ) + /Data/Algebra/Equal + /Data/Algebra/GreaterThan + /Data/Algebra/compareTo[ /T=∀/Data/Algebra/Ord ]
+                                    ) + /Data/Algebra/Equal + /Data/Algebra/GreaterThan + /Data/consThen
+                                    ( /first=∀/Data/Algebra/Comparison
+                                    , /second=∀/Data/Algebra/Comparison
+                                    ) + /Data/Algebra/compareTo[ /T=∀/Data/Algebra/Ord ]
                                     ( /this=∀/Data/Algebra/Ord
                                     , /other=∀/Data/Algebra/Ord
                                     )
@@ -390,12 +401,23 @@ Prgm
                                     ) + /Data/Algebra/LessThan + /Data/Algebra/mkComparison
                                     ( /eq=∀/Data/Primitive/Boolean
                                     , /lt=∀/Data/Primitive/Boolean
+                                    ) + /Data/consCompare
+                                    ( /a=
+                                        ( /Data/Nil + /Data/Cons[ /T=∀/Data/Algebra/Ord ]
+                                            ( /head=∀/Data/Algebra/Ord
+                                            , /tail=∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                            )
+                                        )
+                                    , /b=∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ]
                                     ) + /Data/Algebra/compare
                                     ( /this=
                                         ( /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] )
                                     , /a=( /Data/Primitive/Integer + /Data/Primitive/Float )
                                     , /b=∀/Data/Algebra/Ord
-                                    ) + /Data/Algebra/Equal + /Data/Algebra/GreaterThan + /Data/Algebra/compareTo[ /T=∀/Data/Algebra/Ord ]
+                                    ) + /Data/Algebra/Equal + /Data/Algebra/GreaterThan + /Data/consThen
+                                    ( /first=∀/Data/Algebra/Comparison
+                                    , /second=∀/Data/Algebra/Comparison
+                                    ) + /Data/Algebra/compareTo[ /T=∀/Data/Algebra/Ord ]
                                     ( /this=∀/Data/Algebra/Ord
                                     , /other=∀/Data/Algebra/Ord
                                     )
