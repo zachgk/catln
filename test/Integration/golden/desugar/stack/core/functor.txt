@@ -2,6 +2,33 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/Data/identityEqual"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/identityEqual
+                            ( Value a -> ∀/Data/Identity[ /T=∀/Data/Algebra/Eq ] )
+                            ( Value b -> ∀/Data/Identity[ /T=∀/Data/Algebra/Eq ] ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/identityEqual
+                            ( Value a= Id( Value value@Value av ) )
+                            ( Value b= Id( Value value@Value bv ) )= /operator==( Value /l= Value av )( Value /r= Value bv )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Id"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Id[ /T : TopType ]( Value /value -> $/T ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/fmap"
                 , ObjectMapItem
                     { omiDecls =
@@ -11,19 +38,69 @@ Prgm
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /Data/fmap
+                            ( Value lst= Id( Value value ) )
+                            ( fn( Value v ) )= Id
+                            ( Value value= fn( Value v= Value value ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/testFunctorIdentity"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/testFunctorIdentity
+                            [ /F : ∀/Data/Functor[ /T=∀/Data/Algebra/Eq ] ]( Value x -> $/F )= CInt 0
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Algebra/equal"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Algebra/equal
+                            ( Value other -> ∀/Data/Identity[ /E=∀/Data/Algebra/Eq ] )
+                            ( Value /this= /Data/Id[ /T : ∀/Data/Algebra/Eq ]( Value value ) )= /Data/identityEqual
+                            ( Value a= /Data/Id( Value value= Value value ) )( Value b= Value other )
+                        ]
                     }
                 )
             ]
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            ( False
+            , /Data/Identity
+            ,
+                [ ∀/Data/Identity[ /T=∀/Data/Algebra/Eq ] ]
+            , Just ""
+            )
         , CGClass
             ( False
             , /Data/Functor[ /T=TopType ]
-            , []
+            ,
+                [ ∀/Data/Identity[ /T=$_/T ] ]
             , Just "A [Functor] is a basic property of a collection.
-              It has a single operation [fmap] that applies a function to each element in the collection.$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T]"
+              It has a single operation [fmap] that applies a function to each element in the collection.$F[$A: $T].fmap[$F: Functor](fn(v: $A) -> $B) -> $F[$B: $T] "
+            )
+        , CGClass
+            ( True
+            , /Data/Identity[ /T=TopType ]
+            ,
+                [ /Data/Id[ /T=$_/T ]( /value=$/T ) ]
+            , Just ""
             )
         ]
     , prgmAnnots =
@@ -47,5 +124,22 @@ Prgm
             ( Value /text= CStr "instance supplies its own definition in a separate module (so the open [Functor] class" )
         , /Catln/#md
             ( Value /text= CStr "is not required to be totally covered here). See the [ConsList] instance in [Data/List]." )
+        , /Catln/#md
+            ( Value /text= CStr "## Identity
+            An [Identity] holds exactly one value ([Id]): the simplest possible [Functor]. It gives the
+            open [Functor] class an in-scope instance, which the law property below needs to typecheck
+            and instantiate in this file (an open class with no members in scope admits no values under
+            the objects universe)." )
+        , /Catln/#md
+            ( Value /text= CStr "An [Identity] of an [Eq] element is itself an [Eq] member, so the law below can compare" )
+        , /Catln/#md
+            ( Value /text= CStr "mapped results with [operator==]. Mirrors the [Maybe] membership in [Data/maybe]." )
+        , /Catln/#md
+            ( Value /text= CStr "## Functor laws
+            Identity law: mapping the identity function over a functor returns it unchanged. Expressed
+            as a property test, it is checked against every [Functor] instance (here [$F]) whose
+            elements are [Eq] — so the mapped result can be compared with the original — at arbitrary
+            members of that instance. Like the [Eqv] laws in [Data/Algebra/eq], it instantiates per
+            file over the import graph, so each file defining an instance checks the law for it." )
         ]
     }

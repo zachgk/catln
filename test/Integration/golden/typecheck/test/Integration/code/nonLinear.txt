@@ -56,6 +56,10 @@ Prgm
                                     ( /a=/Data/Some[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq )
                                     , /b=
                                         ( TopType | PredClass /Data/Maybe[ /E=∀/Data/Algebra/Eq ] && PredClass /Data/Maybe[ /T=∀/Data/Algebra/Eq ] )
+                                    ) + /Data/identityEqual[ /T=∀/Data/Algebra/Eq ]
+                                    ( /a=/Data/Id[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq )
+                                    , /b=
+                                        ( TopType | PredClass /Data/Identity[ /E=∀/Data/Algebra/Eq ] && PredClass /Data/Identity[ /T=∀/Data/Algebra/Eq ] )
                                     ) + /Data/Algebra/rel
                                     ( /this=
                                         ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] )
@@ -78,12 +82,9 @@ Prgm
                                     ( /r=/Data/Primitive/Integer
                                     , /l=/Data/Primitive/Integer
                                     ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
-                                    ( /this=∀/Data/Algebra/Eq
-                                    , /other=∀/Data/Algebra/Eq
-                                    )
+                                    ( /this=∀/Data/Algebra/…( truncated ) = /operator==( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) )
                                 )
-                            , []
-                            ) = /operator==( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
+                            )
                         ]
                     }
                 )

@@ -1,4 +1,5 @@
 import "core/primitives.ct"
+import "core/eq.ct"
 
 
 module(Data)
@@ -17,3 +18,34 @@ module(Data)
   # instance supplies its own definition in a separate module (so the open [Functor] class
   # is not required to be totally covered here). See the [ConsList] instance in [Data/List].
   fmap[$F -> /Data/Functor[$T -> $_A], $A, $B](lst -> $F, fn(v -> $_A) -> $_B) -> $F
+
+  # ## Identity
+    An [Identity] holds exactly one value ([Id]): the simplest possible [Functor]. It gives the
+    open [Functor] class an in-scope instance, which the law property below needs to typecheck
+    and instantiate in this file (an open class with no members in scope admits no values under
+    the objects universe).
+  class(Identity[$T], [Id[$T -> $_T](value -> $T)])
+
+  every(Identity[$T -> $_T], isa= [/Data/Functor])
+
+  /Data/fmap(lst= Id(value), fn(v))= Id(value= fn(v= value))
+
+  # An [Identity] of an [Eq] element is itself an [Eq] member, so the law below can compare
+  # mapped results with [operator==]. Mirrors the [Maybe] membership in [Data/maybe].
+  identityEqual(a -> Identity[$T -> /Data/Algebra/Eq], b -> Identity[$T -> /Data/Algebra/Eq]) -> Boolean
+  identityEqual(a= Id(value@av), b= Id(value@bv))= av == bv
+
+  every(Identity[$T -> /Data/Algebra/Eq], isa= [/Data/Algebra/Eq])
+module(Data/Algebra)
+  :/Data/Id[$T -> /Data/Algebra/Eq](value).equal(other -> /Data/Identity[$E -> /Data/Algebra/Eq])= /Data/identityEqual(a= /Data/Id(value= value), b= other)
+module(Data)
+  # ## Functor laws
+    Identity law: mapping the identity function over a functor returns it unchanged. Expressed
+    as a property test, it is checked against every [Functor] instance (here [$F]) whose
+    elements are [Eq] — so the mapped result can be compared with the original — at arbitrary
+    members of that instance. Like the [Eqv] laws in [Data/Algebra/eq], it instantiates per
+    file over the import graph, so each file defining an instance checks the law for it.
+  testFunctorIdentity[$F -> Functor[$T -> /Data/Algebra/Eq]](x -> $F) =
+    #test
+    #assert(test= fmap(lst= x, fn(v)= v) == x)
+    0
