@@ -2702,7 +2702,12 @@ intersectPartialLeafsWithVarEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv
 intersectPartialLeafsWithVarEnv typeEnv vaenv aPartials bPartials = (vaenv', type')
   where
     intersected = H.intersectionWith (\as bs -> [intersectPartials typeEnv vaenv a b | a <- as, b <- bs]) (splitUnionTypeByName aPartials) (splitUnionTypeByName bPartials)
-    vaenv' = mergeAllVarEnvs typeEnv $ fmap fst $ concat $ H.elems intersected
+    -- The result env must EXTEND the given one, not replace it: a caller folding several
+    -- intersections (e.g. 'expandPredsWithNamesFull' over a predicate conjunction) threads the
+    -- returned env into the next step, and a binding recorded by an earlier meet (@/B ↦ Integer@)
+    -- must still constrain a later meet of the same var (@$_/B ∩ ∀Eq@) - shared keys merge by
+    -- intersection in 'mergeVarEnvs', so knowledge only narrows.
+    vaenv' = mergeAllVarEnvs typeEnv $ (vaenv :) $ fmap fst $ concat $ H.elems intersected
     type' = joinUnionTypeByName $ fmap (concatMap snd) intersected
 
 intersectPartialLeafsEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs -> PartialLeafs
