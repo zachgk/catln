@@ -40,8 +40,10 @@ import           Eval.Env
 import           Eval.ExprBuilder
 import qualified Hedgehog
 import qualified Hedgehog.Gen               as HG
+import qualified Hedgehog.Internal.Config
 import           Hedgehog.Internal.Property (propertyConfig, propertyTest)
 import           Hedgehog.Internal.Report   (Result (..), reportStatus)
+import qualified Hedgehog.Internal.Report
 import           Hedgehog.Internal.Runner   (checkReport)
 import qualified Hedgehog.Internal.Seed     as HedgehogSeed
 import           Semantics
@@ -127,10 +129,13 @@ runPropQuietly :: Bool -> Hedgehog.Property -> IO Bool
 runPropQuietly gaveUpOk prop = do
   seed <- HedgehogSeed.random
   report <- checkReport (propertyConfig prop) 0 seed (propertyTest prop) (const (pure ()))
-  return $ case reportStatus report of
-    OK     -> True
-    GaveUp -> gaveUpOk
-    _      -> False
+  case reportStatus report of
+    OK     -> return True
+    GaveUp -> return gaveUpOk
+    _      -> do
+      str <- Hedgehog.Internal.Report.renderResult Hedgehog.Internal.Config.EnableColor Nothing report
+      putStrLn str
+      return False
 
 -- | Derive a property test for every pair of evaluable same-name definitions whose domains
 -- overlap (their argument types intersect): on the overlap the two definitions must AGREE. A
