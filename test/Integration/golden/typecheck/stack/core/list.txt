@@ -98,7 +98,7 @@ Prgm
                                 ( /head=$/T
                                 , /tail=∀/Data/ConsList[ /T=$_/T ]
                                 ) = /Data/Cons( Value /head@Value /ah -> ∀/Data/Algebra/Eq )
-                                ( Value /tail@Value /at -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ] )
+                                ( Value /tail@Value /at -> ∀/Data/ConsList[ /T=$_/T ] )
                             )
                             ( Value /b -> /Data/Cons[ /T=∀/Data/Algebra/Eq ]
                                 ( /head=$/T
@@ -120,33 +120,6 @@ Prgm
                             ) = /operator&&
                             ( Value /l -> ∀/Data/Primitive/Boolean = /operator==( Value /l -> TVArg /ah = Value /ah )( Value /r -> TVArg /bh = Value /bh ) )
                             ( Value /r -> ∀/Data/Primitive/Boolean = /Data/consEqual( Value /a -> TVArg /at = Value /at )( Value /b -> TVArg /bt = Value /bt ) )
-                        ]
-                    }
-                )
-            ,
-                ( "/Data/List/fmap"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/List/fmap( Value /lst -> /Data/Nil = Value /Data/Nil )
-                            ( /fn( Value /v ) ) -> /Data/Nil = Value /Data/Nil
-                        , /Data/List/fmap
-                            ( Value /lst -> /Data/Cons[ /T=TopType ]
-                                ( /head=$/T
-                                , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                ) = /Data/Cons( Value /head )
-                                ( Value /tail -> ∀/Data/ConsList[ /T=$_/T ] )
-                            )
-                            ( /fn( Value /v ) ) -> /Data/Cons[ /T=TopType ]
-                            ( /head=$/T
-                            , /tail=∀/Data/ConsList[ /T=$_/T ]
-                            ) = /Data/Cons
-                            ( Value /head= /fn( Value /v -> TVArg /head = Value /head ) )
-                            ( Value /tail -> ∀/Data/ConsList[ /T=$_/T ] = /fmap( Value /lst -> TVArg /tail = Value /tail )
-                                ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
-                            )
                         ]
                     }
                 )
@@ -182,6 +155,33 @@ Prgm
                         [ /Data/sorted( Value /lst -> ∀/Data/ConsList ) -> ∀/Data/ConsList ]
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/fmap"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/fmap( Value /lst -> /Data/Nil = Value /Data/Nil )
+                            ( /fn( Value /v ) ) -> /Data/Nil = Value /Data/Nil
+                        , /Data/fmap
+                            ( Value /lst -> /Data/Cons[ /T=$_/T ]
+                                ( /head=$/T
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                ) = /Data/Cons( Value /head )
+                                ( Value /tail -> ∀/Data/ConsList[ /T=$_/T ] )
+                            )
+                            ( /fn( Value /v ) ) -> /Data/Cons[ /T=TopType ]
+                            ( /head=$/T
+                            , /tail=∀/Data/ConsList[ /T=$_/T ]
+                            ) = /Data/Cons
+                            ( Value /head= /fn( Value /v -> TVArg /head = Value /head ) )
+                            ( Value /tail -> ∀/Data/ConsList[ /T=$_/T ] = /Data/fmap( Value /lst -> TVArg /tail = Value /tail )
+                                ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
+                            )
+                        ]
                     }
                 )
             ,

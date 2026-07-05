@@ -75,8 +75,8 @@ module(Data/List)
   # This is the [ConsList] instance of the generic [fmap] declared over [Functor] in
   # [Data]. It lives in its own module so the open [Functor] interface is not required to
   # be totally covered, while still resolving for calls of [fmap] on a [ConsList].
-  fmap(lst= Nil, fn(v))= Nil
-  fmap(lst= /Data/Cons(head, tail), fn(v))= /Data/Cons(head= fn(v= head), tail= fmap(lst= tail, fn(v)= fn(v= v)))
+  /Data/fmap(lst= Nil, fn(v))= Nil
+  /Data/fmap(lst= /Data/Cons(head, tail), fn(v))= /Data/Cons(head= fn(v= head), tail= /Data/fmap(lst= tail, fn(v)= fn(v= v)))
 
   # A [ConsList] of any [Eq] element is itself an [Eq] member (see the end of this file), so
   # [operator==] checks whole lists structurally — comparing them directly rather than only their

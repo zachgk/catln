@@ -5,7 +5,8 @@ Prgm
                 ( "/Data/fmap"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/fmap[ /B : TopType ][ /A : TopType ][ /F : ∀/Data/Functor ]( Value /lst -> $/F )
+                        [ /Data/fmap[ /B : TopType ][ /A : TopType ]
+                            [ /F : ∀/Data/Functor[ /T=$_/A ] ]( Value /lst -> $/F )
                             ( /fn( Value /v -> $_/A ) -> $_/B ) -> $/F
                         ]
                     , omiRuntimeDecls = []

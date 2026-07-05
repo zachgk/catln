@@ -82,25 +82,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/List/fmap"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/List/fmap( Value lst= Value Nil )
-                            ( fn( Value v ) )= Value Nil
-                        , /Data/List/fmap
-                            ( Value lst= /Data/Cons( Value head )( Value tail ) )
-                            ( fn( Value v ) )= /Data/Cons
-                            ( Value head= fn( Value v= Value head ) )
-                            ( Value tail= fmap( Value lst= Value tail )
-                                ( fn( Value v )= fn( Value v= Value v ) )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/Cons"
                 , ObjectMapItem
                     { omiDecls =
@@ -132,6 +113,25 @@ Prgm
                         [ /Data/sorted( Value lst -> ∀/Data/ConsList ) -> ∀/Data/ConsList ]
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/fmap"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/fmap( Value lst= Value Nil )
+                            ( fn( Value v ) )= Value Nil
+                        , /Data/fmap
+                            ( Value lst= /Data/Cons( Value head )( Value tail ) )
+                            ( fn( Value v ) )= /Data/Cons
+                            ( Value head= fn( Value v= Value head ) )
+                            ( Value tail= /Data/fmap( Value lst= Value tail )
+                                ( fn( Value v )= fn( Value v= Value v ) )
+                            )
+                        ]
                     }
                 )
             ,

@@ -102,7 +102,7 @@ Prgm
                                 ( /head=$/T
                                 , /tail=∀/Data/ConsList[ /T=$_/T ]
                                 ) = /Data/Cons( EAppArg Value /head@Value /ah -> ∀/Data/Algebra/Eq )
-                                ( EAppArg Value /tail@Value /at -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ] )
+                                ( EAppArg Value /tail@Value /at -> ∀/Data/ConsList[ /T=$_/T ] )
                             )
                             ( EAppArg Value /b -> /Data/Cons[ /T=∀/Data/Algebra/Eq ]
                                 ( /head=$/T
@@ -132,40 +132,6 @@ Prgm
                                 ( /Data/consEqual
                                     ( EAppArg Value /a -> TVArg /at = ( Value /at ↦ TVArg /at ) )
                                     ( EAppArg Value /b -> TVArg /bt = ( Value /bt ↦ TVArg /bt ) ) ↦ ∀/Data/Primitive/Boolean
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/Data/List/fmap"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/List/fmap( EAppArg Value /lst -> /Data/Nil = Value /Data/Nil )
-                            ( EAppArg /fn( EAppArg Value /v ) ) -> /Data/Nil = Value /Data/Nil
-                        , /Data/List/fmap
-                            ( EAppArg Value /lst -> /Data/Cons[ /T=TopType ]
-                                ( /head=$/T
-                                , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                ) = /Data/Cons( EAppArg Value /head )
-                                ( EAppArg Value /tail -> ∀/Data/ConsList[ /T=$_/T ] )
-                            )
-                            ( EAppArg /fn( EAppArg Value /v ) ) -> /Data/Cons[ /T=TopType ]
-                            ( /head=$/T
-                            , /tail=∀/Data/ConsList[ /T=$_/T ]
-                            ) = /Data/Cons
-                            ( EAppArg Value /head=
-                                ( /fn( EAppArg Value /v -> TVArg /head = Value /head ) ↦ TopType )
-                            )
-                            ( EAppArg Value /tail -> ∀/Data/ConsList[ /T=$_/T ] =
-                                ( /fmap
-                                    ( EAppArg Value /lst -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) )
-                                    ( EAppArg /fn( EAppArg Value /v )=
-                                        ( /fn( EAppArg Value /v -> TVArg /v = Value /v ) ↦ TopType )
-                                    ) ↦ ∀/Data/ConsList[ /T=$_/T ]
                                 )
                             )
                         ]
@@ -203,6 +169,40 @@ Prgm
                         [ /Data/sorted( EAppArg Value /lst -> ∀/Data/ConsList ) -> ∀/Data/ConsList ]
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/fmap"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/fmap( EAppArg Value /lst -> /Data/Nil = Value /Data/Nil )
+                            ( EAppArg /fn( EAppArg Value /v ) ) -> /Data/Nil = Value /Data/Nil
+                        , /Data/fmap
+                            ( EAppArg Value /lst -> /Data/Cons[ /T=$_/T ]
+                                ( /head=$/T
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                ) = /Data/Cons( EAppArg Value /head )
+                                ( EAppArg Value /tail -> ∀/Data/ConsList[ /T=$_/T ] )
+                            )
+                            ( EAppArg /fn( EAppArg Value /v ) ) -> /Data/Cons[ /T=TopType ]
+                            ( /head=$/T
+                            , /tail=∀/Data/ConsList[ /T=$_/T ]
+                            ) = /Data/Cons
+                            ( EAppArg Value /head=
+                                ( /fn( EAppArg Value /v -> TVArg /head = Value /head ) ↦ TopType )
+                            )
+                            ( EAppArg Value /tail -> ∀/Data/ConsList[ /T=$_/T ] =
+                                ( /Data/fmap
+                                    ( EAppArg Value /lst -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) )
+                                    ( EAppArg /fn( EAppArg Value /v )=
+                                        ( /fn( EAppArg Value /v -> TVArg /v = Value /v ) ↦ TopType )
+                                    ) ↦ ∀/Data/ConsList[ /T=$_/T ]
+                                )
+                            )
+                        ]
                     }
                 )
             ,
