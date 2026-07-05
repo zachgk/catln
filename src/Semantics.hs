@@ -139,7 +139,19 @@ exprVarArgsWithObjSrcs :: (TypeGraph tg, MetaDat m, Show m) => TypeEnv tg -> [(P
 exprVarArgsWithObjSrcs typeEnv os = exprVarArgsWithSrcs typeEnv $ map (\(src, obj) -> (oaObjExpr obj, src)) os
 
 arrowDestType :: (TypeGraph tg, ExprClass e, Show m, Show (e m), MetaDat m) => TypeEnv tg -> PartialType -> ObjArr e m -> [Type]
-arrowDestType typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, oaM)} = map (arrowDestTypeForVaenv . fmap snd) $ exprVarArgsWithSrc typeEnv (oaObjExpr oa) srcPartial
+arrowDestType = arrowDestTypeBase False
+
+-- | 'arrowDestType' for DISPATCH (TreeBuild/Eval arrow selection): additionally resolves
+-- construction fields valued by an application of an object argument through the src
+-- partial's arg slot (see @resolvedFields@ below). Dispatch works on a fixed, fully-resolved
+-- src, so the extra resolution is stable there; during typecheck the same read would resolve
+-- differently across epochs as the partial's vars narrow, growing the reached dest union and
+-- violating monotonicity ('verifySchemeActLowers').
+arrowDestTypeDispatch :: (TypeGraph tg, ExprClass e, Show m, Show (e m), MetaDat m) => TypeEnv tg -> PartialType -> ObjArr e m -> [Type]
+arrowDestTypeDispatch = arrowDestTypeBase True
+
+arrowDestTypeBase :: (TypeGraph tg, ExprClass e, Show m, Show (e m), MetaDat m) => Bool -> TypeEnv tg -> PartialType -> ObjArr e m -> [Type]
+arrowDestTypeBase resolveAppFields typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, oaM)} = map (arrowDestTypeForVaenv . fmap snd) $ exprVarArgsWithSrc typeEnv (oaObjExpr oa) srcPartial
   where
     srcPartial = case maybeGetSingleton $ substituteVars $ singletonType src of
       Just s  -> s
@@ -167,17 +179,33 @@ arrowDestType typeEnv src oa@ObjArr{oaArr=Just (oaArrExpr, oaM)} = map (arrowDes
         -- is an argument reference through the vaenv, recovering @head=Integer@ (and hence the data
         -- parameter it defines — see 'applyResolvedFields'). This is the per-field analogue of the
         -- bare-path body case above (@= v@).
-        resolvedFields = H.fromList
+        resolvedFields = H.fromList $
           [ (inExprSingleton (oaObjExpr a), fv)
           | Just b <- [oaArrExpr]
           , a <- exprAppliedArgs b
           , Just (Just valExpr, _) <- [oaArr a]
-          -- Only a bare argument reference (@head=x@); an application (@head=fn(v=x)@) names a
-          -- function whose result — not the function itself — is the field, so leave it.
+          -- A bare argument reference (@head=x@): the field is the argument's bound value.
           , isJust (maybeExprPath valExpr)
           , null (exprAppliedArgs valExpr)
           , Just fv <- [H.lookup (TVArg (inExprSingleton valExpr)) vaenv] ]
-arrowDestType _ _ oa@ObjArr{oaArr=Nothing} = error $ printf "Unexpected call to arrowDestType with type obj (which has no arrow to find the dest type of): %s" (show oa)
+          ++
+          -- DISPATCH ONLY ('arrowDestTypeDispatch'): a field valued by an APPLICATION of one
+          -- of the object's own arguments (@head= fn(v=head)@ where @fn@ is an object arg) is
+          -- the argument's OUTPUT, which the dispatch-resolved src partial carries as the
+          -- arg's slot — a declaration pointer slot (@/fn(..)=$B@, see 'updateTypeProp')
+          -- resolves through the partial's own bindings (@/B=Integer@ from the call
+          -- intersection). Unresolved (Top) slots and var reads contribute nothing.
+          [ (inExprSingleton (oaObjExpr a), out)
+          | resolveAppFields
+          , Just b <- [oaArrExpr]
+          , a <- exprAppliedArgs b
+          , Just (Just valExpr, _) <- [oaArr a]
+          , isJust (maybeExprPath valExpr)
+          , not (null (exprAppliedArgs valExpr))
+          , Just out <- [typeGetArgLoose (inExprSingleton valExpr) srcPartial]
+          , out /= PTopType
+          , not (isTypeVar out) ]
+arrowDestTypeBase _ _ _ oa@ObjArr{oaArr=Nothing} = error $ printf "Unexpected call to arrowDestType with type obj (which has no arrow to find the dest type of): %s" (show oa)
 
 -- | Set resolved field values on a constructed type and bind the data parameters those fields
 -- define. For @Cons(head=x)@ resolved to @head=Integer@, the Cons declaration links @head -> $T@,
