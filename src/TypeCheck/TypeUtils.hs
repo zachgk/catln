@@ -273,6 +273,14 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} src@(UnionType No
   let reaches' = reachesPartials reachesEnv allPartials
   let vaenv' = fmap (stypeAct . snd) conVaenv
   let destByGraph = unionReachesTree feTypeEnv vaenv' reaches'
-  let dest' = intersectTypes feTypeEnv dest destByGraph
+  -- An arrow dest carrying a symbolic external var (an instance arm constructing
+  -- @Some[/T=$_T]@) meets the accumulated dest's bound in the intersection's returned env,
+  -- while the type keeps the bare var — discarding the env would WIDEN the stored dest (the
+  -- free var reads as Top) and fail 'verifySchemeActLowers'. Resolve the newly recorded
+  -- meets back into the result; still-unresolved vars stay symbolic ('substituteKeep', the
+  -- 'mergeVarEnvVal' doctrine).
+  let (venv', dest') = intersectTypesWithVarEnv feTypeEnv vaenv' dest destByGraph
+  let newBindings = H.difference venv' vaenv'
+  let resolveNew = if H.null newBindings then id else substituteKeep newBindings
   -- TODO Maybe filter srcPartials based on those reaching dest
-  return (src, compactType feTypeEnv vaenv' dest', Just reaches')
+  return (src, compactType feTypeEnv vaenv' (resolveNew dest'), Just reaches')
