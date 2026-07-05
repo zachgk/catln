@@ -104,9 +104,11 @@ propTestTimeoutMicros = 10 * 1000 * 1000
 -- pass.
 --
 -- The check runs in a worker thread while the timeout is applied to the main thread's wait
--- for its result. This keeps the timeout's async exception off the property computation
--- itself — wrapping the runner directly would let Hedgehog catch that exception and
--- misreport the interruption as a failing test case.
+-- for its result. On timeout the worker is killed; the 'ThreadKilled' delivered to it is
+-- caught inside Hedgehog's 'checkReport', which turns it into a spurious 'Failed' report.
+-- To keep that from being printed, the worker only /produces/ the rendered failure text and
+-- the main thread prints it — so a render reaches stdout only when the main thread actually
+-- received a result, which never happens once the timeout has fired.
 --
 -- 'gaveUpOk' controls how an all-discards run (Hedgehog 'GaveUp') is judged: 'False' treats it as a
 -- failure (the default for tests whose inputs should always generate), 'True' as a pass. The derived
@@ -118,24 +120,24 @@ checkPropWithTimeout gaveUpOk prop = do
   tid <- forkIO $ runPropQuietly gaveUpOk (Hedgehog.withTests propTestIterations prop) >>= putMVar resultVar
   result <- timeout propTestTimeoutMicros (takeMVar resultVar)
   case result of
-    Just ok -> return ok
-    Nothing -> killThread tid >> return True
+    Just (ok, rendered) -> mapM_ putStrLn rendered >> return ok
+    Nothing             -> killThread tid >> return True
 
 -- | Run a Hedgehog property to completion without rendering any progress or result output,
--- returning whether it passed. Uses 'checkReport' with a no-op progress callback so that a
--- worker thread killed at the timeout boundary prints nothing — unlike 'Hedgehog.check',
--- whose interrupted live render emits a spurious "thread killed" failure report.
-runPropQuietly :: Bool -> Hedgehog.Property -> IO Bool
+-- returning whether it passed and, for a genuine failure, the rendered report text to print.
+-- The text is /returned rather than printed/ so its caller can drop it when the run was a
+-- timeout kill (see 'checkPropWithTimeout'); a no-op progress callback likewise suppresses
+-- the live progress render.
+runPropQuietly :: Bool -> Hedgehog.Property -> IO (Bool, Maybe String)
 runPropQuietly gaveUpOk prop = do
   seed <- HedgehogSeed.random
   report <- checkReport (propertyConfig prop) 0 seed (propertyTest prop) (const (pure ()))
   case reportStatus report of
-    OK     -> return True
-    GaveUp -> return gaveUpOk
+    OK     -> return (True, Nothing)
+    GaveUp -> return (gaveUpOk, Nothing)
     _      -> do
       str <- Hedgehog.Internal.Report.renderResult Hedgehog.Internal.Config.EnableColor Nothing report
-      putStrLn str
-      return False
+      return (False, Just str)
 
 -- | Derive a property test for every pair of evaluable same-name definitions whose domains
 -- overlap (their argument types intersect): on the overlap the two definitions must AGREE. A
