@@ -87,7 +87,10 @@ data Val
   | StrVal String
   | CharVal Char
   | TupleVal String (H.HashMap String Val)
-  | ObjArrVal (ObjArr TExpr EvalMetaDat)
+  -- | A function-typed argument's value: the lambda plus the arg env captured at its
+  -- creation site, so body references to enclosing args (@fn(v)= fn(v= v)@'s inner @fn@)
+  -- resolve lexically at application.
+  | ObjArrVal (ObjArr TExpr EvalMetaDat) Args
   | IOVal Integer (IO ())
   | MockIOVal Integer (IO ()) (IORef [String])
   | LLVMVal (LLVM ())
@@ -118,7 +121,7 @@ instance Show Val where
       showArgs as | H.null as = ""
       showArgs as = printf "(%s)" (intercalate ", " $ map showArg $ H.toList as)
       showArg (argName, val) = argName ++ " = " ++ show val
-  show (ObjArrVal oa)   = printf "(ObjArrVal %s)" (show oa)
+  show (ObjArrVal oa _) = printf "(ObjArrVal %s)" (show oa)
   show IOVal{}      = "IOVal"
   show MockIOVal{}  = "MockIOVal"
   show LLVMVal{}   = "LLVMVal"
@@ -133,7 +136,7 @@ instance Hashable Val where
   hashWithSalt s (StrVal i)        = s `hashWithSalt` i
   hashWithSalt s (CharVal i)       = s `hashWithSalt` i
   hashWithSalt s (TupleVal n as)   = s `hashWithSalt` n `hashWithSalt` as
-  hashWithSalt s (ObjArrVal oa)    = s `hashWithSalt` oa
+  hashWithSalt s (ObjArrVal oa _)  = s `hashWithSalt` oa
   hashWithSalt s (IOVal i _)       = s `hashWithSalt` i
   hashWithSalt s (MockIOVal i _ _) = s `hashWithSalt` i
   hashWithSalt s (LLVMVal _)       = s
@@ -148,7 +151,7 @@ instance ToJSON Val where
   toJSON (StrVal v) = object ["tag".=("StrVal" :: String), "contents".=toJSON v]
   toJSON (CharVal v) = object ["tag".=("CharVal" :: String), "contents".=toJSON v]
   toJSON (TupleVal name args) = object ["tag".=("TupleVal" :: String), "name".=name, "args".=toJSON args]
-  toJSON (ObjArrVal _) = object ["tag".=("ObjArrVal" :: String)]
+  toJSON (ObjArrVal _ _) = object ["tag".=("ObjArrVal" :: String)]
   toJSON IOVal{}     = object ["tag".=("IOVal" :: String)]
   toJSON MockIOVal{} = object ["tag".=("MockIOVal" :: String)]
   toJSON LLVMVal{} = object ["tag".=("LLVMVal" :: String)]
@@ -176,7 +179,7 @@ getValType (StrVal s)   = constantType (CStr s)
 getValType (CharVal c)  = constantType (CChar c)
 getValType (TupleVal name args) = singletonType (partialVal (mkName name)){ptArgs=H.fromList $ map fromArg $ H.toList args}
   where fromArg (argName, argVal) = (partialKey (mkName argName), getValType argVal)
-getValType (ObjArrVal oa) = getExprType $ oaObjExpr oa
+getValType (ObjArrVal oa _) = getExprType $ oaObjExpr oa
 getValType IOVal{}     = singletonType ioLeaf
 getValType MockIOVal{} = singletonType ioLeaf
 getValType LLVMVal{}   = singletonType resultLeaf
@@ -194,7 +197,7 @@ getValPartialType StrVal{} = strLeaf
 getValPartialType CharVal{} = charLeaf
 getValPartialType (TupleVal name args) = (partialVal (mkName name)){ptArgs=H.fromList $ map fromArg $ H.toList args}
   where fromArg (argName, argVal) = (partialKey (mkName argName), singletonType $ getValPartialType argVal)
-getValPartialType (ObjArrVal oa) = getSingleton $ getExprType $ oaObjExpr oa
+getValPartialType (ObjArrVal oa _) = getSingleton $ getExprType $ oaObjExpr oa
 getValPartialType IOVal{}     = ioLeaf
 getValPartialType MockIOVal{} = ioLeaf
 getValPartialType LLVMVal{} = resultLeaf

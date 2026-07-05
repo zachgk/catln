@@ -114,8 +114,13 @@ evalGuards = undefined
   --   _ -> error "Non-Bool eval resArrowCond"
 
 evalObjArr :: Val -> AnyObjArr -> StateT Env CRes Val
-evalObjArr input oa = do
-  let newArrArgs = buildArrArgs oa input
+evalObjArr = evalObjArrCaptured H.empty
+
+-- | 'evalObjArr' for a closure ('ObjArrVal'): the captured creation-site args underlay the
+-- closure's own parameters, so body references to enclosing args resolve lexically.
+evalObjArrCaptured :: Args -> Val -> AnyObjArr -> StateT Env CRes Val
+evalObjArrCaptured captured input oa = do
+  let newArrArgs = H.union (buildArrArgs oa input) captured
   (resArrowTree, compAnnots, oldArgs) <- evalStartEArrow (getValPartialType input) oa newArrArgs
   forM_ compAnnots $ \compAnnot -> do
             compAnnot' <- withEvalPush (printf "annot %s" (show compAnnot)) $ evalExpr compAnnot
@@ -185,7 +190,7 @@ evalCallTree m (TCCond resType ((cond, ifThenTree):restIfTrees)) = do
 evalCallTree input (TCArg _ name) = do
   Env{evArgs} <- get
   case H.lookup name evArgs of
-    Just (ObjArrVal oa) -> evalObjArr input (Right oa)
+    Just (ObjArrVal oa captured) -> evalObjArrCaptured captured input (Right oa)
     Just arg' -> return arg'
     Nothing -> evalError $ printf "Unknown arg %s found during evaluation \n\t\t with arg env %s" name (show evArgs)
 evalCallTree input (TCObjArr oa) = evalObjArr input (Left oa)
@@ -250,7 +255,9 @@ evalExpr (TTupleApply _ (_, b) (EAppArg oa)) = do
   v <- case oaArr oa of
     Just (Just oaExpr, _) -> case oaObj oa of
       Just TValue{} -> evalExpr oaExpr
-      Just TTupleApply{} -> return $ ObjArrVal oa
+      Just TTupleApply{} -> do
+        Env{evArgs=creationArgs} <- get
+        return $ ObjArrVal oa creationArgs
       _ -> error $ printf "Unsupported eval argument of %s" (show oa)
     Just (Nothing, _) -> error $ printf "Missing arrExpr in evalExpr TupleApply with %s - %s" (show b) (show oa)
     Nothing -> error $ printf "Missing arrExpr in evalExpr TupleApply with %s - %s" (show b) (show oa)

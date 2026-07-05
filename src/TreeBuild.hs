@@ -324,14 +324,15 @@ toTExprDest env@TBEnv{tbTypeEnv} os e m = do
   e' <- toTExpr env os e
   let srcT = getMetaType $ getExprMeta e'
   ct <- buildCallTree env os S.empty srcT (getMetaType m)
-  -- An application of a function-typed argument (@fn(v= x)@ where @fn@ is a parameter of the
-  -- enclosing definition) is an unreduced call. When the declared result is generic (@-> $_B@)
-  -- the destination type is Top, so 'buildCallTree' short-circuits to 'TCTId' — but the closure
-  -- must still be applied at runtime or the raw applied tuple leaks out as the result value.
-  -- Force the argument arrow (the tree 'findResArrows' builds when the destination is typed).
+  -- A reference to an argument of the enclosing definition — bare (@= v@) or applied
+  -- (@fn(v= x)@ where @fn@ is a parameter) — is unreduced. When the destination is generic
+  -- the dest type is Top, so 'buildCallTree' short-circuits to 'TCTId' — but the argument
+  -- must still be resolved (bare) or the closure applied (application) at runtime, or the
+  -- raw tuple leaks out as the result value. Force the argument arrow (the tree
+  -- 'findResArrows' builds when the destination is typed).
   let argFnTree = case maybeGetSingleton srcT of
-        Just sp | not (H.null (ptArgs sp)) ->
-          case mapMaybe (H.lookup (TVArg (partialToKey sp))) (exprVarArgsWithObjSrcs tbTypeEnv os) of
+        Just sp ->
+          case mapMaybe (lookupArgLoose (partialToKey sp)) (exprVarArgsWithObjSrcs tbTypeEnv os) of
             ((_, argT):_) -> Just $ TCArg argT (nameStr (ptName sp))
             []            -> Nothing
         _ -> Nothing
@@ -342,6 +343,15 @@ toTExprDest env@TBEnv{tbTypeEnv} os e m = do
     (TCSeq (TCMacro _ (MacroFunction f)) _) -> fromMacro f
     _                                       -> return $ TCalls m e' ct
   where
+    -- The applied-arg partial's key carries accreted 'pkVars' (a declaration's contract
+    -- delivered by 'BoundedByObjs') while the venv stores the encode-time structural key
+    -- without them — the same 'PartialKey' phase drift 'typeGetArgLoose' tolerates. Fall back
+    -- to the unique entry matching by name and applied-argument names.
+    lookupArgLoose k venv = case H.lookup (TVArg k) venv of
+      Just v  -> Just v
+      Nothing -> case [v | (TVArg k', v) <- H.toList venv, pkName k' == pkName k, pkArgs k' == pkArgs k] of
+        [v] -> Just v
+        _   -> Nothing
     fromMacro f = do
       macroResult <- f e (MacroData env os)
       case macroResult of
