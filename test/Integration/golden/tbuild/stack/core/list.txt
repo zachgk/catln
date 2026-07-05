@@ -72,72 +72,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/consEqual"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/consEqual
-                            ( EAppArg Value /a -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ] )
-                            ( EAppArg Value /b -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ] ) -> ∀/Data/Primitive/Boolean
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/consEqual( EAppArg Value /a -> /Data/Nil = Value /Data/Nil )( EAppArg Value /b -> /Data/Nil = Value /Data/Nil ) -> /Data/Primitive/True = Value /Data/Primitive/True
-                        , /Data/consEqual( EAppArg Value /a -> /Data/Nil = Value /Data/Nil )
-                            ( EAppArg Value /b -> /Data/Cons[ /T=∀/Data/Algebra/Eq ]
-                                ( /head=$/T
-                                , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                ) = /Data/Cons( EAppArg Value /head )
-                                ( EAppArg Value /tail -> ∀/Data/ConsList[ /T=$_/T ] )
-                            ) -> /Data/Primitive/False = Value /Data/Primitive/False
-                        , /Data/consEqual
-                            ( EAppArg Value /a -> /Data/Cons[ /T=∀/Data/Algebra/Eq ]
-                                ( /head=$/T
-                                , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                ) = /Data/Cons( EAppArg Value /head )
-                                ( EAppArg Value /tail -> ∀/Data/ConsList[ /T=$_/T ] )
-                            )( EAppArg Value /b -> /Data/Nil = Value /Data/Nil ) -> /Data/Primitive/False = Value /Data/Primitive/False
-                        , /Data/consEqual
-                            ( EAppArg Value /a -> /Data/Cons[ /T=∀/Data/Algebra/Eq ]
-                                ( /head=$/T
-                                , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                ) = /Data/Cons( EAppArg Value /head@Value /ah -> ∀/Data/Algebra/Eq )
-                                ( EAppArg Value /tail@Value /at -> ∀/Data/ConsList[ /T=$_/T ] )
-                            )
-                            ( EAppArg Value /b -> /Data/Cons[ /T=∀/Data/Algebra/Eq ]
-                                ( /head=$/T
-                                , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                ) = /Data/Cons( EAppArg Value /head@Value /bh -> ∀/Data/Algebra/Eq )
-                                ( EAppArg Value /tail@Value /bt -> ∀/Data/ConsList[ /T=$_/T ] )
-                            ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Primitive/Boolean
-                                , fromList []
-                                )
-                            ,
-                                ( /Data/Primitive/True + /operator&&
-                                    ( /r=∀/Data/Primitive/Boolean
-                                    , /l=∀/Data/Primitive/Boolean
-                                    ) + /Data/Primitive/False
-                                )
-                            , []
-                            ) = /operator&&
-                            ( EAppArg Value /l -> ∀/Data/Primitive/Boolean =
-                                ( /operator==
-                                    ( EAppArg Value /l -> TVArg /ah = ( Value /ah ↦ TVArg /ah ) )
-                                    ( EAppArg Value /r -> TVArg /bh = ( Value /bh ↦ TVArg /bh ) ) ↦ ∀/Data/Primitive/Boolean
-                                )
-                            )
-                            ( EAppArg Value /r -> ∀/Data/Primitive/Boolean =
-                                ( /Data/consEqual
-                                    ( EAppArg Value /a -> TVArg /at = ( Value /at ↦ TVArg /at ) )
-                                    ( EAppArg Value /b -> TVArg /bt = ( Value /bt ↦ TVArg /bt ) ) ↦ ∀/Data/Primitive/Boolean
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/Cons"
                 , ObjectMapItem
                     { omiDecls =
@@ -158,72 +92,6 @@ Prgm
                         [ /Data/reversed( EAppArg Value /lst -> ∀/Data/ConsList ) -> ∀/Data/ConsList ]
                     , omiRefineDecls = []
                     , omiDefs = []
-                    }
-                )
-            ,
-                ( "/Data/consCompare"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/consCompare
-                            ( EAppArg Value /a -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ] )
-                            ( EAppArg Value /b -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/Algebra/Comparison
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/consCompare( EAppArg Value /a -> /Data/Nil = Value /Data/Nil )( EAppArg Value /b -> /Data/Nil = Value /Data/Nil ) -> /Data/Algebra/Equal = Value /Data/Algebra/Equal
-                        , /Data/consCompare( EAppArg Value /a -> /Data/Nil = Value /Data/Nil )
-                            ( EAppArg Value /b -> /Data/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=$/T
-                                , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                ) = /Data/Cons( EAppArg Value /head )
-                                ( EAppArg Value /tail -> ∀/Data/ConsList[ /T=$_/T ] )
-                            ) -> /Data/Algebra/LessThan = Value /Data/Algebra/LessThan
-                        , /Data/consCompare
-                            ( EAppArg Value /a -> /Data/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=$/T
-                                , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                ) = /Data/Cons( EAppArg Value /head )
-                                ( EAppArg Value /tail -> ∀/Data/ConsList[ /T=$_/T ] )
-                            )( EAppArg Value /b -> /Data/Nil = Value /Data/Nil ) -> /Data/Algebra/GreaterThan = Value /Data/Algebra/GreaterThan
-                        , /Data/consCompare
-                            ( EAppArg Value /a -> /Data/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=$/T
-                                , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                ) = /Data/Cons( EAppArg Value /head@Value /ah -> ∀/Data/Algebra/Ord )
-                                ( EAppArg Value /tail@Value /at -> ∀/Data/ConsList[ /T=$_/T ] )
-                            )
-                            ( EAppArg Value /b -> /Data/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=$/T
-                                , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                ) = /Data/Cons( EAppArg Value /head@Value /bh -> ∀/Data/Algebra/Ord )
-                                ( EAppArg Value /tail@Value /bt -> ∀/Data/ConsList[ /T=$_/T ] )
-                            ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Algebra/Comparison
-                                , fromList []
-                                )
-                            ,
-                                ( /Data/Algebra/LessThan + /Data/Algebra/GreaterThan + /Data/consThen
-                                    ( /first=∀/Data/Algebra/Comparison
-                                    , /second=∀/Data/Algebra/Comparison
-                                    )
-                                )
-                            , []
-                            ) = /Data/consThen
-                            ( EAppArg Value /first -> ∀/Data/Algebra/Comparison =
-                                ( /Data/Algebra/compareTo
-                                    ( EAppArg Value /other -> TVArg /bh = ( Value /bh ↦ TVArg /bh ) )
-                                    ( EAppArg Value /this -> TVArg /ah = ( Value /ah ↦ TVArg /ah ) ) ↦ ∀/Data/Algebra/Comparison
-                                )
-                            )
-                            ( EAppArg Value /second -> ∀/Data/Algebra/Comparison =
-                                ( /Data/consCompare
-                                    ( EAppArg Value /a -> TVArg /at = ( Value /at ↦ TVArg /at ) )
-                                    ( EAppArg Value /b -> TVArg /bt = ( Value /bt ↦ TVArg /bt ) ) ↦ ∀/Data/Algebra/Comparison
-                                )
-                            )
-                        ]
                     }
                 )
             ,
@@ -303,55 +171,58 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/equal
-                            ( EAppArg Value /other -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ] )( EAppArg Value /this -> /Data/Nil ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Primitive/Boolean
-                                , fromList []
-                                )
-                            ,
-                                ( /Data/consEqual
-                                    ( /a=/Data/Nil
-                                    , /b=∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ]
-                                    ) + /Data/Primitive/True + /Data/Primitive/False
-                                )
-                            , []
-                            ) = /Data/consEqual( EAppArg Value /a -> /Data/Nil = Value /Data/Nil )
-                            ( EAppArg Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) )
+                        [ /Data/Algebra/equal( EAppArg Value /other -> /Data/Nil = Value /Data/Nil )( EAppArg Value /this -> /Data/Nil ) -> /Data/Primitive/True = Value /Data/Primitive/True
                         , /Data/Algebra/equal
-                            ( EAppArg Value /other -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ] )
+                            ( EAppArg Value /other -> /Data/Cons[ /T=∀/Data/Algebra/Eq ]
+                                ( /head=$/T
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                ) = /Data/Cons( EAppArg Value /head )
+                                ( EAppArg Value /tail -> ∀/Data/ConsList[ /T=$_/T ] )
+                            )( EAppArg Value /this -> /Data/Nil ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/Algebra/equal( EAppArg Value /other -> /Data/Nil = Value /Data/Nil )
                             ( EAppArg Value /this -> /Data/Cons[ /T=∀/Data/Algebra/Eq ]
                                 ( /head=$/T
                                 , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                ) = /Data/Cons( EAppVar /T ∀/Data/Algebra/Eq )( EAppArg Value /head -> ∀/Data/Algebra/Eq )
+                                ) = /Data/Cons( EAppArg Value /head )
                                 ( EAppArg Value /tail -> ∀/Data/ConsList[ /T=$_/T ] )
+                            ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/Algebra/equal
+                            ( EAppArg Value /other -> /Data/Cons[ /T=∀/Data/Algebra/Eq ]
+                                ( /head=$/T
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                ) = /Data/Cons( EAppArg Value /head@Value /bh -> ∀/Data/Algebra/Eq )
+                                ( EAppArg Value /tail@Value /bt -> ∀/Data/ConsList[ /T=$_/T ] )
+                            )
+                            ( EAppArg Value /this -> /Data/Cons[ /T=∀/Data/Algebra/Eq ]
+                                ( /head=$/T
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                ) = /Data/Cons( EAppVar /T ∀/Data/Algebra/Eq )( EAppArg Value /head@Value /ah -> ∀/Data/Algebra/Eq )
+                                ( EAppArg Value /tail@Value /at -> ∀/Data/ConsList[ /T=$_/T ] )
                             ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
                                 )
                             ,
-                                ( /Data/consEqual
-                                    ( /a=/Data/Cons[ /T=∀/Data/Algebra/Eq ]
-                                        ( /head=$/T
-                                        , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                        )
-                                    , /b=∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ]
-                                    ) + /Data/Primitive/True + /operator&&
+                                ( /Data/Primitive/True + /operator&&
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
                                     ) + /Data/Primitive/False
                                 )
                             , []
-                            ) = /Data/consEqual
-                            ( EAppArg Value /a -> /Data/Cons[ /T=∀/Data/Algebra/Eq ]
-                                ( /head=$/T
-                                , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                ) = /Data/Cons
-                                ( EAppArg Value /head -> TVArg /head = ( Value /head ↦ TVArg /head ) )
-                                ( EAppArg Value /tail -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) )
+                            ) = /operator&&
+                            ( EAppArg Value /l -> ∀/Data/Primitive/Boolean =
+                                ( /operator==
+                                    ( EAppArg Value /l -> TVArg /ah = ( Value /ah ↦ TVArg /ah ) )
+                                    ( EAppArg Value /r -> TVArg /bh = ( Value /bh ↦ TVArg /bh ) ) ↦ ∀/Data/Primitive/Boolean
+                                )
                             )
-                            ( EAppArg Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) )
+                            ( EAppArg Value /r -> ∀/Data/Primitive/Boolean =
+                                ( /Data/Algebra/equal
+                                    ( EAppArg Value /other -> TVArg /bt = ( Value /bt ↦ TVArg /bt ) )
+                                    ( EAppArg Value /this -> TVArg /at = ( Value /at ↦ TVArg /at ) ) ↦ ∀/Data/Primitive/Boolean
+                                )
+                            )
                         ]
                     }
                 )
@@ -397,55 +268,58 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/compareTo
-                            ( EAppArg Value /other -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ] )( EAppArg Value /this -> /Data/Nil ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Algebra/Comparison
-                                , fromList []
-                                )
-                            ,
-                                ( /Data/Algebra/LessThan + /Data/consCompare
-                                    ( /a=/Data/Nil
-                                    , /b=∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    ) + /Data/Algebra/Equal + /Data/Algebra/GreaterThan
-                                )
-                            , []
-                            ) = /Data/consCompare( EAppArg Value /a -> /Data/Nil = Value /Data/Nil )
-                            ( EAppArg Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) )
+                        [ /Data/Algebra/compareTo( EAppArg Value /other -> /Data/Nil = Value /Data/Nil )( EAppArg Value /this -> /Data/Nil ) -> /Data/Algebra/Equal = Value /Data/Algebra/Equal
                         , /Data/Algebra/compareTo
-                            ( EAppArg Value /other -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ] )
+                            ( EAppArg Value /other -> /Data/Cons[ /T=∀/Data/Algebra/Ord ]
+                                ( /head=$/T
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                ) = /Data/Cons( EAppArg Value /head )
+                                ( EAppArg Value /tail -> ∀/Data/ConsList[ /T=$_/T ] )
+                            )( EAppArg Value /this -> /Data/Nil ) -> /Data/Algebra/LessThan = Value /Data/Algebra/LessThan
+                        , /Data/Algebra/compareTo( EAppArg Value /other -> /Data/Nil = Value /Data/Nil )
                             ( EAppArg Value /this -> /Data/Cons[ /T=∀/Data/Algebra/Ord ]
                                 ( /head=$/T
                                 , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                ) = /Data/Cons( EAppVar /T ∀/Data/Algebra/Ord )( EAppArg Value /head -> ∀/Data/Algebra/Ord )
+                                ) = /Data/Cons( EAppArg Value /head )
                                 ( EAppArg Value /tail -> ∀/Data/ConsList[ /T=$_/T ] )
+                            ) -> /Data/Algebra/GreaterThan = Value /Data/Algebra/GreaterThan
+                        , /Data/Algebra/compareTo
+                            ( EAppArg Value /other -> /Data/Cons[ /T=∀/Data/Algebra/Ord ]
+                                ( /head=$/T
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                ) = /Data/Cons( EAppArg Value /head@Value /bh -> ∀/Data/Algebra/Ord )
+                                ( EAppArg Value /tail@Value /bt -> ∀/Data/ConsList[ /T=$_/T ] )
+                            )
+                            ( EAppArg Value /this -> /Data/Cons[ /T=∀/Data/Algebra/Ord ]
+                                ( /head=$/T
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                ) = /Data/Cons( EAppVar /T ∀/Data/Algebra/Ord )( EAppArg Value /head@Value /ah -> ∀/Data/Algebra/Ord )
+                                ( EAppArg Value /tail@Value /at -> ∀/Data/ConsList[ /T=$_/T ] )
                             ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Algebra/Comparison
                                 , fromList []
                                 )
                             ,
-                                ( /Data/Algebra/LessThan + /Data/consCompare
-                                    ( /a=/Data/Cons[ /T=∀/Data/Algebra/Ord ]
-                                        ( /head=$/T
-                                        , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                        )
-                                    , /b=∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    ) + /Data/Algebra/Equal + /Data/Algebra/GreaterThan + /Data/consThen
+                                ( /Data/Algebra/LessThan + /Data/Algebra/GreaterThan + /Data/consThen
                                     ( /first=∀/Data/Algebra/Comparison
                                     , /second=∀/Data/Algebra/Comparison
                                     )
                                 )
                             , []
-                            ) = /Data/consCompare
-                            ( EAppArg Value /a -> /Data/Cons[ /T=∀/Data/Algebra/Ord ]
-                                ( /head=$/T
-                                , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                ) = /Data/Cons
-                                ( EAppArg Value /head -> TVArg /head = ( Value /head ↦ TVArg /head ) )
-                                ( EAppArg Value /tail -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) )
+                            ) = /Data/consThen
+                            ( EAppArg Value /first -> ∀/Data/Algebra/Comparison =
+                                ( /Data/Algebra/compareTo
+                                    ( EAppArg Value /other -> TVArg /bh = ( Value /bh ↦ TVArg /bh ) )
+                                    ( EAppArg Value /this -> TVArg /ah = ( Value /ah ↦ TVArg /ah ) ) ↦ ∀/Data/Algebra/Comparison
+                                )
                             )
-                            ( EAppArg Value /b -> TVArg /other = ( Value /other ↦ TVArg /other ) )
+                            ( EAppArg Value /second -> ∀/Data/Algebra/Comparison =
+                                ( /Data/Algebra/compareTo
+                                    ( EAppArg Value /other -> TVArg /bt = ( Value /bt ↦ TVArg /bt ) )
+                                    ( EAppArg Value /this -> TVArg /at = ( Value /at ↦ TVArg /at ) ) ↦ ∀/Data/Algebra/Comparison
+                                )
+                            )
                         ]
                     }
                 )
@@ -453,8 +327,6 @@ Prgm
         )
     , prgmCG =
         [ CGType
-        , CGType
-        , CGType
         , CGType
         , CGType
         , CGType
@@ -529,19 +401,12 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "The [length] of a [List] is always non-negative." )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "#### Structural equality
-            Two [ConsList]s of [Eq] elements are equal when they have the same length and equal elements
-            pairwise. [consEqual] is the recursive structural comparison — a plain standalone function (it
-            recurses through itself, not through [tail.equal], so the recursion stays a concrete arrow
-            rather than an abstract method dispatch). The [Eq] membership and [equal] method at the end of
-            this file delegate [operator==] into it." )
-        , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "#### Structural comparison
+            ( EAppArg Value /text -> /Data/String = "#### Structural comparison helper
             Two [ConsList]s of [Ord] elements are ordered lexicographically: the first differing pair of
             elements decides the order, and a shorter list that is a prefix of a longer one comes first
-            ([Nil] before any [Cons]). [consCompare] is the recursive structural comparison, mirroring
-            [consEqual]; [consThen] sequences a head comparison with the tail's, falling through to the
-            tail's comparison only when the heads compare [Equal]." )
+            ([Nil] before any [Cons]). The [compareTo] instance at the end of this file compares heads then
+            tails; [consThen] sequences those two comparisons, falling through to the tail's comparison only
+            when the heads compare [Equal]." )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "## List operations" )
         , /Catln/#md
@@ -569,14 +434,16 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "# ConsList Eq membership
             Makes a [ConsList] of any [Eq] element a proper member of [Eq], so the generic [operator==]
-            dispatches through the [equal] method into [consEqual]. This is the idiomatic path (vs. a
-            standalone operator overload), and mirrors Haskell's `instance Eq a => Eq [a]`. The element bound
-            `$T -> Eq` makes the membership conditional on the element being [Eq], so the recursive
-            [consEqual] call on the elements typechecks." )
+            dispatches through the [equal] method. Two lists are equal when they match constructor for
+            constructor with equal heads pairwise; the recursion runs through [tail.equal]. This is the
+            idiomatic path (vs. a standalone operator overload), and mirrors Haskell's `instance Eq a => Eq
+            [a]`. The element bound `$T -> Eq` makes the membership conditional on the element being [Eq], so
+            the head comparison on the elements typechecks." )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "# ConsList Ord membership
             Makes a [ConsList] of any [Ord] element a proper member of [Ord], so [compareTo] dispatches per
-            constructor into [consCompare]. Mirrors the [Eq] membership above (and every [Ord] is an [Eq],
-            which the [Eq] membership already supplies)." )
+            constructor. Lists are ordered lexicographically ([consThen] sequences the head comparison with
+            the tail's); the recursion runs through [tail.compareTo]. Mirrors the [Eq] membership above (and
+            every [Ord] is an [Eq], which the [Eq] membership already supplies)." )
         ]
     }

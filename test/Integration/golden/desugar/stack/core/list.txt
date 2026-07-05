@@ -58,30 +58,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/consEqual"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/consEqual
-                            ( Value a -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ] )
-                            ( Value b -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ] ) -> ∀/Data/Primitive/Boolean
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/consEqual( Value a= Value Nil )( Value b= Value Nil )= Value True
-                        , /Data/consEqual( Value a= Value Nil )
-                            ( Value b= /Data/Cons( Value head )( Value tail ) )= Value False
-                        , /Data/consEqual
-                            ( Value a= /Data/Cons( Value head )( Value tail ) )( Value b= Value Nil )= Value False
-                        , /Data/consEqual
-                            ( Value a= /Data/Cons( Value head@Value ah )( Value tail@Value at ) )
-                            ( Value b= /Data/Cons( Value head@Value bh )( Value tail@Value bt ) )= /operator&&
-                            ( Value /l= /operator==( Value /l= Value ah )( Value /r= Value bh ) )
-                            ( Value /r= consEqual( Value a= Value at )( Value b= Value bt ) )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/Cons"
                 , ObjectMapItem
                     { omiDecls =
@@ -102,30 +78,6 @@ Prgm
                         [ /Data/reversed( Value lst -> ∀/Data/ConsList ) -> ∀/Data/ConsList ]
                     , omiRefineDecls = []
                     , omiDefs = []
-                    }
-                )
-            ,
-                ( "/Data/consCompare"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/consCompare
-                            ( Value a -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ] )
-                            ( Value b -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/Algebra/Comparison
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/consCompare( Value a= Value Nil )( Value b= Value Nil )= Value /Data/Algebra/Equal
-                        , /Data/consCompare( Value a= Value Nil )
-                            ( Value b= /Data/Cons( Value head )( Value tail ) )= Value /Data/Algebra/LessThan
-                        , /Data/consCompare
-                            ( Value a= /Data/Cons( Value head )( Value tail ) )( Value b= Value Nil )= Value /Data/Algebra/GreaterThan
-                        , /Data/consCompare
-                            ( Value a= /Data/Cons( Value head@Value ah )( Value tail@Value at ) )
-                            ( Value b= /Data/Cons( Value head@Value bh )( Value tail@Value bt ) )= consThen
-                            ( Value first= compareTo( Value other= Value bh )( Value /this= Value ah ) )
-                            ( Value second= consCompare( Value a= Value at )( Value b= Value bt ) )
-                        ]
                     }
                 )
             ,
@@ -186,12 +138,16 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/equal
-                            ( Value other -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ] )( Value /this -> /Data/Nil )= /Data/consEqual( Value a= Value /Data/Nil )( Value b= Value other )
+                        [ /Data/Algebra/equal( Value other= Value /Data/Nil )( Value /this -> /Data/Nil )= Value True
                         , /Data/Algebra/equal
-                            ( Value other -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ] )
-                            ( Value /this= /Data/Cons[ /T : ∀/Data/Algebra/Eq ]( Value head )( Value tail ) )= /Data/consEqual
-                            ( Value a= /Data/Cons( Value head= Value head )( Value tail= Value tail ) )( Value b= Value other )
+                            ( Value other= /Data/Cons( Value head )( Value tail ) )( Value /this -> /Data/Nil )= Value False
+                        , /Data/Algebra/equal( Value other= Value /Data/Nil )
+                            ( Value /this= /Data/Cons( Value head )( Value tail ) )= Value False
+                        , /Data/Algebra/equal
+                            ( Value other= /Data/Cons( Value head@Value bh )( Value tail@Value bt ) )
+                            ( Value /this= /Data/Cons[ /T : ∀/Data/Algebra/Eq ]( Value head@Value ah )( Value tail@Value at ) )= /operator&&
+                            ( Value /l= /operator==( Value /l= Value ah )( Value /r= Value bh ) )
+                            ( Value /r= equal( Value other= Value bt )( Value /this= Value at ) )
                         ]
                     }
                 )
@@ -237,12 +193,16 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/compareTo
-                            ( Value other -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ] )( Value /this -> /Data/Nil )= /Data/consCompare( Value a= Value /Data/Nil )( Value b= Value other )
+                        [ /Data/Algebra/compareTo( Value other= Value /Data/Nil )( Value /this -> /Data/Nil )= Value /Data/Algebra/Equal
                         , /Data/Algebra/compareTo
-                            ( Value other -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ] )
-                            ( Value /this= /Data/Cons[ /T : ∀/Data/Algebra/Ord ]( Value head )( Value tail ) )= /Data/consCompare
-                            ( Value a= /Data/Cons( Value head= Value head )( Value tail= Value tail ) )( Value b= Value other )
+                            ( Value other= /Data/Cons( Value head )( Value tail ) )( Value /this -> /Data/Nil )= Value /Data/Algebra/LessThan
+                        , /Data/Algebra/compareTo( Value other= Value /Data/Nil )
+                            ( Value /this= /Data/Cons( Value head )( Value tail ) )= Value /Data/Algebra/GreaterThan
+                        , /Data/Algebra/compareTo
+                            ( Value other= /Data/Cons( Value head@Value bh )( Value tail@Value bt ) )
+                            ( Value /this= /Data/Cons[ /T : ∀/Data/Algebra/Ord ]( Value head@Value ah )( Value tail@Value at ) )= /Data/consThen
+                            ( Value first= compareTo( Value other= Value bh )( Value /this= Value ah ) )
+                            ( Value second= compareTo( Value other= Value bt )( Value /this= Value at ) )
                         ]
                     }
                 )
@@ -250,8 +210,6 @@ Prgm
         )
     , prgmCG =
         [ CGType
-        , CGType
-        , CGType
         , CGType
         , CGType
         , CGType
@@ -326,19 +284,12 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "The [length] of a [List] is always non-negative." )
         , /Catln/#md
-            ( Value /text= CStr "#### Structural equality
-            Two [ConsList]s of [Eq] elements are equal when they have the same length and equal elements
-            pairwise. [consEqual] is the recursive structural comparison — a plain standalone function (it
-            recurses through itself, not through [tail.equal], so the recursion stays a concrete arrow
-            rather than an abstract method dispatch). The [Eq] membership and [equal] method at the end of
-            this file delegate [operator==] into it." )
-        , /Catln/#md
-            ( Value /text= CStr "#### Structural comparison
+            ( Value /text= CStr "#### Structural comparison helper
             Two [ConsList]s of [Ord] elements are ordered lexicographically: the first differing pair of
             elements decides the order, and a shorter list that is a prefix of a longer one comes first
-            ([Nil] before any [Cons]). [consCompare] is the recursive structural comparison, mirroring
-            [consEqual]; [consThen] sequences a head comparison with the tail's, falling through to the
-            tail's comparison only when the heads compare [Equal]." )
+            ([Nil] before any [Cons]). The [compareTo] instance at the end of this file compares heads then
+            tails; [consThen] sequences those two comparisons, falling through to the tail's comparison only
+            when the heads compare [Equal]." )
         , /Catln/#md
             ( Value /text= CStr "## List operations" )
         , /Catln/#md
@@ -366,14 +317,16 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "# ConsList Eq membership
             Makes a [ConsList] of any [Eq] element a proper member of [Eq], so the generic [operator==]
-            dispatches through the [equal] method into [consEqual]. This is the idiomatic path (vs. a
-            standalone operator overload), and mirrors Haskell's `instance Eq a => Eq [a]`. The element bound
-            `$T -> Eq` makes the membership conditional on the element being [Eq], so the recursive
-            [consEqual] call on the elements typechecks." )
+            dispatches through the [equal] method. Two lists are equal when they match constructor for
+            constructor with equal heads pairwise; the recursion runs through [tail.equal]. This is the
+            idiomatic path (vs. a standalone operator overload), and mirrors Haskell's `instance Eq a => Eq
+            [a]`. The element bound `$T -> Eq` makes the membership conditional on the element being [Eq], so
+            the head comparison on the elements typechecks." )
         , /Catln/#md
             ( Value /text= CStr "# ConsList Ord membership
             Makes a [ConsList] of any [Ord] element a proper member of [Ord], so [compareTo] dispatches per
-            constructor into [consCompare]. Mirrors the [Eq] membership above (and every [Ord] is an [Eq],
-            which the [Eq] membership already supplies)." )
+            constructor. Lists are ordered lexicographically ([consThen] sequences the head comparison with
+            the tail's); the recursion runs through [tail.compareTo]. Mirrors the [Eq] membership above (and
+            every [Ord] is an [Eq], which the [Eq] membership already supplies)." )
         ]
     }

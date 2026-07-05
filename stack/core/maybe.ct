@@ -11,26 +11,6 @@ module(Data)
   class(Maybe[$T], [Some[$T -> $_T](value -> $T), Nothing])
     # A [Maybe] is created either by wrapping a value with [Some] or with the empty [Nothing].
 
-  # #### Structural equality
-    Two [Maybe]s of [Eq] elements are equal when both are [Nothing], or both are [Some] of equal
-    values. [maybeEqual] is the structural comparison — a plain standalone function, mirroring
-    [consEqual] but with no self-recursion (a [Maybe] never nests). The [Eq] membership and [equal]
-    method at the end of this file delegate [operator==] into it.
-  maybeEqual(a -> Maybe[$T -> /Data/Algebra/Eq], b -> Maybe[$T -> /Data/Algebra/Eq]) -> Boolean
-  maybeEqual(a= Nothing, b= Nothing)= True
-  maybeEqual(a= Nothing, b= /Data/Some(value))= False
-  maybeEqual(a= /Data/Some(value), b= Nothing)= False
-  maybeEqual(a= /Data/Some(value@av), b= /Data/Some(value@bv))= av == bv
-
-  # #### Structural comparison
-    A [Maybe] of [Ord] elements is ordered with [Nothing] before any [Some], and two [Some]s ordered
-    by their wrapped values. [maybeCompare] is the structural comparison, mirroring [maybeEqual].
-  maybeCompare(a -> Maybe[$T -> /Data/Algebra/Ord], b -> Maybe[$T -> /Data/Algebra/Ord]) -> /Data/Algebra/Comparison
-  maybeCompare(a= Nothing, b= Nothing)= /Data/Algebra/Equal
-  maybeCompare(a= Nothing, b= /Data/Some(value))= /Data/Algebra/LessThan
-  maybeCompare(a= /Data/Some(value), b= Nothing)= /Data/Algebra/GreaterThan
-  maybeCompare(a= /Data/Some(value@av), b= /Data/Some(value@bv))= av.compareTo(other= bv)
-
 # # Maybe equality tests
 module(Data/Maybe)
   # A [Maybe] of any [Eq] element is an [Eq] member (see the end of this file), so [operator==]
@@ -56,23 +36,28 @@ module(Data/Maybe)
 
 # # Maybe Eq membership
   Makes a [Maybe] of any [Eq] element a proper member of [Eq], so the generic [operator==]
-  dispatches through the [equal] method into [maybeEqual]. Mirrors the [ConsList] membership
-  in [Data/list].
+  dispatches through the [equal] method. Two [Maybe]s are equal when both are [Nothing], or both
+  are [Some] of equal values. Mirrors the [ConsList] membership in [Data/list].
 module(Data)
   every(Maybe[$T -> /Data/Algebra/Eq], isa= [/Data/Algebra/Eq])
 module(Data/Algebra)
-  :/Data/Nothing.equal(other -> /Data/Maybe[$T -> /Data/Algebra/Eq])= /Data/maybeEqual(a= /Data/Nothing, b= other)
-  :/Data/Some[$T -> /Data/Algebra/Eq](value).equal(other -> /Data/Maybe[$T -> /Data/Algebra/Eq])= /Data/maybeEqual(a= /Data/Some(value= value), b= other)
+  :/Data/Nothing.equal(other= /Data/Nothing)= True
+  :/Data/Nothing.equal(other= /Data/Some(value))= False
+  :/Data/Some(value).equal(other= /Data/Nothing)= False
+  :/Data/Some[$T -> /Data/Algebra/Eq](value@av).equal(other= /Data/Some(value@bv))= av == bv
 
 # # Maybe Ord membership
   Makes a [Maybe] of any [Ord] element a proper member of [Ord], so [compareTo] dispatches per
-  constructor into [maybeCompare]. Mirrors the [Eq] membership above (and every [Ord] is an
+  constructor. A [Maybe] of [Ord] elements is ordered with [Nothing] before any [Some], and two
+  [Some]s ordered by their wrapped values. Mirrors the [Eq] membership above (and every [Ord] is an
   [Eq], which the [Eq] membership already supplies).
 module(Data)
   every(Maybe[$T -> /Data/Algebra/Ord], isa= [/Data/Algebra/Ord])
 module(Data/Algebra)
-  :/Data/Nothing.compareTo(other -> /Data/Maybe[$T -> /Data/Algebra/Ord])= /Data/maybeCompare(a= /Data/Nothing, b= other)
-  :/Data/Some[$T -> /Data/Algebra/Ord](value).compareTo(other -> /Data/Maybe[$T -> /Data/Algebra/Ord])= /Data/maybeCompare(a= /Data/Some(value= value), b= other)
+  :/Data/Nothing.compareTo(other= /Data/Nothing)= /Data/Algebra/Equal
+  :/Data/Nothing.compareTo(other= /Data/Some(value))= /Data/Algebra/LessThan
+  :/Data/Some(value).compareTo(other= /Data/Nothing)= /Data/Algebra/GreaterThan
+  :/Data/Some[$T -> /Data/Algebra/Ord](value@av).compareTo(other= /Data/Some(value@bv))= av.compareTo(other= bv)
 
 # # Maybe Functor instance
   Makes a [Maybe] a [Functor]: [fmap] applies a function to the wrapped value of a [Some] and

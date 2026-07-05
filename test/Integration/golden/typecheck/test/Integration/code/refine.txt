@@ -27,19 +27,7 @@ Prgm
                                     ) + /Data/strEqual
                                     ( /r=/Data/String
                                     , /l=/Data/String
-                                    ) + /Data/consEqual
-                                    ( /a=
-                                        ( /Data/Nil + /Data/Cons[ /T=∀/Data/Algebra/Eq ]
-                                            ( /head=∀/Data/Algebra/Eq
-                                            , /tail=∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ]
-                                            )
-                                        )
-                                    , /b=∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ]
-                                    ) + /Data/Primitive/True + /Data/maybeEqual
-                                    ( /a=
-                                        ( /Data/Some[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq ) + /Data/Nothing )
-                                    , /b=∀/Data/Maybe[ /T=∀/Data/Algebra/Eq ]
-                                    ) + /Data/identityEqual
+                                    ) + /Data/Primitive/True + /Data/identityEqual
                                     ( /a=/Data/Id[ /T=∀/Data/Algebra/Eq ]( /value=∀/Data/Algebra/Eq )
                                     , /b=∀/Data/Identity[ /T=∀/Data/Algebra/Eq ]
                                     ) + /Data/Algebra/rel

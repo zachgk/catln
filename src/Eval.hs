@@ -165,7 +165,8 @@ evalCallTree  m (TCMatch destType opts) = do
       withEvalPush ("match with val " ++ show m) $ evalCallTree m resArrowTree
     -- No statically-built arm matches the concrete runtime value. An arm can be dropped at build
     -- time by a COMPILE-TIME-ONLY cyclic dispatch (e.g. an 'Eq' instance whose @==@ arm dispatches
-    -- back through the same function — 'maybeEqual' reached via 'Some.equal'). The runtime value is
+    -- back through the same function — the 'ConsList' 'equal' arm recursing through 'tail.equal').
+    -- The runtime value is
     -- concrete, so rebuilding the dispatch from its type cannot cycle. Rebuild from the value and
     -- retry once; if the rebuild is not strictly more resolved, fall back to the original error.
     [] -> do
