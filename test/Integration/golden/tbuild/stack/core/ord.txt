@@ -127,7 +127,9 @@ Prgm
                             , []
                             ) = /Data/Algebra/isEq
                             ( EAppArg Value /this -> ∀/Data/Algebra/Comparison =
-                                ( /compare( EAppArg Value /a -> TVArg /a = Value /a )( EAppArg Value /b -> TVArg /b = Value /b )
+                                ( /compare
+                                    ( EAppArg Value /a -> TVArg /a = ( Value /a ↦ TVArg /a ) )
+                                    ( EAppArg Value /b -> TVArg /b = ( Value /b ↦ TVArg /b ) )
                                     ( EAppArg Value /this -> TVArg /this = ( Value /this ↦ TVArg /this ) ) ↦ ∀/Data/Algebra/Comparison
                                 )
                             )

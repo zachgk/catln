@@ -23,7 +23,7 @@ Prgm
                             ( EAppArg Value /s -> /Catln/#md( /text=/Data/String ) = /Catln/#md( EAppArg Value /text -> /Data/String ) ) -> /Catln/Doc/Show/MD( /text=/Data/String ) = /Catln/Doc/Show/MD
                             ( EAppArg Value /text -> TVArg /text = ( Value /text ↦ TVArg /text ) )
                         , /Catln/Doc/dshow
-                            ( EAppArg Value /s -> /Catln/#print( /p=TopType ) = /Catln/#print( EAppArg Value /p ) ) -> TVArg /p = Value /p
+                            ( EAppArg Value /s -> /Catln/#print( /p=TopType ) = /Catln/#print( EAppArg Value /p ) ) -> TVArg /p = ( Value /p ↦ TVArg /p )
                         , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#listProgram = Value /Catln/Doc/#listProgram ) -> /Catln/Doc/Show/ListProgram = Value /Catln/Doc/Show/ListProgram
                         , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#type = Value /Catln/Doc/#type ) -> /Catln/Doc/Show/TypePage = Value /Catln/Doc/Show/TypePage
                         , /Catln/Doc/dshow( EAppArg Value /s -> /Catln/Doc/#typeInfer = Value /Catln/Doc/#typeInfer ) -> /Catln/Doc/Show/TypeInfer = Value /Catln/Doc/Show/TypeInfer

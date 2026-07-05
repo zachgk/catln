@@ -192,13 +192,17 @@ Prgm
                             , /tail=∀/Data/ConsList[ /T=$_/T ]
                             ) = /Data/Cons
                             ( EAppArg Value /head=
-                                ( /fn( EAppArg Value /v -> TVArg /head = Value /head ) ↦ TopType )
+                                ( /fn
+                                    ( EAppArg Value /v -> TVArg /head = ( Value /head ↦ TVArg /head ) ) ↦ TopType
+                                )
                             )
                             ( EAppArg Value /tail -> ∀/Data/ConsList[ /T=$_/T ] =
                                 ( /Data/fmap
                                     ( EAppArg Value /lst -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) )
                                     ( EAppArg /fn( EAppArg Value /v )=
-                                        ( /fn( EAppArg Value /v -> TVArg /v = Value /v ) ↦ TopType )
+                                        ( /fn
+                                            ( EAppArg Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) ) ↦ TopType
+                                        )
                                     ) ↦ ∀/Data/ConsList[ /T=$_/T ]
                                 )
                             )
@@ -268,7 +272,7 @@ Prgm
                                         )
                                     , /b=
                                         ( TopType | PredClass /Data/ConsList[ /E=∀/Data/Algebra/Eq ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Eq ] )
-                                    ) + /Data/Primitive/True + /operator&&
+                                    ) + /Data/Primitive/True + /operator&&[ /T=∀/Data/Algebra/Eq ]
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
                                     ) + /Data/Primitive/False

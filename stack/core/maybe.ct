@@ -1,4 +1,5 @@
 import "core/ord.ct"
+import "core/functor.ct"
 
 
 module(Data)
@@ -71,3 +72,13 @@ module(Data)
 module(Data/Algebra)
   :/Data/Nothing.compareTo(other -> /Data/Maybe[$E -> /Data/Algebra/Ord])= /Data/maybeCompare(a= /Data/Nothing, b= other)
   :/Data/Some[$T -> /Data/Algebra/Ord](value).compareTo(other -> /Data/Maybe[$E -> /Data/Algebra/Ord])= /Data/maybeCompare(a= /Data/Some(value= value), b= other)
+
+# # Maybe Functor instance
+  Makes a [Maybe] a [Functor]: [fmap] applies a function to the wrapped value of a [Some] and
+  leaves a [Nothing] unchanged. The instances are defined under the declaration's absolute name
+  (see the [ConsList] instance in [Data/list] for the naming rationale).
+module(Data)
+  every(Maybe[$T -> $_T], isa= [/Data/Functor])
+module(Data/Maybe)
+  /Data/fmap(lst= Nothing, fn(v))= Nothing
+  /Data/fmap(lst= /Data/Some(value), fn(v))= /Data/Some(value= fn(v= value))

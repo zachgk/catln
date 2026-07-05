@@ -35,7 +35,7 @@ Prgm
                             ( EAppArg Value /$fb881e-arg= Hole TopType HoleActive Nothing@Value /x2 | /operator>=
                                 ( EAppArg Value /l -> TVArg /x = ( Value /x ↦ TVArg /x ) )
                                 ( EAppArg Value /r -> /Data/Primitive/Integer = 0 )
-                            ) -> TVArg /x2 = Value /x2
+                            ) -> TVArg /x2 = ( Value /x2 ↦ TVArg /x2 )
                         , /abs.$fb881e( EAppArg Value /x )
                             ( EAppArg Value /$fb881e-arg -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = Hole ( /Data/Primitive/Integer + /Data/Primitive/Float ) HoleActive Nothing@Value /x2 ) ->
                             ( /operator*

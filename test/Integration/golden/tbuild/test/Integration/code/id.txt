@@ -30,7 +30,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /id( EAppArg Value /x ) -> TVArg /x = Value /x ]
+                        [ /id( EAppArg Value /x ) -> TVArg /x = ( Value /x ↦ TVArg /x ) ]
                     }
                 )
             ]

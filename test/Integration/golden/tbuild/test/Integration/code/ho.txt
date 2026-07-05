@@ -35,7 +35,9 @@ Prgm
                         [ /tst
                             ( EAppArg Value /d -> /T( /x=TopType ) = /T( EAppArg Value /x ) )
                             ( EAppArg /f( EAppArg Value /y ) -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean =
-                            ( /f( EAppArg Value /y -> TVArg /x = Value /x ) ↦ ∀/Data/Primitive/Boolean )
+                            ( /f
+                                ( EAppArg Value /y -> TVArg /x = ( Value /x ↦ TVArg /x ) ) ↦ ∀/Data/Primitive/Boolean
+                            )
                         ]
                     }
                 )
