@@ -2651,7 +2651,21 @@ intersectPartialsBase typeEnv vaenv (PartialType name' aVars aArgs aPreds (PtArg
   let args' = fmap snd argsMap
   let bottomKeys = H.keysSet $ H.filter (isBottomType . snd) argsMap
   let argsVaenvs = map fst $ H.elems $ H.filter (not . isBottomType . snd) argsMap
-  let venvs' = mergeAllVarEnvs typeEnv [fst $ splitVarArgEnv $ mergeAllVarEnvs typeEnv argsVaenvs, vars']
+  -- The args' envs are seeded with the whole incoming vaenv, so they carry ambient bindings
+  -- (a caller's or an outer partial's vars) alongside the meets discovered here. Folding all
+  -- of that into the result's ptVars stamps foreign var slots onto every intersected partial
+  -- (e.g. an operator's /B appearing on a Cons leaf). An intersection may narrow the var
+  -- slots a partial declares; it must not invent new ones - so keep only the declared keys.
+  -- The args' envs are seeded with the whole incoming vaenv, so they carry the caller's ambient
+  -- bindings alongside the meets discovered here. The discovered bindings must be kept on the
+  -- partial's ptVars - they are returned no other way, and they carry a callee's type-var
+  -- resolution (@unwrap[/T=Integer]@ from meeting @/b@'s @Box[/T=$_/T]@ with @Box[/T=Integer]@,
+  -- which later resolves the passthrough output @$_T@). An ambient binding that merely passed
+  -- through unchanged is dropped: it lives in the caller's env, and stamping it onto every
+  -- intersected partial invents foreign var slots (an operator's /B appearing on a Cons leaf).
+  let ambientVars = fst $ splitVarArgEnv vaenv
+  let argsVarBindings = H.filterWithKey (\k v -> H.lookup k ambientVars /= Just v) $ fst $ splitVarArgEnv $ mergeAllVarEnvs typeEnv argsVaenvs
+  let venvs' = mergeAllVarEnvs typeEnv [argsVarBindings, vars']
   let preds' = predsAnd aPreds bPreds
   -- The two arg-sets each constrain the instance args to an interval over the
   -- arg-name subset lattice (see 'PtArgMode'). Their intersection is the interval

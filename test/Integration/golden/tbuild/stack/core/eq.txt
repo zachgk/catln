@@ -15,10 +15,10 @@ Prgm
                                 , fromList []
                                 )
                             ,
-                                ( /Data/strEqual[ /T=∀/Data/Algebra/Eq ]
+                                ( /Data/strEqual
                                     ( /r=/Data/String
                                     , /l=/Data/String
-                                    ) + /Data/Primitive/True + /Data/Algebra/rel[ /T=∀/Data/Algebra/Eq ]
+                                    ) + /Data/Primitive/True + /Data/Algebra/rel
                                     ( /this=
                                         ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] )
                                     , /a=UnionType
@@ -30,10 +30,10 @@ Prgm
                                         , []
                                         )
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Primitive/False + /Data/Primitive/boolEq[ /T=∀/Data/Algebra/Eq ]
+                                    ) + /Data/Primitive/False + /Data/Primitive/boolEq
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
-                                    ) + /Data/Algebra/isEq[ /T=∀/Data/Algebra/Eq ]( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq[ /T=∀/Data/Algebra/Eq ]
+                                    ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) + /Data/Primitive/intEq
                                     ( /r=/Data/Primitive/Integer
                                     , /l=/Data/Primitive/Integer
                                     ) + /Data/Algebra/equal[ /T=∀/Data/Algebra/Eq ]
@@ -175,7 +175,7 @@ Prgm
                                 , fromList []
                                 )
                             ,
-                                ( /Data/Primitive/True + /operator~[ /T=∀/Data/Algebra/Eq ]( /a=∀/Data/Primitive/Boolean ) + /Data/Primitive/False )
+                                ( /Data/Primitive/True + /operator~( /a=∀/Data/Primitive/Boolean ) + /Data/Primitive/False )
                             , []
                             ) = /operator~
                             ( EAppArg Value /a -> ∀/Data/Primitive/Boolean =

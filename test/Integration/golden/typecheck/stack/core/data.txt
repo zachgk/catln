@@ -42,11 +42,7 @@ Prgm
                         [ /Context[ /V : TopType ]( Value /value -> $/V )( ..Hole TopType HoleActive Nothing ) ]
                     , omiRuntimeDecls =
                         [ /Context[ /T : TopType ][ /V : TopType ]( Value /value -> $/V )( ..Hole TopType HoleActive Nothing ) | /operator?->
-                            ( Value /l -> /ContextIn
-                                [ /T=TopType
-                                , /V=TopType
-                                ]( /value=$/V ).. = /ContextIn[ /V : $_/V ]( Value /value -> $/V = Hole $/V HoleActive Nothing )( ..Hole TopType HoleActive Nothing )
-                            )( Value /r -> $/T = Hole $/T HoleActive Nothing ) -> $/T
+                            ( Value /l -> /ContextIn[ /V=TopType ]( /value=$/V ).. = /ContextIn[ /V : $_/V ]( Value /value -> $/V = Hole $/V HoleActive Nothing )( ..Hole TopType HoleActive Nothing ) )( Value /r -> $/T = Hole $/T HoleActive Nothing ) -> $/T
                         ]
                     , omiRefineDecls = []
                     , omiDefs = []

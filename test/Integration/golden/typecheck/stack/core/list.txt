@@ -239,14 +239,14 @@ Prgm
                                 , fromList []
                                 )
                             ,
-                                ( /Data/consEqual[ /T=∀/Data/Algebra/Eq ]
+                                ( /Data/consEqual
                                     ( /a=/Data/Cons[ /T=∀/Data/Algebra/Eq ]
                                         ( /head=$/T
                                         , /tail=∀/Data/ConsList[ /T=$_/T ]
                                         )
                                     , /b=
                                         ( TopType | PredClass /Data/ConsList[ /E=∀/Data/Algebra/Eq ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Eq ] )
-                                    ) + /Data/Primitive/True + /operator&&[ /T=∀/Data/Algebra/Eq ]
+                                    ) + /Data/Primitive/True + /operator&&
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
                                     ) + /Data/Primitive/False
