@@ -30,6 +30,7 @@ import           Data.Maybe
 import           Eval.Common          (Val (StrVal, TupleVal))
 import           LSP                  (lspRun)
 import           System.Directory
+import           System.Exit          (exitFailure)
 import           Text.Megaparsec      (sourceName)
 import           Text.Printf
 import           TypeCheck.Common     (flipTraceConstrain)
@@ -275,7 +276,9 @@ main = do
   res <- runCResT $ exec cmd
   case res of
     CRes notes _ -> unless (null notes) $ putStrLn $ prettyCNotes notes
-    CErr notes   -> unless (null notes) $ putStrLn $ prettyCNotes notes
+    CErr notes   -> do
+      unless (null notes) $ putStrLn $ prettyCNotes notes
+      exitFailure
   where
     opts = info (mainCommands <**> helper)
       ( fullDesc
