@@ -1,0 +1,29 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                    }
+                )
+            ]
+        )
+    , prgmCG = [ CGType ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "Exercises the core generic [fmap] (dispatched through the [Functor] class) with concrete" )
+        , /Catln/#md
+            ( Value /text= CStr "values from an importing module, comparing results with the generic [operator==]. The law" )
+        , /Catln/#md
+            ( Value /text= CStr "properties in stack/core/functor.ct check these shapes generically; this asserts exact" )
+        , /Catln/#md
+            ( Value /text= CStr "values on the imported path (identity, increment, and composed increments, over both the" )
+        , /Catln/#md
+            ( Value /text= CStr "[ConsList] and [Maybe] instances)." )
+        ]
+    }
