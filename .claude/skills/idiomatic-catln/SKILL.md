@@ -109,7 +109,57 @@ reversed(lst)= reverseOnto(lst= lst, acc= /Data/Nil)   # ConsList arms fulfil it
 - To keep an open interface (like `Functor`) from requiring total coverage, put a type's instance
   in its **own submodule** using absolute names, e.g. `module(Data/List)` with `/Data/fmap(...)=`.
 
-## 4. Syntax quick reference & gotchas
+## 4. Nest single-use helpers inside the function that uses them
+
+A helper used by exactly one function does not belong in the top-level namespace. Write the arm
+with a **bare `=` and nothing after it**, then indent the helper's declaration and arms, and put the
+**body as the final indented line**. Desugar (`nestedDeclPreprocessor` → `flattenNestedDeclarations`)
+lifts that last expression up as the arm's body, and the preceding decls become sub-functions —
+renamed with the parent's path (so they can't collide) and closed over the parent's arguments.
+
+```catln
+reversed(lst -> /Data/List) -> /Data/List
+  # doc for reversed stays on the signature declaration
+reversed(lst) =                                              # bare '=', body comes last
+  reverseOnto(lst -> ConsList, acc -> ConsList) -> ConsList   # private helper decl + arms
+  reverseOnto(lst= Nil, acc)= acc
+  reverseOnto(lst= /Data/Cons(head, tail), acc)= reverseOnto(lst= tail, acc= /Data/Cons(head= head, tail= acc))
+  reverseOnto(lst= lst, acc= /Data/Nil)                      # final indented line = the body
+```
+
+- **Use the `f(args) =` + final-line form, and nest under an *arm* (not the bare `f(args) -> R`
+  signature).** The last indented statement must be a plain expression — it becomes the body; the
+  earlier statements are the helper decls. (The one-line variant `f(args)= body` with helpers
+  indented under also works and desugars identically, but the bare-`=` form is the canonical one and
+  reads better with several helpers.)
+- **The enclosing arm's argument names are curried into the helper**, so the helper's own parameters
+  must not **collide** with them. If the arm destructures `Cons(head, tail)` and the helper also uses
+  `head`/`tail`, rename the arm's fields with `@` first (`f(lst= Cons(head@h, tail@t))= …`) so the
+  curried names don't clash. A collision shows up as an `Unfulfilled Declaration` error listing the
+  extra curried args. (Extra *non-colliding* curried args are harmless — the helper ignores them.)
+- **Mutually-recursive helpers** (A calls B, B calls A — e.g. a `rangeFrom`/`rangeStep` pair) nest
+  as **siblings** under the one arm, so both names are in scope for the cross-reference.
+- **Frontier — only nest under a *plain-function* arm.** The helper is scoped with the parent's
+  `exprPath` as a prefix. Under a plain arm (`reversed(lst)= …`) that prefix is the function name and
+  resolution works. Under a **method arm** (`:Cons.toString= …`) the prefix becomes the *method*
+  name, producing a malformed scope like `/toString./Data/restToString` that type-checks a direct
+  call but breaks the print/`DShow` path with `Actual type contains bottomType` (`ACT ∅`). Keep a
+  method's helper (e.g. `restToString` for `toString`, or a `compareTo` helper) at top level.
+- **Frontier — keep generic / `Ord`-`Eq` helpers at top level.** Nesting a helper that is generic in
+  its element (`insert[$T -> /Data/Algebra/Ord]`) or wired into the `Eq`/`Ord`/`Comparison`
+  machinery (`consThen`) can tip the constraint solver into a global `Scheme failed verification …
+  Grows by` failure that surfaces at an *unrelated* definition. When nesting a helper produces a
+  "Grows by" scheme error, revert it to the top level — this is a compiler limitation, not a style
+  choice.
+- **Both frontiers are form-independent.** The one-line and bare-`=` forms desugar to the identical
+  `flattenNestedDeclarations` structure, so switching between them does *not* rescue a method-arm or
+  generic-`Ord` helper — the method prefix comes from `exprPath` and the "Grows by" from the solver,
+  neither of which the body syntax touches (both verified against the compiler).
+- **Net:** non-generic helpers used by a **plain-function** arm (`reverseOnto` under `reversed`,
+  `rangeFrom`/`rangeStep` under `range`) nest cleanly; helpers under method arms or tied to
+  generic/`Ord`/`Eq` dispatch stay at top level until the compiler catches up.
+
+## 5. Syntax quick reference & gotchas
 
 - **List sugar:** `[1, 2, 3]` desugars to `Cons(1, Cons(2, Cons(3, Nil)))`; `[]` is `Nil`. Use it.
 - **Named args are the norm:** `f(x= 5)`, `Cons(head= 1, tail= Nil)`. Positional field patterns

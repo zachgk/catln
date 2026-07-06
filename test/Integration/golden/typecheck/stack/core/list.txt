@@ -2,6 +2,48 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/reversed./Data/reverseOnto"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /reversed./Data/reverseOnto( Value /lst -> ∀/Data/ConsList )( Value /lst -> ∀/Data/ConsList )( Value /acc -> ∀/Data/ConsList ) -> ∀/Data/ConsList ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /reversed./Data/reverseOnto( Value /lst -> ∀/Data/ConsList )
+                            ( Value /lst -> /Data/Cons[ /T=TopType ]
+                                ( /head=$/T
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                ) = /Data/Cons( Value /head )( Value /tail -> ∀/Data/ConsList )
+                            )
+                            ( Value /acc -> ∀/Data/ConsList[ /T=$_/T ] ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/ConsList
+                                , fromList []
+                                )
+                            ,
+                                ( /reversed./Data/reverseOnto
+                                    ( /acc=/Data/Cons[ /T=TopType ]
+                                        ( /head=TopType
+                                        , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                        )
+                                    , /lst=∀/Data/ConsList
+                                    ) + /Data/Cons[ /T=TopType ]
+                                    ( /head=TopType
+                                    , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                    )
+                                )
+                            , []
+                            ) = /reversed./Data/reverseOnto( Value /lst -> TVArg /tail = Value /tail )
+                            ( Value /acc -> /Data/Cons[ /T=TopType ]
+                                ( /head=$/T
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                ) = /Data/Cons( Value /head -> TVArg /head = Value /head )( Value /tail -> TVArg /acc = Value /acc )
+                            )
+                        , /reversed./Data/reverseOnto( Value /lst -> ∀/Data/ConsList )( Value /lst -> /Data/Nil = Value /Data/Nil )( Value /acc -> ∀/Data/ConsList ) -> TVArg /acc = Value /acc
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/range"
                 , ObjectMapItem
                     { omiDecls =
@@ -15,36 +57,34 @@ Prgm
                                 , fromList []
                                 )
                             ,
-                                ( /Data/rangeFrom
+                                ( /range./Data/rangeFrom
                                     ( /stop=/Data/Primitive/Integer
                                     , /i=/Data/Primitive/Integer
                                     ) + /Data/Nil + /Data/Cons[ /T=/Data/Primitive/Integer ]
                                     ( /head=/Data/Primitive/Integer
-                                    , /tail=
-                                        ( TopType | PredClass /Data/ConsList
-                                            [ /T=( /Data/Primitive/Integer + /Data/Primitive/Float ) ] && PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ]
-                                        )
-                                    ) + /Data/rangeStep
+                                    , /tail=∀/Data/ConsList
+                                        [ /T=( /Data/Primitive/Integer + /Data/Primitive/Float ) ]
+                                    ) + /range./Data/rangeStep
                                     ( /stop=/Data/Primitive/Integer
                                     , /more=∀/Data/Primitive/Boolean
                                     , /i=/Data/Primitive/Integer
                                     )
                                 )
                             , []
-                            ) = /Data/rangeFrom
+                            ) = /range./Data/rangeFrom
                             ( Value /i -> /Data/Primitive/Integer = CInt 0 )( Value /stop -> TVArg /stop = Value /stop )
                         ]
                     }
                 )
             ,
-                ( "/Data/rangeFrom"
+                ( "/range./Data/rangeFrom"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/rangeFrom( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Data/Primitive/Integer ] ]
+                        [ /range./Data/rangeFrom( Value /stop -> /Data/Primitive/Integer )( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Data/Primitive/Integer ] ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/rangeFrom( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> UnionType
+                        [ /range./Data/rangeFrom( Value /stop -> /Data/Primitive/Integer )( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> UnionType
                             ( Just
                                 ( PredClass /Data/List[ /T=/Data/Primitive/Integer ]
                                 , fromList []
@@ -52,18 +92,16 @@ Prgm
                             ,
                                 ( /Data/Nil + /Data/Cons[ /T=/Data/Primitive/Integer ]
                                     ( /head=/Data/Primitive/Integer
-                                    , /tail=
-                                        ( TopType | PredClass /Data/ConsList
-                                            [ /T=( /Data/Primitive/Integer + /Data/Primitive/Float ) ] && PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ]
-                                        )
-                                    ) + /Data/rangeStep
+                                    , /tail=∀/Data/ConsList
+                                        [ /T=( /Data/Primitive/Integer + /Data/Primitive/Float ) ]
+                                    ) + /range./Data/rangeStep
                                     ( /stop=/Data/Primitive/Integer
                                     , /more=∀/Data/Primitive/Boolean
                                     , /i=/Data/Primitive/Integer
                                     )
                                 )
                             , []
-                            ) = /Data/rangeStep
+                            ) = /range./Data/rangeStep
                             ( Value /more -> ∀/Data/Primitive/Boolean = /operator<( Value /l -> TVArg /i = Value /i )( Value /r -> TVArg /stop = Value /stop ) )( Value /i -> TVArg /i = Value /i )( Value /stop -> TVArg /stop = Value /stop )
                         ]
                     }
@@ -225,48 +263,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/reverseOnto"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/reverseOnto( Value /lst -> ∀/Data/ConsList )( Value /acc -> ∀/Data/ConsList ) -> ∀/Data/ConsList ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/reverseOnto( Value /lst -> /Data/Nil = Value /Data/Nil )( Value /acc -> ∀/Data/ConsList ) -> TVArg /acc = Value /acc
-                        , /Data/reverseOnto
-                            ( Value /lst -> /Data/Cons[ /T=TopType ]
-                                ( /head=$/T
-                                , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                ) = /Data/Cons( Value /head )( Value /tail -> ∀/Data/ConsList )
-                            )
-                            ( Value /acc -> ∀/Data/ConsList[ /T=$_/T ] ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/ConsList
-                                , fromList []
-                                )
-                            ,
-                                ( /Data/Cons[ /T=TopType ]
-                                    ( /head=TopType
-                                    , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                    ) + /Data/reverseOnto
-                                    ( /acc=/Data/Cons[ /T=TopType ]
-                                        ( /head=TopType
-                                        , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                        )
-                                    , /lst=∀/Data/ConsList
-                                    )
-                                )
-                            , []
-                            ) = /Data/reverseOnto( Value /lst -> TVArg /tail = Value /tail )
-                            ( Value /acc -> /Data/Cons[ /T=TopType ]
-                                ( /head=$/T
-                                , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                ) = /Data/Cons( Value /head -> TVArg /head = Value /head )( Value /tail -> TVArg /acc = Value /acc )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/reversed"
                 , ObjectMapItem
                     { omiDecls =
@@ -280,10 +276,7 @@ Prgm
                                 , fromList []
                                 )
                             ,
-                                ( /Data/Nil + /Data/Cons[ /T=TopType ]
-                                    ( /head=TopType
-                                    , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                    ) + /Data/reverseOnto
+                                ( /reversed./Data/reverseOnto
                                     ( /acc=
                                         ( /Data/Nil + /Data/Cons[ /T=TopType ]
                                             ( /head=TopType
@@ -291,10 +284,13 @@ Prgm
                                             )
                                         )
                                     , /lst=∀/Data/ConsList
+                                    ) + /Data/Nil + /Data/Cons[ /T=TopType ]
+                                    ( /head=TopType
+                                    , /tail=∀/Data/ConsList[ /T=$_/T ]
                                     )
                                 )
                             , []
-                            ) = /Data/reverseOnto( Value /lst -> TVArg /lst = Value /lst )( Value /acc -> /Data/Nil = Value /Data/Nil )
+                            ) = /reversed./Data/reverseOnto( Value /lst -> TVArg /lst = Value /lst )( Value /acc -> /Data/Nil = Value /Data/Nil )
                         ]
                     }
                 )
@@ -327,6 +323,27 @@ Prgm
                             , /tail=∀/Data/ConsList[ /T=$_/T ]
                             ) = /Data/Cons( Value /head -> TVArg /head = Value /head )
                             ( Value /tail -> ∀/Data/ConsList[ /T=$_/T ] = /Data/insert( Value /x -> TVArg /x = Value /x )( Value /lst -> TVArg /tail = Value /tail ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/range./Data/rangeStep"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /range./Data/rangeStep( Value /stop -> /Data/Primitive/Integer )( Value /more -> ∀/Data/Primitive/Boolean )( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Data/Primitive/Integer ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /range./Data/rangeStep( Value /stop -> /Data/Primitive/Integer )( Value /more -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=∀/Data/ConsList[ /T=$_/T ]
+                            ) = /Data/Cons( Value /head -> TVArg /i = Value /i )
+                            ( Value /tail -> ∀/Data/ConsList[ /T=$_/T ] = /range./Data/rangeFrom
+                                ( Value /i -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /i = Value /i )
+                                    ( Value /r -> /Data/Primitive/Integer = CInt 1 )
+                                )( Value /stop -> TVArg /stop = Value /stop )
+                            )
+                        , /range./Data/rangeStep( Value /stop -> /Data/Primitive/Integer )( Value /more -> /Data/Primitive/False = Value /Data/Primitive/False )( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> /Data/Nil = Value /Data/Nil
                         ]
                     }
                 )
@@ -431,27 +448,6 @@ Prgm
                                 , []
                                 ) = /Data/fmap( Value /lst -> TVArg /tail = Value /tail )
                                 ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/Data/rangeStep"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/rangeStep( Value /more -> ∀/Data/Primitive/Boolean )( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Data/Primitive/Integer ] ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/rangeStep( Value /more -> /Data/Primitive/False = Value /Data/Primitive/False )( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> /Data/Nil = Value /Data/Nil
-                        , /Data/rangeStep( Value /more -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> /Data/Cons[ /T=/Data/Primitive/Integer ]
-                            ( /head=/Data/Primitive/Integer
-                            , /tail=∀/Data/ConsList[ /T=$_/T ]
-                            ) = /Data/Cons( Value /head -> TVArg /i = Value /i )
-                            ( Value /tail -> ∀/Data/ConsList[ /T=$_/T ] = /Data/rangeFrom
-                                ( Value /i -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /i = Value /i )
-                                    ( Value /r -> /Data/Primitive/Integer = CInt 1 )
-                                )( Value /stop -> TVArg /stop = Value /stop )
                             )
                         ]
                     }

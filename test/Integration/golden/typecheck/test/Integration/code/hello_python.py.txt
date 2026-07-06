@@ -66,14 +66,14 @@ Prgm
                                 , fromList []
                                 )
                             ,
-                                ( /Data/range( /stop=/Data/Primitive/Integer ) + /Data/rangeFrom
+                                ( /Data/range( /stop=/Data/Primitive/Integer ) + /range./Data/rangeFrom
                                     ( /stop=/Data/Primitive/Integer
                                     , /i=/Data/Primitive/Integer
                                     ) + /Data/Nil + /Data/Cons[ /T=/Data/Primitive/Integer ]
                                     ( /head=/Data/Primitive/Integer
                                     , /tail=
                                         ( TopType | PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ] )
-                                    ) + /Data/rangeStep
+                                    ) + /range./Data/rangeStep
                                     ( /stop=/Data/Primitive/Integer
                                     , /more=∀/Data/Primitive/Boolean
                                     , /i=/Data/Primitive/Integer
@@ -589,10 +589,7 @@ Prgm
                                 , fromList []
                                 )
                             ,
-                                ( /Data/Nil + /Data/Cons[ /T=$_/T ]
-                                    ( /head=$/T
-                                    , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                    ) + /Data/reverseOnto
+                                ( /reversed./Data/reverseOnto
                                     ( /acc=
                                         ( /Data/Nil + /Data/Cons[ /T=TopType ]
                                             ( /head=TopType
@@ -600,6 +597,9 @@ Prgm
                                             )
                                         )
                                     , /lst=∀/Data/ConsList
+                                    ) + /Data/Nil + /Data/Cons[ /T=$_/T ]
+                                    ( /head=$/T
+                                    , /tail=∀/Data/ConsList[ /T=$_/T ]
                                     ) + /Data/reversed( /lst=∀/Data/List )
                                 )
                             , []

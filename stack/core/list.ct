@@ -74,11 +74,11 @@ module(Data)
       accumulator that starts empty — each [head] is prepended to the growing result, which leaves
       the accumulator holding the reversal once [lst] is exhausted.
 
-  reverseOnto(lst -> ConsList, acc -> ConsList) -> ConsList
-  reverseOnto(lst= Nil, acc)= acc
-  reverseOnto(lst= /Data/Cons(head, tail), acc)= reverseOnto(lst= tail, acc= /Data/Cons(head= head, tail= acc))
-
-  reversed(lst)= reverseOnto(lst= lst, acc= /Data/Nil)
+  reversed(lst) =
+    reverseOnto(lst -> ConsList, acc -> ConsList) -> ConsList
+    reverseOnto(lst= Nil, acc)= acc
+    reverseOnto(lst= /Data/Cons(head, tail), acc)= reverseOnto(lst= tail, acc= /Data/Cons(head= head, tail= acc))
+    reverseOnto(lst= lst, acc= /Data/Nil)
 
   # The result's element type stays generic, so it is compared with a known list rather than
   #   rendered directly; the [Boolean] comparison then prints on its own.
@@ -116,14 +116,15 @@ module(Data)
       [stop] it prepends the counter and recurses, and otherwise it stops with [Nil]. A [stop] of
       zero or less yields the empty list.
 
-  rangeStep(more -> Boolean, i -> Integer, stop -> Integer) -> /Data/List[$T -> Integer]
-  rangeStep(more= /Data/Primitive/False, i, stop)= /Data/Nil
-  rangeStep(more= /Data/Primitive/True, i, stop)= /Data/Cons(head= i, tail= rangeFrom(i= i + 1, stop= stop))
+  range(stop) =
+    rangeFrom(i -> Integer, stop -> Integer) -> /Data/List[$T -> Integer]
+    rangeFrom(i, stop)= rangeStep(more= i < stop, i= i, stop= stop)
 
-  rangeFrom(i -> Integer, stop -> Integer) -> /Data/List[$T -> Integer]
-  rangeFrom(i, stop)= rangeStep(more= i < stop, i= i, stop= stop)
+    rangeStep(more -> Boolean, i -> Integer, stop -> Integer) -> /Data/List[$T -> Integer]
+    rangeStep(more= /Data/Primitive/False, i, stop)= /Data/Nil
+    rangeStep(more= /Data/Primitive/True, i, stop)= /Data/Cons(head= i, tail= rangeFrom(i= i + 1, stop= stop))
 
-  range(stop)= rangeFrom(i= 0, stop= stop)
+    rangeFrom(i= 0, stop= stop)
 
   > /Data/range(stop= 3)
     >>> [0, 1, 2]

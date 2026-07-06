@@ -2,6 +2,21 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/reversed./Data/reverseOnto"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ reversed./Data/reverseOnto( Value /lst )( Value lst -> ∀/Data/ConsList )( Value acc -> ∀/Data/ConsList ) -> ∀/Data/ConsList ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ reversed./Data/reverseOnto( Value /lst )
+                            ( Value lst= /Data/Cons( Value head )( Value tail ) )( Value acc )= reverseOnto( Value lst= Value tail )
+                            ( Value acc= /Data/Cons( Value head= Value head )( Value tail= Value acc ) )
+                        , reversed./Data/reverseOnto( Value /lst )( Value lst= Value Nil )( Value acc )= Value acc
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/range"
                 , ObjectMapItem
                     { omiDecls =
@@ -15,14 +30,14 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/rangeFrom"
+                ( "/range./Data/rangeFrom"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/rangeFrom( Value i -> /Data/Primitive/Integer )( Value stop -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Data/Primitive/Integer ] ]
+                        [ range./Data/rangeFrom( Value /stop )( Value i -> /Data/Primitive/Integer )( Value stop -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Data/Primitive/Integer ] ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/rangeFrom( Value i )( Value stop )= rangeStep
+                        [ range./Data/rangeFrom( Value /stop )( Value i )( Value stop )= rangeStep
                             ( Value more= /operator<( Value /l= Value i )( Value /r= Value stop ) )( Value i= Value i )( Value stop= Value stop )
                         ]
                     }
@@ -113,21 +128,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Data/reverseOnto"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/reverseOnto( Value lst -> ∀/Data/ConsList )( Value acc -> ∀/Data/ConsList ) -> ∀/Data/ConsList ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/reverseOnto( Value lst= Value Nil )( Value acc )= Value acc
-                        , /Data/reverseOnto
-                            ( Value lst= /Data/Cons( Value head )( Value tail ) )( Value acc )= reverseOnto( Value lst= Value tail )
-                            ( Value acc= /Data/Cons( Value head= Value head )( Value tail= Value acc ) )
-                        ]
-                    }
-                )
-            ,
                 ( "/Data/reversed"
                 , ObjectMapItem
                     { omiDecls =
@@ -152,6 +152,24 @@ Prgm
                             ( Value tail= /Data/Cons( Value head= Value head )( Value tail= Value tail ) )
                         , /Data/insertStep( Value before= Value /Data/Primitive/False )( Value x )( Value head )( Value tail )= /Data/Cons( Value head= Value head )
                             ( Value tail= insert( Value x= Value x )( Value lst= Value tail ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/range./Data/rangeStep"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ range./Data/rangeStep( Value /stop )( Value more -> ∀/Data/Primitive/Boolean )( Value i -> /Data/Primitive/Integer )( Value stop -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Data/Primitive/Integer ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ range./Data/rangeStep( Value /stop )( Value more= Value /Data/Primitive/True )( Value i )( Value stop )= /Data/Cons( Value head= Value i )
+                            ( Value tail= rangeFrom
+                                ( Value i= /operator+( Value /l= Value i )
+                                    ( Value /r= CInt 1 )
+                                )( Value stop= Value stop )
+                            )
+                        , range./Data/rangeStep( Value /stop )( Value more= Value /Data/Primitive/False )( Value i )( Value stop )= Value /Data/Nil
                         ]
                     }
                 )
@@ -187,24 +205,6 @@ Prgm
                             ( Value head= fn( Value v= Value head ) )
                             ( Value tail= /Data/fmap( Value lst= Value tail )
                                 ( fn( Value v )= fn( Value v= Value v ) )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/Data/rangeStep"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/rangeStep( Value more -> ∀/Data/Primitive/Boolean )( Value i -> /Data/Primitive/Integer )( Value stop -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Data/Primitive/Integer ] ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/rangeStep( Value more= Value /Data/Primitive/False )( Value i )( Value stop )= Value /Data/Nil
-                        , /Data/rangeStep( Value more= Value /Data/Primitive/True )( Value i )( Value stop )= /Data/Cons( Value head= Value i )
-                            ( Value tail= rangeFrom
-                                ( Value i= /operator+( Value /l= Value i )
-                                    ( Value /r= CInt 1 )
-                                )( Value stop= Value stop )
                             )
                         ]
                     }
