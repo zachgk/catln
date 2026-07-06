@@ -39,34 +39,74 @@ module(Data)
   consThen(first= /Data/Algebra/GreaterThan, second)= /Data/Algebra/GreaterThan
 
   # ## List operations
-  sum(lst -> /Data/List) -> Integer
+  sum(lst -> /Data/List[$T -> Integer]) -> Integer
 
-  all(lst -> /Data/List) -> Boolean
+  all(lst -> /Data/List[$T -> Boolean]) -> Boolean
 
-  any(lst -> /Data/List) -> Boolean
+  any(lst -> /Data/List[$T -> Boolean]) -> Boolean
 
   reversed(lst -> /Data/List) -> /Data/List
 
-  sorted(lst -> /Data/List) -> /Data/List
+  sorted(lst -> /Data/List[$T -> /Data/Algebra/Ord]) -> /Data/List
 
-  # ## ConsList runtime operations
-  sum(lst -> ConsList) -> Integer
-    #runtime("listSum")
+  # ## ConsList operations
+  # [sum] adds up the elements of a [ConsList] of [Integer]s, recursing through the tail with the
+  #   empty list summing to zero.
+  sum(lst -> ConsList[$T -> Integer]) -> Integer
+  sum(lst= Nil)= 0
+  sum(lst= /Data/Cons[$T -> Integer](head, tail))= head + sum(lst= tail)
 
-  all(lst -> ConsList) -> Boolean
-    #runtime("listAll")
+  # [all] is [True] when every element of a [ConsList] of [Boolean]s is [True]; the empty list is
+  #   vacuously [True].
+  all(lst -> ConsList[$T -> Boolean]) -> Boolean
+  all(lst= Nil)= /Data/Primitive/True
+  all(lst= /Data/Cons[$T -> Boolean](head, tail))= head && all(lst= tail)
 
-  any(lst -> ConsList) -> Boolean
-    #runtime("listAny")
+  # [any] is [True] when at least one element of a [ConsList] of [Boolean]s is [True]; the empty
+  #   list is [False].
+  any(lst -> ConsList[$T -> Boolean]) -> Boolean
+  any(lst= Nil)= /Data/Primitive/False
+  any(lst= /Data/Cons[$T -> Boolean](head, tail))= head || any(lst= tail)
+
+  # [reversed] reverses a [ConsList] by moving its elements one at a time onto an accumulator that
+  #   starts empty. There is no list-append operator, so the accumulator carries the growing result
+  #   and the head of [lst] is prepended to it at each step.
+  reverseOnto(lst -> ConsList, acc -> ConsList) -> ConsList
+  reverseOnto(lst= Nil, acc)= acc
+  reverseOnto(lst= /Data/Cons(head, tail), acc)= reverseOnto(lst= tail, acc= /Data/Cons(head= head, tail= acc))
 
   reversed(lst -> ConsList) -> ConsList
-    #runtime("listReversed")
+  reversed(lst)= reverseOnto(lst= lst, acc= /Data/Nil)
 
-  sorted(lst -> ConsList) -> ConsList
-    #runtime("listSorted")
+  # [sorted] returns the elements of an [Ord] [ConsList] in ascending order using insertion sort:
+  #   it sorts the tail and then [insert]s the head into the sorted result. [insert] walks the
+  #   already-sorted list, and [insertStep] branches on whether the new element belongs before the
+  #   current head ([x <= head], so [x] is placed here) or further along (recurse into the tail).
+  insertStep[$T -> /Data/Algebra/Ord](before -> Boolean, x -> $T, head -> $T, tail -> ConsList[$T -> /Data/Algebra/Ord]) -> ConsList
+  insertStep(before= /Data/Primitive/True, x, head, tail)= /Data/Cons(head= x, tail= /Data/Cons(head= head, tail= tail))
+  insertStep(before= /Data/Primitive/False, x, head, tail)= /Data/Cons(head= head, tail= insert(x= x, lst= tail))
+
+  insert[$T -> /Data/Algebra/Ord](x -> $T, lst -> ConsList[$T -> /Data/Algebra/Ord]) -> ConsList
+  insert(x, lst= Nil)= /Data/Cons(head= x, tail= /Data/Nil)
+  insert(x, lst= /Data/Cons[$T -> /Data/Algebra/Ord](head, tail))= insertStep(before= x.compareTo(other= head).isLessEq, x= x, head= head, tail= tail)
+
+  sorted(lst -> ConsList[$T -> /Data/Algebra/Ord]) -> ConsList
+  sorted(lst= Nil)= /Data/Nil
+  sorted(lst= /Data/Cons[$T -> /Data/Algebra/Ord](head, tail))= insert(x= head, lst= sorted(lst= tail))
+
+  # [range] builds the list [0, 1, ..., stop - 1]. It counts up from zero with [rangeFrom], and
+  #   [rangeStep] branches on whether the counter has reached [stop]: while [i < stop] it prepends
+  #   the counter and recurses, and once it is not it stops with [Nil]. A [stop] of zero or less
+  #   yields the empty list.
+  rangeStep(more -> Boolean, i -> Integer, stop -> Integer) -> ConsList
+  rangeStep(more= /Data/Primitive/False, i, stop)= /Data/Nil
+  rangeStep(more= /Data/Primitive/True, i, stop)= /Data/Cons(head= i, tail= rangeFrom(i= i + 1, stop= stop))
+
+  rangeFrom(i -> Integer, stop -> Integer) -> ConsList
+  rangeFrom(i, stop)= rangeStep(more= i < stop, i= i, stop= stop)
 
   range(stop -> Integer) -> ConsList
-    #runtime("listRange")
+  range(stop)= rangeFrom(i= 0, stop= stop)
 
   every(ConsList[$T -> $_T], isa= [/Data/Functor])
 
@@ -89,6 +129,51 @@ module(Data/List)
     #assert(test= ~(/Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Nil)) == /Data/Cons(head= 1, tail= /Data/Nil)))
     #assert(test= /Data/Cons(head= /Data/Primitive/True, tail= /Data/Nil) == /Data/Cons(head= /Data/Primitive/True, tail= /Data/Nil))
     #assert(test= ~(/Data/Cons(head= /Data/Primitive/True, tail= /Data/Nil) == /Data/Cons(head= /Data/Primitive/False, tail= /Data/Nil)))
+    0
+
+  # [sum] adds the elements of a list, with the empty list summing to zero.
+  testListSum =
+    #test
+    #assert(test= /Data/sum(lst= /Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Cons(head= 3, tail= /Data/Nil)))) == 6)
+    #assert(test= /Data/sum(lst= /Data/Nil) == 0)
+    0
+
+  # [all] is [True] only when every element is [True]; [False] otherwise, and [True] for the empty
+  #   list.
+  testListAll =
+    #test
+    #assert(test= /Data/all(lst= /Data/Cons(head= /Data/Primitive/True, tail= /Data/Cons(head= /Data/Primitive/True, tail= /Data/Nil))))
+    #assert(test= ~/Data/all(lst= /Data/Cons(head= /Data/Primitive/False, tail= /Data/Nil)))
+    #assert(test= /Data/all(lst= /Data/Nil))
+    0
+
+  # [any] is [True] when at least one element is [True]; [False] for all-false and empty lists.
+  testListAny =
+    #test
+    #assert(test= /Data/any(lst= /Data/Cons(head= /Data/Primitive/True, tail= /Data/Nil)))
+    #assert(test= ~/Data/any(lst= /Data/Cons(head= /Data/Primitive/False, tail= /Data/Cons(head= /Data/Primitive/False, tail= /Data/Nil))))
+    #assert(test= ~/Data/any(lst= /Data/Nil))
+    0
+
+  # [reversed] reverses the order of a list's elements; the empty list reverses to itself.
+  testListReversed =
+    #test
+    #assert(test= /Data/reversed(lst= /Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Cons(head= 3, tail= /Data/Nil)))) == /Data/Cons(head= 3, tail= /Data/Cons(head= 2, tail= /Data/Cons(head= 1, tail= /Data/Nil))))
+    #assert(test= /Data/reversed(lst= /Data/Nil) == /Data/Nil)
+    0
+
+  # [range] builds the counting list [0, 1, ..., stop - 1]; a stop of zero yields the empty list.
+  testListRange =
+    #test
+    #assert(test= /Data/range(stop= 3) == /Data/Cons(head= 0, tail= /Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Nil))))
+    #assert(test= /Data/range(stop= 0) == /Data/Nil)
+    0
+
+  # [sorted] orders an [Ord] list ascending; the empty list sorts to itself.
+  testListSorted =
+    #test
+    #assert(test= /Data/sorted(lst= /Data/Cons(head= 3, tail= /Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Nil)))) == /Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Cons(head= 3, tail= /Data/Nil))))
+    #assert(test= /Data/sorted(lst= /Data/Nil) == /Data/Nil)
     0
 
   # A [ConsList] of any [Ord] element is an [Ord] member (see the end of this file), so [compareTo]

@@ -2,13 +2,80 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
-                ( "/Data/range"
+                ( "/Data/List/testListSum"
                 , ObjectMapItem
                     { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Data/range( Value /stop -> /Data/Primitive/Integer ) -> ∀/Data/ConsList ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ Value /Data/List/testListSum -> /Data/Primitive/Integer = CInt 0 ]
+                    }
+                )
+            ,
+                ( "/Data/range"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/range( Value /stop -> /Data/Primitive/Integer ) -> ∀/Data/ConsList ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/range( Value /stop -> /Data/Primitive/Integer ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/ConsList
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/rangeFrom
+                                    ( /stop=/Data/Primitive/Integer
+                                    , /i=/Data/Primitive/Integer
+                                    ) + /Data/Nil + /Data/Cons[ /T=/Data/Primitive/Integer ]
+                                    ( /head=/Data/Primitive/Integer
+                                    , /tail=
+                                        ( TopType | PredClass /Data/ConsList
+                                            [ /T=( /Data/Primitive/Integer + /Data/Primitive/Float ) ] && PredClass /Data/ConsList[ /T=$_/T ]
+                                        )
+                                    ) + /Data/rangeStep
+                                    ( /stop=/Data/Primitive/Integer
+                                    , /more=∀/Data/Primitive/Boolean
+                                    , /i=/Data/Primitive/Integer
+                                    )
+                                )
+                            , []
+                            ) = /Data/rangeFrom
+                            ( Value /i -> /Data/Primitive/Integer = CInt 0 )( Value /stop -> TVArg /stop = Value /stop )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/rangeFrom"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/rangeFrom( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> ∀/Data/ConsList ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/rangeFrom( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/ConsList
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Nil + /Data/Cons[ /T=/Data/Primitive/Integer ]
+                                    ( /head=/Data/Primitive/Integer
+                                    , /tail=
+                                        ( TopType | PredClass /Data/ConsList
+                                            [ /T=( /Data/Primitive/Integer + /Data/Primitive/Float ) ] && PredClass /Data/ConsList[ /T=$_/T ]
+                                        )
+                                    ) + /Data/rangeStep
+                                    ( /stop=/Data/Primitive/Integer
+                                    , /more=∀/Data/Primitive/Boolean
+                                    , /i=/Data/Primitive/Integer
+                                    )
+                                )
+                            , []
+                            ) = /Data/rangeStep
+                            ( Value /more -> ∀/Data/Primitive/Boolean = /operator<( Value /l -> TVArg /i = Value /i )( Value /r -> TVArg /stop = Value /stop ) )( Value /i -> TVArg /i = Value /i )( Value /stop -> TVArg /stop = Value /stop )
+                        ]
                     }
                 )
             ,
@@ -31,7 +98,7 @@ Prgm
                     , omiDefs =
                         [ /Data/length( Value /this -> /Data/Nil ) -> /Data/Primitive/Integer = CInt 0
                         , /Data/length
-                            ( Value /this -> /Data/Cons[ /T=$/T ]
+                            ( Value /this -> /Data/Cons[ /T=TopType ]
                                 ( /head=$/T
                                 , /tail=∀/Data/ConsList[ /T=$_/T ]
                                 ) = /Data/Cons( Value /head )
@@ -51,11 +118,31 @@ Prgm
                 ( "/Data/sum"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/sum( Value /lst -> ∀/Data/List ) -> /Data/Primitive/Integer ]
-                    , omiRuntimeDecls =
-                        [ /Data/sum( Value /lst -> ∀/Data/ConsList ) -> /Data/Primitive/Integer ]
+                        [ /Data/sum
+                            ( Value /lst -> ∀/Data/List[ /T=/Data/Primitive/Integer ] ) -> /Data/Primitive/Integer
+                        , /Data/sum
+                            ( Value /lst -> ∀/Data/ConsList[ /T=/Data/Primitive/Integer ] ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /Data/sum( Value /lst -> /Data/Nil = Value /Data/Nil ) -> /Data/Primitive/Integer = CInt 0
+                        , /Data/sum
+                            ( Value /lst -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                ) = /Data/Cons[ /T : /Data/Primitive/Integer ]( Value /head -> /Data/Primitive/Integer )
+                                ( Value /tail ->
+                                    ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/List[ /T=/Data/Primitive/Integer ] )
+                                )
+                            ) ->
+                            ( /operator+
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
+                            ) = /operator+( Value /l -> TVArg /head = Value /head )
+                            ( Value /r -> /Data/Primitive/Integer = /Data/sum( Value /lst -> TVArg /tail = Value /tail ) )
+                        ]
                     }
                 )
             ,
@@ -65,6 +152,26 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/List/testListRange"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/List/testListRange -> /Data/Primitive/Integer = CInt 0 ]
+                    }
+                )
+            ,
+                ( "/Data/List/testListSorted"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/List/testListSorted -> /Data/Primitive/Integer = CInt 0 ]
                     }
                 )
             ,
@@ -80,25 +187,187 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/reverseOnto"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/reverseOnto( Value /lst -> ∀/Data/ConsList )( Value /acc -> ∀/Data/ConsList ) -> ∀/Data/ConsList ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/reverseOnto( Value /lst -> /Data/Nil = Value /Data/Nil )( Value /acc -> ∀/Data/ConsList ) -> TVArg /acc = Value /acc
+                        , /Data/reverseOnto
+                            ( Value /lst -> /Data/Cons[ /T=TopType ]
+                                ( /head=$/T
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                ) = /Data/Cons( Value /head )( Value /tail -> ∀/Data/ConsList )
+                            )
+                            ( Value /acc -> ∀/Data/ConsList[ /T=$_/T ] ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/ConsList
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Cons[ /T=TopType ]
+                                    ( /head=TopType
+                                    , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                    ) + /Data/reverseOnto
+                                    ( /acc=/Data/Cons[ /T=TopType ]
+                                        ( /head=TopType
+                                        , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                        )
+                                    , /lst=∀/Data/ConsList
+                                    )
+                                )
+                            , []
+                            ) = /Data/reverseOnto( Value /lst -> TVArg /tail = Value /tail )
+                            ( Value /acc -> /Data/Cons[ /T=TopType ]
+                                ( /head=$/T
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                ) = /Data/Cons( Value /head -> TVArg /head = Value /head )( Value /tail -> TVArg /acc = Value /acc )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/reversed"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/reversed( Value /lst -> ∀/Data/List ) -> ∀/Data/List ]
-                    , omiRuntimeDecls =
-                        [ /Data/reversed( Value /lst -> ∀/Data/ConsList ) -> ∀/Data/ConsList ]
+                        [ /Data/reversed( Value /lst -> ∀/Data/List ) -> ∀/Data/List
+                        , /Data/reversed( Value /lst -> ∀/Data/ConsList ) -> ∀/Data/ConsList
+                        ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /Data/reversed( Value /lst -> ∀/Data/ConsList ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/ConsList
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Nil + /Data/Cons[ /T=TopType ]
+                                    ( /head=TopType
+                                    , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                    ) + /Data/reverseOnto
+                                    ( /acc=
+                                        ( /Data/Nil + /Data/Cons[ /T=TopType ]
+                                            ( /head=TopType
+                                            , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                            )
+                                        )
+                                    , /lst=∀/Data/ConsList
+                                    )
+                                )
+                            , []
+                            ) = /Data/reverseOnto( Value /lst -> TVArg /lst = Value /lst )( Value /acc -> /Data/Nil = Value /Data/Nil )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/insertStep"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/insertStep[ /T : ∀/Data/Algebra/Ord ]( Value /before -> ∀/Data/Primitive/Boolean )( Value /x -> $/T )( Value /head -> $/T )
+                            ( Value /tail -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/ConsList
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/insertStep( Value /before -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /x -> ∀/Data/Algebra/Ord )( Value /head -> ∀/Data/Algebra/Ord )
+                            ( Value /tail -> ∀/Data/ConsList[ /T=$_/T ] ) -> /Data/Cons[ /T=∀/Data/Algebra/Ord ]
+                            ( /head=$/T
+                            , /tail=/Data/Cons[ /T=$_/T ]
+                                ( /head=$/T
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                )
+                            ) = /Data/Cons( Value /head -> TVArg /x = Value /x )
+                            ( Value /tail -> /Data/Cons[ /T=∀/Data/Algebra/Ord ]
+                                ( /head=$/T
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                ) = /Data/Cons( Value /head -> TVArg /head = Value /head )( Value /tail -> TVArg /tail = Value /tail )
+                            )
+                        , /Data/insertStep( Value /before -> /Data/Primitive/False = Value /Data/Primitive/False )( Value /x -> ∀/Data/Algebra/Ord )( Value /head -> ∀/Data/Algebra/Ord )
+                            ( Value /tail -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> /Data/Cons[ /T=∀/Data/Algebra/Ord ]
+                            ( /head=$/T
+                            , /tail=∀/Data/ConsList[ /T=$_/T ]
+                            ) = /Data/Cons( Value /head -> TVArg /head = Value /head )
+                            ( Value /tail -> ∀/Data/ConsList[ /T=$_/T ] = /Data/insert( Value /x -> TVArg /x = Value /x )( Value /lst -> TVArg /tail = Value /tail ) )
+                        ]
                     }
                 )
             ,
                 ( "/Data/sorted"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/sorted( Value /lst -> ∀/Data/List ) -> ∀/Data/List ]
-                    , omiRuntimeDecls =
-                        [ /Data/sorted( Value /lst -> ∀/Data/ConsList ) -> ∀/Data/ConsList ]
+                        [ /Data/sorted
+                            ( Value /lst -> ∀/Data/List[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/List
+                        , /Data/sorted
+                            ( Value /lst -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/ConsList
+                        ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /Data/sorted( Value /lst -> /Data/Nil = Value /Data/Nil ) -> /Data/Nil = Value /Data/Nil
+                        , /Data/sorted
+                            ( Value /lst -> /Data/Cons[ /T=∀/Data/Algebra/Ord ]
+                                ( /head=$/T
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                ) = /Data/Cons[ /T : ∀/Data/Algebra/Ord ]( Value /head -> ∀/Data/Algebra/Ord )
+                                ( Value /tail ->
+                                    ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/List[ /T=∀/Data/Algebra/Ord ] )
+                                )
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/ConsList
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Cons[ /T=∀/Data/Algebra/Ord ]
+                                    ( /head=$/T
+                                    , /tail=UnionType
+                                        ( Just
+                                            ( PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=$_/T ]
+                                            , fromList []
+                                            )
+                                        ,
+                                            ( /Data/Nil + /Data/Cons[ /T=$_/T ]
+                                                ( /head=$/T
+                                                , /tail=
+                                                    ( TopType | PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=$_/T ] )
+                                                )
+                                            )
+                                        , []
+                                        )
+                                    ) + /Data/insertStep[ /T=∀/Data/Algebra/Ord ]
+                                    ( /head=∀/Data/Algebra/Ord
+                                    , /before=UnionType
+                                        ( Just
+                                            ( PredClass /Data/Primitive/Boolean
+                                            , fromList []
+                                            )
+                                        , ( /Data/Primitive/True + /Data/Primitive/False )
+                                        , []
+                                        )
+                                    , /x=∀/Data/Algebra/Ord
+                                    , /tail=∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                    ) + /Data/insert[ /T=∀/Data/Algebra/Ord ]
+                                    ( /x=∀/Data/Algebra/Ord
+                                    , /lst=∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                    )
+                                )
+                            , []
+                            ) = /Data/insert( Value /x -> TVArg /head = Value /head )
+                            ( Value /lst -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ] = /Data/sorted( Value /lst -> TVArg /tail = Value /tail ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/List/testListReversed"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/List/testListReversed -> /Data/Primitive/Integer = CInt 0 ]
                     }
                 )
             ,
@@ -111,19 +380,54 @@ Prgm
                         [ /Data/fmap( Value /lst -> /Data/Nil = Value /Data/Nil )
                             ( /fn( Value /v ) ) -> /Data/Nil = Value /Data/Nil
                         , /Data/fmap
-                            ( Value /lst -> /Data/Cons[ /T=$_/T ]
+                            ( Value /lst -> /Data/Cons[ /T=TopType ]
                                 ( /head=$/T
                                 , /tail=∀/Data/ConsList[ /T=$_/T ]
                                 ) = /Data/Cons( Value /head )
-                                ( Value /tail -> ∀/Data/ConsList[ /T=$_/T ] )
+                                ( Value /tail ->
+                                    ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Functor[ /T=$_/A ] )
+                                )
                             )
                             ( /fn( Value /v ) ) -> /Data/Cons[ /T=TopType ]
                             ( /head=$/T
                             , /tail=∀/Data/ConsList[ /T=$_/T ]
                             ) = /Data/Cons
                             ( Value /head= /fn( Value /v -> TVArg /head = Value /head ) )
-                            ( Value /tail -> ∀/Data/ConsList[ /T=$_/T ] = /Data/fmap( Value /lst -> TVArg /tail = Value /tail )
+                            ( Value /tail -> UnionType
+                                ( Just
+                                    ( PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Functor[ /T=$_/A ]
+                                    , fromList []
+                                    )
+                                ,
+                                    ( /Data/Nil + /Data/Cons[ /T=$_/T ]
+                                        ( /head=$/T
+                                        , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                        )
+                                    )
+                                , []
+                                ) = /Data/fmap( Value /lst -> TVArg /tail = Value /tail )
                                 ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/rangeStep"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/rangeStep( Value /more -> ∀/Data/Primitive/Boolean )( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> ∀/Data/ConsList ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/rangeStep( Value /more -> /Data/Primitive/False = Value /Data/Primitive/False )( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> /Data/Nil = Value /Data/Nil
+                        , /Data/rangeStep( Value /more -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=∀/Data/ConsList[ /T=$_/T ]
+                            ) = /Data/Cons( Value /head -> TVArg /i = Value /i )
+                            ( Value /tail -> ∀/Data/ConsList[ /T=$_/T ] = /Data/rangeFrom
+                                ( Value /i -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /i = Value /i )
+                                    ( Value /r -> /Data/Primitive/Integer = CInt 1 )
+                                )( Value /stop -> TVArg /stop = Value /stop )
                             )
                         ]
                     }
@@ -132,11 +436,53 @@ Prgm
                 ( "/Data/any"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/any( Value /lst -> ∀/Data/List ) -> ∀/Data/Primitive/Boolean ]
-                    , omiRuntimeDecls =
-                        [ /Data/any( Value /lst -> ∀/Data/ConsList ) -> ∀/Data/Primitive/Boolean ]
+                        [ /Data/any
+                            ( Value /lst -> ∀/Data/List[ /T=∀/Data/Primitive/Boolean ] ) -> ∀/Data/Primitive/Boolean
+                        , /Data/any
+                            ( Value /lst -> ∀/Data/ConsList[ /T=∀/Data/Primitive/Boolean ] ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /Data/any( Value /lst -> /Data/Nil = Value /Data/Nil ) -> /Data/Primitive/False = Value /Data/Primitive/False
+                        , /Data/any
+                            ( Value /lst -> /Data/Cons[ /T=∀/Data/Primitive/Boolean ]
+                                ( /head=$/T
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                ) = /Data/Cons[ /T : ∀/Data/Primitive/Boolean ]( Value /head -> ∀/Data/Primitive/Boolean )
+                                ( Value /tail ->
+                                    ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/List[ /T=∀/Data/Primitive/Boolean ] )
+                                )
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Primitive/True + /operator||
+                                    ( /r=UnionType
+                                        ( Just
+                                            ( PredClass /Data/Primitive/Boolean
+                                            , fromList []
+                                            )
+                                        , ( /Data/Primitive/True + /Data/Primitive/False )
+                                        , []
+                                        )
+                                    , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Primitive/False
+                                )
+                            , []
+                            ) = /operator||( Value /l -> TVArg /head = Value /head )
+                            ( Value /r -> UnionType
+                                ( Just
+                                    ( PredClass /Data/Primitive/Boolean
+                                    , fromList []
+                                    )
+                                , ( /Data/Primitive/True + /Data/Primitive/False )
+                                , []
+                                ) = /Data/any( Value /lst -> TVArg /tail = Value /tail )
+                            )
+                        ]
                     }
                 )
             ,
@@ -147,6 +493,16 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ Value /Data/List/testConsListEquality -> /Data/Primitive/Integer = CInt 0 ]
+                    }
+                )
+            ,
+                ( "/Data/List/testListAll"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/List/testListAll -> /Data/Primitive/Integer = CInt 0 ]
                     }
                 )
             ,
@@ -176,13 +532,17 @@ Prgm
                                 ( /head=$/T
                                 , /tail=∀/Data/ConsList[ /T=$_/T ]
                                 ) = /Data/Cons( Value /head@Value /bh -> ∀/Data/Algebra/Eq )
-                                ( Value /tail@Value /bt -> ∀/Data/ConsList[ /T=$_/T ] )
+                                ( Value /tail@Value /bt ->
+                                    ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Algebra/Eq )
+                                )
                             )
                             ( Value /this -> /Data/Cons[ /T=∀/Data/Algebra/Eq ]
                                 ( /head=$/T
                                 , /tail=∀/Data/ConsList[ /T=$_/T ]
                                 ) = /Data/Cons[ /T : ∀/Data/Algebra/Eq ]( Value /head@Value /ah -> ∀/Data/Algebra/Eq )
-                                ( Value /tail@Value /at -> ∀/Data/ConsList[ /T=$_/T ] )
+                                ( Value /tail@Value /at ->
+                                    ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Algebra/Eq )
+                                )
                             ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
@@ -196,9 +556,35 @@ Prgm
                                 )
                             , []
                             ) = /operator&&
-                            ( Value /l -> ∀/Data/Primitive/Boolean = /operator==( Value /l -> TVArg /ah = Value /ah )( Value /r -> TVArg /bh = Value /bh ) )
-                            ( Value /r -> ∀/Data/Primitive/Boolean = /Data/Algebra/equal( Value /other -> TVArg /bt = Value /bt )( Value /this -> TVArg /at = Value /at ) )
+                            ( Value /l -> UnionType
+                                ( Just
+                                    ( PredClass /Data/Primitive/Boolean
+                                    , fromList []
+                                    )
+                                , ( /Data/Primitive/True + /Data/Primitive/False )
+                                , []
+                                ) = /operator==( Value /l -> TVArg /ah = Value /ah )( Value /r -> TVArg /bh = Value /bh )
+                            )
+                            ( Value /r -> UnionType
+                                ( Just
+                                    ( PredClass /Data/Primitive/Boolean
+                                    , fromList []
+                                    )
+                                , ( /Data/Primitive/True + /Data/Primitive/False )
+                                , []
+                                ) = /Data/Algebra/equal( Value /other -> TVArg /bt = Value /bt )( Value /this -> TVArg /at = Value /at )
+                            )
                         ]
+                    }
+                )
+            ,
+                ( "/Data/List/testListAny"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/List/testListAny -> /Data/Primitive/Integer = CInt 0 ]
                     }
                 )
             ,
@@ -219,11 +605,115 @@ Prgm
                 ( "/Data/all"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/all( Value /lst -> ∀/Data/List ) -> ∀/Data/Primitive/Boolean ]
-                    , omiRuntimeDecls =
-                        [ /Data/all( Value /lst -> ∀/Data/ConsList ) -> ∀/Data/Primitive/Boolean ]
+                        [ /Data/all
+                            ( Value /lst -> ∀/Data/List[ /T=∀/Data/Primitive/Boolean ] ) -> ∀/Data/Primitive/Boolean
+                        , /Data/all
+                            ( Value /lst -> ∀/Data/ConsList[ /T=∀/Data/Primitive/Boolean ] ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRuntimeDecls = []
                     , omiRefineDecls = []
-                    , omiDefs = []
+                    , omiDefs =
+                        [ /Data/all( Value /lst -> /Data/Nil = Value /Data/Nil ) -> /Data/Primitive/True = Value /Data/Primitive/True
+                        , /Data/all
+                            ( Value /lst -> /Data/Cons[ /T=∀/Data/Primitive/Boolean ]
+                                ( /head=$/T
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                ) = /Data/Cons[ /T : ∀/Data/Primitive/Boolean ]( Value /head -> ∀/Data/Primitive/Boolean )
+                                ( Value /tail ->
+                                    ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/List[ /T=∀/Data/Primitive/Boolean ] )
+                                )
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Primitive/Boolean
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Primitive/True + /operator&&
+                                    ( /r=UnionType
+                                        ( Just
+                                            ( PredClass /Data/Primitive/Boolean
+                                            , fromList []
+                                            )
+                                        , ( /Data/Primitive/True + /Data/Primitive/False )
+                                        , []
+                                        )
+                                    , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Primitive/False
+                                )
+                            , []
+                            ) = /operator&&( Value /l -> TVArg /head = Value /head )
+                            ( Value /r -> UnionType
+                                ( Just
+                                    ( PredClass /Data/Primitive/Boolean
+                                    , fromList []
+                                    )
+                                , ( /Data/Primitive/True + /Data/Primitive/False )
+                                , []
+                                ) = /Data/all( Value /lst -> TVArg /tail = Value /tail )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/insert"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/insert[ /T : ∀/Data/Algebra/Ord ]( Value /x -> $/T )
+                            ( Value /lst -> ∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/ConsList
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/insert( Value /x -> ∀/Data/Algebra/Ord )( Value /lst -> /Data/Nil = Value /Data/Nil ) -> /Data/Cons[ /T=∀/Data/Algebra/Ord ]
+                            ( /head=$/T
+                            , /tail=/Data/Nil
+                            ) = /Data/Cons( Value /head -> TVArg /x = Value /x )( Value /tail -> /Data/Nil = Value /Data/Nil )
+                        , /Data/insert( Value /x -> ∀/Data/Algebra/Ord )
+                            ( Value /lst -> /Data/Cons[ /T=∀/Data/Algebra/Ord ]
+                                ( /head=$/T
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                ) = /Data/Cons[ /T : ∀/Data/Algebra/Ord ]( Value /head -> ∀/Data/Algebra/Ord )
+                                ( Value /tail -> ∀/Data/ConsList[ /T=$_/T ] )
+                            ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/ConsList
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Cons[ /T=∀/Data/Algebra/Ord ]
+                                    ( /head=$/T
+                                    , /tail=UnionType
+                                        ( Just
+                                            ( PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=$_/T ]
+                                            , fromList []
+                                            )
+                                        , /Data/Cons[ /T=$_/T ]
+                                            ( /head=$/T
+                                            , /tail=
+                                                ( TopType | PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=$_/T ] )
+                                            )
+                                        , []
+                                        )
+                                    ) + /Data/insertStep[ /T=∀/Data/Algebra/Ord ]
+                                    ( /head=∀/Data/Algebra/Ord
+                                    , /before=UnionType
+                                        ( Just
+                                            ( PredClass /Data/Primitive/Boolean
+                                            , fromList []
+                                            )
+                                        , ( /Data/Primitive/True + /Data/Primitive/False )
+                                        , []
+                                        )
+                                    , /x=∀/Data/Algebra/Ord
+                                    , /tail=∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                    )
+                                )
+                            , []
+                            ) = /Data/insertStep
+                            ( Value /before -> ( /Data/Primitive/True + /Data/Primitive/False ) = /Data/Algebra/isLessEq
+                                ( Value /this -> ∀/Data/Algebra/Comparison = /Data/Algebra/compareTo( Value /other -> TVArg /head = Value /head )( Value /this -> TVArg /x = Value /x ) )
+                            )( Value /x -> TVArg /x = Value /x )( Value /head -> TVArg /head = Value /head )( Value /tail -> TVArg /tail = Value /tail )
+                        ]
                     }
                 )
             ,
@@ -263,13 +753,17 @@ Prgm
                                 ( /head=$/T
                                 , /tail=∀/Data/ConsList[ /T=$_/T ]
                                 ) = /Data/Cons( Value /head@Value /bh -> ∀/Data/Algebra/Ord )
-                                ( Value /tail@Value /bt -> ∀/Data/ConsList[ /T=$_/T ] )
+                                ( Value /tail@Value /bt ->
+                                    ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Algebra/Ord )
+                                )
                             )
                             ( Value /this -> /Data/Cons[ /T=∀/Data/Algebra/Ord ]
                                 ( /head=$/T
                                 , /tail=∀/Data/ConsList[ /T=$_/T ]
                                 ) = /Data/Cons[ /T : ∀/Data/Algebra/Ord ]( Value /head@Value /ah -> ∀/Data/Algebra/Ord )
-                                ( Value /tail@Value /at -> ∀/Data/ConsList[ /T=$_/T ] )
+                                ( Value /tail@Value /at ->
+                                    ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Algebra/Ord )
+                                )
                             ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Algebra/Comparison
@@ -292,6 +786,17 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -375,7 +880,41 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "## List operations" )
         , /Catln/#md
-            ( Value /text -> /Data/String = CStr "## ConsList runtime operations" )
+            ( Value /text -> /Data/String = CStr "## ConsList operations" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[sum] adds up the elements of a [ConsList] of [Integer]s, recursing through the tail with the" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "  empty list summing to zero." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[all] is [True] when every element of a [ConsList] of [Boolean]s is [True]; the empty list is" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "  vacuously [True]." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[any] is [True] when at least one element of a [ConsList] of [Boolean]s is [True]; the empty" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "  list is [False]." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[reversed] reverses a [ConsList] by moving its elements one at a time onto an accumulator that" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "  starts empty. There is no list-append operator, so the accumulator carries the growing result" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "  and the head of [lst] is prepended to it at each step." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[sorted] returns the elements of an [Ord] [ConsList] in ascending order using insertion sort:" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "  it sorts the tail and then [insert]s the head into the sorted result. [insert] walks the" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "  already-sorted list, and [insertStep] branches on whether the new element belongs before the" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "  current head ([x <= head], so [x] is placed here) or further along (recurse into the tail)." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[range] builds the list [0, 1, ..., stop - 1]. It counts up from zero with [rangeFrom], and" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "  [rangeStep] branches on whether the counter has reached [stop]: while [i < stop] it prepends" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "  the counter and recurses, and once it is not it stops with [Nil]. A [stop] of zero or less" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "  yields the empty list." )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "# ConsList Functor instance" )
         , /Catln/#md
@@ -392,6 +931,20 @@ Prgm
             ( Value /text -> /Data/String = CStr "[operator==] checks whole lists structurally — comparing them directly rather than only their" )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "[length]. The element [Eq] dispatch is generic, so lists of [Integer], [Boolean], etc. all work." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[sum] adds the elements of a list, with the empty list summing to zero." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[all] is [True] only when every element is [True]; [False] otherwise, and [True] for the empty" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "  list." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[any] is [True] when at least one element is [True]; [False] for all-false and empty lists." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[reversed] reverses the order of a list's elements; the empty list reverses to itself." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[range] builds the counting list [0, 1, ..., stop - 1]; a stop of zero yields the empty list." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[sorted] orders an [Ord] list ascending; the empty list sorts to itself." )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "A [ConsList] of any [Ord] element is an [Ord] member (see the end of this file), so [compareTo]" )
         , /Catln/#md

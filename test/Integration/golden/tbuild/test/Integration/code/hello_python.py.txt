@@ -70,7 +70,20 @@ Prgm
                                 ( PredClass /Data/ConsList
                                 , fromList []
                                 )
-                            , /Data/range( /stop=/Data/Primitive/Integer )
+                            ,
+                                ( /Data/range( /stop=/Data/Primitive/Integer ) + /Data/rangeFrom
+                                    ( /stop=/Data/Primitive/Integer
+                                    , /i=/Data/Primitive/Integer
+                                    ) + /Data/Nil + /Data/Cons[ /T=/Data/Primitive/Integer ]
+                                    ( /head=/Data/Primitive/Integer
+                                    , /tail=
+                                        ( TopType | PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=$_/T ] )
+                                    ) + /Data/rangeStep
+                                    ( /stop=/Data/Primitive/Integer
+                                    , /more=∀/Data/Primitive/Boolean
+                                    , /i=/Data/Primitive/Integer
+                                    )
+                                )
                             , []
                             ) = /range
                             ( EAppArg Value /stop -> TVArg /n = ( Value /n ↦ TVArg /n ) )
@@ -102,12 +115,51 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /sort_list( EAppArg Value /lst -> ∀/Data/List ) -> UnionType
+                        [ /sort_list
+                            ( EAppArg Value /lst ->
+                                ( TopType | PredClass /Data/List[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List )
+                            ) -> UnionType
                             ( Just
                                 ( PredClass /Data/List
                                 , fromList []
                                 )
-                            , /Data/sorted( /lst=∀/Data/List )
+                            ,
+                                ( /Data/Nil + /Data/Cons[ /T=∀/Data/Algebra/Ord ]
+                                    ( /head=$/T
+                                    , /tail=UnionType
+                                        ( Just
+                                            ( PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                            , fromList []
+                                            )
+                                        ,
+                                            ( /Data/Nil + /Data/Cons[ /T=∀/Data/Algebra/Ord ]
+                                                ( /head=$/T
+                                                , /tail=
+                                                    ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] )
+                                                )
+                                            )
+                                        , []
+                                        )
+                                    ) + /Data/insertStep[ /T=∀/Data/Algebra/Ord ]
+                                    ( /head=∀/Data/Algebra/Ord
+                                    , /before=UnionType
+                                        ( Just
+                                            ( PredClass /Data/Primitive/Boolean
+                                            , fromList []
+                                            )
+                                        , ( /Data/Primitive/True + /Data/Primitive/False )
+                                        , []
+                                        )
+                                    , /x=∀/Data/Algebra/Ord
+                                    , /tail=∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                    ) + /Data/sorted
+                                    ( /lst=
+                                        ( TopType | PredClass /Data/List[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List )
+                                    ) + /Data/insert[ /T=∀/Data/Algebra/Ord ]
+                                    ( /x=∀/Data/Algebra/Ord
+                                    , /lst=∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                    )
+                                )
                             , []
                             ) = /sorted
                             ( EAppArg Value /lst -> TVArg /lst = ( Value /lst ↦ TVArg /lst ) )
@@ -228,12 +280,30 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /any_true( EAppArg Value /flags -> ∀/Data/List ) -> UnionType
+                        [ /any_true
+                            ( EAppArg Value /flags ->
+                                ( TopType | PredClass /Data/List[ /T=∀/Data/Primitive/Boolean ] && PredClass /Data/List )
+                            ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
                                 )
-                            , /Data/any( /lst=∀/Data/List )
+                            ,
+                                ( /Data/Primitive/True + /operator||
+                                    ( /r=UnionType
+                                        ( Just
+                                            ( PredClass /Data/Primitive/Boolean
+                                            , fromList []
+                                            )
+                                        , ( /Data/Primitive/True + /Data/Primitive/False )
+                                        , []
+                                        )
+                                    , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Primitive/False + /Data/any
+                                    ( /lst=
+                                        ( TopType | PredClass /Data/List[ /T=∀/Data/Primitive/Boolean ] && PredClass /Data/List )
+                                    )
+                                )
                             , []
                             ) = /any
                             ( EAppArg Value /lst -> TVArg /flags = ( Value /flags ↦ TVArg /flags ) )
@@ -280,11 +350,11 @@ Prgm
                     , omiDefs =
                         [ /add( EAppArg Value /x -> /Data/Primitive/Integer )( EAppArg Value /y -> /Data/Primitive/Integer ) ->
                             ( /operator+
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                ) + /operator+
                                 ( /r=/Data/String
                                 , /l=/Data/String
+                                ) + /operator+
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
                                 ) + /operator+
                                 ( /r=/Data/Primitive/Float
                                 , /l=/Data/Primitive/Float
@@ -429,8 +499,18 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /sum_list( EAppArg Value /nums -> ∀/Data/List ) ->
-                            ( /Data/sum( /lst=∀/Data/List ) + /Data/Primitive/Integer ) = /sum
+                        [ /sum_list
+                            ( EAppArg Value /nums ->
+                                ( TopType | PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Data/List )
+                            ) ->
+                            ( /Data/sum
+                                ( /lst=
+                                    ( TopType | PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Data/List )
+                                ) + /operator+
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
+                            ) = /sum
                             ( EAppArg Value /lst -> TVArg /nums = ( Value /nums ↦ TVArg /nums ) )
                         ]
                     }
@@ -509,11 +589,11 @@ Prgm
                             ( EAppArg Value /x -> ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float ) )
                             ( EAppArg Value /y -> ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float ) ) ->
                             ( /operator+
-                                ( /r=/Data/Primitive/Integer
-                                , /l=/Data/Primitive/Integer
-                                ) + /operator+
                                 ( /r=/Data/String
                                 , /l=/Data/String
+                                ) + /operator+
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
                                 ) + /operator+
                                 ( /r=/Data/Primitive/Float
                                 , /l=/Data/Primitive/Float
@@ -567,7 +647,20 @@ Prgm
                                 ( PredClass /Data/List
                                 , fromList []
                                 )
-                            , /Data/reversed( /lst=∀/Data/List )
+                            ,
+                                ( /Data/Nil + /Data/Cons[ /T=$_/T ]
+                                    ( /head=$/T
+                                    , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                    ) + /Data/reverseOnto
+                                    ( /acc=
+                                        ( /Data/Nil + /Data/Cons[ /T=TopType ]
+                                            ( /head=TopType
+                                            , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                            )
+                                        )
+                                    , /lst=∀/Data/ConsList
+                                    ) + /Data/reversed( /lst=∀/Data/List )
+                                )
                             , []
                             ) = /reversed
                             ( EAppArg Value /lst -> TVArg /lst = ( Value /lst ↦ TVArg /lst ) )
@@ -581,12 +674,30 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /all_true( EAppArg Value /flags -> ∀/Data/List ) -> UnionType
+                        [ /all_true
+                            ( EAppArg Value /flags ->
+                                ( TopType | PredClass /Data/List[ /T=∀/Data/Primitive/Boolean ] && PredClass /Data/List )
+                            ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
                                 )
-                            , /Data/all( /lst=∀/Data/List )
+                            ,
+                                ( /Data/Primitive/True + /operator&&
+                                    ( /r=UnionType
+                                        ( Just
+                                            ( PredClass /Data/Primitive/Boolean
+                                            , fromList []
+                                            )
+                                        , ( /Data/Primitive/True + /Data/Primitive/False )
+                                        , []
+                                        )
+                                    , /l=∀/Data/Primitive/Boolean
+                                    ) + /Data/Primitive/False + /Data/all
+                                    ( /lst=
+                                        ( TopType | PredClass /Data/List[ /T=∀/Data/Primitive/Boolean ] && PredClass /Data/List )
+                                    )
+                                )
                             , []
                             ) = /all
                             ( EAppArg Value /lst -> TVArg /flags = ( Value /flags ↦ TVArg /flags ) )
