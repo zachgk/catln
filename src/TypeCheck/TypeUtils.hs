@@ -25,7 +25,7 @@ import           Control.Monad
 import           Control.Monad.State
 import           CtConstants         (runtimeAnnot)
 import           Data.Bifunctor      (Bifunctor (bimap))
-import           Data.List           (find, intercalate)
+import           Data.List           (find, intercalate, nub)
 import           Data.Maybe          (mapMaybe)
 import           Data.UUID           (nil)
 import           MapMeta
@@ -233,6 +233,39 @@ fnArgInputBound env callAct fnKey inKey = case callAct of
         predPartial (PredRel r)   = [r]
         predPartial PredExpr{}    = []
 
+-- | Binds a call's declaration-output variable from the call site's destination.
+-- For a declaration whose output is a bare declared variable — @mk[$M -> Mk](v -> V) -> $M@ —
+-- the call's arguments say nothing about @$M@; only the destination does. Once the destination
+-- has resolved, stamp it onto the call partial's variable slot (intersecting any existing
+-- binding), so downstream arrow selection can discriminate instance definitions that differ
+-- only in that variable's binding (return-type-directed dispatch, e.g. @pure@-style
+-- constructors whose instances share an input shape). Mirrors 'fnArgInputBound': declarations
+-- only, and only a fully concrete destination is written — a Top, symbolic, or class-predicate
+-- destination binds nothing (writing symbolic knowledge into a resolving point oscillates
+-- against later epochs).
+outVarBoundSrc :: FEnv -> Type -> Type -> Type
+outVarBoundSrc env dest src@(UnionType Nothing srcLeafs srcConsts)
+  | not (isBottomType dest) && typeFullyConcrete dest =
+      case UnionType Nothing (joinUnionType $ map bindLeaf $ splitUnionType srcLeafs) srcConsts of
+        src' | src' == src -> src
+        src'               -> src'
+  where
+    typeEnv = feReachesTypeEnv env
+    TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} = typeEnv
+    bindLeaf p = foldr bindVar p (outVarNames p)
+    bindVar vn p@PartialType{ptVars} = p{ptVars=H.insertWith (flip (intersectTypes typeEnv)) vn dest ptVars}
+    outVarNames p@PartialType{ptName} = nub
+      [ vn
+      | oa <- maybe [] omiDecls (H.lookup ptName tg)
+      , Just (_, outM) <- [oaArr oa]
+      , TypeVar (TVVar vn) _ <- [getMetaType outM]
+      , Just declObj <- [maybeGetSingleton (getMetaType (getExprMeta (oaObjExpr oa)))]
+      , H.member vn (ptVars declObj)
+      -- Complete applications only: a partial application's ArrowTo destination is the
+      -- further-applied call node, not the result the declaration's output variable stands for.
+      , all (`H.member` ptArgs p) (H.keys (ptArgs declObj)) ]
+outVarBoundSrc _ _ src = src
+
 mkReachesEnv :: FEnv -> RConstraint -> TypeCheckResult (ReachesEnv (ObjArrTypeGraph Expr ()))
 mkReachesEnv env (Constraint maybeConOa stypeVaenv _) = do
 
@@ -282,5 +315,9 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} src@(UnionType No
   let (venv', dest') = intersectTypesWithVarEnv feTypeEnv vaenv' dest destByGraph
   let newBindings = H.difference venv' vaenv'
   let resolveNew = if H.null newBindings then id else substituteKeep newBindings
+  let destFinal = compactType feTypeEnv vaenv' (resolveNew dest')
+  -- Return-type direction: a declaration output that is a bare declared variable is determined
+  -- by the call site's destination — bind it onto the call partial (see 'outVarBoundSrc').
+  let src' = outVarBoundSrc env destFinal src
   -- TODO Maybe filter srcPartials based on those reaching dest
-  return (src, compactType feTypeEnv vaenv' (resolveNew dest'), Just reaches')
+  return (src', destFinal, Just reaches')
