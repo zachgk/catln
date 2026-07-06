@@ -15,9 +15,7 @@ Prgm
                 ( "/Data/toString"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/toString( EAppArg Value /this -> /Data/String ) -> /Data/String
-                        , /Data/toString( EAppArg Value /this -> /Data/Primitive/Integer ) -> /Data/String
-                        ]
+                        [ /Data/toString( EAppVar /T ∀/Data/ToString )( EAppArg Value /this -> $/T ) -> /Data/String ]
                     , omiRuntimeDecls =
                         [ /Data/toString( EAppArg Value /this -> /Data/Primitive/Integer ) -> /Data/String ]
                     , omiRefineDecls = []
@@ -99,6 +97,17 @@ Prgm
             , []
             , Just ""
             )
+        , CGClass
+            ( False
+            , /Data/ToString
+            ,
+                [ /Data/String
+                , /Data/Primitive/Integer
+                ]
+            , Just "[ToString] is the class of types that can render themselves as a [String]. Defining
+              [toString] for a type makes its values printable and, more importantly, lets generic
+              containers such as [List] render their contents by rendering each element.  "
+            )
         ]
     , prgmAnnots =
         [ /Catln/#md
@@ -106,9 +115,11 @@ Prgm
             These define the basic data types used in the language. [String] and its equality live in
             [Data/str]; the conversions and collection types below build on it." )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "## String conversions" )
+            ( EAppArg Value /text -> /Data/String = "## Rendering as text" )
         , /Catln/#md
-            ( EAppArg Value /text -> /Data/String = "Declaration bounding the #runtime toString definition below." )
+            ( EAppArg Value /text -> /Data/String = "[ToString] is the class of types that can render themselves as a [String]. Defining
+            [toString] for a type makes its values printable and, more importantly, lets generic
+            containers such as [List] render their contents by rendering each element." )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "## Context" )
         , /Catln/#md

@@ -21,3 +21,13 @@ module(Data)
   :String.eq= StrEqv
 
   :String.equal(other)= this.eq.rel(a= this, b= other)
+
+  # ## Concatenation
+  every(String, isa= [/Data/Algebra/Semigroup])
+    # [String] is a [Semigroup] under concatenation: joining strings end to end is associative.
+      (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
+      yet dispatched by return type across multiple types, so only the [Semigroup] is declared.)
+
+  (_ :: String ++ _ :: String) -> String
+    # [operator++] joins two strings, the [Semigroup] operation on [String].
+    #runtime("strConcat")

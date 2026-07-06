@@ -2,6 +2,18 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/Data/toString"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/toString( EAppArg Value /this -> /Data/Primitive/True ) -> /Data/String = "True"
+                        , /Data/toString( EAppArg Value /this -> /Data/Primitive/False ) -> /Data/String = "False"
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Primitive/True"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Primitive/True ]
@@ -186,6 +198,7 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         , CGClass
             ( False
             , /Data/Primitive/Boolean
@@ -214,6 +227,12 @@ Prgm
                 ]
             , Just ""
             )
+        , CGClass
+            ( False
+            , /Data/Primitive/Boolean
+            , [ ∀/Data/Primitive/Boolean ]
+            , Just "A [Boolean] renders as the text of its constructor."
+            )
         ]
     , prgmAnnots =
         [ /Catln/#md
@@ -225,5 +244,9 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "## Equality
             [Boolean] is an [Eq] type: [BoolEqv] wraps the primitive [boolEq], and [eq]/[equal] follow." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "## Rendering as text" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "A [Boolean] renders as the text of its constructor." )
         ]
     }

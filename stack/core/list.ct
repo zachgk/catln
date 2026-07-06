@@ -5,83 +5,95 @@ import "core/monad.ct"
 
 module(Data)
   # # Lists
-    A [List] is a collection of zero or more ordered items.
+    A [List] is an ordered collection of zero or more items. [List] is an interface: it names the
+    operations every list supports without fixing how the items are stored. Concrete list types
+    implement it — this file provides the [ConsList], and a future [ArrayList] or [TreeList] would
+    be another. Because [sum], [reversed], [sorted] and the rest are declared on [List] rather than
+    on one concrete type, every list type reuses those same declarations just by being a [List].
   class(List[$T])
-
-  # A [List] is a collection of zero or more ordered items.
   class(ConsList[$T], [Cons[$T -> $_T](head -> $T, tail -> ConsList[$T -> $_T]), Nil])
-    # The simplest kind of list can be created by prepending.
-      A [ConsList] defines a list either by prepending to a list or with an empty list.
+    # A [ConsList] is the simplest [List]: either empty ([Nil]) or an item ([head]) prepended to a
+      smaller list ([tail]). Almost every operation below is a two-arm recursion — a base case for
+      [Nil], and a step that consumes the [head] and recurses on the [tail].
 
   every(ConsList[$T -> $_T], isa= [/Data/List[$T -> $_T]])
+    # Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below.
 
-  # /operator+:<$T>($T l, ConsList<$T> r) = Cons(head=l, tail=r)
-    [operator+:] is a utility operator to prepend an element onto a [List].
-  # #### [length]
-    The [length] of a [List] is the number of items inside of it.
+  # ## Bracket syntax
+    The literal [[1, 2, 3]] is sugar for a [ConsList]: it expands to [Cons(1, Cons(2, Cons(3,
+    Nil)))], and [[]] is [Nil]. The examples throughout this file use it.
+  # ## Length
+  :/Data/List.length -> Integer
+    # The number of items in a list, found by walking to the end. It is declared on [List] (any
+      list has a length) and implemented here for the [ConsList] constructors.
   :Nil.length= 0
   /Data/Cons(head, tail).length= 1 + tail.length
-  :ConsList.length -> Integer
-
-  # The [length] of a [List] is always non-negative.
-  :ConsList.length -> Integer_nonNeg
+  :/Data/List.length -> Integer_nonNeg
+    # A length is never negative — a refinement the derived agreement tests check against the
+      definition above.
     #refine
 
-  # #### Structural comparison helper
-    Two [ConsList]s of [Ord] elements are ordered lexicographically: the first differing pair of
-    elements decides the order, and a shorter list that is a prefix of a longer one comes first
-    ([Nil] before any [Cons]). The [compareTo] instance at the end of this file compares heads then
-    tails; [consThen] sequences those two comparisons, falling through to the tail's comparison only
-    when the heads compare [Equal].
-  consThen(first -> /Data/Algebra/Comparison, second -> /Data/Algebra/Comparison) -> /Data/Algebra/Comparison
-  consThen(first= /Data/Algebra/Equal, second)= second
-  consThen(first= /Data/Algebra/LessThan, second)= /Data/Algebra/LessThan
-  consThen(first= /Data/Algebra/GreaterThan, second)= /Data/Algebra/GreaterThan
-
-  # ## List operations
+  > [10, 20, 30].length.toString
+    >>> 3
+  # ## Summing
   sum(lst -> /Data/List[$T -> Integer]) -> Integer
-
-  all(lst -> /Data/List[$T -> Boolean]) -> Boolean
-
-  any(lst -> /Data/List[$T -> Boolean]) -> Boolean
-
-  reversed(lst -> /Data/List) -> /Data/List
-
-  sorted(lst -> /Data/List[$T -> /Data/Algebra/Ord]) -> /Data/List
-
-  # ## ConsList operations
-  # [sum] adds up the elements of a [ConsList] of [Integer]s, recursing through the tail with the
-  #   empty list summing to zero.
-  sum(lst -> ConsList[$T -> Integer]) -> Integer
+    # [sum] adds up a list of [Integer]s. The empty list sums to zero; a non-empty list adds its
+      [head] to the sum of its [tail].
   sum(lst= Nil)= 0
   sum(lst= /Data/Cons[$T -> Integer](head, tail))= head + sum(lst= tail)
 
-  # [all] is [True] when every element of a [ConsList] of [Boolean]s is [True]; the empty list is
-  #   vacuously [True].
-  all(lst -> ConsList[$T -> Boolean]) -> Boolean
+  > /Data/sum(lst= [1, 2, 3]).toString
+    >>> 6
+  > /Data/sum(lst= []).toString
+    >>> 0
+  # ## Universal and existential quantifiers
+  all(lst -> /Data/List[$T -> Boolean]) -> Boolean
+    # [all] is [True] when every element of a list of [Boolean]s is [True]. The empty list is
+      vacuously [True], and each element is [and]ed with the result for the [tail].
   all(lst= Nil)= /Data/Primitive/True
   all(lst= /Data/Cons[$T -> Boolean](head, tail))= head && all(lst= tail)
 
-  # [any] is [True] when at least one element of a [ConsList] of [Boolean]s is [True]; the empty
-  #   list is [False].
-  any(lst -> ConsList[$T -> Boolean]) -> Boolean
+  > /Data/all(lst= [True, True]).toString
+    >>> True
+  > /Data/all(lst= [False]).toString
+    >>> False
+  any(lst -> /Data/List[$T -> Boolean]) -> Boolean
+    # [any] is [True] when at least one element is [True] — the mirror of [all], with [or] and a
+      [False] base case for the empty list.
   any(lst= Nil)= /Data/Primitive/False
   any(lst= /Data/Cons[$T -> Boolean](head, tail))= head || any(lst= tail)
 
-  # [reversed] reverses a [ConsList] by moving its elements one at a time onto an accumulator that
-  #   starts empty. There is no list-append operator, so the accumulator carries the growing result
-  #   and the head of [lst] is prepended to it at each step.
+  > /Data/any(lst= [True]).toString
+    >>> True
+  > /Data/any(lst= [False, False]).toString
+    >>> False
+  # ## Reversing
+  reversed(lst -> /Data/List) -> /Data/List
+    # [reversed] returns a list with its items in the opposite order. Since there is no
+      list-append operator, it is built with [reverseOnto], which moves items one at a time onto an
+      accumulator that starts empty — each [head] is prepended to the growing result, which leaves
+      the accumulator holding the reversal once [lst] is exhausted.
+
   reverseOnto(lst -> ConsList, acc -> ConsList) -> ConsList
   reverseOnto(lst= Nil, acc)= acc
   reverseOnto(lst= /Data/Cons(head, tail), acc)= reverseOnto(lst= tail, acc= /Data/Cons(head= head, tail= acc))
 
-  reversed(lst -> ConsList) -> ConsList
   reversed(lst)= reverseOnto(lst= lst, acc= /Data/Nil)
 
-  # [sorted] returns the elements of an [Ord] [ConsList] in ascending order using insertion sort:
-  #   it sorts the tail and then [insert]s the head into the sorted result. [insert] walks the
-  #   already-sorted list, and [insertStep] branches on whether the new element belongs before the
-  #   current head ([x <= head], so [x] is placed here) or further along (recurse into the tail).
+  # The result's element type stays generic, so it is compared with a known list rather than
+  #   rendered directly.
+  > (/Data/reversed(lst= [1, 2, 3]) == [3, 2, 1]).toString
+    >>> True
+  > (/Data/reversed(lst= []) == []).toString
+    >>> True
+  # ## Sorting
+  sorted(lst -> /Data/List[$T -> /Data/Algebra/Ord]) -> /Data/List
+    # [sorted] returns the items of an [Ord] list in ascending order using insertion sort: it sorts
+      the [tail], then [insert]s the [head] into the sorted result. [insert] walks the already
+      sorted list and places [x] before the first item it is not greater than; [insertStep] carries
+      the [x <= head] decision, splicing [x] in when [True] and recursing into the [tail] when
+      [False].
+
   insertStep[$T -> /Data/Algebra/Ord](before -> Boolean, x -> $T, head -> $T, tail -> ConsList[$T -> /Data/Algebra/Ord]) -> ConsList
   insertStep(before= /Data/Primitive/True, x, head, tail)= /Data/Cons(head= x, tail= /Data/Cons(head= head, tail= tail))
   insertStep(before= /Data/Primitive/False, x, head, tail)= /Data/Cons(head= head, tail= insert(x= x, lst= tail))
@@ -90,101 +102,76 @@ module(Data)
   insert(x, lst= Nil)= /Data/Cons(head= x, tail= /Data/Nil)
   insert(x, lst= /Data/Cons[$T -> /Data/Algebra/Ord](head, tail))= insertStep(before= x.compareTo(other= head).isLessEq, x= x, head= head, tail= tail)
 
-  sorted(lst -> ConsList[$T -> /Data/Algebra/Ord]) -> ConsList
   sorted(lst= Nil)= /Data/Nil
   sorted(lst= /Data/Cons[$T -> /Data/Algebra/Ord](head, tail))= insert(x= head, lst= sorted(lst= tail))
 
-  # [range] builds the list [0, 1, ..., stop - 1]. It counts up from zero with [rangeFrom], and
-  #   [rangeStep] branches on whether the counter has reached [stop]: while [i < stop] it prepends
-  #   the counter and recurses, and once it is not it stops with [Nil]. A [stop] of zero or less
-  #   yields the empty list.
-  rangeStep(more -> Boolean, i -> Integer, stop -> Integer) -> ConsList
+  > (/Data/sorted(lst= [3, 1, 2]) == [1, 2, 3]).toString
+    >>> True
+  > (/Data/sorted(lst= [5, 4, 4, 1]) == [1, 4, 4, 5]).toString
+    >>> True
+  # ## Counting ranges
+  range(stop -> Integer) -> /Data/List[$T -> Integer]
+    # [range] builds the counting list [[0, 1, ..., stop - 1]]. It counts up from zero with
+      [rangeFrom], and [rangeStep] carries the [i < stop] decision: while the counter is below
+      [stop] it prepends the counter and recurses, and otherwise it stops with [Nil]. A [stop] of
+      zero or less yields the empty list.
+
+  rangeStep(more -> Boolean, i -> Integer, stop -> Integer) -> /Data/List[$T -> Integer]
   rangeStep(more= /Data/Primitive/False, i, stop)= /Data/Nil
   rangeStep(more= /Data/Primitive/True, i, stop)= /Data/Cons(head= i, tail= rangeFrom(i= i + 1, stop= stop))
 
-  rangeFrom(i -> Integer, stop -> Integer) -> ConsList
+  rangeFrom(i -> Integer, stop -> Integer) -> /Data/List[$T -> Integer]
   rangeFrom(i, stop)= rangeStep(more= i < stop, i= i, stop= stop)
 
-  range(stop -> Integer) -> ConsList
   range(stop)= rangeFrom(i= 0, stop= stop)
 
+  > /Data/range(stop= 3).toString
+    >>> [0, 1, 2]
+  > /Data/range(stop= 0).toString
+    >>> []
+  # ## Rendering as text
+  every(ConsList[$T -> /Data/ToString], isa= [/Data/ToString])
+    # A [ConsList] whose elements are [ToString] is itself [ToString]: it renders as its items,
+      each rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]].
+
+  :/Data/Nil.toString= "[]"
+  :/Data/Cons[$T -> /Data/ToString](head, tail).toString= "[" ++ head.toString ++ restToString(lst= tail) ++ "]"
+
+  # [restToString] renders the items after the first, each with a leading ", " separator, so the
+  #   opening item in the arm above carries no comma and the commas fall between items.
+  restToString(lst -> ConsList[$T -> /Data/ToString]) -> String
+  restToString(lst= Nil)= ""
+  restToString(lst= /Data/Cons[$T -> /Data/ToString](head, tail))= ", " ++ head.toString ++ restToString(lst= tail)
+
+  > [1, 2, 3].toString
+    >>> [1, 2, 3]
+  # ## Structural comparison helper
+  consThen(first -> /Data/Algebra/Comparison, second -> /Data/Algebra/Comparison) -> /Data/Algebra/Comparison
+    # [consThen] sequences the two comparisons a lexicographic ordering needs: the heads decide the
+      order unless they are [Equal], in which case the tails' comparison ([second]) decides. The
+      [compareTo] instance at the end of this file uses it.
+  consThen(first= /Data/Algebra/Equal, second)= second
+  consThen(first= /Data/Algebra/LessThan, second)= /Data/Algebra/LessThan
+  consThen(first= /Data/Algebra/GreaterThan, second)= /Data/Algebra/GreaterThan
+
+  # ## Functor
   every(ConsList[$T -> $_T], isa= [/Data/Functor])
+    # A [ConsList] is a [Functor]: [fmap] applies a function to every element while preserving the
+      list's shape — same length, same order — so mapping [f] over [[1, 2, 3]] gives [[f 1, f 2, f
+      3]]. Lists are the canonical [Functor]; "map a function over a collection" is exactly the
+      operation [fmap] generalises. The instance itself lives in [module(Data/List)] below.
 
 # # ConsList Functor instance
 module(Data/List)
-  # [fmap] over a [ConsList] applies a function to every element, producing a new list.
-  # This is the [ConsList] instance of the generic [fmap] declared over [Functor] in
-  # [Data]. It lives in its own module so the open [Functor] interface is not required to
-  # be totally covered, while still resolving for calls of [fmap] on a [ConsList].
+  # [fmap] over a [ConsList] rebuilds the list, applying [fn] to each [head]. This is the
+  # [ConsList] instance of the generic [fmap] declared over [Functor] in [Data]. It lives in its
+  # own module so the open [Functor] interface need not be totally covered while still resolving
+  # for [fmap] calls on a [ConsList].
   /Data/fmap(lst= Nil, fn(v))= Nil
   /Data/fmap(lst= /Data/Cons(head, tail), fn(v))= /Data/Cons(head= fn(v= head), tail= /Data/fmap(lst= tail, fn(v)= fn(v= v)))
 
-  # A [ConsList] of any [Eq] element is itself an [Eq] member (see the end of this file), so
-  # [operator==] checks whole lists structurally — comparing them directly rather than only their
-  # [length]. The element [Eq] dispatch is generic, so lists of [Integer], [Boolean], etc. all work.
-  testConsListEquality =
-    #test
-    #assert(test= /Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Nil)) == /Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Nil)))
-    #assert(test= ~(/Data/Cons(head= 1, tail= /Data/Nil) == /Data/Cons(head= 2, tail= /Data/Nil)))
-    #assert(test= ~(/Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Nil)) == /Data/Cons(head= 1, tail= /Data/Nil)))
-    #assert(test= /Data/Cons(head= /Data/Primitive/True, tail= /Data/Nil) == /Data/Cons(head= /Data/Primitive/True, tail= /Data/Nil))
-    #assert(test= ~(/Data/Cons(head= /Data/Primitive/True, tail= /Data/Nil) == /Data/Cons(head= /Data/Primitive/False, tail= /Data/Nil)))
-    0
-
-  # [sum] adds the elements of a list, with the empty list summing to zero.
-  testListSum =
-    #test
-    #assert(test= /Data/sum(lst= /Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Cons(head= 3, tail= /Data/Nil)))) == 6)
-    #assert(test= /Data/sum(lst= /Data/Nil) == 0)
-    0
-
-  # [all] is [True] only when every element is [True]; [False] otherwise, and [True] for the empty
-  #   list.
-  testListAll =
-    #test
-    #assert(test= /Data/all(lst= /Data/Cons(head= /Data/Primitive/True, tail= /Data/Cons(head= /Data/Primitive/True, tail= /Data/Nil))))
-    #assert(test= ~/Data/all(lst= /Data/Cons(head= /Data/Primitive/False, tail= /Data/Nil)))
-    #assert(test= /Data/all(lst= /Data/Nil))
-    0
-
-  # [any] is [True] when at least one element is [True]; [False] for all-false and empty lists.
-  testListAny =
-    #test
-    #assert(test= /Data/any(lst= /Data/Cons(head= /Data/Primitive/True, tail= /Data/Nil)))
-    #assert(test= ~/Data/any(lst= /Data/Cons(head= /Data/Primitive/False, tail= /Data/Cons(head= /Data/Primitive/False, tail= /Data/Nil))))
-    #assert(test= ~/Data/any(lst= /Data/Nil))
-    0
-
-  # [reversed] reverses the order of a list's elements; the empty list reverses to itself.
-  testListReversed =
-    #test
-    #assert(test= /Data/reversed(lst= /Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Cons(head= 3, tail= /Data/Nil)))) == /Data/Cons(head= 3, tail= /Data/Cons(head= 2, tail= /Data/Cons(head= 1, tail= /Data/Nil))))
-    #assert(test= /Data/reversed(lst= /Data/Nil) == /Data/Nil)
-    0
-
-  # [range] builds the counting list [0, 1, ..., stop - 1]; a stop of zero yields the empty list.
-  testListRange =
-    #test
-    #assert(test= /Data/range(stop= 3) == /Data/Cons(head= 0, tail= /Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Nil))))
-    #assert(test= /Data/range(stop= 0) == /Data/Nil)
-    0
-
-  # [sorted] orders an [Ord] list ascending; the empty list sorts to itself.
-  testListSorted =
-    #test
-    #assert(test= /Data/sorted(lst= /Data/Cons(head= 3, tail= /Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Nil)))) == /Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Cons(head= 3, tail= /Data/Nil))))
-    #assert(test= /Data/sorted(lst= /Data/Nil) == /Data/Nil)
-    0
-
-  # A [ConsList] of any [Ord] element is an [Ord] member (see the end of this file), so [compareTo]
-  # orders lists lexicographically, with a prefix ordered before its extension.
-  testOrdConsList =
-    #test
-    #assert(test= /Data/Cons(head= 1, tail= /Data/Nil).compareTo(other= /Data/Cons(head= 2, tail= /Data/Nil)).isLess)
-    #assert(test= /Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Nil)).compareTo(other= /Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Nil))).isEq)
-    #assert(test= /Data/Cons(head= 1, tail= /Data/Nil).compareTo(other= /Data/Nil).isGreater)
-    #assert(test= /Data/Cons(head= 1, tail= /Data/Nil).compareTo(other= /Data/Cons(head= 1, tail= /Data/Cons(head= 2, tail= /Data/Nil))).isLess)
-    0
+  > (/Data/fmap(lst= [1, 2, 3], fn(v)= v + 1) == [2, 3, 4]).toString
+    >>> True
 
 # # ConsList Eq membership
   Makes a [ConsList] of any [Eq] element a proper member of [Eq], so the generic [operator==]
@@ -200,6 +187,15 @@ module(Data/Algebra)
   :/Data/Nil.equal(other= /Data/Cons(head, tail))= False
   :/Data/Cons(head, tail).equal(other= /Data/Nil)= False
   :/Data/Cons[$T -> /Data/Algebra/Eq](head@ah, tail@at).equal(other= /Data/Cons(head@bh, tail@bt))= (ah == bh) && at.equal(other= bt)
+module(Data/List)
+  # Equal lists compare equal element-wise, and lists that differ in an element or in length do
+  #   not. The element [Eq] dispatch is generic, so lists of [Integer], [Boolean], etc. all work.
+  > ([1, 2] == [1, 2]).toString
+    >>> True
+  > ([1, 2] == [1, 3]).toString
+    >>> False
+  > ([1, 2] == [1]).toString
+    >>> False
 
 # # ConsList Ord membership
   Makes a [ConsList] of any [Ord] element a proper member of [Ord], so [compareTo] dispatches per
@@ -213,6 +209,15 @@ module(Data/Algebra)
   :/Data/Nil.compareTo(other= /Data/Cons(head, tail))= /Data/Algebra/LessThan
   :/Data/Cons(head, tail).compareTo(other= /Data/Nil)= /Data/Algebra/GreaterThan
   :/Data/Cons[$T -> /Data/Algebra/Ord](head@ah, tail@at).compareTo(other= /Data/Cons(head@bh, tail@bt))= /Data/consThen(first= ah.compareTo(other= bh), second= at.compareTo(other= bt))
+module(Data/List)
+  # Lists order lexicographically: the first differing element decides, and a prefix is ordered
+  #   before its extension ([Nil] before any [Cons]).
+  > [1].compareTo(other= [2]).isLess.toString
+    >>> True
+  > [1].compareTo(other= [1, 2]).isLess.toString
+    >>> True
+  > [1, 2].compareTo(other= [1, 2]).isEq.toString
+    >>> True
 
 # # ConsList Monad instance
   [mmap] over a [ConsList] is concatMap: the function returns a whole list for each element, and

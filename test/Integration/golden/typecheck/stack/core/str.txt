@@ -2,6 +2,16 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/operator++"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /operator++( Value /l -> /Data/String = Hole /Data/String HoleActive Nothing )( Value /r -> /Data/String = Hole /Data/String HoleActive Nothing ) -> /Data/String ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/strEqual"
                 , ObjectMapItem
                     { omiDecls = []
@@ -101,6 +111,7 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
         , CGClass
             ( False
             , /Data/String
@@ -114,6 +125,14 @@ Prgm
                 [ /Data/StrEqv[ /T=/Data/String ] ]
             , Nothing
             )
+        , CGClass
+            ( False
+            , /Data/String
+            , [ /Data/String ]
+            , Just "[String] is a [Semigroup] under concatenation: joining strings end to end is associative.
+              (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
+              yet dispatched by return type across multiple types, so only the [Semigroup] is declared.)"
+            )
         ]
     , prgmAnnots =
         [ /Catln/#md
@@ -122,5 +141,11 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "## Equality
             [String] is an [Eq] type: [StrEqv] wraps the primitive [strEqual], and [eq]/[equal] follow." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "## Concatenation" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[String] is a [Semigroup] under concatenation: joining strings end to end is associative.
+            (Conceptually it is also a [Monoid] with the empty string as identity, but [mempty] is not
+            yet dispatched by return type across multiple types, so only the [Semigroup] is declared.)" )
         ]
     }

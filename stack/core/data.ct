@@ -7,12 +7,23 @@ module(Data)
   # # Catln Core Data Types
     These define the basic data types used in the language. [String] and its equality live in
     [Data/str]; the conversions and collection types below build on it.
-  # ## String conversions
-  :String.toString -> String
-  :String.toString= this
+  # ## Rendering as text
+  class(ToString)
+    # [ToString] is the class of types that can render themselves as a [String]. Defining
+      [toString] for a type makes its values printable and, more importantly, lets generic
+      containers such as [List] render their contents by rendering each element.
 
-  # Declaration bounding the #runtime toString definition below.
-  :Integer.toString -> String
+  :$T.toString[$T -> /Data/ToString] -> String
+    # [toString] renders a value as a [String]. Each [ToString] type supplies its own arm; the
+      per-type definitions ([Integer], [Boolean], [ConsList], …) live alongside their types.
+
+  every(String, isa= [/Data/ToString])
+
+  :String.toString= this
+    # A [String] renders as itself.
+
+  every(Integer, isa= [/Data/ToString])
+
   :Integer.toString -> String
     #runtime("intToString")
 

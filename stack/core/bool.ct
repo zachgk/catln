@@ -48,3 +48,10 @@ module(Data/Primitive)
   :Boolean.eq= BoolEqv
 
   :Boolean.equal(other)= this.eq.rel(a= this, b= other)
+
+  # ## Rendering as text
+  every(Boolean, isa= [/Data/ToString])
+    # A [Boolean] renders as the text of its constructor.
+
+  :True.toString= "True"
+  :False.toString= "False"

@@ -15,9 +15,7 @@ Prgm
                 ( "/Data/toString"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /Data/toString( Value /this -> /Data/String ) -> /Data/String
-                        , /Data/toString( Value /this -> /Data/Primitive/Integer ) -> /Data/String
-                        ]
+                        [ /Data/toString[ /T : ∀/Data/ToString ]( Value /this -> $/T ) -> /Data/String ]
                     , omiRuntimeDecls =
                         [ /Data/toString( Value /this -> /Data/Primitive/Integer ) -> /Data/String ]
                     , omiRefineDecls = []
@@ -99,6 +97,17 @@ Prgm
             , []
             , Just ""
             )
+        , CGClass
+            ( False
+            , /Data/ToString
+            ,
+                [ /Data/String
+                , /Data/Primitive/Integer
+                ]
+            , Just "[ToString] is the class of types that can render themselves as a [String]. Defining
+              [toString] for a type makes its values printable and, more importantly, lets generic
+              containers such as [List] render their contents by rendering each element.  "
+            )
         ]
     , prgmAnnots =
         [ /Catln/#md
@@ -106,9 +115,11 @@ Prgm
             These define the basic data types used in the language. [String] and its equality live in
             [Data/str]; the conversions and collection types below build on it." )
         , /Catln/#md
-            ( Value /text= CStr "## String conversions" )
+            ( Value /text= CStr "## Rendering as text" )
         , /Catln/#md
-            ( Value /text= CStr "Declaration bounding the #runtime toString definition below." )
+            ( Value /text= CStr "[ToString] is the class of types that can render themselves as a [String]. Defining
+            [toString] for a type makes its values printable and, more importantly, lets generic
+            containers such as [List] render their contents by rendering each element." )
         , /Catln/#md
             ( Value /text= CStr "## Context" )
         , /Catln/#md

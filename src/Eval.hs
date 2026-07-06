@@ -330,17 +330,31 @@ evalBuildPrgm input srcType destType prgm = do
 -- when the annotation cannot reach @DShow@ and so is not renderable.
 evalDShowAnnot :: Env -> [(PartialType, EObjArr)] -> EExpr -> CRes (Maybe Val)
 evalDShowAnnot env@Env{evTbEnv, evTypeEnv} os annot0
+  -- A @#print@'s @p@ argument is declared @-> DShow@, so it is renderable by construction. Eval it
+  -- directly rather than gating on its statically-inferred type: a computed @p@ (a function call,
+  -- @.toString@, @++@, …) is not run through full inference, so its type stays too loose to prove
+  -- it reaches @DShow@ and would otherwise be silently skipped. Non-@#print@ DShow annotations keep
+  -- the static gate, which correctly excludes annotations like @#test@/@#assert@/@#runtime@.
+  | isPrint = do
+      -- Build @p@ straight toward @DShow@ instead of wrapping it in @dshow(s= p)@: the wrapper's
+      -- @dshow(s -> DShow)= s@ arm is the identity, but interposing it stops 'buildCallTree' from
+      -- resolving a computed @p@'s own arrows (a value reference to its definition, @++@/@toString@
+      -- to their results), which then fails to reach @DShow@. Building @p@ as a root resolves them.
+      tree <- toTExprDest evTbEnv os annot destM
+      val <- evalStateT (evalExpr tree) env
+      return (Just val)
   | reachesTo evTypeEnv H.empty (getExprType $ showAnnot annot) destType = do
       tree <- toTExprDest evTbEnv os (showAnnot annot) destM
       val <- evalStateT (evalExpr tree) env
       return (Just val)
   | otherwise = return Nothing
   where
+    isPrint = nameStr (exprPath annot0) == printAnnot
     -- A #print's rendered value is its `p` argument, so render that directly. This is robust to
     -- the print also carrying a `result` golden (the 2-arg #print), which the bare
     -- @dshow(s= #print(p))= p@ rule would not match.
     annot
-      | nameStr (exprPath annot0) == printAnnot
+      | isPrint
       , Just (Just (_, Just p)) <- H.lookup (partialKey (mkName printAnnotText)) (exprAppliedArgsMap annot0)
       = p
       | otherwise = annot0

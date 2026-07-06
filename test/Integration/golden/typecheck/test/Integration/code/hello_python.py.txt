@@ -62,7 +62,7 @@ Prgm
                     , omiDefs =
                         [ /make_range( Value /n -> /Data/Primitive/Integer ) -> UnionType
                             ( Just
-                                ( PredClass /Data/ConsList
+                                ( PredClass /Data/List[ /T=/Data/Primitive/Integer ]
                                 , fromList []
                                 )
                             ,
@@ -72,7 +72,7 @@ Prgm
                                     ) + /Data/Nil + /Data/Cons[ /T=/Data/Primitive/Integer ]
                                     ( /head=/Data/Primitive/Integer
                                     , /tail=
-                                        ( TopType | PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=$_/T ] )
+                                        ( TopType | PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ] )
                                     ) + /Data/rangeStep
                                     ( /stop=/Data/Primitive/Integer
                                     , /more=∀/Data/Primitive/Boolean
@@ -313,11 +313,11 @@ Prgm
                     , omiDefs =
                         [ /add( Value /x -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer ) ->
                             ( /operator+
-                                ( /r=/Data/String
-                                , /l=/Data/String
-                                ) + /operator+
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
+                                ) + /operator+
+                                ( /r=/Data/String
+                                , /l=/Data/String
                                 ) + /operator+
                                 ( /r=/Data/Primitive/Float
                                 , /l=/Data/Primitive/Float
@@ -535,11 +535,11 @@ Prgm
                             ( Value /x -> ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float ) )
                             ( Value /y -> ( /Data/String + /Data/Primitive/Integer + /Data/Primitive/Float ) ) ->
                             ( /operator+
-                                ( /r=/Data/String
-                                , /l=/Data/String
-                                ) + /operator+
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
+                                ) + /operator+
+                                ( /r=/Data/String
+                                , /l=/Data/String
                                 ) + /operator+
                                 ( /r=/Data/Primitive/Float
                                 , /l=/Data/Primitive/Float
@@ -685,7 +685,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /to_str_from_int( Value /x -> /Data/Primitive/Integer ) ->
-                            ( /Data/toString( /this=/Data/Primitive/Integer ) + /Data/String ) = /toString( Value /this -> TVArg /x = Value /x )
+                            ( /Data/toString[ /T=∀/Data/ToString ]( /this=/Data/Primitive/Integer ) + /Data/String ) = /toString( Value /this -> TVArg /x = Value /x )
                         ]
                     }
                 )
