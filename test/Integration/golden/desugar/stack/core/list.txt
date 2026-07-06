@@ -240,7 +240,6 @@ Prgm
                         [ /Data/mmap( Value m= Value Nil )
                             ( fn( Value v ) )= Value Nil
                         , /Data/mmap
-                            [ /M : ∀/Data/ConsList[ /T=$_/T ] ]
                             ( Value m= /Data/Cons( Value head )( Value tail ) )
                             ( fn( Value v ) )= /Data/append
                             ( Value a= fn( Value v= Value head ) )

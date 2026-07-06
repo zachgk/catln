@@ -119,7 +119,7 @@ module(Data/List)
   # [fmap] instance above, it lives in its own module so the open [Monad] class is not
   # required to be totally covered here.
   /Data/mmap(m= Nil, fn(v))= Nil
-  /Data/mmap[$M -> /Data/ConsList[$T -> $_T]](m= /Data/Cons(head, tail), fn(v))= /Data/append(a= fn(v= head), b= /Data/mmap(m= tail, fn(v)= fn(v= v)))
+  /Data/mmap(m= /Data/Cons(head, tail), fn(v))= /Data/append(a= fn(v= head), b= /Data/mmap(m= tail, fn(v)= fn(v= v)))
 
   testAppend =
     #test

@@ -340,7 +340,6 @@ Prgm
                         [ /Data/mmap( Value /m -> /Data/Nil = Value /Data/Nil )
                             ( /fn( Value /v ) -> ∀/Data/Monad[ /T=$_/A ] ) -> /Data/Nil = Value /Data/Nil
                         , /Data/mmap
-                            [ /M : ∀/Data/ConsList[ /T=$_/T ] ]
                             ( Value /m -> /Data/Cons[ /T=$_/T ]
                                 ( /head=$/T
                                 , /tail=∀/Data/ConsList[ /T=$_/T ]
