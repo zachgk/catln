@@ -2727,7 +2727,19 @@ intersectPartialLeafsWithVarEnv typeEnv vaenv aPartials bPartials = (vaenv', typ
     -- returned env into the next step, and a binding recorded by an earlier meet (@/B ↦ Integer@)
     -- must still constrain a later meet of the same var (@$_/B ∩ ∀Eq@) - shared keys merge by
     -- intersection in 'mergeVarEnvs', so knowledge only narrows.
-    vaenv' = mergeAllVarEnvs typeEnv $ (vaenv :) $ fmap fst $ concat $ H.elems intersected
+    -- The pairwise intersections, however, are the ALTERNATIVES of distributing ∩ over the
+    -- unions (d ∩ (l1 + l2) = d∩l1 + d∩l2), so a var bound by several inhabited alternatives
+    -- holds their JOIN across pairs - meeting them would fabricate an empty binding whenever
+    -- the alternatives disagree, e.g. a raw applied term kept alongside its settled sibling
+    -- binding an output-contract var ($_A ∩ /operator+(..) in one leaf, $_A ∩ Integer in the
+    -- other). Positions within one alternative still meet (inside 'intersectPartialsBase'),
+    -- and an uninhabited alternative binds nothing.
+    liveEnvs = [e | (e, ps) <- concat (H.elems intersected), not (null ps)]
+    joinedAlternatives = case liveEnvs of
+      []  -> H.empty
+      [e] -> e
+      es  -> foldr1 (H.unionWith (unionTypes typeEnv)) es
+    vaenv' = mergeAllVarEnvs typeEnv [vaenv, joinedAlternatives]
     type' = joinUnionTypeByName $ fmap (concatMap snd) intersected
 
 intersectPartialLeafsEnv :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs -> PartialLeafs
