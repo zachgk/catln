@@ -181,9 +181,17 @@ evalCallTree v (TCSeq a b) = do
 evalCallTree _ (TCCond _ []) = evalError "Found no matching conditions in evalTree"
 evalCallTree m (TCCond resType ((cond, ifThenTree):restIfTrees)) = do
   Env{evTypeEnv} <- get
+  -- The value's partial is tried in both slot conventions, like the 'TCMatch' branch above: a
+  -- closure argument's slot in the arm's object holds either the closure's input signature or
+  -- the output contract delivered from the declaration.
+  let condMatches armOa =
+        let armT = simplifyArgKeys $ clearUnionTypePreds $ getExprType $ oaObjExpr armOa
+            valT = simplifyArgKeys $ singletonType $ getValPartialType m
+            valTOut = simplifyArgKeys $ singletonType $ getValPartialTypeOut m
+        in isSubtypeOf evTypeEnv valT armT || (valTOut /= valT && isSubtypeOf evTypeEnv valTOut armT)
   cond' <- case cond of
     -- TODO Remove the use of clearUnionTypePreds below. It is a workaround as type predicates are not supported by subtypeOf
-    Just (_, oa) | not (isSubtypeOf evTypeEnv (simplifyArgKeys $ singletonType $ getValPartialType m) (simplifyArgKeys $ clearUnionTypePreds $ getExprType $ oaObjExpr oa)) -> return False
+    Just (_, oa) | not (condMatches oa) -> return False
     Nothing -> return True
     Just (ifCondTrees, ifObj) -> do
       Env{evArgs} <- get
