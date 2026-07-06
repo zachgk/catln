@@ -33,7 +33,7 @@ module(Data)
       definition above.
     #refine
 
-  > [10, 20, 30].length.toString
+  > [10, 20, 30].length
     >>> 3
   # ## Summing
   sum(lst -> /Data/List[$T -> Integer]) -> Integer
@@ -42,9 +42,9 @@ module(Data)
   sum(lst= Nil)= 0
   sum(lst= /Data/Cons[$T -> Integer](head, tail))= head + sum(lst= tail)
 
-  > /Data/sum(lst= [1, 2, 3]).toString
+  > /Data/sum(lst= [1, 2, 3])
     >>> 6
-  > /Data/sum(lst= []).toString
+  > /Data/sum(lst= [])
     >>> 0
   # ## Universal and existential quantifiers
   all(lst -> /Data/List[$T -> Boolean]) -> Boolean
@@ -53,9 +53,9 @@ module(Data)
   all(lst= Nil)= /Data/Primitive/True
   all(lst= /Data/Cons[$T -> Boolean](head, tail))= head && all(lst= tail)
 
-  > /Data/all(lst= [True, True]).toString
+  > /Data/all(lst= [True, True])
     >>> True
-  > /Data/all(lst= [False]).toString
+  > /Data/all(lst= [False])
     >>> False
   any(lst -> /Data/List[$T -> Boolean]) -> Boolean
     # [any] is [True] when at least one element is [True] — the mirror of [all], with [or] and a
@@ -63,9 +63,9 @@ module(Data)
   any(lst= Nil)= /Data/Primitive/False
   any(lst= /Data/Cons[$T -> Boolean](head, tail))= head || any(lst= tail)
 
-  > /Data/any(lst= [True]).toString
+  > /Data/any(lst= [True])
     >>> True
-  > /Data/any(lst= [False, False]).toString
+  > /Data/any(lst= [False, False])
     >>> False
   # ## Reversing
   reversed(lst -> /Data/List) -> /Data/List
@@ -81,10 +81,10 @@ module(Data)
   reversed(lst)= reverseOnto(lst= lst, acc= /Data/Nil)
 
   # The result's element type stays generic, so it is compared with a known list rather than
-  #   rendered directly.
-  > (/Data/reversed(lst= [1, 2, 3]) == [3, 2, 1]).toString
+  #   rendered directly; the [Boolean] comparison then prints on its own.
+  > (/Data/reversed(lst= [1, 2, 3]) == [3, 2, 1])
     >>> True
-  > (/Data/reversed(lst= []) == []).toString
+  > (/Data/reversed(lst= []) == [])
     >>> True
   # ## Sorting
   sorted(lst -> /Data/List[$T -> /Data/Algebra/Ord]) -> /Data/List
@@ -105,9 +105,9 @@ module(Data)
   sorted(lst= Nil)= /Data/Nil
   sorted(lst= /Data/Cons[$T -> /Data/Algebra/Ord](head, tail))= insert(x= head, lst= sorted(lst= tail))
 
-  > (/Data/sorted(lst= [3, 1, 2]) == [1, 2, 3]).toString
+  > (/Data/sorted(lst= [3, 1, 2]) == [1, 2, 3])
     >>> True
-  > (/Data/sorted(lst= [5, 4, 4, 1]) == [1, 4, 4, 5]).toString
+  > (/Data/sorted(lst= [5, 4, 4, 1]) == [1, 4, 4, 5])
     >>> True
   # ## Counting ranges
   range(stop -> Integer) -> /Data/List[$T -> Integer]
@@ -125,9 +125,9 @@ module(Data)
 
   range(stop)= rangeFrom(i= 0, stop= stop)
 
-  > /Data/range(stop= 3).toString
+  > /Data/range(stop= 3)
     >>> [0, 1, 2]
-  > /Data/range(stop= 0).toString
+  > /Data/range(stop= 0)
     >>> []
   # ## Rendering as text
   every(ConsList[$T -> /Data/ToString], isa= [/Data/ToString])
@@ -143,7 +143,7 @@ module(Data)
   restToString(lst= Nil)= ""
   restToString(lst= /Data/Cons[$T -> /Data/ToString](head, tail))= ", " ++ head.toString ++ restToString(lst= tail)
 
-  > [1, 2, 3].toString
+  > [1, 2, 3]
     >>> [1, 2, 3]
   # ## Structural comparison helper
   consThen(first -> /Data/Algebra/Comparison, second -> /Data/Algebra/Comparison) -> /Data/Algebra/Comparison
@@ -170,7 +170,7 @@ module(Data/List)
   /Data/fmap(lst= Nil, fn(v))= Nil
   /Data/fmap(lst= /Data/Cons(head, tail), fn(v))= /Data/Cons(head= fn(v= head), tail= /Data/fmap(lst= tail, fn(v)= fn(v= v)))
 
-  > (/Data/fmap(lst= [1, 2, 3], fn(v)= v + 1) == [2, 3, 4]).toString
+  > (/Data/fmap(lst= [1, 2, 3], fn(v)= v + 1) == [2, 3, 4])
     >>> True
 
 # # ConsList Eq membership
@@ -190,11 +190,11 @@ module(Data/Algebra)
 module(Data/List)
   # Equal lists compare equal element-wise, and lists that differ in an element or in length do
   #   not. The element [Eq] dispatch is generic, so lists of [Integer], [Boolean], etc. all work.
-  > ([1, 2] == [1, 2]).toString
+  > ([1, 2] == [1, 2])
     >>> True
-  > ([1, 2] == [1, 3]).toString
+  > ([1, 2] == [1, 3])
     >>> False
-  > ([1, 2] == [1]).toString
+  > ([1, 2] == [1])
     >>> False
 
 # # ConsList Ord membership
@@ -212,11 +212,11 @@ module(Data/Algebra)
 module(Data/List)
   # Lists order lexicographically: the first differing element decides, and a prefix is ordered
   #   before its extension ([Nil] before any [Cons]).
-  > [1].compareTo(other= [2]).isLess.toString
+  > [1].compareTo(other= [2]).isLess
     >>> True
-  > [1].compareTo(other= [1, 2]).isLess.toString
+  > [1].compareTo(other= [1, 2]).isLess
     >>> True
-  > [1, 2].compareTo(other= [1, 2]).isEq.toString
+  > [1, 2].compareTo(other= [1, 2]).isEq
     >>> True
 
 # # ConsList Monad instance

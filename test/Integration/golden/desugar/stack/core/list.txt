@@ -435,15 +435,13 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "## Length" )
         , /Catln/#print
-            ( Value /p= toString
-                ( Value /this= length
-                    ( Value /this= /Data/Cons
-                        ( Value /head= CInt 10 )
+            ( Value /p= length
+                ( Value /this= /Data/Cons
+                    ( Value /head= CInt 10 )
+                    ( Value /tail= /Data/Cons
+                        ( Value /head= CInt 20 )
                         ( Value /tail= /Data/Cons
-                            ( Value /head= CInt 20 )
-                            ( Value /tail= /Data/Cons
-                                ( Value /head= CInt 30 )( Value /tail= Value /Data/Nil )
-                            )
+                            ( Value /head= CInt 30 )( Value /tail= Value /Data/Nil )
                         )
                     )
                 )
@@ -452,8 +450,56 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "## Summing" )
         , /Catln/#print
-            ( Value /p= toString
-                ( Value /this= /Data/sum
+            ( Value /p= /Data/sum
+                ( Value lst= /Data/Cons
+                    ( Value /head= CInt 1 )
+                    ( Value /tail= /Data/Cons
+                        ( Value /head= CInt 2 )
+                        ( Value /tail= /Data/Cons
+                            ( Value /head= CInt 3 )( Value /tail= Value /Data/Nil )
+                        )
+                    )
+                )
+            )
+            ( Value /result= CStr "6" )
+        , /Catln/#print
+            ( Value /p= /Data/sum( Value lst= Value /Data/Nil ) )
+            ( Value /result= CStr "0" )
+        , /Catln/#md
+            ( Value /text= CStr "## Universal and existential quantifiers" )
+        , /Catln/#print
+            ( Value /p= /Data/all
+                ( Value lst= /Data/Cons( Value /head= Value True )
+                    ( Value /tail= /Data/Cons( Value /head= Value True )( Value /tail= Value /Data/Nil ) )
+                )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#print
+            ( Value /p= /Data/all
+                ( Value lst= /Data/Cons( Value /head= Value False )( Value /tail= Value /Data/Nil ) )
+            )
+            ( Value /result= CStr "False" )
+        , /Catln/#print
+            ( Value /p= /Data/any
+                ( Value lst= /Data/Cons( Value /head= Value True )( Value /tail= Value /Data/Nil ) )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#print
+            ( Value /p= /Data/any
+                ( Value lst= /Data/Cons( Value /head= Value False )
+                    ( Value /tail= /Data/Cons( Value /head= Value False )( Value /tail= Value /Data/Nil ) )
+                )
+            )
+            ( Value /result= CStr "False" )
+        , /Catln/#md
+            ( Value /text= CStr "## Reversing" )
+        , /Catln/#md
+            ( Value /text= CStr "The result's element type stays generic, so it is compared with a known list rather than" )
+        , /Catln/#md
+            ( Value /text= CStr "  rendered directly; the [Boolean] comparison then prints on its own." )
+        , /Catln/#print
+            ( Value /p= /operator==
+                ( Value /l= /Data/reversed
                     ( Value lst= /Data/Cons
                         ( Value /head= CInt 1 )
                         ( Value /tail= /Data/Cons
@@ -464,140 +510,72 @@ Prgm
                         )
                     )
                 )
-            )
-            ( Value /result= CStr "6" )
-        , /Catln/#print
-            ( Value /p= toString
-                ( Value /this= /Data/sum( Value lst= Value /Data/Nil ) )
-            )
-            ( Value /result= CStr "0" )
-        , /Catln/#md
-            ( Value /text= CStr "## Universal and existential quantifiers" )
-        , /Catln/#print
-            ( Value /p= toString
-                ( Value /this= /Data/all
-                    ( Value lst= /Data/Cons( Value /head= Value True )
-                        ( Value /tail= /Data/Cons( Value /head= Value True )( Value /tail= Value /Data/Nil ) )
-                    )
-                )
-            )
-            ( Value /result= CStr "True" )
-        , /Catln/#print
-            ( Value /p= toString
-                ( Value /this= /Data/all
-                    ( Value lst= /Data/Cons( Value /head= Value False )( Value /tail= Value /Data/Nil ) )
-                )
-            )
-            ( Value /result= CStr "False" )
-        , /Catln/#print
-            ( Value /p= toString
-                ( Value /this= /Data/any
-                    ( Value lst= /Data/Cons( Value /head= Value True )( Value /tail= Value /Data/Nil ) )
-                )
-            )
-            ( Value /result= CStr "True" )
-        , /Catln/#print
-            ( Value /p= toString
-                ( Value /this= /Data/any
-                    ( Value lst= /Data/Cons( Value /head= Value False )
-                        ( Value /tail= /Data/Cons( Value /head= Value False )( Value /tail= Value /Data/Nil ) )
-                    )
-                )
-            )
-            ( Value /result= CStr "False" )
-        , /Catln/#md
-            ( Value /text= CStr "## Reversing" )
-        , /Catln/#md
-            ( Value /text= CStr "The result's element type stays generic, so it is compared with a known list rather than" )
-        , /Catln/#md
-            ( Value /text= CStr "  rendered directly." )
-        , /Catln/#print
-            ( Value /p= toString
-                ( Value /this= /operator==
-                    ( Value /l= /Data/reversed
-                        ( Value lst= /Data/Cons
-                            ( Value /head= CInt 1 )
-                            ( Value /tail= /Data/Cons
-                                ( Value /head= CInt 2 )
-                                ( Value /tail= /Data/Cons
-                                    ( Value /head= CInt 3 )( Value /tail= Value /Data/Nil )
-                                )
-                            )
-                        )
-                    )
-                    ( Value /r= /Data/Cons
-                        ( Value /head= CInt 3 )
+                ( Value /r= /Data/Cons
+                    ( Value /head= CInt 3 )
+                    ( Value /tail= /Data/Cons
+                        ( Value /head= CInt 2 )
                         ( Value /tail= /Data/Cons
-                            ( Value /head= CInt 2 )
-                            ( Value /tail= /Data/Cons
-                                ( Value /head= CInt 1 )( Value /tail= Value /Data/Nil )
-                            )
+                            ( Value /head= CInt 1 )( Value /tail= Value /Data/Nil )
                         )
                     )
                 )
             )
             ( Value /result= CStr "True" )
         , /Catln/#print
-            ( Value /p= toString
-                ( Value /this= /operator==
-                    ( Value /l= /Data/reversed( Value lst= Value /Data/Nil ) )( Value /r= Value /Data/Nil )
-                )
+            ( Value /p= /operator==
+                ( Value /l= /Data/reversed( Value lst= Value /Data/Nil ) )( Value /r= Value /Data/Nil )
             )
             ( Value /result= CStr "True" )
         , /Catln/#md
             ( Value /text= CStr "## Sorting" )
         , /Catln/#print
-            ( Value /p= toString
-                ( Value /this= /operator==
-                    ( Value /l= /Data/sorted
-                        ( Value lst= /Data/Cons
-                            ( Value /head= CInt 3 )
+            ( Value /p= /operator==
+                ( Value /l= /Data/sorted
+                    ( Value lst= /Data/Cons
+                        ( Value /head= CInt 3 )
+                        ( Value /tail= /Data/Cons
+                            ( Value /head= CInt 1 )
                             ( Value /tail= /Data/Cons
-                                ( Value /head= CInt 1 )
-                                ( Value /tail= /Data/Cons
-                                    ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
-                                )
+                                ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
                             )
                         )
                     )
-                    ( Value /r= /Data/Cons
-                        ( Value /head= CInt 1 )
+                )
+                ( Value /r= /Data/Cons
+                    ( Value /head= CInt 1 )
+                    ( Value /tail= /Data/Cons
+                        ( Value /head= CInt 2 )
                         ( Value /tail= /Data/Cons
-                            ( Value /head= CInt 2 )
-                            ( Value /tail= /Data/Cons
-                                ( Value /head= CInt 3 )( Value /tail= Value /Data/Nil )
-                            )
+                            ( Value /head= CInt 3 )( Value /tail= Value /Data/Nil )
                         )
                     )
                 )
             )
             ( Value /result= CStr "True" )
         , /Catln/#print
-            ( Value /p= toString
-                ( Value /this= /operator==
-                    ( Value /l= /Data/sorted
-                        ( Value lst= /Data/Cons
-                            ( Value /head= CInt 5 )
-                            ( Value /tail= /Data/Cons
-                                ( Value /head= CInt 4 )
-                                ( Value /tail= /Data/Cons
-                                    ( Value /head= CInt 4 )
-                                    ( Value /tail= /Data/Cons
-                                        ( Value /head= CInt 1 )( Value /tail= Value /Data/Nil )
-                                    )
-                                )
-                            )
-                        )
-                    )
-                    ( Value /r= /Data/Cons
-                        ( Value /head= CInt 1 )
+            ( Value /p= /operator==
+                ( Value /l= /Data/sorted
+                    ( Value lst= /Data/Cons
+                        ( Value /head= CInt 5 )
                         ( Value /tail= /Data/Cons
                             ( Value /head= CInt 4 )
                             ( Value /tail= /Data/Cons
                                 ( Value /head= CInt 4 )
                                 ( Value /tail= /Data/Cons
-                                    ( Value /head= CInt 5 )( Value /tail= Value /Data/Nil )
+                                    ( Value /head= CInt 1 )( Value /tail= Value /Data/Nil )
                                 )
+                            )
+                        )
+                    )
+                )
+                ( Value /r= /Data/Cons
+                    ( Value /head= CInt 1 )
+                    ( Value /tail= /Data/Cons
+                        ( Value /head= CInt 4 )
+                        ( Value /tail= /Data/Cons
+                            ( Value /head= CInt 4 )
+                            ( Value /tail= /Data/Cons
+                                ( Value /head= CInt 5 )( Value /tail= Value /Data/Nil )
                             )
                         )
                     )
@@ -607,17 +585,13 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "## Counting ranges" )
         , /Catln/#print
-            ( Value /p= toString
-                ( Value /this= /Data/range
-                    ( Value stop= CInt 3 )
-                )
+            ( Value /p= /Data/range
+                ( Value stop= CInt 3 )
             )
             ( Value /result= CStr "[0, 1, 2]" )
         , /Catln/#print
-            ( Value /p= toString
-                ( Value /this= /Data/range
-                    ( Value stop= CInt 0 )
-                )
+            ( Value /p= /Data/range
+                ( Value stop= CInt 0 )
             )
             ( Value /result= CStr "[]" )
         , /Catln/#md
@@ -630,14 +604,12 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "  opening item in the arm above carries no comma and the commas fall between items." )
         , /Catln/#print
-            ( Value /p= toString
-                ( Value /this= /Data/Cons
-                    ( Value /head= CInt 1 )
+            ( Value /p= /Data/Cons
+                ( Value /head= CInt 1 )
+                ( Value /tail= /Data/Cons
+                    ( Value /head= CInt 2 )
                     ( Value /tail= /Data/Cons
-                        ( Value /head= CInt 2 )
-                        ( Value /tail= /Data/Cons
-                            ( Value /head= CInt 3 )( Value /tail= Value /Data/Nil )
-                        )
+                        ( Value /head= CInt 3 )( Value /tail= Value /Data/Nil )
                     )
                 )
             )
@@ -662,29 +634,27 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "for [fmap] calls on a [ConsList]." )
         , /Catln/#print
-            ( Value /p= toString
-                ( Value /this= /operator==
-                    ( Value /l= /Data/fmap
-                        ( Value lst= /Data/Cons
-                            ( Value /head= CInt 1 )
+            ( Value /p= /operator==
+                ( Value /l= /Data/fmap
+                    ( Value lst= /Data/Cons
+                        ( Value /head= CInt 1 )
+                        ( Value /tail= /Data/Cons
+                            ( Value /head= CInt 2 )
                             ( Value /tail= /Data/Cons
-                                ( Value /head= CInt 2 )
-                                ( Value /tail= /Data/Cons
-                                    ( Value /head= CInt 3 )( Value /tail= Value /Data/Nil )
-                                )
+                                ( Value /head= CInt 3 )( Value /tail= Value /Data/Nil )
                             )
-                        )
-                        ( fn( Value v )= /operator+( Value /l= Value v )
-                            ( Value /r= CInt 1 )
                         )
                     )
-                    ( Value /r= /Data/Cons
-                        ( Value /head= CInt 2 )
+                    ( fn( Value v )= /operator+( Value /l= Value v )
+                        ( Value /r= CInt 1 )
+                    )
+                )
+                ( Value /r= /Data/Cons
+                    ( Value /head= CInt 2 )
+                    ( Value /tail= /Data/Cons
+                        ( Value /head= CInt 3 )
                         ( Value /tail= /Data/Cons
-                            ( Value /head= CInt 3 )
-                            ( Value /tail= /Data/Cons
-                                ( Value /head= CInt 4 )( Value /tail= Value /Data/Nil )
-                            )
+                            ( Value /head= CInt 4 )( Value /tail= Value /Data/Nil )
                         )
                     )
                 )
@@ -703,53 +673,47 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "  not. The element [Eq] dispatch is generic, so lists of [Integer], [Boolean], etc. all work." )
         , /Catln/#print
-            ( Value /p= toString
-                ( Value /this= /operator==
-                    ( Value /l= /Data/Cons
-                        ( Value /head= CInt 1 )
-                        ( Value /tail= /Data/Cons
-                            ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
-                        )
+            ( Value /p= /operator==
+                ( Value /l= /Data/Cons
+                    ( Value /head= CInt 1 )
+                    ( Value /tail= /Data/Cons
+                        ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
                     )
-                    ( Value /r= /Data/Cons
-                        ( Value /head= CInt 1 )
-                        ( Value /tail= /Data/Cons
-                            ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
-                        )
+                )
+                ( Value /r= /Data/Cons
+                    ( Value /head= CInt 1 )
+                    ( Value /tail= /Data/Cons
+                        ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
                     )
                 )
             )
             ( Value /result= CStr "True" )
         , /Catln/#print
-            ( Value /p= toString
-                ( Value /this= /operator==
-                    ( Value /l= /Data/Cons
-                        ( Value /head= CInt 1 )
-                        ( Value /tail= /Data/Cons
-                            ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
-                        )
+            ( Value /p= /operator==
+                ( Value /l= /Data/Cons
+                    ( Value /head= CInt 1 )
+                    ( Value /tail= /Data/Cons
+                        ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
                     )
-                    ( Value /r= /Data/Cons
-                        ( Value /head= CInt 1 )
-                        ( Value /tail= /Data/Cons
-                            ( Value /head= CInt 3 )( Value /tail= Value /Data/Nil )
-                        )
+                )
+                ( Value /r= /Data/Cons
+                    ( Value /head= CInt 1 )
+                    ( Value /tail= /Data/Cons
+                        ( Value /head= CInt 3 )( Value /tail= Value /Data/Nil )
                     )
                 )
             )
             ( Value /result= CStr "False" )
         , /Catln/#print
-            ( Value /p= toString
-                ( Value /this= /operator==
-                    ( Value /l= /Data/Cons
-                        ( Value /head= CInt 1 )
-                        ( Value /tail= /Data/Cons
-                            ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
-                        )
+            ( Value /p= /operator==
+                ( Value /l= /Data/Cons
+                    ( Value /head= CInt 1 )
+                    ( Value /tail= /Data/Cons
+                        ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
                     )
-                    ( Value /r= /Data/Cons
-                        ( Value /head= CInt 1 )( Value /tail= Value /Data/Nil )
-                    )
+                )
+                ( Value /r= /Data/Cons
+                    ( Value /head= CInt 1 )( Value /tail= Value /Data/Nil )
                 )
             )
             ( Value /result= CStr "False" )
@@ -764,51 +728,45 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "  before its extension ([Nil] before any [Cons])." )
         , /Catln/#print
-            ( Value /p= toString
-                ( Value /this= isLess
-                    ( Value /this= compareTo
-                        ( Value other= /Data/Cons
+            ( Value /p= isLess
+                ( Value /this= compareTo
+                    ( Value other= /Data/Cons
+                        ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
+                    )
+                    ( Value /this= /Data/Cons
+                        ( Value /head= CInt 1 )( Value /tail= Value /Data/Nil )
+                    )
+                )
+            )
+            ( Value /result= CStr "True" )
+        , /Catln/#print
+            ( Value /p= isLess
+                ( Value /this= compareTo
+                    ( Value other= /Data/Cons
+                        ( Value /head= CInt 1 )
+                        ( Value /tail= /Data/Cons
                             ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
                         )
-                        ( Value /this= /Data/Cons
-                            ( Value /head= CInt 1 )( Value /tail= Value /Data/Nil )
-                        )
+                    )
+                    ( Value /this= /Data/Cons
+                        ( Value /head= CInt 1 )( Value /tail= Value /Data/Nil )
                     )
                 )
             )
             ( Value /result= CStr "True" )
         , /Catln/#print
-            ( Value /p= toString
-                ( Value /this= isLess
-                    ( Value /this= compareTo
-                        ( Value other= /Data/Cons
-                            ( Value /head= CInt 1 )
-                            ( Value /tail= /Data/Cons
-                                ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
-                            )
-                        )
-                        ( Value /this= /Data/Cons
-                            ( Value /head= CInt 1 )( Value /tail= Value /Data/Nil )
+            ( Value /p= isEq
+                ( Value /this= compareTo
+                    ( Value other= /Data/Cons
+                        ( Value /head= CInt 1 )
+                        ( Value /tail= /Data/Cons
+                            ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
                         )
                     )
-                )
-            )
-            ( Value /result= CStr "True" )
-        , /Catln/#print
-            ( Value /p= toString
-                ( Value /this= isEq
-                    ( Value /this= compareTo
-                        ( Value other= /Data/Cons
-                            ( Value /head= CInt 1 )
-                            ( Value /tail= /Data/Cons
-                                ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
-                            )
-                        )
-                        ( Value /this= /Data/Cons
-                            ( Value /head= CInt 1 )
-                            ( Value /tail= /Data/Cons
-                                ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
-                            )
+                    ( Value /this= /Data/Cons
+                        ( Value /head= CInt 1 )
+                        ( Value /tail= /Data/Cons
+                            ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
                         )
                     )
                 )

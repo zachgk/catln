@@ -14,6 +14,13 @@ module(Catln/Doc)
   every(String, isa= [/Catln/Doc/DShow])
   every(CatlnResult.., isa= [/Catln/Doc/DShow])
 
+  every(/Data/ToString, isa= [/Catln/Doc/DShow])
+    # Every [/Data/ToString] value is displayable, so [ToString] is a subset of [DShow]: the
+      webdocs render such a value through its [/Data/toString]. This is what lets a `> value`
+      print statement accept any [ToString] type. A [DShow] value that is not [ToString] (a
+      visualization like [Show/MD]) is still printable, but only [ToString] values are compared
+      against a print/result golden.
+
   data(Show/MD(text -> String))
 
   every(Show/MD.., isa= [/Catln/Doc/DShow])

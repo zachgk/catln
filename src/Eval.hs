@@ -335,14 +335,20 @@ evalDShowAnnot env@Env{evTbEnv, evTypeEnv} os annot0
   -- @.toString@, @++@, …) is not run through full inference, so its type stays too loose to prove
   -- it reaches @DShow@ and would otherwise be silently skipped. Non-@#print@ DShow annotations keep
   -- the static gate, which correctly excludes annotations like @#test@/@#assert@/@#runtime@.
-  | isPrint = do
-      -- Build @p@ straight toward @DShow@ instead of wrapping it in @dshow(s= p)@: the wrapper's
-      -- @dshow(s -> DShow)= s@ arm is the identity, but interposing it stops 'buildCallTree' from
-      -- resolving a computed @p@'s own arrows (a value reference to its definition, @++@/@toString@
-      -- to their results), which then fails to reach @DShow@. Building @p@ as a root resolves them.
-      tree <- toTExprDest evTbEnv os annot destM
-      val <- evalStateT (evalExpr tree) env
-      return (Just val)
+  | isPrint =
+      -- Render @p@ through @/Data/toString@ first: a @ToString@ value (@Integer@, @Boolean@,
+      -- @ConsList@, @String@ — @String.toString@ is the identity) renders to a @String@, the only
+      -- form a print/result golden can check. @toString@ is built as a root over @p@ (not wrapped
+      -- in @dshow(s= p)@, whose identity arm would stop 'buildCallTree' from resolving a computed
+      -- @p@'s own arrows). If @p@ is a @DShow@ value that is not @ToString@ (a webdocs
+      -- visualization), the @toString@ build fails, and we fall back to rendering @p@ directly
+      -- toward @DShow@ — still displayable, just not golden-checkable.
+      case buildEval (toStringAnnot annot) of
+        CRes _ val -> return (Just val)
+        CErr _     -> do
+          tree <- toTExprDest evTbEnv os annot destM
+          val <- evalStateT (evalExpr tree) env
+          return (Just val)
   | reachesTo evTypeEnv H.empty (getExprType $ showAnnot annot) destType = do
       tree <- toTExprDest evTbEnv os (showAnnot annot) destM
       val <- evalStateT (evalExpr tree) env
@@ -359,6 +365,11 @@ evalDShowAnnot env@Env{evTbEnv, evTypeEnv} os annot0
       = p
       | otherwise = annot0
     showAnnot a = eVal "/Catln/Doc/dshow" `eApply ` ("/s", a)
+    -- @p.toString@, i.e. @toString(this= p)@ (the desugaring of the postfix method call).
+    toStringAnnot a = eVal "/Data/toString" `eApply` ("/this", a)
+    buildEval a = do
+      tree <- toTExprDest evTbEnv os a destM
+      evalStateT (evalExpr tree) env
     destType = classPartial $ partialVal "/Catln/Doc/DShow"
     destM = emptyMetaT destType
 

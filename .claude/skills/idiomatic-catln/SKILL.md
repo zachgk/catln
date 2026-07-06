@@ -51,17 +51,24 @@ Write examples as **print-golden** statements right after the definition they ex
 webdocs) and as tests.
 
 ```catln
-> /Data/sum(lst= [1, 2, 3]).toString
+> /Data/sum(lst= [1, 2, 3])
   >>> 6
-> /Data/sum(lst= []).toString
+> /Data/sum(lst= [])
   >>> 0
 ```
 
 - Works nested inside a `module(...)` (grouped with the code) or at file top level.
-- The rendered value must be a **String** — anything else is silently skipped. Render non-strings
-  with `.toString` (see §4) or by comparing: `(expr == known).toString` yields a `Boolean`, which
-  is `ToString`. Use the comparison form when the result type is too polymorphic to render
-  directly (see §7).
+- **`print` calls `toString` implicitly.** `ToString` is a subset of `DShow` (`every(/Data/ToString,
+  isa= [/Catln/Doc/DShow])` in `webdoc.ct`), so a `> expr` whose value is any `ToString` type —
+  `Integer`, `Boolean`, `String`, a `ConsList` of `ToString` elements — is rendered through its
+  `toString` and golden-checked. **Do not write `.toString` in an example** (`> sum(xs)`, not
+  `> sum(xs).toString`).
+- Any `DShow` value can appear after `>` (that is the print syntax's type), but **only `ToString`
+  values are compared against a `>>>` golden**. A `DShow`-but-not-`ToString` value (a webdocs
+  visualization like `Show/MD`) is still displayed; it just produces no golden test (silently
+  skipped).
+- When the result type is too polymorphic to render directly (see §7), compare instead:
+  `> (expr == known)` prints the `Boolean` (`True`/`False`), which is `ToString`.
 - `#example` (annotation on a named value, holding `#assert`s) still exists and is right when you
   want property-style assertions rather than a shown value:
   ```catln
@@ -116,10 +123,10 @@ reversed(lst)= reverseOnto(lst= lst, acc= /Data/Nil)   # ConsList arms fulfil it
   widen). Use same-singleton (`[True, True]`) or single-element (`[False]`) lists in examples.
 - **Rendering a polymorphic-element result is a frontier.** `sorted`/`reversed` return a list whose
   element type stays generic (`Ord`/existential), and the checker cannot reduce
-  `List[Ord] ∩ List[ToString]` to the concrete element — so `sorted(xs).toString` fails to
-  type-check. Render via comparison instead: `(sorted(xs) == known).toString >>> True`. A result
-  with a *concrete* element (`range -> List[$T -> Integer]`) or a scalar (`sum -> Integer`) renders
-  directly.
+  `List[Ord] ∩ List[ToString]` to the concrete element — so printing the result directly (which
+  applies `toString`) fails to type-check. Render via comparison instead: `> (sorted(xs) == known)`
+  prints `True`. A result with a *concrete* element (`range -> List[$T -> Integer]`) or a scalar
+  (`sum -> Integer`) prints directly.
 - **Element-preserving return types can trip the solver.** Returning `List[$T -> $_T]` (existential
   element) can push downstream `==`/`toString` into a "Grows by" scheme error. When it does, fall
   back to an erased return (`-> /Data/List`) and verify with structural `==`.
