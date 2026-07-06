@@ -264,11 +264,27 @@ buildCallTree env@TBEnv{tbTypeEnv} os visitedArrows src@(UnionType (Just (preds,
   , let expanded = expandPredicates tbTypeEnv H.empty preds
   , expanded /= src =
       buildCallTree env os visitedArrows expanded destType
-buildCallTree env os visitedArrows (UnionType _ srcLeafs consts) destType = do
+buildCallTree env@TBEnv{tbTypeEnv} os visitedArrows (UnionType _ srcLeafs consts) destType = do
   let allPartials = splitUnionType srcLeafs ++ map constantPartialType consts
-  matchVal <- forM allPartials $ \srcPartial -> do
-    t <- buildPartialCallTree env os visitedArrows srcPartial destType
-    return (srcPartial, t)
+  let tryBuilds = map (\srcPartial -> (srcPartial, buildPartialCallTree env os visitedArrows srcPartial destType)) allPartials
+  -- The type checker keeps an applied term in both its raw and settled forms (@5 + 1@ is
+  -- @(/operator+(..) + Integer)@), distributed into sibling container leaves
+  -- (@Box[/v=/operator+(..)] + Box[/v=Integer]@). The raw leaf can fail to build: a settled
+  -- data construction has no arrows of its own, so nothing accepts the raw field. The built
+  -- runtime value settles its computed fields (see 'toTEObjArr'), so such a leaf denotes no
+  -- runtime value — drop it when its settled form is covered by the leaves that did build.
+  -- A deferred value reference (@/Context(/value=/main)@) is stored raw on purpose but never
+  -- has a settled sibling (only an applied term is kept in both forms), so its errors — and
+  -- every failure without a covering sibling — still propagate.
+  let builtType = unionAllTypes tbTypeEnv [singletonType p | (p, res) <- tryBuilds, isJust (cresToMaybe res)]
+  let settledRedundant srcPartial =
+        -- Ordered cheapest-first: most failures are not raw applied leaves (their reduction is
+        -- the identity), and testing that first avoids forcing the sibling builds in 'builtType'.
+        let reduced = reduceAppliedTypeDeep tbTypeEnv H.empty (singletonType srcPartial)
+        in reduced /= singletonType srcPartial && not (isBottomType builtType) && isSubtypeOfWithObjSrcs tbTypeEnv os reduced builtType
+  matchVal <- fmap catMaybes $ forM tryBuilds $ \(srcPartial, res) -> case res of
+    CErr{} | settledRedundant srcPartial -> return Nothing
+    _                                    -> Just . (srcPartial,) <$> res
   -- If every source partial resolves to the same call tree, there is nothing to
   -- discriminate at runtime, so use that tree directly instead of a 'TCMatch'. This
   -- collapses the case where a relative call resolves to both a declaration-only
@@ -299,16 +315,19 @@ toTExpr env os (TupleApply m (bm, be) arg) = do
     EAppVar _ _ -> toTExprDest env os be m
     _           -> toTExprDest env os be bm
   arg' <- case arg of
-    EAppArg a     -> EAppArg <$> toTEObjArr env os True a
+    EAppArg a     -> do
+      let baseIsData = maybe False (not . null . typeGraphData (tbTypeEnv env)) (maybeExprPath be)
+      EAppArg <$> toTEObjArr env os True baseIsData a
     EAppVar vn vm -> return $ EAppVar vn vm
     EAppSpread a  -> EAppSpread <$> toTExpr env os a
   return $ TTupleApply m (bm, be') arg'
 
--- | The Bool marks an ObjArr applied inside an expression ('EAppArg') as opposed to a root
--- definition ('buildRootOA').
-toTEObjArr :: TBEnv -> [ObjSrc] -> Bool -> EObjArr -> CRes (ObjArr TExpr TBMetaDat)
--- toTEObjArr _ os _ oa | trace (printf "toTEObjArr %s\n\twith %s" (show oa) (show os)) False = undefined
-toTEObjArr env@TBEnv{tbTypeEnv} os inExpr oa@ObjArr{oaObj, oaAnnots, oaArr} = do
+-- | The first Bool marks an ObjArr applied inside an expression ('EAppArg') as opposed to a root
+-- definition ('buildRootOA'); the second marks the application's base as a data construction
+-- (@Box(v= ..)@) as opposed to a function call.
+toTEObjArr :: TBEnv -> [ObjSrc] -> Bool -> Bool -> EObjArr -> CRes (ObjArr TExpr TBMetaDat)
+-- toTEObjArr _ os _ _ oa | trace (printf "toTEObjArr %s\n\twith %s" (show oa) (show os)) False = undefined
+toTEObjArr env@TBEnv{tbTypeEnv, tbResEnv} os inExpr inData oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   oaObj' <- mapM (toTExpr env os) oaObj
   let os' = case oa of
         ObjArr{oaObj=Just{}, oaArr=Just (Just{}, _)} -> (getSingleton $ getExprType $ oaObjExpr oa, oa) : os
@@ -323,7 +342,19 @@ toTEObjArr env@TBEnv{tbTypeEnv} os inExpr oa@ObjArr{oaObj, oaAnnots, oaArr} = do
   -- is not an applied argument at all.
   let isLambda = inExpr && maybe False (not . null . exprAppliedArgs) oaObj
   oaArr' <- forM oaArr $ \(arrExpr, arrM) -> do
-    let arrBuildM = if isLambda
+    -- A computed value stored in a constructed data field (@Box(v= 5 + 1)@) likewise has no
+    -- consumer arrow to apply it — a data field only STORES its value, so the raw tuple would
+    -- become the field's runtime value. Build it toward what it settles to as well. A bare
+    -- value reference (@/Context(value= main)@, no applied arguments) is a deferred value the
+    -- construction applies later, not a term to settle here. 'metaMightReduce' is a cheap
+    -- name-lookup pre-filter: only a leaf whose name has res-env arrows can be applied at all,
+    -- so for any other meta the reduction is a no-op not worth computing (this runs on every
+    -- eval tree rebuild).
+    let isComputedField = maybe False (not . null . exprAppliedArgs) arrExpr && inData
+    let metaMightReduce = case getMetaType arrM of
+          UnionType Nothing leafs [] -> any (\PartialType{ptName} -> isJust (suffixLookupInDict ptName tbResEnv)) (splitUnionType leafs)
+          _                          -> False
+    let arrBuildM = if isLambda || (isComputedField && metaMightReduce)
           then mWithType (reduceAppliedType tbTypeEnv H.empty (getMetaType arrM)) arrM
           else arrM
     arrExpr' <- forM arrExpr $ \e ->
@@ -389,7 +420,7 @@ buildRootOA :: TBEnv -> EObjArr -> CRes (ObjArr TExpr TBMetaDat)
 buildRootOA env oa = do
   let env' = env{tbName = printf "root"}
   let objSrc = (getSingleton $ getExprType $ oaObjExpr oa, oa)
-  toTEObjArr env' [objSrc] False oa
+  toTEObjArr env' [objSrc] False False oa
 
 buildRoot :: TBEnv -> TBExpr -> PartialType -> Type -> CRes (TExpr TBMetaDat)
 buildRoot env input src dest = do

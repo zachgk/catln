@@ -229,6 +229,27 @@ reduceAppliedType typeEnv vaenv t@(UnionType Nothing leafs []) = case splitUnion
       dests -> unionAllTypesWithEnv typeEnv vaenv (map snd dests)
 reduceAppliedType _ _ t = t
 
+-- | 'reduceAppliedType', additionally settling the field and parameter positions of a leaf no
+-- arrow accepts: a data construction storing a raw applied term (@Box[/v=/operator+(..)]@)
+-- settles to what the term's arrows produce (@Box[/v=Integer]@). Every position settles one
+-- step only — arrow results are not re-reduced — so the recursion follows the finite type
+-- structure and always terminates. Note this cannot tell a reducible applied term from a
+-- deferred value reference stored in a field (@/Context(/value=/main)@ would wrongly settle
+-- to main's result), so callers must gate on context that distinguishes them (see the
+-- sibling-coverage check in 'TreeBuild.buildCallTree').
+reduceAppliedTypeDeep :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
+reduceAppliedTypeDeep typeEnv vaenv t@(UnionType Nothing leafs []) = case splitUnionType leafs of
+  [] -> t
+  ls -> unionAllTypesWithEnv typeEnv vaenv (map reduceLeaf ls)
+  where
+    reduceLeaf l = case typeGraphQueryWithReason typeEnv vaenv l of
+      []    -> singletonType (reduceLeafPositions l)
+      dests -> unionAllTypesWithEnv typeEnv vaenv (map snd dests)
+    reduceLeafPositions p@PartialType{ptArgs, ptVars} = p
+      { ptArgs = fmap (reduceAppliedTypeDeep typeEnv vaenv) ptArgs
+      , ptVars = fmap (reduceAppliedTypeDeep typeEnv vaenv) ptVars }
+reduceAppliedTypeDeep _ _ t = t
+
 -- | Set resolved field values on a constructed type and bind the data parameters those fields
 -- define. For @Cons(head=x)@ resolved to @head=Integer@, the Cons declaration links @head -> $T@,
 -- so this both sets @/head=Integer@ and binds the element parameter @/T=Integer@. A field whose
