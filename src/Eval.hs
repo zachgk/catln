@@ -121,7 +121,12 @@ evalObjArr = evalObjArrCaptured H.empty
 evalObjArrCaptured :: Args -> Val -> AnyObjArr -> StateT Env CRes Val
 evalObjArrCaptured captured input oa = do
   let newArrArgs = H.union (buildArrArgs oa input) captured
-  (resArrowTree, compAnnots, oldArgs) <- evalStartEArrow (getValPartialType input) oa newArrArgs
+  -- The src partial seeds the arm-body rebuild's var/arg environment, where a function-typed
+  -- slot's VALUE is its output type (the input signature lives in the key — the typechecker's
+  -- pointer-slot convention). The input-signature form would bind an arm's output var to the
+  -- signature (@$M := /fn(/v=Int)@) and leave the body's argument application unable to reach
+  -- a concrete destination type.
+  (resArrowTree, compAnnots, oldArgs) <- evalStartEArrow (getValPartialTypeOut input) oa newArrArgs
   forM_ compAnnots $ \compAnnot -> do
             compAnnot' <- withEvalPush (printf "annot %s" (show compAnnot)) $ evalExpr compAnnot
             evalCompAnnot compAnnot'
@@ -148,7 +153,14 @@ evalCallTree  m (TCMatch destType opts) = do
   -- function-signature key @/fn(/v=..)@ on the typed arrow) before matching, mirroring
   -- the 'simplifyArgKeys' handling in the 'TCCond' branch below.
   let reKeyP p = p{ptArgs = H.mapKeys (partialKey . pkName) (ptArgs p)}
-  case H.toList $ H.filterWithKey (\optType _ -> isSubtypePartialOf evTypeEnv (reKeyP $ getValPartialType m) (singletonType $ reKeyP optType)) opts of
+  -- A closure argument's slot in a typed arm holds either the closure's input signature or the
+  -- output contract delivered from the declaration; the value-derived partial only carries the
+  -- input signature, so also try the output form ('getValPartialTypeOut') before failing an arm.
+  let valP = reKeyP $ getValPartialType m
+  let valPOut = reKeyP $ getValPartialTypeOut m
+  let optMatches optType = isSubtypePartialOf evTypeEnv valP (singletonType $ reKeyP optType)
+        || (valPOut /= valP && isSubtypePartialOf evTypeEnv valPOut (singletonType $ reKeyP optType))
+  case H.toList $ H.filterWithKey (\optType _ -> optMatches optType) opts of
     [(_, resArrowTree)] -> do
       withEvalPush ("match with val " ++ show m) $ evalCallTree m resArrowTree
     -- No statically-built arm matches the concrete runtime value. An arm can be dropped at build

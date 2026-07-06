@@ -210,6 +210,22 @@ getValPartialType LLVMQueue{} = queueLeaf
 getValPartialType LLVMIO{} = ioLeaf
 getValPartialType NoVal = error "getValPartialType of NoVal"
 
+-- | Like 'getValPartialType', but a closure argument ('ObjArrVal') contributes its declared
+-- OUTPUT type as the argument slot instead of its input signature. A typed arm's higher-order
+-- slot holds whichever form typechecking delivered: the input signature (@/fn(/v=..)@) or the
+-- output contract propagated from the declaration's pointer slot (@/fn=∀Monad[..]@). Dispatch
+-- matching tries 'getValPartialType' first and falls back to this form.
+getValPartialTypeOut :: Val -> PartialType
+getValPartialTypeOut (TupleVal name args) = (partialVal (mkName name)){ptArgs=H.fromList $ map fromArg $ H.toList args}
+  where
+    -- The closure slot is keyed with the closure's parameter names ('pkArgs'), matching the
+    -- typed structural key (@/fn(/v)@) so 'typeGetArgLoose' finds it; a bare key would miss
+    -- and fall back to the arm's unresolved contract meta.
+    fromArg (argName, argVal@(ObjArrVal oa _)) | Just (_, arrM) <- oaArr oa =
+      ((partialToKey (getValPartialType argVal)){pkName=mkName argName}, getMetaType arrM)
+    fromArg (argName, argVal) = (partialKey (mkName argName), singletonType $ getValPartialTypeOut argVal)
+getValPartialTypeOut v = getValPartialType v
+
 
 --- ResArrowTree
 data MacroData = MacroData {
