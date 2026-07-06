@@ -50,7 +50,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ len( Value /this -> /IntNil )= CInt 0
+                        [ len( Value /this -> /IntNil ) -> /Data/Primitive/Integer = CInt 0
                         , len
                             ( Value /this= /IntCons( Value head )( Value tail ) ) -> /Data/Primitive/Integer = /operator+
                             ( Value /l= CInt 1 )

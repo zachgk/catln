@@ -19,8 +19,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ diag( Value a@Value x )( Value b@Value x )= Value True
-                        , diag( Value a )( Value b )= /operator==( Value /l= Value a )( Value /r= Value b )
+                        [ diag( Value a@Value x )( Value b@Value x ) -> ∀/Data/Primitive/Boolean = Value True
+                        , diag( Value a )( Value b ) -> ∀/Data/Primitive/Boolean = /operator==( Value /l= Value a )( Value /r= Value b )
                         ]
                     }
                 )

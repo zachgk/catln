@@ -18,10 +18,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator^( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing )= Value False
-                        , /operator^( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing )= Value True
-                        , /operator^( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing )= Value True
-                        , /operator^( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing )= Value False
+                        [ /operator^( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /operator^( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /operator^( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /operator^( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean = Value False
                         ]
                     }
                 )
@@ -32,7 +32,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/rel( Value a )( Value b )( Value /this -> /Data/Primitive/BoolEqv )= /Data/Primitive/boolEq( Value l= Value a )( Value r= Value b ) ]
+                        [ /Data/Algebra/rel( Value a )( Value b )( Value /this -> /Data/Primitive/BoolEqv ) -> ∀/Data/Primitive/Boolean = /Data/Primitive/boolEq( Value l= Value a )( Value r= Value b ) ]
                     }
                 )
             ,
@@ -43,8 +43,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator~( Value /a= Hole /Data/Primitive/True HoleActive Nothing )= Value False
-                        , /operator~( Value /a= Hole /Data/Primitive/False HoleActive Nothing )= Value True
+                        [ /operator~( Value /a= Hole /Data/Primitive/True HoleActive Nothing ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /operator~( Value /a= Hole /Data/Primitive/False HoleActive Nothing ) -> ∀/Data/Primitive/Boolean = Value True
                         ]
                     }
                 )
@@ -64,7 +64,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/eq( Value /this -> ∀/Data/Primitive/Boolean )= Value BoolEqv ]
+                        [ /Data/Algebra/eq( Value /this -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Algebra/Eqv[ /T=TopType ] = Value BoolEqv ]
                     }
                 )
             ,
@@ -75,9 +75,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator&&( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing )= Value True
-                        , /operator&&( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing )= Value False
-                        , /operator&&( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )= Value False
+                        [ /operator&&( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /operator&&( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /operator&&( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean = Value False
                         ]
                     }
                 )
@@ -89,9 +89,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator||( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )= Value True
-                        , /operator||( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing )= Value True
-                        , /operator||( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing )= Value False
+                        [ /operator||( Value /l -> /Data/Primitive/True = Hole TopType HoleActive Nothing )( Value /r -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /operator||( Value /l -> ∀/Data/Primitive/Boolean = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/True = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /operator||( Value /l -> /Data/Primitive/False = Hole TopType HoleActive Nothing )( Value /r -> /Data/Primitive/False = Hole TopType HoleActive Nothing ) -> ∀/Data/Primitive/Boolean = Value False
                         ]
                     }
                 )
@@ -112,10 +112,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Primitive/boolEq( Value l= Value True )( Value r= Value True )= Value True
-                        , /Data/Primitive/boolEq( Value l= Value True )( Value r= Value False )= Value False
-                        , /Data/Primitive/boolEq( Value l= Value False )( Value r= Value True )= Value False
-                        , /Data/Primitive/boolEq( Value l= Value False )( Value r= Value False )= Value True
+                        [ /Data/Primitive/boolEq( Value l= Value True )( Value r= Value True ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /Data/Primitive/boolEq( Value l= Value True )( Value r= Value False ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /Data/Primitive/boolEq( Value l= Value False )( Value r= Value True ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /Data/Primitive/boolEq( Value l= Value False )( Value r= Value False ) -> ∀/Data/Primitive/Boolean = Value True
                         ]
                     }
                 )
@@ -126,7 +126,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/equal( Value other )( Value /this -> ∀/Data/Primitive/Boolean )= rel( Value a= Value this )( Value b= Value other )
+                        [ /Data/Algebra/equal( Value other )( Value /this -> ∀/Data/Primitive/Boolean ) -> ∀/Data/Primitive/Boolean = rel( Value a= Value this )( Value b= Value other )
                             ( Value /this= eq( Value /this= Value this ) )
                         ]
                     }

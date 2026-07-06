@@ -9,7 +9,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ unbox( Value b -> /Data/Primitive/Integer )= Value b ]
+                        [ unbox( Value b -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = Value b ]
                     }
                 )
             ,
@@ -37,13 +37,13 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ useBox
-                            ( Value p -> /Box[ /A=∀/Boxed ] ) -> /Data/Primitive/Integer
+                            ( Value p -> /Box[ /A=∀/Boxed ]( /x=∀/Boxed ) ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ useBox
-                            ( Value p= Box( Value x ) )= unbox( Value b= Value x )
+                            ( Value p= Box( Value x ) ) -> /Data/Primitive/Integer = unbox( Value b= Value x )
                         ]
                     }
                 )

@@ -677,6 +677,25 @@ isTypeVar :: Type -> Bool
 isTypeVar TypeVar{} = True
 isTypeVar _         = False
 
+-- | Whether a type references any type variable ('TypeVar') at any nesting depth, including
+-- variable\/argument slot values and predicate partials.
+typeContainsTypeVar :: Type -> Bool
+typeContainsTypeVar TypeVar{} = True
+typeContainsTypeVar BottomType = False
+typeContainsTypeVar (UnionType mPreds leafs _) = predsPart || any partialHas (splitUnionType leafs)
+  where
+    predsPart = case mPreds of
+      Just (preds, negLeafs) -> predsHas preds || any partialHas (splitUnionType negLeafs)
+      Nothing                -> False
+    predsHas (PredsAnd ps) = any predsHas ps
+    predsHas (PredsOne p)  = predHas p
+    predsHas (PredsNot p)  = predsHas p
+    predHas (PredExpr p)  = partialHas p
+    predHas (PredClass p) = partialHas p
+    predHas (PredRel p)   = partialHas p
+    partialHas PartialType{ptVars, ptArgs, ptPreds} =
+      any typeContainsTypeVar ptVars || any typeContainsTypeVar ptArgs || predsHas ptPreds
+
 containsBottomType :: Type -> Bool
 containsBottomType BottomType = True
 containsBottomType (UnionType (Just _) _ _) = False
@@ -813,8 +832,11 @@ completeDataPartialsTop typeEnv = go
     go (TypeVar v l) = TypeVar v l
     go (UnionType mPreds leafs consts) = UnionType (fmap (bimap id goLeafs) mPreds) (goLeafs leafs) consts
     goLeafs = joinUnionType . map completePartial . splitUnionType
-    completePartial p@PartialType{ptName, ptVars, ptArgs}
-      | H.null ptArgs =
+    -- Only an argument-less partial in /exact/ mode is an ambiguous bare reference needing its
+    -- declared fields restored. A non-exact mode (an authored spread like @CatlnResult..@)
+    -- already admits the field forms, and overwriting its mode with the data's would narrow it.
+    completePartial p@PartialType{ptName, ptVars, ptArgs, ptArgMode}
+      | H.null ptArgs && ptArgMode == PtArgExact =
           case [(dArgs, dMode) | PartialType{ptArgs=dArgs, ptArgMode=dMode} <- typeGraphData typeEnv ptName, not (H.null dArgs)] of
             -- Restore the declared fields, carrying the /bound/ of the type parameter each field
             -- is declared with (e.g. field @x : $A@ in @Box[$A -> Boxed]@ is restored as @Boxed@):

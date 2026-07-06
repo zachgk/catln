@@ -9,7 +9,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ unbox( Value b -> /Data/Primitive/Integer )= Value b ]
+                        [ unbox( Value b -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = Value b ]
                     }
                 )
             ,
@@ -41,13 +41,16 @@ Prgm
                                 [ /B=∀/Boxed
                                 , /A=∀/Boxed
                                 ]
+                                ( /first=∀/Boxed
+                                , /second=∀/Boxed
+                                )
                             ) -> /Data/Primitive/Integer
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ bothUnbox
-                            ( Value p= Pair( Value first@Value f )( Value second@Value s ) )= unbox( Value b= Value f )
+                            ( Value p= Pair( Value first@Value f )( Value second@Value s ) ) -> /Data/Primitive/Integer = unbox( Value b= Value f )
                         ]
                     }
                 )

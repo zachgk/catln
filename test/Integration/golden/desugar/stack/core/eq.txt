@@ -9,7 +9,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator==( Value l -> $/T )( Value r -> $/T )[ /T : ∀/Data/Algebra/Eq ]= equal( Value other= Value r )( Value /this= Value l ) ]
+                        [ /operator==( Value l -> $/T )( Value r -> $/T )[ /T : ∀/Data/Algebra/Eq ] -> ∀/Data/Primitive/Boolean = equal( Value other= Value r )( Value /this= Value l ) ]
                     }
                 )
             ,
@@ -77,8 +77,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/rel( Value a )( Value b )( Value /this -> /Data/Algebra/IntEqExample )= /Data/Primitive/intEq( Value l= Value a )( Value r= Value b )
-                        , /Data/Algebra/rel( Value a )( Value b )( Value /this -> /Data/Algebra/AllEqv )= Value True
+                        [ /Data/Algebra/rel( Value a )( Value b )( Value /this -> /Data/Algebra/IntEqExample ) -> ∀/Data/Primitive/Boolean = /Data/Primitive/intEq( Value l= Value a )( Value r= Value b )
+                        , /Data/Algebra/rel( Value a )( Value b )( Value /this -> /Data/Algebra/AllEqv ) -> ∀/Data/Primitive/Boolean = Value True
                         ]
                     }
                 )
@@ -119,7 +119,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /operator!=( Value l -> $/T )( Value r -> $/T )[ /T : ∀/Data/Algebra/Eq ]= /operator~
+                        [ /operator!=( Value l -> $/T )( Value r -> $/T )[ /T : ∀/Data/Algebra/Eq ] -> ∀/Data/Primitive/Boolean = /operator~
                             ( Value /a= /operator==( Value /l= Value l )( Value /r= Value r ) )
                         ]
                     }

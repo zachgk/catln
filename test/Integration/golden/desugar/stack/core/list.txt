@@ -39,9 +39,9 @@ Prgm
                             )
                         ]
                     , omiDefs =
-                        [ /Data/length( Value /this -> /Data/Nil )= CInt 0
+                        [ /Data/length( Value /this -> /Data/Nil ) -> /Data/Primitive/Integer = CInt 0
                         , /Data/length
-                            ( Value /this= /Data/Cons( Value head )( Value tail ) )= /operator+
+                            ( Value /this= /Data/Cons( Value head )( Value tail ) ) -> /Data/Primitive/Integer = /operator+
                             ( Value /l= CInt 1 )
                             ( Value /r= length( Value /this= Value tail ) )
                         ]
@@ -88,14 +88,14 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/consEqual( Value a= Value Nil )( Value b= Value Nil )= Value True
+                        [ /Data/consEqual( Value a= Value Nil )( Value b= Value Nil ) -> ∀/Data/Primitive/Boolean = Value True
                         , /Data/consEqual( Value a= Value Nil )
-                            ( Value b= /Data/Cons( Value head )( Value tail ) )= Value False
+                            ( Value b= /Data/Cons( Value head )( Value tail ) ) -> ∀/Data/Primitive/Boolean = Value False
                         , /Data/consEqual
-                            ( Value a= /Data/Cons( Value head )( Value tail ) )( Value b= Value Nil )= Value False
+                            ( Value a= /Data/Cons( Value head )( Value tail ) )( Value b= Value Nil ) -> ∀/Data/Primitive/Boolean = Value False
                         , /Data/consEqual
                             ( Value a= /Data/Cons( Value head@Value ah )( Value tail@Value at ) )
-                            ( Value b= /Data/Cons( Value head@Value bh )( Value tail@Value bt ) )= /operator&&
+                            ( Value b= /Data/Cons( Value head@Value bh )( Value tail@Value bt ) ) -> ∀/Data/Primitive/Boolean = /operator&&
                             ( Value /l= /operator==( Value /l= Value ah )( Value /r= Value bh ) )
                             ( Value /r= consEqual( Value a= Value at )( Value b= Value bt ) )
                         ]
@@ -211,10 +211,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/equal
-                            ( Value other -> ∀/Data/ConsList[ /E=∀/Data/Algebra/Eq ] )( Value /this -> /Data/Nil )= /Data/consEqual( Value a= Value /Data/Nil )( Value b= Value other )
+                            ( Value other -> ∀/Data/ConsList[ /E=∀/Data/Algebra/Eq ] )( Value /this -> /Data/Nil ) -> ∀/Data/Primitive/Boolean = /Data/consEqual( Value a= Value /Data/Nil )( Value b= Value other )
                         , /Data/Algebra/equal
                             ( Value other -> ∀/Data/ConsList[ /E=∀/Data/Algebra/Eq ] )
-                            ( Value /this= /Data/Cons[ /T : ∀/Data/Algebra/Eq ]( Value head )( Value tail ) )= /Data/consEqual
+                            ( Value /this= /Data/Cons[ /T : ∀/Data/Algebra/Eq ]( Value head )( Value tail ) ) -> ∀/Data/Primitive/Boolean = /Data/consEqual
                             ( Value a= /Data/Cons( Value head= Value head )( Value tail= Value tail ) )( Value b= Value other )
                         ]
                     }

@@ -270,7 +270,16 @@ desFinalPasses nodesWithDeps = do
     let prgm3b = reassignImportedMethodDefs fullPrgm3 prgm3
 
     let prgm4 = linkClassMethodReceivers fullPrgm3 prgm3b
-    lift $ mapMetaPrgmM addMetaID prgm4
+
+    -- Complete authored type annotations with their declared data fields, so a bare data-type
+    -- reference (e.g. @[$M -> BoxA]@) denotes the full type rather than the 0-arg partial.
+    let fullPrgm4 = completeAnnotationTypes fullPrgm3 fullPrgm3
+    let prgm5 = completeAnnotationTypes fullPrgm3 prgm4
+
+    -- Copy each declaration's (variable-free) return type onto its annotation-less definitions,
+    -- so a def under a separate decl solves like an inline-annotated one.
+    let prgm6 = seedDefResultTypes fullPrgm4 prgm5
+    lift $ mapMetaPrgmM addMetaID prgm6
 
 desPrgm :: (PPrgm, FileImport, [FileImport]) -> CRes (DesPrgm, FileImport, [FileImport])
 desPrgm (RawPrgm _ statements, name, imports) = do

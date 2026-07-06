@@ -9,9 +9,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/isGreaterEq( Value /this -> /Data/Algebra/LessThan )= Value False
-                        , /Data/Algebra/isGreaterEq( Value /this -> /Data/Algebra/Equal )= Value True
-                        , /Data/Algebra/isGreaterEq( Value /this -> /Data/Algebra/GreaterThan )= Value True
+                        [ /Data/Algebra/isGreaterEq( Value /this -> /Data/Algebra/LessThan ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /Data/Algebra/isGreaterEq( Value /this -> /Data/Algebra/Equal ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /Data/Algebra/isGreaterEq( Value /this -> /Data/Algebra/GreaterThan ) -> ∀/Data/Primitive/Boolean = Value True
                         ]
                     }
                 )
@@ -23,7 +23,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/pcompare( Value a )( Value b )= mkDivComparison
+                        [ /Data/Algebra/pcompare( Value a )( Value b ) -> ∀/Data/Algebra/PComparison = mkDivComparison
                             ( Value aDivB= /Data/Primitive/intEq
                                 ( Value l= /operator%( Value /l= Value b )( Value /r= Value a ) )
                                 ( Value r= CInt 0 )
@@ -52,9 +52,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/isGreater( Value /this -> /Data/Algebra/LessThan )= Value False
-                        , /Data/Algebra/isGreater( Value /this -> /Data/Algebra/Equal )= Value False
-                        , /Data/Algebra/isGreater( Value /this -> /Data/Algebra/GreaterThan )= Value True
+                        [ /Data/Algebra/isGreater( Value /this -> /Data/Algebra/LessThan ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /Data/Algebra/isGreater( Value /this -> /Data/Algebra/Equal ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /Data/Algebra/isGreater( Value /this -> /Data/Algebra/GreaterThan ) -> ∀/Data/Primitive/Boolean = Value True
                         ]
                     }
                 )
@@ -76,10 +76,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/mkDivComparison( Value aDivB= Value True )( Value bDivA= Value True )= Value Equal
-                        , /Data/Algebra/mkDivComparison( Value aDivB= Value True )( Value bDivA= Value False )= Value LessThan
-                        , /Data/Algebra/mkDivComparison( Value aDivB= Value False )( Value bDivA= Value True )= Value GreaterThan
-                        , /Data/Algebra/mkDivComparison( Value aDivB= Value False )( Value bDivA= Value False )= Value NoOrdering
+                        [ /Data/Algebra/mkDivComparison( Value aDivB= Value True )( Value bDivA= Value True ) -> ∀/Data/Algebra/PComparison = Value Equal
+                        , /Data/Algebra/mkDivComparison( Value aDivB= Value True )( Value bDivA= Value False ) -> ∀/Data/Algebra/PComparison = Value LessThan
+                        , /Data/Algebra/mkDivComparison( Value aDivB= Value False )( Value bDivA= Value True ) -> ∀/Data/Algebra/PComparison = Value GreaterThan
+                        , /Data/Algebra/mkDivComparison( Value aDivB= Value False )( Value bDivA= Value False ) -> ∀/Data/Algebra/PComparison = Value NoOrdering
                         ]
                     }
                 )
@@ -91,7 +91,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Algebra/rel( Value a )( Value b )
-                            ( Value /this -> ∀/Data/Algebra/Ordering[ /T=$/T ] )= isEq
+                            ( Value /this -> ∀/Data/Algebra/Ordering[ /T=$/T ] ) -> ∀/Data/Primitive/Boolean = isEq
                             ( Value /this= compare( Value a= Value a )( Value b= Value b )( Value /this= Value this ) )
                         ]
                     }
@@ -126,9 +126,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/mkComparison( Value lt= Value True )( Value eq= Hole TopType HoleActive Nothing )= Value LessThan
-                        , /Data/Algebra/mkComparison( Value lt= Value False )( Value eq= Value True )= Value Equal
-                        , /Data/Algebra/mkComparison( Value lt= Value False )( Value eq= Value False )= Value GreaterThan
+                        [ /Data/Algebra/mkComparison( Value lt= Value True )( Value eq= Hole TopType HoleActive Nothing ) -> ∀/Data/Algebra/Comparison = Value LessThan
+                        , /Data/Algebra/mkComparison( Value lt= Value False )( Value eq= Value True ) -> ∀/Data/Algebra/Comparison = Value Equal
+                        , /Data/Algebra/mkComparison( Value lt= Value False )( Value eq= Value False ) -> ∀/Data/Algebra/Comparison = Value GreaterThan
                         ]
                     }
                 )
@@ -140,9 +140,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/isLess( Value /this -> /Data/Algebra/LessThan )= Value True
-                        , /Data/Algebra/isLess( Value /this -> /Data/Algebra/Equal )= Value False
-                        , /Data/Algebra/isLess( Value /this -> /Data/Algebra/GreaterThan )= Value False
+                        [ /Data/Algebra/isLess( Value /this -> /Data/Algebra/LessThan ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /Data/Algebra/isLess( Value /this -> /Data/Algebra/Equal ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /Data/Algebra/isLess( Value /this -> /Data/Algebra/GreaterThan ) -> ∀/Data/Primitive/Boolean = Value False
                         ]
                     }
                 )
@@ -163,9 +163,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/isLessEq( Value /this -> /Data/Algebra/LessThan )= Value True
-                        , /Data/Algebra/isLessEq( Value /this -> /Data/Algebra/Equal )= Value True
-                        , /Data/Algebra/isLessEq( Value /this -> /Data/Algebra/GreaterThan )= Value False
+                        [ /Data/Algebra/isLessEq( Value /this -> /Data/Algebra/LessThan ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /Data/Algebra/isLessEq( Value /this -> /Data/Algebra/Equal ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /Data/Algebra/isLessEq( Value /this -> /Data/Algebra/GreaterThan ) -> ∀/Data/Primitive/Boolean = Value False
                         ]
                     }
                 )
@@ -189,9 +189,9 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/isEq( Value /this -> /Data/Algebra/LessThan )= Value False
-                        , /Data/Algebra/isEq( Value /this -> /Data/Algebra/Equal )= Value True
-                        , /Data/Algebra/isEq( Value /this -> /Data/Algebra/GreaterThan )= Value False
+                        [ /Data/Algebra/isEq( Value /this -> /Data/Algebra/LessThan ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /Data/Algebra/isEq( Value /this -> /Data/Algebra/Equal ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /Data/Algebra/isEq( Value /this -> /Data/Algebra/GreaterThan ) -> ∀/Data/Primitive/Boolean = Value False
                         ]
                     }
                 )
@@ -227,10 +227,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/isNoOrdering( Value /this -> /Data/Algebra/LessThan )= Value False
-                        , /Data/Algebra/isNoOrdering( Value /this -> /Data/Algebra/Equal )= Value False
-                        , /Data/Algebra/isNoOrdering( Value /this -> /Data/Algebra/GreaterThan )= Value False
-                        , /Data/Algebra/isNoOrdering( Value /this -> /Data/Algebra/NoOrdering )= Value True
+                        [ /Data/Algebra/isNoOrdering( Value /this -> /Data/Algebra/LessThan ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /Data/Algebra/isNoOrdering( Value /this -> /Data/Algebra/Equal ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /Data/Algebra/isNoOrdering( Value /this -> /Data/Algebra/GreaterThan ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /Data/Algebra/isNoOrdering( Value /this -> /Data/Algebra/NoOrdering ) -> ∀/Data/Primitive/Boolean = Value True
                         ]
                     }
                 )
@@ -270,10 +270,10 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/isComparable( Value /this -> /Data/Algebra/LessThan )= Value True
-                        , /Data/Algebra/isComparable( Value /this -> /Data/Algebra/Equal )= Value True
-                        , /Data/Algebra/isComparable( Value /this -> /Data/Algebra/GreaterThan )= Value True
-                        , /Data/Algebra/isComparable( Value /this -> /Data/Algebra/NoOrdering )= Value False
+                        [ /Data/Algebra/isComparable( Value /this -> /Data/Algebra/LessThan ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /Data/Algebra/isComparable( Value /this -> /Data/Algebra/Equal ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /Data/Algebra/isComparable( Value /this -> /Data/Algebra/GreaterThan ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /Data/Algebra/isComparable( Value /this -> /Data/Algebra/NoOrdering ) -> ∀/Data/Primitive/Boolean = Value False
                         ]
                     }
                 )

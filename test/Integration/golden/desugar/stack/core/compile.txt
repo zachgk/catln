@@ -197,8 +197,8 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Catln/ThenElse/fromBool( Value v= Value /Data/Primitive/True )= Value Then
-                        , /Catln/ThenElse/fromBool( Value v= Value /Data/Primitive/False )= Value Else
+                        [ /Catln/ThenElse/fromBool( Value v= Value /Data/Primitive/True ) -> ∀/Catln/ThenElse = Value Then
+                        , /Catln/ThenElse/fromBool( Value v= Value /Data/Primitive/False ) -> ∀/Catln/ThenElse = Value Else
                         ]
                     }
                 )

@@ -161,6 +161,71 @@ linkClassMethodReceivers (Prgm _ (ClassGraph fullCg) _) (Prgm (ObjectMap objMap)
     enrichReceiverType t = t
 
 -- |
+-- Completes authored type annotations with their declared data fields.
+--
+-- A bare name reference in a type position — an argument annotation (@x -> BoxA@), a
+-- type-variable bound (@[$M -> BoxA]@), or a declared return type — parses as an argument-less
+-- 'PtArgExact' partial, which denotes the 0-arg partial application rather than the full data
+-- type: it fails to reconcile with the data's field-complete form (e.g. the class-expansion
+-- member @BoxA(av=...)@), collapsing to bottom where the annotation was meant to admit every
+-- value of the type. This pass rewrites exactly the annotation positions (the 'EAppVar' bound
+-- metas and the 'oaArr' metas, at every nesting level of the object expression) to their
+-- data-complete form via 'completeDataPartialsTop'. A type with no declared fields, a class
+-- reference, a type variable, and a still-relative name are all left unchanged, as are the
+-- object metas themselves (patterns and data objects keep their exact authored form).
+completeAnnotationTypes :: DesPrgm -> DesPrgm -> DesPrgm
+completeAnnotationTypes fullPrgm (Prgm (ObjectMap objMap) classGraph annots) = Prgm (ObjectMap objMap') classGraph annots
+  where
+    typeEnv = mkTypeEnv fullPrgm
+    objMap' = H.map completeItem objMap
+    completeItem (ObjectMapItem ds rs rfs defs) =
+      ObjectMapItem (map completeOa ds) (map completeOa rs) (map completeOa rfs) (map completeOa defs)
+    completeOa oa@ObjArr{oaObj, oaArr} = oa{oaObj=fmap completeExpr oaObj, oaArr=fmap completeArr oaArr}
+    completeArr (e, m) = (e, completeMeta m)
+    completeMeta m = mWithType (completeDataPartialsTop typeEnv (getMetaType m)) m
+    completeExpr (TupleApply m (bm, be) arg) = TupleApply m (bm, completeExpr be) (completeApplyArg arg)
+    completeExpr e = e
+    completeApplyArg (EAppVar n vm)    = EAppVar n (completeMeta vm)
+    completeApplyArg (EAppArg innerOa) = EAppArg (completeOa innerOa)
+    completeApplyArg a                 = a
+
+-- |
+-- Seeds an annotation-less definition's result meta with its declaration's return type.
+--
+-- A definition written under a separate declaration (@mkA(v -> Integer) -> BoxA@ /
+-- @mkA(v)= ...@) carries a 'PTopType' result meta, so during constraint solving its body's
+-- destination stays unresolved — unlike an inline-annotated definition, whose result meta is
+-- the authored type. This pass copies the declared return type onto each of the item's
+-- definitions (matching by absolute name across the import-merged program), making the two
+-- authoring forms equivalent. In particular the body's calls then see a resolved destination,
+-- which return-type-directed dispatch ('outVarBoundSrc') needs to bind a callee's output
+-- variable (e.g. picking a @pure@-style instance).
+--
+-- Only a variable-free declared return is copied: a return typed by a declaration variable
+-- (@-> $M@) would capture the definition's like-named variable rather than the declaration's.
+-- A definition with its own authored return annotation is left untouched, and multiple
+-- declarations contribute the union of their returns (the body's own arrow narrows it further).
+seedDefResultTypes :: DesPrgm -> DesPrgm -> DesPrgm
+seedDefResultTypes fullPrgm@(Prgm (ObjectMap fullObjMap) _ _) (Prgm (ObjectMap objMap) classGraph annots) =
+    Prgm (ObjectMap objMap') classGraph annots
+  where
+    typeEnv = mkTypeEnv fullPrgm
+    objMap' = H.mapWithKey seedItem objMap
+    declReturn name = case [ t
+                           | ObjectMapItem{omiDecls} <- maybeToList (H.lookup name fullObjMap)
+                           , oa <- omiDecls
+                           , Just (_, dm) <- [oaArr oa]
+                           , let t = getMetaType dm
+                           , t /= PTopType
+                           , not (typeContainsTypeVar t) ] of
+      [] -> Nothing
+      ts -> Just $ unionAllTypes typeEnv ts
+    seedItem name (ObjectMapItem ds rs rfs defs) = ObjectMapItem ds rs rfs (map (seedDef name) defs)
+    seedDef name oa@ObjArr{oaArr=Just (e, m)}
+      | getMetaType m == PTopType, Just t <- declReturn name = oa{oaArr=Just (e, mWithType t m)}
+    seedDef _ oa = oa
+
+-- |
 -- Redirects a receiver-method definition written in a module other than the one that declares the
 -- method, onto the declaration it implements.
 --

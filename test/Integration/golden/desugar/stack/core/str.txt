@@ -27,7 +27,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/rel( Value a )( Value b )( Value /this -> /Data/StrEqv )= /Data/strEqual( Value l= Value a )( Value r= Value b ) ]
+                        [ /Data/Algebra/rel( Value a )( Value b )( Value /this -> /Data/StrEqv ) -> ∀/Data/Primitive/Boolean = /Data/strEqual( Value l= Value a )( Value r= Value b ) ]
                     }
                 )
             ,
@@ -37,7 +37,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/eq( Value /this -> /Data/String )= Value StrEqv ]
+                        [ /Data/Algebra/eq( Value /this -> /Data/String ) -> ∀/Data/Algebra/Eqv[ /T=TopType ] = Value StrEqv ]
                     }
                 )
             ,
@@ -47,7 +47,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/Algebra/equal( Value other )( Value /this -> /Data/String )= rel( Value a= Value this )( Value b= Value other )
+                        [ /Data/Algebra/equal( Value other )( Value /this -> /Data/String ) -> ∀/Data/Primitive/Boolean = rel( Value a= Value this )( Value b= Value other )
                             ( Value /this= eq( Value /this= Value this ) )
                         ]
                     }
