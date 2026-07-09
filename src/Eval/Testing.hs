@@ -156,6 +156,11 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
   , let dom = intersectTypes typeEnv (clauseDom oaA) (clauseDom oaB)
   , not (isBottomType dom)
   , isJust (maybeGetSingleton dom)
+  -- Only overlapping definitions that can actually agree are testable: their result types must
+  -- overlap too. Overloads that share an input shape but produce different result types (e.g. the
+  -- 'bindap' arms: a plain value vs a 'Functor' vs a 'Monad', which also differ in what their
+  -- function argument returns) are not meant to agree, so no agreement test is derived for them.
+  , not (isBottomType (intersectTypes typeEnv (clauseCod oaA) (clauseCod oaB)))
   ]
   where
     TypeEnv{teNames} = typeEnv
@@ -168,6 +173,12 @@ deriveOverlapTests prgm@(Prgm (ObjectMap om) _ _) =
       Just (Nothing, _) -> isJust (getRuntimeAnnot (oaAnnots oa))
       _                 -> False
     clauseDom oa = getExprType (oaObjExpr oa)
+    -- The clause's result (codomain) type: its body's type, or the declared return for a
+    -- body-less runtime primitive.
+    clauseCod oa = case oaArr oa of
+      Just (Just body, _) -> getExprType body
+      Just (Nothing, m)   -> getMetaType m
+      Nothing             -> PTopType
     pairs xs = [(a, b) | (a:rest) <- tails xs, b <- rest]
 
     mkOverlapTest omi oaA oaB dom = (testName, action)

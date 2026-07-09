@@ -69,6 +69,18 @@ applyRawEIArgs base args = case base of
     mapArg (argName, IArgM argM) = RawObjArr (Just argName) ArgObj Nothing [] (Just (Nothing, argM)) Nothing
     mapArg (argName, IArgNothing) = RawObjArr (Just argName) ArgObj Nothing [] (Just (Nothing, Nothing)) Nothing
 
+-- | A bare (patternless) call-site parameter expression, e.g. the @v@ in a higher-order argument
+-- @fn(v)= …@ (or the alias @v\@y@). Its 'roaArr' is 'Nothing' (unlike an 'IArgNothing' arg, which
+-- yields @Just (Nothing, Nothing)@), matching how the parser represents a nested parameter.
+rawBareParam :: RawExpr m -> RawObjArr RawExpr m
+rawBareParam e = RawObjArr (Just e) ArgObj Nothing [] Nothing Nothing
+
+-- | Apply bare (patternless) parameter expressions to a base, producing @base(p1)(p2)…@ exactly as a
+-- call-site higher-order head like the @fn(v)@ in @fn(v)= body@ parses.
+applyRawBareParams :: (MetaDat m, Show m) => RawExpr m -> [RawExpr m] -> RawExpr m
+applyRawBareParams base []     = base
+applyRawBareParams base params = RawTupleApply (emptyMetaE base) (emptyMetaE base, base) (map ((False,) . rawBareParam) params)
+
 applyRawExprVars :: (MetaDat m) => RawExpr m -> [(TypeVarName, Maybe (RawExpr m))] -> RawExpr m
 applyRawExprVars base vars = applyRawExprEVars base vars'
   where

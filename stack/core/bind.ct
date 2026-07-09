@@ -1,0 +1,32 @@
+import "core/functor.ct"
+import "core/monad.ct"
+
+
+module(Data)
+  # # Bind
+    The bind operator [<-] is syntactic sugar that runs the rest of a function in a sub-context.
+    A statement [x <- m] followed by the remaining body [rest] desugars to
+    [bindap(m= m, fn(v)= rest)], where the continuation [fn] binds [x] (the desugar inlines [rest] as
+    a higher-order lambda, so a bind-using function needs a declared return type to pin the result).
+
+    [bindap] is intended to have several overloaded arms selected by the value's type and the
+    continuation: [ap] for a plain value, [fmap] for a [Functor], and [mmap] for a [Monad]. For now
+    only the [mmap] arm (the monadic bind) is enabled — a value that is both a [Functor] and a
+    [Monad] (e.g. [Maybe]) cannot yet dispatch between [fmap] and [mmap], which needs selecting the
+    arm by the continuation's return type through arrow selection. The other arms are kept below,
+    commented out, until that dispatch is implemented.
+
+  # [mmap] arm: a [Monad]. The continuation maps an element to a monad of the same kind; the result
+  # is flattened back into one monad (the monadic bind).
+  bindap[$M -> /Data/Monad[$T -> $_A], $A, $B](m -> $M, fn(v -> $_A) -> $M) -> $M
+  bindap[$M -> /Data/Monad[$T -> $_A]](m, fn(v))= /Data/mmap(m= m, fn(v)= fn(v= v))
+
+  # [ap] arm: a plain value. The continuation consumes the whole value (the [ap] behaviour, inlined —
+  # routing through a second higher-order [ap] call would not propagate the return type).
+  # bindap[$X, $B](m -> $X, fn(v -> $X) -> $B) -> $B
+  # bindap(m, fn(v))= fn(v= m)
+
+  # [fmap] arm: a [Functor]. The continuation maps an element to a plain value; the result is a
+  # container of the mapped elements.
+  # bindap[$F -> /Data/Functor[$T -> $_A], $A, $B](m -> $F, fn(v -> $_A) -> $_B) -> $F
+  # bindap[$F -> /Data/Functor[$T -> $_A]](m, fn(v))= /Data/fmap(lst= m, fn(v)= fn(v= v))

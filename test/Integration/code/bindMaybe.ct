@@ -1,0 +1,14 @@
+import "core"
+
+
+# Exercises the bind operator ([<-]) routing through [bindap]'s [mmap] arm — the monadic bind over
+# [Maybe]. The continuation returns a [Maybe], so the results are flattened (not nested). A
+# bind-using function needs a declared return type to pin the [bindap] result.
+maybeBind(m -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe =
+  x <- m
+  /Data/Some(value= x + 1)
+
+main{io -> IO} =
+  #assert(test= maybeBind(m= /Data/Some(value= 5)) == /Data/Some(value= 6))
+  #assert(test= maybeBind(m= /Data/Nothing) == /Data/Nothing)
+  io

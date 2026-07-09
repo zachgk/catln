@@ -102,6 +102,15 @@ isaClassK = "/class"
 
 nestedDeclaration, modStr, dataStr, annotStr, everyStr, isaStr, applyStr :: String
 nestedDeclaration = "/Catln/nestedDeclaration"
+
+-- | The bind (@<-@) desugar routes @x <- m; rest@ into @bindap(m= m, fn(v)= continuation(v))@.
+-- The arg names match 'fmap'/'mmap' so the stdlib arms forward trivially.
+bindApName, bindApM, bindApFn, bindApV :: String
+bindApName = "/Data/bindap"
+bindApM = "m"
+bindApFn = "fn"
+bindApV = "v"
+
 modStr = "module"
 dataStr = "data"
 annotStr = "annot"

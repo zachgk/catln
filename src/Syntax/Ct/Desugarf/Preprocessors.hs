@@ -200,19 +200,42 @@ applyDeclPreprocessor (roa, _) = fail $ printf "Invalid applyDeclPreprocessor: %
 nestedDeclPreprocessor :: DeclPreprocessor
 nestedDeclPreprocessor (oa, subStatements) = pure . DPPStatements <$> aux [] subStatements
   where
+    -- The enclosing declaration's return-type annotation (e.g. the @-> Integer@ in
+    -- @inc(a -> Integer) -> Integer =@). It must be carried onto the rewritten body: a bind desugars
+    -- to a 'bindap' call whose result type is a bare variable, so without the declared return there
+    -- is nothing to pin it and inference diverges.
+    oaReturnMeta = case roaArr oa of
+      Just (_, retM) -> retM
+      Nothing        -> Nothing
     aux :: [PStatementTree] -> [PStatementTree] -> CRes [PStatementTree]
     aux accStmts [RawStatementTree (RawDeclStatement RawObjArr{roaObj=Just e, roaArr=Nothing}) []] = return [RawStatementTree (RawDeclStatement oa{roaArr=Just (Just e, Nothing)}) accStmts] -- expr statement
     aux accStmts (s@(RawStatementTree RawDeclStatement{} _) : restStmt) = aux (s:accStmts) restStmt
     aux accStmts (s@(RawStatementTree RawAnnot{} _) : restStmt) = aux (s:accStmts) restStmt
     aux accStmts [] = return [RawStatementTree (RawDeclStatement oa{roaArr=Just (Just rawAnon, Nothing)}) accStmts]
-    aux accStmts (RawStatementTree (RawBindStatement roa@RawObjArr{roaObj=Just objExpr, roaArr=Just (Just arrExpr, arrM)}) []:restStmt) = return [RawStatementTree (RawDeclStatement oa{roaArr=Just (Just subExpr, arrM)}) (accStmts ++ [subDef])]
-      where
-        subName = "$" ++ take 6 (printf "%08x" (hash roa))
-        subArgName = subName ++ "-arg"
-        subExpr = rawVal subName `applyRawArgs` [(Just $ partialKey (mkName subArgName), arrExpr)]
-        subObjExpr = rawVal subName `applyRawIArgs` [(partialKey (mkName subArgName), IArgE objExpr)]
-        subDef = RawStatementTree (RawDeclStatement (RawObjArr (Just subObjExpr) TypeObj Nothing [] (Just (Just $ rawVal nestedDeclaration, Nothing)) Nothing)) restStmt
+    aux accStmts (RawStatementTree (RawBindStatement RawObjArr{roaObj=Just objExpr, roaArr=Just (Just arrExpr, _)}) []:restStmt) = case bindContinuation restStmt of
+      -- The continuation is inlined as a higher-order lambda so the binding is typed at the 'bindap'
+      -- call site (see 'bindStatementExpr'). Supported: a final expression, or a further bind chain.
+      Just restExpr -> return [RawStatementTree (RawDeclStatement oa{roaArr=Just (Just (bindStatementExpr objExpr arrExpr restExpr), oaReturnMeta)}) accStmts]
+      Nothing -> fail $ printf "Unsupported bind continuation (only a bind chain ending in an expression is supported): %s" (show restStmt)
     aux _ s = fail $ printf "Unsupported subDeclStatemnt type: %s" (show s)
+
+-- | Build the inline @bindap(m= arrExpr, fn(v\@objExpr)= restExpr)@ call for a bind. The
+-- continuation is inlined as a higher-order lambda (rather than a separate helper) so its binding is
+-- typed at the 'bindap' call site — a named helper is checked in isolation, leaving the binding
+-- 'TopType'. The lambda's declared parameter is @v@ (matching bindap's @fn(v -> $X)@ declaration)
+-- aliased to the bind's own pattern, so nested binds keep distinct names without shadowing @v@.
+bindStatementExpr :: PExpr -> PExpr -> PExpr -> PExpr
+bindStatementExpr objExpr arrExpr restExpr = rawVal bindApName `applyRawEArgs` [(Just (rawVal bindApM), arrExpr), (Just fnHead, restExpr)]
+  where fnHead = applyRawBareParams (rawVal bindApFn) [RawAliasExpr (rawVal bindApV) objExpr]
+
+-- | Reduce the statements following a bind into the single continuation expression the inline lambda
+-- needs, or 'Nothing' when they cannot be expressed as one (which the caller reports as unsupported).
+-- Supported shapes: a bare final expression, and a further bind chain.
+bindContinuation :: [PStatementTree] -> Maybe PExpr
+bindContinuation [RawStatementTree (RawDeclStatement RawObjArr{roaObj=Just e, roaArr=Nothing}) []] = Just e
+bindContinuation [] = Just rawAnon
+bindContinuation (RawStatementTree (RawBindStatement RawObjArr{roaObj=Just objExpr, roaArr=Just (Just arrExpr, _)}) []:restStmt) = bindStatementExpr objExpr arrExpr <$> bindContinuation restStmt
+bindContinuation _ = Nothing
 
 declPreprocessorList :: H.HashMap String DeclPreprocessor
 declPreprocessorList = H.fromList [

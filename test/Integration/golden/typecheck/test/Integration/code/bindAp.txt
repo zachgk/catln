@@ -1,0 +1,66 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
+                    }
+                )
+            ,
+                ( "/inc"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /inc( Value /a -> /Data/Primitive/Integer ) ->
+                            ( /operator+
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) + /Data/bindap[ /B=/Data/Primitive/Integer ]
+                                ( /fn( /v=TopType )=
+                                    ( /operator+
+                                        ( /r=/Data/Primitive/Integer
+                                        , /l=/Data/Primitive/Integer
+                                        ) + /Data/Primitive/Integer
+                                    )
+                                , /m=/Data/Primitive/Integer
+                                ) + /Data/Primitive/Integer
+                            ) = /Data/bindap( Value /m -> TVArg /a = Value /a )
+                            ( /fn( Value /v@Value /y -> /Data/Primitive/Integer ) ->
+                                ( /operator+
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    ) + /Data/Primitive/Integer
+                                ) = /operator+( Value /l -> TVArg /y = Value /y )
+                                ( Value /r -> /Data/Primitive/Integer = CInt 1 )
+                            )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr "Exercises the bind operator ([<-]) routing through [bindap]'s [ap] arm: the bound value is a" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "plain (non-container) value, so the continuation consumes the whole value. A bind-using function" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "needs a declared return type — the bind desugars to a [bindap] call whose result type is a bare" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "variable that the return type pins." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "A single plain-value bind: [y <- a] binds the whole [Integer], and the continuation returns" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[y + 1]." )
+        ]
+    }

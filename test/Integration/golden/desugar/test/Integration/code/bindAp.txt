@@ -1,0 +1,48 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                    }
+                )
+            ,
+                ( "/inc"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ inc( Value a -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /Data/bindap( Value m= Value a )
+                            ( fn( Value v@Value y )= /operator+( Value /l= Value y )
+                                ( Value /r= CInt 1 )
+                            )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "Exercises the bind operator ([<-]) routing through [bindap]'s [ap] arm: the bound value is a" )
+        , /Catln/#md
+            ( Value /text= CStr "plain (non-container) value, so the continuation consumes the whole value. A bind-using function" )
+        , /Catln/#md
+            ( Value /text= CStr "needs a declared return type — the bind desugars to a [bindap] call whose result type is a bare" )
+        , /Catln/#md
+            ( Value /text= CStr "variable that the return type pins." )
+        , /Catln/#md
+            ( Value /text= CStr "A single plain-value bind: [y <- a] binds the whole [Integer], and the continuation returns" )
+        , /Catln/#md
+            ( Value /text= CStr "[y + 1]." )
+        ]
+    }

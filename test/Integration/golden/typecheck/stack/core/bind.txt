@@ -1,0 +1,74 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/Data/bindap"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/bindap[ /B : TopType ][ /A : TopType ]
+                            [ /M : ∀/Data/Monad[ /T=$_/A ] ]( Value /m -> $/M )
+                            ( /fn( Value /v -> $_/A ) -> $/M ) -> $/M
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/bindap
+                            [ /M : ∀/Data/Monad[ /T=$_/A ] ]
+                            ( Value /m -> ∀/Data/Monad[ /T=$_/A ] )
+                            ( /fn( Value /v ) -> ∀/Data/Monad[ /T=$_/A ] ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Monad[ /T=$_/A ]
+                                , fromList []
+                                )
+                            , /Data/mmap
+                                [ /B=TopType
+                                , /M=∀/Data/Monad[ /T=$_/A ]
+                                , /A=TopType
+                                ]
+                                ( /fn( /v=TopType )=∀/Data/Monad[ /T=$_/A ]
+                                , /m=∀/Data/Monad[ /T=$_/A ]
+                                )
+                            , []
+                            ) = /Data/mmap( Value /m -> TVArg /m = Value /m )
+                            ( /fn( Value /v ) -> ∀/Data/Monad[ /T=$_/A ] = /fn( Value /v -> TVArg /v = Value /v ) )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG = [ CGType ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr "# Bind
+            The bind operator [<-] is syntactic sugar that runs the rest of a function in a sub-context.
+            A statement [x <- m] followed by the remaining body [rest] desugars to
+            [bindap(m= m, fn(v)= rest)], where the continuation [fn] binds [x] (the desugar inlines [rest] as
+            a higher-order lambda, so a bind-using function needs a declared return type to pin the result).
+            [bindap] is intended to have several overloaded arms selected by the value's type and the
+            continuation: [ap] for a plain value, [fmap] for a [Functor], and [mmap] for a [Monad]. For now
+            only the [mmap] arm (the monadic bind) is enabled — a value that is both a [Functor] and a
+            [Monad] (e.g. [Maybe]) cannot yet dispatch between [fmap] and [mmap], which needs selecting the
+            arm by the continuation's return type through arrow selection. The other arms are kept below,
+            commented out, until that dispatch is implemented." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[mmap] arm: a [Monad]. The continuation maps an element to a monad of the same kind; the result" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "is flattened back into one monad (the monadic bind)." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[ap] arm: a plain value. The continuation consumes the whole value (the [ap] behaviour, inlined —" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "routing through a second higher-order [ap] call would not propagate the return type)." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "bindap[$X, $B](m -> $X, fn(v -> $X) -> $B) -> $B" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "bindap(m, fn(v))= fn(v= m)" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[fmap] arm: a [Functor]. The continuation maps an element to a plain value; the result is a" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "container of the mapped elements." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "bindap[$F -> /Data/Functor[$T -> $_A], $A, $B](m -> $F, fn(v -> $_A) -> $_B) -> $F" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "bindap[$F -> /Data/Functor[$T -> $_A]](m, fn(v))= /Data/fmap(lst= m, fn(v)= fn(v= v))" )
+        ]
+    }

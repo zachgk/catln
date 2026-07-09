@@ -1,0 +1,45 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/maybeBind"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ maybeBind
+                            ( Value m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe = /Data/bindap( Value m= Value m )
+                            ( fn( Value v@Value x )= /Data/Some
+                                ( Value value= /operator+( Value /l= Value x )
+                                    ( Value /r= CInt 1 )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "Exercises the bind operator ([<-]) routing through [bindap]'s [mmap] arm — the monadic bind over" )
+        , /Catln/#md
+            ( Value /text= CStr "[Maybe]. The continuation returns a [Maybe], so the results are flattened (not nested). A" )
+        , /Catln/#md
+            ( Value /text= CStr "bind-using function needs a declared return type to pin the [bindap] result." )
+        ]
+    }
