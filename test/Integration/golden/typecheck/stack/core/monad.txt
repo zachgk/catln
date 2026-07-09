@@ -2,6 +2,48 @@ Prgm
     { prgmObjMap = ObjectMap
         ( fromList
             [
+                ( "/Data/testMonadIdentityPure"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/testMonadIdentityPure -> /Data/Primitive/Integer = CInt 0 ]
+                    }
+                )
+            ,
+                ( "/Data/pureId"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/pureId( Value /v -> /Data/Primitive/Integer ) -> /Data/Id[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/pureId( Value /v -> /Data/Primitive/Integer ) ->
+                            ( /Data/pure
+                                [ /M=/Data/Id[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                , /A=/Data/Primitive/Integer
+                                ]( /v=/Data/Primitive/Integer ) + /Data/Id[ /T=TopType ]( /value=TopType )
+                            ) = /Data/pure( Value /v -> TVArg /v = Value /v )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/pure"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/pure[ /A : TopType ]
+                            [ /M : ∀/Data/Monad[ /T=$_/A ] ]( Value /v -> $_/A ) -> $/M
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/pure
+                            [ /M : ∀/Data/Identity[ /T=$_/T ] ]( Value /v ) -> /Data/Id[ /T=TopType ]( /value=$/T ) = /Data/Id( Value /value -> TVArg /v = Value /v )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/testMonadIdentityMmap"
                 , ObjectMapItem
                     { omiDecls = []
@@ -32,6 +74,9 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGClass
             ( False
@@ -84,5 +129,13 @@ Prgm
             ( Value /text -> /Data/String = CStr "slot ([reduceAppliedType] settles only top-level leaves, not nested data-construction fields)," )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "so [Some(value= 5 + 1) == Some(value= 6)] fails on its own, independent of [mmap]." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "## Pure
+            [pure] wraps a single plain value into a [Monad]. Every instance shares the same input shape —
+            a bare value — so nothing about the arguments selects an instance: the call site's expected
+            result type ([$M]) does, through return-type-directed dispatch. A caller therefore needs a
+            resolved concrete expected type (such as a declared return type) where it calls [pure]." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "Concrete smoke test: the declared return type of [pureId] selects the [Identity] instance." )
         ]
     }

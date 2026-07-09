@@ -51,6 +51,16 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Maybe/testPureMaybe"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/Maybe/testPureMaybe -> /Data/Primitive/Integer = CInt 0 ]
+                    }
+                )
+            ,
                 ( "/Data/Some"
                 , ObjectMapItem
                     { omiDecls =
@@ -153,6 +163,18 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/pure"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/pure
+                            [ /M : ∀/Data/Maybe[ /T=$_/T ] ]( Value /v ) -> /Data/Some[ /T=TopType ]( /value=$/T ) = /Data/Some( Value /value -> TVArg /v = Value /v )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Maybe/testOrdMaybe"
                 , ObjectMapItem
                     { omiDecls = []
@@ -215,6 +237,23 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ Value /Data/Maybe/testMmapNothing -> /Data/Primitive/Integer = CInt 0 ]
+                    }
+                )
+            ,
+                ( "/Data/Maybe/pureSomeInt"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Maybe/pureSomeInt( Value /v -> /Data/Primitive/Integer ) -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Maybe/pureSomeInt( Value /v -> /Data/Primitive/Integer ) ->
+                            ( /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) + /Data/pure
+                                [ /M=/Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                , /A=/Data/Primitive/Integer
+                                ]( /v=/Data/Primitive/Integer )
+                            ) = /Data/pure( Value /v -> TVArg /v = Value /v )
+                        ]
                     }
                 )
             ,
@@ -399,6 +438,9 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGClass
             ( False
             , /Data/Maybe
@@ -497,5 +539,9 @@ Prgm
             ( Value /text -> /Data/String = CStr "e.g. [Some(value= v + 1)], is not yet comparable — a pre-existing gap unrelated to [Monad]; see" )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "the note in [Data/monad].)" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[pure] for [Maybe] wraps the value in a [Some]; the call site's expected [Maybe] type selects" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "this instance (return-type-directed dispatch — see [pure] in [Data/monad])." )
         ]
     }

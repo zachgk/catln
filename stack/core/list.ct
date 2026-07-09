@@ -135,3 +135,15 @@ module(Data/List)
     #test
     #assert(test= /Data/mmap(m= /Data/Nil, fn(v)= /Data/Cons(head= v, tail= /Data/Nil)) == /Data/Nil)
     0
+
+  # [pure] for [ConsList] builds a singleton list; the call site's expected list type selects
+  # this instance (return-type-directed dispatch — see [pure] in [Data/monad]).
+  /Data/pure[$M -> /Data/ConsList[$T -> $_T]](v)= /Data/Cons(head= v, tail= /Data/Nil)
+
+  pureConsInt(v -> Integer) -> /Data/Cons[$T -> Integer]
+  pureConsInt(v)= /Data/pure(v= v)
+
+  testPureCons =
+    #test
+    #assert(test= pureConsInt(v= 1) == /Data/Cons(head= 1, tail= /Data/Nil))
+    0

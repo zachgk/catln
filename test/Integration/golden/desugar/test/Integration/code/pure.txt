@@ -1,0 +1,59 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/pureMaybe"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ pureMaybe( Value v -> /Data/Primitive/Integer ) -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ pureMaybe( Value v ) -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/pure( Value v= Value v ) ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                    }
+                )
+            ,
+                ( "/pureList"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ pureList( Value v -> /Data/Primitive/Integer ) -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=TopType
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ pureList( Value v ) -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=TopType
+                            ) = /Data/pure( Value v= Value v )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "Cross-module check that [pure] (declared over [Monad] in stack/core/monad.ct) dispatches by the" )
+        , /Catln/#md
+            ( Value /text= CStr "call site's expected type: the same call [pure(v= ...)] builds a [Some] or a singleton [Cons]" )
+        , /Catln/#md
+            ( Value /text= CStr "depending only on the caller's declared return type (return-type-directed dispatch)." )
+        ]
+    }

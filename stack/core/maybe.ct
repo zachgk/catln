@@ -115,3 +115,15 @@ module(Data/Maybe)
     #test
     #assert(test= mmap(m= /Data/Nothing, fn(v)= /Data/Some(value= v)) == /Data/Nothing)
     0
+
+  # [pure] for [Maybe] wraps the value in a [Some]; the call site's expected [Maybe] type selects
+  # this instance (return-type-directed dispatch — see [pure] in [Data/monad]).
+  /Data/pure[$M -> /Data/Maybe[$T -> $_T]](v)= /Data/Some(value= v)
+
+  pureSomeInt(v -> Integer) -> /Data/Some[$T -> Integer]
+  pureSomeInt(v)= /Data/pure(v= v)
+
+  testPureMaybe =
+    #test
+    #assert(test= pureSomeInt(v= 5) == /Data/Some(value= 5))
+    0

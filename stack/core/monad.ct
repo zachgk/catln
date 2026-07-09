@@ -38,3 +38,20 @@ module(Data)
     #test
     #assert(test= mmap(m= Id(value= 5), fn(v)= Id(value= v)) == Id(value= 5))
     0
+
+  # ## Pure
+    [pure] wraps a single plain value into a [Monad]. Every instance shares the same input shape —
+    a bare value — so nothing about the arguments selects an instance: the call site's expected
+    result type ([$M]) does, through return-type-directed dispatch. A caller therefore needs a
+    resolved concrete expected type (such as a declared return type) where it calls [pure].
+  pure[$M -> /Data/Monad[$T -> $_A], $A](v -> $_A) -> $M
+  pure[$M -> Identity[$T -> $_T]](v)= Id(value= v)
+
+  # Concrete smoke test: the declared return type of [pureId] selects the [Identity] instance.
+  pureId(v -> Integer) -> Id[$T -> Integer]
+  pureId(v)= pure(v= v)
+
+  testMonadIdentityPure =
+    #test
+    #assert(test= pureId(v= 5) == Id(value= 5))
+    0

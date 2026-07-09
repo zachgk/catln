@@ -24,6 +24,16 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Maybe/testPureMaybe"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/Maybe/testPureMaybe= CInt 0 ]
+                    }
+                )
+            ,
                 ( "/Data/Some"
                 , ObjectMapItem
                     { omiDecls =
@@ -63,6 +73,18 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ Value /Data/Maybe/testMmapSomeToNothing= CInt 0 ]
+                    }
+                )
+            ,
+                ( "/Data/pure"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/pure
+                            [ /M : ∀/Data/Maybe[ /T=$_/T ] ]( Value v )= /Data/Some( Value value= Value v )
+                        ]
                     }
                 )
             ,
@@ -131,6 +153,17 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Maybe/pureSomeInt"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Maybe/pureSomeInt( Value v -> /Data/Primitive/Integer ) -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Maybe/pureSomeInt( Value v ) -> /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/pure( Value v= Value v ) ]
+                    }
+                )
+            ,
                 ( "/Data/Algebra/equal"
                 , ObjectMapItem
                     { omiDecls = []
@@ -191,6 +224,9 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -302,5 +338,9 @@ Prgm
             ( Value /text= CStr "e.g. [Some(value= v + 1)], is not yet comparable — a pre-existing gap unrelated to [Monad]; see" )
         , /Catln/#md
             ( Value /text= CStr "the note in [Data/monad].)" )
+        , /Catln/#md
+            ( Value /text= CStr "[pure] for [Maybe] wraps the value in a [Some]; the call site's expected [Maybe] type selects" )
+        , /Catln/#md
+            ( Value /text= CStr "this instance (return-type-directed dispatch — see [pure] in [Data/monad])." )
         ]
     }

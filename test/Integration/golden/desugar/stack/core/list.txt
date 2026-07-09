@@ -120,6 +120,18 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/pure"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/pure
+                            [ /M : ∀/Data/ConsList[ /T=$_/T ] ]( Value v )= /Data/Cons( Value head= Value v )( Value tail= Value /Data/Nil )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Cons"
                 , ObjectMapItem
                     { omiDecls =
@@ -129,6 +141,25 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/List/pureConsInt"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/List/pureConsInt( Value v -> /Data/Primitive/Integer ) -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=TopType
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/List/pureConsInt( Value v ) -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=TopType
+                            ) = /Data/pure( Value v= Value v )
+                        ]
                     }
                 )
             ,
@@ -194,6 +225,16 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/List/testPureCons"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/List/testPureCons= CInt 0 ]
+                    }
+                )
+            ,
                 ( "/Data/List/testConsListEquality"
                 , ObjectMapItem
                     { omiDecls = []
@@ -253,6 +294,9 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -377,5 +421,9 @@ Prgm
             ( Value /text= CStr "[fmap] instance above, it lives in its own module so the open [Monad] class is not" )
         , /Catln/#md
             ( Value /text= CStr "required to be totally covered here." )
+        , /Catln/#md
+            ( Value /text= CStr "[pure] for [ConsList] builds a singleton list; the call site's expected list type selects" )
+        , /Catln/#md
+            ( Value /text= CStr "this instance (return-type-directed dispatch — see [pure] in [Data/monad])." )
         ]
     }

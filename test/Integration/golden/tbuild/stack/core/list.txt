@@ -192,6 +192,22 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/pure"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/pure
+                            ( EAppVar /M ∀/Data/ConsList[ /T=$_/T ] )( EAppArg Value /v ) -> /Data/Cons[ /T=TopType ]
+                            ( /head=$/T
+                            , /tail=/Data/Nil
+                            ) = /Data/Cons
+                            ( EAppArg Value /head -> TVArg /v = ( Value /v ↦ TVArg /v ) )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Cons"
                 , ObjectMapItem
                     { omiDecls =
@@ -201,6 +217,48 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/List/pureConsInt"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/List/pureConsInt( EAppArg Value /v -> /Data/Primitive/Integer ) -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=TopType
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/List/pureConsInt( EAppArg Value /v -> /Data/Primitive/Integer ) ->
+                            ( /Data/pure
+                                [ /M=/Data/Cons[ /T=/Data/Primitive/Integer ]
+                                    ( /head=/Data/Primitive/Integer
+                                    , /tail=UnionType
+                                        ( Just
+                                            ( PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ]
+                                            , fromList []
+                                            )
+                                        , /Data/Nil
+                                        , []
+                                        )
+                                    )
+                                , /A=/Data/Primitive/Integer
+                                ]( /v=/Data/Primitive/Integer ) + /Data/Cons[ /T=/Data/Primitive/Integer ]
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=UnionType
+                                    ( Just
+                                        ( PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ]
+                                        , fromList []
+                                        )
+                                    , /Data/Nil
+                                    , []
+                                    )
+                                )
+                            ) = /Data/pure
+                            ( EAppArg Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) )
+                        ]
                     }
                 )
             ,
@@ -282,6 +340,16 @@ Prgm
                         [ /Data/any( EAppArg Value /lst -> ∀/Data/ConsList ) -> ∀/Data/Primitive/Boolean ]
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/List/testPureCons"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/List/testPureCons -> /Data/Primitive/Integer = 0 ]
                     }
                 )
             ,
@@ -381,6 +449,9 @@ Prgm
         )
     , prgmCG =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -505,5 +576,9 @@ Prgm
             ( EAppArg Value /text -> /Data/String = "[fmap] instance above, it lives in its own module so the open [Monad] class is not" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "required to be totally covered here." )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "[pure] for [ConsList] builds a singleton list; the call site's expected list type selects" )
+        , /Catln/#md
+            ( EAppArg Value /text -> /Data/String = "this instance (return-type-directed dispatch — see [pure] in [Data/monad])." )
         ]
     }
