@@ -240,12 +240,14 @@ fnArgInputBound env callAct fnKey inKey = case callAct of
 -- binding), so downstream arrow selection can discriminate instance definitions that differ
 -- only in that variable's binding (return-type-directed dispatch, e.g. @pure@-style
 -- constructors whose instances share an input shape). Mirrors 'fnArgInputBound': declarations
--- only, and only a fully concrete destination is written — a Top, symbolic, or class-predicate
--- destination binds nothing (writing symbolic knowledge into a resolving point oscillates
--- against later epochs).
+-- only, and only a resolved positive destination is written — a Top, symbolic-variable, or
+-- class-predicate destination binds nothing (writing symbolic knowledge into a resolving point
+-- oscillates against later epochs). Top-valued /fields/ inside the destination's partials are
+-- allowed: a completed annotation restores unbound declared fields as Top (see
+-- 'completeDataPartialsTop'), and the partial names still discriminate the instances.
 outVarBoundSrc :: FEnv -> Type -> Type -> Type
-outVarBoundSrc env dest src@(UnionType Nothing srcLeafs srcConsts)
-  | not (isBottomType dest) && typeFullyConcrete dest =
+outVarBoundSrc env dest@(UnionType Nothing destLeafs _) src@(UnionType Nothing srcLeafs srcConsts)
+  | not (H.null destLeafs) && not (isBottomType dest) && not (typeContainsTypeVar dest) =
       case UnionType Nothing (joinUnionType $ map bindLeaf $ splitUnionType srcLeafs) srcConsts of
         src' | src' == src -> src
         src'               -> src'
