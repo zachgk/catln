@@ -26,7 +26,7 @@ Prgm
                     , omiDefs =
                         [ /Data/identityEqual
                             ( Value a= Id( Value value@Value av ) )
-                            ( Value b= Id( Value value@Value bv ) )= /operator==( Value /l= Value av )( Value /r= Value bv )
+                            ( Value b= Id( Value value@Value bv ) ) -> ∀/Data/Primitive/Boolean = /operator==( Value /l= Value av )( Value /r= Value bv )
                         ]
                     }
                 )
@@ -79,7 +79,7 @@ Prgm
                     , omiDefs =
                         [ /Data/Algebra/equal
                             ( Value other -> ∀/Data/Identity[ /T=∀/Data/Algebra/Eq ] )
-                            ( Value /this= /Data/Id[ /T : ∀/Data/Algebra/Eq ]( Value value ) )= /Data/identityEqual
+                            ( Value /this= /Data/Id[ /T : ∀/Data/Algebra/Eq ]( Value value ) ) -> ∀/Data/Primitive/Boolean = /Data/identityEqual
                             ( Value a= /Data/Id( Value value= Value value ) )( Value b= Value other )
                         ]
                     }

@@ -132,32 +132,29 @@ reversed(lst) =                                              # bare '=', body co
   earlier statements are the helper decls. (The one-line variant `f(args)= body` with helpers
   indented under also works and desugars identically, but the bare-`=` form is the canonical one and
   reads better with several helpers.)
-- **The enclosing arm's argument names are curried into the helper**, so the helper's own parameters
-  must not **collide** with them. If the arm destructures `Cons(head, tail)` and the helper also uses
-  `head`/`tail`, rename the arm's fields with `@` first (`f(lst= Cons(head@h, tail@t))= …`) so the
-  curried names don't clash. A collision shows up as an `Unfulfilled Declaration` error listing the
-  extra curried args. (Extra *non-colliding* curried args are harmless — the helper ignores them.)
+- **The enclosing arm's argument names are curried into the helper** (so the helper closes over the
+  parent's context). A parent arg the helper *itself declares* is skipped automatically (lexical
+  shadowing), but a parent arg that collides with a name the helper *destructures inside its arms*
+  still clashes. If the arm destructures `Cons(head, tail)` and the helper also binds `head`/`tail`
+  in its own arm patterns, rename the arm's fields with `@` first (`f(lst= Cons(head@h, tail@t))= …`)
+  so the curried names don't clash. Non-colliding curried args are harmless — the helper ignores them.
 - **Mutually-recursive helpers** (A calls B, B calls A — e.g. a `rangeFrom`/`rangeStep` pair) nest
   as **siblings** under the one arm, so both names are in scope for the cross-reference.
-- **Frontier — only nest under a *plain-function* arm.** The helper is scoped with the parent's
-  `exprPath` as a prefix. Under a plain arm (`reversed(lst)= …`) that prefix is the function name and
-  resolution works. Under a **method arm** (`:Cons.toString= …`) the prefix becomes the *method*
-  name, producing a malformed scope like `/toString./Data/restToString` that type-checks a direct
-  call but breaks the print/`DShow` path with `Actual type contains bottomType` (`ACT ∅`). Keep a
-  method's helper (e.g. `restToString` for `toString`, or a `compareTo` helper) at top level.
-- **Frontier — keep generic / `Ord`-`Eq` helpers at top level.** Nesting a helper that is generic in
-  its element (`insert[$T -> /Data/Algebra/Ord]`) or wired into the `Eq`/`Ord`/`Comparison`
-  machinery (`consThen`) can tip the constraint solver into a global `Scheme failed verification …
-  Grows by` failure that surfaces at an *unrelated* definition. When nesting a helper produces a
-  "Grows by" scheme error, revert it to the top level — this is a compiler limitation, not a style
-  choice.
-- **Both frontiers are form-independent.** The one-line and bare-`=` forms desugar to the identical
-  `flattenNestedDeclarations` structure, so switching between them does *not* rescue a method-arm or
-  generic-`Ord` helper — the method prefix comes from `exprPath` and the "Grows by" from the solver,
-  neither of which the body syntax touches (both verified against the compiler).
-- **Net:** non-generic helpers used by a **plain-function** arm (`reverseOnto` under `reversed`,
-  `rangeFrom`/`rangeStep` under `range`) nest cleanly; helpers under method arms or tied to
-  generic/`Ord`/`Eq` dispatch stay at top level until the compiler catches up.
+- **Method arms work** (`:Cons.toString= …`). A helper under a method arm (e.g. `restToString` for
+  `toString`) nests fine — the parent's element context is curried into the helper so its own
+  element-`.toString`/`.compareTo` calls resolve. (This used to fail with `Actual type contains
+  bottomType`; fixed by the call-site currying in `currySubFunctions`.)
+- **Frontier — keep generic `Ord`/`Eq`-dispatched helpers at top level.** Nesting a helper that is
+  generic in its element (`insert[$T -> /Data/Algebra/Ord]`) or wired into the `Eq`/`Ord`/`Comparison`
+  machinery (`consThen`, used inside the generic `Cons.compareTo` arm) tips the constraint solver
+  into a global `Scheme failed verification … Grows by` that surfaces at an *unrelated* definition.
+  This is a deeper solver-instability frontier, **independent of nesting** — a monomorphic
+  (`Integer`) version of the same helper nests cleanly. When nesting produces a "Grows by" error,
+  revert to top level. Both nesting forms behave identically here (the failure is in the solver, not
+  the body syntax).
+- **Net:** non-generic helpers nest cleanly under plain *and* method arms (`reverseOnto`/`reversed`,
+  `rangeFrom`+`rangeStep`/`range`, `restToString`/`toString`); only helpers tied to generic
+  `Ord`/`Eq` dispatch (`insert`, `consThen`) stay at top level until the solver frontier is resolved.
 
 ## 5. Syntax quick reference & gotchas
 

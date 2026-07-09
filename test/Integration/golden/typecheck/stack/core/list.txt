@@ -5,11 +5,11 @@ Prgm
                 ( "/reversed./Data/reverseOnto"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /reversed./Data/reverseOnto( Value /lst -> ∀/Data/ConsList )( Value /lst -> ∀/Data/ConsList )( Value /acc -> ∀/Data/ConsList ) -> ∀/Data/ConsList ]
+                        [ /reversed./Data/reverseOnto( Value /lst -> ∀/Data/ConsList )( Value /acc -> ∀/Data/ConsList ) -> ∀/Data/ConsList ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /reversed./Data/reverseOnto( Value /lst -> ∀/Data/ConsList )
+                        [ /reversed./Data/reverseOnto
                             ( Value /lst -> /Data/Cons[ /T=TopType ]
                                 ( /head=$/T
                                 , /tail=∀/Data/ConsList[ /T=$_/T ]
@@ -39,7 +39,7 @@ Prgm
                                 , /tail=∀/Data/ConsList[ /T=$_/T ]
                                 ) = /Data/Cons( Value /head -> TVArg /head = Value /head )( Value /tail -> TVArg /acc = Value /acc )
                             )
-                        , /reversed./Data/reverseOnto( Value /lst -> ∀/Data/ConsList )( Value /lst -> /Data/Nil = Value /Data/Nil )( Value /acc -> ∀/Data/ConsList ) -> TVArg /acc = Value /acc
+                        , /reversed./Data/reverseOnto( Value /lst -> /Data/Nil = Value /Data/Nil )( Value /acc -> ∀/Data/ConsList ) -> TVArg /acc = Value /acc
                         ]
                     }
                 )
@@ -62,8 +62,10 @@ Prgm
                                     , /i=/Data/Primitive/Integer
                                     ) + /Data/Nil + /Data/Cons[ /T=/Data/Primitive/Integer ]
                                     ( /head=/Data/Primitive/Integer
-                                    , /tail=∀/Data/ConsList
-                                        [ /T=( /Data/Primitive/Integer + /Data/Primitive/Float ) ]
+                                    , /tail=
+                                        ( TopType | PredClass /Data/ConsList
+                                            [ /T=( /Data/Primitive/Integer + /Data/Primitive/Float ) ] && PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ]
+                                        )
                                     ) + /range./Data/rangeStep
                                     ( /stop=/Data/Primitive/Integer
                                     , /more=∀/Data/Primitive/Boolean
@@ -77,14 +79,24 @@ Prgm
                     }
                 )
             ,
-                ( "/range./Data/rangeFrom"
+                ( "/Data/List/testMmapNil"
                 , ObjectMapItem
-                    { omiDecls =
-                        [ /range./Data/rangeFrom( Value /stop -> /Data/Primitive/Integer )( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Data/Primitive/Integer ] ]
+                    { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /range./Data/rangeFrom( Value /stop -> /Data/Primitive/Integer )( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> UnionType
+                        [ Value /Data/List/testMmapNil -> /Data/Primitive/Integer = CInt 0 ]
+                    }
+                )
+            ,
+                ( "/range./Data/rangeFrom"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /range./Data/rangeFrom( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Data/Primitive/Integer ] ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /range./Data/rangeFrom( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> UnionType
                             ( Just
                                 ( PredClass /Data/List[ /T=/Data/Primitive/Integer ]
                                 , fromList []
@@ -92,8 +104,10 @@ Prgm
                             ,
                                 ( /Data/Nil + /Data/Cons[ /T=/Data/Primitive/Integer ]
                                     ( /head=/Data/Primitive/Integer
-                                    , /tail=∀/Data/ConsList
-                                        [ /T=( /Data/Primitive/Integer + /Data/Primitive/Float ) ]
+                                    , /tail=
+                                        ( TopType | PredClass /Data/ConsList
+                                            [ /T=( /Data/Primitive/Integer + /Data/Primitive/Float ) ] && PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ]
+                                        )
                                     ) + /range./Data/rangeStep
                                     ( /stop=/Data/Primitive/Integer
                                     , /more=∀/Data/Primitive/Boolean
@@ -145,6 +159,16 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/List/testAppend"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/List/testAppend -> /Data/Primitive/Integer = CInt 0 ]
+                    }
+                )
+            ,
                 ( "/Data/toString"
                 , ObjectMapItem
                     { omiDecls = []
@@ -156,20 +180,13 @@ Prgm
                             ( Value /this -> /Data/Cons[ /T=∀/Data/ToString ]
                                 ( /head=$/T
                                 , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                ) = /Data/Cons[ /T : ∀/Data/ToString ]( Value /head -> ∀/Data/ToString )
-                                ( Value /tail -> ∀/Data/ConsList[ /T=∀/Data/ToString ] )
-                            ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Algebra/Semigroup
-                                , fromList []
-                                )
-                            ,
-                                ( /operator++[ /T=∀/Data/Algebra/Semigroup ]
-                                    ( /r=/Data/String
-                                    , /l=∀/Data/Algebra/Semigroup
-                                    ) + /Data/String
-                                )
-                            , []
+                                ) = /Data/Cons[ /T : ∀/Data/ToString ]( Value /head@Value /h -> ∀/Data/ToString )
+                                ( Value /tail@Value /t -> ∀/Data/ConsList[ /T=$_/T ] )
+                            ) ->
+                            ( /operator++[ /T=/Data/String ]
+                                ( /r=/Data/String
+                                , /l=∀/Data/Algebra/Semigroup
+                                ) + /Data/String
                             ) = /operator++
                             ( Value /l -> UnionType
                                 ( Just
@@ -188,25 +205,9 @@ Prgm
                                     , []
                                     ) = /operator++
                                     ( Value /l -> /Data/String = CStr "[" )
-                                    ( Value /r -> UnionType
-                                        ( Just
-                                            ( PredClass /Data/Algebra/Semigroup
-                                            , fromList []
-                                            )
-                                        , /Data/String
-                                        , []
-                                        ) = /Data/toString( Value /this -> TVArg /head = Value /head )
-                                    )
+                                    ( Value /r -> /Data/String = /Data/toString( Value /this -> TVArg /h = Value /h ) )
                                 )
-                                ( Value /r -> UnionType
-                                    ( Just
-                                        ( PredClass /Data/Algebra/Semigroup
-                                        , fromList []
-                                        )
-                                    , ( /Data/String + /Data/Primitive/Integer )
-                                    , []
-                                    ) = /Data/restToString( Value /lst -> TVArg /tail = Value /tail )
-                                )
+                                ( Value /r -> ∀/Data/Algebra/Semigroup = /toString./Data/restToString( Value /t -> TVArg /t = Value /t )( Value /h -> TVArg /h = Value /h )( Value /lst -> TVArg /t = Value /t ) )
                             )
                             ( Value /r -> /Data/String = CStr "]" )
                         ]
@@ -251,6 +252,87 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/append"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/append
+                            ( Value /a -> ∀/Data/ConsList[ /T=$_/T ] )
+                            ( Value /b -> ∀/Data/ConsList[ /T=$_/T ] ) -> ∀/Data/ConsList[ /T=$_/T ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/append( Value /a -> /Data/Nil = Value /Data/Nil )
+                            ( Value /b -> ∀/Data/ConsList[ /T=$_/T ] ) -> TVArg /b = Value /b
+                        , /Data/append
+                            ( Value /a -> /Data/Cons[ /T=TopType ]
+                                ( /head=$/T
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                ) = /Data/Cons( Value /head )
+                                ( Value /tail -> ∀/Data/ConsList[ /T=$_/T ] )
+                            )
+                            ( Value /b -> ∀/Data/ConsList[ /T=$_/T ] ) -> /Data/Cons[ /T=TopType ]
+                            ( /head=$/T
+                            , /tail=∀/Data/ConsList[ /T=$_/T ]
+                            ) = /Data/Cons( Value /head -> TVArg /head = Value /head )
+                            ( Value /tail -> ∀/Data/ConsList[ /T=$_/T ] = /Data/append( Value /a -> TVArg /tail = Value /tail )( Value /b -> TVArg /b = Value /b ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/toString./Data/restToString"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /toString./Data/restToString( Value /t )( Value /h )
+                            ( Value /lst -> ∀/Data/ConsList[ /T=∀/Data/ToString ] ) -> /Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /toString./Data/restToString( Value /t )( Value /h )
+                            ( Value /lst -> /Data/Cons[ /T=∀/Data/ToString ]
+                                ( /head=$/T
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                ) = /Data/Cons[ /T : ∀/Data/ToString ]( Value /head -> ∀/Data/ToString )
+                                ( Value /tail -> ∀/Data/ConsList[ /T=$_/T ] )
+                            ) ->
+                            ( /operator++[ /T=/Data/String ]
+                                ( /r=∀/Data/Algebra/Semigroup
+                                , /l=∀/Data/Algebra/Semigroup
+                                ) + /Data/String + /Data/Primitive/Integer
+                            ) = /operator++
+                            ( Value /l -> UnionType
+                                ( Just
+                                    ( PredClass /Data/Algebra/Semigroup
+                                    , fromList []
+                                    )
+                                , ( /Data/String + /Data/Primitive/Integer )
+                                , []
+                                ) = /operator++
+                                ( Value /l -> /Data/String = CStr ", " )
+                                ( Value /r -> /Data/String = /Data/toString( Value /this -> TVArg /head = Value /head ) )
+                            )
+                            ( Value /r -> ∀/Data/Algebra/Semigroup = /toString./Data/restToString( Value /t -> TVArg /t = Value /t )( Value /h -> TVArg /h = Value /h )( Value /lst -> TVArg /tail = Value /tail ) )
+                        , /toString./Data/restToString( Value /t )( Value /h )( Value /lst -> /Data/Nil = Value /Data/Nil ) -> /Data/String = CStr ""
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/pure"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/pure
+                            [ /M : ∀/Data/ConsList[ /T=$_/T ] ]( Value /v ) -> /Data/Cons[ /T=TopType ]
+                            ( /head=$/T
+                            , /tail=/Data/Nil
+                            ) = /Data/Cons( Value /head -> TVArg /v = Value /v )( Value /tail -> /Data/Nil = Value /Data/Nil )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Cons"
                 , ObjectMapItem
                     { omiDecls =
@@ -260,6 +342,47 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/List/pureConsInt"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/List/pureConsInt( Value /v -> /Data/Primitive/Integer ) -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                            ( /head=/Data/Primitive/Integer
+                            , /tail=TopType
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/List/pureConsInt( Value /v -> /Data/Primitive/Integer ) ->
+                            ( /Data/pure
+                                [ /M=/Data/Cons[ /T=/Data/Primitive/Integer ]
+                                    ( /head=/Data/Primitive/Integer
+                                    , /tail=UnionType
+                                        ( Just
+                                            ( PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=$_/T ]
+                                            , fromList []
+                                            )
+                                        , /Data/Nil
+                                        , []
+                                        )
+                                    )
+                                , /A=/Data/Primitive/Integer
+                                ]( /v=/Data/Primitive/Integer ) + /Data/Cons[ /T=/Data/Primitive/Integer ]
+                                ( /head=/Data/Primitive/Integer
+                                , /tail=UnionType
+                                    ( Just
+                                        ( PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ]
+                                        , fromList []
+                                        )
+                                    , /Data/Nil
+                                    , []
+                                    )
+                                )
+                            ) = /Data/pure( Value /v -> TVArg /v = Value /v )
+                        ]
                     }
                 )
             ,
@@ -330,11 +453,11 @@ Prgm
                 ( "/range./Data/rangeStep"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /range./Data/rangeStep( Value /stop -> /Data/Primitive/Integer )( Value /more -> ∀/Data/Primitive/Boolean )( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Data/Primitive/Integer ] ]
+                        [ /range./Data/rangeStep( Value /more -> ∀/Data/Primitive/Boolean )( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> ∀/Data/List[ /T=/Data/Primitive/Integer ] ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /range./Data/rangeStep( Value /stop -> /Data/Primitive/Integer )( Value /more -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> /Data/Cons[ /T=/Data/Primitive/Integer ]
+                        [ /range./Data/rangeStep( Value /more -> /Data/Primitive/True = Value /Data/Primitive/True )( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                             ( /head=/Data/Primitive/Integer
                             , /tail=∀/Data/ConsList[ /T=$_/T ]
                             ) = /Data/Cons( Value /head -> TVArg /i = Value /i )
@@ -343,7 +466,7 @@ Prgm
                                     ( Value /r -> /Data/Primitive/Integer = CInt 1 )
                                 )( Value /stop -> TVArg /stop = Value /stop )
                             )
-                        , /range./Data/rangeStep( Value /stop -> /Data/Primitive/Integer )( Value /more -> /Data/Primitive/False = Value /Data/Primitive/False )( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> /Data/Nil = Value /Data/Nil
+                        , /range./Data/rangeStep( Value /more -> /Data/Primitive/False = Value /Data/Primitive/False )( Value /i -> /Data/Primitive/Integer )( Value /stop -> /Data/Primitive/Integer ) -> /Data/Nil = Value /Data/Nil
                         ]
                     }
                 )
@@ -412,6 +535,16 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/List/testMmapConsBind"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/List/testMmapConsBind -> /Data/Primitive/Integer = CInt 0 ]
+                    }
+                )
+            ,
                 ( "/Data/fmap"
                 , ObjectMapItem
                     { omiDecls = []
@@ -448,74 +581,6 @@ Prgm
                                 , []
                                 ) = /Data/fmap( Value /lst -> TVArg /tail = Value /tail )
                                 ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/Data/restToString"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /Data/restToString
-                            ( Value /lst -> ∀/Data/ConsList[ /T=∀/Data/ToString ] ) -> /Data/String
-                        ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Data/restToString( Value /lst -> /Data/Nil = Value /Data/Nil ) -> /Data/String = CStr ""
-                        , /Data/restToString
-                            ( Value /lst -> /Data/Cons[ /T=∀/Data/ToString ]
-                                ( /head=$/T
-                                , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                ) = /Data/Cons[ /T : ∀/Data/ToString ]( Value /head -> ∀/Data/ToString )
-                                ( Value /tail -> ∀/Data/ConsList[ /T=∀/Data/ToString ] )
-                            ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Algebra/Semigroup
-                                , fromList []
-                                )
-                            ,
-                                ( /operator++[ /T=∀/Data/Algebra/Semigroup ]
-                                    ( /r=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Algebra/Semigroup
-                                            , fromList []
-                                            )
-                                        , ( /Data/String + /Data/Primitive/Integer )
-                                        , []
-                                        )
-                                    , /l=∀/Data/Algebra/Semigroup
-                                    ) + /Data/String + /Data/Primitive/Integer
-                                )
-                            , []
-                            ) = /operator++
-                            ( Value /l -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Algebra/Semigroup
-                                    , fromList []
-                                    )
-                                , ( /Data/String + /Data/Primitive/Integer )
-                                , []
-                                ) = /operator++
-                                ( Value /l -> /Data/String = CStr ", " )
-                                ( Value /r -> UnionType
-                                    ( Just
-                                        ( PredClass /Data/Algebra/Semigroup
-                                        , fromList []
-                                        )
-                                    , /Data/String
-                                    , []
-                                    ) = /Data/toString( Value /this -> TVArg /head = Value /head )
-                                )
-                            )
-                            ( Value /r -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Algebra/Semigroup
-                                    , fromList []
-                                    )
-                                , ( /Data/String + /Data/Primitive/Integer )
-                                , []
-                                ) = /Data/restToString( Value /lst -> TVArg /tail = Value /tail )
                             )
                         ]
                     }
@@ -569,6 +634,16 @@ Prgm
                                 ) = /Data/any( Value /lst -> TVArg /tail = Value /tail )
                             )
                         ]
+                    }
+                )
+            ,
+                ( "/Data/List/testPureCons"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /Data/List/testPureCons -> /Data/Primitive/Integer = CInt 0 ]
                     }
                 )
             ,
@@ -771,6 +846,47 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/mmap"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/mmap( Value /m -> /Data/Nil = Value /Data/Nil )
+                            ( /fn( Value /v ) -> ∀/Data/Monad[ /T=$_/A ] ) -> /Data/Nil = Value /Data/Nil
+                        , /Data/mmap
+                            ( Value /m -> /Data/Cons[ /T=TopType ]
+                                ( /head=$/T
+                                , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                ) = /Data/Cons( Value /head )
+                                ( Value /tail ->
+                                    ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Monad[ /T=$_/A ] )
+                                )
+                            )
+                            ( /fn( Value /v ) -> ∀/Data/Monad[ /T=$_/A ] ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/ConsList[ /T=$_/T ]
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/append
+                                    ( /a=∀/Data/ConsList[ /T=$_/T ]
+                                    , /b=∀/Data/ConsList[ /T=$_/T ]
+                                    ) + /Data/Cons[ /T=$_/T ]
+                                    ( /head=$/T
+                                    , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                    )
+                                )
+                            , []
+                            ) = /Data/append
+                            ( Value /a -> ∀/Data/ConsList[ /T=$_/T ] = /fn( Value /v -> TVArg /head = Value /head ) )
+                            ( Value /b -> ∀/Data/ConsList[ /T=$_/T ] = /Data/mmap( Value /m -> TVArg /tail = Value /tail )
+                                ( /fn( Value /v ) -> ∀/Data/Monad[ /T=$_/A ] = /fn( Value /v -> TVArg /v = Value /v ) )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Algebra/compareTo"
                 , ObjectMapItem
                     { omiDecls = []
@@ -849,6 +965,14 @@ Prgm
         , CGType
         , CGType
         , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGClass
             ( False
             , /Data/ConsList
@@ -893,6 +1017,13 @@ Prgm
             ,
                 [ ∀/Data/ConsList[ /T=$_/T ] ]
             , Just " Every [ConsList] is a [List], so each [List] operation resolves on it through the arms below."
+            )
+        , CGClass
+            ( False
+            , /Data/ConsList
+            ,
+                [ ∀/Data/ConsList[ /T=$_/T ] ]
+            , Just ""
             )
         , CGClass
             ( False
@@ -1203,14 +1334,17 @@ Prgm
                 , ( /Data/Primitive/True + /Data/Primitive/False )
                 , []
                 ) = /operator==
-                ( Value /l ->
-                    ( /Data/Nil + /Data/Cons
+                ( Value /l -> UnionType
+                    ( Just
+                        ( PredClass /Data/Algebra/Eq && PredClass /Data/List
+                        , fromList []
+                        )
+                    , /Data/Cons
                         [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/Algebra/Eq ) ]
                         ( /head=$/T
                         , /tail=UnionType
                             ( Just
-                                ( PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/ConsList
-                                    [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/Algebra/Eq ) ]
+                                ( PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ]
                                 , fromList []
                                 )
                             ,
@@ -1223,6 +1357,7 @@ Prgm
                             , []
                             )
                         )
+                    , []
                     ) = /Data/sorted
                     ( Value /lst -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer
@@ -1290,14 +1425,17 @@ Prgm
                 , ( /Data/Primitive/True + /Data/Primitive/False )
                 , []
                 ) = /operator==
-                ( Value /l ->
-                    ( /Data/Nil + /Data/Cons
+                ( Value /l -> UnionType
+                    ( Just
+                        ( PredClass /Data/Algebra/Eq && PredClass /Data/List
+                        , fromList []
+                        )
+                    , /Data/Cons
                         [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/Algebra/Eq ) ]
                         ( /head=$/T
                         , /tail=UnionType
                             ( Just
-                                ( PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/ConsList
-                                    [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/Algebra/Eq ) ]
+                                ( PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ]
                                 , fromList []
                                 )
                             ,
@@ -1310,6 +1448,7 @@ Prgm
                             , []
                             )
                         )
+                    , []
                     ) = /Data/sorted
                     ( Value /lst -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer
@@ -1425,10 +1564,6 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "A [ConsList] whose elements are [ToString] is itself [ToString]: it renders as its items,
             each rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]." )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "[restToString] renders the items after the first, each with a leading ", " separator, so the" )
-        , /Catln/#md
-            ( Value /text -> /Data/String = CStr "  opening item in the arm above carries no comma and the commas fall between items." )
         , /Catln/#print
             ( Value /p -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                 ( /head=/Data/Primitive/Integer
@@ -1486,14 +1621,10 @@ Prgm
                 , ( /Data/Primitive/True + /Data/Primitive/False )
                 , []
                 ) = /operator==
-                ( Value /l -> /Data/Cons
-                    [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/Algebra/Eq ) ]
+                ( Value /l -> /Data/Cons[ /T=∀/Data/Algebra/Eq ]
                     ( /head=$/T
                     , /tail=
-                        ( TopType | PredClass /Data/ConsList
-                            [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/Algebra/Eq ) ] && PredClass /Data/ConsList
-                            [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/Algebra/Eq ) ]
-                        )
+                        ( TopType | PredClass /Data/ConsList[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Eq ] )
                     ) = /Data/fmap
                     ( Value /lst -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer
@@ -1798,5 +1929,23 @@ Prgm
                 )
             )
             ( Value /result -> /Data/String = CStr "True" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "# ConsList Monad instance
+            [mmap] over a [ConsList] is concatMap: the function returns a whole list for each element, and
+            the results are appended in order." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[append] joins two lists in order — the recursive structural join (it recurses through itself" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "so the recursion stays a concrete arrow)." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "The [ConsList] instance of the generic [mmap] declared over [Monad] in [Data]. Like the" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[fmap] instance above, it lives in its own module so the open [Monad] class is not" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "required to be totally covered here." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "[pure] for [ConsList] builds a singleton list; the call site's expected list type selects" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "this instance (return-type-directed dispatch — see [pure] in [Data/monad])." )
         ]
     }

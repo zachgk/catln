@@ -136,13 +136,14 @@ module(Data)
       each rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]].
 
   :/Data/Nil.toString= "[]"
-  :/Data/Cons[$T -> /Data/ToString](head, tail).toString= "[" ++ head.toString ++ restToString(lst= tail) ++ "]"
-
-  # [restToString] renders the items after the first, each with a leading ", " separator, so the
-  #   opening item in the arm above carries no comma and the commas fall between items.
-  restToString(lst -> ConsList[$T -> /Data/ToString]) -> String
-  restToString(lst= Nil)= ""
-  restToString(lst= /Data/Cons[$T -> /Data/ToString](head, tail))= ", " ++ head.toString ++ restToString(lst= tail)
+  :/Data/Cons[$T -> /Data/ToString](head@h, tail@t).toString =
+    # [restToString] renders the items after the first, each with a leading ", " separator, so the
+      opening item carries no comma and the commas fall between items. It destructures its own
+      [head]/[tail], so the enclosing arm renames its fields to [h]/[t] to avoid the collision.
+    restToString(lst -> ConsList[$T -> /Data/ToString]) -> String
+    restToString(lst= Nil)= ""
+    restToString(lst= /Data/Cons[$T -> /Data/ToString](head, tail))= ", " ++ head.toString ++ restToString(lst= tail)
+    "[" ++ h.toString ++ restToString(lst= t) ++ "]"
 
   > [1, 2, 3]
     >>> [1, 2, 3]

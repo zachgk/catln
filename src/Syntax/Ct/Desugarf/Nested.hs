@@ -94,20 +94,22 @@ currySubFunctionSignature parentArgs oa@ObjArr{oaObj=Just obj} = oa{oaObj=Just o
     applyParentArgsToObjPath (objPathM, objPathN) = curryApplyParentArgsSignature (Value objPathM objPathN) parentArgs
 currySubFunctionSignature _ d = error $ printf "Invalid currySubFunctionSignature without input expression: %s" (show d)
 
-currySubFunctionsUpdateExpr :: S.HashSet TypeName -> ParentArgs -> PSExpr -> PSExpr
+-- | Curries parent args into a reference to a sub function. 'parentArgsFor' returns the parent args
+-- to apply for a given referenced name, so a parent arg shadowed by the sub function's own parameter
+-- is not applied (which would double-apply that argument).
+currySubFunctionsUpdateExpr :: S.HashSet TypeName -> (TypeName -> ParentArgs) -> PSExpr -> PSExpr
 currySubFunctionsUpdateExpr _ _ c@CExpr{} = c
-currySubFunctionsUpdateExpr _ parentArgs v@Value{} | H.null parentArgs = v
-currySubFunctionsUpdateExpr toUpdate parentArgs v@(Value _ vn) = if S.member vn toUpdate
-  then curryApplyParentArgs v parentArgs
+currySubFunctionsUpdateExpr toUpdate parentArgsFor v@(Value _ vn) = if any (relativeNameMatches vn) (S.toList toUpdate)
+  then curryApplyParentArgs v (parentArgsFor vn)
   else v
 currySubFunctionsUpdateExpr _ _ e@HoleExpr{} = e
-currySubFunctionsUpdateExpr toUpdate parentArgs (AliasExpr b a) = AliasExpr (currySubFunctionsUpdateExpr toUpdate parentArgs b) (currySubFunctionsUpdateExpr toUpdate parentArgs a)
-currySubFunctionsUpdateExpr toUpdate parentArgs (EWhere m b a) = EWhere m (currySubFunctionsUpdateExpr toUpdate parentArgs b) (currySubFunctionsUpdateExpr toUpdate parentArgs a)
-currySubFunctionsUpdateExpr toUpdate parentArgs (TupleApply tm (tbm, tbe) targ) = TupleApply tm (tbm, tbe') targ'
+currySubFunctionsUpdateExpr toUpdate parentArgsFor (AliasExpr b a) = AliasExpr (currySubFunctionsUpdateExpr toUpdate parentArgsFor b) (currySubFunctionsUpdateExpr toUpdate parentArgsFor a)
+currySubFunctionsUpdateExpr toUpdate parentArgsFor (EWhere m b a) = EWhere m (currySubFunctionsUpdateExpr toUpdate parentArgsFor b) (currySubFunctionsUpdateExpr toUpdate parentArgsFor a)
+currySubFunctionsUpdateExpr toUpdate parentArgsFor (TupleApply tm (tbm, tbe) targ) = TupleApply tm (tbm, tbe') targ'
   where
-    tbe' = currySubFunctionsUpdateExpr toUpdate parentArgs tbe
+    tbe' = currySubFunctionsUpdateExpr toUpdate parentArgsFor tbe
     targ' = case targ of
-      EAppArg a -> EAppArg $ mapTupleArgValue (currySubFunctionsUpdateExpr toUpdate parentArgs) a
+      EAppArg a -> EAppArg $ mapTupleArgValue (currySubFunctionsUpdateExpr toUpdate parentArgsFor) a
       a@EAppVar{} -> a
       EAppSpread a -> error $ printf "Not yet implemented: %s" (show a)
 
@@ -116,10 +118,17 @@ currySubFunctions oa@ObjArr{oaObj=Just objExpression, oaAnnots, oaArr} decls = (
   where
     parentArgs = map snd <$> exprArgs objExpression
     toUpdate = S.fromList $ map oaObjPath $ flatObjectMap decls
-    decls2 = map (currySubFunctionSignature parentArgs) $ flatObjectMap decls
-    oaArr' = fmap (first (fmap (currySubFunctionsUpdateExpr toUpdate parentArgs))) oaArr
-    decls' = map (\doa@ObjArr{oaArr=doaArr} -> doa{oaArr=fmap (first (fmap (currySubFunctionsUpdateExpr toUpdate parentArgs))) doaArr}) decls2
-    annots' = map (currySubFunctionsUpdateExpr toUpdate parentArgs) oaAnnots
+    -- Each sub function's own parameter names (unioned across its signature and arms), so a parent
+    -- arg the sub function itself declares (e.g. a parent @range(stop)@ and a helper
+    -- @rangeFrom(i, stop)@ that share @stop@) is not curried into it and double-applied.
+    subOwnArgs = H.fromListWith S.union [(oaObjPath d, H.keysSet $ exprArgs (oaObjExpr d)) | d <- flatObjectMap decls]
+    parentArgsFor n = case [ownArgs | (k, ownArgs) <- H.toList subOwnArgs, relativeNameMatches n k] of
+      (ownArgs:_) -> H.filterWithKey (\a _ -> not $ S.member a ownArgs) parentArgs
+      []          -> parentArgs
+    decls2 = map (\d -> currySubFunctionSignature (parentArgsFor (oaObjPath d)) d) $ flatObjectMap decls
+    oaArr' = fmap (first (fmap (currySubFunctionsUpdateExpr toUpdate parentArgsFor))) oaArr
+    decls' = map (\doa@ObjArr{oaArr=doaArr} -> doa{oaArr=fmap (first (fmap (currySubFunctionsUpdateExpr toUpdate parentArgsFor))) doaArr}) decls2
+    annots' = map (currySubFunctionsUpdateExpr toUpdate parentArgsFor) oaAnnots
 currySubFunctions oa _ = error $ printf "currySubFunctions without input expression: %s" (show oa)
 
 desObjDocComment :: [PStatementTree] -> Maybe String
