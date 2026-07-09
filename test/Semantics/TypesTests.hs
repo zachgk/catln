@@ -321,6 +321,31 @@ propSubtypeUnionVarSplit gPrgm = property $ do
   -- P[$T=(A+B)] should be equivalent to P[$T=A] + P[$T=B]
   assert $ isEqType typeEnv joinedType splitType
 
+-- Parameterized-class covariance: for a class C parameterized by /T, the membership predicate is
+-- covariant in the element bound - @PredClass C[/T=a] ⊆ PredClass C[/T=b]@ whenever @a ⊆ b@ (a value
+-- whose class-C element is within @a@ is also within the wider @b@), and correspondingly
+-- @C[/T=a] − C[/T=b] = ∅@. Uses @a ⊆ (a∪b)@ to guarantee the wider bound for any generated a, b.
+propParamClassCovariant :: IO GenPrgm -> Property
+propParamClassCovariant gPrgm = property $ do
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
+  let typeEnv = mkTypeEnv prgm
+  a <- forAll $ genType prgm
+  b <- forAll $ genType prgm
+  let wider = unionTypes typeEnv a b
+  let mkClassOver elemT =
+        let cP = (partialVal "/TestParamClass"){ptVars = H.singleton (partialKey "T") elemT}
+        in UnionType (Just (PredsOne (PredClass cP), H.empty)) H.empty []
+  let cNarrow = mkClassOver a
+  let cWide = mkClassOver wider
+  annotate $ printf "a = %s" (show a)
+  annotate $ printf "a∪b = %s" (show wider)
+  annotate $ printf "C[a] = %s" (show cNarrow)
+  annotate $ printf "C[a∪b] = %s" (show cWide)
+  annotate $ printf "C[a] − C[a∪b] = %s" (show $ differenceTypeEnv typeEnv cNarrow cWide)
+  assert $ isSubtypeOf typeEnv cNarrow cWide
+  assert $ isEqType typeEnv (differenceTypeEnv typeEnv cNarrow cWide) BottomType
+
 propClassGraphMatchesPredClass :: IO GenPrgm -> Property
 propClassGraphMatchesPredClass gPrgm = property $ do
   gPrgm' <- lift gPrgm
@@ -392,6 +417,7 @@ typeTests = withResource (ggPrgm <$> findPrgms) (const $ pure ()) tests
       , HG.testProperty "propDifferenceSubset" (p $ propDifferenceSubset gPrgm)
       -- , HG.testProperty "propIntersectByDifference" (p $ propIntersectByDifference gPrgm)
       -- , HG.testProperty "propDifferenceByIntersection" (p $ propDifferenceByIntersection gPrgm)
+      , HG.testProperty "propParamClassCovariant" (p $ propParamClassCovariant gPrgm)
       , HG.testProperty "propSubtypeUnionVarSplit" (withDiscards 1000 $ p $ propSubtypeUnionVarSplit gPrgm)
       , HG.testProperty "propClassGraphMatchesPredClass" (withDiscards 1000 $ p $ propClassGraphMatchesPredClass gPrgm)
                                         ]

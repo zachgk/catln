@@ -1157,6 +1157,18 @@ predImpliesAtom :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicat
 -- 'classDeclaredSubclassOf').
 predImpliesAtom typeEnv _ (PredClass c1) (PredClass c2)
   | classDeclaredSubclassOf typeEnv (ptName c1) (ptName c2) = True
+-- Same class, covariant element bound: @hasClass C[/T=a] ⟹ hasClass C[/T=b]@ when @a ⊆ b@. A value
+-- whose class-C element is within @a@ is also within the wider @b@. This is the parameterized-class
+-- subtype rule for a shared class name with a type-var vs. a wider element bound (e.g. @Eqv[$T] ⟹
+-- Eqv[⊤]@, @Functor[Integer] ⟹ Functor[$A]@), which the name-only 'classDeclaredSubclassOf' above
+-- and the member-enumeration below never compare. Checked covariantly over each bound @c2@ declares,
+-- with an absent @c1@ var/arg defaulting to ⊤: this is DIRECTIONAL (unlike the shared-keys-only
+-- 'isSubPartialOfWithEnv', which would vacuously make @C ⟹ C[/T=∀Ord]@ True when @c1@ omits @/T@ and
+-- so drop the tighter bound from an intersection like @C[/T=∀Ord] ∧ C@).
+predImpliesAtom typeEnv vaenv (PredClass c1) (PredClass c2)
+  | ptName c1 == ptName c2
+  , all (\(k, v) -> isSubtypeOfWithEnv typeEnv vaenv (H.lookupDefault PTopType k (ptVars c1)) v) (H.toList (ptVars c2))
+  , all (\(k, v) -> isSubtypeOfWithEnv typeEnv vaenv (H.lookupDefault PTopType k (ptArgs c1)) v) (H.toList (ptArgs c2)) = True
 -- PredClass: c1 implies c2 only when c1 is sealed (all members known) and each member is in U_c2.
 -- Decided symbolically (emptiness of @c1 ∧ ¬c2@ against the class graph); the engine's positive
 -- gate reproduces the sealed/'tePrgmEnv' enumeration gate.
@@ -2404,6 +2416,23 @@ compactType typeEnv vaenv (UnionType (Just (preds, _)) pos _)
 -- growth in 'verifySchemeActLowers'.
 compactType typeEnv vaenv (UnionType (Just (preds, _)) pos _)
   | isPredsContradictory preds = compactType typeEnv vaenv (UnionType Nothing pos [])
+-- Class-graph unsatisfiable top: a negated conjunct implied by the rest (@p ∧ ¬q = ∅@ when @p ⟹ q@),
+-- e.g. @PredClass C[/T=a] ∧ ¬PredClass C[/T=b]@ with @a ⊆ b@. The syntactic 'isPredsContradictory'
+-- above only sees identical-atom @X ∧ ¬X@; this uses 'predImplies' to also reduce a covariant
+-- parameterized-class pair — the difference @C[a] − C[b]@ when @a ⊆ b@ (which otherwise leaves an
+-- unreduced @C[a] ∧ ¬C[b]@ residue). Gated on a present negation so the common all-positive
+-- conjunctions never pay the 'predImplies' pass.
+compactType typeEnv vaenv (UnionType (Just (preds@(PredsAnd ps), _)) pos _)
+  | any isNeg ps
+  , or [ predImplies typeEnv vaenv (mkAnd rest) q | (PredsNot q, rest) <- picks ps ] =
+      compactType typeEnv vaenv (UnionType Nothing pos [])
+  where
+    isNeg (PredsNot _) = True
+    isNeg _            = False
+    -- each element paired with the list of all the others
+    picks = go []
+      where go _   []     = []
+            go pre (x:post) = (x, pre ++ post) : go (pre ++ [x]) post
 -- Top component with empty neg and non-trivial preds
 compactType typeEnv vaenv t@(UnionType (Just (preds, negPartials)) posLeafs [])
   | H.null negPartials && H.null posLeafs && preds /= PredsNone = case preds of
