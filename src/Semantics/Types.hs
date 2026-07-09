@@ -2396,6 +2396,14 @@ compactType typeEnv vaenv (UnionType (Just (preds, _)) pos _)
     predClassConjunctionEmpty _              = False
     isPredClassAtom (PredsOne (PredClass _)) = True
     isPredClassAtom _                        = False
+-- Syntactically contradictory top (e.g. PredsAnd[p, ¬p]): the universe filtered by an
+-- unsatisfiable predicate is empty, so (∅ - neg) ∪ pos = pos. Placed here (like the class-graph
+-- clause above) so it precedes the specialized empty-neg / non-empty-neg top clauses below, whose
+-- catch-alls would otherwise return such a type un-reduced. This arises during difference/subtype
+-- (@t ∩ ¬t@ on a predicated top yields @p ∧ ¬p@); leaving it un-reduced falsely reports monotonicity
+-- growth in 'verifySchemeActLowers'.
+compactType typeEnv vaenv (UnionType (Just (preds, _)) pos _)
+  | isPredsContradictory preds = compactType typeEnv vaenv (UnionType Nothing pos [])
 -- Top component with empty neg and non-trivial preds
 compactType typeEnv vaenv t@(UnionType (Just (preds, negPartials)) posLeafs [])
   | H.null negPartials && H.null posLeafs && preds /= PredsNone = case preds of
@@ -2417,9 +2425,6 @@ compactType typeEnv vaenv t@(UnionType (Just (preds, negPartials)) posLeafs [])
 -- ¬(contradictory) = everything: top component is U, simplify to PTopType
 compactType typeEnv vaenv (UnionType (Just (PredsNot p, negLeafs)) posLeafs cs)
   | isPredsContradictory p = compactType typeEnv vaenv (UnionType (Just (PredsNone, negLeafs)) posLeafs cs)
--- Contradictory predicates (e.g. PredsAnd[p, ¬p]): top component is empty, reduce to posLeafs only
-compactType typeEnv vaenv (UnionType (Just (preds, _)) pos _)
-  | isPredsContradictory preds = compactType typeEnv vaenv (UnionType Nothing pos [])
 -- Cancel pos/neg overlap: (T - neg) ∪ pos = (T - (neg∖pos)) ∪ (pos∖neg)
 -- e.g. (U - {X}) ∪ {X} = U
 compactType typeEnv vaenv (UnionType (Just (preds, negLeafs)) posLeafs cs)
@@ -2928,7 +2933,7 @@ differencePartialLeafs typeEnv vaenv posPartialLeafs negPartialLeafs = UnionType
         subtractVar (_, PTopType) = Nothing
         subtractVar (varName, negVarVal) = case H.lookupDefault PTopType varName posVars of
           BottomType -> Nothing
-          varVal' -> Just p1{ptVars=H.insert varName (snd $ differenceTypeWithEnv typeEnv vaenv varVal' negVarVal) posArgs}
+          varVal' -> Just p1{ptVars=H.insert varName (snd $ differenceTypeWithEnv typeEnv vaenv varVal' negVarVal) posVars}
     -- PtArgExact - PtArgAny: neg requires at least negArgs; pos (exact) is in neg iff neg's required
     -- keys are all present in pos with matching values. Subtract matching args just like the main case.
     differencePartial p1@PartialType{ptArgs=posArgs, ptVars=posVars, ptArgMode=posArgMode} PartialType{ptArgs=negArgs, ptVars=negVars, ptArgMode=PtArgAny}
