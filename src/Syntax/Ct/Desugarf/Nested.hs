@@ -12,7 +12,7 @@
 
 module Syntax.Ct.Desugarf.Nested where
 
-import           Data.Bifunctor          (bimap, first, second)
+import           Data.Bifunctor          (bimap, first)
 import qualified Data.HashMap.Strict     as H
 import qualified Data.HashSet            as S
 import           Text.Printf
@@ -79,9 +79,16 @@ scopeSubDeclFunNames oa@ObjArr{oaObj=Just objExpression, oaAnnots, oaArr} decls 
     annots' = map (scopeSubDeclFunNamesInExpr prefix declNames) oaAnnots
 scopeSubDeclFunNames oa _ = error $ printf "scopeSubDeclFunNames without input expression: %s" (show oa)
 
--- | Apply args to a signature or input expression
+-- | Apply args to a signature or input expression. Each parent argument is curried into the sub
+-- function's signature carrying the parent's declared type meta. Discarding it (leaving the parameter
+-- 'TopType') lets a parent argument a sub function captures but does not use leak 'TopType' into the
+-- file's object union, which fails type checking non-deterministically.
 curryApplyParentArgsSignature :: PSExpr -> ParentArgs -> PSExpr
-curryApplyParentArgsSignature e parentArgs = applyExprIArgs e (map (second IArgM) $ H.toList $ fmap (const Nothing) parentArgs)
+curryApplyParentArgsSignature e parentArgs = foldl addParentArg e (H.toList parentArgs)
+  where
+    addParentArg b (parentArgName, parentArgMetas) = TupleApply (emptyMetaE b) (emptyMetaE b, b) (EAppArg paramObjArr)
+      where
+        paramObjArr = ObjArr (Just (Value emptyMetaN (pkName parentArgName))) ArgObj Nothing [] (Just (Nothing, head parentArgMetas))
 
 -- | Apply args to an output expression
 curryApplyParentArgs :: PSExpr -> ParentArgs -> PSExpr

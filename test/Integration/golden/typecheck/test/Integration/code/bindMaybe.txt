@@ -18,9 +18,9 @@ Prgm
                                 ( /Data/Nil + /Data/append
                                     ( /a=∀/Data/ConsList[ /T=$_/T ]
                                     , /b=∀/Data/ConsList[ /T=$_/T ]
-                                    ) + /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) + /Data/Cons[ /T=TopType ]
-                                    ( /head=TopType
-                                    , /tail=∀/Data/ConsList[ /T=$_/T ]
+                                    ) + /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) + /Data/Cons[ /T=/Data/Primitive/Integer ]
+                                    ( /head=/Data/Primitive/Integer
+                                    , /tail=∀/Data/ConsList[ /T=/Data/Primitive/Integer ]
                                     ) + /Data/Nothing + /Data/bindap
                                     [ /T=
                                         ( /operator+
@@ -58,7 +58,7 @@ Prgm
                                 )
                             , []
                             ) = /Data/bindap( Value /m -> TVArg /m = Value /m )
-                            ( /fn( Value /v@Value /x -> /Data/Primitive/Integer ) ->
+                            ( /fn( Value /v -> /Data/Primitive/Integer ) ->
                                 ( /Data/Some
                                     [ /T=/operator+
                                         ( /r=/Data/Primitive/Integer
@@ -70,15 +70,8 @@ Prgm
                                         , /l=/Data/Primitive/Integer
                                         )
                                     ) + /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                ) = /Data/Some
-                                ( Value /value ->
-                                    ( /operator+
-                                        ( /r=/Data/Primitive/Integer
-                                        , /l=/Data/Primitive/Integer
-                                        ) + /Data/Primitive/Integer
-                                    ) = /operator+( Value /l -> TVArg /x = Value /x )
-                                    ( Value /r -> /Data/Primitive/Integer = CInt 1 )
-                                )
+                                ) = /maybeBind.$71c85d( Value /m -> TVArg /m = Value /m )
+                                ( Value /$71c85d-arg -> TVArg /v = Value /v )
                             )
                         ]
                     }
@@ -93,10 +86,44 @@ Prgm
                         [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
                     }
                 )
+            ,
+                ( "/maybeBind.$71c85d"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /maybeBind.$71c85d
+                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
+                            ( Value /$71c85d-arg@Value /x -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) ) ->
+                            ( /Data/Some
+                                [ /T=/operator+
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    )
+                                ]
+                                ( /value=/operator+
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    )
+                                ) + /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                            ) = /Data/Some
+                            ( Value /value ->
+                                ( /operator+
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    ) + /Data/Primitive/Integer
+                                ) = /operator+( Value /l -> TVArg /x = Value /x )
+                                ( Value /r -> /Data/Primitive/Integer = CInt 1 )
+                            )
+                        ]
+                    }
+                )
             ]
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         ]
     , prgmAnnots =

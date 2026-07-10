@@ -1,0 +1,160 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value -> /main = Value /main )( Value /io -> /Catln/IO ) -> TVArg /io = Value /io ]
+                    }
+                )
+            ,
+                ( "/bindWithLocal.$71c85d.doubled"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /bindWithLocal.$71c85d.doubled
+                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
+                            ( Value /x -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) ) ->
+                            ( /operator+
+                                ( /r=/Data/Primitive/Integer
+                                , /l=/Data/Primitive/Integer
+                                ) + /operator+
+                                ( /r=/Data/Primitive/Float
+                                , /l=/Data/Primitive/Float
+                                ) + /Data/Primitive/Integer + /Data/Primitive/Float
+                            ) = /operator+( Value /l -> TVArg /x = Value /x )( Value /r -> TVArg /x = Value /x )
+                        ]
+                    }
+                )
+            ,
+                ( "/bindWithLocal.$71c85d"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /bindWithLocal.$71c85d
+                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
+                            ( Value /$71c85d-arg@Value /x -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) ) ->
+                            ( /Data/Some
+                                [ /T=/operator+
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    )
+                                ]
+                                ( /value=/operator+
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    )
+                                ) + /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                            ) = /Data/Some
+                            ( Value /value ->
+                                ( /operator+
+                                    ( /r=/Data/Primitive/Integer
+                                    , /l=/Data/Primitive/Integer
+                                    ) + /Data/Primitive/Integer
+                                ) = /operator+
+                                ( Value /l -> ( /Data/Primitive/Integer + /Data/Primitive/Float ) = /bindWithLocal.$71c85d.doubled( Value /m -> TVArg /m = Value /m )( Value /x -> TVArg /x = Value /x ) )
+                                ( Value /r -> /Data/Primitive/Integer = CInt 1 )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/bindWithLocal"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /bindWithLocal
+                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Monad[ /T=$_/A ]
+                                , fromList []
+                                )
+                            ,
+                                ( /Data/Nil + /Data/append
+                                    ( /a=∀/Data/ConsList[ /T=$_/T ]
+                                    , /b=∀/Data/ConsList[ /T=$_/T ]
+                                    ) + /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) + /Data/Cons[ /T=/Data/Primitive/Integer ]
+                                    ( /head=/Data/Primitive/Integer
+                                    , /tail=∀/Data/ConsList[ /T=/Data/Primitive/Integer ]
+                                    ) + /Data/Nothing + /Data/bindap
+                                    [ /T=
+                                        ( /operator+
+                                            ( /r=/Data/Primitive/Integer
+                                            , /l=/Data/Primitive/Integer
+                                            ) + /Data/Primitive/Integer
+                                        )
+                                    , /B=TopType
+                                    , /M=∀/Data/Monad[ /T=$_/A ]
+                                    , /A=TopType
+                                    ]
+                                    ( /fn( /v=TopType )=
+                                        ( /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) + /Data/Some
+                                            [ /T=/operator+
+                                                ( /r=/Data/Primitive/Integer
+                                                , /l=/Data/Primitive/Integer
+                                                )
+                                            ]
+                                            ( /value=/operator+
+                                                ( /r=/Data/Primitive/Integer
+                                                , /l=/Data/Primitive/Integer
+                                                )
+                                            )
+                                        )
+                                    , /m=
+                                        ( TopType | PredClass /Data/Monad[ /T=$_/A ] && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] )
+                                    ) + /Data/mmap
+                                    [ /B=TopType
+                                    , /M=∀/Data/Monad[ /T=$_/A ]
+                                    , /A=TopType
+                                    ]
+                                    ( /fn( /v=TopType )=∀/Data/Monad[ /T=$_/A ]
+                                    , /m=∀/Data/Monad[ /T=$_/A ]
+                                    )
+                                )
+                            , []
+                            ) = /Data/bindap( Value /m -> TVArg /m = Value /m )
+                            ( /fn( Value /v -> /Data/Primitive/Integer ) ->
+                                ( /Data/Some
+                                    [ /T=/operator+
+                                        ( /r=/Data/Primitive/Integer
+                                        , /l=/Data/Primitive/Integer
+                                        )
+                                    ]
+                                    ( /value=/operator+
+                                        ( /r=/Data/Primitive/Integer
+                                        , /l=/Data/Primitive/Integer
+                                        )
+                                    ) + /Data/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                                ) = /bindWithLocal.$71c85d( Value /m -> TVArg /m = Value /m )
+                                ( Value /$71c85d-arg -> TVArg /v = Value /v )
+                            )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String = CStr "The bind continuation contains a local declaration ([doubled]) between the bind and the result." )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "The inline desugar could not express this (it was a desugar error); the helper desugar carries the" )
+        , /Catln/#md
+            ( Value /text -> /Data/String = CStr "whole continuation as a sub function, so its own local decls are preprocessed normally." )
+        ]
+    }

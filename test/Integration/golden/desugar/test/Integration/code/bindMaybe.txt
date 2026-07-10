@@ -10,10 +10,8 @@ Prgm
                     , omiDefs =
                         [ maybeBind
                             ( Value m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe = /Data/bindap( Value m= Value m )
-                            ( fn( Value v@Value x )= /Data/Some
-                                ( Value value= /operator+( Value /l= Value x )
-                                    ( Value /r= CInt 1 )
-                                )
+                            ( fn( Value v )= maybeBind.$71c85d( Value /m= Value /m )
+                                ( Value /$71c85d-arg= Value v )
                             )
                         ]
                     }
@@ -28,10 +26,27 @@ Prgm
                         [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
                     }
                 )
+            ,
+                ( "/maybeBind.$71c85d"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ maybeBind.$71c85d
+                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
+                            ( Value $71c85d-arg@Value x )= /Data/Some
+                            ( Value value= /operator+( Value /l= Value x )
+                                ( Value /r= CInt 1 )
+                            )
+                        ]
+                    }
+                )
             ]
         )
     , prgmCG =
         [ CGType
+        , CGType
         , CGType
         ]
     , prgmAnnots =

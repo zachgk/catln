@@ -22,11 +22,11 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ abs.$fb881e( Value /x )
+                        [ abs.$fb881e( Value /x -> /Data/Primitive/Integer )
                             ( Value /$fb881e-arg= Hole TopType HoleActive Nothing@Value x2 | /operator>=( Value /l= Value x )
                                 ( Value /r= CInt 0 )
                             )= Value x2
-                        , abs.$fb881e( Value /x )( Value /$fb881e-arg= Hole TopType HoleActive Nothing@Value x2 )= /operator*( Value /l= Value x2 )
+                        , abs.$fb881e( Value /x -> /Data/Primitive/Integer )( Value /$fb881e-arg= Hole TopType HoleActive Nothing@Value x2 )= /operator*( Value /l= Value x2 )
                             ( Value /r= /operator-
                                 ( Value /a= CInt 1 )
                             )

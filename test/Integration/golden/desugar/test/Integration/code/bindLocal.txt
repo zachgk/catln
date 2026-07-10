@@ -1,0 +1,74 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        ( fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )( Value /io -> /Catln/IO )= Value io ]
+                    }
+                )
+            ,
+                ( "/bindWithLocal.$71c85d.doubled"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ bindWithLocal.$71c85d.doubled
+                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value /x )= /operator+( Value /l= Value x )( Value /r= Value x )
+                        ]
+                    }
+                )
+            ,
+                ( "/bindWithLocal.$71c85d"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ bindWithLocal.$71c85d
+                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
+                            ( Value $71c85d-arg@Value x )= /Data/Some
+                            ( Value value= /operator+
+                                ( Value /l= bindWithLocal.$71c85d.doubled( Value /m= Value /m )( Value /x= Value /x ) )
+                                ( Value /r= CInt 1 )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/bindWithLocal"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ bindWithLocal
+                            ( Value m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe = /Data/bindap( Value m= Value m )
+                            ( fn( Value v )= bindWithLocal.$71c85d( Value /m= Value /m )
+                                ( Value /$71c85d-arg= Value v )
+                            )
+                        ]
+                    }
+                )
+            ]
+        )
+    , prgmCG =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr "The bind continuation contains a local declaration ([doubled]) between the bind and the result." )
+        , /Catln/#md
+            ( Value /text= CStr "The inline desugar could not express this (it was a desugar error); the helper desugar carries the" )
+        , /Catln/#md
+            ( Value /text= CStr "whole continuation as a sub function, so its own local decls are preprocessed normally." )
+        ]
+    }

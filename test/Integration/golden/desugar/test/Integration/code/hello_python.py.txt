@@ -304,7 +304,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ add.result( Value /x )( Value /y ) -> /Data/Primitive/Integer = /operator+( Value /l= Value x )( Value /r= Value y ) ]
+                        [ add.result( Value /x -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l= Value x )( Value /r= Value y ) ]
                     }
                 )
             ,

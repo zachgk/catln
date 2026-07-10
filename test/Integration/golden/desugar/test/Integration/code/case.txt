@@ -22,11 +22,11 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ abs.$433864-0( Value /x )
+                        [ abs.$433864-0( Value /x -> /Data/Primitive/Integer )
                             ( Value /$433864-arg= Hole TopType HoleActive Nothing@Value x2 | /operator>=( Value /l= Value x )
                                 ( Value /r= CInt 0 )
                             )= Value x2
-                        , abs.$433864-0( Value /x )
+                        , abs.$433864-0( Value /x -> /Data/Primitive/Integer )
                             ( Value /$433864-arg= Hole TopType HoleActive Nothing@Value x2 | /operator>=( Value /l= Value x )
                                 ( Value /r= CInt 0 )
                             )= abs.$433864-1( Value /x= Value /x )
@@ -53,7 +53,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ abs.$433864-1( Value /x )
+                        [ abs.$433864-1( Value /x -> /Data/Primitive/Integer )
                             ( Value /$433864-arg= Hole TopType HoleActive Nothing@Value x2 )= /operator*( Value /l= Value x2 )
                             ( Value /r= /operator-
                                 ( Value /a= CInt 1 )

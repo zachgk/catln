@@ -89,7 +89,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /f.innerVar( Value /io ) -> UnionType
+                        [ /f.innerVar( Value /io -> /Catln/IO ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
