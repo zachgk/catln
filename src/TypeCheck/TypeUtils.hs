@@ -288,38 +288,46 @@ mkReachesEnv env (Constraint maybeConOa stypeVaenv _) = do
   let feTypeEnv' = feReachesTypeEnv env
   return $ ReachesEnv (argTypeEnv <> feTypeEnv') (fmap snd vaenv) S.empty
 
-arrowConstrainUbs :: FEnv -> RConstraint -> Type -> Type -> TypeCheckResult (Type, Type, Maybe ReachesTree)
+arrowConstrainUbs :: FEnv -> RConstraint -> SType -> SType -> TypeCheckResult (Type, Type, Type, Maybe ReachesTree)
+-- Derives the destination actual from what the source reaches (the arrows applicable to it),
+-- bounded by the destination's requirement, and returns @(srcAct', srcReq', destAct', reaches)@.
 -- When the src is fully unresolved (Top) we cannot yet pick an arrow, so skip
 -- deriving the destination from the whole-universe reach. This avoids re-running
 -- the (expensive) universe 'reachesPartials' every epoch while the src stays Top;
 -- once the src resolves, the concrete-src derivation below supersedes it.
-arrowConstrainUbs _ _ PTopType dest = return (PTopType, dest, Nothing)
-arrowConstrainUbs _ _ src@(UnionType (Just _) _ _) dest = return (src, dest, Nothing)
-arrowConstrainUbs env con@Constraint{conVaenv} src@(TypeVar v _) dest = do
-  let src' = maybe PTopType (stypeAct . snd) (H.lookup v conVaenv)
-  case (src', dest) of
-    (PTopType, PTopType) -> return (src, src, Nothing)
+arrowConstrainUbs _ _ SType{stypeAct=PTopType, stypeReq=srcReq} SType{stypeAct=dest} = return (PTopType, srcReq, dest, Nothing)
+arrowConstrainUbs _ _ SType{stypeAct=src@(UnionType (Just _) _ _), stypeReq=srcReq} SType{stypeAct=dest} = return (src, srcReq, dest, Nothing)
+arrowConstrainUbs env con@Constraint{conVaenv} srcS@SType{stypeAct=TypeVar v _, stypeReq=srcReq} destS = do
+  let srcv = maybe PTopType (stypeAct . snd) (H.lookup v conVaenv)
+  case (srcv, stypeAct destS) of
+    (PTopType, PTopType) -> return (stypeAct srcS, srcReq, stypeAct srcS, Nothing)
     _ -> do
-      (_, cdest, destRT) <- arrowConstrainUbs env con src' dest
-      return (src, cdest, destRT)
-arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} src@(UnionType Nothing srcPartials consts) dest = do
+      (_, _, cdest, destRT) <- arrowConstrainUbs env con srcS{stypeAct=srcv} destS
+      return (stypeAct srcS, srcReq, cdest, destRT)
+arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=src@(UnionType Nothing srcPartials consts), stypeReq=srcReq} SType{stypeAct=destAct, stypeReq=destReq} = do
   reachesEnv <- mkReachesEnv env con
   let allPartials = splitUnionType srcPartials ++ map constantPartialType consts
   let reaches' = reachesPartials reachesEnv allPartials
   let vaenv' = fmap (stypeAct . snd) conVaenv
   let destByGraph = unionReachesTree feTypeEnv vaenv' reaches'
+  -- The destination the reach must satisfy is the meet of the destination's actual and required
+  -- bounds. Because the act⊆req invariant is only enforced at Decode, a use may narrow the required
+  -- bound below the actual; intersecting here cuts the reachable-destination union down to what is
+  -- required, letting the arrow drop non-matching definitions when several are available (e.g. an
+  -- Integer requirement picks the Integer-returning arrow out of an @Integer ∪ Float@ reach).
+  let destBound = intersectTypesEnv feTypeEnv vaenv' destAct destReq
   -- An arrow dest carrying a symbolic external var (an instance arm constructing
   -- @Some[/T=$_T]@) meets the accumulated dest's bound in the intersection's returned env,
   -- while the type keeps the bare var — discarding the env would WIDEN the stored dest (the
   -- free var reads as Top) and fail 'verifySchemeActLowers'. Resolve the newly recorded
   -- meets back into the result; still-unresolved vars stay symbolic ('substituteKeep', the
   -- 'mergeVarEnvVal' doctrine).
-  let (venv', dest') = intersectTypesWithVarEnv feTypeEnv vaenv' dest destByGraph
+  let (venv', dest') = intersectTypesWithVarEnv feTypeEnv vaenv' destBound destByGraph
   let newBindings = H.difference venv' vaenv'
   let resolveNew = if H.null newBindings then id else substituteKeep newBindings
   let destFinal = compactType feTypeEnv vaenv' (resolveNew dest')
   -- Return-type direction: a declaration output that is a bare declared variable is determined
   -- by the call site's destination — bind it onto the call partial (see 'outVarBoundSrc').
   let src' = outVarBoundSrc env destFinal src
-  -- TODO Maybe filter srcPartials based on those reaching dest
-  return (src', destFinal, Just reaches')
+  -- TODO Narrow the source requirement to the partials that actually reach the destination.
+  return (src', srcReq, destFinal, Just reaches')

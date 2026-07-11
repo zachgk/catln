@@ -193,8 +193,8 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (NoReturnArg i p@SType
       _                        -> posLeafs
     act' = UnionType (Just topData) posLeafs' consts
 computeConstraint _ con@(Constraint _ _ NoReturnArg{}) = (False, con)
-computeConstraint env con@(Constraint _ _ (ArrowTo i src dest)) = case arrowConstrainUbs env con (stypeAct src) (stypeAct dest) of
-    TypeCheckResult _ (src', dest', destRT') -> (False, con{conDat=ArrowTo i src{stypeAct=src'} dest{stypeAct=dest', stypeTree=destRT'}})
+computeConstraint env con@(Constraint _ _ (ArrowTo i src dest)) = case arrowConstrainUbs env con src dest of
+    TypeCheckResult _ (srcAct', srcReq', destAct', destRT') -> (False, con{conDat=ArrowTo i src{stypeAct=srcAct', stypeReq=srcReq'} dest{stypeAct=destAct', stypeTree=destRT'}})
     TypeCheckResE _ -> (True, con)
 computeConstraint env con@(Constraint _ vaenv (PropEq i (super, name) sub)) = (False, con{conVaenv=updateCOVarArgEnv vaenv' vaenv, conDat=PropEq i (super', name) sub'})
   where
