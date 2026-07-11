@@ -86,7 +86,7 @@ module(Data)
   > (/Data/reversed(lst= []) == [])
     >>> True
   # ## Sorting
-  sorted(lst -> /Data/List[$T -> /Data/Algebra/Ord]) -> /Data/List
+  sorted(lst -> /Data/List[$T -> /Data/Algebra/Ord]) -> /Data/List[$T -> /Data/Algebra/Ord]
     # [sorted] returns the items of an [Ord] list in ascending order using insertion sort: it sorts
       the [tail], then [insert]s the [head] into the sorted result. [insert] walks the already
       sorted list and places [x] before the first item it is not greater than; [insertStep] carries
@@ -103,10 +103,10 @@ module(Data)
     insert(x, lst= /Data/Cons[$T -> /Data/Algebra/Ord](head, tail))= insertStep(before= x.compareTo(other= head).isLessEq, x= x, head= head, tail= tail)
     insert(x= h, lst= sorted(lst= t))
 
-  > (/Data/sorted(lst= [3, 1, 2]) == [1, 2, 3])
-    >>> True
-  > (/Data/sorted(lst= [5, 4, 4, 1]) == [1, 4, 4, 5])
-    >>> True
+  > /Data/sorted(lst= [3, 1, 2])
+    >>> [1, 2, 3]
+  > /Data/sorted(lst= [5, 4, 4, 1])
+    >>> [1, 4, 4, 5]
   # ## Counting ranges
   range(stop -> Integer) -> /Data/List[$T -> Integer]
     # [range] builds the counting list [[0, 1, ..., stop - 1]]. It counts up from zero with
@@ -128,9 +128,11 @@ module(Data)
   > /Data/range(stop= 0)
     >>> []
   # ## Rendering as text
-  every(ConsList[$T -> /Data/ToString], isa= [/Data/ToString])
-    # A [ConsList] whose elements are [ToString] is itself [ToString]: it renders as its items,
-      each rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]].
+  every(/Data/List[$T -> /Data/ToString], isa= [/Data/ToString])
+    # A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
+      rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
+      [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
+      implement it.
 
   :/Data/Nil.toString= "[]"
   :/Data/Cons[$T -> /Data/ToString](head@h, tail@t).toString =

@@ -330,25 +330,22 @@ evalBuildPrgm input srcType destType prgm = do
 -- when the annotation cannot reach @DShow@ and so is not renderable.
 evalDShowAnnot :: Env -> [(PartialType, EObjArr)] -> EExpr -> CRes (Maybe Val)
 evalDShowAnnot env@Env{evTbEnv, evTypeEnv} os annot0
-  -- A @#print@'s @p@ argument is declared @-> DShow@, so it is renderable by construction. Eval it
-  -- directly rather than gating on its statically-inferred type: a computed @p@ (a function call,
-  -- @.toString@, @++@, …) is not run through full inference, so its type stays too loose to prove
-  -- it reaches @DShow@ and would otherwise be silently skipped. Non-@#print@ DShow annotations keep
-  -- the static gate, which correctly excludes annotations like @#test@/@#assert@/@#runtime@.
-  | isPrint =
-      -- Render @p@ through @/Data/toString@ first: a @ToString@ value (@Integer@, @Boolean@,
-      -- @ConsList@, @String@ — @String.toString@ is the identity) renders to a @String@, the only
-      -- form a print/result golden can check. @toString@ is built as a root over @p@ (not wrapped
-      -- in @dshow(s= p)@, whose identity arm would stop 'buildCallTree' from resolving a computed
-      -- @p@'s own arrows). If @p@ is a @DShow@ value that is not @ToString@ (a webdocs
-      -- visualization), the @toString@ build fails, and we fall back to rendering @p@ directly
-      -- toward @DShow@ — still displayable, just not golden-checkable.
-      case buildEval (toStringAnnot annot) of
-        CRes _ val -> return (Just val)
-        CErr _     -> do
-          tree <- toTExprDest evTbEnv os annot destM
-          val <- evalStateT (evalExpr tree) env
-          return (Just val)
+  | isPrint = do
+      -- A @#print@ displays a runtime VALUE. Evaluate @p@ to its concrete value (built toward
+      -- @DShow@, which certifies displayability and yields the value itself), then render THAT
+      -- value as text. Driving the render from the evaluated value — not @p@'s statically-inferred
+      -- type — is what lets a computed or interface-typed result print. @sorted([3,1,2])@ has
+      -- static type @/Data/List@ (the interface, which is not a @ToString@) and, being a function
+      -- call, cannot dispatch @toString@ on its own name; but its value is a concrete @ConsList@ of
+      -- @Integer@s, which renders as @[1, 2, 3]@. Building @toString(this= p)@ from @p@'s static
+      -- type instead only ever worked for string/scalar/literal @p@ and silently skipped the rest.
+      pVal <- evalToValue annot
+      -- Render the value as a @String@ through @/Data/toString@ when it is @ToString@ (the only
+      -- form a golden can check); a @DShow@ value that is not @ToString@ (a webdocs visualization)
+      -- keeps its raw value, so it is displayed but not golden-checked.
+      return $ Just $ case renderValString pVal of
+        CRes _ str@StrVal{} -> str
+        _                   -> pVal
   | reachesTo evTypeEnv H.empty (getExprType $ showAnnot annot) destType = do
       tree <- toTExprDest evTbEnv os (showAnnot annot) destM
       val <- evalStateT (evalExpr tree) env
@@ -365,9 +362,29 @@ evalDShowAnnot env@Env{evTbEnv, evTypeEnv} os annot0
       = p
       | otherwise = annot0
     showAnnot a = eVal "/Catln/Doc/dshow" `eApply ` ("/s", a)
-    -- @p.toString@, i.e. @toString(this= p)@ (the desugaring of the postfix method call).
-    toStringAnnot a = eVal "/Data/toString" `eApply` ("/this", a)
-    buildEval a = do
+    -- Render a value as text through @/Data/toString@. The value is reconstructed as a typed
+    -- constant expression ('valToEExpr', whose meta carries the concrete runtime type — e.g. a
+    -- @ConsList@ of @Integer@s), and @toString@ is built over that; the concrete receiver type
+    -- dispatches where @p@'s abstract static type could not. Fails (leaving the caller with the raw
+    -- value) for a value 'valToEExpr' cannot reconstruct or one that is not @ToString@.
+    renderValString v
+      | reconstructableVal v = do
+          let e = eVal "/Data/toString" `eApply` ("/this", valToEExpr v)
+          tree <- buildRoot evTbEnv e (getExprPartialType e) destType
+          evalStateT (evalExpr tree) env
+      | otherwise = CErr []
+    -- Whether 'valToEExpr' can rebuild this value (it errors on closures, IO, and other runtime-only
+    -- values, none of which are @ToString@).
+    reconstructableVal IntVal{}         = True
+    reconstructableVal FloatVal{}       = True
+    reconstructableVal StrVal{}         = True
+    reconstructableVal CharVal{}        = True
+    reconstructableVal (TupleVal _ as)  = all reconstructableVal (H.elems as)
+    reconstructableVal _                = False
+    -- Evaluate @p@ to its concrete value by building it toward @DShow@ (which certifies
+    -- displayability and yields the value itself). @p@ is declared @-> DShow@, so this resolves for
+    -- every valid print.
+    evalToValue a = do
       tree <- toTExprDest evTbEnv os a destM
       evalStateT (evalExpr tree) env
     destType = classPartial $ partialVal "/Catln/Doc/DShow"

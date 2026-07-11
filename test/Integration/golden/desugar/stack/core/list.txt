@@ -248,14 +248,14 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/sorted
-                            ( Value lst -> ∀/Data/List[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/List
+                            ( Value lst -> ∀/Data/List[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/List[ /T=∀/Data/Algebra/Ord ]
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/sorted( Value lst= Value Nil ) -> ∀/Data/List = Value /Data/Nil
+                        [ /Data/sorted( Value lst= Value Nil ) -> ∀/Data/List[ /T=∀/Data/Algebra/Ord ] = Value /Data/Nil
                         , /Data/sorted
-                            ( Value lst= /Data/Cons[ /T : ∀/Data/Algebra/Ord ]( Value head@Value h )( Value tail@Value t ) ) -> ∀/Data/List = insert( Value /t= Value /t )( Value /h= Value /h )( Value x= Value h )
+                            ( Value lst= /Data/Cons[ /T : ∀/Data/Algebra/Ord ]( Value head@Value h )( Value tail@Value t ) ) -> ∀/Data/List[ /T=∀/Data/Algebra/Ord ] = insert( Value /t= Value /t )( Value /h= Value /h )( Value x= Value h )
                             ( Value lst= sorted( Value lst= Value t ) )
                         ]
                     }
@@ -486,11 +486,13 @@ Prgm
             )
         , CGClass
             ( False
-            , /Data/ConsList
+            , /Data/List
             ,
-                [ ∀/Data/ConsList[ /T=∀/Data/ToString ] ]
-            , Just "A [ConsList] whose elements are [ToString] is itself [ToString]: it renders as its items,
-              each rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]."
+                [ ∀/Data/List[ /T=∀/Data/ToString ] ]
+            , Just "A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
+              rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
+              [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
+              implement it."
             )
         ]
     , prgmAnnots =
@@ -608,59 +610,34 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "## Sorting" )
         , /Catln/#print
-            ( Value /p= /operator==
-                ( Value /l= /Data/sorted
-                    ( Value lst= /Data/Cons
-                        ( Value /head= CInt 3 )
-                        ( Value /tail= /Data/Cons
-                            ( Value /head= CInt 1 )
-                            ( Value /tail= /Data/Cons
-                                ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
-                            )
-                        )
-                    )
-                )
-                ( Value /r= /Data/Cons
-                    ( Value /head= CInt 1 )
+            ( Value /p= /Data/sorted
+                ( Value lst= /Data/Cons
+                    ( Value /head= CInt 3 )
                     ( Value /tail= /Data/Cons
-                        ( Value /head= CInt 2 )
+                        ( Value /head= CInt 1 )
                         ( Value /tail= /Data/Cons
-                            ( Value /head= CInt 3 )( Value /tail= Value /Data/Nil )
+                            ( Value /head= CInt 2 )( Value /tail= Value /Data/Nil )
                         )
                     )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr "[1, 2, 3]" )
         , /Catln/#print
-            ( Value /p= /operator==
-                ( Value /l= /Data/sorted
-                    ( Value lst= /Data/Cons
-                        ( Value /head= CInt 5 )
-                        ( Value /tail= /Data/Cons
-                            ( Value /head= CInt 4 )
-                            ( Value /tail= /Data/Cons
-                                ( Value /head= CInt 4 )
-                                ( Value /tail= /Data/Cons
-                                    ( Value /head= CInt 1 )( Value /tail= Value /Data/Nil )
-                                )
-                            )
-                        )
-                    )
-                )
-                ( Value /r= /Data/Cons
-                    ( Value /head= CInt 1 )
+            ( Value /p= /Data/sorted
+                ( Value lst= /Data/Cons
+                    ( Value /head= CInt 5 )
                     ( Value /tail= /Data/Cons
                         ( Value /head= CInt 4 )
                         ( Value /tail= /Data/Cons
                             ( Value /head= CInt 4 )
                             ( Value /tail= /Data/Cons
-                                ( Value /head= CInt 5 )( Value /tail= Value /Data/Nil )
+                                ( Value /head= CInt 1 )( Value /tail= Value /Data/Nil )
                             )
                         )
                     )
                 )
             )
-            ( Value /result= CStr "True" )
+            ( Value /result= CStr "[1, 4, 4, 5]" )
         , /Catln/#md
             ( Value /text= CStr "## Counting ranges" )
         , /Catln/#print
@@ -676,8 +653,10 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr "## Rendering as text" )
         , /Catln/#md
-            ( Value /text= CStr "A [ConsList] whose elements are [ToString] is itself [ToString]: it renders as its items,
-            each rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]." )
+            ( Value /text= CStr "A [List] whose elements are [ToString] is itself [ToString]: it renders as its items, each
+            rendered in turn, separated by commas and wrapped in brackets — [[1, 2, 3]]. Declared on
+            [List] (like [length] and [sum]) so any list type renders; the [ConsList] arms below
+            implement it." )
         , /Catln/#print
             ( Value /p= /Data/Cons
                 ( Value /head= CInt 1 )
