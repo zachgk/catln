@@ -249,7 +249,13 @@ computeConstraint FEnv{feTypeEnv} con@(Constraint _ vaenv (ConWhere i base cond 
     tp'' = case maybeGetSingleton (stypeAct cond) of
       Just tp' -> intersectTypesEnv feTypeEnv vaenv' (stypeAct res) $ typeAddPreds (stypeAct base) (PredsOne $ PredExpr tp')
       Nothing -> stypeAct res
-    res' = res{stypeAct=tp''}
+    -- The where condition refines an upper bound on the result, so it applies to the required type
+    -- as well as the actual (both are upper bounds — see 'SType'); refine each side against its own
+    -- ambient var-env, keyed on the same condition value.
+    tpReq'' = case maybeGetSingleton (stypeAct cond) of
+      Just tp' -> intersectTypesEnv feTypeEnv (fmap (stypeReq . snd) vaenv) (stypeReq res) $ typeAddPreds (stypeReq base) (PredsOne $ PredExpr tp')
+      Nothing -> stypeReq res
+    res' = res{stypeAct=tp'', stypeReq=tpReq''}
 computeConstraint env@FEnv{feTypeEnv} con@(Constraint _ vaenv (UnionOf i parent children)) = (False, con{conVaenv=updateCOVarArgEnvAct vaenv' vaenv, conDat=UnionOf i parentST' children})
   where
     chAct = unionAllTypesWithEnv feTypeEnv H.empty $ filter (not . isTypeVar) $ map stypeAct children
