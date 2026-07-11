@@ -45,26 +45,12 @@ Prgm
                             ( /Data/pure
                                 [ /M=/Data/Cons[ /T=/Data/Primitive/Integer ]
                                     ( /head=/Data/Primitive/Integer
-                                    , /tail=UnionType
-                                        ( Just
-                                            ( PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=$_/T ]
-                                            , fromList []
-                                            )
-                                        , /Data/Nil
-                                        , []
-                                        )
+                                    , /tail=∀/Data/ConsList[ /T=$_/T ]
                                     )
                                 , /A=/Data/Primitive/Integer
                                 ]( /v=/Data/Primitive/Integer ) + /Data/Cons[ /T=/Data/Primitive/Integer ]
                                 ( /head=/Data/Primitive/Integer
-                                , /tail=UnionType
-                                    ( Just
-                                        ( PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ]
-                                        , fromList []
-                                        )
-                                    , /Data/Nil
-                                    , []
-                                    )
+                                , /tail=∀/Data/ConsList[ /T=/Data/Primitive/Integer ]
                                 )
                             ) = /Data/pure
                             ( EAppArg Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) )

@@ -71,8 +71,7 @@ Prgm
                                     , /i=/Data/Primitive/Integer
                                     ) + /Data/Nil + /Data/Cons[ /T=/Data/Primitive/Integer ]
                                     ( /head=/Data/Primitive/Integer
-                                    , /tail=
-                                        ( TopType | PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ] )
+                                    , /tail=∀/Data/ConsList[ /T=/Data/Primitive/Integer ]
                                     ) + /range./Data/rangeStep
                                     ( /stop=/Data/Primitive/Integer
                                     , /more=∀/Data/Primitive/Boolean
@@ -108,46 +107,19 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /sort_list
-                            ( Value /lst ->
-                                ( TopType | PredClass /Data/List[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List )
-                            ) -> UnionType
+                            ( Value /lst -> ∀/Data/List[ /T=∀/Data/Algebra/Ord ] ) -> UnionType
                             ( Just
                                 ( PredClass /Data/List
                                 , fromList []
                                 )
                             ,
-                                ( /Data/Nil + /Data/Cons[ /T=∀/Data/Algebra/Ord ]
-                                    ( /head=$/T
-                                    , /tail=UnionType
-                                        ( Just
-                                            ( PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                            , fromList []
-                                            )
-                                        ,
-                                            ( /Data/Nil + /Data/Cons[ /T=∀/Data/Algebra/Ord ]
-                                                ( /head=$/T
-                                                , /tail=
-                                                    ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] )
-                                                )
-                                            )
-                                        , []
-                                        )
-                                    ) + /Data/insertStep[ /T=∀/Data/Algebra/Ord ]
+                                ( /Data/Nil + /Data/insertStep[ /T=∀/Data/Algebra/Ord ]
                                     ( /head=∀/Data/Algebra/Ord
-                                    , /before=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Primitive/Boolean
-                                            , fromList []
-                                            )
-                                        , ( /Data/Primitive/True + /Data/Primitive/False )
-                                        , []
-                                        )
+                                    , /before=∀/Data/Primitive/Boolean
                                     , /x=∀/Data/Algebra/Ord
                                     , /tail=∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ]
                                     ) + /Data/sorted
-                                    ( /lst=
-                                        ( TopType | PredClass /Data/List[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List )
-                                    ) + /Data/insert[ /T=∀/Data/Algebra/Ord ]
+                                    ( /lst=∀/Data/List[ /T=∀/Data/Algebra/Ord ] ) + /Data/insert[ /T=∀/Data/Algebra/Ord ]
                                     ( /x=∀/Data/Algebra/Ord
                                     , /lst=∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ]
                                     )
@@ -248,28 +220,17 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /any_true
-                            ( Value /flags ->
-                                ( TopType | PredClass /Data/List[ /T=∀/Data/Primitive/Boolean ] && PredClass /Data/List )
-                            ) -> UnionType
+                            ( Value /flags -> ∀/Data/List[ /T=∀/Data/Primitive/Boolean ] ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
                                 )
                             ,
-                                ( /Data/Primitive/True + /operator||
-                                    ( /r=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Primitive/Boolean
-                                            , fromList []
-                                            )
-                                        , ( /Data/Primitive/True + /Data/Primitive/False )
-                                        , []
-                                        )
+                                ( /operator||
+                                    ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
-                                    ) + /Data/Primitive/False + /Data/any
-                                    ( /lst=
-                                        ( TopType | PredClass /Data/List[ /T=∀/Data/Primitive/Boolean ] && PredClass /Data/List )
-                                    )
+                                    ) + /Data/any
+                                    ( /lst=∀/Data/List[ /T=∀/Data/Primitive/Boolean ] )
                                 )
                             , []
                             ) = /any( Value /lst -> TVArg /flags = Value /flags )
@@ -452,13 +413,9 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /sum_list
-                            ( Value /nums ->
-                                ( TopType | PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Data/List )
-                            ) ->
+                            ( Value /nums -> ∀/Data/List[ /T=/Data/Primitive/Integer ] ) ->
                             ( /Data/sum
-                                ( /lst=
-                                    ( TopType | PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Data/List )
-                                ) + /operator+
+                                ( /lst=∀/Data/List[ /T=/Data/Primitive/Integer ] ) + /operator+
                                 ( /r=/Data/Primitive/Integer
                                 , /l=/Data/Primitive/Integer
                                 ) + /Data/Primitive/Integer
@@ -597,9 +554,6 @@ Prgm
                                             )
                                         )
                                     , /lst=∀/Data/ConsList
-                                    ) + /Data/Nil + /Data/Cons[ /T=$_/T ]
-                                    ( /head=$/T
-                                    , /tail=∀/Data/ConsList[ /T=$_/T ]
                                     ) + /Data/reversed( /lst=∀/Data/List )
                                 )
                             , []
@@ -615,28 +569,17 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /all_true
-                            ( Value /flags ->
-                                ( TopType | PredClass /Data/List[ /T=∀/Data/Primitive/Boolean ] && PredClass /Data/List )
-                            ) -> UnionType
+                            ( Value /flags -> ∀/Data/List[ /T=∀/Data/Primitive/Boolean ] ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
                                 )
                             ,
-                                ( /Data/Primitive/True + /operator&&
-                                    ( /r=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Primitive/Boolean
-                                            , fromList []
-                                            )
-                                        , ( /Data/Primitive/True + /Data/Primitive/False )
-                                        , []
-                                        )
+                                ( /operator&&
+                                    ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
-                                    ) + /Data/Primitive/False + /Data/all
-                                    ( /lst=
-                                        ( TopType | PredClass /Data/List[ /T=∀/Data/Primitive/Boolean ] && PredClass /Data/List )
-                                    )
+                                    ) + /Data/all
+                                    ( /lst=∀/Data/List[ /T=∀/Data/Primitive/Boolean ] )
                                 )
                             , []
                             ) = /all( Value /lst -> TVArg /flags = Value /flags )

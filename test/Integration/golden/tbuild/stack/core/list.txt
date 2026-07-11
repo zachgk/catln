@@ -20,17 +20,12 @@ Prgm
                                 ( PredClass /Data/ConsList
                                 , fromList []
                                 )
-                            ,
-                                ( /reversed./Data/reverseOnto
-                                    ( /acc=/Data/Cons[ /T=TopType ]
-                                        ( /head=TopType
-                                        , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                        )
-                                    , /lst=∀/Data/ConsList
-                                    ) + /Data/Cons[ /T=TopType ]
+                            , /reversed./Data/reverseOnto
+                                ( /acc=/Data/Cons[ /T=TopType ]
                                     ( /head=TopType
                                     , /tail=∀/Data/ConsList[ /T=$_/T ]
                                     )
+                                , /lst=∀/Data/ConsList
                                 )
                             , []
                             ) = /reversed./Data/reverseOnto
@@ -65,10 +60,7 @@ Prgm
                                     , /i=/Data/Primitive/Integer
                                     ) + /Data/Nil + /Data/Cons[ /T=/Data/Primitive/Integer ]
                                     ( /head=/Data/Primitive/Integer
-                                    , /tail=
-                                        ( TopType | PredClass /Data/ConsList
-                                            [ /T=( /Data/Primitive/Integer + /Data/Primitive/Float ) ] && PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ]
-                                        )
+                                    , /tail=∀/Data/ConsList[ /T=/Data/Primitive/Integer ]
                                     ) + /range./Data/rangeStep
                                     ( /stop=/Data/Primitive/Integer
                                     , /more=∀/Data/Primitive/Boolean
@@ -108,10 +100,7 @@ Prgm
                             ,
                                 ( /Data/Nil + /Data/Cons[ /T=/Data/Primitive/Integer ]
                                     ( /head=/Data/Primitive/Integer
-                                    , /tail=
-                                        ( TopType | PredClass /Data/ConsList
-                                            [ /T=( /Data/Primitive/Integer + /Data/Primitive/Float ) ] && PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ]
-                                        )
+                                    , /tail=∀/Data/ConsList[ /T=/Data/Primitive/Integer ]
                                     ) + /range./Data/rangeStep
                                     ( /stop=/Data/Primitive/Integer
                                     , /more=∀/Data/Primitive/Boolean
@@ -208,7 +197,7 @@ Prgm
                                     ( PredClass /Data/Algebra/Semigroup
                                     , fromList []
                                     )
-                                , ( /Data/String + /Data/Primitive/Integer )
+                                , /Data/Primitive/Integer
                                 , []
                                 ) =
                                 ( /operator++
@@ -217,7 +206,7 @@ Prgm
                                             ( PredClass /Data/Algebra/Semigroup
                                             , fromList []
                                             )
-                                        , ( /Data/String + /Data/Primitive/Integer )
+                                        , /Data/Primitive/Integer
                                         , []
                                         ) =
                                         ( /operator++
@@ -231,7 +220,7 @@ Prgm
                                                 ( PredClass /Data/Algebra/Semigroup
                                                 , fromList []
                                                 )
-                                            , ( /Data/String + /Data/Primitive/Integer )
+                                            , /Data/Primitive/Integer
                                             , []
                                             )
                                         )
@@ -247,7 +236,7 @@ Prgm
                                         ( PredClass /Data/Algebra/Semigroup
                                         , fromList []
                                         )
-                                    , ( /Data/String + /Data/Primitive/Integer )
+                                    , /Data/Primitive/Integer
                                     , []
                                     )
                                 )
@@ -360,7 +349,7 @@ Prgm
                                     ( PredClass /Data/Algebra/Semigroup
                                     , fromList []
                                     )
-                                , ( /Data/String + /Data/Primitive/Integer )
+                                , /Data/Primitive/Integer
                                 , []
                                 ) =
                                 ( /operator++
@@ -374,7 +363,7 @@ Prgm
                                         ( PredClass /Data/Algebra/Semigroup
                                         , fromList []
                                         )
-                                    , ( /Data/String + /Data/Primitive/Integer )
+                                    , /Data/Primitive/Integer
                                     , []
                                     )
                                 )
@@ -434,26 +423,12 @@ Prgm
                             ( /Data/pure
                                 [ /M=/Data/Cons[ /T=/Data/Primitive/Integer ]
                                     ( /head=/Data/Primitive/Integer
-                                    , /tail=UnionType
-                                        ( Just
-                                            ( PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=$_/T ]
-                                            , fromList []
-                                            )
-                                        , /Data/Nil
-                                        , []
-                                        )
+                                    , /tail=∀/Data/ConsList[ /T=$_/T ]
                                     )
                                 , /A=/Data/Primitive/Integer
                                 ]( /v=/Data/Primitive/Integer ) + /Data/Cons[ /T=/Data/Primitive/Integer ]
                                 ( /head=/Data/Primitive/Integer
-                                , /tail=UnionType
-                                    ( Just
-                                        ( PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ]
-                                        , fromList []
-                                        )
-                                    , /Data/Nil
-                                    , []
-                                    )
+                                , /tail=∀/Data/ConsList[ /T=/Data/Primitive/Integer ]
                                 )
                             ) = /Data/pure
                             ( EAppArg Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) )
@@ -473,19 +448,14 @@ Prgm
                                 ( PredClass /Data/ConsList
                                 , fromList []
                                 )
-                            ,
-                                ( /reversed./Data/reverseOnto
-                                    ( /acc=
-                                        ( /Data/Nil + /Data/Cons[ /T=TopType ]
-                                            ( /head=TopType
-                                            , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                            )
+                            , /reversed./Data/reverseOnto
+                                ( /acc=
+                                    ( /Data/Nil + /Data/Cons[ /T=TopType ]
+                                        ( /head=TopType
+                                        , /tail=∀/Data/ConsList[ /T=$_/T ]
                                         )
-                                    , /lst=∀/Data/ConsList
-                                    ) + /Data/Nil + /Data/Cons[ /T=TopType ]
-                                    ( /head=TopType
-                                    , /tail=∀/Data/ConsList[ /T=$_/T ]
                                     )
+                                , /lst=∀/Data/ConsList
                                 )
                             , []
                             ) = /reversed./Data/reverseOnto
@@ -587,32 +557,9 @@ Prgm
                                 , fromList []
                                 )
                             ,
-                                ( /Data/Cons[ /T=∀/Data/Algebra/Ord ]
-                                    ( /head=$/T
-                                    , /tail=UnionType
-                                        ( Just
-                                            ( PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=$_/T ]
-                                            , fromList []
-                                            )
-                                        ,
-                                            ( /Data/Nil + /Data/Cons[ /T=$_/T ]
-                                                ( /head=$/T
-                                                , /tail=
-                                                    ( TopType | PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=$_/T ] )
-                                                )
-                                            )
-                                        , []
-                                        )
-                                    ) + /Data/insertStep[ /T=∀/Data/Algebra/Ord ]
+                                ( /Data/insertStep[ /T=∀/Data/Algebra/Ord ]
                                     ( /head=∀/Data/Algebra/Ord
-                                    , /before=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Primitive/Boolean
-                                            , fromList []
-                                            )
-                                        , ( /Data/Primitive/True + /Data/Primitive/False )
-                                        , []
-                                        )
+                                    , /before=∀/Data/Primitive/Boolean
                                     , /x=∀/Data/Algebra/Ord
                                     , /tail=∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ]
                                     ) + /Data/insert[ /T=∀/Data/Algebra/Ord ]
@@ -668,38 +615,16 @@ Prgm
                                     ( EAppArg Value /v -> TVArg /head = ( Value /head ↦ TVArg /head ) ) ↦ TopType
                                 )
                             )
-                            ( EAppArg Value /tail -> UnionType
-                                ( Just
-                                    ( PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Functor[ /T=$_/A ]
-                                    , fromList []
-                                    )
-                                ,
-                                    ( /Data/Nil + /Data/Cons[ /T=$_/T ]
-                                        ( /head=$/T
-                                        , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                        )
-                                    )
-                                , []
-                                ) =
+                            ( EAppArg Value /tail ->
+                                ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Functor[ /T=$_/A ] ) =
                                 ( /Data/fmap
                                     ( EAppArg Value /lst -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) )
                                     ( EAppArg /fn( EAppArg Value /v )=
                                         ( /fn
                                             ( EAppArg Value /v -> TVArg /v = ( Value /v ↦ TVArg /v ) ) ↦ TopType
                                         )
-                                    ) ↦ UnionType
-                                    ( Just
-                                        ( PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Functor[ /T=$_/A ]
-                                        , fromList []
-                                        )
-                                    ,
-                                        ( /Data/Nil + /Data/Cons[ /T=$_/T ]
-                                            ( /head=$/T
-                                            , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                            )
-                                        )
-                                    , []
-                                    )
+                                    ) ↦
+                                    ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Functor[ /T=$_/A ] )
                                 )
                             )
                         ]
@@ -729,39 +654,16 @@ Prgm
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
                                 )
-                            ,
-                                ( /Data/Primitive/True + /operator||
-                                    ( /r=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Primitive/Boolean
-                                            , fromList []
-                                            )
-                                        , ( /Data/Primitive/True + /Data/Primitive/False )
-                                        , []
-                                        )
-                                    , /l=∀/Data/Primitive/Boolean
-                                    ) + /Data/Primitive/False
+                            , /operator||
+                                ( /r=∀/Data/Primitive/Boolean
+                                , /l=∀/Data/Primitive/Boolean
                                 )
                             , []
                             ) = /operator||
                             ( EAppArg Value /l -> TVArg /head = ( Value /head ↦ TVArg /head ) )
-                            ( EAppArg Value /r -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Primitive/Boolean
-                                    , fromList []
-                                    )
-                                , ( /Data/Primitive/True + /Data/Primitive/False )
-                                , []
-                                ) =
+                            ( EAppArg Value /r -> ∀/Data/Primitive/Boolean =
                                 ( /Data/any
-                                    ( EAppArg Value /lst -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) ) ↦ UnionType
-                                    ( Just
-                                        ( PredClass /Data/Primitive/Boolean
-                                        , fromList []
-                                        )
-                                    , ( /Data/Primitive/True + /Data/Primitive/False )
-                                    , []
-                                    )
+                                    ( EAppArg Value /lst -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) ) ↦ ∀/Data/Primitive/Boolean
                                 )
                             )
                         ]
@@ -820,52 +722,22 @@ Prgm
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
                                 )
-                            ,
-                                ( /Data/Primitive/True + /operator&&
-                                    ( /r=∀/Data/Primitive/Boolean
-                                    , /l=∀/Data/Primitive/Boolean
-                                    ) + /Data/Primitive/False
+                            , /operator&&
+                                ( /r=∀/Data/Primitive/Boolean
+                                , /l=∀/Data/Primitive/Boolean
                                 )
                             , []
                             ) = /operator&&
-                            ( EAppArg Value /l -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Primitive/Boolean
-                                    , fromList []
-                                    )
-                                , ( /Data/Primitive/True + /Data/Primitive/False )
-                                , []
-                                ) =
+                            ( EAppArg Value /l -> ∀/Data/Primitive/Boolean =
                                 ( /operator==
                                     ( EAppArg Value /l -> TVArg /ah = ( Value /ah ↦ TVArg /ah ) )
-                                    ( EAppArg Value /r -> TVArg /bh = ( Value /bh ↦ TVArg /bh ) ) ↦ UnionType
-                                    ( Just
-                                        ( PredClass /Data/Primitive/Boolean
-                                        , fromList []
-                                        )
-                                    , ( /Data/Primitive/True + /Data/Primitive/False )
-                                    , []
-                                    )
+                                    ( EAppArg Value /r -> TVArg /bh = ( Value /bh ↦ TVArg /bh ) ) ↦ ∀/Data/Primitive/Boolean
                                 )
                             )
-                            ( EAppArg Value /r -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Primitive/Boolean
-                                    , fromList []
-                                    )
-                                , ( /Data/Primitive/True + /Data/Primitive/False )
-                                , []
-                                ) =
+                            ( EAppArg Value /r -> ∀/Data/Primitive/Boolean =
                                 ( /Data/Algebra/equal
                                     ( EAppArg Value /other -> TVArg /bt = ( Value /bt ↦ TVArg /bt ) )
-                                    ( EAppArg Value /this -> TVArg /at = ( Value /at ↦ TVArg /at ) ) ↦ UnionType
-                                    ( Just
-                                        ( PredClass /Data/Primitive/Boolean
-                                        , fromList []
-                                        )
-                                    , ( /Data/Primitive/True + /Data/Primitive/False )
-                                    , []
-                                    )
+                                    ( EAppArg Value /this -> TVArg /at = ( Value /at ↦ TVArg /at ) ) ↦ ∀/Data/Primitive/Boolean
                                 )
                             )
                         ]
@@ -909,39 +781,16 @@ Prgm
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
                                 )
-                            ,
-                                ( /Data/Primitive/True + /operator&&
-                                    ( /r=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Primitive/Boolean
-                                            , fromList []
-                                            )
-                                        , ( /Data/Primitive/True + /Data/Primitive/False )
-                                        , []
-                                        )
-                                    , /l=∀/Data/Primitive/Boolean
-                                    ) + /Data/Primitive/False
+                            , /operator&&
+                                ( /r=∀/Data/Primitive/Boolean
+                                , /l=∀/Data/Primitive/Boolean
                                 )
                             , []
                             ) = /operator&&
                             ( EAppArg Value /l -> TVArg /head = ( Value /head ↦ TVArg /head ) )
-                            ( EAppArg Value /r -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Primitive/Boolean
-                                    , fromList []
-                                    )
-                                , ( /Data/Primitive/True + /Data/Primitive/False )
-                                , []
-                                ) =
+                            ( EAppArg Value /r -> ∀/Data/Primitive/Boolean =
                                 ( /Data/all
-                                    ( EAppArg Value /lst -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) ) ↦ UnionType
-                                    ( Just
-                                        ( PredClass /Data/Primitive/Boolean
-                                        , fromList []
-                                        )
-                                    , ( /Data/Primitive/True + /Data/Primitive/False )
-                                    , []
-                                    )
+                                    ( EAppArg Value /lst -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) ) ↦ ∀/Data/Primitive/Boolean
                                 )
                             )
                         ]
@@ -973,34 +822,11 @@ Prgm
                                 ( PredClass /Data/ConsList
                                 , fromList []
                                 )
-                            ,
-                                ( /Data/Cons[ /T=∀/Data/Algebra/Ord ]
-                                    ( /head=$/T
-                                    , /tail=UnionType
-                                        ( Just
-                                            ( PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=$_/T ]
-                                            , fromList []
-                                            )
-                                        , /Data/Cons[ /T=$_/T ]
-                                            ( /head=$/T
-                                            , /tail=
-                                                ( TopType | PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=$_/T ] )
-                                            )
-                                        , []
-                                        )
-                                    ) + /Data/insertStep[ /T=∀/Data/Algebra/Ord ]
-                                    ( /head=∀/Data/Algebra/Ord
-                                    , /before=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Primitive/Boolean
-                                            , fromList []
-                                            )
-                                        , ( /Data/Primitive/True + /Data/Primitive/False )
-                                        , []
-                                        )
-                                    , /x=∀/Data/Algebra/Ord
-                                    , /tail=∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    )
+                            , /Data/insertStep[ /T=∀/Data/Algebra/Ord ]
+                                ( /head=∀/Data/Algebra/Ord
+                                , /before=∀/Data/Primitive/Boolean
+                                , /x=∀/Data/Algebra/Ord
+                                , /tail=∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ]
                                 )
                             , []
                             ) = /Data/insertStep
@@ -1075,11 +901,9 @@ Prgm
                                 ( PredClass /Data/Algebra/Comparison
                                 , fromList []
                                 )
-                            ,
-                                ( /Data/Algebra/LessThan + /Data/Algebra/GreaterThan + /Data/consThen
-                                    ( /first=∀/Data/Algebra/Comparison
-                                    , /second=∀/Data/Algebra/Comparison
-                                    )
+                            , /Data/consThen
+                                ( /first=∀/Data/Algebra/Comparison
+                                , /second=∀/Data/Algebra/Comparison
                                 )
                             , []
                             ) = /Data/consThen
@@ -1306,14 +1130,7 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "## Universal and existential quantifiers" )
         , /Catln/#print
-            ( EAppArg Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) =
+            ( EAppArg Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) =
                 ( /Data/all
                     ( EAppArg Value /lst -> /Data/Cons[ /T=/Data/Primitive/True ]
                         ( /head=/Data/Primitive/True
@@ -1327,76 +1144,34 @@ Prgm
                             , /tail=/Data/Nil
                             ) = /Data/Cons( EAppArg Value /head -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
                         )
-                    ) ↦ UnionType
-                    ( Just
-                        ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                        , fromList []
-                        )
-                    , ( /Data/Primitive/True + /Data/Primitive/False )
-                    , []
-                    )
+                    ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "True" )
         , /Catln/#print
-            ( EAppArg Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) =
+            ( EAppArg Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) =
                 ( /Data/all
                     ( EAppArg Value /lst -> /Data/Cons[ /T=/Data/Primitive/False ]
                         ( /head=/Data/Primitive/False
                         , /tail=/Data/Nil
                         ) = /Data/Cons( EAppArg Value /head -> /Data/Primitive/False = Value /Data/Primitive/False )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
-                    ) ↦ UnionType
-                    ( Just
-                        ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                        , fromList []
-                        )
-                    , ( /Data/Primitive/True + /Data/Primitive/False )
-                    , []
-                    )
+                    ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "False" )
         , /Catln/#print
-            ( EAppArg Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) =
+            ( EAppArg Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) =
                 ( /Data/any
                     ( EAppArg Value /lst -> /Data/Cons[ /T=/Data/Primitive/True ]
                         ( /head=/Data/Primitive/True
                         , /tail=/Data/Nil
                         ) = /Data/Cons( EAppArg Value /head -> /Data/Primitive/True = Value /Data/Primitive/True )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
-                    ) ↦ UnionType
-                    ( Just
-                        ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                        , fromList []
-                        )
-                    , ( /Data/Primitive/True + /Data/Primitive/False )
-                    , []
-                    )
+                    ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "True" )
         , /Catln/#print
-            ( EAppArg Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) =
+            ( EAppArg Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) =
                 ( /Data/any
                     ( EAppArg Value /lst -> /Data/Cons[ /T=/Data/Primitive/False ]
                         ( /head=/Data/Primitive/False
@@ -1410,14 +1185,7 @@ Prgm
                             , /tail=/Data/Nil
                             ) = /Data/Cons( EAppArg Value /head -> /Data/Primitive/False = Value /Data/Primitive/False )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
                         )
-                    ) ↦ UnionType
-                    ( Just
-                        ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                        , fromList []
-                        )
-                    , ( /Data/Primitive/True + /Data/Primitive/False )
-                    , []
-                    )
+                    ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "False" )
@@ -1428,28 +1196,9 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "  rendered directly; the [Boolean] comparison then prints on its own." )
         , /Catln/#print
-            ( EAppArg Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) =
+            ( EAppArg Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) =
                 ( /operator==
-                    ( EAppArg Value /l -> UnionType
-                        ( Just
-                            ( PredClass /Data/Algebra/Eq && PredClass /Data/List
-                            , fromList []
-                            )
-                        ,
-                            ( /Data/Nil + /Data/Cons[ /T=∀/Data/Algebra/Eq ]
-                                ( /head=$/T
-                                , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                )
-                            )
-                        , []
-                        ) =
+                    ( EAppArg Value /l -> ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/List ) =
                         ( /Data/reversed
                             ( EAppArg Value /lst -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                                 ( /head=/Data/Primitive/Integer
@@ -1477,19 +1226,7 @@ Prgm
                                         ( EAppArg Value /head -> /Data/Primitive/Integer = 3 )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
                                     )
                                 )
-                            ) ↦ UnionType
-                            ( Just
-                                ( PredClass /Data/Algebra/Eq && PredClass /Data/List
-                                , fromList []
-                                )
-                            ,
-                                ( /Data/Nil + /Data/Cons[ /T=∀/Data/Algebra/Eq ]
-                                    ( /head=$/T
-                                    , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                    )
-                                )
-                            , []
-                            )
+                            ) ↦ ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/List )
                         )
                     )
                     ( EAppArg Value /r -> /Data/Cons[ /T=/Data/Primitive/Integer ]
@@ -1518,102 +1255,25 @@ Prgm
                                 ( EAppArg Value /head -> /Data/Primitive/Integer = 1 )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
                             )
                         )
-                    ) ↦ UnionType
-                    ( Just
-                        ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                        , fromList []
-                        )
-                    , ( /Data/Primitive/True + /Data/Primitive/False )
-                    , []
-                    )
+                    ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "True" )
         , /Catln/#print
-            ( EAppArg Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) =
+            ( EAppArg Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) =
                 ( /operator==
-                    ( EAppArg Value /l -> UnionType
-                        ( Just
-                            ( PredClass /Data/Algebra/Eq && PredClass /Data/List
-                            , fromList []
-                            )
-                        ,
-                            ( /Data/Nil + /Data/Cons[ /T=∀/Data/Algebra/Eq ]
-                                ( /head=$/T
-                                , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                )
-                            )
-                        , []
-                        ) =
-                        ( /Data/reversed( EAppArg Value /lst -> /Data/Nil = Value /Data/Nil ) ↦ UnionType
-                            ( Just
-                                ( PredClass /Data/Algebra/Eq && PredClass /Data/List
-                                , fromList []
-                                )
-                            ,
-                                ( /Data/Nil + /Data/Cons[ /T=∀/Data/Algebra/Eq ]
-                                    ( /head=$/T
-                                    , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                    )
-                                )
-                            , []
-                            )
-                        )
-                    )( EAppArg Value /r -> /Data/Nil = Value /Data/Nil ) ↦ UnionType
-                    ( Just
-                        ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                        , fromList []
-                        )
-                    , ( /Data/Primitive/True + /Data/Primitive/False )
-                    , []
-                    )
+                    ( EAppArg Value /l -> ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/List ) =
+                        ( /Data/reversed( EAppArg Value /lst -> /Data/Nil = Value /Data/Nil ) ↦ ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/List ) )
+                    )( EAppArg Value /r -> /Data/Nil = Value /Data/Nil ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "True" )
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "## Sorting" )
         , /Catln/#print
-            ( EAppArg Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) =
+            ( EAppArg Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) =
                 ( /operator==
-                    ( EAppArg Value /l -> UnionType
-                        ( Just
-                            ( PredClass /Data/Algebra/Eq && PredClass /Data/List
-                            , fromList []
-                            )
-                        , /Data/Cons
-                            [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/Algebra/Eq ) ]
-                            ( /head=$/T
-                            , /tail=UnionType
-                                ( Just
-                                    ( PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    , fromList []
-                                    )
-                                ,
-                                    ( /Data/Nil + /Data/Cons[ /T=∀/Data/Algebra/Ord ]
-                                        ( /head=$/T
-                                        , /tail=
-                                            ( TopType | PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] )
-                                        )
-                                    )
-                                , []
-                                )
-                            )
-                        , []
-                        ) =
+                    ( EAppArg Value /l -> ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/List ) =
                         ( /Data/sorted
                             ( EAppArg Value /lst -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                                 ( /head=/Data/Primitive/Integer
@@ -1641,31 +1301,7 @@ Prgm
                                         ( EAppArg Value /head -> /Data/Primitive/Integer = 2 )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
                                     )
                                 )
-                            ) ↦ UnionType
-                            ( Just
-                                ( PredClass /Data/Algebra/Eq && PredClass /Data/List
-                                , fromList []
-                                )
-                            , /Data/Cons
-                                [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/Algebra/Eq ) ]
-                                ( /head=$/T
-                                , /tail=UnionType
-                                    ( Just
-                                        ( PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                        , fromList []
-                                        )
-                                    ,
-                                        ( /Data/Nil + /Data/Cons[ /T=∀/Data/Algebra/Ord ]
-                                            ( /head=$/T
-                                            , /tail=
-                                                ( TopType | PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] )
-                                            )
-                                        )
-                                    , []
-                                    )
-                                )
-                            , []
-                            )
+                            ) ↦ ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/List )
                         )
                     )
                     ( EAppArg Value /r -> /Data/Cons[ /T=/Data/Primitive/Integer ]
@@ -1694,52 +1330,14 @@ Prgm
                                 ( EAppArg Value /head -> /Data/Primitive/Integer = 3 )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
                             )
                         )
-                    ) ↦ UnionType
-                    ( Just
-                        ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                        , fromList []
-                        )
-                    , ( /Data/Primitive/True + /Data/Primitive/False )
-                    , []
-                    )
+                    ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "True" )
         , /Catln/#print
-            ( EAppArg Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) =
+            ( EAppArg Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) =
                 ( /operator==
-                    ( EAppArg Value /l -> UnionType
-                        ( Just
-                            ( PredClass /Data/Algebra/Eq && PredClass /Data/List
-                            , fromList []
-                            )
-                        , /Data/Cons
-                            [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/Algebra/Eq ) ]
-                            ( /head=$/T
-                            , /tail=UnionType
-                                ( Just
-                                    ( PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    , fromList []
-                                    )
-                                ,
-                                    ( /Data/Nil + /Data/Cons[ /T=∀/Data/Algebra/Ord ]
-                                        ( /head=$/T
-                                        , /tail=
-                                            ( TopType | PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] )
-                                        )
-                                    )
-                                , []
-                                )
-                            )
-                        , []
-                        ) =
+                    ( EAppArg Value /l -> ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/List ) =
                         ( /Data/sorted
                             ( EAppArg Value /lst -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                                 ( /head=/Data/Primitive/Integer
@@ -1782,31 +1380,7 @@ Prgm
                                         )
                                     )
                                 )
-                            ) ↦ UnionType
-                            ( Just
-                                ( PredClass /Data/Algebra/Eq && PredClass /Data/List
-                                , fromList []
-                                )
-                            , /Data/Cons
-                                [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/Algebra/Eq ) ]
-                                ( /head=$/T
-                                , /tail=UnionType
-                                    ( Just
-                                        ( PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                        , fromList []
-                                        )
-                                    ,
-                                        ( /Data/Nil + /Data/Cons[ /T=∀/Data/Algebra/Ord ]
-                                            ( /head=$/T
-                                            , /tail=
-                                                ( TopType | PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] )
-                                            )
-                                        )
-                                    , []
-                                    )
-                                )
-                            , []
-                            )
+                            ) ↦ ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/List )
                         )
                     )
                     ( EAppArg Value /r -> /Data/Cons[ /T=/Data/Primitive/Integer ]
@@ -1850,14 +1424,7 @@ Prgm
                                 )
                             )
                         )
-                    ) ↦ UnionType
-                    ( Just
-                        ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                        , fromList []
-                        )
-                    , ( /Data/Primitive/True + /Data/Primitive/False )
-                    , []
-                    )
+                    ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "True" )
@@ -1951,19 +1518,11 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "for [fmap] calls on a [ConsList]." )
         , /Catln/#print
-            ( EAppArg Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) =
+            ( EAppArg Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) =
                 ( /operator==
                     ( EAppArg Value /l -> /Data/Cons[ /T=∀/Data/Algebra/Eq ]
                         ( /head=$/T
-                        , /tail=
-                            ( TopType | PredClass /Data/ConsList[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Eq ] )
+                        , /tail=∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ]
                         ) =
                         ( /Data/fmap
                             ( EAppArg Value /lst -> /Data/Cons[ /T=/Data/Primitive/Integer ]
@@ -2005,8 +1564,7 @@ Prgm
                                 )
                             ) ↦ /Data/Cons[ /T=∀/Data/Algebra/Eq ]
                             ( /head=$/T
-                            , /tail=
-                                ( TopType | PredClass /Data/ConsList[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Eq ] )
+                            , /tail=∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ]
                             )
                         )
                     )
@@ -2036,14 +1594,7 @@ Prgm
                                 ( EAppArg Value /head -> /Data/Primitive/Integer = 4 )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
                             )
                         )
-                    ) ↦ UnionType
-                    ( Just
-                        ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                        , fromList []
-                        )
-                    , ( /Data/Primitive/True + /Data/Primitive/False )
-                    , []
-                    )
+                    ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "True" )
@@ -2060,14 +1611,7 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "  not. The element [Eq] dispatch is generic, so lists of [Integer], [Boolean], etc. all work." )
         , /Catln/#print
-            ( EAppArg Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) =
+            ( EAppArg Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) =
                 ( /operator==
                     ( EAppArg Value /l -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer
@@ -2098,26 +1642,12 @@ Prgm
                             ) = /Data/Cons
                             ( EAppArg Value /head -> /Data/Primitive/Integer = 2 )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
                         )
-                    ) ↦ UnionType
-                    ( Just
-                        ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                        , fromList []
-                        )
-                    , ( /Data/Primitive/True + /Data/Primitive/False )
-                    , []
-                    )
+                    ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "True" )
         , /Catln/#print
-            ( EAppArg Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) =
+            ( EAppArg Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) =
                 ( /operator==
                     ( EAppArg Value /l -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer
@@ -2148,26 +1678,12 @@ Prgm
                             ) = /Data/Cons
                             ( EAppArg Value /head -> /Data/Primitive/Integer = 3 )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
                         )
-                    ) ↦ UnionType
-                    ( Just
-                        ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                        , fromList []
-                        )
-                    , ( /Data/Primitive/True + /Data/Primitive/False )
-                    , []
-                    )
+                    ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "False" )
         , /Catln/#print
-            ( EAppArg Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) =
+            ( EAppArg Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) =
                 ( /operator==
                     ( EAppArg Value /l -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer
@@ -2189,14 +1705,7 @@ Prgm
                         , /tail=/Data/Nil
                         ) = /Data/Cons
                         ( EAppArg Value /head -> /Data/Primitive/Integer = 1 )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
-                    ) ↦ UnionType
-                    ( Just
-                        ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                        , fromList []
-                        )
-                    , ( /Data/Primitive/True + /Data/Primitive/False )
-                    , []
-                    )
+                    ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "False" )
@@ -2211,14 +1720,7 @@ Prgm
         , /Catln/#md
             ( EAppArg Value /text -> /Data/String = "  before its extension ([Nil] before any [Cons])." )
         , /Catln/#print
-            ( EAppArg Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) =
+            ( EAppArg Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) =
                 ( /Data/Algebra/isLess
                     ( EAppArg Value /this -> ∀/Data/Algebra/Comparison =
                         ( /Data/Algebra/compareTo
@@ -2235,26 +1737,12 @@ Prgm
                                 ( EAppArg Value /head -> /Data/Primitive/Integer = 1 )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
                             ) ↦ ∀/Data/Algebra/Comparison
                         )
-                    ) ↦ UnionType
-                    ( Just
-                        ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                        , fromList []
-                        )
-                    , ( /Data/Primitive/True + /Data/Primitive/False )
-                    , []
-                    )
+                    ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "True" )
         , /Catln/#print
-            ( EAppArg Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) =
+            ( EAppArg Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) =
                 ( /Data/Algebra/isLess
                     ( EAppArg Value /this -> ∀/Data/Algebra/Comparison =
                         ( /Data/Algebra/compareTo
@@ -2280,26 +1768,12 @@ Prgm
                                 ( EAppArg Value /head -> /Data/Primitive/Integer = 1 )( EAppArg Value /tail -> /Data/Nil = Value /Data/Nil )
                             ) ↦ ∀/Data/Algebra/Comparison
                         )
-                    ) ↦ UnionType
-                    ( Just
-                        ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                        , fromList []
-                        )
-                    , ( /Data/Primitive/True + /Data/Primitive/False )
-                    , []
-                    )
+                    ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "True" )
         , /Catln/#print
-            ( EAppArg Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) =
+            ( EAppArg Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) =
                 ( /Data/Algebra/isEq
                     ( EAppArg Value /this -> ∀/Data/Algebra/Comparison =
                         ( /Data/Algebra/compareTo
@@ -2334,14 +1808,7 @@ Prgm
                                 )
                             ) ↦ ∀/Data/Algebra/Comparison
                         )
-                    ) ↦ UnionType
-                    ( Just
-                        ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                        , fromList []
-                        )
-                    , ( /Data/Primitive/True + /Data/Primitive/False )
-                    , []
-                    )
+                    ) ↦ ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean )
                 )
             )
             ( EAppArg Value /result -> /Data/String = "True" )

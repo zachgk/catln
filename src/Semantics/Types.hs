@@ -543,6 +543,42 @@ mkAnd ps = case uniq ps of
   [p] -> p
   ps' -> PredsAnd ps'
 
+-- | Conjoin two top-component predicate formulae, UNIFYING same-class atoms instead of
+-- accumulating them. When both sides assert @PredClass C[..]@ (or @PredRel C[..]@) for the same
+-- class @C@, the two class 'PartialType's are intersected (threading the var env) into one atom:
+-- e.g. @PredClass C[/T=∀Ord] ∧ PredClass C[/T=$_/T]@ becomes @PredClass C[/T=$_/T]@ with @$_/T ↦
+-- ∀Ord@ recorded in the returned env. Unlike a post-hoc 'compactType' (which is 'Type -> Type' and
+-- cannot record the binding, so it would have to DROP a bound), this keeps every bound: the tighter
+-- one survives as a monotonic var binding rather than a lost conjunct. Without it a recursive
+-- parameterized type grows a redundant same-class conjunct each epoch and never converges. A pair
+-- that does not intersect to a single partial is left as separate conjuncts.
+mergePredsAnd :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicates -> TypePredicates -> (TypeVarArgEnv, TypePredicates)
+mergePredsAnd typeEnv vaenv0 ps1 ps2 = (vaenvF, rebuild keptF)
+  where
+    (vaenvF, keptF) = foldl step (vaenv0, []) (conjOf ps1 ++ conjOf ps2)
+    conjOf (PredsAnd xs) = concatMap conjOf xs
+    conjOf PredsNone     = []
+    conjOf p             = [p]
+    atomKC (PredsOne (PredClass c)) = Just (0 :: Int, c)
+    atomKC (PredsOne (PredRel   r)) = Just (1 :: Int, r)
+    atomKC _                        = Nothing
+    mkAtom 0 p = PredsOne (PredClass p)
+    mkAtom _ p = PredsOne (PredRel   p)
+    step (v, kept) atom = case atomKC atom of
+      Nothing     -> (v, kept ++ [atom])
+      Just (k, p) -> case break (sameKN k p) kept of
+        (pre, ex:post) | Just (_, ep) <- atomKC ex ->
+          case intersectPartials typeEnv v ep p of
+            (v', [m]) -> (v', pre ++ mkAtom k m : post)
+            _         -> (v, kept ++ [atom])
+        _ -> (v, kept ++ [atom])
+    sameKN k p a = case atomKC a of
+      Just (k', p') -> k == k' && ptName p' == ptName p
+      Nothing       -> False
+    rebuild []  = PredsNone
+    rebuild [p] = p
+    rebuild xs  = mkAnd xs
+
 predsNot :: TypePredicates -> TypePredicates
 predsNot (PredsNot p) = p
 predsNot PredsNone    = PredsNone
@@ -1574,9 +1610,18 @@ classSatCandidates typeEnv vaenv gatePos PartialType{ptName, ptVars=classVarsP} 
           Just v  -> candsOfType v
           Nothing -> Nothing
         candsOfMember (TypeVar (TVArg _) _) = Nothing
-        candsOfMember (UnionType Nothing p []) =
-          Just (map (CandLeaf . completeLeaf . mapClassPartial) (splitUnionType p))
+        -- A member partial whose name is itself a CLASS (e.g. @ConsList[/T=Eq]@ as a member of @Eq@)
+        -- is emitted as a class-predicate goal, not a bare leaf: 'partialCoversSat' requires an exact
+        -- name match, so a leaf named @ConsList@ never covers a value shaped as one of its
+        -- CONSTRUCTORS (@Nil@/@Cons@). Routing it through 'satGoal' expands the class to its
+        -- constructors (with the member's element bound applied), so e.g. @Nil@ is recognised as an
+        -- @Eq@ (an empty list vacuously satisfies the @[/T=Eq]@ element bound). A non-class member
+        -- (a concrete data type) stays a completed leaf.
+        candsOfMember (UnionType Nothing p []) = Just (map mkMemberCand (splitUnionType p))
         candsOfMember t = candsOfType t
+        mkMemberCand tp@PartialType{ptName=tpNm}
+          | H.member tpNm (scClasses (teSatCache typeEnv)) = CandGoal (SatGoal [SatClass (mapClassPartial tp)] [])
+          | otherwise = CandLeaf (completeLeaf (mapClassPartial tp))
         candsOfType t = map CandGoal <$> typeSatDNF vaenv t
         -- Substitute only informative bindings: an uninstantiated parameter (bound to
         -- 'PTopType', the declaration default) leaves the member's own type variable in
@@ -1600,6 +1645,30 @@ classSatCandidates typeEnv vaenv gatePos PartialType{ptName, ptVars=classVarsP} 
             _     -> tp
           _ -> tp
     _ -> Nothing
+
+-- | Interprets a concrete witness shape under its data declaration. Every actual value of a
+-- data type satisfies the declaration's field types (a @Cons@ value's @tail@ IS a @ConsList@
+-- by construction), so a ⊤-valued declared field carries no constraint of its own but the
+-- value universe does. Substitute the declared field type (with the shape's own informative
+-- param bindings applied) before the engine reasons about what the shape can escape; taking a
+-- ⊤ field at face value manufactures escape witnesses no real value has (e.g.
+-- @Cons(head=⊤, tail=⊤)@ "escaping" @∀ConsList@ through a non-list tail, wrongly refuting
+-- @Cons(head=⊤, tail=⊤) ⊆ ∀ConsList@). Only /present/ ⊤-valued fields are tightened — the
+-- value-set is unchanged, so this is a sound normalization for witness candidates (the
+-- covering sup side must keep its authored ⊤ fields: narrowing a sup could flip a proven
+-- cover to unproven). A bare argless partial is left alone: it may denote the unapplied
+-- constructor (an arg-powerset partial application), whose value set has no fields at all.
+satValueShape :: TypeGraph tg => TypeEnv tg -> PartialType -> PartialType
+satValueShape typeEnv p@PartialType{ptName, ptVars, ptArgs}
+  | H.null ptArgs = p
+  | otherwise = case [dArgs | PartialType{ptArgs=dArgs} <- typeGraphData typeEnv ptName, not (H.null dArgs)] of
+      (dArgs:_) -> p{ptArgs = H.mapWithKey (tightenField dArgs) ptArgs}
+        where
+          tightenField dArgs' k PTopType | Just ft <- H.lookup k dArgs' = interpretField ft
+          tightenField _ _ t = t
+          interpretField = substituteVarsWithVarEnv informativeVars
+          informativeVars = H.filter (/= PTopType) ptVars
+      _ -> p
 
 -- | Global views of a 'TypeEnv''s class graph and name universe used by the engine's hot
 -- query paths, built strictly at 'TypeEnv' construction by 'mkSatCache': the class-name
@@ -1758,10 +1827,18 @@ satAdmits typeEnv vaenv gatePos hyps m atom = case atom of
 -- (an escape is only denied when cover is proven). The shape is first split into its atomic
 -- pieces (per union-valued var/arg component - 'splitPartialByUnionVarArgs'), since each piece
 -- may be covered by a /different/ member of the atom; a cover need not be single-member.
+-- A whole-shape cover ('satEscapesAtomic' on the unsplit shape) is checked first: cover of
+-- the whole denies escape for every piece, and stays precise where the piece split would
+-- exceed 'satDNFCap' (e.g. an applied operator whose arg slots each carry a member union) —
+-- an oversized split otherwise reads as a conservative escape, which the coverage decisions
+-- ('typeCoveredSymbolic') would surface as a definitive not-covered.
 satEscapes :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Bool -> SatHyps -> PartialType -> SatAtom -> Bool
-satEscapes typeEnv vaenv gatePos hyps m0 atom = case splitPartialByUnionVarArgs m0 of
-  pieces | length pieces > satDNFCap -> True -- oversized split: conservative
-  pieces -> any (\m -> satEscapesAtomic typeEnv vaenv gatePos hyps m atom) pieces
+satEscapes typeEnv vaenv gatePos hyps m0 atom
+  | not (satEscapesAtomic typeEnv vaenv gatePos hyps m0 atom) = False
+  | otherwise = case splitPartialByUnionVarArgs m0 of
+      [_] -> True -- no union-valued components: the whole-shape answer is final
+      pieces | length pieces > satDNFCap -> True -- oversized split: conservative
+      pieces -> any (\m -> satEscapesAtomic typeEnv vaenv gatePos hyps m atom) pieces
 
 -- | 'satEscapes' for a shape with no union-valued vars/args.
 satEscapesAtomic :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> Bool -> SatHyps -> PartialType -> SatAtom -> Bool
@@ -1823,7 +1900,9 @@ satGoal typeEnv vaenv gatePos hyps goal0
     isClass SatClass{} = True
     isClass _          = False
 
-    genCandidates (SatLeafs ls) = Just (map CandLeaf ls)
+    -- Witness candidates are interpreted under their data declarations ('satValueShape'): the
+    -- escape checks below must reason over real values, not the leaf's face-value ⊤ fields.
+    genCandidates (SatLeafs ls) = Just (map (CandLeaf . satValueShape typeEnv) ls)
     genCandidates (SatClass c)  = classSatCandidates typeEnv vaenv gatePos c
     -- A relation's type-route candidates come from the name universe ('scTypeNames'); an env
     -- without one (e.g. the reduced env of the class-graph 'Semigroup' merge) makes the
@@ -2422,7 +2501,7 @@ compactType typeEnv vaenv (UnionType (Just (preds, _)) pos _)
 -- parameterized-class pair — the difference @C[a] − C[b]@ when @a ⊆ b@ (which otherwise leaves an
 -- unreduced @C[a] ∧ ¬C[b]@ residue). Gated on a present negation so the common all-positive
 -- conjunctions never pay the 'predImplies' pass.
-compactType typeEnv vaenv (UnionType (Just (preds@(PredsAnd ps), _)) pos _)
+compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, _)) pos _)
   | any isNeg ps
   , or [ predImplies typeEnv vaenv (mkAnd rest) q | (PredsNot q, rest) <- picks ps ] =
       compactType typeEnv vaenv (UnionType Nothing pos [])
@@ -2431,7 +2510,7 @@ compactType typeEnv vaenv (UnionType (Just (preds@(PredsAnd ps), _)) pos _)
     isNeg _            = False
     -- each element paired with the list of all the others
     picks = go []
-      where go _   []     = []
+      where go _   []       = []
             go pre (x:post) = (x, pre ++ post) : go (pre ++ [x]) post
 -- Top component with empty neg and non-trivial preds
 compactType typeEnv vaenv t@(UnionType (Just (preds, negPartials)) posLeafs [])
@@ -2478,6 +2557,24 @@ compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials)) posLeafs 
     isDominatedByPredClass (PredsOne (PredRel r)) =
       any (\c -> relativeNameMatches (ptName r) (ptName c)) predClassAtoms
     isDominatedByPredClass _                      = False
+-- PredsAnd: drop a bare PredClass conjunct that is a declared SUPERCLASS of a bare sibling
+-- (@hasClass Sub ⟹ hasClass Super@, so @Sub ∧ Super = Sub@) - e.g. @PredClass Ord ∧ PredClass Eq →
+-- PredClass Ord@ since @Ord isa Eq@. Uses the fast class-graph 'classDeclaredSubclassOf' (not
+-- satDecide). Restricted to arg/var-free (bare) class atoms so no element bound is lost (a
+-- parameterized @Ord[X] ∧ Eq[Y]@ would need @X ⊆ Y@, which the name-only edge does not check).
+-- Without this an element bound like @Cons[/T=(Ord∧Eq)]@ stays un-canonical and re-derives each
+-- epoch, blocking convergence. Positive-only complement of the negation-gated clause below.
+compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials)) posLeafs cs)
+  | length bareClasses >= 2
+  , let simplified = filter (not . isSuperclassOfSibling) ps
+  , length simplified < length ps =
+      compactType typeEnv vaenv $ UnionType (Just (mkAnd simplified, negPartials)) posLeafs cs
+  where
+    bareClasses = [c | PredsOne (PredClass c) <- ps, H.null (ptVars c), H.null (ptArgs c)]
+    isSuperclassOfSibling (PredsOne (PredClass q))
+      | H.null (ptVars q), H.null (ptArgs q) =
+          any (\p -> ptName p /= ptName q && classDeclaredSubclassOf typeEnv (ptName p) (ptName q)) bareClasses
+    isSuperclassOfSibling _ = False
 -- PredsAnd: drop a conjunct implied by a sibling (@p ∧ q = p@ when @p ⟹ q@), so a disjunction
 -- conjunct absorbed by a stronger sibling collapses - e.g. with @Ord isa Eq@,
 -- @PredClass Eq ∧ (PredRel Eq ∨ PredRel Ord) → PredClass Eq@ (the element bound a parameterized
@@ -2503,13 +2600,35 @@ compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials)) posLeafs 
         go kept (q:rest)
           | any (\p -> p /= q && cheapImplies p q) (kept ++ rest) = go kept rest
           | otherwise = go (q:kept) rest
+-- Mixed Just-top + pos: absorb a positive leaf that the predicate region already covers
+-- (@L ⊆ ∀preds − negs@ makes @L@ redundant in @(∀preds − negs) ∪ pos@). A recursive class
+-- re-expanded during solving accretes exactly this form one level deeper each epoch
+-- (@∀ConsList ∪ Nil ∪ Cons(tail=∀ConsList)@); absorbing restores the finite predicate form so
+-- the solver converges — the mixed-form complement of 'foldRecursiveType', which folds pure
+-- positive unions. Candidates are name-gated to the declared constituents of the predicate's
+-- class atoms so unrelated leaves never pay the subtype check.
+compactType typeEnv vaenv (UnionType (Just topData@(preds, _)) pos cs)
+  | not (H.null pos)
+  , not (S.null constituentNames)
+  , ((_:_), kept) <- L.partition absorbable (splitUnionType pos) =
+      compactType typeEnv vaenv $ UnionType (Just topData) (joinUnionType kept) cs
+  where
+    constituentNames = case tryPredsToList preds of
+      Just ps -> S.unions [classConstituentNames typeEnv (ptName c) | PredClass c <- ps]
+      Nothing -> S.empty
+    absorbable l = S.member (makeAbsoluteName (ptName l)) constituentNames
+                   && isSubtypeOfWithEnv typeEnv vaenv (singletonType l) (UnionType (Just topData) H.empty [])
 -- Top component catch-all (includes PTopType and TopType np PredsNone); preserve constants.
 -- Also compact the pos component for structural canonicalization (ensures union commutativity
 -- holds structurally: different union orderings that mix Just and Nothing forms produce
 -- equivalent pos components after compaction).
 compactType typeEnv vaenv (UnionType (Just topData) pos cs)
   | not (H.null pos) =
-      let pos' = compactPartialLeafs typeEnv vaenv pos
+      -- Recurse into each leaf's nested arg/var types (as the Nothing-pos branch does), so a nested
+      -- bound like @Cons[/T=(Ord∧Eq)]@ canonicalises (→ @Cons[/T=∀Ord]@) instead of re-deriving an
+      -- un-reduced form each epoch and blocking convergence.
+      let argCompacted = joinUnionType $ map (compactPartialArgs typeEnv vaenv) $ splitUnionType pos
+          pos' = compactPartialLeafs typeEnv vaenv argCompacted
       in UnionType (Just topData) pos' cs
 compactType _ _ t@(UnionType (Just _) _ _) = t
 -- TypeVar: unchanged
@@ -2832,7 +2951,8 @@ intersectTypesWithVarEnv typeEnv vaenv t1 t2@(UnionType (Just _) pos _)
   | not (H.null pos) = intersectTypesWithVarEnv typeEnv vaenv t2 t1
 -- Top ∩ Top → union excluded sets, predicates, and constants
 intersectTypesWithVarEnv typeEnv vaenv (UnionType (Just (ps1, np1)) (H.null -> True) cs1) (UnionType (Just (ps2, np2)) (H.null -> True) cs2) =
-  (vaenv, compactType typeEnv vaenv $ UnionType (Just (predsAnd ps1 ps2, unionPartialLeafs [np1, np2])) H.empty (L.nub $ cs1 ++ cs2))
+  let (vaenv', preds') = mergePredsAnd typeEnv vaenv ps1 ps2
+  in (vaenv', compactType typeEnv vaenv' $ UnionType (Just (preds', unionPartialLeafs [np1, np2])) H.empty (L.nub $ cs1 ++ cs2))
 intersectTypesWithVarEnv _ vaenv t1 t2 | t1 == t2 = (vaenv, t1)
 -- TypeVar: constrain in vaenv.  Treats 'TVVar' and 'TVArg' uniformly: both look up in vaenv,
 -- and an unknown key is recorded as a fresh constraint.  TVInt/TVExt is informational here:

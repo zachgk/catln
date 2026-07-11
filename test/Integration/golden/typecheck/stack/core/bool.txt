@@ -50,11 +50,9 @@ Prgm
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
                                 )
-                            ,
-                                ( /Data/Primitive/True + /Data/Primitive/False + /Data/Primitive/boolEq
-                                    ( /r=∀/Data/Primitive/Boolean
-                                    , /l=∀/Data/Primitive/Boolean
-                                    )
+                            , /Data/Primitive/boolEq
+                                ( /r=∀/Data/Primitive/Boolean
+                                , /l=∀/Data/Primitive/Boolean
                                 )
                             , []
                             ) = /Data/Primitive/boolEq( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
@@ -158,12 +156,12 @@ Prgm
                                 , fromList []
                                 )
                             ,
-                                ( /Data/Primitive/True + /Data/Algebra/rel
+                                ( /Data/Algebra/rel
                                     ( /this=
                                         ( /Data/Algebra/AllEqv[ /T=/Data/Primitive/Integer ] + /Data/Primitive/FloatOrdering[ /T=/Data/Primitive/Float ] + /Data/Primitive/IntOrdering[ /T=/Data/Primitive/Integer ] + /Data/Primitive/BoolEqv[ /T=∀/Data/Primitive/Boolean ] + /Data/Algebra/IntEqExample[ /T=/Data/Primitive/Integer ] + /Data/StrEqv[ /T=/Data/String ] )
                                     , /a=∀/Data/Primitive/Boolean
                                     , /b=∀/Data/Algebra/Eq
-                                    ) + /Data/Primitive/False + /Data/Primitive/boolEq
+                                    ) + /Data/Primitive/boolEq
                                     ( /r=∀/Data/Primitive/Boolean
                                     , /l=∀/Data/Primitive/Boolean
                                     ) + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison )

@@ -20,17 +20,12 @@ Prgm
                                 ( PredClass /Data/ConsList
                                 , fromList []
                                 )
-                            ,
-                                ( /reversed./Data/reverseOnto
-                                    ( /acc=/Data/Cons[ /T=TopType ]
-                                        ( /head=TopType
-                                        , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                        )
-                                    , /lst=∀/Data/ConsList
-                                    ) + /Data/Cons[ /T=TopType ]
+                            , /reversed./Data/reverseOnto
+                                ( /acc=/Data/Cons[ /T=TopType ]
                                     ( /head=TopType
                                     , /tail=∀/Data/ConsList[ /T=$_/T ]
                                     )
+                                , /lst=∀/Data/ConsList
                                 )
                             , []
                             ) = /reversed./Data/reverseOnto( Value /lst -> TVArg /tail = Value /tail )
@@ -62,10 +57,7 @@ Prgm
                                     , /i=/Data/Primitive/Integer
                                     ) + /Data/Nil + /Data/Cons[ /T=/Data/Primitive/Integer ]
                                     ( /head=/Data/Primitive/Integer
-                                    , /tail=
-                                        ( TopType | PredClass /Data/ConsList
-                                            [ /T=( /Data/Primitive/Integer + /Data/Primitive/Float ) ] && PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ]
-                                        )
+                                    , /tail=∀/Data/ConsList[ /T=/Data/Primitive/Integer ]
                                     ) + /range./Data/rangeStep
                                     ( /stop=/Data/Primitive/Integer
                                     , /more=∀/Data/Primitive/Boolean
@@ -104,10 +96,7 @@ Prgm
                             ,
                                 ( /Data/Nil + /Data/Cons[ /T=/Data/Primitive/Integer ]
                                     ( /head=/Data/Primitive/Integer
-                                    , /tail=
-                                        ( TopType | PredClass /Data/ConsList
-                                            [ /T=( /Data/Primitive/Integer + /Data/Primitive/Float ) ] && PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ]
-                                        )
+                                    , /tail=∀/Data/ConsList[ /T=/Data/Primitive/Integer ]
                                     ) + /range./Data/rangeStep
                                     ( /stop=/Data/Primitive/Integer
                                     , /more=∀/Data/Primitive/Boolean
@@ -193,7 +182,7 @@ Prgm
                                     ( PredClass /Data/Algebra/Semigroup
                                     , fromList []
                                     )
-                                , ( /Data/String + /Data/Primitive/Integer )
+                                , /Data/Primitive/Integer
                                 , []
                                 ) = /operator++
                                 ( Value /l -> UnionType
@@ -201,7 +190,7 @@ Prgm
                                         ( PredClass /Data/Algebra/Semigroup
                                         , fromList []
                                         )
-                                    , ( /Data/String + /Data/Primitive/Integer )
+                                    , /Data/Primitive/Integer
                                     , []
                                     ) = /operator++
                                     ( Value /l -> /Data/String = CStr "[" )
@@ -306,7 +295,7 @@ Prgm
                                     ( PredClass /Data/Algebra/Semigroup
                                     , fromList []
                                     )
-                                , ( /Data/String + /Data/Primitive/Integer )
+                                , /Data/Primitive/Integer
                                 , []
                                 ) = /operator++
                                 ( Value /l -> /Data/String = CStr ", " )
@@ -360,26 +349,12 @@ Prgm
                             ( /Data/pure
                                 [ /M=/Data/Cons[ /T=/Data/Primitive/Integer ]
                                     ( /head=/Data/Primitive/Integer
-                                    , /tail=UnionType
-                                        ( Just
-                                            ( PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ] && PredClass /Data/ConsList[ /T=$_/T ]
-                                            , fromList []
-                                            )
-                                        , /Data/Nil
-                                        , []
-                                        )
+                                    , /tail=∀/Data/ConsList[ /T=$_/T ]
                                     )
                                 , /A=/Data/Primitive/Integer
                                 ]( /v=/Data/Primitive/Integer ) + /Data/Cons[ /T=/Data/Primitive/Integer ]
                                 ( /head=/Data/Primitive/Integer
-                                , /tail=UnionType
-                                    ( Just
-                                        ( PredClass /Data/ConsList[ /T=/Data/Primitive/Integer ]
-                                        , fromList []
-                                        )
-                                    , /Data/Nil
-                                    , []
-                                    )
+                                , /tail=∀/Data/ConsList[ /T=/Data/Primitive/Integer ]
                                 )
                             ) = /Data/pure( Value /v -> TVArg /v = Value /v )
                         ]
@@ -398,19 +373,14 @@ Prgm
                                 ( PredClass /Data/ConsList
                                 , fromList []
                                 )
-                            ,
-                                ( /reversed./Data/reverseOnto
-                                    ( /acc=
-                                        ( /Data/Nil + /Data/Cons[ /T=TopType ]
-                                            ( /head=TopType
-                                            , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                            )
+                            , /reversed./Data/reverseOnto
+                                ( /acc=
+                                    ( /Data/Nil + /Data/Cons[ /T=TopType ]
+                                        ( /head=TopType
+                                        , /tail=∀/Data/ConsList[ /T=$_/T ]
                                         )
-                                    , /lst=∀/Data/ConsList
-                                    ) + /Data/Nil + /Data/Cons[ /T=TopType ]
-                                    ( /head=TopType
-                                    , /tail=∀/Data/ConsList[ /T=$_/T ]
                                     )
+                                , /lst=∀/Data/ConsList
                                 )
                             , []
                             ) = /reversed./Data/reverseOnto( Value /lst -> TVArg /lst = Value /lst )( Value /acc -> /Data/Nil = Value /Data/Nil )
@@ -495,32 +465,9 @@ Prgm
                                 , fromList []
                                 )
                             ,
-                                ( /Data/Cons[ /T=∀/Data/Algebra/Ord ]
-                                    ( /head=$/T
-                                    , /tail=UnionType
-                                        ( Just
-                                            ( PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=$_/T ]
-                                            , fromList []
-                                            )
-                                        ,
-                                            ( /Data/Nil + /Data/Cons[ /T=$_/T ]
-                                                ( /head=$/T
-                                                , /tail=
-                                                    ( TopType | PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=$_/T ] )
-                                                )
-                                            )
-                                        , []
-                                        )
-                                    ) + /Data/insertStep[ /T=∀/Data/Algebra/Ord ]
+                                ( /Data/insertStep[ /T=∀/Data/Algebra/Ord ]
                                     ( /head=∀/Data/Algebra/Ord
-                                    , /before=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Primitive/Boolean
-                                            , fromList []
-                                            )
-                                        , ( /Data/Primitive/True + /Data/Primitive/False )
-                                        , []
-                                        )
+                                    , /before=∀/Data/Primitive/Boolean
                                     , /x=∀/Data/Algebra/Ord
                                     , /tail=∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ]
                                     ) + /Data/insert[ /T=∀/Data/Algebra/Ord ]
@@ -567,19 +514,8 @@ Prgm
                             , /tail=∀/Data/ConsList[ /T=$_/T ]
                             ) = /Data/Cons
                             ( Value /head= /fn( Value /v -> TVArg /head = Value /head ) )
-                            ( Value /tail -> UnionType
-                                ( Just
-                                    ( PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Functor[ /T=$_/A ]
-                                    , fromList []
-                                    )
-                                ,
-                                    ( /Data/Nil + /Data/Cons[ /T=$_/T ]
-                                        ( /head=$/T
-                                        , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                        )
-                                    )
-                                , []
-                                ) = /Data/fmap( Value /lst -> TVArg /tail = Value /tail )
+                            ( Value /tail ->
+                                ( TopType | PredClass /Data/ConsList[ /T=$_/T ] && PredClass /Data/Functor[ /T=$_/A ] ) = /Data/fmap( Value /lst -> TVArg /tail = Value /tail )
                                 ( /fn( Value /v )= /fn( Value /v -> TVArg /v = Value /v ) )
                             )
                         ]
@@ -609,30 +545,13 @@ Prgm
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
                                 )
-                            ,
-                                ( /Data/Primitive/True + /operator||
-                                    ( /r=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Primitive/Boolean
-                                            , fromList []
-                                            )
-                                        , ( /Data/Primitive/True + /Data/Primitive/False )
-                                        , []
-                                        )
-                                    , /l=∀/Data/Primitive/Boolean
-                                    ) + /Data/Primitive/False
+                            , /operator||
+                                ( /r=∀/Data/Primitive/Boolean
+                                , /l=∀/Data/Primitive/Boolean
                                 )
                             , []
                             ) = /operator||( Value /l -> TVArg /head = Value /head )
-                            ( Value /r -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Primitive/Boolean
-                                    , fromList []
-                                    )
-                                , ( /Data/Primitive/True + /Data/Primitive/False )
-                                , []
-                                ) = /Data/any( Value /lst -> TVArg /tail = Value /tail )
-                            )
+                            ( Value /r -> ∀/Data/Primitive/Boolean = /Data/any( Value /lst -> TVArg /tail = Value /tail ) )
                         ]
                     }
                 )
@@ -689,32 +608,14 @@ Prgm
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
                                 )
-                            ,
-                                ( /Data/Primitive/True + /operator&&
-                                    ( /r=∀/Data/Primitive/Boolean
-                                    , /l=∀/Data/Primitive/Boolean
-                                    ) + /Data/Primitive/False
+                            , /operator&&
+                                ( /r=∀/Data/Primitive/Boolean
+                                , /l=∀/Data/Primitive/Boolean
                                 )
                             , []
                             ) = /operator&&
-                            ( Value /l -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Primitive/Boolean
-                                    , fromList []
-                                    )
-                                , ( /Data/Primitive/True + /Data/Primitive/False )
-                                , []
-                                ) = /operator==( Value /l -> TVArg /ah = Value /ah )( Value /r -> TVArg /bh = Value /bh )
-                            )
-                            ( Value /r -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Primitive/Boolean
-                                    , fromList []
-                                    )
-                                , ( /Data/Primitive/True + /Data/Primitive/False )
-                                , []
-                                ) = /Data/Algebra/equal( Value /other -> TVArg /bt = Value /bt )( Value /this -> TVArg /at = Value /at )
-                            )
+                            ( Value /l -> ∀/Data/Primitive/Boolean = /operator==( Value /l -> TVArg /ah = Value /ah )( Value /r -> TVArg /bh = Value /bh ) )
+                            ( Value /r -> ∀/Data/Primitive/Boolean = /Data/Algebra/equal( Value /other -> TVArg /bt = Value /bt )( Value /this -> TVArg /at = Value /at ) )
                         ]
                     }
                 )
@@ -756,30 +657,13 @@ Prgm
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
                                 )
-                            ,
-                                ( /Data/Primitive/True + /operator&&
-                                    ( /r=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Primitive/Boolean
-                                            , fromList []
-                                            )
-                                        , ( /Data/Primitive/True + /Data/Primitive/False )
-                                        , []
-                                        )
-                                    , /l=∀/Data/Primitive/Boolean
-                                    ) + /Data/Primitive/False
+                            , /operator&&
+                                ( /r=∀/Data/Primitive/Boolean
+                                , /l=∀/Data/Primitive/Boolean
                                 )
                             , []
                             ) = /operator&&( Value /l -> TVArg /head = Value /head )
-                            ( Value /r -> UnionType
-                                ( Just
-                                    ( PredClass /Data/Primitive/Boolean
-                                    , fromList []
-                                    )
-                                , ( /Data/Primitive/True + /Data/Primitive/False )
-                                , []
-                                ) = /Data/all( Value /lst -> TVArg /tail = Value /tail )
-                            )
+                            ( Value /r -> ∀/Data/Primitive/Boolean = /Data/all( Value /lst -> TVArg /tail = Value /tail ) )
                         ]
                     }
                 )
@@ -808,34 +692,11 @@ Prgm
                                 ( PredClass /Data/ConsList
                                 , fromList []
                                 )
-                            ,
-                                ( /Data/Cons[ /T=∀/Data/Algebra/Ord ]
-                                    ( /head=$/T
-                                    , /tail=UnionType
-                                        ( Just
-                                            ( PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=$_/T ]
-                                            , fromList []
-                                            )
-                                        , /Data/Cons[ /T=$_/T ]
-                                            ( /head=$/T
-                                            , /tail=
-                                                ( TopType | PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=$_/T ] )
-                                            )
-                                        , []
-                                        )
-                                    ) + /Data/insertStep[ /T=∀/Data/Algebra/Ord ]
-                                    ( /head=∀/Data/Algebra/Ord
-                                    , /before=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Primitive/Boolean
-                                            , fromList []
-                                            )
-                                        , ( /Data/Primitive/True + /Data/Primitive/False )
-                                        , []
-                                        )
-                                    , /x=∀/Data/Algebra/Ord
-                                    , /tail=∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                    )
+                            , /Data/insertStep[ /T=∀/Data/Algebra/Ord ]
+                                ( /head=∀/Data/Algebra/Ord
+                                , /before=∀/Data/Primitive/Boolean
+                                , /x=∀/Data/Algebra/Ord
+                                , /tail=∀/Data/ConsList[ /T=∀/Data/Algebra/Ord ]
                                 )
                             , []
                             ) = /Data/insertStep
@@ -868,14 +729,9 @@ Prgm
                                 ( PredClass /Data/ConsList[ /T=$_/T ]
                                 , fromList []
                                 )
-                            ,
-                                ( /Data/append
-                                    ( /a=∀/Data/ConsList[ /T=$_/T ]
-                                    , /b=∀/Data/ConsList[ /T=$_/T ]
-                                    ) + /Data/Cons[ /T=$_/T ]
-                                    ( /head=$/T
-                                    , /tail=∀/Data/ConsList[ /T=$_/T ]
-                                    )
+                            , /Data/append
+                                ( /a=∀/Data/ConsList[ /T=$_/T ]
+                                , /b=∀/Data/ConsList[ /T=$_/T ]
                                 )
                             , []
                             ) = /Data/append
@@ -929,11 +785,9 @@ Prgm
                                 ( PredClass /Data/Algebra/Comparison
                                 , fromList []
                                 )
-                            ,
-                                ( /Data/Algebra/LessThan + /Data/Algebra/GreaterThan + /Data/consThen
-                                    ( /first=∀/Data/Algebra/Comparison
-                                    , /second=∀/Data/Algebra/Comparison
-                                    )
+                            , /Data/consThen
+                                ( /first=∀/Data/Algebra/Comparison
+                                , /second=∀/Data/Algebra/Comparison
                                 )
                             , []
                             ) = /Data/consThen
@@ -1134,14 +988,7 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "## Universal and existential quantifiers" )
         , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) = /Data/all
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /Data/all
                 ( Value /lst -> /Data/Cons[ /T=/Data/Primitive/True ]
                     ( /head=/Data/Primitive/True
                     , /tail=/Data/Cons[ /T=/Data/Primitive/True ]
@@ -1158,14 +1005,7 @@ Prgm
             )
             ( Value /result -> /Data/String = CStr "True" )
         , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) = /Data/all
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /Data/all
                 ( Value /lst -> /Data/Cons[ /T=/Data/Primitive/False ]
                     ( /head=/Data/Primitive/False
                     , /tail=/Data/Nil
@@ -1174,14 +1014,7 @@ Prgm
             )
             ( Value /result -> /Data/String = CStr "False" )
         , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) = /Data/any
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /Data/any
                 ( Value /lst -> /Data/Cons[ /T=/Data/Primitive/True ]
                     ( /head=/Data/Primitive/True
                     , /tail=/Data/Nil
@@ -1190,14 +1023,7 @@ Prgm
             )
             ( Value /result -> /Data/String = CStr "True" )
         , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) = /Data/any
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /Data/any
                 ( Value /lst -> /Data/Cons[ /T=/Data/Primitive/False ]
                     ( /head=/Data/Primitive/False
                     , /tail=/Data/Cons[ /T=/Data/Primitive/False ]
@@ -1220,27 +1046,8 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "  rendered directly; the [Boolean] comparison then prints on its own." )
         , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) = /operator==
-                ( Value /l -> UnionType
-                    ( Just
-                        ( PredClass /Data/Algebra/Eq && PredClass /Data/List
-                        , fromList []
-                        )
-                    ,
-                        ( /Data/Nil + /Data/Cons[ /T=∀/Data/Algebra/Eq ]
-                            ( /head=$/T
-                            , /tail=∀/Data/ConsList[ /T=$_/T ]
-                            )
-                        )
-                    , []
-                    ) = /Data/reversed
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /operator==
+                ( Value /l -> ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/List ) = /Data/reversed
                     ( Value /lst -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer
                         , /tail=/Data/Cons[ /T=/Data/Primitive/Integer ]
@@ -1299,66 +1106,15 @@ Prgm
             )
             ( Value /result -> /Data/String = CStr "True" )
         , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) = /operator==
-                ( Value /l -> UnionType
-                    ( Just
-                        ( PredClass /Data/Algebra/Eq && PredClass /Data/List
-                        , fromList []
-                        )
-                    ,
-                        ( /Data/Nil + /Data/Cons[ /T=∀/Data/Algebra/Eq ]
-                            ( /head=$/T
-                            , /tail=∀/Data/ConsList[ /T=$_/T ]
-                            )
-                        )
-                    , []
-                    ) = /Data/reversed( Value /lst -> /Data/Nil = Value /Data/Nil )
-                )( Value /r -> /Data/Nil = Value /Data/Nil )
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /operator==
+                ( Value /l -> ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/List ) = /Data/reversed( Value /lst -> /Data/Nil = Value /Data/Nil ) )( Value /r -> /Data/Nil = Value /Data/Nil )
             )
             ( Value /result -> /Data/String = CStr "True" )
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "## Sorting" )
         , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) = /operator==
-                ( Value /l -> UnionType
-                    ( Just
-                        ( PredClass /Data/Algebra/Eq && PredClass /Data/List
-                        , fromList []
-                        )
-                    , /Data/Cons
-                        [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/Algebra/Eq ) ]
-                        ( /head=$/T
-                        , /tail=UnionType
-                            ( Just
-                                ( PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                , fromList []
-                                )
-                            ,
-                                ( /Data/Nil + /Data/Cons[ /T=∀/Data/Algebra/Ord ]
-                                    ( /head=$/T
-                                    , /tail=
-                                        ( TopType | PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] )
-                                    )
-                                )
-                            , []
-                            )
-                        )
-                    , []
-                    ) = /Data/sorted
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /operator==
+                ( Value /l -> ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/List ) = /Data/sorted
                     ( Value /lst -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer
                         , /tail=/Data/Cons[ /T=/Data/Primitive/Integer ]
@@ -1417,39 +1173,8 @@ Prgm
             )
             ( Value /result -> /Data/String = CStr "True" )
         , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) = /operator==
-                ( Value /l -> UnionType
-                    ( Just
-                        ( PredClass /Data/Algebra/Eq && PredClass /Data/List
-                        , fromList []
-                        )
-                    , /Data/Cons
-                        [ /T=( TopType | PredClass /Data/Algebra/Ord && PredClass /Data/Algebra/Eq ) ]
-                        ( /head=$/T
-                        , /tail=UnionType
-                            ( Just
-                                ( PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ]
-                                , fromList []
-                                )
-                            ,
-                                ( /Data/Nil + /Data/Cons[ /T=∀/Data/Algebra/Ord ]
-                                    ( /head=$/T
-                                    , /tail=
-                                        ( TopType | PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Ord ] )
-                                    )
-                                )
-                            , []
-                            )
-                        )
-                    , []
-                    ) = /Data/sorted
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /operator==
+                ( Value /l -> ( TopType | PredClass /Data/Algebra/Eq && PredClass /Data/List ) = /Data/sorted
                     ( Value /lst -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer
                         , /tail=/Data/Cons[ /T=/Data/Primitive/Integer ]
@@ -1613,18 +1338,10 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "for [fmap] calls on a [ConsList]." )
         , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) = /operator==
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /operator==
                 ( Value /l -> /Data/Cons[ /T=∀/Data/Algebra/Eq ]
                     ( /head=$/T
-                    , /tail=
-                        ( TopType | PredClass /Data/ConsList[ /T=∀/Data/Algebra/Eq ] && PredClass /Data/ConsList[ /T=∀/Data/Algebra/Eq ] )
+                    , /tail=∀/Data/ConsList[ /T=∀/Data/Algebra/Eq ]
                     ) = /Data/fmap
                     ( Value /lst -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer
@@ -1704,14 +1421,7 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "  not. The element [Eq] dispatch is generic, so lists of [Integer], [Boolean], etc. all work." )
         , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) = /operator==
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /operator==
                 ( Value /l -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/Cons[ /T=$_/T ]
@@ -1745,14 +1455,7 @@ Prgm
             )
             ( Value /result -> /Data/String = CStr "True" )
         , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) = /operator==
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /operator==
                 ( Value /l -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/Cons[ /T=$_/T ]
@@ -1786,14 +1489,7 @@ Prgm
             )
             ( Value /result -> /Data/String = CStr "False" )
         , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) = /operator==
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /operator==
                 ( Value /l -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/Cons[ /T=$_/T ]
@@ -1828,14 +1524,7 @@ Prgm
         , /Catln/#md
             ( Value /text -> /Data/String = CStr "  before its extension ([Nil] before any [Cons])." )
         , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) = /Data/Algebra/isLess
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /Data/Algebra/isLess
                 ( Value /this -> ∀/Data/Algebra/Comparison = /Data/Algebra/compareTo
                     ( Value /other -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer
@@ -1853,14 +1542,7 @@ Prgm
             )
             ( Value /result -> /Data/String = CStr "True" )
         , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) = /Data/Algebra/isLess
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /Data/Algebra/isLess
                 ( Value /this -> ∀/Data/Algebra/Comparison = /Data/Algebra/compareTo
                     ( Value /other -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer
@@ -1887,14 +1569,7 @@ Prgm
             )
             ( Value /result -> /Data/String = CStr "True" )
         , /Catln/#print
-            ( Value /p -> UnionType
-                ( Just
-                    ( PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean
-                    , fromList []
-                    )
-                , ( /Data/Primitive/True + /Data/Primitive/False )
-                , []
-                ) = /Data/Algebra/isEq
+            ( Value /p -> ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Primitive/Boolean ) = /Data/Algebra/isEq
                 ( Value /this -> ∀/Data/Algebra/Comparison = /Data/Algebra/compareTo
                     ( Value /other -> /Data/Cons[ /T=/Data/Primitive/Integer ]
                         ( /head=/Data/Primitive/Integer

@@ -346,6 +346,33 @@ propParamClassCovariant gPrgm = property $ do
   assert $ isSubtypeOf typeEnv cNarrow cWide
   assert $ isEqType typeEnv (differenceTypeEnv typeEnv cNarrow cWide) BottomType
 
+-- | Every leaf of a class's (materialized) member expansion is a subtype of the class — both
+-- as expanded (covers class-named members like @Nil@ reached through @Eq@'s @ConsList[Eq]@) and
+-- with its declared fields erased to ⊤ (a data value's fields are constrained by its data
+-- definition, so @Cons(head=⊤, tail=⊤)@ has the same values as @Cons@ and stays inside
+-- @∀ConsList@). Regression for the symbolic engine manufacturing escape witnesses (e.g. a Cons
+-- with a non-ConsList tail) that no real value has.
+propClassExpansionLeafSubtype :: IO GenPrgm -> Property
+propClassExpansionLeafSubtype gPrgm = property $ do
+  gPrgm' <- lift gPrgm
+  prgm <- forAll gPrgm'
+  let typeEnv@TypeEnv{teClassGraph=ClassGraph cgData} = mkTypeEnv prgm
+  let classPartials = [cpt | (CGClass (_, cpt, cts, _), _, _) <- graphToNodes cgData, not (null cts)]
+  when (null classPartials) discard
+  cpt <- forAll $ HG.element classPartials
+  let clsT = classPartial cpt
+  let expanded = expandClassPartial typeEnv H.empty cpt
+  leaves <- case expanded of
+    UnionType Nothing leafs _ | not (H.null leafs) -> return $ splitUnionType leafs
+    _                                              -> discard
+  leaf <- forAll $ HG.element leaves
+  let erased = leaf{ptArgs = fmap (const PTopType) (ptArgs leaf)}
+  annotate $ printf "class = %s" (show clsT)
+  annotate $ printf "leaf = %s" (show leaf)
+  annotate $ printf "erased = %s" (show erased)
+  assert $ isSubtypeOf typeEnv (singletonType leaf) clsT
+  assert $ isSubtypeOf typeEnv (singletonType erased) clsT
+
 propClassGraphMatchesPredClass :: IO GenPrgm -> Property
 propClassGraphMatchesPredClass gPrgm = property $ do
   gPrgm' <- lift gPrgm
@@ -419,6 +446,7 @@ typeTests = withResource (ggPrgm <$> findPrgms) (const $ pure ()) tests
       -- , HG.testProperty "propDifferenceByIntersection" (p $ propDifferenceByIntersection gPrgm)
       , HG.testProperty "propParamClassCovariant" (p $ propParamClassCovariant gPrgm)
       , HG.testProperty "propSubtypeUnionVarSplit" (withDiscards 1000 $ p $ propSubtypeUnionVarSplit gPrgm)
+      , HG.testProperty "propClassExpansionLeafSubtype" (withDiscards 1000 $ p $ propClassExpansionLeafSubtype gPrgm)
       , HG.testProperty "propClassGraphMatchesPredClass" (withDiscards 1000 $ p $ propClassGraphMatchesPredClass gPrgm)
                                         ]
     p prop = prop

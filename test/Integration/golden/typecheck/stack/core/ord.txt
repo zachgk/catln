@@ -32,7 +32,7 @@ Prgm
                                 ( /Data/Algebra/LessThan + /Data/Algebra/mkDivComparison
                                     ( /aDivB=∀/Data/Primitive/Boolean
                                     , /bDivA=∀/Data/Primitive/Boolean
-                                    ) + /Data/Algebra/NoOrdering + /Data/Algebra/Equal + /Data/Algebra/GreaterThan
+                                    ) + /Data/Algebra/Equal + /Data/Algebra/GreaterThan
                                 )
                             , []
                             ) = /Data/Algebra/mkDivComparison
@@ -108,8 +108,7 @@ Prgm
                                 ( PredClass /Data/Primitive/Boolean
                                 , fromList []
                                 )
-                            ,
-                                ( /Data/Primitive/True + /Data/Primitive/False + /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison ) )
+                            , /Data/Algebra/isEq( /this=∀/Data/Algebra/Comparison )
                             , []
                             ) = /Data/Algebra/isEq
                             ( Value /this -> ∀/Data/Algebra/Comparison = /compare( Value /a -> TVArg /a = Value /a )( Value /b -> TVArg /b = Value /b )( Value /this -> TVArg /this = Value /this ) )
